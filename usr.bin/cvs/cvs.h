@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.58 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.59 2005/05/24 20:04:43 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -389,7 +389,7 @@ int    cvs_readrepo   (const char *, char *, size_t);
 int    cvs_modetostr  (mode_t, char *, size_t);
 int    cvs_strtomode  (const char *, mode_t *);
 int    cvs_splitpath  (const char *, char *, size_t, char **);
-int    cvs_mkadmin    (CVSFILE *, mode_t);
+int    cvs_mkadmin    (const char *, const char *, const char *);
 int    cvs_cksum      (const char *, char *, size_t);
 int    cvs_exec       (int, char **, int []);
 int    cvs_getargv    (const char *, char **, int);

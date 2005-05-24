@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.27 2005/05/20 10:40:22 pat Exp $	*/
+/*	$OpenBSD: util.c,v 1.28 2005/05/24 20:04:43 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -422,16 +422,13 @@ cvs_freeargv(char **argv, int argc)
  * Returns 0 on success, or -1 on failure.
  */
 int
-cvs_mkadmin(CVSFILE *cdir, mode_t mode)
+cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath)
 {
 	int l;
-	char dpath[MAXPATHLEN], path[MAXPATHLEN];
+	char path[MAXPATHLEN];
 	FILE *fp;
 	CVSENTRIES *ef;
 	struct stat st;
-	struct cvsroot *root;
-
-	cvs_file_getpath(cdir, dpath, sizeof(dpath));
 
 	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_CVSDIR, dpath);
 	if (l == -1 || l >= (int)sizeof(path)) {
@@ -440,7 +437,7 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 		return (-1);
 	}
 
-	if ((mkdir(path, mode) == -1) && (errno != EEXIST)) {
+	if ((mkdir(path, 0755) == -1) && (errno != EEXIST)) {
 		cvs_log(LP_ERRNO, "failed to create directory %s", path);
 		return (-1);
 	}
@@ -449,7 +446,6 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 	ef = cvs_ent_open(dpath, O_WRONLY);
 	(void)cvs_ent_close(ef);
 
-	root = cdir->cf_root;
 	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_ROOTSPEC, dpath);
 	if (l == -1 || l >= (int)sizeof(path)) {
 		errno = ENAMETOOLONG;
@@ -457,28 +453,14 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 		return (-1);
 	}
 
-	if ((root != NULL) && (stat(path, &st) != 0) && (errno == ENOENT)) {
+	if ((stat(path, &st) != 0) && (errno == ENOENT)) {
 		fp = fopen(path, "w");
 		if (fp == NULL) {
 			cvs_log(LP_ERRNO, "failed to open %s", path);
 			return (-1);
 		}
-		if (root->cr_user != NULL) {
-			fprintf(fp, "%s", root->cr_user);
-			if (root->cr_pass != NULL)
-				fprintf(fp, ":%s", root->cr_pass);
-			if (root->cr_host != NULL)
-				putc('@', fp);
-		}
-
-		if (root->cr_host != NULL) {
-			fprintf(fp, "%s", root->cr_host);
-			if (root->cr_dir != NULL)
-				putc(':', fp);
-		}
-		if (root->cr_dir)
-			fprintf(fp, "%s", root->cr_dir);
-		putc('\n', fp);
+		if (rootpath != NULL)
+			fprintf(fp, "%s\n", rootpath);
 		(void)fclose(fp);
 	}
 
@@ -489,14 +471,14 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 		return (-1);
 	}
 
-	if ((stat(path, &st) != 0) && (errno == ENOENT) &&
-	    (cdir->cf_repo != NULL)) {
+	if ((stat(path, &st) != 0) && (errno == ENOENT)) {
 		fp = fopen(path, "w");
 		if (fp == NULL) {
 			cvs_log(LP_ERRNO, "failed to open %s", path);
 			return (-1);
 		}
-		fprintf(fp, "%s\n", cdir->cf_repo);
+		if (repopath != NULL)
+			fprintf(fp, "%s\n", repopath);
 		(void)fclose(fp);
 	}
 

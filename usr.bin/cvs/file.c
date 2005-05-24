@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.77 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.78 2005/05/24 20:04:43 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -269,7 +269,8 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 			return (NULL);
 		}
 
-		if ((mkdir(path, mode) == -1) || (cvs_mkadmin(cfp, mode) < 0)) {
+		if ((mkdir(path, mode) == -1) ||
+		    (cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo) < 0)) {
 			cvs_file_free(cfp);
 			return (NULL);
 		}
@@ -574,7 +575,7 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 		return (-1);
 
 	if (flags & CF_MKADMIN)
-		cvs_mkadmin(cf, 0755);
+		cvs_mkadmin(fpath, cf->cf_root->cr_str, NULL);
 
 	/* if the CVS administrative directory exists, load the info */
 	l = snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);

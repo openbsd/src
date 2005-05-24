@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.22 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.23 2005/05/24 20:04:43 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -25,6 +25,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -59,7 +60,7 @@ struct cvs_cmd cvs_cmd_checkout = {
 	NULL,
 	NULL,
 	NULL,
-	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR
 };
 
 static char *date, *rev, *koptstr, *tgtdir, *rcsid;
@@ -152,11 +153,26 @@ static int
 cvs_checkout_pre_exec(struct cvsroot *root)
 {
 	int i;
+	char *sp; 
 
-	/* create any required base directories */
 	for (i = 0; i < co_nmod; i++) {
-		if (cvs_file_create(NULL, co_mods[i], DT_DIR, 0755) < 0)
+		if ((sp = strchr(co_mods[i], '/')) != NULL)
+			*sp = '\0';
+
+		if ((mkdir(co_mods[i], 0755) == -1) && (errno != EEXIST)) {
+			cvs_log(LP_ERRNO, "can't create base directory '%s'",
+			    co_mods[i]);
 			return (CVS_EX_DATA);
+		}
+
+		if (cvs_mkadmin(co_mods[i], root->cr_str, co_mods[i]) < 0) {
+			cvs_log(LP_ERROR, "can't create base directory '%s'",
+			    co_mods[i]);
+			return (CVS_EX_DATA);
+		}
+
+		if (sp != NULL)
+			*sp = '/';
 	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
