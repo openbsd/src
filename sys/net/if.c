@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.117 2005/05/24 04:20:25 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.118 2005/05/24 06:48:49 reyk Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #include "bridge.h"
 #include "carp.h"
 #include "pf.h"
+#include "trunk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +82,7 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_media.h>
 #include <net/if_types.h>
 #include <net/route.h>
 
