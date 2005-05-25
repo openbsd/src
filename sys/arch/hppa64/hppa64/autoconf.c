@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.3 2005/05/25 20:49:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -51,6 +51,7 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
+#include <sys/malloc.h>
 
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
@@ -629,10 +630,12 @@ getstr(cp, size)
 	}
 }
 
+u_int32_t pdc_rt[16 / 4 * sizeof(struct pdc_pat_pci_rt)] PDC_ALIGNMENT;
 struct pdc_sysmap_find pdc_find PDC_ALIGNMENT;
 struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
 struct pdc_pat_cell_id pdc_pat_cell_id PDC_ALIGNMENT;
 struct pdc_pat_cell_module pdc_pat_cell_module PDC_ALIGNMENT;
+struct pdc_pat_io_num pdc_pat_io_num PDC_ALIGNMENT;
 const char *pat_names[] = {
 	"central",
 	"cpu",
@@ -738,6 +741,60 @@ pdc_scan(struct device *self, struct confargs *ca)
 			config_found(self, &nca, mbprint);
 		}
 	}
+}
+
+struct pdc_pat_pci_rt *
+pdc_getirt(int *pn)
+{
+	struct pdc_pat_pci_rt *rt;
+	int i, num, err;
+	long cell;
+
+	cell = -1;
+	if (!pdc_call((iodcio_t)pdc, 0, PDC_PAT_CELL, PDC_PAT_CELL_GETID,
+	    &pdc_pat_cell_id, 0)) {
+		cell = pdc_pat_cell_id.id;
+
+		if ((err = pdc_call((iodcio_t)pdc, 0, PDC_PAT_IO,
+		    PDC_PAT_IO_GET_PCI_RTSZ, &pdc_pat_io_num, cell))) {
+			printf("irt size error %d\n", err);
+			return (NULL);
+		}
+	} else if ((err = pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX,
+	    PDC_PCI_GET_INT_TBL_SZ, &pdc_pat_io_num, cpu_gethpa(0)))) {
+		printf("irt size error %d\n", err);
+		return (NULL);
+	}
+
+printf("num %ld ", pdc_pat_io_num.num);
+	*pn = num = pdc_pat_io_num.num;
+	if (num > sizeof(pdc_rt) / sizeof(*rt)) {
+		printf("\nPCI IRT is too big %d\n", num);
+		return (NULL);
+	}
+
+	if (!(rt = malloc(num * sizeof(*rt), M_DEVBUF, M_NOWAIT)))
+		return (NULL);
+
+	if (cell >= 0) {
+		if ((err = pdc_call((iodcio_t)pdc, 0, PDC_PAT_IO,
+		    PDC_PAT_IO_GET_PCI_RT, rt, cell))) {
+			printf("irt fetch error %d\n", err);
+			free(rt, M_DEVBUF);
+			return (NULL);
+		}
+	} else if ((err = pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX,
+	    PDC_PCI_GET_INT_TBL, &pdc_pat_io_num, cpu_gethpa(0), pdc_rt))) {
+		printf("irt fetch error %d\n", err);
+		free(rt, M_DEVBUF);
+		return (NULL);
+	}
+	bcopy(pdc_rt, rt, num * sizeof(*rt));
+
+for (i = 0; i < num; i++)
+printf("\n%d: ty 0x%02x it 0x%02x trig 0x%02x pin 0x%02x bus %d seg %d line %d addr 0x%llx",
+i, rt[i].type, rt[i].itype, rt[i].trigger, rt[i].pin, rt[i].bus, rt[i].seg, rt[i].line, rt[i].addr);
+	return rt;
 }
 
 const struct hppa_mod_info hppa_knownmods[] = {
