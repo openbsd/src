@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.68 2005/05/23 20:54:32 martin Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.69 2005/05/25 07:48:30 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -3184,10 +3184,6 @@ tulip_reset(
     tulip_desc_t *di;
     u_int32_t inreset = (sc->tulip_flags & TULIP_INRESET);
 
-#if defined(TULIP_DEBUG)
-    printf ("de0: resetting...\n");
-#endif
-
     /*
      * Brilliant.  Simply brilliant.  When switching modes/speeds
      * on a 2114*, you need to set the appriopriate MII/PCS/SCL/PS
@@ -3195,7 +3191,8 @@ tulip_reset(
      * to properly reset its internal pathways to the right places.
      *   Grrrr.
      */
-    if (sc->tulip_boardsw->bd_media_preset != NULL)
+    if ((sc->tulip_flags & TULIP_DEVICEPROBE) == 0
+	&& sc->tulip_boardsw->bd_media_preset != NULL)
 	(*sc->tulip_boardsw->bd_media_preset)(sc);
 
     TULIP_CSR_WRITE(sc, csr_busmode, TULIP_BUSMODE_SWRESET);
