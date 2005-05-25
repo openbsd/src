@@ -542,6 +542,10 @@ search for something earlier in the text?  To do this, type C-r for
 Reverse search.  Everything that applies to C-s applies to C-r except
 that the direction of the search is reversed.
 
+If your incremental search fails and you type C-s or C-r again
+(without changing your search direction), Emacs will wrap the
+search around to the beginning (or end, if searching backwards) of
+the buffer and search from there.
 
 GETTING MORE HELP
 -----------------
