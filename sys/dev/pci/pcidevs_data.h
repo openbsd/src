@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.867 2005/05/24 02:49:37 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.868 2005/05/25 20:34:51 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5224,7 +5224,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83820,
-	    "DP83820 1/10/100/1000",
+	    "DP83820 10/100/1000",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200_ISA,

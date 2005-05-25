@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.867 2005/05/24 02:49:37 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.868 2005/05/25 20:34:51 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1859,7 +1859,7 @@
 #define	PCI_PRODUCT_NS_PC87560	0x000e		/* 87560 Legacy I/O */
 #define	PCI_PRODUCT_NS_USB	0x0012		/* USB */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 */
-#define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 1/10/100/1000 */
+#define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 */
 #define	PCI_PRODUCT_NS_SCx200_ISA	0x0500		/* SCx200 ISA */
 #define	PCI_PRODUCT_NS_SCx200_SMI	0x0501		/* SCx200 SMI */
 #define	PCI_PRODUCT_NS_SCx200_IDE	0x0502		/* SCx200 IDE */
