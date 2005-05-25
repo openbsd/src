@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.52 2005/05/25 08:00:03 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.53 2005/05/25 21:32:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1282,11 +1282,16 @@ rcs_getrevbydate(RCSFILE *rfp, struct tm *date)
 /*
  * rcs_rev_add()
  *
- * Add a revision to the RCS file <rf>.
+ * Add a revision to the RCS file <rf>.  The new revision's number can be
+ * specified in <rev> (which can also be RCS_HEAD_REV, in which case the
+ * new revision will have a number equal to the previous head revision plus
+ * one).  The <msg> argument specifies the log message for that revision, and
+ * <date> specifies the revision's date (a value of -1 is
+ * equivalent to using the current time).
  * Returns 0 on success, or -1 on failure.
  */
 int
-rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg)
+rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date)
 {
 	time_t now;
 	struct passwd *pw;
@@ -1334,7 +1339,10 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg)
 		return (-1);
 	}
 
-	time(&now);
+	if (date != (time_t)(-1))
+		now = date;
+	else
+		time(&now);
 	gmtime_r(&now, &(rdp->rd_date));
 
 	TAILQ_INSERT_HEAD(&(rf->rf_delta), rdp, rd_list);
