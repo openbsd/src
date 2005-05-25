@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.109 2005/05/18 20:04:51 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.110 2005/05/25 22:09:17 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -527,11 +527,6 @@ message_validate_cert_req(struct message *msg, struct payload *p)
 /*
  * Validate the delete payload P in message MSG.  As a side-effect, create
  * an exchange if we do not have one already.
- *
- * Note:  DELETEs are only accepted as part of an INFORMATIONAL exchange.
- * exchange_validate() makes sure a HASH payload is present.  Due to the order
- * of message validation functions in message_validate_payload[] we can be
- * sure that the HASH payload has been successfully validated at this point.
  */
 static int
 message_validate_delete(struct message *msg, struct payload *p)
