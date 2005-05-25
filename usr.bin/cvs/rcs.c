@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.53 2005/05/25 21:32:31 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.54 2005/05/25 21:59:16 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1255,28 +1255,6 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 	}
 
 	return (rbuf);
-}
-
-/*
- * rcs_gethead()
- *
- * Get the head revision for the RCS file <rf>.
- */
-BUF*
-rcs_gethead(RCSFILE *rf)
-{
-	return rcs_getrev(rf, rf->rf_head);
-}
-
-/*
- * rcs_getrevbydate()
- *
- * Get an RCS revision by a specific date.
- */
-RCSNUM*
-rcs_getrevbydate(RCSFILE *rfp, struct tm *date)
-{
-	return (NULL);
 }
 
 /*

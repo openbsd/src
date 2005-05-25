@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.27 2005/05/25 21:32:31 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.28 2005/05/25 21:59:16 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -200,8 +200,6 @@ int           rcs_lock_setmode  (RCSFILE *, int);
 int           rcs_lock_add      (RCSFILE *, const char *, RCSNUM *);
 int           rcs_lock_remove   (RCSFILE *, const RCSNUM *);
 BUF*          rcs_getrev        (RCSFILE *, RCSNUM *);
-BUF*          rcs_gethead       (RCSFILE *);
-RCSNUM*       rcs_getrevbydate  (RCSFILE *, struct tm *);
 const char*   rcs_desc_get      (RCSFILE *);
 int           rcs_desc_set      (RCSFILE *, const char *);
 const char*   rcs_comment_lookup(const char *);
@@ -213,8 +211,6 @@ int           rcs_rev_add       (RCSFILE *, RCSNUM *, const char *, time_t);
 int           rcs_rev_remove    (RCSFILE *, RCSNUM *);
 RCSNUM*       rcs_tag_resolve   (RCSFILE *, const char *);
 const char*   rcs_errstr        (int);
-
-
 
 
 int       rcs_kflag_get    (const char *);
