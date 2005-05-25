@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 2002/06/11 09:36:24 hugh Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 2005/05/25 18:29:58 jason Exp $	*/
 /*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
@@ -1025,7 +1025,7 @@ struct vax_bus_dma_tag {
  */
 struct vax_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */

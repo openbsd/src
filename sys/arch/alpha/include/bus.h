@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.19 2003/10/18 20:14:41 jmc Exp $	*/
+/*	$OpenBSD: bus.h,v 1.20 2005/05/25 18:29:58 jason Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ struct alpha_bus_dma_tag {
  */
 struct alpha_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
