@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.4 2005/05/25 17:21:27 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.5 2005/05/25 17:23:46 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -195,6 +195,12 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	iov[iov_cnt].iov_len = sizeof(smsg);
 	iov_cnt++;
 
+	/* add flow type */
+	iov[iov_cnt].iov_base = &sa_flowtype;
+	iov[iov_cnt].iov_len = sizeof(sa_flowtype);
+	smsg.sadb_msg_len += sa_flowtype.sadb_protocol_len;
+	iov_cnt++;
+
 	/* remote peer */
 	iov[iov_cnt].iov_base = &sa_peer;
 	iov[iov_cnt].iov_len = sizeof(sa_peer);
@@ -204,33 +210,22 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	smsg.sadb_msg_len += sa_peer.sadb_address_len;
 	iov_cnt++;
 
-	/* add flow type */
-	iov[iov_cnt].iov_base = &sa_flowtype;
-	iov[iov_cnt].iov_len = sizeof(sa_flowtype);
-	smsg.sadb_msg_len += sa_flowtype.sadb_protocol_len;
+	/* src addr */
+	iov[iov_cnt].iov_base = &sa_src;
+	iov[iov_cnt].iov_len = sizeof(sa_src);
+	iov_cnt++;
+	iov[iov_cnt].iov_base = &ssrc;
+	iov[iov_cnt].iov_len = ROUNDUP(ssrc.ss_len);
+	smsg.sadb_msg_len += sa_src.sadb_address_len;
 	iov_cnt++;
 
-	/* add protocol */
-	iov[iov_cnt].iov_base = &sa_protocol;
-	iov[iov_cnt].iov_len = sizeof(sa_protocol);
-	smsg.sadb_msg_len += sa_protocol.sadb_protocol_len;
-	iov_cnt++;
-
-	/* add flow masks */
+	/* src mask */
 	iov[iov_cnt].iov_base = &sa_smask;
 	iov[iov_cnt].iov_len = sizeof(sa_smask);
 	iov_cnt++;
 	iov[iov_cnt].iov_base = &smask;
 	iov[iov_cnt].iov_len = ROUNDUP(smask.ss_len);
 	smsg.sadb_msg_len += sa_smask.sadb_address_len;
-	iov_cnt++;
-
-	iov[iov_cnt].iov_base = &sa_dmask;
-	iov[iov_cnt].iov_len = sizeof(sa_dmask);
-	iov_cnt++;
-	iov[iov_cnt].iov_base = &dmask;
-	iov[iov_cnt].iov_len = ROUNDUP(dmask.ss_len);
-	smsg.sadb_msg_len += sa_dmask.sadb_address_len;
 	iov_cnt++;
 
 	/* dest addr */
@@ -242,13 +237,19 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	smsg.sadb_msg_len += sa_dst.sadb_address_len;
 	iov_cnt++;
 
-	/* src addr */
-	iov[iov_cnt].iov_base = &sa_src;
-	iov[iov_cnt].iov_len = sizeof(sa_src);
+	/* dst mask */
+	iov[iov_cnt].iov_base = &sa_dmask;
+	iov[iov_cnt].iov_len = sizeof(sa_dmask);
 	iov_cnt++;
-	iov[iov_cnt].iov_base = &ssrc;
-	iov[iov_cnt].iov_len = ROUNDUP(ssrc.ss_len);
-	smsg.sadb_msg_len += sa_src.sadb_address_len;
+	iov[iov_cnt].iov_base = &dmask;
+	iov[iov_cnt].iov_len = ROUNDUP(dmask.ss_len);
+	smsg.sadb_msg_len += sa_dmask.sadb_address_len;
+	iov_cnt++;
+
+	/* add protocol */
+	iov[iov_cnt].iov_base = &sa_protocol;
+	iov[iov_cnt].iov_len = sizeof(sa_protocol);
+	smsg.sadb_msg_len += sa_protocol.sadb_protocol_len;
 	iov_cnt++;
 
 	if (sa_srcid) {
