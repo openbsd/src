@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.28 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.29 2005/05/25 23:17:47 niklas Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ donice(curp, chgp, n)
 		return (EACCES);
 	chgp->p_nice = n;
 	SCHED_LOCK(s);
-	(void)resetpriority(chgp);
+	resetpriority(chgp);
 	SCHED_UNLOCK(s);
 	return (0);
 }

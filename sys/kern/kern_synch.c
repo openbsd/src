@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.61 2004/07/29 06:25:45 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.62 2005/05/25 23:17:47 niklas Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -145,8 +145,12 @@ ltsleep(ident, priority, wmesg, timo, interlock)
 	else
 		*qp->sq_tailp = p;
 	*(qp->sq_tailp = &p->p_forw) = 0;
+
+	p->p_stat = SSLEEP;
+
 	if (timo)
 		timeout_add(&p->p_sleep_to, timo);
+
 	/*
 	 * We can now release the interlock; the scheduler_slock
 	 * is held, so a thread can't get in to do wakeup() before
@@ -170,13 +174,16 @@ ltsleep(ident, priority, wmesg, timo, interlock)
 	 */
 	if (catch) {
 		p->p_flag |= P_SINTR;
+		SCHED_UNLOCK(s);	/* XXX - must unlock for CURSIG */
 		if ((sig = CURSIG(p)) != 0) {
+			SCHED_LOCK(s);
 			if (p->p_wchan)
 				unsleep(p);
 			p->p_stat = SONPROC;
 			SCHED_UNLOCK(s);
 			goto resume;
 		}
+		SCHED_LOCK(s);
 		if (p->p_wchan == 0) {
 			catch = 0;
 			SCHED_UNLOCK(s);
@@ -184,21 +191,13 @@ ltsleep(ident, priority, wmesg, timo, interlock)
 		}
 	} else
 		sig = 0;
-	p->p_stat = SSLEEP;
 	p->p_stats->p_ru.ru_nvcsw++;
 	SCHED_ASSERT_LOCKED();
-	mi_switch();
+	mi_switch(s);
 #ifdef	DDB
 	/* handy breakpoint location after process "wakes" */
 	__asm(".globl bpendtsleep\nbpendtsleep:");
 #endif
-
-	SCHED_ASSERT_UNLOCKED();
-	/*
-	 * Note! this splx belongs to the SCHED_LOCK(s) above, mi_switch
-	 * releases the scheduler lock, but does not lower the spl.
-	 */
-	splx(s);
 
 resume:
 #ifdef __HAVE_CPUINFO
@@ -270,20 +269,13 @@ endtsleep(arg)
  * Remove a process from its wait queue
  */
 void
-unsleep(p)
-	register struct proc *p;
+unsleep(struct proc *p)
 {
-	register struct slpque *qp;
-	register struct proc **hp;
-#if 0
-	int s;
+	struct slpque *qp;
+	struct proc **hp;
 
-	/*
-	 * XXX we cannot do recursive SCHED_LOCKing yet.  All callers lock
-	 * anyhow.
-	 */
-	SCHED_LOCK(s);
-#endif
+	SCHED_ASSERT_LOCKED();
+
 	if (p->p_wchan) {
 		hp = &(qp = &slpque[LOOKUP(p->p_wchan)])->sq_head;
 		while (*hp != p)
@@ -293,24 +285,39 @@ unsleep(p)
 			qp->sq_tailp = hp;
 		p->p_wchan = 0;
 	}
-#if 0
+}
+
+void
+wakeup(void *ident)
+{
+	int s;
+
+	SCHED_LOCK(s);
+	sched_wakeup(ident);
 	SCHED_UNLOCK(s);
-#endif
+}
+
+void
+wakeup_n(void *ident, int n)
+{
+	int s;
+
+	SCHED_LOCK(s);
+	sched_wakeup_n(ident, n);
+	SCHED_UNLOCK(s);
 }
 
 /*
  * Make all processes sleeping on the specified identifier runnable.
  */
 void
-wakeup_n(ident, n)
-	void *ident;
-	int n;
+sched_wakeup_n(void *ident, int n)
 {
 	struct slpque *qp;
 	struct proc *p, **q;
-	int s;
 
-	SCHED_LOCK(s);
+	SCHED_ASSERT_LOCKED();
+
 	qp = &slpque[LOOKUP(ident)];
 restart:
 	for (q = &qp->sq_head; (p = *q) != NULL; ) {
@@ -349,7 +356,7 @@ restart:
 					need_resched(0);
 #endif
 				} else {
-					wakeup((caddr_t)&proc0);
+					sched_wakeup((caddr_t)&proc0);
 				}
 				/* END INLINE EXPANSION */
 
@@ -361,12 +368,4 @@ restart:
 		} else
 			q = &p->p_forw;
 	}
-	SCHED_UNLOCK(s);
-}
-
-void
-wakeup(chan)
-	void *chan;
-{
-	wakeup_n(chan, -1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.4 2004/07/22 15:42:11 art Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.5 2005/05/25 23:17:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -44,14 +44,6 @@ static __inline void __mp_unlock(struct __mp_lock *);
 static __inline int __mp_release_all(struct __mp_lock *);
 static __inline void __mp_acquire_count(struct __mp_lock *, int);
 static __inline int __mp_lock_held(struct __mp_lock *);
-
-/*
- * XXX Simplelocks macros used at "trusted" places.
- */
-#define SIMPLELOCK		__mp_lock
-#define SIMPLE_LOCK_INIT	__mp_lock_init
-#define SIMPLE_LOCK		__mp_lock
-#define SIMPLE_UNLOCK		__mp_unlock
 
 static __inline void
 __mp_lock_init(struct __mp_lock *lock)

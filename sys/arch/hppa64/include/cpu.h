@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 2005/04/19 15:29:48 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 2005/05/25 23:17:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -83,8 +83,8 @@
 #define	IPL_VM		7
 #define	IPL_AUDIO	8
 #define	IPL_CLOCK	9
-#define	IPL_SCHED	9
 #define	IPL_STATCLOCK	10
+#define	IPL_SCHED	IPL_STATCLOCK
 #define	IPL_HIGH	11
 
 #define	NIPL		12

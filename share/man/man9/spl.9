@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.19 2004/12/01 02:39:04 jsg Exp $
+.\"	$OpenBSD: spl.9,v 1.20 2005/05/25 23:17:47 niklas Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -102,6 +102,15 @@ blocks hard interrupts from serial interfaces.
 Code running at this level may not access the tty subsystem.
 .It Fn splsched
 blocks interrupts that may access scheduler data structures.
+Specifically the clock interrupt that invokes the
+.Fn schedclock
+function, needs to be blocked.  On some systems this is a
+separate clock, on others it is the same as the statistics
+clock, and on these,
+.Fn splsched
+must block everything that
+.Fn splstatclock
+does.
 Code running at or above this level may not call
 .Fn sleep ,
 .Fn tsleep ,

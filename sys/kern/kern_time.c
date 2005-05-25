@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.45 2004/07/28 17:15:12 tholo Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.46 2005/05/25 23:17:47 niklas Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -560,8 +560,12 @@ sys_setitimer(p, v, retval)
 		}
 		p->p_realtimer = aitv;
 	} else {
+		int s;
+
 		itimerround(&aitv.it_interval);
+		s = splclock();
 		p->p_stats->p_timer[SCARG(uap, which)] = aitv;
+		splx(s);
 	}
 
 	return (0);

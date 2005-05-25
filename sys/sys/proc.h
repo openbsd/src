@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.77 2005/03/10 17:26:10 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.78 2005/05/25 23:17:47 niklas Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -408,7 +408,7 @@ int	inferior(struct proc *p);
 int	leavepgrp(struct proc *p);
 void	yield(void);
 void	preempt(struct proc *);
-void	mi_switch(void);
+void	mi_switch(int);
 void	pgdelete(struct pgrp *pgrp);
 void	procinit(void);
 #if !defined(remrunqueue)
@@ -424,6 +424,8 @@ int	ltsleep(void *chan, int pri, const char *wmesg, int timo,
 	    volatile struct simplelock *);
 #define tsleep(chan, pri, wmesg, timo) ltsleep(chan, pri, wmesg, timo, NULL)
 void	unsleep(struct proc *);
+void	sched_wakeup_n(void *, int);
+#define sched_wakeup(c) sched_wakeup_n((c), -1)
 void    wakeup_n(void *chan, int);
 void    wakeup(void *chan);
 #define wakeup_one(c) wakeup_n((c), 1)

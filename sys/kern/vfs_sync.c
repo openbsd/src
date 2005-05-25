@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.29 2004/10/29 11:51:49 pedro Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.30 2005/05/25 23:17:47 niklas Exp $  */
 
 /*
  *  Portions of this code are:
@@ -50,6 +50,7 @@
 #include <sys/malloc.h>
 
 #include <sys/kernel.h>
+#include <sys/sched.h>
 
 #ifdef FFS_SOFTUPDATES
 int   softdep_process_worklist(struct mount *);
@@ -244,10 +245,10 @@ speedup_syncer()
 {
 	int s;
 
-	s = splhigh();
+	SCHED_LOCK(s);
 	if (syncerproc && syncerproc->p_wchan == &lbolt)
 		setrunnable(syncerproc);
-	splx(s);
+	SCHED_UNLOCK(s);
 	if (rushjob < syncdelay / 2) {
 		rushjob += 1;
 		stat_rush_requests += 1;

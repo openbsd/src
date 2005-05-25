@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.10 2004/06/22 01:16:50 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.11 2005/05/25 23:17:47 niklas Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -145,59 +145,31 @@ void roundrobin(struct cpu_info *);
 #define IPL_SCHED IPL_HIGH
 #endif
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#include <sys/lock.h>
+#if defined(MULTIPROCESSOR)
+#include <sys/mutex.h>
+
+extern struct mutex sched_mutex;
+
+#define	SCHED_ASSERT_LOCKED()	MUTEX_ASSERT_LOCKED(&sched_mutex)
+#define	SCHED_ASSERT_UNLOCKED()	MUTEX_ASSERT_UNLOCKED(&sched_mutex)
 
 /*
- * XXX Instead of using struct lock for the kernel lock and thus requiring us
- * XXX to implement simplelocks, causing all sorts of fine-grained locks all
- * XXX over our tree getting activated consuming both time and potentially
- * XXX introducing locking protocol bugs.
+ * We need this MUTEX_OLDIPL hack to be able to properly restore the old
+ * ipl after all the ipl juggling in cpu_switch.
  */
-#ifdef notyet
+#define SCHED_LOCK(s) do {						\
+	mtx_enter(&sched_mutex);					\
+	s = MUTEX_OLDIPL(&sched_mutex);					\
+} while (0)
 
-extern struct simplelock sched_lock;
-
-#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock))
-#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock) == 0)
-
-#define	SCHED_LOCK(s)							\
-do {									\
-	s = splsched();							\
-	simple_lock(&sched_lock);					\
-} while (/* CONSTCOND */ 0)
-
-#define	SCHED_UNLOCK(s)							\
-do {									\
-	simple_unlock(&sched_lock);					\
-	splx(s);							\
-} while (/* CONSTCOND */ 0)
-
-#else
-
-extern struct __mp_lock sched_lock;
-
-#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(__mp_lock_held(&sched_lock))
-#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(__mp_lock_held(&sched_lock) == 0)
-
-#define	SCHED_LOCK(s)							\
-do {									\
-	s = splsched();							\
-	__mp_lock(&sched_lock);						\
-} while (/* CONSTCOND */ 0)
-
-#define	SCHED_UNLOCK(s)							\
-do {									\
-	__mp_unlock(&sched_lock);					\
-	splx(s);							\
-} while (/* CONSTCOND */ 0)
-
-#endif
+#define SCHED_UNLOCK(s) do {						\
+	mtx_leave(&sched_mutex);					\
+} while (0)
 
 void	sched_lock_idle(void);
 void	sched_unlock_idle(void);
 
-#else /* ! MULTIPROCESSOR || LOCKDEBUG */
+#else /* ! MULTIPROCESSOR */
 
 #define	SCHED_ASSERT_LOCKED()		splassert(IPL_SCHED);
 #define	SCHED_ASSERT_UNLOCKED()		/* nothing */
@@ -205,7 +177,7 @@ void	sched_unlock_idle(void);
 #define	SCHED_LOCK(s)			s = splsched()
 #define	SCHED_UNLOCK(s)			splx(s)
 
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
+#endif /* MULTIPROCESSOR */
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

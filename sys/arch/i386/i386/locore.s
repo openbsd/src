@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.87 2005/05/25 22:50:25 beck Exp $	*/
+/*	$OpenBSD: locore.s,v 1.88 2005/05/25 23:17:47 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1616,7 +1616,6 @@ ENTRY(idle_loop)
 	jmp	_C_LABEL(idle_loop)
 
 ENTRY(idle_exit)
-	movl	$IPL_HIGH,CPL		# splhigh
 	sti
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_lock_idle)
