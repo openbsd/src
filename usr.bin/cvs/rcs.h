@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.23 2005/04/20 23:11:30 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.24 2005/05/25 06:42:41 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -101,7 +101,7 @@
 #define RCS_ERR_BADNUM   3
 #define RCS_ERR_BADSYM   4
 #define RCS_ERR_PARSE    5
-
+#define RCS_ERR_ERRNO  255
 
 typedef struct rcs_num {
 	u_int      rn_len;
@@ -207,8 +207,13 @@ const char*   rcs_comment_get   (RCSFILE *);
 int           rcs_comment_set   (RCSFILE *, const char *);
 int           rcs_kwexp_set     (RCSFILE *, int);
 int           rcs_kwexp_get     (RCSFILE *);
+int           rcs_rev_add       (RCSFILE *, RCSNUM *, const char *);
+int           rcs_rev_remove    (RCSFILE *, RCSNUM *);
 RCSNUM*       rcs_tag_resolve   (RCSFILE *, const char *);
 const char*   rcs_errstr        (int);
+
+
+
 
 int       rcs_kflag_get    (const char *);
 void      rcs_kflag_usage  (void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.49 2005/04/20 23:11:30 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.50 2005/05/25 06:42:41 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -242,6 +242,7 @@ rcs_open(const char *path, int flags, ...)
 			fmode = va_arg(vap, mode_t);
 			va_end(vap);
 		} else {
+			rcs_errno = RCS_ERR_ERRNO;
 			cvs_log(LP_ERR, "RCS file `%s' does not exist", path);
 			return (NULL);
 		}
@@ -252,11 +253,13 @@ rcs_open(const char *path, int flags, ...)
 
 	if ((rfp = (RCSFILE *)malloc(sizeof(*rfp))) == NULL) {
 		cvs_log(LP_ERRNO, "failed to allocate RCS file structure");
+		rcs_errno = RCS_ERR_ERRNO;
 		return (NULL);
 	}
 	memset(rfp, 0, sizeof(*rfp));
 
 	if ((rfp->rf_path = strdup(path)) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to duplicate RCS file path");
 		free(rfp);
 		return (NULL);
@@ -358,6 +361,7 @@ rcs_write(RCSFILE *rfp)
 		return (0);
 
 	if ((fp = fopen(rfp->rf_path, "w")) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to open RCS output file `%s'",
 		    rfp->rf_path);
 		return (-1);
@@ -540,6 +544,7 @@ rcs_access_add(RCSFILE *file, const char *login)
 
 	ap = (struct rcs_access *)malloc(sizeof(*ap));
 	if (ap == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to allocate RCS access entry");
 		return (-1);
 	}
@@ -613,21 +618,20 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 		}
 	}
 
-	symp = (struct rcs_sym *)malloc(sizeof(*symp));
-	if (symp == NULL) {
+	if ((symp = (struct rcs_sym *)malloc(sizeof(*symp))) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to allocate RCS symbol");
 		return (-1);
 	}
 
-	symp->rs_name = cvs_strdup(sym);
-	if (symp->rs_name == NULL) {
+	if ((symp->rs_name = cvs_strdup(sym)) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to duplicate symbol");
 		free(symp);
 		return (-1);
 	}
 
-	symp->rs_num = rcsnum_alloc();
-	if (symp->rs_num == NULL) {
+	if ((symp->rs_num = rcsnum_alloc()) == NULL) {
 		cvs_strfree(symp->rs_name);
 		free(symp);
 		return (-1);
@@ -794,8 +798,8 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
 		}
 	}
 
-	lkp = (struct rcs_lock *)malloc(sizeof(*lkp));
-	if (lkp == NULL) {
+	if ((lkp = (struct rcs_lock *)malloc(sizeof(*lkp))) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to allocate RCS lock");
 		return (-1);
 	}
@@ -1308,9 +1312,15 @@ rcs_kflag_get(const char *flags)
 const char*
 rcs_errstr(int code)
 {
-	if ((code < 0) || (code >= (int)RCS_NERR))
-		return (NULL);
-	return (rcs_errstrs[code]);
+	const char *esp;
+
+	if ((code < 0) || ((code >= (int)RCS_NERR) && (code != RCS_ERR_ERRNO)))
+		esp = NULL;
+	else if (code == RCS_ERR_ERRNO)
+		esp = strerror(errno);
+	else
+		esp = rcs_errstrs[code];
+	return (esp);
 }
 
 void
@@ -1342,6 +1352,7 @@ rcs_parse(RCSFILE *rfp)
 		return (0);
 
 	if ((pdp = (struct rcs_pdata *)malloc(sizeof(*pdp))) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to allocate RCS parser data");
 		return (-1);
 	}
@@ -1352,6 +1363,7 @@ rcs_parse(RCSFILE *rfp)
 
 	pdp->rp_file = fopen(rfp->rf_path, "r");
 	if (pdp->rp_file == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to open RCS file `%s'", rfp->rf_path);
 		rcs_freepdata(pdp);
 		return (-1);
@@ -1359,6 +1371,7 @@ rcs_parse(RCSFILE *rfp)
 
 	pdp->rp_buf = (char *)malloc(RCS_BUFSIZE);
 	if (pdp->rp_buf == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to allocate RCS parser buffer");
 		rcs_freepdata(pdp);
 		return (-1);
@@ -1387,6 +1400,7 @@ rcs_parse(RCSFILE *rfp)
 
 	ret = rcs_gettok(rfp);
 	if (ret != RCS_TOK_DESC) {
+		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR, "token `%s' found where RCS desc expected",
 		    RCS_TOKSTR(rfp));
 		rcs_freepdata(pdp);
@@ -1395,6 +1409,7 @@ rcs_parse(RCSFILE *rfp)
 
 	ret = rcs_gettok(rfp);
 	if (ret != RCS_TOK_STRING) {
+		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR, "token `%s' found where RCS desc expected",
 		    RCS_TOKSTR(rfp));
 		rcs_freepdata(pdp);
@@ -1448,6 +1463,7 @@ rcs_parse_admin(RCSFILE *rfp)
 	for (;;) {
 		tok = rcs_gettok(rfp);
 		if (tok == RCS_TOK_ERR) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "parse error in RCS admin section");
 			return (-1);
 		} else if ((tok == RCS_TOK_NUM) || (tok == RCS_TOK_DESC)) {
@@ -1466,6 +1482,7 @@ rcs_parse_admin(RCSFILE *rfp)
 				rk = &(rcs_keys[i]);
 
 		if (hmask & (1 << tok)) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "duplicate RCS key");
 			return (-1);
 		}
@@ -1480,6 +1497,7 @@ rcs_parse_admin(RCSFILE *rfp)
 			if (ntok == RCS_TOK_SCOLON)
 				break;
 			if (ntok != rk->rk_val) {
+				rcs_errno = RCS_ERR_PARSE;
 				cvs_log(LP_ERR,
 				    "invalid value type for RCS key `%s'",
 				    rk->rk_str);
@@ -1521,6 +1539,7 @@ rcs_parse_admin(RCSFILE *rfp)
 			/* now get the expected semi-colon */
 			ntok = rcs_gettok(rfp);
 			if (ntok != RCS_TOK_SCOLON) {
+				rcs_errno = RCS_ERR_PARSE;
 				cvs_log(LP_ERR,
 				    "missing semi-colon after RCS `%s' key",
 				    rk->rk_str);
@@ -1540,6 +1559,7 @@ rcs_parse_admin(RCSFILE *rfp)
 				return (-1);
 			break;
 		default:
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR,
 			    "unexpected token `%s' in RCS admin section",
 			    RCS_TOKSTR(rfp));
@@ -1570,6 +1590,7 @@ rcs_parse_delta(RCSFILE *rfp)
 
 	rdp = (struct rcs_delta *)malloc(sizeof(*rdp));
 	if (rdp == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to allocate RCS delta structure");
 		return (-1);
 	}
@@ -1604,6 +1625,7 @@ rcs_parse_delta(RCSFILE *rfp)
 	for (;;) {
 		tok = rcs_gettok(rfp);
 		if (tok == RCS_TOK_ERR) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "parse error in RCS delta section");
 			rcs_freedelta(rdp);
 			return (-1);
@@ -1619,6 +1641,7 @@ rcs_parse_delta(RCSFILE *rfp)
 				rk = &(rcs_keys[i]);
 
 		if (hmask & (1 << tok)) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "duplicate RCS key");
 			rcs_freedelta(rdp);
 			return (-1);
@@ -1635,6 +1658,7 @@ rcs_parse_delta(RCSFILE *rfp)
 				if (rk->rk_flags & RCS_VOPT)
 					break;
 				else {
+					rcs_errno = RCS_ERR_PARSE;
 					cvs_log(LP_ERR, "missing mandatory "
 					    "value to RCS key `%s'",
 					    rk->rk_str);
@@ -1644,6 +1668,7 @@ rcs_parse_delta(RCSFILE *rfp)
 			}
 
 			if (ntok != rk->rk_val) {
+				rcs_errno = RCS_ERR_PARSE;
 				cvs_log(LP_ERR,
 				    "invalid value type for RCS key `%s'",
 				    rk->rk_str);
@@ -1664,6 +1689,7 @@ rcs_parse_delta(RCSFILE *rfp)
 			/* now get the expected semi-colon */
 			ntok = rcs_gettok(rfp);
 			if (ntok != RCS_TOK_SCOLON) {
+				rcs_errno = RCS_ERR_PARSE;
 				cvs_log(LP_ERR,
 				    "missing semi-colon after RCS `%s' key",
 				    rk->rk_str);
@@ -1679,6 +1705,7 @@ rcs_parse_delta(RCSFILE *rfp)
 					return (-1);
 				}
 				if (datenum->rn_len != 6) {
+					rcs_errno = RCS_ERR_PARSE;
 					cvs_log(LP_ERR,
 					    "RCS date specification has %s "
 					    "fields",
@@ -1715,6 +1742,7 @@ rcs_parse_delta(RCSFILE *rfp)
 			}
 			break;
 		default:
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR,
 			    "unexpected token `%s' in RCS delta",
 			    RCS_TOKSTR(rfp));
@@ -1752,6 +1780,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		return (0);
 
 	if (tok != RCS_TOK_NUM) {
+		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR,
 		    "unexpected token `%s' at start of RCS delta text",
 		    RCS_TOKSTR(rfp));
@@ -1777,6 +1806,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 
 	tok = rcs_gettok(rfp);
 	if (tok != RCS_TOK_LOG) {
+		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR, "unexpected token `%s' where RCS log expected",
 		    RCS_TOKSTR(rfp));
 		return (-1);
@@ -1784,6 +1814,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 
 	tok = rcs_gettok(rfp);
 	if (tok != RCS_TOK_STRING) {
+		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR, "unexpected token `%s' where RCS log expected",
 		    RCS_TOKSTR(rfp));
 		return (-1);
@@ -1796,6 +1827,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 
 	tok = rcs_gettok(rfp);
 	if (tok != RCS_TOK_TEXT) {
+		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR, "unexpected token `%s' where RCS text expected",
 		    RCS_TOKSTR(rfp));
 		return (-1);
@@ -1803,6 +1835,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 
 	tok = rcs_gettok(rfp);
 	if (tok != RCS_TOK_STRING) {
+		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR, "unexpected token `%s' where RCS text expected",
 		    RCS_TOKSTR(rfp));
 		return (-1);
@@ -1832,6 +1865,7 @@ rcs_parse_access(RCSFILE *rfp)
 
 	while ((type = rcs_gettok(rfp)) != RCS_TOK_SCOLON) {
 		if (type != RCS_TOK_ID) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "unexpected token `%s' in access list",
 			    RCS_TOKSTR(rfp));
 			return (-1);
@@ -1862,6 +1896,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 			break;
 
 		if (type != RCS_TOK_ID) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			return (-1);
@@ -1869,6 +1904,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 
 		symp = (struct rcs_sym *)malloc(sizeof(*symp));
 		if (symp == NULL) {
+			rcs_errno = RCS_ERR_ERRNO;
 			cvs_log(LP_ERRNO, "failed to allocate RCS symbol");
 			return (-1);
 		}
@@ -1889,6 +1925,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_COLON) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(symp->rs_num);
@@ -1899,6 +1936,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_NUM) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(symp->rs_num);
@@ -1940,6 +1978,7 @@ rcs_parse_locks(RCSFILE *rfp)
 			break;
 
 		if (type != RCS_TOK_ID) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "unexpected token `%s' in lock list",
 			    RCS_TOKSTR(rfp));
 			return (-1);
@@ -1958,6 +1997,7 @@ rcs_parse_locks(RCSFILE *rfp)
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_COLON) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(lkp->rl_num);
@@ -1967,6 +2007,7 @@ rcs_parse_locks(RCSFILE *rfp)
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_NUM) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(lkp->rl_num);
@@ -1994,6 +2035,7 @@ rcs_parse_locks(RCSFILE *rfp)
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_SCOLON) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR,
 			    "missing semi-colon after `strict' keyword");
 			return (-1);
@@ -2021,6 +2063,7 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
 			break;
 
 		if (type != RCS_TOK_NUM) {
+			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR,
 			    "unexpected token `%s' in list of branches",
 			    RCS_TOKSTR(rfp));
@@ -2029,6 +2072,7 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
 
 		brp = (struct rcs_branch *)malloc(sizeof(*brp));
 		if (brp == NULL) {
+			rcs_errno = RCS_ERR_ERRNO;
 			cvs_log(LP_ERRNO, "failed to allocate RCS branch");
 			return (-1);
 		}
@@ -2336,6 +2380,7 @@ rcs_growbuf(RCSFILE *rf)
 
 	tmp = realloc(pdp->rp_buf, pdp->rp_blen + RCS_BUFEXTSIZE);
 	if (tmp == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to grow RCS parse buffer");
 		return (-1);
 	}
