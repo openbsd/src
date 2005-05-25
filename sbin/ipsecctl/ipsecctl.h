@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.3 2005/05/23 20:25:54 kjell Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.4 2005/05/25 17:10:26 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -81,8 +81,5 @@ struct ipsecctl {
 int	parse_rules(FILE *, struct ipsecctl *);
 int	ipsecctl_add_rule(struct ipsecctl * ipsec, struct ipsec_rule *);
 void	ipsecctl_get_rules(struct ipsecctl *);
-int	pfkey_ipsec_establish(struct ipsec_rule *);
-int	pfkey_ipsec_flush(void);
-int	pfkey_init(void);
 
 #endif				/* _IPSECCTL_H_ */

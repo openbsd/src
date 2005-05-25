@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.2 2005/04/04 22:22:55 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.3 2005/05/25 17:10:26 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -33,8 +33,8 @@
 #include <unistd.h>
 
 #include "ipsecctl.h"
+#include "pfkey.h"
 
-#define PFKEYV2_CHUNK sizeof(u_int64_t)
 #define ROUNDUP(x) (((x) + (PFKEYV2_CHUNK - 1)) & ~(PFKEYV2_CHUNK - 1))
 #define IOV_CNT 20
 
@@ -314,6 +314,225 @@ pfkey_reply(int sd)
 	free(data);
 
 	return 0;
+}
+
+int
+pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
+{
+	struct sadb_ext		*ext;
+	struct sadb_address	*saddr;
+	struct sadb_protocol	*sproto;
+	struct sadb_ident	*sident;
+	struct sockaddr		*sa;
+	int			 len;
+
+	switch (msg->sadb_msg_satype) {
+	case IPPROTO_ESP:
+		rule->proto = IPSEC_ESP;
+		break;
+	case IPPROTO_AH:
+		rule->proto = IPSEC_AH;
+		break;
+	case IPPROTO_IPCOMP:
+	default:
+		return (1);
+	}
+
+	for (ext = (struct sadb_ext *)(msg + 1);
+	    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
+	    msg->sadb_msg_len * PFKEYV2_CHUNK;
+	    ext = (struct sadb_ext *)((u_int8_t *)ext + 
+	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
+
+		switch (ext->sadb_ext_type) {
+		case SADB_EXT_ADDRESS_SRC:
+#if 0
+			saddr = (struct sadb_address *)ext;
+			sa = (struct sockaddr *)(saddr + 1);
+
+			rule->peer = calloc(1, sizeof(struct ipsec_addr));
+			if (rule->peer == NULL)
+				err(1, "malloc");
+
+			switch (sa->sa_family) {
+			case AF_INET:
+				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
+				    &rule->peer->v4, sizeof(struct in_addr));
+				memset(&rule->peer->v4mask, 0xff,
+				    sizeof(u_int32_t));
+				rule->peer->af = AF_INET;
+				break;
+			default:
+				return (1);
+			}
+#endif
+			break;
+
+
+		case SADB_EXT_ADDRESS_DST:
+			saddr = (struct sadb_address *)ext;
+			sa = (struct sockaddr *)(saddr + 1);
+
+			rule->peer = calloc(1, sizeof(struct ipsec_addr));
+			if (rule->peer == NULL)
+				err(1, "malloc");
+
+			switch (sa->sa_family) {
+			case AF_INET:
+				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
+				    &rule->peer->v4, sizeof(struct in_addr));
+				memset(&rule->peer->v4mask, 0xff,
+				    sizeof(u_int32_t));
+				rule->peer->af = AF_INET;
+				break;
+			default:
+				return (1);
+			}
+			break;
+
+		case SADB_EXT_IDENTITY_SRC:
+			sident = (struct sadb_ident *)ext;
+			len = (sident->sadb_ident_len * sizeof(uint64_t)) -
+			    sizeof(struct sadb_ident);
+
+			rule->auth.srcid = calloc(1, len);
+			if (rule->auth.srcid == NULL)
+				err(1, "calloc");
+
+			strlcpy(rule->auth.srcid, (char *)(sident + 1), len);
+			break;
+
+		case SADB_EXT_IDENTITY_DST:
+			sident = (struct sadb_ident *)ext;
+			len = (sident->sadb_ident_len * sizeof(uint64_t)) -
+			    sizeof(struct sadb_ident);
+
+			rule->auth.dstid = calloc(1, len);
+			if (rule->auth.dstid == NULL)
+				err(1, "calloc");
+
+			strlcpy(rule->auth.dstid, (char *)(sident + 1), len);
+			break;
+
+		case SADB_X_EXT_PROTOCOL:
+			/* XXX nothing yet? */
+			break;
+
+		case SADB_X_EXT_FLOW_TYPE:
+			sproto = (struct sadb_protocol *)ext;
+
+			switch (sproto->sadb_protocol_direction) {
+			case IPSP_DIRECTION_IN:
+				rule->direction = IPSEC_IN;
+				break;
+			case IPSP_DIRECTION_OUT:
+				rule->direction = IPSEC_OUT;
+				break;
+			default:
+				return (1);
+			}
+			break;
+
+		case SADB_X_EXT_SRC_FLOW:
+			saddr = (struct sadb_address *)ext;
+			sa = (struct sockaddr *)(saddr + 1);
+
+			if (rule->src == NULL) {
+				rule->src = calloc(1,
+				    sizeof(struct ipsec_addr));
+				if (rule->src == NULL)
+					err(1, "calloc");
+			}
+
+			switch (sa->sa_family) {
+			case AF_INET:
+				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
+				    &rule->src->v4, sizeof(struct in_addr));
+				rule->src->af = AF_INET;
+				break;
+			default:
+				return (1);
+			}
+			break;
+
+		case SADB_X_EXT_DST_FLOW:
+			saddr = (struct sadb_address *)ext;
+			sa = (struct sockaddr *)(saddr + 1);
+
+			if (rule->dst == NULL) {
+				rule->dst = calloc(1,
+				    sizeof(struct ipsec_addr));
+				if (rule->dst == NULL)
+					err(1, "calloc");
+			}
+
+			switch (sa->sa_family) {
+			case AF_INET:
+				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
+				    &rule->dst->v4, sizeof(struct in_addr));
+				rule->dst->af = AF_INET;
+				break;
+
+			default:
+				return (1);
+			}
+			break;
+
+
+		case SADB_X_EXT_SRC_MASK:
+			saddr = (struct sadb_address *)ext;
+			sa = (struct sockaddr *)(saddr + 1);
+
+			if (rule->src == NULL) {
+				rule->src = calloc(1,
+				    sizeof(struct ipsec_addr));
+				if (rule->src == NULL)
+					err(1, "calloc");
+			}
+
+			switch (sa->sa_family) {
+			case AF_INET:
+				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
+				    &rule->src->v4mask.mask,
+				    sizeof(struct in_addr));
+				rule->src->af = AF_INET;
+				break;
+
+			default:
+				return (1);
+			}
+			break;
+
+		case SADB_X_EXT_DST_MASK:
+			saddr = (struct sadb_address *)ext;
+			sa = (struct sockaddr *)(saddr + 1);
+
+			if (rule->dst == NULL) {
+				rule->dst = calloc(1,
+				    sizeof(struct ipsec_addr));
+				if (rule->dst == NULL)
+					err(1, "calloc");
+			}
+
+			switch (sa->sa_family) {
+			case AF_INET:
+				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
+				    &rule->dst->v4mask.mask,
+				    sizeof(struct in_addr));
+				rule->dst->af = AF_INET;
+				break;
+
+			default:
+				return (1);
+			}
+			break;
+		
+		default:
+			return (1);
+		}
+	}
+
+	return (0);
 }
 
 int
