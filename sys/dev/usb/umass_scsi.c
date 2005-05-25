@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.12 2005/05/14 23:36:26 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.13 2005/05/25 21:12:54 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -162,8 +162,7 @@ umass_scsi_setup(struct umass_softc *sc)
 	scbus->sc_link.adapter = &scbus->sc_adapter;
 	scbus->sc_link.adapter_softc = sc;
 	scbus->sc_link.openings = 1;
-	scbus->sc_link.quirks |= PQUIRK_ONLYBIG | PQUIRK_NOMODESENSE |
-		sc->sc_busquirks;
+	scbus->sc_link.quirks |= PQUIRK_ONLYBIG | sc->sc_busquirks;
 
 	return (scbus);
 }
@@ -212,12 +211,6 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 
 	cmd = xs->cmd;
 	cmdlen = xs->cmdlen;
-
-	if (cmd->opcode == MODE_SENSE &&
-	    (sc_link->quirks & SDEV_NOMODESENSE)) {
-		xs->error = XS_TIMEOUT;
-		goto done;
-	}
 
 	dir = DIR_NONE;
 	if (xs->datalen) {
