@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.32 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.33 2005/05/25 20:59:04 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -437,9 +437,9 @@ nge_mii_readreg(sc, frame)
 	/* Check for ack */
 	SIO_CLR(NGE_MEAR_MII_CLK);
 	DELAY(1);
+	ack = CSR_READ_4(sc, NGE_MEAR) & NGE_MEAR_MII_DATA;
 	SIO_SET(NGE_MEAR_MII_CLK);
 	DELAY(1);
-	ack = CSR_READ_4(sc, NGE_MEAR) & NGE_MEAR_MII_DATA;
 
 	/*
 	 * Now try reading data bits. If the ack failed, we still
@@ -1390,14 +1390,11 @@ void
 nge_txeof(sc)
 	struct nge_softc	*sc;
 {
-	struct nge_desc		*cur_tx = NULL;
+	struct nge_desc		*cur_tx;
 	struct ifnet		*ifp;
 	u_int32_t		idx;
 
 	ifp = &sc->arpcom.ac_if;
-
-	/* Clear the timeout timer. */
-	ifp->if_timer = 0;
 
 	/*
 	 * Go through our tx list and free mbufs for those
@@ -1431,17 +1428,17 @@ nge_txeof(sc)
 		if (cur_tx->nge_mbuf != NULL) {
 			m_freem(cur_tx->nge_mbuf);
 			cur_tx->nge_mbuf = NULL;
+			ifp->if_flags &= ~IFF_OACTIVE;
 		}
 
 		sc->nge_cdata.nge_tx_cnt--;
 		NGE_INC(idx, NGE_TX_LIST_CNT);
-		ifp->if_timer = 0;
 	}
 
 	sc->nge_cdata.nge_tx_cons = idx;
 
-	if (cur_tx != NULL)
-		ifp->if_flags &= ~IFF_OACTIVE;
+	if (idx == sc->nge_cdata.nge_tx_prod)
+		ifp->if_timer = 0;
 }
 
 void
@@ -1508,7 +1505,6 @@ nge_tick(xsc)
 			nge_start(ifp);
 	} else {
 		mii_tick(mii);
-		mii_pollstat(mii);
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			sc->nge_link++;
