@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.53 2005/04/04 22:18:47 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.54 2005/05/25 05:47:53 markus Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -299,6 +299,7 @@ struct sadb_x_udpencap {
 #define SADB_X_EALG_RC4       10
 #define SADB_EALG_NULL        11
 #define SADB_X_EALG_AES       12
+#define SADB_X_EALG_AESCTR    13
 #define SADB_X_EALG_SKIPJACK  249
 #define SADB_EALG_MAX         249
 

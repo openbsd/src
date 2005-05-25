@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.103 2005/05/24 03:13:53 ho Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.104 2005/05/25 05:47:53 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -100,7 +100,8 @@ static const struct sadb_alg ealgs[] = {
 	{ SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},
 	{ SADB_X_EALG_CAST, 64, 40, 128},
 	{ SADB_X_EALG_SKIPJACK, 64, 80, 80},
-	{ SADB_X_EALG_AES, 128, 64, 256}
+	{ SADB_X_EALG_AES, 128, 128, 256},
+	{ SADB_X_EALG_AESCTR, 128, 128 + 32, 256 + 32}
 };
 
 static const struct sadb_alg aalgs[] = {
@@ -1958,8 +1959,13 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			if (!strncasecmp(ipsec_def_enc, "aes",
 			    sizeof("aes"))) {
 				sadb_comb->sadb_comb_encrypt = SADB_X_EALG_AES;
-				sadb_comb->sadb_comb_encrypt_minbits = 64;
+				sadb_comb->sadb_comb_encrypt_minbits = 128;
 				sadb_comb->sadb_comb_encrypt_maxbits = 256;
+			} else if (!strncasecmp(ipsec_def_enc, "aesctr",
+			    sizeof("aesctr"))) {
+				sadb_comb->sadb_comb_encrypt = SADB_X_EALG_AESCTR;
+				sadb_comb->sadb_comb_encrypt_minbits = 128+32;
+				sadb_comb->sadb_comb_encrypt_maxbits = 256+32;
 			} else if (!strncasecmp(ipsec_def_enc, "3des",
 			    sizeof("3des"))) {
 				sadb_comb->sadb_comb_encrypt = SADB_EALG_3DESCBC;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.42 2003/08/14 15:18:05 jason Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.43 2005/05/25 05:47:53 markus Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -96,7 +96,8 @@
 #define CRYPTO_SHA2_256_HMAC	18
 #define CRYPTO_SHA2_384_HMAC	19
 #define CRYPTO_SHA2_512_HMAC	20
-#define CRYPTO_ALGORITHM_MAX	20 /* Keep updated - see below */
+#define CRYPTO_AES_CTR		21
+#define CRYPTO_ALGORITHM_MAX	21 /* Keep updated - see below */
 
 #define	CRYPTO_ALGORITHM_ALL	(CRYPTO_ALGORITHM_MAX + 1)
 

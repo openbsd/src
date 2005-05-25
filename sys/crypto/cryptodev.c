@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.62 2004/05/07 14:42:26 millert Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.63 2005/05/25 05:47:53 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -172,6 +172,9 @@ cryptof_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 			break;
 		case CRYPTO_AES_CBC:
 			txform = &enc_xform_rijndael128;
+			break;
+		case CRYPTO_AES_CTR:
+			txform = &enc_xform_aes_ctr;
 			break;
 		case CRYPTO_ARC4:
 			txform = &enc_xform_arc4;

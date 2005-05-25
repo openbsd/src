@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2004/03/14 18:37:52 markus Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/05/25 05:47:53 markus Exp $
 
 SUBDIR=enc
-#SUBDIR+=auth
+SUBDIR+=aesctr
 
 install:
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.23 2005/05/24 02:30:03 ho Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.24 2005/05/25 05:47:53 markus Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -230,6 +230,10 @@ export_sa(void **p, struct tdb *tdb)
 
 		case CRYPTO_AES_CBC:
 			sadb_sa->sadb_sa_encrypt = SADB_X_EALG_AES;
+			break;
+
+		case CRYPTO_AES_CTR:
+			sadb_sa->sadb_sa_encrypt = SADB_X_EALG_AESCTR;
 			break;
 
 		case CRYPTO_CAST_CBC:

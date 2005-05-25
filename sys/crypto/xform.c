@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.28 2004/12/20 20:31:18 hshoexer Exp $	*/
+/*	$OpenBSD: xform.c,v 1.29 2005/05/25 05:47:53 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -67,6 +67,7 @@ int  blf_setkey(u_int8_t **, u_int8_t *, int);
 int  cast5_setkey(u_int8_t **, u_int8_t *, int);
 int  skipjack_setkey(u_int8_t **, u_int8_t *, int);
 int  rijndael128_setkey(u_int8_t **, u_int8_t *, int);
+int  aes_ctr_setkey(u_int8_t **, u_int8_t *, int);
 void des1_encrypt(caddr_t, u_int8_t *);
 void des3_encrypt(caddr_t, u_int8_t *);
 void blf_encrypt(caddr_t, u_int8_t *);
@@ -85,10 +86,14 @@ void blf_zerokey(u_int8_t **);
 void cast5_zerokey(u_int8_t **);
 void skipjack_zerokey(u_int8_t **);
 void rijndael128_zerokey(u_int8_t **);
+void aes_ctr_zerokey(u_int8_t **);
 void null_encrypt(caddr_t, u_int8_t *);
 void null_zerokey(u_int8_t **);
 int  null_setkey(u_int8_t **, u_int8_t *, int);
 void null_decrypt(caddr_t, u_int8_t *);
+
+void aes_ctr_reinit(caddr_t, u_int8_t *);
+void aes_ctr_crypt(caddr_t, u_int8_t *);
 
 int MD5Update_int(void *, u_int8_t *, u_int16_t);
 int SHA1Update_int(void *, u_int8_t *, u_int16_t);
@@ -104,74 +109,92 @@ u_int32_t lzs_dummy(u_int8_t *, u_int32_t, u_int8_t **);
 /* Encryption instances */
 struct enc_xform enc_xform_des = {
 	CRYPTO_DES_CBC, "DES",
-	8, 8, 8,
+	8, 8, 8, 8,
 	des1_encrypt,
 	des1_decrypt,
 	des1_setkey,
 	des1_zerokey,
+	NULL
 };
 
 struct enc_xform enc_xform_3des = {
 	CRYPTO_3DES_CBC, "3DES",
-	8, 24, 24,
+	8, 8, 24, 24,
 	des3_encrypt,
 	des3_decrypt,
 	des3_setkey,
-	des3_zerokey
+	des3_zerokey,
+	NULL
 };
 
 struct enc_xform enc_xform_blf = {
 	CRYPTO_BLF_CBC, "Blowfish",
-	8, 5, 56 /* 448 bits, max key */,
+	8, 8, 5, 56 /* 448 bits, max key */,
 	blf_encrypt,
 	blf_decrypt,
 	blf_setkey,
-	blf_zerokey
+	blf_zerokey,
+	NULL
 };
 
 struct enc_xform enc_xform_cast5 = {
 	CRYPTO_CAST_CBC, "CAST-128",
-	8, 5, 16,
+	8, 8, 5, 16,
 	cast5_encrypt,
 	cast5_decrypt,
 	cast5_setkey,
-	cast5_zerokey
+	cast5_zerokey,
+	NULL
 };
 
 struct enc_xform enc_xform_skipjack = {
 	CRYPTO_SKIPJACK_CBC, "Skipjack",
-	8, 10, 10,
+	8, 8, 10, 10,
 	skipjack_encrypt,
 	skipjack_decrypt,
 	skipjack_setkey,
-	skipjack_zerokey
+	skipjack_zerokey,
+	NULL
 };
 
 struct enc_xform enc_xform_rijndael128 = {
 	CRYPTO_RIJNDAEL128_CBC, "Rijndael-128/AES",
-	16, 16, 32,
+	16, 16, 16, 32,
 	rijndael128_encrypt,
 	rijndael128_decrypt,
 	rijndael128_setkey,
 	rijndael128_zerokey,
+	NULL
+};
+
+struct enc_xform enc_xform_aes_ctr = {
+	CRYPTO_AES_CTR, "AES-CTR",
+	16, 8, 16+4, 32+4,
+	aes_ctr_crypt,
+	NULL,
+	aes_ctr_setkey,
+	aes_ctr_zerokey,
+	aes_ctr_reinit
 };
 
 struct enc_xform enc_xform_arc4 = {
 	CRYPTO_ARC4, "ARC4",
-	1, 1, 32,
+	1, 1, 1, 32,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
+	NULL
 };
 
 struct enc_xform enc_xform_null = {
 	CRYPTO_NULL, "NULL",
-	8, 24, 24,
+	1, 0, 0, 256,
 	null_encrypt,
 	null_decrypt,
 	null_setkey,
 	null_zerokey,
+	NULL
 };
 
 /* Authentication instances */
@@ -482,6 +505,76 @@ void
 rijndael128_zerokey(u_int8_t **sched)
 {
 	bzero(*sched, sizeof(rijndael_ctx));
+	FREE(*sched, M_CRYPTO_DATA);
+	*sched = NULL;
+}
+
+#define AESCTR_NONCESIZE	4
+#define AESCTR_IVSIZE		8
+#define AESCTR_BLOCKSIZE	16
+
+struct aes_ctr_ctx {
+	u_int32_t	ac_ek[4*(MAXNR + 1)];
+	u_int8_t	ac_block[AESCTR_BLOCKSIZE];
+	int		ac_nr;
+};
+
+void
+aes_ctr_reinit(caddr_t key, u_int8_t *iv)
+{
+	struct aes_ctr_ctx *ctx;
+
+	ctx = (struct aes_ctr_ctx *)key;
+	bcopy(iv, ctx->ac_block + AESCTR_NONCESIZE, AESCTR_IVSIZE);
+
+	/* reset counter */
+	bzero(ctx->ac_block + AESCTR_NONCESIZE + AESCTR_IVSIZE, 4);
+}
+
+void
+aes_ctr_crypt(caddr_t key, u_int8_t *data)
+{
+	struct aes_ctr_ctx *ctx;
+	u_int8_t keystream[AESCTR_BLOCKSIZE];
+	int i;
+
+	ctx = (struct aes_ctr_ctx *)key;
+	/* increment counter */
+	for (i = AESCTR_BLOCKSIZE - 1;
+	     i >= AESCTR_NONCESIZE + AESCTR_IVSIZE; i--)
+		if (++ctx->ac_block[i])   /* continue on overflow */
+			break;
+	rijndaelEncrypt(ctx->ac_ek, ctx->ac_nr, ctx->ac_block, keystream);
+	for (i = 0; i < AESCTR_BLOCKSIZE; i++)
+		data[i] ^= keystream[i];
+}
+
+int
+aes_ctr_setkey(u_int8_t **sched, u_int8_t *key, int len)
+{
+	struct aes_ctr_ctx *ctx;
+
+	if (len < AESCTR_NONCESIZE)
+		return -1;
+
+	MALLOC(*sched, u_int8_t *, sizeof(struct aes_ctr_ctx), M_CRYPTO_DATA,
+	    M_WAITOK);
+	bzero(*sched, sizeof(struct aes_ctr_ctx));
+	ctx = (struct aes_ctr_ctx *)*sched;
+	ctx->ac_nr = rijndaelKeySetupEnc(ctx->ac_ek, (u_char *)key,
+	    (len - AESCTR_NONCESIZE) * 8);
+	if (ctx->ac_nr == 0) {
+		aes_ctr_zerokey(sched);
+		return -1;
+	}
+	bcopy(key + len - AESCTR_NONCESIZE, ctx->ac_block, AESCTR_NONCESIZE);
+	return 0;
+}
+
+void
+aes_ctr_zerokey(u_int8_t **sched)
+{
+	bzero(*sched, sizeof(struct aes_ctr_ctx));
 	FREE(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
