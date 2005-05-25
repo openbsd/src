@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.85 2005/05/24 19:37:08 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.86 2005/05/25 19:07:13 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1599,6 +1599,7 @@ ENTRY(idle)
 	movl	$IPL_NONE,CPL		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 
+	cli
 	cmpl	$0,_C_LABEL(whichqs)
 	jnz	_C_LABEL(idle_exit)
 
@@ -1613,11 +1614,13 @@ ENTRY(idle_loop)
 	sti
 	hlt
 #endif
+	cli
 	cmpl	$0,_C_LABEL(whichqs)
 	jz	_C_LABEL(idle_loop)
 
 ENTRY(idle_exit)
 	movl	$IPL_HIGH,CPL		# splhigh
+	sti
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_lock_idle)
 #endif
