@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.15 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.16 2005/05/25 03:58:12 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -546,7 +546,7 @@ cvs_req_gzipstream(int reqid, char *line)
 static int
 cvs_req_command(int reqid, char *line)
 {
-	int ret;
+	int ret = 0;
 	struct cvs_cmd *cmdp;
 
 	cmdp = cvs_findcmdbyreq(reqid);
@@ -555,8 +555,7 @@ cvs_req_command(int reqid, char *line)
 		return (-1);
 	}
 
-	cvs_startcmd(cmdp, cvs_req_nargs, cvs_req_args);
-
+	ret = cvs_startcmd(cmdp, cvs_req_nargs, cvs_req_args);
 	if (ret == 0)
 		ret = cvs_sendresp(CVS_RESP_OK, NULL);
 
