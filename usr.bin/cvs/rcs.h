@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.25 2005/05/25 07:15:16 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.26 2005/05/25 10:23:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,6 +53,7 @@
 #define RCS_STATE_DEAD   "dead"
 
 /* lock types */
+#define RCS_LOCK_INVAL  (-1)
 #define RCS_LOCK_LOOSE    0
 #define RCS_LOCK_STRICT   1
 

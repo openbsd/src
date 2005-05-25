@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.15 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: admin.c,v 1.16 2005/05/25 10:23:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "rcs.h"
 #include "cvs.h"
 #include "log.h"
 #include "proto.h"
@@ -50,7 +51,8 @@
 
 static int cvs_admin_init     (struct cvs_cmd *, int, char **, int *);
 static int cvs_admin_pre_exec (struct cvsroot *);
-static int cvs_admin_file     (CVSFILE *, void *);
+static int cvs_admin_remote   (CVSFILE *, void *);
+static int cvs_admin_local    (CVSFILE *, void *);
 
 struct cvs_cmd cvs_cmd_admin = {
 	CVS_OP_ADMIN, CVS_REQ_ADMIN, "admin",
@@ -62,8 +64,8 @@ struct cvs_cmd cvs_cmd_admin = {
 	CF_SORT | CF_IGNORE | CF_RECURSE,
 	cvs_admin_init,
 	cvs_admin_pre_exec,
-	cvs_admin_file,
-	cvs_admin_file,
+	cvs_admin_remote,
+	cvs_admin_local,
 	NULL,
 	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
@@ -72,7 +74,11 @@ struct cvs_cmd cvs_cmd_admin = {
 static char *q, *Ntag, *ntag, *comment, *replace_msg;
 static char *alist, *subst, *lockrev_arg, *unlockrev_arg;
 static char *state, *userfile, *branch_arg, *elist, *range;
-static int runflags, kflag, lockrev, strictlock;
+static int runflags, kflag, lockrev, lkmode;
+
+/* flag as invalid */
+static int kflag = RCS_KWEXP_ERR;
+static int lkmode = RCS_LOCK_INVAL;
 
 static int
 cvs_admin_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
@@ -80,7 +86,7 @@ cvs_admin_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	int ch;
 	RCSNUM *rcs;
 
-	runflags = strictlock = lockrev = 0;
+	runflags = lockrev = 0;
 	Ntag = ntag = comment = replace_msg = NULL;
 	state = alist = subst = elist = lockrev_arg = NULL;
 	range = userfile = branch_arg = unlockrev_arg = NULL;
@@ -126,7 +132,7 @@ cvs_admin_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 				lockrev_arg = optarg;
 			break;
 		case 'L':
-			strictlock |= LOCK_SET;
+			lkmode = RCS_LOCK_STRICT;
 			break;
 		case 'm':
 			replace_msg = optarg;
@@ -154,7 +160,11 @@ cvs_admin_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 				unlockrev_arg = optarg;
 			break;
 		case 'U':
-			strictlock |= LOCK_REMOVE;
+			if (lkmode != RCS_LOCK_INVAL) {
+				cvs_log(LP_ERR, "-L and -U are incompatible");
+				return (CVS_EX_USAGE);
+			}
+			lkmode = RCS_LOCK_LOOSE;
 			break;
 		default:
 			return (CVS_EX_USAGE);
@@ -163,12 +173,6 @@ cvs_admin_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 
 	argc -= optind;
 	argv += optind;
-
-	/* do some sanity checking on the arguments */
-	if ((strictlock & LOCK_SET) && (strictlock & LOCK_REMOVE)) {
-		cvs_log(LP_ERR, "-L and -U are incompatible");
-		return (CVS_EX_USAGE);
-	}
 
 	if (lockrev_arg != NULL) {
 		if ((rcs = rcsnum_parse(lockrev_arg)) == NULL) {
@@ -210,6 +214,9 @@ cvs_admin_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_admin_pre_exec(struct cvsroot *root)
 {
+	if (root->cr_method == CVS_METHOD_LOCAL)
+		return (0);
+
 	if ((alist != NULL) && ((cvs_sendarg(root, "-a", 0) < 0) || 
 	    (cvs_sendarg(root, alist, 0) < 0)))
 		return (CVS_EX_PROTO);
@@ -255,8 +262,9 @@ cvs_admin_pre_exec(struct cvsroot *root)
 			return (CVS_EX_PROTO);
 	}
 
-	if ((strictlock & LOCK_SET) &&
-	    (cvs_sendarg(root, "-L", 0) < 0))
+	if ((lkmode == RCS_LOCK_STRICT) && (cvs_sendarg(root, "-L", 0) < 0))
+		return (CVS_EX_PROTO);
+	else if ((lkmode == RCS_LOCK_LOOSE) && (cvs_sendarg(root, "-U", 0) < 0))
 		return (CVS_EX_PROTO);
 
 	if ((replace_msg != NULL) && ((cvs_sendarg(root, "-m", 0) < 0)
@@ -287,94 +295,98 @@ cvs_admin_pre_exec(struct cvsroot *root)
 			return (CVS_EX_PROTO);
 	}
 
-	if ((strictlock & LOCK_REMOVE) &&
-	    (cvs_sendarg(root, "-U", 0) < 0))
-		return (CVS_EX_PROTO);
-
 	return (0);
 }
 
 /*
- * cvs_admin_file()
+ * cvs_admin_remote()
  *
  * Perform admin commands on each file.
  */
 static int
-cvs_admin_file(CVSFILE *cfp, void *arg)
+cvs_admin_remote(CVSFILE *cf, void *arg)
 {
-	int ret, l;
-	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
-	RCSFILE *rf;
+	int ret;
+	char *repo, fpath[MAXPATHLEN];
 	struct cvsroot *root;
 
 	ret = 0;
-	rf = NULL;
-	root = CVS_DIR_ROOT(cfp);
-	repo = CVS_DIR_REPO(cfp);
+	root = CVS_DIR_ROOT(cf);
+	repo = CVS_DIR_REPO(cf);
 
-	if (cfp->cf_type == DT_DIR) {
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cfp->cf_cvstat == CVS_FST_UNKNOWN)
-				ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-				    CVS_FILE_NAME(cfp));
-			else
-				ret = cvs_senddir(root, cfp);
-
-			if (ret == -1)
-				ret = CVS_EX_PROTO;
-		}
+	if (cf->cf_type == DT_DIR) {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    cf->cf_name);
+		else
+			ret = cvs_senddir(root, cf);
+		if (ret == -1)
+			ret = CVS_EX_PROTO;
 
 		return (ret);
 	}
 
-	cvs_file_getpath(cfp, fpath, sizeof(fpath));
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_sendentry(root, cfp) < 0) {
-			return (CVS_EX_PROTO);
-		}
+	if (cvs_sendentry(root, cf) < 0)
+		return (CVS_EX_PROTO);
 
-		switch (cfp->cf_cvstat) {
-		case CVS_FST_UNKNOWN:
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cfp));
-			break;
-		case CVS_FST_UPTODATE:
-			ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
-			    CVS_FILE_NAME(cfp));
-			break;
-		case CVS_FST_MODIFIED:
-			ret = cvs_sendreq(root, CVS_REQ_MODIFIED,
-			    CVS_FILE_NAME(cfp));
-			if (ret == 0)
-				ret = cvs_sendfile(root, fpath);
-		default:
-			break;
-		}
-
-		if (ret == -1)
-			ret = CVS_EX_PROTO;
-	} else {
-		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
-			cvs_log(LP_WARN, "I know nothing about %s", fpath);
-			return (0);
-		}
-
-		l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-		    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
-		if (l == -1 || l >= (int)sizeof(rcspath)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", rcspath);
-			return (CVS_EX_DATA);
-		}
-
-		rf = rcs_open(rcspath, RCS_READ);
-		if (rf == NULL) {
-			return (CVS_EX_DATA);
-		}
-
-		rcs_close(rf);
+	switch (cf->cf_cvstat) {
+	case CVS_FST_UNKNOWN:
+		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		break;
+	case CVS_FST_UPTODATE:
+		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+		break;
+	case CVS_FST_MODIFIED:
+		ret = cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name);
+		if (ret == 0)
+			ret = cvs_sendfile(root, fpath);
+	default:
+		break;
 	}
 
 	return (ret);
+}
+
+/*
+ * cvs_admin_local()
+ *
+ * Perform administrative operations on a local RCS file.
+ */
+static int
+cvs_admin_local(CVSFILE *cf, void *arg)
+{
+	int ret, len;
+	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	RCSFILE *rf;
+	struct cvsroot *root;
+
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+		cvs_log(LP_WARN, "I know nothing about %s", fpath);
+		return (0);
+	}
+
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+	    root->cr_dir, repo, cf->cf_name, RCS_FILE_EXT);
+	if (len == -1 || len >= (int)sizeof(rcspath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rcspath);
+		return (-1);
+	}
+
+	rf = rcs_open(rcspath, RCS_RDWR);
+	if (rf == NULL)
+		return (CVS_EX_DATA);
+
+	if (!RCS_KWEXP_INVAL(kflag))
+		ret = rcs_kwexp_set(rf, kflag);
+	if (lkmode != RCS_LOCK_INVAL)
+		ret = rcs_lock_setmode(rf, lkmode);
+
+	rcs_close(rf);
+
+	return (0);
 }
