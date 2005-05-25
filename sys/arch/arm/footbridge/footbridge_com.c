@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_com.c,v 1.4 2004/08/17 19:40:45 drahn Exp $	*/
+/*	$OpenBSD: footbridge_com.c,v 1.5 2005/05/25 07:43:46 miod Exp $	*/
 /*	$NetBSD: footbridge_com.c,v 1.13 2003/03/23 14:12:25 chris Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ struct fcom_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih;
-	struct timeout		sc_softintr_ch;
+	void			*sc_si;
 	int			sc_rx_irq;
 	int			sc_tx_irq;
 	int			sc_hwflags;
@@ -103,12 +103,7 @@ static void fcom_softintr (void *);
 static int fcom_rxintr (void *);
 /*static int fcom_txintr (void *);*/
 
-/*struct consdev;*/
-/*void	fcomcnprobe	(struct consdev *);
-void	fcomcninit	(struct consdev *);*/
-int	fcomcngetc	(dev_t);
-void	fcomcnputc	(dev_t, int);
-void	fcomcnpollc	(dev_t, int);
+cons_decl(fcom);
 
 struct cfattach fcom_ca = {
 	sizeof (struct fcom_softc), fcom_probe, fcom_attach
@@ -197,7 +192,9 @@ fcom_attach(parent, self, aux)
 	/* Set up the softc */
 	sc->sc_iot = fba->fba_fca.fca_iot;
 	sc->sc_ioh = fba->fba_fca.fca_ioh;
-	timeout_set(&sc->sc_softintr_ch, fcom_softintr, sc);
+	sc->sc_si = softintr_establish(IPL_TTY, fcom_softintr, sc);
+	if (sc->sc_si == NULL)
+		panic(": can't establish soft interrupt");
 	sc->sc_rx_irq = fba->fba_fca.fca_rx_irq;
 	sc->sc_tx_irq = fba->fba_fca.fca_tx_irq;
 	sc->sc_hwflags = 0;
@@ -568,8 +565,6 @@ fcomparam(tp, t)
 	return (0);
 }
 
-static int softint_scheduled = 0;
-
 static void
 fcom_softintr(arg)
 	void *arg;
@@ -591,7 +586,6 @@ fcom_softintr(arg)
 
 	for (loop = 0; loop < len; ++loop)
 		(*linesw[tp->t_line].l_rint)(ptr[loop], tp);
-	softint_scheduled = 0;
 }
 
 #if 0
@@ -616,6 +610,7 @@ fcom_rxintr(arg)
 	struct tty *tp = sc->sc_tty;
 	int status;
 	int byte;
+	int softint_scheduled = 0;
 
 	do {
 		status = bus_space_read_4(iot, ioh, UART_FLAGS);
@@ -635,7 +630,7 @@ fcom_rxintr(arg)
 				sc->sc_rxbuf[sc->sc_rxpos++] = byte;
 				if (!softint_scheduled) {
 					softint_scheduled = 1;
-					timeout_add(&sc->sc_softintr_ch, 1);
+					softintr_schedule(sc->sc_si);
 				}
 			}
 	} while (1);
