@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.5 2005/01/03 15:18:10 frantzen Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.6 2005/05/25 22:28:38 frantzen Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -137,7 +137,7 @@ struct pf_rule_field {
      */
     PF_RULE_FIELD(af,			NOMERGE),
     PF_RULE_FIELD(ifnot,		NOMERGE),
-    PF_RULE_FIELD(ifname,		NOMERGE),
+    PF_RULE_FIELD(ifname,		NOMERGE),	/* hack for IF groups */
     PF_RULE_FIELD(match_tag_not,	NOMERGE),
     PF_RULE_FIELD(match_tagname,	NOMERGE),
     PF_RULE_FIELD(os_fingerprint,	NOMERGE),
@@ -198,6 +198,7 @@ void	comparable_rule(struct pf_rule *, const struct pf_rule *, int);
 int	construct_superblocks(struct pfctl *, struct pf_opt_queue *,
 	    struct superblocks *);
 void	exclude_supersets(struct pf_rule *, struct pf_rule *);
+int	interface_group(const char *);
 int	load_feedback_profile(struct pfctl *, struct superblocks *);
 int	optimize_superblock(struct pfctl *, struct superblock *);
 int	pf_opt_create_table(struct pfctl *, struct pf_opt_tbl *);
@@ -1372,6 +1373,27 @@ superblock_inclusive(struct superblock *block, struct pf_opt_rule *por)
 	    (por->por_rule.rule_flag & PFRULE_RULESRCTRACK))
 		return (0);
 
+	/*
+	 * Have to handle interface groups seperately.  Consider the following
+	 * rules:
+	 *	block on EXTIFS to any port 22
+	 *	pass  on em0 to any port 22
+	 * (where EXTIFS is an arbitrary interface group)
+	 * The optimizer may decide to re-order the pass rule in front of the
+	 * block rule.  But what if EXTIFS includes em0???  Such a reordering
+	 * would change the meaning of the ruleset.
+	 * We can't just lookup the EXTIFS group and check if em0 is a member
+	 * because the user is allowed to add interfaces to a group during
+	 * runtime.
+	 * Ergo interface groups become a defacto superblock break :-(
+	 */
+	if (interface_group(por->por_rule.ifname) ||
+	    interface_group(TAILQ_FIRST(&block->sb_rules)->por_rule.ifname)) {
+		if (strcasecmp(por->por_rule.ifname,
+		    TAILQ_FIRST(&block->sb_rules)->por_rule.ifname) != 0)
+			return (0);
+	}
+
 	comparable_rule(&a, &TAILQ_FIRST(&block->sb_rules)->por_rule, NOMERGE);
 	comparable_rule(&b, &por->por_rule, NOMERGE);
 	if (strcmp(TAILQ_FIRST(&block->sb_rules)->por_anchor,
@@ -1415,6 +1437,24 @@ superblock_inclusive(struct superblock *block, struct pf_opt_rule *por)
 #endif /* OPT_DEBUG */
 
 	return (0);
+}
+
+
+/*
+ * Figure out if an interface name is an actual interface or actually a
+ * group of interfaces.
+ */
+int
+interface_group(const char *ifname)
+{
+	if (ifname == NULL || !ifname[0])
+		return (0);
+
+	/* Real interfaces must end in a number, interface groups do not */
+	if (isdigit(ifname[strlen(ifname) - 1]))
+		return (0);
+	else
+		return (1);
 }
 
 
