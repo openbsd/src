@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.52 2005/02/16 22:26:39 todd Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.53 2005/05/25 17:59:23 joris Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -294,6 +294,7 @@ int ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
 				  char *);
 void ac97_restore_shadow(struct ac97_codec_if *self);
 
+void ac97_ad1886_init(struct ac97_softc *);
 void ac97_ad198x_init(struct ac97_softc *);
 void ac97_alc655_init(struct ac97_softc *);
 void ac97_cx20468_init(struct ac97_softc *);
@@ -319,7 +320,7 @@ const struct ac97_codecid {
 	{ 0x40, 0xff, 0, 0,	"AD1881" },
 	{ 0x48, 0xff, 0, 0,	"AD1881A" },
 	{ 0x60, 0xff, 0, 0,	"AD1885" },
-	{ 0x61, 0xff, 0, 0,	"AD1886" },
+	{ 0x61, 0xff, 0, 0,	"AD1886",	ac97_ad1886_init },
 	{ 0x63, 0xff, 0, 0,	"AD1886A" },
 	{ 0x68, 0xff, 0, 0,	"AD1888",	ac97_ad198x_init },
 	{ 0x70, 0xff, 0, 0,	"AD1981" },
@@ -1104,6 +1105,14 @@ ac97_set_rate(codec_if, p, mode)
  * Codec-dependent initialization
  */
 
+#define AC97_AD1886_JACK_SENSE	0x72
+
+void
+ac97_ad1886_init(struct ac97_softc *as)
+{
+	ac97_write(as, AC97_AD1886_JACK_SENSE, 0x0010);
+}
+	
 void
 ac97_ad198x_init(struct ac97_softc *as)
 {
