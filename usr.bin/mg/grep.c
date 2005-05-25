@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.13 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: grep.c,v 1.14 2005/05/25 20:15:18 jason Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -107,6 +107,8 @@ compile(int f, int n)
 
 	(void)strlcpy(prompt, compile_last_command, sizeof(prompt));
 	if ((bufp = eread("Compile command: ", prompt, NFILEN, EFDEF|EFNEW|EFCR)) == NULL)
+		return (ABORT);
+	if (savebuffers(f, n) == ABORT)
 		return (ABORT);
 	(void)strlcpy(compile_last_command, bufp, sizeof(compile_last_command));
 
