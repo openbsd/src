@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.1 2005/01/28 14:05:40 claudio Exp $ */
+/*	$OpenBSD: control.h,v 1.2 2005/05/25 13:41:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #ifndef _CONTROL_H_
-#define	_CONTORL_H_
+#define	_CONTROL_H_
 
 #include <sys/queue.h>
 #include <sys/time.h>
