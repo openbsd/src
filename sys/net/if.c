@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.118 2005/05/24 06:48:49 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.119 2005/05/25 06:50:05 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1631,6 +1631,10 @@ if_addgroup(struct ifnet *ifp, char *groupname)
 	TAILQ_INSERT_TAIL(&ifg->ifg_members, ifgm, ifgm_next);
 	TAILQ_INSERT_TAIL(&ifp->if_groups, ifgl, ifgl_next);
 
+#if NPF > 0
+	pfi_group_change(groupname);
+#endif
+
 	return (0);
 }
 
@@ -1669,6 +1673,10 @@ if_delgroup(struct ifnet *ifp, char *groupname)
 	}
 
 	free(ifgl, M_TEMP);
+
+#if NPF > 0
+	pfi_group_change(groupname);
+#endif
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.31 2005/05/24 04:17:19 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.32 2005/05/25 06:50:05 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -279,6 +279,24 @@ pfi_detach_ifgroup(struct ifg_group *ifg)
 	splx(s);
 }
 
+void
+pfi_group_change(char *group)
+{
+	struct pfi_kif		*kif;
+	struct pfi_dynaddr	*dyn;
+	int			 s;
+
+	s = splsoftnet();
+	pfi_update++;
+	if ((kif = pfi_kif_get(group)) == NULL)
+		panic("pfi_kif_get failed");
+
+	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
+		pfi_dynaddr_update(dyn);
+
+	splx(s);
+}
+
 int
 pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 {
@@ -430,10 +448,10 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 
 	if (kif->pfik_ifp != NULL)
 		pfi_instance_add(kif->pfik_ifp, net, flags);
-	else if (kif->pfik_group != NULL) {
+	else if (kif->pfik_group != NULL)
 		TAILQ_FOREACH(ifgm, &kif->pfik_group->ifg_members, ifgm_next)
 			pfi_instance_add(ifgm->ifgm_ifp, net, flags);
-	} else
+	else
 		RB_FOREACH(p, pfi_ifhead, &pfi_ifs)
 			if (p->pfik_ifp != NULL)
 				pfi_instance_add(p->pfik_ifp, net, flags);
