@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.51 2005/05/25 07:15:16 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.52 2005/05/25 08:00:03 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,9 +28,11 @@
 #include <sys/queue.h>
 #include <sys/stat.h>
 
+#include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -168,8 +170,8 @@ static const struct rcs_comment {
 	{ "man",  ".\\\" " },	/* man-macros	t/nroff	 */
 	{ "p",    " * "    },	/* pascal	 */
 	{ "pas",  " * "    },
-	{ "pl",   "# "     },	/* perl	(conflict with Prolog) */
-	{ "pm",   "# "     },	/* perl	module */
+	{ "pl",   "# "     },	/* Perl	(conflict with Prolog) */
+	{ "pm",   "# "     },	/* Perl	module */
 	{ "ps",   "% "     },	/* postscript */
 	{ "psw",  "% "     },	/* postscript wrap */
 	{ "pswm", "% "     },	/* postscript wrap */
@@ -551,6 +553,10 @@ rcs_head_set(RCSFILE *file, const RCSNUM *rev)
 	struct rcs_delta *rd;
 
 	if ((rd = rcs_findrev(file, rev)) == NULL)
+		return (-1);
+
+	if ((file->rf_head == NULL) &&
+	    ((file->rf_head = rcsnum_alloc()) == NULL))
 		return (-1);
 
 	if (rcsnum_cpy(rev, file->rf_head, 0) < 0)
@@ -1274,6 +1280,100 @@ rcs_getrevbydate(RCSFILE *rfp, struct tm *date)
 }
 
 /*
+ * rcs_rev_add()
+ *
+ * Add a revision to the RCS file <rf>.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg)
+{
+	time_t now;
+	struct passwd *pw;
+	struct rcs_delta *rdp;
+
+	if (rev == RCS_HEAD_REV) {
+	} else if ((rdp = rcs_findrev(rf, rev)) != NULL) {
+		rcs_errno = RCS_ERR_DUPENT;
+		return (-1);
+	}
+
+	if ((pw = getpwuid(getuid())) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
+		return (-1);
+	}
+
+	if ((rdp = (struct rcs_delta *)malloc(sizeof(*rdp))) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
+		return (-1);
+	}
+	memset(rdp, 0, sizeof(*rdp));
+
+	TAILQ_INIT(&(rdp->rd_branches));
+	TAILQ_INIT(&(rdp->rd_snodes));
+
+	if ((rdp->rd_num = rcsnum_alloc()) == NULL) {
+		rcs_freedelta(rdp);
+		return (-1);
+	}
+	rcsnum_cpy(rev, rdp->rd_num, 0);
+
+	if ((rdp->rd_author = cvs_strdup(pw->pw_name)) == NULL) {
+		rcs_freedelta(rdp);
+		return (-1);
+	}
+
+	if ((rdp->rd_state = cvs_strdup(RCS_STATE_EXP)) == NULL) {
+		rcs_freedelta(rdp);
+		return (-1);
+	}
+
+	if ((rdp->rd_log = cvs_strdup(msg)) == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
+		rcs_freedelta(rdp);
+		return (-1);
+	}
+
+	time(&now);
+	gmtime_r(&now, &(rdp->rd_date));
+
+	TAILQ_INSERT_HEAD(&(rf->rf_delta), rdp, rd_list);
+	rf->rf_ndelta++;
+
+	return (0);
+}
+
+/*
+ * rcs_rev_remove()
+ *
+ * Remove the revision whose number is <rev> from the RCS file <rf>.
+ */
+int
+rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
+{
+	int ret;
+	struct rcs_delta *rdp;
+
+	ret = 0;
+	if (rev == RCS_HEAD_REV)
+		rev = rf->rf_head;
+
+	/* do we actually have that revision? */
+	if ((rdp = rcs_findrev(rf, rev)) == NULL) {
+		rcs_errno = RCS_ERR_NOENT;
+		ret = -1;
+	} else {
+		/* XXX assumes it's not a sub node */
+		TAILQ_REMOVE(&(rf->rf_delta), rdp, rd_list);
+		rf->rf_ndelta--;
+		rf->rf_flags &= ~RCS_SYNCED;
+	}
+
+	return (ret);
+
+}
+
+/*
  * rcs_findrev()
  *
  * Find a specific revision's delta entry in the tree of the RCS file <rfp>.
@@ -1529,9 +1629,6 @@ rcs_parse(RCSFILE *rfp)
 		}
 	}
 
-	cvs_log(LP_DEBUG, "RCS file `%s' parsed OK (%u lines)", rfp->rf_path,
-	    pdp->rp_lines);
-
 	rcs_freepdata(pdp);
 
 	rfp->rf_pdata = NULL;
@@ -1704,9 +1801,11 @@ rcs_parse_delta(RCSFILE *rfp)
 	}
 
 	TAILQ_INIT(&(rdp->rd_branches));
+	TAILQ_INIT(&(rdp->rd_snodes));
 
 	tok = rcs_gettok(rfp);
 	if (tok != RCS_TOK_NUM) {
+		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR, "unexpected token `%s' at start of delta",
 		    RCS_TOKSTR(rfp));
 		rcs_freedelta(rdp);
@@ -2500,6 +2599,9 @@ rcs_strprint(const u_char *str, size_t slen, FILE *stream)
 {
 	const u_char *ap, *ep, *sp;
 	size_t ret;
+
+	if (slen == 0)
+		return (0);
 
 	ep = str + slen - 1;
 
