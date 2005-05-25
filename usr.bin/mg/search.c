@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.13 2005/05/23 20:39:44 jason Exp $	*/
+/*	$OpenBSD: search.c,v 1.14 2005/05/25 23:04:39 cloder Exp $	*/
 
 /*
  *		Search commands.
@@ -220,8 +220,18 @@ isearch(int dir)
 				is_cpush(SRCH_FORW);
 				success = TRUE;
 			}
-			if (success == FALSE && dir == SRCH_FORW)
+			if (success == FALSE && dir == SRCH_FORW) {
+				/* wrap the search to beginning */
+				clp = lforw(curbp->b_linep);
+				curwp->w_dotp = clp;
+				curwp->w_doto = 0;
+				if (is_find(dir) != FALSE) {
+					is_cpush(SRCH_MARK);
+					success = TRUE;
+				}
 				break;
+			}
+
 			is_lpush();
 			pptr = strlen(pat);
 			(void)forwchar(FFRAND, 1);
@@ -241,8 +251,18 @@ isearch(int dir)
 				is_cpush(SRCH_BACK);
 				success = TRUE;
 			}
-			if (success == FALSE && dir == SRCH_BACK)
+			if (success == FALSE && dir == SRCH_BACK) {
+				/* wrap the search to end */
+				clp = lback(curbp->b_linep);
+				curwp->w_dotp = clp;
+				curwp->w_doto =
+				    llength(curwp->w_dotp);
+				if (is_find(dir) != FALSE) {
+					is_cpush(SRCH_MARK);
+					success = TRUE;
+				}
 				break;
+			}
 			is_lpush();
 			pptr = strlen(pat);
 			(void)backchar(FFRAND, 1);
