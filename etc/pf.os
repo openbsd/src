@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.18 2005/05/22 02:37:11 frantzen Exp $
+# $OpenBSD: pf.os,v 1.19 2005/05/25 08:15:12 david Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -603,7 +603,7 @@ S1:255:1:60:M1460,S,T,N,W0:		LookSmart:ZyBorg::LookSmart ZyBorg
 
 65535:255:0:48:M*,N,N,S:		Redline:::Redline T|X 2200
 
-32696:128:0:40:M1460:                   Spirent:Avalanche::Spirent Web Avalanche HTTP benchmarking engine
+32696:128:0:40:M1460:			Spirent:Avalanche::Spirent Web Avalanche HTTP benchmarking engine
 
 # ----------- Embedded systems --------------
 
