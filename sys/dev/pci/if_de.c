@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.69 2005/05/25 07:48:30 martin Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.70 2005/05/25 22:14:16 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -105,6 +105,10 @@
 #endif
 
 #if 0
+#define TULIP_PERFSTATS
+#endif
+
+#if 0
 #define	TULIP_USE_SOFTINTR
 #endif
 
@@ -146,9 +150,14 @@ tulip_timeout_callback(
     tulip_softc_t * const sc = arg;
     tulip_spl_t s = TULIP_RAISESPL();
 
+    TULIP_PERFSTART(timeout)
+
     sc->tulip_flags &= ~TULIP_TIMEOUTPENDING;
     sc->tulip_probe_timeout -= 1000 / TULIP_HZ;
     (sc->tulip_boardsw->bd_media_poll)(sc, TULIP_MEDIAPOLL_TIMER);
+    TULIP_RESTORESPL(s);
+
+    TULIP_PERFEND(timeout);
     TULIP_RESTORESPL(s);
 }
 
@@ -2380,6 +2389,45 @@ tulip_identify_asante_nic(
     }
 }
 
+static void
+tulip_identify_compex_nic(
+    tulip_softc_t * const sc)
+{
+    strlcpy(sc->tulip_boardid, "COMPEX ", sizeof(sc->tulip_boardid));
+    if (sc->tulip_chipid == TULIP_21140A) {
+	int root_unit;
+	tulip_softc_t *root_sc = NULL;
+
+	strlcat(sc->tulip_boardid, "400TX/PCI ", sizeof(sc->tulip_boardid));
+	/*
+	 * All 4 chips on these boards share an interrupt.  This code
+	 * copied from tulip_read_macaddr.
+	 */
+	sc->tulip_features |= TULIP_HAVE_SHAREDINTR;
+	for (root_unit = sc->tulip_unit - 1; root_unit >= 0; root_unit--) {
+	    root_sc = TULIP_UNIT_TO_SOFTC(root_unit);
+	    if (root_sc == NULL
+		|| !(root_sc->tulip_features & TULIP_HAVE_SLAVEDINTR))
+		break;
+	    root_sc = NULL;
+	}
+	if (root_sc != NULL
+	    && root_sc->tulip_chipid == sc->tulip_chipid
+	    && root_sc->tulip_pci_busno == sc->tulip_pci_busno) {
+	    sc->tulip_features |= TULIP_HAVE_SLAVEDINTR;
+	    sc->tulip_slaves = root_sc->tulip_slaves;
+	    root_sc->tulip_slaves = sc;
+	} else if(sc->tulip_features & TULIP_HAVE_SLAVEDINTR) {
+	    printf("\nCannot find master device for de%d interrupts",
+		sc->tulip_unit);
+	}
+    } else {
+	strlcat(sc->tulip_boardid, "unknown ", sizeof(sc->tulip_boardid));
+    }
+    /*      sc->tulip_boardsw = &tulip_21140_eb_boardsw; */
+    return;
+}
+
 static int
 tulip_srom_decode(
     tulip_softc_t * const sc)
@@ -2756,6 +2804,7 @@ static const struct {
     { tulip_identify_cogent_nic,	{ 0x00, 0x00, 0xD1 } },
     { tulip_identify_asante_nic,	{ 0x00, 0x00, 0x94 } },
     { tulip_identify_accton_nic,	{ 0x00, 0x00, 0xE8 } },
+    { tulip_identify_compex_nic,	{ 0x00, 0x80, 0x48 } },
     { NULL }
 };
 
@@ -3351,6 +3400,7 @@ static void
 tulip_rx_intr(
     tulip_softc_t * const sc)
 {
+    TULIP_PERFSTART(rxintr)
     tulip_ringinfo_t * const ri = &sc->tulip_rxinfo;
     struct ifnet * const ifp = &sc->tulip_if;
     int fillok = 1;
@@ -3359,6 +3409,7 @@ tulip_rx_intr(
 #endif
 
     for (;;) {
+	TULIP_PERFSTART(rxget)
 	struct ether_header eh;
 	tulip_desc_t *eop = ri->ri_nextin;
 	int total_len = 0, last_offset = 0;
@@ -3406,6 +3457,8 @@ tulip_rx_intr(
 		    sc->tulip_dbg.dbg_rxintrs++;
 		    sc->tulip_dbg.dbg_rxpktsperintr[cnt]++;
 #endif
+		    TULIP_PERFEND(rxget);
+		    TULIP_PERFEND(rxintr);
 		    return;
 		}
 		total_len++;
@@ -3561,6 +3614,7 @@ tulip_rx_intr(
 #if defined(TULIP_DEBUG)
 	    sc->tulip_dbg.dbg_rxlowbufs++;
 #endif
+	    TULIP_PERFEND(rxget);
 	    continue;
 	}
 	/*
@@ -3588,12 +3642,14 @@ tulip_rx_intr(
 
 	if (sc->tulip_rxq.ifq_len >= TULIP_RXQ_TARGET)
 	    sc->tulip_flags &= ~TULIP_RXBUFSLOW;
+	TULIP_PERFEND(rxget);
     }
 
 #if defined(TULIP_DEBUG)
     sc->tulip_dbg.dbg_rxintrs++;
     sc->tulip_dbg.dbg_rxpktsperintr[cnt]++;
 #endif
+    TULIP_PERFEND(rxintr);
 }
 
 
@@ -3601,6 +3657,7 @@ static int
 tulip_tx_intr(
     tulip_softc_t * const sc)
 {
+    TULIP_PERFSTART(txintr)
     tulip_ringinfo_t * const ri = &sc->tulip_txinfo;
     struct mbuf *m;
     int xmits = 0;
@@ -3725,6 +3782,7 @@ tulip_tx_intr(
     else if (xmits > 0)
 	sc->tulip_txtimer = TULIP_TXTIMER;
     sc->tulip_if.if_opackets += xmits;
+    TULIP_PERFEND(txintr);
     return descs;
 }
 
