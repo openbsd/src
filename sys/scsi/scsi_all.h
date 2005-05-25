@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.22 2005/04/06 20:50:31 marco Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.23 2005/05/25 20:52:41 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -294,6 +294,19 @@ struct scsi_blk_desc {
 	u_int8_t blklen[3];
 };
 
+struct scsi_mode_direct_blk_desc {
+	u_int8_t nblocks[4];
+	u_int8_t density;
+	u_int8_t blklen[3];
+};
+
+struct scsi_mode_blk_desc_big {
+	u_int8_t nblocks[8];
+	u_int8_t density;
+	u_int8_t reserved[3];
+	u_int8_t blklen[4];
+};
+
 struct scsi_mode_header {
 	u_int8_t data_length;		/* Sense data length */
 	u_int8_t medium_type;
@@ -305,8 +318,18 @@ struct scsi_mode_header_big {
 	u_int8_t data_length[2];	/* Sense data length */
 	u_int8_t medium_type;
 	u_int8_t dev_spec;
-	u_int8_t unused[2];
+	u_int8_t reserved;
+#define LONGLBA	0x01	
+	u_int8_t reserved2;
 	u_int8_t blk_desc_len[2];
+};
+
+struct scsi_mode_sense_buf {
+	union {
+		struct scsi_mode_header hdr;
+		struct scsi_mode_header_big hdr_big;
+	} headers;
+	u_char pad[248];	/* To total length of 256 bytes. */
 };
 
 /*

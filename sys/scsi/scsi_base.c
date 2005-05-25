@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.69 2005/05/22 01:12:47 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.70 2005/05/25 20:52:41 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -420,6 +420,114 @@ scsi_mode_sense_big(sc_link, byte2, page, data, len, flags, timeout)
 	    ("scsi_mode_sense_big: page %#x, error = %d\n", page, error));
 
 	return (error);
+}
+
+void *
+scsi_mode_sense_page(hdr, page_len)
+	struct scsi_mode_header *hdr;
+	const int page_len;
+{
+	int total_length, header_length;
+
+	total_length = hdr->data_length + sizeof(hdr->data_length);
+	header_length = sizeof(*hdr) + hdr->blk_desc_len;
+
+	if ((total_length - header_length) < page_len)
+		return (NULL);
+		
+	return ((u_char *)hdr + header_length);	
+}
+
+void *
+scsi_mode_sense_big_page(hdr, page_len)
+	struct scsi_mode_header_big *hdr;
+	const int page_len;
+{
+	int total_length, header_length;
+
+	total_length = _2btol(hdr->data_length) + sizeof(hdr->data_length);
+	header_length = sizeof(*hdr) + _2btol(hdr->blk_desc_len);
+
+	if ((total_length - header_length) < page_len)
+		return (NULL);
+
+	return ((u_char *)hdr + header_length);
+}
+
+int
+scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
+    block_size, page_len, flags)
+	struct scsi_link *sc_link;
+	struct scsi_mode_sense_buf *buf;
+	int page, page_len, *density, *block_count, *block_size;
+	void **page_data;
+{
+	struct scsi_mode_blk_desc_big *desc_big;
+	struct scsi_mode_direct_blk_desc *desc;
+	struct scsi_mode_header_big *hdr_big;
+	struct scsi_mode_header *hdr;
+	u_char *cbuf = (u_char *)buf;
+	int error, blk_desc_len;
+	
+	*page_data = NULL;
+
+	if (density)
+		*density = 0;
+	if (block_count)
+		/* XXX We don't do block_count at this time. */
+		*block_count = 0;
+	if (block_size)
+		*block_size = 0;
+
+	/* Try 10 byte mode sense request. Don't bother with SMS_DBD. */
+	error = scsi_mode_sense_big(sc_link, 0, page, &buf->headers.hdr_big,
+	    sizeof(*buf), flags, 20000);
+	hdr_big = &buf->headers.hdr_big;
+	if (error == 0 && _2btol(hdr_big->data_length) > 0) {
+		cbuf += sizeof(struct scsi_mode_header_big);
+		*page_data = scsi_mode_sense_big_page(hdr_big, page_len);
+		blk_desc_len = _2btol(hdr_big->blk_desc_len);
+		if ((hdr_big->reserved & LONGLBA) == 0)
+			goto eight_byte;
+		/* 16 byte block descriptors. */
+		if (blk_desc_len < sizeof(struct scsi_mode_blk_desc_big))
+			return (0);
+		desc_big = (struct scsi_mode_blk_desc_big *)cbuf;
+		if (density)
+			*density = desc_big->density;
+		if (block_size)
+			*block_size = _4btol(desc_big->blklen);
+		return (0);
+	}
+
+	if (sc_link->flags & SDEV_ONLYBIG)
+		return (EIO);
+
+	/* Try 6 byte mode sense request. Don't bother with SMS_DBD. */
+	error = scsi_mode_sense(sc_link, 0, page, &buf->headers.hdr,
+	    sizeof(*buf), flags, 20000);
+	if (error != 0)
+		return (error);
+
+	hdr = &buf->headers.hdr;
+	if (hdr->data_length == 0)
+		return (EIO);
+		
+	cbuf += sizeof(struct scsi_mode_header);
+	*page_data = scsi_mode_sense_page(hdr, page_len);
+	blk_desc_len = hdr->blk_desc_len;
+
+eight_byte:			
+	if (blk_desc_len < sizeof(struct scsi_mode_direct_blk_desc))
+		return (0);
+
+	desc = (struct scsi_mode_direct_blk_desc *)cbuf;	
+	if (density)
+		*density = desc->density;
+	if (block_size)
+		*block_size = _3btol(desc->blklen);
+
+	return (0);
 }
 
 int
