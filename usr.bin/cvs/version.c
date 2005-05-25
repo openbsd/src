@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.11 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: version.c,v 1.12 2005/05/25 06:02:00 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -34,6 +34,7 @@
 
 #include "cvs.h"
 #include "proto.h"
+#include "log.h"
 
 static int cvs_version_sendflags  (struct cvsroot *);
 
@@ -59,10 +60,10 @@ cvs_version_sendflags(struct cvsroot *root)
 {
 	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL))
 		printf("Client: ");
-	printf("%s\n", CVS_VERSION);
+	cvs_printf("%s\n", CVS_VERSION);
 
 	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL)) {
-		printf("Server: %s\n", root->cr_version == NULL ?
+		cvs_printf("Server: %s\n", root->cr_version == NULL ?
 		    "(unknown)" : root->cr_version);
 	}
 
