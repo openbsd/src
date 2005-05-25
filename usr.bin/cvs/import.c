@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.17 2005/05/25 09:25:48 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.18 2005/05/25 21:47:19 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -46,6 +46,7 @@ static int cvs_import_pre_exec (struct cvsroot *);
 static int cvs_import_remote   (CVSFILE *, void *);
 static int cvs_import_local    (CVSFILE *, void *);
 
+static int dflag = 0;
 static RCSNUM *bnum;
 static char *branch, *module, *vendor, *release;
 
@@ -86,6 +87,7 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			rcsnum_free(bnum);
 			break;
 		case 'd':
+			dflag = 1;
 			break;
 		case 'I':
 			if (cvs_file_ignore(optarg) < 0) {
@@ -135,7 +137,10 @@ cvs_import_pre_exec(struct cvsroot *root)
 	if (root->cr_method == CVS_METHOD_LOCAL) {
 		snprintf(repodir, sizeof(repodir), "%s/%s", root->cr_dir,
 		    module);
-		mkdir(repodir, 0700);
+		if (mkdir(repodir, 0700) == -1) {
+			cvs_log(LP_ERRNO, "failed to create %s", repodir);
+			return (CVS_EX_DATA);
+		}
 	} else {
 		if ((cvs_sendarg(root, "-b", 0) < 0) ||
 		    (cvs_sendarg(root, branch, 0) < 0) ||
@@ -200,18 +205,16 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 	return (0);
 }
 
-
-/*
- * cvs_import_local()
- *
- */
 static int
 cvs_import_local(CVSFILE *cf, void *arg)
 {
 	int len;
-	struct cvsroot *root;
+	time_t stamp;
 	char fpath[MAXPATHLEN], rpath[MAXPATHLEN], repo[MAXPATHLEN];
 	const char *comment;
+	struct stat fst;
+	struct timeval ts[2];
+	struct cvsroot *root;
 	RCSFILE *rf;
 	RCSNUM *rev;
 
@@ -247,6 +250,24 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
+	/*
+	 * If -d was given, use the file's last modification time as the
+	 * timestamps for the initial revisions.
+	 */
+	if (dflag) {
+		if (stat(fpath, &fst) == -1) {
+			cvs_log(LP_ERRNO, "failed to stat %s", fpath);
+			return (CVS_EX_DATA);
+		}
+		stamp = (time_t)fst.st_mtime;
+
+		ts[0].tv_sec = stamp;
+		ts[0].tv_usec = 0;
+		ts[1].tv_sec = stamp;
+		ts[1].tv_usec = 0;
+	} else
+		stamp = -1;
+
 	snprintf(rpath, sizeof(rpath), "%s/%s%s",
 	    repo, fpath, RCS_FILE_EXT);
 
@@ -261,23 +282,33 @@ cvs_import_local(CVSFILE *cf, void *arg)
 
 	comment = rcs_comment_lookup(cf->cf_name);
 	if ((comment != NULL) && (rcs_comment_set(rf, comment) < 0)) {
-		cvs_log(LP_ERR, "failed to set RCS comment leader: %s",
+		cvs_log(LP_WARN, "failed to set RCS comment leader: %s",
 		    rcs_errstr(rcs_errno));
+		/* don't error out, no big deal */
 	}
 
 	/* first add the magic 1.1.1.1 revision */
 	rev = rcsnum_parse("1.1.1.1");
-	if (rcs_rev_add(rf, rev, cvs_msg) < 0) {
+	if (rcs_rev_add(rf, rev, cvs_msg, stamp) < 0) {
 		cvs_log(LP_ERR, "failed to add revision: %s",
 		    rcs_errstr(rcs_errno));
 		rcs_close(rf);
 		(void)unlink(rpath);
 		return (CVS_EX_DATA);
 	}
+
+	if (rcs_sym_add(rf, release, rev) < 0) {
+		cvs_log(LP_ERR, "failed to set RCS symbol: %s",
+		    strerror(rcs_errno));
+		rcs_close(rf);
+		(void)unlink(rpath);
+		return (CVS_EX_DATA);
+	}
+
 	rcsnum_free(rev);
 
 	rev = rcsnum_parse(RCS_HEAD_INIT);
-	if (rcs_rev_add(rf, rev, cvs_msg) < 0) {
+	if (rcs_rev_add(rf, rev, cvs_msg, stamp) < 0) {
 		cvs_log(LP_ERR, "failed to add revision: %s",
 		    rcs_errstr(rcs_errno));
 		rcs_close(rf);
@@ -293,7 +324,19 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
+#if 0
+	if (rcs_branch_set(rf, rev) < 0) {
+		cvs_log(LP_ERR, "failed to set RCS default branch: %s",
+		    strerror(rcs_errno));
+		return (CVS_EX_DATA);
+	}
+#endif
+
+	/* add the vendor tag and release tag as symbols */
 	rcs_close(rf);
+
+	if (dflag && (utimes(rpath, ts) == -1))
+		cvs_log(LP_ERRNO, "failed to timestamp RCS file");
 
 	return (CVS_EX_OK);
 }
