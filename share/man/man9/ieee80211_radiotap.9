@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_radiotap.9,v 1.3 2005/04/04 14:12:05 jmc Exp $
+.\"	$OpenBSD: ieee80211_radiotap.9,v 1.4 2005/05/25 07:50:47 david Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -27,7 +27,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_radiotap.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_radiotap.9,v 1.3 2005/04/04 14:12:05 jmc Exp $
+.\" $Id: ieee80211_radiotap.9,v 1.4 2005/05/25 07:50:47 david Exp $
 .\"
 .Dd March 2, 2004
 .Dt IEEE80211_RADIOTAP 9
@@ -107,7 +107,7 @@ with the data-link type set to
 .Dv DLT_IEEE_80211_RADIO .
 .Pp
 .\"
-When the the information is available,
+When the information is available,
 usually immediately before a link-layer transmission or after a receive,
 the driver copies it to the bpf layer using the
 .Fn bpf_mtap2
