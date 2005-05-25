@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.3 2005/05/25 17:10:26 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.4 2005/05/25 17:21:27 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -124,7 +124,11 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	sa_flowtype.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
 	sa_flowtype.sadb_protocol_len = sizeof(sa_flowtype) / 8;
 	sa_flowtype.sadb_protocol_direction = direction;
-	sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
+
+	if (direction == IPSP_DIRECTION_IN)
+		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_USE;
+	else
+		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
 
 	bzero(&sa_protocol, sizeof(sa_protocol));
 	sa_protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
