@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.79 2005/05/24 21:57:33 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.80 2005/05/25 09:42:12 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1013,7 +1013,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 				cfp->cf_cvstat = CVS_FST_ADDED;
 			else {
 				/* check last modified time */
-				if (ent->ce_mtime >= (time_t)st.st_mtime)
+				if (ent->ce_mtime == (time_t)st.st_mtime)
 					cfp->cf_cvstat = CVS_FST_UPTODATE;
 				else
 					cfp->cf_cvstat = CVS_FST_MODIFIED;
