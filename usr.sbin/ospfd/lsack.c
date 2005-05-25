@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.8 2005/04/05 13:01:21 claudio Exp $ */
+/*	$OpenBSD: lsack.c,v 1.9 2005/05/25 22:05:58 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -274,7 +274,7 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 			}
 			break;
 		default:
-			fatalx("lsa_flood: unknown interface type");
+			fatalx("lsa_ack_tx_timer: unknown interface type");
 		}
 	}
 
