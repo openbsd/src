@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.15 2004/11/26 18:02:22 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.16 2005/05/25 05:51:13 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -114,7 +114,7 @@ struct idname ext_types[] = {
 };
 
 struct idname msg_types[] = {
-	{ SADB_ACQUIRE,			"sadb_aqcuire",		NULL },
+	{ SADB_ACQUIRE,			"sadb_acquire",		NULL },
 	{ SADB_ADD,			"sadb_add",		NULL },
 	{ SADB_DELETE,			"sadb_delete",		NULL },
 	{ SADB_DUMP,			"sadb_dump",		NULL },
@@ -166,6 +166,7 @@ struct idname enc_types[] = {
 	{ SADB_EALG_DESCBC,		"des-cbc",		NULL },
 	{ SADB_X_EALG_3IDEA,		"idea3",		NULL },
 	{ SADB_X_EALG_AES,		"aes",			NULL },
+	{ SADB_X_EALG_AESCTR,		"aesctr",		NULL },
 	{ SADB_X_EALG_BLF,		"blowfish",		NULL },
 	{ SADB_X_EALG_CAST,		"cast128",		NULL },
 	{ SADB_X_EALG_DES_IV32,		"des-iv32",		NULL },
