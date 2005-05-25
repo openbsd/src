@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2005/04/04 22:22:55 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2005/05/25 16:29:21 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -619,7 +619,7 @@ host(const char *s)
 		}
 	}
 
-	memset(&ipa->v4mask, 0, sizeof(ipa->v4mask));
+	bzero(&ipa->v4mask, sizeof(ipa->v4mask));
 	if (bits == 32) {
 		ipa->v4mask.mask32 = 0xffffffff;
 		ipa->netaddress = 0;
