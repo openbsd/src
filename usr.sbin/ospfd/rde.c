@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.24 2005/05/25 08:06:57 david Exp $ */
+/*	$OpenBSD: rde.c,v 1.25 2005/05/25 23:20:36 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -105,7 +105,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 		return (pid);
 	}
 
-	rdeconf = xconf; /* XXX my not be replaced because of the lsa_tree */
+	rdeconf = xconf; /* XXX may not be replaced because of the lsa_tree */
 
 	if ((pw = getpwnam(OSPFD_USER)) == NULL)
 		fatal("getpwnam");
