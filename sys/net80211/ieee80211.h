@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.8 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.9 2005/05/25 07:40:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -316,7 +316,36 @@ typedef u_int8_t *ieee80211_mgt_beacon_t;
 /* bits 14-15 are reserved */
 #define IEEE80211_CAPINFO_BITS                  "\20\01ESS\02IBSS\03POLLABLE\04POLLREQ\05PRIVACY\06SHORT_PREAMBLE\07PBCC\10CHNL_AGILITY\13SHORT_SLOTTIME\14RSN\16DSSSOFDM"
 
+/* 
+ * Channel attributes
+ */
+#define	IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
+#define	IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
+#define	IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
+#define	IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel. */
+#define	IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
+#define	IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
+#define	IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
+#define	IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
+#define	IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
 
+/*
+ * Useful combinations of channel characteristics.
+ */
+#define	IEEE80211_CHAN_FHSS \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_GFSK)
+#define	IEEE80211_CHAN_A \
+	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
+#define	IEEE80211_CHAN_B \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_CCK)
+#define	IEEE80211_CHAN_PUREG \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM)
+#define	IEEE80211_CHAN_G \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
+#define	IEEE80211_CHAN_T \
+	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
+#define	IEEE80211_CHAN_TG \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 
 /*
  * 802.11i/WPA information element (maximally sized).
@@ -412,6 +441,8 @@ enum {
 
 #define	IEEE80211_RATE_BASIC			0x80
 #define	IEEE80211_RATE_VAL			0x7f
+#define	IEEE80211_RATE_SIZE			8	/* 802.11 standard */
+#define	IEEE80211_RATE_MAXSIZE			15	/* max rates we'll handle */
 
 /* EPR information element flags */
 #define	IEEE80211_ERP_NON_ERP_PRESENT		0x01

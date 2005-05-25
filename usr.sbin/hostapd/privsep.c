@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.10 2005/05/23 22:55:15 henning Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.11 2005/05/25 07:40:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -34,9 +34,8 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
-#include <dev/ic/if_wi_ieee.h>
-#include <dev/ic/if_wireg.h>
-#include <dev/ic/if_wi_hostap.h>
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_ioctl.h>
 
 #include <errno.h>
 #include <event.h>
@@ -169,7 +168,7 @@ hostapd_priv(int fd, short sig, void *arg)
 	struct hostapd_config *cfg = (struct hostapd_config *)arg;
 	struct hostapd_node node;
 	struct ieee80211_bssid bssid;
-	struct hostap_sta sta;
+	struct ieee80211_nodereq nr;
 	struct ifreq ifr;
 	int ret, cmd;
 
@@ -178,7 +177,7 @@ hostapd_priv(int fd, short sig, void *arg)
 		return;
 
 	bzero(&node, sizeof(struct hostapd_node));
-	bzero(&sta, sizeof(struct hostap_sta));
+	bzero(&nr, sizeof(struct ieee80211_nodereq));
 
 	/* Get privsep command */
 	if (hostapd_may_read(fd, &cmd, sizeof(int)))
@@ -210,25 +209,24 @@ hostapd_priv(int fd, short sig, void *arg)
 		    "[priv]: msg PRIV_APME_GETNODE received\n");
 
 		hostapd_must_read(fd, &node, sizeof(struct hostapd_node));
-		bcopy(node.ni_macaddr, sta.addr, IEEE80211_ADDR_LEN);
+		bcopy(node.ni_macaddr, nr.nr_macaddr, IEEE80211_ADDR_LEN);
 
-		strlcpy(ifr.ifr_name, cfg->c_apme_iface, sizeof(ifr.ifr_name));
-		ifr.ifr_data = (caddr_t)&sta;
+		strlcpy(nr.nr_ifname, cfg->c_apme_iface, sizeof(ifr.ifr_name));
 
 		/* Try to get a station from the APME */
 		if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
 			if ((ret = ioctl(cfg->c_apme,
-			    SIOCHOSTAP_GET, &ifr)) != 0)
+			    SIOCG80211NODE, &nr)) != 0)
 				ret = errno;
 		} else
 			ret = ENXIO;
 
 		hostapd_must_write(fd, &ret, sizeof(int));
 		if (ret == 0) {
-			node.ni_associd = sta.asid;
-			node.ni_flags = sta.flags;
-			node.ni_rssi = sta.sig_info;
-			node.ni_capinfo = sta.capinfo;
+			node.ni_associd = nr.nr_associd;
+			node.ni_flags = IEEE80211_NODEREQ_STATE(nr.nr_state);
+			node.ni_rssi = nr.nr_rssi;
+			node.ni_capinfo = nr.nr_capinfo;
 
 			hostapd_must_write(fd, &node,
 			    sizeof(struct hostapd_node));
@@ -240,12 +238,12 @@ hostapd_priv(int fd, short sig, void *arg)
 		    "[priv]: msg PRIV_APME_DELNODE received\n");
 
 		hostapd_must_read(fd, &node, sizeof(struct hostapd_node));
-		bcopy(node.ni_macaddr, sta.addr, IEEE80211_ADDR_LEN);
+		bcopy(node.ni_macaddr, nr.nr_macaddr, IEEE80211_ADDR_LEN);
 
 		/* Try to delete a station from the APME */
 		if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
 			if ((ret = ioctl(cfg->c_apme,
-			    SIOCHOSTAP_DEL, &sta)) != 0)
+			    SIOCS80211DELNODE, &nr)) != 0)
 				ret = errno;
 		} else
 			ret = ENXIO;
@@ -374,7 +372,7 @@ void
 hostapd_sig_chld(int sig)
 {
 	struct timeval tv;
-	
+
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
 

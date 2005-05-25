@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.6 2005/04/21 22:47:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.7 2005/05/25 07:40:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -204,6 +204,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 	if ((ic->ic_modecaps & (1<<ic->ic_curmode)) == 0)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
+	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_setbasicrates(ic);
 	(void) ieee80211_setmode(ic, ic->ic_curmode);
@@ -802,13 +803,13 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 #undef N
 }
 
-void
+enum ieee80211_phymode 
 ieee80211_next_mode(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
 	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO)
-		return;
+		return (IEEE80211_MODE_AUTO);	/* Indicate a wrap around */
 
 	/*
 	 * Get the next supported mode
@@ -827,6 +828,8 @@ ieee80211_next_mode(struct ifnet *ifp)
 	}
 
 	ieee80211_setmode(ic, ic->ic_curmode);
+
+	return (ic->ic_curmode);
 }
 
 /*

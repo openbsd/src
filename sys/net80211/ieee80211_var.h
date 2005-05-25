@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.8 2005/05/13 01:06:41 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.9 2005/05/25 07:40:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -100,36 +100,6 @@ struct ieee80211_channel {
 	u_int16_t	ic_flags;	/* see below */
 };
 
-/* bits 0-3 are for private use by drivers */
-/* channel attributes */
-#define	IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
-#define	IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
-#define	IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
-#define	IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel. */
-#define	IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
-#define	IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
-#define	IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
-#define	IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
-#define	IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
-
-/*
- * Useful combinations of channel characteristics.
- */
-#define	IEEE80211_CHAN_FHSS \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_GFSK)
-#define	IEEE80211_CHAN_A \
-	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
-#define	IEEE80211_CHAN_B \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_CCK)
-#define	IEEE80211_CHAN_PUREG \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM)
-#define	IEEE80211_CHAN_G \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
-#define	IEEE80211_CHAN_T \
-	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
-#define	IEEE80211_CHAN_TG \
-	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
-
 #define	IEEE80211_IS_CHAN_FHSS(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)
 #define	IEEE80211_IS_CHAN_A(_c) \
@@ -168,6 +138,11 @@ struct ieee80211_channel {
 
 #define	IEEE80211_PS_MAX_QUEUE	50	/* maximum saved packets */
 
+#define	IEEE80211_SCAN_UNLOCKED	0x0
+#define	IEEE80211_SCAN_LOCKED	0x1
+#define	IEEE80211_SCAN_REQUEST	0x2
+#define	IEEE80211_SCAN_RESUME	0x4
+
 struct ieee80211com {
 #ifdef __NetBSD__
 	struct ethercom		ic_ec;
@@ -193,6 +168,8 @@ struct ieee80211com {
 	u_char			ic_chan_scan[roundup(IEEE80211_CHAN_MAX,NBBY)];
 	struct ifqueue		ic_mgtq;
 	struct ifqueue		ic_pwrsaveq;
+	u_int			ic_scan_lock;	/* user-initiated scan */
+	u_int8_t		ic_scan_count;	/* count scans */
 	u_int32_t		ic_flags;	/* state flags */
 	u_int32_t		ic_caps;	/* capabilities */
 	u_int16_t		ic_modecaps;	/* set of mode capabilities */
@@ -321,7 +298,7 @@ u_int	ieee80211_mhz2ieee(u_int, u_int);
 u_int	ieee80211_chan2ieee(struct ieee80211com *, struct ieee80211_channel *);
 u_int	ieee80211_ieee2mhz(u_int, u_int);
 int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
-void	ieee80211_next_mode(struct ifnet *);
+enum ieee80211_phymode ieee80211_next_mode(struct ifnet *);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		struct ieee80211_channel *);
 

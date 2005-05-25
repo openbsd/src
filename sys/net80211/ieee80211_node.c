@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.4 2005/04/21 22:47:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.5 2005/05/25 07:40:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -216,6 +216,10 @@ ieee80211_begin_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
+	if (ic->ic_scan_lock & IEEE80211_SCAN_LOCKED)
+		return;
+	ic->ic_scan_lock |= IEEE80211_SCAN_LOCKED;
+
 	/*
 	 * In all but hostap mode scanning starts off in
 	 * an active mode before switching to passive.
@@ -244,6 +248,8 @@ ieee80211_begin_scan(struct ifnet *ifp)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 		ieee80211_setmode(ic, ic->ic_curmode);
 	}
+
+	ic->ic_scan_count = 0;
 
 	/* Scan the next channel. */
 	ieee80211_next_scan(ifp);
@@ -399,7 +405,9 @@ ieee80211_end_scan(struct ifnet *ifp)
 			(ic->ic_flags & IEEE80211_F_ASCAN) ?
 				"active" : "passive");
 
-	ic->ic_flags &= ~IEEE80211_F_ASCAN;
+	if (ic->ic_scan_count)
+		ic->ic_flags &= ~IEEE80211_F_ASCAN;
+
 	ni = TAILQ_FIRST(&ic->ic_node);
 
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
@@ -426,7 +434,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 					break;
 		}
 		ieee80211_create_ibss(ic, &ic->ic_channels[i]);
-		return;
+		goto wakeup;
 	}
 	if (ni == NULL) {
 		IEEE80211_DPRINTF(("%s: no scan candidate\n", __func__));
@@ -435,16 +443,26 @@ ieee80211_end_scan(struct ifnet *ifp)
 		    (ic->ic_flags & IEEE80211_F_IBSSON) &&
 		    ic->ic_des_esslen != 0) {
 			ieee80211_create_ibss(ic, ic->ic_ibss_chan);
-			return;
+			goto wakeup;
 		}
 
 		/*
 		 * Scan the next mode if nothing has been found. This
 		 * is necessary if the device supports different
 		 * incompatible modes in the same channel range, like
-		 * like 11b and "pure" 11G mode.
+		 * like 11b and "pure" 11G mode. This will loop
+		 * forever except for user-initiated scans.
 		 */
-		ieee80211_next_mode(ifp);
+		if (ieee80211_next_mode(ifp) == IEEE80211_MODE_AUTO) {
+			if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST &&
+			    ic->ic_scan_lock & IEEE80211_SCAN_RESUME) {
+				ic->ic_scan_lock = IEEE80211_SCAN_LOCKED;
+				/* Return from an user-initiated scan */
+				wakeup(&ic->ic_scan_lock);
+			} else if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST)
+				goto wakeup;
+			ic->ic_scan_count++;
+		}
 
 		/*
 		 * Reset the list of channels to scan and start again.
@@ -487,6 +505,14 @@ ieee80211_end_scan(struct ifnet *ifp)
 	} else {
 		ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
 	}
+
+ wakeup:
+	if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST) {
+		/* Return from an user-initiated scan */
+		wakeup(&ic->ic_scan_lock);
+	}
+
+	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 }
 
 int

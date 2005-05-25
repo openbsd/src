@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.3 2005/02/27 22:27:56 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.4 2005/05/25 07:40:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
  * IEEE 802.11 ioctls.
  */
 
+/* per-interface statistics */
 struct ieee80211_stats {
 	u_int32_t	is_rx_badversion;	/* rx frame with bad version */
 	u_int32_t	is_rx_tooshort;		/* rx frame too short */
@@ -85,7 +86,9 @@ struct ieee80211_stats {
 	u_int32_t	is_crypto_nomem;	/* no memory for crypto ctx */
 };
 
-/* nwid is pointed at by ifr.ifr_data */
+#define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)
+
+/* network identifier (ESSID), nwid is pointed at by ifr.ifr_data */
 struct ieee80211_nwid {
 	u_int8_t	i_len;
 	u_int8_t	i_nwid[IEEE80211_NWID_LEN];
@@ -94,7 +97,7 @@ struct ieee80211_nwid {
 #define	SIOCS80211NWID		_IOWR('i', 230, struct ifreq)
 #define	SIOCG80211NWID		_IOWR('i', 231, struct ifreq)
 
-/* the first member must be matched with struct ifreq */
+/* network key (WEP), the first member must be matched with struct ifreq */
 struct ieee80211_nwkey {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
 	int		i_wepon;		/* wep enabled flag */
@@ -104,13 +107,14 @@ struct ieee80211_nwkey {
 		u_int8_t	*i_keydat;
 	}		i_key[IEEE80211_WEP_NKID];
 };
-#define	SIOCS80211NWKEY		 _IOW('i', 232, struct ieee80211_nwkey)
-#define	SIOCG80211NWKEY		_IOWR('i', 233, struct ieee80211_nwkey)
-/* i_wepon */
+
 #define	IEEE80211_NWKEY_OPEN	0		/* No privacy */
 #define	IEEE80211_NWKEY_WEP	1		/* WEP enabled */
 #define	IEEE80211_NWKEY_EAP	2		/* EAP enabled */
 #define	IEEE80211_NWKEY_PERSIST	0x100		/* designate persist keyset */
+
+#define	SIOCS80211NWKEY		 _IOW('i', 232, struct ieee80211_nwkey)
+#define	SIOCG80211NWKEY		_IOWR('i', 233, struct ieee80211_nwkey)
 
 /* power management parameters */
 struct ieee80211_power {
@@ -121,6 +125,7 @@ struct ieee80211_power {
 #define	SIOCS80211POWER		 _IOW('i', 234, struct ieee80211_power)
 #define	SIOCG80211POWER		_IOWR('i', 235, struct ieee80211_power)
 
+/* authentication type */
 struct ieee80211_auth {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
 	int		i_authtype;
@@ -133,6 +138,7 @@ struct ieee80211_auth {
 #define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
 #define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)
 
+/* channel request */
 struct ieee80211chanreq {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
 	u_int16_t	i_channel;
@@ -145,6 +151,7 @@ struct ieee80211chanreq {
 #define	SIOCS80211CHANNEL	 _IOW('i', 238, struct ieee80211chanreq)
 #define	SIOCG80211CHANNEL	_IOWR('i', 239, struct ieee80211chanreq)
 
+/* BSS identifier */
 struct ieee80211_bssid {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
 	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
@@ -153,8 +160,7 @@ struct ieee80211_bssid {
 #define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
 #define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
 
-#define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)
-
+/* transmit power */
 struct ieee80211_txpower {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
 	int		i_mode;			/* auto, manual */
@@ -166,5 +172,73 @@ struct ieee80211_txpower {
 
 #define IEEE80211_TXPOWER_MODE_FIXED	0	/* fixed tx power value */
 #define IEEE80211_TXPOWER_MODE_AUTO	1	/* auto level control */
+
+/* scan request (will block) */
+#define IEEE80211_SCAN_TIMEOUT	30	/* timeout in seconds */
+
+#define SIOCS80211SCAN		 _IOW('i', 210, struct ifreq)
+
+/* node and requests */
+struct ieee80211_nodereq {
+	char		nr_ifname[IFNAMSIZ];		/* e.g. "ath0" */
+
+	/* Node address and name information */
+	u_int8_t	nr_macaddr[IEEE80211_ADDR_LEN];	/* node lladdr */
+	u_int8_t	nr_bssid[IEEE80211_ADDR_LEN];	/* bssid */
+	u_int8_t	nr_nwid_len;			/* ESSID length */
+	u_int8_t	nr_nwid[IEEE80211_NWID_LEN];	/* ESSID */
+
+	/* Channel and rates */
+	u_int16_t	nr_channel;			/* last channel */
+	u_int16_t	nr_chan_flags;			/* channel flags */
+	u_int8_t	nr_nrates;			/* rate count */
+	u_int8_t	nr_rates[IEEE80211_RATE_MAXSIZE];	/* rate set */
+
+	/* Node status information */
+	u_int8_t	nr_rssi;	/* received signal strength */
+	u_int8_t	nr_tstamp[8];	/* from last received beacon */
+	u_int16_t	nr_intval;	/* beacon interval */
+	u_int16_t	nr_capinfo;	/* capabilities */
+	u_int16_t	nr_fhdwell;	/* FH only */
+	u_int8_t	nr_fhindex;	/* FH only */
+	u_int8_t	nr_erp;		/* 11g only */
+	u_int8_t	nr_pwrsave;	/* power saving mode */
+	u_int16_t	nr_associd;	/* assoc response */
+	u_int16_t	nr_txseq;	/* seq to be transmitted */
+	u_int16_t	nr_rxseq;	/* seq previous received */
+	u_int32_t	nr_fails;	/* failure count to associate */
+	u_int32_t	nr_inact;	/* inactivity mark count */
+	u_int8_t	nr_txrate;	/* index to nr_rates[] */
+	u_int16_t	nr_state;	/* node state in the cache */
+
+	/* Node flags */
+	u_int8_t	nr_flags;
+};
+
+#define IEEE80211_NODEREQ_STATE(_s)	(1 << _s)
+#define IEEE80211_NODEREQ_STATE_BITS	"\20\01CACHE\02BSS\03AUTH\04ASSOC\05COLLECT"
+
+#define IEEE80211_NODEREQ_STA		0x00	/* station */
+#define IEEE80211_NODEREQ_AP		0x01	/* access point */
+#define IEEE80211_NODEREQ_AP_BSS	0x02	/* current bss access point */
+#define IEEE80211_NODEREQ_COPY		0x04	/* add node with flags */
+
+#define SIOCG80211NODE		_IOWR('i', 211, struct ieee80211_nodereq)
+#define SIOCS80211NODE		 _IOW('i', 212, struct ieee80211_nodereq)
+#define SIOCS80211DELNODE	 _IOW('i', 213, struct ieee80211_nodereq)
+
+/* get the entire node cache */
+struct ieee80211_nodereq_all {
+	char				na_ifname[IFNAMSIZ];	/* e.g. "ath0" */
+
+	int				na_nodes;	/* returned count */
+	size_t				na_size;	/* size of node buffer */
+	struct ieee80211_nodereq	*na_node;	/* allocated node buffer */
+
+	/* Match nodes by flag */
+	u_int8_t			na_flags;	/* IEEE80211_NODEREQ_* */
+};
+
+#define SIOCG80211ALLNODES	_IOWR('i', 214, struct ieee80211_nodereq)
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */

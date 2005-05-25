@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.139 2005/05/24 07:51:53 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.140 2005/05/25 07:40:49 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ int	clearaddr, s;
 int	newaddr = 0;
 int	af = AF_INET;
 int	mflag;
+int	net80211flag;
 int	explicit_prefix = 0;
 #ifdef INET6
 int	Lflag = 1;
@@ -358,6 +359,7 @@ int	getinfo(struct ifreq *, int);
 void	getsock(int);
 void	printif(struct ifreq *, int);
 void	printb(char *, unsigned short, char *);
+void	printb_status(unsigned short, char *);
 void	status(int, struct sockaddr_dl *);
 void	usage(int);
 const char *get_string(const char *, const char *, u_int8_t *, int *);
@@ -398,6 +400,8 @@ void	xns_getaddr(const char *, int);
 void	ipx_status(int);
 void	ipx_getaddr(const char *, int);
 void	ieee80211_status(void);
+void	ieee80211_listnodes(void);
+void	ieee80211_printnode(struct ieee80211_nodereq *);
 
 /* Known address families */
 const struct afswtch {
@@ -447,29 +451,42 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	argc--, argv++;
-	if (!strcmp(*argv, "-a"))
-		aflag = 1;
-	else if (!strcmp(*argv, "-A")) {
-		aflag = 1;
-		ifaliases = 1;
-	} else if (!strcmp(*argv, "-ma") || !strcmp(*argv, "-am")) {
-		aflag = 1;
-		mflag = 1;
-	} else if (!strcmp(*argv, "-mA") || !strcmp(*argv, "-Am")) {
-		aflag = 1;
-		ifaliases = 1;
-		mflag = 1;
-	} else if (!strcmp(*argv, "-m")) {
-		mflag = 1;
-		argc--, argv++;
-		if (argc < 1)
-			usage(1);
-		if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
-			errx(1, "interface name '%s' too long", *argv);
-	} else if (!strcmp(*argv, "-C")) {
-		Cflag = 1;
-	} else if (*argv[0] == '-') {
-		usage(0);
+	if (*argv[0] == '-') {
+		int nomore = 0;
+
+		for (i = 1; argv[0][i]; i++) {
+			switch (argv[0][i]) {
+			case 'a':
+				aflag = 1;
+				nomore = 1;
+				break;
+			case 'A':
+				aflag = 1;
+				ifaliases = 1;
+				nomore = 1;
+				break;
+			case 'm':
+				mflag = 1;
+				break;
+			case 'M':
+				net80211flag = 1;
+				break;
+			case 'C':
+				Cflag = 1;
+				nomore = 1;
+				break;
+			default:
+				usage(1);
+				break;
+			}
+		}
+		if (nomore == 0) {
+			argc--, argv++;
+			if (argc < 1)
+				usage(1);
+			if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
+				errx(1, "interface name '%s' too long", *argv);
+		}
 	} else if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
 		errx(1, "interface name '%s' too long", *argv);
 	argc--, argv++;
@@ -1212,6 +1229,9 @@ setifnwkey(const char *val, int d)
 	struct ieee80211_nwkey nwkey;
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 
+	bzero(&nwkey, sizeof(nwkey));
+	bzero(&keybuf, sizeof(keybuf));
+
 	nwkey.i_wepon = IEEE80211_NWKEY_WEP;
 	nwkey.i_defkid = 1;
 	if (d == -1) {
@@ -1256,11 +1276,6 @@ setifnwkey(const char *val, int d)
 			nwkey.i_key[0].i_keydat = keybuf[0];
 			i = 1;
 		}
-	}
-	/* zero out any unset keys */
-	for (; i < IEEE80211_WEP_NKID; i++) {
-		nwkey.i_key[i].i_keylen = 0;
-		nwkey.i_key[i].i_keydat = NULL;
 	}
 	(void)strlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	if (ioctl(s, SIOCS80211NWKEY, (caddr_t)&nwkey) == -1)
@@ -1405,7 +1420,7 @@ ieee80211_status(void)
 		if (len > IEEE80211_NWID_LEN)
 			len = IEEE80211_NWID_LEN;
 		fputs("nwid ", stdout);
-		print_string(nwid.i_nwid, nwid.i_len);
+		print_string(nwid.i_nwid, len);
 		putchar(' ');
 	}
 
@@ -1483,11 +1498,108 @@ ieee80211_status(void)
 		printf("powersave on (%dms sleep) ", power.i_maxsleep);
 
 	if (itxpower == 0)
-		printf("%ddBm %s", txpower.i_val, 
-		    txpower.i_mode == IEEE80211_TXPOWER_MODE_AUTO ? 
+		printf("%ddBm %s", txpower.i_val,
+		    txpower.i_mode == IEEE80211_TXPOWER_MODE_AUTO ?
 		    "(auto) " : "");
 
 	putchar('\n');
+	if (net80211flag)
+		ieee80211_listnodes();
+}
+
+void
+ieee80211_listnodes(void)
+{
+	struct ieee80211_nodereq_all na;
+	struct ieee80211_nodereq nr[512];
+	struct ifreq ifr;
+	int i, ret, down = 0;
+
+	if ((flags & IFF_UP) == 0) {
+		down = 1;
+		setifflags("up", IFF_UP);
+	}
+
+	bzero(&ifr, sizeof(ifr));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+
+	if (ioctl(s, SIOCS80211SCAN, (caddr_t)&ifr) != 0)
+		goto done;
+
+	bzero(&na, sizeof(na));
+	bzero(&nr, sizeof(nr));
+	na.na_node = nr;
+	na.na_size = sizeof(nr);
+	strlcpy(na.na_ifname, name, sizeof(na.na_ifname));
+	ret = 1;
+
+	if (ioctl(s, SIOCG80211ALLNODES, &na) != 0) {
+		warn("SIOCG80211ALLNODES");
+		goto done;
+	}
+
+	if (!na.na_nodes)
+		printf("\t\tnone\n");
+
+	for (i = 0; i < na.na_nodes; i++) {
+		printf("\t\t");
+		ieee80211_printnode(&nr[i]);
+		putchar('\n');
+	}
+
+	ret = 0;
+
+ done:
+	if (down)
+		setifflags("restore", -IFF_UP);
+
+	if (ret != 0)
+		exit(1);
+
+}
+
+void
+ieee80211_printnode(struct ieee80211_nodereq *nr)
+{
+	int len, i, isap;
+
+	if (nr->nr_flags & IEEE80211_NODEREQ_AP) {
+		len = nr->nr_nwid_len;
+		if (len > IEEE80211_NWID_LEN)
+			len = IEEE80211_NWID_LEN;
+		printf("nwid ");
+		print_string(nr->nr_nwid, len);
+		putchar(' ');
+
+		printf("chan %u ", nr->nr_channel);
+	}
+
+	if (nr->nr_flags & IEEE80211_NODEREQ_AP)
+		printf("bssid %s ",
+		    ether_ntoa((struct ether_addr*)nr->nr_bssid));
+	else
+		printf("lladdr %s ",
+		    ether_ntoa((struct ether_addr*)nr->nr_macaddr));
+
+	printf("%udB ", nr->nr_rssi);
+
+	if (nr->nr_pwrsave)
+		printf("powersave ");
+	if (nr->nr_nrates) {
+		/* Only print the fastest rate */
+		printf("%uM",
+		    (nr->nr_rates[nr->nr_nrates - 1] & IEEE80211_RATE_VAL) / 2);
+		putchar(' ');
+	}
+	/* ESS is the default, skip it */
+	nr->nr_capinfo &= ~IEEE80211_CAPINFO_ESS;
+	if (nr->nr_capinfo) {
+		printb_status(nr->nr_capinfo, IEEE80211_CAPINFO_BITS);
+		putchar(' ');
+	}
+	if ((nr->nr_flags & IEEE80211_NODEREQ_AP) == 0)
+		printb_status(IEEE80211_NODEREQ_STATE(nr->nr_state),
+		    IEEE80211_NODEREQ_STATE_BITS);
 }
 
 void
@@ -2016,7 +2128,6 @@ status(int link, struct sockaddr_dl *sdl)
 	timeslot_status();
 	trunk_status();
 #endif
-	ieee80211_status();
 	getifgroups();
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
@@ -2082,6 +2193,8 @@ status(int link, struct sockaddr_dl *sdl)
 			printf("unknown");
 		putchar('\n');
 	}
+
+	ieee80211_status();
 
 	if (mflag) {
 		int type, printed_type = 0;
@@ -3331,6 +3444,31 @@ printb(char *s, unsigned short v, char *bits)
 	}
 }
 
+/*
+ * A simple version of printb for status output
+ */
+void
+printb_status(unsigned short v, char *bits)
+{
+	int i, any = 0;
+	char c;
+
+	bits++;
+	if (bits) {
+		while ((i = *bits++)) {
+			if (v & (1 << (i-1))) {
+				if (any)
+					putchar(',');
+				any = 1;
+				for (; (c = *bits) > 32; bits++)
+					putchar(tolower(c));
+			} else
+				for (; *bits > 32; bits++)
+					;
+		}
+	}
+}
+
 #ifdef INET6
 #define SIN6(x) ((struct sockaddr_in6 *) &(x))
 struct sockaddr_in6 *sin6tab[] = {
@@ -3455,9 +3593,7 @@ usage(int value)
 	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
 	    "\t[pppoeac access-concentrator] [-pppoeac]\n"
 	    "\t[pppoesvc service] [-pppoesvc]\n"
-	    "       ifconfig -A | -Am | -a | -am [address_family]\n"
-	    "       ifconfig -C\n"
-	    "       ifconfig -m interface [address_family]\n"
+	    "       ifconfig [-aAmMC] [interface] [address_family]\n"
 	    "       ifconfig interface create\n"
 	    "       ifconfig interface destroy\n");
 	exit(value);
@@ -3572,3 +3708,4 @@ setiflladdr(const char *addr, int param)
 	if (ioctl(s, SIOCSIFLLADDR, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFLLADDR");
 }
+

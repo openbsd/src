@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.3 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.4 2005/05/25 07:40:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -47,9 +47,6 @@
 /* simple hash is enough for variation of macaddr */
 #define	IEEE80211_NODE_HASH(addr)	\
 	(((u_int8_t *)(addr))[IEEE80211_ADDR_LEN - 1] % IEEE80211_NODE_HASHSIZE)
-
-#define	IEEE80211_RATE_SIZE	8		/* 802.11 standard */
-#define	IEEE80211_RATE_MAXSIZE	15		/* max rates we'll handle */
 
 struct ieee80211_rateset {
 	u_int8_t		rs_nrates;
