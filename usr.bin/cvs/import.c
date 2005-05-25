@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.16 2005/05/24 04:21:54 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.17 2005/05/25 09:25:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -120,12 +120,9 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 
 	*arg = optind + 3;
 
-	cvs_msg = "test\n";
-#if 0
 	if ((cvs_msg == NULL) &&
 	    (cvs_msg = cvs_logmsg_get(NULL, NULL, NULL, NULL)) == NULL)
 		return (CVS_EX_DATA);
-#endif
 
 	return (0);
 }
@@ -214,7 +211,9 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	int len;
 	struct cvsroot *root;
 	char fpath[MAXPATHLEN], rpath[MAXPATHLEN], repo[MAXPATHLEN];
+	const char *comment;
 	RCSFILE *rf;
+	RCSNUM *rev;
 
 	root = CVS_DIR_ROOT(cf);
 	len = snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, module);
@@ -255,6 +254,43 @@ cvs_import_local(CVSFILE *cf, void *arg)
 
 	rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE);
 	if (rf == NULL) {
+		cvs_log(LP_ERR, "failed to create RCS file: %s",
+		    strerror(rcs_errno));
+		return (CVS_EX_DATA);
+	}
+
+	comment = rcs_comment_lookup(cf->cf_name);
+	if ((comment != NULL) && (rcs_comment_set(rf, comment) < 0)) {
+		cvs_log(LP_ERR, "failed to set RCS comment leader: %s",
+		    rcs_errstr(rcs_errno));
+	}
+
+	/* first add the magic 1.1.1.1 revision */
+	rev = rcsnum_parse("1.1.1.1");
+	if (rcs_rev_add(rf, rev, cvs_msg) < 0) {
+		cvs_log(LP_ERR, "failed to add revision: %s",
+		    rcs_errstr(rcs_errno));
+		rcs_close(rf);
+		(void)unlink(rpath);
+		return (CVS_EX_DATA);
+	}
+	rcsnum_free(rev);
+
+	rev = rcsnum_parse(RCS_HEAD_INIT);
+	if (rcs_rev_add(rf, rev, cvs_msg) < 0) {
+		cvs_log(LP_ERR, "failed to add revision: %s",
+		    rcs_errstr(rcs_errno));
+		rcs_close(rf);
+		(void)unlink(rpath);
+		return (CVS_EX_DATA);
+	}
+
+	if (rcs_head_set(rf, rev) < 0) {
+		cvs_log(LP_ERR, "failed to set RCS head: %s",
+		    rcs_errstr(rcs_errno));
+		rcs_close(rf);
+		(void)unlink(rpath);
+		return (CVS_EX_DATA);
 	}
 
 	rcs_close(rf);
