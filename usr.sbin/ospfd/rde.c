@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.23 2005/05/24 21:36:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.24 2005/05/25 08:06:57 david Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1031,7 +1031,7 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 	struct lsa	*lsa;
 	u_int8_t	 type = 0;
 
-	/* first check if we acctually need to announce this route */
+	/* first check if we actually need to announce this route */
 	if (!(rte->d_type == DT_NET || rte->flags & OSPF_RTR_E))
 		return;
 	/* never create summaries for as-ext LSA */

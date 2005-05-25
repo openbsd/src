@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.16 2005/05/24 20:54:33 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.17 2005/05/25 08:06:57 david Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -617,7 +617,7 @@ lsa_remove_invalid_sums(struct area *area)
 		    v->nbr->self && v->cost == LS_INFINITY) {
 			/*
 			 * age the lsa and call lsa_timeout() which will
-			 * acctually remove it form the database.
+			 * actually remove it form the database.
 			 */
 			v->lsa->hdr.age = htons(MAX_AGE);
 			lsa_timeout(0, 0, v);
