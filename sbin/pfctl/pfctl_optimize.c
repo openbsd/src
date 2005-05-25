@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.6 2005/05/25 22:28:38 frantzen Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.7 2005/05/25 23:58:11 frantzen Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -120,10 +120,19 @@ struct pf_rule_field {
     PF_RULE_FIELD(tagname,		BREAK),
     PF_RULE_FIELD(keep_state,		BREAK),
     PF_RULE_FIELD(qname,		BREAK),
+    PF_RULE_FIELD(pqname,		BREAK),
     PF_RULE_FIELD(rt,			BREAK),
     PF_RULE_FIELD(allow_opts,		BREAK),
     PF_RULE_FIELD(rule_flag,		BREAK),
     PF_RULE_FIELD(action,		BREAK),
+    PF_RULE_FIELD(log,			BREAK),
+    PF_RULE_FIELD(quick,		BREAK),
+    PF_RULE_FIELD(return_ttl,		BREAK),
+    PF_RULE_FIELD(overload_tblname,	BREAK),
+    PF_RULE_FIELD(flush,		BREAK),
+    PF_RULE_FIELD(max_src_conn,		BREAK),
+    PF_RULE_FIELD(max_src_conn_rate,	BREAK),
+    PF_RULE_FIELD(rpool,		BREAK),
 
     /*
      * Any fields not listed in this structure act as BREAK fields
@@ -179,6 +188,9 @@ struct pf_rule_field {
     PF_RULE_FIELD(pqid,			DC),
     PF_RULE_FIELD(anchor_relative,	DC),
     PF_RULE_FIELD(anchor_wildcard,	DC),
+    PF_RULE_FIELD(tag,			DC),
+    PF_RULE_FIELD(match_tag,		DC),
+    PF_RULE_FIELD(overload_tbl,		DC),
 
     /* These fields should never be set in a PASS/BLOCK rule */
     PF_RULE_FIELD(natpass,		NEVER),
