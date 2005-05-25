@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.38 2005/05/15 21:19:08 cloder Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.39 2005/05/25 05:57:32 jason Exp $	*/
 
 /*
  *		Buffer handling.
@@ -196,17 +196,28 @@ savebuffers(int f, int n)
 static int listbuf_ncol;
 
 static int	listbuf_goto_buffer(int f, int n);
+static int	listbuf_goto_buffer_one(int f, int n);
+static int	listbuf_goto_buffer_helper(int f, int n, int only);
 
 static PF listbuf_pf[] = {
 	listbuf_goto_buffer
 };
+static PF listbuf_one[] = {
+	listbuf_goto_buffer_one
+};
 
-static struct KEYMAPE (1 + IMAPEXT) listbufmap = {
-	1,
-	1 + IMAPEXT,
+
+static struct KEYMAPE (2 + IMAPEXT) listbufmap = {
+	2,
+	2 + IMAPEXT,
 	rescan,
 	{
-		{ CCHR('M'), CCHR('M'), listbuf_pf, NULL }
+		{
+			'1', '1', listbuf_one, NULL
+		},
+		{
+			CCHR('M'), CCHR('M'), listbuf_pf, NULL
+		}
 	}
 };
 
@@ -305,6 +316,18 @@ makelist(void)
 static int
 listbuf_goto_buffer(int f, int n)
 {
+	return (listbuf_goto_buffer_helper(f, n, 0));
+}
+
+static int
+listbuf_goto_buffer_one(int f, int n)
+{
+	return (listbuf_goto_buffer_helper(f, n, 1));
+}
+
+static int
+listbuf_goto_buffer_helper(int f, int n, int only)
+{
 	BUFFER  *bp;
 	MGWIN   *wp;
 	char	*line;
@@ -339,6 +362,9 @@ listbuf_goto_buffer(int f, int n)
 		return (FALSE);
 	curbp = bp;
 	curwp = wp;
+
+	if (only)
+		return (onlywind(f, n));
 
 	return (TRUE);
 }
