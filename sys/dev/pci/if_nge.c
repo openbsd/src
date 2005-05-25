@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.33 2005/05/25 20:59:04 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.34 2005/05/25 21:01:17 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -205,10 +205,10 @@ int	ngedebug = 0;
 		CSR_READ_4(sc, reg) & ~(x))
 
 #define SIO_SET(x)					\
-	CSR_WRITE_4(sc, NGE_MEAR, CSR_READ_4(sc, NGE_MEAR) | x)
+	CSR_WRITE_4(sc, NGE_MEAR, CSR_READ_4(sc, NGE_MEAR) | (x))
 
 #define SIO_CLR(x)					\
-	CSR_WRITE_4(sc, NGE_MEAR, CSR_READ_4(sc, NGE_MEAR) & ~x)
+	CSR_WRITE_4(sc, NGE_MEAR, CSR_READ_4(sc, NGE_MEAR) & ~(x))
 
 void
 nge_delay(sc)
