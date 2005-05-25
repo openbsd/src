@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.50 2005/05/25 06:42:41 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.51 2005/05/25 07:15:16 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -114,6 +114,78 @@ struct rcs_foo {
 
 /* invalid characters in RCS symbol names */
 static const char rcs_sym_invch[] = RCS_SYM_INVALCHAR;
+
+
+/* comment leaders, depending on the file's suffix */
+static const struct rcs_comment {
+	const char  *rc_suffix;
+	const char  *rc_cstr;
+} rcs_comments[] = {
+	{ "1",    ".\\\" " },
+	{ "2",    ".\\\" " },
+	{ "3",    ".\\\" " },
+	{ "4",    ".\\\" " },
+	{ "5",    ".\\\" " },
+	{ "6",    ".\\\" " },
+	{ "7",    ".\\\" " },
+	{ "8",    ".\\\" " },
+	{ "9",    ".\\\" " },
+	{ "a",    "-- "    },	/* Ada		 */
+	{ "ada",  "-- "    },
+	{ "adb",  "-- "    },
+	{ "asm",  ";; "    },	/* assembler (MS-DOS) */
+	{ "ads",  "-- "    },	/* Ada */
+	{ "bat",  ":: "    },	/* batch (MS-DOS) */
+	{ "body", "-- "    },	/* Ada */
+	{ "c",    " * "    },	/* C */
+	{ "c++",  "// "    },	/* C++ */
+	{ "cc",   "// "    },
+	{ "cpp",  "// "    },
+	{ "cxx",  "// "    },
+	{ "m",    "// "    },	/* Objective-C */
+	{ "cl",   ";;; "   },	/* Common Lisp	 */
+	{ "cmd",  ":: "    },	/* command (OS/2) */
+	{ "cmf",  "c "     },	/* CM Fortran	 */
+	{ "csh",  "# "     },	/* shell	 */
+	{ "e",    "# "     },	/* efl		 */
+	{ "epsf", "% "     },	/* encapsulated postscript */
+	{ "epsi", "% "     },	/* encapsulated postscript */
+	{ "el",   "; "     },	/* Emacs Lisp	 */
+	{ "f",    "c "     },	/* Fortran	 */
+	{ "for",  "c "     },
+	{ "h",    " * "    },	/* C-header	 */
+	{ "hh",   "// "    },	/* C++ header	 */
+	{ "hpp",  "// "    },
+	{ "hxx",  "// "    },
+	{ "in",   "# "     },	/* for Makefile.in */
+	{ "l",    " * "    },	/* lex */
+	{ "mac",  ";; "    },	/* macro (DEC-10, MS-DOS, PDP-11, VMS, etc) */
+	{ "mak",  "# "     },	/* makefile, e.g. Visual C++ */
+	{ "me",   ".\\\" " },	/* me-macros	t/nroff	 */
+	{ "ml",   "; "     },	/* mocklisp	 */
+	{ "mm",   ".\\\" " },	/* mm-macros	t/nroff	 */
+	{ "ms",   ".\\\" " },	/* ms-macros	t/nroff	 */
+	{ "man",  ".\\\" " },	/* man-macros	t/nroff	 */
+	{ "p",    " * "    },	/* pascal	 */
+	{ "pas",  " * "    },
+	{ "pl",   "# "     },	/* perl	(conflict with Prolog) */
+	{ "pm",   "# "     },	/* perl	module */
+	{ "ps",   "% "     },	/* postscript */
+	{ "psw",  "% "     },	/* postscript wrap */
+	{ "pswm", "% "     },	/* postscript wrap */
+	{ "r",    "# "     },	/* ratfor	 */
+	{ "rc",   " * "    },	/* Microsoft Windows resource file */
+	{ "red",  "% "     },	/* psl/rlisp	 */
+	{ "sh",   "# "     },	/* shell	 */
+	{ "sl",   "% "     },	/* psl		 */
+	{ "spec", "-- "    },	/* Ada		 */
+	{ "tex",  "% "     },	/* tex		 */
+	{ "y",    " * "    },	/* yacc		 */
+	{ "ye",   " * "    },	/* yacc-efl	 */
+	{ "yr",   " * "    },	/* yacc-ratfor	 */
+};
+
+#define NB_COMTYPES  (sizeof(rcs_comments)/sizeof(rcs_comments[0]))
 
 #ifdef notyet
 static struct rcs_kfl {
@@ -882,6 +954,30 @@ rcs_desc_set(RCSFILE *file, const char *desc)
 	file->rf_flags &= ~RCS_SYNCED;
 
 	return (0);
+}
+
+/*
+ * rcs_comment_lookup()
+ *
+ * Lookup the assumed comment leader based on a file's suffix.
+ * Returns a pointer to the string on success, or NULL on failure.
+ */
+const char*
+rcs_comment_lookup(const char *filename)
+{
+	int i;
+	const char *sp;
+
+	if ((sp = strrchr(filename, '.')) == NULL) {
+		rcs_errno = RCS_ERR_NOENT;
+		return (NULL);
+	}
+	sp++;
+
+	for (i = 0; i < (int)NB_COMTYPES; i++)
+		if (strcmp(rcs_comments[i].rc_suffix, sp) == 0)
+			return (rcs_comments[i].rc_cstr);
+	return (NULL);
 }
 
 /*
