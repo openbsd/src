@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.22 2005/05/24 20:32:43 uwe Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.23 2005/05/25 07:29:17 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -109,6 +109,7 @@ struct zkbd_softc {
 	char sc_rep[MAXKEYS];
 	int sc_nrep;
 #endif
+	void *sc_powerhook;
 };
 
 struct zkbd_softc *zkbd_dev; /* XXX */
@@ -121,6 +122,7 @@ void zkbd_poll(void *v);
 int zkbd_on(void *v);
 int zkbd_sync(void *v);
 int zkbd_hinge(void *v);
+void zkbd_power(int why, void *arg);
 
 int zkbd_modstate;
 
@@ -179,6 +181,12 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rawkbd = 0;
 #endif
 	/* Determine which system we are - XXX */
+
+	sc->sc_powerhook = powerhook_establish(zkbd_power, sc);
+	if (sc->sc_powerhook == NULL) {
+		printf(": unable to establish powerhook\n");
+		return;
+	}
 
 	if (1 /* C3000 */) {
 		sc->sc_sense_array = gpio_sense_pins_c3000;
@@ -572,4 +580,15 @@ zkbd_cngetc(void *v, u_int *type, int *data)
 void
 zkbd_cnpollc(void *v, int on)
 {
+}
+
+void
+zkbd_power(int why, void *arg)
+{
+	struct zkbd_softc *sc = arg;
+	int a = pxa2x0_gpio_get_bit(sc->sc_swa_pin) ? 1 : 0;
+	int b = pxa2x0_gpio_get_bit(sc->sc_swb_pin) ? 2 : 0;
+
+	/* probably should check why */
+	sc->sc_hinge = a | b;
 }
