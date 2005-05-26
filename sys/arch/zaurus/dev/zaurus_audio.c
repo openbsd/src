@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.5 2005/05/23 22:53:22 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.6 2005/05/26 03:28:43 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -180,6 +180,7 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zaudio_softc		*sc = (struct zaudio_softc *)self;
 	struct pxaip_attach_args	*pxa = aux;
+	int err;
 
 	sc->sc_powerhook = powerhook_establish(zaudio_power, sc);
 	if (sc->sc_powerhook == NULL) {
@@ -203,10 +204,11 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Check for an I2C response from the wm8750 */
-	pxa2x0_i2s_open(&sc->sc_i2s);	/* supply the codec with a clock */
 	pxa2x0_i2c_open(&sc->sc_i2c);
+	err = wm8750_write(sc, RESET_REG, 0);
+	pxa2x0_i2c_close(&sc->sc_i2c);
 
-	if (wm8750_write(sc, RESET_REG, 0)) {
+	if (err) {
 		printf(": codec failed to respond\n");
 		goto fail_probe;
 	}
@@ -221,9 +223,6 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 
 	zaudio_init(sc);
 
-	pxa2x0_i2c_close(&sc->sc_i2c);
-	pxa2x0_i2s_close(&sc->sc_i2s);
-
 	printf(": I2C, I2S, WM8750 Audio\n");
 
 	audio_attach_mi(&wm8750_hw_if, sc, &sc->sc_dev);
@@ -231,8 +230,6 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 fail_probe:
-	pxa2x0_i2c_close(&sc->sc_i2c);
-	pxa2x0_i2s_close(&sc->sc_i2s);
 	pxa2x0_i2c_detach_sub(&sc->sc_i2c);
 fail_i2c:
 	pxa2x0_i2s_detach_sub(&sc->sc_i2s);
@@ -266,6 +263,8 @@ zaudio_power(int why, void *arg)
 void
 zaudio_init(struct zaudio_softc *sc)
 {
+	pxa2x0_i2c_open(&sc->sc_i2c);
+
 	/* Reset the codec */
 	wm8750_write(sc, RESET_REG, 0);
 	delay(100);
@@ -281,6 +280,8 @@ zaudio_init(struct zaudio_softc *sc)
 	zaudio_update_volume(sc, ZAUDIO_OP_SPKR);
 	zaudio_update_volume(sc, ZAUDIO_OP_HP);
 	scoop_set_headphone(0);
+
+	pxa2x0_i2c_close(&sc->sc_i2c);
 }
 
 void
