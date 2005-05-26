@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.113 2005/05/24 05:34:54 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.114 2005/05/26 00:33:45 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -409,8 +409,6 @@ getnewvnode(tag, mp, vops, vpp)
 		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
 		    vp = TAILQ_NEXT(vp, v_freelist)) {
 			if (simple_lock_try(&vp->v_interlock)) {
-				if ((vp->v_flag & VLAYER) == 0)
-					break;
 				if (VOP_ISLOCKED(vp) == 0)
 					break;
 				else
@@ -459,7 +457,6 @@ getnewvnode(tag, mp, vops, vpp)
 	vp->v_type = VNON;
 	cache_purge(vp);
 	vp->v_vnlock = NULL;
-	lockinit(&vp->v_lock, PVFS, "v_lock", 0, 0);
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
@@ -638,7 +635,6 @@ loop:
 	simple_lock(&vp->v_interlock);
 	vclean(vp, 0, p);
 	vp->v_vnlock = NULL;
-	lockinit(&vp->v_lock, PVFS, "v_lock", 0, 0);
 	vp->v_op = nvp->v_op;
 	vp->v_tag = nvp->v_tag;
 	nvp->v_type = VNON;

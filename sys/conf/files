@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.338 2005/05/24 02:45:17 reyk Exp $
+#	$OpenBSD: files,v 1.339 2005/05/26 00:33:45 pedro Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -658,16 +658,11 @@ file kern/vfs_syscalls.c
 file kern/vfs_vnops.c
 file kern/vnode_if.c
 file miscfs/deadfs/dead_vnops.c
-file miscfs/genfs/layer_subr.c		nullfs | umapfs
-file miscfs/genfs/layer_vfsops.c	nullfs | umapfs
-file miscfs/genfs/layer_vnops.c		nullfs | umapfs
 file miscfs/fdesc/fdesc_vfsops.c	fdesc
 file miscfs/fdesc/fdesc_vnops.c		fdesc
 file miscfs/fifofs/fifo_vnops.c		fifo
 file miscfs/kernfs/kernfs_vfsops.c	kernfs
 file miscfs/kernfs/kernfs_vnops.c	kernfs
-file miscfs/nullfs/null_vfsops.c	nullfs
-file miscfs/nullfs/null_vnops.c		nullfs
 file miscfs/portal/portal_vfsops.c	portal
 file miscfs/portal/portal_vnops.c	portal
 file miscfs/procfs/procfs_cmdline.c	procfs
@@ -680,12 +675,6 @@ file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs
 file miscfs/procfs/procfs_vnops.c	procfs
 file miscfs/specfs/spec_vnops.c
-file miscfs/umapfs/umap_subr.c		umapfs
-file miscfs/umapfs/umap_vfsops.c	umapfs
-file miscfs/umapfs/umap_vnops.c		umapfs
-file miscfs/union/union_subr.c		union
-file miscfs/union/union_vfsops.c	union
-file miscfs/union/union_vnops.c		union
 file msdosfs/msdosfs_conv.c		msdosfs
 file msdosfs/msdosfs_denode.c		msdosfs
 file msdosfs/msdosfs_fat.c		msdosfs

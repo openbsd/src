@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_getdents.c,v 1.8 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: netbsd_getdents.c,v 1.9 2005/05/26 00:33:45 pedro Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,7 +66,6 @@ netbsd_vn_readdir(fp, buf, segflg, count, done, p, cookies, ncookies)
 	struct uio auio;
 	int error, eofflag;
 
-unionread:
 	if (vp->v_type != VDIR)
 		return (EINVAL);
 	aiov.iov_base = buf;
@@ -85,59 +84,6 @@ unionread:
 	VOP_UNLOCK(vp, 0, p);
 	if (error)
 		return (error);
-
-#ifdef UNION
-{
-	extern int (**union_vnodeop_p)(void *);
-	extern struct vnode *union_dircache(struct vnode *);
-
-	if (count == auio.uio_resid && (vp->v_op == union_vnodeop_p)) {
-		struct vnode *lvp;
-
-		lvp = union_dircache(vp);
-		if (lvp != NULLVP) {
-			struct vattr va;
-
-			/*
-			 * If the directory is opaque,
-			 * then don't show lower entries
-			 */
-			error = VOP_GETATTR(vp, &va, fp->f_cred, p);
-			if (va.va_flags & OPAQUE) {
-				vput(lvp);
-				lvp = NULL;
-			}
-		}
-		
-		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
-			if (error) {
-				vput(lvp);
-				return (error);
-			}
-			VOP_UNLOCK(lvp, 0, p);
-			fp->f_data = (caddr_t) lvp;
-			fp->f_offset = 0;
-			error = vn_close(vp, FREAD, fp->f_cred, p);
-			if (error)
-				return (error);
-			vp = lvp;
-			goto unionread;
-		}
-	}
-}
-#endif /* UNION */
-
-	if (count == auio.uio_resid && (vp->v_flag & VROOT) &&
-	    (vp->v_mount->mnt_flag & MNT_UNION)) {
-		struct vnode *tvp = vp;
-		vp = vp->v_mount->mnt_vnodecovered;
-		VREF(vp);
-		fp->f_data = (caddr_t) vp;
-		fp->f_offset = 0;
-		vrele(tvp);
-		goto unionread;
-	}
 	*done = count - auio.uio_resid;
 	return error;
 }

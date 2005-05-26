@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.60 2005/03/29 17:24:52 pedro Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.61 2005/05/26 00:33:45 pedro Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -64,9 +64,8 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
  */
 enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS, VT_FDESC,
-	VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS, VT_AFS, VT_ISOFS,
-	VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_NCPFS, VT_VFS, VT_XFS, VT_NTFS,
-	VT_UDF
+	VT_PORTAL, VT_KERNFS, VT_PROCFS, VT_AFS, VT_ISOFS, VT_ADOSFS, VT_EXT2FS,
+	VT_NCPFS, VT_VFS, VT_XFS, VT_NTFS, VT_UDF
 };
 
 /*
@@ -110,7 +109,6 @@ struct vnode {
 	} v_un;
 
 	struct  simplelock v_interlock;		/* lock on usecount and flag */
-	struct	lock v_lock;
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void	*v_data;			/* private data for fs */
@@ -134,7 +132,6 @@ struct vnode {
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VALIASED	0x0800	/* vnode has an alias */
-#define VLAYER		0x2000	/* vnode is on a layer file system */
 #define VLOCKSWORK	0x4000	/* FS supports locking discipline */
 
 /*

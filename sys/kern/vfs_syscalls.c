@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.120 2005/05/24 05:34:54 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.121 2005/05/26 00:33:45 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -64,17 +64,6 @@ int	usermount = 0;		/* sysctl: by default, users may not mount */
 static int change_dir(struct nameidata *, struct proc *);
 
 void checkdirs(struct vnode *);
-
-/*
- * Redirection info so we don't have to include the union fs routines in
- * the kernel directly.  This way, we can build unionfs as an LKM.  The
- * pointer gets filled in later, when we modload the LKM, or when the
- * compiled-in unionfs code gets initialized.  For now, we just set
- * it to a stub routine.
- */
-
-int (*union_check_p)(struct proc *, struct vnode **,
-    struct file *, struct uio, int *) = NULL;
 
 /*
  * Virtual File System System Calls
@@ -270,11 +259,11 @@ update:
 	else if (mp->mnt_flag & MNT_RDONLY)
 		mp->mnt_flag |= MNT_WANTRDWR;
 	mp->mnt_flag &=~ (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_SOFTDEP |
-	    MNT_NOATIME | MNT_FORCE);
+	    MNT_SYNCHRONOUS | MNT_ASYNC | MNT_SOFTDEP | MNT_NOATIME |
+	    MNT_FORCE);
 	mp->mnt_flag |= SCARG(uap, flags) & (MNT_NOSUID | MNT_NOEXEC |
-	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC |
-	    MNT_SOFTDEP | MNT_NOATIME | MNT_FORCE);
+	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_ASYNC | MNT_SOFTDEP |
+	    MNT_NOATIME | MNT_FORCE);
 	/*
 	 * Mount the filesystem.
 	 */
@@ -2534,7 +2523,6 @@ sys_getdirentries(p, v, retval)
 		goto bad;
 	}
 	vp = (struct vnode *)fp->f_data;
-unionread:
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto bad;
@@ -2554,24 +2542,8 @@ unionread:
 	VOP_UNLOCK(vp, 0, p);
 	if (error)
 		goto bad;
-	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    union_check_p &&
-	    (union_check_p(p, &vp, fp, auio, &error) != 0))
-		goto unionread;
 	if (error)
 		goto bad;
-
-	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    (vp->v_flag & VROOT) &&
-	    (vp->v_mount->mnt_flag & MNT_UNION)) {
-		struct vnode *tvp = vp;
-		vp = vp->v_mount->mnt_vnodecovered;
-		VREF(vp);
-		fp->f_data = vp;
-		fp->f_offset = 0;
-		vrele(tvp);
-		goto unionread;
-	}
 	error = copyout(&loff, SCARG(uap, basep),
 	    sizeof(long));
 	*retval = SCARG(uap, count) - auio.uio_resid;
@@ -2628,7 +2600,7 @@ sys_revoke(p, v, retval)
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
 	    (error = suser(p, 0)))
 		goto out;
-	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED | VLAYER)))
+	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED)))
 		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);

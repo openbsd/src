@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.116 2005/05/24 02:45:17 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.117 2005/05/26 00:33:45 pedro Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -57,10 +57,6 @@ option		FIFO		# FIFOs; RECOMMENDED
 #option		KERNFS		# /kern
 option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
-# layer filesystems
-#option		NULLFS		# loopback file system
-#option		UMAPFS		# NULLFS + uid and gid remapping
-#option		UNION		# union file system
 
 option		INET		# IP + ICMP + TCP + UDP
 option		ALTQ		# ALTQ base

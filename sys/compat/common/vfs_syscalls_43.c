@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.25 2004/07/14 18:57:57 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.26 2005/05/26 00:33:45 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -64,17 +64,6 @@
 #include <sys/pipe.h>
 
 static void cvtstat(struct stat *, struct stat43 *);
-
-/*
- * Redirection info so we don't have to include the union fs routines in 
- * the kernel directly.  This way, we can build unionfs as an LKM.  The
- * pointer gets replaced later, when we modload the LKM, or when the
- * compiled-in unionfs code gets initialized.  Initial, stub routine
- * value is compiled in from kern/vfs_syscalls.c
- */
-
-extern int (*union_check_p)(struct proc *, struct vnode **, 
-				   struct file *, struct uio, int *);
 
 /*
  * Convert from a new to an old stat structure.
@@ -366,7 +355,6 @@ compat_43_sys_getdirentries(p, v, retval)
 		goto bad;
 	}
 	vp = (struct vnode *)fp->f_data;
-unionread:
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto bad;
@@ -441,24 +429,8 @@ unionread:
 	VOP_UNLOCK(vp, 0, p);
 	if (error)
 		goto bad;
-	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    union_check_p &&
-	    (union_check_p(p, &vp, fp, auio, &error) != 0))
-		goto unionread;
 	if (error)
 		goto bad;
-
-	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    (vp->v_flag & VROOT) &&
-	    (vp->v_mount->mnt_flag & MNT_UNION)) {
-		struct vnode *tvp = vp;
-		vp = vp->v_mount->mnt_vnodecovered;
-		VREF(vp);
-		fp->f_data = (caddr_t) vp;
-		fp->f_offset = 0;
-		vrele(tvp);
-		goto unionread;
-	}
 	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
 	    sizeof(long));
 	*retval = SCARG(uap, count) - auio.uio_resid;

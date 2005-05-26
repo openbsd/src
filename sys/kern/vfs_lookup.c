@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.28 2004/07/11 16:42:45 pedro Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.29 2005/05/26 00:33:45 pedro Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -446,7 +446,6 @@ dirloop:
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 */
-unionlookup:
 	ndp->ni_dvp = dp;
 	ndp->ni_vp = NULL;
 	cnp->cn_flags &= ~PDIRUNLOCK;
@@ -459,20 +458,6 @@ unionlookup:
 #ifdef NAMEI_DIAGNOSTIC
 		printf("not found\n");
 #endif
-		if ((error == ENOENT) &&
-		    (dp->v_flag & VROOT) &&
-		    (dp->v_mount->mnt_flag & MNT_UNION)) {
-			tdp = dp;
-			dp = dp->v_mount->mnt_vnodecovered;
-			if (cnp->cn_flags & PDIRUNLOCK)
-				vrele(tdp);
-			else
-				vput(tdp);
-			VREF(dp);
-			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY, p);
-			goto unionlookup;
-		}
-
 		if (error != EJUSTRETURN)
 			goto bad;
 		/*

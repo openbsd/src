@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.28 2005/01/28 15:43:24 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.29 2005/05/26 00:33:45 pedro Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1210,7 +1210,7 @@ retry:
 		}
 		VOP_UNLOCK(snd.ni_vp, 0, p);
 		if (snd.ni_vp->v_usecount > 1 ||
-		    (snd.ni_vp->v_flag & (VALIASED | VLAYER)))
+		    (snd.ni_vp->v_flag & (VALIASED)))
 			VOP_REVOKE(snd.ni_vp, REVOKEALL);
 
 		/*
