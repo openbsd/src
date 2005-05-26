@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.9 2003/12/16 09:29:35 niklas Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.10 2005/05/26 23:44:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -433,12 +433,6 @@ gdt_dec32(addr)
 {
 	return letoh32(*(u_int32_t *)addr);
 }
-#endif
-
-#if defined(__alpha__)
-/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
 #endif
 
 extern u_int8_t gdt_polling;
