@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.13 2004/05/14 04:00:33 tedu Exp $	*/
+/*	$OpenBSD: namei.h,v 1.14 2005/05/26 22:40:52 marius Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ struct nameidata {
 
 struct	namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
+	LIST_ENTRY(namecache) nc_vhash;	/* (reverse) directory hash chain */
 	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
 	u_long	nc_dvpid;		/* capability number of nc_dvp */
@@ -179,6 +180,7 @@ int	relookup(struct vnode *dvp, struct vnode **vpp,
 void cache_purge(struct vnode *);
 int cache_lookup(struct vnode *, struct vnode **, struct componentname *);
 void cache_enter(struct vnode *, struct vnode *, struct componentname *);
+int cache_revlookup(struct vnode *, struct vnode **, char **, char *);
 void nchinit(void);
 struct mount;
 void cache_purgevfs(struct mount *);
@@ -199,6 +201,8 @@ struct	nchstats {
 	long	ncs_long;		/* long names that ignore cache */
 	long	ncs_pass2;		/* names found with passes == 2 */
 	long	ncs_2passes;		/* number of times we attempt it */
+	long    ncs_revhits;		/* reverse-cache hits */
+	long    ncs_revmiss;		/* reverse-cache misses */
 };
 
 /* These sysctl names are only really used by sysctl(8) */
@@ -210,17 +214,21 @@ struct	nchstats {
 #define KERN_NCHSTATS_LONG		6
 #define KERN_NCHSTATS_PASS2		7
 #define KERN_NCHSTATS_2PASSES		8
-#define KERN_NCHSTATS_MAXID		9
+#define KERN_NCHSTATS_REVHITS           9
+#define KERN_NCHSTATS_REVMISS           10
+#define KERN_NCHSTATS_MAXID		11
 
-#define CTL_KERN_NCHSTATS_NAMES { \
-	{ 0, 0 }, \
-	{ "good_hits", CTLTYPE_INT }, \
-	{ "negative_hits", CTLTYPE_INT }, \
-	{ "bad_hits", CTLTYPE_INT }, \
-	{ "false_hits", CTLTYPE_INT }, \
-	{ "misses", CTLTYPE_INT }, \
-	{ "long_names", CTLTYPE_INT }, \
-	{ "pass2", CTLTYPE_INT }, \
-	{ "2passes", CTLTYPE_INT }, \
+#define CTL_KERN_NCHSTATS_NAMES {		\
+	{ 0, 0 },				\
+	{ "good_hits", CTLTYPE_INT },		\
+	{ "negative_hits", CTLTYPE_INT },	\
+	{ "bad_hits", CTLTYPE_INT },		\
+	{ "false_hits", CTLTYPE_INT },		\
+	{ "misses", CTLTYPE_INT },		\
+	{ "long_names", CTLTYPE_INT },		\
+	{ "pass2", CTLTYPE_INT },		\
+	{ "2passes", CTLTYPE_INT },		\
+	{ "ncs_revhits", CTLTYPE_INT },		\
+	{ "nfs_revmiss", CTLTYPE_INT },		\
 }
 #endif /* !_SYS_NAMEI_H_ */

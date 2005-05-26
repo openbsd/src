@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.14 2005/03/04 11:43:37 pedro Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.15 2005/05/26 22:40:53 marius Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -44,6 +44,10 @@
 #include <sys/hash.h>
 
 /*
+ * TODO: namecache access should really be locked.
+ */
+
+/*
  * Name caching works as follows:
  *
  * Names found by directory scans are retained in a cache
@@ -70,6 +74,14 @@ long	numcache;			/* number of cache entries allocated */
 TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
+LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
+u_long  ncvhash;                        /* size of hash table - 1 */
+
+#define NCHASH(dvp, cnp) \
+	hash32_buf(&(dvp)->v_id, sizeof((dvp)->v_id), (cnp)->cn_hash) &nchash
+
+#define NCVHASH(vp) (vp)->v_id & ncvhash
+
 int doingcache = 1;			/* 1 => enable the cache */
 
 struct pool nch_pool;
@@ -93,10 +105,7 @@ u_long nextvnodeid;
  * is returned.
  */
 int
-cache_lookup(dvp, vpp, cnp)
-	struct vnode *dvp;
-	struct vnode **vpp;
-	struct componentname *cnp;
+cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
@@ -117,8 +126,7 @@ cache_lookup(dvp, vpp, cnp)
 		return (-1);
 	}
 
-	ncpp = &nchashtbl[
-	    hash32_buf(&dvp->v_id, sizeof(dvp->v_id), cnp->cn_hash) & nchash];
+	ncpp = &nchashtbl[NCHASH(dvp, cnp)];
 	LIST_FOREACH(ncp, ncpp, nc_hash) {
 		if (ncp->nc_dvp == dvp &&
 		    ncp->nc_dvpid == dvp->v_id &&
@@ -126,7 +134,7 @@ cache_lookup(dvp, vpp, cnp)
 		    !memcmp(ncp->nc_name, cnp->cn_nameptr, (u_int)ncp->nc_nlen))
 			break;
 	}
-	if (ncp == 0) {
+	if (ncp == NULL) {
 		nchstats.ncs_miss++;
 		return (-1);
 	}
@@ -235,13 +243,92 @@ remove:
 	TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 	LIST_REMOVE(ncp, nc_hash);
 	ncp->nc_hash.le_prev = NULL;
-#if 0
+
 	if (ncp->nc_vhash.le_prev != NULL) {
 		LIST_REMOVE(ncp, nc_vhash);
 		ncp->nc_vhash.le_prev = NULL;
 	}
-#endif
+
 	TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
+	return (-1);
+}
+
+/*
+ * Scan cache looking for name of directory entry pointing at vp.
+ *
+ * Fill in dvpp.
+ *
+ * If bufp is non-NULL, also place the name in the buffer which starts
+ * at bufp, immediately before *bpp, and move bpp backwards to point
+ * at the start of it.  (Yes, this is a little baroque, but it's done
+ * this way to cater to the whims of getcwd).
+ *
+ * Returns 0 on success, -1 on cache miss, positive errno on failure.
+ *
+ * TODO: should we return *dvpp locked?
+ */
+
+int
+cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
+{
+	struct namecache *ncp;
+	struct vnode *dvp;
+	struct ncvhashhead *nvcpp;
+	char *bp;
+
+	if (!doingcache)
+		goto out;
+
+	nvcpp = &ncvhashtbl[NCVHASH(vp)];
+
+	LIST_FOREACH(ncp, nvcpp, nc_vhash) {
+		if (ncp->nc_vp == vp &&
+		    ncp->nc_vpid == vp->v_id &&
+		    (dvp = ncp->nc_dvp) != NULL &&
+		    /* avoid pesky '.' entries.. */
+		    dvp != vp) {
+
+#ifdef DIAGNOSTIC
+			if (ncp->nc_nlen == 1 &&
+			    ncp->nc_name[0] == '.')
+				panic("cache_revlookup: found entry for .");
+
+			if (ncp->nc_nlen == 2 &&
+			    ncp->nc_name[0] == '.' &&
+			    ncp->nc_name[1] == '.')
+				panic("cache_revlookup: found entry for ..");
+#endif
+			nchstats.ncs_revhits++;
+
+			if (bufp != NULL) {
+				bp = *bpp;
+				bp -= ncp->nc_nlen;
+				if (bp <= bufp) {
+					*dvpp = NULL;
+					return (ERANGE);
+				}
+				memcpy(bp, ncp->nc_name, ncp->nc_nlen);
+				*bpp = bp;
+			}
+
+			*dvpp = dvp;
+
+			/*
+			 * XXX: Should we vget() here to have more
+			 * consistent semantics with cache_lookup()?
+			 *
+			 * For MP safety it might be necessary to do
+			 * this here, while also protecting hash
+			 * tables themselves to provide some sort of
+			 * sane inter locking.
+			 */
+			return (0);
+		}
+	}
+	nchstats.ncs_revmiss++;
+
+ out:
+	*dvpp = NULL;
 	return (-1);
 }
 
@@ -249,13 +336,11 @@ remove:
  * Add an entry to the cache
  */
 void
-cache_enter(dvp, vp, cnp)
-	struct vnode *dvp;
-	struct vnode *vp;
-	struct componentname *cnp;
+cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 {
-	register struct namecache *ncp;
-	register struct nchashhead *ncpp;
+	struct namecache *ncp;
+	struct nchashhead *ncpp;
+	struct ncvhashhead *nvcpp;
 
 	if (!doingcache || cnp->cn_namelen > NCHNAMLEN)
 		return;
@@ -292,9 +377,24 @@ cache_enter(dvp, vp, cnp)
 	ncp->nc_nlen = cnp->cn_namelen;
 	bcopy(cnp->cn_nameptr, ncp->nc_name, (unsigned)ncp->nc_nlen);
 	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
-	ncpp = &nchashtbl[
-	    hash32_buf(&dvp->v_id, sizeof(dvp->v_id), cnp->cn_hash) & nchash];
+	ncpp = &nchashtbl[NCHASH(dvp, cnp)];
 	LIST_INSERT_HEAD(ncpp, ncp, nc_hash);
+
+	/*
+	 * Create reverse-cache entries (used in getcwd) for
+	 * directories.
+	 */
+
+	ncp->nc_vhash.le_prev = 0;
+	ncp->nc_vhash.le_next = 0;
+
+	if (vp && vp != dvp && vp->v_type == VDIR &&
+	    (ncp->nc_nlen > 2 ||
+		(ncp->nc_nlen > 1 && ncp->nc_name[1] != '.') ||
+		(ncp->nc_nlen > 0 && ncp->nc_name[0] != '.'))) {
+		nvcpp = &ncvhashtbl[NCVHASH(vp)];
+		LIST_INSERT_HEAD(nvcpp, ncp, nc_vhash);
+	}
 }
 
 /*
@@ -306,6 +406,7 @@ nchinit()
 
 	TAILQ_INIT(&nclruhead);
 	nchashtbl = hashinit(desiredvnodes, M_CACHE, M_WAITOK, &nchash);
+	ncvhashtbl = hashinit(desiredvnodes/8, M_CACHE, M_WAITOK, &ncvhash);
 	pool_init(&nch_pool, sizeof(struct namecache), 0, 0, 0, "nchpl",
 	    &pool_allocator_nointr);
 }
@@ -315,8 +416,7 @@ nchinit()
  * hide entries that would now be invalid
  */
 void
-cache_purge(vp)
-	struct vnode *vp;
+cache_purge(struct vnode *vp)
 {
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
@@ -342,10 +442,9 @@ cache_purge(vp)
  * inode.  This makes the algorithm O(n^2), but do you think I care?
  */
 void
-cache_purgevfs(mp)
-	struct mount *mp;
+cache_purgevfs(struct mount *mp)
 {
-	register struct namecache *ncp, *nxtcp;
+	struct namecache *ncp, *nxtcp;
 
 	for (ncp = TAILQ_FIRST(&nclruhead); ncp != TAILQ_END(&nclruhead);
 	    ncp = nxtcp) {
@@ -360,6 +459,10 @@ cache_purgevfs(mp)
 		if (ncp->nc_hash.le_prev != 0) {
 			LIST_REMOVE(ncp, nc_hash);
 			ncp->nc_hash.le_prev = 0;
+		}
+		if (ncp->nc_vhash.le_prev != 0) {
+			LIST_REMOVE(ncp, nc_vhash);
+			ncp->nc_vhash.le_prev = 0;
 		}
 		/* cause rescan of list, it may have altered */
 		nxtcp = TAILQ_FIRST(&nclruhead);
