@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.82 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: conf.c,v 1.83 2005/05/26 02:38:35 cloder Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -197,15 +197,33 @@ conf_set_now(char *section, char *tag, char *value, int override,
 		    (unsigned long)sizeof *node);
 		return 1;
 	}
-	node->section = strdup(section);
-	node->tag = strdup(tag);
-	node->value = strdup(value);
+	node->section = node->tag = node->value = NULL;
+	if ((node->section = strdup(section)) == NULL)
+		goto fail;
+	if ((node->tag = strdup(tag)) == NULL)
+		goto fail;
+	if ((node->value = strdup(value)) == NULL)
+		goto fail;
 	node->is_default = is_default;
 
 	LIST_INSERT_HEAD(&conf_bindings[conf_hash(section)], node, link);
 	LOG_DBG((LOG_MISC, 95, "conf_set_now: [%s]:%s->%s", node->section,
 	    node->tag, node->value));
 	return 0;
+fail:
+	if (node->value) {
+		free(node->value);
+		node->value = NULL;
+	}
+	if (node->tag) {
+		free(node->tag);
+		node->tag = NULL;
+	}
+	if (node->section) {
+		free(node->section);
+		node->section = NULL;
+	}
+	return 1;
 }
 
 /*
