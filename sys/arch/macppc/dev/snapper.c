@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.15 2005/05/26 02:22:06 jason Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.16 2005/05/26 22:51:50 drahn Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -719,7 +719,7 @@ snapper_set_params(h, setmode, usemode, play, rec)
 	}
 
 	/* Set the speed */
-	p->sample_rate = 44100;	/*XX wire rate down */
+	p->sample_rate = play->sample_rate;
 	rate = p->sample_rate;
 
 	if (snapper_set_rate(sc, rate))
