@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.33 2005/05/26 05:21:16 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.34 2005/05/26 05:28:35 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -342,8 +342,7 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 
 	if (aw->type != PF_ADDR_DYNIFTL)
 		return (0);
-	dyn = pool_get(&pfi_addr_pl, PR_NOWAIT);
-	if (dyn == NULL)
+	if ((dyn = pool_get(&pfi_addr_pl, PR_NOWAIT)) == NULL)
 		return (1);
 	bzero(dyn, sizeof(*dyn));
 
@@ -373,14 +372,12 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 	if (dyn->pfid_net != 128)
 		snprintf(tblname + strlen(tblname),
 		    sizeof(tblname) - strlen(tblname), "/%d", dyn->pfid_net);
-	ruleset = pf_find_or_create_ruleset(PF_RESERVED_ANCHOR);
-	if (ruleset == NULL) {
+	if ((ruleset = pf_find_or_create_ruleset(PF_RESERVED_ANCHOR)) == NULL) {
 		rv = 1;
 		goto _bad;
 	}
 
-	dyn->pfid_kt = pfr_attach_table(ruleset, tblname);
-	if (dyn->pfid_kt == NULL) {
+	if ((dyn->pfid_kt = pfr_attach_table(ruleset, tblname)) == NULL) {
 		rv = 1;
 		goto _bad;
 	}
@@ -506,13 +503,12 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 			got6 = 1;
 		net2 = net;
 		if (net2 == 128 && (flags & PFI_AFLAG_NETWORK)) {
-			if (af == AF_INET) {
+			if (af == AF_INET)
 				net2 = pfi_unmask(&((struct sockaddr_in *)
 				    ia->ifa_netmask)->sin_addr);
-			} else if (af == AF_INET6) {
+			else if (af == AF_INET6)
 				net2 = pfi_unmask(&((struct sockaddr_in6 *)
 				    ia->ifa_netmask)->sin6_addr);
-			}
 		}
 		if (af == AF_INET && net2 > 32)
 			net2 = 32;
@@ -560,7 +556,7 @@ pfi_address_add(struct sockaddr *sa, int af, int net)
 	p->pfra_net = net;
 	if (af == AF_INET)
 		p->pfra_ip4addr = ((struct sockaddr_in *)sa)->sin_addr;
-	if (af == AF_INET6) {
+	else if (af == AF_INET6) {
 		p->pfra_ip6addr = ((struct sockaddr_in6 *)sa)->sin6_addr;
 		if (IN6_IS_ADDR_LINKLOCAL(&p->pfra_ip6addr))
 			p->pfra_ip6addr.s6_addr16[1] = 0;
