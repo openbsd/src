@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.18 2005/05/26 20:21:09 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.19 2005/05/26 20:42:10 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -63,7 +63,6 @@ struct {
     {NBR_STA_BIDIR,	NBR_EVT_2_WAY_RCVD,	NBR_ACT_NOTHING,	0},
     {NBR_STA_INIT,	NBR_EVT_1_WAY_RCVD,	NBR_ACT_NOTHING,	0},
     {NBR_STA_DOWN,	NBR_EVT_HELLO_RCVD,	NBR_ACT_STRT_ITIMER,	NBR_STA_INIT},
-    {NBR_STA_DOWN,	NBR_EVT_STRT,		NBR_ACT_STRT,		NBR_STA_ATTEMPT},
     {NBR_STA_ATTEMPT,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	NBR_STA_INIT},
     {NBR_STA_INIT,	NBR_EVT_2_WAY_RCVD,	NBR_ACT_EVAL,		0},
     {NBR_STA_XSTRT,	NBR_EVT_NEG_DONE,	NBR_ACT_SNAP,		NBR_STA_SNAP},
@@ -145,9 +144,6 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	}
 
 	switch (nbr_fsm_tbl[i].action) {
-	case NBR_ACT_STRT:
-		ret = nbr_act_start(nbr);
-		break;
 	case NBR_ACT_RST_ITIMER:
 		ret = nbr_act_reset_itimer(nbr);
 		break;
@@ -431,14 +427,6 @@ nbr_start_adj_timer(struct nbr *nbr)
 }
 
 /* actions */
-int
-nbr_act_start(struct nbr *nbr)
-{
-	log_debug("nbr_act_start: neighbor ID %s", inet_ntoa(nbr->id));
-
-	return (-1);
-}
-
 int
 nbr_act_reset_itimer(struct nbr *nbr)
 {

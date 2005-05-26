@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.14 2005/04/25 11:31:50 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.15 2005/05/26 20:42:10 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -50,7 +50,6 @@ TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 enum nbr_event {
 	NBR_EVT_NOTHING,
 	NBR_EVT_HELLO_RCVD,
-	NBR_EVT_STRT,
 	NBR_EVT_2_WAY_RCVD,
 	NBR_EVT_NEG_DONE,
 	NBR_EVT_SNAP_DONE,
@@ -69,7 +68,6 @@ enum nbr_event {
 /* neighbor actions */
 enum nbr_action {
 	NBR_ACT_NOTHING,
-	NBR_ACT_STRT,
 	NBR_ACT_RST_ITIMER,
 	NBR_ACT_STRT_ITIMER,
 	NBR_ACT_EVAL,
@@ -272,7 +270,6 @@ int	 nbr_reset_itimer(struct nbr *);
 void	 nbr_adj_timer(int, short, void *);
 int	 nbr_start_adj_timer(struct nbr *);
 
-int	 nbr_act_start(struct nbr *);
 int	 nbr_act_reset_itimer(struct nbr *);
 int	 nbr_act_start_itimer(struct nbr *);
 int	 nbr_act_eval(struct nbr *);
