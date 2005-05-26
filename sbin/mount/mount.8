@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.49 2005/03/12 13:28:37 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.50 2005/05/26 20:16:21 fgsch Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -208,13 +208,6 @@ to the file system should be done synchronously.
 The same as
 .Fl u ;
 indicate that the status of an already mounted file system should be changed.
-.It union
-Causes the namespace at the mount point to appear as the union
-of the mounted file system root and the existing directory.
-Lookups will be done in the mounted file system first.
-If those operations fail due to a non-existent file the underlying
-directory is then accessed.
-All creates are done in the mounted file system.
 .El
 .Pp
 Any additional options specific to a given file system type (see the
@@ -364,11 +357,8 @@ with option
 .Xr mount_msdos 8 ,
 .Xr mount_nfs 8 ,
 .Xr mount_ntfs 8 ,
-.Xr mount_null 8 ,
 .Xr mount_portal 8 ,
 .Xr mount_procfs 8 ,
-.Xr mount_umap 8 ,
-.Xr mount_union 8 ,
 .Xr mount_xfs 8 ,
 .Xr sysctl 8 ,
 .Xr umount 8
