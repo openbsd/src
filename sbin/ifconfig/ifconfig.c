@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.140 2005/05/25 07:40:49 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.141 2005/05/26 02:15:42 frantzen Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1078,6 +1078,9 @@ setifgroup(const char *group_name, int dummy)
 	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
 
+	if (group_name[0] && isdigit(group_name[strlen(group_name) - 1]))
+		errx(1, "setifgroup: group names may not end in a digit");
+
 	if (strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
 		err(1, "setifgroup: group name too long");
 	if (ioctl(s, SIOCAIFGROUP, (caddr_t)&ifgr) == -1)
@@ -1092,6 +1095,9 @@ unsetifgroup(const char *group_name, int dummy)
 
 	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
+
+	if (group_name[0] && isdigit(group_name[strlen(group_name) - 1]))
+		errx(1, "unsetifgroup: group names may not end in a digit");
 
 	if (strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
 		err(1, "unsetifgroup: group name too long");
