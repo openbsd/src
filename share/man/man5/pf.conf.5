@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.328 2005/05/23 15:25:50 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.329 2005/05/26 05:34:00 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -217,7 +217,7 @@ When the resolver is called to add a hostname to a table,
 .Em all
 resulting IPv4 and IPv6 addresses are placed into the table.
 IP addresses can also be entered in a table by specifying a valid interface
-name or the
+name, a valid interface group or the
 .Em self
 keyword, in which case all addresses assigned to the interface(s) will be
 added to the table.
@@ -442,8 +442,6 @@ option sets the default behaviour for states:
 .Bl -tag -width group-bound -compact
 .It Ar if-bound
 States are bound to interface.
-.It Ar group-bound
-States are bound to interface group (i.e. ppp)
 .It Ar floating
 States can match packets on any interfaces (the default).
 .El
@@ -1240,9 +1238,7 @@ is considered the last matching rule, and evaluation of subsequent rules
 is skipped.
 .It Ar on <interface>
 This rule applies only to packets coming in on, or going out through, this
-particular interface.
-It is also possible to simply give the interface driver name, like ppp or fxp,
-to make the rule match packets flowing through a group of interfaces.
+particular interface or interface group.
 .It Ar <af>
 This rule applies only to packets of this address family.
 Supported values are
@@ -1754,34 +1750,18 @@ All further packets of these connections are passed if they match a state.
 .Pp
 By default, packets coming in and out of any interface can match a state,
 but it is also possible to change that behaviour by assigning states to a
-single interface or a group of interfaces.
+single interface.
 .Pp
 The default policy is specified by the
 .Ar state-policy
 global option, but this can be adjusted on a per-rule basis by adding one
 of the
-.Ar if-bound ,
-.Ar group-bound
+.Ar if-bound
 or
 .Ar floating
 keywords to the
 .Ar keep state
 option.
-For example, if a rule is defined as:
-.Bd -literal -offset indent
-pass out on ppp from any to 10.12/16 keep state (group-bound)
-.Ed
-.Pp
-A state created on ppp0 would match packets an all PPP interfaces,
-but not packets flowing through fxp0 or any other interface.
-.Pp
-Keeping rules
-.Ar floating
-is the more flexible option when the firewall is in a dynamic routing
-environment.
-However, this has some security implications since a state created by one
-trusted network could allow potentially hostile packets coming in from other
-interfaces.
 .Pp
 Specifying
 .Ar flags S/SA
@@ -2620,8 +2600,7 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "limit" ( limit-item | "{" limit-list "}" ) ] |
                  [ "loginterface" ( interface-name | "none" ) ] |
                  [ "block-policy" ( "drop" | "return" ) ] |
-                 [ "state-policy" ( "if-bound" | "group-bound" |
-                 "floating" ) ]
+                 [ "state-policy" ( "if-bound" | "floating" ) ]
                  [ "require-order" ( "yes" | "no" ) ]
                  [ "fingerprints" filename ] |
                  [ "debug" ( "none" | "urgent" | "misc" | "loud" ) ] )
@@ -2760,7 +2739,7 @@ state-opt      = ( "max" number | "no-sync" | timeout |
                  "max-src-conn" number |
                  "max-src-conn-rate" number "/" number |
                  "overload" "<" string ">" [ "flush" ] |
-                 "if-bound" | "group-bound" | "floating" )
+                 "if-bound" | "floating" )
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
                  "fragment drop-ovl" ]
