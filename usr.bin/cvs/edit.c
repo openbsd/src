@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.1 2005/05/25 22:07:54 jfb Exp $	*/
+/*	$OpenBSD: edit.c,v 1.2 2005/05/26 07:27:01 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,7 +50,7 @@ struct cvs_cmd cvs_cmd_edit = {
 	CVS_OP_EDIT, CVS_REQ_NOOP, "edit",
 	{ },
 	"Mark a file as being edited",
-	"[-lR] [-a action ...",
+	"[-lR] [-a action] [file ...]",
 	"a:lR",
 	NULL,
 	CF_SORT | CF_RECURSE,
