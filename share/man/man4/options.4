@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.159 2005/05/04 05:05:31 jaredy Exp $
+.\"	$OpenBSD: options.4,v 1.160 2005/05/26 02:44:37 pedro Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -451,13 +451,6 @@ may be found.
 See
 .Xr mount_kernfs 8
 for details.
-.It Cd option NULLFS
-Includes code for a loopback file system.
-This permits portions of the file hierarchy to be re-mounted in other places.
-The code really exists to provide an example of a stackable file system layer.
-See
-.Xr mount_null 8
-for details.
 .It Cd option PORTAL
 Includes the (experimental) portal filesystem.
 This permits interesting tricks like opening TCP sockets by opening files in
@@ -478,24 +471,6 @@ visible as files, and signals may be sent to processes by writing to
 files in the procfs namespace.
 See
 .Xr mount_procfs 8
-for details.
-.It Cd option UMAPFS
-Includes a loopback file system in which user and group IDs may be
-remapped -- this can be useful when mounting alien file systems with
-different uids and gids than the local system (eg, remote NFS).
-See
-.Xr mount_umap 8
-for details.
-.It Cd option UNION
-Includes code for the union file system, which permits directories to
-be mounted on top of each other in such a way that both file systems
-remain visible -- this permits tricks like allowing writing (and the
-deleting of files) on a read-only file system like a CD-ROM by
-mounting a local writable file system on top of the read-only file
-system.
-This filesystem is still experimental and is known to be somewhat unstable.
-See
-.Xr mount_union 8
 for details.
 .It Cd option XFS
 Includes the kernel support for the AFS-compatible Arla filesystem.
