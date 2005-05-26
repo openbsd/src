@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.32 2005/05/25 06:50:05 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.33 2005/05/26 05:21:16 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -348,7 +348,10 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 	bzero(dyn, sizeof(*dyn));
 
 	s = splsoftnet();
-	dyn->pfid_kif = pfi_kif_get(aw->v.ifname);
+	if (!strcmp(aw->v.ifname, "self"))
+		dyn->pfid_kif = pfi_kif_get("all");
+	else
+		dyn->pfid_kif = pfi_kif_get(aw->v.ifname);
 	if (dyn->pfid_kif == NULL) {
 		rv = 1;
 		goto _bad;
