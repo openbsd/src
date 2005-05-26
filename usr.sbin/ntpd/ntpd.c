@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.35 2005/04/18 20:46:02 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.36 2005/05/26 09:13:06 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,7 @@ __dead void	usage(void);
 int		main(int, char *[]);
 int		check_child(pid_t, const char *);
 int		dispatch_imsg(struct ntpd_conf *);
-void		ntpd_adjtime(double);
+int		ntpd_adjtime(double);
 void		ntpd_settime(double);
 
 volatile sig_atomic_t	 quit = 0;
@@ -264,7 +264,8 @@ dispatch_imsg(struct ntpd_conf *conf)
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
 				fatalx("invalid IMSG_ADJTIME received");
 			memcpy(&d, imsg.data, sizeof(d));
-			ntpd_adjtime(d);
+			n = ntpd_adjtime(d);
+			imsg_compose(ibuf, IMSG_ADJTIME, 0, 0, &n, sizeof(n));
 			break;
 		case IMSG_SETTIME:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
@@ -308,10 +309,12 @@ dispatch_imsg(struct ntpd_conf *conf)
 	return (0);
 }
 
-void
+int
 ntpd_adjtime(double d)
 {
-	struct timeval	tv;
+	struct timeval	tv, olddelta;
+	int		synced = 0;
+	static int	firstadj = 1;
 
 	if (d >= (double)LOG_NEGLIGEE / 1000 ||
 	    d <= -1 * (double)LOG_NEGLIGEE / 1000)
@@ -319,8 +322,12 @@ ntpd_adjtime(double d)
 	else
 		log_debug("adjusting local clock by %fs", d);
 	d_to_tv(d, &tv);
-	if (adjtime(&tv, NULL) == -1)
+	if (adjtime(&tv, &olddelta) == -1)
 		log_warn("adjtime failed");
+	else if (!firstadj && olddelta.tv_sec == 0 && olddelta.tv_usec == 0)
+		synced = 1;
+	firstadj = 0;
+	return (synced);
 }
 
 void

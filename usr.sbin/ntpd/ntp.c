@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.59 2005/05/23 22:46:43 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.60 2005/05/26 09:13:06 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -304,6 +304,16 @@ ntp_dispatch_imsg(void)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_ADJTIME:
+			memcpy(&n, imsg.data, sizeof(n));
+			if (n == 1 && conf->status.leap == LI_ALARM) {
+				log_info("clock is now synced");
+				conf->status.leap = LI_NOWARNING;
+			} else if (n == 0 && conf->status.leap != LI_ALARM) {
+				log_info("clock is now unsynced");
+				conf->status.leap = LI_ALARM;
+			}
+			break;
 		case IMSG_HOST_DNS:
 			TAILQ_FOREACH(peer, &conf->ntp_peers, entry)
 				if (peer->id == imsg.hdr.peerid)
@@ -418,7 +428,6 @@ priv_adjtime(void)
 		    &offset_median, sizeof(offset_median));
 
 		conf->status.reftime = gettime();
-		conf->status.leap = LI_NOWARNING;
 		conf->status.stratum++;	/* one more than selected peer */
 		update_scale(offset_median);
 
