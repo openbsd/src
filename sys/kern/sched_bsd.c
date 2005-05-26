@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.2 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.3 2005/05/26 18:10:40 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -381,6 +381,7 @@ yield()
 
 	SCHED_LOCK(s);
 	p->p_priority = p->p_usrpri;
+	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nvcsw++;
 	mi_switch(s);
