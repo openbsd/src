@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.23 2005/05/26 19:54:49 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.24 2005/05/26 22:06:26 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -348,10 +348,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				fatalx("ospfe_dispatch_rde: "
 				    "neighbor not found");
 
-			log_debug("ospfe_dispatch_rde: IMSG_DD, "
-			    "neighbor id %s, len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-
 			/* put these on my ls_req_list for retrieval */
 			lhp = lsa_hdr_new();
 			memcpy(lhp, imsg.data, sizeof(*lhp));
@@ -377,10 +373,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				fatalx("ospfe_dispatch_rde: "
 				    "neighbor not found");
 
-			log_debug("ospfe_dispatch_rde: IMSG_DB_SNAPSHOT, "
-			    "neighbor id %s, len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-
 			/* add LSA header to the neighbor db_sum_list */
 			lhp = lsa_hdr_new();
 			memcpy(lhp, imsg.data, sizeof(*lhp));
@@ -391,10 +383,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("ospfe_dispatch_rde: "
 				    "neighbor not found");
-
-			log_debug("ospfe_dispatch_rde: IMSG_DB_END, "
-			    "neighbor id %s, len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			/* snapshot done, start tx of dd packets */
 			nbr_fsm(nbr, NBR_EVT_SNAP_DONE);
@@ -487,10 +475,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				fatalx("ospfe_dispatch_rde: "
 				    "neighbor not found");
 
-			log_debug("ospfe_dispatch_rde: IMSG_LS_UPD, "
-			    "neighbor id %s, len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-
 			if (nbr->iface->self == nbr)
 				break;
 
@@ -518,10 +502,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				fatalx("ospfe_dispatch_rde: "
 				    "neighbor not found");
 
-			log_debug("ospfe_dispatch_rde: IMSG_LS_ACK, "
-			    "neighbor id %s, len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-
 			if (nbr->iface->self == nbr)
 				break;
 
@@ -537,10 +517,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("ospfe_dispatch_rde: "
 				    "neighbor not found");
-
-			log_debug("ospfe_dispatch_rde: IMSG_LS_BADREQ, "
-			    "neighbor id %s, len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			if (nbr->iface->self == nbr)
 				fatalx("ospfe_dispatch_rde: "
@@ -802,8 +778,6 @@ orig_net_lsa(struct iface *iface)
 	struct buf		*buf;
 	int			 num_rtr = 0;
 	u_int16_t		 chksum;
-
-	log_debug("orig_net_lsa: iface %s", iface->name);
 
 	/* XXX READ_BUF_SIZE */
 	if ((buf = buf_dynamic(sizeof(lsa_hdr), READ_BUF_SIZE)) == NULL)
