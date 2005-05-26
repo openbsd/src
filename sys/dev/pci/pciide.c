@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.192 2005/04/29 01:11:46 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.193 2005/05/26 17:43:24 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -654,6 +654,10 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  nforce_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_IDE,
+	  0,
+	  nforce_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
 	  0,
 	  nforce_chip_map
 	}
@@ -6563,6 +6567,7 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_NVIDIA_NFORCE2_400_IDE:
 	case PCI_PRODUCT_NVIDIA_NFORCE3_IDE:
 	case PCI_PRODUCT_NVIDIA_NFORCE3_250_IDE:
+	case PCI_PRODUCT_NVIDIA_NFORCE4_ATA133:
 		sc->sc_wdcdev.UDMA_cap = 6;
 		break;
 	default:
