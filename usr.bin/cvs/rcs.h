@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.28 2005/05/25 21:59:16 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.29 2005/05/26 01:45:54 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -78,7 +78,7 @@
 #define RCSNUM_MAXNUM  USHRT_MAX
 #define RCSNUM_MAXLEN  64
 
-#define RCSNUM_ISBRANCH(n)    (((n)->rn_len % 2) == 0)
+#define RCSNUM_ISBRANCH(n)    ((n)->rn_len % 2)
 
 
 /* file flags */
@@ -221,6 +221,9 @@ BUF*      rcs_patch     (const char *, const char *);
 
 RCSNUM*   rcsnum_alloc  (void);
 RCSNUM*   rcsnum_parse  (const char *);
+RCSNUM*   rcsnum_brtorev(const RCSNUM *);
+RCSNUM*   rcsnum_revtobr(const RCSNUM *);
+RCSNUM*   rcsnum_inc    (RCSNUM *);
 void      rcsnum_free   (RCSNUM *);
 int       rcsnum_aton   (const char *, char **, RCSNUM *);
 char*     rcsnum_tostr  (const RCSNUM *, char *, size_t);

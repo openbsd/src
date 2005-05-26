@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.10 2005/04/13 16:25:02 jfb Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.11 2005/05/26 01:45:54 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,11 +35,14 @@
 #include "log.h"
 
 
+static int rcsnum_setsize  (RCSNUM *, u_int);
+
 
 /*
  * rcsnum_alloc()
  *
- * Allocate an RCS number structure.
+ * Allocate an RCS number structure and return a pointer to it on success,
+ * or NULL on failure.
  */
 RCSNUM*
 rcsnum_alloc(void)
@@ -48,7 +51,7 @@ rcsnum_alloc(void)
 
 	rnp = (RCSNUM *)malloc(sizeof(*rnp));
 	if (rnp == NULL) {
-		cvs_log(LP_ERR, "failed to allocate RCS number");
+		rcs_errno = RCS_ERR_ERRNO;
 		return (NULL);
 	}
 	rnp->rn_len = 0;
@@ -56,7 +59,6 @@ rcsnum_alloc(void)
 
 	return (rnp);
 }
-
 
 /*
  * rcsnum_parse()
@@ -82,7 +84,6 @@ rcsnum_parse(const char *str)
 	return (num);
 }
 
-
 /*
  * rcsnum_free()
  *
@@ -95,7 +96,6 @@ rcsnum_free(RCSNUM *rn)
 		free(rn->rn_id);
 	free(rn);
 }
-
 
 /*
  * rcsnum_tostr()
@@ -125,7 +125,6 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 	return (buf);
 }
 
-
 /*
  * rcsnum_cpy()
  *
@@ -147,7 +146,7 @@ rcsnum_cpy(const RCSNUM *nsrc, RCSNUM *ndst, u_int depth)
 
 	tmp = realloc(ndst->rn_id, sz);
 	if (tmp == NULL) {
-		cvs_log(LP_ERR, "failed to reallocate RCSNUM");
+		rcs_errno = RCS_ERR_ERRNO;
 		return (-1);
 	}
 
@@ -156,7 +155,6 @@ rcsnum_cpy(const RCSNUM *nsrc, RCSNUM *ndst, u_int depth)
 	memcpy(ndst->rn_id, nsrc->rn_id, sz);
 	return (0);
 }
-
 
 /*
  * rcsnum_cmp()
@@ -194,7 +192,6 @@ rcsnum_cmp(const RCSNUM *n1, const RCSNUM *n2, u_int depth)
 	return (0);
 }
 
-
 /*
  * rcsnum_aton()
  *
@@ -214,7 +211,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	if (nump->rn_id == NULL) {
 		nump->rn_id = (u_int16_t *)malloc(sizeof(u_int16_t));
 		if (nump->rn_id == NULL) {
-			cvs_log(LP_ERRNO, "failed to allocate RCSNUM");
+			rcs_errno = RCS_ERR_ERRNO;
 			return (-1);
 		}
 	}
@@ -228,8 +225,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 
 		if (*sp == '.') {
 			if (nump->rn_len >= RCSNUM_MAXLEN - 1) {
-				cvs_log(LP_ERR,
-				    "RCSNUM exceeds maximum length");
+				rcs_errno = RCS_ERR_BADNUM;
 				goto rcsnum_aton_failed;
 			}
 
@@ -263,4 +259,90 @@ rcsnum_aton_failed:
 	free(nump->rn_id);
 	nump->rn_id = NULL;
 	return (-1);
+}
+
+/*
+ * rcsnum_inc()
+ *
+ * Increment the revision number specified in <num>.
+ * Returns a pointer to the <num> on success, or NULL on failure.
+ */
+RCSNUM*
+rcsnum_inc(RCSNUM *num)
+{
+	if (num->rn_id[num->rn_len - 1] == RCSNUM_MAXNUM)
+		return (NULL);
+	num->rn_id[num->rn_len - 1]++;
+	return (num);
+}
+
+/*
+ * rcsnum_revtobr()
+ *
+ * Retrieve the branch number associated with the revision number <num>.
+ * If <num> is a branch revision, the returned value will be the same
+ * number as the argument.
+ */
+RCSNUM*
+rcsnum_revtobr(const RCSNUM *num)
+{
+	RCSNUM *brnum;
+
+	if (num->rn_len < 2)
+		return (NULL);
+
+	if ((brnum = rcsnum_alloc()) == NULL)
+		return (NULL);
+
+	rcsnum_cpy(num, brnum, 0);
+
+	if (!RCSNUM_ISBRANCH(brnum))
+		brnum->rn_len--;
+
+	return (brnum);
+}
+
+/*
+ * rcsnum_brtorev()
+ *
+ * Retrieve the initial revision number associated with the branch number <num>.
+ * If <num> is a revision number, an error will be returned.
+ */
+RCSNUM*
+rcsnum_brtorev(const RCSNUM *brnum)
+{
+	RCSNUM *num;
+
+	if (!RCSNUM_ISBRANCH(brnum)) {
+		return (NULL);
+	}
+
+	if ((num = rcsnum_alloc()) == NULL)
+		return (NULL);
+
+	if (rcsnum_setsize(num, brnum->rn_len + 1) < 0) {
+		rcsnum_free(num);
+		return (NULL);
+	}
+
+	rcsnum_cpy(brnum, num, brnum->rn_len);
+	num->rn_id[num->rn_len++] = 1;
+
+	return (num);
+}
+
+static int
+rcsnum_setsize(RCSNUM *num, u_int len)
+{
+	void *tmp;
+
+	tmp = realloc(num->rn_id, len * sizeof(u_int16_t));
+	if (tmp == NULL) {
+		rcs_errno = RCS_ERR_ERRNO;
+		return (-1);
+	}
+
+	num->rn_id = (u_int16_t *)tmp;
+	num->rn_len = len;
+	return (0);
 }
