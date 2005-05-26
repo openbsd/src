@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.81 2005/04/25 17:55:52 brad Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.82 2005/05/26 01:49:15 markus Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -180,11 +180,11 @@ struct mbuf {
  * prevents a section of code from from being interrupted by network
  * drivers.
  */
-#define	MBUFLOCK(code) \
-	{ int ms = splimp(); \
+#define	MBUFLOCK(code) do {\
+	int ms = splimp(); \
 	  { code } \
 	  splx(ms); \
-	}
+} while(/* CONSTCOND */ 0)
 
 /*
  * mbuf allocation/deallocation macros:
@@ -196,20 +196,18 @@ struct mbuf {
  * allocates an mbuf and initializes it to contain a packet header
  * and internal data.
  */
-#define	_MGET(m, how, type) do { \
-	MBUFLOCK( \
-	    	(m) = pool_get(&mbpool, \
-		    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0); \
-	); \
+#define	_MGET(m, how, type) MBUFLOCK( \
+	(m) = pool_get(&mbpool, \
+	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0); \
 	if (m) { \
 		(m)->m_type = (type); \
-		MBUFLOCK(mbstat.m_mtypes[type]++;) \
+		mbstat.m_mtypes[type]++; \
 		(m)->m_next = (struct mbuf *)NULL; \
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_dat; \
 		(m)->m_flags = 0; \
 	} \
-} while(/* CONSTCOND */ 0)
+)
 
 #ifdef SMALL_KERNEL
 struct mbuf *_sk_mget(int, int);
@@ -218,14 +216,12 @@ struct mbuf *_sk_mget(int, int);
 #define MGET(m, how, type) _MGET(m, how, type)
 #endif
 
-#define	_MGETHDR(m, how, type) do { \
-	MBUFLOCK( \
-		(m) = pool_get(&mbpool, \
-		    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0); \
-	); \
+#define	_MGETHDR(m, how, type) MBUFLOCK( \
+	(m) = pool_get(&mbpool, \
+	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0); \
 	if (m) { \
 		(m)->m_type = (type); \
-		MBUFLOCK(mbstat.m_mtypes[type]++;) \
+		mbstat.m_mtypes[type]++; \
 		(m)->m_next = (struct mbuf *)NULL; \
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
@@ -233,7 +229,7 @@ struct mbuf *_sk_mget(int, int);
 		SLIST_INIT(&(m)->m_pkthdr.tags); \
 		(m)->m_pkthdr.csum_flags = 0; \
 	} \
-} while (/* CONSTCOND */ 0)
+)
 
 #ifdef SMALL_KERNEL
 struct mbuf *_sk_mgethdr(int, int);
@@ -497,7 +493,7 @@ void _sk_mclget(struct mbuf *, int);
 
 /* change mbuf to new type */
 #define MCHTYPE(m, t) { \
-	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;) \
+	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;); \
 	(m)->m_type = t;\
 }
 
