@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.14 2004/07/05 18:33:38 otto Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.15 2005/05/26 01:37:49 pedro Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -60,7 +60,6 @@ union mntval {
 #define MOPT_NOSUID	{ "suid",	MNT_NOSUID, MFLAG_INVERSE | MFLAG_SET }
 #define MOPT_RDONLY	{ "rdonly",	MNT_RDONLY, MFLAG_SET }
 #define MOPT_SYNC	{ "sync",	MNT_SYNCHRONOUS, MFLAG_SET }
-#define MOPT_UNION	{ "union",	MNT_UNION, MFLAG_SET }
 #define MOPT_USERQUOTA	{ "userquota",	0, MFLAG_SET | MFLAG_STRVAL \
 					    | MFLAG_OPT }
 #define MOPT_GROUPQUOTA	{ "groupquota",	0, MFLAG_SET | MFLAG_STRVAL \
@@ -94,8 +93,7 @@ union mntval {
 	MOPT_NODEV,							\
 	MOPT_NOEXEC,							\
 	MOPT_NOSUID,							\
-	MOPT_RDONLY,							\
-	MOPT_UNION
+	MOPT_RDONLY
 
 int getmntopts(const char *, const struct mntopt *, int *);
 int getmntopt(char **, union mntval *, const struct mntopt *, int *);
