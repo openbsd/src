@@ -118,12 +118,9 @@
 ./sbin/mount_mfs
 ./sbin/mount_msdos
 ./sbin/mount_nfs
-./sbin/mount_null
 ./sbin/mount_portal
 ./sbin/mount_procfs
 ./sbin/mount_udf
-./sbin/mount_umap
-./sbin/mount_union
 ./sbin/mount_xfs
 ./sbin/mountd
 ./sbin/ncheck
