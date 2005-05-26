@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.2 2005/05/26 00:55:03 ho Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.3 2005/05/26 05:33:48 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -237,7 +237,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 static void
 m_priv_pfkey_snap(int s)
 {
-	u_int8_t	*sadb_buf, *spd_buf;
+	u_int8_t	*sadb_buf = 0, *spd_buf = 0;
 	size_t		 sadb_buflen = 0, spd_buflen = 0, sz;
 	int		 mib[5];
 	u_int32_t	 v;
@@ -249,7 +249,6 @@ m_priv_pfkey_snap(int s)
 	mib[4] = 0; /* Unspec SA type */
 
 	/* First, fetch SADB data */
-
 	if (sysctl(mib, sizeof mib / sizeof mib[0], NULL, &sz, NULL, 0) == -1
 	    || sz == 0) {
 		sadb_buflen = 0;
