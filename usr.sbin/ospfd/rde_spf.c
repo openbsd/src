@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.20 2005/05/26 23:23:39 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.21 2005/05/26 23:31:04 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -156,7 +156,6 @@ spf_calc(struct area *area)
 				continue;
 			}
 			if (w->cost != LS_INFINITY && w->prev != NULL) {
-				log_debug("spf_calc: w already in SPF tree");
 				continue;
 			}
 			if (v->type == LSA_TYPE_ROUTER)
