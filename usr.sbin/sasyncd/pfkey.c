@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.7 2005/05/26 00:55:03 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.8 2005/05/26 05:34:17 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -318,7 +318,6 @@ pfkey_snapshot(void *v)
 {
 	struct syncpeer		*p = (struct syncpeer *)v;
 	struct sadb_msg		*m;
-	struct ipsec_policy	*ip;
 	u_int8_t		*sadb, *spd, *max, *next, *sendbuf;
 	u_int32_t		 sadbsz, spdsz;
 
@@ -356,9 +355,11 @@ pfkey_snapshot(void *v)
 		memset(sadb, 0, sadbsz);
 		free(sadb);
 	}
-	
+
+#ifdef notyet	
 	/* Parse SPD data */
 	if (spdsz && spd) {
+		struct ipsec_policy	*ip;
 		dump_buf(5, spd, spdsz, "pfkey_snapshot: SPD data");
 
 		max = spd + spdsz;
@@ -374,5 +375,6 @@ pfkey_snapshot(void *v)
 		memset(spd, 0, spdsz);
 		free(spd);
 	}
+#endif
 	return;
 }
