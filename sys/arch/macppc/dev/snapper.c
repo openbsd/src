@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.14 2005/05/23 18:49:31 jason Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.15 2005/05/26 02:22:06 jason Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -327,7 +327,8 @@ snapper_match(parent, match, aux)
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
-	if (strcmp(compat, "snapper") != 0)
+	if (strcmp(compat, "snapper") != 0 &&
+	    strcmp(compat, "AOAKeylargo") != 0)
 		return 0;
 
 	return 1;
@@ -1467,13 +1468,18 @@ snapper_config(sc, node, parent)
 		/* printf("0x%x %s %s\n", gpio, name, audio_gpio); */
 
 		/* gpio5 */
-		if (strcmp(audio_gpio, "headphone-mute") == 0)
+		if (headphone_mute == NULL &&
+		    strcmp(audio_gpio, "headphone-mute") == 0)
 			headphone_mute = mapiodev(addr,1);
+
 		/* gpio6 */
-		if (strcmp(audio_gpio, "amp-mute") == 0)
+		if (amp_mute == NULL &&
+		    strcmp(audio_gpio, "amp-mute") == 0)
 			amp_mute = mapiodev(addr,1);
+
 		/* extint-gpio15 */
-		if (strcmp(audio_gpio, "headphone-detect") == 0) {
+		if (headphone_detect == NULL &&
+		    strcmp(audio_gpio, "headphone-detect") == 0) {
 			headphone_detect = mapiodev(addr,1);
 			OF_getprop(gpio, "audio-gpio-active-state",
 			    &headphone_detect_active, 4);
@@ -1481,9 +1487,12 @@ snapper_config(sc, node, parent)
 			headphone_detect_intr = intr[0];
 			headphone_detect_intrtype = intr[1];
 		}
+
 		/* gpio11 (keywest-11) */
-		if (strcmp(audio_gpio, "audio-hw-reset") == 0)
+		if (audio_hw_reset == NULL &&
+		    strcmp(audio_gpio, "audio-hw-reset") == 0)
 			audio_hw_reset = mapiodev(addr,1);
+
 		gpio = OF_peer(gpio);
 	}
 	DPRINTF((" headphone-mute %p\n", headphone_mute));
