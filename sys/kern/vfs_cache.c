@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.15 2005/05/26 22:40:53 marius Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.16 2005/05/26 23:28:39 pedro Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
 u_long  ncvhash;                        /* size of hash table - 1 */
 
 #define NCHASH(dvp, cnp) \
-	hash32_buf(&(dvp)->v_id, sizeof((dvp)->v_id), (cnp)->cn_hash) &nchash
+	hash32_buf(&(dvp)->v_id, sizeof((dvp)->v_id), (cnp)->cn_hash) & nchash
 
 #define NCVHASH(vp) (vp)->v_id & ncvhash
 
@@ -354,9 +354,9 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		numcache++;
 	} else if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		if (ncp->nc_hash.le_prev != 0) {
+		if (ncp->nc_hash.le_prev != NULL) {
 			LIST_REMOVE(ncp, nc_hash);
-			ncp->nc_hash.le_prev = 0;
+			ncp->nc_hash.le_prev = NULL;
 		}
 	} else
 		return;
@@ -385,8 +385,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	 * directories.
 	 */
 
-	ncp->nc_vhash.le_prev = 0;
-	ncp->nc_vhash.le_next = 0;
+	ncp->nc_vhash.le_prev = NULL;
+	ncp->nc_vhash.le_next = NULL;
 
 	if (vp && vp != dvp && vp->v_type == VDIR &&
 	    (ncp->nc_nlen > 2 ||
@@ -456,13 +456,13 @@ cache_purgevfs(struct mount *mp)
 		ncp->nc_vp = NULL;
 		ncp->nc_dvp = NULL;
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		if (ncp->nc_hash.le_prev != 0) {
+		if (ncp->nc_hash.le_prev != NULL) {
 			LIST_REMOVE(ncp, nc_hash);
-			ncp->nc_hash.le_prev = 0;
+			ncp->nc_hash.le_prev = NULL;
 		}
-		if (ncp->nc_vhash.le_prev != 0) {
+		if (ncp->nc_vhash.le_prev != NULL) {
 			LIST_REMOVE(ncp, nc_vhash);
-			ncp->nc_vhash.le_prev = 0;
+			ncp->nc_vhash.le_prev = NULL;
 		}
 		/* cause rescan of list, it may have altered */
 		nxtcp = TAILQ_FIRST(&nclruhead);
