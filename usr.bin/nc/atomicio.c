@@ -1,3 +1,5 @@
+/* $OpenBSD: atomicio.c,v 1.7 2005/05/26 01:01:08 avsm Exp $ */
+
 /*
  * Copyright (c) 2005 Anil Madhavapeddy.  All rights served.
  * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
@@ -22,7 +24,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * $OpenBSD: atomicio.c,v 1.6 2005/05/24 20:13:28 avsm Exp $
  */
 
 #include <sys/types.h>
