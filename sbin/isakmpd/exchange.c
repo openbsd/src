@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.119 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: exchange.c,v 1.120 2005/05/26 05:14:17 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -240,7 +240,7 @@ exchange_handle_leftover_payloads(struct message *msg)
 	struct payload	*p;
 	int	i;
 
-	for (i = ISAKMP_PAYLOAD_SA; i < payload_index_max; i++) {
+	for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_MAX; i++) {
 		if (i == ISAKMP_PAYLOAD_PROPOSAL ||
 		    i == ISAKMP_PAYLOAD_TRANSFORM)
 			continue;

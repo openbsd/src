@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.110 2005/05/25 22:09:17 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.111 2005/05/26 05:14:17 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -72,6 +72,9 @@ static int	message_index_payload(struct message *, struct payload *,
 		    u_int8_t ,u_int8_t *);
 static int	message_parse_transform(struct message *, struct payload *,
 		    u_int8_t, u_int8_t *);
+static struct field *message_get_field(u_int8_t);
+static int	message_validate_payload(struct message *, struct payload *,
+		    u_int8_t);
 static u_int16_t message_payload_sz(u_int8_t);
 static int      message_validate_attribute(struct message *, struct payload *);
 static int      message_validate_cert(struct message *, struct payload *);
@@ -91,47 +94,6 @@ static int      message_validate_transform(struct message *, struct payload *);
 static int      message_validate_vendor(struct message *, struct payload *);
 
 static void     message_packet_log(struct message *);
-
-static int (*message_validate_payload[])(struct message *, struct payload *) =
-{
-	message_validate_sa, message_validate_proposal,
-	message_validate_transform, message_validate_key_exch,
-	message_validate_id, message_validate_cert, message_validate_cert_req,
-	message_validate_hash, message_validate_sig, message_validate_nonce,
-	message_validate_notify, message_validate_delete,
-	message_validate_vendor, message_validate_attribute,
-	message_validate_nat_d, message_validate_nat_oa
-};
-
-static struct field *fields[] = {
-	isakmp_sa_fld, isakmp_prop_fld, isakmp_transform_fld, isakmp_ke_fld,
-	isakmp_id_fld, isakmp_cert_fld, isakmp_certreq_fld, isakmp_hash_fld,
-	isakmp_sig_fld, isakmp_nonce_fld, isakmp_notify_fld, isakmp_delete_fld,
-	isakmp_vendor_fld, isakmp_attribute_fld, isakmp_nat_d_fld,
-	isakmp_nat_oa_fld
-};
-
-/*
- * These maps are used for indexing the payloads in msg->payloads[i].
- * payload_revmap should be updated if the payloads in isakmp_num.cst change.
- * payload_map is populated during startup by message_init().
- */
-static u_int8_t payload_revmap[] = {
-	ISAKMP_PAYLOAD_NONE, ISAKMP_PAYLOAD_SA, ISAKMP_PAYLOAD_PROPOSAL,
-	ISAKMP_PAYLOAD_TRANSFORM, ISAKMP_PAYLOAD_KEY_EXCH, ISAKMP_PAYLOAD_ID,
-	ISAKMP_PAYLOAD_CERT, ISAKMP_PAYLOAD_CERT_REQ, ISAKMP_PAYLOAD_HASH,
-	ISAKMP_PAYLOAD_SIG, ISAKMP_PAYLOAD_NONCE, ISAKMP_PAYLOAD_NOTIFY,
-	ISAKMP_PAYLOAD_DELETE, ISAKMP_PAYLOAD_VENDOR, ISAKMP_PAYLOAD_ATTRIBUTE,
-#ifdef notyet
-	ISAKMP_PAYLOAD_SAK, ISAKMP_PAYLOAD_SAT, ISAKMP_PAYLOAD_KD,
-	ISAKMP_PAYLOAD_SEQ, ISAKMP_PAYLOAD_POP
-#endif
-	ISAKMP_PAYLOAD_NAT_D, ISAKMP_PAYLOAD_NAT_OA,
-	ISAKMP_PAYLOAD_NAT_D_DRAFT, ISAKMP_PAYLOAD_NAT_OA_DRAFT
-};
-
-static u_int8_t payload_map[256];
-u_int8_t payload_index_max;
 
 /*
  * Fields used for checking monotonic increasing of proposal and transform
@@ -177,13 +139,13 @@ message_alloc(struct transport *t, u_int8_t *buf, size_t sz)
 	    ISAKMP_HDR_NEXT_PAYLOAD_OFF;
 	msg->transport = t;
 	transport_reference(t);
-	msg->payload = (struct payload_head *)calloc(payload_index_max,
+	msg->payload = (struct payload_head *)calloc(ISAKMP_PAYLOAD_MAX,
 	    sizeof *msg->payload);
 	if (!msg->payload) {
 		message_free(msg);
 		return 0;
 	}
-	for (i = 0; i < payload_index_max; i++)
+	for (i = 0; i < ISAKMP_PAYLOAD_MAX; i++)
 		TAILQ_INIT(&msg->payload[i]);
 	TAILQ_INIT(&msg->post_send);
 	LOG_DBG((LOG_MESSAGE, 90, "message_alloc: allocated %p", msg));
@@ -228,7 +190,7 @@ message_free(struct message *msg)
 	if (msg->retrans)
 		timer_remove_event(msg->retrans);
 	if (msg->payload) {
-		for (i = 0; i < payload_index_max; i++)
+		for (i = 0; i < ISAKMP_PAYLOAD_MAX; i++)
 			while ((payload = TAILQ_FIRST(&msg->payload[i]))) {
 				TAILQ_REMOVE(&msg->payload[i], payload, link);
 				free(payload);
@@ -385,7 +347,7 @@ message_parse_proposal(struct message *msg, struct payload *p,
 	message_index_payload(msg, p, payload, buf);
 
 	ZERO(&payload_set);
-	SET(payload_revmap[ISAKMP_PAYLOAD_TRANSFORM], &payload_set);
+	SET(ISAKMP_PAYLOAD_TRANSFORM, &payload_set);
 	if (message_parse_payloads(msg,
 	    payload_last(msg, ISAKMP_PAYLOAD_PROPOSAL),
 	    ISAKMP_PAYLOAD_TRANSFORM, buf + ISAKMP_PROP_SPI_OFF +
@@ -410,6 +372,106 @@ message_parse_transform(struct message *msg, struct payload *p,
 	    msg->exchange->doi->debug_attribute, msg);
 
 	return 0;
+}
+
+static struct field *
+message_get_field(u_int8_t payload)
+{
+	switch (payload) {
+	case ISAKMP_PAYLOAD_SA:
+		return isakmp_sa_fld;
+	case ISAKMP_PAYLOAD_PROPOSAL:
+		return isakmp_prop_fld;
+	case ISAKMP_PAYLOAD_TRANSFORM:
+		return isakmp_transform_fld;
+	case ISAKMP_PAYLOAD_KEY_EXCH:
+		return isakmp_ke_fld;
+	case ISAKMP_PAYLOAD_ID:
+		return isakmp_id_fld;
+	case ISAKMP_PAYLOAD_CERT:
+		return isakmp_cert_fld;
+	case ISAKMP_PAYLOAD_CERT_REQ:
+		return isakmp_certreq_fld;
+	case ISAKMP_PAYLOAD_HASH:
+		return isakmp_hash_fld;
+	case ISAKMP_PAYLOAD_SIG:
+		return isakmp_sig_fld;
+	case ISAKMP_PAYLOAD_NONCE:
+		return isakmp_nonce_fld;
+	case ISAKMP_PAYLOAD_NOTIFY:
+		return isakmp_notify_fld;
+	case ISAKMP_PAYLOAD_DELETE:
+		return isakmp_delete_fld;
+	case ISAKMP_PAYLOAD_VENDOR:
+		return isakmp_vendor_fld;
+	case ISAKMP_PAYLOAD_ATTRIBUTE:
+		return isakmp_attribute_fld;
+	case ISAKMP_PAYLOAD_NAT_D:
+	case ISAKMP_PAYLOAD_NAT_D_DRAFT:
+		return isakmp_nat_d_fld;
+	case ISAKMP_PAYLOAD_NAT_OA:
+	case ISAKMP_PAYLOAD_NAT_OA_DRAFT:
+		return isakmp_nat_oa_fld;
+	/* Not yet supported and any other unknown payloads. */
+	case ISAKMP_PAYLOAD_SAK:
+	case ISAKMP_PAYLOAD_SAT:
+	case ISAKMP_PAYLOAD_KD:
+	case ISAKMP_PAYLOAD_SEQ:
+	case ISAKMP_PAYLOAD_POP:
+	default:
+		break;
+	}
+	return NULL;
+}
+
+static int
+message_validate_payload(struct message *m, struct payload *p, u_int8_t payload)
+{
+	switch (payload) {
+	case ISAKMP_PAYLOAD_SA:
+		return message_validate_sa(m, p);
+	case ISAKMP_PAYLOAD_PROPOSAL:
+		return message_validate_proposal(m, p);
+	case ISAKMP_PAYLOAD_TRANSFORM:
+		return message_validate_transform(m, p);
+	case ISAKMP_PAYLOAD_KEY_EXCH:
+		return message_validate_key_exch(m, p);
+	case ISAKMP_PAYLOAD_ID:
+		return message_validate_id(m, p);
+	case ISAKMP_PAYLOAD_CERT:
+		return message_validate_cert(m, p);
+	case ISAKMP_PAYLOAD_CERT_REQ:
+		return message_validate_cert_req(m, p);
+	case ISAKMP_PAYLOAD_HASH:
+		return message_validate_hash(m, p);
+	case ISAKMP_PAYLOAD_SIG:
+		return message_validate_sig(m, p);
+	case ISAKMP_PAYLOAD_NONCE:
+		return message_validate_nonce(m, p);
+	case ISAKMP_PAYLOAD_NOTIFY:
+		return message_validate_notify(m, p);
+	case ISAKMP_PAYLOAD_DELETE:
+		return message_validate_delete(m, p);
+	case ISAKMP_PAYLOAD_VENDOR:
+		return message_validate_vendor(m, p);
+	case ISAKMP_PAYLOAD_ATTRIBUTE:
+		return message_validate_attribute(m, p);
+	case ISAKMP_PAYLOAD_NAT_D:
+	case ISAKMP_PAYLOAD_NAT_D_DRAFT:
+		return message_validate_nat_d(m, p);
+	case ISAKMP_PAYLOAD_NAT_OA:
+	case ISAKMP_PAYLOAD_NAT_OA_DRAFT:
+		return message_validate_nat_oa(m, p);
+	/* Not yet supported and any other unknown payloads. */
+	case ISAKMP_PAYLOAD_SAK:
+	case ISAKMP_PAYLOAD_SAT:
+	case ISAKMP_PAYLOAD_KD:
+	case ISAKMP_PAYLOAD_SEQ:
+	case ISAKMP_PAYLOAD_POP:
+	default:
+		break;
+	}
+	return -1;
 }
 
 /* Check payloads for their required minimum size. */
@@ -996,7 +1058,7 @@ message_validate_sa(struct message *msg, struct payload *p)
 
 	/* Go through the PROPOSAL payloads.  */
 	ZERO(&payload_set);
-	SET(payload_revmap[ISAKMP_PAYLOAD_PROPOSAL], &payload_set);
+	SET(ISAKMP_PAYLOAD_PROPOSAL, &payload_set);
 	if (message_parse_payloads(msg, p, ISAKMP_PAYLOAD_PROPOSAL,
 	    p->p + ISAKMP_SA_SIT_OFF + len, &payload_set,
 	    message_parse_proposal) == -1)
@@ -1109,8 +1171,7 @@ message_index_payload(struct message *msg, struct payload *p, u_int8_t payload,
 	payload_node->p = buf;
 	payload_node->context = p;
 	payload_node->flags = 0;
-	TAILQ_INSERT_TAIL(&msg->payload[payload_map[payload]], payload_node,
-	    link);
+	TAILQ_INSERT_TAIL(&msg->payload[payload], payload_node, link);
 	return 0;
 }
 
@@ -1127,10 +1188,10 @@ message_sort_payloads(struct message *msg, u_int8_t next)
 	int	i, sz;
 
 	ZERO(&payload_set);
-	for (i = ISAKMP_PAYLOAD_SA; i < payload_index_max; i++)
+	for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_MAX; i++)
 		if (i != ISAKMP_PAYLOAD_PROPOSAL && i !=
 		    ISAKMP_PAYLOAD_TRANSFORM)
-			SET(payload_revmap[i], &payload_set);
+			SET(i, &payload_set);
 	sz = message_parse_payloads(msg, 0, next,
 	    (u_int8_t *)msg->iov[0].iov_base + ISAKMP_HDR_SZ, &payload_set,
 	    message_index_payload);
@@ -1147,16 +1208,16 @@ message_validate_payloads(struct message *msg)
 {
 	int             i;
 	struct payload *p;
+	struct field   *f;
 
-	for (i = ISAKMP_PAYLOAD_SA; i < payload_index_max; i++)
+	for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_MAX; i++)
 		for (p = payload_first(msg, i); p; p = TAILQ_NEXT(p, link)) {
 			LOG_DBG((LOG_MESSAGE, 60, "message_validate_payloads: "
 			    "payload %s at %p of message %p",
 			    constant_name(isakmp_payload_cst, i), p->p, msg));
-			field_dump_payload(fields[i - ISAKMP_PAYLOAD_SA],
-			    p->p);
-			if (message_validate_payload[i - ISAKMP_PAYLOAD_SA]
-			    (msg, p))
+			if ((f = message_get_field(i)) != NULL)
+				field_dump_payload(f, p->p);
+			if (message_validate_payload(msg, p, i))
 				return -1;
 		}
 	return 0;
@@ -1601,8 +1662,7 @@ message_add_payload(struct message *msg, u_int8_t payload, u_int8_t *buf,
 	 * this situation.
          */
 	payload_node->p = buf;
-	TAILQ_INSERT_TAIL(&msg->payload[payload_map[payload]], payload_node,
-	    link);
+	TAILQ_INSERT_TAIL(&msg->payload[payload], payload_node, link);
 	return 0;
 }
 
@@ -2443,37 +2503,14 @@ message_post_send(struct message *msg)
 	}
 }
 
-/* Initialize and populate payload_map[].  */
-void
-message_init(void)
-{
-	u_int8_t	i;
-
-	bzero(&payload_map, sizeof payload_map);
-
-	payload_index_max = sizeof payload_revmap / sizeof payload_revmap[0];
-	for (i = 0; i < payload_index_max; i++) {
-		payload_map[payload_revmap[i]] = i;
-		LOG_DBG((LOG_MESSAGE, 95, "message_init: payload_map[%d] = %d",
-		    payload_revmap[i], i));
-	}
-}
-
 struct payload *
 payload_first(struct message *msg, u_int8_t payload)
 {
-	if (payload_map[payload])
-		return TAILQ_FIRST(&msg->payload[payload_map[payload]]);
-	else
-		return 0;
+	return TAILQ_FIRST(&msg->payload[payload]);
 }
 
 struct payload *
 payload_last(struct message *msg, u_int8_t payload)
 {
-	if (payload_map[payload])
-		return TAILQ_LAST(&msg->payload[payload_map[payload]],
-		    payload_head);
-	else
-		return 0;
+	return TAILQ_LAST(&msg->payload[payload], payload_head);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.36 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: init.c,v 1.37 2005/05/26 05:14:17 hshoexer Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -70,7 +70,6 @@ init(void)
 	group_init();
 	ipsec_init();
 	isakmp_doi_init();
-	message_init();
 	libcrypto_init();
 
 	timer_init();
