@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.30 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.31 2005/05/26 21:25:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -118,7 +118,7 @@ cvs_ent_open(const char *dir, int flags)
 		len = strlen(ebuf);
 		if ((len > 0) && (ebuf[len - 1] == '\n'))
 			ebuf[--len] = '\0';
-		if (strcmp(ebuf, "D") == 0)
+		if ((ebuf[0] == 'D') && (ebuf[1] == '\0'))
 			break;
 		ent = cvs_ent_parse(ebuf);
 		if (ent == NULL)
@@ -366,7 +366,7 @@ cvs_ent_parse(const char *entry)
 			sp = fields[2] + 1;
 		} else {
 			sp = fields[2];
-			if (strcmp(fields[2], "0") == 0)
+			if ((fields[2][0] == '0') && (fields[2][1] == '\0'))
 				entp->ce_status = CVS_ENT_ADDED;
 		}
 		if ((entp->ce_rev = rcsnum_parse(sp)) == NULL) {
@@ -385,7 +385,6 @@ cvs_ent_parse(const char *entry)
 	return (entp);
 }
 
-
 /*
  * cvs_ent_free()
  *
@@ -400,38 +399,6 @@ cvs_ent_free(struct cvs_ent *ent)
 		free(ent->ce_buf);
 	free(ent);
 }
-
-
-/*
- * cvs_ent_getent()
- *
- * Get a single entry from the CVS/Entries file of the basename portion of
- * path <path> and return that entry.  That entry must later be freed using
- * cvs_ent_free().
- */
-struct cvs_ent*
-cvs_ent_getent(const char *path)
-{
-	char base[MAXPATHLEN], *file;
-	CVSENTRIES *entf;
-	struct cvs_ent *ep;
-
-	cvs_splitpath(path, base, sizeof(base), &file);
-
-	entf = cvs_ent_open(base, O_RDONLY);
-	if (entf == NULL)
-		return (NULL);
-
-	ep = cvs_ent_get(entf, file);
-	if (ep != NULL) {
-		/* take it out of the queue so it doesn't get freed */
-		TAILQ_REMOVE(&(entf->cef_ent), ep, ce_list);
-	}
-
-	cvs_ent_close(entf);
-	return (ep);
-}
-
 
 /*
  * cvs_ent_write()
