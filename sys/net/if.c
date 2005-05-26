@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.119 2005/05/25 06:50:05 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.120 2005/05/26 03:11:59 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -250,11 +250,6 @@ if_attachsetup(struct ifnet *ifp)
 
 	TAILQ_INIT(&ifp->if_groups);
 
-	/* add the interface family group */
-	for (n = 0; ifp->if_xname[n] < '0' || ifp->if_xname[n] > '9'; n++)
-		continue;
-	strlcpy(ifgroup, ifp->if_xname, n + 1);
-	if_addgroup(ifp, ifgroup);
 	if_addgroup(ifp, "all");
 
 	ifindex2ifnet[if_index] = ifp;
