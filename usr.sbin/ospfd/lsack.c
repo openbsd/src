@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.11 2005/05/26 20:00:14 norby Exp $ */
+/*	$OpenBSD: lsack.c,v 1.12 2005/05/26 23:42:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -226,8 +226,8 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 	while (!ls_ack_list_empty(iface)) {
 		ptr = buf;
 		cnt = 0;
-		for (le = TAILQ_FIRST(&iface->ls_ack_list); (le != NULL) &&
-		    ((ptr - buf) < iface->mtu - PACKET_HDR); le = nle) {
+		for (le = TAILQ_FIRST(&iface->ls_ack_list); le != NULL &&
+		    (ptr - buf < iface->mtu - PACKET_HDR); le = nle) {
 			nle = TAILQ_NEXT(le, entry);
 			memcpy(ptr, le->le_lsa, sizeof(struct lsa_hdr));
 			ptr += sizeof(*lsa_hdr);
