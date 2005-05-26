@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.1 2005/05/24 02:35:39 ho Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.2 2005/05/26 00:55:03 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -170,50 +170,62 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 		return -1;
 
 	/* Read SADB data. */
+	*sadb = *spd = NULL;
+	*spdsize = 0;
 	if (read(m_state.s, sadbsize, sizeof *sadbsize) < 1)
 		return -1;
-	*sadb = (u_int8_t *)malloc(*sadbsize);
-	if (!*sadb) {
-		log_err("monitor_get_pfkey_snap: malloc()");
-		/* Drain input */
-		ioctl(m_state.s, FIONBIO, &one);
-		while (read(m_state.s, &tmp, 1) > 0);
-		ioctl(m_state.s, FIONBIO, 0);
-		return -1;
-	}
-	rbytes = read(m_state.s, *sadb, *sadbsize);
-	if (rbytes != *sadbsize) {
-		if (rbytes > 0)
-			memset(*sadb, 0, rbytes);
-		free(*sadb);
-		return -1;
+	if (*sadbsize) {
+		*sadb = (u_int8_t *)malloc(*sadbsize);
+		if (!*sadb) {
+			log_err("monitor_get_pfkey_snap: malloc()");
+			/* Drain input */
+			ioctl(m_state.s, FIONBIO, &one);
+			while (read(m_state.s, &tmp, 1) > 0);
+			ioctl(m_state.s, FIONBIO, 0);
+			return -1;
+		}
+		rbytes = read(m_state.s, *sadb, *sadbsize);
+		if (rbytes != *sadbsize) {
+			if (rbytes > 0)
+				memset(*sadb, 0, rbytes);
+			free(*sadb);
+			return -1;
+		}
 	}
 
 	/* Read SPD data */
 	if (read(m_state.s, spdsize, sizeof *spdsize) < 1) {
-		memset(*sadb, 0, *sadbsize);
-		free(*sadb);
+		if (*sadbsize) {
+			memset(*sadb, 0, *sadbsize);
+			free(*sadb);
+		}
 		return -1;
 	}
-	*spd = (u_int8_t *)malloc(*spdsize);
-	if (!*spd) {
-		log_err("monitor_get_pfkey_snap: malloc()");
-		/* Drain input */
-		ioctl(m_state.s, FIONBIO, &one);
-		while (read(m_state.s, &tmp, 1) > 0);
-		ioctl(m_state.s, FIONBIO, 0);
-		memset(*sadb, 0, *sadbsize);
-		free(*sadb);
-		return -1;
-	}
-	rbytes = read(m_state.s, *spd, *spdsize);
-	if (rbytes != *spdsize) {
-		if (rbytes > 0)
-			memset(*spd, 0, rbytes);
-		memset(*sadb, 0, *sadbsize);
-		free(*spd);
-		free(*sadb);
-		return -1;
+	if (*spdsize) {
+		*spd = (u_int8_t *)malloc(*spdsize);
+		if (!*spd) {
+			log_err("monitor_get_pfkey_snap: malloc()");
+			/* Drain input */
+			ioctl(m_state.s, FIONBIO, &one);
+			while (read(m_state.s, &tmp, 1) > 0);
+			ioctl(m_state.s, FIONBIO, 0);
+			if (*sadbsize) {
+				memset(*sadb, 0, *sadbsize);
+				free(*sadb);
+			}
+			return -1;
+		}
+		rbytes = read(m_state.s, *spd, *spdsize);
+		if (rbytes != *spdsize) {
+			if (rbytes > 0)
+				memset(*spd, 0, rbytes);
+			free(*spd);
+			if (*sadbsize) {
+				memset(*sadb, 0, *sadbsize);
+				free(*sadb);
+			}
+			return -1;
+		}
 	}
 
 	log_msg(5, "monitor_get_pfkey_snap: got %d bytes SADB, %d bytes SPD",
@@ -289,10 +301,9 @@ m_priv_pfkey_snap(int s)
 		log_err("m_priv_pfkey_snap: write");
 		return;
 	}
-	if (sadb_buflen)
+	if (sadb_buflen) {
 		if (write(s, sadb_buf, sadb_buflen) == -1)
 			log_err("m_priv_pfkey_snap: write");
-	if (sadb_buf) {
 		memset(sadb_buf, 0, sadb_buflen);
 		free(sadb_buf);
 	}
@@ -303,10 +314,9 @@ m_priv_pfkey_snap(int s)
 		log_err("m_priv_pfkey_snap: write");
 		return;
 	}
-	if (spd_buflen)
+	if (spd_buflen) {
 		if (write(s, spd_buf, spd_buflen) == -1)
 			log_err("m_priv_pfkey_snap: write");
-	if (spd_buf) {
 		memset(spd_buf, 0, spd_buflen);
 		free(spd_buf);
 	}

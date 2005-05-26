@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.6 2005/05/24 03:15:11 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.7 2005/05/26 00:55:03 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -331,44 +331,48 @@ pfkey_snapshot(void *v)
 	}
 
 	/* Parse SADB data */
-	if (sadbsz)
+	if (sadbsz && sadb) {
 		dump_buf(5, sadb, sadbsz, "pfkey_snapshot: SADB data");
+		max = sadb + sadbsz;
+		for (next = sadb; next < max;
+		     next += m->sadb_msg_len * CHUNK) {
+			m = (struct sadb_msg *)next;
+			if (m->sadb_msg_len == 0)
+				break;
 
-	max = sadb + sadbsz;
-	for (next = sadb; next < max; next += m->sadb_msg_len * CHUNK) {
-		m = (struct sadb_msg *)next;
+			/* Tweak and send this SA to the peer. */
+			m->sadb_msg_type = SADB_ADD;
 
-		if (m->sadb_msg_len == 0)
-			break;
+			/* XXX Locate lifetime_cur ext and zero bytes */
 
-		/* Tweak and send this SA to the peer. */
-		m->sadb_msg_type = SADB_ADD;
-
-		/* Allocate a buffer for the msg, net_queue() will free it. */
-		sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
-		if (sendbuf) {
-			memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
-			net_queue(p, MSG_PFKEYDATA, sendbuf,
-			    m->sadb_msg_len * CHUNK);
+			/* Allocate msgbuffer, net_queue() will free it. */
+			sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
+			if (sendbuf) {
+				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
+				net_queue(p, MSG_PFKEYDATA, sendbuf,
+				    m->sadb_msg_len * CHUNK);
+			}
 		}
+		memset(sadb, 0, sadbsz);
+		free(sadb);
 	}
-
+	
 	/* Parse SPD data */
-	if (spdsz)
+	if (spdsz && spd) {
 		dump_buf(5, spd, spdsz, "pfkey_snapshot: SPD data");
 
-	max = spd + spdsz;
-	for (next = spd; next < max; next += sizeof(struct ipsec_policy)) {
-		ip = (struct ipsec_policy *)next;
+		max = spd + spdsz;
+		for (next = spd; next < max;
+		     next += sizeof(struct ipsec_policy)) {
+			ip = (struct ipsec_policy *)next;
+			if (ip->ipo_flags & IPSP_POLICY_SOCKET)
+				continue;
+			/* XXX incomplete */
+		}
 
-		if (ip->ipo_flags & IPSP_POLICY_SOCKET)
-			continue;
+		/* Cleanup. */
+		memset(spd, 0, spdsz);
+		free(spd);
 	}
-
-	/* Cleanup. */
-	memset(sadb, 0, sadbsz);
-	free(sadb);
-	memset(spd, 0, spdsz);
-	free(spd);
 	return;
 }
