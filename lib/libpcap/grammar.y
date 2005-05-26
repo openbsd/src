@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.12 2003/07/18 23:05:13 david Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.13 2005/05/26 17:58:25 camield Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.12 2003/07/18 23:05:13 david Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.13 2005/05/26 17:58:25 camield Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -302,6 +302,12 @@ action:	  ID			{ if (strcasecmp($1, "pass") == 0 ||
 				  else if (strcasecmp($1, "drop") == 0 ||
 				      strcasecmp($1, "block") == 0)
 					$$ = PF_DROP;
+				  else if (strcasecmp($1, "rdr") == 0)
+				  	$$ = PF_RDR;
+				  else if (strcasecmp($1, "nat") == 0)
+				  	$$ = PF_NAT;
+				  else if (strcasecmp($1, "binat") == 0)
+				  	$$ = PF_BINAT;
 				  else
 					  bpf_error("unknown PF action");
 				}
