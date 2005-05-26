@@ -1,4 +1,4 @@
-.\" $OpenBSD: uhci.4,v 1.8 2004/09/30 19:59:25 mickey Exp $
+.\" $OpenBSD: uhci.4,v 1.9 2005/05/26 18:57:38 nate Exp $
 .\" $NetBSD: uhci.4,v 1.3 1999/09/12 18:47:12 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 .Nm uhci
 .Nd USB Universal Host Controller driver
 .Sh SYNOPSIS
+.Cd "uhci*    at cardbus?"
 .Cd "uhci*    at pci?"
 .Cd "usb*     at uhci?"
 .Sh DESCRIPTION
@@ -49,6 +50,7 @@ The
 .Nm
 driver provides support for USB Universal Host Controller Interface.
 .Sh SEE ALSO
+.Xr cardbus 4 ,
 .Xr ehci 4 ,
 .Xr intro 4 ,
 .Xr ohci 4 ,
