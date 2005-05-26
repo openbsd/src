@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.50 2005/05/03 03:41:11 djm Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.51 2005/05/26 01:44:38 pedro Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.50 2005/05/03 03:41:11 djm Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.51 2005/05/26 01:44:38 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -559,11 +559,6 @@ mount_print(struct mount *mp)
 		if (flags & MNT_NODEV) {
 			(void)printf("%snodev", comma);
 			flags &= ~MNT_NODEV;
-			comma = ",";
-		}
-		if (flags & MNT_UNION) {
-			(void)printf("%sunion", comma);
-			flags &= ~MNT_UNION;
 			comma = ",";
 		}
 		if (flags & MNT_ASYNC) {
