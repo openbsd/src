@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.2 2005/05/26 07:27:01 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.3 2005/05/26 14:46:22 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -67,8 +67,8 @@ struct cvs_cmd cvs_cmd_editors = {
 	CVS_OP_EDITORS, CVS_REQ_EDITORS, "editors",
 	{ },
 	"List editors on a file",
-	"",
-	"",
+	"[-lR] [file ...]",
+	"lR",
 	NULL,
 	0,
 	cvs_edit_init,
@@ -85,7 +85,7 @@ struct cvs_cmd cvs_cmd_unedit = {
 	CVS_OP_UNEDIT, CVS_REQ_NOOP, "unedit",
 	{ },
 	"Undo an edit command",
-	"[-lR] ...",
+	"[-lR] [file ...]",
 	"lR",
 	NULL,
 	CF_SORT | CF_RECURSE,
