@@ -1,4 +1,4 @@
-/*	$OpenBSD: area.c,v 1.3 2005/05/12 08:55:39 claudio Exp $ */
+/*	$OpenBSD: area.c,v 1.4 2005/05/26 18:59:14 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -53,8 +53,6 @@ area_del(struct area *area)
 	struct vertex		*v, *nv;
 	struct rde_nbr		*n;
 
-	log_debug("area_del: area ID %s", inet_ntoa(area->id));
-
 	/* clean lists */
 	while ((iface = LIST_FIRST(&area->iface_list)) != NULL) {
 		LIST_REMOVE(iface, entry);
@@ -86,7 +84,6 @@ area_find(struct ospfd_conf *conf, struct in_addr area_id)
 		}
 	}
 
-	log_debug("area_find: area ID %s not found", inet_ntoa(area_id));
 	return (NULL);
 }
 
