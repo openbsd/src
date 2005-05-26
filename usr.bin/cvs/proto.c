@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.54 2005/05/24 06:42:38 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.55 2005/05/26 22:27:11 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -660,7 +660,6 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 	return (fbuf);
 }
 
-
 /*
  * cvs_sendreq()
  *
@@ -767,6 +766,8 @@ cvs_getresp(struct cvsroot *root)
  *
  * Get a line from the remote end and store it in <lbuf>.  The terminating
  * newline character is stripped from the result.
+ * Returns the length in bytes of the line (not including the NUL byte), or
+ * -1 on failure.
  */
 int
 cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
@@ -796,7 +797,7 @@ cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 	if ((rlen > 0) && (lbuf[rlen - 1] == '\n'))
 		lbuf[--rlen] = '\0';
 
-	return (0);
+	return (rlen);
 }
 
 
@@ -898,11 +899,11 @@ cvs_sendln(struct cvsroot *root, const char *line)
 	if (cvs_server_inlog != NULL) {
 		fputs(line, cvs_server_inlog);
 		if (nl)
-			fputc('\n', cvs_server_inlog);
+			putc('\n', cvs_server_inlog);
 	}
 	fputs(line, out);
 	if (nl)
-		fputc('\n', out);
+		putc('\n', out);
 	return (0);
 }
 
