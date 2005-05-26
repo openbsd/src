@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.7 2005/05/25 23:58:11 frantzen Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.8 2005/05/26 02:21:29 frantzen Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -109,6 +109,9 @@ struct pf_rule_field {
     PF_RULE_FIELD(prob,			BARRIER),
     PF_RULE_FIELD(max_states,		BARRIER),
     PF_RULE_FIELD(max_src_nodes,	BARRIER),
+    PF_RULE_FIELD(max_src_states,	BARRIER),
+    PF_RULE_FIELD(max_src_conn,		BARRIER),
+    PF_RULE_FIELD(max_src_conn_rate,	BARRIER),
 
     /*
      * These fields must be the same between all rules in the same superblock.
@@ -130,8 +133,6 @@ struct pf_rule_field {
     PF_RULE_FIELD(return_ttl,		BREAK),
     PF_RULE_FIELD(overload_tblname,	BREAK),
     PF_RULE_FIELD(flush,		BREAK),
-    PF_RULE_FIELD(max_src_conn,		BREAK),
-    PF_RULE_FIELD(max_src_conn_rate,	BREAK),
     PF_RULE_FIELD(rpool,		BREAK),
 
     /*
