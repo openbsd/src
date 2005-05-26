@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.18 2005/05/26 22:44:24 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.19 2005/05/26 23:11:53 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -191,7 +191,7 @@ spf_calc(struct area *area)
 			}
 		}
 
-		cand_list_dump();
+		/* cand_list_dump(); */
 
 		/* get next vertex */
 		v = cand_list_pop();
@@ -342,7 +342,7 @@ spf_calc(struct area *area)
 		}
 	}
 
-	spf_dump(area);
+	/* spf_dump(area); */
 	log_debug("spf_calc: calculation ended, area ID %s",
 	    inet_ntoa(area->id));
 
