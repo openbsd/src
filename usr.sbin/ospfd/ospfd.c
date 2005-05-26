@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.20 2005/05/26 18:46:16 norby Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.21 2005/05/26 22:05:14 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -330,8 +330,7 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_RELOAD:
-			log_debug("main_dispatch_ospfe: IMSG_CTL_RELOAD");
-			/* reconfig */
+			/* XXX reconfig */
 			break;
 		case IMSG_CTL_FIB_COUPLE:
 			kr_fib_couple();
