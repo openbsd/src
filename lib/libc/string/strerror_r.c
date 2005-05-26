@@ -1,8 +1,8 @@
-/* $OpenBSD: strerror_r.c,v 1.4 2005/05/08 06:25:44 otto Exp $ */
+/* $OpenBSD: strerror_r.c,v 1.5 2005/05/26 12:56:01 otto Exp $ */
 /* Public Domain <marc@snafu.org> */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strerror_r.c,v 1.4 2005/05/08 06:25:44 otto Exp $";
+static char *rcsid = "$OpenBSD: strerror_r.c,v 1.5 2005/05/26 12:56:01 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -14,9 +14,11 @@ static char *rcsid = "$OpenBSD: strerror_r.c,v 1.4 2005/05/08 06:25:44 otto Exp 
 
 #define sys_errlist	_sys_errlist
 #define sys_nerr	_sys_nerr
+#define sys_siglist	_sys_siglist
 
 #include <errno.h>
 #include <limits.h>
+#include <signal.h>
 #include <string.h>
 
 static size_t
@@ -33,13 +35,13 @@ __digits10(unsigned int num)
 }
 
 static int
-__itoa(int num, char *buffer, size_t start, size_t end)
+__itoa(int num, int sign, char *buffer, size_t start, size_t end)
 {
 	size_t pos;
 	unsigned int a;
 	int neg;
 
-	if (num < 0) {
+	if (sign && num < 0) {
 		a = -num;
 		neg = 1;
 	}
@@ -68,47 +70,39 @@ __itoa(int num, char *buffer, size_t start, size_t end)
 }
 
 
-#define	UPREFIX	"Unknown error: "
-
-int
-strerror_r(int errnum, char *strerrbuf, size_t buflen)
+static int
+__num2string(int num, int sign, int setid, char *buf, size_t buflen,
+    char * list[], size_t max, const char *def)
 {
-	int save_errno;
-	int ret_errno;
+	int ret = 0;
 	size_t len;
+
 #ifdef NLS
 	nl_catd catd;
-#endif
-
-	save_errno = errno;
-	ret_errno = 0;
-
-#ifdef NLS
 	catd = catopen("libc", 0);
 #endif
 
-	if (errnum >= 0 && errnum < sys_nerr) {
+	if (0 <= num && num < max) {
 #ifdef NLS
-		len = strlcpy(strerrbuf, catgets(catd, 1, errnum,
-		    (char *)sys_errlist[errnum]), buflen);
-#else
-		len = strlcpy(strerrbuf, sys_errlist[errnum], buflen);
-#endif
-		if (len >= buflen)
-			ret_errno = ERANGE;
-	} else {
-#ifdef NLS
-		len = strlcpy(strerrbuf, catgets(catd, 1, 0xffff, UPREFIX), 
+		len = strlcpy(buf, catgets(catd, setid, num, list[num]),
 		    buflen);
 #else
-		len = strlcpy(strerrbuf, UPREFIX, buflen);
+		len = strlcpy(buf, def, buflen);
 #endif
 		if (len >= buflen)
-			ret_errno = ERANGE;
+			ret = ERANGE;
+	} else {
+#ifdef NLS
+		len = strlcpy(buf, catgets(catd, setid, 0xffff, def), buflen);
+#else
+		len = strlcpy(buf, def, buflen);
+#endif
+		if (len >= buflen)
+			ret = ERANGE;
 		else {
-			ret_errno = __itoa(errnum, strerrbuf, len, buflen);
-			if (ret_errno == 0)
-				ret_errno = EINVAL;
+			ret = __itoa(num, sign, buf, len, buflen);
+			if (ret == 0)
+				ret = EINVAL;
 		}
 	}
 
@@ -116,6 +110,32 @@ strerror_r(int errnum, char *strerrbuf, size_t buflen)
 	catclose(catd);
 #endif
 
+	return ret;
+}
+
+#define	UPREFIX	"Unknown error: "
+
+int
+strerror_r(int errnum, char *strerrbuf, size_t buflen)
+{
+	int save_errno;
+	int ret_errno;
+
+	save_errno = errno;
+
+	ret_errno = __num2string(errnum, 1, 1, strerrbuf, buflen,
+	    sys_errlist, sys_nerr, UPREFIX);
+
 	errno = ret_errno ? ret_errno : save_errno;
 	return (ret_errno);
+}
+
+#define USIGPREFIX "Unknown signal: "
+
+char *
+__strsignal(int num, char *buf)
+{
+	__num2string(num, 0, 2, buf, NL_TEXTMAX, (char **)sys_siglist, NSIG,
+	    USIGPREFIX);
+	return buf;
 }
