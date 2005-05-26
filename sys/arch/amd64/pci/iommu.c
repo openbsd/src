@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.1 2005/05/26 17:48:20 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.2 2005/05/26 19:47:44 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -117,6 +117,9 @@ pci_chipset_tag_t gartpc;
 pcitag_t garttag;
 bus_dma_tag_t gartparent;
 paddr_t gartpa;
+paddr_t gartscribpa;
+void *gartscrib;
+u_int32_t gartscribflags;
 
 void amdgart_invalidate_wait(pci_chipset_tag_t, pcitag_t);
 void amdgart_invalidate(pci_chipset_tag_t, pcitag_t);
@@ -200,6 +203,16 @@ amdgart_initpte(pci_chipset_tag_t pc, pcitag_t tag, paddr_t base,
 
 	TAILQ_INIT(&gartplist);
 
+	gartscrib = (void *)malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
+	if (gartscrib == NULL) {
+		printf("\nGART: failed to get scribble page");
+		goto err;
+	}
+	pmap_extract(pmap_kernel(), (vaddr_t)gartscrib, &gartscribpa);
+	gartscribflags = GART_PTE_VALID | GART_PTE_COHERENT |
+	    ((gartscribpa >> 28) & GART_PTE_PHYSHI) |
+	     (gartscribpa & GART_PTE_PHYSLO);
+
 	err = uvm_pglistalloc(sz, sz, trunc_page(avail_end), sz, sz,
 	    &gartplist, 1, 0);
 	if (err) {
@@ -240,13 +253,15 @@ amdgart_initpte(pci_chipset_tag_t pc, pcitag_t tag, paddr_t base,
 	pci_conf_write(NULL, tag, GART_TBLBASE, (pa >> 8) & GART_TBLBASE_MASK);
 
 	for (r = 0, pte = gartpt; r < (sz / sizeof(*gartpt)); r++, pte++)
-		*pte = 0;
+		*pte = gartscribflags;
 	amdgart_invalidate(pc, tag);
 	amdgart_invalidate_wait(pc, tag);
 		
 	return (0);
 
 err:
+	if (gartscrib)
+		free(gartscrib, M_DEVBUF);
 	if (!TAILQ_EMPTY(&gartplist))
 		uvm_pglistfree(&gartplist);
 	if (gartex != NULL) {
@@ -283,12 +298,6 @@ amdgart_probe(struct pcibus_attach_args *pba)
 		printf("\ndidn't find misc registers, no gart.");
 		return;
 	}
-
-#if 0
-	v = pci_conf_read(pc, tag, MCANB_CTRL);
-	v |= MCANB_GARTTBLWKEN;
-	pci_conf_write(pc, tag, MCANB_CTRL, v);
-#endif
 
 	apctl = pci_conf_read(pc, tag, GART_APCTRL);
 	if (apctl & GART_APCTRL_ENABLE) {
@@ -422,7 +431,7 @@ amdgart_iommu_unmap(struct extent *ex, paddr_t pa, psize_t len)
 
 	for (idx = 0; idx < alen; idx += PAGE_SIZE) {
 		pgno = ((base - gartpa) + idx) >> PGSHIFT;
-		gartpt[pgno] = GART_PTE_COHERENT;
+		gartpt[pgno] = gartscribflags;
 	}
 
 	return (0);
