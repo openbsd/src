@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.8 2005/05/24 02:35:39 ho Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.9 2005/05/26 19:18:16 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -53,7 +53,7 @@ sasyncd_stop(int s)
 }
 
 static int
-sasyncd_run(void)
+sasyncd_run(pid_t ppid)
 {
 	struct timeval	*timeout, tv;
 	fd_set		*rfds, *wfds;
@@ -108,6 +108,12 @@ sasyncd_run(void)
 			pfkey_send_message(wfds);
 		}
 		timer_run();
+
+		/* Mostly for debugging. */
+		if (getppid() != ppid) {
+			log_msg(0, "sasyncd: parent died");
+			daemon_shutdown++;
+		}
 	}
 	free(rfds);
 	free(wfds);
@@ -168,7 +174,7 @@ main(int argc, char **argv)
 	}
 
 	/* Child, no privileges left. Run main loop. */
-	sasyncd_run();
+	sasyncd_run(getppid());
 
 	/* Shutdown. */
 	log_msg(0, "shutting down...");
