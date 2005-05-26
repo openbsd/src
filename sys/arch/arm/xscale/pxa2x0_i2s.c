@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2s.c,v 1.4 2005/05/23 21:57:23 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2s.c,v 1.5 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -35,13 +35,9 @@ struct pxa2x0_i2s_dma {
 	bus_dma_segment_t seg;
 };
 
-static void pxa2x0_i2s_init(struct pxa2x0_i2s_softc *sc);
-
-static void
+void
 pxa2x0_i2s_init(struct pxa2x0_i2s_softc *sc)
 {
-	pxa2x0_clkman_config(CKEN_I2S, 1);
-
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, I2S_SACR0, SACR0_RST);
 	delay(100);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, I2S_SACR0,
@@ -51,8 +47,6 @@ pxa2x0_i2s_init(struct pxa2x0_i2s_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, I2S_SADIV, sc->sc_sadiv);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, I2S_SACR0,
 		SACR0_BCKD | SACR0_SET_TFTH(7) | SACR0_SET_RFTH(7) | SACR0_ENB);
-
-	pxa2x0_clkman_config(CKEN_I2S, 0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2c.h,v 1.1 2005/04/15 00:06:21 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2c.h,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -30,6 +30,7 @@ struct pxa2x0_i2c_softc {
 
 int	pxa2x0_i2c_attach_sub(struct pxa2x0_i2c_softc *);
 int	pxa2x0_i2c_detach_sub(struct pxa2x0_i2c_softc *);
+void	pxa2x0_i2c_init(struct pxa2x0_i2c_softc *);
 void	pxa2x0_i2c_open(struct pxa2x0_i2c_softc *);
 void	pxa2x0_i2c_close(struct pxa2x0_i2c_softc *);
 int	pxa2x0_i2c_read(struct pxa2x0_i2c_softc *sc, u_char, u_char *);

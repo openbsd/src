@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2s.h,v 1.1 2005/04/15 00:09:06 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2s.h,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -35,6 +35,7 @@ struct pxa2x0_i2s_softc {
 	struct pxa2x0_i2s_dma *sc_dmas;
 };
 
+void	pxa2x0_i2s_init(struct pxa2x0_i2s_softc *sc);
 int	pxa2x0_i2s_attach_sub(struct pxa2x0_i2s_softc *);
 int	pxa2x0_i2s_detach_sub(struct pxa2x0_i2s_softc *);
 void	pxa2x0_i2s_open(struct pxa2x0_i2s_softc *);

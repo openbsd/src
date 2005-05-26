@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2c.c,v 1.1 2005/04/15 00:06:21 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2c.c,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -44,11 +44,7 @@ pxa2x0_i2c_attach_sub(struct pxa2x0_i2c_softc *sc)
 	pxa2x0_gpio_set_function(117, GPIO_ALT_FN_1_IN);	/* SCL */
 	pxa2x0_gpio_set_function(118, GPIO_ALT_FN_1_IN);	/* SDA */
 
-	/* Reset and disable the standard I2C unit. */
-	pxa2x0_clkman_config(CKEN_I2C, 1);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, I2C_ICR, ICR_UR);
-	delay(1);
-	pxa2x0_clkman_config(CKEN_I2C, 0);
+	pxa2x0_i2c_init(sc);
 
 	return 0;
 }
@@ -63,6 +59,13 @@ pxa2x0_i2c_detach_sub(struct pxa2x0_i2c_softc *sc)
 	pxa2x0_clkman_config(CKEN_I2C, 0);
 
 	return 0;
+}
+
+void
+pxa2x0_i2c_init(struct pxa2x0_i2c_softc *sc)
+{
+	pxa2x0_i2c_open(sc);
+	pxa2x0_i2c_close(sc);
 }
 
 void
