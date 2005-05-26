@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.1 2005/05/24 20:38:20 uwe Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.2 2005/05/26 23:49:18 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -63,17 +63,17 @@ static void
 hardprobe(void)
 {
 	struct diskinfo *dip;
-	int i;
+	int i, order[] = { 0x80, 0x82 }; /* XXX probe disks in this order */
 	u_int bsdunit, type;
 	u_int scsi = 0, ide = 0;
 	u_int disk = 0;
 
 	/* Hard disks */
-	for (i = (0x80 + 8); i >= 0x80; i--) {
+	for (i = 0; i < sizeof(order) / sizeof(order[0]); i++) {
 		dip = alloc(sizeof(struct diskinfo));
 		bzero(dip, sizeof(*dip));
 
-		if (bios_getdiskinfo(i, &dip->bios_info) != NULL) {
+		if (bios_getdiskinfo(order[i], &dip->bios_info) != NULL) {
 			free(dip, 0);
 			continue;
 		}
@@ -243,10 +243,23 @@ bios_getdospart(bios_diskinfo_t *bdi)
 
 	bios_devpath(bdi->bios_number, -1, path);
 
-	if ((fd = uopen(path, O_RDONLY)) == -1) {
-		errno = ENOENT;
-		return -1;
+	/*
+	 * Give disk devices some time to become ready when the first open
+	 * fails.  Even when open succeeds the disk is sometimes not ready.
+	 */
+	if ((fd = uopen(path, O_RDONLY)) == -1 && errno == ENXIO) {
+		int t;
+
+		while (fd == -1 && timeout > 0) {
+			timeout--;
+			sleep(1);
+			fd = uopen(path, O_RDONLY);
+		}
+		if (fd != -1)
+			sleep(2);
 	}
+	if (fd == -1)
+		return -1;
 
 	/* Read the disk's MBR. */
 	if (unixstrategy((void *)fd, F_READ, DOSBBSECTOR,
