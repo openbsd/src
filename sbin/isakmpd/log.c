@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.57 2005/05/03 13:42:54 hshoexer Exp $	 */
+/* $OpenBSD: log.c,v 1.58 2005/05/26 05:35:55 moritz Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -350,6 +350,16 @@ log_error(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	_log_print(1, LOG_ERR, fmt, ap, LOG_PRINT, 0);
+	va_end(ap);
+}
+
+void
+log_errorx(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	_log_print(0, LOG_ERR, fmt, ap, LOG_PRINT, 0);
 	va_end(ap);
 }
 
