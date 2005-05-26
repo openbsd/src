@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.141 2005/05/26 02:15:42 frantzen Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.142 2005/05/26 03:39:57 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3609,7 +3609,6 @@ void
 getifgroups(void)
 {
 	int			 len, cnt, n;
-	char			 ifgroup[IFNAMSIZ];
 	struct ifgroupreq	 ifgr;
 	struct ifg_req		*ifg;
 
@@ -3633,14 +3632,9 @@ getifgroups(void)
 
 	cnt = 0;
 	ifg = ifgr.ifgr_groups;
-	for (n = 0; name[n] < '0' || name[n] > '9'; n++)
-		continue;
-	strlcpy(ifgroup, name, n + 1);
-
 	for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
 		len -= sizeof(struct ifg_req);
-		if (strcmp(ifg->ifgrq_group, "all") &&
-		    strcmp(ifg->ifgrq_group, ifgroup)) {
+		if (strcmp(ifg->ifgrq_group, "all")) {
 			if (cnt == 0)
 				printf("\tgroups: ");
 			cnt++;
