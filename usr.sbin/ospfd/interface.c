@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.23 2005/05/26 19:54:49 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.24 2005/05/26 22:31:28 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -409,8 +409,6 @@ if_act_elect(struct iface *iface)
 	int		 old_state;
 	char		 b1[16], b2[16], b3[16], b4[16];
 
-	log_debug("if_act_elect: interface %s", iface->name);
-
 start:
 	/* elect backup designated router */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
@@ -434,8 +432,7 @@ start:
 		} else
 			bdr = nbr;
 	}
-	log_debug("if_act_elect: bdr %s", bdr ?
-	    inet_ntop(AF_INET, &bdr->addr, b4, sizeof(b4)) : "none");
+
 	/* elect designated router */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr->priority == 0 || nbr->state & NBR_STA_DOWN ||
@@ -447,8 +444,7 @@ start:
 		else
 			dr = if_elect(dr, nbr);
 	}
-	log_debug("if_act_elect: dr %s", dr ?
-	    inet_ntop(AF_INET, &dr->addr, b4, sizeof(b4)) : "none");
+
 	if (dr == NULL) {
 		/* no designate router found use backup DR */
 		dr = bdr;
@@ -472,7 +468,6 @@ start:
 		iface->self->dr.s_addr = dr->addr.s_addr;
 		if (bdr)
 			iface->self->bdr.s_addr = dr->addr.s_addr;
-		log_debug("if_act_elect: round two");
 		round = 1;
 		goto start;
 	}
