@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.1.1.1 2003/08/05 08:21:03 hin Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.2 2005/05/26 03:52:06 pedro Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@ struct mntopt {
 #define MOPT_NOSUID		{ "suid",	1, MNT_NOSUID }
 #define MOPT_RDONLY		{ "rdonly",	0, MNT_RDONLY }
 #define MOPT_SYNC		{ "sync",	0, MNT_SYNCHRONOUS }
-#define MOPT_UNION		{ "union",	0, MNT_UNION }
 #define MOPT_USERQUOTA		{ "userquota",	0, 0 }
 #define MOPT_GROUPQUOTA		{ "groupquota",	0, 0 }
 
@@ -87,8 +86,7 @@ struct mntopt {
 	MOPT_NODEV,							\
 	MOPT_NOEXEC,							\
 	MOPT_NOSUID,							\
-	MOPT_RDONLY,							\
-	MOPT_UNION
+	MOPT_RDONLY
 
 #else
 
@@ -99,8 +97,7 @@ struct mntopt {
 	MOPT_NODEV,							\
 	MOPT_NOEXEC,							\
 	MOPT_NOSUID,							\
-	MOPT_RDONLY,							\
-	MOPT_UNION
+	MOPT_RDONLY
 
 #endif
 
