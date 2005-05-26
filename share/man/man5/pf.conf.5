@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.329 2005/05/26 05:34:00 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.330 2005/05/26 15:29:47 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2621,18 +2621,21 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "probability" number"%"
 
-nat-rule       = [ "no" ] "nat" [ "pass" ] [ "on" ifspec ] [ af ]
+nat-rule       = [ "no" ] "nat" [ "pass" [ "log" | "log-all" ] ]
+                 [ "on" ifspec ] [ af ]
                  [ protospec ] hosts [ "tag" string ] [ "tagged" string ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] [ "static-port" ] ]
 
-binat-rule     = [ "no" ] "binat" [ "pass" ] [ "on" interface-name ]
-                 [ af ] [ "proto" ( proto-name | proto-number ) ]
+binat-rule     = [ "no" ] "binat" [ "pass" [ "log" | "log-all" ] ]
+                 [ "on" interface-name ] [ af ]
+                 [ "proto" ( proto-name | proto-number ) ]
                  "from" address [ "/" mask-bits ] "to" ipspec
                  [ "tag" string ] [ "tagged" string ]
                  [ "->" address [ "/" mask-bits ] ]
 
-rdr-rule       = [ "no" ] "rdr" [ "pass" ] [ "on" ifspec ] [ af ]
+rdr-rule       = [ "no" ] "rdr" [ "pass" [ "log" | "log-all" ] ]
+                 [ "on" ifspec ] [ af ]
                  [ protospec ] hosts [ "tag" string ] [ "tagged" string ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] ]

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.490 2005/05/23 23:28:53 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.491 2005/05/26 15:29:48 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2805,10 +2805,11 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	REASON_SET(&reason, PFRES_MATCH);
 
-	if (r->log) {
+	if (r->log || (nr != NULL && nr->natpass && nr->log)) {
 		if (rewrite)
 			m_copyback(m, off, sizeof(*th), th);
-		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset);
+		PFLOG_PACKET(kif, h, m, af, direction, reason, r->log ? r : nr,
+		    a, ruleset);
 	}
 
 	if ((r->action == PF_DROP) &&
@@ -2911,7 +2912,9 @@ cleanup:
 		s->anchor.ptr = a;
 		STATE_INC_COUNTERS(s);
 		s->allow_opts = r->allow_opts;
-		s->log = r->log & 2;
+		s->log = r->log & PF_LOGALL;
+		if (nr != NULL)
+			s->log |= nr->log & PF_LOGALL;
 		s->proto = IPPROTO_TCP;
 		s->direction = direction;
 		s->af = af;
@@ -3176,10 +3179,11 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	REASON_SET(&reason, PFRES_MATCH);
 
-	if (r->log) {
+	if (r->log || (nr != NULL && nr->natpass && nr->log)) {
 		if (rewrite)
 			m_copyback(m, off, sizeof(*uh), uh);
-		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset);
+		PFLOG_PACKET(kif, h, m, af, direction, reason, r->log ? r : nr,
+		    a, ruleset);
 	}
 
 	if ((r->action == PF_DROP) &&
@@ -3264,7 +3268,9 @@ cleanup:
 		s->anchor.ptr = a;
 		STATE_INC_COUNTERS(s);
 		s->allow_opts = r->allow_opts;
-		s->log = r->log & 2;
+		s->log = r->log & PF_LOGALL;
+		if (nr != NULL)
+			s->log |= nr->log & PF_LOGALL;
 		s->proto = IPPROTO_UDP;
 		s->direction = direction;
 		s->af = af;
@@ -3491,13 +3497,14 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	REASON_SET(&reason, PFRES_MATCH);
 
-	if (r->log) {
+	if (r->log || (nr != NULL && nr->natpass && nr->log)) {
 #ifdef INET6
 		if (rewrite)
 			m_copyback(m, off, sizeof(struct icmp6_hdr),
 			    pd->hdr.icmp6);
 #endif /* INET6 */
-		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset);
+		PFLOG_PACKET(kif, h, m, af, direction, reason, r->log ? r : nr,
+		    a, ruleset);
 	}
 
 	if (r->action != PF_PASS)
@@ -3559,7 +3566,9 @@ cleanup:
 		s->anchor.ptr = a;
 		STATE_INC_COUNTERS(s);
 		s->allow_opts = r->allow_opts;
-		s->log = r->log & 2;
+		s->log = r->log & PF_LOGALL;
+		if (nr != NULL)
+			s->log |= nr->log & PF_LOGALL;
 		s->proto = pd->proto;
 		s->direction = direction;
 		s->af = af;
@@ -3738,8 +3747,9 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	REASON_SET(&reason, PFRES_MATCH);
 
-	if (r->log)
-		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset);
+	if (r->log || (nr != NULL && nr->natpass && nr->log))
+		PFLOG_PACKET(kif, h, m, af, direction, reason, r->log ? r : nr,
+		    a, ruleset);
 
 	if ((r->action == PF_DROP) &&
 	    ((r->rule_flag & PFRULE_RETURNICMP) ||
@@ -3834,7 +3844,9 @@ cleanup:
 		s->anchor.ptr = a;
 		STATE_INC_COUNTERS(s);
 		s->allow_opts = r->allow_opts;
-		s->log = r->log & 2;
+		s->log = r->log & PF_LOGALL;
+		if (nr != NULL)
+			s->log |= nr->log & PF_LOGALL;
 		s->proto = pd->proto;
 		s->direction = direction;
 		s->af = af;
@@ -5924,8 +5936,16 @@ done:
 		REASON_SET(&reason, PFRES_MEMORY);
 	}
 
-	if (log)
-		PFLOG_PACKET(kif, h, m, AF_INET, dir, reason, r, a, ruleset);
+	if (log) {
+		struct pf_rule *lr;
+
+		if (s != NULL && s->nat_rule.ptr != NULL &&
+		    s->nat_rule.ptr->log & PF_LOGALL)
+			lr = s->nat_rule.ptr;
+		else
+			lr = r;
+		PFLOG_PACKET(kif, h, m, AF_INET, dir, reason, lr, a, ruleset);
+	}
 
 	kif->pfik_bytes[0][dir == PF_OUT][action != PF_PASS] += pd.tot_len;
 	kif->pfik_packets[0][dir == PF_OUT][action != PF_PASS]++;
@@ -6258,8 +6278,16 @@ done:
 		REASON_SET(&reason, PFRES_MEMORY);
 	}
 
-	if (log)
-		PFLOG_PACKET(kif, h, m, AF_INET6, dir, reason, r, a, ruleset);
+	if (log) {
+		struct pf_rule *lr;
+
+		if (s != NULL && s->nat_rule.ptr != NULL &&
+		    s->nat_rule.ptr->log & PF_LOGALL)
+			lr = s->nat_rule.ptr;
+		else
+			lr = r;
+		PFLOG_PACKET(kif, h, m, AF_INET6, dir, reason, lr, a, ruleset);
+	}
 
 	kif->pfik_bytes[1][dir == PF_OUT][action != PF_PASS] += pd.tot_len;
 	kif->pfik_packets[1][dir == PF_OUT][action != PF_PASS]++;

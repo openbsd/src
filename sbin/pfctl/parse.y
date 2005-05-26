@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.485 2005/05/23 21:29:50 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.486 2005/05/26 15:29:48 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -415,10 +415,10 @@ typedef struct {
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
-%type	<v.number>		tos not yesno natpass
+%type	<v.number>		tos not yesno
 %type	<v.i>			no dir log af fragcache sourcetrack flush
 %type	<v.i>			unaryop statelock
-%type	<v.b>			action nataction scrubaction
+%type	<v.b>			action nataction natpass scrubaction
 %type	<v.b>			flags flag blockspec
 %type	<v.range>		port rport
 %type	<v.hashkey>		hashkey
@@ -2028,8 +2028,8 @@ logquick	: /* empty */			{ $$.log = 0; $$.quick = 0; }
 		| QUICK log			{ $$.log = $2; $$.quick = 1; }
 		;
 
-log		: LOG				{ $$ = 1; }
-		| LOGALL			{ $$ = 2; }
+log		: LOG				{ $$ = PF_LOG; }
+		| LOGALL			{ $$ = PF_LOGALL; }
 		;
 
 interface	: /* empty */			{ $$ = NULL; }
@@ -3178,25 +3178,34 @@ redirection	: /* empty */			{ $$ = NULL; }
 		}
 		;
 
-natpass		: /* empty */	{ $$ = 0; }
-		| PASS		{ $$ = 1; }
+natpass		: /* empty */	{ $$.b1 = $$.b2 = 0; }
+		| PASS		{ $$.b1 = 1; $$.b2 = 0; }
+		| PASS log	{ $$.b1 = 1; $$.b2 = $2; }
 		;
 
 nataction	: no NAT natpass {
-			$$.b2 = $$.w = 0;
+			if ($1 && ($3.b1 || $3.b2)) {
+				yyerror("\"pass\" and \"log\" not valid with \"no\"");
+				YYERROR;
+			}
 			if ($1)
 				$$.b1 = PF_NONAT;
 			else
 				$$.b1 = PF_NAT;
-			$$.b2 = $3;
+			$$.b2 = $3.b1;
+			$$.w = $3.b2;
 		}
 		| no RDR natpass {
-			$$.b2 = $$.w = 0;
+			if ($1 && ($3.b1 || $3.b2)) {
+				yyerror("\"pass\" and \"log\" not valid with \"no\"");
+				YYERROR;
+			}
 			if ($1)
 				$$.b1 = PF_NORDR;
 			else
 				$$.b1 = PF_RDR;
-			$$.b2 = $3;
+			$$.b2 = $3.b1;
+			$$.w = $3.b2;
 		}
 		;
 
@@ -3211,6 +3220,7 @@ natrule		: nataction interface af proto fromto tag tagged redirpool pool_opts
 
 			r.action = $1.b1;
 			r.natpass = $1.b2;
+			r.log = $1.w;
 			r.af = $3;
 
 			if (!r.af) {
@@ -3366,11 +3376,16 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 
 			memset(&binat, 0, sizeof(binat));
 
+			if ($1 && ($3.b1 || $3.b2)) {
+				yyerror("\"pass\" and \"log\" not valid with \"no\"");
+				YYERROR;
+			}
 			if ($1)
 				binat.action = PF_NOBINAT;
 			else
 				binat.action = PF_BINAT;
-			binat.natpass = $3;
+			binat.natpass = $3.b1;
+			binat.log = $3.b2;
 			binat.af = $5;
 			if (!binat.af && $8 != NULL && $8->af)
 				binat.af = $8->af;
