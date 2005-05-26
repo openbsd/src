@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.15 2005/05/22 20:01:47 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.16 2005/05/26 06:07:47 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -803,6 +803,7 @@ show_db_msg_detail(struct imsg *imsg)
 	case IMSG_CTL_AREA:
 		area = imsg->data;
 		area_id = area->id;
+		lasttype = 0;
 		break;
 	case IMSG_CTL_END:
 		return (1);
