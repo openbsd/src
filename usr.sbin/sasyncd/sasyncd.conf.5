@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.6 2005/05/24 19:18:11 ho Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.7 2005/05/26 19:40:20 ho Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -70,6 +70,26 @@ should track master/slave state on.
 Optionally state how often the daemon should check the interface
 for state changes.
 Defaults to once every 10 seconds.
+.It Ic flushmode sync | startup | never
+Controls how the
+.Xr sasyncd 8
+master host handles SADB_FLUSH messages to it's slaves.
+.Pp
+.Bl -tag -width 2n -offset -indent -compact
+.It Ic sync
+Pass any SADB_FLUSH messages along. For example, in this mode
+.Xr sasyncd 8
+will synchronize an
+.Do Ic ipsecadm flush Dc
+command to all connected slaves. For more information, see
+.Xr ipsecadm 8 .
+.It Ic startup
+Send a SADB_FLUSH message to the slaves as they connect, and act as
+.Ic sync
+afterwards. This is the default.
+.It Ic never
+Never send SADB_FLUSH messages.
+.El
 .It Xo
 .Ic listen on Ar address 
 .Op Ar family
@@ -117,6 +137,7 @@ bytes long (corresponding to AES using a 128, 192 or 256 bit key).
 .Xr chmod 1 ,
 .Xr carp 4 ,
 .Xr chown 8 ,
+.Xr ipsecadm 8 ,
 .Xr sasyncd 8
 .Sh HISTORY
 The
