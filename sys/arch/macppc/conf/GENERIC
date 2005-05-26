@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.84 2005/05/24 07:51:20 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.85 2005/05/26 05:54:23 jsg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -246,6 +246,7 @@ dc*		at cardbus?	# 21143, "tulip" clone ethernet
 #fxp*		at cardbus?	# Intel PRO/100 ethernet
 xl*		at cardbus?	# 3C575/3C656 ethernet
 #rl*		at cardbus?	# RealTek 81[23]9 ethernet
+rtw*		at cardbus?	# Realtek 8180
 wdc*		at pcmcia?
 
 wsdisplay*	at vgafb?
