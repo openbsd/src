@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.9 2005/04/22 15:33:00 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.10 2005/05/26 19:10:56 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -46,9 +46,6 @@ send_db_description(struct nbr *nbr)
 	struct buf		*buf;
 	int			 ret = 0;
 
-	log_debug("send_db_description: neighbor ID %s, seq_num %x",
-	    inet_ntoa(nbr->id), nbr->dd_seq_num);
-
 	if (nbr->iface->passive)
 		return (0);
 
@@ -75,15 +72,9 @@ send_db_description(struct nbr *nbr)
 		ret = -1;
 		goto done;
 	case NBR_STA_XSTRT:
-		log_debug("send_db_description: state %s, neighbor ID %s",
-		    nbr_state_name(nbr->state), inet_ntoa(nbr->id));
-
 		nbr->options |= OSPF_DBD_MS | OSPF_DBD_M | OSPF_DBD_I;
 		break;
 	case NBR_STA_XCHNG:
-		log_debug("send_db_description: state %s, neighbor ID %s",
-		    nbr_state_name(nbr->state), inet_ntoa(nbr->id));
-
 		if (nbr->master) {
 			/* master */
 			nbr->options |= OSPF_DBD_MS;
@@ -110,9 +101,6 @@ send_db_description(struct nbr *nbr)
 		break;
 	case NBR_STA_LOAD:
 	case NBR_STA_FULL:
-		log_debug("send_db_description: state %s, neighbor ID %s",
-		    nbr_state_name(nbr->state), inet_ntoa(nbr->id));
-
 		if (nbr->master) {
 			/* master */
 			nbr->options |= OSPF_DBD_MS;
@@ -179,9 +167,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 	struct db_dscrp_hdr	 dd_hdr;
 	int			 dupe = 0;
 
-	log_debug("recv_db_description: neighbor ID %s, seq_num %x",
-	    inet_ntoa(nbr->id), nbr->dd_seq_num);
-
 	if (len < sizeof(dd_hdr)) {
 		log_warnx("recv_dd_description: "
 		    "bad packet size, neighbor ID %s", inet_ntoa(nbr->id));
@@ -206,7 +191,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 			dupe = 1;
 	}
 
-	log_debug("recv_db_description: seq_num %x", ntohl(dd_hdr.dd_seq_num));
 	switch (nbr->state) {
 	case NBR_STA_DOWN:
 	case NBR_STA_ATTEMPT:
@@ -217,9 +201,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 		    inet_ntoa(nbr->id));
 		return;
 	case NBR_STA_INIT:
-		log_debug("recv_db_description: state %s, neighbor ID %s",
-		    nbr_state_name(nbr->state), inet_ntoa(nbr->id));
-
 		/* evaluate dr and bdr before issuing a 2-Way event */
 		if_fsm(nbr->iface, IF_EVT_NBR_CHNG);
 		nbr_fsm(nbr, NBR_EVT_2_WAY_RCVD);
@@ -227,9 +208,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 			return;
 		/* FALLTHROUGH */
 	case NBR_STA_XSTRT:
-		log_debug("recv_db_description: state %s, neighbor ID %s",
-		    nbr_state_name(nbr->state), inet_ntoa(nbr->id));
-
 		if (dupe)
 			return;
 		/*
@@ -241,8 +219,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 			if ((ntohl(nbr->id.s_addr)) >
 			    ntohl(nbr->iface->rtr_id.s_addr)) {
 				/* slave */
-				log_debug("recv_db_description: slave, "
-				    "neighbor ID %s", inet_ntoa(nbr->id));
 				nbr->master = 0;
 				nbr->dd_seq_num = ntohl(dd_hdr.dd_seq_num);
 
@@ -280,9 +256,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 	case NBR_STA_XCHNG:
 	case NBR_STA_LOAD:
 	case NBR_STA_FULL:
-		log_debug("recv_db_description: state %s, neighbor ID %s",
-		    nbr_state_name(nbr->state), inet_ntoa(nbr->id));
-
 		if (dd_hdr.bits & OSPF_DBD_I ||
 		    !(dd_hdr.bits & OSPF_DBD_MS) == !nbr->master) {
 			log_warnx("recv_db_description: seq num mismatch, "
@@ -399,8 +372,6 @@ db_tx_timer(int fd, short event, void *arg)
 	struct nbr *nbr = arg;
 	struct timeval tv;
 
-	log_debug("db_tx_timer: neighbor ID %s", inet_ntoa(nbr->id));
-
 	switch (nbr->state) {
 	case NBR_STA_DOWN:
 	case NBR_STA_ATTEMPT:
@@ -424,8 +395,6 @@ db_tx_timer(int fd, short event, void *arg)
 	if (nbr->master) {
 		timerclear(&tv);
 		tv.tv_sec = nbr->iface->rxmt_interval;
-		log_debug("db_tx_timer: reschedule neighbor ID %s",
-		    inet_ntoa(nbr->id));
 		evtimer_add(&nbr->db_tx_timer, &tv);
 	}
 }
@@ -438,8 +407,6 @@ start_db_tx_timer(struct nbr *nbr)
 	if (nbr == nbr->iface->self)
 		return (0);
 
-	log_debug("start_db_tx_timer: neighbor ID %s", inet_ntoa(nbr->id));
-
 	timerclear(&tv);
 
 	return (evtimer_add(&nbr->db_tx_timer, &tv));
@@ -450,8 +417,6 @@ stop_db_tx_timer(struct nbr *nbr)
 {
 	if (nbr == nbr->iface->self)
 		return (0);
-
-	log_debug("stop_db_tx_timer: neighbor ID %s", inet_ntoa(nbr->id));
 
 	return (evtimer_del(&nbr->db_tx_timer));
 }
