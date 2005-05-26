@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.85 2005/04/07 00:23:51 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.86 2005/05/26 04:34:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -51,6 +51,14 @@
 #include <ddb/db_output.h>
 #endif
 #endif
+
+#ifdef PTRACE
+#include <miscfs/procfs/procfs.h>
+void ss_clear_breakpoints(struct proc *p);
+#endif
+
+/* single-step breakpoint */
+#define SSBREAKPOINT	(HPPA_BREAK_KERNEL | (HPPA_BREAK_SS << 13))
 
 const char *trap_type[] = {
 	"invalid",
@@ -277,10 +285,26 @@ trap(type, frame)
 		break;
 
 	case T_IBREAK | T_USER:
-	case T_DBREAK | T_USER:
+	case T_DBREAK | T_USER: {
+		int code = TRAP_BRKPT;
+#ifdef PTRACE
+		ss_clear_breakpoints(p);
+		if (opcode == SSBREAKPOINT)
+			code = TRAP_TRACE;
+#endif
 		/* pass to user debugger */
-		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
+		trapsignal(p, SIGTRAP, type &~ T_USER, code, sv);
+		}
 		break;
+
+#ifdef PTRACE
+	case T_TAKENBR | T_USER:
+		ss_clear_breakpoints(p);
+
+		/* pass to user debugger */
+		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_TRACE, sv);
+		break;
+#endif
 
 	case T_EXCEPTION | T_USER: {
 		u_int64_t *fpp = (u_int64_t *)frame->tf_cr30;
@@ -571,6 +595,98 @@ child_return(arg)
 #endif
 }
 
+#ifdef PTRACE
+
+#include <sys/ptrace.h>
+
+int
+ss_get_value(struct proc *p, vaddr_t addr, u_int *value)
+{
+	struct uio uio;
+	struct iovec iov;
+
+	iov.iov_base = (caddr_t)value;
+	iov.iov_len = sizeof(u_int);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)addr;
+	uio.uio_resid = sizeof(u_int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	return (procfs_domem(curproc, p, NULL, &uio));
+}
+
+int
+ss_put_value(struct proc *p, vaddr_t addr, u_int value)
+{
+	struct uio uio;
+	struct iovec iov;
+
+	iov.iov_base = (caddr_t)&value;
+	iov.iov_len = sizeof(u_int);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)addr;
+	uio.uio_resid = sizeof(u_int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = curproc;
+	return (procfs_domem(curproc, p, NULL, &uio));
+}
+
+void
+ss_clear_breakpoints(struct proc *p)
+{
+	/* Restore origional instructions. */
+	if (p->p_md.md_bpva != 0) {
+		ss_put_value(p, p->p_md.md_bpva, p->p_md.md_bpsave[0]);
+		ss_put_value(p, p->p_md.md_bpva + 4, p->p_md.md_bpsave[1]);
+		p->p_md.md_bpva = 0;
+	}
+}
+
+int
+process_sstep(struct proc *p, int sstep)
+{
+	int error;
+
+	ss_clear_breakpoints(p);
+
+	/* Don't touch the syscall gateway page. */
+	if (sstep == 0 ||
+	    (p->p_md.md_regs->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE) {
+		p->p_md.md_regs->tf_ipsw &= ~PSL_T;
+		return (0);
+	}
+
+	p->p_md.md_bpva = p->p_md.md_regs->tf_iioq_tail & ~HPPA_PC_PRIV_MASK;
+
+	/*
+	 * Insert two breakpoint instructions; the first one might be
+	 * nullified.  Of course we need to save two instruction
+	 * first.
+	 */
+
+	error = ss_get_value(p, p->p_md.md_bpva, &p->p_md.md_bpsave[0]);
+	if (error)
+		return (error);
+	error = ss_get_value(p, p->p_md.md_bpva + 4, &p->p_md.md_bpsave[1]);
+	if (error)
+		return (error);
+
+	error = ss_put_value(p, p->p_md.md_bpva, SSBREAKPOINT);
+	if (error)
+		return (error);
+	error = ss_put_value(p, p->p_md.md_bpva + 4, SSBREAKPOINT);
+	if (error)
+		return (error);
+
+	p->p_md.md_regs->tf_ipsw |= PSL_T;
+	return (0);
+}
+
+#endif	/* PTRACE */
 
 /*
  * call actual syscall routine

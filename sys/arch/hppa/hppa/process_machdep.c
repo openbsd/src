@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.12 2005/05/10 11:32:51 mickey Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.13 2005/05/26 04:34:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -164,16 +164,7 @@ process_write_fpregs(p, fpregs)
 	return (0);
 }
 
-int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
-{
-	if (sstep)
-		return (EINVAL);
-
-	return (0);
-}
+/* process_sstep() is in trap.c */
 
 int
 process_set_pc(p, addr)

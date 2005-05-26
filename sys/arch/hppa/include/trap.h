@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.11 2005/01/17 20:47:40 mickey Exp $	*/
+/*	$OpenBSD: trap.h,v 1.12 2005/05/26 04:34:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -95,6 +95,7 @@
 /* im5 */
 #define	HPPA_BREAK_KERNEL	0
 /* im13 */
+#define HPPA_BREAK_SS		4
 #define	HPPA_BREAK_KGDB		5
 #define	HPPA_BREAK_GET_PSW	9
 #define	HPPA_BREAK_SET_PSW	10
