@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.23 2005/02/16 01:30:48 martin Exp $
+dnl	$OpenBSD: hardware,v 1.24 2005/05/26 20:36:40 martin Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 8MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 120MB partition by installing just the minimum sets.
@@ -7,61 +7,68 @@ booting, more RAM and disk space is highly recommended. About 250MB will be
 necessary to install all of the OpenBSD OSREV binary distribution (note that
 this does not count swap space!).
 
-A Mac OS partition is also required to install OpenBSD/MACHINE OSREV and boot it,
-see below.
+A Mac OS partition is also required to install OpenBSD/MACHINE OSREV and boot
+it, see below.
 
-OpenBSD/MACHINE OSREV now runs on most 680x0 Macintosh's.  Specifically, it
+OpenBSD/MACHINE OSREV runs on most 680x0 Macintosh's.  Specifically, it
 should work on:
-	68020 with 68851 PMMU and 68881 FPU
-	68030 with 68882 FPU (many Macs do not have this)
-	68040 (not including the 68LC040)
+	* 68020 with 68851 PMMU and 68881 FPU
+	* 68030 with 68882 FPU (many Macs do not have this)
+	* 68040 (not including the 68LC040)
 
-The following Macintosh models are "fully" supported.  This means that at
-least the SCSI controller, ADB (keyboard and mouse), and some sort of
-display will function on these models.  On some of these machines, a PMMU
-and/or FPU are required if they are not provided by default with the
-machine.
-	Mac II, Mac IIx, Mac IIcx, Mac IIci, Mac SE/30,
-	Mac IIsi, Mac IIvx, Mac IIvi, Performa 600, Centris 650,
-	Color Classic, Classic II, LC520, LC550, Performa 4xx,  LCII,
-	LCIII, MacTV, Quadra 610, Quadra 700, Quadra 650, Quadra 800,
-	Quadra 840AV, some Duo Series,
-	PowerBook 180 and 180c, PB140, PB145, PB145B, PB160, PB170, PB165,
-	PB165c
+The following Macintosh models are supported and tested.  This means that at
+least the SCSI controller, serial console and on-board ethernet will function on
+these models.  On some of these machines, a full 68040 CPU is required to
+replace the default 68LC040 CPU.
+	* LC family: LC 475, Performa 475, Performa 476
+	* Centris family: 610, 650
+	* Quadra family: 605, 610, 630, 650, 660AV, 700, 800, 840AV, 900, 950
 
 
-Supported devices on all of the above systems {:-include-:}:
-	Internal SCSI bus (esp, ncrscsi, sbc) and most SCSI tapes, hard drives,
-	  and CD-ROM drives
-	Internal sound -- enough to beep on some machines, anyway (asc)
-	Most NuBus video cards (there have been some
-	  problems with some 24-bit color cards)
-	Both internal serial ports (zsc)
-	ADB keyboards and mice (adb)
-	Ethernet cards based on the Natl. Semiconductor 8390
-	  (Asante, Apple, and a few others) (ae)
-	Some Ethernet cards based on the SONIC chip including internal
-	  Ethernet on Apple Quadras/Centrises and PowerBook 500 series (sn)
-	
-Some systems will boot and are usable from an external terminal
-(serial tty or SL/IP):
-	LC475, Performa 475, Quadra 605, Quadra 950
-	Possibly others
+Supported devices:
+	* Internal SCSI controllers and peripherals:
+		- Quadra/Centris series' onboard NCR 53c96 SCSI controller
+		  (esp).
+		- Macintosh II-series', Performa, and LC-series' onboard NCR
+		  5380 SCSI controller (ncrscsi, sbc).
+		- SCSI disk drives (sd).
+		- SCSI cdrom drives (cd).
+		- Autochangers (ch).
+		- Tape drives (st). 
+	* Internal sound (asc).
+	* NuBus internal expansion bus (nubus) (except on the 840AV).
+	* Most NuBus video cards.
+	* Both internal serial ports (zsc).
+	* ADB keyboards and mice (adb) (except on the IIfx, Quadra 900 and 950).
+	* Ethernet cards based on the Natl. Semiconductor 8390 (Asante, Apple,
+	  and a few others) (ae).
+	* Quadra/Centris AV series' onboard MACE ethernet (mc).
+	* Some ethernet cards based on the SONIC chip including internal
+	  Ethernet on many of Apple's non-AV Quadras/Centrises (sn).
 
-Some systems are reportedly almost supported:
-	LC/Performa575 (if 68LC040 replaced with a 68040)
-	LC/Performa630 (if 68LC040 replaced with a 68040, and booted from an
-	  external SCSI drive)
-	PowerBook 550c (but the internal SCSI drive is not supported yet)
+Untested systems:
+	The following Macintosh models are untested and/or lack support for
+	  major subsystems.  It is very likely that many of these system don't
+	  work at all.
+	* Classic family: Color Classic, Classic II
+	* Macintosh II family: Mac II, IIx, IIcx, IIci, IIsi, IIfx, IIvi, IIvx,
+	  Performa 600
+	* LC family: LC, LC II, LC III, LC III+, Performa 400-430,
+	  Performa 450, Performa 460
+	* 500 family: 520, 550, 575, 580, Mac TV 
 
-What isn't supported, but often asked about:
-	PowerPC-based Macs.  Newer Mac PPC systems are supported by the
+OpenBSD/MACHINE OSREV does NOT run on these machines:
+	* PowerPC-based Macs.  Newer Mac PPC systems are supported by the
 	  OpenBSD/macppc port.
-dnl XXX I think IIfx work now...
-	Machines based on Apple's IOP technology including the Mac IIfx.
-	Machines based on the 68LC040 processor.  Unfortunately, the chip
-	  itself contains a major bug for which no workaround is available
-	  in OpenBSD.
-	LCPDS Ethernet cards.
-	Apple Communication Slot (CS) Ethernet cards.
-	Floppy drive.
+	* Powerbook family.  Hardware capabilities limit the usability of these
+	  systems.
+	* Machines based on the 68LC040 processor.  Unfortunately, the chip
+	  itself contains a major bug for which there is no software workaround
+	  available in OpenBSD.
+
+Hardware that we do NOT currently support, but get many questions about:
+	* LCPDS Ethernet cards.
+	* Apple Communication Slot (CS) Ethernet cards.
+	* Floppy drive.
+	* IOP ADB subsystem on the IIfx, Quadra 900 and 950.
+	* IDE drives.

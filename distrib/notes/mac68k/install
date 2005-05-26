@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.29 2004/12/03 20:42:05 miod Exp $
+dnl	$OpenBSD: install,v 1.30 2005/05/26 20:36:40 martin Exp $
 OpenBSDInstallShortPrelude
 
 OpenBSDInstallPart2
@@ -6,7 +6,9 @@ OpenBSDInstallPart2
 	Double-click on the BSD/Mac68k Booter icon on the desktop to
 	start the application.  Go to the "Booting..." entry in the
 	"Options" menu, and make it point to the bsd.rd kernel on your
-	Mac OS filesystem. Then boot the kernel.
+	Mac OS filesystem. For the Quadra 605, LC 475, Performa 475 and
+	Performa 476 models it is also necessary to activate the video address
+	hack. Now boot the kernel.
 
 OpenBSDBootMsgs
 
