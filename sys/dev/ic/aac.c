@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.19 2004/03/20 03:58:09 aaron Exp $	*/
+/*	$OpenBSD: aac.c,v 1.20 2005/05/26 23:53:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1223,19 +1223,6 @@ aacminphys(bp)
 
 	AAC_DPRINTF(AAC_D_MISC, ("aacminphys(0x%x) ", bp));
 
-#if 1
-#if 0	/* As this is way more than MAXPHYS it's really not necessary. */
-	if (bp->b_bcount > ((AAC_MAXOFFSETS - 1) * PAGE_SIZE))
-		bp->b_bcount = ((AAC_MAXOFFSETS - 1) * PAGE_SIZE);
-#endif
-#else
-	for (off = PAGE_SIZE, pa = vtophys(buf); off < bp->b_bcount;
-	    off += PAGE_SIZE)
-		if (pa + off != vtophys(buf + off)) {
-			bp->b_bcount = off;
-			break;
-		}
-#endif
 	minphys(bp);
 }
 
