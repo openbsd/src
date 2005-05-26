@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.9 2005/05/24 07:38:46 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.10 2005/05/26 21:46:36 jfb Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -417,8 +417,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 	
 	fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode);
 	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open file `%s': %s", 
-		    path, strerror(errno));
+		cvs_log(LP_ERRNO, "failed to open file `%s'", path); 
 		return (-1);
 	}
 
@@ -426,8 +425,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 		ret = cvs_buf_write_fd(b, fd);
 
 	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to write to file `%s': %s", 
-		    path, strerror(errno));
+		cvs_log(LP_ERRNO, "failed to write to file `%s'",  path);
 		(void)unlink(path);
 	}
 	(void)close(fd);
