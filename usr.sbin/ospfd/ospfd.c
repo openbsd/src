@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.19 2005/05/23 22:54:05 henning Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.20 2005/05/26 18:46:16 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -109,7 +109,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-d] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-dnv] [-f file]\n", __progname);
 	exit(1);
 }
 
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 {
 	struct event		 ev_sigint, ev_sigterm, ev_sigchld, ev_sighup;
 	char			*conffile;
-	int			 ch;
+	int			 ch, opts = 0;
 	int			 debug = 0;
 
 	conffile = CONF_FILE;
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 	/* start logging */
 	log_init(1);
 
-	while ((ch = getopt(argc, argv, "df:")) != -1) {
+	while ((ch = getopt(argc, argv, "df:nv")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -135,6 +135,15 @@ main(int argc, char *argv[])
 		case 'f':
 			conffile = optarg;
 			break;
+		case 'n':
+			opts |= OSPFD_OPT_NOACTION;
+			break;
+		case 'v':
+			if (opts & OSPFD_OPT_VERBOSE)
+				opts |= OSPFD_OPT_VERBOSE2;
+			opts |= OSPFD_OPT_VERBOSE;
+			break;
+
 		default:
 			usage();
 			/* NOTREACHED */
@@ -147,8 +156,16 @@ main(int argc, char *argv[])
 	kif_init();
 
 	/* parse config file */
-	if ((conf = parse_config(conffile, OSPFD_OPT_VERBOSE)) == NULL )
+	if ((conf = parse_config(conffile, opts)) == NULL )
 		exit(1);
+
+	if (conf->opts & OSPFD_OPT_NOACTION) {
+		if (conf->opts & OSPFD_OPT_VERBOSE)
+			print_config(conf);
+		else
+			fprintf(stderr, "configuration OK\n");
+		exit(0);
+	}
 
 	/* check for root privileges  */
 	if (geteuid())
@@ -222,8 +239,6 @@ main(int argc, char *argv[])
 
 	if (kr_init(!(conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
-
-	show_config(conf);
 
 	event_dispatch();
 
@@ -417,17 +432,17 @@ check_file_secrecy(int fd, const char *fname)
 	struct stat	st;
 
 	if (fstat(fd, &st)) {
-		log_warn("cannot stat %s", fname);
+		warn("cannot stat %s", fname);
 		return (-1);
 	}
 
 	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_warnx("%s: owner not root or current user", fname);
+		warnx("%s: owner not root or current user", fname);
 		return (-1);
 	}
 
 	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_warnx("%s: group/world readable/writeable", fname);
+		warnx("%s: group/world readable/writeable", fname);
 		return (-1);
 	}
 

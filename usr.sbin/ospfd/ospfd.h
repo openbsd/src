@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.32 2005/05/26 04:09:24 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.33 2005/05/26 18:46:16 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -455,8 +455,6 @@ struct ctl_sum_area {
 	u_int32_t		 num_lsa;
 };
 
-void		 show_config(struct ospfd_conf *xconf);
-
 /* area.c */
 struct area	*area_new(void);
 int		 area_del(struct area *);
@@ -526,5 +524,8 @@ in_addr_t	prefixlen2mask(u_int8_t);
 /* ospfd.c */
 void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
 void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
+
+/* printconf.c */
+void	print_config(struct ospfd_conf *);
 
 #endif	/* _OSPFD_H_ */

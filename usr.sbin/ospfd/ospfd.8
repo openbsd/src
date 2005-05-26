@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.6 2005/02/03 10:49:29 jmc Exp $
+.\"	$OpenBSD: ospfd.8,v 1.7 2005/05/26 18:46:16 norby Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -47,6 +47,11 @@ will run in the foreground and log to
 .Em stderr .
 .It Fl f Ar file
 Specify an alternative configuration file.
+.It Fl n
+Configtest mode.
+Only check the configuration file for validity.
+.It Fl v
+Produce more verbose output.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ospfd.confXXXX" -compact

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2005/05/23 19:59:02 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.15 2005/05/26 18:46:16 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -791,11 +791,12 @@ parse_config(char *filename, int opts)
 	conf->opts = opts;
 	LIST_INIT(&conf->area_list);
 
-	if (check_file_secrecy(fileno(fin), filename)) {
-		fclose(fin);
-		free(conf);
-		return (NULL);
-	}
+	if (!(conf->opts & OSPFD_OPT_NOACTION))
+		if (check_file_secrecy(fileno(fin), filename)) {
+			fclose(fin);
+			free(conf);
+			return (NULL);
+		}
 
 	yyparse();
 
