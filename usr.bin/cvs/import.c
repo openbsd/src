@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.18 2005/05/25 21:47:19 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.19 2005/05/26 00:51:36 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -41,14 +41,20 @@
 
 #define CVS_IMPORT_DEFBRANCH    "1.1.1"
 
+
 static int cvs_import_init     (struct cvs_cmd *, int, char **, int *);
 static int cvs_import_pre_exec (struct cvsroot *);
+static int cvs_import_pre_exec (struct cvsroot *);
+static int cvs_import_post_exec(struct cvsroot *);
 static int cvs_import_remote   (CVSFILE *, void *);
 static int cvs_import_local    (CVSFILE *, void *);
+static int cvs_import_cleanup  (void);
 
 static int dflag = 0;
-static RCSNUM *bnum;
-static char *branch, *module, *vendor, *release;
+static int conflicts = 0;
+static RCSNUM *imp_brnum;
+
+static char *module, *vendor, *release;
 
 struct cvs_cmd cvs_cmd_import = {
 	CVS_OP_IMPORT, CVS_REQ_IMPORT, "import",
@@ -63,8 +69,8 @@ struct cvs_cmd cvs_cmd_import = {
 	cvs_import_pre_exec,
 	cvs_import_remote,
 	cvs_import_local,
-	NULL,
-	NULL,
+	cvs_import_post_exec,
+	cvs_import_cleanup,
 	CVS_CMD_SENDDIR
 };
 
@@ -73,18 +79,14 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	branch = CVS_IMPORT_DEFBRANCH;
-
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'b':
-			branch = optarg;
-			if ((bnum = rcsnum_parse(branch)) == NULL) {
+			if ((imp_brnum = rcsnum_parse(optarg)) == NULL) {
 				cvs_log(LP_ERR, "%s is not a numeric branch",
-				    branch);
+				    optarg);
 				return (CVS_EX_USAGE);
 			}
-			rcsnum_free(bnum);
 			break;
 		case 'd':
 			dflag = 1;
@@ -112,9 +114,14 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 
 	argc -= optind;
 	argv += optind;
-
 	if (argc != 3)
 		return (CVS_EX_USAGE);
+
+	if ((imp_brnum == NULL) &&
+	    ((imp_brnum = rcsnum_parse(CVS_IMPORT_DEFBRANCH)) == NULL)) {
+		cvs_log(LP_ERR, "failed to parse default import branch");
+		return (CVS_EX_DATA);
+	}
 
 	module = argv[0];
 	vendor = argv[1];
@@ -132,7 +139,7 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_import_pre_exec(struct cvsroot *root)
 {
-	char repodir[MAXPATHLEN];
+	char numbuf[64], repodir[MAXPATHLEN];
 
 	if (root->cr_method == CVS_METHOD_LOCAL) {
 		snprintf(repodir, sizeof(repodir), "%s/%s", root->cr_dir,
@@ -142,8 +149,10 @@ cvs_import_pre_exec(struct cvsroot *root)
 			return (CVS_EX_DATA);
 		}
 	} else {
+		rcsnum_tostr(imp_brnum, numbuf, sizeof(numbuf));
+
 		if ((cvs_sendarg(root, "-b", 0) < 0) ||
-		    (cvs_sendarg(root, branch, 0) < 0) ||
+		    (cvs_sendarg(root, numbuf, 0) < 0) ||
 		    (cvs_logmsg_send(root, cvs_msg) < 0) ||
 		    (cvs_sendarg(root, module, 0) < 0) ||
 		    (cvs_sendarg(root, vendor, 0) < 0) ||
@@ -152,6 +161,22 @@ cvs_import_pre_exec(struct cvsroot *root)
 	}
 
 	return (0);
+}
+
+static int
+cvs_import_post_exec(struct cvsroot *root)
+{
+	char buf[8];
+
+	if (root->cr_method == CVS_METHOD_LOCAL) {
+		if (conflicts > 0)
+			snprintf(buf, sizeof(buf), "%d", conflicts);
+
+		cvs_printf("\n%s conflicts created by this import\n\n",
+		    conflicts == 0 ? "No" : buf);
+	}
+
+	return (CVS_EX_OK);
 }
 
 /*
@@ -324,13 +349,11 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
-#if 0
-	if (rcs_branch_set(rf, rev) < 0) {
+	if (rcs_branch_set(rf, imp_brnum) < 0) {
 		cvs_log(LP_ERR, "failed to set RCS default branch: %s",
 		    strerror(rcs_errno));
 		return (CVS_EX_DATA);
 	}
-#endif
 
 	/* add the vendor tag and release tag as symbols */
 	rcs_close(rf);
@@ -339,4 +362,12 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		cvs_log(LP_ERRNO, "failed to timestamp RCS file");
 
 	return (CVS_EX_OK);
+}
+
+static int
+cvs_import_cleanup(void)
+{
+	if (imp_brnum != NULL)
+		rcsnum_free(imp_brnum);
+	return (0);
 }
