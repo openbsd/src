@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.486 2005/05/26 15:29:48 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.487 2005/05/26 20:20:38 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3184,8 +3184,8 @@ natpass		: /* empty */	{ $$.b1 = $$.b2 = 0; }
 		;
 
 nataction	: no NAT natpass {
-			if ($1 && ($3.b1 || $3.b2)) {
-				yyerror("\"pass\" and \"log\" not valid with \"no\"");
+			if ($1 && $3.b1) {
+				yyerror("\"pass\" not valid with \"no\"");
 				YYERROR;
 			}
 			if ($1)
@@ -3196,8 +3196,8 @@ nataction	: no NAT natpass {
 			$$.w = $3.b2;
 		}
 		| no RDR natpass {
-			if ($1 && ($3.b1 || $3.b2)) {
-				yyerror("\"pass\" and \"log\" not valid with \"no\"");
+			if ($1 && $3.b1) {
+				yyerror("\"pass\" not valid with \"no\"");
 				YYERROR;
 			}
 			if ($1)
@@ -3376,8 +3376,8 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 
 			memset(&binat, 0, sizeof(binat));
 
-			if ($1 && ($3.b1 || $3.b2)) {
-				yyerror("\"pass\" and \"log\" not valid with \"no\"");
+			if ($1 && $3.b1) {
+				yyerror("\"pass\" not valid with \"no\"");
 				YYERROR;
 			}
 			if ($1)
