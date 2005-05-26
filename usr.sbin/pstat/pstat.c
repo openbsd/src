@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.51 2005/05/26 01:44:38 pedro Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.52 2005/05/26 01:45:02 pedro Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.51 2005/05/26 01:44:38 pedro Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.52 2005/05/26 01:45:02 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -535,7 +535,7 @@ mount_print(struct mount *mp)
 		char *comma = "(";
 
 		putchar(' ');
-		/* user visable flags */
+		/* user visible flags */
 		if (flags & MNT_RDONLY) {
 			(void)printf("%srdonly", comma);
 			flags &= ~MNT_RDONLY;
