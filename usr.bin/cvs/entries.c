@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.31 2005/05/26 21:25:49 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.32 2005/05/26 22:25:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,7 +53,7 @@ CVSENTRIES*
 cvs_ent_open(const char *dir, int flags)
 {
 	size_t len;
-	int exists, l;
+	int exists;
 	char entpath[MAXPATHLEN], ebuf[128], mode[4];
 	FILE *fp;
 	struct stat st;
@@ -63,8 +63,8 @@ cvs_ent_open(const char *dir, int flags)
 	exists = 0;
 	memset(mode, 0, sizeof(mode));
 
-	l = snprintf(entpath, sizeof(entpath), "%s/" CVS_PATH_ENTRIES, dir);
-	if (l == -1 || l >= (int)sizeof(entpath)) {
+	len = cvs_path_cat(dir, CVS_PATH_ENTRIES, entpath, sizeof(entpath));
+	if (len >= sizeof(entpath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", entpath);
 		return (NULL);
@@ -163,8 +163,6 @@ cvs_ent_close(CVSENTRIES *ep)
 		(void)cvs_ent_write(ep);
 	}
 
-	if (ep->cef_file != NULL)
-		(void)fclose(ep->cef_file);
 	if (ep->cef_path != NULL)
 		free(ep->cef_path);
 
@@ -412,25 +410,19 @@ cvs_ent_write(CVSENTRIES *ef)
 	size_t len;
 	char revbuf[64], timebuf[32];
 	struct cvs_ent *ent;
+	FILE *fp;
 
 	if (ef->cef_flags & CVS_ENTF_SYNC)
 		return (0);
 
-	if (ef->cef_file == NULL) {
-		ef->cef_file = fopen(ef->cef_path, "w");
-		if (ef->cef_file == NULL) {
-			cvs_log(LP_ERRNO, "failed to open Entries `%s'",
-			    ef->cef_path);
-			return (-1);
-		}
+	if ((fp = fopen(ef->cef_path, "w")) == NULL) {
+		cvs_log(LP_ERRNO, "failed to open Entries `%s'", ef->cef_path);
+		return (-1);
 	}
 
-
-	/* reposition ourself at beginning of file */
-	rewind(ef->cef_file);
 	TAILQ_FOREACH(ent, &(ef->cef_ent), ce_list) {
 		if (ent->ce_type == CVS_ENT_DIR) {
-			putc('D', ef->cef_file);
+			putc('D', fp);
 			timebuf[0] = '\0';
 			revbuf[0] = '\0';
 		} else {
@@ -447,17 +439,16 @@ cvs_ent_write(CVSENTRIES *ef)
 			}
 		}
 
-		fprintf(ef->cef_file, "/%s/%s%s/%s/%s/%s\n", ent->ce_name,
+		fprintf(fp, "/%s/%s%s/%s/%s/%s\n", ent->ce_name,
 		    (ent->ce_status == CVS_ENT_REMOVED) ? "-" : "", revbuf,
 		    timebuf, "", "");
 	}
 
 	/* terminating line */
-	fprintf(ef->cef_file, "D\n");
+	putc('D', fp);
+	putc('\n', fp);
 
 	ef->cef_flags |= CVS_ENTF_SYNC;
-	fclose(ef->cef_file);
-	ef->cef_file = NULL;
-
+	fclose(fp);
 	return (0);
 }

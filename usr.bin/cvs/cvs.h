@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.61 2005/05/26 21:25:49 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.62 2005/05/26 22:25:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -254,7 +254,6 @@ struct cvs_ent {
 
 typedef struct cvs_entries {
 	char    *cef_path;
-	FILE    *cef_file;
 	u_int    cef_flags;
 
 	TAILQ_HEAD(, cvs_ent) cef_ent;
@@ -396,6 +395,7 @@ int    cvs_getargv    (const char *, char **, int);
 int    cvs_remove_dir (const char *);
 char** cvs_makeargv   (const char *, int *);
 void   cvs_freeargv   (char **, int);
+size_t cvs_path_cat   (const char *, const char *, char *, size_t);
 
 
 #endif /* CVS_H */

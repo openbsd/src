@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.28 2005/05/24 20:04:43 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.29 2005/05/26 22:25:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -559,3 +559,24 @@ cvs_remove_dir(const char *path)
 	return (CVS_EX_OK);
 }
 
+size_t
+cvs_path_cat(const char *base, const char *end, char *dst, size_t dlen)
+{
+	size_t len;
+
+	len = strlcpy(dst, base, dlen);
+	if (len >= dlen - 1) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", dst);
+	} else {
+		dst[len] = '/';
+		dst[len + 1] = '\0';
+		len = strlcat(dst, end, dlen);
+		if (len >= dlen) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", dst);
+		}
+	}
+
+	return (len);
+}
