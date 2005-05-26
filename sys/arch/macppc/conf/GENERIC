@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.85 2005/05/26 05:54:23 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.86 2005/05/26 23:18:27 drahn Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -207,6 +207,7 @@ midi*	at umidi?
 ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
+atapiscsi* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
