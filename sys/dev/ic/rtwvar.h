@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.8 2005/03/02 11:14:12 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.9 2005/05/26 05:41:45 jsg Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -34,6 +34,7 @@
 #ifndef _DEV_IC_RTWVAR_H_
 #define	_DEV_IC_RTWVAR_H_
 
+#include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/timeout.h>
 
