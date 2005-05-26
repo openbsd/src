@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 2004/09/09 09:29:52 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.13 2005/05/26 04:02:44 kjell Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -294,17 +294,12 @@ cpu_attach(parent, self, aux)
 		 * report on an AP
 		 */
 		printf("apid %d (application processor)\n", caa->cpu_number);
-
-#ifdef MULTIPROCESSOR
 		gdt_alloc_cpu(ci);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
 		identifycpu(ci);
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ncpus++;
-#else
-		printf("%s: not started\n", ci->ci_dev.dv_xname);
-#endif
 		break;
 
 	default:
