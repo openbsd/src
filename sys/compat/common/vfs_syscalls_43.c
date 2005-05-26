@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.26 2005/05/26 00:33:45 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.27 2005/05/26 01:15:12 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -427,8 +427,6 @@ compat_43_sys_getdirentries(p, v, retval)
 		FREE(dirbuf, M_TEMP);
 	}
 	VOP_UNLOCK(vp, 0, p);
-	if (error)
-		goto bad;
 	if (error)
 		goto bad;
 	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
