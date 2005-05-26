@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.88 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.89 2005/05/26 04:29:06 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1598,22 +1598,23 @@ ENTRY(idle)
 
 	movl	$IPL_NONE,CPL		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
+	jmp	_C_LABEL(idle_start)
 
 ENTRY(idle_loop)
-	cli
-	cmpl	$0,_C_LABEL(whichqs)
-	jnz	_C_LABEL(idle_exit)
-#if NPCTR > 0 && NAPM == 0
-	addl	$1,_C_LABEL(pctr_idlcnt)
-	adcl	$0,_C_LABEL(pctr_idlcnt)+4
-#endif
 #if NAPM > 0
 	call	_C_LABEL(apm_cpu_idle)
 #else
+#if NPCTR > 0
+	addl	$1,_C_LABEL(pctr_idlcnt)
+	adcl	$0,_C_LABEL(pctr_idlcnt)+4
+#endif
 	sti
 	hlt
 #endif
-	jmp	_C_LABEL(idle_loop)
+ENTRY(idle_start)
+	cli
+	cmpl	$0,_C_LABEL(whichqs)
+	jz	_C_LABEL(idle_loop)
 
 ENTRY(idle_exit)
 	sti
