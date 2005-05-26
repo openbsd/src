@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.17 2005/05/24 06:55:21 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.18 2005/05/26 22:44:24 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -564,8 +564,6 @@ int
 start_spf_timer(struct ospfd_conf *conf)
 {
 	struct timeval	tv;
-
-	log_debug("start_spf_timer:");
 
 	switch (conf->spf_state) {
 	case SPF_IDLE:
