@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.50 2004/11/17 01:47:20 itojun Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.51 2005/05/26 05:15:56 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.50 2004/11/17 01:47:20 itojun Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.51 2005/05/26 05:15:56 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,6 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.50 2004/11/17 01:47:20 itojun Exp $"
 #include <sys/file.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
-#include <miscfs/nullfs/null.h>
 #undef _KERNEL
 #define NFS
 #include <nfs/nfsproto.h>
@@ -151,7 +150,6 @@ int isofs_filestat(struct vnode *, struct filestat *);
 int msdos_filestat(struct vnode *, struct filestat *);
 int nfs_filestat(struct vnode *, struct filestat *);
 int xfs_filestat(struct vnode *, struct filestat *);
-int null_filestat(struct vnode *, struct filestat *);
 void dofiles(struct kinfo_proc2 *);
 void getinetproto(int);
 void socktrans(struct socket *, int);
@@ -436,10 +434,6 @@ vtrans(struct vnode *vp, int i, int flag, off_t offset)
 			if (!xfs_filestat(&vn, &fst))
 				badtype = "error";
 			break;
-		case VT_NULL:
-			if (!null_filestat(&vn, &fst))
-				badtype = "error";
-			break;
 		default: {
 			static char unknown[30];
 			snprintf(badtype = unknown, sizeof unknown,
@@ -629,81 +623,6 @@ xfs_filestat(struct vnode *vp, struct filestat *fsp)
 	fsp->mode = xfs_node.attr.va_mode;
 	fsp->size = xfs_node.attr.va_size;
 	fsp->rdev = xfs_node.attr.va_rdev;
-
-	return 1;
-}
-
-int
-null_filestat(struct vnode *vp, struct filestat *fsp)
-{
-	struct null_node node;
-	struct filestat fst;
-	struct vnode vn;
-	int fail = 1;
-
-	memset(&fst, 0, sizeof fst);
-
-	if (!KVM_READ(VTONULL(vp), &node, sizeof (node))) {
-		dprintf("can't read node at %p for pid %ld",
-		    VTONULL(vp), (long)Pid);
-		return 0;
-	}
-
-	/*
-	 * Attempt to find information that might be useful.
-	 */
-	if (node.null_lowervp) {
-		if (!KVM_READ(node.null_lowervp, &vn, sizeof (vn))) {
-			dprintf("can't read vnode at %p for pid %ld",
-			    node.null_lowervp, (long)Pid);
-			return 0;
-		}
-
-		fail = 0;
-		if (vn.v_type == VNON || vn.v_tag == VT_NON)
-			fail = 1;
-		else if (vn.v_type == VBAD)
-			fail = 1;
-		else
-			switch (vn.v_tag) {
-			case VT_UFS:
-			case VT_MFS:
-				if (!ufs_filestat(&vn, &fst))
-					fail = 1;
-				break;
-			case VT_NFS:
-				if (!nfs_filestat(&vn, &fst))
-					fail = 1;
-				break;
-			case VT_EXT2FS:
-				if (!ext2fs_filestat(&vn, &fst))
-					fail = 1;
-				break;
-			case VT_ISOFS:
-				if (!isofs_filestat(&vn, &fst))
-					fail = 1;
-				break;
-			case VT_MSDOSFS:
-				if (!msdos_filestat(&vn, &fst))
-					fail = 1;
-				break;
-			case VT_XFS:
-				if (!xfs_filestat(&vn, &fst))
-					fail = 1;
-				break;
-			default:
-				break;
-			}
-	}
-
-	fsp->fsid = (long)node.null_vnode;
-	if (fail)
-		fsp->fileid = (long)node.null_lowervp;
-	else
-		fsp->fileid = fst.fileid;
-	fsp->mode = fst.mode;
-	fsp->size = fst.mode;
-	fsp->rdev = fst.mode;
 
 	return 1;
 }
