@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.10 2005/05/26 19:10:56 norby Exp $ */
+/*	$OpenBSD: database.c,v 1.11 2005/05/26 19:54:49 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,9 +45,6 @@ send_db_description(struct nbr *nbr)
 	struct lsa_entry	*le, *nle;
 	struct buf		*buf;
 	int			 ret = 0;
-
-	if (nbr->iface->passive)
-		return (0);
 
 	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_db_description");

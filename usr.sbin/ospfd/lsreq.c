@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.8 2005/04/12 09:47:30 claudio Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.9 2005/05/26 19:54:49 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -38,9 +38,6 @@ send_ls_req(struct nbr *nbr)
 	struct lsa_entry	*le, *nle;
 	struct buf		*buf;
 	int			 ret;
-
-	if (nbr->iface->passive)
-		return (0);
 
 	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_ls_req");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.22 2005/05/26 18:46:16 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.23 2005/05/26 19:54:49 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -286,11 +286,9 @@ if_hello_timer(int fd, short event, void *arg)
 	send_hello(iface);
 
 	/* reschedule hello_timer */
-	if (!iface->passive) {
-		timerclear(&tv);
-		tv.tv_sec = iface->hello_interval;
-		evtimer_add(&iface->hello_timer, &tv);
-	}
+	timerclear(&tv);
+	tv.tv_sec = iface->hello_interval;
+	evtimer_add(&iface->hello_timer, &tv);
 }
 
 int
@@ -337,12 +335,6 @@ int
 if_act_start(struct iface *iface)
 {
 	struct in_addr		 addr;
-
-	if (iface->passive) {
-		log_debug("if_act_start: cannot start passive interface %s",
-		    iface->name);
-		return (-1);
-	}
 
 	if (!((iface->flags & IFF_UP) &&
 	    (iface->linkstate != LINK_STATE_DOWN))) {

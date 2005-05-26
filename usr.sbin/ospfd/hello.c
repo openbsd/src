@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.5 2005/04/05 13:01:21 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.6 2005/05/26 19:54:49 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -43,9 +43,6 @@ send_hello(struct iface *iface)
 	struct nbr		*nbr;
 	struct buf		*buf;
 	int			 ret;
-
-	if (iface->passive)
-		return (0);
 
 	/* XXX READ_BUF_SIZE */
 	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)

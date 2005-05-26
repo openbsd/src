@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.9 2005/05/25 22:05:58 norby Exp $ */
+/*	$OpenBSD: lsack.c,v 1.10 2005/05/26 19:54:49 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -43,9 +43,6 @@ send_ls_ack(struct iface *iface, struct in_addr addr, void *data, int len)
 
 	log_debug("send_ls_ack: interface %s addr %s",
 	    iface->name, inet_ntoa(addr));
-
-	if (iface->passive)
-		return (0);
 
 	/* XXX READ_BUF_SIZE */
 	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)

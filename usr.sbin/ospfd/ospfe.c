@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.22 2005/05/26 18:46:16 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.23 2005/05/26 19:54:49 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -168,10 +168,12 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	/* start interfaces */
 	LIST_FOREACH(area, &oeconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
-			if_init(xconf, iface);
-			if (if_fsm(iface, IF_EVT_UP)) {
-				log_debug("error starting interface %s",
-				    iface->name);
+			if (!iface->passive) {
+				if_init(xconf, iface);
+				if (if_fsm(iface, IF_EVT_UP)) {
+					log_debug("error starting interface %s",
+					    iface->name);
+				}
 			}
 		}
 	}
@@ -192,12 +194,14 @@ ospfe_shutdown(void)
 	/* stop all interfaces and remove all areas */
 	LIST_FOREACH(area, &oeconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
-			if (if_fsm(iface, IF_EVT_DOWN)) {
-				log_debug("error stopping interface %s",
-				    iface->name);
+			if (!iface->passive) {
+				if (if_fsm(iface, IF_EVT_DOWN)) {
+					log_debug("error stopping interface %s",
+					    iface->name);
+				}
 			}
+			area_del(area);
 		}
-		area_del(area);
 	}
 
 	/* clean up */

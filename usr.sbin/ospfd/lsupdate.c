@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.9 2005/04/05 13:01:22 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.10 2005/05/26 19:54:49 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -44,9 +44,6 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 	struct lsa_entry	*le = NULL;
 	int			 queued = 0, dont_ack = 0;
 	int			 r;
-
-	if (iface->passive)
-		return (0);
 
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr == iface->self)
@@ -154,9 +151,6 @@ send_ls_update(struct iface *iface, struct in_addr addr, void *data, int len)
 
 	log_debug("send_ls_update: interface %s addr %s",
 	    iface->name, inet_ntoa(addr));
-
-	if (iface->passive)
-		return (0);
 
 	/* XXX READ_BUF_SIZE */
 	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)

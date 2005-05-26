@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.8 2005/04/14 20:02:10 cloder Exp $ */
+/*	$OpenBSD: packet.c,v 1.9 2005/05/26 19:54:49 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -60,12 +60,6 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 int
 send_packet(struct iface *iface, char *pkt, int len, struct sockaddr_in *dst)
 {
-	if (iface->passive) {
-		log_warnx("send_packet: cannot send packet on passive "
-		    "interface %s", iface->name);
-		return (-1);
-	}
-
 	/* set outgoing interface for multicast traffic */
 	if (IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
 		if (if_set_mcast(iface) == -1) {
