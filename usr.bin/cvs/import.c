@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.19 2005/05/26 00:51:36 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.20 2005/05/26 02:35:13 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -312,8 +312,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		/* don't error out, no big deal */
 	}
 
-	/* first add the magic 1.1.1.1 revision */
-	rev = rcsnum_parse("1.1.1.1");
+	rev = rcsnum_brtorev(imp_brnum);
 	if (rcs_rev_add(rf, rev, cvs_msg, stamp) < 0) {
 		cvs_log(LP_ERR, "failed to add revision: %s",
 		    rcs_errstr(rcs_errno));
@@ -330,9 +329,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
-	rcsnum_free(rev);
-
-	rev = rcsnum_parse(RCS_HEAD_INIT);
+	rcsnum_cpy(imp_brnum, rev, 2);
 	if (rcs_rev_add(rf, rev, cvs_msg, stamp) < 0) {
 		cvs_log(LP_ERR, "failed to add revision: %s",
 		    rcs_errstr(rcs_errno));
@@ -352,6 +349,14 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	if (rcs_branch_set(rf, imp_brnum) < 0) {
 		cvs_log(LP_ERR, "failed to set RCS default branch: %s",
 		    strerror(rcs_errno));
+		return (CVS_EX_DATA);
+	}
+
+	if (rcs_sym_add(rf, vendor, imp_brnum) < 0) {
+		cvs_log(LP_ERR, "failed to set RCS symbol: %s",
+		    strerror(rcs_errno));
+		rcs_close(rf);
+		(void)unlink(rpath);
 		return (CVS_EX_DATA);
 	}
 
