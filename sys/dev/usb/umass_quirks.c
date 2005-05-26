@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.18 2005/05/25 21:12:54 krw Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.19 2005/05/26 20:54:39 krw Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_MSYSTEMS, USB_PRODUCT_MSYSTEMS_DISKONKEY2 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_ATAPI,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
