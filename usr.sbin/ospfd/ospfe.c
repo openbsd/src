@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.24 2005/05/26 22:06:26 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.25 2005/05/26 22:45:00 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -392,10 +392,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("ospfe_dispatch_rde: "
 				    "neighbor not found");
-
-			log_debug("ospfe_dispatch_rde: IMSG_LS_FLOOD, "
-			    "neighbor id %s, len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			l = imsg.hdr.len - IMSG_HEADER_SIZE;
 			if (l < sizeof(lsa_hdr))
