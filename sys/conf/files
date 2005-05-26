@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.339 2005/05/26 00:33:45 pedro Exp $
+#	$OpenBSD: files,v 1.340 2005/05/26 16:37:37 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -416,7 +416,7 @@ pseudo-device faith: ifnet
 pseudo-device gif: ifnet
 pseudo-device gre: ifnet
 pseudo-device crypto: ifnet
-pseudo-device trunk: ifnet, ether
+pseudo-device trunk: ifnet, ether, ifmedia
 
 pseudo-device sequencer
 pseudo-device systrace
