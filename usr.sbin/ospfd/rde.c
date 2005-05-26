@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.26 2005/05/26 18:46:16 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.27 2005/05/26 22:22:37 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -275,8 +275,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("rde_dispatch_imsg: "
 				    "neighbor does not exist");
-			log_debug("rde_dispatch_imsg: IMSG_DB_SNAPSHOT, "
-			    "neighbor %s", inet_ntoa(nbr->id));
 
 			lsa_snap(nbr->area, imsg.hdr.peerid);
 
@@ -288,8 +286,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("rde_dispatch_imsg: "
 				    "neighbor does not exist");
-			log_debug("rde_dispatch_imsg: IMSG_DD, "
-			    "neighbor %s", inet_ntoa(nbr->id));
 
 			buf = imsg.data;
 			for (l = imsg.hdr.len - IMSG_HEADER_SIZE;
@@ -328,9 +324,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("rde_dispatch_imsg: "
 				    "neighbor does not exist");
-			log_debug("rde_dispatch_imsg: IMSG_LS_REQ, "
-			    "neighbor %s len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			buf = imsg.data;
 			for (l = imsg.hdr.len - IMSG_HEADER_SIZE;
@@ -359,9 +352,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("rde_dispatch_imsg: "
 				    "neighbor does not exist");
-			log_debug("rde_dispatch_imsg: IMSG_LS_UPD, "
-			    "neighbor %s len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			lsa = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
 			if (lsa == NULL)
@@ -406,8 +396,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					    v->nbr->peerid, 0, -1,
 					    v->lsa, ntohs(v->lsa->hdr.len));
 
-				/* start spf_timer */
-				log_debug("rde_dispatch_imsg: start spf_timer");
 				start_spf_timer(rdeconf);
 			} else if (rde_req_list_exists(nbr, &lsa->hdr)) {
 				imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
@@ -938,8 +926,7 @@ rde_redistribute(struct kroute *kr)
 			    prefixlen2mask(kr->prefixlen))
 				rv = 0;	/* already announced as net LSA */
 		}
-	log_debug("rde_redistribute: prefix %s/%d used %d",
-	    inet_ntoa(kr->prefix), kr->prefixlen, rv);
+
 	return (rv);
 }
 
