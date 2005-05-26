@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.10 2005/05/26 19:54:49 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.11 2005/05/26 20:10:24 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -135,7 +135,6 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 		fatalx("lsa_flood: unknown interface type");
 	}
 
-
 	return (dont_ack == 2);
 }
 
@@ -148,9 +147,6 @@ send_ls_update(struct iface *iface, struct in_addr addr, void *data, int len)
 	u_int32_t		 nlsa;
 	u_int16_t		 age;
 	int			 ret;
-
-	log_debug("send_ls_update: interface %s addr %s",
-	    iface->name, inet_ntoa(addr));
 
 	/* XXX READ_BUF_SIZE */
 	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
@@ -200,8 +196,6 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct lsa_hdr		 lsa;
 	u_int32_t		 nlsa;
-
-	log_debug("recv_ls_update: neighbor ID %s", inet_ntoa(nbr->id));
 
 	if (len < sizeof(nlsa)) {
 		log_warnx("recv_ls_update: bad packet size, neighbor ID %s",
