@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.30 2005/05/24 04:21:54 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.31 2005/05/26 03:07:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,14 +64,14 @@ struct cvs_cmd cvs_cmd_update = {
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2 | CVS_CMD_SENDDIR
 };
 
-static int Pflag, dflag, Aflag;
+static int dflag, Aflag;
 
 static int
 cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	Pflag = dflag = Aflag = 0;
+	dflag = Aflag = 0;
 
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
@@ -89,7 +89,7 @@ cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'P':
-			Pflag = 1;
+			cmd->cmd_flags |= CVS_CMD_PRUNEDIRS;
 			break;
 		case 'p':
 			cvs_noexec = 1;	/* no locks will be created */
@@ -114,7 +114,8 @@ cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_update_pre_exec(struct cvsroot *root)
 {
-	if (Pflag && cvs_sendarg(root, "-P", 0) < 0)
+	if ((cvs_cmd_update.cmd_flags & CVS_CMD_PRUNEDIRS) && 
+	    (cvs_sendarg(root, "-P", 0) < 0))
 		return (CVS_EX_PROTO);
 	if (Aflag && cvs_sendarg(root, "-A", 0) < 0)
 		return (CVS_EX_PROTO);

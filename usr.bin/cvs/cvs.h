@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.59 2005/05/24 20:04:43 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.60 2005/05/26 03:07:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -140,6 +140,7 @@
 #define CVS_CMD_SENDARGS1	0x04
 #define CVS_CMD_SENDARGS2	0x08
 #define CVS_CMD_SENDDIR		0x10
+#define CVS_CMD_PRUNEDIRS	0x20
 
 
 struct cvs_cmd {
