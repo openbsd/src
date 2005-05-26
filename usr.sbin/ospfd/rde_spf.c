@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.19 2005/05/26 23:11:53 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.20 2005/05/26 23:23:39 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -757,8 +757,6 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 		fatalx("rt_update: invalid nexthop");
 
 	if ((rte = rt_find(prefix.s_addr, prefixlen)) == NULL) {
-		log_debug("rt_update: creating %s/%d", inet_ntoa(prefix),
-		    prefixlen);
 		if ((rte = calloc(1, sizeof(struct rt_node))) == NULL)
 			fatalx("rt_update");
 		rte->prefix.s_addr = prefix.s_addr;
@@ -775,9 +773,6 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 
 		rt_insert(rte);
 	} else {
-		log_debug("rt_update: updating %s/%d", inet_ntoa(prefix),
-		    prefixlen);
-
 		if (rte->invalid) {
 			/* invalidated entry - just update */
 			rte->nexthop.s_addr = nexthop.s_addr;
