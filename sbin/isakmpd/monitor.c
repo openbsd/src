@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.49 2005/05/24 03:26:26 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.50 2005/05/26 22:22:03 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -65,14 +65,10 @@ static volatile sig_atomic_t cur_state = STATE_INIT;
 extern void	set_slave_signals(void);
 
 /* Private functions.  */
-int             m_write_int32(int, int32_t);
-int             m_write_raw(int, const char *, size_t);
-int             m_read_int32(int, int32_t *);
-int             m_read_raw(int, char *, size_t);
-void            m_flush(int);
+static void	must_read(int, void *, size_t);
+static void	must_write(int, const void *, size_t);
 
 static void     m_priv_getfd(int);
-static void     m_priv_getsocket(int);
 static void     m_priv_setsockopt(int);
 static void     m_priv_bind(int);
 static int      m_priv_local_sanitize_path(char *, size_t, int);
@@ -166,14 +162,12 @@ monitor_exit(int code)
 void
 monitor_ui_init(void)
 {
-	int32_t	err;
+	int	err, cmd;
 
-	if (m_write_int32(m_state.s, MONITOR_UI_INIT))
-		goto errout;
+	cmd = MONITOR_UI_INIT;
+	must_write(m_state.s, &cmd, sizeof cmd);
 
-	if (m_read_int32(m_state.s, &err))
-		goto errout;
-
+	must_read(m_state.s, &err, sizeof err);
 	if (err != 0)
 		log_fatal("monitor_ui_init: parent could not create FIFO "
 		    "\"%s\"", ui_fifo);
@@ -184,47 +178,36 @@ monitor_ui_init(void)
 		    "\"%s\"", ui_fifo);
 
 	return;
-
-errout:
-	log_error("monitor_ui_init: problem talking to privileged process");
 }
 
 int
 monitor_pf_key_v2_open(void)
 {
-	int32_t err;
+	int	err, cmd;
 
-	if (m_write_int32(m_state.s, MONITOR_PFKEY_OPEN))
-		goto errout;
+	cmd = MONITOR_PFKEY_OPEN;
+	must_write(m_state.s, &cmd, sizeof cmd);
 
-	if (m_read_int32(m_state.s, &err))
-		goto errout;
-
+	must_read(m_state.s, &err, sizeof err);
 	if (err < 0) {
 		log_error("monitor_pf_key_v2_open: parent could not create "
 		    "PF_KEY socket");
 		return -1;
 	}
-
 	pf_key_v2_socket = mm_receive_fd(m_state.s);
 	if (pf_key_v2_socket < 0) {
 		log_error("monitor_pf_key_v2_open: mm_receive_fd() failed: %s",
 		    strerror(errno));
 		return -1;
 	}
-	return pf_key_v2_socket;
 
-errout:
-	log_error("monitor_pf_key_v2_open: problem talking to privileged "
-	    "process");
-	return -1;
+	return pf_key_v2_socket;
 }
 
 int
 monitor_open(const char *path, int flags, mode_t mode)
 {
-	int	fd, mode32 = (int32_t) mode;
-	int32_t	err;
+	int	fd, err, cmd, len;
 	char	pathreal[MAXPATHLEN];
 
 	if (path[0] == '/')
@@ -233,38 +216,30 @@ monitor_open(const char *path, int flags, mode_t mode)
 		snprintf(pathreal, sizeof pathreal, "%s/%s", m_state.root,
 		    path);
 
-	/* Write data to priv process.  */
-	if (m_write_int32(m_state.s, MONITOR_GET_FD))
-		goto errout;
+	cmd = MONITOR_GET_FD;
+	must_write(m_state.s, &cmd, sizeof cmd);
 
-	if (m_write_raw(m_state.s, pathreal, strlen(pathreal) + 1))
-		goto errout;
+	len = strlen(pathreal) + 1;
+	must_write(m_state.s, &len, sizeof len);
+	must_write(m_state.s, &pathreal, len);
 
-	if (m_write_int32(m_state.s, flags))
-		goto errout;
+	must_write(m_state.s, &flags, sizeof flags);
+	must_write(m_state.s, &mode, sizeof mode);
 
-	if (m_write_int32(m_state.s, mode32))
-		goto errout;
-
-	if (m_read_int32(m_state.s, &err))
-		goto errout;
-
+	must_read(m_state.s, &err, sizeof err);
 	if (err != 0) {
-		errno = (int) err;
+		errno = err;
 		return -1;
 	}
-	/* Wait for response.  */
+
 	fd = mm_receive_fd(m_state.s);
 	if (fd < 0) {
 		log_error("monitor_open: mm_receive_fd () failed: %s",
 		    strerror(errno));
 		return -1;
 	}
-	return fd;
 
-errout:
-	log_error("monitor_open: problem talking to privileged process");
-	return -1;
+	return fd;
 }
 
 FILE *
@@ -336,32 +311,23 @@ int
 monitor_setsockopt(int s, int level, int optname, const void *optval,
     socklen_t optlen)
 {
-	int32_t	ret, err;
+	int	ret, err, cmd;
 
-	if (m_write_int32(m_state.s, MONITOR_SETSOCKOPT))
-		goto errout;
+	cmd = MONITOR_SETSOCKOPT;
+	must_write(m_state.s, &cmd, sizeof cmd);
 	if (mm_send_fd(m_state.s, s))
 		goto errout;
 
-	if (m_write_int32(m_state.s, (int32_t)level))
-		goto errout;
-	if (m_write_int32(m_state.s, (int32_t)optname))
-		goto errout;
-	if (m_write_int32(m_state.s, (int32_t)optlen))
-		goto errout;
-	if (m_write_raw(m_state.s, (const char *)optval, (size_t)optlen))
-		goto errout;
+	must_write(m_state.s, &level, sizeof level);
+	must_write(m_state.s, &optname, sizeof optname);
+	must_write(m_state.s, &optlen, sizeof optlen);
+	must_write(m_state.s, optval, (size_t)optlen);
 
-	if (m_read_int32(m_state.s, &err))
-		goto errout;
-
+	must_read(m_state.s, &err, sizeof err);
+	must_read(m_state.s, &ret, sizeof ret);
 	if (err != 0)
-		errno = (int)err;
-
-	if (m_read_int32(m_state.s, &ret))
-		goto errout;
-
-	return (int)ret;
+		errno = err;
+	return ret;
 
 errout:
 	log_print("monitor_setsockopt: read/write error");
@@ -371,28 +337,21 @@ errout:
 int
 monitor_bind(int s, const struct sockaddr *name, socklen_t namelen)
 {
-	int32_t	ret, err;
+	int	ret, err, cmd;
 
-	if (m_write_int32(m_state.s, MONITOR_BIND))
-		goto errout;
+	cmd = MONITOR_BIND;
+	must_write(m_state.s, &cmd, sizeof cmd);
 	if (mm_send_fd(m_state.s, s))
 		goto errout;
 
-	if (m_write_int32(m_state.s, (int32_t)namelen))
-		goto errout;
-	if (m_write_raw(m_state.s, (const char *)name, (size_t)namelen))
-		goto errout;
+	must_write(m_state.s, &namelen, sizeof namelen);
+	must_write(m_state.s, name, (size_t)namelen);
 
-	if (m_read_int32(m_state.s, &err))
-		goto errout;
-
+	must_read(m_state.s, &err, sizeof err);
+	must_read(m_state.s, &ret, sizeof ret);
 	if (err != 0)
-		errno = (int)err;
-
-	if (m_read_int32(m_state.s, &ret))
-		goto errout;
-
-	return (int)ret;
+		errno = err;
+	return ret;
 
 errout:
 	log_print("monitor_bind: read/write error");
@@ -494,8 +453,10 @@ monitor_closedir(struct monitor_dirents *direntries)
 void
 monitor_init_done(void)
 {
-	if (m_write_int32(m_state.s, MONITOR_INIT_DONE))
-		log_print("monitor_init_done: read/write error");
+	int	cmd;
+
+	cmd = MONITOR_INIT_DONE;
+	must_write(m_state.s, &cmd, sizeof cmd);
 }
 
 /*
@@ -541,8 +502,7 @@ void
 monitor_loop(int debug)
 {
 	pid_t	 pid;
-	int32_t	 msgcode;
-	int	 status;
+	int	 msgcode, status;
 
 	if (!debug)
 		log_to(0);
@@ -570,8 +530,7 @@ monitor_loop(int debug)
 			}
 		}
 
-		if (m_read_int32(m_state.s, &msgcode))
-			break;
+		must_read(m_state.s, &msgcode, sizeof msgcode);
 
 		switch (msgcode) {
 		case MONITOR_GET_FD:
@@ -590,13 +549,6 @@ monitor_loop(int debug)
 			    "monitor_loop: MONITOR_PFKEY_OPEN"));
 			m_priv_test_state(STATE_INIT);
 			m_priv_pfkey_open(m_state.s);
-			break;
-
-		case MONITOR_GET_SOCKET:
-			LOG_DBG((LOG_MISC, 80,
-			    "monitor_loop: MONITOR_GET_SOCKET"));
-			m_priv_test_state(STATE_INIT);
-			m_priv_getsocket(m_state.s);
 			break;
 
 		case MONITOR_SETSOCKOPT:
@@ -640,17 +592,14 @@ monitor_loop(int debug)
 static void
 m_priv_ui_init(int s)
 {
-	int32_t err;
+	int	err = 0;
 
 	ui_init();
 
-	if (ui_socket >= 0)
-		err = 0;
-	else
+	if (ui_socket < 0)
 		err = -1;
 
-	if (m_write_int32(s, err))
-		goto errout;
+	must_write(s, &err, sizeof err);
 
 	if (ui_socket >= 0 && mm_send_fd(s, ui_socket)) {
 		close(ui_socket);
@@ -670,18 +619,13 @@ errout:
 static void
 m_priv_pfkey_open(int s)
 {
-	int fd;
-	int32_t err;
+	int	fd, err = 0;
 
 	fd = pf_key_v2_open();
-
 	if (fd < 0)
 		err = -1;
-	else
-		err = 0;
 
-	if (m_write_int32(s, err))
-		goto errout;
+	must_write(s, &err, sizeof err);
 
 	if (fd > 0 && mm_send_fd(s, fd)) {
 		close(fd);
@@ -700,41 +644,28 @@ static void
 m_priv_getfd(int s)
 {
 	char	path[MAXPATHLEN];
-	int32_t	v, err;
-	int	flags;
+	int	v, flags, len;
+	int	err = 0;
 	mode_t	mode;
 
-	/*
-	 * We expect the following data on the socket:
-	 *  u_int32_t  pathlen
-	 *  <variable> path
-	 *  u_int32_t  flags
-	 *  u_int32_t  mode
-         */
+	must_read(s, &len, sizeof len);
+	if (len <= 0 || sizeof path < len)
+		log_fatal("m_priv_getfd: invalid pathname length");
 
-	if (m_read_raw(s, path, MAXPATHLEN))
-		goto errout;
-
-	if (m_read_int32(s, &v))
-		goto errout;
-	flags = (int)v;
-
-	if (m_read_int32(s, &v))
-		goto errout;
-	mode = (mode_t) v;
+	must_read(s, path, len);
+	must_read(s, &flags, sizeof flags);
+	must_read(s, &mode, sizeof mode);
 
 	if (m_priv_local_sanitize_path(path, sizeof path, flags) != 0) {
 		err = EACCES;
 		v = -1;
 	} else {
-		err = 0;
-		v = (int32_t)open(path, flags, mode);
+		v = open(path, flags, mode);
 		if (v < 0)
-			err = (int32_t)errno;
+			err = errno;
 	}
 
-	if (m_write_int32(s, err))
-		goto errout;
+	must_write(s, &err, sizeof err);
 
 	if (v > 0 && mm_send_fd(s, v)) {
 		close(v);
@@ -749,89 +680,41 @@ errout:
 
 /* Privileged: called by monitor_loop.  */
 static void
-m_priv_getsocket(int s)
-{
-	int	domain, type, protocol;
-	int32_t	v, err;
-
-	if (m_read_int32(s, &v))
-		goto errout;
-	domain = (int)v;
-
-	if (m_read_int32(s, &v))
-		goto errout;
-	type = (int)v;
-
-	if (m_read_int32(s, &v))
-		goto errout;
-	protocol = (int)v;
-
-	err = 0;
-	v = (int32_t)socket(domain, type, protocol);
-	if (v < 0)
-		err = (int32_t)errno;
-
-	if (m_write_int32(s, err))
-		goto errout;
-
-	if (v > 0 && mm_send_fd(s, v)) {
-		close(v);
-		goto errout;
-	}
-	close(v);
-	return;
-
-errout:
-	log_error("m_priv_getsocket: read/write operation failed");
-}
-
-/* Privileged: called by monitor_loop.  */
-static void
 m_priv_setsockopt(int s)
 {
-	int		 sock, level, optname;
+	int		 sock, level, optname, v;
+	int		 err = 0;
 	char		*optval = 0;
 	socklen_t	 optlen;
-	int32_t		 v, err;
 
 	sock = mm_receive_fd(s);
 	if (sock < 0)
 		goto errout;
 
-	if (m_read_int32(s, &level))
-		goto errout;
-
-	if (m_read_int32(s, &optname))
-		goto errout;
-
-	if (m_read_int32(s, (int *)&optlen))
-		goto errout;
+	must_read(s, &level, sizeof level);
+	must_read(s, &optname, sizeof optname);
+	must_read(s, &optlen, sizeof optlen);
 
 	optval = (char *)malloc(optlen);
 	if (!optval)
 		goto errout;
 
-	if (m_read_raw(s, optval, optlen))
-		goto errout;
+	must_read(s, optval, (size_t)optlen);
 
 	if (m_priv_check_sockopt(level, optname) != 0) {
 		err = EACCES;
 		v = -1;
 	} else {
-		err = 0;
-		v = (int32_t)setsockopt(sock, level, optname, optval, optlen);
+		v = setsockopt(sock, level, optname, optval, optlen);
 		if (v < 0)
-			err = (int32_t)errno;
+			err = errno;
 	}
 
 	close(sock);
 	sock = -1;
 
-	if (m_write_int32(s, err))
-		goto errout;
-
-	if (m_write_int32(s, v))
-		goto errout;
+	must_write(s, &err, sizeof err);
+	must_write(s, &v, sizeof v);
 
 	free(optval);
 	return;
@@ -848,47 +731,38 @@ errout:
 static void
 m_priv_bind(int s)
 {
-	int		 sock;
+	int		 sock, v, err = 0;
 	struct sockaddr *name = 0;
 	socklen_t        namelen;
-	int32_t          v, err;
 
 	sock = mm_receive_fd(s);
 	if (sock < 0)
 		goto errout;
 
-	if (m_read_int32(s, &v))
-		goto errout;
-	namelen = (socklen_t) v;
-
+	must_read(s, &v, sizeof v);
+	namelen = (socklen_t)v;
 	name = (struct sockaddr *)malloc(namelen);
 	if (!name)
 		goto errout;
-
-	if (m_read_raw(s, (char *)name, (size_t)namelen))
-		goto errout;
+	must_read(s, (char *)name, (size_t)namelen);
 
 	if (m_priv_check_bind(name, namelen) != 0) {
 		err = EACCES;
 		v = -1;
 	} else {
-		err = 0;
-		v = (int32_t)bind(sock, name, namelen);
+		v = bind(sock, name, namelen);
 		if (v < 0) {
 			log_error("m_priv_bind: bind(%d,%p,%d) returned %d",
 			    sock, name, namelen, v);
-			err = (int32_t)errno;
+			err = errno;
 		}
 	}
 
 	close(sock);
 	sock = -1;
 
-	if (m_write_int32(s, err))
-		goto errout;
-
-	if (m_write_int32(s, v))
-		goto errout;
+	must_write(s, &err, sizeof err);
+	must_write(s, &v, sizeof v);
 
 	free(name);
 	return;
@@ -905,60 +779,53 @@ errout:
  * Help functions, used by both privileged and unprivileged code
  */
 
-/* Write a 32-bit value to a socket.  */
-int
-m_write_int32(int s, int32_t value)
+/*
+ * Read data with the assertion that it all must come through, or else abort
+ * the process.  Based on atomicio() from openssh.
+ */
+static void
+must_read(int fd, void *buf, size_t n)
 {
-	u_int32_t	v;
+        char *s = buf;
+	size_t pos = 0;
+        ssize_t res;
 
-	memcpy(&v, &value, sizeof v);
-	return (write(s, &v, sizeof v) == -1);
+        while (n > pos) {
+                res = read(fd, s + pos, n - pos);
+                switch (res) {
+                case -1:
+                        if (errno == EINTR || errno == EAGAIN)
+                                continue;
+                case 0:
+			_exit(0);
+                default:
+                        pos += res;
+                }
+        }
 }
 
-/* Write a number of bytes of data to a socket.  */
-int
-m_write_raw(int s, const char *data, size_t dlen)
+/*
+ * Write data with the assertion that it all has to be written, or else abort
+ * the process.  Based on atomicio() from openssh.
+ */
+static void
+must_write(int fd, const void *buf, size_t n)
 {
-	if (m_write_int32(s, (int32_t) dlen))
-		return 1;
-	return (write(s, data, dlen) == -1);
-}
+        const char *s = buf;
+        ssize_t res, pos = 0;
 
-int
-m_read_int32(int s, int32_t *value)
-{
-	u_int32_t	v;
-
-	if (read(s, &v, sizeof v) != sizeof v)
-		return 1;
-	memcpy(value, &v, sizeof v);
-	return 0;
-}
-
-int
-m_read_raw(int s, char *data, size_t maxlen)
-{
-	u_int32_t	v;
-	int		r;
-
-	if (m_read_int32(s, &v))
-		return 1;
-	if (v > maxlen)
-		return 1;
-	r = read(s, data, v);
-	return (r == -1);
-}
-
-/* Drain all available input on a socket.  */
-void
-m_flush(int s)
-{
-	u_int8_t	tmp;
-	int             one = 1;
-
-	ioctl(s, FIONBIO, &one);/* Non-blocking */
-	while (read(s, &tmp, 1) > 0);
-	ioctl(s, FIONBIO, 0);	/* Blocking */
+        while (n > pos) {
+                res = write(fd, s + pos, n - pos);
+                switch (res) {
+                case -1:
+                        if (errno == EINTR || errno == EAGAIN)
+                                continue;
+                case 0:
+			_exit(0);
+                default:
+                        pos += res;
+                }
+        }
 }
 
 /* Check that path/mode is permitted.  */
