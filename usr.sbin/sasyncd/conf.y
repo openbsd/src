@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.3 2005/05/24 19:18:10 ho Exp $	*/
+/*	$OpenBSD: conf.y,v 1.4 2005/05/26 19:19:51 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -58,10 +58,10 @@ void	yyerror(const char *);
 }
 
 %token MODE CARP INTERFACE INTERVAL LISTEN ON PORT PEER SHAREDKEY
-%token Y_SLAVE Y_MASTER INET INET6
+%token Y_SLAVE Y_MASTER INET INET6 FLUSHMODE STARTUP NEVER SYNC
 %token <string> STRING
 %token <val>	VALUE
-%type  <val>	af port interval mode
+%type  <val>	af port interval mode flushmode
 
 %%
 /* Rules */
@@ -87,6 +87,11 @@ interval	: /* empty */			{ $$ = CARP_DEFAULT_INTERVAL; }
 		| INTERVAL VALUE		{ $$ = $2; }
 		;
 
+flushmode	: STARTUP			{ $$ = FM_STARTUP; }
+		| NEVER				{ $$ = FM_NEVER; }
+		| SYNC				{ $$ = FM_SYNC; }
+		;
+
 setting		: CARP INTERFACE STRING interval
 		{
 			if (cfgstate.carp_ifname)
@@ -95,6 +100,12 @@ setting		: CARP INTERFACE STRING interval
 			cfgstate.carp_check_interval = $4;
 			log_msg(2, "config: carp interface %s interval %d",
 			    $3, $4);
+		}
+		| FLUSHMODE flushmode
+		{
+			const char *fm[] = FLUSHMODES;
+			cfgstate.flushmode = $2;
+			log_msg(2, "config: flush mode set to %s", fm[$2]);
 		}
 		| PEER STRING
 		{
@@ -146,9 +157,9 @@ setting		: CARP INTERFACE STRING interval
 		}
 		| mode
 		{
+			const char *m[] = CARPSTATES;
 			cfgstate.lockedstate = $1;
-			log_msg(2, "config: mode set to %s",
-			    $1 == MASTER ? "MASTER" : "SLAVE");
+			log_msg(2, "config: mode set to %s", m[$1]);
 		}
 		| SHAREDKEY STRING
 		{
@@ -179,6 +190,7 @@ match(char *token)
 	/* Sorted */
 	static const struct keyword keywords[] = {
 		{ "carp", CARP },
+		{ "flushmode", FLUSHMODE },
 		{ "inet", INET },
 		{ "inet6", INET6 },
 		{ "interface", INTERFACE },
@@ -186,11 +198,14 @@ match(char *token)
 		{ "listen", LISTEN },
 		{ "master", Y_MASTER },
 		{ "mode", MODE },
+		{ "never", NEVER },
 		{ "on", ON },
 		{ "peer", PEER },
 		{ "port", PORT },
 		{ "sharedkey", SHAREDKEY },
 		{ "slave", Y_SLAVE },
+		{ "startup", STARTUP },
+		{ "sync", SYNC },
 	};
 
 	const struct keyword *k;

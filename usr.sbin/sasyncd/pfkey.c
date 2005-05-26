@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.8 2005/05/26 05:34:17 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.9 2005/05/26 19:19:51 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -46,6 +46,7 @@
 #include <unistd.h>
 
 #include "sasyncd.h"
+#include "net.h"
 
 struct pfkey_msg 
 {
@@ -101,6 +102,28 @@ pfkey_set_promisc(void)
 	return pfkey_write((u_int8_t *)&msg, sizeof msg);
 }
 
+/* Send a SADB_FLUSH PFKEY message to peer 'p' */
+static void
+pfkey_send_flush(struct syncpeer *p)
+{
+	struct sadb_msg *m = (struct sadb_msg *)calloc(1, sizeof *m);
+	static u_int32_t seq = 1;
+
+	if (m) {
+		memset(m, 0, sizeof *m);
+		m->sadb_msg_version = PF_KEY_V2;
+		m->sadb_msg_seq = seq++;
+		m->sadb_msg_type = SADB_FLUSH;
+		m->sadb_msg_satype = SADB_SATYPE_UNSPEC;
+		m->sadb_msg_pid = getpid();
+		m->sadb_msg_len = sizeof *m / CHUNK;
+
+		log_msg(3, "pfkey_send_flush: sending FLUSH to peer %s",
+		    p->name);
+		net_queue(p, MSG_PFKEYDATA, (u_int8_t *)m, sizeof *m);
+	}
+}
+
 static const char *
 pfkey_print_type(struct sadb_msg *msg)
 {
@@ -144,6 +167,12 @@ pfkey_handle_message(struct sadb_msg *m)
 	 */
 	if (cfgstate.runstate != MASTER ||
 	    msg->sadb_msg_pid == (u_int32_t)getpid()) {
+		free(m);
+		return 0;
+	}
+
+	if (msg->sadb_msg_type == SADB_FLUSH &&
+	    cfgstate.flushmode == FM_NEVER) {
 		free(m);
 		return 0;
 	}
@@ -329,9 +358,13 @@ pfkey_snapshot(void *v)
 		return;
 	}
 
+	/* XXX needs moving if snapshot is called more than once per peer */
+	if (cfgstate.flushmode == FM_STARTUP)
+		pfkey_send_flush(p);
+
 	/* Parse SADB data */
 	if (sadbsz && sadb) {
-		dump_buf(5, sadb, sadbsz, "pfkey_snapshot: SADB data");
+		dump_buf(3, sadb, sadbsz, "pfkey_snapshot: SADB data");
 		max = sadb + sadbsz;
 		for (next = sadb; next < max;
 		     next += m->sadb_msg_len * CHUNK) {
@@ -342,25 +375,25 @@ pfkey_snapshot(void *v)
 			/* Tweak and send this SA to the peer. */
 			m->sadb_msg_type = SADB_ADD;
 
-			/* XXX Locate lifetime_cur ext and zero bytes */
-
 			/* Allocate msgbuffer, net_queue() will free it. */
 			sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
 			if (sendbuf) {
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,
 				    m->sadb_msg_len * CHUNK);
+				log_msg(3, "pfkey_snapshot: sync SA %p to"
+				    "peer %s", m, p->name);
 			}
 		}
 		memset(sadb, 0, sadbsz);
 		free(sadb);
 	}
 
-#ifdef notyet	
 	/* Parse SPD data */
 	if (spdsz && spd) {
+#ifdef notyet	
 		struct ipsec_policy	*ip;
-		dump_buf(5, spd, spdsz, "pfkey_snapshot: SPD data");
+		dump_buf(3, spd, spdsz, "pfkey_snapshot: SPD data");
 
 		max = spd + spdsz;
 		for (next = spd; next < max;
@@ -370,11 +403,11 @@ pfkey_snapshot(void *v)
 				continue;
 			/* XXX incomplete */
 		}
+#endif
 
 		/* Cleanup. */
 		memset(spd, 0, spdsz);
 		free(spd);
 	}
-#endif
 	return;
 }

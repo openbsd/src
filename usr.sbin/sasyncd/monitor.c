@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.3 2005/05/26 05:33:48 ho Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.4 2005/05/26 19:19:51 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -123,36 +123,51 @@ sig_to_child(int s)
 		kill(m_state.pid, s);
 }
 
+static void
+monitor_drain_input(void)
+{
+	int		one = 1;
+	u_int8_t	tmp;
+
+	ioctl(m_state.s, FIONBIO, &one);
+	while (read(m_state.s, &tmp, 1) > 0)
+		;
+	ioctl(m_state.s, FIONBIO, 0);
+}
+
 /* We only use privsep to get in-kernel SADB and SPD snapshots via sysctl */
 void
 monitor_loop(void)
 {
-	extern volatile sig_atomic_t	daemon_shutdown;
-	pid_t		pid;
-	int		status;
 	u_int32_t	v;
+	ssize_t		r;
 
-	while (!daemon_shutdown) {
+	for (;;) {
 		if (sigchld) {
+			pid_t	pid;
+			int	status;
 			do {
 				pid = waitpid(m_state.pid, &status, WNOHANG);
 			} while (pid == -1 && errno == EINTR);
 
 			if (pid == m_state.pid &&
-			    (WIFEXITED(status) || WIFSIGNALED(status))) {
-				daemon_shutdown++;
+			    (WIFEXITED(status) || WIFSIGNALED(status)))
 				break;
-			}
 		}
 
 		/* Wait for next snapshot task. Disregard read data. */
-		if (read(m_state.s, &v, sizeof v) != (ssize_t)sizeof v)
+		if ((r = read(m_state.s, &v, sizeof v)) != sizeof v) {
+			if (r == -1)
+				log_err(0, "monitor_loop: read() ");
 			break;
+		}
 
 		/* Get the data. */
 		m_priv_pfkey_snap(m_state.s);
 	}
-	
+
+	if (!sigchld)
+		log_msg(0, "monitor_loop: priv process exiting abnormally");
 	exit(0);
 }
 
@@ -160,13 +175,11 @@ int
 monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
     u_int32_t *spdsize)
 {
-	int		one = 1;
-	u_int8_t	tmp;
 	u_int32_t	rbytes;
 	
 	/* We write a (any) value to the monitor socket to start a snapshot. */
-	*sadbsize = 0;
-	if (write(m_state.s, sadbsize, sizeof *sadbsize) < 1)
+	rbytes = 0;
+	if (write(m_state.s, &rbytes, sizeof rbytes) < 1)
 		return -1;
 
 	/* Read SADB data. */
@@ -178,10 +191,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 		*sadb = (u_int8_t *)malloc(*sadbsize);
 		if (!*sadb) {
 			log_err("monitor_get_pfkey_snap: malloc()");
-			/* Drain input */
-			ioctl(m_state.s, FIONBIO, &one);
-			while (read(m_state.s, &tmp, 1) > 0);
-			ioctl(m_state.s, FIONBIO, 0);
+			monitor_drain_input();
 			return -1;
 		}
 		rbytes = read(m_state.s, *sadb, *sadbsize);
@@ -205,10 +215,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 		*spd = (u_int8_t *)malloc(*spdsize);
 		if (!*spd) {
 			log_err("monitor_get_pfkey_snap: malloc()");
-			/* Drain input */
-			ioctl(m_state.s, FIONBIO, &one);
-			while (read(m_state.s, &tmp, 1) > 0);
-			ioctl(m_state.s, FIONBIO, 0);
+			monitor_drain_input();
 			if (*sadbsize) {
 				memset(*sadb, 0, *sadbsize);
 				free(*sadb);
@@ -228,7 +235,7 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 		}
 	}
 
-	log_msg(5, "monitor_get_pfkey_snap: got %d bytes SADB, %d bytes SPD",
+	log_msg(3, "monitor_get_pfkey_snap: got %d bytes SADB, %d bytes SPD",
 	    *sadbsize, *spdsize);
 	return 0;
 }

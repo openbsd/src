@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.6 2005/05/24 19:18:11 ho Exp $	*/
+/*	$OpenBSD: net.c,v 1.7 2005/05/26 19:19:51 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -139,10 +139,10 @@ net_add_listener(struct sockaddr *sa)
 
 	if (getnameinfo(sa, sa->sa_len, host, sizeof host, port, sizeof port,
 		NI_NUMERICHOST | NI_NUMERICSERV)) 
-		log_msg(2, "listening on port %u fd %d", cfgstate.listen_port,
+		log_msg(3, "listening on port %u fd %d", cfgstate.listen_port,
 		    s);
 	else
-		log_msg(2, "listening on %s port %s fd %d", host, port, s);
+		log_msg(3, "listening on %s port %s fd %d", host, port, s);
 
 	return s;
 }
@@ -538,7 +538,7 @@ net_handle_messages(fd_set *fds)
 		if (!msg)
 			continue;
 
-		log_msg(4, "net_handle_messages: got msg type %u len %u from "
+		log_msg(5, "net_handle_messages: got msg type %u len %u from "
 		    "peer %s", msgtype, msglen, p->name);
 
 		switch (msgtype) {
@@ -588,7 +588,7 @@ net_send_messages(fd_set *fds)
 		}
 		m = qm->msg;
 
-		log_msg(4, "net_send_messages: msg %p len %d ref %d "
+		log_msg(5, "net_send_messages: msg %p len %d ref %d "
 		    "to peer %s", m, m->len, m->refcnt, p->name);
 
 		/* write message */
@@ -607,7 +607,7 @@ net_send_messages(fd_set *fds)
 		free(qm);
 
 		if (--m->refcnt < 1) {
-			log_msg(4, "net_send_messages: freeing msg %p", m);
+			log_msg(5, "net_send_messages: freeing msg %p", m);
 			free(m->buf);
 			free(m);
 		}

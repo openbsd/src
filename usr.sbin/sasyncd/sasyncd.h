@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.6 2005/05/24 19:18:11 ho Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.7 2005/05/26 19:19:51 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -35,6 +35,9 @@
 enum RUNSTATE		{ INIT = 0, SLAVE, MASTER, FAIL };
 #define CARPSTATES	{ "INIT", "SLAVE", "MASTER", "FAIL" }
 
+enum FLUSHMODE		{ FM_STARTUP = 0, FM_NEVER, FM_SYNC };
+#define FLUSHMODES	{ "STARTUP", "NEVER", "SYNC" };
+
 struct syncpeer;
 struct timeval;
 
@@ -43,6 +46,7 @@ struct cfgstate {
 	enum RUNSTATE	 lockedstate;
 	int		 debug;
 	int		 verboselevel;
+    	enum FLUSHMODE	 flushmode;
 
 	char		*carp_ifname;
 	int		 carp_check_interval;
@@ -88,6 +92,16 @@ void	carp_check_state(void);
 int	carp_init(void);
 
 /* log.c */
+/*
+ * Log levels for log_msg(level, ...) roughly means:
+ *  0 = errors and other important messages
+ *  1 = state changes, ctl message errors and dis-/connecting peers
+ *  2 = configuration and initialization messages
+ *  3 = PF_KEY logging
+ *  4 = misc network
+ *  5 = crypto
+ *  6 = timers
+ */
 void	log_init(char *);
 void	log_msg(int, const char *, ...);
 void	log_err(const char *, ...);
