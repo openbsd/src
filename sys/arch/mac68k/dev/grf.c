@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.25 2003/09/23 16:51:11 millert Exp $	*/
+/*	$OpenBSD: grf.c,v 1.26 2005/05/26 16:35:56 miod Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ grfmap(dev, addrp, p)
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
 	    (vm_size_t)len, UVM_PROT_RW, UVM_PROT_RW, flags, (caddr_t)&vn, 0,
-	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
 
 	/* Offset into page: */
 	*addrp += (unsigned long) gp->sc_grfmode->fboff & 0xfff;
