@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.20 2005/05/26 02:35:13 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.21 2005/05/26 03:10:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -190,7 +190,7 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 	int len;
 	struct cvsroot *root;
 	char fpath[MAXPATHLEN], repodir[MAXPATHLEN];
-	char repo[MAXPATHLEN];
+	char repo[MAXPATHLEN], date[32];
 
 	root = CVS_DIR_ROOT(cf);
 	len = snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, module);
@@ -222,6 +222,11 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
+	if (dflag) {
+		ctime_r(&(cf->cf_mtime), date);
+		if (cvs_sendreq(root, CVS_REQ_CHECKINTIME, date) < 0)
+			return (CVS_EX_PROTO);
+	}
 	if (cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name) < 0)
 		return (CVS_EX_PROTO);
 	if (cvs_sendfile(root, fpath) < 0)
