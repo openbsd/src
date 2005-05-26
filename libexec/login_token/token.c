@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.9 2003/02/20 17:32:28 millert Exp $	*/
+/*	$OpenBSD: token.c,v 1.10 2005/05/26 23:04:09 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -290,8 +290,8 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	tokenrec.mode = 0;
 	tokenrec.flags = TOKEN_ENABLED | TOKEN_USEMODES;
 	tokenrec.mode = mode;
-	memset(tokenrec.reserved_char1, '0', sizeof(tokenrec.reserved_char1));
-	memset(tokenrec.reserved_char2, '0', sizeof(tokenrec.reserved_char2));
+	memset(tokenrec.reserved_char1, 0, sizeof(tokenrec.reserved_char1));
+	memset(tokenrec.reserved_char2, 0, sizeof(tokenrec.reserved_char2));
 
 	if (tokendb_putrec(username, &tokenrec))
 		return (-1);
