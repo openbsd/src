@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.87 2005/05/03 14:03:11 moritz Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.88 2005/05/26 20:40:50 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -230,6 +230,7 @@ parse_args(int argc, char *argv[])
 		pcap_file = PCAP_FILE_DEFAULT;
 }
 
+/* ARGSUSED */
 static void
 sighup(int sig)
 {
@@ -318,6 +319,8 @@ daemon_shutdown(void)
 
 		while ((sa = sa_find(phase1_sa_check, NULL)))
 			sa_delete(sa, 1);
+
+		/* We only want to do this once. */
 		sigtermed++;
 	}
 	if (transport_prio_sendqs_empty()) {
@@ -336,6 +339,7 @@ daemon_shutdown(void)
 }
 
 /* Called on SIGTERM, SIGINT or by ui_shutdown_daemon().  */
+/* ARGSUSED */
 void
 daemon_shutdown_now(int sig)
 {
