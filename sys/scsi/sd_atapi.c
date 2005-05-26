@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_atapi.c,v 1.7 2005/05/22 21:11:31 krw Exp $	*/
+/*	$OpenBSD: sd_atapi.c,v 1.8 2005/05/26 02:10:14 krw Exp $	*/
 /*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
@@ -72,7 +72,8 @@ sd_atapibus_get_parms(sd, dp, flags)
 {
 	struct atapi_read_format_capacities scsi_cmd;
 	struct atapi_capacity_descriptor *descp;
-	struct atapi_sd_mode_data sense_data;
+	struct scsi_mode_sense_buf sense_data; 
+	union scsi_disk_pages *sense_pages = NULL;
 	char capacity_data[ATAPI_CAP_DESC_SIZE(1)];
 	u_int16_t rpm;
 	int error;
@@ -112,38 +113,41 @@ sd_atapibus_get_parms(sd, dp, flags)
 		break;
 	}
 
-	/*
-	 * Try to determine disk size, block size and geometry.  If disk size
-	 * (in sectors) can be determined, then fake the rest if necessary.
-	 *
-	 * XXX Rigid geometry page?
-	 */
-	dp->rot_rate = 3600;
-	dp->blksize = _3btol(descp->blklen);
-	if (dp->blksize == 0)
-		dp->blksize = 512;
 	dp->disksize = _4btol(descp->nblks);
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
 
-	bzero(&sense_data, sizeof(sense_data));
-	error = scsi_mode_sense_big(sd->sc_link, 0, ATAPI_FLEX_GEOMETRY_PAGE,
-	    (struct scsi_mode_header_big *)&sense_data, sizeof(sense_data),
-	    flags, 20000);
-	SC_DEBUG(sd->sc_link, SDEV_DB2,
-	    ("sd_atapibus_get_parms: mode sense (flex) error=%d\n", error));
-	if (error == 0) {
-		dp->heads = sense_data.pages.flex_geometry.nheads;
-		dp->sectors = sense_data.pages.flex_geometry.ph_sec_tr;
-		dp->cyls = _2btol(sense_data.pages.flex_geometry.ncyl);
-		rpm = _2btol(sense_data.pages.flex_geometry.rpm);
+	dp->blksize = _3btol(descp->blklen);
+
+	error = scsi_do_mode_sense(sd->sc_link, ATAPI_FLEX_GEOMETRY_PAGE,
+	    &sense_data, (void **)&sense_pages, NULL, NULL, NULL,
+	    sizeof(sense_pages->flex_geometry), flags | SCSI_SILENT);
+	if (error == 0 && sense_pages) {
+		dp->heads = sense_pages->flex_geometry.nheads;
+		dp->sectors = sense_pages->flex_geometry.ph_sec_tr;
+		dp->cyls = _2btol(sense_pages->flex_geometry.ncyl);
+		if (dp->blksize == 0)
+			dp->blksize =
+			     _2btol(sense_pages->flex_geometry.bytes_s);
+		rpm = _2btol(sense_pages->flex_geometry.rpm);
 		if (rpm)
 			dp->rot_rate = rpm;
-	} else {
-		dp->heads = 64;
-		dp->sectors = 32;
-		dp->cyls = dp->disksize / (64 * 32);
 	}
 	
+	/*
+	 * Use standard fake values if MODE SENSE did not provide better ones.
+	 */
+	if (dp->rot_rate == 0)
+		dp->rot_rate = 3600;
+	if (dp->blksize == 0)
+		dp->blksize = 512;
+
+	if (dp->heads == 0)
+		dp->heads = 64;
+	if (dp->sectors == 0)
+		dp->sectors = 32;
+	if (dp->cyls == 0)
+		dp->cyls = dp->disksize / (dp->heads * dp->sectors);
+
 	return (SDGP_RESULT_OK);
 }
