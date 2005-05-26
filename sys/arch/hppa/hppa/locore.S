@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.150 2005/04/21 04:39:35 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.151 2005/05/26 03:42:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1058,7 +1058,7 @@ ENTRY(TLABEL(emu),0)
 	 * pass through for all coprocessors now and
 	 * do not check the uid here.
 	 * in case that piece does not exist emulate
-	 * or the trap will be generted later.
+	 * or the trap will be generated later.
 	 */
 
 	ldil	L%cpu_fpuena, r1
