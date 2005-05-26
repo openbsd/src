@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.23 2005/02/25 03:12:43 cloder Exp $
+.\" $OpenBSD: crypt.3,v 1.24 2005/05/26 22:10:54 millert Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -47,7 +47,7 @@
 .Ft char *
 .Fn crypt "const char *key" "const char *setting"
 .Ft int
-.Fn setkey "char *key"
+.Fn setkey "const char *key"
 .Ft int
 .Fn encrypt "char *block" "int flag"
 .Ft int
