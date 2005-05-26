@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.53 2005/03/18 04:20:04 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.54 2005/05/26 19:24:43 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -341,6 +341,18 @@ Supported devices {:-include-:}:
 			Z-Com XI-725/726
 			Z-Com XI-735
 			ZyXEL ZyAIR B-200
+		Realtek RTL8180L based CardBus IEEE 802.11b adapters
+			Belkin F5D6020 V3
+			Buffalo WLI-CB-B11
+			Corega CG-WLCB11V3
+			D-Link DWL-610
+			Level-One WPC-0101
+			Linksys WPC11 v4
+			Netgear MA521
+			Ovislink AirLive WL-1120PCM
+			Planet WL-3553
+			TrendNET TEW-266PC
+			VCTnet PC-11B1
 
 	Tape drives
 		SCSI Tape drives (st)
