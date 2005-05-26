@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.17 2005/05/12 08:55:39 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.18 2005/05/26 20:21:09 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -306,9 +306,6 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 	evtimer_set(&nbr->ls_retrans_timer, ls_retrans_timer, nbr);
 	evtimer_set(&nbr->adj_timer, nbr_adj_timer, nbr);
 
-	log_debug("nbr_new: neighbor ID %s, peerid %lu",
-	    inet_ntoa(nbr->id), nbr->peerid);
-
 	bzero(&rn, sizeof(rn));
 	rn.id.s_addr = nbr->id.s_addr;
 	rn.area_id.s_addr = nbr->iface->area->id.s_addr;
@@ -323,9 +320,6 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 int
 nbr_del(struct nbr *nbr)
 {
-	log_debug("nbr_del: neighbor ID %s, peerid %lu", inet_ntoa(nbr->id),
-	    nbr->peerid);
-
 	if (nbr == nbr->iface->self)
 		return (0);
 
@@ -380,8 +374,6 @@ nbr_itimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	log_debug("nbr_itimer: %s", inet_ntoa(nbr->id));
-
 	if (nbr->state == NBR_STA_DOWN) {
 		nbr_del(nbr);
 	} else
@@ -392,8 +384,6 @@ int
 nbr_start_itimer(struct nbr *nbr)
 {
 	struct timeval	tv;
-
-	log_debug("nbr_start_itimer: %s", inet_ntoa(nbr->id));
 
 	timerclear(&tv);
 	tv.tv_sec = nbr->iface->dead_interval;
@@ -433,8 +423,6 @@ int
 nbr_start_adj_timer(struct nbr *nbr)
 {
 	struct timeval	tv;
-
-	log_debug("nbr_start_adj_timer: %s", inet_ntoa(nbr->id));
 
 	timerclear(&tv);
 	tv.tv_sec = DEFAULT_ADJ_TMOUT;
@@ -505,8 +493,6 @@ nbr_adj_ok(struct nbr *nbr)
 int
 nbr_act_eval(struct nbr *nbr)
 {
-	log_debug("nbr_act_eval: neighbor ID %s", inet_ntoa(nbr->id));
-
 	if (!nbr_adj_ok(nbr)) {
 		nbr->state = NBR_STA_2_WAY;
 		return (0);
@@ -525,8 +511,6 @@ nbr_act_eval(struct nbr *nbr)
 int
 nbr_act_snapshot(struct nbr *nbr)
 {
-	log_debug("nbr_act_snapshot: neighbor ID %s", inet_ntoa(nbr->id));
-
 	stop_db_tx_timer(nbr);
 	nbr_start_adj_timer(nbr);
 
@@ -538,8 +522,6 @@ nbr_act_snapshot(struct nbr *nbr)
 int
 nbr_act_exchange_done(struct nbr *nbr)
 {
-	log_debug("nbr_act_exchange_done: neighbor ID %s", inet_ntoa(nbr->id));
-
 	if (nbr->master)
 		stop_db_tx_timer(nbr);
 
@@ -560,8 +542,6 @@ nbr_act_exchange_done(struct nbr *nbr)
 int
 nbr_act_adj_ok(struct nbr *nbr)
 {
-	log_debug("nbr_act_adj_ok: neighbor ID %s", inet_ntoa(nbr->id));
-
 	if (nbr_adj_ok(nbr)) {
 		if (nbr->state == NBR_STA_2_WAY)
 			return (nbr_act_eval(nbr));
@@ -576,8 +556,6 @@ nbr_act_adj_ok(struct nbr *nbr)
 int
 nbr_act_restart_dd(struct nbr *nbr)
 {
-	log_debug("nbr_act_restart_dd: neighbor ID %s", inet_ntoa(nbr->id));
-
 	nbr_act_clear_lists(nbr);
 
 	if (!nbr_adj_ok(nbr)) {
@@ -600,8 +578,6 @@ int
 nbr_act_delete(struct nbr *nbr)
 {
 	struct timeval	tv;
-
-	log_debug("nbr_act_delete: neighbor ID %s", inet_ntoa(nbr->id));
 
 	/* stop timers */
 	if (nbr_stop_itimer(nbr)) {
@@ -631,8 +607,6 @@ nbr_act_delete(struct nbr *nbr)
 int
 nbr_act_clear_lists(struct nbr *nbr)
 {
-	log_debug("nbr_act_clear_lists: neighbor ID %s", inet_ntoa(nbr->id));
-
 	if (stop_db_tx_timer(nbr)) {
 		log_warnx("nbr_act_delete: error removing db_tx_timer, "
 		    "neighbor ID %s", inet_ntoa(nbr->id));
