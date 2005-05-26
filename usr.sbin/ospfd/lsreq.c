@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.9 2005/05/26 19:54:49 norby Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.10 2005/05/26 20:05:29 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -93,8 +93,6 @@ fail:
 void
 recv_ls_req(struct nbr *nbr, char *buf, u_int16_t len)
 {
-	log_debug("recv_ls_req: neighbor ID %s", inet_ntoa(nbr->id));
-
 	switch (nbr->state) {
 	case NBR_STA_DOWN:
 	case NBR_STA_ATTEMPT:
@@ -199,8 +197,6 @@ ls_req_tx_timer(int fd, short event, void *arg)
 	struct nbr	*nbr = arg;
 	struct timeval	 tv;
 
-	log_debug("ls_req_tx_timer: neighbor ID %s", inet_ntoa(nbr->id));
-
 	switch (nbr->state) {
 	case NBR_STA_DOWN:
 	case NBR_STA_ATTEMPT:
@@ -225,8 +221,6 @@ ls_req_tx_timer(int fd, short event, void *arg)
 	if (nbr->state == NBR_STA_LOAD) {
 		timerclear(&tv);
 		tv.tv_sec = nbr->iface->rxmt_interval;
-		log_debug("ls_req_tx_timer: reschedule neighbor ID %s",
-		    inet_ntoa(nbr->id));
 		evtimer_add(&nbr->lsreq_tx_timer, &tv);
 	}
 }
@@ -239,7 +233,6 @@ start_ls_req_tx_timer(struct nbr *nbr)
 	if (nbr == nbr->iface->self)
 		return (0);
 
-	log_debug("start_ls_req_tx_timer: neighbor ID %s", inet_ntoa(nbr->id));
 	timerclear(&tv);
 
 	return (evtimer_add(&nbr->lsreq_tx_timer, &tv));
@@ -250,8 +243,6 @@ stop_ls_req_tx_timer(struct nbr *nbr)
 {
 	if (nbr == nbr->iface->self)
 		return (0);
-
-	log_debug("stop_ls_req_tx_timer: neighbor ID %s", inet_ntoa(nbr->id));
 
 	return (evtimer_del(&nbr->lsreq_tx_timer));
 }
