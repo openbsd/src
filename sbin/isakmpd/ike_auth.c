@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.102 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.103 2005/05/26 06:11:09 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -611,8 +611,7 @@ rsa_sig_decode_hash(struct message *msg)
 	 * XXX I believe this is the wrong spot for this.  CERTs can appear
 	 * anytime.
          */
-	for (p = payload_first(msg, ISAKMP_PAYLOAD_CERT); p;
-	    p = TAILQ_NEXT(p, link)) {
+	TAILQ_FOREACH(p, &msg->payload[ISAKMP_PAYLOAD_CERT], link) {
 		p->flags |= PL_MARK;
 
 		/*

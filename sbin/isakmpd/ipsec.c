@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.118 2005/05/04 10:05:01 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.119 2005/05/26 06:11:09 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1007,8 +1007,7 @@ ipsec_responder(struct message *msg)
 		script = isakmp_cfg_responder;
 		break;
 	case ISAKMP_EXCH_INFO:
-		for (p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY); p;
-		    p = TAILQ_NEXT(p, link)) {
+		TAILQ_FOREACH(p, &msg->payload[ISAKMP_PAYLOAD_NOTIFY], link) {
 			type = GET_ISAKMP_NOTIFY_MSG_TYPE(p->p);
 			LOG_DBG((LOG_EXCHANGE, 10,
 			    "ipsec_responder: got NOTIFY of type %s",

@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.111 2005/05/26 05:14:17 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.112 2005/05/26 06:11:09 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -349,7 +349,7 @@ message_parse_proposal(struct message *msg, struct payload *p,
 	ZERO(&payload_set);
 	SET(ISAKMP_PAYLOAD_TRANSFORM, &payload_set);
 	if (message_parse_payloads(msg,
-	    payload_last(msg, ISAKMP_PAYLOAD_PROPOSAL),
+	    TAILQ_LAST(&msg->payload[ISAKMP_PAYLOAD_PROPOSAL], payload_head),
 	    ISAKMP_PAYLOAD_TRANSFORM, buf + ISAKMP_PROP_SPI_OFF +
 	    GET_ISAKMP_PROP_SPI_SZ(buf), &payload_set, message_parse_transform)
 	    == -1)
@@ -1211,7 +1211,7 @@ message_validate_payloads(struct message *msg)
 	struct field   *f;
 
 	for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_MAX; i++)
-		for (p = payload_first(msg, i); p; p = TAILQ_NEXT(p, link)) {
+		TAILQ_FOREACH(p, &msg->payload[i], link) {
 			LOG_DBG((LOG_MESSAGE, 60, "message_validate_payloads: "
 			    "payload %s at %p of message %p",
 			    constant_name(isakmp_payload_cst, i), p->p, msg));
@@ -2118,8 +2118,7 @@ message_negotiate_sa(struct message *msg, int (*validate)(struct exchange *,
          */
 
 	sa = TAILQ_FIRST(&exchange->sa_list);
-	for (tp = payload_first(msg, ISAKMP_PAYLOAD_TRANSFORM); tp;
-	    tp = next_tp) {
+	TAILQ_FOREACH(tp, &msg->payload[ISAKMP_PAYLOAD_TRANSFORM], link) {
 		propp = tp->context;
 		sap = propp->context;
 		sap->flags |= PL_MARK;
@@ -2507,10 +2506,4 @@ struct payload *
 payload_first(struct message *msg, u_int8_t payload)
 {
 	return TAILQ_FIRST(&msg->payload[payload]);
-}
-
-struct payload *
-payload_last(struct message *msg, u_int8_t payload)
-{
-	return TAILQ_LAST(&msg->payload[payload], payload_head);
 }

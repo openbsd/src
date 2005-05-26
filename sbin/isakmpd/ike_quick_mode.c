@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.95 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.96 2005/05/26 06:11:09 hshoexer Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1196,9 +1196,7 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	}
 
 	/* Build the protection suite in our SA.  */
-	for (xf = payload_first(msg, ISAKMP_PAYLOAD_TRANSFORM); xf;
-	    xf = TAILQ_NEXT(xf, link)) {
-
+	TAILQ_FOREACH(xf, &msg->payload[ISAKMP_PAYLOAD_TRANSFORM], link) {
 		/*
 		 * XXX We could check that the proposal each transform
 		 * belongs to is unique.

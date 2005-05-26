@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.120 2005/05/26 05:14:17 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.121 2005/05/26 06:11:09 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -244,8 +244,7 @@ exchange_handle_leftover_payloads(struct message *msg)
 		if (i == ISAKMP_PAYLOAD_PROPOSAL ||
 		    i == ISAKMP_PAYLOAD_TRANSFORM)
 			continue;
-		for (p = payload_first(msg, i); p;
-		    p = TAILQ_NEXT(p, link)) {
+		TAILQ_FOREACH(p, &msg->payload[i], link) {
 			if (p->flags & PL_MARK)
 				continue;
 			if (!doi->handle_leftover_payload ||
@@ -1562,11 +1561,11 @@ exchange_save_nonce(struct message *msg)
 int
 exchange_save_certreq(struct message *msg)
 {
-	struct payload	*cp = payload_first(msg, ISAKMP_PAYLOAD_CERT_REQ);
+	struct payload	*cp;
 	struct exchange	*exchange = msg->exchange;
 	struct certreq_aca *aca;
 
-	for (; cp; cp = TAILQ_NEXT(cp, link)) {
+	TAILQ_FOREACH(cp, &msg->payload[ISAKMP_PAYLOAD_CERT_REQ], link) {
 		cp->flags |= PL_MARK;
 		aca = certreq_decode(GET_ISAKMP_CERTREQ_TYPE(cp->p), cp->p +
 		    ISAKMP_CERTREQ_AUTHORITY_OFF, GET_ISAKMP_GEN_LENGTH(cp->p)
