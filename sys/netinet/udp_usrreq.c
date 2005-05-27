@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.103 2005/04/25 17:55:52 brad Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.104 2005/05/27 04:55:28 mcbride Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1002,7 +1002,8 @@ udp_output(struct mbuf *m, ...)
 
 	udpstat.udps_opackets++;
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
-	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
+	    inp->inp_socket->so_options &
+	    (SO_DONTROUTE | SO_BROADCAST | SO_JUMBO),
 	    inp->inp_moptions, inp, (void *)NULL);
 
 bail:

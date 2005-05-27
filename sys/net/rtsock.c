@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.43 2004/09/16 22:31:29 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.44 2005/05/27 04:55:27 mcbride Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -396,6 +396,12 @@ report:
 				    rt->rt_ifp = ifp;
 				}
 			}
+
+			/* XXX Hack to allow the jumbo flag to be toggled */
+			if (rtm->rtm_flags & RTF_JUMBO)
+				rt->rt_flags = (rt->rt_flags & ~rtm->rtm_use) |
+				    (rtm->rtm_flags & rtm->rtm_use);
+
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)

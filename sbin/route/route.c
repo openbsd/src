@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.87 2005/03/30 07:59:03 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.88 2005/05/27 04:55:27 mcbride Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ void	 bprintf(FILE *, int, char *);
 void	 mask_addr(union sockunion *, union sockunion *, int);
 int	 inet6_makenetandmask(struct sockaddr_in6 *);
 int	 getaddr(int, char *, struct hostent **);
-int	 rtmsg(int, int);
+int	 rtmsg(int, int, int);
 __dead void usage(char *);
 void	 set_metric(char *, int);
 void	 inet_makenetandmask(u_int32_t, struct sockaddr_in *, int);
@@ -348,7 +348,7 @@ int
 newroute(int argc, char **argv)
 {
 	char *cmd, *dest = "", *gateway = "", *error;
-	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC;
+	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC, use = 0;
 	int key;
 	struct hostent *hp = NULL;
 
@@ -468,6 +468,14 @@ newroute(int argc, char **argv)
 			case K_MPATH:
 				flags |= RTF_MPATH;
 				break;
+			case K_JUMBO:
+				flags |= RTF_JUMBO;
+				use |= RTF_JUMBO;
+				break;
+			case K_NOJUMBO:
+				flags &= ~RTF_JUMBO;
+				use |= RTF_JUMBO;
+				break;
 			case K_MTU:
 			case K_HOPCOUNT:
 			case K_EXPIRE:
@@ -528,7 +536,7 @@ newroute(int argc, char **argv)
 		flags |= RTF_GATEWAY;
 	for (attempts = 1; ; attempts++) {
 		errno = 0;
-		if ((ret = rtmsg(*cmd, flags)) == 0)
+		if ((ret = rtmsg(*cmd, flags, use)) == 0)
 			break;
 		if (errno != ENETUNREACH && errno != ESRCH)
 			break;
@@ -938,7 +946,7 @@ struct {
 } m_rtmsg;
 
 int
-rtmsg(int cmd, int flags)
+rtmsg(int cmd, int flags, int use)
 {
 	static int seq;
 	char *cp = m_rtmsg.m_space;
@@ -971,6 +979,7 @@ rtmsg(int cmd, int flags)
 #define rtm m_rtmsg.m_rtm
 	rtm.rtm_type = cmd;
 	rtm.rtm_flags = flags;
+	rtm.rtm_use = use;
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_seq = ++seq;
 	rtm.rtm_addrs = rtm_addrs;

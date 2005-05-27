@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.79 2005/05/24 20:13:28 avsm Exp $ */
+/* $OpenBSD: netcat.c,v 1.80 2005/05/27 04:55:28 mcbride Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -63,6 +63,7 @@
 /* Command Line Options */
 int	dflag;					/* detached, no stdin */
 int	iflag;					/* Interval Flag */
+int	jflag;					/* use jumbo frames if we can */
 int	kflag;					/* More than one connect */
 int	lflag;					/* Bind to local port */
 int	nflag;					/* Don't do name look up */
@@ -115,7 +116,8 @@ main(int argc, char *argv[])
 	endp = NULL;
 	sv = NULL;
 
-	while ((ch = getopt(argc, argv, "46Ddhi:klnp:rSs:tUuvw:X:x:z")) != -1) {
+	while ((ch = getopt(argc, argv,
+	    "46Ddhi:jklnp:rSs:tUuvw:X:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -146,6 +148,9 @@ main(int argc, char *argv[])
 			iflag = (int)strtoul(optarg, &endp, 10);
 			if (iflag < 0 || *endp != '\0')
 				errx(1, "interval cannot be negative");
+			break;
+		case 'j':
+			jflag = 1;
 			break;
 		case 'k':
 			kflag = 1;
@@ -286,12 +291,13 @@ main(int argc, char *argv[])
 			 * functions to talk to the caller.
 			 */
 			if (uflag) {
-				int rv;
-				char buf[1024];
+				int rv, plen;
+				char buf[8192];
 				struct sockaddr_storage z;
 
 				len = sizeof(z);
-				rv = recvfrom(s, buf, sizeof(buf), MSG_PEEK,
+				plen = jflag ? 8192 : 1024;
+				rv = recvfrom(s, buf, plen, MSG_PEEK,
 				    (struct sockaddr *)&z, &len);
 				if (rv < 0)
 					err(1, "recvfrom");
@@ -501,6 +507,11 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 			    &x, sizeof(x)) == -1)
 				err(1, NULL);
 		}
+		if (jflag) {
+			if (setsockopt(s, SOL_SOCKET, SO_JUMBO,
+			    &x, sizeof(x)) == -1)
+				err(1, NULL);
+		}
 
 		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
@@ -589,9 +600,12 @@ void
 readwrite(int nfd)
 {
 	struct pollfd pfd[2];
-	unsigned char buf[BUFSIZ];
+	unsigned char buf[8192];
 	int n, wfd = fileno(stdin);
 	int lfd = fileno(stdout);
+	int plen;
+
+	plen = jflag ? 8192 : 1024;
 
 	/* Setup Network FD */
 	pfd[0].fd = nfd;
@@ -614,7 +628,7 @@ readwrite(int nfd)
 			return;
 
 		if (pfd[0].revents & POLLIN) {
-			if ((n = read(nfd, buf, sizeof(buf))) < 0)
+			if ((n = read(nfd, buf, plen)) < 0)
 				return;
 			else if (n == 0) {
 				shutdown(nfd, SHUT_RD);
@@ -629,7 +643,7 @@ readwrite(int nfd)
 		}
 
 		if (!dflag && pfd[1].revents & POLLIN) {
-			if ((n = read(wfd, buf, sizeof(buf))) < 0)
+			if ((n = read(wfd, buf, plen)) < 0)
 				return;
 			else if (n == 0) {
 				shutdown(nfd, SHUT_WR);

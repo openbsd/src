@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.51 2005/04/04 22:18:47 hshoexer Exp $	*/
+/*	$OpenBSD: socket.h,v 1.52 2005/05/27 04:55:28 mcbride Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #define	SO_LINGER	0x0080		/* linger on close if data present */
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
+#define SO_JUMBO	0x0400		/* try to use jumbograms */
 
 /*
  * Additional options, not kept in so_options.

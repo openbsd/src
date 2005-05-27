@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.27 2005/05/26 22:37:34 henning Exp $	*/
+/*	$OpenBSD: route.h,v 1.28 2005/05/27 04:55:27 mcbride Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ struct rtentry {
 #define RTF_CLONED	0x10000		/* this is a cloned route */
 #define RTF_SOURCE	0x20000		/* this route has a source selector */
 #define RTF_MPATH	0x40000		/* multipath route or operation */
+#define RTF_JUMBO	0x80000		/* try to use jumbo frames */
 
 #ifndef _KERNEL
 /* obsoleted */
