@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.64 2005/05/23 23:28:53 dhartmei Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.65 2005/05/27 18:53:09 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -557,10 +557,11 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 	struct pfr_walktree	 w;
 	int			 rv;
 
+	ACCEPT_FLAGS(0);
 	if (pfr_validate_table(tbl, 0, 0))
 		return (EINVAL);
 	kt = pfr_lookup_table(tbl);
-	if (kt == NULL)
+	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (ESRCH);
 	if (kt->pfrkt_cnt > *size) {
 		*size = kt->pfrkt_cnt;
