@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.17 2005/05/09 02:01:36 brad Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.18 2005/05/27 17:03:04 mickey Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -830,7 +830,7 @@ cardbus_get_capability(cc, cf, tag, capid, offset, value)
 	while (ofs != 0) {
 #ifdef DIAGNOSTIC
 		if ((ofs & 3) || (ofs < 0x40))
-			panic("cardbus_get_capability");
+			panic("cardbus_get_capability 0x%x", ofs);
 #endif
 		reg = cardbus_conf_read(cc, cf, tag, ofs);
 		if (PCI_CAPLIST_CAP(reg) == capid) {
