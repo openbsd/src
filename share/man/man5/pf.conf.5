@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.330 2005/05/26 15:29:47 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.331 2005/05/27 18:57:56 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1219,7 +1219,7 @@ logging daemon, which dumps the logged packets to the file
 in
 .Xr pcap 3
 binary format.
-.It Ar log-all
+.It Ar log (all)
 Used with
 .Ar keep state ,
 .Ar modulate state
@@ -2606,9 +2606,12 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "debug" ( "none" | "urgent" | "misc" | "loud" ) ] )
 
 pf-rule        = action [ ( "in" | "out" ) ]
-                 [ "log" | "log-all" ] [ "quick" ]
+                 [ "log" [ "(" logopts ")"] ] [ "quick" ]
                  [ "on" ifspec ] [ route ] [ af ] [ protospec ]
                  hosts [ filteropt-list ]
+
+logopts        = logopt [ "," logopts ]
+logopt         = "all" | "user"
 
 filteropt-list = filteropt-list filteropt | filteropt
 filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
@@ -2621,20 +2624,20 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "probability" number"%"
 
-nat-rule       = [ "no" ] "nat" [ "pass" [ "log" | "log-all" ] ]
+nat-rule       = [ "no" ] "nat" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
                  [ "on" ifspec ] [ af ]
                  [ protospec ] hosts [ "tag" string ] [ "tagged" string ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] [ "static-port" ] ]
 
-binat-rule     = [ "no" ] "binat" [ "pass" [ "log" | "log-all" ] ]
+binat-rule     = [ "no" ] "binat" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
                  [ "on" interface-name ] [ af ]
                  [ "proto" ( proto-name | proto-number ) ]
                  "from" address [ "/" mask-bits ] "to" ipspec
                  [ "tag" string ] [ "tagged" string ]
                  [ "->" address [ "/" mask-bits ] ]
 
-rdr-rule       = [ "no" ] "rdr" [ "pass" [ "log" | "log-all" ] ]
+rdr-rule       = [ "no" ] "rdr" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
                  [ "on" ifspec ] [ af ]
                  [ protospec ] hosts [ "tag" string ] [ "tagged" string ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
