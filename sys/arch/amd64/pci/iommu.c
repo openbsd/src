@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.7 2005/05/27 21:44:54 art Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.8 2005/05/27 23:48:24 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -129,7 +129,8 @@ void amdgart_invalidate(void);
 void amdgart_probe(struct pcibus_attach_args *);
 int amdgart_initpte(pci_chipset_tag_t, pcitag_t, paddr_t, psize_t, psize_t);
 void amdgart_dumpregs(void);
-int amdgart_iommu_map(struct extent *, paddr_t, paddr_t *, psize_t);
+int amdgart_iommu_map(bus_dmamap_t, struct extent *, paddr_t,
+    paddr_t *, psize_t);
 int amdgart_iommu_unmap(struct extent *, paddr_t, psize_t);
 int amdgart_reload(struct extent *, bus_dmamap_t);
 int amdgart_ok(pci_chipset_tag_t, pcitag_t);
@@ -408,7 +409,7 @@ amdgart_reload(struct extent *ex, bus_dmamap_t dmam)
 
 		opa = dmam->dm_segs[i].ds_addr;
 		len = dmam->dm_segs[i].ds_len;
-		err = amdgart_iommu_map(ex, opa, &npa, len);
+		err = amdgart_iommu_map(dmam, ex, opa, &npa, len);
 		if (err) {
 			for (j = 0; j < i - 1; j++)
 				amdgart_iommu_unmap(ex, opa, len);
@@ -420,7 +421,8 @@ amdgart_reload(struct extent *ex, bus_dmamap_t dmam)
 }
 
 int
-amdgart_iommu_map(struct extent *ex, paddr_t opa, paddr_t *npa, psize_t len)
+amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, paddr_t opa,
+    paddr_t *npa, psize_t len)
 {
 	paddr_t base, end, idx;
 	psize_t alen;
@@ -431,7 +433,7 @@ amdgart_iommu_map(struct extent *ex, paddr_t opa, paddr_t *npa, psize_t len)
 	base = trunc_page(opa);
 	end = roundup(opa + len, PAGE_SIZE);
 	alen = end - base;
-	err = extent_alloc(ex, alen, PAGE_SIZE, 0, EX_NOBOUNDARY,
+	err = extent_alloc(ex, alen, PAGE_SIZE, 0, dmam->_dm_boundary,
 	    EX_NOWAIT, &res);
 	if (err) {
 		printf("GART: extent_alloc %d\n", err);
