@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.32 2005/05/26 22:25:31 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.33 2005/05/27 17:39:40 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -157,7 +157,7 @@ cvs_ent_close(CVSENTRIES *ep)
 {
 	struct cvs_ent *ent;
 
-	if ((ep->cef_flags & CVS_ENTF_WR) &&
+	if (!cvs_noexec && (ep->cef_flags & CVS_ENTF_WR) &&
 	    !(ep->cef_flags & CVS_ENTF_SYNC)) {
 		/* implicit sync with disk */
 		(void)cvs_ent_write(ep);
