@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.28 2005/05/27 04:48:48 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.29 2005/05/27 07:58:46 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -581,6 +581,7 @@ find_vlink(struct abr_rtr *ar)
 			    iface->area->id.s_addr == ar->area.s_addr) {
 				iface->dst.s_addr = ar->dst_ip.s_addr;
 				iface->addr.s_addr = ar->addr.s_addr;
+				iface->metric = ar->metric;
 
 				return (iface);
 			}
@@ -716,8 +717,23 @@ orig_rtr_lsa(struct area *area)
 			rtr_link.type = LINK_TYPE_STUB_NET;
 			break;
 		case IF_TYPE_VIRTUALLINK:
-			log_debug("orig_rtr_lsa: not supported, interface %s",
-			     iface->name);
+			LIST_FOREACH(nbr, &iface->nbr_list, entry) {
+				if (nbr != iface->self &&
+				    nbr->state & NBR_STA_FULL)
+					break;
+			}
+			if (nbr) {
+				rtr_link.id = nbr->id.s_addr;
+				rtr_link.data = iface->addr.s_addr;
+				rtr_link.type = LINK_TYPE_VIRTUAL;
+				rtr_link.metric = htons(iface->metric);
+				num_links++;
+				if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
+					fatalx("orig_rtr_lsa: buf_add failed");
+
+				log_debug("orig_rtr_lsa: virtual link, interface %s",
+				     iface->name);
+			}
 			continue;
 		case IF_TYPE_POINTOMULTIPOINT:
 			log_debug("orig_rtr_lsa: stub net, "
