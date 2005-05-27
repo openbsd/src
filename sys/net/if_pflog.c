@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.13 2005/05/27 17:22:40 dhartmei Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.14 2005/05/27 20:17:31 dhartmei Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
@@ -203,8 +204,13 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	}
 	if (rm->log & PF_LOG_SOCKET_LOOKUP && !pd->lookup.done)
 		pd->lookup.done = pf_socket_lookup(dir, pd);
-	hdr.uid = pd->lookup.uid;
-	hdr.pid = pd->lookup.pid;
+	if (pd->lookup.done > 0) {
+		hdr.uid = pd->lookup.uid;
+		hdr.pid = pd->lookup.pid;
+	} else {
+		hdr.uid = UID_MAX;
+		hdr.pid = NO_PID;
+	}
 	hdr.rule_uid = rm->cuid;
 	hdr.rule_pid = rm->cpid;
 	hdr.dir = dir;
