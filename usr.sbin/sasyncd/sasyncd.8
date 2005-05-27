@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.8,v 1.5 2005/05/23 20:41:47 jmc Exp $
+.\" $OpenBSD: sasyncd.8,v 1.6 2005/05/27 21:20:50 ho Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -40,8 +40,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon synchronizes IPSec SA information between a number of failover
-IPsec gateways.
+daemon synchronizes IPSec SA and SPD information between a number of
+failover IPsec gateways.
 The most typical scenario is to run
 .Nm
 on hosts also running
@@ -52,6 +52,9 @@ and sharing a common IP-address using
 The daemon runs either in master or slave mode, in which the master
 tracks all local IPsec SA changes and sends this information along to
 all slaves so they will have the same data.
+.Pp
+When a slave connects, or reconnects, the master will transmit a
+snapshot of all it's current IPsec SA and SPD information.
 .Ss Failover
 .Nm
 does not itself do any failover processing; the normal mode of
@@ -61,21 +64,40 @@ interface.
 Whenever it changes,
 .Nm
 will follow suit.
-It is possible to
+For debugging purposes, it is possible to
 .Qq lock
 the daemon to a particular state; see
 .Xr sasyncd.conf 5 .
-.Ss Host to host communication
+.Ss sasyncd to sasyncd communication
 As
 .Nm
-will transmit IPSec SA keys over a network not guaranteed to be
-private,
+will transmit IPSec SA key and policy information over a network not
+guaranteed to be private,
 .Nm
 messages are protected using AES and SHA.
 The shared key used for the encryption must be specified in
 .Pa /etc/sasyncd.conf .
 See
 .Xr sasyncd.conf 5
+for more information.
+.Ss SA replay counters
+For SAs with replay protection enabled, such as those created by
+.Xr isakmpd 8 ,
+the
+.Nm
+hosts must have
+.Xr pfsync 4
+enabled to synchronize the in-kernel SA replay counters.
+Without this replay counter synchronization the IPsec packets a host
+sends after failover will not be accepted by the remote VPN endpoint.
+.Pp
+In most redundancy setups
+.Xr pfsync 4
+is likely already activated to synchronize
+.Xr pf 4
+states.
+See
+.Xr pfsync 4
 for more information.
 .Pp
 The options are as follows:
@@ -112,6 +134,7 @@ configuration file.
 .Xr syslog 3 ,
 .Xr carp 4 ,
 .Xr ipsec 4 ,
+.Xr pfsync 4 ,
 .Xr sasyncd.conf 5 ,
 .Xr isakmpd 8
 .Sh HISTORY
@@ -119,5 +142,5 @@ The
 .Nm
 daemon first appeared in
 .Ox 3.8 .
-It was written in 2004 by Hakan Olsson, in part sponsored by
+It was written in 2004-2005 by Hakan Olsson, in part sponsored by
 Multicom Security AB, Sweden.
