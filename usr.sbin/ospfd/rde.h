@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.16 2005/05/24 06:55:21 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.17 2005/05/27 02:01:53 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -81,6 +81,14 @@ struct rt_node {
 	u_int8_t		 flags;
 	u_int8_t		 prefixlen;
 	u_int8_t		 invalid;
+};
+
+struct abr_rtr {
+	struct in_addr		 addr;
+	struct in_addr		 abr_id;
+	struct in_addr		 dst_ip;
+	struct in_addr		 area;
+	u_int16_t		 metric;
 };
 
 /* rde.c */
