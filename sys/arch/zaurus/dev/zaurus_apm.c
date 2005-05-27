@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.7 2005/05/27 05:09:42 uwe Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.8 2005/05/27 05:14:41 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -448,9 +448,9 @@ zapm_poll(void *v)
 	 */
 	if (bc_lock && ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)) {
 		if (sc->sc_suspended) {
-			printf("zapm_poll: suspended %lu %lu\n",
+			DPRINTF(("zapm_poll: suspended %lu %lu\n",
 			    sc->sc_lastbattchk.tv_sec,
-			    pxa2x0_rtc_getsecs());
+			    pxa2x0_rtc_getsecs()));
 			if (charging) {
 				zapm_enable_charging(sc, 0);
 				delay(15000);
@@ -491,7 +491,7 @@ zapm_poll(void *v)
 
 #ifdef APMDEBUG
 	if (sc->sc_event != APM_NOEVENT)
-		printf("zapm_poll: power event %d\n", sc->sc_event);
+		DPRINTF(("zapm_poll: power event %d\n", sc->sc_event));
 #endif
 	splx(s);
 }
