@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.4 2005/05/14 00:13:15 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.5 2005/05/27 07:46:38 jason Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -179,14 +179,17 @@ struct x86_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
+extern void amdgart_probe(struct pcibus_attach_args *);
+
 void
 pci_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
-
-	if (pba->pba_bus == 0)
+	if (pba->pba_bus == 0) {
 		printf(": configuration mode %d", pci_mode);
+		amdgart_probe(pba);
+	}
 }
 
 int
