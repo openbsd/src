@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.34 2003/10/17 09:50:18 jmc Exp $
+.\"	$OpenBSD: mktemp.3,v 1.35 2005/05/27 17:45:56 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nm mkdtemp
 .Nd make temporary file name (unique)
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.Fd #include <stdlib.h>
 .Ft char *
 .Fn mktemp "char *template"
 .Ft int
@@ -49,23 +49,22 @@
 .Sh DESCRIPTION
 The
 .Fn mktemp
-function takes the given file name template and overwrites a portion of it
-to create a file name.
+family of functions take the given file name template and overwrite
+a portion of it to create a new file name.
 This file name is unique and suitable for use by the application.
 The template may be any file name with some number of
 .So Li X
 .Sc Ns s
 appended
 to it, for example
-.Pa /tmp/temp.XXXX .
+.Pa /tmp/temp.XXXXXX .
 The trailing
 .So Li X
 .Sc Ns s
 are replaced with the current process number and/or a
 unique letter combination.
-The number of unique file names
-.Fn mktemp
-can return depends on the number of
+The number of unique file names that
+can be returned depends on the number of
 .So Li X
 .Sc Ns s
 provided; six
@@ -79,6 +78,23 @@ At least 6
 .So Li X
 .Sc Ns s
 should be used, though 10 is much better.
+.Pp
+The
+.Fn mktemp
+function generates a temporary file name based on a template as
+described above.
+Because
+.Fn mktemp
+does not actually create the temporary file there is a window of
+opportunity during which another process can open the file instead.
+Because of this race condition the
+.Fn mktemp
+should not be used in new code.
+.Fn mktemp
+was marked as a legacy interface in
+.St -p1003.1-2001
+and may be removed in a future release of
+.Ox .
 .Pp
 The
 .Fn mkstemp
@@ -162,7 +178,7 @@ code which calls
 .Xr open 2
 or
 .Xr fopen 3
-on that filename will occur much later.
+on that file name will occur much later.
 (In almost all cases, the use of
 .Xr fopen 3
 will mean that the flags
@@ -204,7 +220,7 @@ functions may set
 to one of the following values:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
-The pathname portion of the template is not an existing directory.
+The path name portion of the template is not an existing directory.
 .El
 .Pp
 The
@@ -288,7 +304,7 @@ device) that the attacker has created in the expected file location.
 Hence
 .Fn mkstemp
 is recommended, since it atomically creates the file.
-An attacker can guess the filenames produced by
+An attacker can guess the file names produced by
 .Fn mktemp .
 Whenever it is possible,
 .Fn mkstemp
