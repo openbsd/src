@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.141 2005/05/21 21:03:57 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.142 2005/05/27 17:22:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -48,6 +48,7 @@
 #include <sys/time.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/malloc.h>
 
 #include <net/if.h>
@@ -1159,6 +1160,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(&pr->rule, rule, sizeof(struct pf_rule));
+		rule->cuid = p->p_cred->p_ruid;
+		rule->cpid = p->p_pid;
 		rule->anchor = NULL;
 		rule->kif = NULL;
 		TAILQ_INIT(&rule->rpool.list);
@@ -1389,6 +1392,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 			bcopy(&pcr->rule, newrule, sizeof(struct pf_rule));
+			newrule->cuid = p->p_cred->p_ruid;
+			newrule->cpid = p->p_pid;
 			TAILQ_INIT(&newrule->rpool.list);
 			/* initialize refcounting */
 			newrule->states = 0;

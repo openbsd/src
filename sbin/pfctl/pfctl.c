@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.238 2005/05/23 23:28:53 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.239 2005/05/27 17:22:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -589,12 +589,15 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 		printf("  [ queue: qname=%s qid=%u pqname=%s pqid=%u ]\n",
 		    rule->qname, rule->qid, rule->pqname, rule->pqid);
 	}
-	if (opts & PF_OPT_VERBOSE)
+	if (opts & PF_OPT_VERBOSE) {
 		printf("  [ Evaluations: %-8llu  Packets: %-8llu  "
 			    "Bytes: %-10llu  States: %-6u]\n",
 			    (unsigned long long)rule->evaluations,
 			    (unsigned long long)rule->packets,
 			    (unsigned long long)rule->bytes, rule->states);
+		printf("  [ Inserted: uid %u pid %u ]\n",
+		    (unsigned)rule->cuid, (unsigned)rule->cpid);
+	}
 }
 
 void

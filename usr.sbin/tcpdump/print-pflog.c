@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.15 2005/03/11 15:54:11 dhartmei Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.16 2005/05/27 17:22:41 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.15 2005/03/11 15:54:11 dhartmei Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.16 2005/05/27 17:22:41 dhartmei Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -32,6 +32,11 @@ static const char rcsid[] =
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
+
+#ifndef NO_PID
+#define NO_PID	(32766+1)
+#endif
 
 struct rtentry;
 #include <net/if.h>
@@ -116,6 +121,9 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 			printf("/(%s) ", pf_reasons[hdr->reason]);
 		else
 			printf("/(unkn %u) ", (unsigned)hdr->reason);
+		if (vflag)
+			printf("[uid %u, pid %u] ", (unsigned)hdr->rule_uid,
+			    (unsigned)hdr->rule_pid);
 
 		switch (hdr->action) {
 		case PF_SCRUB:
@@ -143,6 +151,9 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 		printf(" %s on %s: ",
 		    hdr->dir == PF_OUT ? "out" : "in",
 		    hdr->ifname);
+		if (vflag && hdr->pid != NO_PID)
+			printf("[uid %u, pid %u] ", (unsigned)hdr->uid,
+			    (unsigned)hdr->pid);
 	}
 	af = hdr->af;
 	length -= hdrlen;

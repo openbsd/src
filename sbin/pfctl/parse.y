@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.488 2005/05/27 03:54:27 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.489 2005/05/27 17:22:40 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -416,8 +416,8 @@ typedef struct {
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno
-%type	<v.i>			no dir log af fragcache sourcetrack flush
-%type	<v.i>			unaryop statelock
+%type	<v.i>			no dir log logopts logopt af fragcache
+%type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action nataction natpass scrubaction
 %type	<v.b>			flags flag blockspec
 %type	<v.range>		port rport
@@ -2029,8 +2029,17 @@ logquick	: /* empty */			{ $$.log = 0; $$.quick = 0; }
 		;
 
 log		: LOG				{ $$ = PF_LOG; }
-		| LOGALL			{ $$ = PF_LOGALL; }
+		| LOG '(' logopts ')'		{ $$ = PF_LOG | $3; }
+		| LOGALL			{ $$ = PF_LOG_ALL; }
+		| LOGALL '(' logopts ')'	{ $$ = PF_LOG_ALL | $3; }
 		;
+
+logopts		: /* empty */			{ $$ = 0; }
+		| logopt			{ $$ = $1; }
+		| logopts comma logopt		{ $$ = $1 | $3; }
+
+logopt		: USER				{ $$ = PF_LOG_SOCKET_LOOKUP; }
+		| GROUP				{ $$ = PF_LOG_SOCKET_LOOKUP; }
 
 interface	: /* empty */			{ $$ = NULL; }
 		| ON if_item_not		{ $$ = $2; }

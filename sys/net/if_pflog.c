@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.12 2004/05/19 17:50:51 dhartmei Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.13 2005/05/27 17:22:40 dhartmei Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -174,14 +174,14 @@ pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 int
 pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
     u_int8_t reason, struct pf_rule *rm, struct pf_rule *am,
-    struct pf_ruleset *ruleset)
+    struct pf_ruleset *ruleset, struct pf_pdesc *pd)
 {
 #if NBPFILTER > 0
 	struct ifnet *ifn;
 	struct pfloghdr hdr;
 	struct mbuf m1;
 
-	if (kif == NULL || m == NULL || rm == NULL)
+	if (kif == NULL || m == NULL || rm == NULL || pd == NULL)
 		return (-1);
 
 	bzero(&hdr, sizeof(hdr));
@@ -201,6 +201,12 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 			strlcpy(hdr.ruleset, ruleset->anchor->name,
 			    sizeof(hdr.ruleset));
 	}
+	if (rm->log & PF_LOG_SOCKET_LOOKUP && !pd->lookup.done)
+		pd->lookup.done = pf_socket_lookup(dir, pd);
+	hdr.uid = pd->lookup.uid;
+	hdr.pid = pd->lookup.pid;
+	hdr.rule_uid = rm->cuid;
+	hdr.rule_pid = rm->cpid;
 	hdr.dir = dir;
 
 #ifdef INET

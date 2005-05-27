@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.219 2005/05/26 15:29:48 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.220 2005/05/27 17:22:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -108,7 +108,8 @@ enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 #define	PF_WSCALE_MASK		0x0f
 
 #define	PF_LOG			0x01
-#define	PF_LOGALL		0x02
+#define	PF_LOG_ALL		0x02
+#define	PF_LOG_SOCKET_LOOKUP	0x04
 
 struct pf_addr {
 	union {
@@ -533,6 +534,8 @@ struct pf_rule {
 	u_int32_t		 rt_listid;
 	u_int32_t		 nr;
 	u_int32_t		 prob;
+	uid_t			 cuid;
+	pid_t			 cpid;
 
 	u_int16_t		 return_icmp;
 	u_int16_t		 return_icmp6;
@@ -881,6 +884,12 @@ enum pfi_kif_refs {
 #define PFI_IFLAG_SKIP		0x0100	/* skip filtering on interface */
 
 struct pf_pdesc {
+	struct {
+		int	 done;
+		uid_t	 uid;
+		gid_t	 gid;
+		pid_t	 pid;
+	}		 lookup;
 	u_int64_t	 tot_len;	/* Make Mickey money */
 	union {
 		struct tcphdr		*tcp;
@@ -1432,7 +1441,8 @@ void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
 	    sa_family_t);
 void	pf_change_a(void *, u_int16_t *, u_int32_t, u_int8_t);
 int	pflog_packet(struct pfi_kif *, struct mbuf *, sa_family_t, u_int8_t,
-	    u_int8_t, struct pf_rule *, struct pf_rule *, struct pf_ruleset *);
+	    u_int8_t, struct pf_rule *, struct pf_rule *, struct pf_ruleset *,
+	    struct pf_pdesc *);
 int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
 	    struct pf_addr *, sa_family_t);
 int	pf_match(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
@@ -1458,6 +1468,7 @@ u_int32_t
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
 int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *);
+int	pf_socket_lookup(int, struct pf_pdesc *);
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
