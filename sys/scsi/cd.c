@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.79 2005/05/01 19:29:17 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.80 2005/05/27 16:07:51 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/cd.h>
-#include <scsi/scsi_cd.h>
 #include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
 #include <scsi/scsiconf.h>
 
@@ -124,6 +123,11 @@ void	cddone(struct scsi_xfer *);
 u_long	cd_size(struct cd_softc *, int);
 void	lba2msf(u_long, u_char *, u_char *, u_char *);
 u_long	msf2lba(u_char, u_char, u_char);
+int	cd_setchan(struct cd_softc *, int, int, int, int, int);
+int	cd_getvol(struct cd_softc *cd, struct ioc_vol *, int);
+int	cd_setvol(struct cd_softc *, const struct ioc_vol *, int);
+int	cd_load_unload(struct cd_softc *, int, int);
+int	cd_set_pa_immed(struct cd_softc *, int);
 int	cd_play(struct cd_softc *, int, int);
 int	cd_play_tracks(struct cd_softc *, int, int, int, int);
 int	cd_play_msf(struct cd_softc *, int, int, int, int, int, int);
@@ -174,9 +178,6 @@ const struct scsi_inquiry_pattern cd_patterns[] = {
 	 "PIONEER ", "CD-ROM DRM-600  ", ""},
 #endif
 };
-
-extern struct cd_ops cd_atapibus_ops;
-extern struct cd_ops cd_scsibus_ops;
 
 #define cdlock(softc)   disk_lock(&(softc)->sc_dk)
 #define cdunlock(softc) disk_unlock(&(softc)->sc_dk)
@@ -235,12 +236,6 @@ cdattach(parent, self, aux)
 	if (!(sc_link->flags & SDEV_ATAPI) &&
 	    (sa->sa_inqbuf->version & SID_ANSII) == 0)
 		cd->flags |= CDF_ANCIENT;
-
-	if (sc_link->flags & SDEV_ATAPI) {
-		cd->sc_ops = &cd_atapibus_ops;
-	} else {
-		cd->sc_ops = &cd_scsibus_ops;
-	}
 
 	printf("\n");
 }
@@ -896,7 +891,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPLAYTRACKS: {
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;
 
-		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd, 0)) != 0)
+		if ((error = cd_set_pa_immed(cd, 0)) != 0)
 			break;
 		error = cd_play_tracks(cd, args->start_track,
 		    args->start_index, args->end_track, args->end_index);
@@ -905,7 +900,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPLAYMSF: {
 		struct ioc_play_msf *args = (struct ioc_play_msf *)addr;
 
-		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd, 0)) != 0)
+		if ((error = cd_set_pa_immed(cd, 0)) != 0)
 			break;
 		error = cd_play_msf(cd, args->start_m, args->start_s,
 		    args->start_f, args->end_m, args->end_s, args->end_f);
@@ -914,7 +909,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPLAYBLOCKS: {
 		struct ioc_play_blocks *args = (struct ioc_play_blocks *)addr;
 
-		if ((error = (*cd->sc_ops->cdo_set_pa_immed)(cd, 0)) != 0)
+		if ((error = cd_set_pa_immed(cd, 0)) != 0)
 			break;
 		error = cd_play(cd, args->blk, args->len);
 		break;
@@ -1045,46 +1040,46 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCSETPATCH: {
 		struct ioc_patch *arg = (struct ioc_patch *)addr;
 
-		error = (*cd->sc_ops->cdo_setchan)(cd, arg->patch[0],
-		    arg->patch[1], arg->patch[2], arg->patch[3], 0);
+		error = cd_setchan(cd, arg->patch[0], arg->patch[1],
+		    arg->patch[2], arg->patch[3], 0);
 		break;
 	}
 	case CDIOCGETVOL: {
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 
-		error = (*cd->sc_ops->cdo_getvol)(cd, arg, 0);
+		error = cd_getvol(cd, arg, 0);
 		break;
 	}
 	case CDIOCSETVOL: {
 		struct ioc_vol *arg = (struct ioc_vol *)addr;
 
-		error = (*cd->sc_ops->cdo_setvol)(cd, arg, 0);
+		error = cd_setvol(cd, arg, 0);
 		break;
 	}
 
 	case CDIOCSETMONO:
-		error = (*cd->sc_ops->cdo_setchan)(cd, BOTH_CHANNEL,
-		    BOTH_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0);
+		error = cd_setchan(cd, BOTH_CHANNEL, BOTH_CHANNEL, MUTE_CHANNEL,
+		    MUTE_CHANNEL, 0);
 		break;
 
 	case CDIOCSETSTEREO:
-		error = (*cd->sc_ops->cdo_setchan)(cd, LEFT_CHANNEL,
-		    RIGHT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0);
+		error = cd_setchan(cd, LEFT_CHANNEL, RIGHT_CHANNEL,
+		    MUTE_CHANNEL, MUTE_CHANNEL, 0);
 		break;
 
 	case CDIOCSETMUTE:
-		error = (*cd->sc_ops->cdo_setchan)(cd, MUTE_CHANNEL,
-		    MUTE_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0);
+		error = cd_setchan(cd, MUTE_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL,
+		    MUTE_CHANNEL, 0);
 		break;
 
 	case CDIOCSETLEFT:
-		error = (*cd->sc_ops->cdo_setchan)(cd, LEFT_CHANNEL,
-		    LEFT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0);
+		error = cd_setchan(cd, LEFT_CHANNEL, LEFT_CHANNEL, MUTE_CHANNEL,
+		    MUTE_CHANNEL, 0);
 		break;
 
 	case CDIOCSETRIGHT:
-		error = (*cd->sc_ops->cdo_setchan)(cd, RIGHT_CHANNEL,
-		    RIGHT_CHANNEL, MUTE_CHANNEL, MUTE_CHANNEL, 0);
+		error = cd_setchan(cd, RIGHT_CHANNEL, RIGHT_CHANNEL,
+		    MUTE_CHANNEL, MUTE_CHANNEL, 0);
 		break;
 
 	case CDIOCRESUME:
@@ -1143,8 +1138,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCLOADUNLOAD: {
 		struct ioc_load_unload *args = (struct ioc_load_unload *)addr;
 
-		error = (*cd->sc_ops->cdo_load_unload)(cd, args->options,
-			args->slot);
+		error = cd_load_unload(cd, args->options, args->slot);
 		break;
 	}
 
@@ -1367,6 +1361,162 @@ cd_size(cd, flags)
 	return (cd->params.disksize);
 }
 
+int
+cd_setchan(cd, p0, p1, p2, p3, flags)
+	struct cd_softc *cd;
+	int p0, p1, p2, p3, flags;
+{
+	struct scsi_mode_sense_buf data;
+	struct cd_audio_page *audio = NULL;
+	int error;
+
+	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags);
+	if (error != 0)
+		return (error);
+	if (audio == NULL)
+		return (EIO);
+
+	audio->port[LEFT_PORT].channels = p0;
+	audio->port[RIGHT_PORT].channels = p1;
+	audio->port[2].channels = p2;
+	audio->port[3].channels = p3;
+
+	if (MODE_HEADER_IS_BIG(&data, audio))
+		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
+		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
+		    20000);
+	else
+		error = scsi_mode_select(cd->sc_link, SMS_PF,
+		    (struct scsi_mode_header *)&data, sizeof(data), flags,
+		    20000);
+
+	return (error);
+}
+
+int
+cd_getvol(cd, arg, flags)
+	struct cd_softc *cd;
+	struct ioc_vol *arg;
+	int flags;
+{
+	struct scsi_mode_sense_buf data;
+	struct cd_audio_page *audio = NULL;
+	int error;
+
+	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags);
+	if (error != 0)
+		return (error);
+	if (audio == NULL)
+		return (EIO);
+		
+	arg->vol[0] = audio->port[0].volume;
+	arg->vol[1] = audio->port[1].volume;
+	arg->vol[2] = audio->port[2].volume;
+	arg->vol[3] = audio->port[3].volume;
+
+	return (0);
+}
+
+int
+cd_setvol(cd, arg, flags)
+	struct cd_softc *cd;
+	const struct ioc_vol *arg;
+	int flags;
+{
+	struct scsi_mode_sense_buf data;
+	struct cd_audio_page *audio = NULL;
+	u_int8_t mask_volume[4];
+	int error;
+
+	error = scsi_do_mode_sense(cd->sc_link,
+	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE, &data, (void **)&audio, NULL,
+	       NULL, NULL, sizeof(*audio), flags);
+	if (error != 0)
+		return (error);
+	if (audio == NULL)
+		return (EIO);
+		
+	mask_volume[0] = audio->port[0].volume;
+	mask_volume[1] = audio->port[1].volume;
+	mask_volume[2] = audio->port[2].volume;
+	mask_volume[3] = audio->port[3].volume;
+
+	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags);
+	if (error != 0)
+		return (error);
+	if (audio == NULL)
+		return (EIO);
+
+	audio->port[0].volume = arg->vol[0] & mask_volume[0];
+	audio->port[1].volume = arg->vol[1] & mask_volume[1];
+	audio->port[2].volume = arg->vol[2] & mask_volume[2];
+	audio->port[3].volume = arg->vol[3] & mask_volume[3];
+
+	if (MODE_HEADER_IS_BIG(&data, audio))
+		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
+		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
+		    20000);
+	else
+		error = scsi_mode_select(cd->sc_link, SMS_PF,
+		    (struct scsi_mode_header *)&data, sizeof(data), flags,
+		    20000);
+
+	return (error);
+}
+
+int
+cd_load_unload(cd, options, slot)
+	struct cd_softc *cd;
+	int options, slot;
+{
+	struct scsi_load_unload cmd;
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.opcode = LOAD_UNLOAD;
+	cmd.options = options;    /* ioctl uses ATAPI values */
+	cmd.slot = slot;
+	
+	return (scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&cmd,
+	    sizeof(cmd), 0, 0, CDRETRIES, 200000, NULL, 0));
+}
+
+int
+cd_set_pa_immed(cd, flags)
+	struct cd_softc *cd;
+	int flags;
+{
+	struct scsi_mode_sense_buf data;
+	struct cd_audio_page *audio = NULL;
+	int error;
+
+	if (cd->sc_link->flags & SDEV_ATAPI)
+		/* XXX Noop? */
+		return (0);
+
+	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags);
+	if (error != 0)
+		return (error);
+	if (audio == NULL)
+		return (EIO);
+		
+	audio->flags &= ~CD_PA_SOTC;
+	audio->flags |= CD_PA_IMMED;
+
+	if (MODE_HEADER_IS_BIG(&data, audio))
+		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
+		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
+		    20000);
+	else
+		error = scsi_mode_select(cd->sc_link, SMS_PF,
+		    (struct scsi_mode_header *)&data, sizeof(data), flags,
+		    20000);
+
+	return (error);
+}
 
 /*
  * Get scsi driver to send a "start playing" command

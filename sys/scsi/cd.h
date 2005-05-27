@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.2 2005/04/16 16:54:34 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.3 2005/05/27 16:07:51 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -131,6 +131,20 @@ struct scsi_read_cd_capacity {
 	u_int8_t control;
 };
 
+struct scsi_load_unload {
+	u_int8_t opcode;
+	u_int8_t reserved;
+#define	IMMED	0x1	
+	u_int8_t reserved2[2];
+	u_int8_t options;
+#define START	0x1
+#define	LOUNLO	0x2
+	u_int8_t reserved4[3];
+	u_int8_t slot;
+	u_int8_t reserved5[2];
+	u_int8_t control;
+};
+
 /*
  * Opcodes
  */
@@ -145,6 +159,7 @@ struct scsi_read_cd_capacity {
 #define PLAY_TRACK_REL		0x49	/* cdrom play track/index mode */
 #define PAUSE			0x4b	/* cdrom pause in 'play audio' mode */
 #define PLAY_BIG		0xa5	/* cdrom pause in 'play audio' mode */
+#define	LOAD_UNLOAD		0xa6	/* cdrom load/unload media */
 #define PLAY_TRACK_REL_BIG	0xa9	/* cdrom play track/index mode */
 
 
@@ -184,7 +199,6 @@ struct cd_audio_page {
 #define	RIGHT_PORT	1
 };
 
-#ifdef CDDA
 /*
  * There are 2352 bytes in a CD digital audio frame.  One frame is 1/75 of a
  * second, at 44.1kHz sample rate, 16 bits/sample, 2 channels.
@@ -193,13 +207,7 @@ struct cd_audio_page {
  * channel first.  Samples are little endian 16-bit signed values.
  */
 #define CD_DA_BLKSIZ		2352	/* # bytes in CD-DA frame */
-#ifndef CD_NORMAL_DENSITY_CODE
 #define CD_NORMAL_DENSITY_CODE	0x00	/* from Toshiba CD-ROM specs */
-#endif
-#ifndef CD_DA_DENSITY_CODE
 #define CD_DA_DENSITY_CODE	0x82	/* from Toshiba CD-ROM specs */
+
 #endif
-#endif /* CDDA */
-
-#endif /*_SCSI_CD_H*/
-
