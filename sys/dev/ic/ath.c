@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.27 2005/05/27 04:10:06 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.28 2005/05/27 09:53:55 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -80,9 +80,7 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 
-#ifdef notyet
 #include <dev/gpio/gpiovar.h>
-#endif
 #include <dev/ic/athvar.h>
 
 int	ath_init(struct ifnet *);
@@ -143,14 +141,10 @@ int	ath_enable(struct ath_softc *);
 void	ath_disable(struct ath_softc *);
 void	ath_power(int, void *);
 
-#ifdef notyet
-#if NGPIO > 0
 int	ath_gpio_attach(struct ath_softc *);
 int	ath_gpio_pin_read(void *, int);
 void	ath_gpio_pin_write(void *, int, int);
 void	ath_gpio_pin_ctl(void *, int, int);
-#endif
-#endif
 
 #ifdef AR_DEBUG
 void	ath_printrxbuf(struct ath_buf *, int);
@@ -413,12 +407,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	printf(", %s, address %s\n", ieee80211_regdomain2name(ath_regdomain),
 	    ether_sprintf(ic->ic_myaddr));
 
-#ifdef notyet
-#if NGPIO > 0
 	if (ath_gpio_attach(sc) == 0)
 		sc->sc_flags |= ATH_GPIO;
-#endif
-#endif
 
 	return 0;
 bad2:
@@ -3236,8 +3226,6 @@ ath_printtxbuf(struct ath_buf *bf, int done)
 }
 #endif /* AR_DEBUG */
 
-#ifdef notyet
-#if NGPIO > 0
 int
 ath_gpio_attach(struct ath_softc *sc)
 {
@@ -3274,8 +3262,12 @@ ath_gpio_attach(struct ath_softc *sc)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = ah->ah_gpio_npins;
 
+#ifdef notyet
+#if NGPIO > 0
 	if (config_found(&sc->sc_dev, &gba, gpiobus_print) == NULL)
 		return (ENODEV);
+#endif
+#endif
 
 	return (0);
 }
@@ -3308,5 +3300,3 @@ ath_gpio_pin_ctl(void *arg, int pin, int flags)
 		ath_hal_set_gpio_output(ah, pin);
 	}
 }
-#endif /* NGPIO */
-#endif

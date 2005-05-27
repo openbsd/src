@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.9 2005/05/27 04:10:06 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.10 2005/05/27 09:53:55 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -310,10 +310,8 @@ struct ath_softc {
 
 	u_int8_t                sc_broadcast_addr[IEEE80211_ADDR_LEN];
 
-#if NGPIO > 0
 	struct gpio_chipset_tag sc_gpio_gc;	/* gpio(4) framework */
 	gpio_pin_t		sc_gpio_pins[ATH_MAXGPIO];
-#endif
 };
 
 /* unaligned little endian access */     
