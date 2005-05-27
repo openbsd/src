@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.142 2005/05/27 17:22:41 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.143 2005/05/27 21:41:03 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -103,6 +103,9 @@ int			 pf_disable_altq(struct pf_altq *);
 #endif /* ALTQ */
 int			 pf_begin_rules(u_int32_t *, int, const char *);
 int			 pf_rollback_rules(u_int32_t, int, char *);
+void			 pf_calc_chksum(struct pf_ruleset *);
+void			 pf_hash_rule(MD5_CTX *, struct pf_rule *);
+void			 pf_hash_rule_addr(MD5_CTX *, struct pf_rule_addr *);
 int			 pf_commit_rules(u_int32_t, int, char *);
 
 extern struct timeout	 pf_expire_to;
@@ -961,6 +964,89 @@ pf_rollback_rules(u_int32_t ticket, int rs_num, char *anchor)
 	return (0);
 }
 
+#define PF_MD5_UPD(st, elm)						\
+		MD5Update(ctx, (u_int8_t *) &(st)->elm, sizeof((st)->elm))
+
+#define PF_MD5_UPD_STR(st, elm)						\
+		MD5Update(ctx, (u_int8_t *) (st)->elm, strlen((st)->elm))
+
+#define PF_MD5_UPD_HTONL(st, elm, stor) do {				\
+		(stor) = htonl((st)->elm);				\
+		MD5Update(ctx, (u_int8_t *) &(stor), sizeof(u_int32_t));\
+} while (0)
+
+#define PF_MD5_UPD_HTONS(st, elm, stor) do {				\
+		(stor) = htons((st)->elm);				\
+		MD5Update(ctx, (u_int8_t *) &(stor), sizeof(u_int16_t));\
+} while (0)
+
+void
+pf_hash_rule_addr(MD5_CTX *ctx, struct pf_rule_addr *pfr)
+{
+	PF_MD5_UPD(pfr, addr.type);
+	switch(pfr->addr.type) {
+		case PF_ADDR_DYNIFTL:
+			PF_MD5_UPD(pfr, addr.v.ifname);
+			PF_MD5_UPD(pfr, addr.iflags);
+			break;
+		case PF_ADDR_TABLE:
+			PF_MD5_UPD(pfr, addr.v.tblname);
+			break;
+		case PF_ADDR_ADDRMASK:
+			/* XXX ignore af? */
+			PF_MD5_UPD(pfr, addr.v.a.addr.addr32);
+			PF_MD5_UPD(pfr, addr.v.a.mask.addr32);
+			break;
+		case PF_ADDR_RTLABEL:
+			PF_MD5_UPD(pfr, addr.v.rtlabelname);
+			break;
+	}
+
+	PF_MD5_UPD(pfr, port[0]);
+	PF_MD5_UPD(pfr, port[1]);
+	PF_MD5_UPD(pfr, neg);
+	PF_MD5_UPD(pfr, port_op);
+}
+
+void
+pf_hash_rule(MD5_CTX *ctx, struct pf_rule *rule)
+{
+	u_int16_t x;
+	u_int32_t y;
+
+	pf_hash_rule_addr(ctx, &rule->src);
+	pf_hash_rule_addr(ctx, &rule->dst);
+	PF_MD5_UPD_STR(rule, label);
+	PF_MD5_UPD_STR(rule, ifname);
+	PF_MD5_UPD_STR(rule, match_tagname);
+	PF_MD5_UPD_HTONS(rule, match_tag, x); /* dup? */
+	PF_MD5_UPD_HTONL(rule, os_fingerprint, y);
+	PF_MD5_UPD_HTONL(rule, prob, y);
+	PF_MD5_UPD_HTONL(rule, uid.uid[0], y);
+	PF_MD5_UPD_HTONL(rule, uid.uid[1], y);
+	PF_MD5_UPD(rule, uid.op);
+	PF_MD5_UPD_HTONL(rule, gid.gid[0], y);
+	PF_MD5_UPD_HTONL(rule, gid.gid[1], y);
+	PF_MD5_UPD(rule, gid.op);
+	PF_MD5_UPD_HTONL(rule, rule_flag, y);
+	PF_MD5_UPD(rule, action);
+	PF_MD5_UPD(rule, direction);
+	PF_MD5_UPD(rule, af);
+	PF_MD5_UPD(rule, quick);
+	PF_MD5_UPD(rule, ifnot);
+	PF_MD5_UPD(rule, match_tag_not);
+	PF_MD5_UPD(rule, natpass);
+	PF_MD5_UPD(rule, keep_state);
+	PF_MD5_UPD(rule, proto);
+	PF_MD5_UPD(rule, type);
+	PF_MD5_UPD(rule, code);
+	PF_MD5_UPD(rule, flags);
+	PF_MD5_UPD(rule, flagset);
+	PF_MD5_UPD(rule, allow_opts);
+	PF_MD5_UPD(rule, rt);
+	PF_MD5_UPD(rule, tos);
+}
+
 int
 pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 {
@@ -986,6 +1072,10 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 	    rs->rules[rs_num].inactive.ticket;
 	pf_calc_skip_steps(rs->rules[rs_num].active.ptr);
 
+	/* Calculate checksum for the main ruleset */
+	if (rs == &pf_main_ruleset)
+		pf_calc_chksum(rs);
+
 	/* Purge the old rule list. */
 	while ((rule = TAILQ_FIRST(old_rules)) != NULL)
 		pf_rm_rule(old_rules, rule);
@@ -993,6 +1083,29 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 	pf_remove_if_empty_ruleset(rs);
 	splx(s);
 	return (0);
+}
+
+void
+pf_calc_chksum(struct pf_ruleset *rs)
+{
+	MD5_CTX			 ctx;
+	struct pf_rule		*rule;
+	int			 rs_cnt;
+	u_int8_t		 digest[MD5_DIGEST_LENGTH];
+
+	MD5Init(&ctx);
+	for (rs_cnt = 0; rs_cnt < PF_RULESET_MAX; rs_cnt++) {
+		/* XXX PF_RULESET_SCRUB as well? */
+		if (rs_cnt == PF_RULESET_SCRUB)
+			continue;
+
+		TAILQ_FOREACH(rule, rs->rules[rs_cnt].active.ptr,
+		    entries)
+			pf_hash_rule(&ctx, rule);
+	}
+
+	MD5Final(digest, &ctx);
+	memcpy(pf_status.pf_chksum, digest, sizeof(pf_status.pf_chksum));
 }
 
 int

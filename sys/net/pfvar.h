@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.220 2005/05/27 17:22:41 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.221 2005/05/27 21:41:03 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -42,6 +42,7 @@
 #include <net/route.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/tcp_fsm.h>
+#include <crypto/md5.h>
 
 struct ip;
 
@@ -1047,6 +1048,7 @@ struct pf_status {
 	u_int32_t	debug;
 	u_int32_t	hostid;
 	char		ifname[IFNAMSIZ];
+	u_int8_t	pf_chksum[MD5_DIGEST_LENGTH];
 };
 
 struct cbq_opts {
