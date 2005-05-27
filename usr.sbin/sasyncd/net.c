@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.7 2005/05/26 19:19:51 ho Exp $	*/
+/*	$OpenBSD: net.c,v 1.8 2005/05/27 20:47:11 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -645,6 +645,8 @@ net_shutdown(void)
 			free(qm);
 		}
 		net_disconnect_peer(p);
+		if (p->sa)
+			free(p->sa);
 		if (p->name)
 			free(p->name);
 		LIST_REMOVE(p, link);
@@ -788,10 +790,8 @@ got_sigalrm(int s)
 void
 net_connect(void)
 {
-	struct sockaddr_storage sa_storage;
 	struct itimerval	iv;
-	struct sockaddr	*sa = (struct sockaddr *)&sa_storage;
-	struct syncpeer	*p;
+	struct syncpeer		*p;
 
 	signal(SIGALRM, got_sigalrm);
 	memset(&iv, 0, sizeof iv);
@@ -802,16 +802,20 @@ net_connect(void)
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		if (p->socket > -1)
 			continue;
-
-		memset(sa, 0, sizeof sa_storage);
-		if (net_set_sa(sa, p->name, cfgstate.listen_port))
-			continue;
-		p->socket = socket(sa->sa_family, SOCK_STREAM, 0);
+		if (!p->sa) {
+			p->sa = (void *)calloc(1,
+			    sizeof(struct sockaddr_storage));
+			if (!p->sa)
+				return;
+			if (net_set_sa(p->sa, p->name, cfgstate.listen_port))
+				continue;
+		}
+		p->socket = socket(p->sa->sa_family, SOCK_STREAM, 0);
 		if (p->socket < 0) {
 			log_err("peer \"%s\": socket()", p->name);
 			continue;
 		}
-		if (connect(p->socket, sa, sa->sa_len)) {
+		if (connect(p->socket, p->sa, p->sa->sa_len)) {
 			log_msg(1, "net_connect: peer \"%s\" not ready yet",
 			    p->name);
 			net_disconnect_peer(p);
