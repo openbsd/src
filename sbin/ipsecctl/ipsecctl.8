@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.7 2005/05/23 20:25:54 kjell Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.8 2005/05/27 05:19:55 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -22,8 +22,9 @@
 .Nd control flows for IPsec
 .Sh SYNOPSIS
 .Nm ipsecctl
-.Op Fl Fnsv
+.Op Fl Fnv
 .Op Fl f Ar file
+.Op Fl s Ar modifier
 .Sh DESCRIPTION
 The
 .Nm
@@ -46,8 +47,19 @@ Load the rules contained in
 .Ar file .
 .It Fl n
 Do not actually load rules, just parse them.
-.It Fl s
+.It Fl s Ar modifier
+Show the kernels databases specified by
+.Ar modifier
+(may be abbreviated):
+.Pp
+.Bl -tag -width xxxxxxxxxxxxx -compact
+.It Fl s Cm flow
 Show the ruleset loaded into the SPD.
+.It Fl s Cm sa
+Show the active SADB entries.
+.It Fl s Cm all
+Show all of the above.
+.El
 .It Fl v
 Produce more verbose output.
 A second use of

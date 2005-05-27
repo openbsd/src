@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.4 2005/05/25 17:10:26 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.5 2005/05/27 05:19:55 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #define IPSECCTL_OPT_VERBOSE		0x0010
 #define IPSECCTL_OPT_VERBOSE2		0x0020
 #define IPSECCTL_OPT_SHOW		0x0040
+#define IPSECCTL_OPT_SHOWALL		0x0080
 #define IPSECCTL_OPT_FLUSH		0x0100
 
 enum {

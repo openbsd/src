@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.7 2005/05/25 17:10:26 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.8 2005/05/27 05:19:55 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -46,10 +46,20 @@ void		 ipsecctl_print_addr(struct ipsec_addr *);
 void		 ipsecctl_print_rule(struct ipsec_rule *, int);
 int		 ipsecctl_flush(int);
 void		 ipsecctl_get_rules(struct ipsecctl *);
-void		 ipsecctl_show(int);
+void		 ipsecctl_print_title(char *);
+void		 ipsecctl_show_flows(int);
+void		 ipsecctl_show_sas(int);
 void		 usage(void);
+const char	*ipsecctl_lookup_option(char *, const char **);
 
 const char	*infile;	/* Used by parse.y */
+const char	*showopt;
+
+int		 first_title = 1;
+
+static const char *showopt_list[] = {
+	"flow", "sa", "all", NULL
+};
 
 int
 ipsecctl_rules(char *filename, int opts)
@@ -140,7 +150,7 @@ ipsecctl_add_rule(struct ipsecctl *ipsec, struct ipsec_rule *r)
 
 	if ((ipsec->opts & IPSECCTL_OPT_VERBOSE) && !(ipsec->opts &
 	    IPSECCTL_OPT_SHOW))
-		ipsecctl_print_rule(r, ipsec->opts & IPSECCTL_OPT_VERBOSE2);
+		ipsecctl_print_rule(r, ipsec->opts);
 
 	return (0);
 }
@@ -170,13 +180,13 @@ ipsecctl_print_addr(struct ipsec_addr *ipa)
 }
 
 void
-ipsecctl_print_rule(struct ipsec_rule *r, int verbose)
+ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 {
 	static const char *direction[] = {"?", "in", "out"};
 	static const char *proto[] = {"?", "esp", "ah"};
 	static const char *auth[] = {"?", "psk", "rsa"};
 
-	if (verbose)
+	if (opts & IPSECCTL_OPT_VERBOSE2)
 		printf("@%d ", r->nr);
 
 	printf("flow %s %s", proto[r->proto], direction[r->direction]);
@@ -187,14 +197,14 @@ ipsecctl_print_rule(struct ipsec_rule *r, int verbose)
 	printf(" peer ");
 	ipsecctl_print_addr(r->peer);
 
-	if (r->auth.srcid)
-		printf(" srcid %s", r->auth.srcid);
-	if (r->auth.dstid)
-		printf(" dstid %s", r->auth.dstid);
-
-	if (r->auth.type > 0)
-		printf(" %s", auth[r->auth.type]);
-
+	if (opts & IPSECCTL_OPT_VERBOSE) {
+		if (r->auth.srcid)
+			printf("\n\tsrcid %s", r->auth.srcid);
+		if (r->auth.dstid)
+			printf("\n\tdstid %s", r->auth.dstid);
+		if (r->auth.type > 0)
+			printf(" %s", auth[r->auth.type]);
+	}
 	printf("\n");
 }
 
@@ -318,7 +328,16 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 }
 
 void
-ipsecctl_show(int opts)
+ipsecctl_print_title(char *title)
+{
+	if (!first_title)
+		printf("\n");
+	first_title = 0;
+	printf("%s\n", title);
+}
+
+void
+ipsecctl_show_flows(int opts)
 {
 	struct ipsecctl ipsec;
 	struct ipsec_rule *rp;
@@ -329,10 +348,19 @@ ipsecctl_show(int opts)
 
 	ipsecctl_get_rules(&ipsec);
 
+	if (opts & IPSECCTL_OPT_SHOWALL)
+		ipsecctl_print_title("FLOWS:");
+
+	if (TAILQ_FIRST(&ipsec.rule_queue) == 0) {
+		if (opts & IPSECCTL_OPT_SHOWALL)
+			printf("No flows\n");
+		return;
+	}
+		
 	while ((rp = TAILQ_FIRST(&ipsec.rule_queue))) {
 		TAILQ_REMOVE(&ipsec.rule_queue, rp, entries);
 
-		ipsecctl_print_rule(rp, ipsec.opts & IPSECCTL_OPT_VERBOSE2);
+		ipsecctl_print_rule(rp, ipsec.opts);
 
 		free(rp->src);
 		free(rp->dst);
@@ -347,13 +375,63 @@ ipsecctl_show(int opts)
 	return;
 }
 
+void
+ipsecctl_show_sas(int opts)
+{
+	struct sadb_msg *msg;
+	int		 mib[5];
+	size_t		 need = 0;
+	char		*buf, *lim, *next;
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_KEY;
+	mib[2] = PF_KEY_V2;
+	mib[3] = NET_KEY_SADB_DUMP;
+	mib[4] = SADB_SATYPE_UNSPEC;
+
+	if (opts & IPSECCTL_OPT_SHOWALL)
+		ipsecctl_print_title("SADB:");
+
+	/* When the SADB is empty we get ENOENT, no need to err(). */
+	if (sysctl(mib, 5, NULL, &need, NULL, 0) == -1 && errno != ENOENT)
+		err(1, "sysctl");
+	if (need == 0) {
+		if (opts & IPSECCTL_OPT_SHOWALL)
+			printf("No entries\n");
+		return;
+	}
+	if ((buf = malloc(need)) == NULL)
+		err(1, "malloc");
+	if (sysctl(mib, 5, buf, &need, NULL, 0) == -1)
+		err(1, "sysctl");
+	lim = buf + need;
+	for (next = buf; next < lim;
+	    next += msg->sadb_msg_len * PFKEYV2_CHUNK) {
+		msg = (struct sadb_msg *)next;
+		if (msg->sadb_msg_len == 0)
+			break;
+		pfkey_print_sa(msg, opts);
+	}
+}
+
 __dead void
 usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-Fnsv] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-Fnv] [-f file] [-s modifier]\n",
+	    __progname);
 	exit(1);
+}
+
+const char *
+ipsecctl_lookup_option(char *cmd, const char **list)
+{
+	if (cmd != NULL && *cmd)
+		for (; *list; list++)
+			if (!strncmp(cmd, *list, strlen(cmd)))
+				return (*list);
+	return (NULL);
 }
 
 int
@@ -367,7 +445,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "f:Fnvs")) != -1) {
+	while ((ch = getopt(argc, argv, "f:Fnvs:")) != -1) {
 		switch (ch) {
 		case 'f':
 			rulesopt = optarg;
@@ -388,6 +466,12 @@ main(int argc, char *argv[])
 			break;
 
 		case 's':
+			showopt = ipsecctl_lookup_option(optarg, showopt_list);
+			if (showopt == NULL) {
+				warnx("Unknown show modifier '%s'", optarg);
+				usage();
+				/* NOTREACHED */
+			}
 			opts |= IPSECCTL_OPT_SHOW;
 			break;
 
@@ -410,8 +494,20 @@ main(int argc, char *argv[])
 		if (ipsecctl_rules(rulesopt, opts))
 			error = 1;
 
-	if (opts & IPSECCTL_OPT_SHOW)
-		ipsecctl_show(opts);
+	if (showopt != NULL) {
+		switch (*showopt) {
+		case 'f':
+			ipsecctl_show_flows(opts);
+			break;
+		case 's':
+			ipsecctl_show_sas(opts);
+			break;
+		case 'a':
+			opts |= IPSECCTL_OPT_SHOWALL;
+			ipsecctl_show_flows(opts);
+			ipsecctl_show_sas(opts);
+		}
+	}
 
 	exit(error);
 }
