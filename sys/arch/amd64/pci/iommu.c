@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.3 2005/05/27 06:27:43 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.4 2005/05/27 06:40:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -386,7 +386,7 @@ amdgart_probe(struct pcibus_attach_args *pba)
 			amdgart_softcs[count].g_pte = pte;
 			amdgart_softcs[count].g_dmat = pba->pba_dmat;
 
-			printf("\niommu%d(cpu%d): base 0x%lx length %d pte 0x%lx",
+			printf("\niommu%d(cpu%d): base 0x%lx length %dMB pte 0x%lx",
 			    count, dev - 24, dvabase, IOMMU_SIZE,
 			    VM_PAGE_TO_PHYS(TAILQ_FIRST(&plist)));
 			count++;
