@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.22 2005/05/27 00:50:50 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.23 2005/05/27 00:56:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -155,9 +155,10 @@ spf_calc(struct area *area)
 				log_debug("spf_calc: w has no link to v");
 				continue;
 			}
-			if (w->cost != LS_INFINITY && w->prev != NULL) {
+			if (w->cost != LS_INFINITY && w->prev != NULL &&
+			    !cand_list_present(w))
 				continue;
-			}
+
 			if (v->type == LSA_TYPE_ROUTER)
 				d = v->cost + ntohs(rtr_link->metric);
 			else
