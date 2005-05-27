@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.44 2005/05/27 04:55:27 mcbride Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.45 2005/05/27 07:11:21 mcbride Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ report:
 			}
 
 			/* XXX Hack to allow the jumbo flag to be toggled */
-			if (rtm->rtm_flags & RTF_JUMBO)
+			if (rtm->rtm_use & RTF_JUMBO)
 				rt->rt_flags = (rt->rt_flags & ~rtm->rtm_use) |
 				    (rtm->rtm_flags & rtm->rtm_use);
 
