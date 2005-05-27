@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.51 2005/05/27 04:37:25 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.52 2005/05/27 06:33:11 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -65,20 +65,19 @@ static volatile sig_atomic_t cur_state = STATE_INIT;
 extern void	set_slave_signals(void);
 
 /* Private functions.  */
-static void	must_read(int, void *, size_t);
-static void	must_write(int, const void *, size_t);
+static void	must_read(void *, size_t);
+static void	must_write(const void *, size_t);
 
-static void     m_priv_getfd(int);
-static void     m_priv_setsockopt(int);
-static void     m_priv_bind(int);
+static void	m_priv_getfd(void);
+static void	m_priv_setsockopt(void);
+static void	m_priv_bind(void);
+static void	m_priv_ui_init(void);
+static void	m_priv_pfkey_open(void);
 static int      m_priv_local_sanitize_path(char *, size_t, int);
 static int      m_priv_check_sockopt(int, int);
 static int      m_priv_check_bind(const struct sockaddr *, socklen_t);
 static void     m_priv_increase_state(int);
 static void     m_priv_test_state(int);
-
-static void	m_priv_ui_init(int);
-static void	m_priv_pfkey_open(int);
 
 static void	set_monitor_signals(void);
 static void	monitor_got_sigchld(int);
@@ -165,9 +164,9 @@ monitor_ui_init(void)
 	int	err, cmd;
 
 	cmd = MONITOR_UI_INIT;
-	must_write(m_state.s, &cmd, sizeof cmd);
+	must_write(&cmd, sizeof cmd);
 
-	must_read(m_state.s, &err, sizeof err);
+	must_read(&err, sizeof err);
 	if (err != 0)
 		log_fatal("monitor_ui_init: parent could not create FIFO "
 		    "\"%s\"", ui_fifo);
@@ -186,9 +185,9 @@ monitor_pf_key_v2_open(void)
 	int	err, cmd;
 
 	cmd = MONITOR_PFKEY_OPEN;
-	must_write(m_state.s, &cmd, sizeof cmd);
+	must_write(&cmd, sizeof cmd);
 
-	must_read(m_state.s, &err, sizeof err);
+	must_read(&err, sizeof err);
 	if (err < 0) {
 		log_error("monitor_pf_key_v2_open: parent could not create "
 		    "PF_KEY socket");
@@ -217,16 +216,16 @@ monitor_open(const char *path, int flags, mode_t mode)
 		    path);
 
 	cmd = MONITOR_GET_FD;
-	must_write(m_state.s, &cmd, sizeof cmd);
+	must_write(&cmd, sizeof cmd);
 
 	len = strlen(pathreal);
-	must_write(m_state.s, &len, sizeof len);
-	must_write(m_state.s, &pathreal, len);
+	must_write(&len, sizeof len);
+	must_write(&pathreal, len);
 
-	must_write(m_state.s, &flags, sizeof flags);
-	must_write(m_state.s, &mode, sizeof mode);
+	must_write(&flags, sizeof flags);
+	must_write(&mode, sizeof mode);
 
-	must_read(m_state.s, &err, sizeof err);
+	must_read(&err, sizeof err);
 	if (err != 0) {
 		errno = err;
 		return -1;
@@ -314,17 +313,17 @@ monitor_setsockopt(int s, int level, int optname, const void *optval,
 	int	ret, err, cmd;
 
 	cmd = MONITOR_SETSOCKOPT;
-	must_write(m_state.s, &cmd, sizeof cmd);
+	must_write(&cmd, sizeof cmd);
 	if (mm_send_fd(m_state.s, s))
 		goto errout;
 
-	must_write(m_state.s, &level, sizeof level);
-	must_write(m_state.s, &optname, sizeof optname);
-	must_write(m_state.s, &optlen, sizeof optlen);
-	must_write(m_state.s, optval, (size_t)optlen);
+	must_write(&level, sizeof level);
+	must_write(&optname, sizeof optname);
+	must_write(&optlen, sizeof optlen);
+	must_write(optval, (size_t)optlen);
 
-	must_read(m_state.s, &err, sizeof err);
-	must_read(m_state.s, &ret, sizeof ret);
+	must_read(&err, sizeof err);
+	must_read(&ret, sizeof ret);
 	if (err != 0)
 		errno = err;
 	return ret;
@@ -340,15 +339,15 @@ monitor_bind(int s, const struct sockaddr *name, socklen_t namelen)
 	int	ret, err, cmd;
 
 	cmd = MONITOR_BIND;
-	must_write(m_state.s, &cmd, sizeof cmd);
+	must_write(&cmd, sizeof cmd);
 	if (mm_send_fd(m_state.s, s))
 		goto errout;
 
-	must_write(m_state.s, &namelen, sizeof namelen);
-	must_write(m_state.s, name, (size_t)namelen);
+	must_write(&namelen, sizeof namelen);
+	must_write(name, (size_t)namelen);
 
-	must_read(m_state.s, &err, sizeof err);
-	must_read(m_state.s, &ret, sizeof ret);
+	must_read(&err, sizeof err);
+	must_read(&ret, sizeof ret);
 	if (err != 0)
 		errno = err;
 	return ret;
@@ -456,7 +455,7 @@ monitor_init_done(void)
 	int	cmd;
 
 	cmd = MONITOR_INIT_DONE;
-	must_write(m_state.s, &cmd, sizeof cmd);
+	must_write(&cmd, sizeof cmd);
 }
 
 /*
@@ -530,39 +529,39 @@ monitor_loop(int debug)
 			}
 		}
 
-		must_read(m_state.s, &msgcode, sizeof msgcode);
+		must_read(&msgcode, sizeof msgcode);
 
 		switch (msgcode) {
 		case MONITOR_GET_FD:
-			m_priv_getfd(m_state.s);
+			m_priv_getfd();
 			break;
 
 		case MONITOR_UI_INIT:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_UI_INIT"));
 			m_priv_test_state(STATE_INIT);
-			m_priv_ui_init(m_state.s);
+			m_priv_ui_init();
 			break;
 
 		case MONITOR_PFKEY_OPEN:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_PFKEY_OPEN"));
 			m_priv_test_state(STATE_INIT);
-			m_priv_pfkey_open(m_state.s);
+			m_priv_pfkey_open();
 			break;
 
 		case MONITOR_SETSOCKOPT:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_SETSOCKOPT"));
 			m_priv_test_state(STATE_INIT);
-			m_priv_setsockopt(m_state.s);
+			m_priv_setsockopt();
 			break;
 
 		case MONITOR_BIND:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_BIND"));
 			m_priv_test_state(STATE_INIT);
-			m_priv_bind(m_state.s);
+			m_priv_bind();
 			break;
 
 		case MONITOR_INIT_DONE:
@@ -590,7 +589,7 @@ monitor_loop(int debug)
 
 /* Privileged: called by monitor_loop.  */
 static void
-m_priv_ui_init(int s)
+m_priv_ui_init(void)
 {
 	int	err = 0;
 
@@ -599,9 +598,9 @@ m_priv_ui_init(int s)
 	if (ui_socket < 0)
 		err = -1;
 
-	must_write(s, &err, sizeof err);
+	must_write(&err, sizeof err);
 
-	if (ui_socket >= 0 && mm_send_fd(s, ui_socket)) {
+	if (ui_socket >= 0 && mm_send_fd(m_state.s, ui_socket)) {
 		close(ui_socket);
 		goto errout;
 	}
@@ -617,7 +616,7 @@ errout:
 
 /* Privileged: called by monitor_loop.  */
 static void
-m_priv_pfkey_open(int s)
+m_priv_pfkey_open(void)
 {
 	int	fd, err = 0;
 
@@ -625,9 +624,9 @@ m_priv_pfkey_open(int s)
 	if (fd < 0)
 		err = -1;
 
-	must_write(s, &err, sizeof err);
+	must_write(&err, sizeof err);
 
-	if (fd > 0 && mm_send_fd(s, fd)) {
+	if (fd > 0 && mm_send_fd(m_state.s, fd)) {
 		close(fd);
 		goto errout;
 	}
@@ -641,21 +640,21 @@ errout:
 
 /* Privileged: called by monitor_loop.  */
 static void
-m_priv_getfd(int s)
+m_priv_getfd(void)
 {
 	char	path[MAXPATHLEN];
 	int	v, flags, len;
 	int	err = 0;
 	mode_t	mode;
 
-	must_read(s, &len, sizeof len);
+	must_read(&len, sizeof len);
 	if (len <= 0 || len >= sizeof path)
 		log_fatal("m_priv_getfd: invalid pathname length");
 
-	must_read(s, path, len);
+	must_read(path, len);
 	path[len] = '\0';
-	must_read(s, &flags, sizeof flags);
-	must_read(s, &mode, sizeof mode);
+	must_read(&flags, sizeof flags);
+	must_read(&mode, sizeof mode);
 
 	if (m_priv_local_sanitize_path(path, sizeof path, flags) != 0) {
 		err = EACCES;
@@ -666,9 +665,9 @@ m_priv_getfd(int s)
 			err = errno;
 	}
 
-	must_write(s, &err, sizeof err);
+	must_write(&err, sizeof err);
 
-	if (v > 0 && mm_send_fd(s, v)) {
+	if (v > 0 && mm_send_fd(m_state.s, v)) {
 		close(v);
 		goto errout;
 	}
@@ -681,26 +680,26 @@ errout:
 
 /* Privileged: called by monitor_loop.  */
 static void
-m_priv_setsockopt(int s)
+m_priv_setsockopt(void)
 {
 	int		 sock, level, optname, v;
 	int		 err = 0;
 	char		*optval = 0;
 	socklen_t	 optlen;
 
-	sock = mm_receive_fd(s);
+	sock = mm_receive_fd(m_state.s);
 	if (sock < 0)
 		goto errout;
 
-	must_read(s, &level, sizeof level);
-	must_read(s, &optname, sizeof optname);
-	must_read(s, &optlen, sizeof optlen);
+	must_read(&level, sizeof level);
+	must_read(&optname, sizeof optname);
+	must_read(&optlen, sizeof optlen);
 
 	optval = (char *)malloc(optlen);
 	if (!optval)
 		goto errout;
 
-	must_read(s, optval, (size_t)optlen);
+	must_read(optval, (size_t)optlen);
 
 	if (m_priv_check_sockopt(level, optname) != 0) {
 		err = EACCES;
@@ -714,8 +713,8 @@ m_priv_setsockopt(int s)
 	close(sock);
 	sock = -1;
 
-	must_write(s, &err, sizeof err);
-	must_write(s, &v, sizeof v);
+	must_write(&err, sizeof err);
+	must_write(&v, sizeof v);
 
 	free(optval);
 	return;
@@ -730,22 +729,22 @@ errout:
 
 /* Privileged: called by monitor_loop.  */
 static void
-m_priv_bind(int s)
+m_priv_bind(void)
 {
 	int		 sock, v, err = 0;
 	struct sockaddr *name = 0;
 	socklen_t        namelen;
 
-	sock = mm_receive_fd(s);
+	sock = mm_receive_fd(m_state.s);
 	if (sock < 0)
 		goto errout;
 
-	must_read(s, &v, sizeof v);
+	must_read(&v, sizeof v);
 	namelen = (socklen_t)v;
 	name = (struct sockaddr *)malloc(namelen);
 	if (!name)
 		goto errout;
-	must_read(s, (char *)name, (size_t)namelen);
+	must_read((char *)name, (size_t)namelen);
 
 	if (m_priv_check_bind(name, namelen) != 0) {
 		err = EACCES;
@@ -762,8 +761,8 @@ m_priv_bind(int s)
 	close(sock);
 	sock = -1;
 
-	must_write(s, &err, sizeof err);
-	must_write(s, &v, sizeof v);
+	must_write(&err, sizeof err);
+	must_write(&v, sizeof v);
 
 	free(name);
 	return;
@@ -785,14 +784,14 @@ errout:
  * the process.  Based on atomicio() from openssh.
  */
 static void
-must_read(int fd, void *buf, size_t n)
+must_read(void *buf, size_t n)
 {
         char *s = buf;
 	size_t pos = 0;
         ssize_t res;
 
         while (n > pos) {
-                res = read(fd, s + pos, n - pos);
+                res = read(m_state.s, s + pos, n - pos);
                 switch (res) {
                 case -1:
                         if (errno == EINTR || errno == EAGAIN)
@@ -810,13 +809,13 @@ must_read(int fd, void *buf, size_t n)
  * the process.  Based on atomicio() from openssh.
  */
 static void
-must_write(int fd, const void *buf, size_t n)
+must_write(const void *buf, size_t n)
 {
         const char *s = buf;
         ssize_t res, pos = 0;
 
         while (n > pos) {
-                res = write(fd, s + pos, n - pos);
+                res = write(m_state.s, s + pos, n - pos);
                 switch (res) {
                 case -1:
                         if (errno == EINTR || errno == EAGAIN)
