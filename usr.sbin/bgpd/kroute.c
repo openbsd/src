@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.128 2005/05/27 17:59:50 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.129 2005/05/27 20:00:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -132,7 +132,6 @@ int		send_rtmsg(int, int, struct kroute *);
 int		send_rt6msg(int, int, struct kroute6 *);
 int		dispatch_rtmsg(void);
 int		fetchtable(void);
-int		fetchtable6(void);
 int		fetchifs(int);
 int		dispatch_rtmsg_addr(struct rt_msghdr *,
 		    struct sockaddr *[RTAX_MAX]);
@@ -200,9 +199,6 @@ kr_init(int fs)
 		return (-1);
 
 	if (fetchtable() == -1)
-		return (-1);
-
-	if (fetchtable6() == -1)
 		return (-1);
 
 	if (protect_lo() == -1)
@@ -1811,14 +1807,16 @@ fetchtable(void)
 	int			 mib[6];
 	char			*buf, *next, *lim;
 	struct rt_msghdr	*rtm;
-	struct sockaddr		*sa, *rti_info[RTAX_MAX];
+	struct sockaddr		*sa, *gw, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
-	struct kroute_node	*kr;
+	struct sockaddr_in6	*sa_in6;
+	struct kroute_node	*kr = NULL;
+	struct kroute6_node	*kr6 = NULL;
 
 	mib[0] = CTL_NET;
 	mib[1] = AF_ROUTE;
 	mib[2] = 0;
-	mib[3] = AF_INET;
+	mib[3] = 0;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
 
@@ -1852,18 +1850,17 @@ fetchtable(void)
 		if (rtm->rtm_flags & RTF_MPATH)		/* multipath */
 			continue;
 #endif
-
-		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-			log_warn("fetchtable");
-			free(buf);
-			return (-1);
-		}
-
-		kr->r.flags = F_KERNEL;
-		kr->r.ifindex = rtm->rtm_index;
-
 		switch (sa->sa_family) {
 		case AF_INET:
+			if ((kr = calloc(1, sizeof(struct kroute_node))) ==
+			    NULL) {
+				log_warn("fetchtable");
+				free(buf);
+				return (-1);
+			}
+
+			kr->r.flags = F_KERNEL;
+			kr->r.ifindex = rtm->rtm_index;
 			kr->r.prefix.s_addr =
 			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
@@ -1880,124 +1877,64 @@ fetchtable(void)
 				kr->r.prefixlen =
 				    prefixlen_classful(kr->r.prefix.s_addr);
 			break;
-		default:
-			free(kr);
-			continue;
-		}
-
-		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
-			switch (sa->sa_family) {
-			case AF_INET:
-				kr->r.nexthop.s_addr =
-				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
-				break;
-			case AF_LINK:
-				kr->r.flags |= F_CONNECTED;
-				break;
+		case AF_INET6:
+			if ((kr6 = calloc(1, sizeof(struct kroute6_node))) ==
+			    NULL) {
+				log_warn("fetchtable");
+				free(buf);
+				return (-1);
 			}
 
-		kroute_insert(kr);
-
-	}
-	free(buf);
-	return (0);
-}
-
-int
-fetchtable6(void)
-{
-	size_t			 len;
-	int			 mib[6];
-	char			*buf, *next, *lim;
-	struct rt_msghdr	*rtm;
-	struct sockaddr		*sa, *rti_info[RTAX_MAX];
-	struct sockaddr_in6	*sa_in6;
-	struct kroute6_node	*kr;
-
-	mib[0] = CTL_NET;
-	mib[1] = AF_ROUTE;
-	mib[2] = 0;
-	mib[3] = AF_INET6;
-	mib[4] = NET_RT_DUMP;
-	mib[5] = 0;
-
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
-		log_warn("sysctl");
-		return (-1);
-	}
-	if ((buf = malloc(len)) == NULL) {
-		log_warn("fetchtable");
-		return (-1);
-	}
-	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
-		log_warn("sysctl");
-		free(buf);
-		return (-1);
-	}
-
-	lim = buf + len;
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		sa = (struct sockaddr *)(rtm + 1);
-		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
-
-		if ((sa = rti_info[RTAX_DST]) == NULL)
-			continue;
-
-		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
-			continue;
-
-#ifdef RTF_MPATH
-		if (rtm->rtm_flags & RTF_MPATH)		/* multipath */
-			continue;
-#endif
-
-		if ((kr = calloc(1, sizeof(struct kroute6_node))) == NULL) {
-			log_warn("fetchtable");
-			free(buf);
-			return (-1);
-		}
-
-		kr->r.flags = F_KERNEL;
-		kr->r.ifindex = rtm->rtm_index;
-
-		switch (sa->sa_family) {
-		case AF_INET6:
-			memcpy(&kr->r.prefix,
+			kr6->r.flags = F_KERNEL;
+			kr6->r.ifindex = rtm->rtm_index;
+			memcpy(&kr6->r.prefix,
 			    &((struct sockaddr_in6 *)sa)->sin6_addr,
-			    sizeof(kr->r.prefix));
+			    sizeof(kr6->r.prefix));
 
 			sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 			if (rtm->rtm_flags & RTF_STATIC)
-				kr->r.flags |= F_STATIC;
+				kr6->r.flags |= F_STATIC;
 			if (sa_in6 != NULL) {
 				if (sa_in6->sin6_len == 0)
 					break;
-				kr->r.prefixlen =
+				kr6->r.prefixlen =
 				    mask2prefixlen6(&sa_in6->sin6_addr);
 			} else if (rtm->rtm_flags & RTF_HOST)
-				kr->r.prefixlen = 128;
+				kr6->r.prefixlen = 128;
 			else
 				fatalx("INET6 route without netmask");
 			break;
 		default:
-			free(kr);
 			continue;
 		}
 
-		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
-			switch (sa->sa_family) {
+		if ((gw = rti_info[RTAX_GATEWAY]) != NULL)
+			switch (gw->sa_family) {
+			case AF_INET:
+				if (kr == NULL)
+					fatalx("v4 gateway for !v4 dst?!");
+				kr->r.nexthop.s_addr =
+				    ((struct sockaddr_in *)gw)->sin_addr.s_addr;
+				break;
 			case AF_INET6:
-				memcpy(&kr->r.nexthop,
-				    &((struct sockaddr_in6 *)sa)->sin6_addr,
-				    sizeof(kr->r.nexthop));
+				if (kr6 == NULL)
+					fatalx("v6 gateway for !v6 dst?!");
+				memcpy(&kr6->r.nexthop,
+				    &((struct sockaddr_in6 *)gw)->sin6_addr,
+				    sizeof(kr6->r.nexthop));
 				break;
 			case AF_LINK:
-				kr->r.flags |= F_CONNECTED;
+				if (sa->sa_family == AF_INET)
+					kr->r.flags |= F_CONNECTED;
+				else if (sa->sa_family == AF_INET6)
+					kr6->r.flags |= F_CONNECTED;
 				break;
 			}
 
-		kroute6_insert(kr);
+		if (sa->sa_family == AF_INET)
+			kroute_insert(kr);
+		else if (sa->sa_family == AF_INET6)
+			kroute6_insert(kr6);
 
 	}
 	free(buf);
