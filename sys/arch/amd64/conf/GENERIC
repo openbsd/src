@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.69 2005/05/26 23:18:27 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.70 2005/05/27 06:36:23 jason Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -265,9 +265,9 @@ epic*	at pci?				# SMC EPIC/100 ethernet
 #tl*	at pci?				# Compaq Thunderlan ethernet
 vr*	at pci?				# VIA Rhine ethernet
 #wb*	at pci?				# Winbond W89C840F ethernet
-sf*	at pci?				# Adaptec AIC-6915 ethernet
+#sf*	at pci?				# Adaptec AIC-6915 ethernet BORKED
 sis*	at pci?				# SiS 900/7016 ethernet
-ste*	at pci?				# Sundance ST201 ethernet
+#ste*	at pci?				# Sundance ST201 ethernet BORKED
 dc*	at pci?				# 21143, "tulip" clone ethernet
 #dc*	at cardbus?			# 21143, "tulip" clone ethernet
 ti*	at pci?				# Alteon Tigon 1Gb ethernet
