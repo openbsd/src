@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.14 2005/05/25 23:04:39 cloder Exp $	*/
+/*	$OpenBSD: search.c,v 1.15 2005/05/27 05:55:12 cloder Exp $	*/
 
 /*
  *		Search commands.
@@ -701,10 +701,12 @@ readpattern(char *prompt)
 		rep = ereply("%s: (default %s) ", tpat, NPAT, prompt, pat);
 
 	/* specified */
-	if (rep != NULL && *rep != '\0') {
+	if (rep == NULL) {
+		retval = ABORT;
+	} else if (*rep != '\0') {
 		(void) strlcpy(pat, tpat, sizeof(pat));
 		retval = TRUE;
-	} else if (*rep == '\0' && pat[0] != '\0') {
+	} else if (pat[0] != '\0') {
 		retval = TRUE;
 	} else
 		retval = FALSE;
