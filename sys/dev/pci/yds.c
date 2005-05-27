@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.25 2004/12/30 20:45:12 miod Exp $	*/
+/*	$OpenBSD: yds.c,v 1.26 2005/05/27 00:49:56 jason Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -66,11 +66,6 @@
 
 #include <dev/pci/ydsreg.h>
 #include <dev/pci/ydsvar.h>
-
-#ifdef AUDIO_DEBUG
-#include <uvm/uvm_extern.h>    /* for vtophys */
-#include <uvm/uvm_pmap.h>      /* for vtophys */
-#endif
 
 /* Debug */
 #undef YDS_USE_REC_SLOT
@@ -305,8 +300,6 @@ yds_dump_play_slot(sc, bank)
 
 		dma = yds_find_dma(sc,(void *)p);
 
-		printf("  pbankp[%d] : %p(%p)\n",
-		       i, p, (void *)vtophys((vaddr_t)p));
 		for (j = 0; j < sizeof(struct play_slot_ctrl_bank) /
 		    sizeof(u_int32_t); j++) {
 			printf("    0x%02x: 0x%08x\n",
