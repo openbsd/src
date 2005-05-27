@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.16 2005/05/26 06:07:47 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.17 2005/05/27 00:51:52 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -865,16 +865,15 @@ show_nbr_detail_msg(struct imsg *imsg)
 		nbr = imsg->data;
 		printf("\nNeighbor %s, ", inet_ntoa(nbr->id));
 		printf("interface address %s\n", inet_ntoa(nbr->addr));
-		printf("  In the area %s via interface %s\n",
-		    inet_ntoa(nbr->area), nbr->name);
+		printf("  Area %s, interface %s\n", inet_ntoa(nbr->area),
+		    nbr->name);
 		printf("  Neighbor priority is %d, "
 		    "State is %s, %d state changes\n",
 		    nbr->priority, print_nbr_state(nbr->nbr_state),
 		    nbr->state_chng_cnt);
 		printf("  DR is %s, ", inet_ntoa(nbr->dr));
 		printf("BDR is %s\n", inet_ntoa(nbr->bdr));
-		printf("  Options is 0x%x  %s\n", nbr->options,
-		    print_ospf_options(nbr->options));
+		printf("  Options %s\n", print_ospf_options(nbr->options));
 		printf("  Dead timer due in %s\n",
 		    fmt_timeframe_core(nbr->dead_timer));
 		printf("  Database Summary List %d\n", nbr->db_sum_lst_cnt);
