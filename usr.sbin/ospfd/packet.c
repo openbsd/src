@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.9 2005/05/26 19:54:49 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.10 2005/05/27 07:24:51 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -50,7 +50,8 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 	ospf_hdr.version = OSPF_VERSION;
 	ospf_hdr.type = type;
 	ospf_hdr.rtr_id = iface->rtr_id.s_addr;
-	ospf_hdr.area_id = iface->area->id.s_addr;
+	if (iface->type != IF_TYPE_VIRTUALLINK)
+		ospf_hdr.area_id = iface->area->id.s_addr;
 	ospf_hdr.auth_type = htons(iface->auth_type);
 
 	return (buf_add(buf, &ospf_hdr, sizeof(ospf_hdr)));
@@ -240,12 +241,19 @@ ospf_hdr_sanity_check(const struct ip *ip_hdr, struct ospf_hdr *ospf_hdr,
 		return (-1);
 	}
 
-	if (ospf_hdr->area_id != iface->area->id.s_addr) {
-		/* TODO backbone area is allowed for virtual links */
-		addr.s_addr = ospf_hdr->area_id;
-		log_debug("recv_packet: invalid area ID %s, interface %s",
-		    inet_ntoa(addr), iface->name);
-		return (-1);
+	if (iface->type != IF_TYPE_VIRTUALLINK) {
+		if (ospf_hdr->area_id != iface->area->id.s_addr) {
+			addr.s_addr = ospf_hdr->area_id;
+			log_debug("recv_packet: invalid area ID %s, "
+			    "interface %s", inet_ntoa(addr), iface->name);
+			return (-1);
+		}
+	 } else {
+		if (ospf_hdr->area_id != 0) {
+			log_debug("recv_packet: invalid area ID %s, "
+			    "interface %s",iface->name);
+			return (-1);
+		}
 	}
 
 	if (iface->type == IF_TYPE_BROADCAST || iface->type == IF_TYPE_NBMA) {
@@ -280,10 +288,20 @@ find_iface(struct ospfd_conf *xconf, struct in_addr src)
 
 			if (iface->fd > 0 && (iface->addr.s_addr &
 			    iface->mask.s_addr) == (src.s_addr &
-			    iface->mask.s_addr) && !iface->passive)
+			    iface->mask.s_addr) && !iface->passive &&
+			    iface->type != IF_TYPE_VIRTUALLINK) {
 				return (iface);
+			}
 		}
 	}
+
+	LIST_FOREACH(area, &xconf->area_list, entry)
+		LIST_FOREACH(iface, &area->iface_list, entry)
+			if ((iface->type == IF_TYPE_VIRTUALLINK) &&
+			    (src.s_addr == iface->dst.s_addr)) {
+				return (iface);
+			}
+
 
 	return (NULL);
 }
