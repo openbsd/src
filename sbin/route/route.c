@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.88 2005/05/27 04:55:27 mcbride Exp $	*/
+/*	$OpenBSD: route.c,v 1.89 2005/05/27 22:38:52 mcbride Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -348,7 +348,8 @@ int
 newroute(int argc, char **argv)
 {
 	char *cmd, *dest = "", *gateway = "", *error;
-	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC, use = 0;
+	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC;
+	int fmask = 0;
 	int key;
 	struct hostent *hp = NULL;
 
@@ -470,11 +471,11 @@ newroute(int argc, char **argv)
 				break;
 			case K_JUMBO:
 				flags |= RTF_JUMBO;
-				use |= RTF_JUMBO;
+				fmask |= RTF_JUMBO;
 				break;
 			case K_NOJUMBO:
 				flags &= ~RTF_JUMBO;
-				use |= RTF_JUMBO;
+				fmask |= RTF_JUMBO;
 				break;
 			case K_MTU:
 			case K_HOPCOUNT:
@@ -536,7 +537,7 @@ newroute(int argc, char **argv)
 		flags |= RTF_GATEWAY;
 	for (attempts = 1; ; attempts++) {
 		errno = 0;
-		if ((ret = rtmsg(*cmd, flags, use)) == 0)
+		if ((ret = rtmsg(*cmd, flags, fmask)) == 0)
 			break;
 		if (errno != ENETUNREACH && errno != ESRCH)
 			break;
@@ -946,7 +947,7 @@ struct {
 } m_rtmsg;
 
 int
-rtmsg(int cmd, int flags, int use)
+rtmsg(int cmd, int flags, int fmask)
 {
 	static int seq;
 	char *cp = m_rtmsg.m_space;
@@ -979,7 +980,7 @@ rtmsg(int cmd, int flags, int use)
 #define rtm m_rtmsg.m_rtm
 	rtm.rtm_type = cmd;
 	rtm.rtm_flags = flags;
-	rtm.rtm_use = use;
+	rtm.rtm_fmask = fmask;
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_seq = ++seq;
 	rtm.rtm_addrs = rtm_addrs;
