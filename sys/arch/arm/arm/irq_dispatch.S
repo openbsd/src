@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.4 2004/12/30 23:44:22 drahn Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.5 2005/05/27 20:14:30 uwe Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ ASENTRY_NP(irq_entry)
 	 * Increment the interrupt nesting depth and call the interrupt
 	 * dispatch routine.  We've pushed a frame, so we can safely use
 	 * callee-saved regs here.  We use the following registers, which
-	 * we expect to presist:
+	 * we expect to persist:
 	 *
 	 *	r5	address of `current_intr_depth' variable
 	 *	r6	old value of `current_intr_depth'
