@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.8 2005/04/21 06:27:29 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.9 2005/05/27 10:54:03 uwe Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -288,10 +288,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 	bus_space_handle_t ioh;
 	int irq;
 
-	if (bus_space_map(sc->sc_bust, PXA2X0_RTC_BASE, PXA2X0_RTC_SIZE, 0,
-	    &ioh))
-		panic("pxaip_measure_cpuclock: can't map RTC");
-
+	ioh = sc->sc_bush_rtc;
 	irq = disable_interrupts(I32_bit|F32_bit);
 
 	__asm __volatile( "mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save));
@@ -309,8 +306,6 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 
 	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (pmcr_save));
 	restore_interrupts(irq);
-
-	bus_space_unmap(sc->sc_bust, ioh, PXA2X0_RTC_SIZE);
 
 	return end - start;
 }
@@ -391,38 +386,47 @@ pxa2x0_clkman_config(u_int clk, int enable)
 }
 
 void
-pxa2x0_watchdog_boot(void)
+pxa2x0_rtc_setalarm(u_int32_t secs)
 {
 	struct pxaip_softc *sc;
-	bus_space_handle_t bush_pow;
-	bus_space_handle_t bush_ost;
-	int rv;
+	u_int32_t rv;
+	int s;
 
 	KDASSERT(pxaip_sc != NULL);
 	sc = pxaip_sc;
 
-	if (bus_space_map(sc->sc_bust, PXA2X0_POWMAN_BASE, PXA2X0_POWMAN_SIZE,
-	    0, &bush_pow))
-		panic("pxa2x0_watchdog_boot: failed to map POWMAN");
+	s = splhigh();
+	bus_space_write_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RTAR, secs);
+	rv = bus_space_read_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RTSR);
+	if (secs == 0)
+		bus_space_write_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RTSR,
+		    (rv | RTSR_AL) & ~RTSR_ALE);
+	else
+		bus_space_write_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RTSR,
+		    (rv | RTSR_AL | RTSR_ALE));
+	splx(s);
+}
 
-	if (bus_space_map(sc->sc_bust, PXA2X0_OST_BASE, PXA2X0_OST_SIZE,
-	    0, &bush_ost))
-		panic("pxa2x0_watchdog_boot: failed to map OST");
+u_int32_t
+pxa2x0_rtc_getalarm(void)
+{
+	struct pxaip_softc *sc;
 
-	bus_space_write_4(sc->sc_bust, bush_pow, POWMAN_RCSR,
-	    RCSR_GPR | RCSR_SMR | RCSR_WDR | RCSR_HWR);
+	KDASSERT(pxaip_sc != NULL);
+	sc = pxaip_sc;
 
-	rv = bus_space_read_4(sc->sc_bust, bush_ost, OST_OSCR0);
-	bus_space_write_4(sc->sc_bust, bush_ost, OST_OSMR3,
-	    rv + 0x100);
-	bus_space_write_4(sc->sc_bust, bush_ost, OST_OWER,
-	    OWER_WME);
-	rv = bus_space_read_4(sc->sc_bust, bush_ost, OST_OIER);
-	bus_space_write_4(sc->sc_bust, bush_ost, OST_OIER,
-	    rv | OIER_E3);
+	return (bus_space_read_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RTAR));
+}
 
-        for (rv = 0; rv < 0x20000000; rv++)
-		/* wait for watchdog reset */;
+u_int32_t
+pxa2x0_rtc_getsecs(void)
+{
+	struct pxaip_softc *sc;
+
+	KDASSERT(pxaip_sc != NULL);
+	sc = pxaip_sc;
+
+	return (bus_space_read_4(sc->sc_bust, sc->sc_bush_rtc, RTC_RCNR));
 }
 
 void
