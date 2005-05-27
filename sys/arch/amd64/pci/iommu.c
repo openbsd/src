@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.6 2005/05/27 18:37:07 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.7 2005/05/27 21:44:54 art Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -110,7 +110,7 @@ extern paddr_t avail_end;
 extern struct extent *iomem_ex;
 
 int amdgarts;
-int amdgart_enable = 0;
+int amdgart_enable;
 
 struct amdgart_softc {
 	pci_chipset_tag_t g_pc;
@@ -133,7 +133,6 @@ int amdgart_iommu_map(struct extent *, paddr_t, paddr_t *, psize_t);
 int amdgart_iommu_unmap(struct extent *, paddr_t, psize_t);
 int amdgart_reload(struct extent *, bus_dmamap_t);
 int amdgart_ok(pci_chipset_tag_t, pcitag_t);
-int amdgart_load_phys(struct pglist *, vaddr_t);
 
 int amdgart_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
     bus_size_t, int, bus_dmamap_t *);
@@ -240,28 +239,6 @@ amdgart_ok(pci_chipset_tag_t pc, pcitag_t tag)
 	return (1);
 }
 
-int
-amdgart_load_phys(struct pglist *plist, vaddr_t va)
-{
-	struct vm_page *m;
-	paddr_t pa;
-	psize_t off;
-
-	m = TAILQ_FIRST(plist);
-	pa = VM_PAGE_TO_PHYS(m);
-	for (off = 0; m; m = TAILQ_NEXT(m, pageq), off += PAGE_SIZE) {
-		if (VM_PAGE_TO_PHYS(m) != (pa + off)) {
-			printf("\nGART: too many segments");
-			return (-1);
-		}
-		pmap_enter(pmap_kernel(), va + off, pa + off,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-	}
-	pmap_update(pmap_kernel());
-	return (0);
-}
-
 void
 amdgart_probe(struct pcibus_attach_args *pba)
 {
@@ -292,8 +269,8 @@ amdgart_probe(struct pcibus_attach_args *pba)
 	if (count == 0)
 		return;
 
-	amdgart_softcs = (struct amdgart_softc *)malloc(sizeof(*amdgart_softcs),
-	    M_DEVBUF, M_NOWAIT);
+	amdgart_softcs = malloc(sizeof(*amdgart_softcs) * count, M_DEVBUF,
+	    M_NOWAIT);
 	if (amdgart_softcs == NULL) {
 		printf("\nGART: can't get softc");
 		goto err;
@@ -320,11 +297,8 @@ amdgart_probe(struct pcibus_attach_args *pba)
 		printf("\nGART: failed to get pte pages");
 		goto err;
 	}
-	pte = (u_int32_t *)uvm_km_valloc(kernel_map, ptesize);
-
-	if (amdgart_load_phys(&plist, (vaddr_t)pte))
-		goto err;
 	ptepa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&plist));
+	pte = (u_int32_t *)pmap_map_direct(TAILQ_FIRST(&plist));
 
 	ex = extent_create("iommu", dvabase, dvabase + mapsize - 1, M_DEVBUF,
 	    NULL, NULL, EX_NOWAIT | EX_NOCOALESCE);
@@ -411,9 +385,6 @@ amdgart_probe(struct pcibus_attach_args *pba)
 	return;
 
 err:
-	/* XXX pmap_remove? */
-	if (pte != NULL)
-		uvm_km_free(kernel_map, (vaddr_t)pte, ptesize);
 	if (ex != NULL)
 		extent_destroy(ex);
 	if (scrib != NULL)
