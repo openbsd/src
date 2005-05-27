@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.5 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.6 2005/05/27 20:46:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -97,6 +97,28 @@ __mp_lock(struct __mp_lock *lock)
 	}
 	lock->mpl_count++;
 	splx(s);
+}
+
+/*
+ * Try to acquire the lock, if another cpu has it, fill it in the
+ * call-by-reference cpu parameter.  Return true if acquired.
+ */
+static __inline int
+__mp_lock_try(struct __mp_lock *lock, cpuid_t *cpu)
+{
+	int s = spllock();
+
+	if (lock->mpl_cpu != cpu_number()) {
+		if (!__cpu_simple_lock_try(&lock->mpl_lock)) {
+			*cpu = lock->mpl_cpu;
+			splx(s);
+			return 0;
+		}
+		lock->mpl_cpu = cpu_number();
+	}
+	lock->mpl_count++;
+	splx(s);
+	return 1;
 }
 
 static __inline void
