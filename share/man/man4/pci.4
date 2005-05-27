@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.116 2005/05/10 08:19:10 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.117 2005/05/27 11:55:46 miod Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -124,12 +124,12 @@ interfaces.
 LSI Fusion-MPT
 .Tn SCSI/Fibre Channel
 interfaces.
-.It Xr ncr 4 , Xr siop 4
-LSI/Symbios Logic/NCR 53c8xx and 53c1010-family
-.Tn SCSI
-interfaces.
 .It Xr pcscp 4
 AMD Am53c974 PCscsi-PCI
+.Tn SCSI
+interfaces.
+.It Xr siop 4
+LSI/Symbios Logic/NCR 53c8xx and 53c1010-family
 .Tn SCSI
 interfaces.
 .It Xr trm 4
