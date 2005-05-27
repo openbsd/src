@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.118 2005/05/23 22:48:53 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.119 2005/05/27 17:52:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -518,6 +518,18 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			else if (kr_delete(imsg.data))
 				rv = -1;
 			break;
+		case IMSG_KROUTE6_CHANGE:
+			if (idx != PFD_PIPE_ROUTE)
+				log_warnx("route request not from RDE");
+			else if (kr6_change(imsg.data))
+				rv = -1;
+			break;
+		case IMSG_KROUTE6_DELETE:
+			if (idx != PFD_PIPE_ROUTE)
+				log_warnx("route request not from RDE");
+			else if (kr6_delete(imsg.data))
+				rv = -1;
+			break;
 		case IMSG_NEXTHOP_ADD:
 			if (idx != PFD_PIPE_ROUTE)
 				log_warnx("nexthop request not from RDE");
@@ -643,7 +655,7 @@ send_imsg_session(int type, pid_t pid, void *data, u_int16_t datalen)
 }
 
 int
-bgpd_redistribute(int type, struct kroute *kr)
+bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
 {
 	struct network_config	 net;
 	struct filter_set_head	*h;
@@ -656,9 +668,20 @@ bgpd_redistribute(int type, struct kroute *kr)
 		return (0);
 
 	bzero(&net, sizeof(net));
-	net.prefix.af = AF_INET;
-	net.prefix.v4.s_addr = kr->prefix.s_addr;
-	net.prefixlen = kr->prefixlen;
+	if (kr && kr6)
+		fatalx("bgpd_redistribute: unable to redistribute v4 and v6"
+		    "together");
+	if (kr != NULL) {
+		net.prefix.af = AF_INET;
+		net.prefix.v4.s_addr = kr->prefix.s_addr;
+		net.prefixlen = kr->prefixlen;
+	}
+	if (kr6 != NULL) {
+		net.prefix.af = AF_INET6;
+		memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+		net.prefixlen = kr6->prefixlen;
+	}
+
 
 	if (imsg_compose(ibuf_rde, type, 0, 0, -1, &net,
 	    sizeof(struct network_config)) == -1)

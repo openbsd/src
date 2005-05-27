@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.165 2005/04/28 13:54:45 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.166 2005/05/27 17:52:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -276,6 +276,8 @@ enum imsg_type {
 	IMSG_MRT_CLOSE,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
+	IMSG_KROUTE6_CHANGE,
+	IMSG_KROUTE6_DELETE,
 	IMSG_NEXTHOP_ADD,
 	IMSG_NEXTHOP_REMOVE,
 	IMSG_NEXTHOP_UPDATE,
@@ -296,6 +298,7 @@ enum imsg_type {
 	IMSG_CTL_NEIGHBOR_DOWN,
 	IMSG_CTL_NEIGHBOR_CLEAR,
 	IMSG_CTL_KROUTE,
+	IMSG_CTL_KROUTE6,
 	IMSG_CTL_KROUTE_ADDR,
 	IMSG_CTL_SHOW_NEXTHOP,
 	IMSG_CTL_SHOW_INTERFACE,
@@ -594,7 +597,7 @@ struct rrefresh {
 /* bgpd.c */
 void		 send_nexthop_update(struct kroute_nexthop *);
 void		 send_imsg_session(int, pid_t, void *, u_int16_t);
-int		 bgpd_redistribute(int, struct kroute *);
+int		 bgpd_redistribute(int, struct kroute *, struct kroute6 *);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);
@@ -622,6 +625,7 @@ void		 fatal(const char *);
 void		 fatalx(const char *);
 void		 fatal_ensure(const char *, int, const char *);
 const char	*log_addr(const struct bgpd_addr *);
+const char	*log_in6addr(const struct in6_addr *);
 
 /* parse.y */
 int	 cmdline_symset(char *);
@@ -647,6 +651,8 @@ int	 imsg_get_fd(struct imsgbuf *);
 int		 kr_init(int);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
+int		 kr6_change(struct kroute6 *);
+int		 kr6_delete(struct kroute6 *);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);
