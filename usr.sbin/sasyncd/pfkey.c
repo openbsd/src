@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.9 2005/05/26 19:19:51 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.10 2005/05/27 18:05:27 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -61,7 +61,7 @@ SIMPLEQ_HEAD(, pfkey_msg)		pfkey_msglist;
 static const char *msgtypes[] = {
 	"RESERVED", "GETSPI", "UPDATE", "ADD", "DELETE", "GET", "ACQUIRE",
 	"REGISTER", "EXPIRE", "FLUSH", "DUMP", "X_PROMISC", "X_ADDFLOW",
-	"X_DELFLOW", "X_GRPSPIS", "X_ASKPOLICY"
+	"X_DELFLOW", "X_GRPSPIS", "X_ASKPOLICY", "X_SPDDUMP"
 };
 
 #define CHUNK sizeof(u_int64_t)
@@ -381,8 +381,9 @@ pfkey_snapshot(void *v)
 				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
 				net_queue(p, MSG_PFKEYDATA, sendbuf,
 				    m->sadb_msg_len * CHUNK);
-				log_msg(3, "pfkey_snapshot: sync SA %p to"
-				    "peer %s", m, p->name);
+				log_msg(3, "pfkey_snapshot: sync SA %p len %u "
+				    "to peer %s", m,
+				    m->sadb_msg_len * CHUNK, p->name);
 			}
 		}
 		memset(sadb, 0, sadbsz);
@@ -391,20 +392,27 @@ pfkey_snapshot(void *v)
 
 	/* Parse SPD data */
 	if (spdsz && spd) {
-#ifdef notyet	
-		struct ipsec_policy	*ip;
 		dump_buf(3, spd, spdsz, "pfkey_snapshot: SPD data");
-
 		max = spd + spdsz;
-		for (next = spd; next < max;
-		     next += sizeof(struct ipsec_policy)) {
-			ip = (struct ipsec_policy *)next;
-			if (ip->ipo_flags & IPSP_POLICY_SOCKET)
-				continue;
-			/* XXX incomplete */
-		}
-#endif
+		for (next = spd; next < max; next += m->sadb_msg_len * CHUNK) {
+			m = (struct sadb_msg *)next;
+			if (m->sadb_msg_len == 0)
+				break;
 
+			/* Tweak msg type. */
+			m->sadb_msg_type = SADB_X_ADDFLOW;
+			
+			/* Allocate msgbuffer, freed by net_queue(). */
+			sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
+			if (sendbuf) {
+				memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
+				net_queue(p, MSG_PFKEYDATA, sendbuf,
+				    m->sadb_msg_len * CHUNK);
+				log_msg(3, "pfkey_snapshot: sync FLOW %p len "
+				    "%u to peer %s", m,
+				    m->sadb_msg_len * CHUNK, p->name);
+			}
+		}
 		/* Cleanup. */
 		memset(spd, 0, spdsz);
 		free(spd);
