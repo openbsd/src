@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.86 2005/05/24 03:33:01 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.87 2005/05/27 01:41:27 jason Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -175,7 +175,8 @@ static const char *talk[] = {
 	"Whiners.  They scale really well.",
 	"in your world, you would have a checklist of 50 fucking workarounds just to make a coffee.",
 	"for once, I have nothing to say.",
-	"You have no idea how fucked we are"
+	"You have no idea how fucked we are",
+	"You can call it fart if you want to."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
