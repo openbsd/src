@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.13 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: RAMDISK,v 1.14 2005/05/27 15:54:59 drahn Exp $
 
 machine	cats	arm
 
@@ -169,6 +169,7 @@ wskbd*	at ukbd? mux 1
 umass*	at uhub?
 atapiscsi* at umass?
 scsibus* at umass?
+atapiscsi* at umass?
 
 # USB Ethernet adapters
 aue*	at uhub?		# ADMtek AN986 Pegasus based adapters

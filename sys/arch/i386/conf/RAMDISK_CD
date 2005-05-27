@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.96 2005/05/27 02:08:14 martin Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.97 2005/05/27 15:55:00 drahn Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -113,6 +113,7 @@ ukbd*	at uhidev?
 wskbd*	at ukbd? mux 1
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
+atapiscsi* at umass?
 #ums*	at uhidev?
 #wsmouse* at ums? mux 0
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
