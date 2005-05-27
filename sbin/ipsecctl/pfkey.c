@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.5 2005/05/25 17:23:46 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.6 2005/05/27 15:36:02 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -345,27 +345,26 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 
 	for (ext = (struct sadb_ext *)(msg + 1);
 	    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
-	    msg->sadb_msg_len * PFKEYV2_CHUNK;
+	    msg->sadb_msg_len * PFKEYV2_CHUNK && ext->sadb_ext_len > 0;
 	    ext = (struct sadb_ext *)((u_int8_t *)ext + 
 	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
-
 		switch (ext->sadb_ext_type) {
 		case SADB_EXT_ADDRESS_SRC:
-#if 0
+#ifdef notyet
 			saddr = (struct sadb_address *)ext;
 			sa = (struct sockaddr *)(saddr + 1);
 
-			rule->peer = calloc(1, sizeof(struct ipsec_addr));
-			if (rule->peer == NULL)
+			rule->local = calloc(1, sizeof(struct ipsec_addr));
+			if (rule->local == NULL)
 				err(1, "malloc");
 
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
-				    &rule->peer->v4, sizeof(struct in_addr));
-				memset(&rule->peer->v4mask, 0xff,
+				    &rule->local->v4, sizeof(struct in_addr));
+				memset(&rule->local->v4mask, 0xff,
 				    sizeof(u_int32_t));
-				rule->peer->af = AF_INET;
+				rule->local->af = AF_INET;
 				break;
 			default:
 				return (1);
