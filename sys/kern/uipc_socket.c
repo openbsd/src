@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.57 2005/05/27 04:55:27 mcbride Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.58 2005/05/27 17:16:13 dhartmei Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ socreate(dom, aso, type, proto)
 	so->so_euid = p->p_ucred->cr_uid;
 	so->so_rgid = p->p_cred->p_rgid;
 	so->so_egid = p->p_ucred->cr_gid;
+	so->so_cpid = p->p_pid;
 	so->so_proto = prp;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, NULL,
 	    (struct mbuf *)(long)proto, NULL);

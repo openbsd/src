@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.38 2004/04/25 16:25:05 markus Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.39 2005/05/27 17:16:13 dhartmei Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -178,6 +178,7 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_ruid = head->so_ruid;
 	so->so_egid = head->so_egid;
 	so->so_rgid = head->so_rgid;
+	so->so_cpid = head->so_cpid;
 	so->so_siguid = head->so_siguid;
 	so->so_sigeuid = head->so_sigeuid;
 

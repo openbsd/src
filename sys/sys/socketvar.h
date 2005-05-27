@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.36 2004/11/17 13:46:33 markus Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.37 2005/05/27 17:16:13 dhartmei Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -106,6 +106,7 @@ struct socket {
 	caddr_t	so_upcallarg;		/* Arg for above */
 	uid_t	so_euid, so_ruid;	/* who opened the socket */
 	gid_t	so_egid, so_rgid;
+	pid_t	so_cpid;		/* pid of process that opened socket */
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
