@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.51 2005/05/23 23:26:56 tedu Exp $ */
+/* $OpenBSD: if_em.c,v 1.52 2005/05/27 20:36:35 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -310,7 +310,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	 * sized frames
 	 */
 	sc->hw.max_frame_size = 
-	    ETHER_MAX_LEN;
+	    ETHER_MAX_LEN_JUMBO;
 
 	sc->hw.min_frame_size = 
 	    ETHER_MIN_LEN + ETHER_CRC_LEN;
@@ -549,8 +549,6 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		} else {
                         EM_LOCK(sc);
 			ifp->if_mtu = ifr->ifr_mtu;
-			sc->hw.max_frame_size = 
-			ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
 			em_init_locked(sc);
                         EM_UNLOCK(sc);
 		}
@@ -2354,8 +2352,7 @@ em_initialize_receive_unit(struct em_softc *sc)
 		break;
 	}
 
-	if (ifp->if_mtu > ETHERMTU)
-		reg_rctl |= E1000_RCTL_LPE;
+	reg_rctl |= E1000_RCTL_LPE;
 
 	/* Enable 82543 Receive Checksum Offload for TCP and UDP */
 	if (sc->hw.mac_type >= em_82543) {
