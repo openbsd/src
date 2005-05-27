@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.50 2005/05/26 22:22:03 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.51 2005/05/27 04:37:25 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -219,7 +219,7 @@ monitor_open(const char *path, int flags, mode_t mode)
 	cmd = MONITOR_GET_FD;
 	must_write(m_state.s, &cmd, sizeof cmd);
 
-	len = strlen(pathreal) + 1;
+	len = strlen(pathreal);
 	must_write(m_state.s, &len, sizeof len);
 	must_write(m_state.s, &pathreal, len);
 
@@ -649,10 +649,11 @@ m_priv_getfd(int s)
 	mode_t	mode;
 
 	must_read(s, &len, sizeof len);
-	if (len <= 0 || sizeof path < len)
+	if (len <= 0 || len >= sizeof path)
 		log_fatal("m_priv_getfd: invalid pathname length");
 
 	must_read(s, path, len);
+	path[len] = '\0';
 	must_read(s, &flags, sizeof flags);
 	must_read(s, &mode, sizeof mode);
 
