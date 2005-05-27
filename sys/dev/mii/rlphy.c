@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.17 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.18 2005/05/27 08:04:15 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -77,7 +77,7 @@ rlphymatch(struct device *parent, void *match, void *aux)
 	/* Test for RealTek 8201L PHY */
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_REALTEK &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_REALTEK_RTL8201L) {
-		return(10);
+		return (10);
 	}
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||

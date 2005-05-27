@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.6 2005/03/28 03:11:06 krw Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.7 2005/05/27 08:04:15 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -121,10 +121,7 @@ ciphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	//sc->mii_service = ciphy_service;
 	sc->mii_funcs = &ciphy_funcs;
-	sc->mii_model = MII_MODEL(ma->mii_id2);
-	sc->mii_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;

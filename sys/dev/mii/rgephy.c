@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.9 2005/03/26 04:40:09 krw Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.10 2005/05/27 08:04:15 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -85,7 +85,6 @@ int	rgephy_mii_phy_auto(struct mii_softc *);
 void	rgephy_reset(struct mii_softc *);
 void	rgephy_loop(struct mii_softc *);
 void	rgephy_load_dspcode(struct mii_softc *);
-int	rgephy_mii_model;
 
 const struct mii_phy_funcs rgephy_funcs = {
 	rgephy_service, rgephy_status, rgephy_reset,
@@ -105,9 +104,9 @@ rgephymatch(struct device *parent, void *match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, rgephys) != NULL)
-		return(10);
+		return (10);
 
-	return(0);
+	return (0);
 }
 
 void
@@ -124,8 +123,6 @@ rgephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &rgephy_funcs;
-	sc->mii_model = MII_MODEL(ma->mii_id2);
-	sc->mii_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;

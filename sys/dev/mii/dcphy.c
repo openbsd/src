@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.14 2005/03/26 04:40:09 krw Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.15 2005/05/27 08:04:15 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -140,8 +140,6 @@ dcphy_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
-	mii->mii_instance++;
-
 	dc_sc = mii->mii_ifp->if_softc;
 	CSR_WRITE_4(dc_sc, DC_10BTSTAT, 0);
 	CSR_WRITE_4(dc_sc, DC_10BTCTRL, 0);
@@ -261,7 +259,7 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			CSR_WRITE_4(dc_sc, DC_NETCFG, mode);
 			break;
 		default:
-			return(EINVAL);
+			return (EINVAL);
 		}
 		break;
 
@@ -425,7 +423,7 @@ dcphy_mii_phy_auto(struct mii_softc *mii, int waitfor)
 		for (i = 0; i < 500; i++) {
 			if ((CSR_READ_4(sc, DC_10BTSTAT) & DC_TSTAT_ANEGSTAT)
 			    == DC_ASTAT_AUTONEGCMP)
-				return(0);
+				return (0);
 			DELAY(1000);
 		}
 		/*
@@ -433,7 +431,7 @@ dcphy_mii_phy_auto(struct mii_softc *mii, int waitfor)
 		 * If that's set, a timeout is pending, and it will
 		 * clear the flag.
 		 */
-		return(EIO);
+		return (EIO);
 	}
 
 	/*
@@ -444,7 +442,7 @@ dcphy_mii_phy_auto(struct mii_softc *mii, int waitfor)
 	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0)
 		mii->mii_flags |= MIIF_DOINGAUTO;
 
-	return(EJUSTRETURN);
+	return (EJUSTRETURN);
 }
 
 void
