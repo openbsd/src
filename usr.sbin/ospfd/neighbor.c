@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.20 2005/05/26 22:09:10 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.21 2005/05/27 02:45:15 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -459,6 +459,7 @@ nbr_adj_ok(struct nbr *nbr)
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_VIRTUALLINK:
 	case IF_TYPE_POINTOMULTIPOINT:
+		/* always ok */
 		break;
 	case IF_TYPE_BROADCAST:
 	case IF_TYPE_NBMA:
