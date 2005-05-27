@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.34 2005/05/26 05:28:35 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.35 2005/05/27 19:16:32 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -436,14 +436,9 @@ void
 pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 {
 	int			 e, size2 = 0;
-	struct pfi_kif		*p;
 	struct pfr_table	 t;
 	struct ifg_member	*ifgm;
 
-	if (kif->pfik_ifp == NULL && kif->pfik_group == NULL) {
-		pfr_clr_addrs(&kt->pfrkt_t, NULL, 0);
-		return;
-	}
 	pfi_buffer_cnt = 0;
 
 	if (kif->pfik_ifp != NULL)
@@ -451,10 +446,6 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 	else if (kif->pfik_group != NULL)
 		TAILQ_FOREACH(ifgm, &kif->pfik_group->ifg_members, ifgm_next)
 			pfi_instance_add(ifgm->ifgm_ifp, net, flags);
-	else
-		RB_FOREACH(p, pfi_ifhead, &pfi_ifs)
-			if (p->pfik_ifp != NULL)
-				pfi_instance_add(p->pfik_ifp, net, flags);
 
 	t = kt->pfrkt_t;
 	t.pfrt_flags = 0;
