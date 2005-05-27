@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.25 2004/12/31 10:47:37 jaredy Exp $
+.\" $OpenBSD: bgpctl.8,v 1.26 2005/05/27 17:10:29 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm bgpctl
 .Op Fl n
+.Op Fl s Ar socket
 .Ar command
 .Op Ar arguments ...
 .Sh DESCRIPTION
@@ -41,6 +42,13 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
 Show neighbors' IP-addresses instead of their description.
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/bgpd.sock
+to communicate with
+.Xr bgpd 8 .
 .El
 .Pp
 The commands are as follows:

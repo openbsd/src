@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.79 2005/05/23 20:08:59 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.80 2005/05/27 17:10:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -77,7 +77,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-n] <command> [arg [...]]\n", __progname);
+	fprintf(stderr, "usage: %s [-s socket] [-n] "
+	    "<command> [arg [...]]\n", __progname);
 	exit(1);
 }
 
@@ -90,12 +91,17 @@ main(int argc, char *argv[])
 	struct network_config	 net;
 	struct parse_result	*res;
 	struct ctl_neighbor	 neighbor;
+	char			*sockname;
 
-	while ((ch = getopt(argc, argv, "n")) != -1) {
+	sockname = SOCKET_NAME;
+	while ((ch = getopt(argc, argv, "ns:")) != -1) {
 		switch (ch) {
 		case 'n':
 			if (++nodescr > 1)
 				usage();
+			break;
+		case 's':
+			sockname = optarg;
 			break;
 		default:
 			usage();
@@ -116,9 +122,11 @@ main(int argc, char *argv[])
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, SOCKET_NAME, sizeof(sun.sun_path));
+	if (strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path)) >=
+	    sizeof(sun.sun_path))
+		errx(1, "socket name too long");
 	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		err(1, "connect: %s", SOCKET_NAME);
+		err(1, "connect: %s", sockname);
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
