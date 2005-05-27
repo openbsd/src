@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.14 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: history.c,v 1.15 2005/05/27 20:47:06 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -63,8 +63,9 @@ struct cvs_cmd cvs_cmd_history = {
 	CVS_OP_HISTORY, CVS_REQ_HISTORY, "history",
 	{ "hi", "his" },
 	"Show repository access history",
-	"",
-	"acelm:oTt:u:wx:z:",
+	"[-aceloTw] [-b str] [-D date] [-f file] [-m module] [-n module] "
+	"[-p path] [-r rev] [-t tag] [-u user] [-x ACEFGMORTUW] [-z tz]",
+	"ab:cD:ef:lm:n:op:r:Tt:u:wx:z:",
 	NULL,
 	0,
 	cvs_history_init,
@@ -94,13 +95,19 @@ cvs_history_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		case 'a':
 			flags |= CVS_HF_A;
 			break;
+		case 'b':
+			break;
 		case 'c':
 			rep++;
 			flags |= CVS_HF_C;
 			break;
+		case 'D':
+			break;
 		case 'e':
 			rep++;
 			flags |= CVS_HF_E;
+			break;
+		case 'f':
 			break;
 		case 'l':
 			flags |= CVS_HF_L;
@@ -113,6 +120,8 @@ cvs_history_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 				return (CVS_EX_USAGE);
 			}
 			modules[nbmod++] = optarg;
+			break;
+		case 'n':
 			break;
 		case 'o':
 			rep++;
@@ -156,6 +165,8 @@ cvs_history_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_history_pre_exec(struct cvsroot *root)
 {
+	if ((flags & CVS_HF_A) && (cvs_sendarg(root, "-a", 0) < 0))
+		return (CVS_EX_PROTO);
 
 	if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
 		return (CVS_EX_PROTO);
@@ -169,11 +180,17 @@ cvs_history_pre_exec(struct cvsroot *root)
 			return (CVS_EX_PROTO);
 	}
 
-	if (user != NULL) {
+	/* if no user is specified, get login name of command issuer */
+	if (!(flags & CVS_HF_A) && (user == NULL)) {
+		if ((user = getlogin()) == NULL) {
+			cvs_log(LP_ERRNO, "cannot get login name");
+			return (CVS_EX_DATA);
+		}
+	}
+	if (!(flags & CVS_HF_A))
 		if ((cvs_sendarg(root, "-u", 0) < 0) ||
 		    (cvs_sendarg(root, user, 0) < 0))
 			return (CVS_EX_PROTO);
-	}
 
 	if ((cvs_sendarg(root, "-z", 0) < 0) ||
 	    (cvs_sendarg(root, zone, 0) < 0))
