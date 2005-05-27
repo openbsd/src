@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.5 2005/05/27 07:46:38 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.6 2005/05/27 18:37:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -273,6 +273,7 @@ amdgart_probe(struct pcibus_attach_args *pba)
 	void *scrib = NULL;
 	struct extent *ex = NULL;
 	u_int32_t *pte;
+	paddr_t ptepa;
 
 	if (amdgart_enable == 0)
 		return;
@@ -298,6 +299,7 @@ amdgart_probe(struct pcibus_attach_args *pba)
 		goto err;
 	}
 
+#if 0
 	r = extent_alloc_subregion(iomem_ex, IOMMU_START, IOMMU_END,
 	    IOMMU_SIZE * 1024 * 1024, IOMMU_ALIGN * 1024 * 1024, 0,
 	    EX_NOBOUNDARY, EX_NOWAIT, &dvabase);
@@ -305,6 +307,9 @@ amdgart_probe(struct pcibus_attach_args *pba)
 		printf("\nGART: extent alloc failed: %d", r);
 		goto err;
 	}
+#else
+	dvabase = IOMMU_START;
+#endif
 
 	mapsize = IOMMU_SIZE * 1024 * 1024;
 	ptesize = mapsize / (PAGE_SIZE / sizeof(u_int32_t));
@@ -319,6 +324,7 @@ amdgart_probe(struct pcibus_attach_args *pba)
 
 	if (amdgart_load_phys(&plist, (vaddr_t)pte))
 		goto err;
+	ptepa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&plist));
 
 	ex = extent_create("iommu", dvabase, dvabase + mapsize - 1, M_DEVBUF,
 	    NULL, NULL, EX_NOWAIT | EX_NOCOALESCE);
@@ -369,6 +375,9 @@ amdgart_probe(struct pcibus_attach_args *pba)
 			pci_conf_write(pba->pba_pc, tag, GART_APBASE,
 			    dvabase >> 25);
 
+			pci_conf_write(pba->pba_pc, tag, GART_TBLBASE,
+			    (ptepa >> 8) & GART_TBLBASE_MASK);
+
 			v = pci_conf_read(pba->pba_pc, tag, GART_APCTRL);
 			v |= GART_APCTRL_ENABLE;
 			v &= ~(GART_APCTRL_DISIO | GART_APCTRL_DISTBL);
@@ -391,8 +400,7 @@ amdgart_probe(struct pcibus_attach_args *pba)
 			amdgart_softcs[count].g_dmat = pba->pba_dmat;
 
 			printf("\niommu%d(cpu%d): base 0x%lx length %dMB pte 0x%lx",
-			    count, dev - 24, dvabase, IOMMU_SIZE,
-			    VM_PAGE_TO_PHYS(TAILQ_FIRST(&plist)));
+			    count, dev - 24, dvabase, IOMMU_SIZE, ptepa);
 			count++;
 		}
 	}
