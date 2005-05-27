@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.26 2005/05/26 22:55:56 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.27 2005/05/27 02:37:39 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -38,12 +38,14 @@
 #include "ospf.h"
 #include "ospfd.h"
 #include "ospfe.h"
+#include "rde.h"
 #include "control.h"
 #include "log.h"
 
-void	 ospfe_sig_handler(int, short, void *);
-void	 ospfe_shutdown(void);
-void	 orig_rtr_lsa_all(struct area *);
+void		 ospfe_sig_handler(int, short, void *);
+void		 ospfe_shutdown(void);
+void		 orig_rtr_lsa_all(struct area *);
+struct iface	*find_vlink(struct abr_rtr *);
 
 volatile sig_atomic_t	 ospfe_quit = 0;
 struct ospfd_conf	*oeconf = NULL;
@@ -271,7 +273,8 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 
 			LIST_FOREACH(area, &oeconf->area_list, entry) {
 				LIST_FOREACH(iface, &area->iface_list, entry) {
-					if (kif->ifindex == iface->ifindex) {
+					if (kif->ifindex == iface->ifindex &&
+					    iface->type != IF_TYPE_VIRTUALLINK) {
 						iface->flags = kif->flags;
 						iface->linkstate =
 						    kif->link_state;
@@ -316,6 +319,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 	struct iface		*iface;
 	struct lsa_entry	*le;
 	struct imsg		 imsg;
+	struct abr_rtr		 ar;
 	int			 n, noack = 0;
 	u_int16_t		 l, age;
 
@@ -520,6 +524,26 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 
 			nbr_fsm(nbr, NBR_EVT_BAD_LS_REQ);
 			break;
+		case IMSG_ABR_UP:
+			memcpy(&ar, imsg.data, sizeof(ar));
+
+			if ((iface = find_vlink(&ar)) != NULL &&
+			    iface->state == IF_STA_DOWN)
+				if (if_fsm(iface, IF_EVT_UP)) {
+					log_debug("error starting interface %s",
+					    iface->name);
+				}
+			break;
+		case IMSG_ABR_DOWN:
+			memcpy(&ar, imsg.data, sizeof(ar));
+
+			if ((iface = find_vlink(&ar)) != NULL &&
+			    iface->state == IF_STA_POINTTOPOINT)
+				if (if_fsm(iface, IF_EVT_DOWN)) {
+					log_debug("error stopping interface %s",
+					    iface->name);
+				}
+			break;
 		case IMSG_CTL_AREA:
 		case IMSG_CTL_END:
 		case IMSG_CTL_SHOW_DATABASE:
@@ -542,6 +566,26 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(ibuf);
+}
+
+struct iface *
+find_vlink(struct abr_rtr *ar)
+{
+	struct area	*area;
+	struct iface	*iface = NULL;
+
+	LIST_FOREACH(area, &oeconf->area_list, entry)
+		LIST_FOREACH(iface, &area->iface_list, entry)
+			if (iface->abr_id.s_addr == ar->abr_id.s_addr &&
+			    iface->type == IF_TYPE_VIRTUALLINK &&
+			    iface->area->id.s_addr == ar->area.s_addr) {
+				iface->dst.s_addr = ar->dst_ip.s_addr;
+				iface->addr.s_addr = ar->addr.s_addr;
+
+				return (iface);
+			}
+
+	return (iface);
 }
 
 void
