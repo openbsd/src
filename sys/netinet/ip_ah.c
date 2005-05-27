@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.79 2003/08/14 19:00:12 jason Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.80 2005/05/27 18:23:18 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -494,7 +494,6 @@ int
 ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
 	struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
-	struct tdb_ident *tdbi;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	u_int32_t btsx;
@@ -606,10 +605,13 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crda->crd_key = tdb->tdb_amxkey;
 	crda->crd_klen = tdb->tdb_amxkeylen * 8;
 
+#ifdef notyet
 	/* Find out if we've already done crypto. */
 	for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_CRYPTO_DONE, NULL);
 	     mtag != NULL;
 	     mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_CRYPTO_DONE, mtag)) {
+		struct tdb_ident *tdbi;
+
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		if (tdbi->proto == tdb->tdb_sproto &&
 		    tdbi->spi == tdb->tdb_spi &&
@@ -617,6 +619,9 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			sizeof(union sockaddr_union)))
 			break;
 	}
+#else
+	mtag = NULL;
+#endif
 
 	/* Allocate IPsec-specific opaque crypto info. */
 	if (mtag == NULL)
