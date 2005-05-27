@@ -1,13 +1,13 @@
 #!/bin/ksh
 D=`dirname $1`
-A='regress'
+A='regress:regress'
 pfctl -a $A -FT 2>/dev/null
 pfctl -a $A -Fr 2>/dev/null
 pfctl -a $A -Fn 2>/dev/null
-KT_A=0`vmstat -m | awk '/pfrktable/{print $3}'`
-KT_R=0`vmstat -m | awk '/pfrktable/{print $5}'`
-KE_A=0`vmstat -m | awk '/pfrkentry/{print $3}'`
-KE_R=0`vmstat -m | awk '/pfrkentry/{print $5}'`
+KT_A=`vmstat -m | awk '/pfrktable/{print $3}'`
+KT_R=`vmstat -m | awk '/pfrktable/{print $5}'`
+KE_A=`vmstat -m | awk '/pfrkentry/{print $3}'`
+KE_R=`vmstat -m | awk '/pfrkentry/{print $5}'`
 echo "# create"
 echo "table <regress> persist" | pfctl -a $A -Tl -f - 2>&1 || exit 1
 for LINE in `sed -e "s/ /_/g" $1`; do 
