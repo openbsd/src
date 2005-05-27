@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.8 2005/05/27 05:19:55 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.9 2005/05/27 15:33:49 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -225,7 +225,7 @@ ipsecctl_flush(int opts)
 void
 ipsecctl_get_rules(struct ipsecctl *ipsec)
 {
-	struct ipsec_policy *ipo;
+	struct sadb_msg *msg;
 	struct ipsec_rule *rule;
 	int		 mib[4];
 	size_t		 need;
@@ -238,90 +238,27 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 
 	if (sysctl(mib, 4, NULL, &need, NULL, 0) == -1)
 		err(1, "sysctl");
-
 	if (need == 0)
 		return;
 	if ((buf = malloc(need)) == NULL)
 		err(1, "malloc");
 	if (sysctl(mib, 4, buf, &need, NULL, 0) == -1)
 		err(1, "sysctl");
-
 	lim = buf + need;
-	for (next = buf; next < lim; next += sizeof(struct ipsec_policy)) {
-		ipo = (struct ipsec_policy *)next;
 
-		/*
-		 * We only want static policies and are not interrested in
-		 * policies attached to sockets.
-		 */
-		if (ipo->ipo_flags & IPSP_POLICY_SOCKET)
-			continue;
+	for (next = buf; next < lim; next += msg->sadb_msg_len *
+	    PFKEYV2_CHUNK) {
+		msg = (struct sadb_msg *)next;
+		if (msg->sadb_msg_len == 0)
+			break;
 
 		rule = calloc(1, sizeof(struct ipsec_rule));
 		if (rule == NULL)
 			err(1, "malloc");
 		rule->nr = ipsec->rule_nr++;
 
-		/* Source and destination. */
-		if (ipo->ipo_addr.sen_type == SENT_IP4) {
-			rule->src = calloc(1, sizeof(struct ipsec_addr));
-			if (rule->src == NULL)
-				err(1, "calloc");
-			rule->src->af = AF_INET;
-
-			bcopy(&ipo->ipo_addr.sen_ip_src.s_addr, &rule->src->v4,
-			    sizeof(struct in_addr));
-			bcopy(&ipo->ipo_mask.sen_ip_src.s_addr,
-			    &rule->src->v4mask.mask, sizeof(struct in_addr));
-
-			rule->dst = calloc(1, sizeof(struct ipsec_addr));
-			if (rule->dst == NULL)
-				err(1, "calloc");
-			rule->dst->af = AF_INET;
-
-			bcopy(&ipo->ipo_addr.sen_ip_dst.s_addr, &rule->dst->v4,
-			    sizeof(struct in_addr));
-			bcopy(&ipo->ipo_mask.sen_ip_dst.s_addr,
-			    &rule->dst->v4mask.mask, sizeof(struct in_addr));
-		} else
-			warnx("unsupported encapsulation policy type %d",
-			    ipo->ipo_addr.sen_type);
-
-		/* IPsec gateway. */
-		if (ipo->ipo_dst.sa.sa_family == AF_INET) {
-			rule->peer = calloc(1, sizeof(struct ipsec_addr));
-			if (rule->peer == NULL)
-				err(1, "calloc");
-			rule->peer->af = AF_INET;
-
-			bcopy(&((struct sockaddr_in *)&ipo->ipo_dst.sa)->sin_addr,
-			    &rule->peer->v4, sizeof(struct in_addr));
-
-			/* No netmask for peer. */
-			memset(&rule->peer->v4mask, 0xff, sizeof(u_int32_t));
-
-			if (ipo->ipo_sproto == IPPROTO_ESP)
-				rule->proto = IPSEC_ESP;
-			else if (ipo->ipo_sproto == IPPROTO_AH)
-				rule->proto = IPSEC_AH;
-			else {
-				rule->proto = PROTO_UNKNOWN;
-				warnx("unsupported protocol %d",
-				    ipo->ipo_sproto);
-			}
-
-			if (ipo->ipo_addr.sen_direction == IPSP_DIRECTION_OUT)
-				rule->direction = IPSEC_OUT;
-			else if (ipo->ipo_addr.sen_direction == IPSP_DIRECTION_IN)
-				rule->direction = IPSEC_IN;
-			else {
-				rule->direction = DIRECTION_UNKNOWN;
-				warnx("bogus direction %d",
-				    ipo->ipo_addr.sen_direction);
-			}
-		} else
-			warnx("unsupported address family %d",
-			    ipo->ipo_dst.sa.sa_family);
+		if (pfkey_parse(msg, rule))
+			errx(1, "failed to parse pfkey message");
 
 		ipsecctl_add_rule(ipsec, rule);
 	}
