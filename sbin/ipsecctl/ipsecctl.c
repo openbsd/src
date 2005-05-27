@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.9 2005/05/27 15:33:49 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.10 2005/05/27 19:55:21 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -183,6 +183,8 @@ void
 ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 {
 	static const char *direction[] = {"?", "in", "out"};
+	static const char *type[] = {"?", "use", "acquire", "require", "deny",
+	    "bypass", "dontacq"};
 	static const char *proto[] = {"?", "esp", "ah"};
 	static const char *auth[] = {"?", "psk", "rsa"};
 
@@ -203,7 +205,8 @@ ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 		if (r->auth.dstid)
 			printf("\n\tdstid %s", r->auth.dstid);
 		if (r->auth.type > 0)
-			printf(" %s", auth[r->auth.type]);
+			printf("\n\t%s", auth[r->auth.type]);
+		printf("\n\ttype %s", type[r->type]);
 	}
 	printf("\n");
 }

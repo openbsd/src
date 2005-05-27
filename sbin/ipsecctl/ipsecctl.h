@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.5 2005/05/27 05:19:55 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.6 2005/05/27 19:55:21 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -39,6 +39,10 @@ enum {
 enum {
 	ID_UNKNOWN, ID_PREFIX, ID_FQDN, ID_UFQDN
 };
+enum {
+	TYPE_UNKNOWN, TYPE_USE, TYPE_ACQUIRE, TYPE_REQUIRE, TYPE_DENY,
+	TYPE_BYPASS, TYPE_DONTACQ
+};
 
 struct ipsec_addr {
 	struct in_addr  v4;
@@ -66,6 +70,7 @@ struct ipsec_rule {
 
 	u_int8_t	 proto;
 	u_int8_t	 direction;
+	u_int8_t	 type;
 	u_int32_t	 nr;
 
 	TAILQ_ENTRY(ipsec_rule) entries;
