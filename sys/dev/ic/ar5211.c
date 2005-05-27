@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.15 2005/05/24 21:46:18 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.16 2005/05/27 11:42:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1626,9 +1626,9 @@ ar5k_ar5211_set_lladdr(hal, mac)
 
 	bcopy(mac, &low_id, 4);
 	bcopy(mac + 4, &high_id, 2);
-	high_id = 0x0000ffff & htole32(high_id);
+	high_id = 0x0000ffff & high_id;
 
-	AR5K_REG_WRITE(AR5K_AR5211_STA_ID0, htole32(low_id));
+	AR5K_REG_WRITE(AR5K_AR5211_STA_ID0, low_id);
 	AR5K_REG_WRITE(AR5K_AR5211_STA_ID1, high_id);
 
 	return (AH_TRUE);
@@ -1710,8 +1710,8 @@ ar5k_ar5211_set_associd(hal, bssid, assoc_id, tim_offset)
 	 */
 	bcopy(bssid, &low_id, 4);
 	bcopy(bssid + 4, &high_id, 2);
-	AR5K_REG_WRITE(AR5K_AR5211_BSS_ID0, htole32(low_id));
-	AR5K_REG_WRITE(AR5K_AR5211_BSS_ID1, htole32(high_id) |
+	AR5K_REG_WRITE(AR5K_AR5211_BSS_ID0, low_id);
+	AR5K_REG_WRITE(AR5K_AR5211_BSS_ID1, high_id |
 	    ((assoc_id & 0x3fff) << AR5K_AR5211_BSS_ID1_AID_S));
 	bcopy(bssid, hal->ah_bssid, IEEE80211_ADDR_LEN);
 
@@ -2087,8 +2087,8 @@ ar5k_ar5211_set_key_lladdr(hal, entry, mac)
 	bcopy(mac_v + 4, &high_id, 2);
 	high_id |= AR5K_AR5211_KEYTABLE_VALID;
 
-	AR5K_REG_WRITE(AR5K_AR5211_KEYTABLE_MAC0(entry), htole32(low_id));
-	AR5K_REG_WRITE(AR5K_AR5211_KEYTABLE_MAC1(entry), htole32(high_id));
+	AR5K_REG_WRITE(AR5K_AR5211_KEYTABLE_MAC0(entry), low_id);
+	AR5K_REG_WRITE(AR5K_AR5211_KEYTABLE_MAC1(entry), high_id);
 
 	return (AH_TRUE);
 }
