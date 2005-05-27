@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.54 2005/05/27 19:26:25 cloder Exp $	 */
+/* $OpenBSD: monitor.c,v 1.55 2005/05/27 20:55:49 cloder Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -206,7 +206,8 @@ monitor_pf_key_v2_open(void)
 int
 monitor_open(const char *path, int flags, mode_t mode)
 {
-	int	fd, err, cmd, len;
+	size_t	len;
+	int	fd, err, cmd;
 	char	pathreal[MAXPATHLEN];
 
 	if (path[0] == '/')
@@ -320,7 +321,7 @@ monitor_setsockopt(int s, int level, int optname, const void *optval,
 	must_write(&level, sizeof level);
 	must_write(&optname, sizeof optname);
 	must_write(&optlen, sizeof optlen);
-	must_write(optval, (size_t)optlen);
+	must_write(optval, optlen);
 
 	must_read(&err, sizeof err);
 	must_read(&ret, sizeof ret);
@@ -344,7 +345,7 @@ monitor_bind(int s, const struct sockaddr *name, socklen_t namelen)
 		goto errout;
 
 	must_write(&namelen, sizeof namelen);
-	must_write(name, (size_t)namelen);
+	must_write(name, namelen);
 
 	must_read(&err, sizeof err);
 	must_read(&ret, sizeof ret);
@@ -643,12 +644,13 @@ static void
 m_priv_getfd(void)
 {
 	char	path[MAXPATHLEN];
-	int	v, flags, len;
+	size_t	len;
+	int	v, flags;
 	int	err = 0;
 	mode_t	mode;
 
 	must_read(&len, sizeof len);
-	if (len <= 0 || len >= sizeof path)
+	if (len == 0 || len >= sizeof path)
 		log_fatal("m_priv_getfd: invalid pathname length");
 
 	must_read(path, len);
@@ -702,7 +704,7 @@ m_priv_setsockopt(void)
 	if (!optval)
 		goto errout;
 
-	must_read(optval, (size_t)optlen);
+	must_read(optval, optlen);
 
 	if (m_priv_check_sockopt(level, optname) != 0) {
 		err = EACCES;
@@ -742,12 +744,11 @@ m_priv_bind(void)
 	if (sock < 0)
 		goto errout;
 
-	must_read(&v, sizeof v);
-	namelen = (socklen_t)v;
+	must_read(&namelen, sizeof namelen);
 	name = (struct sockaddr *)malloc(namelen);
 	if (!name)
 		goto errout;
-	must_read((char *)name, (size_t)namelen);
+	must_read((char *)name, namelen);
 
 	if (m_priv_check_bind(name, namelen) != 0) {
 		err = EACCES;
@@ -815,7 +816,8 @@ static void
 must_write(const void *buf, size_t n)
 {
         const char *s = buf;
-        ssize_t res, pos = 0;
+	size_t pos = 0;
+	ssize_t res;
 
         while (n > pos) {
                 res = write(m_state.s, s + pos, n - pos);
