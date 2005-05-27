@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.27 2005/05/23 23:14:30 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.28 2005/05/27 18:57:18 robert Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -3289,7 +3289,7 @@ rtw_power(int why, void *arg)
 		/* XXX do nothing. */
 		break;
 	case PWR_SUSPEND:
-		rtw_stop(ifp, 0);
+		rtw_stop(ifp, 1);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
 		break;

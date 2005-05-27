@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.7 2004/07/25 13:36:08 millert Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.8 2005/05/27 18:57:19 robert Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -473,6 +473,7 @@ void	atw_attach(struct atw_softc *);
 int	atw_detach(struct atw_softc *);
 int	atw_activate(struct device *, enum devact);
 int	atw_intr(void *arg);
+int	atw_enable(struct atw_softc *);
 void	atw_power(int, void *);
 void	atw_shutdown(void *);
 

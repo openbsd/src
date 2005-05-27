@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.30 2005/03/26 16:35:25 naddy Exp $	*/
+/*	$OpenBSD: atw.c,v 1.31 2005/05/27 18:57:19 robert Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3923,7 +3923,7 @@ atw_power(int why, void *arg)
 		/* XXX do nothing. */
 		break;
 	case PWR_SUSPEND:
-		atw_stop(ifp, 0);
+		atw_stop(ifp, 1);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
 		break;

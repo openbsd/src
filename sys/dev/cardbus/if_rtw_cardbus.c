@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.5 2005/05/16 01:36:25 brad Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.6 2005/05/27 18:57:19 robert Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -395,22 +395,11 @@ rtw_cardbus_disable(struct rtw_softc *sc)
 void
 rtw_cardbus_power(struct rtw_softc *sc, int why)
 {
-	struct rtw_cardbus_softc *csc = (void *) sc;
-
 	RTW_DPRINTF(RTW_DEBUG_ATTACH,
 	    ("%s: rtw_cardbus_power\n", sc->sc_dev.dv_xname));
 
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if ((sc->sc_flags & RTW_F_ENABLED) == 0)
-			panic("rtw_cardbus_power");
-#endif
-		rtw_cardbus_setup(csc);
-	}
+	if (why == PWR_RESUME)
+		rtw_enable(sc);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.8 2005/05/16 01:36:25 brad Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.9 2005/05/27 18:57:19 robert Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -331,21 +331,10 @@ atw_cardbus_disable(struct atw_softc *sc)
 void
 atw_cardbus_power(struct atw_softc *sc, int why)
 {
-	struct atw_cardbus_softc *csc = (void *) sc;
-
 	printf("%s: atw_cardbus_power\n", sc->sc_dev.dv_xname);
 
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if (ATW_IS_ENABLED(sc) == 0)
-			panic("atw_cardbus_power");
-#endif
-		atw_cardbus_setup(csc);
-	}
+	if (why == PWR_RESUME)
+		atw_enable(sc);
 }
 
 void
