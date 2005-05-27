@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.23 2005/05/16 04:54:31 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.24 2005/05/27 04:10:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -245,7 +245,7 @@ ath_hal_attach(device, sc, st, sh, status)
 	}
 
 	/* Get MAC address */
-	if ((*status = ar5k_eeprom_read_mac(hal, mac)) != HAL_OK) {
+	if ((*status = ar5k_eeprom_read_mac(hal, mac)) != 0) {
 		AR5K_PRINTF("unable to read address from EEPROM: 0x%04x\n",
 		    device);
 		goto failed;
@@ -878,10 +878,6 @@ ar5k_eeprom_init(hal)
 	int ret, i;
 	u_int mode;
 
-	/* Check if EEPROM is busy */
-	if (hal->ah_eeprom_is_busy(hal) == AH_TRUE)
-		return (EBUSY);
-
 	/* Initial TX thermal adjustment values */
 	ee->ee_tx_clip = 4;
 	ee->ee_pwd_84 = ee->ee_pwd_90 = 1;
@@ -1063,9 +1059,6 @@ ar5k_eeprom_read_mac(hal, mac)
 
 	bzero(mac, IEEE80211_ADDR_LEN);
 	bzero(&mac_d, IEEE80211_ADDR_LEN);
-
-	if (hal->ah_eeprom_is_busy(hal))
-		return (EBUSY);
 
 	if (hal->ah_eeprom_read(hal, 0x20, &data) != 0)
 		return (EIO);
