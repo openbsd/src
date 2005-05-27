@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.16 2005/05/24 20:32:43 uwe Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.17 2005/05/27 18:42:15 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -254,13 +254,8 @@ bs_protos(bs_notimpl);
 
 #include "com.h"
 #if NCOM > 0
-#if defined(COM_PXA2X0)
-#include <arm/xscale/pxacomreg.h>
-#include <arm/xscale/pxacomvar.h>
-#else
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
-#endif
 #endif
 
 #ifndef CONSPEED

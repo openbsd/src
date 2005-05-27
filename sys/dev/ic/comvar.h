@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.35 2004/10/20 12:40:14 pefo Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.36 2005/05/27 18:42:15 uwe Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -103,10 +103,12 @@ struct com_softc {
 #define COM_UART_ST16650V2	0x06		/* 32 byte fifo */
 #define COM_UART_TI16750	0x07		/* 64 byte fifo */
 #define	COM_UART_XR16850	0x10		/* 128 byte fifo */
+#define COM_UART_PXA2X0		0x11		/* 16 byte fifo */
 
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
+#define	COM_HW_SIR	0x20
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
 	u_char sc_swflags;
@@ -133,7 +135,6 @@ struct com_softc {
 };
 
 int	comprobe1(bus_space_tag_t, bus_space_handle_t);
-void	cominit(bus_space_tag_t, bus_space_handle_t, int);
 int	comstop(struct tty *, int);
 int	comintr(void *);
 int	com_detach(struct device *, int);
@@ -141,7 +142,7 @@ int	com_activate(struct device *, enum devact);
 
 void	comdiag(void *);
 int	comspeed(long, long);
-u_char	com_cflag2lcr(tcflag_t);
+u_char	com_cflag2lcr(tcflag_t); /* XXX undefined */
 int	comparam(struct tty *, struct termios *);
 void	comstart(struct tty *);
 void	comsoft(void *);
@@ -165,7 +166,9 @@ int	kgdbintr(void *);
 void com_attach_subr(struct com_softc *);
 
 extern int comdefaultrate;
+extern int comconsfreq;
 extern bus_addr_t comconsaddr;
+extern bus_addr_t comsiraddr;
 extern int comconsinit;
 extern int comconsattached;
 extern bus_space_tag_t comconsiot;

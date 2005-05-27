@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.12 2004/12/23 17:50:24 markus Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.13 2005/05/27 18:42:15 uwe Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*
@@ -69,6 +69,9 @@
 #define	IER_ERLS	0x4	/* Enable line status interrupt */
 #define	IER_EMSC	0x8	/* Enable modem status interrupt */
 #define IER_SLEEP	0x10	/* Enable sleep mode */
+/* PXA2X0's ns16550 ports have extra bits in this register */
+#define	IER_ERXTOUT	0x10	/* Enable rx timeout interrupt */
+#define	IER_EUART	0x40	/* Enable UART */
 
 /* interrupt identification register */
 #define	IIR_IMASK	0xf
@@ -169,7 +172,18 @@
 #define FCTL_TRIGGER2	0x10
 #define FCTL_TRIGGER3	0x20
 
+/* infrared selection register */
+#define ISR_XMITIR	0x01	/* transmitter SIR enable */
+#define ISR_RCVEIR	0x02	/* receiver SIR enable */
+#define ISR_XMODE	0x04	/* 1.6us transmit pulse width */
+#define ISR_TXPL	0x08	/* negative transmit data polarity */
+#define ISR_RXPL	0x10	/* negative receive data polarity */
+
+#ifdef COM_PXA2X0
+#define	COM_NPORTS	9
+#else
 #define	COM_NPORTS	8
+#endif
 
 /*
  * WARNING: Serial console is assumed to be at COM1 address

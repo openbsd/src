@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_com.c,v 1.4 2005/03/22 15:52:16 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_com.c,v 1.5 2005/05/27 18:42:15 uwe Exp $ */
 /*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $")
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <arm/xscale/pxacomreg.h>
-#include <arm/xscale/pxacomvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
@@ -133,6 +133,7 @@ pxauart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = &pxa2x0_a4x_bs_tag;	/* XXX: This sucks */
 	sc->sc_iobase = pxa->pxa_addr;
 	sc->sc_frequency = PXA2X0_COM_FREQ;
+	sc->sc_uarttype = COM_UART_PXA2X0;
 
 #if 0
 	if (com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
