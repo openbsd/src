@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflog.4,v 1.7 2004/03/21 19:47:59 miod Exp $
+.\"	$OpenBSD: pflog.4,v 1.8 2005/05/27 20:19:33 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Tobias Weingartner
 .\" All rights reserved.
@@ -63,6 +63,10 @@ struct pfloghdr {
 	char		ruleset[PF_RULESET_NAME_SIZE];
 	u_int32_t	rulenr;
 	u_int32_t	subrulenr;
+	uid_t		uid;
+	pid_t		pid;
+	uid_t		rule_uid;
+	pid_t		rule_pid;
 	u_int8_t	dir;
 	u_int8_t	pad[3];
 };
