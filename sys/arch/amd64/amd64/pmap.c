@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 2005/05/24 21:11:47 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 2005/05/27 19:32:39 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -169,9 +169,6 @@
  *      page is mapped in.    this is critical for page based operations
  *      such as pmap_page_protect() [change protection on _all_ mappings
  *      of a page]
- *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
- *      if we run out of pv_entry's we allocate a new pv_page and free
- *      its pv_entrys.
  * - pmap_remove_record: a list of virtual addresses whose mappings
  *	have been changed.   used for TLB flushing.
  */
@@ -209,21 +206,7 @@
  * pmap_growkernel() to grow the kernel PTPs in advance.
  *
  * [C] pv_entry structures
- *	- plan 1: try to allocate one off the free list
- *		=> success: done!
- *		=> failure: no more free pv_entrys on the list
- *	- plan 2: try to allocate a new pv_page to add a chunk of
- *	pv_entrys to the free list
- *		[a] obtain a free, unmapped, VA in kmem_map.  either
- *		we have one saved from a previous call, or we allocate
- *		one now using a "vm_map_lock_try" in uvm_map
- *		=> success: we have an unmapped VA, continue to [b]
- *		=> failure: unable to lock kmem_map or out of VA in it.
- *			move on to plan 3.
- *		[b] allocate a page for the VA
- *		=> success: map it in, free the pv_entry's, DONE!
- *		=> failure: no free vm_pages, etc.
- *			save VA for later call to [a], go to plan 3.
+ *	- try to allocate one from the pool.
  *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
 
@@ -261,10 +244,6 @@
  *   when traversing the list (e.g. adding/removing mappings,
  *   syncing R/M bits, etc.)
  *
- * - pvalloc_lock
- *   this lock protects the data structures which are used to manage
- *   the free list of pv_entry structures.
- *
  * - pmaps_lock
  *   this lock protects the list of active pmaps (headed by "pmaps").
  *   we lock it when adding or removing pmaps from this list.
@@ -291,7 +270,6 @@ paddr_t DMPDpa;
 
 /* int nkpde = NKPTP; */
 
-struct simplelock pvalloc_lock;
 struct simplelock pmaps_lock;
 
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && 0
@@ -397,19 +375,9 @@ pt_entry_t protection_codes[8];     /* maps MI prot to i386 prot code */
 boolean_t pmap_initialized = FALSE; /* pmap_init done yet? */
 
 /*
- * pv_page management structures: locked by pvalloc_lock
+ * pv management structures.
  */
-
-TAILQ_HEAD(pv_pagelist, pv_page);
-struct pv_pagelist pv_freepages;	/* list of pv_pages with free entrys */
-struct pv_pagelist pv_unusedpgs; /* list of unused pv_pages */
-unsigned int pv_nfpvents;	/* # of free pv entries */
-struct pv_page *pv_initpage;	/* bootstrap page from kernel_map */
-vaddr_t pv_cachedva;		/* cached VA for later use */
-
-#define PVE_LOWAT (PVE_PER_PVPAGE / 2)	/* free pv_entry low water mark */
-#define PVE_HIWAT (PVE_LOWAT + (PVE_PER_PVPAGE * 2))
-					/* high water mark */
+struct pool pmap_pv_pool;
 
 /*
  * linked list of all non-kernel pmaps
@@ -425,26 +393,6 @@ struct pool pmap_pmap_pool;
 
 
 /*
- * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * X86_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
- * due to false sharing.
- */
-
-#ifdef MULTIPROCESSOR
-#define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
-#define VASLEW(va,id) ((va)+(id)*NPTECL*PAGE_SIZE)
-#else
-#define PTESLEW(pte, id) (pte)
-#define VASLEW(va,id) (va)
-#endif
-
-/*
- * special VAs and the PTEs that map them
- */
-pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
-caddr_t csrcp, cdstp, zerop, ptpp, early_zerop;
-
-/*
  * pool and cache that PDPs are allocated from
  */
 
@@ -453,8 +401,6 @@ struct pool_cache pmap_pdp_cache;
 u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
-
-caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 extern vaddr_t msgbuf_vaddr;
 extern paddr_t msgbuf_paddr;
@@ -470,52 +416,33 @@ extern vaddr_t lo32_paddr;
 vaddr_t virtual_avail;
 extern int end;
 
-#if defined(I586_CPU)
-/* stuff to fix the pentium f00f bug */
-extern vaddr_t pentium_idt_vaddr;
-#endif
-
 /*
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
-static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
-#define ALLOCPV_NEED	0	/* need PV now */
-#define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
-#define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
-struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
-static void	 pmap_enter_pv(struct pv_head *,
-    struct pv_entry *, struct pmap *, vaddr_t, struct vm_page *);
-static void	 pmap_free_pv(struct pmap *, struct pv_entry *);
-static void	 pmap_free_pvs(struct pmap *, struct pv_entry *);
-static void	 pmap_free_pv_doit(struct pv_entry *);
-void	 pmap_free_pvpage(void);
-struct vm_page	*pmap_get_ptp(struct pmap *, vaddr_t, pd_entry_t **);
-static struct vm_page	*pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
-void	 pmap_free_ptp(struct pmap *, struct vm_page *,
+void  pmap_enter_pv(struct pv_head *, struct pv_entry *, struct pmap *,
+    vaddr_t, struct vm_page *);
+struct vm_page *pmap_get_ptp(struct pmap *, vaddr_t, pd_entry_t **);
+struct vm_page *pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
+void pmap_free_ptp(struct pmap *, struct vm_page *,
     vaddr_t, pt_entry_t *, pd_entry_t **, int32_t *);
-static void	 pmap_freepage(struct pmap *, struct vm_page *, int);
-static boolean_t pmap_is_curpmap(struct pmap *);
+void pmap_freepage(struct pmap *, struct vm_page *, int);
 static boolean_t pmap_is_active(struct pmap *, int);
-static void pmap_map_ptes(struct pmap *, pt_entry_t **, pd_entry_t ***);
-static struct pv_entry *pmap_remove_pv(struct pv_head *, struct pmap *, vaddr_t);
-void	pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
+void pmap_map_ptes(struct pmap *, pt_entry_t **, pd_entry_t ***);
+struct pv_entry *pmap_remove_pv(struct pv_head *, struct pmap *, vaddr_t);
+void pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 boolean_t pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
     vaddr_t, int32_t *, int);
-void	pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
+void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t,
     vaddr_t, vaddr_t, int32_t *, int);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
-static vaddr_t	pmap_tmpmap_pa(paddr_t);
-static pt_entry_t *pmap_tmpmap_pvepte(struct pv_entry *);
-static void	pmap_tmpunmap_pa(void);
-static void	pmap_tmpunmap_pvepte(struct pv_entry *);
-static void	pmap_unmap_ptes(struct pmap *);
+void pmap_unmap_ptes(struct pmap *);
 boolean_t pmap_get_physpage(vaddr_t, int, paddr_t *);
 boolean_t pmap_pdes_valid(vaddr_t, pd_entry_t **, pd_entry_t *);
-void	pmap_alloc_level(pd_entry_t **, vaddr_t, int, long *);
+void pmap_alloc_level(pd_entry_t **, vaddr_t, int, long *);
+void pmap_apte_flush(struct pmap *pmap);
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -526,9 +453,8 @@ void	pmap_alloc_level(pd_entry_t **, vaddr_t, int, long *);
  *		of course the kernel is always loaded
  */
 
-__inline static boolean_t
-pmap_is_curpmap(pmap)
-	struct pmap *pmap;
+static __inline boolean_t
+pmap_is_curpmap(struct pmap *pmap)
 {
 	return((pmap == pmap_kernel()) ||
 	       (pmap->pm_pdirpa == (paddr_t) rcr3()));
@@ -538,101 +464,14 @@ pmap_is_curpmap(pmap)
  * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
  */
 
-__inline static boolean_t
-pmap_is_active(pmap, cpu_id)
-	struct pmap *pmap;
-	int cpu_id;
+static __inline boolean_t
+pmap_is_active(struct pmap *pmap, int cpu_id)
 {
-
 	return (pmap == pmap_kernel() ||
 	    (pmap->pm_cpus & (1U << cpu_id)) != 0);
 }
 
-/*
- * pmap_tmpmap_pa: map a page in for tmp usage
- */
-
-__inline static vaddr_t
-pmap_tmpmap_pa(pa)
-	paddr_t pa;
-{
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
-	caddr_t ptpva = VASLEW(ptpp, id);
-#if defined(DIAGNOSTIC)
-	if (*ptpte)
-		panic("pmap_tmpmap_pa: ptp_pte in use?");
-#endif
-	*ptpte = PG_V | PG_RW | pa;		/* always a new mapping */
-	return((vaddr_t)ptpva);
-}
-
-/*
- * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
- */
-
-__inline static void
-pmap_tmpunmap_pa()
-{
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
-	caddr_t ptpva = VASLEW(ptpp, id);
-#if defined(DIAGNOSTIC)
-	if (!pmap_valid_entry(*ptp_pte))
-		panic("pmap_tmpunmap_pa: our pte invalid?");
-#endif
-	*ptpte = 0;		/* zap! */
-	pmap_update_pg((vaddr_t)ptpva);
-#ifdef MULTIPROCESSOR
-	/*
-	 * No need for tlb shootdown here, since ptp_pte is per-CPU.
-	 */
-#endif  
-}
-
-/*
- * pmap_tmpmap_pvepte: get a quick mapping of a PTE for a pv_entry
- *
- * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
- */
-
-__inline static pt_entry_t *
-pmap_tmpmap_pvepte(pve)
-	struct pv_entry *pve;
-{
-#ifdef DIAGNOSTIC
-	if (pve->pv_pmap == pmap_kernel())
-		panic("pmap_tmpmap_pvepte: attempt to map kernel");
-#endif
-
-	/* is it current pmap?  use direct mapping... */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return(vtopte(pve->pv_va));
-
-	return(((pt_entry_t *)pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pve->pv_ptp)))
-	       + ptei((unsigned long)pve->pv_va));
-}
-
-/*
- * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
- */
-
-__inline static void
-pmap_tmpunmap_pvepte(pve)
-	struct pv_entry *pve;
-{
-	/* was it current pmap?   if so, return */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return;
-
-	pmap_tmpunmap_pa();
-}
-
-__inline static void
+void
 pmap_apte_flush(struct pmap *pmap)
 {
 #if defined(MULTIPROCESSOR)
@@ -671,7 +510,7 @@ pmap_apte_flush(struct pmap *pmap)
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-__inline static void
+void
 pmap_map_ptes(pmap, ptepp, pdeppp)
 	struct pmap *pmap;
 	pt_entry_t **ptepp;
@@ -719,9 +558,8 @@ pmap_map_ptes(pmap, ptepp, pdeppp)
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-__inline static void
-pmap_unmap_ptes(pmap)
-	struct pmap *pmap;
+void
+pmap_unmap_ptes(struct pmap *pmap)
 {
 	if (pmap == pmap_kernel()) {
 		return;
@@ -854,7 +692,8 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 {
 	vaddr_t kva, kva_end;
 	struct pmap *kpm;
-	pt_entry_t *pte;
+	pt_entry_t *tmppte;
+	vaddr_t tmpva;
 	int i;
 	unsigned long p1i;
 	pt_entry_t pg_nx = (cpu_feature & CPUID_NXE? PG_NX : 0);
@@ -936,16 +775,13 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 		if (pmap_valid_entry(PTE_BASE[p1i]))
 			PTE_BASE[p1i] |= PG_G;
 	}
-	/*
-	 * zero_pte is stuck at the end of mapped space for the kernel
-	 * image (disjunct from kva space). This is done so that it
-	 * can safely be used in pmap_growkernel (pmap_get_physpage),
-	 * when it's called for the first time.
-	 * XXXfvdl fix this for MULTIPROCESSOR later.
-	 */
 
-	early_zerop = (caddr_t)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
-	early_zero_pte = PTE_BASE + pl1_i((unsigned long)early_zerop);
+	/*
+	 * Temporary mapping for setting up the direct map.
+	 */
+	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+	virtual_avail += PAGE_SIZE;
+	tmppte = PTE_BASE + pl1_i(tmpva);
 
 	/*
 	 * Enable large pages.
@@ -972,10 +808,10 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 
 		pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
 		off = pdp - trunc_page(pdp);
-		*early_zero_pte = (trunc_page(pdp) & PG_FRAME) | PG_V | PG_RW;
-		pmap_update_pg((vaddr_t)early_zerop);
+		*tmppte = (trunc_page(pdp) & PG_FRAME) | PG_V | PG_RW;
+		pmap_update_pg(tmpva);
 
-		va = (vaddr_t)early_zerop + off;
+		va = tmpva + off;
 		*((pd_entry_t *)va) = (paddr_t)i << L2_SHIFT;
 		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_PS | PG_G;
 	}
@@ -987,88 +823,27 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 
 		pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
 		off = pdp - trunc_page(pdp);
-		*early_zero_pte = (trunc_page(pdp) & PG_FRAME) | PG_V | PG_RW;
-		pmap_update_pg((vaddr_t)early_zerop);
+		*tmppte = (trunc_page(pdp) & PG_FRAME) | PG_V | PG_RW;
+		pmap_update_pg(tmpva);
 
-		va = (vaddr_t)early_zerop + off;
+		va = tmpva + off;
 		*((pd_entry_t *)va) = dmpd + (i << PAGE_SHIFT);
 		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U;
 	}
+	*tmppte = 0;
 	
 	DMPDpa = dmpdp;
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = DMPDpa | PG_V | PG_KW | PG_U;
 
 	tlbflush();
 
-	/*
-	 * now we allocate the "special" VAs which are used for tmp mappings
-	 * by the pmap (and other modules).    we allocate the VAs by advancing
-	 * virtual_avail (note that there are no pages mapped at these VAs).
-	 * we find the PTE that maps the allocated VA via the linear PTE
-	 * mapping.
-	 */
-
-	pte = PTE_BASE + pl1_i(virtual_avail);
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * Waste some VA space to avoid false sharing of cache lines
-	 * for page table pages: Give each possible CPU a cache line
-	 * of PTE's (8) to play with, though we only need 4.  We could
-	 * recycle some of this waste by putting the idle stacks here
-	 * as well; we could waste less space if we knew the largest
-	 * CPU ID beforehand.
-	 */
-	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;
-
-	cdstp = (caddr_t) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
-
-	zerop = (caddr_t) virtual_avail+PAGE_SIZE*2;  zero_pte = pte+2;
-
-	ptpp = (caddr_t) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
-
-	virtual_avail += PAGE_SIZE * X86_MAXPROCS * NPTECL;
-	pte += X86_MAXPROCS * NPTECL;
-#else
-	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;	/* allocate */
-	virtual_avail += PAGE_SIZE; pte++;			/* advance */
-
-	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
-	virtual_avail += PAGE_SIZE; pte++;
-
-	zerop = (caddr_t) virtual_avail;  zero_pte = pte;
-	virtual_avail += PAGE_SIZE; pte++;
-
-	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
-	virtual_avail += PAGE_SIZE; pte++;
-#endif
-
-#if VM_MIN_KERNEL_ADDRESS == KERNBASE
-	early_zerop = zerop;
-	early_zero_pte = zero_pte;
-#endif
-
-	pte = (void *)0xdeadbeef;
-
-	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
-	/* XXXfvdl PTEs not needed here */
-	vmmap = (char *)virtual_avail;			/* don't need pte */
-	virtual_avail += PAGE_SIZE; pte++;
-
-	msgbuf_vaddr = virtual_avail;			/* don't need pte */
+	msgbuf_vaddr = virtual_avail;
 	virtual_avail += round_page(MSGBUFSIZE);
-	pte += x86_btop(round_page(MSGBUFSIZE));
 
-	idt_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += 2 * PAGE_SIZE; pte += 2;
+	idt_vaddr = virtual_avail;
+	virtual_avail += 2 * PAGE_SIZE;
 	idt_paddr = avail_start;			/* steal a page */
 	avail_start += 2 * PAGE_SIZE;
-
-#if defined(I586_CPU)
-	/* pentium f00f bug stuff */
-	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
-	virtual_avail += PAGE_SIZE; pte++;
-#endif
 
 #ifdef _LP64
 	/*
@@ -1076,7 +851,7 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	 * having an initial %cr3 for the MP trampoline).
 	 */
 	lo32_vaddr = virtual_avail;
-	virtual_avail += PAGE_SIZE; pte++;
+	virtual_avail += PAGE_SIZE;
 	lo32_paddr = avail_start;
 	avail_start += PAGE_SIZE;
 #endif
@@ -1094,18 +869,17 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && 0
 	spinlockinit(&pmap_main_lock, "pmaplk", 0);
 #endif
-	simple_lock_init(&pvalloc_lock);
 	simple_lock_init(&pmaps_lock);
 	LIST_INIT(&pmaps);
-	TAILQ_INIT(&pv_freepages);
-	TAILQ_INIT(&pv_unusedpgs);
 
 	/*
 	 * initialize the pmap pool.
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr);
+	    &pool_allocator_nointr);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
+	    &pool_allocator_nointr);
 
 	/*
 	 * Initialize the TLB shootdown queues.
@@ -1148,9 +922,7 @@ pmap_prealloc_lowmem_ptps(void)
 	for (;;) {
 		newp = avail_start;
 		avail_start += PAGE_SIZE;
-		*early_zero_pte = (newp & PG_FRAME) | PG_V | PG_RW;
-		pmap_update_pg((vaddr_t)early_zerop);
-		memset(early_zerop, 0, PAGE_SIZE);
+		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
 		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
 		level--;
 		if (level <= 1)
@@ -1166,10 +938,11 @@ pmap_prealloc_lowmem_ptps(void)
  */
 
 void
-pmap_init()
+pmap_init(void)
 {
 	int lcv;
 	unsigned int npages, i;
+	struct vm_page *pg;
 	vaddr_t addr;
 	vsize_t s;
 
@@ -1230,24 +1003,10 @@ pmap_init()
 	}
 #endif
 
-	/*
-	 * now we need to free enough pv_entry structures to allow us to get
-	 * the kmem_map allocated and inited (done after this
-	 * function is finished).  to do this we allocate one bootstrap page out
-	 * of kernel_map and use it to provide an initial pool of pv_entry
-	 * structures.   we never free this page.
-	 */
-
-	pv_initpage = (struct pv_page *) uvm_km_alloc(kernel_map, PAGE_SIZE);
-	if (pv_initpage == NULL)
-		panic("pmap_init: pv_initpage");
-	pv_cachedva = 0;   /* a VA we have allocated but not used yet */
-	pv_nfpvents = 0;
-	(void) pmap_add_pvpage(pv_initpage, FALSE);
-
-	pj_page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
-	if (pj_page == NULL)
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	if (pg == NULL)
 		panic("pmap_init: pj_page");
+	pj_page = (void *)pmap_map_direct(pg);
 
 	for (i = 0;
 	     i < (PAGE_SIZE / sizeof (union pmap_tlb_shootdown_job_al) - 1);
@@ -1268,340 +1027,6 @@ pmap_init()
  */
 
 /*
- * pv_entry allocation functions:
- *   the main pv_entry allocation functions are:
- *     pmap_alloc_pv: allocate a pv_entry structure
- *     pmap_free_pv: free one pv_entry
- *     pmap_free_pvs: free a list of pv_entrys
- *
- * the rest are helper functions
- */
-
-/*
- * pmap_alloc_pv: inline function to allocate a pv_entry structure
- * => we lock pvalloc_lock
- * => if we fail, we call out to pmap_alloc_pvpage
- * => 3 modes:
- *    ALLOCPV_NEED   = we really need a pv_entry, even if we have to steal it
- *    ALLOCPV_TRY    = we want a pv_entry, but not enough to steal
- *    ALLOCPV_NONEED = we are trying to grow our free list, don't really need
- *			one now
- *
- * "try" is for optional functions like pmap_copy().
- */
-
-__inline static struct pv_entry *
-pmap_alloc_pv(pmap, mode)
-	struct pmap *pmap;
-	int mode;
-{
-	struct pv_page *pvpage;
-	struct pv_entry *pv;
-
-	simple_lock(&pvalloc_lock);
-
-	pvpage = TAILQ_FIRST(&pv_freepages);
-	if (pvpage != NULL) {
-		pvpage->pvinfo.pvpi_nfree--;
-		if (pvpage->pvinfo.pvpi_nfree == 0) {
-			/* nothing left in this one? */
-			TAILQ_REMOVE(&pv_freepages, pvpage, pvinfo.pvpi_list);
-		}
-		pv = pvpage->pvinfo.pvpi_pvfree;
-		KASSERT(pv);
-		pvpage->pvinfo.pvpi_pvfree = pv->pv_next;
-		pv_nfpvents--;  /* took one from pool */
-	} else {
-		pv = NULL;		/* need more of them */
-	}
-
-	/*
-	 * if below low water mark or we didn't get a pv_entry we try and
-	 * create more pv_entrys ...
-	 */
-
-	if (pv_nfpvents < PVE_LOWAT || pv == NULL) {
-		if (pv == NULL)
-			pv = pmap_alloc_pvpage(pmap, (mode == ALLOCPV_TRY) ?
-					       mode : ALLOCPV_NEED);
-		else
-			(void) pmap_alloc_pvpage(pmap, ALLOCPV_NONEED);
-	}
-
-	simple_unlock(&pvalloc_lock);
-	return(pv);
-}
-
-/*
- * pmap_alloc_pvpage: maybe allocate a new pvpage
- *
- * if need_entry is false: try and allocate a new pv_page
- * if need_entry is true: try and allocate a new pv_page and return a
- *	new pv_entry from it.   if we are unable to allocate a pv_page
- *	we make a last ditch effort to steal a pv_page from some other
- *	mapping.    if that fails, we panic...
- *
- * => we assume that the caller holds pvalloc_lock
- */
-
-struct pv_entry *
-pmap_alloc_pvpage(pmap, mode)
-	struct pmap *pmap;
-	int mode;
-{
-	struct vm_page *pg;
-	struct pv_page *pvpage;
-	struct pv_entry *pv;
-	int s;
-
-	/*
-	 * if we need_entry and we've got unused pv_pages, allocate from there
-	 */
-
-	pvpage = TAILQ_FIRST(&pv_unusedpgs);
-	if (mode != ALLOCPV_NONEED && pvpage != NULL) {
-
-		/* move it to pv_freepages list */
-		TAILQ_REMOVE(&pv_unusedpgs, pvpage, pvinfo.pvpi_list);
-		TAILQ_INSERT_HEAD(&pv_freepages, pvpage, pvinfo.pvpi_list);
-
-		/* allocate a pv_entry */
-		pvpage->pvinfo.pvpi_nfree--;	/* can't go to zero */
-		pv = pvpage->pvinfo.pvpi_pvfree;
-		KASSERT(pv);
-		pvpage->pvinfo.pvpi_pvfree = pv->pv_next;
-		pv_nfpvents--;  /* took one from pool */
-		return(pv);
-	}
-
-	/*
-	 *  see if we've got a cached unmapped VA that we can map a page in.
-	 * if not, try to allocate one.
-	 */
-
-	s = splvm();	/* must protect kmem_map with splvm! */
-	if (pv_cachedva == 0) {
-		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-		    PAGE_SIZE, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
-		if (pv_cachedva == 0) {
-			splx(s);
-			return (NULL);
-		}
-	}
-
-	/*
-	 * we have a VA, now let's try and allocate a page.
-	 */
-	if (!simple_lock_try(&uvmexp.kmem_object->vmobjlock)) {
-		splx(s);
-		return (NULL);
-	}
-
-	pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva -
-	    vm_map_min(kernel_map), NULL, UVM_PGA_USERESERVE);
-	if (pg)
-		pg->flags &= ~PG_BUSY;	/* never busy */
-
-	simple_unlock(&uvmexp.kmem_object->vmobjlock);
-	splx(s);
-
-	if (pg == NULL)
-		return (NULL);
-
-	/*
-	 * add a mapping for our new pv_page and free its entrys (save one!)
-	 *
-	 * NOTE: If we are allocating a PV page for the kernel pmap, the
-	 * pmap is already locked!  (...but entering the mapping is safe...)
-	 */
-
-	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ | VM_PROT_WRITE);
-	pmap_update(pmap_kernel());
-	pvpage = (struct pv_page *) pv_cachedva;
-	pv_cachedva = 0;
-	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
-}
-
-/*
- * pmap_add_pvpage: add a pv_page's pv_entrys to the free list
- *
- * => caller must hold pvalloc_lock
- * => if need_entry is true, we allocate and return one pv_entry
- */
-
-static struct pv_entry *
-pmap_add_pvpage(pvp, need_entry)
-	struct pv_page *pvp;
-	boolean_t need_entry;
-{
-	int tofree, lcv;
-
-	/* do we need to return one? */
-	tofree = (need_entry) ? PVE_PER_PVPAGE - 1 : PVE_PER_PVPAGE;
-
-	pvp->pvinfo.pvpi_pvfree = NULL;
-	pvp->pvinfo.pvpi_nfree = tofree;
-	for (lcv = 0 ; lcv < tofree ; lcv++) {
-		pvp->pvents[lcv].pv_next = pvp->pvinfo.pvpi_pvfree;
-		pvp->pvinfo.pvpi_pvfree = &pvp->pvents[lcv];
-	}
-	if (need_entry)
-		TAILQ_INSERT_TAIL(&pv_freepages, pvp, pvinfo.pvpi_list);
-	else
-		TAILQ_INSERT_TAIL(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
-	pv_nfpvents += tofree;
-	return((need_entry) ? &pvp->pvents[lcv] : NULL);
-}
-
-/*
- * pmap_free_pv_doit: actually free a pv_entry
- *
- * => do not call this directly!  instead use either
- *    1. pmap_free_pv ==> free a single pv_entry
- *    2. pmap_free_pvs => free a list of pv_entrys
- * => we must be holding pvalloc_lock
- */
-
-__inline static void
-pmap_free_pv_doit(pv)
-	struct pv_entry *pv;
-{
-	struct pv_page *pvp;
-
-	pvp = (struct pv_page *) x86_trunc_page(pv);
-	pv_nfpvents++;
-	pvp->pvinfo.pvpi_nfree++;
-
-	/* nfree == 1 => fully allocated page just became partly allocated */
-	if (pvp->pvinfo.pvpi_nfree == 1) {
-		TAILQ_INSERT_HEAD(&pv_freepages, pvp, pvinfo.pvpi_list);
-	}
-
-	/* free it */
-	pv->pv_next = pvp->pvinfo.pvpi_pvfree;
-	pvp->pvinfo.pvpi_pvfree = pv;
-
-	/*
-	 * are all pv_page's pv_entry's free?  move it to unused queue.
-	 */
-
-	if (pvp->pvinfo.pvpi_nfree == PVE_PER_PVPAGE) {
-		TAILQ_REMOVE(&pv_freepages, pvp, pvinfo.pvpi_list);
-		TAILQ_INSERT_HEAD(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
-	}
-}
-
-/*
- * pmap_free_pv: free a single pv_entry
- *
- * => we gain the pvalloc_lock
- */
-
-__inline static void
-pmap_free_pv(pmap, pv)
-	struct pmap *pmap;
-	struct pv_entry *pv;
-{
-	simple_lock(&pvalloc_lock);
-	pmap_free_pv_doit(pv);
-
-	/*
-	 * Can't free the PV page if the PV entries were associated with
-	 * the kernel pmap; the pmap is already locked.
-	 */
-	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
-	    pmap != pmap_kernel())
-		pmap_free_pvpage();
-
-	simple_unlock(&pvalloc_lock);
-}
-
-/*
- * pmap_free_pvs: free a list of pv_entrys
- *
- * => we gain the pvalloc_lock
- */
-
-__inline static void
-pmap_free_pvs(pmap, pvs)
-	struct pmap *pmap;
-	struct pv_entry *pvs;
-{
-	struct pv_entry *nextpv;
-
-	simple_lock(&pvalloc_lock);
-
-	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
-		nextpv = pvs->pv_next;
-		pmap_free_pv_doit(pvs);
-	}
-
-	/*
-	 * Can't free the PV page if the PV entries were associated with
-	 * the kernel pmap; the pmap is already locked.
-	 */
-	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
-	    pmap != pmap_kernel())
-		pmap_free_pvpage();
-
-	simple_unlock(&pvalloc_lock);
-}
-
-
-/*
- * pmap_free_pvpage: try and free an unused pv_page structure
- *
- * => assume caller is holding the pvalloc_lock and that
- *	there is a page on the pv_unusedpgs list
- * => if we can't get a lock on the kmem_map we try again later
- */
-
-void
-pmap_free_pvpage()
-{
-	int s;
-	struct vm_map *map;
-	struct vm_map_entry *dead_entries;
-	struct pv_page *pvp;
-
-	s = splvm(); /* protect kmem_map */
-
-	pvp = TAILQ_FIRST(&pv_unusedpgs);
-
-	/*
-	 * note: watch out for pv_initpage which is allocated out of
-	 * kernel_map rather than kmem_map.
-	 */
-
-	if (pvp == pv_initpage)
-		map = kernel_map;
-	else
-		map = kmem_map;
-	if (vm_map_lock_try(map)) {
-
-		/* remove pvp from pv_unusedpgs */
-		TAILQ_REMOVE(&pv_unusedpgs, pvp, pvinfo.pvpi_list);
-
-		/* unmap the page */
-		dead_entries = NULL;
-		uvm_unmap_remove(map, (vaddr_t)pvp, ((vaddr_t)pvp) + PAGE_SIZE,
-		    &dead_entries, NULL);
-		vm_map_unlock(map);
-
-		if (dead_entries != NULL)
-			uvm_unmap_detach(dead_entries, 0);
-
-		pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
-	}
-	if (pvp == pv_initpage)
-		/* no more initpage, we've freed it */
-		pv_initpage = NULL;
-
-	splx(s);
-}
-
-/*
  * main pv_entry manipulation functions:
  *   pmap_enter_pv: enter a mapping onto a pv_head list
  *   pmap_remove_pv: remove a mappiing from a pv_head list
@@ -1619,7 +1044,7 @@ pmap_free_pvpage()
  * => caller should adjust ptp's wire_count before calling
  */
 
-__inline static void
+void
 pmap_enter_pv(pvh, pve, pmap, va, ptp)
 	struct pv_head *pvh;
 	struct pv_entry *pve;	/* preallocated pve for us to use */
@@ -1646,7 +1071,7 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
  * => we return the removed pve
  */
 
-__inline static struct pv_entry *
+struct pv_entry *
 pmap_remove_pv(pvh, pmap, va)
 	struct pv_head *pvh;
 	struct pmap *pmap;
@@ -1671,7 +1096,7 @@ pmap_remove_pv(pvh, pmap, va)
  * p t p   f u n c t i o n s
  */
 
-static __inline struct vm_page *
+struct vm_page *
 pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 {
 	int lidx = level - 1;
@@ -1691,7 +1116,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 	return pg;
 }
 
-static __inline void
+void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
 	int lidx;
@@ -2272,26 +1697,7 @@ pmap_map(va, spa, epa, prot)
 void
 pmap_zero_page(struct vm_page *pg)
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *zpte = PTESLEW(zero_pte, id);
-	caddr_t zerova = VASLEW(zerop, id);
-
-#ifdef DIAGNOSTIC
-	if (*zpte)
-		panic("pmap_zero_page: lock botch");
-#endif
-
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW;		/* map in */
-	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-
-	memset(zerova, 0, PAGE_SIZE);			/* zero */
-#ifdef DIAGNOSTIC
-	*zpte = 0;					/* zap! */
-#endif
+	pagezero(pmap_map_direct(pg));
 }
 
 /*
@@ -2303,23 +1709,18 @@ pmap_zero_page(struct vm_page *pg)
 boolean_t
 pmap_pageidlezero(struct vm_page *pg)
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *zpte = PTESLEW(zero_pte, id);
-	caddr_t zerova = VASLEW(zerop, id);
+	vaddr_t va = pmap_map_direct(pg);
 	boolean_t rv = TRUE;
-	int *ptr;
-	unsigned int i;
+	long *ptr;
+	int i;
 
-#ifdef DIAGNOSTIC
-	if (*zpte)
-		panic("pmap_zero_page_uncached: lock botch");
-#endif
-	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_N;	/* map in */
-	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-	for (i = 0, ptr = (int *) zerova; i < PAGE_SIZE / sizeof(int); i++) {
+	/*
+	 * XXX - We'd really like to do this uncached. But at this moment
+ 	 *       we're never called, so just pretend that this works.
+	 *       It shouldn't be too hard to create a second direct map
+	 *       with uncached mappings.
+	 */
+	for (i = 0, ptr = (long *) va; i < PAGE_SIZE / sizeof(long); i++) {
 		if (whichqs != 0) {
 
 			/*
@@ -2335,9 +1736,6 @@ pmap_pageidlezero(struct vm_page *pg)
 		*ptr++ = 0;
 	}
 
-#ifdef DIAGNOSTIC
-	*zpte = 0;					/* zap! */
-#endif
 	return (rv);
 }
 
@@ -2348,28 +1746,10 @@ pmap_pageidlezero(struct vm_page *pg)
 void
 pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 {
-	paddr_t srcpa = VM_PAGE_TO_PHYS(srcpg);
-	paddr_t dstpa = VM_PAGE_TO_PHYS(dstpg);
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *spte = PTESLEW(csrc_pte,id);
-	pt_entry_t *dpte = PTESLEW(cdst_pte,id);
-	caddr_t csrcva = VASLEW(csrcp, id);
-	caddr_t cdstva = VASLEW(cdstp, id);
+	vaddr_t srcva = pmap_map_direct(srcpg);
+	vaddr_t dstva = pmap_map_direct(dstpg);
 
-#ifdef DIAGNOSTIC
-	if (*spte || *dpte)
-		panic("pmap_copy_page: lock botch");
-#endif
-
-	*spte = (srcpa & PG_FRAME) | PG_V | PG_RW;
-	*dpte = (dstpa & PG_FRAME) | PG_V | PG_RW;
-	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
-	memcpy(cdstva, csrcva, PAGE_SIZE);
-#ifdef DIAGNOSTIC
-	*spte = *dpte = 0;			/* zap! */
-#endif
+	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 }
 
 /*
@@ -2396,7 +1776,6 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 	int32_t *cpumaskp;
 	int flags;
 {
-	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
 	pt_entry_t opte;
@@ -2461,14 +1840,11 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		simple_unlock(&vm_physmem[bank].pmseg.pvhead[off].pvh_lock);
 
 		if (pve) {
-			pve->pv_next = pv_tofree;
-			pv_tofree = pve;
+			pool_put(&pmap_pv_pool, pve);
 		}
 
 		/* end of "for" loop: time for next pte */
 	}
-	if (pv_tofree)
-		pmap_free_pvs(pmap, pv_tofree);
 }
 
 
@@ -2542,7 +1918,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	simple_unlock(&vm_physmem[bank].pmseg.pvhead[off].pvh_lock);
 
 	if (pve)
-		pmap_free_pv(pmap, pve);
+		pool_put(&pmap_pv_pool, pve);
 	return(TRUE);
 }
 
@@ -2704,7 +2080,7 @@ pmap_page_remove(pg)
 {
 	int bank, off;
 	struct pv_head *pvh;
-	struct pv_entry *pve, *npve, **prevptr, *killlist = NULL;
+	struct pv_entry *pve, *npve, **prevptr;
 	pt_entry_t *ptes, opte;
 	pd_entry_t **pdes;
 #ifdef DIAGNOSTIC
@@ -2771,10 +2147,9 @@ pmap_page_remove(pg)
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
 		*prevptr = npve;			/* remove it */
-		pve->pv_next = killlist;		/* mark it for death */
-		killlist = pve;
+		pool_put(&pmap_pv_pool, pve);
 	}
-	pmap_free_pvs(NULL, killlist);
+
 	pvh->pvh_list = NULL;
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
@@ -3242,7 +2617,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap_initialized && bank != -1) {
 		pvh = &vm_physmem[bank].pmseg.pvhead[off];
 		if (pve == NULL) {
-			pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
+			pve = pool_get(&pmap_pv_pool, PR_NOWAIT);
 			if (pve == NULL) {
 				if (flags & PMAP_CANFAIL) {
 					error = ENOMEM;
@@ -3258,7 +2633,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		/* new mapping is not PG_PVLIST.   free pve if we've got one */
 		pvh = NULL;		/* ensure !PG_PVLIST */
 		if (pve)
-			pmap_free_pv(pmap, pve);
+			pool_put(&pmap_pv_pool, pve);
 	}
 
 enter_now:
@@ -3328,9 +2703,7 @@ pmap_get_physpage(va, level, paddrp)
 
 		if (uvm_page_physget(paddrp) == FALSE)
 			panic("pmap_get_physpage: out of memory");
-		*early_zero_pte = (*paddrp & PG_FRAME) | PG_V | PG_RW;
-		pmap_update_pg((vaddr_t)early_zerop);
-		memset(early_zerop, 0, PAGE_SIZE);
+		memset((void *)PMAP_DIRECT_MAP(*paddrp), 0, PAGE_SIZE);
 	} else {
 		ptp = uvm_pagealloc(&kpm->pm_obj[level - 1],
 				    ptp_va2o(va, level), NULL,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.1 2004/01/28 01:39:38 mickey Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.2 2005/05/27 19:32:39 art Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*-
@@ -129,11 +129,9 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		/*
 		 * Get the VA for the page.
 		 */
-#ifdef LARGEPAGES
 		if (oldpte & PG_PS)
 			pgva = (vaddr_t)dst & PG_LGFRAME;
 		else
-#endif
 			pgva = x86_trunc_page(dst);
 
 		/*
@@ -141,11 +139,9 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		 * with this mapping and subtract it from the
 		 * total size.
 		 */
-#ifdef LARGEPAGES
 		if (oldpte & PG_PS)
-			limit = NBPD - ((vaddr_t)dst & (NBPD - 1));
+			limit = NBPD_L2 - ((vaddr_t)dst & (NBPD_L2 - 1));
 		else
-#endif
 			limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
 		if (limit > size)
 			limit = size;

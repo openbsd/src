@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2004/07/22 00:48:41 art Exp $ */
+/*	$OpenBSD: mem.c,v 1.4 2005/05/27 19:32:39 art Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -58,7 +58,6 @@
 
 #include <uvm/uvm_extern.h>
 
-extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
 extern int start, end, etext;
 
@@ -121,23 +120,11 @@ int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	extern vaddr_t kern_end;
-	vaddr_t o, v;
+	vaddr_t v;
 	int c;
 	struct iovec *iov;
 	int error = 0;
-	static int physlock;
 
-	if (minor(dev) == 0) {
-		/* lock against other uses of shared vmmap */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
-	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -151,17 +138,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 
 /* minor device 0 is physical memory */
 		case 0:
-			v = uio->uio_offset;
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, PMAP_WIRED);
-			pmap_update(pmap_kernel());
-			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + NBPG);
-			pmap_update(pmap_kernel());
+			v = PMAP_DIRECT_MAP(uio->uio_offset);
+			error = uiomove((caddr_t)v, uio->uio_resid, uio);
 			continue;
 
 /* minor device 1 is kernel memory */
@@ -208,11 +186,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (minor(dev) == 0) {
-		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
-		physlock = 0;
-	}
+
 	return (error);
 }
 
