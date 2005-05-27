@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.1 2005/05/27 05:19:55 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.2 2005/05/27 05:48:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -146,14 +146,6 @@ struct idname identity_types[] = {
 	{ SADB_IDENTTYPE_FQDN,		"fqdn",			NULL },
 	{ SADB_IDENTTYPE_USERFQDN,	"ufqdn",		NULL },
 	{ SADB_X_IDENTTYPE_CONNECTION,	"x_connection",		NULL },
-	{ 0,				NULL,			NULL }
-};
-
-struct idname states[] = {
-	{ SADB_SASTATE_LARVAL,		"larval",		NULL },
-	{ SADB_SASTATE_MATURE,		"mature",		NULL },
-	{ SADB_SASTATE_DYING,		"dying",		NULL },
-	{ SADB_SASTATE_DEAD,		"dead",			NULL },
 	{ 0,				NULL,			NULL }
 };
 
