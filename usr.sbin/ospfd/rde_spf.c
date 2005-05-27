@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.23 2005/05/27 00:56:35 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.24 2005/05/27 01:02:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -198,14 +198,13 @@ spf_calc(struct area *area)
 	/* calculate route table */
 	RB_FOREACH(v, lsa_tree, tree) {
 		lsa_age(v);
-		if (ntohs(v->lsa->hdr.age) == MAX_AGE ||
-		    v->cost == LS_INFINITY)
+		if (ntohs(v->lsa->hdr.age) == MAX_AGE)
 			continue;
 
 		switch (v->type) {
 		case LSA_TYPE_ROUTER:
 			/* stub networks */
-			if (v->nexthop.s_addr == 0)
+			if (v->cost == LS_INFINITY || v->nexthop.s_addr == 0)
 				continue;
 
 			for (i = 0; i < lsa_num_links(v); i++) {
@@ -236,7 +235,7 @@ spf_calc(struct area *area)
 			    v->lsa->data.rtr.flags);
 			break;
 		case LSA_TYPE_NETWORK:
-			if (v->nexthop.s_addr == 0)
+			if (v->cost == LS_INFINITY || v->nexthop.s_addr == 0)
 				continue;
 
 			addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
@@ -264,7 +263,7 @@ spf_calc(struct area *area)
 			v->cost = w->cost +
 			    ntohl(v->lsa->data.sum.metric);
 
-			if (v->nexthop.s_addr == 0)
+			if (v->cost == LS_INFINITY || v->nexthop.s_addr == 0)
 				continue;
 
 			adv_rtr.s_addr = htonl(v->adv_rtr);
