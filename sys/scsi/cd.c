@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.80 2005/05/27 16:07:51 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.81 2005/05/27 23:51:53 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1490,7 +1490,7 @@ cd_set_pa_immed(cd, flags)
 {
 	struct scsi_mode_sense_buf data;
 	struct cd_audio_page *audio = NULL;
-	int error;
+	int error, oflags;
 
 	if (cd->sc_link->flags & SDEV_ATAPI)
 		/* XXX Noop? */
@@ -1503,8 +1503,11 @@ cd_set_pa_immed(cd, flags)
 	if (audio == NULL)
 		return (EIO);
 		
+	oflags = audio->flags;
 	audio->flags &= ~CD_PA_SOTC;
 	audio->flags |= CD_PA_IMMED;
+	if (audio->flags == oflags)
+		return (0);
 
 	if (MODE_HEADER_IS_BIG(&data, audio))
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
