@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.6 2005/04/13 05:49:57 uwe Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.7 2005/05/27 05:09:42 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -23,6 +23,7 @@
 #include <sys/conf.h>
 
 #include <arm/xscale/pxa2x0reg.h>
+#include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_apm.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 
@@ -75,7 +76,7 @@ extern struct cfdriver apm_cd;
 /* battery-related GPIO pins */
 #define GPIO_AC_IN_C3000	115	/* 0=AC connected */
 #define GPIO_CHRG_CO_C3000	101	/* 1=battery full */
-#define GPIO_BATT_COVER_C3000	90	/* ?=open */
+#define GPIO_BATT_COVER_C3000	90	/* 0=unlocked */
 
 /*
  * Battery-specific information
@@ -100,7 +101,7 @@ const struct battery_threshold zaurus_battery_life_c3000[] = {
 	{188,	75,	APM_BATT_HIGH},
 	{184,	50,	APM_BATT_HIGH},
 	{180,	25,	APM_BATT_LOW},
-	{176,	5,	APM_BATT_LOW},
+	{178,	5,	APM_BATT_LOW},
 	{0,	0,	APM_BATT_CRITICAL},
 };
 
@@ -124,8 +125,9 @@ const	struct timeval zapm_battchkrate = { 60, 0 };
 
 #if 0
 void	zapm_shutdown(void *);
-int	zapm_acintr(void *);
 #endif
+int	zapm_acintr(void *);
+int	zapm_bcintr(void *);
 int	zapm_ac_on(void);
 int	max1111_adc_value(int);
 int	max1111_adc_value_avg(int, int);
@@ -161,10 +163,10 @@ apm_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_gpio_set_function(GPIO_CHRG_CO_C3000, GPIO_IN);
 	pxa2x0_gpio_set_function(GPIO_BATT_COVER_C3000, GPIO_IN);
 
-#if 0
-	(void)pxa2x0_gpio_intr_establish(GPIO_AC_IN_C3000, IST_EDGE_BOTH,
-	    IPL_BIO, zapm_acintr, sc, "apm_ac");
-#endif
+	(void)pxa2x0_gpio_intr_establish(GPIO_AC_IN_C3000,
+	    IST_EDGE_BOTH, IPL_BIO, zapm_acintr, sc, "apm_ac");
+	(void)pxa2x0_gpio_intr_establish(GPIO_BATT_COVER_C3000,
+	    IST_EDGE_BOTH, IPL_BIO, zapm_bcintr, sc, "apm_bc");
 
 	sc->sc_event = APM_NOEVENT;
 	sc->sc.sc_get_event = zapm_get_event;
@@ -199,13 +201,21 @@ zapm_shutdown(void *v)
 
 	zapm_enable_charging(sc, 0);
 }
+#endif
 
 int
 zapm_acintr(void *v)
 {
+	zapm_poll(v);
 	return (1);
 }
-#endif
+
+int
+zapm_bcintr(void *v)
+{
+	zapm_poll(v);
+	return (1);
+}
 
 int
 zapm_ac_on(void)
@@ -376,28 +386,40 @@ zapm_charge_complete(struct zapm_softc *sc)
 	return (sc->sc_batt_full >= MIN_BATT_FULL);
 }
 
+/*
+ * Poll power-management related GPIO inputs, update battery life
+ * in softc, and/or control battery charging.
+ */
 void
 zapm_poll(void *v)
 {
 	struct zapm_softc *sc = v;
-	int	ac_on = sc->sc_ac_on;
-	int	charging = sc->sc_charging;
-	int	volt = sc->sc_batt_volt;
-	int	s;
+	int ac_on;
+	int bc_lock;
+	int charging;
+	int volt;
+	int s;
 
 	s = splhigh();
 
+	/* Check positition of battery compartment lock switch. */
+	bc_lock = pxa2x0_gpio_get_bit(GPIO_BATT_COVER_C3000) ? 1 : 0;
+
+	/* Stop discharging. */
 	if (sc->sc_discharging) {
 		sc->sc_discharging = 0;
 		volt = zapm_batt_volt();
 		ac_on = zapm_ac_on();
-		charging = ac_on && sc->sc_batt_full < MIN_BATT_FULL;
-		zapm_enable_charging(sc, charging);
+		charging = 0;
 		DPRINTF(("zapm_poll: discharge off volt %d\n", volt));
-	} else
+	} else {
 		ac_on = zapm_ac_on();
+		charging = sc->sc_charging;
+		volt = sc->sc_batt_volt;
+	}
 
-	if (ac_on) {
+	/* Start or stop charging as necessary. */
+	if (ac_on && bc_lock) {
 		if (charging) {
 			if (zapm_charge_complete(sc)) {
 				DPRINTF(("zapm_poll: batt full\n"));
@@ -410,33 +432,46 @@ zapm_poll(void *v)
 			zapm_enable_charging(sc, 1);
 			DPRINTF(("zapm_poll: start charging volt %d\n", volt));
 		}
-		
-		if (!sc->sc_suspended && sc->sc_batt_full == 0 &&
-		    ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)) {
+	} else {
+		if (charging) {
+			charging = 0;
+			zapm_enable_charging(sc, 0);
+			timerclear(&sc->sc_lastbattchk);
+			DPRINTF(("zapm_poll: stop charging\n"));
+		}
+		sc->sc_batt_full = 0;
+	}
+
+	/*
+	 * Restart charging once in a while.  Discharge a few milliseconds
+	 * before updating the voltage in our softc if A/C is connected.
+	 */
+	if (bc_lock && ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)) {
+		if (sc->sc_suspended) {
+			printf("zapm_poll: suspended %lu %lu\n",
+			    sc->sc_lastbattchk.tv_sec,
+			    pxa2x0_rtc_getsecs());
+			if (charging) {
+				zapm_enable_charging(sc, 0);
+				delay(15000);
+				zapm_enable_charging(sc, 1);
+				pxa2x0_rtc_setalarm(pxa2x0_rtc_getsecs() +
+				    zapm_battchkrate.tv_sec + 1);
+			}
+		} else if (ac_on && sc->sc_batt_full == 0) {
 			DPRINTF(("zapm_poll: discharge on\n"));
 			if (charging)
 				zapm_enable_charging(sc, 0);
 			sc->sc_discharging = 1;
 			scoop_discharge_battery(1);
 			timeout_add(&sc->sc_poll, DISCHARGE_TIMEOUT);
-		}
-	} else {
-		if (sc->sc_ac_on) {
-			sc->sc_batt_full = 0;
-			charging = 0;
-			zapm_enable_charging(sc, 0);
-			timerclear(&sc->sc_lastbattchk);
-			DPRINTF(("zapm_poll: stop charging\n"));
-		} else if (!sc->sc_suspended &&
-		    ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)) {
+		} else if (!ac_on) {
 			volt = zapm_batt_volt();
 			DPRINTF(("zapm_poll: volt %d\n", volt));
 		}
-
-		if (zapm_batt_state(volt) == APM_BATT_CRITICAL)
-			sc->sc_event = APM_CRIT_SUSPEND_REQ;
 	}
 
+	/* Update the cached power state in our softc. */
 	if (ac_on != sc->sc_ac_on || charging != sc->sc_charging ||
 	    volt != sc->sc_batt_volt) {
 		sc->sc_ac_on = ac_on;
@@ -444,6 +479,14 @@ zapm_poll(void *v)
 		sc->sc_batt_volt = volt;
 		if (sc->sc_event == APM_NOEVENT)
 			sc->sc_event = APM_POWER_CHANGE;
+	}
+
+	/* Detect battery low conditions. */
+	if (!ac_on) {
+		if (zapm_batt_life(volt) < 5)
+			sc->sc_event = APM_BATTERY_LOW;
+		if (zapm_batt_state(volt) == APM_BATT_CRITICAL)
+			sc->sc_event = APM_CRIT_SUSPEND_REQ;
 	}
 
 #ifdef APMDEBUG
@@ -513,16 +556,18 @@ zapm_suspend(struct pxa2x0_apm_softc *pxa_sc)
 {
 	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
 
+	/* Poll in suspended mode and forget the discharge timeout. */
 	sc->sc_suspended = 1;
 	timeout_del(&sc->sc_poll);
+
+	/* Make sure charging is enabled and RTC alarm is set. */
+	timerclear(&sc->sc_lastbattchk);
+
 	zapm_poll(sc);
 
-	if (sc->sc_charging) {
-		zapm_enable_charging(sc, 0);
-		delay(15000);
-		zapm_enable_charging(sc, 1);
-	}
-
+#if 0
+	pxa2x0_rtc_setalarm(pxa2x0_rtc_getsecs() + 5);
+#endif
 	pxa2x0_wakeup_config(PXA2X0_WAKEUP_ALL, 1);
 }
 
@@ -561,8 +606,19 @@ zapm_resume(struct pxa2x0_apm_softc *pxa_sc)
 	zssp_init();
 
 	zapm_poll(sc);
-	if (wakeup)
+
+	if (wakeup) {
+		/* Resume normal polling. */
 		sc->sc_suspended = 0;
+
+		pxa2x0_rtc_setalarm(0);
+	} else {
+#if 0
+		DPRINTF(("zapm_resume: suspended %lu %lu\n",
+		    sc->sc_lastbattchk.tv_sec, pxa2x0_rtc_getsecs()));
+		pxa2x0_rtc_setalarm(pxa2x0_rtc_getsecs() + 5);
+#endif
+	}
 
 	return (wakeup);
 }
@@ -608,20 +664,20 @@ zapm_poweroff(void)
 void
 zapm_restart(void)
 {
-	struct pxa2x0_apm_softc *sc;
-	int rv;
+	if (apm_cd.cd_ndevs > 0 && apm_cd.cd_devs[0] != NULL) {
+		struct pxa2x0_apm_softc *sc = apm_cd.cd_devs[0];
+		int rv;
 
-	KASSERT(apm_cd.cd_ndevs > 0 && apm_cd.cd_devs[0] != NULL);
-	sc = apm_cd.cd_devs[0];
-
-	/*
-	 * Reduce the ROM Delay Next Access and ROM Delay First Access times
-	 * for synchronous flash connected to nCS1.
-	 */
-	rv = bus_space_read_4(sc->sc_iot, sc->sc_memctl_ioh, MEMCTL_MSC0);
-        if ((rv & 0xffff0000) == 0x7ff00000)
-		bus_space_write_4(sc->sc_iot, sc->sc_memctl_ioh,
-		    MEMCTL_MSC0, (rv & 0xffff) | 0x7ee00000);
+		/*
+		 * Reduce the ROM Delay Next Access and ROM Delay First
+		 * Access times for synchronous flash connected to nCS1.
+		 */
+		rv = bus_space_read_4(sc->sc_iot, sc->sc_memctl_ioh,
+		    MEMCTL_MSC0);
+		if ((rv & 0xffff0000) == 0x7ff00000)
+			bus_space_write_4(sc->sc_iot, sc->sc_memctl_ioh,
+			    MEMCTL_MSC0, (rv & 0xffff) | 0x7ee00000);
+	}
 
 	/* External reset circuit presumably asserts nRESET_GPIO. */
 	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
