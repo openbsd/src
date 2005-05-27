@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.2 2005/05/24 07:51:53 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.3 2005/05/27 22:57:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -116,8 +116,10 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	for (i = 0; trunk_protos[i].ti_proto != TRUNK_PROTO_NONE; i++) {
 		if (trunk_protos[i].ti_proto == TRUNK_PROTO_DEFAULT) {
 			tr->tr_proto = trunk_protos[i].ti_proto;
-			if ((error = trunk_protos[i].ti_attach(tr)) != 0)
+			if ((error = trunk_protos[i].ti_attach(tr)) != 0) {
+				free(tr, M_DEVBUF);
 				return (error);
+			}
 			break;
 		}
 	}
