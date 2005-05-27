@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.25 2005/05/27 15:27:27 hshoexer Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.26 2005/05/27 17:59:22 ho Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -580,7 +580,31 @@ export_flow(void **p, u_int8_t ftype, struct sockaddr_encap *flow,
 	sab = (struct sadb_protocol *)*p;
 	sab->sadb_protocol_len = sizeof(struct sadb_protocol) /
 	    sizeof(uint64_t);
-	sab->sadb_protocol_proto = ftype;
+
+	switch (ftype) {
+	case IPSP_IPSEC_USE:
+		sab->sadb_protocol_proto = SADB_X_FLOW_TYPE_USE;
+		break;
+	case IPSP_IPSEC_ACQUIRE:
+		sab->sadb_protocol_proto = SADB_X_FLOW_TYPE_ACQUIRE;
+		break;
+	case IPSP_IPSEC_REQUIRE:
+		sab->sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
+		break;
+	case IPSP_DENY:
+		sab->sadb_protocol_proto = SADB_X_FLOW_TYPE_DENY;
+		break;
+	case IPSP_PERMIT:
+		sab->sadb_protocol_proto = SADB_X_FLOW_TYPE_BYPASS;
+		break;
+	case IPSP_IPSEC_DONTACQ:
+		sab->sadb_protocol_proto = SADB_X_FLOW_TYPE_DONTACQ;
+		break;
+	default:
+		sab->sadb_protocol_proto = 0;
+		break;
+	}
+	
 	switch (flow->sen_type) {
 #ifdef INET
 	case SENT_IP4:
