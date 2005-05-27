@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.105 2005/04/20 23:00:41 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.106 2005/05/27 08:33:25 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -756,6 +756,7 @@ void
 carpdetach(struct carp_softc *sc)
 {
 	struct carp_if *cif;
+	int s;
 
 	timeout_del(&sc->sc_ad_tmo);
 	timeout_del(&sc->sc_md_tmo);
@@ -774,6 +775,7 @@ carpdetach(struct carp_softc *sc)
 	carp_setrun(sc, 0);
 	carp_multicast_cleanup(sc);
 
+	s = splnet();
 	if (sc->sc_carpdev != NULL) {
 		hook_disestablish(sc->sc_carpdev->if_linkstatehooks,
 		    sc->lh_cookie);
@@ -786,6 +788,7 @@ carpdetach(struct carp_softc *sc)
 		}
 	}
 	sc->sc_carpdev = NULL;
+	splx(s);
 }
 
 /* Detach an interface from the carp.  */
@@ -1408,6 +1411,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 	struct carp_if *cif, *ncif = NULL;
 	struct carp_softc *vr, *after = NULL;
 	int myself = 0, error = 0;
+	int s;
 
 	if (ifp == sc->sc_carpdev)
 		return (0);
@@ -1485,9 +1489,11 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (sc->sc_naddrs || sc->sc_naddrs6)
 			sc->sc_if.if_flags |= IFF_UP;
 		carp_set_enaddr(sc);
+		s = splnet();
 		sc->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
 		    carp_carpdev_state, ifp);
 		carp_carpdev_state(ifp);
+		splx(s);
 	} else {
 		carpdetach(sc);
 		sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);

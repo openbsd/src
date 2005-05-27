@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.54 2005/04/25 01:34:26 brad Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.55 2005/05/27 08:33:25 mpf Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -499,6 +499,7 @@ vlan_unconfig(struct ifnet *ifp)
 
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
+	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
 	splx(s);
 
 	/*
@@ -512,7 +513,6 @@ vlan_unconfig(struct ifnet *ifp)
 	/* Disconnect from parent. */
 	ifv->ifv_p = NULL;
 	ifv->ifv_if.if_mtu = ETHERMTU;
-	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
 
 	/* Clear our MAC address. */
 	ifa = ifnet_addrs[ifv->ifv_if.if_index];
