@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.13 2004/09/28 04:37:33 brad Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.14 2005/05/27 00:18:59 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -589,9 +589,4 @@ struct vr_softc {
 
 #ifndef ETHER_CRC_LEN
 #define ETHER_CRC_LEN 4
-#endif
-
-#ifdef __alpha__
-#undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
 #endif
