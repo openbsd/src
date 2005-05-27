@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.21 2005/05/27 02:45:15 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.22 2005/05/27 08:44:43 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -217,6 +217,10 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		    nbr_action_name(nbr_fsm_tbl[i].action),
 		    inet_ntoa(nbr->id), nbr_state_name(old_state),
 		    nbr_state_name(nbr->state));
+
+		if (nbr->iface->type == IF_TYPE_VIRTUALLINK) {
+			orig_rtr_lsa(nbr->iface->area);
+		}
 	}
 
 	return (ret);
