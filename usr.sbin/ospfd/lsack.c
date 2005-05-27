@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.12 2005/05/26 23:42:18 claudio Exp $ */
+/*	$OpenBSD: lsack.c,v 1.13 2005/05/27 02:24:42 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -256,7 +256,7 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 					continue;
 				if (!(nbr->state & NBR_STA_FLOOD))
 					continue;
-				send_ls_ack(iface, nbr->addr, ptr, ptr - buf);
+				send_ls_ack(iface, nbr->addr, buf, ptr - buf);
 			}
 			break;
 		default:
