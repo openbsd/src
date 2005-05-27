@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.21 2005/05/26 23:31:04 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.22 2005/05/27 00:50:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -167,16 +167,12 @@ spf_calc(struct area *area)
 				if (d > w->cost)
 					continue;
 
-				if (d == w->cost) {
-					calc_next_hop(w, v);
-				}
-
 				if (d < w->cost) {
-					calc_next_hop(w, v);
-
 					w->cost = d;
 					w->prev = v;
 				}
+
+				calc_next_hop(w, v);
 			} else {
 				if (w->cost == LS_INFINITY) {
 					w->cost = 0;
