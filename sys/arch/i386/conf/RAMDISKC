@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.57 2005/05/10 01:16:31 brad Exp $
+#	$OpenBSD: RAMDISKC,v 1.58 2005/05/27 02:08:14 martin Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -176,8 +176,6 @@ pccom*	at pcmcia?			# PCMCIA modem cards
 #aic*	at isapnp?
 #aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
 #scsibus* at aic?
-#ncr*	at pci?			# NCR 538XX SCSI controllers(old)
-#scsibus* at ncr?
 #siop*	at pci?			# NCR 538XX SCSI controllers(new)
 #scsibus* at siop?
 #adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI

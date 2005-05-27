@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.49 2005/05/24 07:51:21 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.50 2005/05/27 02:08:14 martin Exp $
 #
 # PPC GENERIC config file
 #
@@ -44,7 +44,6 @@ ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
 siop*		at pci?
-#ncr*		at pci?
 fxp*		at pci?
 de*		at pci?
 #vme*		at pci?
@@ -124,7 +123,6 @@ zsc*		at macobio?
 zstty*		at zsc?
 
 scsibus*	at siop?
-#scsibus*	at ncr?
 #scsibus*	at adv?
 scsibus*	at ahc?
 #scsibus*	at bha?

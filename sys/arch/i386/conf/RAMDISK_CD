@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.95 2005/05/10 01:16:31 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.96 2005/05/27 02:08:14 martin Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -212,8 +212,6 @@ aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 aic*	at isapnp?
 aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
 scsibus* at aic?
-#ncr*	at pci?			# NCR 538XX SCSI controllers(old)
-#scsibus* at ncr?
 siop*	at pci?			# NCR 538XX SCSI controllers(new)
 scsibus* at siop?
 adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI

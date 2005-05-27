@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2005/05/27 02:08:14 martin Exp $
 #
 # MVMEPPC GENERIC config file
 #
@@ -40,7 +40,6 @@ pci*		at mpcpcibr0
 pchb*		at pci?			# PCI host bridge
 pcib*		at pci?			# PCI-ISA bridge
 siop*		at pci?
-#ncr*		at pci?
 de*		at pci?
 #vme*		at pci?
 #pciide*	at pci?
@@ -67,7 +66,6 @@ isa*	at	pcib?
 #### SCSI attachment points
 
 scsibus*	at siop?
-#scsibus*	at ncr?
 
 #wdc*	at mainbus? flags 0x0
 #wd*	at wdc? flags 0x0000

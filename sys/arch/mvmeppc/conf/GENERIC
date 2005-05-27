@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.9 2005/05/27 02:08:14 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -44,7 +44,6 @@ pci*		at mpcpcibr0
 pchb*		at pci?			# PCI host bridge
 pcib*		at pci?			# PCI-ISA bridge
 siop*		at pci?
-#ncr*		at pci?
 de*		at pci?
 #vme*		at pci?
 #pciide*	at pci?
@@ -71,7 +70,6 @@ isa*	at	pcib?
 #### SCSI attachment points
 
 scsibus*	at siop?
-#scsibus*	at ncr?
 
 #wdc*	at mainbus? flags 0x0
 #wd*	at wdc? flags 0x0000
