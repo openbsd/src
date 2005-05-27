@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.26 2005/04/14 03:45:03 joel Exp $
+.\"	$OpenBSD: pflogd.8,v 1.27 2005/05/27 20:27:17 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -148,7 +148,7 @@ Tcpdump can restrict the output
 to packets logged on a specified interface, a rule number, a reason,
 a direction, an IP family or an action.
 .Pp
-.Bl -tag -width "reason match " -compact
+.Bl -tag -width "ruleset authpf " -compact
 .It ip
 Address family equals IPv4.
 .It ip6
@@ -157,6 +157,8 @@ Address family equals IPv6.
 Interface name equals "kue0".
 .It on kue0
 Interface name equals "kue0".
+.It ruleset authpf
+Ruleset name equals "authpf".
 .It rulenum 10
 Rule number equals 10.
 .It reason match
