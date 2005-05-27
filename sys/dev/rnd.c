@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.76 2005/03/04 17:09:21 robert Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.77 2005/05/27 16:33:27 ho Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -472,10 +472,10 @@ rnd_qlen(void)
 void dequeue_randomness(void *);
 
 static void add_entropy_words(const u_int32_t *, u_int n);
-static __inline void extract_entropy(register u_int8_t *, int);
+void extract_entropy(register u_int8_t *, int);
 
 static u_int8_t arc4_getbyte(void);
-static __inline void arc4_stir(void);
+void arc4_stir(void);
 void arc4_reinit(void *v);
 void arc4maybeinit(void);
 
@@ -517,7 +517,7 @@ arc4_getbyte(void)
 	return (ret);
 }
 
-static __inline void
+void
 arc4_stir(void)
 {
 	u_int8_t buf[256];
@@ -882,7 +882,7 @@ dequeue_randomness(v)
  * bits of entropy are left in the pool, but it does not restrict the
  * number of bytes that are actually obtained.
  */
-static __inline void
+void
 extract_entropy(buf, nbytes)
 	register u_int8_t *buf;
 	int	nbytes;
