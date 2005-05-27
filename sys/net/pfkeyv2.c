@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.104 2005/05/25 05:47:53 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.105 2005/05/27 15:29:55 hshoexer Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2216,28 +2216,203 @@ done:
 }
 
 int
-pfkeyv2_sysctl_dump(void *arg)
+pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
+    int *lenp)
+{
+	struct sadb_ident *ident;
+	int i, rval;
+	void *p;
+
+	/* Find how much space we need. */
+	i = 2 * sizeof(struct sadb_protocol);
+
+	/* We'll need four of them: src, src mask, dst, dst mask. */
+	switch (ipo->ipo_addr.sen_type) {
+#ifdef INET
+	case SENT_IP4:
+		i += 4 * PADUP(sizeof(struct sockaddr_in));
+		i += 4 * sizeof(struct sadb_address);
+		break;
+#endif /* INET */
+#ifdef INET6
+	case SENT_IP6:
+		i += 4 * PADUP(sizeof(struct sockaddr_in6));
+		i += 4 * sizeof(struct sadb_address);
+		break;
+#endif /* INET6 */
+	default:
+		return (EINVAL);
+	}
+
+	/* Local address, might be zeroed. */
+	switch (ipo->ipo_src.sa.sa_family) {
+	case 0:
+		break;
+#ifdef INET
+	case AF_INET:
+		i += PADUP(sizeof(struct sockaddr_in));
+		i += sizeof(struct sadb_address);
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		i += PADUP(sizeof(struct sockaddr_in6));
+		i += sizeof(struct sadb_address);
+		break;
+#endif /* INET6 */
+	default:
+		return (EINVAL);
+	}
+
+	/* Remote address, might be zeroed. XXX ??? */
+	switch (ipo->ipo_dst.sa.sa_family) {
+	case 0:
+		break;
+#ifdef INET
+	case AF_INET:
+		i += PADUP(sizeof(struct sockaddr_in));
+		i += sizeof(struct sadb_address);
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		i += PADUP(sizeof(struct sockaddr_in6));
+		i += sizeof(struct sadb_address);
+		break;
+#endif /* INET6 */
+	default:
+		return (EINVAL);
+	}
+
+	if (ipo->ipo_srcid)
+		i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid->ref_len);
+	if (ipo->ipo_dstid)
+		i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
+
+	if (lenp)
+		*lenp = i;
+
+	if (buffer == NULL) {
+		rval = 0;
+		goto ret;
+	}
+
+	if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
+		rval = ENOMEM;
+		goto ret;
+	} else {
+		*buffer = p;
+		bzero(p, i);
+	}
+
+	/* Local address. */
+	if (ipo->ipo_src.sa.sa_family) {
+		headers[SADB_EXT_ADDRESS_SRC] = p;
+		export_address(&p, (struct sockaddr *)&ipo->ipo_src);
+	}
+	
+	/* Remote address. */
+	if (ipo->ipo_dst.sa.sa_family) {
+		headers[SADB_EXT_ADDRESS_DST] = p;
+		export_address(&p, (struct sockaddr *)&ipo->ipo_dst);
+	}
+
+	/* Get actual flow. */
+	export_flow(&p, ipo->ipo_type, &ipo->ipo_addr, &ipo->ipo_mask,
+	    headers);
+
+	/* Add ids. */
+	if (ipo->ipo_srcid) {
+		headers[SADB_EXT_IDENTITY_SRC] = p;
+		p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid->ref_len);
+		ident = (struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC];
+		ident->sadb_ident_len = (sizeof(struct sadb_ident) +
+		    PADUP(ipo->ipo_srcid->ref_len)) / sizeof(uint64_t);
+		ident->sadb_ident_type = ipo->ipo_srcid->ref_type;
+		bcopy(ipo->ipo_srcid + 1, headers[SADB_EXT_IDENTITY_SRC] +
+		    sizeof(struct sadb_ident), ipo->ipo_srcid->ref_len);
+	}
+
+	if (ipo->ipo_dstid) {
+		headers[SADB_EXT_IDENTITY_DST] = p;
+		p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
+		ident = (struct sadb_ident *)headers[SADB_EXT_IDENTITY_DST];
+		ident->sadb_ident_len = (sizeof(struct sadb_ident) +
+		    PADUP(ipo->ipo_dstid->ref_len)) / sizeof(uint64_t);
+		ident->sadb_ident_type = ipo->ipo_dstid->ref_type;
+		bcopy(ipo->ipo_dstid + 1, headers[SADB_EXT_IDENTITY_DST] +
+		    sizeof(struct sadb_ident), ipo->ipo_dstid->ref_len);
+	}
+
+	rval = 0;
+
+ret:
+	return (rval);
+}
+
+/*
+ * Caller is responsible for setting at least spltdb().
+ */
+int
+pfkeyv2_ipo_walk(int (*walker)(struct ipsec_policy *, void *), void *arg)
+{
+	int rval = 0;
+	struct ipsec_policy *ipo;
+
+	TAILQ_FOREACH(ipo, &ipsec_policy_head, ipo_list)
+		rval = walker(ipo, (void *)arg);
+	return (rval);
+}
+
+int
+pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg)
 {
 	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
-	struct ipsec_policy *ipo;
-	int error = 0;
+	void *buffer = 0;
+	int i, buflen, error = 0;
 
-	TAILQ_FOREACH(ipo, &ipsec_policy_head, ipo_list) {
-		if (w->w_where) {
-			if (w->w_len < sizeof(struct ipsec_policy)) {
-				error = ENOMEM;
-				goto done;
-			}
-			if ((error = copyout(ipo, w->w_where,
-			    sizeof(struct ipsec_policy))) != 0)
-				goto done;
-			w->w_where += sizeof(struct ipsec_policy);
-			w->w_len -= sizeof(struct ipsec_policy);
-		} else
-			w->w_len += sizeof(struct ipsec_policy);
+	if (w->w_where) {
+		void *headers[SADB_EXT_MAX + 1];
+		struct sadb_msg msg;
+
+		bzero(headers, sizeof(headers));
+		if ((error = pfkeyv2_dump_policy(ipo, headers, &buffer,
+		    &buflen)) != 0)
+			goto done;
+		if (w->w_len < buflen) {
+			error = ENOMEM;
+			goto done;
+		}
+		/* prepend header */
+		bzero(&msg, sizeof(msg));
+		msg.sadb_msg_version = PF_KEY_V2;
+		msg.sadb_msg_satype = ipo->ipo_sproto;
+		msg.sadb_msg_type = SADB_X_SPDDUMP;
+		msg.sadb_msg_len = (sizeof(msg) + buflen) / sizeof(uint64_t);
+		if ((error = copyout(&msg, w->w_where, sizeof(msg))) != 0)
+			goto done;
+		w->w_where += sizeof(msg);
+		w->w_len -= sizeof(msg);
+		/* set extension type */
+		for (i = 1; i < SADB_EXT_MAX; i++)
+			if (headers[i])
+				((struct sadb_ext *)
+				    headers[i])->sadb_ext_type = i;
+		if ((error = copyout(buffer, w->w_where, buflen)) != 0)
+			goto done;
+		w->w_where += buflen;
+		w->w_len -= buflen;
+	} else {
+		if ((error = pfkeyv2_dump_policy(ipo, NULL, NULL,
+		    &buflen)) != 0)
+			goto done;
+		w->w_len += buflen;
+		w->w_len += sizeof(struct sadb_msg);
 	}
 
 done:
+	if (buffer)
+		free(buffer, M_PFKEY);
 	return (error);
 }
 
@@ -2257,14 +2432,13 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	w.w_where = oldp;
 	w.w_len = oldp ? *oldlenp : 0;
 
-	s = spltdb();
 	switch(w.w_op) {
 	case NET_KEY_SADB_DUMP:
-		if ((error = suser(curproc, 0)) != 0) {
-			splx(s);
+		if ((error = suser(curproc, 0)) != 0)
 			return (error);
-		}
+		s = spltdb();
 		error = tdb_walk(pfkeyv2_sysctl_walker, &w);
+		splx(s);
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
 		else
@@ -2272,14 +2446,17 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		break;
 
 	case NET_KEY_SPD_DUMP:
-		error = pfkeyv2_sysctl_dump(&w);
+		if ((error = suser(curproc, 0)) != 0)
+			return (error);
+		s = spltdb();
+		error = pfkeyv2_ipo_walk(pfkeyv2_sysctl_policydumper, &w);
+		splx(s);
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
 		else
 			*oldlenp = w.w_len;
 		break;
 	}
-	splx(s);
 
 	return (error);
 }
