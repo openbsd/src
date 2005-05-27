@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.11 2004/08/01 18:32:21 deraadt Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.12 2005/05/27 05:01:28 millert Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -33,13 +33,15 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
 #include <err.h>
 #include <errno.h>
 

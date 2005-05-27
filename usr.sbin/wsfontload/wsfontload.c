@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.9 2004/08/03 09:45:29 jmc Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.10 2005/05/27 05:03:47 millert Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -33,12 +33,14 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
 #include <string.h>
 #include <err.h>
 
