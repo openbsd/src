@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.9 2005/05/09 19:50:48 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.10 2005/05/27 20:39:30 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -60,13 +60,15 @@ struct ami_softc {
 	struct scsi_link sc_link;
 
 /* don't use 0x0001 */
-#define AMI_BROKEN 0x0002
+#define AMI_BROKEN 	0x0002
+#define	AMI_CMDWAIT	0x0004
 	u_int	sc_flags;
 
 	/* low-level interface */
 	int (*sc_init)(struct ami_softc *sc);
 	int (*sc_exec)(struct ami_softc *sc, struct ami_iocmd *);
 	int (*sc_done)(struct ami_softc *sc, struct ami_iocmd *);
+	int (*sc_poll)(struct ami_softc *sc, struct ami_iocmd *);
 
 	bus_space_tag_t	iot;
 	bus_space_handle_t ioh;
@@ -88,6 +90,7 @@ struct ami_softc {
 	int		sc_timeout;
 	struct timeout	sc_requeue_tmo;
 	struct timeout	sc_poll_tmo;
+	int		sc_dis_poll;
 
 	char	sc_fwver[16];
 	char	sc_biosver[16];
@@ -120,10 +123,12 @@ int  ami_intr(void *);
 int ami_quartz_init(struct ami_softc *sc);
 int ami_quartz_exec(struct ami_softc *sc, struct ami_iocmd *);
 int ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *);
+int ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *);
 
 int ami_schwartz_init(struct ami_softc *sc);
 int ami_schwartz_exec(struct ami_softc *sc, struct ami_iocmd *);
 int ami_schwartz_done(struct ami_softc *sc, struct ami_iocmd *);
+int ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *);
 
 #ifdef AMI_DEBUG
 void ami_print_mbox(struct ami_iocmd *);

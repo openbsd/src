@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.9 2005/05/24 19:56:53 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.10 2005/05/27 20:39:30 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -40,9 +40,10 @@
 #define	AMI_MAXCMDS	250	/* theoretical limit is 250 */
 #define	AMI_SECTOR_SIZE	512
 #define	AMI_MAXOFFSETS	26
-#define	AMI_SGEPERCMD	32	/* to prevent page boundary crossing */
-#define AMI_MAX_BUSYWAIT 10	/* wait up to 10 usecs */
-
+#define	AMI_SGEPERCMD	32		/* to prevent page boundary crossing */
+#define AMI_MAX_BUSYWAIT 10		/* wait up to 10 usecs */
+#define AMI_MAX_POLLWAIT 1000000	/* wait up to 1000 000 usecs */
+ 
 #define	AMI_MAXFER	(AMI_MAXOFFSETS * PAGE_SIZE)
 
 #define	AMI_QIDB	0x20

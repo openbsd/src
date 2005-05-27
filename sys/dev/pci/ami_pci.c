@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.24 2005/05/09 19:50:48 marco Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.25 2005/05/27 20:39:30 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -203,10 +203,12 @@ ami_pci_attach(parent, self, aux)
 		sc->sc_init = ami_schwartz_init;
 		sc->sc_exec = ami_schwartz_exec;
 		sc->sc_done = ami_schwartz_done;
+		sc->sc_poll = ami_schwartz_poll;
 	} else {
 		sc->sc_init = ami_quartz_init;
 		sc->sc_exec = ami_quartz_exec;
 		sc->sc_done = ami_quartz_done;
+		sc->sc_poll = ami_quartz_poll;
 	}
 	sc->dmat = pa->pa_dmat;
 

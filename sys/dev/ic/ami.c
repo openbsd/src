@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.38 2005/05/17 18:38:52 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.39 2005/05/27 20:39:29 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -45,7 +45,7 @@
  *	Theo de Raadt.
  */
 
- /*#define	AMI_DEBUG */
+/*#define	AMI_DEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,8 @@
 #define	AMI_D_DMA	0x0008
 #define	AMI_D_IOCTL	0x0010
 int ami_debug = 0
-/*	| AMI_D_CMD */
-/*	| AMI_D_INTR */
+	| AMI_D_CMD
+	| AMI_D_INTR
 	| AMI_D_MISC
 /*	| AMI_D_DMA */
 /*	| AMI_D_IOCTL */
@@ -128,7 +128,6 @@ void ami_dispose(struct ami_softc *sc);
 void ami_stimeout(void *v);
 int  ami_cmd(struct ami_ccb *ccb, int flags, int wait);
 int  ami_start(struct ami_ccb *ccb, int wait);
-int  ami_complete(struct ami_ccb *ccb);
 int  ami_done(struct ami_softc *sc, int idx);
 void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 int  ami_inquire(struct ami_softc *sc, u_int8_t op);
@@ -745,6 +744,123 @@ ami_quartz_done(sc, mbox)
 }
 
 int
+ami_quartz_poll(sc, cmd)
+	struct ami_softc *sc;
+	struct ami_iocmd *cmd;
+{
+	/* struct scsi_xfer *xs = ccb->ccb_xs; */
+	u_int32_t qidb, i;
+	u_int8_t status, ready;
+
+	if (sc->sc_dis_poll)
+		return 1; /* fail */
+
+	i = 0;
+	while (sc->sc_mbox->acc_busy && (i < AMI_MAX_BUSYWAIT)) {
+		delay(1);
+		i++;
+	}
+	if (sc->sc_mbox->acc_busy) {
+		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
+		return (EBUSY);
+	}
+
+	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+
+	sc->sc_mbox->acc_id = 0xfe;
+	sc->sc_mbox->acc_busy = 1;
+	sc->sc_mbox->acc_poll = 0;
+	sc->sc_mbox->acc_ack = 0;
+
+	sc->sc_mbox->acc_nstat = 0xff;
+	sc->sc_mbox->acc_status = 0xff;
+
+	/* send command to firmware */
+	qidb = sc->sc_mbox_pa | AMI_QIDB_EXEC;
+	ami_write_inbound_db(sc, qidb);
+
+	while ((sc->sc_mbox->acc_nstat == 0xff) && (i < AMI_MAX_POLLWAIT)) {
+		delay(1);
+		i++;
+	}
+	if (i >= AMI_MAX_POLLWAIT) {
+		printf("%s: command not accepted, polling disabled\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_dis_poll = 1;
+		return 1;
+	}
+
+	sc->sc_mbox->acc_nstat = 0xff;
+
+	while ((sc->sc_mbox->acc_status == 0xff) && (i < AMI_MAX_POLLWAIT)) {
+		delay(1);
+		i++;
+	}
+	if (i >= AMI_MAX_POLLWAIT) {
+		printf("%s: bad status, polling disabled\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_dis_poll = 1;
+		return 1;
+	}
+	status = sc->sc_mbox->acc_status;
+	sc->sc_mbox->acc_status = 0xff;
+
+	/* poll firmware */
+	while ((sc->sc_mbox->acc_poll != 0x77) && (i < AMI_MAX_POLLWAIT)) {
+		delay(1);
+		i++;
+	}
+	if (i >= AMI_MAX_POLLWAIT) {
+		printf("%s: firmware didn't reply, polling disabled\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_dis_poll = 1;
+		return 1;
+	}
+
+	sc->sc_mbox->acc_poll = 0;
+	sc->sc_mbox->acc_ack = 0x77;
+
+	/* ack */
+	qidb = sc->sc_mbox_pa | AMI_QIDB_ACK;
+	ami_write_inbound_db(sc, qidb);
+
+	while((ami_read_inbound_db(sc) & AMI_QIDB_ACK) &&
+	    (i < AMI_MAX_POLLWAIT)) {
+		delay(1);
+		i++;
+	}
+	if (i >= AMI_MAX_POLLWAIT) {
+		printf("%s: firmware didn't ack the ack, polling disabled\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_dis_poll = 1;
+		return 1;
+	}
+
+	ready = sc->sc_mbox->acc_cmplidl[0];
+
+	for (i = 0; i < AMI_MAXSTATACK; i++)
+		sc->sc_mbox->acc_cmplidl[i] = 0xff;
+#if 0
+	/* FIXME */
+	/* am I a scsi command? if so complete it */
+	if (xs) {
+		printf("sc ");
+		if (!ami_done(sc, ready))
+			status = 0;
+		else
+			status = 1; /* failed */
+	}
+	else /* need to clean up ccb ourselves */
+		ami_put_ccb(ccb);
+#endif
+
+
+	return status;
+}
+
+int
 ami_schwartz_init(sc)
 	struct ami_softc *sc;
 {
@@ -811,6 +927,15 @@ ami_schwartz_done(sc, mbox)
 }
 
 int
+ami_schwartz_poll(sc, cmd)
+	struct ami_softc *sc;
+	struct ami_iocmd *cmd;
+{
+	/* FIXME add the actual code here */
+	return 1;
+}
+
+int
 ami_cmd(ccb, flags, wait)
 	struct ami_ccb *ccb;
 	int flags, wait;
@@ -866,16 +991,21 @@ ami_cmd(ccb, flags, wait)
 	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, sc->sc_cmdmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	if ((error = ami_start(ccb, wait))) {
+	if (wait) {
+		AMI_DPRINTF(AMI_D_DMA, ("waiting "));
+		/* FIXME remove all wait out ami_start */
+		if ((error = sc->sc_poll(sc, ccb->ccb_cmd))) {
+			AMI_DPRINTF(AMI_D_MISC, ("pf "));
+		}
+		/* always free ccb */
+		ami_put_ccb(ccb);
+	}
+	else if ((error = ami_start(ccb, wait))) {
 		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
 		__asm __volatile(".globl _bpamierr\n_bpamierr:");
 		if (ccb->ccb_data)
 			bus_dmamap_unload(sc->dmat, dmap);
 		ami_put_ccb(ccb);
-	} else if (wait) {
-		AMI_DPRINTF(AMI_D_DMA, ("waiting "));
-		if ((error = ami_complete(ccb)))
-			ami_put_ccb(ccb);
 	}
 
 	return (error);
@@ -941,6 +1071,7 @@ ami_start(ccb, wait)
 	return (i);
 }
 
+/* FIXME timeouts should be rethought */
 void
 ami_stimeout(v)
 	void *v;
@@ -995,44 +1126,6 @@ ami_stimeout(v)
 		panic("ami_stimeout(%d) botch", cmd->acc_id);
 	}
 	AMI_UNLOCK_AMI(sc, lock);
-}
-
-int
-ami_complete(ccb)
-	struct ami_ccb *ccb;
-{
-	struct ami_softc *sc = ccb->ccb_sc;
-	struct scsi_xfer *xs = ccb->ccb_xs;
-	struct ami_iocmd mbox;
-	int i, j, rv, status;
-
-	i = 1 * (xs? xs->timeout: 1000);
-	AMI_DPRINTF(AMI_D_CMD, ("%d ", i));
-	for (rv = 1, status = 0; !status && rv && i--; DELAY(1000))
-		if ((sc->sc_done)(sc, &mbox)) {
-			AMI_DPRINTF(AMI_D_CMD, ("got#%d ", mbox.acc_nstat));
-			status = mbox.acc_status;
-			for (j = 0; j < mbox.acc_nstat; j++ ) {
-				int ready = mbox.acc_cmplidl[j];
-
-				AMI_DPRINTF(AMI_D_CMD, ("ready=%x ", ready));
-
-				if (!ami_done(sc, ready) &&
-				    ccb->ccb_cmd->acc_id == ready)
-					rv = 0;
-			}
-		}
-
-	if (status) {
-		AMI_DPRINTF(AMI_D_CMD, ("aborted\n"));
-	} else if (!rv) {
-		AMI_DPRINTF(AMI_D_CMD, ("complete\n"));
-	} else if (i < 0) {
-		AMI_DPRINTF(AMI_D_CMD, ("timeout\n"));
-	} else
-		AMI_DPRINTF(AMI_D_CMD, ("screwed\n"));
-
-	return rv? rv : status;
 }
 
 int
@@ -1502,11 +1595,17 @@ ami_ioctl(dev, cmd, addr)
 	u_long cmd;
 	caddr_t addr;
 {
-	int error = 0;
+	int lock, error = 0;
 	struct ami_softc *sc = (struct ami_softc *)dev;
 
 	if (sc->sc_flags & AMI_BROKEN)
 		return ENODEV; /* can't do this to broken device for now */
+
+	lock = AMI_LOCK_AMI(sc);
+	if (sc->sc_flags & AMI_CMDWAIT) {
+		AMI_UNLOCK_AMI(sc, lock);
+		return EBUSY;
+	}
 
 	switch (cmd) {
 	case BIOCPING:
@@ -1562,6 +1661,8 @@ ami_ioctl(dev, cmd, addr)
 		error = EINVAL;
 	}
 
+	AMI_UNLOCK_AMI(sc, lock);
+
 	return (error);
 }
 
@@ -1573,7 +1674,6 @@ ami_ioctl_alarm(sc, ra)
 	int error = 0;
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
-	ami_lock_t lock;
 	void	*idata;
 	bus_dmamap_t idatamap;
 	bus_dma_segment_t idataseg[1];
@@ -1590,8 +1690,6 @@ ami_ioctl_alarm(sc, ra)
 
 	pa = idataseg[0].ds_addr;
 	p = idata;
-
-	lock = AMI_LOCK_AMI(sc);
 
 	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
@@ -1627,7 +1725,6 @@ ami_ioctl_alarm(sc, ra)
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
 		    sc->sc_dev.dv_xname, ra->opcode));
 		ami_put_ccb(ccb);
-		AMI_UNLOCK_AMI(sc, lock);
 		return EINVAL;
 	}
 
@@ -1647,8 +1744,6 @@ ami_ioctl_alarm(sc, ra)
 		error = EINVAL;
 	}
 
-	AMI_UNLOCK_AMI(sc, lock);
-
 	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
 
 	return (error);
@@ -1662,9 +1757,6 @@ ami_ioctl_startstop(sc, bs)
 	int error = 0;
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
-	ami_lock_t lock;
-
-	lock = AMI_LOCK_AMI(sc);
 
 	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
@@ -1695,8 +1787,6 @@ ami_ioctl_startstop(sc, bs)
 		error = EINVAL;
 	}
 
-	AMI_UNLOCK_AMI(sc, lock);
-
 	return (error);
 }
 
@@ -1708,7 +1798,6 @@ ami_ioctl_status(sc, bs)
 	int error = 0;
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
-	ami_lock_t lock;
 	void	*idata;
 	bus_dmamap_t idatamap;
 	bus_dma_segment_t idataseg[1];
@@ -1724,8 +1813,6 @@ ami_ioctl_status(sc, bs)
 
 	pa = idataseg[0].ds_addr;
 	p = idata;
-
-	lock = AMI_LOCK_AMI(sc);
 
 	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
@@ -1746,8 +1833,6 @@ ami_ioctl_status(sc, bs)
 		error = EINVAL;
 	}
 
-	AMI_UNLOCK_AMI(sc, lock);
-
 	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
 
 	return (error);
@@ -1762,7 +1847,6 @@ ami_ioctl_passthru(sc, bp)
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
 	struct ami_passthrough *ps;
-	ami_lock_t lock;
 	void	*idata;
 	bus_dmamap_t idatamap;
 	bus_dma_segment_t idataseg[1];
@@ -1797,8 +1881,6 @@ ami_ioctl_passthru(sc, bp)
 
 	pa = idataseg[0].ds_addr;
 	ps = idata;
-
-	lock = AMI_LOCK_AMI(sc);
 
 	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
@@ -1861,15 +1943,12 @@ ami_ioctl_passthru(sc, bp)
 		    sc->sc_dev.dv_xname, bp->status, bp->senselen,
 		    sc->sc_dev.dv_xname));
 
-		for (i = 0; i < bp->senselen; i++) {
-			bp->sensebuf[i] = ps->apt_sense[i];
+		for (i = 0; i < bp->senselen; i++)
 			printf("%0x ", bp->sensebuf[i]);
-		}
+
 		printf("\n");
 #endif /* AMI_DEBUG */
 	}
-
-	AMI_UNLOCK_AMI(sc, lock);
 
 	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
 
