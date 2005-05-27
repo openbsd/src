@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.24 2005/05/26 22:31:28 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.25 2005/05/27 02:14:20 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -64,6 +64,8 @@ struct {
     {IF_STA_LOOPBACK,	IF_EVT_UNLOOP,		IF_ACT_NOTHING,	IF_STA_DOWN},
     {-1,		IF_EVT_NOTHING,		IF_ACT_NOTHING,	0},
 };
+
+static int vlink_cnt = 0;
 
 const char * const if_action_names[] = {
 	"NOTHING",
@@ -166,6 +168,15 @@ if_new(struct kif *kif)
 
 	iface->crypt_seq_num = arc4random() & 0x0fffffff;
 
+	if (kif == NULL) {
+		iface->type = IF_TYPE_VIRTUALLINK;
+		snprintf(iface->name, sizeof(iface->name), "vlink%d",
+		    vlink_cnt++);
+		iface->flags |= IFF_UP;
+		iface->mtu = IP_MSS;
+		return (iface);
+	}
+
 	strlcpy(iface->name, kif->ifname, sizeof(iface->name));
 
 	if ((ifr = calloc(1, sizeof(*ifr))) == NULL)
@@ -247,23 +258,7 @@ if_init(struct ospfd_conf *xconf, struct iface *iface)
 	evtimer_set(&iface->hello_timer, if_hello_timer, iface);
 	evtimer_set(&iface->wait_timer, if_wait_timer, iface);
 
-	switch (iface->type) {
-	case IF_TYPE_POINTOPOINT:
-		iface->fd = xconf->ospf_socket;
-		break;
-	case IF_TYPE_BROADCAST:
-		/* all bcast interfaces use the same socket */
-		iface->fd = xconf->ospf_socket;
-		break;
-	case IF_TYPE_NBMA:
-		break;
-	case IF_TYPE_POINTOMULTIPOINT:
-		break;
-	case IF_TYPE_VIRTUALLINK:
-		break;
-	default:
-		fatalx("if_init: unknown interface type");
-	}
+	iface->fd = xconf->ospf_socket;
 }
 
 int
@@ -356,8 +351,13 @@ if_act_start(struct iface *iface)
 			log_warnx("if_act_start: cannot schedule hello "
 			    "timer, interface %s", iface->name);
 		break;
-	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_VIRTUALLINK:
+		iface->state = IF_STA_POINTTOPOINT;
+		if (if_start_hello_timer(iface))
+			log_warnx("if_act_start: cannot schedule hello "
+			    "timer, interface %s", iface->name);
+		break;
+	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_NBMA:
 		log_debug("if_act_start: type %s not supported, interface %s",
 		    if_type_name(iface->type), iface->name);
@@ -536,9 +536,11 @@ if_act_reset(struct iface *iface)
 			    "interface %s", inet_ntoa(addr), iface->name);
 		}
 		break;
+	case IF_TYPE_VIRTUALLINK:
+		/* nothing */
+		break;
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:
-	case IF_TYPE_VIRTUALLINK:
 		log_debug("if_act_reset: type %s not supported, interface %s",
 		    if_type_name(iface->type), iface->name);
 		return (-1);
