@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.23 2005/05/25 20:52:41 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.24 2005/05/27 00:14:50 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -324,12 +324,20 @@ struct scsi_mode_header_big {
 	u_int8_t blk_desc_len[2];
 };
 
+/*
+ * Block descriptors are 8 or 16 bytes. scsi_mode_header_big is 8 bytes. But
+ * scsi_mode_header is 4 bytes, so if the page data starts at an offset that is
+ * a multiple of 8 the header is scsi_mode_header_big.
+ */
+#define MODE_HEADER_IS_BIG(hdr, pgdata) \
+	(((u_int8_t *)pgdata - (u_int8_t *)hdr) % 8 == 0)
+
 struct scsi_mode_sense_buf {
 	union {
 		struct scsi_mode_header hdr;
 		struct scsi_mode_header_big hdr_big;
+		u_char buf[255];	/* 256 bytes breaks some devices. */
 	} headers;
-	u_char pad[248];	/* To total length of 256 bytes. */
 };
 
 /*
