@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.216 2005/05/27 21:41:04 mpf Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.217 2005/05/27 22:09:06 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -517,14 +517,17 @@ print_status(struct pf_status *s, int opts)
 		printf("%15s\n\n", "Debug: Loud");
 		break;
 	}
-	printf("Hostid:   0x%08x\n", ntohl(s->hostid));
 
-	for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
-		buf[i + i] = hex[s->pf_chksum[i] >> 4];
-		buf[i + i + 1] = hex[s->pf_chksum[i] & 0x0f];
+	if (opts & PF_OPT_VERBOSE) {
+		printf("Hostid:   0x%08x\n", ntohl(s->hostid));
+
+		for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
+			buf[i + i] = hex[s->pf_chksum[i] >> 4];
+			buf[i + i + 1] = hex[s->pf_chksum[i] & 0x0f];
+		}
+		buf[i + i] = '\0';
+		printf("Checksum: 0x%s\n\n", buf);
 	}
-	buf[i + i] = '\0';
-	printf("Checksum: 0x%s\n\n", buf);
 
 	if (s->ifname[0] != 0) {
 		printf("Interface Stats for %-16s %5s %16s\n",
