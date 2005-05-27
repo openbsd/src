@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.60 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: def.h,v 1.61 2005/05/27 08:08:18 cloder Exp $	*/
 
 #include <sys/queue.h>
 
@@ -577,6 +577,7 @@ int	 re_forwsearch(int, int);
 int	 re_backsearch(int, int);
 int	 re_searchagain(int, int);
 int	 re_queryrepl(int, int);
+int	 replstr(int, int);
 int	 setcasefold(int, int);
 int	 delmatchlines(int, int);
 int	 delnonmatchlines(int, int);
