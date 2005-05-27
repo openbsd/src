@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.34 2005/05/13 18:03:48 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.35 2005/05/27 06:37:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -137,7 +137,6 @@ fxp_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t iosize;
-	pcireg_t rev = PCI_REVISION(pa->pa_class);
 
 	if (pci_mapreg_map(pa, FXP_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
@@ -146,7 +145,7 @@ fxp_pci_attach(parent, self, aux)
 	}
 	sc->sc_dmat = pa->pa_dmat;
 	
-	sc->sc_revision = rev; 
+	sc->sc_revision = PCI_REVISION(pa->pa_class);
 
 	/*
 	 * Allocate our interrupt.
@@ -176,15 +175,15 @@ fxp_pci_attach(parent, self, aux)
 	{
 		const char *chipname = NULL;
 
-		if (rev >= FXP_REV_82558_A4)
+		if (sc->sc_revision >= FXP_REV_82558_A4)
 			chipname = "i82558";
-		if (rev >= FXP_REV_82559_A0)
+		if (sc->sc_revision >= FXP_REV_82559_A0)
 			chipname = "i82559";
-		if (rev >= FXP_REV_82559S_A)
+		if (sc->sc_revision >= FXP_REV_82559S_A)
 			chipname = "i82559S";
-		if (rev >= FXP_REV_82550)
+		if (sc->sc_revision >= FXP_REV_82550)
 			chipname = "i82550";
-		if (rev >= FXP_REV_82551_E)
+		if (sc->sc_revision >= FXP_REV_82551_E)
 			chipname = "i82551";
 
 		if (chipname != NULL)
@@ -192,10 +191,6 @@ fxp_pci_attach(parent, self, aux)
 
 		break;
 	}
-		sc->not_82557 = (rev >= FXP_REV_82558_A4) ? 1 : 0;
-		break;
-	case PCI_PRODUCT_INTEL_82562:
-		sc->not_82557 = 1;
 		break;
 	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
@@ -210,10 +205,8 @@ fxp_pci_attach(parent, self, aux)
 		 * features, so just treat them as an i82557.
 		 */
 		sc->sc_revision = 1;
-		sc->not_82557 = 0;
 		break;
 	default:
-		sc->not_82557 = 0;
 		break;
 	}
 
@@ -231,8 +224,8 @@ fxp_pci_attach(parent, self, aux)
 	    (PCI_PRODUCT(pa->pa_id) == 0x2449 || 
 	    (PCI_PRODUCT(pa->pa_id) > 0x1030 && 
 	    PCI_PRODUCT(pa->pa_id) < 0x1039) || 
-	    (PCI_PRODUCT(pa->pa_id) == 0x1229 && (rev == 8 || rev == 9 ||
-		rev == 12 || rev == 13))))
+	    (PCI_PRODUCT(pa->pa_id) == 0x1229 &&
+	    (sc->sc_revision >= 8 && sc->sc_revision <= 13))))
 		sc->sc_flags |= FXPF_DISABLE_STANDBY;
 
 	/* enable bus mastering */
@@ -243,7 +236,7 @@ fxp_pci_attach(parent, self, aux)
 	/*
 	 * enable PCI Memory Write and Invalidate command
 	 */
-	if (rev >= FXP_REV_82558_A4)
+	if (sc->sc_revision >= FXP_REV_82558_A4)
 		if (PCI_CACHELINE(pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    PCI_BHLC_REG))) {
 			pci_conf_write(pa->pa_pc, pa->pa_tag,
