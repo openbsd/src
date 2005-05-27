@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.121 2005/05/26 00:33:45 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.122 2005/05/27 17:31:47 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1426,34 +1426,7 @@ sys_undelete(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_undelete_args /* {
-		syscallarg(const char *) path;
-	} */ *uap = v;
-	int error;
-	struct nameidata nd;
-
-	NDINIT(&nd, DELETE, LOCKPARENT|DOWHITEOUT, UIO_USERSPACE,
-	    SCARG(uap, path), p);
-	error = namei(&nd);
-	if (error)
-		return (error);
-
-	if (nd.ni_vp != NULLVP || !(nd.ni_cnd.cn_flags & ISWHITEOUT)) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		if (nd.ni_vp)
-			vrele(nd.ni_vp);
-		return (EEXIST);
-	}
-
-	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-	if ((error = VOP_WHITEOUT(nd.ni_dvp, &nd.ni_cnd, DELETE)) != 0)
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-	vput(nd.ni_dvp);
-	return (error);
+	return (ENOSYS);
 }
 
 /*
