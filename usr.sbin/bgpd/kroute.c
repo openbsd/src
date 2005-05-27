@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.129 2005/05/27 20:00:35 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.130 2005/05/27 20:01:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -628,8 +628,6 @@ kr_redistribute(int type, struct kroute *kr)
 
 	switch (type) {
 	case IMSG_NETWORK_ADD:
-		log_debug("kr_redistribute: ADD %s/%d fl %x",
-		    inet_ntoa(kr->prefix), kr->prefixlen, kr->flags);
 		if (rn == NULL) {
 			if ((rn = calloc(1, sizeof(struct redist_node))) ==
 			    NULL) {
@@ -641,8 +639,6 @@ kr_redistribute(int type, struct kroute *kr)
 		}
 		break;
 	case IMSG_NETWORK_REMOVE:
-		log_debug("kr_redistribute: DEL %s/%d fl %x",
-		    inet_ntoa(kr->prefix), kr->prefixlen, kr->flags);
 		if (rn != NULL) {
 			LIST_REMOVE(rn, entry);
 			free(rn);
@@ -701,8 +697,6 @@ kr_redistribute6(int type, struct kroute6 *kr6)
 
 	switch (type) {
 	case IMSG_NETWORK_ADD:
-		log_debug("kr_redistribute: ADD %s/%d fl %x",
-		    log_in6addr(&kr6->prefix), kr6->prefixlen, kr6->flags);
 		if (rn == NULL) {
 			if ((rn = calloc(1, sizeof(struct redist_node))) ==
 			    NULL) {
@@ -714,8 +708,6 @@ kr_redistribute6(int type, struct kroute6 *kr6)
 		}
 		break;
 	case IMSG_NETWORK_REMOVE:
-		log_debug("kr_redistribute: DEL %s/%d fl %x",
-		    log_in6addr(&kr6->prefix), kr6->prefixlen, kr6->flags);
 		if (rn != NULL) {
 			LIST_REMOVE(rn, entry);
 			free(rn);
