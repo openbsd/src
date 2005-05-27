@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.45 2005/05/22 05:40:52 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.46 2005/05/27 04:52:24 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1967,6 +1967,12 @@ int sis_ioctl(ifp, command, data)
 				sis_stop(sc);
 		}
 		error = 0;
+		break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		else if (ifp->if_mtu != ifr->ifr_mtu)
+			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
