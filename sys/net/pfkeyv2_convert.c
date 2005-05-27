@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.24 2005/05/25 05:47:53 markus Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.25 2005/05/27 15:27:27 hshoexer Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -519,6 +519,100 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 		break;
 #endif /* INET6 */
 	}
+}
+
+/*
+ * Helper to export addresses from an struct sockaddr_encap.
+ */
+static void
+export_encap(void **p, struct sockaddr_encap *encap, int type)
+{
+	struct sadb_address *saddr = (struct sadb_address *)*p;
+	union sockaddr_union *sunion;
+
+	*p += sizeof(struct sadb_address);
+	sunion = (union sockaddr_union *)*p;
+
+	switch (encap->sen_type) {
+	case SENT_IP4:
+		saddr->sadb_address_len = (sizeof(struct sadb_address) +
+		    PADUP(sizeof(struct sockaddr_in))) / sizeof(uint64_t);
+		sunion->sa.sa_len = sizeof(struct sockaddr_in);
+		sunion->sa.sa_family = AF_INET;
+		if (type == SADB_X_EXT_SRC_FLOW ||
+		    type == SADB_X_EXT_SRC_MASK) {
+			sunion->sin.sin_addr = encap->sen_ip_src;
+			sunion->sin.sin_port = encap->sen_sport;
+		} else {
+			sunion->sin.sin_addr = encap->sen_ip_dst;
+			sunion->sin.sin_port = encap->sen_dport;
+		}
+		*p += PADUP(sizeof(struct sockaddr_in));
+		break;
+        case SENT_IP6:
+		saddr->sadb_address_len = (sizeof(struct sadb_address)
+		    + PADUP(sizeof(struct sockaddr_in6))) / sizeof(uint64_t);
+		sunion->sa.sa_len = sizeof(struct sockaddr_in6);
+		sunion->sa.sa_family = AF_INET6;
+		if (type == SADB_X_EXT_SRC_FLOW ||
+		    type == SADB_X_EXT_SRC_MASK) {
+			sunion->sin6.sin6_addr = encap->sen_ip6_src;
+			sunion->sin6.sin6_port = encap->sen_ip6_sport;
+		} else {
+			sunion->sin6.sin6_addr = encap->sen_ip6_dst;
+			sunion->sin6.sin6_port = encap->sen_ip6_dport;
+		}
+		*p += PADUP(sizeof(struct sockaddr_in6));
+		break;
+	}
+}
+
+/*
+ * Export flow information from two struct sockaddr_encap's.
+ */
+void
+export_flow(void **p, u_int8_t ftype, struct sockaddr_encap *flow,
+    struct sockaddr_encap *flowmask, void **headers)
+{
+	struct sadb_protocol *sab;
+
+	headers[SADB_X_EXT_FLOW_TYPE] = *p;
+	sab = (struct sadb_protocol *)*p;
+	sab->sadb_protocol_len = sizeof(struct sadb_protocol) /
+	    sizeof(uint64_t);
+	sab->sadb_protocol_proto = ftype;
+	switch (flow->sen_type) {
+#ifdef INET
+	case SENT_IP4:
+		sab->sadb_protocol_direction = flow->sen_direction;
+		break;
+#endif /* INET */
+#ifdef INET6
+	case SENT_IP6:
+		sab->sadb_protocol_direction = flow->sen_ip6_direction;
+		break;
+#endif /* INET6 */
+	}
+	*p += sizeof(struct sadb_protocol);
+
+	headers[SADB_X_EXT_PROTOCOL] = *p;
+	sab = (struct sadb_protocol *)*p;
+	sab->sadb_protocol_len = sizeof(struct sadb_protocol) /
+	    sizeof(uint64_t);
+	sab->sadb_protocol_proto = flow->sen_proto;
+	*p += sizeof(struct sadb_protocol);
+
+	headers[SADB_X_EXT_SRC_FLOW] = *p;
+	export_encap(p, flow, SADB_X_EXT_SRC_FLOW);
+
+	headers[SADB_X_EXT_SRC_MASK] = *p;
+	export_encap(p, flowmask, SADB_X_EXT_SRC_MASK);
+
+	headers[SADB_X_EXT_DST_FLOW] = *p;
+	export_encap(p, flow, SADB_X_EXT_DST_FLOW);
+
+	headers[SADB_X_EXT_DST_MASK] = *p;
+	export_encap(p, flowmask, SADB_X_EXT_DST_MASK);
 }
 
 /*
