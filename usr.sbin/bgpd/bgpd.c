@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.119 2005/05/27 17:52:10 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.120 2005/05/27 17:59:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -690,7 +690,7 @@ bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
 	/* networks that get deleted don't need to send the filter set */
 	if (type == IMSG_NETWORK_REMOVE)
 		return (1);
-	
+
 	if (send_filterset(ibuf_rde, h, 0, 0) == -1)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.127 2005/05/27 17:52:11 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.128 2005/05/27 17:59:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -522,7 +522,7 @@ kr_show_route(struct imsg *imsg)
 		}
 		addr = imsg->data;
 		kr = NULL;
-		switch(addr->af) {
+		switch (addr->af) {
 		case AF_INET:
 			kr = kroute_match(addr->v4.s_addr);
 			if (kr != NULL)
@@ -613,12 +613,11 @@ kr_redistribute(int type, struct kroute *kr)
 	if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
 	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
 		return (0);
-	/*
-	 * Consider networks with nexthop loopback as not redistributable.
-	 */
+
+	/* Consider networks with nexthop loopback as not redistributable. */
 	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK))
 		return (0);
-	
+
 	/*
 	 * never allow 0.0.0.0/0 the default route can only be redistributed
 	 * with announce default.
@@ -626,10 +625,7 @@ kr_redistribute(int type, struct kroute *kr)
 	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
 		return (0);
 
-	/* Add or delete kr from list ...
-	 * using a linear list to store the redistributed networks will hurt
-	 * as soon as redistribute ospf comes but until the keep it simple.
-	 */
+	/* Add or delete kr from list ... */
 	LIST_FOREACH(rn, &redistlist, entry)
 	    if (rn->kr == kr)
 		    break;
@@ -660,7 +656,7 @@ kr_redistribute(int type, struct kroute *kr)
 		errno = EINVAL;
 		return (-1);
 	}
-	
+
 	return (bgpd_redistribute(type, kr, NULL));
 }
 
@@ -684,13 +680,13 @@ kr_redistribute6(int type, struct kroute6 *kr6)
 	    IN6_IS_ADDR_V4MAPPED(&kr6->prefix) ||
 	    IN6_IS_ADDR_V4COMPAT(&kr6->prefix))
 		return (0);
-	
+
 	/*
 	 * Consider networks with nexthop loopback as not redistributable.
 	 */
 	if (IN6_IS_ADDR_LOOPBACK(&kr6->nexthop))
 		return (0);
-	
+
 	/*
 	 * never allow ::/0 the default route can only be redistributed
 	 * with announce default.
@@ -733,7 +729,7 @@ kr_redistribute6(int type, struct kroute6 *kr6)
 		errno = EINVAL;
 		return (-1);
 	}
-	
+
 	return (bgpd_redistribute(type, NULL, kr6));
 }
 
@@ -933,7 +929,7 @@ kroute6_insert(struct kroute6_node *kr)
 		RB_FOREACH(h, knexthop_tree, &knt)
 			if (h->nexthop.af == AF_INET6) {
 				inet6applymask(&inb, &h->nexthop.v6,
-			       	    kr->r.prefixlen);
+				    kr->r.prefixlen);
 				if (memcmp(&ina, &inb, sizeof(ina)) == 0)
 					knexthop_validate(h);
 			}
@@ -1970,7 +1966,7 @@ fetchtable6(void)
 			memcpy(&kr->r.prefix,
 			    &((struct sockaddr_in6 *)sa)->sin6_addr,
 			    sizeof(kr->r.prefix));
-			
+
 			sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 			if (rtm->rtm_flags & RTF_STATIC)
 				kr->r.flags |= F_STATIC;
