@@ -244,7 +244,8 @@ client_read(struct bufferevent *bufev, void *arg)
 		}
 
 		if (n == -1) {
-			logmsg(LOG_ERR, "#%d client command too long", s->id);
+			logmsg(LOG_ERR, "#%d client command too long or not"
+			    " clean", s->id);
 			end_session(s);
 			return;
 		}
@@ -342,9 +343,13 @@ getline(char *buf, size_t *valid)
 		return (-1);
 
 	/* Copy to linebuf while searching for a newline. */
-	for (i = 0; i < *valid; i++)
-		if ((linebuf[i] = buf[i]) == '\n')
+	for (i = 0; i < *valid; i++) {
+		linebuf[i] = buf[i];
+		if (buf[i] == '\0')
+			return (-1);
+		if (buf[i] == '\n')
 			break;
+	}
 
 	if (i == *valid) {
 		/* No newline found. */
@@ -1036,7 +1041,8 @@ server_read(struct bufferevent *bufev, void *arg)
 		}
 
 		if (n == -1) {
-			logmsg(LOG_ERR, "#%d server reply too long", s->id);
+			logmsg(LOG_ERR, "#%d server reply too long or not"
+			    " clean", s->id);
 			end_session(s);
 			return;
 		}
