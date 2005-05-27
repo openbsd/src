@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.52 2005/05/27 06:33:11 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.53 2005/05/27 07:08:21 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -491,7 +491,7 @@ sig_pass_to_chld(int sig)
 {
 	int	oerrno = errno;
 
-	if (m_state.pid != -1)
+	if (m_state.pid > 0)
 		kill(m_state.pid, sig);
 	errno = oerrno;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.13 2005/04/08 16:24:12 deraadt Exp $	 */
+/* $OpenBSD: monitor.h,v 1.14 2005/05/27 07:08:21 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -41,7 +41,6 @@ enum monitor_reqtypes {
 	MONITOR_UI_INIT,
 	MONITOR_PFKEY_OPEN,
 	MONITOR_GET_FD,
-	MONITOR_GET_SOCKET,
 	MONITOR_SETSOCKOPT,
 	MONITOR_BIND,
 	MONITOR_MKFIFO,
