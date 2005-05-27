@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.33 2005/05/26 18:46:16 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.34 2005/05/27 02:07:13 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -133,7 +133,9 @@ enum imsg_type {
 	IMSG_LS_ACK,
 	IMSG_LS_FLOOD,
 	IMSG_LS_BADREQ,
-	IMSG_LS_MAXAGE
+	IMSG_LS_MAXAGE,
+	IMSG_ABR_UP,
+	IMSG_ABR_DOWN
 };
 
 struct imsg_hdr {
@@ -300,6 +302,7 @@ struct iface {
 	struct in_addr		 dst;
 	struct in_addr		 mask;
 	struct in_addr		 rtr_id;
+	struct in_addr		 abr_id;
 	char			*auth_key;
 	struct nbr		*dr;	/* designated router */
 	struct nbr		*bdr;	/* backup designated router */
