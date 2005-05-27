@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.122 2005/05/27 17:31:47 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.123 2005/05/27 20:20:23 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1220,7 +1220,6 @@ sys_mknod(p, v, retval)
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
-	int whiteout = 0;
 	struct nameidata nd;
 
 	if ((error = suser(p, 0)) != 0)
@@ -1237,7 +1236,6 @@ sys_mknod(p, v, retval)
 		VATTR_NULL(&vattr);
 		vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
 		vattr.va_rdev = SCARG(uap, dev);
-		whiteout = 0;
 
 		switch (SCARG(uap, mode) & S_IFMT) {
 		case S_IFMT:	/* used by badsect to flag bad sectors */
@@ -1249,9 +1247,6 @@ sys_mknod(p, v, retval)
 		case S_IFBLK:
 			vattr.va_type = VBLK;
 			break;
-		case S_IFWHT:
-			whiteout = 1;
-			break;
 		default:
 			error = EINVAL;
 			break;
@@ -1259,15 +1254,7 @@ sys_mknod(p, v, retval)
 	}
 	if (!error) {
 		VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-		if (whiteout) {
-			error = VOP_WHITEOUT(nd.ni_dvp, &nd.ni_cnd, CREATE);
-			if (error)
-				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-			vput(nd.ni_dvp);
-		} else {
-			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp,
-						&nd.ni_cnd, &vattr);
-		}
+		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)

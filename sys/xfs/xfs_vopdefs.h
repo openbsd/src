@@ -68,8 +68,6 @@ NNPFS_VOP_DEF(pathconf);
 NNPFS_VOP_DEF(advlock);
 #define HAVE_VOP_REALLOCBLKS 1
 NNPFS_VOP_DEF(reallocblks);
-#define HAVE_VOP_WHITEOUT 1
-NNPFS_VOP_DEF(whiteout);
 #define HAVE_VOP_GETEXTATTR 1
 NNPFS_VOP_DEF(getextattr);
 #define HAVE_VOP_SETEXTATTR 1
