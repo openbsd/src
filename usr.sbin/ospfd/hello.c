@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.6 2005/05/26 19:54:49 norby Exp $ */
+/*	$OpenBSD: hello.c,v 1.7 2005/05/27 05:56:34 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -58,10 +58,10 @@ send_hello(struct iface *iface)
 		break;
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:
+		/* XXX not supported */
+		break;
 	case IF_TYPE_VIRTUALLINK:
-		/* XXX these networks need to be preconfigured */
-		/* dst.sin_addr.s_addr = nbr->addr.s_addr; */
-		inet_aton(AllSPFRouters, &dst.sin_addr);
+		dst.sin_addr = iface->dst;
 		break;
 	default:
 		fatalx("send_hello: unknown interface type");
@@ -188,6 +188,7 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 
 	if (!nbr)
 		nbr = nbr_new(rtr_id, iface, 0);
+
 	/* actually the neighbor address shouldn't be stored on virtual links */
 	nbr->addr.s_addr = src.s_addr;
 	nbr->options = hello.opts;
