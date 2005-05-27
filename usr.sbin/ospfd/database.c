@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.11 2005/05/26 19:54:49 norby Exp $ */
+/*	$OpenBSD: database.c,v 1.12 2005/05/27 05:51:22 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -128,8 +128,10 @@ send_db_description(struct nbr *nbr)
 		break;
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:
+		/* XXX not supported */
+		break;
 	case IF_TYPE_VIRTUALLINK:
-		dst.sin_addr = nbr->addr;
+		dst.sin_addr = nbr->iface->dst;
 		dd_hdr.iface_mtu = 0;
 		break;
 	default:
@@ -172,7 +174,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 	memcpy(&dd_hdr, buf, sizeof(dd_hdr));
 	buf += sizeof(dd_hdr);
 	len -= sizeof(dd_hdr);
-
 
 	/* db description packet sanity checks */
 	if (ntohs(dd_hdr.iface_mtu) > nbr->iface->mtu) {
