@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.489 2005/05/27 17:22:40 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.490 2005/05/27 18:41:29 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2034,8 +2034,7 @@ log		: LOG				{ $$ = PF_LOG; }
 		| LOGALL '(' logopts ')'	{ $$ = PF_LOG_ALL | $3; }
 		;
 
-logopts		: /* empty */			{ $$ = 0; }
-		| logopt			{ $$ = $1; }
+logopts		: logopt			{ $$ = $1; }
 		| logopts comma logopt		{ $$ = $1 | $3; }
 
 logopt		: USER				{ $$ = PF_LOG_SOCKET_LOOKUP; }
