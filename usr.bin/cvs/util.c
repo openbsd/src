@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2005/05/26 22:25:31 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.30 2005/05/27 17:04:59 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -139,7 +139,9 @@ cvs_strtomode(const char *str, mode_t *mode)
 	char buf[32], ms[4], *sp, *ep;
 
 	m = 0;
-	strlcpy(buf, str, sizeof(buf));
+	if (strlcpy(buf, str, sizeof(buf)) >= sizeof(buf)) {
+		return (-1);
+	}
 	sp = buf;
 	ep = sp;
 
@@ -185,6 +187,10 @@ cvs_strtomode(const char *str, mode_t *mode)
 /*
  * cvs_modetostr()
  *
+ * Generate a CVS-format string to represent the permissions mask on a file
+ * from the mode <mode> and store the result in <buf>, which can accept up to
+ * <len> bytes (including the terminating NUL byte).  The result is guaranteed
+ * to be NUL-terminated.
  * Returns 0 on success, or -1 on failure.
  */
 int
@@ -222,7 +228,6 @@ cvs_modetostr(mode_t mode, char *buf, size_t len)
 	return (0);
 }
 
-
 /*
  * cvs_cksum()
  *
@@ -245,7 +250,6 @@ cvs_cksum(const char *file, char *dst, size_t len)
 
 	return (0);
 }
-
 
 /*
  * cvs_splitpath()
@@ -368,7 +372,6 @@ cvs_getargv(const char *line, char **argv, int argvlen)
  * Allocate an argument vector large enough to accommodate for all the
  * arguments found in <line> and return it.
  */
-
 char**
 cvs_makeargv(const char *line, int *argc)
 {
@@ -511,19 +514,22 @@ cvs_exec(int argc, char **argv, int fds[3])
 }
 
 /*
- * remove a directory tree from disk.
+ * cvs_remove_dir()
+ *
+ * Remove a directory tree from disk.
+ * Returns 0 on success, or -1 on failure.
  */
 int
 cvs_remove_dir(const char *path)
 {
-	int l, ret;
+	size_t len;
 	DIR *dirp;
 	struct dirent *ent;
 	char fpath[MAXPATHLEN];
 
 	if ((dirp = opendir(path)) == NULL) {
 		cvs_log(LP_ERRNO, "failed to open '%s'", path);
-		return (CVS_EX_FILE);
+		return (-1);
 	}
 
 	while ((ent = readdir(dirp)) != NULL) {
@@ -531,34 +537,45 @@ cvs_remove_dir(const char *path)
 		    !strcmp(ent->d_name, ".."))
 			continue;
 
-		l = snprintf(fpath, sizeof(fpath), "%s/%s", path, ent->d_name);
-		if (l == -1 || l >= (int)sizeof(fpath)) {
+		len = cvs_path_cat(path, ent->d_name, fpath, sizeof(fpath));
+		if (len >= sizeof(fpath)) {
 			errno = ENAMETOOLONG;
 			cvs_log(LP_ERRNO, "%s", fpath);
 			closedir(dirp);
-			return (CVS_EX_FILE);
+			return (-1);
 		}
 
 		if (ent->d_type == DT_DIR) {
-			if ((ret = cvs_remove_dir(fpath)) != CVS_EX_OK) {
+			if (cvs_remove_dir(fpath) == -1) {
 				closedir(dirp);
-				return (ret);
+				return (-1);
 			}
-		} else {
-			if ((unlink(fpath) == -1) && (errno != ENOENT))
-				cvs_log(LP_ERRNO, "failed to remove '%s'",
-				    fpath);
+		} else if ((unlink(fpath) == -1) && (errno != ENOENT)) {
+			cvs_log(LP_ERRNO, "failed to remove '%s'", fpath);
+			return (-1);
 		}
 	}
 
 	closedir(dirp);
 
-	if ((rmdir(path) == -1) && (errno != ENOENT))
+	if ((rmdir(path) == -1) && (errno != ENOENT)) {
 		cvs_log(LP_ERRNO, "failed to remove '%s'", path);
+		return (-1);
+	}
 
-	return (CVS_EX_OK);
+	return (0);
 }
 
+/*
+ * cvs_path_cat()
+ *
+ * Concatenate the two paths <base> and <end> and store the generated path
+ * into the buffer <dst>, which can accept up to <dlen> bytes, including the
+ * NUL byte.  The result is guaranteed to be NUL-terminated.
+ * Returns the number of bytes necessary to store the full resulting path,
+ * not including the NUL byte (a value equal to or larger than <dlen>
+ * indicates truncation).
+ */
 size_t
 cvs_path_cat(const char *base, const char *end, char *dst, size_t dlen)
 {
