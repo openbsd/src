@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.16 2005/05/25 03:58:12 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.17 2005/05/27 22:33:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -116,7 +116,7 @@ struct cvs_reqhdlr {
 	{ NULL                  },
 	{ NULL                  },
 	{ NULL                  },
-	{ NULL                  },
+	{ cvs_req_command       },
 	{ cvs_req_command       },
 	{ NULL                  },
 	{ cvs_req_command       },
