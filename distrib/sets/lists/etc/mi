@@ -30,6 +30,7 @@
 ./etc/hosts.equiv
 ./etc/hosts.lpd
 ./etc/hotplug
+./etc/ifstated.conf
 ./etc/inetd.conf
 ./etc/kerberosV
 ./etc/kerberosV/README

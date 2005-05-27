@@ -1384,7 +1384,6 @@
 ./usr/share/man/cat4/mvme88k/vme.0
 ./usr/share/man/cat4/mvme88k/vs.0
 ./usr/share/man/cat4/mvmeppc
-./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/ne.0
 ./usr/share/man/cat4/neo.0
 ./usr/share/man/cat4/netintro.0
@@ -2068,6 +2067,7 @@
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
+./usr/share/man/cat8/ifstated.0
 ./usr/share/man/cat8/inetd.0
 ./usr/share/man/cat8/init.0
 ./usr/share/man/cat8/intro.0

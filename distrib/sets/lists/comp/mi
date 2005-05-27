@@ -514,7 +514,6 @@
 ./usr/include/dev/pci/lofnreg.h
 ./usr/include/dev/pci/lofnvar.h
 ./usr/include/dev/pci/maestro_reg.h
-./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/neoreg.h
 ./usr/include/dev/pci/noctreg.h
 ./usr/include/dev/pci/noctvar.h

@@ -495,7 +495,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/lofnvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/maestro_reg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ncrreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/neoreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/noctreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/noctvar.ph

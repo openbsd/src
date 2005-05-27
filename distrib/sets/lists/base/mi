@@ -1797,6 +1797,7 @@
 ./usr/sbin/host
 ./usr/sbin/hostapd
 ./usr/sbin/httpd
+./usr/sbin/ifstated
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/kadmin
