@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 2005/05/26 04:02:44 kjell Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.14 2005/05/27 10:41:11 kjell Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -331,7 +331,7 @@ cpu_init(ci)
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
-		(*ci->cpu_setup)(ci->ci_dev.dv_xname, 0, 0);
+		(*ci->cpu_setup)(ci);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	/*
@@ -344,6 +344,20 @@ cpu_init(ci)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
 
 	ci->ci_flags |= CPUF_RUNNING;
+#if defined(I686_CPU)
+	/*
+	 * If we have FXSAVE/FXRESTOR, use them.
+	 */
+	if (cpu_feature & CPUID_FXSR) {
+		lcr4(rcr4() | CR4_OSFXSR);
+
+		/*
+		 * If we have SSE/SSE2, enable XMM exceptions.
+		 */
+		if (cpu_feature & (CPUID_SSE|CPUID_SSE2))
+			lcr4(rcr4() | CR4_OSXMMEXCPT);
+	}
+#endif /* I686_CPU */
 }
 
 

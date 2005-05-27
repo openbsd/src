@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.317 2005/04/02 02:44:58 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.318 2005/05/27 10:41:11 kjell Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -319,17 +319,17 @@ int allowaperture = 0;
 #endif
 #endif
 
-void	winchip_cpu_setup(const char *, int, int);
-void	amd_family5_setup(const char *, int, int);
-void	amd_family6_setup(const char *, int, int);
-void	cyrix3_cpu_setup(const char *, int, int);
-void	cyrix6x86_cpu_setup(const char *, int, int);
-void	natsem6x86_cpu_setup(const char *, int, int);
-void	intel586_cpu_setup(const char *, int, int);
-void	intel686_common_cpu_setup(const char *, int, int);
-void	intel686_cpu_setup(const char *, int, int);
-void	intel686_p4_cpu_setup(const char *, int, int);
-void	tm86_cpu_setup(const char *, int, int);
+void	winchip_cpu_setup(struct cpu_info *);
+void	amd_family5_setup(struct cpu_info *);
+void	amd_family6_setup(struct cpu_info *);
+void	cyrix3_cpu_setup(struct cpu_info *);
+void	cyrix6x86_cpu_setup(struct cpu_info *);
+void	natsem6x86_cpu_setup(struct cpu_info *);
+void	intel586_cpu_setup(struct cpu_info *);
+void	intel686_common_cpu_setup(struct cpu_info *);
+void	intel686_cpu_setup(struct cpu_info *);
+void	intel686_p4_cpu_setup(struct cpu_info *);
+void	tm86_cpu_setup(struct cpu_info *);
 char *	intel686_cpu_name(int);
 char *	cyrix3_cpu_name(int, int);
 char *	tm86_cpu_name(int);
@@ -1127,28 +1127,29 @@ const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
 };
 
 void
-winchip_cpu_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+winchip_cpu_setup(struct cpu_info *ci)
 {
 #if defined(I586_CPU)
 
-	switch ((curcpu()->ci_signature >> 4) & 15) { /* model */
+	switch ((ci->ci_signature >> 4) & 15) { /* model */
 	case 4: /* WinChip C6 */
-		curcpu()->ci_feature_flags &= ~CPUID_TSC;
+		ci->ci_feature_flags &= ~CPUID_TSC;
 		/* Disable RDTSC instruction from user-level. */
 		lcr4(rcr4() | CR4_TSD);
-		printf("%s: TSC disabled\n", cpu_device);
+		printf("%s: TSC disabled\n", ci->ci_dev.dv_xname);
 		break;
 	}
 #endif
 }
 
 void
-cyrix3_cpu_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+cyrix3_cpu_setup(struct cpu_info *ci)
 {
+	int model, step;
+
+	model = (ci->ci_signature >> 4) & 15;
+	step = ci->ci_signature & 15;
+
 #if defined(I686_CPU)
 	u_int64_t msreg;
 	u_int32_t regs[4];
@@ -1199,9 +1200,9 @@ cyrix3_cpu_setup(cpu_device, model, step)
 		} else
 			val = 0;
 
-		/* Enable RNG if present and disabled */
 		if (val & 0x44/*???*/)
-			printf("%s:", cpu_device);
+			printf("%s:", ci->ci_dev.dv_xname);
+		/* Enable RNG if present and disabled */
 		if (val & 0x4) {
 			extern int viac3_rnd_present;
 
@@ -1213,7 +1214,6 @@ cyrix3_cpu_setup(cpu_device, model, step)
 			viac3_rnd_present = 1;
 			printf(" RNG");
 		}
-
 		/* Enable AES engine if present and disabled */
 		if (val & 0x40) {
 #ifdef CRYPTO
@@ -1261,14 +1261,12 @@ cyrix3_cpu_setup(cpu_device, model, step)
 }
 
 void
-cyrix6x86_cpu_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+cyrix6x86_cpu_setup(struct cpu_info *ci)
 {
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 	extern int clock_broken_latch;
 
-	switch ((curcpu()->ci_signature >> 4) & 15) { /* model */
+	switch ((ci->ci_signature >> 4) & 15) { /* model */
 	case -1: /* M1 w/o cpuid */
 	case 2:	/* M1 */
 		/* set up various cyrix registers */
@@ -1284,13 +1282,14 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 		/* disable access to ccr4/ccr5 */
 		cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
 
-		printf("%s: xchg bug workaround performed\n", cpu_device);
+		printf("%s: xchg bug workaround performed\n",
+		    ci->ci_dev.dv_xname);
 		break;	/* fallthrough? */
 	case 4:	/* GXm */
 		/* Unset the TSC bit until calibrate_delay() gets fixed. */
 		clock_broken_latch = 1;
 		curcpu()->ci_feature_flags &= ~CPUID_TSC;
-		printf("%s: TSC disabled\n", cpu_device);
+		printf("%s: TSC disabled\n", ci->ci_dev.dv_xname);
 		break;
 	}
 #endif
@@ -1310,18 +1309,17 @@ natsem6x86_cpureset(void)
 #endif
 
 void
-natsem6x86_cpu_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+natsem6x86_cpu_setup(struct cpu_info *ci)
 {
 #if defined(I586_CPU) || defined(I686_CPU)
 	extern int clock_broken_latch;
+	int model = (ci->ci_signature >> 4) & 15;
 
 	clock_broken_latch = 1;
 	switch (model) {
 	case 4:
 		cpu_feature &= ~CPUID_TSC;
-		printf("%s: TSC disabled\n", cpu_device);
+		printf("%s: TSC disabled\n", ci->ci_dev.dv_xname);
 		break;
 	}
 	cpuresetfn = natsem6x86_cpureset;
@@ -1330,23 +1328,22 @@ natsem6x86_cpu_setup(cpu_device, model, step)
 
 
 void
-intel586_cpu_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+intel586_cpu_setup(struct cpu_info *ci)
 {
 #if defined(I586_CPU)
 	if (!cpu_f00f_bug) {
 		fix_f00f();
-		printf("%s: F00F bug workaround installed\n", cpu_device);
+		printf("%s: F00F bug workaround installed\n",
+		    ci->ci_dev.dv_xname);
 	}
 #endif
 }
 
 void
-amd_family5_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+amd_family5_setup(struct cpu_info *ci)
 {
+	int model = (ci->ci_signature >> 4) & 15;
+
 	switch (model) {
 	case 0:		/* AMD-K5 Model 0 */
 		/*
@@ -1377,9 +1374,7 @@ struct amd_pn_flag {
 };
 
 void
-amd_family6_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+amd_family6_setup(struct cpu_info *ci)
 {
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 	extern void (*pagezero)(void *, size_t);
@@ -1403,7 +1398,7 @@ amd_family6_setup(cpu_device, model, step)
 	cpuid(0x80000000, regs);
 	if (regs[0] > 0x80000007) {
 		cpuid(0x80000007, regs);
-		printf("%s: AMD Powernow:", cpu_device);
+		printf("%s: AMD Powernow:", ci->ci_dev.dv_xname);
 		for (i = 0; i < 6; i++) {
 			if (regs[3] & amd_pn_flags[i].mask)
 				printf(" %s", amd_pn_flags[i].name);
@@ -1416,8 +1411,11 @@ amd_family6_setup(cpu_device, model, step)
 }
 
 void
-intel686_common_cpu_setup(const char *cpu_device, int model, int step)
+intel686_common_cpu_setup(struct cpu_info *ci)
 {
+	int model = (ci->ci_signature >> 4) & 15;
+	int step = ci->ci_signature & 15;
+
 	/*
 	 * Make sure SYSENTER is disabled.
 	 */
@@ -1427,10 +1425,10 @@ intel686_common_cpu_setup(const char *cpu_device, int model, int step)
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(cpu_device);
+			est_init(ci->ci_dev.dv_xname);
 		else
 			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
-			    cpu_device);
+			    ci->ci_dev.dv_xname);
 	} else if ((cpu_feature & (CPUID_ACPI | CPUID_TM)) ==
 	    (CPUID_ACPI | CPUID_TM))
 		p4tcc_init(model, step);
@@ -1449,14 +1447,13 @@ intel686_common_cpu_setup(const char *cpu_device, int model, int step)
 }
 
 void
-intel686_cpu_setup(const char *cpu_device, int model, int step)
+intel686_cpu_setup(struct cpu_info *ci)
 {
-	struct cpu_info *ci = curcpu();
-	/* XXX SMP int model = (ci->ci_signature >> 4) & 15; */
-	/* XXX SMP int step = ci->ci_signature & 15; */
+	int model = (ci->ci_signature >> 4) & 15;
+	int step = ci->ci_signature & 15;
 	u_quad_t msr119;
 
-	intel686_common_cpu_setup(cpu_device, model, step);
+	intel686_common_cpu_setup(ci);
 
 	/*
 	 * Original PPro returns SYSCALL in CPUID but is non-functional.
@@ -1473,7 +1470,8 @@ intel686_cpu_setup(const char *cpu_device, int model, int step)
 		msr119 |= 0x0000000000200000LL;
 		wrmsr(MSR_BBL_CR_CTL, msr119);
 
-		printf("%s: disabling processor serial number\n", cpu_device);
+		printf("%s: disabling processor serial number\n",
+			 ci->ci_dev.dv_xname);
 		ci->ci_feature_flags &= ~CPUID_SER;
 		ci->ci_level = 2;
 	}
@@ -1485,20 +1483,18 @@ intel686_cpu_setup(const char *cpu_device, int model, int step)
 }
 
 void
-intel686_p4_cpu_setup(const char *cpu_device, int model, int step)
+intel686_p4_cpu_setup(struct cpu_info *ci)
 {
-	intel686_common_cpu_setup(cpu_device, model, step);
+	intel686_common_cpu_setup(ci);
 
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
-	p4_model = model;
+	p4_model = (ci->ci_signature >> 4) & 15;
 	update_cpuspeed = p4_update_cpuspeed;
 #endif
 }
 
 void
-tm86_cpu_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+tm86_cpu_setup(struct cpu_info *ci)
 {
 #if !defined(SMALL_KERNEL) && defined(I586_CPU)
 	longrun_init();
@@ -1806,7 +1802,7 @@ identifycpu(struct cpu_info *ci)
 #ifndef MULTIPROCESSOR
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
-		(ci->cpu_setup)(cpu_device, model, step);
+		(ci->cpu_setup)(ci);
 #endif
 
 #ifndef SMALL_KERNEL
