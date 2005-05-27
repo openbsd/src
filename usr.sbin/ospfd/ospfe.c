@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.29 2005/05/27 07:58:46 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.30 2005/05/27 08:41:25 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -614,7 +614,7 @@ orig_rtr_lsa(struct area *area)
 	struct nbr		*nbr, *self = NULL;
 	u_int16_t		 num_links = 0;
 	u_int16_t		 chksum;
-	u_int8_t		 border;
+	u_int8_t		 border, virtual = 0;
 
 	log_debug("orig_rtr_lsa: area %s", inet_ntoa(area->id));
 
@@ -728,6 +728,7 @@ orig_rtr_lsa(struct area *area)
 				rtr_link.type = LINK_TYPE_VIRTUAL;
 				rtr_link.metric = htons(iface->metric);
 				num_links++;
+				virtual = 1;
 				if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 					fatalx("orig_rtr_lsa: buf_add failed");
 
@@ -793,6 +794,8 @@ orig_rtr_lsa(struct area *area)
 
 	if (oeconf->border)
 		lsa_rtr.flags |= OSPF_RTR_B;
+	if (virtual)
+		lsa_rtr.flags |= OSPF_RTR_V;
 
 	/* TODO set V flag if a active virtual link ends here and the
 	 * area is the tranist area for this link. */
