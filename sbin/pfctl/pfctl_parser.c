@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.214 2005/05/27 17:22:40 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.215 2005/05/27 18:52:42 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -715,14 +715,15 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	else if (r->direction == PF_OUT)
 		printf(" out");
 	if (r->log) {
-		if (r->log & PF_LOG_ALL)
-			printf(" log-all");
-		else
-			printf(" log");
-		if (r->log & ~(PF_LOG | PF_LOG_ALL)) {
+		printf(" log");
+		if (r->log & ~PF_LOG) {
+			int count = 0;
+
 			printf(" (");
+			if (r->log & PF_LOG_ALL)
+				printf("%sall", count++ ? ", " : "");
 			if (r->log & PF_LOG_SOCKET_LOOKUP)
-				printf("user");
+				printf("%suser", count++ ? ", " : "");
 			printf(")");
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.490 2005/05/27 18:41:29 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.491 2005/05/27 18:52:41 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -395,7 +395,7 @@ typedef struct {
 
 %}
 
-%token	PASS BLOCK SCRUB RETURN IN OS OUT LOG LOGALL QUICK ON FROM TO FLAGS
+%token	PASS BLOCK SCRUB RETURN IN OS OUT LOG QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
@@ -2030,14 +2030,13 @@ logquick	: /* empty */			{ $$.log = 0; $$.quick = 0; }
 
 log		: LOG				{ $$ = PF_LOG; }
 		| LOG '(' logopts ')'		{ $$ = PF_LOG | $3; }
-		| LOGALL			{ $$ = PF_LOG_ALL; }
-		| LOGALL '(' logopts ')'	{ $$ = PF_LOG_ALL | $3; }
 		;
 
 logopts		: logopt			{ $$ = $1; }
 		| logopts comma logopt		{ $$ = $1 | $3; }
 
-logopt		: USER				{ $$ = PF_LOG_SOCKET_LOOKUP; }
+logopt		: ALL				{ $$ = PF_LOG_ALL; }
+		| USER				{ $$ = PF_LOG_SOCKET_LOOKUP; }
 		| GROUP				{ $$ = PF_LOG_SOCKET_LOOKUP; }
 
 interface	: /* empty */			{ $$ = NULL; }
@@ -4614,7 +4613,6 @@ lookup(char *s)
 		{ "linkshare",		LINKSHARE},
 		{ "load",		LOAD},
 		{ "log",		LOG},
-		{ "log-all",		LOGALL},
 		{ "loginterface",	LOGINTERFACE},
 		{ "max",		MAXIMUM},
 		{ "max-mss",		MAXMSS},
