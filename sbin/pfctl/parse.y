@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.487 2005/05/26 20:20:38 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.488 2005/05/27 03:54:27 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -255,8 +255,8 @@ struct node_hfsc_opts	hfsc_opts;
 int	yyerror(const char *, ...);
 int	disallow_table(struct node_host *, const char *);
 int	disallow_alias(struct node_host *, const char *);
-int	rule_consistent(struct pf_rule *);
-int	filter_consistent(struct pf_rule *);
+int	rule_consistent(struct pf_rule *, int);
+int	filter_consistent(struct pf_rule *, int);
 int	nat_consistent(struct pf_rule *);
 int	rdr_consistent(struct pf_rule *);
 int	process_tabledef(char *, struct table_opts *);
@@ -3706,7 +3706,7 @@ disallow_alias(struct node_host *h, const char *fmt)
 }
 
 int
-rule_consistent(struct pf_rule *r)
+rule_consistent(struct pf_rule *r, int anchor_call)
 {
 	int	problems = 0;
 
@@ -3715,7 +3715,7 @@ rule_consistent(struct pf_rule *r)
 	case PF_DROP:
 	case PF_SCRUB:
 	case PF_NOSCRUB:
-		problems = filter_consistent(r);
+		problems = filter_consistent(r, anchor_call);
 		break;
 	case PF_NAT:
 	case PF_NONAT:
@@ -3734,7 +3734,7 @@ rule_consistent(struct pf_rule *r)
 }
 
 int
-filter_consistent(struct pf_rule *r)
+filter_consistent(struct pf_rule *r, int anchor_call)
 {
 	int	problems = 0;
 
@@ -3787,7 +3787,7 @@ filter_consistent(struct pf_rule *r)
 		problems++;
 	}
 	if ((r->tagname[0] || r->match_tagname[0]) && !r->keep_state &&
-	    r->action == PF_PASS) {
+	    r->action == PF_PASS && !anchor_call) {
 		yyerror("tags cannot be used without keep state");
 		problems++;
 	}
@@ -4474,7 +4474,7 @@ expand_rule(struct pf_rule *r,
 			TAILQ_INSERT_TAIL(&r->rpool.list, pa, entries);
 		}
 
-		if (rule_consistent(r) < 0 || error)
+		if (rule_consistent(r, anchor_call[0]) < 0 || error)
 			yyerror("skipping rule due to errors");
 		else {
 			r->nr = pf->rule_nr++;
