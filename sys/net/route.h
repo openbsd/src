@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.28 2005/05/27 04:55:27 mcbride Exp $	*/
+/*	$OpenBSD: route.h,v 1.29 2005/05/27 17:18:20 mcbride Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -171,6 +171,7 @@ struct rt_msghdr {
 	int	rtm_seq;	/* for sender to identify action */
 	int	rtm_errno;	/* why failed */
 	int	rtm_use;	/* from rtentry */
+#define rtm_fmask	rtm_use	/* bitmask used in RTM_CHANGE message */
 	u_long	rtm_inits;	/* which metrics we are initializing */
 	struct	rt_metrics rtm_rmx; /* metrics themselves */
 };
