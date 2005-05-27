@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.39 2005/05/26 23:18:27 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.40 2005/05/27 19:01:21 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -118,7 +118,7 @@ scsibus*	at usscanner?
 #uyap*		at uhub?		# Y@P firmware loader
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
-#ubt*		at uhub?		# USB Bluetooth
+ubt*		at uhub?		# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
 
 sd*		at scsibus?
@@ -133,12 +133,10 @@ options COM_PXA2X0
 com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
 com1	at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
 com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
-options FFUARTCONSOLE
-#options BTUARTCONSOLE
-#options STUARTCONSOLE
 
 pxapcic0	at pxaip?		# CF (pcmcia) support
 pcmcia*		at pxapcic?
+com*		at pcmcia?		# PCMCIA modems/serial ports
 wi*		at pcmcia?
 ne*		at pcmcia?
 wdc*		at pcmcia?

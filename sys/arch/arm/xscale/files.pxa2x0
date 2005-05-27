@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.12 2005/04/15 01:07:34 pascoe Exp $
+#	$OpenBSD: files.pxa2x0,v 1.13 2005/05/27 19:01:21 uwe Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -45,7 +45,6 @@ attach	com at pxaip with pxauart
 file	arch/arm/xscale/pxa2x0_com.c		pxauart
 file	arch/arm/xscale/pxa2x0_a4x_space.c	pxauart | obio
 file	arch/arm/xscale/pxa2x0_a4x_io.S		pxauart | obio
-#defflag	opt_com.h	FFUARTCONSOLE STUARTCONSOLE BTUARTCONSOLE
 
 # PXA27x USB Device Controller
 device	pxaudc
@@ -74,5 +73,3 @@ file	arch/arm/xscale/pxa2x0_pcic.c		pxapcic
 
 # XXX this is a hack to use dev/pcmcia without fdc.c
 device	fdc
-
-file	arch/arm/xscale/pxacom.c		com & pxauart needs-flag
