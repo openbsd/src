@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnsubr.9,v 1.1 2005/05/27 22:31:47 marius Exp $
+.\"     $OpenBSD: vnsubr.9,v 1.2 2005/05/28 00:58:48 marius Exp $
 .\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 .Ft int
 .Fn vn_isunder "struct vnode *dvp" "struct vnode *rvp" "struct proc *p"
 .Ft int
-.Fn vn_lock "struct vnode *vp" "int flags"
+.Fn vn_lock "struct vnode *vp" "int flags" "struct proc *p"
 .Ft void
 .Fn vn_marktext "struct vnode *vp"
 .Ft int
@@ -72,8 +72,6 @@
 .Fa "int len" "off_t offset" "enum uio_seg segflg" "int ioflg"
 .Fa "struct ucred *cred" "size_t *aresid" "struct proc *p"
 .Fc
-.Ft int
-.Fn vn_readdir "struct file *fp" "char *buf" "int segflg" "u_int count" "int *done" "struct proc *p" "off_t **cookies" "int *ncookies"
 .Ft int
 .Fn vn_stat "struct vnode *vp" "struct stat *sb" "struct proc *p"
 .Ft int
@@ -122,7 +120,7 @@ etc., to ensure that
 .Xr chroot 2
 actually means something.
 If the operation is successful zero is returned, otherwise 1 is returned.
-.It Fn vn_lock "vp" "flags"
+.It Fn vn_lock "vp" "flags" "p"
 Acquire the vnode lock.  Certain file system operations require that
 the vnode lock be held when they are called.
 See
@@ -162,6 +160,10 @@ function can sleep.
 The
 .Fn vn_lock
 releases the vnode interlock before exit.
+.It Fn vn_marktext "vp"
+Common code to mark the vnode
+.Fa vp
+as being the text of a running process.
 .It Fn vn_open "ndp" "fmode" "cmode"
 Common code for vnode open operations.
 The pathname is described in the nameidata pointer (see
@@ -202,31 +204,6 @@ are the calling process and its credentials.
 The remaining arguments specify the uio parameters.
 For further information on these parameters see
 .Xr uiomove 9 .
-.It Xo Fo vn_readdir "struct file *fp" "char *buf" "int segflg" 
-.Fa "u_int count" "int *done" "struct proc *p" 
-.Fa "off_t **cookies" "int *ncookies"
-.Fc
-.Xc
-Common code for reading the contents of a directory.
-The argument
-.Fa fp
-is the file structure,
-.Fa buf
-is the buffer for placing the struct dirent structures.
-The arguments
-.Fa cookies
-and
-.Fa ncookies
-specify the addresses for the list and number of directory seek
-cookies generated for NFS.
-Both
-.Fa cookies
-and
-.Fa ncookies
-should be NULL is they aren't required to be returned by
-.Fn vn_readdir .
-If the operation is successful zero is returned, otherwise an
-appropriate error code is returned.
 .It Fn vn_stat "vp" "sb" "p"
 Common code for a vnode stat operation.
 The vnode is specified by the argument
@@ -262,10 +239,6 @@ This error is only returned if the LK_RETRY flag is not passed to
 The LK_NOWAIT flag was set and
 .Fn vn_lock
 would have slept.
-.It Fn vn_marktext "vp"
-Common code to mark the vnode
-.Fa vp
-as being the text of a running process.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
