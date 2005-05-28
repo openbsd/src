@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.18 2005/05/15 21:19:08 cloder Exp $	*/
+/*	$OpenBSD: dired.c,v 1.19 2005/05/28 01:53:37 cloder Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
@@ -115,7 +115,7 @@ int
 dired(int f, int n)
 {
 	static int   inited = 0;
-	char	     dirname[NFILEN], *bufp;
+	char	     dirname[NFILEN], *bufp, *slash;
 	BUFFER	    *bp;
 
 	if (inited == 0) {
@@ -123,8 +123,17 @@ dired(int f, int n)
 		inited = 1;
 	}
 
-	dirname[0] = '\0';
-	if ((bufp = eread("Dired: ", dirname, NFILEN, EFNEW | EFCR)) == NULL)
+	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
+		strlcpy(dirname, curbp->b_fname, sizeof(dirname));
+		if ((slash = strrchr(dirname, '/')) != NULL) {
+			*(slash + 1) = '\0';
+		}
+	} else {
+		if (getcwd(dirname, sizeof(dirname)) == NULL)
+			dirname[0] = '\0';
+	}
+
+	if ((bufp = eread("Dired: ", dirname, NFILEN, EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	if ((bp = dired_(bufp)) == NULL)
 		return (FALSE);
