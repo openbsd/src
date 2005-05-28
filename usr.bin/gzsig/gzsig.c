@@ -1,4 +1,4 @@
-/* $OpenBSD: gzsig.c,v 1.1.1.1 2005/05/28 01:57:30 marius Exp $ */
+/* $OpenBSD: gzsig.c,v 1.2 2005/05/28 08:07:45 marius Exp $ */
 
 /*
  * gzsig.c
@@ -30,7 +30,7 @@
  *   OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  *   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
- * $Id: gzsig.c,v 1.1.1.1 2005/05/28 01:57:30 marius Exp $
+ * $Vendor: gzsig.c,v 1.2 2005/04/01 16:47:31 dugsong Exp $
  */
 
 #include <stdio.h>
