@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: snprintf.c,v 1.11 2005/04/30 09:25:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: snprintf.c,v 1.12 2005/05/28 00:54:50 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <limits.h>
@@ -56,14 +56,14 @@ snprintf(char *str, size_t n, const char *fmt, ...)
 		str = &dummy;
 		n = 1;
 	}
-	va_start(ap, fmt);
 	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = n - 1;
+	va_start(ap, fmt);
 	ret = vfprintf(&f, fmt, ap);
-	*f._p = '\0';
 	va_end(ap);
+	*f._p = '\0';
 	return (ret);
 }

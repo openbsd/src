@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.12 2005/04/30 09:25:17 espie Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.13 2005/05/28 00:54:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: asprintf.c,v 1.12 2005/04/30 09:25:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: asprintf.c,v 1.13 2005/05/28 00:54:50 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -36,14 +36,15 @@ asprintf(char **str, const char *fmt, ...)
 	unsigned char *_base;
 
 	_FILEEXT_SETUP(&f, &fext);
-	va_start(ap, fmt);
 	f._file = -1;
 	f._flags = __SWR | __SSTR | __SALC;
 	f._bf._base = f._p = (unsigned char *)malloc(128);
 	if (f._bf._base == NULL)
 		goto err;
 	f._bf._size = f._w = 127;		/* Leave room for the NUL */
+	va_start(ap, fmt);
 	ret = vfprintf(&f, fmt, ap);
+	va_end(ap);
 	if (ret == -1)
 		goto err;
 	*f._p = '\0';
@@ -51,11 +52,9 @@ asprintf(char **str, const char *fmt, ...)
 	if (_base == NULL)
 		goto err;
 	*str = (char *)_base;
-	va_end(ap);
 	return (ret);
 
 err:
-	va_end(ap);
 	if (f._bf._base) {
 		free(f._bf._base);
 		f._bf._base = NULL;
