@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.71 2005/05/28 06:16:33 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.72 2005/05/28 23:26:09 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1720,7 +1720,7 @@ scsi_decode_sense(sense, flag)
 	static char rqsbuf[132];
 	u_int16_t count;
 	u_int8_t skey, spec_1;
-	size_t len;
+	int len;
 
 	bzero(rqsbuf, sizeof rqsbuf);
 
