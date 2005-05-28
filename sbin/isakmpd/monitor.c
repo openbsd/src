@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.57 2005/05/28 17:42:49 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.58 2005/05/28 18:38:38 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -797,8 +797,11 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 	 *  /var/run/		(rw)
          */
 
-	if (realpath(path, new_path) == NULL)
+	if (realpath(path, new_path) == NULL) {
+		if (errno == ENOENT)
+			return 1;
 		goto bad_path;
+	}
 
 	if (strncmp("/var/run/", new_path, strlen("/var/run/")) == 0)
 		return 0;
@@ -917,8 +920,6 @@ m_priv_req_readdir()
 	off = strlen(path);
 	size = sizeof path - off;
 
-	/* XXX sanitize path */
-
 	if ((dp = opendir(path)) == NULL) {
 		serrno = errno;
 		ret = -1;
@@ -934,10 +935,14 @@ m_priv_req_readdir()
 	while ((file = readdir(dp)) != NULL) {
 		strlcpy(path + off, file->d_name, size);
 
-		if (file->d_type != DT_UNKNOWN && file->d_type != DT_REG &&
-		    file->d_type != DT_LNK)
-			continue;
+		if (file->d_type != DT_REG && file->d_type != DT_LNK)
+				continue;
 
+		if (m_priv_local_sanitize_path(path, sizeof path, O_RDONLY)
+		    != 0) {
+			log_errorx("m_priv_req_readdir: invalid dir entry");
+			continue;
+		}
 		fd = open(path, O_RDONLY, 0);
 		if (fd == -1) {
 			log_error("m_priv_req_readdir: open "
