@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.25 2005/05/22 21:08:21 pedro Exp 
+ *	OpenBSD: vnode_if.src,v 1.26 2005/05/28 03:05:44 pedro Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.14 2005/05/22 21:07:23 pedro Exp 
  */
@@ -1193,39 +1193,6 @@ int VOP_REALLOCBLKS(vp, buflist)
 	return (VCALL(vp, VOFFSET(vop_reallocblks), &a));
 }
 
-int vop_whiteout_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_whiteout_args,a_dvp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_whiteout_desc = {
-	0,
-	"vop_whiteout",
-	0,
-	vop_whiteout_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_whiteout_args, a_cnp),
-	NULL,
-};
-
-int VOP_WHITEOUT(dvp, cnp, flags)
-	struct vnode *dvp;
-	struct componentname *cnp;
-	int flags;
-{
-	struct vop_whiteout_args a;
-	a.a_desc = VDESC(vop_whiteout);
-	a.a_dvp = dvp;
-#ifdef VFSDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_whiteout: dvp");
-#endif
-	a.a_cnp = cnp;
-	a.a_flags = flags;
-	return (VCALL(dvp, VOFFSET(vop_whiteout), &a));
-}
-
 int vop_getextattr_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_getextattr_args,a_vp),
 	VDESC_NO_OFFSET
@@ -1390,7 +1357,6 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_pathconf_desc,
 	&vop_advlock_desc,
 	&vop_reallocblks_desc,
-	&vop_whiteout_desc,
 	&vop_getextattr_desc,
 	&vop_setextattr_desc,
 	NULL
