@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.48 2005/03/07 16:13:38 reyk Exp $	*/
+/*	$OpenBSD: interface.h,v 1.49 2005/05/28 09:01:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.48 2005/03/07 16:13:38 reyk Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.49 2005/05/28 09:01:52 reyk Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -79,7 +79,8 @@ extern int packettype;		/* as specified by -T */
 #define DEFAULT_SNAPLEN 96
 #endif /* INET6 */
 #define SACK_SNAPLEN 94
-#define RADIOTAP_SNAPLEN (DEFAULT_SNAPLEN + 64)
+#define IEEE802_11_SNAPLEN (DEFAULT_SNAPLEN + 30)
+#define IEEE802_11_RADIO_SNAPLEN (IEEE802_11_SNAPLEN + 64)
 
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN 4321

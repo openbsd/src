@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.3 2005/03/09 11:43:17 deraadt Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.4 2005/05/28 09:01:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -58,6 +58,7 @@ const char *ieee80211_mgt_subtype_name[] = {
 };
 
 int	 ieee80211_hdr(struct ieee80211_frame *);
+int	 ieee80211_data(struct ieee80211_frame *, u_int);
 void	 ieee80211_print_element(u_int8_t *, u_int);
 void	 ieee80211_print_essid(u_int8_t *, u_int);
 int	 ieee80211_elements(struct ieee80211_frame *, u_int);
@@ -114,6 +115,35 @@ ieee80211_hdr(struct ieee80211_frame *wh)
 		printf(" (seq %u): ", letoh16(*(u_int16_t *)&wh->i_seq[0]));
 	} else
 		printf(": ");
+
+	return (0);
+
+ trunc:
+	/* Truncated elements in frame */
+	return (1);
+}
+
+int
+ieee80211_data(struct ieee80211_frame *wh, u_int len)
+{
+	u_int8_t *t = (u_int8_t *)wh;
+	u_int datalen;
+
+	TCHECK2(*t, sizeof(struct ieee80211_frame));
+	t += sizeof(struct ieee80211_frame);
+	datalen = len - sizeof(struct ieee80211_frame);
+
+	switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
+	case IEEE80211_FC1_DIR_TODS:
+		llc_print(t, datalen, datalen, wh->i_addr2, wh->i_addr3);
+		break;
+	case IEEE80211_FC1_DIR_FROMDS:
+		llc_print(t, datalen, datalen, wh->i_addr3, wh->i_addr1);
+		break;
+	case IEEE80211_FC1_DIR_NODS:
+	case IEEE80211_FC1_DIR_DSTODS:
+		break;
+	}
 
 	return (0);
 
@@ -318,7 +348,8 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 
 	switch (type) {
 	case IEEE80211_FC0_TYPE_DATA:
-		printf(": data");
+		printf(": data: ");
+		ieee80211_data(wh, len);
 		break;
 	case IEEE80211_FC0_TYPE_MGT:
 		printf(": %s", ieee80211_mgt_subtype_name[
