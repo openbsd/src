@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2005/04/26 20:56:59 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2005/05/28 05:15:18 niklas Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 			ci->ci_isources[slot] = isp;
 			simple_unlock(&ci->ci_slock);
 		} else {
-			if (isp->is_pin != pin) {
+			if (isp->is_pic != pic || isp->is_pin != pin) {
 				if (pic == &i8259_pic)
 					return EINVAL;
 				goto other;
