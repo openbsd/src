@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.7 2005/05/25 07:40:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.8 2005/05/28 12:01:53 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -205,6 +205,9 @@ ieee80211_ifattach(struct ifnet *ifp)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
+
+	/* IEEE 802.11 defines a MTU >= 2290 */
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 
 	ieee80211_setbasicrates(ic);
 	(void) ieee80211_setmode(ic, ic->ic_curmode);
