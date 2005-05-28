@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.12 2005/05/25 20:52:41 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.13 2005/05/28 06:16:33 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -140,8 +140,9 @@ sd_scsibus_get_parms(sd, dp, flags)
 	struct sd_scsibus_mode_sense_data scsi_sense;
 	struct scsi_mode_sense_buf buf;
 	union scsi_disk_pages *sense_pages = NULL;
+	u_int32_t blksize;
 	u_int16_t rpm = 0;
-	int page, error, blksize;
+	int page, error;
 
 	dp->rot_rate = 3600;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.54 2005/05/25 21:39:08 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.55 2005/05/28 06:16:33 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -337,8 +337,8 @@ int	scsi_mode_sense_big(struct scsi_link *, int, int,
 void *	scsi_mode_sense_page(struct scsi_mode_header *, int);
 void *	scsi_mode_sense_big_page(struct scsi_mode_header_big *, int);
 int	scsi_do_mode_sense(struct scsi_link *, int,
-	    struct scsi_mode_sense_buf *, void **, int *, int *, int *, int,
-	    int);
+	    struct scsi_mode_sense_buf *, void **, u_int32_t *, u_int64_t *,
+	    u_int32_t *, int, int);
 int	scsi_mode_select(struct scsi_link *, int, struct scsi_mode_header *,
 	    size_t, int, int);
 int	scsi_mode_select_big(struct scsi_link *, int,
@@ -362,9 +362,11 @@ void	scsi_strvis(u_char *, u_char *, int);
 static __inline void _lto2b(u_int32_t val, u_int8_t *bytes);
 static __inline void _lto3b(u_int32_t val, u_int8_t *bytes);
 static __inline void _lto4b(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto8b(u_int64_t val, u_int8_t *bytes);
 static __inline u_int32_t _2btol(u_int8_t *bytes);
 static __inline u_int32_t _3btol(u_int8_t *bytes);
 static __inline u_int32_t _4btol(u_int8_t *bytes);
+static __inline u_int64_t _8btol(u_int8_t *bytes);
 
 static __inline void _lto2l(u_int32_t val, u_int8_t *bytes);
 static __inline void _lto3l(u_int32_t val, u_int8_t *bytes);
@@ -406,6 +408,22 @@ _lto4b(val, bytes)
 	bytes[3] = val & 0xff;
 }
 
+static __inline void
+_lto8b(val, bytes)
+	u_int64_t val;
+	u_int8_t *bytes;
+{
+
+	bytes[0] = (val >> 56) & 0xff;
+	bytes[1] = (val >> 48) & 0xff;
+	bytes[2] = (val >> 40) & 0xff;
+	bytes[3] = (val >> 32) & 0xff;
+	bytes[4] = (val >> 24) & 0xff;
+	bytes[5] = (val >> 16) & 0xff;
+	bytes[6] = (val >> 8) & 0xff;
+	bytes[7] = val & 0xff;
+}
+
 static __inline u_int32_t
 _2btol(bytes)
 	u_int8_t *bytes;
@@ -434,6 +452,23 @@ _4btol(bytes)
 
 	rv = (bytes[0] << 24) | (bytes[1] << 16) |
 	    (bytes[2] << 8) | bytes[3];
+	return (rv);
+}
+
+static __inline u_int64_t
+_8btol(bytes)
+	u_int8_t *bytes;
+{
+	u_int64_t rv;
+
+	rv = (((u_int64_t)bytes[0]) << 56) |
+	    (((u_int64_t)bytes[1]) << 48) |
+	    (((u_int64_t)bytes[2]) << 40) |
+	    (((u_int64_t)bytes[3]) << 32) |
+	    (((u_int64_t)bytes[4]) << 24) |
+	    (((u_int64_t)bytes[5]) << 16) |
+	    (((u_int64_t)bytes[6]) << 8) |
+	    ((u_int64_t)bytes[7]);
 	return (rv);
 }
 

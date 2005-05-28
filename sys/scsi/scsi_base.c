@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.70 2005/05/25 20:52:41 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.71 2005/05/28 06:16:33 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -459,7 +459,9 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
     block_size, page_len, flags)
 	struct scsi_link *sc_link;
 	struct scsi_mode_sense_buf *buf;
-	int page, page_len, *density, *block_count, *block_size;
+	int page, page_len;
+	u_int32_t *density, *block_size;
+	u_int64_t *block_count;
 	void **page_data;
 {
 	struct scsi_mode_blk_desc_big *desc_big;
@@ -474,7 +476,6 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	if (density)
 		*density = 0;
 	if (block_count)
-		/* XXX We don't do block_count at this time. */
 		*block_count = 0;
 	if (block_size)
 		*block_size = 0;
@@ -497,6 +498,8 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 			*density = desc_big->density;
 		if (block_size)
 			*block_size = _4btol(desc_big->blklen);
+		if (block_count)
+			*block_count = _8btol(desc_big->nblocks);
 		return (0);
 	}
 
@@ -526,6 +529,8 @@ eight_byte:
 		*density = desc->density;
 	if (block_size)
 		*block_size = _3btol(desc->blklen);
+	if (block_count)
+		*block_count = (u_int64_t)_4btol(desc_big->nblocks);
 
 	return (0);
 }
