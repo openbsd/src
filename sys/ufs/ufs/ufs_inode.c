@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.27 2005/05/23 21:16:28 pedro Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.28 2005/05/28 17:56:28 art Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ ufs_inactive(v)
 		ip->i_ffs_mode = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
+#if 0
 		/*
 		 * Setting the mode to zero needs to wait for the inode to be
 		 * written just as does a change to the link count. So, rather
@@ -104,6 +105,7 @@ ufs_inactive(v)
 		 */
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
+#endif
 
 		UFS_INODE_FREE(ip, ip->i_number, mode);
 	}
