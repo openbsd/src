@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.19 2004/12/26 21:22:14 miod Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.20 2005/05/28 04:08:39 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -195,6 +195,12 @@ scsi_user_done(struct scsi_xfer *xs)
 		screq->senselen_used = min(sizeof(xs->sense), SENSEBUFLEN);
 		bcopy(&xs->sense, screq->sense, screq->senselen);
 		screq->retsts = SCCMD_SENSE;
+		break;
+	case XS_SHORTSENSE:
+		SC_DEBUG(sc_link, SDEV_DB3, ("have short sense\n"));
+		screq->senselen_used = min(sizeof(xs->sense), SENSEBUFLEN);
+		bcopy(&xs->sense, screq->sense, screq->senselen);
+		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	case XS_DRIVER_STUFFUP:
 		sc_print_addr(sc_link);
