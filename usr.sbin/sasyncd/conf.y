@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.5 2005/05/28 01:07:52 ho Exp $	*/
+/*	$OpenBSD: conf.y,v 1.6 2005/05/28 01:36:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -237,7 +237,7 @@ yylex(void)
 	else {
 		for (p = confptr; *p && p < confbuf + conflen; p++)
 			;
-		*p++;
+		p++;
 		if (!*p)
 			return 0;
 		confptr = p;
