@@ -1279,12 +1279,10 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi
-./usr/libdata/perl5/site_perl/vax-openbsd/scsi/atapi_cd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/atapi_disk.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/cdvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/scsi_all.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/scsi/scsi_cd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/scsi_changer.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/scsi_debug.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/scsi_disk.ph

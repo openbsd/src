@@ -1946,12 +1946,10 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi
-./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/atapi_cd.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/atapi_disk.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/cd.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/cdvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/scsi_all.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/scsi_cd.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/scsi_changer.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/scsi_debug.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/scsi_disk.ph
