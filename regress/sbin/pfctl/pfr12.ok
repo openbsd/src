@@ -2,7 +2,7 @@
 # pass list 
 regress
 # pass list -v
--pa---	regress	regress:regress
+-pa---	regress	regress
 # pass kill 
 1 table deleted.
 # pass list 
@@ -12,10 +12,10 @@ pfctl: Anchor or Ruleset does not exist.
 # pass rule pass in from <regress> to any
 # pass list 
 # pass list -v
-----r-	regress	regress:regress
+----r-	regress	regress
 # pass list 
 # pass list -v
-----r-	regress	regress:regress
+----r-	regress	regress
 # pass rule 
 # pass list 
 pfctl: Anchor or Ruleset does not exist.
@@ -30,17 +30,17 @@ pfctl: Anchor or Ruleset does not exist.
 # pass rule pass in from <regress> to any
 # pass list 
 # pass list -v
-----r-	regress	regress:regress
+----r-	regress	regress
 # pass load table <regress> persist
 # pass list 
 regress
 # pass list -v
--pa-r-	regress	regress:regress
+-pa-r-	regress	regress
 # pass rule 
 # pass list 
 regress
 # pass list -v
--pa---	regress	regress:regress
+-pa---	regress	regress
 # kill
 1 tables deleted.
 rules cleared
