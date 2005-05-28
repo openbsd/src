@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.25 2005/05/22 21:08:21 pedro Exp $
+#	$OpenBSD: vnode_if.src,v 1.26 2005/05/28 03:05:44 pedro Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -441,18 +441,6 @@ vop_advlock {
 vop_reallocblks {
 	IN SHOULDBELOCKED struct vnode *vp;
 	IN struct cluster_save *buflist;
-};
-
-#
-#% whiteout	dvp	L L L
-#% whiteout	cnp	- - -
-#% whiteout	flag	- - -
-#
-
-vop_whiteout {
-	IN SHOULDBELOCKED struct vnode *dvp;
-	IN struct componentname *cnp;
-	IN int flags;
 };
 
 # Needs work: no vp?
