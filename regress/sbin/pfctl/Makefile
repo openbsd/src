@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.187 2005/05/26 20:22:29 camield Exp $
+# $OpenBSD: Makefile,v 1.188 2005/05/28 00:52:41 mpf Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -30,6 +30,7 @@ PFALTQ=1 2 3 4 5 6 7 8 9 10 11 12 13 14
 PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12 13
 PFOPT=1 2 3 4 5
 PFIF2IP=1 2 3
+PFCHKSUM=1 2 3
 
 .MAIN: all
 
@@ -272,6 +273,31 @@ pfaltq-update:	${PFALTQ_UPDATES}
 
 NODEFAULT_TARGETS+=pfaltq
 REGRESS_ROOT_TARGETS+=pfaltq
+
+.for n in ${PFCHKSUM}
+PFCHKSUM_TARGETS+=pfchksum${n}
+PFCHKSUM_UPDATES+=pfchksum${n}-update
+
+pfchksum${n}:
+	${SUDO} pfctl -Fa >/dev/null 2>&1
+	${SUDO} pfctl -f - < ${.CURDIR}/pfchksum${n}.in
+	${SUDO} pfctl -vsi | grep '^Checksum:' | \
+		 diff -u ${.CURDIR}/pfchksum${n}.ok /dev/stdin
+	${SUDO} pfctl -Fa >/dev/null 2>&1
+
+pfchksum${n}-update:
+	${SUDO} pfctl -Fa >/dev/null 2>&1
+	${SUDO} pfctl -f - < ${.CURDIR}/pfchksum${n}.in
+	${SUDO} pfctl -vsi | grep '^Checksum:' > ${.CURDIR}/pfchksum${n}.ok
+	${SUDO} pfctl -Fa >/dev/null 2>&1
+
+.endfor
+
+pfchksum:		${PFCHKSUM_TARGETS}
+pfchksum-update:	${PFCHKSUM_UPDATES}
+
+NODEFAULT_TARGETS+=pfchksum
+REGRESS_ROOT_TARGETS+=pfchksum
 
 update:	${UPDATE_TARGETS}
 
