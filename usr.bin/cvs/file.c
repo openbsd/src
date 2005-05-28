@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.80 2005/05/25 09:42:12 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.81 2005/05/28 01:34:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -621,7 +621,8 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 	DIR *dirp;
 	CVSENTRIES *entfile;
 
-	check_entry = ndirs = nfiles = 0;
+	check_entry = 1;
+	ndirs = nfiles = 0;
 	SIMPLEQ_INIT(&dirs);
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
