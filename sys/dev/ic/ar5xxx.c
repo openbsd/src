@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.24 2005/05/27 04:10:06 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.25 2005/05/28 23:45:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -608,7 +608,7 @@ ar5k_get_regdomain(hal)
 	ieee80211_regdomain_t ieee_regdomain;
 
 	if (ar5k_eeprom_regulation_domain(hal,
-		AH_FALSE, &ieee_regdomain) == AH_TRUE) {
+	    AH_FALSE, &ieee_regdomain) == AH_TRUE) {
 		if ((regdomain = ar5k_regdomain_from_ieee(ieee_regdomain)))
 			return (regdomain);
 	}

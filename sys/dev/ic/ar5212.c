@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.20 2005/05/27 11:42:52 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.21 2005/05/28 23:45:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1223,8 +1223,6 @@ ar5k_ar5212_stop_tx_dma(hal, queue)
 	struct ath_hal *hal;
 	u_int queue;
 {
-	HAL_BOOL ret;
-
 	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
 
 	/*
@@ -1232,10 +1230,8 @@ ar5k_ar5212_stop_tx_dma(hal, queue)
 	 */
 	AR5K_REG_WRITE_Q(AR5K_AR5212_QCU_TXD, queue);
 
-	if (queue <= HAL_TX_QUEUE_ID_DATA_MAX)
-		ret = ar5k_register_timeout(hal,
-		    AR5K_AR5212_QCU_STS(queue), AR5K_AR5212_QCU_STS_FRMPENDCNT,
-		    0, AH_FALSE);
+	ar5k_register_timeout(hal, AR5K_AR5212_QCU_STS(queue),
+	    AR5K_AR5212_QCU_STS_FRMPENDCNT, 0, AH_FALSE);
 
 	/* Clear register */
 	AR5K_REG_WRITE(AR5K_AR5212_QCU_TXD, 0);
@@ -1243,7 +1239,7 @@ ar5k_ar5212_stop_tx_dma(hal, queue)
 	if (AR5K_REG_READ_Q(AR5K_AR5212_QCU_TXE, queue))
 		return (AH_FALSE);
 
-	return (ret);
+	return (AH_TRUE);
 }
 
 HAL_BOOL
@@ -2146,11 +2142,18 @@ ar5k_ar5212_update_mib_counters(hal, statistics)
 	struct ath_hal *hal;
 	HAL_MIB_STATS *statistics;
 {
+	/* Read-And-Clear */
 	statistics->ackrcv_bad += AR5K_REG_READ(AR5K_AR5212_ACK_FAIL);
 	statistics->rts_bad += AR5K_REG_READ(AR5K_AR5212_RTS_FAIL);
 	statistics->rts_good += AR5K_REG_READ(AR5K_AR5212_RTS_OK);
 	statistics->fcs_bad += AR5K_REG_READ(AR5K_AR5212_FCS_FAIL);
 	statistics->beacons += AR5K_REG_READ(AR5K_AR5212_BEACON_CNT);
+
+	/* Reset profile count registers */
+	AR5K_REG_WRITE(AR5K_AR5212_PROFCNT_TX, 0);
+	AR5K_REG_WRITE(AR5K_AR5212_PROFCNT_RX, 0);
+	AR5K_REG_WRITE(AR5K_AR5212_PROFCNT_RXCLR, 0);
+	AR5K_REG_WRITE(AR5K_AR5212_PROFCNT_CYCLE, 0);
 }
 
 HAL_RFGAIN
@@ -2742,6 +2745,9 @@ ar5k_ar5212_get_isr(hal, interrupt_mask)
 	    hal->ah_radar.r_enabled == AH_TRUE)
 		ar5k_radar_alert(hal);
 
+	if (*interrupt_mask == 0)
+		AR5K_PRINTF("0x%08x\n", data);
+
 	return (AH_TRUE);
 }
 
@@ -2794,12 +2800,6 @@ ar5k_ar5212_set_intr(hal, new_mask)
 		    AR5K_AR5212_SIMR2_MCABT |
 		    AR5K_AR5212_SIMR2_SSERR |
 		    AR5K_AR5212_SIMR2_DPERR);
-	}
-
-	if (hal->ah_op_mode & HAL_M_HOSTAP) {
-		int_mask |= AR5K_AR5212_PIMR_MIB;
-	} else {
-		int_mask &= ~AR5K_AR5212_PIMR_MIB;
 	}
 
 	AR5K_REG_WRITE(AR5K_AR5212_PIMR, int_mask);

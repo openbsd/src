@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.11 2005/05/28 00:46:46 robert Exp $  */
+/*      $OpenBSD: athvar.h,v 1.12 2005/05/28 23:45:10 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -74,6 +74,7 @@ struct ath_stats {
 	u_int32_t	ast_watchdog;	/* device reset by watchdog */
 	u_int32_t	ast_hardware;	/* fatal hardware error interrupts */
 	u_int32_t	ast_bmiss;	/* beacon miss interrupts */
+	u_int32_t	ast_mib;	/* MIB counter interrupts */
 	u_int32_t	ast_rxorn;	/* rx overrun interrupts */
 	u_int32_t	ast_rxeol;	/* rx eol interrupts */
 	u_int32_t	ast_txurn;	/* tx underrun interrupts */
@@ -301,6 +302,7 @@ struct ath_softc {
 	struct callout		sc_scan_ch;	/* callout handle for scan */
 #endif
 	struct ath_stats	sc_stats;	/* interface statistics */
+	HAL_MIB_STATS		sc_mib_stats;	/* MIB counter statistics */
 
 #ifndef __FreeBSD__
 	void			*sc_sdhook;	/* shutdown hook */
@@ -323,6 +325,7 @@ struct ath_softc {
 	 ((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8) |	\
 	 (((u_int8_t *)(p))[2] << 16) | (((u_int8_t *)(p))[3] << 24)))
 
+#define AR_DEBUG
 #ifdef AR_DEBUG
 enum {
 	ATH_DEBUG_XMIT		= 0x00000001,	/* basic xmit operation */
@@ -412,6 +415,7 @@ void	ath_power(int, void *);
 #endif
 void	ath_shutdown(void *);
 int	ath_intr(void *);
+int	ath_enable(struct ath_softc *);
 
 /*
  * HAL definitions to comply with local coding convention.
@@ -525,6 +529,8 @@ int	ath_intr(void *);
 	((*(_ah)->ah_release_tx_queue)((_ah), (_q)))
 #define	ath_hal_has_veol(_ah) \
 	((*(_ah)->ah_has_veol)((_ah)))
+#define ath_hal_update_mib_counters(_ah, _stats) \
+	((*(_ah)->ah_update_mib_counters)((_ah), (_stats)))
 #define	ath_hal_get_rf_gain(_ah) \
 	((*(_ah)->ah_get_rf_gain)((_ah)))
 #define	ath_hal_set_rx_signal(_ah) \

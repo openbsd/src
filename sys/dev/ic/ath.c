@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.28 2005/05/27 09:53:55 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.29 2005/05/28 23:45:10 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -137,7 +137,6 @@ void	ath_rate_ctl_reset(struct ath_softc *, enum ieee80211_state);
 void	ath_rate_ctl(void *, struct ieee80211_node *);
 void	ath_recv_mgmt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int, int, u_int32_t);
-int	ath_enable(struct ath_softc *);
 void	ath_disable(struct ath_softc *);
 void	ath_power(int, void *);
 
@@ -149,7 +148,7 @@ void	ath_gpio_pin_ctl(void *, int, int);
 #ifdef AR_DEBUG
 void	ath_printrxbuf(struct ath_buf *, int);
 void	ath_printtxbuf(struct ath_buf *, int);
-int ath_debug = ATH_DEBUG_ANY;
+int ath_debug = 0;
 #endif
 
 int ath_dwelltime = 200;		/* 5 channels/second */
@@ -563,6 +562,11 @@ ath_intr1(struct ath_softc *sc)
 		sc->sc_stats.ast_rxorn++;
 		ath_hal_set_intr(ah, 0);		/* disable intr's until reset */
 		ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_rxorntask);
+	} else if (status & HAL_INT_MIB) {
+		DPRINTF(ATH_DEBUG_INTR,
+		    ("%s: resetting MIB counters\n", __func__));
+		sc->sc_stats.ast_mib++;
+		ath_hal_update_mib_counters(ah, &sc->sc_mib_stats);
 	} else {
 		if (status & HAL_INT_RXEOL) {
 			/*
@@ -727,6 +731,8 @@ ath_init1(struct ath_softc *sc)
 	sc->sc_imask = HAL_INT_RX | HAL_INT_TX
 	    | HAL_INT_RXEOL | HAL_INT_RXORN
 	    | HAL_INT_FATAL | HAL_INT_GLOBAL;
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		sc->sc_imask |= HAL_INT_MIB;
 	ath_hal_set_intr(ah, sc->sc_imask);
 
 	ifp->if_flags |= IFF_RUNNING;

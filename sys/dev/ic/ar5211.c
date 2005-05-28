@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.16 2005/05/27 11:42:52 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.17 2005/05/28 23:45:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1081,8 +1081,6 @@ ar5k_ar5211_stop_tx_dma(hal, queue)
 	struct ath_hal *hal;
 	u_int queue;
 {
-	HAL_BOOL ret;
-
 	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
 
 	/*
@@ -1090,7 +1088,7 @@ ar5k_ar5211_stop_tx_dma(hal, queue)
 	 */
 	AR5K_REG_WRITE_Q(AR5K_AR5211_QCU_TXD, queue);
 
-	ret = ar5k_register_timeout(hal, AR5K_AR5211_QCU_STS(queue),
+	ar5k_register_timeout(hal, AR5K_AR5211_QCU_STS(queue),
 	    AR5K_AR5211_QCU_STS_FRMPENDCNT, 0, AH_FALSE);
 
 	if (AR5K_REG_READ_Q(AR5K_AR5211_QCU_TXE, queue))
@@ -2455,12 +2453,6 @@ ar5k_ar5211_set_intr(hal, new_mask)
 		    AR5K_AR5211_SIMR2_MCABT |
 		    AR5K_AR5211_SIMR2_SSERR |
 		    AR5K_AR5211_SIMR2_DPERR);
-	}
-
-	if (hal->ah_op_mode & HAL_M_HOSTAP) {
-		int_mask |= AR5K_AR5211_PIMR_MIB;
-	} else {
-		int_mask &= ~AR5K_AR5211_PIMR_MIB;
 	}
 
 	AR5K_REG_WRITE(AR5K_AR5211_PIMR, int_mask);
