@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.19 2005/01/20 17:47:38 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.20 2005/05/28 15:10:07 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -88,6 +88,16 @@ struct pfsync_state {
 #define PFSYNC_FLAG_COMPRESS 	0x01
 #define PFSYNC_FLAG_STALE	0x02
 
+struct pfsync_tdb {
+	u_int32_t	spi;
+	union sockaddr_union dst;
+	u_int32_t	rpl;
+	u_int64_t	cur_bytes;
+	u_int8_t	sproto;
+	u_int8_t	updates;
+	u_int8_t	pad[2];
+} __packed;
+
 struct pfsync_state_upd {
 	u_int32_t		id[2];
 	struct pfsync_state_peer	src;
@@ -143,6 +153,10 @@ union sc_statep {
 	struct pfsync_state_upd_req	*r;
 };
 
+union sc_tdb_statep {
+	struct pfsync_tdb	*t;
+};
+
 extern int	pfsync_sync_ok;
 
 struct pfsync_softc {
@@ -151,14 +165,17 @@ struct pfsync_softc {
 
 	struct ip_moptions	 sc_imo;
 	struct timeout		 sc_tmo;
+	struct timeout		 sc_tdb_tmo;
 	struct timeout		 sc_bulk_tmo;
 	struct timeout		 sc_bulkfail_tmo;
 	struct in_addr		 sc_sync_peer;
 	struct in_addr		 sc_sendaddr;
 	struct mbuf		*sc_mbuf;	/* current cumulative mbuf */
 	struct mbuf		*sc_mbuf_net;	/* current cumulative mbuf */
+    	struct mbuf		*sc_mbuf_tdb;	/* dito for TDB updates */
 	union sc_statep		 sc_statep;
 	union sc_statep		 sc_statep_net;
+	union sc_tdb_statep	 sc_statep_tdb;
 	u_int32_t		 sc_ureq_received;
 	u_int32_t		 sc_ureq_sent;
 	int			 sc_bulk_tries;
@@ -183,7 +200,8 @@ struct pfsync_header {
 #define	PFSYNC_ACT_DEL_F	7	/* delete fragments */
 #define	PFSYNC_ACT_UREQ		8	/* request "uncompressed" state */
 #define PFSYNC_ACT_BUS		9	/* Bulk Update Status */
-#define	PFSYNC_ACT_MAX		10
+#define PFSYNC_ACT_TDB_UPD	10	/* TDB replay counter update */
+#define	PFSYNC_ACT_MAX		11
 	u_int8_t count;
 } __packed;
 
@@ -193,7 +211,7 @@ struct pfsync_header {
 #define	PFSYNC_ACTIONS \
 	"CLR ST", "INS ST", "UPD ST", "DEL ST", \
 	"UPD ST COMP", "DEL ST COMP", "INS FR", "DEL FR", \
-	"UPD REQ", "BLK UPD STAT"
+	"UPD REQ", "BLK UPD STAT", "TDB UPD"
 
 #define PFSYNC_DFLTTL		255
 
@@ -282,6 +300,7 @@ int pfsync_pack_state(u_int8_t, struct pf_state *, int);
 		    PFSYNC_FLAG_COMPRESS);			\
 	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
+int pfsync_update_tdb(struct tdb *);
 #endif
 
 #endif /* _NET_IF_PFSYNC_H_ */

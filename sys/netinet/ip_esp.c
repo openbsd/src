@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.91 2005/05/27 18:23:18 markus Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.92 2005/05/28 15:10:07 ho Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -35,6 +35,8 @@
  * PURPOSE.
  */
 
+#include "pfsync.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -49,6 +51,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #endif /* INET */
 
 #ifdef INET6
@@ -62,6 +65,11 @@
 #include <netinet/ip_esp.h>
 #include <net/pfkeyv2.h>
 #include <net/if_enc.h>
+
+#if NPFSYNC > 0
+#include <net/pfvar.h>
+#include <net/if_pfsync.h>
+#endif /* NPFSYNC > 0 */
 
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
@@ -573,6 +581,9 @@ esp_input_cb(void *op)
 		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
 		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 1)) {
 		case 0: /* All's well */
+#if NPFSYNC > 0
+			pfsync_update_tdb(tdb);
+#endif
 			break;
 
 		case 1:
@@ -875,6 +886,9 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		u_int32_t replay = htonl(tdb->tdb_rpl++);
 		bcopy((caddr_t) &replay, mtod(mo, caddr_t) + sizeof(u_int32_t),
 		    sizeof(u_int32_t));
+#if NPFSYNC > 0
+		pfsync_update_tdb(tdb);
+#endif
 	}
 
 	/*

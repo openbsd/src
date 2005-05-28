@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.162 2005/05/27 19:33:56 hshoexer Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.163 2005/05/28 15:10:07 ho Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -76,10 +76,6 @@ void tdb_hashstats(void);
 #define	DPRINTF(x)
 #endif
 
-#ifdef __GNUC__
-#define	INLINE	static __inline
-#endif
-
 int		ipsp_kern(int, char **, int);
 u_int8_t	get_sa_require(struct inpcb *);
 void		tdb_rehash(void);
@@ -145,7 +141,7 @@ static int tdb_count;
  * Our hashing function needs to stir things with a non-zero random multiplier
  * so we cannot be DoS-attacked via choosing of the data to hash.
  */
-INLINE int
+int
 tdb_hash(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 {
 	static u_int32_t mult1 = 0, mult2 = 0;
