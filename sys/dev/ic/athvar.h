@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.10 2005/05/27 09:53:55 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.11 2005/05/28 00:46:46 robert Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -403,6 +403,7 @@ typedef unsigned long u_intptr_t;
 
 int	ath_attach(u_int16_t, struct ath_softc *);
 int	ath_detach(struct ath_softc *, int);
+int	ath_enable(struct ath_softc *);
 void	ath_resume(struct ath_softc *, int);
 void	ath_suspend(struct ath_softc *, int);
 #ifdef __NetBSD__
