@@ -1,0 +1,113 @@
+.\" $OpenBSD: gzsig.1,v 1.1.1.1 2005/05/28 01:57:30 marius Exp $
+.\" $Id: gzsig.1,v 1.1.1.1 2005/05/28 01:57:30 marius Exp $
+.\"
+.\"  Copyright (c) 2001 Dug Song <dugsong@arbor.net>
+.\"  Copyright (c) 2001 Arbor Networks, Inc.
+.\" 
+.\"    Redistribution and use in source and binary forms, with or without
+.\"    modification, are permitted provided that the following conditions
+.\"    are met:
+.\"  
+.\"    1. Redistributions of source code must retain the above copyright
+.\"       notice, this list of conditions and the following disclaimer.
+.\"    2. Redistributions in binary form must reproduce the above copyright
+.\"       notice, this list of conditions and the following disclaimer in the
+.\"       documentation and/or other materials provided with the distribution.
+.\"    3. The names of the copyright holders may not be used to endorse or
+.\"       promote products derived from this software without specific
+.\"       prior written permission.
+.\"  
+.\"    THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\"    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\"    AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+.\"    THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\"    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\"    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\"    OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\"    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\"    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\"    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" 
+.Dd July 6, 2001
+.Dt GZSIG 1
+.Sh NAME
+.Nm gzsig
+.Nd gzip signing utility
+.Sh SYNOPSIS
+.Nm gzsig sign
+.Op Fl v
+.Ar privkey
+.Op Ar
+.Pp
+.Nm gzsig verify
+.Op Fl v
+.Ar pubkey
+.Op Ar
+.Sh DESCRIPTION
+.Nm
+embeds or verifies RSA PKCS #1 v2.0 or DSA SHA1 signatures in
+.Xr gzip 1
+compressed files using SSH2 identity keys or X509 certificates.
+.Pp
+The
+.Ar file
+operands are processed in command-line order. If 
+.Ar file
+is a single dash
+.Pq Sq \&-
+or absent,
+.Nm
+reads from the standard input.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Nm sign
+Sign the input using the private key in
+.Ar privkey .
+.It Nm verify
+Verify the signature using the public key in
+.Ar pubkey .
+.It Fl v
+Enable verbose mode.
+.It Fl p
+Supply a passphrase for decrypting private keys when signing.
+.El
+.Pp
+The
+.Nm
+utility exits 0 on success or >0 if an error occured.
+.Sh EXAMPLES
+.Cm gzsign sign ~/.ssh/id_rsa file1 file2
+.Pp
+Sign 
+.Ar file1
+and
+.Ar file2
+with the SSH2 identity key in
+.Ar ~/.ssh/id_rsa .
+.Pp
+.Cm gzsign sign ~/.ssh/id_rsa < file1 > file2
+.Pp
+Sign
+.Ar file1
+with the SSH2 identity key, saving the signed file in
+.Ar file2 .
+.Pp
+.Cm gzsign verify /etc/ssl/server.crt < file1
+.Pp
+Verify the signature on
+.Ar file1
+using the SSL certificate in
+.Ar /etc/ssl/server.crt .
+.Pp
+.Sh SEE ALSO
+.Xr gzip 1 ,
+.Xr ssh-keygen 1 ,
+.Xr ssl 8
+.Sh AUTHORS
+Dug Song
+.Aq dugsong@arbor.net
+.Pp
+SSH2 support by
+Marius Eriksen
+.Aq marius@openbsd.org
