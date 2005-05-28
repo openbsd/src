@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.318 2005/05/27 10:41:11 kjell Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.319 2005/05/28 09:48:54 kjell Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1145,12 +1145,12 @@ winchip_cpu_setup(struct cpu_info *ci)
 void
 cyrix3_cpu_setup(struct cpu_info *ci)
 {
+#if defined(I686_CPU)
 	int model, step;
 
 	model = (ci->ci_signature >> 4) & 15;
 	step = ci->ci_signature & 15;
 
-#if defined(I686_CPU)
 	u_int64_t msreg;
 	u_int32_t regs[4];
 	unsigned int val;
@@ -1413,8 +1413,6 @@ amd_family6_setup(struct cpu_info *ci)
 void
 intel686_common_cpu_setup(struct cpu_info *ci)
 {
-	int model = (ci->ci_signature >> 4) & 15;
-	int step = ci->ci_signature & 15;
 
 	/*
 	 * Make sure SYSENTER is disabled.
@@ -1423,6 +1421,9 @@ intel686_common_cpu_setup(struct cpu_info *ci)
 		wrmsr(MSR_SYSENTER_CS, 0);
 
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
+	int model = (ci->ci_signature >> 4) & 15;
+	int step = ci->ci_signature & 15;
+
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(ci->ci_dev.dv_xname);
