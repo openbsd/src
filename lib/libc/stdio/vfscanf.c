@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.12 2005/05/11 18:39:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.13 2005/05/28 04:34:05 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -376,7 +376,7 @@ literal:
 				n = p - p0;
 				if (n == 0)
 					goto match_failure;
-				*p = 0;
+				*p = '\0';
 				nassigned++;
 			}
 			nread += n;
@@ -406,7 +406,7 @@ literal:
 					if (fp->_r <= 0 && __srefill(fp))
 						break;
 				}
-				*p = 0;
+				*p = '\0';
 				nread += p - p0;
 				nassigned++;
 			}
@@ -533,7 +533,7 @@ literal:
 			if ((flags & SUPPRESS) == 0) {
 				u_quad_t res;
 
-				*p = 0;
+				*p = '\0';
 				res = (*ccfn)(buf, (char **)NULL, base);
 				if (flags & POINTER)
 					*va_arg(ap, void **) =
@@ -631,7 +631,7 @@ literal:
 			if ((flags & SUPPRESS) == 0) {
 				double res;
 
-				*p = 0;
+				*p = '\0';
 				res = strtod(buf, (char **) NULL);
 				if (flags & LONGDBL)
 					*va_arg(ap, long double *) = res;

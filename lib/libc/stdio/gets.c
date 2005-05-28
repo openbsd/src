@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gets.c,v 1.7 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: gets.c,v 1.8 2005/05/28 04:34:05 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -53,6 +53,6 @@ gets(char *buf)
 				break;
 		else
 			*s++ = c;
-	*s = 0;
+	*s = '\0';
 	return (buf);
 }

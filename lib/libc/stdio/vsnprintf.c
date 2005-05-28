@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vsnprintf.c,v 1.8 2005/04/30 09:25:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: vsnprintf.c,v 1.9 2005/05/28 04:34:05 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <limits.h>
@@ -61,6 +61,6 @@ vsnprintf(char *str, size_t n, const char *fmt, _BSD_VA_LIST_ ap)
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = n - 1;
 	ret = vfprintf(&f, fmt, ap);
-	*f._p = 0;
+	*f._p = '\0';
 	return (ret);
 }
