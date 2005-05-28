@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.72 2005/05/28 23:26:09 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.73 2005/05/28 23:32:25 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
     block_size, page_len, flags)
 	struct scsi_link *sc_link;
 	struct scsi_mode_sense_buf *buf;
-	int page, page_len;
+	int page, page_len, flags;
 	u_int32_t *density, *block_size;
 	u_int64_t *block_count;
 	void **page_data;
