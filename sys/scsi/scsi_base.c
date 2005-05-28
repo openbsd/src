@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.73 2005/05/28 23:32:25 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.74 2005/05/28 23:45:06 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ scsi_get_xs(sc_link, flags)
 	SC_DEBUG(sc_link, SDEV_DB3, ("scsi_get_xs\n"));
 
 	s = splbio();
-	while (sc_link->openings <= 0) {
+	while (sc_link->openings == 0) {
 		SC_DEBUG(sc_link, SDEV_DB3, ("sleeping\n"));
 		if ((flags & SCSI_NOSLEEP) != 0) {
 			splx(s);
