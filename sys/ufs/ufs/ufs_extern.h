@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.22 2004/12/07 04:37:28 tedu Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.23 2005/05/28 02:02:50 pedro Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -91,7 +91,6 @@ int	 ufs_setattr(void *);
 int	 ufs_strategy(void *);
 int	 ufs_symlink(void *);
 int	 ufs_unlock(void *);
-int	 ufs_whiteout(void *);
 int	 ufsspec_close(void *);
 int	 ufsspec_read(void *);
 int	 ufsspec_write(void *);

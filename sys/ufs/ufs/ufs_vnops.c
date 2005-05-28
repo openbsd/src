@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.62 2005/05/22 21:12:42 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.63 2005/05/28 02:02:50 pedro Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -742,68 +742,6 @@ out2:
 	vput(dvp);
 	return (error);
 }
-
-/*
- * whiteout vnode call
- */
-int
-ufs_whiteout(v)
-	void *v;
-{
-	struct vop_whiteout_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *dvp = ap->a_dvp;
-	struct componentname *cnp = ap->a_cnp;
-	struct direct newdir;
-	int error = 0;
-
-	switch (ap->a_flags) {
-	case LOOKUP:
-		/* 4.4 format directories support whiteout operations */
-		if (dvp->v_mount->mnt_maxsymlinklen > 0)
-			return (0);
-		return (EOPNOTSUPP);
-
-	case CREATE:
-		/* create a new directory whiteout */
-#ifdef DIAGNOSTIC
-		if ((cnp->cn_flags & SAVENAME) == 0)
-			panic("ufs_whiteout: missing name");
-		if (dvp->v_mount->mnt_maxsymlinklen <= 0)
-			panic("ufs_whiteout: old format filesystem");
-#endif
-
-		newdir.d_ino = WINO;
-		newdir.d_namlen = cnp->cn_namelen;
-		bcopy(cnp->cn_nameptr, newdir.d_name, (unsigned)cnp->cn_namelen + 1);
-		newdir.d_type = DT_WHT;
-		error = ufs_direnter(dvp, NULL, &newdir, cnp, NULL);
-		break;
-
-	case DELETE:
-		/* remove an existing directory whiteout */
-#ifdef DIAGNOSTIC
-		if (dvp->v_mount->mnt_maxsymlinklen <= 0)
-			panic("ufs_whiteout: old format filesystem");
-#endif
-
-		cnp->cn_flags &= ~DOWHITEOUT;
-		error = ufs_dirremove(dvp, NULL, cnp->cn_flags, 0);
-		break;
-	default:
-		panic("ufs_whiteout: unknown op");
-		/* NOTREACHED */
-	}
-	if (cnp->cn_flags & HASBUF) {
-		pool_put(&namei_pool, cnp->cn_pnbuf);
-		cnp->cn_flags &= ~HASBUF;
-	}
-	return (error);
-}
-
 
 /*
  * Rename system call.
