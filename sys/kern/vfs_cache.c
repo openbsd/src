@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.16 2005/05/26 23:28:39 pedro Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.17 2005/05/28 07:28:07 marius Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -357,6 +357,10 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		if (ncp->nc_hash.le_prev != NULL) {
 			LIST_REMOVE(ncp, nc_hash);
 			ncp->nc_hash.le_prev = NULL;
+		}
+		if (ncp->nc_vhash.le_prev != NULL) {
+			LIST_REMOVE(ncp, nc_vhash);
+			ncp->nc_vhash.le_prev = NULL;
 		}
 	} else
 		return;
