@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.24 2005/05/27 01:02:04 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.25 2005/05/28 17:49:59 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -246,7 +246,7 @@ spf_calc(struct area *area)
 			break;
 		case LSA_TYPE_SUM_NETWORK:
 		case LSA_TYPE_SUM_ROUTER:
-			/* if BDR only look at area 0.0.0.0 LSA */
+			/* if ABR only look at area 0.0.0.0 LSA */
 
 			/* ignore self-originated stuff */
 			if (v->nbr->self)
