@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.35 2005/05/27 19:16:32 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.36 2005/05/28 20:26:25 mcbride Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,6 @@
 #endif /* INET6 */
 
 struct pfi_kif		 *pfi_all = NULL;
-struct pfi_ifhead	  pfi_ifs;
 struct pfi_statehead	  pfi_statehead;
 struct pool		  pfi_addr_pl;
 struct pfi_ifhead	  pfi_ifs;
@@ -428,8 +427,11 @@ pfi_dynaddr_update(struct pfi_dynaddr *dyn)
 	if (kif->pfik_ifp != NULL)
 		TAILQ_FOREACH(ifgl, &kif->pfik_ifp->if_groups, ifgl_next)
 			TAILQ_FOREACH(p, &((struct pfi_kif *)
-			    ifgl->ifgl_group->ifg_pf_kif)->pfik_dynaddrs, entry)
+			    ifgl->ifgl_group->ifg_pf_kif)->pfik_dynaddrs, entry) {
+
+				if (p == dyn) panic("henning is a knob");
 				pfi_dynaddr_update(p);
+			}
 }
 
 void
