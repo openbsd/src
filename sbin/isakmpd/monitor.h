@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.16 2005/05/28 18:48:12 hshoexer Exp $	 */
+/* $OpenBSD: monitor.h,v 1.17 2005/05/28 18:52:12 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -29,9 +29,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
-//#include <dirent.h>
-//#include <stdio.h>
 
 #define ISAKMPD_PRIVSEP_USER "_isakmpd"
 
