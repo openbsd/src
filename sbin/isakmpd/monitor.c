@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.55 2005/05/27 20:55:49 cloder Exp $	 */
+/* $OpenBSD: monitor.c,v 1.56 2005/05/28 17:07:53 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -837,7 +837,7 @@ must_write(const void *buf, size_t n)
 static int
 m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 {
-	char	*p;
+	char new_path[PATH_MAX];
 
 	/*
 	 * We only permit paths starting with
@@ -845,23 +845,14 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 	 *  /var/run/		(rw)
          */
 
-	if (strlen(path) < strlen("/var/run/"))
+	if (realpath(path, new_path) == NULL)
 		goto bad_path;
 
-	/* Any path containing '..' is invalid.  */
-	for (p = path; *p && (p - path) < (int)pmax; p++)
-		if (*p == '.' && *(p + 1) == '.')
-			goto bad_path;
+	if (strncmp("/var/run/", new_path, strlen("/var/run/")) == 0)
+		return 0;
 
-	/* For any write-mode, only a few paths are permitted.  */
-	if ((flags & O_ACCMODE) != O_RDONLY) {
-		if (strncmp("/var/run/", path, strlen("/var/run/")) == 0)
-			return 0;
-		goto bad_path;
-	}
-	/* Any other path is read-only.  */
-	if (strncmp(ISAKMPD_ROOT, path, strlen(ISAKMPD_ROOT)) == 0 ||
-	    strncmp("/var/run/", path, strlen("/var/run/")) == 0)
+	if (strncmp(ISAKMPD_ROOT, new_path, strlen(ISAKMPD_ROOT)) == 0 &&
+	    (flags & O_ACCMODE) == O_RDONLY)
 		return 0;
 
 bad_path:
