@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.3 2005/05/27 16:07:51 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.4 2005/05/28 22:53:00 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -121,7 +121,6 @@ struct scsi_read_toc {
 	u_int8_t data_len[2];
 	u_int8_t control;
 };
-;
 
 struct scsi_read_cd_capacity {
 	u_int8_t opcode;
