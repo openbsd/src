@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.39 2005/05/27 20:39:29 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.40 2005/05/28 00:07:03 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -54,6 +54,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 
@@ -932,6 +933,10 @@ ami_schwartz_poll(sc, cmd)
 	struct ami_iocmd *cmd;
 {
 	/* FIXME add the actual code here */
+
+	if (sc->sc_dis_poll)
+		return 1; /* fail */
+
 	return 1;
 }
 
@@ -1185,6 +1190,8 @@ ami_done(sc, idx)
 		xs->flags |= ITSDONE;
 		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
 		scsi_done(xs);
+		if (sc->sc_flags & AMI_CMDWAIT && TAILQ_EMPTY(&sc->sc_ccbq))
+			wakeup(&sc->sc_ccbq);
 	}
 	AMI_UNLOCK_AMI(sc, lock);
 
@@ -1247,6 +1254,9 @@ ami_scsi_raw_cmd(xs)
 		AMI_UNLOCK_AMI(sc, lock);
 		return (COMPLETE);
 	}
+
+	while (sc->sc_flags & AMI_CMDWAIT)
+		tsleep(&sc->sc_ccbq, PRIBIO + 1, "ami_raw", 0);
 
 	xs->error = XS_NOERROR;
 
@@ -1484,6 +1494,9 @@ ami_scsi_cmd(xs)
 			}
 		}
 
+		while (sc->sc_flags & AMI_CMDWAIT)
+			tsleep(&sc->sc_ccbq, PRIBIO + 1, "ami_cmd", 0);
+
 		if ((ccb = ami_get_ccb(sc)) == NULL) {
 			AMI_DPRINTF(AMI_D_CMD, ("no more ccbs "));
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1598,6 +1611,8 @@ ami_ioctl(dev, cmd, addr)
 	int lock, error = 0;
 	struct ami_softc *sc = (struct ami_softc *)dev;
 
+	/* FIXME do we need to test for sc_dis_poll? */
+
 	if (sc->sc_flags & AMI_BROKEN)
 		return ENODEV; /* can't do this to broken device for now */
 
@@ -1605,6 +1620,19 @@ ami_ioctl(dev, cmd, addr)
 	if (sc->sc_flags & AMI_CMDWAIT) {
 		AMI_UNLOCK_AMI(sc, lock);
 		return EBUSY;
+	}
+
+	switch (cmd) {
+	case BIOCALARM:
+	case BIOCBLINK:
+	case BIOCSTARTSTOP:
+	case BIOCSTATUS:
+	case BIOCSCSICMD:
+		sc->sc_flags |= AMI_CMDWAIT;
+		while (!TAILQ_EMPTY(&sc->sc_ccbq))
+			if (tsleep(&sc->sc_ccbq, PRIBIO, "ami_ioctl",
+			    100 * 60) == EWOULDBLOCK)
+				return EWOULDBLOCK;
 	}
 
 	switch (cmd) {
@@ -1660,6 +1688,9 @@ ami_ioctl(dev, cmd, addr)
 		    sc->sc_dev.dv_xname));
 		error = EINVAL;
 	}
+
+	sc->sc_flags &= ~AMI_CMDWAIT;
+	wakeup(&sc->sc_ccbq);
 
 	AMI_UNLOCK_AMI(sc, lock);
 
