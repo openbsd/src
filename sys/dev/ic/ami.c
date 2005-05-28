@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.40 2005/05/28 00:07:03 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.41 2005/05/28 00:15:41 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1191,7 +1191,7 @@ ami_done(sc, idx)
 		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
 		scsi_done(xs);
 		if (sc->sc_flags & AMI_CMDWAIT && TAILQ_EMPTY(&sc->sc_ccbq))
-			wakeup(&sc->sc_ccbq);
+			wakeup(&sc->sc_free_ccb);
 	}
 	AMI_UNLOCK_AMI(sc, lock);
 
@@ -1630,7 +1630,7 @@ ami_ioctl(dev, cmd, addr)
 	case BIOCSCSICMD:
 		sc->sc_flags |= AMI_CMDWAIT;
 		while (!TAILQ_EMPTY(&sc->sc_ccbq))
-			if (tsleep(&sc->sc_ccbq, PRIBIO, "ami_ioctl",
+			if (tsleep(&sc->sc_free_ccb, PRIBIO, "ami_ioctl",
 			    100 * 60) == EWOULDBLOCK)
 				return EWOULDBLOCK;
 	}
