@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.102 2005/05/26 00:58:52 cloder Exp $	 */
+/* $OpenBSD: x509.c,v 1.103 2005/05/28 17:42:50 moritz Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -583,13 +583,12 @@ x509_hash_enter(X509 *cert)
 int
 x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 {
-	struct dirent  *file;
-	struct monitor_dirents *dir;
 	FILE		*certfp;
 	X509		*cert;
 	struct stat	sb;
 	char		fullname[PATH_MAX];
-	int		fd, off, size;
+	char		file[PATH_MAX];
+	int		fd;
 
 	if (strlen(name) >= sizeof fullname - 1) {
 		log_print("x509_read_from_dir: directory name too long");
@@ -598,34 +597,17 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 	LOG_DBG((LOG_CRYPTO, 40, "x509_read_from_dir: reading certs from %s",
 	    name));
 
-	dir = monitor_opendir(name);
-	if (!dir) {
+	if (monitor_req_readdir(name) == -1) {
 		LOG_DBG((LOG_CRYPTO, 10,
 		    "x509_read_from_dir: opendir (\"%s\") failed: %s",
 		    name, strerror(errno)));
 		return 0;
 	}
-	strlcpy(fullname, name, sizeof fullname);
-	off = strlen(fullname);
-	size = sizeof fullname - off;
 
-	while ((file = monitor_readdir(dir)) != NULL) {
-		strlcpy(fullname + off, file->d_name, size);
-
-		if (file->d_type != DT_UNKNOWN) {
-			if (file->d_type != DT_REG && file->d_type != DT_LNK)
-				continue;
-		}
-
+	while ((fd = monitor_readdir(file, sizeof file)) != -1) {
 		LOG_DBG((LOG_CRYPTO, 60,
 		    "x509_read_from_dir: reading certificate %s",
-		    file->d_name));
-
-		if ((fd = monitor_open(fullname, O_RDONLY, 0)) == -1) {
-			log_error("x509_read_from_dir: monitor_open"
-			    "(\"%s\", O_RDONLY, 0) failed", fullname);
-			continue;
-		}
+		    file));
 
 		if (fstat(fd, &sb) == -1) {
 			log_error("x509_read_from_dir: fstat failed");
@@ -653,7 +635,7 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 
 		if (cert == NULL) {
 			log_print("x509_read_from_dir: PEM_read_X509 "
-			    "failed for %s", file->d_name);
+			    "failed for %s", file);
 			continue;
 		}
 		if (!X509_STORE_add_cert(ctx, cert)) {
@@ -665,16 +647,14 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 			*/
 			LOG_DBG((LOG_CRYPTO, 50,
 			    "x509_read_from_dir: X509_STORE_add_cert failed "
-			    "for %s", file->d_name));
+			    "for %s", file));
 		}
 		if (hash)
 			if (!x509_hash_enter(cert))
 				log_print("x509_read_from_dir: "
 				    "x509_hash_enter (%s) failed",
-				    file->d_name);
+				    file);
 	}
-
-	monitor_closedir(dir);
 
 	return 1;
 }
@@ -684,12 +664,11 @@ int
 x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
-	struct dirent	*file;
-	struct monitor_dirents *dir;
 	FILE		*crlfp;
 	X509_CRL	*crl;
 	struct stat	sb;
 	char		fullname[PATH_MAX];
+	char		file[PATH_MAX];
 	int		fd, off, size;
 
 	if (strlen(name) >= sizeof fullname - 1) {
@@ -699,8 +678,7 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 	LOG_DBG((LOG_CRYPTO, 40, "x509_read_crls_from_dir: reading CRLs "
 	    "from %s", name));
 
-	dir = monitor_opendir(name);
-	if (!dir) {
+	if (monitor_req_readdir(name) == -1) {
 		LOG_DBG((LOG_CRYPTO, 10, "x509_read_crls_from_dir: opendir "
 		    "(\"%s\") failed: %s", name, strerror(errno)));
 		return 0;
@@ -709,22 +687,9 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 	off = strlen(fullname);
 	size = sizeof fullname - off;
 
-	while ((file = monitor_readdir(dir)) != NULL) {
-		strlcpy(fullname + off, file->d_name, size);
-
-		if (file->d_type != DT_UNKNOWN) {
-			if (file->d_type != DT_REG && file->d_type != DT_LNK)
-				continue;
-		}
-
+	while ((fd = monitor_readdir(file, sizeof file)) != -1) {
 		LOG_DBG((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading "
-		    "CRL %s", file->d_name));
-
-		if ((fd = monitor_open(fullname, O_RDONLY, 0)) == -1) {
-			log_error("x509_read_crls_from_dir: monitor_open"
-			    "(\"%s\", O_RDONLY, 0) failed", fullname);
-			continue;
-		}
+		    "CRL %s", file));
 
 		if (fstat(fd, &sb) == -1) {
 			log_error("x509_read_crls_from_dir: fstat failed");
@@ -750,12 +715,12 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		if (crl == NULL) {
 			log_print("x509_read_crls_from_dir: "
 			    "PEM_read_X509_CRL failed for %s",
-			    file->d_name);
+			    file);
 			continue;
 		}
 		if (!X509_STORE_add_crl(ctx, crl)) {
 			LOG_DBG((LOG_CRYPTO, 50, "x509_read_crls_from_dir: "
-			    "X509_STORE_add_crl failed for %s", file->d_name));
+			    "X509_STORE_add_crl failed for %s", file));
 			continue;
 		}
 		/*
@@ -769,7 +734,6 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		X509_STORE_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
 	}
 
-	monitor_closedir(dir);
 #endif				/* OPENSSL_VERSION_NUMBER >= 0x00907000L */
 
 	return 1;

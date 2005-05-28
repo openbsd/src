@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.14 2005/05/27 07:08:21 moritz Exp $	 */
+/* $OpenBSD: monitor.h,v 1.15 2005/05/28 17:42:50 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -43,6 +43,7 @@ enum monitor_reqtypes {
 	MONITOR_GET_FD,
 	MONITOR_SETSOCKOPT,
 	MONITOR_BIND,
+	MONITOR_REQ_READDIR,
 	MONITOR_MKFIFO,
 	MONITOR_INIT_DONE,
 	MONITOR_SHUTDOWN
@@ -52,11 +53,6 @@ enum priv_state {
 	STATE_INIT,		/* just started */
 	STATE_RUNNING,		/* running */
 	STATE_QUIT		/* shutting down */
-};
-
-struct monitor_dirents {
-	int             current;
-	struct dirent **dirents;
 };
 
 pid_t           monitor_init(int);
@@ -70,9 +66,8 @@ int             monitor_open(const char *, int, mode_t);
 int             monitor_stat(const char *, struct stat *);
 int             monitor_setsockopt(int, int, int, const void *, socklen_t);
 int             monitor_bind(int, const struct sockaddr *, socklen_t);
-struct monitor_dirents *monitor_opendir(const char *);
-struct dirent  *monitor_readdir(struct monitor_dirents *);
-void            monitor_closedir(struct monitor_dirents *);
+int		monitor_req_readdir(const char *);
+int		monitor_readdir(char *, size_t);
 void            monitor_init_done(void);
 
 void		monitor_ui_init(void);

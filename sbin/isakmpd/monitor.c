@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.56 2005/05/28 17:07:53 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.57 2005/05/28 17:42:49 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -70,6 +70,7 @@ static void	must_write(const void *, size_t);
 
 static void	m_priv_getfd(void);
 static void	m_priv_setsockopt(void);
+static void	m_priv_req_readdir(void);
 static void	m_priv_bind(void);
 static void	m_priv_ui_init(void);
 static void	m_priv_pfkey_open(void);
@@ -358,96 +359,41 @@ errout:
 	return -1;
 }
 
-struct monitor_dirents *
-monitor_opendir(const char *path)
+int
+monitor_req_readdir(const char *filename)
 {
-	char           *buf, *cp;
-	size_t          bufsize;
-	int             fd, nbytes, entries;
-	long            base;
-	struct stat     sb;
-	struct dirent  *dp;
-	struct monitor_dirents *direntries;
+	int cmd, err;
+	size_t len;
 
-	fd = monitor_open(path, 0, O_RDONLY);
-	if (fd < 0) {
-		log_error("monitor_opendir: opendir(\"%s\") failed", path);
-		return NULL;
-	}
-	/* Now build a list with all dirents from fd. */
-	if (fstat(fd, &sb) < 0) {
-		(void)close(fd);
-		return NULL;
-	}
-	if (!S_ISDIR(sb.st_mode)) {
-		(void)close(fd);
-		errno = EACCES;
-		return NULL;
-	}
-	bufsize = sb.st_size;
-	if (bufsize < sb.st_blksize)
-		bufsize = sb.st_blksize;
+	cmd = MONITOR_REQ_READDIR;
+	must_write(&cmd, sizeof cmd);
 
-	buf = calloc(bufsize, sizeof(char));
-	if (buf == NULL) {
-		(void)close(fd);
-		errno = EACCES;
-		return NULL;
-	}
-	nbytes = getdirentries(fd, buf, bufsize, &base);
-	if (nbytes <= 0) {
-		(void)close(fd);
-		free(buf);
-		errno = EACCES;
-		return NULL;
-	}
-	(void)close(fd);
+	len = strlen(filename);
+	must_write(&len, sizeof len);
+	must_write(filename, len);
 
-	for (entries = 0, cp = buf; cp < buf + nbytes;) {
-		dp = (struct dirent *)cp;
-		cp += dp->d_reclen;
-		entries++;
-	}
+	must_read(&err, sizeof err);
+	if (err == -1)
+		must_read(&errno, sizeof errno);
 
-	direntries = calloc(1, sizeof(struct monitor_dirents));
-	if (direntries == NULL) {
-		free(buf);
-		errno = EACCES;
-		return NULL;
-	}
-	direntries->dirents = calloc(entries + 1, sizeof(struct dirent *));
-	if (direntries->dirents == NULL) {
-		free(buf);
-		free(direntries);
-		errno = EACCES;
-		return NULL;
-	}
-	direntries->current = 0;
-
-	for (entries = 0, cp = buf; cp < buf + nbytes;) {
-		dp = (struct dirent *)cp;
-		direntries->dirents[entries++] = dp;
-		cp += dp->d_reclen;
-	}
-	direntries->dirents[entries] = NULL;
-
-	return direntries;
+	return (err);
 }
 
-struct dirent *
-monitor_readdir(struct monitor_dirents *direntries)
+int
+monitor_readdir(char *file, size_t size)
 {
-	if (direntries->dirents[direntries->current] != NULL)
-		return direntries->dirents[direntries->current++];
+	int fd;
+	size_t len;
 
-	return NULL;
-}
-
-void
-monitor_closedir(struct monitor_dirents *direntries)
-{
-	free(direntries->dirents);
-	free(direntries);
+	must_read(&len, sizeof len);
+	if (len == 0)
+		return -1;
+	if (len >= size)
+		log_fatal("monitor_readdir: received bad length from monitor");
+	must_read(file, len);
+	file[len] = '\0';
+	fd = mm_receive_fd(m_state.s);
+	return fd;
 }
 
 void
@@ -563,6 +509,12 @@ monitor_loop(int debug)
 			    "monitor_loop: MONITOR_BIND"));
 			m_priv_test_state(STATE_INIT);
 			m_priv_bind();
+			break;
+
+		case MONITOR_REQ_READDIR:
+			LOG_DBG((LOG_MISC, 80,
+			    "monitor_loop: MONITOR_REQ_READDIR"));
+			m_priv_req_readdir();
 			break;
 
 		case MONITOR_INIT_DONE:
@@ -943,6 +895,69 @@ m_priv_check_bind(const struct sockaddr *sa, socklen_t salen)
 		return 1;
 	}
 	return 0;
+}
+
+static void
+m_priv_req_readdir()
+{
+	size_t len;
+	char path[MAXPATHLEN];
+	DIR *dp;
+	struct dirent *file;
+	int off, size, fd, ret, serrno;
+
+	must_read(&len, sizeof len);
+	if (len == 0 || len >= sizeof path)
+		log_fatal("m_priv_req_readdir: invalid pathname length");
+	must_read(path, len);
+	path[len] = '\0';
+	if (strlen(path) != len)
+		log_fatal("m_priv_req_readdir: invalid pathname");
+
+	off = strlen(path);
+	size = sizeof path - off;
+
+	/* XXX sanitize path */
+
+	if ((dp = opendir(path)) == NULL) {
+		serrno = errno;
+		ret = -1;
+		must_write(&ret, sizeof ret);
+		must_write(&serrno, sizeof serrno);
+		return;
+	}
+
+	/* report opendir() success */
+	ret = 0;
+	must_write(&ret, sizeof ret);
+
+	while ((file = readdir(dp)) != NULL) {
+		strlcpy(path + off, file->d_name, size);
+
+		if (file->d_type != DT_UNKNOWN && file->d_type != DT_REG &&
+		    file->d_type != DT_LNK)
+			continue;
+
+		fd = open(path, O_RDONLY, 0);
+		if (fd == -1) {
+			log_error("m_priv_req_readdir: open "
+			    "(\"%s\", O_RDONLY, 0) failed", path);
+			continue;
+		}
+
+		len = strlen(path);
+		must_write(&len, sizeof len);
+		must_write(path, len);
+
+		mm_send_fd(m_state.s, fd);
+		close(fd);
+	}
+	closedir(dp);
+
+	len = 0;
+	must_write(&len, sizeof len);
+
+	return;
 }
 
 /* Increase state into less permissive mode */
