@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.15 2004/06/24 19:35:24 tholo Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.16 2005/05/28 07:30:25 marius Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -301,11 +301,12 @@ void
 acct_thread(void *arg)
 {
 	struct statfs sb;
+	struct proc *p = curproc;
 
 	for (;;) {
 		if (savacctp != NULL) {
 			if (savacctp->v_type == VBAD) {
-				(void) vn_close(savacctp, FWRITE, NOCRED, NULL);
+				(void) vn_close(savacctp, FWRITE, NOCRED, p);
 				savacctp = NULL;
 				return;
 			}
@@ -317,7 +318,7 @@ acct_thread(void *arg)
 			}
 		} else if (acctp != NULL) {
 			if (acctp->v_type == VBAD) {
-				(void) vn_close(acctp, FWRITE, NOCRED, NULL);
+				(void) vn_close(acctp, FWRITE, NOCRED, p);
 				acctp = NULL;
 				return;
 			}
@@ -339,9 +340,11 @@ void
 acct_shutdown(void)
 {
 
+	struct proc *p = curproc;
+
 	if (acctp != NULL || savacctp != NULL) {
 		vn_close((acctp != NULL ? acctp : savacctp), FWRITE,
-		    NOCRED, NULL);
+		    NOCRED, p);
 		acctp = savacctp = NULL;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.45 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.46 2005/05/28 07:30:25 marius Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -228,8 +228,9 @@ vn_close(vp, flags, cred, p)
 
 	if (flags & FWRITE)
 		vp->v_writecount--;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_CLOSE(vp, flags, cred, p);
-	vrele(vp);
+	vput(vp);
 	return (error);
 }
 
