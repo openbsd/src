@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.58 2005/05/28 18:38:38 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.59 2005/05/28 18:48:12 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -60,7 +60,6 @@ struct monitor_state {
 
 volatile sig_atomic_t sigchlded = 0;
 extern volatile sig_atomic_t sigtermed;
-static volatile sig_atomic_t cur_state = STATE_INIT;
 
 extern void	set_slave_signals(void);
 
@@ -77,8 +76,6 @@ static void	m_priv_pfkey_open(void);
 static int      m_priv_local_sanitize_path(char *, size_t, int);
 static int      m_priv_check_sockopt(int, int);
 static int      m_priv_check_bind(const struct sockaddr *, socklen_t);
-static void     m_priv_increase_state(int);
-static void     m_priv_test_state(int);
 
 static void	set_monitor_signals(void);
 static void	monitor_got_sigchld(int);
@@ -453,13 +450,12 @@ monitor_loop(int debug)
 	if (!debug)
 		log_to(0);
 
-	while (cur_state < STATE_QUIT) {
+	for (;;) {
 		/*
 		 * Currently, there is no need for us to hang around if the
 		 * child is in the process of shutting down.
 		 */
 		if (sigtermed) {
-			m_priv_increase_state(STATE_QUIT);
 			kill(m_state.pid, SIGTERM);
 			break;
 		}
@@ -471,7 +467,6 @@ monitor_loop(int debug)
 
 			if (pid == m_state.pid && (WIFEXITED(status) ||
 			    WIFSIGNALED(status))) {
-				m_priv_increase_state(STATE_QUIT);
 				break;
 			}
 		}
@@ -486,28 +481,24 @@ monitor_loop(int debug)
 		case MONITOR_UI_INIT:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_UI_INIT"));
-			m_priv_test_state(STATE_INIT);
 			m_priv_ui_init();
 			break;
 
 		case MONITOR_PFKEY_OPEN:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_PFKEY_OPEN"));
-			m_priv_test_state(STATE_INIT);
 			m_priv_pfkey_open();
 			break;
 
 		case MONITOR_SETSOCKOPT:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_SETSOCKOPT"));
-			m_priv_test_state(STATE_INIT);
 			m_priv_setsockopt();
 			break;
 
 		case MONITOR_BIND:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_BIND"));
-			m_priv_test_state(STATE_INIT);
 			m_priv_bind();
 			break;
 
@@ -520,14 +511,11 @@ monitor_loop(int debug)
 		case MONITOR_INIT_DONE:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_INIT_DONE"));
-			m_priv_test_state(STATE_INIT);
-			m_priv_increase_state(STATE_RUNNING);
 			break;
 
 		case MONITOR_SHUTDOWN:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_SHUTDOWN"));
-			m_priv_increase_state(STATE_QUIT);
 			break;
 
 		default:
@@ -963,25 +951,4 @@ m_priv_req_readdir()
 	must_write(&len, sizeof len);
 
 	return;
-}
-
-/* Increase state into less permissive mode */
-static void
-m_priv_increase_state(int state)
-{
-	if (state <= cur_state)
-		log_print("m_priv_increase_state: attempt to decrease state "
-		    "or match current state");
-	if (state < STATE_INIT || state > STATE_QUIT)
-		log_print("m_priv_increase_state: attempt to switch to "
-		    "invalid state");
-	cur_state = state;
-}
-
-static void
-m_priv_test_state(int state)
-{
-	if (cur_state != state)
-		log_print("m_priv_test_state: Illegal state: %d != %d",
-		    (int)cur_state, state);
 }

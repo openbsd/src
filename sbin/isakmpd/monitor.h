@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.15 2005/05/28 17:42:50 moritz Exp $	 */
+/* $OpenBSD: monitor.h,v 1.16 2005/05/28 18:48:12 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -30,8 +30,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <dirent.h>
-#include <stdio.h>
+//#include <dirent.h>
+//#include <stdio.h>
 
 #define ISAKMPD_PRIVSEP_USER "_isakmpd"
 
@@ -47,12 +47,6 @@ enum monitor_reqtypes {
 	MONITOR_MKFIFO,
 	MONITOR_INIT_DONE,
 	MONITOR_SHUTDOWN
-};
-
-enum priv_state {
-	STATE_INIT,		/* just started */
-	STATE_RUNNING,		/* running */
-	STATE_QUIT		/* shutting down */
 };
 
 pid_t           monitor_init(int);
