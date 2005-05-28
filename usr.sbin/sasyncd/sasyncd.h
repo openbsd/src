@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.7 2005/05/26 19:19:51 ho Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.8 2005/05/28 01:07:52 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -35,9 +35,6 @@
 enum RUNSTATE		{ INIT = 0, SLAVE, MASTER, FAIL };
 #define CARPSTATES	{ "INIT", "SLAVE", "MASTER", "FAIL" }
 
-enum FLUSHMODE		{ FM_STARTUP = 0, FM_NEVER, FM_SYNC };
-#define FLUSHMODES	{ "STARTUP", "NEVER", "SYNC" };
-
 struct syncpeer;
 struct timeval;
 
@@ -46,7 +43,7 @@ struct cfgstate {
 	enum RUNSTATE	 lockedstate;
 	int		 debug;
 	int		 verboselevel;
-    	enum FLUSHMODE	 flushmode;
+	u_int32_t	 flags;
 
 	char		*carp_ifname;
 	int		 carp_check_interval;
@@ -61,6 +58,15 @@ struct cfgstate {
 
 	LIST_HEAD(, syncpeer) peerlist;
 };
+
+/* flags */
+#define	FM_STARTUP	0x0000
+#define FM_NEVER	0x0001
+#define FM_SYNC		0x0002
+#define FM_MASK		0x0003
+
+/* Do not sync SAs to/from our peers. */
+#define SKIP_LOCAL_SAS	0x0004
 
 extern struct cfgstate	cfgstate;
 

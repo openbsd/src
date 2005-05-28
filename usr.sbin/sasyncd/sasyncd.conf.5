@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.7 2005/05/26 19:40:20 ho Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.8 2005/05/28 01:07:52 ho Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -115,6 +115,13 @@ The default is to listen to port 500.
 .It Ic mode master | slave
 Force the daemon to run as master or slave.
 Normally only intended for debugging use.
+.It Ic mode skipslave
+Prevent the daemon from syncing SA or SPD messages where the source or
+destination address is one of the configured peers. 
+Intended to permit IPsec
+.Xr pfsync 4
+protection.
+This mode is experimental.
 .It Ic peer Ar address
 Specify a
 .Xr sasyncd 8

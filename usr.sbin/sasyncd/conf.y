@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.4 2005/05/26 19:19:51 ho Exp $	*/
+/*	$OpenBSD: conf.y,v 1.5 2005/05/28 01:07:52 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -59,6 +59,7 @@ void	yyerror(const char *);
 
 %token MODE CARP INTERFACE INTERVAL LISTEN ON PORT PEER SHAREDKEY
 %token Y_SLAVE Y_MASTER INET INET6 FLUSHMODE STARTUP NEVER SYNC
+%token SKIPSLAVE
 %token <string> STRING
 %token <val>	VALUE
 %type  <val>	af port interval mode flushmode
@@ -70,26 +71,39 @@ settings	: /* empty */
 		| settings setting
 		;
 
-af		: /* empty */			{ $$ = AF_UNSPEC; }
-		| INET				{ $$ = AF_INET; }
-		| INET6				{ $$ = AF_INET6; }
+af		: /* empty */		{ $$ = AF_UNSPEC; }
+		| INET			{ $$ = AF_INET; }
+		| INET6			{ $$ = AF_INET6; }
 		;
 
-port		: /* empty */			{ $$ = SASYNCD_DEFAULT_PORT; }
-		| PORT VALUE			{ $$ = $2; }
+port		: /* empty */		{ $$ = SASYNCD_DEFAULT_PORT; }
+		| PORT VALUE		{ $$ = $2; }
 		;
 
-mode		: MODE Y_MASTER			{ $$ = MASTER; }
-		| MODE Y_SLAVE			{ $$ = SLAVE; }
+mode		: Y_MASTER		{ $$ = MASTER; }
+		| Y_SLAVE		{ $$ = SLAVE; }
 		;
 
-interval	: /* empty */			{ $$ = CARP_DEFAULT_INTERVAL; }
-		| INTERVAL VALUE		{ $$ = $2; }
+modes		: SKIPSLAVE
+		{
+			cfgstate.flags |= SKIP_LOCAL_SAS;
+			log_msg(2, "config: not syncing SA to peers");
+		}
+		| mode
+		{
+			const char *m[] = CARPSTATES;
+			cfgstate.lockedstate = $1;
+			log_msg(2, "config: mode set to %s", m[$1]);
+		}
 		;
 
-flushmode	: STARTUP			{ $$ = FM_STARTUP; }
-		| NEVER				{ $$ = FM_NEVER; }
-		| SYNC				{ $$ = FM_SYNC; }
+interval	: /* empty */		{ $$ = CARP_DEFAULT_INTERVAL; }
+		| INTERVAL VALUE	{ $$ = $2; }
+		;
+
+flushmode	: STARTUP		{ $$ = FM_STARTUP; }
+		| NEVER			{ $$ = FM_NEVER; }
+		| SYNC			{ $$ = FM_SYNC; }
 		;
 
 setting		: CARP INTERFACE STRING interval
@@ -103,8 +117,8 @@ setting		: CARP INTERFACE STRING interval
 		}
 		| FLUSHMODE flushmode
 		{
-			const char *fm[] = FLUSHMODES;
-			cfgstate.flushmode = $2;
+			const char *fm[] = { "STARTUP", "NEVER", "SYNC" };
+			cfgstate.flags |= $2;
 			log_msg(2, "config: flush mode set to %s", fm[$2]);
 		}
 		| PEER STRING
@@ -155,12 +169,7 @@ setting		: CARP INTERFACE STRING interval
 			    ($4 == AF_INET ? "(IPv4) " : ""),
 			    $5 != SASYNCD_DEFAULT_PORT ? pstr : "");
 		}
-		| mode
-		{
-			const char *m[] = CARPSTATES;
-			cfgstate.lockedstate = $1;
-			log_msg(2, "config: mode set to %s", m[$1]);
-		}
+		| MODE modes
 		| SHAREDKEY STRING
 		{
 			if (cfgstate.sharedkey)
@@ -203,11 +212,11 @@ match(char *token)
 		{ "peer", PEER },
 		{ "port", PORT },
 		{ "sharedkey", SHAREDKEY },
+		{ "skipslave", SKIPSLAVE },
 		{ "slave", Y_SLAVE },
 		{ "startup", STARTUP },
 		{ "sync", SYNC },
 	};
-
 	const struct keyword *k;
 
 	k = bsearch(token, keywords, sizeof keywords / sizeof keywords[0],

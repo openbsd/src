@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.10 2005/05/27 18:05:27 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.11 2005/05/28 01:07:52 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -137,6 +137,108 @@ pfkey_print_type(struct sadb_msg *msg)
 	}
 }
 
+static struct sadb_ext *
+pfkey_find_ext(struct sadb_msg *msg, u_int16_t type)
+{
+	struct sadb_ext	*ext;
+	u_int8_t	*e;
+
+	for (e = (u_int8_t *)msg + sizeof *msg;
+	     e < (u_int8_t *)msg + msg->sadb_msg_len * CHUNK;
+	     e += ext->sadb_ext_len * CHUNK) {
+		ext = (struct sadb_ext *)e;
+		if (ext->sadb_ext_len == 0)
+			break;
+		if (ext->sadb_ext_type != type)
+			continue;
+		return ext;
+	}
+	return NULL;
+}
+
+/* Return: 0 means ok to sync msg, 1 means to skip it */
+static int
+pfkey_msg_filter(struct sadb_msg *msg)
+{
+	struct sockaddr		*src = 0, *dst = 0;
+	struct syncpeer		*p;
+	struct sadb_ext		*ext;
+	u_int8_t		*max;
+
+	switch (msg->sadb_msg_type) {
+	case SADB_ADD:
+		/* No point in syncing LARVAL SAs */
+		if (pfkey_find_ext(msg, SADB_EXT_KEY_ENCRYPT) == 0)
+			return 1;
+	case SADB_DELETE:
+	case SADB_X_ADDFLOW:
+	case SADB_X_DELFLOW:
+	case SADB_EXPIRE:
+		/* Continue below */
+		break;
+	case SADB_FLUSH:
+		if ((cfgstate.flags & FM_MASK) == FM_NEVER)
+			return 1;
+		break;
+	default:
+		return 0;
+	}
+
+	if ((cfgstate.flags & SKIP_LOCAL_SAS) == 0)
+		return 0;
+
+	/* SRC or DST address of this msg must not be one of our peers. */
+	ext = pfkey_find_ext(msg, SADB_EXT_ADDRESS_SRC);
+	if (ext)
+		src = (struct sockaddr *)((struct sadb_address *)ext + 1);
+	ext = pfkey_find_ext(msg, SADB_EXT_ADDRESS_DST);
+	if (ext)
+		dst = (struct sockaddr *)((struct sadb_address *)ext + 1);
+	if (!src && !dst)
+		return 0;
+
+	max = (u_int8_t *)msg + msg->sadb_msg_len * CHUNK;
+	if (src && ((u_int8_t *)src + src->sa_len) > max)
+		return 1;
+	if (dst && ((u_int8_t *)dst + dst->sa_len) > max)
+		return 1;
+
+	/* Found SRC or DST, check it against our peers */
+	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
+		if (p->socket < 0 || p->sa->sa_family !=
+		    (src ? src->sa_family : dst->sa_family))
+			continue;
+
+		switch (p->sa->sa_family) {
+		case AF_INET:
+			if (src && memcmp(
+			    &((struct sockaddr_in *)p->sa)->sin_addr.s_addr,
+			    &((struct sockaddr_in *)src)->sin_addr.s_addr,
+			    sizeof(struct in_addr)) == 0)
+				return 1;
+			if (dst && memcmp(
+			    &((struct sockaddr_in *)p->sa)->sin_addr.s_addr,
+			    &((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			    sizeof(struct in_addr)) == 0)
+				return 1;
+			break;
+		case AF_INET6:
+			if (src && 
+			    memcmp(&((struct sockaddr_in6 *)p->sa)->sin6_addr,
+			    &((struct sockaddr_in6 *)src)->sin6_addr,
+			    sizeof(struct in_addr)) == 0)
+				return 1;
+			if (dst && 
+			    memcmp(&((struct sockaddr_in6 *)p->sa)->sin6_addr,
+			    &((struct sockaddr_in6 *)dst)->sin6_addr,
+			    sizeof(struct in_addr)) == 0)
+				return 1;
+			break;
+		}
+	}
+	return 0;
+}
+
 static int
 pfkey_handle_message(struct sadb_msg *m)
 {
@@ -171,8 +273,7 @@ pfkey_handle_message(struct sadb_msg *m)
 		return 0;
 	}
 
-	if (msg->sadb_msg_type == SADB_FLUSH &&
-	    cfgstate.flushmode == FM_NEVER) {
+	if (pfkey_msg_filter(msg)) {
 		free(m);
 		return 0;
 	}
@@ -359,7 +460,7 @@ pfkey_snapshot(void *v)
 	}
 
 	/* XXX needs moving if snapshot is called more than once per peer */
-	if (cfgstate.flushmode == FM_STARTUP)
+	if ((cfgstate.flags & FM_MASK) == FM_STARTUP)
 		pfkey_send_flush(p);
 
 	/* Parse SADB data */
@@ -374,6 +475,9 @@ pfkey_snapshot(void *v)
 
 			/* Tweak and send this SA to the peer. */
 			m->sadb_msg_type = SADB_ADD;
+
+			if (pfkey_msg_filter(m))
+				continue;
 
 			/* Allocate msgbuffer, net_queue() will free it. */
 			sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
@@ -402,6 +506,9 @@ pfkey_snapshot(void *v)
 			/* Tweak msg type. */
 			m->sadb_msg_type = SADB_X_ADDFLOW;
 			
+			if (pfkey_msg_filter(m))
+				continue;
+
 			/* Allocate msgbuffer, freed by net_queue(). */
 			sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
 			if (sendbuf) {
