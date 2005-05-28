@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.74 2005/05/28 23:45:06 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.75 2005/05/28 23:59:18 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -647,6 +647,7 @@ retry:
 
 		case TRY_AGAIN_LATER:
 			xs->error = XS_BUSY;
+			/* FALLTHROUGH */
 		case COMPLETE:
 			goto retry;
 		}
@@ -740,6 +741,7 @@ retry:
 		while ((xs->flags & ITSDONE) == 0)
 			tsleep(xs, PRIBIO + 1, "scsi_scsi_cmd", 0);
 		splx(s);
+		/* FALLTHROUGH */
 	case COMPLETE:		/* Polling command completed ok */
 		if ((flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 			return EJUSTRETURN;
@@ -856,6 +858,7 @@ sc_err1(xs, async)
 			} else
 				goto lose;
 		}
+		/* FALLTHROUGH */
 	case XS_TIMEOUT:
 	retry:
 		if (xs->retries--) {
@@ -863,6 +866,7 @@ sc_err1(xs, async)
 			xs->flags &= ~ITSDONE;
 			return ERESTART;
 		}
+		/* FALLTHROUGH */
 	case XS_DRIVER_STUFFUP:
 	lose:
 		error = EIO;
