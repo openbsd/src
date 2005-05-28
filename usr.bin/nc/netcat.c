@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.80 2005/05/27 04:55:28 mcbride Exp $ */
+/* $OpenBSD: netcat.c,v 1.81 2005/05/28 16:57:48 marius Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -93,6 +93,7 @@ int	socks_connect(const char *, const char *, struct addrinfo, const char *, con
 int	udptest(int);
 int	unix_connect(char *);
 int	unix_listen(char *);
+int     set_common_sockopts(int);
 void	usage(int);
 
 int
@@ -462,7 +463,7 @@ int
 remote_connect(const char *host, const char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
-	int s, error, x = 1;
+	int s, error;
 
 	if ((error = getaddrinfo(host, port, &hints, &res)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
@@ -497,21 +498,8 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 				errx(1, "bind failed: %s", strerror(errno));
 			freeaddrinfo(ares);
 		}
-		if (Sflag) {
-			if (setsockopt(s, IPPROTO_TCP, TCP_MD5SIG,
-			    &x, sizeof(x)) == -1)
-				err(1, NULL);
-		}
-		if (Dflag) {
-			if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
-			    &x, sizeof(x)) == -1)
-				err(1, NULL);
-		}
-		if (jflag) {
-			if (setsockopt(s, SOL_SOCKET, SO_JUMBO,
-			    &x, sizeof(x)) == -1)
-				err(1, NULL);
-		}
+
+		set_common_sockopts(s);
 
 		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
@@ -562,17 +550,8 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
 		if (ret == -1)
 			err(1, NULL);
-		if (Sflag) {
-			ret = setsockopt(s, IPPROTO_TCP, TCP_MD5SIG,
-			    &x, sizeof(x));
-			if (ret == -1)
-				err(1, NULL);
-		}
-		if (Dflag) {
-			if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
-			    &x, sizeof(x)) == -1)
-				err(1, NULL);
-		}
+
+		set_common_sockopts(s);
 
 		if (bind(s, (struct sockaddr *)res0->ai_addr,
 		    res0->ai_addrlen) == 0)
@@ -771,6 +750,28 @@ udptest(int s)
 			ret = -1;
 	}
 	return (ret);
+}
+
+int
+set_common_sockopts(int s)
+{
+	int x = 1;
+
+	if (Sflag) {
+		if (setsockopt(s, IPPROTO_TCP, TCP_MD5SIG,
+			&x, sizeof(x)) == -1)
+			err(1, NULL);
+	}
+	if (Dflag) {
+		if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
+			&x, sizeof(x)) == -1)
+			err(1, NULL);
+	}
+	if (jflag) {
+		if (setsockopt(s, SOL_SOCKET, SO_JUMBO,
+			&x, sizeof(x)) == -1)
+			err(1, NULL);
+	}
 }
 
 void
