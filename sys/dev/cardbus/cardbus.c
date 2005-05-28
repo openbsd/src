@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.19 2005/05/28 02:35:48 jsg Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.20 2005/05/28 19:46:07 jsg Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -588,7 +588,6 @@ cardbusprint(aux, pnp)
      const char *pnp;
 {
     struct cardbus_attach_args *ca = aux;
-    struct cardbus_matchid cm;
     char devinfo[256];
     int i;
     if (pnp) {
@@ -602,15 +601,11 @@ cardbusprint(aux, pnp)
 	}
 	if (i)
 	    printf(" ");
-	if (ca->ca_cis.manufacturer) {
-		cm.cm_vid = ca->ca_cis.manufacturer;
-		cm.cm_pid = ca->ca_cis.product;
-	} else {
-		cm.cm_vid = CARDBUS_VENDOR(ca->ca_id);
-		cm.cm_pid = CARDBUS_PRODUCT(ca->ca_id);
-	}
-	printf("(manufacturer 0x%x, product 0x%x)", cm.cm_vid, cm.cm_pid);
-	printf(" %s at %s", devinfo, pnp);
+	if (ca->ca_cis.manufacturer)
+		printf("(manufacturer 0x%x, product 0x%x) ",
+		    ca->ca_cis.manufacturer,
+		    ca->ca_cis.product);
+	printf("%s at %s", devinfo, pnp);
     }
     printf(" dev %d function %d", ca->ca_device, ca->ca_function);
 
