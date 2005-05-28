@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.106 2005/05/27 17:58:47 ho Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.107 2005/05/28 17:43:25 hshoexer Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2220,7 +2220,7 @@ pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
     int *lenp)
 {
 	struct sadb_ident *ident;
-	int i, rval;
+	int i, rval, perm;
 	void *p;
 
 	/* Find how much space we need. */
@@ -2321,8 +2321,9 @@ pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
 	export_flow(&p, ipo->ipo_type, &ipo->ipo_addr, &ipo->ipo_mask,
 	    headers);
 
-	/* Add ids. */
-	if (ipo->ipo_srcid) {
+	/* Add ids only when we are root. */
+	perm = suser(curproc, 0);
+	if (perm == 0 && ipo->ipo_srcid) {
 		headers[SADB_EXT_IDENTITY_SRC] = p;
 		p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid->ref_len);
 		ident = (struct sadb_ident *)headers[SADB_EXT_IDENTITY_SRC];
@@ -2332,8 +2333,7 @@ pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
 		bcopy(ipo->ipo_srcid + 1, headers[SADB_EXT_IDENTITY_SRC] +
 		    sizeof(struct sadb_ident), ipo->ipo_srcid->ref_len);
 	}
-
-	if (ipo->ipo_dstid) {
+	if (perm == 0 && ipo->ipo_dstid) {
 		headers[SADB_EXT_IDENTITY_DST] = p;
 		p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid->ref_len);
 		ident = (struct sadb_ident *)headers[SADB_EXT_IDENTITY_DST];
@@ -2345,7 +2345,6 @@ pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
 	}
 
 	rval = 0;
-
 ret:
 	return (rval);
 }
@@ -2451,8 +2450,6 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		break;
 
 	case NET_KEY_SPD_DUMP:
-		if ((error = suser(curproc, 0)) != 0)
-			return (error);
 		s = spltdb();
 		error = pfkeyv2_ipo_walk(pfkeyv2_sysctl_policydumper, &w);
 		splx(s);
