@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.31 2005/05/26 03:07:20 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.32 2005/05/29 16:36:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,6 +64,7 @@ struct cvs_cmd cvs_cmd_update = {
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2 | CVS_CMD_SENDDIR
 };
 
+static char *date, *rev;
 static int dflag, Aflag;
 
 static int
@@ -72,6 +73,8 @@ cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	int ch;
 
 	dflag = Aflag = 0;
+	date = NULL;
+	rev = NULL;
 
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
@@ -80,6 +83,8 @@ cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			break;
 		case 'C':
 		case 'D':
+			date = optarg;
+			break;
 		case 'd':
 			dflag = 1;
 			break;
@@ -101,10 +106,17 @@ cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			cmd->file_flags |= CF_RECURSE;
 			break;
 		case 'r':
+			rev = optarg;
 			break;
 		default:
 			return (CVS_EX_USAGE);
 		}
+	}
+
+	if ((date != NULL) && (rev != NULL)) {
+		cvs_log(LP_ERR,
+		    "the -D and -r arguments are mutually exclusive");
+		return (CVS_EX_USAGE);
 	}
 
 	*arg = optind;
