@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.3 2005/05/29 07:34:34 djm Exp $ */
+/* $OpenBSD: sign.c,v 1.4 2005/05/29 08:54:13 djm Exp $ */
 
 /*
  * sign.c
@@ -46,13 +46,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "extern.h"
 #include "gzip.h"
 #include "key.h"
 #include "util.h"
 
-static char *passphrase = NULL;
+static char *passphrase_file = NULL;
 
 static int
 embed_signature(struct key *key, FILE *fin, FILE *fout)
@@ -191,10 +192,16 @@ int
 sign_passwd_cb(char *buf, int size, int rwflag, void *u)
 {
 	char *p;
+	FILE *f;
 
-	if (passphrase != NULL) {
-		if (strlcpy(buf, passphrase, size) >= size)
-			errx(1, "Passphrase too long");
+	if (passphrase_file != NULL) {
+		if ((f = fopen(passphrase_file, "r")) == NULL)
+			err(1, "fopen(%.64s)", passphrase_file);
+		if (fgets(buf, size, f) == NULL)
+			err(1, "fgets(%.64s)", passphrase_file);
+		fclose(f);
+		if ((p = strchr(buf, '\n')) != NULL)
+			*p = '\0';
 	} else {
 		p = getpass("Enter passphrase: ");
 		if (strlcpy(buf, p, size) >= size)
@@ -215,7 +222,7 @@ sign(int argc, char *argv[])
 
 	qflag = 0;
 	
-	while ((i = getopt(argc, argv, "qvh?p:")) != -1) {
+	while ((i = getopt(argc, argv, "qvh?f:")) != -1) {
 		switch (i) {
 		case 'q':
 			qflag = 1;
@@ -223,8 +230,8 @@ sign(int argc, char *argv[])
 		case 'v':
 			qflag = 0;
 			break;
-		case 'p':
-			passphrase = optarg;
+		case 'f':
+			passphrase_file = optarg;
 			break;
 		default:
 			sign_usage();
@@ -303,7 +310,4 @@ sign(int argc, char *argv[])
 		}
 	}
 	key_free(key);
-
-	if (passphrase != NULL)
-		memset(passphrase, 0, strlen(passphrase));
 }
