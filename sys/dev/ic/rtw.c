@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.31 2005/05/29 03:57:54 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.32 2005/05/29 06:03:11 reyk Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -678,6 +678,7 @@ rtw_srom_parse(struct rtw_softc *sc)
 		*locale = RTW_LOCALE_EUROPE;
 		break;
 	case RTW8180_CONFIG0_GL_JAPAN:
+	case RTW8180_CONFIG0_GL_JAPAN2:
 		*locale = RTW_LOCALE_JAPAN;
 		break;
 	default:
@@ -865,6 +866,7 @@ rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale,
 		*locale = RTW_LOCALE_USA;
 		break;
 	case RTW8180_CONFIG0_GL_JAPAN:
+	case RTW8180_CONFIG0_GL_JAPAN2:
 		*locale = RTW_LOCALE_JAPAN;
 		break;
 	case RTW8180_CONFIG0_GL_EUROPE:

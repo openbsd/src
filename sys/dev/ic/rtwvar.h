@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.11 2005/05/29 03:49:52 reyk Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.12 2005/05/29 06:03:11 reyk Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -112,11 +112,11 @@ enum rtw_rfchipid {
 #define RTW_F_ENABLED		0x00000001	/* chip is enabled */
 #define RTW_F_DIGPHY		0x00000002	/* digital PHY */
 #define RTW_F_DFLANTB		0x00000004	/* B antenna is default */
+#define RTW_F_RTL8185		0x00000008	/* RTL8185 or newer */
 #define RTW_F_ANTDIV		0x00000010	/* h/w antenna diversity */
 #define RTW_F_9356SROM		0x00000020	/* 93c56 SROM */
 #define RTW_F_SLEEP		0x00000040	/* chip is asleep */
 #define RTW_F_INVALID		0x00000080	/* chip is absent */
-#define RTW_F_RTL8185		0x00000100	/* RTL8185 or newer */
 	/* all PHY flags */
 #define RTW_F_ALLPHY		(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV)
 
