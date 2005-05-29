@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.47 2005/05/29 17:27:16 grange Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.48 2005/05/29 17:29:37 grange Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -403,6 +403,9 @@ pchbattach(parent, self, aux)
 		case PCI_PRODUCT_INTEL_82855PE:
 		case PCI_PRODUCT_INTEL_82860_HB:
 		case PCI_PRODUCT_INTEL_82875P_HB:
+		case PCI_PRODUCT_INTEL_E7221_HB:
+		case PCI_PRODUCT_INTEL_E7501_HB:
+		case PCI_PRODUCT_INTEL_E7710_SMCH:
 			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 			    I82820_SMRAM);
 			bcreg |= (I82820_SMRAM_D_LCK << I82820_SMRAM_SHIFT);
