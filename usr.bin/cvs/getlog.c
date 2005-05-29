@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.29 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.30 2005/05/29 14:30:38 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -57,7 +57,7 @@ struct cvs_cmd cvs_cmd_log = {
 	{ "lo" },
 	"Print out history information for files",
 	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
-	"d:hlRr:",
+	"bd:hlNRr:s:tw:",
 	NULL,
 	CF_RECURSE,
 	cvs_getlog_options,
