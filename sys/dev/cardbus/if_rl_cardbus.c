@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.9 2005/05/16 01:36:25 brad Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.10 2005/05/29 07:54:33 brad Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -94,8 +94,8 @@
  * Various supported device vendors/types and their names.
  */
 const struct cardbus_matchid rl_cardbus_devices[] = {
-	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_5030	},
-	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_TE100	},
+	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_5030 },
+	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2000VX },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138 },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139 },
 	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CB_TXD },
