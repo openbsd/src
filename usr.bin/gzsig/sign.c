@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.4 2005/05/29 08:54:13 djm Exp $ */
+/* $OpenBSD: sign.c,v 1.5 2005/05/29 09:10:23 djm Exp $ */
 
 /*
  * sign.c
@@ -216,7 +216,7 @@ void
 sign(int argc, char *argv[])
 {
 	struct key *key;
-	char *gzipfile, tmpfile[MAXPATHLEN];
+	char *gzipfile, tmppath[MAXPATHLEN];
 	FILE *fin, *fout;
 	int i, fd, error, qflag;
 
@@ -270,24 +270,24 @@ sign(int argc, char *argv[])
 			    gzipfile, strerror(errno));
 			continue;
 		}
-		snprintf(tmpfile, sizeof(tmpfile), "%s.XXXXXX", gzipfile);
+		snprintf(tmppath, sizeof(tmppath), "%s.XXXXXX", gzipfile);
 		
-		if ((fd = mkstemp(tmpfile)) < 0) {
+		if ((fd = mkstemp(tmppath)) < 0) {
 			fprintf(stderr, "Error creating %s: %s\n",
-			    tmpfile, strerror(errno));
+			    tmppath, strerror(errno));
 			fclose(fin);
 			continue;
 		}
 		if ((fout = fdopen(fd, "w")) == NULL) {
 			fprintf(stderr, "Error opening %s: %s\n",
-			    tmpfile, strerror(errno));
+			    tmppath, strerror(errno));
 			fclose(fin);
 			close(fd);
 			continue;
 		}
-		if (copy_permissions(gzipfile, tmpfile) < 0) {
+		if (copy_permissions(gzipfile, tmppath) < 0) {
 			fprintf(stderr, "Error initializing %s: %s\n",
-			    tmpfile, strerror(errno));
+			    tmppath, strerror(errno));
 			fclose(fin);
 			fclose(fout);
 			continue;
@@ -298,14 +298,14 @@ sign(int argc, char *argv[])
 		fclose(fout);
 
 		if (!error) {
-			if (rename(tmpfile, gzipfile) < 0) {
-				unlink(tmpfile);
+			if (rename(tmppath, gzipfile) < 0) {
+				unlink(tmppath);
 				fatal(1, "Couldn't sign %s", gzipfile);
 			}
 			if (!qflag)
 				fprintf(stderr, "Signed %s\n", gzipfile);
 		} else {
-			unlink(tmpfile);
+			unlink(tmppath);
 			fatal(1, "Couldn't sign %s", gzipfile);
 		}
 	}

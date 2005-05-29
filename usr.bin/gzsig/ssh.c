@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.1 2005/05/29 02:41:42 marius Exp $ */
+/* $OpenBSD: ssh.c,v 1.2 2005/05/29 09:10:23 djm Exp $ */
 
 /*
  * ssh.c
@@ -52,6 +52,8 @@
 #include "ssh.h"
 
 #define SSH1_MAGIC		"SSH PRIVATE KEY FILE FORMAT 1.1\n"
+
+extern int sign_passwd_cb(char *, int, int, void *);
 
 struct des3_state {
 	des_key_schedule	k1, k2, k3;
@@ -215,7 +217,7 @@ load_ssh1_private(RSA *rsa, struct iovec *iov)
 	BN_CTX *ctx;
 	BIGNUM *aux;
 	MD5_CTX md;
-	char pass[128], prompt[128], comment[BUFSIZ];
+	char pass[128], comment[BUFSIZ];
 	u_char *p, cipher_type, digest[16];
 	void *dstate;
 	int i;
