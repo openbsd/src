@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.26 2005/04/29 07:22:38 otto Exp $ */
+/* $OpenBSD: undo.c,v 1.27 2005/05/29 21:37:49 cloder Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -235,8 +235,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 	memmove(&rec->region, &reg, sizeof(REGION));
 	rec->content = NULL;
 
-	if (lastrectype() != INSERT)
-		undo_add_boundary();
+	undo_add_boundary();
 
 	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
 
