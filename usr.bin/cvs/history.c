@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.15 2005/05/27 20:47:06 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.16 2005/05/29 00:18:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -78,6 +78,7 @@ struct cvs_cmd cvs_cmd_history = {
 };
 
 static int flags = 0;
+static char *rev = NULL;
 static char *user = NULL;
 static char *zone = "+0000";
 static char *tag = NULL;
@@ -127,6 +128,9 @@ cvs_history_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			rep++;
 			flags |= CVS_HF_O;
 			break;
+		case 'r':
+			rev = optarg;
+			break;
 		case 'T':
 			rep++;
 			flags |= CVS_HF_T;
@@ -173,6 +177,12 @@ cvs_history_pre_exec(struct cvsroot *root)
 
 	if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
 		return (CVS_EX_PROTO);
+
+	if (rev != NULL) {
+		if ((cvs_sendarg(root, "-r", 0) < 0) ||
+		    (cvs_sendarg(root, rev, 0) < 0))
+			return (CVS_EX_PROTO);
+	}
 
 	if (tag != NULL) {
 		if ((cvs_sendarg(root, "-t", 0) < 0) ||
