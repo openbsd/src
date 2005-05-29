@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.6 2005/05/27 18:57:19 robert Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.7 2005/05/29 02:58:30 reyk Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -167,9 +167,10 @@ void rtw_cardbus_disable(struct rtw_softc *);
 void rtw_cardbus_power(struct rtw_softc *, int);
 
 const struct cardbus_matchid rtw_cardbus_devices[] = {
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180 },
-	{ PCI_VENDOR_BELKIN2, PCI_PRODUCT_BELKIN2_F5D6020V3 },
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DWL610 },
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RT8185 },
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RT8180 },
+	{ PCI_VENDOR_BELKIN2,	PCI_PRODUCT_BELKIN2_F5D6020V3 },
+	{ PCI_VENDOR_DLINK,	PCI_PRODUCT_DLINK_DWL610 },
 };
 
 int
