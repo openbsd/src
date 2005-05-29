@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa64.c,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa64.c,v 1.2 2005/05/29 18:53:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -113,8 +113,10 @@ devboot(dev, p)
 	char *p;
 {
 	const char *q;
+	int unit;
+
 	if (!dev) {
-		int type, unit;
+		int type;
 
 		switch (PAGE0->mem_boot.pz_class) {
 		case PCL_RANDOM:
@@ -146,7 +148,12 @@ devboot(dev, p)
 #endif
 	/* quick copy device name */
 	for (q = pdc_devs[B_TYPE(dev)].name; (*p++ = *q++););
-	p[-1] = '0' + B_UNIT(dev);
+	unit = B_UNIT(dev);
+	if (unit >= 10) {
+		p[-1] = '0' + unit / 10;
+		*p++ = '0' + (unit % 10);
+	} else
+		p[-1] = '0' + unit;
 	*p++ = 'a' + B_PARTITION(dev);
 	*p = '\0';
 }
