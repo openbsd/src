@@ -4394,3 +4394,4 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/sbin/sasyncd

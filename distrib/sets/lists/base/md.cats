@@ -996,8 +996,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtl80x9reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtl80x9var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtl81x9reg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtwphy.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtwphyio.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtl8225reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtwreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtwvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/s3_617.ph
