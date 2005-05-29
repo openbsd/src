@@ -746,3 +746,4 @@
 ./var/www/icons/world1.png
 ./var/www/icons/world2.gif
 ./var/www/icons/world2.png
+./usr/share/ipsec/isakmpd/VPN-default.conf

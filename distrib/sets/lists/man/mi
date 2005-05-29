@@ -2604,3 +2604,6 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
+./usr/share/man/cat1/gzsig.0
+./usr/share/man/cat5/sasyncd.conf.0
+./usr/share/man/cat8/sasyncd.0
