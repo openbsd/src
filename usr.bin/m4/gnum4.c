@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.30 2005/05/21 10:33:48 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.31 2005/05/29 18:44:36 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -550,4 +550,19 @@ doesyscmd(const char *cmd)
 			continue;
 		pbstr(getstring());
 	}
+}
+
+void
+getdivfile(const char *name)
+{
+	FILE *f;
+	int c;
+
+	f = fopen(name, "r");
+	if (!f)
+		return;
+
+	while ((c = getc(f))!= EOF)
+		putc(c, active);
+	(void) fclose(f);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.30 2003/11/17 17:12:10 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.31 2005/05/29 18:44:36 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.30 2003/11/17 17:12:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.31 2005/05/29 18:44:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,13 +119,33 @@ pbstr(const char *s)
 void
 pbnum(int n)
 {
+	pbnumbase(n, 10, 0);
+}
+
+void
+pbnumbase(int n, int base, int d)
+{
+	static char digits[36] = "0123456789abcdefghijklmnopqrstuvwxyz";
 	int num;
+	int printed = 0;
+
+	if (base > 36)
+		errx(1, "base %d > 36: not supported", base);
+
+	if (base < 2)
+		errx(1, "bad base %d for conversion", base);
 
 	num = (n < 0) ? -n : n;
 	do {
-		putback(num % 10 + '0');
+		putback(digits[num % base]);
+		printed++;
 	}
-	while ((num /= 10) > 0);
+	while ((num /= base) > 0);
+
+	if (n < 0)
+		printed++;
+	while (printed++ < d)
+		putback('0');
 
 	if (n < 0)
 		putback('-');

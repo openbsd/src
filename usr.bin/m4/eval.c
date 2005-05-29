@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.55 2005/03/02 10:12:15 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.56 2005/05/29 18:44:36 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.55 2005/03/02 10:12:15 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.56 2005/05/29 18:44:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.55 2005/03/02 10:12:15 espie Exp $";
 
 #include <sys/types.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -178,9 +179,27 @@ expand_builtin(const char *argv[], int argc, int td)
 	 * doexpr - evaluate arithmetic
 	 * expression
 	 */
+	{
+		int base = 10;
+		int maxdigits = 0;
+		const char *errstr;
+
+		if (argc > 3) {
+			base = strtonum(argv[3], 2, 36, &errstr);
+			if (errstr) {
+				errx(1, "base %s invalid", argv[3]);
+			}
+		}
+		if (argc > 4) {
+			maxdigits = strtonum(argv[4], 0, INT_MAX, &errstr);
+			if (errstr) {
+				errx(1, "maxdigits %s invalid", argv[4]);
+			}
+		}
 		if (argc > 2)
-			pbnum(expr(argv[2]));
+			pbnumbase(expr(argv[2]), base, maxdigits);
 		break;
+	}
 
 	case IFELTYPE:
 		if (argc > 4)
@@ -866,10 +885,15 @@ doundiv(const char *argv[], int argc)
 
 	if (argc > 2) {
 		for (ind = 2; ind < argc; ind++) {
-			n = atoi(argv[ind]);
-			if (n > 0 && n < maxout && outfile[n] != NULL)
-				getdiv(n);
-
+			const char *errstr;
+			n = strtonum(argv[ind], 1, INT_MAX, &errstr);
+			if (errstr) {
+				if (errno == EINVAL && mimic_gnu)
+					getdivfile(argv[ind]);
+			} else {
+				if (n < maxout && outfile[n] != NULL)
+					getdiv(n);
+			}
 		}
 	}
 	else
@@ -1011,12 +1035,23 @@ handledash(char *buffer, char *end, const char *src)
 	while(*src) {
 		if (src[1] == '-' && src[2]) {
 			unsigned char i;
-			for (i = (unsigned char)src[0]; 
-			    i <= (unsigned char)src[2]; i++) {
-				*p++ = i;
-				if (p == end) {
-					*p = '\0';
-					return buffer;
+			if ((unsigned char)src[0] <= (unsigned char)src[2]) {
+				for (i = (unsigned char)src[0]; 
+				    i <= (unsigned char)src[2]; i++) {
+					*p++ = i;
+					if (p == end) {
+						*p = '\0';
+						return buffer;
+					}
+				}
+			} else {
+				for (i = (unsigned char)src[0]; 
+				    i >= (unsigned char)src[2]; i--) {
+					*p++ = i;
+					if (p == end) {
+						*p = '\0';
+						return buffer;
+					}
 				}
 			}
 			src += 3;
