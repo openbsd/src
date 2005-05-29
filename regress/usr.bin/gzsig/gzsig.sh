@@ -1,13 +1,13 @@
 #!/bin/sh
 # 
-# $OpenBSD: gzsig.sh,v 1.1.1.1 2005/05/28 01:58:12 marius Exp $
+# $OpenBSD: gzsig.sh,v 1.2 2005/05/29 02:41:42 marius Exp $
 
 set -e
 
 # TODO: add ssh2
 
-KEYS="ssh2-rsa ssh2-dsa x509-dsa x509-rsa"
-KEYS_ENC="ssh2-rsa-pass ssh2-dsa-pass x509-dsa-pass x509-rsa-pass"
+KEYS="ssh-rsa ssh2-rsa ssh2-dsa x509-dsa x509-rsa"
+KEYS_ENC="ssh-rsa-pass ssh2-rsa-pass ssh2-dsa-pass x509-dsa-pass x509-rsa-pass"
 
 # Clean up from last time.
 gunzip *.gz >/dev/null 2>&1 || true
