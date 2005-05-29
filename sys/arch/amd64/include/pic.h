@@ -1,4 +1,4 @@
-/*	$OpenBSD: pic.h,v 1.3 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: pic.h,v 1.4 2005/05/29 03:20:36 deraadt Exp $	*/
 /*	$NetBSD: pic.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 #ifndef _X86_PIC_H
@@ -20,7 +20,7 @@ struct pic {
 	struct device pic_dev;
         int pic_type;
 #ifdef MULTIPROCESSOR
-	struct mutex pic_mutex;
+	struct SIMPLE_LOCK pic_lock;
 #endif
         void (*pic_hwmask)(struct pic *, int);
         void (*pic_hwunmask)(struct pic *, int);

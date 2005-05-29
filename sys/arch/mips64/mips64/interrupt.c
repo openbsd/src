@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.12 2005/05/25 23:17:47 niklas Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.13 2005/05/29 03:20:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -282,10 +282,21 @@ softintr()
 		ADDUPROF(p);
 	}
 	if (want_resched) {
+		int s;
+
 		/*
-		 * We're being preempted.
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we put ourselves on the run queue
+		 * but before we switched, we might not be on the queue
+		 * indicated by our priority.
 		 */
-		preempt(NULL);
+		s = splstatclock();
+		setrunqueue(p);
+		p->p_stats->p_ru.ru_nivcsw++;
+		mi_switch();
+		splx(s);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}

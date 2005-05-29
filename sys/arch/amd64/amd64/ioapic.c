@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.4 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.5 2005/05/29 03:20:36 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -127,14 +127,14 @@ ioapic_lock(struct ioapic_softc *sc)
 
 	flags = read_psl();
 	disable_intr();
-	mtx_enter(&sc->sc_pic.pic_mutex);
+	SIMPLE_LOCK(&sc->sc_pic.pic_lock);
 	return flags;
 }
 
 static __inline void
 ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 {
-	mtx_leave(&sc->sc_pic.pic_mutex);
+	SIMPLE_UNLOCK(&sc->sc_pic.pic_lock);
 	write_psl(flags);
 }
 
@@ -294,7 +294,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_data = (volatile u_int32_t *)(bh + IOAPIC_DATA);	
 
 	sc->sc_pic.pic_type = PIC_IOAPIC;
-	mtx_init(&sc->sc_pic.pic_mutex, IPL_NONE);
+	SIMPLE_LOCK_INIT(&sc->sc_pic.pic_lock);
 	sc->sc_pic.pic_hwmask = ioapic_hwmask;
 	sc->sc_pic.pic_hwunmask = ioapic_hwunmask;
 	sc->sc_pic.pic_addroute = ioapic_addroute;

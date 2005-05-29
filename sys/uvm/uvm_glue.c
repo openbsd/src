@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.40 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.41 2005/05/29 03:20:43 deraadt Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -80,7 +80,6 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#include <sys/sched.h>
 
 #include <uvm/uvm.h>
 
@@ -381,13 +380,13 @@ uvm_swapin(p)
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
 	cpu_swapin(p);
-	SCHED_LOCK(s);
+	s = splstatclock();
 	if (p->p_stat == SRUN)
 		setrunqueue(p);
 	p->p_flag |= P_INMEM;
 	p->p_flag &= ~P_SWAPIN;
+	splx(s);
 	p->p_swtime = 0;
-	SCHED_UNLOCK(s);
 	++uvmexp.swapins;
 }
 
@@ -578,16 +577,16 @@ uvm_swapout(p)
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
-	SCHED_LOCK(s);
+	s = splstatclock();
 	if (!(p->p_flag & P_INMEM)) {
-		SCHED_UNLOCK(s);
+		splx(s);
 		return;
 	}
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
 		remrunqueue(p);
+	splx(s);
 	p->p_swtime = 0;
-	SCHED_UNLOCK(s);
 	++uvmexp.swapouts;
 
 	/*

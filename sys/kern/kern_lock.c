@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.18 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.19 2005/05/29 03:20:41 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -1121,6 +1121,18 @@ simple_lock_freecheck(void *start, void *end)
 	splx(s);
  }
 
+/*
+ * We must be holding exactly one lock: the sched_lock.
+ */
+
+#ifdef notyet
+void
+simple_lock_switchcheck(void)
+{
+
+	simple_lock_only_held(&sched_lock, "switching");
+}
+#endif
 
 void
 simple_lock_only_held(volatile struct simplelock *lp, const char *where)
@@ -1159,6 +1171,60 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
  * Functions for manipulating the kernel_lock.  We put them here
  * so that they show up in profiles.
  */
+
+/*
+ * XXX Instead of using struct lock for the kernel lock and thus requiring us
+ * XXX to implement simplelocks, causing all sorts of fine-grained locks all
+ * XXX over our tree getting activated consuming both time and potentially
+ * XXX introducing locking protocol bugs.
+ */
+#ifdef notyet
+
+struct lock kernel_lock; 
+
+void
+_kernel_lock_init(void)
+{
+	spinlockinit(&kernel_lock, "klock", 0);
+}
+
+/*
+ * Acquire/release the kernel lock.  Intended for use in the scheduler
+ * and the lower half of the kernel.
+ */
+void
+_kernel_lock(int flag)
+{
+	SCHED_ASSERT_UNLOCKED();
+	spinlockmgr(&kernel_lock, flag, 0);
+}
+
+void
+_kernel_unlock(void)
+{
+	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+}
+
+/*
+ * Acquire/release the kernel_lock on behalf of a process.  Intended for
+ * use in the top half of the kernel.
+ */
+void
+_kernel_proc_lock(struct proc *p)
+{
+	SCHED_ASSERT_UNLOCKED();
+	spinlockmgr(&kernel_lock, LK_EXCLUSIVE, 0);
+	p->p_flag |= P_BIGLOCK;
+}
+
+void
+_kernel_proc_unlock(struct proc *p)
+{
+	p->p_flag &= ~P_BIGLOCK;
+	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+}
+
+#else
 
 struct __mp_lock kernel_lock; 
 
@@ -1205,6 +1271,8 @@ _kernel_proc_unlock(struct proc *p)
 	p->p_flag &= ~P_BIGLOCK;
 	__mp_unlock(&kernel_lock);
 }
+
+#endif
 
 #ifdef MP_LOCKDEBUG
 /* CPU-dependent timing, needs this to be settable from ddb. */

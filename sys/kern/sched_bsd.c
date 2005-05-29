@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.3 2005/05/26 18:10:40 art Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.4 2005/05/29 03:20:41 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -65,9 +65,7 @@ int	rrticks_init;		/* # of hardclock ticks per roundrobin() */
 int whichqs;			/* Bit mask summary of non-empty Q's. */
 struct prochd qs[NQS];
 
-#ifdef MULTIPROCESSOR
-struct mutex sched_mutex = MUTEX_INITIALIZER(IPL_SCHED);
-#endif
+struct SIMPLELOCK sched_lock;
 
 void scheduler_start(void);
 
@@ -262,7 +260,7 @@ schedcpu(arg)
 	struct timeout *to = (struct timeout *)arg;
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	struct proc *p;
-	int s, t;
+	int s;
 	unsigned int newcpu;
 	int phz;
 
@@ -276,7 +274,6 @@ schedcpu(arg)
 	KASSERT(phz);
 
 	for (p = LIST_FIRST(&allproc); p != 0; p = LIST_NEXT(p, p_list)) {
-		SCHED_LOCK(s);
 		/*
 		 * Increment time in/out of memory and sleep time
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
@@ -290,11 +287,9 @@ schedcpu(arg)
 		 * If the process has slept the entire second,
 		 * stop recalculating its priority until it wakes up.
 		 */
-		if (p->p_slptime > 1) {
-			SCHED_UNLOCK(s);
+		if (p->p_slptime > 1)
 			continue;
-		}
-		t = splstatclock();
+		s = splstatclock();	/* prevent state changes */
 		/*
 		 * p_pctcpu is only for ps.
 		 */
@@ -310,7 +305,8 @@ schedcpu(arg)
 		p->p_cpticks = 0;
 		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);
 		p->p_estcpu = newcpu;
-		splx(t);
+		splx(s);
+		SCHED_LOCK(s);
 		resetpriority(p);
 		if (p->p_priority >= PUSER) {
 			if ((p != curproc) &&
@@ -359,13 +355,13 @@ updatepri(p)
 void
 sched_unlock_idle(void)
 {
-	mtx_leave(&sched_mutex);
+	SIMPLE_UNLOCK(&sched_lock);
 }
 
 void
 sched_lock_idle(void)
 {
-	mtx_enter(&sched_mutex);
+	SIMPLE_LOCK(&sched_lock);
 }
 #endif /* MULTIPROCESSOR || LOCKDEBUG */
 
@@ -384,7 +380,9 @@ yield()
 	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nvcsw++;
-	mi_switch(s);
+	mi_switch();
+	SCHED_ASSERT_UNLOCKED();
+	splx(s);
 }
 
 /*
@@ -411,17 +409,19 @@ preempt(newp)
 	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nivcsw++;
-	mi_switch(s);
+	mi_switch();
+	SCHED_ASSERT_UNLOCKED();
+	splx(s);
 }
 
 
 /*
- * Must be called at splsched() or higher.
+ * Must be called at splstatclock() or higher.
  */
 void
-mi_switch(int s)
+mi_switch()
 {
-	struct proc *p = curproc;
+	struct proc *p = curproc;	/* XXX */
 	struct rlimit *rlim;
 	struct timeval tv;
 #if defined(MULTIPROCESSOR)
@@ -432,6 +432,20 @@ mi_switch(int s)
 #endif
 
 	SCHED_ASSERT_LOCKED();
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Release the kernel_lock, as we are about to yield the CPU.
+	 * The scheduler lock is still held until cpu_switch()
+	 * selects a new process and removes it from the run queue.
+	 */
+	if (p->p_flag & P_BIGLOCK)
+#ifdef notyet
+		hold_count = spinlock_release_all(&kernel_lock);
+#else
+		hold_count = __mp_release_all(&kernel_lock);
+#endif
+#endif
 
 	/*
 	 * Compute the amount of time during which the current
@@ -470,7 +484,6 @@ mi_switch(int s)
 	 */
 	rlim = &p->p_rlimit[RLIMIT_CPU];
 	if ((rlim_t)p->p_rtime.tv_sec >= rlim->rlim_cur) {
-		SCHED_UNLOCK(s);
 		if ((rlim_t)p->p_rtime.tv_sec >= rlim->rlim_max) {
 			psignal(p, SIGKILL);
 		} else {
@@ -478,22 +491,7 @@ mi_switch(int s)
 			if (rlim->rlim_cur < rlim->rlim_max)
 				rlim->rlim_cur += 5;
 		}
-		SCHED_LOCK(s);
 	}
-
-#if defined(MULTIPROCESSOR)
-	/*
-	 * Release the kernel_lock, as we are about to yield the CPU.
-	 * The scheduler lock is still held until cpu_switch()
-	 * selects a new process and removes it from the run queue.
-	 */
-	if (p->p_flag & P_BIGLOCK)
-#ifdef notyet
-		hold_count = spinlock_release_all(&kernel_lock);
-#else
-		hold_count = __mp_release_all(&kernel_lock);
-#endif
-#endif
 
 	/*
 	 * Process is about to yield the CPU; clear the appropriate
@@ -537,9 +535,12 @@ mi_switch(int s)
 	 * we reacquire the interlock.
 	 */
 	if (p->p_flag & P_BIGLOCK)
+#ifdef notyet
+		spinlock_acquire_count(&kernel_lock, hold_count);
+#else
 		__mp_acquire_count(&kernel_lock, hold_count);
 #endif
-	splx(s);
+#endif
 }
 
 /*
@@ -553,6 +554,7 @@ rqinit()
 
 	for (i = 0; i < NQS; i++)
 		qs[i].ph_link = qs[i].ph_rlink = (struct proc *)&qs[i];
+	SIMPLE_LOCK_INIT(&sched_lock);
 }
 
 static __inline void
@@ -600,7 +602,8 @@ resched_proc(struct proc *p, u_char pri)
  * and awakening the swapper if it isn't in memory.
  */
 void
-setrunnable(struct proc *p)
+setrunnable(p)
+	register struct proc *p;
 {
 	SCHED_ASSERT_LOCKED();
 
@@ -632,7 +635,7 @@ setrunnable(struct proc *p)
 		updatepri(p);
 	p->p_slptime = 0;
 	if ((p->p_flag & P_INMEM) == 0)
-		sched_wakeup((caddr_t)&proc0);
+		wakeup((caddr_t)&proc0);
 	else
 		resched_proc(p, p->p_priority);
 }
@@ -677,10 +680,10 @@ schedclock(p)
 {
 	int s;
 
-	SCHED_LOCK(s);
 	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);
+	SCHED_LOCK(s);
 	resetpriority(p);
+	SCHED_UNLOCK(s);
 	if (p->p_priority >= PUSER)
 		p->p_priority = p->p_usrpri;
-	SCHED_UNLOCK(s);
 }

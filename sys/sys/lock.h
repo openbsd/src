@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.13 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: lock.h,v 1.14 2005/05/29 03:20:42 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -237,6 +237,39 @@ void	spinlock_acquire_count(__volatile struct lock *, int);
 #define LOCK_ASSERT(x)	KASSERT(x)
 #else
 #define LOCK_ASSERT(x)	/* nothing */
+#endif
+
+#if defined(MULTIPROCESSOR)
+/*
+ * XXX Instead of using struct lock for the kernel lock and thus requiring us
+ * XXX to implement simplelocks, causing all sorts of fine-grained locks all
+ * XXX over our tree getting activated consuming both time and potentially
+ * XXX introducing locking protocol bugs.
+ */
+#ifdef notyet
+
+extern struct lock kernel_lock;
+
+/*
+ * XXX Simplelock macros used at "trusted" places.
+ */
+#define SIMPLELOCK		simplelock
+#define SIMPLE_LOCK_INIT	simple_lock_init
+#define SIMPLE_LOCK		simple_lock
+#define SIMPLE_UNLOCK		simple_unlock
+
+#endif
+
+#else
+
+/*
+ * XXX Simplelock macros used at "trusted" places.
+ */
+#define SIMPLELOCK		simplelock
+#define SIMPLE_LOCK_INIT	simple_lock_init
+#define SIMPLE_LOCK		simple_lock
+#define SIMPLE_UNLOCK		simple_unlock
+
 #endif
 
 #endif /* !_LOCK_H_ */

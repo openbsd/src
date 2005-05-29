@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.74 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.75 2005/05/29 03:20:41 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -805,19 +805,29 @@ trapsignal(p, signum, code, type, sigval)
  *     regardless of the signal action (eg, blocked or ignored).
  *
  * Other ignored signals are discarded immediately.
+ *
+ * XXXSMP: Invoked as psignal() or sched_psignal().
  */
 void
-psignal(struct proc *p, int signum)
+psignal1(p, signum, dolock)
+	register struct proc *p;
+	register int signum;
+	int dolock;		/* XXXSMP: works, but icky */
 {
-	int s, prop;
-	sig_t action;
+	register int s, prop;
+	register sig_t action;
 	int mask;
 
 #ifdef DIAGNOSTIC
 	if ((u_int)signum >= NSIG || signum == 0)
 		panic("psignal signal number");
+
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_ASSERT_UNLOCKED();
+	else
+		SCHED_ASSERT_LOCKED();
 #endif
-	SCHED_ASSERT_UNLOCKED();
 
 	/* Ignore signal if we are exiting */
 	if (p->p_flag & P_WEXIT)
@@ -880,8 +890,10 @@ psignal(struct proc *p, int signum)
 	 */
 	if (action == SIG_HOLD && ((prop & SA_CONT) == 0 || p->p_stat != SSTOP))
 		return;
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_LOCK(s);
 
-	SCHED_LOCK(s);
 	switch (p->p_stat) {
 
 	case SSLEEP:
@@ -922,11 +934,12 @@ psignal(struct proc *p, int signum)
 				goto out;
 			p->p_siglist &= ~mask;
 			p->p_xstat = signum;
-			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0) {
-				SCHED_UNLOCK(s);
-				psignal(p->p_pptr, SIGCHLD);
-				SCHED_LOCK(s);
-			}
+			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
+				/*
+				 * XXXSMP: recursive call; don't lock
+				 * the second time around.
+				 */
+				sched_psignal(p->p_pptr, SIGCHLD);
 			proc_stop(p);
 			goto out;
 		}
@@ -963,7 +976,7 @@ psignal(struct proc *p, int signum)
 			 * Otherwise, process goes back to sleep state.
 			 */
 			p->p_flag |= P_CONTINUED;
-			sched_wakeup(p->p_pptr);
+			wakeup(p->p_pptr);
 			if (action == SIG_DFL)
 				p->p_siglist &= ~mask;
 			if (action == SIG_CATCH)
@@ -1014,7 +1027,9 @@ runfast:
 run:
 	setrunnable(p);
 out:
-	SCHED_UNLOCK(s);
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_UNLOCK(s);
 }
 
 /*
@@ -1059,23 +1074,24 @@ issignal(struct proc *p)
 			 */
 			p->p_xstat = signum;
 
+			SCHED_LOCK(s);	/* protect mi_switch */
 			if (p->p_flag & P_FSTRACE) {
 #ifdef	PROCFS
-				SCHED_LOCK(s);
 				/* procfs debugging */
 				p->p_stat = SSTOP;
-				sched_wakeup(p);
-				mi_switch(s);
+				wakeup(p);
+				mi_switch();
 #else
 				panic("procfs debugging");
 #endif
 			} else {
 				/* ptrace debugging */
 				psignal(p->p_pptr, SIGCHLD);
-				SCHED_LOCK(s);
 				proc_stop(p);
-				mi_switch(s);
+				mi_switch();
 			}
+			SCHED_ASSERT_UNLOCKED();
+			splx(s);
 
 			/*
 			 * If we are no longer being traced, or the parent
@@ -1136,7 +1152,9 @@ issignal(struct proc *p)
 					psignal(p->p_pptr, SIGCHLD);
 				SCHED_LOCK(s);
 				proc_stop(p);
-				mi_switch(s);
+				mi_switch();
+				SCHED_ASSERT_UNLOCKED();
+				splx(s);
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
@@ -1180,13 +1198,16 @@ keep:
  * on the run queue.
  */
 void
-proc_stop(struct proc *p)
+proc_stop(p)
+	struct proc *p;
 {
+#ifdef MULTIPROCESSOR
 	SCHED_ASSERT_LOCKED();
+#endif
 
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
-	sched_wakeup(p->p_pptr);
+	wakeup(p->p_pptr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2005/05/27 19:32:39 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.19 2005/05/29 03:20:36 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -846,8 +846,9 @@ idle_start:
 	cmpl	$0,_C_LABEL(whichqs)(%rip)
 	jz	idle_loop
 idle_exit:
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	sti
-#if defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
 	call	_C_LABEL(sched_lock_idle)
 #endif
 switch_search:

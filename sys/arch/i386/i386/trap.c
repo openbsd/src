@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2005/05/25 23:17:47 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2005/05/29 03:20:38 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -451,6 +451,15 @@ trap(frame)
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (p == 0 || p->p_addr == 0)
 			goto we_re_toast;
+#ifdef LOCKDEBUG
+		/* If we page-fault while in scheduler, we're doomed. */
+#ifdef notyet
+		if (simple_lock_held(&sched_lock))
+#else
+		if (__mp_lock_held(&sched_lock))
+#endif
+			goto we_re_toast;
+#endif
 
 		pcb = &p->p_addr->u_pcb;
 #if 0
