@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.29 2005/05/29 02:54:51 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.30 2005/05/29 03:49:52 reyk Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -39,8 +39,8 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
@@ -53,13 +53,13 @@
 #include <machine/intr.h>	/* splnet */
 
 #include <uvm/uvm_extern.h>
- 
+
 #include <net/if.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -80,8 +80,8 @@
 
 int rtw_rfprog_fallback = 0;
 int rtw_host_rfio = 0;
-int rtw_macbangbits_timeout = 100;
 int rtw_dwelltime = 200;	/* milliseconds per channel */
+int rtw_macbangbits_timeout = 100;
 
 #ifdef RTW_DEBUG
 int rtw_debug = 0;
@@ -290,16 +290,16 @@ rtw_continuous_tx_enable(struct rtw_softc *sc, int enable)
 const char *
 rtw_access_string(enum rtw_access access)
 {
-        switch (access) {
-        case RTW_ACCESS_NONE:
-                return "none";
-        case RTW_ACCESS_CONFIG:
-                return "config";
-        case RTW_ACCESS_ANAPARM:
-                return "anaparm";
-        default:
-                return "unknown";
-        }
+	switch (access) {
+	case RTW_ACCESS_NONE:
+		return "none";
+	case RTW_ACCESS_CONFIG:
+		return "config";
+	case RTW_ACCESS_ANAPARM:
+		return "anaparm";
+	default:
+		return "unknown";
+	}
 }
 #endif
 
@@ -358,7 +358,7 @@ rtw_set_access(struct rtw_regs *regs, enum rtw_access access)
 {
 	rtw_set_access1(regs, access);
 	RTW_DPRINTF(RTW_DEBUG_ACCESS,
-	    ("%s: access %s -> %s\n",__func__, 
+	    ("%s: access %s -> %s\n",__func__,
 	    rtw_access_string(regs->r_access),
 	    rtw_access_string(access)));
 	regs->r_access = access;
@@ -446,7 +446,7 @@ rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 
 	/* from Linux driver */
 	tcr = RTW_TCR_CWMIN | RTW_TCR_MXDMA_2048 |
-	      LSHIFT(7, RTW_TCR_SRL_MASK) | LSHIFT(7, RTW_TCR_LRL_MASK);
+	    LSHIFT(7, RTW_TCR_SRL_MASK) | LSHIFT(7, RTW_TCR_LRL_MASK);
 
 	RTW_WRITE(regs, RTW_TCR, tcr);
 
@@ -662,7 +662,7 @@ rtw_srom_parse(struct rtw_softc *sc)
 		rfname = scratch;
 	}
 	printf("radio %s, ", rfname);
-	if (paname != NULL) 
+	if (paname != NULL)
 		printf("amp %s, ", paname);
 
 	if (sc->sc_flags & RTW_F_RTL8185) {
@@ -884,7 +884,7 @@ rtw_identify_sta(struct rtw_regs *regs, u_int8_t (*addr)[IEEE80211_ADDR_LEN],
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
 	u_int32_t idr0 = RTW_READ(regs, RTW_IDR0),
-	          idr1 = RTW_READ(regs, RTW_IDR1);
+	    idr1 = RTW_READ(regs, RTW_IDR1);
 
 	(*addr)[0] = MASK_AND_RSHIFT(idr0, BITS(0,  7));
 	(*addr)[1] = MASK_AND_RSHIFT(idr0, BITS(8,  15));
@@ -1029,11 +1029,11 @@ rtw_rxsoft_alloc(bus_dma_tag_t dmat, struct rtw_rxsoft *rs)
 	int rc;
 	struct mbuf *m;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA); 
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
 
-	MCLGET(m, M_DONTWAIT); 
+	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		return ENOBUFS;
@@ -1077,7 +1077,7 @@ rtw_rxsoft_init_all(bus_dma_tag_t dmat, struct rtw_rxsoft *desc,
 #endif /* RTW_DEBUG */
 		if ((rc = rtw_rxsoft_alloc(dmat, rs)) != 0) {
 			printf("%s: rtw_rxsoft_alloc failed, %d buffers, "
-			       "rc %d\n", dvname, i, rc);
+			    "rc %d\n", dvname, i, rc);
 			break;
 		}
 	}
@@ -1105,12 +1105,11 @@ rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
 	octl = rd->rd_ctl;
 	rd->rd_ctl = htole32(ctl);
 
-	RTW_DPRINTF(
-	    kick ? (RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK)
-	         : RTW_DEBUG_RECV_DESC,
+	RTW_DPRINTF(kick ? (RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK)
+	    : RTW_DEBUG_RECV_DESC,
 	    ("%s: rd %p buf %08x -> %08x ctl %08x -> %08x\n", __func__, rd,
-	     letoh32(obuf), letoh32(rd->rd_buf), letoh32(octl),
-	     letoh32(rd->rd_ctl)));
+	    letoh32(obuf), letoh32(rd->rd_buf), letoh32(octl),
+	    letoh32(rd->rd_ctl)));
 
 	/* sync the mbuf */
 	bus_dmamap_sync(rdb->rdb_dmat, rs->rs_dmamap, 0,
@@ -1478,7 +1477,7 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		if ((tdb->tdb_desc[ts->ts_last].td_stat &
-		    htole32(RTW_TXSTAT_OWN)) != 0) 
+		    htole32(RTW_TXSTAT_OWN)) != 0)
 			break;
 
 		if (&sc->sc_txdesc_blk[RTW_TXPRIBCN] == tdb) {
@@ -1603,13 +1602,14 @@ rtw_swring_setup(struct rtw_softc *sc)
 	rtw_txsoft_blk_init_all(&sc->sc_txsoft_blk[0]);
 
 	rdb = &sc->sc_rxdesc_blk;
-	if ((rc = rtw_rxsoft_init_all(sc->sc_dmat, sc->sc_rxsoft, &rdb->rdb_ndesc,
-	     sc->sc_dev.dv_xname)) != 0 && rdb->rdb_ndesc == 0) {
+	if ((rc = rtw_rxsoft_init_all(sc->sc_dmat, sc->sc_rxsoft,
+	    &rdb->rdb_ndesc, sc->sc_dev.dv_xname)) != 0 &&
+	    rdb->rdb_ndesc == 0) {
 		printf("%s: could not allocate rx buffers\n",
 		    sc->sc_dev.dv_xname);
 		return rc;
 	}
-	
+
 	rdb = &sc->sc_rxdesc_blk;
 	rtw_rxdescs_sync(rdb, 0, rdb->rdb_ndesc,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -2680,14 +2680,14 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 
 	if (sc->sc_ic.ic_state == IEEE80211_S_RUN &&
 	    (*mp = rtw_80211_dequeue(sc, &sc->sc_beaconq, RTW_TXPRIBCN, tsbp,
-		                     tdbp, nip, if_flagsp)) != NULL) {
+	    tdbp, nip, if_flagsp)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue beacon frame\n",
 		    __func__));
 		return 0;
 	}
 
 	if ((*mp = rtw_80211_dequeue(sc, &sc->sc_ic.ic_mgtq, RTW_TXPRIMD, tsbp,
-		                     tdbp, nip, if_flagsp)) != NULL) {
+	    tdbp, nip, if_flagsp)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue mgt frame\n",
 		    __func__));
 		return 0;
@@ -2699,7 +2699,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	}
 
 	if ((*mp = rtw_80211_dequeue(sc, &sc->sc_ic.ic_pwrsaveq, RTW_TXPRIHI,
-	                             tsbp, tdbp, nip, if_flagsp)) != NULL) {
+	    tsbp, tdbp, nip, if_flagsp)) != NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue pwrsave frame\n",
 		    __func__));
 		return 0;
@@ -2772,8 +2772,8 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 	 */
 	for (first = 1;
 	     ((rc = bus_dmamap_load_mbuf(dmat, dmam, m0,
-			  BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
-	      dmam->dm_nsegs > ndescfree || rtw_seg_too_short(dmam)) && first;
+	     BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
+	     dmam->dm_nsegs > ndescfree || rtw_seg_too_short(dmam)) && first;
 	     first = 0) {
 		if (rc == 0)
 			bus_dmamap_unload(dmat, dmam);
@@ -2897,8 +2897,7 @@ rtw_start(struct ifnet *ifp)
 		    (IFF_DEBUG|IFF_LINK2)) {
 			ieee80211_dump_pkt(mtod(m0, uint8_t *),
 			    (dmamap->dm_nsegs == 1) ? m0->m_pkthdr.len
-			                            : sizeof(wh),
-			    rate, 0);
+			    : sizeof(wh), rate, 0);
 		}
 #endif /* RTW_DEBUG */
 		ctl0 = proto_ctl0 |
@@ -3014,7 +3013,7 @@ rtw_start(struct ifnet *ifp)
 		ts->ts_last = lastdesc;
 		tdb->tdb_desc[ts->ts_last].td_ctl0 |= htole32(RTW_TXCTL0_LS);
 		tdb->tdb_desc[ts->ts_first].td_ctl0 |=
-		   htole32(RTW_TXCTL0_FS);
+		    htole32(RTW_TXCTL0_FS);
 
 #ifdef RTW_DEBUG
 		rtw_print_txdesc(sc, "FS on", ts, tdb, ts->ts_first);
@@ -3719,7 +3718,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	NEXT_ATTACH_STATE(sc, FINISH_TXMAPS_CREATE);
 	if ((rc = rtw_rxdesc_dmamaps_create(sc->sc_dmat, &sc->sc_rxsoft[0],
-	                                    RTW_RXQLEN)) != 0) {
+	    RTW_RXQLEN)) != 0) {
 		printf("\n%s: could not load DMA map for hw rx descriptors, "
 		    "error %d\n", sc->sc_dev.dv_xname, rc);
 		goto err;
@@ -4037,10 +4036,10 @@ rtw_verify_syna(u_int freq, u_int32_t val)
 	case 2467:
 		expected_val = 0x001809a0; /* ch 12 */
 		break;
-        case 2472:
+	case 2472:
 		expected_val = 0x000009a8; /* ch 13 */
 		break;
-        case 2484:
+	case 2484:
 		expected_val = 0x000009b4; /* ch 14 */
 		break;
 	}
@@ -4193,11 +4192,11 @@ rtw_sa2400_dc_calibration(struct rtw_sa2400 *sa)
 			 * microseconds
 			 */
 
-	dccal &= ~SA2400_OPMODE_MODE_MASK; 
+	dccal &= ~SA2400_OPMODE_MODE_MASK;
 	dccal |= SA2400_OPMODE_MODE_DCALIB;
 
 	rc = rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
-	   dccal);
+	    dccal);
 	if (rc != 0)
 		return rc;
 
@@ -4421,7 +4420,8 @@ rtw_max2820_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
 		enable = MAX2820_ENABLE_DEFAULT;
 		break;
 	}
-	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820, MAX2820_ENABLE, enable);
+	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820,
+	    MAX2820_ENABLE, enable);
 }
 
 struct rtw_rf *
@@ -4609,7 +4609,7 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 		RTW_SYNC(regs, RTW_BB, RTW_BB);
 		delay(BBP_WRITE_DELAY);	/* 1 microsecond */
 		if (MASK_AND_RSHIFT(RTW_READ(regs, RTW_BB),
-		                    RTW_BB_RD_MASK) == val) {
+		    RTW_BB_RD_MASK) == val) {
 			RTW_DPRINTF(RTW_DEBUG_PHYIO,
 			    ("%s: finished in %dus\n", __func__,
 			    BBP_WRITE_DELAY * (BBP_WRITE_ITERS - i)));
@@ -4685,7 +4685,7 @@ rtw_rf_rtl8225_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
 	u_int8_t page;
 	u_int16_t reg0, reg1, reg2;
 	u_int32_t mask;
-	
+
 	/* enable page 0 */
 	page = RTW_READ8(regs, RTW_PSR);
 	RTW_WRITE8(regs, RTW_PSR, page & ~RTW_PSR_PSEN);
@@ -4755,13 +4755,14 @@ rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
 	RTW_WBR(regs, RTW8180_PHYCFG, RTW8180_PHYCFG);
 
 	for (i = rtw_macbangbits_timeout; --i >= 0; delay(1)) {
-		if ((RTW_READ(regs, RTW8180_PHYCFG) & RTW8180_PHYCFG_MAC_POLL) == 0) {
+		if ((RTW_READ(regs, RTW8180_PHYCFG) &
+		    RTW8180_PHYCFG_MAC_POLL) == 0) {
 			RTW_DPRINTF(RTW_DEBUG_PHY,
 			    ("%s: finished in %dus\n", __func__,
 			    rtw_macbangbits_timeout - i));
 			return 0;
 		}
-		RTW_RBR(regs, RTW8180_PHYCFG, RTW8180_PHYCFG);	/* XXX paranoia? */
+		RTW_RBR(regs, RTW8180_PHYCFG, RTW8180_PHYCFG);
 	}
 
 	printf("%s: RTW8180_PHYCFG_MAC_POLL still set.\n", __func__);
@@ -4780,19 +4781,21 @@ rtw_grf5101_mac_crypt(u_int addr, u_int32_t val)
 {
 	u_int32_t data_and_addr;
 #define EXTRACT_NIBBLE(d, which) (((d) >> (4 * (which))) & 0xf)
-	static u_int8_t caesar[16] = {0x0, 0x8, 0x4, 0xc,
-	                              0x2, 0xa, 0x6, 0xe,
-				      0x1, 0x9, 0x5, 0xd,
-				      0x3, 0xb, 0x7, 0xf};
-
-	data_and_addr =  caesar[EXTRACT_NIBBLE(val, 2)] |
-	                (caesar[EXTRACT_NIBBLE(val, 1)] <<  4) |
-	                (caesar[EXTRACT_NIBBLE(val, 0)] <<  8) |
-	                (caesar[(addr >> 1) & 0xf]      << 12) |
-	                ((addr & 0x1)                   << 16) |
-	                (caesar[EXTRACT_NIBBLE(val, 3)] << 24);
-	return LSHIFT(data_and_addr,
-	    RTW8180_PHYCFG_MAC_PHILIPS_ADDR_MASK|RTW8180_PHYCFG_MAC_PHILIPS_DATA_MASK);
+	static u_int8_t caesar[16] = {
+		0x0, 0x8, 0x4, 0xc,
+		0x2, 0xa, 0x6, 0xe,
+		0x1, 0x9, 0x5, 0xd,
+		0x3, 0xb, 0x7, 0xf
+	};
+	data_and_addr =
+	    caesar[EXTRACT_NIBBLE(val, 2)] |
+	    (caesar[EXTRACT_NIBBLE(val, 1)] <<  4) |
+	    (caesar[EXTRACT_NIBBLE(val, 0)] <<  8) |
+	    (caesar[(addr >> 1) & 0xf]      << 12) |
+	    ((addr & 0x1)                   << 16) |
+	    (caesar[EXTRACT_NIBBLE(val, 3)] << 24);
+	return LSHIFT(data_and_addr, RTW8180_PHYCFG_MAC_PHILIPS_ADDR_MASK |
+	    RTW8180_PHYCFG_MAC_PHILIPS_DATA_MASK);
 #undef EXTRACT_NIBBLE
 }
 
@@ -4825,7 +4828,7 @@ rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 	u_int nbits;
 	int lo_to_hi;
 	u_int32_t bits;
-	void (*rf_bangbits)(struct rtw_regs *, u_int32_t, int, u_int) =
+	void(*rf_bangbits)(struct rtw_regs *, u_int32_t, int, u_int) =
 	    rtw_rf_hostbangbits;
 
 	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
@@ -4836,13 +4839,13 @@ rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 		nbits = 16;
 		lo_to_hi = 0;
 		bits = LSHIFT(val, MAX2820_TWI_DATA_MASK) |
-		       LSHIFT(addr, MAX2820_TWI_ADDR_MASK);
+		    LSHIFT(addr, MAX2820_TWI_ADDR_MASK);
 		break;
 	case RTW_RFCHIPID_PHILIPS:
 		KASSERT((addr & ~PRESHIFT(SA2400_TWI_ADDR_MASK)) == 0);
 		KASSERT((val & ~PRESHIFT(SA2400_TWI_DATA_MASK)) == 0);
 		bits = LSHIFT(val, SA2400_TWI_DATA_MASK) |
-		       LSHIFT(addr, SA2400_TWI_ADDR_MASK) | SA2400_TWI_WREN;
+		    LSHIFT(addr, SA2400_TWI_ADDR_MASK) | SA2400_TWI_WREN;
 		nbits = 32;
 		lo_to_hi = 1;
 		break;
@@ -4854,7 +4857,7 @@ rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 			bits = rtw_grf5101_host_crypt(addr, val);
 		else {
 			bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
-			       LSHIFT(addr, SI4126_TWI_ADDR_MASK);
+			    LSHIFT(addr, SI4126_TWI_ADDR_MASK);
 		}
 		nbits = 22;
 		lo_to_hi = 0;
@@ -4911,13 +4914,13 @@ rtw_rf_macwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 		break;
 	default:		/* XXX */
 	case RTW_RFCHIPID_PHILIPS:
-		KASSERT(
-		    (addr & ~PRESHIFT(RTW8180_PHYCFG_MAC_PHILIPS_ADDR_MASK)) == 0);
-		KASSERT(
-		    (val & ~PRESHIFT(RTW8180_PHYCFG_MAC_PHILIPS_DATA_MASK)) == 0);
+		KASSERT((addr &
+		    ~PRESHIFT(RTW8180_PHYCFG_MAC_PHILIPS_ADDR_MASK)) == 0);
+		KASSERT((val &
+		    ~PRESHIFT(RTW8180_PHYCFG_MAC_PHILIPS_DATA_MASK)) == 0);
 
 		reg = LSHIFT(addr, RTW8180_PHYCFG_MAC_PHILIPS_ADDR_MASK) |
-		      LSHIFT(val, RTW8180_PHYCFG_MAC_PHILIPS_DATA_MASK);
+		    LSHIFT(val, RTW8180_PHYCFG_MAC_PHILIPS_DATA_MASK);
 	}
 
 	switch (rfchipid) {

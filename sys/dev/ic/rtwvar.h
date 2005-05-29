@@ -1,5 +1,6 @@
-/*	$OpenBSD: rtwvar.h,v 1.10 2005/05/29 02:54:51 reyk Exp $	*/
-/* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
+/*	$OpenBSD: rtwvar.h,v 1.11 2005/05/29 03:49:52 reyk Exp $	*/
+/*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
+
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -105,7 +106,7 @@ enum rtw_rfchipid {
 	RTW_RFCHIPID_MAXIM2822 = 7,
 	RTW_RFCHIPID_MAXIM2825 = 8,
 	RTW_RFCHIPID_RTL8225 = 9
-}; 
+};
 
 /* sc_flags */
 #define RTW_F_ENABLED		0x00000001	/* chip is enabled */
@@ -166,7 +167,8 @@ struct rtw_txsoft {
 
 #define RTW_MAXPKTSEGS		64	/* max 64 segments per Tx packet */
 
-#define CASSERT(cond, complaint) complaint[(cond) ? 0 : -1] = complaint[(cond) ? 0 : -1]
+#define CASSERT(cond, complaint)					\
+	complaint[(cond) ? 0 : -1] = complaint[(cond) ? 0 : -1]
 
 /* Note well: the descriptor rings must begin on RTW_DESC_ALIGNMENT
  * boundaries.  I allocate them consecutively from one buffer, so
@@ -322,7 +324,7 @@ struct rtw_rf {
 	void	(*rf_destroy)(struct rtw_rf *);
 	/* args: frequency, txpower, power state */
 	int	(*rf_init)(struct rtw_rf *, u_int, u_int8_t,
-	                  enum rtw_pwrstate);
+		    enum rtw_pwrstate);
 	/* arg: power state */
 	int	(*rf_pwrstate)(struct rtw_rf *, enum rtw_pwrstate);
 	/* arg: frequency */
@@ -428,7 +430,7 @@ struct rtw_softc {
 	u_int16_t		sc_inten;
 
 	/* interrupt acknowledge hook */
-	void (*sc_intr_ack)(struct rtw_regs *);
+	void			(*sc_intr_ack)(struct rtw_regs *);
 
 	int			(*sc_enable)(struct rtw_softc *);
 	void			(*sc_disable)(struct rtw_softc *);
