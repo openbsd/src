@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.30 2005/05/29 03:49:52 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.31 2005/05/29 03:57:54 reyk Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -696,7 +696,7 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 	struct seeprom_descriptor sd;
 	u_int8_t ecr;
 
-	(void)memset(&sd, 0, sizeof(sd));
+	bzero(&sd, sizeof(sd));
 
 	ecr = RTW_READ8(regs, RTW_9346CR);
 
@@ -723,7 +723,7 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 		return ENOMEM;
 	}
 
-	(void)memset(sr->sr_content, 0, sr->sr_size);
+	bzero(sr->sr_content, sr->sr_size);
 
 	/* RTL8180 has a single 8-bit register for controlling the
 	 * 93cx6 SROM.  There is no "ready" bit. The RTL8180
@@ -1624,8 +1624,7 @@ rtw_txdesc_blk_reset(struct rtw_txdesc_blk *tdb)
 {
 	int i;
 
-	(void)memset(tdb->tdb_desc, 0,
-	    sizeof(tdb->tdb_desc[0]) * tdb->tdb_ndesc);
+	bzero(tdb->tdb_desc, sizeof(tdb->tdb_desc[0]) * tdb->tdb_ndesc);
 	for (i = 0; i < tdb->tdb_ndesc; i++)
 		tdb->tdb_desc[i].td_next = htole32(RTW_NEXT_DESC(tdb, i));
 	tdb->tdb_nfree = tdb->tdb_ndesc;
@@ -2277,7 +2276,7 @@ allmulti:
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		/* XXX */
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0)
 			goto allmulti;
 
@@ -3185,8 +3184,7 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 	case IEEE80211_S_SCAN:
 		if (ostate != IEEE80211_S_SCAN) {
-			(void)memset(ic->ic_bss->ni_bssid, 0,
-			    IEEE80211_ADDR_LEN);
+			bzero(ic->ic_bss->ni_bssid, IEEE80211_ADDR_LEN);
 			rtw_set_nettype(sc, IEEE80211_M_MONITOR);
 		}
 
@@ -3380,7 +3378,7 @@ rtw_shutdown(void *arg)
 void
 rtw_setifprops(struct ifnet *ifp, const char *dvname, void *softc)
 {
-	(void)memcpy(ifp->if_xname, dvname, IFNAMSIZ);
+	bcopy(dvname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = softc;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST |
 	    IFF_NOTRAILERS;
@@ -3514,8 +3512,7 @@ rtw_txdesc_blk_setup(struct rtw_txdesc_blk *tdb, struct rtw_txdesc *desc,
 	tdb->tdb_physbase = physbase;
 	tdb->tdb_ofs = ofs;
 
-	(void)memset(tdb->tdb_desc, 0,
-	    sizeof(tdb->tdb_desc[0]) * tdb->tdb_ndesc);
+	bzero(tdb->tdb_desc, sizeof(tdb->tdb_desc[0]) * tdb->tdb_ndesc);
 
 	rtw_txdesc_blk_reset(tdb);
 }
@@ -4225,7 +4222,7 @@ void
 rtw_sa2400_destroy(struct rtw_rf *rf)
 {
 	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
-	memset(sa, 0, sizeof(*sa));
+	bzero(sa, sizeof(*sa));
 	free(sa, M_DEVBUF);
 }
 
@@ -4346,7 +4343,7 @@ void
 rtw_max2820_destroy(struct rtw_rf *rf)
 {
 	struct rtw_max2820 *mx = (struct rtw_max2820 *)rf;
-	memset(mx, 0, sizeof(*mx));
+	bzero(mx, sizeof(*mx));
 	free(mx, M_DEVBUF);
 }
 
