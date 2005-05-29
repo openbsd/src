@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.3 2005/05/29 07:34:34 djm Exp $ */
+/* $OpenBSD: verify.c,v 1.4 2005/05/29 08:37:52 djm Exp $ */
 
 /*
  * verify.c
@@ -197,7 +197,7 @@ verify(int argc, char *argv[])
 	for (i = 1; i < argc; i++) {
 		gzipfile = argv[i];
 
-		if ((fin = fopen(gzipfile, "r")) < 0) {
+		if ((fin = fopen(gzipfile, "r")) == NULL) {
 			fprintf(stderr,  "Couldn't open %s: %s\n",
 			    gzipfile, strerror(errno));
 			continue;
