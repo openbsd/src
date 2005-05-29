@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.2 2005/05/28 08:07:45 marius Exp $ */
+/* $OpenBSD: sign.c,v 1.3 2005/05/29 07:34:34 djm Exp $ */
 
 /*
  * sign.c
@@ -184,7 +184,7 @@ embed_signature(struct key *key, FILE *fin, FILE *fout)
 void
 sign_usage(void)
 {
-	fprintf(stderr, "Usage: gzsig sign [-v] privkey [file ...]\n");
+	fprintf(stderr, "Usage: gzsig sign [-q] privkey [file ...]\n");
 }
 
 int
@@ -211,14 +211,17 @@ sign(int argc, char *argv[])
 	struct key *key;
 	char *gzipfile, tmpfile[MAXPATHLEN];
 	FILE *fin, *fout;
-	int i, fd, error, vflag;
+	int i, fd, error, qflag;
 
-	vflag = 0;
+	qflag = 0;
 	
-	while ((i = getopt(argc, argv, "vh?p:")) != -1) {
+	while ((i = getopt(argc, argv, "qvh?p:")) != -1) {
 		switch (i) {
+		case 'q':
+			qflag = 1;
+			break;
 		case 'v':
-			vflag = 1;
+			qflag = 0;
 			break;
 		case 'p':
 			passphrase = optarg;
@@ -247,7 +250,7 @@ sign(int argc, char *argv[])
 		argc = 0;
 		
 		if (embed_signature(key, stdin, stdout) == 0) {
-			if (vflag)
+			if (!qflag)
 				fprintf(stderr, "Signed input\n");
 		} else
 			fatal(1, "Couldn't sign input");
@@ -292,7 +295,7 @@ sign(int argc, char *argv[])
 				unlink(tmpfile);
 				fatal(1, "Couldn't sign %s", gzipfile);
 			}
-			if (vflag)
+			if (!qflag)
 				fprintf(stderr, "Signed %s\n", gzipfile);
 		} else {
 			unlink(tmpfile);

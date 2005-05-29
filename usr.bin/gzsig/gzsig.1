@@ -1,5 +1,5 @@
-.\" $OpenBSD: gzsig.1,v 1.2 2005/05/29 02:41:42 marius Exp $
-.\" $Id: gzsig.1,v 1.2 2005/05/29 02:41:42 marius Exp $
+.\" $OpenBSD: gzsig.1,v 1.3 2005/05/29 07:34:34 djm Exp $
+.\" $Id: gzsig.1,v 1.3 2005/05/29 07:34:34 djm Exp $
 .\"
 .\"  Copyright (c) 2001 Dug Song <dugsong@arbor.net>
 .\"  Copyright (c) 2001 Arbor Networks, Inc.
@@ -35,12 +35,12 @@
 .Nd gzip signing utility
 .Sh SYNOPSIS
 .Nm gzsig sign
-.Op Fl v
+.Op Fl q
 .Ar privkey
 .Op Ar
 .Pp
 .Nm gzsig verify
-.Op Fl v
+.Op Fl q
 .Ar pubkey
 .Op Ar
 .Sh DESCRIPTION
@@ -67,8 +67,8 @@ Sign the input using the private key in
 .It Nm verify
 Verify the signature using the public key in
 .Ar pubkey .
-.It Fl v
-Enable verbose mode.
+.It Fl q
+Enable quiet mode.
 .It Fl p
 Supply a passphrase for decrypting private keys when signing.
 .El
