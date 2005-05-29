@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.9 2005/05/26 05:41:45 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.10 2005/05/29 02:54:51 reyk Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -75,6 +75,18 @@ extern int rtw_debug;
 #define	DPRINTF(__sc, __flags, __x)
 #endif /* RTW_DEBUG */
 
+#define	KASSERT2(__cond, __msg)		\
+	do {				\
+		if (!(__cond))		\
+			panic __msg ;	\
+	} while (0)
+
+#define NEXT_ATTACH_STATE(sc, state) do {			\
+	DPRINTF(sc, RTW_DEBUG_ATTACH,				\
+	    ("%s: attach state %s\n", __func__, #state));	\
+	sc->sc_attach_state = state;				\
+} while (0)
+
 enum rtw_locale {
 	RTW_LOCALE_USA = 0,
 	RTW_LOCALE_EUROPE,
@@ -85,10 +97,14 @@ enum rtw_locale {
 enum rtw_rfchipid {
 	RTW_RFCHIPID_RESERVED = 0,
 	RTW_RFCHIPID_INTERSIL = 1,
-	RTW_RFCHIPID_RFMD = 2,
+	RTW_RFCHIPID_RFMD2948 = 2,
 	RTW_RFCHIPID_PHILIPS = 3,
-	RTW_RFCHIPID_MAXIM = 4,
-	RTW_RFCHIPID_GCT = 5
+	RTW_RFCHIPID_MAXIM2820 = 4,
+	RTW_RFCHIPID_GCT = 5,
+	RTW_RFCHIPID_RFMD2958 = 6,
+	RTW_RFCHIPID_MAXIM2822 = 7,
+	RTW_RFCHIPID_MAXIM2825 = 8,
+	RTW_RFCHIPID_RTL8225 = 9
 }; 
 
 /* sc_flags */
@@ -99,6 +115,7 @@ enum rtw_rfchipid {
 #define RTW_F_9356SROM		0x00000020	/* 93c56 SROM */
 #define RTW_F_SLEEP		0x00000040	/* chip is asleep */
 #define RTW_F_INVALID		0x00000080	/* chip is absent */
+#define RTW_F_RTL8185		0x00000100	/* RTL8185 or newer */
 	/* all PHY flags */
 #define RTW_F_ALLPHY		(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV)
 
@@ -344,6 +361,11 @@ struct rtw_sa2400 {
 	int			sa_digphy;	/* 1: digital PHY */
 };
 
+struct rtw_rtl8225 {
+	struct rtw_rf		rt_rf;
+	struct rtw_rfbus	rt_bus;
+};
+
 typedef void (*rtw_pwrstate_t)(struct rtw_regs *, enum rtw_pwrstate, int, int);
 
 union rtw_keys {
@@ -443,7 +465,7 @@ struct rtw_softc {
 	int			sc_txkey;
 	struct ifqueue		sc_beaconq;
 	struct rtw_led_state	sc_led_state;
-	int			sc_hwverid;
+	u_int			sc_hwverid;
 };
 
 #define	sc_if		sc_ic.ic_if
