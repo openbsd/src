@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.35 2005/05/30 07:37:01 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.36 2005/05/30 09:52:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -160,6 +160,9 @@ cvs_commit_pre_exec(struct cvsroot *root)
 		return (CVS_EX_DATA);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_logmsg_send(root, cvs_msg) < 0)
+			return (CVS_EX_PROTO);
+
 		if (rev != NULL) {
 			if ((cvs_sendarg(root, "-r", 0) < 0) ||
 			    (cvs_sendarg(root, rev, 0) < 0))
