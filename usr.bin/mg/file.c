@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.34 2005/05/27 08:52:30 cloder Exp $	*/
+/*	$OpenBSD: file.c,v 1.35 2005/05/30 13:13:50 jason Exp $	*/
 
 /*
  *	File commands.
@@ -71,6 +71,14 @@ filevisit(int f, int n)
 		return (status);
 	}
 	return (TRUE);
+}
+
+int
+filevisitalt(int f, int n)
+{
+	if (killbuffer(curbp) == ABORT)
+		return (ABORT);
+	return (filevisit(f, n));
 }
 
 int

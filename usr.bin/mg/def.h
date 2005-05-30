@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.61 2005/05/27 08:08:18 cloder Exp $	*/
+/*	$OpenBSD: def.h,v 1.62 2005/05/30 13:13:50 jason Exp $	*/
 
 #include <sys/queue.h>
 
@@ -331,6 +331,7 @@ int	 d_create_directory(int, int);
 /* file.c X */
 int	 fileinsert(int, int);
 int	 filevisit(int, int);
+int	 filevisitalt(int, int);
 int	 filevisitro(int, int);
 int	 poptofile(int, int);
 BUFFER  *findbuffer(char *);
