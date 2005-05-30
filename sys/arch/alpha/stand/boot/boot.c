@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.17 2004/12/01 20:55:09 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.18 2005/05/30 01:31:12 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ int loadfile(char *, u_int64_t *);
 char boot_file[128];
 char boot_flags[128];
 
-extern char bootprog_name[], bootprog_rev[];
+extern char bootprog_name[];
 
 struct bootinfo_v1 bootinfo_v1;
 
@@ -75,7 +75,7 @@ main()
 	init_prom_calls();
 
 	/* print a banner */
-	printf("%s %s\n", bootprog_name, bootprog_rev);
+	printf("%s\n", bootprog_name);
 
 	/* switch to OSF pal code. */
 	OSFpal();
@@ -87,10 +87,10 @@ main()
 		(void)printf("Boot file: %s %s\n", boot_file, boot_flags);
 
 	if (boot_file[0] != '\0')
-		win = (loadfile(name = boot_file, &entry) == 0);
+		name = boot_file;
 	else
-		win = (loadfile(name = "bsd", &entry) == 0);
-
+		name = "bsd";
+	win = (loadfile(name, &entry) == 0);
 	if (!win)
 		goto fail;
 
