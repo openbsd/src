@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.25 2005/05/29 17:48:44 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.26 2005/05/30 07:39:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -141,12 +141,12 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	if (!statmod && (argc == 0)) {
 		cvs_log(LP_ERR,
 		    "must specify at least one module or directory");
-		return (CVS_EX_USAGE);
+		return (-1);
 	}
 
 	if (statmod && (argc > 0)) {
 		cvs_log(LP_ERR,  "-c and -s must not get any arguments");
-		return (CVS_EX_USAGE);
+		return (-1);
 	}
 
 	*arg = optind;
