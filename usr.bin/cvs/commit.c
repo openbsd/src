@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.34 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.35 2005/05/30 07:37:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,6 +64,7 @@ struct cvs_cmd cvs_cmd_commit = {
 };
 
 static char *mfile = NULL;
+static char *rev = NULL;
 static char **commit_files = NULL;
 static int commit_fcount = 0;
 
@@ -93,6 +94,9 @@ cvs_commit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			break;
 		case 'R':
 			cmd->file_flags |= CF_RECURSE;
+			break;
+		case 'r':
+			rev = optarg;
 			break;
 		default:
 			return (CVS_EX_USAGE);
@@ -154,6 +158,14 @@ cvs_commit_pre_exec(struct cvsroot *root)
 
 	if (cvs_msg == NULL)
 		return (CVS_EX_DATA);
+
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (rev != NULL) {
+			if ((cvs_sendarg(root, "-r", 0) < 0) ||
+			    (cvs_sendarg(root, rev, 0) < 0))
+				return (CVS_EX_PROTO);
+		}
+	}
 
 	return (0);
 }
