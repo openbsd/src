@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.20 2005/05/23 19:22:11 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.21 2005/05/30 23:31:16 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -67,10 +67,6 @@ _dl_unload_shlib(elf_object_t *object)
 	if (object->refcount == 0) {
 		_dl_load_list_free(object->load_list);
 		_dl_remove_object(object);
-
-		for (n = object->first_child; n; n = n->next_sibling) {
-			_dl_unload_shlib(n->data);
-		}
 	}
 }
 
