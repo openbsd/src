@@ -549,10 +549,11 @@ void
 logmsg(int pri, const char *message, ...)
 {
 	va_list	ap;
-	va_start(ap, message);
 
 	if (pri > loglevel)
 		return;
+
+	va_start(ap, message);
 
 	if (daemonize)
 		/* syslog does its own vissing. */
