@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.32 2005/05/29 16:36:54 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.33 2005/05/30 08:27:03 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -113,12 +113,6 @@ cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		}
 	}
 
-	if ((date != NULL) && (rev != NULL)) {
-		cvs_log(LP_ERR,
-		    "the -D and -r arguments are mutually exclusive");
-		return (CVS_EX_USAGE);
-	}
-
 	*arg = optind;
 	return (0);
 }
@@ -133,6 +127,12 @@ cvs_update_pre_exec(struct cvsroot *root)
 		return (CVS_EX_PROTO);
 	if (dflag && cvs_sendarg(root, "-d", 0) < 0)
 		return (CVS_EX_PROTO);
+
+	if (rev != NULL) {
+		if ((cvs_sendarg(root, "-r", 0) < 0) ||
+		    (cvs_sendarg(root, rev, 0) < 0))
+			return (CVS_EX_PROTO);
+	}
 	return (0);
 }
 
