@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.67 2005/04/21 04:39:35 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.68 2005/05/30 22:12:32 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -666,7 +666,7 @@ for (i = 0; i < errnum; i++) {
 	 */
 	if (p != fpuproc)
 		frame->srr1 &= ~PSL_FP;
-	else
+	else if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
 		frame->srr1 |= PSL_FP;
 
 #ifdef ALTIVEC
