@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.37 2005/05/27 22:41:00 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.38 2005/05/30 07:28:49 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -473,24 +473,31 @@ cvs_diff_pre_exec(struct cvsroot *root)
 		if (pflag && (cvs_sendarg(root, "-p", 0) < 0))
 			return (CVS_EX_PROTO);
 
-		if (format == D_CONTEXT)
-			cvs_sendarg(root, "-c", 0);
-		else if (format == D_UNIFIED)
-			cvs_sendarg(root, "-u", 0);
+		if (format == D_CONTEXT) {
+			if (cvs_sendarg(root, "-c", 0) < 0)
+				return (CVS_EX_PROTO);
+		} else if (format == D_UNIFIED) {
+			if (cvs_sendarg(root, "-u", 0) < 0)
+				return (CVS_EX_PROTO);
+		}
 
 		if (dap->rev1 != NULL) {
-			cvs_sendarg(root, "-r", 0);
-			cvs_sendarg(root, dap->rev1, 0);
+			if ((cvs_sendarg(root, "-r", 0) < 0) ||
+			    (cvs_sendarg(root, dap->rev1, 0) < 0))
+				return (CVS_EX_PROTO);
 		} else if (dap->date1 != NULL) {
-			cvs_sendarg(root, "-D", 0);
-			cvs_sendarg(root, dap->date1, 0);
+			if ((cvs_sendarg(root, "-D", 0) < 0) ||
+			    (cvs_sendarg(root, dap->date1, 0) < 0))
+				return (CVS_EX_PROTO);
 		}
 		if (dap->rev2 != NULL) {
-			cvs_sendarg(root, "-r", 0);
-			cvs_sendarg(root, dap->rev2, 0);
+			if ((cvs_sendarg(root, "-r", 0) < 0) ||
+			    (cvs_sendarg(root, dap->rev2, 0) < 0))
+				return (CVS_EX_PROTO);
 		} else if (dap->date2 != NULL) {
-			cvs_sendarg(root, "-D", 0);
-			cvs_sendarg(root, dap->date2, 0);
+			if ((cvs_sendarg(root, "-D", 0) < 0) ||
+			    (cvs_sendarg(root, dap->date2, 0) < 0))
+				return  (CVS_EX_PROTO);
 		}
 	}
 
