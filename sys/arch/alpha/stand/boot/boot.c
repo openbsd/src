@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.18 2005/05/30 01:31:12 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.19 2005/05/30 01:41:33 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -83,12 +83,10 @@ main()
 	prom_getenv(PROM_E_BOOTED_FILE, boot_file, sizeof(boot_file));
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
 
-	if (boot_file[0] != 0)
+	if (boot_file[0] != '\0') {
 		(void)printf("Boot file: %s %s\n", boot_file, boot_flags);
-
-	if (boot_file[0] != '\0')
 		name = boot_file;
-	else
+	} else
 		name = "bsd";
 	win = (loadfile(name, &entry) == 0);
 	if (!win)
