@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2005/04/22 11:59:10 miod Exp $ */
+/*	$OpenBSD: util.c,v 1.30 2005/05/31 15:33:57 brad Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -81,7 +81,7 @@ static const struct nameint mstype_tab[] = {
 	{ WSMOUSE_TYPE_USB,	"usb" },
 	{ WSMOUSE_TYPE_LMS,	"lms" },
 	{ WSMOUSE_TYPE_MMS,	"mms" },
-	{ WSMOUSE_TYPE_TPANEL,	"touch-pannel" },
+	{ WSMOUSE_TYPE_TPANEL,	"touch-panel" },
 	{ WSMOUSE_TYPE_NEXT,	"NeXT" },
 	{ WSMOUSE_TYPE_ARCHIMEDES, "archimedes" },
 	{ WSMOUSE_TYPE_ADB,	"adb" },
