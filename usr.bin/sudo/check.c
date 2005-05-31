@@ -316,7 +316,7 @@ build_timestamp(timestampdir, timestampfile)
     dirparent = def_timestampdir;
     len = easprintf(timestampdir, "%s/%s", dirparent, user_name);
     if (len >= PATH_MAX)
-	log_error(0, "timestamp path too long: %s", timestampdir);
+	log_error(0, "timestamp path too long: %s", *timestampdir);
 
     /*
      * Timestamp file may be a file in the directory or NUL to use
@@ -335,12 +335,12 @@ build_timestamp(timestampdir, timestampfile)
 	else
 	    len = easprintf(timestampfile, "%s/%s/%s", dirparent, user_name, p);
 	if (len >= PATH_MAX)
-	    log_error(0, "timestamp path too long: %s", timestampfile);
+	    log_error(0, "timestamp path too long: %s", *timestampfile);
     } else if (def_targetpw) {
 	len = easprintf(timestampfile, "%s/%s/%s", dirparent, user_name,
 	    *user_runas);
 	if (len >= PATH_MAX)
-	    log_error(0, "timestamp path too long: %s", timestampfile);
+	    log_error(0, "timestamp path too long: %s", *timestampfile);
     } else
 	*timestampfile = NULL;
 }
@@ -465,7 +465,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 		/* If bad uid or file mode, complain and kill the bogus file. */
 		if (sb.st_uid != timestamp_uid) {
 		    log_error(NO_EXIT,
-			"%s owned by uid %ud, should be uid %lu",
+			"%s owned by uid %lu, should be uid %lu",
 			timestampfile, (unsigned long) sb.st_uid,
 			(unsigned long) timestamp_uid);
 		    (void) unlink(timestampfile);

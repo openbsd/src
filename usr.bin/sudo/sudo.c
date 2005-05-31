@@ -901,10 +901,10 @@ check_sudoers()
 	    (statbuf.st_mode & 07777), SUDOERS_MODE);
     else if (statbuf.st_uid != SUDOERS_UID)
 	log_error(0, "%s is owned by uid %lu, should be %lu", _PATH_SUDOERS,
-	    (unsigned long) statbuf.st_uid, SUDOERS_UID);
+	    (unsigned long) statbuf.st_uid, (unsigned long) SUDOERS_UID);
     else if (statbuf.st_gid != SUDOERS_GID)
 	log_error(0, "%s is owned by gid %lu, should be %lu", _PATH_SUDOERS,
-	    (unsigned long) statbuf.st_gid, SUDOERS_GID);
+	    (unsigned long) statbuf.st_gid, (unsigned long) SUDOERS_GID);
     else {
 	/* Solaris sometimes returns EAGAIN so try 10 times */
 	for (i = 0; i < 10 ; i++) {
@@ -1086,7 +1086,7 @@ get_authpw()
     } else if (def_targetpw) {
 	if (runas_pw->pw_name == NULL)
 	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %lu!",
-		runas_pw->pw_uid);
+		(unsigned long) runas_pw->pw_uid);
 	pw = runas_pw;
     } else
 	pw = sudo_user.pw;

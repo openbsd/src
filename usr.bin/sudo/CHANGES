@@ -1778,3 +1778,11 @@ Sudo 1.6.8p6 released.
 561) Fixed setting of $USER when env_reset is enabled.
 
 Sudo 1.6.8p7 released.
+
+562) Fixed noexec functionality on Linux.
+
+563) Fixed minor format string mismatches in some error cases.
+
+564) Fixed a bug that prevented Heimdal authentication from working.
+
+Sudo 1.6.8p8 released.
