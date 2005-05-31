@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.33 2005/05/28 00:41:13 cloder Exp $	*/
+/*	$OpenBSD: echo.c,v 1.34 2005/05/31 20:38:59 kjell Exp $	*/
 /*
  *	Echo line reading and writing.
  *
@@ -203,7 +203,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 			/* FALLTHROUGH */
 		case CCHR('M'):			/* return, done */
 			/* if there's nothing in the minibuffer, quit */
-			if (cpos == 0) {
+			if (cpos == 0 && !(flag & EFNUL)) {
 				(void)ctrlg(FFRAND, 0);
 				ttflush();
 				return (NULL);

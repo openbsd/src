@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.39 2005/05/25 05:57:32 jason Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.40 2005/05/31 20:38:59 kjell Exp $	*/
 
 /*
  *		Buffer handling.
@@ -45,7 +45,7 @@ usebuffer(int f, int n)
 		bufp = eread("Switch to buffer: ", bufn, NBUFN, EFNEW | EFBUF);
 	else
 		bufp = eread("Switch to buffer: (default %s) ", bufn, NBUFN,
-			  EFNEW | EFBUF, curbp->b_altb->b_bname);
+			  EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
 
 	if (bufp == NULL)
 		return (ABORT);
@@ -77,7 +77,7 @@ poptobuffer(int f, int n)
 			  EFNEW | EFBUF);
 	else
 		bufp = eread("Switch to buffer in other window: (default %s) ",
-			bufn, NBUFN, EFNEW | EFBUF, curbp->b_altb->b_bname);
+			bufn, NBUFN, EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
 	if (bufp == NULL)
 		return (ABORT);
 	if (bufp[0] == 0 && curbp->b_altb != NULL)
@@ -107,8 +107,8 @@ killbuffer_cmd(int f, int n)
 	BUFFER *bp;
 	char    bufn[NBUFN], *bufp;
 
-	if ((bufp = eread("Kill buffer: (default %s) ", bufn, NBUFN, EFNEW | EFBUF,
-	    curbp->b_bname)) == NULL)
+	if ((bufp = eread("Kill buffer: (default %s) ", bufn, NBUFN,
+	    EFNUL | EFNEW | EFBUF, curbp->b_bname)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == 0)
 		bp = curbp;
@@ -607,7 +607,7 @@ bufferinsert(int f, int n)
 	/* Get buffer to use from user */
 	if (curbp->b_altb != NULL)
 		bufp = eread("Insert buffer: (default %s) ", bufn, NBUFN,
-		    EFNEW | EFBUF, curbp->b_altb->b_bname);
+		    EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
 	else
 		bufp = eread("Insert buffer: ", bufn, NBUFN, EFNEW | EFBUF);
 	if (bufp == NULL)
