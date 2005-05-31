@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnsubr.9,v 1.2 2005/05/28 00:58:48 marius Exp $
+.\"     $OpenBSD: vnsubr.9,v 1.3 2005/05/31 22:59:29 jmc Exp $
 .\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,9 +79,8 @@
 .Sh DESCRIPTION
 The high-level functions described in this page are convenience
 functions for simplified access to the vnode operations described in
-.Xr vnodeops 9 .
-.Sh FUNCTIONS
-.Bl -tag -width Ds -compact
+.Xr VOP_LOOKUP 9 .
+.Bl -tag -width Ds
 .It Fn vn_close "vp" "flags" "cred" "p"
 Common code for a vnode close.
 The argument
@@ -89,7 +88,7 @@ The argument
 is the unlocked vnode of the vnode to close.
 .Fn vn_close
 simply locks the vnode, invokes the vnode operation
-.Xr VOP_CLOSE 9
+.Fn VOP_CLOSE
 and calls
 .Fn vput
 to return the vnode to the freelist or holdlist.
@@ -121,7 +120,8 @@ etc., to ensure that
 actually means something.
 If the operation is successful zero is returned, otherwise 1 is returned.
 .It Fn vn_lock "vp" "flags" "p"
-Acquire the vnode lock.  Certain file system operations require that
+Acquire the vnode lock.
+Certain file system operations require that
 the vnode lock be held when they are called.
 See
 .Pa sys/kern/vnode_if.src
@@ -177,7 +177,7 @@ specify the
 file mode and the access permissions for creation.
 .Fn vn_open
 checks  permissions and invokes the
-.Xr VOP_OPEN 9
+.Fn VOP_OPEN
 or
 .Xr VOP_CREATE 9
 vnode operations.
@@ -207,7 +207,7 @@ For further information on these parameters see
 .It Fn vn_stat "vp" "sb" "p"
 Common code for a vnode stat operation.
 The vnode is specified by the argument
-.Fa vp
+.Fa vp ,
 and
 .Fa sb
 is the buffer to return the stat information.
@@ -216,8 +216,8 @@ The argument
 is the calling process.
 .Fn vn_stat
 basically calls the vnode operation
-.Xr VOP_GETATTR 9
-and transfer the contents of a vattr structure into a struct stat.
+.Fn VOP_GETATTR
+and transfers the contents of a vattr structure into a struct stat.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn vn_writechk "vp"
@@ -242,7 +242,7 @@ would have slept.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
-.Nx
+.Ox
 source tree where actual code implementing or using the vnode
 framework can be found.
 All pathnames are relative to
@@ -267,7 +267,7 @@ the lock before they exit.
 Discussions with Kirk McKusick indicate that locking
 discipline evolved out of the pre-VFS way of doing inode locking.
 In addition, the current locking discipline may actually save
-lines of code, esp. if the number of file systems is fewer
+lines of code, especially if the number of file systems is fewer
 than the number of call sites.
 However, the VFS interface would
 require less wizardry if the locking discipline were simpler.
