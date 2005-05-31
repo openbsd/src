@@ -1,3 +1,4 @@
+.\"	$OpenBSD: ftp-proxy.8,v 1.2 2005/05/31 21:47:20 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -78,8 +79,8 @@ pass out log quick inet proto tcp \e
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 6
-IPv6 mode.  The proxy will expect and use IPv6 addresses for all
-communication.
+IPv6 mode.
+The proxy will expect and use IPv6 addresses for all communication.
 Only the extended FTP modes EPSV and EPRT are allowed with IPv6.
 The proxy is in IPv4 mode by default.
 .It Fl A
@@ -107,7 +108,8 @@ When the proxy reaches this limit, new connections are denied.
 The default is 100.
 .It Fl P Ar port
 Fixed server port.
-Only used in combination with -R.
+Only used in combination with
+.Fl R .
 The default is port 21.
 .It Fl p Ar port
 Port where the proxy will listen for redirected connections.
@@ -123,7 +125,7 @@ where the client wanted to connect to (before it was redirected).
 Use this option to proxy for a server behind NAT, or to forward all
 connections to another proxy.
 .It Fl r
-Rewrite sourceport to 20 in active mode to suit antique clients that insist
+Rewrite sourceport to 20 in active mode to suit ancient clients that insist
 on this RFC property.
 .It Fl t Ar timeout
 Number of seconds that the control connection can be idle, before the
@@ -164,4 +166,4 @@ chroots to "/var/empty" and changes to user "proxy" to drop privileges.
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pf 4 ,
-.Xr pf.conf 5 ,
+.Xr pf.conf 5
