@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.22 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: status.c,v 1.23 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,11 +28,11 @@
 #include <sys/stat.h>
 
 #include <errno.h>
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "log.h"

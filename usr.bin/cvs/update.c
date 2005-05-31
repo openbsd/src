@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.33 2005/05/30 08:27:03 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.34 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,14 +28,13 @@
 #include <sys/stat.h>
 
 #include <errno.h>
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "rcs.h"
 #include "log.h"
 #include "proto.h"
 

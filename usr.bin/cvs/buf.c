@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.10 2005/05/26 21:46:36 jfb Exp $	*/
+/*	$OpenBSD: buf.c,v 1.11 2005/05/31 08:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,14 +27,14 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
-#include <unistd.h>
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "buf.h"
 #include "cvs.h"

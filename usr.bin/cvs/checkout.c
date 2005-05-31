@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.27 2005/05/31 08:26:40 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.28 2005/05/31 08:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,12 +30,11 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "log.h"
-#include "file.h"
 #include "proto.h"
 
 

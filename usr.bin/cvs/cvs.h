@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.62 2005/05/26 22:25:31 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.63 2005/05/31 08:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,8 +28,9 @@
 #define CVS_H
 
 #include <sys/param.h>
-#include <stdio.h>
+
 #include <dirent.h>
+#include <stdio.h>
 
 #include "rcs.h"
 #include "file.h"

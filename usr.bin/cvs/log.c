@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.15 2005/04/06 21:42:32 jfb Exp $	*/
+/*	$OpenBSD: log.c,v 1.16 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,14 +28,13 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <stdarg.h>
+#include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
-#include "log.h"
 #include "cvs.h"
+#include "log.h"
 
 extern char *__progname;
 

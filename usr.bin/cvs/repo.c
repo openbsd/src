@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.3 2005/04/16 20:05:05 xsa Exp $	*/
+/*	$OpenBSD: repo.c,v 1.4 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,17 +30,16 @@
 #include <sys/stat.h>
 
 #include <errno.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <dirent.h>
-#include <string.h>
+#include <fcntl.h>
 #include <libgen.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "repo.h"
-#include "cvsd.h"
 
 
 

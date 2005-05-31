@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.16 2005/05/25 10:23:57 jfb Exp $	*/
+/*	$OpenBSD: admin.c,v 1.17 2005/05/31 08:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -29,13 +29,12 @@
 #include <sys/stat.h>
 
 #include <errno.h>
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
-#include "rcs.h"
 #include "cvs.h"
 #include "log.h"
 #include "proto.h"

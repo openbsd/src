@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.13 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.14 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,12 +30,12 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "buf.h"
 #include "cvs.h"
 #include "log.h"
-#include "buf.h"
 #include "proto.h"
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.4 2005/04/16 17:50:08 joris Exp $	*/
+/*	$OpenBSD: hist.c,v 1.5 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,14 +27,14 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
-#include "log.h"
 #include "cvs.h"
+#include "log.h"
 
 #define CVS_HIST_BUFSIZE    8192
 

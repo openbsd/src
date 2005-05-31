@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.40 2005/05/24 22:00:25 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.41 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,19 +29,18 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <errno.h>
 #include <dirent.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "buf.h"
 #include "cvs.h"
 #include "log.h"
-#include "file.h"
 #include "proto.h"
 
 

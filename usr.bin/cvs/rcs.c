@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.54 2005/05/25 21:59:16 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.55 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -25,20 +25,19 @@
  */
 
 #include <sys/param.h>
-#include <sys/queue.h>
 #include <sys/stat.h>
 
-#include <pwd.h>
-#include <errno.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <errno.h>
+#include <pwd.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-#include "rcs.h"
 #include "log.h"
+#include "rcs.h"
 #include "strtab.h"
 
 #define RCS_BUFSIZE     16384

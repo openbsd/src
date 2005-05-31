@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.19 2005/05/31 08:26:40 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.20 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,17 +28,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <errno.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "buf.h"
 #include "cvs.h"
 #include "log.h"
-#include "file.h"
 #include "proto.h"
 
 

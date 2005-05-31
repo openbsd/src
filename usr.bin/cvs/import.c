@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.22 2005/05/26 03:14:21 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.23 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -30,12 +30,11 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
-#include "log.h"
-#include "file.h"
 #include "cvs.h"
+#include "log.h"
 #include "proto.h"
 
 

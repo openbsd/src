@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.40 2005/05/31 08:26:40 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.41 2005/05/31 08:58:47 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -129,22 +129,22 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
-#include <ctype.h>
-#include <stdio.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <regex.h>
-#include <dirent.h>
-#include <stdlib.h>
 #include <stddef.h>
-#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "buf.h"
 #include "cvs.h"
 #include "log.h"
-#include "buf.h"
 #include "proto.h"
 
 

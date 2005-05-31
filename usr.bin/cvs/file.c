@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.82 2005/05/31 08:26:40 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.83 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,20 +28,20 @@
 #include <sys/queue.h>
 #include <sys/stat.h>
 
-#include <pwd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <libgen.h>
 #include <dirent.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <fnmatch.h>
+#include <libgen.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
-#include "log.h"
 #include "file.h"
+#include "log.h"
 #include "strtab.h"
 
 

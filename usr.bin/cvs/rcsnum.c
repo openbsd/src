@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.11 2005/05/26 01:45:54 jfb Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.12 2005/05/31 08:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,8 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "rcs.h"
 #include "log.h"
+#include "rcs.h"
 
 
 static int rcsnum_setsize  (RCSNUM *, u_int);

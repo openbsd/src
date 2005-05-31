@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.67 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.68 2005/05/31 08:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,15 +27,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <err.h>
-#include <pwd.h>
-#include <errno.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <err.h>
+#include <errno.h>
+#include <pwd.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "log.h"

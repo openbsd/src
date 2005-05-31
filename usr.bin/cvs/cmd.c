@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.21 2005/05/25 04:12:54 jfb Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.22 2005/05/31 08:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -28,15 +28,14 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "cvs.h"
 #include "log.h"
-#include "rcs.h"
 #include "proto.h"
 
 

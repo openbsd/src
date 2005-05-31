@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.4 2005/05/28 20:39:08 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.5 2005/05/31 08:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,10 +28,10 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libgen.h>
 #include <unistd.h>
 
 #include "cvs.h"
