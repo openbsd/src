@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.10 2005/05/27 20:39:30 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.11 2005/05/31 04:34:20 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -37,7 +37,7 @@
 #define	AMI_BIG_MAX_SPANDEPTH	8
 #define	AMI_BIG_MAX_DEVDEPTH	32
 
-#define	AMI_MAXCMDS	250	/* theoretical limit is 250 */
+#define	AMI_MAXCMDS	126	/* theoretical limit is 250 */
 #define	AMI_SECTOR_SIZE	512
 #define	AMI_MAXOFFSETS	26
 #define	AMI_SGEPERCMD	32		/* to prevent page boundary crossing */
