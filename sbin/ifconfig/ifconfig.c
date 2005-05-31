@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.142 2005/05/26 03:39:57 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.143 2005/05/31 20:54:38 jmc Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3599,7 +3599,7 @@ usage(int value)
 	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
 	    "\t[pppoeac access-concentrator] [-pppoeac]\n"
 	    "\t[pppoesvc service] [-pppoesvc]\n"
-	    "       ifconfig [-aAmMC] [interface] [address_family]\n"
+	    "       ifconfig [-AaCMm] [interface] [address_family]\n"
 	    "       ifconfig interface create\n"
 	    "       ifconfig interface destroy\n");
 	exit(value);
