@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.18 2005/05/30 08:13:15 joris Exp $	*/
+/*	$OpenBSD: req.c,v 1.19 2005/05/31 08:26:40 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -278,7 +278,7 @@ cvs_req_directory(int reqid, char *line)
 
 	cvs_req_currentdir = strdup(rdir);
 	if (cvs_req_currentdir == NULL) {
-		cvs_log(LP_ERROR, "failed to duplicate directory");
+		cvs_log(LP_ERR, "failed to duplicate directory");
 		return (-1);
 	}
 
@@ -352,7 +352,7 @@ cvs_req_filestate(int reqid, char *line)
 
 		/* write the file */
 		if (cvs_buf_write(fdata, fpath, fmode) < 0) {
-			cvs_log(LP_ERROR, "failed to create file %s", fpath);
+			cvs_log(LP_ERR, "failed to create file %s", fpath);
 			cvs_buf_free(fdata);
 			return (-1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.16 2005/05/29 00:18:01 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.17 2005/05/31 08:26:40 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -216,7 +216,7 @@ cvs_history_print(struct cvs_hent *hent)
 	struct tm etime;
 
 	if (localtime_r(&(hent->ch_date), &etime) == NULL) {
-		cvs_log(LP_ERROR, "failed to convert timestamp to structure");
+		cvs_log(LP_ERR, "failed to convert timestamp to structure");
 		return;
 	}
 

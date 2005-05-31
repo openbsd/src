@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.6 2005/02/15 15:29:35 jfb Exp $	*/
+/*	$OpenBSD: log.h,v 1.7 2005/05/31 08:26:40 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -48,8 +48,7 @@
 #define LP_NOTICE   2
 #define LP_WARNING  3
 #define LP_WARN     LP_WARNING
-#define LP_ERROR    4
-#define LP_ERR      LP_ERROR
+#define LP_ERR      4
 #define LP_ALERT    5
 #define LP_ERRNO    6
 #define LP_ABORT    7

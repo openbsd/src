@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.81 2005/05/28 01:34:28 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.82 2005/05/31 08:26:40 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -800,8 +800,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 			cfp->cf_flags &= ~CVS_GDIR_IGNORE;
 
 		if (cvs_file_getdir(cfp, flags, np, cb, arg) < 0) {
-			cvs_log(LP_ERROR, "failed to get %s",
-			    CVS_FILE_NAME(cfp));
+			cvs_log(LP_ERR, "failed to get %s", CVS_FILE_NAME(cfp));
 			continue;
 		}
 	}

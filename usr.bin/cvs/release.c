@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.8 2005/05/27 17:04:59 jfb Exp $	*/
+/*	$OpenBSD: release.c,v 1.9 2005/05/31 08:26:40 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -188,7 +188,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 
 			/* XXX we should try to avoid a new connection ... */
 			if ((fp = popen(updcmd, "r")) == NULL) {
-				cvs_log(LP_ERROR, "cannot run command `%s'",
+				cvs_log(LP_ERR, "cannot run command `%s'",
 				    updcmd);
 				return (CVS_EX_DATA);
 			}
@@ -200,7 +200,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 			}
 
 			if (pclose(fp) != 0) {
-				cvs_log(LP_ERROR, "unable to release `%s'",
+				cvs_log(LP_ERR, "unable to release `%s'",
 				    dpath);
 				return (CVS_EX_DATA);
 			}
