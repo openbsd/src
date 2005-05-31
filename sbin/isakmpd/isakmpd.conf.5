@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.104 2005/05/23 23:09:39 cloder Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.105 2005/05/31 14:28:39 hshoexer Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -395,8 +395,7 @@ and X.509 CA certificates) allows for maintenance of a list of
 A directory containing PEM certificates that we trust to be valid.
 These certificates are used in preference to those passed in messages and
 are required to have a subjectAltName extension containing the certificate
-holder identity; usually IP address, FQDN, or User FQDN, as provided by
-.Xr certpatch 8 .
+holder identity; usually IP address, FQDN, or User FQDN.
 .It Em Private-key
 The private key matching the public key of our certificate (which should be
 in the "Cert-directory", and have an appropriate subjectAltName field).
@@ -1233,7 +1232,6 @@ LIFE_DURATION=		1000,768:1536
 .Xr ipsec 4 ,
 .Xr keynote 4 ,
 .Xr isakmpd.policy 5 ,
-.Xr certpatch 8 ,
 .Xr isakmpd 8 ,
 .Xr vpn 8
 .Sh CAVEATS
