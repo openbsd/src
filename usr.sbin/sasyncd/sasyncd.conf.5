@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.8 2005/05/28 01:07:52 ho Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.9 2005/05/31 21:15:32 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -73,40 +73,43 @@ Defaults to once every 10 seconds.
 .It Ic flushmode sync | startup | never
 Controls how the
 .Xr sasyncd 8
-master host handles SADB_FLUSH messages to it's slaves.
+master host handles SADB_FLUSH messages to its slaves.
 .Pp
-.Bl -tag -width 2n -offset -indent -compact
+.Bl -tag -width "startupXX" -offset indent -compact
 .It Ic sync
-Pass any SADB_FLUSH messages along. For example, in this mode
+Pass any SADB_FLUSH messages along.
+For example, in this mode
 .Xr sasyncd 8
 will synchronize an
-.Do Ic ipsecadm flush Dc
-command to all connected slaves. For more information, see
+.Ic ipsecadm flush
+command to all connected slaves.
+For more information, see
 .Xr ipsecadm 8 .
 .It Ic startup
 Send a SADB_FLUSH message to the slaves as they connect, and act as
 .Ic sync
-afterwards. This is the default.
+afterwards.
+This is the default.
 .It Ic never
 Never send SADB_FLUSH messages.
 .El
 .It Xo
-.Ic listen on Ar address 
+.Ic listen on Ar address
 .Op Ar family
 .Op Ic port Ar port
 .Xc
 Specify a local IP address, hostname, or interface the
 .Xr sasyncd 8
 daemon should listen on.
-The default is to listen on all local addresses. 
-When using an interface name, 
+The default is to listen on all local addresses.
+When using an interface name,
 .Ar family
 may be given as
 .Dq inet
 or
 .Dq inet6
-to only bind using the specified address family. 
-Finally, 
+to only bind using the specified address family.
+Finally,
 .Ar port
 can be used to specify which TCP port
 .Xr sasyncd 8
@@ -117,7 +120,7 @@ Force the daemon to run as master or slave.
 Normally only intended for debugging use.
 .It Ic mode skipslave
 Prevent the daemon from syncing SA or SPD messages where the source or
-destination address is one of the configured peers. 
+destination address is one of the configured peers.
 Intended to permit IPsec
 .Xr pfsync 4
 protection.
