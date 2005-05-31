@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.15 2005/05/29 03:20:35 deraadt Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.16 2005/05/31 11:35:33 art Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/ptrace.h>
+#include <sys/sched.h>
 #include <miscfs/procfs/procfs.h>
 
 /*
@@ -110,6 +111,7 @@ procfs_control(curp, p, op)
 	int op;
 {
 	int error;
+	int s;
 
 	/*
 	 * Attach - attaches the target process for debugging
@@ -248,8 +250,10 @@ procfs_control(curp, p, op)
 #endif
 	}
 
+	SCHED_LOCK(s);
 	if (p->p_stat == SSTOP)
 		setrunnable(p);
+	SCHED_UNLOCK(s);
 	return (0);
 }
 #endif
@@ -265,6 +269,7 @@ procfs_doctl(curp, p, pfs, uio)
 	int error;
 	char msg[PROCFS_CTLLEN+1];
 	const vfs_namemap_t *nm;
+	int s;
 
 	if (uio->uio_rw != UIO_WRITE)
 		return (EOPNOTSUPP);
@@ -297,7 +302,9 @@ procfs_doctl(curp, p, pfs, uio)
 			if (TRACE_WAIT_P(curp, p)) {
 				p->p_xstat = nm->nm_val;
 				FIX_SSTEP(p);
+				SCHED_LOCK(s);
 				setrunnable(p);
+				SCHED_UNLOCK(s);
 			} else {
 				psignal(p, nm->nm_val);
 			}
