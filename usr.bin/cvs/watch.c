@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.1 2005/05/30 08:01:19 xsa Exp $	*/
+/*	$OpenBSD: watch.c,v 1.2 2005/05/31 10:54:05 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -89,6 +89,10 @@ cvs_watch_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'a':
+			/*
+			 * The `watchers' command does not have the
+			 * -a option. Check which command has been issued.
+			 */
 			if (cvs_cmdop != CVS_OP_WATCH)
 				return (CVS_EX_USAGE);
 			break;
