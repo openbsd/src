@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.38 2005/05/30 07:28:49 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.39 2005/05/31 01:59:59 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -638,6 +638,14 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 	    rcsnum_tostr(r1, buf, sizeof(buf)));
 	b1 = rcs_getrev(rf, r1);
 
+	if (b1 == NULL) {
+		cvs_log(LP_ERROR, "failed to retrieve revision %s\n",
+		    rcsnum_tostr(r1, buf, sizeof(buf)));
+		if (r1 != cf->cf_lrev)
+			rcsnum_free(r1);
+		return (CVS_EX_DATA);
+	}
+
 	if (r1 != cf->cf_lrev)
 		rcsnum_free(r1);
 
@@ -653,6 +661,13 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 	}
 
 	rcs_close(rf);
+
+	if (b2 == NULL) {
+		cvs_log(LP_ERROR, "failed to retrieve revision %s\n",
+		    dap->rev2);
+		cvs_buf_free(b1);
+		return (CVS_EX_DATA);
+	}
 
 	printf("%s", diffargs);
 	printf(" -r%s", buf);
