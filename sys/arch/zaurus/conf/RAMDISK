@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.28 2005/05/27 19:01:21 uwe Exp $
+#	$OpenBSD: RAMDISK,v 1.29 2005/05/31 23:05:41 deraadt Exp $
 
 machine	zaurus	arm
 
@@ -114,6 +114,7 @@ com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 # CF (pcmcia) support
 pxapcic0	at pxaip?
 pcmcia*		at pxapcic?
+com*		at pcmcia?		# PCMCIA modems/serial ports
 wi*		at pcmcia?
 ne*		at pcmcia?
 wdc*		at pcmcia?
