@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.20 2005/05/25 23:17:47 niklas Exp $
+.\"	$OpenBSD: spl.9,v 1.21 2005/05/31 21:38:13 jmc Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -104,9 +104,9 @@ Code running at this level may not access the tty subsystem.
 blocks interrupts that may access scheduler data structures.
 Specifically the clock interrupt that invokes the
 .Fn schedclock
-function, needs to be blocked.  On some systems this is a
-separate clock, on others it is the same as the statistics
-clock, and on these,
+function needs to be blocked.
+On some systems this is a separate clock;
+on others it is the same as the statistics clock and, on these,
 .Fn splsched
 must block everything that
 .Fn splstatclock
