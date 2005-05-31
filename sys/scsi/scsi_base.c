@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.75 2005/05/28 23:59:18 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.76 2005/05/31 01:15:31 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ static __inline struct scsi_xfer *scsi_make_xs(struct scsi_link *,
     int datalen, int retries, int timeout, struct buf *, int flags);
 static __inline void asc2ascii(u_int8_t, u_int8_t ascq, char *result,
     size_t len);
-int	sc_err1(struct scsi_xfer *, int);
+int	sc_err1(struct scsi_xfer *);
 int	scsi_interpret_sense(struct scsi_xfer *);
 char   *scsi_decode_sense(struct scsi_sense_data *, int);
 
@@ -639,7 +639,7 @@ scsi_done(xs)
 	 * If it returns ERESTART then we should RETRY
 	 */
 retry:
-	error = sc_err1(xs, 1);
+	error = sc_err1(xs);
 	if (error == ERESTART) {
 		switch ((*(sc_link->adapter->scsi_cmd)) (xs)) {
 		case SUCCESSFULLY_QUEUED:
@@ -749,7 +749,7 @@ retry:
 			return EJUSTRETURN;
 	doit:
 		SC_DEBUG(xs->sc_link, SDEV_DB3, ("back in cmd()\n"));
-		if ((error = sc_err1(xs, 0)) != ERESTART)
+		if ((error = sc_err1(xs)) != ERESTART)
 			return error;
 		goto retry;
 
@@ -815,9 +815,8 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 }
 
 int 
-sc_err1(xs, async)
+sc_err1(xs)
 	struct scsi_xfer *xs;
-	int async;
 {
 	int error;
 
