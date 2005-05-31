@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.30 2005/04/30 16:14:35 tom Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.31 2005/05/31 23:08:47 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -280,8 +280,8 @@ IENTRY_ERR(ud,0,T_PRIVINFLT)	/* #UD invalid opcode */
 IENTRY_ERR(nm,0,T_DNA)		/* #NM device not available */
 IENTRY(df,T_DOUBLEFLT)		/* #DF double fault */
 IENTRY_ERR(fo,0,T_FPOPFLT)	/* #FO coprocessor segment overrun */
-IENTRY(ts,T_TSSFLT)		/* #TS innvalid TSS */
-IENTRY(np,T_SEGNPFLT)		/* #NP segmant not present */
+IENTRY(ts,T_TSSFLT)		/* #TS invalid TSS */
+IENTRY(np,T_SEGNPFLT)		/* #NP segment not present */
 IENTRY(ss,T_STKFLT)		/* #SS stack fault */
 IENTRY(gp,T_PROTFLT)		/* #GP general protection */
 IENTRY(pf,T_PAGEFLT)		/* #PF page fault */
