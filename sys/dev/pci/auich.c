@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.52 2005/04/14 12:42:16 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.53 2005/05/31 19:17:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -52,15 +52,6 @@
 #include <machine/bus.h>
 
 #include <dev/ic/ac97.h>
-
-/*
- * XXX > 4GB kaboom: define kvtop as a truncated vtophys.  Will not
- * do the right thing on machines with more than 4 gig of ram.
- */
-#if defined(__amd64__)
-#include <uvm/uvm_extern.h>	/* for vtophys */
-#define kvtop(va)		(int)vtophys((vaddr_t)(va))
-#endif
 
 /* 12.1.10 NAMBAR - native audio mixer base address register */
 #define	AUICH_NAMBAR	0x10
@@ -182,12 +173,17 @@ struct auich_softc {
 	struct ac97_host_if host_if;
 
 	/* dma scatter-gather buffer lists, aligned to 8 bytes */
-	struct auich_dmalist *dmalist_pcmo, *dmap_pcmo,
-	    dmasto_pcmo[AUICH_DMALIST_MAX+1];
-	struct auich_dmalist *dmalist_pcmi, *dmap_pcmi,
-	    dmasto_pcmi[AUICH_DMALIST_MAX+1];
-	struct auich_dmalist *dmalist_mici, *dmap_mici,
-	    dmasto_mici[AUICH_DMALIST_MAX+1];
+	struct auich_dmalist *dmalist_pcmo, *dmap_pcmo;
+	struct auich_dmalist *dmalist_pcmi, *dmap_pcmi;
+	struct auich_dmalist *dmalist_mici, *dmap_mici;
+
+	bus_dmamap_t dmalist_map;
+	bus_dma_segment_t dmalist_seg[2];
+	caddr_t dmalist_kva;
+	bus_addr_t dmalist_pcmo_pa;
+	bus_addr_t dmalist_pcmi_pa;
+	bus_addr_t dmalist_mici_pa;
+
 	/* i/o buffer pointers */
 	u_int32_t pcmo_start, pcmo_p, pcmo_end;
 	int pcmo_blksize, pcmo_fifoe;
@@ -351,7 +347,8 @@ auich_attach(parent, self, aux)
 	pcireg_t csr;
 	const char *intrstr;
 	u_int32_t status;
-	int i;
+	bus_size_t dmasz;
+	int i, segs;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA ||
@@ -401,7 +398,37 @@ auich_attach(parent, self, aux)
 	}
 	sc->dmat = pa->pa_dmat;
 
-	/* enable bus mastering (should not it be mi?) */
+	/* allocate dma memory */
+	dmasz = AUICH_DMALIST_MAX * 3 * sizeof(struct auich_dma);
+	segs = 1;
+	if (bus_dmamem_alloc(sc->dmat, dmasz, PAGE_SIZE, 0, sc->dmalist_seg,
+	    segs, &segs, BUS_DMA_NOWAIT)) {
+		printf(": failed to alloc dmalist\n");
+		return;
+	}
+	if (bus_dmamem_map(sc->dmat, sc->dmalist_seg, segs, dmasz,
+	    &sc->dmalist_kva, BUS_DMA_NOWAIT)) {
+		printf(": failed to map dmalist\n");
+		bus_dmamem_free(sc->dmat, sc->dmalist_seg, segs);
+		return;
+	}
+	if (bus_dmamap_create(sc->dmat, dmasz, segs, dmasz, 0, BUS_DMA_NOWAIT,
+	    &sc->dmalist_map)) {
+		printf(": failed to create dmalist map\n");
+		bus_dmamem_unmap(sc->dmat, sc->dmalist_kva, dmasz);
+		bus_dmamem_free(sc->dmat, sc->dmalist_seg, segs);
+		return;
+	}
+	if (bus_dmamap_load_raw(sc->dmat, sc->dmalist_map, sc->dmalist_seg,
+	    segs, dmasz, BUS_DMA_NOWAIT)) {
+		printf(": failed to load dmalist map: %d segs %u size\n", segs, dmasz);
+		bus_dmamap_destroy(sc->dmat, sc->dmalist_map);
+		bus_dmamem_unmap(sc->dmat, sc->dmalist_kva, dmasz);
+		bus_dmamem_free(sc->dmat, sc->dmalist_seg, segs);
+		return;
+	}
+
+	/* enable bus mastering (should it not be mi?) */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
@@ -451,12 +478,21 @@ auich_attach(parent, self, aux)
 		sc->sc_sample_size = 2;
 	}
 
-	/* allocate dma lists */
-#define	a(a)	(void *)(((u_long)(a) + sizeof(*(a)) - 1) & ~(sizeof(*(a))-1))
-	sc->dmalist_pcmo = sc->dmap_pcmo = a(sc->dmasto_pcmo);
-	sc->dmalist_pcmi = sc->dmap_pcmi = a(sc->dmasto_pcmi);
-	sc->dmalist_mici = sc->dmap_mici = a(sc->dmasto_mici);
-#undef a
+	sc->dmalist_pcmo = (struct auich_dmalist *)(sc->dmalist_kva +
+	    (0 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX));
+	sc->dmalist_pcmo_pa = sc->dmalist_map->dm_segs[0].ds_addr +
+	    (0 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX);
+
+	sc->dmalist_pcmi = (struct auich_dmalist *)(sc->dmalist_kva +
+	    (1 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX));
+	sc->dmalist_pcmi_pa = sc->dmalist_map->dm_segs[0].ds_addr +
+	    (1 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX);
+
+	sc->dmalist_mici = (struct auich_dmalist *)(sc->dmalist_kva +
+	    (2 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX));
+	sc->dmalist_mici_pa = sc->dmalist_map->dm_segs[0].ds_addr +
+	    (2 * sizeof(struct auich_dmalist) + AUICH_DMALIST_MAX);
+
 	DPRINTF(AUICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
 	    sc->dmalist_pcmo, sc->dmalist_pcmi, sc->dmalist_mici));
 
@@ -1282,7 +1318,7 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 	sc->dmap_pcmo = q;
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_BDBAR,
-	    kvtop((caddr_t)sc->dmalist_pcmo));
+	    sc->dmalist_pcmo_pa);
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_CTRL,
 	    AUICH_IOCE | AUICH_FEIE | AUICH_LVBIE | AUICH_RPBM);
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_LVI,
@@ -1333,7 +1369,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	sc->dmap_pcmi = q;
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_BDBAR,
-	    kvtop((caddr_t)sc->dmalist_pcmi));
+	    sc->dmalist_pcmi_pa);
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CTRL,
 	    AUICH_IOCE | AUICH_FEIE | AUICH_LVBIE | AUICH_RPBM);
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_LVI,
@@ -1429,7 +1465,7 @@ auich_calibrate(struct auich_softc *sc)
 	ociv = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CIV);
 	nciv = ociv;
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_BDBAR,
-	    kvtop((caddr_t)sc->dmalist_pcmi));
+	    sc->dmalist_pcmi_pa);
 	bus_space_write_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_LVI,
 			  (0 - 1) & AUICH_LVI_MASK);
 
