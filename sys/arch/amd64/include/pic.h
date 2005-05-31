@@ -1,15 +1,12 @@
-/*	$OpenBSD: pic.h,v 1.4 2005/05/29 03:20:36 deraadt Exp $	*/
+/*	$OpenBSD: pic.h,v 1.5 2005/05/31 09:34:23 art Exp $	*/
 /*	$NetBSD: pic.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 #ifndef _X86_PIC_H
 #define _X86_PIC_H
 
 #include <sys/device.h>
-#ifdef MULTIPROCESSOR
-#include <sys/mplock.h>
-#else
+#include <sys/mutex.h>
 #include <sys/lock.h>
-#endif
 
 struct cpu_info;
 
@@ -20,7 +17,7 @@ struct pic {
 	struct device pic_dev;
         int pic_type;
 #ifdef MULTIPROCESSOR
-	struct SIMPLE_LOCK pic_lock;
+	struct mutex pic_mutex;
 #endif
         void (*pic_hwmask)(struct pic *, int);
         void (*pic_hwunmask)(struct pic *, int);
