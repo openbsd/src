@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.319 2005/05/28 09:48:54 kjell Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.320 2005/06/01 16:41:03 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1146,10 +1146,8 @@ void
 cyrix3_cpu_setup(struct cpu_info *ci)
 {
 #if defined(I686_CPU)
-	int model, step;
-
-	model = (ci->ci_signature >> 4) & 15;
-	step = ci->ci_signature & 15;
+	int model = (ci->ci_signature >> 4) & 15;
+	int step = ci->ci_signature & 15;
 
 	u_int64_t msreg;
 	u_int32_t regs[4];
@@ -1414,12 +1412,6 @@ void
 intel686_common_cpu_setup(struct cpu_info *ci)
 {
 
-	/*
-	 * Make sure SYSENTER is disabled.
-	 */
-	if (cpu_feature & CPUID_SEP)
-		wrmsr(MSR_SYSENTER_CS, 0);
-
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 	int model = (ci->ci_signature >> 4) & 15;
 	int step = ci->ci_signature & 15;
@@ -1445,6 +1437,11 @@ intel686_common_cpu_setup(struct cpu_info *ci)
 		pagezero = i686_pagezero;
 	}
 #endif
+	/*
+	 * Make sure SYSENTER is disabled.
+	 */
+	if (cpu_feature & CPUID_SEP)
+		wrmsr(MSR_SYSENTER_CS, 0);
 }
 
 void
