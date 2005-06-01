@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.107 2005/05/28 17:43:25 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.108 2005/06/01 11:22:07 hshoexer Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2369,6 +2369,10 @@ pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg)
 	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
 	void *buffer = 0;
 	int i, buflen, error = 0;
+
+	/* Do not dump policies attached to a socket. */
+	if (ipo->ipo_flags & IPSP_POLICY_SOCKET)
+		return (0);
 
 	if (w->w_where) {
 		void *headers[SADB_EXT_MAX + 1];
