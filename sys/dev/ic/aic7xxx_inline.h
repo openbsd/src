@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_inline.h,v 1.9 2004/10/24 04:28:33 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_inline.h,v 1.10 2005/06/01 21:49:54 miod Exp $	*/
 /*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -50,6 +50,13 @@
 
 #ifndef _AIC7XXX_INLINE_H_
 #define _AIC7XXX_INLINE_H_
+
+#ifdef SMALL_KERNEL
+#define	IO_INLINE
+#else
+#define	IO_INLINE	static __inline
+#define	IO_EXPAND
+#endif
 
 /************************* Sequencer Execution Control ************************/
 static __inline void ahc_pause_bug_fix(struct ahc_softc *ahc);
@@ -244,6 +251,7 @@ static __inline struct ahc_initiator_tinfo *
 					    char channel, u_int our_id,
 					    u_int remote_id,
 					    struct ahc_tmode_tstate **tstate);
+
 static __inline uint16_t
 			ahc_inw(struct ahc_softc *ahc, u_int port);
 static __inline void	ahc_outw(struct ahc_softc *ahc, u_int port,
@@ -256,12 +264,12 @@ static __inline uint64_t
 			ahc_inq(struct ahc_softc *ahc, u_int port);
 static __inline void	ahc_outq(struct ahc_softc *ahc, u_int port,
 				 uint64_t value);
-static __inline struct scb*
+IO_INLINE struct scb*
 			ahc_get_scb(struct ahc_softc *ahc);
-static __inline void	ahc_free_scb(struct ahc_softc *ahc, struct scb *scb);
-static __inline void	ahc_swap_with_next_hscb(struct ahc_softc *ahc,
+IO_INLINE void		ahc_free_scb(struct ahc_softc *ahc, struct scb *scb);
+IO_INLINE void		ahc_swap_with_next_hscb(struct ahc_softc *ahc,
 						struct scb *scb);
-static __inline void	ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb);
+IO_INLINE void		ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb);
 static __inline struct scsi_sense_data *
 			ahc_get_sense_buf(struct ahc_softc *ahc,
 					  struct scb *scb);
@@ -360,10 +368,12 @@ ahc_outq(struct ahc_softc *ahc, u_int port, uint64_t value)
 	ahc_outb(ahc, port+7, (value >> 56) & 0xFF);
 }
 
+#ifdef IO_EXPAND
+
 /*
  * Get a free scb. If there are none, see if we can allocate a new SCB.
  */
-static __inline struct scb *
+IO_INLINE struct scb *
 ahc_get_scb(struct ahc_softc *ahc)
 {
 	struct scb *scb;
@@ -381,7 +391,7 @@ ahc_get_scb(struct ahc_softc *ahc)
 /*
  * Return an SCB resource to the free list.
  */
-static __inline void
+IO_INLINE void
 ahc_free_scb(struct ahc_softc *ahc, struct scb *scb)
 {       
 	struct hardware_scb *hscb;
@@ -398,6 +408,8 @@ ahc_free_scb(struct ahc_softc *ahc, struct scb *scb)
 	ahc_platform_scb_free(ahc, scb);
 }
 
+#endif	/* IO_EXPAND */
+
 static __inline struct scb *
 ahc_lookup_scb(struct ahc_softc *ahc, u_int tag)
 {
@@ -410,7 +422,9 @@ ahc_lookup_scb(struct ahc_softc *ahc, u_int tag)
 	return (scb);
 }
 
-static __inline void
+#ifdef IO_EXPAND
+
+IO_INLINE void
 ahc_swap_with_next_hscb(struct ahc_softc *ahc, struct scb *scb)
 {
 	struct hardware_scb *q_hscb;
@@ -450,7 +464,7 @@ ahc_swap_with_next_hscb(struct ahc_softc *ahc, struct scb *scb)
 /*
  * Tell the sequencer about a new transaction to execute.
  */
-static __inline void
+IO_INLINE void
 ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb)
 {
 	ahc_swap_with_next_hscb(ahc, scb);
@@ -494,6 +508,8 @@ ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb)
 	}
 }
 
+#endif	/* IO_EXPAND */
+
 static __inline struct scsi_sense_data *
 ahc_get_sense_buf(struct ahc_softc *ahc, struct scb *scb)
 {
@@ -518,7 +534,7 @@ static __inline void	ahc_sync_qoutfifo(struct ahc_softc *ahc, int op);
 static __inline void	ahc_sync_qinfifo(struct ahc_softc *ahc, int op);
 static __inline void	ahc_sync_tqinfifo(struct ahc_softc *ahc, int op);
 static __inline u_int	ahc_check_cmdcmpltqueues(struct ahc_softc *ahc);
-static __inline int	ahc_intr(struct ahc_softc *ahc);
+IO_INLINE int	ahc_intr(struct ahc_softc *ahc);
 
 static __inline void
 ahc_sync_qoutfifo(struct ahc_softc *ahc, int op)
@@ -580,10 +596,12 @@ ahc_check_cmdcmpltqueues(struct ahc_softc *ahc)
 	return (retval);
 }
 
+#ifdef IO_EXPAND
+
 /*
  * Catch an interrupt from the adapter
  */
-static __inline int
+IO_INLINE int
 ahc_intr(struct ahc_softc *ahc)
 {
 	u_int	intstat;
@@ -664,5 +682,7 @@ ahc_intr(struct ahc_softc *ahc)
 
 	return (1);
 }
+
+#endif	/* IO_EXPAND */
 
 #endif  /* _AIC7XXX_INLINE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.64 2005/04/17 18:54:41 tom Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.65 2005/06/01 21:49:53 miod Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.64 2005/04/17 18:54:41 tom Exp $
+ * $Id: aic7xxx.c,v 1.65 2005/06/01 21:49:53 miod Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -50,6 +50,9 @@
 /* __FBSDID("$FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.100 2004/05/11 20:39:46 gibbs Exp $"); */
 
 #include <dev/ic/aic7xxx_openbsd.h>
+#ifdef SMALL_KERNEL
+#define	IO_EXPAND
+#endif
 #include <dev/ic/aic7xxx_inline.h>
 #include <dev/microcode/aic7xxx/aicasm_insformat.h>
 
@@ -1578,7 +1581,6 @@ ahc_clear_intstat(struct ahc_softc *ahc)
 /**************************** Debugging Routines ******************************/
 #ifdef AHC_DEBUG
 uint32_t ahc_debug = 0; /* AHC_SHOW_MISC|AHC_SHOW_SENSE|AHC_DEBUG_OPTS;*/
-#endif
 
 void
 ahc_print_scb(struct scb *scb)
@@ -1612,6 +1614,7 @@ ahc_print_scb(struct scb *scb)
 		}
 	}
 }
+#endif
 
 /************************* Transfer Negotiation *******************************/
 /*

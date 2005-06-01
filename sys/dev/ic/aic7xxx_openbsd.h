@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.14 2005/02/12 15:32:12 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.15 2005/06/01 21:49:54 miod Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -76,7 +76,9 @@
 #define AHC_PCI_CONFIG 1
 #endif 
 
+#if 0
 #define AHC_DEBUG	AHC_SHOW_SENSE | AHC_SHOW_MISC | AHC_SHOW_CMDS
+#endif
 
 #ifdef DEBUG
 #define bootverbose	1
