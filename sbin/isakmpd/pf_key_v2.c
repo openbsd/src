@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.165 2005/05/22 06:22:53 cloder Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.166 2005/06/01 23:04:35 cloder Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2476,6 +2476,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	if (!ext) {
 		log_print("pf_key_v2_acquire: "
 		    "no destination address specified");
+		free(conn);
 		return;
 	}
 	dst = ext->seg;
