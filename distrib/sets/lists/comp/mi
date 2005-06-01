@@ -5026,7 +5026,6 @@
 ./usr/share/man/cat9/VOP_STRATEGY.0
 ./usr/share/man/cat9/VOP_SYMLINK.0
 ./usr/share/man/cat9/VOP_UNLOCK.0
-./usr/share/man/cat9/VOP_WHITEOUT.0
 ./usr/share/man/cat9/abs.0
 ./usr/share/man/cat9/add_audio_randomness.0
 ./usr/share/man/cat9/add_disk_randomness.0
