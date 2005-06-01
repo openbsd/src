@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.153 2005/05/12 17:10:42 deraadt Exp $
+$OpenBSD: usbdevs,v 1.154 2005/06/01 00:58:00 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -944,6 +944,7 @@ product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 product GREENHOUSE KANA21	0x0001	CF-writer/MP3 Player
 product GREENHOUSE2 USBKR100	0x8150	GH-USB100B Ethernet
 product GREENHOUSE2 USBKR100PNA	0x8151	GH-USB100B Ethernet PNA
+product GREENHOUSE2 RTL8187	0x8187	RTL8187
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
