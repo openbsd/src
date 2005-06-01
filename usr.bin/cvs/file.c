@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.84 2005/06/01 14:03:14 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.85 2005/06/01 15:46:32 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -248,9 +248,9 @@ cvs_file_chkign(const char *file)
 CVSFILE*
 cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 {
-	int fd;
+	int fd, l;
 	int bail;
-	char fp[MAXPATHLEN];
+	char fp[MAXPATHLEN], repo[MAXPATHLEN];
 	CVSFILE *cfp;
 	CVSENTRIES *ent;
 
@@ -258,7 +258,7 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 	if (cfp == NULL)
 		return (NULL);
 
-	bail = 0;
+	bail = l = 0;
 	cfp->cf_mode = mode;
 	cfp->cf_parent = parent;
 
@@ -287,7 +287,23 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 			return (NULL);
 		}
 
-		cfp->cf_repo = strdup(cvs_file_getpath(cfp, fp, sizeof(fp)));
+		if (cvs_repo_base != NULL) {
+			cvs_file_getpath(cfp, fp, sizeof(fp));
+			l = snprintf(repo, sizeof(repo), "%s/%s", cvs_repo_base,
+			    fp);
+		} else {
+			cvs_file_getpath(cfp, repo, sizeof(repo));
+			l = 0;
+		}
+
+		if (l == -1 || l >= (int)sizeof(repo)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", repo);
+			cvs_file_free(cfp);
+			return (NULL);
+		}
+
+		cfp->cf_repo = strdup(repo);
 		if (cfp->cf_repo == NULL) {
 			cvs_file_free(cfp);
 			return (NULL);
@@ -403,6 +419,23 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 	base = cvs_file_lget(".", 0, NULL, NULL);
 	if (base == NULL)
 		return (NULL);
+
+	/*
+	 * fill in the repository base (needed to construct repo's in
+	 * cvs_file_create).
+	 */
+	if (base->cf_repo != NULL) {
+		cvs_repo_base = strdup(base->cf_repo);
+		if (cvs_repo_base == NULL) {
+			cvs_log(LP_ERR, "failed to duplicate repository base");
+			cvs_file_free(base);
+			if (entfile)
+				cvs_ent_close(entfile);
+			return (NULL);
+		}
+
+		printf("cvs_repo_base is %s\n", cvs_repo_base);
+	}
 
 	/* XXX - needed for some commands */
 	if (cb != NULL) {
