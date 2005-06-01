@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.15 2005/05/18 21:31:27 miod Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.16 2005/06/01 18:50:30 miod Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -505,6 +505,9 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 	struct wsmouse_softc *sc =
 	    (struct wsmouse_softc *)wsmouse_cd.cd_devs[minor(dev)];
 	struct wseventvar *evar = sc->sc_base.me_evp;
+
+	if ((flags & (FREAD | FWRITE)) == FWRITE)
+		return (0);			/* see wsmouseopen() */
 
 	if (evar == NULL)
 		/* not open for read */
