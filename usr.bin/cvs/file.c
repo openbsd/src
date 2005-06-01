@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.85 2005/06/01 15:46:32 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.86 2005/06/01 16:49:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -433,8 +433,6 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 				cvs_ent_close(entfile);
 			return (NULL);
 		}
-
-		printf("cvs_repo_base is %s\n", cvs_repo_base);
 	}
 
 	/* XXX - needed for some commands */
