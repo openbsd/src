@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.193 2005/05/26 17:43:24 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.194 2005/06/01 21:50:52 miod Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -129,19 +129,26 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/cy82c693var.h>
 
 /* inlines for reading/writing 8-bit PCI registers */
-static __inline u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t,
+
+#if defined(SMALL_KERNEL) && defined(__alpha__)
+#define	INLINE
+#else
+#define	INLINE __inline
+#endif
+
+static INLINE u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t,
 					int);
-static __inline void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
+static INLINE void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
 					int, u_int8_t);
 
-static __inline u_int8_t
+static INLINE u_int8_t
 pciide_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
 {
 	return (pci_conf_read(pc, pa, (reg & ~0x03)) >>
 	    ((reg & 0x03) * 8) & 0xff);
 }
 
-static __inline void
+static INLINE void
 pciide_pci_write(pci_chipset_tag_t pc, pcitag_t pa, int reg, u_int8_t val)
 {
 	pcireg_t pcival;
@@ -5423,7 +5430,7 @@ hpt_pci_intr(void *arg)
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20277  ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20376)
 
-static __inline u_int8_t
+static INLINE u_int8_t
 pdc268_config_read(struct channel_softc *chp, int index)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
@@ -5436,6 +5443,7 @@ pdc268_config_read(struct channel_softc *chp, int index)
 	    PDC268_DATA(channel)));
 }
 
+/* unused */
 static __inline void
 pdc268_config_write(struct channel_softc *chp, int index, u_int8_t value)
 {
