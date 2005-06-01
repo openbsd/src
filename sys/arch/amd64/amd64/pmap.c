@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2005/05/27 19:32:39 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2005/06/01 14:36:36 brad Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1648,24 +1648,6 @@ pmap_extract(pmap, va, pap)
 
 	return FALSE;
 }
-
-
-/*
- * vtophys: virtual address to physical address.  For use by
- * machine-dependent code only.
- */
-
-paddr_t
-vtophys(va)
-	vaddr_t va;
-{
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), va, &pa) == TRUE)
-		return (pa);
-	return (0);
-}
-
 
 /*
  * pmap_map: map a range of PAs into kvm

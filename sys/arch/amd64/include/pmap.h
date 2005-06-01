@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 2005/05/27 19:32:39 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 2005/06/01 14:36:36 brad Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -555,18 +555,12 @@ kvtopte(vaddr_t va)
 #define pmap_cpu_has_pg_n()		(1)
 #define pmap_cpu_has_invlpg		(1)
 
-paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 
 #if 0   /* XXXfvdl was USER_LDT, need to check if that can be supported */
 void	pmap_ldt_cleanup(struct proc *);
 #define	PMAP_FORK
 #endif /* USER_LDT */
-
-/* 
- * Hooks for the pool allocator.
- */
-/* #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va)) */
 
 #define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + pa)
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)va - PMAP_DIRECT_BASE)
