@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.16 2005/02/24 21:19:48 brad Exp $
+.\" $OpenBSD: em.4,v 1.17 2005/06/01 01:59:40 brad Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -40,10 +40,11 @@
 The
 .Nm
 driver provides support for PCI Gigabit Ethernet adapters based on the
-Intel 82540, 82541ER, 82541PI, 82542, 82543, 82544, 82545, 82546, 82546EB,
-82546GB and 82547 Ethernet controller chips.
-The driver supports Receive checksum offload and Jumbo Frames
-only on 82540, 82543, 82544 and 82546-based adapters.
+Intel 82540EM, 82540EP, 82541EI, 82541ER, 82541GI, 82542, 82543GC, 82544EI,
+82544GC, 82545EM, 82545GC, 82546EB, 82546GB, 82457EI and 82547GI Ethernet
+controller chips.
+The driver supports transmit/receive TCP/UDP checksum offload on all but
+82542-based adapters and Jumbo frames.
 This includes the following models:
 .Pp
 .Bl -item -offset indent -compact
@@ -129,3 +130,16 @@ The
 .Nm
 driver was written by
 .An Intel Corporation Aq freebsdnic@mailbox.intel.com .
+.Sh BUGS
+There are known performance issues with this driver when running UDP traffic
+with Jumbo frames.
+.Pp
+There is a known compatibility issue where time to link is slow or link is not
+established between 82541/82547 controllers and some switches.
+Known switches include:
+.Bl -item -offset indent -compact
+.It
+Planex FXG-08TE
+.It
+I-O Data ETG-SH8
+.El
