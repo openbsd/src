@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.66 2005/05/24 04:12:25 jfb Exp $
+.\"	$OpenBSD: cvs.1,v 1.67 2005/06/01 09:12:05 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -84,6 +84,10 @@ This option overrides the environment variables CVSEDITOR, VISUAL, and EDITOR.
 Do not read the user's configuration file on startup.
 .It Fl l
 Suppress logging of history information.
+.It Fl n
+Dry-run mode.
+Show which files will be used by the command issued
+without really running it.
 .It Fl Q
 Be extra quiet.
 Only error messages will be displayed.
