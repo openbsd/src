@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.83 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.84 2005/06/01 14:03:14 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -249,6 +249,7 @@ CVSFILE*
 cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 {
 	int fd;
+	int bail;
 	char fp[MAXPATHLEN];
 	CVSFILE *cfp;
 	CVSENTRIES *ent;
@@ -257,13 +258,36 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 	if (cfp == NULL)
 		return (NULL);
 
+	bail = 0;
 	cfp->cf_mode = mode;
 	cfp->cf_parent = parent;
 
 	if (type == DT_DIR) {
 		cfp->cf_root = cvsroot_get(path);
-		cfp->cf_repo = strdup(cvs_file_getpath(cfp,
-		    fp, sizeof(fp)));
+
+		/*
+		 * If we do not have a valid root for this, try looking at
+		 * the parent its root.
+		 */
+		if (cfp->cf_root == NULL) {
+			if (parent != NULL && parent->cf_root != NULL) {
+				cfp->cf_root =
+				    cvsroot_parse(parent->cf_root->cr_str);
+				if (cfp->cf_root == NULL)
+					bail = 1;
+			} else {
+				bail = 1;
+			}
+		}
+
+		/* we tried, too bad */
+		if (bail) {
+			cvs_log(LP_ERR, "failed to obtain root info for `%s'",
+			    path);
+			return (NULL);
+		}
+
+		cfp->cf_repo = strdup(cvs_file_getpath(cfp, fp, sizeof(fp)));
 		if (cfp->cf_repo == NULL) {
 			cvs_file_free(cfp);
 			return (NULL);
