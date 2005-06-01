@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcwd.c,v 1.12 2005/03/25 15:38:47 otto Exp $";
+static char rcsid[] = "$OpenBSD: getcwd.c,v 1.13 2005/06/01 18:55:59 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -221,10 +221,15 @@ notfound:
 		errno = save_errno ? save_errno : ENOENT;
 	/* FALLTHROUGH */
 err:
+	save_errno = errno;
+
 	if (ptsize)
 		free(pt);
 	free(up);
 	if (dir)
 		(void)closedir(dir);
+
+	errno = save_errno;
+
 	return (NULL);
 }
