@@ -1,5 +1,5 @@
-.\" $OpenBSD: gzsig.1,v 1.5 2005/05/31 23:02:29 jmc Exp $
-.\" $Id: gzsig.1,v 1.5 2005/05/31 23:02:29 jmc Exp $
+.\" $OpenBSD: gzsig.1,v 1.6 2005/06/01 08:14:53 jmc Exp $
+.\" $Id: gzsig.1,v 1.6 2005/06/01 08:14:53 jmc Exp $
 .\"
 .\"  Copyright (c) 2001 Dug Song <dugsong@arbor.net>
 .\"  Copyright (c) 2001 Arbor Networks, Inc.
@@ -88,21 +88,21 @@ and
 with the SSH2 identity key in
 .Ar ~/.ssh/id_rsa :
 .Pp
-.Dl $ gzsign sign ~/.ssh/id_rsa file1 file2
+.Dl $ gzsig sign ~/.ssh/id_rsa file1 file2
 .Pp
 Sign
 .Ar file1
 with the SSH2 identity key, saving the signed file in
 .Ar file2 :
 .Pp
-.Dl $ gzsign sign ~/.ssh/id_rsa < file1 > file2
+.Dl $ gzsig sign ~/.ssh/id_rsa < file1 > file2
 .Pp
 Verify the signature on
 .Ar file1
 using the SSL certificate in
 .Ar /etc/ssl/server.crt :
 .Pp
-.Dl $ gzsign verify /etc/ssl/server.crt < file1
+.Dl $ gzsig verify /etc/ssl/server.crt < file1
 .Sh SEE ALSO
 .Xr gzip 1 ,
 .Xr ssh-keygen 1 ,
