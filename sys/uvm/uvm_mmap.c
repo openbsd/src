@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.56 2005/05/24 21:11:47 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.57 2005/06/01 18:34:40 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -584,17 +584,10 @@ sys_mmap(p, v, retval)
 		pos = 0;
 	}
 
-	/*
-	 * XXX (in)sanity check.  We don't do proper datasize checking
-	 * XXX for anonymous (or private writable) mmap().  However,
-	 * XXX know that if we're trying to allocate more than the amount
-	 * XXX remaining under our current data size limit, _that_ should
-	 * XXX be disallowed.
-	 */
 	if ((flags & MAP_ANON) != 0 ||
 	    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
 		if (size >
-		    (p->p_rlimit[RLIMIT_DATA].rlim_cur - ctob(p->p_vmspace->vm_dsize))) {
+		    (p->p_rlimit[RLIMIT_DATA].rlim_cur - ctob(p->p_vmspace->vm_dused))) {
 			error = ENOMEM;
 			goto out;
 		}
