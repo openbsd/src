@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.13 2004/02/05 14:25:52 jmc Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.14 2005/06/01 10:20:25 pedro Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -147,12 +147,6 @@
 .Fa "struct vnode *vp"
 .Fa "int flags"
 .Fa "struct proc *p"
-.Fc
-.Ft int
-.Fo VOP_WHITEOUT
-.Fa "struct vnode *dvp"
-.Fa "struct componentname *cnp"
-.Fa "int flags"
 .Fc
 .\" and many more
 .Sh DESCRIPTION
@@ -368,19 +362,6 @@ is locked and 0 if not.
 It should be used cautiously, as not all file systems implement locks
 effectively.
 Note the asymmetry between vn_lock and VOP_UNLOCK.
-.Sh VOP_WHITEOUT
-.Fn VOP_WHITEOUT
-manipulates whiteout entries in a directory.
-.Ar dvp
-is the directory containing, or to contain, the whiteout.
-It is locked on entry and exit.
-.Ar cnp
-contains the name of the whiteout.
-.Ar flags
-is used to indicate the operation.
-Whiteouts may be created or deleted.
-A whiteout entry is normally used to indicate the absence of a file on a
-translucent file system.
 .Sh IMPLEMENTATION NOTES
 The
 .Nm VOP
