@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2002/06/09 05:53:53 todd Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2005/06/01 18:53:27 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -22,7 +22,7 @@ INSTALLBOOT?=	/usr/mdec/installboot -v
 XNAME?=		floppy
 FLOPPY?=	${XNAME}${REV}.fs
 FLOPPYBLKS?=	2880
-FLOPPYTYPE?=	floppy3
+FLOPPYTYPE?=	floppyx
 BOOT?=		/usr/mdec/boot
 BOOTXX?=	/usr/mdec/bootxx
 
@@ -38,7 +38,7 @@ NBLKS=          5744
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS=	-t ffs -m 0 -o space
 NEWFSARGS_RD=	-i 16384 -c 80
-NEWFSARGS_FD=	-i 524288 -c 80
+NEWFSARGS_FD=	-i 524288 -d 0 -e 2000 -g 100000 -h 2 -a 10000
 
 ${FLOPPY}:	bsd.gz
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYBLKS}
@@ -46,13 +46,13 @@ ${FLOPPY}:	bsd.gz
 	disklabel -w -r ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}
+	dd if=${DESTDIR}/${BOOT} of=${MOUNT_POINT}/boot bs=512
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	${INSTALLBOOT} ${MOUNT_POINT}/boot ${BOOTXX} ${VND_CRDEV}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
-	@cmp ${BOOT} ${MOUNT_POINT}/boot || echo "Warning! /boot corrupted!!!"
+	@cmp ${DESTDIR}/${BOOT} ${MOUNT_POINT}/boot || echo "Warning! /boot corrupted!!!"
 	@cmp bsd.gz ${MOUNT_POINT}/bsd || echo "Warning! /bsd corrupted!!!"
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
