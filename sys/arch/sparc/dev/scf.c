@@ -1,4 +1,4 @@
-/*	$OpenBSD: scf.c,v 1.6 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: scf.c,v 1.7 2005/06/01 22:31:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -132,7 +132,7 @@ scfattach(parent, self, aux)
 	printf(": model %s\n", s);
 
 	sc->sc_regs->led1 &= ~LED_MASK;
-	sc->sc_regs->led1 &= ~LED_MASK;
+	sc->sc_regs->led2 &= ~LED_MASK;
 	sc->sc_regs->ssldcr = 0;
 
 	timeout_set(&sc->sc_blink_tmo, scfblink, 0);
