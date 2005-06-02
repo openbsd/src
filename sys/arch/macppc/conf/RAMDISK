@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.50 2005/05/27 02:08:14 martin Exp $
+#	$OpenBSD: RAMDISK,v 1.51 2005/06/02 23:21:03 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -11,8 +11,6 @@ maxusers	32
 # actual machine type probed via name of openfirmware root node.
 option		SYS_TYPE=APPL
 
-option		FIREPOWERBUGS
-option		PPC_MPC106_BUG
 option		PCIVERBOSE
 
 # include "../../../conf/GENERIC"

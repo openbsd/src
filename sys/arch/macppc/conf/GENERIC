@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.86 2005/05/26 23:18:27 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.87 2005/06/02 23:21:03 drahn Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -17,8 +17,6 @@ maxusers	32			# estimated number of users
 # actual machine type probed via name of openfirmware root node.
 option		SYS_TYPE=APPL
 
-option		FIREPOWERBUGS
-option		PPC_MPC106_BUG
 option		PCIVERBOSE
 option		USBVERBOSE
 #option		MACOBIOVERBOSE
