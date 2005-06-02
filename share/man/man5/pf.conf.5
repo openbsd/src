@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.331 2005/05/27 18:57:56 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.332 2005/06/02 22:56:50 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2620,7 +2620,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  "fragment" | "no-df" | "min-ttl" number |
                  "max-mss" number | "random-id" | "reassemble tcp" |
                  fragmentation | "allow-opts" |
-                 "label" string | "tag" string | [ ! ] "tagged" string
+                 "label" string | "tag" string | [ ! ] "tagged" string |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "probability" number"%"
 
@@ -2662,7 +2662,7 @@ queue-rule     = "queue" string [ "on" interface-name ] queueopts-list
                  subqueue
 
 anchor-rule    = "anchor" string [ ( "in" | "out" ) ] [ "on" ifspec ]
-                 [ af ] [ "proto" ] [ protospec ] [ hosts ]
+                 [ af ] [ protospec ] [ hosts ]
 
 trans-anchors  = ( "nat-anchor" | "rdr-anchor" | "binat-anchor" ) string
                  [ "on" ifspec ] [ af ] [ "proto" ] [ protospec ] [ hosts ]
