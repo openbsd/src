@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.56 2005/05/25 21:12:54 krw Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.57 2005/06/02 02:03:33 krw Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -241,8 +241,6 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 #define UMASS_ATAPISTR		"atapiscsi"
 
 /* periph_quirks */
-#define	PQUIRK_NOTUR		ADEV_NOTUR	/* no TEST UNIT READY */
-#define	PQUIRK_NODOORLOCK	ADEV_NODOORLOCK	/* can't lock door */
 #define	PQUIRK_NOSENSE		ADEV_NOSENSE	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		SDEV_ONLYBIG
 

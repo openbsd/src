@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.19 2005/05/26 20:54:39 krw Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.20 2005/06/02 02:03:33 krw Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_FUJIPHOTO, USB_PRODUCT_FUJIPHOTO_MASS0100 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NOTUR | PQUIRK_NOSENSE,
+	  PQUIRK_NOSENSE,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -115,7 +115,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IMATION, USB_PRODUCT_IMATION_FLASHGO },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NODOORLOCK,
+	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -153,7 +153,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_USBCABLE },
 	  UMASS_WPROTO_CBI, UMASS_CPROTO_ATAPI,
 	  0,
-	  PQUIRK_NOTUR,
+	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  umass_init_insystem, NULL
 	},
@@ -169,7 +169,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IOMEGA, USB_PRODUCT_IOMEGA_ZIP100 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NOTUR,
+	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -177,7 +177,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IOMEGA, USB_PRODUCT_IOMEGA_ZIP250 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NOTUR,
+	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -185,7 +185,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IOMEGA, USB_PRODUCT_IOMEGA_ZIP250_2 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NOTUR,
+	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -193,7 +193,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_1XX },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NODOORLOCK | PQUIRK_ONLYBIG,
+	  PQUIRK_ONLYBIG,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
@@ -201,7 +201,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_3XX },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NODOORLOCK,
+	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
@@ -217,7 +217,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_MICROTECH, USB_PRODUCT_MICROTECH_DPCM },
 	  UMASS_WPROTO_CBI, UMASS_CPROTO_ATAPI,
 	  0,
-	  PQUIRK_NOTUR,
+	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
@@ -249,7 +249,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_MSYSTEMS, USB_PRODUCT_MSYSTEMS_DISKONKEY },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NODOORLOCK,
+	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -257,7 +257,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_MSYSTEMS, USB_PRODUCT_MSYSTEMS_DISKONKEY2 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_ATAPI,
 	  0,
-	  PQUIRK_NODOORLOCK,
+	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -353,7 +353,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_PQI, USB_PRODUCT_PQI_TRAVELFLASH },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NODOORLOCK,
+	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
@@ -369,7 +369,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_SHUTTLE, USB_PRODUCT_SHUTTLE_EUSB },
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
 	  0,
-	  PQUIRK_NOTUR | PQUIRK_NOSENSE,
+	  PQUIRK_NOSENSE,
 	  UMATCH_VENDOR_PRODUCT,
 	  umass_init_shuttle, NULL
 	},
@@ -377,7 +377,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_SHUTTLE, USB_PRODUCT_SHUTTLE_ZIOMMC },
 	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
 	  0,
-	  PQUIRK_NOTUR,
+	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
@@ -425,7 +425,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_TREK, USB_PRODUCT_TREK_THUMBDRIVE_8MB },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NODOORLOCK,
+	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
@@ -457,7 +457,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_DNSSF7X},
 	 UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	 0,
-	 SDEV_NOSYNCCACHE | PQUIRK_NODOORLOCK,
+	 SDEV_NOSYNCCACHE,
 	 UMATCH_VENDOR_PRODUCT,
 	 NULL, NULL
 	},
@@ -465,7 +465,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_CREATIVE, USB_PRODUCT_CREATIVE_NOMAD},
 	 UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	 0,
-	 SDEV_NOSYNCCACHE | PQUIRK_NODOORLOCK,
+	 SDEV_NOSYNCCACHE,
 	 UMATCH_VENDOR_PRODUCT,
 	 NULL, NULL
 	},
@@ -534,11 +534,4 @@ umass_fixup_yedata(struct umass_softc *sc)
 		sc->sc_wire = UMASS_WPROTO_CBI;
 	else
 		sc->sc_wire = UMASS_WPROTO_CBI_I;
-
-	/*
-	 * Revisions < 1.28 do not have the TEST UNIT READY command
-	 * Revisions == 1.28 have a broken TEST UNIT READY
-	 */
-	if (UGETW(dd->bcdDevice) <= 0x128)
-		sc->sc_busquirks |= PQUIRK_NOTUR;
 }
