@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2004/08/03 00:56:22 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 2005/06/02 20:09:38 tholo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -131,15 +131,21 @@
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
 #include <dev/ic/i8042reg.h>
+#include <dev/acpi/acpivar.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
+#include "acpi.h"
 #include "isa.h"
 #include "isadma.h"
 #include "ksyms.h"
+
+#if NACPI > 0
+extern struct acpi_softc *acpi_softc;
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "amd64";		/* cpu "architecture" */
@@ -893,9 +899,11 @@ haltsys:
 	if (howto & RB_HALT) {
 	        if (howto & RB_POWERDOWN) {
 #if NACPI > 0
-			delay(500000);
-			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
-			printf("WARNING: powerdown failed!\n");
+			if (acpi_softc) {
+				delay(500000);
+				acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
+				printf("WARNING: powerdown failed!\n");
+			}
 #endif
 		}
 

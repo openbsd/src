@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.119 2005/05/28 01:38:14 ho Exp $
+#	$OpenBSD: Makefile,v 1.120 2005/06/02 20:09:39 tholo Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ SUBDIR=	ac accton adduser amd arp authpf bgpctl bgpd bind chroot \
 SUBDIR+=faithd ndp rip6query route6d rtadvd rtsold traceroute6
 
 # Arch dependent tools, with manpages
-SUBDIR+=bad144 apm apmd fdformat memconfig
+SUBDIR+=bad144 acpid acpidump apm apmd fdformat memconfig
 SUBDIR+=eeprom gpioctl hotplugd
 SUBDIR+=wsconscfg wsfontload
 

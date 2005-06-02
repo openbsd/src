@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.30 2005/04/21 00:26:30 krw Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.31 2005/06/02 20:09:38 tholo Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -18,6 +18,7 @@ dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl
 __devitem(apm, apm, Power management device)dnl
+__devitem(acpi, acpi, Advanced Configuration and Power Interface)dnl
 __devitem(nvram, nvram, NVRAM access)dnl
 _mkdev(nvram, nvram, {-M nvram c major_nvram_c 0 440 kmem-})dnl
 _TITLE(make)
@@ -67,6 +68,7 @@ _DEV(usb, 61)
 _DEV(uscan, 77)
 _TITLE(spec)
 _DEV(apm, 21)
+_DEV(acpi, 85)
 _DEV(au, 42)
 _DEV(bktr, 49)
 _DEV(bpf, 23)

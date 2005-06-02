@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.416 2005/05/27 02:08:14 martin Exp $
+#	$OpenBSD: GENERIC,v 1.417 2005/06/02 20:09:39 tholo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -55,6 +55,13 @@ isa0	at ichpcib?
 isa0	at gscpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
+
+#acpi0	at mainbus?
+#acpitimer* at acpi?
+#hpet*	at acpi?
+
+option		ACPIVERBOSE
+#option		ACPI_ENABLE
 
 option		PCIVERBOSE
 option		EISAVERBOSE

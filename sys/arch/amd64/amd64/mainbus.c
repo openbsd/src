@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.2 2005/06/02 20:09:38 tholo Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -44,14 +44,16 @@
 
 #include "pci.h"
 #include "isa.h"
+#include "acpi.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
 
-/*
- * XXXfvdl ACPI
- */
+#if NACPI > 0
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
+#endif
 
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -72,6 +74,9 @@ union mainbus_attach_args {
 	struct isabus_attach_args mba_iba;
 	struct cpu_attach_args mba_caa;
 	struct apic_attach_args aaa_caa;
+#if NACPI > 0
+	struct acpi_attach_args mba_aaa;
+#endif	
 };
 
 /*
@@ -130,6 +135,17 @@ mainbus_attach(parent, self, aux)
 #endif
 
 	printf("\n");
+
+#if NACPI > 0
+	{
+		memset(&mba.mba_aaa, 0, sizeof(mba.mba_aaa));
+		mba.mba_aaa.aaa_name = "acpi";
+		mba.mba_aaa.aaa_iot = X86_BUS_SPACE_IO;
+		mba.mba_aaa.aaa_memt = X86_BUS_SPACE_MEM;
+
+		config_found(self, &mba.mba_aaa, mainbus_print);
+	}
+#endif
 
 #ifdef MPBIOS
 	mpbios_present = mpbios_probe(self);

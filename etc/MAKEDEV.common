@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.17 2005/03/29 16:40:08 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.18 2005/06/02 20:09:38 tholo Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -125,6 +125,7 @@ target(all, pctr0)dnl
 target(all, pf)dnl
 twrget(all, cry, crypto)dnl
 target(all, apm)dnl
+target(all, acpi)dnl
 twrget(all, tth, ttyh, 0, 1)dnl
 target(all, ttyA, 0, 1)dnl
 target(all, ttyB, 0, 1, 2, 3, 4, 5)dnl
@@ -441,6 +442,7 @@ __devitem(scc, scc*, 82530 serial interface,scc)dnl
 __devtitle(spec, Special purpose devices)dnl
 _mkdev(apm, apm*, {-M apm	c major_apm_c 0 644
 	M apmctl	c major_apm_c 8 644-})dnl
+_mkdev(acpi, acpi*, {-M acpi	c major_acpi_c 0 644-})dnl
 __devitem(pctr, pctr*, PC Performance Tuning Register access device)dnl
 _mkdev(pctr, pctr, {-M pctr c major_pctr_c 0 644-})dnl
 __devitem(systrace, systrace*, System call tracing device)dnl

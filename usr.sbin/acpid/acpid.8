@@ -1,0 +1,83 @@
+.\"	$OpenBSD: acpid.8,v 1.1 2005/06/02 20:09:39 tholo Exp $
+.\"
+.\" Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 27, 2005
+.Dt ACPID 8
+.Os
+.Sh NAME
+.Nm acpid
+.Nd Advanced Configuration and Power Interface daemon
+.Sh SYNOPSIS
+.Nm acpid
+.Op Fl d
+.Sh DESCRIPTION
+.Nm
+monitors the advanced configuration and power interface (ACPI) device,
+acting of signaled events.
+For suspend and poweroff request events delivered by the BIOS,
+.Nm
+runs the appropriate program (if one exists).
+.Pp
+If the
+.Fl d
+flag is specified,
+.Nm
+enters debug mode, logging to facility
+.Dv LOG_LOCAL1
+and staying in the foreground on the controlling terminal.
+.Pp
+Actions can be configured for the following two events:
+.Cm suspend
+and
+.Cm powerdown .
+The suspend actions are run when the sleep button is pressed, while
+the powerdown action is run when the power button is pressed.
+.Sh FILES
+.Pa /etc/acpi/suspend
+and
+.Pa /etc/acpi/powerdown
+are the files that contain the host's customized actions.
+Each file must be an executable binary or shell script suitable
+for execution by the
+.Xr execve 2
+function.
+If you wish to have the same program or script control all transitions, it
+may determine which transition is in progress by examining its
+.Va argv[0]
+which is set to one of
+.Ar suspend
+and
+.Ar powerdown .
+.Pp
+.Pa /dev/acpi
+is the default device used to control the ACPI kernel driver.
+.Sh SEE ALSO
+.Xr execve 2 ,
+.Xr syslog 3 ,
+.Xr apm 4 ,
+.Xr speaker 4 ,
+.Xr apm 8 ,
+.Xr apmd 8 ,
+.Xr syslogd 8
+.Sh REFERENCES
+Advanced Configuration and Power Interface Specification (Revision 3.0),
+Hewlett-Packard Corporation, Intel Corporation, Microsoft Corporation,
+Phoenix Technologies Ltd and Toshiba Corporation.
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Ox 3.8 .

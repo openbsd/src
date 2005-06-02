@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.16 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.17 2005/06/02 20:09:39 tholo Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include "apm.h"
 #include "bios.h"
 #include "mpbios.h"
+#include "acpi.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -57,6 +58,11 @@
 
 #if NBIOS > 0
 #include <machine/biosvar.h>
+#endif
+
+#if NACPI > 0
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
 #endif
 
 #if 0
@@ -88,6 +94,9 @@ union mainbus_attach_args {
 #endif
 	struct cpu_attach_args mba_caa;
 	struct apic_attach_args	aaa_caa;
+#if NACPI > 0
+	struct acpi_attach_args mba_aaa;
+#endif
 };
 
 /*
@@ -121,6 +130,16 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
+#if NACPI > 0
+	{
+		memset(&mba.mba_aaa, 0, sizeof(mba.mba_aaa));
+		mba.mba_aaa.aaa_name = "acpi";
+		mba.mba_aaa.aaa_iot = I386_BUS_SPACE_IO;
+		mba.mba_aaa.aaa_memt = I386_BUS_SPACE_MEM;
+
+		config_found(self, &mba.mba_aaa, mainbus_print);
+	}
+#endif
 #if NBIOS > 0
 	{
 		mba.mba_bios.bios_dev = "bios";

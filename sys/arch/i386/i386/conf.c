@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.109 2004/10/03 21:28:34 jcs Exp $	*/
+/*	$OpenBSD: conf.c,v 1.110 2005/06/02 20:09:39 tholo Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -168,6 +168,7 @@ cdev_decl(mcd);
 #include "sequencer.h"
 cdev_decl(music);
 #include "joy.h"
+#include "acpi.h"
 #include "apm.h"
 #include "pctr.h"
 #include "bios.h"
@@ -324,6 +325,7 @@ struct cdevsw	cdevsw[] =
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
 	cdev_gpio_init(NGPIO,gpio),	/* 83: GPIO interface */
 	cdev_nvram_init(NNVRAM,nvram),	/* 84: NVRAM interface */
+	cdev_acpi_init(NACPI,acpi),	/* 85: ACPI */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

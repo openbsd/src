@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.10 2005/04/21 00:26:30 krw Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.11 2005/06/02 20:09:38 tholo Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -17,6 +17,7 @@ dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl
+__devitem(acpi, acpi, Advanced Configuration and Power Interface)dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramdisk)
@@ -64,6 +65,7 @@ _DEV(usb, 61)
 _DEV(uscan, 77)
 _TITLE(spec)
 dnl _DEV(apm, 21)
+_DEV(acpi, 83)
 _DEV(au, 42)
 _DEV(bktr, 49)
 _DEV(bpf, 23)
