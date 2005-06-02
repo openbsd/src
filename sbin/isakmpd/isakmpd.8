@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.79 2005/05/18 20:22:19 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.80 2005/06/02 10:03:37 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -272,7 +272,7 @@ reports successful completion of phase 1 (Main and Aggressive) and phase 2
 (Quick) exchanges (Information and Transaction exchanges do not generate any
 additional status information).
 .El
-.Ss The FIFO user interface
+.Sh THE FIFO USER INTERFACE
 When
 .Nm
 starts, it creates a FIFO (named pipe) where it listens for user
@@ -439,19 +439,102 @@ Tear down all active connections.
 .It Ic t Aq Ic name
 Tear down the named connection, if active.
 .El
-.Ss Setting up an IKE public key infrastructure (a.k.a. PKI)
+.Sh SETTING UP AN IKE PUBLIC KEY INFRASTRUCTURE (PKI)
 In order to use public key based authentication, there has to be an
 infrastructure managing the key signing.
 Either there is an already existing PKI
 .Nm
 should take part in, or there will be a need to set one up.
-In the former case, what is needed to be done varies depending on the
-actual Certificate Authority used, and is therefore not covered here,
+The procedures for using a pre-existing PKI varies depending on the
+actual Certificate Authority (CA) used, and is therefore not covered here,
 other than mentioning that
 .Xr openssl 1
-needs to be used to create a certificate signing request that the
+needs to be used to create a Certificate Signing Request (CSR) that the
 CA understands.
-The latter case, however, is described here:
+.Pp
+A number of methods exist to allow authentication:
+.Bl -ohang -offset indent
+.It Passphrase:
+This method does not use keys at all, but relies on a shared passphrase.
+See
+.Xr vpn 8
+for an example implementation.
+.It Host Keys:
+Public keys are used to authenticate.
+See
+.Sx PUBLIC KEY AUTHENTICATION
+below.
+.It X509 Certificates:
+X509 Certificates are used to authenticate.
+See
+.Sx X509 AUTHENTICATION
+below.
+.It Keynote Certificates:
+Keynote Certificates are used to authenticate.
+See
+.Sx KEYNOTE AUTHENTICATION
+below.
+.El
+.Sh PUBLIC KEY AUTHENTICATION
+It is possible to store trusted public keys to make them directly
+usable by
+.Nm ,
+bypassing the need to use certificates.
+The keys should be saved in PEM format (see
+.Xr openssl 1 )
+and named and stored after this easy formula:
+.Pp
+.Bl -tag -width "for_ufqdn_identitiesXX" -offset 3n -compact
+.It For IPv4 identities:
+/etc/isakmpd/pubkeys/ipv4/A.B.C.D
+.It For IPv6 identities:
+/etc/isakmpd/pubkeys/ipv6/abcd:abcd::ab:bc
+.It For FQDN identities:
+/etc/isakmpd/pubkeys/fqdn/foo.bar.org
+.It For UFQDN identities:
+/etc/isakmpd/pubkeys/ufqdn/user@foo.bar.org
+.El
+.Pp
+By default, the system startup script
+.Xr rc 8
+generates a key-pair when starting, if one does not already exist.
+The private and public keys are named
+.Pa local.key
+and
+.Pa local.pub ,
+respectively.
+Depending on the
+.Dv ID-type
+field of
+.Xr isakmpd.conf 5 ,
+keys may be named after their IPv4 address (IPV4_ADDR or IPV4_ADDR_SUBNET),
+IPv6 address (IPV6_ADDR or IPV6_ADDR_SUBNET),
+fully qualified domain name (FDQN),
+user fully qualified domain name (USER_FQDN),
+or key ID (KEY_ID).
+.Pp
+For example,
+.Nm
+can authenticate using the pre-generated keys if the local public key
+is copied to the remote gateway as
+.Pa /etc/isakmpd/pubkeys/ipv4/local.gateway.ip.address
+and the remote gateway's public key
+is copied to the local gateway as
+.Pa /etc/isakmpd/pubkeys/ipv4/remote.gateway.ip.address .
+Of course, new keys may also be generated
+(the user is not required to use the pre-generated keys).
+In this example,
+.Dv ID-type
+would also have to be set to IPV4_ADDR or IPV4_ADDR_SUBNET
+in
+.Xr isakmpd.conf 5 .
+.Sh X509 AUTHENTICATION
+X509 is a framework for public key certificates.
+Certificates can be generated using
+.Xr openssl 1
+and provide a means for PKI authentication.
+In the following example, a CA is created along with host certificates
+to be signed by the CA.
 .Bl -enum
 .It
 Create your own Certificate Authority (CA).
@@ -503,9 +586,12 @@ Now take these certificate signing requests to your CA and process
 them as below.
 A
 .Em subjectAltName
-extension field has to be added
-to the certificate in order to make it usable by
-.Nm .
+extension field should be added to the certificate.
+This field is not mandatory, but is highly recommended since it allows
+.Nm
+to avoid
+.Dq man in the middle
+attacks.
 Replace 10.0.0.1 with the IP address which
 .Nm
 will use as the certificate identity.
@@ -544,25 +630,16 @@ See
 and the
 .Sq crl
 subcommand for more info.
-.Pp
-It is also possible to store trusted public keys to make them directly
-usable by
-.Nm ,
-bypassing the need to use X509 certificates.
-The keys should be saved in PEM format (see
-.Xr openssl 1 )
-and named and stored after this easy formula:
-.Pp
-.Bl -tag -width "for_ufqdn_identitiesXX" -offset 3n -compact
-.It For IPv4 identities:
-/etc/isakmpd/pubkeys/ipv4/A.B.C.D
-.It For IPv6 identities:
-/etc/isakmpd/pubkeys/ipv6/abcd:abcd::ab:bc
-.It For FQDN identities:
-/etc/isakmpd/pubkeys/fqdn/foo.bar.org
-.It For UFQDN identities:
-/etc/isakmpd/pubkeys/ufqdn/user@foo.bar.org
-.El
+.Sh KEYNOTE AUTHENTICATION
+Keynote is a trust-management framework.
+Keys can be generated using
+.Xr keynote 1
+and provide an alternative means for
+.Nm
+to authenticate.
+See
+.Xr keynote 4
+for further information.
 .Sh FILES
 .Bl -tag -width Ds
 .It /etc/isakmpd/ca/
