@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.130 2005/05/27 20:01:21 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.131 2005/06/02 15:06:08 cloder Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -303,7 +303,7 @@ kr6_change(struct kroute6 *kroute)
 		return (-1);
 
 	if (action == RTM_ADD) {
-		if ((kr6 = calloc(1, sizeof(struct kroute_node))) == NULL) {
+		if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
 			log_warn("kr_change");
 			return (-1);
 		}
@@ -443,7 +443,7 @@ kr_nexthop_add(struct bgpd_addr *addr)
 			if (memcmp(&k6->r.nexthop, &in6addr_any,
 			    sizeof(struct in6_addr)) != 0) {
 				nh.gateway.af = AF_INET6;
-				memcpy(&nh.gateway.v4, &k6->r.nexthop,
+				memcpy(&nh.gateway.v6, &k6->r.nexthop,
 				    sizeof(struct in6_addr));
 			}
 			memcpy(&nh.kr.kr6, &k6->r, sizeof(nh.kr.kr6));
@@ -1308,7 +1308,7 @@ knexthop_validate(struct knexthop_node *kn)
 				if (memcmp(&kr6->r.nexthop, &in6addr_any,
 				    sizeof(struct in6_addr)) != 0) {
 					n.gateway.af = AF_INET6;
-					memcpy(&n.gateway.v4, &kr6->r.nexthop,
+					memcpy(&n.gateway.v6, &kr6->r.nexthop,
 					    sizeof(struct in6_addr));
 				}
 				memcpy(&n.kr.kr6, &kr6->r, sizeof(n.kr.kr6));
