@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.34 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.35 2005/06/02 17:32:02 mickey Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/syslog.h>
 
 #include <sys/mount.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -106,6 +107,8 @@ ktrsyscall(p, code, argsize, args)
 	register_t *argp;
 	int i;
 
+	if (code == SYS___sysctl)
+		len += args[1] * sizeof(int);
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_SYSCALL);
 	ktp = malloc(len, M_TEMP, M_WAITOK);
@@ -114,6 +117,9 @@ ktrsyscall(p, code, argsize, args)
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof *argp); i++)
 		*argp++ = args[i];
+	if (code == SYS___sysctl &&
+	    copyin((void *)args[0], argp, args[1] * sizeof(int)))
+		bzero(argp, args[1] * sizeof(int));
 	kth.ktr_buf = (caddr_t)ktp;
 	kth.ktr_len = len;
 	ktrwrite(p, &kth);

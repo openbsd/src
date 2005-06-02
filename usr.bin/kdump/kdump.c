@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.26 2004/07/09 23:51:40 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.27 2005/06/02 17:32:02 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.26 2004/07/09 23:51:40 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.27 2005/06/02 17:32:02 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -359,16 +359,17 @@ ktrsyscall(struct ktr_syscall *ktr)
 	else
 		(void)printf("%s", current->sysnames[ktr->ktr_code]);
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
+	(void)putchar('(');
 	if (argsize) {
-		char c = '(';
+		char c = '\0';
 		if (fancy) {
 			if (ktr->ktr_code == SYS_ioctl) {
 				const char *cp;
 
 				if (decimal)
-					(void)printf("(%ld", (long)*ap);
+					(void)printf("%ld", (long)*ap);
 				else
-					(void)printf("(%#lx", (long)*ap);
+					(void)printf("%#lx", (long)*ap);
 				ap++;
 				argsize -= sizeof(register_t);
 				if ((cp = ioctlname(*ap)) != NULL)
@@ -378,39 +379,54 @@ ktrsyscall(struct ktr_syscall *ktr)
 				c = ',';
 				ap++;
 				argsize -= sizeof(register_t);
+			} else if (ktr->ktr_code == SYS___sysctl) {
+				int *np, n;
+
+				n = ap[1];
+				np = (int *)(ap + 6);
+				for (; n--; np++) {
+					if (c)
+						putchar(c);
+					printf("%d", *np);
+					c = '.';
+				}
+
+				c = ',';
+				ap += 2;
+				argsize -= 2 * sizeof(register_t);
 			} else if (ktr->ktr_code == SYS_ptrace) {
 				if (*ap >= 0 && *ap <
 				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
-					(void)printf("(%s", ptrace_ops[*ap]);
+					(void)printf("%s", ptrace_ops[*ap]);
 				else switch(*ap) {
 #ifdef PT_GETFPREGS
 				case PT_GETFPREGS:
-					(void)printf("(PT_GETFPREGS");
+					(void)printf("PT_GETFPREGS");
 					break;
 #endif
 				case PT_GETREGS:
-					(void)printf("(PT_GETREGS");
+					(void)printf("PT_GETREGS");
 					break;
 #ifdef PT_SETFPREGS
 				case PT_SETFPREGS:
-					(void)printf("(PT_SETFPREGS");
+					(void)printf("PT_SETFPREGS");
 					break;
 #endif
 				case PT_SETREGS:
-					(void)printf("(PT_SETREGS");
+					(void)printf("PT_SETREGS");
 					break;
 #ifdef PT_STEP
 				case PT_STEP:
-					(void)printf("(PT_STEP");
+					(void)printf("PT_STEP");
 					break;
 #endif
 #ifdef PT_WCOOKIE
 				case PT_WCOOKIE:
-					(void)printf("(PT_WCOOKIE");
+					(void)printf("PT_WCOOKIE");
 					break;
 #endif
 				default:
-					(void)printf("(%ld", (long)*ap);
+					(void)printf("%ld", (long)*ap);
 					break;
 				}
 				c = ',';
@@ -419,17 +435,18 @@ ktrsyscall(struct ktr_syscall *ktr)
 			}
 		}
 		while (argsize) {
+			if (c)
+				putchar(c);
 			if (decimal)
-				(void)printf("%c%ld", c, (long)*ap);
+				(void)printf("%ld", (long)*ap);
 			else
-				(void)printf("%c%#lx", c, (long)*ap);
+				(void)printf("%#lx", (long)*ap);
 			c = ',';
 			ap++;
 			argsize -= sizeof(register_t);
 		}
-		(void)putchar(')');
 	}
-	(void)putchar('\n');
+	(void)printf(")\n");
 }
 
 static void
