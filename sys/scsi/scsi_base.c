@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.76 2005/05/31 01:15:31 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.77 2005/06/02 23:49:28 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -530,7 +530,7 @@ eight_byte:
 	if (block_size)
 		*block_size = _3btol(desc->blklen);
 	if (block_count)
-		*block_count = (u_int64_t)_4btol(desc_big->nblocks);
+		*block_count = (u_int64_t)_4btol(desc->nblocks);
 
 	return (0);
 }
