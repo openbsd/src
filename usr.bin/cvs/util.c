@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.31 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.32 2005/06/02 20:19:30 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -538,8 +538,6 @@ cvs_remove_dir(const char *path)
 
 		len = cvs_path_cat(path, ent->d_name, fpath, sizeof(fpath));
 		if (len >= sizeof(fpath)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", fpath);
 			closedir(dirp);
 			return (-1);
 		}

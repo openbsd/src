@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.34 2005/05/31 08:58:47 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.35 2005/06/02 20:19:30 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,11 +64,8 @@ cvs_ent_open(const char *dir, int flags)
 	memset(mode, 0, sizeof(mode));
 
 	len = cvs_path_cat(dir, CVS_PATH_ENTRIES, entpath, sizeof(entpath));
-	if (len >= sizeof(entpath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", entpath);
+	if (len >= sizeof(entpath))
 		return (NULL);
-	}
 
 	switch (flags & O_ACCMODE) {
 	case O_WRONLY:
