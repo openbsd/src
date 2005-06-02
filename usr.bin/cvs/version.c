@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.15 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: version.c,v 1.16 2005/06/02 20:12:06 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -47,7 +47,7 @@ struct cvs_cmd cvs_cmd_version = {
 	"",
 	NULL,
 	0,
-	cvs_version_init,
+	NULL,
 	cvs_version_pre_exec,
 	NULL,
 	NULL,
@@ -56,13 +56,6 @@ struct cvs_cmd cvs_cmd_version = {
 	0
 };
 
-
-static int
-cvs_version_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
-{
-	*arg = 1;
-	return (0);
-}
 
 static int
 cvs_version_pre_exec(struct cvsroot *root)
