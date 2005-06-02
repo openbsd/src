@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.43 2005/05/18 21:31:27 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.44 2005/06/02 07:31:17 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -81,6 +81,7 @@
 
 #ifndef	SMALL_KERNEL
 #define	BURNER_SUPPORT
+#define	SCROLLBACK_SUPPORT
 #endif
 
 #include <sys/param.h>
@@ -602,11 +603,13 @@ wskbd_input(struct device *dev, u_int type, int value)
 		num = wskbd_translate(sc->id, type, value);
 		if (num > 0) {
 			if (sc->sc_base.me_dispdv != NULL) {
+#ifdef SCROLLBACK_SUPPORT
 				/* XXX - Shift_R+PGUP(release) emits PrtSc */
 				if (sc->id->t_symbols[0] != KS_Print_Screen) {
 					wsscrollback(sc->sc_base.me_dispdv,
 					    WSDISPLAY_SCROLL_RESET);
 				}
+#endif
 				for (i = 0; i < num; i++) {
 					wsdisplay_kbdinput(sc->sc_base.me_dispdv,
 					    sc->id->t_symbols[i]);
@@ -1375,6 +1378,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	if (*type != WSCONS_EVENT_KEY_DOWN)
 		return (0);
 
+#ifdef SCROLLBACK_SUPPORT
 #if NWSDISPLAY > 0
 	switch (ksym) {
 	case KS_Cmd_ScrollBack:
@@ -1395,6 +1399,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 		}
 		break;
 	}
+#endif
 #endif
 
 	if (!MOD_ONESET(sc->id, MOD_COMMAND) &&

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.58 2005/05/18 21:31:27 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.59 2005/06/02 07:31:17 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -34,6 +34,7 @@
 #ifndef	SMALL_KERNEL
 #define WSMOUSED_SUPPORT
 #define	BURNER_SUPPORT
+#define	SCROLLBACK_SUPPORT
 #endif
 
 #include <sys/param.h>
@@ -2050,6 +2051,7 @@ wsdisplay_switchtoconsole()
 	}
 }
 
+#ifdef SCROLLBACK_SUPPORT
 void
 wsscrollback(void *arg, int op)
 {
@@ -2069,6 +2071,7 @@ wsscrollback(void *arg, int op)
 		    sc->sc_focus->scr_dconf->emulcookie, lines);
 	}
 }
+#endif
 
 #ifdef BURNER_SUPPORT
 void
