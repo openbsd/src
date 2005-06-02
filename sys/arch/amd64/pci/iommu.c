@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.8 2005/05/27 23:48:24 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.9 2005/06/02 15:26:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -392,8 +392,10 @@ err:
 		free(scrib, M_DEVBUF);
 	if (amdgart_softcs != NULL)
 		free(amdgart_softcs, M_DEVBUF);
+#if 0
 	if (dvabase == (u_long)-1)
 		extent_free(iomem_ex, dvabase, IOMMU_SIZE * 1024 * 1024, 0);
+#endif
 	if (!TAILQ_EMPTY(&plist))
 		uvm_pglistfree(&plist);
 }
@@ -427,14 +429,16 @@ amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, paddr_t opa,
 	paddr_t base, end, idx;
 	psize_t alen;
 	u_long res;
-	int err;
+	int err, s;
 	u_int32_t pgno, flags;
 
 	base = trunc_page(opa);
 	end = roundup(opa + len, PAGE_SIZE);
 	alen = end - base;
+	s = splhigh();
 	err = extent_alloc(ex, alen, PAGE_SIZE, 0, dmam->_dm_boundary,
 	    EX_NOWAIT, &res);
+	splx(s);
 	if (err) {
 		printf("GART: extent_alloc %d\n", err);
 		return (err);
@@ -457,13 +461,15 @@ amdgart_iommu_unmap(struct extent *ex, paddr_t pa, psize_t len)
 {
 	paddr_t base, end, idx;
 	psize_t alen;
-	int err;
+	int err, s;
 	u_int32_t pgno;
 
 	base = trunc_page(pa);
 	end = roundup(pa + len, PAGE_SIZE);
 	alen = end - base;
+	s = splhigh();
 	err = extent_free(ex, base, alen, EX_NOWAIT);
+	splx(s);
 	if (err) {
 		printf("GART: extent_free %d\n", err);
 		return (err);
