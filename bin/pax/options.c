@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.62 2005/05/24 16:33:45 jaredy Exp $	*/
+/*	$OpenBSD: options.c,v 1.63 2005/06/02 19:11:06 jaredy Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.62 2005/05/24 16:33:45 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.63 2005/06/02 19:11:06 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ pax_options(int argc, char **argv)
 	/*
 	 * process option flags
 	 */
-	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zB:DE:G:HLPT:U:XYZ0"))
+	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zB:DE:G:HLOPT:U:XYZ0"))
 	    != -1) {
 		switch (c) {
 		case 'a':
@@ -1527,29 +1527,18 @@ no_op(void)
 void
 pax_usage(void)
 {
-	(void)fputs("usage: pax [-cdnvzO] [-E limit] [-f archive] ", stderr);
-	(void)fputs("[-s replstr] ... [-U user] ...", stderr);
-	(void)fputs("\n           [-G group] ... ", stderr);
-	(void)fputs("[-T [from_date][,to_date]] ... ", stderr);
-	(void)fputs("[pattern ...]\n", stderr);
-	(void)fputs("       pax -r [-cdiknuvzDOYZ] [-E limit] ", stderr);
-	(void)fputs("[-f archive] [-o options] ... \n", stderr);
-	(void)fputs("           [-p string] ... [-s replstr] ... ", stderr);
-	(void)fputs("[-U user] ... [-G group] ...\n	      ", stderr);
-	(void)fputs("[-T [from_date][,to_date]] ... ", stderr);
-	(void)fputs(" [pattern ...]\n", stderr);
-	(void)fputs("       pax -w [-dituvzHLOPX] [-b blocksize] ", stderr);
-	(void)fputs("[ [-a] [-f archive] ] [-x format] \n", stderr);
-	(void)fputs("           [-B bytes] [-s replstr] ... ", stderr);
-	(void)fputs("[-o options] ... [-U user] ...", stderr);
-	(void)fputs("\n           [-G group] ... ", stderr);
-	(void)fputs("[-T [from_date][,to_date][/[c][m]]] ... ", stderr);
-	(void)fputs("[file ...]\n", stderr);
-	(void)fputs("       pax -r -w [-diklntuvDHLOPXYZ] ", stderr);
-	(void)fputs("[-p string] ... [-s replstr] ...", stderr);
-	(void)fputs("\n           [-U user] ... [-G group] ... ", stderr);
-	(void)fputs("[-T [from_date][,to_date][/[c][m]]] ... ", stderr);
-	(void)fputs("\n           [file ...] directory\n", stderr);
+	(void)fputs(
+	    "usage: pax [-0cdOnvz] [-E limit] [-f archive] [-G group] [-s replstr]\n"
+	    "\t  [-T [from_date][,to_date][/[c][m]]] [-U user] [pattern ...]\n"
+	    "       pax -r [-0cDdikOnuvzYZz] [-E limit] [-f archive] [-G group]\n"
+	    "\t  [-o options] [-p string] [-s replstr] [-T [from_date][,to_date]]\n"
+	    "\t  [-U user] [pattern ...]\n"
+	    "       pax -w [-0adHiLOPtuvXz] [-B bytes] [-b blocksize] [-f archive]\n"
+	    "\t  [-G group] [-o options] [-s replstr]\n"
+	    "\t  [-T [from_date][,to_date][/[c][m]]] [-U user] [-x format] [file ...]\n"
+	    "       pax -r -w [-0DdHikLlnOPtuvXYZ] [-G group] [-p string] [-s replstr]\n"
+	    "\t  [-T [from_date][,to_date][/[c][m]]] [-U user] [file ...] directory\n",
+	    stderr);
 	exit(1);
 }
 
