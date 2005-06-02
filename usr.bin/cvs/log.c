@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.17 2005/06/02 16:05:38 xsa Exp $	*/
+/*	$OpenBSD: log.c,v 1.18 2005/06/02 20:16:48 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -299,6 +299,7 @@ cvs_printf(const char *fmt, ...)
 	int ret;
 	char *nstr, *dp, *sp;
 	va_list vap;
+	static int send_m = 1;
 
 	va_start(vap, fmt);
 
@@ -311,8 +312,12 @@ cvs_printf(const char *fmt, ...)
 					for (sp = dp; *sp != '\0'; sp++)
 						;
 
-				putc('M', stdout);
-				putc(' ', stdout);
+				if (send_m) { 
+					send_m = 0;
+					putc('M', stdout);
+					putc(' ', stdout);
+				}
+
 				fwrite(dp, sizeof(char), (size_t)(sp - dp),
 				    stdout);
 
@@ -320,6 +325,7 @@ cvs_printf(const char *fmt, ...)
 					break;
 
 				putc('\n', stdout);
+				send_m = 1;
 				dp = sp + 1;
 			}
 			free(nstr);
