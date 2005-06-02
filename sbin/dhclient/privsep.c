@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.7 2004/05/10 18:34:42 deraadt Exp $ */
+/*	$OpenBSD: privsep.c,v 1.8 2005/06/02 15:04:25 cloder Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -38,6 +38,9 @@ buf_open(size_t len)
 int
 buf_add(struct buf *buf, void *data, size_t len)
 {
+	if (len == 0)
+		return (0);
+
 	if (buf->wpos + len > buf->size)
 		return (-1);
 
