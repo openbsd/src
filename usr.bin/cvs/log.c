@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.16 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: log.c,v 1.17 2005/06/02 16:05:38 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -218,6 +218,11 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		ecp = 0;
 
 #ifdef CVS
+	struct cvs_cmd *cmdp;
+
+	/* always use the command name in error messages, not aliases */
+	cmdp = cvs_findcmd(cvs_command);
+
 	/* The cvs program appends the command name to the program name */
 	if (level == LP_TRACE) {
 		strlcpy(prefix, " -> ", sizeof(prefix));
@@ -226,10 +231,10 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	} else if (cvs_command != NULL) {
 		if (level == LP_ABORT)
 			snprintf(prefix, sizeof(prefix), "%s [%s aborted]",
-			    __progname, cvs_command);
+			    __progname, cmdp->cmd_name);
 		else
 			snprintf(prefix, sizeof(prefix), "%s %s", __progname,
-			    cvs_command);
+			    cmdp->cmd_name);
 	} else /* just use the standard strlcpy */
 #endif
 		strlcpy(prefix, __progname, sizeof(prefix));

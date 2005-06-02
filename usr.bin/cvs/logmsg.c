@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.14 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.15 2005/06/02 16:05:38 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -266,7 +266,7 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 
 		/* nothing was entered */
 		fprintf(stderr,
-		    "Log message unchanged or not specified\na)bort, "
+		    "\nLog message unchanged or not specified\na)bort, "
 		    "c)ontinue, e)dit, !)reuse this message unchanged "
 		    "for remaining dirs\nAction: (continue) ");
 
@@ -280,7 +280,7 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 			fprintf(stderr, "invalid input\n");
 			continue;
 		} else if (buf[0] == 'a') {
-			cvs_log(LP_ERR, "aborted by user");
+			cvs_log(LP_ABORT, "aborted by user");
 			break;
 		} else if ((buf[0] == '\n') || (buf[0] == 'c')) {
 			/* empty message */
