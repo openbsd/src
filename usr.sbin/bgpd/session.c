@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.219 2005/05/24 17:30:37 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.220 2005/06/02 15:07:02 cloder Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2119,7 +2119,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 					log_warnx("expected to receive fd for "
 					    "%s but didn't receive any",
 					    log_sockaddr((struct sockaddr *)
-					    &la->sa));
+					    &nla->sa));
 
 				la = calloc(1, sizeof(struct listen_addr));
 				if (la == NULL)
