@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.45 2005/04/14 05:39:17 brad Exp $	*/
+/*	$OpenBSD: audio.c,v 1.46 2005/06/02 19:04:18 joris Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1034,7 +1034,8 @@ audio_open(dev, sc, flags, ifmt, p)
 	 */
 	if (sc->sc_rparams.precision == 0 || sc->sc_pparams.precision == 0) {
 		printf("audio_open: 0 precision\n");
-		return EINVAL;
+		error = EINVAL;
+		goto bad;
 	}
 #endif
 
