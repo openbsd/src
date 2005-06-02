@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.45 2005/06/02 16:27:08 jaredy Exp $
+.\"	$OpenBSD: pax.1,v 1.46 2005/06/02 19:06:43 jaredy Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -80,7 +80,6 @@
 .Fl r
 .Fl w
 .Op Fl 0DdHikLlnOPtuvXYZ
-.Op Fl E Ar limit
 .Op Fl G Ar group
 .Op Fl p Ar string
 .Op Fl s Ar replstr
@@ -244,35 +243,22 @@ and then exit with a non-zero exit status.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl r
-Read an archive file from standard input
-and extract the specified
-.Ar file
-operands.
-If any intermediate directories are needed in order to extract an archive
-member, these directories will be created as if
-.Xr mkdir 2
-was called with the bitwise inclusive
-.Tn OR
-of
-.Dv S_IRWXU , S_IRWXG ,
-and
-.Dv S_IRWXO
-as the mode argument.
-When the selected archive format supports the specification of linked
-files and these files cannot be linked while the archive is being extracted,
-.Nm
-will write a diagnostic message to standard error
-and exit with a non-zero exit status at the completion of operation.
-.It Fl w
-Write files to the standard output
-in the specified archive format.
-When no
-.Ar file
-operands are specified, standard input
-is read for a list of pathnames with one per line without any leading or
-trailing
-.Aq blanks .
+.It Fl 0
+Use the NUL
+.Pq Ql \e0
+character as a pathname terminator, instead of newline
+.Pq Ql \en .
+This applies only to the pathnames read from standard input in
+the write and copy modes,
+and to the pathnames written to standard output in list mode.
+This option is expected to be used in concert with the
+.Fl print0
+function in
+.Xr find 1
+or the
+.Fl 0
+flag in
+.Xr xargs 1 .
 .It Fl a
 Append the given
 .Ar file
@@ -297,22 +283,28 @@ archive or have other unpredictable results.
 Tape drives in particular are more likely to not support an append operation.
 An archive stored in a regular file system file or on a disk device will
 usually support an append operation.
-.It Fl 0
-Use the NUL
-.Pq Ql \e0
-character as a pathname terminator, instead of newline
-.Pq Ql \en .
-This applies only to the pathnames read from standard input in
-the write and copy modes,
-and to the pathnames written to standard output in list mode.
-This option is expected to be used in concert with the
-.Fl print0
-function in
-.Xr find 1
-or the
-.Fl 0
-flag in
-.Xr xargs 1 .
+.It Fl B Ar bytes
+Limit the number of bytes written to a single archive volume to
+.Ar bytes .
+The
+.Ar bytes
+limit can end with
+.Sq Li m ,
+.Sq Li k ,
+or
+.Sq Li b
+to specify multiplication by 1048576 (1M), 1024 (1K) or 512, respectively.
+A pair of
+.Ar bytes
+limits can be separated by
+.Sq Li x
+to indicate a product.
+.Pp
+.Em Warning :
+Only use this option when writing an archive to a device which supports
+an end of file read condition based on last (or largest) write offset
+(such as a regular file or a tape drive).
+The use of this option with a floppy or hard disk is not recommended.
 .It Fl b Ar blocksize
 When
 .Em writing
@@ -352,10 +344,49 @@ those specified by the
 and
 .Ar file
 operands.
+.It Fl D
+This option is the same as the
+.Fl u
+option, except that the file inode change time is checked instead of the
+file modification time.
+The file inode change time can be used to select files whose inode information
+(e.g., UID, GID, etc.) is newer than a copy of the file in the destination
+.Ar directory .
 .It Fl d
 Cause files of type directory being copied or archived, or archive members of
 type directory being extracted, to match only the directory file or archive
 member and not the file hierarchy rooted at the directory.
+.It Fl E Ar limit
+Limit the number of consecutive read faults while trying to read a flawed
+archive to
+.Ar limit .
+With a positive
+.Ar limit ,
+.Nm
+will attempt to recover from an archive read error and will
+continue processing starting with the next file stored in the archive.
+A
+.Ar limit
+of 0 will cause
+.Nm
+to stop operation after the first read error is detected on an archive volume.
+A
+.Ar limit
+of
+.Li NONE
+will cause
+.Nm
+to attempt to recover from read errors forever.
+The default
+.Ar limit
+is a small positive number of retries.
+.Pp
+.Em Warning :
+Using this option with
+.Li NONE
+should be used with extreme caution as
+.Nm
+may get stuck in an infinite loop on a very badly flawed archive.
 .It Fl f Ar archive
 Specify
 .Ar archive
@@ -372,6 +403,22 @@ When required,
 .Nm
 will prompt for the pathname of the file or device of the next volume in the
 archive.
+.It Fl G Ar group
+Select a file based on its
+.Ar group
+name, or when starting with a
+.Cm # ,
+a numeric GID.
+A
+.Ql \e
+can be used to escape the
+.Cm # .
+Multiple
+.Fl G
+options may be supplied and checking stops with the first match.
+.It Fl H
+Follow only command-line symbolic links while performing a physical file
+system traversal.
 .It Fl i
 Interactively rename files or archive members.
 For each archive member matching a
@@ -398,6 +445,8 @@ is encountered when reading a response or if
 cannot be opened for reading and writing.
 .It Fl k
 Do not overwrite existing files.
+.It Fl L
+Follow all symbolic links to perform a logical file system traversal.
 .It Fl l
 (The lowercase letter
 .Dq ell . )
@@ -418,6 +467,13 @@ When members of type directory are matched, the file hierarchy rooted at that
 directory is also matched (unless
 .Fl d
 is also specified).
+.It Fl O
+Force the archive to be one volume.
+If a volume ends prematurely,
+.Nm
+will not prompt for a new volume.
+This option can be useful for
+automated tasks where error recovery cannot be performed by a human.
 .It Fl o Ar options
 Information to modify the algorithm for extracting or writing archive files
 which is specific to the archive format specified by
@@ -437,6 +493,9 @@ format:
 .It Cm write_opt=nodir
 When writing archives, omit the storage of directories.
 .El
+.It Fl P
+Do not follow symbolic links, perform a physical file system traversal.
+This is the default mode.
 .It Fl p Ar string
 Specify one or more file characteristic options (privileges).
 The
@@ -519,6 +578,26 @@ precedence.
 For example, if
 .Fl p Ar eme
 is specified, file modification times are still preserved.
+.It Fl r
+Read an archive file from standard input
+and extract the specified
+.Ar file
+operands.
+If any intermediate directories are needed in order to extract an archive
+member, these directories will be created as if
+.Xr mkdir 2
+was called with the bitwise inclusive
+.Tn OR
+of
+.Dv S_IRWXU , S_IRWXG ,
+and
+.Dv S_IRWXO
+as the mode argument.
+When the selected archive format supports the specification of linked
+files and these files cannot be linked while the archive is being extracted,
+.Nm
+will write a diagnostic message to standard error
+and exit with a non-zero exit status at the completion of operation.
 .It Fl s Ar replstr
 Modify the archive member names according to the substitution expression
 .Ar replstr ,
@@ -580,11 +659,132 @@ standard error in the following format:
 .Pp
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
+.It Fl T Ar range
+Allow files to be selected based on a file modification or inode change
+time falling within the specified time range.
+The range has the format:
+.Sm off
+.Bd -filled -offset indent
+.Oo Ar from_date Oc Oo ,
+.Ar to_date Oc Oo /
+.Oo Cm c Oc Op Cm m Oc
+.Ed
+.Sm on
+.Pp
+The dates specified by
+.Ar from_date
+to
+.Ar to_date
+are inclusive.
+If only a
+.Ar from_date
+is supplied, all files with a modification or inode change time
+equal to or younger are selected.
+If only a
+.Ar to_date
+is supplied, all files with a modification or inode change time
+equal to or older will be selected.
+When the
+.Ar from_date
+is equal to the
+.Ar to_date ,
+only files with a modification or inode change time of exactly that
+time will be selected.
+.Pp
+When
+.Nm
+is in the
+.Em write
+or
+.Em copy
+mode, the optional trailing field
+.Oo Cm c Oc Op Cm m
+can be used to determine which file time (inode change, file modification or
+both) are used in the comparison.
+If neither is specified, the default is to use file modification time only.
+The
+.Cm m
+specifies the comparison of file modification time (the time when
+the file was last written).
+The
+.Cm c
+specifies the comparison of inode change time (the time when the file
+inode was last changed; e.g., a change of owner, group, mode, etc).
+When
+.Cm c
+and
+.Cm m
+are both specified, then the modification and inode change times are
+both compared.
+.Pp
+The inode change time comparison is useful in selecting files whose
+attributes were recently changed or selecting files which were recently
+created and had their modification time reset to an older time (as what
+happens when a file is extracted from an archive and the modification time
+is preserved).
+Time comparisons using both file times is useful when
+.Nm
+is used to create a time based incremental archive (only files that were
+changed during a specified time range will be archived).
+.Pp
+A time range is made up of six different fields and each field must contain two
+digits.
+The format is:
+.Pp
+.Dl [[[[[cc]yy]mm]dd]HH]MM[.SS]
+.Pp
+Where
+.Ar cc
+is the first two digits of the year (the century),
+.Ar yy
+is the last two digits of the year,
+the first
+.Ar mm
+is the month (from 01 to 12),
+.Ar dd
+is the day of the month (from 01 to 31),
+.Ar HH
+is the hour of the day (from 00 to 23),
+.Ar MM
+is the minute (from 00 to 59),
+and
+.Ar SS
+is the seconds (from 00 to 59).
+The minute field
+.Ar MM
+is required, while the other fields are optional and must be added in the
+following order:
+.Ar HH , dd , mm ,
+.Ar yy , cc .
+.Pp
+The
+.Ar SS
+field may be added independently of the other fields.
+Time ranges are relative to the current time, so
+.Ic -T 1234/cm
+would select all files with a modification or inode change time
+of 12:34 PM today or later.
+Multiple
+.Fl T
+time range can be supplied and checking stops with the first match.
 .It Fl t
 Reset the access times of any file or directory read or accessed by
 .Nm
 to be the same as they were before being read or accessed by
 .Nm pax .
+.It Fl U Ar user
+Select a file based on its
+.Ar user
+name, or when starting with a
+.Cm # ,
+a numeric UID.
+A
+.Ql \e
+can be used to escape the
+.Cm # .
+Multiple
+.Fl U
+options may be supplied and checking stops with the first match.
 .It Fl u
 Ignore files that are older (having a less recent file modification time)
 than a pre-existing file or archive member with the same name.
@@ -634,6 +834,23 @@ as soon as processing begins on that file or
 archive member.
 The trailing newline
 is not buffered and is written only after the file has been read or written.
+.It Fl w
+Write files to the standard output
+in the specified archive format.
+When no
+.Ar file
+operands are specified, standard input
+is read for a list of pathnames with one per line without any leading or
+trailing
+.Aq blanks .
+.It Fl X
+When traversing the file hierarchy specified by a pathname,
+do not descend into directories that have a different device ID.
+See the
+.Li st_dev
+field as described in
+.Xr stat 2
+for more information about device IDs.
 .It Fl x Ar format
 Specify the output archive format, with the default format being
 .Cm ustar .
@@ -708,229 +925,6 @@ The individual archive formats may impose additional restrictions on use.
 Typical archive format restrictions include (but are not limited to):
 file pathname length, file size, link pathname length, and the type of the
 file.
-.It Fl z
-Use
-.Xr gzip 1
-to compress (decompress) the archive while writing (reading).
-Incompatible with
-.Fl a .
-.It Fl B Ar bytes
-Limit the number of bytes written to a single archive volume to
-.Ar bytes .
-The
-.Ar bytes
-limit can end with
-.Sq Li m ,
-.Sq Li k ,
-or
-.Sq Li b
-to specify multiplication by 1048576 (1M), 1024 (1K) or 512, respectively.
-A pair of
-.Ar bytes
-limits can be separated by
-.Sq Li x
-to indicate a product.
-.Pp
-.Em Warning :
-Only use this option when writing an archive to a device which supports
-an end of file read condition based on last (or largest) write offset
-(such as a regular file or a tape drive).
-The use of this option with a floppy or hard disk is not recommended.
-.It Fl D
-This option is the same as the
-.Fl u
-option, except that the file inode change time is checked instead of the
-file modification time.
-The file inode change time can be used to select files whose inode information
-(e.g., UID, GID, etc.) is newer than a copy of the file in the destination
-.Ar directory .
-.It Fl E Ar limit
-Limit the number of consecutive read faults while trying to read a flawed
-archive to
-.Ar limit .
-With a positive
-.Ar limit ,
-.Nm
-will attempt to recover from an archive read error and will
-continue processing starting with the next file stored in the archive.
-A
-.Ar limit
-of 0 will cause
-.Nm
-to stop operation after the first read error is detected on an archive volume.
-A
-.Ar limit
-of
-.Li NONE
-will cause
-.Nm
-to attempt to recover from read errors forever.
-The default
-.Ar limit
-is a small positive number of retries.
-.Pp
-.Em Warning :
-Using this option with
-.Li NONE
-should be used with extreme caution as
-.Nm
-may get stuck in an infinite loop on a very badly flawed archive.
-.It Fl G Ar group
-Select a file based on its
-.Ar group
-name, or when starting with a
-.Cm # ,
-a numeric GID.
-A
-.Ql \e
-can be used to escape the
-.Cm # .
-Multiple
-.Fl G
-options may be supplied and checking stops with the first match.
-.It Fl H
-Follow only command-line symbolic links while performing a physical file
-system traversal.
-.It Fl L
-Follow all symbolic links to perform a logical file system traversal.
-.It Fl O
-Force the archive to be one volume.
-If a volume ends prematurely,
-.Nm
-will not prompt for a new volume.
-This option can be useful for
-automated tasks where error recovery cannot be performed by a human.
-.It Fl P
-Do not follow symbolic links, perform a physical file system traversal.
-This is the default mode.
-.It Fl T Ar range
-Allow files to be selected based on a file modification or inode change
-time falling within the specified time range.
-The range has the format:
-.Sm off
-.Bd -filled -offset indent
-.Oo Ar from_date Oc Oo ,
-.Ar to_date Oc Oo /
-.Oo Cm c Oc Op Cm m Oc
-.Ed
-.Sm on
-.Pp
-The dates specified by
-.Ar from_date
-to
-.Ar to_date
-are inclusive.
-If only a
-.Ar from_date
-is supplied, all files with a modification or inode change time
-equal to or younger are selected.
-If only a
-.Ar to_date
-is supplied, all files with a modification or inode change time
-equal to or older will be selected.
-When the
-.Ar from_date
-is equal to the
-.Ar to_date ,
-only files with a modification or inode change time of exactly that
-time will be selected.
-.Pp
-When
-.Nm
-is in the
-.Em write
-or
-.Em copy
-mode, the optional trailing field
-.Oo Cm c Oc Op Cm m
-can be used to determine which file time (inode change, file modification or
-both) are used in the comparison.
-If neither is specified, the default is to use file modification time only.
-The
-.Cm m
-specifies the comparison of file modification time (the time when
-the file was last written).
-The
-.Cm c
-specifies the comparison of inode change time (the time when the file
-inode was last changed; e.g., a change of owner, group, mode, etc).
-When
-.Cm c
-and
-.Cm m
-are both specified, then the modification and inode change times are
-both compared.
-The inode change time comparison is useful in selecting files whose
-attributes were recently changed or selecting files which were recently
-created and had their modification time reset to an older time (as what
-happens when a file is extracted from an archive and the modification time
-is preserved).
-Time comparisons using both file times is useful when
-.Nm
-is used to create a time based incremental archive (only files that were
-changed during a specified time range will be archived).
-.Pp
-A time range is made up of six different fields and each field must contain two
-digits.
-The format is:
-.Pp
-.Dl [[[[[cc]yy]mm]dd]HH]MM[.SS]
-.Pp
-Where
-.Ar cc
-is the first two digits of the year (the century),
-.Ar yy
-is the last two digits of the year,
-the first
-.Ar mm
-is the month (from 01 to 12),
-.Ar dd
-is the day of the month (from 01 to 31),
-.Ar HH
-is the hour of the day (from 00 to 23),
-.Ar MM
-is the minute (from 00 to 59),
-and
-.Ar SS
-is the seconds (from 00 to 59).
-The minute field
-.Ar MM
-is required, while the other fields are optional and must be added in the
-following order:
-.Ar HH , dd , mm ,
-.Ar yy , cc .
-.Pp
-The
-.Ar SS
-field may be added independently of the other fields.
-Time ranges are relative to the current time, so
-.Ic -T 1234/cm
-would select all files with a modification or inode change time
-of 12:34 PM today or later.
-Multiple
-.Fl T
-time range can be supplied, and checking stops with the first match.
-.It Fl U Ar user
-Select a file based on its
-.Ar user
-name, or when starting with a
-.Cm # ,
-a numeric UID.
-A
-.Ql \e
-can be used to escape the
-.Cm # .
-Multiple
-.Fl U
-options may be supplied and checking stops with the first match.
-.It Fl X
-When traversing the file hierarchy specified by a pathname,
-do not descend into directories that have a different device ID.
-See the
-.Li st_dev
-field as described in
-.Xr stat 2
-for more information about device IDs.
 .It Fl Y
 This option is the same as the
 .Fl D
@@ -941,6 +935,12 @@ This option is the same as the
 .Fl u
 option, except that the modification time is checked using the
 pathname created after all the file name modifications have completed.
+.It Fl z
+Use
+.Xr gzip 1
+to compress (decompress) the archive while writing (reading).
+Incompatible with
+.Fl a .
 .El
 .Pp
 The options that operate on the names of files or archive members
