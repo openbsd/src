@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.16 2004/11/25 16:41:55 jmc Exp $
+.\"	$OpenBSD: pty.4,v 1.17 2005/06/02 07:51:37 jmc Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -151,11 +151,8 @@ is a copy of the new
 .Xr termios 4
 structure.
 .Pp
-This is used by
-.Xr telnetd 8
-to implement TELNET "line mode" - it allows the
-.Xr telnetd 8
-to detect
+This is used by telnet daemons to implement TELNET "line mode",
+allowing them to detect
 .Xr tty 4
 state changes by the slave, and negotiate the appropriate TELNET
 protocol equivalents with the remote peer.
