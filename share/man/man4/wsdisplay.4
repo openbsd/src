@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.33 2005/05/15 19:36:21 miod Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.34 2005/06/02 07:34:12 miod Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat.
@@ -82,17 +82,13 @@ framework.
 It attaches to the hardware specific display device driver and
 makes it available as text terminal or graphics interface.
 .Pp
-A display device can have the ability to display characters on it
+Display devices have the ability to display characters on them
 (without help of an X server), either directly by hardware or through
 software drawing pixel data into the display memory.
-Such displays are called
-.Dq emulating ,
-the
+The
 .Nm
 driver will connect a terminal emulation module and provide a
 tty-like software interface.
-In contrary, non-emulating displays can only be used by special programs
-like X servers.
 .Pp
 The
 .Em console
@@ -104,9 +100,6 @@ if the device is in use as system console.
 This way, the console device can be connected to a known
 .Nm wsdisplay
 device instance.
-(Naturally, only
-.Dq emulating
-display devices are usable as console.)
 .Pp
 The
 .Em mux
@@ -603,6 +596,3 @@ The terms
 and
 .Dq wsdisplay
 are not cleanly distinguished in the code and in manual pages.
-.Pp
-.Dq non-emulating
-display devices are not tested.

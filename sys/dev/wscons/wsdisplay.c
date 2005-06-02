@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.59 2005/06/02 07:31:17 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.60 2005/06/02 07:34:14 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -206,8 +206,6 @@ extern struct cfdriver wsdisplay_cd;
 /* Autoconfiguration definitions. */
 int	wsdisplay_emul_match(struct device *, void *, void *);
 void	wsdisplay_emul_attach(struct device *, struct device *, void *);
-int	wsdisplay_noemul_match(struct device *, void *, void *);
-void	wsdisplay_noemul_attach(struct device *, struct device *, void *);
 
 struct cfdriver wsdisplay_cd = {
 	NULL, "wsdisplay", DV_TTY
@@ -216,11 +214,6 @@ struct cfdriver wsdisplay_cd = {
 struct cfattach wsdisplay_emul_ca = {
 	sizeof(struct wsdisplay_softc), wsdisplay_emul_match,
 	    wsdisplay_emul_attach,
-};
-
-struct cfattach wsdisplay_noemul_ca = {
-	sizeof(struct wsdisplay_softc), wsdisplay_noemul_match,
-	    wsdisplay_noemul_attach,
 };
 
 void	wsdisplaystart(struct tty *);
@@ -608,28 +601,6 @@ wsemuldisplaydevprint(void *aux, const char *pnp)
 #endif
 
 	return (UNCONF);
-}
-
-int
-wsdisplay_noemul_match(struct device *parent, void *match, void *aux)
-{
-#if 0 /* -Wunused */
-	struct wsdisplaydev_attach_args *ap = aux;
-#endif
-
-	/* Always match. */
-	return (1);
-}
-
-void
-wsdisplay_noemul_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)self;
-	struct wsdisplaydev_attach_args *ap = aux;
-
-	wsdisplay_common_attach(sc, 0,
-	    sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_mux, NULL,
-	    ap->accessops, ap->accesscookie);
 }
 
 /* Print function (for parent devices). */

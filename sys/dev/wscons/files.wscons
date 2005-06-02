@@ -1,4 +1,4 @@
-# $OpenBSD: files.wscons,v 1.9 2005/05/15 11:29:15 miod Exp $
+# $OpenBSD: files.wscons,v 1.10 2005/06/02 07:34:14 miod Exp $
 # $NetBSD: files.wscons,v 1.34 2005/05/04 01:52:16 augustss Exp $
 
 #
@@ -16,7 +16,6 @@
 # this loses, but there's no way to define attributes which have attributes
 device	wsdisplay #tty?
 attach	wsdisplay at wsemuldisplaydev with wsdisplay_emul
-attach	wsdisplay at wsdisplaydev with wsdisplay_noemul
 device	wskbd
 attach	wskbd at wskbddev
 device	wsmouse
