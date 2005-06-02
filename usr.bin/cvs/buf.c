@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.11 2005/05/31 08:58:47 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.12 2005/06/02 07:16:38 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,7 +37,6 @@
 #include <unistd.h>
 
 #include "buf.h"
-#include "cvs.h"
 #include "log.h"
 
 
@@ -413,17 +412,13 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 {
 	int ret, fd;
 
-	ret = 0;
-	
 	fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode);
 	if (fd == -1) {
 		cvs_log(LP_ERRNO, "failed to open file `%s'", path); 
 		return (-1);
 	}
 
-	if (!cvs_noexec)
-		ret = cvs_buf_write_fd(b, fd);
-
+	ret = cvs_buf_write_fd(b, fd);
 	if (ret == -1) {
 		cvs_log(LP_ERRNO, "failed to write to file `%s'",  path);
 		(void)unlink(path);
@@ -446,8 +441,6 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 {
 	int ret, fd;
 
-	ret = 0;
-
 	fd = mkstemp(template);
 	if (fd == -1) {
 		cvs_log(LP_ERRNO, "failed to mkstemp file `%s': %s", 
@@ -455,9 +448,7 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 		return (-1);
 	}
 
-	if (!cvs_noexec)
-		ret = cvs_buf_write_fd(b, fd);
-
+	ret = cvs_buf_write_fd(b, fd);
 	if (ret == -1) {
 		cvs_log(LP_ERRNO, "failed to write to temp file `%s': %s", 
 		    template, strerror(errno));
