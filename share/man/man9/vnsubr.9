@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnsubr.9,v 1.3 2005/05/31 22:59:29 jmc Exp $
+.\"     $OpenBSD: vnsubr.9,v 1.4 2005/06/02 15:42:12 jaredy Exp $
 .\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 .Nm vn_rdwr ,
 .Nm vn_open ,
 .Nm vn_stat ,
-.Nm vn_writechk ,
+.Nm vn_writechk
 .Nd high-level convenience functions for vnode operations
 .Sh SYNOPSIS
 .In sys/param.h
@@ -90,13 +90,13 @@ is the unlocked vnode of the vnode to close.
 simply locks the vnode, invokes the vnode operation
 .Fn VOP_CLOSE
 and calls
-.Fn vput
+.Xr vput 9
 to return the vnode to the freelist or holdlist.
 Note that
 .Fn vn_close
 expects an unlocked, referenced vnode and will dereference the vnode
 prior to returning.
-If the operation is successful zero is returned,
+If the operation is successful, zero is returned;
 otherwise an appropriate error is returned.
 .It Fn vn_default_error "v"
 A generic "default" routine that just returns error.
@@ -118,7 +118,7 @@ is intended to be used in
 etc., to ensure that
 .Xr chroot 2
 actually means something.
-If the operation is successful zero is returned, otherwise 1 is returned.
+If the operation is successful, zero is returned; otherwise 1 is returned.
 .It Fn vn_lock "vp" "flags" "p"
 Acquire the vnode lock.
 Certain file system operations require that
@@ -132,7 +132,7 @@ The
 function must not be called when the vnode's reference count is
 zero.
 Instead, the
-.Fn vget
+.Xr vget 9
 function should be used.
 .Pp
 The
@@ -145,7 +145,7 @@ Return the vnode even if it has been reclaimed.
 Must be set if the caller owns the vnode interlock.
 .It Dv LK_NOWAIT Ta
 Don't wait if the vnode lock is held by someone else (may still
-wait on reclamation lock on or interlock).
+wait on reclamation lock or on interlock).
 Must not be used with
 .Dv LK_RETRY .
 .It Dv LK_EXCLUSIVE Ta
@@ -157,7 +157,6 @@ Acquire a shared lock.
 The
 .Fn vn_lock
 function can sleep.
-The
 .Fn vn_lock
 releases the vnode interlock before exit.
 .It Fn vn_marktext "vp"
@@ -166,7 +165,9 @@ Common code to mark the vnode
 as being the text of a running process.
 .It Fn vn_open "ndp" "fmode" "cmode"
 Common code for vnode open operations.
-The pathname is described in the nameidata pointer (see
+The pathname is described in the
+.Vt nameidata
+pointer (see
 .Xr namei 9 ) .
 The arguments
 .Fa fmode
@@ -176,23 +177,28 @@ specify the
 .Xr open 2
 file mode and the access permissions for creation.
 .Fn vn_open
-checks  permissions and invokes the
-.Fn VOP_OPEN
+checks permissions and invokes the
+.Xr VOP_OPEN 9
 or
 .Xr VOP_CREATE 9
 vnode operations.
-If the operation is successful zero is returned,
+If the operation is successful, zero is returned;
 otherwise an appropriate error code is returned.
-.It Xo Fo vn_rdwr "enum uio_rw rw" "struct vnode *vp" "caddr_t base"
-.Fa "int len" "off_t offset" "enum uio_seg segflg" "int ioflg"
-.Fa "struct ucred *cred" "size_t *aresid" "struct proc *p"
+.It Xo
+.Fo vn_rdwr
+.Fa "rw" "vp" "base" "len" "offset"
+.Fa "segflg" "ioflg" "cred" "aresid" "p"
 .Fc
 .Xc
-Common code to package up an I/O request on a vnode into a uio and
-then perform the I/O.
+Common code to package up an I/O request on a vnode into a
+.Vt uio
+and then perform the I/O.
 The argument
 .Fa rw
-specifies whether the I/O is a read (UIO_READ) or write (UIO_WRITE)
+specifies whether the I/O is a read
+.Pq Dv UIO_READ
+or write
+.Pq Dv UIO_WRITE
 operation.
 The unlocked vnode is specified by
 .Fa vp .
@@ -201,8 +207,10 @@ The arguments
 and
 .Fa cred
 are the calling process and its credentials.
-The remaining arguments specify the uio parameters.
-For further information on these parameters see
+The remaining arguments specify the
+.Vt uio
+parameters.
+For further information on these parameters, see
 .Xr uiomove 9 .
 .It Fn vn_stat "vp" "sb" "p"
 Common code for a vnode stat operation.
@@ -210,33 +218,42 @@ The vnode is specified by the argument
 .Fa vp ,
 and
 .Fa sb
-is the buffer to return the stat information.
+is the buffer in which to store the stat information.
 The argument
 .Fa p
 is the calling process.
 .Fn vn_stat
 basically calls the vnode operation
-.Fn VOP_GETATTR
-and transfers the contents of a vattr structure into a struct stat.
-If the operation is successful zero is returned, otherwise an
+.Xr VOP_GETATTR 9
+and transfers the contents of a
+.Vt vattr
+structure into a
+.Vt struct stat .
+If the operation is successful, zero is returned; otherwise an
 appropriate error code is returned.
 .It Fn vn_writechk "vp"
 Common code to check for write permission on the vnode
 .Fa vp .
 A vnode is read-only if it is in use as a process's text image.
-If the vnode is read-only ETEXTBSY is returned, otherwise zero is
+If the vnode is read-only,
+.Er ETXTBSY
+is returned; otherwise zero is
 returned to indicate that the vnode can be written to.
 .El
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ETXTBSY
-Cannot write to a vnode since is a process's text image.
+Cannot write to a vnode since it is a process's text image.
 .It Bq Er ENOENT
 The vnode has been reclaimed and is dead.
-This error is only returned if the LK_RETRY flag is not passed to
+This error is only returned if the
+.Dv LK_RETRY
+flag is not passed to
 .Fn vn_lock .
 .It Bq Er EBUSY
-The LK_NOWAIT flag was set and
+The
+.Dv LK_NOWAIT
+flag was set and
 .Fn vn_lock
 would have slept.
 .El
@@ -254,7 +271,6 @@ and
 .Pa sys/sys/vnode.h .
 .Sh SEE ALSO
 .Xr file 9 ,
-.Xr intro 9 ,
 .Xr lock 9 ,
 .Xr namei 9 ,
 .Xr vfs 9 ,
