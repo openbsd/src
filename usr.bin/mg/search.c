@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.17 2005/05/27 08:08:18 cloder Exp $	*/
+/*	$OpenBSD: search.c,v 1.18 2005/06/03 15:16:22 cloder Exp $	*/
 
 /*
  *		Search commands.
@@ -10,6 +10,7 @@
  */
 
 #include "def.h"
+#include <ctype.h>
 
 #ifndef NO_MACRO
 #include "macro.h"
@@ -157,7 +158,9 @@ isearch(int dir)
 	int	 cbo;
 	int	 success;
 	int	 pptr;
-
+	int	 firstc;
+	int	 xcase;
+	int	 i;
 	char	 opat[NPAT];
 
 #ifndef NO_MACRO
@@ -272,6 +275,42 @@ isearch(int dir)
 				(void)forwchar(FFRAND, 1);
 				ttbeep();
 				success = FALSE;
+			}
+			is_prompt(dir, pptr < 0, success);
+			break;
+		case CCHR('W'):
+			/* add the rest of the current word to the pattern */
+			clp = curwp->w_dotp;
+			cbo = curwp->w_doto;
+			firstc = 1;
+			if (dir == SRCH_BACK) {
+				/* when isearching backwards, cbo is the start of the pattern */
+				cbo += pptr;
+			}
+
+			/* if the search is case insensitive, add to pattern using lowercase */
+			xcase = 0;
+			for (i = 0; pat[i]; i++)
+				if (ISUPPER(CHARMASK(pat[i])))
+					xcase = 1;
+
+			while (cbo < llength(clp)) {
+				c = lgetc(clp, cbo++);
+				if ((!firstc && !isalnum(c)) || pptr == NPAT)
+					break;
+
+				firstc = 0;
+				if (!xcase && ISUPPER(c))
+					c = TOLOWER(c);
+
+				pat[pptr++] = c;
+				pat[pptr] = '\0';
+				/* cursor only moves when isearching forwards */
+				if (dir == SRCH_FORW) {
+					curwp->w_doto = cbo;
+					curwp->w_flag |= WFMOVE;
+					update();
+				}
 			}
 			is_prompt(dir, pptr < 0, success);
 			break;
