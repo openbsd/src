@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.40 2005/03/07 10:40:42 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.41 2005/06/03 08:14:01 pascoe Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -962,6 +962,7 @@ in_addmulti(ap, ifp)
 			return (NULL);
 		}
 		inm->inm_ia = ia;
+		ia->ia_ifa.ifa_refcnt++;
 		LIST_INSERT_HEAD(&ia->ia_multiaddrs, inm, inm_list);
 		/*
 		 * Ask the network driver to update its multicast reception
@@ -973,6 +974,7 @@ in_addmulti(ap, ifp)
 		if ((ifp->if_ioctl == NULL) ||
 		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
 			LIST_REMOVE(inm, inm_list);
+			IFAFREE(&inm->inm_ia->ia_ifa);
 			free(inm, M_IPMADDR);
 			splx(s);
 			return (NULL);
@@ -1006,6 +1008,7 @@ in_delmulti(inm)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(inm, inm_list);
+		IFAFREE(&inm->inm_ia->ia_ifa);
 		/*
 		 * Notify the network driver to update its multicast reception
 		 * filter.
