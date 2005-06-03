@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.35 2005/05/30 13:13:50 jason Exp $	*/
+/*	$OpenBSD: file.c,v 1.36 2005/06/03 08:23:12 kjell Exp $	*/
 
 /*
  *	File commands.
@@ -73,12 +73,52 @@ filevisit(int f, int n)
 	return (TRUE);
 }
 
+/*
+ * Replace the current file with an alternate one. Semantics for finding
+ * the replacement file are the same as 'filevisit', except the current
+ * buffer is killed before the switch. If the kill fails, or is aborted,
+ * revert to the original file.
+ */
 int
 filevisitalt(int f, int n)
 {
-	if (killbuffer(curbp) == ABORT)
+	BUFFER	*bp;
+	char	 fname[NFILEN], *bufp, *adjf, *slash;
+	int	 status;
+
+	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
+		strlcpy(fname, curbp->b_fname, sizeof(fname));
+		if ((slash = strrchr(fname, '/')) != NULL) {
+			*(slash + 1) = '\0';
+		}
+	} else
+		fname[0] = '\0';
+
+	bufp = eread("Find alternate file: ", fname, NFILEN,
+	    EFNEW | EFCR | EFFILE | EFDEF);
+	if (bufp == NULL)
 		return (ABORT);
-	return (filevisit(f, n));
+	else if (bufp[0] == '\0')
+		return (FALSE);
+
+	status = killbuffer(curbp);
+	if (status == ABORT || status == FALSE)
+		return (ABORT);
+
+	adjf = adjustname(fname);
+	if (adjf == NULL)
+		return (FALSE);
+	if ((bp = findbuffer(adjf)) == NULL)
+		return (FALSE);
+	curbp = bp;
+	if (showbuffer(bp, curwp, WFHARD) != TRUE)
+		return (FALSE);
+	if (bp->b_fname[0] == '\0') {
+		if ((status = readin(adjf)) != TRUE)
+			killbuffer(bp);
+		return (status);
+	}
+	return (TRUE);
 }
 
 int
