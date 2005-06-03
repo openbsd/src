@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.15 2005/04/21 00:22:28 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.16 2005/06/03 12:31:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,7 @@
 int		 main(int, char *[]);
 void		 check_sensors(void);
 void		 report(time_t);
-static char	*print_sensor(enum sensor_type, u_int64_t);
+static char	*print_sensor(enum sensor_type, int64_t);
 int		 parse_config(char *);
 int64_t		 get_val(char *, int, enum sensor_type);
 void		 reparse_cfg(int);
@@ -293,7 +293,7 @@ report(time_t last_report)
 }
 
 static char *
-print_sensor(enum sensor_type type, u_int64_t value)
+print_sensor(enum sensor_type type, int64_t value)
 {
 	static char	 rfbuf[RFBUFCNT][RFBUFSIZ];	/* ring buffer */
 	static int	 idx;
