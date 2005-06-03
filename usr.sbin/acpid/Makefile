@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2005/06/02 20:09:39 tholo Exp $
+# $OpenBSD: Makefile,v 1.2 2005/06/03 17:55:24 deraadt Exp $
 
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64")
 PROG=		acpid
@@ -15,9 +15,9 @@ NOPROG=		yes
 MAN=		acpid.8
 MANSUBDIR=	i386 amd64
 
-.if make(install)
-SUBDIR+=	samples
-.endif
+#.if make(install)
+#SUBDIR+=	samples
+#.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
