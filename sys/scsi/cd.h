@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.4 2005/05/28 22:53:00 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.5 2005/06/03 17:29:55 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -208,5 +208,37 @@ struct cd_audio_page {
 #define CD_DA_BLKSIZ		2352	/* # bytes in CD-DA frame */
 #define CD_NORMAL_DENSITY_CODE	0x00	/* from Toshiba CD-ROM specs */
 #define CD_DA_DENSITY_CODE	0x82	/* from Toshiba CD-ROM specs */
+
+#define	CDRETRIES	4
+
+struct cd_softc {
+	struct device sc_dev;
+	struct disk sc_dk;
+
+	int flags;
+#define	CDF_LOCKED	0x01
+#define	CDF_WANTED	0x02
+#define	CDF_WLABEL	0x04		/* label is writable */
+#define	CDF_LABELLING	0x08		/* writing label */
+#define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
+#ifdef CDDA
+#define CDF_CDDA	0x20
+#endif
+	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
+	struct cd_parms {
+		int blksize;
+		u_long disksize;	/* total number sectors */
+	} params;
+#ifdef CDDA
+	struct cd_parms orig_params;    /* filled in when CD-DA mode starts */
+#endif
+	struct buf buf_queue;
+	char name[16]; /* product name, for default disklabel */
+	const struct cd_ops *sc_ops;	/* our bus-dependent ops vector */
+
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
+};
 
 #endif
