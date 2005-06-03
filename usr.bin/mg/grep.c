@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.14 2005/05/25 20:15:18 jason Exp $	*/
+/*	$OpenBSD: grep.c,v 1.15 2005/06/03 23:39:55 cloder Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -136,23 +136,26 @@ gid(int f, int n)
 	/* catch ([^\s(){}]+)[\s(){}]* */
 
 	i = curwp->w_doto;
-	/* Skip delimiters we are currently on */
-	while (i > 0 && ((c = lgetc(curwp->w_dotp, i)) == '(' || c == ')' ||
-	    c == '{' || c == '}' || isspace(c)))
+	/* Skip backwards over delimiters we are currently on */
+	while (i > 0) {
+		c = lgetc(curwp->w_dotp, i);
+		if (isalnum(c) || c == '_')
+			break;
+
 		i--;
+	}
+
 	/* Skip the symbol itself */
 	for (; i > 0; i--) {
 		c = lgetc(curwp->w_dotp, i - 1);
-		if (isspace(c) || c == '(' || c == ')' ||
-		    c == '{' || c == '}')
+		if (!isalnum(c) && c != '_')
 			break;
 	}
 	/* Fill the symbol in prompt[] */
 	for (j = 0; j < sizeof(prompt) - 1 && i < llength(curwp->w_dotp);
 	    j++, i++) {
 		c = lgetc(curwp->w_dotp, i);
-		if (isspace(c) || c == '(' || c == ')' ||
-		    c == '{' || c == '}')
+		if (!isalnum(c) && c != '_')
 			break;
 		prompt[j] = c;
 	}
