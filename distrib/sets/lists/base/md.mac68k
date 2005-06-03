@@ -1930,7 +1930,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/atapi_disk.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/cd.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/cdvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_all.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_changer.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_debug.ph
