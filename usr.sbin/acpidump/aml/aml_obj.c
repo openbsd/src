@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_obj.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: aml_obj.c,v 1.2 2005/06/03 19:59:04 grange Exp $	*/
 /*-
  * Copyright (c) 1999 Takanori Watanabe
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_obj.c,v 1.1 2005/06/02 20:09:39 tholo Exp $
+ *	$Id: aml_obj.c,v 1.2 2005/06/03 19:59:04 grange Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_obj.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 
@@ -102,7 +102,9 @@ aml_copy_object(struct aml_environ *env, union aml_object *orig)
                         ret->num.constant = 0;
                 }
 	} else {
+#if 0
 		printf("%s:%d\n", __FILE__, __LINE__);
+#endif
 		env->tempobject.type = aml_t_null;
 	}
 out:
