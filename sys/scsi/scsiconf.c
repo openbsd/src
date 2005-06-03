@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.95 2005/05/07 16:24:46 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.96 2005/06/03 15:24:05 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -706,6 +706,7 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 	 * Save INQUIRY "flags" (SID_Linked, etc.) for low-level drivers.
 	 */
 	sc_link->inquiry_flags = inqbuf.flags;
+	memcpy(&sc_link->inqdata, &inqbuf, sizeof(sc_link->inqdata));
 
 	/*
 	 * note what BASIC type of device it is

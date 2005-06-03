@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.55 2005/05/28 06:16:33 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.56 2005/06/03 15:24:05 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -195,6 +195,7 @@ struct scsi_link {
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 	u_char	luns;
+	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
 };
 
 int	scsiprint(void *, const char *);
