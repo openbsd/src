@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.332 2005/06/02 22:56:50 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.333 2005/06/03 22:14:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2559,6 +2559,12 @@ pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \e
 # a viral worm. Alternately we could limit these OSes to 1 connection each.
 block in on $ext_if proto tcp from any os {"Windows 95", "Windows 98"} \e
       to any port smtp
+
+# IPv6
+# pass in/out all IPv6 traffic: note that we have to enable this in two
+# different ways, on both our physical interface and our tunnel
+pass quick on gif0 inet6 keep state
+pass quick on $ext_if proto ipv6 keep state
 
 # Packet Tagging
 
