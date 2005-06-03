@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.13 2005/05/28 06:16:33 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.14 2005/06/03 15:50:10 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	error = scsi_do_mode_sense(sd->sc_link, page = 4, &buf,
 	    (void **)&sense_pages, NULL, NULL, &blksize,
-	    sizeof(sense_pages->rigid_geometry), flags | SCSI_SILENT);
+	    sizeof(sense_pages->rigid_geometry), flags | SCSI_SILENT, NULL);
 	if (error == 0) {
 		if (sense_pages) { 
 			SC_DEBUG(sd->sc_link, SDEV_DB3,
@@ -194,7 +194,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	error = scsi_do_mode_sense(sd->sc_link, page = 5, &buf,
 	    (void **)&sense_pages, NULL, NULL, &blksize,
-	    sizeof(sense_pages->flex_geometry), flags | SCSI_SILENT);
+	    sizeof(sense_pages->flex_geometry), flags | SCSI_SILENT, NULL);
 	if (error == 0) {
 		if (sense_pages) {
 			dp->heads = sense_pages->flex_geometry.nheads;
@@ -226,7 +226,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	error = scsi_do_mode_sense(sd->sc_link, page = 6, &buf,
 	    (void **)&sense_pages, NULL, NULL, &blksize,
-	    sizeof(sense_pages->reduced_geometry), flags | SCSI_SILENT);
+	    sizeof(sense_pages->reduced_geometry), flags | SCSI_SILENT, NULL);
 	if (error == 0) {
 		dp->heads = 64;
 		dp->sectors = 32;

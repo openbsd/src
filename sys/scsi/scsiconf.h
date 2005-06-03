@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.56 2005/06/03 15:24:05 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.57 2005/06/03 15:50:10 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ void *	scsi_mode_sense_page(struct scsi_mode_header *, int);
 void *	scsi_mode_sense_big_page(struct scsi_mode_header_big *, int);
 int	scsi_do_mode_sense(struct scsi_link *, int,
 	    struct scsi_mode_sense_buf *, void **, u_int32_t *, u_int64_t *,
-	    u_int32_t *, int, int);
+	    u_int32_t *, int, int, int *);
 int	scsi_mode_select(struct scsi_link *, int, struct scsi_mode_header *,
 	    size_t, int, int);
 int	scsi_mode_select_big(struct scsi_link *, int,

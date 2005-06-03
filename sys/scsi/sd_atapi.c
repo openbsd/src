@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_atapi.c,v 1.8 2005/05/26 02:10:14 krw Exp $	*/
+/*	$OpenBSD: sd_atapi.c,v 1.9 2005/06/03 15:50:10 krw Exp $	*/
 /*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 
 	error = scsi_do_mode_sense(sd->sc_link, ATAPI_FLEX_GEOMETRY_PAGE,
 	    &sense_data, (void **)&sense_pages, NULL, NULL, NULL,
-	    sizeof(sense_pages->flex_geometry), flags | SCSI_SILENT);
+	    sizeof(sense_pages->flex_geometry), flags | SCSI_SILENT, NULL);
 	if (error == 0 && sense_pages) {
 		dp->heads = sense_pages->flex_geometry.nheads;
 		dp->sectors = sense_pages->flex_geometry.ph_sec_tr;

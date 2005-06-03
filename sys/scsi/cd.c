@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.81 2005/05/27 23:51:53 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.82 2005/06/03 15:50:10 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1368,10 +1368,10 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 {
 	struct scsi_mode_sense_buf data;
 	struct cd_audio_page *audio = NULL;
-	int error;
+	int error, big;
 
 	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags);
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
 	if (error != 0)
 		return (error);
 	if (audio == NULL)
@@ -1382,7 +1382,7 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 	audio->port[2].channels = p2;
 	audio->port[3].channels = p3;
 
-	if (MODE_HEADER_IS_BIG(&data, audio))
+	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
 		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
 		    20000);
@@ -1405,7 +1405,7 @@ cd_getvol(cd, arg, flags)
 	int error;
 
 	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags);
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, NULL);
 	if (error != 0)
 		return (error);
 	if (audio == NULL)
@@ -1428,11 +1428,11 @@ cd_setvol(cd, arg, flags)
 	struct scsi_mode_sense_buf data;
 	struct cd_audio_page *audio = NULL;
 	u_int8_t mask_volume[4];
-	int error;
+	int error, big;
 
 	error = scsi_do_mode_sense(cd->sc_link,
 	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE, &data, (void **)&audio, NULL,
-	       NULL, NULL, sizeof(*audio), flags);
+	       NULL, NULL, sizeof(*audio), flags, NULL);
 	if (error != 0)
 		return (error);
 	if (audio == NULL)
@@ -1444,7 +1444,7 @@ cd_setvol(cd, arg, flags)
 	mask_volume[3] = audio->port[3].volume;
 
 	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags);
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
 	if (error != 0)
 		return (error);
 	if (audio == NULL)
@@ -1455,7 +1455,7 @@ cd_setvol(cd, arg, flags)
 	audio->port[2].volume = arg->vol[2] & mask_volume[2];
 	audio->port[3].volume = arg->vol[3] & mask_volume[3];
 
-	if (MODE_HEADER_IS_BIG(&data, audio))
+	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
 		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
 		    20000);
@@ -1490,14 +1490,14 @@ cd_set_pa_immed(cd, flags)
 {
 	struct scsi_mode_sense_buf data;
 	struct cd_audio_page *audio = NULL;
-	int error, oflags;
+	int error, oflags, big;
 
 	if (cd->sc_link->flags & SDEV_ATAPI)
 		/* XXX Noop? */
 		return (0);
 
 	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags);
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
 	if (error != 0)
 		return (error);
 	if (audio == NULL)
@@ -1509,7 +1509,7 @@ cd_set_pa_immed(cd, flags)
 	if (audio->flags == oflags)
 		return (0);
 
-	if (MODE_HEADER_IS_BIG(&data, audio))
+	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
 		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
 		    20000);

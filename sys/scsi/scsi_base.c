@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.77 2005/06/02 23:49:28 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.78 2005/06/03 15:50:10 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -456,10 +456,10 @@ scsi_mode_sense_big_page(hdr, page_len)
 
 int
 scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
-    block_size, page_len, flags)
+    block_size, page_len, flags, big)
 	struct scsi_link *sc_link;
 	struct scsi_mode_sense_buf *buf;
-	int page, page_len, flags;
+	int page, page_len, flags, *big;
 	u_int32_t *density, *block_size;
 	u_int64_t *block_count;
 	void **page_data;
@@ -479,12 +479,16 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 		*block_count = 0;
 	if (block_size)
 		*block_size = 0;
+	if (big)
+		*big = 0;
 
 	/* Try 10 byte mode sense request. Don't bother with SMS_DBD. */
 	error = scsi_mode_sense_big(sc_link, 0, page, &buf->headers.hdr_big,
 	    sizeof(*buf), flags, 20000);
 	hdr_big = &buf->headers.hdr_big;
 	if (error == 0 && _2btol(hdr_big->data_length) > 0) {
+		if (big)
+			*big = 1;
 		cbuf += sizeof(struct scsi_mode_header_big);
 		*page_data = scsi_mode_sense_big_page(hdr_big, page_len);
 		blk_desc_len = _2btol(hdr_big->blk_desc_len);
