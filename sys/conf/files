@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.341 2005/05/29 02:54:50 reyk Exp $
+#	$OpenBSD: files,v 1.342 2005/06/03 23:09:12 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -290,7 +290,7 @@ device	com: tty
 file	dev/ic/com.c			com & (com_isa | com_isapnp |
 					       com_commulti | com_pcmcia |
 					       com_localbus | com_gsc |
-					       com_puc | com_ebus |
+					       com_puc | com_ebus | com_pxa2x0 |
 					       com_dino) needs-flag
 
 # PC-like keyboard controller
