@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpid.8,v 1.1 2005/06/02 20:09:39 tholo Exp $
+.\"	$OpenBSD: acpid.8,v 1.2 2005/06/03 22:29:48 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
 .\"
@@ -26,7 +26,7 @@
 .Sh DESCRIPTION
 .Nm
 monitors the advanced configuration and power interface (ACPI) device,
-acting of signaled events.
+acting on signaled events.
 For suspend and poweroff request events delivered by the BIOS,
 .Nm
 runs the appropriate program (if one exists).
@@ -56,8 +56,8 @@ for execution by the
 function.
 If you wish to have the same program or script control all transitions, it
 may determine which transition is in progress by examining its
-.Va argv[0]
-which is set to one of
+.Va argv[0] ,
+which should be set to one of
 .Ar suspend
 and
 .Ar powerdown .

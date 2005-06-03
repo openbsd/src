@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.1 2005/06/02 20:09:39 tholo Exp $
+.\"	$OpenBSD: acpidump.8,v 1.2 2005/06/03 22:29:49 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -37,10 +37,11 @@
 .Nd dump ACPI tables
 .Sh SYNOPSIS
 .Nm
-.Nm
-.Op Fl o Ar dsdt_file_for_output
+.Op Fl h
 .Nm
 .Op Fl f Ar dsdt_file_for_input
+.Nm
+.Op Fl o Ar dsdt_file_for_output
 .Sh DESCRIPTION
 The
 .Nm
@@ -55,19 +56,20 @@ and dump them in ASL
 ACPI tables have an notably essential data block called DSDT
 (Differentiated System Description Table),
 that includes information used on the kernel side such as
-detail information about PnP hardware, procedures for controlling
-a power management support and so on.
+detailed information about PnP hardware, procedures for controlling
+power management support, and so on.
 .Nm
 can extract a DSDT data block from physical memory and store it into
-a DSDT data file, and also can generate an output in ASL
+a DSDT data file, and can also generate an output in ASL
 from a given DSDT data file.
 .Pp
 When
 .Nm
-is invoked with no option, it will search ACPI tables from physical
+is invoked with no options, it will search ACPI tables from physical
 memory via a special file
 .Pa /dev/mem
-and dump them.  First, it searches Root System Description Pointer,
+and dump them.
+First, it searches Root System Description Pointer,
 that has a signature
 .Qq RSD PTR\ \& ,
 and then gets RSDT
@@ -79,10 +81,10 @@ called SDT
 (System Description Table)
 and their header has the common format which consists of items
 such as Signature, Length, Revision, Checksum, OEMID, OEM Table ID,
-OEM Revision, Creator ID and Creator Revision.
+OEM Revision, Creator ID, and Creator Revision.
 .Nm
-dumps contents of these SDTs.
-For further information about formats of each table,
+dumps the contents of these SDTs.
+For further information about the formats of each table,
 see chapter 5: ACPI Software Programming Model,
 .Dq Advanced Configuration and Power Interface Specification Revision 1.0b
 from Intel/Microsoft/Toshiba.
@@ -94,14 +96,14 @@ FACP defines static system information about power management support
 such as interrupt mode
 (INT_MODEL),
 SCI interrupt number, SMI command port
-(SMI_CMD)
-and location of ACPI registers.
+(SMI_CMD),
+and the location of ACPI registers.
 FACP also has a pointer to a physical memory address for DSDT,
 which includes information used on the kernel side such as
-PnP, power management support and so on.
-While the other tables are described in fixed format,
-DSDT consists of AML data which compiled from sources
-written in free formated ASL, description language for ACPI.
+PnP, power management support, and so on.
+While the other tables are described in a fixed format,
+DSDT consists of AML data which is compiled from sources
+written in free formatted ASL, a description language for ACPI.
 When
 .Nm
 outputs DSDT, it disassembles the AML data and
@@ -110,61 +112,60 @@ translates them into ASL.
 The following options are supported by
 .Nm :
 .Bl -tag -width indent
-.It Fl o Ar dsdt_file_for_output
-Stores DSDT data block from physical memory into a file specified in
-.Ar dsdt_file_for_output
-in addition to behavior with no option.
 .It Fl f Ar dsdt_file_for_input
-Interprets AML data in DSDT from a file specified in
+Interpret AML data in DSDT from a file specified in
 .Ar dsdt_file_for_input
 and dumps them in ASL to standard output.
 .It Fl h
-Displays usage and exit.
+Display usage and exit.
+.It Fl o Ar dsdt_file_for_output
+Store DSDT data block from physical memory into a file specified in
+.Ar dsdt_file_for_output
+in addition to behavior with no option.
 .El
-.Sh EXAMPLES
-This is an example to get a dump of SDTs and a DSDT data file
-simultaneously on a machine that supports ACPI BIOS.
-.Bd -literal -offset indent
-# acpidump -o foo.dsdt > foo.asl
-.Ed
-.Sh BUGS
-In the current implementation,
-.Nm
-doesn't dump any information of Firmware ACPI Control Structure
-(FACS)
-specified by a pointer in FACP.
 .Sh FILES
 .Bl -tag -width /dev/mem
 .It Pa /dev/mem
 .El
+.Sh EXAMPLES
+This is an example to get a dump of SDTs and a DSDT data file
+simultaneously on a machine that supports ACPI BIOS:
+.Pp
+.Dl # acpidump -o foo.dsdt \*(Gt foo.asl
 .Sh SEE ALSO
 .\" .Xr acpi 4 ,
 .Xr mem 4 ,
 .\" .Xr acpiconf 8 ,
-..\" Xr amldb 8
-.Pp
-.Dq Advanced Configuration and Power Interface Specification
-.Bd -literal -offset indent -compact
-Intel
-Microsoft
-Toshiba
-Revision 1.0b
-.Ed
-<URL:http://www.teleport.com/~acpi/>
+.Xr acpid 8
+.\" Xr amldb 8
+.Rs
+.%T Advanced Configuration and Power Interface Specification
+.%A Intel
+.%A Microsoft
+.%A Toshiba
+.%R Revision 1.0b
+.%O http://www.teleport.com/~acpi/
+.Re
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Ox 3.8 .
 .Sh AUTHORS
 .An Doug Rabson Aq dfr@FreeBSD.org
 .An Mitsuru IWASAKI Aq iwasaki@FreeBSD.org
 .An Yasuo YOKOYAMA Aq yokoyama@jp.FreeBSD.org
 .Pp
-Some contributions made by
+Some contributions made by:
 .An Chitoshi Ohsawa Aq ohsawa@catv1.ccn-net.ne.jp ,
 .An Takayasu IWANASHI Aq takayasu@wendy.a.perfect-liberty.or.jp ,
 .An Yoshihiko SARUMARU Aq mistral@imasy.or.jp ,
 .An Hiroki Sato Aq hrs@FreeBSD.org ,
 and
 .An Michael Lucas Aq mwlucas@blackhelicopters.org .
-.Sh HISTORY
-The
+.Sh BUGS
+In the current implementation,
 .Nm
-command appeared in
-.Fx 5.0 .
+doesn't dump any information of Firmware ACPI Control Structure
+(FACS)
+specified by a pointer in FACP.
