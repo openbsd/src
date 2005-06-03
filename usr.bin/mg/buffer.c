@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.41 2005/06/03 08:23:12 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.42 2005/06/03 15:18:05 cloder Exp $	*/
 
 /*
  *		Buffer handling.
@@ -331,8 +331,8 @@ listbuf_goto_buffer_helper(int f, int n, int only)
 {
 	BUFFER  *bp;
 	MGWIN   *wp;
-	char	*line;
-	int	 i;
+	char	*line = NULL;
+	int	 i, ret = FALSE;
 
 	if (curwp->w_dotp->l_text[listbuf_ncol/2 - 1] == '$') {
 		ewprintf("buffer name truncated");
@@ -350,24 +350,29 @@ listbuf_goto_buffer_helper(int f, int n, int only)
 		}
 	}
 	if (i == 0)
-		return (FALSE);
+		goto cleanup;
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (strcmp(bp->b_bname, line) == 0)
 			break;
 	}
 	if (bp == NULL)
-		return (FALSE);
+		goto cleanup;
 
 	if ((wp = popbuf(bp)) == NULL)
-		return (FALSE);
+		goto cleanup;
 	curbp = bp;
 	curwp = wp;
 
 	if (only)
-		return (onlywind(f, n));
+		ret = (onlywind(f, n));
+	else
+		ret = TRUE;
 
-	return (TRUE);
+cleanup:
+	free(line);
+
+	return (ret);
 }
 
 /*
