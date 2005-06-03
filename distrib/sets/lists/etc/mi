@@ -133,6 +133,7 @@
 ./root/.klogin
 ./root/.login
 ./root/.profile
+./usr/share/ipsec/isakmpd/VPN-default.conf
 ./var/crash/minfree
 ./var/cron/at.deny
 ./var/cron/cron.deny
@@ -746,4 +747,3 @@
 ./var/www/icons/world1.png
 ./var/www/icons/world2.gif
 ./var/www/icons/world2.png
-./usr/share/ipsec/isakmpd/VPN-default.conf

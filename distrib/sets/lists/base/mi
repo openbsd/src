@@ -1879,6 +1879,7 @@
 ./usr/sbin/rtsold
 ./usr/sbin/rwhod
 ./usr/sbin/sa
+./usr/sbin/sasyncd
 ./usr/sbin/sendmail
 ./usr/sbin/sensorsd
 ./usr/sbin/sesd
@@ -4394,4 +4395,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/sbin/sasyncd

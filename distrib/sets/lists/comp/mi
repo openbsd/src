@@ -99,6 +99,10 @@
 ./usr/include/ddb/db_watch.h
 ./usr/include/des.h
 ./usr/include/dev
+./usr/include/dev/acpi
+./usr/include/dev/acpi/acpireg.h
+./usr/include/dev/acpi/acpivar.h
+./usr/include/dev/acpi/hpetreg.h
 ./usr/include/dev/ata
 ./usr/include/dev/ata/atareg.h
 ./usr/include/dev/ata/atavar.h
@@ -314,6 +318,7 @@
 ./usr/include/dev/ic/rtl80x9reg.h
 ./usr/include/dev/ic/rtl80x9var.h
 ./usr/include/dev/ic/rtl81x9reg.h
+./usr/include/dev/ic/rtl8225reg.h
 ./usr/include/dev/ic/rtwreg.h
 ./usr/include/dev/ic/rtwvar.h
 ./usr/include/dev/ic/s3_617.h
@@ -5573,4 +5578,3 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
-./usr/include/dev/ic/rtl8225reg.h

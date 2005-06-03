@@ -748,6 +748,10 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ddb/db_watch.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/acpi
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/acpi/acpireg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/acpi/acpivar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/acpi/hpetreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ata/atavar.ph
@@ -2243,6 +2247,8 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/mdec/pxeboot
+./usr/sbin/acpid
+./usr/sbin/acpidump
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
