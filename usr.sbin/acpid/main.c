@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 2005/06/03 22:45:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -60,8 +60,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *fname = acpidev;
-	int acpi_fd, ch;
-	int kq;
+	int acpi_fd, ch, kq;
 	struct kevent ev[2];
 
 	while ((ch = getopt(argc, argv, "qadsepmf:t:S:")) != -1)
@@ -69,7 +68,6 @@ main(int argc, char *argv[])
 		case 'd':
 			debug = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
