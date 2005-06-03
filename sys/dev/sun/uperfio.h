@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperfio.h,v 1.3 2003/06/02 19:08:58 jason Exp $	*/
+/*	$OpenBSD: uperfio.h,v 1.4 2005/06/03 10:53:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -80,10 +80,10 @@
 #define	UPERFSRC_PIOR		44	/* PIO read xfers */
 #define	UPERFSRC_PIOW		45	/* PIO write xfers */
 #define	UPERFSRC_MERGE		46	/* merge buffer xacts */
-#define	UPERFSRC_TBLA		47	/* dma reties for tblwalk, A */
-#define	UPERFSRC_STCA		48	/* dma reties for tblwalk, A */
-#define	UPERFSRC_TBLB		49	/* dma reties for tblwalk, B */
-#define	UPERFSRC_STCB		50	/* dma reties for tblwalk, B */
+#define	UPERFSRC_TBLA		47	/* dma retries for tblwalk, A */
+#define	UPERFSRC_STCA		48	/* dma retries for tblwalk, A */
+#define	UPERFSRC_TBLB		49	/* dma retries for tblwalk, B */
+#define	UPERFSRC_STCB		50	/* dma retries for tblwalk, B */
 
 struct uperf_io {
 	int cnt_flags;
