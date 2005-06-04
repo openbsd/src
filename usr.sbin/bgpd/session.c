@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.220 2005/06/02 15:07:02 cloder Exp $ */
+/*	$OpenBSD: session.c,v 1.221 2005/06/04 07:07:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2269,6 +2269,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			}
 			break;
 		case IMSG_CTL_KROUTE:
+		case IMSG_CTL_KROUTE6:
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_SHOW_NEXTHOP:
 		case IMSG_CTL_SHOW_INTERFACE:
