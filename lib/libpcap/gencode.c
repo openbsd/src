@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.23 2005/02/28 13:19:56 reyk Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.24 2005/06/04 18:00:45 joel Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -2985,7 +2985,7 @@ gen_pf_ifname(char *ifname)
 }
 
 
-/* PF firewall log matched interface */
+/* PF firewall log ruleset name */
 struct block *
 gen_pf_ruleset(char *ruleset)
 {
