@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.54 2005/05/01 17:35:26 david Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.55 2005/06/04 21:48:16 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,7 +240,8 @@ section.
 If set to
 .Ic evaluate ,
 the best path selection will not only be based on the path attributes but
-also on the age of the route.
+also on the age of the route, giving preference to the older, typically
+more stable, route.
 In this case the decision process is no longer deterministic.
 The default is
 .Ic ignore .
