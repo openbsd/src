@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.224 2005/06/04 22:58:03 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.225 2005/06/04 23:14:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1539,6 +1539,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 					    ERR_HDR_TYPE, &msgtype, 1);
 					log_warnx("received message with "
 					    "unknown type %u", msgtype);
+					bgp_fsm(p, EVNT_CON_FATAL);
 				}
 				rpos += msglen;
 				if (++processed > MSG_PROCESS_LIMIT)
@@ -1590,6 +1591,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		    "received message: illegal length: %u byte", *len);
 		session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 		    &olen, sizeof(olen));
+		bgp_fsm(peer, EVNT_CON_FATAL);
 		return (-1);
 	}
 
@@ -1600,6 +1602,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			    "received OPEN: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
+			bgp_fsm(peer, EVNT_CON_FATAL);
 			return (-1);
 		}
 		break;
@@ -1610,6 +1613,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			    *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
+			bgp_fsm(peer, EVNT_CON_FATAL);
 			return (-1);
 		}
 		break;
@@ -1619,6 +1623,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			    "received UPDATE: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
+			bgp_fsm(peer, EVNT_CON_FATAL);
 			return (-1);
 		}
 		break;
@@ -1628,6 +1633,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			    "received KEEPALIVE: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
+			bgp_fsm(peer, EVNT_CON_FATAL);
 			return (-1);
 		}
 		break;
@@ -1637,6 +1643,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 			    "received RREFRESH: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
+			bgp_fsm(peer, EVNT_CON_FATAL);
 			return (-1);
 		}
 		break;
@@ -1645,6 +1652,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		    "received msg with unknown type %u", *type);
 		session_notification(peer, ERR_HEADER, ERR_HDR_TYPE,
 		    type, 1);
+		bgp_fsm(peer, EVNT_CON_FATAL);
 		return (-1);
 	}
 	LIST_FOREACH(mrt, &mrthead, entry) {
@@ -2334,6 +2342,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 
 			session_notification(p, errcode, subcode,
 			    data, imsg.hdr.len - IMSG_HEADER_SIZE - 2);
+			bgp_fsm(p, EVNT_CON_FATAL);
 			break;
 		default:
 			break;
