@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.89 2005/06/01 23:03:56 cloder Exp $	 */
+/* $OpenBSD: udp.c,v 1.90 2005/06/04 21:54:55 hshoexer Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -193,7 +193,6 @@ err:
 		/* Already closed.  */
 		t->s = -1;
 		udp_remove(&t->transport);
-		free(t);
 	}
 	return 0;
 }
