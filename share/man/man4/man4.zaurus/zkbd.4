@@ -1,4 +1,4 @@
-.\" $OpenBSD: zkbd.4,v 1.11 2005/05/08 17:46:44 espie Exp $
+.\" $OpenBSD: zkbd.4,v 1.12 2005/06/04 17:56:24 dlg Exp $
 .\"
 .\" Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -76,10 +76,14 @@ End
 .Pp
 On/Off is special: pressing the key for 2 seconds will suspend
 the system.
+Pressing the key while the Zaurus is suspended will cause it to resume.
 Pressing the key longer than 6 seconds will do a nice halt if
 the machdep.kbdreset
 .Xr sysctl 8
 variable is 1.
+.Pp
+All keyboard input (including the On/Off key) is ignored if the display is
+shut.
 .Pp
 For information on the use and configuration of the keyboard refer to
 .Xr wskbd 4 .
