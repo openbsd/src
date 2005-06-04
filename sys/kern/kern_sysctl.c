@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.125 2005/05/24 21:11:48 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.126 2005/06/04 05:10:40 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -398,8 +398,18 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_RND:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &rndstats,
 		    sizeof(rndstats)));
-	case KERN_ARND:
-		return (sysctl_rdint(oldp, oldlenp, newp, arc4random()));
+	case KERN_ARND: {
+		char buf[256];
+
+		if (*oldlenp > sizeof(buf))
+			*oldlenp = sizeof(buf);
+		if (oldp) {
+			arc4random_bytes(buf, *oldlenp);
+			if ((error = copyout(buf, oldp, *oldlenp)))
+				return (error);
+		}
+		return (0);
+	}
 	case KERN_NOSUIDCOREDUMP:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &nosuidcoredump));
 	case KERN_FSYNC:
