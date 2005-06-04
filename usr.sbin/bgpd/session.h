@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.76 2005/04/05 17:37:44 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.77 2005/06/04 22:50:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -145,6 +145,8 @@ struct peer_stats {
 	time_t			 last_updown;
 	time_t			 last_read;
 	u_int32_t		 prefix_cnt;
+	u_int8_t		 last_sent_errcode;
+	u_int8_t		 last_sent_suberr;
 };
 
 struct peer {

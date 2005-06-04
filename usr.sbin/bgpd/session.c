@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.221 2005/06/04 07:07:34 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.222 2005/06/04 22:50:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -577,6 +577,9 @@ bgp_fsm(struct peer *peer, enum session_events event)
 				    "pfkey setup failed");
 				return;
 			}
+
+			peer->stats.last_sent_errcode = 0;
+			peer->stats.last_sent_suberr = 0;
 
 			if (!peer->depend_ok)
 				peer->ConnectRetryTimer = 0;
@@ -1404,7 +1407,10 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 		bgp_fsm(peer, EVNT_CON_FATAL);
 		return;
 	}
+
 	peer->stats.msg_sent_notification++;
+	peer->stats.last_sent_errcode = errcode;
+	peer->stats.last_sent_suberr = subcode;
 }
 
 int
