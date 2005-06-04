@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.225 2005/06/04 23:14:32 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.226 2005/06/04 23:31:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2342,7 +2342,21 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 
 			session_notification(p, errcode, subcode,
 			    data, imsg.hdr.len - IMSG_HEADER_SIZE - 2);
-			bgp_fsm(p, EVNT_CON_FATAL);
+			switch (errcode) {
+			case ERR_CEASE:
+				switch (subcode) {
+				case ERR_CEASE_MAX_PREFIX:
+					bgp_fsm(p, EVNT_STOP);
+					break;
+				default:
+					bgp_fsm(p, EVNT_CON_FATAL);
+					break;
+				}
+				break;
+			default:
+				bgp_fsm(p, EVNT_CON_FATAL);
+				break;
+			}
 			break;
 		default:
 			break;
