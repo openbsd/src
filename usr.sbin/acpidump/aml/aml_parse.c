@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_parse.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: aml_parse.c,v 1.2 2005/06/04 02:25:53 cloder Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_parse.c,v 1.1 2005/06/02 20:09:39 tholo Exp $
+ *	$Id: aml_parse.c,v 1.2 2005/06/04 02:25:53 cloder Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 
@@ -701,7 +701,32 @@ aml_parse_field(struct aml_environ *env, struct aml_field *template)
 	switch (*env->dp) {
 	case '\\':
 	case '^':
-	case 'A'...'Z':
+	case 'A':
+	case 'B':
+	case 'C':
+	case 'D':
+	case 'E':
+	case 'F':
+	case 'G':
+	case 'H':
+	case 'I':
+	case 'J':
+	case 'K':
+	case 'L':
+	case 'M':
+	case 'N':
+	case 'O':
+	case 'P':
+	case 'Q':
+	case 'R':
+	case 'S':
+	case 'T':
+	case 'U':
+	case 'V':
+	case 'W':
+	case 'X':
+	case 'Y':
+	case 'Z':
 	case '_':
 	case '.':  
 	case '/':
@@ -1310,7 +1335,32 @@ aml_parse_termobj(struct aml_environ *env, int indent)
 	switch (opcode) {
 	case '\\':
 	case '^':
-	case 'A' ... 'Z':
+	case 'A':
+	case 'B':
+	case 'C':
+	case 'D':
+	case 'E':
+	case 'F':
+	case 'G':
+	case 'H':
+	case 'I':
+	case 'J':
+	case 'K':
+	case 'L':
+	case 'M':
+	case 'N':
+	case 'O':
+	case 'P':
+	case 'Q':
+	case 'R':
+	case 'S':
+	case 'T':
+	case 'U':
+	case 'V':
+	case 'W':
+	case 'X':
+	case 'Y':
+	case 'Z':
 	case '_':
 	case '.':
 	case '/':
@@ -1611,11 +1661,25 @@ aml_parse_termobj(struct aml_environ *env, int indent)
 			AML_SYSABORT();
 		}
 		break;
-	case 0x68 ... 0x6e:	/* ArgN */
+	case 0x68:
+	case 0x69:
+	case 0x6a:
+	case 0x6b:
+	case 0x6c:
+	case 0x6d:
+	case 0x6e:
+		/* ArgN */
 		AML_DEBUGPRINT("Arg%d", opcode - 0x68);
 		return (aml_local_stack_getArgX(NULL, opcode - 0x68));
 		break;
-	case 0x60 ... 0x67:
+	case 0x60:
+	case 0x61:
+	case 0x62:
+	case 0x63:
+	case 0x64:
+	case 0x65:
+	case 0x66:
+	case 0x67:
 		AML_DEBUGPRINT("Local%d", opcode - 0x60);
 		return (aml_local_stack_getLocalX(opcode - 0x60));
 		break;
@@ -1906,7 +1970,11 @@ aml_parse_termobj(struct aml_environ *env, int indent)
 		env->tempobject.num = anum.num;
 		break;
 #undef MATCHOP
-	case 0x8a ... 0x8d:	/* CreateDWordFieldOp */
+	case 0x8a:
+	case 0x8b:
+	case 0x8c:
+	case 0x8d:
+		/* CreateDWordFieldOp */
 		widthindex = *(env->dp - 1) - 0x8a;
 		AML_DEBUGPRINT("%s(", opname[widthindex]);
 		srcbuf = aml_eval_name(env, aml_parse_termobj(env, indent));

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2005/06/03 19:18:32 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2005/06/04 02:25:53 cloder Exp $
 
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64")
 PROG=	acpidump
@@ -11,8 +11,8 @@ NOPROG=		yes
 
 MAN=	acpidump.8
 
-VPATH=	${.CURDIR}/aml
-CFLAGS=	-I${.CURDIR}
+VPATH=${.CURDIR}/aml
+CFLAGS+=-I${.CURDIR}
 
 BINDIR?=/usr/sbin
 

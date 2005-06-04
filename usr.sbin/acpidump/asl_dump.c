@@ -1,4 +1,4 @@
-/*	$OpenBSD: asl_dump.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: asl_dump.c,v 1.2 2005/06/04 02:25:53 cloder Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asl_dump.c,v 1.1 2005/06/02 20:09:39 tholo Exp $
+ *	$Id: asl_dump.c,v 1.2 2005/06/04 02:25:53 cloder Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.5 2001/10/23 14:53:58 takawata Exp $
  */
 
@@ -376,7 +376,32 @@ asl_dump_field(u_int8_t **dpp, u_int32_t offset)
 	switch (*dp) {
 	case '\\':
 	case '^':
-	case 'A' ... 'Z':
+	case 'A':
+	case 'B':
+	case 'C':
+	case 'D':
+	case 'E':
+	case 'F':
+	case 'G':
+	case 'H':
+	case 'I':
+	case 'J':
+	case 'K':
+	case 'L':
+	case 'M':
+	case 'N':
+	case 'O':
+	case 'P':
+	case 'Q':
+	case 'R':
+	case 'S':
+	case 'T':
+	case 'U':
+	case 'V':
+	case 'W':
+	case 'X':
+	case 'Y':
+	case 'Z':
 	case '_':
 	case '.':
 	case '/':
