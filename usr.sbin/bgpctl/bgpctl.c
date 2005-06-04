@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.80 2005/05/27 17:10:29 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.81 2005/06/04 23:38:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -460,24 +460,28 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			break;
 		}
 		printf("\n");
-		if (getnameinfo((struct sockaddr *)&p->sa_local,
-		    (socklen_t)p->sa_local.ss_len,
-		    buf, sizeof(buf), pbuf, sizeof(pbuf),
-		    NI_NUMERICHOST | NI_NUMERICSERV)) {
-			strlcpy(buf, "(unknown)", sizeof(buf));
-			strlcpy(pbuf, "", sizeof(pbuf));
-		}
-		printf("  Local host:  %20s, Local port:  %5s\n", buf, pbuf);
+		if (p->state != STATE_IDLE) {
+			if (getnameinfo((struct sockaddr *)&p->sa_local,
+			    (socklen_t)p->sa_local.ss_len,
+			    buf, sizeof(buf), pbuf, sizeof(pbuf),
+			    NI_NUMERICHOST | NI_NUMERICSERV)) {
+				strlcpy(buf, "(unknown)", sizeof(buf));
+				strlcpy(pbuf, "", sizeof(pbuf));
+			}
+			printf("  Local host:  %20s, Local port:  %5s\n", buf,
+			    pbuf);
 
-		if (getnameinfo((struct sockaddr *)&p->sa_remote,
-		    (socklen_t)p->sa_remote.ss_len,
-		    buf, sizeof(buf), pbuf, sizeof(pbuf),
-		    NI_NUMERICHOST | NI_NUMERICSERV)) {
-			strlcpy(buf, "(unknown)", sizeof(buf));
-			strlcpy(pbuf, "", sizeof(pbuf));
+			if (getnameinfo((struct sockaddr *)&p->sa_remote,
+			    (socklen_t)p->sa_remote.ss_len,
+			    buf, sizeof(buf), pbuf, sizeof(pbuf),
+			    NI_NUMERICHOST | NI_NUMERICSERV)) {
+				strlcpy(buf, "(unknown)", sizeof(buf));
+				strlcpy(pbuf, "", sizeof(pbuf));
+			}
+			printf("  Remote host: %20s, Remote port: %5s\n", buf,
+			    pbuf);
+			printf("\n");
 		}
-		printf("  Remote host: %20s, Remote port: %5s\n", buf, pbuf);
-		printf("\n");
 		break;
 	case IMSG_CTL_END:
 		return (1);
