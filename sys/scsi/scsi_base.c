@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.78 2005/06/03 15:50:10 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.79 2005/06/04 01:25:02 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -465,9 +465,10 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	void **page_data;
 {
 	struct scsi_mode_blk_desc_big *desc_big;
-	struct scsi_mode_direct_blk_desc *desc;
+	struct scsi_mode_direct_blk_desc *direct;
 	struct scsi_mode_header_big *hdr_big;
 	struct scsi_mode_header *hdr;
+	struct scsi_blk_desc *general;
 	u_char *cbuf = (u_char *)buf;
 	int error, blk_desc_len;
 	
@@ -525,16 +526,35 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	blk_desc_len = hdr->blk_desc_len;
 
 eight_byte:			
+	/* Both scsi_blk_desc and scsi_mode_direct_blk_desc are 8 bytes. */
 	if (blk_desc_len < sizeof(struct scsi_mode_direct_blk_desc))
 		return (0);
 
-	desc = (struct scsi_mode_direct_blk_desc *)cbuf;	
-	if (density)
-		*density = desc->density;
-	if (block_size)
-		*block_size = _3btol(desc->blklen);
-	if (block_count)
-		*block_count = (u_int64_t)_4btol(desc->nblocks);
+	switch (sc_link->inqdata.device & SID_TYPE) {
+	case T_SEQUENTIAL:
+		/*
+		 * XXX What other device types will return general block
+		 * descriptors other than tape drives?
+		 */
+		general = (struct scsi_blk_desc *)cbuf;	
+		if (density)
+			*density = general->density;
+		if (block_size)
+			*block_size = _3btol(general->blklen);
+		if (block_count)
+			*block_count = (u_int64_t)_3btol(general->nblocks);
+		break;
+
+	default:
+		direct = (struct scsi_mode_direct_blk_desc *)cbuf;	
+		if (density)
+			*density = direct->density;
+		if (block_size)
+			*block_size = _3btol(direct->blklen);
+		if (block_count)
+			*block_count = (u_int64_t)_4btol(direct->nblocks);
+		break;
+	}
 
 	return (0);
 }
