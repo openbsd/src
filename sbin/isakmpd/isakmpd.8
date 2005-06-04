@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.80 2005/06/02 10:03:37 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.81 2005/06/04 17:22:42 hshoexer Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -206,6 +206,9 @@ By default the PID of the daemon process will be written to
 This path can be overridden by specifying another one as the argument to the
 .Fl i
 option.
+Note that only paths beginning with
+.Pa /var/run
+are allowed.
 .It Fl K
 When this option is given,
 .Nm
@@ -257,6 +260,9 @@ but this can be changed by feeding
 the file name as an argument to the
 .Fl R
 flag.
+Note that only paths beginning with
+.Pa /var/run
+are allowed.
 .It Fl T
 When this option is given, NAT-Traversal will be disabled and
 .Nm
