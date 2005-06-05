@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.46 2005/05/14 00:20:43 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.47 2005/06/05 21:27:07 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1479,15 +1479,12 @@ st_mode_select(st, flags)
 	struct st_softc *st;
 	int flags;
 {
-	u_int scsi_select_len;
 	struct scsi_select {
 		struct scsi_mode_header header;
 		struct scsi_blk_desc blk_desc;
 		u_char sense_data[MAX_PAGE_0_SIZE];
 	} scsi_select;
 	struct scsi_link *sc_link = st->sc_link;
-
-	scsi_select_len = 12 + st->page_0_size;
 
 	/*
 	 * This quirk deals with drives that have only one valid mode
@@ -1505,9 +1502,12 @@ st_mode_select(st, flags)
 		return 0;
 
 	/*
-	 * Set up for a mode select
+	 * Set up for a mode select. Remember that data_length is the 
+	 * size less the size of the data_length field.
 	 */
-	bzero(&scsi_select, scsi_select_len);
+	bzero(&scsi_select, sizeof(scsi_select));
+	scsi_select.header.data_length = sizeof(scsi_select.header) +
+	    sizeof(scsi_select.blk_desc) + st->page_0_size - 1;
 	scsi_select.header.blk_desc_len = sizeof(struct scsi_blk_desc);
 	scsi_select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
 	scsi_select.blk_desc.density = st->density;
@@ -1524,8 +1524,7 @@ st_mode_select(st, flags)
 	 * do the command
 	 */
 	return (scsi_mode_select(st->sc_link, 0,
-	    (struct scsi_mode_header *)&scsi_select, scsi_select_len, flags,
-	    ST_CTL_TIME)); 
+	    (struct scsi_mode_header *)&scsi_select, flags, ST_CTL_TIME)); 
 }
 
 /*

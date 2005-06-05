@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.83 2005/06/03 17:29:55 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.84 2005/06/05 21:27:07 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1382,12 +1382,10 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 
 	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
-		    20000);
+		    (struct scsi_mode_header_big *)&data, flags, 20000);
 	else
 		error = scsi_mode_select(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header *)&data, sizeof(data), flags,
-		    20000);
+		    (struct scsi_mode_header *)&data, flags, 20000);
 
 	return (error);
 }
@@ -1455,12 +1453,10 @@ cd_setvol(cd, arg, flags)
 
 	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
-		    20000);
+		    (struct scsi_mode_header_big *)&data, flags, 20000);
 	else
 		error = scsi_mode_select(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header *)&data, sizeof(data), flags,
-		    20000);
+		    (struct scsi_mode_header *)&data, flags, 20000);
 
 	return (error);
 }
@@ -1509,12 +1505,10 @@ cd_set_pa_immed(cd, flags)
 
 	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header_big *)&data, sizeof(data), flags,
-		    20000);
+		    (struct scsi_mode_header_big *)&data, flags, 20000);
 	else
 		error = scsi_mode_select(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header *)&data, sizeof(data), flags,
-		    20000);
+		    (struct scsi_mode_header *)&data, flags, 20000);
 
 	return (error);
 }

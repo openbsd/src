@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.79 2005/06/04 01:25:02 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.80 2005/06/05 21:27:07 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -560,10 +560,9 @@ eight_byte:
 }
 
 int
-scsi_mode_select(sc_link, byte2, data, len, flags, timeout)
+scsi_mode_select(sc_link, byte2, data, flags, timeout)
 	struct scsi_link *sc_link;
 	int byte2, flags, timeout;
-	size_t len;
 	struct scsi_mode_header *data;
 {
 	struct scsi_mode_select scsi_cmd;
@@ -572,13 +571,13 @@ scsi_mode_select(sc_link, byte2, data, len, flags, timeout)
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = MODE_SELECT;
 	scsi_cmd.byte2 = byte2;
-	scsi_cmd.length = len & 0xff;
+	scsi_cmd.length = data->data_length + 1; /* 1 == sizeof(data_length) */
 
 	/* Length is reserved when doing mode select so zero it. */
 	data->data_length = 0;
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
+	    sizeof(scsi_cmd), (u_char *)data, scsi_cmd.length, 4, timeout, NULL,
 	    flags | SCSI_DATA_OUT);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_mode_select: error = %d\n", error));
@@ -587,14 +586,16 @@ scsi_mode_select(sc_link, byte2, data, len, flags, timeout)
 }
 
 int
-scsi_mode_select_big(sc_link, byte2, data, len, flags, timeout)
+scsi_mode_select_big(sc_link, byte2, data, flags, timeout)
 	struct scsi_link *sc_link;
 	int byte2, flags, timeout;
-	size_t len;
 	struct scsi_mode_header_big *data;
 {
 	struct scsi_mode_select_big scsi_cmd;
+	u_int32_t len;
 	int error;
+
+	len = _2btol(data->data_length) + 2; /* 2 == sizeof data->data_length */
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = MODE_SELECT_BIG;
