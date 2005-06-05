@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.45 2005/05/27 17:52:11 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.46 2005/06/05 23:54:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -346,12 +346,24 @@ log_addr(const struct bgpd_addr *addr)
 const char *
 log_in6addr(const struct in6_addr *addr)
 {
-	static char	buf[48];
+	struct sockaddr_in6	sa_in6;
+	u_int16_t		tmp16;
 
-	if (inet_ntop(AF_INET6, addr, buf, sizeof(buf)) == NULL)
-		return ("?");
-	else
-		return (buf);
+	bzero(&sa_in6, sizeof(sa_in6));
+	sa_in6.sin6_len = sizeof(sa_in6);
+	sa_in6.sin6_family = AF_INET6;
+	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
+
+	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
+	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
+		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
+		sa_in6.sin6_scope_id = ntohs(tmp16);
+		sa_in6.sin6_addr.s6_addr[2] = 0;
+		sa_in6.sin6_addr.s6_addr[3] = 0;
+	}
+
+	return (log_sockaddr((struct sockaddr *)&sa_in6));
 }
 
 const char *
