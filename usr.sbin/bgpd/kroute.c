@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.132 2005/06/05 23:57:33 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.133 2005/06/05 23:59:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -498,12 +498,6 @@ kr_show_route(struct imsg *imsg)
 			if (!flags || kr->r.flags & flags)
 				send_imsg_session(IMSG_CTL_KROUTE,
 				    imsg->hdr.pid, &kr->r, sizeof(kr->r));
-	case IMSG_CTL_KROUTE6:
-		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(flags)) {
-			log_warnx("kr_show_route: wrong imsg len");
-			return;
-		}
-		memcpy(&flags, imsg->data, sizeof(flags));
 		RB_FOREACH(kr6, kroute6_tree, &krt6)
 			if (!flags || kr6->r.flags & flags)
 				send_imsg_session(IMSG_CTL_KROUTE6,
