@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.13 2005/05/23 20:09:00 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.14 2005/06/05 00:23:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -618,7 +618,7 @@ int
 parse_community(const char *word, struct parse_result *r)
 {
 	struct filter_set	*fs;
-	char 			*p;
+	char			*p;
 	int			 i;
 	u_int16_t		 as, type;
 
@@ -682,7 +682,7 @@ done:
 	fs->type = ACTION_SET_COMMUNITY;
 	fs->action.community.as = as;
 	fs->action.community.type = type;
-	
+
 	SIMPLEQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
 }
