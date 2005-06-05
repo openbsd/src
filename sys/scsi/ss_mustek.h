@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.h,v 1.5 2005/04/05 12:13:16 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.h,v 1.6 2005/06/05 21:03:50 krw Exp $	*/
 /*	$NetBSD: ss_mustek.h,v 1.2 1996/03/19 03:08:37 mycroft Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #define MUSTEK_SET_WINDOW	0x04	/* set image area and windows */
 #define MUSTEK_READ		0x08	/* read command */
 #define MUSTEK_GET_STATUS	0x0f	/* image status */
+#define MUSTEK_MODE_SELECT	0x15	/* set resolution, paper length, .. */
 #define MUSTEK_ADF		0x10	/* ADF and backtracking selection */
 #define MUSTEK_START_STOP	0x1b	/* start/stop scan */
 #define MUSTEK_LUT		0x55	/* look up table download */
@@ -123,6 +124,13 @@ struct mustek_get_status_data {
 	u_int8_t ready_busy;		/* 0 = ready */
 	u_int8_t bytes_per_line[2];	/* LSB */
 	u_int8_t lines[3];		/* LSB */
+};
+
+struct mustek_mode_select_cmd {
+	u_int8_t opcode;		/* 0x15 */
+	u_int8_t reserved[2];
+	u_int8_t length[2];
+	u_int8_t control;
 };
 
 /*
