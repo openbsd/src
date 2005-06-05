@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.870 2005/05/29 07:54:26 brad Exp 
+ *	OpenBSD: pcidevs,v 1.871 2005/06/04 07:20:46 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -8067,6 +8067,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "V96DPC i960 (Dual) PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_0,
+	    "K8HTB Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363,
 	    "VT8363 Host",
 	},
@@ -8151,12 +8155,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT82C570M ISA",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_1,
+	    "K8HTB Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C416,
 	    "VT82C416 IDE",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C1595,
 	    "VT82C1595 PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_2,
+	    "K8HTB Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572,
@@ -8287,12 +8299,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8237 ISA",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_3,
+	    "K8HTB Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_4,
+	    "K8HTB Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
 	    "RhineII",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_VGA,
 	    "VT8378 VGA",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_7,
+	    "K8HTB Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231_ISA,
