@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.221 2005/05/27 21:41:03 mpf Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.222 2005/06/05 20:47:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1512,7 +1512,7 @@ extern struct pfi_statehead	 pfi_statehead;
 extern struct pfi_kif		*pfi_all;
 
 void		 pfi_initialize(void);
-struct pfi_kif	*pfi_kif_get(char *);
+struct pfi_kif	*pfi_kif_get(const char *);
 void		 pfi_kif_ref(struct pfi_kif *, enum pfi_kif_refs);
 void		 pfi_kif_unref(struct pfi_kif *, enum pfi_kif_refs);
 int		 pfi_kif_match(struct pfi_kif *, struct pfi_kif *);
@@ -1520,7 +1520,7 @@ void		 pfi_attach_ifnet(struct ifnet *);
 void		 pfi_detach_ifnet(struct ifnet *);
 void		 pfi_attach_ifgroup(struct ifg_group *);
 void		 pfi_detach_ifgroup(struct ifg_group *);
-void		 pfi_group_change(char *);
+void		 pfi_group_change(const char *);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
 int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);

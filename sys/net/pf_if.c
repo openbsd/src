@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.37 2005/06/02 17:51:48 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.38 2005/06/05 20:47:46 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -100,7 +100,7 @@ pfi_initialize(void)
 }
 
 struct pfi_kif *
-pfi_kif_get(char *kif_name)
+pfi_kif_get(const char *kif_name)
 {
 	struct pfi_kif	s, *kif;
 
@@ -279,7 +279,7 @@ pfi_detach_ifgroup(struct ifg_group *ifg)
 }
 
 void
-pfi_group_change(char *group)
+pfi_group_change(const char *group)
 {
 	struct pfi_kif		*kif;
 	struct pfi_dynaddr	*dyn;
