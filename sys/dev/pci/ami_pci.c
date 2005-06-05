@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.25 2005/05/27 20:39:30 marco Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.26 2005/06/05 23:34:00 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -85,15 +85,16 @@ struct	ami_pci_device {
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4EDI,	0 },	
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80960RP_ATU,
 	    AMI_CHECK_SIGN | AMI_BROKEN },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID,	0 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SATA8,	0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID,		0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_320,	0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SATA8,		0 },
 	{ 0 }
 };
 
 static const
 struct	ami_pci_subsys {
 	pcireg_t id;
-	char	name[12];
+	char	name[14];
 } ami_pci_subsys[] = {
 	/* only those of a special name are listed here */
 	{ 0x09A0101E,	"Dell 466v1" },
@@ -105,6 +106,7 @@ struct	ami_pci_subsys {
 	{ 0x10cc103c,	"HP T7" },
 	{ 0x10cd103c,	"HP 466" },
 	{ 0x45231000,	"LSI 523" },
+	{ 0x05328086,	"Intel SRCU42X" },
 	{ 0 }
 };
 
@@ -117,6 +119,7 @@ struct ami_pci_vendor {
 	{ 0x1028, "Dell" },
 	{ 0x103c, "HP" },
 	{ 0x1000, "LSI" },
+	{ 0x8086, "Intel" },
 	{ 0 }
 };
 
