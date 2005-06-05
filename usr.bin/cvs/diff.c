@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.41 2005/05/31 08:58:47 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.42 2005/06/05 20:47:44 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -669,11 +669,11 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
-	printf("%s", diffargs);
-	printf(" -r%s", buf);
+	cvs_printf("%s", diffargs);
+	cvs_printf(" -r%s", buf);
 	if (dap->rev2 != NULL)
-		printf(" -r%s", dap->rev2);
-	printf(" %s\n", diff_file);
+		cvs_printf(" -r%s", dap->rev2);
+	cvs_printf(" %s\n", diff_file);
 	strlcpy(path_tmp1, "/tmp/diff1.XXXXXXXXXX", sizeof(path_tmp1));
 	if (cvs_buf_write_stmp(b1, path_tmp1, 0600) == -1) {
 		cvs_buf_free(b1);
@@ -1145,7 +1145,7 @@ check(FILE *f1, FILE *f2)
 		ixnew[j] = ctnew += skipline(f2);
 	/*
 	 * if (jackpot)
-	 *	fprintf(stderr, "jackpot\n");
+	 *	cvs_printf("jackpot\n");
 	 */
 }
 
@@ -1236,7 +1236,7 @@ output(const char *file1, FILE *f1, const char *file2, FILE *f2)
 #define	c i0
 			if ((c = getc(f1)) == EOF)
 				return;
-			putchar(c);
+			cvs_putchar(c);
 		}
 #undef c
 	}
@@ -1251,20 +1251,20 @@ output(const char *file1, FILE *f1, const char *file2, FILE *f2)
 static __inline void
 range(int a, int b, char *separator)
 {
-	printf("%d", a > b ? b : a);
+	cvs_printf("%d", a > b ? b : a);
 	if (a < b)
-		printf("%s%d", separator, b);
+		cvs_printf("%s%d", separator, b);
 }
 
 static __inline void
 uni_range(int a, int b)
 {
 	if (a < b)
-		printf("%d,%d", a, b - a + 1);
+		cvs_printf("%d,%d", a, b - a + 1);
 	else if (a == b)
-		printf("%d", b);
+		cvs_printf("%d", b);
 	else
-		printf("%d,0", b);
+		cvs_printf("%d,0", b);
 }
 
 static char *
@@ -1354,10 +1354,10 @@ proceed:
 			/*
 			 * Print the context/unidiff header first time through.
 			 */
-			printf("%s %s	%s",
+			cvs_printf("%s %s	%s",
 			    format == D_CONTEXT ? "***" : "---", diff_file,
 			    ctime(&stb1.st_mtime));
-			printf("%s %s	%s",
+			cvs_printf("%s %s	%s",
 			    format == D_CONTEXT ? "---" : "+++", diff_file,
 			    ctime(&stb2.st_mtime));
 			anychange = 1;
@@ -1386,19 +1386,19 @@ proceed:
 		return;
 	case D_NORMAL:
 		range(a, b, ",");
-		putchar(a > b ? 'a' : c > d ? 'd' : 'c');
+		cvs_putchar(a > b ? 'a' : c > d ? 'd' : 'c');
 		if (format == D_NORMAL)
 			range(c, d, ",");
-		putchar('\n');
+		cvs_putchar('\n');
 		break;
 	case D_RCSDIFF:
 		if (a > b)
-			printf("a%d %d\n", b, d - c + 1);
+			cvs_printf("a%d %d\n", b, d - c + 1);
 		else {
-			printf("d%d %d\n", a, b - a + 1);
+			cvs_printf("d%d %d\n", a, b - a + 1);
 
 			if (!(c > d))	/* add changed lines */
-				printf("a%d %d\n", b, d - c + 1);
+				cvs_printf("a%d %d\n", b, d - c + 1);
 		}
 		break;
 	}
@@ -1409,7 +1409,7 @@ proceed:
 	}
 	i = fetch(ixnew, c, d, f2, format == D_NORMAL ? '>' : '\0', 0);
 	if (inifdef) {
-		printf("#endif /* %s */\n", ifdefname);
+		cvs_printf("#endif /* %s */\n", ifdefname);
 		inifdef = 0;
 	}
 }
@@ -1428,19 +1428,19 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 		/* print through if append (a>b), else to (nb: 0 vs 1 orig) */
 		nc = f[a > b ? b : a - 1] - curpos;
 		for (i = 0; i < nc; i++)
-			putchar(getc(lb));
+			cvs_putchar(getc(lb));
 	}
 	if (a > b)
 		return (0);
 	if (format == D_IFDEF) {
 		if (inifdef) {
-			printf("#else /* %s%s */\n",
+			cvs_printf("#else /* %s%s */\n",
 			    oldfile == 1 ? "!" : "", ifdefname);
 		} else {
 			if (oldfile)
-				printf("#ifndef %s\n", ifdefname);
+				cvs_printf("#ifndef %s\n", ifdefname);
 			else
-				printf("#ifdef %s\n", ifdefname);
+				cvs_printf("#ifdef %s\n", ifdefname);
 		}
 		inifdef = 1 + oldfile;
 	}
@@ -1448,12 +1448,12 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 		fseek(lb, f[i - 1], SEEK_SET);
 		nc = f[i] - f[i - 1];
 		if (format != D_IFDEF && ch != '\0') {
-			putchar(ch);
+			cvs_putchar(ch);
 			if (Tflag && (format == D_NORMAL || format == D_CONTEXT
 			    || format == D_UNIFIED))
-				putchar('\t');
+				cvs_putchar('\t');
 			else if (format != D_UNIFIED)
-				putchar(' ');
+				cvs_putchar(' ');
 		}
 		col = 0;
 		for (j = 0, lastc = '\0'; j < nc; j++, lastc = c) {
@@ -1466,10 +1466,10 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 			}
 			if (c == '\t' && tflag) {
 				do {
-					putchar(' ');
+					cvs_putchar(' ');
 				} while (++col & 7);
 			} else {
-				putchar(c);
+				cvs_putchar(c);
 				col++;
 			}
 		}
@@ -1606,17 +1606,17 @@ dump_context_vec(FILE *f1, FILE *f2)
 	lowc = MAX(1, cvp->c - context);
 	upd = MIN(diff_len[1], context_vec_ptr->d + context);
 
-	printf("***************");
+	cvs_printf("***************");
 	if (pflag) {
 		f = match_function(ixold, lowa - 1, f1);
 		if (f != NULL) {
-			putchar(' ');
-			fputs(f, stdout);
+			cvs_putchar(' ');
+			cvs_printf("%s", f);
 		}
 	}
-	printf("\n*** ");
+	cvs_printf("\n*** ");
 	range(lowa, upb, ",");
-	printf(" ****\n");
+	cvs_printf(" ****\n");
 
 	/*
 	 * Output changes to the "old" file.  The first loop suppresses
@@ -1655,9 +1655,9 @@ dump_context_vec(FILE *f1, FILE *f2)
 		fetch(ixold, b + 1, upb, f1, ' ', 0);
 	}
 	/* output changes to the "new" file */
-	printf("--- ");
+	cvs_printf("--- ");
 	range(lowc, upd, ",");
-	printf(" ----\n");
+	cvs_printf(" ----\n");
 
 	do_output = 0;
 	for (cvp = context_vec_start; cvp <= context_vec_ptr; cvp++)
@@ -1711,19 +1711,19 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	lowc = MAX(1, cvp->c - context);
 	upd = MIN(diff_len[1], context_vec_ptr->d + context);
 
-	fputs("@@ -", stdout);
+	cvs_printf("@@ -");
 	uni_range(lowa, upb);
-	fputs(" +", stdout);
+	cvs_printf(" +");
 	uni_range(lowc, upd);
-	fputs(" @@", stdout);
+	cvs_printf(" @@");
 	if (pflag) {
 		f = match_function(ixold, lowa - 1, f1);
 		if (f != NULL) {
-			putchar(' ');
-			fputs(f, stdout);
+			cvs_putchar(' ');
+			cvs_printf("%s", f);
 		}
 	}
-	putchar('\n');
+	cvs_putchar('\n');
 
 	/*
 	 * Output changes in "unified" diff format--the old and new lines

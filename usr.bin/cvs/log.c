@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.18 2005/06/02 20:16:48 joris Exp $	*/
+/*	$OpenBSD: log.c,v 1.19 2005/06/05 20:47:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -65,6 +65,7 @@ static int cvs_slpriomap[LP_MAX + 1] = {
 	LOG_DEBUG,
 };
 
+static int send_m = 1;
 static u_int cvs_log_dest = LD_STD;
 static u_int cvs_log_flags = 0;
 
@@ -299,7 +300,6 @@ cvs_printf(const char *fmt, ...)
 	int ret;
 	char *nstr, *dp, *sp;
 	va_list vap;
-	static int send_m = 1;
 
 	va_start(vap, fmt);
 
@@ -336,4 +336,20 @@ cvs_printf(const char *fmt, ...)
 	va_end(vap);
 	return (ret);
 }
+
+void
+cvs_putchar(int c)
+{
+	if (cvs_cmdop == CVS_OP_SERVER && send_m) {
+		send_m = 0;
+		putc('M', stdout);
+		putc(' ', stdout);
+	}
+
+	putc(c, stdout);
+
+	if (cvs_cmdop == CVS_OP_SERVER && c == '\n')
+		send_m = 1;
+}
+
 #endif
