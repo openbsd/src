@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.81 2005/06/04 23:38:07 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.82 2005/06/05 00:24:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -69,6 +69,7 @@ void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
 const char *	 print_origin(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
+static const char	*get_errstr(u_int8_t, u_int8_t);
 
 struct imsgbuf	*ibuf;
 
@@ -460,7 +461,14 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			break;
 		}
 		printf("\n");
-		if (p->state != STATE_IDLE) {
+		if (p->state == STATE_IDLE) {
+			static const char	*errstr;
+
+			errstr = get_errstr(p->stats.last_sent_errcode,
+			    p->stats.last_sent_suberr);
+			if (errstr)
+				printf("  Last error: %s\n\n", errstr);
+		} else {
 			if (getnameinfo((struct sockaddr *)&p->sa_local,
 			    (socklen_t)p->sa_local.ss_len,
 			    buf, sizeof(buf), pbuf, sizeof(pbuf),
@@ -993,3 +1001,37 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 	}
 }
 
+static const char *
+get_errstr(u_int8_t errcode, u_int8_t subcode)
+{
+	static const char	*errstr = NULL;
+
+	if (errcode && errcode < sizeof(errnames)/sizeof(char *))
+		errstr = errnames[errcode];
+
+	switch (errcode) {
+	case ERR_HEADER:
+		if (subcode &&
+		    subcode < sizeof(suberr_header_names)/sizeof(char *))
+			errstr = suberr_header_names[subcode];
+		break;
+	case ERR_OPEN:
+		if (subcode &&
+		    subcode < sizeof(suberr_open_names)/sizeof(char *))
+			errstr = suberr_open_names[subcode];
+		break;
+	case ERR_UPDATE:
+		if (subcode &&
+		    subcode < sizeof(suberr_update_names)/sizeof(char *))
+			errstr = suberr_update_names[subcode];
+		break;
+	case ERR_HOLDTIMEREXPIRED:
+	case ERR_FSM:
+	case ERR_CEASE:
+		break;
+	default:
+		return ("unknown error code");
+	}
+
+	return (errstr);
+}
