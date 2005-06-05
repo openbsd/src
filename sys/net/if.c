@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.123 2005/05/26 04:07:45 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.124 2005/06/05 20:49:25 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1577,7 +1577,7 @@ if_detached_watchdog(struct ifnet *ifp)
  * Add a group to an interface
  */
 int
-if_addgroup(struct ifnet *ifp, char *groupname)
+if_addgroup(struct ifnet *ifp, const char *groupname)
 {
 	struct ifg_list		*ifgl;
 	struct ifg_group	*ifg = NULL;
@@ -1639,7 +1639,7 @@ if_addgroup(struct ifnet *ifp, char *groupname)
  * Remove a group from an interface
  */
 int
-if_delgroup(struct ifnet *ifp, char *groupname)
+if_delgroup(struct ifnet *ifp, const char *groupname)
 {
 	struct ifg_list		*ifgl;
 	struct ifg_member	*ifgm;
