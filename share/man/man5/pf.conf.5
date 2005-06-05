@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.333 2005/06/03 22:14:37 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.334 2005/06/05 13:46:30 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1858,6 +1858,15 @@ Using a
 modifier on
 .Ar modulate state
 rules between fast networks is suggested to prevent ACK storms.
+.Pp
+Note that alternative methods are available
+to prevent loss of the state table
+and allow for firewall failover.
+See
+.Xr carp 4
+and
+.Xr pfsync 4
+for further information.
 .Sh SYN PROXY
 By default,
 .Xr pf 4
@@ -2803,6 +2812,7 @@ Service name database.
 Example rulesets.
 .El
 .Sh SEE ALSO
+.Xr carp 4 ,
 .Xr icmp 4 ,
 .Xr icmp6 4 ,
 .Xr ip 4 ,
