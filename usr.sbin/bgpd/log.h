@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.3 2004/05/21 16:01:14 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.4 2005/06/05 19:50:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -84,6 +84,18 @@ static const char * const suberr_update_names[] = {
 	"optional attribute error",
 	"network unacceptable",
 	"AS-Path unacceptable"
+};
+
+static const char * const suberr_cease_names[] = {
+	"none",
+	"max-prefix exceeded",
+	"administratively down",
+	"peer unconfigured",
+	"administrative reset",
+	"connection rejected",
+	"other config change",
+	"collision",
+	"ressource exhaustion"
 };
 
 static const char * const procnames[] = {
