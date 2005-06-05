@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getservent.3,v 1.17 2005/06/05 19:40:21 jmc Exp $
+.\"	$OpenBSD: getservent.3,v 1.18 2005/06/05 19:44:16 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,10 +149,6 @@ functions
 also take a pointer to a
 .Fa servent
 structure which is used to store the results of the database lookup.
-.Sh FILES
-.Bl -tag -width /etc/services -compact
-.It Pa /etc/services
-.El
 .Sh RETURN VALUES
 The
 .Fn getservent ,
@@ -171,6 +167,10 @@ and
 .Fn getservbyname_r
 functions return 0 on success or \-1 if end-of-file
 is reached or an error occurs.
+.Sh FILES
+.Bl -tag -width /etc/services -compact
+.It Pa /etc/services
+.El
 .Sh SEE ALSO
 .Xr getprotoent 3 ,
 .Xr services 5
