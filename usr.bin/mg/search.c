@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.18 2005/06/03 15:16:22 cloder Exp $	*/
+/*	$OpenBSD: search.c,v 1.19 2005/06/05 05:15:56 kjell Exp $	*/
 
 /*
  *		Search commands.
@@ -775,7 +775,8 @@ readpattern(char *prompt)
 	if (pat[0] == '\0')
 		rep = ereply("%s: ", tpat, NPAT, prompt);
 	else
-		rep = ereply("%s: (default %s) ", tpat, NPAT, prompt, pat);
+		rep = eread("%s: (default %s) ", tpat, NPAT,
+		    EFNUL | EFNEW | EFCR, prompt, pat);
 
 	/* specified */
 	if (rep == NULL) {
