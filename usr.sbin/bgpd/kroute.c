@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.131 2005/06/02 15:06:08 cloder Exp $ */
+/*	$OpenBSD: kroute.c,v 1.132 2005/06/05 23:57:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -498,7 +498,6 @@ kr_show_route(struct imsg *imsg)
 			if (!flags || kr->r.flags & flags)
 				send_imsg_session(IMSG_CTL_KROUTE,
 				    imsg->hdr.pid, &kr->r, sizeof(kr->r));
-		break;
 	case IMSG_CTL_KROUTE6:
 		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(flags)) {
 			log_warnx("kr_show_route: wrong imsg len");
@@ -1469,14 +1468,55 @@ mask2prefixlen(in_addr_t ina)
 u_int8_t
 mask2prefixlen6(struct in6_addr *in6a)
 {
-	u_int8_t	 l, i;
+	u_int8_t	 l = 0, i;
+	int		 final = 0;
 
-	l = 0;
-	for (i = 0; i < 16; i ++)
-		if (in6a->s6_addr[i] == 0)
+	for (i = 0; i < 16; i ++) {
+		/* this "beauty" is adopted from sbin/route/show.c ... */
+		switch (in6a->s6_addr[i]) {
+		case 0xff:
+			l += 8;
+			break;
+		case 0xfe:
+			l += 7;
+			final++;
+			break;
+		case 0xfc:
+			l += 6;
+			final++;
+			break;
+		case 0xf8:
+			l += 5;
+			final++;
+			break;
+		case 0xf0:
+			l += 4;
+			final++;
+			break;
+		case 0xe0:
+			l += 3;
+			final++;
+			break;
+		case 0xc0:
+			l += 2;
+			final++;
+			break;
+		case 0x80:
+			l += 1;
+			final++;
+			break;
+		case 0x00:
+			final++;
+			break;
+		default:
+			/* XXX why is there crap in the mask??? */
+			in6a->s6_addr[i] = 0x00;
+			final++;
+			break;
+		}
+		if (final)
 			return (l);
-		else
-			l += 9 - ffs(in6a->s6_addr[i]);
+	}
 
 	return (l);
 }
