@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.50 2004/05/23 23:59:53 dtucker Exp $	*/
+/*	$OpenBSD: auth.h,v 1.51 2005/06/06 11:20:36 djm Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -146,7 +146,6 @@ struct passwd * getpwnamallow(const char *user);
 char	*get_challenge(Authctxt *);
 int	verify_response(Authctxt *, const char *);
 
-char	*expand_filename(const char *, struct passwd *);
 char	*authorized_keys_file(struct passwd *);
 char	*authorized_keys_file2(struct passwd *);
 
