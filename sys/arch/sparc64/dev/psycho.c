@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.40 2005/01/27 21:17:50 miod Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.41 2005/06/06 20:31:12 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -831,6 +831,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 		}
 #undef TSBCASE
 		DPRINTF(PDB_CONF, ("psycho_iommu_init: iobase=0x%x\n", iobase));
+		free(vdma, M_DEVBUF);
 	}
 	else {
 		DPRINTF(PDB_CONF, ("psycho_iommu_init: getprop failed, "
@@ -888,7 +889,7 @@ _psycho_alloc_bus_tag(struct psycho_pbm *pp,
 	bzero(bt, sizeof *bt);
 	
 	snprintf(bt->name, sizeof(bt->name), "%s-pbm_%s(%d-%2.2x)",
-	    	sc->sc_dev.dv_xname, name, ss, asi); 
+	    sc->sc_dev.dv_xname, name, ss, asi); 
 
 	bt->cookie = pp;
 	bt->parent = sc->sc_bustag;
@@ -908,8 +909,8 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
 	struct psycho_softc *sc = pp->pp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmatag;
 
-	dt = (bus_dma_tag_t)
-		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
+	dt = (bus_dma_tag_t)malloc(sizeof(struct sparc_bus_dma_tag),
+	    M_DEVBUF, M_NOWAIT);
 	if (dt == NULL)
 		panic("could not allocate psycho dma tag");
 
