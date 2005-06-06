@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.82 2005/06/05 00:24:18 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.83 2005/06/06 00:00:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -55,6 +55,7 @@ static char	*fmt_timeframe(time_t t);
 static char	*fmt_timeframe_core(time_t t);
 void		 show_fib_head(void);
 void		 show_network_head(void);
+void		 show_fib_flags(u_int16_t);
 int		 show_fib_msg(struct imsg *);
 void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
@@ -634,10 +635,45 @@ show_network_head(void)
 	printf("flags destination\n");
 }
 
+void
+show_fib_flags(u_int16_t flags)
+{
+	if (flags & F_DOWN)
+		printf(" ");
+	else
+		printf("*");
+
+	if (flags & F_BGPD_INSERTED)
+		printf("B");
+	else if (flags & F_CONNECTED)
+		printf("C");
+	else if (flags & F_STATIC)
+		printf("S");
+	else
+		printf(" ");
+
+	if (flags & F_NEXTHOP)
+		printf("N");
+	else
+		printf(" ");
+
+	if (flags & F_REJECT && flags & F_BLACKHOLE)
+		printf("f");
+	else if (flags & F_REJECT)
+		printf("r");
+	else if (flags & F_BLACKHOLE)
+		printf("b");
+	else
+		printf(" ");
+
+	printf("  ");
+}
+
 int
 show_fib_msg(struct imsg *imsg)
 {
 	struct kroute		*k;
+	struct kroute6		*k6;
 	char			*p;
 
 	switch (imsg->hdr.type) {
@@ -647,35 +683,8 @@ show_fib_msg(struct imsg *imsg)
 			errx(1, "wrong imsg len");
 		k = imsg->data;
 
-		if (k->flags & F_DOWN)
-			printf(" ");
-		else
-			printf("*");
+		show_fib_flags(k->flags);
 
-		if (k->flags & F_BGPD_INSERTED)
-			printf("B");
-		else if (k->flags & F_CONNECTED)
-			printf("C");
-		else if (k->flags & F_STATIC)
-			printf("S");
-		else
-			printf(" ");
-
-		if (k->flags & F_NEXTHOP)
-			printf("N");
-		else
-			printf(" ");
-
-		if (k->flags & F_REJECT && k->flags & F_BLACKHOLE)
-			printf("f");
-		else if (k->flags & F_REJECT)
-			printf("r");
-		else if (k->flags & F_BLACKHOLE)
-			printf("b");
-		else
-			printf(" ");
-
-		printf("  ");
 		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
 		    -1)
 			err(1, NULL);
@@ -686,6 +695,26 @@ show_fib_msg(struct imsg *imsg)
 			printf("%s", inet_ntoa(k->nexthop));
 		else if (k->flags & F_CONNECTED)
 			printf("link#%u", k->ifindex);
+		printf("\n");
+
+		break;
+	case IMSG_CTL_KROUTE6:
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct kroute6))
+			errx(1, "wrong imsg len");
+		k6 = imsg->data;
+
+		show_fib_flags(k6->flags);
+
+		if (asprintf(&p, "%s/%u", log_in6addr(&k6->prefix),
+		    k6->prefixlen) == -1)
+			err(1, NULL);
+		printf("%-20s ", p);
+		free(p);
+
+		if (!IN6_IS_ADDR_UNSPECIFIED(&k6->nexthop))
+			printf("%s", log_in6addr(&k6->nexthop));
+		else if (k6->flags & F_CONNECTED)
+			printf("link#%u", k6->ifindex);
 		printf("\n");
 
 		break;
