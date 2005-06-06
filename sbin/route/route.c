@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.89 2005/05/27 22:38:52 mcbride Exp $	*/
+/*	$OpenBSD: route.c,v 1.90 2005/06/06 04:22:28 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ union	sockunion {
 	struct sockaddr_in6	sin6;
 	struct sockaddr_ipx	sipx;
 	struct sockaddr_dl	sdl;
-	struct sockaddr_rtin	rtin;
 	struct sockaddr_rtlabel	rtlabel;
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label;
 
