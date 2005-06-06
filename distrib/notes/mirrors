@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.60 2005/03/18 13:30:08 miod Exp $
+dnl	$OpenBSD: mirrors,v 1.61 2005/06/06 05:48:09 kevlo Exp $
 This is a list of currently known FTP servers at the time of the OSREV release.
 For a more recent list, please refer to
 
@@ -134,9 +134,9 @@ Switzerland:
     ftp://sunsite.cnlab-switch.ch/pub/OpenBSD (Zurich)
 
 Taiwan:
-    ftp://openbsd.csie.nctu.edu.tw/pub/OpenBSD
-    ftp://openbsd.nsysu.edu.tw/pub/OpenBSD
-    ftp://ftp.tku.edu.tw/pub/OpenBSD (TamSui)
+    ftp://ftp2.openbsd.org.tw/pub/OpenBSD
+    ftp://openbsd.nsysu.edu.tw/pub/BSD/OpenBSD
+    ftp://ftp.twaren.net/BSD/OpenBSD
 
 Turkey:
     ftp://ftp.linux.org.tr/pub/OpenBSD
