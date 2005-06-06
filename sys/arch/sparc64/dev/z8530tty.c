@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.9 2003/10/03 16:44:50 miod Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.10 2005/06/06 01:08:47 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -331,7 +331,7 @@ zstty_attach(parent, self, aux)
 
 	if (strcmp(args->type, "keyboard") == 0 ||
 	    strcmp(args->type, "mouse") == 0)
-		printf(", %s", args->type);
+		printf(": %s", args->type);
 
 	printf("\n");
 

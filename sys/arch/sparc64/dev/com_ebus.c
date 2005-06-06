@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.10 2004/09/23 18:55:45 miod Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.11 2005/06/06 01:08:47 miod Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -173,9 +173,9 @@ com_ebus_attach(parent, self, aux)
 	}
 
         if (OF_getproplen(ea->ea_node, "keyboard") == 0)
-		printf(", keyboard");
+		printf(": keyboard");
 	else if (OF_getproplen(ea->ea_node, "mouse") == 0)
-		printf(", mouse");
+		printf(": mouse");
 
 	/* Now attach the driver */
 	com_attach_subr(sc);
