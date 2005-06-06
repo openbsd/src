@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.65 2005/05/27 18:53:09 henning Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.66 2005/06/06 09:01:55 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -125,6 +125,7 @@ struct pfr_walktree {
 
 struct pool		 pfr_ktable_pl;
 struct pool		 pfr_kentry_pl;
+struct pool		 pfr_kentry_pl2;
 struct sockaddr_in	 pfr_sin;
 struct sockaddr_in6	 pfr_sin6;
 union sockaddr_union	 pfr_mask;
@@ -188,9 +189,11 @@ void
 pfr_initialize(void)
 {
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
-	    "pfrktable", NULL);
+	    "pfrktable", &pool_allocator_oldnointr);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
-	    "pfrkentry", NULL);
+	    "pfrkentry", &pool_allocator_oldnointr);
+	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
+	    "pfrkentry2", NULL);
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;
@@ -794,8 +797,10 @@ pfr_create_kentry(struct pfr_addr *ad, int intr)
 {
 	struct pfr_kentry	*ke;
 
-	ke = pool_get(&pfr_kentry_pl, intr ? PR_NOWAIT :
-	    (PR_WAITOK | PR_LIMITFAIL));
+	if (intr)
+		ke = pool_get(&pfr_kentry_pl2, PR_NOWAIT);
+	else
+		ke = pool_get(&pfr_kentry_pl, PR_NOWAIT);
 	if (ke == NULL)
 		return (NULL);
 	bzero(ke, sizeof(*ke));
@@ -825,7 +830,10 @@ pfr_destroy_kentries(struct pfr_kentryworkq *workq)
 void
 pfr_destroy_kentry(struct pfr_kentry *ke)
 {
-	pool_put(&pfr_kentry_pl, ke);
+	if (ke->pfrke_intrpool)
+		pool_put(&pfr_kentry_pl2, ke);
+	else
+		pool_put(&pfr_kentry_pl, ke);
 }
 
 void
@@ -1868,7 +1876,7 @@ pfr_create_ktable(struct pfr_table *tbl, long tzero, int attachruleset)
 	struct pfr_ktable	*kt;
 	struct pf_ruleset	*rs;
 
-	kt = pool_get(&pfr_ktable_pl, PR_WAITOK | PR_LIMITFAIL);
+	kt = pool_get(&pfr_ktable_pl, PR_NOWAIT);
 	if (kt == NULL)
 		return (NULL);
 	bzero(kt, sizeof(*kt));
