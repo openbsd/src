@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.54 2005/06/06 21:08:14 mjc Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.55 2005/06/06 21:12:44 mjc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -1120,7 +1120,7 @@ ac97_ad198x_init(struct ac97_softc *as)
 
 	ac97_read(as, AC97_AD_REG_MISC, &misc);
 	ac97_write(as, AC97_AD_REG_MISC,
-	    misc|AC97_AD_MISC_DAM|AC97_AD_MISC_MADPD);
+	    misc|AC97_AD_MISC_HPSEL|AC97_AD_MISC_LOSEL);
 }
 
 void
