@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.25 2005/05/23 20:12:28 henning Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.26 2005/06/06 23:20:44 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -325,6 +325,8 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 			break;
 		}
 	}
+
+	close(socks[0]);
 
 	/* Unlink any domain sockets that have been opened */
 	for (i = 0; i < nfunix; i++)
