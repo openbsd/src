@@ -60,6 +60,7 @@ struct ringbuf {
 };
 
 struct ringbuf *ringbuf_init(size_t);
+void		ringbuf_free(struct ringbuf *);
 void		ringbuf_clear(struct ringbuf *);
 size_t		ringbuf_used(struct ringbuf *);
 int		ringbuf_append_line(struct ringbuf *, char *);

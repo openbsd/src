@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.90 2005/04/21 16:15:50 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.91 2005/06/06 23:22:04 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.90 2005/04/21 16:15:50 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.91 2005/06/06 23:22:04 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -1146,6 +1146,9 @@ init(void)
 			(void)close(f->f_file);
 			break;
 		case F_FORW:
+			break;
+		case F_MEMBUF:
+			ringbuf_free(f->f_un.f_mb.f_rb);
 			break;
 		}
 		next = f->f_next;

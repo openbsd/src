@@ -1,4 +1,4 @@
-/* $OpenBSD: ringbuf.c,v 1.3 2004/06/25 19:10:54 djm Exp $ */
+/* $OpenBSD: ringbuf.c,v 1.4 2005/06/06 23:22:04 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -49,6 +49,14 @@ ringbuf_init(size_t len)
 	ret->start = ret->end = 0;
 
 	return (ret);
+}
+
+/* Free a ring buffer */
+void
+ringbuf_free(struct ringbuf *rb)
+{
+	free(rb->buf);
+	free(rb);
 }
 
 /* Clear a ring buffer */
