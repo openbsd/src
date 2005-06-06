@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.53 2005/05/25 17:59:23 joris Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.54 2005/06/06 21:08:14 mjc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -323,7 +323,7 @@ const struct ac97_codecid {
 	{ 0x61, 0xff, 0, 0,	"AD1886",	ac97_ad1886_init },
 	{ 0x63, 0xff, 0, 0,	"AD1886A" },
 	{ 0x68, 0xff, 0, 0,	"AD1888",	ac97_ad198x_init },
-	{ 0x70, 0xff, 0, 0,	"AD1981" },
+	{ 0x70, 0xff, 0, 0,	"AD1980" },
 	{ 0x72, 0xff, 0, 0,	"AD1981A" },
 	{ 0x74, 0xff, 0, 0,	"AD1981B" },
 	{ 0x75, 0xff, 0, 0,	"AD1985",	ac97_ad198x_init },
