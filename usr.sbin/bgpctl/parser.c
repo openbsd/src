@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.14 2005/06/05 00:23:23 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.15 2005/06/06 17:13:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,8 @@ enum token_type {
 	PFTABLE,
 	PREPNBR,
 	PREPSELF,
-	WEIGHT
+	WEIGHT,
+	FAMILY
 };
 
 struct token {
@@ -103,6 +104,7 @@ static const struct token t_show_fib[] = {
 	{ FLAG,		"static",	F_STATIC,		t_show_fib},
 	{ FLAG,		"bgp",		F_BGPD_INSERTED,	t_show_fib},
 	{ FLAG,		"nexthop",	F_NEXTHOP,		t_show_fib},
+	{ FAMILY,	"",		NONE,			t_show_fib},
 	{ ADDRESS,	"",		NONE,			NULL},
 	{ ENDTOKEN,	"",		NONE,			NULL}
 };
@@ -317,6 +319,20 @@ match_token(const char *word, const struct token table[])
 				res.flags |= t->value;
 			}
 			break;
+		case FAMILY:
+			if (word == NULL)
+				break;
+			if (!strcmp(word, "inet") || !strcmp(word, "IPv4")) {
+				match++;
+				t = &table[i];
+				res.af = AF_INET;
+			}
+			if (!strcmp(word, "inet6") || !strcmp(word, "IPv6")) {
+				match++;
+				t = &table[i];
+				res.af = AF_INET6;
+			}
+			break;
 		case ADDRESS:
 			if (parse_addr(word, &res.addr)) {
 				match++;
@@ -459,6 +475,8 @@ show_valid_args(const struct token table[])
 		case PFTABLE:
 			fprintf(stderr, "  <pftable>\n");
 			break;
+		case FAMILY:
+			fprintf(stderr, "  [ inet | inet6 | IPv4 | IPv6 ]\n");
 		case ENDTOKEN:
 			break;
 		}
