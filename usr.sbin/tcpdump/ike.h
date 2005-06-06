@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.12 2005/05/18 19:50:58 hshoexer Exp $ */
+/* $OpenBSD: ike.h,v 1.13 2005/06/06 21:26:21 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -321,7 +321,8 @@
 	{ "NONE", "SECONDS", "KILOBYTES",			\
 	}
 #define IPSEC_ATTR_ENCAP_INITIALIZER				\
-	{ "NONE", "TUNNEL", "TRANSPORT",			\
+	{ "NONE", "TUNNEL", "TRANSPORT", "UDP_ENCAP_TUNNEL",	\
+	  "UDP_ENCAP_TRANSPORT"					\
 	}
 #define IPSEC_ATTR_AUTH_INITIALIZER				\
 	{ "NONE", "HMAC_MD5", "HMAC_SHA", "DES_MAC", "KPDK",	\
