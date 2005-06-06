@@ -1,7 +1,7 @@
-/*	$OpenBSD: arc4random.c,v 1.13 2005/06/06 04:54:28 kjell Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.14 2005/06/06 14:57:59 kjell Exp $	*/
 
 /*
- * Copyright (c) 1996, David Mazieres <dm@lcs.mit.edu>
+ * Copyright (c) 1996, David Mazieres <dm@uun.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
