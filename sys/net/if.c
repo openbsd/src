@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.125 2005/06/06 03:05:05 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.126 2005/06/06 03:44:21 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ if_attachsetup(struct ifnet *ifp)
 
 	TAILQ_INIT(&ifp->if_groups);
 
-	if_addgroup(ifp, "all");
+	if_addgroup(ifp, IFG_ALL);
 
 	ifindex2ifnet[if_index] = ifp;
 

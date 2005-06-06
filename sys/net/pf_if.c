@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.38 2005/06/05 20:47:46 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.39 2005/06/06 03:44:21 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -95,7 +95,7 @@ pfi_initialize(void)
 	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
 
-	if ((pfi_all = pfi_kif_get("all")) == NULL)
+	if ((pfi_all = pfi_kif_get(IFG_ALL)) == NULL)
 		panic("pfi_kif_get for pfi_all failed");
 }
 
@@ -347,7 +347,7 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 
 	s = splsoftnet();
 	if (!strcmp(aw->v.ifname, "self"))
-		dyn->pfid_kif = pfi_kif_get("all");
+		dyn->pfid_kif = pfi_kif_get(IFG_ALL);
 	else
 		dyn->pfid_kif = pfi_kif_get(aw->v.ifname);
 	if (dyn->pfid_kif == NULL) {
