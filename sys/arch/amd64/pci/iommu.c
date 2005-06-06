@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.9 2005/06/02 15:26:03 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.10 2005/06/06 15:10:20 jason Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -110,7 +110,6 @@ extern paddr_t avail_end;
 extern struct extent *iomem_ex;
 
 int amdgarts;
-int amdgart_enable;
 
 struct amdgart_softc {
 	pci_chipset_tag_t g_pc;
@@ -252,9 +251,6 @@ amdgart_probe(struct pcibus_attach_args *pba)
 	struct extent *ex = NULL;
 	u_int32_t *pte;
 	paddr_t ptepa;
-
-	if (amdgart_enable == 0)
-		return;
 
 	TAILQ_INIT(&plist);
 
