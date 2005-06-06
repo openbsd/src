@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.83 2005/06/06 00:00:33 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.84 2005/06/06 17:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -145,10 +145,19 @@ main(int argc, char *argv[])
 		show_summary_head();
 		break;
 	case SHOW_FIB:
-		if (!res->addr.af)
-			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0, -1,
-			    &res->flags, sizeof(res->flags));
-		else
+		if (!res->addr.af) {
+			struct buf	*msg;
+
+			if ((msg = imsg_create(ibuf, IMSG_CTL_KROUTE, 0, 0,
+			    sizeof(res->flags) + sizeof(res->af))) == NULL)
+				errx(1, "imsg_create failure");
+			if (imsg_add(msg, &res->flags, sizeof(res->flags)) ==
+			    -1 ||
+			    imsg_add(msg, &res->af, sizeof(res->af)) == -1)
+				errx(1, "imsg_add failure");
+			if (imsg_close(ibuf, msg) < 0)
+				errx(1, "imsg_close error");
+		} else
 			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0, -1,
 			    &res->addr, sizeof(res->addr));
 		show_fib_head();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.133 2005/06/05 23:59:28 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.134 2005/06/06 17:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -482,6 +482,7 @@ kr_show_route(struct imsg *imsg)
 	struct kroute6_node	*kr6;
 	struct bgpd_addr	*addr;
 	int			 flags;
+	sa_family_t		 af;
 	struct ctl_show_nexthop	 snh;
 	struct knexthop_node	*h;
 	struct kif_node		*kif;
@@ -489,19 +490,25 @@ kr_show_route(struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_KROUTE:
-		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(flags)) {
+		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(flags) +
+		    sizeof(af)) {
 			log_warnx("kr_show_route: wrong imsg len");
 			return;
 		}
 		memcpy(&flags, imsg->data, sizeof(flags));
-		RB_FOREACH(kr, kroute_tree, &krt)
-			if (!flags || kr->r.flags & flags)
-				send_imsg_session(IMSG_CTL_KROUTE,
-				    imsg->hdr.pid, &kr->r, sizeof(kr->r));
-		RB_FOREACH(kr6, kroute6_tree, &krt6)
-			if (!flags || kr6->r.flags & flags)
-				send_imsg_session(IMSG_CTL_KROUTE6,
-				    imsg->hdr.pid, &kr6->r, sizeof(kr6->r));
+		memcpy(&af, (char *)imsg->data + sizeof(flags), sizeof(af));
+		if (!af || af == AF_INET)
+			RB_FOREACH(kr, kroute_tree, &krt)
+				if (!flags || kr->r.flags & flags)
+					send_imsg_session(IMSG_CTL_KROUTE,
+					    imsg->hdr.pid, &kr->r,
+					    sizeof(kr->r));
+		if (!af || af == AF_INET6)
+			RB_FOREACH(kr6, kroute6_tree, &krt6)
+				if (!flags || kr6->r.flags & flags)
+					send_imsg_session(IMSG_CTL_KROUTE6,
+					    imsg->hdr.pid, &kr6->r,
+					    sizeof(kr6->r));
 		break;
 	case IMSG_CTL_KROUTE_ADDR:
 		if (imsg->hdr.len != IMSG_HEADER_SIZE +
