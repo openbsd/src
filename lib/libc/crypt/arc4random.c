@@ -1,15 +1,24 @@
-/*	$OpenBSD: arc4random.c,v 1.12 2005/06/04 05:13:13 tedu Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.13 2005/06/06 04:54:28 kjell Exp $	*/
 
 /*
- * Arc4 random number generator for OpenBSD.
- * Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
+ * Copyright (c) 1996, David Mazieres <dm@lcs.mit.edu>
  *
- * Modification and redistribution in source and binary forms is
- * permitted provided that due credit is given to the author and the
- * OpenBSD project by leaving this copyright notice intact.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
+ * Arc4 random number generator for OpenBSD.
+ *
  * This code is derived from section 17.1 of Applied Cryptography,
  * second edition, which describes a stream cipher allegedly
  * compatible with RSA Labs "RC4" cipher (the actual description of
