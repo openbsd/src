@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.2 2005/05/27 05:48:10 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.3 2005/06/06 07:15:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -46,6 +46,7 @@ static void	print_key(struct sadb_ext *, struct sadb_msg *);
 static void	print_life(struct sadb_ext *, struct sadb_msg *);
 static void	print_ident(struct sadb_ext *, struct sadb_msg *);
 static void	print_auth(struct sadb_ext *, struct sadb_msg *);
+static void	print_cred(struct sadb_ext *, struct sadb_msg *);
 static void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
 
 static struct idname *lookup(struct idname [], u_int8_t);
@@ -73,6 +74,8 @@ struct idname ext_types[] = {
 	{ SADB_EXT_IDENTITY_SRC,	"identity_src",		print_ident },
 	{ SADB_EXT_IDENTITY_DST,	"identity_dst",		print_ident },
 	{ SADB_X_EXT_REMOTE_AUTH,	"remote_auth",		print_auth },
+	{ SADB_X_EXT_LOCAL_CREDENTIALS, "local_cred",		print_cred },
+	{ SADB_X_EXT_REMOTE_CREDENTIALS,"remote_cred",		print_cred },
 	{ SADB_X_EXT_UDPENCAP,		"udpencap",		print_udpenc },
 	{ SADB_X_EXT_LIFETIME_LASTUSE,	"lifetime_lastuse",	print_life },
 	{ 0,				NULL,			NULL }
@@ -103,6 +106,12 @@ struct idname auth_types[] = {
 	{ SADB_X_AALG_SHA2_512,		"hmac-sha2-512",	NULL },
 	{ SADB_X_AALG_MD5,		"md5",			NULL },
 	{ SADB_X_AALG_SHA1,		"sha1",			NULL },
+	{ 0,				NULL,			NULL }
+};
+
+struct idname cred_types[] = {
+	{ SADB_X_CREDTYPE_X509,		"x509-asn1",		NULL },
+	{ SADB_X_CREDTYPE_KEYNOTE,	"keynote",		NULL },
 	{ 0,				NULL,			NULL }
 };
 
@@ -287,6 +296,14 @@ print_auth(struct sadb_ext *ext, struct sadb_msg *msg)
 
 	printf("type %s\n",
 	    lookup_name(xauth_types, x_cred->sadb_x_cred_type));
+}
+
+void
+print_cred(struct sadb_ext *ext, struct sadb_msg *msg)
+{
+	struct sadb_x_cred *x_cred = (struct sadb_x_cred *) ext;
+	printf("type %s\n",
+	    lookup_name(cred_types, x_cred->sadb_x_cred_type));
 }
 
 static void
