@@ -115,7 +115,7 @@ struct sockaddr_storage fixed_server_ss, fixed_proxy_ss;
 char *fixed_server, *fixed_server_port, *fixed_proxy, *listen_ip, *listen_port,
     *qname;
 int anonymous_only, caught_sig, daemonize, id_count, ipv6_mode, loglevel,
-    max_sessions, rfc_mode, session_count, timeout;
+    max_sessions, rfc_mode, session_count, timeout, verbose;
 extern char *__progname;
 
 void
@@ -594,12 +594,13 @@ main(int argc, char *argv[])
 	qname		= NULL;
 	rfc_mode	= 0;
 	timeout		= 24 * 3600;
+	verbose		= 0;
 
 	/* Other initialization. */
 	id_count	= 1;
 	session_count	= 0;
 
-	while ((ch = getopt(argc, argv, "6Aa:b:D:dm:P:p:q:R:rt:")) != -1) {
+	while ((ch = getopt(argc, argv, "6Aa:b:D:dm:P:p:q:R:rt:v")) != -1) {
 		switch (ch) {
 		case '6':
 			ipv6_mode = 1;
@@ -647,6 +648,11 @@ main(int argc, char *argv[])
 			timeout = atoi(optarg);
 			if (timeout < 0)
 				errx(1, "bad timeout");
+			break;
+		case 'v':
+			verbose++;
+			if (verbose > 2)
+				usage();
 			break;
 		default:
 			usage();
@@ -718,7 +724,7 @@ main(int argc, char *argv[])
 	freeaddrinfo(res);
 
 	/* Initialize pf. */
-	init_filter(qname);
+	init_filter(qname, verbose);
 
 	if (daemonize) {
 		if (daemon(0, 0) == -1)
@@ -1085,7 +1091,7 @@ sock_ntop(struct sockaddr *sa)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-6Adr] [-a address] [-b address]"
+	fprintf(stderr, "usage: %s [-6Adrv] [-a address] [-b address]"
 	    " [-D level] [-m maxsessions]\n                 [-P port]"
 	    " [-p port] [-q queue] [-R address] [-t timeout]\n", __progname);
 	exit(1);

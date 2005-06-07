@@ -50,7 +50,7 @@ static struct pfioc_pooladdr	pfp;
 static struct pfioc_rule	pfr;
 static struct pfioc_trans	pft;
 static struct pfioc_trans_e	pfte[TRANS_SIZE];
-static int dev;
+static int dev, rule_log;
 static char *qname;
 
 int
@@ -157,11 +157,16 @@ do_rollback(void)
 }
 
 void
-init_filter(char *opt_qname)
+init_filter(char *opt_qname, int opt_verbose)
 {
 	struct pf_status status;
 
 	qname = opt_qname;
+
+	if (opt_verbose == 1)
+		rule_log = PF_LOG;
+	else if (opt_verbose == 2)
+		rule_log = PF_LOG_ALL;
 
 	dev = open("/dev/pf", O_RDWR);	
 	if (dev == -1)
@@ -273,13 +278,13 @@ prepare_rule(u_int32_t id, int rs_num, struct sockaddr *src,
 	switch (rs_num) {
 	case PF_RULESET_FILTER:
 		/*
-		 * pass quick log inet[6] proto tcp \
+		 * pass quick [log] inet[6] proto tcp \
 		 *     from $src to $dst port = $d_port flags S/SAFR keep state
 		 *     (max 1) [queue qname]
 		 */
 		pfr.rule.action = PF_PASS;
 		pfr.rule.quick = 1;
-		pfr.rule.log = 1;
+		pfr.rule.log = rule_log;
 		pfr.rule.keep_state = 1;
 		pfr.rule.flags = TH_SYN;
 		pfr.rule.flagset = (TH_SYN|TH_ACK|TH_FIN|TH_RST);

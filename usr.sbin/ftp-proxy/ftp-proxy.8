@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.2 2005/05/31 21:47:20 jmc Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.3 2005/06/07 04:37:32 camield Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -22,7 +22,7 @@
 .Nd Internet File Transfer Protocol proxy daemon
 .Sh SYNOPSIS
 .Nm ftp-proxy
-.Op Fl 6Adr
+.Op Fl 6Adrv
 .Op Fl a Ar address
 .Op Fl b Ar address
 .Op Fl D Ar level
@@ -63,16 +63,16 @@ adds the following rules to the various anchors.
 In case of active mode (PORT or EPRT):
 .Bd -literal -offset 2n
 rdr from $server to $proxy port $port -> $client
-pass log quick inet proto tcp \e
+pass quick inet proto tcp \e
     from $server to $client port $port flags S/SAFR keep state
 .Ed
 .Pp
 In case of passive mode (PASV or EPSV):
 .Bd -literal -offset 2n
 nat from $client to $server port $port -> $proxy
-pass in log quick inet proto tcp \e
+pass in quick inet proto tcp \e
     from $client to $server port $port flags S/SAFR keep state
-pass out log quick inet proto tcp \e
+pass out quick inet proto tcp \e
     from $proxy to $server port $port flags S/SAFR keep state
 .Ed
 .Pp
@@ -133,6 +133,11 @@ proxy will disconnect.
 The default is 24 hours.
 Do not set this too low, because the control connection is usually
 idle when large data transfers are taking place.
+.It Fl v
+Set the 'log' flag on pf rules committed by
+.Nm .
+Use twice to set the 'log-all' flag.
+The pf rules do not log by default.
 .El
 .Sh CONFIGURATION
 To make use of the proxy,
