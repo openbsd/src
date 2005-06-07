@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.36 2005/06/07 07:23:41 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.37 2005/06/07 08:19:07 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -71,11 +71,9 @@ cvs_ent_open(const char *dir, int flags)
 	 * update or checkout of a module.
 	 */
 	len = cvs_path_cat(dir, CVS_PATH_CVSDIR, cdpath, sizeof(cdpath));
-	if (len >= sizeof(cdpath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", cdpath);
+	if (len >= sizeof(cdpath))
 		return (NULL);
-	}
+
 	if ((stat(cdpath, &st) == 0) && S_ISDIR(st.st_mode))
 		nodir = 0;	/* the CVS/ directory does exist */
 
