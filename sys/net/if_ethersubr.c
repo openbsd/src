@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.93 2005/05/24 16:28:03 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.94 2005/06/07 02:45:11 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -151,12 +151,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netipx/ipx_if.h>
 #endif
 
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#include <netccitt/dll.h>
-#include <netccitt/llc_var.h>
-
 #ifdef NETATALK
 #include <netatalk/at.h>
 #include <netatalk/at_var.h>
@@ -165,10 +159,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 extern u_char	at_org_code[ 3 ];
 extern u_char	aarp_org_code[ 3 ];
 #endif /* NETATALK */
-
-#if defined(CCITT)
-#include <sys/socketvar.h>
-#endif
 
 u_char etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -187,13 +177,6 @@ ether_ioctl(ifp, arp, cmd, data)
 
 	switch (cmd) {
 
-#if defined(CCITT)
-	case SIOCSIFCONF_X25:
-		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = cons_rtrequest;
-		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
-		break;
-#endif /* CCITT */
 	case SIOCSIFADDR:
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef IPX
@@ -426,43 +409,6 @@ ether_output(ifp0, m0, dst, rt0)
 		}
 		} break;
 #endif /* NETATALK */
-/*	case AF_NSAP: */
-	case AF_CCITT: {
-		struct sockaddr_dl *sdl =
-			(struct sockaddr_dl *) rt -> rt_gateway;
-
-		if (sdl && sdl->sdl_family == AF_LINK
-		    && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (char *)edst,
-				sizeof(edst));
-		} else goto bad; /* Not a link interface ? Funny ... */
-		if ((ifp->if_flags & IFF_SIMPLEX) && (*edst & 1) &&
-		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
-			M_PREPEND(mcopy, sizeof(*eh), M_DONTWAIT);
-			if (mcopy) {
-				eh = mtod(mcopy, struct ether_header *);
-				bcopy(edst, eh->ether_dhost, sizeof(edst));
-				bcopy(ac->ac_enaddr, eh->ether_shost,
-				    sizeof(edst));
-			}
-		}
-		etype = htons(m->m_pkthdr.len);
-#ifdef LLC_DEBUG
-		{
-			int i;
-			struct llc *l = mtod(m, struct llc *);
-
-			printf("ether_output: sending LLC2 pkt to: ");
-			for (i=0; i < ETHER_ADDR_LEN; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n",
-			    m->m_pkthdr.len, l->llc_dsap & 0xff,
-			    l->llc_ssap &0xff, l->llc_control & 0xff);
-
-		}
-#endif /* LLC_DEBUG */
-		} break;
-
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
 		eh = (struct ether_header *)dst->sa_data;
@@ -864,25 +810,6 @@ decapsulate:
 				goto decapsulate;
 			}
 			goto dropanyway;
-#ifdef CCITT
-		case LLC_X25_LSAP:
-			if (m->m_pkthdr.len > etype)
-				m_adj(m, etype - m->m_pkthdr.len);
-			M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
-			if (m == 0)
-				return;
-			if (!sdl_sethdrif(ifp, eh->ether_shost, LLC_X25_LSAP,
-			    eh->ether_dhost, LLC_X25_LSAP, ETHER_ADDR_LEN,
-			    mtod(m, struct sdl_hdr *)))
-				panic("ETHER cons addr failure");
-			mtod(m, struct sdl_hdr *)->sdlhdr_len = etype;
-#ifdef LLC_DEBUG
-			printf("llc packet\n");
-#endif /* LLC_DEBUG */
-			schednetisr(NETISR_CCITT);
-			inq = &llcintrq;
-			break;
-#endif /* CCITT */
 		dropanyway:
 		default:
 			m_freem(m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.44 2005/01/18 23:26:52 mpf Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.45 2005/06/07 02:45:11 henning Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -124,13 +124,6 @@
 #endif
 
 #include "bpfilter.h"
-
-#include <netccitt/dll.h>
-#include <netccitt/llc_var.h>
-
-#if defined(CCITT)
-extern struct ifqueue pkintrq;
-#endif
 
 #include "carp.h"
 #if NCARP > 0
@@ -278,46 +271,6 @@ fddi_output(ifp0, m0, dst, rt0)
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		break;
 #endif
-#ifdef	CCITT
-/*	case AF_NSAP: */
-	case AF_CCITT: {
-		struct sockaddr_dl *sdl = 
-			(struct sockaddr_dl *) rt->rt_gateway;
-
-		if (sdl && sdl->sdl_family == AF_LINK
-		    && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (char *)edst,
-				sizeof(edst));
-		} else goto bad; /* Not a link interface ? Funny ... */
-		if ((ifp->if_flags & IFF_SIMPLEX) && (*edst & 1) &&
-		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
-			M_PREPEND(mcopy, sizeof (*fh), M_DONTWAIT);
-			if (mcopy) {
-				fh = mtod(mcopy, struct fddi_header *);
-				bcopy((caddr_t)edst,
-				      (caddr_t)fh->fddi_dhost, sizeof (edst));
-				bcopy((caddr_t)ac->ac_enaddr,
-				      (caddr_t)fh->fddi_shost, sizeof (edst));
-				fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
-			}
-		}
-		type = 0;
-#ifdef LLC_DEBUG
-		{
-			int i;
-			struct llc *l = mtod(m, struct llc *);
-
-			printf("fddi_output: sending LLC2 pkt to: ");
-			for (i=0; i<6; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
-			    m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
-			    l->llc_control & 0xff);
-
-		}
-#endif /* LLC_DEBUG */
-		} break;
-#endif /* CCITT */	
 
 	case pseudo_AF_HDRCMPLT:
 	{
@@ -544,25 +497,6 @@ fddi_input(ifp, fh, m)
 		break;
 	}
 #endif /* INET || IPX || NS || DECNET */
-#ifdef CCITT
-	case LLC_X25_LSAP:
-	{
-		M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
-		if (m == 0)
-			return;
-		if ( !sdl_sethdrif(ifp, fh->fddi_shost, LLC_X25_LSAP,
-				    fh->fddi_dhost, LLC_X25_LSAP, 6, 
-				    mtod(m, struct sdl_hdr *)))
-			panic("ETHER cons addr failure");
-		mtod(m, struct sdl_hdr *)->sdlhdr_len = m->m_pkthdr.len - sizeof(struct sdl_hdr);
-#ifdef LLC_DEBUG
-		printf("llc packet\n");
-#endif /* LLC_DEBUG */
-		schednetisr(NETISR_CCITT);
-		inq = &llcintrq;
-		break;
-	}
-#endif /* CCITT */
 		
 	default:
 		/* printf("fddi_input: unknown dsap 0x%x\n", l->llc_dsap); */

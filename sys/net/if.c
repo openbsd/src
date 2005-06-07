@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.126 2005/06/06 03:44:21 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.127 2005/06/07 02:45:11 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -580,9 +580,6 @@ do { \
 #ifdef NETATALK
 	IF_DETACH_QUEUES(atintrq1);
 	IF_DETACH_QUEUES(atintrq2);
-#endif
-#ifdef CCITT
-	IF_DETACH_QUEUES(llcintrq);
 #endif
 #ifdef NATM
 	IF_DETACH_QUEUES(natmintrq);

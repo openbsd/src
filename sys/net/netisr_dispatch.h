@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr_dispatch.h,v 1.8 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: netisr_dispatch.h,v 1.9 2005/06/07 02:45:11 henning Exp $	*/
 /* $NetBSD: netisr_dispatch.h,v 1.2 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
@@ -54,9 +54,6 @@
 #endif
 #ifdef NS
 	DONETISR(NETISR_NS,nsintr);
-#endif
-#ifdef CCITT
-	DONETISR(NETISR_CCITT,ccittintr);
 #endif
 #if NATM > 0
 	DONETISR(NETISR_NATM,natmintr);
