@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.117 2005/05/26 00:33:45 pedro Exp $
+#	$OpenBSD: GENERIC,v 1.118 2005/06/07 02:48:21 henning Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -68,7 +68,6 @@ option		IPSEC		# IPsec
 #option		IPX		# IPX+SPX
 #option		IPXIP		# IPX tunneling over IP
 #option		NETATALK	# AppleTalk
-#option		CCITT,LLC,HDLC	# X.25
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
 #option		MROUTING	# Multicast router
