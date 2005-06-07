@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.59 2005/05/21 17:24:50 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.60 2005/06/07 17:38:54 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -221,6 +221,7 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705K },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705M },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705M_ALT },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714C },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5720 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5721 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750 },
@@ -1083,6 +1084,7 @@ bge_chipinit(sc)
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750)
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_MINDMA;
 
@@ -1612,6 +1614,10 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5705 A3" },
 
+	{ BGE_CHIPID_BCM5714_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5714 A0" },
+
 	{ BGE_CHIPID_BCM5750_A0,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5750 A1" },
@@ -1647,6 +1653,10 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5705,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5705" },
+
+	{ BGE_ASICREV_BCM5714,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5714" },
 
 	{ BGE_ASICREV_BCM5750,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
@@ -1796,7 +1806,8 @@ bge_attach(parent, self, aux)
 	 * XXX: Broadcom Linux driver.  Not in specs or eratta.
 	 * PCI-Express?
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750) {
 		u_int32_t v;
 
 		v = pci_conf_read(pc, pa->pa_tag, BGE_PCI_MSI_CAPID);
