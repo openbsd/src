@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.68 2005/03/30 08:23:47 jaredy Exp $	*/
+/*	$OpenBSD: route.c,v 1.69 2005/06/07 00:53:25 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.68 2005/03/30 08:23:47 jaredy Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.69 2005/06/07 00:53:25 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -201,9 +201,6 @@ pr_family(int af)
 		break;
 	case AF_IPX:
 		afname = "IPX";
-		break;
-	case AF_CCITT:
-		afname = "X.25";
 		break;
 	case PF_KEY:
 		afname = "Encap";
