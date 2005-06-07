@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.3 2005/01/01 00:30:31 canacar Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.4 2005/06/07 05:10:57 canacar Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -528,8 +528,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			printf("%s: %s: %*s\n",
 			    sc ? sc->sc_sppp.pp_if.if_xname : "pppoe*",
 			    err_msg, len, err_txt);
-			if (errortag)
-				goto done;
+			goto done;
 		}
 		off += sizeof(*pt) + len;
 	}
@@ -553,7 +552,9 @@ breakbreak:
 				break;
 		}
 		if (sc == NULL) {
-			PPPOEDEBUG(("pppoe: free passive interface is not found\n"));
+#ifdef PPPOE_DEBUG
+			printf("pppoe: free passive interface is not found\n");
+#endif
 			goto done;
 		}
 		if (hunique) {
