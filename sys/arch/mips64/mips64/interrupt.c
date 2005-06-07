@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.14 2005/05/30 12:51:13 art Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.15 2005/06/07 02:29:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -205,7 +205,7 @@ printf("Unhandled interrupt %x:%x\n", cause, pending);
 		softclock();
 	}
 #if defined(INET) || defined(INET6) || defined(NETATALK) || defined(IMP) || \
-    defined(IPX) || defined(NS) || defined(CCITT) || NATM > 0 || \
+    defined(IPX) || defined(NS) || NATM > 0 || \
     NPPP > 0 || NBRIDGE > 0
 	if ((ipending & SINT_NETMASK) & ~xcpl) {
 		extern int netisr;
@@ -514,7 +514,7 @@ generic_do_pending_int(int newcpl)
 		softclock();
 	}
 #if defined(INET) || defined(INET6) || defined(NETATALK) || defined(IMP) || \
-    defined(IPX) || defined(NS) || defined(CCITT) || NATM > 0 || \
+    defined(IPX) || defined(NS) || NATM > 0 || \
     NPPP > 0 || NBRIDGE > 0
 	if ((ipending & SINT_NETMASK) & ~newcpl) {
 		int isr = netisr;

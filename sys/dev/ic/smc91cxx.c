@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.19 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.20 2005/06/07 02:29:30 henning Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -111,14 +111,6 @@
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
-#endif
-
-#if defined(CCITT) && defined(LLC)
-#include <sys/socketvar.h>
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
 #endif
 
 #if NBPFILTER > 0
@@ -1003,18 +995,6 @@ smc91cxx_ioctl(ifp, cmd, data)
 			break;
 		}
 		break;
-
-#if defined(CCITT) && defined(LLC)
-	case SIOCSIFCONF_X25:
-		if ((error = smc91cxx_enable(sc)) != 0)
-			break;
-		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = cons_rtrequest;	/* XXX */
-		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
-		if (error == 0)
-			smc91cxx_init(sc);
-		break;
-#endif
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
