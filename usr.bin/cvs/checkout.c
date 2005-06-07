@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.28 2005/05/31 08:58:47 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.29 2005/06/07 15:13:25 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -199,6 +199,10 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 			return (CVS_EX_PROTO);
 
 		if (!shorten && cvs_sendarg(root, "-N", 0) < 0)
+			return (CVS_EX_PROTO);
+
+		if ((cvs_cmd_update.cmd_flags & CVS_CMD_PRUNEDIRS) &&
+		    (cvs_sendarg(root, "-P", 0) < 0))
 			return (CVS_EX_PROTO);
 
 		for (i = 0; i < co_nmod; i++)
