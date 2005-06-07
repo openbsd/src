@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.84 2005/06/06 17:15:07 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.85 2005/06/07 17:45:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -924,7 +924,7 @@ print_prefix(struct bgpd_addr *prefix, u_int8_t prefixlen, u_int8_t flags)
 		*p++ = '>';
 	*p = '\0';
 
-	if (asprintf(&p, "%s/%u", inet_ntoa(prefix->v4), prefixlen) == -1)
+	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
 		err(1, NULL);
 	printf("%-4s %-20s", flagstr, p);
 	free(p);
@@ -970,7 +970,7 @@ show_rib_summary_msg(struct imsg *imsg)
 		memcpy(rib, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
 
 		print_prefix(&rib->prefix, rib->prefixlen, rib->flags);
-		printf("%-15s ", inet_ntoa(rib->nexthop.v4));
+		printf("%-15s ", log_addr(&rib->nexthop));
 
 		printf(" %5u %5u ", rib->local_pref, rib->med);
 
@@ -990,7 +990,7 @@ show_rib_summary_msg(struct imsg *imsg)
 			return (0);
 
 		print_prefix(&p->prefix, p->prefixlen, p->flags);
-		printf("%-15s ", inet_ntoa(rib->nexthop.v4));
+		printf("%-15s ", log_addr(&rib->nexthop));
 
 		printf(" %5u %5u ", rib->local_pref, rib->med);
 
