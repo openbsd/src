@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.31 2005/06/07 21:38:09 henning Exp $
+.\"	$OpenBSD: netintro.4,v 1.32 2005/06/07 23:12:17 henning Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -109,15 +109,6 @@ due to errors in device operation.
 Network interfaces may be collected together into interface groups.
 An interface group is a container that can be used generically when
 referring to any interface related by some criteria.
-Interfaces may be a member of any number of interface groups.
-Cloned interfaces are members of their interface family group by default.
-For example, a PPP interface such as
-.Li ppp0
-is a member of the PPP interface family group,
-.Li ppp .
-The interface(s) the default route(s) point to are members of the
-.Em external
-interface group.
 When an action is performed on an interface group, such as packet
 filtering by the
 .Xr pf 4
