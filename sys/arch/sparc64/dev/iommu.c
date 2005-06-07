@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.37 2005/06/02 01:27:39 mickey Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.38 2005/06/07 20:40:01 kurt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -582,7 +582,7 @@ iommu_dvmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, struct strbuf_ctl *sb,
 	if (ret)
 		return (ret);
 
-	ims = iommu_iomap_create((size + PAGE_MASK) >> PAGE_SHIFT);
+	ims = iommu_iomap_create(nsegments);
 
 	if (ims == NULL) {
 		bus_dmamap_destroy(t0, map);
@@ -1695,6 +1695,9 @@ iommu_iomap_create(int n)
 	struct iommu_map_state *ims;
 	struct strbuf_flush *sbf;
 	vaddr_t va;
+
+	if (n < 64)
+		n = 64;
 
 	ims = malloc(sizeof(*ims) + (n - 1) * sizeof(ims->ims_map.ipm_map[0]),
 		M_DEVBUF, M_NOWAIT);
