@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.135 2005/06/07 18:43:31 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.136 2005/06/07 18:56:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1891,6 +1891,10 @@ fetchtable(void)
 			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
 			if (rtm->rtm_flags & RTF_STATIC)
 				kr->r.flags |= F_STATIC;
+			if (rtm->rtm_flags & RTF_BLACKHOLE)
+				kr->r.flags |= F_BLACKHOLE;
+			if (rtm->rtm_flags & RTF_REJECT)
+				kr->r.flags |= F_REJECT;
 			if (sa_in != NULL) {
 				if (sa_in->sin_len == 0)
 					break;
@@ -1919,6 +1923,10 @@ fetchtable(void)
 			sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 			if (rtm->rtm_flags & RTF_STATIC)
 				kr6->r.flags |= F_STATIC;
+			if (rtm->rtm_flags & RTF_BLACKHOLE)
+				kr6->r.flags |= F_BLACKHOLE;
+			if (rtm->rtm_flags & RTF_REJECT)
+				kr6->r.flags |= F_REJECT;
 			if (sa_in6 != NULL) {
 				if (sa_in6->sin6_len == 0)
 					break;
@@ -2114,13 +2122,18 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 	if ((sa = rti_info[RTAX_DST]) == NULL)
 		return (-1);
 
+	if (rtm->rtm_flags & RTF_STATIC)
+		flags |= F_STATIC;
+	if (rtm->rtm_flags & RTF_BLACKHOLE)
+		flags |= F_BLACKHOLE;
+	if (rtm->rtm_flags & RTF_REJECT)
+		flags |= F_REJECT;
+
 	prefix.af = sa->sa_family;
 	switch (prefix.af) {
 	case AF_INET:
 		prefix.v4.s_addr = ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 		sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
-		if (rtm->rtm_flags & RTF_STATIC)
-			flags |= F_STATIC;
 		if (sa_in != NULL) {
 			if (sa_in->sin_len != 0)
 				prefixlen = mask2prefixlen(
@@ -2135,8 +2148,6 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 		memcpy(&prefix.v6, &((struct sockaddr_in6 *)sa)->sin6_addr,
 		    sizeof(struct in6_addr));
 		sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
-		if (rtm->rtm_flags & RTF_STATIC)
-			flags |= F_STATIC;
 		if (sa_in6 != NULL) {
 			if (sa_in6->sin6_len != 0)
 				prefixlen = mask2prefixlen6(sa_in6);
