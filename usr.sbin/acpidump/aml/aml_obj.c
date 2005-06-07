@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_obj.c,v 1.2 2005/06/03 19:59:04 grange Exp $	*/
+/*	$OpenBSD: aml_obj.c,v 1.3 2005/06/07 16:27:03 deraadt Exp $	*/
 /*-
  * Copyright (c) 1999 Takanori Watanabe
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_obj.c,v 1.2 2005/06/03 19:59:04 grange Exp $
+ *	$Id: aml_obj.c,v 1.3 2005/06/07 16:27:03 deraadt Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_obj.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 
@@ -95,9 +95,9 @@ aml_copy_object(struct aml_environ *env, union aml_object *orig)
 				ret->package.objects[i] = aml_copy_object(env, orig->package.objects[i]);
 			}
 		} else if (orig->type == aml_t_string && orig->str.needfree != 0) {
-			ret->str.string = memman_alloc_flexsize(aml_memman,
-			    strlen(orig->str.string) + 1);
-			strcpy(orig->str.string, ret->str.string);
+			int l = strlen(orig->str.string) + 1;
+			ret->str.string = memman_alloc_flexsize(aml_memman, l);
+			strlcpy(orig->str.string, ret->str.string, l);
 		} else if (orig->type == aml_t_num) {
                         ret->num.constant = 0;
                 }
@@ -244,7 +244,7 @@ aml_realloc_object(union aml_object *obj, int size)
 			return;
 		}
 		tmp.str.string = memman_alloc_flexsize(aml_memman, size + 1);
-		strcpy(tmp.str.string, obj->str.string);
+		strlcpy(tmp.str.string, obj->str.string, size + 1);
 		aml_free_objectcontent(obj);
 		*obj = tmp;
 		break;
