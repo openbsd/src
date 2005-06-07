@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsintro.7,v 1.6 2005/04/12 20:11:07 xsa Exp $
+.\"	$OpenBSD: cvsintro.7,v 1.7 2005/06/07 09:11:12 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -93,7 +93,7 @@ This example shows how a user initially checks out a copy of the source tree
 from local mirror anoncvs.nl.openbsd.org:
 .Bd -literal -offset indent
 $ cd /usr
-$ cvs -d anoncvs@anoncvs.nl.openbsd.org:/cvs checkout src
+$ cvs -d anoncvs@anoncvs.nl.openbsd.org:/cvs checkout -P src
 .Ed
 .Pp
 In this case it was first necessary to add ourselves to the
