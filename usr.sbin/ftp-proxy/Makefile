@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 2005/06/07 14:12:07 camield Exp $
+
 PROG=	ftp-proxy
 SRCS=	ftp-proxy.c filter.c
 MAN=	ftp-proxy.8

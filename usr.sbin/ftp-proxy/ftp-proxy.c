@@ -1,3 +1,5 @@
+/*	$OpenBSD: ftp-proxy.c,v 1.5 2005/06/07 14:12:07 camield Exp $ */
+
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
  *
