@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.39 2005/06/07 04:42:42 tedu Exp $
+.\"	$OpenBSD: malloc.3,v 1.40 2005/06/07 09:04:42 jmc Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -182,7 +182,6 @@ Flags are single letters, uppercase means on, lowercase means off.
 will coredump the process, rather than tolerate failure.
 This is a very handy debugging aid, since the core file will represent the
 time of failure, rather than when the null pointer was accessed.
-.Pp
 .It Cm D
 .Dq Dump .
 .Fn malloc
@@ -191,41 +190,34 @@ will dump statistics in a file called
 at exit.
 This option requires the library to have been compiled with -DMALLOC_STATS in
 order to have any effect.
-.Pp
 .It Cm F
 .Dq Freeguard .
 Enable use after free protection.
 Unused pages on the freelist are read and write protected to
 cause a segmentation fault upon access.
-.Pp
 .It Cm G
 .Dq Guard .
 Enable guard pages and chunk randomization.
 Each page size or larger allocation is followed by a guard page that will
 cause a segmentation fault upon any access.
 Smaller than page size chunks are returned in a random order.
-.Pp
 .It Cm H
 .Dq Hint .
 Pass a hint to the kernel about pages we don't use.
 If the machine is paging a lot this may help a bit.
-.Pp
 .It Cm J
 .Dq Junk .
 Fill some junk into the area allocated.
 Currently junk is bytes of 0xd0; this is pronounced
 .Dq Duh .
 \&:-)
-.Pp
 .It Cm N
 Do not output warning messages when encountering possible corruption
 or bad pointers.
-.Pp
 .It Cm P
 .Dq Pointer Protection .
 Pointer sized allocations are aligned to the end of a page to catch
 sizeof(ptr) errors where sizeof(*ptr) is meant.
-.Pp
 .It Cm R
 .Dq realloc .
 Always reallocate when
@@ -239,7 +231,6 @@ This can substantially aid in compacting memory.
 .\".Xr ktrace 1
 .\"for all operations.
 .\"Consult the source for this one.
-.Pp
 .It Cm X
 .Dq xmalloc .
 Rather than return failure,
@@ -251,17 +242,14 @@ including in the source:
 extern char *malloc_options;
 malloc_options = "X";
 .Ed
-.Pp
 .It Cm Z
 .Dq Zero .
 Fill some junk into the area allocated (see
 .Cm J ) ,
 except for the exact length the user asked for, which is zeroed.
-.Pp
 .It Cm <
 .Dq Half the cache size .
 Reduce the size of the cache by a factor of two.
-.Pp
 .It Cm >
 .Dq Double the cache size .
 Double the size of the cache by a factor of two.
