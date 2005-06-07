@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.342 2005/06/03 23:09:12 deraadt Exp $
+#	$OpenBSD: files,v 1.343 2005/06/07 02:48:39 henning Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -727,25 +727,6 @@ file net80211/ieee80211_output.c	wlan
 file net80211/ieee80211_proto.c		wlan
 file net80211/ieee80211_rssadapt.c	wlan
 file net80211/ieee80211_regdomain.c	wlan
-file netccitt/ccitt_proto.c		ccitt
-file netccitt/hd_debug.c		hdlc
-file netccitt/hd_input.c		hdlc
-file netccitt/hd_output.c		hdlc
-file netccitt/hd_subr.c			hdlc
-file netccitt/hd_timer.c		hdlc
-file netccitt/if_x25subr.c		ccitt
-file netccitt/llc_input.c		llc
-file netccitt/llc_output.c		llc
-file netccitt/llc_subr.c		llc
-file netccitt/llc_timer.c		llc
-file netccitt/pk_acct.c			ccitt
-file netccitt/pk_debug.c		ccitt
-file netccitt/pk_input.c		ccitt
-file netccitt/pk_llcsubr.c		llc | hdlc
-file netccitt/pk_output.c		ccitt
-file netccitt/pk_subr.c			ccitt
-file netccitt/pk_timer.c		ccitt
-file netccitt/pk_usrreq.c		ccitt
 file netinet/if_atm.c			atm
 file netinet/if_ether.c			ether | inet
 file netinet/igmp.c			inet
