@@ -1,4 +1,4 @@
-.\"	$OpenBSD: files.conf.5,v 1.9 2005/03/07 20:10:27 tdeval Exp $
+.\"	$OpenBSD: files.conf.5,v 1.10 2005/06/07 14:39:19 hshoexer Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat.
 .\" All rights reserved.
@@ -162,11 +162,11 @@ and
 .Tn SCSI
 drivers can then be defined as
 .Pp
-.Dl define scsictrl: scsi
+.Dl device scsictrl: scsi
 .Pp
 A device may depend on as many attributes as necessary:
 .Pp
-.Dl define complexdev: simpledev, otherdev, specialattribute
+.Dl device complexdev: simpledev, otherdev, specialattribute
 .Pp
 .\"
 .Ss Pseudo devices
