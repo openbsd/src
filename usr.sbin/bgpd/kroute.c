@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.134 2005/06/06 17:15:07 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.135 2005/06/07 18:43:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -123,7 +123,7 @@ void			 kroute_detach_nexthop(struct knexthop_node *);
 int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
-u_int8_t	mask2prefixlen6(struct in6_addr *);
+u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
 void		if_announce(void *);
@@ -1467,56 +1467,48 @@ mask2prefixlen(in_addr_t ina)
 }
 
 u_int8_t
-mask2prefixlen6(struct in6_addr *in6a)
+mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 {
-	u_int8_t	 l = 0, i;
-	int		 final = 0;
+	u_int8_t	 l = 0, i, len;
 
-	for (i = 0; i < 16; i ++) {
+	/*
+	 * sin6_len is the size of the sockaddr so substract the offset of
+	 * the possibly truncated sin6_addr struct.
+	 */
+	len = sa_in6->sin6_len -
+	    (u_int8_t)(&((struct sockaddr_in6 *)NULL)->sin6_addr);
+	for (i = 0; i < len; i++) {
 		/* this "beauty" is adopted from sbin/route/show.c ... */
-		switch (in6a->s6_addr[i]) {
+		switch (sa_in6->sin6_addr.s6_addr[i]) {
 		case 0xff:
 			l += 8;
 			break;
 		case 0xfe:
 			l += 7;
-			final++;
-			break;
+			return (l);
 		case 0xfc:
 			l += 6;
-			final++;
-			break;
+			return (l);
 		case 0xf8:
 			l += 5;
-			final++;
-			break;
+			return (l);
 		case 0xf0:
 			l += 4;
-			final++;
-			break;
+			return (l);
 		case 0xe0:
 			l += 3;
-			final++;
-			break;
+			return (l);
 		case 0xc0:
 			l += 2;
-			final++;
-			break;
+			return (l);
 		case 0x80:
 			l += 1;
-			final++;
-			break;
-		case 0x00:
-			final++;
-			break;
-		default:
-			/* XXX why is there crap in the mask??? */
-			in6a->s6_addr[i] = 0x00;
-			final++;
-			break;
-		}
-		if (final)
 			return (l);
+		case 0x00:
+			return (l);
+		default:
+			fatalx("non continguous inet6 netmask");
+		}
 	}
 
 	return (l);
@@ -1930,8 +1922,7 @@ fetchtable(void)
 			if (sa_in6 != NULL) {
 				if (sa_in6->sin6_len == 0)
 					break;
-				kr6->r.prefixlen =
-				    mask2prefixlen6(&sa_in6->sin6_addr);
+				kr6->r.prefixlen = mask2prefixlen6(sa_in6);
 			} else if (rtm->rtm_flags & RTF_HOST)
 				kr6->r.prefixlen = 128;
 			else
@@ -2148,7 +2139,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 			flags |= F_STATIC;
 		if (sa_in6 != NULL) {
 			if (sa_in6->sin6_len != 0)
-				prefixlen = mask2prefixlen6(&sa_in6->sin6_addr);
+				prefixlen = mask2prefixlen6(sa_in6);
 		} else if (rtm->rtm_flags & RTF_HOST)
 			prefixlen = 128;
 		else
