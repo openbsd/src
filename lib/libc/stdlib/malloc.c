@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.73 2005/05/24 16:39:05 tedu Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.74 2005/06/07 04:42:42 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -211,6 +211,8 @@ static int malloc_freeprot;
 
 /* use guard pages after allocations? */
 static int malloc_guard = 0;
+/* align pointers to end of page? */
+static int malloc_ptrguard;
 
 #if defined(__FreeBSD__) || (defined(__OpenBSD__) && defined(MADV_FREE))
 /* pass the kernel a hint on free pages ?  */
@@ -612,6 +614,8 @@ malloc_init(void)
 		case 'J': malloc_junk    = 1; break;
 		case 'n': malloc_silent  = 0; break;
 		case 'N': malloc_silent  = 1; break;
+		case 'p': malloc_ptrguard = 0; break;
+		case 'P': malloc_ptrguard = 1; break;
 		case 'r': malloc_realloc = 0; break;
 		case 'R': malloc_realloc = 1; break;
 #ifdef __FreeBSD__
@@ -1082,7 +1086,7 @@ imalloc(size_t size)
     if (suicide)
 	abort();
 
-    if (malloc_guard && size == PTR_SIZE) {
+    if (malloc_ptrguard && size == PTR_SIZE) {
 	    ptralloc = 1;
 	    size = malloc_pagesize;
     }
@@ -1128,7 +1132,7 @@ irealloc(void *ptr, size_t size)
 	return (NULL);
     }
 
-    if (malloc_guard && PTR_ALIGNED(ptr)) {
+    if (malloc_ptrguard && PTR_ALIGNED(ptr)) {
 	    if (size <= PTR_SIZE)
 		    return (ptr);
 	    else {
@@ -1602,7 +1606,7 @@ ifree(void *ptr)
     if (suicide)
 	return;
 
-    if (malloc_guard && PTR_ALIGNED(ptr))
+    if (malloc_ptrguard && PTR_ALIGNED(ptr))
 	    ptr = (char *)ptr - PTR_GAP;
 
     index = ptr2index(ptr);
