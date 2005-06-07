@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.94 2005/06/07 02:45:11 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.95 2005/06/07 07:09:42 camield Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -621,6 +621,11 @@ ether_input(ifp, eh, m)
 
 	etype = ntohs(eh->ether_type);
 
+#if NVLAN > 0
+	if (etype == ETHERTYPE_VLAN && (vlan_input(eh, m) == 0))
+		return;
+#endif
+
 #if NBRIDGE > 0
 	/*
 	 * Tap the packet off here for a bridge, if configured and
@@ -643,8 +648,9 @@ ether_input(ifp, eh, m)
 
 #if NVLAN > 0
 	if (etype == ETHERTYPE_VLAN) {
-		if (vlan_input(eh, m) < 0)
-			ifp->if_noproto++;
+		/* The bridge did not want the vlan frame either, drop it. */
+		ifp->if_noproto++;
+		m_freem(m);
 		return;
 	}
 #endif /* NVLAN > 0 */

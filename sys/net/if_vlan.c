@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.55 2005/05/27 08:33:25 mpf Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.56 2005/06/07 07:09:42 camield Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -328,6 +328,9 @@ vlan_input_tag(struct mbuf *m, u_int16_t t)
 	return 0;
 }
 
+/*
+ * vlan_input() returns 0 if it has consumed the packet, 1 otherwise.
+ */
 int
 vlan_input(eh, m)
 	struct ether_header *eh;
@@ -349,11 +352,13 @@ vlan_input(eh, m)
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag)
 			break;
 	}
+	if (ifv == NULL)
+		return (1);
 
-	if (ifv == NULL || (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
+	if ((ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
-		return -1;	/* so ether_input can take note */
+		return (0);
 	}
 
 	/*
@@ -389,7 +394,7 @@ vlan_input(eh, m)
 	ifv->ifv_if.if_ipackets++;
 	ether_input(&ifv->ifv_if, eh, m);
 
-	return 0;
+	return (0);
 }
 
 int
