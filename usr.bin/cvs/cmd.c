@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.23 2005/06/02 20:12:06 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.24 2005/06/07 16:22:19 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -228,6 +228,9 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 
 	if (cmd->cmd_cleanup != NULL)
 		(*cmd->cmd_cleanup)();
+
+	if (root->cr_method != CVS_METHOD_LOCAL)
+		cvs_disconnect(root);
 
 	return (0);
 }
