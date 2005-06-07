@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.64 2005/06/01 17:44:34 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.65 2005/06/07 09:06:15 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -290,8 +290,6 @@ typedef struct cvs_histfile {
 } CVSHIST;
 
 
-#ifdef CVS
-
 extern char *cvs_repo_base;
 extern char *cvs_command;
 extern char *cvs_editor;
@@ -308,8 +306,6 @@ extern int  cvs_noexec;
 extern int  cvs_readonly;
 
 extern CVSFILE *cvs_files;
-
-#endif
 
 extern struct cvs_cmd *cvs_cdt[];
 

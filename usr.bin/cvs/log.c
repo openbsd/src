@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.19 2005/06/05 20:47:44 joris Exp $	*/
+/*	$OpenBSD: log.c,v 1.20 2005/06/07 09:06:15 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -205,6 +205,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	int ecp;
 	char prefix[64], buf[1024], ebuf[32];
 	FILE *out;
+	struct cvs_cmd *cmdp;
 
 	if (level > LP_MAX)
 		return (-1);
@@ -217,9 +218,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		ecp = errno;
 	else
 		ecp = 0;
-
-#ifdef CVS
-	struct cvs_cmd *cmdp;
 
 	/* always use the command name in error messages, not aliases */
 	cmdp = cvs_findcmd(cvs_command);
@@ -237,7 +235,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 			snprintf(prefix, sizeof(prefix), "%s %s", __progname,
 			    cmdp->cmd_name);
 	} else /* just use the standard strlcpy */
-#endif
 		strlcpy(prefix, __progname, sizeof(prefix));
 
 	if ((cvs_log_flags & LF_PID) && (level != LP_TRACE)) {
@@ -257,7 +254,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		else
 			out = stderr;
 
-#ifdef CVS
 		if (cvs_cmdop == CVS_OP_SERVER) {
 			if (out == stdout)
 				putc('M', out);
@@ -267,7 +263,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 			}
 			putc(' ', out);
 		}
-#endif
 
 		fputs(prefix, out);
 		if (level != LP_TRACE)
@@ -287,7 +282,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 }
 
 
-#ifdef CVS
 /*
  * cvs_printf()
  *
@@ -336,7 +330,6 @@ cvs_printf(const char *fmt, ...)
 	va_end(vap);
 	return (ret);
 }
-
 void
 cvs_putchar(int c)
 {
@@ -351,5 +344,3 @@ cvs_putchar(int c)
 	if (cvs_cmdop == CVS_OP_SERVER && c == '\n')
 		send_m = 1;
 }
-
-#endif
