@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.15 2005/06/06 17:13:56 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.16 2005/06/07 17:43:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -368,7 +368,8 @@ match_token(const char *word, const struct token table[])
 				if (strlcpy(res.peerdesc, word,
 				    sizeof(res.peerdesc)) >=
 				    sizeof(res.peerdesc))
-					err(1, "neighbor description too long");
+					errx(1, "neighbor description too "
+					    "long");
 				match++;
 				t = &table[i];
 			}
@@ -405,12 +406,8 @@ match_token(const char *word, const struct token table[])
 					err(1, NULL);
 				if (strlcpy(fs->action.pftable, word,
 				    sizeof(fs->action.pftable)) >=
-				    sizeof(fs->action.pftable)) {
-					fprintf(stderr,
-					    "pftable name too long");
-					free(fs);
-					break;
-				}
+				    sizeof(fs->action.pftable))
+					errx(1, "pftable name too long");
 				SIMPLEQ_INSERT_TAIL(&res.set, fs, entry);
 				match++;
 				t = &table[i];
