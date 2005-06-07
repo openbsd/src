@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.46 2005/05/27 22:37:46 mcbride Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.47 2005/06/07 18:21:44 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -416,6 +416,7 @@ report:
 				rt->rt_labelid =
 				    rtlabel_name2id(rtlabel);
 			}
+			if_group_routechange(dst, netmask);
 			/* fallthrough */
 		case RTM_LOCK:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);

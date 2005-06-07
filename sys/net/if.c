@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.127 2005/06/07 02:45:11 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.128 2005/06/07 18:21:44 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ int	if_clone_list(struct if_clonereq *);
 struct if_clone	*if_clone_lookup(const char *, int *);
 
 void	if_congestion_clear(void *);
+int	if_group_ext_build(void);
 
 TAILQ_HEAD(, ifg_group) ifg_head;
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
@@ -1717,6 +1718,84 @@ if_getgroup(caddr_t data, struct ifnet *ifp)
 	return (0);
 }
 
+void
+if_group_routechange(struct sockaddr *dst, struct sockaddr *mask)
+{
+	switch (dst->sa_family) {
+	case AF_INET:
+		if (satosin(dst)->sin_addr.s_addr == INADDR_ANY &&
+		    satosin(mask)->sin_addr.s_addr == INADDR_ANY)
+			if_group_ext_build();
+		break;
+	case AF_INET6:
+		if (IN6_ARE_ADDR_EQUAL(&(satosin6(dst))->sin6_addr,
+		    &in6addr_any) &&
+		    IN6_ARE_ADDR_EQUAL(&(satosin6(mask))->sin6_addr,
+		    &in6addr_any))
+			if_group_ext_build();
+		break;
+	}
+}
+
+int
+if_group_ext_build(void)
+{
+	struct ifg_group	*ifg;
+	struct ifg_member	*ifgm, *next;
+	struct sockaddr_in	 sa_in;
+	struct sockaddr_in6	 sa_in6;
+	struct radix_node_head	*rnh;
+	struct radix_node	*rn;
+	struct rtentry		*rt;
+
+	TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
+		if (!strcmp(ifg->ifg_group, IFG_EXTERNAL))
+			break;
+
+	if (ifg != NULL)
+		for (ifgm = TAILQ_FIRST(&ifg->ifg_members); ifgm; ifgm = next) {
+			next = TAILQ_NEXT(ifgm, ifgm_next);
+			if_delgroup(ifgm->ifgm_ifp, IFG_EXTERNAL);
+		}
+
+	if ((rnh = rt_tables[AF_INET]) == NULL)
+		return (-1);
+
+	bzero(&sa_in, sizeof(sa_in));
+	sa_in.sin_len = sizeof(sa_in);
+	sa_in.sin_family = AF_INET;
+	if ((rn = rnh->rnh_lookup(&sa_in, &sa_in, rnh))) {
+		do {
+			rt = (struct rtentry *)rn;
+			if (rt->rt_ifp)
+				if_addgroup(rt->rt_ifp, IFG_EXTERNAL);
+			if (rn_mpath_capable(rnh))
+				rn = rn_mpath_next(rn);
+			else
+				rn = NULL;
+		} while (rn != NULL);
+	}
+
+#ifdef INET6
+	if ((rnh = rt_tables[AF_INET6]) == NULL)
+		return (-1);
+
+	bcopy(&sa6_any, &sa_in6, sizeof(sa_in6));
+	if ((rn = rnh->rnh_lookup(&sa_in6, &sa_in6, rnh))) {
+		do {
+			rt = (struct rtentry *)rn;
+			if (rt->rt_ifp)
+				if_addgroup(rt->rt_ifp, IFG_EXTERNAL);
+			if (rn_mpath_capable(rnh))
+				rn = rn_mpath_next(rn);
+			else
+				rn = NULL;
+		} while (rn != NULL);
+	}
+#endif
+
+	return (0);
+}
 
 /*
  * Set/clear promiscuous mode on interface ifp based on the truth value

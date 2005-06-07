@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.72 2005/06/06 03:44:21 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.73 2005/06/07 18:21:44 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -425,7 +425,8 @@ struct if_announcemsghdr {
  * interface groups
  */
 
-#define	IFG_ALL	"all"	/* group containing all interfaces */
+#define	IFG_ALL		"all"		/* group contains all interfaces */
+#define	IFG_EXTERNAL	"external"	/* if(s) default route(s) point to */
 
 struct ifg_group {
 	char				 ifg_group[IFNAMSIZ];
@@ -690,6 +691,7 @@ int	ifpromisc(struct ifnet *, int);
 int	if_addgroup(struct ifnet *, const char *);
 int	if_delgroup(struct ifnet *, const char *);
 int	if_getgroup(caddr_t, struct ifnet *);
+void	if_group_routechange(struct sockaddr *, struct sockaddr *);
 struct	ifnet *ifunit(const char *);
 
 struct	ifaddr *ifa_ifwithaddr(struct sockaddr *);
