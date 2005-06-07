@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.32 2004/07/08 15:11:37 tedu Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.33 2005/06/07 02:30:47 henning Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -114,13 +114,13 @@ static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
 	AF_UNSPEC,
 	AF_UNIX,
 	AF_INET,
-	AF_CCITT,	/* LINUX_AF_AX25 */
+	-1,		/* LINUX_AF_AX25 */
 	AF_IPX,
 	AF_APPLETALK,
 	-1,		/* LINUX_AF_NETROM */
 	-1,		/* LINUX_AF_BRIDGE */
 	-1,		/* LINUX_AF_ATMPVC */
-	AF_CCITT,	/* LINUX_AF_X25 */
+	-1,		/* LINUX_AF_X25 */
 	AF_INET6,
 	-1,		/* LINUX_AF_ROSE */
 	AF_DECnet,
@@ -148,7 +148,7 @@ static const int bsd_to_linux_domain_[AF_MAX] = {
 	-1,		/* AF_ISO */
 	-1,		/* AF_ECMA */
 	-1,		/* AF_DATAKIT */
-	LINUX_AF_AX25,	/* AF_CCITT */
+	-1,		/* AF_CCITT */
 	-1,		/* LINUX_AF_SNA */
 	-1,		/* LINUX_AF_DECnet */
 	-1,		/* AF_DLI */
