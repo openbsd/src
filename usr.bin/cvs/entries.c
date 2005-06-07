@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.35 2005/06/02 20:19:30 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.36 2005/06/07 07:23:41 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,15 +53,31 @@ CVSENTRIES*
 cvs_ent_open(const char *dir, int flags)
 {
 	size_t len;
-	int exists;
-	char entpath[MAXPATHLEN], ebuf[128], mode[4];
+	int exists, nodir;
+	char cdpath[MAXPATHLEN], entpath[MAXPATHLEN], ebuf[128], mode[4];
 	FILE *fp;
 	struct stat st;
 	struct cvs_ent *ent;
 	CVSENTRIES *ep;
 
 	exists = 0;
+	nodir = 1;
 	memset(mode, 0, sizeof(mode));
+
+	/*
+	 * Check if the CVS/ dir does exist. If it does,
+	 * maybe the Entries file was deleted by accident,
+	 * display error message. Else we might be doing a fresh
+	 * update or checkout of a module.
+	 */
+	len = cvs_path_cat(dir, CVS_PATH_CVSDIR, cdpath, sizeof(cdpath));
+	if (len >= sizeof(cdpath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", cdpath);
+		return (NULL);
+	}
+	if ((stat(cdpath, &st) == 0) && S_ISDIR(st.st_mode))
+		nodir = 0;	/* the CVS/ directory does exist */
 
 	len = cvs_path_cat(dir, CVS_PATH_ENTRIES, entpath, sizeof(entpath));
 	if (len >= sizeof(entpath))
@@ -87,8 +103,9 @@ cvs_ent_open(const char *dir, int flags)
 
 	fp = fopen(entpath, mode);
 	if (fp == NULL) {
-		cvs_log(LP_ERRNO, "cannot open %s for %s", entpath,
-		    mode[1] == '+' ? "writing" : "reading");
+		if (!nodir)
+			cvs_log(LP_ERRNO, "cannot open %s for %s", entpath,
+			    mode[1] == '+' ? "writing" : "reading");
 		return (NULL);
 	}
 
