@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.17 2005/06/07 17:42:58 deraadt Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.18 2005/06/07 17:53:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -897,9 +897,9 @@ bstp_initialization(sc)
 	    (((u_int64_t)mac->ac_enaddr[0]) << 40) |
 	    (((u_int64_t)mac->ac_enaddr[1]) << 32) |
 	    ((unsigned int)mac->ac_enaddr[2] << 24) |
-	    (((unsigned int)mac->ac_enaddr[3] << 16) |
-	    (((unsigned int)mac->ac_enaddr[4] << 8) |
-	    (((unsigned int)mac->ac_enaddr[5]);
+	    ((unsigned int)mac->ac_enaddr[3] << 16) |
+	    ((unsigned int)mac->ac_enaddr[4] << 8) |
+	    ((unsigned int)mac->ac_enaddr[5]);
 
 	sc->sc_designated_root = sc->sc_bridge_id;
 	sc->sc_root_path_cost = 0;
