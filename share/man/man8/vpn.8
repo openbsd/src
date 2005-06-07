@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.103 2005/05/24 04:29:51 david Exp $
+.\" $OpenBSD: vpn.8,v 1.104 2005/06/07 09:09:50 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -570,6 +570,13 @@ and vice versa.
 The opposite would be true if
 .Xr netstat 1
 were run on GATEWAY_B.
+.Pp
+Note that the routing table above is given for an automated keying session.
+SA information for a manual keying session would differ slightly: the
+.Dq Type
+field would be
+.Dq require
+for both directions.
 .Pp
 Next check that you can
 .Xr ping 8
