@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.85 2005/05/25 05:51:13 markus Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.86 2005/06/07 02:36:41 henning Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -48,7 +48,6 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
-#include <netccitt/x25.h>
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/in.h>
