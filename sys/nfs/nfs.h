@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.23 2005/04/02 01:00:38 mickey Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.24 2005/06/08 04:17:14 marius Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -170,39 +170,39 @@ struct nfsd_cargs {
  * Stats structure
  */
 struct nfsstats {
-	int	attrcache_hits;
-	int	attrcache_misses;
-	int	lookupcache_hits;
-	int	lookupcache_misses;
-	int	direofcache_hits;
-	int	direofcache_misses;
-	int	biocache_reads;
-	int	read_bios;
-	int	read_physios;
-	int	biocache_writes;
-	int	write_bios;
-	int	write_physios;
-	int	biocache_readlinks;
-	int	readlink_bios;
-	int	biocache_readdirs;
-	int	readdir_bios;
-	int	rpccnt[NFS_NPROCS];
-	int	rpcretries;
-	int	srvrpccnt[NFS_NPROCS];
-	int	srvrpc_errs;
-	int	srv_errs;
-	int	rpcrequests;
-	int	rpctimeouts;
-	int	rpcunexpected;
-	int	rpcinvalid;
-	int	srvcache_inproghits;
-	int	srvcache_idemdonehits;
-	int	srvcache_nonidemdonehits;
-	int	srvcache_misses;
-	int	srvnqnfs_leases;
-	int	srvnqnfs_maxleases;
-	int	srvnqnfs_getleases;
-	int	srvvop_writes;
+	uint64_t	attrcache_hits;
+	uint64_t	attrcache_misses;
+	uint64_t	lookupcache_hits;
+	uint64_t	lookupcache_misses;
+	uint64_t	direofcache_hits;
+	uint64_t	direofcache_misses;
+	uint64_t	biocache_reads;
+	uint64_t	read_bios;
+	uint64_t	read_physios;
+	uint64_t	biocache_writes;
+	uint64_t	write_bios;
+	uint64_t	write_physios;
+	uint64_t	biocache_readlinks;
+	uint64_t	readlink_bios;
+	uint64_t	biocache_readdirs;
+	uint64_t	readdir_bios;
+	uint64_t	rpccnt[NFS_NPROCS];
+	uint64_t	rpcretries;
+	uint64_t	srvrpccnt[NFS_NPROCS];
+	uint64_t	srvrpc_errs;
+	uint64_t	srv_errs;
+	uint64_t	rpcrequests;
+	uint64_t	rpctimeouts;
+	uint64_t	rpcunexpected;
+	uint64_t	rpcinvalid;
+	uint64_t	srvcache_inproghits;
+	uint64_t	srvcache_idemdonehits;
+	uint64_t	srvcache_nonidemdonehits;
+	uint64_t	srvcache_misses;
+	uint64_t	srvnqnfs_leases;
+	uint64_t	srvnqnfs_maxleases;
+	uint64_t	srvnqnfs_getleases;
+	uint64_t	srvvop_writes;
 };
 
 /*
