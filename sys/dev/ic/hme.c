@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.36 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.37 2005/06/08 04:14:25 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -877,7 +877,9 @@ hme_rint(sc)
 		}
 
 		ifp->if_ipackets++;
+#if 0
 		hme_rxcksum(m, flags);
+#endif
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf) {
