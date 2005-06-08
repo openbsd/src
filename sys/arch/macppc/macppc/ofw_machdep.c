@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.25 2004/06/24 22:35:56 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.26 2005/06/08 19:08:23 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -569,7 +569,6 @@ of_display_console()
 		int i;
 
 		cons_membus->bus_base = 0x80000000;
-		cons_membus->bus_reverse = 1;
 #if 0
 		err = bus_space_map( cons_membus, cons_addr, addr[0].size_lo,
 			0, &cons_display_mem_h);

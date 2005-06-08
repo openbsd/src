@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.9 2003/10/15 23:00:56 drahn Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.10 2005/06/08 19:08:23 drahn Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -161,8 +161,6 @@ macobio_attach(struct device *parent, struct device *self, void *aux)
 	ca.ca_baseaddr = reg[2];
 
 	sc->sc_membus_space.bus_base = ca.ca_baseaddr;
-
-	sc->sc_membus_space.bus_reverse = 1;
 
 	ca.ca_iot = &sc->sc_membus_space;
 	ca.ca_dmat = pa->pa_dmat;

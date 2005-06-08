@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2004/06/28 02:49:10 aaron Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2005/06/08 19:08:23 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1274,8 +1274,7 @@ bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 	int i;
 
 	dst = (u_int16_t *) (h+o);
-	if (t->bus_reverse)
-		val = swap16(val);
+	val = swap16(val);
 
 	for (i = 0; i < c; i++)
 		dst[i] = val;
@@ -1288,8 +1287,7 @@ bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 	int i;
 
 	dst = (u_int32_t *) (h+o);
-	if (t->bus_reverse)
-		val = swap32(val);
+	val = swap32(val);
 
 	for (i = 0; i < c; i++)
 		dst[i] = val;

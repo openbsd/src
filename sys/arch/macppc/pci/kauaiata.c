@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.3 2003/06/05 22:40:48 drahn Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.4 2005/06/08 19:08:23 drahn Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -140,8 +140,6 @@ vendor 0x106b product 0x003b (class undefined unknown subclass 0x00, rev 0x00) a
 #endif
 
 	ca.ca_baseaddr = sc->sc_membus_space.bus_base;
-
-	sc->sc_membus_space.bus_reverse = 1;
 
 	ca.ca_name = name;
 	ca.ca_iot = &sc->sc_membus_space;

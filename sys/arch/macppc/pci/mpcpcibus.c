@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.23 2003/12/20 22:40:27 miod Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.24 2005/06/08 19:08:23 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -223,9 +223,7 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 		}
 		if (map == 1) {
 			sc->sc_membus_space.bus_base = MPC106_P_PCI_MEM_SPACE;
-			sc->sc_membus_space.bus_reverse = 1;
 			sc->sc_iobus_space.bus_base = MPC106_P_PCI_IO_SPACE;
-			sc->sc_iobus_space.bus_reverse = 1;
 			if ( bus_space_map(&(sc->sc_iobus_space), 0, NBPG, 0,
 			    &lcp->ioh_cf8) != 0 )
 				panic("mpcpcibus: unable to map self");
@@ -234,10 +232,8 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 		} else {
 			sc->sc_membus_space.bus_base =
 			    MPC106_P_PCI_MEM_SPACE_MAP_B;
-			sc->sc_membus_space.bus_reverse = 1;
 			sc->sc_iobus_space.bus_base =
 			    MPC106_P_PCI_IO_SPACE_MAP_B;
-			sc->sc_iobus_space.bus_reverse = 1;
 			if ( bus_space_map(&(sc->sc_iobus_space), 0xfec00000,
 			    NBPG, 0, &lcp->ioh_cf8) != 0 )
 				panic("mpcpcibus: unable to map self");
@@ -349,10 +345,8 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 				/* mac configs */
 
 				sc->sc_membus_space.bus_base = 0;
-				sc->sc_membus_space.bus_reverse = 1;
 				sc->sc_membus_space.bus_io = 0;
 				sc->sc_iobus_space.bus_base = 0;
-				sc->sc_iobus_space.bus_reverse = 1;
 				sc->sc_iobus_space.bus_io = 1;
 
 				/* find io(config) base, flag == 0x01000000 */

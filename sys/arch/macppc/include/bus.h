@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 2003/10/08 21:52:46 drahn Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 2005/06/08 19:08:23 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -55,7 +55,6 @@ typedef struct ppc_bus_space *bus_space_tag_t;
 struct ppc_bus_space {
 	u_int32_t	bus_base;
 	u_int32_t	bus_size;
-	u_int8_t	bus_reverse;	/* Reverse bytes */
 	u_int8_t	bus_io;		/* IO or memory */
 };
 #define POWERPC_BUS_TAG_BASE(x)  ((x)->bus_base)
@@ -83,10 +82,7 @@ static __inline CAT3(u_int,m,_t)					      \
 CAT(bus_space_read_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba)							      \
 {									      \
-    if(bst->bus_reverse)						      \
 	return CAT3(in,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));      \
-    else								      \
-	return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));	      \
 }
 
 bus_space_read(1,8)
@@ -100,10 +96,7 @@ static __inline void							      \
 CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba, CAT3(u_int,m,_t) x)					      \
 {									      \
-    if(bst->bus_reverse)						      \
 	CAT3(out,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
-    else								      \
-	CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
 }
 
 bus_space_write(1,8)
