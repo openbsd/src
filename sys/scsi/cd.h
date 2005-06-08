@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.5 2005/06/03 17:29:55 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.6 2005/06/08 21:57:44 espie Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -211,6 +211,8 @@ struct cd_audio_page {
 
 #define	CDRETRIES	4
 
+#ifdef _KERNEL
+
 struct cd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
@@ -241,4 +243,5 @@ struct cd_softc {
 #endif
 };
 
+#endif /* _KERNEL */
 #endif
