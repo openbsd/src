@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.h,v 1.12 2004/10/07 06:26:12 otto Exp $	 */
+/* $OpenBSD: machine.h,v 1.13 2005/06/08 22:36:43 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -55,7 +55,7 @@ struct system_info {
 	int             p_active;	/* number of procs considered
 					 * "active" */
 	int            *procstates;
-	int            *cpustates;
+	int64_t        *cpustates;
 	int            *memory;
 };
 

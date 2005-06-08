@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.h,v 1.5 2003/06/13 21:52:25 deraadt Exp $	*/
+/*	$OpenBSD: top.h,v 1.6 2005/06/08 22:36:43 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -40,7 +40,7 @@
 #define VERSION		3
 
 /* Number of lines of header information on the standard screen */
-#define Header_lines	6
+extern int Header_lines;
 
 /* Maximum number of columns allowed for display */
 #define MAX_COLS	128
@@ -82,3 +82,9 @@ extern uid_t userid(char *);
 
 /* version.c */
 extern char *version_string(void);
+extern int y_mem;
+extern int y_message;
+extern int y_header;
+extern int y_idlecursor;
+extern int y_procs;
+extern int num_CPUS;

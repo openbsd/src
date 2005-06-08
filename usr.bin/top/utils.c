@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.15 2004/11/22 15:26:53 pat Exp $	 */
+/* $OpenBSD: utils.c,v 1.16 2005/06/08 22:36:43 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -162,10 +163,12 @@ argparse(char *line, int *cntp)
 	cnt += 3;
 
 	/* allocate a char * array to hold the pointers */
-	argarray = (char **) malloc(cnt * sizeof(char *));
+	if ((argarray = malloc(cnt * sizeof(char *))) == NULL)
+		err(1, NULL);
 
 	/* allocate another array to hold the strings themselves */
-	args = (char *) malloc(length + 2);
+	if ((args = malloc(length + 2)) == NULL)
+		err(1, NULL);
 
 	/* initialization for main loop */
 	from = line;
@@ -207,9 +210,9 @@ argparse(char *line, int *cntp)
  * useful on BSD mchines for calculating cpu state percentages.
  */
 int
-percentages(int cnt, int *out, long *new, long *old, long *diffs)
+percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
 {
-	long change, total_change, *dp, half_total;
+	int64_t change, total_change, *dp, half_total;
 	int i;
 
 	/* initialization */
@@ -220,7 +223,7 @@ percentages(int cnt, int *out, long *new, long *old, long *diffs)
 	for (i = 0; i < cnt; i++) {
 		if ((change = *new - *old) < 0) {
 			/* this only happens when the counter wraps */
-			change = ((unsigned int)*new - (unsigned int)*old);
+			change = (*new - *old);
 		}
 		total_change += (*dp++ = change);
 		*old++ = *new++;

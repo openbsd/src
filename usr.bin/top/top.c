@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.38 2005/05/14 09:03:31 jmc Exp $	*/
+/*	$OpenBSD: top.c,v 1.39 2005/06/08 22:36:43 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -42,6 +42,7 @@ const char	copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 /* includes specific to top */
 #include "display.h"		/* interface to display package */
@@ -79,7 +80,7 @@ int order_index;
 /* pointers to display routines */
 void		(*d_loadave)(int, double *) = i_loadave;
 void		(*d_procstates)(int, int *) = i_procstates;
-void		(*d_cpustates)(int *) = i_cpustates;
+void		(*d_cpustates)(int64_t *) = i_cpustates;
 void		(*d_memory)(int *) = i_memory;
 void		(*d_message)(void) = i_message;
 void		(*d_header)(char *) = i_header;

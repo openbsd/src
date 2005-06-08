@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.19 2005/04/13 02:33:09 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.20 2005/06/08 22:36:43 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -46,8 +46,11 @@
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/sched.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <err.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -74,7 +77,7 @@ static int      last_hi = 0;	/* used in u_process and u_endscreen */
 static int      lastline = 0;
 static int      display_width = MAX_COLS;
 
-static char    *cpustates_tag(void);
+static char    *cpustates_tag(int);
 static int      string_count(char **);
 static void     summary_format(char *, size_t, int *, char **);
 static void     line_update(char *, char *, int, int);
@@ -94,10 +97,19 @@ static int      num_procstates;
 static int      num_cpustates;
 
 static int     *lprocstates;
-static int     *lcpustates;
+static int64_t **lcpustates;
 
 static int     *cpustate_columns;
 static int      cpustate_total_length;
+
+/* display ips */
+int y_mem;
+int y_message;
+int y_header;
+int y_idlecursor;
+int y_procs;
+extern int ncpu;
+int Header_lines;
 
 static enum {
 	OFF, ON, ERASE
@@ -126,8 +138,8 @@ display_resize(void)
 		display_width = MAX_COLS - 1;
 
 	/* now, allocate space for the screen buffer */
-	screenbuf = (char *) malloc(display_lines * display_width);
-	if (screenbuf == (char *) NULL)
+	screenbuf = malloc(display_lines * display_width);
+	if (screenbuf == NULL)
 		return (-1);
 
 	/* return number of lines available */
@@ -138,8 +150,15 @@ display_resize(void)
 int
 display_init(struct statics * statics)
 {
-	int display_lines, *ip, i;
+	int display_lines, *ip, i, cpu;
 	char **pp;
+
+	y_mem = 2 + ncpu;
+	y_message = 3 + ncpu;
+	y_header = 4 + ncpu;
+	y_idlecursor = 3 + ncpu;
+	y_procs = 5 + ncpu;
+	Header_lines = 5 + ncpu;
 
 	/* call resize to do the dirty work */
 	display_lines = display_resize();
@@ -149,12 +168,24 @@ display_init(struct statics * statics)
 		/* save pointers and allocate space for names */
 		procstate_names = statics->procstate_names;
 		num_procstates = string_count(procstate_names);
-		lprocstates = (int *) malloc(num_procstates * sizeof(int));
+		lprocstates = malloc(num_procstates * sizeof(int));
+		if (lprocstates == NULL)
+			err(1, NULL);
 
 		cpustate_names = statics->cpustate_names;
 		num_cpustates = string_count(cpustate_names);
-		lcpustates = (int *) malloc(num_cpustates * sizeof(int));
-		cpustate_columns = (int *) malloc(num_cpustates * sizeof(int));
+		lcpustates = malloc(ncpu * sizeof(int64_t *));
+		if (lcpustates == NULL)
+			err(1, NULL);
+		for (cpu = 0; cpu < ncpu; cpu++) {
+			lcpustates[cpu] = malloc(num_cpustates * sizeof(int64_t));
+			if (lcpustates[cpu] == NULL)
+				err(1, NULL);
+		}
+		
+		cpustate_columns = malloc(num_cpustates * sizeof(int));
+		if (cpustate_columns == NULL)
+			err(1, NULL);
 
 		memory_names = statics->memory_names;
 
@@ -339,112 +370,149 @@ static int      cpustates_column;
 /* cpustates_tag() calculates the correct tag to use to label the line */
 
 static char *
-cpustates_tag(void)
+cpustates_tag(int cpu)
 {
-	static char *short_tag = "CPU: ";
-	static char *long_tag = "CPU states: ";
-	char *use;
+	static char *tag;
+	static int cpulen, old_width;
+	int i;
 
-	/*
-	 * if length + strlen(long_tag) >= screen_width, then we have to use
-	 * the shorter tag (we subtract 2 to account for ": ")
-	 */
-	if (cpustate_total_length + (int) strlen(long_tag) - 2 >= screen_width)
-		use = short_tag;
-	else
-		use = long_tag;
-
-	/* set cpustates_column accordingly then return result */
-	cpustates_column = strlen(use);
-	return (use);
-}
-
-void
-i_cpustates(int *states)
-{
-	int i = 0, value;
-	char **names = cpustate_names, *thisname;
-
-	/* print tag and bump lastline */
-	printf("\n%s", cpustates_tag());
-	lastline++;
-
-	/* now walk thru the names and print the line */
-	while ((thisname = *names++) != NULL) {
-		if (*thisname != '\0') {
-			/* retrieve the value and remember it */
-			value = *states++;
-
-			/* if percentage is >= 1000, print it as 100% */
-			printf((value >= 1000 ? "%s%4.0f%% %s" : "%s%4.1f%% %s"),
-			    i++ == 0 ? "" : ", ",
-			    ((float) value) / 10.,
-			    thisname);
-		}
+	if (cpulen == 0 && ncpu > 1) {
+		/* compute length of the cpu string */
+		for (i = ncpu; i > 0; cpulen++, i /= 10)
+			continue;
 	}
 
-	/* copy over values into "last" array */
-	memcpy(lcpustates, states, num_cpustates * sizeof(int));
+	if (old_width == screen_width) {
+		if (ncpu > 1) {
+			/* just store the cpu number in the tag */
+			i = tag[3 + cpulen];
+			snprintf(tag + 3, cpulen + 1, "%.*d", cpulen, cpu);
+			tag[3 + cpulen] = i;
+		}
+	} else {
+		/*
+		 * use a long tag if it will fit, otherwise use short one.
+		 */
+		free(tag);
+		if (cpustate_total_length + 10 + cpulen >= screen_width)
+			i = asprintf(&tag, "CPU%.*d: ", cpulen, cpu);
+		else
+			i = asprintf(&tag, "CPU%.*d states: ", cpulen, cpu);
+		if (i == -1)
+			tag = NULL;
+		else {
+			cpustates_column = strlen(tag);
+			old_width = screen_width;
+		}
+	}
+	return (tag);
 }
 
 void
-u_cpustates(int *states)
+i_cpustates(int64_t *ostates)
 {
+	int i, cpu, value;
+	int64_t *states;
 	char **names = cpustate_names, *thisname;
-	int value, *lp, *colp;
 
-	Move_to(cpustates_column, y_cpustates);
-	lastline = y_cpustates;
-	lp = lcpustates;
-	colp = cpustate_columns;
+	for (cpu = 0; cpu < ncpu; cpu++) {
+		/* print tag and bump lastline */
+		printf("\n%s", cpustates_tag(cpu));
+		lastline++;
 
-	/* we could be much more optimal about this */
-	while ((thisname = *names++) != NULL) {
-		if (*thisname != '\0') {
-			/* did the value change since last time? */
-			if (*lp != *states) {
-				/* yes, move and change */
-				Move_to(cpustates_column + *colp, y_cpustates);
-				lastline = y_cpustates;
-
-				/* retrieve value and remember it */
-				value = *states;
+		/* now walk thru the names and print the line */
+		names = cpustate_names;
+		i = 0;
+		states = ostates + (CPUSTATES * cpu);
+		while ((thisname = *names++) != NULL) {
+			if (*thisname != '\0') {
+				/* retrieve the value and remember it */
+				value = *states++;
 
 				/* if percentage is >= 1000, print it as 100% */
-				printf((value >= 1000 ? "%4.0f" : "%4.1f"),
-				    ((double) value) / 10.);
-
-				/* remember it for next time */
-				*lp = *states;
+				printf((value >= 1000 ? "%s%4.0f%% %s" :
+				    "%s%4.1f%% %s"), i++ == 0 ? "" : ", ",
+				    ((float) value) / 10., thisname);
 			}
 		}
-		/* increment and move on */
-		lp++;
-		states++;
-		colp++;
+
+		/* copy over values into "last" array */
+		memcpy(lcpustates[cpu], ostates, num_cpustates * sizeof(int64_t));
+	}
+}
+
+void
+u_cpustates(int64_t *ostates)
+{
+	char **names, *thisname;
+	int cpu, value, *colp;
+	int64_t *lp, *states;
+
+	for (cpu = 0; cpu < ncpu; cpu++) {
+		lastline = y_cpustates + cpu;
+		states = ostates + (CPUSTATES * cpu);
+		Move_to(cpustates_column, lastline);
+		lp = lcpustates[cpu];
+		colp = cpustate_columns;
+
+		/* we could be much more optimal about this */
+		names = cpustate_names;
+		while ((thisname = *names++) != NULL) {
+			if (*thisname != '\0') {
+				/* did the value change since last time? */
+				if (*lp != *states) {
+					/* yes, move and change */
+					lastline = y_cpustates + cpu;
+					Move_to(cpustates_column + *colp,
+					    lastline);
+
+					/* retrieve value and remember it */
+					value = *states;
+
+					/* if percentage is >= 1000,
+					 * print it as 100%
+					 */
+					printf((value >= 1000 ? "%4.0f" :
+					    "%4.1f"), ((double) value) / 10.);
+
+					/* remember it for next time */
+					*lp = *states;
+				}
+			}
+			/* increment and move on */
+			lp++;
+			states++;
+			colp++;
+		}
 	}
 }
 
 void
 z_cpustates(void)
 {
-	char **names = cpustate_names, *thisname;
-	int i = 0, *lp;
+	char **names, *thisname;
+	int cpu, i;
+	int64_t *lp;
 
-	/* show tag and bump lastline */
-	printf("\n%s", cpustates_tag());
-	lastline++;
+	for (cpu = 0; cpu < ncpu; cpu++) {
+		/* show tag and bump lastline */
+		printf("\n%s", cpustates_tag(cpu));
+		lastline++;
 
-	while ((thisname = *names++) != NULL) {
-		if (*thisname != '\0')
-			printf("%s    %% %s", i++ == 0 ? "" : ", ", thisname);
+		names = cpustate_names;
+		i = 0;
+		while ((thisname = *names++) != NULL) {
+			if (*thisname != '\0')
+				printf("%s    %% %s", i++ == 0 ? "" : ", ",
+				    thisname);
+		}
+
+		/* fill the "last" array with all -1s, to ensure correct updating */
+		lp = lcpustates[cpu];
+		i = num_cpustates;
+		while (--i >= 0)
+			*lp++ = -1;
 	}
-
-	/* fill the "last" array with all -1s, to insure correct updating */
-	lp = lcpustates;
-	i = num_cpustates;
-	while (--i >= 0)
-		*lp++ = -1;
 }
 
 static char     memory_buffer[MAX_COLS];
