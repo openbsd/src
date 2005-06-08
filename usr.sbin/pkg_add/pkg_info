@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.28 2005/01/16 11:16:23 espie Exp $
+# $OpenBSD: pkg_info,v 1.29 2005/06/08 09:43:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -64,6 +64,19 @@ sub printfile
 	close $fh;
 }
 
+sub print_description
+{
+	my $dir = shift;
+	local $_;
+
+	open my $fh, '<', $dir.DESC or return;
+	$_ = <$fh> unless -f $dir.COMMENT;
+	while(<$fh>) {
+		print;
+	}
+	close $fh;
+}
+
 sub get_line
 {
 	open my $fh, '<', shift or return "";
@@ -71,6 +84,12 @@ sub get_line
 	chomp($c);
 	close $fh;
 	return $c;
+}
+
+sub get_comment
+{
+	my $d = shift;
+	return get_line(-f $d.COMMENT? $d.COMMENT : $d.DESC);
 }
 
 sub find_by_spec
@@ -153,7 +172,7 @@ sub print_info
 	if ($opt_I) {
 		my $l = 20 - length($pkg);
 		$l = 1 if $l <= 0;
-		print $pkg, " "x$l, get_line($dir.COMMENT), "\n";
+		print $pkg, " "x$l, get_comment($dir), "\n";
 	} else {
 		if ($terse) {
 			print $opt_l, $pkg, "\n" unless $opt_q;
@@ -162,7 +181,7 @@ sub print_info
 		}
 		if ($opt_c) {
 			print $opt_l, "Comment:\n" unless $opt_q;
-			printfile($dir.COMMENT);
+			print get_comment($dir), "\n";
 			print "\n";
 		}
 		if ($opt_R && -f $dir.REQUIRED_BY) {
@@ -172,7 +191,7 @@ sub print_info
 		}
 		if ($opt_d) {
 			print $opt_l, "Description:\n" unless $opt_q;
-			printfile($dir.DESC);
+			print_description($dir);
 			print "\n";
 		}
 		if ($opt_M && -f $dir.DISPLAY) {
