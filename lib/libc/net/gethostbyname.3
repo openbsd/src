@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.22 2004/03/14 18:05:37 jmc Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.23 2005/06/08 18:32:34 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Ft struct hostent *
 .Fn gethostbyname2 "const char *name" "int af"
 .Ft struct hostent *
-.Fn gethostbyaddr "const char *addr" "int len" "int af"
+.Fn gethostbyaddr "const void *addr" "socklen_t len" "int af"
 .Ft struct hostent *
 .Fn gethostent void
 .Ft void

@@ -48,7 +48,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.62 2005/05/02 17:38:41 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.63 2005/06/08 18:32:34 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -640,7 +640,7 @@ gethostbyname2(const char *name, int af)
 }
 
 struct hostent *
-gethostbyaddr(const char *addr, int len, int af)
+gethostbyaddr(const void *addr, socklen_t len, int af)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	const u_char *uaddr = (const u_char *)addr;
@@ -650,8 +650,8 @@ gethostbyaddr(const char *addr, int len, int af)
 	char qbuf[MAXDNAME+1], *qp, *ep;
 	char lookups[MAXDNSLUS];
 	struct hostent *res;
-	extern struct hostent *_gethtbyaddr(const char *, int, int);
-	extern struct hostent *_yp_gethtbyaddr(const char *);
+	extern struct hostent *_gethtbyaddr(const void *, socklen_t, int);
+	extern struct hostent *_yp_gethtbyaddr(const void *);
 	
 	if (_res_init(0) == -1) {
 		res = _gethtbyaddr(addr, len, af);
@@ -668,7 +668,6 @@ gethostbyaddr(const char *addr, int len, int af)
 	    (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)uaddr) ||
 	     IN6_IS_ADDR_V4COMPAT((struct in6_addr *)uaddr))) {
 		/* Unmap. */
-		addr += IN6ADDRSZ - INADDRSZ;
 		uaddr += IN6ADDRSZ - INADDRSZ;
 		af = AF_INET;
 		len = INADDRSZ;
@@ -724,7 +723,7 @@ gethostbyaddr(const char *addr, int len, int af)
 		case 'y':
 			/* YP only supports AF_INET. */
 			if (af == AF_INET)
-				hp = _yp_gethtbyaddr(addr);
+				hp = _yp_gethtbyaddr(uaddr);
 			break;
 #endif
 		case 'b':
@@ -748,7 +747,7 @@ gethostbyaddr(const char *addr, int len, int af)
 			free(buf);
 			hp->h_addrtype = af;
 			hp->h_length = len;
-			bcopy(addr, host_addr, len);
+			bcopy(uaddr, host_addr, len);
 			h_addr_ptrs[0] = (char *)host_addr;
 			h_addr_ptrs[1] = NULL;
 			if (af == AF_INET && (_resp->options & RES_USE_INET6)) {
@@ -760,7 +759,7 @@ gethostbyaddr(const char *addr, int len, int af)
 			h_errno = NETDB_SUCCESS;
 			break;
 		case 'f':
-			hp = _gethtbyaddr(addr, len, af);
+			hp = _gethtbyaddr(uaddr, len, af);
 			break;
 		}
 	}
@@ -906,7 +905,7 @@ _gethtbyname2(const char *name, int af)
 }
 
 struct hostent *
-_gethtbyaddr(const char *addr, int len, int af)
+_gethtbyaddr(const void *addr, socklen_t len, int af)
 {
 	struct hostent *p;
 
@@ -997,9 +996,10 @@ done:
 }
 
 struct hostent *
-_yp_gethtbyaddr(const char *addr)
+_yp_gethtbyaddr(const void *addr)
 {
-	struct hostent *hp = (struct hostent *)NULL;
+	struct hostent *hp = NULL;
+	const u_char *uaddr = (const u_char *)addr;
 	static char *__ypcurrent;
 	int __ypcurrentlen, r;
 	char name[sizeof("xxx.xxx.xxx.xxx")];
@@ -1008,9 +1008,8 @@ _yp_gethtbyaddr(const char *addr)
 		if (_yp_check(&__ypdomain) == 0)
 			return (hp);
 	}
-	snprintf(name, sizeof name, "%u.%u.%u.%u",
-	    ((unsigned)addr[0] & 0xff), ((unsigned)addr[1] & 0xff),
-	    ((unsigned)addr[2] & 0xff), ((unsigned)addr[3] & 0xff));
+	snprintf(name, sizeof name, "%u.%u.%u.%u", (uaddr[0] & 0xff),
+	    (uaddr[1] & 0xff), (uaddr[2] & 0xff), (uaddr[3] & 0xff));
 	if (__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
