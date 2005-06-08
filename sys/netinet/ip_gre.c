@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.25 2004/06/26 21:37:09 pb Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.26 2005/06/08 06:16:42 henning Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -67,11 +67,6 @@
 #include <netinet/if_ether.h>
 #else
 #error "ip_gre used without inet"
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #ifdef NETATALK
@@ -167,13 +162,6 @@ gre_input2(m , hlen, proto)
 			ifq = &ipintrq;          /* we are in ip_input */
 			af = AF_INET;
 			break;
-#ifdef NS
-		case ETHERTYPE_NS:
-			ifq = &nsintrq;
-			schednetisr(NETISR_NS);
-			af = AF_NS;
-			break;
-#endif
 #ifdef NETATALK
 		case ETHERTYPE_AT:
 			ifq = &atintrq1;
