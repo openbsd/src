@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.52 2005/06/07 18:21:44 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.53 2005/06/08 03:13:49 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1160,6 +1160,9 @@ rtlabel_name2id(char *name)
 {
 	struct rt_label		*label, *p = NULL;
 	u_int16_t		 new_id = 1;
+
+	if (!name[0])
+		return (0);
 
 	TAILQ_FOREACH(label, &rt_labels, rtl_entry)
 		if (strcmp(name, label->rtl_name) == 0) {
