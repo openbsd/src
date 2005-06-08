@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.7 2005/05/29 02:58:30 reyk Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.8 2005/06/08 05:36:33 henning Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -105,11 +105,6 @@
 #if NBPFILTER > 0 
 #include <net/bpf.h>
 #endif 
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
