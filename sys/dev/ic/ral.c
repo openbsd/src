@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.53 2005/05/18 20:10:07 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.54 2005/06/08 23:49:56 naddy Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2649,9 +2649,6 @@ ral_init(struct ifnet *ifp)
 
 	/* set supported basic rates (1, 2, 6, 12, 24) */
 	RAL_WRITE(sc, RAL_ARSP_PLCP_1, 0x153);
-
-	/* set default sensitivity */
-	ral_bbp_write(sc, 17, 0x48);
 
 	ral_set_txantenna(sc, 1);
 	ral_set_rxantenna(sc, 1);
