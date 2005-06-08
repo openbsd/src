@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.143 2005/05/31 20:54:38 jmc Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.144 2005/06/08 19:03:55 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -92,10 +92,6 @@
 #include <netatalk/at.h>
 
 #include <netinet/ip_carp.h>
-
-#define	NSIP
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 
 #define	IPXIP
 #include <netipx/ipx.h>
@@ -379,10 +375,7 @@ void	process_media_commands(void);
 void	init_current_media(void);
 
 unsigned long get_ts_map(int, int, int);
-/*
- * XNS support liberally adapted from code written at the University of
- * Maryland principally by James O'Toole and Chris Torek.
- */
+
 void	in_status(int);
 void	in_getaddr(const char *, int);
 void	in_getprefix(const char *, int);
@@ -395,8 +388,6 @@ void	in6_getprefix(const char *, int);
 #endif /* INET6 */
 void    at_status(int);
 void    at_getaddr(const char *, int);
-void	xns_status(int);
-void	xns_getaddr(const char *, int);
 void	ipx_status(int);
 void	ipx_getaddr(const char *, int);
 void	ieee80211_status(void);
@@ -425,8 +416,6 @@ const struct afswtch {
 #ifndef SMALL
 	{ "atalk", AF_APPLETALK, at_status, at_getaddr, NULL,
 	    SIOCDIFADDR, SIOCAIFADDR, C(addreq), C(addreq) },
-	{ "ns", AF_NS, xns_status, xns_getaddr, NULL,
-	    SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
 	{ "ipx", AF_IPX, ipx_status, ipx_getaddr, NULL,
 	    SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
 #endif
@@ -586,18 +575,6 @@ main(int argc, char *argv[])
 
 #ifndef SMALL
 	switch (af) {
-	case AF_NS:
-		if (setipdst) {
-			struct nsip_req rq;
-			int size = sizeof(rq);
-
-			rq.rq_ns = addreq.ifra_addr;
-			rq.rq_ip = addreq.ifra_dstaddr;
-
-			if (setsockopt(s, 0, SO_NSIP_ROUTE, &rq, size) < 0)
-				warn("encapsulation routing");
-		}
-		break;
 	case AF_IPX:
 		if (setipdst) {
 			struct ipxip_req rq;
@@ -2540,44 +2517,6 @@ at_status(int force)
 	putchar('\n');
 }
 
-void
-xns_status(int force)
-{
-	struct sockaddr_ns *sns;
-
-	getsock(AF_NS);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
-			return;
-		err(1, "socket");
-	}
-	memset(&ifr, 0, sizeof(ifr));
-	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			if (!force)
-				return;
-			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-		} else
-			warn("SIOCGIFADDR");
-	}
-	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	sns = (struct sockaddr_ns *)&ifr.ifr_addr;
-	printf("\tns %s ", ns_ntoa(sns->sns_addr));
-	if (flags & IFF_POINTOPOINT) { /* by W. Nesheim@Cornell */
-		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
-			if (errno == EADDRNOTAVAIL)
-			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			else
-			    warn("SIOCGIFDSTADDR");
-		}
-		(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-		sns = (struct sockaddr_ns *)&ifr.ifr_dstaddr;
-		printf("--> %s ", ns_ntoa(sns->sns_addr));
-	}
-	putchar('\n');
-}
-
 /* ARGSUSED */
 void
 setipxframetype(const char *vname, int type)
@@ -2710,23 +2649,6 @@ checkatrange(struct sockaddr_at *sat)
 	    (u_short) ntohs(sat->sat_addr.s_net))
 		errx(1, "AppleTalk address is not in range");
 	*((struct netrange *) &sat->sat_zero) = at_nr;
-}
-
-#define SNS(x) ((struct sockaddr_ns *) &(x))
-struct sockaddr_ns *snstab[] = {
-SNS(ridreq.ifr_addr), SNS(addreq.ifra_addr),
-SNS(addreq.ifra_mask), SNS(addreq.ifra_broadaddr)};
-
-void
-xns_getaddr(const char *addr, int which)
-{
-	struct sockaddr_ns *sns = snstab[which];
-
-	sns->sns_family = AF_NS;
-	sns->sns_len = sizeof(*sns);
-	sns->sns_addr = ns_addr(addr);
-	if (which == MASK)
-		printf("Attempt to set XNS netmask will be ineffectual\n");
 }
 
 #define SIPX(x) ((struct sockaddr_ipx *) &(x))

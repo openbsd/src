@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.107 2005/06/07 23:12:17 henning Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.108 2005/06/08 19:03:55 henning Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -228,9 +228,8 @@ supported are
 .Dq inet ,
 .Dq inet6 ,
 .Dq atalk ,
-.Dq ipx ,
 and
-.Dq ns .
+.Dq ipx .
 .It Ar interface
 The
 .Ar interface
@@ -361,9 +360,6 @@ Disable driver-dependent debugging code.
 Remove the network address specified.
 This would be used if you incorrectly specified an alias, or it
 was no longer needed.
-If you have incorrectly set an NS address having the side effect
-of specifying the host portion, removing all NS addresses will
-allow you to respecify the host portion.
 .It Cm deletetunnel
 Removes the source and destination tunnel addresses,
 configured onto a tunnel interface.
@@ -416,9 +412,9 @@ by the network interface driver as the driver may take care of this
 automatically; see the driver's manual page for more information.
 .It Cm ipdst Ar addr
 This is used to specify an Internet host which is willing to receive
-IP packets encapsulating NS packets bound for a remote network.
+IP packets encapsulating IPX or AppleTalk packets bound for a remote network.
 An apparent point-to-point link is constructed, and
-the address specified will be taken as the NS address and network
+the address specified will be taken as the address and network
 of the destination.
 IP encapsulation of Connectionless Network Protocol
 (``CLNP'')
