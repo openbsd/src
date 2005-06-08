@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.29 2005/04/30 09:25:17 espie Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.30 2005/06/08 22:08:30 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -165,6 +165,7 @@ vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
 	int prec;		/* precision from format (%.3d), or -1 */
 	char sign;		/* sign prefix (' ', '+', '-', or \0) */
 	wchar_t wc;
+	mbstate_t ps;
 #ifdef FLOATING_POINT
 	char *decimal_point = localeconv()->decimal_point;
 	char softsign;		/* temporary negative sign for floats */
@@ -243,14 +244,14 @@ vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
 	 * argument extraction methods.
 	 */
 #define	SARG() \
-	(flags&QUADINT ? va_arg(ap, quad_t) : \
+	(flags&QUADINT ? GETARG(quad_t) : \
 	    flags&LONGINT ? GETARG(long) : \
 	    flags&PTRINT ? GETARG(ptrdiff_t) : \
 	    flags&SIZEINT ? GETARG(ssize_t) : \
 	    flags&SHORTINT ? (long)(short)GETARG(int) : \
 	    (long)GETARG(int))
 #define	UARG() \
-	(flags&QUADINT ? va_arg(ap, u_quad_t) : \
+	(flags&QUADINT ? GETARG(u_quad_t) : \
 	    flags&LONGINT ? GETARG(u_long) : \
 	    flags&PTRINT ? GETARG(ptrdiff_t) : /* XXX */ \
 	    flags&SIZEINT ? GETARG(size_t) : \
@@ -311,12 +312,13 @@ vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
 	uio.uio_iovcnt = 0;
 	ret = 0;
 
+	memset(&ps, 0, sizeof(ps));
 	/*
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
 		cp = fmt;
-		while ((n = mbtowc(&wc, fmt, MB_CUR_MAX)) > 0) {
+		while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
 			fmt += n;
 			if (wc == '%') {
 				fmt--;
@@ -824,6 +826,8 @@ __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
 	int tablesize;		/* current size of type table */
 	int tablemax;		/* largest used index in table */
 	int nextarg;		/* 1-based argument index */
+	wchar_t wc;
+	mbstate_t ps;
 
 	/*
 	 * Add an argument type to the table, expanding if necessary.
@@ -835,12 +839,14 @@ __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
 	typetable[nextarg++] = type)
 
 #define	ADDSARG() \
-	((flags&LONGINT) ? ADDTYPE(T_LONG) : \
-		((flags&SHORTINT) ? ADDTYPE(T_SHORT) : ADDTYPE(T_INT)))
+	((flags&QUADINT) ? ADDTYPE(T_QUAD) : \
+	    ((flags&LONGINT) ? ADDTYPE(T_LONG) : \
+		((flags&SHORTINT) ? ADDTYPE(T_SHORT) : ADDTYPE(T_INT))))
 
 #define	ADDUARG() \
-	((flags&LONGINT) ? ADDTYPE(T_U_LONG) : \
-		((flags&SHORTINT) ? ADDTYPE(T_U_SHORT) : ADDTYPE(T_U_INT)))
+	((flags&QUADINT) ? ADDTYPE(T_U_QUAD) : \
+	    ((flags&LONGINT) ? ADDTYPE(T_U_LONG) : \
+		((flags&SHORTINT) ? ADDTYPE(T_U_SHORT) : ADDTYPE(T_U_INT))))
 
 	/*
 	 * Add * arguments to the type array.
@@ -867,14 +873,21 @@ __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
 	tablemax = 0;
 	nextarg = 1;
 	memset(typetable, T_UNUSED, STATIC_ARG_TBL_SIZE);
+	memset(&ps, 0, sizeof(ps));
 
 	/*
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
-		for (cp = fmt; (ch = *fmt) != '\0' && ch != '%'; fmt++)
-			/* void */;
-		if (ch == '\0')
+		cp = fmt;
+		while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
+			fmt += n;
+			if (wc == '%') {
+				fmt--;
+				break;
+			}
+		}
+		if (n <= 0)
 			goto done;
 		fmt++;		/* skip over '%' */
 
