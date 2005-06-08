@@ -1029,17 +1029,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/ddp_var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/endian.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netatalk/phase2.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/dll.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/hd_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/hdlc.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/llc_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/pk.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/pk_extern.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/pk_var.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/x25.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/x25acct.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/netccitt/x25err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/netinet

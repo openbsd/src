@@ -1621,17 +1621,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netatalk/ddp_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netatalk/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netatalk/phase2.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/dll.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/hd_var.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/hdlc.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/llc_var.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/pk.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/pk_extern.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/pk_var.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/x25.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/x25acct.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/netccitt/x25err.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet

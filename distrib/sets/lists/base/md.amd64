@@ -1715,17 +1715,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netatalk/ddp_var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netatalk/endian.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netatalk/phase2.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/dll.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/hd_var.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/hdlc.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/llc_var.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/pk.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/pk_extern.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/pk_var.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/x25.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/x25acct.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/netccitt/x25err.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/netinet

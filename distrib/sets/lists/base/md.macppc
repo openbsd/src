@@ -1704,17 +1704,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netatalk/ddp_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netatalk/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netatalk/phase2.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/dll.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/hd_var.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/hdlc.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/llc_var.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/pk.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/pk_extern.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/pk_var.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/x25.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/x25acct.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netccitt/x25err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netgroup.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet

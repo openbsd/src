@@ -992,17 +992,6 @@
 ./usr/include/netatalk/ddp_var.h
 ./usr/include/netatalk/endian.h
 ./usr/include/netatalk/phase2.h
-./usr/include/netccitt
-./usr/include/netccitt/dll.h
-./usr/include/netccitt/hd_var.h
-./usr/include/netccitt/hdlc.h
-./usr/include/netccitt/llc_var.h
-./usr/include/netccitt/pk.h
-./usr/include/netccitt/pk_extern.h
-./usr/include/netccitt/pk_var.h
-./usr/include/netccitt/x25.h
-./usr/include/netccitt/x25acct.h
-./usr/include/netccitt/x25err.h
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
 ./usr/include/netinet
