@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.57 2005/05/02 10:07:19 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.58 2005/06/08 04:47:04 henning Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.57 2005/05/02 10:07:19 jmc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.58 2005/06/08 04:47:04 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,79 +85,71 @@ struct nlist nl[] = {
 	{ "_rtstat" },
 #define N_UNIXSW	9
 	{ "_unixsw" },
-#define N_IDP		10
-	{ "_nspcb"},
-#define N_IDPSTAT	11
-	{ "_idpstat"},
-#define N_SPPSTAT	12
-	{ "_spp_istat"},
-#define N_NSERR		13
-	{ "_ns_errstat"},
-#define N_RTREE		14
+#define N_RTREE		10
 	{ "_rt_tables"},
-#define N_FILE		15
+#define N_FILE		11
 	{ "_file" },
-#define N_IGMPSTAT	16
+#define N_IGMPSTAT	12
 	{ "_igmpstat" },
-#define N_MRTPROTO	17
+#define N_MRTPROTO	13
 	{ "_ip_mrtproto" },
-#define N_MRTSTAT	18
+#define N_MRTSTAT	14
 	{ "_mrtstat" },
-#define N_MFCHASHTBL	19
+#define N_MFCHASHTBL	15
 	{ "_mfchashtbl" },
-#define N_MFCHASH	20
+#define N_MFCHASH	16
 	{ "_mfchash" },
-#define N_VIFTABLE	21
+#define N_VIFTABLE	17
 	{ "_viftable" },
-#define N_IPX		22
+#define N_IPX		18
 	{ "_ipxcbtable"},
-#define N_IPXSTAT	23
+#define N_IPXSTAT	19
 	{ "_ipxstat"},
-#define N_SPXSTAT	24
+#define N_SPXSTAT	20
 	{ "_spx_istat"},
-#define N_AHSTAT	25
+#define N_AHSTAT	21
 	{ "_ahstat"},
-#define N_ESPSTAT	26
+#define N_ESPSTAT	22
 	{ "_espstat"},
-#define N_IP4STAT	27
+#define N_IP4STAT	23
 	{ "_ipipstat"},
-#define N_DDPSTAT	28
+#define N_DDPSTAT	24
 	{ "_ddpstat"},
-#define N_DDPCB		29
+#define N_DDPCB		25
 	{ "_ddpcb"},
-#define N_ETHERIPSTAT	30
+#define N_ETHERIPSTAT	26
 	{ "_etheripstat"},
-#define N_IP6STAT	31
+#define N_IP6STAT	27
 	{ "_ip6stat" },
-#define N_ICMP6STAT	32
+#define N_ICMP6STAT	28
 	{ "_icmp6stat" },
-#define N_PIM6STAT	33
+#define N_PIM6STAT	29
 	{ "_pim6stat" },
-#define N_MRT6PROTO	34
+#define N_MRT6PROTO	30
 	{ "_ip6_mrtproto" },
-#define N_MRT6STAT	35
+#define N_MRT6STAT	31
 	{ "_mrt6stat" },
-#define N_MF6CTABLE	36
+#define N_MF6CTABLE	32
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	37
+#define N_MIF6TABLE	33
 	{ "_mif6table" },
-#define N_MBPOOL	38
+#define N_MBPOOL	34
 	{ "_mbpool" },
-#define N_MCLPOOL	39
+#define N_MCLPOOL	35
 	{ "_mclpool" },
-#define N_IPCOMPSTAT	40
+#define N_IPCOMPSTAT	36
 	{ "_ipcompstat" },
-#define N_RIP6STAT	41
+#define N_RIP6STAT	37
 	{ "_rip6stat" },
-#define N_CARPSTAT	42
+#define N_CARPSTAT	38
 	{ "_carpstats" },
-#define N_RAWIPTABLE	43
+#define N_RAWIPTABLE	39
 	{ "_rawcbtable" },
-#define N_RAWIP6TABLE	44
+#define N_RAWIP6TABLE	40
 	{ "_rawin6pcbtable" },
-#define N_PFSYNCSTAT	45
+#define N_PFSYNCSTAT	41
 	{ "_pfsyncstats" },
-#define N_PIMSTAT	46
+#define N_PIMSTAT	42
 	{ "_pimstat" },
 	{ ""}
 };
@@ -228,17 +220,6 @@ struct protox ipxprotox[] = {
 	  0,		0 }
 };
 
-struct protox nsprotox[] = {
-	{ N_IDP,	N_IDPSTAT,	1,	nsprotopr,
-	  idp_stats,	"idp" },
-	{ N_IDP,	N_SPPSTAT,	1,	nsprotopr,
-	  spp_stats,	"spp" },
-	{ -1,		N_NSERR,	1,	0,
-	  nserr_stats,	"ns_err" },
-	{ -1,		-1,		0,	0,
-	  0,		0 }
-};
-
 struct protox atalkprotox[] = {
 	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
 	  ddp_stats,	"ddp" },
@@ -248,11 +229,11 @@ struct protox atalkprotox[] = {
 
 #ifndef INET6
 struct protox *protoprotox[] = {
-	protox, ipxprotox, nsprotox, atalkprotox, NULL
+	protox, ipxprotox, atalkprotox, NULL
 };
 #else
 struct protox *protoprotox[] = {
-	protox, ip6protox, ipxprotox, nsprotox, atalkprotox, NULL
+	protox, ip6protox, ipxprotox, atalkprotox, NULL
 };
 #endif
 
@@ -301,8 +282,6 @@ main(int argc, char *argv[])
 				af = AF_UNIX;
 			else if (strcmp(optarg, "ipx") == 0)
 				af = AF_IPX;
-			else if (strcmp(optarg, "ns") == 0)
-				af = AF_NS;
 			else if (strcmp(optarg, "encap") == 0)
 				af = PF_KEY;
 			else if (strcmp(optarg, "atalk") == 0)
@@ -509,9 +488,6 @@ main(int argc, char *argv[])
 #endif
 	if (af == AF_IPX || af == AF_UNSPEC)
 		for (tp = ipxprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
-	if (af == AF_NS || af == AF_UNSPEC)
-		for (tp = nsprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
 	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value);
