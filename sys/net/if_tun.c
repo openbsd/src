@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.67 2005/06/08 06:35:04 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.68 2005/06/08 06:53:32 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -887,12 +887,6 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	case AF_INET6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
-		break;
-#endif
-#ifdef NS
-	case AF_NS:
-		ifq = &nsintrq;
-		isr = NETISR_NS;
 		break;
 #endif
 #ifdef IPX
