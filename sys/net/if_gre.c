@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.33 2005/05/14 19:24:23 brad Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.34 2005/06/08 06:35:04 henning Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -72,11 +72,6 @@
 #include <netinet/if_ether.h>
 #else
 #error "if_gre used without inet"
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #ifdef NETATALK
@@ -387,11 +382,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 #ifdef NETATALK
 		case AF_APPLETALK:
 			etype = ETHERTYPE_AT;
-			break;
-#endif
-#ifdef NS
-		case AF_NS:
-			etype = ETHERTYPE_NS;
 			break;
 #endif
 #ifdef INET6
