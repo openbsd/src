@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2005/04/04 13:46:06 robert Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2005/06/08 03:18:59 pvalchev Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 2005/04/04 13:46:06 robert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 2005/06/08 03:18:59 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -371,8 +371,8 @@ open_files(void)
     if (dflag)
     {
 	defines_file = fopen(defines_file_name, "w");
-	if (defines_file == 0)
-	    open_error(defines_file_name);
+	if (defines_file == NULL)
+	    open_write_error(defines_file_name);
 	fd = mkstemp(union_file_name);
 	if (fd == -1 || (union_file = fdopen(fd, "w")) == NULL)
 	    open_error(union_file_name);

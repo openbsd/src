@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.9 2003/06/19 16:34:53 pvalchev Exp $	*/
+/*	$OpenBSD: error.c,v 1.10 2005/06/08 03:18:59 pvalchev Exp $	*/
 /*	$NetBSD: error.c,v 1.4 1996/03/19 03:21:32 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.9 2003/06/19 16:34:53 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.10 2005/06/08 03:18:59 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,13 @@ open_error(char *filename)
     done(2);
 }
 
+void
+open_write_error(char *filename)
+{
+    fprintf(stderr, "%s: cannot open target file %s for writing\n",
+	input_file_name, filename);
+    done(2);
+}
 
 void
 unexpected_EOF(void)
