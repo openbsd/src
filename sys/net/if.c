@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.128 2005/06/07 18:21:44 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.129 2005/06/08 00:13:19 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1743,7 +1743,9 @@ if_group_ext_build(void)
 	struct ifg_group	*ifg;
 	struct ifg_member	*ifgm, *next;
 	struct sockaddr_in	 sa_in;
+#ifdef INET6
 	struct sockaddr_in6	 sa_in6;
+#endif
 	struct radix_node_head	*rnh;
 	struct radix_node	*rn;
 	struct rtentry		*rt;
@@ -1769,9 +1771,11 @@ if_group_ext_build(void)
 			rt = (struct rtentry *)rn;
 			if (rt->rt_ifp)
 				if_addgroup(rt->rt_ifp, IFG_EXTERNAL);
+#ifndef SMALL_KERNEL
 			if (rn_mpath_capable(rnh))
 				rn = rn_mpath_next(rn);
 			else
+#endif
 				rn = NULL;
 		} while (rn != NULL);
 	}
@@ -1786,9 +1790,11 @@ if_group_ext_build(void)
 			rt = (struct rtentry *)rn;
 			if (rt->rt_ifp)
 				if_addgroup(rt->rt_ifp, IFG_EXTERNAL);
+#ifndef SMALL_KERNEL
 			if (rn_mpath_capable(rnh))
 				rn = rn_mpath_next(rn);
 			else
+#endif
 				rn = NULL;
 		} while (rn != NULL);
 	}
