@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.194 2005/06/01 21:50:52 miod Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.195 2005/06/08 20:43:40 fgsch Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -108,6 +108,12 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#if defined(SMALL_KERNEL)
+#define	INLINE
+#else
+#define	INLINE __inline
+#endif
+
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piix_reg.h>
@@ -129,12 +135,6 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/cy82c693var.h>
 
 /* inlines for reading/writing 8-bit PCI registers */
-
-#if defined(SMALL_KERNEL) && defined(__alpha__)
-#define	INLINE
-#else
-#define	INLINE __inline
-#endif
 
 static INLINE u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t,
 					int);
