@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.126 2005/06/04 05:10:40 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.127 2005/06/08 22:33:27 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@ int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
+int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
 
 int (*cpu_cpuspeed)(int *);
 int (*cpu_setperf)(int);
@@ -288,6 +289,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #ifdef __HAVE_TIMECOUNTER
 		case KERN_TIMECOUNTER:
 #endif
+		case KERN_CPTIME2:
 			break;
 		default:
 			return (ENOTDIR);	/* overloaded */
@@ -550,6 +552,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	case KERN_MAXLOCKSPERUID:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxlocksperuid));
+#ifdef __HAVE_CPUINFO
+	case KERN_CPTIME2:
+		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
+		    newp, newlen));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1870,3 +1877,30 @@ sysctl_emul(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 }
 
 #endif	/* SMALL_KERNEL */
+
+#ifdef __HAVE_CPUINFO
+int
+sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int i;
+
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	i = name[0];
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (i-- == 0)
+			break;
+	}
+	if (i > 0)
+		return (ENOENT);
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &ci->ci_schedstate.spc_cp_time,
+	    sizeof(ci->ci_schedstate.spc_cp_time)));
+}
+#endif
