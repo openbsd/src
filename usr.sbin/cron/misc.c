@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.36 2005/03/10 22:41:56 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.37 2005/06/08 18:34:00 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.36 2005/03/10 22:41:56 deraadt Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.37 2005/06/08 18:34:00 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -310,6 +310,18 @@ acquire_daemonlock(int closeflag) {
 			fprintf(stderr, "%s: %s\n", ProgramName, buf);
 			log_it("CRON", getpid(), "DEATH", buf);
 			exit(ERROR_EXIT);
+		}
+		/* fd must be > STDERR since we dup fd 0-2 to /dev/null */
+		if (fd <= STDERR) {
+			if (dup2(fd, STDERR + 1) < 0) {
+				snprintf(buf, sizeof buf,
+				    "can't dup pid fd: %s", strerror(errno));
+				fprintf(stderr, "%s: %s\n", ProgramName, buf);
+				log_it("CRON", getpid(), "DEATH", buf);
+				exit(ERROR_EXIT);
+			}
+			close(fd);
+			fd = STDERR + 1;
 		}
 		(void) fcntl(fd, F_SETFD, 1);
 	}
