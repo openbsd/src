@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.19 2005/06/07 02:45:11 henning Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.20 2005/06/08 06:55:33 henning Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -61,15 +61,6 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_var.h>
 #include <net/if_token.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef DECNET
-#include <netdnet/dn.h>
 #endif
 
 #include "bpfilter.h"
@@ -275,19 +266,6 @@ token_output(ifp0, m0, dst, rt0)
 		break;
 #endif /* 0 */
 #endif
-#ifdef NS
-	case AF_NS:
-		etype = htons(ETHERTYPE_NS);
-		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
-		    (caddr_t)edst, sizeof (edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
-		/* If broadcasting on a simplex interface, loopback a copy. */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		break;
-#endif
-
 	case AF_UNSPEC:
 	{
 		struct ether_header *eh;
@@ -439,7 +417,7 @@ token_input(ifp, m)
 
 	l = mtod(m, struct llc *);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(NS) || defined(DECNET)
+#if defined(INET)
 	case LLC_SNAP_LSAP:
 	{
 		u_int16_t etype;
@@ -471,18 +449,6 @@ token_input(ifp, m)
 			inq = &arpintrq;
 			break;
 #endif
-#ifdef NS
-		case ETHERTYPE_NS:
-			schednetisr(NETISR_NS);
-			inq = &nsintrq;
-			break;
-#endif
-#ifdef DECNET
-		case ETHERTYPE_DECNET:
-			schednetisr(NETISR_DECNET);
-			inq = &decnetintrq;
-			break;
-#endif
 		default:
 			/*
 			printf("token_input: unknown protocol 0x%x\n", etype);
@@ -492,7 +458,7 @@ token_input(ifp, m)
 		}
 		break;
 	}
-#endif /* INET || NS */
+#endif /* INET */
 
 	default:
 		/* printf("token_input: unknown dsap 0x%x\n", l->llc_dsap); */

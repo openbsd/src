@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.45 2005/06/07 02:45:11 henning Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.46 2005/06/08 06:55:33 henning Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -112,15 +112,6 @@
 #include <netinet/in_var.h>
 #endif
 #include <netinet6/nd6.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef DECNET
-#include <netdnet/dn.h>
 #endif
 
 #include "bpfilter.h"
@@ -254,18 +245,6 @@ fddi_output(ifp0, m0, dst, rt0)
 		type = htons(ETHERTYPE_IPX);
  		bcopy((caddr_t)&(((struct sockaddr_ipx*)dst)->sipx_addr.ipx_host),
 		    (caddr_t)edst, sizeof (edst));
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		break;
-#endif
-#ifdef NS
-	case AF_NS:
-		type = htons(ETHERTYPE_NS);
- 		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
-		    (caddr_t)edst, sizeof (edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -433,7 +412,7 @@ fddi_input(ifp, fh, m)
 
 	l = mtod(m, struct llc *);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(IPX) || defined(NS) || defined(DECNET) || defined(INET6)
+#if defined(INET) || defined(IPX) || defined(INET6)
 	case LLC_SNAP_LSAP:
 	{
 		u_int16_t etype;
@@ -477,18 +456,6 @@ fddi_input(ifp, fh, m)
 			inq = &ipxintrq;
 			break;
 #endif
-#ifdef NS
-		case ETHERTYPE_NS:
-			schednetisr(NETISR_NS);
-			inq = &nsintrq;
-			break;
-#endif
-#ifdef DECNET
-		case ETHERTYPE_DECNET:
-			schednetisr(NETISR_DECNET);
-			inq = &decnetintrq;
-			break;
-#endif
 		default:
 			/* printf("fddi_input: unknown protocol 0x%x\n", etype); */
 			ifp->if_noproto++;
@@ -496,7 +463,7 @@ fddi_input(ifp, fh, m)
 		}
 		break;
 	}
-#endif /* INET || IPX || NS || DECNET */
+#endif /* INET || IPX || INET6 */
 		
 	default:
 		/* printf("fddi_input: unknown dsap 0x%x\n", l->llc_dsap); */

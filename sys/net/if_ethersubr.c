@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.95 2005/06/07 07:09:42 camield Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.96 2005/06/08 06:55:33 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -141,11 +141,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/nd6.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
@@ -198,21 +193,6 @@ ether_ioctl(ifp, arp, cmd, data)
 			/* Nothing to do. */
 			break;
 #endif /* NETATALK */
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(arp->ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    arp->ac_enaddr, sizeof(arp->ac_enaddr));
-			break;
-		    }
-#endif /* NS */
 		}
 		break;
 	default:
@@ -312,18 +292,6 @@ ether_output(ifp0, m0, dst, rt0)
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
 			return (0); /* it must be impossible, but... */
 		etype = htons(ETHERTYPE_IPV6);
-		break;
-#endif
-#ifdef NS
-	case AF_NS:
-		etype = htons(ETHERTYPE_NS);
-		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
-		    (caddr_t)edst, sizeof(edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		break;
 #endif
 #ifdef IPX
@@ -713,12 +681,6 @@ decapsulate:
 	case ETHERTYPE_IPX:
 		schednetisr(NETISR_IPX);
 		inq = &ipxintrq;
-		break;
-#endif
-#ifdef NS
-	case ETHERTYPE_NS:
-		schednetisr(NETISR_NS);
-		inq = &nsintrq;
 		break;
 #endif
 #ifdef NETATALK

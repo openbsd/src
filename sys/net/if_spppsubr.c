@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.33 2005/05/13 20:17:02 brad Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.34 2005/06/08 06:55:33 henning Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -97,11 +97,6 @@
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <net/if_sppp.h>
@@ -563,15 +558,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			break;
 #endif
-#ifdef NS
-		case PPP_XNS:
-			/* XNS IDPCP not implemented yet */
-			if (sp->pp_phase == PHASE_NETWORK) {
-				schednetisr (NETISR_NS);
-				inq = &nsintrq;
-			}
-			break;
-#endif
 		}
 		break;
 	case CISCO_MULTICAST:
@@ -604,12 +590,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		case ETHERTYPE_IPX:
 			schednetisr (NETISR_IPX);
 			inq = &ipxintrq;
-			break;
-#endif
-#ifdef NS
-		case ETHERTYPE_NS:
-			schednetisr (NETISR_NS);
-			inq = &nsintrq;
 			break;
 #endif
 		}
@@ -777,12 +757,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if (sp->state[IDX_IPCP] != STATE_OPENED)
 				rv = ENETDOWN;
 		}
-		break;
-#endif
-#ifdef NS
-	case AF_NS:     /* Xerox NS Protocol */
-		protocol = htons ((sp->pp_flags & PP_CISCO) ?
-			ETHERTYPE_NS : PPP_XNS);
 		break;
 #endif
 #ifdef IPX
