@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.241 2005/06/06 11:20:36 djm Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.242 2005/06/08 11:25:09 djm Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -381,8 +381,10 @@ again:
 			}
 			break;
 		case 'M':
-			options.control_master =
-			    (options.control_master >= 1) ? 2 : 1;
+			if (options.control_master == SSHCTL_MASTER_YES)
+				options.control_master = SSHCTL_MASTER_ASK;
+			else
+				options.control_master = SSHCTL_MASTER_YES;
 			break;
 		case 'p':
 			options.port = a2port(optarg);
@@ -611,11 +613,8 @@ again:
 	}
 	if (mux_command != 0 && options.control_path == NULL)
 		fatal("No ControlPath specified for \"-O\" command");
-	if (options.control_path != NULL && options.control_master == 0) {
-		if (mux_command == 0)
-			mux_command = SSHMUX_COMMAND_OPEN;
+	if (options.control_path != NULL)
 		control_client(options.control_path);
-	}
 
 	/* Open a connection to the remote host. */
 	if (ssh_connect(host, &hostaddr, options.port,
@@ -1074,8 +1073,11 @@ ssh_control_listener(void)
 	struct sockaddr_un addr;
 	mode_t old_umask;
 
-	if (options.control_path == NULL || options.control_master <= 0)
+	if (options.control_path == NULL ||
+	    options.control_master == SSHCTL_MASTER_NO)
 		return;
+
+	debug("setting up multiplex master socket");
 
 	memset(&addr, '\0', sizeof(addr));
 	addr.sun_family = AF_UNIX;
@@ -1286,6 +1288,20 @@ control_client(const char *path)
 	char *term;
 	extern char **environ;
 	u_int  flags;
+
+	if (mux_command == 0)
+		mux_command = SSHMUX_COMMAND_OPEN;
+
+	switch (options.control_master) {
+	case SSHCTL_MASTER_AUTO:
+	case SSHCTL_MASTER_AUTO_ASK:
+		debug("auto-mux: Trying existing master");
+		/* FALLTHROUGH */
+	case SSHCTL_MASTER_NO:
+		break;
+	default:
+		return;
+	}
 
 	memset(&addr, '\0', sizeof(addr));
 	addr.sun_family = AF_UNIX;
