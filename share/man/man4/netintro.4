@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.32 2005/06/07 23:12:17 henning Exp $
+.\"	$OpenBSD: netintro.4,v 1.33 2005/06/08 04:17:43 henning Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -123,17 +123,13 @@ modifier.
 .Sh PROTOCOLS
 The system currently supports the
 Internet protocols (IPv4 and IPv6),
-the Xerox Network Systems(tm) protocols,
-CCITT, Appletalk, Novell's IPX protocols,
+Appletalk, Novell's IPX protocols,
 and a few others.
 Raw socket interfaces are provided to the
 .Tn IP
 protocol
 layer of the
-Internet, and to the
-.Tn IDP
-protocol of Xerox
-.Tn NS .
+Internet.
 Consult the appropriate manual pages in this section for more
 information regarding the support for each protocol family.
 .Sh ADDRESSING
@@ -164,8 +160,6 @@ are known to the system
 .Bd -literal
 #define AF_LOCAL	1	/* local to host (pipes, portals) */
 #define AF_INET		2	/* internetwork: UDP, TCP, etc. */
-#define AF_NS		6	/* Xerox NS protocols */
-#define AF_CCITT	10	/* CCITT protocols, X.25 etc */
 #define AF_HYLINK	15	/* NSC Hyperchannel */
 #define AF_APPLETALK	16	/* AppleTalk */
 #define AF_IPX		23	/* Novell Internet Protocol */
