@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.40 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.41 2005/06/08 17:02:59 henning Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1368,23 +1368,6 @@ gem_ioctl(ifp, cmd, data)
 			gem_init(ifp);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, sizeof(sc->sc_enaddr));
-			}	
-			/* Set new address. */
-			gem_init(ifp);
-			break;
-		    }
 #endif
 		default:
 			gem_init(ifp);

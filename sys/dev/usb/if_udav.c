@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.9 2005/01/03 22:45:52 brad Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.10 2005/06/08 17:03:02 henning Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -77,11 +77,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -1236,20 +1231,6 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(&sc->sc_ac, ifa);
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		{
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ifp->if_addrlen);
-			break;
-		}
-#endif /* NS */
 		}
 		break;
 

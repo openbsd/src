@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.70 2005/05/25 22:14:16 martin Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.71 2005/06/08 17:03:00 henning Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -71,11 +71,6 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -4506,27 +4501,6 @@ tulip_ifioctl(
 	    break;
 	}
 #endif /* INET */
-
-#ifdef NS
-	    /*
-	     * This magic copied from if_is.c; I don't use XNS,
-	     * so I have no way of telling if this actually
-	     * works or not.
-	     */
-	case AF_NS: {
-	    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-	    if (ns_nullhost(*ina)) {
-		ina->x_host = *(union ns_host *)(sc->tulip_enaddr);
-	    } else {
-		ifp->if_flags &= ~IFF_RUNNING;
-		bcopy((caddr_t)ina->x_host.c_host,
-		      (caddr_t)sc->tulip_enaddr,
-		      sizeof(sc->tulip_enaddr));
-	    }
-	    tulip_init(sc);
-	    break;
-	}
-#endif /* NS */
 
 	default: {
 	    tulip_init(sc);

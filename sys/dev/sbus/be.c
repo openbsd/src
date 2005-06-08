@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.16 2005/01/15 05:24:12 brad Exp $	*/
+/*	$OpenBSD: be.c,v 1.17 2005/06/08 17:03:01 henning Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -88,11 +88,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -961,22 +956,6 @@ beioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			/* Set new address. */
-			beinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			beinit(sc);
 			break;

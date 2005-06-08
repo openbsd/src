@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.28 2005/01/27 17:04:56 millert Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.29 2005/06/08 17:03:01 henning Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -72,11 +72,6 @@
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -1182,9 +1177,6 @@ xe_ether_ioctl(ifp, cmd, data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct xe_softc *sc = ifp->if_softc;
-#ifdef NS
-	struct ns_addr *ina;
-#endif	/* NS */
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1197,21 +1189,6 @@ xe_ether_ioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif	/* INET */
-
-#ifdef NS
-		case AF_NS:
-			ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)sc->sc_arpcom.ac_enaddr;
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr, ifp->if_addrlen);
-			/* Set new address. */
-			xe_init(sc);
-			break;
-#endif	/* NS */
 
 		default:
 			xe_init(sc);

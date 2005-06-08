@@ -1,4 +1,4 @@
-/*	$OpenBSD: tropic.c,v 1.8 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: tropic.c,v 1.9 2005/06/08 17:03:00 henning Exp $	*/
 /*	$NetBSD: tropic.c,v 1.6 1999/12/17 08:26:31 fvdl Exp $	*/
 
 /* 
@@ -62,11 +62,6 @@
 #include <netinet/ip.h>
 #include <netinet/in_var.h>
 #include <net/if_token.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0

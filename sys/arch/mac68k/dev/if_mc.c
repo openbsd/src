@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.12 2005/06/07 02:29:30 henning Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.13 2005/06/08 17:03:02 henning Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*-
@@ -55,11 +55,6 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -195,24 +190,6 @@ mcioctl(ifp, cmd, data)
 			mcinit(sc);
 			arp_ifinit(&sc->sc_ethercom, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl),
-				    sizeof(sc->sc_enaddr));
-			}
-			/* Set new address. */
-			mcinit(sc);
-			break;
-		    }
 #endif
 		default:
 			mcinit(sc);

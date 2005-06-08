@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.20 2005/06/07 02:29:30 henning Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.21 2005/06/08 17:03:00 henning Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -106,11 +106,6 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -967,28 +962,6 @@ smc91cxx_ioctl(ifp, cmd, data)
 			smc91cxx_init(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl), 
-				    ETHER_ADDR_LEN);
-			}
-
-			/*
-			 * Set new address.  Reset, because the receiver
-			 * has to be stopped before we can set the new
-			 * MAC address.
-			 */
-			smc91cxx_reset(sc);
-			break;
-		    }
 #endif
 		default:
 			smc91cxx_init(sc);

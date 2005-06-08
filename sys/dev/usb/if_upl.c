@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.17 2004/11/10 10:14:48 grange Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.18 2005/06/08 17:03:02 henning Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,11 +90,6 @@
 #endif
 #else
 #error upl without INET?
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <dev/usb/usb.h>
@@ -898,21 +893,6 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		case AF_INET:
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				       ina->x_host.c_host,
-				       ifp->if_addrlen);
-			break;
-		    }
-#endif /* NS */
 		}
 		break;
 

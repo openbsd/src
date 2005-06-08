@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.15 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.16 2005/06/08 17:03:00 henning Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -75,11 +75,6 @@
 
 #if defined(__bsdi__) && _BSDI_VERSION < 199401
 #include <i386/isa/isavar.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <uvm/uvm_extern.h>

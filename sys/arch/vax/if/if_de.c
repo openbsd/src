@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.16 2004/12/25 23:02:25 miod Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.17 2005/06/08 17:03:02 henning Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -65,11 +65,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/cpu.h>
@@ -589,19 +584,6 @@ deioctl(ifp, cmd, data)
 		case AF_INET:
 			arp_ifinit(&ds->ds_ac, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-			
-			if (ns_nullhost(*ina))
-				ina->x_host = 
-					*(union ns_host *)ds->ds_ac.ac_enaddr;
-			else
-				de_setaddr(ina->x_host.c_host, ds);
-			break;
-		    }
 #endif
 		}
 		break;

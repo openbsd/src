@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.71 2004/12/02 19:40:46 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.72 2005/06/08 17:03:03 henning Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -87,9 +87,6 @@
 #endif
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
 #endif
 #include "ppp.h"	/* For NPPP */
 #include "bridge.h"	/* For NBRIDGE */

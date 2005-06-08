@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.12 2005/04/03 10:29:12 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.13 2005/06/08 17:03:00 henning Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -57,11 +57,6 @@
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -824,22 +819,6 @@ ex_ioctl(ifp, cmd, data)
 					ex_init(sc);
 					break;
      				}
-#endif
-#ifdef NS
-				case AF_NS:
-      				{
-	register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-	if (ns_nullhost(*ina))
-	  ina->x_host = *(union ns_host *) (sc->arpcom.ac_enaddr);
-	else {
-	  ifp->if_flags &= ~IFF_RUNNING;
-	  bcopy((caddr_t) ina->x_host.c_host, (caddr_t) sc->arpcom.ac_enaddr, 
-		sizeof(sc->arpcom.ac_enaddr));
-	}
-	ex_init(sc);
-	break;
-      }
 #endif
     default:
       ex_init(sc);

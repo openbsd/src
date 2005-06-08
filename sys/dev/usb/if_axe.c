@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.24 2005/03/14 04:08:49 deraadt Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.25 2005/06/08 17:03:01 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -127,11 +127,6 @@
 #include <netinet/if_ether.h>
 #endif
 #endif /* defined(__OpenBSD__) */
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1200,21 +1195,6 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(&sc->arpcom, ifa);
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				       ina->x_host.c_host,
-				       ifp->if_addrlen);
-			break;
-		    }
-#endif /* NS */
 		}
 		break;
 

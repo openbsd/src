@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.27 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.28 2005/06/08 17:02:59 henning Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -36,11 +36,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -824,23 +819,6 @@ dp8390_ioctl(ifp, cmd, data)
 			dp8390_init(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
-#ifdef NS
-			/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ETHER_ADDR_LEN);
-			/* Set new address. */
-			dp8390_init(sc);
-			break;
-		    }
 #endif
 		default:
 			dp8390_init(sc);

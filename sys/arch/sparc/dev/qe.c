@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.26 2005/01/15 05:24:10 brad Exp $	*/
+/*	$OpenBSD: qe.c,v 1.27 2005/06/08 17:03:02 henning Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -602,24 +602,6 @@ qeioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif /* INET */
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    (sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			/* Set new address. */
-			qeinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			qeinit(sc);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isapnp.c,v 1.6 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: if_ne_isapnp.c,v 1.7 2005/06/08 17:03:00 henning Exp $	*/
 /*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
@@ -67,11 +67,6 @@
 #else
 #include <netinet/if_ether.h>
 #endif
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0

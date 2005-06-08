@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.17 2005/01/15 05:24:10 brad Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.18 2005/06/08 17:03:02 henning Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -822,24 +822,6 @@ bmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(ifp, ifa);
 #endif
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl),
-				    sizeof(sc->sc_enaddr));
-			}
-			/* Set new address. */
-			bmac_init(sc);
-			break;
-		    }
 #endif
 		default:
 			bmac_init(sc);
