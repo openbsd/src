@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.47 2005/06/07 18:21:44 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.48 2005/06/08 06:43:07 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -121,10 +121,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			route_cb.ip_count--;
 		else if (af == AF_INET6)
 			route_cb.ip6_count--;
-		else if (af == AF_NS)
-			route_cb.ns_count--;
-		else if (af == AF_ISO)
-			route_cb.iso_count--;
 		route_cb.any_count--;
 	}
 	s = splsoftnet();
@@ -153,10 +149,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			route_cb.ip_count++;
 		else if (af == AF_INET6)
 			route_cb.ip6_count++;
-		else if (af == AF_NS)
-			route_cb.ns_count++;
-		else if (af == AF_ISO)
-			route_cb.iso_count++;
 		rp->rcb_faddr = &route_src;
 		route_cb.any_count++;
 		soisconnected(so);
