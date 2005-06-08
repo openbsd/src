@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.130 2005/06/08 00:14:45 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.131 2005/06/08 06:58:11 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -575,18 +575,12 @@ do { \
 #ifdef IPX
 	IF_DETACH_QUEUES(ipxintrq);
 #endif
-#ifdef NS
-	IF_DETACH_QUEUES(nsintrq);
-#endif
 #ifdef NETATALK
 	IF_DETACH_QUEUES(atintrq1);
 	IF_DETACH_QUEUES(atintrq2);
 #endif
 #ifdef NATM
 	IF_DETACH_QUEUES(natmintrq);
-#endif
-#ifdef DECNET
-	IF_DETACH_QUEUES(decnetintrq);
 #endif
 #if NBLUETOOTH > 0
 	IF_DETACH_QUEUES(btintrq);
