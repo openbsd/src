@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.94 2005/06/01 10:20:25 pedro Exp $
+#	$OpenBSD: Makefile,v 1.95 2005/06/09 02:59:12 jaredy Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -24,9 +24,9 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	style.9 syscall.9 systrace.9 \
 	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
-	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vput.9 vref.9 \
-	vrele.9 vnode.9 VOP_LOOKUP.9 vrecycle.9 vnsubr.9 vwaitforio.9 \
-	vwakeup.9 wdog_register.9 vnsubr.9
+	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
+	VOP_LOOKUP.9 vput.9 vrecycle.9 vref.9 vrele.9 vwaitforio.9 vwakeup.9 \
+	wdog_register.9
 
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
@@ -283,19 +283,28 @@ MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 srandom.9 kern.9 getsn.9
 
 MLINKS+=vnsubr.9 vn_close.9 vnsubr.9 vn_default_error.9 vnsubr.9 vn_isunder.9 \
-	vnsubr.9 vn_lock.9 vnsubr.9 vn_open.9 vnsubr.9 vn_rdrw.9 \
-	vnsubr.9 vn_readdir.9 vnsubr.9 vn_stat.9 vnsubr.9 vn_writechk.9 \
-	vnsubr.9 vn_marktext.9
+	vnsubr.9 vn_lock.9 vnsubr.9 vn_open.9 vnsubr.9 vn_rdwr.9 \
+	vnsubr.9 vn_stat.9 vnsubr.9 vn_writechk.9 vnsubr.9 vn_marktext.9
 
 # VOP functions
-MLINKS+=VOP_LOOKUP.9 VOP_CREATE.9 VOP_LOOKUP.9 VOP_FSYNC.9 \
-	VOP_LOOKUP.9 VOP_GETEXTATTR.9 VOP_LOOKUP.9 VOP_ISLOCKED.9 \
-	VOP_LOOKUP.9 VOP_LINK.9 VOP_LOOKUP.9 VOP_LOCK.9 \
-	VOP_LOOKUP.9 VOP_MKDIR.9 VOP_LOOKUP.9 VOP_PRINT.9 \
-	VOP_LOOKUP.9 VOP_READLINK.9 VOP_LOOKUP.9 VOP_REALLOCBLKS.9 \
-	VOP_LOOKUP.9 VOP_RECLAIM.9 VOP_LOOKUP.9 VOP_REMOVE.9 \
+MLINKS+=VOP_LOOKUP.9 VOP_ABORTOP.9 VOP_LOOKUP.9 VOP_ACCESS.9 \
+	VOP_LOOKUP.9 VOP_ADVLOCK.9 VOP_LOOKUP.9 VOP_BMAP.9 \
+	VOP_LOOKUP.9 VOP_BWRITE.9 VOP_LOOKUP.9 VOP_CLOSE.9 \
+	VOP_LOOKUP.9 VOP_CREATE.9 VOP_LOOKUP.9 VOP_FSYNC.9 \
+	VOP_LOOKUP.9 VOP_GETATTR.9 VOP_LOOKUP.9 VOP_GETEXTATTR.9 \
+	VOP_LOOKUP.9 VOP_INACTIVE.9 VOP_LOOKUP.9 VOP_IOCTL.9 \
+	VOP_LOOKUP.9 VOP_ISLOCKED.9 VOP_LOOKUP.9 VOP_KQFILTER.9 \
+	VOP_LOOKUP.9 VOP_LINK.9 \
+	VOP_LOOKUP.9 VOP_LOCK.9 VOP_LOOKUP.9 VOP_MKDIR.9 \
+	VOP_LOOKUP.9 VOP_MKNOD.9 VOP_LOOKUP.9 VOP_OPEN.9 \
+	VOP_LOOKUP.9 VOP_PATHCONF.9 VOP_LOOKUP.9 VOP_POLL.9 \
+	VOP_LOOKUP.9 VOP_PRINT.9 VOP_LOOKUP.9 VOP_READ.9 \
+	VOP_LOOKUP.9 VOP_READDIR.9 VOP_LOOKUP.9 VOP_READLINK.9 \
+	VOP_LOOKUP.9 VOP_REALLOCBLKS.9 VOP_LOOKUP.9 VOP_RECLAIM.9 \
+	VOP_LOOKUP.9 VOP_REMOVE.9 VOP_LOOKUP.9 VOP_RENAME.9 \
 	VOP_LOOKUP.9 VOP_REVOKE.9 VOP_LOOKUP.9 VOP_RMDIR.9 \
-	VOP_LOOKUP.9 VOP_SETEXTATTR.9 VOP_LOOKUP.9 VOP_STRATEGY.9 \
-	VOP_LOOKUP.9 VOP_SYMLINK.9 VOP_LOOKUP.9 VOP_UNLOCK.9
+	VOP_LOOKUP.9 VOP_SETATTR.9 VOP_LOOKUP.9 VOP_SETEXTATTR.9 \
+	VOP_LOOKUP.9 VOP_STRATEGY.9 VOP_LOOKUP.9 VOP_SYMLINK.9 \
+	VOP_LOOKUP.9 VOP_UNLOCK.9 VOP_LOOKUP.9 VOP_WRITE.9
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.14 2005/06/01 10:20:25 pedro Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.15 2005/06/09 02:59:12 jaredy Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -32,6 +32,45 @@
 .Sh SYNOPSIS
 .Fd #include <sys/vnode.h>
 .Ft int
+.Fo VOP_ABORTOP
+.Fa "struct vnode *dvp"
+.Fa "struct componentname *cnp"
+.Fc
+.Ft int
+.Fo VOP_ACCESS
+.Fa "struct vnode *vp"
+.Fa "int mode"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_ADVLOCK
+.Fa "struct vnode *vp"
+.Fa "void *id"
+.Fa "int op"
+.Fa "struct flock *fl"
+.Fa "int flags"
+.Fc
+.Ft int
+.Fo VOP_BMAP
+.Fa "struct vnode *vp"
+.Fa "daddr_t bn"
+.Fa "struct vnode **vpp"
+.Fa "daddr_t *bnp"
+.Fa "int *runp"
+.Fc
+.Ft int
+.Fo VOP_BWRITE
+.Fa "struct buf *bp"
+.Fc
+.Ft int
+.Fo VOP_CLOSE
+.Fa "struct vnode *vp"
+.Fa "int fflag"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Ft int
 .Fo VOP_CREATE
 .Fa "struct vnode *dvp"
 .Fa "struct vnode **vpp"
@@ -46,6 +85,13 @@
 .Fa "struct proc *p"
 .Fc
 .Ft int
+.Fo VOP_GETATTR
+.Fa "struct vnode *vp"
+.Fa "struct vattr *vap"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Ft int
 .Fo VOP_GETEXTATTR
 .Fa "struct vnode *vp"
 .Fa "int attrnamespace"
@@ -56,9 +102,35 @@
 .Fa "struct proc *p"
 .Fc
 .Ft int
-.Fo VOP_ISLOCKED
-.Fa "struct vnode *"
+.Fo VOP_INACTIVE
+.Fa "struct vnode *vp"
+.Fa "struct proc *p"
 .Fc
+.Ft int
+.Fo VOP_IOCTL
+.Fa "struct vnode *vp"
+.Fa "u_long command"
+.Fa "void *data"
+.Fa "int fflag"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_ISLOCKED
+.Fa "struct vnode *vp"
+.Fc
+.Ft int
+.Fo VOP_KQFILTER
+.Fa "struct vnode *vp"
+.Fa "struct knote *kn"
+.Fc
+.\" .Ft int
+.\" .Fo VOP_LEASE
+.\" .Fa "struct vnode *vp"
+.\" .Fa "struct proc *p"
+.\" .Fa "struct ucred *cred"
+.\" .Fa "int flag"
+.\" .Fc
 .Ft int
 .Fo VOP_LINK
 .Fa "struct vnode *dvp"
@@ -85,8 +157,50 @@
 .Fa "struct vattr *vap"
 .Fc
 .Ft int
+.Fo VOP_MKNOD
+.Fa "struct vnode *dvp"
+.Fa "struct vnode **vpp"
+.Fa "struct componentname *cnp"
+.Fa "struct vattr *vap"
+.Fc
+.Ft int
+.Fo VOP_OPEN
+.Fa "struct vnode *vp"
+.Fa "int mode"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_PATHCONF
+.Fa "struct vnode *vp"
+.Fa "int name"
+.Fa "register_t *retval"
+.Fc
+.Ft int
+.Fo VOP_POLL
+.Fa "struct vnode *vp"
+.Fa "int events"
+.Fa "struct proc *p"
+.Fc
+.Ft int
 .Fo VOP_PRINT
 .Fa "struct vnode *vp"
+.Fc
+.Ft int
+.Fo VOP_READ
+.Fa "struct vnode *vp"
+.Fa "struct uio *uio"
+.Fa "int ioflag"
+.Fa "struct ucred *cred"
+.Fc
+.Ft int
+.Fo VOP_READDIR
+.Fa "struct vnode *vp"
+.Fa "struct uio *uio"
+.Fa "struct ucred *cred"
+.Fa "int *eofflag"
+.Fa "int *ncookies"
+.Fa "u_long **cookies"
 .Fc
 .Ft int
 .Fo VOP_READLINK
@@ -111,6 +225,15 @@
 .Fa "struct componentname *cnp"
 .Fc
 .Ft int
+.Fo VOP_RENAME
+.Fa "struct vnode *fdvp"
+.Fa "struct vnode *fvp"
+.Fa "struct componentname *fcnp"
+.Fa "struct vnode *tdvp"
+.Fa "struct vnode *tvp"
+.Fa "struct componentname *tcnp"
+.Fc
+.Ft int
 .Fo VOP_REVOKE
 .Fa "struct vnode *vp"
 .Fa "int flags"
@@ -120,6 +243,13 @@
 .Fa "struct vnode *dvp"
 .Fa "struct vnode *vp"
 .Fa "struct componentname *cnp"
+.Fc
+.Ft int
+.Fo VOP_SETATTR
+.Fa "struct vnode *vp"
+.Fa "struct vattr *vap"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
 .Fc
 .Ft int
 .Fo VOP_SETEXTATTR
@@ -137,7 +267,7 @@
 .Ft int
 .Fo VOP_SYMLINK
 .Fa "struct vnode *dvp"
-.Fa "struct vnode *vpp"
+.Fa "struct vnode **vpp"
 .Fa "struct componentname *cnp"
 .Fa "struct vattr *vap"
 .Fa "char *target"
@@ -148,7 +278,13 @@
 .Fa "int flags"
 .Fa "struct proc *p"
 .Fc
-.\" and many more
+.Ft int
+.Fo VOP_WRITE
+.Fa "struct vnode *vp"
+.Fa "struct uio *uio"
+.Fa "int ioflag"
+.Fa "struct ucred *cred"
+.Fc
 .Sh DESCRIPTION
 The
 .Nm VOP
@@ -159,7 +295,7 @@ Not all file systems implement all operations, in which case a generic
 method will be used.
 These functions exist to provide an abstract method to invoke vnode
 operations without needing to know anything about the underlying file system.
-Many syscalls map directly to a specific VOP function.
+Many system calls map directly to a specific VOP function.
 .Pp
 The arguments for each VOP
 function consist of one or more vnode pointers along with other data
@@ -169,183 +305,251 @@ VOP functions.
 The locking discipline for all currently defined VOP
 functions is described in the file
 .Pa sys/kern/vnode_if.src .
-Many VOP calls take a struct proc *p argument.
+Many VOP calls take a
+.Vt struct proc *p
+argument.
 This should be the current process.
 VOP calls are not safe to call in an interrupt context.
 .Pp
 The following sections comment on the VOP functions from the consumer's
 perspective.
 Some notes for file system implementors follow.
-.Sh VOP_CREATE
-.Fn VOP_CREATE
-creates a new directory entry for a regular file in the directory
-.Ar dvp
-and returns a locked, referenced vnode in
-.Ar vpp .
+.Pp
+.Bl -tag -width Ds -compact
+.It Fn VOP_ABORTOP dvp cnp
+Abort any asynchronous operations pending on the vnode
+.Fa dvp
+associated with the path name
+.Fa cnp .
+This is mostly used by internal VFS code and should not be needed by
+file system implementors.
+.Pp
+.It Fn VOP_ACCESS vp mode cred p
+Determine if the locked vnode
+.Fa vp
+can be accessed by the calling process
+.Fa p
+with credentials
+.Fa cred
+for the given access
+.Fa mode .
+.Pp
+.Fa mode
+may contain any of the following values:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It Dv VWRITE
+check writeability
+.It Dv VREAD
+check readability
+.It Dv VEXEC
+check executability
+.El
+.Pp
+If the access check succeeds, zero is returned; otherwise, an
+appropriate error code is returned.
+.Pp
+.It Fn VOP_ADVLOCK vp id op fl flags
+Perform advisory locking on the vnode
+.Fa vp
+according to the operation
+.Fa op
+and lock specification
+.Fa fl .
+.Fa id
+identifies the resource holding the lock
+(typically a pointer to the holding process).
+.Pp
+.Fa op
+may be one of the following operations:
+.Pp
+.Bl -tag -width F_GETLK -compact -offset indent
+.It Dv F_GETLK
+Get the first lock that would block a lock request.
+.It Dv F_SETLK
+Set a lock.
+.It Dv F_UNLCK
+Release a lock.
+.El
+.Pp
+.Fa flags
+may contain the following flags:
+.Pp
+.Bl -tag -width F_POSIX -compact -offset indent
+.It Dv F_WAIT
+If required, block waiting to obtain an exclusive lock.
+.It Dv F_POSIX
+Follow
+.Tn POSIX
+locking semantics; see
+.Xr fcntl 2 .
+.It Dv F_FLOCK
+Follow
+.Xr flock 2
+locking semantics.
+.El
+.Pp
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_BMAP vp bn vpp bnp runp
+Convert the logical block number
+.Fa bn
+of the file the locked vnode
+.Fa vp
+is associated with to its physical number on-disk.
+The physical block number is stored in
+.Fa *bnp
+on return.
+.Fa vpp ,
+if
+.No non- Ns Dv NULL ,
+will be updated to point to the vnode of the block device of which
+.Fa vp
+is associated.
+.Fa runp ,
+if
+.No non- Ns Dv NULL ,
+will be updated to the number of contiguous disk blocks following
+.Fa *bnp .
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_BWRITE bp
+Write a file system buffer to disk.
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_CLOSE vp fflag cred p
+Close the file associated with the locked vnode
+.Fa vp
+with file flags
+.Fa fflag
+by the calling process
+.Fa p
+with credentials
+.Fa cred .
+This operation should be performed only when the file is no longer being
+used.
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_CREATE dvp vpp cnp vap
+Create a new directory entry for a regular file in the directory
+.Fa dvp
+and return a locked, referenced vnode in
+.Fa vpp .
 The file name is in
-.Ar cnp
+.Fa cnp
 and its permissions will be
-.Ar vap .
-.Sh VOP_FSYNC
-.Fn VOP_FSYNC
-flushes any dirty buffers associated with
-.Ar vp
+.Fa vap .
+.Pp
+.It Fn VOP_FSYNC vp cred waitfor p
+Flush any dirty buffers associated with
+.Fa vp
 to disk.
 The vnode is locked on entry and exit.
-.Ar waitfor
-can be set to MNT_WAIT to indicate VOP_FSYNC should not return
-until all data is written.
-.Sh VOP_GETEXTATTR
+.Fa waitfor
+can be set to
+.Dv MNT_WAIT
+to indicate that
+.Fn VOP_FSYNC
+should not return until all data is written.
+.Pp
+.It Fn VOP_GETATTR vp vap cred p
+.It Fn VOP_SETATTR vp vap cred p
+Access the vnode attributes
+.Fa vap
+of the vnode
+.Fa vp
+by the calling process
+.Fa p
+with credentials
+.Fa cred .
+.Fn VOP_SETATTR
+requires that
+.Fa vp
+be locked.
+A field value for any member of
+.Fa vap
+of
+.Dv VNOVAL
+represents that the information could not be obtained by
+.Fn VOP_GETATTR
+or should not be changed by
+.Fn VOP_SETATTR .
+Upon success of obtaining or changing the attributes, zero is returned;
+otherwise, an appropriate error code is returned.
+.Pp
+.It Fn VOP_GETEXTATTR vp attrnamespace name uio size cred p
+.It Fn VOP_SETEXTATTR vp attrnamespace name uio cred p
 .Fn VOP_GETEXTATTR
 and
 .Fn VOP_SETEXTATTR
 are called to get and set named extended file attributes (see
 .Xr extattr 9 ) .
-.Ar vp
+.Fa vp
 is the vnode for which to get or set the attribute.
 It must be locked.
-.Ar attrnamespace
+.Fa attrnamespace
 is an integer describing whether the attribute belongs in the
 user or system namespace.
-.Ar name
+.Fa name
 is the extended attribute to get or set.
-.Ar uio
+.Fa uio
 is a
 .Xr uio 9
 structure with the userland address containing the userland data.
-VOP_GETEXTATTR will return the actual length of the attribute
-in
-.Ar size
-if it is non-NULL.
-.Ar cred
+.Fn VOP_GETEXTATTR
+will return the actual length of the attribute in
+.Fa size
+if it is
+.No non- Ns Dv NULL .
+.Fa cred
 is a pointer to the credentials used to access the file.
-.Sh VOP_LINK
-.Fn VOP_LINK
-increases the link count for the vnode
-.Ar vp .
-A new entry with name
-.Ar cnp
-should be added to the directory
-.Ar dvp .
-.Ar dvp
-is locked on entry and unlocked on exit.
-.Sh VOP_LOOKUP
-.Fn VOP_LOOKUP
-finds the file corresponding to the name
-.Ar cnp
-in the directory
-.Ar dvp
-and returns a vnode in
-.Ar vpp .
-.Ar dvp
-is locked on entry and exit, and
-.Ar vpp
-is locked upon a successful return.
-.Ar vpp
-will be NULL on error, and cnp->cn_flags will be set to PDIRUNLOCK
-if
-.Ar dvp
-has been unlocked for an unsuccessful return.
-.Sh VOP_MKDIR
-.Fn VOP_MKDIR
-implements the
-.Xr mkdir 2
-syscall.
-A new directory with name matching that in
-.Ar cnp
-and with permissions
-.Ar vattr
-will be created in the directory
-.Ar dvp .
-On success, the new vnode is returned locked in
-.Ar vpp .
-.Ar dvp
-must be locked on entry and is unlocked on exit.
-.Sh VOP_PRINT
-.Fn VOP_PRINT
-prints information about the vnode to the kernel message buffer.
-It is not used normally, but exists only for debugging purposes.
-.Sh VOP_READLINK
-.Fn VOP_READLINK
-reads a symbolic link and returns the target's name in
-.Ar uio .
-.Ar vp
-is locked on entry and exit and must be a symlink.
-.Sh VOP_REALLOCBLKS
-.Fn VOP_REALLOCBLKS
-is called by the vfs write clustering code.
-It gives the file system an opportunity to rearrange the on disk blocks
-for a file to reduce fragmentation.
-.Ar vp
-is the locked vnode for the file, and
-.Ar buflist
-is a cluster of the outstanding buffers about to written.
-Currently, only FFS implements this call.
-.Sh VOP_RECLAIM
-.Fn VOP_RECLAIM
-is used by
-.Xr vclean 9
-so that the file system has an opportunity to free memory
-and perform any other cleanup activity related to
-.Ar vp .
-.Ar vp
-is unlocked on entry and exit.
-VOP_RECLAIM should not be used by generic code.
-.Sh VOP_REMOVE
-.Fn VOP_REMOVE
-removes the link named
-.Ar cnp
-from the directory
-.Ar dvp .
-This file corresponds to the vnode
-.Ar vp .
-Both dvp and vp are locked on entry and unlocked on exit, and
-each has its reference count decremented by one.
-VOP_REMOVE does not delete the file from disk unless its link count
-becomes zero (for file systems which support multiple links).
-.Sh VOP_REVOKE
-.Fn VOP_REVOKE
-is used by the
-.Xr revoke 2
-syscall to prevent any further access to a vnode.
-The vnode ops will be changed to those of deadfs, which returns only
-errors.
-.Ar vp
-must be unlocked.
-.Sh VOP_RMDIR
-.Fn VOP_RMDIR
-implements the
-.Xr rmdir 2
-syscall.
-The directory
-.Ar vp
-will be removed from the directory
-.Ar dvp .
-Both are locked on entry and unlocked on exit.
-The name of the directory for removal is additionally contained in
-.Ar cnp .
-.Sh VOP_STRATEGY
-.Fn VOP_STRATEGY
-is the only VOP call not taking a vnode argument.
-It calls the appropriate strategy function for the device backing the
-buffer's vnode.
-.Sh VOP_SYMLINK
-.Fn VOP_SYMLINK
-creates a symbolic link with name
-.Ar cnp
-in the directory
-.Ar dvp
-with mode
-.Ar vap .
-The link will point to
-.Ar target
-and a vnode for it is returned in
-.Ar vpp .
-The directory vnode is locked on entry and unlocked on exit.
-Note that unlike most VOP calls returning a vnode, VOP_SYMLINK
-does not lock or reference
-.Ar vpp .
-.Sh VOP_LOCK
+.Pp
+.It Fn VOP_INACTIVE vp p
+Notify the underlying file system that the locked vnode
+.Fa vp
+is no longer in use.
+The vnode will be unlocked upon return.
+.Fa p
+specifies the calling process.
+This may happen when the vnode reference count reaches zero or
+when the underlying file system has disappeared or has been forcibly
+unmounted.
+.Pp
+Typically, the underlying file system will write any buffers associated
+with
+.Fa vp
+to disk or delete the file entry, if need be.
+The underlying file system may not necessarily release any buffers
+associated with
+.Fa vp
+so that it can be immediately reactivated in case the file is used again.
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_IOCTL vp command data fflag cred p
+Perform the control operation
+.Fa command
+with additional information
+.Fa data
+on the vnode
+.Fa vp ,
+normally associated with a device,
+with file flags
+.Fa fflag
+by the calling process
+.Fa p
+with credentials
+.Fa cred .
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_ISLOCKED vp
+.It Fn VOP_LOCK vp flags p
+.It Fn VOP_UNLOCK vp flags p
 .Fn VOP_LOCK
 is used internally by
 .Xr vn_lock 9
@@ -353,34 +557,374 @@ to lock a vnode.
 It should not be used by other file system code.
 .Fn VOP_UNLOCK
 unlocks a vnode.
-.Ar flags
+.Fa flags
 should be zero in most cases.
 .Fn VOP_ISLOCKED
 returns 1 if
-.Ar vp
+.Fa vp
 is locked and 0 if not.
 It should be used cautiously, as not all file systems implement locks
 effectively.
-Note the asymmetry between vn_lock and VOP_UNLOCK.
+Note the asymmetry between
+.Xr vn_lock 9
+and
+.Fn VOP_UNLOCK .
+.Pp
+.It Fn VOP_KQFILTER vp kn
+Register the
+.Xr knote 9
+filtering information
+.Fa kn
+for the vnode
+.Fa vp .
+Only filters for
+.Dv EVFILT_READ ,
+.Dv EVFILT_WRITE ,
+and
+.Dv EVFILT_VNODE
+will invoke this operation.
+Upon success, zero is returned; otherwise, a non-zero value is returned.
+.Pp
+.\" .It Fn VOP_LEASE vp p cred flag
+.\" .Pp
+.It Fn VOP_LINK dvp vp cnp
+Increase the link count for the vnode
+.Fa vp .
+A new entry with name
+.Fa cnp
+should be added to the directory
+.Fa dvp .
+.Fa dvp
+is locked on entry and unlocked on exit.
+.Pp
+.It Fn VOP_LOOKUP dvp vpp cnp
+Find the file corresponding to the name
+.Fa cnp
+in the directory
+.Fa dvp
+and return a vnode in
+.Fa vpp .
+.Fa dvp
+is locked on entry and exit, and
+.Fa vpp
+is locked upon a successful return.
+.Fa vpp
+will be
+.Dv NULL
+on error, and
+.Fa cnp->cn_flags
+will be set to
+.Dv PDIRUNLOCK
+if
+.Fa dvp
+has been unlocked for an unsuccessful return.
+.Pp
+.It Fn VOP_MKDIR dvp vpp cnp vap
+Create a new directory named by
+.Fa cnp
+with permissions
+.Fa vattr
+in the directory
+.Fa dvp .
+On success, the new vnode is returned locked in
+.Fa vpp .
+.Fa dvp
+must be locked on entry and is unlocked on exit.
+.Pp
+.It Fn VOP_MKNOD dvp vpp cnp vap
+Create a device special file with name
+.Fa cnp
+and attributes
+.Fa vap
+in the directory associated with the locked vnode
+.Fa dvp .
+.Fa dvp
+will be unlocked on return (see
+.Xr vput 9 ) .
+A pointer to the new, locked vnode will be returned in
+.Fa *vpp
+if
+.Fa vpp
+is not
+.Dv NULL .
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_OPEN vp mode cred p
+Open the file associated with the vnode
+.Fa vp
+with the access modes
+.Fa mode
+by the calling process
+.Fa p
+with credentials
+.Fa cred .
+.Fa mode
+takes the flags described in
+.Xr open 2 .
+.Pp
+For some underlying file systems, access permissions for the file by the
+process are checked; for others, this is a no-op.
+In any case, this must be called before a process can access the file.
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_PATHCONF vp name retval
+Obtain the value of the applicable
+.Tn POSIX
+configurable pathname variable (see
+.Xr pathconf 2 )
+specified by
+.Fa name
+from the locked vnode
+.Fa vp .
+The result is placed in
+.Fa *retval .
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_POLL vp events p
+Determine whether the vnode
+.Fa vp
+is ready to perform the operations specified by
+.Fa events
+(see
+.Xr poll 2 )
+for the calling process
+.Fa p .
+The
+.Fn selrecord
+routine may be used to detect selection collisions for multiple
+processes sleeping on the same file, waiting for
+.Tn I/O
+to become possible, although all file systems currently assume that
+.Tn I/O
+is always possible.
+The return value specifies which operations from
+.Fa events
+were found to be ready, which may be performed without the need for
+blocking.
+.Pp
+.It Fn VOP_PRINT vp
+Print information about the vnode to the kernel message buffer.
+It is not used normally, but exists only for debugging purposes.
+.Pp
+.It Fn VOP_READ vp uio ioflag cred
+Copy data from the locked vnode
+.Fa vp
+to the buffers specified by
+.Fa uio
+with calling process credentials
+.Fa cred .
+.Pp
+.Fa ioflag
+may contain the following flags:
+.Pp
+.Bl -tag -width IO_APPEND -offset indent -compact
+.It Dv IO_NDELAY
+Non-blocking I/O.
+.It Dv IO_UNIT
+Do I/O as an atomic unit.
+.El
+.Pp
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_READDIR vp uio cred eofflag ncookies cookies
+Read the contents of the directory associated with the locked vnode
+.Fa vp ,
+usually via
+.Fn VOP_READ ,
+and convert its file-system-specific format to that expected by the
+.Xr getdirentries 2
+system call, storing the result into the buffers specified by
+.Fa uio .
+.Fa cred
+specifies the credentials of the calling process.
+.Fa *eofflag
+is set to a non-zero value on return once successful end-of-file for the
+directory contents has been reached.
+.Pp
+.Fa ncookies
+and
+.Fa cookies ,
+if not
+.Dv NULL ,
+are used for keeping track of directory seeking.
+This is used by some file systems, such as
+.Tn NFS ,
+to allow sequential chunks of the directory contents to be obtained.
+.Pp
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_READLINK vp uio cred
+Read a symbolic link and return the target's name in
+.Fa uio .
+.Fa vp
+is locked on entry and exit and must be a symlink.
+.Pp
+.It Fn VOP_REALLOCBLKS vp buflist
+Called by the VFS write clustering code.
+It gives the file system an opportunity to rearrange the on-disk blocks
+for a file to reduce fragmentation.
+.Fa vp
+is the locked vnode for the file, and
+.Fa buflist
+is a cluster of the outstanding buffers about to be written.
+Currently, only FFS implements this call.
+.Pp
+.It Fn VOP_RECLAIM vp p
+Used by
+.Xr vclean 9
+so that the file system has an opportunity to free memory
+and perform any other cleanup activity related to
+.Fa vp .
+.Fa vp
+is unlocked on entry and exit.
+.Fn VOP_RECLAIM
+should not be used by generic code.
+.Pp
+.It Fn VOP_REMOVE dvp vp cnp
+Remove the link named
+.Fa cnp
+from the directory
+.Fa dvp .
+This file corresponds to the vnode
+.Fa vp .
+Both
+.Fa dvp
+and
+.Fa vp
+are locked on entry and unlocked on exit, and
+each has its reference count decremented by one.
+.Fn VOP_REMOVE
+does not delete the file from disk unless its link count
+becomes zero (for file systems which support multiple links).
+.Pp
+.It Fn VOP_RENAME fdvp fvp fcnp tdvp tvp tcnp
+Remove the link to the file with associated vnode
+.Fa fvp
+and name
+.Fa fcnp
+in the directory with associated vnode
+.Fa fdvp ,
+and create a new link to the file with name
+.Fa tcnp
+(and associated locked vnode
+.Fa tvp ,
+if the file already exists) residing in the directory with the
+associated locked vnode
+.Fa tdvp .
+.Fa fdvp ,
+.Fa fvp ,
+and
+.Fa tvp
+(if not
+.Dv NULL )
+will be released (see
+.Xr vrele 9 )
+and
+.Fa tdvp
+will have its reference count decremented (see
+.Xr vput 9 )
+on return.
+If not
+.Dv NULL ,
+.Fa tvp
+will be locked on return as well.
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.Pp
+.It Fn VOP_REVOKE vp flags
+Used by the
+.Xr revoke 2
+system call to prevent any further access to a vnode.
+The vnode ops will be changed to those of deadfs, which returns only
+errors.
+.Ar vp
+must be unlocked.
+.Pp
+.It Fn VOP_RMDIR dvp vp cnp
+Remove the directory
+.Fa vp
+from the directory
+.Fa dvp .
+Both are locked on entry and unlocked on exit.
+The name of the directory for removal is additionally contained in
+.Fa cnp .
+.Pp
+.It Fn VOP_STRATEGY bp
+Call the appropriate strategy function for the device backing the
+buffer's vnode.
+.Pp
+.It Fn VOP_SYMLINK dvp vpp cnp vap target
+Create a symbolic link with name
+.Fa cnp
+in the directory
+.Fa dvp
+with mode
+.Fa vap .
+The link will point to
+.Fa target
+and a vnode for it is returned in
+.Fa vpp .
+The directory vnode is locked on entry and unlocked on exit.
+Note that unlike most VOP calls returning a vnode,
+.Fn VOP_SYMLINK
+does not lock or reference
+.Fa vpp .
+.Pp
+.It Fn VOP_WRITE vp uio ioflag cred
+Copy data from the buffers specified by
+.Fa uio
+to the locked vnode
+.Fa vp
+with calling process credentials
+.Fa cred .
+.Pp
+.Fa ioflag
+may contain the following flags:
+.Pp
+.Bl -tag -width IO_APPEND -offset indent -compact
+.It Dv IO_APPEND
+Perform write at the end of file.
+.\" .It Dv IO_METASYNC
+.\" Ensure all metadata is written synchronously.
+.It Dv IO_NDELAY
+Non-blocking I/O.
+.It Dv IO_SYNC
+Wait for I/O to complete.
+.It Dv IO_UNIT
+Do I/O as an atomic unit.
+.El
+.Pp
+Upon success, zero is returned; otherwise, an appropriate error code is
+returned.
+.El
 .Sh IMPLEMENTATION NOTES
 The
 .Nm VOP
 functions are stubs which redirect their arguments to the
 appropriate function for each file system.
 In order to allow for layered file systems and generic bypass methods,
-all vnode operation implementing functions take only a single void *
+all vnode operation implementing functions take only a single
+.Vt void *
 pointer as an argument.
 This points to a structure containing the real arguments.
-Additionally, this structure contains a struct vnodeop_desc *,
-or vnodeop description.
+Additionally, this structure contains a
+.Vt struct vnodeop_desc * ,
+or
+.Em vnodeop description .
 The description is typically used by the abstract VOP code, but can
 be useful to the lower implementation as well.
-Every file system defines an array of struct vnodeopv_entry_desc
+Every file system defines an array of
+.Vt struct vnodeopv_entry_desc
 that contains one entry for each implemented vnode op.
 Unimplemented vnode operations match the default description,
-.Em vop_default_desc .
+.Va vop_default_desc .
 Most non-layer file systems should assign the default error handler,
-.Em vn_default_error ,
+.Fn vn_default_error ,
 to the generic description.
 .Pp
 All lower level implementations should conform to the interfaces described
@@ -405,6 +949,8 @@ stub call
 .El
 .Sh SEE ALSO
 .Xr errno 2 ,
+.Xr uio 9 ,
+.Xr vfs 9 ,
 .Xr vn_lock 9 ,
 .Xr vnode 9
 .Sh AUTHORS
