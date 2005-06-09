@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.90 2005/06/06 04:22:28 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.91 2005/06/09 08:07:45 markus Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1148,7 +1148,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 void
 print_getmsg(struct rt_msghdr *rtm, int msglen)
 {
-	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL;
+	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL, *ifa = NULL;
 	struct sockaddr_dl *ifp = NULL;
 	struct sockaddr_rtlabel *sa_rl = NULL;
 	struct sockaddr *sa;
@@ -1184,6 +1184,9 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 				case RTA_NETMASK:
 					mask = sa;
 					break;
+				case RTA_IFA:
+					ifa = sa;
+					break;
 				case RTA_IFP:
 					if (sa->sa_family == AF_LINK &&
 					   ((struct sockaddr_dl *)sa)->sdl_nlen)
@@ -1211,6 +1214,8 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	if (ifp)
 		printf("  interface: %.*s\n",
 		    ifp->sdl_nlen, ifp->sdl_data);
+	if (ifa)
+		printf(" if address: %s\n", routename(ifa));
 	printf("      flags: ");
 	bprintf(stdout, rtm->rtm_flags, routeflags);
 	printf("\n");
