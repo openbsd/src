@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2005/06/07 09:06:15 joris Exp $
+#	$OpenBSD: Makefile,v 1.10 2005/06/09 01:10:00 joris Exp $
 
 PROG=	cvs
 MAN=	cvs.1 cvsrc.5 cvsintro.7
@@ -11,9 +11,6 @@ SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c date.y \
 
 BINDIR= /usr/bin
 BINOWN=	root
-
-#BINGRP=_cvsd
-#BINMODE=555
 
 CFLAGS= -g -ggdb
 CFLAGS+= -I${.CURDIR} -Wall
