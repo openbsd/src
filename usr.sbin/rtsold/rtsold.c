@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.36 2004/01/05 20:35:52 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.37 2005/06/09 00:27:12 deraadt Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ static int Fflag = 0;	/* force setting sysctl parameters */
 int aflag = 0;
 int dflag = 0;
 
-/* protocol constatns */
+/* protocol constants */
 #define MAX_RTR_SOLICITATION_DELAY	1 /* second */
 #define RTR_SOLICITATION_INTERVAL	4 /* seconds */
 #define MAX_RTR_SOLICITATIONS		3 /* times */
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 	/* configuration per interface */
 	if (ifinit()) {
 		warnmsg(LOG_ERR, __func__,
-		    "failed to initilizatoin interfaces");
+		    "failed to initialize interfaces");
 		exit(1);
 		/*NOTREACHED*/
 	}
@@ -607,7 +607,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			/*
 			 * After sending MAX_RTR_SOLICITATIONS solicitations,
 			 * we're just waiting for possible replies; there
-			 * will be no more solicatation.  Thus, we change
+			 * will be no more solicitation.  Thus, we change
 			 * the timer value to MAX_RTR_SOLICITATION_DELAY based
 			 * on RFC 2461, Section 6.3.7.
 			 */
