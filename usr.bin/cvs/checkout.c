@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.31 2005/06/09 07:24:39 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.32 2005/06/09 09:01:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -88,6 +88,7 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			break;
 		case 'D':
 			date = optarg;
+			cmd->cmd_flags |= CVS_CMD_PRUNEDIRS;
 			break;
 		case 'd':
 			tgtdir = optarg;
