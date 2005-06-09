@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.48 2005/05/27 15:54:59 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.49 2005/06/09 18:01:36 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -179,8 +179,8 @@ hilkbd*	at hil?		# keyboard, knob and buttons
 com0	at gsc0 offset 0x5000 irq 5	# on lasi
 com1	at gsc1 offset 0x5000 irq 5
 com1	at gsc2 offset 0x2000 irq 6	# on wax
-com0	at gsc0 offset 0x23000 irq 5	# on asp
-com1	at gsc0 offset 0x22000 irq 6
+com0	at gsc0 offset 0x823000 irq 5	# on asp
+com1	at gsc0 offset 0x822000 irq 6
 com2	at gsc0 offset 0x0 irq 13	# only on asp0 w/o audio (off ?)
 com2	at gsc0 offset 0x4040 irq 13	# gecko's fax/voice/modems
 com3	at gsc0 offset 0x4060 irq 13

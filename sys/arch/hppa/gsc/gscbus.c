@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.26 2004/09/15 20:11:29 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.27 2005/06/09 18:01:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -123,7 +123,6 @@ gscattach(parent, self, aux)
 	sc->sc_dmatag._dmamem_unmap = gsc_dmamem_unmap;
 	sc->sc_dmatag._dmamem_mmap = gsc_dmamem_mmap;
 
-	ga->ga_hpamask = HPPA_FLEX_MASK;
 	pdc_scanbus(self, &ga->ga_ca, MAXMODBUS, 0);
 }
 

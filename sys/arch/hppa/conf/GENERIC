@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.73 2005/05/26 23:18:27 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.74 2005/06/09 18:01:36 mickey Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -176,8 +176,8 @@ hilid*	at hil?		# ID module
 com0	at gsc0 offset 0x5000 irq 5	# on lasi
 com1	at gsc1 offset 0x5000 irq 5
 com1	at gsc2 offset 0x2000 irq 6	# on wax
-com0	at gsc0 offset 0x23000 irq 5	# on asp
-com1	at gsc0 offset 0x22000 irq 6
+com0	at gsc0 offset 0x823000 irq 5	# on asp
+com1	at gsc0 offset 0x822000 irq 6
 com2	at gsc0 offset 0x0 irq 13	# only on asp0 w/o audio (off ?)
 com2	at gsc0 offset 0x4040 irq 13	# gecko's fax/voice/modems
 com3	at gsc0 offset 0x4060 irq 13
