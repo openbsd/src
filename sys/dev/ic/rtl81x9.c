@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.39 2005/03/04 19:30:43 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.40 2005/06/09 03:14:43 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -84,7 +84,6 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
