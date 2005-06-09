@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.86 2005/06/01 16:49:20 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.87 2005/06/09 01:45:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -415,10 +415,11 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 	CVSENTRIES *entfile;
 	struct cvs_ent *ent;
 
-	entfile = cvs_ent_open(".", O_RDONLY);
 	base = cvs_file_lget(".", 0, NULL, NULL);
 	if (base == NULL)
 		return (NULL);
+
+	entfile = cvs_ent_open(".", O_RDONLY);
 
 	/*
 	 * fill in the repository base (needed to construct repo's in
@@ -439,6 +440,8 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 	if (cb != NULL) {
 		if (cb(base, arg) != CVS_EX_OK) {
 			cvs_file_free(base);
+			if (entfile)
+				cvs_ent_close(entfile);
 			return (NULL);
 		}
 	}
@@ -464,11 +467,15 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 				nf = cvs_file_lget(pcopy, 0, base, ent);
 				if (nf == NULL) {
 					cvs_file_free(base);
+					if (entfile)
+						cvs_ent_close(entfile);
 					return (NULL);
 				}
 
 				if (cvs_file_attach(base, nf) < 0) {
 					cvs_file_free(base);
+					if (entfile)
+						cvs_ent_close(entfile);
 					return (NULL);
 				}
 			}
@@ -480,17 +487,24 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 
 			if (cvs_file_getdir(nf, flags, np, cb, arg) < 0) {
 				cvs_file_free(base);
+				if (entfile)
+					cvs_ent_close(entfile);
 				return (NULL);
 			}
 		} else {
 			if (cb != NULL) {
 				if (cb(nf, arg) != CVS_EX_OK) {
 					cvs_file_free(base);
+					if (entfile)
+						cvs_ent_close(entfile);
 					return (NULL);
 				}
 			}
 		}
 	}
+
+	if (entfile)
+		cvs_ent_close(entfile);
 
 	return (base);
 }
