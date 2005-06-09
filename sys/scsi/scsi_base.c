@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.80 2005/06/05 21:27:07 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.81 2005/06/09 00:16:09 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1257,7 +1257,7 @@ static const struct {
 	{ 0x20, 0x08, "Access Denied - Enrollment Conflict" },
 	{ 0x20, 0x09, "Access Denied - Invalid LU Identifier" },
 	{ 0x20, 0x0A, "Access Denied - Invalid Proxy Token" },
-	{ 0x20, 0x0B, "Access DEnied - ACL LUN Conflict" },
+	{ 0x20, 0x0B, "Access Denied - ACL LUN Conflict" },
 	{ 0x21, 0x00, "Logical Block Address Out of Range" },
 	{ 0x21, 0x01, "Invalid Element Address" },
 	{ 0x21, 0x02, "Invalid Address For Write" },
