@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.41 2005/04/28 13:54:45 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.42 2005/06/09 15:32:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -167,17 +167,31 @@ print_mainconf(struct bgpd_config *conf)
 		    log_sockaddr((struct sockaddr *)&la->sa));
 
 	if (conf->flags & BGPD_FLAG_REDIST_CONNECTED) {
-		printf("network connected");
+		printf("network inet connected");
 		if (!SIMPLEQ_EMPTY(&conf->connectset))
 			printf(" ");
 		print_set(&conf->connectset);
 		printf("\n");
 	}
 	if (conf->flags & BGPD_FLAG_REDIST_STATIC) {
-		printf("network static");
+		printf("network inet static");
 		if (!SIMPLEQ_EMPTY(&conf->staticset))
 			printf(" ");
 		print_set(&conf->staticset);
+		printf("\n");
+	}
+	if (conf->flags & BGPD_FLAG_REDIST6_CONNECTED) {
+		printf("network inet6 connected");
+		if (!SIMPLEQ_EMPTY(&conf->connectset6))
+			printf(" ");
+		print_set(&conf->connectset6);
+		printf("\n");
+	}
+	if (conf->flags & BGPD_FLAG_REDIST_STATIC) {
+		printf("network inet6 static");
+		if (!SIMPLEQ_EMPTY(&conf->staticset6))
+			printf(" ");
+		print_set(&conf->staticset6);
 		printf("\n");
 	}
 }

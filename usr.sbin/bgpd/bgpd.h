@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.166 2005/05/27 17:52:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.167 2005/06/09 15:32:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,6 +54,8 @@
 #define	BGPD_FLAG_REFLECTOR		0x0004
 #define	BGPD_FLAG_REDIST_STATIC		0x0008
 #define	BGPD_FLAG_REDIST_CONNECTED	0x0010
+#define	BGPD_FLAG_REDIST6_STATIC	0x0020
+#define	BGPD_FLAG_REDIST6_CONNECTED	0x0040
 #define	BGPD_FLAG_DECISION_MASK		0x0f00
 #define	BGPD_FLAG_DECISION_ROUTEAGE	0x0100
 #define	BGPD_FLAG_DECISION_TRANS_AS	0x0200
@@ -133,7 +135,9 @@ SIMPLEQ_HEAD(filter_set_head, filter_set);
 
 struct bgpd_config {
 	struct filter_set_head			 connectset;
+	struct filter_set_head			 connectset6;
 	struct filter_set_head			 staticset;
+	struct filter_set_head			 staticset6;
 	struct listen_addrs			*listen_addrs;
 	int					 opts;
 	int					 flags;

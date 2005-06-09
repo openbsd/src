@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.120 2005/05/27 17:59:50 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.121 2005/06/09 15:32:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,7 +49,9 @@ int		dispatch_imsg(struct imsgbuf *, int);
 int			 rfd = -1;
 int			 cflags = 0;
 struct filter_set_head	*connectset;
+struct filter_set_head	*connectset6;
 struct filter_set_head	*staticset;
+struct filter_set_head	*staticset6;
 volatile sig_atomic_t	 mrtdump = 0;
 volatile sig_atomic_t	 quit = 0;
 volatile sig_atomic_t	 reconfig = 0;
@@ -171,6 +173,8 @@ main(int argc, char *argv[])
 	cflags = conf.flags;
 	connectset = &conf.connectset;
 	staticset = &conf.staticset;
+	connectset6 = &conf.connectset6;
+	staticset6 = &conf.staticset6;
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -424,6 +428,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	cflags = conf->flags;
 	connectset = &conf->connectset;
 	staticset = &conf->staticset;
+	connectset6 = &conf->connectset6;
+	staticset6 = &conf->staticset6;
 
 	prepare_listeners(conf);
 
@@ -660,10 +666,18 @@ bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
 	struct network_config	 net;
 	struct filter_set_head	*h;
 
-	if ((cflags & BGPD_FLAG_REDIST_CONNECTED) && (kr->flags & F_CONNECTED))
+	if ((cflags & BGPD_FLAG_REDIST_CONNECTED) && kr &&
+	    (kr->flags & F_CONNECTED))
 		h = connectset;
-	else if ((cflags & BGPD_FLAG_REDIST_STATIC) && (kr->flags & F_STATIC))
+	else if ((cflags & BGPD_FLAG_REDIST_STATIC) && kr &&
+	    (kr->flags & F_STATIC))
 		h = staticset;
+	else if ((cflags & BGPD_FLAG_REDIST6_CONNECTED) && kr6 &&
+	    (kr6->flags & F_CONNECTED))
+		h = connectset6;
+	else if ((cflags & BGPD_FLAG_REDIST6_STATIC) && kr6 &&
+	    (kr6->flags & F_STATIC))
+		h = staticset6;
 	else
 		return (0);
 

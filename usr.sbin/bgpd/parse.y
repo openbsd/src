@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.163 2005/05/24 17:41:13 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.164 2005/06/09 15:32:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -326,10 +326,6 @@ conf_main	: AS asnumber		{
 		| NETWORK prefix filter_set	{
 			struct network	*n;
 
-			if ($2.prefix.af != AF_INET) {
-				yyerror("king bula sez: AF_INET only for now");
-				YYERROR;
-			}
 			if ((n = calloc(1, sizeof(struct network))) == NULL)
 				fatal("new_network");
 			memcpy(&n->net.prefix, &$2.prefix,
@@ -344,7 +340,46 @@ conf_main	: AS asnumber		{
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
+		| NETWORK STRING STATIC filter_set	{
+			if (!strcmp($2, "inet")) {
+				conf->flags |= BGPD_FLAG_REDIST_STATIC;
+				if ($4 == NULL || SIMPLEQ_EMPTY($4))
+					SIMPLEQ_INIT(&conf->staticset);
+				else
+					memcpy(&conf->staticset, $4,
+					    sizeof(conf->staticset));
+			} else if (!strcmp($2, "inet6")) {
+				conf->flags |= BGPD_FLAG_REDIST6_STATIC;
+				if ($4 == NULL || SIMPLEQ_EMPTY($4))
+					SIMPLEQ_INIT(&conf->staticset6);
+				else
+					memcpy(&conf->staticset6, $4,
+					    sizeof(conf->staticset6));
+			}
+			free($2);
+			free($4);
+		}
+		| NETWORK STRING CONNECTED filter_set	{
+			if (!strcmp($2, "inet")) {
+				conf->flags |= BGPD_FLAG_REDIST_CONNECTED;
+				if ($4 == NULL || SIMPLEQ_EMPTY($4))
+					SIMPLEQ_INIT(&conf->connectset);
+				else
+					memcpy(&conf->connectset, $4,
+					    sizeof(conf->connectset));
+			} else if (!strcmp($2, "inet6")) {
+				conf->flags |= BGPD_FLAG_REDIST6_CONNECTED;
+				if ($4 == NULL || SIMPLEQ_EMPTY($4))
+					SIMPLEQ_INIT(&conf->connectset6);
+				else
+					memcpy(&conf->connectset6, $4,
+					    sizeof(conf->connectset6));
+			}
+			free($2);
+			free($4);
+		}
 		| NETWORK STATIC filter_set	{
+			/* keep for compatibility till after next release */
 			conf->flags |= BGPD_FLAG_REDIST_STATIC;
 			if ($3 == NULL || SIMPLEQ_EMPTY($3))
 				SIMPLEQ_INIT(&conf->staticset);
@@ -354,6 +389,7 @@ conf_main	: AS asnumber		{
 			free($3);
 		}
 		| NETWORK CONNECTED filter_set	{
+			/* keep for compatibility till after next release */
 			conf->flags |= BGPD_FLAG_REDIST_CONNECTED;
 			if ($3 == NULL || SIMPLEQ_EMPTY($3))
 				SIMPLEQ_INIT(&conf->connectset);

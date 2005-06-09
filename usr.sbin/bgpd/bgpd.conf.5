@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.55 2005/06/04 21:48:16 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.56 2005/06/09 15:32:03 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -206,8 +206,16 @@ Log received and sent updates.
 .Ar address Ns Li / Ns Ar prefix
 .Op Ic set ...\&
 .Xc
-.It Ic network static Op Ic set ...\&
-.It Ic network connected Op Ic set ...\&
+.It Xo
+.Ic network
+.Pq Ic inet Ns \&| Ns Ic inet6
+.Ic static Op Ic set ...\&
+.Xc
+.It Xo
+.Ic network
+.Pq Ic inet Ns \&| Ns Ic inet6
+.Ic connected Op Ic set ...\&
+.Xc
 Announce the specified network as belonging to our AS.
 If set to
 .Ic connected ,
