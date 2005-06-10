@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.171 2005/05/27 04:55:28 mcbride Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.172 2005/06/10 15:53:07 markus Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1493,7 +1493,25 @@ ip_ctloutput(op, so, level, optname, mp)
 			if (ipr == NULL)
 				*mtod(m, u_int16_t *) = opt16val;
 			else {
-				m->m_len += ipr->ref_len;
+				size_t len;
+
+				len = m->m_len + ipr->ref_len;
+				if (len > MCLBYTES) {
+					 m_free(m);
+					 error = EINVAL;
+					 break;
+				}
+				/* allocate mbuf cluster for larger option */
+				if (len > MLEN) {
+					 MCLGET(m, M_WAITOK);
+					 if ((m->m_flags & M_EXT) == 0) {
+						 m_free(m);
+						 error = ENOBUFS;
+						 break;
+					 }
+						 
+				}
+				m->m_len = len;
 				*mtod(m, u_int16_t *) = ipr->ref_type;
 				m_copyback(m, sizeof(u_int16_t), ipr->ref_len,
 				    ipr + 1);
