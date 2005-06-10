@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.64 2005/04/12 14:32:00 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.65 2005/06/10 09:58:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -249,6 +249,7 @@ int		 rde_decisionflags(void);
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
 		     u_int16_t);
+int		 attr_optlen(struct attr *);
 void		 attr_optcopy(struct rde_aspath *, struct rde_aspath *);
 int		 attr_optadd(struct rde_aspath *, u_int8_t, u_int8_t,
 		     void *, u_int16_t);
