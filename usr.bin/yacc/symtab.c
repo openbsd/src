@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.11 2003/08/12 04:51:44 millert Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.12 2005/06/10 16:40:45 pvalchev Exp $	*/
 /*	$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.11 2003/08/12 04:51:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.12 2005/06/10 16:40:45 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ hash(char *name)
     assert(name && *name);
     s = name;
     k = *s;
-    while (c = *++s)
+    while ((c = *++s))
 	k = (31*k + c) & (TABLE_SIZE - 1);
 
     return (k);

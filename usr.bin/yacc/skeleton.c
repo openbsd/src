@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.23 2004/03/12 13:39:50 henning Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.24 2005/06/10 16:40:45 pvalchev Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ char *banner[] =
     "#if __GNUC__ >= 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ >= 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.23 2004/03/12 13:39:50 henning Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.24 2005/06/10 16:40:45 pvalchev Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -431,7 +431,7 @@ write_section(char *section[])
     for (i = 0; (s = section[i]); ++i)
     {
 	++outline;
-	while (c = *s)
+	while ((c = *s))
 	{
 	    putc(c, f);
 	    ++s;

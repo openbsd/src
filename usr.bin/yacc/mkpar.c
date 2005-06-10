@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpar.c,v 1.12 2004/08/08 20:13:13 deraadt Exp $	*/
+/*	$OpenBSD: mkpar.c,v 1.13 2005/06/10 16:40:45 pvalchev Exp $	*/
 /*	$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ remove_conflicts(void)
 {
     int i;
     int symbol;
-    action *p, *pref;
+    action *p, *pref = NULL;
 
     SRtotal = 0;
     RRtotal = 0;

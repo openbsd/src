@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.17 2004/08/08 20:13:13 deraadt Exp $	*/
+/*	$OpenBSD: reader.c,v 1.18 2005/06/10 16:40:45 pvalchev Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -1554,7 +1554,7 @@ int
 mark_symbol(void)
 {
     int c;
-    bucket *bp;
+    bucket *bp = NULL;
 
     c = cptr[1];
     if (c == '%' || c == '\\')
@@ -1878,7 +1878,7 @@ void
 print_grammar(void)
 {
     int i, j, k;
-    int spacing;
+    int spacing = 0;
     FILE *f = verbose_file;
 
     if (!vflag) return;

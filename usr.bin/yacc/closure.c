@@ -1,4 +1,4 @@
-/*	$OpenBSD: closure.c,v 1.7 2003/06/19 16:34:53 pvalchev Exp $	*/
+/*	$OpenBSD: closure.c,v 1.8 2005/06/10 16:40:45 pvalchev Exp $	*/
 /*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)closure.c	5.3 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: closure.c,v 1.7 2003/06/19 16:34:53 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: closure.c,v 1.8 2005/06/10 16:40:45 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ set_first_derives(void)
     unsigned *vrow;
     int j;
     unsigned k;
-    unsigned cword;
+    unsigned cword = 0;
     short *rp;
 
     int rule;
@@ -271,7 +271,7 @@ print_first_derives(void)
     int i;
     int j;
     unsigned *rp;
-    unsigned cword;
+    unsigned cword = 0;
     unsigned k;
 
     printf("\n\n\nFirst Derives\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: verbose.c,v 1.8 2003/06/19 16:34:53 pvalchev Exp $	*/
+/*	$OpenBSD: verbose.c,v 1.9 2005/06/10 16:40:45 pvalchev Exp $	*/
 /*	$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #else
-static char rcsid[] = "$OpenBSD: verbose.c,v 1.8 2003/06/19 16:34:53 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: verbose.c,v 1.9 2005/06/10 16:40:45 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ print_state(int state)
 void
 print_conflicts(int state)
 {
-    int symbol, act, number;
+    int symbol, act = REDUCE, number = 0;
     action *p;
 
     symbol = -1;

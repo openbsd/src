@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.13 2004/08/08 20:13:13 deraadt Exp $	*/
+/*	$OpenBSD: output.c,v 1.14 2005/06/10 16:40:45 pvalchev Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.13 2004/08/08 20:13:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.14 2005/06/10 16:40:45 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -891,7 +891,7 @@ is_C_identifier(char *name)
 
     if (!isalpha(c) && c != '_' && c != '$')
 	return (0);
-    while (c = *++s)
+    while ((c = *++s))
     {
 	if (!isalnum(c) && c != '_' && c != '$')
 	    return (0);
@@ -929,7 +929,7 @@ output_defines(void)
 		    putc(c, code_file);
 		    if (dflag) putc(c, defines_file);
 		}
-		while (c = *++s);
+		while ((c = *++s));
 	    }
 	    ++outline;
 	    fprintf(code_file, " %d\n", symbol_value[i]);
