@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.69 2005/06/01 17:44:34 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.70 2005/06/10 13:34:23 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -325,7 +325,7 @@ cvs_getopt(int argc, char **argv)
 static void
 cvs_read_rcfile(void)
 {
-	char rcpath[MAXPATHLEN], linebuf[128], *lp;
+	char rcpath[MAXPATHLEN], linebuf[128], *lp, *p;
 	int l, linenum = 0;
 	size_t len;
 	struct cvs_cmd *cmdp;
@@ -364,11 +364,20 @@ cvs_read_rcfile(void)
 		}
 		linebuf[--len] = '\0';
 
-		lp = strchr(linebuf, ' ');
+		/* skip any whitespaces */
+		p = linebuf;
+		while (*p == ' ')
+			*p++;
+
+		/* allow comments */
+		if (*p == '#')
+			continue;
+
+		lp = strchr(p, ' ');
 		if (lp == NULL)
 			continue;	/* ignore lines with no arguments */
 		*lp = '\0';
-		if (strcmp(linebuf, "cvs") == 0) {
+		if (strcmp(p, "cvs") == 0) {
 			/*
 			 * Global default options.  In the case of cvs only,
 			 * we keep the 'cvs' string as first argument because
@@ -376,17 +385,17 @@ cvs_read_rcfile(void)
 			 * argument processing.
 			 */
 			*lp = ' ';
-			cvs_defargs = strdup(linebuf);
+			cvs_defargs = strdup(p);
 			if (cvs_defargs == NULL)
 				cvs_log(LP_ERRNO,
 				    "failed to copy global arguments");
 		} else {
 			lp++;
-			cmdp = cvs_findcmd(linebuf);
+			cmdp = cvs_findcmd(p);
 			if (cmdp == NULL) {
 				cvs_log(LP_NOTICE,
 				    "unknown command `%s' in `%s:%d'",
-				    linebuf, rcpath, linenum);
+				    p, rcpath, linenum);
 				continue;
 			}
 
