@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.85 2005/06/07 17:45:28 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.86 2005/06/10 08:30:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -945,81 +945,36 @@ print_origin(u_int8_t origin, int sum)
 	}
 }
 
-char			*aspath = NULL;
-struct ctl_show_rib	*rib = NULL;
 
 int
 show_rib_summary_msg(struct imsg *imsg)
 {
-	struct ctl_show_rib_prefix	*p;
-	u_char				*asdata;
+	struct ctl_show_rib	 rib;
+	char			*aspath;
+	u_char			*asdata;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_RIB:
-		if (rib != NULL) {
-			free(rib);
-			rib = NULL;
-		}
-		if (aspath != NULL) {
-			free(aspath);
-			aspath = NULL;
-		}
+		memcpy(&rib, imsg->data, sizeof(rib));
 
-		if ((rib = malloc(imsg->hdr.len - IMSG_HEADER_SIZE)) == NULL)
-			err(1, NULL);
-		memcpy(rib, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
+		print_prefix(&rib.prefix, rib.prefixlen, rib.flags);
+		printf("%-15s ", log_addr(&rib.nexthop));
 
-		print_prefix(&rib->prefix, rib->prefixlen, rib->flags);
-		printf("%-15s ", log_addr(&rib->nexthop));
-
-		printf(" %5u %5u ", rib->local_pref, rib->med);
+		printf(" %5u %5u ", rib.local_pref, rib.med);
 
 		asdata = imsg->data;
 		asdata += sizeof(struct ctl_show_rib);
-		if (aspath_asprint(&aspath, asdata, rib->aspath_len) == -1)
+		if (aspath_asprint(&aspath, asdata, rib.aspath_len) == -1)
 			err(1, NULL);
 		if (strlen(aspath) > 0)
 			printf("%s ", aspath);
+		free(aspath);
 
-		printf("%s\n", print_origin(rib->origin, 1));
-		break;
-	case IMSG_CTL_SHOW_RIB_PREFIX:
-		p = imsg->data;
-		if (rib == NULL)
-			/* unexpected packet */
-			return (0);
-
-		print_prefix(&p->prefix, p->prefixlen, p->flags);
-		printf("%-15s ", log_addr(&rib->nexthop));
-
-		printf(" %5u %5u ", rib->local_pref, rib->med);
-
-		if (strlen(aspath) > 0)
-			printf("%s ", aspath);
-
-		printf("%s\n", print_origin(rib->origin, 1));
+		printf("%s\n", print_origin(rib.origin, 1));
 		break;
 	case IMSG_CTL_END:
-		if (rib != NULL) {
-			free(rib);
-			rib = NULL;
-		}
-		if (aspath != NULL) {
-			free(aspath);
-			aspath = NULL;
-		}
-
 		return (1);
 	default:
-		if (rib != NULL) {
-			free(rib);
-			rib = NULL;
-		}
-		if (aspath != NULL) {
-			free(aspath);
-			aspath = NULL;
-		}
-
 		break;
 	}
 
