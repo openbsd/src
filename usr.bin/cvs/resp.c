@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.41 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.42 2005/06/10 21:13:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -112,7 +112,15 @@ struct cvs_resphdlr {
 	{ cvs_resp_m        },
 };
 
-
+/*
+ * Instead of opening and closing the Entry file all the time,
+ * which caused a huge CPU load and slowed down everything,
+ * we keep the Entry file for the directory we are working in
+ * open until we encounter a new directory.
+ */
+static char cvs_resp_lastdir[MAXPATHLEN] = "";
+static CVSENTRIES *cvs_resp_lastent = NULL;
+static int resp_check_dir(const char *);
 
 /*
  * The MT command uses scoping to tag the data.  Whenever we encouter a '+',
@@ -292,6 +300,11 @@ cvs_resp_m(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_ok(struct cvsroot *root, int type, char *line)
 {
+	/*
+	 * If we still have an Entry file open, close it now.
+	 */
+	if (cvs_resp_lastent != NULL)
+		cvs_ent_close(cvs_resp_lastent);
 
 	return (1);
 }
@@ -463,7 +476,6 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 {
 	char entbuf[128];
 	struct cvs_ent *ent;
-	CVSENTRIES *entfile;
 
 	/* get the remote path */
 	cvs_getln(root, entbuf, sizeof(entbuf));
@@ -472,16 +484,15 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 	if (cvs_getln(root, entbuf, sizeof(entbuf)) < 0)
 		return (-1);
 
-	entfile = cvs_ent_open(line, O_WRONLY);
-	if (entfile == NULL)
+	if (resp_check_dir(line) < 0)
 		return (-1);
+
 	if (type == CVS_RESP_NEWENTRY) {
-		cvs_ent_addln(entfile, entbuf);
+		cvs_ent_addln(cvs_resp_lastent, entbuf);
 	} else if (type == CVS_RESP_CHECKEDIN) {
 		ent = cvs_ent_parse(entbuf);
 		if (ent == NULL) {
 			cvs_log(LP_ERR, "failed to parse entry");
-			cvs_ent_close(entfile);
 			return (-1);
 		}
 
@@ -489,11 +500,10 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 		ent->ce_mtime = time(&(ent->ce_mtime));
 
 		/* replace the current entry with the one we just received */
-		(void)cvs_ent_remove(entfile, ent->ce_name);
+		(void)cvs_ent_remove(cvs_resp_lastent, ent->ce_name);
 
-		cvs_ent_add(entfile, ent);
+		cvs_ent_add(cvs_resp_lastent, ent);
 	}
-	cvs_ent_close(entfile);
 
 	return (0);
 }
@@ -600,7 +610,6 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	mode_t fmode;
 	char path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
 	BUF *fbuf;
-	CVSENTRIES *entfile;
 	struct cvs_ent *ep;
 	struct timeval tv[2];
 
@@ -623,11 +632,8 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	}
 	ret = 0;
 
-	entfile = cvs_ent_open(line, O_WRONLY);
-	if (entfile == NULL) {
-		cvs_ent_free(ep);
+	if (resp_check_dir(line) < 0)
 		return (-1);
-	}
 
 	if (cvs_modtime != CVS_DATE_DMSEC) {
 		ep->ce_mtime = cvs_modtime;
@@ -636,20 +642,17 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 
 	if ((type == CVS_RESP_UPDEXIST) || (type == CVS_RESP_UPDATED) ||
 	    (type == CVS_RESP_MERGED) || (type == CVS_RESP_CREATED)) {
-		if ((cvs_ent_remove(entfile, ep->ce_name) < 0) &&
+		if ((cvs_ent_remove(cvs_resp_lastent, ep->ce_name) < 0) &&
 		    (type != CVS_RESP_CREATED)) {
 			cvs_log(LP_WARN, "failed to remove entry for '%s`",
 			    ep->ce_name);
 		}
 	}
 
-	if (cvs_ent_add(entfile, ep) < 0) {
+	if (cvs_ent_add(cvs_resp_lastent, ep) < 0) {
 		cvs_ent_free(ep);
-		cvs_ent_close(entfile);
 		return (-1);
 	}
-
-	cvs_ent_close(entfile);
 
 	if ((fbuf = cvs_recvfile(root, &fmode)) == NULL)
 		return (-1);
@@ -702,7 +705,6 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
 {
 	int l;
 	char buf[MAXPATHLEN], base[MAXPATHLEN], fpath[MAXPATHLEN], *file;
-	CVSENTRIES *ef;
 
 	if (cvs_getln(root, buf, sizeof(buf)) < 0)
 		return (-1);
@@ -715,16 +717,10 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
 		return (-1);
 	}
 
-	ef = cvs_ent_open(line, O_RDWR);
-	if (ef == NULL) {
-		cvs_log(LP_ERR, "error handling `Removed' response");
-		if (type == CVS_RESP_RMENTRY)
-			return (-1);
-	} else {
-		(void)cvs_ent_remove(ef, file);
-		cvs_ent_close(ef);
-	}
+	if (resp_check_dir(line) < 0)
+		return (-1);
 
+	(void)cvs_ent_remove(cvs_resp_lastent, file);
 	if ((type == CVS_RESP_REMOVED) && ((unlink(fpath) == -1) &&
 	    errno != ENOENT)) {
 		cvs_log(LP_ERRNO, "failed to unlink `%s'", file);
@@ -850,6 +846,41 @@ cvs_resp_template(struct cvsroot *root, int type, char *line)
 	tmpl = cvs_recvfile(root, &mode);
 	if (tmpl == NULL)
 		return (-1);
+
+	return (0);
+}
+
+/*
+ * Check if <dir> is the same as the last
+ * received directory, if it's not, switch Entry files.
+ */
+static int
+resp_check_dir(const char *dir)
+{
+	size_t len;
+
+	if (strcmp(dir, cvs_resp_lastdir)) {
+		if (cvs_resp_lastent != NULL)
+			cvs_ent_close(cvs_resp_lastent);
+		cvs_resp_lastent = cvs_ent_open(dir, O_WRONLY);
+		if (cvs_resp_lastent == NULL)
+			return (-1);
+
+		len = strlcpy(cvs_resp_lastdir, dir, sizeof(cvs_resp_lastdir));
+		if (len >= sizeof(cvs_resp_lastdir)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", cvs_resp_lastdir);
+			return (-1);
+		}
+	} else {
+		/* make sure the old one is still open */
+		if (cvs_resp_lastent == NULL) {
+			cvs_resp_lastent = cvs_ent_open(cvs_resp_lastdir,
+			    O_WRONLY);
+			if (cvs_resp_lastent == NULL)
+				return (-1);
+		}
+	}
 
 	return (0);
 }
