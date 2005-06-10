@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.91 2005/06/06 23:22:04 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.92 2005/06/10 01:41:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.91 2005/06/06 23:22:04 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.92 2005/06/10 01:41:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
 	socklen_t len;
 	char *p, *line;
 	char resolve[MAXHOSTNAMELEN];
-	int lockpipe[2], nullfd = -1;
+	int lockpipe[2], nullfd;
 	FILE *fp;
 
 	while ((ch = getopt(argc, argv, "dnuf:m:p:a:s:")) != -1)
@@ -329,6 +329,15 @@ main(int argc, char *argv[])
 
 	if (Debug)
 		setlinebuf(stdout);
+
+	if ((nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
+		logerror("Couldn't open /dev/null");
+		die(0);
+	}
+	while (nullfd < 2) {
+		dup2(nullfd, nullfd + 1);
+		nullfd++;
+	}
 
 	consfile.f_type = F_CONSOLE;
 	(void)strlcpy(consfile.f_un.f_fname, ctty,
@@ -435,7 +444,6 @@ main(int argc, char *argv[])
 			exit(1);
 		case 0:
 			setsid();
-			nullfd = open(_PATH_DEVNULL, O_RDWR);
 			close(lockpipe[0]);
 			break;
 		default:
