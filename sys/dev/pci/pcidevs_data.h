@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.872 2005/06/05 23:24:06 marco Exp 
+ *	OpenBSD: pcidevs,v 1.873 2005/06/10 05:32:39 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -145,6 +145,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRSHPW796,
 	    "3CRSHPW796 802.11b",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE154G72,
+	    "3CRWE154G72 802.11g",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
