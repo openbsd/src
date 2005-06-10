@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.160 2005/05/23 22:45:02 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.161 2005/06/10 08:28:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,7 +61,6 @@ void		 rde_update_log(const char *,
 		     const struct bgpd_addr *, u_int8_t);
 int		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 void		 rde_dump_rib_as(struct prefix *, pid_t);
-void		 rde_dump_rib_prefix(struct prefix *, pid_t);
 void		 rde_dump_upcall(struct pt_entry *, void *);
 void		 rde_dump_as(struct filter_as *, pid_t);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
@@ -1533,29 +1532,6 @@ rde_dump_rib_as(struct prefix *p, pid_t pid)
 }
 
 void
-rde_dump_rib_prefix(struct prefix *p, pid_t pid)
-{
-	struct ctl_show_rib_prefix	 prefix;
-
-	prefix.lastchange = p->lastchange;
-	pt_getaddr(p->prefix, &prefix.prefix);
-	prefix.prefixlen = p->prefix->prefixlen;
-	prefix.flags = 0;
-	if (p->prefix->active == p)
-		prefix.flags |= F_RIB_ACTIVE;
-	if (p->peer->conf.ebgp == 0)
-		prefix.flags |= F_RIB_INTERNAL;
-	if (p->aspath->flags & F_PREFIX_ANNOUNCED)
-		prefix.flags |= F_RIB_ANNOUNCE;
-	if (p->aspath->nexthop == NULL ||
-	    p->aspath->nexthop->state == NEXTHOP_REACH)
-		prefix.flags |= F_RIB_ELIGIBLE;
-	if (imsg_compose(ibuf_se, IMSG_CTL_SHOW_RIB_PREFIX, 0, pid, -1,
-	    &prefix, sizeof(prefix)) == -1)
-		log_warnx("rde_dump_as: imsg_compose error");
-}
-
-void
 rde_dump_upcall(struct pt_entry *pt, void *ptr)
 {
 	struct prefix		*p;
@@ -1575,18 +1551,15 @@ rde_dump_as(struct filter_as *a, pid_t pid)
 	struct prefix			*p;
 	u_int32_t			 i;
 
-	i = pathtable.path_hashmask;
-	do {
+	for (i = 0; i <= pathtable.path_hashmask; i++) {
 		LIST_FOREACH(asp, &pathtable.path_hashtbl[i], path_l) {
 			if (!aspath_match(asp->aspath, a->type, a->as))
 				continue;
 			/* match found */
-			rde_dump_rib_as(LIST_FIRST(&asp->prefix_h), pid);
-			for (p = LIST_NEXT(LIST_FIRST(&asp->prefix_h), path_l);
-			    p != NULL; p = LIST_NEXT(p, path_l))
-				rde_dump_rib_prefix(p, pid);
+			LIST_FOREACH(p, &asp->prefix_h, path_l)
+				rde_dump_rib_as(p, pid);
 		}
-	} while (i-- != 0);
+	}
 }
 
 void
