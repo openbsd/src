@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.41 2005/04/12 13:27:11 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.42 2005/06/10 00:01:12 joel Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -56,12 +56,13 @@ For example:
 .Bd -literal -offset indent
 inet 10.0.0.1 255.255.255.0 10.0.0.255 description "Bob's uplink"
 .Ed
-.Pp
-The following three formats are valid for
+.Sh STATIC ADDRESS CONFIGURATION
+The following three
 .Nm hostname.*\&
-files:
+formats are valid for configuring network interfaces with static
+addresses:
 .Pp
-Regular ipv4 network setup:
+Regular IPv4 network setup:
 .Bd -ragged -offset indent
 .Va addr_family
 .Op Va alias
@@ -74,7 +75,7 @@ Regular ipv4 network setup:
 .Va dest_addr
 .Ed
 .Pp
-Regular ipv6 network setup:
+Regular IPv6 network setup:
 .Bd -ragged -offset indent
 .Va addr_family
 .Op Va alias
@@ -130,12 +131,34 @@ options are invalid and will be ignored.
 .It Va netmask
 The optional network mask for the interface, e.g.,
 255.255.255.0.
+If
+.Va addr
+is specified but
+.Va netmask
+is not, the classful mask based on
+.Va addr
+is used.
 .It Va broadcast_addr
 The optional broadcast address for the interface, e.g.,
-190.191.192.255
+190.191.192.255.
+The word
+.Dq NONE
+can also be specified in order to configure the broadcast address based
+on the
+.Va netmask .
+The
+.Va netmask
+option must be present in order to use this option.
 .It Va options
-Optional miscellaneous options to set on the interface, e.g.,
+Miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
+Valid options for a particular interface type can be found in
+.Xr ifconfig 8 .
+When used, the
+.Va netmask
+and
+.Va broadcast_addr
+options must also be present.
 .It Li dest
 If the interface needs a destination address set, this is the literal text
 .Dq dest .
@@ -167,6 +190,11 @@ It is worth noting that
 .Dq \e$if
 in a command line will be replaced by the interface name.
 .El
+.Sh DYNAMIC ADDRESS CONFIGURATION
+The following
+.Nm hostname.*\&
+formats are valid for configuring network interfaces with dynamic
+addresses:
 .Pp
 A DHCP-configured network interface setup consists of
 .Bd -ragged -offset indent
@@ -191,8 +219,19 @@ and
 .Xr dhclient.conf 5
 for more details.
 .It Va options
-Optional miscellaneous options to set on the interface, e.g.,
+Miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
+Valid options for a particular interface type can be found in
+.Xr ifconfig 8 .
+The
+.Ox
+installation script will create
+.Nm hostname.if
+with options of
+.Dq NONE NONE NONE
+when DHCP configuration is chosen.
+This is the same as specifying just
+.Dq dhcp .
 .El
 .Pp
 IPv6 stateless address autoconfiguration:
@@ -220,11 +259,14 @@ net.inet6.ip6.forwarding=0
 net.inet6.ip6.accept_rtadv=1
 .Ed
 .It Va options
-Optional miscellaneous options to set on the interface, e.g.,
+Miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
+Valid options for a particular interface type can be found in
+.Xr ifconfig 8 .
 .El
-.Pp
-An addressless network interface setup (useful for
+.Sh ADDRESS-LESS CONFIGURATION
+A network interface that does not require an IP address
+(such as
 .Xr bridge 4
 member interfaces and interfaces to be used with
 .Xr ppp 8
@@ -232,21 +274,24 @@ and
 .Xr pppoe 8 )
 consists of
 .Bd -ragged -offset indent
-.Li up
+.Va state
 .Va options
 .Ed
 .Pp
 The above format has the following field values:
 .Bl -tag -width indent -offset indent
-.It Li up
-The literal string
+.It Va state
+The administrative state in which to put the interface, either
 .Dq up
-if the interface is to be simply brought up.
+or
+.Dq down .
 .It Va options
-Optional miscellaneous options to set on the interface, e.g.,
+Miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
+Valid options for a particular interface type can be found in
+.Xr ifconfig 8 .
 .El
-.Pp
+.Sh BRIDGE INTERFACE CONFIGURATION
 The final file format only applies to
 .Nm bridgename.bridge*
 files.
