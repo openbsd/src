@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.20 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.21 2005/06/10 21:14:47 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -156,8 +156,6 @@ static char cvs_req_tmppath[MAXPATHLEN];
 extern char cvs_server_tmpdir[MAXPATHLEN];
 static char *cvs_req_args[CVS_PROTO_MAXARG];
 static int   cvs_req_nargs = 0;
-
-static CVSFILE *cvs_lastdir = NULL;
 
 
 /*
