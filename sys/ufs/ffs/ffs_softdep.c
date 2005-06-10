@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.56 2005/05/24 04:33:35 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.57 2005/06/10 17:37:40 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -2901,18 +2901,30 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
  * inode has been written.
  */
 void
-softdep_change_linkcnt(ip)
+softdep_change_linkcnt(ip, nodelay)
 	struct inode *ip;	/* the inode with the increased link count */
+	int nodelay;		/* do background work or not */
 {
 	struct inodedep *inodedep;
+	int flags;
+
+	/*
+	 * If requested, do not allow background work to happen.
+	 */
+	flags = DEPALLOC;
+	if (nodelay)
+		flags |= NODELAY;
 
 	ACQUIRE_LOCK(&lk);
-	(void) inodedep_lookup(ip->i_fs, ip->i_number, DEPALLOC, &inodedep);
+
+	(void) inodedep_lookup(ip->i_fs, ip->i_number, flags, &inodedep);
 	if (ip->i_ffs_nlink < ip->i_effnlink) {
 		FREE_LOCK(&lk);
 		panic("softdep_change_linkcnt: bad delta");
 	}
+
 	inodedep->id_nlinkdelta = ip->i_ffs_nlink - ip->i_effnlink;
+
 	FREE_LOCK(&lk);
 }
 

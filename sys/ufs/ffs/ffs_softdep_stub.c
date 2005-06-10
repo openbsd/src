@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep_stub.c,v 1.8 2004/12/07 06:06:51 deraadt Exp $	*/
+/*	$OpenBSD: ffs_softdep_stub.c,v 1.9 2005/06/10 17:37:40 pedro Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -202,8 +202,9 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 }
 
 void
-softdep_change_linkcnt(ip)
+softdep_change_linkcnt(ip, nodelay)
 	struct inode *ip;
+	int nodelay;
 {
 
 	panic("softdep_change_linkcnt called");

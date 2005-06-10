@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.28 2004/12/07 04:37:28 tedu Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.29 2005/06/10 17:37:41 pedro Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -1037,7 +1037,7 @@ out:
  	if (DOINGSOFTDEP(dvp)) {
 		if (ip) {
 			ip->i_effnlink--;
-			softdep_change_linkcnt(ip);
+			softdep_change_linkcnt(ip, 0);
 			softdep_setup_remove(bp, dp, ip, isrmdir);
 		}
 		if (softdep_slowdown(dvp)) {
@@ -1089,7 +1089,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
  		ep->d_type = newtype;
  	oip->i_effnlink--;
  	if (DOINGSOFTDEP(vdp)) {
-		softdep_change_linkcnt(oip);
+		softdep_change_linkcnt(oip, 0);
  		softdep_setup_directory_change(bp, dp, oip, newinum, isrmdir);
  		bdwrite(bp);
  	} else {

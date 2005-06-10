@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.63 2005/05/28 02:02:50 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.64 2005/06/10 17:37:41 pedro Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -720,7 +720,7 @@ ufs_link(v)
 	ip->i_ffs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(vp))
-		softdep_change_linkcnt(ip);
+		softdep_change_linkcnt(ip, 0);
 	if ((error = UFS_UPDATE(ip, !DOINGSOFTDEP(vp))) == 0) {
 		ufs_makedirentry(ip, cnp, &newdir);
 		error = ufs_direnter(dvp, vp, &newdir, cnp, NULL);
@@ -730,7 +730,7 @@ ufs_link(v)
 		ip->i_ffs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 		if (DOINGSOFTDEP(vp))
-			softdep_change_linkcnt(ip);
+			softdep_change_linkcnt(ip, 0);
 	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VN_KNOTE(vp, NOTE_LINK);
@@ -930,7 +930,7 @@ abortit:
 	ip->i_ffs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(fvp))
-		softdep_change_linkcnt(ip);
+		softdep_change_linkcnt(ip, 0);
 	if ((error = UFS_UPDATE(ip, !DOINGSOFTDEP(fvp))) != 0) {
 		VOP_UNLOCK(fvp, 0, p);
 		goto bad;
@@ -997,14 +997,14 @@ abortit:
 			dp->i_ffs_nlink++;
 			dp->i_flag |= IN_CHANGE;
 			if (DOINGSOFTDEP(tdvp))
-                               softdep_change_linkcnt(dp);
+                               softdep_change_linkcnt(dp, 0);
 			if ((error = UFS_UPDATE(dp, !DOINGSOFTDEP(tdvp))) 
 			    != 0) {
 				dp->i_effnlink--;
 				dp->i_ffs_nlink--;
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
-					softdep_change_linkcnt(dp);
+					softdep_change_linkcnt(dp, 0);
 				goto bad;
 			}
 		}
@@ -1015,7 +1015,7 @@ abortit:
 				dp->i_ffs_nlink--;
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
-					softdep_change_linkcnt(dp);
+					softdep_change_linkcnt(dp, 0);
 				(void)UFS_UPDATE(dp, 1);
 			}
 			goto bad;
@@ -1071,11 +1071,11 @@ abortit:
 			if (!newparent) {
 				dp->i_effnlink--;
 				if (DOINGSOFTDEP(tdvp))
-					softdep_change_linkcnt(dp);
+					softdep_change_linkcnt(dp, 0);
 			}
 			xp->i_effnlink--;
 			if (DOINGSOFTDEP(tvp))
-				softdep_change_linkcnt(xp);
+				softdep_change_linkcnt(xp, 0);
 		}
 		if (doingdirectory && !DOINGSOFTDEP(tvp)) {
 		       /*
@@ -1182,7 +1182,7 @@ out:
 		ip->i_flag |= IN_CHANGE;
 		ip->i_flag &= ~IN_RENAME;
 		if (DOINGSOFTDEP(fvp))
-			softdep_change_linkcnt(ip);
+			softdep_change_linkcnt(ip, 0);
 		vput(fvp);
 	} else
 		vrele(fvp);
@@ -1249,7 +1249,7 @@ ufs_mkdir(v)
 	ip->i_effnlink = 2;
 	ip->i_ffs_nlink = 2;
 	if (DOINGSOFTDEP(tvp))
-		softdep_change_linkcnt(ip);
+		softdep_change_linkcnt(ip, 0);
 
 	if (cnp->cn_flags & ISWHITEOUT)
 		ip->i_ffs_flags |= UF_OPAQUE;
@@ -1263,7 +1263,7 @@ ufs_mkdir(v)
 	dp->i_ffs_nlink++;
 	dp->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(dvp))
-		softdep_change_linkcnt(dp);
+		softdep_change_linkcnt(dp, 0);
 	if ((error = UFS_UPDATE(dp, !DOINGSOFTDEP(dvp))) != 0)
 		goto bad;
 
@@ -1329,7 +1329,7 @@ bad:
                 dp->i_ffs_nlink--;
                 dp->i_flag |= IN_CHANGE;
 		if (DOINGSOFTDEP(dvp))
-			softdep_change_linkcnt(dp);
+			softdep_change_linkcnt(dp, 0);
                 /*
                  * No need to do an explicit VOP_TRUNCATE here, vrele will
                  * do this for us because we set the link count to 0.
@@ -1338,7 +1338,7 @@ bad:
                 ip->i_ffs_nlink = 0;
                 ip->i_flag |= IN_CHANGE;
 		if (DOINGSOFTDEP(tvp))
-			softdep_change_linkcnt(ip);
+			softdep_change_linkcnt(ip, 0);
 		vput(tvp);
 	}
 out:
@@ -1408,15 +1408,15 @@ ufs_rmdir(v)
 	dp->i_effnlink--;
 	ip->i_effnlink--;
 	if (DOINGSOFTDEP(vp)) {
-		softdep_change_linkcnt(dp);
-		softdep_change_linkcnt(ip);
+		softdep_change_linkcnt(dp, 0);
+		softdep_change_linkcnt(ip, 0);
 	}
 	if ((error = ufs_dirremove(dvp, ip, cnp->cn_flags, 1)) != 0) {
 		dp->i_effnlink++;
 		ip->i_effnlink++;
 		if (DOINGSOFTDEP(vp)) {
-			softdep_change_linkcnt(dp);
-			softdep_change_linkcnt(ip);
+			softdep_change_linkcnt(dp, 0);
+			softdep_change_linkcnt(ip, 0);
 		}
 		goto out;
 	}
@@ -2082,7 +2082,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	ip->i_effnlink = 1;
 	ip->i_ffs_nlink = 1;
 	if (DOINGSOFTDEP(tvp))
-		softdep_change_linkcnt(ip);
+		softdep_change_linkcnt(ip, 0);
 	if ((ip->i_ffs_mode & ISGID) &&
 		!groupmember(ip->i_ffs_gid, cnp->cn_cred) &&
 	    suser_ucred(cnp->cn_cred))
@@ -2118,7 +2118,7 @@ bad:
 	ip->i_ffs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(tvp))
-		softdep_change_linkcnt(ip);
+		softdep_change_linkcnt(ip, 0);
 	tvp->v_type = VNON;
 	vput(tvp);
 
