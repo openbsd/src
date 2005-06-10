@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.56 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.57 2005/06/10 21:32:08 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -684,9 +684,15 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 
 	/* is this request supported by the server? */
 	if (!CVS_GETVR(root, req->req_id)) {
-		cvs_log(LP_WARN, "remote end does not support request `%s'",
-		    req->req_str);
-		return (-1);
+		if (rid == CVS_REQ_VERSION) {
+			ret = cvs_sendreq(root, CVS_REQ_NOOP, arg);
+		} else {
+			cvs_log(LP_WARN,
+			    "remote end does not support request `%s'",
+			    req->req_str);
+			ret = -1;
+		}
+		return (ret);
 	}
 
 	l = snprintf(cvs_proto_buf, sizeof(cvs_proto_buf), "%s%s%s\n",
