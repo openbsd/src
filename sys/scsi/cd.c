@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.84 2005/06/05 21:27:07 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.85 2005/06/11 14:49:54 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1382,10 +1382,10 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 
 	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header_big *)&data, flags, 20000);
+		    &data.headers.hdr_big, flags, 20000);
 	else
-		error = scsi_mode_select(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header *)&data, flags, 20000);
+		error = scsi_mode_select(cd->sc_link, SMS_PF, &data.headers.hdr,
+		    flags, 20000);
 
 	return (error);
 }
@@ -1428,12 +1428,12 @@ cd_setvol(cd, arg, flags)
 
 	error = scsi_do_mode_sense(cd->sc_link,
 	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE, &data, (void **)&audio, NULL,
-	       NULL, NULL, sizeof(*audio), flags, NULL);
+	    NULL, NULL, sizeof(*audio), flags, NULL);
 	if (error != 0)
 		return (error);
 	if (audio == NULL)
 		return (EIO);
-		
+
 	mask_volume[0] = audio->port[0].volume;
 	mask_volume[1] = audio->port[1].volume;
 	mask_volume[2] = audio->port[2].volume;
@@ -1453,10 +1453,10 @@ cd_setvol(cd, arg, flags)
 
 	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header_big *)&data, flags, 20000);
+		    &data.headers.hdr_big, flags, 20000);
 	else
-		error = scsi_mode_select(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header *)&data, flags, 20000);
+		error = scsi_mode_select(cd->sc_link, SMS_PF, &data.headers.hdr,
+		    flags, 20000);
 
 	return (error);
 }
@@ -1505,10 +1505,10 @@ cd_set_pa_immed(cd, flags)
 
 	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header_big *)&data, flags, 20000);
+		    &data.headers.hdr_big, flags, 20000);
 	else
-		error = scsi_mode_select(cd->sc_link, SMS_PF,
-		    (struct scsi_mode_header *)&data, flags, 20000);
+		error = scsi_mode_select(cd->sc_link, SMS_PF, &data.headers.hdr,
+		    flags, 20000);
 
 	return (error);
 }
