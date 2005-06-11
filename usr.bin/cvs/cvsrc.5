@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsrc.5,v 1.4 2005/06/09 08:38:03 joris Exp $
+.\"	$OpenBSD: cvsrc.5,v 1.5 2005/06/11 12:15:44 joris Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -58,7 +58,6 @@ Arguments following
 .Ar command
 will be added implicitly to the appropriate command's argument vector if it is
 run.
-Empty lines and lines specifying no optional arguments are ignored.
 Lines whose
 .Ar command
 argument is not a valid command will generate a warning when running without
@@ -67,6 +66,11 @@ the
 or
 .Fl Q
 flags.
+.Pp
+Empty lines and lines specifying no optional arguments are ignored.
+A line beginning with a hash character
+.Pq Sq #
+is considered a comment and ignored.
 .Sh EXAMPLES
 Specify that
 .Xr cvs 1
