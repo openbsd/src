@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.17 2004/05/03 15:18:21 drahn Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.18 2005/06/11 00:48:06 miod Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*-
@@ -220,7 +220,7 @@ vga_pci_attach(parent, self, aux)
 
 		/*
 		 * Work out an upper bound for agp memory allocation. This
-		 * uses a heurisitc table from the Linux driver.
+		 * uses a heuristic table from the Linux driver.
 		 */
 		memsize = ptoa(physmem) >> 20;
 
