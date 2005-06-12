@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.12 2003/08/15 23:16:30 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.13 2005/06/12 18:16:13 xsa Exp $ */
 /*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -182,7 +182,7 @@ Xmain(void)
 		if (c[0] == 0)
 			continue;
 
-		if ((d = index(c, ' ')))
+		if ((d = strchr(c, ' ')))
 			*d++ = 0;
 
 		while (v->namn) {
@@ -218,7 +218,7 @@ boot(char *arg)
 
 		if (*arg != '-') {
 			fn = arg;
-			if ((arg = index(arg, ' '))) {
+			if ((arg = strchr(arg, ' '))) {
 				*arg++ = 0;
 				while (*arg == ' ')
 					arg++;
