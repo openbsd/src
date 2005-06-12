@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.22 2005/05/01 17:04:52 martin Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.23 2005/06/12 20:51:29 martin Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -334,6 +334,7 @@ bad:
 	case NUBUS_DRHW_ROPS24LXI:
 	case NUBUS_DRHW_ROPS24XLTV:
 	case NUBUS_DRHW_ROPS24MXTV:
+	case NUBUS_DRHW_THUNDER24:
 		sc->cli_offset = 0xfb0010;
 		sc->cli_value = 0x00;
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
