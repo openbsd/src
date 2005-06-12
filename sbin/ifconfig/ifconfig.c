@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.144 2005/06/08 19:03:55 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.145 2005/06/12 00:42:55 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -353,7 +353,8 @@ const struct	cmd {
 
 int	getinfo(struct ifreq *, int);
 void	getsock(int);
-void	printif(struct ifreq *, int);
+int	printgroup(char *, int);
+void	printif(char *, int);
 void	printb(char *, unsigned short, char *);
 void	printb_status(unsigned short, char *);
 void	status(int, struct sockaddr_dl *);
@@ -504,7 +505,7 @@ main(int argc, char *argv[])
 	}
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (argc == 0) {
-		printif(&ifr, 1);
+		printif(ifr.ifr_name, 1);
 		exit(0);
 	}
 
@@ -663,8 +664,42 @@ getinfo(struct ifreq *ifr, int create)
 	return (0);
 }
 
+int
+printgroup(char *groupname, int ifaliases)
+{
+	struct ifgroupreq	 ifgr;
+	struct ifg_req		*ifg;
+	int			 len, cnt = 0;
+
+	getsock(AF_INET);
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, groupname, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+		if (errno == EINVAL || errno == ENOTTY ||
+		    errno == ENOENT)
+			return (-1);
+		else
+			err(1, "SIOCGIFGMEMB");
+
+	len = ifgr.ifgr_len;
+	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
+		err(1, "printgroup");
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+		err(1, "SIOCGIFGMEMB");
+
+	for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(struct ifg_req);
+	    ifg++) {
+		len -= sizeof(struct ifg_req);
+		printif(ifg->ifgrq_member, ifaliases);
+		cnt++;
+	}
+	free(ifgr.ifgr_groups);
+
+	return (cnt);
+}
+
 void
-printif(struct ifreq *ifrm, int ifaliases)
+printif(char *ifname, int ifaliases)
 {
 	struct ifaddrs *ifap, *ifa;
 	const char *namep;
@@ -675,11 +710,13 @@ printif(struct ifreq *ifrm, int ifaliases)
 	if (getifaddrs(&ifap) != 0)
 		err(1, "getifaddrs");
 
-	if (ifrm) {
-		oname = strdup(ifrm->ifr_name);
-		if (oname == NULL)
+	if (ifname) {
+		if ((oname = strdup(ifname)) == NULL)
 			err(1, "strdup");
 		nlen = strlen(oname);
+		if (!isdigit(oname[nlen - 1]))	/* is it a group? */
+			if (printgroup(oname, ifaliases) != -1)
+				return;
 	}
 
 	namep = NULL;
