@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.1 2005/02/28 13:08:41 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.2 2005/06/12 11:24:28 espie Exp $
 
 =head1 NAME
 
@@ -13,6 +13,7 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
     	# decide whether we want to extract it, change object attributes
 	$o->create();
     }
+    close($fh);
 
 
 =head1 DESCRIPTION
@@ -24,7 +25,7 @@ Most client software will specialize C<OpenBSD::Ustar> to their own needs.
 Note however that C<OpenBSD::Ustar> is not designed for inheritance.
 Composition (putting a C<OpenBSD::Ustar> object inside your class) and
 forwarding methods (writing C<create> or C<next> methods that call the
-C<OpenBSD::Ustar> method) are the correct way to use this API.
+corresponding C<OpenBSD::Ustar> method) are the correct way to use this API.
 
 A filehandle C<$fh> is associated with an C<OpenBSD::Ustar> object through
 C<new>. The filehandle should support C<read>. C<OpenBSD::UStar> does not
