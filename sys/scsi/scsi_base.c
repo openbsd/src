@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.81 2005/06/09 00:16:09 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.82 2005/06/12 21:40:05 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -464,13 +464,9 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	u_int64_t *block_count;
 	void **page_data;
 {
-	struct scsi_mode_blk_desc_big *desc_big;
 	struct scsi_mode_direct_blk_desc *direct;
-	struct scsi_mode_header_big *hdr_big;
-	struct scsi_mode_header *hdr;
 	struct scsi_blk_desc *general;
-	u_char *cbuf = (u_char *)buf;
-	int error, blk_desc_len;
+	int error, blk_desc_len, offset;
 	
 	*page_data = NULL;
 
@@ -483,60 +479,47 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	if (big)
 		*big = 0;
 
-	/* Try 10 byte mode sense request. Don't bother with SMS_DBD. */
+	/*
+	 * Try 10 byte mode sense request. Don't bother with SMS_DBD or
+	 * SMS_LLBAA.
+	 */
 	error = scsi_mode_sense_big(sc_link, 0, page, &buf->headers.hdr_big,
 	    sizeof(*buf), flags, 20000);
-	hdr_big = &buf->headers.hdr_big;
-	if (error == 0 && _2btol(hdr_big->data_length) > 0) {
+
+	if (error == 0 && _2btol(buf->headers.hdr_big.data_length) > 0) {
 		if (big)
 			*big = 1;
-		cbuf += sizeof(struct scsi_mode_header_big);
-		*page_data = scsi_mode_sense_big_page(hdr_big, page_len);
-		blk_desc_len = _2btol(hdr_big->blk_desc_len);
-		if ((hdr_big->reserved & LONGLBA) == 0)
-			goto eight_byte;
-		/* 16 byte block descriptors. */
-		if (blk_desc_len < sizeof(struct scsi_mode_blk_desc_big))
-			return (0);
-		desc_big = (struct scsi_mode_blk_desc_big *)cbuf;
-		if (density)
-			*density = desc_big->density;
-		if (block_size)
-			*block_size = _4btol(desc_big->blklen);
-		if (block_count)
-			*block_count = _8btol(desc_big->nblocks);
-		return (0);
+		offset = sizeof(struct scsi_mode_header_big);
+		*page_data = scsi_mode_sense_big_page(&buf->headers.hdr_big,
+		    page_len);
+		blk_desc_len = _2btol(buf->headers.hdr_big.blk_desc_len);
+	} else {
+		/*
+		 * Try 6 byte mode sense request. Don't bother with SMS_DBD.
+		 */
+		if (sc_link->flags & SDEV_ONLYBIG)
+			return (EIO);
+		error = scsi_mode_sense(sc_link, 0, page, &buf->headers.hdr,
+		    sizeof(*buf), flags, 20000);
+		if (error != 0)
+			return (error);
+		if (buf->headers.hdr.data_length == 0)
+			return (EIO);
+		offset = sizeof(struct scsi_mode_header);
+		*page_data = scsi_mode_sense_page(&buf->headers.hdr, page_len);
+		blk_desc_len = buf->headers.hdr.blk_desc_len;
 	}
 
-	if (sc_link->flags & SDEV_ONLYBIG)
-		return (EIO);
-
-	/* Try 6 byte mode sense request. Don't bother with SMS_DBD. */
-	error = scsi_mode_sense(sc_link, 0, page, &buf->headers.hdr,
-	    sizeof(*buf), flags, 20000);
-	if (error != 0)
-		return (error);
-
-	hdr = &buf->headers.hdr;
-	if (hdr->data_length == 0)
-		return (EIO);
-		
-	cbuf += sizeof(struct scsi_mode_header);
-	*page_data = scsi_mode_sense_page(hdr, page_len);
-	blk_desc_len = hdr->blk_desc_len;
-
-eight_byte:			
 	/* Both scsi_blk_desc and scsi_mode_direct_blk_desc are 8 bytes. */
-	if (blk_desc_len < sizeof(struct scsi_mode_direct_blk_desc))
+	if (blk_desc_len == 0 || (blk_desc_len % 8 != 0))
 		return (0);
 
 	switch (sc_link->inqdata.device & SID_TYPE) {
 	case T_SEQUENTIAL:
 		/*
-		 * XXX What other device types will return general block
-		 * descriptors other than tape drives?
+		 * XXX What other device types return general block descriptors?
 		 */
-		general = (struct scsi_blk_desc *)cbuf;	
+		general = (struct scsi_blk_desc *)&buf->headers.buf[offset];	
 		if (density)
 			*density = general->density;
 		if (block_size)
@@ -546,7 +529,8 @@ eight_byte:
 		break;
 
 	default:
-		direct = (struct scsi_mode_direct_blk_desc *)cbuf;	
+		direct = (struct scsi_mode_direct_blk_desc *)&buf->
+		    headers.buf[offset];
 		if (density)
 			*density = direct->density;
 		if (block_size)

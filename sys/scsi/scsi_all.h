@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.25 2005/06/03 15:50:10 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.26 2005/06/12 21:40:05 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ struct scsi_inquiry {
 struct scsi_mode_sense {
 	u_int8_t opcode;
 	u_int8_t byte2;
-#define	SMS_DBD				0x08
+#define	SMS_DBD				0x08	/* Disable Block Descriptors */
 	u_int8_t page;
 #define	SMS_PAGE_CODE 			0x3F
 #define	SMS_PAGE_CTRL 			0xC0
@@ -103,8 +103,9 @@ struct scsi_mode_sense {
 
 struct scsi_mode_sense_big {
 	u_int8_t opcode;
-	u_int8_t byte2;		/* same bits as small version */
-	u_int8_t page; 		/* same bits as small version */
+	u_int8_t byte2;				/* same bits as small version */
+#define SMS_LLBAA			0x10	/*    plus: Long LBA Accepted */
+	u_int8_t page;				/* same bits as small version */
 	u_int8_t unused[4];
 	u_int8_t length[2];
 	u_int8_t control;
