@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.46 2005/05/27 04:52:24 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.47 2005/06/12 21:38:14 fgsch Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -864,7 +864,6 @@ void sis_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	struct ifnet		*ifp;
-	bus_addr_t		iobase;
 	bus_size_t		iosize;
 
 	s = splnet();
@@ -921,33 +920,17 @@ void sis_attach(parent, self, aux)
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef SIS_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports\n");
-		goto fail;
-	}
-	if (pci_io_find(pc, pa->pa_tag, SIS_PCI_LOIO, &iobase, &iosize)) {
-		printf(": can't find I/O space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->sis_bhandle)) {
-		printf(": can't map I/O space\n");
-		goto fail;
-	}
-	sc->sis_btag = pa->pa_iot;
+	if (pci_mapreg_map(pa, SIS_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sis_btag, &sc->sis_bhandle, NULL, &iosize, 0)) {
+		printf(": can't map i/o space\n");
+		return;
+ 	}
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		goto fail;
-	}
-	if (pci_mem_find(pc, pa->pa_tag, SIS_PCI_LOMEM, &iobase, &iosize,NULL)){
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sis_bhandle)) {
-		printf(": can't map mem space\n");
-		goto fail;
-	}
-	sc->sis_btag = pa->pa_memt;
+	if (pci_mapreg_map(pa, SIS_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sis_btag, &sc->sis_bhandle, NULL, &iosize, 0)) {
+ 		printf(": can't map mem space\n");
+		return;
+ 	}
 #endif
 
 	/* Allocate interrupt */
