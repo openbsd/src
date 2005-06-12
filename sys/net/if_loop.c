@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.34 2005/06/08 06:35:04 henning Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.35 2005/06/12 06:23:43 henning Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -206,6 +206,7 @@ loop_clone_create(ifc, unit)
 	if (unit == 0) {
 		lo0ifp = ifp;
 		if_attachhead(ifp);
+		if_addgroup(lo0ifp, ifc->ifc_name);
 	} else
 		if_attach(ifp);
 	if_alloc_sadl(ifp);
