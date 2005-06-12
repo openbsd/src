@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_parse.c,v 1.2 2005/06/04 02:25:53 cloder Exp $	*/
+/*	$OpenBSD: aml_parse.c,v 1.3 2005/06/12 20:08:58 sturm Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_parse.c,v 1.2 2005/06/04 02:25:53 cloder Exp $
+ *	$Id: aml_parse.c,v 1.3 2005/06/12 20:08:58 sturm Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 
@@ -488,7 +488,7 @@ aml_parse_concat_string(struct aml_environ *env, union aml_object *obj,
 			return (NULL);
 		}
 		strncpy(resobj->str.string, obj->str.string, len);
-		strcat(resobj->str.string, tmpobj->str.string);
+		strlcat(resobj->str.string, tmpobj->str.string, len);
 	} else {
 		resobj->str.string = NULL;
 	}
