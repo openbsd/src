@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.73 2005/06/07 18:21:44 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.74 2005/06/12 00:41:33 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -447,7 +447,12 @@ struct ifg_list {
 };
 
 struct ifg_req {
-	char			 ifgrq_group[IFNAMSIZ];
+	union {
+		char			 ifgrqu_group[IFNAMSIZ];
+		char			 ifgrqu_member[IFNAMSIZ];
+	} ifgrq_ifgrqu;
+#define	ifgrq_group	ifgrq_ifgrqu.ifgrqu_group
+#define	ifgrq_member	ifgrq_ifgrqu.ifgrqu_member
 };
 
 /*
@@ -690,7 +695,6 @@ int	ifioctl(struct socket *, u_long, caddr_t, struct proc *);
 int	ifpromisc(struct ifnet *, int);
 int	if_addgroup(struct ifnet *, const char *);
 int	if_delgroup(struct ifnet *, const char *);
-int	if_getgroup(caddr_t, struct ifnet *);
 void	if_group_routechange(struct sockaddr *, struct sockaddr *);
 struct	ifnet *ifunit(const char *);
 

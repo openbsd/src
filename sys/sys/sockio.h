@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.34 2005/05/26 22:37:35 henning Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.35 2005/06/12 00:41:33 henning Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -144,6 +144,7 @@
 #define	SIOCAIFGROUP	_IOW('i', 135, struct ifgroupreq) /* add an ifgroup */
 #define	SIOCGIFGROUP   _IOWR('i', 136, struct ifgroupreq) /* get ifgroups */
 #define	SIOCDIFGROUP    _IOW('i', 137, struct ifgroupreq) /* delete ifgroup */
+#define	SIOCGIFGMEMB   _IOWR('i', 138, struct ifgroupreq) /* get members */
 
 #define	SIOCSIFDESCR	 _IOW('i', 128, struct ifreq)	/* set ifnet descr */
 #define	SIOCGIFDESCR	_IOWR('i', 129, struct ifreq)	/* get ifnet descr */
