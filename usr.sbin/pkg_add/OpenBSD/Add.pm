@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.31 2005/02/07 00:52:35 espie Exp $
+# $OpenBSD: Add.pm,v 1.32 2005/06/12 11:14:28 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -341,6 +341,9 @@ sub prepare_to_extract
 	my $destdir = $state->{destdir};
 
 	my $file=$state->{archive}->next();
+	if (!defined $file) {
+		Fatal "Error: truncated archive\n";
+	}
 	if ($file->{name} ne $self->{name}) {
 		Fatal "Error: archive does not match ", $file->{name}, "!=",
 		$self->{name}, "\n";
