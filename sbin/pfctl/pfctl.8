@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.119 2005/05/22 21:05:23 mpf Exp $
+.\" $OpenBSD: pfctl.8,v 1.120 2005/06/13 20:18:52 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -361,7 +361,8 @@ When used together with
 .Fl v ,
 source tracking statistics are also shown.
 .It Fl s Cm labels
-Show per-rule statistics (label, evaluations, packets, bytes) of
+Show per-rule statistics (label, evaluations, packets total, bytes total,
+packets in, bytes in, packets out, bytes out) of
 filter rules with labels, useful for accounting.
 .It Fl s Cm timeouts
 Show the current global timeouts.
