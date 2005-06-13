@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_locl.h,v 1.2 2002/10/27 13:24:26 miod Exp $	*/
+/*	$OpenBSD: des_locl.h,v 1.3 2005/06/13 10:56:44 hshoexer Exp $	*/
 
 /* lib/des/des_locl.h */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -161,21 +161,6 @@
 	*(u_int32_t *)(des_SP+0x0400+((u>>16)&0xfc))+ \
 	*(u_int32_t *)(des_SP+0x0600+((u>>24)&0xfc)); }
 #else /* original version */
-#ifdef MSDOS
-#define D_ENCRYPT(L,R,S)	\
-	U.l=R^s[S+1]; \
-	T.s[0]=((U.s[0]>>4)|(U.s[1]<<12))&0x3f3f; \
-	T.s[1]=((U.s[1]>>4)|(U.s[0]<<12))&0x3f3f; \
-	U.l=(R^s[S  ])&0x3f3f3f3fL; \
-	L^=	des_SPtrans[1][(T.c[0])]| \
-		des_SPtrans[3][(T.c[1])]| \
-		des_SPtrans[5][(T.c[2])]| \
-		des_SPtrans[7][(T.c[3])]| \
-		des_SPtrans[0][(U.c[0])]| \
-		des_SPtrans[2][(U.c[1])]| \
-		des_SPtrans[4][(U.c[2])]| \
-		des_SPtrans[6][(U.c[3])];
-#else
 #define D_ENCRYPT(Q,R,S) {\
 	u=(R^s[S  ]); \
 	t=R^s[S+1]; \
@@ -188,7 +173,6 @@
 		des_SPtrans[2][(u>> 8L)&0x3f]| \
 		des_SPtrans[4][(u>>16L)&0x3f]| \
 		des_SPtrans[6][(u>>24L)&0x3f]; }
-#endif
 #endif
 
 	/* IP and FP

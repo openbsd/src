@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecb_enc.c,v 1.2 2002/10/27 13:24:26 miod Exp $	*/
+/*	$OpenBSD: ecb_enc.c,v 1.3 2005/06/13 10:56:44 hshoexer Exp $	*/
 
 /* lib/des/ecb_enc.c */
 /* Copyright (C) 1995 Eric Young (eay@mincom.oz.au)
@@ -81,13 +81,6 @@ int encrypt;
 #ifdef DES_USE_PTR
 	register unsigned char *des_SP=(unsigned char *)des_SPtrans;
 #endif
-#ifdef MSDOS
-	union fudge {
-		u_int32_t  l;
-		unsigned short s[2];
-		unsigned char  c[4];
-		} U,T;
-#endif
 	register int i;
 	register u_int32_t *s;
 
@@ -147,13 +140,6 @@ int encrypt;
 	register u_int32_t l,r,t,u;
 #ifdef DES_USE_PTR
 	register unsigned char *des_SP=(unsigned char *)des_SPtrans;
-#endif
-#ifdef MSDOS
-	union fudge {
-		u_int32_t  l;
-		unsigned short s[2];
-		unsigned char  c[4];
-		} U,T;
 #endif
 	register int i;
 	register u_int32_t *s;
