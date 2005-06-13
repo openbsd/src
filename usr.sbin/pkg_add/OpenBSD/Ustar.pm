@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.19 2005/06/13 12:51:18 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.20 2005/06/13 13:11:11 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -166,6 +166,9 @@ sub mkheader
 		$cwd.='/' unless $cwd =~ m/\/$/;
 		$linkname =~ s/^\Q$cwd\E//;
 	}
+	if (!defined $linkname) {
+		$linkname = '';
+	}
 	my $header;
 	my $cksum = ' 'x8;
 	for (1 .. 2) {
@@ -214,14 +217,14 @@ sub prepare
 	my $k = $entry->{key};
 	if (defined $self->{key}->{$k}) {
 		$entry->{linkname} = $self->{key}->{$k};
-		bless "OpenBSD::Ustar::HardLink", $entry;
-	} elsif (-l $_) {
+		bless $entry, "OpenBSD::Ustar::HardLink";
+	} elsif (-l "$destdir/$filename") {
 		$entry->{linkname} = readlink("$destdir/$filename");
-		bless "OpenBSD::Ustar::SoftLink", $entry;
+		bless $entry, "OpenBSD::Ustar::SoftLink";
 	} elsif (-d _) {
-		bless "OpenBSD::UStar::Dir", $entry;
+		bless $entry, "OpenBSD::UStar::Dir";
 	} else {
-		bless "OpenBSD::Ustar::File", $entry;
+		bless $entry, "OpenBSD::Ustar::File";
 	}
 	return $entry;
 }
@@ -279,7 +282,7 @@ sub create
 
 sub isDir() { 1 }
 
-sub type() { DIR }
+sub type() { OpenBSD::Ustar::DIR }
 
 package OpenBSD::Ustar::HardLink;
 our @ISA=qw(OpenBSD::Ustar::Object);
@@ -299,7 +302,7 @@ sub create
 sub isLink() { 1 }
 sub isHardLink() { 1 }
 
-sub type() { HARDLINK }
+sub type() { OpenBSD::Ustar::HARDLINK }
 
 package OpenBSD::Ustar::SoftLink;
 our @ISA=qw(OpenBSD::Ustar::Object);
@@ -315,7 +318,7 @@ sub create
 sub isLink() { 1 }
 sub isSymLink() { 1 }
 
-sub type() { SOFTLINK }
+sub type() { OpenBSD::Ustar::SOFTLINK }
 
 package OpenBSD::CompactWriter;
 
@@ -442,6 +445,6 @@ sub write_contents
 
 sub isFile() { 1 }
 
-sub type() { FILE }
+sub type() { OpenBSD::Ustar::FILE }
 
 1;
