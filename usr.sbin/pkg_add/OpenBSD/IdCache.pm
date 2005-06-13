@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: IdCache.pm,v 1.1 2004/09/14 22:37:39 espie Exp $
+# $OpenBSD: IdCache.pm,v 1.2 2005/06/13 11:33:07 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -17,8 +17,8 @@
 
 use strict;
 use warnings;
-package OpenBSD::IdCache;
 
+package OpenBSD::SimpleIdCache;
 sub new
 {
 	my $class = shift;
@@ -30,9 +30,6 @@ sub lookup
 	my ($self, $name, $default) = @_;
 	my $r;
 
-	if ($name =~ m/^\d+$/) {
-		return $name;
-	}
 	if (defined $self->{$name}) {
 		$r = $self->{$name};
 	} else {
@@ -43,6 +40,21 @@ sub lookup
 		$self->{$name} = $r;
 	}
 	return $r;
+}
+
+
+package OpenBSD::IdCache;
+our @ISA=qw(OpenBSD::SimpleIdCache);
+
+sub lookup
+{
+	my ($self, $name, $default) = @_;
+
+	if ($name =~ m/^\d+$/) {
+		return $name;
+	} else {
+		return $self->SUPER::lookup($name, $default);
+	}
 }
 
 package OpenBSD::UidCache;
@@ -61,6 +73,22 @@ sub convert
 {
 	my @entry = getgrnam($_[1]);
 	return @entry == 0 ? undef : $entry[2];
+}
+	
+package OpenBSD::UnameCache;
+our @ISA=qw(OpenBSD::SimpleIdCache);
+
+sub convert
+{
+	return getpwuid($_[1]);
+}
+
+package OpenBSD::GnameCache;
+our @ISA=qw(OpenBSD::SimpleIdCache);
+
+sub convert
+{
+	return getgrgid($_[1]);
 }
 	
 1;
