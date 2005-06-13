@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.26 2005/06/13 08:41:16 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.27 2005/06/13 08:44:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,6 +56,7 @@ struct {
     {IF_STA_DOWN,	IF_EVT_UP,		IF_ACT_STRT,	0},
     {IF_STA_WAITING,	IF_EVT_BACKUP_SEEN,	IF_ACT_ELECT,	0},
     {IF_STA_WAITING,	IF_EVT_WTIMER,		IF_ACT_ELECT,	0},
+    {IF_STA_ANY,	IF_EVT_WTIMER,		IF_ACT_NOTHING,	0},
     {IF_STA_WAITING,	IF_EVT_NBR_CHNG,	IF_ACT_NOTHING,	0},
     {IF_STA_MULTI,	IF_EVT_NBR_CHNG,	IF_ACT_ELECT,	0},
     {IF_STA_ANY,	IF_EVT_NBR_CHNG,	IF_ACT_NOTHING,	0},
