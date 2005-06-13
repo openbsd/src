@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.20 2005/06/13 13:11:11 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.21 2005/06/13 14:24:06 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -31,7 +31,7 @@ use constant {
 	DIR => '5',
 	FIFO => '6',
 	CONTFILE => '7',
-	USTAR_HEADER => 'a100a8a8a8a12a12a8aa100a6a2a32a32a8a8a155',
+	USTAR_HEADER => 'a100a8a8a8a12a12a8aa100a6a2a32a32a8a8a155a12',
 };
 
 use File::Path ();
@@ -86,7 +86,7 @@ sub next
     # decode header
     my ($name, $mode, $uid, $gid, $size, $mtime, $chksum, $type,
     $linkname, $magic, $version, $uname, $gname, $major, $minor,
-    $prefix) = unpack(USTAR_HEADER, $header);
+    $prefix, $pad) = unpack(USTAR_HEADER, $header);
     if ($magic ne "ustar\0" || $version ne '00') {
 	die "Not an ustar archive header";
     }
@@ -174,20 +174,20 @@ sub mkheader
 	for (1 .. 2) {
 		$header = pack(USTAR_HEADER, 
 		    $name,
-		    sprintf("%o", $entry->{mode}),
-		    sprintf("%o", $entry->{uid}),
-		    sprintf("%o", $entry->{gid}),
-		    sprintf("%o", $entry->{size}),
-		    sprintf("%o", $entry->{mtime}),
+		    sprintf("%07o", $entry->{mode}),
+		    sprintf("%07o", $entry->{uid}),
+		    sprintf("%07o", $entry->{gid}),
+		    sprintf("%011o", $entry->{size}),
+		    sprintf("%011o", $entry->{mtime}),
 		    $cksum,
 		    $type,
 		    $linkname,
 		    'ustar', '00',
 		    $entry->{uname},
 		    $entry->{gname},
-		    '0', '0',
-		    $prefix);
-		$cksum = unpack("%C*", $header);
+		    "\0", "\0",
+		    $prefix, "\0");
+		$cksum = sprintf("%07o", unpack("%C*", $header));
 	}
 	return $header;
 }
@@ -222,11 +222,17 @@ sub prepare
 		$entry->{linkname} = readlink("$destdir/$filename");
 		bless $entry, "OpenBSD::Ustar::SoftLink";
 	} elsif (-d _) {
-		bless $entry, "OpenBSD::UStar::Dir";
+		bless $entry, "OpenBSD::Ustar::Dir";
 	} else {
 		bless $entry, "OpenBSD::Ustar::File";
 	}
 	return $entry;
+}
+
+sub pad
+{
+	my $fh = $_[0]->{fh};
+	print $fh "\0"x1024;
 }
 
 package OpenBSD::Ustar::Object;
@@ -249,9 +255,10 @@ sub write
 {
 	my $self = shift;
 	my $arc = $self->{archive};
+	my $out = $arc->{fh};
 
 	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
-	syswrite($arc->{fh}, $header, 512);
+	print $out $header;
 	$self->write_contents($arc);
 	my $k = $self->{key};
 	if (!defined $arc->{key}->{$k}) {
@@ -431,7 +438,6 @@ sub write_contents
 		if (!defined read($fh, $buffer, $maxread)) {
 			die "Error reading from file: $!";
 		}
-		$self->{archive}->{swallow} -= $maxread;
 		unless (print $out $buffer) {
 			die "Error writing to archive: $!";
 		}
@@ -445,6 +451,6 @@ sub write_contents
 
 sub isFile() { 1 }
 
-sub type() { OpenBSD::Ustar::FILE }
+sub type() { OpenBSD::Ustar::FILE1 }
 
 1;

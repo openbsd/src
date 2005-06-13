@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.4 2005/06/13 12:54:11 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.5 2005/06/13 14:24:06 espie Exp $
 
 =head1 NAME
 
@@ -25,6 +25,7 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
 	# tweak some entry parameters
 	$o->write();
 
+    $wrarc->pad();
     close($out);
 
 =head1 DESCRIPTION
@@ -68,6 +69,9 @@ elements or not.
 
 Actual writing is performed through C<$o-E<gt>write()> and is not mandatory
 either.
+
+Writing valid archives requires calling C<$wrarc-E<gt>pad()> after archiving
+all the entries to complete the archive with blank-filled blocks.
 
 Client code may decide to abort archive extraction early, or to run it through
 until C<$arc-E<gt>next()> returns false.  The C<OpenBSD::Ustar> object doesn't
