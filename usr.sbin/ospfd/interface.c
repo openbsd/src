@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.28 2005/06/13 08:48:16 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.29 2005/06/13 08:52:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -417,7 +417,7 @@ start:
 	/* elect backup designated router */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr->priority == 0 || nbr == dr ||	/* not electable */
-		    nbr->state & NBR_STA_DOWN ||	/* not available */
+		    nbr->state & NBR_STA_PRELIM ||	/* not available */
 		    nbr->dr.s_addr == nbr->addr.s_addr)	/* don't elect DR */
 			continue;
 		if (bdr != NULL) {
@@ -439,7 +439,7 @@ start:
 
 	/* elect designated router */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-		if (nbr->priority == 0 || nbr->state & NBR_STA_DOWN ||
+		if (nbr->priority == 0 || nbr->state & NBR_STA_PRELIM ||
 		    (nbr != dr && nbr->dr.s_addr != nbr->addr.s_addr))
 			/* only DR may be elected check priority too */
 			continue;
