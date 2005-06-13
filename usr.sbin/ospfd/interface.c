@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.27 2005/06/13 08:44:24 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.28 2005/06/13 08:48:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -471,7 +471,7 @@ start:
 		 */
 		iface->self->dr.s_addr = dr->addr.s_addr;
 		if (bdr)
-			iface->self->bdr.s_addr = dr->addr.s_addr;
+			iface->self->bdr.s_addr = bdr->addr.s_addr;
 		round = 1;
 		goto start;
 	}
