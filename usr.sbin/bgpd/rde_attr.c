@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.48 2005/06/10 10:02:21 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.49 2005/06/13 15:16:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -703,11 +703,12 @@ community_set(struct attr *attr, int as, int type)
 	if (i >= ncommunities) {
 		if (attr->len > 0xffff - 4) /* overflow */
 			return (0);
-		attr->len += 4;
-		if ((p = realloc(attr->data, attr->len)) == NULL)
+		i = attr->len + 4;
+		if ((p = realloc(attr->data, i)) == NULL)
 			return (0);
 
 		attr->data = p;
+		attr->len = i;
 		p = attr->data + attr->len - 4;
 	}
 	p[0] = as >> 8;
