@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.3 2005/06/13 12:39:14 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.4 2005/06/13 12:54:11 espie Exp $
 
 =head1 NAME
 
@@ -9,7 +9,7 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
     use OpenBSD::Ustar;
     # for reading
 
-    open(my $in, "<", $filename);
+    open(my $in, "<", $arcname);
     $rdarc = OpenBSD::Ustar->new($in, $destdir);
     while (my $o = $rdarc->next()) {
     	# decide whether we want to extract it, change object attributes
@@ -18,7 +18,7 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
     close($in);
 
     # for writing
-    open(my $out, ">", $filename);
+    open(my $out, ">", $arcname);
     $wrarc = OpenBSD::Ustar->new($fh, $destdir);
     # loop
     	my $o = $wrarc->prepare($filename);
@@ -41,7 +41,7 @@ support C<print>.
 
 Note that read and write support are mutually exclusive, though there is
 no need to specify the mode used at creation time; it is implicitly
-provided by the underlying file handle.
+provided by the underlying filehandle.
 
 Read access to an archive object C<$rdarc> occurs through a loop that 
 repeatedly calls C<$o = $rdarc-E<gt>next()> to obtain the next archive entry.  
@@ -146,3 +146,7 @@ to C<tar(1)>'s C<-C> option to affect the creation of hard links.
 
 All creation commands happen relative to the C<$destdir> that was used
 for creating the C<$arc> C<OpenBSD::Ustar> object.
+
+During writing, hard link status is determined according to already written
+archive entries: a name that references a file which has already been written
+will be granted hard link status.
