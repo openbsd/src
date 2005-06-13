@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.386 2005/05/24 22:38:41 krw Exp $
+#	$OpenBSD: install.sub,v 1.387 2005/06/13 23:42:38 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1651,9 +1651,9 @@ for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 	isin $_set xbase xetc xshare xfont xserv site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
 done
-# Since etc${version}.tgz is not in DEFAULTSETS for upgrades, it can always be
+# Since etc${VERSION}.tgz is not in DEFAULTSETS for upgrades, it can always be
 # in SANESETS.
-SANESETS="bsd base${VERSION}.tgz etc${version}.tgz"
+SANESETS="bsd base${VERSION}.tgz etc${VERSION}.tgz"
 
 # decide upon an editor
 : ${EDITOR:=ed}
