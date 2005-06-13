@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.7 2005/05/27 05:56:34 norby Exp $ */
+/*	$OpenBSD: hello.c,v 1.8 2005/06/13 08:22:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -221,9 +221,9 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 		nbr_change = 1;
 	}
 
-	if (iface->state == IF_STA_WAITING &&
-	    ((nbr->dr.s_addr == nbr->addr.s_addr &&
-	    nbr->bdr.s_addr == 0) || nbr->bdr.s_addr == nbr->addr.s_addr))
+	if (iface->state & IF_STA_WAITING &&
+	    ((hello.d_rtr == nbr->addr.s_addr && hello.bd_rtr == 0) ||
+	    hello.bd_rtr == nbr->addr.s_addr))
 		if_fsm(iface, IF_EVT_BACKUP_SEEN);
 
 	if ((nbr->addr.s_addr == nbr->dr.s_addr &&
