@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.240 2005/05/28 01:48:23 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.241 2005/06/13 19:26:06 jaredy Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -765,16 +765,17 @@ pfctl_show_src_nodes(int dev, int opts)
 		}
 		if (ioctl(dev, DIOCGETSRCNODES, &psn) < 0) {
 			warn("DIOCGETSRCNODES");
+			free(inbuf);
 			return (-1);
 		}
 		if (psn.psn_len + sizeof(struct pfioc_src_nodes) < len)
 			break;
 		if (len == 0 && psn.psn_len == 0)
-			return (0);
+			goto done;
 		if (len == 0 && psn.psn_len != 0)
 			len = psn.psn_len;
 		if (psn.psn_len == 0)
-			return (0);	/* no src_nodes */
+			goto done;	/* no src_nodes */
 		len *= 2;
 	}
 	p = psn.psn_src_nodes;
@@ -784,6 +785,8 @@ pfctl_show_src_nodes(int dev, int opts)
 		print_src_node(p, opts);
 		p++;
 	}
+done:
+	free(inbuf);
 	return (0);
 }
 
@@ -807,16 +810,17 @@ pfctl_show_states(int dev, const char *iface, int opts)
 		}
 		if (ioctl(dev, DIOCGETSTATES, &ps) < 0) {
 			warn("DIOCGETSTATES");
+			free(inbuf);
 			return (-1);
 		}
 		if (ps.ps_len + sizeof(struct pfioc_states) < len)
 			break;
 		if (len == 0 && ps.ps_len == 0)
-			return (0);
+			goto done;
 		if (len == 0 && ps.ps_len != 0)
 			len = ps.ps_len;
 		if (ps.ps_len == 0)
-			return (0);	/* no states */
+			goto done;	/* no states */
 		len *= 2;
 	}
 	p = ps.ps_states;
@@ -829,6 +833,8 @@ pfctl_show_states(int dev, const char *iface, int opts)
 		}
 		print_state(p, opts);
 	}
+done:
+	free(inbuf);
 	return (0);
 }
 
