@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.167 2005/06/09 15:32:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.168 2005/06/13 21:16:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
+#include <net/route.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -369,6 +370,7 @@ struct kroute {
 	struct in_addr	prefix;
 	struct in_addr	nexthop;
 	u_int16_t	flags;
+	u_int16_t	labelid;
 	u_short		ifindex;
 	u_int8_t	prefixlen;
 };
@@ -377,6 +379,7 @@ struct kroute6 {
 	struct in6_addr	prefix;
 	struct in6_addr	nexthop;
 	u_int16_t	flags;
+	u_int16_t	labelid;
 	u_short		ifindex;
 	u_int8_t	prefixlen;
 };
@@ -425,6 +428,16 @@ struct ctl_show_nexthop {
 struct ctl_neighbor {
 	struct bgpd_addr	addr;
 	char			descr[PEER_DESCR_LEN];
+};
+
+struct kroute_label {
+	struct kroute	kr;
+	char		label[RTLABEL_LEN];
+};
+
+struct kroute6_label {
+	struct kroute6	kr;
+	char		label[RTLABEL_LEN];
 };
 
 #define	F_RIB_ELIGIBLE	0x01
@@ -653,10 +666,10 @@ int	 imsg_get_fd(struct imsgbuf *);
 
 /* kroute.c */
 int		 kr_init(int);
-int		 kr_change(struct kroute *);
-int		 kr_delete(struct kroute *);
-int		 kr6_change(struct kroute6 *);
-int		 kr6_delete(struct kroute6 *);
+int		 kr_change(struct kroute_label *);
+int		 kr_delete(struct kroute_label *);
+int		 kr6_change(struct kroute6_label *);
+int		 kr6_delete(struct kroute6_label *);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);

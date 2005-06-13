@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.161 2005/06/10 08:28:50 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.162 2005/06/13 21:16:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1611,10 +1611,10 @@ rde_dump_prefix(struct ctl_show_rib_prefix *pref, pid_t pid)
 void
 rde_send_kroute(struct prefix *new, struct prefix *old)
 {
-	struct kroute		kr;
-	struct bgpd_addr	addr;
-	struct prefix	*p;
-	enum imsg_type	 type;
+	struct kroute_label	 kl;
+	struct bgpd_addr	 addr;
+	struct prefix		*p;
+	enum imsg_type		 type;
 
 	/*
 	 * If old is != NULL we know it was active and should be removed.
@@ -1627,7 +1627,7 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	    new->aspath->flags & F_PREFIX_ANNOUNCED))
 		return;
 
-	bzero(&kr, sizeof(kr));
+	bzero(&kl, sizeof(kl));
 
 	if (new == NULL || new->aspath->nexthop == NULL ||
 	    new->aspath->nexthop->state != NEXTHOP_REACH ||
@@ -1637,18 +1637,21 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	} else {
 		type = IMSG_KROUTE_CHANGE;
 		p = new;
-		kr.nexthop.s_addr = p->aspath->nexthop->true_nexthop.v4.s_addr;
+		kl.kr.nexthop.s_addr =
+		    p->aspath->nexthop->true_nexthop.v4.s_addr;
 	}
 
 	pt_getaddr(p->prefix, &addr);
-	kr.prefix.s_addr = addr.v4.s_addr;
-	kr.prefixlen = p->prefix->prefixlen;
+	kl.kr.prefix.s_addr = addr.v4.s_addr;
+	kl.kr.prefixlen = p->prefix->prefixlen;
 	if (p->aspath->flags & F_NEXTHOP_REJECT)
-		kr.flags |= F_REJECT;
+		kl.kr.flags |= F_REJECT;
 	if (p->aspath->flags & F_NEXTHOP_BLACKHOLE)
-		kr.flags |= F_BLACKHOLE;
+		kl.kr.flags |= F_BLACKHOLE;
+	/* XXX */
+	strlcpy(kl.label, rtlabel_id2name(0), sizeof(kl.label));
 
-	if (imsg_compose(ibuf_main, type, 0, 0, -1, &kr, sizeof(kr)) == -1)
+	if (imsg_compose(ibuf_main, type, 0, 0, -1, &kl, sizeof(kl)) == -1)
 		fatal("imsg_compose error");
 }
 
