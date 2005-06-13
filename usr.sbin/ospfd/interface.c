@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.25 2005/05/27 02:14:20 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.26 2005/06/13 08:41:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -376,6 +376,9 @@ if_act_start(struct iface *iface)
 				    "timer, interface %s", iface->name);
 		} else {
 			iface->state = IF_STA_WAITING;
+			if (if_start_hello_timer(iface))
+				log_warnx("if_act_start: cannot schedule hello "
+				    "timer, interface %s", iface->name);
 			if (if_start_wait_timer(iface))
 				log_warnx("if_act_start: cannot schedule wait "
 				    "timer, interface %s", iface->name);
