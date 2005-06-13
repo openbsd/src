@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.133 2005/06/12 00:41:33 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.134 2005/06/13 21:02:21 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1767,14 +1767,14 @@ if_group_routechange(struct sockaddr *dst, struct sockaddr *mask)
 	switch (dst->sa_family) {
 	case AF_INET:
 		if (satosin(dst)->sin_addr.s_addr == INADDR_ANY &&
-		    satosin(mask)->sin_addr.s_addr == INADDR_ANY)
+		    mask && satosin(mask)->sin_addr.s_addr == INADDR_ANY)
 			if_group_ext_build();
 		break;
 #ifdef INET6
 	case AF_INET6:
 		if (IN6_ARE_ADDR_EQUAL(&(satosin6(dst))->sin6_addr,
 		    &in6addr_any) &&
-		    IN6_ARE_ADDR_EQUAL(&(satosin6(mask))->sin6_addr,
+		    mask && IN6_ARE_ADDR_EQUAL(&(satosin6(mask))->sin6_addr,
 		    &in6addr_any))
 			if_group_ext_build();
 		break;
