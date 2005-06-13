@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.223 2005/06/13 20:17:25 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.224 2005/06/13 20:54:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -863,7 +863,7 @@ struct pfi_kif {
 	char				 pfik_name[IFNAMSIZ];
 	u_int64_t			 pfik_packets[2][2][2];
 	u_int64_t			 pfik_bytes[2][2][2];
-	u_int32_t			 pfik_tzero;	/* XXX */
+	u_int32_t			 pfik_tzero;
 	int				 pfik_flags;
 	struct pf_state_tree_lan_ext	 pfik_lan_ext;
 	struct pf_state_tree_ext_gwy	 pfik_ext_gwy;
