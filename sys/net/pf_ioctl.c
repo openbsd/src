@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.143 2005/05/27 21:41:03 mpf Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.144 2005/06/13 20:17:25 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1372,7 +1372,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		rule->rpool.cur = TAILQ_FIRST(&rule->rpool.list);
-		rule->evaluations = rule->packets = rule->bytes = 0;
+		rule->evaluations = rule->packets[0] = rule->packets[1] =
+		    rule->bytes[0] = rule->bytes[1] = 0;
 		TAILQ_INSERT_TAIL(ruleset->rules[rs_num].inactive.ptr,
 		    rule, entries);
 		break;
@@ -1598,8 +1599,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 			newrule->rpool.cur = TAILQ_FIRST(&newrule->rpool.list);
-			newrule->evaluations = newrule->packets = 0;
-			newrule->bytes = 0;
+			newrule->evaluations = 0;
+			newrule->packets[0] = newrule->packets[1] = 0;
+			newrule->bytes[0] = newrule->bytes[1] = 0;
 		}
 		pf_empty_pool(&pf_pabuf);
 
@@ -1996,8 +1998,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		TAILQ_FOREACH(rule,
 		    ruleset->rules[PF_RULESET_FILTER].active.ptr, entries)
-			rule->evaluations = rule->packets =
-			    rule->bytes = 0;
+			rule->evaluations = 0;
+			rule->packets[0] = rule->packets[1] = 0;
+			rule->bytes[0] = rule->bytes[1] = 0;
 		break;
 	}
 

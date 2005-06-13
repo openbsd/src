@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.241 2005/06/13 19:26:06 jaredy Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.242 2005/06/13 20:17:25 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -593,8 +593,10 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 		printf("  [ Evaluations: %-8llu  Packets: %-8llu  "
 			    "Bytes: %-10llu  States: %-6u]\n",
 			    (unsigned long long)rule->evaluations,
-			    (unsigned long long)rule->packets,
-			    (unsigned long long)rule->bytes, rule->states);
+			    (unsigned long long)(rule->packets[0] +
+			    rule->packets[1]),
+			    (unsigned long long)(rule->bytes[0] +
+			    rule->bytes[1]), rule->states);
 		if (!(opts & PF_OPT_DEBUG))
 			printf("  [ Inserted: uid %u pid %u ]\n",
 			    (unsigned)rule->cuid, (unsigned)rule->cpid);
@@ -654,10 +656,16 @@ pfctl_show_rules(int dev, int opts, int format, char *anchorname)
 		case 1:
 			if (pr.rule.label[0]) {
 				printf("%s ", pr.rule.label);
-				printf("%llu %llu %llu\n",
+				printf("%llu %llu %llu %llu %llu %llu %llu\n",
 				    (unsigned long long)pr.rule.evaluations,
-				    (unsigned long long)pr.rule.packets,
-				    (unsigned long long)pr.rule.bytes);
+				    (unsigned long long)(pr.rule.packets[0] +
+				    pr.rule.packets[1]),
+				    (unsigned long long)(pr.rule.bytes[0] +
+				    pr.rule.bytes[1]),
+				    (unsigned long long)pr.rule.packets[0],
+				    (unsigned long long)pr.rule.bytes[0],
+				    (unsigned long long)pr.rule.packets[1],
+				    (unsigned long long)pr.rule.bytes[1]);
 			}
 			break;
 		default:
@@ -689,10 +697,16 @@ pfctl_show_rules(int dev, int opts, int format, char *anchorname)
 		case 1:
 			if (pr.rule.label[0]) {
 				printf("%s ", pr.rule.label);
-				printf("%llu %llu %llu\n",
+				printf("%llu %llu %llu %llu %llu %llu %llu\n",
 				    (unsigned long long)pr.rule.evaluations,
-				    (unsigned long long)pr.rule.packets,
-				    (unsigned long long)pr.rule.bytes);
+				    (unsigned long long)(pr.rule.packets[0] +
+				    pr.rule.packets[1]),
+				    (unsigned long long)(pr.rule.bytes[0] +
+				    pr.rule.bytes[1]),
+				    (unsigned long long)pr.rule.packets[0],
+				    (unsigned long long)pr.rule.bytes[0],
+				    (unsigned long long)pr.rule.packets[1],
+				    (unsigned long long)pr.rule.bytes[1]);
 			}
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.100 2005/05/27 17:22:41 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.101 2005/06/13 20:17:25 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -851,8 +851,10 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 
 	if (r == NULL || r->action == PF_NOSCRUB)
 		return (PF_PASS);
-	else
-		r->packets++;
+	else {
+		r->packets[dir == PF_OUT]++;
+		r->bytes[dir == PF_OUT] += pd->tot_len;
+	}
 
 	/* Check for illegal packets */
 	if (hlen < (int)sizeof(struct ip))
@@ -1069,8 +1071,10 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 
 	if (r == NULL || r->action == PF_NOSCRUB)
 		return (PF_PASS);
-	else
-		r->packets++;
+	else {
+		r->packets[dir == PF_OUT]++;
+		r->bytes[dir == PF_OUT] += pd->tot_len;
+	}
 
 	/* Check for illegal packets */
 	if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET < m->m_pkthdr.len)
@@ -1243,8 +1247,10 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 
 	if (rm == NULL || rm->action == PF_NOSCRUB)
 		return (PF_PASS);
-	else
-		r->packets++;
+	else {
+		r->packets[dir == PF_OUT]++;
+		r->bytes[dir == PF_OUT] += pd->tot_len;
+	}
 
 	if (rm->rule_flag & PFRULE_REASSEMBLE_TCP)
 		pd->flags |= PFDESC_TCP_NORM;

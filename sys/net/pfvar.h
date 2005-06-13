@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.222 2005/06/05 20:47:46 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.223 2005/06/13 20:17:25 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -510,8 +510,8 @@ struct pf_rule {
 	struct pf_pool		 rpool;
 
 	u_int64_t		 evaluations;
-	u_int64_t		 packets;
-	u_int64_t		 bytes;
+	u_int64_t		 packets[2];
+	u_int64_t		 bytes[2];
 
 	struct pfi_kif		*kif;
 	struct pf_anchor	*anchor;
@@ -617,8 +617,8 @@ struct pf_src_node {
 	struct pf_addr	 raddr;
 	union pf_rule_ptr rule;
 	struct pfi_kif	*kif;
-	u_int32_t	 bytes;
-	u_int32_t	 packets;
+	u_int32_t	 bytes[2];
+	u_int32_t	 packets[2];
 	u_int32_t	 states;
 	u_int32_t	 conn;
 	struct pf_threshold	conn_rate;
