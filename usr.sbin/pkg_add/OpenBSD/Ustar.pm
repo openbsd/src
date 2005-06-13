@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.21 2005/06/13 14:24:06 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.22 2005/06/13 18:11:44 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -161,6 +161,10 @@ sub mkheader
 		die "Can't fit such a name $name\n";
 	}
 	my $linkname = $entry->{linkname};
+	my $size = $entry->{size};
+	if (!$entry->isFile()) {
+		$size = 0;
+	}
 	if (defined $entry->{cwd}) {
 		my $cwd = $entry->{cwd};
 		$cwd.='/' unless $cwd =~ m/\/$/;
@@ -177,7 +181,7 @@ sub mkheader
 		    sprintf("%07o", $entry->{mode}),
 		    sprintf("%07o", $entry->{uid}),
 		    sprintf("%07o", $entry->{gid}),
-		    sprintf("%011o", $entry->{size}),
+		    sprintf("%011o", $size),
 		    sprintf("%011o", $entry->{mtime}),
 		    $cksum,
 		    $type,
