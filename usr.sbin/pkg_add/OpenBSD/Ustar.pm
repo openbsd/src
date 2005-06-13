@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.18 2005/06/13 12:46:47 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.19 2005/06/13 12:51:18 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -160,6 +160,12 @@ sub mkheader
 	} else {
 		die "Can't fit such a name $name\n";
 	}
+	my $linkname = $entry->{linkname};
+	if (defined $entry->{cwd}) {
+		my $cwd = $entry->{cwd};
+		$cwd.='/' unless $cwd =~ m/\/$/;
+		$linkname =~ s/^\Q$cwd\E//;
+	}
 	my $header;
 	my $cksum = ' 'x8;
 	for (1 .. 2) {
@@ -172,7 +178,7 @@ sub mkheader
 		    sprintf("%o", $entry->{mtime}),
 		    $cksum,
 		    $type,
-		    $entry->{linkname},
+		    $linkname,
 		    'ustar', '00',
 		    $entry->{uname},
 		    $entry->{gname},
