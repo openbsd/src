@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.32 2005/06/09 09:01:50 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.33 2005/06/13 07:40:39 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -48,7 +48,7 @@ struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_REQ_CO, "checkout",
 	{ "co", "get" },
 	"Checkout sources for editing",
-	"[-AcflNnPpRs] [-D date | -r rev] [-d dir] [-j rev] [-k mode] "
+	"[-AcflNnPpRs] [-D date | -r tag] [-d dir] [-j rev] [-k mode] "
 	"[-t id] module ...",
 	"AcD:d:fj:k:lNnPRr:st:",
 	NULL,
@@ -62,7 +62,24 @@ struct cvs_cmd cvs_cmd_checkout = {
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR
 };
 
-static char *date, *rev, *koptstr, *tgtdir, *rcsid;
+struct cvs_cmd cvs_cmd_export = {
+	CVS_OP_EXPORT, CVS_REQ_EXPORT, "export",
+	{ "ex", "exp" },
+	"Extract copy of a module without management directories",
+	"[-flNnR] [-d dir] [-k mode] -D date | -r tag module ...",
+	"D:d:fk:lNnRr:",
+	NULL,
+	0,
+	cvs_checkout_init,
+	cvs_checkout_pre_exec,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR
+};
+
+static char *date, *tag, *koptstr, *tgtdir, *rcsid;
 static int statmod = 0;
 static int shorten = 1;
 static int usehead = 0;
@@ -76,8 +93,9 @@ static int
 cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
+	RCSNUM *rcs;
 
-	date = rev = koptstr = tgtdir = rcsid = NULL;
+	date = tag = koptstr = tgtdir = rcsid = NULL;
 
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
@@ -118,7 +136,7 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			cvs_noexec = 1;	/* no locks will be created */
 			break;
 		case 'r':
-			rev = optarg;
+			tag = optarg;
 			cmd->cmd_flags |= CVS_CMD_PRUNEDIRS;
 			break;
 		case 's':
@@ -147,6 +165,22 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	if (statmod && (argc > 0)) {
 		cvs_log(LP_ABORT,  "-c and -s must not get any arguments");
 		return (-1);
+	}
+
+	/* `export' command exceptions */
+	if (cvs_cmdop == CVS_OP_EXPORT) {
+		if (!tag && !date) {
+			cvs_log(LP_ABORT, "must specify a tag or date");
+			return (-1);
+		}
+
+		/* we don't want numerical revisions here */
+		if (tag && (rcs = rcsnum_parse(tag)) != NULL) {
+			cvs_log(LP_ABORT, "tag `%s' must be a symbolic tag",
+			    tag);
+			rcsnum_free(rcs);
+			return (-1);
+		}
 	}
 
 	*arg = optind;
@@ -215,6 +249,10 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 			return (CVS_EX_PROTO);
 		else if ((statmod == CVS_STATMOD) &&
 		    (cvs_sendarg(root, "-s", 0) < 0))
+			return (CVS_EX_PROTO);
+
+		if ((tag != NULL) && ((cvs_sendarg(root, "-r", 0) < 0) ||
+		    (cvs_sendarg(root, tag, 0) < 0)))
 			return (CVS_EX_PROTO);
 	}
 	return (0);
