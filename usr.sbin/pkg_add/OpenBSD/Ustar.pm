@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.17 2005/06/13 12:22:37 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.18 2005/06/13 12:46:47 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -205,8 +205,11 @@ sub prepare
 		archive => $self,
 		destdir => $self->{destdir}
 	};
-
-	if (-l $_) {
+	my $k = $entry->{key};
+	if (defined $self->{key}->{$k}) {
+		$entry->{linkname} = $self->{key}->{$k};
+		bless "OpenBSD::Ustar::HardLink", $entry;
+	} elsif (-l $_) {
 		$entry->{linkname} = readlink("$destdir/$filename");
 		bless "OpenBSD::Ustar::SoftLink", $entry;
 	} elsif (-d _) {
@@ -238,7 +241,8 @@ sub write
 	my $self = shift;
 	my $arc = $self->{archive};
 
-	$self->write_header($arc);
+	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
+	syswrite($arc->{fh}, $header, 512);
 	$self->write_contents($arc);
 	my $k = $self->{key};
 	if (!defined $arc->{key}->{$k}) {
@@ -249,13 +253,6 @@ sub write
 sub write_contents
 {
 	# only files have anything to write
-}
-
-sub write_header
-{
-	my ($self, $arc) = @_;
-	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
-	syswrite($arc->{fh}, $header, 512);
 }
 
 sub isDir() { 0 }
@@ -407,17 +404,6 @@ sub create
 	}
 	$out->close() or die "Error closing $self->{destdir}$self->{name}: $!";
 	$self->SUPER::set_modes();
-}
-
-sub write_header
-{
-	my ($self, $arc) = @_;
-	my $k = $self->{key};
-	if (defined $arc->{key}->{$k}) {
-		$self->{linkname} = $arc->{key}->{$k};
-		bless "OpenBSD::Ustar::HardLink", $self;
-	}
-	$self->SUPER::write_header($arc);
 }
 
 sub write_contents
