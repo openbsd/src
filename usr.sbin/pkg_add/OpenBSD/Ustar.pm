@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.16 2005/06/13 12:12:34 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.17 2005/06/13 12:22:37 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -185,9 +185,9 @@ sub mkheader
 
 sub prepare
 {
-	my ($arc, $filename) = @_;
+	my ($self, $filename) = @_;
 
-	my $destdir = $arc->{destdir};
+	my $destdir = $self->{destdir};
 
 	my ($dev, $ino, $mode, $uid, $gid, $size, $mtime) = 
 	    (lstat "$destdir/$filename")[0,1,2,4,5,7,9];
@@ -201,7 +201,9 @@ sub prepare
 		size => $size,
 		mtime => $mtime,
 		uname => $unamecache->lookup($uid),
-		gname => $gnamecache->lookup($gid)
+		gname => $gnamecache->lookup($gid),
+		archive => $self,
+		destdir => $self->{destdir}
 	};
 
 	if (-l $_) {
@@ -233,7 +235,8 @@ sub make_basedir
 
 sub write
 {
-	my ($self, $arc) = @_;
+	my $self = shift;
+	my $arc = $self->{archive};
 
 	$self->write_header($arc);
 	$self->write_contents($arc);
@@ -420,7 +423,7 @@ sub write_header
 sub write_contents
 {
 	my ($self, $arc) = @_;
-	my $filename = $arc->{destdir}."/".$self->{name};
+	my $filename = $self->{destdir}."/".$self->{name};
 	my $size = $self->{size};
 	my $out = $arc->{fh};
 	open my $fh, "<", $filename or die "Can't read file $filename: $!";
