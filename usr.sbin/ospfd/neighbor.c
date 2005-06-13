@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.22 2005/05/27 08:44:43 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.23 2005/06/13 08:32:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -191,26 +191,27 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	if (new_state != 0)
 		nbr->state = new_state;
 
-	/* state change inform RDE */
-	if (old_state != nbr->state)
+	if (old_state != nbr->state) {
+		nbr->stats.sta_chng++;
+		/* state change inform RDE */
 		ospfe_imsg_compose_rde(IMSG_NEIGHBOR_CHANGE,
 		    nbr->peerid, 0, &new_state, sizeof(new_state));
 
-	/* bidirectional communication lost */
-	if (old_state & ~NBR_STA_PRELIM && nbr->state & NBR_STA_PRELIM)
-		if_fsm(nbr->iface, IF_EVT_NBR_CHNG);
+		if (old_state & NBR_STA_FULL || nbr->state & NBR_STA_FULL) {
+			/*
+			 * neighbor changed from/to FULL
+			 * originate new rtr and net LSA
+			 */
+			area_track(nbr->iface->area, nbr->state);
+			orig_rtr_lsa(nbr->iface->area);
+			if (nbr->iface->state & IF_STA_DR)
+				orig_net_lsa(nbr->iface);
+		}
 
-	/* neighbor changed from/to FULL originate new rtr and net LSA */
-	if (old_state != nbr->state && (old_state & NBR_STA_FULL ||
-	    nbr->state & NBR_STA_FULL)) {
-		area_track(nbr->iface->area, nbr->state);
-		orig_rtr_lsa(nbr->iface->area);
-		if (nbr->iface->state & IF_STA_DR)
-			orig_net_lsa(nbr->iface);
-	}
+		/* bidirectional communication lost */
+		if (old_state & ~NBR_STA_PRELIM && nbr->state & NBR_STA_PRELIM)
+			if_fsm(nbr->iface, IF_EVT_NBR_CHNG);
 
-	if (old_state != nbr->state) {
-		nbr->stats.sta_chng++;
 		log_debug("nbr_fsm: event %s resulted in action %s and "
 		    "changing state for neighbor ID %s from %s to %s",
 		    nbr_event_name(event),
