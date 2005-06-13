@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.86 2005/06/10 08:30:38 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.87 2005/06/13 08:16:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -903,7 +903,7 @@ show_rib_summary_head(void)
 	printf(
 	    "flags: * = Valid, > = Selected, I = via IBGP, A = Announced\n");
 	printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
-	printf("%-4s %-20s%-15s  %5s %5s %s\n", "flags", "destination",
+	printf("%-5s %-20s%-15s  %5s %5s %s\n", "flags", "destination",
 	    "gateway", "lpref", "med", "aspath origin");
 }
 
@@ -926,7 +926,7 @@ print_prefix(struct bgpd_addr *prefix, u_int8_t prefixlen, u_int8_t flags)
 
 	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
 		err(1, NULL);
-	printf("%-4s %-20s", flagstr, p);
+	printf("%-5s %-20s", flagstr, p);
 	free(p);
 }
 
