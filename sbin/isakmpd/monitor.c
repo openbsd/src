@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.59 2005/05/28 18:48:12 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.60 2005/06/13 13:32:59 millert Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -777,7 +777,7 @@ must_write(const void *buf, size_t n)
 static int
 m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 {
-	char new_path[PATH_MAX];
+	char new_path[PATH_MAX], var_run[PATH_MAX];
 
 	/*
 	 * We only permit paths starting with
@@ -785,13 +785,15 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 	 *  /var/run/		(rw)
          */
 
-	if (realpath(path, new_path) == NULL) {
+	if (realpath(path, new_path) == NULL ||
+	    realpath("/var/run", var_run) == NULL) {
 		if (errno == ENOENT)
 			return 1;
 		goto bad_path;
 	}
+	strlcat(var_run, "/", sizeof(var_run));
 
-	if (strncmp("/var/run/", new_path, strlen("/var/run/")) == 0)
+	if (strncmp(var_run, new_path, strlen(var_run)) == 0)
 		return 0;
 
 	if (strncmp(ISAKMPD_ROOT, new_path, strlen(ISAKMPD_ROOT)) == 0 &&
