@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.5 2005/06/13 14:24:06 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.6 2005/06/13 18:38:59 espie Exp $
 
 =head1 NAME
 
@@ -28,10 +28,22 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
     $wrarc->pad();
     close($out);
 
+    # for copying 
+    open(my $in, "<", $arcname);
+    $rdarc = OpenBSD::Ustar->new($in, $destdir);
+    open(my $out, ">", $arcname);
+    $wrarc = OpenBSD::Ustar->new($fh, $destdir);
+    while (my $o = $rdarc->next()) {
+    	$o->copy($wrarc);
+    }
+    $wrarc->pad();
+    close($in);
+    close($out);
+
 =head1 DESCRIPTION
 
-C<OpenBSD::Ustar> provides an API to read or write archives compatible with 
-C<tar(1)>
+C<OpenBSD::Ustar> provides an API to read, write and copy archives compatible 
+with C<tar(1)>
 For the time being, it can only handle the USTAR archive format.
 
 A filehandle C<$fh> is associated with an C<OpenBSD::Ustar> object through
@@ -154,3 +166,7 @@ for creating the C<$arc> C<OpenBSD::Ustar> object.
 During writing, hard link status is determined according to already written
 archive entries: a name that references a file which has already been written
 will be granted hard link status.
+
+Archives can be copied by creating separate archives for reading and writing.
+Calling C<$o = $rdarc-E<gt>next()> and C<$o-E<gt>copy($wrarc)> will copy
+an entry obtained from C<$rdarc> to C<$wrarc>.

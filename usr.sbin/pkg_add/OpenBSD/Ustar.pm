@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.22 2005/06/13 18:11:44 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.23 2005/06/13 18:38:59 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -126,11 +126,6 @@ sub next
 	archive => $self,
 	destdir => $self->{destdir}
 	};
-    # adjust swallow
-    $self->{swallow} = $size;
-    if ($size % 512) {
-	$self->{swallow} += 512 - $size % 512;
-    }
     if ($type eq DIR) {
     	bless $result, 'OpenBSD::Ustar::Dir';
     } elsif ($type eq HARDLINK) {
@@ -141,6 +136,16 @@ sub next
     	bless $result, 'OpenBSD::Ustar::File';
     } else {
     	die "Unsupported type";
+    }
+#    if (!$result->isFile()) {
+#    	if ($size != 0) {
+#		die "Bad archive: non null size for non file entry\n";
+#	}
+#    }
+    # adjust swallow
+    $self->{swallow} = $size;
+    if ($size % 512) {
+	$self->{swallow} += 512 - $size % 512;
     }
     return $result;
 }
@@ -273,6 +278,21 @@ sub write
 sub write_contents
 {
 	# only files have anything to write
+}
+
+sub copy_contents
+{
+	# only files need copying
+}
+
+sub copy
+{
+	my ($self, $wrarc) = @_;
+	my $out = $wrarc->{fh};
+	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
+	print $out $header;
+
+	$self->copy_contents($wrarc);
 }
 
 sub isDir() { 0 }
@@ -435,7 +455,7 @@ sub write_contents
 	open my $fh, "<", $filename or die "Can't read file $filename: $!";
 
 	my $buffer;
-	my $toread = $self->{size};
+	my $toread = $size;
 	while ($toread > 0) {
 		my $maxread = $buffsize;
 		$maxread = $toread if $maxread > $toread;
@@ -444,6 +464,31 @@ sub write_contents
 		}
 		unless (print $out $buffer) {
 			die "Error writing to archive: $!";
+		}
+			
+		$toread -= $maxread;
+	}
+	if ($size % 512) {
+		print $out "\0" x (512 - $size % 512);
+	}
+}
+
+sub copy_contents
+{
+	my ($self, $arc) = @_;
+	my $out = $arc->{fh};
+	my $buffer;
+	my $size = $self->{size};
+	my $toread = $size;
+	while ($toread > 0) {
+		my $maxread = $buffsize;
+		$maxread = $toread if $maxread > $toread;
+		if (!defined read($self->{archive}->{fh}, $buffer, $maxread)) {
+			die "Error reading from archive: $!";
+		}
+		$self->{archive}->{swallow} -= $maxread;
+		unless (print $out $buffer) {
+			die "Error writing to archive $!";
 		}
 			
 		$toread -= $maxread;
