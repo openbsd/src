@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.15 2004/12/26 15:18:51 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.16 2005/06/13 12:12:34 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -40,6 +40,8 @@ use OpenBSD::IdCache;
 
 my $uidcache = new OpenBSD::UidCache;
 my $gidcache = new OpenBSD::GidCache;
+my $unamecache = new OpenBSD::UnameCache;
+my $gnamecache = new OpenBSD::GnameCache;
 
 # This is a multiple of st_blksize everywhere....
 my $buffsize = 2 * 1024 * 1024;
@@ -50,7 +52,7 @@ sub new
 
     $destdir = '' unless defined $destdir;
 
-    return bless { fh => $fh, swallow => 0, destdir => $destdir} , $class;
+    return bless { fh => $fh, swallow => 0, key => {}, destdir => $destdir} , $class;
 }
 
 
@@ -147,6 +149,7 @@ sub mkheader
 {
 	my ($entry, $type) = @_;
 	my ($name, $prefix);
+	$name = $entry->{name};
 	if (length($name) < 100) {
 		$prefix = '';
 	} elsif (length($name) > 255) {
@@ -180,6 +183,37 @@ sub mkheader
 	return $header;
 }
 
+sub prepare
+{
+	my ($arc, $filename) = @_;
+
+	my $destdir = $arc->{destdir};
+
+	my ($dev, $ino, $mode, $uid, $gid, $size, $mtime) = 
+	    (lstat "$destdir/$filename")[0,1,2,4,5,7,9];
+
+	my $entry = {
+		key => "$dev/$ino", 
+		name => $filename,
+		mode => $mode,
+		uid => $uid,
+		gid => $gid,
+		size => $size,
+		mtime => $mtime,
+		uname => $unamecache->lookup($uid),
+		gname => $gnamecache->lookup($gid)
+	};
+
+	if (-l $_) {
+		$entry->{linkname} = readlink("$destdir/$filename");
+		bless "OpenBSD::Ustar::SoftLink", $entry;
+	} elsif (-d _) {
+		bless "OpenBSD::UStar::Dir", $entry;
+	} else {
+		bless "OpenBSD::Ustar::File", $entry;
+	}
+	return $entry;
+}
 
 package OpenBSD::Ustar::Object;
 sub set_modes
@@ -195,6 +229,30 @@ sub make_basedir
 	my $self = shift;
 	my $dir = $self->{destdir}.File::Basename::dirname($self->{name});
 	File::Path::mkpath($dir) unless -d $dir;
+}
+
+sub write
+{
+	my ($self, $arc) = @_;
+
+	$self->write_header($arc);
+	$self->write_contents($arc);
+	my $k = $self->{key};
+	if (!defined $arc->{key}->{$k}) {
+		$arc->{key}->{$k} = $self->{name};
+	}
+}
+
+sub write_contents
+{
+	# only files have anything to write
+}
+
+sub write_header
+{
+	my ($self, $arc) = @_;
+	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
+	syswrite($arc->{fh}, $header, 512);
 }
 
 sub isDir() { 0 }
@@ -215,6 +273,8 @@ sub create
 
 sub isDir() { 1 }
 
+sub type() { DIR }
+
 package OpenBSD::Ustar::HardLink;
 our @ISA=qw(OpenBSD::Ustar::Object);
 
@@ -233,6 +293,8 @@ sub create
 sub isLink() { 1 }
 sub isHardLink() { 1 }
 
+sub type() { HARDLINK }
+
 package OpenBSD::Ustar::SoftLink;
 our @ISA=qw(OpenBSD::Ustar::Object);
 
@@ -246,6 +308,8 @@ sub create
 
 sub isLink() { 1 }
 sub isSymLink() { 1 }
+
+sub type() { SOFTLINK }
 
 package OpenBSD::CompactWriter;
 
@@ -342,6 +406,47 @@ sub create
 	$self->SUPER::set_modes();
 }
 
+sub write_header
+{
+	my ($self, $arc) = @_;
+	my $k = $self->{key};
+	if (defined $arc->{key}->{$k}) {
+		$self->{linkname} = $arc->{key}->{$k};
+		bless "OpenBSD::Ustar::HardLink", $self;
+	}
+	$self->SUPER::write_header($arc);
+}
+
+sub write_contents
+{
+	my ($self, $arc) = @_;
+	my $filename = $arc->{destdir}."/".$self->{name};
+	my $size = $self->{size};
+	my $out = $arc->{fh};
+	open my $fh, "<", $filename or die "Can't read file $filename: $!";
+
+	my $buffer;
+	my $toread = $self->{size};
+	while ($toread > 0) {
+		my $maxread = $buffsize;
+		$maxread = $toread if $maxread > $toread;
+		if (!defined read($fh, $buffer, $maxread)) {
+			die "Error reading from file: $!";
+		}
+		$self->{archive}->{swallow} -= $maxread;
+		unless (print $out $buffer) {
+			die "Error writing to archive: $!";
+		}
+			
+		$toread -= $maxread;
+	}
+	if ($size % 512) {
+		print $out "\0" x (512 - $size % 512);
+	}
+}
+
 sub isFile() { 1 }
+
+sub type() { FILE }
 
 1;
