@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.119 2005/05/26 06:11:09 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.120 2005/06/14 10:50:47 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1150,7 +1150,9 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			return dv != IPSEC_ENCAP_TUNNEL &&
 			    dv != IPSEC_ENCAP_TRANSPORT &&
 			    dv != IPSEC_ENCAP_UDP_ENCAP_TUNNEL &&
-			    dv != IPSEC_ENCAP_UDP_ENCAP_TRANSPORT;
+			    dv != IPSEC_ENCAP_UDP_ENCAP_TRANSPORT &&
+			    dv != IPSEC_ENCAP_UDP_ENCAP_TUNNEL_DRAFT &&
+			    dv != IPSEC_ENCAP_UDP_ENCAP_TRANSPORT_DRAFT;
 		case IPSEC_ATTR_AUTHENTICATION_ALGORITHM:
 			return dv < IPSEC_AUTH_HMAC_MD5 ||
 			    dv > IPSEC_AUTH_HMAC_RIPEMD;

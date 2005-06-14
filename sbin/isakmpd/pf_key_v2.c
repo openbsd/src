@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.166 2005/06/01 23:04:35 cloder Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.167 2005/06/14 10:50:47 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -1083,7 +1083,8 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	ssa.sadb_sa_state = SADB_SASTATE_MATURE;
 	ssa.sadb_sa_flags = 0;
 	if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL ||
-	    iproto->encap_mode == IPSEC_ENCAP_UDP_ENCAP_TUNNEL)
+	    iproto->encap_mode == IPSEC_ENCAP_UDP_ENCAP_TUNNEL ||
+	    iproto->encap_mode == IPSEC_ENCAP_UDP_ENCAP_TUNNEL_DRAFT)
 		ssa.sadb_sa_flags = SADB_X_SAFLAGS_TUNNEL;
 
 	if (isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE) {
