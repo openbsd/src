@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.24 2003/11/21 21:04:36 jmc Exp $
+.\"	$OpenBSD: rm.1,v 1.25 2005/06/14 19:15:35 millert Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm rm
 .Op Fl f | Fl i
-.Op Fl dPRrW
+.Op Fl dPRr
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
@@ -104,10 +104,6 @@ that directory is skipped.
 .It Fl r
 Equivalent to
 .Fl R .
-.It Fl W
-Attempts to undelete the named files.
-Currently, this option can only be used to recover
-files covered by whiteouts on union mounts.
 .El
 .Pp
 The

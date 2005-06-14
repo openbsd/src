@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.17 2004/06/02 06:58:54 otto Exp $	*/
+/*	$OpenBSD: rm.c,v 1.18 2005/06/14 19:15:35 millert Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.17 2004/06/02 06:58:54 otto Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.18 2005/06/14 19:15:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: rm.c,v 1.17 2004/06/02 06:58:54 otto Exp $";
 
 extern char *__progname;
 
-int dflag, eval, fflag, iflag, Pflag, Wflag, stdin_ok;
+int dflag, eval, fflag, iflag, Pflag, stdin_ok;
 
 int	check(char *, char *, struct stat *);
 void	checkdot(char **);
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	setlocale(LC_ALL, "");
 
 	Pflag = rflag = 0;
-	while ((ch = getopt(argc, argv, "dfiPRrW")) != -1)
+	while ((ch = getopt(argc, argv, "dfiPRr")) != -1)
 		switch(ch) {
 		case 'd':
 			dflag = 1;
@@ -107,9 +107,6 @@ main(int argc, char *argv[])
 		case 'R':
 		case 'r':			/* Compatibility. */
 			rflag = 1;
-			break;
-		case 'W':
-			Wflag = 1;
 			break;
 		default:
 			usage();
@@ -157,8 +154,6 @@ rm_tree(char **argv)
 	flags = FTS_PHYSICAL;
 	if (!needstat)
 		flags |= FTS_NOSTAT;
-	if (Wflag)
-		flags |= FTS_WHITEOUT;
 	if (!(fts = fts_open(argv, flags, NULL)))
 		err(1, NULL);
 	while ((p = fts_read(fts)) != NULL) {
@@ -217,12 +212,6 @@ rm_tree(char **argv)
 				continue;
 			break;
 
-		case FTS_W:
-			if (!undelete(p->fts_accpath) ||
-			    (fflag && errno == ENOENT))
-				continue;
-			break;
-
 		default:
 			if (Pflag)
 				if (!rm_overwrite(p->fts_accpath, NULL))
@@ -252,18 +241,10 @@ rm_file(char **argv)
 	while ((f = *argv++) != NULL) {
 		/* Assume if can't stat the file, can't unlink it. */
 		if (lstat(f, &sb)) {
-			if (Wflag) {
-				sb.st_mode = S_IFWHT|S_IWUSR|S_IRUSR;
-			} else {
-				if (!fflag || errno != ENOENT) {
-					warn("%s", f);
-					eval = 1;
-				}
-				continue;
+			if (!fflag || errno != ENOENT) {
+				warn("%s", f);
+				eval = 1;
 			}
-		} else if (Wflag) {
-			warnx("%s: %s", f, strerror(EEXIST));
-			eval = 1;
 			continue;
 		}
 
@@ -272,10 +253,8 @@ rm_file(char **argv)
 			eval = 1;
 			continue;
 		}
-		if (!fflag && !S_ISWHT(sb.st_mode) && !check(f, f, &sb))
+		if (!fflag && !check(f, f, &sb))
 			continue;
-		if (S_ISWHT(sb.st_mode))
-			rval = undelete(f);
 		else if (S_ISDIR(sb.st_mode))
 			rval = rmdir(f);
 		else {
