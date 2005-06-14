@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.57 2005/06/14 03:24:32 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.58 2005/06/14 03:27:58 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -56,6 +56,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #endif
 
 #if NVLAN > 0
@@ -1990,7 +1992,6 @@ em_free_transmit_structures(struct em_softc *sc)
  *  context only if the protocol type changes.
  *
  **********************************************************************/
-#if 0
 void
 em_transmit_checksum_setup(struct em_softc *sc,
 			   struct mbuf *mp,
@@ -2003,7 +2004,7 @@ em_transmit_checksum_setup(struct em_softc *sc,
 
 	if (mp->m_pkthdr.csum_flags) {
 
-		if (mp->m_pkthdr.csum_flags & CSUM_TCP) {
+		if (mp->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
 			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
 			if (sc->active_checksum_context == OFFLOAD_TCP_IP)
@@ -2011,7 +2012,7 @@ em_transmit_checksum_setup(struct em_softc *sc,
 			else
 				sc->active_checksum_context = OFFLOAD_TCP_IP;
 
-		} else if (mp->m_pkthdr.csum_flags & CSUM_UDP) {
+		} else if (mp->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
 			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
 			if (sc->active_checksum_context == OFFLOAD_UDP_IP)
@@ -2069,7 +2070,6 @@ em_transmit_checksum_setup(struct em_softc *sc,
 
 	return;
 }
-#endif
 
 /**********************************************************************
  *
