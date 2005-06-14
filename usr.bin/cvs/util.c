@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.32 2005/06/02 20:19:30 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.33 2005/06/14 03:56:14 pat Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -521,6 +521,7 @@ cvs_exec(int argc, char **argv, int fds[3])
 int
 cvs_remove_dir(const char *path)
 {
+	int ret = -1;
 	size_t len;
 	DIR *dirp;
 	struct dirent *ent;
@@ -537,30 +538,28 @@ cvs_remove_dir(const char *path)
 			continue;
 
 		len = cvs_path_cat(path, ent->d_name, fpath, sizeof(fpath));
-		if (len >= sizeof(fpath)) {
-			closedir(dirp);
-			return (-1);
-		}
+		if (len >= sizeof(fpath))
+			goto done;
 
 		if (ent->d_type == DT_DIR) {
-			if (cvs_remove_dir(fpath) == -1) {
-				closedir(dirp);
-				return (-1);
-			}
+			if (cvs_remove_dir(fpath) == -1)
+				goto done;
 		} else if ((unlink(fpath) == -1) && (errno != ENOENT)) {
 			cvs_log(LP_ERRNO, "failed to remove '%s'", fpath);
-			return (-1);
+			goto done;
 		}
 	}
 
-	closedir(dirp);
 
 	if ((rmdir(path) == -1) && (errno != ENOENT)) {
 		cvs_log(LP_ERRNO, "failed to remove '%s'", path);
-		return (-1);
+		goto done;
 	}
 
-	return (0);
+	ret = 0;
+done:
+	closedir(dirp);
+	return (ret);
 }
 
 /*
