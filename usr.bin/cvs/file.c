@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.87 2005/06/09 01:45:45 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.88 2005/06/14 15:27:31 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -114,7 +114,6 @@ static int      cvs_file_cmp     (const void *, const void *);
 static int      cvs_file_cmpname (const char *, const char *);
 static CVSFILE* cvs_file_alloc   (const char *, u_int);
 static CVSFILE* cvs_file_lget  (const char *, int, CVSFILE *, struct cvs_ent *);
-
 
 
 /*
@@ -1152,4 +1151,68 @@ cvs_file_cmpname(const char *name1, const char *name2)
 {
 	return (cvs_nocase == 0) ? (strcmp(name1, name2)) :
 	    (strcasecmp(name1, name2));
+}
+
+/*
+ * remove a directory if it does not contain
+ * any files other than the CVS/ administrative files.
+ */
+int
+cvs_file_prune(char *path)
+{
+	DIR *dirp;
+	int l, pwd, empty;
+	struct dirent *dp;
+	char fpath[MAXPATHLEN];
+	CVSENTRIES *entf;
+
+	pwd = (!strcmp(path, "."));
+
+	if ((dirp = opendir(path)) == NULL) {
+		cvs_log(LP_ERRNO, "failed to open `%s'", fpath);
+		return (-1);
+	}
+
+	empty = 0;
+	entf = cvs_ent_open(path, O_RDWR);
+
+	while ((dp = readdir(dirp)) != NULL) {
+		if (!strcmp(dp->d_name, ".") ||
+		    !strcmp(dp->d_name, "..") ||
+		    !strcmp(dp->d_name, CVS_PATH_CVSDIR))
+			continue;
+
+		empty++;
+		if (dp->d_type == DT_DIR) {
+			l = snprintf(fpath, sizeof(fpath), "%s%s%s",
+			    (pwd) ? "" : path, (pwd) ? "" : "/", dp->d_name);
+			if (l == -1 || l >= (int)sizeof(fpath)) {
+				errno = ENAMETOOLONG;
+				cvs_log(LP_ERRNO, "%s", fpath);
+				continue;
+			}
+
+			if (cvs_file_prune(fpath)) {
+				empty--;
+				if (entf)
+					cvs_ent_remove(entf, fpath);
+			} else {
+				empty++;
+			}
+		}
+	}
+
+	closedir(dirp);
+	if (entf)
+		cvs_ent_close(entf);
+
+	empty = (empty == 0);
+	if (empty) {
+		if (cvs_remove_dir(path) < 0) {
+			cvs_log(LP_ERR, "failed to prune `%s'", path);
+			empty = 0;
+		}
+	} 
+
+	return (empty);
 }

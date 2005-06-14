@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.25 2005/06/13 13:02:18 xsa Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.26 2005/06/14 15:27:31 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -155,6 +155,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	int ret;
 	struct cvsroot *root;
 	int (*ex_hdlr)(CVSFILE *, void *);
+	char fpath[MAXPATHLEN];
 
 	/* if the command requested is the server one, just call the
 	 * cvs_server() function to handle it, and return after it.
@@ -203,6 +204,8 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	if (cvs_files == NULL)
 		return (CVS_EX_DATA);
 
+	cvs_file_getpath(cvs_files, fpath, sizeof(fpath));
+
 	if (cmd->cmd_post_exec != NULL) {
 		if ((ret = cmd->cmd_post_exec(root)) != 0)
 			return (ret);
@@ -229,6 +232,9 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	if (cmd->cmd_cleanup != NULL)
 		(*cmd->cmd_cleanup)();
 
+	if (cmd->cmd_flags & CVS_CMD_PRUNEDIRS)
+		cvs_file_prune(fpath);
+		
 	if (root->cr_method != CVS_METHOD_LOCAL)
 		cvs_disconnect(root);
 
