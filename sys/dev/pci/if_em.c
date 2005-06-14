@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.56 2005/06/14 03:18:10 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.57 2005/06/14 03:24:32 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -181,7 +181,7 @@ void em_disable_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
 void em_print_hw_stats(struct em_softc *);
 void em_update_link_status(struct em_softc *);
-int  em_get_buf(int i, struct em_softc *,
+int  em_get_buf(int, struct em_softc *,
 			    struct mbuf *);
 void em_enable_vlans(struct em_softc *);
 void em_disable_vlans(struct em_softc *);
