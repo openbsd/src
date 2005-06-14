@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.55 2005/06/12 23:43:29 millert Exp $ */
+/* $OpenBSD: if_em.c,v 1.56 2005/06/14 03:18:10 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2632,17 +2632,29 @@ em_receive_checksum(struct em_softc *sc,
 	/* 82543 or newer only */
 	if ((sc->hw.mac_type < em_82543) ||
 	    /* Ignore Checksum bit is set */
-	    (rx_desc->status & E1000_RXD_STAT_IXSM))
+	    (rx_desc->status & E1000_RXD_STAT_IXSM)) {
+		mp->m_pkthdr.csum_flags = 0;
 		return;
+	}
 
-	if ((rx_desc->status & (E1000_RXD_STAT_IPCS|E1000_RXD_ERR_IPE)) ==
-	    E1000_RXD_STAT_IPCS)
-		mp->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+	if (rx_desc->status & E1000_RXD_STAT_IPCS) {
+		/* Did it pass? */
+		if (!(rx_desc->errors & E1000_RXD_ERR_IPE)) {
+			/* IP Checksum Good */
+			mp->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
 
-	if ((rx_desc->status & (E1000_RXD_STAT_IPCS|E1000_RXD_ERR_IPE|
-	    E1000_RXD_STAT_TCPCS|E1000_RXD_ERR_TCPE)) ==
-	    (E1000_RXD_STAT_TCPCS | E1000_RXD_STAT_IPCS))
-		mp->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+		} else {
+			mp->m_pkthdr.csum_flags = 0;
+		}
+	}
+
+	if (rx_desc->status & E1000_RXD_STAT_TCPCS) {
+		/* Did it pass? */        
+		if (!(rx_desc->errors & E1000_RXD_ERR_TCPE)) {
+			mp->m_pkthdr.csum_flags |=
+				M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+		}
+	}
 }
 
 void
