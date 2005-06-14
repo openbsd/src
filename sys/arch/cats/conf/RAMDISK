@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.14 2005/05/27 15:54:59 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.15 2005/06/14 13:32:49 drahn Exp $
 
 machine	cats	arm
 
@@ -127,7 +127,6 @@ fxp*	at pci?			# Intel EtherExpress PRO 10+/100B
 ne*	at pci?			# NE2000 compat ethernet
 #ntwoc*	at pci?			# Riscom/N2 PCI Sync Serial
 dc*	at pci?			# DECchip 21x4x and clones
-de*	at pci?			# DECchip 21x4x and clones
 vr*	at pci?			# VIA Rhine Fast Ethernet
 xl*	at pci?			# 3C9xx ethernet
 #lmc*	at pci?			# Lan Media Corp SSI/HSSI/DS3

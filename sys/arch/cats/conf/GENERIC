@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2005/05/26 23:18:27 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.26 2005/06/14 13:32:49 drahn Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -126,7 +126,6 @@ fxp*	at pci?			# Intel EtherExpress PRO 10+/100B
 ne*	at pci?			# NE2000 compat ethernet
 #ntwoc*	at pci?			# Riscom/N2 PCI Sync Serial
 dc*	at pci?			# DECchip 21x4x and clones
-de*	at pci?			# DECchip 21x4x and clones
 vr*	at pci?			# VIA Rhine Fast Ethernet
 xl*	at pci?			# 3C9xx ethernet
 #lmc*	at pci?			# Lan Media Corp SSI/HSSI/DS3
