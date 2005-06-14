@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.334 2005/06/05 13:46:30 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.335 2005/06/14 18:18:14 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1556,14 +1556,6 @@ is not the last matching rule.
 Further matching rules can replace the tag with a
 new one but will not remove a previously applied tag.
 A packet is only ever assigned one tag at a time.
-.Ar pass
-rules that use the
-.Ar tag
-keyword must also use
-.Ar keep state ,
-.Ar modulate state
-or
-.Ar synproxy state .
 Packet tagging can be done during
 .Ar nat ,
 .Ar rdr ,
