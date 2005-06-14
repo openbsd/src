@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.491 2005/05/27 18:52:41 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.492 2005/06/14 18:15:49 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3791,11 +3791,6 @@ filter_consistent(struct pf_rule *r, int anchor_call)
 	}
 	if (r->action == PF_DROP && r->keep_state) {
 		yyerror("keep state on block rules doesn't make sense");
-		problems++;
-	}
-	if ((r->tagname[0] || r->match_tagname[0]) && !r->keep_state &&
-	    r->action == PF_PASS && !anchor_call) {
-		yyerror("tags cannot be used without keep state");
 		problems++;
 	}
 	return (-problems);
