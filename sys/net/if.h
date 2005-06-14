@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.75 2005/06/14 03:54:31 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.76 2005/06/14 04:00:39 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ struct if_announcemsghdr {
  */
 
 #define	IFG_ALL		"all"		/* group contains all interfaces */
-#define	IFG_EXTERNAL	"egress"	/* if(s) default route(s) point to */
+#define	IFG_EGRESS	"egress"	/* if(s) default route(s) point to */
 
 struct ifg_group {
 	char				 ifg_group[IFNAMSIZ];

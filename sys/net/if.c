@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.134 2005/06/13 21:02:21 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.135 2005/06/14 04:00:38 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ int	if_clone_list(struct if_clonereq *);
 struct if_clone	*if_clone_lookup(const char *, int *);
 
 void	if_congestion_clear(void *);
-int	if_group_ext_build(void);
+int	if_group_egress_build(void);
 
 TAILQ_HEAD(, ifg_group) ifg_head;
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
@@ -1768,7 +1768,7 @@ if_group_routechange(struct sockaddr *dst, struct sockaddr *mask)
 	case AF_INET:
 		if (satosin(dst)->sin_addr.s_addr == INADDR_ANY &&
 		    mask && satosin(mask)->sin_addr.s_addr == INADDR_ANY)
-			if_group_ext_build();
+			if_group_egress_build();
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -1776,14 +1776,14 @@ if_group_routechange(struct sockaddr *dst, struct sockaddr *mask)
 		    &in6addr_any) &&
 		    mask && IN6_ARE_ADDR_EQUAL(&(satosin6(mask))->sin6_addr,
 		    &in6addr_any))
-			if_group_ext_build();
+			if_group_egress_build();
 		break;
 #endif
 	}
 }
 
 int
-if_group_ext_build(void)
+if_group_egress_build(void)
 {
 	struct ifg_group	*ifg;
 	struct ifg_member	*ifgm, *next;
@@ -1796,13 +1796,13 @@ if_group_ext_build(void)
 	struct rtentry		*rt;
 
 	TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
-		if (!strcmp(ifg->ifg_group, IFG_EXTERNAL))
+		if (!strcmp(ifg->ifg_group, IFG_EGRESS))
 			break;
 
 	if (ifg != NULL)
 		for (ifgm = TAILQ_FIRST(&ifg->ifg_members); ifgm; ifgm = next) {
 			next = TAILQ_NEXT(ifgm, ifgm_next);
-			if_delgroup(ifgm->ifgm_ifp, IFG_EXTERNAL);
+			if_delgroup(ifgm->ifgm_ifp, IFG_EGRESS);
 		}
 
 	if ((rnh = rt_tables[AF_INET]) == NULL)
@@ -1815,7 +1815,7 @@ if_group_ext_build(void)
 		do {
 			rt = (struct rtentry *)rn;
 			if (rt->rt_ifp)
-				if_addgroup(rt->rt_ifp, IFG_EXTERNAL);
+				if_addgroup(rt->rt_ifp, IFG_EGRESS);
 #ifndef SMALL_KERNEL
 			if (rn_mpath_capable(rnh))
 				rn = rn_mpath_next(rn);
@@ -1834,7 +1834,7 @@ if_group_ext_build(void)
 		do {
 			rt = (struct rtentry *)rn;
 			if (rt->rt_ifp)
-				if_addgroup(rt->rt_ifp, IFG_EXTERNAL);
+				if_addgroup(rt->rt_ifp, IFG_EGRESS);
 #ifndef SMALL_KERNEL
 			if (rn_mpath_capable(rnh))
 				rn = rn_mpath_next(rn);
