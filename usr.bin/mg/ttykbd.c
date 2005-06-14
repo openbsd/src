@@ -1,4 +1,6 @@
-/*	$OpenBSD: ttykbd.c,v 1.13 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.14 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
 
 /*
  * Name:	MG 2a

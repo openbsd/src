@@ -1,4 +1,6 @@
-/*	$OpenBSD: window.c,v 1.16 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: window.c,v 1.17 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
 
 /*
  *		Window handling.

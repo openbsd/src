@@ -1,4 +1,6 @@
-/*	$OpenBSD: extend.c,v 1.33 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: extend.c,v 1.34 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.

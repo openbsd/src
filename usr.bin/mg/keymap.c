@@ -1,4 +1,6 @@
-/*	$OpenBSD: keymap.c,v 1.29 2005/05/30 13:13:50 jason Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.30 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific

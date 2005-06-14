@@ -1,4 +1,6 @@
-/*	$OpenBSD: chrdef.h,v 1.6 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: chrdef.h,v 1.7 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
 
 /*
  * sys/default/chardef.h: character set specific #defines for Mg 2a

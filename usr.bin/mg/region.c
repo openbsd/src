@@ -1,4 +1,6 @@
-/*	$OpenBSD: region.c,v 1.16 2005/06/05 05:15:56 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.17 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
 
 /*
  *		Region based commands.

@@ -1,4 +1,6 @@
-/*	$OpenBSD: buffer.c,v 1.42 2005/06/03 15:18:05 cloder Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.43 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
 
 /*
  *		Buffer handling.

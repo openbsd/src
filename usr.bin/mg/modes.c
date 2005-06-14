@@ -1,4 +1,6 @@
-/*	$OpenBSD: modes.c,v 1.10 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: modes.c,v 1.11 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
 
 /*
  * Commands to toggle modes.   Without an argument, these functions will

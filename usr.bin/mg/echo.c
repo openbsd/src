@@ -1,4 +1,7 @@
-/*	$OpenBSD: echo.c,v 1.34 2005/05/31 20:38:59 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.35 2005/06/14 18:14:40 kjell Exp $	*/
+
+/* This file is in the public domain. */
+
 /*
  *	Echo line reading and writing.
  *
