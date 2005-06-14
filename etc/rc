@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.268 2005/06/02 20:09:38 tholo Exp $
+#	$OpenBSD: rc,v 1.269 2005/06/14 22:49:06 dhartmei Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -234,7 +234,8 @@ if [ X"${pf}" != X"NO" ]; then
 		RULES="$RULES\npass out proto udp from any to any port { 111, 2049 }"
 		;;
 	esac
-	echo $RULES | pfctl -f - -e
+	echo $RULES | pfctl -f -
+	pfctl -e
 fi
 
 sysctl_conf
