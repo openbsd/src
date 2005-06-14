@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.14 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.15 2005/06/14 19:46:05 millert Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: symtab.c,v 1.14 2004/07/17 02:14:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: symtab.c,v 1.15 2005/06/14 19:46:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ lookupino(ino_t inum)
 {
 	struct entry *ep;
 
-	if (inum < WINO || inum >= maxino)
+	if (inum < ROOTINO || inum >= maxino)
 		return (NULL);
 	for (ep = entry[inum % entrytblsize]; ep != NULL; ep = ep->e_next)
 		if (ep->e_ino == inum)
@@ -101,7 +101,7 @@ addino(ino_t inum, struct entry *np)
 {
 	struct entry **epp;
 
-	if (inum < WINO || inum >= maxino)
+	if (inum < ROOTINO || inum >= maxino)
 		panic("addino: out of range %d\n", inum);
 	epp = &entry[inum % entrytblsize];
 	np->e_ino = inum;
@@ -122,7 +122,7 @@ deleteino(ino_t inum)
 	struct entry *next;
 	struct entry **prev;
 
-	if (inum < WINO || inum >= maxino)
+	if (inum < ROOTINO || inum >= maxino)
 		panic("deleteino: out of range %d\n", inum);
 	prev = &entry[inum % entrytblsize];
 	for (next = *prev; next != NULL; next = next->e_next) {
@@ -458,7 +458,7 @@ dumpsymtable(char *filename, long checkpt)
 	 * Assign indicies to each entry
 	 * Write out the string entries
 	 */
-	for (i = WINO; i <= maxino; i++) {
+	for (i = ROOTINO; i <= maxino; i++) {
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
 			ep->e_index = mynum++;
 			(void)fwrite(ep->e_name, sizeof(char),
@@ -470,7 +470,7 @@ dumpsymtable(char *filename, long checkpt)
 	 */
 	tep = &temp;
 	stroff = 0;
-	for (i = WINO; i <= maxino; i++) {
+	for (i = ROOTINO; i <= maxino; i++) {
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
 			memcpy(tep, ep, (long)sizeof(struct entry));
 			tep->e_name = (char *)stroff;

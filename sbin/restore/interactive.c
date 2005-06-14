@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.21 2005/04/28 16:15:46 millert Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.22 2005/06/14 19:46:05 millert Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: interactive.c,v 1.21 2005/04/28 16:15:46 millert Exp $";
+static const char rcsid[] = "$OpenBSD: interactive.c,v 1.22 2005/06/14 19:46:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -518,8 +518,7 @@ printlist(char *name, char *basename)
 	char locname[MAXPATHLEN];
 
 	dp = pathsearch(name);
-	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0) ||
-	    (!vflag && dp->d_ino == WINO))
+	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0))
 		return;
 	if ((dirp = rst_opendir(name)) == NULL) {
 		entries = 1;
@@ -556,8 +555,7 @@ printlist(char *name, char *basename)
 				break;
 			if (!dflag && TSTINO(dp->d_ino, dumpmap) == 0)
 				continue;
-			if (!vflag && (dp->d_ino == WINO ||
-			     strcmp(dp->d_name, ".") == 0 ||
+			if (!vflag && (strcmp(dp->d_name, ".") == 0 ||
 			     strcmp(dp->d_name, "..") == 0))
 				continue;
 			locname[namelen] = '\0';
@@ -729,8 +727,6 @@ glob_readdir(RST_DIR *dirp)
 	static struct dirent adirent;
 
 	while ((dp = rst_readdir(dirp)) != NULL) {
-		if (!vflag && dp->d_ino == WINO)
-			continue;
 		if (dflag || TSTINO(dp->d_ino, dumpmap))
 			break;
 	}
@@ -751,8 +747,7 @@ glob_stat(const char *name, struct stat *stp)
 	struct direct *dp;
 
 	dp = pathsearch(name);
-	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0) ||
-	    (!vflag && dp->d_ino == WINO))
+	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0))
 		return (-1);
 	if (inodetype(dp->d_ino) == NODE)
 		stp->st_mode = S_IFDIR;

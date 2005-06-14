@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2004/12/30 01:51:32 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2005/06/14 19:46:05 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 
 struct entry	*addentry(char *, ino_t, int);
 long		 addfile(char *, ino_t, int);
-int		 addwhiteout(char *);
 void		 badentry(struct entry *, char *);
 void	 	 canon(char *, char *, size_t);
 void		 checkrestore(void);
@@ -45,7 +44,6 @@ void		 createleaves(char *);
 void		 createlinks(void);
 long		 deletefile(char *, ino_t, int);
 void		 deleteino(ino_t);
-void		 delwhiteout(struct entry *);
 ino_t		 dirlookup(const char *);
 void		 dumpsymtable(char *, long);
 void	 	 extractdirs(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.14 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.15 2005/06/14 19:46:05 millert Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.14 2004/07/17 02:14:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.15 2005/06/14 19:46:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -219,41 +219,6 @@ linkit(char *existing, char *new, int type)
 	Vprintf(stdout, "Create %s link %s->%s\n",
 		type == SYMLINK ? "symbolic" : "hard", new, existing);
 	return (GOOD);
-}
-
-/*
- * Create a whiteout.
- */
-int
-addwhiteout(char *name)
-{
-
-	if (!Nflag && mknod(name, S_IFWHT, 0) < 0) {
-		warn("cannot create whiteout %s", name);
-		return (FAIL);
-	}
-	Vprintf(stdout, "Create whiteout %s\n", name);
-	return (GOOD);
-}
-
-/*
- * Delete a whiteout.
- */
-void
-delwhiteout(struct entry *ep)
-{
-	char *name;
-
-	if (ep->e_type != LEAF)
-		badentry(ep, "delwhiteout: not a leaf");
-	ep->e_flags |= REMOVED;
-	ep->e_flags &= ~TMPNAME;
-	name = myname(ep);
-	if (!Nflag && undelete(name) < 0) {
-		warn("cannot delete whiteout %s", name);
-		return;
-	}
-	Vprintf(stdout, "Delete whiteout %s\n", name);
 }
 
 /*
