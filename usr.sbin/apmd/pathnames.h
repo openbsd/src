@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 2001/03/23 01:00:41 mickey Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2005/06/14 15:18:53 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -38,4 +38,3 @@
 #define _PATH_APM_ETC_POWERUP	_PATH_APM_ETC_DIR"/powerup"
 #define _PATH_APM_ETC_POWERDOWN	_PATH_APM_ETC_DIR"/powerdown"
 #define _PATH_APM_NORMAL	"/dev/apm"
-#define _PATH_DEV_SPEAKER	"/dev/speaker"

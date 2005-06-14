@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.33 2005/05/09 04:53:51 miod Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.34 2005/06/14 15:18:53 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -67,7 +67,6 @@ enum apm_state handle_client(int sock_fd, int ctl_fd);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
 void sigexit(int signo);
-void make_noise(int howmany);
 void do_etc_file(const char *file);
 void sockunlink(void);
 
@@ -259,55 +258,11 @@ handle_client(int sock_fd, int ctl_fd)
 	return reply.newstate;
 }
 
-int speaker_ok = TRUE;
-
-void
-make_noise(int howmany)
-{
-	int spkrfd = -1;
-	int trycnt;
-
-	if (!speaker_ok)		/* don't bother after sticky errors */
-		return;
-
-	for (trycnt = 0; trycnt < 3; trycnt++) {
-		spkrfd = open(_PATH_DEV_SPEAKER, O_WRONLY);
-		if (spkrfd == -1) {
-			switch (errno) {
-			case EBUSY:
-				usleep(500000);
-				errno = EBUSY;
-				continue;
-			case ENOENT:
-			case ENODEV:
-			case ENXIO:
-			case EPERM:
-			case EACCES:
-				syslog(LOG_WARNING, "speaker device "
-				    _PATH_DEV_SPEAKER " unavailable: %m");
-				speaker_ok = FALSE;
-				return;
-			}
-		} else
-			break;
-	}
-
-	if (spkrfd == -1) {
-		syslog(LOG_WARNING, "cannot open " _PATH_DEV_SPEAKER ": %m");
-		return;
-	}
-
-	syslog(LOG_DEBUG, "sending %d tones to speaker", howmany);
-	write(spkrfd, "o4cc", 2 + howmany);
-	close(spkrfd);
-}
-
 void
 suspend(int ctl_fd)
 {
 	do_etc_file(_PATH_APM_ETC_SUSPEND);
 	sync();
-	make_noise(2);
 	sync();
 	sync();
 	sleep(1);
@@ -319,7 +274,6 @@ stand_by(int ctl_fd)
 {
 	do_etc_file(_PATH_APM_ETC_STANDBY);
 	sync();
-	make_noise(1);
 	sync();
 	sync();
 	sleep(1);
@@ -344,11 +298,8 @@ main(int argc, char *argv[])
 	int kq;
 	struct kevent ev[2];
 
-	while ((ch = getopt(argc, argv, "qadsepmf:t:S:")) != -1)
+	while ((ch = getopt(argc, argv, "adsepmf:t:S:")) != -1)
 		switch(ch) {
-		case 'q':
-			speaker_ok = FALSE;
-			break;
 		case 'a':
 			noacsleep = 1;
 			break;

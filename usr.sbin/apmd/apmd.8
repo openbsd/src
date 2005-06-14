@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.27 2005/06/09 15:14:23 xsa Exp $
+.\"	$OpenBSD: apmd.8,v 1.28 2005/06/14 15:18:53 deraadt Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nd Advanced Power Management monitor daemon
 .Sh SYNOPSIS
 .Nm apmd
-.Op Fl adempqs
+.Op Fl ademps
 .Op Fl f Ar devname
 .Op Fl S Ar sockname
 .Op Fl t Ar seconds
@@ -58,13 +58,6 @@ fetches the current status and reports it via
 .Xr syslog 3
 with logging facility
 .Dv LOG_DAEMON .
-.Pp
-.Nm
-announces the transition to standby mode with a single high tone on the
-speaker (using the
-.Pa /dev/speaker
-device).
-Suspends are announced with two high tones.
 .Pp
 .Nm
 periodically polls the APM driver for the current power state.
@@ -96,12 +89,6 @@ flag is specified,
 enters debug mode, logging to facility
 .Dv LOG_LOCAL1
 and staying in the foreground on the controlling terminal.
-.Pp
-If the
-.Fl q
-flag is specified,
-.Nm
-does not announce suspend and standby requests on the speaker.
 .Pp
 If the
 .Fl m
@@ -211,7 +198,6 @@ flag may be used to specify an alternate device file name.
 .Xr execve 2 ,
 .Xr syslog 3 ,
 .Xr apm 4 ,
-.Xr speaker 4 ,
 .Xr apm 8 ,
 .Xr sysctl 8 ,
 .Xr syslogd 8
