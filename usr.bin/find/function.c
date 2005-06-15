@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.30 2004/07/20 03:50:25 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.31 2005/06/15 14:19:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.30 2004/07/20 03:50:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.31 2005/06/15 14:19:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1276,13 +1276,6 @@ c_type(char *typestring, char ***ignored, int unused)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	switch (typestring[0]) {
-#ifdef S_IFWHT
-	case 'W':
-		mask = S_IFWHT;
-		if ((ftsoptions & FTS_WHITEOUT) == 0)
-			warnx("-type W without -W is a no-op");
-		break;
-#endif
 	case 'b':
 		mask = S_IFBLK;
 		break;
