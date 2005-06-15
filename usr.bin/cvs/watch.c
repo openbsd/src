@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.2 2005/05/31 10:54:05 xsa Exp $	*/
+/*	$OpenBSD: watch.c,v 1.3 2005/06/15 09:17:14 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -48,7 +48,7 @@ static int cvs_watchers_local  (CVSFILE *, void*);
 struct cvs_cmd cvs_cmd_watch = {
 	CVS_OP_WATCH, CVS_REQ_NOOP, "watch",
 	{},
-	"",
+	"Set watches",
 	"on | off | add | remove [-lR] [-a action] [file ...]",
 	"a:lR",
 	NULL,
@@ -65,7 +65,7 @@ struct cvs_cmd cvs_cmd_watch = {
 struct cvs_cmd cvs_cmd_watchers = {
         CVS_OP_WATCHERS, CVS_REQ_WATCHERS, "watchers",
         {},
-        "",
+        "See who is watching a file",
         "[-lR] [file ...]",
         "lR",
         NULL,
