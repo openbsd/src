@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.23 2005/01/10 20:16:15 otto Exp $	*/
+/*	$OpenBSD: print.c,v 1.24 2005/06/15 17:47:17 millert Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.23 2005/01/10 20:16:15 otto Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.24 2005/06/15 17:47:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -337,9 +337,6 @@ printtype(u_int mode)
 		return (1);
 	case S_IFSOCK:
 		(void)putchar('=');
-		return (1);
-	case S_IFWHT:
-		(void)putchar('%');
 		return (1);
 	}
 	if (mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
