@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.16 2005/06/15 15:50:00 mickey Exp $
+ * $OpenBSD: calendar.music,v 1.17 2005/06/15 20:25:36 mickey Exp $
  */
 
 #ifndef _calendar_music_
@@ -141,7 +141,7 @@
 05/31	Joseph Haydn dies in Vienna, Austria, 1809
 06/01	The Beatles release "Sgt. Pepper", 1967
 06/01	Mikhail Glinka is born, 1804
-06/02	Edward William Edgar is born in Lower Broadheath, 1857
+06/02	Edward William Elgar is born in Lower Broadheath, England, 1857
 06/03	Georges Bizet dies in Bougival, Paris, France, 1875
 06/05	Carl Maria von Weber dies in London, England, 1826
 06/06	"Rock Around The Clock" makes Billboard's #1 slot, 1955
@@ -175,7 +175,7 @@
 07/10	Carl Orff is born in Munich, Germany, 1895
 07/11	George Gershwin dies in Hollywood, California, 1937
 07/12	Chicago DJ Steve Dahl holds "Disco Demolition" at Kamisky Park, 1979
-07/13	Arnold Schoenerg dies in Los Angeles, California, 1951
+07/13	Arnold Schoenberg dies in Los Angeles, California, 1951
 07/14	Woodie Guthrie is born, 1912
 07/16	Cream forms in the U.K., 1966
 07/16	Harry Chapin dies on Long Island Expressway, 1981
@@ -225,7 +225,7 @@
 09/23	"Paul is dead" rumors sweep the country, 1969
 09/23	Bruce "The Boss" Springsteen is born in Freehold, New Jersey, 1949
 09/25	John Bonham (Led Zeppelin) dies of alcohol poisoning, 1980
-09/25	Dmirti Shostakovich is born in St. Petersberg, Russia, 1906
+09/25	Dmitri Shostakovich is born in St. Petersberg, Russia, 1906
 09/26	Bela Bartok dies in New York City, 1945
 09/26	George Gershwin is born in Brooklyn, New York, 1898
 10/04	Janis Joplin dies of a heroin overdose in Hollywood, 1970
@@ -301,7 +301,7 @@
 12/21	Frank Zappa is born in Baltimore, 1940
 12/22	Beethoven's Symphony No. 5 and Symphony No. 6 premier, underrehearsed, 
 	at Theater an der Wien in Vienna, Austria, 1808
-12/23	First G&S collaboration, Thespis, 1871
+12/23	First Gilbert and Sullivan collaboration, Thespis, 1871
 12/23	Joe Strummer (born John Mellor) dies in Broomfield, England, 2002
 12/24	Alban Berg dies in Vienna, Austria, 1935
 12/25	John Philip Sousa's "The Stars and Stripes Forever" composed, 1896
