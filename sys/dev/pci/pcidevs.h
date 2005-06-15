@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.874 2005/06/14 00:54:27 brad Exp 
+ *	OpenBSD: pcidevs,v 1.875 2005/06/15 20:44:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1705,6 +1705,7 @@
 /* Linksys products */
 #define	PCI_PRODUCT_LINKSYS_EG1032	0x1032		/* EG1032 */
 #define	PCI_PRODUCT_LINKSYS_EG1064	0x1064		/* EG1064 */
+#define	PCI_PRODUCT_LINKSYS_PCMPC200	0xab08		/* PCMPC200 */
 #define	PCI_PRODUCT_LINKSYS_PCM200	0xab09		/* PCM200 */
 
 /* Lite-On Communications */

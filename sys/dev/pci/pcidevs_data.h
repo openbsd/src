@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.874 2005/06/14 00:54:27 brad Exp 
+ *	OpenBSD: pcidevs,v 1.875 2005/06/15 20:44:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4765,6 +4765,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064,
 	    "EG1064",
+	},
+	{
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCMPC200,
+	    "PCMPC200",
 	},
 	{
 	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200,
