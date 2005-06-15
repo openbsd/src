@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.15 2005/06/15 02:46:06 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.16 2005/06/15 03:06:47 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -97,7 +97,6 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	int error;
 
 	dp->blksize = 512;
-	dp->disksize = scsi_size(sd->sc_link, flags);
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
@@ -144,6 +143,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	u_int16_t rpm = 0;
 	int page, error;
 
+	dp->disksize = scsi_size(sd->sc_link, flags);
 	dp->rot_rate = 3600;
 
 	/*
@@ -176,18 +176,16 @@ sd_scsibus_get_parms(sd, dp, flags)
 			dp->cyls = _3btol(sense_pages->rigid_geometry.ncyl);
 			rpm = _2btol(sense_pages->rigid_geometry.rpm);
 		}	
-		dp->disksize = scsi_size(sd->sc_link, flags);
+		if (rpm)
+			dp->rot_rate = rpm;
+
+		dp->blksize = (blksize == 0) ? 512 : blksize;
 
 		if (dp->disksize == 0 || dp->heads == 0 || dp->cyls == 0)
 			goto fake_it;
 
 		/* XXX dubious on SCSI */
 		dp->sectors = dp->disksize / (dp->heads * dp->cyls);
-
-		if (rpm)
-			dp->rot_rate = rpm;
-
-		dp->blksize = (blksize == 0) ? 512 : blksize;
 
 		return (SDGP_RESULT_OK);
 	}
@@ -200,23 +198,23 @@ sd_scsibus_get_parms(sd, dp, flags)
 			dp->heads = sense_pages->flex_geometry.nheads;
 			dp->cyls = _2btol(sense_pages->flex_geometry.ncyl);
 			dp->sectors = sense_pages->flex_geometry.ph_sec_tr;
-			dp->blksize =
-			    _2btol(sense_pages->flex_geometry.bytes_s);
+			if (blksize == 0)
+				blksize = _2btol(sense_pages->
+				    flex_geometry.bytes_s);
 			rpm = _2btol(scsi_sense.pages.flex_geometry.rpm);
 		}	
-		if (dp->cyls == 0 || dp->heads == 0 || dp->sectors == 0)
-			goto fake_it;
-
-		dp->disksize = dp->heads * dp->cyls * dp->sectors;
-			
 		if (rpm)
 			dp->rot_rate = rpm;
 
-		if (blksize)
-			dp->blksize = blksize;
-		else if (dp->blksize == 0)
-			dp->blksize = 512;
+		dp->blksize = (blksize == 0) ? 512 : blksize;
 
+		if (dp->cyls == 0 || dp->heads == 0 || dp->sectors == 0)
+			goto fake_it;
+
+		if (dp->disksize == 0)
+			/* XXX Why go on if READ CAPACITY failed? */
+			dp->disksize = dp->heads * dp->cyls * dp->sectors;
+			
 		return (SDGP_RESULT_OK);
 	}
 
@@ -231,29 +229,25 @@ sd_scsibus_get_parms(sd, dp, flags)
 		dp->heads = 64;
 		dp->sectors = 32;
 		if (sense_pages) {
-			dp->disksize =
-			    _4btol(sense_pages->reduced_geometry.sectors+1);
-			dp->blksize =
-			    _2btol(sense_pages->reduced_geometry.bytes_s);
+			if (dp->disksize == 0)
+				dp->disksize = _4btol(sense_pages->
+				    reduced_geometry.sectors+1);
+			if (blksize == 0)
+				blksize = _2btol(sense_pages->
+				    reduced_geometry.bytes_s);
 		    	dp->sectors = sense_pages->reduced_geometry.sectors[0];
 		}
+		dp->blksize = (blksize == 0) ? 512 : blksize;
+
 		if (dp->disksize == 0 || dp->sectors == 0)
 			goto fake_it;
 
 		dp->cyls = dp->disksize / (dp->heads * dp->sectors);
 
-		if (blksize)
-			dp->blksize = blksize;
-
-		if (dp->blksize == 0)
-			dp->blksize = 512;
-
 		return (SDGP_RESULT_OK);
 	}
 
 fake_it:
-	/* If we can get the disk size, fake a geometry. */
-	dp->disksize = scsi_size(sd->sc_link, flags);
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
 	SC_DEBUG(sd->sc_link, SDEV_DB1, ("error %d on pg %d, fake geometry.\n",
@@ -264,7 +258,7 @@ fake_it:
 	dp->heads = 64;
 	dp->sectors = 32;
 	dp->cyls = dp->disksize / (64 * 32);
-	dp->blksize = 512;
+	dp->blksize = (blksize == 0) ? 512 : blksize;
 
 	return (SDGP_RESULT_OK);
 }
