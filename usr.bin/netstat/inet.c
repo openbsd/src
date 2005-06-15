@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.95 2005/04/05 20:27:35 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.96 2005/06/15 10:53:23 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.95 2005/04/05 20:27:35 markus Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.96 2005/06/15 10:53:23 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -1026,3 +1026,74 @@ ipcomp_stats(u_long off, char *name)
 
 #undef p
 }
+
+/*
+ * Dump the contents of a TCPCB
+ */
+void
+tcp_dump(u_long off)
+{
+	struct tcpcb tcpcb;
+
+	if (off == 0)
+		return;
+	kread(off, (char *)&tcpcb, sizeof (tcpcb));
+
+#define	p(fmt, v, sep) printf(#v " " fmt sep, tcpcb.v);
+	printf("pcb %p, ", off);
+	p("%p", t_inpcb, "\n");
+	p("%d", t_state, "");
+        if (tcpcb.t_state >= 0 && tcpcb.t_state < TCP_NSTATES)
+		printf(" (%s)", tcpstates[tcpcb.t_state]);
+	printf("\n");
+	p("%d", t_rxtshift, ", ");
+	p("%d", t_rxtcur, ", ");
+	p("%d", t_dupacks, "\n");
+	p("%u", t_maxseg, ", ");
+	p("%u", t_maxopd, ", ");
+	p("%u", t_peermss, "\n");
+	p("0x%x", t_flags, ", ");
+	p("%u", t_force, "\n");
+	p("%u", iss, "\n");
+	p("%u", snd_una, ", ");
+	p("%u", snd_nxt, ", ");
+	p("%u", snd_up, "\n");
+	p("%u", snd_wl1, ", ");
+	p("%u", snd_wl2, ", ");
+	p("%lu", snd_wnd, "\n");
+	p("%d", sack_enable, ", ");
+	p("%d", snd_numholes, ", ");
+	p("%u", snd_fack, ", ");
+	p("%lu",snd_awnd, "\n");
+	p("%u", retran_data, ", ");
+	p("%u", snd_last, "\n");
+	p("%u", irs, "\n");
+	p("%u", rcv_nxt, ", ");
+	p("%u", rcv_up, ", ");
+	p("%lu", rcv_wnd, "\n");
+	p("%u", rcv_lastsack, "\n");
+	p("%d", rcv_numsacks, "\n");
+	p("%u", rcv_adv, ", ");
+	p("%u", snd_max, "\n");
+	p("%lu", snd_cwnd, ", ");
+	p("%lu", snd_ssthresh, ", ");
+	p("%lu", max_sndwnd, "\n");
+	p("%u", t_rcvtime, ", ");
+	p("%u", t_rtttime, ", ");
+	p("%u", t_rtseq, "\n");
+	p("%u", t_srtt, ", ");
+	p("%u", t_rttvar, ", ");
+	p("%u", t_rttmin, "\n");
+	p("%u", t_oobflags, ", ");
+	p("%u", t_iobc, "\n");
+	p("%u", t_softerror, "\n");
+	p("%u", snd_scale, ", ");
+	p("%u", rcv_scale, ", ");
+	p("%u", request_r_scale, ", ");
+	p("%u", requested_s_scale, "\n");
+	p("%u", ts_recent, ", ");
+	p("%u", ts_recent_age, "\n");
+	p("%u", last_ack_sent, "\n");
+	p("%u", pf, "\n");
+#undef	p
+};

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2005/06/08 04:47:04 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2005/06/15 10:53:23 markus Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.58 2005/06/08 04:47:04 henning Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.59 2005/06/15 10:53:23 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,71 +160,72 @@ struct protox {
 	u_char	pr_wanted;			/* 1 if wanted, 0 otherwise */
 	void	(*pr_cblocks)(u_long, char *);	/* control blocks printing routine */
 	void	(*pr_stats)(u_long, char *);	/* statistics printing routine */
+	void	(*pr_dump)(u_long);		/* pcb printing routine */
 	char	*pr_name;			/* well-known name */
 } protox[] = {
 	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
-	  tcp_stats,	"tcp" },
+	  tcp_stats,	tcp_dump,	"tcp" },
 	{ N_UDBTABLE,	N_UDPSTAT,	1,	protopr,
-	  udp_stats,	"udp" },
+	  udp_stats,	0,		"udp" },
 	{ N_RAWIPTABLE,	N_IPSTAT,	1,	protopr,
-	  ip_stats,	"ip" },
+	  ip_stats,	0,		"ip" },
 	{ -1,		N_ICMPSTAT,	1,	0,
-	  icmp_stats,	"icmp" },
+	  icmp_stats,	0,		"icmp" },
 	{ -1,		N_IGMPSTAT,	1,	0,
-	  igmp_stats,	"igmp" },
+	  igmp_stats,	0,		"igmp" },
 	{ -1,		N_AHSTAT,	1,	0,
-	  ah_stats,	"ah" },
+	  ah_stats,	0,		"ah" },
 	{ -1,		N_ESPSTAT,	1,	0,
-	  esp_stats,	"esp" },
+	  esp_stats,	0,		"esp" },
 	{ -1,		N_IP4STAT,	1,	0,
-	  ipip_stats,	"ipencap" },
+	  ipip_stats,	0,		"ipencap" },
 	{ -1,		N_ETHERIPSTAT,	1,	0,
-	  etherip_stats,"etherip" },
+	  etherip_stats,0,		"etherip" },
 	{ -1,		N_IPCOMPSTAT,	1,	0,
-	  ipcomp_stats,	"ipcomp" },
+	  ipcomp_stats,	0,		"ipcomp" },
 	{ -1,		N_CARPSTAT,	1,	0,
-	  carp_stats,	"carp" },
+	  carp_stats,	0,		"carp" },
 	{ -1,		N_PFSYNCSTAT,	1,	0,
-	  pfsync_stats,	"pfsync" },
+	  pfsync_stats,	0,		"pfsync" },
 	{ -1,		N_PIMSTAT,	1,	0,
-	  pim_stats,	"pim" },
+	  pim_stats,	0,		"pim" },
 	{ -1,		-1,		0,	0,
-	  0,		0 }
+	  0,		0,		0 }
 };
 
 #ifdef INET6
 struct protox ip6protox[] = {
 	{ N_TCBTABLE,	N_TCPSTAT,	1,	ip6protopr,
-	  0,		"tcp" },
+	  0,		tcp_dump,	"tcp" },
 	{ N_UDBTABLE,	N_UDPSTAT,	1,	ip6protopr,
-	  0,		"udp" },
+	  0,		0,		"udp" },
 	{ N_RAWIP6TABLE,N_IP6STAT,	1,	ip6protopr,
-	  ip6_stats,	"ip6" },
+	  ip6_stats,	0,		"ip6" },
 	{ -1,		N_ICMP6STAT,	1,	0,
-	  icmp6_stats,	"icmp6" },
+	  icmp6_stats,	0,		"icmp6" },
 	{ -1,		N_PIM6STAT,	1,	0,
-	  pim6_stats,	"pim6" },
+	  pim6_stats,	0,		"pim6" },
 	{ -1,		N_RIP6STAT,	1,	0,
-	  rip6_stats,	"rip6" },
+	  rip6_stats,	0,		"rip6" },
 	{ -1,		-1,		0,	0,
-	  0,		0 }
+	  0,		0,		0 }
 };
 #endif
 
 struct protox ipxprotox[] = {
 	{ N_IPX,	N_IPXSTAT,	1,	ipxprotopr,
-	  ipx_stats,	"ipx" },
+	  ipx_stats,	0,		"ipx" },
 	{ N_IPX,	N_SPXSTAT,	1,	ipxprotopr,
-	  spx_stats,	"spx" },
+	  spx_stats,	0,		"spx" },
 	{ -1,		-1,		0,	0,
-	  0,		0 }
+	  0,		0,		0 }
 };
 
 struct protox atalkprotox[] = {
 	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
-	  ddp_stats,	"ddp" },
+	  ddp_stats,	0,		"ddp" },
 	{ -1,		-1,		0,	0,
-	  0,		0 }
+	  0,		0,		0 }
 };
 
 #ifndef INET6
@@ -252,12 +253,13 @@ main(int argc, char *argv[])
 	struct protoent *p;
 	struct protox *tp = NULL; /* for printing cblocks & stats */
 	int ch;
-	char *nlistf = NULL, *memf = NULL;
+	char *nlistf = NULL, *memf = NULL, *ep;
 	char buf[_POSIX2_LINE_MAX];
+	u_long pcbaddr = 0;
 
 	af = AF_UNSPEC;
 
-	while ((ch = getopt(argc, argv, "Aabdf:gI:ilM:mN:np:qrstuvW:w:")) != -1)
+	while ((ch = getopt(argc, argv, "Aabdf:gI:ilM:mN:np:P:qrstuvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -327,6 +329,18 @@ main(int argc, char *argv[])
 			}
 			pflag = 1;
 			break;
+		case 'P':
+			errno = 0;
+			pcbaddr = strtoul(optarg, &ep, 16);
+			if (optarg[0] == '\0' || *ep != '\0' ||
+			    errno == ERANGE) {
+				(void)fprintf(stderr,
+				    "%s: %s: invalid PCB address\n",
+				    __progname, optarg);
+				exit(1);
+			}
+			Pflag = 1;
+			break;
 		case 'q':
 			qflag = 1;
 			break;
@@ -374,8 +388,9 @@ main(int argc, char *argv[])
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
+	 * Dumping PCB info is also restricted.
 	 */
-	if (nlistf != NULL || memf != NULL) {
+	if (nlistf != NULL || memf != NULL || Pflag) {
 		setegid(getgid());
 		setgid(getgid());
 	}
@@ -421,6 +436,17 @@ main(int argc, char *argv[])
 	}
 	if (pflag) {
 		printproto(tp, tp->pr_name);
+		exit(0);
+	}
+	if (Pflag) {
+		if (tp == NULL && (tp = name2protox("tcp")) == NULL) {
+			(void)fprintf(stderr,
+			    "%s: %s: unknown protocol\n",
+			    __progname, "tcp");
+			exit(1);
+		}
+		if (tp->pr_dump)
+			(tp->pr_dump)(pcbaddr);
 		exit(0);
 	}
 	/*

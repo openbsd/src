@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.34 2005/04/12 14:11:49 reyk Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.35 2005/06/15 10:53:23 markus Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -47,6 +47,7 @@ int	lflag;		/* show routing table with use and ref */
 int	mflag;		/* show memory stats */
 int	nflag;		/* show addresses numerically */
 int	pflag;		/* show given protocol */
+int	Pflag;		/* show given PCB */
 int	qflag;		/* only display non-zero values for output */
 int	rflag;		/* show routing tables (or routing stats) */
 int	sflag;		/* show protocol statistics */
@@ -85,6 +86,8 @@ void	pfsync_stats (u_long, char *);
 void	etherip_stats(u_long, char *);
 void	protopr(u_long, char *);
 void	ipcomp_stats(u_long, char *);
+
+void	tcp_dump(u_long);
 
 void	mbpr(u_long, u_long, u_long);
 
