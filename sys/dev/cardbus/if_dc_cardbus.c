@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.20 2005/05/29 07:54:33 brad Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.21 2005/06/15 20:53:32 brad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ const struct cardbus_matchid dc_cardbus_devices[] = {
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500 },
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500MX },
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_PCM200 },
+	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCMPC200 },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200 },
 	{ PCI_VENDOR_HAWKING, PCI_PRODUCT_HAWKING_PN672TX },
 	{ PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120 },
@@ -164,6 +165,7 @@ dc_cardbus_attach(parent, self, aux)
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ABOCOM_FE2500 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ABOCOM_FE2500MX ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ABOCOM_PCM200 ||
+		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_LINKSYS_PCMPC200 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_LINKSYS_PCM200 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_HAWKING_PN672TX ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_MICROSOFT_MN120) {
