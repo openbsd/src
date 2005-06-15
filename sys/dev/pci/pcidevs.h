@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.875 2005/06/15 20:44:34 brad Exp 
+ *	OpenBSD: pcidevs,v 1.876 2005/06/15 23:33:18 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1139,6 +1139,7 @@
 #define	PCI_PRODUCT_DLINK_DFE690TXD	0x1340		/* DFE-690TXD */
 #define	PCI_PRODUCT_DLINK_DWL610	0x3300		/* DWL-610 */
 #define	PCI_PRODUCT_DLINK_DGE550T	0x4000		/* DGE-550T */
+#define	PCI_PRODUCT_DLINK_DGE528T	0x4300		/* DGE-528T */
 #define	PCI_PRODUCT_DLINK_DGE560T	0x4b00		/* DGE-560T */
 #define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T */
 
@@ -2722,6 +2723,7 @@
 
 /* US Rebotics */
 #define	PCI_PRODUCT_USR_3CP5610	0x1008		/* 3CP5610 */
+#define	PCI_PRODUCT_USR2_USR997902	0x0116		/* USR997902 */
 #define	PCI_PRODUCT_USR2_WL11000P	0x3685		/* WL11000P */
 
 /* V3 Semiconductor products */
