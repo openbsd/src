@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.11 2004/09/24 07:38:38 grange Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.12 2005/06/15 04:45:49 fgsch Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.5 2001/07/05 08:38:27 toshii Exp $ */
 
 /*
@@ -125,5 +125,39 @@ static int8_t pdc2xx_udma_mc[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
 #define PDC268_DATA(chan)	(0x03 + IDEDMA_SCH_OFFSET * (chan))
 #define PDC268_CABLE		0x04
 #define PDC268_INTR		0x20
+
+/*
+ * PDC203xx register definitions.
+ */
+#define PDC203xx_NCHANNELS	4
+#define PDC203xx_BAR_IDEREGS	0x1c
+
+/* Private data */
+struct pciide_pdcsata {
+	bus_space_tag_t			ba5_st;
+	bus_space_handle_t		ba5_sh;
+
+	struct {
+		bus_space_tag_t		cmd_iot;
+		bus_space_handle_t	cmd_iohs[WDC_NREG+WDC_NSHADOWREG];
+
+		bus_space_tag_t		ctl_iot;
+		bus_space_handle_t	ctl_ioh;
+
+		bus_space_handle_t	dma_iohs[IDEDMA_NREGS];
+	} regs[PDC203xx_NCHANNELS];
+};
+
+u_int8_t pdc203xx_read_reg(struct channel_softc *, enum wdc_regs);
+void     pdc203xx_write_reg(struct channel_softc *, enum wdc_regs, u_int8_t);
+
+struct channel_softc_vtbl wdc_pdc203xx_vtbl = {
+	pdc203xx_read_reg,
+	pdc203xx_write_reg,
+	wdc_default_read_raw_multi_2,
+	wdc_default_write_raw_multi_2,
+	wdc_default_read_raw_multi_4,
+	wdc_default_write_raw_multi_4
+};
 
 #endif	/* !_DEV_PCI_PCIIDE_PDC202XX_REG_H_ */
