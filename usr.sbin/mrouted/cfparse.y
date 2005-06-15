@@ -84,7 +84,6 @@ int numbounds = 0;			/* Number of named boundaries */
 %token PHYINT TUNNEL NAME
 %token DISABLE IGMPV1 SRCRT
 %token METRIC THRESHOLD RATE_LIMIT BOUNDARY NETMASK ALTNET
-%token SYSNAM SYSCONTACT SYSVERSION SYSLOCATION
 %token <num> BOOLEAN
 %token <num> NUMBER
 %token <ptr> STRING
@@ -206,26 +205,6 @@ stmt	: error
 				      boundlist[numbounds].name = strdup($2);
 				      boundlist[numbounds++].bound = $3;
 				    }
-	| SYSNAM STRING    {
-#ifdef SNMP
-			    set_sysName($2);
-#endif /* SNMP */
-			    }
-	| SYSCONTACT STRING {
-#ifdef SNMP
-			    set_sysContact($2);
-#endif /* SNMP */
-			    }
-        | SYSVERSION STRING {
-#ifdef SNMP
-			    set_sysVersion($2);
-#endif /* SNMP */
-			    }
-	| SYSLOCATION STRING {
-#ifdef SNMP
-			    set_sysLocation($2);
-#endif /* SNMP */
-			    }
 	;
 
 tunnelmods	: /* empty */
@@ -443,15 +422,6 @@ next_word()
 		continue;
 	    }
 	    q = p;
-#ifdef SNMP
-       if (*p == '"') {
-          p++;
-	       while (*p && *p != '"' && *p != '\n')
-		      p++;		/* find next whitespace */
-          if (*p == '"')
-             p++;
-       } else
-#endif
 	    while (*p && *p != ' ' && *p != '\t' && *p != '\n')
 		p++;		/* find next whitespace */
 	    *p++ = '\0';	/* null-terminate string */
@@ -535,22 +505,6 @@ yylex()
 		yylval.num = n;
 		return NUMBER;
 	}
-#ifdef SNMP
-	if (!strcmp(q,"sysName"))
-		return SYSNAM;
-	if (!strcmp(q,"sysContact"))
-		return SYSCONTACT;
-	if (!strcmp(q,"sysVersion"))
-		return SYSVERSION;
-	if (!strcmp(q,"sysLocation"))
-		return SYSLOCATION;
-   if (*q=='"') {
-      if (q[ strlen(q)-1 ]=='"')
-         q[ strlen(q)-1 ]='\0'; /* trash trailing quote */
-      yylval.ptr = q+1;
-      return STRING;
-   }
-#endif
 	yylval.ptr = q;
 	return STRING;
 }

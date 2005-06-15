@@ -24,13 +24,9 @@
 #include <fcntl.h>
 #include <util.h>
 
-#ifdef SNMP
-#include "snmp.h"
-#endif
-
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.14 2003/11/26 01:17:12 millert Exp $";
+	"@(#) $Id: main.c,v 1.15 2005/06/15 14:30:56 robert Exp $";
 #endif
 
 extern char *configfilename;
@@ -46,11 +42,7 @@ int max_prune_lifetime	= DEFAULT_CACHE_LIFETIME * 2;
 int debug = 0;
 u_char pruning = 1;	/* Enable pruning by default */
 
-#ifdef SNMP
-#define NHANDLERS	34
-#else
 #define NHANDLERS	2
-#endif
 
 static struct ihandler {
     int fd;			/* File descriptor		 */
@@ -95,11 +87,6 @@ main(int argc, char *argv[])
     fd_set rfds, readers;
     int nfds, n, i;
     sigset_t mask, omask;
-#ifdef SNMP
-    struct timeval  timeout, *tvp = &timeout;
-    struct timeval  sched, *svp = &sched, now, *nvp = &now;
-    int index, block;
-#endif
 
     if (geteuid() != 0) {
 	fprintf(stderr, "must be root\n");
@@ -123,14 +110,6 @@ main(int argc, char *argv[])
 		goto usage;
 	} else if (strcmp(*argv, "-p") == 0) {
 	    pruning = 0;
-#ifdef SNMP
-   } else if (strcmp(*argv, "-P") == 0) {
-	    if (argc > 1 && isdigit(*(argv + 1)[0])) {
-		argv++, argc--;
-		dest_port = atoi(*argv);
-	    } else
-		dest_port = DEFAULT_PORT;
-#endif
 	} else
 	    goto usage;
 	argv++, argc--;
@@ -228,20 +207,6 @@ usage:	fprintf(stderr,
 		PROTOCOL_VERSION, MROUTED_VERSION);
 #endif
 
-#ifdef SNMP
-    if (i = snmp_init())
-       return i;
-
-    gettimeofday(nvp, 0);
-    if (nvp->tv_usec < 500000L){
-   svp->tv_usec = nvp->tv_usec + 500000L;
-   svp->tv_sec = nvp->tv_sec;
-    } else {
-   svp->tv_usec = nvp->tv_usec - 500000L;
-   svp->tv_sec = nvp->tv_sec + 1;
-    }
-#endif /* SNMP */
-
     init_vifs();
 
 #ifdef RSRR
@@ -302,34 +267,7 @@ usage:	fprintf(stderr,
     dummy = 0;
     for(;;) {
 	bcopy((char *)&readers, (char *)&rfds, sizeof(rfds));
-#ifdef SNMP
-   gettimeofday(nvp, 0);
-   if (nvp->tv_sec > svp->tv_sec
-       || (nvp->tv_sec == svp->tv_sec && nvp->tv_usec > svp->tv_usec)){
-       alarmTimer(nvp);
-       eventTimer(nvp);
-       if (nvp->tv_usec < 500000L){
-      svp->tv_usec = nvp->tv_usec + 500000L;
-      svp->tv_sec = nvp->tv_sec;
-       } else {
-      svp->tv_usec = nvp->tv_usec - 500000L;
-      svp->tv_sec = nvp->tv_sec + 1;
-       }
-   }
-
-	tvp =  &timeout;
-	tvp->tv_sec = 0;
-	tvp->tv_usec = 500000L;
-
-	block = 0;
-	snmp_select_info(&nfds, &rfds, tvp, &block);
-	if (block == 1)
-		tvp = NULL; /* block without timeout */
-	if ((n = select(nfds, &rfds, NULL, NULL, tvp)) < 0)
-#else
-	if ((n = select(nfds, &rfds, NULL, NULL, NULL)) < 0)
-#endif
-   {
+	if ((n = select(nfds, &rfds, NULL, NULL, NULL)) < 0) {
             if (errno != EINTR) /* SIGALRM is expected */
                 logit(LOG_WARNING, errno, "select failed");
             continue;
@@ -355,11 +293,6 @@ usage:	fprintf(stderr,
 		(*ihandlers[i].func)(ihandlers[i].fd, &rfds);
 	    }
 	}
-
-#ifdef SNMP
-	snmp_read(&rfds);
-	snmp_timeout(); /* poll */
-#endif
     }
 }
 
@@ -471,10 +404,6 @@ timer(void)
 	 */
 	report_to_all_neighbors(CHANGED_ROUTES);
     }
-
-#ifdef SNMP
-    sync_timer();
-#endif
 
     /*
      * Advance virtual time

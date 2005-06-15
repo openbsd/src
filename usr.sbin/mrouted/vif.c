@@ -556,9 +556,6 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
 	if (group == g->al_addr) {
 	    if (r_type == IGMP_v1_HOST_MEMBERSHIP_REPORT)
 		g->al_old = OLD_AGE_THRESHOLD;
-#ifdef SNMP
-	    g->al_genid = src;
-#endif /* SNMP */
 
 	    /** delete old timers, set a timer for expiration **/
 	    g->al_timer = GROUP_EXPIRE_TIME;
@@ -584,9 +581,6 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
 	    g->al_old = 0;
 	else
 	    g->al_old = OLD_AGE_THRESHOLD;
-#ifdef SNMP
-	g->al_genid = src;
-#endif
 
 	/** set a timer for expiration **/
         g->al_query = 0;

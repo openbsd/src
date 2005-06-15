@@ -271,13 +271,6 @@ extern void		k_add_rg(u_int32_t origin, struct gtable *g);
 extern int		k_del_rg(u_int32_t origin, struct gtable *g);
 extern int		k_get_version(void);
 
-#ifdef SNMP
-/* prune.c */
-extern struct rtentry * snmp_find_route();
-extern struct gtable *	find_grp();
-extern struct stable *	find_grp_src();
-#endif
-
 #ifdef RSRR
 /* prune.c */
 extern struct gtable	*kernel_table;
