@@ -1,4 +1,4 @@
-/* $OpenBSD: httpd.h,v 1.25 2005/03/28 23:26:51 niallo Exp $ */
+/* $OpenBSD: httpd.h,v 1.26 2005/06/15 00:00:16 niallo Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1117,7 +1117,7 @@ API_EXPORT(char *) ap_escape_quotes(pool *p, const char *instr);
  */
 API_EXPORT(void) ap_log_assert(const char *szExp, const char *szFile, int nLine)
     __attribute__((noreturn));
-#define ap_assert(exp) ((exp) ? (void)0 : ap_log_assert(#exp,__FILE__,__LINE__))
+#define ap_assert(exp) ((exp) ? (void)0 : ap_log_assert(#exp,__FILE__,0))
 
 #define OPTIMIZE_TIMEOUTS
 

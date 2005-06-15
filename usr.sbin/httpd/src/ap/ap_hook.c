@@ -796,7 +796,7 @@ static int ap_hook_call_func(va_list ap, ap_hook_entry *he, ap_hook_func *hf)
 	}
 	/* ----END GENERATED SECTION---------- */
 	else
-		ap_log_assert("hook signature not implemented", __FILE__, __LINE__);
+		ap_log_assert("hook signature not implemented", __FILE__, 0);
 
 	if (he->he_modeid == AP_HOOK_MODE_ALL)
 		rc = FALSE;
