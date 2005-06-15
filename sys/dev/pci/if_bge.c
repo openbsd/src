@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.62 2005/06/07 20:39:07 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.63 2005/06/15 16:30:34 camield Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2214,10 +2214,6 @@ bge_rxeof(sc)
 		struct bge_rx_bd	*cur_rx;
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
-#if NVLAN > 0
-		u_int16_t		vlan_tag = 0;
-		int			have_tag = 0;
-#endif
 #ifdef BGE_CHECKSUM
 		int			sumflags = 0;
 #endif
@@ -2227,13 +2223,6 @@ bge_rxeof(sc)
 
 		rxidx = cur_rx->bge_idx;
 		BGE_INC(sc->bge_rx_saved_considx, sc->bge_return_ring_cnt);
-
-#if NVLAN > 0
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
-			have_tag = 1;
-			vlan_tag = cur_rx->bge_vlan_tag;
-		}
-#endif
 
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_JUMBO_RING) {
 			BGE_INC(sc->bge_jumbo, BGE_JUMBO_RX_RING_CNT);
@@ -2316,18 +2305,6 @@ bge_rxeof(sc)
 #endif
 		m->m_pkthdr.csum_flags = sumflags;
 		sumflags = 0;
-#endif
-
-#if NVLAN > 0
-		/*
-		 * If we received a packet with a vlan tag, pass it
-		 * to vlan_input() instead of ether_input().
-		 */
-		if (have_tag) {
-			vlan_input_tag(m, vlan_tag);
-			have_tag = vlan_tag = 0;
-			continue;
-		}
 #endif
 		ether_input_mbuf(ifp, m);
 	}
@@ -2826,6 +2803,9 @@ bge_init(xsc)
 	} else {
 		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
 	}
+
+	/* Disable hardware decapsulation of vlan frames. */
+	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
 
 	/* Program multicast filter. */
 	bge_setmulti(sc);
