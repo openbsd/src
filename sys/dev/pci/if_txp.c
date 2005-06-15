@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.77 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.78 2005/06/15 16:28:09 camield Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -700,6 +700,34 @@ txp_rx_reclaim(sc, r, dma)
 		}
 #endif
 
+#if NVLAN > 0
+		/*
+		 * XXX Another firmware bug: the vlan encapsulation
+		 * is always removed, even when we tell the card not
+		 * to do that.  Restore the vlan encapsulation below.
+		 */
+		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
+			struct ether_vlan_header vh;
+
+			if (m->m_pkthdr.len < ETHER_HDR_LEN) {
+				m_freem(m);
+				goto next;
+			}
+			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
+			vh.evl_proto = vh.evl_encap_proto;
+			vh.evl_tag = rxd->rx_vlan >> 16;
+			vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
+			m_adj(m, ETHER_HDR_LEN);
+			if ((m = m_prepend(m, sizeof(vh), M_DONTWAIT)) == NULL)
+				goto next;
+			m->m_pkthdr.len += sizeof(vh);
+			if (m->m_len < sizeof(vh) &&
+			    (m = m_pullup(m, sizeof(vh))) == NULL)
+				goto next;
+			m_copyback(m, 0, sizeof(vh), &vh);
+		}
+#endif
+
 #if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
@@ -724,14 +752,6 @@ txp_rx_reclaim(sc, r, dma)
 			sumflags |= M_UDP_CSUM_IN_OK;
 
 		m->m_pkthdr.csum_flags = sumflags;
-
-#if NVLAN > 0
-		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
-			if (vlan_input_tag(m, htons(rxd->rx_vlan >> 16)) < 0)
-				ifp->if_noproto++;
-			goto next;
-		}
-#endif
 
 		ether_input_mbuf(ifp, m);
 
@@ -2005,7 +2025,6 @@ txp_capabilities(sc)
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_VLAN) {
 		sc->sc_tx_capability |= OFFLOAD_VLAN;
-		sc->sc_rx_capability |= OFFLOAD_VLAN;
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 	}
 #endif
