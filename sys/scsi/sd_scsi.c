@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.14 2005/06/03 15:50:10 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.15 2005/06/15 02:46:06 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -204,7 +204,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 			    _2btol(sense_pages->flex_geometry.bytes_s);
 			rpm = _2btol(scsi_sense.pages.flex_geometry.rpm);
 		}	
-		if (dp->cyls == 0 || dp->heads == 0 || dp->cyls == 0)
+		if (dp->cyls == 0 || dp->heads == 0 || dp->sectors == 0)
 			goto fake_it;
 
 		dp->disksize = dp->heads * dp->cyls * dp->sectors;
