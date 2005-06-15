@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dir.5,v 1.10 2003/07/04 23:06:01 millert Exp $
+.\"	$OpenBSD: dir.5,v 1.11 2005/06/15 17:51:35 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -132,9 +132,7 @@ typedef struct _dirdesc {
 #define	dirfd(dirp)	((dirp)->dd_fd)
 
 /* flags for opendir2 */
-#define DTF_HIDEW	0x0001	/* hide whiteout entries */
 #define DTF_NODUP	0x0002	/* don't return duplicate names */
-#define DTF_REWIND	0x0004	/* rewind after reading union stack */
 #define __DTF_READALL	0x0008	/* everything has been read */
 
 #endif /* _POSIX_SOURCE */
