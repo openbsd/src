@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.1 2005/01/14 01:08:11 pvalchev Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.2 2005/06/15 23:39:19 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -65,6 +65,8 @@ struct re_pci_softc {
 const struct pci_matchid re_pci_devices[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169 },
 	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGLAPCIGT },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T },
+	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902 },
 };
 
 int re_pci_probe(struct device *, void *, void *);
