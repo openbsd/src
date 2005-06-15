@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.12 2005/05/29 06:03:11 reyk Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.13 2005/06/15 01:33:50 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -96,16 +96,17 @@ enum rtw_locale {
 };
 
 enum rtw_rfchipid {
-	RTW_RFCHIPID_RESERVED = 0,
-	RTW_RFCHIPID_INTERSIL = 1,
-	RTW_RFCHIPID_RFMD2948 = 2,
-	RTW_RFCHIPID_PHILIPS = 3,
-	RTW_RFCHIPID_MAXIM2820 = 4,
-	RTW_RFCHIPID_GCT = 5,
-	RTW_RFCHIPID_RFMD2958 = 6,
-	RTW_RFCHIPID_MAXIM2822 = 7,
-	RTW_RFCHIPID_MAXIM2825 = 8,
-	RTW_RFCHIPID_RTL8225 = 9
+	RTW_RFCHIPID_RESERVED	= 0x00,
+	RTW_RFCHIPID_INTERSIL	= 0x01,
+	RTW_RFCHIPID_RFMD2948	= 0x02,
+	RTW_RFCHIPID_PHILIPS	= 0x03,
+	RTW_RFCHIPID_MAXIM2820	= 0x04,
+	RTW_RFCHIPID_GCT	= 0x05,
+	RTW_RFCHIPID_RFMD2958	= 0x06,
+	RTW_RFCHIPID_MAXIM2822	= 0x07,
+	RTW_RFCHIPID_MAXIM2825	= 0x08,
+	RTW_RFCHIPID_RTL8225	= 0x09,
+	RTW_RFCHIPID_RTL8255	= 0x0a
 };
 
 /* sc_flags */
@@ -364,6 +365,11 @@ struct rtw_sa2400 {
 };
 
 struct rtw_rtl8225 {
+	struct rtw_rf		rt_rf;
+	struct rtw_rfbus	rt_bus;
+};
+
+struct rtw_rtl8255 {
 	struct rtw_rf		rt_rf;
 	struct rtw_rfbus	rt_bus;
 };

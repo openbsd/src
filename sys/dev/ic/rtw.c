@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.33 2005/06/13 13:37:51 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.34 2005/06/15 01:33:50 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -201,6 +201,7 @@ void	 rtw_led_newstate(struct rtw_softc *, enum ieee80211_state);
 struct rtw_rf *rtw_sa2400_create(struct rtw_regs *, rtw_rf_write_t, int);
 struct rtw_rf *rtw_max2820_create(struct rtw_regs *, rtw_rf_write_t, int);
 struct rtw_rf *rtw_rtl8225_create(struct rtw_regs *, rtw_rf_write_t);
+struct rtw_rf *rtw_rtl8255_create(struct rtw_regs *, rtw_rf_write_t);
 int	 rtw_phy_init(struct rtw_regs *, struct rtw_rf *, u_int8_t, u_int8_t,
 	    u_int, int, int, enum rtw_pwrstate);
 int	 rtw_bbp_preinit(struct rtw_regs *, u_int, int, u_int);
@@ -232,6 +233,12 @@ int	 rtw_rtl8225_init(struct rtw_rf *, u_int, u_int8_t,
 	    enum rtw_pwrstate);
 int	 rtw_rtl8225_txpower(struct rtw_rf *, u_int8_t);
 int	 rtw_rtl8225_tune(struct rtw_rf *, u_int);
+int	 rtw_rtl8255_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
+void	 rtw_rtl8255_destroy(struct rtw_rf *);
+int	 rtw_rtl8255_init(struct rtw_rf *, u_int, u_int8_t,
+	    enum rtw_pwrstate);
+int	 rtw_rtl8255_txpower(struct rtw_rf *, u_int8_t);
+int	 rtw_rtl8255_tune(struct rtw_rf *, u_int);
 int	 rtw_rf_hostwrite(struct rtw_regs *, enum rtw_rfchipid, u_int,
 	    u_int32_t);
 int	 rtw_rf_macwrite(struct rtw_regs *, enum rtw_rfchipid, u_int,
@@ -604,6 +611,9 @@ rtw_srom_parse(struct rtw_softc *sc)
 	switch (*rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
 		rfname = "RTL8225";
+		break;
+	case RTW_RFCHIPID_RTL8255:
+		rfname = "RTL8255";
 		break;
 	case RTW_RFCHIPID_GCT:		/* this combo seen in the wild */
 		rfname = "GRF5101";
@@ -3477,6 +3487,7 @@ rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid, int digphy)
 
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
+	case RTW_RFCHIPID_RTL8255:
 	default:
 		rf_write = rtw_rf_hostwrite;
 		break;
@@ -3492,6 +3503,10 @@ rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid, int digphy)
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
 		rf = rtw_rtl8225_create(&sc->sc_regs, rf_write);
+		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
+		break;
+	case RTW_RFCHIPID_RTL8255:
+		rf = rtw_rtl8255_create(&sc->sc_regs, rf_write);
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
 		break;
 	case RTW_RFCHIPID_MAXIM2820:
@@ -4499,6 +4514,68 @@ rtw_rtl8225_create(struct rtw_regs *regs, rtw_rf_write_t rf_write)
 	return (&rt->rt_rf);
 }
 
+int
+rtw_rtl8255_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+{
+	return (0);
+}
+
+void
+rtw_rtl8255_destroy(struct rtw_rf *rf)
+{
+	struct rtw_rtl8255 *rt = (struct rtw_rtl8255 *)rf;
+	bzero(rt, sizeof(*rt));
+	free(rt, M_DEVBUF);
+}
+
+int
+rtw_rtl8255_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+    enum rtw_pwrstate power)
+{
+	return (0);
+}
+
+int
+rtw_rtl8255_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+{
+	return (0);
+}
+
+int
+rtw_rtl8255_tune(struct rtw_rf *rf, u_int freq)
+{
+	return (0);
+}
+
+struct rtw_rf *
+rtw_rtl8255_create(struct rtw_regs *regs, rtw_rf_write_t rf_write)
+{
+	struct rtw_rtl8255 *rt;
+	struct rtw_rfbus *bus;
+	struct rtw_rf *rf;
+	struct rtw_bbpset *bb;
+
+	rt = malloc(sizeof(*rt), M_DEVBUF, M_NOWAIT);
+	if (rt == NULL)
+		return NULL;
+	bzero(rt, sizeof(struct rtw_rtl8255));
+
+	rf = &rt->rt_rf;
+	bus = &rt->rt_bus;
+
+	rf->rf_init = rtw_rtl8255_init;
+	rf->rf_destroy = rtw_rtl8255_destroy;
+	rf->rf_txpower = rtw_rtl8255_txpower;
+	rf->rf_tune = rtw_rtl8255_tune;
+	rf->rf_pwrstate = rtw_rtl8255_pwrstate;
+	bb = &rf->rf_bbpset;
+
+	bus->b_regs = regs;
+	bus->b_write = rf_write;
+
+	return (&rt->rt_rf);
+}
+
 /* freq is in MHz */
 int
 rtw_phy_init(struct rtw_regs *regs, struct rtw_rf *rf, u_int8_t opaque_txpower,
@@ -4783,6 +4860,8 @@ rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
 		return "Intersil";
 	case RTW_RFCHIPID_RTL8225:
 		return "Realtek RTL8225";
+	case RTW_RFCHIPID_RTL8255:
+		return "Realtek RTL8255";
 	default:
 		return "unknown";
 	}
@@ -4831,6 +4910,7 @@ rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 		lo_to_hi = 0;
 		break;
 	case RTW_RFCHIPID_RTL8225:
+	case RTW_RFCHIPID_RTL8255:
 		nbits = 16;
 		lo_to_hi = 0;
 		bits = LSHIFT(val, RTL8225_TWI_DATA_MASK) |
