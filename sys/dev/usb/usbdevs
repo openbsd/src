@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.154 2005/06/01 00:58:00 jsg Exp $
+$OpenBSD: usbdevs,v 1.155 2005/06/16 03:35:34 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -665,6 +665,7 @@ product BELKIN SCSI		0x0115	SCSI
 product BELKIN USB2LAN		0x0121	USB to LAN Converter
 product BELKIN F5U237		0x0237	F5U237 USB 2.0 7-Port Hub
 product BELKIN F5U120		0x1203	F5U120-PC Hub
+product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 Ethernet
