@@ -26,7 +26,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.15 2005/06/15 14:30:56 robert Exp $";
+	"@(#) $Id: main.c,v 1.16 2005/06/16 19:41:23 robert Exp $";
 #endif
 
 extern char *configfilename;
@@ -85,8 +85,9 @@ main(int argc, char *argv[])
     u_int32_t prev_genid;
     int vers;
     fd_set rfds, readers;
-    int nfds, n, i;
+    int nfds, n, i, ch;
     sigset_t mask, omask;
+    const char *errstr;
 
     if (geteuid() != 0) {
 	fprintf(stderr, "must be root\n");
@@ -94,27 +95,32 @@ main(int argc, char *argv[])
     }
     setlinebuf(stderr);
 
-    argv++, argc--;
-    while (argc > 0 && *argv[0] == '-') {
-	if (strcmp(*argv, "-d") == 0) {
-	    if (argc > 1 && isdigit(*(argv + 1)[0])) {
-		argv++, argc--;
-		debug = atoi(*argv);
-	    } else
-		debug = DEFAULT_DEBUG;
-	} else if (strcmp(*argv, "-c") == 0) {
-	    if (argc > 1) {
-		argv++, argc--;
-		configfilename = *argv;
-	    } else
-		goto usage;
-	} else if (strcmp(*argv, "-p") == 0) {
-	    pruning = 0;
-	} else
-	    goto usage;
-	argv++, argc--;
+    while ((ch = getopt(argc, argv, "c:d::p")) != -1) {
+	    switch (ch) {
+	    case 'c':
+		    configfilename = optarg;
+		    break;
+	    case 'd':
+		    if (!optarg)
+			    debug = DEFAULT_DEBUG;
+		    else {
+			    debug = strtonum(optarg, 0, 3, &errstr);
+			    if (errstr) {
+				    warnx("debug level %s", errstr);
+				    debug = DEFAULT_DEBUG;
+			    }
+		    }
+		    break;
+	    case 'p':
+		    pruning = 0;
+		    break;
+	    default:
+		    goto usage;
+	    }
     }
-
+    argc -= optind;
+    argv += optind;
+    
     if (argc > 0) {
 usage:	fprintf(stderr,
 		"usage: mrouted [-p] [-c configfile] [-d [debug_level]]\n");
