@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2005/05/27 19:01:21 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.41 2005/06/16 21:04:02 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -118,7 +118,7 @@ scsibus*	at usscanner?
 #uyap*		at uhub?		# Y@P firmware loader
 udsbr*		at uhub?		# D-Link DSB-R100 radio
 radio*		at udsbr?		# USB radio
-ubt*		at uhub?		# USB Bluetooth
+#ubt*		at uhub?		# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
 
 sd*		at scsibus?
