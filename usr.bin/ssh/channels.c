@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.215 2005/06/16 03:38:36 djm Exp $");
+RCSID("$OpenBSD: channels.c,v 1.216 2005/06/16 08:00:00 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1177,7 +1177,7 @@ port_open_helper(Channel *c, char *rtype)
 	int direct;
 	char buf[1024];
 	char *remote_ipaddr = get_peer_ipaddr(c->sock);
-	u_short remote_port = get_peer_port(c->sock);
+	int remote_port = get_peer_port(c->sock);
 
 	direct = (strcmp(rtype, "direct-tcpip") == 0);
 
@@ -1207,7 +1207,7 @@ port_open_helper(Channel *c, char *rtype)
 		}
 		/* originator host and port */
 		packet_put_cstring(remote_ipaddr);
-		packet_put_int(remote_port);
+		packet_put_int((u_int)remote_port);
 		packet_send();
 	} else {
 		packet_start(SSH_MSG_PORT_OPEN);
