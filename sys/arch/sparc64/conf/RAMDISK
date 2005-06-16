@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.44 2005/05/16 16:56:44 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.45 2005/06/16 14:13:26 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -39,6 +39,8 @@ fhc0	at central0
 fhc*	at mainbus0
 
 # Bus types found on SPARC systems.
+schizo*	at mainbus0
+pci*	at schizo?
 sbus*	at mainbus0		# Ultra 1/E4500
 psycho*	at mainbus0
 upa0	at mainbus0
