@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.19 2005/04/16 18:15:41 millert Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.20 2005/06/16 14:51:37 millert Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.19 2005/04/16 18:15:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.20 2005/06/16 14:51:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,6 @@ pass5(void)
 	struct cg *newcg = (struct cg *)buf;
 	struct ocg *ocg = (struct ocg *)buf;
 
-	statemap[WINO] = USTATE;
 	memset(newcg, 0, (size_t)fs->fs_cgsize);
 	newcg->cg_niblk = fs->fs_ipg;
 	if (cvtlevel >= 3) {
