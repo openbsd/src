@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.9 2004/05/18 16:50:31 mickey Exp $	*/
+/*	$OpenBSD: dir.c,v 1.10 2005/06/16 14:47:09 millert Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,8 +61,6 @@ _dl_opendir(const char *name)
 	struct stat sb;
 	int incr;
 
-	int flags = DTF_HIDEW|DTF_NODUP;
-
 	if ((fd = _dl_open(name, O_RDONLY | O_NONBLOCK)) < 0)
 		return (NULL);
 	if (_dl_fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
@@ -94,11 +92,9 @@ _dl_opendir(const char *name)
 		return (NULL);
 	}
 	dirp->dd_seek = 0;
-	flags &= ~DTF_REWIND;
-
 	dirp->dd_loc = 0;
 	dirp->dd_fd = fd;
-	dirp->dd_flags = flags;
+	dirp->dd_flags = DTF_NODUP;
 
 	/*
 	 * Set up seek point for rewinddir.
@@ -163,8 +159,6 @@ _dl_readdir(DIR *dirp)
 			return (NULL);
 		dirp->dd_loc += dp->d_reclen;
 		if (dp->d_ino == 0)
-			continue;
-		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
 			continue;
 		return (dp);
 	}
