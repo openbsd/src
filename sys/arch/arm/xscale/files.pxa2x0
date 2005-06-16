@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.13 2005/05/27 19:01:21 uwe Exp $
+#	$OpenBSD: files.pxa2x0,v 1.14 2005/06/16 21:06:55 uwe Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -41,10 +41,10 @@ attach	saost at pxaip
 file	arch/arm/sa11x0/sa11x0_ost.c		saost needs-flag
 
 # NS16550 compatible serial ports
-attach	com at pxaip with pxauart
-file	arch/arm/xscale/pxa2x0_com.c		pxauart
-file	arch/arm/xscale/pxa2x0_a4x_space.c	pxauart | obio
-file	arch/arm/xscale/pxa2x0_a4x_io.S		pxauart | obio
+attach	com at pxaip with com_pxaip
+file	arch/arm/xscale/pxa2x0_com.c		com_pxaip
+file	arch/arm/xscale/pxa2x0_a4x_space.c	com_pxaip
+file	arch/arm/xscale/pxa2x0_a4x_io.S		com_pxaip
 
 # PXA27x USB Device Controller
 device	pxaudc

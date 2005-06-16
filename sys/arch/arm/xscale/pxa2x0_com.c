@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_com.c,v 1.5 2005/05/27 18:42:15 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_com.c,v 1.6 2005/06/16 21:06:55 uwe Exp $ */
 /*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -62,18 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $")
 static int	pxauart_match(struct device *, void *, void *);
 static void	pxauart_attach(struct device *, struct device *, void *);
 
-#ifdef __NetBSD__
-CFATTACH_DECL(pxauart, sizeof(struct com_softc),
-    pxauart_match, pxauart_attach, NULL, NULL);
-#else
-struct cfattach pxauart_ca = {
+struct cfattach com_pxaip_ca = {
         sizeof (struct com_softc), pxauart_match, pxauart_attach
 };
-	 
-struct cfdriver pxauart_cd = {
-	NULL, "pxauart", DV_DULL
-};
-#endif
 
 static int
 pxauart_match(struct device *parent, void *cf, void *aux)
