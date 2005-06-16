@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.65 2005/05/24 08:54:14 marco Exp $	*/
+/*	$OpenBSD: apm.c,v 1.66 2005/06/16 16:49:04 beck Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -144,8 +144,8 @@ int apm_op_inprog;
 u_int apm_flags;
 u_char apm_majver;
 u_char apm_minver;
-int apm_dobusy = 1;
-int apm_doidle = 1;
+int apm_dobusy = 0;
+int apm_doidle = 0;
 int apm_bebatt = 0;
 int apm_idle_called = 0;
 
@@ -731,8 +731,12 @@ apm_set_ver(self)
 	printf(": Power Management spec V%d.%d", apm_majver, apm_minver);
 	if (apm_flags & APM_IDLE_SLOWS) {
 		DPRINTF((" (slowidle)"));
-	} else
+		apm_dobusy = 1;
+		apm_doidle = 1;
+	} else {
 		apm_dobusy = 0;
+		apm_doidle = 1;
+	}
 #ifdef DIAGNOSTIC
 	if (apm_flags & APM_BIOS_PM_DISABLED)
 		printf(" (BIOS mgmt disabled)");
@@ -949,6 +953,7 @@ apm_thread_create(v)
 		apm_disconnect(sc);
 		printf("%s: failed to create kernel thread, disabled",
 		    sc->sc_dev.dv_xname);
+		apm_dobusy = apm_doidle = 0;
 	}
 }
 
