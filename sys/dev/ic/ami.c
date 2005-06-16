@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.41 2005/05/28 00:15:41 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.42 2005/06/16 20:36:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -411,7 +411,7 @@ ami_attach(sc)
 		cmd->acc_io.aio_channel = AMI_FC_EINQ3;
 		cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
 		cmd->acc_io.aio_data = htole32(pa);
-		if (ami_cmd(ccb, 0, 1) == 0) {
+		if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) == 0) {
 			struct ami_fc_einquiry *einq = idata;
 			struct ami_fc_prodinfo *pi = idata;
 
@@ -426,7 +426,7 @@ ami_attach(sc)
 			cmd->acc_io.aio_channel = AMI_FC_PRODINF;
 			cmd->acc_io.aio_param = 0;
 			cmd->acc_io.aio_data = htole32(pa);
-			if (ami_cmd(ccb, 0, 1) == 0) {
+			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) == 0) {
 				sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
 
 				bcopy (pi->api_fwver, sc->sc_fwver, 16);
@@ -451,7 +451,7 @@ ami_attach(sc)
 			cmd->acc_io.aio_channel = 0;
 			cmd->acc_io.aio_param = 0;
 			cmd->acc_io.aio_data = htole32(pa);
-			if (ami_cmd(ccb, 0, 1) != 0) {
+			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 				ccb = ami_get_ccb(sc);
 				cmd = ccb->ccb_cmd;
 
@@ -459,7 +459,7 @@ ami_attach(sc)
 				cmd->acc_io.aio_channel = 0;
 				cmd->acc_io.aio_param = 0;
 				cmd->acc_io.aio_data = htole32(pa);
-				if (ami_cmd(ccb, 0, 1) != 0) {
+				if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 					AMI_UNLOCK_AMI(sc, lock);
 					printf(": cannot do inquiry\n");
 					ami_dispose(sc);
@@ -510,7 +510,7 @@ ami_attach(sc)
 		cmd->acc_io.aio_param = 0;
 		cmd->acc_io.aio_data = htole32(pa);
 
-		if (ami_cmd(ccb, 0, 1) != 0) {
+		if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 			AMI_DPRINTF(AMI_D_MISC, ("getting io completion values"
 			    " failed\n"));
 		}
@@ -529,7 +529,7 @@ ami_attach(sc)
 			pp[0] = 0; /* minimal outstanding commands, 0 disable */
 			pp[1] = 0; /* maximal timeout in us, 0 disable */
 
-			if (ami_cmd(ccb, 0, 1) != 0) {
+			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 				AMI_DPRINTF(AMI_D_MISC, ("setting io completion"
 				    " values failed\n"));
 			}
@@ -667,7 +667,7 @@ ami_quartz_exec(sc, cmd)
 	}
 
 	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	sc->sc_mbox->acc_busy = 1;
@@ -703,16 +703,22 @@ ami_quartz_done(sc, mbox)
 	 */
 	i = 0;
 	while ((nstat = sc->sc_mbox->acc_nstat) == 0xff) {
+		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
+		    BUS_DMASYNC_POSTREAD);
 		delay(1);
 		if (i++ > 1000000)
 			return (0); /* nothing to do */
 	}
 	sc->sc_mbox->acc_nstat = 0xff;
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
+	    BUS_DMASYNC_POSTWRITE);
 
 	/* wait until fw wrote out all completions */
 	i = 0;
 	AMI_DPRINTF(AMI_D_CMD, ("aqd %d ", nstat));
 	for (n = 0; n < nstat; n++) {
+		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
+		    BUS_DMASYNC_PREREAD);
 		while ((completed[n] = sc->sc_mbox->acc_cmplidl[n]) ==
 		    0xff) {
 			delay(1);
@@ -720,6 +726,8 @@ ami_quartz_done(sc, mbox)
 				return (0); /* nothing to do */
 		}
 		sc->sc_mbox->acc_cmplidl[n] = 0xff;
+		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
+		    BUS_DMASYNC_POSTWRITE);
 	}
 
 	/* this should never happen, someone screwed up the completion status */
@@ -734,14 +742,13 @@ ami_quartz_done(sc, mbox)
 	memcpy(mbox, (struct ami_iocmd *)sc->sc_mbox, 16);
 	mbox->acc_nstat = nstat;
 	mbox->acc_status = status;
-	for (n = 0; n < nstat; n++) {
+	for (n = 0; n < nstat; n++)
 		mbox->acc_cmplidl[n] = completed[n];
-	}
 
 	/* ack interrupt */
 	ami_write_inbound_db(sc, AMI_QIDB_ACK);
 
-	return (1); /* ready to complete all IOs in acc_cmplidl */
+	return (1);	/* ready to complete all IOs in acc_cmplidl */
 }
 
 int
@@ -1608,8 +1615,9 @@ ami_ioctl(dev, cmd, addr)
 	u_long cmd;
 	caddr_t addr;
 {
-	int lock, error = 0;
+	int error = 0;
 	struct ami_softc *sc = (struct ami_softc *)dev;
+	ami_lock_t lock;
 
 	/* FIXME do we need to test for sc_dis_poll? */
 
@@ -1763,7 +1771,7 @@ ami_ioctl_alarm(sc, ra)
 	    sc->sc_dev.dv_xname, *p));
 
 
-	if (ami_cmd(ccb, 0, 1) == 0) {
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
 		AMI_DPRINTF(AMI_D_IOCTL, ("out %x\n", *p));
 		if (ra->opcode == BIOCGALARM_STATE)
 			ra->state = *p;
@@ -1809,7 +1817,7 @@ ami_ioctl_startstop(sc, bs)
 	cmd->acc_io.aio_pad[0] = AMI_STARTU_SYNC;
 	cmd->acc_io.aio_data = NULL;
 
-	if (ami_cmd(ccb, 0, 1) == 0) {
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s\n",
 		    bs->opcode  == BIOCSUNIT_START ? "started" : "stopped"));
 	}
@@ -1856,7 +1864,7 @@ ami_ioctl_status(sc, bs)
 
 	AMI_DPRINTF(AMI_D_IOCTL, ("status %d\n", bs->opcode));
 
-	if (ami_cmd(ccb, 0, 1) == 0) {
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
 		AMI_DPRINTF(AMI_D_IOCTL, ("success\n"));
 	}
 	else {
@@ -1948,7 +1956,7 @@ ami_ioctl_passthru(sc, bp)
 	printf("\n");
 #endif /* AMI_DEBUG */
 
-	if (ami_cmd(ccb, 0, 1) == 0) {
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
 		AMI_DPRINTF(AMI_D_IOCTL, ("cdb issued\n"));
 		if (bp->direction == BIOC_DIRIN) {
 			/* userland expects data */
