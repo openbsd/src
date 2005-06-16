@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.22 2005/06/14 19:46:05 millert Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.23 2005/06/16 14:51:21 millert Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: interactive.c,v 1.22 2005/06/14 19:46:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: interactive.c,v 1.23 2005/06/16 14:51:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -629,10 +629,6 @@ mkentry(char *name, struct direct *dp, struct afile *fp)
 	case DT_CHR:
 	case DT_BLK:
 		fp->postfix = '#';
-		break;
-
-	case DT_WHT:
-		fp->postfix = '%';
 		break;
 
 	case DT_UNKNOWN:
