@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.17 2005/04/08 21:50:37 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.18 2005/06/16 21:57:29 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -71,10 +71,12 @@ struct pxagpio_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
-	void *sc_irqcookie[3];
+	void *sc_irqcookie[4];
 	u_int32_t sc_mask[3];
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	struct gpio_irq_handler *sc_handlers[GPIO_NPINS];
+	int sc_minipl;
+	int sc_maxipl;
 #else
 	struct gpio_irq_handler *sc_handlers[2];
 #endif
@@ -110,6 +112,8 @@ int pxagpio_intr1(void *);
 #ifdef PXAGPIO_HAS_GPION_INTRS
 int pxagpio_dispatch(struct pxagpio_softc *, int);
 int pxagpio_intrN(void *);
+int pxagpio_intrlow(void *);
+void pxa2x0_gpio_intr_fixup(int minipl, int maxipl);
 #endif
 u_int32_t pxagpio_reg_read(struct pxagpio_softc *sc, int reg);
 void pxagpio_reg_write(struct pxagpio_softc *sc, int reg, u_int32_t val);
@@ -194,14 +198,8 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 	pxagpio_reg_write(sc, GPIO_GEDR3, ~0);
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
-	sc->sc_irqcookie[2] = pxa2x0_intr_establish(PXA2X0_INT_GPION, IPL_BIO,
-	    pxagpio_intrN, sc, NULL);
-	if (sc->sc_irqcookie[2] == NULL) {
-		printf("%s: failed to hook main GPIO interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
+	sc->sc_minipl = IPL_NONE;
+	sc->sc_maxipl = IPL_NONE;
 #endif
 
 	sc->sc_irqcookie[0] = sc->sc_irqcookie[1] = NULL;
@@ -256,12 +254,29 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 		sc->sc_irqcookie[0] = pxa2x0_intr_establish(PXA2X0_INT_GPIO0,
 		    spl, pxagpio_intr0, sc, NULL);
 		KDASSERT(sc->sc_irqcookie[0]);
-	} else
-	if (gpio == 1) {
+	} else if (gpio == 1) {
 		KDASSERT(sc->sc_irqcookie[1] == NULL);
 		sc->sc_irqcookie[1] = pxa2x0_intr_establish(PXA2X0_INT_GPIO1,
 		    spl, pxagpio_intr1, sc, NULL);
 		KDASSERT(sc->sc_irqcookie[1]);
+	} else {
+#ifdef PXAGPIO_HAS_GPION_INTRS
+		int minipl, maxipl;
+		
+		if (sc->sc_maxipl == IPL_NONE || spl > sc->sc_maxipl) {
+			maxipl = spl;
+		} else {
+			maxipl = sc->sc_maxipl;
+		}
+
+		
+		if (sc->sc_minipl == IPL_NONE || spl < sc->sc_minipl) {
+			minipl = spl;
+		} else {
+			minipl = sc->sc_minipl;
+		}
+		pxa2x0_gpio_intr_fixup(minipl, maxipl);
+#endif
 	}
 
 	bit = GPIO_BIT(gpio);
@@ -298,14 +313,87 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 	if (gh->gh_gpio == 0) {
 		pxa2x0_intr_disestablish(sc->sc_irqcookie[0]);
 		sc->sc_irqcookie[0] = NULL;
-	} else
-	if (gh->gh_gpio == 1) {
+	} else if (gh->gh_gpio == 1) {
 		pxa2x0_intr_disestablish(sc->sc_irqcookie[1]);
-		sc->sc_irqcookie[0] = NULL;
+		sc->sc_irqcookie[1] = NULL;
+	}  else { 
+#ifdef PXAGPIO_HAS_GPION_INTRS
+		int i, minipl, maxipl, ipl;
+		minipl = IPL_HIGH;
+		maxipl = IPL_NONE;
+		for (i = 2; i < sc->npins; i++) {
+			if (sc->sc_handlers[i] != NULL) {
+				ipl = sc->sc_handlers[i]->gh_spl;
+				if (minipl > ipl)
+					minipl = ipl;
+
+				if (maxipl < ipl)
+					maxipl = ipl;
+			}
+		}
+		pxa2x0_gpio_intr_fixup(minipl, maxipl);
+#endif /* PXAGPIO_HAS_GPION_INTRS */
 	}
 
-	FREE(gh, M_DEVBUF);
+	FREE(gh, M_DEVBUF); 
 }
+
+#ifdef PXAGPIO_HAS_GPION_INTRS
+void
+pxa2x0_gpio_intr_fixup(int minipl, int maxipl)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int save = disable_interrupts(I32_bit);
+
+	if (maxipl == IPL_NONE  && minipl == IPL_HIGH) {
+		/* no remaining interrupts */
+		if (sc->sc_irqcookie[2])
+			pxa2x0_intr_disestablish(sc->sc_irqcookie[2]);
+		sc->sc_irqcookie[2] = NULL;
+		if (sc->sc_irqcookie[3])
+			pxa2x0_intr_disestablish(sc->sc_irqcookie[3]);
+		sc->sc_irqcookie[3] = NULL;
+		sc->sc_minipl = IPL_NONE;
+		sc->sc_maxipl = IPL_NONE;
+		restore_interrupts(save);
+		return;
+	}
+		
+	if (sc->sc_maxipl == IPL_NONE || maxipl > sc->sc_maxipl) {
+		if (sc->sc_irqcookie[2])
+			pxa2x0_intr_disestablish(sc->sc_irqcookie[2]);
+
+		sc->sc_maxipl = maxipl;
+		sc->sc_irqcookie[2] =
+		    pxa2x0_intr_establish(PXA2X0_INT_GPION,
+		    maxipl, pxagpio_intrN, sc, NULL);
+
+		if (sc->sc_irqcookie[2] == NULL) {
+			printf("%s: failed to hook main "
+			    "GPIO interrupt\n",
+			    sc->sc_dev.dv_xname);
+			/* XXX - panic? */
+		}
+	}
+	if (sc->sc_minipl == IPL_NONE || minipl < sc->sc_minipl) {
+		if (sc->sc_irqcookie[3])
+			pxa2x0_intr_disestablish(sc->sc_irqcookie[3]);
+
+		sc->sc_minipl = minipl;
+		sc->sc_irqcookie[3] =
+		    pxa2x0_intr_establish(PXA2X0_INT_GPION,
+		    sc->sc_minipl, pxagpio_intrlow, sc, NULL);
+
+		if (sc->sc_irqcookie[3] == NULL) {
+			printf("%s: failed to hook main "
+			    "GPIO interrupt\n",
+			    sc->sc_dev.dv_xname);
+			/* XXX - panic? */
+		}
+	}
+	restore_interrupts(save);
+}
+#endif /* PXAGPIO_HAS_GPION_INTRS */
 
 const char *
 pxa2x0_gpio_intr_string(void *cookie)
@@ -449,6 +537,13 @@ pxagpio_intrN(void *arg)
 	handled |= pxagpio_dispatch(sc, 96);
 
 	return (handled);
+}
+
+int
+pxagpio_intrlow(void *arg)
+{
+	/* dummy */
+	return 0;
 }
 #endif	/* PXAGPIO_HAS_GPION_INTRS */
 
