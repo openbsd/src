@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.41 2005/06/16 21:04:02 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.42 2005/06/16 21:58:27 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,11 +48,13 @@ cpu0		at mainbus?
 pxaip0		at mainbus?
 
 pxaintc0	at pxaip?		# interrupt controller
-pxagpio0	at pxaip?		# GPIO
+pxagpio0	at pxaip?		# GPIO controller
 pxadmac0	at pxaip?		# DMA controller
+saost0		at pxaip? addr 0x40a00000 size 0x20
+
+# PCMCIA/CF socket and GPIO controllers
 scoop0		at pxaip?
 scoop1		at pxaip?
-saost0		at pxaip? addr 0x40a00000 size 0x20
 
 # touch screen
 zts0		at pxaip?
@@ -121,12 +123,12 @@ radio*		at udsbr?		# USB radio
 #ubt*		at uhub?		# USB Bluetooth
 ugen*		at uhub?		# USB Generic driver
 
-sd*		at scsibus?
-#st*		at scsibus?
-cd*		at scsibus?
-#ch*		at scsibus?
-#ss*		at scsibus?
-#uk*		at scsibus?
+sd*		at scsibus?		# SCSI disk drives
+#st*		at scsibus?		# SCSI tape drives
+cd*		at scsibus?		# SCSI CD-ROM drives
+#ch*		at scsibus?		# SCSI autochangers
+#ss*		at scsibus?		# SCSI scanners
+#uk*		at scsibus?		# unknown SCSI
 
 # integrated 16550 UARTs
 options COM_PXA2X0
@@ -134,17 +136,22 @@ com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
 com1	at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
 com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 
-pxapcic0	at pxaip?		# CF (pcmcia) support
-pcmcia*		at pxapcic?
-com*		at pcmcia?		# PCMCIA modems/serial ports
-wi*		at pcmcia?
-ne*		at pcmcia?
-wdc*		at pcmcia?
+# integrated PCMCIA/CF controller
+pxapcic0	at pxaip?
 
-wd0		at wdc? flags 0x0000	# IDE hard drives
+# PCMCIA bus support
+pcmcia*		at pxapcic?
+
+# PCMCIA (CF) devices
+com*		at pcmcia?		# PCMCIA modems/serial ports
+wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
+ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
+wdc*		at pcmcia?		# hard disk controller
+
+# IDE hard drives
 wd*		at wdc? flags 0x0000
 
-# PHY
+# Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
 inphy*	at mii?				# Intel 82555 PHYs
 iophy*	at mii?				# Intel 82553 PHYs
