@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.70 2005/06/10 13:34:23 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.71 2005/06/16 07:46:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -207,7 +207,8 @@ main(int argc, char **argv)
 		cvs_log(LP_ABORT, "an operation on a file or directory failed");
 		break;
 	case CVS_EX_BADROOT:
-		cvs_log(LP_ABORT,
+		/* match GNU CVS output, thus the LP_ERR and LP_ABORT codes. */
+		cvs_log(LP_ERR,
 		    "No CVSROOT specified! Please use the `-d' option");
 		cvs_log(LP_ABORT,
 		    "or set the CVSROOT enviroment variable.");
