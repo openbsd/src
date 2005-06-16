@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2004/12/19 16:19:43 deraadt Exp $
+# $OpenBSD: Makefile,v 1.4 2005/06/16 08:23:49 markus Exp $
 
 NOPROG=
 NOMAN=
@@ -12,10 +12,16 @@ NOMAN=
 
 FIRM=	3c990
 
-CLEANFILES+= build ${FIRM}
+PROG=	build
 
-all:	build
+CLEANFILES+= ${FIRM} ${PROG}
+
+all: ${FIRM}
+
+${FIRM}: build
 	${.OBJDIR}/build
+
+realinstall:
 
 afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
@@ -25,4 +31,3 @@ afterinstall:
 .endif
 
 .include <bsd.prog.mk>
-
