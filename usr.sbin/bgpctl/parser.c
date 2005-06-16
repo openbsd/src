@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.16 2005/06/07 17:43:06 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.17 2005/06/16 18:43:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -517,7 +517,7 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 		    &ina, sizeof(ina))) == -1)
 			return (0);
 		addr->af = AF_INET;
-		addr->v4.s_addr = ina.s_addr & htonl(0xffffffff << (32 - bits));
+		addr->v4.s_addr = ina.s_addr & htonl(prefixlen2mask(bits));
 		*prefixlen = bits;
 		return (1);
 	} else {
@@ -725,4 +725,14 @@ parse_nexthop(const char *word, struct parse_result *r)
 
 	SIMPLEQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
+}
+
+/* XXX local copy from kroute.c, should go to a shared file */
+in_addr_t
+prefixlen2mask(u_int8_t prefixlen)
+{
+	if (prefixlen == 0)
+		return (0);
+
+	return (0xffffffff << (32 - prefixlen));
 }

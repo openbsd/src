@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.35 2005/03/11 12:54:20 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.36 2005/06/16 18:43:07 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -620,8 +620,8 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 		/* ebgp directly connected */
 		if (a->nexthop != NULL &&
 		    a->nexthop->flags & NEXTHOP_CONNECTED) {
-			mask = 0xffffffff << (32 - a->nexthop->nexthop_netlen);
-			mask = htonl(mask);
+			mask = htonl(
+			    prefixlen2mask(a->nexthop->nexthop_netlen));
 			if ((peer->remote_addr.v4.s_addr & mask) ==
 			    (a->nexthop->nexthop_net.v4.s_addr & mask))
 				/* nexthop and peer are in the same net */

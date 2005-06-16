@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.227 2005/06/09 12:31:38 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.228 2005/06/16 18:43:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2518,7 +2518,7 @@ session_match_mask(struct peer *p, struct sockaddr *ip)
 	struct in6_addr	 mask;
 
 	if (p->conf.remote_addr.af == AF_INET) {
-		v4mask = htonl(0xffffffff << (32 - p->conf.remote_masklen));
+		v4mask = htonl(prefixlen2mask(p->conf.remote_masklen));
 		if (p->conf.remote_addr.v4.s_addr ==
 		    ((((struct sockaddr_in *)ip)->sin_addr.s_addr) & v4mask))
 			return (1);
