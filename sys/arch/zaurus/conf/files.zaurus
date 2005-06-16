@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.18 2005/05/01 19:25:37 matthieu Exp $
+#	$OpenBSD: files.zaurus,v 1.19 2005/06/16 21:30:12 uwe Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -53,11 +53,9 @@ attach zts at pxaip
 file arch/zaurus/dev/zts.c			zts needs-flag
 
 # Zaurus sound
-device	zaudio: audio, auconv,  mulaw
+device	zaudio: audio, auconv, mulaw, i2s, i2c
 attach	zaudio at pxaip
 file	arch/zaurus/dev/zaurus_audio.c		zaudio
-file	arch/arm/xscale/pxa2x0_i2s.c		zaudio
-file	arch/arm/xscale/pxa2x0_i2c.c		zaudio
 
 #
 # Machine-independent ATA drivers

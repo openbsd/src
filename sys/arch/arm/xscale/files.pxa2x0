@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.14 2005/06/16 21:06:55 uwe Exp $
+#	$OpenBSD: files.pxa2x0,v 1.15 2005/06/16 21:30:11 uwe Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -58,6 +58,14 @@ file	arch/arm/xscale/pxa2x0_ohci.c		pxaohci
 # LCD controller
 device	lcd: wsemuldisplaydev, rasops16, rasops8, rasops4
 file	arch/arm/xscale/pxa2x0_lcd.c		lcd needs-flag
+
+# Inter-Integrated Circuit controller
+device	i2c {}
+file	arch/arm/xscale/pxa2x0_i2c.c		i2c
+
+# Inter-IC Sound controller
+device	i2s {}
+file	arch/arm/xscale/pxa2x0_i2s.c		i2s
 
 # Power manager and APM emulation
 device	apm
