@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.12 2005/06/08 04:21:24 marc Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.13 2005/06/17 19:25:39 marco Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -110,7 +110,7 @@ extern paddr_t avail_end;
 extern struct extent *iomem_ex;
 
 int amdgarts;
-int amdgart_enable;
+int amdgart_enable = 0;
 
 struct amdgart_softc {
 	pci_chipset_tag_t g_pc;
@@ -127,13 +127,13 @@ struct amdgart_softc {
 void amdgart_invalidate_wait(void);
 void amdgart_invalidate(void);
 void amdgart_probe(struct pcibus_attach_args *);
-int amdgart_initpte(pci_chipset_tag_t, pcitag_t, paddr_t, psize_t, psize_t);
 void amdgart_dumpregs(void);
 int amdgart_iommu_map(bus_dmamap_t, struct extent *, paddr_t,
     paddr_t *, psize_t);
 int amdgart_iommu_unmap(struct extent *, paddr_t, psize_t);
 int amdgart_reload(struct extent *, bus_dmamap_t);
 int amdgart_ok(pci_chipset_tag_t, pcitag_t);
+void amdgart_initpt(struct amdgart_softc *, u_long);
 
 int amdgart_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
     bus_size_t, int, bus_dmamap_t *);
@@ -207,7 +207,8 @@ amdgart_invalidate(void)
 void
 amdgart_dumpregs(void)
 {
-	int n;
+	int n, i, dirty;
+	u_int8_t *p;
 
 	for (n = 0; n < amdgarts; n++) {
 		printf("GART%d:\n", n);
@@ -219,6 +220,13 @@ amdgart_dumpregs(void)
 		    amdgart_softcs[n].g_tag, GART_TBLBASE));
 		printf("cachectl %x\n", pci_conf_read(amdgart_softcs[n].g_pc,
 		    amdgart_softcs[n].g_tag, GART_CACHECTRL));
+
+		p = amdgart_softcs[n].g_scrib;
+		dirty = 0;
+		for (i = 0; i < PAGE_SIZE; i++, p++)
+			if (*p != '\0')
+				dirty++;
+		printf("scribble: %s\n", dirty ? "dirty" : "clean");
 	}
 }
 
@@ -277,17 +285,7 @@ amdgart_probe(struct pcibus_attach_args *pba)
 		goto err;
 	}
 
-#if 0
-	r = extent_alloc_subregion(iomem_ex, IOMMU_START, IOMMU_END,
-	    IOMMU_SIZE * 1024 * 1024, IOMMU_ALIGN * 1024 * 1024, 0,
-	    EX_NOBOUNDARY, EX_NOWAIT, &dvabase);
-	if (r != 0) {
-		printf("\nGART: extent alloc failed: %d", r);
-		goto err;
-	}
-#else
 	dvabase = IOMMU_START;
-#endif
 
 	mapsize = IOMMU_SIZE * 1024 * 1024;
 	ptesize = mapsize / (PAGE_SIZE / sizeof(u_int32_t));
@@ -307,6 +305,13 @@ amdgart_probe(struct pcibus_attach_args *pba)
 		printf("\nGART: extent create failed");
 		goto err;
 	}
+
+	scrib = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
+	if (scrib == NULL) {
+		printf("\nGART: didn't get scribble page");
+		goto err;
+	}
+	bzero(scrib, PAGE_SIZE);
 
 	for (count = 0, dev = 24; dev < 32; dev++) {
 		for (func = 0; func < 8; func++) {
@@ -374,6 +379,9 @@ amdgart_probe(struct pcibus_attach_args *pba)
 			amdgart_softcs[count].g_pte = pte;
 			amdgart_softcs[count].g_dmat = pba->pba_dmat;
 
+			amdgart_initpt(&amdgart_softcs[count],
+			    ptesize / sizeof(*amdgart_softcs[count].g_pte));
+
 			printf("\niommu%d at cpu%d: base 0x%lx length %dMB pte 0x%lx",
 			    count, dev - 24, dvabase, IOMMU_SIZE, ptepa);
 			count++;
@@ -392,12 +400,19 @@ err:
 		free(scrib, M_DEVBUF);
 	if (amdgart_softcs != NULL)
 		free(amdgart_softcs, M_DEVBUF);
-#if 0
-	if (dvabase == (u_long)-1)
-		extent_free(iomem_ex, dvabase, IOMMU_SIZE * 1024 * 1024, 0);
-#endif
 	if (!TAILQ_EMPTY(&plist))
 		uvm_pglistfree(&plist);
+}
+
+void
+amdgart_initpt(struct amdgart_softc *sc, u_long nent)
+{
+	u_long i;
+
+	for (i = 0; i < nent; i++)
+		sc->g_pte[i] = sc->g_scribpte;
+	amdgart_invalidate();
+	amdgart_invalidate_wait();
 }
 
 int
