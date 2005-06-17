@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.16 2004/10/07 06:26:12 otto Exp $	 */
+/* $OpenBSD: commands.c,v 1.17 2005/06/17 09:40:48 markus Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -100,6 +100,7 @@ show_help(void)
 		    "s       - change number of seconds to delay between updates\n"
 		    "S       - toggle the display of system processes\n"
 		    "u       - display processes for only one user (+ selects all users)\n"
+		    "C       - toggle the display of the command line arguments\n"
 		    "\n\n", stdout);
 	}
 }

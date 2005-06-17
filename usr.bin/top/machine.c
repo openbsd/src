@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.48 2005/06/08 22:36:43 millert Exp $	 */
+/* $OpenBSD: machine.c,v 1.49 2005/06/17 09:40:48 markus Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -81,7 +81,7 @@ static char header[] =
 #define UNAME_START 6
 
 #define Proc_format \
-	"%5d %-8.8s %3d %4d %5s %5s %-8s %-6.6s %6s %5.2f%% %.11s"
+	"%5d %-8.8s %3d %4d %5s %5s %-8s %-6.6s %6s %5.2f%% %.51s"
 
 /* process state names for the "STATE" column of the display */
 /*
@@ -424,6 +424,42 @@ state_abbr(struct kinfo_proc2 *pp)
 }
 
 char *
+format_comm(struct kinfo_proc2 *kp)
+{
+#define ARG_SIZE 60
+	static char **s, buf[ARG_SIZE];
+	size_t siz = 100;
+	char **p;
+	int mib[4];
+	extern int show_args;
+
+	if (!show_args)
+		return (kp->p_comm);
+
+	for (;; siz *= 2) {
+		if ((s = realloc(s, siz)) == NULL)
+			err(1, NULL);
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_PROC_ARGS;
+		mib[2] = kp->p_pid;
+		mib[3] = KERN_PROC_ARGV;
+		if (sysctl(mib, 4, s, &siz, NULL, 0) == 0)
+			break;
+		if (errno != ENOMEM)
+			return (kp->p_comm);
+	}
+	buf[0] = '\0';
+	for (p = s; *p != NULL; p++) {
+		if (p != s)
+			strlcat(buf, " ", sizeof(buf));
+		strlcat(buf, *p, sizeof(buf));
+	}
+	if (buf[0] == '\0')
+		return (kp->p_comm);
+	return (buf);
+}
+
+char *
 format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 {
 	char *p_wait, waddr[sizeof(void *) * 2 + 3];	/* Hexify void pointer */
@@ -471,7 +507,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 	    (pp->p_stat == SSLEEP && pp->p_slptime > maxslp) ?
 	    "idle" : state_abbr(pp),
 	    p_wait, format_time(cputime), 100.0 * pct,
-	    printable(pp->p_comm));
+	    printable(format_comm(pp)));
 
 	/* return the result */
 	return (fmt);

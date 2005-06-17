@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.39 2005/06/08 22:36:43 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.40 2005/06/17 09:40:48 markus Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -97,6 +97,7 @@ char *order_name = NULL;
 int topn = Default_TOPN;
 int no_command = Yes;
 int old_system = No;
+int show_args = No;
 
 #if Default_TOPN == Infinity
 char topn_specified = No;
@@ -125,6 +126,7 @@ char topn_specified = No;
 #define CMD_system	15
 #define CMD_order	16
 #define CMD_pid		17
+#define CMD_command	18
 
 static void
 usage(void)
@@ -512,7 +514,7 @@ rundisplay(void)
 	int change, i;
 	struct pollfd pfd[1];
 	uid_t uid;
-	static char command_chars[] = "\f qh?en#sdkriIuSop";
+	static char command_chars[] = "\f qh?en#sdkriIuSopC";
 
 	/*
 	 * assume valid command unless told
@@ -846,6 +848,10 @@ rundisplay(void)
 					exit(1);
 			} else
 				clear_message();
+			break;
+
+		case CMD_command:
+			show_args = (show_args == No) ? Yes : No;
 			break;
 
 		default:

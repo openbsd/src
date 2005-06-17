@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.h,v 1.6 2005/06/08 22:36:43 millert Exp $	*/
+/*	$OpenBSD: top.h,v 1.7 2005/06/17 09:40:48 markus Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -43,7 +43,7 @@
 extern int Header_lines;
 
 /* Maximum number of columns allowed for display */
-#define MAX_COLS	128
+#define MAX_COLS	256
 
 /* Log base 2 of 1024 is 10 (2^10 == 1024) */
 #define LOG1024		10
