@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.34 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.35 2005/06/17 08:40:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -51,7 +51,7 @@ struct cvs_cmd cvs_cmd_update = {
 	"Bring work tree in sync with repository",
 	"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k mode] "
 	"[-t id] ...",
-	"ACD:dflPpQqRr:",
+	"ACD:dfI:j:k:lPpQqRr:t:",
 	NULL,
 	CF_SORT | CF_RECURSE | CF_IGNORE | CF_KNOWN | CF_NOSYMS,
 	cvs_update_init,
@@ -63,8 +63,9 @@ struct cvs_cmd cvs_cmd_update = {
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2 | CVS_CMD_SENDDIR
 };
 
-static char *date, *rev;
+static char *date, *rev, *koptstr;
 static int dflag, Aflag;
+static int kflag = RCS_KWEXP_DEFAULT;
 
 static int
 cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
@@ -88,6 +89,20 @@ cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			dflag = 1;
 			break;
 		case 'f':
+			break;
+		case 'I':
+			break;
+		case 'j':
+			break;
+		case 'k':
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expansion mode");
+				rcs_kflag_usage();
+				return (CVS_EX_USAGE);
+			}
 			break;
 		case 'l':
 			cmd->file_flags &= ~CF_RECURSE;
@@ -127,11 +142,14 @@ cvs_update_pre_exec(struct cvsroot *root)
 	if (dflag && cvs_sendarg(root, "-d", 0) < 0)
 		return (CVS_EX_PROTO);
 
-	if (rev != NULL) {
-		if ((cvs_sendarg(root, "-r", 0) < 0) ||
-		    (cvs_sendarg(root, rev, 0) < 0))
+	if ((rev != NULL) && ((cvs_sendarg(root, "-r", 0) < 0) ||
+	    (cvs_sendarg(root, rev, 0) < 0)))
 			return (CVS_EX_PROTO);
-	}
+
+	if ((date != NULL) && ((cvs_sendarg(root, "-D", 0) < 0) ||
+	    (cvs_sendarg(root, date, 0) < 0)))
+		return (CVS_EX_PROTO);
+
 	return (0);
 }
 
