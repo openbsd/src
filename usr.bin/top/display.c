@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.20 2005/06/08 22:36:43 millert Exp $	 */
+/* $OpenBSD: display.c,v 1.21 2005/06/17 12:12:28 markus Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -284,7 +284,7 @@ i_timeofday(time_t * tod)
 }
 
 static int      ltotal = 0;
-static char     procstates_buffer[128];
+static char     procstates_buffer[MAX_COLS];
 
 /*
  *  *_procstates(total, brkdn, names) - print the process summary line
@@ -321,7 +321,7 @@ i_procstates(int total, int *brkdn)
 void
 u_procstates(int total, int *brkdn)
 {
-	static char new[128];
+	static char new[MAX_COLS];
 	int i;
 
 	/* update number of processes only if it has changed */
