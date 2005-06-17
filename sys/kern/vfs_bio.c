@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.75 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.76 2005/06/17 16:45:02 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -886,7 +886,7 @@ buf_daemon(struct proc *p)
 #endif
 			if (LIST_FIRST(&bp->b_dep) != NULL &&
 			    !ISSET(bp->b_flags, B_DEFERRED) &&
-			    buf_countdeps(bp, 0, 1)) {
+			    buf_countdeps(bp, 0, 0)) {
 				SET(bp->b_flags, B_DEFERRED);
 				s = splbio();
 				numfreepages += btoc(bp->b_bufsize);
