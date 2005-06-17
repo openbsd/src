@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.11 2005/05/25 07:40:49 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.12 2005/06/17 19:13:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -54,6 +54,7 @@
 enum hostapd_cmd_types {
 	PRIV_APME_BSSID,	/* Get the Host AP's BSSID */
 	PRIV_APME_GETNODE,	/* Get a node from the Host AP */
+	PRIV_APME_ADDNODE,	/* Delete a node from the Host AP */
 	PRIV_APME_DELNODE,	/* Delete a node from the Host AP */
 	PRIV_LLC_SEND_XID	/* Send IEEE 802.3 LLC XID frame */
 };
@@ -170,6 +171,7 @@ hostapd_priv(int fd, short sig, void *arg)
 	struct ieee80211_bssid bssid;
 	struct ieee80211_nodereq nr;
 	struct ifreq ifr;
+	unsigned long request;
 	int ret, cmd;
 
 	/* Terminate the event if we got an invalid signal */
@@ -233,17 +235,22 @@ hostapd_priv(int fd, short sig, void *arg)
 		}
 		break;
 
+	case PRIV_APME_ADDNODE:
 	case PRIV_APME_DELNODE:
 		hostapd_log(HOSTAPD_LOG_DEBUG,
-		    "[priv]: msg PRIV_APME_DELNODE received\n");
+		    "[priv]: msg PRIV_APME_[ADD|DEL]NODE received\n");
 
 		hostapd_must_read(fd, &node, sizeof(struct hostapd_node));
 		bcopy(node.ni_macaddr, nr.nr_macaddr, IEEE80211_ADDR_LEN);
 
-		/* Try to delete a station from the APME */
+		strlcpy(nr.nr_ifname, cfg->c_apme_iface, sizeof(ifr.ifr_name));
+
+		request = cmd == PRIV_APME_ADDNODE ?
+		    SIOCS80211NODE : SIOCS80211DELNODE;
+
+		/* Try to add/delete a station from the APME */
 		if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
-			if ((ret = ioctl(cfg->c_apme,
-			    SIOCS80211DELNODE, &nr)) != 0)
+			if ((ret = ioctl(cfg->c_apme, request, &nr)) != 0)
 				ret = errno;
 		} else
 			ret = ENXIO;
@@ -289,12 +296,12 @@ hostapd_priv_apme_getnode(struct hostapd_config *cfg, struct hostapd_node *node)
 		return (ret);
 
 	hostapd_must_read(priv_fd, node, sizeof(struct hostapd_node));
-	cfg->c_stats.cn_tx_apme++;
 	return (ret);
 }
 
 int
-hostapd_priv_apme_delnode(struct hostapd_config *cfg, struct hostapd_node *node)
+hostapd_priv_apme_setnode(struct hostapd_config *cfg, struct hostapd_node *node,
+    int add)
 {
 	int ret, cmd;
 
@@ -304,12 +311,13 @@ hostapd_priv_apme_delnode(struct hostapd_config *cfg, struct hostapd_node *node)
 	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
 		hostapd_fatal("%s: Host AP is not available\n", __func__);
 
-	cmd = PRIV_APME_DELNODE;
+	if (add)
+		cmd = PRIV_APME_ADDNODE;
+	else
+		cmd = PRIV_APME_DELNODE;
 	hostapd_must_write(priv_fd, &cmd, sizeof(int));
 	hostapd_must_write(priv_fd, node, sizeof(struct hostapd_node));
 	hostapd_must_read(priv_fd, &ret, sizeof(int));
-	if (ret == 0)
-		cfg->c_stats.cn_tx_apme++;
 
 	return (ret);
 }

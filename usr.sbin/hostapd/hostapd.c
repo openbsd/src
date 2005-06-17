@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.10 2005/05/21 19:18:51 msf Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.11 2005/06/17 19:13:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -54,6 +54,7 @@ void	 hostapd_sig_handler(int);
 struct hostapd_config hostapd_cfg;
 
 extern char *__progname;
+char printbuf[BUFSIZ];
 
 void
 hostapd_usage(void)
@@ -77,6 +78,31 @@ hostapd_log(u_int level, const char *fmt, ...)
 		fflush(stderr);
 	} else
 		vsyslog(LOG_INFO, fmt, ap);
+	va_end(ap);
+}
+
+void
+hostapd_printf(const char *fmt, ...)
+{
+	char newfmt[BUFSIZ];
+	va_list ap;
+	size_t n;
+
+	if (fmt == NULL) {
+ flush:
+		hostapd_log(HOSTAPD_LOG, "%s", printbuf);
+		bzero(printbuf, sizeof(printbuf));
+		return;
+	}
+
+	va_start(ap, fmt);
+	bzero(newfmt, sizeof(newfmt));
+	if ((n = strlcpy(newfmt, printbuf, sizeof(newfmt))) >= sizeof(newfmt))
+		goto flush;
+	if (strlcpy(newfmt + n, fmt, sizeof(newfmt) - n) >= sizeof(newfmt) - n)
+		goto flush;
+	if (vsnprintf(printbuf, sizeof(printbuf), newfmt, ap) == -1)
+		goto flush;
 	va_end(ap);
 }
 
@@ -258,7 +284,7 @@ void
 hostapd_sig_handler(int sig)
 {
 	struct timeval tv;
-	
+
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
 
@@ -274,7 +300,10 @@ hostapd_sig_handler(int sig)
 void
 hostapd_cleanup(struct hostapd_config *cfg)
 {
+	int i;
 	struct ip_mreq mreq;
+	struct hostapd_table *table;
+	struct hostapd_entry *entry;
 
 	if (cfg->c_flags & HOSTAPD_CFG_F_PRIV &&
 	    (cfg->c_flags & HOSTAPD_CFG_F_BRDCAST) == 0 &&
@@ -302,6 +331,24 @@ hostapd_cleanup(struct hostapd_config *cfg)
 	    cfg->c_flags & HOSTAPD_CFG_F_APME) {
 		/* Shutdown the Host AP protocol handler */
 		hostapd_iapp_term(&hostapd_cfg);
+	}
+
+	/* Cleanup tables */
+	while ((table = TAILQ_FIRST(&cfg->c_tables)) != NULL) {
+		for (i = 0; i < HOSTAPD_TABLE_HASHSIZE; i++) {
+			while ((entry =
+			    TAILQ_FIRST(&table->t_head[i])) != NULL) {
+				TAILQ_REMOVE(&table->t_head[i], entry,
+				    e_entries);
+				free(entry);
+			}
+		}
+		while ((entry = TAILQ_FIRST(&table->t_mask_head)) != NULL) {
+			TAILQ_REMOVE(&table->t_mask_head, entry, e_entries);
+			free(entry);
+		}
+		TAILQ_REMOVE(&cfg->c_tables, table, t_entries);
+		free(table);
 	}
 
 	hostapd_log(HOSTAPD_LOG_VERBOSE, "bye!\n");
@@ -371,13 +418,17 @@ main(int argc, char *argv[])
 		hostapd_fatal("need root privileges\n");
 
 	/* Parse the configuration file */
-	hostapd_parse_file(cfg);
+	if (hostapd_parse_file(cfg) != 0)
+		hostapd_fatal("invalid configuration\n");
 
 	if ((cfg->c_flags & HOSTAPD_CFG_F_IAPP) == 0)
 		hostapd_usage();
 
 	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
 		strlcpy(cfg->c_apme_iface, "<none>", sizeof(cfg->c_apme_iface));
+
+	if (cfg->c_apme_dlt == 0)
+		cfg->c_apme_dlt = HOSTAPD_DLT;
 
 	/*
 	 * Setup the hostapd handlers
@@ -441,4 +492,97 @@ main(int argc, char *argv[])
 	/* Executed after the event loop has been terminated */
 	hostapd_cleanup(cfg);
 	return (EXIT_SUCCESS);
+}
+
+struct hostapd_table *
+hostapd_table_add(struct hostapd_config *cfg, const char *name)
+{
+	int i;
+	struct hostapd_table *table;
+
+	if (hostapd_table_lookup(cfg, name) != NULL)
+		return (NULL);
+	if ((table = (struct hostapd_table *)
+	    calloc(1, sizeof(struct hostapd_table))) == NULL)
+		return (NULL);
+
+	strlcpy(table->t_name, name, sizeof(table->t_name));
+	for (i = 0; i < HOSTAPD_TABLE_HASHSIZE; i++)
+		TAILQ_INIT(&table->t_head[i]);
+	TAILQ_INIT(&table->t_mask_head);
+	TAILQ_INSERT_TAIL(&cfg->c_tables, table, t_entries);
+
+	return (table);
+}
+
+struct hostapd_table *
+hostapd_table_lookup(struct hostapd_config *cfg, const char *name)
+{
+	struct hostapd_table *table;
+
+	TAILQ_FOREACH(table, &cfg->c_tables, t_entries) {
+		if (strcmp(name, table->t_name) == 0)
+			return (table);
+	}
+
+	return (NULL);
+}
+
+struct hostapd_entry *
+hostapd_entry_add(struct hostapd_table *table, u_int8_t *lladdr)
+{
+	u_int hash;
+	struct hostapd_entry *entry;
+
+	if (hostapd_entry_lookup(table, lladdr) != NULL)
+		return (NULL);
+
+	if ((entry = (struct hostapd_entry *)
+	    calloc(1, sizeof(struct hostapd_entry))) == NULL)
+		return (NULL);
+
+	bcopy(lladdr, entry->e_lladdr, IEEE80211_ADDR_LEN);
+	hash = HOSTAPD_TABLE_HASH(lladdr);
+	TAILQ_INSERT_TAIL(&table->t_head[hash], entry, e_entries);
+
+	return (entry);
+}
+
+struct hostapd_entry *
+hostapd_entry_lookup(struct hostapd_table *table, u_int8_t *lladdr)
+{
+	u_int hash;
+	struct hostapd_entry *entry;
+
+	hash = HOSTAPD_TABLE_HASH(lladdr);
+	TAILQ_FOREACH(entry, &table->t_head[hash], e_entries) {
+		if (bcmp(lladdr, entry->e_lladdr, IEEE80211_ADDR_LEN) == 0)
+			return (entry);
+	}
+
+	/* Masked entries can't be handled by the hash table */
+	TAILQ_FOREACH(entry, &table->t_mask_head, e_entries) {
+		if (HOSTAPD_ENTRY_MASK_MATCH(entry, lladdr))
+			return (entry);
+	}
+
+	return (NULL);
+}
+
+void
+hostapd_entry_update(struct hostapd_table *table, struct hostapd_entry *entry)
+{
+	u_int hash;
+
+	hash = HOSTAPD_TABLE_HASH(entry->e_lladdr);
+	TAILQ_REMOVE(&table->t_head[hash], entry, e_entries);
+
+	/* Apply mask to entry */
+	if (entry->e_flags & HOSTAPD_ENTRY_F_MASK) {
+		HOSTAPD_ENTRY_MASK_ADD(entry->e_lladdr, entry->e_mask);
+		TAILQ_INSERT_TAIL(&table->t_mask_head, entry, e_entries);
+	} else {
+		hash = HOSTAPD_TABLE_HASH(entry->e_lladdr);
+		TAILQ_INSERT_TAIL(&table->t_head[hash], entry, e_entries);
+	}
 }

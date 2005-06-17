@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.3 2005/04/13 20:03:06 jmc Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.4 2005/06/17 19:13:35 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -33,9 +33,15 @@ file is divided into two main sections.
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
 configuration file.
+.It Sy Tables
+Tables provide a mechanism to handle large number of linker layer
+addresses easily with increased performance and flexibility.
 .It Sy Global Configuration
-Global settings for
+Global runtime settings for
 .Xr hostapd 8 .
+.It Sy Event rules
+Event rules provide a powerful mechanism to trigger certain actions
+when receiving specified IEEE 802.11 frames.
 .El
 .Pp
 Comments can be put anywhere in the file using a hash mark
@@ -61,9 +67,36 @@ For example:
 wlan="ath0"
 set iapp interface $wlan
 .Ed
+.Sh TABLES
+Tables are named structures which can hold a collection of link layer
+addresses, masked address ranges and link layer to IP address
+assignments. Lookups against tables in
+.Xr hostapd 8
+are relatively fast, making a single rule with tables much more
+efficient, in terms of processor usage and memory consumption, than a
+large number of rules which differ only in link layer addresses.
+.Pp
+Tables are used for
+.Xr hostapd 8
+.Ic event rules
+to match specified IEEE 802.11 link layer addresses and address ranges
+and the capability to assign link layer to IP addresses is a
+requirement for advanced IAPP functionality.
+.Pp
+For example:
+.Bd -literal -offset indent
+cisco="00:40:06:ff:ff:ff / ff:ff:ff:00:00:00"
+
+table <black> { $cisco, 00:0d:60:ff:f1:2a }
+table <myess> const {
+	00:00:24:c3:40:18 -> 10.195.64.24,
+	00:00:24:c3:40:19 -> 10.195.64.25,
+	00:00:24:c3:40:1a -> 10.195.64.26
+}
+.Ed
 .Sh GLOBAL CONFIGURATION
 The following configuration settings are understood:
-.Bl -tag -width Ds
+.Bl -tag -width xxxx
 .It Ic set hostap interface Ar interface
 Specify the wireless interface running in Host AP mode.
 This option could be omitted to use
@@ -78,9 +111,199 @@ The used multicast group is 224.0.1.178.
 .Pp
 Possible options:
 .Bd -literal -offset indent
-set iapp mode multicast
-set iapp mode broadcast
+.Ar set iapp mode multicast
+.Ar set iapp mode broadcast
 .Ed
+.El
+.Sh EVENT RULES
+Event rules provide a powerful way to trigger a certain action when
+receiving specified IEEE 802.11 frames on the 
+.Ic hostap interface .
+The rules are handled in sequential order, from first to last.
+.Pp
+In difference to packet filter rules like in
+.Xr pf.conf 5 ,
+the
+.Xr hostapd 8
+event rules are handled without a state,
+each rule is processed indepedently from the others and from
+any previous actions.
+.Pp
+All hostapd event rules are single line statements beginning with
+the mandatory
+.Ic hostap handle
+keywords and optional rule options, frame matching,
+a specified action and a limit.
+.Bd -literal -offset indent
+.Ar hostap handle [<option>] [<frame>] [<action>] [<limit>]
+.Ed
+.Pp
+The optional parts are defined below:
+.Bl -tag -width xxxx
+.It Ar <option>
+The rule
+.Ic option
+will modify the behaviour of handling the statement.
+There are two possible options,
+.Ar quick
+and
+.Ar skip .
+If either the keyword
+.Ar quick
+or the keyword
+.Ar skip
+is specified, no further event rules will be handled for this frame
+after processing this rule successfully.
+The keyword
+.Ar skip
+additionally skips any further IAPP processing of the frame,
+which is normally done after handling the event rules.
+.It Ar [<type>] [<subtype>] [<dir>] [<from>] [<to>] [<bssid>]
+The
+.Ic frame
+description specifies a mechanism to match IEEE 802.11 frames.
+.It Ar with <action>
+An optional
+.Ic action
+is triggered if a received IEEE 802.11 frame matches the frame
+description. The following choice are available as an
+.Ic action :
+.Bd -literal
+.Ar frame <type> <subtype> [<dir>] <from> <to> <bssid>
+.Ed
+.Pp
+.Bd -literal -offset indent
+.Ic type :
+.Ar type data
+.Ar type management
+.Ed
+.Pp
+.Bd -literal -offset indent
+.Ic subtype :
+.Ar subtype beacon
+.Ar subtype deauth [<reason>]
+.Ar subtype assoc request
+.Ar subtype assoc resp
+.Ar subtype atim
+.Ar subtype auth
+.Ar subtype probe request
+.Ar subtype probe resp
+.Ar subtype reassoc request
+.Ar subtype reassoc response
+.Ed
+.Pp
+.Bd -literal -offset indent
+.Ic reason :
+.Ar reason assoc leave
+.Ar reason assoc not authed
+.Ar reason assoc toomany
+.Ar reason auth expire
+.Ar reason auth leave
+.Ar reason ie invalid
+.Ar reason mic failure
+.Ar reason not authed
+.Ar reason not assoced
+.Ar reason rsn required
+.Ar reason rsn inconsistent
+.Ar reason unspecified
+.Ed
+.Pp
+.Bd -literal -offset indent
+.Ic dir :
+.Ar dir no ds
+.Ar dir to ds
+.Ar dir from ds
+.Ar dir ds to ds
+.Ed
+.Pp
+.Bd -literal -offset indent
+.Ic from/to/bssid :
+.Ar ( from | to | bssid ) lladdr
+.Ar ( from | to | bssid ) &refaddr
+.Ed
+.Pp
+.Bd -literal
+.Ar iapp radiotap
+.Ar log [verbose]
+.Ar node ( add | delete ) <lladdr>
+.Ar resend
+.Ed
+.It Ar limit <number> ( sec | usec )
+It is possible to
+.Ic limit
+handling of specific rules.
+In some cases it is absolutely necessary to use limited matching
+to protect
+.Xr hostapd 8
+against excessive flooding with IEEE 802.11 frames.
+In example, beacon frames will be normally received every 100 ms.
+.Pp
+.El
+.Sh GRAMMAR
+Syntax for
+.Nm
+in BNF:
+.Bd -literal
+grammar		= [ varset ] | [ tabledef ] | option | [ event ]
+
+varset		= varname "=" varvalue
+
+tabledef	= "table" table tableopts
+
+table		= "<" tablename ">"
+
+tableopts	= "const" | "{" [ "\n" ] "}" |
+		  "{" [ "\\n" ] tableaddrlist [ "\\n" ] "}"
+
+tableaddrlist	= lladdr [ "->" ipv4-dotted-quad | "&" lladdr-mask |
+		  "/" number ] [ "," ] [ tableaddrlist ]
+
+option		= "set" ( "hostap" "interface" name |
+		  "iapp" "interface" name [ "passive" ] |
+		  [ "iapp" "mode" ( "multicast" | "broadcast" ] )
+
+event		= "hostap" "handle" [ eventopt ] [ frmmatch ] [ action ]
+		  [ limit ]
+
+eventopt	= "skip" | "quick"
+
+action		= "with" ( "log" [ "verbose" ] | "frame" frmaction |
+		  "iapp" "type" "radiotap" |
+		  "node" ( "add" | "delete" ) frmactionaddr )
+
+frmmatch	= [ frmmatchtype ] [ "dir" ( "any" | [ "!" ] frmdir ) ]
+		  [ ( "from" | "to" | "bssid" ) frmmatchaddr ]
+
+frmmatchtype	= "type" ( "any" | [ "!" ] ( "data" | "management"
+		  [ frmmatchmgmt ] ) )
+
+frmmatchmgmt	= "subtype" ( "any" | [ "!" ] frmsubtype )
+
+frmmatchaddr	= "any" | [ "!" ] table | [ "!" ] lladdr
+
+frmaction	= frmactiontype [ "dir" frmdir ]
+		  ( "from" , "to" , "bssid" ) frmactionaddr
+
+frmactiontype	= "type" ( "data" | "management" "subtype" frmsubtype )
+
+frmactionaddr	= lladdr | refaddr
+
+limit		= "limit" number ( "sec" | "usec" )
+
+frmsubtype	= ( "probe-request" | "probe-resp" | "beacon" ) [ frmelems ] |
+		  "atim" | "auth" | "deauth" | "assoc-request" | "assoc-resp" |
+		  "reassoc-request" | "reassoc-response"
+
+frmelems	= "nwid" [ "!" ] name [ frmelems ]
+
+frmdir		= ( "no" | "to" | "from" | "ds" "to" ) "ds"
+
+refaddr		= "&" ( "from" | "to" | "bssid" )
+.Ed
+.Sh FILES
+.Bl -tag -width "/etc/hostapd.conf" -compact
+.It Pa /etc/hostapd.conf
+Default location of the configuration file.
 .El
 .Sh SEE ALSO
 .Xr hostapd 8

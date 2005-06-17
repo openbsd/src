@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2005/04/13 19:06:08 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2005/06/17 19:13:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -81,18 +81,51 @@ char	*symget(const char *);
 
 typedef struct {
 	union {
-		char	*string;
-		int	 val;
+		struct {
+			u_int8_t		lladdr[IEEE80211_ADDR_LEN];
+			struct hostapd_table	*table;
+			u_int32_t		flags;
+		} reflladdr __packed;
+		struct in_addr		in;
+		char			*string;
+		long			val;
+		u_int16_t		reason;
 	} v;
 	int lineno;
 } YYSTYPE;
 
+struct hostapd_table *table;
+struct hostapd_entry *entry;
+struct hostapd_frame frame, *frame_ptr;
+struct hostapd_ieee80211_frame *frame_ieee80211;
+u_int negative;
+
+#define HOSTAPD_MATCH(_m)	{					\
+	frame.f_flags |= negative ?				\
+	    HOSTAPD_FRAME_F_##_m##_N : HOSTAPD_FRAME_F_##_m;		\
+	negative = 0;							\
+}
+#define HOSTAPD_MATCH_TABLE(_m)	{					\
+	frame.f_flags |= HOSTAPD_FRAME_F_##_m##_TABLE | (negative ?	\
+	    HOSTAPD_FRAME_F_##_m##_N : HOSTAPD_FRAME_F_##_m);		\
+	negative = 0;							\
+}
 %}
 
-%token	MODE INTERFACE IAPP HOSTAP MULTICAST BROADCAST SET
-%token	ERROR
+%token	MODE INTERFACE IAPP HOSTAP MULTICAST BROADCAST SET SEC USEC
+%token	HANDLE TYPE SUBTYPE FROM TO BSSID WITH FRAME RADIOTAP NWID PASSIVE
+%token	MANAGEMENT DATA PROBE BEACON ATIM ANY DS NO DIR RESEND
+%token	AUTH DEAUTH ASSOC DISASSOC REASSOC REQUEST RESPONSE PCAP
+%token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
+%token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
+%token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
+%type	<v.val>		number
+%type	<v.in>		ipv4addr
+%type	<v.reflladdr>	refaddr, lladdr, frmactionaddr, frmmatchaddr
+%type	<v.reason>	frmreason
+%type	<v.string>	table
 %type	<v.string>	string
 
 %%
@@ -103,7 +136,9 @@ typedef struct {
 
 grammar		: /* empty */
 		| grammar '\n'
+		| grammar tabledef '\n'
 		| grammar option '\n'
+		| grammar event '\n'
 		| grammar varset '\n'
 		| grammar error '\n'		{ errors++; }
 		;
@@ -121,7 +156,8 @@ option		: SET HOSTAP INTERFACE STRING
 
 			free($4);
 		}
-		| SET IAPP INTERFACE STRING
+		| SET HOSTAP MODE hostapmode
+		| SET IAPP INTERFACE STRING passive
 		{
 			strlcpy(hostapd_cfg.c_iapp_iface, $4,
 			    sizeof(hostapd_cfg.c_iapp_iface));
@@ -133,17 +169,502 @@ option		: SET HOSTAP INTERFACE STRING
 
 			free($4);
 		}
-		| SET IAPP MODE MULTICAST
+		| SET IAPP MODE iappmode
+		;
+
+iappmode	: MULTICAST
 		{
 			hostapd_cfg.c_flags &= ~HOSTAPD_CFG_F_BRDCAST;
 		}
-		| SET IAPP MODE BROADCAST
+		| BROADCAST
 		{
 			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_BRDCAST;
 		}
 		;
 
-string		: string STRING				{
+hostapmode	: RADIOTAP
+		{
+			hostapd_cfg.c_apme_dlt = DLT_IEEE802_11_RADIO;
+		}
+		| PCAP
+		{
+			hostapd_cfg.c_apme_dlt = DLT_IEEE802_11;
+		}
+		;
+
+event		: HOSTAP HANDLE
+		{
+			bzero(&frame, sizeof(struct hostapd_frame));
+			/* IEEE 802.11 frame to match */
+			frame_ieee80211 = &frame.f_frame;
+		} eventopt frmmatch {
+			/* IEEE 802.11 raw frame to send as an action */
+			frame_ieee80211 = &frame.f_action_data.a_frame;
+		} action limit {
+			struct timeval t_now;
+
+			if ((frame_ptr = (struct hostapd_frame *)calloc(1,
+				 sizeof(struct hostapd_frame))) == NULL) {
+				yyerror("calloc");
+				YYERROR;
+			}
+
+			gettimeofday(&t_now, NULL);
+			timeradd(&t_now, &frame.f_limit, &frame.f_then);
+
+			bcopy(&frame, frame_ptr, sizeof(struct hostapd_frame));
+			TAILQ_INSERT_TAIL(&hostapd_cfg.c_frames,
+			    frame_ptr, f_entries);
+		}
+		;
+
+eventopt	: /* empty */
+		{
+			frame.f_flags |= HOSTAPD_FRAME_F_RET_OK;
+		}
+		| QUICK
+		{
+			frame.f_flags |= HOSTAPD_FRAME_F_RET_QUICK;
+		}
+		| SKIP
+		{
+			frame.f_flags |= HOSTAPD_FRAME_F_RET_SKIP;
+		}
+		;
+
+action		: /* empty */
+		{
+			frame.f_action = HOSTAPD_ACTION_NONE;
+		}
+		| WITH LOG verbose
+		{
+			frame.f_action = HOSTAPD_ACTION_LOG;
+		}
+		| WITH FRAME frmaction
+		{
+			frame.f_action = HOSTAPD_ACTION_FRAME;
+		}
+		| WITH IAPP iapp
+		| WITH NODE nodeopt frmactionaddr
+		{
+			if (($4.flags & HOSTAPD_ACTION_F_REF_M) == 0) {
+				bcopy($4.lladdr, frame.f_action_data.a_lladdr,
+				    IEEE80211_ADDR_LEN);
+			} else
+				frame.f_action_data.a_flags |= $4.flags;
+		}
+		| WITH RESEND
+		{
+			frame.f_action = HOSTAPD_ACTION_RESEND;
+		}
+		;
+
+verbose		: /* empty */
+		| VERBOSE
+		{
+			frame.f_action_flags |= HOSTAPD_ACTION_VERBOSE;
+		}
+		;
+
+iapp		: TYPE RADIOTAP verbose
+		{
+			frame.f_action = HOSTAPD_ACTION_RADIOTAP;
+		}
+		;
+
+nodeopt		: DELETE
+		{
+			frame.f_action = HOSTAPD_ACTION_DELNODE;
+		}
+		| ADD
+		{
+			frame.f_action = HOSTAPD_ACTION_ADDNODE;
+		}
+		;
+
+frmmatch	: frmmatchtype frmmatchdir frmmatchfrom frmmatchto frmmatchbssid
+		;
+
+frmaction	: frmactiontype frmactiondir frmactionfrom frmactionto frmactionbssid
+		;
+
+limit		: /* empty */
+		| LIMIT number SEC
+		{
+			frame.f_limit.tv_sec = $2;
+		}
+		| LIMIT number USEC
+		{
+			frame.f_limit.tv_usec = $2;
+		}
+		;
+
+frmmatchtype	: /* any */
+		| TYPE ANY
+		| TYPE not DATA
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_TYPE_DATA;
+			HOSTAPD_MATCH(TYPE);
+		}
+		| TYPE not MANAGEMENT frmmatchmgmt
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_TYPE_MGT;
+			HOSTAPD_MATCH(TYPE);
+		}
+		;
+
+frmmatchmgmt	: /* any */
+		| SUBTYPE ANY
+		| SUBTYPE not frmsubtype
+		{
+			HOSTAPD_MATCH(SUBTYPE);
+		}
+		;
+
+frmsubtype	: PROBE REQUEST frmelems
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
+		}
+		| PROBE RESPONSE frmelems
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_PROBE_RESP;
+		}
+		| BEACON frmelems
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_BEACON;
+		}
+		| ATIM
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_ATIM;
+		}
+		| AUTH
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_AUTH;
+		}
+		| DEAUTH frmreason
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_DEAUTH;
+
+			if ($2 != 0) {
+				if ((frame_ieee80211->i_data = (u_int16_t *)
+				    malloc(sizeof(u_int16_t))) == NULL) {
+					yyerror("failed to allocate deauth"
+					    " reason code %u", $2);
+					YYERROR;
+				}
+				*(u_int16_t *)frame_ieee80211->i_data =
+				    htole16($2);
+				frame_ieee80211->i_data_len = sizeof(u_int16_t);
+			}
+		}
+		| ASSOC REQUEST
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_ASSOC_REQ;
+		}
+		| DISASSOC
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_DISASSOC;
+		}
+		| ASSOC RESPONSE
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
+		}
+		| REASSOC REQUEST
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_REASSOC_REQ;
+		}
+		| REASSOC RESPONSE
+		{
+			frame_ieee80211->i_fc[0] |=
+			    IEEE80211_FC0_SUBTYPE_REASSOC_RESP;
+		}
+		;
+
+frmelems	: /* empty */
+		| frmelems_l
+		;
+
+frmelems_l	: frmelems_l frmelem
+		| frmelem
+		;
+
+frmelem		: NWID not STRING
+		;
+
+frmreason	: /* empty */
+		{
+			$$ = 0;
+		}
+		| REASON UNSPECIFIED
+		{
+			$$ = IEEE80211_REASON_UNSPECIFIED;
+		}
+		| REASON AUTH EXPIRE
+		{
+			$$ = IEEE80211_REASON_AUTH_EXPIRE;
+		}
+		| REASON AUTH LEAVE
+		{
+			$$ = IEEE80211_REASON_AUTH_LEAVE;
+		}
+		| REASON ASSOC EXPIRE
+		{
+			$$ = IEEE80211_REASON_ASSOC_EXPIRE;
+		}
+		| REASON ASSOC TOOMANY
+		{
+			$$ = IEEE80211_REASON_ASSOC_TOOMANY;
+		}
+		| REASON NOT AUTHED
+		{
+			$$ = IEEE80211_REASON_NOT_AUTHED;
+		}
+		| REASON NOT ASSOCED
+		{
+			$$ = IEEE80211_REASON_NOT_ASSOCED;
+		}
+		| REASON ASSOC LEAVE
+		{
+			$$ = IEEE80211_REASON_ASSOC_LEAVE;
+		}
+		| REASON ASSOC NOT AUTHED
+		{
+			$$ = IEEE80211_REASON_NOT_AUTHED;
+		}
+		| REASON RESERVED
+		{
+			$$ = 10;	/* XXX unknown */
+		}
+		| REASON RSN REQUIRED
+		{
+			$$ = IEEE80211_REASON_RSN_REQUIRED;
+		}
+		| REASON RSN INCONSISTENT
+		{
+			$$ = IEEE80211_REASON_RSN_INCONSISTENT;
+		}
+		| REASON IE INVALID
+		{
+			$$ = IEEE80211_REASON_IE_INVALID;
+		}
+		| REASON MIC FAILURE
+		{
+			$$ = IEEE80211_REASON_MIC_FAILURE;
+		}
+		;
+
+frmmatchdir	: /* any */
+		| DIR ANY
+		| DIR frmdir
+		{
+			HOSTAPD_MATCH(DIR);
+		}
+		;
+
+frmdir		: NO DS
+		{
+			frame_ieee80211->i_fc[1] |= IEEE80211_FC1_DIR_NODS;
+		}
+		| TO DS
+		{
+			frame_ieee80211->i_fc[1] |= IEEE80211_FC1_DIR_TODS;
+		}
+		| FROM DS
+		{
+			frame_ieee80211->i_fc[1] |= IEEE80211_FC1_DIR_FROMDS;
+		}
+		| DS TO DS
+		{
+			frame_ieee80211->i_fc[1] |= IEEE80211_FC1_DIR_DSTODS;
+		}
+		;
+
+frmmatchfrom	: /* any */
+		| FROM frmmatchaddr
+		{
+			if (($2.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
+				bcopy($2.lladdr, &frame_ieee80211->i_from,
+				    IEEE80211_ADDR_LEN);
+				HOSTAPD_MATCH(FROM);
+			} else {
+				frame.f_from = $2.table;
+				HOSTAPD_MATCH_TABLE(FROM);
+			}
+		}
+		;
+
+frmmatchto	: /* any */
+		| TO frmmatchaddr
+		{
+			if (($2.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
+				bcopy($2.lladdr, &frame_ieee80211->i_to,
+				    IEEE80211_ADDR_LEN);
+				HOSTAPD_MATCH(TO);
+			} else {
+				frame.f_to = $2.table;
+				HOSTAPD_MATCH_TABLE(TO);
+			}
+		}
+		;
+
+frmmatchbssid	: /* any */
+		| BSSID frmmatchaddr
+		{
+			if (($2.flags & HOSTAPD_ACTION_F_OPT_TABLE) == 0) {
+				bcopy($2.lladdr, &frame_ieee80211->i_bssid,
+				    IEEE80211_ADDR_LEN);
+				HOSTAPD_MATCH(BSSID);
+			} else {
+				frame.f_bssid = $2.table;
+				HOSTAPD_MATCH_TABLE(BSSID);
+			}
+		}
+		;
+
+frmmatchaddr	: ANY
+		{
+			$$.flags = 0;
+		}
+		| not table
+		{
+			if (($$.table =
+			    hostapd_table_lookup(&hostapd_cfg, $2)) == NULL) {
+				yyerror("undefined table <%s>", $2);
+				free($2);
+				YYERROR;
+			}
+			$$.flags = HOSTAPD_ACTION_F_OPT_TABLE;
+			free($2);
+		}
+		| not lladdr
+		{
+			bcopy($2.lladdr, $$.lladdr, IEEE80211_ADDR_LEN);
+			$$.flags = HOSTAPD_ACTION_F_OPT_TABLE;
+		}
+		;
+
+frmactiontype	: TYPE DATA
+		{
+			frame_ieee80211->i_fc[0] |= IEEE80211_FC0_TYPE_DATA;
+		}
+		| TYPE MANAGEMENT frmactionmgmt
+		{
+			frame_ieee80211->i_fc[0] |= IEEE80211_FC0_TYPE_MGT;
+		}
+		;
+
+frmactionmgmt	: SUBTYPE frmsubtype
+		;
+
+frmactiondir	: /* empty */
+		{
+			frame.f_action_data.a_flags |=
+			    HOSTAPD_ACTION_F_OPT_DIR_AUTO;
+		}
+		| DIR frmdir
+		;
+
+frmactionfrom	: FROM frmactionaddr
+		{
+			if (($2.flags & HOSTAPD_ACTION_F_REF_M) == 0) {
+				bcopy($2.lladdr, frame_ieee80211->i_from,
+				    IEEE80211_ADDR_LEN);
+			} else
+				frame.f_action_data.a_flags |=
+				    ($2.flags << HOSTAPD_ACTION_F_REF_FROM_S);
+		}
+		;
+
+frmactionto	: TO frmactionaddr
+		{
+			if (($2.flags & HOSTAPD_ACTION_F_REF_M) == 0) {
+				bcopy($2.lladdr, frame_ieee80211->i_to,
+				    IEEE80211_ADDR_LEN);
+			} else
+				frame.f_action_data.a_flags |=
+				    ($2.flags << HOSTAPD_ACTION_F_REF_TO_S);
+		}
+		;
+
+frmactionbssid	: BSSID frmactionaddr
+		{
+			if (($2.flags & HOSTAPD_ACTION_F_REF_M) == 0) {
+				bcopy($2.lladdr, frame_ieee80211->i_bssid,
+				    IEEE80211_ADDR_LEN);
+			} else
+				frame.f_action_data.a_flags |=
+				    ($2.flags << HOSTAPD_ACTION_F_REF_BSSID_S);
+		}
+		;
+
+frmactionaddr	: lladdr
+		{
+			bcopy($1.lladdr, $$.lladdr, IEEE80211_ADDR_LEN);
+			$$.flags = 0;
+		}
+		| refaddr
+		{
+			$$.flags = $1.flags;
+		}
+		;
+
+table		: '<' STRING '>' {
+			if (strlen($2) >= HOSTAPD_TABLE_NAMELEN) {
+				yyerror("table name %s too long, max %u",
+				    $2, HOSTAPD_TABLE_NAMELEN - 1);
+				free($2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
+tabledef	: TABLE table {
+			if ((table =
+			    hostapd_table_add(&hostapd_cfg, $2)) == NULL) {
+				yyerror("failed to add table: %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		} tableopts {
+			table = NULL;
+		}
+		;
+
+tableopts	: /* empty */
+		| tableopts_l
+		;
+
+tableopts_l	: tableopts_l tableopt
+		| tableopt
+		;
+
+tableopt	: CONST	{
+			if (table->t_flags & HOSTAPD_TABLE_F_CONST) {
+				yyerror("option already specified");
+				YYERROR;
+			}
+			table->t_flags |= HOSTAPD_TABLE_F_CONST;
+		}
+		| '{' optnl '}'
+		| '{' optnl tableaddrlist optnl '}'
+		;
+
+string		: string STRING
+		{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
 				hostapd_fatal("string: asprintf");
 			free($1);
@@ -158,6 +679,115 @@ varset		: STRING '=' string
 				hostapd_fatal("cannot store variable");
 			free($1);
 			free($3);
+		}
+		;
+
+refaddr		: '&' FROM
+		{
+			$$.flags |= HOSTAPD_ACTION_F_REF_FROM;
+		}
+		| '&' TO
+		{
+			$$.flags |= HOSTAPD_ACTION_F_REF_TO;
+		}
+		| '&' BSSID
+		{
+			$$.flags |= HOSTAPD_ACTION_F_REF_BSSID;
+		}
+		;
+
+tableaddrlist	: tableaddrentry
+		| tableaddrlist comma tableaddrentry
+		;
+
+tableaddrentry	: lladdr
+		{
+			if ((entry = hostapd_entry_add(table,
+			    $1.lladdr)) == NULL) {
+				yyerror("failed to add entry: %s",
+				    etheraddr_string($1.lladdr));
+				YYERROR;
+			}
+		} tableaddropt {
+			entry = NULL;
+		}
+		;
+
+tableaddropt	: /* empty */
+		| assign ipv4addr
+		{
+			entry->e_flags |= HOSTAPD_ENTRY_F_IPV4;
+			bcopy(&$2, &entry->e_ipv4, sizeof(struct in_addr));
+		}
+		| mask lladdr
+		{
+			entry->e_flags |= HOSTAPD_ENTRY_F_MASK;
+			bcopy($2.lladdr, entry->e_mask, IEEE80211_ADDR_LEN);
+
+			/* Update entry position in the table */
+			hostapd_entry_update(table, entry);
+		}
+		;
+
+ipv4addr	: STRING
+		{
+			if (inet_net_pton(AF_INET, $1, &$$, sizeof($$)) == -1) {
+				yyerror("invalid address: %s\n", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		;
+
+lladdr		: STRING
+		{
+			struct ether_addr *ea;
+
+			if ((ea = ether_aton($1)) == NULL) {
+				yyerror("invalid address: %s\n", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+
+			bcopy(ea, $$.lladdr, IEEE80211_ADDR_LEN);
+			$$.flags = 0;
+		}
+		;
+
+number		: STRING
+		{
+			$$ = strtonum($1, 0, 1 << sizeof(long), NULL);
+			free($1);
+		}
+		;
+
+passive		: /* empty */
+		| PASSIVE
+		{
+			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_IAPP_PASSIVE;
+		}
+		;
+
+assign		: '-' '>'
+		;
+
+mask		: '&'
+		;
+
+comma		: /* emtpy */
+		| ',' optnl
+		;
+
+optnl		: /* empty */
+		| '\n'
+		;
+
+not		: /* empty */
+		| '!'
+		{
+			negative = 1;
 		}
 		;
 
@@ -183,13 +813,70 @@ lookup(char *token)
 {
 	/* Keep this list sorted */
 	static const struct keywords keywords[] = {
-		{ "broadcast",	BROADCAST },
-		{ "hostap",	HOSTAP },
-		{ "iapp",	IAPP },
-		{ "interface",	INTERFACE },
-		{ "mode",	MODE },
-		{ "multicast",	MULTICAST },
-		{ "set",	SET },
+		{ "add",		ADD },
+		{ "any",		ANY },
+		{ "assoc",		ASSOC },
+		{ "assoced",		ASSOCED },
+		{ "atim",		ATIM },
+		{ "auth",		AUTH },
+		{ "authed",		AUTHED },
+		{ "beacon",		BEACON },
+		{ "broadcast",		BROADCAST },
+		{ "bssid",		BSSID },
+		{ "const",		CONST },
+		{ "data",		DATA },
+		{ "deauth",		DEAUTH },
+		{ "delete",		DELETE },
+		{ "dir",		DIR },
+		{ "disassoc",		DISASSOC },
+		{ "ds",			DS },
+		{ "expire",		EXPIRE },
+		{ "failure",		FAILURE },
+		{ "frame",		FRAME },
+		{ "from",		FROM },
+		{ "handle",		HANDLE },
+		{ "hostap",		HOSTAP },
+		{ "iapp",		IAPP },
+		{ "ie",			IE },
+		{ "inconsistent",	INCONSISTENT },
+		{ "interface",		INTERFACE },
+		{ "invalid",		INVALID },
+		{ "leave",		LEAVE },
+		{ "limit",		LIMIT },
+		{ "log",		LOG },
+		{ "management",		MANAGEMENT },
+		{ "mic",		MIC },
+		{ "mode",		MODE },
+		{ "multicast",		MULTICAST },
+		{ "no",			NO },
+		{ "not",		NOT },
+		{ "node",		NODE },
+		{ "nwid",		NWID },
+		{ "passive",		PASSIVE },
+		{ "pcap",		PCAP },
+		{ "probe",		PROBE },
+		{ "quick",		QUICK },
+		{ "radiotap",		RADIOTAP },
+		{ "reason",		REASON },
+		{ "reassoc",		REASSOC },
+		{ "request",		REQUEST },
+		{ "required",		REQUIRED },
+		{ "resend",		RESEND },
+		{ "reserved",		RESERVED },
+		{ "response",		RESPONSE },
+		{ "rsn",		RSN },
+		{ "sec",		SEC },
+		{ "set",		SET },
+		{ "skip",		SKIP },
+		{ "subtype",		SUBTYPE },
+		{ "table",		TABLE },
+		{ "to",			TO },
+		{ "toomany",		TOOMANY },
+		{ "type",		TYPE },
+		{ "unspecified",	UNSPECIFIED },
+		{ "usec",		USEC },
+		{ "verbose",		VERBOSE },
+		{ "with",		WITH }
 	};
 	const struct keywords *p;
 
@@ -405,7 +1092,7 @@ symset(const char *nam, const char *val, int persist)
 			free(sym);
 		}
 	}
-	if ((sym = calloc(1, sizeof(*sym))) == NULL)
+	if ((sym = (struct sym *)calloc(1, sizeof(*sym))) == NULL)
 		return (-1);
 
 	sym->nam = strdup(nam);
@@ -439,7 +1126,7 @@ hostapd_parse_symset(char *s)
 		return (-1);
 
 	len = strlen(s) - strlen(val) + 1;
-	if ((sym = malloc(len)) == NULL)
+	if ((sym = (char *)malloc(len)) == NULL)
 		hostapd_fatal("cmdline_symset: malloc");
 
 	strlcpy(sym, s, len);
@@ -483,6 +1170,10 @@ hostapd_parse_file(struct hostapd_config *cfg)
 		return (-1);
 	}
 
+	/* Init tables and data structures */
+	TAILQ_INIT(&cfg->c_tables);
+	TAILQ_INIT(&cfg->c_frames);
+
 	lineno = 1;
 	errors = 0;
 
@@ -504,7 +1195,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 		}
 	}
 
-	return (ret);
+	return (errors ? EINVAL : ret);
 }
 
 int
@@ -518,7 +1209,8 @@ yyerror(const char *fmt, ...)
 	va_start(ap, fmt);
 	if (asprintf(&nfmt, "%s:%d: %s\n", infile, yylval.lineno, fmt) == -1)
 		hostapd_fatal("yyerror asprintf");
-	hostapd_log(HOSTAPD_LOG, nfmt, ap);
+	vfprintf(stderr, nfmt, ap);
+	fflush(stderr);
 	va_end(ap);
 	free(nfmt);
 
