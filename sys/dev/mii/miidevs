@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.55 2005/06/11 06:06:05 brad Exp $
+$OpenBSD: miidevs,v 1.56 2005/06/17 23:51:36 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -53,6 +53,7 @@ oui DAVICOM			0x00606e	Davicom Semiconductor
 oui MARVELL			0x005043	Marvell Semiconductor
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
+oui JATO			0x00e083	Jato Technologies
 oui LEVEL1			0x00207b	Level 1
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
@@ -172,6 +173,9 @@ model INTEL I82555		0x0015 i82555 10/100 PHY
 model INTEL I82562EM		0x0032 i82562EM 10/100 PHY
 model INTEL I82562ET		0x0033 i82562ET 10/100 PHY
 model INTEL I82553		0x0035 i82553 10/100 PHY
+
+/* Jato Technologies PHYs */
+model JATO BASEX		0x0000 Jato 1000baseX PHY
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 PHY
