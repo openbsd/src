@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.876 2005/06/15 23:33:18 brad Exp $
+$OpenBSD: pcidevs,v 1.877 2005/06/17 23:42:40 martin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1527,6 +1527,7 @@ product INTEL 82875P_AGP	0x2579	82875P AGP
 product INTEL 82875P_CSA	0x257b	82875P PCI-CSA
 product INTEL 915G_HB		0x2580	915G/P/GV Host
 product INTEL 915G_PCIE		0x2581	915G/P/GV PCIE
+product INTEL 915G_IV		0x2582	915G/P/GV Video
 product INTEL 925X_HB		0x2584	925X MCH Host
 product INTEL 925X_PCIE		0x2585	925X PCIE
 product INTEL E7221_HB		0x2588	E7221 MCH Host
