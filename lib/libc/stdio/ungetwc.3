@@ -1,3 +1,5 @@
+.\"	$OpenBSD: ungetwc.3,v 1.2 2005/06/17 22:03:18 jmc Exp $
+.\"
 .\"	$NetBSD: ungetwc.3,v 1.7 2003/09/08 17:54:32 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -39,8 +41,6 @@
 .Sh NAME
 .Nm ungetwc
 .Nd un-get wide-character from input stream
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .In stdio.h
 .In wchar.h
@@ -68,14 +68,14 @@ One wide-character of push-back is guaranteed,
 but as long as there is
 sufficient memory, an effectively infinite amount of pushback is allowed.
 .Pp
-If a character is successfully pushed-back,
+If a character is successfully pushed back,
 the end-of-file indicator for the stream is cleared.
 .Sh RETURN VALUES
 The
 .Fn ungetwc
 function
 returns
-the wide-character pushed-back after the conversion, or
+the wide-character pushed back after the conversion, or
 .Dv WEOF
 if the operation fails.
 If the value of the argument

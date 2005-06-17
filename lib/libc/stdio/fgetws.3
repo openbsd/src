@@ -1,3 +1,5 @@
+.\"	$OpenBSD: fgetws.3,v 1.2 2005/06/17 22:03:18 jmc Exp $
+.\"
 .\" $NetBSD: fgetws.3,v 1.2 2003/08/07 16:43:23 agc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -43,8 +45,6 @@
 .Sh NAME
 .Nm fgetws
 .Nd get a line of wide characters from a stream
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .In stdio.h
 .In wchar.h
@@ -61,7 +61,7 @@ from the given
 and stores them in the wide character string
 .Fa ws .
 Reading stops when a newline character is found,
-at end-of-file or error.
+at end-of-file, or error.
 The newline, if any, is retained.
 If any characters are read and there is no error, a
 .Ql \e0
