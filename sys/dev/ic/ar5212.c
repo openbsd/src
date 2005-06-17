@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.21 2005/05/28 23:45:09 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.22 2005/06/17 12:51:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -2333,8 +2333,8 @@ ar5k_ar5212_set_key(hal, entry, keyval, mac, xor_notused)
 	const u_int8_t *mac;
 	int xor_notused;
 {
-	int elements = AR5K_AR5212_KEYCACHE_SIZE - 2, i;
-	u_int32_t key_v[elements];
+	int i;
+	u_int32_t key_v[AR5K_AR5212_KEYCACHE_SIZE - 2];
 
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5212_KEYTABLE_SIZE);
 
@@ -2370,7 +2370,7 @@ ar5k_ar5212_set_key(hal, entry, keyval, mac, xor_notused)
 		return (AH_FALSE);
 	}
 
-	for (i = 0; i < elements; i++)
+	for (i = 0; i < AR5K_ELEMENTS(key_v); i++)
 		AR5K_REG_WRITE(AR5K_AR5212_KEYTABLE_OFF(entry, i), key_v[i]);
 
 	return (ar5k_ar5212_set_key_lladdr(hal, entry, mac));

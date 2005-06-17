@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.25 2005/05/28 23:45:10 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.26 2005/06/17 12:51:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -408,7 +408,11 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 	u_int i, c;
 	u_int32_t domain_current;
 	u_int domain_5ghz, domain_2ghz;
-	HAL_CHANNEL all_channels[max_channels];
+	HAL_CHANNEL *all_channels;
+
+	if ((all_channels = malloc(sizeof(HAL_CHANNEL) * max_channels,
+	    M_TEMP, M_NOWAIT)) == NULL)
+		return (AH_FALSE);
 
 	i = c = 0;
 	domain_current = hal->ah_get_regdomain(hal);
@@ -520,9 +524,9 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 	}
 
  done:
-	bcopy(all_channels, channels, sizeof(all_channels));
+	bcopy(all_channels, channels, sizeof(HAL_CHANNEL) * max_channels);
 	*channels_size = c;
-
+	free(all_channels, M_TEMP);
 	return (AH_TRUE);
 }
 
