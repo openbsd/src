@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.88 2005/06/14 15:27:31 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.89 2005/06/17 14:58:23 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1165,6 +1165,7 @@ cvs_file_prune(char *path)
 	struct dirent *dp;
 	char fpath[MAXPATHLEN];
 	CVSENTRIES *entf;
+	CVSFILE *cfp;
 
 	pwd = (!strcmp(path, "."));
 
@@ -1191,6 +1192,10 @@ cvs_file_prune(char *path)
 				cvs_log(LP_ERRNO, "%s", fpath);
 				continue;
 			}
+
+			cfp = cvs_file_find(cvs_files, fpath);
+			if (cfp == NULL)
+				continue;
 
 			if (cvs_file_prune(fpath)) {
 				empty--;
