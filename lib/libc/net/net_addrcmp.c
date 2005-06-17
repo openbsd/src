@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_addrcmp.c,v 1.9 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: net_addrcmp.c,v 1.10 2005/06/17 20:36:16 henning Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -29,7 +29,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
-#include <netns/ns.h>
 #include <string.h>
 
 int
@@ -55,10 +54,6 @@ net_addrcmp(struct sockaddr *sa1, struct sockaddr *sa2)
 		return memcmp(&((struct sockaddr_in6 *)sa1)->sin6_addr,
 		    &((struct sockaddr_in6 *)sa2)->sin6_addr,
 		    sizeof(struct in6_addr));
-	case AF_NS:
-		return (memcmp(&((struct sockaddr_ns *)sa1)->sns_addr,
-		    &((struct sockaddr_ns *)sa2)->sns_addr,
-		    sizeof(struct ns_addr)));
 	case AF_LOCAL:
 		return (strcmp(((struct sockaddr_un *)sa1)->sun_path,
 		    ((struct sockaddr_un *)sa1)->sun_path));
