@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.91 2005/04/28 17:19:27 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.92 2005/06/17 21:54:14 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -410,6 +410,32 @@ nobootinfo:
 	 * XXX (unless _PMAP_MAY_USE_PROM_CONSOLE is defined and
 	 * XXX pmap_uses_prom_console() evaluates to non-zero.)
 	 */
+#endif
+
+#ifndef SMALL_KERNEL
+	/*
+	 * If we run on a BWX-capable processor, override cpu_switch
+	 * with a faster version.
+	 * We do this now because the kernel text might be mapped
+	 * read-only eventually (although this is not the case at the moment).
+	 */
+	if (alpha_implver() >= ALPHA_IMPLVER_EV5) {
+		if (~alpha_amask(ALPHA_AMASK_BWX) != 0) {
+			extern vaddr_t __bwx_switch0, __bwx_switch1,
+			    __bwx_switch2, __bwx_switch3;
+			u_int32_t *dst, *src, *end;
+
+			src = (u_int32_t *)&__bwx_switch2;
+			end = (u_int32_t *)&__bwx_switch3;
+			dst = (u_int32_t *)&__bwx_switch0;
+			while (src != end)
+				*dst++ = *src++;
+			src = (u_int32_t *)&__bwx_switch1;
+			end = (u_int32_t *)&__bwx_switch2;
+			while (src != end)
+				*dst++ = *src++;
+		}
+	}
 #endif
 
 	/*

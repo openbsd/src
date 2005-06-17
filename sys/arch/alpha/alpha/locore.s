@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.27 2004/12/24 22:50:27 miod Exp $ */
+/* $OpenBSD: locore.s,v 1.28 2005/06/17 21:54:14 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -891,10 +891,7 @@ cpu_switch_queuescan:
 	 *
 	 * Note: GET_CPUINFO clobbers v0, t0, t8...t11.
 	 */
-#ifdef __alpha_bwx__
-	ldiq	t0, SONPROC			/* p->p_stat = SONPROC */
-	stb	t0, P_STAT(s2)
-#else
+EXPORT(__bwx_switch0)
 	addq	s2, P_STAT, t3			/* p->p_stat = SONPROC */
 	ldq_u	t1, 0(t3)
 	ldiq	t0, SONPROC
@@ -902,7 +899,7 @@ cpu_switch_queuescan:
 	mskbl	t1, t3, t1
 	or	t0, t1, t0
 	stq_u	t0, 0(t3)
-#endif /* __alpha_bwx__ */
+EXPORT(__bwx_switch1)
 
 	GET_CPUINFO
 	/* p->p_cpu initialized in fork1() for single-processor */
@@ -934,6 +931,19 @@ cpu_switch_queuescan:
 	ldiq	v0, 1				/* possible ret to savectx() */
 	RET
 	END(cpu_switch)
+
+#ifndef SMALL_KERNEL
+	/*
+	 * BWX-enhanced version of the p->p_stat assignment, to be copied
+	 * over the __bwx_switch0 area.
+
+	 * Do not put anything between the end of cpu_switch and this!
+	 */
+EXPORT(__bwx_switch2)
+	ldiq	t0, SONPROC			/* p->p_stat = SONPROC */
+	stb	t0, P_STAT(s2)
+EXPORT(__bwx_switch3)
+#endif
 
 /*
  * switch_trampoline()
