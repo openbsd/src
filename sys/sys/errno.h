@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.13 2005/05/24 03:55:11 millert Exp $	*/
+/*	$OpenBSD: errno.h,v 1.14 2005/06/17 21:48:03 espie Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -175,7 +175,8 @@ __END_DECLS
 #define	ENEEDAUTH	81		/* Need authenticator */
 #define	EIPSEC		82		/* IPsec processing failure */
 #define	ENOATTR		83		/* Attribute not found */
-#define	ELAST		83		/* Must be equal largest errno */
+#define	EILSEQ		84		/* Illegal byte sequence */
+#define	ELAST		84		/* Must be equal largest errno */
 #endif /* _POSIX_SOURCE */
 
 #ifdef _KERNEL
