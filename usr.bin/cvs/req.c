@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.21 2005/06/10 21:14:47 joris Exp $	*/
+/*	$OpenBSD: req.c,v 1.22 2005/06/17 15:09:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,6 +30,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +42,7 @@
 #include "proto.h"
 
 
+extern char *cvs_rootstr;
 extern int   verbosity;
 extern int   cvs_compress;
 extern char *cvs_rsh;
@@ -119,7 +121,7 @@ struct cvs_reqhdlr {
 	{ cvs_req_command       },
 	{ NULL                  },
 	{ cvs_req_command       },
-	{ NULL                  },
+	{ cvs_req_command       },
 	{ NULL                  },	/* 50 */
 	{ NULL                  },
 	{ NULL                  },
@@ -147,16 +149,16 @@ struct cvs_reqhdlr {
 /*
  * Argument array built by `Argument' and `Argumentx' requests.
  */
+static char *cvs_req_args[CVS_PROTO_MAXARG];
 
+/* start at 1, because 0 will be the command name */
+static int  cvs_req_nargs = 1;
+
+static char *cvs_req_modulename;
 static char *cvs_req_rootpath;
 static char *cvs_req_currentdir;
-static char *cvs_req_repopath;
-static char cvs_req_tmppath[MAXPATHLEN];
-
 extern char cvs_server_tmpdir[MAXPATHLEN];
-static char *cvs_req_args[CVS_PROTO_MAXARG];
-static int   cvs_req_nargs = 0;
-
+static CVSENTRIES *cvs_req_entf;
 
 /*
  * cvs_req_handle()
@@ -218,6 +220,8 @@ cvs_req_root(int reqid, char *line)
 		return (-1);
 	}
 
+	cvs_rootstr = cvs_req_rootpath;
+
 	return (0);
 }
 
@@ -264,8 +268,12 @@ cvs_req_validresp(int reqid, char *line)
 static int
 cvs_req_directory(int reqid, char *line)
 {
-	int l;
+	int pwd;
+	size_t dirlen;
 	char rdir[MAXPATHLEN];
+	char *repo, *s, *p;
+
+	pwd = (!strcmp(line, "."));
 
 	if (cvs_getln(NULL, rdir, sizeof(rdir)) < 0)
 		return (-1);
@@ -279,27 +287,96 @@ cvs_req_directory(int reqid, char *line)
 		return (-1);
 	}
 
-	/* now obtain the path relative to the Root directory */
-	cvs_req_repopath = cvs_req_currentdir + strlen(cvs_req_rootpath) + 1;
+	dirlen = strlen(cvs_req_currentdir);
 
-	/* create tmp path */
-	l = snprintf(cvs_req_tmppath, sizeof(cvs_req_tmppath), "%s/%s",
-	    cvs_server_tmpdir, cvs_req_repopath);
-	if (l == -1 || l >= (int)sizeof(cvs_req_tmppath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", cvs_req_tmppath);
+	/*
+	 * Lets make sure we always start at the correct
+	 * directory.
+	 */
+	if (chdir(cvs_server_tmpdir) == -1) {
+		cvs_log(LP_ERRNO, "failed to change to top directory");
 		return (-1);
 	}
 
-	if ((mkdir(cvs_req_tmppath, 0755) == -1) && (errno != EEXIST)) {
-		cvs_log(LP_ERRNO, "failed to create temporary directory '%s'",
-		    cvs_req_tmppath);
+	/*
+	 * Set repository path.
+	 */
+	s = cvs_req_currentdir + strlen(cvs_req_rootpath) + 1;
+	if (s >= (cvs_req_currentdir + dirlen)) {
+		cvs_log(LP_ERR, "you're bad, go away");
 		return (-1);
 	}
 
-	/* create the CVS/ administrative files */
-	/* XXX - TODO */
+	if ((repo = strdup(s)) == NULL) {
+		cvs_log(LP_ERR, "failed to save repository path");
+		return (-1);
+	}
 
+	/*
+	 * Skip back "foo/bar" part, so we can feed the repo
+	 * as a startpoint for cvs_create_dir().
+	 */
+	if (!pwd) {
+		s = repo + strlen(repo) - strlen(line) - 1;
+		if (*s != '/') {
+			cvs_log(LP_ERR, "malformed directory");
+			free(repo);
+			return (-1);
+		}
+
+		*s = '\0';
+	}
+
+	/*
+	 * Obtain the modulename, we only need to do this at
+	 * the very first time we get a Directory request.
+	 */
+	if (cvs_req_modulename == NULL) {
+		if ((p = strchr(repo, '/')) != NULL)
+			*p = '\0';
+
+		if ((cvs_req_modulename = strdup(repo)) == NULL) {
+			cvs_log(LP_ERR, "failed to save modulename");
+			free(repo);
+			return (-1);
+		}
+
+		if (p != NULL)
+			*p = '/';
+
+		/*
+		 * Now, create the admin files in the top-level
+		 * directory for the temp repo.
+		 */
+		if (cvs_mkadmin(cvs_server_tmpdir, cvs_rootstr, repo) < 0) {
+			cvs_log(LP_ERR, "failed to create admin files");
+			free(repo);
+			return (-1);
+		}
+	}
+
+	/*
+	 * create the directory plus the administrative files.
+	 */
+	if (cvs_create_dir(line, 1, cvs_rootstr, repo) < 0) {
+		free(repo);
+		return (-1);
+	}
+
+	/*
+	 * cvs_create_dir() has already put us in the correct directory
+	 * so now open it's Entry file for incoming files.
+	 */
+	if (cvs_req_entf != NULL)
+		cvs_ent_close(cvs_req_entf);
+	cvs_req_entf = cvs_ent_open(".", O_RDWR);
+	if (cvs_req_entf == NULL) {
+		cvs_log(LP_ERR, "failed to open Entry file for %s", line);
+		free(repo);
+		return (-1);
+	}
+
+	free(repo);
 	return (0);
 }
 
@@ -307,12 +384,20 @@ static int
 cvs_req_entry(int reqid, char *line)
 {
 	struct cvs_ent *ent;
-	CVSFILE *cf;
 
+	/* parse received entry */
 	if ((ent = cvs_ent_parse(line)) == NULL)
 		return (-1);
 
-	cf = cvs_file_create(NULL, ent->ce_name, DT_REG, 0644);
+	/* add it to the entry file and done */
+	if (cvs_ent_add(cvs_req_entf, ent) < 0) {
+		cvs_log(LP_ERR, "failed to add '%s' to the Entry file",
+		    ent->ce_name);
+		return (-1);
+	}
+
+	/* XXX */
+	cvs_ent_write(cvs_req_entf);
 
 	return (0);
 }
@@ -327,37 +412,52 @@ cvs_req_entry(int reqid, char *line)
 static int
 cvs_req_filestate(int reqid, char *line)
 {
-	int l;
+	int ret;
 	mode_t fmode;
 	BUF *fdata;
-	char fpath[MAXPATHLEN];
+	struct cvs_ent *ent;
 
-	if (reqid == CVS_REQ_MODIFIED) {
+	ret = 0;
+	switch (reqid) {
+	case CVS_REQ_MODIFIED:
 		fdata = cvs_recvfile(NULL, &fmode);
 		if (fdata == NULL)
 			return (-1);
 
-		/* create full temporary path */
-		l = snprintf(fpath, sizeof(fpath), "%s/%s", cvs_req_tmppath,
-		    line);
-		if (l == -1 || l >= (int)sizeof(fpath)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", fpath);
-			cvs_buf_free(fdata);
-			return (-1);
-		}
-
 		/* write the file */
-		if (cvs_buf_write(fdata, fpath, fmode) < 0) {
-			cvs_log(LP_ERR, "failed to create file %s", fpath);
+		if (cvs_buf_write(fdata, line, fmode) < 0) {
+			cvs_log(LP_ERR, "failed to create file %s", line);
 			cvs_buf_free(fdata);
 			return (-1);
 		}
 
 		cvs_buf_free(fdata);
+		break;
+	case CVS_REQ_ISMODIFIED:
+		break;
+	case CVS_REQ_UNCHANGED:
+		ent = cvs_ent_get(cvs_req_entf, line);
+		if (ent == NULL) {
+			cvs_log(LP_ERR,
+			    "received Unchanged request for a non-existing file");
+			ret = -1;
+		} else {
+			ent->ce_status = CVS_ENT_UPTODATE;
+		}
+		break;
+	case CVS_REQ_QUESTIONABLE:
+		break;
+	default:
+		cvs_log(LP_ERR, "wrong request id type");
+		ret = -1;
+		break;
 	}
 
-	return (0);
+	/* XXX */
+	cvs_req_entf->cef_flags &= ~CVS_ENTF_SYNC;
+	cvs_ent_write(cvs_req_entf);
+
+	return (ret);
 }
 
 /*
@@ -551,7 +651,23 @@ cvs_req_command(int reqid, char *line)
 		return (-1);
 	}
 
+	/* close the Entry file if it's still open */
+	if (cvs_req_entf != NULL)
+		cvs_ent_close(cvs_req_entf);
+
+	/* fill in the command name */
+	cvs_req_args[0] = cmdp->cmd_name;
+
+	/* switch to the correct directory */
+	if (cmdp->cmd_op != CVS_OP_VERSION) {
+		if (chdir(cvs_server_tmpdir) == -1) {
+			cvs_log(LP_ERRNO, "failed to change dir");
+			return (-1);
+		}
+	}
+
 	ret = cvs_startcmd(cmdp, cvs_req_nargs, cvs_req_args);
+
 	if (ret == 0)
 		ret = cvs_sendresp(CVS_RESP_OK, NULL);
 

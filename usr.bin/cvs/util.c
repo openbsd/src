@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.33 2005/06/14 03:56:14 pat Exp $	*/
+/*	$OpenBSD: util.c,v 1.34 2005/06/17 15:09:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -559,6 +559,121 @@ cvs_remove_dir(const char *path)
 	ret = 0;
 done:
 	closedir(dirp);
+	return (ret);
+}
+
+/*
+ * Create a directory, and the parent directories if needed.
+ * based upon mkpath() from mkdir.c
+ */
+int
+cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
+{
+	size_t l;
+	int len, ret;
+	char *d, *s;
+	struct stat sb;
+	char rpath[MAXPATHLEN], entry[MAXPATHLEN];
+	CVSENTRIES *entf;
+	struct cvs_ent *ent;
+
+	if (create_adm == 1 && (root == NULL || repo == NULL)) {
+		cvs_log(LP_ERR, "missing stuff in cvs_create_dir");
+		return (-1);
+	}
+
+	if ((s = strdup(path)) == NULL)
+		return (-1);
+
+	if (strlcpy(rpath, repo, sizeof(rpath)) >= sizeof(rpath) ||
+	    strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rpath);
+		free(s);
+		return (-1);
+	}
+
+	ret = -1;
+	entf = NULL;
+	d = strtok(s, "/");
+	while (d != NULL) {
+		if (stat(d, &sb)) {
+			/* try to create the directory */
+			if ((errno != ENOENT) || (mkdir(d, 0755) &&
+			    errno != EEXIST)) {
+				cvs_log(LP_ERRNO, "failed to create `%s'", d);
+				goto done;
+			}
+		} else if (!S_ISDIR(sb.st_mode)) {
+			cvs_log(LP_ERR, "`%s' not a directory", d);
+			goto done;
+		}
+
+		/*
+		 * Create administrative files if requested.
+		 */
+		if (create_adm) {
+			l = strlcat(rpath, d, sizeof(rpath));
+			if (l >= sizeof(rpath))
+				goto done;
+
+			l = strlcat(rpath, "/", sizeof(rpath));
+			if (l >= sizeof(rpath))
+				goto done;
+
+			if (cvs_mkadmin(d, root, rpath) < 0) {
+				cvs_log(LP_ERR, "failed to create adm files");
+				goto done;
+			}
+		}
+
+		/*
+		 * Add it to the parent directory entry file.
+		 * (if any).
+		 */
+		entf = cvs_ent_open(".", O_RDWR);
+		if (entf != NULL && strcmp(d, ".")) {
+			len = snprintf(entry, sizeof(entry), "D/%s////", d);
+			if (len == -1 || len >= (int)sizeof(entry)) {
+				errno = ENAMETOOLONG;
+				cvs_log(LP_ERRNO, "%s", entry);
+				goto done;
+			}
+
+			if ((ent = cvs_ent_parse(entry)) == NULL) {
+				cvs_log(LP_ERR, "failed to parse entry");
+				goto done;
+			}
+
+			cvs_ent_remove(entf, d);
+
+			if (cvs_ent_add(entf, ent) < 0) {
+				cvs_log(LP_ERR, "failed to add entry");
+				goto done;
+			}
+		}
+
+		if (entf != NULL) {
+			cvs_ent_close(entf);
+			entf = NULL;
+		}
+
+		/*
+		 * All went ok, switch to the newly created directory.
+		 */
+		if (chdir(d) == -1) {
+			cvs_log(LP_ERRNO, "failed to change dir to `%s'", d);
+			goto done;
+		}
+
+		d = strtok(NULL, "/");
+	}
+
+	ret = 0;
+done:
+	if (entf != NULL)
+		cvs_ent_close(entf);
+	free(s);
 	return (ret);
 }
 

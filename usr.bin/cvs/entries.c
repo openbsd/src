@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.37 2005/06/07 08:19:07 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.38 2005/06/17 15:09:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -379,15 +379,21 @@ cvs_ent_parse(const char *entry)
 			if ((fields[2][0] == '0') && (fields[2][1] == '\0'))
 				entp->ce_status = CVS_ENT_ADDED;
 		}
+
 		if ((entp->ce_rev = rcsnum_parse(sp)) == NULL) {
 			cvs_ent_free(entp);
 			return (NULL);
 		}
 
-		if (strcmp(fields[3], CVS_DATE_DUMMY) == 0)
-			entp->ce_mtime = CVS_DATE_DMSEC;
-		else
-			entp->ce_mtime = cvs_date_parse(fields[3]);
+		if (cvs_cmdop == CVS_OP_SERVER) {
+			if (!strcmp(fields[3], "up to date"))
+				entp->ce_status = CVS_ENT_UPTODATE;
+		} else {
+			if (strcmp(fields[3], CVS_DATE_DUMMY) == 0)
+				entp->ce_mtime = CVS_DATE_DMSEC;
+			else
+				entp->ce_mtime = cvs_date_parse(fields[3]);
+		}
 	}
 
 	entp->ce_opts = fields[4];
@@ -449,6 +455,13 @@ cvs_ent_write(CVSENTRIES *ef)
 				if ((len > 0) && (timebuf[len - 1] == '\n'))
 					timebuf[--len] = '\0';
 			}
+		}
+
+		if (cvs_cmdop == CVS_OP_SERVER) {
+			if (ent->ce_status == CVS_ENT_UPTODATE)
+				strlcpy(timebuf, "up to date", sizeof(timebuf));
+			else
+				timebuf[0] = '\0';
 		}
 
 		fprintf(fp, "/%s/%s%s/%s/%s/%s\n", ent->ce_name,

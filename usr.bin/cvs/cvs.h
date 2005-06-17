@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.66 2005/06/17 08:09:13 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.67 2005/06/17 15:09:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -236,7 +236,7 @@ struct cvsroot {
 #define CVS_ENT_REG      0
 #define CVS_ENT_ADDED    1
 #define CVS_ENT_REMOVED  2
-
+#define CVS_ENT_UPTODATE 3
 
 #define CVS_ENTF_SYNC   0x01    /* contents of disk and memory match */
 #define CVS_ENTF_WR     0x02    /* file is opened for writing too */
@@ -291,6 +291,7 @@ typedef struct cvs_histfile {
 } CVSHIST;
 
 
+extern char *cvs_req_modulename;
 extern char *cvs_repo_base;
 extern char *cvs_command;
 extern char *cvs_editor;
@@ -392,6 +393,7 @@ int    cvs_cksum      (const char *, char *, size_t);
 int    cvs_exec       (int, char **, int []);
 int    cvs_getargv    (const char *, char **, int);
 int    cvs_remove_dir (const char *);
+int    cvs_create_dir (const char *, int, char *, char *);
 char** cvs_makeargv   (const char *, int *);
 void   cvs_freeargv   (char **, int);
 size_t cvs_path_cat   (const char *, const char *, char *, size_t);
