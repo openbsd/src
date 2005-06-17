@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.15 2004/07/13 21:04:28 millert Exp $
+	$OpenBSD: syscalls.master,v 1.16 2005/06/17 20:39:14 millert Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -362,7 +362,7 @@
 			    size_t newlen); }
 203	NOARGS		{ int sys_mlock(caddr_t addr, size_t len); }
 204	NOARGS		{ int sys_munlock(caddr_t addr, size_t len); }
-205	NOARGS		{ int sys_undelete(char *path); }
+205	UNIMPL		sys_undelete
 206	UNIMPL
 207	UNIMPL
 208	UNIMPL

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.27 2005/02/19 21:19:28 matthieu Exp $
+	$OpenBSD: syscalls.master,v 1.28 2005/06/17 20:39:14 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -389,11 +389,7 @@
 			    size_t newlen); }
 203	NOARGS		{ int sys_mlock(caddr_t addr, size_t len); }
 204	NOARGS		{ int sys_munlock(caddr_t addr, size_t len); }
-#ifdef FREEBSD_BASED_ON_44LITE_R2
-205	STD		{ int freebsd_sys_undelete(char *path); }
-#else
-205	UNIMPL		undelete
-#endif
+205	UNIMPL		sys_undelete
 206	UNIMPL		futimes
 207	NOARGS		{ int sys_getpgid(pid_t pid); }
 208	UNIMPL		reboot

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.73 2005/06/17 20:37:31 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.72 2005/06/17 20:36:10 millert Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -58,6 +58,10 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	symlink.o sync.o sysarch.o umask.o unlink.o unmount.o \
 	utimes.o vadvise.o wait4.o write.o writev.o xfspioctl.o __semctl.o \
 	__syscall.o __sysctl.o
+
+ASM+=	extattrctl.o extattr_set_file.o extattr_get_file.o \
+	extattr_delete_file.o extattr_set_fd.o extattr_get_fd.o \
+	extattr_delete_fd.o
 
 GASM=	${ASM:.o=.go}
 PASM=	${ASM:.o=.po}
@@ -223,6 +227,14 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	sigreturn.2 sigstack.2 sigsuspend.2 socket.2 socketpair.2 stat.2 \
 	statfs.2 swapctl.2 symlink.2 sync.2 sysarch.2 syscall.2 truncate.2 \
 	umask.2 unlink.2 utimes.2 vfork.2 wait.2 write.2
+
+MAN+=	extattr_get_file.2
+MLINKS+=extattr_get_file.2 extattr_set_file.2 \
+	extattr_get_file.2 extattr_delete_file.2 \
+	extattr_get_file.2 extattr_get_fd.2 \
+	extattr_get_file.2 extattr_set_fd.2 \
+	extattr_get_file.2 extattr_delete_fd.2 \
+	extattr_get_file.2 extattr.2
 
 MAN+=	msgctl.2 shmctl.2 shmat.2 semop.2 semget.2 semctl.2 msgsnd.2 msgrcv.2 \
 	msgget.2 shmget.2

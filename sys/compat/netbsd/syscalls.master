@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.24 2004/07/13 21:04:29 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.25 2005/06/17 20:39:14 millert Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -421,7 +421,7 @@
 			    size_t newlen); }
 203	NOARGS		{ int sys_mlock(const void *addr, size_t len); }
 204	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
-205	NOARGS		{ int sys_undelete(const char *path); }
+205	UNIMPL		sys_undelete
 206	NOARGS		{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
 207	NOARGS		{ int sys_getpgid(pid_t pid); }

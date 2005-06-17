@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.124 2005/05/27 23:44:05 marius Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.125 2005/06/17 20:39:14 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1401,19 +1401,6 @@ sys_symlink(p, v, retval)
 out:
 	pool_put(&namei_pool, path);
 	return (error);
-}
-
-/*
- * Delete a whiteout from the filesystem.
- */
-/* ARGSUSED */
-int
-sys_undelete(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return (ENOSYS);
 }
 
 /*
