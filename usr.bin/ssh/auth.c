@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.59 2005/06/06 11:20:36 djm Exp $");
+RCSID("$OpenBSD: auth.c,v 1.60 2005/06/17 02:44:32 djm Exp $");
 
 #include <libgen.h>
 
@@ -64,7 +64,7 @@ allowed_user(struct passwd * pw)
 	struct stat st;
 	const char *hostname = NULL, *ipaddr = NULL;
 	char *shell;
-	int i;
+	u_int i;
 
 	/* Shouldn't be called if pw is NULL, but better safe than sorry... */
 	if (!pw || !pw->pw_name)

@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.138 2004/06/13 12:53:24 djm Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.139 2005/06/17 02:44:33 djm Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -480,7 +480,7 @@ userauth_gssapi(Authctxt *authctxt)
 {
 	Gssctxt *gssctxt = NULL;
 	static gss_OID_set gss_supported = NULL;
-	static int mech = 0;
+	static u_int mech = 0;
 	OM_uint32 min;
 	int ok = 0;
 
@@ -507,7 +507,8 @@ userauth_gssapi(Authctxt *authctxt)
 		}
 	}
 
-	if (!ok) return 0;
+	if (!ok)
+		return 0;
 
 	authctxt->methoddata=(void *)gssctxt;
 
