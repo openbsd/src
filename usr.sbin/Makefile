@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.120 2005/06/02 20:09:39 tholo Exp $
+#	$OpenBSD: Makefile,v 1.121 2005/06/17 20:35:18 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -20,9 +20,6 @@ SUBDIR+=faithd ndp rip6query route6d rtadvd rtsold traceroute6
 SUBDIR+=bad144 acpid acpidump apm apmd fdformat memconfig
 SUBDIR+=eeprom gpioctl hotplugd
 SUBDIR+=wsconscfg wsfontload
-
-# Extended Attribute tools
-SUBDIR+=extattrctl setextattr getextattr
 
 .if (${AFS:L} == "yes")
 SUBDIR+=afs
