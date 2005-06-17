@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.h,v 1.10 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: fts.h,v 1.11 2005/06/17 20:36:55 millert Exp $	*/
 /*	$NetBSD: fts.h,v 1.5 1994/12/28 01:41:50 mycroft Exp $	*/
 
 /*
@@ -53,7 +53,6 @@ typedef struct {
 #define	FTS_PHYSICAL	0x0010		/* physical walk */
 #define	FTS_SEEDOT	0x0020		/* return dot and dot-dot */
 #define	FTS_XDEV	0x0040		/* don't cross devices */
-#define	FTS_WHITEOUT	0x0080		/* return whiteout information */
 #define	FTS_OPTIONMASK	0x00ff		/* valid user option mask */
 
 #define	FTS_NAMEONLY	0x1000		/* (private) child names only */
@@ -95,12 +94,10 @@ typedef struct _ftsent {
 #define	FTS_NSOK	11		/* no stat(2) requested */
 #define	FTS_SL		12		/* symbolic link */
 #define	FTS_SLNONE	13		/* symbolic link without target */
-#define	FTS_W		14		/* whiteout object */
 	unsigned short fts_info;	/* user flags for FTSENT structure */
 
 #define	FTS_DONTCHDIR	 0x01		/* don't chdir .. to the parent */
 #define	FTS_SYMFOLLOW	 0x02		/* followed a symlink to get here */
-#define	FTS_ISW		 0x04		/* this is a whiteout object */
 	unsigned short fts_flags;	/* private flags for FTSENT structure */
 
 #define	FTS_AGAIN	 1		/* read node again */

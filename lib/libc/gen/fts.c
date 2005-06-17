@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.35 2005/06/16 03:01:25 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.36 2005/06/17 20:36:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.35 2005/06/16 03:01:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.36 2005/06/17 20:36:55 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -695,11 +695,6 @@ mem1:				saved_errno = errno;
 			return (NULL);
 		}
 
-#ifdef FTS_WHITEOUT
-		if (dp->d_type == DT_WHT)
-			p->fts_flags |= FTS_ISW;
-#endif
-
 		if (cderrno) {
 			if (nlinks) {
 				p->fts_info = FTS_NS;
@@ -801,17 +796,6 @@ fts_stat(FTS *sp, FTSENT *p, int follow)
 
 	/* If user needs stat info, stat buffer already allocated. */
 	sbp = ISSET(FTS_NOSTAT) ? &sb : p->fts_statp;
-
-#ifdef FTS_WHITEOUT
-	/* check for whiteout */
-	if (p->fts_flags & FTS_ISW) {
-		if (sbp != &sb) {
-			memset(sbp, '\0', sizeof (*sbp));
-			sbp->st_mode = S_IFWHT;
-		}
-		return (FTS_W);
-	}
-#endif
 
 	/*
 	 * If doing a logical walk, or application requested FTS_FOLLOW, do
