@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.4 2005/06/17 19:13:35 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.5 2005/06/17 20:17:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -34,8 +34,8 @@ file is divided into two main sections.
 User-defined variables may be defined and used later, simplifying the
 configuration file.
 .It Sy Tables
-Tables provide a mechanism to handle large number of linker layer
-addresses easily with increased performance and flexibility.
+Tables provide a mechanism to handle a large number of link layer
+addresses easily, with increased performance and flexibility.
 .It Sy Global Configuration
 Global runtime settings for
 .Xr hostapd 8 .
@@ -69,8 +69,9 @@ set iapp interface $wlan
 .Ed
 .Sh TABLES
 Tables are named structures which can hold a collection of link layer
-addresses, masked address ranges and link layer to IP address
-assignments. Lookups against tables in
+addresses, masked address ranges, and link layer to IP address
+assignments.
+Lookups against tables in
 .Xr hostapd 8
 are relatively fast, making a single rule with tables much more
 efficient, in terms of processor usage and memory consumption, than a
@@ -110,14 +111,14 @@ IAPP could be used in multicast (default) or in broadcast mode.
 The used multicast group is 224.0.1.178.
 .Pp
 Possible options:
-.Bd -literal -offset indent
-.Ar set iapp mode multicast
-.Ar set iapp mode broadcast
+.Bd -unfilled -offset indent
+.Ic set iapp mode multicast
+.Ic set iapp mode broadcast
 .Ed
 .El
 .Sh EVENT RULES
 Event rules provide a powerful way to trigger a certain action when
-receiving specified IEEE 802.11 frames on the 
+receiving specified IEEE 802.11 frames on the
 .Ic hostap interface .
 The rules are handled in sequential order, from first to last.
 .Pp
@@ -133,102 +134,109 @@ All hostapd event rules are single line statements beginning with
 the mandatory
 .Ic hostap handle
 keywords and optional rule options, frame matching,
-a specified action and a limit.
+a specified action and a limit:
 .Bd -literal -offset indent
-.Ar hostap handle [<option>] [<frame>] [<action>] [<limit>]
+hostap handle [<option>] [<frame>] [<action>] [<limit>]
 .Ed
 .Pp
 The optional parts are defined below:
 .Bl -tag -width xxxx
-.It Ar <option>
+.It Aq Ic option
 The rule
 .Ic option
 will modify the behaviour of handling the statement.
 There are two possible options,
-.Ar quick
+.Ic quick
 and
-.Ar skip .
+.Ic skip .
 If either the keyword
-.Ar quick
+.Ic quick
 or the keyword
-.Ar skip
+.Ic skip
 is specified, no further event rules will be handled for this frame
 after processing this rule successfully.
 The keyword
-.Ar skip
+.Ic skip
 additionally skips any further IAPP processing of the frame,
 which is normally done after handling the event rules.
-.It Ar [<type>] [<subtype>] [<dir>] [<from>] [<to>] [<bssid>]
+.It Xo
+.Ic frame
+.Bq Aq Ar type
+.Bq Aq Ar subtype
+.Bq Aq Ar dir
+.Bq Aq Ar from
+.Bq Aq Ar to
+.Bq Aq Ar bssid
+.Xc
 The
 .Ic frame
 description specifies a mechanism to match IEEE 802.11 frames.
-.It Ar with <action>
+.It Ic with Aq Ar action
 An optional
-.Ic action
+.Ar action
 is triggered if a received IEEE 802.11 frame matches the frame
-description. The following choice are available as an
-.Ic action :
+description.
+The following choices are available as an
+.Ar action :
 .Bd -literal
-.Ar frame <type> <subtype> [<dir>] <from> <to> <bssid>
+frame <type> <subtype> [<dir>] <from> <to> <bssid>
 .Ed
-.Pp
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic type :
-.Ar type data
-.Ar type management
+type data
+type management
 .Ed
-.Pp
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic subtype :
-.Ar subtype beacon
-.Ar subtype deauth [<reason>]
-.Ar subtype assoc request
-.Ar subtype assoc resp
-.Ar subtype atim
-.Ar subtype auth
-.Ar subtype probe request
-.Ar subtype probe resp
-.Ar subtype reassoc request
-.Ar subtype reassoc response
+subtype beacon
+subtype deauth [<reason>]
+subtype assoc request
+subtype assoc resp
+subtype atim
+subtype auth
+subtype probe request
+subtype probe resp
+subtype reassoc request
+subtype reassoc response
 .Ed
-.Pp
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic reason :
-.Ar reason assoc leave
-.Ar reason assoc not authed
-.Ar reason assoc toomany
-.Ar reason auth expire
-.Ar reason auth leave
-.Ar reason ie invalid
-.Ar reason mic failure
-.Ar reason not authed
-.Ar reason not assoced
-.Ar reason rsn required
-.Ar reason rsn inconsistent
-.Ar reason unspecified
+reason assoc leave
+reason assoc not authed
+reason assoc toomany
+reason auth expire
+reason auth leave
+reason ie invalid
+reason mic failure
+reason not authed
+reason not assoced
+reason rsn required
+reason rsn inconsistent
+reason unspecified
 .Ed
-.Pp
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic dir :
-.Ar dir no ds
-.Ar dir to ds
-.Ar dir from ds
-.Ar dir ds to ds
+dir no ds
+dir to ds
+dir from ds
+dir ds to ds
 .Ed
-.Pp
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic from/to/bssid :
-.Ar ( from | to | bssid ) lladdr
-.Ar ( from | to | bssid ) &refaddr
+( from | to | bssid ) lladdr
+( from | to | bssid ) &refaddr
 .Ed
-.Pp
-.Bd -literal
-.Ar iapp radiotap
-.Ar log [verbose]
-.Ar node ( add | delete ) <lladdr>
-.Ar resend
+.Bd -unfilled
+iapp radiotap
+log [verbose]
+node ( add | delete ) <lladdr>
+resend
 .Ed
-.It Ar limit <number> ( sec | usec )
+.It Xo
+.Ic limit
+.Aq Ar number
+.Pq Ar sec \*(Ba usec
+.Xc
 It is possible to
 .Ic limit
 handling of specific rules.
@@ -236,7 +244,7 @@ In some cases it is absolutely necessary to use limited matching
 to protect
 .Xr hostapd 8
 against excessive flooding with IEEE 802.11 frames.
-In example, beacon frames will be normally received every 100 ms.
+For example, beacon frames will be normally received every 100 ms.
 .Pp
 .El
 .Sh GRAMMAR
@@ -290,9 +298,10 @@ frmactionaddr	= lladdr | refaddr
 
 limit		= "limit" number ( "sec" | "usec" )
 
-frmsubtype	= ( "probe-request" | "probe-resp" | "beacon" ) [ frmelems ] |
-		  "atim" | "auth" | "deauth" | "assoc-request" | "assoc-resp" |
-		  "reassoc-request" | "reassoc-response"
+frmsubtype	= ( "probe-request" | "probe-resp" |
+		  "beacon" ) [ frmelems ] | "atim" | "auth" | "deauth" |
+		  "assoc-request" | "assoc-resp" | "reassoc-request" |
+		  "reassoc-response"
 
 frmelems	= "nwid" [ "!" ] name [ frmelems ]
 
