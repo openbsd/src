@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.155 2005/06/16 03:35:34 dlg Exp $
+$OpenBSD: usbdevs,v 1.156 2005/06/17 23:02:46 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1016,6 +1016,8 @@ product HP P2000U		0x1801	Inkjet P-2000U
 product HP 640C			0x2004	DeskJet 640c
 product HP P1100		0x3102	Photosmart P1100
 product HP HN210E		0x811c	HN210E Ethernet
+product HP 2215			0x1016  iPAQ 22xx/Jornada 548
+product HP 568J			0x1116  Jornada 568
 
 /* HP products */
 product HP2 C500		0x6002	PhotoSmart C500
