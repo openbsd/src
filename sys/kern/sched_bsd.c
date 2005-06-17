@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.4 2005/05/29 03:20:41 deraadt Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.5 2005/06/17 22:33:34 niklas Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -381,8 +381,7 @@ yield()
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nvcsw++;
 	mi_switch();
-	SCHED_ASSERT_UNLOCKED();
-	splx(s);
+	SCHED_UNLOCK(s);
 }
 
 /*
@@ -410,8 +409,7 @@ preempt(newp)
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nivcsw++;
 	mi_switch();
-	SCHED_ASSERT_UNLOCKED();
-	splx(s);
+	SCHED_UNLOCK(s);
 }
 
 
@@ -426,6 +424,7 @@ mi_switch()
 	struct timeval tv;
 #if defined(MULTIPROCESSOR)
 	int hold_count;
+	int sched_count;
 #endif
 #ifdef __HAVE_CPUINFO
 	struct schedstate_percpu *spc = &p->p_cpu->ci_schedstate;
@@ -439,12 +438,9 @@ mi_switch()
 	 * The scheduler lock is still held until cpu_switch()
 	 * selects a new process and removes it from the run queue.
 	 */
+	sched_count = __mp_release_all_but_one(&sched_lock);
 	if (p->p_flag & P_BIGLOCK)
-#ifdef notyet
-		hold_count = spinlock_release_all(&kernel_lock);
-#else
 		hold_count = __mp_release_all(&kernel_lock);
-#endif
 #endif
 
 	/*
@@ -532,14 +528,11 @@ mi_switch()
 	/*
 	 * Reacquire the kernel_lock now.  We do this after we've
 	 * released the scheduler lock to avoid deadlock, and before
-	 * we reacquire the interlock.
+	 * we reacquire the interlock and the scheduler lock.
 	 */
 	if (p->p_flag & P_BIGLOCK)
-#ifdef notyet
-		spinlock_acquire_count(&kernel_lock, hold_count);
-#else
 		__mp_acquire_count(&kernel_lock, hold_count);
-#endif
+	__mp_acquire_count(&sched_lock, sched_count + 1);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.12 2005/05/29 03:20:42 deraadt Exp $	*/
+/*	$OpenBSD: sched.h,v 1.13 2005/06/17 22:33:34 niklas Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -158,8 +158,8 @@ void roundrobin(struct cpu_info *);
 
 extern struct simplelock sched_lock;
 
-#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock))
-#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock) == 0)
+#define	SCHED_ASSERT_LOCKED()	KASSERT(simple_lock_held(&sched_lock))
+#define	SCHED_ASSERT_UNLOCKED()	KASSERT(simple_lock_held(&sched_lock) == 0)
 
 #define	SCHED_LOCK(s)							\
 do {									\
@@ -177,8 +177,8 @@ do {									\
 
 extern struct __mp_lock sched_lock;
 
-#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(__mp_lock_held(&sched_lock))
-#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(__mp_lock_held(&sched_lock) == 0)
+#define	SCHED_ASSERT_LOCKED()	KASSERT(__mp_lock_held(&sched_lock))
+#define	SCHED_ASSERT_UNLOCKED()	KASSERT(__mp_lock_held(&sched_lock) == 0)
 
 #define	SCHED_LOCK(s)							\
 do {									\

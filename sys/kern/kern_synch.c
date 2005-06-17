@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.63 2005/05/29 03:20:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.64 2005/06/17 22:33:34 niklas Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -174,12 +174,10 @@ ltsleep(ident, priority, wmesg, timo, interlock)
 			if (p->p_wchan)
 				unsleep(p);
 			p->p_stat = SONPROC;
-			SCHED_UNLOCK(s);
 			goto resume;
 		}
 		if (p->p_wchan == 0) {
 			catch = 0;
-			SCHED_UNLOCK(s);
 			goto resume;
 		}
 	} else
@@ -193,14 +191,9 @@ ltsleep(ident, priority, wmesg, timo, interlock)
 	__asm(".globl bpendtsleep\nbpendtsleep:");
 #endif
 
-	SCHED_ASSERT_UNLOCKED();
-	/*
-	 * Note! this splx belongs to the SCHED_LOCK(s) above, mi_switch
-	 * releases the scheduler lock, but does not lower the spl.
-	 */
-	splx(s);
-
 resume:
+	SCHED_UNLOCK(s);
+
 #ifdef __HAVE_CPUINFO
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
 #else

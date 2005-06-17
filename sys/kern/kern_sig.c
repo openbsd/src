@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.75 2005/05/29 03:20:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.76 2005/06/17 22:33:34 niklas Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -805,14 +805,11 @@ trapsignal(p, signum, code, type, sigval)
  *     regardless of the signal action (eg, blocked or ignored).
  *
  * Other ignored signals are discarded immediately.
- *
- * XXXSMP: Invoked as psignal() or sched_psignal().
  */
 void
-psignal1(p, signum, dolock)
+psignal(p, signum)
 	register struct proc *p;
 	register int signum;
-	int dolock;		/* XXXSMP: works, but icky */
 {
 	register int s, prop;
 	register sig_t action;
@@ -821,12 +818,6 @@ psignal1(p, signum, dolock)
 #ifdef DIAGNOSTIC
 	if ((u_int)signum >= NSIG || signum == 0)
 		panic("psignal signal number");
-
-	/* XXXSMP: works, but icky */
-	if (dolock)
-		SCHED_ASSERT_UNLOCKED();
-	else
-		SCHED_ASSERT_LOCKED();
 #endif
 
 	/* Ignore signal if we are exiting */
@@ -890,9 +881,8 @@ psignal1(p, signum, dolock)
 	 */
 	if (action == SIG_HOLD && ((prop & SA_CONT) == 0 || p->p_stat != SSTOP))
 		return;
-	/* XXXSMP: works, but icky */
-	if (dolock)
-		SCHED_LOCK(s);
+
+	SCHED_LOCK(s);
 
 	switch (p->p_stat) {
 
@@ -935,11 +925,7 @@ psignal1(p, signum, dolock)
 			p->p_siglist &= ~mask;
 			p->p_xstat = signum;
 			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
-				/*
-				 * XXXSMP: recursive call; don't lock
-				 * the second time around.
-				 */
-				sched_psignal(p->p_pptr, SIGCHLD);
+				psignal(p->p_pptr, SIGCHLD);
 			proc_stop(p);
 			goto out;
 		}
@@ -1027,9 +1013,7 @@ runfast:
 run:
 	setrunnable(p);
 out:
-	/* XXXSMP: works, but icky */
-	if (dolock)
-		SCHED_UNLOCK(s);
+	SCHED_UNLOCK(s);
 }
 
 /*
@@ -1090,8 +1074,7 @@ issignal(struct proc *p)
 				proc_stop(p);
 				mi_switch();
 			}
-			SCHED_ASSERT_UNLOCKED();
-			splx(s);
+			SCHED_UNLOCK(s);
 
 			/*
 			 * If we are no longer being traced, or the parent
@@ -1153,8 +1136,7 @@ issignal(struct proc *p)
 				SCHED_LOCK(s);
 				proc_stop(p);
 				mi_switch();
-				SCHED_ASSERT_UNLOCKED();
-				splx(s);
+				SCHED_UNLOCK(s);
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
