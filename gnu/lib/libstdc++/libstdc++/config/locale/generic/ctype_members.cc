@@ -47,7 +47,7 @@ namespace std
       _S_create_c_locale(_M_c_locale_ctype, __s); 
     }
 
-#ifdef _GLIBCPP_USE_WCHAR_T  
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   ctype<wchar_t>::__wmask_type
   ctype<wchar_t>::_M_convert_to_wmask(const mask __m) const
   {

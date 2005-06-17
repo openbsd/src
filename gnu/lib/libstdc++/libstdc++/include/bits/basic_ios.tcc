@@ -214,7 +214,7 @@ namespace std
 #if defined(_GLIBCPP_EXTERN_TEMPLATE)
   extern template class basic_ios<char>;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern template class basic_ios<wchar_t>;
 #endif
 #endif

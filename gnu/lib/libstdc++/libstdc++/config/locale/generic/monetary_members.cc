@@ -83,7 +83,7 @@ namespace std
     moneypunct<char, false>::~moneypunct()
     { }
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<> 
     void
     moneypunct<wchar_t, true>::_M_initialize_moneypunct(__c_locale, 

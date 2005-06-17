@@ -113,7 +113,7 @@ namespace std
       _M_month_a12 = "Dec";
     }
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<>
     void
     __timepunct<wchar_t>::
@@ -122,7 +122,9 @@ namespace std
     {
       char* __old = strdup(setlocale(LC_ALL, NULL));
       setlocale(LC_ALL, _M_name_timepunct);
+# if defined(_GLIBCPP_USE_WCHAR_T)
       wcsftime(__s, __maxlen, __format, __tm);
+# endif
       setlocale(LC_ALL, __old);
       free(__old);
     }

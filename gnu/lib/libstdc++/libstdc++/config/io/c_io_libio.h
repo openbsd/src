@@ -57,8 +57,7 @@ namespace std
 // from basic_file.h
   typedef _IO_FILE 	__c_file_type;
   typedef _IO_wide_data __c_wfile_type;
-
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern "C" _IO_codecvt __c_libio_codecvt;
 #endif 
 

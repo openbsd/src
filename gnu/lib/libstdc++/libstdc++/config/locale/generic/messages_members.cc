@@ -43,7 +43,7 @@ namespace std
     messages<char>::do_get(catalog, int, int, const string& __dfault) const
     { return __dfault; }
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<>
     wstring
     messages<wchar_t>::do_get(catalog, int, int, const wstring& __dfault) const

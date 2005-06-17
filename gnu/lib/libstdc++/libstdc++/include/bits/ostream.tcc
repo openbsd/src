@@ -689,7 +689,7 @@ namespace std
   extern template ostream& operator<<(ostream&, const unsigned char*);
   extern template ostream& operator<<(ostream&, const signed char*);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern template class basic_ostream<wchar_t>;
   extern template wostream& endl(wostream&);
   extern template wostream& ends(wostream&);

@@ -39,7 +39,7 @@ namespace std
 {
   // streambuf
   template class basic_streambuf<char>;
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template class basic_streambuf<wchar_t>;
 #endif
 
@@ -47,7 +47,7 @@ namespace std
     streamsize
     __copy_streambufs(basic_ios<char>&, basic_streambuf<char>*,
 		      basic_streambuf<char>*); 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template
     streamsize
     __copy_streambufs(basic_ios<wchar_t>&, basic_streambuf<wchar_t>*,

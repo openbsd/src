@@ -49,7 +49,7 @@ namespace __gnu_cxx
   extern stdio_filebuf<char> buf_cin;
   extern stdio_filebuf<char> buf_cerr;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern stdio_filebuf<wchar_t> buf_wcout;
   extern stdio_filebuf<wchar_t> buf_wcin;
   extern stdio_filebuf<wchar_t> buf_wcerr;
@@ -65,7 +65,7 @@ namespace std
   extern ostream cerr;
   extern ostream clog;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern wistream wcin;
   extern wostream wcout;
   extern wostream wcerr;
@@ -185,7 +185,7 @@ namespace std
     cin.tie(&cout);
     cerr.flags(ios_base::unitbuf);
     
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
     new (&buf_wcout) stdio_filebuf<wchar_t>(stdout, ios_base::out, __out_size);
     new (&buf_wcin) stdio_filebuf<wchar_t>(stdin, ios_base::in, __in_size);
     new (&buf_wcerr) stdio_filebuf<wchar_t>(stderr, ios_base::out, __out_size);
@@ -212,7 +212,7 @@ namespace std
     buf_cin.~stdio_filebuf();
     buf_cerr.~stdio_filebuf();
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
     buf_wcout.~stdio_filebuf();
     buf_wcin.~stdio_filebuf();
     buf_wcerr.~stdio_filebuf();

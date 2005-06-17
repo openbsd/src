@@ -34,7 +34,7 @@ namespace std
   // Definitions for locale::id of standard facets that are specialized.
  locale::id codecvt<char, char, mbstate_t>::id;
 
-#ifdef _GLIBCPP_USE_WCHAR_T  
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   locale::id codecvt<wchar_t, char, mbstate_t>::id;
 #endif
 
@@ -112,7 +112,7 @@ namespace std
   do_max_length() const throw() 
   { return 1; }
   
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   // codecvt<wchar_t, char, mbstate_t> required specialization
   codecvt<wchar_t, char, mbstate_t>::
   codecvt(size_t __refs)

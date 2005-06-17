@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: wbuf.c,v 1.7 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: wbuf.c,v 1.8 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -48,6 +48,7 @@ __swbuf(int c, FILE *fp)
 {
 	int n;
 
+	_SET_ORIENTATION(fp, -1);
 	/*
 	 * In case we cannot write, or longjmp takes us out early,
 	 * make sure _w is 0 (if fully- or un-buffered) or -_bf._size

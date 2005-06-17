@@ -434,7 +434,7 @@ extern int _IO_new_fsetpos64 __P ((_IO_FILE *, const _IO_fpos64_t *));
 extern int _IO_old_fsetpos64 __P ((_IO_FILE *, const _IO_fpos64_t *));
 
 
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 # define _IO_do_flush(_f) \
   ((_f)->_mode <= 0							      \
    ? _IO_do_write(_f, (_f)->_IO_write_base,				      \
@@ -726,7 +726,7 @@ extern int _IO_vscanf __P ((const char *, _IO_va_list));
 	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (_IO_FILE *) CHAIN, FD, \
 	 0, _IO_pos_BAD, 0, 0, { 0 }, &_IO_stdfile_##FD##_lock }
 # else
-#  if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#  if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 #   define FILEBUF_LITERAL(CHAIN, FLAGS, FD, WDP) \
        { _IO_MAGIC+_IO_LINKED+_IO_IS_FILEBUF+FLAGS, \
 	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (_IO_FILE *) CHAIN, FD, \
@@ -747,7 +747,7 @@ extern int _IO_vscanf __P ((const char *, _IO_va_list));
 	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (_IO_FILE *) CHAIN, FD, \
 	 0, _IO_pos_BAD }
 # else
-#  if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#  if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 #   define FILEBUF_LITERAL(CHAIN, FLAGS, FD, WDP) \
        { _IO_MAGIC+_IO_LINKED+_IO_IS_FILEBUF+FLAGS, \
 	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (_IO_FILE *) CHAIN, FD, \

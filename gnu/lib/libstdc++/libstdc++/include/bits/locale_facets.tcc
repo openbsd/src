@@ -2630,7 +2630,7 @@ namespace std
     bool
     has_facet<messages<char> >(const locale&);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern template class moneypunct<wchar_t, false>;
   extern template class moneypunct<wchar_t, true>;
   extern template class moneypunct_byname<wchar_t, false>;

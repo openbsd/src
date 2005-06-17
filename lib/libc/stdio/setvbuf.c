@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setvbuf.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: setvbuf.c,v 1.7 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -68,6 +68,7 @@ setvbuf(FILE *fp, char *buf, int mode, size_t size)
 	(void)__sflush(fp);
 	if (HASUB(fp))
 		FREEUB(fp);
+	WCIO_FREE(fp);
 	fp->_r = fp->_lbfsize = 0;
 	flags = fp->_flags;
 	if (flags & __SMBF)

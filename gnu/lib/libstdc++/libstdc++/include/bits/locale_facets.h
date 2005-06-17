@@ -51,7 +51,7 @@
 namespace std
 {
   // NB: Don't instantiate required wchar_t facets if no wchar_t support.
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 # define  _GLIBCPP_NUM_FACETS 28
 #else
 # define  _GLIBCPP_NUM_FACETS 14
@@ -424,7 +424,7 @@ namespace std
     const ctype<char>&
     use_facet<ctype<char> >(const locale& __loc);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   // 22.2.1.3  ctype<wchar_t> specialization
   template<>
     class ctype<wchar_t> : public __ctype_abstract_base<wchar_t>
@@ -670,7 +670,7 @@ namespace std
     void
     numpunct<char>::_M_initialize_numpunct(__c_locale __cloc);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<> 
     numpunct<wchar_t>::~numpunct();
 
@@ -1053,7 +1053,7 @@ namespace std
     size_t
     collate<char>::_M_transform(char*, const char*, size_t) const;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<>
     int 
     collate<wchar_t>::_M_compare(const wchar_t*, const wchar_t*) const;
@@ -1287,7 +1287,7 @@ namespace std
     void
     __timepunct<char>::_M_put(char*, size_t, const char*, const tm*) const;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<> 
     const wchar_t*
     __timepunct<wchar_t>::_S_timezones[14];
@@ -1624,7 +1624,7 @@ namespace std
     void
     moneypunct<char, false>::_M_initialize_moneypunct(__c_locale, const char*);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<>
     moneypunct<wchar_t, true>::~moneypunct();
 
@@ -1865,7 +1865,7 @@ namespace std
     string
     messages<char>::do_get(catalog, int, int, const string&) const;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<>
     wstring
     messages<wchar_t>::do_get(catalog, int, int, const wstring&) const;

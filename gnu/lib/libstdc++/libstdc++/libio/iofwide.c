@@ -34,11 +34,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_LIBC) || defined(_GLIBCPP_USE_WCHAR_T)
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 # include <langinfo.h>
 #endif
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 /* Prototypes of libio's codecvt functions.  */
 static enum __codecvt_result do_out (struct _IO_codecvt *codecvt,
 				     __c_mbstate_t *statep,
@@ -104,7 +104,7 @@ _IO_fwide (fp, mode)
   /* Set the orientation appropriately.  */
   if (mode > 0)
     {
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
       struct _IO_codecvt *cc = fp->_codecvt;
 
       fp->_wide_data->_IO_read_ptr = fp->_wide_data->_IO_read_end;
@@ -148,7 +148,7 @@ _IO_fwide (fp, mode)
 	cc->__cd_out.__cd.__data[0].__trans = &libio_translit;
       }
 #else
-# ifdef _GLIBCPP_USE_WCHAR_T
+# if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
       {
 	/* Determine internal and external character sets.
 	   XXX For now we make our life easy: we assume a fixed internal
@@ -190,7 +190,7 @@ _IO_fwide (fp, mode)
 weak_alias (_IO_fwide, fwide)
 #endif
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 
 static enum __codecvt_result
 do_out (struct _IO_codecvt *codecvt, __c_mbstate_t *statep,
@@ -235,7 +235,7 @@ do_out (struct _IO_codecvt *codecvt, __c_mbstate_t *statep,
       break;
     }
 #else
-# ifdef _GLIBCPP_USE_WCHAR_T
+# if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   size_t res;
   const char *from_start_copy = (const char *) from_start;
   size_t from_len = from_end - from_start;
@@ -299,7 +299,7 @@ do_unshift (struct _IO_codecvt *codecvt, __c_mbstate_t *statep,
       break;
     }
 #else
-# ifdef _GLIBCPP_USE_WCHAR_T
+# if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   size_t res;
   char *to_start_copy = (char *) to_start;
   size_t to_len = to_end - to_start;
@@ -363,7 +363,7 @@ do_in (struct _IO_codecvt *codecvt, __c_mbstate_t *statep,
       break;
     }
 #else
-# ifdef _GLIBCPP_USE_WCHAR_T
+# if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   size_t res;
   const char *from_start_copy = (const char *) from_start;
   size_t from_len = from_end - from_start;
@@ -442,7 +442,7 @@ do_length (struct _IO_codecvt *codecvt, __c_mbstate_t *statep,
 
   result = cp - (const unsigned char *) from_start;
 #else
-# ifdef _GLIBCPP_USE_WCHAR_T
+# if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   const char *from_start_copy = (const char *) from_start;
   size_t from_len = from_end - from_start;
   wchar_t to_buf[max];

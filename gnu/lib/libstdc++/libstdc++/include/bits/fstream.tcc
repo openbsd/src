@@ -518,7 +518,7 @@ namespace std
   extern template class basic_ofstream<char>;
   extern template class basic_fstream<char>;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern template class basic_filebuf<wchar_t>;
   extern template class basic_ifstream<wchar_t>;
   extern template class basic_ofstream<wchar_t>;

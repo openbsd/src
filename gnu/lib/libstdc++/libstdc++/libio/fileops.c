@@ -160,7 +160,7 @@ _IO_new_file_close_it (fp)
       _IO_setg (fp, NULL, NULL, NULL);
       _IO_setp (fp, NULL, NULL);
     }
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   else
     {
       _IO_wsetb (fp, NULL, NULL, 0);

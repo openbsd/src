@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: freopen.c,v 1.7 2005/04/30 09:25:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: freopen.c,v 1.8 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -116,6 +116,7 @@ freopen(const char *file, const char *mode, FILE *fp)
 	if (HASUB(fp))
 		FREEUB(fp);
 	_UB(fp)._size = 0;
+	WCIO_FREE(fp);
 	if (HASLB(fp))
 		FREELB(fp);
 	fp->_lb._size = 0;

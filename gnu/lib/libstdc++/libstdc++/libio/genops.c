@@ -285,7 +285,7 @@ int
 __underflow (fp)
      _IO_FILE *fp;
 {
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   if (fp->_vtable_offset == 0 && _IO_fwide (fp, -1) != -1)
     return EOF;
 #endif
@@ -317,7 +317,7 @@ int
 __uflow (fp)
      _IO_FILE *fp;
 {
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   if (fp->_vtable_offset == 0 && _IO_fwide (fp, -1) != -1)
     return EOF;
 #endif
@@ -584,7 +584,7 @@ _IO_no_init (fp, flags, orientation, wd, jmp)
   _IO_lock_init (*fp->_lock);
 #endif
   fp->_mode = orientation;
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   if (orientation >= 0)
     {
       fp->_wide_data = wd;
@@ -755,7 +755,7 @@ _IO_flush_all ()
   struct _IO_FILE *fp;
   for (fp = (_IO_FILE *) _IO_list_all; fp; fp = fp->_chain)
     if (((fp->_mode < 0 && fp->_IO_write_ptr > fp->_IO_write_base)
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 	 || (fp->_vtable_offset == 0
 	     && fp->_mode > 0 && (fp->_wide_data->_IO_write_ptr
 				  > fp->_wide_data->_IO_write_base))

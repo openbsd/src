@@ -42,7 +42,7 @@ namespace std
     _lock = __lock;
 #endif
     // Don't set the orientation of the stream when initializing.
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
     _IO_no_init(this, 0, 0, &_M_wfile, 0);
 #else /* !defined(_GLIBCPP_USE_WCHAR_T) */
     _IO_no_init(this, 0, 0, NULL, 0);
@@ -99,7 +99,7 @@ namespace std
   { return _IO_file_doallocate(this); }
 
   // __basic_file<wchar_t> definitions
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   __basic_file<wchar_t>::__basic_file(__c_lock* __lock)
   {
 #ifdef _IO_MTSAFE_IO
@@ -180,7 +180,7 @@ namespace std
   // Need to instantiate base class here for type-info bits, etc
   template struct __basic_file_base<char>;
   template class __basic_file<char>;
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template struct __basic_file_base<wchar_t>;
   template class __basic_file<wchar_t>;
 #endif

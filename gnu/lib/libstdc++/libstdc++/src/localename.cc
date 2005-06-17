@@ -53,7 +53,7 @@ namespace __gnu_cxx
   extern time_get<char> 			time_get_c;
   extern time_put<char> 			time_put_c;
   extern std::messages<char> 			messages_c;
-#ifdef  _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern std::ctype<wchar_t>			ctype_w;
   extern std::collate<wchar_t> 			collate_w;
   extern numpunct<wchar_t> 			numpunct_w;
@@ -71,7 +71,7 @@ namespace __gnu_cxx
 #endif
 
   extern std::__locale_cache<numpunct<char> >	locale_cache_np_c;
-#ifdef  _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern std::__locale_cache<numpunct<wchar_t> >	locale_cache_np_w;
 #endif
 } // namespace __gnu_cxx
@@ -203,7 +203,7 @@ namespace std
 	_M_init_facet(new time_put<char>);
 	_M_init_facet(new std::messages<char>(__cloc, __s));
 	
-#ifdef  _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 	_M_init_facet(new std::ctype<wchar_t>(__cloc));
 	_M_init_facet(new codecvt<wchar_t, char, mbstate_t>);
 	_M_init_facet(new numpunct<wchar_t>(__cloc));
@@ -274,7 +274,7 @@ namespace std
     _M_init_facet(new (&time_get_c) time_get<char>(1));
     _M_init_facet(new (&time_put_c) time_put<char>(1));
     _M_init_facet(new (&messages_c) std::messages<char>(1));	
-#ifdef  _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
     _M_init_facet(new (&ctype_w) std::ctype<wchar_t>(1));
     _M_init_facet(new (&codecvt_w) codecvt<wchar_t, char, mbstate_t>(1));
     _M_init_facet(new (&numpunct_w) numpunct<wchar_t>(1));
@@ -303,7 +303,7 @@ namespace std
     _M_facets[numpunct<char>::id._M_id() + _M_facets_size] =
       reinterpret_cast<locale::facet*>(__lc);
       
-#ifdef  _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
     __locale_cache<numpunct<wchar_t> >* __wlc =
       new (&locale_cache_np_w) __locale_cache<numpunct<wchar_t> >(ltmp, true);
     _M_facets[numpunct<wchar_t>::id._M_id() + _M_facets_size] =

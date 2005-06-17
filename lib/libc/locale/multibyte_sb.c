@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_sb.c,v 1.1 2005/05/11 18:44:12 espie Exp $	*/
+/*	$OpenBSD: multibyte_sb.c,v 1.2 2005/06/17 20:40:32 espie Exp $	*/
 /*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: multibyte_sb.c,v 1.1 2005/05/11 18:44:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: multibyte_sb.c,v 1.2 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -223,4 +223,21 @@ wctob(wint_t c)
 	if (c == WEOF || c & ~0xFF)
 		return EOF;
 	return (int)c;
+}
+
+int
+wcscoll(const wchar_t *s1, const wchar_t *s2)
+{
+	while (*s1 == *s2++)
+		if (*s1++ == 0)
+			return (0);
+	return ((unsigned char)(*s1) - (unsigned char)(*--s2));
+}
+
+size_t 
+wcsxfrm(wchar_t *dest, const wchar_t *src, size_t n)
+{
+	if (n == 0)
+		return wcslen(src);
+	return wcslcpy(dest, src, n);
 }

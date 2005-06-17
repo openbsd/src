@@ -1072,7 +1072,7 @@ namespace std
     basic_istream<char>& 
     getline(basic_istream<char>&, string&);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern template class basic_string<wchar_t>;
   extern template 
     basic_istream<wchar_t>& 

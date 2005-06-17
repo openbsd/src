@@ -38,7 +38,7 @@
 namespace std
 {
   // Specializations.
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   codecvt_base::result
   codecvt<wchar_t, char, mbstate_t>::
   do_out(state_type& __state, const intern_type* __from, 

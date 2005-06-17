@@ -122,7 +122,7 @@ namespace std
   template<typename _CharT>
     class __basic_file: public __basic_file_base<_CharT>
     {
-# ifdef _GLIBCPP_USE_WCHAR_T
+# if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
       __c_wfile_type	_M_wfile;
 # endif
 
@@ -292,7 +292,7 @@ namespace std
     __basic_file<char>::doallocate();
 
   // __basic_file<wchar_t> specializations
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<>
     __basic_file<wchar_t>::__basic_file(__c_lock* __lock);
 

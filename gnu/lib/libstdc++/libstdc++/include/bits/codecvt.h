@@ -259,7 +259,7 @@
       do_max_length() const throw();
   };
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   // codecvt<wchar_t, char, mbstate_t> required specialization
   template<>
     class codecvt<wchar_t, char, mbstate_t> 
@@ -330,7 +330,7 @@
 
   // Include host and configuration specific partial specializations
   // with additional functionality, if possible.
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   #include <bits/codecvt_specializations.h>
 #endif
 

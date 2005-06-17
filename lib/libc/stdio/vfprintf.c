@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.30 2005/06/08 22:08:30 espie Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.31 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -292,6 +292,7 @@ vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
 	(((argtable != NULL) ? (void)(ap = argtable[nextarg]) : (void)0), \
 	 nextarg++, va_arg(ap, type))
 
+	_SET_ORIENTATION(fp, -1);
 	/* sorry, fprintf(read_only_file, "") returns EOF, not 0 */
 	if (cantwrite(fp)) {
 		errno = EBADF;

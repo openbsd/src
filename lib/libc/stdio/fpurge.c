@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fpurge.c,v 1.4 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: fpurge.c,v 1.5 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -53,6 +53,7 @@ fpurge(FILE *fp)
 
 	if (HASUB(fp))
 		FREEUB(fp);
+	WCIO_FREE(fp);
 	fp->_p = fp->_bf._base;
 	fp->_r = 0;
 	fp->_w = fp->_flags & (__SLBF|__SNBF) ? 0 : fp->_bf._size;

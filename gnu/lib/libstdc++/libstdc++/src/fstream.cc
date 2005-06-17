@@ -104,7 +104,7 @@ namespace std
       return __ret;
     }
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<> 
     basic_filebuf<wchar_t>::int_type 
     basic_filebuf<wchar_t>::_M_underflow_common(bool __bump)

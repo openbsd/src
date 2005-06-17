@@ -41,7 +41,7 @@ using std::cout;
 using std::cin;
 using std::cerr;
 using std::clog;
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 using std::wcout;
 using std::wcin;
 using std::wcerr;

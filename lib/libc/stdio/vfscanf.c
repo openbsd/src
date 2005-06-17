@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.13 2005/05/28 04:34:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.14 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -112,6 +112,8 @@ VFSCANF(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
 	/* `basefix' is used to avoid `if' tests in the integer scanner */
 	static short basefix[17] =
 		{ 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+
+	_SET_ORIENTATION(fp, -1);
 
 	nassigned = 0;
 	nread = 0;

@@ -189,9 +189,7 @@ namespace std
       typedef wchar_t 		char_type;
       typedef wint_t 		int_type;
       typedef streamoff 	off_type;
-#ifdef _GLIBCPP_USE_WCHAR_T
       typedef wstreampos 	pos_type;
-#endif
       typedef mbstate_t 	state_type;
       
       static void 

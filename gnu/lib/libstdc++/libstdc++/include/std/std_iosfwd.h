@@ -147,7 +147,7 @@ namespace std
   typedef basic_ofstream<char> 		ofstream;	///< @isiosfwd
   typedef basic_fstream<char> 		fstream;	///< @isiosfwd
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   typedef basic_ios<wchar_t> 		wios;		///< @isiosfwd
   typedef basic_streambuf<wchar_t> 	wstreambuf;	///< @isiosfwd
   typedef basic_istream<wchar_t> 	wistream;	///< @isiosfwd

@@ -31,11 +31,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fputs.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: fputs.c,v 1.6 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
+#include "local.h"
 #include "fvwrite.h"
 
 /*
@@ -51,5 +52,6 @@ fputs(const char *s, FILE *fp)
 	iov.iov_len = uio.uio_resid = strlen(s);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
+	_SET_ORIENTATION(fp, -1);
 	return (__sfvwrite(fp, &uio));
 }

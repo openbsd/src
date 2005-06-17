@@ -280,7 +280,7 @@ namespace std
   extern template istream& operator>>(istream&, _Setprecision);
   extern template istream& operator>>(istream&, _Setw);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern template wostream& operator<<(wostream&, _Setfill<wchar_t>);
   extern template wostream& operator<<(wostream&, _Setiosflags);
   extern template wostream& operator<<(wostream&, _Resetiosflags);

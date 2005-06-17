@@ -44,7 +44,7 @@ _IO_new_fopen (filename, mode)
 #ifdef _IO_MTSAFE_IO
     _IO_lock_t lock;
 #endif
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
     struct _IO_wide_data wd;
 #endif /* !(defined _LIBC || defined _GLIBCPP_USE_WCHAR_T) */
   } *new_f = (struct locked_FILE *) malloc (sizeof (struct locked_FILE));
@@ -54,7 +54,7 @@ _IO_new_fopen (filename, mode)
 #ifdef _IO_MTSAFE_IO
   new_f->fp.file._lock = &new_f->lock;
 #endif
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   _IO_no_init (&new_f->fp.file, 0, 0, &new_f->wd, &_IO_wfile_jumps);
 #else
   _IO_no_init (&new_f->fp.file, 1, 0, NULL, NULL);

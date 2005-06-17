@@ -56,7 +56,7 @@ namespace std
   template ostream& operator<<(ostream&, _Setprecision);
   template ostream& operator<<(ostream&, _Setw);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template class basic_ostream<wchar_t>;
   template wostream& endl(wostream&);
   template wostream& ends(wostream&);

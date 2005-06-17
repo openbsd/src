@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ungetc.c,v 1.7 2005/04/30 09:25:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: ungetc.c,v 1.8 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -85,6 +85,7 @@ ungetc(int c, FILE *fp)
 		return (EOF);
 	if (!__sdidinit)
 		__sinit();
+	_SET_ORIENTATION(fp, -1);
 	if ((fp->_flags & __SRD) == 0) {
 		/*
 		 * Not already reading: no good unless reading-and-writing.

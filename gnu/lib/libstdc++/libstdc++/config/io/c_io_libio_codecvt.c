@@ -35,7 +35,7 @@
 
 #include <libio.h>
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 
 /* Prototypes of libio's codecvt functions.  */
 static enum __codecvt_result 

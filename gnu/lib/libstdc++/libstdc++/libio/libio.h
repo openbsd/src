@@ -205,7 +205,7 @@ enum __codecvt_result
   __codecvt_noconv
 };
 
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 /* The order of the elements in the following struct must match the order
    of the virtual functions in the libstdc++ codecvt class.  */
 struct _IO_codecvt
@@ -252,7 +252,7 @@ struct _IO_wide_data
 				   backup area */
   wchar_t *_IO_save_end;	/* Pointer to end of non-current get area. */
 
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   __c_mbstate_t _IO_state;
   __c_mbstate_t _IO_last_state;
 #endif
@@ -260,7 +260,7 @@ struct _IO_wide_data
 
   wchar_t _shortbuf[1];
 
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   struct _IO_jump_t *_wide_vtable;
 #endif
 };
@@ -317,7 +317,7 @@ struct _IO_FILE_complete
 #endif
 #if defined _G_IO_IO_FILE_VERSION && _G_IO_IO_FILE_VERSION == 0x20001
   _IO_off64_t _offset;
-# if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+# if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   /* Wide character stream stuff.  */
   struct _IO_codecvt *_codecvt;
   struct _IO_wide_data *_wide_data;
@@ -475,7 +475,7 @@ extern _IO_off64_t _IO_seekpos (_IO_FILE *, _IO_off64_t, int) __THROW;
 
 extern void _IO_free_backup_area (_IO_FILE *) __THROW;
 
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 extern _IO_wint_t _IO_getwc (_IO_FILE *__fp) __THROW;
 extern _IO_wint_t _IO_putwc (wchar_t __wc, _IO_FILE *__fp) __THROW;
 extern int _IO_fwide (_IO_FILE *__fp, int __mode) __THROW;

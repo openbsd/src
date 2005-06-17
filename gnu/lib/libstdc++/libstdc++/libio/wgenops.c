@@ -28,7 +28,7 @@
 /* Generic or default I/O operations. */
 
 #include "libioP.h"
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 #ifdef __STDC__
 #include <stdlib.h>
 #endif

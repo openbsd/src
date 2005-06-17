@@ -27,7 +27,7 @@
 
 #include <assert.h>
 #include <libioP.h>
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 #include <wchar.h>
 #ifdef HAVE_GCONV_H
 #  include <gconv.h>

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fgets.c,v 1.8 2005/05/28 04:34:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: fgets.c,v 1.9 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -54,6 +54,7 @@ fgets(char *buf, int n, FILE *fp)
 	if (n <= 0)		/* sanity check */
 		return (NULL);
 
+	_SET_ORIENTATION(fp, -1);
 	s = buf;
 	n--;			/* leave space for NUL */
 	while (n != 0) {

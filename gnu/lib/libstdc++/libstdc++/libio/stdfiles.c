@@ -33,7 +33,7 @@
 #include "libioP.h"
 
 #ifdef _IO_MTSAFE_IO
-# if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+# if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 #  define DEF_STDFILE(NAME, FD, CHAIN, FLAGS) \
   static _IO_lock_t _IO_stdfile_##FD##_lock = _IO_lock_initializer; \
   static struct _IO_wide_data _IO_wide_data_##FD \
@@ -49,7 +49,7 @@
        &_IO_file_jumps};
 # endif
 #else
-# if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+# if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 #  define DEF_STDFILE(NAME, FD, CHAIN, FLAGS) \
   static struct _IO_wide_data _IO_wide_data_##FD \
     = { ._wide_vtable = &_IO_wfile_jumps }; \

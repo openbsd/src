@@ -54,7 +54,7 @@ namespace std
   template istream& operator>>(istream&, _Setprecision);
   template istream& operator>>(istream&, _Setw);
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template class basic_istream<wchar_t>;
   template wistream& ws(wistream&);
   template wistream& operator>>(wistream&, wchar_t&);

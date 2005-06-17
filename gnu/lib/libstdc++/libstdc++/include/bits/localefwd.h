@@ -110,7 +110,7 @@ namespace std
   template<typename _CharT> 
     class ctype;
   template<> class ctype<char>;
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<> class ctype<wchar_t>;
 #endif
   template<typename _CharT> 
@@ -122,7 +122,7 @@ namespace std
   template<typename _InternT, typename _ExternT, typename _StateT>
     class codecvt;
   template<> class codecvt<char, char, mbstate_t>;
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<> class codecvt<wchar_t, char, mbstate_t>;
 #endif
   template<typename _InternT, typename _ExternT, typename _StateT>

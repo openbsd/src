@@ -77,7 +77,7 @@ typedef struct
 typedef size_t _G_size_t;
 
 
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 typedef struct
 {
   __off_t __pos;
@@ -101,7 +101,7 @@ typedef __off64_t _G_fpos64_t;
 #define _G_wchar_t	wchar_t
 #define _G_wint_t	wint_t
 #define _G_stat64	stat64
-#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+#if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 # include <iconv.h>
 typedef iconv_t _G_iconv_t;
 #endif

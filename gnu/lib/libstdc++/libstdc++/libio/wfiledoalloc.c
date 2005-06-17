@@ -46,7 +46,7 @@
 # define _POSIX_SOURCE
 #endif
 #include "libioP.h"
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef __STDC__

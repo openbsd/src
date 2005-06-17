@@ -231,7 +231,7 @@ namespace std
   extern template class basic_ostringstream<char>;
   extern template class basic_stringstream<char>;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern template class basic_stringbuf<wchar_t>;
   extern template class basic_istringstream<wchar_t>;
   extern template class basic_ostringstream<wchar_t>;

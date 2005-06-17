@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: findfp.c,v 1.6 2005/04/30 09:25:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: findfp.c,v 1.7 2005/06/17 20:40:32 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -125,10 +125,9 @@ found:
 	fp->_lbfsize = 0;	/* not line buffered */
 	fp->_file = -1;		/* no file */
 /*	fp->_cookie = <any>; */	/* caller sets cookie, _read/_write etc */
-	_UB(fp)._base = NULL;	/* no ungetc buffer */
-	_UB(fp)._size = 0;
 	fp->_lb._base = NULL;	/* no line buffer */
 	fp->_lb._size = 0;
+	_FILEEXT_INIT(fp);
 	return (fp);
 }
 
@@ -172,8 +171,9 @@ __sinit(void)
 {
 	int i;
 
-	for (i = 0; i < FOPEN_MAX - 3; i++)
+	for (i = 0; i < FOPEN_MAX - 3; i++) {
 		_FILEEXT_SETUP(usual+i, usualext+i);
+	}
 	/* make sure we clean up on exit */
 	__atexit_register_cleanup(_cleanup); /* conservative */
 	__sdidinit = 1;

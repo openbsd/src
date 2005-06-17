@@ -65,7 +65,7 @@ namespace std
   extern ostream cerr;		///< Linked to standard error (unbuffered)
   extern ostream clog;		///< Linked to standard error (buffered)
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   extern wistream wcin;		///< Linked to standard input
   extern wostream wcout;	///< Linked to standard output
   extern wostream wcerr;	///< Linked to standard error (unbuffered)

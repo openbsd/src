@@ -158,7 +158,7 @@ namespace __gnu_cxx
   fake_messages_c messages_c;
   _GLIBCPP_ASM_SYMVER(_ZN9__gnu_cxx10messages_cE, _ZSt10messages_c, GLIBCPP_3.2)
 
-#ifdef  _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   typedef char fake_wtype_w[sizeof(std::ctype<wchar_t>)]
   __attribute__ ((aligned(__alignof__(std::ctype<wchar_t>))));
   fake_wtype_w ctype_w;
@@ -234,7 +234,7 @@ namespace __gnu_cxx
   __attribute__ ((aligned(__alignof__(std::__locale_cache<numpunct<char> >))));
   fake_locale_cache_np_c locale_cache_np_c;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   typedef char fake_locale_cache_np_w[sizeof(std::__locale_cache<numpunct<wchar_t> >)]
   __attribute__ ((aligned(__alignof__(std::__locale_cache<numpunct<wchar_t> >))));
   fake_locale_cache_np_w locale_cache_np_w;
@@ -249,7 +249,7 @@ namespace __gnu_cxx
   _GLIBCPP_ASM_SYMVER(_ZN9__gnu_cxx7buf_cinE, _ZSt7buf_cin, GLIBCPP_3.2)
   _GLIBCPP_ASM_SYMVER(_ZN9__gnu_cxx8buf_cerrE, _ZSt8buf_cerr, GLIBCPP_3.2)
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   typedef char fake_wfilebuf[sizeof(stdio_filebuf<wchar_t>)]
   __attribute__ ((aligned(__alignof__(stdio_filebuf<wchar_t>))));
   fake_wfilebuf buf_wcout;
@@ -304,7 +304,7 @@ namespace std
   fake_ostream cerr;
   fake_ostream clog;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   typedef char fake_wistream[sizeof(wistream)] 
   __attribute__ ((aligned(__alignof__(wistream))));
   typedef char fake_wostream[sizeof(wostream)] 

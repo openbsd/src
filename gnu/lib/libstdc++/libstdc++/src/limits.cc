@@ -159,7 +159,7 @@ namespace std
 
   // wchar_t
   // This used to be problematic...
-#ifdef _GLIBCPP_USE_WCHAR_T  
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   const bool numeric_limits<wchar_t>::is_specialized;
   const int  numeric_limits<wchar_t>::digits;
   const int  numeric_limits<wchar_t>::digits10;
