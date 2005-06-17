@@ -39,6 +39,7 @@ uhid.c			USB generic HID driver
 uhidev.c		USB HID class driver
 uhidev.h		  and definitions for it
 uhub.c			USB hub driver
+uipaq.c			HP ipaq22xx driver
 ukbd.c			USB keyboard driver
 ukbdmap.c		wscons key mapping for ukbd
 ukbdvar.h		API for ukbd.c

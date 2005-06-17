@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.74 2005/06/09 18:01:36 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.75 2005/06/17 23:50:37 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -108,6 +108,8 @@ pcmcia*		at cardslot?
 #ucom*	at uplcom?
 #umct*	at uhub?		# MCT USB-RS232 serial adapter
 #ucom*	at umct?
+#uipaq*	at uhub?		# iPAQ serial adapter
+#ucom*	at uipaq?
 #uaudio* at uhub?		# USB Audio
 #audio*	at uaudio?
 #umidi*	at uhub?		# USB MIDI
