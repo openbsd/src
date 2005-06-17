@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.166 2005/06/10 18:47:33 pedro Exp $
+.\"	$OpenBSD: options.4,v 1.167 2005/06/17 20:49:26 drahn Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -554,13 +554,6 @@ With this option, only the superuser can set them, and they can't be cleared
 if the securelevel is greater than 0.
 See also
 .Xr chflags 1 .
-.It Cd option UFS_EXTATTR
-This option enables Extended Attribute support for UFS filesystems.
-.It Cd option UFS_EXTATTR_AUTOSTART
-This option causes Extended Attributes to be started and enabled when each
-UFS filesystem is mounted.
-The attribute storage is expected to be (relative to mount point)
-.Pa /.attribute/{system|user}/<attrname>
 .It Cd option UFS_DIRHASH
 This option enables using an in memory hash table to speed lookups
 in large directories.
