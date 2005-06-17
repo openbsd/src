@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.58 2005/06/11 06:06:16 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.59 2005/06/17 23:51:55 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.55 2005/06/11 06:06:05 brad Exp 
+ *	OpenBSD: miidevs,v 1.56 2005/06/17 23:51:36 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -60,6 +60,7 @@
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
+#define	MII_OUI_JATO	0x00e083	/* Jato Technologies */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
@@ -232,6 +233,10 @@
 #define	MII_STR_INTEL_I82562ET	"i82562ET 10/100 PHY"
 #define	MII_MODEL_INTEL_I82553	0x0035
 #define	MII_STR_INTEL_I82553	"i82553 10/100 PHY"
+
+/* Jato Technologies PHYs */
+#define	MII_MODEL_JATO_BASEX	0x0000
+#define	MII_STR_JATO_BASEX	"Jato 1000baseX PHY"
 
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
