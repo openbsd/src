@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2005/06/17 19:13:35 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2005/06/17 21:22:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -124,7 +124,7 @@ u_int negative;
 %type	<v.val>		number
 %type	<v.in>		ipv4addr
 %type	<v.reflladdr>	refaddr, lladdr, frmactionaddr, frmmatchaddr
-%type	<v.reason>	frmreason
+%type	<v.reason>	frmreason_l
 %type	<v.string>	table
 %type	<v.string>	string
 
@@ -352,25 +352,13 @@ frmsubtype	: PROBE REQUEST frmelems
 		{
 			frame_ieee80211->i_fc[0] |=
 			    IEEE80211_FC0_SUBTYPE_DEAUTH;
-
-			if ($2 != 0) {
-				if ((frame_ieee80211->i_data = (u_int16_t *)
-				    malloc(sizeof(u_int16_t))) == NULL) {
-					yyerror("failed to allocate deauth"
-					    " reason code %u", $2);
-					YYERROR;
-				}
-				*(u_int16_t *)frame_ieee80211->i_data =
-				    htole16($2);
-				frame_ieee80211->i_data_len = sizeof(u_int16_t);
-			}
 		}
 		| ASSOC REQUEST
 		{
 			frame_ieee80211->i_fc[0] |=
 			    IEEE80211_FC0_SUBTYPE_ASSOC_REQ;
 		}
-		| DISASSOC
+		| DISASSOC frmreason
 		{
 			frame_ieee80211->i_fc[0] |=
 			    IEEE80211_FC0_SUBTYPE_DISASSOC;
@@ -403,7 +391,24 @@ frmelems_l	: frmelems_l frmelem
 frmelem		: NWID not STRING
 		;
 
-frmreason	: /* empty */
+
+frmreason	: frmreason_l
+		{
+			if ($1 != 0) {
+				if ((frame_ieee80211->i_data = (u_int16_t *)
+				    malloc(sizeof(u_int16_t))) == NULL) {
+					yyerror("failed to allocate "
+					    "reason code %u", $1);
+					YYERROR;
+				}
+				*(u_int16_t *)frame_ieee80211->i_data =
+				    htole16($1);
+				frame_ieee80211->i_data_len = sizeof(u_int16_t);
+			}
+		}
+		;
+
+frmreason_l	: /* empty */
 		{
 			$$ = 0;
 		}
