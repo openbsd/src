@@ -1,0 +1,202 @@
+.\"	$OpenBSD: vfs_cache.9,v 1.1 2005/06/17 15:18:55 jaredy Exp $
+.\" Copyright (c) 1989, 1993
+.\"      The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"   may be used to endorse or promote products derived from this software
+.\"   without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.Dd June 17, 2005
+.Dt VFS_CACHE 9
+.Os
+.Sh NAME
+.Nm vfs_cache ,
+.Nm cache_enter ,
+.Nm cache_lookup ,
+.Nm cache_purge ,
+.Nm cache_purgevfs ,
+.Nm cache_revlookup
+.Nd name lookup cache
+.Sh SYNOPSIS
+.In sys/vnode.h
+.In sys/namei.h
+.Pp
+.Ft int
+.Fn cache_lookup "struct vnode *dvp" "struct vnode **vpp" \
+    "struct componentname *cnp"
+.Ft void
+.Fn cache_enter "struct vnode *dvp" "struct vnode *vp" \
+    "struct componentname *cnp"
+.Ft void
+.Fn cache_purge "struct vnode *vp"
+.Ft void
+.Fn cache_purgevfs "struct mount *mp"
+.Ft int
+.Fn cache_revlookup "struct vnode *vp" "struct vnode **dvpp" \
+    "char **bpp" "char *bufp"
+.Sh DESCRIPTION
+In order to speed up file name look-up operations (see
+.Xr VOP_LOOKUP 9 ) ,
+the kernel provides an interface for maintaining a cache of the most
+recently looked-up file name translations.
+Entries in this cache have the following definition:
+.Bd -literal
+struct	namecache {
+	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
+	LIST_ENTRY(namecache) nc_vhash;	/* (reverse) dir hash chain */
+	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
+	struct	vnode *nc_dvp;		/* vnode of parent of name */
+	u_long	nc_dvpid;		/* capability number of nc_dvp */
+	struct	vnode *nc_vp;		/* vnode the name refers to */
+	u_long	nc_vpid;		/* capability number of nc_vp */
+	char	nc_nlen;		/* length of name */
+	char	nc_name[NCHNAMLEN];	/* segment name */
+};
+.Ed
+.Pp
+The cache is indexed by a hash value based on the file's base name and
+its encompassing directory's vnode generation number.
+Negative caching is also performed so that frequently accessed path
+names of files that do not exist do not result in expensive lookups.
+.Pp
+For simplicity and economy of storage, names longer than the maximum
+length
+.Dv NCHNAMLEN
+are not cached; they occur infrequently in any case, and are almost
+never of interest.
+.Pp
+The
+.Nm vfs_cache
+API contains the following routines:
+.Bl -tag -width Ds
+.It Fn cache_lookup dvp vpp cnp
+Look up the given name in the cache.
+.Fa dvp
+points to the directory to search,
+.Fa vpp
+points to a pointer where the vnode of the name being sought will be
+stored, and
+.Fa cnp
+contains the last component of the path name.
+.Fa cnp
+must have the
+.Va cn_nameptr ,
+.Va cn_namelen ,
+and
+.Va cn_hash
+fields filled in.
+If no entry is found for the given name, a new one will be created,
+even if the path name fails (i.e. it will be negative cached), unless
+the
+.Xr namei 9
+lookup operation was
+.Dv DELETE
+or the
+.Dv NOCACHE
+flag was set for the call to
+.Xr namei 9 .
+.Pp
+Upon success, a pointer to a locked vnode is stored in
+.Fa vpp
+and a zero value is returned.
+If locking the vnode fails, the vnode will remain unlocked,
+.Fa *vpp
+will be set to
+.Dv NULL ,
+and the corresponding error will be returned.
+If the cache entry is negative cached, meaning the name is no longer
+valid,
+.Er ENOENT
+is returned.
+Otherwise, the cache lookup has failed and a \-1 value is returned.
+.It Fn cache_enter dvp vp cnp
+Add a new entry for the translation in the directory
+.Fa dvp
+for the vnode
+.Fa vp
+with name
+.Fa cnp
+to the cache.
+.Fa cnp
+must have the
+.Va cn_nameptr ,
+.Va cn_namelen ,
+and
+.Va cn_hash
+fields filled in.
+.It Fn cache_purge vp
+Flush all cache entries corresponding with the given vnode
+.Fa vp .
+This is called after rename operations to hide entries that would no
+longer be valid.
+.It Fn cache_purgevfs mp
+Flush all cache entries for name translations associated with the file
+system mount described by
+.Fa mp .
+This is called when unmounting file systems, which would make all name
+translations pertaining to the mount invalid.
+.It Fn cache_revlookup vp dvpp bpp bufp
+Scan the cache for the name of the directory entry that points to
+.Fa vp .
+.Fa dvpp
+points to where a pointer to the encompassing directory will be stored.
+If
+.Fa bufp
+is not
+.Dv NULL ,
+the name will be written to the end of the space between this pointer
+and the value in
+.Fa bpp ,
+and
+.Fa bpp
+will be updated on return to point to the start of the copied name.
+.Pp
+On success,
+.Fa *dvpp
+will be set to point to the encompassing directory and zero will be
+returned.
+If the cache misses,
+.Fa dvpp
+will be set to
+.Dv NULL
+and \-1 will be returned.
+Otherwise, failure has occurred,
+.Fa dvpp
+will be set to
+.Dv NULL ,
+and an appropriate error code will be returned.
+.El
+.Sh CODE REFERENCES
+The
+.Nm
+API is implemented in the file
+.Pa sys/kern/vfs_cache.c .
+.Sh SEE ALSO
+.Xr vmstat 8 ,
+.Xr namei 9 ,
+.Xr vfs 9 ,
+.Xr vnode 9
+.Sh HISTORY
+The
+.Nm
+API first appeared in
+.Bx 4.2 .
