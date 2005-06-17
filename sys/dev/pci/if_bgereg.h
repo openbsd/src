@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.22 2005/06/07 20:39:07 brad Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.23 2005/06/17 15:15:43 brad Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -250,6 +250,7 @@
 #define BGE_CHIPID_BCM5705_A3		0x30030000
 #define BGE_CHIPID_BCM5750_A0		0x40000000
 #define BGE_CHIPID_BCM5750_A1		0x40010000
+#define BGE_CHIPID_BCM5750_B1		0x41010000
 #define BGE_CHIPID_BCM5714_A0		0x50000000
 
 /* shorthand one */
