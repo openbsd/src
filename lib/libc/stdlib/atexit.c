@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: atexit.c,v 1.8 2005/03/30 18:51:49 pat Exp $";
+static char *rcsid = "$OpenBSD: atexit.c,v 1.9 2005/06/17 21:38:59 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -73,10 +73,6 @@ atexit(void (*fn)(void))
 			return (-1);
 	}
 	if (p == NULL) {
-		if (__atexit_invalid) {
-			free(malloc(1));
-			__atexit_invalid = 0;
-		}
 		p = mmap(NULL, pgsize, PROT_READ | PROT_WRITE,
 		    MAP_ANON | MAP_PRIVATE, -1, 0);
 		if (p == MAP_FAILED)
@@ -90,6 +86,8 @@ atexit(void (*fn)(void))
 		    sizeof(p->fns[0]);
 		p->next = __atexit;
 		__atexit = p;
+		if (__atexit_invalid)
+			__atexit_invalid = 0;
 	}
 	p->fns[p->ind++] = fn;
 	if (mprotect(p, pgsize, PROT_READ))
@@ -111,10 +109,6 @@ __atexit_register_cleanup(void (*fn)(void))
 	while (p != NULL && p->next != NULL)
 		p = p->next;
 	if (p == NULL) {
-		if (__atexit_invalid) {
-			free(malloc(1));
-			__atexit_invalid = 0;
-		}
 		p = mmap(NULL, pgsize, PROT_READ | PROT_WRITE,
 		    MAP_ANON | MAP_PRIVATE, -1, 0);
 		if (p == MAP_FAILED)
@@ -124,6 +118,8 @@ __atexit_register_cleanup(void (*fn)(void))
 		    sizeof(p->fns[0]);
 		p->next = NULL;
 		__atexit = p;
+		if (__atexit_invalid)
+			__atexit_invalid = 0;
 	} else {
 		if (mprotect(p, pgsize, PROT_READ | PROT_WRITE))
 		    return;
