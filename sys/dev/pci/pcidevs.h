@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.876 2005/06/15 23:33:18 brad Exp 
+ *	OpenBSD: pcidevs,v 1.877 2005/06/17 23:42:40 martin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1532,6 +1532,7 @@
 #define	PCI_PRODUCT_INTEL_82875P_CSA	0x257b		/* 82875P PCI-CSA */
 #define	PCI_PRODUCT_INTEL_915G_HB	0x2580		/* 915G/P/GV Host */
 #define	PCI_PRODUCT_INTEL_915G_PCIE	0x2581		/* 915G/P/GV PCIE */
+#define	PCI_PRODUCT_INTEL_915G_IV	0x2582		/* 915G/P/GV Video */
 #define	PCI_PRODUCT_INTEL_925X_HB	0x2584		/* 925X MCH Host */
 #define	PCI_PRODUCT_INTEL_925X_PCIE	0x2585		/* 925X PCIE */
 #define	PCI_PRODUCT_INTEL_E7221_HB	0x2588		/* E7221 MCH Host */
