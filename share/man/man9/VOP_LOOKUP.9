@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.15 2005/06/09 02:59:12 jaredy Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.16 2005/06/17 21:36:20 drahn Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -88,16 +88,6 @@
 .Fo VOP_GETATTR
 .Fa "struct vnode *vp"
 .Fa "struct vattr *vap"
-.Fa "struct ucred *cred"
-.Fa "struct proc *p"
-.Fc
-.Ft int
-.Fo VOP_GETEXTATTR
-.Fa "struct vnode *vp"
-.Fa "int attrnamespace"
-.Fa "const char *name"
-.Fa "struct uio *uio"
-.Fa "size_t *size"
 .Fa "struct ucred *cred"
 .Fa "struct proc *p"
 .Fc
@@ -248,15 +238,6 @@
 .Fo VOP_SETATTR
 .Fa "struct vnode *vp"
 .Fa "struct vattr *vap"
-.Fa "struct ucred *cred"
-.Fa "struct proc *p"
-.Fc
-.Ft int
-.Fo VOP_SETEXTATTR
-.Fa "struct vnode *vp"
-.Fa "int attrnamespace"
-.Fa "const char *name"
-.Fa "struct uio *uio"
 .Fa "struct ucred *cred"
 .Fa "struct proc *p"
 .Fc
@@ -480,33 +461,6 @@ or should not be changed by
 .Fn VOP_SETATTR .
 Upon success of obtaining or changing the attributes, zero is returned;
 otherwise, an appropriate error code is returned.
-.Pp
-.It Fn VOP_GETEXTATTR vp attrnamespace name uio size cred p
-.It Fn VOP_SETEXTATTR vp attrnamespace name uio cred p
-.Fn VOP_GETEXTATTR
-and
-.Fn VOP_SETEXTATTR
-are called to get and set named extended file attributes (see
-.Xr extattr 9 ) .
-.Fa vp
-is the vnode for which to get or set the attribute.
-It must be locked.
-.Fa attrnamespace
-is an integer describing whether the attribute belongs in the
-user or system namespace.
-.Fa name
-is the extended attribute to get or set.
-.Fa uio
-is a
-.Xr uio 9
-structure with the userland address containing the userland data.
-.Fn VOP_GETEXTATTR
-will return the actual length of the attribute in
-.Fa size
-if it is
-.No non- Ns Dv NULL .
-.Fa cred
-is a pointer to the credentials used to access the file.
 .Pp
 .It Fn VOP_INACTIVE vp p
 Notify the underlying file system that the locked vnode
