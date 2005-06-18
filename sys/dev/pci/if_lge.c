@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.19 2005/05/11 03:54:59 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.20 2005/06/18 04:23:09 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -361,9 +361,8 @@ allmulti:
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto allmulti;
 		}
-		h = ( ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26) &
+		h = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26) &
 		    0x0000003F;
-		h = lge_crc(sc, LLADDR((struct sockaddr_dl *)enm->enm_addrlo));
 		if (h < 32)
 			hashes[0] |= (1 << h);
 		else
