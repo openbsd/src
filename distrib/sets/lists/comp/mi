@@ -1058,19 +1058,6 @@
 ./usr/include/netipx/spx_var.h
 ./usr/include/netnatm
 ./usr/include/netnatm/natm.h
-./usr/include/netns
-./usr/include/netns/idp.h
-./usr/include/netns/idp_var.h
-./usr/include/netns/ns.h
-./usr/include/netns/ns_error.h
-./usr/include/netns/ns_if.h
-./usr/include/netns/ns_pcb.h
-./usr/include/netns/ns_var.h
-./usr/include/netns/sp.h
-./usr/include/netns/spidp.h
-./usr/include/netns/spp_debug.h
-./usr/include/netns/spp_timer.h
-./usr/include/netns/spp_var.h
 ./usr/include/nfs
 ./usr/include/nfs/krpc.h
 ./usr/include/nfs/nfs.h
@@ -1778,13 +1765,6 @@
 ./usr/share/man/cat2/errno.0
 ./usr/share/man/cat2/exect.0
 ./usr/share/man/cat2/execve.0
-./usr/share/man/cat2/extattr.0
-./usr/share/man/cat2/extattr_delete_fd.0
-./usr/share/man/cat2/extattr_delete_file.0
-./usr/share/man/cat2/extattr_get_fd.0
-./usr/share/man/cat2/extattr_get_file.0
-./usr/share/man/cat2/extattr_set_fd.0
-./usr/share/man/cat2/extattr_set_file.0
 ./usr/share/man/cat2/fchdir.0
 ./usr/share/man/cat2/fchflags.0
 ./usr/share/man/cat2/fchmod.0
@@ -3191,9 +3171,6 @@
 ./usr/share/man/cat3/expf.0
 ./usr/share/man/cat3/expm1.0
 ./usr/share/man/cat3/expm1f.0
-./usr/share/man/cat3/extattr.0
-./usr/share/man/cat3/extattr_namespace_to_string.0
-./usr/share/man/cat3/extattr_string_to_namespace.0
 ./usr/share/man/cat3/f.0
 ./usr/share/man/cat3/fabs.0
 ./usr/share/man/cat3/fabsf.0
@@ -3210,6 +3187,8 @@
 ./usr/share/man/cat3/fgetln.0
 ./usr/share/man/cat3/fgetpos.0
 ./usr/share/man/cat3/fgets.0
+./usr/share/man/cat3/fgetwc.0
+./usr/share/man/cat3/fgetws.0
 ./usr/share/man/cat3/field_arg.0
 ./usr/share/man/cat3/field_back.0
 ./usr/share/man/cat3/field_buffer.0
@@ -3285,6 +3264,8 @@
 ./usr/share/man/cat3/fpurge.0
 ./usr/share/man/cat3/fputc.0
 ./usr/share/man/cat3/fputs.0
+./usr/share/man/cat3/fputwc.0
+./usr/share/man/cat3/fputws.0
 ./usr/share/man/cat3/fread.0
 ./usr/share/man/cat3/free.0
 ./usr/share/man/cat3/free_field.0
@@ -3316,6 +3297,7 @@
 ./usr/share/man/cat3/ftw.0
 ./usr/share/man/cat3/funlockfile.0
 ./usr/share/man/cat3/funopen.0
+./usr/share/man/cat3/fwide.0
 ./usr/share/man/cat3/fwopen.0
 ./usr/share/man/cat3/fwrite.0
 ./usr/share/man/cat3/gai_strerror.0
@@ -3402,6 +3384,8 @@
 ./usr/share/man/cat3/getttynam.0
 ./usr/share/man/cat3/getusershell.0
 ./usr/share/man/cat3/getw.0
+./usr/share/man/cat3/getwc.0
+./usr/share/man/cat3/getwchar.0
 ./usr/share/man/cat3/getwd.0
 ./usr/share/man/cat3/getwin.0
 ./usr/share/man/cat3/getyx.0
@@ -4140,9 +4124,6 @@
 ./usr/share/man/cat3/noraw.0
 ./usr/share/man/cat3/notimeout.0
 ./usr/share/man/cat3/nrand48.0
-./usr/share/man/cat3/ns.0
-./usr/share/man/cat3/ns_addr.0
-./usr/share/man/cat3/ns_ntoa.0
 ./usr/share/man/cat3/ntoa.0
 ./usr/share/man/cat3/ntohl.0
 ./usr/share/man/cat3/ntohs.0
@@ -4219,7 +4200,6 @@
 ./usr/share/man/cat3/popen.0
 ./usr/share/man/cat3/pos_form_cursor.0
 ./usr/share/man/cat3/pos_menu_cursor.0
-./usr/share/man/cat3/posix1e.0
 ./usr/share/man/cat3/posix2time.0
 ./usr/share/man/cat3/post_form.0
 ./usr/share/man/cat3/post_menu.0
@@ -4314,6 +4294,8 @@
 ./usr/share/man/cat3/putp.0
 ./usr/share/man/cat3/puts.0
 ./usr/share/man/cat3/putw.0
+./usr/share/man/cat3/putwc.0
+./usr/share/man/cat3/putwchar.0
 ./usr/share/man/cat3/putwin.0
 ./usr/share/man/cat3/pw_abort.0
 ./usr/share/man/cat3/pw_copy.0
@@ -4778,6 +4760,7 @@
 ./usr/share/man/cat3/ungetc.0
 ./usr/share/man/cat3/ungetch.0
 ./usr/share/man/cat3/ungetmouse.0
+./usr/share/man/cat3/ungetwc.0
 ./usr/share/man/cat3/unpost_form.0
 ./usr/share/man/cat3/unpost_menu.0
 ./usr/share/man/cat3/unsetenv.0
@@ -5139,6 +5122,11 @@
 ./usr/share/man/cat9/bus_space_write_region_4.0
 ./usr/share/man/cat9/bus_space_write_region_8.0
 ./usr/share/man/cat9/bwrite.0
+./usr/share/man/cat9/cache_enter.0
+./usr/share/man/cat9/cache_lookup.0
+./usr/share/man/cat9/cache_purge.0
+./usr/share/man/cat9/cache_purgevfs.0
+./usr/share/man/cat9/cache_revlookup.0
 ./usr/share/man/cat9/cdevvp.0
 ./usr/share/man/cat9/config_activate.0
 ./usr/share/man/cat9/config_attach.0
@@ -5189,7 +5177,6 @@
 ./usr/share/man/cat9/evcount.0
 ./usr/share/man/cat9/evcount_attach.0
 ./usr/share/man/cat9/evcount_detach.0
-./usr/share/man/cat9/extattr.0
 ./usr/share/man/cat9/extent.0
 ./usr/share/man/cat9/extent_alloc.0
 ./usr/share/man/cat9/extent_alloc_region.0
@@ -5552,6 +5539,7 @@
 ./usr/share/man/cat9/vflush.0
 ./usr/share/man/cat9/vflushbuf.0
 ./usr/share/man/cat9/vfs.0
+./usr/share/man/cat9/vfs_cache.0
 ./usr/share/man/cat9/vget.0
 ./usr/share/man/cat9/vgone.0
 ./usr/share/man/cat9/vgonel.0
