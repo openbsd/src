@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.9 2003/12/28 17:20:16 tedu Exp $	*/
+/*	$OpenBSD: dir.h,v 1.10 2005/06/18 18:09:43 millert Exp $	*/
 /*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
 
 /*
@@ -95,7 +95,6 @@ struct	direct {
 #define	DT_REG		 8
 #define	DT_LNK		10
 #define	DT_SOCK		12
-#define	DT_WHT		14
 
 /*
  * Convert between stat structure types and directory types.

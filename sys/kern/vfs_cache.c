@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.17 2005/05/28 07:28:07 marius Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.18 2005/06/18 18:09:42 millert Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -142,10 +142,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		nchstats.ncs_badhits++;
 		goto remove;
 	} else if (ncp->nc_vp == NULL) {
-		/*
-		 * Restore the ISWHITEOUT flag saved earlier.
-		 */
-		cnp->cn_flags |= ncp->nc_vpid;
 		if (cnp->cn_nameiop != CREATE ||
 		    (cnp->cn_flags & ISLASTCN) == 0) {
 			nchstats.ncs_neghits++;
@@ -368,13 +364,6 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	ncp->nc_vp = vp;
 	if (vp)
 		ncp->nc_vpid = vp->v_id;
-	else {
-		/*
-		 * For negative hits, save the ISWHITEOUT flag so we can
-		 * restore it later when the cache entry is used again.
-		 */
-		ncp->nc_vpid = cnp->cn_flags & ISWHITEOUT;
-	}
 	/* fill in cache info */
 	ncp->nc_dvp = dvp;
 	ncp->nc_dvpid = dvp->v_id;

@@ -1,4 +1,4 @@
-/* $OpenBSD: netbsd_getcwd.c,v 1.8 2005/05/26 00:33:45 pedro Exp $ */
+/* $OpenBSD: netbsd_getcwd.c,v 1.9 2005/06/18 18:09:42 millert Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*-
@@ -244,8 +244,7 @@ unionread:
 				 * but getting the locking games for that
 				 * right would be heinous.
 				 */
-				if ((dp->d_type != DT_WHT) &&
-				    (dp->d_fileno == fileno)) {
+				if (dp->d_fileno == fileno) {
 					char *bp = *bpp;
 					bp -= dp->d_namlen;
 					

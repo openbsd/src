@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.14 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: stat.h,v 1.15 2005/06/18 18:09:43 millert Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -162,7 +162,6 @@ struct stat {
 #define	S_IFREG	 0100000		/* regular */
 #define	S_IFLNK	 0120000		/* symbolic link */
 #define	S_IFSOCK 0140000		/* socket */
-#define	S_IFWHT  0160000		/* whiteout */
 #define	S_ISVTX	 0001000		/* save swapped text even after use */
 #endif
 
@@ -174,7 +173,6 @@ struct stat {
 #ifndef _POSIX_SOURCE
 #define	S_ISLNK(m)	((m & 0170000) == 0120000)	/* symbolic link */
 #define	S_ISSOCK(m)	((m & 0170000) == 0140000)	/* socket */
-#define	S_ISWHT(m)	((m & 0170000) == 0160000)	/* whiteout */
 #endif
 
 #ifndef _POSIX_SOURCE

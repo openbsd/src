@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.5 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.6 2005/06/18 18:09:43 millert Exp $	*/
 /*	$NetBSD: dirent.h,v 1.12 1996/04/09 20:55:25 cgd Exp $	*/
 
 /*-
@@ -67,7 +67,6 @@ struct dirent {
 #define	DT_REG		 8
 #define	DT_LNK		10
 #define	DT_SOCK		12
-#define	DT_WHT		14
 
 /*
  * Convert between stat structure types and directory types.

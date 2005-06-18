@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.13 2003/08/01 17:38:33 avsm Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.14 2005/06/18 18:09:42 millert Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -72,9 +72,7 @@ typedef struct _dirdesc {
 #define	dirfd(dirp)	((dirp)->dd_fd)
 
 /* flags for opendir2 */
-#define DTF_HIDEW	0x0001	/* hide whiteout entries */
 #define DTF_NODUP	0x0002	/* don't return duplicate names */
-#define DTF_REWIND	0x0004	/* rewind after reading union stack */
 #define __DTF_READALL	0x0008	/* everything has been read */
 
 #ifndef NULL

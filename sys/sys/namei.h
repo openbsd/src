@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.14 2005/05/26 22:40:52 marius Exp $	*/
+/*	$OpenBSD: namei.h,v 1.15 2005/06/18 18:09:43 millert Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -132,8 +132,6 @@ struct nameidata {
 #define MAKEENTRY	0x004000      /* entry is to be added to name cache */
 #define ISLASTCN	0x008000      /* this is last component of pathname */
 #define ISSYMLINK	0x010000      /* symlink needs interpretation */
-#define	ISWHITEOUT	0x020000      /* found whiteout */
-#define	DOWHITEOUT	0x040000      /* do whiteouts */
 #define	REQUIREDIR	0x080000      /* must be a directory */
 #define STRIPSLASHES    0x100000      /* strip trailing slashes */
 #define PDIRUNLOCK	0x200000      /* vfs_lookup() unlocked parent dir */

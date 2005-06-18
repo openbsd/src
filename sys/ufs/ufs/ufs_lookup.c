@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.29 2005/06/10 17:37:41 pedro Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.30 2005/06/18 18:09:43 millert Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -350,33 +350,6 @@ foundentry:
 				 * reclen in ndp->ni_ufs area, and release
 				 * directory buffer.
 				 */
-				if (vdp->v_mount->mnt_maxsymlinklen > 0 &&
-				    ep->d_type == DT_WHT) {
-					slotstatus = FOUND;
-					slotoffset = dp->i_offset;
-					slotsize = ep->d_reclen;
-					dp->i_reclen = slotsize;
-					/*
-					 * This is used to set dp->i_endoff,
-					 * which may be used by ufs_direnter2()
-					 * as a length to truncate the
-					 * directory to.  Therefore, it must
-					 * point past the end of the last
-					 * non-empty directory entry.  We don't
-					 * know where that is in this case, so
-					 * we effectively disable shrinking by
-					 * using the existing size of the
-					 * directory.
-					 *
-					 * Note that we wouldn't expect to
-					 * shrink the directory while rewriting
-					 * an existing entry anyway.
-					 */
-					enduseful = endsearch;
-					ap->a_cnp->cn_flags |= ISWHITEOUT;
-					numdirpasses--;
-					goto notfound;
-				}
 				dp->i_ino = ep->d_ino;
 				dp->i_reclen = ep->d_reclen;
 				goto found;
@@ -406,10 +379,7 @@ notfound:
 	 * directory has not been removed, then can consider
 	 * allowing file to be created.
 	 */
-	if ((nameiop == CREATE || nameiop == RENAME ||
-	     (nameiop == DELETE &&
-	      (ap->a_cnp->cn_flags & DOWHITEOUT) &&
-	      (ap->a_cnp->cn_flags & ISWHITEOUT))) &&
+	if ((nameiop == CREATE || nameiop == RENAME) &&
 	    (flags & ISLASTCN) && dp->i_effnlink != 0) {
 		/*
 		 * Access for write is interpreted as allowing
@@ -903,9 +873,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	 * Update the pointer fields in the previous entry (if any),
 	 * copy in the new entry, and write out the block.
 	 */
-	if (ep->d_ino == 0 ||
-	    (ep->d_ino == WINO &&
-	     bcmp(ep->d_name, dirp->d_name, dirp->d_namlen) == 0)) {
+	if (ep->d_ino == 0) {
 		if (spacefree + dsize < newentrysize)
 			panic("ufs_direnter: compact1");
 		dirp->d_reclen = spacefree + dsize;
@@ -990,19 +958,6 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 
 	dp = VTOI(dvp);
 
-	if (flags & DOWHITEOUT) {
-		/*
-		 * Whiteout entry: set d_ino to WINO.
-		 */
-		error = UFS_BUFATOFF(dp, (off_t)dp->i_offset, (char **)&ep,
-				     &bp);
-		if (error)
-			return (error);
-		ep->d_ino = WINO;
-		ep->d_type = DT_WHT;
-		goto out;
-	}
-
 	if ((error = UFS_BUFATOFF(dp,
 	    (off_t)(dp->i_offset - dp->i_count), (char **)&ep, &bp)) != 0)
 		return (error);
@@ -1033,7 +988,6 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 		    ((dp->i_offset - dp->i_count) & (DIRBLKSIZ - 1)),
 		    dp->i_offset & ~(DIRBLKSIZ - 1));
 #endif
-out:
  	if (DOINGSOFTDEP(dvp)) {
 		if (ip) {
 			ip->i_effnlink--;
@@ -1052,9 +1006,7 @@ out:
 			ip->i_ffs_nlink--;
 			ip->i_flag |= IN_CHANGE;
 		}
-		if (flags & DOWHITEOUT)
-			error = bwrite(bp);
-		else if (DOINGASYNC(dvp) && dp->i_count != 0) {
+		if (DOINGASYNC(dvp) && dp->i_count != 0) {
 			bdwrite(bp);
 			error = 0;
 		} else
@@ -1142,7 +1094,7 @@ ufs_dirempty(ip, parentino, cred)
 		if (dp->d_reclen == 0)
 			return (0);
 		/* skip empty entries */
-		if (dp->d_ino == 0 || dp->d_ino == WINO)
+		if (dp->d_ino == 0)
 			continue;
 		/* accept only "." and ".." */
 #		if (BYTE_ORDER == LITTLE_ENDIAN)

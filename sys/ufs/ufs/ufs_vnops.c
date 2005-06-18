@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.64 2005/06/10 17:37:41 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.65 2005/06/18 18:09:43 millert Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1251,9 +1251,6 @@ ufs_mkdir(v)
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip, 0);
 
-	if (cnp->cn_flags & ISWHITEOUT)
-		ip->i_ffs_flags |= UF_OPAQUE;
-
 	/*
 	 * Bump link count in parent directory to reflect work done below.
 	 * Should be done before reference is create so cleanup is 
@@ -2087,9 +2084,6 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 		!groupmember(ip->i_ffs_gid, cnp->cn_cred) &&
 	    suser_ucred(cnp->cn_cred))
 		ip->i_ffs_mode &= ~ISGID;
-
-	if (cnp->cn_flags & ISWHITEOUT)
-		ip->i_ffs_flags |= UF_OPAQUE;
 
 	/*
 	 * Make sure inode goes to disk before directory entry.

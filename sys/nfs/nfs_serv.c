@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.38 2004/06/24 19:35:26 tholo Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.39 2005/06/18 18:09:43 millert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2330,8 +2330,6 @@ out:
  * - it trims out records with d_fileno == 0
  *	this doesn't matter for Unix clients, but they might confuse clients
  *	for other os'.
- * - it trims out records with d_type == DT_WHT
- *	these cannot be seen through NFS (unless we extend the protocol)
  * NB: It is tempting to set eof to true if the VOP_READDIR() reads less
  *	than requested, but this may not apply to all filesystems. For
  *	example, client NFS does not { although it is never remote mounted
@@ -2508,8 +2506,7 @@ again:
 	dp = (struct dirent *)cpos;
 	cookiep = cookies;
 
-	while (cpos < cend && ncookies > 0 &&
-	    (dp->d_fileno == 0 || dp->d_type == DT_WHT)) {
+	while (cpos < cend && ncookies > 0 && dp->d_fileno == 0) {
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
 		cookiep++;
@@ -2534,7 +2531,7 @@ again:
 
 	/* Loop through the records and build reply */
 	while (cpos < cend && ncookies > 0) {
-		if (dp->d_fileno != 0 && dp->d_type != DT_WHT) {
+		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
 			rem = nfsm_rndup(nlen)-nlen;
 			len += (4 * NFSX_UNSIGNED + nlen + rem);
@@ -2764,8 +2761,7 @@ again:
 	dp = (struct dirent *)cpos;
 	cookiep = cookies;
 
-	while (cpos < cend && ncookies > 0 &&
-	    (dp->d_fileno == 0 || dp->d_type == DT_WHT)) {
+	while (cpos < cend && ncookies > 0 && dp->d_fileno == 0) {
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
 		cookiep++;
@@ -2800,7 +2796,7 @@ again:
 
 	/* Loop through the records and build reply */
 	while (cpos < cend && ncookies > 0) {
-		if (dp->d_fileno != 0 && dp->d_type != DT_WHT) {
+		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
 			rem = nfsm_rndup(nlen)-nlen;
 	

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.9 2004/01/20 03:44:06 tedu Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.10 2005/06/18 18:09:43 millert Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -47,14 +47,6 @@
  * numerous dump tapes make this assumption, so we are stuck with it).
  */
 #define	ROOTINO	((ino_t)2)
-
-/*
- * The Whiteout inode# is a dummy non-zero inode number which will
- * never be allocated to a real file.  It is used as a place holder
- * in the directory entry which has been tagged as a DT_W entry.
- * See the comments about ROOTINO above.
- */
-#define	WINO	((ino_t)1)
 
 /*
  * A dinode contains all the meta-data associated with a UFS file.
