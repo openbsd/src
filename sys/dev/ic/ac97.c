@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.55 2005/06/06 21:12:44 mjc Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.56 2005/06/18 21:23:59 canacar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -805,6 +805,10 @@ ac97_attach(host_if)
 
 	ac97_setup_source_info(as);
 
+	/* use initfunc for specific device */
+	if (initfunc != NULL)
+		initfunc(as);
+
 	/* Just enable the DAC and master volumes by default */
 	bzero(&ctl, sizeof(ctl));
 
@@ -827,10 +831,6 @@ ac97_attach(host_if)
 	ctl.dev = ac97_get_portnum_by_name(&as->codec_if, AudioCrecord,
 	    AudioNsource, NULL);
 	ac97_mixer_set_port(&as->codec_if, &ctl);
-
-	/* use initfunc for specific device */
-	if (initfunc != NULL)
-		initfunc(as);
 
 	return (0);
 }
@@ -904,6 +904,12 @@ ac97_mixer_set_port(codec_if, cp)
 			newval |= (newval << (8 + si->ofs));
 			mask |= (mask << 8);
 		}
+
+		if (si->mute) {
+			newval |= newval << 8;
+			mask |= mask << 8;
+		}
+
 		break;
 	case AUDIO_MIXER_VALUE:
 	{
@@ -1116,11 +1122,24 @@ ac97_ad1886_init(struct ac97_softc *as)
 void
 ac97_ad198x_init(struct ac97_softc *as)
 {
+	int i;
 	u_int16_t misc;
 
 	ac97_read(as, AC97_AD_REG_MISC, &misc);
 	ac97_write(as, AC97_AD_REG_MISC,
 	    misc|AC97_AD_MISC_HPSEL|AC97_AD_MISC_LOSEL);
+
+	for (i = 0; i < as->num_source_info; i++) {
+		if (as->source_info[i].reg == AC97_REG_SURROUND_VOLUME)
+			as->source_info[i].reg = AC97_REG_MASTER_VOLUME;
+		else if (as->source_info[i].reg == AC97_REG_MASTER_VOLUME) {
+			as->source_info[i].reg = AC97_REG_SURROUND_VOLUME;
+			if (as->source_info[i].type == AUDIO_MIXER_ENUM) {
+				as->source_info[i].mute = 1;
+				as->source_info[i].ofs = 7;
+			}
+		}
+	}
 }
 
 void
