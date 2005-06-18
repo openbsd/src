@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.877 2005/06/17 23:42:40 martin Exp 
+ *	OpenBSD: pcidevs,v 1.878 2005/06/18 01:06:38 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -611,7 +611,7 @@
 #define	PCI_PRODUCT_AD_SP2141	0x2f44		/* SafeNet ADSP 2141 */
 
 /* Antares Microsystems products */
-#define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares */
+#define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* TC9021 */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit */
