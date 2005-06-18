@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.24 2005/06/18 11:42:49 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.25 2005/06/18 12:52:29 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -32,6 +32,11 @@ use constant {
 	FIFO => '6',
 	CONTFILE => '7',
 	USTAR_HEADER => 'a100a8a8a8a12a12a8aa100a6a2a32a32a8a8a155a12',
+	MAXFILENAME => 100,
+	MAXLINKNAME => 100,
+	MAXPREFIX => 155,
+	MAXUSERNAME => 32,
+	MAXGROUPNAME => 32
 };
 
 use File::Path ();
@@ -155,21 +160,17 @@ sub mkheader
 	my ($entry, $type) = @_;
 	my ($name, $prefix);
 	$name = $entry->{name};
-	if (length($name) < 100) {
+	if (length($name) <= MAXFILENAME) {
 		$prefix = '';
-	} elsif (length($name) > 255) {
+	} elsif (length($name) > MAXFILENAME+MAXPREFIX+1) {
 		die "Can't fit such a name $name\n";
 	} else {
-		my @c = split('/', $name);
 		$prefix = '';
-		while (length($prefix.$c[0].'/') <= 155 and @c > 1) {
-			$prefix.=(shift @c).'/';
+		while (length($name) > MAXFILENAME && $name =~ m/^(.*\/)(.*)$/) {
+			$prefix =$1;
+			$name = $2;
 		}
-		$name = join('/', @c);
 		$prefix =~ s|/$||;
-		if (length $prefix > 155 or length $name > 100) {
-			die "Can't fit such a name $prefix/$name\n";
-		}
 	}
 	my $linkname = $entry->{linkname};
 	my $size = $entry->{size};
@@ -183,6 +184,21 @@ sub mkheader
 	}
 	if (!defined $linkname) {
 		$linkname = '';
+	}
+	if (length $prefix > MAXPREFIX) {
+		die "Prefix too long $prefix\n";
+	}
+	if (length $name > MAXFILENAME) {
+		die "Name too long $name\n";
+	}
+	if (length $linkname > MAXLINKNAME) {
+		die "Linkname too long $linkname\n";
+	}
+	if (length $entry->{uname} > MAXUSERNAME) {
+		die "Username too long ", $entry->{uname}, "\n";
+	}
+	if (length $entry->{gname} > MAXGROUPNAME) {
+		die "Groupname too long ", $entry->{gname}, "\n";
 	}
 	my $header;
 	my $cksum = ' 'x8;
