@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.5 2005/05/04 03:17:48 brad Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.6 2005/06/18 01:52:22 brad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -186,10 +186,10 @@ evbuffer_remove(struct evbuffer *buf, void *data, size_t datlen)
 char *
 evbuffer_readline(struct evbuffer *buffer)
 {
-	char *data = EVBUFFER_DATA(buffer);
+	u_char *data = EVBUFFER_DATA(buffer);
 	size_t len = EVBUFFER_LENGTH(buffer);
 	char *line;
-	int i;
+	u_int i;
 
 	for (i = 0; i < len; i++) {
 		if (data[i] == '\r' || data[i] == '\n')
@@ -334,7 +334,7 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 #endif
 
 #ifdef FIONREAD
-	if (ioctl(fd, FIONREAD, &n) == -1)
+	if (ioctl(fd, FIONREAD, &n) == -1 || n == 0)
 		n = EVBUFFER_MAX_READ;
 #endif	
 	if (howmuch < 0 || howmuch > n)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.16 2005/05/04 03:17:48 brad Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.17 2005/06/18 01:52:22 brad Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -122,6 +122,27 @@ kq_init(void)
 	}
 	kqueueop->nevents = NEVENT;
 
+	/* Check for Mac OS X kqueue bug. */
+	kqueueop->changes[0].ident = -1;
+	kqueueop->changes[0].filter = EVFILT_READ;
+	kqueueop->changes[0].flags = EV_ADD;
+	/* 
+	 * If kqueue works, then kevent will succeed, and it will
+	 * stick an error in events[0].  If kqueue is broken, then
+	 * kevent will fail.
+	 */
+	if (kevent(kq,
+		kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
+	    kqueueop->events[0].ident != -1 ||
+	    kqueueop->events[0].flags != EV_ERROR) {
+		event_warn("%s: detected broken kqueue; not using.", __func__);
+		free(kqueueop->changes);
+		free(kqueueop->events);
+		free(kqueueop);
+		close(kq);
+		return (NULL);
+	}
+
 	return (kqueueop);
 }
 
@@ -218,11 +239,14 @@ kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			 *   closed,
 			 *   ENOENT when the file discriptor was closed and
 			 *   then reopened.
+			 *   EINVAL for some reasons not understood; EINVAL
+			 *   should not be returned ever; but FreeBSD does :-\
 			 * An error is also indicated when a callback deletes
 			 * an event we are still processing.  In that case
 			 * the data field is set to ENOENT.
 			 */
 			if (events[i].data == EBADF ||
+			    events[i].data == EINVAL ||
 			    events[i].data == ENOENT)
 				continue;
 			errno = events[i].data;
