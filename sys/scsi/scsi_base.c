@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.82 2005/06/12 21:40:05 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.83 2005/06/18 00:52:15 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -479,37 +479,44 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	if (big)
 		*big = 0;
 
+	if ((sc_link->flags & SDEV_ATAPI) == 0) {
+		/*
+		 * Try 6 byte mode sense request first. Some devices don't
+		 * distinguish between 6 and 10 byte MODE SENSE commands,
+		 * returning 6 byte data for 10 byte requests. Don't bother
+		 * with SMS_DBD. Check returned data length to ensure that
+		 * at least a header (3 additional bytes) is returned.
+		 */
+		error = scsi_mode_sense(sc_link, 0, page, &buf->headers.hdr,
+		    sizeof(*buf), flags, 20000);
+		if (error == 0 && buf->headers.hdr.data_length > 2) {
+			*page_data = scsi_mode_sense_page(&buf->headers.hdr,
+			    page_len);
+			offset = sizeof(struct scsi_mode_header);
+			blk_desc_len = buf->headers.hdr.blk_desc_len;
+			goto blk_desc;
+		}	
+	}	
+
 	/*
 	 * Try 10 byte mode sense request. Don't bother with SMS_DBD or
-	 * SMS_LLBAA.
+	 * SMS_LLBAA. Bail out if the returned information is less than
+	 * a big header in size (6 additional bytes).
 	 */
 	error = scsi_mode_sense_big(sc_link, 0, page, &buf->headers.hdr_big,
 	    sizeof(*buf), flags, 20000);
+	if (error != 0)
+		return (error);
+	if (_2btol(buf->headers.hdr_big.data_length) < 6)
+		return (EIO);
 
-	if (error == 0 && _2btol(buf->headers.hdr_big.data_length) > 0) {
-		if (big)
-			*big = 1;
-		offset = sizeof(struct scsi_mode_header_big);
-		*page_data = scsi_mode_sense_big_page(&buf->headers.hdr_big,
-		    page_len);
-		blk_desc_len = _2btol(buf->headers.hdr_big.blk_desc_len);
-	} else {
-		/*
-		 * Try 6 byte mode sense request. Don't bother with SMS_DBD.
-		 */
-		if (sc_link->flags & SDEV_ONLYBIG)
-			return (EIO);
-		error = scsi_mode_sense(sc_link, 0, page, &buf->headers.hdr,
-		    sizeof(*buf), flags, 20000);
-		if (error != 0)
-			return (error);
-		if (buf->headers.hdr.data_length == 0)
-			return (EIO);
-		offset = sizeof(struct scsi_mode_header);
-		*page_data = scsi_mode_sense_page(&buf->headers.hdr, page_len);
-		blk_desc_len = buf->headers.hdr.blk_desc_len;
-	}
+	if (big)
+		*big = 1;
+	offset = sizeof(struct scsi_mode_header_big);
+	*page_data = scsi_mode_sense_big_page(&buf->headers.hdr_big, page_len);
+	blk_desc_len = _2btol(buf->headers.hdr_big.blk_desc_len);
 
+blk_desc:
 	/* Both scsi_blk_desc and scsi_mode_direct_blk_desc are 8 bytes. */
 	if (blk_desc_len == 0 || (blk_desc_len % 8 != 0))
 		return (0);
