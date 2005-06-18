@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.25 2005/06/18 12:52:29 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.26 2005/06/18 13:17:11 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -152,6 +152,7 @@ sub next
     if ($size % 512) {
 	$self->{swallow} += 512 - $size % 512;
     }
+    $self->{cachename} = $name;
     return $result;
 }
 
@@ -302,6 +303,11 @@ sub write_contents
 	# only files have anything to write
 }
 
+sub resolve_links
+{
+	# only hard links must cheat
+}
+
 sub copy_contents
 {
 	# only files need copying
@@ -311,6 +317,7 @@ sub copy
 {
 	my ($self, $wrarc) = @_;
 	my $out = $wrarc->{fh};
+	$self->resolve_links($wrarc);
 	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
 	print $out $header;
 
@@ -350,6 +357,18 @@ sub create
 	}
 	link $self->{destdir}.$linkname, $self->{destdir}.$self->{name} or
 	    die "Can't link $self->{destdir}$linkname to $self->{destdir}$self->{name}: $!";
+}
+
+sub resolve_links
+{
+	my ($self, $arc) = @_;
+
+	my $k = $self->{archive}.":".$self->{linkname};
+	if (defined $arc->{key}->{$k}) {
+		$self->{linkname} = $arc->{key}->{$k};
+	} else {
+		die "Can't copy link over: original NOT available\n";
+	}
 }
 
 sub isLink() { 1 }
@@ -517,6 +536,10 @@ sub copy_contents
 	}
 	if ($size % 512) {
 		print $out "\0" x (512 - $size % 512);
+	}
+	my $k = $self->{archive}.":".$self->{archive}->{cachename};
+	if (!defined $arc->{key}->{$k}) {
+		$arc->{key}->{$k} = $self->{name};
 	}
 }
 
