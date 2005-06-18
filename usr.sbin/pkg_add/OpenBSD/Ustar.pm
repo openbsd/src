@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.23 2005/06/13 18:38:59 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.24 2005/06/18 11:42:49 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -159,11 +159,17 @@ sub mkheader
 		$prefix = '';
 	} elsif (length($name) > 255) {
 		die "Can't fit such a name $name\n";
-	} elsif ($name =~ m|^(.*)/(.{,100})$|) {
-		$prefix = $1;
-		$name = $2;
 	} else {
-		die "Can't fit such a name $name\n";
+		my @c = split('/', $name);
+		$prefix = '';
+		while (length($prefix.$c[0].'/') <= 155 and @c > 1) {
+			$prefix.=(shift @c).'/';
+		}
+		$name = join('/', @c);
+		$prefix =~ s|/$||;
+		if (length $prefix > 155 or length $name > 100) {
+			die "Can't fit such a name $prefix/$name\n";
+		}
 	}
 	my $linkname = $entry->{linkname};
 	my $size = $entry->{size};
