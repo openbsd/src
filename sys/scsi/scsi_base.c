@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.83 2005/06/18 00:52:15 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.84 2005/06/18 01:09:03 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -464,7 +464,7 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	u_int64_t *block_count;
 	void **page_data;
 {
-	struct scsi_mode_direct_blk_desc *direct;
+	struct scsi_direct_blk_desc *direct;
 	struct scsi_blk_desc *general;
 	int error, blk_desc_len, offset;
 	
@@ -517,7 +517,7 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	blk_desc_len = _2btol(buf->headers.hdr_big.blk_desc_len);
 
 blk_desc:
-	/* Both scsi_blk_desc and scsi_mode_direct_blk_desc are 8 bytes. */
+	/* Both scsi_blk_desc and scsi_direct_blk_desc are 8 bytes. */
 	if (blk_desc_len == 0 || (blk_desc_len % 8 != 0))
 		return (0);
 
@@ -536,7 +536,7 @@ blk_desc:
 		break;
 
 	default:
-		direct = (struct scsi_mode_direct_blk_desc *)&buf->
+		direct = (struct scsi_direct_blk_desc *)&buf->
 		    headers.buf[offset];
 		if (density)
 			*density = direct->density;

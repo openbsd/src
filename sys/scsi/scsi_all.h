@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.26 2005/06/12 21:40:05 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.27 2005/06/18 01:09:03 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -295,13 +295,13 @@ struct scsi_blk_desc {
 	u_int8_t blklen[3];
 };
 
-struct scsi_mode_direct_blk_desc {
+struct scsi_direct_blk_desc {
 	u_int8_t nblocks[4];
 	u_int8_t density;
 	u_int8_t blklen[3];
 };
 
-struct scsi_mode_blk_desc_big {
+struct scsi_blk_desc_big {
 	u_int8_t nblocks[8];
 	u_int8_t density;
 	u_int8_t reserved[3];
