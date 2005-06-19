@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.30 2005/06/18 18:09:43 millert Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.31 2005/06/19 00:44:01 deraadt Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -361,7 +361,9 @@ foundentry:
 		if (ep->d_ino)
 			enduseful = dp->i_offset;
 	}
+#ifdef UFS_DIRHASH
 notfound:
+#endif
 	/*
 	 * If we started in the middle of the directory and failed
 	 * to find our target, we must check the beginning as well.
