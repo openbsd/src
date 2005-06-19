@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.269 2005/06/14 22:49:06 dhartmei Exp $
+#	$OpenBSD: rc,v 1.270 2005/06/19 16:55:10 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -396,8 +396,7 @@ if [ X"${timed_flags}" != X"NO" ]; then
 fi
 
 if [ X"${ntpd_flags}" != X"NO" ]; then
-	# since this is system startup, use -s
-	echo -n ' ntpd'; ntpd -s $ntpd_flags
+	echo -n ' ntpd'; ntpd $ntpd_flags
 fi
 echo '.'
 
