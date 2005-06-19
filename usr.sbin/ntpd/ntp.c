@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.60 2005/05/26 09:13:06 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.61 2005/06/19 16:42:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -194,13 +194,14 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		idx_peers = i;
 		sent_cnt = trial_cnt = 0;
 		TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-			if (p->next > 0 && p->next < nextaction)
-				nextaction = p->next;
 			if (p->next > 0 && p->next <= time(NULL)) {
-				trial_cnt++;
+				if (p->state > STATE_DNS_INPROGRESS)
+					trial_cnt++;
 				if (client_query(p) == 0)
 					sent_cnt++;
 			}
+			if (p->next > 0 && p->next < nextaction)
+				nextaction = p->next;
 
 			if (p->deadline > 0 && p->deadline < nextaction)
 				nextaction = p->deadline;
@@ -326,7 +327,13 @@ ntp_dispatch_imsg(void)
 				log_warnx("IMSG_HOST_DNS but addr != NULL!");
 				break;
 			}
+
 			dlen = imsg.hdr.len - IMSG_HEADER_SIZE;
+			if (dlen == 0) {	/* no data -> temp error */
+				peer->state = STATE_DNS_TEMPFAIL;
+				break;
+			}
+
 			p = (u_char *)imsg.data;
 			while (dlen >= sizeof(struct sockaddr_storage)) {
 				if ((h = calloc(1, sizeof(struct ntp_addr))) ==
@@ -341,11 +348,13 @@ ntp_dispatch_imsg(void)
 					npeer->addr = h;
 					npeer->addr_head.a = h;
 					client_peer_init(npeer);
+					npeer->state = STATE_DNS_DONE;
 					peer_add(npeer);
 				} else {
 					h->next = peer->addr;
 					peer->addr = h;
 					peer->addr_head.a = peer->addr;
+					peer->state = STATE_DNS_DONE;
 				}
 			}
 			if (dlen != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.60 2005/04/19 11:08:41 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.61 2005/06/19 16:42:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -71,11 +71,13 @@ client_addr_init(struct ntp_peer *p)
 			sa_in = (struct sockaddr_in *)&h->ss;
 			if (ntohs(sa_in->sin_port) == 0)
 				sa_in->sin_port = htons(123);
+			p->state = STATE_DNS_DONE;
 			break;
 		case AF_INET6:
 			sa_in6 = (struct sockaddr_in6 *)&h->ss;
 			if (ntohs(sa_in6->sin6_port) == 0)
 				sa_in6->sin6_port = htons(123);
+			p->state = STATE_DNS_DONE;
 			break;
 		default:
 			fatal("king bula sez: wrong AF in client_addr_init");
@@ -97,6 +99,7 @@ client_nextaddr(struct ntp_peer *p)
 
 	if (p->addr_head.a == NULL) {
 		priv_host_dns(p->addr_head.name, p->id);
+		p->state = STATE_DNS_INPROGRESS;
 		return (-1);
 	}
 
@@ -118,6 +121,9 @@ client_query(struct ntp_peer *p)
 		set_next(p, error_interval());
 		return (0);
 	}
+
+	if (p->state < STATE_DNS_DONE || p->addr == NULL)
+		return (-1);
 
 	if (p->query->fd == -1) {
 		struct sockaddr *sa = (struct sockaddr *)&p->addr->ss;

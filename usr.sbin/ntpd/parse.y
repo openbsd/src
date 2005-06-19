@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2004/11/25 06:27:41 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.25 2005/06/19 16:42:57 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -134,6 +134,8 @@ conf_main	: LISTEN ON address	{
 				p->addr_head.name = strdup($2->name);
 				if (p->addr_head.name == NULL)
 					fatal(NULL);
+				if (p->addr != NULL)
+					p->state = STATE_DNS_DONE;
 				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 
 				h = next;
@@ -168,6 +170,8 @@ conf_main	: LISTEN ON address	{
 			p->addr_head.name = strdup($2->name);
 			if (p->addr_head.name == NULL)
 				fatal(NULL);
+			if (p->addr != NULL)
+				p->state = STATE_DNS_DONE;
 			TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
 			free($2->name);
 			free($2);
