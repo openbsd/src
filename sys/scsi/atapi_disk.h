@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi_disk.h,v 1.3 2005/05/22 21:11:31 krw Exp $	*/
+/*	$OpenBSD: atapi_disk.h,v 1.4 2005/06/19 20:41:28 krw Exp $	*/
 /*	$NetBSD: atapi_disk.h,v 1.3 1998/02/13 08:28:21 enami Exp $	*/
 
 /*
@@ -54,12 +54,6 @@ struct atapi_capacity_list_header {
 	u_int8_t length;
 };
 
-struct atapi_capacity_descriptor {
-	u_int8_t nblks[4];
-	u_int8_t byte5;
-	u_int8_t blklen[3];
-};
-
 /* codes only valid in the current/maximum capacity descriptor */
 #define	ATAPI_CAP_DESC_CODE_MASK	0x3
 /*	reserved			0x0 */
@@ -69,13 +63,8 @@ struct atapi_capacity_descriptor {
 
 #define	ATAPI_CAP_DESC_SIZE(n)						\
     (sizeof(struct atapi_capacity_list_header) +			\
-    (n) * sizeof(struct atapi_capacity_descriptor))
+    (n) * sizeof(struct scsi_direct_blk_desc))
 #define ATAPI_CAP_DESC_OFFSET_HEADER	0
 #define ATAPI_CAP_DESC_OFFSET_DESC(n)	ATAPI_CAP_DESC_SIZE(n)
 
 #define ATAPI_FLEX_GEOMETRY_PAGE	0x05
-
-struct atapi_sd_mode_data {
-	struct scsi_mode_header_big header;
-	union scsi_disk_pages pages;
-};

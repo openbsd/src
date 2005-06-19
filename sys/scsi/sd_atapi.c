@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_atapi.c,v 1.9 2005/06/03 15:50:10 krw Exp $	*/
+/*	$OpenBSD: sd_atapi.c,v 1.10 2005/06/19 20:41:28 krw Exp $	*/
 /*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 	int flags;
 {
 	struct atapi_read_format_capacities scsi_cmd;
-	struct atapi_capacity_descriptor *descp;
+	struct scsi_direct_blk_desc *descp;
 	struct scsi_mode_sense_buf sense_data; 
 	union scsi_disk_pages *sense_pages = NULL;
 	char capacity_data[ATAPI_CAP_DESC_SIZE(1)];
@@ -92,10 +92,10 @@ sd_atapibus_get_parms(sd, dp, flags)
 	if (error != 0)
 		return (SDGP_RESULT_OFFLINE);
 
-	descp = (struct atapi_capacity_descriptor *)
+	descp = (struct scsi_direct_blk_desc *)
 	    &capacity_data[ATAPI_CAP_DESC_OFFSET_DESC(0)];
 
-	switch (descp->byte5 & ATAPI_CAP_DESC_CODE_MASK) {
+	switch (descp->density & ATAPI_CAP_DESC_CODE_MASK) {
 	case ATAPI_CAP_DESC_CODE_UNFORMATTED:
 		return SDGP_RESULT_UNFORMATTED;
 
@@ -107,13 +107,13 @@ sd_atapibus_get_parms(sd, dp, flags)
 
 	default:
 #ifdef DIAGNOSTIC
-		printf("%s: strange capacity descriptor byte5 0x%x\n",
-		    sd->sc_dev.dv_xname, (u_int)descp->byte5);
+		printf("%s: strange capacity descriptor density 0x%x\n",
+		    sd->sc_dev.dv_xname, (u_int)descp->density);
 #endif
 		break;
 	}
 
-	dp->disksize = _4btol(descp->nblks);
+	dp->disksize = _4btol(descp->nblocks);
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
 
