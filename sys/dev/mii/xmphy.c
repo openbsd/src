@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.13 2005/06/19 17:08:14 brad Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.14 2005/06/19 19:30:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -232,11 +232,11 @@ xmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		sc->mii_ticks = 0;
-
 		PHY_RESET(sc);
 
 		if (xmphy_mii_phy_auto(sc, 0) == EJUSTRETURN)
 			return (0);
+
 		break;
 	}
 
