@@ -275,6 +275,8 @@ main(argc, argv, envp)
 	/* Validate the user but don't search for pseudo-commands. */
 	validated = sudoers_lookup(pwflag);
     }
+    if (safe_cmnd == NULL)
+	safe_cmnd = user_cmnd;
 
     /*
      * If we are using set_perms_posix() and the stay_setuid flag was not set,
@@ -389,14 +391,6 @@ main(argc, argv, envp)
 	    sudo_ldap_list_matches();
 #endif
 	    exit(0);
-	}
-
-	/* This *must* have been set if we got a match but... */
-	if (safe_cmnd == NULL) {
-	    log_error(MSG_ONLY,
-		"internal error, safe_cmnd never got set for %s; %s",
-		user_cmnd,
-		"please report this error at http://courtesan.com/sudo/bugs/");
 	}
 
 	/* Override user's umask if configured to do so. */

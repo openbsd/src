@@ -676,10 +676,6 @@ cmnd		:	ALL {
 			    }
 
 			    $$ = TRUE;
-
-			    if (safe_cmnd)
-				free(safe_cmnd);
-			    safe_cmnd = estrdup(user_cmnd);
 			}
 		|	ALIAS {
 			    aliasinfo *aip;
