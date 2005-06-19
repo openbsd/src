@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.106 2005/05/27 08:33:25 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.107 2005/06/19 18:17:02 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -115,7 +115,6 @@ struct carp_softc {
 
 	enum { INIT = 0, BACKUP, MASTER }	sc_state;
 
-	int sc_flags_backup;
 	int sc_suppress;
 	int sc_bow_out;
 
@@ -700,7 +699,6 @@ carp_clone_create(ifc, unit)
 		return (ENOMEM);
 	bzero(sc, sizeof(*sc));
 
-	sc->sc_flags_backup = 0;
 	sc->sc_suppress = 0;
 	sc->sc_advbase = CARP_DFLTINTV;
 	sc->sc_vhid = -1;	/* required setting */
@@ -833,8 +831,8 @@ carp_send_ad_all(void)
 
 		cif = (struct carp_if *)ifp->if_carp;
 		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
-			if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) &&
-			    vh->sc_state == MASTER)
+			if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
+			    (IFF_UP|IFF_RUNNING) && vh->sc_state == MASTER)
 				carp_send_ad(vh);
 		}
 	}
@@ -1316,7 +1314,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 	}
 
 	if (sc->sc_if.if_flags & IFF_UP && sc->sc_vhid > 0 &&
-	    (sc->sc_naddrs || sc->sc_naddrs6)) {
+	    (sc->sc_naddrs || sc->sc_naddrs6) && !sc->sc_suppress) {
 		sc->sc_if.if_flags |= IFF_RUNNING;
 	} else {
 		sc->sc_if.if_flags &= ~IFF_RUNNING;
@@ -2008,28 +2006,28 @@ carp_carpdev_state(void *v)
 	cif = (struct carp_if *)ifp->if_carp;
 
 	TAILQ_FOREACH(sc, &cif->vhif_vrs, sc_list) {
+		int suppressed = sc->sc_suppress;
+
 		if (sc->sc_carpdev->if_link_state == LINK_STATE_DOWN ||
 		    !(sc->sc_carpdev->if_flags & IFF_UP)) {
-			sc->sc_flags_backup = sc->sc_if.if_flags;
-			sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
+			sc->sc_if.if_flags &= ~IFF_RUNNING;
 			timeout_del(&sc->sc_ad_tmo);
 			timeout_del(&sc->sc_md_tmo);
 			timeout_del(&sc->sc_md6_tmo);
 			carp_set_state(sc, INIT);
+			sc->sc_suppress = 1;
 			carp_setrun(sc, 0);
-			if (!sc->sc_suppress) {
+			if (!suppressed) {
 				carp_suppress_preempt++;
 				if (carp_suppress_preempt == 1)
 					carp_send_ad_all();
 			}
-			sc->sc_suppress = 1;
 		} else {
-			sc->sc_if.if_flags |= sc->sc_flags_backup;
 			carp_set_state(sc, INIT);
-			carp_setrun(sc, 0);
-			if (sc->sc_suppress)
-				carp_suppress_preempt--;
 			sc->sc_suppress = 0;
+			carp_setrun(sc, 0);
+			if (suppressed)
+				carp_suppress_preempt--;
 		}
 	}
 }
