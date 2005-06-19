@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.30 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.31 2005/06/19 04:44:34 marcm Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -110,9 +110,6 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 	if (sa == NULL)
 		return EAI_FAIL;
 
-	if (sa->sa_len != salen)
-		return EAI_FAIL;
-	
 	family = sa->sa_family;
 	for (i = 0; afdl[i].a_af; i++)
 		if (afdl[i].a_af == family) {
