@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsstr.c,v 1.1 2005/04/13 16:35:58 espie Exp $	*/
+/*	$OpenBSD: wcsstr.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
 /*	$NetBSD: wcsstr.c,v 1.3 2003/03/05 20:18:17 tshiozak Exp $	*/
 
 /*-
@@ -30,19 +30,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wcsstr.c,v 1.1 2005/04/13 16:35:58 espie Exp $";
+static char *rcsid = "$OpenBSD: wcsstr.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
 wchar_t *
 #ifdef WCSWCS
-wcswcs(big, little)
+wcswcs(const wchar_t *big, const wchar_t *little)
 #else
-wcsstr(big, little)
+wcsstr(const wchar_t *big, const wchar_t *little)
 #endif
-	const wchar_t *big;
-	const wchar_t *little;
 {
 	const wchar_t *p;
 	const wchar_t *q;

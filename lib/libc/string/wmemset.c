@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemset.c,v 1.1 2005/04/13 16:35:58 espie Exp $	*/
+/*	$OpenBSD: wmemset.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
 /*	$NetBSD: wmemset.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -30,21 +30,18 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wmemset.c,v 1.1 2005/04/13 16:35:58 espie Exp $";
+static char *rcsid = "$OpenBSD: wmemset.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
 wchar_t	*
-wmemset(s, c, n)
-	wchar_t *s;
-	wchar_t c;
-	size_t n;
+wmemset(wchar_t *s, wchar_t c, size_t n)
 {
 	size_t i;
 	wchar_t *p;
 
-	p = (wchar_t *)s;
+	p = s;
 	for (i = 0; i < n; i++) {
 		*p = c;
 		p++;

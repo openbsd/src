@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemchr.c,v 1.1 2005/04/13 16:35:58 espie Exp $	*/
+/*	$OpenBSD: wmemchr.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
 /*	$NetBSD: wmemchr.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -30,16 +30,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wmemchr.c,v 1.1 2005/04/13 16:35:58 espie Exp $";
+static char *rcsid = "$OpenBSD: wmemchr.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
 wchar_t	*
-wmemchr(s, c, n)
-	const wchar_t *s;
-	wchar_t c;
-	size_t n;
+wmemchr(const wchar_t *s, wchar_t c, size_t n)
 {
 	size_t i;
 

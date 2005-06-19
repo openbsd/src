@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcstok.c,v 1.1 2005/04/13 16:35:58 espie Exp $	*/
+/*	$OpenBSD: wcstok.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
 /* $NetBSD: wcstok.c,v 1.3 2003/07/10 08:50:48 tshiozak Exp $ */
 
 /*-
@@ -43,16 +43,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wcstok.c,v 1.1 2005/04/13 16:35:58 espie Exp $";
+static char *rcsid = "$OpenBSD: wcstok.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
 wchar_t *
-wcstok(s, delim, last)
-	wchar_t * __restrict s;
-	const wchar_t * __restrict delim;
-	wchar_t ** __restrict last;
+wcstok(wchar_t * __restrict s, const wchar_t * __restrict delim, 
+    wchar_t ** __restrict last)
 {
 	const wchar_t *spanp;
 	wchar_t c, sc;

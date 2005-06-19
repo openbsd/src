@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemcmp.c,v 1.1 2005/04/13 16:35:58 espie Exp $	*/
+/*	$OpenBSD: wmemcmp.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
 /*	$NetBSD: wmemcmp.c,v 1.3 2003/04/06 18:33:23 tshiozak Exp $	*/
 
 /*-
@@ -30,17 +30,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wmemcmp.c,v 1.1 2005/04/13 16:35:58 espie Exp $";
+static char *rcsid = "$OpenBSD: wmemcmp.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 #include "locale/runetype.h"
 
 int
-wmemcmp(s1, s2, n)
-	const wchar_t *s1;
-	const wchar_t *s2;
-	size_t n;
+wmemcmp(const wchar_t *s1, const wchar_t *s2, size_t n)
 {
 	size_t i;
 

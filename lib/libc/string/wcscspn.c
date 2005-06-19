@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcscspn.c,v 1.1 2005/04/13 16:35:58 espie Exp $	*/
+/*	$OpenBSD: wcscspn.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
 /*	$NetBSD: wcscspn.c,v 1.2 2001/01/03 14:29:36 lukem Exp $	*/
 
 /*-
@@ -30,15 +30,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wcscspn.c,v 1.1 2005/04/13 16:35:58 espie Exp $";
+static char *rcsid = "$OpenBSD: wcscspn.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
 size_t
-wcscspn(s, set)
-	const wchar_t *s;
-	const wchar_t *set;
+wcscspn(const wchar_t *s, const wchar_t *set)
 {
 	const wchar_t *p;
 	const wchar_t *q;

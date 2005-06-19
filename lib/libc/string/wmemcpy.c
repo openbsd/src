@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemcpy.c,v 1.1 2005/04/13 16:35:58 espie Exp $	*/
+/*	$OpenBSD: wmemcpy.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
 /*	$NetBSD: wmemcpy.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -30,17 +30,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wmemcpy.c,v 1.1 2005/04/13 16:35:58 espie Exp $";
+static char *rcsid = "$OpenBSD: wmemcpy.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 #include <wchar.h>
 
 wchar_t *
-wmemcpy(d, s, n)
-	wchar_t *d;
-	const wchar_t *s;
-	size_t n;
+wmemcpy(wchar_t *d, const wchar_t *s, size_t n)
 {
 
 	return (wchar_t *)memcpy(d, s, n * sizeof(wchar_t));

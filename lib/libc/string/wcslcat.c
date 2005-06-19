@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcslcat.c,v 1.1 2005/04/13 16:35:58 espie Exp $	*/
+/*	$OpenBSD: wcslcat.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
 /*	$NetBSD: wcslcat.c,v 1.2 2001/01/03 14:33:02 lukem Exp $	*/
 /*	from OpenBSD: strlcat.c,v 1.3 2000/11/24 11:10:02 itojun Exp 	*/
 
@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wcslcat.c,v 1.1 2005/04/13 16:35:58 espie Exp $";
+static char *rcsid = "$OpenBSD: wcslcat.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,10 +44,7 @@ static char *rcsid = "$OpenBSD: wcslcat.c,v 1.1 2005/04/13 16:35:58 espie Exp $"
  * truncation occurred.
  */
 size_t
-wcslcat(dst, src, siz)
-	wchar_t *dst;
-	const wchar_t *src;
-	size_t siz;
+wcslcat(wchar_t *dst, const wchar_t *src, size_t siz)
 {
 	wchar_t *d = dst;
 	const wchar_t *s = src;
