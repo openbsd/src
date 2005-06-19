@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.37 2005/06/19 16:42:57 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.38 2005/06/19 17:11:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 			if (daemon(1, 0))
 				fatal("daemon");
 	} else
-		timeout = 15 * 1000;
+		timeout = SETTIME_TIMEOUT * 1000;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_chld) == -1)
 		fatal("socketpair");
@@ -168,8 +168,8 @@ main(int argc, char *argv[])
 			conf.settime = 0;
 			timeout = INFTIM;
 			log_init(conf.debug);
-			log_debug("no reply received, skipping initial time "
-			    "setting");
+			log_debug("no reply received in time, skipping initial "
+			    "time setting");
 			if (!conf.debug)
 				if (daemon(1, 0))
 					fatal("daemon");

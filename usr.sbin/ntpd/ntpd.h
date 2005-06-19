@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.56 2005/06/19 16:42:57 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.57 2005/06/19 17:11:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,6 +55,7 @@
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
 #define	OFFSET_ARRAY_SIZE	8
 #define	SETTIME_MIN_OFFSET	180	/* min offset for settime at start */
+#define	SETTIME_TIMEOUT		15	/* max seconds to wait with -s */
 #define	LOG_NEGLIGEE		128	/* negligible drift to not log (ms) */
 
 enum client_state {
