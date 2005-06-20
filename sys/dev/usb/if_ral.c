@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.35 2005/06/16 03:43:50 dlg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.36 2005/06/20 18:54:59 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1799,7 +1799,7 @@ ural_set_bssid(struct ural_softc *sc, uint8_t *bssid)
 	tmp = bssid[4] | bssid[5] << 8;
 	ural_write(sc, RAL_MAC_CSR7, tmp);
 
-	DPRINTF(("setting BSSID to %6D\n", bssid, ":"));
+	DPRINTF(("setting BSSID to %s\n", ether_sprintf(bssid)));
 }
 
 Static void
@@ -1816,7 +1816,7 @@ ural_set_macaddr(struct ural_softc *sc, uint8_t *addr)
 	tmp = addr[4] | addr[5] << 8;
 	ural_write(sc, RAL_MAC_CSR4, tmp);
 
-	DPRINTF(("setting MAC address to %6D\n", addr, ":"));
+	DPRINTF(("setting MAC address to %s\n", ether_sprintf(addr)));
 }
 
 Static void
