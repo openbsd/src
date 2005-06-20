@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2005/05/16 15:22:46 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.31 2005/06/20 07:14:06 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: util.c,v 1.30 2005/05/16 15:22:46 espie Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.31 2005/06/20 07:14:06 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -307,7 +307,6 @@ void
 makedirs(const char *filename, bool striplast)
 {
 	char	*tmpbuf;
-	mode_t mode, dir_mode;
 
 	if ((tmpbuf = strdup(filename)) == NULL)
 		fatal("out of memory\n");
@@ -318,9 +317,7 @@ makedirs(const char *filename, bool striplast)
 			return;	/* nothing to be done */
 		*s = '\0';
 	}
-	mode = 0777 & ~umask(0);
-	dir_mode = mode | S_IWUSR | S_IXUSR;
-	if (mkpath(tmpbuf, mode, dir_mode) != 0)
+	if (mkpath(tmpbuf) != 0)
 		pfatal("creation of %s failed", tmpbuf);
 	free(tmpbuf);
 }

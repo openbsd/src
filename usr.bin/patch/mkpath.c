@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpath.c,v 1.1 2005/05/16 15:22:46 espie Exp $ */
+/*	$OpenBSD: mkpath.c,v 1.2 2005/06/20 07:14:06 otto Exp $ */
 /*
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,11 +38,9 @@
 
  * mkpath -- create directories.
  *	path     - path
- *	mode     - file mode of terminal directory
- *	dir_mode - file mode of intermediate directories
  */
 int
-mkpath(char *path, mode_t mode, mode_t dir_mode)
+mkpath(char *path)
 {
 	struct stat sb;
 	char *slash;
@@ -58,8 +56,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		*slash = '\0';
 
 		if (stat(path, &sb)) {
-			if (errno != ENOENT ||
-			    (mkdir(path, done ? mode : dir_mode) &&
+			if (errno != ENOENT || (mkdir(path, 0777) &&
 			    errno != EEXIST)) {
 				warn("%s", path);
 				return (-1);
