@@ -76,7 +76,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $OpenBSD: mrinfo.c,v 1.20 2005/05/03 05:42:05 djm Exp $";
+    "@(#) $OpenBSD: mrinfo.c,v 1.21 2005/06/20 14:48:26 robert Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
@@ -106,7 +106,6 @@ vifi_t  numvifs;		/* to keep loader happy */
 char		*inet_name(u_int32_t addr);
 void		ask(u_int32_t dst);
 void		ask2(u_int32_t dst);
-int		get_number(int *var, int deflt, char ***pargv, int *pargc);
 u_int32_t	host_addr(char *name);
 void		usage(void);
 
@@ -276,47 +275,25 @@ accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 	}
 }
 
-int
-get_number(int *var, int deflt, char ***pargv, int *pargc)
-{
-	if ((*pargv)[0][2] == '\0') {
-		/* Get the value from the next argument */
-		if (*pargc > 1 && isdigit((*pargv)[1][0])) {
-			(*pargv)++, (*pargc)--;
-			*var = atoi((*pargv)[0]);
-			return 1;
-		} else if (deflt >= 0) {
-			*var = deflt;
-			return 1;
-		} else
-			return 0;
-	} else {		/* Get value from the rest of this argument */
-		if (isdigit((*pargv)[0][2])) {
-			*var = atoi((*pargv)[0] + 2);
-			return 1;
-		} else
-			return 0;
-	}
-}
-
 void
 usage()
 {
 	fprintf(stderr,
-	    "Usage: mrinfo [-n] [-t timeout] [-r retries] [router]\n");
+	    "Usage: mrinfo [-d [debug_level]] [-n] [-t timeout] [-r retries] [router]\n");
 	exit(1);
 }
 
 int
 main(int argc, char *argv[])
 {
-	int tries, trynew, curaddr, udp;
+	int tries, trynew, curaddr, udp, ch;
 	struct hostent *hp, bogus;
 	struct sockaddr_in addr;
 	socklen_t addrlen;
 	struct timeval et;
 	char *host;
 	uid_t uid;
+	const char *errstr;
 
 	if (geteuid() != 0) {
 		fprintf(stderr, "mrinfo: must be root\n");
@@ -331,30 +308,43 @@ main(int argc, char *argv[])
 
 	setlinebuf(stderr);
 
-	argv++;
-	argc--;
-	while (argc > 0 && argv[0][0] == '-') {
-		switch (argv[0][1]) {
+	while ((ch = getopt(argc, argv, "d::nr:t:")) != -1) {
+		switch (ch) {
 		case 'd':
-			if (!get_number(&debug, DEFAULT_DEBUG, &argv, &argc))
-				usage();
+			if (!optarg)
+				debug = DEFAULT_DEBUG;
+			else {
+				debug = strtonum(optarg, 0, 3, &errstr);
+				if (errstr) {
+					warnx("debug level %s", errstr);
+					debug = DEFAULT_DEBUG;
+				}
+			}
 			break;
 		case 'n':
 			++nflag;
 			break;
 		case 'r':
-			if (!get_number(&retries, -1, &argv, &argc))
+			retries = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("retries %s", errstr);
 				usage();
+			}
 			break;
 		case 't':
-			if (!get_number(&timeout, -1, &argv, &argc))
+			timeout = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("timeout %s", errstr);
 				usage();
+			}
 			break;
 		default:
 			usage();
 		}
-		argv++, argc--;
 	}
+	argc -= optind;
+	argv += optind;
+			
 	if (argc > 1)
 		usage();
 	if (argc == 1)
