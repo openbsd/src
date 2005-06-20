@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/* $OpenBSD: ap_strtol.c,v 1.7 2005/06/20 12:23:22 robert Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1

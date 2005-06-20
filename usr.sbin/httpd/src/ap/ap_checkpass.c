@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/* $OpenBSD: ap_checkpass.c,v 1.9 2005/06/20 12:23:22 robert Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1

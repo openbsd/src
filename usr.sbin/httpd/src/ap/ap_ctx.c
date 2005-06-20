@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/* $OpenBSD: ap_ctx.c,v 1.6 2005/06/20 12:23:22 robert Exp $ */
 
 /* ====================================================================
  * Copyright (c) 1998-2000 The Apache Group.  All rights reserved.

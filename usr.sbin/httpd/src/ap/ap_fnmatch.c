@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/* $OpenBSD: ap_fnmatch.c,v 1.5 2005/06/20 12:23:22 robert Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
