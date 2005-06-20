@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.56 2005/05/27 15:54:58 drahn Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.57 2005/06/20 23:09:28 martin Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -191,6 +191,7 @@ sis*	at pci?				# SiS 900/7016 ethernet
 epic*	at pci?				# SMC EPIC/100 ethernet
 skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
+ral*	at pci?				# Ralink RT2500
 
 #UNTESTED:  the following section of drivers is untested on alpha.
 en*	at pci?				# ENI PCI ATM (untested)

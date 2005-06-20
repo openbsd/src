@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.151 2005/06/17 23:50:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.152 2005/06/20 23:09:28 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -212,6 +212,7 @@ sis*	at pci?				# SiS 900/7016 ethernet
 epic*	at pci?				# SMC EPIC/100 ethernet
 skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
+ral*	at pci?				# Ralink RT2500
 
 #UNTESTED:  the following section of drivers is untested on alpha.
 en*	at pci?				# ENI PCI ATM (untested)
