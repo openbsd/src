@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.6 2005/06/13 18:38:59 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.7 2005/06/20 13:27:38 espie Exp $
 
 =head1 NAME
 
@@ -91,6 +91,10 @@ hold any resources and doesn't need any specific clean-up. However, client
 code is responsible for closing the underlying filehandle and 
 terminating any associated pipe process.
 
+A convenience method C<close> is provided that can be used to finish reading
+or writing to an archive, providing adequate padding and closing the 
+associated filehandle.
+
 An object C<$o> returned through C<next> or through C<prepare> holds all 
 the characteristics of the archive header:
 
@@ -160,8 +164,9 @@ conforms to the USTAR format usual behavior.
 In addition, client code may define C<$o-E<gt>{cwd}> in a way similar
 to C<tar(1)>'s C<-C> option to affect the creation of hard links.
 
-All creation commands happen relative to the C<$destdir> that was used
-for creating the C<$arc> C<OpenBSD::Ustar> object.
+All creation commands happen relative to the current destdir of 
+the C<$arc> C<OpenBSD::Ustar> object.  This is set at creation, and can
+later be changed through C<$arc-E<gt>destdir($value)>.
 
 During writing, hard link status is determined according to already written
 archive entries: a name that references a file which has already been written

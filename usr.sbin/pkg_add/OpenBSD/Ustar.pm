@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.26 2005/06/18 13:17:11 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.27 2005/06/20 13:27:37 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -267,6 +267,30 @@ sub pad
 	print $fh "\0"x1024;
 }
 
+sub close
+{
+	my $self = shift;
+	if (defined $self->{padout}) {
+	    $self->pad();
+	}
+	close($self->{fh});
+}
+
+sub destdir
+{
+	my $self = shift;
+	if (@_ > 0) {
+		$self->{destdir} = shift;
+	} else {
+		return $self->{destdir};
+	}
+}
+
+sub fh
+{
+	return $_[0]->{fh};
+}
+
 package OpenBSD::Ustar::Object;
 sub set_modes
 {
@@ -289,6 +313,7 @@ sub write
 	my $arc = $self->{archive};
 	my $out = $arc->{fh};
 
+	$arc->{padout} = 1;
 	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
 	print $out $header;
 	$self->write_contents($arc);
@@ -318,6 +343,7 @@ sub copy
 	my ($self, $wrarc) = @_;
 	my $out = $wrarc->{fh};
 	$self->resolve_links($wrarc);
+	$wrarc->{padout} = 1;
 	my $header = OpenBSD::Ustar::mkheader($self, $self->type());
 	print $out $header;
 
