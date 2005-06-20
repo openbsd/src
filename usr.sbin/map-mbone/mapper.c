@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.16 2004/08/01 18:32:19 deraadt Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.17 2005/06/20 14:42:57 robert Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -98,8 +98,6 @@ char *			graph_name(u_int32_t addr, char *buf, size_t len);
 void			graph_edges(Node *node);
 void			elide_aliases(Node *node);
 void			graph_map(void);
-int			get_number(int *var, int deflt, char ***pargv,
-			    int *pargc);
 u_int32_t		host_addr(char *name);
 
 
@@ -766,29 +764,6 @@ void graph_map(void)
 }
 
 
-int get_number(int *var, int deflt, char ***pargv, int *pargc)
-{
-    if ((*pargv)[0][2] == '\0') { /* Get the value from the next argument */
-	if (*pargc > 1  &&  isdigit((*pargv)[1][0])) {
-	    (*pargv)++, (*pargc)--;
-	    *var = atoi((*pargv)[0]);
-	    return 1;
-	} else if (deflt >= 0) {
-	    *var = deflt;
-	    return 1;
-	} else
-	    return 0;
-    } else {			/* Get value from the rest of this argument */
-	if (isdigit((*pargv)[0][2])) {
-	    *var = atoi((*pargv)[0] + 2);
-	    return 1;
-	} else {
-	    return 0;
-	}
-    }
-}
-
-
 u_int32_t host_addr(char *name)
 {
     struct hostent *e = gethostbyname(name);
@@ -809,6 +784,8 @@ u_int32_t host_addr(char *name)
 int main(int argc, char *argv[])
 {
     int flood = FALSE, graph = FALSE;
+    int ch;
+    const char *errstr;
     
     if (geteuid() != 0) {
       fprintf(stderr, "map-mbone: must be root\n");
@@ -820,36 +797,49 @@ int main(int argc, char *argv[])
 
     setlinebuf(stderr);
 
-    argv++, argc--;
-    while (argc > 0 && argv[0][0] == '-') {
-	switch (argv[0][1]) {
-	  case 'd':
-	    if (!get_number(&debug, DEFAULT_DEBUG, &argv, &argc))
-		goto usage;
-	    break;
-	  case 'f':
-	    flood = TRUE;
-	    break;
-	  case 'g':
-	    graph = TRUE;
-	    break;
-	  case 'n':
-	    show_names = FALSE;
-	    break;
-	  case 'r':
-	    if (!get_number(&retries, -1, &argv, &argc))
-		goto usage;
-	    break;
-	  case 't':
-	    if (!get_number(&timeout, -1, &argv, &argc))
-		goto usage;
-	    break;
-	  default:
-	    goto usage;
-	}
-	argv++, argc--;
+    while ((ch = getopt(argc, argv, "d::fgnr:t:")) != -1) {
+	    switch (ch) {
+	    case 'd':
+		    if (!optarg)
+			    debug = DEFAULT_DEBUG;
+		    else {
+			    debug = strtonum(optarg, 0, 3, &errstr);
+			    if (errstr) {
+				    warnx("debug level %s", errstr);
+				    debug = DEFAULT_DEBUG;
+			    }
+		    }
+		    break;
+	    case 'f':
+		    flood = TRUE;
+		    break;
+	    case 'g':
+		    graph = TRUE;
+		    break;
+	    case 'n':
+		    show_names = FALSE;
+		    break;
+	    case 'r':
+		    retries = strtonum(optarg, 0, INT_MAX, &errstr);
+		    if (errstr) {
+			    warnx("retries %s", errstr);
+			    goto usage;
+		    }
+		    break;
+	    case 't':
+		    timeout = strtonum(optarg, 0, INT_MAX, &errstr);
+		    if (errstr) {
+			    warnx("timeout %s", errstr);
+			    goto usage;
+		    }
+		    break;
+	    default:
+		    goto usage;
+	    }
     }
-
+    argc -= optind;
+    argv += optind;
+    
     if (argc > 1) {
       usage:	
 	fprintf(stderr,
