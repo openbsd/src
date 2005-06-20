@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.71 2005/06/08 17:03:00 henning Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.72 2005/06/20 22:44:39 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -1608,7 +1608,7 @@ tulip_null_media_poll(
 #endif
 }
 
-__inline__ static void
+static void
 tulip_21140_mediainit(
     tulip_softc_t * const sc,
     tulip_media_info_t * const mip,
@@ -5006,9 +5006,6 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 	(sc)->tulip_pci_devno = pa->pa_device; \
     } while (0)
 
-#if defined(__alpha__)
-    tulip_media_t media = TULIP_MEDIA_UNKNOWN;
-#endif
     int retval, idx;
     u_int32_t revinfo, cfdainfo, id;
     unsigned csroffset = TULIP_PCI_CSROFFSET;
@@ -5081,26 +5078,6 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 
     if (sc->tulip_features & TULIP_HAVE_STOREFWD)
 	    sc->tulip_cmdmode |= TULIP_CMD_STOREFWD;
-
-
-#if defined(__alpha__)
-    /*
-     * The Alpha SRM console encodes a console set media in the driver
-     * part of the CFDA register.  Note that the Multia presents a
-     * problem in that its BNC mode is really EXTSIA.  So in that case
-     * force a probe.
-     */
-    switch ((cfdainfo >> 8) & 0xff) {
-    case 1: media = chipid > TULIP_DE425 ?
-        TULIP_MEDIA_AUI : TULIP_MEDIA_AUIBNC; break;
-    case 2: media = chipid > TULIP_DE425 ?
-        TULIP_MEDIA_BNC : TULIP_MEDIA_UNKNOWN; break;
-    case 3: media = TULIP_MEDIA_10BASET; break;
-    case 4: media = TULIP_MEDIA_10BASET_FD; break;
-    case 5: media = TULIP_MEDIA_100BASETX; break;
-    case 6: media = TULIP_MEDIA_100BASETX_FD; break;
-    }
-#endif
 
     bcopy(self->dv_xname, sc->tulip_if.if_xname, IFNAMSIZ);
     sc->tulip_if.if_softc = sc;
@@ -5201,14 +5178,7 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 #endif
 
 	s = TULIP_RAISESPL();
-#if defined(__alpha__)
-	sc->tulip_media = media;
-#endif
 	tulip_attach(sc);
-#if defined(__alpha__)
-	if (sc->tulip_media != TULIP_MEDIA_UNKNOWN)
-		tulip_linkup(sc, media);
-#endif
 	TULIP_RESTORESPL(s);
     }
 }
