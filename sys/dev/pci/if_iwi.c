@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.44 2005/05/22 16:30:30 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.45 2005/06/20 18:25:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1078,7 +1078,6 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_frame *wh;
 	struct iwi_tx_buf *buf;
 	struct iwi_tx_desc *desc;
 	struct mbuf *mnew;
@@ -1105,9 +1104,8 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	buf = &sc->tx_buf[sc->tx_cur];
 	desc = &sc->tx_desc[sc->tx_cur];
 
-	wh = mtod(m0, struct ieee80211_frame *);
-
-	/* trim IEEE802.11 header */
+	/* save and trim IEEE802.11 header */
+	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (caddr_t)&desc->wh);
 	m_adj(m0, sizeof (struct ieee80211_frame));
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m0, BUS_DMA_NOWAIT);
@@ -1158,11 +1156,11 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->len = htole16(m0->m_pkthdr.len);
 	desc->flags = 0;
 
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1))
+	if (!IEEE80211_IS_MULTICAST(desc->wh.i_addr1))
 		desc->flags |= IWI_DATA_FLAG_NEED_ACK;
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
-		wh->i_fc[1] |= IEEE80211_FC1_WEP;
+		desc->wh.i_fc[1] |= IEEE80211_FC1_WEP;
 		desc->wep_txkey = ic->ic_wep_txkey;
 	} else
 		desc->flags |= IWI_DATA_FLAG_NO_WEP;
@@ -1170,7 +1168,6 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		desc->flags |= IWI_DATA_FLAG_SHPREAMBLE;
 
-	bcopy(wh, &desc->wh, sizeof (struct ieee80211_frame));
 	desc->nseg = htole32(buf->map->dm_nsegs);
 	for (i = 0; i < buf->map->dm_nsegs; i++) {
 		desc->seg_addr[i] = htole32(buf->map->dm_segs[i].ds_addr);

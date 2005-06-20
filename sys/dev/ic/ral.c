@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.54 2005/06/08 23:49:56 naddy Exp $  */
+/*	$OpenBSD: ral.c,v 1.55 2005/06/20 18:25:10 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1803,6 +1803,9 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
 		if (m0 == NULL)
 			return ENOBUFS;
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
 	/*
@@ -1910,6 +1913,9 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			m_freem(m0);
 			return error;
 		}
+
+		/* packet header have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
 #if NBPFILTER > 0
