@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.8 2003/10/15 02:43:09 drahn Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.9 2005/06/20 20:02:04 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -35,18 +35,29 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
+#include <sys/user.h>
+
+#include <machine/fpu.h>
+#include <machine/pcb.h>
+#include <machine/psl.h>
 #include <machine/reg.h>
 
 int
 process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = trapframe(p);
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	bcopy(&(tf->fixreg[0]), &(regs->gpr[0]), sizeof(regs->gpr));
-	bzero(&(regs->fpr[0]), sizeof(regs->fpr));
-	/* 
-	 * need to do floating point here
-	 */
+	bcopy(tf->fixreg, regs->gpr, sizeof(regs->gpr));
+
+	if (!(pcb->pcb_flags & PCB_FPU)) {
+		bzero(regs->fpr, sizeof(regs->fpr));
+	} else {
+		if (p == fpuproc)
+			save_fpu(fpuproc);
+		bcopy(pcb->pcb_fpu.fpr, regs->fpr, sizeof(regs->fpr));
+	}
+
 	regs->pc  = tf->srr0;
 	regs->ps  = tf->srr1; /* is this the correct value for this ? */
 	regs->cnd = tf->cr;
@@ -88,11 +99,21 @@ int
 process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = trapframe(p);
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	bcopy(&(regs->gpr[0]), &(tf->fixreg[0]), sizeof(regs->gpr));
-	/* 
-	 * need to do floating point here
-	 */
+	bcopy(regs->gpr, tf->fixreg, sizeof(regs->gpr));
+
+	if (p == fpuproc) {	/* release the fpu */
+		save_fpu(fpuproc);
+		fpuproc = NULL;
+	}
+
+	bcopy(regs->fpr, pcb->pcb_fpu.fpr, sizeof(regs->fpr));
+	if (!(pcb->pcb_flags & PCB_FPU)) {
+		pcb->pcb_fpu.fpcsr = 0;
+		pcb->pcb_flags |= PCB_FPU;
+	}
+
 	tf->srr0 = regs->pc;
 	tf->srr1 = regs->ps;  /* is this the correct value for this ? */
 	tf->cr   = regs->cnd;
