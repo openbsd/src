@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.13 2005/01/27 17:04:55 millert Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.14 2005/06/20 22:42:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -39,6 +39,8 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#include <net80211/ieee80211_var.h>
 
 #include <machine/bus.h>
 
@@ -143,7 +145,8 @@ an_pcmcia_detach(dev, flags)
 {
 	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)dev;
 	struct an_softc *sc = (struct an_softc *)dev;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ieee80211com	*ic = &sc->sc_ic;
+	struct ifnet		*ifp = &ic->ic_if;
 
 	if (sc->an_gone) {
 		printf ("%s: already detached\n", sc->sc_dev.dv_xname);
@@ -171,7 +174,8 @@ an_pcmcia_activate(dev, act)
 {
 	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)dev;
 	struct an_softc *sc = &psc->sc_an;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ieee80211com	*ic = &sc->sc_ic;
+	struct ifnet		*ifp = &ic->ic_if;
 	int s;
 
 	s = splnet();
