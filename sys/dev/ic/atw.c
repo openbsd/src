@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.31 2005/05/27 18:57:19 robert Exp $	*/
+/*	$OpenBSD: atw.c,v 1.32 2005/06/21 05:36:43 kevlo Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -197,10 +197,6 @@ int	atw_ioctl(struct ifnet *, u_long, caddr_t);
 int	atw_init(struct ifnet *);
 void	atw_stop(struct ifnet *, int);
 
-/* Device attachment */
-void	atw_attach(struct atw_softc *);
-int	atw_detach(struct atw_softc *);
-
 /* Rx/Tx process */
 void	atw_rxdrain(struct atw_softc *);
 void	atw_txdrain(struct atw_softc *);
@@ -208,10 +204,7 @@ int	atw_add_rxbuf(struct atw_softc *, int);
 void	atw_idle(struct atw_softc *, u_int32_t);
 
 /* Device (de)activation and power state */
-int	atw_enable(struct atw_softc *);
 void	atw_disable(struct atw_softc *);
-void	atw_power(int, void *);
-void	atw_shutdown(void *);
 void	atw_reset(struct atw_softc *);
 
 /* Interrupt handlers */
