@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.59 2005/06/17 23:51:55 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.60 2005/06/21 03:25:05 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.56 2005/06/17 23:51:36 brad Exp 
+ *	OpenBSD: miidevs,v 1.57 2005/06/21 03:24:50 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -184,11 +184,13 @@
 #define	MII_MODEL_DAVICOM_DM9601	0x000c
 #define	MII_STR_DAVICOM_DM9601	"DM9601 10/100 PHY"
 
-/* Enable Semiconductor PHYs */
-#define	MII_MODEL_ENABLESEMI_88E1000	0x0005
-#define	MII_STR_ENABLESEMI_88E1000	"Enable 88E1000"
+/* Enable Semiconductor PHYs (Agere) */
+#define	MII_MODEL_ENABLESEMI_LU3X31FT	0x0001
+#define	MII_STR_ENABLESEMI_LU3X31FT	"Enable LU3X31FT"
 #define	MII_MODEL_ENABLESEMI_88E1000S	0x0004
 #define	MII_STR_ENABLESEMI_88E1000S	"Enable 88E1000S"
+#define	MII_MODEL_ENABLESEMI_88E1000	0x0005
+#define	MII_STR_ENABLESEMI_88E1000	"Enable 88E1000"
 
 /* Marvell Semiconductor PHYs */
 #define	MII_MODEL_MARVELL_E1000	0x0000
@@ -247,6 +249,10 @@
 /* Lucent Technologies PHYs */
 #define	MII_MODEL_LUCENT_LU6612	0x000c
 #define	MII_STR_LUCENT_LU6612	"LU6612 10/100 PHY"
+#define	MII_MODEL_LUCENT_LU3X51FT	0x0033
+#define	MII_STR_LUCENT_LU3X51FT	"LU3X51FT 10/100 PHY"
+#define	MII_MODEL_LUCENT_LU3X54FT	0x0036
+#define	MII_STR_LUCENT_LU3X54FT	"LU3X54FT 10/100 PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_MYSON_MTD972	0x0000
