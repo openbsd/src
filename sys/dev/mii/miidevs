@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.56 2005/06/17 23:51:36 brad Exp $
+$OpenBSD: miidevs,v 1.57 2005/06/21 03:24:50 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -144,9 +144,10 @@ model xxDAVICOM DM9101		0x0000 DM9101 10/100 PHY
 model DAVICOM DM9102		0x0004 DM9102 10/100 PHY
 model DAVICOM DM9601		0x000c DM9601 10/100 PHY
 
-/* Enable Semiconductor PHYs */
-model ENABLESEMI 88E1000	0x0005 Enable 88E1000
+/* Enable Semiconductor PHYs (Agere) */
+model ENABLESEMI LU3X31FT	0x0001 Enable LU3X31FT
 model ENABLESEMI 88E1000S	0x0004 Enable 88E1000S
+model ENABLESEMI 88E1000	0x0005 Enable 88E1000
 
 /* Marvell Semiconductor PHYs */
 model MARVELL E1000		0x0000 Marvell 88E1000* Gigabit PHY
@@ -183,6 +184,8 @@ model xxLEVEL1a LXT971		0x000e LXT971 10/100 PHY
 
 /* Lucent Technologies PHYs */
 model LUCENT LU6612		0x000c LU6612 10/100 PHY
+model LUCENT LU3X51FT		0x0033 LU3X51FT 10/100 PHY
+model LUCENT LU3X54FT		0x0036 LU3X54FT 10/100 PHY
 
 /* Myson Technology PHYs */
 model MYSON MTD972		0x0000 MTD972 10/100 PHY
