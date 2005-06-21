@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2004/08/06 20:29:47 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2005/06/21 17:43:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -120,6 +120,14 @@ cdev_decl(com);
 cdev_decl(pci);
 #endif
 
+#include "usb.h"
+#include "uhid.h"
+#include "ugen.h"
+#include "ulpt.h"
+#include "urio.h"
+#include "ucom.h"
+#include "uscanner.h"
+
 struct cdevsw   cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/*  0: virtual console */
@@ -171,6 +179,13 @@ struct cdevsw   cdevsw[] =
 	cdev_ses_init(NSES,ses),	/* 37: SCSI SES/SAF-TE */
 	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
 	cdev_disk_init(NWD,wd),		/* 39: ST506 disk */
+	cdev_usb_init(NUSB,usb),	/* 40: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 41: USB generic HID */
+	cdev_usbdev_init(NUGEN,ugen),	/* 42: USB generic driver */
+	cdev_ulpt_init(NULPT,ulpt),	/* 43: USB printers */
+	cdev_urio_init(NURIO,urio),	/* 44: USB Diamond Rio 500 */
+	cdev_tty_init(NUCOM,ucom),	/* 45: USB tty */
+	cdev_usbdev_init(NUSCANNER,uscanner), /* 46: USB scanners */
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
@@ -236,6 +251,13 @@ int chrtoblktbl[] = {
 	/* 37 */	NODEV,
 	/* 38 */	NODEV,
 	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV
 };
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 

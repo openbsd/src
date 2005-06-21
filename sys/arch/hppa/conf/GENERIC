@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.75 2005/06/17 23:50:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.76 2005/06/21 17:43:34 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -80,69 +80,72 @@ option		PCMCIADEBUG,PCMCIAVERBOSE
 pcmcia*		at cardslot?
 
 # PCI USB Controllers
-#ehci*	at pci?			# Enhanced Host Controller
-#ehci*	at cardbus?
-#ohci*	at pci?			# Open Host Controller
-#ohci*	at cardbus?
-#uhci*	at pci?			# Universal Host Controller (Intel)
+ehci*	at pci?			# Enhanced Host Controller
+ehci*	at cardbus?
+ohci*	at pci?			# Open Host Controller
+ohci*	at cardbus?
+uhci*	at pci?			# Universal Host Controller (Intel)
 
 # USB bus support
-#usb*	at ehci?
-#usb*	at uhci?
-#usb*	at ohci?
+usb*	at ehci?
+usb*	at uhci?
+usb*	at ohci?
 
 # USB devices
-#uhub*	at usb?			# USB Hubs
-#uhub*	at uhub?		# USB Hubs
-#umodem*	at uhub?	# USB Modems/Serial
-#ucom*	at umodem?
-#uvisor*	at uhub?	# Handspring Visor
-#ucom*	at uvisor?
-#uvscom*	at uhub?	# SUNTAC Slipper U VS-10U serial
-#ucom*	at uvscom?
-#ubsa*	at uhub?		# Belkin serial adapter
-#ucom*	at ubsa?
-#uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
-#ucom*	at uftdi?
-#uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
-#ucom*	at uplcom?
-#umct*	at uhub?		# MCT USB-RS232 serial adapter
-#ucom*	at umct?
-#uipaq*	at uhub?		# iPAQ serial adapter
-#ucom*	at uipaq?
-#uaudio* at uhub?		# USB Audio
-#audio*	at uaudio?
-#umidi*	at uhub?		# USB MIDI
-#midi*	at umidi?
-#ulpt*	at uhub?		# USB Printers
-#umass*	at uhub?		# USB Mass Storage devices
-#scsibus* at umass?
-#atapiscsi* at umass?
-#uhidev*	at uhub?	# Human Interface Devices
-#ums*	at uhidev?		# USB mouse
-#wsmouse* at ums? mux 0
-#ukbd*	at uhidev?		# USB keyboard
-#wskbd*	at ukbd? mux 1
-#uhid*	at uhidev?		# USB generic HID support
-#aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
-#atu*	at uhub?		# Atmel AT76c50x based 802.11b
-#axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
-#cue*	at uhub?		# CATC USB-EL1201A based Ethernet
-#kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
-#cdce*	at uhub?		# CDC Ethernet
-#udav*	at uhub?		# Davicom DM9601 based Ethernet
-#upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
-#url*	at uhub?		# Realtek RTL8150L based adapters
-#wi*	at uhub?		# WaveLAN IEEE 802.11DS
-#urio*	at uhub?		# Diamond Multimedia Rio 500
-#uscanner* at uhub?		# USB Scanners
-#usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
-#scsibus* at usscanner?
-#uyap*	at uhub?		# Y@P firmware loader
-#udsbr*	at uhub?		# D-Link DSB-R100 radio
-#radio*	at udsbr?		# USB radio
+uhub*	at usb?			# USB Hubs
+uhub*	at uhub?		# USB Hubs
+uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi?
+umass*	at uhub?		# USB Mass Storage devices
+scsibus* at umass?
+atapiscsi* at umass?
+uhidev*	at uhub?		# Human Interface Devices
+ums*	at uhidev?		# USB mouse
+wsmouse* at ums? mux 0
+ukbd*	at uhidev?		# USB keyboard
+wskbd*	at ukbd? mux 1
+uhid*	at uhidev?		# USB generic HID support
+
+# untested USB devices
+umodem*	at uhub?		# USB Modems/Serial
+ucom*	at umodem?
+uvisor*	at uhub?		# Handspring Visor
+ucom*	at uvisor?
+uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
+ucom*	at uvscom?
+ubsa*	at uhub?		# Belkin serial adapter
+ucom*	at ubsa?
+uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom?
+umct*	at uhub?		# MCT USB-RS232 serial adapter
+ucom*	at umct?
+uipaq*	at uhub?		# iPAQ serial adapter
+ucom*	at uipaq?
+uaudio* at uhub?		# USB Audio
+audio*	at uaudio?
+umidi*	at uhub?		# USB MIDI
+midi*	at umidi?
+ulpt*	at uhub?		# USB Printers
+aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+atu*	at uhub?		# Atmel AT76c50x based 802.11b
+axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
+cue*	at uhub?		# CATC USB-EL1201A based Ethernet
+kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+cdce*	at uhub?		# CDC Ethernet
+udav*	at uhub?		# Davicom DM9601 based Ethernet
+upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+url*	at uhub?		# Realtek RTL8150L based adapters
+wi*	at uhub?		# WaveLAN IEEE 802.11DS
+urio*	at uhub?		# Diamond Multimedia Rio 500
+uscanner* at uhub?		# USB Scanners
+usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
+scsibus* at usscanner?
+uyap*	at uhub?		# Y@P firmware loader
+udsbr*	at uhub?		# D-Link DSB-R100 radio
+radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
-#ugen*	at uhub?		# USB Generic driver
+ugen*	at uhub?		# USB Generic driver
+ural*	at uhub?		# Ralink RT2500
 
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*
