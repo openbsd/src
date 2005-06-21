@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.27 2005/06/20 13:27:37 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.28 2005/06/21 17:52:49 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -229,13 +229,15 @@ sub prepare
 	my ($self, $filename) = @_;
 
 	my $destdir = $self->{destdir};
+	my $realname = "$destdir/$filename";
 
 	my ($dev, $ino, $mode, $uid, $gid, $size, $mtime) = 
-	    (lstat "$destdir/$filename")[0,1,2,4,5,7,9];
+	    (lstat $realname)[0,1,2,4,5,7,9];
 
 	my $entry = {
 		key => "$dev/$ino", 
 		name => $filename,
+		realname => $realname,
 		mode => $mode,
 		uid => $uid,
 		gid => $gid,
@@ -250,8 +252,8 @@ sub prepare
 	if (defined $self->{key}->{$k}) {
 		$entry->{linkname} = $self->{key}->{$k};
 		bless $entry, "OpenBSD::Ustar::HardLink";
-	} elsif (-l "$destdir/$filename") {
-		$entry->{linkname} = readlink("$destdir/$filename");
+	} elsif (-l $realname) {
+		$entry->{linkname} = readlink($realname);
 		bless $entry, "OpenBSD::Ustar::SoftLink";
 	} elsif (-d _) {
 		bless $entry, "OpenBSD::Ustar::Dir";
@@ -516,7 +518,7 @@ sub create
 sub write_contents
 {
 	my ($self, $arc) = @_;
-	my $filename = $self->{destdir}."/".$self->{name};
+	my $filename = $self->{realname};
 	my $size = $self->{size};
 	my $out = $arc->{fh};
 	open my $fh, "<", $filename or die "Can't read file $filename: $!";
