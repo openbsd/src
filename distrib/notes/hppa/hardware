@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.22 2005/03/19 18:54:00 miod Exp $
+dnl	$OpenBSD: hardware,v 1.23 2005/06/21 18:10:57 martin Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -175,6 +175,13 @@ Supported devices {:-include-:}:
 		Telecom Device TCD-HPC100
 		Wisecom T210CT, iPort
 		Xircom CFE-10
+- Universal Serial Bus (USB) Devices
+		USB Generic Human Interface Devices (catch-all)
+		USB Hubs
+		USB Keyboards
+		USB Mass Storage devices, i.e., USB floppy drives and
+		  USB memory stick controllers
+		USB Mice
 - Miscellaneous devices:
 	battery-backed real time clock
 	``soft'' power button as available on some models (power)
