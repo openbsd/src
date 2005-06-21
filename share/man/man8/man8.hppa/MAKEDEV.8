@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.18 2005/06/02 20:13:58 tholo Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.19 2005/06/21 18:02:30 martin Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.22 2004/09/15 01:02:31 mickey Exp 
+.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.24 2005/06/21 17:43:34 martin Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.18 2005/06/02 20:09:38 tholo Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd June  2, 2005
+.Dd June 21, 2005
 .Dt MAKEDEV 8 hppa
 .Os
 .Sh NAME
@@ -159,6 +159,34 @@ wscons mice, see
 .It Ar lpt*
 IEEE 1284 centronics printer, see
 .Xr lpt 4 .
+.El
+.Pp
+.Sy USB devices
+.Bl -tag -width tenletters -compact
+.It Ar uall
+All USB devices, see
+.Xr usb 4 .
+.It Ar usb*
+Bus control devices used by usbd for attach/detach, see
+.Xr usb 4 .
+.It Ar uhid*
+Generic HID devices, see
+.Xr uhid 4 .
+.It Ar ugen*
+Generic USB devices, see
+.Xr ugen 4 .
+.It Ar ulpt*
+Printer devices, see
+.Xr ulpt 4 .
+.It Ar urio*
+Diamond Multimedia Rio 500, see
+.Xr urio 4 .
+.It Ar ttyU*
+USB serial ports, see
+.Xr ucom 4 .
+.It Ar uscanner*
+Scanners, see
+.Xr uscanner 4 .
 .El
 .Pp
 .Sy Special purpose devices
