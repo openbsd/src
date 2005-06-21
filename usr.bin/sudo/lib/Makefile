@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2004/09/28 15:10:51 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2005/06/21 02:11:43 brad Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -6,6 +6,8 @@ LIB=	sudo
 SRCS=	alloc.c defaults.c fileops.c find_path.c gettime.c goodpath.c \
 	lex.yy.c sudo.tab.c
 CPPFLAGS+=	-I.
+
+CLEANFILES=	lex.yy.c sudo.tab.c sudo.tab.h
 
 DEBUGLIBS= no
 NOPROFILE= yes
