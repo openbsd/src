@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.13 2004/12/10 03:54:18 jaredy Exp $
+.\" $OpenBSD: ntpd.8,v 1.14 2005/06/21 19:55:18 deraadt Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -98,18 +98,6 @@ eliminating the need to run
 .Xr rdate 8
 before starting
 .Nm .
-Currently, the
-.Fl s
-option is added unconditionally in
-.Xr rc 8 .
-Make sure to specify the
-.Fl S
-option
-(add/edit
-.Va ntpd_flags
-in
-.Xr rc.conf.local 8 )
-if this behaviour is not desired.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ntpd.confXXX" -compact
