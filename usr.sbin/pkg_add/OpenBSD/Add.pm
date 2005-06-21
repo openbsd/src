@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.32 2005/06/12 11:14:28 espie Exp $
+# $OpenBSD: Add.pm,v 1.33 2005/06/21 19:12:31 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -526,34 +526,5 @@ sub install
 	return if $state->{do_faked};
 	$self->mark_ldconfig_directory($state->{destdir});
 }
-
-package OpenBSD::PackingElement::Arch;
-
-sub check
-{
-	my ($self, $forced_arch) = @_;
-
-	my ($machine_arch, $arch);
-	for my $ok (@{$self->{arches}}) {
-		return 1 if $ok eq '*';
-		if (defined $forced_arch) {
-			if ($ok eq $forced_arch) {
-				return 1;
-			} else {
-				next;
-			}
-		}
-		if (!defined $machine_arch) {
-			chomp($machine_arch = `/usr/bin/arch -s`);
-		}
-		return 1 if $ok eq $machine_arch;
-		if (!defined $arch) {
-			chomp($arch = `/usr/bin/uname -m`);
-		}
-		return 1 if $ok eq $arch;
-	}
-	return undef;
-}
-
 
 1;
