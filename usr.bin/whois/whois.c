@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.31 2005/06/22 10:29:57 henning Exp $	*/
+/*      $NetBSD: whois.c,v 1.27 2005/06/22 12:17:56 christos Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.31 2005/06/22 10:29:57 henning Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.32 2005/06/22 16:50:49 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,10 +164,10 @@ static int
 whois(const char *query, const char *server, const char *port, int flags)
 {
 	FILE *sfi, *sfo;
-	char *buf, *p, *nhost, *nbuf = NULL, *nquery;
+	char *buf, *p, *nhost, *nbuf = NULL;
 	size_t len;
 	int i, s, error;
-	const char *reason = NULL;
+	const char *reason = NULL, *fmt;
 	struct addrinfo hints, *res, *ai;
 
 	memset(&hints, 0, sizeof(hints));
@@ -206,20 +206,17 @@ whois(const char *query, const char *server, const char *port, int flags)
 		return (1);
 	}
 
-	if (!strcmp(server, "whois.denic.de") ||
-	    !strcmp(server, "de.whois-servers.net")) {
-		if (asprintf(&nquery, "-T dn %s", query) == -1)
-			err(1, NULL);
-	} else {
-		if ((nquery = strdup(query)) == NULL)
-			err(1, NULL);
-	}
+	if (strcmp(server, "whois.denic.de") == 0 ||
+	    strcmp(server, "de.whois-servers.net") == 0)
+		fmt = "-T dn %s\r\n";
+	else
+		fmt = "%s\r\n";
 
 	sfi = fdopen(s, "r");
 	sfo = fdopen(s, "w");
 	if (sfi == NULL || sfo == NULL)
 		err(1, "fdopen");
-	(void)fprintf(sfo, "%s\r\n", nquery);
+	(void)fprintf(sfo, fmt, query);
 	(void)fflush(sfo);
 	nhost = NULL;
 	while ((buf = fgetln(sfi, &len)) != NULL) {
@@ -263,8 +260,8 @@ whois(const char *query, const char *server, const char *port, int flags)
 			}
 		}
 	}
-	free(nbuf);
-	free(nquery);
+	if (nbuf != NULL)
+		free(nbuf);
 
 	if (nhost != NULL) {
 		error = whois(query, nhost, port, 0);
