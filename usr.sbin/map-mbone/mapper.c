@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.17 2005/06/20 14:42:57 robert Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.18 2005/06/22 14:50:21 robert Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -99,7 +99,7 @@ void			graph_edges(Node *node);
 void			elide_aliases(Node *node);
 void			graph_map(void);
 u_int32_t		host_addr(char *name);
-
+void			usage(void);
 
 Node *find_node(u_int32_t addr, Node **ptr)
 {
@@ -780,6 +780,20 @@ u_int32_t host_addr(char *name)
     return addr;
 }
 
+void usage(void)
+{
+    extern char *__progname;
+
+    fprintf(stderr,
+	    "Usage: %s [-f] [-g] [-n] [-t timeout] [-r retries] "
+	    "[-d [debug-level]] [router]\n\n", __progname);
+    fprintf(stderr, "\t-f  Flood the routing graph with queries\n");
+    fprintf(stderr, "\t    (True by default unless `router' is given)\n");
+    fprintf(stderr, "\t-g  Generate output in GraphEd format\n");
+    fprintf(stderr, "\t-n  Don't look up DNS names for routers\n");
+
+    exit(1);
+}
 
 int main(int argc, char *argv[])
 {
@@ -823,34 +837,26 @@ int main(int argc, char *argv[])
 		    retries = strtonum(optarg, 0, INT_MAX, &errstr);
 		    if (errstr) {
 			    warnx("retries %s", errstr);
-			    goto usage;
+			    usage();
 		    }
 		    break;
 	    case 't':
 		    timeout = strtonum(optarg, 0, INT_MAX, &errstr);
 		    if (errstr) {
 			    warnx("timeout %s", errstr);
-			    goto usage;
+			    usage();
 		    }
 		    break;
 	    default:
-		    goto usage;
+		    usage();
 	    }
     }
     argc -= optind;
     argv += optind;
     
-    if (argc > 1) {
-      usage:	
-	fprintf(stderr,
-		"Usage: map-mbone [-f] [-g] [-n] [-t timeout] %s\n\n",
-		"[-r retries] [-d [debug-level]] [router]");
-        fprintf(stderr, "\t-f  Flood the routing graph with queries\n");
-        fprintf(stderr, "\t    (True by default unless `router' is given)\n");
-        fprintf(stderr, "\t-g  Generate output in GraphEd format\n");
-        fprintf(stderr, "\t-n  Don't look up DNS names for routers\n");
-	exit(1);
-    } else if (argc == 1 && !(target_addr = host_addr(argv[0]))) {
+    if (argc > 1)
+	usage();
+    else if (argc == 1 && !(target_addr = host_addr(argv[0]))) {
 	fprintf(stderr, "Unknown host: %s\n", argv[0]);
 	exit(2);
     }
