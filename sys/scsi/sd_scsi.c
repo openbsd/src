@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.16 2005/06/15 03:06:47 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.17 2005/06/22 02:49:36 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -136,7 +136,6 @@ sd_scsibus_get_parms(sd, dp, flags)
 	struct disk_parms *dp;
 	int flags;
 {
-	struct sd_scsibus_mode_sense_data scsi_sense;
 	struct scsi_mode_sense_buf buf;
 	union scsi_disk_pages *sense_pages = NULL;
 	u_int32_t blksize;
@@ -201,7 +200,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 			if (blksize == 0)
 				blksize = _2btol(sense_pages->
 				    flex_geometry.bytes_s);
-			rpm = _2btol(scsi_sense.pages.flex_geometry.rpm);
+			rpm = _2btol(sense_pages->flex_geometry.rpm);
 		}	
 		if (rpm)
 			dp->rot_rate = rpm;
