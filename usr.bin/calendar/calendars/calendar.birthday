@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.28 2005/01/31 13:40:45 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.29 2005/06/23 21:29:47 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -171,6 +171,7 @@
 06/07	Alan Mathison Turing died, 1954
 06/08	Frank Lloyd Wright born in Richland Center, Wisconsin, 1867
 06/13	Alexander the Great dies (323BC)
+06/14	Ernesto "Che" Guevara de la Serna born in Rosario, Argentina, 1928
 06/15	Edward (Edvard Hagerup) Grieg born in Bergen, Norway, 1843
 06/16	Hammurabi the Great dies, Babylon, 1686 BC
 06/17	M.C. Escher born, 1898
@@ -250,6 +251,8 @@
 10/04	John V. Atanasoff born, 1903
 10/05	Pablo Picasso born in Malaga, Spain, 1881
 10/05	Ray Kroc (founder of McDonald's) born, 1902
+10/09	Commandante Che Guevara "an artist of revolutionary warfare" executed
+	by CIA-supervised forces near Villagrande, Bolivia, 1967
 10/13	Lenny Bruce is born in New York City, 1925
 10/14	Dwight David Eisenhower born, 1890
 10/14	William Penn born in London, 1644
