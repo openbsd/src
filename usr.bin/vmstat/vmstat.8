@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.31 2004/06/28 01:45:51 aaron Exp $
+.\"	$OpenBSD: vmstat.8,v 1.32 2005/06/23 14:32:48 jmc Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -75,11 +75,11 @@ startup.
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the running kernel.
-.It Fl N Ar system
-Extract the name list from the specified system instead of the running kernel.
 .It Fl m
 Report on the usage of kernel dynamic memory listed first by size of
 allocation and then by type of usage.
+.It Fl N Ar system
+Extract the name list from the specified system instead of the running kernel.
 .It Fl s
 Display the contents of the
 .Ar sum
@@ -88,6 +88,8 @@ events which have occurred since system startup.
 .It Fl t
 Report on the number of page in and page reclaims since system startup,
 and the amount of time required by each.
+.It Fl v
+Print more verbose information.
 .It Fl w Ar wait
 Pause
 .Ar wait
@@ -95,8 +97,6 @@ seconds between each display.
 If no repeat
 .Ar count
 is specified, the default is infinity.
-.It Fl v
-Print more verbose information.
 .It Fl z
 When used with
 .Fl i ,
