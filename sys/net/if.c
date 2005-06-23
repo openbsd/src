@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.135 2005/06/14 04:00:38 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.136 2005/06/23 14:30:40 mickey Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1437,6 +1437,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	}
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
+		microtime(&ifp->if_lastchange);
 #ifdef INET6
 		if ((ifp->if_flags & IFF_UP) != 0) {
 			int s = splnet();
