@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atrm.1,v 1.5 2003/06/10 09:12:09 jmc Exp $
+.\"	$OpenBSD: atrm.1,v 1.6 2005/06/23 14:39:35 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,8 +39,11 @@
 .Sh SYNOPSIS
 .Nm atrm
 .Op Fl afi
-.Oo Op Ar job
-.Op Ar name ... Oc
+.Oo
+.Op Ar job
+.Op Ar name
+.Ar ...
+.Oc
 .Sh DESCRIPTION
 .Nm atrm
 removes jobs that were created with the

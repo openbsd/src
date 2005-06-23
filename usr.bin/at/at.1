@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.31 2003/06/10 09:12:09 jmc Exp $
+.\" $OpenBSD: at.1,v 1.32 2005/06/23 14:39:35 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -33,17 +33,18 @@
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
-.Op Fl blmr
+.Op Fl blm
 .Op Fl f Ar file
 .Op Fl q Ar queue
 .Fl t Ar time_arg
 .Nm at
-.Op Fl blmr
+.Op Fl blm
 .Op Fl f Ar file
 .Op Fl q Ar queue
 .Ar timespec
 .Nm at
-.Fl c Ar job Op Ar job ...
+.Fl c | r
+.Ar job Op Ar job ...
 .Nm batch
 .Op Fl m
 .Op Fl f Ar file
@@ -159,10 +160,6 @@ year.
 If the
 .Ar SS
 letter pair is not specified, the value defaults to 0.
-.It Fl v
-When used in conjunction with the
-.Fl l
-option, shows completed but not yet deleted jobs in the queue.
 .El
 .Pp
 .Nm at
