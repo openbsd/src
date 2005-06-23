@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.18 2005/06/23 00:31:44 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.19 2005/06/23 02:26:35 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -127,8 +127,10 @@ sd_scsibus_get_optparms(sd, dp, flags)
 }
 
 /*
- * Get the scsi driver to send a full inquiry to the * device and use the
- * results to fill out the disk parameter structure.
+ * Fill out the disk parameter structure. Return SDGP_RESULT_OK if the
+ * structure is correctly filled in, SDGP_RESULT_OFFLINE otherwise. The caller
+ * is responsible for clearing the SDEV_MEDIA_LOADED flag if the structure
+ * cannot be completed.
  */
 int
 sd_scsibus_get_parms(sd, dp, flags)
@@ -140,31 +142,19 @@ sd_scsibus_get_parms(sd, dp, flags)
 	union scsi_disk_pages *sense_pages = NULL;
 	u_int32_t blksize;
 	u_int16_t rpm = 0;
-	int page, error;
+	int error;
 
 	dp->disksize = scsi_size(sd->sc_link, flags, &blksize);
 	dp->rot_rate = 3600;
 
-	/*
-	 * If offline, the SDEV_MEDIA_LOADED flag will be
-	 * cleared by the caller if necessary.
-	 */
 	if (sd->type == T_OPTICAL)
 		return (sd_scsibus_get_optparms(sd, dp, flags));
 
-	error = scsi_do_mode_sense(sd->sc_link, page = 4, &buf,
+	error = scsi_do_mode_sense(sd->sc_link, 4, &buf,
 	    (void **)&sense_pages, NULL, NULL, &blksize,
 	    sizeof(sense_pages->rigid_geometry), flags | SCSI_SILENT, NULL);
 	if (error == 0) {
 		if (sense_pages) { 
-			SC_DEBUG(sd->sc_link, SDEV_DB3,
-			    ("%d cyls, %d heads, %d precomp, %d red_write,"
-			     " %d land_zone\n",
-			    _3btol(sense_pages->rigid_geometry.ncyl),
-			    sense_pages->rigid_geometry.nheads,
-			    _2btol(sense_pages->rigid_geometry.st_cyl_wp),
-			    _2btol(sense_pages->rigid_geometry.st_cyl_rwc),
-			    _2btol(sense_pages->rigid_geometry.land_zone)));
 			/*
 			 * KLUDGE!! (for zone recorded disks)
 			 * give a number of sectors so that sec * trks * cyls
@@ -189,7 +179,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 		return (SDGP_RESULT_OK);
 	}
 
-	error = scsi_do_mode_sense(sd->sc_link, page = 5, &buf,
+	error = scsi_do_mode_sense(sd->sc_link, 5, &buf,
 	    (void **)&sense_pages, NULL, NULL, &blksize,
 	    sizeof(sense_pages->flex_geometry), flags | SCSI_SILENT, NULL);
 	if (error == 0) {
@@ -221,7 +211,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	if (sd->type != T_RDIRECT)
 		goto fake_it;
 
-	error = scsi_do_mode_sense(sd->sc_link, page = 6, &buf,
+	error = scsi_do_mode_sense(sd->sc_link, 6, &buf,
 	    (void **)&sense_pages, NULL, NULL, &blksize,
 	    sizeof(sense_pages->reduced_geometry), flags | SCSI_SILENT, NULL);
 	if (error == 0) {
@@ -249,8 +239,6 @@ sd_scsibus_get_parms(sd, dp, flags)
 fake_it:
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
-	SC_DEBUG(sd->sc_link, SDEV_DB1, ("error %d on pg %d, fake geometry.\n",
-	    error, page));
 
 	/* Use adaptec standard fictitious geometry. */
 
