@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.17 2005/06/22 02:49:36 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.18 2005/06/23 00:31:44 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -142,7 +142,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	u_int16_t rpm = 0;
 	int page, error;
 
-	dp->disksize = scsi_size(sd->sc_link, flags);
+	dp->disksize = scsi_size(sd->sc_link, flags, &blksize);
 	dp->rot_rate = 3600;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.84 2005/06/18 01:09:03 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.85 2005/06/23 00:31:44 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -219,9 +219,10 @@ scsi_make_xs(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
  * Find out from the device what its capacity is.
  */
 u_long
-scsi_size(sc_link, flags)
+scsi_size(sc_link, flags, blksize)
 	struct scsi_link *sc_link;
 	int flags;
+	u_int32_t *blksize;
 {
 	struct scsi_read_capacity scsi_cmd;
 	struct scsi_read_cap_data rdcap;
@@ -247,6 +248,9 @@ scsi_size(sc_link, flags)
 	}
 
 	max_addr = _4btol(rdcap.addr);
+	if (blksize)
+		*blksize = _4btol(rdcap.length);
+
 	if (max_addr == 0xffffffffUL) {
 		/*
 		 * The device is reporting it has more than 2^32-1 sectors. The
