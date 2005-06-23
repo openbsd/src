@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.86 2005/05/22 19:29:55 martin Exp $	*/
+/*	$OpenBSD: dc.c,v 1.87 2005/06/23 15:41:01 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -3176,6 +3176,8 @@ dc_stop(sc)
 
 	timeout_del(&sc->dc_tick_tmo);
 
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_RX_ON|DC_NETCFG_TX_ON));
 	CSR_WRITE_4(sc, DC_IMR, 0x00000000);
 	CSR_WRITE_4(sc, DC_TXADDR, 0x00000000);
@@ -3228,8 +3230,6 @@ dc_stop(sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    0, sc->sc_listmap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 /*
