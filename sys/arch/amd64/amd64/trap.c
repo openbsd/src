@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 2005/05/29 03:20:36 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 2005/06/23 11:13:01 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -386,10 +386,6 @@ copyfault:
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (p == NULL)
 			goto we_re_toast;
-#ifdef LOCKDEBUG
-		if (simple_lock_held(&sched_lock))
-			goto we_re_toast;
-#endif
 #ifdef MULTIPROCESSOR
 		if ((p->p_flag & P_BIGLOCK) == 0)
 			goto we_re_toast;
