@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.1 2005/01/14 12:21:02 grange Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.2 2005/06/24 20:06:11 martin Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.1 2005/01/14 12:21:02 grange Exp $
+ * $Id: if_ubt.c,v 1.2 2005/06/24 20:06:11 martin Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -120,11 +120,11 @@ USB_MATCH(ubt)
 	 * If device violates Bluetooth specification and has bDeviceClass,
 	 * bDeviceSubClass and bDeviceProtocol set to wrong values then you
 	 * could try to put VendorID/ProductID pair into the list below.
-	 * Currently I do not know of any such devices.
 	 */
 
 	Static struct usb_devno const	ubt_broken_devices[] = {
 		{ USB_VENDOR_CSR, USB_PRODUCT_CSR_BLUECORE },
+		{ USB_VENDOR_MSI, USB_PRODUCT_MSI_BLUETOOTH },
 		{ 0, 0 } /* This should be the last item in the list */
 	};
 
