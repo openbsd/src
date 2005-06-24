@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.19 2005/06/23 02:26:35 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.20 2005/06/24 21:03:36 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -70,15 +70,7 @@
 #include <scsi/scsiconf.h>
 #include <scsi/sdvar.h>
 
-struct sd_scsibus_mode_sense_data {
-	struct scsi_mode_header header;
-	struct scsi_blk_desc blk_desc;
-	union scsi_disk_pages pages;
-};
-
 int	sd_scsibus_get_parms(struct sd_softc *,
-	    struct disk_parms *, int);
-int	sd_scsibus_get_optparms(struct sd_softc *,
 	    struct disk_parms *, int);
 void	sd_scsibus_flush(struct sd_softc *, int);
 
@@ -86,45 +78,6 @@ const struct sd_ops sd_scsibus_ops = {
 	sd_scsibus_get_parms,
 	sd_scsibus_flush,
 };
-
-int
-sd_scsibus_get_optparms(sd, dp, flags)
-	struct sd_softc *sd;
-	struct disk_parms *dp;
-	int flags;
-{
-	struct sd_scsibus_mode_sense_data scsi_sense;
-	int error;
-
-	dp->blksize = 512;
-	if (dp->disksize == 0)
-		return (SDGP_RESULT_OFFLINE);		/* XXX? */
-
-	/* XXX
-	 * It is better to get the following params from the
-	 * mode sense page 6 only (optical device parameter page).
-	 * However, there are stupid optical devices which does NOT
-	 * support the page 6. Ask for all (0x3f) pages. Ghaa....
-	 */
-	error = scsi_mode_sense(sd->sc_link, 0, 0x3f,
-	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense), flags,
-	    6000);
-	if (error != 0)
-		return (SDGP_RESULT_OFFLINE);		/* XXX? */
-
-	dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
-	if (dp->blksize == 0) 
-		dp->blksize = 512;
-
-	/*
-	 * Create a pseudo-geometry.
-	 */
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = dp->disksize / (dp->heads * dp->sectors);
-
-	return (SDGP_RESULT_OK);
-}
 
 /*
  * Fill out the disk parameter structure. Return SDGP_RESULT_OK if the
@@ -148,7 +101,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	dp->rot_rate = 3600;
 
 	if (sd->type == T_OPTICAL)
-		return (sd_scsibus_get_optparms(sd, dp, flags));
+		goto fake_it;
 
 	error = scsi_do_mode_sense(sd->sc_link, 4, &buf,
 	    (void **)&sense_pages, NULL, NULL, &blksize,
