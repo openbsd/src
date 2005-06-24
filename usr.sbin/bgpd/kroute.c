@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.138 2005/06/14 15:01:51 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.139 2005/06/24 14:01:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -615,6 +615,10 @@ kr_redistribute(int type, struct kroute *kr)
 	u_int32_t		 a;
 
 	if (!(kr->flags & F_KERNEL))
+		return (0);
+
+	/* Dynamic routes are not redistributable. */
+	if (kr->flags & F_DYNAMIC)
 		return (0);
 
 	/*
@@ -1921,6 +1925,8 @@ fetchtable(void)
 				kr->r.flags |= F_BLACKHOLE;
 			if (rtm->rtm_flags & RTF_REJECT)
 				kr->r.flags |= F_REJECT;
+			if (rtm->rtm_flags & RTF_DYNAMIC)
+				kr->r.flags |= F_DYNAMIC;
 			if (sa_in != NULL) {
 				if (sa_in->sin_len == 0)
 					break;
@@ -1953,6 +1959,8 @@ fetchtable(void)
 				kr6->r.flags |= F_BLACKHOLE;
 			if (rtm->rtm_flags & RTF_REJECT)
 				kr6->r.flags |= F_REJECT;
+			if (rtm->rtm_flags & RTF_DYNAMIC)
+				kr6->r.flags |= F_DYNAMIC;
 			if (sa_in6 != NULL) {
 				if (sa_in6->sin6_len == 0)
 					break;
@@ -2154,6 +2162,8 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX])
 		flags |= F_BLACKHOLE;
 	if (rtm->rtm_flags & RTF_REJECT)
 		flags |= F_REJECT;
+	if (rtm->rtm_flags & RTF_DYNAMIC)
+		flags |= F_DYNAMIC;
 
 	prefix.af = sa->sa_family;
 	switch (prefix.af) {
