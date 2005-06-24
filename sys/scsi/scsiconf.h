@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.59 2005/06/23 00:31:44 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.60 2005/06/24 23:39:18 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -367,6 +367,7 @@ static __inline void _lto8b(u_int64_t val, u_int8_t *bytes);
 static __inline u_int32_t _2btol(u_int8_t *bytes);
 static __inline u_int32_t _3btol(u_int8_t *bytes);
 static __inline u_int32_t _4btol(u_int8_t *bytes);
+static __inline u_int64_t _5btol(u_int8_t *bytes);
 static __inline u_int64_t _8btol(u_int8_t *bytes);
 
 static __inline void _lto2l(u_int32_t val, u_int8_t *bytes);
@@ -453,6 +454,20 @@ _4btol(bytes)
 
 	rv = (bytes[0] << 24) | (bytes[1] << 16) |
 	    (bytes[2] << 8) | bytes[3];
+	return (rv);
+}
+
+static __inline u_int64_t
+_5btol(bytes)
+	u_int8_t *bytes;
+{
+	u_int64_t rv;
+
+	rv = ((u_int64_t)bytes[0] << 32) |
+	     ((u_int64_t)bytes[1] << 24) |
+	     ((u_int64_t)bytes[2] << 16) |
+	     ((u_int64_t)bytes[3] << 8) |
+	     (u_int64_t)bytes[4];
 	return (rv);
 }
 
