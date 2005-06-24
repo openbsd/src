@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.42 2004/02/06 21:05:57 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.43 2005/06/24 07:57:24 markus Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -306,11 +306,10 @@ in6_pcbsetport(laddr, inp, p)
 {
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
-	u_int16_t first, last, old = 0;
+	u_int16_t first, last;
 	u_int16_t *lastport = &inp->inp_table->inpt_lastport;
 	u_int16_t lport = 0;
 	int count;
-	int loopcount = 0;
 	int wild = INPLOOKUP_IPV6;
 	int error;
 
@@ -342,27 +341,17 @@ in6_pcbsetport(laddr, inp, p)
 	 * is not being tested on each round of the loop.
 	 */
 
-portloop:
 	if (first > last) {
 		/*
 		 * counting down
 		 */
-		if (loopcount == 0) {	/* only do this once. */
-			old = first;
-			first -= (arc4random() % (first - last));
-		}
 		count = first - last;
-		*lastport = first;		/* restart each time */
+		if (count)
+			*lastport = first - (arc4random() % count);
 
 		do {
-			if (count-- <= 0) {	/* completely used? */
-				if (loopcount == 0) {
-					last = old;
-					loopcount++;
-					goto portloop;
-				}
+			if (count-- < 0)	/* completely used? */
 				return (EADDRNOTAVAIL);
-			}
 			--*lastport;
 			if (*lastport > first || *lastport < last)
 				*lastport = first;
@@ -374,22 +363,13 @@ portloop:
 		/*
 		 * counting up
 		 */
-		if (loopcount == 0) {	/* only do this once. */
-			old = first;
-			first += (arc4random() % (last - first));
-		}
 		count = last - first;
-		*lastport = first;		/* restart each time */
+		if (count)
+			*lastport = first + (arc4random() % count);
 
 		do {
-			if (count-- <= 0) {	/* completely used? */
-				if (loopcount == 0) {
-					first = old;
-					loopcount++;
-					goto portloop;
-				}
+			if (count-- < 0)	/* completely used? */
 				return (EADDRNOTAVAIL);
-			}
 			++*lastport;
 			if (*lastport < first || *lastport > last)
 				*lastport = first;

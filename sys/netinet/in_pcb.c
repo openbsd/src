@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.83 2004/12/06 02:46:34 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.84 2005/06/24 07:57:24 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -304,9 +304,8 @@ in_pcbbind(v, nam)
 		inp->inp_laddr = sin->sin_addr;
 	}
 	if (lport == 0) {
-		u_int16_t first, last, old = 0;
+		u_int16_t first, last;
 		int count;
-		int loopcount = 0;
 
 		if (inp->inp_flags & INP_HIGHPORT) {
 			first = ipport_hifirstauto;	/* sysctl */
@@ -329,27 +328,17 @@ in_pcbbind(v, nam)
 		 * is not being tested on each round of the loop.
 		 */
 
-portloop:
 		if (first > last) {
 			/*
 			 * counting down
 			 */
-			if (loopcount == 0) {	/* only do this once. */
-				old = first;
-				first -= (arc4random() % (first - last));
-			}
 			count = first - last;
-			*lastport = first;		/* restart each time */
+			if (count)
+				*lastport = first - (arc4random() % count);
 
 			do {
-				if (count-- <= 0) {	/* completely used? */
-					if (loopcount == 0) {
-						last = old;
-						loopcount++;
-						goto portloop;
-					}
+				if (count-- < 0)	/* completely used? */
 					return (EADDRNOTAVAIL);
-				}
 				--*lastport;
 				if (*lastport > first || *lastport < last)
 					*lastport = first;
@@ -361,22 +350,13 @@ portloop:
 			/*
 			 * counting up
 			 */
-			if (loopcount == 0) {	/* only do this once. */
-				old = first;
-				first += (arc4random() % (last - first));
-			}
 			count = last - first;
-			*lastport = first;		/* restart each time */
+			if (count)
+				*lastport = first + (arc4random() % count);
 
 			do {
-				if (count-- <= 0) {	/* completely used? */
-					if (loopcount == 0) {
-						first = old;
-						loopcount++;
-						goto portloop;
-					}
+				if (count-- < 0)	/* completely used? */
 					return (EADDRNOTAVAIL);
-				}
 				++*lastport;
 				if (*lastport < first || *lastport > last)
 					*lastport = first;
