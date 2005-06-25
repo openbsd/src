@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.169 2005/06/24 14:01:52 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.170 2005/06/25 19:24:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -697,5 +697,11 @@ int	pftable_clear_all(void);
 int	pftable_addr_add(struct pftable_msg *);
 int	pftable_addr_remove(struct pftable_msg *);
 int	pftable_commit(void);
+
+/* name2id.c */
+u_int16_t	 rtlabel_name2id(char *);
+const char	*rtlabel_id2name(u_int16_t);
+void		 rtlabel_unref(u_int16_t);
+
 
 #endif /* __BGPD_H__ */
