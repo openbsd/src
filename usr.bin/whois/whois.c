@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.33 2005/06/25 14:21:34 henning Exp $   */
+/*      $OpenBSD: whois.c,v 1.34 2005/06/25 14:27:36 henning Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.33 2005/06/25 14:21:34 henning Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -81,9 +67,9 @@ static const char rcsid[] = "$OpenBSD: whois.c,v 1.33 2005/06/25 14:21:34 hennin
 const char *port = WHOIS_PORT;
 const char *ip_whois[] = { LNICHOST, RNICHOST, PNICHOST, BNICHOST, NULL };
 
-static __dead void usage(void);
-static int whois(const char *, const char *, const char *, int);
-static char *choose_server(const char *, const char *);
+__dead void usage(void);
+int whois(const char *, const char *, const char *, int);
+char *choose_server(const char *, const char *);
 
 int
 main(int argc, char *argv[])
@@ -91,13 +77,10 @@ main(int argc, char *argv[])
 	int ch, flags, rval;
 	char *host, *name, *country, *server;
 
-#ifdef SOCKS
-	SOCKSinit(argv[0]);
-#endif
 	country = host = server = NULL;
 	flags = rval = 0;
 	while ((ch = getopt(argc, argv, "aAc:dgh:ilmp:qQrR6")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			host = ANICHOST;
 			break;
@@ -160,7 +143,7 @@ main(int argc, char *argv[])
 	exit(rval);
 }
 
-static int
+int
 whois(const char *query, const char *server, const char *port, int flags)
 {
 	FILE *sfi, *sfo;
@@ -185,11 +168,11 @@ whois(const char *query, const char *server, const char *port, int flags)
 
 	for (s = -1, ai = res; ai != NULL; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (s < 0) {
+		if (s == -1) {
 			reason = "socket";
 			continue;
 		}
-		if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0) {
+		if (connect(s, ai->ai_addr, ai->ai_addrlen) == -1) {
 			reason = "connect";
 			close(s);
 			s = -1;
@@ -197,7 +180,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 		}
 		break;	/*okay*/
 	}
-	if (s < 0) {
+	if (s == -1) {
 		if (reason)
 			warn("%s: %s", server, reason);
 		else
@@ -216,8 +199,8 @@ whois(const char *query, const char *server, const char *port, int flags)
 	sfo = fdopen(s, "w");
 	if (sfi == NULL || sfo == NULL)
 		err(1, "fdopen");
-	(void)fprintf(sfo, fmt, query);
-	(void)fflush(sfo);
+	fprintf(sfo, fmt, query);
+	fflush(sfo);
 	nhost = NULL;
 	while ((buf = fgetln(sfi, &len)) != NULL) {
 		p = buf + len - 1;
@@ -232,7 +215,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 			nbuf[len] = '\0';
 			buf = nbuf;
 		}
-		(void)puts(buf);
+		puts(buf);
 
 		if (nhost != NULL || !(flags & WHOIS_RECURSE))
 			continue;
@@ -278,7 +261,7 @@ whois(const char *query, const char *server, const char *port, int flags)
  * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+).
  * Fall back to NICHOST for the non-handle case.
  */
-static char *
+char *
 choose_server(const char *name, const char *country)
 {
 	static char *server;
@@ -294,7 +277,7 @@ choose_server(const char *name, const char *country)
 		else if ((strncasecmp(name, "COCO-", 5) == 0 ||
 		    strncasecmp(name, "COHO-", 5) == 0) &&
 		    strtol(name + 5, &ep, 10) > 0 && *ep == '\0')
-			return (CNICHOST);  
+			return (CNICHOST);
 		else
 			return (NICHOST);
 	} else if (isdigit(*(++qhead)))
@@ -307,12 +290,12 @@ choose_server(const char *name, const char *country)
 	return (server);
 }
 
-static __dead void
+__dead void
 usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr,
+	fprintf(stderr,
 	    "usage: %s [-6AadgilmQRr] [-c country-code | -h hostname] "
 		"[-p port] name ...\n", __progname);
 	exit(1);
