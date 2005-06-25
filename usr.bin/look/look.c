@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.10 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.11 2005/06/25 17:00:35 niallo Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: look.c,v 1.10 2003/06/10 22:20:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: look.c,v 1.11 2005/06/25 17:00:35 niallo Exp $";
 #endif /* not lint */
 
 /*
@@ -154,7 +154,7 @@ look(char *string, char *front, char *back)
 	int ch;
 	char *readp, *writep;
 
-	/* Reformat string string to avoid doing it multiple times later. */
+	/* Reformat string to avoid doing it multiple times later. */
 	for (readp = writep = string; ch = *readp++;) {
 		if (fflag)
 			ch = FOLD(ch);
