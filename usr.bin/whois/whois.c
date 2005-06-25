@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.27 2005/06/22 12:17:56 christos Exp $   */
+/*      $OpenBSD: whois.c,v 1.33 2005/06/25 14:21:34 henning Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.32 2005/06/22 16:50:49 henning Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.33 2005/06/25 14:21:34 henning Exp $";
 #endif
 #endif /* not lint */
 
