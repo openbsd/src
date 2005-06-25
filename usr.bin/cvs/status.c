@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.23 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.24 2005/06/25 13:53:37 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -174,9 +174,7 @@ static int
 cvs_status_local(CVSFILE *cf, void *arg)
 {
 	int len;
-	size_t sz;
 	char *repo, buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
-	char datebuf[26];
 	RCSFILE *rf;
 	struct cvsroot *root;
 
@@ -216,12 +214,8 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		snprintf(buf, sizeof(buf), "No entry for %s", cf->cf_name);
 	} else {
-		ctime_r(&(cf->cf_mtime), datebuf);
-		sz = strlen(datebuf);
-		if ((sz > 0) && (datebuf[sz - 1] == '\n'))
-			datebuf[--sz] = '\0';
-		snprintf(buf, sizeof(buf), "%s %s",
-		    rcsnum_tostr(cf->cf_lrev, buf, sizeof(buf)), datebuf);
+		snprintf(buf, sizeof(buf), "%s",
+		    rcsnum_tostr(cf->cf_lrev, buf, sizeof(buf)));
 	}
 
 	cvs_printf("   Working revision:    %s\n", buf);
