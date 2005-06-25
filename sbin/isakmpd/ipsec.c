@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.120 2005/06/14 10:50:47 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.121 2005/06/25 23:20:43 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1658,7 +1658,7 @@ ipsec_esp_enckeylength(struct proto *proto)
 	case IPSEC_ESP_AES_128_CTR:
 		if (!iproto->keylen)
 			return 16;
-		/* Fallthrough */
+		/* FALLTHROUGH */
 	default:
 		return iproto->keylen / 8;
 	}
