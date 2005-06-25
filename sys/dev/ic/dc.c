@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.87 2005/06/23 15:41:01 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.88 2005/06/25 23:27:43 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2433,7 +2433,7 @@ dc_tick(xsc)
 		} else {
 			r = CSR_READ_4(sc, DC_ISR);
 			if ((r & DC_ISR_RX_STATE) == DC_RXSTATE_WAIT &&
-			    sc->dc_cdata.dc_tx_cnt == 0) {
+			    sc->dc_cdata.dc_tx_cnt == 0 && !DC_IS_ASIX(sc)) {
 				mii_tick(mii);
 				if (!(mii->mii_media_status & IFM_ACTIVE))
 					sc->dc_link = 0;
