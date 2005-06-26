@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.11 2004/08/06 08:06:01 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.12 2005/06/26 11:25:11 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -288,10 +288,11 @@ sub find
 {
 	my $class = shift;
 	local $_ = shift;
+	my $arch = shift;
 
 	if ($_ eq '-') {
 		my $location = OpenBSD::PackageLocation::Local::Pipe->_new('./');
-		my $package = $class->openAbsolute($location, '');
+		my $package = $class->openAbsolute($location, '', $arch);
 		return $package;
 	}
 	$_.=".tgz" unless m/\.tgz$/;
@@ -304,13 +305,13 @@ sub find
 
 		my ($pkgname, $path) = fileparse($_);
 		my $location = OpenBSD::PackageLocation->new($path);
-		$package = $class->openAbsolute($location, $pkgname);
+		$package = $class->openAbsolute($location, $pkgname, $arch);
 		if (defined $package) {
 			push(@pkgpath, $location);
 		}
 	} else {
 		for my $p (@pkgpath) {
-			$package = $class->openAbsolute($p, $_);
+			$package = $class->openAbsolute($p, $_, $arch);
 			last if defined $package;
 		}
 	}
@@ -362,7 +363,7 @@ sub _open
 
 sub openAbsolute
 {
-	my ($class, $location, $name) = @_;
+	my ($class, $location, $name, $arch) = @_;
 	my $self = { location => $location, name => $name};
 	bless $self, $class;
 
@@ -373,6 +374,7 @@ sub openAbsolute
 	$self->{dir} = $dir;
 
 	# check that Open worked
+OKAY:
 	while (my $e = $self->next()) {
 		if ($e->isFile() && is_info_name($e->{name})) {
 			$e->{name}=$dir.$e->{name};
@@ -386,6 +388,23 @@ sub openAbsolute
 #		$self->close();
 		return $self;
 	} else {
+		# maybe it's a fat package.
+		while (my $e = $self->next()) {
+			unless ($e->{name} =~ m/\/\+CONTENTS$/) {
+				last;
+			}
+			my $prefix = $`;
+			$e->{name}=$dir.CONTENTS;
+			eval { $e->create(); };
+			require OpenBSD::PackingList;
+			my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FatOnly);
+			if ($plist->has('arch')) {
+				if ($plist->{arch}->check($arch)) {
+					$self->{filter} = $prefix;
+					goto OKAY;
+				}
+			}
+		}
 		$self->close();
 		return undef;
 	}
@@ -417,7 +436,17 @@ sub next
 		}
 	}
 	if (!$self->{_unput}) {
-		$self->{_current} = $self->{_archive}->next();
+		my $e = $self->{_archive}->next();
+		if (defined $self->{filter}) {
+			if ($e->{name} =~ m/^(.*?)\/(.*)$/) {
+				my ($beg, $name) = ($1, $2);
+				if (index($beg, $self->{filter}) == -1) {
+					return $self->next();
+				}
+				$e->{name} = $name;
+			}
+		}
+		$self->{_current} = $e;
 	}
 	$self->{_unput} = 0;
 	return $self->{_current};
