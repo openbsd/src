@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.320 2005/06/01 16:41:03 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.321 2005/06/26 19:23:53 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1198,13 +1198,14 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 		} else
 			val = 0;
 
-		if (val & 0x44/*???*/)
+		if (val & (C3_CPUID_HAS_RNG | C3_CPUID_HAS_ACE))
 			printf("%s:", ci->ci_dev.dv_xname);
+
 		/* Enable RNG if present and disabled */
-		if (val & 0x4) {
+		if (val & C3_CPUID_HAS_RNG) {
 			extern int viac3_rnd_present;
 
-			if (!(val & 0x8)) {
+			if (!(val & C3_CPUID_DO_RNG)) {
 				msreg = rdmsr(0x110B);
 				msreg |= 0x40;
 				wrmsr(0x110B, msreg);
@@ -1212,10 +1213,11 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 			viac3_rnd_present = 1;
 			printf(" RNG");
 		}
+
 		/* Enable AES engine if present and disabled */
-		if (val & 0x40) {
+		if (val & C3_CPUID_HAS_ACE) {
 #ifdef CRYPTO
-			if (!(val & 0x80)) {
+			if (!(val & C3_CPUID_DO_ACE)) {
 				msreg = rdmsr(0x1107);
 				msreg |= (0x01 << 28);
 				wrmsr(0x1107, msreg);
@@ -1224,11 +1226,24 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 #endif /* CRYPTO */
 			printf(" AES");
 		}
-#if 0
-		/* Enable SHA engine if present and disabled */
-		if (val & 0x40/**/) {
+
+		/* Enable ACE2 engine if present and disabled */
+		if (val & C3_CPUID_HAS_ACE2) {
 #ifdef CRYPTO
-			if (!(val & 0x80/**/)) {
+			if (!(val & C3_CPUID_DO_ACE2)) {
+				msreg = rdmsr(0x1107);
+				msreg |= (0x01 << 28);
+				wrmsr(0x1107, msreg);
+			}
+			i386_has_xcrypt |= C3_HAS_AESCTR;
+#endif /* CRYPTO */
+			printf(" AES-CTR");
+		}
+
+		/* Enable SHA engine if present and disabled */
+		if (val & C3_CPUID_HAS_PHE) {
+#ifdef CRYPTO
+			if (!(val & C3_CPUID_DO_PHE)) {
 				msreg = rdmsr(0x1107);
 				msreg |= (0x01 << 28/**/);
 				wrmsr(0x1107, msreg);
@@ -1237,12 +1252,11 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 #endif /* CRYPTO */
 			printf(" SHA1 SHA256");
 		}
-#endif
-#if 0
+
 		/* Enable MM engine if present and disabled */
-		if (val & 0x40/*???*/) {
+		if (val & C3_CPUID_HAS_PMM) {
 #ifdef CRYPTO
-			if (!(val & 0x80/**/)) {
+			if (!(val & C3_CPUID_DO_PMM)) {
 				msreg = rdmsr(0x1107);
 				msreg |= (0x01 << 28/**/);
 				wrmsr(0x1107, msreg);
@@ -1251,7 +1265,7 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 #endif /* CRYPTO */
 			printf(" RSA");
 		}
-#endif
+
 		printf("\n");
 		break;
 	}
