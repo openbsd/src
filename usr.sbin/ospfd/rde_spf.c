@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.26 2005/06/26 20:44:44 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.27 2005/06/26 23:50:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -811,7 +811,7 @@ rt_lookup(u_int8_t type, in_addr_t addr)
 
 	do {
 		/* a DT_NET /32 is equivalent to a DT_RTR */
-		if ((rn = rt_find(addr & prefixlen2mask(i)), i))
+		if ((rn = rt_find(addr & prefixlen2mask(i), i)))
 			return (rn);
 	} while (i-- != 0);
 
