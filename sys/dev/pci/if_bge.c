@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.65 2005/06/26 03:17:55 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.66 2005/06/26 06:06:17 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2351,14 +2351,9 @@ bge_intr(xsc)
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
 
-#ifdef notdef
-	/* Avoid this for now -- checking this register is expensive. */
 	/* Make sure this is really our interrupt. */
-	if (!(CSR_READ_4(sc, BGE_MISC_LOCAL_CTL) & BGE_MLC_INTR_STATE))
-		return (0);
-#endif
 	if (!(sc->bge_rdata->bge_status_block.bge_status &
-	    BGE_STATFLAG_UPDATED)) /* shared interrupt */
+	    BGE_STATFLAG_UPDATED))
 		return(0);
 
 	/* Ack interrupt and stop others from occurring. */
