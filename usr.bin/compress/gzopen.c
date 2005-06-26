@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.22 2004/09/06 21:24:11 mickey Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.23 2005/06/26 18:20:26 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -60,7 +60,7 @@
 
 #ifndef SMALL
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.22 2004/09/06 21:24:11 mickey Exp $";
+    "$OpenBSD: gzopen.c,v 1.23 2005/06/26 18:20:26 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -163,13 +163,13 @@ gz_open(int fd, const char *mode, char *name, int bits,
 	if (s->z_mode == 'w') {
 		/* write the .gz header */
 		if (put_header(s, name, mtime, bits) != 0) {
-			gz_close(s, NULL);
+			gz_close(s, NULL, NULL, NULL);
 			s = NULL;
 		}
 	} else {
 		/* read the .gz header */
 		if (get_header(s, name, gotmagic) != 0) {
-			gz_close(s, NULL);
+			gz_close(s, NULL, NULL, NULL);
 			s = NULL;
 		}
 	}
@@ -178,7 +178,7 @@ gz_open(int fd, const char *mode, char *name, int bits,
 }
 
 int
-gz_close(void *cookie, struct z_info *info)
+gz_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
 {
 	gz_stream *s = (gz_stream*)cookie;
 	int err = 0;
@@ -214,6 +214,7 @@ gz_close(void *cookie, struct z_info *info)
 		info->total_out = (off_t)s->z_stream.total_out;
 	}
 
+	setfile(name, s->z_fd, sb);
 	if (!err)
 		err = close(s->z_fd);
 	else

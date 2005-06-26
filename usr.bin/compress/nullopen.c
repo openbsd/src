@@ -1,4 +1,4 @@
-/*	$OpenBSD: nullopen.c,v 1.2 2004/01/22 18:49:35 millert Exp $	*/
+/*	$OpenBSD: nullopen.c,v 1.3 2005/06/26 18:20:26 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -29,7 +29,7 @@
  */
 
 const char null_rcsid[] =
-    "$OpenBSD: nullopen.c,v 1.2 2004/01/22 18:49:35 millert Exp $";
+    "$OpenBSD: nullopen.c,v 1.3 2005/06/26 18:20:26 otto Exp $";
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -75,7 +75,7 @@ null_open(int fd, const char *mode, char *name, int bits,
 }
 
 int
-null_close(void *cookie, struct z_info *info)
+null_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
 {
 	null_stream *s = (null_stream*) cookie;
 	int err = 0;
@@ -92,6 +92,7 @@ null_close(void *cookie, struct z_info *info)
 		info->total_out = (off_t) s->total_out;
 	}
 
+	setfile(name, s->fd, sb);
 	err = close(s->fd);
 
 	free(s);

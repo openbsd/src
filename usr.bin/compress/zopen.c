@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.15 2005/04/17 16:17:39 deraadt Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.16 2005/06/26 18:20:26 otto Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
 const char z_rcsid[] =
-	"$OpenBSD: zopen.c,v 1.15 2005/04/17 16:17:39 deraadt Exp $";
+	"$OpenBSD: zopen.c,v 1.16 2005/06/26 18:20:26 otto Exp $";
 #endif
 
 /*-
@@ -313,7 +313,7 @@ nomatch:		if (output(zs, (code_int) zs->zs_ent) == -1)
 }
 
 int
-z_close(void *cookie, struct z_info *info)
+z_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
 {
 	struct s_zstate *zs;
 	int rval;
@@ -341,6 +341,9 @@ z_close(void *cookie, struct z_info *info)
 		info->total_out = (off_t)zs->zs_bytes_out;
 	}
 
+#ifndef SAVECORE
+	setfile(name, zs->zs_fd, sb);
+#endif
 	rval = close(zs->zs_fd);
 	free(zs);
 	return (rval);
@@ -349,7 +352,7 @@ z_close(void *cookie, struct z_info *info)
 static int
 zclose(void *cookie)
 {
-	return z_close(cookie, NULL);
+	return z_close(cookie, NULL, NULL, NULL);
 }
 
 /*-
