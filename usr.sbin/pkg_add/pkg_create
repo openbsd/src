@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.34 2005/06/08 09:43:40 espie Exp $
+# $OpenBSD: pkg_create,v 1.35 2005/06/26 11:24:06 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -24,40 +24,41 @@ use OpenBSD::Getopt;
 use OpenBSD::md5;
 use OpenBSD::Temp;
 use OpenBSD::Error;
+use OpenBSD::Ustar;
 use Symbol;
 use File::Basename;
 
 # Extra stuff needed to archive files
 package OpenBSD::PackingElement;
-sub archive_cmd { () }
 
+sub archive {}
 sub anything { ${$_[1]}++; }
 
 package OpenBSD::PackingElement::FileBase;
-sub archive_cmd
+sub archive
 {
-	my ($self, $pfh, $use_cwd) = @_;
-	my $fh = $$pfh;
-	print $fh $self->{name}, "\n";
-	if (@$use_cwd != 0) {
-	    my @r = @$use_cwd;
-	    @$use_cwd = ();
-	    return @r;
-	} else {
-	    return ();
+	my ($self, $arc, $base, $verbose) = @_;
+
+	if (defined $arc) {
+	    my $o = $arc->prepare($self->{name});
+	    $o->write();
+	}
+	if ($verbose) {
+		print "Adding ", $self->{name}, "\n";
 	}
 }
 
 package OpenBSD::PackingElement::Cwd;
 use OpenBSD::Temp;
-
-sub archive_cmd
+sub archive
 {
-	my ($self, $pfh, $use_cwd, $dir, $base) = @_;
-	my ($fh, $fname) = OpenBSD::Temp::list($dir);
-	$$pfh = $fh;
-	@$use_cwd = ("-C", $base."/".$self->{name}, "-I", $fname );
-	return ();
+	my ($self, $arc, $base, $verbose) = @_;
+	if (defined $arc) {
+	    $arc->destdir($base."/".$self->{name});
+	}
+	if ($verbose) {
+		print "Cwd: ", $self->{name}, "\n";
+	}
 }
 
 package OpenBSD::PackingElement::DirRm;
@@ -160,16 +161,12 @@ sub compute_checksum
 
 package OpenBSD::PackingList;
 
-sub archive_cmd
+sub archive
 {
-	my ($self, $dir, $base) = @_;
-	my $fh;
-	my @use_cwd = ();
-	my @cmd = ();
+	my ($self, $wrarc, $base, $verbose) = @_;
 	for my $item (@{$self->{items}}) {
-		push(@cmd, $item->archive_cmd(\$fh, \@use_cwd, $dir, $base));
+		$item->archive($wrarc, $base, $verbose);
 	}
-	return @cmd;
 }
 
 sub makesum
@@ -314,7 +311,6 @@ if (@ARGV == 0) {
 
 try {
 my $dir = OpenBSD::Temp::dir();
-my $dir2 = $dir;
 
 if (defined $opt_s) {
 	Usage "Option s is no longer supported";
@@ -482,7 +478,6 @@ if (!defined $plist->{extrainfo} &&
 
 if ($regen_package) {
 	$plist->checksum($base);
-	$dir2 = OpenBSD::Temp::dir();
 } else {
 	$plist->makesum($base);
 }
@@ -498,9 +493,6 @@ if ($errors) {
 	exit(1);
 }
 
-my @cmd = $plist->archive_cmd($dir2, $base);
-
-
 if (!defined $plist->{name}) {
 	print STDERR "Can't write unnamed packing list\n";
 	exit 1;
@@ -514,15 +506,26 @@ if ($regen_package) {
 	$wname = $ARGV[0];
 }
 
-@cmd = ('tar', $opt_h ? "zcfh" : "zcf", $wname, "-C", $dir, CONTENTS,
-    @extra_files, @cmd);
+unshift(@extra_files, CONTENTS);
 
 if ($opt_n) {
-	print join(' ', @cmd), "\n";
-	exit(0);
+	for my $special (@extra_files) {
+		print "Adding $special\n";
+	}
+	$plist->archive(undef, $base, 1);
 } else {
 	print "Creating gzip'd tar ball in '$wname'\n" if $opt_v;
-	System(@cmd) == 0 or Fatal "tar failed";
+	open(my $fh, "|gzip >$wname");
+	my $wrarc = OpenBSD::Ustar->new($fh, $dir);
+	for my $special (@extra_files) {
+		print "Adding $special\n" if $opt_v;
+		my $o = $wrarc->prepare($special);
+		$o->write();
+	}
+
+	$plist->archive($wrarc, $base, $opt_v);
+	$wrarc->pad();
+	close($fh);
 }
 } catch {
 	print STDERR "$0: $_\n";
