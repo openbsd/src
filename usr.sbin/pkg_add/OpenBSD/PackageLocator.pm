@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.12 2005/06/26 11:25:11 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.13 2005/06/26 12:44:29 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -367,6 +367,7 @@ sub openAbsolute
 	my $self = { location => $location, name => $name};
 	bless $self, $class;
 
+
 	if (!$self->_open()) {
 		return undef;
 	}
@@ -397,7 +398,10 @@ OKAY:
 			$e->{name}=$dir.CONTENTS;
 			eval { $e->create(); };
 			require OpenBSD::PackingList;
+			my $pkgname = $name;
+			$pkgname =~ s/\.tgz$//;
 			my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FatOnly);
+			next if $pkgname ne '-' and $plist->pkgname() ne $pkgname;
 			if ($plist->has('arch')) {
 				if ($plist->{arch}->check($arch)) {
 					$self->{filter} = $prefix;
