@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.28 2005/06/21 17:52:49 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.29 2005/06/26 15:39:19 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -325,6 +325,16 @@ sub write
 	}
 }
 
+sub alias
+{
+	my ($self, $arc, $alias) = @_;
+
+	my $k = $self->{archive}.":".$self->{archive}->{cachename};
+	if (!defined $arc->{key}->{$k}) {
+		$arc->{key}->{$k} = $alias;
+	}
+}
+
 sub write_contents
 {
 	# only files have anything to write
@@ -395,7 +405,7 @@ sub resolve_links
 	if (defined $arc->{key}->{$k}) {
 		$self->{linkname} = $arc->{key}->{$k};
 	} else {
-		die "Can't copy link over: original NOT available\n";
+		die "Can't copy link over: original for $k NOT available\n";
 	}
 }
 
@@ -565,10 +575,7 @@ sub copy_contents
 	if ($size % 512) {
 		print $out "\0" x (512 - $size % 512);
 	}
-	my $k = $self->{archive}.":".$self->{archive}->{cachename};
-	if (!defined $arc->{key}->{$k}) {
-		$arc->{key}->{$k} = $self->{name};
-	}
+	$self->alias($arc, $self->{name});
 }
 
 sub isFile() { 1 }
