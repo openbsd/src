@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.4 2004/12/31 04:27:52 jsg Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.5 2005/06/26 04:00:23 brad Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -103,41 +103,15 @@ struct cfattach atw_pci_ca = {
     sizeof (struct atw_softc), atw_pci_match, atw_pci_attach
 };
 
-const struct atw_pci_product {
-	u_int32_t	app_vendor;	/* PCI vendor ID */
-	u_int32_t	app_product;	/* PCI product ID */
-} atw_pci_products[] = {
+const struct pci_matchid atw_pci_devices[] = {
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM8211 },
-
-	{ 0,				0 },
 };
-
-const struct atw_pci_product *atw_pci_lookup(const struct pci_attach_args *);
-
-const struct atw_pci_product *
-atw_pci_lookup(const struct pci_attach_args *pa)
-{
-	const struct atw_pci_product *app;
-
-	for (app = atw_pci_products;
-	     app->app_vendor != 0 && app->app_product != 0;
-	     app++) {
-		if (PCI_VENDOR(pa->pa_id) == app->app_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == app->app_product)
-			return (app);
-	}
-	return (NULL);
-}
 
 int
 atw_pci_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (atw_pci_lookup(pa) != NULL)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, atw_pci_devices,
+	    sizeof(atw_pci_devices)/sizeof(atw_pci_devices[0])));
 }
 
 static int
@@ -178,18 +152,11 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
-	const struct atw_pci_product *app;
 	pcireg_t reg;
 	int pmreg;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
-
-	app = atw_pci_lookup(pa);
-	if (app == NULL) {
-		printf("\n");
-		panic("atw_pci_attach: impossible");
-	}
 
 	/*
 	 * No power management hooks.
