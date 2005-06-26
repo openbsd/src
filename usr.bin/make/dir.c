@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.42 2004/06/22 19:58:20 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.43 2005/06/26 15:19:12 mickey Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ Dir_Init(void)
     dot = DirReaddiri(dotname, dotname+1);
 
     if (!dot)
-    	Error("Can't access current directory");
+    	Fatal("Can't access current directory");
 
     /* We always need to have dot around, so we increment its reference count
      * to make sure it won't be destroyed.  */
