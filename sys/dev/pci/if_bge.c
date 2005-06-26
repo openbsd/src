@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.64 2005/06/17 15:15:43 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.65 2005/06/26 03:17:55 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1614,10 +1614,6 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5705 A3" },
 
-	{ BGE_CHIPID_BCM5714_A0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
-	  "BCM5714 A0" },
-
 	{ BGE_CHIPID_BCM5750_A0,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5750 A0" },
@@ -1629,6 +1625,10 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5750_B1,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5750 B1" },
+
+	{ BGE_CHIPID_BCM5714_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5714 A0" },
 
 	{ 0, 0, NULL }
 };
@@ -1658,13 +1658,13 @@ static const struct bge_revision bge_majorrevs[] = {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5705" },
 
-	{ BGE_ASICREV_BCM5714,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
-	  "unknown BCM5714" },
-
 	{ BGE_ASICREV_BCM5750,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5750" },
+
+	{ BGE_ASICREV_BCM5714,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5714" },
 
 	{ 0,
 	  0,
@@ -2044,22 +2044,6 @@ bge_release_resources(sc)
 
 	if (sc->bge_vpd_readonly != NULL)
 		free(sc->bge_vpd_readonly, M_DEVBUF);
-
-#ifdef fake
-	if (sc->bge_intrhand != NULL)
-		bus_teardown_intr(dev, sc->bge_irq, sc->bge_intrhand);
-
-	if (sc->bge_irq != NULL)
-		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->bge_irq);
-
-	if (sc->bge_res != NULL)
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    BGE_PCI_BAR0, sc->bge_res);
-
-	if (sc->bge_rdata != NULL)
-		contigfree(sc->bge_rdata,
-		    sizeof(struct bge_ring_data), M_DEVBUF);
-#endif
 }
 
 void
@@ -3102,6 +3086,8 @@ bge_stop(sc)
 
 	timeout_del(&sc->bge_timeout);
 
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	/*
 	 * Disable all of the receiver blocks
 	 */
@@ -3182,8 +3168,6 @@ bge_stop(sc)
 	sc->bge_link = 0;
 
 	sc->bge_tx_saved_considx = BGE_TXCONS_UNSET;
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 /*
