@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.34 2005/05/27 02:07:13 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.35 2005/06/26 19:22:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -51,7 +51,8 @@
 #define	F_CONNECTED		0x0004
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
-#define	F_LONGER		0x0040
+#define	F_DYNAMIC		0x0040
+#define	F_LONGER		0x0080
 
 #define REDISTRIBUTE_STATIC	0x01
 #define REDISTRIBUTE_CONNECTED	0x02

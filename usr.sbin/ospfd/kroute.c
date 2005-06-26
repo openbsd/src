@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.18 2005/05/24 21:36:40 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.19 2005/06/26 19:22:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -330,6 +330,10 @@ kr_redistribute(int type, struct kroute *kr)
 {
 	u_int32_t	a;
 
+	/* Dynamic routes are not redistributable. */
+	if (kr->flags & F_DYNAMIC)
+		return;
+	
 	/*
 	 * We consider the loopback net, multicast and experimental addresses
 	 * as not redistributable.
@@ -780,6 +784,8 @@ fetchtable(void)
 			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
 			if (rtm->rtm_flags & RTF_STATIC)
 				kr->r.flags |= F_STATIC;
+			if (rtm->rtm_flags & RTF_DYNAMIC)
+				kr->r.flags |= F_DYNAMIC;
 			if (sa_in != NULL) {
 				if (sa_in->sin_len == 0)
 					break;
@@ -955,6 +961,8 @@ dispatch_rtmsg(void)
 					    prefixlen_classful(prefix.s_addr);
 				if (rtm->rtm_flags & RTF_STATIC)
 					flags |= F_STATIC;
+				if (rtm->rtm_flags & RTF_DYNAMIC)
+					flags |= F_DYNAMIC;
 				break;
 			default:
 				continue;
