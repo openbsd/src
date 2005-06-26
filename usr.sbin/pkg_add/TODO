@@ -1,8 +1,8 @@
 - handle n-to-1 updates: mostly need to allow for a list of replaced packages.
 The tricky part is that the replaced packages will often have 
 inter-dependencies, and we must ignore those inter-dependencies.
-- UStar::write method, so that we can handle long links, and that we can
-write a decent pkg_merge.
 - rewrite of PackageLocator to make listing of distant packages effective,
 which is the first step of pkg updates.
 - finish pulling the pkg_add code into Add.pm/Update.pm.
+- add aliasing support to Ustar writer so that pkg_merge can safely copy
+links over.
