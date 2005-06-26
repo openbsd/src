@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.45 2005/06/21 19:12:31 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.46 2005/06/26 11:23:35 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -163,7 +163,12 @@ sub FatOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-		next unless m/^\@(?:name\b|arch\b)/o;
+		# XXX optimization
+		if (m/^\@arch\b/o) {
+			&$cont($_);
+			return;
+		}
+		next unless m/^\@(?:name\b)/o;
 		&$cont($_);
 	}
 }
