@@ -112,12 +112,12 @@ sub occurs_first
 }
 
 
-set_usage('pkg_merge -o result pkg pkg2 ...');
+set_usage('pkg_merge [-v] -o result pkg pkg2 ...');
 
-our ($opt_o);
+our ($opt_o, $opt_v);
 
 try {
-	getopts('o:');
+	getopts('o:v');
 } catchall {
 	Usage($_);
 };
@@ -156,6 +156,9 @@ for my $pkgname (@ARGV) {
 	$prefix++;
 }
 
+my $total_files = 0;
+my $total_size = 0;
+
 # For now, we assume packing-lists contain the same items.
 while(1) {
 	# kill empty lists
@@ -178,17 +181,13 @@ while(1) {
 	# second case: a name that occurs first in some lists,
 	# and not in the others
 	if (!defined $name) {
-		print "(first)";
 		$name = occurs_first(\@tomerge);
 	}
 
 	# else, try random
 	if (!defined $name) {
-		print "(random)";
 		$name = $tomerge[0]->{tocopy}->[0]->{name};
 	}
-
-	print $name, "\n";
 
 	my $allprefix='';
 	my $ref;
@@ -200,9 +199,11 @@ while(1) {
 		}
 	}
 
+	my $all_copies = 0;
 	while (@mergeable > 0) {
 		my $pkg = shift @mergeable;
 		my $ref = shift @{$pkg->{tocopy}};
+		my $copies = 0;
 		my $currentprefix = $pkg->{prefix};
 		my @todo = ();
 		for my $cmp (@mergeable) {
@@ -210,12 +211,24 @@ while(1) {
 			my $i = shift @{$cmp->{tocopy}};
 			$i->copy_over(undef, undef, $cmp);
 			$currentprefix .= $cmp->{prefix};
+			$copies++;
 		    } else {
 			    push(@todo, $cmp);
 		    }
 		}
+		$total_files += $copies;
+		$total_size += $ref->{size} * $copies;
 		$ref->copy_over($wrarc, $currentprefix, $pkg);
 		@mergeable = @todo;
+		$all_copies += $copies;
+	}
+	if ($opt_v) {
+		if ($all_copies) {
+			print "$name (shared: $all_copies)\n";
+		} else {
+			print $name, "\n";
+		}
 	}
 }
 $wrarc->close();
+print "Shared $total_files files for $total_size bytes\n" if $opt_v;
