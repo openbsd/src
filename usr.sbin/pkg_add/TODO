@@ -4,5 +4,3 @@ inter-dependencies, and we must ignore those inter-dependencies.
 - rewrite of PackageLocator to make listing of distant packages effective,
 which is the first step of pkg updates.
 - finish pulling the pkg_add code into Add.pm/Update.pm.
-- add aliasing support to Ustar writer so that pkg_merge can safely copy
-links over.
