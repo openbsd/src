@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.112 2005/05/26 06:11:09 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.113 2005/06/26 20:49:24 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -117,7 +117,7 @@ message_alloc(struct transport *t, u_int8_t *buf, size_t sz)
 	/*
 	 * We use calloc(3) because it zeroes the structure which we rely on in
 	 * message_free when determining what sub-allocations to free.
-         */
+	 */
 	msg = (struct message *)calloc(1, sizeof *msg);
 	if (!msg)
 		return 0;
@@ -575,7 +575,7 @@ message_validate_cert_req(struct message *msg, struct payload *p)
 	/*
 	 * Check the certificate types we support and if an acceptable
 	 * authority is included in the payload check if it can be decoded
-         */
+	 */
 	cert = cert_get(GET_ISAKMP_CERTREQ_TYPE(p->p));
 	if (!cert || (len && !cert->certreq_validate(p->p +
 	    ISAKMP_CERTREQ_AUTHORITY_OFF, len))) {
@@ -1002,7 +1002,7 @@ message_validate_sa(struct message *msg, struct payload *p)
 	 * already set, then we are creating a new phase 1 SA.  Otherwise,
 	 * lookup the SA using the cookies and the message ID.  If we cannot
 	 * find it, and the phase 1 SA is ready, setup a phase 2 SA.
-         */
+	 */
 	if (!exchange) {
 		if (zero_test(pkt + ISAKMP_HDR_RCOOKIE_OFF,
 		    ISAKMP_HDR_RCOOKIE_LEN))
@@ -1025,7 +1025,7 @@ message_validate_sa(struct message *msg, struct payload *p)
 	/*
 	 * Create a struct sa for each SA payload handed to us unless we are
 	 * the initiator where we only will count them.
-         */
+	 */
 	if (exchange->initiator) {
 		/* XXX Count SA payloads.  */
 	} else if (sa_create(exchange, msg->transport)) {
@@ -1041,7 +1041,7 @@ message_validate_sa(struct message *msg, struct payload *p)
 	/*
 	 * Let the DOI validate the situation, at the same time it tells us
 	 * what the length of the situation field is.
-         */
+	 */
 	if (exchange->doi->validate_situation(p->p + ISAKMP_SA_SIT_OFF, &len,
 	    GET_ISAKMP_GEN_LENGTH(p->p) - ISAKMP_SA_SIT_OFF)) {
 		log_print("message_validate_sa: situation not supported");
@@ -1109,7 +1109,7 @@ message_validate_transform(struct message *msg, struct payload *p)
 	/*
 	 * Check that we get monotonically increasing transform numbers per
 	 * proposal.
-         */
+	 */
 	if (prop != last_prop)
 		last_prop = prop;
 	else if (GET_ISAKMP_TRANSFORM_NO(p->p) <= last_xf_no) {
@@ -1254,10 +1254,10 @@ message_recv(struct message *msg)
 	 * If the responder cookie is zero, this is a request to setup an
 	 * ISAKMP SA.  Otherwise the cookies should refer to an existing
 	 * ISAKMP SA.
-         *
+	 *
 	 * XXX This is getting ugly, please reread later to see if it can be
 	 * made nicer.
-         */
+	 */
 	setup_isakmp_sa = zero_test(buf + ISAKMP_HDR_RCOOKIE_OFF,
 	    ISAKMP_HDR_RCOOKIE_LEN);
 	if (setup_isakmp_sa) {
@@ -1351,7 +1351,7 @@ message_recv(struct message *msg)
 	 * until after all payloads have been seen for the validation as the
 	 * SA payload might not yet have been parsed, thus the DOI might be
 	 * unknown.
-         */
+	 */
 	exch_type = GET_ISAKMP_HDR_EXCH_TYPE(buf);
 	if (exch_type == ISAKMP_EXCH_NONE ||
 	    (exch_type >= ISAKMP_EXCH_FUTURE_MIN &&
@@ -1366,7 +1366,7 @@ message_recv(struct message *msg)
 	/*
 	 * Check for unrecognized flags, or the encryption flag when we don't
 	 * have an ISAKMP SA to decrypt with.
-         */
+	 */
 	flags = GET_ISAKMP_HDR_FLAGS(buf);
 	if (flags & ~(ISAKMP_FLAGS_ENC | ISAKMP_FLAGS_COMMIT |
 	    ISAKMP_FLAGS_AUTH_ONLY)) {
@@ -1380,7 +1380,7 @@ message_recv(struct message *msg)
 	 * zero.
 	 */
 	msgid_is_zero = zero_test(buf + ISAKMP_HDR_MESSAGE_ID_OFF,
-				  ISAKMP_HDR_MESSAGE_ID_LEN);
+	    ISAKMP_HDR_MESSAGE_ID_LEN);
 	if (setup_isakmp_sa && !msgid_is_zero) {
 		log_print("message_recv: invalid message id");
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_MESSAGE_ID, 0, 1, 1);
@@ -1434,7 +1434,7 @@ message_recv(struct message *msg)
 	/*
 	 * Check the overall payload structure at the same time as indexing
 	 * them by type.
-         */
+	 */
 	if (GET_ISAKMP_HDR_NEXT_PAYLOAD(buf) != ISAKMP_PAYLOAD_NONE &&
 	    message_sort_payloads(msg, GET_ISAKMP_HDR_NEXT_PAYLOAD(buf))) {
 		if (ks)
@@ -1446,7 +1446,7 @@ message_recv(struct message *msg)
 	 * message needs either to be retained for later duplicate checks or
 	 * freed entirely.
 	 * XXX Should SAs and even transports be cleaned up then too?
-         */
+	 */
 	if (message_validate_payloads(msg)) {
 		if (ks)
 			free(ks);
@@ -1478,7 +1478,7 @@ message_recv(struct message *msg)
 	/*
 	 * Now we can validate DOI-specific exchange types.  If we have no SA
 	 * DOI-specific exchange types are definitely wrong.
-         */
+	 */
 	if (exch_type >= ISAKMP_EXCH_DOI_MIN &&
 	    msg->exchange->doi->validate_exchange(exch_type)) {
 		log_print("message_recv: invalid DOI exchange type %d",
@@ -1551,7 +1551,7 @@ message_send(struct message *msg)
 	/*
 	 * If the ISAKMP SA has set up encryption, encrypt the message.
 	 * However, in a retransmit, it is already encrypted.
-         */
+	 */
 	if ((msg->flags & MSG_ENCRYPTED) == 0 &&
 	    exchange->flags & EXCHANGE_FLAG_ENCRYPT) {
 		if (!exchange->keystate) {
@@ -1580,7 +1580,7 @@ message_send(struct message *msg)
 	 * If we get a retransmission of a message before our response
 	 * has left the queue, don't queue it again, as it will result
 	 * in a circular list.
-         */
+	 */
 	q = msg->transport->vtbl->get_queue(msg);
 	for (m = TAILQ_FIRST(q); m; m = TAILQ_NEXT(m, link))
 		if (m == msg) {
@@ -1660,7 +1660,7 @@ message_add_payload(struct message *msg, u_int8_t payload, u_int8_t *buf,
 	 * For the sake of exchange_validate we index the payloads even in
 	 * outgoing messages, however context and flags are uninteresting in
 	 * this situation.
-         */
+	 */
 	payload_node->p = buf;
 	TAILQ_INSERT_TAIL(&msg->payload[payload], payload_node, link);
 	return 0;
@@ -1975,7 +1975,7 @@ message_encrypt(struct message *msg)
 	 * For encryption we need to put all payloads together in a single
 	 * buffer.  This buffer should be padded to the current crypto
 	 * transform's blocksize.
-         */
+	 */
 	for (i = 1; i < msg->iovlen; i++)
 		sz += msg->iov[i].iov_len;
 	sz = ((sz + exchange->crypto->blocksize - 1) /
@@ -2054,7 +2054,7 @@ message_check_duplicate(struct message *msg)
 	/*
 	 * As this new message is an indication that state is moving forward
 	 * at the peer, remove the retransmit timer on our last message.
-         */
+	 */
 	if (exchange->last_sent) {
 		if (exchange->last_sent == exchange->in_transit) {
 			struct message *m = exchange->in_transit;
@@ -2099,7 +2099,7 @@ message_negotiate_sa(struct message *msg, int (*validate)(struct exchange *,
 	/*
 	 * This algorithm is a weird bottom-up thing... mostly due to the
 	 * payload links pointing upwards.
-         *
+	 *
 	 * The algorithm goes something like this:
 	 * Foreach transform
 	 *   If transform is compatible
@@ -2115,7 +2115,7 @@ message_negotiate_sa(struct message *msg, int (*validate)(struct exchange *,
 	 *   If the next transform belongs to a new SA
 	 *     If no transforms have been chosen
 	 *       Issue a NO_PROPOSAL_CHOSEN notification
-         */
+	 */
 
 	sa = TAILQ_FIRST(&exchange->sa_list);
 	TAILQ_FOREACH(tp, &msg->payload[ISAKMP_PAYLOAD_TRANSFORM], link) {
@@ -2256,7 +2256,7 @@ cleanup:
 	/*
 	 * Remove potentially succeeded choices from the SA.
 	 * XXX Do we leak struct protos and related data here?
-         */
+	 */
 	while (TAILQ_FIRST(&sa->protos))
 		TAILQ_REMOVE(&sa->protos, TAILQ_FIRST(&sa->protos), link);
 	return -1;
@@ -2283,7 +2283,7 @@ message_add_sa_payload(struct message *msg)
 
 	/*
 	 * Generate SA payloads.
-         */
+	 */
 	for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
 	    sa = TAILQ_NEXT(sa, next)) {
 		/* Setup a SA payload.  */
