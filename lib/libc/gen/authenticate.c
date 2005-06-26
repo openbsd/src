@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.13 2002/10/15 20:16:08 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.14 2005/06/26 16:39:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -490,5 +490,6 @@ auth_verify(auth_session_t *as, char *style, char *name, ...)
 	auth_set_va_list(as, ap);
 	auth_call(as, path, auth_getitem(as, AUTHV_STYLE), "-s",
 	    auth_getitem(as, AUTHV_SERVICE), name, (char *)NULL);
+	va_end(ap);
 	return (as);
 }
