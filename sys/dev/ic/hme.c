@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.37 2005/06/08 04:14:25 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.38 2005/06/26 04:27:19 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -620,6 +620,9 @@ hme_init(sc)
 	/* Call MI initialization function if any */
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
+
+	/* Set the current media. */
+	mii_mediachg(&sc->sc_mii);
 
 	/* Start the one second timer. */
 	timeout_add(&sc->sc_tick_ch, hz);
