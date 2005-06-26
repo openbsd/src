@@ -28,6 +28,7 @@ sub copy_over {}
 
 sub mark_tocopy {}
 
+sub make_alias {}
 package OpenBSD::PackingElement::FileBase;
 sub mark_tocopy
 {
@@ -43,9 +44,18 @@ sub copy_over
 		die "Names don't match: ", $e->{name}, " ", $self->{name};
 	}
 	$e->{name} = $prefix."/".$e->{name};
-	if (defined $wrarc) {
-		$e->copy($wrarc);
+	$e->copy($wrarc);
+}
+
+sub make_alias
+{
+	my ($self, $wrarc, $prefix, $pkg, $alias) = @_;
+	my $e = $pkg->{pkg}->next();
+	if ($e->{name} ne $self->{name}) {
+		die "Names don't match: ", $e->{name}, " ", $self->{name};
 	}
+	$e->{name} = $prefix."/".$e->{name};
+	$e->alias($wrarc, "$prefix/$alias");
 }
 
 package OpenBSD::PackingElement::SpecialFile;
@@ -206,10 +216,10 @@ while(1) {
 		my $copies = 0;
 		my $currentprefix = $pkg->{prefix};
 		my @todo = ();
+		my @merged = ();
 		for my $cmp (@mergeable) {
 		    if (defined $ref->{md5} && $cmp->{tocopy}->[0]->{md5} eq $ref->{md5}) {
-			my $i = shift @{$cmp->{tocopy}};
-			$i->copy_over(undef, undef, $cmp);
+		    	push(@merged, $cmp);
 			$currentprefix .= $cmp->{prefix};
 			$copies++;
 		    } else {
@@ -221,6 +231,10 @@ while(1) {
 		$ref->copy_over($wrarc, $currentprefix, $pkg);
 		@mergeable = @todo;
 		$all_copies += $copies;
+		for my $pkg2 (@merged) {
+			my $i = shift @{$pkg2->{tocopy}};
+			$i->make_alias($wrarc, $currentprefix, $pkg2, $name);
+		}
 	}
 	if ($opt_v) {
 		if ($all_copies) {

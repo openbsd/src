@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.13 2005/06/26 12:44:29 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.14 2005/06/26 16:41:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -448,6 +448,9 @@ sub next
 					return $self->next();
 				}
 				$e->{name} = $name;
+				if ($e->isHardLink()) {
+					$e->{linkname} =~ s/^(.*?)\///;
+				}
 			}
 		}
 		$self->{_current} = $e;
