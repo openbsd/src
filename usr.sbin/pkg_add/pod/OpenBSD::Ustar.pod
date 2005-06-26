@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.7 2005/06/20 13:27:38 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.8 2005/06/26 16:48:30 espie Exp $
 
 =head1 NAME
 
@@ -171,6 +171,11 @@ later be changed through C<$arc-E<gt>destdir($value)>.
 During writing, hard link status is determined according to already written
 archive entries: a name that references a file which has already been written
 will be granted hard link status.
+
+Hard links can not be copied from one archive to another unless the original
+file has also been copied.  Calling C<$o-E<gt>alias($arc, $name)> will trick
+the destination archive C<$arc> into believing C<$o> has been copied under the
+given C<$name>, so that further hard links will be copied over.
 
 Archives can be copied by creating separate archives for reading and writing.
 Calling C<$o = $rdarc-E<gt>next()> and C<$o-E<gt>copy($wrarc)> will copy
