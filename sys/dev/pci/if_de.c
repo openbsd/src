@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.72 2005/06/20 22:44:39 martin Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.73 2005/06/26 01:38:39 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4805,15 +4805,6 @@ tulip_attach(
 	   (sc->tulip_features & (TULIP_HAVE_ISVSROM|TULIP_HAVE_OKSROM))
 		 == TULIP_HAVE_ISVSROM ? " (invalid EESPROM checksum)" : "",
 	   TULIP_EADDR_ARGS(sc->tulip_enaddr));
-
-#if defined(__alpha__)
-    /*
-     * In case the SRM console told us about a bogus media,
-     * we need to check to be safe.
-     */
-    if (sc->tulip_mediums[sc->tulip_media] == NULL)
-	sc->tulip_media = TULIP_MEDIA_UNKNOWN;
-#endif
 
     (*sc->tulip_boardsw->bd_media_probe)(sc);
 #if defined(IFM_ETHER)
