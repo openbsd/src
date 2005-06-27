@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.6 2005/06/08 21:57:44 espie Exp $	*/
+/*	$OpenBSD: cd.h,v 1.7 2005/06/27 18:17:57 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -236,7 +236,6 @@ struct cd_softc {
 #endif
 	struct buf buf_queue;
 	char name[16]; /* product name, for default disklabel */
-	const struct cd_ops *sc_ops;	/* our bus-dependent ops vector */
 
 #if NRND > 0
 	rndsource_element_t	rnd_source;
