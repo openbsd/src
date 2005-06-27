@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.76 2005/06/17 16:45:02 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.77 2005/06/27 22:08:39 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -504,10 +504,9 @@ brelse(struct buf *bp)
 			CLR(bp->b_flags, B_DELWRI);
 		}
 
-		if (bp->b_vp) {
-			reassignbuf(bp);
+		if (bp->b_vp)
 			brelvp(bp);
-		}
+
 		if (bp->b_bufsize <= 0) {
 			/* no data */
 			bufq = &bufqueues[BQ_EMPTY];
