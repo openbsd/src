@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.51 2005/06/10 18:52:51 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.52 2005/06/27 08:55:39 jmc Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -186,6 +186,13 @@ not want the extra disk activity associated with updating the atime.
 .It noaccesstime
 Synonym for noatime provided for compatibility with
 other operating systems.
+.It noauto
+Do not mount the file system automatically
+(either at boot or with the
+.Fl A
+or
+.Fl a
+options).
 .It nodev
 Do not interpret character or block special devices on the file system.
 This option is useful for a server that has file systems containing
