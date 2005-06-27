@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.26 2004/12/23 17:43:18 aaron Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.27 2005/06/27 02:36:06 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -578,5 +578,5 @@ pci_intr_disestablish(pc, cookie)
 	void *cookie;
 {
 	/* XXX oh, unroute the pci int link? */
-	return (isa_intr_disestablish(NULL, cookie));
+	isa_intr_disestablish(NULL, cookie);
 }
