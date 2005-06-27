@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.418 2005/06/17 23:50:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.419 2005/06/27 20:45:20 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -239,6 +239,7 @@ pccom*	at ast?
 pccom*	at pcmcia?			# PCMCIA modems/serial ports
 pccom*	at isapnp?
 pccom*	at puc?
+pccom*	at cardbus?
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
