@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.7 2005/05/09 00:38:57 brad Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.8 2005/06/27 21:38:27 deraadt Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ typedef u_int16_t cardbus_product_id_t;
 	    (((bhlcr) >> CARDBUS_CACHELINE_SHIFT) & CARDBUS_CACHELINE_MASK)
 
 
-/* Base Resisters */
+/* Base Registers */
 #define CARDBUS_BASE0_REG  0x10
 #define CARDBUS_BASE1_REG  0x14
 #define CARDBUS_BASE2_REG  0x18
