@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.17 2005/05/27 02:01:53 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.18 2005/06/27 17:59:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -140,7 +140,7 @@ int		 start_spf_holdtimer(struct ospfd_conf *);
 
 void		 rt_init(void);
 int		 rt_compare(struct rt_node *, struct rt_node *);
-struct rt_node	*rt_find(in_addr_t, u_int8_t);
+struct rt_node	*rt_find(in_addr_t, u_int8_t, enum dst_type);
 int		 rt_insert(struct rt_node *);
 int		 rt_remove(struct rt_node *);
 void		 rt_clear(void);

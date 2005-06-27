@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.27 2005/06/26 23:50:10 deraadt Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.28 2005/06/27 17:59:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -39,9 +39,9 @@ void		 spf_dump(struct area *);	/* XXX */
 void		 cand_list_dump(void);		/* XXX */
 void		 calc_next_hop(struct vertex *, struct vertex *);
 void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
-		     u_int32_t, struct in_addr, struct in_addr, u_int8_t,
-		     u_int8_t, u_int8_t);
-struct rt_node	*rt_lookup(u_int8_t, in_addr_t);
+		     u_int32_t, struct in_addr, struct in_addr, enum path_type,
+		     enum dst_type, u_int8_t);
+struct rt_node	*rt_lookup(enum dst_type, in_addr_t);
 void		 rt_invalidate(void);
 int		 linked(struct vertex *, struct vertex *);
 
@@ -87,7 +87,7 @@ spf_calc(struct area *area)
 	u_int32_t		 cost2, d;
 	int			 i;
 	struct in_addr		 addr, adv_rtr, a;
-	u_int8_t		 type;
+	enum dst_type		 type;
 
 	log_debug("spf_calc: calculation started, area ID %s",
 	    inet_ntoa(area->id));
@@ -631,16 +631,21 @@ rt_compare(struct rt_node *a, struct rt_node *b)
 		return (-1);
 	if (a->prefixlen > b->prefixlen)
 		return (1);
+	if (a->d_type > b->d_type)
+		return (-1);
+	if (a->d_type < b->d_type)
+		return (1);
 	return (0);
 }
 
 struct rt_node *
-rt_find(in_addr_t prefix, u_int8_t prefixlen)
+rt_find(in_addr_t prefix, u_int8_t prefixlen, enum dst_type d_type)
 {
 	struct rt_node	s;
 
 	s.prefix.s_addr = prefix;
 	s.prefixlen = prefixlen;
+	s.d_type = d_type;
 
 	return (RB_FIND(rt_tree, &rt, &s));
 }
@@ -744,14 +749,15 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 void
 rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
      u_int32_t cost, u_int32_t cost2, struct in_addr area,
-     struct in_addr adv_rtr, u_int8_t p_type, u_int8_t d_type, u_int8_t flags)
+     struct in_addr adv_rtr, enum path_type p_type, enum dst_type d_type,
+     u_int8_t flags)
 {
 	struct rt_node	*rte;
 
 	if (nexthop.s_addr == 0)	/* XXX remove */
 		fatalx("rt_update: invalid nexthop");
 
-	if ((rte = rt_find(prefix.s_addr, prefixlen)) == NULL) {
+	if ((rte = rt_find(prefix.s_addr, prefixlen, d_type)) == NULL) {
 		if ((rte = calloc(1, sizeof(struct rt_node))) == NULL)
 			fatalx("rt_update");
 		rte->prefix.s_addr = prefix.s_addr;
@@ -796,22 +802,17 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 }
 
 struct rt_node *
-rt_lookup(u_int8_t type, in_addr_t addr)
+rt_lookup(enum dst_type type, in_addr_t addr)
 {
 	struct rt_node	*rn;
 	u_int8_t	 i = 32;
 
-	if (type == DT_RTR) {
-		rn = rt_find(addr, 32);
-		if (rn == NULL || rn->d_type != DT_RTR)
-			/* /32 networks need to be ignored */
-			return (NULL);
-		return (rn);
-	}
+	if (type == DT_RTR)
+		return (rt_find(addr, 32, type));
 
+	/* type == DT_NET */
 	do {
-		/* a DT_NET /32 is equivalent to a DT_RTR */
-		if ((rn = rt_find(addr & prefixlen2mask(i), i)))
+		if ((rn = rt_find(addr & prefixlen2mask(i), i, type)))
 			return (rn);
 	} while (i-- != 0);
 
