@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.9 2004/10/07 21:16:59 brad Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.10 2005/06/27 19:21:07 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -129,6 +129,8 @@ static struct csdev {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_GLOBALMODEM56,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_SERIAL,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO }
 };
 
@@ -263,11 +265,9 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 		csc->cc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->cc_cben = CARDBUS_MEM_ENABLE;
 	}
-	sc->sc_iobase = csc->cc_addr;
 
-#if 0
+	sc->sc_iobase = csc->cc_addr;
 	sc->sc_frequency = COM_FREQ;
-#endif
 
 	sc->enable = com_cardbus_enable;
 	sc->disable = com_cardbus_disable;
@@ -279,20 +279,10 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 		printf("%s", DEVNAME(csc));
 	}
 
-#ifdef __OpenBSD__
 	if (com_cardbus_enable(sc))
 		printf(": function enable failed\n");
-
 	sc->enabled = 1;
-
 	com_cardbus_attach2(sc);
-#else
-	com_cardbus_setup(csc);
-
-	com_attach_subr(sc);
-
-	Cardbus_function_disable(csc->cc_ct);
-#endif
 }
 
 void
@@ -484,6 +474,7 @@ com_cardbus_attach2(sc)
 	 * Print UART type and initialize ourself.
 	 */
 	sc->sc_fifolen = 1;	/* default */
+	printf(" ");
 	switch (sc->sc_uarttype) {
 	case COM_UART_UNKNOWN:
 		printf("unknown uart\n");
