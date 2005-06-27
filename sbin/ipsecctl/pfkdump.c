@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.3 2005/06/06 07:15:46 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.4 2005/06/27 21:26:02 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -54,6 +54,8 @@ static char    *lookup_name(struct idname [], u_int8_t);
 static void	print_ext(struct sadb_ext *, struct sadb_msg *, int);
 
 void		pfkey_print_sa(struct sadb_msg *, int);
+
+struct sadb_ext *extensions[SADB_EXT_MAX];
 
 struct idname {
 	u_int8_t id;
@@ -183,13 +185,17 @@ print_ext(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
 	struct idname *entry;
 
+	if (ext->sadb_ext_type == SADB_EXT_ADDRESS_SRC ||
+	    ext->sadb_ext_type == SADB_EXT_ADDRESS_DST)
+		return;
+
 	if ((entry = lookup(ext_types, ext->sadb_ext_type)) == NULL) {
 		printf("unknown ext: type %u len %u\n",
 		    ext->sadb_ext_type, ext->sadb_ext_len);
 		return;
 	}
 
-	if (!(opts & IPSECCTL_OPT_VERBOSE) && entry->id != SADB_EXT_SA)
+	if (!(opts & IPSECCTL_OPT_VERBOSE) && (entry->id != SADB_EXT_SA))
 		return;
 	if (entry->id != SADB_EXT_SA)
 		printf("\t%s: ", entry->name);
@@ -203,26 +209,34 @@ print_ext(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 static void
 print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-	struct sadb_sa *sa = (struct sadb_sa *) ext;
+	struct sadb_sa *sa = (struct sadb_sa *)ext;
 
 	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
-		printf("cpi 0x%8.8x comp %s",
+		printf("cpi 0x%8.8x %s",
 		    ntohl(sa->sadb_sa_spi),
 		    lookup_name(comp_types, sa->sadb_sa_encrypt));
 	else
-		printf("spi 0x%8.8x auth %s enc %s",
+		printf("spi 0x%8.8x %s %s",
 		    ntohl(sa->sadb_sa_spi),
-		    lookup_name(auth_types, sa->sadb_sa_auth),
-		    lookup_name(enc_types, sa->sadb_sa_encrypt));
+		    lookup_name(enc_types, sa->sadb_sa_encrypt),
+		    lookup_name(auth_types, sa->sadb_sa_auth));
 	if (sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
 		printf(" tunnel");
+	if (extensions[SADB_EXT_ADDRESS_SRC]) {
+		printf(" from ");
+		print_addr(extensions[SADB_EXT_ADDRESS_SRC], msg);
+	}
+	if (extensions[SADB_EXT_ADDRESS_DST]) {
+		printf(" to ");
+		print_addr(extensions[SADB_EXT_ADDRESS_DST], msg);
+	}
 	printf("\n");
 }
 
 static void
 print_addr(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-	struct sadb_address *addr = (struct sadb_address *) ext;
+	struct sadb_address *addr = (struct sadb_address *)ext;
 	struct sockaddr *sa;
 	struct sockaddr_in *sin4;
 	struct sockaddr_in6 *sin6;
@@ -248,13 +262,12 @@ print_addr(struct sadb_ext *ext, struct sadb_msg *msg)
 			printf(" port %u", ntohs(sin6->sin6_port));
 		break;
 	}
-	printf("\n");
 }
 
 static void
 print_key(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-	struct sadb_key *key = (struct sadb_key *) ext;
+	struct sadb_key *key = (struct sadb_key *)ext;
 	u_int8_t *data;
 	int i;
 
@@ -270,7 +283,7 @@ print_key(struct sadb_ext *ext, struct sadb_msg *msg)
 static void
 print_life(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-	struct sadb_lifetime *life = (struct sadb_lifetime *) ext;
+	struct sadb_lifetime *life = (struct sadb_lifetime *)ext;
 
 	printf("alloc %u bytes %llu add %llu first %llu\n",
 	    life->sadb_lifetime_allocations,
@@ -282,7 +295,7 @@ print_life(struct sadb_ext *ext, struct sadb_msg *msg)
 static void
 print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-	struct sadb_ident *ident = (struct sadb_ident *) ext;
+	struct sadb_ident *ident = (struct sadb_ident *)ext;
 
 	printf("type %s id %llu: %s\n",
 	    lookup_name(identity_types, ident->sadb_ident_type),
@@ -292,16 +305,16 @@ print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 static void
 print_auth(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-	struct sadb_x_cred *x_cred = (struct sadb_x_cred *) ext;
+	struct sadb_x_cred *x_cred = (struct sadb_x_cred *)ext;
 
 	printf("type %s\n",
 	    lookup_name(xauth_types, x_cred->sadb_x_cred_type));
 }
 
-void
+static void
 print_cred(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-	struct sadb_x_cred *x_cred = (struct sadb_x_cred *) ext;
+	struct sadb_x_cred *x_cred = (struct sadb_x_cred *)ext;
 	printf("type %s\n",
 	    lookup_name(cred_types, x_cred->sadb_x_cred_type));
 }
@@ -309,7 +322,7 @@ print_cred(struct sadb_ext *ext, struct sadb_msg *msg)
 static void
 print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg)
 {
-	struct sadb_x_udpencap *x_udpencap = (struct sadb_x_udpencap *) ext;
+	struct sadb_x_udpencap *x_udpencap = (struct sadb_x_udpencap *)ext;
 
 	printf("udpencap port %u\n", ntohs(x_udpencap->sadb_x_udpencap_port));
 }
@@ -318,6 +331,9 @@ void
 pfkey_print_sa(struct sadb_msg *msg, int opts)
 {
 	struct sadb_ext *ext;
+	int		 i;
+
+	bzero(extensions, sizeof(extensions));
 
 	printf("%s ", lookup_name(sa_types, msg->sadb_msg_satype));
 	for (ext = (struct sadb_ext *)(msg + 1);
@@ -325,6 +341,10 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 	    msg->sadb_msg_len * PFKEYV2_CHUNK && ext->sadb_ext_len > 0;
 	    ext = (struct sadb_ext *)((u_int8_t *)ext +
 	    ext->sadb_ext_len * PFKEYV2_CHUNK))
-		print_ext(ext, msg, opts);
+		extensions[ext->sadb_ext_type] = ext;
+
+	for (i = 0; i < SADB_EXT_MAX; i++)
+		if (extensions[i])
+			print_ext(extensions[i], msg, opts);
 	fflush(stdout);
 }
