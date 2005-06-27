@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.21 2005/06/24 23:39:18 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.22 2005/06/27 23:50:43 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -93,83 +93,21 @@ sd_scsibus_get_parms(sd, dp, flags)
 {
 	struct scsi_mode_sense_buf buf;
 	union scsi_disk_pages *sense_pages = NULL;
-	u_int32_t blksize;
+	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize;
 	u_int16_t rpm = 0;
-	int error;
 
 	dp->disksize = scsi_size(sd->sc_link, flags, &blksize);
-	dp->rot_rate = 3600;
 
-	if (sd->type == T_OPTICAL)
-		goto fake_it;
+	switch (sd->type) {
+	case T_OPTICAL:
+		/* No more information needed or available. */
+		break;
 
-	error = scsi_do_mode_sense(sd->sc_link, 4, &buf,
-	    (void **)&sense_pages, NULL, NULL, &blksize,
-	    sizeof(sense_pages->rigid_geometry), flags | SCSI_SILENT, NULL);
-	if (error == 0) {
-		if (sense_pages) { 
-			/*
-			 * KLUDGE!! (for zone recorded disks)
-			 * give a number of sectors so that sec * trks * cyls
-			 * is <= disk_size
-			 * can lead to wasted space! THINK ABOUT THIS !
-			 */
-			dp->heads = sense_pages->rigid_geometry.nheads;
-			dp->cyls = _3btol(sense_pages->rigid_geometry.ncyl);
-			rpm = _2btol(sense_pages->rigid_geometry.rpm);
-		}	
-		if (rpm)
-			dp->rot_rate = rpm;
-
-		dp->blksize = (blksize == 0) ? 512 : blksize;
-
-		if (dp->disksize == 0 || dp->heads == 0 || dp->cyls == 0)
-			goto fake_it;
-
-		/* XXX dubious on SCSI */
-		dp->sectors = dp->disksize / (dp->heads * dp->cyls);
-
-		return (SDGP_RESULT_OK);
-	}
-
-	error = scsi_do_mode_sense(sd->sc_link, 5, &buf,
-	    (void **)&sense_pages, NULL, NULL, &blksize,
-	    sizeof(sense_pages->flex_geometry), flags | SCSI_SILENT, NULL);
-	if (error == 0) {
-		if (sense_pages) {
-			dp->heads = sense_pages->flex_geometry.nheads;
-			dp->cyls = _2btol(sense_pages->flex_geometry.ncyl);
-			dp->sectors = sense_pages->flex_geometry.ph_sec_tr;
-			if (blksize == 0)
-				blksize = _2btol(sense_pages->
-				    flex_geometry.bytes_s);
-			rpm = _2btol(sense_pages->flex_geometry.rpm);
-		}	
-		if (rpm)
-			dp->rot_rate = rpm;
-
-		dp->blksize = (blksize == 0) ? 512 : blksize;
-
-		if (dp->cyls == 0 || dp->heads == 0 || dp->sectors == 0)
-			goto fake_it;
-
-		if (dp->disksize == 0)
-			/* XXX Why go on if READ CAPACITY failed? */
-			dp->disksize = dp->heads * dp->cyls * dp->sectors;
-			
-		return (SDGP_RESULT_OK);
-	}
-
-	/* T_RDIRECT defines page 6. */
-	if (sd->type != T_RDIRECT)
-		goto fake_it;
-
-	error = scsi_do_mode_sense(sd->sc_link, 6, &buf,
-	    (void **)&sense_pages, NULL, NULL, &blksize,
-	    sizeof(sense_pages->reduced_geometry), flags | SCSI_SILENT, NULL);
-	if (error == 0) {
-		dp->heads = 64;
-		dp->sectors = 32;
+	case T_RDIRECT:
+		/* T_RDIRECT only supports RBC Device Parameter Page (6). */
+		scsi_do_mode_sense(sd->sc_link, 6, &buf, (void **)&sense_pages,
+		    NULL, NULL, &blksize, sizeof(sense_pages->reduced_geometry),
+		    flags | SCSI_SILENT, NULL);
 		if (sense_pages) {
 			if (dp->disksize == 0)
 				dp->disksize = _5btol(sense_pages->
@@ -178,26 +116,63 @@ sd_scsibus_get_parms(sd, dp, flags)
 				blksize = _2btol(sense_pages->
 				    reduced_geometry.bytes_s);
 		}
-		dp->blksize = (blksize == 0) ? 512 : blksize;
+		break;
 
-		if (dp->disksize == 0 || dp->sectors == 0)
-			goto fake_it;
-
-		dp->cyls = dp->disksize / (dp->heads * dp->sectors);
-
-		return (SDGP_RESULT_OK);
+	default:
+		/*
+		 * For other devices try mode sense page 4 (RIGID GEOMETRY) and
+		 * if that doesn't work try page 5 (FLEX GEOMETRY).
+		 */
+		scsi_do_mode_sense(sd->sc_link, 4, &buf, (void **)&sense_pages,
+		    NULL, NULL, &blksize, sizeof(sense_pages->rigid_geometry),
+		    flags | SCSI_SILENT, NULL);
+		if (sense_pages) { 
+			heads = sense_pages->rigid_geometry.nheads;
+			cyls = _3btol(sense_pages->rigid_geometry.ncyl);
+			rpm = _2btol(sense_pages->rigid_geometry.rpm);
+			if (heads * cyls > 0)
+				sectors = dp->disksize / (heads * cyls);
+		} else {
+			scsi_do_mode_sense(sd->sc_link, 5, &buf,
+			    (void **)&sense_pages, NULL, NULL, &blksize,
+			    sizeof(sense_pages->flex_geometry),
+			    flags | SCSI_SILENT, NULL);
+			if (sense_pages) {
+				sectors = sense_pages->flex_geometry.ph_sec_tr;
+				heads = sense_pages->flex_geometry.nheads;
+				cyls = _2btol(sense_pages->flex_geometry.ncyl);
+				rpm = _2btol(sense_pages->flex_geometry.rpm);
+				if (blksize == 0)
+					blksize = _2btol(sense_pages->
+					    flex_geometry.bytes_s);
+				if (dp->disksize == 0)
+					dp->disksize = heads * cyls * sectors;
+			}	
+		}
+		break;
 	}
 
-fake_it:
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
 
-	/* Use adaptec standard fictitious geometry. */
+	/*
+	 * Use Adaptec standard geometry values for anything we still don't
+	 * know.
+	 */
 
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = dp->disksize / (64 * 32);
+	dp->heads = (heads == 0) ? 64 : heads;
 	dp->blksize = (blksize == 0) ? 512 : blksize;
+	dp->sectors = (sectors == 0) ? 32 : sectors;
+	dp->rot_rate = (rpm == 0) ? 3600 : rpm;
+
+	/*
+	 * XXX THINK ABOUT THIS!!  Using values such that sectors * heads *
+	 * cyls is <= disk_size can lead to wasted space. We need a more
+	 * careful calculation/validation to make everything work out
+	 * optimally.
+	 */
+	dp->cyls = (cyls == 0) ? dp->disksize / (dp->heads * dp->sectors) :
+	    cyls;
 
 	return (SDGP_RESULT_OK);
 }
