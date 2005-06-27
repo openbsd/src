@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.18 2005/06/27 17:59:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.19 2005/06/27 18:59:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -81,6 +81,7 @@ struct rt_node {
 	u_int8_t		 flags;
 	u_int8_t		 prefixlen;
 	u_int8_t		 invalid;
+	u_int8_t		 connected;
 };
 
 struct abr_rtr {
