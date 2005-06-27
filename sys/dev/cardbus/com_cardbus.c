@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.10 2005/06/27 19:21:07 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.11 2005/06/27 21:38:57 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -338,7 +338,7 @@ com_cardbus_enable(struct com_softc *sc)
 		return (1);
 	}
 
-	printf(": irq %d", psc->sc_intrline);
+	printf(": irq %d,", psc->sc_intrline);
 
 	return (0);
 }
