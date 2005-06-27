@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2005/06/08 19:08:23 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 2005/06/27 14:32:20 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -174,9 +174,6 @@ void bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 static long devio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
 struct extent *devio_ex;
 static int devio_malloc_safe = 0;
-
-/* HACK - XXX */
-int segment8_a_mapped = 0;
 
 extern int OF_stdout;
 
@@ -1034,12 +1031,6 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	    (ppc_malloc_ok ? EX_MALLOCOK : 0))))
 		return error;
 
-	if ((bpa >= 0x80000000) && ((bpa+size) < 0xb0000000)) {
-		if (segment8_a_mapped) {
-			*bshp = bpa;
-			return 0;
-		}
-	}
 	if ((error  = bus_mem_add_mapping(bpa, size, cacheable, bshp))) {
 		if (extent_free(devio_ex, bpa, size, EX_NOWAIT |
 			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
@@ -1171,11 +1162,6 @@ mapiodev(paddr_t pa, psize_t len)
 	spa = trunc_page(pa);
 	off = pa - spa;
 	size = round_page(off+len);
-	if ((pa >= 0x80000000) && ((pa+len) < 0xb0000000)) {
-		if (segment8_a_mapped) {
-			return (void *)pa;
-		}
-	}
 	if (ppc_malloc_ok == 0) {
 		/* need to steal vm space before kernel vm is initialized */
 		va = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
