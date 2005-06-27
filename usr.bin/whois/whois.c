@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.34 2005/06/25 14:27:36 henning Exp $   */
+/*      $OpenBSD: whois.c,v 1.35 2005/06/27 21:01:43 henning Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,6 +38,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,7 +65,7 @@
 #define WHOIS_RECURSE		0x01
 #define WHOIS_QUICK		0x02
 
-const char *port = WHOIS_PORT;
+const char *port_whois = WHOIS_PORT;
 const char *ip_whois[] = { LNICHOST, RNICHOST, PNICHOST, BNICHOST, NULL };
 
 __dead void usage(void);
@@ -109,7 +110,7 @@ main(int argc, char *argv[])
 			host = MNICHOST;
 			break;
 		case 'p':
-			port = optarg;
+			port_whois = optarg;
 			break;
 		case 'q':
 			/* deprecated, now the default */
@@ -139,7 +140,7 @@ main(int argc, char *argv[])
 		flags |= WHOIS_RECURSE;
 	for (name = *argv; (name = *argv) != NULL; argv++)
 		rval += whois(name, host ? host : choose_server(name, country),
-		    port, flags);
+		    port_whois, flags);
 	exit(rval);
 }
 
@@ -169,10 +170,12 @@ whois(const char *query, const char *server, const char *port, int flags)
 	for (s = -1, ai = res; ai != NULL; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s == -1) {
+			error = errno;
 			reason = "socket";
 			continue;
 		}
 		if (connect(s, ai->ai_addr, ai->ai_addrlen) == -1) {
+			error = errno;
 			reason = "connect";
 			close(s);
 			s = -1;
@@ -181,9 +184,10 @@ whois(const char *query, const char *server, const char *port, int flags)
 		break;	/*okay*/
 	}
 	if (s == -1) {
-		if (reason)
+		if (reason) {
+			errno = error;
 			warn("%s: %s", server, reason);
-		else
+		} else
 			warn("unknown error in connection attempt");
 		freeaddrinfo(res);
 		return (1);
@@ -266,6 +270,7 @@ choose_server(const char *name, const char *country)
 {
 	static char *server;
 	const char *qhead;
+	char *nserver;
 	char *ep;
 	size_t len;
 
@@ -283,8 +288,9 @@ choose_server(const char *name, const char *country)
 	} else if (isdigit(*(++qhead)))
 		return (ANICHOST);
 	len = strlen(qhead) + sizeof(QNICHOST_TAIL);
-	if ((server = realloc(server, len)) == NULL)
+	if ((nserver = realloc(server, len)) == NULL)
 		err(1, "realloc");
+	server = nserver;
 	strlcpy(server, qhead, len);
 	strlcat(server, QNICHOST_TAIL, len);
 	return (server);
