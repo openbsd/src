@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.96 2005/05/22 03:29:27 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.97 2005/06/28 13:46:21 martin Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Sun Blade 100/150
 	Sun Fire V100
@@ -140,8 +140,12 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		Realtek 8169/8169S/8110S based PCI adapters, including:
 		    Buffalo LGY-PCI-GT (8169S)
 		    Corega CG-LAPCIGT (8169S)
+		    D-Link DGE-528T (8169S)
 		    Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S)
+		    Netgear GA511 PC Card (8169)
 		    PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
+		    Surecom EP-320G-TX1 (8169S)
+		    US Robotics USR997902 (8169S)
 		    Xterasys XN-152 10/100/1000 NIC (8169) 
 		ADMtek AN986-based USB adapters, including:
 		    Abocom UFE1000
