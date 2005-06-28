@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.7 2005/03/12 17:28:08 grange Exp $
+# $OpenBSD: Makefile.cross,v 1.8 2005/06/28 23:10:36 martin Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -37,8 +37,7 @@ NO_CROSS=	isakmpd tn3270 less sudo openssl libkeynote libssl \
 		photurisd keynote sectok ssh
 
 # no libcrypto.... these won't build
-NO_CROSS+=	telnetd login_krb5 login_krb5-or-pwd dc passwd telnet ppp \
-		tcpdump
+NO_CROSS+=	dc login_krb5 login_krb5-or-pwd passwd ppp tcpdump telnet
 # need host setup for ydr
 NO_CROSS+=afs
 # explicit cross-compile
