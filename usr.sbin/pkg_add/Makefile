@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.23 2005/03/07 21:46:59 espie Exp $
+# $OpenBSD: Makefile,v 1.24 2005/06/28 20:34:55 espie Exp $
 
 .include <bsd.own.mk>
 
-MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1 pkg_mklocatedb.1
+MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg_merge.1 \
+	pkg.1 pkg_mklocatedb.1
 POD2MAN=/usr/bin/pod2man
 
 PACKAGES= \
@@ -37,6 +38,7 @@ SCRIPTS= \
     pkg_info \
     pkg_create \
     pkg_delete \
+    pkg_merge \
     pkg_mklocatedb \
     pkg
 
