@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.13 2005/06/06 21:26:21 hshoexer Exp $ */
+/* $OpenBSD: ike.h,v 1.14 2005/06/28 09:28:28 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -110,10 +110,17 @@
 #define PAYLOAD_DELETE		12
 #define PAYLOAD_VENDOR		13
 #define PAYLOAD_ATTRIBUTE	14
-#define PAYLOAD_RESERVED_MIN	15
+#define PAYLOAD_SAK		15
+#define PAYLOAD_SAT		16
+#define PAYLOAD_KD		17
+#define PAYLOAD_SEQ		18
+#define PAYLOAD_POP		19
+#define PAYLOAD_NAT_D		20
+#define PAYLOAD_NAT_OA		21
+#define PAYLOAD_RESERVED_MIN	22
 #define PAYLOAD_PRIVATE_MIN	128
-#define PAYLOAD_NAT_D		130
-#define PAYLOAD_NAT_OA		131
+#define PAYLOAD_NAT_D_DRAFT	130
+#define PAYLOAD_NAT_OA_DRAFT	131
 #define PAYLOAD_PRIVATE_MAX	132
 
 /* see http://www.iana.org/assignments/isakmp-registry */
