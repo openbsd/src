@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.42 2005/06/05 20:47:44 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.43 2005/06/28 08:44:44 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -337,8 +337,9 @@ struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_REQ_DIFF, "diff",
 	{ "di", "dif" },
 	"Show differences between revisions",
-	"[-cilNnpu] [-D date] [-r rev] ...",
-	"cD:ilNnpr:Ru",
+	"[-cilNnpu] [[-D date] [-r rev] [-D date2 | -r rev2]] "
+	"[-k mode] [file ...]",
+	"cD:iklNnpr:Ru",
 	NULL,
 	CF_RECURSE | CF_IGNORE | CF_SORT | CF_KNOWN,
 	cvs_diff_init,
@@ -353,10 +354,11 @@ struct cvs_cmd cvs_cmd_diff = {
 
 struct cvs_cmd cvs_cmd_rdiff = {
 	CVS_OP_RDIFF, CVS_REQ_DIFF, "rdiff",
-	{ "di", "dif" },
+	{ "pa", "patch" },
 	"Create 'patch' format diffs between releases",
-	"",
-	"",
+	"[-flR] [-c | -u] [-s | -t] [-V ver] -D date | -r rev "
+	"[-D date2 | -rev2] module ...",
+	"cD:flRr:stuV:",
 	NULL,
 	CF_RECURSE | CF_IGNORE | CF_SORT | CF_KNOWN,
 	cvs_diff_init,
