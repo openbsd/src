@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.4 2003/05/17 19:30:55 art Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 2005/06/28 22:32:03 deraadt Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -162,9 +162,9 @@ extern void tlb_flush_ctx(int ctx);
 #define TLB_SZ_MASK		0x6000000000000000LL
 #define TLB_NFO			0x1000000000000000LL
 #define TLB_IE			0x0800000000000000LL
-#define TLB_SOFT2_MASK		0x07fe000000000000LL
-#define TLB_DIAG_MASK		0x0001fe0000000000LL
-#define TLB_PA_MASK		0x000001ffffffe000LL
+#define TLB_SOFT2_MASK		0x07fc000000000000LL
+#define TLB_RESERVED_MASK	0x0003f80000000000LL
+#define TLB_PA_MASK		0x000007ffffffe000LL
 #define TLB_SOFT_MASK		0x0000000000001f80LL
 /* S/W bits */
 /* Access & TSB locked bits are swapped so I can set access w/one insn */
