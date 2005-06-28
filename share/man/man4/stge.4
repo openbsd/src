@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stge.4,v 1.7 2005/05/08 01:58:43 brad Exp $
+.\"	$OpenBSD: stge.4,v 1.8 2005/06/28 00:46:58 brad Exp $
 .\"	$NetBSD: stge.4,v 1.5 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,18 +44,24 @@
 .Sh SYNOPSIS
 .Cd "stge* at pci?"
 .Cd "eephy* at mii?"
-.Pp
-Configuration of PHYs or Ten-bit interfaces may also be necessary.
-See
-.Xr mii 4 .
 .Sh DESCRIPTION
 The
 .Nm
 device driver supports the Sundance/Tamarack TC9021 Gigabit Ethernet
 chip.
 .Pp
-The Sundance/Tamarack TC9021 is found on the D-Link DGE-550T, and
-the Antares Microsystems Gigabit Ethernet board.
+The Sundance/Tamarack TC9021 chip is found on adapters such as the
+following:
+.Pp
+.Bl -bullet -compact
+.It
+Allied Telesis CentreCOM LA1000-PCI-T
+.It
+Antares Microsystems TC9021
+.It
+D-Link DGE-550T
+.El
+.Pp
 It uses an external PHY or an external 10-bit interface.
 .\".Pp
 .\"The TC9021 supports IPv4/TCP/UDP checksumming in hardware.  The
