@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2005/05/26 18:46:16 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.16 2005/06/28 22:35:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -251,7 +251,7 @@ conf_main	: METRIC number {
 			free($2);
 		}
 		| RFC1583COMPAT yesno {
-				conf->rfc1583compat = $2;
+			conf->rfc1583compat = $2;
 		}
 		| SPFDELAY number {
 			if ($2 < MIN_SPF_DELAY || $2 > MAX_SPF_DELAY) {
@@ -352,9 +352,7 @@ area		: AREA string {
 			}
 			free($2);
 			area = conf_get_area(id);
-		} optnl '{' optnl {
-
-		} areaopts_l '}' {
+		} '{' optnl areaopts_l '}' {
 			area = NULL;
 		}
 		;
@@ -417,7 +415,7 @@ areaoptsl	: interface nl
 		}
 		;
 
-interface	: INTERFACE STRING {
+interface	: INTERFACE STRING	{
 			struct kif *kif;
 
 			if ((kif = kif_findname($2)) == NULL) {
@@ -434,11 +432,13 @@ interface	: INTERFACE STRING {
 			    iface, entry);
 			iface->rtr_id = conf->rtr_id;
 			iface->passive = 0;
-		} optnl '{' optnl {
-
-		} interfaceopts_l '}' {
+		} interface_block {
 			iface = NULL;
 		}
+		;
+
+interface_block	: '{' optnl interfaceopts_l '}'
+		|
 		;
 
 interfaceopts_l	: interfaceopts_l interfaceoptsl
