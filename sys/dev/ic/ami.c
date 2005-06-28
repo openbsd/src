@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.42 2005/06/16 20:36:03 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.43 2005/06/28 13:58:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -91,10 +91,12 @@ struct cfdriver ami_cd = {
 };
 
 int	ami_scsi_cmd(struct scsi_xfer *xs);
+int	ami_scsi_ioctl(struct scsi_link *link, u_long cmd,
+    caddr_t addr, int flag, struct proc *p);
 void	amiminphys(struct buf *bp);
 
 struct scsi_adapter ami_switch = {
-	ami_scsi_cmd, amiminphys, 0, 0,
+	ami_scsi_cmd, amiminphys, 0, 0, ami_scsi_ioctl
 };
 
 struct scsi_device ami_dev = {
@@ -133,13 +135,11 @@ int  ami_done(struct ami_softc *sc, int idx);
 void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 int  ami_inquire(struct ami_softc *sc, u_int8_t op);
 
-#if NBIO > 0
 int ami_ioctl(struct device *, u_long, caddr_t);
 int ami_ioctl_alarm(struct ami_softc *, bioc_alarm *);
 int ami_ioctl_startstop( struct ami_softc *, bioc_startstop *);
 int ami_ioctl_status( struct ami_softc *, bioc_status *);
 int ami_ioctl_passthru(struct ami_softc *, bioc_scsicmd *);
-#endif
 
 struct ami_ccb *
 ami_get_ccb(sc)
@@ -1608,7 +1608,13 @@ ami_intr(v)
 	return (rv);
 }
 
-#if NBIO > 0
+int
+ami_scsi_ioctl(struct scsi_link *link, u_long cmd,
+    caddr_t addr, int flag, struct proc *p)
+{
+	return ami_ioctl(link->adapter_softc, cmd, addr);
+}
+
 int
 ami_ioctl(dev, cmd, addr)
 	struct device *dev;
@@ -1993,7 +1999,6 @@ ami_ioctl_passthru(sc, bp)
 
 	return (error);
 }
-#endif /* NBIO > 0 */
 
 #ifdef AMI_DEBUG
 void
