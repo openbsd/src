@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.18 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.19 2005/06/28 14:34:56 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -77,10 +77,8 @@ struct cvs_cmd cvs_cmd_history = {
 };
 
 static int flags = 0;
-static char *rev = NULL;
-static char *user = NULL;
+static char *date, *rev, *user, *tag;
 static char *zone = "+0000";
-static char *tag = NULL;
 static u_int nbmod = 0;
 static u_int rep = 0;
 static char *modules[CVS_HISTORY_MAXMOD];
@@ -89,6 +87,8 @@ static int
 cvs_history_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
+
+	date = rev = user = tag = NULL;
 
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
@@ -177,17 +177,17 @@ cvs_history_pre_exec(struct cvsroot *root)
 	if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
 		return (CVS_EX_PROTO);
 
-	if (rev != NULL) {
-		if ((cvs_sendarg(root, "-r", 0) < 0) ||
-		    (cvs_sendarg(root, rev, 0) < 0))
-			return (CVS_EX_PROTO);
-	}
+	if ((date != NULL) && ((cvs_sendarg(root, "-D", 0) < 0) ||
+	    (cvs_sendarg(root, date, 0) < 0)))
+		return (CVS_EX_PROTO);
 
-	if (tag != NULL) {
-		if ((cvs_sendarg(root, "-t", 0) < 0) ||
-		    (cvs_sendarg(root, tag, 0) < 0))
+	if ((rev != NULL) && ((cvs_sendarg(root, "-r", 0) < 0) ||
+	    (cvs_sendarg(root, rev, 0) < 0)))
 			return (CVS_EX_PROTO);
-	}
+
+	if ((tag != NULL) && ((cvs_sendarg(root, "-t", 0) < 0) ||
+	    (cvs_sendarg(root, tag, 0) < 0)))
+			return (CVS_EX_PROTO);
 
 	/* if no user is specified, get login name of command issuer */
 	if (!(flags & CVS_HF_A) && (user == NULL)) {
