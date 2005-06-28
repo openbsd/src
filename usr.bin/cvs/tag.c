@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.20 2005/05/31 08:26:40 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.21 2005/06/28 13:20:53 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -48,6 +48,7 @@ static char *tag_oldname = NULL;
 static int tag_branch = 0;
 static int tag_delete = 0;
 static int tag_forcehead = 0;
+static int tag_forcemove = 0;
 
 struct cvs_cmd cvs_cmd_tag = {
 	CVS_OP_TAG, CVS_REQ_TAG, "tag",
@@ -71,8 +72,8 @@ struct cvs_cmd cvs_cmd_rtag = {
 	CVS_OP_RTAG, CVS_REQ_TAG, "rtag",
 	{  },
 	"Add a symbolic tag to a module",
-	"",
-	"",
+	"[-abdFflnR] [-D date | -r rev] symbolic_tag modules ...",
+	"abD:fFflnRr:",
 	NULL,
 	CF_SORT | CF_IGNORE | CF_RECURSE,
 	cvs_tag_init,
@@ -98,6 +99,9 @@ cvs_tag_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			break;
 		case 'd':
 			tag_delete = 1;
+			break;
+		case 'F':
+			tag_forcemove = 1;
 			break;
 		case 'f':
 			tag_forcehead = 1;
@@ -168,17 +172,19 @@ cvs_tag_pre_exec(struct cvsroot *root)
 		if (tag_delete && (cvs_sendarg(root, "-d", 0) < 0))
 			return (CVS_EX_PROTO);
 
-		if (tag_oldname) {
-			if ((cvs_sendarg(root, "-r", 0) < 0) ||
-			    (cvs_sendarg(root, tag_oldname, 0) < 0))
-				return (CVS_EX_PROTO);
-		}
+		if (tag_forcemove && (cvs_sendarg(root, "-F", 0) < 0))
+			return (CVS_EX_PROTO);
 
-		if (tag_date) {
-			if ((cvs_sendarg(root, "-D", 0) < 0) ||
-			    (cvs_sendarg(root, tag_date, 0) < 0))
+		if (tag_forcehead && (cvs_sendarg(root, "-f", 0) < 0))
+			return (CVS_EX_PROTO);
+
+		if ((tag_oldname) && ((cvs_sendarg(root, "-r", 0) < 0) ||
+		    (cvs_sendarg(root, tag_oldname, 0) < 0)))
 				return (CVS_EX_PROTO);
-		}
+
+		if ((tag_date) && ((cvs_sendarg(root, "-D", 0) < 0) ||
+		    (cvs_sendarg(root, tag_date, 0) < 0)))
+				return (CVS_EX_PROTO);
 
 		if (cvs_sendarg(root, tag_name, 0) < 0)
 			return (CVS_EX_PROTO);
