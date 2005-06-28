@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.14 2005/05/24 06:14:26 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.15 2005/06/28 03:48:31 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -876,9 +876,9 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU) {
 			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu) {
+		} else if (ifp->if_mtu != ifr->ifr_mtu) {
 			ifp->if_mtu = ifr->ifr_mtu;
 			stge_init(ifp);
 		}
@@ -1393,12 +1393,9 @@ stge_init(struct ifnet *ifp)
 	STGE_RXCHAIN_RESET(sc);
 
 	/* Set the station address. */
-	bus_space_write_2(st, sh, STGE_StationAddress0,
-	    sc->sc_arpcom.ac_enaddr[0] | sc->sc_arpcom.ac_enaddr[1] << 8);
-	bus_space_write_2(st, sh, STGE_StationAddress1,
-	    sc->sc_arpcom.ac_enaddr[2] | sc->sc_arpcom.ac_enaddr[3] << 8);
-	bus_space_write_2(st, sh, STGE_StationAddress2,
-	    sc->sc_arpcom.ac_enaddr[4] | sc->sc_arpcom.ac_enaddr[5] << 8);
+	for (i = 0; i < 6; i++)
+		bus_space_write_1(st, sh, STGE_StationAddress0 + i,
+		    sc->sc_arpcom.ac_enaddr[i]);
 
 	/*
 	 * Set the statistics masks.  Disable all the RMON stats,
@@ -1437,6 +1434,10 @@ stge_init(struct ifnet *ifp)
 
 	/* Initialize the Tx start threshold. */
 	bus_space_write_2(st, sh, STGE_TxStartThresh, sc->sc_txthresh);
+
+	/* RX DMA thresholds, from linux */
+	bus_space_write_1(st, sh, STGE_RxDMABurstThresh, 0x30);
+	bus_space_write_1(st, sh, STGE_RxDMAUrgentThresh, 0x30);
 
 	/*
 	 * Initialize the Rx DMA interrupt control register.  We
@@ -1497,6 +1498,9 @@ stge_init(struct ifnet *ifp)
 		/* Tx Poll Now bug work-around. */
 		bus_space_write_2(st, sh, STGE_DebugCtrl,
 		    bus_space_read_2(st, sh, STGE_DebugCtrl) | 0x0010);
+		/* XXX ? from linux */
+		bus_space_write_2(st, sh, STGE_DebugCtrl,
+		    bus_space_read_2(st, sh, STGE_DebugCtrl) | 0x0020);
 	}
 
 	/*
