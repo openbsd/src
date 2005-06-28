@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.43 2005/06/28 13:58:05 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.44 2005/06/28 15:09:36 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -935,16 +935,78 @@ ami_schwartz_done(sc, mbox)
 }
 
 int
-ami_schwartz_poll(sc, cmd)
+ami_schwartz_poll(sc, mbox)
 	struct ami_softc *sc;
-	struct ami_iocmd *cmd;
+	struct ami_iocmd *mbox;
 {
-	/* FIXME add the actual code here */
+	u_int8_t status;
+	u_int32_t i;
+	int rv;
 
-	if (sc->sc_dis_poll)
+	if (sc->sc_dis_poll) {
 		return 1; /* fail */
+	}
 
-	return 1;
+	for (i = 0; i < AMI_MAX_POLLWAIT; i++) {
+		if (!(bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY))
+			break;
+		delay(1);
+	}
+	if (i >= AMI_MAX_POLLWAIT) {
+		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
+		return (EBUSY);
+	}
+
+	memcpy((struct ami_iocmd *)sc->sc_mbox, mbox, 16);
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+
+	sc->sc_mbox->acc_busy = 1;
+	sc->sc_mbox->acc_poll = 0;
+	sc->sc_mbox->acc_ack = 0;
+	/* send command to firmware */
+	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_EXEC);
+
+	/* wait until no longer busy */
+	for (i = 0; i < AMI_MAX_POLLWAIT; i++) {
+		if (!(bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY))
+			break;
+		delay(1);
+	}
+	if (i >= AMI_MAX_POLLWAIT) {
+		printf("%s: command not accepted, polling disabled\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_dis_poll = 1;
+		return 1; /* fail */
+	}
+
+	/* wait for interrupt bit */
+	for (i = 0; i < AMI_MAX_POLLWAIT; i++) {
+		status = bus_space_read_1(sc->iot, sc->ioh, AMI_ISTAT);
+		if (status & AMI_ISTAT_PEND)
+			break;
+		delay(1);
+	}
+	if (i >= AMI_MAX_POLLWAIT) {
+		printf("%s: interrupt didn't arrive, polling disabled\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_dis_poll = 1;
+		return 1; /* fail */
+	}
+
+	/* write ststus back to firmware */
+	bus_space_write_1(sc->iot, sc->ioh, AMI_ISTAT, status);
+
+	/* copy mailbox and status back */
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
+	    BUS_DMASYNC_PREREAD);
+	*mbox = *sc->sc_mbox;
+	rv = sc->sc_mbox->acc_status;
+
+	/* ack interrupt */
+	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_ACK);
+
+	return rv;
 }
 
 int
