@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.10 2005/05/27 20:39:30 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.11 2005/06/28 18:33:11 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -69,6 +69,7 @@ struct ami_softc {
 	int (*sc_exec)(struct ami_softc *sc, struct ami_iocmd *);
 	int (*sc_done)(struct ami_softc *sc, struct ami_iocmd *);
 	int (*sc_poll)(struct ami_softc *sc, struct ami_iocmd *);
+	int (*sc_ioctl)(struct device *, u_long, caddr_t);
 
 	bus_space_tag_t	iot;
 	bus_space_handle_t ioh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.44 2005/06/28 15:09:36 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.45 2005/06/28 18:33:11 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -135,11 +135,13 @@ int  ami_done(struct ami_softc *sc, int idx);
 void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 int  ami_inquire(struct ami_softc *sc, u_int8_t op);
 
+#if NBIO > 0
 int ami_ioctl(struct device *, u_long, caddr_t);
 int ami_ioctl_alarm(struct ami_softc *, bioc_alarm *);
 int ami_ioctl_startstop( struct ami_softc *, bioc_startstop *);
 int ami_ioctl_status( struct ami_softc *, bioc_status *);
 int ami_ioctl_passthru(struct ami_softc *, bioc_scsicmd *);
+#endif /* NBIO > 0 */
 
 struct ami_ccb *
 ami_get_ccb(sc)
@@ -605,7 +607,9 @@ ami_attach(sc)
 	if (bio_register(&sc->sc_dev, ami_ioctl) != 0)
 		printf("%s: controller registration failed",
 		    sc->sc_dev.dv_xname);
-#endif
+	else
+		sc->sc_ioctl = ami_ioctl;
+#endif /* NBIO > 0 */
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
@@ -1674,9 +1678,15 @@ int
 ami_scsi_ioctl(struct scsi_link *link, u_long cmd,
     caddr_t addr, int flag, struct proc *p)
 {
-	return ami_ioctl(link->adapter_softc, cmd, addr);
+	struct ami_softc *sc = (struct ami_softc *)link->adapter_softc;
+
+	if (sc->sc_ioctl)
+		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
+	else
+		return (ENOTTY);
 }
 
+#if NBIO > 0
 int
 ami_ioctl(dev, cmd, addr)
 	struct device *dev;
@@ -2061,6 +2071,7 @@ ami_ioctl_passthru(sc, bp)
 
 	return (error);
 }
+#endif /* NBIO > 0 */
 
 #ifdef AMI_DEBUG
 void
