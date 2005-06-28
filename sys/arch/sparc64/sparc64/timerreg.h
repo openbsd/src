@@ -1,4 +1,4 @@
-/*	$OpenBSD: timerreg.h,v 1.3 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: timerreg.h,v 1.4 2005/06/28 22:30:46 deraadt Exp $	*/
 /*	$NetBSD: timerreg.h,v 1.3 1999/06/05 05:10:01 mrg Exp $ */
 
 /*
@@ -42,18 +42,6 @@
  */
 
 /*
- * Sun-4c counter/timer registers.  The timers are implemented within
- * the cache chip (!).  The counter and limit fields below could be
- * defined as:
- *
- *	struct {
- *		u_int	t_limit:1,	// limit reached
- *			t_usec:21,	// counter value in microseconds
- *			t_mbz:10;	// always zero
- *	};
- *
- * but this is more trouble than it is worth.
- *
  * These timers work in a rather peculiar fashion.  Most clock counters
  * run to 0 (as, e.g., on the VAX, where the ICR counts up to 0 from a
  * large unsigned number).  On the Sun-4c, it counts up to a limit.  But
@@ -64,24 +52,11 @@
  *
  * and if we want to divide by N we must set the limit register to N+1.
  *
- * Sun-4m counters/timer registers are similar, with these exceptions:
- *
- *	- the limit and counter registers have changed positions..
- *	- both limit and counter registers are 22 bits wide, but
- *	  they count in 500ns increments (bit 9 being the least
- *	  significant bit).
- *
- *	  Note that we still use the `sun4c' masks and shifts to compute
- *	  the bit pattern, given the tick period in microseconds, resulting
- *	  in a limit value that is 1 too high. This means that (with HZ=100)
- *	  the clock will err on the slow side by 500ns/10ms (or 0.00005 %).
- *	  We dont bother.
- *
  * Sun-4u counters/timer are similar but:
  *
  *	- the registers have been shuffled around once again.  We need
  *	  to use offsets from the 3 addresses the ROM provides us.
- *	- The counters are 28 bits wide with 1us accuracy.
+ *	- The counters are 29 bits wide with 1us accuracy.
  *	- You can make them do funky things with the limit register
  *	- They have standard 64-bit SBUS control registers.
  *
@@ -90,65 +65,23 @@
  * and so we must use %tick.
  */
 #ifndef _LOCORE
-struct timer_4 {
-	volatile int	t_counter;		/* counter reg */
-	volatile int	t_limit;		/* limit reg */
-};
-
-struct timerreg_4 {
-	struct	timer_4 t_c10;		/* counter that interrupts at ipl 10 */
-	struct	timer_4 t_c14;		/* counter that interrupts at ipl 14 */
-};
-
-struct timer_4m {		/* counter that interrupts at ipl 10 */
-	volatile int	t_limit;		/* limit register */
-	volatile int	t_counter;		/* counter register */
-	volatile int	t_limit_nr;		/* limit reg, non-resetting */
-	volatile int	t_reserved;
-	volatile int	t_cfg;			/* a configuration register */
-/*
- * Note: The SparcClassic manual only defines this one bit
- * I suspect there are more in multi-processor machines.
- */
-#define TMR_CFG_USER	1
-};
-
 struct timer_4u {
 	volatile int64_t t_count;		/* counter reg */
 	volatile int64_t t_limit;		/* limit reg */
 
-#define TMR_LIM_IEN		0x80000000		/* interrupt enable bit */
-#define TMR_LIM_RELOAD		0x40000000		/* reload counter to 0 */
-#define TMR_LIM_PERIODIC	0x20000000		/* reset when limit is reached */
+#define TMR_LIM_IEN		0x80000000	/* interrupt enable bit */
+#define TMR_LIM_RELOAD		0x40000000	/* reload counter to 0 */
+#define TMR_LIM_PERIODIC	0x20000000	/* reset at limit */
 #define TMR_LIM_MASK		0x1fffffff
 };
 
-struct timerreg_4u {		
-	struct timer_4u*	t_timer;		/* There are two of them */
-	volatile int64_t*	t_clrintr;		/* There are two of these, too. */
-	volatile int64_t*	t_mapintr;		/* Same here. */
-};
-
-struct counter_4m {		/* counter that interrupts at ipl 14 */
-	volatile int	t_limit;		/* limit register */
-	volatile int	t_counter;		/* counter register */
-	volatile int	t_limit_nr;		/* limit reg, non-resetting */
-	volatile int	t_ss;			/* Start/Stop register */
-#define TMR_USER_RUN	1
+struct timerreg_4u {
+	struct timer_4u		*t_timer;	/* There are two of them. */
+	volatile int64_t	*t_clrintr;	/* There are two of these. */
+	volatile int64_t	*t_mapintr;	/* Same here. */
 };
 
 #endif /* _LOCORE */
 
-#define	TMR_LIMIT	0x80000000	/* counter reached its limit */
-#define	TMR_SHIFT	10		/* shift to obtain microseconds */
-#define	TMR_MASK	0x1fffff	/* 21 bits */
-
 /* Compute a limit that causes the timer to fire every n microseconds. */
-/* #define	tmr_ustolim(n)	(((n) + 1) << TMR_SHIFT) */
-#define	tmr_ustolim(n)	((n))
-
-/*efine	TMR_SHIFT4M	9		-* shift to obtain microseconds */
-/*efine tmr_ustolim(n)	(((2*(n)) + 1) << TMR_SHIFT4M)*/
-
-
-
+#define	tmr_ustolim(n)	(((n) - 1) & TMR_LIM_MASK)
