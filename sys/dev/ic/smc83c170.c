@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.3 2005/05/10 03:28:24 brad Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.4 2005/06/28 03:07:37 brad Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -422,16 +422,11 @@ epic_start(struct ifnet *ifp)
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
 
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
-				printf("%s: unable to allocate Tx mbuf\n",
-				    sc->sc_dev.dv_xname);
+			if (m == NULL)
 				break;
-			}
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
-					    "cluster\n", sc->sc_dev.dv_xname);
 					m_freem(m);
 					break;
 				}
@@ -440,11 +435,8 @@ epic_start(struct ifnet *ifp)
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", sc->sc_dev.dv_xname, error);
+			if (error)
 				break;
-			}
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m != NULL) {
