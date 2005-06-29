@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.32 2005/06/23 14:32:48 jmc Exp $
+.\"	$OpenBSD: vmstat.8,v 1.33 2005/06/29 00:38:18 jaredy Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -44,11 +44,17 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl w Ar wait
-.Op Ar disks
+.Op Ar disk ...
 .Sh DESCRIPTION
 .Nm
 reports certain kernel statistics kept about process, virtual memory,
-disk, trap and CPU activity.
+disk, trap, and CPU activity.
+The default behavior is to print a one-line summary of these statistics.
+The
+.Fl c
+and
+.Fl w
+flags may be used to continually report summaries.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -64,7 +70,7 @@ interval is specified, the default is 1 second.
 .It Fl f
 Report on the number of
 .Xr fork 2 ,
-.Xr rfork 2
+.Xr rfork 2 ,
 and
 .Xr vfork 2
 system calls as well as kernel thread creations since system startup,
@@ -82,8 +88,10 @@ allocation and then by type of usage.
 Extract the name list from the specified system instead of the running kernel.
 .It Fl s
 Display the contents of the
-.Ar sum
-structure, giving the total number of several kinds of paging related
+.Va uvmexp
+structure (see
+.Xr uvm 9 ) ,
+giving the total number of several kinds of paging related
 events which have occurred since system startup.
 .It Fl t
 Report on the number of page in and page reclaims since system startup,
@@ -106,54 +114,51 @@ also list devices which have not yet generated an interrupt.
 By default,
 .Nm
 displays the following information just once:
-.Bl -tag -width "whatever"
-.It Ar procs
+.Bl -tag -width Ds
+.It Li procs
 Information about the numbers of processes in various states.
 .Pp
-.Bl -inset -width xxxxxx -compact
-.It Ar r
+.Bl -tag -width 4n -compact
+.It Li r
 in run queue
-.It Ar b
-blocked for resources (i/o, paging, etc.)
-.It Ar w
+.It Li b
+blocked for resources (I/O, paging, etc.)
+.It Li w
 runnable or short sleeper (< 20 secs) but swapped
 .El
-.Pp
-.It Ar memory
+.It Li memory
 Information about the usage of virtual and real memory.
 Virtual pages
 (reported in units of 1024 bytes) are considered active if they belong
 to processes which are running or have run in the last 20 seconds.
 .Pp
-.Bl -inset -width xxxxxx -compact
-.It Ar avm
+.Bl -tag -width 4n -compact
+.It Li avm
 active virtual pages
-.It Ar fre
+.It Li fre
 size of the free list
 .El
-.Pp
-.It Ar page
+.It Li page
 Information about page faults and paging activity.
 These are averaged each five seconds, and given in units per second.
 .Pp
-.Bl -tag -width flt -compact
-.It Ar flt
+.Bl -tag -width 4n -compact
+.It Li flt
 page faults
-.It Ar re
+.It Li re
 page reclaims (simulating reference bits)
-.It Ar at
+.It Li at
 pages attached (found in free list)
-.It Ar pi
+.It Li pi
 pages paged in
-.It Ar po
+.It Li po
 pages paged out
-.It Ar fr
+.It Li fr
 pages freed
-.It Ar sr
+.It Li sr
 pages scanned by clock algorithm
 .El
-.Pp
-.It Ar disks
+.It Li disks
 Disk transfers per second.
 Typically paging will be split across the available drives.
 The header of the field is the first character of the disk name and
@@ -164,30 +169,35 @@ displays only the first two drives.
 To force
 .Nm
 to display specific drives, their names may be supplied on the command line.
-.Pp
-.It Ar traps
+.It Li traps
 Trap/interrupt rate averages per second over last 5 seconds.
 .Pp
-.Bl -inset -width xxxxxx -compact
-.It Ar int
+.Bl -tag -width 4n -compact
+.It Li int
 device interrupts per interval (including clock interrupts)
-.It Ar sys
+.It Li sys
 system calls per interval
-.It Ar cs
-\ \&CPU context switch rate (switches/interval)
+.It Li cs
+CPU context switch rate (switches/interval)
 .El
-.Pp
-.It Ar cpu
+.It Li cpu
 Breakdown of percentage usage of CPU time.
 .Pp
-.Bl -inset -width xxxxxx -compact
-.It Ar us
+.Bl -tag -width 4n -compact
+.It Li us
 user time for normal and low priority processes
-.It Ar sy
+.It Li sy
 system time
-.It Ar id
+.It Li id
 CPU idle
 .El
+.El
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /bsd
+default kernel image
+.It Pa /dev/kmem
+default memory file
 .El
 .Sh EXAMPLES
 The command
@@ -205,12 +215,8 @@ apparent which are recomputed every second.
 .Xr ps 1 ,
 .Xr systat 1 ,
 .Xr iostat 8 ,
-.Xr pstat 8
-.Pp
-The sections starting with
-.Dq Interpreting system activity
-in
-.%T "Installing and Operating 4.3BSD" .
+.Xr pstat 8 ,
+.Xr uvm 9
 .Sh BUGS
 The
 .Fl c
