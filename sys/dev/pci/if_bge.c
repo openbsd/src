@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.68 2005/06/29 04:03:42 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.69 2005/06/29 04:25:10 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1215,7 +1215,7 @@ int
 bge_blockinit(sc)
 	struct bge_softc *sc;
 {
-	struct bge_rcb		*rcb;
+	volatile struct bge_rcb		*rcb;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	vaddr_t			rcb_addr;
 	int			i;
