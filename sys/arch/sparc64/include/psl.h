@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.16 2005/05/31 09:31:16 art Exp $	*/
+/*	$OpenBSD: psl.h,v 1.17 2005/06/29 06:30:18 deraadt Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -43,36 +43,6 @@
 
 #ifndef _SPARC64_PSL_
 #define _SPARC64_PSL_
-
-/*
- * SPARC Process Status Register (in psl.h for hysterical raisins).  This
- * doesn't exist on the V9.
- *
- * The picture in the Sun manuals looks like this:
- *					     1 1
- *	 31   28 27   24 23   20 19	  14 3 2 11    8 7 6 5 4       0
- *	+-------+-------+-------+-----------+-+-+-------+-+-+-+---------+
- *	|  impl |  ver	|  icc	|  reserved |E|E|  pil	|S|P|E|	  CWP	|
- *	|	|	|n z v c|	    |C|F|	| |S|T|		|
- *	+-------+-------+-------+-----------+-+-+-------+-+-+-+---------+
- */
-
-#define PSR_IMPL	0xf0000000	/* implementation */
-#define PSR_VER		0x0f000000	/* version */
-#define PSR_ICC		0x00f00000	/* integer condition codes */
-#define PSR_N		0x00800000	/* negative */
-#define PSR_Z		0x00400000	/* zero */
-#define PSR_O		0x00200000	/* overflow */
-#define PSR_C		0x00100000	/* carry */
-#define PSR_EC		0x00002000	/* coprocessor enable */
-#define PSR_EF		0x00001000	/* FP enable */
-#define PSR_PIL		0x00000f00	/* interrupt level */
-#define PSR_S		0x00000080	/* supervisor (kernel) mode */
-#define PSR_PS		0x00000040	/* previous supervisor mode (traps) */
-#define PSR_ET		0x00000020	/* trap enable */
-#define PSR_CWP		0x0000001f	/* current window pointer */
-
-#define PSR_BITS "\20\16EC\15EF\10S\7PS\6ET"
 
 /* Interesting spl()s */
 #define PIL_SCSI	3
