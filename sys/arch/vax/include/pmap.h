@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.24 2004/08/06 22:39:14 deraadt Exp $     */
+/*      $OpenBSD: pmap.h,v 1.25 2005/06/29 06:07:04 deraadt Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -53,7 +53,7 @@
  */
 #define LTOHPS		(PGSHIFT - VAX_PGSHIFT)
 #define LTOHPN		(1 << LTOHPS)
-#define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
+#define USRPTSIZE ((MAXTSIZ + 40*1024*1024 + MAXSSIZ) / VAX_NBPG)
 #define	NPTEPGS	(USRPTSIZE / (sizeof(pt_entry_t) * LTOHPN))
 
 /*

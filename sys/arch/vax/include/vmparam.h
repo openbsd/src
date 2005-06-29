@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.22 2005/04/11 15:13:01 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.23 2005/06/29 06:07:04 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@
 #define MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef MAXDSIZ
-#define MAXDSIZ		(8*1024*1024)		/* max data size */
+#define MAXDSIZ		(40*1024*1024)		/* max data size */
 #endif
 #ifndef MAXSSIZ
 #define MAXSSIZ		(8*1024*1024)		/* max stack size */
@@ -75,13 +75,7 @@
 
 #define STACKGAP_RANDOM	32*1024
 
-/*
- * All mmap()'ed data will be mapped above MAXDSIZ. This means that
- * pte space must be allocated for (possible) mmap()'ed data.
- * Note: This is just a hint, if we mmap() more than this the page
- * table will be expanded. (at the cost of speed).
- */
-#define MMAPSPACE	(24*1024*1024)
+#define BRKSIZ		(8*1024*1024)
 
 /* 
  * Size of shared memory map
