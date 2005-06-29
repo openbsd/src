@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.67 2005/06/29 03:36:06 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.68 2005/06/29 04:03:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1814,9 +1814,7 @@ bge_attach(parent, self, aux)
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
 	u_int32_t		command;
-#if 0
 	u_int32_t		pm_ctl;
-#endif
 	struct ifnet		*ifp;
 	int			unit, error = 0;
 	caddr_t			kva;
@@ -1877,7 +1875,6 @@ bge_attach(parent, self, aux)
 		goto fail;
 	}
 
-#if 0
 	/*
 	 * Kludge for 5700 Bx bug: a hardware bug (PCIX byte enable?)
 	 * can clobber the chip's PCI config-space power control registers,
@@ -1890,7 +1887,6 @@ bge_attach(parent, self, aux)
 	pm_ctl |= (1 << 8) | PCI_PWR_D0 ; /* D0 state */
 	pci_conf_write(pc, pa->pa_tag, BGE_PCI_PWRMGMT_CMD, pm_ctl);
 	DELAY(1000);	/* 27 usec is allegedly sufficent */
-#endif
 
 	/*
 	 * Save ASIC rev.  Look up any quirks
