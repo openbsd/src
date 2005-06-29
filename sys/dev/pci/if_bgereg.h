@@ -1,4 +1,5 @@
-/* $OpenBSD: if_bgereg.h,v 1.23 2005/06/17 15:15:43 brad Exp $ */
+/*	$OpenBSD: if_bgereg.h,v 1.24 2005/06/29 03:36:06 brad Exp $	*/
+
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2196,6 +2197,7 @@ struct vpd_key {
 #define BGE_SSLOTS	256
 #define BGE_MSLOTS	256
 #define BGE_JSLOTS	384
+#define BGE_RSLOTS	256
 
 #define BGE_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
 #define BGE_JLEN (BGE_JRAWLEN + (sizeof(u_int64_t) - \
@@ -2273,8 +2275,20 @@ struct bge_type {
 
 struct bge_jpool_entry {
 	int                             slot;
-	LIST_ENTRY(bge_jpool_entry)	jpool_entries;
+	SLIST_ENTRY(bge_jpool_entry)	jpool_entries;
 };
+
+struct txdmamap_pool_entry {
+	bus_dmamap_t dmamap;
+	SLIST_ENTRY(txdmamap_pool_entry) link;
+};
+
+/*
+ * Flags for bge_flags.
+ */
+#define BGE_TXRING_VALID	0x0001
+#define BGE_RXRING_VALID	0x0002
+#define BGE_JUMBO_RXRING_VALID	0x0004
 
 struct bge_softc {
 	struct device		bge_dev;
@@ -2302,8 +2316,8 @@ struct bge_softc {
 	u_int16_t		bge_return_ring_cnt;
 	u_int16_t		bge_std;	/* current std ring head */
 	u_int16_t		bge_jumbo;	/* current jumo ring head */
-	LIST_HEAD(__bge_jfreehead, bge_jpool_entry)	bge_jfree_listhead;
-	LIST_HEAD(__bge_jinusehead, bge_jpool_entry)	bge_jinuse_listhead;
+	SLIST_HEAD(__bge_jfreehead, bge_jpool_entry)	bge_jfree_listhead;
+	SLIST_HEAD(__bge_jinusehead, bge_jpool_entry)	bge_jinuse_listhead;
 	u_int32_t		bge_stat_ticks;
 	u_int32_t		bge_rx_coal_ticks;
 	u_int32_t		bge_tx_coal_ticks;
@@ -2311,9 +2325,12 @@ struct bge_softc {
 	u_int32_t		bge_tx_max_coal_bds;
 	u_int32_t		bge_tx_buf_ratio;
 	int			bge_if_flags;
+	int			bge_flags;
 	int			bge_txcnt;
 	int			bge_link;
 	struct timeout		bge_timeout;
 	char			*bge_vpd_prodname;
 	char			*bge_vpd_readonly;
+	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
+	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 };
