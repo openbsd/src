@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.174 2005/06/26 11:25:11 espie Exp $
+# $OpenBSD: pkg_add,v 1.175 2005/06/29 22:54:31 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -780,7 +780,9 @@ $state->{very_verbose} = $opt_v >= 2;
 $state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
 
-lock_db($opt_n);
+if (@ARGV == 0) {
+	Usage "Missing pkgname";
+}
 if (!$opt_x && !$state->{beverbose}) {
 	OpenBSD::ProgressMeter::enable();
 }
@@ -793,6 +795,7 @@ if ($< && !$forced{nonroot}) {
 	}
 }
 
+lock_db($opt_n);
 my @todo = (@ARGV);
 if (defined $state->{forced}->{kitchensink}) {
 	reorder(\@todo);
