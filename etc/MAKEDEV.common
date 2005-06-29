@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.18 2005/06/02 20:09:38 tholo Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.19 2005/06/29 18:23:26 todd Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -458,6 +458,8 @@ _mkdev(au, audio*, {-M sound$U	c major_au_c $U
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"-})dnl
 __devitem(asc, asc*, ASC Audio device)dnl
 _mkdev(asc, asc*, {-M asc$U major_asc_c 0-})dnl
+__devitem(bio, bio, {-ioctl tunnel pseudo-device-})dnl
+_mkdev(bio, bio, {-M bio c major_bio_c 0 600-})dnl
 __devitem(music, music*, MIDI devices,midi)dnl
 _mkdev(music, music*, {-M music$U     c major_music_c $U
 	M sequencer$U c major_music_c Add($U, 128)
