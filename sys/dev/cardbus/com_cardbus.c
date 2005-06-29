@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.11 2005/06/27 21:38:57 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.12 2005/06/29 18:22:49 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -237,7 +237,7 @@ com_cardbus_gofigure(struct cardbus_attach_args *ca,
 }
 
 void
-com_cardbus_attach (struct device *parent, struct device *self, void *aux)
+com_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (struct com_softc*)self;
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)self;
@@ -268,6 +268,9 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iobase = csc->cc_addr;
 	sc->sc_frequency = COM_FREQ;
+
+	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
+	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
 
 	sc->enable = com_cardbus_enable;
 	sc->disable = com_cardbus_disable;
