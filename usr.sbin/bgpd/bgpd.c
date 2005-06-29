@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.121 2005/06/09 15:32:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.122 2005/06/29 09:43:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@ __dead void	usage(void);
 int		main(int, char *[]);
 int		check_child(pid_t, const char *);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *,
-		    int, int);
+		    int);
 int		reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 		    struct peer **, struct filter_head *);
 int		dispatch_imsg(struct imsgbuf *, int);
@@ -391,21 +391,14 @@ check_child(pid_t pid, const char *pname)
 }
 
 int
-send_filterset(struct imsgbuf *i, struct filter_set_head *set, int id, int f)
+send_filterset(struct imsgbuf *i, struct filter_set_head *set, int id)
 {
 	struct filter_set	*s;
 
-	for (s = SIMPLEQ_FIRST(set); s != NULL; ) {
+	SIMPLEQ_FOREACH(s, set, entry)
 		if (imsg_compose(i, IMSG_FILTER_SET, id, 0, -1, s,
 		    sizeof(struct filter_set)) == -1)
 			return (-1);
-		if (f) {
-			SIMPLEQ_REMOVE_HEAD(set, entry);
-			free(s);
-			s = SIMPLEQ_FIRST(set);
-		} else
-			s = SIMPLEQ_NEXT(s, entry);
-	}
 	return (0);
 }
 
@@ -444,19 +437,20 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
 		if (send_filterset(ibuf_se, &p->conf.attrset,
-		    p->conf.id, 0) == -1)
+		    p->conf.id) == -1)
 			return (-1);
 	}
 	while ((n = TAILQ_FIRST(&net_l)) != NULL) {
 		if (imsg_compose(ibuf_rde, IMSG_NETWORK_ADD, 0, 0, -1,
 		    &n->net, sizeof(struct network_config)) == -1)
 			return (-1);
-		if (send_filterset(ibuf_rde, &n->net.attrset, 0, 1) == -1)
+		if (send_filterset(ibuf_rde, &n->net.attrset, 0) == -1)
 			return (-1);
 		if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1,
 		    NULL, 0) == -1)
 			return (-1);
 		TAILQ_REMOVE(&net_l, n, entry);
+		filterset_free(&n->net.attrset);
 		free(n);
 	}
 	/* redistribute list needs to be reloaded too */
@@ -467,9 +461,10 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
 			return (-1);
-		if (send_filterset(ibuf_rde, &r->set, 0, 1) == -1)
+		if (send_filterset(ibuf_rde, &r->set, 0) == -1)
 			return (-1);
 		TAILQ_REMOVE(rules_l, r, entry);
+		filterset_free(&r->set);
 		free(r);
 	}
 	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
@@ -705,7 +700,7 @@ bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
 	if (type == IMSG_NETWORK_REMOVE)
 		return (1);
 
-	if (send_filterset(ibuf_rde, h, 0, 0) == -1)
+	if (send_filterset(ibuf_rde, h, 0) == -1)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0) == -1)
 		return (-1);

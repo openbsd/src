@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.42 2005/06/09 15:32:03 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.43 2005/06/29 09:43:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,6 +125,13 @@ print_set(struct filter_set_head *set)
 			break;
 		case ACTION_PFTABLE:
 			printf("pftable %s ", s->action.pftable);
+			break;
+		case ACTION_RTLABEL:
+			printf("rtlabel %s ", s->action.rtlabel);
+			break;
+		case ACTION_RTLABEL_ID:
+			/* not possible */
+			printf("rtlabel id %d ", s->action.id);
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.162 2005/06/13 21:16:18 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.163 2005/06/29 09:43:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -522,6 +522,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			prefix_network_clean(&peerself, reloadtime);
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 				TAILQ_REMOVE(rules_l, r, entry);
+				filterset_free(&r->set);
 				free(r);
 			}
 			free(rules_l);
@@ -1648,8 +1649,8 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 		kl.kr.flags |= F_REJECT;
 	if (p->aspath->flags & F_NEXTHOP_BLACKHOLE)
 		kl.kr.flags |= F_BLACKHOLE;
-	/* XXX */
-	strlcpy(kl.label, rtlabel_id2name(0), sizeof(kl.label));
+	strlcpy(kl.label, rtlabel_id2name(p->aspath->rtlabelid),
+	    sizeof(kl.label));
 
 	if (imsg_compose(ibuf_main, type, 0, 0, -1, &kl, sizeof(kl)) == -1)
 		fatal("imsg_compose error");

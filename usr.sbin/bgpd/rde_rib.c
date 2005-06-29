@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.66 2005/04/12 14:32:01 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.67 2005/06/29 09:43:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -131,6 +131,10 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 	if (a->weight > b->weight)
 		return (1);
 	if (a->weight < b->weight)
+		return (-1);
+	if (a->rtlabelid > b->rtlabelid)
+		return (1);
+	if (a->rtlabelid < b->rtlabelid)
 		return (-1);
 
 	r = strcmp(a->pftable, b->pftable);
@@ -272,6 +276,8 @@ path_copy(struct rde_aspath *asp)
 	nasp->lpref = asp->lpref;
 	nasp->weight = asp->weight;
 	nasp->origin = asp->origin;
+	nasp->rtlabelid = asp->rtlabelid;
+	rtlabel_ref(nasp->rtlabelid);
 
 	nasp->flags = asp->flags & ~F_ATTR_LINKED;
 
@@ -296,6 +302,7 @@ path_get(void)
 	asp->lpref = DEFAULT_LPREF;
 	/* med = 0 */
 	/* weight = 0 */
+	/* rtlabel = 0 */
 
 	return (asp);
 }
@@ -307,6 +314,7 @@ path_put(struct rde_aspath *asp)
 	if (asp->flags & F_ATTR_LINKED)
 		fatalx("path_put: linked object");
 
+	rtlabel_unref(asp->rtlabelid);
 	aspath_put(asp->aspath);
 	attr_optfree(asp);
 	free(asp);

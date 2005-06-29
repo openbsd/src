@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.171 2005/06/28 12:12:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.172 2005/06/29 09:43:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -578,18 +578,22 @@ enum action_types {
 	ACTION_SET_NEXTHOP_NOMODIFY,
 	ACTION_SET_COMMUNITY,
 /*	ACTION_SCRUB_COMMUNITY, */
-	ACTION_PFTABLE
+	ACTION_PFTABLE,
+	ACTION_RTLABEL,
+	ACTION_RTLABEL_ID
 };
 
 struct filter_set {
 	SIMPLEQ_ENTRY(filter_set)	entry;
 	union {
 		u_int8_t		prepend;
+		u_int16_t		id;
 		u_int32_t		metric;
 		int32_t			relative;
 		struct bgpd_addr	nexthop;
 		struct filter_community	community;
 		char			pftable[PFTABLE_LEN];
+		char			rtlabel[RTLABEL_LEN];
 	} action;
 	enum action_types		type;
 };
@@ -702,6 +706,10 @@ int	pftable_commit(void);
 u_int16_t	 rtlabel_name2id(char *);
 const char	*rtlabel_id2name(u_int16_t);
 void		 rtlabel_unref(u_int16_t);
+void		 rtlabel_ref(u_int16_t);
+
+/* rde_filter.c */
+void			 filterset_free(struct filter_set_head *);
 
 
 #endif /* __BGPD_H__ */

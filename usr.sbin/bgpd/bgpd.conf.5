@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.56 2005/06/09 15:32:03 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.57 2005/06/29 09:43:25 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -897,7 +897,7 @@ set nexthop reject
 .It Ic pftable Ar table
 Add the prefix in the update to the specified
 .Xr pf 4
-radix table, regardless of whether or not the path was selected for routing.
+table, regardless of whether or not the path was selected for routing.
 This option may be useful in building realtime blacklists.
 .Pp
 .It Ic prepend-neighbor Ar number
@@ -911,6 +911,11 @@ Prepend the local AS
 .Ar number
 times to the
 .Em AS path .
+.Pp
+.It Ic rtlabel Ar label
+Add the prefix with the specified
+.Ar label
+to the kernel routing table.
 .Pp
 .It Ic weight Ar number
 The
