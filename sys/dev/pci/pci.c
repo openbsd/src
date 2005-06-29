@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.37 2005/05/02 11:30:25 grange Exp $	*/
+/*	$OpenBSD: pci.c,v 1.38 2005/06/29 03:18:49 brad Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -423,7 +423,20 @@ pci_get_capability(pc, tag, capid, offset, value)
 	if (!(reg & PCI_STATUS_CAPLIST_SUPPORT))
 		return (0);
 
-	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, PCI_CAPLISTPTR_REG));
+	/* Determine the Capability List Pointer register to start with. */
+	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE_TYPE(reg)) {
+	case 0:	/* standard device header */
+		ofs = PCI_CAPLISTPTR_REG;
+		break;
+	case 2:	/* PCI-CardBus Bridge header */
+		ofs = PCI_CARDBUS_CAPLISTPTR_REG;
+		break;
+	default:
+		return (0);
+	}
+
+	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, ofs));
 	while (ofs != 0) {
 #ifdef DIAGNOSTIC
 		if ((ofs & 3) || (ofs < 0x40))
