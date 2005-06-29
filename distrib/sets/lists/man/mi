@@ -500,6 +500,7 @@
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
+./usr/share/man/cat1/pkg_merge.0
 ./usr/share/man/cat1/pkg_mklocatedb.0
 ./usr/share/man/cat1/pkill.0
 ./usr/share/man/cat1/pl2pm.0
