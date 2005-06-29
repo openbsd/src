@@ -133,11 +133,11 @@ try {
 };
 
 if (!defined $opt_o) {
-	die "Error: must have a result name";
+	Usage "Missing -o result";
 }
 
 if (@ARGV<2) {
-	die "Error need at least two packages to merge";
+	Usage "Can't merge less than two packages";
 }
 my @tomerge;
 
