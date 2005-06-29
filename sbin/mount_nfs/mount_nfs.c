@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.43 2005/04/08 20:09:37 jaredy Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.44 2005/06/29 20:50:37 jaredy Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
 	nfsargs = nfsdefargs;
 	nfsargsp = &nfsargs;
 	while ((c = getopt(argc, argv,
-	    "23a:bcdD:g:I:iL:lo:PpqR:r:sTt:w:x:U")) != -1)
+	    "23a:bcdD:g:I:iL:lo:PR:r:sTt:w:x:U")) != -1)
 		switch (c) {
 		case '3':
 			if (force2)
@@ -214,11 +214,7 @@ main(int argc, char *argv[])
 			nfsargsp->flags |= NFSMNT_NOCONN;
 			break;
 		case 'D':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -D value -- %s", optarg);
-			nfsargsp->deadthresh = num;
-			nfsargsp->flags |= NFSMNT_DEADTHRESH;
+			/* backward compatibility */
 			break;
 		case 'd':
 			nfsargsp->flags |= NFSMNT_DUMBTIMR;
@@ -244,11 +240,7 @@ main(int argc, char *argv[])
 			nfsargsp->flags |= NFSMNT_INT;
 			break;
 		case 'L':
-			num = strtol(optarg, &p, 10);
-			if (*p || num < 2)
-				errx(1, "illegal -L value -- %s", optarg);
-			nfsargsp->leaseterm = num;
-			nfsargsp->flags |= NFSMNT_LEASETERM;
+			/* backward compatibility */
 			break;
 		case 'l':
 			nfsargsp->flags |= NFSMNT_RDIRPLUS;
@@ -331,7 +323,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'P':
-			nfsargsp->flags |= NFSMNT_RESVPORT;
+			/* backward compatibility */
 			break;
 		case 'R':
 			num = strtol(optarg, &p, 10);
@@ -379,7 +371,7 @@ main(int argc, char *argv[])
 			break;
 		default:
 			usage();
-			break;
+			/* NOTREACHED */
 		}
 	argc -= optind;
 	argv += optind;
@@ -490,10 +482,10 @@ tryagain:
 							nfsvers = NFS_VER2;
 							mntvers = RPCMNT_VER1;
 							nfsargsp->flags &=
-								~NFSMNT_NFSV3;
+							    ~NFSMNT_NFSV3;
 							goto tryagain;
 						} else {
-							fprintf(stderr, "%s",
+							warnx("%s",
 							    clnt_sperror(clp,
 								"MNT RPC"));
 						}
@@ -513,7 +505,7 @@ tryagain:
 				opflags &= ~BGRND;
 				if ((i = fork())) {
 					if (i == -1)
-						err(1, "nqnfs 2");
+						err(1, "fork");
 					exit(0);
 				}
 				(void) setsid();
@@ -594,10 +586,12 @@ xdr_fh(XDR *xdrsp, struct nfhret *np)
 __dead void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n",
-	    "[-23PTUbcdilqs] [-a maxreadahead] [-D deadthresh]",
-	    "\t[-I readdirsize] [-g maxgroups] [-L leaseterm] [-o options]",
-	    "\t[-R retrycnt] [-r readsize] [-t timeout] [-w writesize] [-x retrans]",
-	    "\trhost:path node");
+	extern char *__progname;
+
+	(void)fprintf(stderr,
+	    "usage: %s [-23bcdilsTU] [-a maxreadahead] [-g maxgroups]\n"
+	    "\t[-I readdirsize] [-o options] [-R retrycnt] [-r readsize]\n"
+	    "\t[-t timeout] [-w writesize] [-x retrans] rhost:path node\n",
+	    __progname);
 	exit(1);
 }
