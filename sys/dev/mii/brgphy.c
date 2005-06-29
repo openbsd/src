@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.25 2005/06/11 06:12:14 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.26 2005/06/29 04:37:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -399,9 +399,6 @@ brgphy_loop(struct mii_softc *sc)
 	for (i = 0; i < 15000; i++) {
 		bmsr = PHY_READ(sc, BRGPHY_MII_BMSR);
 		if (!(bmsr & BRGPHY_BMSR_LINK)) {
-#if 0
-			device_printf(sc->mii_dev, "looped %d\n", i);
-#endif
 			break;
 		}
 		DELAY(10);
@@ -417,10 +414,10 @@ brgphy_reset(struct mii_softc *sc)
 
 	mii_phy_reset(sc);
 
-	brgphy_load_dspcode(sc);
-
 	ifp = sc->mii_pdata->mii_ifp;
 	bge_sc = ifp->if_softc;
+
+	brgphy_load_dspcode(sc);
 
 	/*
 	 * Don't enable Ethernet@WireSpeed for the 5700 or the
