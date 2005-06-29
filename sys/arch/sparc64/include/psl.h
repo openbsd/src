@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.18 2005/06/29 07:11:14 deraadt Exp $	*/
+/*	$OpenBSD: psl.h,v 1.19 2005/06/29 07:17:22 deraadt Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -167,8 +167,8 @@
 
 #define TSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
 
-#define TSTATE_KERN	((TSTATE_KERN)<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_USER	((TSTATE_USER)<<TSTATE_PSTATE_SHIFT)
+#define TSTATE_KERN	((PSTATE_KERN)<<TSTATE_PSTATE_SHIFT)
+#define TSTATE_USER	((PSTATE_USER)<<TSTATE_PSTATE_SHIFT)
 /*
  * SPARC V9 VER version register.
  *
@@ -179,15 +179,15 @@
  *
  */
 
-#define VER_MANUF	0xffff000000000000LL
+#define VER_MANUF	0xffff000000000000ULL
 #define VER_MANUF_SHIFT	48
-#define VER_IMPL	0x0000ffff00000000LL
+#define VER_IMPL	0x0000ffff00000000ULL
 #define VER_IMPL_SHIFT	32
-#define VER_MASK	0x00000000ff000000LL
+#define VER_MASK	0x00000000ff000000ULL
 #define VER_MASK_SHIFT	24
-#define VER_MAXTL	0x000000000000ff00LL
+#define VER_MAXTL	0x000000000000ff00ULL
 #define VER_MAXTL_SHIFT	8
-#define VER_MAXWIN	0x000000000000001fLL
+#define VER_MAXWIN	0x000000000000001fULL
 
 /*
  * Here are a few things to help us transition between user and kernel mode:
