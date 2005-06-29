@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.21 2004/11/22 21:10:08 deraadt Exp $
+.\"	$OpenBSD: ami.4,v 1.22 2005/06/29 19:51:04 mickey Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -28,22 +28,38 @@ including:
 These controllers support RAID 0, RAID 1, RAID 5, JBOD,
 and superpositions of those configurations.
 .Pp
-Some cards support both I2O and a so-called `Mass Storage' mode
-of operation.
-This driver only supports the `Mass Storage' mode; I2O mode is supported
+Some cards support both I2O and a so-called
+.Sq Mass Storage
+mode of operation.
+This driver only supports the
+.Sq Mass Storage
+mode; I2O mode is supported
 by the
 .Xr iop 4
 driver.
+However it is recommended to use these cards in
+.Sq Mass Storage
+mode.
 .Pp
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
+.Pp
+Management interface is provided through the
+.Xr bio 4
+device or one of the daughter
+.Xr sd 4
+devices as implemented in
+.Xr bioctl 8
+utility.
 .Sh SEE ALSO
+.Xr bio 4 ,
 .Xr intro 4 ,
 .Xr iop 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
-.Xr sd 4
+.Xr sd 4 ,
+.Xr bioctl 8
 .Sh HISTORY
 The
 .Nm
@@ -54,3 +70,6 @@ The
 .Nm
 driver was written by
 .An Michael Shalayeff Aq mickey@openbsd.org .
+.Pp
+Management functions were implemented by
+.An Marco Peereboom Aq marco@openbsd.org .
