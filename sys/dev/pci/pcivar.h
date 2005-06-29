@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.41 2005/06/02 21:55:33 mickey Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.42 2005/06/29 03:53:28 brad Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -191,5 +191,13 @@ void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
 const struct pci_quirkdata *
 	pci_lookup_quirkdata(pci_vendor_id_t, pci_product_id_t);
 void	pciagp_set_pchb(struct pci_attach_args *);
+
+/*
+ * Power Management (PCI 2.2)
+ */
+#define PCI_PWR_D0	0
+#define PCI_PWR_D1	1
+#define PCI_PWR_D2	2
+#define PCI_PWR_D3	3
 
 #endif /* _DEV_PCI_PCIVAR_H_ */
