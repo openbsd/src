@@ -35,7 +35,7 @@ sub getopts($;$)
 	if ($args =~ m/\Q$opt\E(\:)?/) {
 		if ($1 eq ':') {
 			if ($other eq '') {
-				die "no argument for option $opt" unless @ARGV;
+				die "no argument for option -$opt" unless @ARGV;
 				$other = shift @ARGV;
 			}
 			handle_option($opt, $hash, $other);
@@ -47,7 +47,7 @@ sub getopts($;$)
 			}
 		}
 	} else {
-		die "Unknown option $opt";
+		die "Unknown option -$opt";
 	}
     }
     local $Exporter::ExportLevel = 1;
