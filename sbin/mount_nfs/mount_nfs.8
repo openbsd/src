@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.34 2005/06/23 00:41:56 jaredy Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.35 2005/06/29 20:48:05 jaredy Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -74,24 +74,6 @@ Use the NFS Version 2 protocol.
 Use the NFS Version 3 protocol.
 The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
-.It Fl I Ar readdirsize
-Set the readdir read size to the specified value.
-The value should normally be a multiple of
-.Dv DIRBLKSIZ
-that is less than or equal to the read size for the mount.
-.It Fl R Ar retrycnt
-Set the retry count for doing the mount to the specified value.
-The default is 10000.
-.It Fl T
-Use TCP instead of UDP.
-This is recommended for servers that are not on the same LAN cable as
-the client.
-(NB: This is NOT supported by most non-BSD servers.)
-.It Fl U
-Force the mount protocol to use UDP, even for TCP NFS mounts.
-(Necessary for some old
-.Bx
-servers.)
 .It Fl a Ar maxreadahead
 Set the read-ahead count to the specified value.
 This may be in the range of 0\-4, and determines how many blocks
@@ -124,6 +106,11 @@ This should be used for mounts on old servers that cannot handle a
 group list size of 16, as specified in RFC 1057.
 Try 8, if users in a lot of groups cannot get a response from the mount
 point.
+.It Fl I Ar readdirsize
+Set the readdir read size to the specified value.
+The value should normally be a multiple of
+.Dv DIRBLKSIZ
+that is less than or equal to the read size for the mount.
 .It Fl i
 Make the mount interruptible, which implies that file system calls that
 are delayed due to an unresponsive server will fail with EINTR when a
@@ -180,6 +167,9 @@ The default is 5 seconds.
 Use the specified port number for NFS requests.
 The default is to query the portmapper for the NFS port.
 .El
+.It Fl R Ar retrycnt
+Set the retry count for doing the mount to the specified value.
+The default is 10000.
 .It Fl r Ar readsize
 Set the read data size to the specified value.
 It should normally be a power of 2 greater than or equal to 1024.
@@ -201,6 +191,11 @@ after
 .Ar retrans
 round trip timeout intervals have been reached (see
 .Fl x ) .
+.It Fl T
+Use TCP instead of UDP.
+This is recommended for servers that are not on the same LAN cable as
+the client.
+(NB: This is NOT supported by most non-BSD servers.)
 .It Fl t Ar timeout
 Set the initial retransmit timeout to the specified value.
 May be useful for fine tuning UDP mounts over internetworks
@@ -214,6 +209,11 @@ value if there is a low retransmit rate but long response delay observed.
 option should be specified when using this option to manually
 tune the timeout
 interval.)
+.It Fl U
+Force the mount protocol to use UDP, even for TCP NFS mounts.
+(Necessary for some old
+.Bx
+servers.)
 .It Fl w Ar writesize
 Set the write data size to the specified value.
 Ditto the comments w.r.t. the
