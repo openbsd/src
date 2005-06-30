@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2005/06/29 06:07:07 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.36 2005/06/30 21:53:13 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -403,7 +403,7 @@ pmap_pinit(pmap)
 	    (u_long *)&pmap->pm_p0br);
 	if (res)
 		panic("pmap_pinit");
-	pmap->pm_p0lr = vax_btoc(MAXTSIZ + USRPTSIZE) | AST_PCB;
+	pmap->pm_p0lr = vax_btoc(MAXTSIZ + 40*1024*1024) | AST_PCB;
 	(vaddr_t)pmap->pm_p1br = (vaddr_t)pmap->pm_p0br + bytesiz - 0x800000;
 	pmap->pm_p1lr = (0x200000 - vax_btoc(MAXSSIZ));
 	pmap->pm_stack = USRSTACK;
