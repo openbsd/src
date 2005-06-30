@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.10 2005/06/30 18:54:17 hshoexer Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.11 2005/06/30 19:05:45 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -22,7 +22,7 @@
 .Nd control flows for IPsec
 .Sh SYNOPSIS
 .Nm ipsecctl
-.Op Fl Fnv
+.Op Fl dFnv
 .Op Fl f Ar file
 .Op Fl s Ar modifier
 .Sh DESCRIPTION
@@ -31,13 +31,21 @@ The
 utility controls flows that determine which packets are to be processed by
 IPsec.
 It allows ruleset configuration and retrieval of status information from the
-kernel's SPD (Security Policy Database).
+kernel's SPD (Security Policy Database) and SADB (Security Association
+Database).
 .Pp
 The ruleset grammar is described in
 .Xr ipsec.conf 5 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl d
+When the
+.Fl d
+option is set, specified flows will be deleted from the SPD.
+Otherwise,
+.Nm
+will add flows.
 .It Fl F
 The
 .Fl F
