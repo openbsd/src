@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.19 2005/06/28 14:34:56 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.20 2005/06/30 16:37:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -168,42 +168,46 @@ cvs_history_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_history_pre_exec(struct cvsroot *root)
 {
-	if ((flags & CVS_HF_A) && (cvs_sendarg(root, "-a", 0) < 0))
-		return (CVS_EX_PROTO);
-
-	if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
-		return (CVS_EX_PROTO);
-
-	if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
-		return (CVS_EX_PROTO);
-
-	if ((date != NULL) && ((cvs_sendarg(root, "-D", 0) < 0) ||
-	    (cvs_sendarg(root, date, 0) < 0)))
-		return (CVS_EX_PROTO);
-
-	if ((rev != NULL) && ((cvs_sendarg(root, "-r", 0) < 0) ||
-	    (cvs_sendarg(root, rev, 0) < 0)))
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if ((flags & CVS_HF_A) && (cvs_sendarg(root, "-a", 0) < 0))
 			return (CVS_EX_PROTO);
 
-	if ((tag != NULL) && ((cvs_sendarg(root, "-t", 0) < 0) ||
-	    (cvs_sendarg(root, tag, 0) < 0)))
+		if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
 			return (CVS_EX_PROTO);
 
-	/* if no user is specified, get login name of command issuer */
-	if (!(flags & CVS_HF_A) && (user == NULL)) {
-		if ((user = getlogin()) == NULL) {
-			cvs_log(LP_ERRNO, "cannot get login name");
-			return (CVS_EX_DATA);
+		if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
+			return (CVS_EX_PROTO);
+
+		if ((date != NULL) && ((cvs_sendarg(root, "-D", 0) < 0) ||
+		    (cvs_sendarg(root, date, 0) < 0)))
+			return (CVS_EX_PROTO);
+
+		if ((rev != NULL) && ((cvs_sendarg(root, "-r", 0) < 0) ||
+		    (cvs_sendarg(root, rev, 0) < 0)))
+			return (CVS_EX_PROTO);
+
+		if ((tag != NULL) && ((cvs_sendarg(root, "-t", 0) < 0) ||
+		    (cvs_sendarg(root, tag, 0) < 0)))
+			return (CVS_EX_PROTO);
+
+		/* if no user is specified, get login name of command issuer */
+		if (!(flags & CVS_HF_A) && (user == NULL)) {
+			if ((user = getlogin()) == NULL) {
+				cvs_log(LP_ERRNO, "cannot get login name");
+				return (CVS_EX_DATA);
+			}
 		}
-	}
-	if (!(flags & CVS_HF_A))
-		if ((cvs_sendarg(root, "-u", 0) < 0) ||
-		    (cvs_sendarg(root, user, 0) < 0))
-			return (CVS_EX_PROTO);
 
-	if ((cvs_sendarg(root, "-z", 0) < 0) ||
-	    (cvs_sendarg(root, zone, 0) < 0))
-		return (CVS_EX_PROTO);
+		if (!(flags & CVS_HF_A)) {
+			if ((cvs_sendarg(root, "-u", 0) < 0) ||
+			    (cvs_sendarg(root, user, 0) < 0))
+				return (CVS_EX_PROTO);
+		}
+
+		if ((cvs_sendarg(root, "-z", 0) < 0) ||
+		    (cvs_sendarg(root, zone, 0) < 0))
+			return (CVS_EX_PROTO);
+	}
 
 	return (0);
 }
