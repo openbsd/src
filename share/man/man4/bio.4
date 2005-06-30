@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio.4,v 1.8 2005/06/29 20:04:30 mickey Exp $
+.\"	$OpenBSD: bio.4,v 1.9 2005/06/30 06:24:13 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
 .\" All rights reserved.
@@ -67,23 +67,23 @@ Locate a named device and give back a cookie to the application
 for subsequent ioctl calls.
 The cookie is used to tunnel further ioctls to the right device.
 .It Dv BIOCPING
-Check upon the device to see it's alive.
+Check on the device to see if it's alive.
 Increments a counter to signify the OK condition.
 .It Dv BIOCCAPABILITIES
-Return information about ioctl commands, raid levels and other
+Return information about ioctl commands, raid levels, and other
 features supported.
 .It Dv BIOCALARM
 Control the alarm beeper on the device.
 .It Dv BIOCSCSICMD
-Tunnel a SCSI command into one of the busses on the device.
-May not be supported shall the device not employ SCSI.
+Tunnel a SCSI command into one of the buses on the device.
+May not be supported if the device doesn't employ SCSI.
 .It Dv BIOCSTARTSTOP
 Start or Stop one of the component drives.
 .It Dv BIOCSTATUS
-Retrieve device status including physical drives, logical drives
+Retrieve device status including physical drives, logical drives,
 and battery module.
 .It Dv BIOCBLINK
-Blink a led on one of the drives (to be replaced).
+Blink an LED on one of the drives (to be replaced).
 .El
 .Sh FILES
 .Bl -tag -width /dev/bio -compact
