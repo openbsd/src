@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.36 2005/06/30 16:37:29 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.37 2005/06/30 16:47:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,7 +53,7 @@ struct cvs_cmd cvs_cmd_update = {
 	"[-t id] ...",
 	"ACD:dfI:j:k:lPpQqRr:t:",
 	NULL,
-	CF_SORT | CF_RECURSE | CF_IGNORE | CF_KNOWN | CF_NOSYMS,
+	CF_SORT | CF_RECURSE | CF_IGNORE | CF_NOSYMS,
 	cvs_update_init,
 	cvs_update_pre_exec,
 	cvs_update_remote,
@@ -231,14 +231,14 @@ cvs_update_local(CVSFILE *cf, void *arg)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (cf->cf_type == DT_DIR) {
-		cvs_log(LP_INFO, "Updating %s", fpath);
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+		cvs_printf("? %s\n", fpath);
 		return (CVS_EX_OK);
 	}
 
-	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		cvs_printf("? %s\n", fpath);
-		return (0);
+	if (cf->cf_type == DT_DIR) {
+		cvs_log(LP_INFO, "Updating %s", fpath);
+		return (CVS_EX_OK);
 	}
 
 	l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
