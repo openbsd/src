@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.66 2005/01/18 22:25:38 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.67 2005/06/30 08:51:31 markus Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		icmp_reflect(m);
 }
 
-static struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
+struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
 static struct sockaddr_in icmpdst = { sizeof (struct sockaddr_in), AF_INET };
 static struct sockaddr_in icmpgw = { sizeof (struct sockaddr_in), AF_INET };
 struct sockaddr_in icmpmask = { 8, 0 };

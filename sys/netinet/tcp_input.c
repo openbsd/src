@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.187 2005/04/25 17:55:52 brad Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.188 2005/06/30 08:51:31 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1010,6 +1010,24 @@ after_listen:
 				tcpstat.tcps_rcvackbyte += acked;
 				ND6_HINT(tp);
 				sbdrop(&so->so_snd, acked);
+
+				/*
+				 * If we had a pending ICMP message that
+				 * referres to data that have just been 
+				 * acknowledged, disregard the recorded ICMP 
+				 * message.
+				 */
+				if ((tp->t_flags & TF_PMTUD_PEND) && 
+				    SEQ_GT(th->th_ack, tp->t_pmtud_th_seq))
+					tp->t_flags &= ~TF_PMTUD_PEND;
+
+				/*
+				 * Keep track of the largest chunk of data 
+				 * acknowledged since last PMTU update
+				 */
+				if (tp->t_pmtud_mss_acked < acked)
+					tp->t_pmtud_mss_acked = acked;
+
 				tp->snd_una = th->th_ack;
 #if defined(TCP_SACK) || defined(TCP_ECN)
 				/*
@@ -1811,6 +1829,23 @@ trimthenstep6:
 		}
 		if (sb_notify(&so->so_snd))
 			sowwakeup(so);
+
+		/*
+		 * If we had a pending ICMP message that referred to data
+		 * that have just been acknowledged, disregard the recorded
+		 * ICMP message.
+		 */
+		if ((tp->t_flags & TF_PMTUD_PEND) && 
+		    SEQ_GT(th->th_ack, tp->t_pmtud_th_seq))
+			tp->t_flags &= ~TF_PMTUD_PEND;
+
+		/*
+		 * Keep track of the largest chunk of data acknowledged
+		 * since last PMTU update
+		 */
+		if (tp->t_pmtud_mss_acked < acked)
+		    tp->t_pmtud_mss_acked = acked;
+
 		tp->snd_una = th->th_ack;
 #ifdef TCP_ECN
 		/* sync snd_last with snd_una */
@@ -3045,6 +3080,9 @@ tcp_mss(tp, offer)
 
 	if (offer == -1) {
 		/* mss changed due to Path MTU discovery */
+		tp->t_flags &= ~TF_PMTUD_PEND;
+		tp->t_pmtud_mtu_sent = 0;
+		tp->t_pmtud_mss_acked = 0;
 		if (mss < tp->t_maxseg) {
 			/*
 			 * Follow suggestion in RFC 2414 to reduce the
@@ -3063,6 +3101,36 @@ tcp_mss(tp, offer)
 	tp->t_maxseg = mss;
 
 	return (offer != -1 ? mssopt : mss);
+}
+
+u_int
+tcp_hdrsz(struct tcpcb *tp)
+{
+	u_int hlen;
+
+	switch (tp->pf) {
+#ifdef INET6
+	case AF_INET6:
+		hlen = sizeof(struct ip6_hdr);
+		break;
+#endif
+	case AF_INET:
+		hlen = sizeof(struct ip);
+		break;
+	default:
+		hlen = 0;
+		break;
+	}
+	hlen += sizeof(struct tcphdr);
+
+	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
+	    (tp->t_flags & TF_RCVD_TSTMP) == TF_RCVD_TSTMP)
+		hlen += TCPOLEN_TSTAMP_APPA;
+#ifdef TCP_SIGNATURE
+	if (tp->t_flags & TF_SIGNATURE)
+		hlen += TCPOLEN_SIGLEN;
+#endif
+	return (hlen);
 }
 
 /*

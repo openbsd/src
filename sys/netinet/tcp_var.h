@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.74 2005/05/24 00:02:37 fgont Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.75 2005/06/30 08:51:31 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ struct tcpcb {
 #define TF_REASSLOCK	0x00080000	/* reassembling or draining */
 #define TF_LASTIDLE	0x00100000	/* no outstanding ACK on last send */
 #define TF_DEAD		0x00200000	/* dead and to-be-released */
+#define TF_PMTUD_PEND	0x00400000	/* Path MTU Discovery pending */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
@@ -178,6 +179,14 @@ struct tcpcb {
 
 /* TUBA stuff */
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
+
+/* Path-MTU Discovery Information */
+	u_int	t_pmtud_mss_acked;	/* MSS acked, lower bound for MTU */
+	u_int	t_pmtud_mtu_sent;	/* MTU used, upper bound for MTU */
+	tcp_seq	t_pmtud_th_seq;		/* TCP SEQ from ICMP payload */
+	u_int	t_pmtud_nextmtu;	/* Advertised Next-Hop MTU from ICMP */
+	u_short	t_pmtud_ip_len;		/* IP length from ICMP payload */
+	u_short	t_pmtud_ip_hl;		/* IP header length from ICMP payload */
 
 	int pf;
 
@@ -582,6 +591,7 @@ int	 tcp6_input(struct mbuf **, int *, int);
 void	 tcp_input(struct mbuf *, ...);
 int	 tcp_mss(struct tcpcb *, int);
 void	 tcp_mss_update(struct tcpcb *);
+u_int	 tcp_hdrsz(struct tcpcb *);
 void	 tcp_mtudisc(struct inpcb *, int);
 void	 tcp_mtudisc_increase(struct inpcb *, int);
 #ifdef INET6
