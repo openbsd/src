@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.10 2005/05/27 19:55:21 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.11 2005/06/30 18:27:14 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -127,7 +127,7 @@ ipsecctl_commit(struct ipsecctl *ipsec)
 	while ((rp = TAILQ_FIRST(&ipsec->rule_queue))) {
 		TAILQ_REMOVE(&ipsec->rule_queue, rp, entries);
 
-		if (pfkey_ipsec_establish(rp) == -1)
+		if (pfkey_ipsec_establish(PFK_ACTION_ADD, rp) == -1)
 			warnx("failed to add rule %d", rp->nr);
 
 		free(rp->src);

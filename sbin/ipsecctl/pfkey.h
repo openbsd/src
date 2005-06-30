@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.h,v 1.2 2005/05/27 05:19:55 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.h,v 1.3 2005/06/30 18:27:14 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -20,9 +20,13 @@
 
 #define PFKEYV2_CHUNK sizeof(u_int64_t)
 
+enum {
+	PFK_ACTION_ADD, PFK_ACTION_DELETE
+};
+
 int	pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
 void	pfkey_print_sa(struct sadb_msg *, int);
-int	pfkey_ipsec_establish(struct ipsec_rule *);
+int	pfkey_ipsec_establish(int, struct ipsec_rule *);
 int	pfkey_ipsec_flush(void);
 int	pfkey_init(void);
 

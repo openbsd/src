@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.8 2005/05/27 19:55:21 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.9 2005/06/30 18:27:14 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -46,7 +46,7 @@ static int pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t, struct ipsec_addr *,
 		    struct ipsec_auth);
 static int	pfkey_reply(int);
 int		pfkey_ipsec_flush(void);
-int		pfkey_ipsec_establish(struct ipsec_rule *);
+int		pfkey_ipsec_establish(int, struct ipsec_rule *);
 int		pfkey_init(void);
 
 static int
@@ -563,10 +563,18 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 }
 
 int
-pfkey_ipsec_establish(struct ipsec_rule *r)
+pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 {
-	u_int8_t	satype;
-	u_int8_t	direction;
+	u_int8_t	satype, direction, sa_act;
+
+	switch (action) {
+	case PFK_ACTION_ADD:
+		sa_act = SADB_X_ADDFLOW;
+		break;
+	case PFK_ACTION_DELETE:
+	default:
+		return -1;
+	}
 
 	switch (r->proto) {
 	case IPSEC_ESP:
