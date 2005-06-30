@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.218 2005/06/13 20:17:26 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.219 2005/06/30 20:52:20 sturm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -482,7 +482,7 @@ print_status(struct pf_status *s, int opts)
 	char			statline[80], *running;
 	time_t			runtime;
 	int			i;
-	char			buf[MD5_DIGEST_LENGTH * 2 + 1];
+	char			buf[PF_MD5_DIGEST_LENGTH * 2 + 1];
 	static const char 	hex[] = "0123456789abcdef";
 
 	runtime = time(NULL) - s->since;
@@ -521,7 +521,7 @@ print_status(struct pf_status *s, int opts)
 	if (opts & PF_OPT_VERBOSE) {
 		printf("Hostid:   0x%08x\n", ntohl(s->hostid));
 
-		for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
+		for (i = 0; i < PF_MD5_DIGEST_LENGTH; i++) {
 			buf[i + i] = hex[s->pf_chksum[i] >> 4];
 			buf[i + i + 1] = hex[s->pf_chksum[i] & 0x0f];
 		}

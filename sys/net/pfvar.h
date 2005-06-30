@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.224 2005/06/13 20:54:50 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.225 2005/06/30 20:52:20 sturm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -42,12 +42,18 @@
 #include <net/route.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/tcp_fsm.h>
-#include <crypto/md5.h>
 
 struct ip;
 
 #define	PF_TCPS_PROXY_SRC	((TCP_NSTATES)+0)
 #define	PF_TCPS_PROXY_DST	((TCP_NSTATES)+1)
+
+#define	PF_MD5_DIGEST_LENGTH	16
+#ifdef MD5_DIGEST_LENGTH
+#if PF_MD5_DIGEST_LENGTH != MD5_DIGEST_LENGTH
+#error
+#endif
+#endif
 
 enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_LAN_EXT, PF_EXT_GWY, PF_ID };
@@ -1048,7 +1054,7 @@ struct pf_status {
 	u_int32_t	debug;
 	u_int32_t	hostid;
 	char		ifname[IFNAMSIZ];
-	u_int8_t	pf_chksum[MD5_DIGEST_LENGTH];
+	u_int8_t	pf_chksum[PF_MD5_DIGEST_LENGTH];
 };
 
 struct cbq_opts {

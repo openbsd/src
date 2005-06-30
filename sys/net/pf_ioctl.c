@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.144 2005/06/13 20:17:25 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.145 2005/06/30 20:52:20 sturm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -63,6 +63,7 @@
 #include <netinet/ip_icmp.h>
 
 #include <dev/rndvar.h>
+#include <crypto/md5.h>
 #include <net/pfvar.h>
 
 #if NPFSYNC > 0
@@ -1091,7 +1092,7 @@ pf_calc_chksum(struct pf_ruleset *rs)
 	MD5_CTX			 ctx;
 	struct pf_rule		*rule;
 	int			 rs_cnt;
-	u_int8_t		 digest[MD5_DIGEST_LENGTH];
+	u_int8_t		 digest[PF_MD5_DIGEST_LENGTH];
 
 	MD5Init(&ctx);
 	for (rs_cnt = 0; rs_cnt < PF_RULESET_MAX; rs_cnt++) {
