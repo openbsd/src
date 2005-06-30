@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.12 2005/06/30 19:05:27 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.13 2005/06/30 19:13:57 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -364,7 +364,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-Fnv] [-f file] [-s modifier]\n",
+	fprintf(stderr, "usage: %s [-dFnv] [-f file] [-s modifier]\n",
 	    __progname);
 	exit(1);
 }
