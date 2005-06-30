@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nohup.1,v 1.9 2005/06/29 07:34:42 jmc Exp $
+.\"	$OpenBSD: nohup.1,v 1.10 2005/06/30 20:02:12 jmc Exp $
 .\"	$NetBSD: nohup.1,v 1.5 1995/08/31 23:35:24 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -45,20 +45,41 @@
 .Op Ar arg ...
 .Sh DESCRIPTION
 The
-.Nm nohup
-command invokes
-.Ar utility
-with
-its arguments
-and at this time sets the signal
+.Nm
+command allows the specified utility to be protected from termination
+if the user should become logged out
+(for example, due to a modem line or TCP/IP connection being dropped).
+To do this,
+.Nm
+sets the
 .Dv SIGHUP
-to be ignored.
+.Xr signal 3
+.Pq Dq terminal line hangup
+to be ignored,
+then executes
+.Ar utility
+along with any arguments.
+.Pp
 If the standard output is a terminal, the standard output is
 appended to the file
 .Pa nohup.out
 in the current directory.
 If standard error is a terminal, it is directed to the same place
 as the standard output.
+.Pp
+If the output file
+.Pa nohup.out
+cannot be created in the current directory,
+.Nm
+attempts to create the file in the user's home directory.
+If the file
+.Pa nohup.out
+cannot be created,
+either in the current directory or the user's home directory,
+.Nm
+will exit without invoking
+.Ar utility ,
+with an exit value as described below.
 .Pp
 The
 .Nm nohup
@@ -73,29 +94,23 @@ was found but could not be invoked.
 The
 .Ar utility
 could not be found or an error occurred in
-.Nm nohup .
+.Nm .
 .El
 .Pp
 Otherwise, the exit status of
-.Nm nohup
+.Nm
 shall be that of
 .Ar utility .
 .Sh ENVIRONMENT
-.Bl -tag -width flag
+.Bl -tag -width Ds
 .It Ev HOME
-If the output file
-.Pa nohup.out
-cannot be created in the current directory, the
-.Nm nohup
-utility uses the directory named by
-.Ev HOME
-to create the file.
+User's home directory.
 .El
 .Sh SEE ALSO
 .Xr signal 3
 .Sh STANDARDS
 The
-.Nm nohup
+.Nm
 command is expected to be
 .St -p1003.2
 compatible.
