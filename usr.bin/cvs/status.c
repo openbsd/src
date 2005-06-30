@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.25 2005/06/30 09:42:14 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.26 2005/06/30 15:24:53 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -107,8 +107,11 @@ cvs_status_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_status_pre_exec(struct cvsroot *root)
 {
-	if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
-		return (CVS_EX_PROTO);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
+			return (CVS_EX_PROTO);
+	}
+
 	return (0);
 }
 
