@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.15 2004/12/02 02:41:02 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.16 2005/06/30 04:02:52 marco Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -418,6 +418,7 @@ pci_intr_map(pa, ihp)
 	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
 		sizeof(interrupts)) < 0) {
 		printf("OF_mapintr failed\n");
+		return (ENODEV);
 	}
 	/* Try to find an IPL for this type of device. */
 	if (OF_getprop(node, "device_type", &devtype, sizeof(devtype)) > 0) {
