@@ -22,7 +22,4 @@ To preserve the GNU CVS binary, it is recommended that you first rename it:
 	# cd /usr/bin
 	# mv cvs gcvs
 
-The CVS daemon is not yet ready so there are no additional steps required
-for the moment.
-
 See http://www.opencvs.org/ for more information.
