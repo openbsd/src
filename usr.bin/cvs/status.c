@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.24 2005/06/25 13:53:37 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.25 2005/06/30 09:42:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -227,6 +227,7 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	cvs_printf("   Sticky Options:      %s\n",
 	    cf->cf_opts == NULL ? "(none)" : cf->cf_opts);
 
+	cvs_printf("\n");
 	rcs_close(rf);
 
 	return (0);
