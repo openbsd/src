@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.22 2005/06/29 19:51:04 mickey Exp $
+.\"	$OpenBSD: ami.4,v 1.23 2005/06/30 06:16:09 jmc Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -45,11 +45,11 @@ Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
 .Pp
-Management interface is provided through the
+The management interface is provided through the
 .Xr bio 4
 device or one of the daughter
 .Xr sd 4
-devices as implemented in
+devices as implemented in the
 .Xr bioctl 8
 utility.
 .Sh SEE ALSO
