@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.882 2005/06/30 00:56:56 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.883 2005/06/30 03:15:31 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4617,6 +4617,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
 	    "Powerstorm 4D50T",
+	},
+	{
+	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_EXPERT3D,
+	    "Expert3D",
 	},
 	{
 	    PCI_VENDOR_INTERPHASE, PCI_PRODUCT_INTERPHASE_5526,
