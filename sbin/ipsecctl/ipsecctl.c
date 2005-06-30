@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.11 2005/06/30 18:27:14 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.12 2005/06/30 19:05:27 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -40,7 +40,7 @@
 
 int		 ipsecctl_rules(char *, int);
 FILE		*ipsecctl_fopen(const char *, const char *);
-int		 ipsecctl_commit(struct ipsecctl *);
+int		 ipsecctl_commit(int, struct ipsecctl *);
 int		 ipsecctl_add_rule(struct ipsecctl *, struct ipsec_rule *);
 void		 ipsecctl_print_addr(struct ipsec_addr *);
 void		 ipsecctl_print_rule(struct ipsec_rule *, int);
@@ -66,7 +66,7 @@ ipsecctl_rules(char *filename, int opts)
 {
 	FILE		*fin;
 	struct ipsecctl	 ipsec;
-	int		 error = 0;
+	int		 action, error = 0;
 
 	bzero(&ipsec, sizeof(ipsec));
 	ipsec.opts = opts;
@@ -87,8 +87,13 @@ ipsecctl_rules(char *filename, int opts)
 		warnx("Syntax error in config file: ipsec rules not loaded");
 		error = 1;
 	} else {
+		if (opts & IPSECCTL_OPT_DELETE)
+			action = PFK_ACTION_DELETE;
+		else
+			action = PFK_ACTION_ADD;
+
 		if ((opts & IPSECCTL_OPT_NOACTION) == 0)
-			if (ipsecctl_commit(&ipsec))
+			if (ipsecctl_commit(action, &ipsec))
 				err(1, NULL);
 	}
 	return (error);
@@ -117,7 +122,7 @@ ipsecctl_fopen(const char *name, const char *mode)
 }
 
 int
-ipsecctl_commit(struct ipsecctl *ipsec)
+ipsecctl_commit(int action, struct ipsecctl *ipsec)
 {
 	struct ipsec_rule *rp;
 
@@ -127,7 +132,7 @@ ipsecctl_commit(struct ipsecctl *ipsec)
 	while ((rp = TAILQ_FIRST(&ipsec->rule_queue))) {
 		TAILQ_REMOVE(&ipsec->rule_queue, rp, entries);
 
-		if (pfkey_ipsec_establish(PFK_ACTION_ADD, rp) == -1)
+		if (pfkey_ipsec_establish(action, rp) == -1)
 			warnx("failed to add rule %d", rp->nr);
 
 		free(rp->src);
@@ -385,8 +390,11 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "f:Fnvs:")) != -1) {
+	while ((ch = getopt(argc, argv, "df:Fnvs:")) != -1) {
 		switch (ch) {
+		case 'd':
+			opts |= IPSECCTL_OPT_DELETE;
+			break;
 		case 'f':
 			rulesopt = optarg;
 			break;
