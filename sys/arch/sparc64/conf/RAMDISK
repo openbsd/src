@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.45 2005/06/16 14:13:26 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.46 2005/06/30 01:08:48 brad Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -58,6 +58,8 @@ xl*	at pci?			# 3C9xx ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 epic*	at pci?			# SMC EPIC/100 ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
+#bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
+stge*	at pci?			# Sundance TC9021 GigE
 rl*	at pci?			# RealTek 81[23]9 ethernet
 vr*	at pci?			# VIA Rhine ethernet
 
@@ -122,6 +124,7 @@ acphy*	at mii?			# Altima AC101 PHYs
 exphy*	at mii?			# 3Com internal PHYs
 bmtphy*	at mii?			# Broadcom 10/100 PHYs
 brgphy*	at mii?			# Broadcom PHYs
+eephy*	at mii?			# Marvell 88E1000 series PHY
 nsphy*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?			# Quality Semi QS6612 PHYs
 luphy*	at mii?			# Lucent LU6612 PHY
