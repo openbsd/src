@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.10 2005/05/23 22:44:57 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.11 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -25,6 +25,9 @@
 
 #include <arm/xscale/pxa2x0var.h>
 
+#include <machine/zaurus_reg.h>
+#include <machine/zaurus_var.h>
+
 #include <zaurus/dev/zaurus_scoopreg.h>
 #include <zaurus/dev/zaurus_scoopvar.h>
 
@@ -38,7 +41,7 @@ struct scoop_softc {
 int	scoopmatch(struct device *, void *, void *);
 void	scoopattach(struct device *, struct device *, void *);
 
-struct cfattach scoop_pxaip_ca = {
+struct cfattach scoop_ca = {
 	sizeof (struct scoop_softc), scoopmatch, scoopattach
 };
 
@@ -57,10 +60,9 @@ scoopmatch(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 
 	/*
-	 * Only the C3000 models (pxa270) are known to have two SCOOPs,
-	 * on other models we only find the first one.
+	 * Only C3000-like models are known to have two SCOOPs.
 	 */
-        if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X)
+        if (ZAURUS_ISC3000)
 	    	return (cf->cf_unit < 2);
 
 	return (cf->cf_unit == 0);
@@ -79,9 +81,9 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 	if (pxa->pxa_addr != -1)
 		addr = pxa->pxa_addr;
 	else if (sc->sc_dev.dv_unit == 0)
-		addr = SCOOP0_BASE;
+		addr = C3000_SCOOP0_BASE;
 	else
-		addr = SCOOP1_BASE;
+		addr = C3000_SCOOP1_BASE;
 
 	size = pxa->pxa_size < SCOOP_SIZE ? SCOOP_SIZE : pxa->pxa_size;
 
@@ -90,7 +92,7 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(": Onboard Peripheral Controller\n");
+	printf(": PCMCIA/GPIO controller\n");
 }
 
 int

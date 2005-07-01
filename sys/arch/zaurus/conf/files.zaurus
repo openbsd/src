@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.19 2005/06/16 21:30:12 uwe Exp $
+#	$OpenBSD: files.zaurus,v 1.20 2005/07/01 23:51:55 uwe Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -33,10 +33,14 @@ device zkbd: wskbddev
 attach zkbd at pxaip
 file arch/zaurus/dev/zaurus_kbd.c		zkbd
 
-# Onboard peripheral and GPIO controller
+# 16-bit GPIO controller
 device scoop
-attach scoop at pxaip with scoop_pxaip
+attach scoop at pxaip
 file arch/zaurus/dev/zaurus_scoop.c		scoop
+
+# PCMCIA/CF socket controller
+attach pxapcic at pxaip with pxapcic_scoop
+file arch/zaurus/dev/scoop_pcic.c		pxapcic_scoop
 
 # Dedicated SSP unit for ADC, touch screen, and backlight
 device zssp

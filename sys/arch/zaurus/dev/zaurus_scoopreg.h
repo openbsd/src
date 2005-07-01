@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoopreg.h,v 1.6 2005/03/08 23:29:06 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoopreg.h,v 1.7 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -16,22 +16,43 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define SCOOP0_BASE	0x10800000
-#define SCOOP1_BASE	0x08800040
-#define SCOOP_SIZE	0x2c
+#define SCOOP_SIZE		0x2c
 
-#define SCOOP_MCR	0x00		/* (R/W) */
-#define SCOOP_CDR	0x04		/* (R?/W) */
-#define SCOOP_CSR	0x08		/* card status register (R) */
-#define SCOOP_CPR	0x0c		/* card power register (R/W) */
-#define SCOOP_CCR	0x10		/* card configuration reg.? (R/W) */
-#define SCOOP_IRR	0x14		/* XXX for pcic: bit 0x4 role is? */
-#define SCOOP_IRM	0x14
-#define SCOOP_IMR	0x18		/* (R/W) */
-#define SCOOP_ISR	0x1c
-#define SCOOP_GPCR	0x20		/* GPIO pin direction (R/W) */
-#define SCOOP_GPWR	0x24		/* GPIO pin output level (R/W) */
-#define SCOOP_GPRR	0x28
+/* registers and values */
+
+#define SCOOP_MCR		0x00
+#define  SCP_MCR_IOCARD		0x0010
+#define SCOOP_CDR		0x04	/* card detect register */
+#define  SCP_CDR_DETECT		0x0002
+#define SCOOP_CSR		0x08	/* card status register */
+#define  SCP_CSR_READY		0x0002
+#define  SCP_CSR_MISSING	0x0004
+#define  SCP_CSR_WPROT		0x0008
+#define  SCP_CSR_BVD1		0x0010
+#define  SCP_CSR_BVD2		0x0020
+#define  SCP_CSR_3V		0x0040
+#define  SCP_CSR_PWR		0x0080
+#define SCOOP_CPR		0x0c	/* card power register */
+#define  SCP_CPR_OFF		0x0000
+#define  SCP_CPR_3V		0x0001
+#define  SCP_CPR_5V		0x0002
+#define  SCP_CPR_PWR		0x0080
+#define SCOOP_CCR		0x10	/* card control register */
+#define  SCP_CCR_RESET		0x0080
+#define SCOOP_IRR		0x14	/* XXX for pcic: bit 0x4 role is? */
+#define SCOOP_IRM		0x14
+#define SCOOP_IMR		0x18
+#define  SCP_IMR_READY		0x0002
+#define  SCP_IMR_DETECT		0x0004
+#define  SCP_IMR_WRPROT		0x0008
+#define  SCP_IMR_STSCHG		0x0010
+#define  SCP_IMR_BATWARN	0x0020
+#define  SCP_IMR_UNKN0		0x0040
+#define  SCP_IMR_UNKN1		0x0080
+#define SCOOP_ISR		0x1c
+#define SCOOP_GPCR		0x20	/* GPIO pin direction (R/W) */
+#define SCOOP_GPWR		0x24	/* GPIO pin output level (R/W) */
+#define SCOOP_GPRR		0x28	/* GPIO pin input level (R) */
 
 /* GPIO bits */
 
