@@ -1,4 +1,4 @@
-/* $OpenBSD: runetype.h,v 1.2 2005/05/11 18:44:12 espie Exp $ */
+/* $OpenBSD: runetype.h,v 1.3 2005/07/01 08:59:27 espie Exp $ */
 
 #ifndef _NB_RUNETYPE_H_
 #define _NB_RUNETYPE_H_
@@ -9,6 +9,19 @@
 typedef uint32_t		__nbrune_t;
 
 typedef uint32_t _RuneType;
+
+/*
+ * wctrans stuffs.
+ */
+typedef struct _WCTransEntry {
+	char		*te_name;
+	__nbrune_t	*te_cached;
+	void		*te_extmap;
+} _WCTransEntry;
+
+#define _WCTRANS_INDEX_LOWER	0
+#define _WCTRANS_INDEX_UPPER	1
+#define _WCTRANS_NINDEXES	2
 
 /*
  * wctype stuffs.

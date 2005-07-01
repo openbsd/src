@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype_sb.c,v 1.2 2005/05/11 18:44:12 espie Exp $	*/
+/*	$OpenBSD: iswctype_sb.c,v 1.3 2005/07/01 08:59:27 espie Exp $	*/
 /*	$NetBSD: iswctype_sb.c,v 1.3 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -36,12 +36,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: iswctype_sb.c,v 1.2 2005/05/11 18:44:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: iswctype_sb.c,v 1.3 2005/07/01 08:59:27 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 #include <wctype.h>
 #include <ctype.h>
+#include <errno.h>
 #include "runetype.h"
 
 int
@@ -149,6 +150,12 @@ static _WCTypeEntry names[] = {
 	"xdigit", _WCTYPE_INDEX_XDIGIT
 };
 
+static _WCTransEntry tnames[] = {
+	"tolower", 0, 0,
+	"toupper", 0, 0
+};
+
+
 wctype_t
 wctype(const char *charclass)
 {
@@ -158,6 +165,17 @@ wctype(const char *charclass)
 		if (strcmp(names[i].te_name, charclass) == 0)
 			return (wctype_t)(&names[i]);
 	return (wctype_t)NULL;
+}
+
+wctrans_t
+wctrans(const char *charclass)
+{
+	int i;
+
+	for (i = 0; i < sizeof tnames / sizeof tnames[0]; i++)
+		if (strcmp(names[i].te_name, charclass) == 0)
+			return (wctrans_t)(&tnames[i]);
+	return (wctrans_t)NULL;
 }
 
 int
@@ -194,5 +212,18 @@ iswctype(wint_t c, wctype_t charclass)
 		return iswxdigit(c);
 	default:
 		return 0;
+	}
+}
+
+wint_t
+towctrans(wint_t c, wctrans_t desc)
+{
+	if (desc == (wctrans_t)(&tnames[_WCTRANS_INDEX_LOWER])) {
+		return towlower(c);
+	} else if (desc == (wctrans_t)(&tnames[_WCTRANS_INDEX_UPPER])) {
+		return towupper(c);
+	} else {
+		errno = EINVAL;
+		return (c);
 	}
 }

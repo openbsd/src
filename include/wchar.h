@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.5 2005/06/20 10:46:34 espie Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.6 2005/07/01 08:59:27 espie Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -134,6 +134,7 @@ size_t	wcsspn(const wchar_t *, const wchar_t *);
 wchar_t	*wcsstr(const wchar_t *, const wchar_t *);
 wchar_t *wcstok(wchar_t * __restrict, const wchar_t * __restrict,
 		     wchar_t ** __restrict);
+size_t	wcsxfrm(wchar_t *, const wchar_t *, size_t);
 wchar_t	*wcswcs(const wchar_t *, const wchar_t *);
 wchar_t	*wmemchr(const wchar_t *, wchar_t, size_t);
 int	wmemcmp(const wchar_t *, const wchar_t *, size_t);
@@ -144,9 +145,25 @@ wchar_t	*wmemset(wchar_t *, wchar_t, size_t);
 
 size_t	wcslcat(wchar_t *, const wchar_t *, size_t);
 size_t	wcslcpy(wchar_t *, const wchar_t *, size_t);
+int	wcswidth(const wchar_t *, size_t);
 int	wctob(wint_t);
 int	wcscoll(const wchar_t *, const wchar_t *);
-size_t	wcsxfrm(wchar_t *, const wchar_t *, size_t);
+int	wcwidth(wchar_t);
+
+double wcstod(const wchar_t * __restrict, wchar_t ** __restrict);
+long int wcstol(const wchar_t * __restrict, wchar_t ** __restrict, int base);
+unsigned long int wcstoul(const wchar_t * __restrict, wchar_t ** __restrict,
+		int base);
+
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L
+/* LONGLONG */
+long long int wcstoll(const wchar_t * __restrict,
+	wchar_t ** __restrict, int base);
+/* LONGLONG */
+unsigned long long int wcstoull(const wchar_t * __restrict,
+	wchar_t ** __restrict, int base);
+#endif
 
 wint_t ungetwc(wint_t, FILE *);
 wint_t fgetwc(FILE *);

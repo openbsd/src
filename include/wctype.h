@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctype.h,v 1.3 2005/05/11 18:44:12 espie Exp $	*/
+/*	$OpenBSD: wctype.h,v 1.4 2005/07/01 08:59:27 espie Exp $	*/
 /*	$NetBSD: wctype.h,v 1.5 2003/03/02 22:18:11 tshiozak Exp $	*/
 
 /*-
@@ -67,10 +67,12 @@ int	iswpunct(wint_t);
 int	iswspace(wint_t);
 int	iswupper(wint_t);
 int	iswxdigit(wint_t);
+int	iswctype(wint_t, wctype_t);
+wint_t	towctrans(wint_t, wctrans_t);
 wint_t	towlower(wint_t);
 wint_t	towupper(wint_t);
-int	iswctype(wint_t, wctype_t);
-wctype_t	wctype(const char *);
+wctrans_t wctrans(const char *);
+wctype_t wctype(const char *);
 __END_DECLS
 
 #endif		/* _WCTYPE_H_ */
