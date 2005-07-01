@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.17 2005/06/16 18:43:00 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.18 2005/07/01 18:59:15 fgsch Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -259,7 +259,7 @@ parse(int argc, char *argv[])
 	const struct token	*match;
 
 	bzero(&res, sizeof(res));
-	SIMPLEQ_INIT(&res.set);
+	TAILQ_INIT(&res.set);
 
 	while (argc > 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
@@ -408,7 +408,7 @@ match_token(const char *word, const struct token table[])
 				    sizeof(fs->action.pftable)) >=
 				    sizeof(fs->action.pftable))
 					errx(1, "pftable name too long");
-				SIMPLEQ_INSERT_TAIL(&res.set, fs, entry);
+				TAILQ_INSERT_TAIL(&res.set, fs, entry);
 				match++;
 				t = &table[i];
 			}
@@ -604,7 +604,7 @@ parse_number(const char *word, struct parse_result *r, enum token_type type)
 		errx(1, "king bula sez bad things happen");
 	}
 
-	SIMPLEQ_INSERT_TAIL(&r->set, fs, entry);
+	TAILQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
 }
 
@@ -698,7 +698,7 @@ done:
 	fs->action.community.as = as;
 	fs->action.community.type = type;
 
-	SIMPLEQ_INSERT_TAIL(&r->set, fs, entry);
+	TAILQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
 }
 
@@ -723,7 +723,7 @@ parse_nexthop(const char *word, struct parse_result *r)
 		return (0);
 	}
 
-	SIMPLEQ_INSERT_TAIL(&r->set, fs, entry);
+	TAILQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
 }
 
