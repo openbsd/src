@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.43 2005/06/29 09:43:25 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.44 2005/07/01 09:19:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -130,8 +130,9 @@ print_set(struct filter_set_head *set)
 			printf("rtlabel %s ", s->action.rtlabel);
 			break;
 		case ACTION_RTLABEL_ID:
+		case ACTION_PFTABLE_ID:
 			/* not possible */
-			printf("rtlabel id %d ", s->action.id);
+			printf("king bula saiz: config broken");
 			break;
 		}
 	}

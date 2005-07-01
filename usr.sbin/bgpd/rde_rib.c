@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.67 2005/06/29 09:43:26 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.68 2005/07/01 09:19:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -81,7 +81,7 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	struct rde_aspath	*asp;
 	struct prefix		*p;
 
-	rde_send_pftable(nasp->pftable, prefix, prefixlen, 0);
+	rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
 	rde_send_pftable_commit();
 
 	if ((p = prefix_get(peer, prefix, prefixlen)) != NULL) {
@@ -136,10 +136,12 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 		return (1);
 	if (a->rtlabelid < b->rtlabelid)
 		return (-1);
+	if (a->pftableid > b->pftableid)
+		return (1);
+	if (a->pftableid < b->pftableid)
+		return (-1);
 
-	r = strcmp(a->pftable, b->pftable);
-	if (r == 0)
-		r = aspath_compare(a->aspath, b->aspath);
+	r = aspath_compare(a->aspath, b->aspath);
 	if (r == 0)
 		r = nexthop_compare(a->nexthop, b->nexthop);
 	if (r > 0)
@@ -196,7 +198,7 @@ path_remove(struct rde_aspath *asp)
 	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
 		/* Commit is done in peer_down() */
 		pt_getaddr(p->prefix, &addr);
-		rde_send_pftable(p->aspath->pftable,
+		rde_send_pftable(p->aspath->pftableid,
 		    &addr, p->prefix->prefixlen, 1);
 
 		prefix_destroy(p);
@@ -492,7 +494,7 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
 
 	asp = p->aspath;
 
-	rde_send_pftable(asp->pftable, prefix, prefixlen, 1);
+	rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
 	rde_send_pftable_commit();
 
 	prefix_unlink(p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.66 2005/06/29 09:43:26 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.67 2005/07/01 09:19:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -158,11 +158,11 @@ struct rde_aspath {
 	struct rde_peer			*peer;
 	struct aspath			*aspath;
 	struct nexthop			*nexthop;	/* may be NULL */
-	char				 pftable[PFTABLE_LEN];
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
 	u_int32_t			 weight;	/* low prio lpref */
 	u_int16_t			 rtlabelid;	/* route label id */
+	u_int16_t			 pftableid;	/* pf table id */
 	u_int16_t			 flags;		/* internally used */
 	u_int16_t			 prefix_cnt; /* # of prefixes */
 	u_int16_t			 active_cnt; /* # of active prefixes */
@@ -238,7 +238,7 @@ struct prefix {
 /* rde.c */
 void		 rde_send_kroute(struct prefix *, struct prefix *);
 void		 rde_send_nexthop(struct bgpd_addr *, int);
-void		 rde_send_pftable(const char *, struct bgpd_addr *,
+void		 rde_send_pftable(u_int16_t, struct bgpd_addr *,
 		     u_int8_t, int);
 void		 rde_send_pftable_commit(void);
 

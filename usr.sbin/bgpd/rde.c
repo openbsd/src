@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.163 2005/06/29 09:43:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.164 2005/07/01 09:19:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1660,16 +1660,16 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
  * pf table specific functions
  */
 void
-rde_send_pftable(const char *table, struct bgpd_addr *addr,
+rde_send_pftable(u_int16_t id, struct bgpd_addr *addr,
     u_int8_t len, int del)
 {
 	struct pftable_msg pfm;
 
-	if (*table == '\0')
+	if (id == 0)
 		return;
 
 	bzero(&pfm, sizeof(pfm));
-	strlcpy(pfm.pftable, table, sizeof(pfm.pftable));
+	strlcpy(pfm.pftable, pftable_id2name(id), sizeof(pfm.pftable));
 	memcpy(&pfm.addr, addr, sizeof(pfm.addr));
 	pfm.len = len;
 

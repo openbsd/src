@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.172 2005/06/29 09:43:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.173 2005/07/01 09:19:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -579,6 +579,7 @@ enum action_types {
 	ACTION_SET_COMMUNITY,
 /*	ACTION_SCRUB_COMMUNITY, */
 	ACTION_PFTABLE,
+	ACTION_PFTABLE_ID,
 	ACTION_RTLABEL,
 	ACTION_RTLABEL_ID
 };
@@ -707,6 +708,11 @@ u_int16_t	 rtlabel_name2id(char *);
 const char	*rtlabel_id2name(u_int16_t);
 void		 rtlabel_unref(u_int16_t);
 void		 rtlabel_ref(u_int16_t);
+u_int16_t	 pftable_name2id(char *);
+const char	*pftable_id2name(u_int16_t);
+void		 pftable_unref(u_int16_t);
+void		 pftable_ref(u_int16_t);
+
 
 /* rde_filter.c */
 void			 filterset_free(struct filter_set_head *);

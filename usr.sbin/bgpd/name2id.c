@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.3 2005/06/29 09:43:25 claudio Exp $ */
+/*	$OpenBSD: name2id.c,v 1.4 2005/07/01 09:19:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -45,7 +45,7 @@ void		 _ref(struct n2id_labels *, u_int16_t);
 int		 _exists(struct n2id_labels *, const char *);
 
 struct n2id_labels	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
-struct n2id_labels	filter_labels = TAILQ_HEAD_INITIALIZER(filter_labels);
+struct n2id_labels	pftable_labels = TAILQ_HEAD_INITIALIZER(pftable_labels);
 
 u_int16_t
 rtlabel_name2id(char *name)
@@ -67,6 +67,30 @@ rtlabel_unref(u_int16_t id)
 
 void
 rtlabel_ref(u_int16_t id)
+{
+	_ref(&rt_labels, id);
+}
+
+u_int16_t
+pftable_name2id(char *name)
+{
+	return (_name2id(&rt_labels, name));
+}
+
+const char *
+pftable_id2name(u_int16_t id)
+{
+	return (_id2name(&rt_labels, id));
+}
+
+void
+pftable_unref(u_int16_t id)
+{
+	_unref(&rt_labels, id);
+}
+
+void
+pftable_ref(u_int16_t id)
 {
 	_ref(&rt_labels, id);
 }

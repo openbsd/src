@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.28 2005/06/29 09:43:26 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.29 2005/07/01 09:19:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -188,8 +188,14 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			    set->action.community.type);
 			break;
 		case ACTION_PFTABLE:
-			strlcpy(asp->pftable, set->action.pftable,
-			    sizeof(asp->pftable));
+			/* convert pftable name to an id */
+			set->action.id = pftable_name2id(set->action.pftable);
+			set->type = ACTION_PFTABLE_ID;
+			/* FALLTHROUGH */
+		case ACTION_PFTABLE_ID:
+			pftable_unref(asp->pftableid);
+			asp->pftableid = set->action.id;
+			pftable_ref(asp->pftableid);
 			break;
 		case ACTION_RTLABEL:
 			/* convert the route label to an id for faster access */
@@ -309,6 +315,8 @@ filterset_free(struct filter_set_head *sh)
 		SIMPLEQ_REMOVE_HEAD(sh, entry);
 		if (s->type == ACTION_RTLABEL_ID)
 		       	rtlabel_unref(s->action.id);
+		else if (s->type == ACTION_PFTABLE_ID)
+			pftable_unref(s->action.id);
 		free(s);
 	}
 	

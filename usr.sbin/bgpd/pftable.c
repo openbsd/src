@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.4 2004/11/02 17:00:52 henning Exp $ */
+/*	$OpenBSD: pftable.c,v 1.5 2005/07/01 09:19:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -76,7 +76,7 @@ pftable_change(struct pf_table *pft)
 	if (ret == -1) {
 		if (errno == EINVAL)
 			return (0);
-		log_warn("pftable_change ioctl %s", strerror(errno));
+		log_warn("pftable_change ioctl");
 	}
 
 	return (ret);
@@ -95,7 +95,7 @@ pftable_clear(const char *name)
 	    sizeof(tio.pfrio_table.pfrt_name));
 
 	if (ioctl(devpf, DIOCRCLRADDRS, &tio) != 0) {
-		log_warn("pftable_clear ioctl %s", strerror(errno));
+		log_warn("pftable_clear ioctl");
 		return (-1);
 	}
 
