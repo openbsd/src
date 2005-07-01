@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.32 2005/07/01 14:29:13 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.33 2005/07/01 14:55:30 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -46,10 +46,10 @@
 #define CVS_GETLOG_REVEND \
  "============================================================================="
 
-static int  cvs_getlog_remote  (CVSFILE *, void *);
-static int  cvs_getlog_local   (CVSFILE *, void *);
-static int cvs_getlog_options(struct cvs_cmd *, int, char **, int *);
-static int cvs_getlog_sendflags(struct cvsroot *);
+static int cvs_getlog_init     (struct cvs_cmd *, int, char **, int *);
+static int cvs_getlog_remote   (CVSFILE *, void *);
+static int cvs_getlog_local    (CVSFILE *, void *);
+static int cvs_getlog_pre_exec (struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_log = {
 	CVS_OP_LOG, CVS_REQ_LOG, "log",
@@ -59,8 +59,8 @@ struct cvs_cmd cvs_cmd_log = {
 	"bd:hlNRr:s:tw:",
 	NULL,
 	CF_RECURSE,
-	cvs_getlog_options,
-	NULL,
+	cvs_getlog_init,
+	cvs_getlog_pre_exec,
 	cvs_getlog_remote,
 	cvs_getlog_local,
 	NULL,
@@ -77,8 +77,8 @@ struct cvs_cmd cvs_cmd_rlog = {
 	"d:hlRr:",
 	NULL,
 	CF_RECURSE,
-	cvs_getlog_options,
-	cvs_getlog_sendflags,
+	cvs_getlog_init,
+	cvs_getlog_pre_exec,
 	cvs_getlog_remote,
 	cvs_getlog_local,
 	NULL,
@@ -92,7 +92,7 @@ static int log_lhonly = 0;
 static int log_notags = 0;
 
 static int
-cvs_getlog_options(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
+cvs_getlog_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
@@ -133,16 +133,18 @@ cvs_getlog_options(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 }
 
 static int
-cvs_getlog_sendflags(struct cvsroot *root)
+cvs_getlog_pre_exec(struct cvsroot *root)
 {
-	if (log_honly && (cvs_sendarg(root, "-h", 0) < 0))
-		return (CVS_EX_PROTO);
-	if (log_notags && (cvs_sendarg(root, "-N", 0) < 0))
-		return (CVS_EX_PROTO);
-	if (log_rfonly && (cvs_sendarg(root, "-R", 0) < 0))
-		return (CVS_EX_PROTO);
-	if (log_lhonly && (cvs_sendarg(root, "-t", 0) < 0))
-		return (CVS_EX_PROTO);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (log_honly && (cvs_sendarg(root, "-h", 0) < 0))
+			return (CVS_EX_PROTO);
+		if (log_notags && (cvs_sendarg(root, "-N", 0) < 0))
+			return (CVS_EX_PROTO);
+		if (log_rfonly && (cvs_sendarg(root, "-R", 0) < 0))
+			return (CVS_EX_PROTO);
+		if (log_lhonly && (cvs_sendarg(root, "-t", 0) < 0))
+			return (CVS_EX_PROTO);
+	}
 
 	return (0);
 }
@@ -269,15 +271,17 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 	cvs_printf("keyword substitution: %s\n",
 	    rf->rf_expand == NULL ? "kv" : rf->rf_expand);
 
-	if (log_honly)
-		cvs_printf("total revisions: %u;\n", rf->rf_ndelta);
-	else {
-		cvs_printf("total revisions: %u;\tselected revisions: %u\n",
-		    rf->rf_ndelta, nrev);
+	cvs_printf("total revisions: %u;", rf->rf_ndelta);
 
-		if (!log_lhonly)
-			cvs_printf("description:\n%s", rf->rf_desc);
+	if (!log_honly || !log_lhonly)
+		cvs_printf("\tselected revisions: %u", nrev);
+	
+	cvs_printf("\n");
 
+	if (!log_honly || log_lhonly)
+		cvs_printf("description:\n%s", rf->rf_desc);
+
+	if (!log_honly && !log_lhonly) {
 		TAILQ_FOREACH(rdp, &(rf->rf_delta), rd_list) {
 			rcsnum_tostr(rdp->rd_num, numbuf, sizeof(numbuf));
 			cvs_printf(CVS_GETLOG_REVSEP "\nrevision %s\n", numbuf);
