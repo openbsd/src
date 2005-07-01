@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.31 2005/07/01 13:38:14 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.32 2005/07/01 22:04:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -303,11 +303,10 @@ filterset_free(struct filter_set_head *sh)
 	while ((s = TAILQ_FIRST(sh)) != NULL) {
 		TAILQ_REMOVE(sh, s, entry);
 		if (s->type == ACTION_RTLABEL_ID)
-		       	rtlabel_unref(s->action.id);
+			rtlabel_unref(s->action.id);
 		else if (s->type == ACTION_PFTABLE_ID)
 			pftable_unref(s->action.id);
 		free(s);
 	}
-	
 }
 
