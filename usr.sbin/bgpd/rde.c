@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.165 2005/07/01 12:10:20 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.166 2005/07/01 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -331,7 +331,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
-			SIMPLEQ_INIT(&netconf_s.attrset);
+			TAILQ_INIT(&netconf_s.attrset);
 			session_set = &netconf_s.attrset;
 			break;
 		case IMSG_NETWORK_DONE:
@@ -349,7 +349,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
-			SIMPLEQ_INIT(&netconf_s.attrset);
+			TAILQ_INIT(&netconf_s.attrset);
 			network_delete(&netconf_s, 0);
 			break;
 		case IMSG_NETWORK_FLUSH:
@@ -373,7 +373,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
-			SIMPLEQ_INSERT_TAIL(session_set, s, entry);
+			TAILQ_INSERT_TAIL(session_set, s, entry);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
@@ -475,7 +475,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			break;
 		case IMSG_NETWORK_ADD:
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
-			SIMPLEQ_INIT(&netconf_p.attrset);
+			TAILQ_INIT(&netconf_p.attrset);
 			parent_set = &netconf_p.attrset;
 			break;
 		case IMSG_NETWORK_DONE:
@@ -489,7 +489,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				break;
 			}
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
-			SIMPLEQ_INIT(&netconf_p.attrset);
+			TAILQ_INIT(&netconf_p.attrset);
 			network_delete(&netconf_p, 1);
 			break;
 		case IMSG_RECONF_FILTER:
@@ -499,7 +499,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((r = malloc(sizeof(struct filter_rule))) == NULL)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
-			SIMPLEQ_INIT(&r->set);
+			TAILQ_INIT(&r->set);
 			parent_set = &r->set;
 			TAILQ_INSERT_TAIL(newrules, r, entry);
 			break;
@@ -541,7 +541,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
-			SIMPLEQ_INSERT_TAIL(parent_set, s, entry);
+			TAILQ_INSERT_TAIL(parent_set, s, entry);
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:
@@ -1870,7 +1870,7 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 
 	LIST_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
-	SIMPLEQ_INIT(&peer->conf.attrset);
+	TAILQ_INIT(&peer->conf.attrset);
 	peer->remote_bgpid = 0;
 	peer->state = PEER_NONE;
 	up_init(peer);

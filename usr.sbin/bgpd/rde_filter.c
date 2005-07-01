@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.30 2005/07/01 12:10:21 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.31 2005/07/01 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -71,7 +71,7 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 	if (asp == NULL)
 		return;
 
-	SIMPLEQ_FOREACH(set, sh, entry) {
+	TAILQ_FOREACH(set, sh, entry) {
 		/*
 		 * default outgoing overrides are only allowed to
 		 * set prepend-self and set nexthop no-modify
@@ -300,8 +300,8 @@ filterset_free(struct filter_set_head *sh)
 {
 	struct filter_set	*s;
 
-	while ((s = SIMPLEQ_FIRST(sh)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(sh, entry);
+	while ((s = TAILQ_FIRST(sh)) != NULL) {
+		TAILQ_REMOVE(sh, s, entry);
 		if (s->type == ACTION_RTLABEL_ID)
 		       	rtlabel_unref(s->action.id);
 		else if (s->type == ACTION_PFTABLE_ID)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.165 2005/06/29 09:43:25 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.166 2005/07/01 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -94,6 +94,8 @@ int		 str2key(char *, char *, size_t);
 int		 neighbor_consistent(struct peer *);
 int		 merge_filterset(struct filter_set_head *, struct filter_set *);
 void		 copy_filterset(struct filter_set_head *,
+		    struct filter_set_head *);
+void		 move_filterset(struct filter_set_head *,
 		    struct filter_set_head *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
@@ -331,11 +333,7 @@ conf_main	: AS asnumber		{
 			memcpy(&n->net.prefix, &$2.prefix,
 			    sizeof(n->net.prefix));
 			n->net.prefixlen = $2.len;
-			if ($3 == NULL || SIMPLEQ_EMPTY($3))
-				SIMPLEQ_INIT(&n->net.attrset);
-			else
-				memcpy(&n->net.attrset, $3,
-				    sizeof(n->net.attrset));
+			move_filterset($3, &n->net.attrset);
 			free($3);
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
@@ -343,18 +341,10 @@ conf_main	: AS asnumber		{
 		| NETWORK STRING STATIC filter_set	{
 			if (!strcmp($2, "inet")) {
 				conf->flags |= BGPD_FLAG_REDIST_STATIC;
-				if ($4 == NULL || SIMPLEQ_EMPTY($4))
-					SIMPLEQ_INIT(&conf->staticset);
-				else
-					memcpy(&conf->staticset, $4,
-					    sizeof(conf->staticset));
+				move_filterset($4, &conf->staticset);
 			} else if (!strcmp($2, "inet6")) {
 				conf->flags |= BGPD_FLAG_REDIST6_STATIC;
-				if ($4 == NULL || SIMPLEQ_EMPTY($4))
-					SIMPLEQ_INIT(&conf->staticset6);
-				else
-					memcpy(&conf->staticset6, $4,
-					    sizeof(conf->staticset6));
+				move_filterset($4, &conf->staticset6);
 			}
 			free($2);
 			free($4);
@@ -362,18 +352,10 @@ conf_main	: AS asnumber		{
 		| NETWORK STRING CONNECTED filter_set	{
 			if (!strcmp($2, "inet")) {
 				conf->flags |= BGPD_FLAG_REDIST_CONNECTED;
-				if ($4 == NULL || SIMPLEQ_EMPTY($4))
-					SIMPLEQ_INIT(&conf->connectset);
-				else
-					memcpy(&conf->connectset, $4,
-					    sizeof(conf->connectset));
+				move_filterset($4, &conf->connectset);
 			} else if (!strcmp($2, "inet6")) {
 				conf->flags |= BGPD_FLAG_REDIST6_CONNECTED;
-				if ($4 == NULL || SIMPLEQ_EMPTY($4))
-					SIMPLEQ_INIT(&conf->connectset6);
-				else
-					memcpy(&conf->connectset6, $4,
-					    sizeof(conf->connectset6));
+				move_filterset($4, &conf->connectset6);
 			}
 			free($2);
 			free($4);
@@ -381,21 +363,13 @@ conf_main	: AS asnumber		{
 		| NETWORK STATIC filter_set	{
 			/* keep for compatibility till after next release */
 			conf->flags |= BGPD_FLAG_REDIST_STATIC;
-			if ($3 == NULL || SIMPLEQ_EMPTY($3))
-				SIMPLEQ_INIT(&conf->staticset);
-			else
-				memcpy(&conf->staticset, $3,
-				    sizeof(conf->staticset));
+			move_filterset($3, &conf->staticset);
 			free($3);
 		}
 		| NETWORK CONNECTED filter_set	{
 			/* keep for compatibility till after next release */
 			conf->flags |= BGPD_FLAG_REDIST_CONNECTED;
-			if ($3 == NULL || SIMPLEQ_EMPTY($3))
-				SIMPLEQ_INIT(&conf->connectset);
-			else
-				memcpy(&conf->connectset, $3,
-				    sizeof(conf->connectset));
+			move_filterset($3, &conf->connectset);
 			free($3);
 		}
 		| DUMP STRING STRING optnumber		{
@@ -802,8 +776,8 @@ peeropts	: REMOTEAS asnumber	{
 		| SET optnl "{" optnl filter_set_l optnl "}"	{
 			struct filter_set	*s;
 
-			while ((s = SIMPLEQ_FIRST($5)) != NULL) {
-				SIMPLEQ_REMOVE_HEAD($5, entry);
+			while ((s = TAILQ_FIRST($5)) != NULL) {
+				TAILQ_REMOVE($5, s, entry);
 				if (merge_filterset(&curpeer->conf.attrset, s)
 				    == -1)
 				YYERROR;
@@ -1167,8 +1141,8 @@ filter_set	: /* empty */					{ $$ = NULL; }
 			if (($$ = calloc(1, sizeof(struct filter_set_head))) ==
 			    NULL)
 				fatal(NULL);
-			SIMPLEQ_INIT($$);
-			SIMPLEQ_INSERT_TAIL($$, $2, entry);
+			TAILQ_INIT($$);
+			TAILQ_INSERT_TAIL($$, $2, entry);
 		}
 		| SET optnl "{" optnl filter_set_l optnl "}"	{ $$ = $5; }
 		;
@@ -1182,8 +1156,8 @@ filter_set_l	: filter_set_l comma filter_set_opt	{
 			if (($$ = calloc(1, sizeof(struct filter_set_head))) ==
 			    NULL)
 				fatal(NULL);
-			SIMPLEQ_INIT($$);
-			SIMPLEQ_INSERT_TAIL($$, $1, entry);
+			TAILQ_INIT($$);
+			TAILQ_INSERT_TAIL($$, $1, entry);
 		}
 		;
 
@@ -1993,7 +1967,7 @@ alloc_peer(void)
 	p->conf.capabilities.mp_v4 = SAFI_UNICAST;
 	p->conf.capabilities.mp_v6 = SAFI_NONE;
 	p->conf.capabilities.refresh = 1;
-	SIMPLEQ_INIT(&p->conf.attrset);
+	TAILQ_INIT(&p->conf.attrset);
 
 	return (p);
 }
@@ -2014,7 +1988,7 @@ new_peer(void)
 		    sizeof(p->conf.descr)) >= sizeof(p->conf.descr))
 			fatalx("new_peer descr strlcpy");
 		p->conf.groupid = curgroup->conf.id;
-		SIMPLEQ_INIT(&p->conf.attrset);
+		TAILQ_INIT(&p->conf.attrset);
 		copy_filterset(&curgroup->conf.attrset, &p->conf.attrset);
 	}
 	p->next = NULL;
@@ -2127,7 +2101,7 @@ expand_rule(struct filter_rule *rule, struct filter_peers_l *peer,
 				memcpy(r, rule, sizeof(struct filter_rule));
 				memcpy(&r->match, match,
 				    sizeof(struct filter_match));
-				SIMPLEQ_INIT(&r->set);
+				TAILQ_INIT(&r->set);
 				copy_filterset(set, &r->set);
 
 				if (p != NULL)
@@ -2172,8 +2146,8 @@ expand_rule(struct filter_rule *rule, struct filter_peers_l *peer,
 	}
 
 	if (set != NULL) {
-		while ((s = SIMPLEQ_FIRST(set)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(set, entry);
+		while ((s = TAILQ_FIRST(set)) != NULL) {
+			TAILQ_REMOVE(set, s, entry);
 			free(s);
 		}
 		free(set);
@@ -2272,7 +2246,7 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 {
 	struct filter_set	*t;
 
-	SIMPLEQ_FOREACH(t, sh, entry) {
+	TAILQ_FOREACH(t, sh, entry) {
 		if (s->type != t->type)
 			continue;
 
@@ -2294,7 +2268,7 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 			return (-1);
 		}
 	}
-	SIMPLEQ_INSERT_TAIL(sh, s, entry);
+	TAILQ_INSERT_TAIL(sh, s, entry);
 	return (0);
 }
 
@@ -2307,10 +2281,27 @@ copy_filterset(struct filter_set_head *source, struct filter_set_head *dest)
 	if (source == NULL)
 		return;
 
-	SIMPLEQ_FOREACH(s, source, entry) {
+	TAILQ_FOREACH(s, source, entry) {
 		if ((t = calloc(1, sizeof(struct filter_set))) == NULL)
 			fatal(NULL);
 		memcpy(t, s, sizeof(struct filter_set));
-		SIMPLEQ_INSERT_TAIL(dest, t, entry);
+		TAILQ_INSERT_TAIL(dest, t, entry);
 	}
 }
+
+void
+move_filterset(struct filter_set_head *source, struct filter_set_head *dest)
+{
+	struct filter_set	*s;
+
+	TAILQ_INIT(dest);
+
+	if (source == NULL || TAILQ_EMPTY(source))
+		return;
+
+	while ((s = TAILQ_FIRST(source)) != NULL) {
+		TAILQ_REMOVE(source, s, entry);
+		TAILQ_INSERT_TAIL(dest, s, entry);
+	}
+}
+

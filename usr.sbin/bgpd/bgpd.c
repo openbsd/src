@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.122 2005/06/29 09:43:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.123 2005/07/01 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -395,7 +395,7 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set, int id)
 {
 	struct filter_set	*s;
 
-	SIMPLEQ_FOREACH(s, set, entry)
+	TAILQ_FOREACH(s, set, entry)
 		if (imsg_compose(i, IMSG_FILTER_SET, id, 0, -1, s,
 		    sizeof(struct filter_set)) == -1)
 			return (-1);

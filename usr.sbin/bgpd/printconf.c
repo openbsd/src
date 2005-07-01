@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.44 2005/07/01 09:19:24 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.45 2005/07/01 13:38:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -77,11 +77,11 @@ print_set(struct filter_set_head *set)
 {
 	struct filter_set	*s;
 
-	if (SIMPLEQ_EMPTY(set))
+	if (TAILQ_EMPTY(set))
 		return;
 
 	printf("set { ");
-	SIMPLEQ_FOREACH(s, set, entry) {
+	TAILQ_FOREACH(s, set, entry) {
 		switch (s->type) {
 		case ACTION_SET_LOCALPREF:
 			printf("localpref %u ", s->action.metric);
@@ -176,28 +176,28 @@ print_mainconf(struct bgpd_config *conf)
 
 	if (conf->flags & BGPD_FLAG_REDIST_CONNECTED) {
 		printf("network inet connected");
-		if (!SIMPLEQ_EMPTY(&conf->connectset))
+		if (!TAILQ_EMPTY(&conf->connectset))
 			printf(" ");
 		print_set(&conf->connectset);
 		printf("\n");
 	}
 	if (conf->flags & BGPD_FLAG_REDIST_STATIC) {
 		printf("network inet static");
-		if (!SIMPLEQ_EMPTY(&conf->staticset))
+		if (!TAILQ_EMPTY(&conf->staticset))
 			printf(" ");
 		print_set(&conf->staticset);
 		printf("\n");
 	}
 	if (conf->flags & BGPD_FLAG_REDIST6_CONNECTED) {
 		printf("network inet6 connected");
-		if (!SIMPLEQ_EMPTY(&conf->connectset6))
+		if (!TAILQ_EMPTY(&conf->connectset6))
 			printf(" ");
 		print_set(&conf->connectset6);
 		printf("\n");
 	}
 	if (conf->flags & BGPD_FLAG_REDIST_STATIC) {
 		printf("network inet6 static");
-		if (!SIMPLEQ_EMPTY(&conf->staticset6))
+		if (!TAILQ_EMPTY(&conf->staticset6))
 			printf(" ");
 		print_set(&conf->staticset6);
 		printf("\n");
@@ -208,7 +208,7 @@ void
 print_network(struct network_config *n)
 {
 	printf("network %s/%u", log_addr(&n->prefix), n->prefixlen);
-	if (!SIMPLEQ_EMPTY(&n->attrset))
+	if (!TAILQ_EMPTY(&n->attrset))
 		printf(" ");
 	print_set(&n->attrset);
 	printf("\n");
@@ -296,10 +296,10 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 	else if (p->auth.method == AUTH_IPSEC_IKE_ESP)
 		printf("%s\tipsec esp ike\n", c);
 
-	if (!SIMPLEQ_EMPTY(&p->attrset))
+	if (!TAILQ_EMPTY(&p->attrset))
 		printf("%s\t", c);
 	print_set(&p->attrset);
-	if (!SIMPLEQ_EMPTY(&p->attrset))
+	if (!TAILQ_EMPTY(&p->attrset))
 		printf("\n");
 
 	print_mrt(p->id, p->groupid, c, "\t");

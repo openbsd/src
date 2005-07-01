@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.228 2005/06/16 18:43:07 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.229 2005/07/01 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2124,7 +2124,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				reconf = RECONF_KEEP;
 
 			memcpy(&p->conf, pconf, sizeof(struct peer_config));
-			SIMPLEQ_INIT(&p->conf.attrset);
+			TAILQ_INIT(&p->conf.attrset);
 			session_set = &p->conf.attrset;
 			p->conf.reconf_action = reconf;
 			break;
@@ -2225,7 +2225,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
-			SIMPLEQ_INSERT_TAIL(session_set, s, entry);
+			TAILQ_INSERT_TAIL(session_set, s, entry);
 			break;
 		case IMSG_IFINFO:
 			if (idx != PFD_PIPE_MAIN)
@@ -2579,7 +2579,7 @@ session_up(struct peer *p)
 	    &p->conf, sizeof(p->conf)) == -1)
 		fatalx("imsg_compose error");
 
-	SIMPLEQ_FOREACH(s, &p->conf.attrset, entry) {
+	TAILQ_FOREACH(s, &p->conf.attrset, entry) {
 		if (imsg_compose(ibuf_rde, IMSG_FILTER_SET, p->conf.id, 0, -1,
 		    s, sizeof(struct filter_set)) == -1)
 			fatalx("imsg_compose error");

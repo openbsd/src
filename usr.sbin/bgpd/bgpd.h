@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.173 2005/07/01 09:19:24 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.174 2005/07/01 13:38:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,7 +133,7 @@ struct listen_addr {
 };
 
 TAILQ_HEAD(listen_addrs, listen_addr);
-SIMPLEQ_HEAD(filter_set_head, filter_set);
+TAILQ_HEAD(filter_set_head, filter_set);
 
 struct bgpd_config {
 	struct filter_set_head			 connectset;
@@ -585,7 +585,7 @@ enum action_types {
 };
 
 struct filter_set {
-	SIMPLEQ_ENTRY(filter_set)	entry;
+	TAILQ_ENTRY(filter_set)		entry;
 	union {
 		u_int8_t		prepend;
 		u_int16_t		id;
