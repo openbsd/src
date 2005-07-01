@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.31 2005/03/26 22:02:15 millert Exp $
+.\"	$OpenBSD: getopt.3,v 1.32 2005/07/01 02:11:55 millert Exp $
 .\"
 .Dd December 17, 2002
 .Dt GETOPT 3
@@ -351,22 +351,34 @@ as an option.
 This practice is wrong, and should not be used in any current development.
 It is provided for backward compatibility
 .Em only .
-The following code fragment works in most cases.
-.Bd -literal -offset indent
-int ch;
-long length;
-char *p;
+The following code fragment works in most cases and can handle mixed
+number and letter arguments.
 
-while ((ch = getopt(argc, argv, "0123456789")) != -1) {
+.Bd -literal -offset indent
+int aflag = 0, bflag = 0, ch, lastch = '\e0';
+int length = -1, newarg = 1, prevoptind = 1; 
+
+while ((ch = getopt(argc, argv, "0123456789ab")) != -1) {
 	switch (ch) {
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
-		p = argv[optind - 1];
-		if (p[0] == '-' && p[1] == ch && !p[2])
-			length = ch - '0';
-		else
-			length = strtol(argv[optind] + 1, NULL, 10);
+		if (newarg || !isdigit(lastch))
+			length = 0;
+		else if (length > INT_MAX / 10)
+			usage();
+		length = (length * 10) + (ch - '0');                    
 		break;
+	case 'a':
+		aflag = 1;
+		break;
+	case 'b':
+		bflag = 1;
+		break;
+	default:
+		usage();
 	}
+	lastch = ch;
+	newarg = optind != prevoptind;
+	prevoptind = optind;                                            
 }
 .Ed
