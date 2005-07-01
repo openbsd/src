@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.21 2005/06/17 12:12:28 markus Exp $	 */
+/* $OpenBSD: display.c,v 1.22 2005/07/01 19:33:35 jaredy Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -138,7 +138,7 @@ display_resize(void)
 		display_width = MAX_COLS - 1;
 
 	/* now, allocate space for the screen buffer */
-	screenbuf = malloc(display_lines * display_width);
+	screenbuf = malloc(display_lines * display_width + 1);
 	if (screenbuf == NULL)
 		return (-1);
 
@@ -675,6 +675,7 @@ u_process(int linenum, char *linebuf)
 
 	/* truncate the line to conform to our current screen width */
 	linebuf[display_width] = '\0';
+	bufferline[display_width] = '\0';
 
 	/* is line higher than we went on the last display? */
 	if (linenum >= last_hi) {
