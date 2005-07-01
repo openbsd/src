@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.14 2005/06/20 23:44:52 martin Exp $
+.\" $OpenBSD: re.4,v 1.15 2005/07/01 21:54:41 brad Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -63,6 +63,8 @@ D-Link DGE-528T (8169S)
 .It
 Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S)
 .It
+LevelOne GNC-0105T (8169S)
+.It
 Netgear GA511 PC Card (8169)
 .It
 PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
@@ -73,16 +75,17 @@ US Robotics USR997902 (8169S)
 .It
 Xterasys XN-152 10/100/1000 NIC (8169)
 .El
-.\" .Pp
+.Pp
 .\" NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over CAT5
-.\" cable. NICs based on the 8169, 8169S and 8110S are capable of 10, 100 and
-.\" 1000Mbps operation.
-.\" .Pp
-.\" All NICs supported by the
-.\" .Nm
-.\" driver have TCP/IP checksum offload and hardware VLAN tagging/insertion
-.\" features, and use a descriptor-based DMA mechanism. They are also
-.\" capable of TCP large send (TCP segmentation offload).
+.\" cable.
+NICs based on the 8169, 8169S and 8110S are capable of 10, 100 and
+1000Mbps operation.
+.Pp
+All NICs supported by the
+.Nm
+driver have receive TCP/IP checksum offload and use a descriptor-based
+DMA mechanism.
+.\" and hardware VLAN tagging/insertion features
 .Pp
 .\" The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
 The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY.
@@ -91,12 +94,13 @@ MAC and 10/100/1000 copper PHY.
 Standalone 10/100/1000 cards are available in both 32-bit PCI and 64-bit
 PCI models.
 The 8110S is designed for embedded LAN-on-motherboard applications.
-.\" .Pp
-.\" The 8169, 8169S and 8110S also support jumbo frames, which can be configured
-.\" via the interface MTU setting.
-.\" Selecting an MTU larger than 1500 bytes with the
-.\" .Xr ifconfig 8
-.\" utility configures the adapter to receive and transmit jumbo frames.
+.Pp
+The 8169, 8169S and 8110S also support Jumbo frames, which can be configured
+via the interface MTU setting. The MTU is limited to 7422, since the chip
+cannot transmit larger frames.
+Selecting an MTU larger than 1500 bytes with the
+.Xr ifconfig 8
+utility configures the adapter to receive and transmit Jumbo frames.
 .Pp
 The
 .Nm
