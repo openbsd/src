@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.15 2005/05/24 20:32:43 uwe Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.16 2005/07/01 23:57:28 uwe Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -56,9 +56,6 @@
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_lcd.h>
-
-#include <machine/zaurus_reg.h>
-#include <machine/zaurus_var.h>
 
 #include <zaurus/dev/zaurus_scoopvar.h>
 #include <zaurus/dev/zaurus_sspvar.h>
