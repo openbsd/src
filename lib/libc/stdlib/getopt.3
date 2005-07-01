@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.32 2005/07/01 02:11:55 millert Exp $
+.\"	$OpenBSD: getopt.3,v 1.33 2005/07/01 05:18:57 jmc Exp $
 .\"
 .Dd December 17, 2002
 .Dt GETOPT 3
@@ -356,7 +356,7 @@ number and letter arguments.
 
 .Bd -literal -offset indent
 int aflag = 0, bflag = 0, ch, lastch = '\e0';
-int length = -1, newarg = 1, prevoptind = 1; 
+int length = -1, newarg = 1, prevoptind = 1;
 
 while ((ch = getopt(argc, argv, "0123456789ab")) != -1) {
 	switch (ch) {
@@ -366,7 +366,7 @@ while ((ch = getopt(argc, argv, "0123456789ab")) != -1) {
 			length = 0;
 		else if (length > INT_MAX / 10)
 			usage();
-		length = (length * 10) + (ch - '0');                    
+		length = (length * 10) + (ch - '0');
 		break;
 	case 'a':
 		aflag = 1;
@@ -379,6 +379,6 @@ while ((ch = getopt(argc, argv, "0123456789ab")) != -1) {
 	}
 	lastch = ch;
 	newarg = optind != prevoptind;
-	prevoptind = optind;                                            
+	prevoptind = optind;
 }
 .Ed
