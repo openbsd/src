@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.31 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.32 2005/07/01 14:29:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -241,14 +241,21 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 	if (rf == NULL)
 		return (CVS_EX_DATA);
 
-	cvs_printf("\nRCS file: %s\nWorking file: %s\n", rcspath, cf->cf_name);
-	cvs_printf("head: %s\n",
-	    rcsnum_tostr(rcs_head_get(rf), numbuf, sizeof(numbuf)));
-	cvs_printf("branch: %s\n",
-	    rcsnum_tostr(rcs_branch_get(rf), numbuf, sizeof(numbuf)));
-	cvs_printf("locks: %s\n", (rf->rf_flags & RCS_SLOCK) ? "strict" : "");
+	cvs_printf("\nRCS file: %s", rcspath);
+	cvs_printf("\nWorking file: %s", cf->cf_name);
+	cvs_printf("\nhead:");
+	if (rcs_head_get(rf) != NULL) {
+		cvs_printf(" %s",
+		    rcsnum_tostr(rcs_head_get(rf), numbuf, sizeof(numbuf)));
+	}
+	cvs_printf("\nbranch:");
+	if (rcs_branch_get(rf) != NULL) {
+		cvs_printf(" %s",
+		    rcsnum_tostr(rcs_branch_get(rf), numbuf, sizeof(numbuf)));
+	}
+	cvs_printf("\nlocks:%s", (rf->rf_flags & RCS_SLOCK) ? " strict" : "");
 
-	cvs_printf("access list:\n");
+	cvs_printf("\naccess list:\n");
 	TAILQ_FOREACH(acp, &(rf->rf_access), ra_list)
 		cvs_printf("\t%s\n", acp->ra_name);
 
@@ -259,7 +266,8 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 			    rcsnum_tostr(sym->rs_num, numbuf, sizeof(numbuf)));
 	}
 
-	cvs_printf("keyword substitution: %s\n", "");
+	cvs_printf("keyword substitution: %s\n",
+	    rf->rf_expand == NULL ? "kv" : rf->rf_expand);
 
 	if (log_honly)
 		cvs_printf("total revisions: %u;\n", rf->rf_ndelta);
@@ -267,7 +275,7 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 		cvs_printf("total revisions: %u;\tselected revisions: %u\n",
 		    rf->rf_ndelta, nrev);
 
-		if (log_lhonly)
+		if (!log_lhonly)
 			cvs_printf("description:\n%s", rf->rf_desc);
 
 		TAILQ_FOREACH(rdp, &(rf->rf_delta), rd_list) {
