@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_reg.h,v 1.4 2005/05/24 20:32:43 uwe Exp $	*/
+/*	$OpenBSD: zaurus_reg.h,v 1.5 2005/07/01 23:56:47 uwe Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -30,22 +30,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#ifndef _EVBARM_ZAURUS_REG_H
-#define _EVBARM_ZAURUS_REG_H
+#ifndef _ZAURUS_REG_H
+#define _ZAURUS_REG_H
 
 #include <arm/xscale/pxa2x0reg.h>
 
-#define ZAURUS_SRAM_PBASE (PXA2X0_CS2_START+0x02000000)
-#define ZAURUS_SRAM_SIZE  0x00100000
-
-#define ZAURUS_91C96_PBASE PXA2X0_CS3_START
-#define ZAURUS_91C96_IO	ZAURUS_91C96_PBASE
-#define ZAURUS_91C96_ATTRMEM	(ZAURUS_91C96_PBASE+0x02000000)
-
-
 /* SA-1111 companion chip registers */
-#define ZAURUS_SACC_PBASE PXA2X0_CS4_START
+#define ZAURUS_SACC_PBASE	PXA2X0_CS4_START
 
 /*
  * Logical mapping for onboard/integrated peripherals
@@ -69,4 +60,22 @@
 #define ioreg8_read(a)  (*(volatile uint8_t *)(a))
 #define ioreg8_write(a,v)  (*(volatile uint8_t *)(a)=(v))
 
-#endif /* _EVBARM_ZAURUS_REG_H */
+/*
+ * Magic numbers for the C860 (PXA255) and C3000 (PXA27x).
+ */
+
+/* physical adresses of companion chips */
+#define C3000_SCOOP0_BASE	0x10800000 /* XXX same as C860 */
+#define C3000_SCOOP1_BASE	0x08800040
+
+/* processor IRQ numbers */
+#define C860_CF0_IRQ		17
+#define C3000_CF0_IRQ		105
+#define C3000_CF1_IRQ		106
+
+/* processor GPIO pins */
+#define C860_CF0_IRQ_PIN	14
+#define C3000_CF0_IRQ_PIN	94
+#define C3000_CF1_IRQ_PIN	93
+
+#endif /* _ZAURUS_REG_H */

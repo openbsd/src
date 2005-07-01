@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.17 2005/05/27 18:42:15 uwe Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.18 2005/07/01 23:56:47 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -190,6 +190,8 @@ u_int cpu_reset_address = 0;
 #else
 #define UND_STACK_SIZE	1
 #endif
+
+int zaurusmod;
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -405,13 +407,13 @@ struct l1_sec_map {
     },
     {
 	    ZAURUS_SCOOP0_VBASE,
-	    SCOOP0_BASE,
+	    C3000_SCOOP0_BASE,
 	    SCOOP_SIZE,
 	    PTE_NOCACHE,
     },
     {
 	    ZAURUS_SCOOP1_VBASE,
-	    trunc_page(SCOOP1_BASE),
+	    trunc_page(C3000_SCOOP1_BASE),
 	    round_page(SCOOP_SIZE),
 	    PTE_NOCACHE,
     },
@@ -501,7 +503,7 @@ green_on(int virt)
 	if (virt)
 		p = (u_int16_t *)(ZAURUS_SCOOP0_VBASE+SCOOP_GPWR);
 	else
-		p = (u_int16_t *)(SCOOP0_BASE+SCOOP_GPWR);
+		p = (u_int16_t *)(C3000_SCOOP0_BASE+SCOOP_GPWR);
 
 	*p = *p | (1<<SCOOP0_LED_GREEN);
 }
@@ -512,12 +514,12 @@ irda_on(int virt)
 	/* clobber IrDA led p */
 	volatile u_int16_t *p;
 	/* XXX scoop1 registers are not page-aligned! */
-	int ofs = SCOOP1_BASE - trunc_page(SCOOP1_BASE);
+	int ofs = C3000_SCOOP1_BASE - trunc_page(C3000_SCOOP1_BASE);
 
 	if (virt)
 		p = (u_int16_t *)(ZAURUS_SCOOP1_VBASE+ofs+SCOOP_GPWR);
 	else
-		p = (u_int16_t *)(SCOOP1_BASE+SCOOP_GPWR);
+		p = (u_int16_t *)(C3000_SCOOP1_BASE+SCOOP_GPWR);
 
 	*p = *p & ~(1<<SCOOP1_IR_ON);
 }
@@ -666,6 +668,15 @@ initarm(void *arg)
 #ifdef RAMDISK_HOOKS
         boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */
+
+	/*
+	 * This test will work for now but has to be revised when support
+	 * for other models is added.
+	 */
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X)
+		zaurusmod = ZAURUS_C3000;
+	else
+		zaurusmod = ZAURUS_C860;
 
 	/* setup GPIO for BTUART, in case bootloader doesn't take care of it */
 	pxa2x0_gpio_bootstrap(ZAURUS_GPIO_VBASE);

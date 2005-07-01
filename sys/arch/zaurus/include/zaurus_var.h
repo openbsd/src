@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_var.h,v 1.3 2005/01/14 18:44:08 drahn Exp $	*/
+/*	$OpenBSD: zaurus_var.h,v 1.4 2005/07/01 23:56:47 uwe Exp $	*/
 /*	$NetBSD: lubbock_var.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -39,6 +39,16 @@
 #include <machine/bus.h>
 #include <machine/zaurus_reg.h>
 
-/* XXX */
+#ifdef _KERNEL
+
+#define ZAURUS_C860		0xC0860
+#define ZAURUS_C3000		0xC3000
+
+extern int zaurusmod;
+
+#define ZAURUS_ISC860		(zaurusmod == ZAURUS_C860)
+#define ZAURUS_ISC3000		(zaurusmod == ZAURUS_C3000)
+
+#endif
 
 #endif /* _EVBARM_ZAURUS_VAR_H */
