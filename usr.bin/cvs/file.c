@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.90 2005/06/17 15:09:55 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.91 2005/07/01 08:59:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -639,8 +639,14 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 	cf->cf_root = cvsroot_get(fpath);
-	if (cf->cf_root == NULL)
+	if (cf->cf_root == NULL) {
+		/*
+		 * Do not fail here for an unknown directory.
+		 */
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			return (0);
 		return (-1);
+	}
 
 	if (flags & CF_MKADMIN)
 		cvs_mkadmin(fpath, cf->cf_root->cr_str, NULL);
@@ -677,7 +683,7 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 static int
 cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *), void *arg)
 {
-	int l;
+	int l, ret;
 	int check_entry;
 	u_int ndirs, nfiles;
 	char *cur, *np;
@@ -689,16 +695,12 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 	DIR *dirp;
 	CVSENTRIES *entfile;
 
+	ret = -1;
 	check_entry = 1;
 	ndirs = nfiles = 0;
 	SIMPLEQ_INIT(&dirs);
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
-	entfile = cvs_ent_open(fpath, O_RDONLY);
-
-	cf->cf_root = cvsroot_get(fpath);
-	if (cf->cf_root == NULL)
-		return (-1);
 
 	cur = np = NULL;
 	if (path != NULL) {
@@ -720,12 +722,23 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 			return (-1);
 	}
 
+	cf->cf_root = cvsroot_get(fpath);
+	if (cf->cf_root == NULL) {
+		/*
+		 * Do not fail here for an unknown directory.
+		 */
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			return (0);
+		return (-1);
+	}
+
 	dirp = opendir(fpath);
 	if (dirp == NULL) {
 		cvs_log(LP_ERRNO, "failed to open directory %s", fpath);
 		return (-1);
 	}
 
+	entfile = cvs_ent_open(fpath, O_RDONLY);
 	while ((ent = readdir(dirp)) != NULL) {
 		if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
 			continue;
@@ -754,7 +767,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 			errno = ENAMETOOLONG;
 			cvs_log(LP_ERRNO, "%s", pbuf);
 			closedir(dirp);
-			return (-1);
+			goto done;
 		}
 
 		cfp = cvs_file_find(cf, ent->d_name);
@@ -768,7 +781,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 
 			if (cfp == NULL) {
 				closedir(dirp);
-				return (-1);
+				goto done;
 			}
 			if (entfile != NULL)
 				cvs_ent_remove(entfile, cfp->cf_name);
@@ -790,7 +803,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 			if (cb != NULL) {
 				if (cb(cfp, arg) != CVS_EX_OK) {
 					closedir(dirp);
-					return (-1);
+					goto done;
 				}
 			}
 		}
@@ -815,7 +828,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 			if (l == -1 || l >= (int)sizeof(pbuf)) {
 				errno = ENAMETOOLONG;
 				cvs_log(LP_ERRNO, "%s", pbuf);
-				return (-1);
+				goto done;
 			}
 
 			cfp = cvs_file_find(cf, cvsent->ce_name);
@@ -841,14 +854,13 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 				/* callback for the file */
 				if (cb != NULL) {
 					if (cb(cfp, arg) != CVS_EX_OK)
-						return (-1);
+						goto done;
 				}
 			}
 
 			if (path != NULL)
 				break;
 		}
-		cvs_ent_close(entfile);
 	}
 
 	if (flags & CF_SORT) {
@@ -873,7 +885,12 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 		}
 	}
 
-	return (0);
+	ret = 0;
+done:
+	if (entfile != NULL)
+		cvs_ent_close(entfile);
+
+	return (ret);
 }
 
 
@@ -1198,6 +1215,10 @@ cvs_file_prune(char *path)
 
 			cfp = cvs_file_find(cvs_files, fpath);
 			if (cfp == NULL)
+				continue;
+
+			/* ignore unknown directories */
+			if (cfp->cf_cvstat == CVS_FST_UNKNOWN)
 				continue;
 
 			if (cvs_file_prune(fpath)) {
