@@ -1,4 +1,5 @@
-/*	$OpenBSD: mii_bitbang.c,v 1.3 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: mii_bitbang.c,v 1.4 2005/07/01 02:50:34 brad Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.6 2004/08/23 06:18:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +74,8 @@ do {									\
 void
 mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
 {
-	int i, v;
+	int i;
+	u_int32_t v;
 
 	v = MDIRPHY | MDO;
 
@@ -93,7 +95,8 @@ void
 mii_bitbang_sendbits(struct device *sc, mii_bitbang_ops_t ops,
     u_int32_t data, int nbits)
 {
-	int i, v;
+	int i;
+	u_int32_t v;
 
 	v = MDIRPHY;
 	WRITE(v);
