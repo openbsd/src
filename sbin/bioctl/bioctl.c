@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.10 2005/04/18 11:51:46 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.11 2005/07/01 21:53:40 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -70,6 +71,8 @@ main(int argc, char *argv[])
 	unsigned char *pl;
 
 	char *bioc_dev = NULL;
+	char *sd_dev = NULL;
+	char *realname = NULL;
 	char *al_arg = NULL; /* argument to alarm */
 	char *ss_arg = NULL; /* argument to start/stop */
 	char inq[INQSIZE];
@@ -84,7 +87,7 @@ main(int argc, char *argv[])
 
 	atexit(cleanup);
 
-	while ((ch = getopt(argc, argv, "a:b:Dd:ehl:pst:u:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:b:Dd:ef:hl:pst:u:")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -106,6 +109,10 @@ main(int argc, char *argv[])
 		case 'e': /* enumerate */
 			func |= BIOC_SCSICMD;
 			subfunc |= F_ENUM;
+			break;
+
+		case 'f': /* device */
+			sd_dev = optarg;
 			break;
 
 		case 'l': /* device list, separated for now use one dev only*/
@@ -139,14 +146,27 @@ main(int argc, char *argv[])
 		}
 	}
 
-	devh = open(bio_device, O_RDWR);
-	if (devh == -1)
-		err(1, "Can't open %s", bio_device);
+	if (sd_dev && bioc_dev)
+		err(1, "-d and -f are mutually exclusive");
 
-	bl.name = bioc_dev;
-	rv = ioctl(devh, BIOCLOCATE, &bl);
-	if (rv == -1)
-		errx(1, "Can't locate %s device via %s", bl.name, bio_device);
+	if (bioc_dev) {
+		devh = open(bio_device, O_RDWR);
+		if (devh == -1)
+			err(1, "Can't open %s", bio_device);
+
+		bl.name = bioc_dev;
+		rv = ioctl(devh, BIOCLOCATE, &bl);
+		if (rv == -1)
+			errx(1, "Can't locate %s device via %s",
+			    bl.name, bio_device);
+	}
+	else if (sd_dev) {
+	        devh = opendev(sd_dev, O_RDWR, OPENDEV_PART, &realname);
+		if (devh == -1)
+			err(1, "Can't open %s", sd_dev);
+	}
+	else
+		errx(1, "need -d or -f parameter");
 
 	if (debug)
 		warnx("cookie = %p", bl.cookie);
@@ -237,7 +257,7 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-Dehpt] [-a function] [-b function] "
 	    "[-l device list]\n"
-	    "\t[-u function] -d device\n", __progname);
+	    "\t[-u function] [-d device | -f disk]\n", __progname);
 
 	exit(1);
 }

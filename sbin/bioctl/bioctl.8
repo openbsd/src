@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.8 2005/05/05 02:18:50 marco Exp $
+.\"	$OpenBSD: bioctl.8,v 1.9 2005/07/01 21:53:40 marco Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -56,9 +56,14 @@ Or use the first letter of the function.
 .It Fl D
 Enable debug output.
 .It Fl d Ar device
-Select RAID device.
+Select RAID controller e.g ami0.
+Use the -d option for controller operations.
 .It Fl e
 Enumerate drives.
+.It Fl f Ar disk
+Select disk device e.g sd0.
+Use the -f option for disk operations.
+Either -f or -d must be selected.
 .It Fl h
 Online help.
 .It Fl l Ar device-list
