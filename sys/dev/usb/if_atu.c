@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.60 2005/05/23 20:09:31 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.61 2005/07/01 04:09:19 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1452,7 +1452,6 @@ atu_complete_attach(struct atu_softc *sc)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = atu_start;
 	ifp->if_ioctl = atu_ioctl;
-	ifp->if_start = atu_start;
 	ifp->if_watchdog = atu_watchdog;
 	ifp->if_mtu = ATU_DEFAULT_MTU;
 	IFQ_SET_READY(&ifp->if_snd);
