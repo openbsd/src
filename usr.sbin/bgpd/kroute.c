@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.139 2005/06/24 14:01:53 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.140 2005/07/01 22:00:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -366,7 +366,7 @@ kr6_delete(struct kroute6_label *kl)
 
 	rtlabel_unref(kl->kr.labelid);
 
- 	if (kroute6_remove(kr6) == -1)
+	if (kroute6_remove(kr6) == -1)
 		return (-1);
 
 	return (0);
