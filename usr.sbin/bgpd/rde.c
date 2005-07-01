@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.164 2005/07/01 09:19:24 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.165 2005/07/01 12:10:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1889,7 +1889,7 @@ peer_remove(struct rde_peer *peer)
 	LIST_REMOVE(peer, hash_l);
 	LIST_REMOVE(peer, peer_l);
 
-	rde_free_set(&peer->conf.attrset);
+	filterset_free(&peer->conf.attrset);
 	free(peer);
 }
 
@@ -2091,7 +2091,7 @@ network_add(struct network_config *nc, int flagstatic)
 		    DIR_DEFAULT_IN);
 		path_update(&peerdynamic, asp, &nc->prefix, nc->prefixlen);
 	}
-	rde_free_set(&nc->attrset);
+	filterset_free(&nc->attrset);
 }
 
 void
