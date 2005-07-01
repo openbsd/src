@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.13 2005/06/29 23:48:10 deraadt Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.14 2005/07/01 01:12:04 brad Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -831,7 +831,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 					/* Error -- ran out of storage. */
 					return (-1);
 				}
-				parent ++;
+				parent++;
 #ifdef DEBUG
 				DPRINTF(("Match! using "));
 				for (len=0; len<pintr_cells; len++)
