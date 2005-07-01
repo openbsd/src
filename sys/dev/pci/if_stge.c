@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.15 2005/06/28 03:48:31 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.16 2005/07/01 01:13:45 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -1202,21 +1202,19 @@ stge_rxintr(struct stge_softc *sc)
 			m = nm;
 		}
 
-#ifdef STGE_CHECKSUM
 		/*
 		 * Set the incoming checksum information for the packet.
 		 */
 		if (status & RFD_IPDetected) {
-			m->m_pkthdr.csum_flags |= (status & RFD_IPError) ?
-			  M_IPV4_CSUM_IN_BAD : M_IPV4_CSUM_IN_OK;
-			if (status & RFD_TCPDetected)
-				m->m_pkthdr.csum_flags |= (status & RFD_TCPError) ?
-				  M_TCP_CSUM_IN_BAD : M_TCP_CSUM_IN_OK;
-			else if (status & RFD_UDPDetected)
-				m->m_pkthdr.csum_flags |= (status & RFD_UDPError) ?
-				  M_UDP_CSUM_IN_BAD : M_UDP_CSUM_IN_OK;
+			if (!(status & RFD_IPError))
+				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+			if ((status & RFD_TCPDetected) &&
+			   (!(status & RFD_TCPError)))
+				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
+			else if ((status & RFD_UDPDetected) &&
+				(!(status & RFD_UDPError)))
+				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 		}
-#endif
 
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
