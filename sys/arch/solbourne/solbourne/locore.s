@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.1 2005/04/20 01:00:18 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.2 2005/07/02 09:15:41 miod Exp $	*/
 /*	OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp 	*/
 
 /*
@@ -2574,7 +2574,7 @@ dostart:
 	 * the adequate hardware...
 	 */
 
-	/* disable external interrupts - this also disable soft interrupts */
+	/* disable external interrupts - this also disables soft interrupts */
 	set	GLU_ICR, %o0
 	mov	GICR_DISABLE_ALL, %o1
 	sll	%o1, 24, %o1

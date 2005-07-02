@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102reg.h,v 1.5 2005/04/11 01:49:50 miod Exp $	*/
+/*	$OpenBSD: ts102reg.h,v 1.6 2005/07/02 09:15:42 miod Exp $	*/
 /*	$NetBSD: ts102reg.h,v 1.7 2002/09/29 23:23:58 wiz Exp $ */
 
 /*-
@@ -272,7 +272,7 @@ enum ts102_opcode {			/* Argument	Returned */
 #define	TS102_BITPORT_SYNCINVA		0x04	/* ext. monitor sync (low) */
 #define	TS102_BITPORT_SYNCINVB		0x08	/* ext. monitor sync (low) */
 #define	TS102_BITPORT_BP_DIS		0x10	/* no bootprom from pcmcia (high) */
-						/* boot from pcmcia (low */
+						/* boot from pcmcia (low) */
 #define	TS102_BITPORT_ENCSYNC		0x20	/* enab composite sync (low) */
     TS102_OP_CTL_DEV=0x22,		/* mask 	ack + 1 byte */
 #define TS102_DEVCTL_CHARGE_DISABLE	0x01	/* dis/en charging */
