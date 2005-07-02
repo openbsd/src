@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.78 2005/07/02 03:49:47 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.79 2005/07/02 14:32:17 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -140,9 +140,6 @@ const struct scsi_inquiry_pattern sd_patterns[] = {
 	{T_OPTICAL, T_REMOV,
 	 "",         "",                 ""},
 };
-
-extern struct sd_ops sd_scsibus_ops;
-extern struct sd_ops sd_atapibus_ops;
 
 #define sdlock(softc)   disk_lock(&(softc)->sc_dk)
 #define sdunlock(softc) disk_unlock(&(softc)->sc_dk)

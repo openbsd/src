@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.5 2005/07/02 03:49:47 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.6 2005/07/02 14:32:17 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -55,8 +55,6 @@
  */
 
 #define	SDRETRIES	4
-
-struct sd_ops;
 
 struct sd_softc {
 	struct device sc_dev;
