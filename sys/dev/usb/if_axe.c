@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.25 2005/06/08 17:03:01 henning Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.26 2005/07/02 22:17:57 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -985,16 +985,13 @@ axe_tick_task(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (!sc->axe_link) {
-		mii_pollstat(mii);
-		if (mii->mii_media_status & IFM_ACTIVE &&
-		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			DPRINTF(("%s: %s: got link\n",
-				 USBDEVNAME(sc->axe_dev), __func__));
-			sc->axe_link++;
-			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-				   axe_start(ifp);
-		}
+	if (!sc->axe_link && mii->mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+		DPRINTF(("%s: %s: got link\n",
+			 USBDEVNAME(sc->axe_dev), __func__));
+		sc->axe_link++;
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+			   axe_start(ifp);
 	}
 
 	usb_callout(sc->axe_stat_ch, hz, axe_tick, sc);

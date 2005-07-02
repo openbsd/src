@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.10 2005/06/08 17:03:02 henning Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.11 2005/07/02 22:17:58 brad Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1486,16 +1486,13 @@ udav_tick_task(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (!sc->sc_link) {
-		mii_pollstat(mii);
-		if (mii->mii_media_status & IFM_ACTIVE &&
-		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			DPRINTF(("%s: %s: got link\n",
-				 USBDEVNAME(sc->sc_dev), __func__));
-			sc->sc_link++;
-			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-				   udav_start(ifp);
-		}
+	if (!sc->sc_link && mii->mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+		DPRINTF(("%s: %s: got link\n",
+			 USBDEVNAME(sc->sc_dev), __func__));
+		sc->sc_link++;
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+			   udav_start(ifp);
 	}
 
 	usb_callout(sc->sc_stat_ch, hz, udav_tick, sc);

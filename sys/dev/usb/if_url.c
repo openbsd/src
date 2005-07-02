@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.22 2005/06/08 17:03:02 henning Exp $ */
+/*	$OpenBSD: if_url.c,v 1.23 2005/07/02 22:17:58 brad Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -1406,16 +1406,13 @@ url_tick_task(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (!sc->sc_link) {
-		mii_pollstat(mii);
-		if (mii->mii_media_status & IFM_ACTIVE &&
-		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			DPRINTF(("%s: %s: got link\n",
-				 USBDEVNAME(sc->sc_dev), __func__));
-			sc->sc_link++;
-			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-				   url_start(ifp);
-		}
+	if (!sc->sc_link && mii->mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+		DPRINTF(("%s: %s: got link\n",
+			 USBDEVNAME(sc->sc_dev), __func__));
+		sc->sc_link++;
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+			   url_start(ifp);
 	}
 
 	usb_callout(sc->sc_stat_ch, hz, url_tick, sc);

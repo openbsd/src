@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.39 2005/06/08 17:03:01 henning Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.40 2005/07/02 22:17:57 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1262,16 +1262,13 @@ aue_tick_task(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (!sc->aue_link) {
-		mii_pollstat(mii); /* XXX FreeBSD has removed this call */
-		if (mii->mii_media_status & IFM_ACTIVE &&
-		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			DPRINTFN(2,("%s: %s: got link\n",
-				    USBDEVNAME(sc->aue_dev),__func__));
-			sc->aue_link++;
-			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-				aue_start(ifp);
-		}
+	if (!sc->aue_link && mii->mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+		DPRINTFN(2,("%s: %s: got link\n",
+			    USBDEVNAME(sc->aue_dev),__func__));
+		sc->aue_link++;
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+			aue_start(ifp);
 	}
 
 	usb_callout(sc->aue_stat_ch, hz, aue_tick, sc);
