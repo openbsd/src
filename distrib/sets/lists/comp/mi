@@ -4739,6 +4739,7 @@
 ./usr/share/man/cat3/touchline.0
 ./usr/share/man/cat3/touchwin.0
 ./usr/share/man/cat3/toupper.0
+./usr/share/man/cat3/towctrans.0
 ./usr/share/man/cat3/towlower.0
 ./usr/share/man/cat3/towupper.0
 ./usr/share/man/cat3/tparam.0
@@ -4850,6 +4851,7 @@
 ./usr/share/man/cat3/wcstombs.0
 ./usr/share/man/cat3/wctob.0
 ./usr/share/man/cat3/wctomb.0
+./usr/share/man/cat3/wctrans.0
 ./usr/share/man/cat3/wctype.0
 ./usr/share/man/cat3/wcursyncup.0
 ./usr/share/man/cat3/wdelch.0
