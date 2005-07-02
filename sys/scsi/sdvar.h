@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.6 2005/07/02 14:32:17 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.7 2005/07/02 15:39:55 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -78,7 +78,6 @@ struct sd_softc {
 		u_long	rot_rate;	/* rotational rate, in RPM */
 	} params;
 	struct buf buf_queue;
-	u_int8_t type;
 	struct disk_name {
 		char vendor[9];		/* disk vendor/manufacturer */
 		char product[17];	/* disk product model */

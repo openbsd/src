@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.79 2005/07/02 14:32:17 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.80 2005/07/02 15:39:55 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -180,7 +180,6 @@ sdattach(parent, self, aux)
 	 * Store information needed to contact our base driver
 	 */
 	sd->sc_link = sc_link;
-	sd->type = (sa->sa_inqbuf->device & SID_TYPE);
 	sc_link->device = &sd_switch;
 	sc_link->device_softc = sd;
 
@@ -989,7 +988,7 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 	}
 
 	lp->d_type = DTYPE_SCSI;
-	if (sd->type == T_OPTICAL)
+	if ((sd->sc_link->inqdata.device & SID_TYPE) == T_OPTICAL)
 		strncpy(lp->d_typename, "SCSI optical",
 		    sizeof(lp->d_typename));
 	else
@@ -1341,7 +1340,7 @@ sd_get_parms(sd, dp, flags)
 
 	dp->disksize = scsi_size(sd->sc_link, flags, &blksize);
 
-	switch (sd->type) {
+	switch (sd->sc_link->inqdata.device & SID_TYPE) {
 	case T_OPTICAL:
 		/* No more information needed or available. */
 		break;
