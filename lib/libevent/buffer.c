@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.6 2005/06/18 01:52:22 brad Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.7 2005/07/02 07:15:13 grunk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -77,7 +77,7 @@ evbuffer_free(struct evbuffer *buffer)
 	free(buffer);
 }
 
-/* 
+/*
  * This is a destructive add.  The data from one buffer moves into
  * the other buffer.
  */
@@ -105,7 +105,7 @@ evbuffer_add_buffer(struct evbuffer *outbuf, struct evbuffer *inbuf)
 		SWAP(outbuf, inbuf);
 		SWAP(inbuf, &tmp);
 
-		/* 
+		/*
 		 * Optimization comes with a price; we need to notify the
 		 * buffer if necessary of the changes. oldoff is the amount
 		 * of data that we tranfered from inbuf to outbuf

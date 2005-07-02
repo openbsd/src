@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.10 2005/05/04 03:17:48 brad Exp $	*/
+/*	$OpenBSD: event.c,v 1.11 2005/07/02 07:15:13 grunk Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -40,7 +40,7 @@
 #include <sys/tree.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#else 
+#else
 #include <sys/_time.h>
 #endif
 #include <sys/queue.h>
@@ -171,7 +171,7 @@ event_init(void)
 	if (current_base->evbase == NULL)
 		event_errx(1, "%s: no event mechanism available", __func__);
 
-	if (!issetugid() && getenv("EVENT_SHOW_METHOD")) 
+	if (!issetugid() && getenv("EVENT_SHOW_METHOD"))
 		event_msgx("libevent using: %s\n",
 			   current_base->evsel->name);
 
@@ -802,7 +802,7 @@ event_get_version(void)
 	return (LIBEVENT_VERSION);
 }
 
-/* 
+/*
  * No thread-safe interface needed - the information should be the same
  * for all threads.
  */

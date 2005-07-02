@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.17 2005/06/18 01:52:22 brad Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.18 2005/07/02 07:15:13 grunk Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -126,7 +126,7 @@ kq_init(void)
 	kqueueop->changes[0].ident = -1;
 	kqueueop->changes[0].filter = EVFILT_READ;
 	kqueueop->changes[0].flags = EV_ADD;
-	/* 
+	/*
 	 * If kqueue works, then kevent will succeed, and it will
 	 * stick an error in events[0].  If kqueue is broken, then
 	 * kevent will fail.
@@ -190,7 +190,7 @@ kq_insert(struct kqop *kqop, struct kevent *kev)
 	memcpy(&kqop->changes[kqop->nchanges++], kev, sizeof(struct kevent));
 
 	event_debug(("%s: fd %d %s%s",
-		 __func__, kev->ident, 
+		 __func__, kev->ident,
 		 kev->filter == EVFILT_READ ? "EVFILT_READ" : "EVFILT_WRITE",
 		 kev->flags == EV_DELETE ? " (del)" : ""));
 
@@ -233,7 +233,7 @@ kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 		int which = 0;
 
 		if (events[i].flags & EV_ERROR) {
-			/* 
+			/*
 			 * Error messages that can happen, when a delete fails.
 			 *   EBADF happens when the file discriptor has been
 			 *   closed,

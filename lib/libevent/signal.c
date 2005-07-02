@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.6 2005/04/22 00:56:25 brad Exp $	*/
+/*	$OpenBSD: signal.c,v 1.7 2005/07/02 07:15:13 grunk Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -89,7 +89,7 @@ evsignal_init(sigset_t *evsigmask)
 {
 	sigemptyset(evsigmask);
 
-	/* 
+	/*
 	 * Our signal handler is going to write to one end of the socket
 	 * pair to wake up our event loop.  The event loop then scans for
 	 * signals that got delivered.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.9 2005/06/18 01:52:22 brad Exp $	*/
+/*	$OpenBSD: poll.c,v 1.10 2005/07/02 07:15:13 grunk Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -342,7 +342,7 @@ poll_del(void *arg, struct event *ev)
 
 	--pop->nfds;
 	if (i != pop->nfds) {
-		/* 
+		/*
 		 * Shift the last pollfd down into the now-unoccupied
 		 * position.
 		 */
