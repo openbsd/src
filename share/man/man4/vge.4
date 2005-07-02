@@ -1,4 +1,4 @@
-.\" $OpenBSD: vge.4,v 1.4 2005/01/14 03:08:44 pvalchev Exp $
+.\" $OpenBSD: vge.4,v 1.5 2005/07/02 21:21:25 brad Exp $
 .\" $FreeBSD: vge.4,v 1.6 2004/11/24 19:06:43 brueffer Exp $
 .\"
 .\" Copyright (c) 2004
@@ -50,23 +50,23 @@ controller chips.
 The VT6122 is a 33/66Mhz 64-bit PCI device which combines a tri-speed MAC with
 an integrated 10/100/1000 copper PHY.
 (Some older cards use an external PHY.)
-.\" The MAC supports TCP/IP hardware
-.\" checksums (IPv4 only), TCP large send, VLAN tag insertion and stripping,
-.\" as well as VLAN filtering, a 64-entry CAM filter and a 64-entry VLAN filter,
-.\" 64-bit multicast hash filter, 4 separate transmit DMA queues, flow control
-.\" and jumbo frames up to 16K in size.
-.\" The VT6122 has a 16K receive FIFO and 48K transmit FIFO.
-.\" .Pp
-.\" The
-.\" .Nm
-.\" driver takes advantage of the VT6122's checksum offload and VLAN
-.\" tagging features, as well as the jumbo frame and CAM filter support.
-.\" The CAM filter is used for multicast address filtering to provide
-.\" 64 perfect multicast address filter support.
-.\" If it is necessary for the interface to join more than 64 multicast
-.\" groups, the driver will switch over to using the hash filter.
+The MAC supports IPv4 transmit/receive IP/TCP/UDP hardware
+checksum offload, VLAN tag insertion and stripping,
+as well as VLAN filtering, a 64-entry CAM filter and a 64-entry VLAN filter,
+64-bit multicast hash filter, 4 separate transmit DMA queues, flow control
+and Jumbo frames up to 16K in size.
+The VT6122 has a 16K receive FIFO and 48K transmit FIFO.
 .Pp
-The jumbo frame support can be enabled by setting the interface MTU
+The
+.Nm
+driver takes advantage of the VT6122's checksum offload and VLAN
+tagging features, as well as the Jumbo frame and CAM filter support.
+The CAM filter is used for multicast address filtering to provide
+64 perfect multicast address filter support.
+If it is necessary for the interface to join more than 64 multicast
+groups, the driver will switch over to using the hash filter.
+.Pp
+The Jumbo frame support can be enabled by setting the interface MTU
 to any value larger than the default of 1500 bytes, up to a maximum
 of 9000 bytes.
 The receive and transmit checksum offload support
@@ -122,27 +122,27 @@ Force full duplex operation.
 .It half-duplex
 Force half duplex operation.
 .El
-.\" .Pp
-.\" The
-.\" .Nm
-.\" driver also supports one special link option for 1000baseTX cards:
-.\" .Bl -tag -width link0
-.\" .It link0
-.\" With 1000baseTX cards, establishing a link between two ports requires
-.\" that one port be configured as a master and the other a slave.
-.\" With autonegotiation,
-.\" the master/slave settings will be chosen automatically.
-.\" However when manually selecting the link state, it is necessary to
-.\" force one side of the link to be a master and the other a slave.
-.\" The
-.\" .Nm
-.\" driver configures the ports as slaves by default.
-.\" Setting the
-.\" .Cm link0
-.\" flag with
-.\" .Xr ifconfig 8
-.\" will set a port as a master instead.
-.\" .El
+.Pp
+The
+.Nm
+driver also supports one special link option for 1000baseTX cards:
+.Bl -tag -width link0
+.It link0
+With 1000baseTX cards, establishing a link between two ports requires
+that one port be configured as a master and the other a slave.
+With autonegotiation,
+the master/slave settings will be chosen automatically.
+However when manually selecting the link state, it is necessary to
+force one side of the link to be a master and the other a slave.
+The
+.Nm
+driver configures the ports as slaves by default.
+Setting the
+.Cm link0
+flag with
+.Xr ifconfig 8
+will set a port as a master instead.
+.El
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
