@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.8 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.9 2005/07/02 22:04:54 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -167,6 +167,8 @@ mtd_attach(struct mtd_softc *sc)
 	ifp->if_baudrate = 10000000;
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -498,16 +500,11 @@ mtd_newbuf(struct mtd_softc *sc, int i, struct mbuf *m)
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
+		if (m_new == NULL)
 			return (1);
-		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return (1);
 		}
@@ -515,7 +512,6 @@ mtd_newbuf(struct mtd_softc *sc, int i, struct mbuf *m)
 		if (bus_dmamap_load(sc->sc_dmat, sc->sc_rx_sparemap,
 		    mtod(m_new, caddr_t), MCLBYTES, NULL,
 		    BUS_DMA_NOWAIT) != 0) {
-			printf("%s: rx load failed\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return (1);
 		}
