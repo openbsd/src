@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.11 2005/05/04 02:33:31 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.12 2005/07/02 06:15:44 deraadt Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -192,7 +192,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_SMARTSPEED_DOWNSHIFT         3
 #define EM_SMARTSPEED_MAX               15
 
-
 #define MAX_NUM_MULTICAST_ADDRESSES     128
 #define PCI_ANY_ID                      (~0U)
 
@@ -210,7 +209,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HW_DEBUGOUT(S)              if (DEBUG_HW) printf(S "\n")
 #define HW_DEBUGOUT1(S, A)          if (DEBUG_HW) printf(S "\n", A)
 #define HW_DEBUGOUT2(S, A, B)       if (DEBUG_HW) printf(S "\n", A, B)
-
 
 /* Supported RX Buffer Sizes */
 #define EM_RXBUFFER_2048        2048
@@ -374,11 +372,6 @@ struct em_softc {
         boolean_t       pcix_82544;
         boolean_t       in_detach;
 
-#ifdef DBG_STATS
-	unsigned long   no_pkts_avail;
-	unsigned long   clean_tx_interrupts;
-
-#endif
 	struct em_hw_stats stats;
 };
 

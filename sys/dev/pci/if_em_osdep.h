@@ -31,8 +31,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/*$FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $*/
-/* $OpenBSD: if_em_osdep.h,v 1.3 2004/04/18 04:15:01 henric Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.4 2005/07/02 06:15:44 deraadt Exp $ */
+/* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
 #define _EM_OPENBSD_OS_H_
@@ -42,6 +42,8 @@ POSSIBILITY OF SUCH DAMAGE.
 /* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
 #define usec_delay(x) DELAY(x)
 #define msec_delay(x) DELAY(1000*(x))
+/* TODO: Should we be paranoid about delaying in interrupt context? */
+#define msec_delay_irq(x) DELAY(1000*(x))
 
 #define MSGOUT(S, A, B)     printf(S "\n", A, B)
 #define DEBUGFUNC(F)        DEBUGOUT(F);
@@ -81,33 +83,53 @@ struct em_osdep
         bus_addr_t              em_iobase;
 };
 
-#define E1000_WRITE_FLUSH(a) E1000_READ_REG(a, STATUS)
+#define E1000_WRITE_FLUSH(hw) E1000_READ_REG(hw, STATUS)
 
-#define E1000_READ_REG(a, reg) 						\
-   bus_space_read_4( ((struct em_osdep *)(a)->back)->mem_bus_space_tag,	\
-	((struct em_osdep *)(a)->back)->mem_bus_space_handle,		\
-	((a)->mac_type >= em_82543) ? E1000_##reg : E1000_82542_##reg)
+/* Read from an absolute offset in the adapter's memory space */
+#define E1000_READ_OFFSET(hw, offset) \
+    bus_space_read_4( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+                      ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+                      offset)
 
-#define E1000_WRITE_REG(a, reg, value)					\
-   bus_space_write_4( ((struct em_osdep *)(a)->back)->mem_bus_space_tag, \
-	((struct em_osdep *)(a)->back)->mem_bus_space_handle,		\
-	((a)->mac_type >= em_82543) ? E1000_##reg : E1000_82542_##reg,	\
-	value)
+/* Write to an absolute offset in the adapter's memory space */
+#define E1000_WRITE_OFFSET(hw, offset, value) \
+    bus_space_write_4( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+                       ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+                       offset, \
+                       value)
 
-#define E1000_READ_REG_ARRAY(a, reg, offset)				\
-   bus_space_read_4( ((struct em_osdep *)(a)->back)->mem_bus_space_tag,	\
-		     ((struct em_osdep *)(a)->back)->mem_bus_space_handle, \
-		     ((a)->mac_type >= em_82543) ?			\
-				(E1000_##reg	   + ((offset) << 2)) :	\
-				(E1000_82542_##reg + ((offset) << 2)) ) 
+/* Convert a register name to its offset in the adapter's memory space */
+#define E1000_REG_OFFSET(hw, reg) \
+    ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg)
 
-#define E1000_WRITE_REG_ARRAY(a, reg, offset, value)			\
-    bus_space_write_4( ((struct em_osdep *)(a)->back)->mem_bus_space_tag, \
-	((struct em_osdep *)(a)->back)->mem_bus_space_handle,		\
-	((a)->mac_type >= em_82543) ?					\
-		(E1000_##reg	   + ((offset) << 2)) :			\
-		(E1000_82542_##reg + ((offset) << 2)),			\
-	value)
+#define E1000_READ_REG(hw, reg) \
+    E1000_READ_OFFSET(hw, E1000_REG_OFFSET(hw, reg))
+
+#define E1000_WRITE_REG(hw, reg, value) \
+    E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg), value)
+
+#define E1000_READ_REG_ARRAY(hw, reg, index) \
+    E1000_READ_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2))
+
+#define E1000_READ_REG_ARRAY_DWORD E1000_READ_REG_ARRAY
+
+#define E1000_WRITE_REG_ARRAY(hw, reg, index, value) \
+    E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2), value)
+
+#define E1000_WRITE_REG_ARRAY_BYTE(hw, reg, index, value) \
+    bus_space_write_1( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+                       ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+                       E1000_REG_OFFSET(hw, reg) + (index), \
+                       value)
+
+#define E1000_WRITE_REG_ARRAY_WORD(hw, reg, index, value) \
+    bus_space_write_2( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+                       ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+                       E1000_REG_OFFSET(hw, reg) + (index), \
+                       value)
+
+#define E1000_WRITE_REG_ARRAY_DWORD(hw, reg, index, value) \
+    E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2), value)
 
 #define em_io_read(hw, port)						\
         bus_space_read_4(((struct em_osdep *)(hw)->back)->em_iobtag,	\

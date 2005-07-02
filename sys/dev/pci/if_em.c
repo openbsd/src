@@ -31,8 +31,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
+/* $OpenBSD: if_em.c,v 1.59 2005/07/02 06:15:44 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.58 2005/06/14 03:27:58 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -93,7 +93,7 @@ struct em_softc *em_adapter_list = NULL;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "1.7.35";
+char em_driver_version[] = "2.1.7";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -134,6 +134,8 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI_MOBILE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_IAMT },
 };
 
 /*********************************************************************
@@ -310,8 +312,13 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	 * Set the max frame size assuming standard ethernet
 	 * sized frames
 	 */
-	sc->hw.max_frame_size = 
-	    ETHER_MAX_LEN_JUMBO;
+	if (sc->hw.mac_type == em_82573) {
+		sc->hw.max_frame_size = 
+		    ETHER_MAX_LEN;
+	} else {
+		sc->hw.max_frame_size = 
+		    MAX_JUMBO_FRAME_SIZE;
+	}
 
 	sc->hw.min_frame_size = 
 	    ETHER_MIN_LEN + ETHER_CRC_LEN;
@@ -545,7 +552,9 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFMTU (Set Interface MTU)");
-		if (ifr->ifr_mtu > MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN) {
+		if (ifr->ifr_mtu > MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN || \
+			/* 82573 does not support Jumbo frames */
+			(sc->hw.mac_type == em_82573 && ifr->ifr_mtu > ETHERMTU)) {
 			error = EINVAL;
 		} else {
                         EM_LOCK(sc);
@@ -1934,6 +1943,8 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	/* Program the Transmit Control Register */
 	reg_tctl = E1000_TCTL_PSP | E1000_TCTL_EN |
 		   (E1000_COLLISION_THRESHOLD << E1000_CT_SHIFT);
+	if (sc->hw.mac_type >= em_82573)
+		reg_tctl |= E1000_TCTL_MULR;
 	if (sc->link_duplex == 1) {
 		reg_tctl |= E1000_FDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
 	} else {
@@ -2091,9 +2102,6 @@ em_clean_transmit_interrupts(struct em_softc *sc)
 	if (sc->num_tx_desc_avail == sc->num_tx_desc)
 		return;
 
-#ifdef DBG_STATS
-	sc->clean_tx_interrupts++;
-#endif
 	num_avail = sc->num_tx_desc_avail;
 	i = sc->oldest_used_tx_desc;
 
@@ -2353,7 +2361,8 @@ em_initialize_receive_unit(struct em_softc *sc)
 		break;
 	}
 
-	reg_rctl |= E1000_RCTL_LPE;
+	if (sc->hw.mac_type != em_82573)
+		reg_rctl |= E1000_RCTL_LPE;
 
 	/* Enable 82543 Receive Checksum Offload for TCP and UDP */
 	if (sc->hw.mac_type >= em_82543) {
@@ -2434,9 +2443,6 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 	current_desc = &sc->rx_desc_base[i];
 
 	if (!((current_desc->status) & E1000_RXD_STAT_DD)) {
-#ifdef DBG_STATS
-		sc->no_pkts_avail++;
-#endif
 		return;
 	}
 
@@ -2948,12 +2954,6 @@ em_print_debug_info(struct em_softc *sc)
               E1000_READ_REG(&sc->hw, RDTR),
               E1000_READ_REG(&sc->hw, RADV));
 
-#ifdef DBG_STATS
-	printf("%s: Packets not Avail = %ld\n", unit, 
-	       sc->no_pkts_avail);
-	printf("%s: CleanTxInterrupts = %ld\n", unit,
-	       sc->clean_tx_interrupts);
-#endif
 	printf("%s: fifo workaround = %lld, fifo_reset = %lld\n", unit,
 		(long long)sc->tx_fifo_wrk_cnt,
 		(long long)sc->tx_fifo_reset_cnt);

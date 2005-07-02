@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.883 2005/06/30 03:15:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.884 2005/07/02 06:15:39 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -52,7 +52,7 @@
  */
 
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta */
-#define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge Computer Works */
+#define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge */
 #define	PCI_VENDOR_DYNALINK	0x0675		/* Dynalink */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
 #define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
@@ -139,7 +139,7 @@
 #define	PCI_VENDOR_AMCIRCUITS	0x10e8		/* Applied Micro Circuits */
 #define	PCI_VENDOR_REALTEK	0x10ec		/* Realtek */
 #define	PCI_VENDOR_NKK	0x10f5		/* NKK */
-#define	PCI_VENDOR_IODATA	0x10fc		/* IO Data Device Inc */
+#define	PCI_VENDOR_IODATA	0x10fc		/* IO Data Device */
 #define	PCI_VENDOR_INITIO	0x1101		/* Initio */
 #define	PCI_VENDOR_CREATIVELABS	0x1102		/* Creative Labs */
 #define	PCI_VENDOR_TRIONES	0x1103		/* HighPoint */
@@ -210,7 +210,7 @@
 #define	PCI_VENDOR_DTCTECH	0x134a		/* DTC Tech */
 #define	PCI_VENDOR_PCTEL	0x134d		/* PCTEL */
 #define	PCI_VENDOR_CNET	0x1371		/* CNet */
-#define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
+#define	PCI_VENDOR_LMC	0x1376		/* LAN Media */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_MOXA	0x1393		/* Moxa */
 #define	PCI_VENDOR_LEVEL1	0x1394		/* Level 1 */
@@ -243,7 +243,7 @@
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
-#define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp */
+#define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_ZOLTRIX	0x15b0		/* Zoltrix */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
@@ -450,7 +450,7 @@
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 AGP/PCI-PCI */
 #define	PCI_PRODUCT_ALI_M5451	0x5451		/* M5451 Audio */
 #define	PCI_PRODUCT_ALI_M5457	0x5457		/* M5457 Modem */
-#define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Mgmt */
+#define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power */
 
 /* ADMtek products */
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 */
@@ -569,21 +569,21 @@
 #define	PCI_PRODUCT_AMD_761_PPB	0x700f		/* 761 PCI-PCI */
 #define	PCI_PRODUCT_AMD_755_ISA	0x7400		/* 755 ISA */
 #define	PCI_PRODUCT_AMD_755_IDE	0x7401		/* 755 IDE */
-#define	PCI_PRODUCT_AMD_755_PMC	0x7403		/* 755 Power Mgmt */
+#define	PCI_PRODUCT_AMD_755_PMC	0x7403		/* 755 Power */
 #define	PCI_PRODUCT_AMD_755_USB	0x7404		/* 755 USB */
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf */
 #define	PCI_PRODUCT_AMD_PBC756_ISA	0x7408		/* 756 ISA */
 #define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* 756 IDE */
-#define	PCI_PRODUCT_AMD_PBC756_PMC	0x740b		/* 756 Power Mgmt */
+#define	PCI_PRODUCT_AMD_PBC756_PMC	0x740b		/* 756 Power */
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740c		/* 756 USB Host */
 #define	PCI_PRODUCT_AMD_766_ISA	0x7410		/* 766 ISA */
 #define	PCI_PRODUCT_AMD_766_IDE	0x7411		/* 766 IDE */
 #define	PCI_PRODUCT_AMD_766_USB	0x7412		/* 766 USB */
-#define	PCI_PRODUCT_AMD_766_PMC	0x7413		/* 766 Power Mgmt */
+#define	PCI_PRODUCT_AMD_766_PMC	0x7413		/* 766 Power */
 #define	PCI_PRODUCT_AMD_766_USB_HCI	0x7414		/* 766 USB OpenHCI */
 #define	PCI_PRODUCT_AMD_PBC768_ISA	0x7440		/* 768 ISA */
 #define	PCI_PRODUCT_AMD_PBC768_IDE	0x7441		/* 768 IDE */
-#define	PCI_PRODUCT_AMD_PBC768_PMC	0x7443		/* 768 Power Mgmt */
+#define	PCI_PRODUCT_AMD_PBC768_PMC	0x7443		/* 768 Power */
 #define	PCI_PRODUCT_AMD_PBC768_ACA	0x7445		/* 768 AC97 */
 #define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* 768 Modem */
 #define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* 768 PCI-PCI */
@@ -1603,7 +1603,7 @@
 #define	PCI_PRODUCT_INTEL_82371AB_ISA	0x7110		/* 82371AB PIIX4 ISA */
 #define	PCI_PRODUCT_INTEL_82371AB_IDE	0x7111		/* 82371AB IDE */
 #define	PCI_PRODUCT_INTEL_82371AB_USB	0x7112		/* 82371AB USB */
-#define	PCI_PRODUCT_INTEL_82371AB_PMC	0x7113		/* 82371AB Power Mgmt */
+#define	PCI_PRODUCT_INTEL_82371AB_PMC	0x7113		/* 82371AB Power */
 #define	PCI_PRODUCT_INTEL_82810_MCH	0x7120		/* 82810 */
 #define	PCI_PRODUCT_INTEL_82810_GC	0x7121		/* 82810 Graphics */
 #define	PCI_PRODUCT_INTEL_82810_DC100_MCH	0x7122		/* 82810-DC100 */
@@ -1621,7 +1621,7 @@
 #define	PCI_PRODUCT_INTEL_82440MX_ISA	0x7198		/* 82440MX ISA */
 #define	PCI_PRODUCT_INTEL_82440MX_IDE	0x7199		/* 82440MX IDE */
 #define	PCI_PRODUCT_INTEL_82440MX_USB	0x719a		/* 82440MX USB */
-#define	PCI_PRODUCT_INTEL_82440MX_PM	0x719b		/* 82440MX Power Mgmt */
+#define	PCI_PRODUCT_INTEL_82440MX_PM	0x719b		/* 82440MX Power */
 #define	PCI_PRODUCT_INTEL_82440BX	0x71a0		/* 82440BX AGP */
 #define	PCI_PRODUCT_INTEL_82440BX_AGP	0x71a1		/* 82440BX AGP */
 #define	PCI_PRODUCT_INTEL_82443GX	0x71a2		/* 82443GX */
@@ -2763,10 +2763,10 @@
 #define	PCI_PRODUCT_VIATECH_VT82C1595	0x1595		/* VT82C1595 PCI */
 #define	PCI_PRODUCT_VIATECH_K8HTB_2	0x2282		/* K8HTB Host */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB */
-#define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 Power Mgmt */
+#define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 Power */
 #define	PCI_PRODUCT_VIATECH_RHINE	0x3043		/* Rhine/RhineII */
 #define	PCI_PRODUCT_VIATECH_VT6306	0x3044		/* VT6306 FireWire */
-#define	PCI_PRODUCT_VIATECH_VT82C596	0x3050		/* VT82C596 Power Mgmt */
+#define	PCI_PRODUCT_VIATECH_VT82C596	0x3050		/* VT82C596 Power */
 #define	PCI_PRODUCT_VIATECH_VT82C596B_PM	0x3051		/* VT82C596B PM */
 #define	PCI_PRODUCT_VIATECH_VT6105M	0x3053		/* VT6105M RhineIII */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686 SMBus */

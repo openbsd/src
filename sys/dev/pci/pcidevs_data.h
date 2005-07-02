@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.883 2005/06/30 03:15:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.884 2005/07/02 06:15:39 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -576,7 +576,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
-	    "M7101 Power Mgmt",
+	    "M7101 Power",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
@@ -972,7 +972,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_755_PMC,
-	    "755 Power Mgmt",
+	    "755 Power",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_755_USB,
@@ -988,7 +988,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_PMC,
-	    "756 Power Mgmt",
+	    "756 Power",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_USB,
@@ -1008,7 +1008,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_PMC,
-	    "766 Power Mgmt",
+	    "766 Power",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_USB_HCI,
@@ -1024,7 +1024,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC,
-	    "768 Power Mgmt",
+	    "768 Power",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_ACA,
@@ -4472,7 +4472,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PMC,
-	    "82371AB Power Mgmt",
+	    "82371AB Power",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_MCH,
@@ -4544,7 +4544,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_PM,
-	    "82440MX Power Mgmt",
+	    "82440MX Power",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440BX,
@@ -8216,7 +8216,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
-	    "VT82C586 Power Mgmt",
+	    "VT82C586 Power",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
@@ -8228,7 +8228,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596,
-	    "VT82C596 Power Mgmt",
+	    "VT82C596 Power",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596B_PM,
@@ -8944,7 +8944,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_HAUPPAUGE,
-	    "Hauppauge Computer Works",
+	    "Hauppauge",
 	},
 	{
 	    PCI_VENDOR_DYNALINK,
@@ -9292,7 +9292,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_IODATA,
-	    "IO Data Device Inc",
+	    "IO Data Device",
 	},
 	{
 	    PCI_VENDOR_INITIO,
@@ -9576,7 +9576,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_LMC,
-	    "LAN Media Corp",
+	    "LAN Media",
 	},
 	{
 	    PCI_VENDOR_NETGEAR,
@@ -9708,7 +9708,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NDC,
-	    "National Datacomm Corp",
+	    "National Datacomm",
 	},
 	{
 	    PCI_VENDOR_ZOLTRIX,
