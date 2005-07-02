@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.387 2005/06/13 23:42:38 krw Exp $
+#	$OpenBSD: install.sub,v 1.388 2005/07/02 00:55:48 uwe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -479,8 +479,8 @@ select_sets() {
 
 	cat <<__EOT
 
-Select sets by entering a set name, a regular expression or 'all'. De-select
-sets by prepending a '-' to the set name, regular expression or 'all'. Selected
+Select sets by entering a set name, a file name pattern or 'all'. De-select
+sets by prepending a '-' to the set name, file name pattern or 'all'. Selected
 sets are labelled '[x]'.
 __EOT
 	while :; do
