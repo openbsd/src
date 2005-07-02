@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.41 2005/07/02 23:17:36 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.42 2005/07/02 23:20:05 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1178,7 +1178,7 @@ void rl_stop(sc)
 
 	timeout_del(&sc->sc_tick_tmo);
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE)
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
