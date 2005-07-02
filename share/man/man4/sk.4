@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.33 2005/05/14 09:35:46 jmc Exp $
+.\"	$OpenBSD: sk.4,v 1.34 2005/07/02 21:24:36 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -108,14 +108,14 @@ to separate networks.
 The XaQti XMAC II supports full and half duplex operation with
 autonegotiation.
 The XMAC also supports unlimited frame sizes.
-Support for jumbo frames is provided via the interface MTU setting.
+Support for Jumbo frames is provided via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
-utility configures the adapter to receive and transmit jumbo frames.
-Using jumbo frames can greatly improve performance for certain tasks,
+utility configures the adapter to receive and transmit Jumbo frames.
+Using Jumbo frames can greatly improve performance for certain tasks,
 such as file transfers and data streaming.
 .Pp
-Hardware receive TCP/IP checksum offload for IPv4 is supported.
+Hardware receive IP checksum offload for IPv4 is supported.
 .Pp
 The following media types and options (as given to
 .Xr ifconfig 8 )

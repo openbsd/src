@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nge.4,v 1.21 2005/02/27 00:00:02 brad Exp $
+.\"	$OpenBSD: nge.4,v 1.22 2005/07/02 21:24:36 brad Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@bsdi.com>. All rights reserved.
@@ -76,24 +76,20 @@ copper cable.
 The DP83820 supports TBI (ten bit interface) and GMII
 transceivers, which means it can be used with either copper or 1000baseX
 fiber applications.
-The DP83820 supports transmit/receive
-.Xr ip 4 ,
-.Xr tcp 4 ,
-and
-.Xr udp 4
-checksum offload as well as a 2048-bit
-multicast hash filter and up to 4 pattern match buffers.
+The DP83820 supports IPv4 transmit/receive IP/TCP/UDP checksum offload
+as well as a 2048-bit multicast hash filter and up to 4 pattern match
+buffers.
 .Pp
 Most cards also use the DP83861 10/100/1000 copper gigabit transceiver
 chip, which supports autonegotiation of 10, 100 and 1000Mbps modes in
 full or half duplex.
 .Pp
-The DP83820 also supports jumbo frames, which can be configured
+The DP83820 also supports Jumbo frames, which can be configured
 via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
-utility configures the adapter to receive and transmit jumbo frames.
-Using jumbo frames can greatly improve performance for certain tasks,
+utility configures the adapter to receive and transmit Jumbo frames.
+Using Jumbo frames can greatly improve performance for certain tasks,
 such as file transfers and data streaming.
 If the MTU is set to be larger than the NIC's transmit buffer
 (typically 8152 bytes), hardware output checksumming is disabled
@@ -193,7 +189,7 @@ The driver failed to initialize PCI shared memory mapping.
 This might
 happen if the card is not in a bus-master slot.
 .It "nge%d: no memory for jumbo buffers!"
-The driver failed to allocate memory for jumbo frames during
+The driver failed to allocate memory for Jumbo frames during
 initialization.
 .It "nge%d: watchdog timeout"
 The device has stopped responding to the network, or there is a problem with
