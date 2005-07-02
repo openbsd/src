@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.16 2005/07/01 01:13:45 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.17 2005/07/02 00:55:09 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -1562,6 +1562,12 @@ stge_stop(struct ifnet *ifp, int disable)
 	 */
 	timeout_del(&sc->sc_timeout);
 
+	/*
+	 * Mark the interface down and cancel the watchdog timer.
+	 */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
+
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
 
@@ -1599,12 +1605,6 @@ stge_stop(struct ifnet *ifp, int disable)
 
 	if (disable)
 		stge_rxdrain(sc);
-
-	/*
-	 * Mark the interface down and cancel the watchdog timer.
-	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 }
 
 #if 0
