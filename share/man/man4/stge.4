@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stge.4,v 1.8 2005/06/28 00:46:58 brad Exp $
+.\"	$OpenBSD: stge.4,v 1.9 2005/07/02 18:49:18 brad Exp $
 .\"	$NetBSD: stge.4,v 1.5 2001/09/11 22:52:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,14 +63,8 @@ D-Link DGE-550T
 .El
 .Pp
 It uses an external PHY or an external 10-bit interface.
-.\".Pp
-.\"The TC9021 supports IPv4/TCP/UDP checksumming in hardware.  The
-.\".Nm
-.\"driver supports this feature of the chip.  See
-.\".Xr ifconfig 8
-.\"for information on how to enable this feature.
-.\" .Sh DIAGNOSTICS
-.\" XXX too be done.
+.Pp
+The TC9021 supports IPv4 receive IP/TCP/UDP checksum offload.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr eephy 4 ,
@@ -97,9 +91,9 @@ The
 .Nm
 driver does not support the VLAN tag insertion/removal feature of the
 TC9021 chip.
-This is primarily because the TC9021's VLAN do not have a useful
+This is primarily because the TC9021 does not provide a useful
 programming interface.
 .Pp
 The
 .Nm
-driver does not yet support jumbo Ethernet frames.
+driver does not yet support Jumbo frames.
