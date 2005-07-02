@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.23 2005/07/02 22:17:58 brad Exp $ */
+/*	$OpenBSD: if_url.c,v 1.24 2005/07/02 22:21:12 brad Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -1240,6 +1240,7 @@ url_stop(struct ifnet *ifp, int disable)
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	url_reset(sc);
 
@@ -1313,7 +1314,6 @@ url_stop(struct ifnet *ifp, int disable)
 	}
 
 	sc->sc_link = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 /* Set media options */

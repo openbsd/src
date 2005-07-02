@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.8 2005/01/27 21:49:53 dlg Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.9 2005/07/02 22:21:12 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -345,6 +345,7 @@ cdce_stop(struct cdce_softc *sc)
 	int		 i;
 
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	if (sc->cdce_bulkin_pipe != NULL) {
 		err = usbd_abort_pipe(sc->cdce_bulkin_pipe);
@@ -391,8 +392,6 @@ cdce_stop(struct cdce_softc *sc)
 			sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer = NULL;
 		}
 	}
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 Static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.25 2005/06/08 17:03:02 henning Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.26 2005/07/02 22:21:12 brad Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1260,6 +1260,7 @@ cue_stop(struct cue_softc *sc)
 
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	cue_csr_write_1(sc, CUE_ETHCTL, 0);
 	cue_reset(sc);
@@ -1331,6 +1332,4 @@ cue_stop(struct cue_softc *sc)
 			sc->cue_cdata.cue_tx_chain[i].cue_xfer = NULL;
 		}
 	}
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.11 2005/07/02 22:17:58 brad Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.12 2005/07/02 22:21:12 brad Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1320,6 +1320,7 @@ udav_stop(struct ifnet *ifp, int disable)
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	udav_reset(sc);
 
@@ -1393,7 +1394,6 @@ udav_stop(struct ifnet *ifp, int disable)
 	}
 
 	sc->sc_link = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 /* Set media options */

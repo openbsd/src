@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.18 2005/06/08 17:03:02 henning Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.19 2005/07/02 22:21:12 brad Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -958,6 +958,7 @@ upl_stop(struct upl_softc *sc)
 
 	ifp = &sc->sc_if;
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	/* Stop transfers. */
 	if (sc->sc_ep[UPL_ENDPT_RX] != NULL) {
@@ -1025,8 +1026,6 @@ upl_stop(struct upl_softc *sc)
 			sc->sc_cdata.upl_tx_chain[i].upl_xfer = NULL;
 		}
 	}
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 Static int

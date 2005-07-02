@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.36 2005/06/08 17:03:02 henning Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.37 2005/07/02 22:21:12 brad Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1220,6 +1220,7 @@ kue_stop(struct kue_softc *sc)
 
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	/* Stop transfers. */
 	if (sc->kue_ep[KUE_ENDPT_RX] != NULL) {
@@ -1287,6 +1288,4 @@ kue_stop(struct kue_softc *sc)
 			sc->kue_cdata.kue_tx_chain[i].kue_xfer = NULL;
 		}
 	}
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }

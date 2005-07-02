@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.26 2005/07/02 22:17:57 brad Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.27 2005/07/02 22:21:12 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -1297,6 +1297,7 @@ axe_stop(struct axe_softc *sc)
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	usb_uncallout(sc->axe_stat_ch, axe_tick, sc);
 
@@ -1368,6 +1369,5 @@ axe_stop(struct axe_softc *sc)
 	}
 
 	sc->axe_link = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 

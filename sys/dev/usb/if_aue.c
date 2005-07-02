@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.40 2005/07/02 22:17:57 brad Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.41 2005/07/02 22:21:12 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1660,6 +1660,7 @@ aue_stop(struct aue_softc *sc)
 
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	aue_csr_write_1(sc, AUE_CTL0, 0);
 	aue_csr_write_1(sc, AUE_CTL1, 0);
@@ -1734,6 +1735,4 @@ aue_stop(struct aue_softc *sc)
 	}
 
 	sc->aue_link = 0;
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
