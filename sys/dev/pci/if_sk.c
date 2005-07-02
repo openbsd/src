@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.67 2005/05/17 19:18:18 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.68 2005/07/02 21:57:19 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -771,7 +771,7 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 	struct sk_rx_desc	*r;
 
 	if (m == NULL) {
-		caddr_t *buf = NULL;
+		caddr_t buf = NULL;
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
@@ -1006,13 +1006,10 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		else {
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
-			ifp->if_flags &= ~IFF_RUNNING;
-			sk_init(sc_if);
-		}
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
