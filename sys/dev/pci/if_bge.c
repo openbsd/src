@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.70 2005/07/01 20:47:50 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.71 2005/07/02 00:34:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1169,8 +1169,9 @@ bge_chipinit(sc)
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750)
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_MINDMA;
 
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL, dma_rw_ctl);
@@ -1630,6 +1631,10 @@ static const struct bge_revision {
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B2" },
 
+	{ BGE_CHIPID_BCM5700_B3,
+	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
+	  "BCM5700 B3" },
+
 	/* This is treated like a BCM5700 Bx */
 	{ BGE_CHIPID_BCM5700_ALTIMA,
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
@@ -1711,13 +1716,29 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5750 A1" },
 
+	{ BGE_CHIPID_BCM5750_A3,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5750 A3" },
+
+	{ BGE_CHIPID_BCM5750_B0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5750 B0" },
+
 	{ BGE_CHIPID_BCM5750_B1,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5750 B1" },
 
+	{ BGE_CHIPID_BCM5750_C0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5750 C0" },
+
 	{ BGE_CHIPID_BCM5714_A0,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5714 A0" },
+
+	{ BGE_CHIPID_BCM5752_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5752 A0" },
 
 	{ 0, 0, NULL }
 };
@@ -1754,6 +1775,10 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5714,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5714" },
+
+	{ BGE_ASICREV_BCM5752,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5752" },
 
 	{ 0,
 	  0,
@@ -1913,8 +1938,9 @@ bge_attach(parent, self, aux)
 	 * XXX: Broadcom Linux driver.  Not in specs or eratta.
 	 * PCI-Express?
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752) {
 		u_int32_t v;
 
 		v = pci_conf_read(pc, pa->pa_tag, BGE_PCI_MSI_CAPID);
