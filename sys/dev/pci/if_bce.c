@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.6 2005/04/23 22:59:01 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.7 2005/07/02 23:10:11 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -1141,6 +1141,10 @@ bce_stop(ifp, disable)
 	/* Stop the 1 second timer */
 	timeout_del(&sc->bce_timeout);
 
+	/* Mark the interface down and cancel the watchdog timer. */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
+
 	/* Down the MII. */
 	mii_down(&sc->bce_mii);
 
@@ -1177,10 +1181,6 @@ bce_stop(ifp, disable)
 	/* drain receive queue */
 	if (disable)
 		bce_rxdrain(sc);
-
-	/* Mark the interface down and cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 }
 
 /* reset the chip */

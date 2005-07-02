@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.20 2005/06/18 04:23:09 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.21 2005/07/02 23:10:11 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1579,6 +1579,9 @@ void lge_stop(sc)
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
 	timeout_del(&sc->lge_timeout);
+
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	CSR_WRITE_4(sc, LGE_IMR, LGE_IMR_INTR_ENB);
 
 	/* Disable receiver and transmitter. */
@@ -1609,8 +1612,6 @@ void lge_stop(sc)
 
 	bzero((char *)&sc->lge_ldata->lge_tx_list,
 		sizeof(sc->lge_ldata->lge_tx_list));
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	return;
 }

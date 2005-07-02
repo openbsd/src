@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.47 2005/04/17 13:41:46 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.48 2005/07/02 23:10:11 brad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1980,14 +1980,14 @@ ipw_stop(struct ifnet *ifp, int disable)
 	ipw_stop_master(sc);
 	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_SW_RESET);
 
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	/*
 	 * Release tx buffers
 	 */
 	for (i = 0; i < IPW_NTBD; i++)
 		ipw_release_sbd(sc, &sc->stbd_list[i]);
-
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 }

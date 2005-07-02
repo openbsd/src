@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.4 2005/06/28 03:07:37 brad Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.5 2005/07/02 23:10:16 brad Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -1153,6 +1153,12 @@ epic_stop(struct ifnet *ifp, int disable)
 	 */
 	timeout_del(&sc->sc_mii_timeout);
 
+	/*
+	 * Mark the interface down and cancel the watchdog timer.
+	 */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
+
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
 
@@ -1186,12 +1192,6 @@ epic_stop(struct ifnet *ifp, int disable)
 
 	if (disable)
 		epic_rxdrain(sc);
-
-	/*
-	 * Mark the interface down and cancel the watchdog timer.
-	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 }
 
 /*

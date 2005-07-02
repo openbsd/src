@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.30 2005/04/21 06:48:05 fgsch Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.31 2005/07/02 23:10:11 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1222,6 +1222,8 @@ void ste_stop(sc)
 
 	timeout_del(&sc->sc_stats_tmo);
 
+	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+
 	CSR_WRITE_2(sc, STE_IMR, 0);
 	STE_SETBIT2(sc, STE_MACCTL1, STE_MACCTL1_TX_DISABLE);
 	STE_SETBIT2(sc, STE_MACCTL1, STE_MACCTL1_RX_DISABLE);
@@ -1252,8 +1254,6 @@ void ste_stop(sc)
 	}
 
 	bzero(sc->ste_ldata, sizeof(struct ste_list_data));
-
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 
 	return;
 }

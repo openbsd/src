@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.64 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.65 2005/07/02 23:10:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2606,9 +2606,9 @@ xl_stop(sc)
 	/* Stop the stats updater. */
 	timeout_del(&sc->xl_stsup_tmo);
 
-	xl_freetxrx(sc);
-
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	xl_freetxrx(sc);
 
 	return;
 }

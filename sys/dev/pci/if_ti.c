@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.60 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.61 2005/07/02 23:10:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2675,6 +2675,8 @@ void ti_stop(sc)
 
 	ifp = &sc->arpcom.ac_if;
 
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	/* Disable host interrupts. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 1);
 	/*
@@ -2703,8 +2705,6 @@ void ti_stop(sc)
 	sc->ti_return_prodidx.ti_idx = 0;
 	sc->ti_tx_considx.ti_idx = 0;
 	sc->ti_tx_saved_considx = TI_TXCONS_UNSET;
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	return;
 }

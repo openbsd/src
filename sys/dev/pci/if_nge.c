@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.34 2005/05/25 21:01:17 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.35 2005/07/02 23:10:11 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -2244,6 +2244,9 @@ nge_stop(sc)
 	}
 
 	timeout_del(&sc->nge_timeout);
+
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	CSR_WRITE_4(sc, NGE_IER, 0);
 	CSR_WRITE_4(sc, NGE_IMR, 0);
 	NGE_SETBIT(sc, NGE_CSR, NGE_CSR_TX_DISABLE|NGE_CSR_RX_DISABLE);
@@ -2280,8 +2283,6 @@ nge_stop(sc)
 
 	bzero((char *)&sc->nge_ldata->nge_tx_list,
 		sizeof(sc->nge_ldata->nge_tx_list));
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 /*

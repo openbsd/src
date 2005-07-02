@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.32 2005/06/21 05:36:43 kevlo Exp $	*/
+/*	$OpenBSD: atw.c,v 1.33 2005/07/02 23:10:16 brad Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2697,6 +2697,12 @@ atw_stop(struct ifnet *ifp, int disable)
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	/*
+	 * Mark the interface down and cancel the watchdog timer.
+	*/
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
+
 	/* Disable interrupts. */
 	ATW_WRITE(sc, ATW_IER, 0);
 
@@ -2714,12 +2720,6 @@ atw_stop(struct ifnet *ifp, int disable)
 		atw_rxdrain(sc);
 		atw_disable(sc);
 	}
-
-	/*
-	 * Mark the interface down and cancel the watchdog timer.
-	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 
 	if (!disable)
 		atw_reset(sc);

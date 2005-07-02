@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.68 2005/07/02 21:57:19 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.69 2005/07/02 23:10:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2709,6 +2709,8 @@ sk_stop(struct sk_if_softc *sc_if)
 
 	timeout_del(&sc_if->sk_tick_ch);
 
+	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+
 	if (sc_if->sk_phytype == SK_PHYTYPE_BCOM) {
 		u_int32_t		val;
 
@@ -2773,8 +2775,6 @@ sk_stop(struct sk_if_softc *sc_if)
 			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
 		}
 	}
-
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 }
 
 struct cfattach skc_ca = {

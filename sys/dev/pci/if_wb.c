@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.27 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.28 2005/07/02 23:10:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1735,6 +1735,8 @@ void wb_stop(sc)
 
 	timeout_del(&sc->wb_tick_tmo);
 
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	WB_CLRBIT(sc, WB_NETCFG, (WB_NETCFG_RX_ON|WB_NETCFG_TX_ON));
 	CSR_WRITE_4(sc, WB_IMR, 0x00000000);
 	CSR_WRITE_4(sc, WB_TXADDR, 0x00000000);
@@ -1764,10 +1766,6 @@ void wb_stop(sc)
 
 	bzero((char *)&sc->wb_ldata->wb_tx_list,
 		sizeof(sc->wb_ldata->wb_tx_list));
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	return;
 }
 
 /*

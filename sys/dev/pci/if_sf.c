@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.29 2005/05/11 03:44:27 brad Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.30 2005/07/02 23:10:11 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1296,6 +1296,8 @@ void sf_stop(sc)
 
 	timeout_del(&sc->sc_stats_tmo);
 
+	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+
 	csr_write_4(sc, SF_GEN_ETH_CTL, 0);
 	csr_write_4(sc, SF_CQ_CONSIDX, 0);
 	csr_write_4(sc, SF_CQ_PRODIDX, 0);
@@ -1322,8 +1324,6 @@ void sf_stop(sc)
 			sc->sf_ldata->sf_tx_dlist[i].sf_mbuf = NULL;
 		}
 	}
-
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 
 	return;
 }

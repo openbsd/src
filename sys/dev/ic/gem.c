@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.41 2005/06/08 17:02:59 henning Exp $	*/
+/*	$OpenBSD: gem.c,v 1.42 2005/07/02 23:10:16 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -454,6 +454,13 @@ gem_stop(struct ifnet *ifp, int disable)
 	DPRINTF(sc, ("%s: gem_stop\n", sc->sc_dev.dv_xname));
 
 	timeout_del(&sc->sc_tick_ch);
+
+	/*
+	 * Mark the interface down and cancel the watchdog timer.
+	 */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
+
 	mii_down(&sc->sc_mii);
 
 	gem_reset_rx(sc);
@@ -477,12 +484,6 @@ gem_stop(struct ifnet *ifp, int disable)
 	if (disable) {
 		gem_rxdrain(sc);
 	}
-
-	/*
-	 * Mark the interface down and cancel the watchdog timer.
-	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 }
 
 

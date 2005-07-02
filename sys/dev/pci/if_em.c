@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.59 2005/07/02 06:15:44 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.60 2005/07/02 23:10:11 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include "bpfilter.h"
@@ -1439,11 +1439,12 @@ em_stop(void *arg)
 	em_reset_hw(&sc->hw);
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
-	em_free_transmit_structures(sc);
-	em_free_receive_structures(sc);
 
 	/* Tell the stack that the interface is no longer active */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	em_free_transmit_structures(sc);
+	em_free_receive_structures(sc);
 
 	return;
 }

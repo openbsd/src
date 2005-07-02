@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.45 2005/06/20 18:25:14 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.46 2005/07/02 23:10:11 brad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -2014,6 +2014,9 @@ iwi_stop(struct ifnet *ifp, int disable)
 	iwi_stop_master(sc);
 	CSR_WRITE_4(sc, IWI_CSR_RST, IWI_RST_SW_RESET);
 
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	/*
 	 * Release Tx buffers
 	 */
@@ -2031,9 +2034,6 @@ iwi_stop(struct ifnet *ifp, int disable)
 			}
 		}
 	}
-
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 }
