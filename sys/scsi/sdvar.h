@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.4 2003/05/17 16:28:05 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.5 2005/07/02 03:49:47 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -86,8 +86,6 @@ struct sd_softc {
 		char product[17];	/* disk product model */
 		char revision[5];	/* drive/firmware revision */
 	} name;
-	const struct sd_ops *sc_ops;	/* our bus-dependent ops vector */
-
 	void *sc_sdhook;		/* our shutdown hook */
 
 #if NRND > 0
@@ -95,12 +93,6 @@ struct sd_softc {
 #endif
 };
 
-struct sd_ops {
-	int	(*sdo_get_parms)(struct sd_softc *, struct disk_parms *,
-		    int);
-	void	(*sdo_flush)(struct sd_softc *, int);
-};
 #define	SDGP_RESULT_OK		0	/* parameters obtained */
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */
-#define	SDGP_RESULT_UNFORMATTED	2	/* unformatted media (max params) */
 
