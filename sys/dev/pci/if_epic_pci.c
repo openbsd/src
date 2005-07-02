@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_epic_pci.c,v 1.2 2005/05/10 02:37:46 brad Exp $	*/
+/*	$OpenBSD: if_epic_pci.c,v 1.3 2005/07/02 21:51:05 brad Exp $	*/
 /*	$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
@@ -97,8 +97,8 @@ struct epic_pci_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-static int	epic_pci_match(struct device *, void *, void *);
-static void	epic_pci_attach(struct device *, struct device *, void *);
+int	epic_pci_match(struct device *, void *, void *);
+void	epic_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach epic_pci_ca = {
 	sizeof(struct epic_pci_softc), epic_pci_match, epic_pci_attach
@@ -139,14 +139,14 @@ epic_pci_subsys_lookup(const struct pci_attach_args *pa)
 	return (NULL);
 }
 
-static int
+int
 epic_pci_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, epic_pci_devices,
 	    sizeof(epic_pci_devices)/sizeof(epic_pci_devices[0])));
 }
 
-static void
+void
 epic_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct epic_pci_softc *psc = (struct epic_pci_softc *)self;
@@ -210,11 +210,6 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	/* Make sure bus mastering is enabled. */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
 
 	/*
 	 * Map and establish our interrupt.
