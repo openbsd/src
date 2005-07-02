@@ -1,4 +1,4 @@
-# $OpenBSD: faq-example2,v 1.2 2003/08/06 16:04:45 henning Exp $
+# $OpenBSD: faq-example2,v 1.3 2005/07/02 16:16:39 joel Exp $
 
 #
 # Small, Home Network
@@ -42,9 +42,9 @@ altq on dc0 cbq bandwidth 2Mb queue { std_in, ssh_im_in, dns_in, bob_in }
 # bob_in      - bandwidth reserved for Bob's workstation. allow him to
 #               borrow.
 
-queue std_in    cbq(default)
-queue ssh_im_in priority 4
-queue dns_in    priority 5
+queue std_in    bandwidth 1.6Mb cbq(default)
+queue ssh_im_in bandwidth 200Kb priority 4
+queue dns_in    bandwidth 120Kb priority 5
 queue bob_in    bandwidth 80Kb cbq(borrow)
 
 

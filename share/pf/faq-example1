@@ -1,4 +1,4 @@
-# $OpenBSD: faq-example1,v 1.2 2003/08/06 16:04:45 henning Exp $
+# $OpenBSD: faq-example1,v 1.3 2005/07/02 16:16:39 joel Exp $
 
 #
 # Firewall for Home or Small Office
@@ -14,7 +14,9 @@ tcp_services = "{ 22, 113 }"
 icmp_types = "echoreq"
 
 priv_nets = "{ 127.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8 }"
-        
+
+comp3 = "192.168.0.3"
+
 # options
 set block-policy return
 set loginterface $ext_if
@@ -26,6 +28,7 @@ scrub in all
 nat on $ext_if from $int_if:network to any -> ($ext_if)
 rdr on $int_if proto tcp from any to any port 21 -> 127.0.0.1 \
    port 8021
+rdr on $ext_if proto tcp from any to any port 80 -> $comp3
 
 # filter rules
 block all
@@ -37,6 +40,12 @@ block drop out quick on $ext_if from any to $priv_nets
 
 pass in on $ext_if inet proto tcp from any to ($ext_if) \
    port $tcp_services flags S/SA keep state
+
+pass in on $ext_if proto tcp from any to $comp3 port 80 \
+   flags S/SA synproxy state
+
+pass in on $ext_if inet proto tcp from port 20 to ($ext_if) \
+   user proxy flags S/SA keep state
 
 pass in inet proto icmp all icmp-type $icmp_types keep state
 
