@@ -1,16 +1,9 @@
-#	$OpenBSD: files.dec,v 1.2 2005/03/08 20:00:24 tdeval Exp $
+#	$OpenBSD: files.dec,v 1.3 2005/07/02 09:28:39 miod Exp $
 #	$NetBSD: files.dec,v 1.4 1999/08/04 07:17:51 nisimura Exp $
 #
 # Config file and device description for machine-independent
 # code for devices for Digital Equipment Corp. systems.
 # Included by ports that need it.
-
-# Attribute for DEC lance padded-DMA copy functions.  Lance attachments
-# which need it should specify the le_de_subr attribute.
-define	le_dec_subr
-
-# DMA copy functions.
-file	arch/vax/dec/if_le_dec.c		le_dec_subr
 
 # LK201 keyboard
 file	arch/vax/dec/lk201_ws.c			lkkbd

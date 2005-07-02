@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.12 2004/07/07 23:10:45 deraadt Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.13 2005/07/02 09:28:40 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -116,7 +116,6 @@ u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
 void	lance_copytobuf_gap2(struct am7990_softc *, void *, int, int);
 void	lance_copyfrombuf_gap2(struct am7990_softc *, void *, int, int);
 void	lance_zerobuf_gap2(struct am7990_softc *, int, int);
-void	leintr(void *);
 
 struct cfattach le_ibus_ca = {
 	sizeof(struct le_softc), le_ibus_match, le_ibus_attach
@@ -311,12 +310,4 @@ lance_zerobuf_gap2(sc, boff, len)
 		bptr += 2;
 		len -= 2;
 	}
-}
-
-void
-leintr(arg)
-	void *arg;
-{
-	int unit = (int)arg;
-	am7990_intr(le_cd.cd_devs[unit]);
 }
