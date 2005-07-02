@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.15 2005/07/01 21:54:41 brad Exp $
+.\" $OpenBSD: re.4,v 1.16 2005/07/02 05:20:22 jmc Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -96,8 +96,8 @@ PCI models.
 The 8110S is designed for embedded LAN-on-motherboard applications.
 .Pp
 The 8169, 8169S and 8110S also support Jumbo frames, which can be configured
-via the interface MTU setting. The MTU is limited to 7422, since the chip
-cannot transmit larger frames.
+via the interface MTU setting.
+The MTU is limited to 7422, since the chip cannot transmit larger frames.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
 utility configures the adapter to receive and transmit Jumbo frames.
