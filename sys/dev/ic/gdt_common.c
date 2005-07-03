@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.28 2004/04/12 05:33:04 deraadt Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.29 2005/07/03 22:31:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -910,8 +910,9 @@ gdt_internal_cache_cmd(xs)
 		case 4:
 			/* scsi_disk.h says this should be 0x16 */
 			mpd.dp.rigid_geometry.pg_length = 0x16;
-			mpd.hd.data_length = sizeof mpd.hd + sizeof mpd.bd +
-			    mpd.dp.rigid_geometry.pg_length;
+			mpd.hd.data_length = sizeof mpd.hd -
+			    sizeof mpd.hd.data_length + sizeof mpd.bd +
+			    sizeof mpd.dp.rigid_geometry;
 			mpd.hd.blk_desc_len = sizeof mpd.bd;
 
 			/* XXX */

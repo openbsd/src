@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.6 2005/05/23 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.7 2005/07/03 22:31:27 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -800,8 +800,9 @@ ioprbs_internal_cache_cmd(xs)
 		case 4:
 			/* scsi_disk.h says this should be 0x16 */
 			mpd.dp.rigid_geometry.pg_length = 0x16;
-			mpd.hd.data_length = sizeof mpd.hd + sizeof mpd.bd +
-			    mpd.dp.rigid_geometry.pg_length;
+			mpd.hd.data_length = sizeof mpd.hd -
+			    sizeof mpd.hd.data_length + sizeof mpd.bd +
+			    sizeof mpd.dp.rigid_geometry;
 			mpd.hd.blk_desc_len = sizeof mpd.bd;
 
 			/* XXX */
