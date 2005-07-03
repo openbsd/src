@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.60 2005/07/02 23:10:11 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.61 2005/07/03 07:31:43 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include "bpfilter.h"
@@ -187,8 +187,6 @@ void em_print_hw_stats(struct em_softc *);
 void em_update_link_status(struct em_softc *);
 int  em_get_buf(int, struct em_softc *,
 			    struct mbuf *);
-void em_enable_vlans(struct em_softc *);
-void em_disable_vlans(struct em_softc *);
 int  em_encap(struct em_softc *, struct mbuf **);
 void em_smartspeed(struct em_softc *);
 int  em_82547_fifo_workaround(struct em_softc *, int);
@@ -721,8 +719,6 @@ em_init_locked(struct em_softc *sc)
 		return;
 	}
 
-	/* em_enable_vlans(sc); */
-
 	/* Prepare transmit descriptors and buffers */
 	if (em_setup_transmit_structures(sc)) {
 		printf("%s: Could not setup transmit structures\n", 
@@ -1005,17 +1001,15 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
 		return (ENOBUFS);
 	}
 
-
 #if 0
 	em_transmit_checksum_setup(sc,	m_head, &txd_upper, &txd_lower);
 #endif
 	txd_upper = txd_lower = 0;
 
-	/* Find out if we are in vlan mode */
 #if NVLAN > 0
+	/* Find out if we are in vlan mode */
 	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL &&
-	    m_head->m_pkthdr.rcvif->if_type == IFT_L2VLAN)
+	    m_head->m_pkthdr.rcvif != NULL)
 		ifv = m_head->m_pkthdr.rcvif->if_softc;
 #endif
 
@@ -1209,7 +1203,6 @@ em_82547_update_fifo_head(struct em_softc *sc, int len)
 	return;
 }
 
-
 int
 em_82547_tx_fifo_reset(struct em_softc *sc)
 {
@@ -1261,15 +1254,6 @@ em_set_promisc(struct em_softc *sc)
 	if (ifp->if_flags & IFF_PROMISC) {
 		reg_rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
 		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
-
-#if 0
-		/* Disable VLAN stripping in promiscous mode 
-		 * This enables bridging of vlan tagged frames to occur 
-		 * and also allows vlan tags to be seen in tcpdump
-		 */
-		ctrl &= ~E1000_CTRL_VME; 
-		E1000_WRITE_REG(&sc->hw, CTRL, ctrl);
-#endif
 	} else if (ifp->if_flags & IFF_ALLMULTI) {
 		reg_rctl |= E1000_RCTL_MPE;
 		reg_rctl &= ~E1000_RCTL_UPE;
@@ -1290,7 +1274,6 @@ em_disable_promisc(struct em_softc *sc)
 	reg_rctl &=  (~E1000_RCTL_MPE);
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 
-	/* em_enable_vlans(sc); */
 	return;
 }
 
@@ -2662,32 +2645,6 @@ em_receive_checksum(struct em_softc *sc,
 				M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 		}
 	}
-}
-
-void
-em_enable_vlans(struct em_softc *sc)
-{
-	uint32_t ctrl;
-
-	E1000_WRITE_REG(&sc->hw, VET, ETHERTYPE_VLAN);
-
-	ctrl = E1000_READ_REG(&sc->hw, CTRL);
-	ctrl |= E1000_CTRL_VME; 
-	E1000_WRITE_REG(&sc->hw, CTRL, ctrl);
-
-	return;
-}
-
-void
-em_disable_vlans(struct em_softc *sc)
-{
-	uint32_t ctrl;
-
-	ctrl = E1000_READ_REG(&sc->hw, CTRL);
-	ctrl &= ~E1000_CTRL_VME;
-	E1000_WRITE_REG(&sc->hw, CTRL, ctrl);
-
-	return;
 }
 
 void
