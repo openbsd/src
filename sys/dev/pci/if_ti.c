@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.63 2005/07/03 02:17:51 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.64 2005/07/03 02:25:13 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2367,7 +2367,8 @@ void ti_init2(sc)
 
 	/* Specify MTU and interface index. */
 	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dv.dv_unit);
-	CSR_WRITE_4(sc, TI_GCR_IFMTU, ETHERMTU_JUMBO + ETHER_VLAN_ENCAP_LEN);
+	CSR_WRITE_4(sc, TI_GCR_IFMTU,
+		ETHER_MAX_LEN_JUMBO + ETHER_VLAN_ENCAP_LEN);
 	TI_DO_CMD(TI_CMD_UPDATE_GENCOM, 0, 0);
 
 	/* Load our MAC address. */
