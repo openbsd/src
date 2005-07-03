@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.26 2005/05/28 03:05:44 pedro Exp 
+ *	OpenBSD: vnode_if.src,v 1.27 2005/07/03 01:07:44 jaredy Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.14 2005/05/22 21:07:23 pedro Exp 
  */
@@ -1124,6 +1124,10 @@ int VOP_PATHCONF(vp, name, retval)
 	struct vop_pathconf_args a;
 	a.a_desc = VDESC(vop_pathconf);
 	a.a_vp = vp;
+#ifdef VFSDEBUG
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_pathconf: vp");
+#endif
 	a.a_name = name;
 	a.a_retval = retval;
 	return (VCALL(vp, VOFFSET(vop_pathconf), &a));
