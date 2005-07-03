@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.61 2005/07/03 07:31:43 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.62 2005/07/03 16:58:16 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include "bpfilter.h"
@@ -315,7 +315,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		    ETHER_MAX_LEN;
 	} else {
 		sc->hw.max_frame_size = 
-		    MAX_JUMBO_FRAME_SIZE;
+		    MAX_JUMBO_FRAME_SIZE + ETHER_CRC_LEN;
 	}
 
 	sc->hw.min_frame_size = 
