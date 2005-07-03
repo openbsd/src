@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.61 2005/07/02 23:10:11 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.62 2005/07/03 02:04:15 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1242,6 +1242,7 @@ int ti_chipinit(sc)
 {
 	u_int32_t		cacheline;
 	u_int32_t		pci_writemax = 0;
+	u_int32_t		chip_rev;
 
 	/* Initialize link to down state. */
 	sc->ti_linkstat = TI_EV_CODE_LINK_DOWN;
@@ -1266,7 +1267,8 @@ int ti_chipinit(sc)
 	TI_SETBIT(sc, TI_CPU_STATE, TI_CPUSTATE_HALT);
 
 	/* Figure out the hardware revision. */
-	switch(CSR_READ_4(sc, TI_MISC_HOST_CTL) & TI_MHC_CHIP_REV_MASK) {
+	chip_rev = CSR_READ_4(sc, TI_MISC_HOST_CTL) & TI_MHC_CHIP_REV_MASK;
+	switch(chip_rev) {
 	case TI_REV_TIGON_I:
 		sc->ti_hwrev = TI_HWREV_TIGON;
 		break;
@@ -1274,14 +1276,16 @@ int ti_chipinit(sc)
 		sc->ti_hwrev = TI_HWREV_TIGON_II;
 		break;
 	default:
-		printf("%s: unsupported chip revision\n", sc->sc_dv.dv_xname);
+		printf("\n");
+		printf("%s: unsupported chip revision: %x\n",
+		    chip_rev, sc->sc_dv.dv_xname);
 		return(ENODEV);
 	}
 
 	/* Do special setup for Tigon 2. */
 	if (sc->ti_hwrev == TI_HWREV_TIGON_II) {
 		TI_SETBIT(sc, TI_CPU_CTL_B, TI_CPUSTATE_HALT);
-		TI_SETBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_SRAM_BANK_256K);
+		TI_SETBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_SRAM_BANK_512K);
 		TI_SETBIT(sc, TI_MISC_CONF, TI_MCR_SRAM_SYNCHRONOUS);
 	}
 
@@ -1730,13 +1734,15 @@ ti_attach(parent, self, aux)
 	ifp->if_ioctl = ti_ioctl;
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
-#if NVLAN >0
-	ifp->if_capabilities |= IFCAP_VLAN_MTU | IFCAP_VLAN_HWTAGGING;
-#endif
-
 	IFQ_SET_MAXLEN(&ifp->if_snd, TI_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 
 	/* Set up ifmedia support. */
 	ifmedia_init(&sc->ifmedia, IFM_IMASK, ti_ifmedia_upd, ti_ifmedia_sts);
@@ -1776,6 +1782,9 @@ ti_attach(parent, self, aux)
 	shutdownhook_establish(ti_shutdown, sc);
 
 fail:
+	if (sc->ti_intrhand != NULL)
+		pci_intr_disestablish(pc, sc->ti_intrhand);
+
 	splx(s);
 
 	return;
@@ -2362,8 +2371,7 @@ void ti_init2(sc)
 
 	/* Specify MTU and interface index. */
 	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dv.dv_unit);
-	CSR_WRITE_4(sc, TI_GCR_IFMTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN);
+	CSR_WRITE_4(sc, TI_GCR_IFMTU, ETHERMTU_JUMBO + ETHER_VLAN_ENCAP_LEN);
 	TI_DO_CMD(TI_CMD_UPDATE_GENCOM, 0, 0);
 
 	/* Load our MAC address. */
@@ -2395,8 +2403,7 @@ void ti_init2(sc)
 		panic("not enough mbufs for rx ring");
 
 	/* Init jumbo RX ring. */
-	if (ifp->if_mtu > ETHER_MAX_LEN)
-		ti_init_rx_ring_jumbo(sc);
+	ti_init_rx_ring_jumbo(sc);
 
 	/*
 	 * If this is a Tigon 2, we can also configure the
@@ -2584,12 +2591,10 @@ int ti_ioctl(ifp, command, data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO) {
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		} else {
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
-			ti_init(sc);
-		}
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
