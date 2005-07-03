@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.27 2005/07/03 01:07:44 jaredy Exp 
+ *	OpenBSD: vnode_if.src,v 1.28 2005/07/03 20:14:00 drahn Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.14 2005/05/22 21:07:23 pedro Exp 
  */
@@ -1197,78 +1197,6 @@ int VOP_REALLOCBLKS(vp, buflist)
 	return (VCALL(vp, VOFFSET(vop_reallocblks), &a));
 }
 
-int vop_getextattr_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_getextattr_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_getextattr_desc = {
-	0,
-	"vop_getextattr",
-	0,
-	vop_getextattr_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_getextattr_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_getextattr_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_GETEXTATTR(vp, attrnamespace, name, uio, size, cred, p)
-	struct vnode *vp;
-	int attrnamespace;
-	const char *name;
-	struct uio *uio;
-	size_t *size;
-	struct ucred *cred;
-	struct proc *p;
-{
-	struct vop_getextattr_args a;
-	a.a_desc = VDESC(vop_getextattr);
-	a.a_vp = vp;
-	a.a_attrnamespace = attrnamespace;
-	a.a_name = name;
-	a.a_uio = uio;
-	a.a_size = size;
-	a.a_cred = cred;
-	a.a_p = p;
-	return (VCALL(vp, VOFFSET(vop_getextattr), &a));
-}
-
-int vop_setextattr_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_setextattr_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_setextattr_desc = {
-	0,
-	"vop_setextattr",
-	0,
-	vop_setextattr_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_setextattr_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_setextattr_args, a_p),
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_SETEXTATTR(vp, attrnamespace, name, uio, cred, p)
-	struct vnode *vp;
-	int attrnamespace;
-	const char *name;
-	struct uio *uio;
-	struct ucred *cred;
-	struct proc *p;
-{
-	struct vop_setextattr_args a;
-	a.a_desc = VDESC(vop_setextattr);
-	a.a_vp = vp;
-	a.a_attrnamespace = attrnamespace;
-	a.a_name = name;
-	a.a_uio = uio;
-	a.a_cred = cred;
-	a.a_p = p;
-	return (VCALL(vp, VOFFSET(vop_setextattr), &a));
-}
-
 /* Special cases: */
 
 int vop_strategy_vp_offsets[] = {
@@ -1361,8 +1289,6 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_pathconf_desc,
 	&vop_advlock_desc,
 	&vop_reallocblks_desc,
-	&vop_getextattr_desc,
-	&vop_setextattr_desc,
 	NULL
 };
 
