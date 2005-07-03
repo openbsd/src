@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.60 2005/07/02 16:29:31 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.61 2005/07/03 16:59:15 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -103,7 +103,7 @@ atapiscsi* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
-aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+#aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 #atu*	at uhub?		# Atmel AT76c50x based 802.11b
 #axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 #cue*	at uhub?		# CATC USB-EL1201A based Ethernet
