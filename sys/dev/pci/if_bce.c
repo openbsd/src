@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.7 2005/07/02 23:10:11 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.8 2005/07/03 07:47:23 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -483,6 +483,7 @@ bce_ioctl(ifp, cmd, data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
+
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -496,7 +497,10 @@ bce_ioctl(ifp, cmd, data)
 		}
 		break;
 	case SIOCSIFMTU:
-		ifp->if_mtu = ifr->ifr_mtu;
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		else if (ifp->if_mtu != ifr->ifr_mtu)
+			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCSIFFLAGS:
 		if(ifp->if_flags & IFF_UP)
