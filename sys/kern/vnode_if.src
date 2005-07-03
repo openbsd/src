@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.26 2005/05/28 03:05:44 pedro Exp $
+#	$OpenBSD: vnode_if.src,v 1.27 2005/07/03 01:07:44 jaredy Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -419,7 +419,7 @@ vop_print {
 #% pathconf	vp	L L L
 #
 vop_pathconf {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN int name;
 	OUT register_t *retval;
 };
