@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.62 2005/07/03 02:04:15 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.63 2005/07/03 02:17:51 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1523,11 +1523,7 @@ int ti_gibinit(sc)
 	TI_RING_DMASYNC(sc, ti_info, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Set up tuneables */
-	if (ifp->if_mtu > ETHER_MAX_LEN)
-		CSR_WRITE_4(sc, TI_GCR_RX_COAL_TICKS,
-		    (sc->ti_rx_coal_ticks / 10));
-	else
-		CSR_WRITE_4(sc, TI_GCR_RX_COAL_TICKS, sc->ti_rx_coal_ticks);
+	CSR_WRITE_4(sc, TI_GCR_RX_COAL_TICKS, (sc->ti_rx_coal_ticks / 10));
 	CSR_WRITE_4(sc, TI_GCR_TX_COAL_TICKS, sc->ti_tx_coal_ticks);
 	CSR_WRITE_4(sc, TI_GCR_STAT_TICKS, sc->ti_stat_ticks);
 	CSR_WRITE_4(sc, TI_GCR_RX_MAX_COAL_BD, sc->ti_rx_max_coal_bds);
