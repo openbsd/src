@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.14 2005/05/03 03:13:05 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.15 2005/07/03 02:38:23 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -477,42 +477,8 @@ vge_setmulti(struct vge_softc *sc)
 	struct ifnet		*ifp = &ac->ac_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
+	int			error;
 	u_int32_t		h = 0, hashes[2] = { 0, 0 };
-
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-		CSR_WRITE_4(sc, VGE_MAR0, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, VGE_MAR1, 0xFFFFFFFF);
-		return;
-	}
-	/* reset existing hash bits */
-	CSR_WRITE_4(sc, VGE_MAR0, 0);
-	CSR_WRITE_4(sc, VGE_MAR1, 0);
-
-	/* program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
-			ifp->if_flags |= IFF_ALLMULTI;
-		h = (ether_crc32_be(enm->enm_addrlo,
-		    ETHER_ADDR_LEN) >> 26) & 0x0000003F;
-		if (h < 32)
-			hashes[0] |= (1 << h);
-		else
-			hashes[1] |= (1 << (h - 32));
-		ETHER_NEXT_MULTI(step, enm);
-	}
-	CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
-	CSR_WRITE_4(sc, VGE_MAR1, hashes[1]);
-
-#ifdef CAM_FILTERING
-	struct ifnet		*ifp;
-	u_int32_t		h, hashes[2] = { 0, 0 };
-	int			mcnt = 0;
-	struct arpcom		*ac = &sc->arpcom;
-	struct ether_multi	*enm;
-	struct ether_multistep	step;
-
-	ifp = &sc->arpcom.ac_if;
 
 	/* First, zot all the multicast entries. */
 	vge_cam_clear(sc);
@@ -523,34 +489,44 @@ vge_setmulti(struct vge_softc *sc)
 	 * If the user wants allmulti or promisc mode, enable reception
 	 * of all multicast frames.
 	 */
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		CSR_WRITE_4(sc, VGE_MAR0, 0xFFFFFFFF);
 		CSR_WRITE_4(sc, VGE_MAR1, 0xFFFFFFFF);
 		return;
 	}
 
+	/* Now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			ifp->if_flags |= IFF_ALLMULTI;
-			mcnt = MAX_NUM_MULTICAST_ADDRESSES;
+			goto allmulti;
 		}
-		if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
+		error = vge_cam_set(sc, enm->enm_addrlo);
+		if (error)
 			break;
-
-		h = (ether_crc32_be(enm->enm_addrlo,
-		    ETHER_ADDR_LEN) >> 26) & 0x0000003F;
-		if (h < 32)
-			hashes[0] |= (1 << h);
-		else
-			hashes[1] |= (1 << (h - 32));
-		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
-	
-	CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
-	CSR_WRITE_4(sc, VGE_MAR1, hashes[1]);
-#endif
+
+	/* If there were too many addresses, use the hash filter. */
+	if (error) {
+		vge_cam_clear(sc);
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = (ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26) & 0x0000003F;
+			if (h < 32)
+				hashes[0] |= (1 << h);
+			else
+				hashes[1] |= (1 << (h - 32));
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
+		CSR_WRITE_4(sc, VGE_MAR1, hashes[1]);
+	}
 }
 
 void
@@ -1611,9 +1587,7 @@ vge_init(struct ifnet *ifp)
 	}
 
 	/* Init the cam filter. */
-#ifdef CAM_FILTERING
 	vge_cam_clear(sc);
-#endif
 
 	/* Init the multicast filter. */
 	vge_setmulti(sc);
