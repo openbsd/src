@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.13 2005/05/27 18:42:15 uwe Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.14 2005/07/03 19:46:45 deraadt Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*
@@ -130,6 +130,7 @@
 #define LCR_EFR		0xbf	/* ST16650/XR16850 EFR access enable */
 
 /* modem control register */
+#define	MCR_AFE		0x20	/* auto flow control */
 #define	MCR_LOOPBACK	0x10	/* Loop test: echos from TX to RX */
 #define	MCR_IENABLE	0x08	/* Out2: enables UART interrupts */
 #define	MCR_DRS		0x04	/* Out1: resets some internal modems */
