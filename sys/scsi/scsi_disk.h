@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.15 2005/05/25 20:52:41 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.16 2005/07/03 04:03:25 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -255,6 +255,7 @@ union scsi_disk_pages {
 #define	DISK_FMT_RMB	0x20
 #define	DISK_FMT_HSEC	0x40
 #define	DISK_FMT_SSEC	0x80
+		u_int8_t reserved1;
 		u_int8_t reserved2;
 		u_int8_t reserved3;
 	} disk_format;
