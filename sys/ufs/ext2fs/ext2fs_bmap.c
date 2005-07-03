@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.10 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.11 2005/07/03 20:14:01 drahn Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>

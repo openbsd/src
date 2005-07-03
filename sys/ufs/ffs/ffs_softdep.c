@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.58 2005/06/18 18:09:43 millert Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.59 2005/07/03 20:14:01 drahn Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -51,7 +51,6 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <miscfs/specfs/specdev.h>
-#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

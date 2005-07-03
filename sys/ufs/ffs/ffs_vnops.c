@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.33 2005/05/28 02:02:50 pedro Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.34 2005/07/03 20:14:02 drahn Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
-#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
@@ -103,10 +102,6 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-#ifdef UFS_EXTATTR
-	{ &vop_getextattr_desc, ufs_vop_getextattr },
-	{ &vop_setextattr_desc, ufs_vop_setextattr },
-#endif
 	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
@@ -128,10 +123,6 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
 	{ &vop_print_desc, ufs_print },			/* print */
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
-#ifdef UFS_EXTATTR
-	{ &vop_getextattr_desc, ufs_vop_getextattr },
-	{ &vop_setextattr_desc, ufs_vop_setextattr },
-#endif
 	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_specop_opv_desc =
@@ -155,10 +146,6 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_print_desc, ufs_print },			/* print */
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-#ifdef UFS_EXTATTR
-	{ &vop_getextattr_desc, ufs_vop_getextattr },
-	{ &vop_setextattr_desc, ufs_vop_setextattr },
-#endif
 	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_fifoop_opv_desc =

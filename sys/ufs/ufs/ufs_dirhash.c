@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.8 2004/07/21 12:10:20 art Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.9 2005/07/03 20:14:02 drahn Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -50,7 +50,6 @@ __FBSDID("$FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.18 2004/02/15 21:39:35 dwm
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dirhash.h>
-#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.25 2004/06/09 22:54:14 tedu Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.26 2005/07/03 20:13:59 drahn Exp $  */
 
 /*
  *    Portions of this code are:
@@ -291,20 +291,4 @@ int
 lease_check(void *v)
 {
 	return (0);
-}
-
-/* 
- * vfs default ops
- * used to fill the vfs function table to get reasonable default return values.
- */
-int
-vfs_stdextattrctl(mp, cmd, filename_vp, attrnamespace, attrname, td)
-	struct mount *mp;
-	int cmd;
-	struct vnode *filename_vp;
-	int attrnamespace;
-	const char *attrname;
-	struct proc *td;
-{
-	return(EOPNOTSUPP);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.15 2004/01/20 03:44:06 tedu Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.16 2005/07/03 20:14:02 drahn Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 
-#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>

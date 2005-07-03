@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.36 2005/04/30 13:58:55 niallo Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.37 2005/07/03 20:14:01 drahn Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
@@ -98,8 +97,7 @@ const struct vfsops ext2fs_vfsops = {
 	ext2fs_vptofh,
 	ext2fs_init,
 	ext2fs_sysctl,
-	ufs_check_export,
-	vfs_stdextattrctl
+	ufs_check_export
 };
 
 struct pool ext2fs_inode_pool;
