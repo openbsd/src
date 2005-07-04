@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.6 2005/07/04 18:12:31 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.7 2005/07/04 18:25:32 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -112,14 +112,16 @@ This option could be omitted to use
 .Xr hostapd 8
 to log received IAPP messages.
 .It Ic set hostap mode Ar mode
-Specify the Host AP mode.
+Specify the Host AP capture mode.
 The supported modes are:
 .Pp
 .Bl -tag -width radiotap -offset indent -compact
 .It Ic radiotap
-<radiotap mode>
+Capture IEEE 802.11 frames with additional radiotap headers.
+They will provide optional but useful information like received frame
+signal levels. 
 .It Ic pcap
-<pcap mode>
+Capture plain IEEE 802.11 frames.
 .El
 .It Ic set iapp interface Ar interface
 Specify the mandatory Inter-Access-Point (IAPP) interface.
