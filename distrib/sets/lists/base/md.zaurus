@@ -2115,7 +2115,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ufs/dinode.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ufs/dir.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ufs/dirhash.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ufs/extattr.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ufs/inode.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ufs/quota.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/ufs/ufs/ufs_extern.ph
