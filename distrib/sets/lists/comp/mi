@@ -2041,6 +2041,11 @@
 ./usr/share/man/cat3/CIRCLEQ_NEXT.0
 ./usr/share/man/cat3/CIRCLEQ_PREV.0
 ./usr/share/man/cat3/CIRCLEQ_REMOVE.0
+./usr/share/man/cat3/CMSG_DATA.0
+./usr/share/man/cat3/CMSG_FIRSTHDR.0
+./usr/share/man/cat3/CMSG_LEN.0
+./usr/share/man/cat3/CMSG_NXTHDR.0
+./usr/share/man/cat3/CMSG_SPACE.0
 ./usr/share/man/cat3/COLOR_PAIR.0
 ./usr/share/man/cat3/CRYPTO_add.0
 ./usr/share/man/cat3/CRYPTO_add_lock.0
