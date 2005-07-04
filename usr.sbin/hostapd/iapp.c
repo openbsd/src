@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.5 2005/06/17 19:13:35 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.6 2005/07/04 18:48:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -123,7 +123,7 @@ hostapd_iapp_radiotap(struct hostapd_config *cfg, u_int8_t *buf,
 	/*
 	 * Send an HOSTAPD.pcap/radiotap message to other accesspoints with
 	 * with an appaneded network dump. This is an hostapd extension to
-	 * IAPP. 
+	 * IAPP.
 	 */
 	bzero(&hdr, sizeof(hdr));
 
