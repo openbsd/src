@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.17 2005/05/31 08:58:47 xsa Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.18 2005/07/04 10:21:03 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,10 +39,10 @@
 #include "proto.h"
 
 
-static int cvs_annotate_file      (CVSFILE *, void *);
-static int cvs_annotate_options   (struct cvs_cmd *, int, char **, int *);
-static int cvs_annotate_sendflags (struct cvsroot *);
-
+static int cvs_annotate_init     (struct cvs_cmd *, int, char **, int *);
+static int cvs_annotate_remote   (CVSFILE *, void *);
+static int cvs_annotate_local    (CVSFILE *, void *);
+static int cvs_annotate_pre_exec (struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_annotate = {
 	CVS_OP_ANNOTATE, CVS_REQ_ANNOTATE, "annotate",
@@ -52,10 +52,10 @@ struct cvs_cmd cvs_cmd_annotate = {
 	"D:flRr:",
 	NULL,
 	CF_SORT | CF_RECURSE | CF_IGNORE | CF_NOSYMS,
-	cvs_annotate_options,
-	cvs_annotate_sendflags,
-	cvs_annotate_file,
-	cvs_annotate_file,
+	cvs_annotate_init,
+	cvs_annotate_pre_exec,
+	cvs_annotate_remote,
+	cvs_annotate_local,
 	NULL,
 	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
@@ -65,7 +65,7 @@ static char *date, *rev;
 static int usehead;
 
 static int
-cvs_annotate_options(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
+cvs_annotate_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
@@ -100,33 +100,35 @@ cvs_annotate_options(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 }
 
 static int
-cvs_annotate_sendflags(struct cvsroot *root)
+cvs_annotate_pre_exec(struct cvsroot *root)
 {
-	if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
-		return (CVS_EX_PROTO);
-
-	if (rev != NULL) {
-		if ((cvs_sendarg(root, "-r", 0) < 0) ||
-		    (cvs_sendarg(root, rev, 0) < 0))
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
 			return (CVS_EX_PROTO);
-	}
 
-	if (date != NULL) {
-		if ((cvs_sendarg(root, "-D", 0) < 0) ||
-		    (cvs_sendarg(root, date, 0) < 0))
-			return (CVS_EX_PROTO);
+		if (rev != NULL) {
+			if ((cvs_sendarg(root, "-r", 0) < 0) ||
+			    (cvs_sendarg(root, rev, 0) < 0))
+				return (CVS_EX_PROTO);
+		}
+
+		if (date != NULL) {
+			if ((cvs_sendarg(root, "-D", 0) < 0) ||
+			    (cvs_sendarg(root, date, 0) < 0))
+				return (CVS_EX_PROTO);
+		}
 	}
 
 	return (0);
 }
 
 /*
- * cvs_annotate_file()
+ * cvs_annotate_remote()
  *
  * Annotate a single file.
  */
 static int
-cvs_annotate_file(CVSFILE *cf, void *arg)
+cvs_annotate_remote(CVSFILE *cf, void *arg)
 {
 	int ret;
 	char fpath[MAXPATHLEN];
@@ -173,4 +175,45 @@ cvs_annotate_file(CVSFILE *cf, void *arg)
 		ret = CVS_EX_PROTO;
 
 	return (ret);
+}
+
+
+static int
+cvs_annotate_local(CVSFILE *cf, void *arg)
+{
+	int len;
+	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	RCSFILE *rf;
+	struct cvsroot *root;
+	struct rcs_delta *rdp;
+
+	if (cf->cf_type == DT_DIR)
+		return (0);
+
+	root = CVS_DIR_ROOT(cf);
+	repo = CVS_DIR_REPO(cf);
+
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+		return (0);
+
+	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+	    root->cr_dir, repo, CVS_FILE_NAME(cf), RCS_FILE_EXT);
+	if (len == -1 || len >= (int)sizeof(rcspath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rcspath);
+		return (CVS_EX_DATA);
+	}
+
+	rf = rcs_open(rcspath, RCS_READ);
+	if (rf == NULL)
+		return (CVS_EX_DATA);
+
+	cvs_printf("Annotations for %s", cf->cf_name);
+	cvs_printf("\n***************\n");
+
+	rcs_close(rf);
+
+	return (0);
 }
