@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.22 2005/05/23 21:20:14 deraadt Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.23 2005/07/04 00:37:21 deraadt Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -185,6 +185,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_CN104 },
 	/* Pharos USB GPS - Microsoft version */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
+	/* IODATA USB-RSAQ3 */
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X2 },
 	/* SOURCENEXT KeikaiDenwa 8 */
 	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8 },
 	/* SOURCENEXT KeikaiDenwa 8 with charger */
