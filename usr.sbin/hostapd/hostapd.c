@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.12 2005/07/04 16:48:55 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.13 2005/07/04 17:13:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -44,6 +44,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "hostapd.h"
 
@@ -359,7 +360,11 @@ main(int argc, char *argv[])
 {
 	struct hostapd_config *cfg = &hostapd_cfg;
 	char *iapp_iface = NULL, *hostap_iface = NULL, *config = NULL;
+	u_int debug = 0;
 	int ch;
+
+	/* Set startup logging */
+	cfg->c_debug = 1;
 
 	/*
 	 * Get and parse command line options
@@ -382,7 +387,7 @@ main(int argc, char *argv[])
 				    "definition %s", optarg);
 			break;
 		case 'd':
-			cfg->c_debug++;
+			debug++;
 			break;
 		case 'i':
 			iapp_iface = optarg;
@@ -409,11 +414,6 @@ main(int argc, char *argv[])
 		strlcpy(cfg->c_apme_iface, hostap_iface,
 		    sizeof(cfg->c_apme_iface));
 
-	if (!cfg->c_debug) {
-		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
-		daemon(0, 0);
-	}
-
 	if (geteuid())
 		hostapd_fatal("need root privileges\n");
 
@@ -422,7 +422,7 @@ main(int argc, char *argv[])
 		hostapd_fatal("invalid configuration\n");
 
 	if ((cfg->c_flags & HOSTAPD_CFG_F_IAPP) == 0)
-		hostapd_usage();
+		hostapd_fatal("unspecified IAPP interface\n");
 
 	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
 		strlcpy(cfg->c_apme_iface, "<none>", sizeof(cfg->c_apme_iface));
@@ -435,6 +435,14 @@ main(int argc, char *argv[])
 	 */
 	hostapd_udp_init(cfg);
 	hostapd_llc_init(cfg);
+
+	/*
+	 * Set runtime logging and detach as daemon
+	 */
+	if ((cfg->c_debug = debug) == 0) {
+		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+		daemon(0, 0);
+	}
 
 	if (cfg->c_flags & HOSTAPD_CFG_F_APME)
 		hostapd_apme_init(cfg);
