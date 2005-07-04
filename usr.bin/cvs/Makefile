@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.10 2005/06/09 01:10:00 joris Exp $
+#	$OpenBSD: Makefile,v 1.11 2005/07/04 07:11:10 xsa Exp $
 
 PROG=	cvs
 MAN=	cvs.1 cvsrc.5 cvsintro.7
 
 SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c date.y \
-	diff.c entries.c file.c getlog.c history.c hist.c \
+	diff.c edit.c entries.c file.c getlog.c history.c hist.c \
 	import.c init.c log.c logmsg.c proto.c rcs.c rcsnum.c release.c \
 	remove.c req.c resp.c root.c server.c status.c strtab.c tag.c \
-	update.c util.c version.c
+	update.c util.c version.c watch.c
 
 BINDIR= /usr/bin
 BINOWN=	root
