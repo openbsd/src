@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.3 2005/06/17 19:13:35 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.4 2005/07/04 16:48:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -188,12 +188,13 @@ struct hostapd_action_data {
 	u_int16_t				a_flags;
 
 #define HOSTAPD_ACTION_F_REF_FROM		0x0001
+#define HOSTAPD_ACTION_F_REF_TO			0x0002
+#define HOSTAPD_ACTION_F_REF_BSSID		0x0004
+#define HOSTAPD_ACTION_F_REF_RANDOM		0x0008
 #define HOSTAPD_ACTION_F_REF_FROM_M		0x000f
 #define HOSTAPD_ACTION_F_REF_FROM_S		0
-#define HOSTAPD_ACTION_F_REF_TO			0x0002
 #define HOSTAPD_ACTION_F_REF_TO_M		0x00f0
 #define HOSTAPD_ACTION_F_REF_TO_S		4
-#define HOSTAPD_ACTION_F_REF_BSSID		0x0004
 #define HOSTAPD_ACTION_F_REF_BSSID_M		0x0f00
 #define HOSTAPD_ACTION_F_REF_BSSID_S		8
 #define HOSTAPD_ACTION_F_REF_M			0x0fff
@@ -327,6 +328,7 @@ void	 hostapd_fatal(const char *, ...);
 int	 hostapd_bpf_open(u_int);
 void	 hostapd_cleanup(struct hostapd_config *);
 int	 hostapd_check_file_secrecy(int, const char *);
+void	 hostapd_randval(u_int8_t *, const u_int);
 
 struct hostapd_table *hostapd_table_add(struct hostapd_config *,
 	    const char *);

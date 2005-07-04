@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2005/06/17 21:22:00 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2005/07/04 16:48:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -86,6 +86,10 @@ typedef struct {
 			struct hostapd_table	*table;
 			u_int32_t		flags;
 		} reflladdr __packed;
+		struct {
+			u_int16_t		alg;
+			u_int16_t		transaction;
+		} authalg;
 		struct in_addr		in;
 		char			*string;
 		long			val;
@@ -114,19 +118,20 @@ u_int negative;
 
 %token	MODE INTERFACE IAPP HOSTAP MULTICAST BROADCAST SET SEC USEC
 %token	HANDLE TYPE SUBTYPE FROM TO BSSID WITH FRAME RADIOTAP NWID PASSIVE
-%token	MANAGEMENT DATA PROBE BEACON ATIM ANY DS NO DIR RESEND
+%token	MANAGEMENT DATA PROBE BEACON ATIM ANY DS NO DIR RESEND RANDOM
 %token	AUTH DEAUTH ASSOC DISASSOC REASSOC REQUEST RESPONSE PCAP
 %token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
-%token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE
+%token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
 %type	<v.val>		number
 %type	<v.in>		ipv4addr
-%type	<v.reflladdr>	refaddr, lladdr, frmactionaddr, frmmatchaddr
+%type	<v.reflladdr>	refaddr, lladdr, randaddr, frmactionaddr, frmmatchaddr
 %type	<v.reason>	frmreason_l
 %type	<v.string>	table
 %type	<v.string>	string
+%type	<v.authalg>	authalg
 
 %%
 
@@ -282,7 +287,13 @@ nodeopt		: DELETE
 		}
 		;
 
-frmmatch	: frmmatchtype frmmatchdir frmmatchfrom frmmatchto frmmatchbssid
+frmmatch	: ANY
+		| frm frmmatchtype frmmatchdir frmmatchfrom frmmatchto
+			frmmatchbssid
+		;
+
+frm		: /* empty */
+		| FRAME
 		;
 
 frmaction	: frmactiontype frmactiondir frmactionfrom frmactionto frmactionbssid
@@ -343,7 +354,7 @@ frmsubtype	: PROBE REQUEST frmelems
 			frame_ieee80211->i_fc[0] |=
 			    IEEE80211_FC0_SUBTYPE_ATIM;
 		}
-		| AUTH
+		| AUTH frmauth
 		{
 			frame_ieee80211->i_fc[0] |=
 			    IEEE80211_FC0_SUBTYPE_AUTH;
@@ -391,6 +402,33 @@ frmelems_l	: frmelems_l frmelem
 frmelem		: NWID not STRING
 		;
 
+frmauth		: /* empty */
+		| authalg
+		{
+			if ((frame_ieee80211->i_data = malloc(6)) == NULL) {
+				yyerror("failed to allocate auth");
+				YYERROR;
+			}
+			((u_int16_t *)frame_ieee80211->i_data)[0] =
+				$1.alg;
+			((u_int16_t *)frame_ieee80211->i_data)[1] =
+				$1.transaction;
+			((u_int16_t *)frame_ieee80211->i_data)[0] = 0;
+			frame_ieee80211->i_data_len = 6;
+		}
+		;
+
+authalg		: OPEN REQUEST
+		{
+			$$.alg = htole16(IEEE80211_AUTH_ALG_OPEN);
+			$$.transaction = htole16(IEEE80211_AUTH_OPEN_REQUEST);
+		}
+		| OPEN RESPONSE
+		{
+			$$.alg = htole16(IEEE80211_AUTH_ALG_OPEN);
+			$$.transaction = htole16(IEEE80211_AUTH_OPEN_RESPONSE);
+		}
+		;
 
 frmreason	: frmreason_l
 		{
@@ -617,7 +655,11 @@ frmactionbssid	: BSSID frmactionaddr
 frmactionaddr	: lladdr
 		{
 			bcopy($1.lladdr, $$.lladdr, IEEE80211_ADDR_LEN);
-			$$.flags = 0;
+			$$.flags = $1.flags;
+		}
+		| randaddr
+		{
+			$$.flags = $1.flags;
 		}
 		| refaddr
 		{
@@ -757,7 +799,13 @@ lladdr		: STRING
 			free($1);
 
 			bcopy(ea, $$.lladdr, IEEE80211_ADDR_LEN);
-			$$.flags = 0;
+			$$.flags = HOSTAPD_ACTION_F_OPT_LLADDR;
+		}
+		;
+
+randaddr	: RANDOM
+		{
+			$$.flags |= HOSTAPD_ACTION_F_REF_RANDOM;
 		}
 		;
 
@@ -857,11 +905,13 @@ lookup(char *token)
 		{ "not",		NOT },
 		{ "node",		NODE },
 		{ "nwid",		NWID },
+		{ "open",		OPEN },
 		{ "passive",		PASSIVE },
 		{ "pcap",		PCAP },
 		{ "probe",		PROBE },
 		{ "quick",		QUICK },
 		{ "radiotap",		RADIOTAP },
+		{ "random",		RANDOM },
 		{ "reason",		REASON },
 		{ "reassoc",		REASSOC },
 		{ "request",		REQUEST },

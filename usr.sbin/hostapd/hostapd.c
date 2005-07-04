@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.11 2005/06/17 19:13:35 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.12 2005/07/04 16:48:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -492,6 +492,20 @@ main(int argc, char *argv[])
 	/* Executed after the event loop has been terminated */
 	hostapd_cleanup(cfg);
 	return (EXIT_SUCCESS);
+}
+
+void
+hostapd_randval(u_int8_t *buf, const u_int len)
+{
+	u_int32_t data = 0;
+	u_int i;
+
+	for (i = 0; i < len; i++) {
+		if ((i % sizeof(data)) == 0)
+			data = arc4random();
+		buf[i] = data & 0xff;
+		data >>= 8;
+	}
 }
 
 struct hostapd_table *

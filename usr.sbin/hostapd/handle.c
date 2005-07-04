@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle.c,v 1.1 2005/06/17 19:13:35 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.2 2005/07/04 16:48:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -91,6 +91,11 @@ hostapd_handle_ref(u_int flags, u_int shift, u_int8_t *wfrom, u_int8_t *wto,
 		bcopy(wto, addr, IEEE80211_ADDR_LEN);
 	else if (flags & (HOSTAPD_ACTION_F_REF_BSSID << shift))
 		bcopy(wbssid, addr, IEEE80211_ADDR_LEN);
+	else if (flags & (HOSTAPD_ACTION_F_REF_RANDOM << shift)) {
+		hostapd_randval(addr, IEEE80211_ADDR_LEN);
+		/* Avoid multicast/broadcast addresses */
+		addr[0] &= ~0x1;
+	}
 }
 
 int
