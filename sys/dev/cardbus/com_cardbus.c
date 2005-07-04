@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.13 2005/07/04 18:44:53 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.14 2005/07/04 18:45:20 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -433,6 +433,20 @@ com_cardbus_attach2(struct com_softc *sc, u_char bug)
 			if (bus_space_read_1(iot, ioh, com_efr) == 0)
 				sc->sc_uarttype = COM_UART_ST16650V2;
 		}
+	}
+
+	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for TI16750s */
+		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
+		bus_space_write_1(iot, ioh, com_fifo,
+		    FIFO_ENABLE | FIFO_ENABLE_64BYTE);
+		if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 7) {
+#if 0
+			bus_space_write_1(iot, ioh, com_lcr, 0);
+			if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 6)
+#endif
+				sc->sc_uarttype = COM_UART_TI16750;
+		}
+		bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
 	}
 
 #if NPCCOM > 0
