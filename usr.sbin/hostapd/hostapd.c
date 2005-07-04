@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.13 2005/07/04 17:13:39 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.14 2005/07/04 17:51:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -60,8 +60,8 @@ char printbuf[BUFSIZ];
 void
 hostapd_usage(void)
 {
-	fprintf(stderr, "usage: %s [-bdv] [-a interface] [-D macro=value] "
-	    "[-f file] [-i interface]\n", __progname);
+	fprintf(stderr, "usage: %s [-dv] [-D macro=value] [-f file]\n",
+	    __progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -369,15 +369,8 @@ main(int argc, char *argv[])
 	/*
 	 * Get and parse command line options
 	 */
-	while ((ch = getopt(argc, argv, "a:bf:D:di:v")) != -1) {
+	while ((ch = getopt(argc, argv, "f:D:dv")) != -1) {
 		switch (ch) {
-		case 'a':
-			hostap_iface = optarg;
-			cfg->c_flags |= HOSTAPD_CFG_F_APME;
-			break;
-		case 'b':
-			cfg->c_flags |= HOSTAPD_CFG_F_BRDCAST;
-			break;
 		case 'f':
 			config = optarg;
 			break;
@@ -388,10 +381,6 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug++;
-			break;
-		case 'i':
-			iapp_iface = optarg;
-			cfg->c_flags |= HOSTAPD_CFG_F_IAPP;
 			break;
 		case 'v':
 			cfg->c_verbose++;
@@ -419,7 +408,7 @@ main(int argc, char *argv[])
 
 	/* Parse the configuration file */
 	if (hostapd_parse_file(cfg) != 0)
-		hostapd_fatal("invalid configuration\n");
+		hostapd_fatal("invalid configuration in %s\n", cfg->c_config);
 
 	if ((cfg->c_flags & HOSTAPD_CFG_F_IAPP) == 0)
 		hostapd_fatal("unspecified IAPP interface\n");

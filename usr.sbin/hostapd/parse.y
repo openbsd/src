@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2005/07/04 16:48:55 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2005/07/04 17:51:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -842,6 +842,10 @@ not		: /* empty */
 		{
 			negative = 1;
 		}
+		| NOT
+		{
+			negative = 1;
+		}
 		;
 
 %%
@@ -1212,17 +1216,14 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	struct sym *sym, *next;
 	int ret;
 
-	if ((fin = fopen(cfg->c_config, "r")) == NULL) {
-		hostapd_log(HOSTAPD_LOG, "unable to find %s, using defaults\n",
-		    cfg->c_config);
-		return (0);
-	}
+	if ((fin = fopen(cfg->c_config, "r")) == NULL)
+		hostapd_fatal("failed to open %s\n", cfg->c_config);
+
 	infile = cfg->c_config;
 
 	if (hostapd_check_file_secrecy(fileno(fin), cfg->c_config)) {
-		hostapd_fatal("invalid permissions for %s\n", cfg->c_config);
 		fclose(fin);
-		return (-1);
+		hostapd_fatal("invalid permissions for %s\n", cfg->c_config);
 	}
 
 	/* Init tables and data structures */

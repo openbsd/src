@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.8,v 1.8 2005/04/18 04:05:25 jolan Exp $
+.\" $OpenBSD: hostapd.8,v 1.9 2005/07/04 17:51:44 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -22,13 +22,11 @@
 .Nd Host Access Point daemon
 .Sh SYNOPSIS
 .Nm hostapd
-.Op Fl bdv
-.Op Fl a Ar interface
+.Op Fl dv
 .Oo Xo
 .Fl D Ar macro Ns = Ns Ar value Oc
 .Xc
 .Op Fl f Ar file
-.Op Fl i Ar interface
 .Sh DESCRIPTION
 .Nm
 is a daemon which allows communication between different 802.11
@@ -49,12 +47,9 @@ additionally allows the monitoring and logging of station associations on a
 non-hostap host which is receiving IAPP messages.
 .Pp
 .Nm
-uses two network interfaces as options on startup.
-The first interface,
-specified using the
-.Fl a
-flag,
-is used to access the Host AP,
+uses two network interfaces on startup specified in the configuration file
+.Xr hostapd.conf 5 .
+The first interface is used to access the Host AP,
 which is a wireless interface running in Host AP mode.
 Host AP mode can be enabled using
 .Xr ifconfig 8 .
@@ -76,16 +71,6 @@ remove a station which has been associated to another access point.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar interface
-Specify the 802.11 wireless network interface running in Host AP mode.
-This option could be omitted to use the
-.Nm
-to log received
-.Pa IAPP
-messages.
-.It Fl b
-Use UDP broadcast instead of multicast group 224.0.1.178 for IAPP
-messages.
 .It Fl D Ar macro Ns = Ns Ar value
 Define
 .Ar macro
@@ -103,13 +88,6 @@ Use
 .Ar file
 as the configuration file, instead of the default
 .Pa /etc/hostapd.conf .
-.It Fl i Ar interface
-Specify the network interface used to send
-.Pa IAPP
-messages.
-It is important that the IAPP interface is on a trusted
-network because there is no authentication and an attacker could force
-disassociation of selected stations on all listening access points.
 .It Fl v
 Produce more verbose output.
 .El
