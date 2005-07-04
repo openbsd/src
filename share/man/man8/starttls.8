@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.13 2005/04/30 23:45:42 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.14 2005/07/04 08:44:37 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -119,7 +119,7 @@ with the following command:
 .Pp
 If you don't intend to use TLS for authentication (and if you are using
 self-signed certificates you probably don't) you can simply link
-your new key to
+your new certificate to
 .Pa CAcert.pem .
 .Pp
 .Dl # ln -s /etc/mail/certs/mycert.pem /etc/mail/certs/CAcert.pem
@@ -269,8 +269,6 @@ you should receive something like the following back.
 250-localhost Hello localhost [IPv6:::1], pleased to meet you
 250-ENHANCEDSTATUSCODES
 250-PIPELINING
-250-EXPN
-250-VERB
 250-8BITMIME
 250-SIZE
 250-DSN
