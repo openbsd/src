@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2005/07/04 00:59:56 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.72 2005/07/04 01:02:10 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1115,7 +1115,8 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 			panic("ppc_kvm_stolen, out of space");
 		}
 	} else {
-		vaddr = uvm_km_valloc_wait(phys_map, len);
+		vaddr = uvm_km_kmemalloc(phys_map, NULL, len,
+		    UVM_KMF_NOWAIT|UVM_KMF_VALLOC);
 		if (vaddr == 0)
 			panic("bus_mem_add_mapping: kvm alloc of 0x%x failed",
 			    len);
@@ -1170,7 +1171,8 @@ mapiodev(paddr_t pa, psize_t len)
 			panic("ppc_kvm_stolen, out of space");
 		}
 	} else {
-		va = uvm_km_valloc_wait(phys_map, size);
+		va = uvm_km_kmemalloc(phys_map, NULL, size,
+		    UVM_KMF_NOWAIT|UVM_KMF_VALLOC);
 	}
 
 	if (va == 0)
