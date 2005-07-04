@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.32 2005/07/01 22:04:37 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.33 2005/07/04 09:37:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -295,6 +295,7 @@ rde_filter_community(struct rde_aspath *asp, int as, int type)
 	return (community_match(a->data, a->len, as, type));
 }
 
+/* free a filterset and take care of possible name2id references */
 void
 filterset_free(struct filter_set_head *sh)
 {
@@ -309,4 +310,39 @@ filterset_free(struct filter_set_head *sh)
 		free(s);
 	}
 }
+
+/*
+ * this function is a bit more complicated than a memcmp() because there are
+ * types that need to be considered equal e.g. ACTION_SET_MED and
+ * ACTION_SET_RELATIVE_MED. Also ACTION_SET_COMMUNITY and ACTION_SET_NEXTHOP
+ * need some special care.
+ */
+int
+filterset_cmp(struct filter_set *a, struct filter_set *b)
+{
+	if (strcmp(filterset_names[a->type], filterset_names[b->type]))
+		return (a->type - b->type);
+
+	if (a->type == ACTION_SET_COMMUNITY) {	/* a->type == b->type */
+		/* compare community */
+		if (a->action.community.as - b->action.community.as != 0)
+			return (a->action.community.as -
+			    b->action.community.as);
+		return (a->action.community.type - b->action.community.type);
+	}
+
+	if (a->type == ACTION_SET_NEXTHOP && b->type == ACTION_SET_NEXTHOP) {
+		/*
+		 * This is the only intresting case, all others are considered
+		 * equal. It does not make sense to e.g. set a nexthop and
+		 * reject it at the same time. Allow one IPv4 and one IPv6
+		 * per filter set or only one of the other nexthop modifiers.
+		 */
+		return (a->action.nexthop.af - b->action.nexthop.af);
+	}
+
+	/* equal */
+	return (0);
+}
+
 

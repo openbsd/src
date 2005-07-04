@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.167 2005/07/04 09:31:35 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.168 2005/07/04 09:37:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2247,31 +2247,18 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 	struct filter_set	*t;
 
 	TAILQ_FOREACH(t, sh, entry) {
-		if (s->type != t->type)
-			continue;
-
-		switch (s->type) {
-		case ACTION_SET_COMMUNITY:
-			if (s->action.community.as == t->action.community.as &&
-			    s->action.community.type ==
-			    t->action.community.type) {
+		if (filterset_cmp(s, t) == 0) {
+			if (s->type == ACTION_SET_COMMUNITY)
 				yyerror("community is already set");
-				return (-1);
-			}
-			break;
-		case ACTION_SET_NEXTHOP:
-			if (s->action.nexthop.af != t->action.nexthop.af)
-				break;
-			/* FALLTHROUGH */
-		default:
-			yyerror("redefining set parameters is not fluffy");
+			else
+				yyerror("redefining set parameter %s",
+				    filterset_names[s->type]);
 			return (-1);
 		}
 	}
 	TAILQ_INSERT_TAIL(sh, s, entry);
 	return (0);
 }
-
 
 void
 copy_filterset(struct filter_set_head *source, struct filter_set_head *dest)

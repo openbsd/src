@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.174 2005/07/01 13:38:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.175 2005/07/04 09:37:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -577,11 +577,30 @@ enum action_types {
 	ACTION_SET_NEXTHOP_BLACKHOLE,
 	ACTION_SET_NEXTHOP_NOMODIFY,
 	ACTION_SET_COMMUNITY,
-/*	ACTION_SCRUB_COMMUNITY, */
 	ACTION_PFTABLE,
 	ACTION_PFTABLE_ID,
 	ACTION_RTLABEL,
 	ACTION_RTLABEL_ID
+};
+
+static const char * const filterset_names[] = {
+	"localpref",
+	"localpref",
+	"metric",
+	"metric",
+	"weight",
+	"weight",
+	"prepend-self",
+	"prepend-peer",
+	"nexthop",
+	"nexthop",
+	"nexthop",
+	"nexthop",
+	"community",
+	"pftable",
+	"pftable",
+	"rtlabel",
+	"rtlabel"
 };
 
 struct filter_set {
@@ -715,7 +734,8 @@ void		 pftable_ref(u_int16_t);
 
 
 /* rde_filter.c */
-void			 filterset_free(struct filter_set_head *);
+void		 filterset_free(struct filter_set_head *);
+int		 filterset_cmp(struct filter_set *, struct filter_set *);
 
 
 #endif /* __BGPD_H__ */
