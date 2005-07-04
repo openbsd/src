@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.75 2005/06/30 08:51:31 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.76 2005/07/04 12:34:12 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -176,9 +176,6 @@ struct tcpcb {
 
 /* pointer for syn cache entries*/
 	LIST_HEAD(, syn_cache) t_sc;	/* list of entries by this tcb */
-
-/* TUBA stuff */
-	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 
 /* Path-MTU Discovery Information */
 	u_int	t_pmtud_mss_acked;	/* MSS acked, lower bound for MTU */
