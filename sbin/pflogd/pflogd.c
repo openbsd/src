@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.33 2005/02/09 12:09:30 henning Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.34 2005/07/04 22:35:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -255,20 +255,20 @@ reset_dump(void)
 	fp = fdopen(fd, "a+");
 
 	if (fp == NULL) {
-		close(fd);
 		logmsg(LOG_ERR, "Error: %s: %s", filename, strerror(errno));
+		close(fd);
 		return (1);
 	}
 	if (fstat(fileno(fp), &st) == -1) {
-		fclose(fp);
 		logmsg(LOG_ERR, "Error: %s: %s", filename, strerror(errno));
+		fclose(fp);
 		return (1);
 	}
 
 	/* set FILE unbuffered, we do our own buffering */
 	if (setvbuf(fp, NULL, _IONBF, 0)) {
-		fclose(fp);
 		logmsg(LOG_ERR, "Failed to set output buffers");
+		fclose(fp);
 		return (1);
 	}
 
@@ -277,11 +277,9 @@ reset_dump(void)
 	if (st.st_size == 0) {
 		if (snaplen != cur_snaplen) {
 			logmsg(LOG_NOTICE, "Using snaplen %d", snaplen);
-			if (set_snaplen(snaplen)) {
-				fclose(fp);
+			if (set_snaplen(snaplen))
 				logmsg(LOG_WARNING,
 				    "Failed, using old settings");
-			}
 		}
 		hdr.magic = TCPDUMP_MAGIC;
 		hdr.version_major = PCAP_VERSION_MAJOR;
