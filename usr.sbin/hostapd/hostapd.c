@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.14 2005/07/04 17:51:44 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.15 2005/07/04 18:48:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -411,7 +411,7 @@ main(int argc, char *argv[])
 		hostapd_fatal("invalid configuration in %s\n", cfg->c_config);
 
 	if ((cfg->c_flags & HOSTAPD_CFG_F_IAPP) == 0)
-		hostapd_fatal("unspecified IAPP interface\n");
+		hostapd_fatal("IAPP interface not specified\n");
 
 	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
 		strlcpy(cfg->c_apme_iface, "<none>", sizeof(cfg->c_apme_iface));
