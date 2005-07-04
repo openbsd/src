@@ -2044,7 +2044,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/exec_elf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/exec_olf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/exec_script.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/extent.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/fcntl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/file.ph

@@ -1967,7 +1967,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/exec_elf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/exec_olf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/exec_script.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/extent.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/fcntl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/file.ph

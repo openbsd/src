@@ -1325,7 +1325,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/exec_elf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/exec_olf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/exec_script.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/extent.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/fcntl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/file.ph

@@ -1992,7 +1992,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/exec_elf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/exec_olf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/exec_script.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/extent.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/fcntl.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/file.ph
