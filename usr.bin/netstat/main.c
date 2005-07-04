@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.60 2005/06/16 16:03:32 jaredy Exp $	*/
+/*	$OpenBSD: main.c,v 1.61 2005/07/04 01:54:10 djm Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.60 2005/06/16 16:03:32 jaredy Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.61 2005/07/04 01:54:10 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ static char *rcsid = "$OpenBSD: main.c,v 1.60 2005/06/16 16:03:32 jaredy Exp $";
 #include <netinet/in.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <kvm.h>
 #include <limits.h>
@@ -255,6 +256,7 @@ main(int argc, char *argv[])
 	int ch;
 	char *nlistf = NULL, *memf = NULL, *ep;
 	char buf[_POSIX2_LINE_MAX];
+	gid_t gid;
 	u_long pcbaddr = 0;
 
 	af = AF_UNSPEC;
@@ -390,18 +392,20 @@ main(int argc, char *argv[])
 	 * guys can't print interesting stuff from kernel memory.
 	 * Dumping PCB info is also restricted.
 	 */
-	if (nlistf != NULL || memf != NULL || Pflag) {
-		setegid(getgid());
-		setgid(getgid());
-	}
+	gid = getgid();
+	if (nlistf != NULL || memf != NULL || Pflag)
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 
 	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
 	    buf)) == NULL) {
 		fprintf(stderr, "%s: kvm_open: %s\n", __progname, buf);
 		exit(1);
 	}
-	setegid(getgid());
-	setgid(getgid());
+
+	if (nlistf == NULL && memf == NULL && !Pflag)
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 
 #define	BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY

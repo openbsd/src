@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.28 2005/04/13 02:33:08 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.29 2005/07/04 01:54:10 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.28 2005/04/13 02:33:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.29 2005/07/04 01:54:10 djm Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -1389,10 +1389,10 @@ dospecial(cmd)
 		(void) close(fd[0]);
 		(void) close(fd[1]);
 #if	defined(DIRECT_RCMD)
-		setegid(groupid);
-		setgid(groupid);
-		seteuid(userid);
-		setuid(userid);
+		if (setgroups(1, &groupid) == -1 ||
+		    setresgid(groupid, groupid, groupid) == -1 ||
+		    setresuid(userid, userid, userid) == -1)
+			_exit(127);
 #endif	/* DIRECT_RCMD */
 		execl(_PATH_BSHELL, "sh", "-c", cmd, (char *)NULL);
 		_exit(127);

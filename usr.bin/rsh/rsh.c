@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.37 2005/04/01 04:06:40 deraadt Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.38 2005/07/04 01:54:10 djm Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static const char rcsid[] = "$OpenBSD: rsh.c,v 1.37 2005/04/01 04:06:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rsh.c,v 1.38 2005/07/04 01:54:10 djm Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,10 +77,11 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	struct servent *sp;
 	sigset_t mask, omask;
-	int argoff = 0, asrsh = 0, ch, dflag = 0, nflag = 0, one = 1, rem, uid;
+	int argoff = 0, asrsh = 0, ch, dflag = 0, nflag = 0, one = 1, rem;
 	char *args, *host = NULL, *user = NULL;
 	pid_t pid = 0;
 	extern char *__progname;
+	uid_t uid;
 
 	/* if called as something other than "rsh", use it as the host name */
 	if (strcmp(__progname, "rsh") != 0)
@@ -116,14 +117,16 @@ main(int argc, char *argv[])
 		}
 	optind += argoff;
 
+	uid = getuid();
+
 	/* if haven't gotten a host yet, do so */
 	if (!host && !(host = argv[optind++]))
 		usage();
 
 	/* if no command, login to remote host via ssh. */
 	if (!argv[optind]) {
-		seteuid(getuid());
-		setuid(getuid());
+		if (setresuid(uid, uid, uid) == -1)
+			err(1, "setresuid");
 		if (asrsh)
 			*argv = "ssh";
 		execv(_PATH_SSH, argv);
@@ -135,7 +138,7 @@ main(int argc, char *argv[])
 
 	if (geteuid() != 0)
 		errx(1, "must be setuid root");
-	if ((pw = getpwuid(uid = getuid())) == NULL)
+	if ((pw = getpwuid(uid)) == NULL)
 		errx(1, "unknown user ID %u", uid);
 	if (user == NULL)
 		user = pw->pw_name;
@@ -154,8 +157,8 @@ main(int argc, char *argv[])
 	if (rfd2 < 0)
 		errx(1, "can't establish stderr");
 
-	(void)seteuid(uid);
-	(void)setuid(uid);
+	if (setresuid(uid, uid, uid) == -1)
+		err(1, "setresuid");
 
 	if (dflag) {
 		if (setsockopt(rem, SOL_SOCKET, SO_DEBUG, &one,

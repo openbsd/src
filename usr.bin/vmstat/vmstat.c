@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.95 2005/04/21 04:42:56 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.96 2005/07/04 01:54:10 djm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.95 2005/04/21 04:42:56 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.96 2005/07/04 01:54:10 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,7 @@ main(int argc, char *argv[])
 	u_int interval;
 	int reps;
 	char errbuf[_POSIX2_LINE_MAX];
+	gid_t gid;
 
 	interval = reps = todo = 0;
 	while ((c = getopt(argc, argv, "c:fiM:mN:stw:vz")) != -1) {
@@ -199,9 +200,10 @@ main(int argc, char *argv[])
 	if (todo == 0)
 		todo = VMSTAT;
 
+	gid = getgid();
 	if (nlistf != NULL || memf != NULL) {
-		setegid(getgid());
-		setgid(getgid());
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 	}
 
 	/*
@@ -215,9 +217,11 @@ main(int argc, char *argv[])
 		if (kd == 0)
 			errx(1, "kvm_openfiles: %s", errbuf);
 
+		if (nlistf == NULL && memf == NULL)
+			if (setresgid(gid, gid, gid) == -1)
+				err(1, "setresgid");
+
 		if ((c = kvm_nlist(kd, namelist)) != 0) {
-			setgid(getgid());
-			setegid(getegid());
 
 			if (c > 0) {
 				(void)fprintf(stderr,
@@ -234,11 +238,9 @@ main(int argc, char *argv[])
 				errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 		}
 #ifdef notyet
-	}
+	} else if (setresgid(gid, gid, gid) == -1)
+		err(1, "setresgid");
 #endif /* notyet */
-
-	setegid(getegid());
-	setgid(getgid());
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.34 2004/05/31 15:48:26 pedro Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.35 2005/07/04 01:54:10 djm Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1852,14 +1852,10 @@ changeuid(namep, passwordp, fileuid, filegid)
 #if	CMUCS
 	if (setgroups(grps[0], &grps[1]) < 0)
 		logerr("setgroups: %%m");
-	if (setegid((gid_t)grp->gr_gid) < 0)
-		logerr("setegid: %%m");
-	if (setgid((gid_t)grp->gr_gid) < 0)
-		logerr("setgid: %%m");
-	if (seteuid(pwd->pw_uid) < 0)
-		logerr("seteuid: %%m");
-	if (setuid(pwd->pw_uid) < 0)
-		logerr("setuid: %%m");
+	if (setresgid(grp->gr_gid, grp->gr_gid, grp->gr_gid) < 0)
+		logerr("setresgid: %%m");
+	if (setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid) < 0)
+		logerr("setresuid: %%m");
 #else   /* CMUCS */
 #ifdef HAS_LOGIN_CAP
 	if (setusercontext(NULL, pwd, pwd->pw_uid, LOGIN_SETALL) < 0)
@@ -1867,18 +1863,14 @@ changeuid(namep, passwordp, fileuid, filegid)
 #else
 	if (initgroups(pwd->pw_name,pwd->pw_gid) < 0)
 		return ("Error setting group list");
-	if (setegid(pwd->pw_gid) < 0)
-		logerr("setegid: %%m");
-	if (setgid(pwd->pw_gid) < 0)
-		logerr("setgid: %%m");
+	if (setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) < 0)
+		logerr("setresgid: %%m");
 #ifndef NO_SETLOGIN
 	if (setlogin(pwd->pw_name) < 0)
 		logerr("setlogin: %%m");
 #endif
-	if (seteuid(pwd->pw_uid) < 0)
-		logerr("seteuid: %%m");
-	if (setuid(pwd->pw_uid) < 0)
-		logerr("setuid: %%m");
+	if (setresuid(pwd->pw_uid, pwd->pw_uid, pwd->pw_uid) < 0)
+		logerr("setresuid: %%m");
 #endif	/* HAS_LOGIN_CAP */
 #endif	/* CMUCS */
 	return (NULL);

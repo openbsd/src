@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.25 2004/04/22 22:28:37 millert Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.26 2005/07/04 01:54:10 djm Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -409,16 +409,17 @@ dkinit(int select)
 	size_t		size;
 	struct clockinfo clkinfo;
 	char		*disknames, *name, *bufpp;
+	gid_t		gid;
 
 	if (once)
 		return(1);
 
+	gid = getgid();
 	if (nlistf != NULL || memf != NULL) {
 #if !defined(NOKVM)
-		if (memf != NULL) {
-			setegid(getgid());
-			setgid(getgid());
-		}
+		if (memf != NULL)
+			if (setresgid(gid, gid, gid) == -1)
+				err(1, "setresgid");
 
 		/* Open the kernel. */
 		if (kd == NULL &&
@@ -426,8 +427,9 @@ dkinit(int select)
 		    errbuf)) == NULL)
 			errx(1, "kvm_openfiles: %s", errbuf);
 
-		setegid(getgid());
-		setgid(getgid());
+		if (memf == NULL)
+			if (setresgid(gid, gid, gid) == -1)
+				err(1, "setresgid");
 
 		/* Obtain the namelist symbols from the kernel. */
 		if (kvm_nlist(kd, namelist))

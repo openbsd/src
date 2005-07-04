@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.21 2003/06/10 22:20:48 deraadt Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.22 2005/07/04 01:54:10 djm Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -114,6 +114,7 @@ main(int argc, char *argv[])
 	char *modname = NULL;
 	char *endptr;
 	int devfd;
+	gid_t gid;
 
 	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
@@ -143,8 +144,9 @@ main(int argc, char *argv[])
 	if ((devfd = open(_PATH_LKM, O_RDONLY)) == -1)
 		err(2, "%s", _PATH_LKM);
 
-	setegid(getgid());
-	setgid(getgid());
+	gid = getgid();
+	if (setresgid(gid, gid, gid) == -1)
+		err(1, "setresgid");
 
 	printf("Type     Id Off %-*s Size %-*s Rev Module Name\n",
 	    POINTERSIZE, "Loadaddr", POINTERSIZE, "Info");

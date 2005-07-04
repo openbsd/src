@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.13 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: run.c,v 1.14 2005/07/04 01:54:10 djm Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -170,15 +170,19 @@ dorun(name, argv, usepath)
 	pid_t pid;
 	struct sigaction ignoresig, intsig, quitsig;
 	int status;
+	uid_t uid;
+	gid_t gid;
 
 	if ((pid = fork()) == -1)
 		return(-1);	/* no more process's, so exit with error */
 
 	if (pid == 0) {			/* child process */
-		setegid(getgid());
-		setgid(getgid());
-		seteuid(getuid());
-		setuid(getuid());
+		uid = getuid();
+		gid = getgid();
+		if (setgroups(1, &gid) == -1 ||
+		    setresgid(gid, gid, gid) == -1 ||
+		    setresuid(uid, uid, uid) == -1)
+			_exit(0377);
 		if (usepath)
 		    execvp(name,argv);
 		else

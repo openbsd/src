@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.22 2003/07/10 00:06:52 david Exp $	*/
+/*	$OpenBSD: write.c,v 1.23 2005/07/04 01:54:11 djm Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.22 2003/07/10 00:06:52 david Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.23 2005/07/04 01:54:11 djm Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -240,6 +240,7 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	struct passwd *pwd;
 	time_t now;
 	char path[MAXPATHLEN], host[MAXHOSTNAMELEN], line[512];
+	gid_t gid;
 
 	/* Determine our login name before the we reopen() stdout */
 	if ((login = getlogin()) == NULL) {
@@ -254,8 +255,9 @@ do_write(char *tty, char *mytty, uid_t myuid)
 		err(1, "%s", path);
 
 	/* revoke privs, now that we have opened the tty */
-	setegid(getgid());
-	setgid(getgid());
+	gid = getgid();
+	if (setresgid(gid, gid, gid) == -1)
+		err(1, "setresgid");
 
 	(void)signal(SIGINT, done);
 	(void)signal(SIGHUP, done);
