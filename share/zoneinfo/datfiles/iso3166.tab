@@ -1,7 +1,7 @@
-# $OpenBSD: iso3166.tab,v 1.12 2004/10/18 19:54:48 millert Exp $
+# $OpenBSD: iso3166.tab,v 1.13 2005/07/05 02:21:55 millert Exp $
 # ISO 3166 alpha-2 country codes
 #
-# @(#)iso3166.tab	1.15
+# @(#)iso3166.tab	1.16
 #
 # From Paul Eggert <eggert@twinsun.com> (2004-06-14):
 #
@@ -256,7 +256,7 @@ VI	Virgin Islands (US)
 VN	Vietnam
 VU	Vanuatu
 WF	Wallis & Futuna
-WS	Samoa (Western)
+WS	Samoa (western)
 YE	Yemen
 YT	Mayotte
 ZA	South Africa
