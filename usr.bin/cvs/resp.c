@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.42 2005/06/10 21:13:40 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.43 2005/07/05 12:00:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -478,7 +478,8 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 	struct cvs_ent *ent;
 
 	/* get the remote path */
-	cvs_getln(root, entbuf, sizeof(entbuf));
+	if (cvs_getln(root, entbuf, sizeof(entbuf)) < 0)
+		return (-1);
 
 	/* get the new Entries line */
 	if (cvs_getln(root, entbuf, sizeof(entbuf)) < 0)
@@ -775,7 +776,9 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 	struct cvs_ent *ent;
 
 	/* get remote path and build local path of file to be patched */
-	cvs_getln(root, buf, sizeof(buf));
+	if (cvs_getln(root, buf, sizeof(buf)) < 0)
+		return (-1);
+
 	fname = strrchr(buf, '/');
 	if (fname == NULL)
 		fname = buf;
@@ -786,7 +789,9 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 	}
 
 	/* get updated entry fields */
-	cvs_getln(root, buf, sizeof(buf));
+	if (cvs_getln(root, buf, sizeof(buf)) < 0)
+		return (-1);
+
 	ent = cvs_ent_parse(buf);
 	if (ent == NULL)
 		return (-1);
