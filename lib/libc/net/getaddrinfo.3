@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.40 2005/03/12 00:02:07 claudio Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.41 2005/07/05 22:21:16 dlg Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -288,7 +288,7 @@ structure(s).
 The following code tries to connect to
 .Dq Li www.kame.net
 service
-.Dq Li http
+.Dq Li www
 via a stream socket.
 It loops through all the addresses available, regardless of address family.
 If the destination resolves to an IPv4 address, it will use an
@@ -310,7 +310,7 @@ const char *cause = NULL;
 memset(&hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
-error = getaddrinfo("www.kame.net", "http", &hints, &res0);
+error = getaddrinfo("www.kame.net", "www", &hints, &res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
@@ -341,7 +341,7 @@ freeaddrinfo(res0);
 .Ed
 .Pp
 The following example tries to open a wildcard listening socket onto service
-.Dq Li http ,
+.Dq Li www ,
 for all the address families available.
 .Bd -literal -offset indent
 struct addrinfo hints, *res, *res0;
@@ -354,7 +354,7 @@ memset(&hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
-error = getaddrinfo(NULL, "http", &hints, &res0);
+error = getaddrinfo(NULL, "www", &hints, &res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
