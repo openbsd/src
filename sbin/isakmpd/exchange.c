@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.122 2005/06/25 23:20:43 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.123 2005/07/05 11:57:03 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -250,7 +250,8 @@ exchange_handle_leftover_payloads(struct message *msg)
 			if (!doi->handle_leftover_payload ||
 			    doi->handle_leftover_payload(msg, i, p))
 				LOG_DBG((LOG_EXCHANGE, 10,
-				    "exchange_run: unexpected payload %s",
+				    "exchange_handle_leftover_payloads: "
+				    "unexpected payload %s",
 				    constant_name(isakmp_payload_cst, i)));
 		}
 	}
@@ -269,7 +270,7 @@ exchange_run(struct message *msg)
 	struct exchange *exchange = msg->exchange;
 	struct doi	*doi = exchange->doi;
 	int             (*handler)(struct message *) = exchange->initiator ?
-	    doi->initiator : doi->responder;
+			    doi->initiator : doi->responder;
 	int              done = 0;
 
 	while (!done) {
