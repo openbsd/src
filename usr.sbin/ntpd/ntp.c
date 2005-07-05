@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.61 2005/06/19 16:42:57 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.62 2005/07/05 10:09:12 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -440,9 +440,13 @@ priv_adjtime(void)
 		conf->status.stratum++;	/* one more than selected peer */
 		update_scale(offset_median);
 
+		conf->status.refid4 =
+		    peers[offset_cnt / 2]->update.status.refid4;
 		if (peers[offset_cnt / 2]->addr->ss.ss_family == AF_INET)
 			conf->status.refid = ((struct sockaddr_in *)
 			    &peers[offset_cnt / 2]->addr->ss)->sin_addr.s_addr;
+		else
+			conf->status.refid = conf->status.refid4;
 	}
 
 	free(peers);
