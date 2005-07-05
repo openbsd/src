@@ -1,4 +1,4 @@
-.\" $OpenBSD: deroff.1,v 1.5 2003/06/10 09:12:10 jmc Exp $
+.\" $OpenBSD: deroff.1,v 1.6 2005/07/05 15:02:20 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@
 .Op Fl ikpw
 .Oo
 .Fl m
-.Ar m | s | e | a | l
+.Ar a | e | l | m | s
 .Oc
 .Op Ar
 .Sh DESCRIPTION
@@ -83,13 +83,26 @@ and
 .Xr troff 1
 command lines, backslash constructions, macro definitions,
 .Xr eqn 1
-constructs (between `.EQ' and `.EN' lines or between delimiters),
+constructs (between
+.Dq .EQ
+and
+.Dq .EN
+lines or between delimiters),
 .Xr pic 1
 pictures,
 and table descriptions and writes the remainder to the standard output.
 .Nm
-follows chains of included files (`.so' and `.nx' commands);
-if a file has already been included, a `.so' is ignored and a `.nx'
+follows chains of included files
+.Po
+.Dq .so
+and
+.Dq .nx
+commands
+.Pc ;
+if a file has already been included, a
+.Dq .so
+is ignored and a
+.Dq .nx
 terminates execution.
 If no input file is given,
 .Nm
@@ -98,7 +111,11 @@ reads from the standard input.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl i
-Ignore `.so' and `.nx' commands.
+Ignore
+.Dq .so
+and
+.Dq .nx
+commands.
 .It Fl k
 Keep blocks of text intact.
 This is the default behavior unless the
@@ -109,20 +126,13 @@ Enable support for common macro packages.
 The
 .Fl m
 option takes the following arguments:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It a
 recognize
 .Xr man 7
 macros.
 .It e
-recognize
-.Xr me 7
-macros.
-.It m
-recognize
-.Xr me 7
-macros.
-.It s
 recognize
 .Xr me 7
 macros.
@@ -132,6 +142,14 @@ recognize
 macros and delete
 .Xr mm 7
 lists.
+.It m
+recognize
+.Xr mm 7
+macros.
+.It s
+recognize
+.Xr ms 7
+macros.
 .El
 .It Fl p
 Preserve paragraph macros.
