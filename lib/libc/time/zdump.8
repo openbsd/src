@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zdump.8,v 1.10 2005/07/05 13:40:51 millert Exp $
+.\"	$OpenBSD: zdump.8,v 1.11 2005/07/05 18:22:39 jmc Exp $
 .Dd May 23, 1999
 .Dt ZDUMP 8
 .Os
@@ -8,14 +8,11 @@
 .Sh SYNOPSIS
 .Nm zdump
 .Op Fl v
-.Sm off
 .Oo
-.Fl c No \ \&
-.Op Ar loyear,
-.Ar hiyear
+.Fl c
+.Oo Ar loyear , Oc Ar hiyear
 .Oc
-.Sm on
-.Ar zonename Ar ...
+.Ar zonename ...
 .Sh DESCRIPTION
 .Nm
 prints the current time in each
@@ -24,10 +21,13 @@ named on the command line.
 .Pp
 These options are available:
 .Bl -tag -width Fl
-.It Fl c Ar Op loyear, Ns hiyear
+.It Xo
+.Fl c
+.Oo Ar loyear , Oc Ar hiyear
+.Xc
 Cut off verbose output near the start of the given year(s).
 By default,
-the program cuts off verbose output near the starts of the years -500 and 2500.
+the program cuts off verbose output near the start of the years -500 and 2500.
 .It Fl v
 For each
 .Ar zonename
