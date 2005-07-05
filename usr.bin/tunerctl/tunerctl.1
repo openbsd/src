@@ -13,9 +13,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\"	$OpenBSD: tunerctl.1,v 1.2 2005/07/04 23:27:05 robert Exp $
+.\"	$OpenBSD: tunerctl.1,v 1.3 2005/07/05 07:44:49 jmc Exp $
 .\"
-.Dd Mar 27, 2005
+.Dd March 27, 2005
 .Dt TUNERCTL 1
 .Os
 .Sh NAME
@@ -82,7 +82,8 @@ Depending on the features of a specific tuner, the setting of some
 variables may not have any effect.
 .Pp
 Variable names explained:
-.Bl -tag -width contrast
+.Pp
+.Bl -tag -width contrast -offset indent -compact
 .It Ic chanset
 TV tuner channel set.
 .It Ic channel
@@ -116,19 +117,18 @@ Video
 default tuner device
 .El
 .Sh EXAMPLES
-The command
+The following command
+sets the tuner to North American broadcast TV channel 13:
 .Pp
-.Dl "$ tunerctl chanset=nabcst channel=13"
-.Pp
-sets the tuner to North American broadcast TV channel 13.
+.Dl $ tunerctl chanset=nabcst channel=13
 .Sh SEE ALSO
 .Xr bktr 4
-.Sh AUTHORS
-.Nm
-and this manual page were written by
-.An Jacob Meuser Aq jakemsr@jakemsr.com .
 .Sh HISTORY
 The
 .Nm
 command first appeared in
 .Ox 3.8 .
+.Sh AUTHORS
+.Nm
+and this manual page were written by
+.An Jacob Meuser Aq jakemsr@jakemsr.com .
