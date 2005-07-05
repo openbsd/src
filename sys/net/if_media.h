@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.17 2004/11/02 02:12:16 reyk Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.18 2005/07/05 01:48:50 brad Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -94,16 +94,16 @@
 /*
  * Driver callbacks for media status and change requests.
  */
-typedef	int (*ifm_change_cb_t)(struct ifnet *ifp);
-typedef	void (*ifm_stat_cb_t)(struct ifnet *ifp, struct ifmediareq *req);
+typedef	int (*ifm_change_cb_t)(struct ifnet *);
+typedef	void (*ifm_stat_cb_t)(struct ifnet *, struct ifmediareq *);
 
 /*
  * In-kernel representation of a single supported media type.
  */
 struct ifmedia_entry {
 	TAILQ_ENTRY(ifmedia_entry) ifm_list;
-	int	ifm_media;	/* description of this media attachment */
-	int	ifm_data;	/* for driver-specific use */
+	u_int	ifm_media;	/* description of this media attachment */
+	u_int	ifm_data;	/* for driver-specific use */
 	void	*ifm_aux;	/* for driver-specific use */
 };
 
@@ -112,8 +112,8 @@ struct ifmedia_entry {
  * It is used to keep general media state.
  */
 struct ifmedia {
-	int	ifm_mask;	/* mask of changes we don't care about */
-	int	ifm_media;	/* current user-set media word */
+	u_int	ifm_mask;	/* mask of changes we don't care about */
+	u_int	ifm_media;	/* current user-set media word */
 	struct ifmedia_entry *ifm_cur;	/* currently selected media */
 	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
 	ifm_change_cb_t	ifm_change;	/* media change driver callback */
@@ -121,29 +121,28 @@ struct ifmedia {
 };
 
 /* Initialize an interface's struct if_media field. */
-void	ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
-	    ifm_change_cb_t change_callback, ifm_stat_cb_t status_callback);
+void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t,
+	     ifm_stat_cb_t);
 
 /* Add one supported medium to a struct ifmedia. */
-void	ifmedia_add(struct ifmedia *ifm, int mword, int data, void *aux);
+void	ifmedia_add(struct ifmedia *, int, int, void *);
 
 /* Add an array (of ifmedia_entry) media to a struct ifmedia. */
-void	ifmedia_list_add(struct ifmedia *mp, struct ifmedia_entry *lp,
-	    int count);
+void	ifmedia_list_add(struct ifmedia *, struct ifmedia_entry *,
+	    int);
 
 /* Set default media type on initialization. */
-void	ifmedia_set(struct ifmedia *ifm, int mword);
+void	ifmedia_set(struct ifmedia *, int);
 
 /* Common ioctl function for getting/setting media, called by driver. */
-int	ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr,
-	    struct ifmedia *ifm, u_long cmd);
+int	ifmedia_ioctl(struct ifnet *, struct ifreq *, struct ifmedia *,
+	    u_long);
 
 /* Locate a media entry */
-struct	ifmedia_entry *ifmedia_match(struct ifmedia *ifm,
-	     int flags, int mask);
+struct	ifmedia_entry *ifmedia_match(struct ifmedia *, u_int, u_int);
 
 /* Delete all media for a given media instance */
-void	ifmedia_delete_instance(struct ifmedia *, int);
+void	ifmedia_delete_instance(struct ifmedia *, u_int);
 
 /* Compute baudrate for a given media. */
 int	ifmedia_baudrate(int);
@@ -327,7 +326,7 @@ int	ifmedia_baudrate(int);
 #define	IFM_MODE(x)	((x) & IFM_MMASK)
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
-#define	IFM_INST_ANY	(-1)
+#define	IFM_INST_ANY	((u_int) -1)
 
 /*
  * Macro to create a media word.

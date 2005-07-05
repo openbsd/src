@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.13 2005/07/03 03:28:23 brad Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.14 2005/07/05 01:48:49 brad Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -257,8 +257,8 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 	case  SIOCSIFMEDIA:
 	{
 		struct ifmedia_entry *oldentry;
-		int oldmedia;
-		int newmedia = ifr->ifr_media;
+		u_int oldmedia;
+		u_int newmedia = ifr->ifr_media;
 
 		match = ifmedia_match(ifm, newmedia, ifm->ifm_mask);
 		if (match == NULL) {
@@ -370,8 +370,8 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 struct ifmedia_entry *
 ifmedia_match(ifm, target, mask)
 	struct ifmedia *ifm; 
-	int target;
-	int mask;
+	u_int target;
+	u_int mask;
 {
 	struct ifmedia_entry *match, *next;
 
@@ -400,7 +400,7 @@ ifmedia_match(ifm, target, mask)
 void
 ifmedia_delete_instance(ifm, inst)
 	struct ifmedia *ifm;
-	int inst;
+	u_int inst;
 {
 	struct ifmedia_entry *ife, *nife;
 
