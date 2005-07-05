@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.7 2005/07/02 15:39:55 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.8 2005/07/05 00:55:25 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -78,11 +78,6 @@ struct sd_softc {
 		u_long	rot_rate;	/* rotational rate, in RPM */
 	} params;
 	struct buf buf_queue;
-	struct disk_name {
-		char vendor[9];		/* disk vendor/manufacturer */
-		char product[17];	/* disk product model */
-		char revision[5];	/* drive/firmware revision */
-	} name;
 	void *sc_sdhook;		/* our shutdown hook */
 
 #if NRND > 0
@@ -92,4 +87,3 @@ struct sd_softc {
 
 #define	SDGP_RESULT_OK		0	/* parameters obtained */
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */
-

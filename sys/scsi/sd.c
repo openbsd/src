@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.80 2005/07/02 15:39:55 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.81 2005/07/05 00:55:25 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -220,11 +220,6 @@ sdattach(parent, self, aux)
 	if (error == EIO)
 		error = scsi_start(sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
-
-	/* Fill in name struct for spoofed label */
-	viscpy(sd->name.vendor, sa->sa_inqbuf->vendor, 8);
-	viscpy(sd->name.product, sa->sa_inqbuf->product, 16);
-	viscpy(sd->name.revision, sa->sa_inqbuf->revision, 4);
 
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
@@ -973,6 +968,7 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 {
 	size_t len;
 	char *errstring, packname[sizeof(lp->d_packname) + 1];
+	char product[17], vendor[9];
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
@@ -1000,10 +996,11 @@ sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 	 * then leave out '<vendor> ' and use only as much of '<product>' as
 	 * does fit.
 	 */
-	len = snprintf(packname, sizeof(packname), "%s %s",
-	    sd->name.vendor, sd->name.product);
+	viscpy(vendor, sd->sc_link->inqdata.vendor, 8);
+	viscpy(product, sd->sc_link->inqdata.product, 16);
+	len = snprintf(packname, sizeof(packname), "%s %s", vendor, product);
 	if (len > sizeof(lp->d_packname)) {
-		strlcpy(packname, sd->name.product, sizeof(packname));
+		strlcpy(packname, product, sizeof(packname));
 		len = strlen(packname);
 	}
 	/*
