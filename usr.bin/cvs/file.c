@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.91 2005/07/01 08:59:09 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.92 2005/07/05 16:55:30 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1107,10 +1107,9 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 		}
 	} else {
 		if (ent == NULL) {
-			cvs_log(LP_ERR, "no Entry and no file for `%s'",
-			    CVS_FILE_NAME(cfp));
-			cvs_file_free(cfp);
-			return (NULL);
+			/* assume it is a file and unknown */
+			cfp->cf_cvstat = CVS_FST_UNKNOWN;
+			cfp->cf_type = DT_REG;
 		} else {
 			if (ent->ce_type == CVS_ENT_FILE)
 				cfp->cf_type = DT_REG;
