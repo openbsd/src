@@ -1,4 +1,4 @@
-.\" $OpenBSD: spell.1,v 1.6 2003/06/10 09:12:11 jmc Exp $
+.\" $OpenBSD: spell.1,v 1.7 2005/07/05 15:01:12 jmc Exp $
 .\"
 .\" Copyright (C) 1985, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,7 @@
 .Op Fl h Ar spellhist
 .Oo
 .Fl m
-.Ar m | s | e | a | l
+.Ar a | e | l | m | s
 .Oc
 .Op Fl s Ar stop
 .Op + Ns Ar extra_list
@@ -91,7 +91,7 @@ If no files are named, words are collected from the standard input.
 ignores most
 .Xr troff 1 ,
 .Xr tbl 1 ,
-.Xr eqn 1
+.Xr eqn 1 ,
 and
 .Xr pic 1
 constructions.
@@ -102,7 +102,13 @@ By default,
 .Nm
 (like
 .Xr deroff 1 )
-follows chains of included files (`.so' and `.nx' commands).
+follows chains of included files
+.Po
+.Dq .so
+and
+.Dq .nx
+commands
+.Pc .
 .Pp
 The default spelling list is based on Webster's Second International
 dictionary and should be fairly complete.
@@ -143,16 +149,41 @@ in words like
 .Em standardise ,
 Fowler and the OED to the contrary notwithstanding.
 In this mode, American variants of words are added to the stop list.
+.It Fl d Ar word_list
+Use the specified word list instead of the default system word list.
+The word list must be sorted as specified above.
+.It Fl h Ar spellhist
+Store misspelled words in the specified history file.
+The output of
+.Li who -m
+is appended to the history file after the list of misspelled words.
 .It Fl i
 Instruct
 .Xr deroff 1
-to ignore `.so' and `.nx' commands.
+to ignore
+.Dq .so
+and
+.Dq .nx
+commands.
 .It Fl l
 Use
 .Xr delatex
 instead of
 .Xr deroff 1
 if it is present on the system.
+.It Fl m
+Enable support for common
+.Xr troff 1
+macro packages; this option is passed verbatim to
+.Xr deroff 1 .
+Refer to the
+.Fl m
+description in
+.Xr deroff 1
+for details.
+.It Fl s Ar stop_list
+Use the specified stop list instead of the default system stop list.
+The stop list must be sorted as specified above.
 .It Fl t
 Use
 .Xr detex
@@ -163,50 +194,8 @@ if it is present on the system.
 Print all words not literally in the spelling list in addition to
 plausible derivations from spelling list words.
 .It Fl x
-Print every plausible stem, prefixed with `='.
-.It Fl d Ar word_list
-Use the specified word list instead of the default system word list.
-The word list must be sorted as specified above.
-.It Fl h Ar spellhist
-Store misspelled words in the specified history file.
-The output of
-.Li who -m
-is appended to the history file after the list of misspelled words.
-.It Fl m
-Enable support for common
-.Xr troff 1
-macro packages; this option is passed verbatim to
-.Xr deroff 1 .
-The
-.Fl m
-option takes the following arguments:
-.Bl -tag -width Ds
-.It a
-recognize
-.Xr man 7
-macros.
-.It e
-recognize
-.Xr me 7
-macros.
-.It m
-recognize
-.Xr me 7
-macros.
-.It s
-recognize
-.Xr me 7
-macros.
-.It l
-recognize
-.Xr mm 7
-macros and delete
-.Xr mm 7
-lists.
-.El
-.It Fl s Ar stop_list
-Use the specified stop list instead of the default system stop list.
-The stop list must be sorted as specified above.
+Print every plausible stem, prefixed with
+.Sq = .
 .It + Ns Ar extra_list
 Use
 .Ar extra_list
