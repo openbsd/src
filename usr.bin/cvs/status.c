@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.27 2005/07/05 16:06:52 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.28 2005/07/05 16:14:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -177,7 +177,8 @@ static int
 cvs_status_local(CVSFILE *cf, void *arg)
 {
 	int len;
-	char *repo, buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char *repo;
 	RCSFILE *rf;
 	struct cvsroot *root;
 
@@ -211,7 +212,7 @@ cvs_status_local(CVSFILE *cf, void *arg)
 		strlcpy(buf, "no file ", sizeof(buf));
 	strlcat(buf, cf->cf_name, sizeof(buf));
 
-	cvs_printf(CVS_STATUS_SEP "\nFile: %-18sStatus: %s\n\n",
+	cvs_printf(CVS_STATUS_SEP "\nFile: %-17s\tStatus: %s\n\n",
 	    buf, cvs_statstr[cf->cf_cvstat]);
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
@@ -221,13 +222,13 @@ cvs_status_local(CVSFILE *cf, void *arg)
 		    rcsnum_tostr(cf->cf_lrev, buf, sizeof(buf)));
 	}
 
-	cvs_printf("   Working revision:    %s\n", buf);
+	cvs_printf("   Working revision:\t%s\n", buf);
 	rcsnum_tostr(rf->rf_head, buf, sizeof(buf));
-	cvs_printf("   Repository revision: %s %s\n", buf, rcspath);
-	cvs_printf("   Sticky Tag:          %s\n",
+	cvs_printf("   Repository revision:\t%s\t%s\n", buf, rcspath);
+	cvs_printf("   Sticky Tag:\t\t%s\n",
 	    cf->cf_tag == NULL ? "(none)" : cf->cf_tag);
-	cvs_printf("   Sticky Date:         %s\n", "(none)");
-	cvs_printf("   Sticky Options:      %s\n",
+	cvs_printf("   Sticky Date:\t\t%s\n", "(none)");
+	cvs_printf("   Sticky Options:\t%s\n",
 	    cf->cf_opts == NULL ? "(none)" : cf->cf_opts);
 
 	cvs_printf("\n");
