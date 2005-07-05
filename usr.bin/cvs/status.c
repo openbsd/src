@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.26 2005/06/30 15:24:53 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.27 2005/07/05 16:06:52 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -208,7 +208,7 @@ cvs_status_local(CVSFILE *cf, void *arg)
 
 	buf[0] = '\0';
 	if (cf->cf_cvstat == CVS_FST_LOST)
-		strlcpy(buf, "No file ", sizeof(buf));
+		strlcpy(buf, "no file ", sizeof(buf));
 	strlcat(buf, cf->cf_name, sizeof(buf));
 
 	cvs_printf(CVS_STATUS_SEP "\nFile: %-18sStatus: %s\n\n",
