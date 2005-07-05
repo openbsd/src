@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.64 2005/06/25 11:40:52 hshoexer Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.65 2005/07/05 11:59:51 hshoexer Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -1340,7 +1340,7 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 
 				/*
 				 * If this is the type we are looking at,
-				 * to save a pointer this section in vs->life.
+				 * save a pointer to this section in vs->life.
 				 */
 				if (constant_value(ike_duration_cst, str) ==
 				    decode_16(value)) {
