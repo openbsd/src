@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.16 2004/10/18 22:33:43 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.17 2005/07/05 13:40:51 millert Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -14,7 +14,6 @@
 #define PCTS			1
 #define XPG4_1994_04_09		1
 #define STD_INSPIRED		1
-#define HAVE_LONG_DOUBLE	1
 #define HAVE_STRERROR		1
 #define NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU	1
 
@@ -33,10 +32,12 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.54";
+static char	privatehid[] = "@(#)private.h	7.55";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
+
+#define GRANDPARENTED	"Local time zone must be set--see zic manual page"
 
 /*
 ** Defaults for preprocessor symbols.
@@ -106,13 +107,13 @@ static char	privatehid[] = "@(#)private.h	7.54";
 #include "time.h"
 #include "stdlib.h"
 
-#if HAVE_GETTEXT - 0
+#if HAVE_GETTEXT
 #include "libintl.h"
-#endif /* HAVE_GETTEXT - 0 */
+#endif /* HAVE_GETTEXT */
 
-#if HAVE_SYS_WAIT_H - 0
+#if HAVE_SYS_WAIT_H
 #include <sys/wait.h>	/* for WIFEXITED and WEXITSTATUS */
-#endif /* HAVE_SYS_WAIT_H - 0 */
+#endif /* HAVE_SYS_WAIT_H */
 
 #ifndef WIFEXITED
 #define WIFEXITED(status)	(((status) & 0xff) == 0)
@@ -121,20 +122,20 @@ static char	privatehid[] = "@(#)private.h	7.54";
 #define WEXITSTATUS(status)	(((status) >> 8) & 0xff)
 #endif /* !defined WEXITSTATUS */
 
-#if HAVE_UNISTD_H - 0
+#if HAVE_UNISTD_H
 #include "unistd.h"	/* for F_OK and R_OK */
-#endif /* HAVE_UNISTD_H - 0 */
+#endif /* HAVE_UNISTD_H */
 
-#if !(HAVE_UNISTD_H - 0)
+#if !HAVE_UNISTD_H
 #ifndef F_OK
 #define F_OK	0
 #endif /* !defined F_OK */
 #ifndef R_OK
 #define R_OK	4
 #endif /* !defined R_OK */
-#endif /* !(HAVE_UNISTD_H - 0) */
+#endif /* !HAVE_UNISTD_H */
 
-/* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX.  */
+/* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
 /*
@@ -224,6 +225,7 @@ extern char * asctime_r();
 /*
 ** Private function declarations.
 */
+
 char *	icalloc P((int nelem, int elsize));
 char *	icatalloc P((char * old, const char * new));
 char *	icpyalloc P((const char * string));
@@ -231,8 +233,7 @@ char *	imalloc P((int n));
 void *	irealloc P((void * pointer, int size));
 void	icfree P((char * pointer));
 void	ifree P((char * pointer));
-char *	scheck P((const char *string, const char *format));
-
+char *	scheck P((const char *string, char *format));
 
 /*
 ** Finally, some convenience items.
@@ -254,6 +255,15 @@ char *	scheck P((const char *string, const char *format));
 #define TYPE_SIGNED(type) (((type) -1) < 0)
 #endif /* !defined TYPE_SIGNED */
 
+/*
+** Since the definition of TYPE_INTEGRAL contains floating point numbers,
+** it cannot be used in preprocessor directives.
+*/
+
+#ifndef TYPE_INTEGRAL
+#define TYPE_INTEGRAL(type) (((type) 0.5) != 0.5)
+#endif /* !defined TYPE_INTEGRAL */
+
 #ifndef INT_STRLEN_MAXIMUM
 /*
 ** 302 / 1000 is log10(2.0) rounded up.
@@ -262,7 +272,8 @@ char *	scheck P((const char *string, const char *format));
 ** add one more for a minus sign if the type is signed.
 */
 #define INT_STRLEN_MAXIMUM(type) \
-    ((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + 1 + TYPE_SIGNED(type))
+	((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + \
+	1 + TYPE_SIGNED(type))
 #endif /* !defined INT_STRLEN_MAXIMUM */
 
 /*
@@ -296,11 +307,11 @@ char *	scheck P((const char *string, const char *format));
 */
 
 #ifndef _
-#if HAVE_GETTEXT - 0
+#if HAVE_GETTEXT
 #define _(msgid) gettext(msgid)
-#else /* !(HAVE_GETTEXT - 0) */
+#else /* !HAVE_GETTEXT */
 #define _(msgid) msgid
-#endif /* !(HAVE_GETTEXT - 0) */
+#endif /* !HAVE_GETTEXT */
 #endif /* !defined _ */
 
 #ifndef TZ_DOMAIN

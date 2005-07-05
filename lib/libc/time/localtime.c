@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)localtime.c	7.80";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.25 2004/10/18 22:33:43 millert Exp $";
+static char elsieid[] = "@(#)localtime.c	7.95";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.26 2005/07/05 13:40:51 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -19,7 +19,21 @@ static char rcsid[] = "$OpenBSD: localtime.c,v 1.25 2004/10/18 22:33:43 millert 
 #include "private.h"
 #include "tzfile.h"
 #include "fcntl.h"
+#include "float.h"	/* for FLT_MAX and DBL_MAX */
 #include "thread_private.h"
+
+#ifndef TZ_ABBR_MAX_LEN
+#define TZ_ABBR_MAX_LEN	16
+#endif /* !defined TZ_ABBR_MAX_LEN */
+
+#ifndef TZ_ABBR_CHAR_SET
+#define TZ_ABBR_CHAR_SET \
+	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 :+-._"
+#endif /* !defined TZ_ABBR_CHAR_SET */
+
+#ifndef TZ_ABBR_ERR_CHAR
+#define TZ_ABBR_ERR_CHAR	'_'
+#endif /* !defined TZ_ABBR_ERR_CHAR */
 
 /*
 ** SunOS 4.1.1 headers lack O_BINARY.
@@ -46,16 +60,16 @@ static char rcsid[] = "$OpenBSD: localtime.c,v 1.25 2004/10/18 22:33:43 millert 
 **	5.	They might reference tm.TM_ZONE after calling offtime.
 ** What's best to do in the above cases is open to debate;
 ** for now, we just set things up so that in any of the five cases
-** WILDABBR is used.  Another possibility:  initialize tzname[0] to the
+** WILDABBR is used. Another possibility: initialize tzname[0] to the
 ** string "tzname[0] used before set", and similarly for the other cases.
-** And another:  initialize tzname[0] to "ERA", with an explanation in the
+** And another: initialize tzname[0] to "ERA", with an explanation in the
 ** manual page of what this "time zone abbreviation" means (doing this so
 ** that tzname[0] has the "normal" length of three characters).
 */
 #define WILDABBR	"   "
 #endif /* !defined WILDABBR */
 
-static char		wildabbr[] = "WILDABBR";
+static char		wildabbr[] = WILDABBR;
 
 static const char	gmt[] = "GMT";
 
@@ -123,17 +137,19 @@ struct rule {
 
 static long		detzcode P((const char * codep));
 static const char *	getzname P((const char * strp));
+static const char *	getqzname P((const char * strp, const char delim));
 static const char *	getnum P((const char * strp, int * nump, int min,
 				int max));
 static const char *	getsecs P((const char * strp, long * secsp));
 static const char *	getoffset P((const char * strp, long * offsetp));
 static const char *	getrule P((const char * strp, struct rule * rulep));
 static void		gmtload P((struct state * sp));
-static void		gmtsub P((const time_t * timep, long offset,
+static struct tm *	gmtsub P((const time_t * timep, long offset,
 				struct tm * tmp));
-static void		localsub P((const time_t * timep, long offset,
+static struct tm *	localsub P((const time_t * timep, long offset,
 				struct tm * tmp));
 static int		increment_overflow P((int * number, int delta));
+static int		leaps_thru_end_of P((int y));
 static int		long_increment_overflow P((long * number, int delta));
 static int		long_normalize_overflow P((long * tensptr,
 				int * unitsptr, int base));
@@ -141,18 +157,18 @@ static int		normalize_overflow P((int * tensptr, int * unitsptr,
 				int base));
 static void		settzname P((void));
 static time_t		time1 P((struct tm * tmp,
-				void(*funcp) P((const time_t *,
+				struct tm * (*funcp) P((const time_t *,
 				long, struct tm *)),
 				long offset));
 static time_t		time2 P((struct tm *tmp,
-				void(*funcp) P((const time_t *,
+				struct tm * (*funcp) P((const time_t *,
 				long, struct tm*)),
 				long offset, int * okayp));
 static time_t		time2sub P((struct tm *tmp,
-				void(*funcp) P((const time_t *,
+				struct tm * (*funcp) P((const time_t *,
 				long, struct tm*)),
 				long offset, int * okayp, int do_norm_secs));
-static void		timesub P((const time_t * timep, long offset,
+static struct tm *	timesub P((const time_t * timep, long offset,
 				const struct state * sp, struct tm * tmp));
 static int		tmcomp P((const struct tm * atmp,
 				const struct tm * btmp));
@@ -268,6 +284,24 @@ settzname P((void))
 
 		tzname[ttisp->tt_isdst] =
 			&sp->chars[ttisp->tt_abbrind];
+	}
+	/*
+	** Finally, scrub the abbreviations.
+	** First, replace bogus characters.
+	*/
+	for (i = 0; i < sp->charcnt; ++i)
+		if (strchr(TZ_ABBR_CHAR_SET, sp->chars[i]) == NULL)
+			sp->chars[i] = TZ_ABBR_ERR_CHAR;
+	/*
+	** Second, truncate long abbreviations.
+	*/
+	for (i = 0; i < sp->typecnt; ++i) {
+		register const struct ttinfo * const	ttisp = &sp->ttis[i];
+		register char *				cp = &sp->chars[ttisp->tt_abbrind];
+
+		if (strlen(cp) > TZ_ABBR_MAX_LEN &&
+			strcmp(cp, GRANDPARENTED) != 0)
+				*(cp + TZ_ABBR_MAX_LEN) = '\0';
 	}
 }
 
@@ -415,6 +449,33 @@ register struct state * const	sp;
 						return -1;
 			}
 		}
+		/*
+		** Out-of-sort ats should mean we're running on a
+		** signed time_t system but using a data file with
+		** unsigned values (or vice versa).
+		*/
+		for (i = 0; i < sp->timecnt - 2; ++i)
+			if (sp->ats[i] > sp->ats[i + 1]) {
+				++i;
+				if (TYPE_SIGNED(time_t)) {
+					/*
+					** Ignore the end (easy).
+					*/
+					sp->timecnt = i;
+				} else {
+					/*
+					** Ignore the beginning (harder).
+					*/
+					register int	j;
+
+					for (j = 0; j + i < sp->timecnt; ++j) {
+						sp->ats[j] = sp->ats[j + i];
+						sp->types[j] = sp->types[j + i];
+					}
+					sp->timecnt = j;
+				}
+				break;
+			}
 	}
 	return 0;
 }
@@ -430,7 +491,7 @@ static const int	year_lengths[2] = {
 
 /*
 ** Given a pointer into a time zone string, scan until a character that is not
-** a valid character in a zone name is found.  Return a pointer to that
+** a valid character in a zone name is found. Return a pointer to that
 ** character.
 */
 
@@ -443,6 +504,27 @@ register const char *	strp;
 	while ((c = *strp) != '\0' && !is_digit(c) && c != ',' && c != '-' &&
 		c != '+')
 			++strp;
+	return strp;
+}
+
+/*
+** Given a pointer into an extended time zone string, scan until the ending
+** delimiter of the zone name is located.   Return a pointer to the delimiter.
+**
+** As with getzname above, the legal character set is actually quite
+** restricted, with other characters producing undefined results.
+** We choose not to care - allowing almost anything to be in the zone abbrev.
+*/
+
+static const char *
+getqzname(strp, delim)
+register const char *	strp;
+const char		delim;
+{
+	register char	c;
+
+	while ((c = *strp) != '\0' && c != delim)
+		++strp;
 	return strp;
 }
 
@@ -511,7 +593,7 @@ long * const		secsp;
 		*secsp += num * SECSPERMIN;
 		if (*strp == ':') {
 			++strp;
-			/* `SECSPERMIN' allows for leap seconds.  */
+			/* `SECSPERMIN' allows for leap seconds. */
 			strp = getnum(strp, &num, 0, SECSPERMIN);
 			if (strp == NULL)
 				return NULL;
@@ -550,7 +632,7 @@ long * const		offsetp;
 
 /*
 ** Given a pointer into a time zone string, extract a rule in the form
-** date[/time].  See POSIX section 8 for the format of "date" and "time".
+** date[/time]. See POSIX section 8 for the format of "date" and "time".
 ** If a valid rule is not found, return NULL.
 ** Otherwise, return a pointer to the first character not part of the rule.
 */
@@ -669,7 +751,7 @@ const long				offset;
 			dow += DAYSPERWEEK;
 
 		/*
-		** "dow" is the day-of-week of the first day of the month.  Get
+		** "dow" is the day-of-week of the first day of the month. Get
 		** the day-of-month (zero-origin) of the first "dow" day of the
 		** month.
 		*/
@@ -692,7 +774,7 @@ const long				offset;
 
 	/*
 	** "value" is the Epoch-relative time of 00:00:00 UTC on the day in
-	** question.  To get the Epoch-relative time of the specified local
+	** question. To get the Epoch-relative time of the specified local
 	** time on that day, add the transition time and the current offset
 	** from UTC.
 	*/
@@ -730,10 +812,18 @@ const int			lastditch;
 			stdlen = (sizeof sp->chars) - 1;
 		stdoffset = 0;
 	} else {
-		name = getzname(name);
-		stdlen = name - stdname;
-		if (stdlen < 3)
-			return -1;
+		if (*name == '<') {
+			name++;
+			stdname = name;
+			name = getqzname(name, '>');
+			if (*name != '>')
+				return (-1);
+			stdlen = name - stdname;
+			name++;
+		} else {
+			name = getzname(name);
+			stdlen = name - stdname;
+		}
 		if (*name == '\0')
 			return -1;
 		name = getoffset(name, &stdoffset);
@@ -744,11 +834,18 @@ const int			lastditch;
 	if (load_result != 0)
 		sp->leapcnt = 0;		/* so, we're off a little */
 	if (*name != '\0') {
-		dstname = name;
-		name = getzname(name);
-		dstlen = name - dstname;	/* length of DST zone name */
-		if (dstlen < 3)
-			return -1;
+		if (*name == '<') {
+			dstname = ++name;
+			name = getqzname(name, '>');
+			if (*name != '>')
+				return -1;
+			dstlen = name - dstname;
+			name++;
+		} else {
+			dstname = name;
+			name = getzname(name);
+			dstlen = name - dstname; /* length of DST zone name */
+		}
 		if (*name != '\0' && *name != ',' && *name != ';') {
 			name = getoffset(name, &dstoffset);
 			if (name == NULL)
@@ -1014,14 +1111,14 @@ tzset P((void))
 /*
 ** The easy way to behave "as if no library function calls" localtime
 ** is to not call it--so we drop its guts into "localsub", which can be
-** freely called.  (And no, the PANS doesn't require the above behavior--
+** freely called. (And no, the PANS doesn't require the above behavior--
 ** but it *is* desirable.)
 **
 ** The unused offset argument is for the benefit of mktime variants.
 */
 
 /*ARGSUSED*/
-static void
+static struct tm *
 localsub(timep, offset, tmp)
 const time_t * const	timep;
 const long		offset;
@@ -1030,14 +1127,13 @@ struct tm * const	tmp;
 	register struct state *		sp;
 	register const struct ttinfo *	ttisp;
 	register int			i;
+	register struct tm *		result;
 	const time_t			t = *timep;
 
 	sp = lclptr;
 #ifdef ALL_STATE
-	if (sp == NULL) {
-		gmtsub(timep, offset, tmp);
-		return;
-	}
+	if (sp == NULL)
+		return gmtsub(timep, offset, tmp);
 #endif /* defined ALL_STATE */
 	if (sp->timecnt == 0 || t < sp->ats[0]) {
 		i = 0;
@@ -1050,7 +1146,7 @@ struct tm * const	tmp;
 		for (i = 1; i < sp->timecnt; ++i)
 			if (t < sp->ats[i])
 				break;
-		i = sp->types[i - 1];
+		i = (int) sp->types[i - 1];
 	}
 	ttisp = &sp->ttis[i];
 	/*
@@ -1059,12 +1155,13 @@ struct tm * const	tmp;
 	**	t += ttisp->tt_gmtoff;
 	**	timesub(&t, 0L, sp, tmp);
 	*/
-	timesub(&t, ttisp->tt_gmtoff, sp, tmp);
+	result = timesub(&t, ttisp->tt_gmtoff, sp, tmp);
 	tmp->tm_isdst = ttisp->tt_isdst;
 	tzname[tmp->tm_isdst] = &sp->chars[ttisp->tt_abbrind];
 #ifdef TM_ZONE
 	tmp->TM_ZONE = &sp->chars[ttisp->tt_abbrind];
 #endif /* defined TM_ZONE */
+	return result;
 }
 
 /*
@@ -1099,12 +1196,14 @@ const time_t * const	timep;
 ** gmtsub is to gmtime as localsub is to localtime.
 */
 
-static void
+static struct tm *
 gmtsub(timep, offset, tmp)
 const time_t * const	timep;
 const long		offset;
 struct tm * const	tmp;
 {
+	register struct tm *	result;
+
 	_THREAD_PRIVATE_MUTEX_LOCK(gmt);
 	if (!gmt_is_set) {
 		gmt_is_set = TRUE;
@@ -1115,7 +1214,7 @@ struct tm * const	tmp;
 			gmtload(gmtptr);
 	}
 	_THREAD_PRIVATE_MUTEX_UNLOCK(gmt);
-	timesub(timep, offset, gmtptr, tmp);
+	result = timesub(timep, offset, gmtptr, tmp);
 #ifdef TM_ZONE
 	/*
 	** Could get fancy here and deliver something such as
@@ -1135,6 +1234,7 @@ struct tm * const	tmp;
 #endif /* State Farm */
 	}
 #endif /* defined TM_ZONE */
+	return result;
 }
 
 /*
@@ -1170,13 +1270,25 @@ offtime(timep, offset)
 const time_t * const	timep;
 const long		offset;
 {
-	gmtsub(timep, offset, &tm);
-	return &tm;
+	return gmtsub(timep, offset, &tm);
 }
 
 #endif /* defined STD_INSPIRED */
 
-static void
+/*
+** Return the number of leap years through the end of the given year
+** where, to make the math easy, the answer for year zero is defined as zero.
+*/
+
+static int
+leaps_thru_end_of(y)
+register const int	y;
+{
+	return (y >= 0) ? (y / 4 - y / 100 + y / 400) :
+		-(leaps_thru_end_of(-(y + 1)) + 1);
+}
+
+static struct tm *
 timesub(timep, offset, sp, tmp)
 const time_t * const			timep;
 const long				offset;
@@ -1184,10 +1296,10 @@ register const struct state * const	sp;
 register struct tm * const		tmp;
 {
 	register const struct lsinfo *	lp;
-	register long			days;
+	register time_t			tdays;
+	register int			idays;	/* unsigned would be so 2003 */
 	register long			rem;
-	register long			y;
-	register int			yleap;
+	int				y;
 	register const int *		ip;
 	register long			corr;
 	register int			hit;
@@ -1221,60 +1333,93 @@ register struct tm * const		tmp;
 			break;
 		}
 	}
-	days = *timep / SECSPERDAY;
-	rem = *timep % SECSPERDAY;
-#ifdef mc68k
-	if (*timep == 0x80000000) {
-		/*
-		** A 3B1 muffs the division on the most negative number.
-		*/
-		days = -24855;
-		rem = -11648;
+	y = EPOCH_YEAR;
+	tdays = *timep / SECSPERDAY;
+	rem = *timep - tdays * SECSPERDAY;
+	while (tdays < 0 || tdays >= year_lengths[isleap(y)]) {
+		int		newy;
+		register time_t	tdelta;
+		register int	idelta;
+		register int	leapdays;
+
+		tdelta = tdays / DAYSPERLYEAR;
+		idelta = tdelta;
+		if (tdelta - idelta >= 1 || idelta - tdelta >= 1)
+			return NULL;
+		if (idelta == 0)
+			idelta = (tdays < 0) ? -1 : 1;
+		newy = y;
+		if (increment_overflow(&newy, idelta))
+			return NULL;
+		leapdays = leaps_thru_end_of(newy - 1) -
+			leaps_thru_end_of(y - 1);
+		tdays -= ((time_t) newy - y) * DAYSPERNYEAR;
+		tdays -= leapdays;
+		y = newy;
 	}
-#endif /* defined mc68k */
-	rem += (offset - corr);
+	{
+		register long	seconds;
+
+		seconds = tdays * SECSPERDAY + 0.5;
+		tdays = seconds / SECSPERDAY;
+		rem += seconds - tdays * SECSPERDAY;
+	}
+	/*
+	** Given the range, we can now fearlessly cast...
+	*/
+	idays = tdays;
+	rem += offset - corr;
 	while (rem < 0) {
 		rem += SECSPERDAY;
-		--days;
+		--idays;
 	}
 	while (rem >= SECSPERDAY) {
 		rem -= SECSPERDAY;
-		++days;
+		++idays;
 	}
+	while (idays < 0) {
+		if (increment_overflow(&y, -1))
+			return NULL;
+		idays += year_lengths[isleap(y)];
+	}
+	while (idays >= year_lengths[isleap(y)]) {
+		idays -= year_lengths[isleap(y)];
+		if (increment_overflow(&y, 1))
+			return NULL;
+	}
+	tmp->tm_year = y;
+	if (increment_overflow(&tmp->tm_year, -TM_YEAR_BASE))
+		return NULL;
+	tmp->tm_yday = idays;
+	/*
+	** The "extra" mods below avoid overflow problems.
+	*/
+	tmp->tm_wday = EPOCH_WDAY +
+		((y - EPOCH_YEAR) % DAYSPERWEEK) *
+		(DAYSPERNYEAR % DAYSPERWEEK) +
+		leaps_thru_end_of(y - 1) -
+		leaps_thru_end_of(EPOCH_YEAR - 1) +
+		idays;
+	tmp->tm_wday %= DAYSPERWEEK;
+	if (tmp->tm_wday < 0)
+		tmp->tm_wday += DAYSPERWEEK;
 	tmp->tm_hour = (int) (rem / SECSPERHOUR);
-	rem = rem % SECSPERHOUR;
+	rem %= SECSPERHOUR;
 	tmp->tm_min = (int) (rem / SECSPERMIN);
 	/*
 	** A positive leap second requires a special
-	** representation.  This uses "... ??:59:60" et seq.
+	** representation. This uses "... ??:59:60" et seq.
 	*/
 	tmp->tm_sec = (int) (rem % SECSPERMIN) + hit;
-	tmp->tm_wday = (int) ((EPOCH_WDAY + days) % DAYSPERWEEK);
-	if (tmp->tm_wday < 0)
-		tmp->tm_wday += DAYSPERWEEK;
-	y = EPOCH_YEAR;
-#define LEAPS_THRU_END_OF(y)	((y) / 4 - (y) / 100 + (y) / 400)
-	while (days < 0 || days >= (long) year_lengths[yleap = isleap(y)]) {
-		register long	newy;
-
-		newy = y + days / DAYSPERNYEAR;
-		if (days < 0)
-			--newy;
-		days -= (newy - y) * DAYSPERNYEAR +
-			LEAPS_THRU_END_OF(newy - 1) -
-			LEAPS_THRU_END_OF(y - 1);
-		y = newy;
-	}
-	tmp->tm_year = y - TM_YEAR_BASE;
-	tmp->tm_yday = (int) days;
-	ip = mon_lengths[yleap];
-	for (tmp->tm_mon = 0; days >= (long) ip[tmp->tm_mon]; ++(tmp->tm_mon))
-		days = days - (long) ip[tmp->tm_mon];
-	tmp->tm_mday = (int) (days + 1);
+	ip = mon_lengths[isleap(y)];
+	for (tmp->tm_mon = 0; idays >= ip[tmp->tm_mon]; ++(tmp->tm_mon))
+		idays -= ip[tmp->tm_mon];
+	tmp->tm_mday = (int) (idays + 1);
 	tmp->tm_isdst = 0;
 #ifdef TM_GMTOFF
 	tmp->TM_GMTOFF = offset;
 #endif /* defined TM_GMTOFF */
+	return tmp;
 }
 
 char *
@@ -1284,7 +1429,7 @@ const time_t * const	timep;
 /*
 ** Section 4.12.3.2 of X3.159-1989 requires that
 **	The ctime function converts the calendar time pointed to by timer
-**	to local time in the form of a string.  It is equivalent to
+**	to local time in the form of a string. It is equivalent to
 **		asctime(localtime(timer))
 */
 	return asctime(localtime(timep));
@@ -1295,9 +1440,9 @@ ctime_r(timep, buf)
 const time_t * const	timep;
 char *			buf;
 {
-	struct tm	tm;
+	struct tm	mytm;
 
-	return asctime_r(localtime_r(timep, &tm), buf);
+	return asctime_r(localtime_r(timep, &mytm), buf);
 }
 
 /*
@@ -1305,7 +1450,7 @@ char *			buf;
 **	The "best" way to do mktime I think is based on an idea of Bob
 **	Kridle's (so its said...) from a long time ago.
 **	[kridle@xinet.com as of 1996-01-16.]
-**	It does a binary search of the time_t space.  Since time_t's are
+**	It does a binary search of the time_t space. Since time_t's are
 **	just 32 bits, its a max of 32 iterations (even at 64 bits it
 **	would still be very reasonable).
 */
@@ -1391,17 +1536,18 @@ register const struct tm * const btmp;
 static time_t
 time2sub(tmp, funcp, offset, okayp, do_norm_secs)
 struct tm * const	tmp;
-void (* const		funcp) P((const time_t*, long, struct tm*));
+struct tm * (* const	funcp) P((const time_t*, long, struct tm*));
 const long		offset;
 int * const		okayp;
 const int		do_norm_secs;
 {
 	register const struct state *	sp;
 	register int			dir;
-	register int			bits;
 	register int			i, j;
 	register int			saved_seconds;
 	register long			li;
+	register time_t			lo;
+	register time_t			hi;
 	long				y;
 	time_t				newt;
 	time_t				t;
@@ -1454,7 +1600,7 @@ const int		do_norm_secs;
 		return WRONG;
 	yourtm.tm_year = y;
 	if (yourtm.tm_year != y)
- 		return WRONG;
+		return WRONG;
 	if (yourtm.tm_sec >= 0 && yourtm.tm_sec < SECSPERMIN)
 		saved_seconds = 0;
 	else if (y + TM_YEAR_BASE < EPOCH_YEAR) {
@@ -1475,27 +1621,49 @@ const int		do_norm_secs;
 		yourtm.tm_sec = 0;
 	}
 	/*
-	** Divide the search space in half
-	** (this works whether time_t is signed or unsigned).
+	** Do a binary search (this works whatever time_t's type is).
 	*/
-	bits = TYPE_BIT(time_t) - 1;
-	/*
-	** If time_t is signed, then 0 is just above the median,
-	** assuming two's complement arithmetic.
-	** If time_t is unsigned, then (1 << bits) is just above the median.
-	*/
-	t = TYPE_SIGNED(time_t) ? 0 : (((time_t) 1) << bits);
+	if (!TYPE_SIGNED(time_t)) {
+		lo = 0;
+		hi = lo - 1;
+	} else if (!TYPE_INTEGRAL(time_t)) {
+		if (sizeof(time_t) > sizeof(float))
+			hi = (time_t) DBL_MAX;
+		else	hi = (time_t) FLT_MAX;
+		lo = -hi;
+	} else {
+		lo = 1;
+		for (i = 0; i < (int) TYPE_BIT(time_t) - 1; ++i)
+			lo *= 2;
+		hi = -(lo + 1);
+	}
 	for ( ; ; ) {
-		(*funcp)(&t, offset, &mytm);
-		dir = tmcomp(&mytm, &yourtm);
+		t = lo / 2 + hi / 2;
+		if (t < lo)
+			t = lo;
+		else if (t > hi)
+			t = hi;
+		if ((*funcp)(&t, offset, &mytm) == NULL) {
+			/*
+			** Assume that t is too extreme to be represented in
+			** a struct tm; arrange things so that it is less
+			** extreme on the next pass.
+			*/
+			dir = (t > 0) ? 1 : -1;
+		} else	dir = tmcomp(&mytm, &yourtm);
 		if (dir != 0) {
-			if (bits-- < 0)
+			if (t == lo) {
+				++t;
+				++lo;
+			} else if (t == hi) {
+				--t;
+				--hi;
+			}
+			if (lo > hi)
 				return WRONG;
-			if (bits < 0)
-				--t; /* may be needed if new t is minimal */
-			else if (dir > 0)
-				t -= ((time_t) 1) << bits;
-			else	t += ((time_t) 1) << bits;
+			if (dir > 0)
+				hi = t;
+			else	lo = t;
 			continue;
 		}
 		if (yourtm.tm_isdst < 0 || mytm.tm_isdst == yourtm.tm_isdst)
@@ -1524,7 +1692,8 @@ const int		do_norm_secs;
 					continue;
 				newt = t + sp->ttis[j].tt_gmtoff -
 					sp->ttis[i].tt_gmtoff;
-				(*funcp)(&newt, offset, &mytm);
+				if ((*funcp)(&newt, offset, &mytm) == NULL)
+					continue;
 				if (tmcomp(&mytm, &yourtm) != 0)
 					continue;
 				if (mytm.tm_isdst != yourtm.tm_isdst)
@@ -1543,15 +1712,15 @@ label:
 	if ((newt < t) != (saved_seconds < 0))
 		return WRONG;
 	t = newt;
-	(*funcp)(&t, offset, tmp);
-	*okayp = TRUE;
+	if ((*funcp)(&t, offset, tmp))
+		*okayp = TRUE;
 	return t;
 }
 
 static time_t
 time2(tmp, funcp, offset, okayp)
 struct tm * const	tmp;
-void (* const		funcp) P((const time_t*, long, struct tm*));
+struct tm * (* const	funcp) P((const time_t*, long, struct tm*));
 const long		offset;
 int * const		okayp;
 {
@@ -1569,7 +1738,7 @@ int * const		okayp;
 static time_t
 time1(tmp, funcp, offset)
 struct tm * const	tmp;
-void (* const		funcp) P((const time_t *, long, struct tm *));
+struct tm * (* const	funcp) P((const time_t *, long, struct tm *));
 const long		offset;
 {
 	register time_t			t;
@@ -1755,7 +1924,7 @@ time_t	t;
 	tzset();
 	/*
 	** For a positive leap second hit, the result
-	** is not unique.  For a negative leap second
+	** is not unique. For a negative leap second
 	** hit, the corresponding time doesn't exist,
 	** so we return an adjacent second.
 	*/

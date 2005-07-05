@@ -1,4 +1,4 @@
-/*	$OpenBSD: tzfile.h,v 1.5 1998/01/18 23:25:00 millert Exp $	*/
+/*	$OpenBSD: tzfile.h,v 1.6 2005/07/05 13:40:51 millert Exp $	*/
 
 #ifndef TZFILE_H
 
@@ -24,7 +24,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	tzfilehid[] = "@(#)tzfile.h	7.14";
+static char	tzfilehid[] = "@(#)tzfile.h	7.17";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -160,33 +160,20 @@ struct tzhead {
 #define EPOCH_YEAR	1970
 #define EPOCH_WDAY	TM_THURSDAY
 
-/*
-** Accurate only for the past couple of centuries;
-** that will probably do.
-*/
-
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
-#ifndef USG
-
 /*
-** Use of the underscored variants may cause problems if you move your code to
-** certain System-V-based systems; for maximum portability, use the
-** underscore-free variants.  The underscored variants are provided for
-** backward compatibility only; they may disappear from future versions of
-** this file.
+** Since everything in isleap is modulo 400 (or a factor of 400), we know that
+**	isleap(y) == isleap(y % 400)
+** and so
+**	isleap(a + b) == isleap((a + b) % 400)
+** or
+**	isleap(a + b) == isleap(a % 400 + b % 400)
+** This is true even if % means modulo rather than Fortran remainder
+** (which is allowed by C89 but not C99).
+** We use this to avoid addition overflow problems.
 */
 
-#define SECS_PER_MIN	SECSPERMIN
-#define MINS_PER_HOUR	MINSPERHOUR
-#define HOURS_PER_DAY	HOURSPERDAY
-#define DAYS_PER_WEEK	DAYSPERWEEK
-#define DAYS_PER_NYEAR	DAYSPERNYEAR
-#define DAYS_PER_LYEAR	DAYSPERLYEAR
-#define SECS_PER_HOUR	SECSPERHOUR
-#define SECS_PER_DAY	SECSPERDAY
-#define MONS_PER_YEAR	MONSPERYEAR
-
-#endif /* !defined USG */
+#define isleap_sum(a, b)	isleap((a) % 400 + (b) % 400)
 
 #endif /* !defined TZFILE_H */

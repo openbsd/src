@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)scheck.c	8.15";
-static char rcsid[] = "$OpenBSD: scheck.c,v 1.6 2003/02/14 18:24:53 millert Exp $";
+static char elsieid[] = "@(#)scheck.c	8.16";
+static char rcsid[] = "$OpenBSD: scheck.c,v 1.7 2005/07/05 13:40:51 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
@@ -15,7 +15,7 @@ static char rcsid[] = "$OpenBSD: scheck.c,v 1.6 2003/02/14 18:24:53 millert Exp 
 char *
 scheck(string, format)
 const char * const	string;
-const char * const	format;
+char * const		format;
 {
 	register char *		fbuf;
 	register const char *	fp;

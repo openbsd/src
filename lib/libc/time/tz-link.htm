@@ -9,7 +9,7 @@
 <meta http-equiv="Content-type" content='text/html; charset="US-ASCII"' />
 <meta name="DC.Creator" content="Eggert, Paul" />
 <meta name="DC.Contributor" content="Olson, Arthur David" />
-<meta name="DC.Date" content="2004-09-22" />
+<meta name="DC.Date" content="2005-03-11" />
 <meta name="DC.Description"
  content="Sources of information about time zones and daylight saving time" />
 <meta name="DC.Identifier" content="http://www.twinsun.com/tz/tz-link.htm" />
@@ -19,7 +19,7 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	7.44
+@(#)tz-link.htm	7.48
 </address>
 <p>
 Please send corrections to this web page to the
@@ -36,9 +36,9 @@ This database (often called <code>tz</code> or <code>zoneinfo</code>)
 is used by several implementations,
 including
 <a href="http://www.gnu.org/software/libc/">the
-<acronym title="GNU's Not Unix">GNU</acronym>
+<abbr title="GNU's Not Unix">GNU</abbr>
 C Library</a> used in
-<a href="http://www.linux.org/"><acronym>GNU</acronym>/Linux</a>,
+<a href="http://www.linux.org/"><abbr>GNU</abbr>/Linux</a>,
 <a href="http://www.freebsd.org/">FreeBSD</a>,
 <a href="http://www.netbsd.org/">NetBSD</a>,
 <a href="http://www.openbsd.org/">OpenBSD</a>,
@@ -80,7 +80,7 @@ where <code><var>C</var></code> is the code's version;
 similarly, the data are in <code>tzdata<var>D</var>.tar.gz</code>,
 where <code><var>D</var></code> is the data's version.
 The following shell commands download
-these files to a <acronym>GNU</acronym>/Linux or similar host;
+these files to a <abbr>GNU</abbr>/Linux or similar host;
 see the downloaded
 <code>README</code> file for what to do next.</p>
 <pre style="margin-left: 2em"><code><a href="http://www.gnu.org/software/wget/">wget</a> 'ftp://elsie.nci.nih.gov/pub/tz*.tar.gz'
@@ -136,7 +136,9 @@ title="Internet Engineering Task Force">IETF</abbr>
 Calendaring and Scheduling Working Group (<abbr
 title="Calendaring and Scheduling Working Group">calsch</abbr>)</a>
 covers time zone
-data; see its VTIMEZONE calendar component.</li>
+data; see its VTIMEZONE calendar component.
+The <a href='http://www.calconnect.org/'>Calendaring and Scheduling
+Consortium</a> is promoting further work in this area.</li>
 <li>The <a
 href="http://lists.w3.org/Archives/Public/www-rdf-calendar/">www-rdf-calendar</a>
 list discusses <a
@@ -157,12 +159,12 @@ definition that corresponded to iCalendar.</li>
 </ul>
 <h2>Other <code>tz</code> compilers</h2>
 <ul>
-<li><a href="http://www.dachaplin.dsl.pipex.com/vzic">Vzic iCalendar
+<li><a href="http://dialspace.dial.pipex.com/prod/dialspace/town/pipexdsl/s/asbm26/vzic/">Vzic iCalendar
 Timezone Converter</a> describes a program Vzic that compiles
 <code>tz</code> source into iCalendar-compatible VTIMEZONE files.
 Vzic is freely
 available under the <a
-href="http://www.gnu.org/copyleft/gpl.html"><acronym>GNU</acronym>
+href="http://www.gnu.org/copyleft/gpl.html"><abbr>GNU</abbr>
 General Public License (<abbr
 title="General Public License">GPL</abbr>)</a>.</li>
 <li><a
@@ -178,7 +180,7 @@ transition in the <code>tz</code> database.</li>
 <li><a href="http://oss.software.ibm.com/icu/"><abbr
 title="International Components for Unicode">ICU</abbr></a>
 contains a C/C++ library for internationalization that
-has a compiler from <samp>tz</samp> source
+has a compiler from <code>tz</code> source
 into an <abbr>ICU</abbr>-specific format.
 <abbr>ICU</abbr> is freely available under a
 <abbr title="Berkeley Software Distribution">BSD</abbr>-style license.</li>
@@ -196,18 +198,18 @@ It is freely available under a <abbr>BSD</abbr>-style license.</li>
 <h2>Other <code>tz</code> binary file readers</h2>
 <ul>
 <li>The <a
-href="http://www.gnu.org/software/libc/"><acronym>GNU</acronym> C
+href="http://www.gnu.org/software/libc/"><abbr>GNU</abbr> C
 Library</a>
 has an independent, thread-safe implementation of
 a <code>tz</code> binary file reader.
 This library is freely available under the
 <a href="http://www.gnu.org/copyleft/lesser.html">
-<acronym>GNU</acronym> Lesser General Public License
+<abbr>GNU</abbr> Lesser General Public License
 (<abbr title="Lesser General Public License">LGPL</abbr>)</a>,
-and is widely used in <acronym>GNU</acronym>/Linux systems.</li>
+and is widely used in <abbr>GNU</abbr>/Linux systems.</li>
 <li><a href="http://www.bmsi.com/java/#TZ">ZoneInfo.java</a>
 is a <code>tz</code> binary file reader written in Java.
-It is freely available under the <acronym>GNU</acronym>
+It is freely available under the <abbr>GNU</abbr>
 <abbr>LGPL</abbr>.</li>
 <li><a href="http://s.keim.free.fr/tz/doc.html">Python time zones</a>
 is a <code>tz</code> binary file reader written in Python.
@@ -216,11 +218,16 @@ It is freely available under a <abbr>BSD</abbr>-style license.</li>
 <h2>Other <code>tz</code>-based time zone conversion software</h2>
 <ul>
 <li><a href="http://java.sun.com/">Sun Java</a> releases since 1.4
-contain a copy of a subset of a recent <samp>tz</samp> database in a
+contain a copy of a subset of a recent <code>tz</code> database in a
 Java-specific format.</li>
 <li><a
 href="http://www1.tip.nl/~t876506/AboutTimeZonesHC.html">HyperCard
 time zones calculator</a> is a HyperCard stack.</li>
+<li><a
+href="http://www.veladg.com/velaterra.html">VelaTerra</a> is
+a Mac OS X program. Its developers
+<a href="http://www.veladg.com/tzoffer.html">offer free
+licenses</a> to <code>tz</code> contributors.</li>
 <li><a
 href="http://www.cimmyt.org/timezone/">World Time Explorer</a> is a
 Microsoft Windows program.</li>
@@ -243,10 +250,7 @@ is another time zone database.</li>
 contains data from the Time Service Department of the
 <abbr>US</abbr> Naval Observatory, used as the source
 for the <code>usno*</code> files in the <code>tz</code> distribution.</li>
-<li><a href="http://www.airportcitycodes.com/aaa/">Airlines, Airplanes
-and Airports</a> lists current standard times for thousands of
-airports around the world. This seems to be derived from
-the <a href="http://www.iata.org/ps/publications/9179.htm">Standard
+<li>The <a href="http://www.iata.org/ps/publications/9179.htm">Standard
 Schedules Information Manual</a> of the
 the <a href="http://www.iata.org/">International Air Transport
 Association</a>,
@@ -285,7 +289,7 @@ zone boundaries for multizone countries</a> summarizes legal
 boundaries between time zones within countries.</li>
 <li>Manifold.net's <a
 href="http://www.manifold.net/download/freemaps.html">Free Maps and
-<acronym title="Geographic Information Systems">GIS</acronym>
+<abbr title="Geographic Information Systems">GIS</abbr>
 Data</a> includes a Manifold-format map of
 world time zone boundaries distributed under the
 <abbr>GPL</abbr>.</li>
@@ -299,11 +303,15 @@ Time Zones and Time Zone Data</a>.</li>
 </ul>
 <h2>Civil time concepts and history</h2>
 <ul>
-<li><a href="http://physics.nist.gov/time">A Walk through Time</a>
+<li><a href="http://physics.nist.gov/GenInt/Time/time.html">A
+Walk through Time</a>
 surveys the evolution of timekeeping.</li>
 <li><a href="http://webexhibits.org/daylightsaving/">About Daylight
 Saving Time - History, rationale, laws &amp; dates</a>
 is an overall history of <abbr>DST</abbr>.</li>
+<li><a href="http://www.seizethedaylight.com/dst/">Who Knew? A Brief
+History of Daylight Saving Time</a> summarizes some of the contentious
+history of <abbr>DST</abbr>.</li>
 <li><a href="http://toi.iriti.cnr.it/">The
 Time of Internet</a>
 describes time zones and daylight saving time,
@@ -410,8 +418,8 @@ Times</a> explains more abstruse astronomical time scales like
 <abbr title="Barycentric Dynamic Time">TDB</abbr>.</li>
 <li>The <a href="http://www.iau.org/"><abbr
 title="International Astronomical Union">IAU</abbr></a>'s <a
-href="http://www.iau-sofa.rl.ac.uk/"><acronym
-title="Standards Of Fundamental Astronomy">SOFA</acronym></a>
+href="http://www.iau-sofa.rl.ac.uk/"><abbr
+title="Standards Of Fundamental Astronomy">SOFA</abbr></a>
 initiative publishes Fortran
 code for converting among time scales like
 <abbr title="International Atomic Time">TAI</abbr>,
@@ -447,7 +455,7 @@ title="Global Positioning System">GPS</abbr> World</a>
 (1999-11), 50&ndash;57 and discussed further in R. A. Nelson et al.,
 <a href="http://www.cl.cam.ac.uk/~mgk25/time/metrologia-leapsecond.pdf">The
 leap second: its history and possible future</a>,
-<a href="http://www.bipm.fr/metrologia/metrologia.html">Metrologia</a>
+<a href="http://www.bipm.fr/metrologia/">Metrologia</a>
 <strong>38</strong> (2001), 509&ndash;529.
 <a href="http://www.ucolick.org/~sla/leapsecs/onlinebib.html">The
 Future of Leap Seconds</a> catalogs information about this
@@ -459,12 +467,11 @@ contentious issue.</li>
 <a href="http://www.cl.cam.ac.uk/~mgk25/iso-time.html">A Summary of
 the International Standard Date and Time Notation</a> is a good
 summary of
-<abbr title="International Organization for Standardization">ISO</abbr>
-8601:1988 - Data elements and interchange formats - Information interchange
-- Representation of dates and times (which has been superseded by
 <a
-href="http://www.iso.org/iso/en/CatalogueDetailPage.CatalogueDetail?CSNUMBER=26780"><abbr>ISO</abbr>
-8601:2000</a>).</li>
+href="http://www.iso.org/iso/en/CatalogueDetailPage.CatalogueDetail?CSNUMBER=40874"><abbr
+title="International Organization for Standardization">ISO</abbr>
+8601:2004 -- Data elements and interchange formats -- Information
+interchange -- Representation of dates and times</a>.</li>
 <li>
 Section 3.3 of <a
 href="ftp://ftp.rfc-editor.org/in-notes/rfc2822.txt">Internet
@@ -482,13 +489,21 @@ protocols.</li>
 Best of Dates, the Worst of Dates</a> covers many problems encountered
 by software developers when handling dates and time stamps.</li>
 <li><a
-href="http://oss.software.ibm.com/cvs/icu/~checkout~/icuhtml/design/formatting/time_zone_localization.html">Time
-Zone Localization</a> is a proposed mechanism for localizing time zone
-labels and abbreviations; for example, one might use it to specify
+href="http://ibm.com/software/globalization/icu"><abbr
+title="International Components for Unicode">ICU</abbr></a> contains a
+mechanism for localizing time zone
+labels and abbreviations; for example, one can use it to specify
 Russian translations for "Eastern European Summer Time",
 "<abbr title="Eastern European Summer Time">EEST</abbr>",
-and <code>Europe/Bucharest</code>.</li>
-<li> Alphabetic time zone abbreviations should not be used as unique
+and <code>Europe/Bucharest</code>.
+This mechanism is part of the
+<a href="http://unicode.org/cldr/">Unicode
+<abbr title="Common Locale Data Repository">CLDR</abbr> Project</a>;
+for example, the <a
+href="http://www.unicode.org/cldr/data/diff/by_type/dates_timeZoneNames.html">By-Type
+Chart for //ldml/dates/timeZoneNames/&hellip;</a>
+shows values for time zone names in many locales.</li>
+<li>Alphabetic time zone abbreviations should not be used as unique
 identifiers for <abbr>UTC</abbr> offsets as they are ambiguous in
 practice. For example, "<abbr>EST</abbr>" denotes 5 hours behind
 <abbr>UTC</abbr> in English-speaking North America, but it denotes 10
@@ -499,6 +514,21 @@ French-speaking North Americans prefer
 database contains English abbreviations for all time stamps but in
 many cases these are merely inventions of the database
 maintainers.</li>
+<li>Numeric time zone abbreviations typically count hours east of
+<abbr>UTC</abbr>, e.g., <code>+09</code> for Japan and
+<code>-10</code> for Hawaii. However, the <abbr>POSIX</abbr>
+<code>TZ</code> environment variable uses the opposite convention. For
+example, one might use <code>TZ="JST-9"</code> and
+<code>TZ="HST10"</code> for Japan and Hawaii, respectively. If the
+<code>tz</code> database is available, it is usually better to use
+settings like <code>TZ="Asia/Tokyo"</code> and
+<code>TZ="Pacific/Honolulu"</code> instead, as this should avoid
+confusion, handle old timestamps better, and insulate you better from
+any future changes to the rules. One should never set
+<abbr>POSIX</abbr> <code>TZ</code> to a value like
+<code>"GMT-9"</code>, though, since this would falsely claim that
+local time is nine hours ahead of <abbr>UTC</abbr> and the time zone
+is called "<abbr>GMT</abbr>".</li>
 </ul>
 <h2>Related indexes</h2>
 <ul>

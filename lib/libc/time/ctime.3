@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.29 2004/10/18 22:33:43 millert Exp $
+.\"	$OpenBSD: ctime.3,v 1.30 2005/07/05 13:40:51 millert Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -63,13 +63,13 @@ string of the form
 .Pp
 .Dl Thu Nov 24 18:22:48 1986\en
 .Pp
-Years requiring fewer than four characters are padded with trailing spaces.
+Years requiring fewer than four characters are padded with leading zeroes.
 For years longer than four characters, the string is of the form
 .Pp
 .Dl Thu Nov 24 18:22:48\ \ \ \ \ 81986\en
 .Pp
 with five spaces before the year.
-This unusual format is designed to make it less likely that older
+These unusual formats are designed to make it less likely that older
 software that expects exactly 26 bytes of output will mistakenly output
 misleading values for out-of-range years.
 .Pp
@@ -99,7 +99,7 @@ functions return pointers to
 structures, described below.
 .Fn localtime
 corrects for the time zone and any time zone adjustments
-(such as Daylight Saving Time in the U.S.A.).
+(such as Daylight Saving Time in the United States).
 After filling in the
 .Li tm
 structure,

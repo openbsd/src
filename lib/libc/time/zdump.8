@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zdump.8,v 1.9 2004/04/01 11:37:02 jmc Exp $
+.\"	$OpenBSD: zdump.8,v 1.10 2005/07/05 13:40:51 millert Exp $
 .Dd May 23, 1999
 .Dt ZDUMP 8
 .Os
@@ -8,7 +8,13 @@
 .Sh SYNOPSIS
 .Nm zdump
 .Op Fl v
-.Op Fl c Ar cutoffyear
+.Sm off
+.Oo
+.Fl c No \ \&
+.Op Ar loyear,
+.Ar hiyear
+.Oc
+.Sm on
 .Ar zonename Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -18,8 +24,10 @@ named on the command line.
 .Pp
 These options are available:
 .Bl -tag -width Fl
-.It Fl c Ar cutoffyear
-Cut off the verbose output near the start of the given year.
+.It Fl c Ar Op loyear, Ns hiyear
+Cut off verbose output near the start of the given year(s).
+By default,
+the program cuts off verbose output near the starts of the years -500 and 2500.
 .It Fl v
 For each
 .Ar zonename
@@ -36,10 +44,21 @@ if the given time is Daylight Saving Time or
 .Dq isdst=0
 otherwise.
 .El
+.Sh LIMITATIONS
+The
+.Fl v
+option may not be used on systems with floating-point
+.Li time_t
+values that are neither float nor double.
+.Pp
+Time discontinuities are found by sampling the results returned by localtime
+at twelve-hour intervals.
+This works in all real-world cases;
+one can construct artificial time zones for which this fails.
 .Sh SEE ALSO
 .Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zic 8
-.\" @(#)zdump.8	7.4
+.\" @(#)zdump.8	7.7
 .\" This file is in the public domain, so clarified as of
 .\" 2003-02-14 by Arthur David Olson (arthur_david_olson@nih.gov).
