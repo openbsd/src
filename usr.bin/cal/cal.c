@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.13 2005/07/06 05:31:08 tedu Exp $	*/
+/*	$OpenBSD: cal.c,v 1.14 2005/07/06 06:45:58 deraadt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: cal.c,v 1.13 2005/07/06 05:31:08 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: cal.c,v 1.14 2005/07/06 06:45:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,10 +56,10 @@ static const char rcsid[] = "$OpenBSD: cal.c,v 1.13 2005/07/06 05:31:08 tedu Exp
 #include <unistd.h>
 
 #define	THURSDAY		4		/* for reformation */
-#define	SATURDAY 		6		/* 1 Jan 1 was a Saturday */
+#define	SATURDAY		6		/* 1 Jan 1 was a Saturday */
 
-#define	FIRST_MISSING_DAY 	639799		/* 3 Sep 1752 */
-#define	NUMBER_MISSING_DAYS 	11		/* 11 day correction */
+#define	FIRST_MISSING_DAY	639799		/* 3 Sep 1752 */
+#define	NUMBER_MISSING_DAYS	11		/* 11 day correction */
 
 #define	MAXDAYS			42		/* max slots in a month array */
 #define	SPACE			-1		/* used in day array */
