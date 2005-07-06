@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: chat.c,v 1.20 2002/06/15 08:02:00 brian Exp $
+ *	$OpenBSD: chat.c,v 1.21 2005/07/06 13:56:00 brad Exp $
  */
 
 #include <sys/param.h>
@@ -243,9 +243,10 @@ chat_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
               break;
             }
           c->abort.string[i].len = len;
-          c->abort.string[i].data = (char *)malloc(len+1);
-          memcpy(c->abort.string[i].data, c->exp+2, len+1);
-          c->abort.num++;
+          if ((c->abort.string[i].data = (char *)malloc(len+1)) != NULL) {
+            memcpy(c->abort.string[i].data, c->exp+2, len+1);
+            c->abort.num++;
+	  }
         } else
           log_Printf(LogERROR, "chat_UpdateSet: too many abort strings\n");
         gotabort = 0;

@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.36 2002/06/15 08:02:01 brian Exp $
+ *  $OpenBSD: physical.c,v 1.37 2005/07/06 13:56:00 brad Exp $
  *
  */
 
@@ -35,6 +35,7 @@
 #include <string.h>
 #include <sys/tty.h>	/* TIOCOUTQ */
 #include <sys/uio.h>
+#include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
 #include <utmp.h>
@@ -84,6 +85,7 @@
 #include "prompt.h"
 #include "chat.h"
 #include "auth.h"
+#include "main.h"
 #include "chap.h"
 #include "cbcp.h"
 #include "datalink.h"
@@ -722,7 +724,10 @@ physical2iov(struct physical *p, struct iovec *iov, int *niov, int maxiov,
     if (h && h->device2iov)
       (*h->device2iov)(h, iov, niov, maxiov, auxfd, nauxfd);
     else {
-      iov[*niov].iov_base = malloc(sz);
+      if ((iov[*niov].iov_base = malloc(sz)) == NULL) {
+	log_Printf(LogALERT, "physical2iov: Out of memory (%d bytes)\n", sz);
+	AbortProgram(EX_OSERR);
+      }
       if (h)
         memcpy(iov[*niov].iov_base, h, sizeof *h);
       iov[*niov].iov_len = sz;

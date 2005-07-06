@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.30 2005/01/20 14:58:14 markus Exp $
+ * $OpenBSD: route.c,v 1.31 2005/07/06 13:56:00 brad Exp $
  */
 
 #include <sys/param.h>
@@ -277,10 +277,15 @@ Index2Nam(int idx)
         }
         if (ifs[ifm->ifm_index-1] == NULL) {
           ifs[ifm->ifm_index-1] = (char *)malloc(dl->sdl_nlen+1);
-          memcpy(ifs[ifm->ifm_index-1], dl->sdl_data, dl->sdl_nlen);
-          ifs[ifm->ifm_index-1][dl->sdl_nlen] = '\0';
-          if (route_nifs < ifm->ifm_index)
-            route_nifs = ifm->ifm_index;
+          if (ifs[ifm->ifm_index-1] == NULL)
+	    log_Printf(LogDEBUG, "Skipping interface %d: Out of memory\n",
+                  ifm->ifm_index);
+	  else {
+	    memcpy(ifs[ifm->ifm_index-1], dl->sdl_data, dl->sdl_nlen);
+	    ifs[ifm->ifm_index-1][dl->sdl_nlen] = '\0';
+	    if (route_nifs < ifm->ifm_index)
+	      route_nifs = ifm->ifm_index;
+	  }
         }
       } else if (log_IsKept(LogDEBUG))
         log_Printf(LogDEBUG, "Skipping out-of-range interface %d!\n",

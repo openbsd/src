@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.h,v 1.9 2002/03/31 02:38:49 brian Exp $
+ *	$OpenBSD: datalink.h,v 1.10 2005/07/06 13:56:00 brad Exp $
  */
 
 #define DATALINK_CLOSED  (0)
@@ -148,7 +148,6 @@ extern int datalink_SetRedial(struct cmdargs const *);
 extern int datalink_SetReconnect(struct cmdargs const *);
 extern const char *datalink_State(struct datalink *);
 extern void datalink_Rename(struct datalink *, const char *);
-extern char *datalink_NextName(struct datalink *);
 extern int datalink_RemoveFromSet(struct datalink *, fd_set *, fd_set *,
                                   fd_set *);
 extern int datalink_SetMode(struct datalink *, int);
