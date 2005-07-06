@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.71 2005/07/02 00:34:29 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.72 2005/07/06 00:56:33 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1217,7 +1217,6 @@ bge_blockinit(sc)
 	struct bge_softc *sc;
 {
 	volatile struct bge_rcb		*rcb;
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	vaddr_t			rcb_addr;
 	int			i;
 	bge_hostaddr		taddr;
@@ -1257,16 +1256,9 @@ bge_blockinit(sc)
 	/* Configure mbuf pool watermarks */
 	/* new Broadcom docs strongly recommend these: */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
-		if (ifp->if_mtu > ETHER_MAX_LEN) {
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
-		} else {
-			/* Values from Linux driver... */
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 304);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 152);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 380);
-		}
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 	} else {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
@@ -3095,8 +3087,12 @@ bge_init(xsc)
 	ifp = &sc->arpcom.ac_if;
 
 	/* Specify MTU. */
-	CSR_WRITE_4(sc, BGE_RX_MTU, ifp->if_mtu +
-	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+		CSR_WRITE_4(sc, BGE_RX_MTU,
+			ETHER_MAX_LEN_JUMBO + ETHER_VLAN_ENCAP_LEN);
+	else
+		CSR_WRITE_4(sc, BGE_RX_MTU,
+			ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* Load our MAC address. */
 	m = (u_int16_t *)&sc->arpcom.ac_enaddr[0];
@@ -3304,11 +3300,8 @@ bge_ioctl(ifp, command, data)
 		if ((((sc->bge_quirks & BGE_QUIRK_5705_CORE) != 0) &&
 		    ifr->ifr_mtu > ETHERMTU) || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		else {
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
-			ifp->if_flags &= ~IFF_RUNNING;
-			bge_init(sc);
-		}
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
