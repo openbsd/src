@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.11 2005/04/13 18:52:59 deraadt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.12 2005/07/06 05:24:30 tedu Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cal.c,v 1.11 2005/04/13 18:52:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cal.c,v 1.12 2005/07/06 05:24:30 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,12 +159,22 @@ main(int argc, char *argv[])
 	month = 0;
 	switch(argc) {
 	case 2:
-		if ((month = atoi(*argv++)) < 1 || month > 12)
-			errx(1, "illegal month value: use 1-12");
+		month = parsemonth(*argv++);
+		if (!month)
+			errx(1, "Unable to parse month");
 		/* FALLTHROUGH */
 	case 1:
-		if ((year = atoi(*argv)) < 1 || year > 9999)
-			errx(1, "illegal year value: use 1-9999");
+		if (argc == 1 && !isdigit(*argv[0])) {
+			month = parsemonth(*argv);
+			if (!month)
+				errx(1, "illegal year value: use 1-9999");
+			(void)time(&now);
+			local_time = localtime(&now);
+			year = local_time->tm_year + TM_YEAR_BASE;
+		} else {
+			if ((year = atoi(*argv)) < 1 || year > 9999)
+				errx(1, "illegal year value: use 1-9999");
+		}
 		break;
 	case 0:
 		(void)time(&now);
@@ -416,4 +426,21 @@ usage(void)
 
 	(void)fprintf(stderr, "usage: cal [-jy] [[month] year]\n");
 	exit(1);
+}
+
+int
+parsemonth(const char *s)
+{
+	int v;
+	char *cp;
+	struct tm tm;
+
+	v = (int)strtol(s, &cp, 10);
+	if (cp != s)
+		return (v);
+	if (strptime(s, "%B", &tm) != NULL)
+		return (tm.tm_mon + 1);
+	if (strptime(s, "%b", &tm) != NULL)
+		return (tm.tm_mon + 1);
+	return (0);
 }
