@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.49 2005/01/07 11:11:28 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.50 2005/07/06 08:15:00 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -454,7 +454,12 @@ in a file or
 carriage returns from the terminal) terminates macro input mode.
 There is a limit of 16 macros and 4096 total characters in all
 defined macros.
-Macros remain defined until a
+Macro names can be a maximum of 8 characters.
+Macros are only applicable to the current session they are
+defined in (or if defined outside a session, to the session
+invoked with the next
+.Ic open
+command), and remain defined until a
 .Ic close
 command is executed.
 The macro processor interprets
@@ -1387,6 +1392,20 @@ next
 .Pa .netrc
 line and continue until a null line (consecutive new-line
 characters) is encountered.
+Like the other tokens in the
+.Pa .netrc
+file, a
+.Ic macdef
+is applicable only to the
+.Ic machine
+definition preceding it.
+A
+.Ic macdef
+entry cannot be utilized by multiple
+.Ic machine
+definitions; rather, it must be defined following each
+.Ic machine
+it is intended to be used with.
 If a macro named
 .Ic init
 is defined, it is automatically executed as the last step in the
