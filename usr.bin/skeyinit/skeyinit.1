@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.30 2004/06/07 19:22:20 otto Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.31 2005/07/06 22:15:11 jmc Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -10,19 +10,15 @@
 .Nd change password or add user to S/Key authentication system
 .Sh SYNOPSIS
 .Nm skeyinit
-.Op Fl r
-.Op Fl s
-.Op Fl x
-.Op Fl C
-.Op Fl D
-.Op Fl E
+.Bk -words
+.Op Fl CDErsx
 .Op Fl a Ar auth-type
 .Op Fl n Ar count
 .Oo
-.Fl md4 | Fl md5 | Fl sha1 |
-.Fl rmd160
+.Fl md4 | Fl md5 | rmd160 | sha1
 .Oc
 .Op Ar user
+.Ek
 .Sh DESCRIPTION
 .Nm
 initializes the system so you can use S/Key one-time passwords to log in.
@@ -56,7 +52,7 @@ S/Key challenge and allowed to proceed if it is correct.
 .Pp
 .Nm
 prints a sequence number and a one-time password.
-This password can not be used to log in; one-time passwords should be
+This password can't be used to log in; one-time passwords should be
 generated using
 .Xr skey 1
 first.
@@ -71,6 +67,12 @@ should match the one printed by
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar auth-type
+Specify an authentication type such as
+.Dq krb5 ,
+.Dq passwd ,
+or
+.Dq skey .
 .It Fl C
 Converts from the old-style
 .Pa /etc/skeykeys
@@ -89,6 +91,16 @@ Enables access to the S/Key database.
 Only the superuser may use the
 .Fl E
 option.
+.It Fl md4 | md5 | rmd160 | sha1
+Selects the hash algorithm:
+MD4, MD5, RMD-160 (160-bit Ripe Message Digest),
+or SHA1 (NIST Secure Hash Algorithm Revision 1).
+.It Fl n Ar count
+Start the
+.Nm skey
+sequence at
+.Ar count
+(default is 100).
 .It Fl r
 Removes the user's S/Key entry.
 .It Fl s
@@ -131,27 +143,7 @@ defeats the purpose of using
 .Dq secure
 mode.
 .It Fl x
-Displays one-time password in hexadecimal instead of ASCII.
-.It Fl a Ar auth-type
-Specify an authentication type such as
-.Dq krb5 ,
-.Dq passwd
-or
-.Dq skey .
-.It Fl n Ar count
-Start the
-.Nm skey
-sequence at
-.Ar count
-(default is 100).
-.It Fl md4
-Selects MD4 as the hash algorithm.
-.It Fl md5
-Selects MD5 as the hash algorithm.
-.It Fl sha1
-Selects SHA (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
-.It Fl rmd160
-Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
+Displays one-time passwords in hexadecimal instead of ASCII.
 .It Ar user
 The username to be changed/added.
 By default the current user is operated on.
@@ -169,16 +161,16 @@ $ skeyinit
 Reminder - Only use this method if you are directly connected
            or have an encrypted channel.  If you are using telnet,
            hit return now and use skeyinit -s.
-Password: <enter your regular password here>
+Password: \*(Ltenter your regular password here\*(Gt
 [Updating user with md5]
 Old seed: [md5] host12377
-Enter new secret passphrase: <type a new passphrase here>
-Again secret passphrase: <again>
+Enter new secret passphrase: \*(Lttype a new passphrase here\*(Gt
+Again secret passphrase: \*(Ltagain\*(Gt
 ID user skey is otp-md5 100 host12378
 Next login password: CITE BREW IDLE CAIN ROD DOME
 $ otp-md5 -n 3 100 host12378
 Reminder - Do not use this program while logged in via telnet.
-Enter secret passphrase: <type your passphrase here>
+Enter secret passphrase: \*(Lttype your passphrase here\*(Gt
 98: WERE TUG EDDY GEAR GILL TEE
 99: NEAR HA TILT FIN LONG SNOW
 100: CITE BREW IDLE CAIN ROD DOME
