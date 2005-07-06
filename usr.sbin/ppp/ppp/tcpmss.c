@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: tcpmss.c,v 1.6 2002/06/15 08:02:01 brian Exp $
+ * $OpenBSD: tcpmss.c,v 1.7 2005/07/06 03:40:13 brad Exp $
  */
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@
  * We are in a liberal position about MSS
  * (RFC 879, section 7).
  */
-#define MAXMSS(mtu) (mtu - sizeof(struct ip) - sizeof(struct tcphdr))
+#define MAXMSS(mtu) ((mtu) - sizeof(struct ip) - sizeof(struct tcphdr) - 12)
 
 
 /*-
