@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.28 2005/07/05 16:14:47 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.29 2005/07/06 09:52:16 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -47,9 +47,9 @@ const char *cvs_statstr[] = {
 	"Unknown",
 	"Up-to-date",
 	"Locally Modified",
-	"Added",
-	"Removed",
-	"Conflict",
+	"Locally Added",
+	"Locally Removed",
+	"Unresolved Conflict",
 	"Patched",
 	"Needs Checkout",
 };
