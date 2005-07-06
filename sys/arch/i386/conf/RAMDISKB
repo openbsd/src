@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.82 2005/05/27 02:08:14 martin Exp $
+#	$OpenBSD: RAMDISKB,v 1.83 2005/07/06 01:52:13 mickey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -145,6 +145,8 @@ scsibus* at ami?
 cac*	at pci?			# Compaq Smart ARRAY RAID controllers
 cac*	at eisa?
 scsibus* at cac?
+#ciss*	at pci?			# Compaq Smart ARRAY 5* Controllers
+#scsibus* at ciss?
 twe*	at pci?			# 3ware Escalade RAID controllers
 scsibus* at twe?
 iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2005/05/27 15:54:58 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2005/07/06 01:52:13 mickey Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -135,6 +135,8 @@ ami*	at pci?			# AMI MegaRAID controllers
 scsibus* at ami?
 #cac*	at pci?			# Compaq Smart ARRAY RAID controllers
 #scsibus* at cac?
+#ciss*	at pci?			# Compaq Smart ARRAY 5* Controllers
+#scsibus* at ciss?
 #twe*	at pci?			# 3ware Escalade RAID controllers
 #scsibus* at twe?
 #iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.346 2005/07/03 20:13:59 drahn Exp $
+#	$OpenBSD: files,v 1.347 2005/07/06 01:52:13 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -162,6 +162,10 @@ file	dev/ic/lsi64854.c		lsi64854
 # Compaq Smart ARRAY controllers
 device	cac: scsi
 file	dev/ic/cac.c			cac
+
+# Compaq Smart ARRAY 5* controllers
+device	ciss: scsi
+file	dev/ic/ciss.c			ciss
 
 # AMI MegaRAID controllers
 device	ami: scsi
