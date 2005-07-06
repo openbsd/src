@@ -682,6 +682,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cacvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cd1190reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cd1400reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cissreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cissvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/comreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/comvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cs4231reg.ph

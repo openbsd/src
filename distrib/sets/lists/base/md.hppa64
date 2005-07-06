@@ -786,6 +786,8 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/cacvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/cd1190reg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/cd1400reg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/cissreg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/cissvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/comreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/comvar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/ic/cs4231reg.ph
