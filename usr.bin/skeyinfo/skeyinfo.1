@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyinfo.1,v 1.7 2003/06/10 09:12:11 jmc Exp $
+.\" $OpenBSD: skeyinfo.1,v 1.8 2005/07/06 21:55:48 jmc Exp $
 .\"
 .Dd May 16, 2002
 .Dt SKEYINFO 1
@@ -26,7 +26,7 @@ Print the hash algorithm as well.
 directory containing user entries for S/Key
 .El
 .Sh EXAMPLES
-% skey -n <number of passwords to print> `skeyinfo` | lpr
+$ skey -n \*(Ltnumber of passwords to print\*(Gt `skeyinfo` \*(Ba lpr
 .Pp
 This would print out a list of S/Key passwords for use over
 an untrusted network (perhaps for use at a conference).
