@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.45 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.46 2005/07/06 02:22:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -115,7 +115,6 @@ int vr_encap(struct vr_softc *, struct vr_chain *, struct mbuf *);
 void vr_rxeof(struct vr_softc *);
 void vr_rxeoc(struct vr_softc *);
 void vr_txeof(struct vr_softc *);
-void vr_txeoc(struct vr_softc *);
 void vr_tick(void *);
 int vr_intr(void *);
 void vr_start(struct ifnet *);
@@ -879,8 +878,7 @@ vr_list_tx_init(sc)
 				&cd->vr_tx_chain[i + 1];
 	}
 
-	cd->vr_tx_free = &cd->vr_tx_chain[0];
-	cd->vr_tx_tail = cd->vr_tx_head = NULL;
+	cd->vr_tx_cons = cd->vr_tx_prod = &cd->vr_tx_chain[0];
 
 	return (0);
 }
@@ -964,6 +962,7 @@ void
 vr_rxeof(sc)
 	struct vr_softc		*sc;
 {
+	struct mbuf		*m0;
 	struct ifnet		*ifp;
 	struct vr_chain_onefrag	*cur_rx;
 	int			total_len = 0;
@@ -972,7 +971,6 @@ vr_rxeof(sc)
 	ifp = &sc->arpcom.ac_if;
 
 	for (;;) {
-		struct mbuf		*m0 = NULL;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 		    0, sc->sc_listmap->dm_mapsize,
@@ -981,6 +979,7 @@ vr_rxeof(sc)
 		if (rxstat & VR_RXSTAT_OWN)
 			break;
 
+		m0 = NULL;
 		cur_rx = sc->vr_cdata.vr_rx_head;
 		sc->vr_cdata.vr_rx_head = cur_rx->vr_nextdesc;
 
@@ -1127,22 +1126,15 @@ vr_txeof(sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	/* Reset the timeout timer; if_txeoc will clear it. */
-	ifp->if_timer = 5;
-
-	/* Sanity check. */
-	if (sc->vr_cdata.vr_tx_head == NULL)
-		return;
-
 	/*
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been transmitted.
 	 */
-	while(sc->vr_cdata.vr_tx_head->vr_mbuf != NULL) {
+	cur_tx = sc->vr_cdata.vr_tx_cons;
+	while(cur_tx->vr_mbuf != NULL) {
 		u_int32_t		txstat;
 		int			i;
 
-		cur_tx = sc->vr_cdata.vr_tx_head;
 		txstat = letoh32(cur_tx->vr_ptr->vr_status);
 
 		if ((txstat & VR_TXSTAT_ABRT) ||
@@ -1178,41 +1170,17 @@ vr_txeof(sc)
 		ifp->if_opackets++;
 		if (cur_tx->vr_map != NULL && cur_tx->vr_map->dm_segs > 0)
 			bus_dmamap_unload(sc->sc_dmat, cur_tx->vr_map);
-		if (cur_tx->vr_mbuf != NULL) {
-			m_freem(cur_tx->vr_mbuf);
-			cur_tx->vr_mbuf = NULL;
-		}
 
-		if (sc->vr_cdata.vr_tx_head == sc->vr_cdata.vr_tx_tail) {
-			sc->vr_cdata.vr_tx_head = NULL;
-			sc->vr_cdata.vr_tx_tail = NULL;
-			break;
-		}
-
-		sc->vr_cdata.vr_tx_head = cur_tx->vr_nextdesc;
-	}
-
-	return;
-}
-
-/*
- * TX 'end of channel' interrupt handler.
- */
-void
-vr_txeoc(sc)
-	struct vr_softc		*sc;
-{
-	struct ifnet		*ifp;
-
-	ifp = &sc->arpcom.ac_if;
-
-	if (sc->vr_cdata.vr_tx_head == NULL) {
+		m_freem(cur_tx->vr_mbuf);
+		cur_tx->vr_mbuf = NULL;
 		ifp->if_flags &= ~IFF_OACTIVE;
-		sc->vr_cdata.vr_tx_tail = NULL;
-		ifp->if_timer = 0;
+
+		cur_tx = cur_tx->vr_nextdesc;
 	}
 
-	return;
+	sc->vr_cdata.vr_tx_cons = cur_tx;
+	if (cur_tx->vr_mbuf == NULL)
+ 		ifp->if_timer = 0;
 }
 
 void
@@ -1303,14 +1271,13 @@ vr_intr(arg)
 			    (status & VR_ISR_TX_ABRT2) ||
 			    (status & VR_ISR_TX_ABRT)) {
 				ifp->if_oerrors++;
-				if (sc->vr_cdata.vr_tx_head != NULL) {
+				if (sc->vr_cdata.vr_tx_cons->vr_mbuf != NULL) {
 					VR_SETBIT16(sc, VR_COMMAND,
 					    VR_CMD_TX_ON);
 					VR_SETBIT16(sc, VR_COMMAND,
 					    VR_CMD_TX_GO); 
 				}
-			} else
-				vr_txeoc(sc);
+			}
 		}
 	}
 
@@ -1401,30 +1368,16 @@ vr_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct vr_softc		*sc;
-	struct mbuf		*m_head = NULL;
-	struct vr_chain		*cur_tx = NULL, *start_tx, *prev_tx;
+	struct mbuf		*m_head;
+	struct vr_chain		*cur_tx;
 
 	sc = ifp->if_softc;
 
-	/*
-	 * Check for an available queue slot. If there are none,
-	 * punt.
-	 */
-	if (sc->vr_cdata.vr_tx_free->vr_mbuf != NULL) {
-		return;
-	}
-
-	start_tx = sc->vr_cdata.vr_tx_free;
-
-	while(sc->vr_cdata.vr_tx_free->vr_mbuf == NULL) {
+	cur_tx = sc->vr_cdata.vr_tx_prod;
+	while (cur_tx->vr_mbuf == NULL) {
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
-
-		/* Pick a descriptor off the free list. */
-		prev_tx = cur_tx;
-		cur_tx = sc->vr_cdata.vr_tx_free;
-		sc->vr_cdata.vr_tx_free = cur_tx->vr_nextdesc;
 
 		/* Pack the data into the descriptor. */
 		if (vr_encap(sc, cur_tx, m_head)) {
@@ -1434,13 +1387,10 @@ vr_start(ifp)
 			} else {
 				IF_PREPEND(&ifp->if_snd, m_head);
 			}
-			sc->vr_cdata.vr_tx_free = cur_tx;
-			cur_tx = prev_tx;
 			break;
 		}
 
-		if (cur_tx != start_tx)
-			VR_TXOWN(cur_tx) = htole32(VR_TXSTAT_OWN);
+		VR_TXOWN(cur_tx) = htole32(VR_TXSTAT_OWN);
 
 #if NBPFILTER > 0
 		/*
@@ -1450,31 +1400,24 @@ vr_start(ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, cur_tx->vr_mbuf);
 #endif
-		VR_TXOWN(cur_tx) = htole32(VR_TXSTAT_OWN);
+		cur_tx = cur_tx->vr_nextdesc;
 	}
+	if (cur_tx != sc->vr_cdata.vr_tx_prod || cur_tx->vr_mbuf != NULL) {
+		sc->vr_cdata.vr_tx_prod = cur_tx;
 
-	/*
-	 * If there are no frames queued, bail.
-	 */
-	if (cur_tx == NULL)
-		return;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
+		    sc->sc_listmap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
-	sc->vr_cdata.vr_tx_tail = cur_tx;
+		/* Tell the chip to start transmitting. */
+		VR_SETBIT16(sc, VR_COMMAND, /*VR_CMD_TX_ON|*/VR_CMD_TX_GO);
 
-	if (sc->vr_cdata.vr_tx_head == NULL)
-		sc->vr_cdata.vr_tx_head = start_tx;
+		/* Set a timeout in case the chip goes out to lunch. */
+		ifp->if_timer = 5;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
-	    sc->sc_listmap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-
-	/* Tell the chip to start transmitting. */
-	VR_SETBIT16(sc, VR_COMMAND, /*VR_CMD_TX_ON|*/VR_CMD_TX_GO);
-
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
+		if (cur_tx->vr_mbuf != NULL)
+			ifp->if_flags |= IFF_OACTIVE;
+	}
 }
 
 void
@@ -1730,6 +1673,8 @@ vr_stop(sc)
 	if (timeout_pending(&sc->sc_to))
 		timeout_del(&sc->sc_to);
 
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_STOP);
 	VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_RX_ON|VR_CMD_TX_ON));
 	CSR_WRITE_2(sc, VR_IMR, 0x0000);
@@ -1778,8 +1723,6 @@ vr_stop(sc)
 
 	bzero((char *)&sc->vr_ldata->vr_tx_list,
 		sizeof(sc->vr_ldata->vr_tx_list));
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	return;
 }
