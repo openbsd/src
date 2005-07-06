@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.50 2005/07/06 08:15:00 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.51 2005/07/06 08:22:07 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -181,7 +181,7 @@ from the user.
 When
 .Nm
 is awaiting commands, the prompt
-.Dq ftp>
+.Dq ftp\*(Gt
 is provided to the user.
 The following commands are recognized
 by
@@ -291,7 +291,7 @@ When debugging is on,
 .Nm
 prints each command sent to the remote machine,
 preceded by the string
-.Ql --> .
+.Ql --\*(Gt .
 .It Ic delete Ar remote-file
 Delete the file
 .Ar remote-file
@@ -462,6 +462,10 @@ invoked with the next
 command), and remain defined until a
 .Ic close
 command is executed.
+To invoke a macro,
+use the following syntax:
+.Pf $ Ar macro-name .
+.Pp
 The macro processor interprets
 .Ql $
 and
@@ -1185,7 +1189,7 @@ processing.
 If the remote server does not support the
 .Dv ABOR
 command, an
-.Ql ftp>
+.Ql ftp\*(Gt
 prompt will not appear until the remote server has completed
 sending the requested file.
 .Pp
