@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.886 2005/07/03 02:08:24 brad Exp 
+ *	OpenBSD: pcidevs,v 1.887 2005/07/06 00:44:25 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1642,6 +1642,7 @@
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
+#define	PCI_PRODUCT_INTERGRAPH_INTENSE3D	0x00eb		/* Intense 3D */
 #define	PCI_PRODUCT_INTERGRAPH_EXPERT3D	0x07a0		/* Expert3D */
 
 /* Interphase products */
