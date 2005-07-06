@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.51 2005/07/06 08:22:07 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.52 2005/07/06 10:35:36 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -463,8 +463,9 @@ command), and remain defined until a
 .Ic close
 command is executed.
 To invoke a macro,
-use the following syntax:
-.Pf $ Ar macro-name .
+use the
+.Ic $
+command (see above).
 .Pp
 The macro processor interprets
 .Ql $
