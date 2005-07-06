@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.12 2005/07/06 05:24:30 tedu Exp $	*/
+/*	$OpenBSD: cal.c,v 1.13 2005/07/06 05:31:08 tedu Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -34,16 +34,13 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cal.c,v 1.12 2005/07/06 05:24:30 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: cal.c,v 1.13 2005/07/06 05:31:08 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,12 +64,12 @@ static char rcsid[] = "$OpenBSD: cal.c,v 1.12 2005/07/06 05:24:30 tedu Exp $";
 #define	MAXDAYS			42		/* max slots in a month array */
 #define	SPACE			-1		/* used in day array */
 
-static int days_in_month[2][13] = {
+static const int days_in_month[2][13] = {
 	{0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 	{0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 };
 
-int sep1752[MAXDAYS] = {
+const int sep1752[MAXDAYS] = {
 	SPACE,	SPACE,	1,	2,	14,	15,	16,
 	17,	18,	19,	20,	21,	22,	23,
 	24,	25,	26,	27,	28,	29,	30,
@@ -95,13 +92,13 @@ int sep1752[MAXDAYS] = {
 	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,	SPACE,
 };
 
-char *month_names[12] = {
+const char *month_names[12] = {
 	"January", "February", "March", "April", "May", "June",
 	"July", "August", "September", "October", "November", "December",
 };
 
-char *day_headings = "Su Mo Tu We Th Fr Sa";
-char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
+const char *day_headings = "Su Mo Tu We Th Fr Sa";
+const char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
 
 /* leap year -- account for gregorian reformation in 1752 */
 #define	leap_year(yr) \
@@ -123,7 +120,7 @@ char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
 int julian;
 
 void	ascii_day(char *, int);
-void	center(char *, int, int);
+void	center(const char *, int, int);
 void	day_array(int, int, int *);
 int	day_in_week(int, int, int);
 int	day_in_year(int, int, int);
@@ -132,6 +129,7 @@ void	monthly(int, int);
 void	trim_trailing_spaces(char *);
 void	usage(void);
 void	yearly(int);
+int	parsemonth(const char *);
 
 int
 main(int argc, char *argv[])
@@ -210,7 +208,7 @@ monthly(int month, int year)
 	char *p, lineout[30];
 
 	day_array(month, year, days);
-	(void) snprintf(lineout, sizeof lineout, "%s %d",
+	(void)snprintf(lineout, sizeof lineout, "%s %d",
 	    month_names[month - 1], year);
 	len = strlen(lineout);
 	(void)printf("%*s%s\n%s\n",
@@ -309,7 +307,7 @@ day_array(int month, int year, int *days)
 
 	if (month == 9 && year == 1752) {
 		memmove(days,
-			julian ? j_sep1752 : sep1752, MAXDAYS * sizeof(int));
+		    julian ? j_sep1752 : sep1752, MAXDAYS * sizeof(int));
 		return;
 	}
 	memmove(days, empty, MAXDAYS * sizeof(int));
@@ -360,7 +358,7 @@ void
 ascii_day(char *p, int day)
 {
 	int display, val;
-	static char *aday[] = {
+	static const char *aday[] = {
 		"",
 		" 1", " 2", " 3", " 4", " 5", " 6", " 7",
 		" 8", " 9", "10", "11", "12", "13", "14",
@@ -411,7 +409,7 @@ trim_trailing_spaces(char *s)
 }
 
 void
-center(char *str, int len, int separate)
+center(const char *str, int len, int separate)
 {
 
 	len -= strlen(str);
