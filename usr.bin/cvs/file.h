@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.21 2005/06/14 15:27:31 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.22 2005/07/06 10:04:55 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -61,14 +61,14 @@ struct cvs_entries;
  * The <cf_cvstat> field gives the file's status with regards to the CVS
  * repository.  The file can be in any one of the CVS_FST_* states.
  */
-#define CVS_FST_UNKNOWN   0
-#define CVS_FST_UPTODATE  1
-#define CVS_FST_MODIFIED  2
-#define CVS_FST_ADDED     3
-#define CVS_FST_REMOVED   4
-#define CVS_FST_CONFLICT  5
+#define CVS_FST_UNKNOWN   0	/* Unknown */
+#define CVS_FST_UPTODATE  1	/* Up-to-date */
+#define CVS_FST_MODIFIED  2	/* Locally Modified */
+#define CVS_FST_ADDED     3	/* Locally Added */
+#define CVS_FST_REMOVED   4	/* Locally Removed */
+#define CVS_FST_CONFLICT  5	/* Unresolved Conflict */
 #define CVS_FST_PATCHED   6
-#define CVS_FST_LOST      7
+#define CVS_FST_LOST      7	/* Needs Checkout */
 
 
 SIMPLEQ_HEAD(cvs_flist, cvs_file);
