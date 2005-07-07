@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.33 2005/07/07 15:10:17 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.34 2005/07/07 15:52:26 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -225,17 +225,26 @@ cvs_status_local(CVSFILE *cf, void *arg)
 		    rcsnum_tostr(cf->cf_lrev, buf, sizeof(buf)));
 	}
 
-	if (len == -1 || len >= (int)sizeof(len))
+	if (len == -1 || len >= (int)sizeof(buf)) {
+		if (rf != NULL)
+			rcs_close(rf);
 		return (CVS_EX_DATA);
+	}
 
 	cvs_printf("   Working revision:\t%s\n", buf);
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		snprintf(buf, sizeof(buf), "%s", "No revision control file\n");
+		len = snprintf(buf, sizeof(buf), "No revision control file\n");
 	} else {
-		snprintf(buf, sizeof(buf), "%s\t%s",
+		len = snprintf(buf, sizeof(buf), "%s\t%s",
 		    rcsnum_tostr(rf->rf_head, numbuf, sizeof(numbuf)),
 		    rcspath);
+	}
+
+	if (len == -1 || len >= (int)sizeof(buf)) {
+		if (rf != NULL)
+			rcs_close(rf);
+		return (CVS_EX_DATA);
 	}
 
 	cvs_printf("   Repository revision:\t%s\n", buf);
