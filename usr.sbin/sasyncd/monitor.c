@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.4 2005/05/26 19:19:51 ho Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.5 2005/07/07 19:29:24 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -175,11 +175,12 @@ int
 monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
     u_int32_t *spdsize)
 {
-	u_int32_t	rbytes;
-	
+	u_int32_t	v;
+	ssize_t		rbytes;
+
 	/* We write a (any) value to the monitor socket to start a snapshot. */
-	rbytes = 0;
-	if (write(m_state.s, &rbytes, sizeof rbytes) < 1)
+	v = 0;
+	if (write(m_state.s, &v, sizeof v) < 1)
 		return -1;
 
 	/* Read SADB data. */
