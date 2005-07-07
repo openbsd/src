@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.13 2005/06/30 19:13:57 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.14 2005/07/07 21:00:07 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -187,6 +187,7 @@ ipsecctl_print_addr(struct ipsec_addr *ipa)
 void
 ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 {
+	static const char *rule[] = {"?", "flow", "tcpmd5"};
 	static const char *direction[] = {"?", "in", "out"};
 	static const char *type[] = {"?", "use", "acquire", "require", "deny",
 	    "bypass", "dontacq"};
@@ -196,7 +197,8 @@ ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 	if (opts & IPSECCTL_OPT_VERBOSE2)
 		printf("@%d ", r->nr);
 
-	printf("flow %s %s", proto[r->proto], direction[r->direction]);
+	printf("%s %s %s", rule[r->type], proto[r->proto],
+	    direction[r->direction]);
 	printf(" from ");
 	ipsecctl_print_addr(r->src);
 	printf(" to ");
