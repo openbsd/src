@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2005/07/07 21:00:08 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2005/07/07 22:00:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -659,12 +659,17 @@ create_rule(u_int8_t dir, struct ipsec_addr *src, struct ipsec_addr *dst,
 	if (r == NULL)
 		err(1, "calloc");
 	
+	r->type = RULE_FLOW;
+
 	if (dir == IPSEC_INOUT)
 		r->direction = IPSEC_OUT;
 	else
 		r->direction = dir;
 
-	r->type = RULE_FLOW;
+	if (r->direction == IPSEC_IN)
+		r->flowtype = TYPE_USE;
+	else
+		r->flowtype = TYPE_REQUIRE;
 
 	r->src = src;
 	r->dst = dst;
@@ -720,10 +725,13 @@ reverse_rule(struct ipsec_rule *rule)
 
 	reverse->type = RULE_FLOW;
 	
-	if (rule->direction == (u_int8_t)IPSEC_OUT)
+	if (rule->direction == (u_int8_t)IPSEC_OUT) {
 		reverse->direction = (u_int8_t)IPSEC_IN;
-	else
+		reverse->flowtype = TYPE_USE;
+	} else {
 		reverse->direction = (u_int8_t)IPSEC_OUT;
+		reverse->flowtype = TYPE_REQUIRE;
+	}
 	
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);

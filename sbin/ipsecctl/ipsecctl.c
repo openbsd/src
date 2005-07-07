@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.15 2005/07/07 21:13:00 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.16 2005/07/07 22:00:36 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -213,7 +213,7 @@ ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 			printf("\n\tdstid %s", r->auth.dstid);
 		if (r->auth.type > 0)
 			printf("\n\t%s", auth[r->auth.type]);
-		printf("\n\ttype %s", type[r->type]);
+		printf("\n\ttype %s", type[r->flowtype]);
 	}
 	printf("\n");
 }

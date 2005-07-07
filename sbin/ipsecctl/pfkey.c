@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.12 2005/07/07 21:13:00 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.13 2005/07/07 22:00:36 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -43,7 +43,7 @@ static u_int32_t sadb_msg_seq = 1;
 
 static int pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t, struct ipsec_addr *,
 		    struct ipsec_addr *, struct ipsec_addr *,
-		    struct ipsec_auth);
+		    struct ipsec_auth, u_int8_t);
 static int	pfkey_reply(int);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
 int		pfkey_ipsec_flush(void);
@@ -53,7 +53,7 @@ int		pfkey_init(void);
 static int
 pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
     struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_addr *peer,
-    struct ipsec_auth auth)
+    struct ipsec_auth auth, u_int8_t flowtype)
 {
 	struct sadb_msg	 smsg;
 	struct sadb_address sa_src, sa_dst, sa_peer, sa_smask, sa_dmask;
@@ -128,10 +128,17 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	sa_flowtype.sadb_protocol_len = sizeof(sa_flowtype) / 8;
 	sa_flowtype.sadb_protocol_direction = direction;
 
-	if (direction == IPSP_DIRECTION_IN)
+	switch (flowtype) {
+	case TYPE_USE:
 		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_USE;
-	else
+		break;
+	case TYPE_REQUIRE:
 		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
+		break;
+	default:
+		warnx("unsupported flowtype %d", flowtype);
+		return -1;
+	}
 
 	bzero(&sa_protocol, sizeof(sa_protocol));
 	sa_protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
@@ -599,12 +606,12 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 	switch (action) {
 	case PFK_ACTION_ADD:
 		ret = pfkey_flow(fd, satype, SADB_X_ADDFLOW, direction, r->src,
-		    r->dst, r->peer, r->auth);
+		    r->dst, r->peer, r->auth, r->flowtype);
 		break;
 	case PFK_ACTION_DELETE:
 		/* No peer for flow deletion. */
 		ret = pfkey_flow(fd, satype, SADB_X_DELFLOW, direction, r->src,
-		    r->dst, NULL, r->auth);
+		    r->dst, NULL, r->auth, r->flowtype);
 		break;
 	default:
 		return -1;
