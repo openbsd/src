@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.157 2005/07/04 00:37:21 deraadt Exp $
+$OpenBSD: usbdevs,v 1.158 2005/07/07 02:11:20 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -931,6 +931,7 @@ product GENESYS GL641USB	0x0700	GL641USB CompactFlash
 /* GIGABYTE products */
 product GIGABYTE GNBR402W	0x8002	GN-BR402W
 product GIGABYTE GNWLBM101	0x8003	GN-WLBM101
+product GIGABYTE GNWBKG		0x8007	GN-WBKG
 
 /* Gigaset products */
 product GIGASET WLAN		0x0701	WLAN
