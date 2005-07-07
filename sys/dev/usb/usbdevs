@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.158 2005/07/07 02:11:20 jsg Exp $
+$OpenBSD: usbdevs,v 1.159 2005/07/07 06:35:13 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -188,7 +188,7 @@ vendor DIGI		0x05c5	Digi International
 vendor QUALCOMM		0x05c6	Qualcomm
 vendor QTRONIX		0x05c7	Qtronix
 vendor ELSA		0x05cc	ELSA
-vendor BRAINBOXES	0x05d1	Brainboxes Limited
+vendor BRAINBOXES	0x05d1	Brainboxes
 vendor ULTIMA		0x05d8	Ultima
 vendor AXIOHM		0x05d9	Axiohm Transaction Solutions
 vendor MICROTEK		0x05da	Microtek
@@ -262,7 +262,7 @@ vendor JENOPTIK		0x0784  Jenoptik
 vendor BRIMAX		0x078e	Brimax
 vendor AXIS		0x0792	Axis Communications
 vendor ABL		0x0794	ABL Electronics
-vendor SUNCOMM		0x079c	Sun Communications, Inc.
+vendor SUNCOMM		0x079c	Sun Communications
 vendor ALFADATA		0x079d	Alfadata Computer
 vendor NATIONALTECH	0x07a2	National Technical Systems
 vendor ONNTO		0x07a3	Onnto
@@ -359,7 +359,7 @@ vendor TEKRAM		0x0b3b	Tekram Technology
 vendor HAL		0x0b41	HAL Corporation
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
-vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
+vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics
 vendor ASIX		0x0b95	ASIX Electronics
 vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
@@ -378,7 +378,7 @@ vendor CONCEPTRONIC	0x0d8e	Conceptronic
 vendor MSI		0x0db0	Micro Star International
 vendor ELCON		0x0db7	ELCON Systemtechnik
 vendor HAWKING		0x0e66	Hawking
-vendor OTI		0x0ea0	Ours Technology Inc.
+vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf  Pilotech
 vendor AIRPRIME		0x0f3d	Airprime
 vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
@@ -388,7 +388,7 @@ vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
-vendor ANALOG		0x1110	Analog Devices, Inc.
+vendor ANALOG		0x1110	Analog Devices
 vendor JRC		0x1145	Japan Radio Company
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
@@ -1697,7 +1697,7 @@ product SONY MSC		0x0032	Sony MSC Memorystick Slot
 product SONY CLIE_35		0x0038	Clie v3.5
 product SONY PS2KEYBOARD	0x005c	PlayStation2 keyboard
 product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
-product SONY PS2MOUSE		0x0061	PlayStatoin2 mouse
+product SONY PS2MOUSE		0x0061	PlayStation2 mouse
 product SONY CLIE_40		0x0066	Clie v4.0
 product SONY CLIE_40_MS		0x006d	Clie v4.0 Memory Stick slot
 product SONY CLIE_S360		0x0095	Sony Clie s360
