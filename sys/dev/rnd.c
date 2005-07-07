@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.77 2005/05/27 16:33:27 ho Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.78 2005/07/07 00:11:24 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -889,24 +889,28 @@ extract_entropy(buf, nbytes)
 {
 	struct random_bucket *rs = &random_state;
 	u_char buffer[16];
+	MD5_CTX tmp;
+	u_int i;
+	int s;
 
 	add_timer_randomness(nbytes);
 
 	while (nbytes) {
-		MD5_CTX tmp;
-		int i, s;
+		if (nbytes < sizeof(buffer) / 2)
+			i = nbytes;
+		else
+			i = sizeof(buffer) / 2;
 
 		/* Hash the pool to get the output */
 		MD5Init(&tmp);
 		s = splhigh();
 		MD5Update(&tmp, (u_int8_t*)rs->pool, sizeof(rs->pool));
-		if (rs->entropy_count / 8 > nbytes)
-			rs->entropy_count -= nbytes * 8;
+		if (rs->entropy_count / 8 > i)
+			rs->entropy_count -= i * 8;
 		else
 			rs->entropy_count = 0;
 		splx(s);
 		MD5Final(buffer, &tmp);
-		bzero(&tmp, sizeof(tmp));
 
 		/*
 		 * In case the hash function has some recognizable
@@ -922,10 +926,7 @@ extract_entropy(buf, nbytes)
 		buffer[7] ^= buffer[ 8];
 
 		/* Copy data to destination buffer */
-		if (nbytes < sizeof(buffer) / 2)
-			bcopy(buffer, buf, i = nbytes);
-		else
-			bcopy(buffer, buf, i = sizeof(buffer) / 2);
+		bcopy(buffer, buf, i);
 		nbytes -= i;
 		buf += i;
 
@@ -935,6 +936,7 @@ extract_entropy(buf, nbytes)
 	}
 
 	/* Wipe data from memory */
+	bzero(&tmp, sizeof(tmp));
 	bzero(&buffer, sizeof(buffer));
 }
 
