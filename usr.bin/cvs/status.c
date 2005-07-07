@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.30 2005/07/07 06:52:14 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.31 2005/07/07 07:37:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,7 +42,7 @@
 #define CVS_STATUS_SEP \
  "==================================================================="
 
-
+/* Keep this sorted as it is now. See file.h for status values. */
 const char *cvs_statstr[] = {
 	"Unknown",
 	"Up-to-date",
