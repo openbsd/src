@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.61 2005/07/01 04:09:19 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.62 2005/07/07 15:14:56 jcs Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -524,6 +524,7 @@ atu_start_ibss(struct atu_softc *sc)
 int
 atu_start_scan(struct atu_softc *sc)
 {
+	struct ieee80211com		*ic = &sc->sc_ic;
 	struct atu_cmd_do_scan		Scan;
 	usbd_status			err;
 	int				Cnt;
@@ -539,8 +540,8 @@ atu_start_scan(struct atu_softc *sc)
 		Scan.BSSID[Cnt] = 0xff;
 
 	memset(Scan.SSID, 0x00, sizeof(Scan.SSID));
-	memcpy(Scan.SSID, sc->atu_ssid, sc->atu_ssidlen);
-	Scan.SSID_Len = sc->atu_ssidlen;
+	memcpy(Scan.SSID, ic->ic_des_essid, ic->ic_des_esslen);
+	Scan.SSID_Len = ic->ic_des_esslen;
 
 	/* default values for scan */
 	Scan.ScanType = ATU_SCAN_ACTIVE;
