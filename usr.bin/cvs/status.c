@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.29 2005/07/06 09:52:16 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.30 2005/07/07 06:52:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -177,7 +177,7 @@ static int
 cvs_status_local(CVSFILE *cf, void *arg)
 {
 	int len;
-	char buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char buf[MAXNAMLEN], fpath[MAXPATHLEN], numbuf[64], rcspath[MAXPATHLEN];
 	char *repo;
 	RCSFILE *rf;
 	struct cvsroot *root;
@@ -190,11 +190,6 @@ cvs_status_local(CVSFILE *cf, void *arg)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		cvs_log(LP_WARN, "I know nothing about %s", fpath);
-		return (0);
-	}
-
 	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 	    root->cr_dir, repo, CVS_FILE_NAME(cf), RCS_FILE_EXT);
 	if (len == -1 || len >= (int)sizeof(rcspath)) {
@@ -203,12 +198,14 @@ cvs_status_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
-	rf = rcs_open(rcspath, RCS_READ);
-	if (rf == NULL)
-		return (CVS_EX_DATA);
+	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
+		rf = rcs_open(rcspath, RCS_READ);
+		if (rf == NULL)
+			return (CVS_EX_DATA);
+	}
 
 	buf[0] = '\0';
-	if (cf->cf_cvstat == CVS_FST_LOST)
+	if (cf->cf_cvstat == CVS_FST_LOST || cf->cf_cvstat == CVS_FST_UNKNOWN)
 		strlcpy(buf, "no file ", sizeof(buf));
 	strlcat(buf, cf->cf_name, sizeof(buf));
 
@@ -223,8 +220,21 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	}
 
 	cvs_printf("   Working revision:\t%s\n", buf);
-	rcsnum_tostr(rf->rf_head, buf, sizeof(buf));
-	cvs_printf("   Repository revision:\t%s\t%s\n", buf, rcspath);
+
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+		snprintf(buf, sizeof(buf), "%s", "No revision control file\n");
+	} else {
+		snprintf(buf, sizeof(buf), "%s\t%s",
+		    rcsnum_tostr(rf->rf_head, numbuf, sizeof(numbuf)),
+		    rcspath);
+	}
+
+	cvs_printf("   Repository revision:\t%s\n", buf);
+
+	/* If the file is unknown, no other output is needed after this. */
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+		return (0);
+
 	cvs_printf("   Sticky Tag:\t\t%s\n",
 	    cf->cf_tag == NULL ? "(none)" : cf->cf_tag);
 	cvs_printf("   Sticky Date:\t\t%s\n", "(none)");
