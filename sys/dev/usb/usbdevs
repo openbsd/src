@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.159 2005/07/07 06:35:13 deraadt Exp $
+$OpenBSD: usbdevs,v 1.160 2005/07/07 08:25:05 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -255,6 +255,7 @@ vendor EICON		0x0734	Eicon Networks
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
+vendor SURECOM		0x0769	Surecom Technology
 vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
 vendor SANDISK		0x0781	SanDisk
@@ -381,6 +382,7 @@ vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf  Pilotech
 vendor AIRPRIME		0x0f3d	Airprime
+vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
 vendor QUALCOMM2	0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
@@ -430,6 +432,7 @@ vendor IRIVER		0x4102	iRiver
 vendor DELL		0x413c	Dell
 vendor AVERATEC		0x50c2	Averatec
 vendor ONSPEC2		0x55aa	OnSpec
+vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
 vendor SITECOM2		0x9016	Sitecom
@@ -610,7 +613,8 @@ product ASKEY VOYAGER1010	0x0821	Voyager 1010
 product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
 
 /* ASUS products */
-product ASUS RT2570		0x1707	RT2570
+product ASUS RT2570		0x1706	RT2570
+product ASUS RT2570_2		0x1707	RT2570
 
 /* ASUSTeK Computer products */
 product ASUSTEK WL140		0x3300	WL-140
@@ -956,6 +960,7 @@ product GUDE DCF		0xdcf7	Expert mouseCLOCK USB
 
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
+product GUILLEMOT HWGUSB254	0xe000	HWGUSB2-54 WLAN
 
 /* Hagiwara products */
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia
@@ -1270,7 +1275,9 @@ product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G wlan
 product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
 product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
+product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
 product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
+product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -1278,6 +1285,9 @@ product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 /* Micro Star International products */
 product MSI WLAN		0x1020	WLAN
 product MSI BLUETOOTH		0x1967	Bluetooth
+product MSI RT2570		0x6861	RT2570
+product MSI RT2570_2		0x6865	RT2570
+product MSI RT2570_3		0x6869	RT2570
 
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
@@ -1555,6 +1565,7 @@ product	RAINBOW IKEY2000	0x1200	i-Key 2000
 /* Ralink Technology products */
 product RALINK RT2570		0x1706	RT2570
 product RALINK RT2570_2		0x2570	RT2570
+product RALINK RT2570_3		0x9020	RT2570
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
@@ -1742,7 +1753,8 @@ product DIAMOND2 RIO600USB	0x5001	Rio 600
 product DIAMOND2 RIO800USB	0x5002	Rio 800
 product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
-/* Surecom products */
+/* Surecom Technology products */
+product SURECOM RT2570		0x11f3	RT2570
 product ACERCM EP1427X2		0x0893	EP-1427X-2 Ethernet
 
 /* Susteen, Inc. products */
@@ -1841,6 +1853,9 @@ product VISIONEER 8600		0x0331	OneTouch 8600
 /* Vivitar products */
 product VIVITAR DSC350		0x0003	DSC350
 
+/* VTech products */
+product VTECH RT2570		0x3012	RT2570
+
 /* Option products */
 product OPTION VODAFONEMC3G	0x5000	Vodafone Mobile Connect 3G
 product OPTION GT3GFUSION	0x6000	GlobeTrotter 3G FUSION
@@ -1874,6 +1889,9 @@ product YANO U640MO		0x0101	U640MO-03
 product ZCOM M4Y750		0x0001	M4Y-750
 product ZCOM XI725		0x0002	XI-725/726
 product ZCOM XI735		0x0005	XI-735
+
+/* Zinwell products */
+product ZINWELL RT2570		0x0260	RT2570
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax Modem
