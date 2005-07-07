@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.16 2005/06/30 04:02:52 marco Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.17 2005/07/07 16:40:05 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -491,5 +491,5 @@ pci_intr_disestablish(pc, cookie)
 	DPRINTF(SPDB_INTR, ("pci_intr_disestablish: cookie %p\n", cookie));
 
 	/* XXX */
-	panic("can't disestablish PCI interrupts yet");
+	printf("can't disestablish PCI interrupts yet\n");
 }
