@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.32 2005/07/07 14:08:41 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.33 2005/07/07 15:10:17 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,6 +53,8 @@ const char *cvs_statstr[] = {
 	"Patched",
 	"Needs Checkout",
 };
+
+extern int verbosity;
 
 
 static int cvs_status_init      (struct cvs_cmd *, int, char **, int *);
@@ -182,8 +184,11 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	RCSFILE *rf;
 	struct cvsroot *root;
 
-	if (cf->cf_type == DT_DIR)
+	if (cf->cf_type == DT_DIR) {
+		if (verbosity > 1)
+			cvs_log(LP_INFO, "Examining %s", cf->cf_name);
 		return (0);
+	}
 
 	root = CVS_DIR_ROOT(cf);
 	repo = CVS_DIR_REPO(cf);
