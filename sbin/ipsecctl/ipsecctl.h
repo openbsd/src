@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.8 2005/07/07 21:00:08 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.9 2005/07/07 21:13:00 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -67,6 +67,8 @@ struct ipsec_auth {
 
 /* Complete state of one rule. */
 struct ipsec_rule {
+	u_int8_t	 type;
+
 	struct ipsec_addr *src;
 	struct ipsec_addr *dst;
 	struct ipsec_addr *peer;
@@ -74,7 +76,7 @@ struct ipsec_rule {
 
 	u_int8_t	 proto;
 	u_int8_t	 direction;
-	u_int8_t	 type;
+	u_int8_t	 flowtype;
 	u_int32_t	 nr;
 
 	TAILQ_ENTRY(ipsec_rule) entries;

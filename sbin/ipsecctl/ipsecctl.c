@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.14 2005/07/07 21:00:07 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.15 2005/07/07 21:13:00 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -266,6 +266,7 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 		if (rule == NULL)
 			err(1, "malloc");
 		rule->nr = ipsec->rule_nr++;
+		rule->type = RULE_FLOW;
 
 		if (pfkey_parse(msg, rule))
 			errx(1, "failed to parse pfkey message");

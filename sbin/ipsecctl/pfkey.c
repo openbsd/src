@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.11 2005/07/07 20:58:28 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.12 2005/07/07 21:13:00 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -442,25 +442,25 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			}
 			switch (sproto->sadb_protocol_proto) {
 			case SADB_X_FLOW_TYPE_USE:
-				rule->type = TYPE_USE;
+				rule->flowtype = TYPE_USE;
 				break;
 			case SADB_X_FLOW_TYPE_ACQUIRE:
-				rule->type = TYPE_ACQUIRE;
+				rule->flowtype = TYPE_ACQUIRE;
 				break;
 			case SADB_X_FLOW_TYPE_REQUIRE:
-				rule->type = TYPE_REQUIRE;
+				rule->flowtype = TYPE_REQUIRE;
 				break;
 			case SADB_X_FLOW_TYPE_DENY:
-				rule->type = TYPE_DENY;
+				rule->flowtype = TYPE_DENY;
 				break;
 			case SADB_X_FLOW_TYPE_BYPASS:
-				rule->type = TYPE_BYPASS;
+				rule->flowtype = TYPE_BYPASS;
 				break;
 			case SADB_X_FLOW_TYPE_DONTACQ:
-				rule->type = TYPE_DONTACQ;
+				rule->flowtype = TYPE_DONTACQ;
 				break;
 			default:
-				rule->type = TYPE_UNKNOWN;
+				rule->flowtype = TYPE_UNKNOWN;
 				break;
 			}
 			break;
