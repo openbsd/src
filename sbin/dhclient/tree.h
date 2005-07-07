@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.5 2004/05/06 22:29:15 deraadt Exp $	*/
+/*	$OpenBSD: tree.h,v 1.6 2005/07/07 13:34:48 krw Exp $	*/
 
 /* Definitions for address trees... */
 
@@ -48,8 +48,6 @@ typedef struct _pair {
 struct tree_cache {
 	unsigned char *value;
 	int len;
-	int buf_size;
-	time_t timeout;
 };
 
 struct universe {

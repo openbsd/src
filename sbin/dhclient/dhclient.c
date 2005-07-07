@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.68 2005/05/29 08:46:10 marius Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.69 2005/07/07 13:33:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1369,17 +1369,12 @@ make_discover(struct interface_info *ip, struct client_lease *lease)
 	options[i] = &option_elements[i];
 	options[i]->value = &discover;
 	options[i]->len = sizeof(discover);
-	options[i]->buf_size = sizeof(discover);
-	options[i]->timeout = 0xFFFFFFFF;
 
 	/* Request the options we want */
 	i  = DHO_DHCP_PARAMETER_REQUEST_LIST;
 	options[i] = &option_elements[i];
 	options[i]->value = ip->client->config->requested_options;
 	options[i]->len = ip->client->config->requested_option_count;
-	options[i]->buf_size =
-		ip->client->config->requested_option_count;
-	options[i]->timeout = 0xFFFFFFFF;
 
 	/* If we had an address, try to get it again. */
 	if (lease) {
@@ -1388,8 +1383,6 @@ make_discover(struct interface_info *ip, struct client_lease *lease)
 		options[i] = &option_elements[i];
 		options[i]->value = lease->address.iabuf;
 		options[i]->len = lease->address.len;
-		options[i]->buf_size = lease->address.len;
-		options[i]->timeout = 0xFFFFFFFF;
 	} else
 		ip->client->requested_address.len = 0;
 
@@ -1402,9 +1395,6 @@ make_discover(struct interface_info *ip, struct client_lease *lease)
 			    ip->client->config->send_options[i].data;
 			options[i]->len =
 			    ip->client->config->send_options[i].len;
-			options[i]->buf_size =
-			    ip->client->config->send_options[i].len;
-			options[i]->timeout = 0xFFFFFFFF;
 		}
 
 	/* Set up the option buffer... */
@@ -1450,17 +1440,12 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 	options[i] = &option_elements[i];
 	options[i]->value = &request;
 	options[i]->len = sizeof(request);
-	options[i]->buf_size = sizeof(request);
-	options[i]->timeout = 0xFFFFFFFF;
 
 	/* Request the options we want */
 	i = DHO_DHCP_PARAMETER_REQUEST_LIST;
 	options[i] = &option_elements[i];
 	options[i]->value = ip->client->config->requested_options;
 	options[i]->len = ip->client->config->requested_option_count;
-	options[i]->buf_size =
-		ip->client->config->requested_option_count;
-	options[i]->timeout = 0xFFFFFFFF;
 
 	/* If we are requesting an address that hasn't yet been assigned
 	   to us, use the DHCP Requested Address option. */
@@ -1470,8 +1455,6 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 		options[i] = &option_elements[i];
 		options[i]->value = lease->options[i].data;
 		options[i]->len = lease->options[i].len;
-		options[i]->buf_size = lease->options[i].len;
-		options[i]->timeout = 0xFFFFFFFF;
 	}
 	if (ip->client->state == S_REQUESTING ||
 	    ip->client->state == S_REBOOTING) {
@@ -1480,8 +1463,6 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 		options[i] = &option_elements[i];
 		options[i]->value = lease->address.iabuf;
 		options[i]->len = lease->address.len;
-		options[i]->buf_size = lease->address.len;
-		options[i]->timeout = 0xFFFFFFFF;
 	} else
 		ip->client->requested_address.len = 0;
 
@@ -1494,9 +1475,6 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 			    ip->client->config->send_options[i].data;
 			options[i]->len =
 			    ip->client->config->send_options[i].len;
-			options[i]->buf_size =
-			    ip->client->config->send_options[i].len;
-			options[i]->timeout = 0xFFFFFFFF;
 		}
 
 	/* Set up the option buffer... */
@@ -1553,24 +1531,18 @@ make_decline(struct interface_info *ip, struct client_lease *lease)
 	options[i] = &message_type_tree;
 	options[i]->value = &decline;
 	options[i]->len = sizeof(decline);
-	options[i]->buf_size = sizeof(decline);
-	options[i]->timeout = 0xFFFFFFFF;
 
 	/* Send back the server identifier... */
 	i = DHO_DHCP_SERVER_IDENTIFIER;
 	options[i] = &server_id_tree;
 	options[i]->value = lease->options[i].data;
 	options[i]->len = lease->options[i].len;
-	options[i]->buf_size = lease->options[i].len;
-	options[i]->timeout = 0xFFFFFFFF;
 
 	/* Send back the address we're declining. */
 	i = DHO_DHCP_REQUESTED_ADDRESS;
 	options[i] = &requested_address_tree;
 	options[i]->value = lease->address.iabuf;
 	options[i]->len = lease->address.len;
-	options[i]->buf_size = lease->address.len;
-	options[i]->timeout = 0xFFFFFFFF;
 
 	/* Send the uid if the user supplied one. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
@@ -1578,8 +1550,6 @@ make_decline(struct interface_info *ip, struct client_lease *lease)
 		options[i] = &client_id_tree;
 		options[i]->value = ip->client->config->send_options[i].data;
 		options[i]->len = ip->client->config->send_options[i].len;
-		options[i]->buf_size = ip->client->config->send_options[i].len;
-		options[i]->timeout = 0xFFFFFFFF;
 	}
 
 
