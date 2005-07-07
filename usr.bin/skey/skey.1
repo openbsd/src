@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.1,v 1.27 2005/07/06 21:39:30 jmc Exp $
+.\" $OpenBSD: skey.1,v 1.28 2005/07/07 08:12:22 jmc Exp $
 .\"	@(#)skey.1	1.1 	10/28/93
 .\"
 .Dd October 28, 1993
@@ -73,14 +73,10 @@ Uses
 as the secret passphrase.
 Use of this option is discouraged as
 your secret passphrase could be visible in a process listing.
-.It Fl md4
-Selects MD4 as the hash algorithm.
-.It Fl md5
-Selects MD5 as the hash algorithm.
-.It Fl rmd160
-Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
-.It Fl sha1
-Selects SHA-1 (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
+.It Fl md4 | md5 | rmd160 | sha1
+Selects the hash algorithm:
+MD4, MD5, RMD-160 (160-bit Ripe Message Digest),
+or SHA1 (NIST Secure Hash Algorithm Revision 1).
 .It Fl x
 Causes output to be in hexadecimal instead of ASCII.
 .El
