@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.3 2005/05/13 20:20:21 damien Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.4 2005/07/07 20:16:44 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -1073,6 +1073,9 @@ ueagle_start(struct ifnet *ifp)
 	if (!(sc->vcc.flags & UEAGLE_VCC_ACTIVE))
 		return;
 
+	if (sc->pipeh_tx == NULL)
+		return;
+
 	IFQ_POLL(&ifp->if_snd, m0);
 	if (m0 == NULL)
 		return;
@@ -1348,7 +1351,7 @@ ueagle_init(struct ifnet *ifp)
 	struct ueagle_softc *sc = ifp->if_softc;
 	usbd_interface_handle iface;
 	usbd_status error;
-	int len;
+	size_t len;
 
 	ueagle_stop(ifp, 0);
 
