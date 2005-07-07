@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.92 2005/04/11 20:05:51 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.93 2005/07/07 23:43:04 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -417,6 +417,7 @@ sys_execve(p, v, retval)
 	vm->vm_tsize = btoc(pack.ep_tsize);
 	vm->vm_daddr = (char *)pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
+	vm->vm_dused = 0;
 	vm->vm_ssize = btoc(pack.ep_ssize);
 	vm->vm_maxsaddr = (char *)pack.ep_maxsaddr;
 	vm->vm_minsaddr = (char *)pack.ep_minsaddr;
