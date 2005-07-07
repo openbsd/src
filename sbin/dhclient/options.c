@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.16 2005/07/07 16:24:24 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.17 2005/07/07 20:03:40 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -196,7 +196,7 @@ parse_option_buffer(struct packet *packet,
  * vendor options using the same routine.
  */
 int
-cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
+cons_options(struct dhcp_packet *outpacket,
     int mms, struct option_data *options,
     int overload, /* Overload flags that may be set. */
     int terminate, int bootpp, u_int8_t *prl, int prl_len)
@@ -204,22 +204,6 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	unsigned char priority_list[300], buffer[4096];
 	int priority_len, main_buffer_size, mainbufix, bufix;
 	int option_size, length;
-
-	/*
-	 * If the client has provided a maximum DHCP message size, use
-	 * that; otherwise, if it's BOOTP, only 64 bytes; otherwise use
-	 * up to the minimum IP MTU size (576 bytes).
-	 *
-	 * XXX if a BOOTP client specifies a max message size, we will
-	 * honor it.
-	 */
-	if (!mms &&
-	    inpacket &&
-	    inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].data &&
-	    (inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].len >=
-	    sizeof(u_int16_t)))
-		mms = getUShort(
-		    inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].data);
 
 	if (mms)
 		main_buffer_size = mms - DHCP_FIXED_LEN;
@@ -243,19 +227,7 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	 * returned, use it to prioritize.  Otherwise, prioritize based
 	 * on the default priority list.
 	 */
-	if (inpacket &&
-	    inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data) {
-		int prlen =
-		    inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].len;
-		if (prlen + priority_len > sizeof(priority_list))
-			prlen = sizeof(priority_list) - priority_len;
-
-		memcpy(&priority_list[priority_len],
-		    inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data,
-		    prlen);
-		priority_len += prlen;
-		prl = priority_list;
-	} else if (prl) {
+	if (prl) {
 		if (prl_len + priority_len > sizeof(priority_list))
 			prl_len = sizeof(priority_list) - priority_len;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.34 2005/07/07 16:24:24 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.35 2005/07/07 20:03:40 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -245,7 +245,7 @@ struct hash_table {
 /* External definitions... */
 
 /* options.c */
-int cons_options(struct packet *, struct dhcp_packet *, int,
+int cons_options(struct dhcp_packet *, int,
     struct option_data *, int, int, int, u_int8_t *, int);
 char *pretty_print_option(unsigned int,
     unsigned char *, int, int, int);
