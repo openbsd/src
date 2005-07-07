@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.22 2005/07/06 10:04:55 xsa Exp $	*/
+/*	$OpenBSD: file.h,v 1.23 2005/07/07 19:06:12 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -84,6 +84,7 @@ typedef struct cvs_file {
 	union {
 		struct {
 			RCSNUM  *cd_lrev;	/* local revision */
+			time_t   cd_etime;	/* time in Entries file */
 			time_t   cd_mtime;
 			char    *cd_tag;
 			char    *cd_opts;
@@ -99,6 +100,7 @@ typedef struct cvs_file {
 } CVSFILE;
 
 /* only valid for regular files */
+#define cf_etime  cf_td.cf_reg.cd_etime
 #define cf_mtime  cf_td.cf_reg.cd_mtime
 #define cf_lrev   cf_td.cf_reg.cd_lrev
 #define cf_tag    cf_td.cf_reg.cd_tag

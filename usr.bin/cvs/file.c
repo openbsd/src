@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.93 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.94 2005/07/07 19:06:12 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -358,9 +358,10 @@ cvs_file_copy(CVSFILE *orig)
 	cfp->cf_mode = orig->cf_mode;
 	cfp->cf_cvstat = orig->cf_cvstat;
 
-	if (orig->cf_type == DT_REG)
+	if (orig->cf_type == DT_REG) {
+		cfp->cf_etime = orig->cf_etime;
 		cfp->cf_mtime = orig->cf_mtime;
-	else if (orig->cf_type == DT_DIR) {
+	} else if (orig->cf_type == DT_DIR) {
 		/* XXX copy CVS directory attributes */
 	}
 
@@ -1104,6 +1105,8 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 					cfp->cf_cvstat = CVS_FST_MODIFIED;
 				}
 			}
+
+			cfp->cf_etime = ent->ce_mtime;
 		}
 	} else {
 		if (ent == NULL) {
