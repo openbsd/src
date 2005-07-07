@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.69 2005/07/07 13:33:35 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.70 2005/07/07 16:24:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1356,44 +1356,38 @@ void
 make_discover(struct interface_info *ip, struct client_lease *lease)
 {
 	unsigned char discover = DHCPDISCOVER;
-	struct tree_cache *options[256];
-	struct tree_cache option_elements[256];
+	struct option_data options[256];
 	int i;
 
-	memset(option_elements, 0, sizeof(option_elements));
 	memset(options, 0, sizeof(options));
 	memset(&ip->client->packet, 0, sizeof(ip->client->packet));
 
 	/* Set DHCP_MESSAGE_TYPE to DHCPDISCOVER */
 	i = DHO_DHCP_MESSAGE_TYPE;
-	options[i] = &option_elements[i];
-	options[i]->value = &discover;
-	options[i]->len = sizeof(discover);
+	options[i].data = &discover;
+	options[i].len = sizeof(discover);
 
 	/* Request the options we want */
 	i  = DHO_DHCP_PARAMETER_REQUEST_LIST;
-	options[i] = &option_elements[i];
-	options[i]->value = ip->client->config->requested_options;
-	options[i]->len = ip->client->config->requested_option_count;
+	options[i].data = ip->client->config->requested_options;
+	options[i].len = ip->client->config->requested_option_count;
 
 	/* If we had an address, try to get it again. */
 	if (lease) {
 		ip->client->requested_address = lease->address;
 		i = DHO_DHCP_REQUESTED_ADDRESS;
-		options[i] = &option_elements[i];
-		options[i]->value = lease->address.iabuf;
-		options[i]->len = lease->address.len;
+		options[i].data = lease->address.iabuf;
+		options[i].len = lease->address.len;
 	} else
 		ip->client->requested_address.len = 0;
 
 	/* Send any options requested in the config file. */
 	for (i = 0; i < 256; i++)
-		if (!options[i] &&
+		if (!options[i].data &&
 		    ip->client->config->send_options[i].data) {
-			options[i] = &option_elements[i];
-			options[i]->value =
+			options[i].data =
 			    ip->client->config->send_options[i].data;
-			options[i]->len =
+			options[i].len =
 			    ip->client->config->send_options[i].len;
 		}
 
@@ -1428,8 +1422,7 @@ void
 make_request(struct interface_info *ip, struct client_lease * lease)
 {
 	unsigned char request = DHCPREQUEST;
-	struct tree_cache *options[256];
-	struct tree_cache option_elements[256];
+	struct option_data options[256];
 	int i;
 
 	memset(options, 0, sizeof(options));
@@ -1437,43 +1430,38 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 
 	/* Set DHCP_MESSAGE_TYPE to DHCPREQUEST */
 	i = DHO_DHCP_MESSAGE_TYPE;
-	options[i] = &option_elements[i];
-	options[i]->value = &request;
-	options[i]->len = sizeof(request);
+	options[i].data = &request;
+	options[i].len = sizeof(request);
 
 	/* Request the options we want */
 	i = DHO_DHCP_PARAMETER_REQUEST_LIST;
-	options[i] = &option_elements[i];
-	options[i]->value = ip->client->config->requested_options;
-	options[i]->len = ip->client->config->requested_option_count;
+	options[i].data = ip->client->config->requested_options;
+	options[i].len = ip->client->config->requested_option_count;
 
 	/* If we are requesting an address that hasn't yet been assigned
 	   to us, use the DHCP Requested Address option. */
 	if (ip->client->state == S_REQUESTING) {
 		/* Send back the server identifier... */
 		i = DHO_DHCP_SERVER_IDENTIFIER;
-		options[i] = &option_elements[i];
-		options[i]->value = lease->options[i].data;
-		options[i]->len = lease->options[i].len;
+		options[i].data = lease->options[i].data;
+		options[i].len = lease->options[i].len;
 	}
 	if (ip->client->state == S_REQUESTING ||
 	    ip->client->state == S_REBOOTING) {
 		ip->client->requested_address = lease->address;
 		i = DHO_DHCP_REQUESTED_ADDRESS;
-		options[i] = &option_elements[i];
-		options[i]->value = lease->address.iabuf;
-		options[i]->len = lease->address.len;
+		options[i].data = lease->address.iabuf;
+		options[i].len = lease->address.len;
 	} else
 		ip->client->requested_address.len = 0;
 
 	/* Send any options requested in the config file. */
 	for (i = 0; i < 256; i++)
-		if (!options[i] &&
+		if (!options[i].data &&
 		    ip->client->config->send_options[i].data) {
-			options[i] = &option_elements[i];
-			options[i]->value =
+			options[i].data =
 			    ip->client->config->send_options[i].data;
-			options[i]->len =
+			options[i].len =
 			    ip->client->config->send_options[i].len;
 		}
 
@@ -1517,9 +1505,7 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 void
 make_decline(struct interface_info *ip, struct client_lease *lease)
 {
-	struct tree_cache *options[256], message_type_tree;
-	struct tree_cache requested_address_tree;
-	struct tree_cache server_id_tree, client_id_tree;
+	struct option_data options[256];
 	unsigned char decline = DHCPDECLINE;
 	int i;
 
@@ -1528,30 +1514,25 @@ make_decline(struct interface_info *ip, struct client_lease *lease)
 
 	/* Set DHCP_MESSAGE_TYPE to DHCPDECLINE */
 	i = DHO_DHCP_MESSAGE_TYPE;
-	options[i] = &message_type_tree;
-	options[i]->value = &decline;
-	options[i]->len = sizeof(decline);
+	options[i].data = &decline;
+	options[i].len = sizeof(decline);
 
 	/* Send back the server identifier... */
 	i = DHO_DHCP_SERVER_IDENTIFIER;
-	options[i] = &server_id_tree;
-	options[i]->value = lease->options[i].data;
-	options[i]->len = lease->options[i].len;
+	options[i].data = lease->options[i].data;
+	options[i].len = lease->options[i].len;
 
 	/* Send back the address we're declining. */
 	i = DHO_DHCP_REQUESTED_ADDRESS;
-	options[i] = &requested_address_tree;
-	options[i]->value = lease->address.iabuf;
-	options[i]->len = lease->address.len;
+	options[i].data = lease->address.iabuf;
+	options[i].len = lease->address.len;
 
 	/* Send the uid if the user supplied one. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
 	if (ip->client->config->send_options[i].len) {
-		options[i] = &client_id_tree;
-		options[i]->value = ip->client->config->send_options[i].data;
-		options[i]->len = ip->client->config->send_options[i].len;
+		options[i].data = ip->client->config->send_options[i].data;
+		options[i].len = ip->client->config->send_options[i].len;
 	}
-
 
 	/* Set up the option buffer... */
 	ip->client->packet_length = cons_options(NULL, &ip->client->packet, 0,

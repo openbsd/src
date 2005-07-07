@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.15 2004/12/26 03:17:07 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.16 2005/07/07 16:24:24 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -50,7 +50,7 @@ int bad_options_max = 5;
 
 void	parse_options(struct packet *);
 void	parse_option_buffer(struct packet *, unsigned char *, int);
-int	store_options(unsigned char *, int, struct tree_cache **,
+int	store_options(unsigned char *, int, struct option_data *,
 	    unsigned char *, int, int, int, int);
 
 
@@ -197,7 +197,7 @@ parse_option_buffer(struct packet *packet,
  */
 int
 cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
-    int mms, struct tree_cache **options,
+    int mms, struct option_data *options,
     int overload, /* Overload flags that may be set. */
     int terminate, int bootpp, u_int8_t *prl, int prl_len)
 {
@@ -340,7 +340,7 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
  * Store all the requested options into the requested buffer.
  */
 int
-store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
+store_options(unsigned char *buffer, int buflen, struct option_data *options,
     unsigned char *priority_list, int priority_len, int first_cutoff,
     int second_cutoff, int terminate)
 {
@@ -365,7 +365,7 @@ store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
 		int length;
 
 		/* If no data is available for this option, skip it. */
-		if (!options[code]) {
+		if (!options[code].data) {
 			continue;
 		}
 
@@ -378,7 +378,7 @@ store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
 		option_stored[code] = 1;
 
 		/* We should now have a constant length for the option. */
-		length = options[code]->len;
+		length = options[code].len;
 
 		/* Do we add a NUL? */
 		if (terminate && dhcp_options[code].format[0] == 't') {
@@ -428,11 +428,11 @@ store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
 			buffer[bufix + 1] = incr;
 			if (tto && incr == length) {
 				memcpy(buffer + bufix + 2,
-				    options[code]->value + ix, incr - 1);
+				    options[code].data + ix, incr - 1);
 				buffer[bufix + 2 + incr - 1] = 0;
 			} else
 				memcpy(buffer + bufix + 2,
-				    options[code]->value + ix, incr);
+				    options[code].data + ix, incr);
 			length -= incr;
 			ix += incr;
 			bufix += 2 + incr;

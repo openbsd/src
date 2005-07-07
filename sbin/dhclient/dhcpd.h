@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.33 2004/05/06 22:29:15 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.34 2005/07/07 16:24:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -77,7 +77,7 @@
 #define	REMOTE_PORT	67
 
 struct option_data {
-	int		 len;
+	unsigned int	 len;
 	u_int8_t	*data;
 };
 
@@ -246,7 +246,7 @@ struct hash_table {
 
 /* options.c */
 int cons_options(struct packet *, struct dhcp_packet *, int,
-    struct tree_cache **, int, int, int, u_int8_t *, int);
+    struct option_data *, int, int, int, u_int8_t *, int);
 char *pretty_print_option(unsigned int,
     unsigned char *, int, int, int);
 void do_packet(struct interface_info *, struct dhcp_packet *,
