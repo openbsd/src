@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.94 2005/07/07 19:06:12 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.95 2005/07/07 20:24:35 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -436,7 +436,9 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 		}
 	}
 
-	/* XXX - needed for some commands */
+	/*
+	 * XXX - needed for some commands
+	 */
 	if (cb != NULL) {
 		if (cb(base, arg) != CVS_EX_OK) {
 			cvs_file_free(base);
@@ -717,8 +719,11 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 	if ((flags & CF_KNOWN) && (cf->cf_cvstat == CVS_FST_UNKNOWN))
 		return (0);
 
-	/* callback for the directory entry */
-	if (cb != NULL) {
+	/*
+	 * XXX - Do not call the callback for ".", this has
+	 * already been done in cvs_file_getspec().
+	 */
+	if (cb != NULL && strcmp(cf->cf_name, ".")) {
 		if (cb(cf, arg) != CVS_EX_OK)
 			return (-1);
 	}
