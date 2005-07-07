@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.92 2005/07/05 16:55:30 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.93 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -788,7 +788,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 
 			if (cfp->cf_type != DT_DIR) {
 				SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp,
-			    	    cf_list);
+				    cf_list);
 				nfiles++;
 			}
 		} else {
@@ -848,7 +848,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 
 			if (cfp->cf_type == DT_DIR) {
 				ndirs++;
-				SIMPLEQ_INSERT_TAIL(&dirs, cfp, 
+				SIMPLEQ_INSERT_TAIL(&dirs, cfp,
 				    cf_list);
 			} else {
 				/* callback for the file */
@@ -1116,7 +1116,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 			else if (ent->ce_type == CVS_ENT_DIR)
 				cfp->cf_type = DT_DIR;
 			else
-				cvs_log(LP_WARN, "unknown ce_type %d", 
+				cvs_log(LP_WARN, "unknown ce_type %d",
 				    ent->ce_type);
 
 			if (ent->ce_status == CVS_ENT_REMOVED)
@@ -1240,7 +1240,7 @@ cvs_file_prune(char *path)
 			cvs_log(LP_ERR, "failed to prune `%s'", path);
 			empty = 0;
 		}
-	} 
+	}
 
 	return (empty);
 }

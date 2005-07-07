@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.34 2005/06/28 08:54:54 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.35 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -191,7 +191,7 @@ static int
 cvs_checkout_pre_exec(struct cvsroot *root)
 {
 	int i;
-	char *sp; 
+	char *sp;
 
 	for (i = 0; i < co_nmod; i++) {
 		if ((sp = strchr(co_mods[i], '/')) != NULL)

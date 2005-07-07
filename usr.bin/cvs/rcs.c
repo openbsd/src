@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.55 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.56 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -905,7 +905,7 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
  * Returns 0 on success, or -1 on failure.
  */
 int
-rcs_lock_remove(RCSFILE *file, const RCSNUM *rev) 
+rcs_lock_remove(RCSFILE *file, const RCSNUM *rev)
 {
 	struct rcs_lock *lkp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.4 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: repo.c,v 1.5 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -197,7 +197,7 @@ cvs_repo_lockent(CVSRPENT *ent, int type, pid_t owner)
 		 * Another process has already locked the entry with a write
 		 * lock, so regardless of the type of lock we are requesting,
 		 * we'll have to wait in the pending requests queue.
-		 */ 
+		 */
 		if (ent->cr_wlock->lk_owner == owner) {
 			cvs_log(LP_WARN, "double-lock attempt");
 			free(lk);
@@ -282,7 +282,7 @@ cvs_repo_unlockent(CVSRPENT *ent, pid_t owner)
  * cvs_repo_alias()
  *
  * Add a new module entry with name <alias> in the repository <repo>, which
- * points to the path <path> within the repository. 
+ * points to the path <path> within the repository.
  * Returns 0 on success, or -1 on failure.
  */
 int

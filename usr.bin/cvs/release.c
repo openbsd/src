@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.11 2005/06/30 16:37:29 joris Exp $	*/
+/*	$OpenBSD: release.c,v 1.12 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -173,7 +173,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 			/* XXX kept for compat reason of `cvs update' output */
 			/* save current working directory for further use */
 			if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL)
-                		cvs_log(LP_ERRNO, "cannot get current dir");
+				cvs_log(LP_ERRNO, "cannot get current dir");
 
 			/* change dir before running the `cvs update' command */
 			if (chdir(dpath) == -1) {
@@ -216,7 +216,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 
 			if (cvs_release_yesno() == -1) {	/* No */
 				(void)fprintf(stderr,
-			    	    "** `%s' aborted by user choice.\n",
+				    "** `%s' aborted by user choice.\n",
 				    cvs_command);
 				return (-1);
 			}
@@ -231,7 +231,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 			if (dflag == 1) {
 				if (!cvs_noexec && cvs_remove_dir(dpath) != 0) {
 					cvs_log(LP_ERRNO,
-				   	    "deletion of directory `%s' failed",
+					    "deletion of directory `%s' failed",
 					    dpath);
 					return (CVS_EX_FILE);
 				}

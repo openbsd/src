@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.37 2005/06/30 16:47:19 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.38 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -135,7 +135,7 @@ static int
 cvs_update_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((cvs_cmd_update.cmd_flags & CVS_CMD_PRUNEDIRS) && 
+		if ((cvs_cmd_update.cmd_flags & CVS_CMD_PRUNEDIRS) &&
 		    (cvs_sendarg(root, "-P", 0) < 0))
 			return (CVS_EX_PROTO);
 		if (Aflag && cvs_sendarg(root, "-A", 0) < 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.3 2005/06/15 09:17:14 xsa Exp $	*/
+/*	$OpenBSD: watch.c,v 1.4 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -63,20 +63,20 @@ struct cvs_cmd cvs_cmd_watch = {
 };
 
 struct cvs_cmd cvs_cmd_watchers = {
-        CVS_OP_WATCHERS, CVS_REQ_WATCHERS, "watchers",
-        {},
-        "See who is watching a file",
-        "[-lR] [file ...]",
-        "lR",
-        NULL,
-        CF_SORT | CF_RECURSE,
-        cvs_watch_init,
-        NULL,
-        cvs_watchers_remote,
-        cvs_watchers_local,
-        NULL,
-        NULL,
-        0
+	CVS_OP_WATCHERS, CVS_REQ_WATCHERS, "watchers",
+	{},
+	"See who is watching a file",
+	"[-lR] [file ...]",
+	"lR",
+	NULL,
+	CF_SORT | CF_RECURSE,
+	cvs_watch_init,
+	NULL,
+	cvs_watchers_remote,
+	cvs_watchers_local,
+	NULL,
+	NULL,
+	0
 };
 
 
@@ -85,7 +85,7 @@ static int
 cvs_watch_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
-	
+
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'a':
@@ -143,8 +143,7 @@ cvs_watchers_remote(CVSFILE *file, void *arg)
 {
 	return (CVS_EX_OK);
 }
- 
- 
+
 /*
  * cvs_watchers_local()
  *

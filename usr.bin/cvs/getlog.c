@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.34 2005/07/01 15:00:22 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.35 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -275,7 +275,7 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 
 	if (!log_honly && !log_lhonly)
 		cvs_printf("\tselected revisions: %u", nrev);
-	
+
 	cvs_printf("\n");
 
 	if (!log_honly || log_lhonly)
@@ -286,7 +286,7 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 			rcsnum_tostr(rdp->rd_num, numbuf, sizeof(numbuf));
 			cvs_printf(CVS_GETLOG_REVSEP "\nrevision %s\n", numbuf);
 			cvs_printf("date: %d/%02d/%02d %02d:%02d:%02d;"
-		    	    "  author: %s;  state: %s;\n",
+			    "  author: %s;  state: %s;\n",
 			    rdp->rd_date.tm_year + 1900,
 			    rdp->rd_date.tm_mon + 1,
 			    rdp->rd_date.tm_mday, rdp->rd_date.tm_hour,

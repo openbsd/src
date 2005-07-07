@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.18 2005/07/04 10:21:03 xsa Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.19 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -59,7 +59,7 @@ struct cvs_cmd cvs_cmd_annotate = {
 	NULL,
 	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
-};	
+};
 
 static char *date, *rev;
 static int usehead;

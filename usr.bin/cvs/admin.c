@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.17 2005/05/31 08:58:47 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.18 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -216,7 +216,7 @@ cvs_admin_pre_exec(struct cvsroot *root)
 	if (root->cr_method == CVS_METHOD_LOCAL)
 		return (0);
 
-	if ((alist != NULL) && ((cvs_sendarg(root, "-a", 0) < 0) || 
+	if ((alist != NULL) && ((cvs_sendarg(root, "-a", 0) < 0) ||
 	    (cvs_sendarg(root, alist, 0) < 0)))
 		return (CVS_EX_PROTO);
 

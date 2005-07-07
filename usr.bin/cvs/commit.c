@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.37 2005/05/31 08:58:47 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.38 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -126,7 +126,7 @@ cvs_commit_pre_exec(struct cvsroot *root)
 	CVSFILE *cfp;
 	CVSFILE *tmp;
 	int flags = CF_RECURSE | CF_IGNORE | CF_SORT;
- 
+
 	SIMPLEQ_INIT(&cl);
 
 	if (commit_fcount != 0) {

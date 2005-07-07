@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.71 2005/06/16 07:46:42 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.72 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -76,8 +76,7 @@ static TAILQ_HEAD(, cvs_var) cvs_variables;
 
 void         usage           (void);
 static void  cvs_read_rcfile (void);
-int          cvs_getopt      (int, char **); 
-
+int          cvs_getopt(int, char **);
 
 /*
  * usage()

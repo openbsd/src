@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.20 2005/06/07 09:06:15 joris Exp $	*/
+/*	$OpenBSD: log.c,v 1.21 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -306,7 +306,7 @@ cvs_printf(const char *fmt, ...)
 					for (sp = dp; *sp != '\0'; sp++)
 						;
 
-				if (send_m) { 
+				if (send_m) {
 					send_m = 0;
 					putc('M', stdout);
 					putc(' ', stdout);

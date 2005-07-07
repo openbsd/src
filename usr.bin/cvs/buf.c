@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.12 2005/06/02 07:16:38 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.13 2005/07/07 14:27:57 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -414,7 +414,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 
 	fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode);
 	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open file `%s'", path); 
+		cvs_log(LP_ERRNO, "failed to open file `%s'", path);
 		return (-1);
 	}
 
@@ -431,7 +431,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 /*
  * cvs_buf_write_stmp()
  *
- * Write the contents of the buffer <b> to a temporary file whose path is 
+ * Write the contents of the buffer <b> to a temporary file whose path is
  * specified using <template> (see mkstemp.3). NB. This function will modify
  * <template>, as per mkstemp
  */
@@ -443,14 +443,14 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 
 	fd = mkstemp(template);
 	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to mkstemp file `%s': %s", 
+		cvs_log(LP_ERRNO, "failed to mkstemp file `%s': %s",
 		    template, strerror(errno));
 		return (-1);
 	}
 
 	ret = cvs_buf_write_fd(b, fd);
 	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to write to temp file `%s': %s", 
+		cvs_log(LP_ERRNO, "failed to write to temp file `%s': %s",
 		    template, strerror(errno));
 		(void)unlink(template);
 	}
