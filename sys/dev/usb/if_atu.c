@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.62 2005/07/07 15:14:56 jcs Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.63 2005/07/07 22:47:08 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -694,9 +694,9 @@ atu_initial_config(struct atu_softc *sc)
 	}
 
 	/* Setting the SSID here doesn't seem to do anything */
-	memset(cmd.SSID, 0, sizeof(cmd.SSID));
-	memcpy(cmd.SSID, sc->atu_ssid, sc->atu_ssidlen);
-	cmd.SSID_Len = sc->atu_ssidlen;
+	memset(cmd.SSID, 0x00, sizeof(cmd.SSID));
+	memcpy(cmd.SSID, ic->ic_des_essid, ic->ic_des_esslen);
+	cmd.SSID_Len = ic->ic_des_esslen;
 
 	cmd.ShortPreamble = 0;
 	USETW(cmd.BeaconPeriod, 100);
@@ -1420,8 +1420,6 @@ atu_complete_attach(struct atu_softc *sc)
 	sc->atu_cdata.atu_tx_inuse = 0;
 
 	bzero(sc->atu_bssid, ETHER_ADDR_LEN);
-	sc->atu_ssidlen = strlen(ATU_DEFAULT_SSID);
-	memcpy(sc->atu_ssid, ATU_DEFAULT_SSID, sc->atu_ssidlen);
 	sc->atu_channel = ATU_DEFAULT_CHANNEL;
 	sc->atu_desired_channel = IEEE80211_CHAN_ANY;
 	sc->atu_mode = INFRASTRUCTURE_MODE;
