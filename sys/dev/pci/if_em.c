@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.62 2005/07/03 16:58:16 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.63 2005/07/07 21:28:10 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include "bpfilter.h"
@@ -550,15 +550,13 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFMTU (Set Interface MTU)");
-		if (ifr->ifr_mtu > MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN || \
+		if (ifr->ifr_mtu < ETHERMIN ||
+		    ifr->ifr_mtu > MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN || \
 			/* 82573 does not support Jumbo frames */
 			(sc->hw.mac_type == em_82573 && ifr->ifr_mtu > ETHERMTU)) {
 			error = EINVAL;
-		} else {
-                        EM_LOCK(sc);
+		} else if (ifp->if_mtu != ifr->ifr_mtu) {
 			ifp->if_mtu = ifr->ifr_mtu;
-			em_init_locked(sc);
-                        EM_UNLOCK(sc);
 		}
 		break;
 	case SIOCSIFFLAGS:

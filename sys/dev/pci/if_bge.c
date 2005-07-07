@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.72 2005/07/06 00:56:33 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.73 2005/07/07 21:28:10 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3297,7 +3297,8 @@ bge_ioctl(ifp, command, data)
 		break;
 	case SIOCSIFMTU:
 		/* Disallow jumbo frames on 5705. */
-		if ((((sc->bge_quirks & BGE_QUIRK_5705_CORE) != 0) &&
+		if (ifr->ifr_mtu < ETHERMIN ||
+		    (((sc->bge_quirks & BGE_QUIRK_5705_CORE) != 0) &&
 		    ifr->ifr_mtu > ETHERMTU) || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
