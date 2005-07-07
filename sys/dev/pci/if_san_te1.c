@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.c,v 1.8 2005/04/01 21:42:36 canacar Exp $	*/
+/*	$OpenBSD: if_san_te1.c,v 1.9 2005/07/07 20:58:50 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -2009,6 +2009,12 @@ sdla_te_settimeslot(void* pcard, unsigned long ts_map)
 	log(LOG_INFO, "%s: Setting timeslot map to %08lX\n",
 			card->devname, ts_map);
 #endif /* DEBUG_INIT */
+	if (IS_T1(&card->fe_te.te_cfg)) {
+		/* For T1, Shift timeslot map left by 1, because bit 0
+		** is not been used by T1 timeslot map (bit 1 is used for
+		** channel 1, bit 2 is used for channel 2 and so on). */
+		ts_map = ts_map >> 1;	
+	}
 	card->fe_te.te_cfg.active_ch = ts_map;
 	return;
 }
@@ -2016,7 +2022,14 @@ sdla_te_settimeslot(void* pcard, unsigned long ts_map)
 unsigned long
 sdla_te_gettimeslot(void* pcard)
 {
-	return ((sdla_t*)pcard)->fe_te.te_cfg.active_ch;
+	sdla_t		*card = (sdla_t*)pcard;
+	unsigned long	ts_map = card->fe_te.te_cfg.active_ch;
+ 
+	if (IS_T1(&card->fe_te.te_cfg)) {
+		/* See explaination before. */
+		ts_map = ts_map << 1;
+	}
+	return ts_map;
 }
 
 /*
@@ -2368,7 +2381,7 @@ sdla_te_config(void* card_id)
 		EnableAllChannels(card);
 	} else {
 		for (i = 1; i <= channel_range; i++) {
-			if (te_cfg->active_ch & (1 << i)) {
+			if (te_cfg->active_ch & (1 << (i-1))) {
 #ifdef DEBUG_INIT
 				log(LOG_DEBUG, "%s: Enable channel %d\n",
 						card->devname, i);
