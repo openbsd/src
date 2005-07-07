@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.64 2005/07/03 02:25:13 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.65 2005/07/07 17:49:43 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1575,8 +1575,6 @@ ti_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_addr_t iobase;
-	bus_size_t iosize;
 	bus_dma_segment_t seg;
 	int s, rseg;
 	u_int32_t command;
@@ -1589,29 +1587,19 @@ ti_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
+	command |= PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf("%s: failed to enable memory mapping!\n",
-		    sc->sc_dv.dv_xname);
-		free(sc, M_DEVBUF);
-		goto fail;
-	}
-	if (pci_mem_find(pc, pa->pa_tag, TI_PCI_LOMEM, &iobase, &iosize, NULL)) {
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->ti_bhandle)) {
-		printf(": can't map mem space\n");
-		goto fail;
-	}
-	sc->ti_btag = pa->pa_memt;
+	if (pci_mapreg_map(pa, TI_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->ti_btag, &sc->ti_bhandle, NULL, NULL, 0)) {
+ 		printf(": can't map mem space\n");
+		goto fail_1;
+ 	}
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->ti_intrhand = pci_intr_establish(pc, ih, IPL_NET, ti_intr, sc,
@@ -1621,7 +1609,7 @@ ti_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 
 	if (ti_chipinit(sc)) {
@@ -1778,12 +1766,10 @@ ti_attach(parent, self, aux)
 	shutdownhook_establish(ti_shutdown, sc);
 
 fail:
-	if (sc->ti_intrhand != NULL)
-		pci_intr_disestablish(pc, sc->ti_intrhand);
+	pci_intr_disestablish(pc, sc->ti_intrhand);
 
+fail_1:
 	splx(s);
-
-	return;
 }
 
 /*
