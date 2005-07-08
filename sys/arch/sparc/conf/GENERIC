@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.82 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.83 2005/07/08 12:36:36 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -52,8 +52,8 @@ audio*	at audioamd?
 audiocs0 at sbus0				# sun4m
 audio*	at audiocs?
 
-auxreg0	at mainbus0				# sun4c
-auxreg0	at obio0				# sun4m
+auxreg*	at mainbus0				# sun4c
+auxreg*	at obio0				# sun4m
 
 # Power status and control register found on Sun4m systems
 power0	at obio0

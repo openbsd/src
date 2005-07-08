@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.67 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: SUN4M,v 1.68 2005/07/08 12:36:36 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -40,7 +40,7 @@ audio*	at audioamd?
 audiocs0 at sbus0				# sun4m
 audio*	at audiocs?
 
-auxreg0	at obio0				# sun4m
+auxreg*	at obio0				# sun4m
 
 # Power status and control register found on Sun4m systems
 power0	at obio0

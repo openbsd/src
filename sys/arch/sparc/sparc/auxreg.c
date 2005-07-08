@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxreg.c,v 1.12 2005/04/17 18:47:50 miod Exp $	*/
+/*	$OpenBSD: auxreg.c,v 1.13 2005/07/08 12:36:38 miod Exp $	*/
 /*	$NetBSD: auxreg.c,v 1.21 1997/05/24 20:15:59 pk Exp $ */
 
 /*
@@ -67,6 +67,12 @@ struct cfdriver auxreg_cd = {
 
 volatile u_char *auxio_reg;	/* Copy of AUXIO_REG */
 u_char auxio_regval;
+
+#ifdef SUN4M	/* Tadpole SPARCbook */
+volatile u_char *sb_auxio_reg;
+volatile u_char *sb_auxio2_reg;
+#endif
+
 extern int sparc_led_blink;	/* from machdep */
 struct timeout sparc_led_to;
 
@@ -77,7 +83,7 @@ led_blink(zero)
 	int s;
 
 	/* Don't do anything if there's no auxreg, ok? */
-	if (auxio_reg == 0)
+	if (auxio_reg == NULL)
 		return;
 
 	if (!sparc_led_blink) {
@@ -106,64 +112,75 @@ led_blink(zero)
 
 /*
  * The OPENPROM calls this "auxiliary-io".
+ * We also need to match the "auxio2" register on Tadpole SPARCbooks.
  */
 static int
-auxregmatch(parent, cf, aux)
-	struct device *parent;
-	void *cf, *aux;
+auxregmatch(struct device *parent, void *cf, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	switch (cputyp) {
-	    case CPU_SUN4:
+	case CPU_SUN4:
+	default:
 		return (0);
-	    case CPU_SUN4C:
+	case CPU_SUN4C:
 		return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
-	    case CPU_SUN4M:
-		return (strcmp("auxio", ca->ca_ra.ra_name) == 0);
-	    default:
-		panic("auxregmatch");
+	case CPU_SUN4M:
+		return (strcmp("auxio", ca->ca_ra.ra_name) == 0 ||
+			strcmp("auxio2", ca->ca_ra.ra_name) == 0);
 	}
 }
 
 /* ARGSUSED */
 static void
-auxregattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auxregattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
+#ifdef SUN4M
+	volatile u_char **regp;
 
-	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long));
-	if (CPU_ISSUN4M) {
-		auxio_reg = AUXIO4M_REG;
-		auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;
-	} else {
-		auxio_reg = AUXIO4C_REG;
-		auxio_regval = *AUXIO4C_REG | AUXIO4C_FEJ | AUXIO4C_MB1;
+	if (CPU_ISSUN4M && strncmp("Tadpole", mainbus_model, 7) == 0) {
+		if (strcmp("auxio", ra->ra_name) == 0)
+			regp = &sb_auxio_reg;
+		else
+			regp = &sb_auxio2_reg;
+		if (*regp == NULL)
+			*regp = mapdev(ra->ra_reg, 0, 0, sizeof(char));
+	} else
+#endif
+	if (auxio_reg == NULL) {
+		(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long));
+		if (CPU_ISSUN4M) {
+			auxio_reg = AUXIO4M_REG;
+			auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;
+		} else {
+			auxio_reg = AUXIO4C_REG;
+			auxio_regval = *AUXIO4C_REG | AUXIO4C_FEJ | AUXIO4C_MB1;
+		}
+
+		timeout_set(&sparc_led_to, led_blink, NULL);
+		/* In case it's initialized to true... */
+		if (sparc_led_blink)
+			led_blink((caddr_t)0);
 	}
 
 	printf("\n");
-
-	timeout_set(&sparc_led_to, led_blink, NULL);
-	/* In case it's initialized to true... */
-	if (sparc_led_blink)
-		led_blink((caddr_t)0);
 }
 
 unsigned int
-auxregbisc(bis, bic)
-	int bis, bic;
+auxregbisc(int bis, int bic)
 {
-	register int s;
+	int s;
 
-	if (auxio_reg == 0)
+#ifdef DIAGNOSTIC
+	if (auxio_reg == NULL)
 		/*
 		 * Not all machines have an `aux' register; devices that
 		 * depend on it should not get configured if it's absent.
 		 */
 		panic("no aux register");
+#endif
 
 	s = splhigh();
 	auxio_regval = (auxio_regval | bis) & ~bic;
@@ -171,3 +188,23 @@ auxregbisc(bis, bic)
 	splx(s);
 	return (auxio_regval);
 }
+
+#ifdef SUN4M
+unsigned int
+sb_auxregbisc(int isreg2, int bis, int bic)
+{
+	int s;
+	volatile u_char *auxreg;
+	u_char aux;
+
+	auxreg = isreg2 ? sb_auxio2_reg : sb_auxio_reg;
+	if (auxreg == NULL)
+		return (0);
+
+	s = splhigh();
+	aux = (*auxreg | bis) & ~bic;
+	*auxreg = aux;
+	splx(s);
+	return (aux);
+}
+#endif

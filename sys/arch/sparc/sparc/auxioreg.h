@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxioreg.h,v 1.4 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: auxioreg.h,v 1.5 2005/07/08 12:36:38 miod Exp $	*/
 /*	$NetBSD: auxreg.h,v 1.7 1997/05/17 17:52:52 pk Exp $ */
 
 /*
@@ -62,6 +62,18 @@
 #define	AUXIO4M_LED	0x01		/* front panel LED */
 
 /*
+ * Tadpole Auxiliary I/O registers.  Those control various power management
+ * features.
+ */
+
+#define	AUXIO_MODEM		0x01	/* enable modem power */
+#define	AUXIO_ISDN		0x04	/* enable ISDN power */
+#define	AUXIO_MODEM_RESET	0x08	/* reset modem line (active low) */
+#define	AUXIO_TFT		0x80	/* S3000 XT tft power */
+
+#define	AUXIO2_SERIAL		0x01	/* enable serial ports power */
+
+/*
  * We use a fixed virtual address for the register because we use it for
  * timing short sections of code (via external hardware attached to the LED).
  */
@@ -119,8 +131,8 @@
 )
 
 #ifndef _LOCORE
-extern volatile u_char *auxio_reg;	/* Copy of AUXIO_REG */
 extern u_char auxio_regval;
 unsigned int auxregbisc(int, int);
+unsigned int sb_auxregbisc(int, int, int);
 #endif
 

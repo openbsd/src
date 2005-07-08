@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.67 2005/05/03 00:39:39 brad Exp $
+#	$OpenBSD: files.sparc,v 1.68 2005/07/08 12:36:36 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -30,7 +30,7 @@ file	arch/sparc/dev/obio.c		(obio | vmel | vmes | vme) & !solbourne
 
 device	auxreg
 attach	auxreg at mainbus, obio
-file	arch/sparc/sparc/auxreg.c		auxreg needs-count
+file	arch/sparc/sparc/auxreg.c		auxreg needs-flag
 
 device	clock
 attach	clock at mainbus, obio
