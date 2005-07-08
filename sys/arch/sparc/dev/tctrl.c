@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.12 2005/07/08 12:43:48 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.13 2005/07/08 12:50:21 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -88,6 +88,8 @@
 #include <machine/conf.h>
 #include <machine/cpu.h>
 
+#include <sparc/sparc/auxioreg.h>
+
 #include <sparc/dev/ts102reg.h>
 #include <sparc/dev/tctrlvar.h>
 
@@ -134,6 +136,7 @@ struct tctrl_softc {
 	u_int	sc_ext_status;
 	u_int	sc_flags;
 #define	TCTRL_SEND_REQUEST		0x0001
+#define	TCTRL_ISXT			0x0002
 	u_int	sc_wantdata;
 	enum { TCTRL_IDLE, TCTRL_ARGS,
 		TCTRL_ACK, TCTRL_DATA } sc_state;
@@ -230,6 +233,13 @@ tctrl_attach(parent, self, aux)
 
 	printf(" pri %d\n", pri);
 
+	/*
+	 * We need to check if we are running on the SPARCbook S3XT, which
+	 * needs extra work to control the TFT power.
+	 */
+	sc->sc_flags = 0;
+	if (strcmp(mainbus_model, "Tadpole_S3000XT") == 0)
+		sc->sc_flags |= TCTRL_ISXT;
 	sc->sc_tft_on = 1;
 
 	/* clear any pending data */
@@ -610,19 +620,28 @@ void
 tctrl_tft(struct tctrl_softc *sc)
 {
 	struct tctrl_req req;
+	int enable;
 
-	if ((sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN)
-	    || !sc->sc_tft_on) {
-		req.cmdbuf[2] = TS102_BITPORT_TFTPWR;
-	} else {
-		req.cmdbuf[2] = 0;
-	}
+	enable = (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) == 0 &&
+	    sc->sc_tft_on;
+
 	req.cmdbuf[0] = TS102_OP_CTL_BITPORT;
 	req.cmdbuf[1] = ~TS102_BITPORT_TFTPWR;
+	req.cmdbuf[2] = enable ? 0 : TS102_BITPORT_TFTPWR;
 	req.cmdlen = 3;
 	req.rsplen = 2;
 
+	if ((sc->sc_flags & TCTRL_ISXT) != 0 && enable) {
+		sb_auxregbisc(0, AUXIO_TFT, 0);
+		delay(100000);	/* XXX is such a long delay really necessary? */
+	}
+
 	tctrl_request(sc, &req);
+
+	if ((sc->sc_flags & TCTRL_ISXT) != 0 && !enable) {
+		delay(100000);	/* XXX is such a long delay really necessary? */
+		sb_auxregbisc(0, 0, AUXIO_TFT);
+	}
 }
 
 void
