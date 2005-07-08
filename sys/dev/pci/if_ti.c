@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.66 2005/07/08 01:09:14 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.67 2005/07/08 01:49:51 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1056,7 +1056,7 @@ int ti_init_tx_ring(sc)
 	SLIST_INIT(&sc->ti_tx_map_listhead);
 	for (i = 0; i < TI_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->sc_dmatag, ETHER_MAX_LEN_JUMBO,
-		    TI_NTXSEG, MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap))
+		    TI_NTXSEG, ETHER_MAX_LEN_JUMBO, 0, BUS_DMA_NOWAIT, &dmamap))
 			return(ENOBUFS);
 
 		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
@@ -1893,8 +1893,6 @@ void ti_rxeof(sc)
 
 		if ((cur_rx->ti_ip_cksum ^ 0xffff) == 0)
 			sumflags |= M_IPV4_CSUM_IN_OK;
-		else
-			sumflags |= M_IPV4_CSUM_IN_BAD;
 		m->m_pkthdr.csum_flags = sumflags;
 		sumflags = 0;
 
