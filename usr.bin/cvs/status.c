@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.34 2005/07/07 15:52:26 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.35 2005/07/08 07:22:58 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -179,7 +179,9 @@ static int
 cvs_status_local(CVSFILE *cf, void *arg)
 {
 	int len;
-	char buf[MAXNAMLEN], fpath[MAXPATHLEN], numbuf[64], rcspath[MAXPATHLEN];
+	size_t n;
+	char buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char numbuf[64], timebuf[32];
 	char *repo;
 	RCSFILE *rf;
 	struct cvsroot *root;
@@ -223,6 +225,18 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	} else {
 		len = snprintf(buf, sizeof(buf), "%s",
 		    rcsnum_tostr(cf->cf_lrev, buf, sizeof(buf)));
+
+		/* Display etime in local mode only. */
+		if (cvs_cmdop != CVS_OP_SERVER) {
+			strlcat(buf, "\t", sizeof(buf));
+
+			ctime_r(&(cf->cf_etime), timebuf);
+			n = strlen(timebuf);
+			if ((n > 0) && (timebuf[n - 1] == '\n'))
+                                        timebuf[--n] = '\0';
+
+			strlcat(buf, timebuf, sizeof(buf));
+		}
 	}
 
 	if (len == -1 || len >= (int)sizeof(buf)) {
