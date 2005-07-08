@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.17 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.18 2005/07/08 16:03:38 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -43,7 +43,8 @@ extern char *__progname;
 
 
 static int cvs_remove_init (struct cvs_cmd *, int, char **, int *);
-static int cvs_remove_file (CVSFILE *, void *);
+static int cvs_remove_remote (CVSFILE *, void *);
+static int cvs_remove_local (CVSFILE *, void *);
 
 static int	force_remove = 0;	/* -f option */
 
@@ -57,8 +58,8 @@ struct cvs_cmd cvs_cmd_remove = {
 	CF_IGNORE | CF_RECURSE,
 	cvs_remove_init,
 	NULL,
-	cvs_remove_file,
-	cvs_remove_file,
+	cvs_remove_remote,
+	cvs_remove_local,
 	NULL,
 	NULL,
 	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC
@@ -94,7 +95,7 @@ cvs_remove_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 
 
 static int
-cvs_remove_file(CVSFILE *cf, void *arg)
+cvs_remove_remote(CVSFILE *cf, void *arg)
 {
 	int ret;
 	char fpath[MAXPATHLEN];
@@ -104,51 +105,50 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-				ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-				    CVS_FILE_NAME(cf));
-			else
-				ret = cvs_senddir(root, cf);
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cf));
+		else
+			ret = cvs_senddir(root, cf);
 
-			if (ret == -1)
-				ret = CVS_EX_PROTO;
-		}
-
+		if (ret == -1)
+			ret = CVS_EX_PROTO;
 		return (ret);
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		/* if -f option is used, physically remove the file */
-		if ((force_remove == 1) && !cvs_noexec) {
-			if((unlink(fpath) == -1) && (errno != ENOENT)) {
-				cvs_log(LP_ERRNO,
-				    "failed to unlink `%s'", fpath);
-				return (CVS_EX_FILE);
-			}
+	/* if -f option is used, physically remove the file */
+	if ((force_remove == 1) && !cvs_noexec) {
+		if((unlink(fpath) == -1) && (errno != ENOENT)) {
+			cvs_log(LP_ERRNO,
+			    "failed to unlink `%s'", fpath);
+			return (CVS_EX_FILE);
 		}
-
-		if (cvs_sendentry(root, cf) < 0)
-			return (CVS_EX_PROTO);
-
-		if (cf->cf_cvstat != CVS_FST_LOST && force_remove != 1) {
-			if (cvs_sendreq(root, CVS_REQ_MODIFIED,
-			    CVS_FILE_NAME(cf)) < 0) {
-				return (CVS_EX_PROTO);
-			}
-
-			if (cvs_sendfile(root, fpath) < 0)
-				return (CVS_EX_PROTO);
-		}
-	} else {
-		cvs_log(LP_INFO, "scheduling file `%s' for removal",
-		    CVS_FILE_NAME(cf));
-		cvs_log(LP_INFO,
-		    "use `%s commit' to remove this file permanently",
-		    __progname);
 	}
 
-	return (ret);
+	if (cvs_sendentry(root, cf) < 0)
+		return (CVS_EX_PROTO);
+
+	if (cf->cf_cvstat != CVS_FST_LOST && force_remove != 1) {
+		if (cvs_sendreq(root, CVS_REQ_MODIFIED,
+		    CVS_FILE_NAME(cf)) < 0) {
+			return (CVS_EX_PROTO);
+		}
+
+		if (cvs_sendfile(root, fpath) < 0)
+			return (CVS_EX_PROTO);
+	}
+
+	return (0);
+}
+
+static int
+cvs_remove_local(CVSFILE *cf, void *arg)
+{
+	cvs_log(LP_INFO, "scheduling file `%s' for removal", cf->cf_name);
+	cvs_log(LP_INFO, "use `%s commit' to remove this file permanently",
+	    __progname);
+
+	return (0);
 }

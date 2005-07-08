@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.21 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.22 2005/07/08 16:03:38 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,7 +40,8 @@
 extern char *__progname;
 
 
-static int cvs_add_file(CVSFILE *, void *);
+static int cvs_add_remote(CVSFILE *, void *);
+static int cvs_add_local(CVSFILE *, void *);
 static int cvs_add_init(struct cvs_cmd *, int, char **, int *);
 static int cvs_add_pre_exec(struct cvsroot *);
 
@@ -54,8 +55,8 @@ struct cvs_cmd cvs_cmd_add = {
 	0,
 	cvs_add_init,
 	cvs_add_pre_exec,
-	cvs_add_file,
-	cvs_add_file,
+	cvs_add_remote,
+	cvs_add_local,
 	NULL,
 	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
@@ -115,7 +116,7 @@ cvs_add_pre_exec(struct cvsroot *root)
 }
 
 static int
-cvs_add_file(CVSFILE *cf, void *arg)
+cvs_add_remote(CVSFILE *cf, void *arg)
 {
 	int ret;
 	struct cvsroot *root;
@@ -124,25 +125,25 @@ cvs_add_file(CVSFILE *cf, void *arg)
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
-		if (root->cr_method != CVS_METHOD_LOCAL)
-			ret = cvs_senddir(root, cf);
-
+		ret = cvs_senddir(root, cf);
 		if (ret == -1)
 			ret = CVS_EX_PROTO;
-
 		return (ret);
 	}
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-			ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED,
-			    cf->cf_name);
-	} else {
-		cvs_log(LP_INFO, "scheduling file `%s' for addition",
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED,
 		    cf->cf_name);
-		cvs_log(LP_INFO, "use `%s commit' to add this file permanently",
-		    __progname);
-	}
 
 	return (ret);
+}
+
+static
+int cvs_add_local(CVSFILE *cf, void *arg)
+{
+	cvs_log(LP_INFO, "scheduling file `%s' for addition", cf->cf_name);
+	cvs_log(LP_INFO, "use `%s commit' to add this file permanently",
+	    __progname);
+
+	return (0);
 }
