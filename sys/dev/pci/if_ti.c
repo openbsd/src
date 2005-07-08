@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.65 2005/07/07 17:49:43 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.66 2005/07/08 01:09:14 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1764,6 +1764,7 @@ ti_attach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	shutdownhook_establish(ti_shutdown, sc);
+	return;
 
 fail:
 	pci_intr_disestablish(pc, sc->ti_intrhand);
