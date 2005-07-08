@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102reg.h,v 1.6 2005/07/02 09:15:42 miod Exp $	*/
+/*	$OpenBSD: ts102reg.h,v 1.7 2005/07/08 12:35:15 miod Exp $	*/
 /*	$NetBSD: ts102reg.h,v 1.7 2002/09/29 23:23:58 wiz Exp $ */
 
 /*-
@@ -269,11 +269,12 @@ enum ts102_opcode {			/* Argument	Returned */
 #define	TS102_LCD_COMPOSE		0x0100
     TS102_OP_CTL_BITPORT=0x21,		/* mask		ack + 1 byte */
 #define	TS102_BITPORT_TFTPWR		0x01	/* TFT power (low) */
-#define	TS102_BITPORT_SYNCINVA		0x04	/* ext. monitor sync (low) */
-#define	TS102_BITPORT_SYNCINVB		0x08	/* ext. monitor sync (low) */
-#define	TS102_BITPORT_BP_DIS		0x10	/* no bootprom from pcmcia (high) */
+#define	TS102_BITPORT_SYNCINVA		0x02	/* ext. monitor sync (low) */
+#define	TS102_BITPORT_SYNCINVB		0x04	/* ext. monitor sync (low) */
+#define	TS102_BITPORT_BP_DIS		0x08	/* no bootprom from pcmcia (high) */
 						/* boot from pcmcia (low) */
-#define	TS102_BITPORT_ENCSYNC		0x20	/* enab composite sync (low) */
+#define	TS102_BITPORT_ENCSYNC		0x10	/* enab composite sync (low) */
+#define	TS102_BITPORT_DISK_POWER	0x20	/* internal disk power (low) */
     TS102_OP_CTL_DEV=0x22,		/* mask 	ack + 1 byte */
 #define TS102_DEVCTL_CHARGE_DISABLE	0x01	/* dis/en charging */
 #define TS102_DEVCTL_POINTER_DISABLE	0x04	/* dis/en pointer */
