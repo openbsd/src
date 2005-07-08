@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.36 2005/07/08 10:10:48 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.37 2005/07/08 11:46:23 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -205,7 +205,8 @@ cvs_status_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
-	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
+	if (cf->cf_cvstat != CVS_FST_UNKNOWN &&
+	    cf->cf_cvstat != CVS_FST_ADDED) {
 		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL)
 			return (CVS_EX_DATA);
@@ -222,9 +223,11 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		len = snprintf(buf, sizeof(buf), "No entry for %s",
 		    cf->cf_name);
+	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
+		len = snprintf(buf, sizeof(buf), "New file!");
 	} else {
-		len = snprintf(buf, sizeof(buf), "%s",
-		    rcsnum_tostr(cf->cf_lrev, buf, sizeof(buf)));
+		rcsnum_tostr(cf->cf_lrev, numbuf, sizeof(numbuf));
+		len = snprintf(buf, sizeof(buf), "%s", numbuf);
 
 		/* Display etime in local mode only. */
 		if (cvs_cmdop != CVS_OP_SERVER) {
@@ -247,8 +250,9 @@ cvs_status_local(CVSFILE *cf, void *arg)
 
 	cvs_printf("   Working revision:\t%s\n", buf);
 
-	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		len = snprintf(buf, sizeof(buf), "No revision control file\n");
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN ||
+	    cf->cf_cvstat == CVS_FST_ADDED) {
+		len = snprintf(buf, sizeof(buf), "No revision control file");
 	} else {
 		len = snprintf(buf, sizeof(buf), "%s\t%s",
 		    rcsnum_tostr(rf->rf_head, numbuf, sizeof(numbuf)),
@@ -264,8 +268,10 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	cvs_printf("   Repository revision:\t%s\n", buf);
 
 	/* If the file is unknown, no other output is needed after this. */
-	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+		cvs_printf("\n");
 		return (0);
+	}
 
 	cvs_printf("   Sticky Tag:\t\t%s\n",
 	    cf->cf_tag == NULL ? "(none)" : cf->cf_tag);
