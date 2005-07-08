@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.36 2005/07/08 08:24:09 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.37 2005/07/08 08:54:43 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -81,7 +81,7 @@ struct cvs_cmd cvs_cmd_export = {
 
 static char *date, *tag, *koptstr, *tgtdir, *rcsid;
 static int statmod = 0;
-static int shorten = 1;
+static int shorten = 0;
 static int usehead = 0;
 static int kflag = RCS_KWEXP_DEFAULT;
 
@@ -110,6 +110,7 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			break;
 		case 'd':
 			tgtdir = optarg;
+			shorten = 1;
 			break;
 		case 'f':
 			usehead = 1;
@@ -214,6 +215,14 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
+		/*
+		 * These arguments are for the expand-modules
+		 * command that we send to the server before requesting
+		 * a checkout.
+		 */
+		for (i = 0; i < co_nmod; i++)
+			if (cvs_sendarg(root, co_mods[i], 0) < 0)
+				return (CVS_EX_PROTO);
 		if (cvs_sendreq(root, CVS_REQ_DIRECTORY, ".") < 0)
 			return (CVS_EX_PROTO);
 		if (cvs_sendln(root, root->cr_dir) < 0)
