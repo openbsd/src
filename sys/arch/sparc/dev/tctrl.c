@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.11 2005/04/11 01:49:50 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.12 2005/07/08 12:43:48 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -1045,18 +1045,20 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		tctrl_request(sc, &req);
 
 		c = req.rspbuf[0];
-		if (c == TS102_CHARGE_UNKNOWN)
-			c = 0;
-		power->battery_life = c;
-		power->minutes_left = (u_int)-1;	/* unknown */
-		if (power->battery_state != APM_BATT_CHARGING) {
-			if (c < 0x20)
-				power->battery_state = APM_BATT_CRITICAL;
-			else if (c < 0x40)
-				power->battery_state = APM_BATT_HIGH;
-			else if (c < 0x66)
-				power->battery_state = APM_BATT_HIGH;
+		if (c >= TS102_CHARGE_UNKNOWN)
+			power->battery_life = 0;
+		else {
+			power->battery_life = c;
+			if (power->battery_state != APM_BATT_CHARGING) {
+				if (c < 0x20)
+					power->battery_state = APM_BATT_CRITICAL;
+				else if (c < 0x40)
+					power->battery_state = APM_BATT_HIGH;
+				else if (c < 0x66)
+					power->battery_state = APM_BATT_HIGH;
+			}
 		}
+		power->minutes_left = (u_int)-1;	/* unknown */
 
 #if 0
 		tctrl_read_ext_status(sc);
