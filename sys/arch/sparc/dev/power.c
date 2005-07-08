@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.8 2005/03/23 17:12:24 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.9 2005/07/08 12:34:36 miod Exp $	*/
 /*	$NetBSD: power.c,v 1.2 1996/05/16 15:56:56 abrown Exp $ */
 
 /*
@@ -76,9 +76,7 @@ powermatch(struct device *parent, void *vcf, void *aux)
 	struct confargs *ca = aux;
 
 	if (CPU_ISSUN4M) {
-		/* Tadpole SPARCbooks provide the power register as "auxio2" */
-		if (strcmp("power", ca->ca_ra.ra_name) == 0 ||
-		    strcmp("auxio2", ca->ca_ra.ra_name) == 0)
+		if (strcmp("power", ca->ca_ra.ra_name) == 0)
 			return (1);
 	}
 
