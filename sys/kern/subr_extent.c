@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.28 2005/04/21 17:46:52 miod Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.29 2005/07/08 14:05:28 krw Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -76,7 +76,7 @@
 #endif
 
 static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
-	    int, struct extent_region *, struct extent_region *);
+	    struct extent_region *, struct extent_region *);
 static	struct extent_region *extent_alloc_region_descriptor(struct extent *, int);
 static	void extent_free_region_descriptor(struct extent *,
 	    struct extent_region *);
@@ -296,10 +296,9 @@ extent_destroy(ex)
  * If we don't need the region descriptor, it will be freed here.
  */
 static void
-extent_insert_and_optimize(ex, start, size, flags, after, rp)
+extent_insert_and_optimize(ex, start, size, after, rp)
 	struct extent *ex;
 	u_long start, size;
-	int flags;
 	struct extent_region *after, *rp;
 {
 	struct extent_region *nextr;
@@ -519,7 +518,7 @@ extent_alloc_region(ex, start, size, flags)
 	 * to the region we fall after, or is NULL if we belong
 	 * at the beginning of the region list.  Insert ourselves.
 	 */
-	extent_insert_and_optimize(ex, start, size, flags, last, myrp);
+	extent_insert_and_optimize(ex, start, size, last, myrp);
 	return (0);
 }
 
@@ -886,7 +885,7 @@ skip:
 	/*
 	 * Insert ourselves into the region list.
 	 */
-	extent_insert_and_optimize(ex, newstart, size, flags, last, myrp);
+	extent_insert_and_optimize(ex, newstart, size, last, myrp);
 	*result = newstart;
 	return (0);
 }
