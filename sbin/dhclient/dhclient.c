@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.71 2005/07/07 20:03:40 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.72 2005/07/08 00:57:36 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1392,8 +1392,7 @@ make_discover(struct interface_info *ip, struct client_lease *lease)
 		}
 
 	/* Set up the option buffer... */
-	ip->client->packet_length = cons_options(&ip->client->packet, 0,
-	    options, 0, 0, 0, NULL, 0);
+	ip->client->packet_length = cons_options(&ip->client->packet, options);
 	if (ip->client->packet_length < BOOTP_MIN_LEN)
 		ip->client->packet_length = BOOTP_MIN_LEN;
 
@@ -1466,8 +1465,7 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 		}
 
 	/* Set up the option buffer... */
-	ip->client->packet_length = cons_options(&ip->client->packet, 0,
-	    options, 0, 0, 0, NULL, 0);
+	ip->client->packet_length = cons_options(&ip->client->packet, options);
 	if (ip->client->packet_length < BOOTP_MIN_LEN)
 		ip->client->packet_length = BOOTP_MIN_LEN;
 
@@ -1535,8 +1533,7 @@ make_decline(struct interface_info *ip, struct client_lease *lease)
 	}
 
 	/* Set up the option buffer... */
-	ip->client->packet_length = cons_options(&ip->client->packet, 0,
-	    options, 0, 0, 0, NULL, 0);
+	ip->client->packet_length = cons_options(&ip->client->packet, options);
 	if (ip->client->packet_length < BOOTP_MIN_LEN)
 		ip->client->packet_length = BOOTP_MIN_LEN;
 
