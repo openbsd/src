@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.14 2005/03/23 17:10:24 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.15 2005/07/08 12:42:57 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -147,6 +147,8 @@ int	getpropint(int node, char *name, int deflt);
 
 /* Frequently used options node */
 extern int optionsnode;
+/* Machine type */
+extern char mainbus_model[30];
 
 /*
  * The romprop function gets physical and virtual addresses from the PROM
