@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.28 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.29 2005/07/08 10:30:24 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -226,7 +226,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	if (cmd->cmd_cleanup != NULL)
 		(*cmd->cmd_cleanup)();
 
-	if (cmd->cmd_flags & CVS_CMD_PRUNEDIRS)
+	if (cvs_cmdop != CVS_OP_SERVER && cmd->cmd_flags & CVS_CMD_PRUNEDIRS)
 		cvs_file_prune(fpath);
 
 	if (root->cr_method != CVS_METHOD_LOCAL)
