@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2005/04/02 14:34:46 krw Exp $
+#	$OpenBSD: install.md,v 1.6 2005/07/08 19:40:31 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 # machine dependent section of installation/upgrade script.
 #
 
-# Machine-dependent install sets
-MDTERM=vt220
 ARCH=ARCH
 
 md_installboot() {
