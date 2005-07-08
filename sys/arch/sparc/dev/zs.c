@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.41 2005/04/19 21:30:19 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.42 2005/07/08 12:38:31 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -204,7 +204,11 @@ zs_get_chan_addr(zs_unit, channel)
 /* Definition of the driver for autoconfig. */
 int	zs_match(struct device *, void *, void *);
 void	zs_attach(struct device *, struct device *, void *);
-int  zs_print(void *, const char *nam);
+int	zs_print(void *, const char *nam);
+
+/* Power management hooks (for Tadpole SPARCbooks) */
+void	zs_disable(struct zs_chanstate *);
+int	zs_enable(struct zs_chanstate *);
 
 struct cfattach zs_ca = {
 	sizeof(struct zsc_softc), zs_match, zs_attach
@@ -378,6 +382,19 @@ zs_attach(parent, self, aux)
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
+
+#ifdef SUN4M
+	/* register power management routines if necessary */
+	if (CPU_ISSUN4M) {
+		if (getpropint(ra->ra_node, "pwr-on-auxio2", 0))
+			for (channel = 0; channel < 2; channel++) {
+				cs = &zsc->zsc_cs[channel];
+				cs->disable = zs_disable;
+				cs->enable = zs_enable;
+				cs->enabled = 0;
+			}
+	}
+#endif
 
 #if 0
 	/*
@@ -647,6 +664,46 @@ void  zs_write_data(cs, val)
 	*cs->cs_reg_data = val;
 	ZS_DELAY();
 }
+
+#ifdef SUN4M
+/*
+ * Power management hooks for zsopen() and zsclose().
+ * We use them to power on/off the ports on the Tadpole SPARCbook machines
+ * (on other sun4m machines, this is a no-op).
+ */
+
+/*
+ * Since the serial power control is global, we need to remember which channels
+ * have their ports open, so as not to power off when closing one channel if
+ * both were open. Simply xor'ing the zs_chanstate pointers is enough to let us
+ * know if the serial lines are used or not.
+ */
+static vaddr_t zs_sb_enable = 0;
+
+int
+zs_enable(struct zs_chanstate *cs)
+{
+	if (cs->enabled == 0) {
+		if (zs_sb_enable == 0)
+			sb_auxregbisc(1, AUXIO2_SERIAL, 0);
+		zs_sb_enable ^= (vaddr_t)cs;
+		cs->enabled = 1;
+	}
+	return (0);
+}
+
+void
+zs_disable(struct zs_chanstate *cs)
+{
+	if (cs->enabled != 0) {
+		cs->enabled = 0;
+		zs_sb_enable ^= (vaddr_t)cs;
+		if (zs_sb_enable == 0)
+			sb_auxregbisc(1, 0, AUXIO2_SERIAL);
+	}
+}
+
+#endif	/* SUN4M */
 
 /****************************************************************
  * Console support functions (Sun specific!)
