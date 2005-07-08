@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.18 2005/07/08 00:57:36 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.19 2005/07/08 14:15:23 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -50,9 +50,7 @@ int bad_options_max = 5;
 
 void	parse_options(struct packet *);
 void	parse_option_buffer(struct packet *, unsigned char *, int);
-int	store_options(unsigned char *, int, struct option_data *,
-	    unsigned char *, int, int, int);
-
+int	store_options(unsigned char *, int, struct option_data *, int);
 
 /*
  * Parse all available options out of the specified packet.
@@ -198,26 +196,15 @@ parse_option_buffer(struct packet *packet,
 int
 cons_options(struct dhcp_packet *outpacket, struct option_data *options)
 {
-	unsigned char priority_list[300], buffer[4096];
-	int priority_len, main_buffer_size, mainbufix, bufix;
+	unsigned char buffer[4096];
+	int main_buffer_size, mainbufix, bufix;
 	int option_size, length;
 
 	main_buffer_size = 576 - DHCP_FIXED_LEN;
 
-	/* Preload the option priority list with mandatory options. */
-	priority_len = 0;
-	priority_list[priority_len++] = DHO_DHCP_MESSAGE_TYPE;
-	priority_list[priority_len++] = DHO_DHCP_SERVER_IDENTIFIER;
-	priority_list[priority_len++] = DHO_DHCP_LEASE_TIME;
-	priority_list[priority_len++] = DHO_DHCP_MESSAGE;
-
-	memcpy(&priority_list[priority_len], dhcp_option_default_priority_list,
-	    sizeof_dhcp_option_default_priority_list);
-	priority_len += sizeof_dhcp_option_default_priority_list;
-
 	/* Copy the options into the big buffer... */
 	option_size = store_options( buffer, (main_buffer_size - 7), options,
-	    priority_list, priority_len, main_buffer_size, main_buffer_size);
+	    main_buffer_size);
 
 	/* Put the cookie up front... */
 	memcpy(outpacket->options, DHCP_OPTIONS_COOKIE, 4);
@@ -257,21 +244,17 @@ cons_options(struct dhcp_packet *outpacket, struct option_data *options)
  */
 int
 store_options(unsigned char *buffer, int buflen, struct option_data *options,
-    unsigned char *priority_list, int priority_len, int first_cutoff,
-    int second_cutoff)
+    int first_cutoff)
 {
-	int bufix = 0, option_stored[256], i, ix;
-
-	/* Zero out the stored-lengths array. */
-	memset(option_stored, 0, sizeof(option_stored));
+	int bufix = 0, i, ix;
 
 	/*
 	 * Copy out the options in the order that they appear in the
-	 * priority list...
+	 * priority list.
 	 */
-	for (i = 0; i < priority_len; i++) {
+	for (i = 0; i < sizeof dhcp_option_default_priority_list; i++) {
 		/* Code for next option to try to store. */
-		int code = priority_list[i];
+		int code = dhcp_option_default_priority_list[i];
 		int optstart;
 
 		/*
@@ -281,17 +264,8 @@ store_options(unsigned char *buffer, int buflen, struct option_data *options,
 		int length;
 
 		/* If no data is available for this option, skip it. */
-		if (!options[code].data) {
+		if (!options[code].data)
 			continue;
-		}
-
-		/*
-		 * The client could ask for things that are mandatory,
-		 * in which case we should avoid storing them twice...
-		 */
-		if (option_stored[code])
-			continue;
-		option_stored[code] = 1;
 
 		/* We should now have a constant length for the option. */
 		length = options[code].len;
@@ -319,9 +293,6 @@ store_options(unsigned char *buffer, int buflen, struct option_data *options,
 			if (bufix < first_cutoff &&
 			    bufix + incr > first_cutoff)
 				incr = first_cutoff - bufix;
-			else if (bufix < second_cutoff &&
-			    bufix + incr > second_cutoff)
-				incr = second_cutoff - bufix;
 
 			/*
 			 * If this option is going to overflow the

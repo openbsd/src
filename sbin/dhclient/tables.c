@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.4 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: tables.c,v 1.5 2005/07/08 14:15:23 krw Exp $	*/
 
 /* Tables of information... */
 
@@ -324,7 +324,11 @@ struct option dhcp_options[256] = {
  * Default dhcp option priority list (this is ad hoc and should not be
  * mistaken for a carefully crafted and optimized list).
  */
-unsigned char dhcp_option_default_priority_list[] = {
+unsigned char dhcp_option_default_priority_list[256] = {
+	DHO_DHCP_MESSAGE_TYPE,
+	DHO_DHCP_SERVER_IDENTIFIER,
+	DHO_DHCP_LEASE_TIME,
+	DHO_DHCP_MESSAGE,
 	DHO_DHCP_REQUESTED_ADDRESS,
 	DHO_DHCP_OPTION_OVERLOAD,
 	DHO_DHCP_MAX_MESSAGE_SIZE,
@@ -402,9 +406,6 @@ unsigned char dhcp_option_default_priority_list[] = {
 	239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250,
 	251, 252, 253, 254,
 };
-
-int sizeof_dhcp_option_default_priority_list =
-	sizeof(dhcp_option_default_priority_list);
 
 struct hash_table universe_hash;
 
