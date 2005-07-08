@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.35 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.36 2005/07/08 08:24:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -214,9 +214,6 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		for (i = 0; i < co_nmod; i++)
-			if (cvs_sendarg(root, co_mods[i], 0) < 0)
-				return (CVS_EX_PROTO);
 		if (cvs_sendreq(root, CVS_REQ_DIRECTORY, ".") < 0)
 			return (CVS_EX_PROTO);
 		if (cvs_sendln(root, root->cr_dir) < 0)
