@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.37 2005/07/08 11:46:23 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.38 2005/07/08 12:45:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -273,11 +273,19 @@ cvs_status_local(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	cvs_printf("   Sticky Tag:\t\t%s\n",
-	    cf->cf_tag == NULL ? "(none)" : cf->cf_tag);
-	cvs_printf("   Sticky Date:\t\t%s\n", "(none)");
-	cvs_printf("   Sticky Options:\t%s\n",
-	    cf->cf_opts == NULL ? "(none)" : cf->cf_opts);
+	if (cf->cf_tag != NULL)
+		cvs_printf("   Sticky Tag:\t\t%s\n", cf->cf_tag);
+	else if (verbosity > 0)
+		cvs_printf("   Sticky Tag:\t\t(none)\n");
+
+	/* XXX */
+	if (verbosity > 0)
+		cvs_printf("   Sticky Date:\t\t%s\n", "(none)");
+
+	if (cf->cf_opts != NULL)
+		cvs_printf("   Sticky Options:\t%s\n", cf->cf_opts);
+	else if (verbosity > 0)
+		cvs_printf("   Sticky Options:\t(none)\n");
 
 	cvs_printf("\n");
 	rcs_close(rf);
