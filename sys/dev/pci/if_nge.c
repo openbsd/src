@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.35 2005/07/02 23:10:11 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.36 2005/07/09 20:53:08 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -920,13 +920,10 @@ nge_attach(parent, self, aux)
 	ifp->if_baudrate = 1000000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, NGE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
-	ifp->if_capabilities =
-	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-#if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
-#endif
 	DPRINTFN(5, ("%s: bcopy\n", sc->sc_dv.dv_xname));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/*
 	 * Do MII setup.
@@ -1345,35 +1342,15 @@ nge_rxeof(sc)
 
 		/* Do IP checksum checking. */
 		if (extsts & NGE_RXEXTSTS_IPPKT) {
-			if (extsts & NGE_RXEXTSTS_IPCSUMERR)
-				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_BAD;
-			else
+			if (!(extsts & NGE_RXEXTSTS_IPCSUMERR))
 				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
-		}
-		if (extsts & NGE_RXEXTSTS_TCPPKT) {
-			if (extsts & NGE_RXEXTSTS_TCPCSUMERR)
-				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_BAD;
-			else
+			if ((extsts & NGE_RXEXTSTS_TCPPKT) &&
+			    (!(extsts & NGE_RXEXTSTS_TCPCSUMERR)))
 				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
-		}
-		if (extsts & NGE_RXEXTSTS_UDPPKT) {
-			if (extsts & NGE_RXEXTSTS_UDPCSUMERR)
-				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_BAD;
-			else
+			else if ((extsts & NGE_RXEXTSTS_UDPPKT) &&
+				 (!(extsts & NGE_RXEXTSTS_UDPCSUMERR)))
 				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 		}
-
-#if NVLAN > 0
-		/*
-		 * If we received a packet with a vlan tag, pass it
-		 * to vlan_input() instead of ether_input().
-		 */
-		if (extsts & NGE_RXEXTSTS_VLANPKT) {
-			if (vlan_input_tag(m, extsts & NGE_RXEXTSTS_VTCI) < 0)
-				ifp->if_data.ifi_noproto++;
-                        continue;
-                }
-#endif
 
 		ether_input_mbuf(ifp, m);
 	}
@@ -1847,17 +1824,6 @@ nge_init(xsc)
 	 */
 	CSR_WRITE_4(sc, NGE_VLAN_IP_RXCTL, NGE_VIPRXCTL_IPCSUM_ENB);
 
-#if NVLAN > 0
-	/*
-	 * If VLAN support is enabled, tell the chip to detect
-	 * and strip VLAN tag info from received frames. The tag
-	 * will be provided in the extsts field in the RX descriptors.
-	 */
-	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
-		NGE_SETBIT(sc, NGE_VLAN_IP_RXCTL,
-		    NGE_VIPRXCTL_TAG_DETECT_ENB|NGE_VIPRXCTL_TAG_STRIP_ENB);
-#endif
-
 	/* Set TX configuration */
 	CSR_WRITE_4(sc, NGE_TX_CFG, NGE_TXCFG);
 
@@ -2112,22 +2078,10 @@ nge_ioctl(ifp, command, data)
 
 	switch(command) {
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU_JUMBO || ifr->ifr_mtu < ETHERMIN)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu < ETHERMTU_JUMBO)
 			error = EINVAL;
-		else {
+		else
 			ifp->if_mtu = ifr->ifr_mtu;
-			/*
-			 * Workaround: if the MTU is larger than
-			 * 8152 (TX FIFO size minus 64 minus 18), turn off
-			 * TX checksum offloading.
-			 */
-			if (ifr->ifr_mtu >= 8152)
-				ifp->if_capabilities &= ~(IFCAP_CSUM_IPv4 |
-				    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4);
-			else
-				ifp->if_capabilities = IFCAP_CSUM_IPv4 |
-					IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-		}
 		break;
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
