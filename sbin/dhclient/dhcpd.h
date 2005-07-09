@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.39 2005/07/09 14:36:15 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.40 2005/07/09 16:16:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -261,9 +261,6 @@ int parse_warn(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 /* conflex.c */
 extern int lexline, lexchar;
 extern char *token_line, *tlname;
-extern char comments[4096];
-extern int comment_index;
-extern int eol_token;
 void new_parse(char *);
 int next_token(char **, FILE *);
 int peek_token(char **, FILE *);
