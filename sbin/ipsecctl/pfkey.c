@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.15 2005/07/09 21:17:46 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.16 2005/07/09 21:31:24 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -363,6 +363,10 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 
 	if (action == SADB_ADD) {
+		if (!key) {
+			warnx("no key specified");
+			return -1;
+		}
 		bzero(&sa_key, sizeof(sa_key));
 		sa_key.sadb_key_len = (sizeof(sa_key) + ((key->len + 7) / 8)
 		    * 8) / 8;
@@ -437,12 +441,8 @@ pfkey_reply(int sd)
 	}
 	if (hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
-		if (errno == ESRCH)
-			return 0;
-		else {
-			warn("PF_KEY returned error");
-			return -1;
-		}
+		warn("PF_KEY failed");
+		return -1;
 	}
 	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
 	if ((data = malloc(len)) == NULL)
