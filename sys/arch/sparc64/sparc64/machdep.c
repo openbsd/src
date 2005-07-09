@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.75 2005/03/29 19:34:07 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.76 2005/07/09 22:51:13 robert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1621,10 +1621,29 @@ _bus_dmamem_mmap(t, t0, segs, nsegs, off, prot, flags)
 	off_t off;
 	int prot, flags;
 {
+	int i;
 
-	panic("_bus_dmamem_mmap: not implemented");
+	for (i = 0; i < nsegs; i++) {
+#ifdef DIAGNOSTIC
+		if (off & PGOFSET)
+			panic("_bus_dmamem_mmap: offset unaligned");
+		if (segs[i].ds_addr & PGOFSET)
+			panic("_bus_dmamem_mmap: segment unaligned");
+		if (segs[i].ds_len & PGOFSET)
+			panic("_bus_dmamem_mmap: segment size not multiple"
+					" of page size");
+#endif
+		if (off >= segs[i].ds_len) {
+			off -= segs[i].ds_len;
+			continue;
+		}
+
+		return (sparc64_btop((caddr_t)segs[i].ds_addr + off));
+	}
+
+	/* Page not found. */
+	return (-1);
 }
-
 
 struct sparc_bus_dma_tag mainbus_dma_tag = {
 	NULL,
