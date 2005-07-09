@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.40 2005/07/09 22:26:14 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.41 2005/07/09 23:18:53 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1634,22 +1634,7 @@ nge_encap(sc, m_head, txidx)
 	if (m != NULL)
 		return(ENOBUFS);
 
-	/*
-	 * Card handles checksumming on a packet by packet
-	 * basis.
-	 */
 	sc->nge_ldata->nge_tx_list[*txidx].nge_extsts = 0;
-	if (m_head->m_pkthdr.csum_flags) {
-		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
-			    NGE_TXEXTSTS_IPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
-			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
-			    NGE_TXEXTSTS_TCPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
-			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
-			    NGE_TXEXTSTS_UDPCSUM;
-	}
 
 #if NVLAN > 0
 	if (ifv != NULL) {
