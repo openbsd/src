@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.15 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: mii.c,v 1.16 2005/07/09 21:32:06 brad Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 	int bmsr, offset = 0;
 	int phymin, phymax;
 
-	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_attach: phyloc and offloc specified");
 
 	if (phyloc == MII_PHY_ANY) {
@@ -159,7 +159,7 @@ mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
 {
 	struct mii_softc *child;
 
-	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_activate: phyloc and offloc specified");
 
 	if ((mii->mii_flags & MIIF_INITDONE) == 0)
