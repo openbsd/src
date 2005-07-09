@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: arp.c,v 1.13 2002/01/16 14:13:06 brian Exp $
+ * $OpenBSD: arp.c,v 1.14 2005/07/09 01:44:16 brad Exp $
  *
  */
 
@@ -302,7 +302,7 @@ arp_EtherAddr(int s, struct in_addr ipaddr, struct sockaddr_dl *hwaddr,
         if ((ifa->sin_addr.s_addr & netmask->sin_addr.s_addr) ==
             (ipaddr.s_addr & netmask->sin_addr.s_addr)) {
           log_Printf(verbose ? LogPHASE : LogDEBUG,
-                     "Found interface %.*s for %s\n", dl->sdl_alen,
+                     "Found interface %.*s for %s\n", dl->sdl_nlen,
                      dl->sdl_data, inet_ntoa(ipaddr));
           memcpy(hwaddr, dl, dl->sdl_len);
           free(buf);
