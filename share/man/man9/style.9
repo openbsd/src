@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.39 2005/05/15 22:38:26 krw Exp $
+.\"	$OpenBSD: style.9,v 1.40 2005/07/09 08:05:08 jmc Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -644,6 +644,10 @@ Whenever possible, code should be run through a code checker
 .Dq Li gcc -Wall -W -Wtraditional -Wpointer-arith -Wbad-function-cast ... ,
 .Xr lint 1
 or lclint from the ports tree) and produce minimal warnings.
+.Pp
+Note that documentation follows its own style guide,
+as documented in
+.Xr mdoc.samples 7 .
 .Sh FILES
 .Bl -tag -width "/usr/share/misc/license.template " -compact
 .It Pa /usr/share/misc/license.template
@@ -653,7 +657,8 @@ Example license for new code.
 .Xr indent 1 ,
 .Xr err 3 ,
 .Xr queue 3 ,
-.Xr warn 3
+.Xr warn 3 ,
+.Xr mdoc.samples 7
 .Sh HISTORY
 This man page is largely based on the src/admin/style/style file from
 the
