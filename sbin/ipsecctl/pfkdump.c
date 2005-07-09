@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.4 2005/06/27 21:26:02 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.5 2005/07/09 21:54:12 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -211,25 +211,29 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_sa *sa = (struct sadb_sa *)ext;
 
-	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
-		printf("cpi 0x%8.8x %s",
-		    ntohl(sa->sadb_sa_spi),
-		    lookup_name(comp_types, sa->sadb_sa_encrypt));
-	else
-		printf("spi 0x%8.8x %s %s",
-		    ntohl(sa->sadb_sa_spi),
-		    lookup_name(enc_types, sa->sadb_sa_encrypt),
-		    lookup_name(auth_types, sa->sadb_sa_auth));
-	if (sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
-		printf(" tunnel");
 	if (extensions[SADB_EXT_ADDRESS_SRC]) {
-		printf(" from ");
+		printf("from ");
 		print_addr(extensions[SADB_EXT_ADDRESS_SRC], msg);
 	}
 	if (extensions[SADB_EXT_ADDRESS_DST]) {
 		printf(" to ");
 		print_addr(extensions[SADB_EXT_ADDRESS_DST], msg);
 	}
+	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
+		printf("cpi 0x%8.8x %s",
+		    ntohl(sa->sadb_sa_spi),
+		    lookup_name(comp_types, sa->sadb_sa_encrypt));
+	else {
+		printf(" spi 0x%8.8x", ntohl(sa->sadb_sa_spi));
+		if (sa->sadb_sa_encrypt)
+			printf(" %s",
+			    lookup_name(enc_types, sa->sadb_sa_encrypt));
+		if (sa->sadb_sa_auth)
+			printf(" %s",
+			    lookup_name(auth_types, sa->sadb_sa_auth));
+	}
+	if (sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
+		printf(" tunnel");
 	printf("\n");
 }
 
