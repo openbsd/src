@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.17 2005/07/09 21:12:07 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.18 2005/07/09 21:41:08 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -241,8 +241,10 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 	printf(" to ");
 	ipsecctl_print_addr(r->dst);
 	printf(" spi 0x%08x", r->spi);
-	printf(" key 0x");
-	ipsecctl_print_key(r->key);
+	if (r->key) {
+		printf(" key 0x");
+		ipsecctl_print_key(r->key);
+	}
 }
 
 void

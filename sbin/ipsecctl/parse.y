@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2005/07/09 21:12:07 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2005/07/09 21:41:08 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -117,7 +117,7 @@ typedef struct {
 %type	<v.id>			id
 %type	<v.authtype>		authtype
 %type	<v.spi>			spi
-%type	<v.key>			key
+%type	<v.key>			keyspec
 %%
 
 grammar		: /* empty */
@@ -147,7 +147,7 @@ number		: STRING			{
 flowrule	: FLOW ipsecrule		{ }
 		;
 
-tcpmd5rule	: TCPMD5 hosts spi key		{
+tcpmd5rule	: TCPMD5 hosts spi keyspec	{
 			struct ipsec_rule	*r;
 
 			r = create_sa($2.src, $2.dst, $3, $4);
@@ -268,7 +268,8 @@ spi		: SPI number			{
 		}
 		;
 
-key		: KEY STRING			{
+keyspec		: /* empty */			{ $$ = NULL; }
+		| KEY STRING			{
 			struct ipsec_key *key;
 			int	 i;
 			char	*hexkey;
