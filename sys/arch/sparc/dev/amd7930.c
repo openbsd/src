@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.28 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.29 2005/07/09 22:23:13 miod Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -30,9 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "audio.h"
-#if NAUDIO > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -845,4 +842,3 @@ amd7930swintr(sc0)
 		splx(s);
 	return (ret);
 }
-#endif /* NAUDIO > 0 */

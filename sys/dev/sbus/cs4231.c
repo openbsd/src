@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.26 2005/04/16 21:57:23 mickey Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.27 2005/07/09 22:23:15 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -35,9 +35,6 @@
  * Driver for CS4231 based audio found in some sun4m systems (cs4231)
  * based on ideas from the S/Linux project and the NetBSD project.
  */
-
-#include "audio.h"
-#if NAUDIO > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1624,5 +1621,3 @@ cs4231_trigger_input(void *vsc, void *start, void *end, int blksize,
 
 	return (0);
 }
-
-#endif /* NAUDIO > 0 */

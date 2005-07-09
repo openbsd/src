@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.14 2005/03/08 21:56:23 martin Exp $	*/
+/*	$OpenBSD: magma.c,v 1.15 2005/07/09 22:23:15 miod Exp $	*/
 /*
  * magma.c
  *
@@ -37,9 +37,6 @@
  * Driver for Magma SBus Serial/Parallel cards using the Cirrus Logic
  * CD1400 & CD1190 chips
  */
-
-#include "magma.h"
-#if NMAGMA > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1778,5 +1775,3 @@ mbpp_mstohz(int m)
 	}
 	return (h);
 }
-
-#endif /* NMAGMA */
