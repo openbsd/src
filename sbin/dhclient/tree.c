@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.13 2004/05/06 22:29:15 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.14 2005/07/09 14:36:16 krw Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -41,8 +41,6 @@
  */
 
 #include "dhcpd.h"
-
-extern int h_errno;
 
 pair
 cons(caddr_t car, pair cdr)

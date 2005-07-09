@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.19 2005/07/08 14:15:23 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.20 2005/07/09 14:36:16 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -42,7 +42,6 @@
 
 #include <ctype.h>
 
-#define DHCP_OPTION_DATA
 #include "dhcpd.h"
 
 int bad_options = 0;

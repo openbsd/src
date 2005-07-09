@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.38 2005/07/09 01:06:00 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.39 2005/07/09 14:36:15 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -341,7 +341,6 @@ char *piaddr(struct iaddr);
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
 extern time_t cur_time;
-extern int log_priority;
 extern int log_perror;
 
 extern struct client_config top_level_config;

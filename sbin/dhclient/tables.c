@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.6 2005/07/09 01:06:00 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.7 2005/07/09 14:36:16 krw Exp $	*/
 
 /* Tables of information... */
 
@@ -412,7 +412,6 @@ initialize_dhcp_universe(void)
 {
 	int i;
 
-	dhcp_universe.name = "dhcp";
 	dhcp_universe.hash = new_hash();
 	if (!dhcp_universe.hash)
 		error("Can't allocate dhcp option hash table.");

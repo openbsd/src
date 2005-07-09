@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.72 2005/07/08 00:57:36 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.73 2005/07/09 14:36:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,6 @@ struct sockaddr_in sockaddr_broadcast;
 
 #define TIME_MAX 2147483647
 
-int		log_priority;
 int		no_daemon;
 int		unknown_ok = 1;
 int		routefd;
