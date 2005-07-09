@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.6 2005/05/28 01:36:02 deraadt Exp $	*/
+/*	$OpenBSD: conf.y,v 1.7 2005/07/09 07:53:26 jmc Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -246,7 +246,7 @@ yylex(void)
 	/* Numerical token? */
 	if (isdigit(*confptr)) {
 		for (p = confptr; *p; p++)
-			if (*p == '.') /* IP-address, or bad input */
+			if (*p == '.') /* IP address, or bad input */
 				goto is_string;
 		v = (int)strtol(confptr, (char **)NULL, 10);
 		yylval.val = v;
