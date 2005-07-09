@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.196 2005/06/15 04:45:48 fgsch Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.197 2005/07/09 09:45:21 ho Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -6135,6 +6135,7 @@ pdc203xx_setup_channel(struct channel_softc *chp)
 			splx(s);
 		}
 	}
+	pciide_print_modes(cp);
 }
 
 int
