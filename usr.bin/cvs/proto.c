@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.58 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.59 2005/07/09 16:27:34 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1101,7 +1101,7 @@ cvs_initlog(void)
 			break;
 		case 'd':
 			time(&now);
-			snprintf(fpath, sizeof(fpath), "%s", ctime(&now));
+			strlcpy(fpath, ctime(&now), sizeof(fpath));
 			break;
 		case 'p':
 			snprintf(fpath, sizeof(fpath), "%d", getpid());
