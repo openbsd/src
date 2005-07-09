@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.8 2005/04/10 14:02:45 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.9 2005/07/09 22:22:44 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -104,6 +104,37 @@ the
 .Ar peer
 specification can be left out.
 .El
+.Sh TCP MD5 SIGNATURES
+RFC 2385 describes a mechanism to protect
+.Xr tcp 4
+sessions using MD5.
+A Security Association (SA) for TCP MD5 signatures is set up using the
+following rule:
+.Bl -tag -width xxxx
+.It Xo
+.Ar tcpmd5
+.Ar from
+.Aq Ar src
+.Ar to
+.Aq Ar dst
+.Ar spi
+.Aq Ar number
+.Ar key
+.Aq Ar hex string
+.Xc
+This rule applies for packets with source address
+.Aq Ar src
+and destination address
+.Aq Ar dst .
+All addresses are specified in CIDR notation.
+The parameter
+.Ar spi
+is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
+The key to be used is a hexadecimal string of arbitrary length.
+.El
+.Pp
+For details on how to enable TCP MD5 signatures see
+.Xr tcp 4 .
 .Sh EXAMPLES
 .Bd -literal
 # Host-to-host
@@ -119,6 +150,10 @@ flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 # Same as above, but explicitly specifying "in" and "out" rules
 flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
+
+# Set up a keys for TCP MD5 signatures
+tcpmd5       from 192.168.3.14   to 192.168.3.27 spi 0x1000 key 0xdeadbeef
+tcpmd5       from 192.168.3.27   to 192.168.3.14 spi 0x1001 key 0xbeefdead
 .Ed
 .Sh SEE ALSO
 .Xr ipsec 4 ,
