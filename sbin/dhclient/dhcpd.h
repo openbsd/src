@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.37 2005/07/08 14:15:23 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.38 2005/07/09 01:06:00 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -318,9 +318,8 @@ unsigned char *hash_lookup(struct hash_table *, unsigned char *, int);
 /* tables.c */
 extern struct option dhcp_options[256];
 extern unsigned char dhcp_option_default_priority_list[256];
-extern struct hash_table universe_hash;
 extern struct universe dhcp_universe;
-void initialize_universes(void);
+void initialize_dhcp_universe(void);
 
 /* convert.c */
 u_int32_t getULong(unsigned char *);

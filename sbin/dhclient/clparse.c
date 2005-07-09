@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.18 2004/09/15 18:15:18 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.19 2005/07/09 01:06:00 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -66,7 +66,7 @@ read_client_conf(void)
 	new_parse(path_dhclient_conf);
 
 	/* Set up the initial dhcp option universe. */
-	initialize_universes();
+	initialize_dhcp_universe();
 
 	/* Initialize the top level client configuration. */
 	memset(&top_level_config, 0, sizeof(top_level_config));
@@ -670,9 +670,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	u_int8_t	 buf[4];
 	u_int8_t	 hunkbuf[1024];
 	int		 hunkix = 0;
-	char		*vendor;
 	char		*fmt;
-	struct universe	*universe;
 	struct option	*option;
 	struct iaddr	 ip_addr;
 	u_int8_t	*dp;
@@ -686,58 +684,17 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-	if ((vendor = strdup(val)) == NULL)
-		error("no memory for vendor information.");
-
-	token = peek_token(&val, cfile);
-	if (token == DOT) {
-		/* Go ahead and take the DOT token... */
-		token = next_token(&val, cfile);
-
-		/* The next token should be an identifier... */
-		token = next_token(&val, cfile);
-		if (!is_identifier(token)) {
-			parse_warn("expecting identifier after '.'");
-			if (token != SEMI)
-				skip_to_semi(cfile);
-			return (NULL);
-		}
-
-		/* Look up the option name hash table for the specified
-		   vendor. */
-		universe = ((struct universe *)hash_lookup(&universe_hash,
-		    (unsigned char *)vendor, 0));
-		/* If it's not there, we can't parse the rest of the
-		   declaration. */
-		if (!universe) {
-			parse_warn("no vendor named %s.", vendor);
-			skip_to_semi(cfile);
-			return (NULL);
-		}
-	} else {
-		/* Use the default hash table, which contains all the
-		   standard dhcp option names. */
-		val = vendor;
-		universe = &dhcp_universe;
-	}
 
 	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup(universe->hash,
+	option = (struct option *)hash_lookup(dhcp_universe.hash,
 	    (unsigned char *)val, 0);
 
 	/* If we didn't get an option structure, it's an undefined option. */
 	if (!option) {
-		if (val == vendor)
-			parse_warn("no option named %s", val);
-		else
-			parse_warn("no option named %s for vendor %s",
-				    val, vendor);
+		parse_warn("no option named %s", val);
 		skip_to_semi(cfile);
 		return (NULL);
 	}
-
-	/* Free the initial identifier token. */
-	free(vendor);
 
 	/* Parse the option data... */
 	do {
