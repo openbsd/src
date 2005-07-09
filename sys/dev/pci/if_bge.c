@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.73 2005/07/07 21:28:10 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.74 2005/07/09 22:22:41 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -765,9 +765,8 @@ bge_newbuf_std(sc, i, m, dmamap)
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
+		if (m_new == NULL)
 			return(ENOBUFS);
-		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
