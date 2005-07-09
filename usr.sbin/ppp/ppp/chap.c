@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.40 2004/01/23 03:48:43 deraadt Exp $
+ * $OpenBSD: chap.c,v 1.41 2005/07/09 01:45:08 brad Exp $
  */
 
 #include <sys/param.h>
@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #ifndef NODES
@@ -630,18 +631,23 @@ chap_Cmp(u_char type, char *myans, int mylen, char *hisans, int hislen
 #endif
         )
 {
+  int off;
+
   if (mylen != hislen)
     return 0;
-#ifndef NODES
-  else if (type == 0x80) {
-    int off = lm ? 0 : 24;
 
-    if (memcmp(myans + off, hisans + off, 24))
-      return 0;
+  off = 0;
+
+#ifndef NODES
+  if (type == 0x80) {
+    off = lm ? 0 : 24;
+    mylen = 24;
   }
 #endif
-  else if (memcmp(myans, hisans, mylen))
-    return 0;
+
+  for (; mylen; off++, mylen--)
+    if (toupper(myans[off]) != toupper(hisans[off]))
+      return 0;
 
   return 1;
 }
@@ -934,7 +940,7 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
           if (p->link.lcp.auth_ineed == 0) {
 #ifndef NODES
             if (p->link.lcp.his_authtype == 0x81) {
-              if (strncmp(ans, chap->authresponse, 42)) {
+              if (strncasecmp(ans, chap->authresponse, 42)) {
                 datalink_AuthNotOk(p->dl);
 	        log_Printf(LogWARN, "CHAP81: AuthenticatorResponse: (%.42s)"
                            " != ans: (%.42s)\n", chap->authresponse, ans);
