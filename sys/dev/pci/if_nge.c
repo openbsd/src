@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.37 2005/07/09 20:57:18 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.38 2005/07/09 22:09:39 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1074,28 +1074,30 @@ nge_newbuf(sc, c, m)
 	struct mbuf		*m;
 {
 	struct mbuf		*m_new = NULL;
-	caddr_t			*buf = NULL;
 
 	if (m == NULL) {
+		caddr_t buf = NULL;
+
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
-			return(ENOBUFS);
+			return (ENOBUFS);
 
 		/* Allocate the jumbo buffer */
 		buf = nge_jalloc(sc);
 		if (buf == NULL) {
 			m_freem(m_new);
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
+
 		/* Attach the buffer to the mbuf */
-		m_new->m_data = m_new->m_ext.ext_buf = (void *)buf;
-		m_new->m_flags |= M_EXT;
-		m_new->m_ext.ext_size = m_new->m_pkthdr.len =
-			m_new->m_len = NGE_MCLBYTES;
-		m_new->m_ext.ext_free = nge_jfree;
-		m_new->m_ext.ext_arg = sc;
-		MCLINITREFERENCE(m_new);
+		m_new->m_len = m_new->m_pkthdr.len = NGE_MCLBYTES;
+		MEXTADD(m_new, buf, NGE_MCLBYTES, 0, nge_jfree, sc);
 	} else {
+		/*
+		 * We're re-using a previously allocated mbuf;
+		 * be sure to re-init pointers and lengths to
+		 * default values.
+		 */
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = NGE_MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
