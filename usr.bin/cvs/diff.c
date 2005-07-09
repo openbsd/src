@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.44 2005/07/09 16:28:30 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.45 2005/07/09 18:56:16 niallo Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -608,7 +608,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		cvs_log(LP_WARN, "I know nothing about %s", diff_file);
 		return (0);
-	} else if (cf->cf_cvstat == CVS_FST_UPTODATE && r1 == NULL)
+	} else if (cf->cf_cvstat == CVS_FST_UPTODATE)
 		return (0);
 
 	/* at this point, the file is modified */
