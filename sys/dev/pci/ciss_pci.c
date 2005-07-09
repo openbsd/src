@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.1 2005/07/06 01:52:13 mickey Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.2 2005/07/09 21:47:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -80,9 +80,15 @@ ciss_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t size, cfgsz;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	int cfg_bar;
+	int cfg_bar, memtype;
 
-	if (pci_mapreg_map(pa, CISS_BAR, PCI_MAPREG_TYPE_MEM, 0,
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, CISS_BAR);
+	if (memtype != (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT) &&
+	    memtype != (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT)) {
+		printf(": wrong BAR type\n");
+		return;
+	}
+	if (pci_mapreg_map(pa, CISS_BAR, memtype, 0,
 	    &sc->iot, &sc->ioh, NULL, &size, 0)) {
 		printf(": can't map controller i/o space\n");
 		return;
