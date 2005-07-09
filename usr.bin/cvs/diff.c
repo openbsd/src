@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.43 2005/06/28 08:44:44 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.44 2005/07/09 16:28:30 niallo Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1575,11 +1575,11 @@ match_function(const long *f, int pos, FILE *fp)
 		nc = fread(buf, 1, nc, fp);
 		if (nc > 0) {
 			buf[nc] = '\0';
-			p = strchr(buf, '\n');
+			p = strchr((const char *)buf, '\n');
 			if (p != NULL)
 				*p = '\0';
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
-				strlcpy(lastbuf, buf, sizeof lastbuf);
+				strlcpy(lastbuf, (const char *)buf, sizeof lastbuf);
 				lastmatchline = pos;
 				return lastbuf;
 			}
