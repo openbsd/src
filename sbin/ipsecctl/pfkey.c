@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.13 2005/07/07 22:00:36 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.14 2005/07/09 21:05:02 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -41,9 +41,12 @@
 static int	fd;
 static u_int32_t sadb_msg_seq = 1;
 
-static int pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t, struct ipsec_addr *,
+static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t,
 		    struct ipsec_addr *, struct ipsec_addr *,
-		    struct ipsec_auth, u_int8_t);
+		    struct ipsec_addr *, struct ipsec_auth, u_int8_t);
+static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
+		    struct ipsec_addr *, struct ipsec_addr *,
+		    struct ipsec_key *);
 static int	pfkey_reply(int);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
 int		pfkey_ipsec_flush(void);
@@ -294,6 +297,129 @@ out:
 		free(sa_srcid);
 	if (sa_dstid)
 		free(sa_dstid);
+
+	return ret;
+}
+
+static int
+pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
+    struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_key *key)
+{
+	struct sadb_msg  smsg;
+	struct sadb_sa	 sa;
+	struct sadb_address sa_src, sa_dst;
+	struct sadb_key	 sa_key;
+	struct sockaddr_storage ssrc, sdst;
+	struct iovec	 iov[IOV_CNT];
+	ssize_t		 n;
+	int		 iov_cnt, len, ret = 0;
+
+	bzero(&ssrc, sizeof(ssrc));
+	switch (src->af) {
+	case AF_INET:
+		((struct sockaddr_in *)&ssrc)->sin_addr = src->v4;
+		ssrc.ss_len = sizeof(struct sockaddr_in);
+		ssrc.ss_family = AF_INET;
+		break;
+	case AF_INET6:
+	default:
+		warnx("unsupported address family %d", src->af);
+		return -1;
+	}
+
+	bzero(&sdst, sizeof(sdst));
+	switch (dst->af) {
+	case AF_INET:
+		((struct sockaddr_in *)&sdst)->sin_addr = dst->v4;
+		sdst.ss_len = sizeof(struct sockaddr_in);
+		sdst.ss_family = AF_INET;
+		break;
+	case AF_INET6:
+	default:
+		warnx("unsupported address family %d", dst->af);
+		return -1;
+	}
+
+	bzero(&smsg, sizeof(smsg));
+	smsg.sadb_msg_version = PF_KEY_V2;
+	smsg.sadb_msg_seq = sadb_msg_seq++;
+	smsg.sadb_msg_pid = getpid();
+	smsg.sadb_msg_len = sizeof(smsg) / 8;
+	smsg.sadb_msg_type = action;
+	smsg.sadb_msg_satype = satype;
+
+	bzero(&sa, sizeof(sa));
+	sa.sadb_sa_len = sizeof(sa) / 8;
+	sa.sadb_sa_exttype = SADB_EXT_SA;
+	sa.sadb_sa_spi = htonl(spi);
+	sa.sadb_sa_state = SADB_SASTATE_MATURE;
+
+	bzero(&sa_src, sizeof(sa_src));
+	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;
+	sa_src.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
+
+	bzero(&sa_dst, sizeof(sa_dst));
+	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
+	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+
+	if (action == SADB_ADD) {
+		bzero(&sa_key, sizeof(sa_key));
+		sa_key.sadb_key_len = (sizeof(sa_key) + ((key->len + 7) / 8)
+		    * 8) / 8;
+		sa_key.sadb_key_exttype = SADB_EXT_KEY_AUTH;
+		sa_key.sadb_key_bits = 8 * key->len;
+	}
+
+	iov_cnt = 0;
+
+	/* header */
+	iov[iov_cnt].iov_base = &smsg;
+	iov[iov_cnt].iov_len = sizeof(smsg);
+	iov_cnt++;
+
+	/* sa */
+	iov[iov_cnt].iov_base = &sa;
+	iov[iov_cnt].iov_len = sizeof(sa);
+	smsg.sadb_msg_len += sa.sadb_sa_len;
+	iov_cnt++;
+
+	/* src addr */
+	iov[iov_cnt].iov_base = &sa_src;
+	iov[iov_cnt].iov_len = sizeof(sa_src);
+	iov_cnt++;
+	iov[iov_cnt].iov_base = &ssrc;
+	iov[iov_cnt].iov_len = ROUNDUP(ssrc.ss_len);
+	smsg.sadb_msg_len += sa_src.sadb_address_len;
+	iov_cnt++;
+
+	/* dst addr */
+	iov[iov_cnt].iov_base = &sa_dst;
+	iov[iov_cnt].iov_len = sizeof(sa_dst);
+	iov_cnt++;
+	iov[iov_cnt].iov_base = &sdst;
+	iov[iov_cnt].iov_len = ROUNDUP(sdst.ss_len);
+	smsg.sadb_msg_len += sa_dst.sadb_address_len;
+	iov_cnt++;
+
+	if (action == SADB_ADD) {
+		/* key */
+		iov[iov_cnt].iov_base = &sa_key;
+		iov[iov_cnt].iov_len = sizeof(sa_key);
+		iov_cnt++;
+		iov[iov_cnt].iov_base = key->data;
+		iov[iov_cnt].iov_len = ((key->len + 7) / 8) * 8;
+		smsg.sadb_msg_len += sa_key.sadb_key_len;
+		iov_cnt++;
+	}
+
+	len = smsg.sadb_msg_len * 8;
+	if ((n = writev(sd, iov, iov_cnt)) == -1) {
+		warn("writev failed");
+		ret = -1;
+	} else if (n != len) {
+		warnx("short write");
+		ret = -1;
+	}
 
 	return ret;
 }
@@ -580,42 +706,60 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 	int		ret;
 	u_int8_t	satype, direction;
 
-	switch (r->proto) {
-	case IPSEC_ESP:
-		satype = SADB_SATYPE_ESP;
-		break;
-	case IPSEC_AH:
-		satype = SADB_SATYPE_AH;
-		break;
-	case IPSEC_COMP:
-	default:
-		return -1;
-	}
+	if (r->type == RULE_FLOW) {
+		switch (r->proto) {
+		case IPSEC_ESP:
+			satype = SADB_SATYPE_ESP;
+			break;
+		case IPSEC_AH:
+			satype = SADB_SATYPE_AH;
+			break;
+		case IPSEC_COMP:
+		default:
+			return -1;
+		}
 
-	switch (r->direction) {
-	case IPSEC_IN:
-		direction = IPSP_DIRECTION_IN;
-		break;
-	case IPSEC_OUT:
-		direction = IPSP_DIRECTION_OUT;
-		break;
-	default:
-		return -1;
-	}
+		switch (r->direction) {
+		case IPSEC_IN:
+			direction = IPSP_DIRECTION_IN;
+			break;
+		case IPSEC_OUT:
+			direction = IPSP_DIRECTION_OUT;
+			break;
+		default:
+			return -1;
+		}
 
-	switch (action) {
-	case PFK_ACTION_ADD:
-		ret = pfkey_flow(fd, satype, SADB_X_ADDFLOW, direction, r->src,
-		    r->dst, r->peer, r->auth, r->flowtype);
-		break;
-	case PFK_ACTION_DELETE:
-		/* No peer for flow deletion. */
-		ret = pfkey_flow(fd, satype, SADB_X_DELFLOW, direction, r->src,
-		    r->dst, NULL, r->auth, r->flowtype);
-		break;
-	default:
+		switch (action) {
+		case PFK_ACTION_ADD:
+			ret = pfkey_flow(fd, satype, SADB_X_ADDFLOW, direction,
+			    r->src, r->dst, r->peer, r->auth, r->flowtype);
+			break;
+		case PFK_ACTION_DELETE:
+			/* No peer for flow deletion. */
+			ret = pfkey_flow(fd, satype, SADB_X_DELFLOW, direction,
+			    r->src, r->dst, NULL, r->auth, r->flowtype);
+			break;
+		default:
+			return -1;
+		}
+	} else if (r->type == RULE_SA) {
+		satype = SADB_X_SATYPE_TCPSIGNATURE;
+		switch (action) {
+		case PFK_ACTION_ADD:
+			ret = pfkey_sa(fd, satype, SADB_ADD, r->spi,
+			    r->src, r->dst, r->key);
+			break;
+		case PFK_ACTION_DELETE:
+			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi, 
+			    r->src, r->dst, r->key);
+			break;
+		default:
+			return -1;
+		}
+	} else
 		return -1;
-	}
+
 	if (ret < 0)
 		return -1;
 	if (pfkey_reply(fd) < 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.9 2005/07/07 21:13:00 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.10 2005/07/09 21:05:02 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -29,7 +29,7 @@
 #define IPSECCTL_OPT_DELETE		0x0200
 
 enum {
-	RULE_UNKNOWN, RULE_FLOW, RULE_TCPMD5
+	RULE_UNKNOWN, RULE_FLOW, RULE_SA
 };
 enum {
 	DIRECTION_UNKNOWN, IPSEC_IN, IPSEC_OUT, IPSEC_INOUT
@@ -65,6 +65,11 @@ struct ipsec_auth {
 	u_int16_t	 type;
 };
 
+struct ipsec_key {
+	size_t		 len;
+	u_int8_t	*data;
+};
+
 /* Complete state of one rule. */
 struct ipsec_rule {
 	u_int8_t	 type;
@@ -73,10 +78,12 @@ struct ipsec_rule {
 	struct ipsec_addr *dst;
 	struct ipsec_addr *peer;
 	struct ipsec_auth  auth;
+	struct ipsec_key  *key;
 
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 	u_int8_t	 flowtype;
+	u_int32_t	 spi;
 	u_int32_t	 nr;
 
 	TAILQ_ENTRY(ipsec_rule) entries;
