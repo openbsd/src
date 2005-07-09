@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.14 2005/07/09 21:05:02 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.15 2005/07/09 21:17:46 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -58,14 +58,14 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
     struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_addr *peer,
     struct ipsec_auth auth, u_int8_t flowtype)
 {
-	struct sadb_msg	 smsg;
-	struct sadb_address sa_src, sa_dst, sa_peer, sa_smask, sa_dmask;
-	struct sadb_protocol sa_flowtype, sa_protocol;
-	struct sadb_ident *sa_srcid, *sa_dstid;
-	struct sockaddr_storage ssrc, sdst, speer, smask, dmask;
-	struct iovec	 iov[IOV_CNT];
-	ssize_t		 n;
-	int		 iov_cnt, len, ret = 0;
+	struct sadb_msg		 smsg;
+	struct sadb_address	 sa_src, sa_dst, sa_peer, sa_smask, sa_dmask;
+	struct sadb_protocol	 sa_flowtype, sa_protocol;
+	struct sadb_ident	*sa_srcid, *sa_dstid;
+	struct sockaddr_storage	 ssrc, sdst, speer, smask, dmask;
+	struct iovec	 	 iov[IOV_CNT];
+	ssize_t		 	 n;
+	int			 iov_cnt, len, ret = 0;
 
 	sa_srcid = sa_dstid = NULL;
 
@@ -305,14 +305,14 @@ static int
 pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
     struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_key *key)
 {
-	struct sadb_msg  smsg;
-	struct sadb_sa	 sa;
-	struct sadb_address sa_src, sa_dst;
-	struct sadb_key	 sa_key;
-	struct sockaddr_storage ssrc, sdst;
-	struct iovec	 iov[IOV_CNT];
-	ssize_t		 n;
-	int		 iov_cnt, len, ret = 0;
+	struct sadb_msg		smsg;
+	struct sadb_sa		sa;
+	struct sadb_address	sa_src, sa_dst;
+	struct sadb_key		sa_key;
+	struct sockaddr_storage	ssrc, sdst;
+	struct iovec	 	iov[IOV_CNT];
+	ssize_t		 	n;
+	int		 	iov_cnt, len, ret = 0;
 
 	bzero(&ssrc, sizeof(ssrc));
 	switch (src->af) {
@@ -484,7 +484,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 	for (ext = (struct sadb_ext *)(msg + 1);
 	    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
 	    msg->sadb_msg_len * PFKEYV2_CHUNK && ext->sadb_ext_len > 0;
-	    ext = (struct sadb_ext *)((u_int8_t *)ext + 
+	    ext = (struct sadb_ext *)((u_int8_t *)ext +
 	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
 		switch (ext->sadb_ext_type) {
 		case SADB_EXT_ADDRESS_SRC:
@@ -751,7 +751,7 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 			    r->src, r->dst, r->key);
 			break;
 		case PFK_ACTION_DELETE:
-			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi, 
+			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi,
 			    r->src, r->dst, r->key);
 			break;
 		default:
