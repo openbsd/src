@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.39 2005/07/09 22:14:27 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.40 2005/07/09 22:26:14 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -2116,7 +2116,6 @@ nge_ioctl(ifp, command, data)
 					NGE_CLRBIT(sc, NGE_RXFILT_CTL,
 					    NGE_RXFILTCTL_ALLMULTI);
 			} else {
-				ifp->if_flags &= ~IFF_RUNNING;
 				nge_init(sc);
 			}
 		} else {
