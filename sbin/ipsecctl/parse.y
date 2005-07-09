@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2005/07/07 22:00:36 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2005/07/09 21:12:07 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
@@ -66,9 +67,12 @@ int			 symset(const char *, const char *, int);
 int			 cmdline_symset(char *);
 char			*symget(const char *);
 int			 atoul(char *, u_long *);
+u_int8_t		 x2i(unsigned char *);
 struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
-struct ipsec_rule	*create_rule(u_int8_t, struct ipsec_addr *, struct
+struct ipsec_rule	*create_sa(struct ipsec_addr *, struct ipsec_addr *,
+			 u_int32_t, struct ipsec_key *);
+struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr *, struct
 			     ipsec_addr *, struct ipsec_addr *, u_int8_t,
 			     char *, char *, u_int16_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
@@ -92,13 +96,15 @@ typedef struct {
 		} ids;
 		char		*id;
 		u_int16_t	 authtype;
+		u_int32_t	 spi;
+		struct ipsec_key *key;
 	} v;
 	int lineno;
 } YYSTYPE;
 
 %}
 
-%token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK
+%token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI KEY
 %token	ERROR
 %token	<v.string>		STRING
 %type	<v.dir>			dir
@@ -110,11 +116,14 @@ typedef struct {
 %type	<v.ids>			ids
 %type	<v.id>			id
 %type	<v.authtype>		authtype
+%type	<v.spi>			spi
+%type	<v.key>			key
 %%
 
 grammar		: /* empty */
 		| grammar '\n'
 		| grammar flowrule '\n'
+		| grammar tcpmd5rule '\n'
 		| grammar error '\n'		{ errors++; }
 		;
 
@@ -125,18 +134,36 @@ number		: STRING			{
 				yyerror("%s is not a number", $1);
 				free($1);
 				YYERROR;
-			} else
-				$$ = ulval;
+			}
+			if (ulval > UINT_MAX) {
+				yyerror("0x%lx out of range", ulval);
+				free($1);
+				YYERROR;
+			}
+			$$ = (u_int32_t)ulval;
 			free($1);
 		}
 
 flowrule	: FLOW ipsecrule		{ }
 		;
 
+tcpmd5rule	: TCPMD5 hosts spi key		{
+			struct ipsec_rule	*r;
+
+			r = create_sa($2.src, $2.dst, $3, $4);
+			if (r == NULL)
+				YYERROR;
+			r->nr = ipsec->rule_nr++;
+
+			if (ipsecctl_add_rule(ipsec, r))
+				errx(1, "tcpmd5rule: ipsecctl_add_rule");
+		}
+		;
+
 ipsecrule	: protocol dir hosts peer ids authtype	{
 			struct ipsec_rule	*r;
 
-			r = create_rule($2, $3.src, $3.dst, $4, $1, $5.srcid,
+			r = create_flow($2, $3.src, $3.dst, $4, $1, $5.srcid,
 			    $5.dstid, $6);
 			if (r == NULL)
 				YYERROR;
@@ -231,6 +258,41 @@ authtype	: /* empty */			{ $$ = 0; }
 		| RSA				{ $$ = AUTH_RSA; }
 		| PSK				{ $$ = AUTH_PSK; }
 		;
+
+spi		: SPI number			{
+			if ($2 >= SPI_RESERVED_MIN && $2 <= SPI_RESERVED_MAX) {
+			    yyerror("invalid spi 0x%lx", $2);
+			    YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
+key		: KEY STRING			{
+			struct ipsec_key *key;
+			int	 i;
+			char	*hexkey;
+			
+			hexkey = $2;
+			if (!strncmp(hexkey, "0x", 2))
+				hexkey += 2;
+
+			key = calloc(1, sizeof(struct ipsec_key));
+			if (key == NULL)
+				err(1, "calloc:");
+
+			key->len = strlen(hexkey) / 2;
+			key->data = calloc(key->len, sizeof(u_int8_t));
+			if (key->data == NULL)
+				err(1, "calloc:");
+
+			for (i = 0; i < (int)key->len; i++)
+				key->data[i] = x2i(hexkey + 2 * i);
+
+			$$ = key;
+			free($2);
+		}
+		;
 %%
 
 struct keywords {
@@ -270,11 +332,14 @@ lookup(char *s)
 		{ "flow",		FLOW},
 		{ "from",		FROM},
 		{ "in",			IN},
+		{ "key",		KEY},
 		{ "out",		OUT},
 		{ "peer",		PEER},
 		{ "psk",		PSK},
 		{ "rsa",		RSA},
+		{ "spi",		SPI},
 		{ "srcid",		SRCID},
+		{ "tcpmd5",		TCPMD5},
 		{ "to",			TO},
 	};
 	const struct keywords	*p;
@@ -594,6 +659,22 @@ atoul(char *s, u_long *ulvalp)
 	return (0);
 }
 
+u_int8_t
+x2i(unsigned char *s)
+{
+	char	ss[3];
+
+	ss[0] = s[0];
+	ss[1] = s[1];
+	ss[2] = 0;
+
+	if (!isxdigit(s[0]) || !isxdigit(s[1])) {
+		yyerror("keys need to be specified in hex digits");
+		return -1;
+	}
+	return ((u_int8_t)strtoul(ss, NULL, 16));
+}
+
 struct ipsec_addr *
 host(const char *s)
 {
@@ -649,7 +730,27 @@ copyhost(const struct ipsec_addr *src)
 }
 
 struct ipsec_rule *
-create_rule(u_int8_t dir, struct ipsec_addr *src, struct ipsec_addr *dst,
+create_sa(struct ipsec_addr *src, struct ipsec_addr *dst, u_int32_t spi,
+    struct ipsec_key *key)
+{
+	struct ipsec_rule *r;
+
+	r = calloc(1, sizeof(struct ipsec_rule));
+	if (r == NULL)
+		err(1, "calloc");
+
+	r->type = RULE_SA;
+
+	r->src = src;
+	r->dst = dst;
+	r->spi = spi;
+	r->key = key;
+
+	return r;
+}
+
+struct ipsec_rule *
+create_flow(u_int8_t dir, struct ipsec_addr *src, struct ipsec_addr *dst,
     struct ipsec_addr *peer, u_int8_t proto, char *srcid, char *dstid,
     u_int16_t authtype)
 {
