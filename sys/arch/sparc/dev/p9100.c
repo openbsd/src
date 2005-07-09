@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.36 2005/03/26 15:16:14 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.37 2005/07/09 22:22:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, Miodrag Vallat.
@@ -124,31 +124,23 @@ struct cfdriver pnozz_cd = {
 /*
  * SBus registers mappings
  */
-#define	P9100_NREG	3
-#define	P9100_REG_CTL	0
-#define	P9100_REG_CMD	1
-#define	P9100_REG_VRAM	2
+#define	P9100_NREG		3
+#define	P9100_REG_CTL		0
+#define	P9100_REG_CMD		1
+#define	P9100_REG_VRAM		2
 
 /*
  * IBM RGB525 RAMDAC registers
  */
 
-/* Palette write address */
-#define	IBM525_WRADDR			0
-/* Palette data */
-#define	IBM525_DATA			1
-/* Pixel mask */
-#define	IBM525_PIXMASK			2
-/* Read palette address */
-#define	IBM525_RDADDR			3
-/* Register index low */
-#define	IBM525_IDXLOW			4
-/* Register index high */
-#define	IBM525_IDXHIGH			5
-/* Register data */
-#define	IBM525_REGDATA			6
-/* Index control */
-#define	IBM525_IDXCONTROL		7
+#define	IBM525_WRADDR			0	/* Palette write address */
+#define	IBM525_DATA			1	/* Palette data */
+#define	IBM525_PIXMASK			2	/* Pixel mask */
+#define	IBM525_RDADDR			3	/* Read palette address */
+#define	IBM525_IDXLOW			4	/* Register index low */
+#define	IBM525_IDXHIGH			5	/* Register index high */
+#define	IBM525_REGDATA			6	/* Register data */
+#define	IBM525_IDXCONTROL		7	/* Index control */
 
 /*
  * P9100 read/write macros
@@ -159,7 +151,8 @@ struct cfdriver pnozz_cd = {
 #define	P9100_READ_CMD(sc,reg) \
 	*(volatile u_int32_t *)((sc)->sc_cmd + (reg))
 #define	P9100_READ_RAMDAC(sc,reg) \
-	*(volatile u_int32_t *)((sc)->sc_ctl + P9100_RAMDAC_REGISTER(reg))
+	(*(volatile u_int32_t *)((sc)->sc_ctl + P9100_RAMDAC_REGISTER(reg)) \
+	    >> 16)
 
 #define	P9100_WRITE_CTL(sc,reg,value) \
 	*(volatile u_int32_t *)((sc)->sc_ctl + (reg)) = (value)
@@ -167,7 +160,7 @@ struct cfdriver pnozz_cd = {
 	*(volatile u_int32_t *)((sc)->sc_cmd + (reg)) = (value)
 #define	P9100_WRITE_RAMDAC(sc,reg,value) \
 	*(volatile u_int32_t *)((sc)->sc_ctl + P9100_RAMDAC_REGISTER(reg)) = \
-	    (value)
+	    ((value) << 16)
 
 /*
  * On the Tadpole, the first write to a register group is ignored until
@@ -244,9 +237,9 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	sc->sc_phys = ca->ca_ra.ra_reg[P9100_REG_VRAM];
 
 	sc->sc_ctl = mapiodev(&(ca->ca_ra.ra_reg[P9100_REG_CTL]), 0,
-	    ca->ca_ra.ra_reg[0].rr_len);
+	    ca->ca_ra.ra_reg[P9100_REG_CTL].rr_len);
 	sc->sc_cmd = mapiodev(&(ca->ca_ra.ra_reg[P9100_REG_CMD]), 0,
-	    ca->ca_ra.ra_reg[1].rr_len);
+	    ca->ca_ra.ra_reg[P9100_REG_CMD].rr_len);
 
 	node = ca->ca_ra.ra_node;
 	isconsole = node == fbnode;
@@ -268,6 +261,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 		printf(": unknown color depth code 0x%x, assuming 8\n%s",
 		    scr & SCR_PIXEL_MASK, self->dv_xname);
 #endif
+		/* FALLTHROUGH */
 	case SCR_PIXEL_8BPP:
 		fb_depth = 8;
 		break;
@@ -281,14 +275,14 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
 	    sc->sc_sunfb.sf_depth);
 
+	/* Disable frame buffer interrupts */
+	P9100_SELECT_SCR(sc);
+	P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE, IER_MASTER_ENABLE | 0);
+
 	sc->sc_ih.ih_fun = p9100_intr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
 	    self->dv_xname);
-
-	/* Disable frame buffer interrupts */
-	P9100_SELECT_SCR(sc);
-	P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE, IER_MASTER_ENABLE | 0);
 
 	/*
 	 * Try to get a copy of the PROM font.
@@ -469,12 +463,12 @@ p9100_loadcmap_immediate(struct p9100_softc *sc, u_int start, u_int ncolors)
 	u_char *p;
 
 	P9100_SELECT_DAC(sc);
-	P9100_WRITE_RAMDAC(sc, IBM525_WRADDR, start << 16);
+	P9100_WRITE_RAMDAC(sc, IBM525_WRADDR, start);
 	P9100_FLUSH_DAC(sc);
 
 	for (p = sc->sc_cmap.cm_map[start], ncolors *= 3; ncolors-- > 0; p++) {
 		P9100_SELECT_DAC(sc);
-		P9100_WRITE_RAMDAC(sc, IBM525_DATA, (*p) << 16);
+		P9100_WRITE_RAMDAC(sc, IBM525_DATA, (*p));
 		P9100_FLUSH_DAC(sc);
 	}
 }
@@ -522,6 +516,10 @@ p9100_intr(void *v)
 		/* P9100_SELECT_SCR(sc); */
 		P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE,
 		    IER_MASTER_ENABLE | 0);
+
+		/* Clear interrupt condition */
+		P9100_WRITE_CTL(sc, P9000_INTERRUPT,
+		    IER_VBLANK_ENABLE | 0);
 
 		return (1);
 	}
@@ -796,9 +794,11 @@ p9100_pick_romfont(struct p9100_softc *sc)
 	/*
 	 * Get the PROM font metrics and address
 	 */
-	snprintf(buf, sizeof buf, "stdout @ is my-self "
+	if (snprintf(buf, sizeof buf, "stdout @ is my-self "
 	    "addr char-height %lx ! addr char-width %lx ! addr font-base %lx !",
-	    (vaddr_t)&romheight, (vaddr_t)&romwidth, (vaddr_t)&romaddr);
+	    (vaddr_t)&romheight, (vaddr_t)&romwidth, (vaddr_t)&romaddr) >=
+	    sizeof buf)
+		return (1);
 	romheight = romwidth = NULL;
 	rominterpret(buf);
 

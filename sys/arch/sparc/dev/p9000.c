@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.14 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.15 2005/07/09 22:22:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -235,14 +235,14 @@ p9000attach(struct device *parent, struct device *self, void *args)
 	printf(": rev %x, %dx%d\n", scr & SCR_ID_MASK,
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
+	/* Disable frame buffer interrupts */
+	P9000_SELECT_SCR(sc);
+	P9000_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE, IER_MASTER_ENABLE | 0);
+
 	sc->sc_ih.ih_fun = p9000_intr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
 	    self->dv_xname);
-
-	/* Disable frame buffer interrupts */
-	P9000_SELECT_SCR(sc);
-	P9000_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE, IER_MASTER_ENABLE | 0);
 
 	/*
 	 * If the framebuffer width is under 1024x768, we will switch from the
@@ -465,6 +465,10 @@ p9000_intr(void *v)
 		/* P9000_SELECT_SCR(sc); */
 		P9000_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE,
 		    IER_MASTER_ENABLE | 0);
+
+		/* Clear interrupt condition */
+		P9000_WRITE_CTL(sc, P9000_INTERRUPT,
+		    IER_VBLANK_ENABLE | 0);
 
 		return (1);
 	}
