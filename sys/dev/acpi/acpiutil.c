@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiutil.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: acpiutil.c,v 1.2 2005/07/10 19:39:01 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -36,7 +36,7 @@ acpi_checksum(const void *v, size_t len)
 		s += p[i];
 
 	if (s)
-	    printf("acpi: bad checksum at %p\n", v);
+		printf("acpi: bad checksum at %p\n", v);
 
 	return (s);
 }

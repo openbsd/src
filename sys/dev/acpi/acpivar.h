@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.2 2005/07/10 17:24:18 grange Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.3 2005/07/10 19:39:01 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -83,7 +83,7 @@ struct acpi_softc {
 struct acpi_table {
 	int	offset;
 	size_t	size;
-	void	*table;	
+	void	*table;
 };
 
 #define	ACPI_IOC_GETFACS	_IOR('A', 0, struct acpi_facs)

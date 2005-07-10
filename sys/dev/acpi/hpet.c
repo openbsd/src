@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpet.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: hpet.c,v 1.2 2005/07/10 19:39:01 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -114,11 +114,11 @@ hpetattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-        if (bus_space_map(sc->sc_iot, hpet->base_address.address, HPET_REG_SIZE,
-	    0, &sc->sc_ioh)) {
-                printf(": can't map i/o space\n");
-                return;
-        }
+	if (bus_space_map(sc->sc_iot, hpet->base_address.address,
+	    HPET_REG_SIZE, 0, &sc->sc_ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	period = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				  HPET_CAPABILITIES + sizeof(u_int32_t));

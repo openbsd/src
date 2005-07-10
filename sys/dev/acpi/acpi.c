@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.2 2005/07/10 19:39:01 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -169,7 +169,7 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	 * that actually does work
 	 */
 #ifdef ACPI_ENABLE
-	bus_space_map(sc->sc_iot, sc->sc_fadt->smi_cmd, 1, 0, &ioh); 
+	bus_space_map(sc->sc_iot, sc->sc_fadt->smi_cmd, 1, 0, &ioh);
 	bus_space_write_1(sc->sc_iot, ioh, 0, sc->sc_fadt->acpi_enable);
 	bus_space_unmap(sc->sc_iot, ioh, 1);
 #endif
@@ -248,7 +248,7 @@ fail:
 int
 acpi_submatch(struct device *parent, void *match, void *aux)
 {
-	struct acpi_attach_args *aaa = (struct acpi_attach_args *)aux; 
+	struct acpi_attach_args *aaa = (struct acpi_attach_args *)aux;
 	struct cfdata *cf = match;
 
 	if (aaa->aaa_table == NULL)
@@ -376,7 +376,7 @@ acpi_load_dsdt(paddr_t pa, struct acpi_q **dsdt)
 	size_t len;
 
 	if (acpi_map(pa, sizeof(*hdr), &handle))
-	    return;
+		return;
 	hdr = (struct acpi_table_header *)handle.va;
 	len = hdr->length;
 	acpi_unmap(&handle);

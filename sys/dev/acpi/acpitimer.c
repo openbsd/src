@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpitimer.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: acpitimer.c,v 1.2 2005/07/10 19:39:01 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -114,11 +114,11 @@ acpitimerattach(struct device *parent, struct device *self, void *aux)
 		address = psc->sc_fadt->pm_tmr_blk;
 	}
 	size = psc->sc_fadt->pm_tmr_len;
-	    
-        if (bus_space_map(sc->sc_iot, address, size, 0, &sc->sc_ioh)) {
-                printf(": can't map i/o space\n");
-                return;
-        }
+
+	if (bus_space_map(sc->sc_iot, address, size, 0, &sc->sc_ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	printf(": %ld Hz, %d bits\n", ACPI_FREQUENCY,
 	    psc->sc_fadt->flags & FADT_TMR_VAL_EXT ? 32 : 24);
