@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.16 2003/06/24 21:54:39 henric Exp $	*/
+/*	$OpenBSD: bus.h,v 1.17 2005/07/10 00:23:11 brad Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -75,8 +75,6 @@
 
 #include <machine/types.h>
 #include <machine/ctlreg.h>
-
-#define	__HAS_NEW_BUS_DMAMAP_SYNC
 
 /*
  * Debug hooks
@@ -406,8 +404,6 @@ struct uio;
 #define	BUS_DMASYNC_POSTREAD	0x02	/* post-read synchronization */
 #define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
-
-#define __HAVE_NEW_BUS_DMAMAP_SYNC
 
 typedef struct sparc_bus_dma_tag	*bus_dma_tag_t;
 typedef struct sparc_bus_dmamap		*bus_dmamap_t;
