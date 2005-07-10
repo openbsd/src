@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.47 2005/07/10 13:58:19 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.48 2005/07/10 21:50:25 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -241,7 +241,7 @@ static char *preadline(int, size_t, off_t);
 
 
 static int aflag, bflag, dflag, iflag, Nflag, pflag, tflag, Tflag, wflag;
-static int context, status;
+static int context;
 static int format = D_NORMAL;
 static struct stat stb1, stb2;
 static char *ifdefname, *ignore_pats, diffargs[128];
@@ -719,14 +719,12 @@ cvs_diffreg(const char *file1, const char *file2)
 	f1 = fopen(file1, "r");
 	if (f1 == NULL) {
 		cvs_log(LP_ERRNO, "%s", file1);
-		status |= 2;
 		goto closem;
 	}
 
 	f2 = fopen(file2, "r");
 	if (f2 == NULL) {
 		cvs_log(LP_ERRNO, "%s", file2);
-		status |= 2;
 		goto closem;
 	}
 
@@ -737,18 +735,15 @@ cvs_diffreg(const char *file1, const char *file2)
 		break;
 	default:
 		/* error */
-		status |= 2;
 		goto closem;
 	}
 
 	if (!asciifile(f1) || !asciifile(f2)) {
 		rval = D_BINARY;
-		status |= 1;
 		goto closem;
 	}
 	if ((prepare(0, f1, stb1.st_size) < 0) ||
 	    (prepare(1, f2, stb2.st_size) < 0)) {
-		status |= 2;
 		goto closem;
 	}
 	prune();
@@ -757,33 +752,30 @@ cvs_diffreg(const char *file1, const char *file2)
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	if ((tmp = realloc(member, (slen[1] + 2) * sizeof(int))) == NULL) {
-		status |= 2;
+	if ((tmp = realloc(member, (slen[1] + 2) * sizeof(int))) == NULL)
 		goto closem;
-	}
 	member = (int *)tmp;
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	if ((tmp = realloc(class, (slen[0] + 2) * sizeof(int))) == NULL) {
-		status |= 2;
+	if ((tmp = realloc(class, (slen[0] + 2) * sizeof(int))) == NULL)
 		goto closem;
-	}
 	class = (int *)tmp;
 
 	if ((klist = malloc((slen[0] + 2) * sizeof(int))) == NULL) {
 		cvs_log(LP_ERRNO, "failed to allocate klist");
-		status |= 2;
 		goto closem;
 	}
 	clen = 0;
 	clistlen = 100;
 	if ((clist = malloc(clistlen * sizeof(cand))) == NULL) {
 		cvs_log(LP_ERRNO, "failed to allocate clist");
-		status |= 2;
 		goto closem;
 	}
-	i = stone(class, slen[0], member, klist);
+
+	if ((i = stone(class, slen[0], member, klist)) < 0)
+		goto closem;
+
 	free(member);
 	free(class);
 
@@ -799,7 +791,6 @@ cvs_diffreg(const char *file1, const char *file2)
 
 closem:
 	if (anychange) {
-		status |= 1;
 		if (rval == D_SAME)
 			rval = D_DIFFER;
 	}
@@ -950,6 +941,7 @@ isqrt(int n)
 static int
 stone(int *a, int n, int *b, int *c)
 {
+	int ret;
 	int i, k, y, j, l;
 	int oldc, tc, oldl;
 	u_int numtries;
@@ -958,7 +950,9 @@ stone(int *a, int n, int *b, int *c)
 	const u_int bound = dflag ? UINT_MAX : MAX(256, (u_int)isqrt(n));
 
 	k = 0;
-	c[0] = newcand(0, 0, 0);
+	if ((ret = newcand(0, 0, 0)) < 0)
+		return (-1);
+	c[0] = ret;
 	for (i = 1; i <= n; i++) {
 		j = a[i];
 		if (j == 0)
@@ -977,12 +971,16 @@ stone(int *a, int n, int *b, int *c)
 				if (clist[c[l]].y <= y)
 					continue;
 				tc = c[l];
-				c[l] = newcand(i, y, oldc);
+				if ((ret = newcand(i, y, oldc)) < 0)
+					return (-1);
+				c[l] = ret;
 				oldc = tc;
 				oldl = l;
 				numtries++;
 			} else {
-				c[l] = newcand(i, y, oldc);
+				if ((ret = newcand(i, y, oldc)) < 0)
+					return (-1);
+				c[l] = ret;
 				k++;
 				break;
 			}
