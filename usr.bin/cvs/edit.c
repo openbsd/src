@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.6 2005/05/31 10:54:05 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.7 2005/07/10 21:51:23 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -102,8 +102,7 @@ struct cvs_cmd cvs_cmd_unedit = {
 static int
 cvs_edit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
-	int i, ch, dflag, mod_count;
-	struct cvsroot *root;
+	int ch, dflag, mod_count;
 
 	dflag = 0;
 	mod_count = 0;
