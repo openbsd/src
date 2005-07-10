@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.46 2005/07/10 13:53:51 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.47 2005/07/10 13:58:19 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -204,8 +204,6 @@ struct diff_arg {
 	char  *date1;
 	char  *date2;
 };
-
-extern int verbosity;
 
 
 static int  cvs_diff_init      (struct cvs_cmd *, int, char **, int *);

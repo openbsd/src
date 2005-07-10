@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.38 2005/07/08 12:45:10 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.39 2005/07/10 13:58:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,8 +53,6 @@ const char *cvs_statstr[] = {
 	"Patched",
 	"Needs Checkout",
 };
-
-extern int verbosity;
 
 
 static int cvs_status_init      (struct cvs_cmd *, int, char **, int *);
