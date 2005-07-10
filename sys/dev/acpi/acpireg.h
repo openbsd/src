@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.2 2005/07/10 17:24:18 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -14,6 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _DEV_ACPI_ACPIREG_H_
+#define _DEV_ACPI_ACPIREG_H_
 
 /*	Root System Descriptor Pointer */
 struct acpi_rsdp1 {
@@ -426,3 +429,5 @@ struct acpi_facs {
 #define		ACPI_PM1_BM_RLD			0x0002
 #define		ACPI_PM1_GBL_RLS		0x0004
 #define		ACPI_PM1_SLP_EN			0x2000
+
+#endif	/* !_DEV_ACPI_ACPIREG_H_ */

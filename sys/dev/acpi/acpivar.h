@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.2 2005/07/10 17:24:18 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -14,6 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _DEV_ACPI_ACPIVAR_H_
+#define _DEV_ACPI_ACPIVAR_H_
 
 #include <sys/timeout.h>
 
@@ -109,3 +112,5 @@ void	 acpi_attach_machdep(struct acpi_softc *);
 int	 acpi_interrupt(void *);
 void	 acpi_enter_sleep_state(struct acpi_softc *, int);
 #endif
+
+#endif	/* !_DEV_ACPI_ACPIVAR_H_ */

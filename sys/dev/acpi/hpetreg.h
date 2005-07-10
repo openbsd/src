@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpetreg.h,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: hpetreg.h,v 1.2 2005/07/10 17:24:18 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -15,6 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _DEV_ACPI_HPETREG_H_
+#define _DEV_ACPI_HPETREG_H_
+
 #define	HPET_REG_SIZE		1024
 
 #define	HPET_CAPABILITIES	0x000
@@ -30,3 +33,5 @@
 #define	HPET_TIMER2_CONFIG	0x400
 #define	HPET_TIMER2_COMPARE	0x408
 #define	HPET_TIMER2_INTERRUPT	0x510
+
+#endif	/* !_DEV_ACPI_HPETREG_H_ */
