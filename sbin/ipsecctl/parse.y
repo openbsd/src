@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2005/07/09 21:41:08 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2005/07/10 09:33:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
@@ -31,13 +32,17 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "ipsecctl.h"
+
+#define KEYSIZE_LIMIT	1024
 
 static struct ipsecctl	*ipsec = NULL;
 static FILE		*fin = NULL;
@@ -68,6 +73,7 @@ int			 cmdline_symset(char *);
 char			*symget(const char *);
 int			 atoul(char *, u_long *);
 u_int8_t		 x2i(unsigned char *);
+struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
 struct ipsec_rule	*create_sa(struct ipsec_addr *, struct ipsec_addr *,
@@ -105,7 +111,7 @@ typedef struct {
 %}
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI KEY
-%token	ERROR
+%token	KEYFILE ERROR
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -270,27 +276,35 @@ spi		: SPI number			{
 
 keyspec		: /* empty */			{ $$ = NULL; }
 		| KEY STRING			{
-			struct ipsec_key *key;
-			int	 i;
-			char	*hexkey;
+			unsigned char	 *hex;
 			
-			hexkey = $2;
-			if (!strncmp(hexkey, "0x", 2))
-				hexkey += 2;
+			hex = $2;
+			if (!strncmp(hex, "0x", 2))
+				hex += 2;
+			$$ = parsekey(hex, strlen(hex));
 
-			key = calloc(1, sizeof(struct ipsec_key));
-			if (key == NULL)
-				err(1, "calloc:");
+			free($2);
+		}
+		| KEYFILE STRING		{
+			struct stat	 sb;
+			int		 fd;
+			unsigned char	*hex;
 
-			key->len = strlen(hexkey) / 2;
-			key->data = calloc(key->len, sizeof(u_int8_t));
-			if (key->data == NULL)
-				err(1, "calloc:");
+			if (stat($2, &sb) < 0)
+				err(1, "stat");
+			if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
+				errx(1, "key too %s", sb.st_size ? "large" :
+				    "small");
+			if ((hex = calloc(sb.st_size, sizeof(unsigned char)))
+			    == NULL)
+				err(1, "calloc");
+			if ((fd = open($2, O_RDONLY)) < 0)
+				err(1, "open");
+			if (read(fd, hex, sb.st_size) < sb.st_size)
+				err(1, "read");
+			close(fd);
+			$$ = parsekey(hex, sb.st_size);
 
-			for (i = 0; i < (int)key->len; i++)
-				key->data[i] = x2i(hexkey + 2 * i);
-
-			$$ = key;
 			free($2);
 		}
 		;
@@ -334,6 +348,7 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "in",			IN},
 		{ "key",		KEY},
+		{ "keyfile",		KEYFILE},
 		{ "out",		OUT},
 		{ "peer",		PEER},
 		{ "psk",		PSK},
@@ -674,6 +689,27 @@ x2i(unsigned char *s)
 		return -1;
 	}
 	return ((u_int8_t)strtoul(ss, NULL, 16));
+}
+
+struct ipsec_key *
+parsekey(unsigned char *hexkey, size_t len)
+{
+	struct ipsec_key *key;
+	int		  i;
+
+	key = calloc(1, sizeof(struct ipsec_key));
+	if (key == NULL)
+		err(1, "calloc");
+
+	key->len = len / 2;
+	key->data = calloc(key->len, sizeof(u_int8_t));
+	if (key->data == NULL)
+		err(1, "calloc");
+
+	for (i = 0; i < (int)key->len; i++)
+		key->data[i] = x2i(hexkey + 2 * i);
+
+	return (key);
 }
 
 struct ipsec_addr *
