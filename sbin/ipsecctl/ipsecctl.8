@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.12 2005/07/09 22:31:07 hshoexer Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.13 2005/07/10 07:11:37 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -34,13 +34,13 @@ It allows ruleset configuration and retrieval of status information from the
 kernel's SPD (Security Policy Database) and SADB (Security Association
 Database).
 .Pp
-Additionally
+Additionally,
 .Nm
 can be used to configure the SADB for use with TCP MD5
-signatures described in RFC 2385.
+signatures, as described in RFC 2385.
 See
 .Xr tcp 4
-for details .
+for details.
 .Pp
 The ruleset grammar is described in
 .Xr ipsec.conf 5 .
