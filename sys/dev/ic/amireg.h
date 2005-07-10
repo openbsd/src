@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.11 2005/05/31 04:34:20 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.12 2005/07/10 15:26:18 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -564,6 +564,36 @@ struct ami_diskarray {
 		u_int8_t	adp_sneg;	/* sync negotiation */
 		u_int32_t	adp_size;
 	} ada_pdrv[AMI_MAX_PDRIVES];
+};
+
+struct ami_big_diskarray {
+	u_int8_t	ada_nld;
+	u_int8_t	ada_pad[3];
+	struct {
+		u_int8_t	adl_spandepth;
+		u_int8_t	adl_raidlvl;
+		u_int8_t	adl_rdahead;
+		u_int8_t	adl_stripesz;
+		u_int8_t	adl_status;
+		u_int8_t	adl_wrpolicy;
+		u_int8_t	adl_directio;
+		u_int8_t	adl_nstripes;
+		struct {
+			u_int32_t	ads_start;
+			u_int32_t	ads_length;	/* blocks */
+			struct {
+				u_int8_t	add_channel;
+				u_int8_t	add_target;
+			} ads_devs[AMI_BIG_MAX_DEVDEPTH];
+		} adl_spans[AMI_BIG_MAX_SPANDEPTH];
+	} ada_ldrv[AMI_BIG_MAX_LDRIVES];
+	struct {
+		u_int8_t	adp_type;	/* SCSI device type */
+		u_int8_t	adp_ostatus;	/* status during config */
+		u_int8_t	adp_tagdepth;	/* level of tagging */
+		u_int8_t	adp_sneg;	/* sync negotiation */
+		u_int32_t	adp_size;
+	} ada_pdrv[AMI_BIG_MAX_PDRIVES];
 };
 
 struct ami_scsisense {
