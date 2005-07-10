@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.10 2005/07/09 22:24:44 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.11 2005/07/10 07:56:56 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -151,9 +151,9 @@ flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 
-# Set up a keys for TCP MD5 signatures
-tcpmd5       from 192.168.3.14   to 192.168.3.27 spi 0x1000 key 0xdeadbeef
-tcpmd5       from 192.168.3.27   to 192.168.3.14 spi 0x1001 key 0xbeefdead
+# Set up keys for TCP MD5 signatures
+tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000 key 0xdeadbeef
+tcpmd5 from 192.168.3.27 to 192.168.3.14 spi 0x1001 key 0xbeefdead
 .Ed
 .Sh SEE ALSO
 .Xr ipsec 4 ,
