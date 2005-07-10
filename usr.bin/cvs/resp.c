@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.43 2005/07/05 12:00:45 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.44 2005/07/10 00:12:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -440,9 +440,20 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 			return (-1);
 		}
 
+		/*
+		 * If the Entries file for the parent is already
+		 * open, operate on that, instead of reopening it
+		 * and invalidating the opened list.
+		 */
+		if (!strcmp(subdir, cvs_resp_lastdir))
+			entf = cvs_resp_lastent;
+		else
+			entf = cvs_ent_open(subdir, O_WRONLY);
+
 		/* add a directory entry to the parent */
-		if ((entf = cvs_ent_open(subdir, O_WRONLY)) != NULL) {
-			if ((ent = cvs_ent_get(entf, CVS_FILE_NAME(cf))) == NULL) {
+		if (entf != NULL) {
+			if ((ent = cvs_ent_get(entf,
+			    CVS_FILE_NAME(cf))) == NULL) {
 				snprintf(buf, sizeof(buf), "D/%s////",
 				    CVS_FILE_NAME(cf));
 				ent = cvs_ent_parse(buf);
@@ -452,7 +463,9 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 				else
 					cvs_ent_add(entf, ent);
 			}
-			cvs_ent_close(entf);
+
+			if (strcmp(subdir, cvs_resp_lastdir))
+				cvs_ent_close(entf);
 		}
 	}
 
