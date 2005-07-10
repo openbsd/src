@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.22 2005/07/08 16:03:38 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.23 2005/07/10 21:55:30 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -134,6 +134,9 @@ cvs_add_remote(CVSFILE *cf, void *arg)
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
 		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED,
 		    cf->cf_name);
+
+	if (ret == -1)
+		ret = CVS_EX_PROTO;
 
 	return (ret);
 }
