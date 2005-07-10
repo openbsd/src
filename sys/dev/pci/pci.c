@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.38 2005/06/29 03:18:49 brad Exp $	*/
+/*	$OpenBSD: pci.c,v 1.39 2005/07/10 19:03:09 mickey Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -390,19 +390,19 @@ pcisubmatch(parent, match, aux)
 
 	success = (*cf->cf_attach->ca_match)(parent, match, aux);
 
-	/* My Dell BIOS does not enable certain non-critical PCI devices
-	   for IO and memory cycles (e.g. network card). This is
-	   the generic approach to fixing this problem. Basically, if
-	   we support the card, then we enable its IO cycles.
-	*/
+	/*
+	 * My Dell BIOS does not enable certain non-critical PCI devices
+	 * for IO and memory cycles (e.g. network card). This is
+	 * the generic approach to fixing this problem. Basically, if
+	 * we support the card, then we enable its IO cycles.
+	 */
 	if (success) {
-		u_int32_t csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
-					      PCI_COMMAND_STATUS_REG);
+		pcireg_t csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
 
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-			       csr | PCI_COMMAND_MASTER_ENABLE |
-			       PCI_COMMAND_IO_ENABLE |
-			       PCI_COMMAND_MEM_ENABLE);
+		    csr | PCI_COMMAND_MASTER_ENABLE |
+		    PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 	}
 
 	return (success);
