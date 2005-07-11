@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.38 2005/06/19 17:11:13 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.39 2005/07/11 08:08:06 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -217,7 +217,8 @@ main(int argc, char *argv[])
 int
 check_child(pid_t pid, const char *pname)
 {
-	int	status;
+	int	 status, sig;
+	char 	*signame;
 
 	if (waitpid(pid, &status, WNOHANG) > 0) {
 		if (WIFEXITED(status)) {
@@ -225,8 +226,10 @@ check_child(pid_t pid, const char *pname)
 			return (1);
 		}
 		if (WIFSIGNALED(status)) {
-			log_warnx("Lost child: %s terminated; signal %d",
-			    pname, WTERMSIG(status));
+			sig = WTERMSIG(status);
+			signame = strsignal(sig) ? strsignal(sig) : "unknown";
+			log_warnx("Lost child: %s terminated; signal %d (%s)",
+			    pname, sig, signame);
 			return (1);
 		}
 	}
