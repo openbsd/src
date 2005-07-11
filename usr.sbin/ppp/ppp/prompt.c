@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: prompt.c,v 1.15 2003/04/07 23:58:53 deraadt Exp $
+ *	$OpenBSD: prompt.c,v 1.16 2005/07/11 22:36:17 brad Exp $
  */
 
 #include <sys/param.h>
@@ -103,6 +103,11 @@ prompt_Display(struct prompt *p)
 
   if (p->bundle->ncp.ipcp.fsm.state == ST_OPENED)
     pconnect = "PPP";
+#ifndef NOINET6
+  else if (!Enabled(p->bundle, OPT_IPCP) &&
+	   p->bundle->ncp.ipv6cp.fsm.state == ST_OPENED)
+    pconnect = "PPP";
+#endif
   else if (bundle_Phase(p->bundle) == PHASE_NETWORK)
     pconnect = "PPp";
   else if (bundle_Phase(p->bundle) == PHASE_AUTHENTICATE)
