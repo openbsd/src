@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.888 2005/07/06 10:40:44 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.889 2005/07/11 01:30:00 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2592,7 +2592,8 @@
 #define	PCI_PRODUCT_TI_PCI4451_FW	0x8027		/* PCI4451 FireWire */
 #define	PCI_PRODUCT_TI_PCI4510_FW	0x8029		/* PCI4510 FireWire */
 #define	PCI_PRODUCT_TI_PCI4520_FW	0x802A		/* PCI4520 FireWire */
-#define	PCI_PRODUCT_TI_PCI7410_FW	0x802B		/* PCI7(4-6)10 FireWire */
+#define	PCI_PRODUCT_TI_PCI7410_FW	0x802b		/* PCI7(4-6)10 FireWire */
+#define	PCI_PRODUCT_TI_PCI7420_FW	0x802e		/* PCI7x20 FireWire */
 #define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A */
 #define	PCI_PRODUCT_TI_ACX100B	0x8401		/* ACX100B */
 #define	PCI_PRODUCT_TI_ACX111	0x9066		/* ACX111 */
@@ -2620,9 +2621,9 @@
 #define	PCI_PRODUCT_TI_PCI7510_CB	0xac47		/* PCI7510 CardBus */
 #define	PCI_PRODUCT_TI_PCI7610_CB	0xac48		/* PCI7610 CardBus */
 #define	PCI_PRODUCT_TI_PCI7410_CB	0xac49		/* PCI7410 CardBus */
-#define	PCI_PRODUCT_TI_PCI7610SM	0xac4A		/* PCI7610 CardBus (Smart Card mode) */
-#define	PCI_PRODUCT_TI_PCI7410SD	0xac4B		/* PCI7[46]10 CardBus (SD/MMC mode) */
-#define	PCI_PRODUCT_TI_PCI7410MS	0xac4C		/* PCI7[46]10 CardBus (Memory stick mode) */
+#define	PCI_PRODUCT_TI_PCI7610SM	0xac4a		/* PCI7610 CardBus (Smart Card mode) */
+#define	PCI_PRODUCT_TI_PCI7410SD	0xac4b		/* PCI7[46]10 CardBus (SD/MMC mode) */
+#define	PCI_PRODUCT_TI_PCI7410MS	0xac4c		/* PCI7[46]10 CardBus (Memory stick mode) */
 #define	PCI_PRODUCT_TI_PCI1410	0xac50		/* PCI1410 CardBus */
 #define	PCI_PRODUCT_TI_PCI1420	0xac51		/* PCI1420 CardBus */
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 CardBus */
@@ -2633,6 +2634,7 @@
 #define	PCI_PRODUCT_TI_PCI1530	0xac57		/* PCI1530 CardBus */
 #define	PCI_PRODUCT_TI_PCI1515	0xac58		/* PCI1515 CardBus */
 #define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 DSP */
+#define	PCI_PRODUCT_TI_PCI7420	0xac8e		/* PCI7420 CardBus */
 
 /* TigerJet Network products */
 #define	PCI_PRODUCT_TIGERJET_TIGER320	0x0001		/* PCI interface */

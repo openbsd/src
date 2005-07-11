@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.888 2005/07/06 10:40:44 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.889 2005/07/11 01:30:00 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7647,6 +7647,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI7(4-6)10 FireWire",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420_FW,
+	    "PCI7x20 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
 	    "ACX100A",
 	},
@@ -7805,6 +7809,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2040,
 	    "PCI2040 DSP",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420,
+	    "PCI7420 CardBus",
 	},
 	{
 	    PCI_VENDOR_TIGERJET, PCI_PRODUCT_TIGERJET_TIGER320,
