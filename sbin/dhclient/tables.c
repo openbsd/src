@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.7 2005/07/09 14:36:16 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.8 2005/07/11 18:09:09 krw Exp $	*/
 
 /* Tables of information... */
 
@@ -60,7 +60,6 @@
  * A - array of whatever precedes (e.g., IA means array of IP addresses)
  */
 
-struct universe dhcp_universe;
 struct option dhcp_options[256] = {
 	{ "pad", "",					0 },
 	{ "subnet-mask", "I",				1 },
@@ -406,19 +405,3 @@ unsigned char dhcp_option_default_priority_list[256] = {
 	239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250,
 	251, 252, 253, 254,
 };
-
-void
-initialize_dhcp_universe(void)
-{
-	int i;
-
-	dhcp_universe.hash = new_hash();
-	if (!dhcp_universe.hash)
-		error("Can't allocate dhcp option hash table.");
-	for (i = 0; i < 256; i++) {
-		dhcp_universe.options[i] = &dhcp_options[i];
-		add_hash(dhcp_universe.hash,
-		    (unsigned char *)dhcp_options[i].name, 0,
-		    (unsigned char *)&dhcp_options[i]);
-	}
-}

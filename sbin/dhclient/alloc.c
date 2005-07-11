@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.9 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.10 2005/07/11 18:09:09 krw Exp $	*/
 
 /* Memory allocation... */
 
@@ -50,27 +50,5 @@ new_string_list(size_t size)
 	rval = calloc(1, sizeof(struct string_list) + size);
 	if (rval != NULL)
 		rval->string = ((char *)rval) + sizeof(struct string_list);
-	return (rval);
-}
-
-struct hash_table *
-new_hash_table(int count)
-{
-	struct hash_table *rval;
-
-	rval = calloc(1, sizeof(struct hash_table) -
-	    (DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *)) +
-	    (count * sizeof(struct hash_bucket *)));
-	if (rval == NULL)
-		return (NULL);
-	rval->hash_count = count;
-	return (rval);
-}
-
-struct hash_bucket *
-new_hash_bucket(void)
-{
-	struct hash_bucket *rval = calloc(1, sizeof(struct hash_bucket));
-
 	return (rval);
 }

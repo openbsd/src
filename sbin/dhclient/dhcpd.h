@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.40 2005/07/09 16:16:11 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.41 2005/07/11 18:09:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -220,20 +220,6 @@ struct protocol {
 	void *local;
 };
 
-#define DEFAULT_HASH_SIZE 97
-
-struct hash_bucket {
-	struct hash_bucket *next;
-	unsigned char *name;
-	int len;
-	unsigned char *value;
-};
-
-struct hash_table {
-	int hash_count;
-	struct hash_bucket *buckets[DEFAULT_HASH_SIZE];
-};
-
 /* Default path to dhcpd config file. */
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
 #define	_PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
@@ -282,8 +268,6 @@ pair cons(caddr_t, pair);
 
 /* alloc.c */
 struct string_list	*new_string_list(size_t size);
-struct hash_table	*new_hash_table(int);
-struct hash_bucket	*new_hash_bucket(void);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
@@ -307,16 +291,9 @@ void add_protocol(char *, int, void (*)(struct protocol *), void *);
 void remove_protocol(struct protocol *);
 int interface_link_status(char *);
 
-/* hash.c */
-struct hash_table *new_hash(void);
-void add_hash(struct hash_table *, unsigned char *, int, unsigned char *);
-unsigned char *hash_lookup(struct hash_table *, unsigned char *, int);
-
 /* tables.c */
 extern struct option dhcp_options[256];
 extern unsigned char dhcp_option_default_priority_list[256];
-extern struct universe dhcp_universe;
-void initialize_dhcp_universe(void);
 
 /* convert.c */
 u_int32_t getULong(unsigned char *);

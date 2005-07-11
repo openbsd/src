@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.20 2005/07/11 17:57:26 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.21 2005/07/11 18:09:09 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -64,9 +64,6 @@ read_client_conf(void)
 	struct client_config	*config;
 
 	new_parse(path_dhclient_conf);
-
-	/* Set up the initial dhcp option universe. */
-	initialize_dhcp_universe();
 
 	/* Initialize the top level client configuration. */
 	memset(&top_level_config, 0, sizeof(top_level_config));
