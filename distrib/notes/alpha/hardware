@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.60 2005/06/28 13:46:21 martin Exp $
+dnl	$OpenBSD: hardware,v 1.61 2005/07/11 23:56:33 jolan Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -6,7 +6,7 @@ here, please send mail to <alpha@OpenBSD.org> with as much information
 as possible.
 
 Supported hardware:
-    XP1000, DS10, DS20, 264DP, and other EV6 machines using the Tsunami
+    XP900, XP1000, DS10, DS20, 264DP, and other EV6 machines using the Tsunami
     chipset (only one processor on the DS20 will be used)
 	  Supported devices:
 		Built-in serial and parallel ports.

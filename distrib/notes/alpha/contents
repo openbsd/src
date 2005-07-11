@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.39 2005/03/18 13:31:13 miod Exp $
+dnl	$OpenBSD: contents,v 1.40 2005/07/11 23:56:33 jolan Exp $
 TopPart
 
 OpenBSDfloppy
@@ -18,7 +18,7 @@ OpenBSDfloppy
 			This floppy image will boot on the following MACHINE
 			models:
    			- Alpha Processor, Inc. UP1000
-			- XP1000, 264DP, DS10, DS20
+			- XP900, XP1000, 264DP, DS10, DS20
 
 OpenBSDdistsets
 
