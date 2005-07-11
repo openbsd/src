@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.145 2005/06/30 20:52:20 sturm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.146 2005/07/11 14:14:14 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1998,10 +1998,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule		*rule;
 
 		TAILQ_FOREACH(rule,
-		    ruleset->rules[PF_RULESET_FILTER].active.ptr, entries)
+		    ruleset->rules[PF_RULESET_FILTER].active.ptr, entries) {
 			rule->evaluations = 0;
 			rule->packets[0] = rule->packets[1] = 0;
 			rule->bytes[0] = rule->bytes[1] = 0;
+		}
 		break;
 	}
 
