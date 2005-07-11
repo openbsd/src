@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.63 2005/07/06 09:54:24 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.64 2005/07/11 08:04:28 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -334,7 +334,7 @@ client_log_error(struct ntp_peer *peer, const char *operation, int error)
 
 	address = log_sockaddr((struct sockaddr *)&peer->addr->ss);
 	if (peer->lasterror == error) {
-		log_debug("%s %s", operation, address);
+		log_debug("%s %s: %s", operation, address, strerror(error));
 		return;
 	}
 	peer->lasterror = error;
