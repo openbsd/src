@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.101 2005/07/02 15:39:04 uwe Exp $	*/
+/*	$OpenBSD: com.c,v 1.102 2005/07/11 23:41:58 uwe Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -578,6 +578,9 @@ comopen(dev, flag, mode, p)
 		case COM_UART_TI16750:
 			bus_space_write_1(iot, ioh, com_ier, 0);
 			break;
+		case COM_UART_PXA2X0:
+			bus_space_write_1(iot, ioh, com_ier, IER_EUART);
+			break;
 		}
 
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
@@ -781,13 +784,16 @@ compwroff(sc)
 	case COM_UART_TI16750:
 		bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
 		break;
-	}
-
-#if defined(COM_PXA2X0) && defined(__zaurus__)
-	if (sc->sc_uarttype == COM_UART_PXA2X0 &&
-	    ISSET(sc->sc_hwflags, COM_HW_SIR))
-		scoop_set_irled(0);
+#ifdef COM_PXA2X0
+	case COM_UART_PXA2X0:
+		bus_space_write_1(iot, ioh, com_ier, 0);
+#ifdef __zaurus__
+		if (ISSET(sc->sc_hwflags, COM_HW_SIR))
+			scoop_set_irled(0);
 #endif
+		break;
+#endif
+	}
 }
 
 void
@@ -1444,6 +1450,7 @@ comintr(arg)
 
 #ifdef COM_PXA2X0
 		if (sc->sc_uarttype == COM_UART_PXA2X0 &&
+		    ISSET(sc->sc_hwflags, COM_HW_SIR) &&
 		    ISSET(lsr, LSR_TXRDY) && ISSET(lsr, LSR_TSRE))
 			bus_space_write_1(iot, ioh, com_isr, ISR_RECV);
 #endif
