@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.19 2005/07/09 01:06:00 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.20 2005/07/11 17:57:26 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -671,10 +671,9 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	u_int8_t	 hunkbuf[1024];
 	int		 hunkix = 0;
 	char		*fmt;
-	struct option	*option;
 	struct iaddr	 ip_addr;
 	u_int8_t	*dp;
-	int		 len;
+	int		 len, code;
 	int		 nul_term = 0;
 
 	token = next_token(&val, cfile);
@@ -685,12 +684,15 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 		return (NULL);
 	}
 
-	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup(dhcp_universe.hash,
-	    (unsigned char *)val, 0);
+	/* Look up the actual option info. */
+	fmt = NULL;
+	for (code=0; code < 256; code++)
+		if (strcmp(dhcp_options[code].name, val) == 0) {
+			fmt = dhcp_options[code].format;
+			break;
+		}	
 
-	/* If we didn't get an option structure, it's an undefined option. */
-	if (!option) {
+	if (!fmt) {
 		parse_warn("no option named %s", val);
 		skip_to_semi(cfile);
 		return (NULL);
@@ -698,7 +700,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 
 	/* Parse the option data... */
 	do {
-		for (fmt = option->format; *fmt; fmt++) {
+		for (; *fmt; fmt++) {
 			if (*fmt == 'A')
 				break;
 			switch (*fmt) {
@@ -810,12 +812,12 @@ bad_flag:
 		return (NULL);
 	}
 
-	options[option->code].data = malloc(hunkix + nul_term);
-	if (!options[option->code].data)
+	options[code].data = malloc(hunkix + nul_term);
+	if (!options[code].data)
 		error("out of memory allocating option data.");
-	memcpy(options[option->code].data, hunkbuf, hunkix + nul_term);
-	options[option->code].len = hunkix;
-	return (option);
+	memcpy(options[code].data, hunkbuf, hunkix + nul_term);
+	options[code].len = hunkix;
+	return (&dhcp_options[code]);
 }
 
 void
