@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2005/06/26 18:20:26 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.64 2005/07/11 14:16:47 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.63 2005/06/26 18:20:26 otto Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.64 2005/07/11 14:16:47 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -468,7 +468,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 
 	if ((ifd = open(in, O_RDONLY)) < 0) {
 		if (verbose >= 0)
-			warn("%s", out);
+			warn("%s", in);
 		return (FAILURE);
 	}
 
@@ -681,13 +681,6 @@ setfile(const char *name, int fd, struct stat *fs)
 	if (name == NULL || cat || testmode)
 		return;
 
-	if (!pipin || !nosave) {
-		TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
-		TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
-		if (futimes(fd, tv))
-			warn("futimes: %s", name);
-	}
-
 	/*
 	 * If input was a pipe we don't have any info to restore but we
 	 * must set the mode since the current mode on the file is 0200.
@@ -716,6 +709,13 @@ setfile(const char *name, int fd, struct stat *fs)
 
 	if (fs->st_flags && fchflags(fd, fs->st_flags))
 		warn("fchflags: %s", name);
+
+	if (!nosave) {
+		TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
+		TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
+		if (futimes(fd, tv))
+			warn("futimes: %s", name);
+	}
 }
 
 int
