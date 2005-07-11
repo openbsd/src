@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.20 2005/06/30 16:37:29 joris Exp $	*/
+/*	$OpenBSD: history.c,v 1.21 2005/07/11 18:13:01 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,7 +53,9 @@
 #define CVS_HF_EXCL (CVS_HF_C|CVS_HF_E|CVS_HF_M|CVS_HF_O|CVS_HF_T|CVS_HF_X)
 
 static int  cvs_history_init      (struct cvs_cmd *, int, char **, int *);
+#if 0
 static void cvs_history_print     (struct cvs_hent *);
+#endif
 static int  cvs_history_pre_exec (struct cvsroot *);
 
 extern char *__progname;
@@ -213,6 +215,7 @@ cvs_history_pre_exec(struct cvsroot *root)
 }
 
 
+#if 0
 static void
 cvs_history_print(struct cvs_hent *hent)
 {
@@ -228,3 +231,4 @@ cvs_history_print(struct cvs_hent *hent)
 	    etime.tm_mday, etime.tm_hour, etime.tm_min,
 	    0, hent->ch_user, hent->ch_repo);
 }
+#endif
