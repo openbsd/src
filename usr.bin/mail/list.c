@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.15 2004/09/15 22:21:40 deraadt Exp $	*/
+/*	$OpenBSD: list.c,v 1.16 2005/07/11 14:08:23 millert Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static const char rcsid[] = "$OpenBSD: list.c,v 1.15 2004/09/15 22:21:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: list.c,v 1.16 2005/07/11 14:08:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -543,7 +543,8 @@ scan(char **sp)
 		lexnumber = 0;
 		while (isdigit(c)) {
 			lexnumber = lexnumber*10 + c - '0';
-			*cp2++ = c;
+			if (cp2 - lexstring < STRINGLEN - 1)
+				*cp2++ = c;
 			c = *cp++;
 		}
 		*cp2 = '\0';

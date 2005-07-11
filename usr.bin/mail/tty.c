@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.17 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.18 2005/07/11 14:08:23 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: tty.c,v 1.17 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tty.c,v 1.18 2005/07/11 14:08:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ readtty(char *pr, char *src)
 
 	fputs(pr, stdout);
 	fflush(stdout);
-	if (src != NULL && strlen(src) > BUFSIZ - 2) {
+	if (src != NULL && strlen(src) > sizeof(canonb) - 2) {
 		puts("too long to edit");
 		return(src);
 	}
@@ -216,10 +216,6 @@ readtty(char *pr, char *src)
 	cp = canonb;
 	*cp = 0;
 #endif
-	cp2 = cp;
-	while (cp2 < canonb + BUFSIZ)
-		*cp2++ = 0;
-	cp2 = cp;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;		/* Note: will not restart syscalls */
 	act.sa_handler = ttyint;
@@ -230,7 +226,8 @@ readtty(char *pr, char *src)
 	(void)sigaction(SIGTTIN, &act, NULL);
 	(void)sigprocmask(SIG_UNBLOCK, &intset, &oset);
 	clearerr(stdin);
-	while (cp2 < canonb + BUFSIZ) {
+	memset(cp, 0, canonb + sizeof(canonb) - cp);
+	for (cp2 = cp; cp2 < canonb + sizeof(canonb) - 1; ) {
 		c = getc(stdin);
 		switch (ttysignal) {
 			case SIGINT:
