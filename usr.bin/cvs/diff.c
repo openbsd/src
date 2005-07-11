@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.48 2005/07/10 21:50:25 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.49 2005/07/11 01:26:47 niallo Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -752,14 +752,22 @@ cvs_diffreg(const char *file1, const char *file2)
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	if ((tmp = realloc(member, (slen[1] + 2) * sizeof(int))) == NULL)
+	if ((tmp = realloc(member, (slen[1] + 2) * sizeof(int))) == NULL) {
+		free(member);
+		member = NULL;
+		cvs_log(LP_ERRNO, "failed to resize member");
 		goto closem;
+	}
 	member = (int *)tmp;
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	if ((tmp = realloc(class, (slen[0] + 2) * sizeof(int))) == NULL)
+	if ((tmp = realloc(class, (slen[0] + 2) * sizeof(int))) == NULL) {
+		free(class);
+		class = NULL;
+		cvs_log(LP_ERRNO, "failed to resize class");
 		goto closem;
+	}
 	class = (int *)tmp;
 
 	if ((klist = malloc((slen[0] + 2) * sizeof(int))) == NULL) {
@@ -779,13 +787,34 @@ cvs_diffreg(const char *file1, const char *file2)
 	free(member);
 	free(class);
 
-	J = realloc(J, (diff_len[0] + 2) * sizeof(int));
+	if ((tmp = realloc(J, (diff_len[0] + 2) * sizeof(int))) == NULL) {
+		free(J);
+		J = NULL;
+		cvs_log(LP_ERRNO, "failed to resize J");
+		status |= 2;
+		goto closem;
+	}
+	J = (int *)tmp;
 	unravel(klist[i]);
 	free(clist);
 	free(klist);
 
-	ixold = realloc(ixold, (diff_len[0] + 2) * sizeof(long));
-	ixnew = realloc(ixnew, (diff_len[1] + 2) * sizeof(long));
+	if ((tmp = realloc(ixold, (diff_len[0] + 2) * sizeof(long))) == NULL) {
+		free(ixold);
+		ixold = NULL;
+		cvs_log(LP_ERRNO, "failed to resize ixold");
+		status |= 2;
+		goto closem;
+	}
+	ixold = (long *)tmp;
+	if ((tmp = realloc(ixnew, (diff_len[1] + 2) * sizeof(long))) == NULL) {
+		free(ixnew);
+		ixnew = NULL;
+		cvs_log(LP_ERRNO, "failed to resize ixnew");
+		status |= 2;
+		goto closem;
+	}
+	ixnew = (long *)tmp;
 	check(f1, f2);
 	output(file1, f1, file2, f2);
 
@@ -992,15 +1021,18 @@ stone(int *a, int n, int *b, int *c)
 static int
 newcand(int x, int y, int pred)
 {
-	struct cand *q;
+	struct cand *q, *tmp;
+	int newclistlen;
 
 	if (clen == clistlen) {
-		clistlen = clistlen * 11 / 10;
-		clist = realloc(clist, clistlen * sizeof(cand));
-		if (clist == NULL) {
+		newclistlen = clistlen * 11 / 10;
+		tmp = realloc(clist, newclistlen * sizeof(cand));
+		if (tmp == NULL) {
 			cvs_log(LP_ERRNO, "failed to resize clist");
 			return (-1);
 		}
+		clist = tmp;
+		clistlen = newclistlen;
 	}
 	q = clist + clen;
 	q->x = x;
@@ -1344,10 +1376,18 @@ proceed:
 		 * Allocate change records as needed.
 		 */
 		if (context_vec_ptr == context_vec_end - 1) {
+			struct context_vec *tmp;
 			ptrdiff_t offset = context_vec_ptr - context_vec_start;
 			max_context <<= 1;
-			context_vec_start = realloc(context_vec_start,
-			    max_context * sizeof(struct context_vec));
+			if ((tmp = realloc(context_vec_start,
+			    max_context * sizeof(struct context_vec))) == NULL) {
+				free(context_vec_start);
+				context_vec_start = NULL;
+				cvs_log(LP_ERRNO,
+				    "failed to resize context_vec_start");
+				return;
+			}
+			context_vec_start = tmp;
 			context_vec_end = context_vec_start + max_context;
 			context_vec_ptr = context_vec_start + offset;
 		}
