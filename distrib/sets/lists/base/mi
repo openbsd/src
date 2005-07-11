@@ -461,7 +461,6 @@
 ./usr/bin/tset
 ./usr/bin/tsort
 ./usr/bin/tty
-./usr/bin/tunerctl
 ./usr/bin/ul
 ./usr/bin/uname
 ./usr/bin/uncompress
