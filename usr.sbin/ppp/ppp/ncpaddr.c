@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ncpaddr.c,v 1.8 2005/07/11 22:34:56 brad Exp $
+ * $OpenBSD: ncpaddr.c,v 1.9 2005/07/11 23:05:48 brad Exp $
  */
 
 #include <sys/types.h>
@@ -713,7 +713,10 @@ ncprange_setsa(struct ncprange *range, const struct sockaddr *host,
   case AF_INET6:
     range->ncprange_family = AF_INET6;
     range->ncprange_ip6addr = host6->sin6_addr;
-    range->ncprange_ip6width = mask6 ? mask62bits(&mask6->sin6_addr) : 128;
+    if (IN6_IS_ADDR_UNSPECIFIED(&host6->sin6_addr))
+      range->ncprange_ip6width = 0;
+    else
+      range->ncprange_ip6width = mask6 ? mask62bits(&mask6->sin6_addr) : 128;
     break;
 #endif
 
