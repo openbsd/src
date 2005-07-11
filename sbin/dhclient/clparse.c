@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.21 2005/07/11 18:09:09 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.22 2005/07/11 18:24:08 deraadt Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -687,7 +687,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 		if (strcmp(dhcp_options[code].name, val) == 0) {
 			fmt = dhcp_options[code].format;
 			break;
-		}	
+		}
 
 	if (!fmt) {
 		parse_warn("no option named %s", val);
