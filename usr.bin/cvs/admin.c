@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.18 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.19 2005/07/11 08:32:36 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -360,6 +360,12 @@ cvs_admin_local(CVSFILE *cf, void *arg)
 	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
+
+	if (cf->cf_type == DT_DIR) {
+		if (verbosity > 1)
+			cvs_log(LP_INFO, "Administrating %s", cf->cf_name);
+		return (0);
+	}
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		cvs_log(LP_WARN, "I know nothing about %s", fpath);
