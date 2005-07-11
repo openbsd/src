@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.23 2005/07/11 09:08:47 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.24 2005/07/11 10:33:57 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -290,7 +290,8 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 		}
 	}
 
-	cvs_printf("T %s\n", fpath);
+	if (verbosity > 0)
+		cvs_printf("T %s\n", fpath);
 
 	rcs_close(rf);
 	return (0);
