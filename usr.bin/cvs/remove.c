@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.18 2005/07/08 16:03:38 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.19 2005/07/11 07:51:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -146,6 +146,12 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 static int
 cvs_remove_local(CVSFILE *cf, void *arg)
 {
+	if (cf->cf_type == DT_DIR) {
+		if (verbosity > 1)
+			cvs_log(LP_INFO, "Removing %s", cf->cf_name);
+		return (0);
+	}
+
 	cvs_log(LP_INFO, "scheduling file `%s' for removal", cf->cf_name);
 	cvs_log(LP_INFO, "use `%s commit' to remove this file permanently",
 	    __progname);
