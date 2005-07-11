@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.146 2005/05/10 11:23:39 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.147 2005/07/11 04:04:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1456,10 +1456,10 @@ sys_sigreturn(p, v, retval)
 	tf->tf_r17 = ksc.sc_regs[21];
 	tf->tf_r18 = ksc.sc_regs[22];
 	tf->tf_t4 = ksc.sc_regs[23];		/* r19 */
-	tf->tf_arg3 = ksc.sc_regs[24];	/* r23 */
-	tf->tf_arg2 = ksc.sc_regs[25];	/* r24 */
-	tf->tf_arg1 = ksc.sc_regs[26];	/* r25 */
-	tf->tf_arg0 = ksc.sc_regs[27];	/* r26 */
+	tf->tf_arg3 = ksc.sc_regs[24];		/* r23 */
+	tf->tf_arg2 = ksc.sc_regs[25];		/* r24 */
+	tf->tf_arg1 = ksc.sc_regs[26];		/* r25 */
+	tf->tf_arg0 = ksc.sc_regs[27];		/* r26 */
 	tf->tf_dp = ksc.sc_regs[28];
 	tf->tf_ret0 = ksc.sc_regs[29];
 	tf->tf_ret1 = ksc.sc_regs[30];
