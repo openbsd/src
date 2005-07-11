@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.49 2005/07/11 01:26:47 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.50 2005/07/11 01:32:17 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -791,7 +791,6 @@ cvs_diffreg(const char *file1, const char *file2)
 		free(J);
 		J = NULL;
 		cvs_log(LP_ERRNO, "failed to resize J");
-		status |= 2;
 		goto closem;
 	}
 	J = (int *)tmp;
@@ -803,7 +802,6 @@ cvs_diffreg(const char *file1, const char *file2)
 		free(ixold);
 		ixold = NULL;
 		cvs_log(LP_ERRNO, "failed to resize ixold");
-		status |= 2;
 		goto closem;
 	}
 	ixold = (long *)tmp;
@@ -811,7 +809,6 @@ cvs_diffreg(const char *file1, const char *file2)
 		free(ixnew);
 		ixnew = NULL;
 		cvs_log(LP_ERRNO, "failed to resize ixnew");
-		status |= 2;
 		goto closem;
 	}
 	ixnew = (long *)tmp;
