@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.22 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.23 2005/07/11 09:08:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -253,7 +253,9 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_type == DT_DIR) {
-		cvs_log(LP_INFO, "Tagging %s", fpath);
+		if (verbosity > 1)
+			cvs_log(LP_INFO, "%s %s",
+			    tag_delete ? "Untagging" : "Tagging", fpath);
 		return (CVS_EX_OK);
 	}
 
