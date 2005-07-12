@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.889 2005/07/11 01:30:00 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.890 2005/07/12 01:55:53 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4151,6 +4151,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82845G/GL Video",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_HB,
+	    "915GM/PM/GMS Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_IGD,
+	    "915GM/GMS Video",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_IO_1,
 	    "82865G/PE/P CPU-I/0-1",
 	},
@@ -4263,6 +4271,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801FB LPC",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LPC,
+	    "82801FBM LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SATA,
 	    "82801FB SATA",
 	},
@@ -4315,12 +4327,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801FB SMBus",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_ACM,
+	    "82801FB Modem",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_ACA,
 	    "82801FB AC97",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_IDE,
 	    "82801FB IDE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_IGD_S,
+	    "915GM/GMS Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU32,
