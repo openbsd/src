@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.83 2005/07/12 03:01:12 brad Exp $
+ * $OpenBSD: command.c,v 1.84 2005/07/12 03:08:12 brad Exp $
  */
 
 #include <sys/param.h>
@@ -451,7 +451,7 @@ subst(char *tgt, const char *oldstr, const char *newstr)
       tgt = ntgt;
     }
     if (lnewstr > loldstr)
-      bcopy(word + loldstr, word + lnewstr, ltgt - pos - loldstr);
+      bcopy(word + loldstr, word + lnewstr, ltgt - pos - lnewstr);
     bcopy(newstr, word, lnewstr);
   } while ((word = strstrword(word, oldstr)));
 
