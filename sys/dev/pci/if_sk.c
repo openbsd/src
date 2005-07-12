@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.70 2005/07/12 00:01:49 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.71 2005/07/12 00:43:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -159,7 +159,6 @@ void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void sk_reset(struct sk_softc *);
 int sk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int sk_alloc_jumbo_mem(struct sk_if_softc *);
-void sk_free_jumbo_mem(struct sk_if_softc *);
 void *sk_jalloc(struct sk_if_softc *);
 void sk_jfree(caddr_t, u_int, void *);
 int sk_init_rx_ring(struct sk_if_softc *);
