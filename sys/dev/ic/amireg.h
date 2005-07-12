@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.12 2005/07/10 15:26:18 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.13 2005/07/12 03:21:17 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -31,6 +31,7 @@
 #define	AMI_MAX_LDRIVES		8
 #define	AMI_MAX_SPANDEPTH	4
 #define	AMI_MAX_DEVDEPTH	8
+#define	AMI_MAX_TARGET		16
 
 #define	AMI_BIG_MAX_PDRIVES	(256)
 #define	AMI_BIG_MAX_LDRIVES	40
