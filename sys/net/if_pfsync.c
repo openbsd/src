@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.48 2005/05/28 15:10:07 ho Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.49 2005/07/12 17:40:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -43,11 +43,12 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/bpf.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
 
 #ifdef	INET
-#include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
@@ -55,9 +56,6 @@
 #endif
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
@@ -132,7 +130,7 @@ pfsyncattach(int npfsync)
 	ifp->if_type = IFT_PFSYNC;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_hdrlen = PFSYNC_HDRLEN;
-	pfsync_setmtu(&pfsyncif, MCLBYTES);
+	pfsync_setmtu(&pfsyncif, ETHERMTU);
 	timeout_set(&pfsyncif.sc_tmo, pfsync_timeout, &pfsyncif);
 	timeout_set(&pfsyncif.sc_tdb_tmo, pfsync_tdb_timeout, &pfsyncif);
 	timeout_set(&pfsyncif.sc_bulk_tmo, pfsync_bulk_update, &pfsyncif);
