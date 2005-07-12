@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.117 2005/04/03 08:07:00 uwe Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.118 2005/07/12 17:23:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.117 2005/04/03 08:07:00 uwe Exp $";
+	"$OpenBSD: if_wi.c,v 1.118 2005/07/12 17:23:19 jsg Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2566,11 +2566,11 @@ wi_get_id(sc)
 		printf("%s: Firmware %d.%02d variant %d, ", WI_PRT_ARG(sc),
 		    ver.wi_ver[2], ver.wi_ver[3], ver.wi_ver[1]);
 	} else {
-		printf("%s: %s%s, Firmware %d.%d.%d (primary), %d.%d.%d (station), ",
+		printf("%s: %s%s (0x%04x), Firmware %d.%d.%d (primary), %d.%d.%d (station), ",
 		    WI_PRT_ARG(sc),
 		    sc->sc_firmware_type == WI_SYMBOL ? "Symbol " : "",
-		    card_name, pri_fw_ver[0], pri_fw_ver[1], pri_fw_ver[2],
-		    sc->sc_sta_firmware_ver / 10000,
+		    card_name, card_id, pri_fw_ver[0], pri_fw_ver[1],
+		    pri_fw_ver[2], sc->sc_sta_firmware_ver / 10000,
 		    (sc->sc_sta_firmware_ver % 10000) / 100,
 		    sc->sc_sta_firmware_ver % 100);
 	}
