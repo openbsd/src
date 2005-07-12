@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.37 2005/07/02 23:42:50 brad Exp $
+.\"	$OpenBSD: xl.4,v 1.38 2005/07/12 07:47:40 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -91,14 +91,6 @@ NVIDIA nForce2 integrated 3Com 9201 (nForce2-ST, nForce2-GT)
 It also supports embedded 3C905-TX and 3C905B-TX Ethernet hardware found
 in certain Dell OptiPlex and Dell Precision desktop machines, as well as
 some Dell Latitude laptop docking stations.
-Other models of 3Com network cards are supported by the
-.Xr ec 4 ,
-.Xr eg 4 ,
-.Xr el 4 ,
-.Xr ep 4 ,
-and
-.Xr ie 4
-drivers.
 .Pp
 Category 3, 4 or 5 unshielded twisted-pair (UTP) cable should be used for
 RJ-45 (10baseT), thick Ethernet coaxial (RG59 B/U, 50 ohm) for AUI/DIX,
@@ -213,17 +205,11 @@ the author considers it a manufacturing defect.
 .Xr arp 4 ,
 .Xr bmtphy 4 ,
 .Xr cardbus 4 ,
-.Xr ec 4 ,
-.Xr eg 4 ,
-.Xr el 4 ,
-.Xr ep 4 ,
 .Xr exphy 4 ,
-.Xr ie 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr nsphy 4 ,
-.Xr ti 4 ,
 .Xr tqphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ie.4,v 1.12 2005/04/05 06:47:32 jmc Exp $
+.\"	$OpenBSD: ie.4,v 1.13 2005/07/12 07:47:40 jmc Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -45,21 +45,6 @@ This includes the following network adapters:
 .It Intel EtherExpress 16
 .El
 .Pp
-Other models of 3Com network cards are supported by the
-.Xr ec 4 ,
-.Xr ef 4 ,
-.Xr eg 4 ,
-.Xr el 4 ,
-.Xr ep 4 ,
-and
-.Xr xl 4
-drivers.
-Other models of Intel network cards are supported by the
-.Xr fxp 4
-and
-.Xr em 4
-drivers.
-.Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 To view a list of media types and options supported by your card try
@@ -68,16 +53,8 @@ For example,
 .Dq ifconfig -m ie0 .
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr ec 4 ,
-.Xr ef 4 ,
-.Xr eg 4 ,
-.Xr el 4 ,
-.Xr em 4 ,
-.Xr ep 4 ,
-.Xr fxp 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
-.Xr xl 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
