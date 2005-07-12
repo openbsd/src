@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.2 2005/05/17 18:48:52 jason Exp $	*/
+/*	$OpenBSD: build.c,v 1.3 2005/07/12 19:28:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 
 	bcopy(yds_dsp_mcode, &yf->data[0], yf->dsplen);
 	bcopy(yds_ds1_ctrl_mcode, &yf->data[yf->dsplen], yf->ds1len);
-	bcopy(yds_ds1_ctrl_mcode, &yf->data[yf->dsplen + yf->ds1len],
+	bcopy(yds_ds1e_ctrl_mcode, &yf->data[yf->dsplen + yf->ds1len],
 	    yf->ds1elen);
 
 	printf("creating %s length %d [%d+%d+%d]\n",
