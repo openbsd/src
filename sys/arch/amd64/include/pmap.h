@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 2005/06/01 14:36:36 brad Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 2005/07/12 21:18:11 hshoexer Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -111,7 +111,7 @@
  *  |         Kernel Space            |
  *  |                                 |
  *  |                                 |
- *  +---------------------------------+ 0xffff800000000000 = 0x0000008000000000
+ *  +---------------------------------+ 0xffff800000000000 = 0x0000800000000000
  *  |                                 |
  *  |    alt.L1 table (PTE pages)     |
  *  |                                 |
@@ -123,7 +123,7 @@
  *  |                                 |
  *  +---------------------------------+ 0x0000000000000000
  *
- * In other words, there is a 'VA hole' at 0x0000008000000000 -
+ * In other words, there is a 'VA hole' at 0x0000800000000000 -
  * 0xffff800000000000 which will trap, just as on, for example,
  * sparcv9.
  *
