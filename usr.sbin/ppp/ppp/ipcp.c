@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipcp.c,v 1.39 2004/06/26 20:12:48 claudio Exp $
+ * $OpenBSD: ipcp.c,v 1.40 2005/07/12 01:47:21 brad Exp $
  */
 
 #include <sys/param.h>
@@ -1013,7 +1013,8 @@ ipcp_ValidateReq(struct ipcp *ipcp, struct in_addr ip, struct fsm_decode *dec)
       }
       return;
     }
-  } else if (!ncprange_containsip4(&ipcp->cfg.peer_range, ip)) {
+  } else if (ip.s_addr == INADDR_ANY ||
+             !ncprange_containsip4(&ipcp->cfg.peer_range, ip)) {
     /*
      * If the destination address is not acceptable, NAK with what we
      * want to use.
