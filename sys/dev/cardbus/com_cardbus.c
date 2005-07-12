@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.14 2005/07/04 18:45:20 deraadt Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.15 2005/07/12 04:15:28 deraadt Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -527,6 +527,11 @@ com_cardbus_attach2(struct com_softc *sc, u_char bug)
 		printf("st16650, 32 byte fifo\n");
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 32;
+		break;
+	case COM_UART_TI16750:
+		printf("ti16750, 64 byte fifo\n");
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 64;
 		break;
 #if NPCCOM > 0
 #ifdef i386
