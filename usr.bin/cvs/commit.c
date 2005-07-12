@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.38 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.39 2005/07/12 07:12:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,7 +43,8 @@
 
 static int cvs_commit_init    (struct cvs_cmd *, int, char **, int *);
 static int cvs_commit_prepare (CVSFILE *, void *);
-static int cvs_commit_file    (CVSFILE *, void *);
+static int cvs_commit_remote  (CVSFILE *, void *);
+static int cvs_commit_local   (CVSFILE *, void *);
 static int cvs_commit_pre_exec(struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_commit = {
@@ -56,8 +57,8 @@ struct cvs_cmd cvs_cmd_commit = {
 	CF_RECURSE | CF_IGNORE | CF_SORT,
 	cvs_commit_init,
 	cvs_commit_pre_exec,
-	cvs_commit_file,
-	NULL,
+	cvs_commit_remote,
+	cvs_commit_local,
 	NULL,
 	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
@@ -200,15 +201,15 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 
 
 /*
- * cvs_commit_file()
+ * cvs_commit_remote()
  *
  * Commit a single file.
  */
 int
-cvs_commit_file(CVSFILE *cf, void *arg)
+cvs_commit_remote(CVSFILE *cf, void *arg)
 {
-	int ret, l;
-	char *repo, rcspath[MAXPATHLEN], fpath[MAXPATHLEN];
+	int ret;
+	char *repo, fpath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
 
@@ -218,13 +219,10 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-				if (cvs_senddir(root, cf) < 0)
-					return (CVS_EX_PROTO);
-			}
+		if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
+			if (cvs_senddir(root, cf) < 0)
+				return (CVS_EX_PROTO);
 		}
-
 		return (0);
 	}
 
@@ -236,32 +234,52 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 	if ((cf->cf_cvstat == CVS_FST_ADDED) ||
 	    (cf->cf_cvstat == CVS_FST_MODIFIED) ||
 	    (cf->cf_cvstat == CVS_FST_REMOVED)) {
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cvs_sendentry(root, cf) < 0) {
-				return (CVS_EX_PROTO);
-			}
+		if (cvs_sendentry(root, cf) < 0) {
+			return (CVS_EX_PROTO);
+		}
 
-			/* if it's removed, don't bother sending a
-			 * Modified request together with the file its
-			 * contents.
-			 */
-			if (cf->cf_cvstat == CVS_FST_REMOVED)
-				return (0);
+		/* if it's removed, don't bother sending a
+		 * Modified request together with the file its
+		 * contents.
+		 */
+		if (cf->cf_cvstat == CVS_FST_REMOVED)
+			return (0);
 
-			if (cvs_sendreq(root, CVS_REQ_MODIFIED,
-			    CVS_FILE_NAME(cf)) < 0) {
-				return (CVS_EX_PROTO);
-			}
+		if (cvs_sendreq(root, CVS_REQ_MODIFIED,
+		    CVS_FILE_NAME(cf)) < 0) {
+			return (CVS_EX_PROTO);
+		}
 
-			if (cvs_sendfile(root, fpath) < 0) {
-				return (CVS_EX_PROTO);
-			}
+		if (cvs_sendfile(root, fpath) < 0) {
+			return (CVS_EX_PROTO);
 		}
 	}
 
-	l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+	return (0);
+}
+
+static int
+cvs_commit_local(CVSFILE *cf, void *arg)
+{
+	int len;
+	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char *repo;
+	struct cvsroot *root;
+
+	if (cf->cf_type == DT_DIR) {
+		if (verbosity > 1)
+			cvs_log(LP_INFO, "Examining %s", cf->cf_name);
+		return (0);
+	}
+
+	root = CVS_DIR_ROOT(cf);
+	repo = CVS_DIR_REPO(cf);
+
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 	    root->cr_dir, repo, fpath, RCS_FILE_EXT);
-	if (l == -1 || l >= (int)sizeof(rcspath)) {
+	if (len == -1 || len >= (int)sizeof(rcspath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcspath);
 		return (CVS_EX_DATA);
