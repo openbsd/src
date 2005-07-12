@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.69 2005/07/02 23:10:11 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.70 2005/07/12 00:01:49 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2703,6 +2703,7 @@ sk_stop(struct sk_if_softc *sc_if)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
+	struct sk_txmap_entry	*dma;
 	int			i;
 
 	DPRINTFN(2, ("sk_stop\n"));
@@ -2773,7 +2774,16 @@ sk_stop(struct sk_if_softc *sc_if)
 		if (sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf != NULL) {
 			m_freem(sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf);
 			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
+			SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head,
+			    sc_if->sk_cdata.sk_tx_map[i], link);
+			sc_if->sk_cdata.sk_tx_map[i] = 0;
 		}
+	}
+
+	while ((dma = SIMPLEQ_FIRST(&sc_if->sk_txmap_head))) {
+		SIMPLEQ_REMOVE_HEAD(&sc_if->sk_txmap_head, link);
+		bus_dmamap_destroy(sc->sc_dmatag, dma->dmamap);
+		free(dma, M_DEVBUF);
 	}
 }
 
