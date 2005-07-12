@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.81 2005/07/11 22:34:56 brad Exp $
+ * $OpenBSD: command.c,v 1.82 2005/07/12 01:28:10 brad Exp $
  */
 
 #include <sys/param.h>
@@ -140,6 +140,7 @@
 #define	VAR_LOGOUT	34
 #define	VAR_IFQUEUE	35
 #define	VAR_MPPE	36
+#define	VAR_IPV6CPRETRY	37
 
 /* ``accept|deny|disable|enable'' masks */
 #define NEG_HISMASK (1)
@@ -2045,6 +2046,13 @@ SetVariable(struct cmdargs const *arg)
                    &arg->bundle->ncp.ipcp.cfg.fsm.maxtrm, DEF_FSMTRIES);
     break;
 
+  case VAR_IPV6CPRETRY:
+    res = SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
+                   &arg->bundle->ncp.ipv6cp.cfg.fsm.timeout,
+                   &arg->bundle->ncp.ipv6cp.cfg.fsm.maxreq,
+                   &arg->bundle->ncp.ipv6cp.cfg.fsm.maxtrm, DEF_FSMTRIES);
+    break;
+
   case VAR_NBNS:
   case VAR_DNS:
     if (param == VAR_DNS) {
@@ -2303,6 +2311,8 @@ static struct cmdtab const SetCommands[] = {
   "set ifqueue packets", (const void *)VAR_IFQUEUE},
   {"ipcpretry", "ipcpretries", SetVariable, LOCAL_AUTH, "IPCP retries",
    "set ipcpretry value [attempts]", (const void *)VAR_IPCPRETRY},
+  {"ipv6cpretry", "ipv6cpretries", SetVariable, LOCAL_AUTH, "IPV6CP retries",
+   "set ipv6cpretry value [attempts]", (const void *)VAR_IPV6CPRETRY},
   {"lcpretry", "lcpretries", SetVariable, LOCAL_AUTH | LOCAL_CX, "LCP retries",
    "set lcpretry value [attempts]", (const void *)VAR_LCPRETRY},
   {"log", NULL, log_SetLevel, LOCAL_AUTH, "log level",
