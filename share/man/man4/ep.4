@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ep.4,v 1.30 2005/07/12 07:47:39 jmc Exp $
+.\"	$OpenBSD: ep.4,v 1.31 2005/07/12 07:53:43 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -110,15 +110,15 @@ For example,
 If more than one of the supported cards is installed, they are probed for
 in the following order:
 .Pp
-.Bl -item -offset indent -compact
+.Bl -enum -offset indent -compact
 .It
-1.  PCI cards based on PCI function number order.
+PCI cards based on PCI function number order.
 .It
-2.  EISA cards based on EISA slot number order.
+EISA cards based on EISA slot number order.
 .It
-3.  ISA cards based on increasing Ethernet address order.
+ISA cards based on increasing Ethernet address order.
 .It
-4.  Any ISA cards in Plug-and-Play mode, in Plug-and-Play order.
+Any ISA cards in Plug-and-Play mode, in Plug-and-Play order.
 .El
 .Pp
 You may specify the port and IRQ numbers where the cards are expected to
