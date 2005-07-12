@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.82 2005/07/12 01:28:10 brad Exp $
+ * $OpenBSD: command.c,v 1.83 2005/07/12 03:01:12 brad Exp $
  */
 
 #include <sys/param.h>
@@ -1555,8 +1555,8 @@ SetInterfaceAddr(struct cmdargs const *arg)
   }
 
   /* 0.0.0.0 means any address (0 bits) */
-  ncpaddr_getip4(&ncpaddr, &ncp->ipcp.my_ip);
   ncprange_getaddr(&ncp->ipcp.cfg.my_range, &ncpaddr);
+  ncpaddr_getip4(&ncpaddr, &ncp->ipcp.my_ip);
   if (ncp->ipcp.my_ip.s_addr == INADDR_ANY)
     ncprange_setwidth(&ncp->ipcp.cfg.my_range, 0);
   bundle_AdjustFilters(arg->bundle, &ncpaddr, NULL);
@@ -2046,12 +2046,14 @@ SetVariable(struct cmdargs const *arg)
                    &arg->bundle->ncp.ipcp.cfg.fsm.maxtrm, DEF_FSMTRIES);
     break;
 
+#ifndef NOINET6
   case VAR_IPV6CPRETRY:
     res = SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
                    &arg->bundle->ncp.ipv6cp.cfg.fsm.timeout,
                    &arg->bundle->ncp.ipv6cp.cfg.fsm.maxreq,
                    &arg->bundle->ncp.ipv6cp.cfg.fsm.maxtrm, DEF_FSMTRIES);
     break;
+#endif
 
   case VAR_NBNS:
   case VAR_DNS:
