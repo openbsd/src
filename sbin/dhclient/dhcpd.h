@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.41 2005/07/11 18:09:09 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.42 2005/07/13 23:25:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -231,7 +231,7 @@ struct protocol {
 /* External definitions... */
 
 /* options.c */
-int cons_options(struct dhcp_packet *, struct option_data *);
+int cons_options(unsigned char *, const int, struct option_data *);
 char *pretty_print_option(unsigned int, unsigned char *, int, int, int);
 void do_packet(struct interface_info *, struct dhcp_packet *,
     int, unsigned int, struct iaddr, struct hardware *);
@@ -293,7 +293,6 @@ int interface_link_status(char *);
 
 /* tables.c */
 extern struct option dhcp_options[256];
-extern unsigned char dhcp_option_default_priority_list[256];
 
 /* convert.c */
 u_int32_t getULong(unsigned char *);

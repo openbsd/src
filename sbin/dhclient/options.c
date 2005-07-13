@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.20 2005/07/09 14:36:16 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.21 2005/07/13 23:25:55 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -49,7 +49,6 @@ int bad_options_max = 5;
 
 void	parse_options(struct packet *);
 void	parse_option_buffer(struct packet *, unsigned char *, int);
-int	store_options(unsigned char *, int, struct option_data *, int);
 
 /*
  * Parse all available options out of the specified packet.
@@ -188,131 +187,51 @@ parse_option_buffer(struct packet *packet,
 }
 
 /*
- * cons options into a big buffer, and then split them out into the
- * three separate buffers if needed.  This allows us to cons up a set of
- * vendor options using the same routine.
+ * Copy as many options as fit in buflen bytes of buf. Return the
+ * offset of the start of the last option copied. A caller can check
+ * to see if it's DHO_END to decide if all the options were copied.
  */
 int
-cons_options(struct dhcp_packet *outpacket, struct option_data *options)
+cons_options(unsigned char *buf, const int buflen, struct option_data *options)
 {
-	unsigned char buffer[4096];
-	int main_buffer_size, mainbufix, bufix;
-	int option_size, length;
+	int ix, incr, length, bufix, code, lastopt = -1;
 
-	main_buffer_size = 576 - DHCP_FIXED_LEN;
+	bzero(buf, buflen);
 
-	/* Copy the options into the big buffer... */
-	option_size = store_options( buffer, (main_buffer_size - 7), options,
-	    main_buffer_size);
+	if (buflen > 3)
+		memcpy(buf, DHCP_OPTIONS_COOKIE, 4);
+	bufix = 4;
 
-	/* Put the cookie up front... */
-	memcpy(outpacket->options, DHCP_OPTIONS_COOKIE, 4);
-	mainbufix = 4;
-
-	/*
-	 * If we're going to have to overload, store the overload option
-	 * at the beginning.  If we can, though, just store the whole
-	 * thing in the packet's option buffer and leave it at that.
-	 */
-	if (option_size <= main_buffer_size - mainbufix) {
-		memcpy(&outpacket->options[mainbufix],
-		    buffer, option_size);
-		mainbufix += option_size;
-		if (mainbufix < main_buffer_size)
-			outpacket->options[mainbufix++] = DHO_END;
-		length = DHCP_FIXED_NON_UDP + mainbufix;
-	} else {
-		outpacket->options[mainbufix++] = DHO_DHCP_OPTION_OVERLOAD;
-		outpacket->options[mainbufix++] = 1;
-		if (option_size >
-		    main_buffer_size - mainbufix + DHCP_FILE_LEN)
-			outpacket->options[mainbufix++] = 3;
-		else
-			outpacket->options[mainbufix++] = 1;
-
-		memcpy(&outpacket->options[mainbufix],
-		    buffer, main_buffer_size - mainbufix);
-		bufix = main_buffer_size - mainbufix;
-		length = DHCP_FIXED_NON_UDP + mainbufix;
-	}
-	return (length);
-}
-
-/*
- * Store all the requested options into the requested buffer.
- */
-int
-store_options(unsigned char *buffer, int buflen, struct option_data *options,
-    int first_cutoff)
-{
-	int bufix = 0, i, ix;
-
-	/*
-	 * Copy out the options in the order that they appear in the
-	 * priority list.
-	 */
-	for (i = 0; i < sizeof dhcp_option_default_priority_list; i++) {
-		/* Code for next option to try to store. */
-		int code = dhcp_option_default_priority_list[i];
-		int optstart;
-
-		/*
-		 * Number of bytes left to store (some may already have
-		 * been stored by a previous pass).
-		 */
-		int length;
-
-		/* If no data is available for this option, skip it. */
+	for (code = DHO_SUBNET_MASK; code < DHO_END; code++) {
 		if (!options[code].data)
 			continue;
 
-		/* We should now have a constant length for the option. */
 		length = options[code].len;
+		if (bufix + length + 2*((length+254)/255) >= buflen)
+			return (lastopt);
 
-		/* Try to store the option. */
-
-		/*
-		 * If the option's length is more than 255, we must
-		 * store it in multiple hunks.   Store 255-byte hunks
-		 * first.  However, in any case, if the option data will
-		 * cross a buffer boundary, split it across that
-		 * boundary.
-		 */
+		lastopt = bufix;
 		ix = 0;
 
-		optstart = bufix;
 		while (length) {
-			unsigned char incr = length > 255 ? 255 : length;
+			incr = length > 255 ? 255 : length;
 
-			/*
-			 * If this hunk of the buffer will cross a
-			 * boundary, only go up to the boundary in this
-			 * pass.
-			 */
-			if (bufix < first_cutoff &&
-			    bufix + incr > first_cutoff)
-				incr = first_cutoff - bufix;
+			buf[bufix++] = code;
+			buf[bufix++] = incr;
+			memcpy(buf + bufix, options[code].data + ix, incr);
 
-			/*
-			 * If this option is going to overflow the
-			 * buffer, skip it.
-			 */
-			if (bufix + 2 + incr > buflen) {
-				bufix = optstart;
-				break;
-			}
-
-			/* Everything looks good - copy it in! */
-			buffer[bufix] = code;
-			buffer[bufix + 1] = incr;
-			memcpy(buffer + bufix + 2, options[code].data + ix,
-			    incr);
 			length -= incr;
 			ix += incr;
 			bufix += 2 + incr;
 		}
 	}
-	return (bufix);
+
+	if (bufix < buflen) {
+		buf[bufix] = DHO_END;
+		lastopt = bufix;
+	}	
+
+	return (lastopt);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.73 2005/07/09 14:36:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.74 2005/07/13 23:25:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1390,8 +1390,12 @@ make_discover(struct interface_info *ip, struct client_lease *lease)
 			    ip->client->config->send_options[i].len;
 		}
 
-	/* Set up the option buffer... */
-	ip->client->packet_length = cons_options(&ip->client->packet, options);
+	/* Set up the option buffer to fit in a minimal UDP packet. */
+	i = cons_options(ip->client->packet.options, 576 - DHCP_FIXED_LEN,
+	    options);
+	if (i == -1 || ip->client->packet.options[i] != DHO_END)
+		error("options do not fit in DHCPDISCOVER packet.");
+	ip->client->packet_length = DHCP_FIXED_NON_UDP+i+1;
 	if (ip->client->packet_length < BOOTP_MIN_LEN)
 		ip->client->packet_length = BOOTP_MIN_LEN;
 
@@ -1463,8 +1467,12 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 			    ip->client->config->send_options[i].len;
 		}
 
-	/* Set up the option buffer... */
-	ip->client->packet_length = cons_options(&ip->client->packet, options);
+	/* Set up the option buffer to fit in a minimal UDP packet. */
+	i = cons_options(ip->client->packet.options, 576 - DHCP_FIXED_LEN,
+	    options);
+	if (i == -1 || ip->client->packet.options[i] != DHO_END)
+		error("options do not fit in DHCPREQUEST packet.");
+	ip->client->packet_length = DHCP_FIXED_NON_UDP+i+1;
 	if (ip->client->packet_length < BOOTP_MIN_LEN)
 		ip->client->packet_length = BOOTP_MIN_LEN;
 
@@ -1531,8 +1539,12 @@ make_decline(struct interface_info *ip, struct client_lease *lease)
 		options[i].len = ip->client->config->send_options[i].len;
 	}
 
-	/* Set up the option buffer... */
-	ip->client->packet_length = cons_options(&ip->client->packet, options);
+	/* Set up the option buffer to fit in a minimal UDP packet. */
+	i = cons_options(ip->client->packet.options, 576 - DHCP_FIXED_LEN,
+	    options);
+	if (i == -1 || ip->client->packet.options[i] != DHO_END)
+		error("options do not fit in DHCPDECLINE packet.");
+	ip->client->packet_length = DHCP_FIXED_NON_UDP+i+1;
 	if (ip->client->packet_length < BOOTP_MIN_LEN)
 		ip->client->packet_length = BOOTP_MIN_LEN;
 
