@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.68 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.69 2005/07/13 16:20:44 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -113,6 +113,7 @@
 
 /* server-side paths */
 #define CVS_PATH_ROOT         "CVSROOT"
+#define CVS_PATH_EMPTYDIR     CVS_PATH_ROOT "/Emptydir"
 #define CVS_PATH_COMMITINFO   CVS_PATH_ROOT "/commitinfo"
 #define CVS_PATH_CONFIG       CVS_PATH_ROOT "/config"
 #define CVS_PATH_CVSIGNORE    CVS_PATH_ROOT "/cvsignore"
@@ -351,7 +352,7 @@ int         cvs_var_unset (const char *);
 const char* cvs_var_get   (const char *);
 
 
-/* from root.c */
+/* root.c */
 struct cvsroot*  cvsroot_parse (const char *);
 void             cvsroot_free  (struct cvsroot *);
 struct cvsroot*  cvsroot_get   (const char *);
@@ -376,27 +377,29 @@ int              cvs_hist_parse   (CVSHIST *);
 struct cvs_hent* cvs_hist_getnext (CVSHIST *);
 int              cvs_hist_append  (CVSHIST *, struct cvs_hent *);
 
-/* from logmsg.c */
+/* logmsg.c */
 char*  cvs_logmsg_open (const char *);
 char*  cvs_logmsg_get  (const char *, struct cvs_flist *, struct cvs_flist *, struct cvs_flist *);
 int    cvs_logmsg_send (struct cvsroot *, const char *);
 
-
+/* date.y */
 time_t cvs_date_parse  (const char *);
 
-int    cvs_readrepo   (const char *, char *, size_t);
-int    cvs_modetostr  (mode_t, char *, size_t);
-int    cvs_strtomode  (const char *, mode_t *);
-int    cvs_splitpath  (const char *, char *, size_t, char **);
-int    cvs_mkadmin    (const char *, const char *, const char *);
-int    cvs_cksum      (const char *, char *, size_t);
-int    cvs_exec       (int, char **, int []);
-int    cvs_getargv    (const char *, char **, int);
-int    cvs_remove_dir (const char *);
-int    cvs_create_dir (const char *, int, char *, char *);
-char** cvs_makeargv   (const char *, int *);
-void   cvs_freeargv   (char **, int);
-size_t cvs_path_cat   (const char *, const char *, char *, size_t);
+/* util.c */
+int    cvs_readrepo    (const char *, char *, size_t);
+int    cvs_modetostr   (mode_t, char *, size_t);
+int    cvs_strtomode   (const char *, mode_t *);
+int    cvs_splitpath   (const char *, char *, size_t, char **);
+int    cvs_mkadmin     (const char *, const char *, const char *);
+int    cvs_cksum       (const char *, char *, size_t);
+int    cvs_exec        (int, char **, int []);
+int    cvs_getargv     (const char *, char **, int);
+int    cvs_remove_dir  (const char *);
+int    cvs_create_dir  (const char *, int, char *, char *);
+char*  cvs_rcs_getpath (CVSFILE *, char *, size_t);
+char** cvs_makeargv    (const char *, int *);
+void   cvs_freeargv    (char **, int);
+size_t cvs_path_cat    (const char *, const char *, char *, size_t);
 
 
 #endif /* CVS_H */

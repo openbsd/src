@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.34 2005/06/17 15:09:55 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.35 2005/07/13 16:20:44 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -707,4 +707,33 @@ cvs_path_cat(const char *base, const char *end, char *dst, size_t dlen)
 	}
 
 	return (len);
+}
+
+/*
+ * cvs_rcs_getpath()
+ *
+ * Get the RCS path of the file <file> and store it in <buf>, which is
+ * of size <len>. For portability, it is recommended that <buf> always be
+ * at least MAXPATHLEN bytes long.
+ * Returns a pointer to the start of the path on success, or NULL on failure.
+ */
+char*
+cvs_rcs_getpath(CVSFILE *file, char *buf, size_t len)
+{
+	int l;
+	char *repo;
+	struct cvsroot *root;
+
+	root = CVS_DIR_ROOT(file);
+	repo = CVS_DIR_REPO(file);
+
+	l = snprintf(buf, len, "%s/%s/%s%s",  
+	    root->cr_dir, repo, file->cf_name, RCS_FILE_EXT);
+	if (l == -1 || l >= (int)len) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", buf);
+		return (NULL);
+	}
+
+	return (buf);
 }
