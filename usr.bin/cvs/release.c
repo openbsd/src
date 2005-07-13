@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.12 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: release.c,v 1.13 2005/07/13 14:35:17 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -138,6 +138,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 {
 	FILE *fp;
 	int j, l;
+	size_t len;
 	char *wdir, cwd[MAXPATHLEN];
 	char buf[256], cdpath[MAXPATHLEN], dpath[MAXPATHLEN];
 	char updcmd[MAXPATHLEN];	/* XXX find a better size; malloc()?? */
@@ -150,12 +151,9 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 
 	cvs_file_getpath(cdir, dpath, sizeof(dpath));
 
-	l = snprintf(cdpath, sizeof(cdpath), "%s/" CVS_PATH_CVSDIR, dpath);
-	if (l == -1 || l >= (int)sizeof(cdpath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", cdpath);
+	len = cvs_path_cat(dpath, CVS_PATH_CVSDIR, cdpath, sizeof(cdpath));
+	if (len >= sizeof(cdpath))
 		return (CVS_EX_DATA);
-	}
 
 	if (cdir->cf_type == DT_DIR) {
 		if (!strcmp(CVS_FILE_NAME(cdir), "."))
