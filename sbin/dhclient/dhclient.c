@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.74 2005/07/13 23:25:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.75 2005/07/13 23:31:32 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -69,6 +69,9 @@ char *path_dhclient_db = NULL;
 int log_perror = 1;
 int privfd;
 int nullfd = -1;
+int no_daemon;
+int unknown_ok = 1;
+int routefd;
 
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
 struct in_addr inaddr_any;
@@ -81,10 +84,6 @@ struct sockaddr_in sockaddr_broadcast;
 #define ASSERT_STATE(state_is, state_shouldbe) {}
 
 #define TIME_MAX 2147483647
-
-int		no_daemon;
-int		unknown_ok = 1;
-int		routefd;
 
 struct interface_info	*ifi;
 
@@ -243,10 +242,9 @@ die:
 int
 main(int argc, char *argv[])
 {
-	extern char		*__progname;
-	int			 ch, fd, quiet = 0, i = 0;
-	int			 pipe_fd[2];
-	struct passwd		*pw;
+	int	 ch, fd, quiet = 0, i = 0, pipe_fd[2];
+	extern char *__progname;
+	struct passwd *pw;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY);
@@ -416,7 +414,6 @@ usage(void)
  * In leases on the acked_leases list, this simply determines when we
  * can no longer legitimately use the lease.
  */
-
 void
 state_reboot(void *ipp)
 {
@@ -565,9 +562,10 @@ freeit:
 	send_request(ip);
 }
 
-/* state_requesting is called when we receive a DHCPACK message after
-   having sent out one or more DHCPREQUEST packets. */
-
+/*
+ * state_requesting is called when we receive a DHCPACK message after
+ * having sent out one or more DHCPREQUEST packets.
+ */
 void
 dhcpack(struct packet *packet)
 {
@@ -603,8 +601,8 @@ dhcpack(struct packet *packet)
 
 	/* Figure out the lease time. */
 	if (ip->client->new->options[DHO_DHCP_LEASE_TIME].data)
-		ip->client->new->expiry = getULong(
-		    ip->client->new->options[DHO_DHCP_LEASE_TIME].data);
+		ip->client->new->expiry =
+		    getULong(ip->client->new->options[DHO_DHCP_LEASE_TIME].data);
 	else
 		ip->client->new->expiry = default_lease_time;
 	/* A number that looks negative here is really just very large,
@@ -618,15 +616,15 @@ dhcpack(struct packet *packet)
 	/* Take the server-provided renewal time if there is one;
 	   otherwise figure it out according to the spec. */
 	if (ip->client->new->options[DHO_DHCP_RENEWAL_TIME].len)
-		ip->client->new->renewal = getULong(
-		    ip->client->new->options[DHO_DHCP_RENEWAL_TIME].data);
+		ip->client->new->renewal =
+		    getULong(ip->client->new->options[DHO_DHCP_RENEWAL_TIME].data);
 	else
 		ip->client->new->renewal = ip->client->new->expiry / 2;
 
 	/* Same deal with the rebind time. */
 	if (ip->client->new->options[DHO_DHCP_REBINDING_TIME].len)
-		ip->client->new->rebind = getULong(
-		    ip->client->new->options[DHO_DHCP_REBINDING_TIME].data);
+		ip->client->new->rebind =
+		    getULong(ip->client->new->options[DHO_DHCP_REBINDING_TIME].data);
 	else
 		ip->client->new->rebind = ip->client->new->renewal +
 		    ip->client->new->renewal / 2 + ip->client->new->renewal / 4;
@@ -701,8 +699,9 @@ state_bound(void *ipp)
 	ip->client->xid = ip->client->packet.xid;
 
 	if (ip->client->active->options[DHO_DHCP_SERVER_IDENTIFIER].len == 4) {
-		memcpy(ip->client->destination.iabuf, ip->client->active->
-		    options[DHO_DHCP_SERVER_IDENTIFIER].data, 4);
+		memcpy(ip->client->destination.iabuf,
+		    ip->client->active->options[DHO_DHCP_SERVER_IDENTIFIER].data,
+		    4);
 		ip->client->destination.len = 4;
 	} else
 		ip->client->destination = iaddr_broadcast;
@@ -796,8 +795,7 @@ dhcpoffer(struct packet *packet)
 	/* If this lease doesn't supply the minimum required parameters,
 	   blow it off. */
 	for (i = 0; ip->client->config->required_options[i]; i++) {
-		if (!packet->options[ip->client->config->
-		    required_options[i]].len) {
+		if (!packet->options[ip->client->config->required_options[i]].len) {
 			note("%s isn't satisfactory.", name);
 			return;
 		}
@@ -888,9 +886,10 @@ dhcpoffer(struct packet *packet)
 	}
 }
 
-/* Allocate a client_lease structure and initialize it from the parameters
-   in the specified packet. */
-
+/*
+ * Allocate a client_lease structure and initialize it from the
+ * parameters in the specified packet.
+ */
 struct client_lease *
 packet_to_lease(struct packet *packet)
 {
@@ -1008,10 +1007,11 @@ dhcpnak(struct packet *packet)
 	state_init(ip);
 }
 
-/* Send out a DHCPDISCOVER packet, and set a timeout to send out another
-   one after the right interval has expired.  If we don't get an offer by
-   the time we reach the panic interval, call the panic function. */
-
+/*
+ * Send out a DHCPDISCOVER packet, and set a timeout to send out another
+ * one after the right interval has expired.  If we don't get an offer by
+ * the time we reach the panic interval, call the panic function.
+ */
 void
 send_discover(void *ipp)
 {
@@ -1150,8 +1150,7 @@ state_panic(void *ipp)
 					note("bound: renewal in %d seconds.",
 					    ip->client->active->renewal -
 					    cur_time);
-					add_timeout(
-					    ip->client->active->renewal,
+					add_timeout(ip->client->active->renewal,
 					    state_bound, ip);
 				} else {
 					ip->client->state = S_BOUND;
@@ -1779,22 +1778,18 @@ priv_script_write_params(char *prefix, struct client_lease *lease)
 
 		if (ip->client->config->defaults[i].len) {
 			if (lease->options[i].len) {
-				switch (
-				    ip->client->config->default_actions[i]) {
+				switch (ip->client->config->default_actions[i]) {
 				case ACTION_DEFAULT:
 					dp = lease->options[i].data;
 					len = lease->options[i].len;
 					break;
 				case ACTION_SUPERSEDE:
 supersede:
-					dp = ip->client->
-						config->defaults[i].data;
-					len = ip->client->
-						config->defaults[i].len;
+					dp = ip->client->config->defaults[i].data;
+					len = ip->client->config->defaults[i].len;
 					break;
 				case ACTION_PREPEND:
-					len = ip->client->
-					    config->defaults[i].len +
+					len = ip->client->config->defaults[i].len +
 					    lease->options[i].len;
 					if (len > sizeof(dbuf)) {
 						warning("no space to %s %s",
@@ -1804,19 +1799,16 @@ supersede:
 					}
 					dp = dbuf;
 					memcpy(dp,
-						ip->client->
-						config->defaults[i].data,
-						ip->client->
-						config->defaults[i].len);
-					memcpy(dp + ip->client->
-						config->defaults[i].len,
-						lease->options[i].data,
-						lease->options[i].len);
+					    ip->client->config->defaults[i].data,
+					    ip->client->config->defaults[i].len);
+					memcpy(dp +
+					    ip->client->config->defaults[i].len,
+					    lease->options[i].data,
+					    lease->options[i].len);
 					dp[len] = '\0';
 					break;
 				case ACTION_APPEND:
-					len = ip->client->
-					    config->defaults[i].len +
+					len = ip->client->config->defaults[i].len +
 					    lease->options[i].len;
 					if (len > sizeof(dbuf)) {
 						warning("no space to %s %s",
@@ -1826,20 +1818,16 @@ supersede:
 					}
 					dp = dbuf;
 					memcpy(dp,
-						lease->options[i].data,
-						lease->options[i].len);
+					    lease->options[i].data,
+					    lease->options[i].len);
 					memcpy(dp + lease->options[i].len,
-						ip->client->
-						config->defaults[i].data,
-						ip->client->
-						config->defaults[i].len);
+					    ip->client->config->defaults[i].data,
+					    ip->client->config->defaults[i].len);
 					dp[len] = '\0';
 				}
 			} else {
-				dp = ip->client->
-					config->defaults[i].data;
-				len = ip->client->
-					config->defaults[i].len;
+				dp = ip->client->config->defaults[i].data;
+				len = ip->client->config->defaults[i].len;
 			}
 		} else if (lease->options[i].len) {
 			len = lease->options[i].len;
@@ -2035,7 +2023,7 @@ script_set_env(struct client_state *client, const char *prefix,
 		error("script_set_env: no memory for variable assignment");
 
 	/* No `` or $() command substitution allowed in environment values! */
-	for (j=0; j < strlen(value); j++)
+	for (j = 0; j < strlen(value); j++)
 		switch (value[j]) {
 		case '`':
 		case '$':
@@ -2140,7 +2128,7 @@ check_option(struct client_lease *l, int option)
 			warning("Invalid IP address in option: %s", opbuf);
 			return (0);
 		}
-		return (1)  ;
+		return (1);
 	case DHO_HOST_NAME:
 	case DHO_DOMAIN_NAME:
 	case DHO_NIS_DOMAIN:
