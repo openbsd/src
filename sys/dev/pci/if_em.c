@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.63 2005/07/07 21:28:10 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.64 2005/07/13 20:25:46 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include "bpfilter.h"
@@ -1894,7 +1894,6 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	E1000_WRITE_REG(&sc->hw, TDH, 0);
 	E1000_WRITE_REG(&sc->hw, TDT, 0);
 
-
 	HW_DEBUGOUT2("Base = %x, Length = %x\n", 
 		     E1000_READ_REG(&sc->hw, TDBAL),
 		     E1000_READ_REG(&sc->hw, TDLEN));
@@ -1912,8 +1911,8 @@ em_initialize_transmit_unit(struct em_softc *sc)
 			reg_tipg = DEFAULT_82543_TIPG_IPGT_FIBER;
 		else
 			reg_tipg = DEFAULT_82543_TIPG_IPGT_COPPER;
-			reg_tipg |= DEFAULT_82543_TIPG_IPGR1 << E1000_TIPG_IPGR1_SHIFT;
-			reg_tipg |= DEFAULT_82543_TIPG_IPGR2 << E1000_TIPG_IPGR2_SHIFT;
+		reg_tipg |= DEFAULT_82543_TIPG_IPGR1 << E1000_TIPG_IPGR1_SHIFT;
+		reg_tipg |= DEFAULT_82543_TIPG_IPGR2 << E1000_TIPG_IPGR2_SHIFT;
 	}
 
 	E1000_WRITE_REG(&sc->hw, TIPG, reg_tipg);
