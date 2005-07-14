@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.890 2005/07/12 01:55:53 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.891 2005/07/14 00:55:54 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1142,6 +1142,7 @@
 #define	PCI_PRODUCT_DLINK_DGE550T	0x4000		/* DGE-550T */
 #define	PCI_PRODUCT_DLINK_DGE528T	0x4300		/* DGE-528T */
 #define	PCI_PRODUCT_DLINK_DGE560T	0x4b00		/* DGE-560T */
+#define	PCI_PRODUCT_DLINK_DGE560T_2	0x4b01		/* DGE-560T_2 */
 #define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T */
 
 /* Distributed Processing Technology products */
@@ -2399,7 +2400,7 @@
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2	0x4320		/* SK-9821 v2.0 */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK9D21	0x4400		/* SK-9D21 */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK9Sxx	0x9000		/* SK-9Sxx */
-#define	PCI_PRODUCT_SCHNEIDERKOCH_SK9Exx	0x9300		/* SK-9Exx */
+#define	PCI_PRODUCT_SCHNEIDERKOCH_SK9Exx	0x9E00		/* SK-9Exx */
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_TIGON	0x0009		/* Tigon */
