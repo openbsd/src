@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.67 2005/05/09 21:54:58 brad Exp $
+#	$OpenBSD: files.alpha,v 1.68 2005/07/14 02:09:46 uwe Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -289,7 +289,6 @@ file	dev/clock_subr.c
 #
 
 file	arch/alpha/alpha/in_cksum.c		inet
-file	netns/ns_cksum.c			ns
 
 # XXX
 file	arch/alpha/alpha/promcons.c

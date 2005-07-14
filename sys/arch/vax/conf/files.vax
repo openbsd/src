@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.31 2005/05/10 04:04:39 brad Exp $
+#	$OpenBSD: files.vax,v 1.32 2005/07/14 02:09:46 uwe Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -346,7 +346,6 @@ file	arch/vax/vax/rootfil.c
 file	arch/vax/vax/autoconf.c
 file	arch/vax/vax/in_cksum.c			inet
 file	arch/vax/vax/in4_cksum.c		inet
-file	arch/vax/vax/ns_cksum.c			ns
 file	arch/vax/vax/disksubr.c			disk | tape
 file	arch/vax/vax/db_machdep.c		ddb
 file	arch/vax/vax/db_disasm.c		ddb

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.68 2005/07/08 12:36:36 miod Exp $
+#	$OpenBSD: files.sparc,v 1.69 2005/07/14 02:09:46 uwe Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -316,9 +316,6 @@ file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include	"../../../compat/sunos/files.sunos"
-
-# Miscellaneous
-file	netns/ns_cksum.c		ns
 
 # Magma Serial/Parallel boards
 device	magma {}
