@@ -20,16 +20,21 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
+#include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
 
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
+#include <sys/signal.h>
+#include <machine/frame.h>
+#include <machine/pcb.h>
 #include <machine/reg.h>
 
 #include "ppc-tdep.h"
 #include "ppcobsd-tdep.h"
+#include "bsd-kvm.h"
 
 /* OpenBSD/powerpc doesn't have PT_GETFPREGS/PT_SETFPREGS like
    NetBSD/powerpc and FreeBSD/powerpc.  */
@@ -71,6 +76,43 @@ store_inferior_registers (int regnum)
 }
 
 
+static int
+ppcobsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (get_regcache_arch (regcache));
+  struct switchframe sf;
+  struct callframe cf;
+  int i, regnum;
+
+  /* The following is true for OpenBSD 3.7:
+
+     The pcb contains %r1 (the stack pointer) at the point of the
+     context switch in cpu_switch().  At that point we have a stack
+     frame as described by `struct switchframe', and below that a call
+     frame as described by `struct callframe'.  From this information
+     we reconstruct the register state as it would look when we are in
+     cpu_switch().  */
+
+  /* The stack pointer shouldn't be zero.  */
+  if (pcb->pcb_sp == 0)
+    return 0;
+
+  read_memory (pcb->pcb_sp, (char *)&sf, sizeof sf);
+  regcache_raw_supply (regcache, SP_REGNUM, &sf.sp);
+  regcache_raw_supply (regcache, tdep->ppc_cr_regnum, &sf.cr);
+  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 2, &sf.fixreg2);
+  for (i = 0, regnum = tdep->ppc_gp0_regnum + 13; i < 19; i++, regnum++)
+    regcache_raw_supply (regcache, regnum, &sf.fixreg[i]);
+
+  read_memory (sf.sp, (char *)&cf, sizeof cf);
+  regcache_raw_supply (regcache, PC_REGNUM, &cf.lr);
+  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 30, &cf.r30);
+  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 31, &cf.r31);
+
+  return 1;
+}
+
+
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 void _initialize_ppcobsd_nat (void);
 
@@ -95,4 +137,7 @@ _initialize_ppcobsd_nat (void)
   ppcobsd_reg_offsets.vr0_offset = offsetof (struct vreg, vreg);
   ppcobsd_reg_offsets.vscr_offset = offsetof (struct vreg, vscr);
   ppcobsd_reg_offsets.vrsave_offset = offsetof (struct vreg, vrsave);
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (ppcobsd_supply_pcb);
 }
