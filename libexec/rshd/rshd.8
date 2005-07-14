@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rshd.8,v 1.16 2003/07/25 09:27:45 jmc Exp $
+.\"	$OpenBSD: rshd.8,v 1.17 2005/07/14 21:28:40 jmc Exp $
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -36,7 +36,7 @@
 .Nd remote shell server
 .Sh SYNOPSIS
 .Nm rshd
-.Op Fl aklnL
+.Op Fl akLln
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,14 +54,14 @@ The options are as follows:
 Ask hostname for verification.
 .It Fl k
 Use Kerberos authentication.
+.It Fl L
+Log successful accesses very verbosely.
 .It Fl l
 Prevent any authentication based on the user's
-.Dq Pa .rhosts
+.Pa .rhosts
 file, unless the user is logging in as the superuser.
 .It Fl n
 Disable keep-alive messages.
-.It Fl L
-Log successful accesses very verbosely.
 .El
 .Pp
 The
@@ -113,9 +113,7 @@ with the message
 .It
 A null terminated user name of at most 16 characters
 is retrieved on the initial socket.
-This user name is interpreted as the user identity on the
-.Em client Ns 's
-machine.
+This user name is interpreted as the user identity on the client's machine.
 .It
 A null terminated user name of at most 16 characters
 is retrieved on the initial socket.
@@ -209,17 +207,17 @@ and is not preceded by a flag byte.
 .El
 .Sh SEE ALSO
 .Xr rsh 1 ,
+.Xr ssh 1 ,
 .Xr rcmd 3 ,
-.Xr ruserok 3
+.Xr ruserok 3 ,
+.Xr kerberos 8
 .Sh BUGS
 The authentication procedure used here assumes the integrity
 of each client machine and the connecting medium.
 This is insecure, so
 .Xr ssh 1
-or kerberos
-.Po see\ \&
-.Ql info heimdal
-.Pc
+or
+.Xr kerberos 8
 should be used instead.
 .Pp
 .Nm
