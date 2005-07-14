@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.45 2005/03/30 11:23:15 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.46 2005/07/14 09:24:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -309,7 +309,7 @@ prepare_listeners(struct bgpd_config *conf)
 		opt = 1;
 		if (setsockopt(la->fd, SOL_SOCKET, SO_REUSEADDR,
 		    &opt, sizeof(opt)) == -1)
-			fatal("setsockopt SO_REUSEPORT");
+			fatal("setsockopt SO_REUSEADDR");
 
 		if (bind(la->fd, (struct sockaddr *)&la->sa, la->sa.ss_len) ==
 		    -1) {
