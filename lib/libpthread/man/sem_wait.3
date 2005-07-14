@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_wait.3,v 1.4 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: sem_wait.3,v 1.5 2005/07/14 14:10:50 jmc Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -78,6 +78,10 @@ will fail if:
 The semaphore value was zero, and thus could not be decremented.
 .El
 .Sh SEE ALSO
+.Xr sem_destroy 3 ,
+.Xr sem_getvalue 3 ,
+.Xr sem_init 3 ,
+.Xr sem_open 3 ,
 .Xr sem_post 3
 .Sh STANDARDS
 .Fn sem_wait

@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_destroy.3,v 1.3 2003/05/18 13:06:33 jmc Exp $
+.\" $OpenBSD: sem_destroy.3,v 1.4 2005/07/14 14:10:50 jmc Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -63,7 +63,11 @@ There are currently threads blocked on the semaphore that
 points to.
 .El
 .Sh SEE ALSO
-.Xr sem_init 3
+.Xr sem_getvalue 3 ,
+.Xr sem_init 3 ,
+.Xr sem_open 3 ,
+.Xr sem_post 3 ,
+.Xr sem_wait 3
 .Sh STANDARDS
 .Fn sem_destroy
 conforms to
