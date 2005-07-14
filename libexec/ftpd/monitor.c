@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.10 2005/05/24 02:24:57 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.11 2005/07/14 14:48:47 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -39,6 +39,7 @@
 enum monitor_command {
 	CMD_USER,
 	CMD_PASS,
+	CMD_SOCKET,
 	CMD_BIND
 };
 
@@ -249,7 +250,7 @@ handle_cmds(void)
 {
 	enum monitor_command cmd;
 	enum auth_ret auth;
-	int err, s, slavequit, serrno;
+	int err, s, slavequit, serrno, domain;
 	pid_t preauth_slave_pid;
 	size_t len;
 	struct sockaddr sa;
@@ -323,6 +324,25 @@ handle_cmds(void)
 				fatalx("bad return value from pass()");
 				/* NOTREACHED */
 			}
+			break;
+		case CMD_SOCKET:
+			debugmsg("CMD_SOCKET received");
+
+			if (state != POSTAUTH)
+				fatalx("CMD_SOCKET received in invalid state");
+
+			recv_data(fd_slave, &domain, sizeof(domain));
+			if (domain != AF_INET && domain != AF_INET6)
+				fatalx("monitor received invalid addr family");
+
+			s = socket(domain, SOCK_STREAM, 0);
+			serrno = errno;
+
+			send_fd(fd_slave, s);
+			if (s == -1)
+				send_data(fd_slave, &serrno, sizeof(serrno));
+			else
+				close(s);
 			break;
 		case CMD_BIND:
 			debugmsg("CMD_BIND received");
@@ -456,6 +476,25 @@ monitor_pass(char *pass)
 	recv_data(fd_monitor, &quitnow, sizeof(quitnow));
 
 	return (quitnow);
+}
+
+int
+monitor_socket(int domain)
+{
+	enum monitor_command cmd;
+	int s, serrno;
+
+	cmd = CMD_SOCKET;
+	send_data(fd_monitor, &cmd, sizeof(cmd));
+	send_data(fd_monitor, &domain, sizeof(domain));
+
+	s = recv_fd(fd_monitor);
+	if (s == -1) {
+		recv_data(fd_monitor, &serrno, sizeof(serrno));
+		errno = serrno;
+	}
+
+	return (s);
 }
 
 int
