@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.49 2005/03/29 19:34:07 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.50 2005/07/14 01:46:13 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4944,11 +4944,11 @@ _C_LABEL(sigcode):
 	 * Now that the handler has returned, re-establish all the state
 	 * we just saved above, then do a sigreturn.
 	 */
-	btst	3, %l0			! All clean?
+	btst	FPRS_DL|FPRS_DU, %l0	! All clean?
 	bz,pt	%icc, 2f
-	 btst	1, %l0			! test dl
+	 btst	FPRS_DL, %l0		! test dl
 	bz,pt	%icc, 1f
-	 btst	2, %l0			! test du
+	 btst	FPRS_DU, %l0		! test du
 
 	ldx	[%sp + CC64FSZ + BIAS + 0], %fsr
 	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
