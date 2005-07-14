@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.13 2005/07/13 14:35:17 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.14 2005/07/14 15:17:42 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -161,8 +161,10 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 		else {
 			/* test if dir has CVS/ directory */
 			if (stat(cdpath, &st) == -1) {
-				cvs_log(LP_ERR,
-				    "no repository directory: %s", dpath);
+				if (verbosity > 0)
+					cvs_log(LP_ERR,
+					    "no repository directory: %s",
+					    dpath);
 				return (0);
 			}
 		}
@@ -236,7 +238,8 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 			}
 		}
 	} else {
-		cvs_log(LP_ERR, "no such directory: %s", dpath);
+		if (verbosity > 0)
+			cvs_log(LP_ERR, "no such directory: %s", dpath);
 		return (CVS_EX_DATA);
 	}
 
