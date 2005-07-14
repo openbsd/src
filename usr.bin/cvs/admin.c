@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.19 2005/07/11 08:32:36 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.20 2005/07/14 06:50:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -356,10 +356,9 @@ cvs_admin_remote(CVSFILE *cf, void *arg)
 static int
 cvs_admin_local(CVSFILE *cf, void *arg)
 {
-	int ret, len;
-	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	int ret;
+	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
-	struct cvsroot *root;
 
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
@@ -374,13 +373,8 @@ cvs_admin_local(CVSFILE *cf, void *arg)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, cf->cf_name, RCS_FILE_EXT);
-	if (len == -1 || len >= (int)sizeof(rcspath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rcspath);
-		return (-1);
-	}
+	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
+		return (CVS_EX_DATA);
 
 	rf = rcs_open(rcspath, RCS_RDWR);
 	if (rf == NULL)

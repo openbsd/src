@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.37 2005/07/11 08:44:16 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.38 2005/07/14 06:50:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -203,14 +203,12 @@ cvs_getlog_remote(CVSFILE *cf, void *arg)
 static int
 cvs_getlog_local(CVSFILE *cf, void *arg)
 {
-	int nrev, l;
+	int nrev;
 	char rcspath[MAXPATHLEN], numbuf[64];
-	char *repo;
 	RCSFILE *rf;
 	struct rcs_sym *sym;
 	struct rcs_delta *rdp;
 	struct rcs_access *acp;
-	struct cvsroot *root;
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		if (verbosity > 0)
@@ -225,16 +223,9 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 	}
 
 	nrev = 0;
-	root = CVS_DIR_ROOT(cf);
-	repo = CVS_DIR_REPO(cf);
 
-	l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, CVS_FILE_NAME(cf), RCS_FILE_EXT);
-	if (l == -1 || l >= (int)sizeof(rcspath)) {
-		errno = ENAMETOOLONG;
-		 cvs_log(LP_ERRNO, "%s", rcspath);
+	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
 		return (CVS_EX_DATA);
-	}
 
 	if (log_rfonly) {
 		cvs_printf("%s\n", rcspath);

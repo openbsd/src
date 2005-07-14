@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.39 2005/07/12 07:12:13 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.40 2005/07/14 06:50:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -261,10 +261,7 @@ cvs_commit_remote(CVSFILE *cf, void *arg)
 static int
 cvs_commit_local(CVSFILE *cf, void *arg)
 {
-	int len;
 	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
-	char *repo;
-	struct cvsroot *root;
 
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
@@ -272,18 +269,10 @@ cvs_commit_local(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	root = CVS_DIR_ROOT(cf);
-	repo = CVS_DIR_REPO(cf);
-
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, fpath, RCS_FILE_EXT);
-	if (len == -1 || len >= (int)sizeof(rcspath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rcspath);
+	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
 		return (CVS_EX_DATA);
-	}
 
 	return (0);
 }

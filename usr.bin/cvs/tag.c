@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.24 2005/07/11 10:33:57 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.25 2005/07/14 06:50:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -244,9 +244,7 @@ cvs_tag_remote(CVSFILE *cfp, void *arg)
 static int
 cvs_tag_local(CVSFILE *cf, void *arg)
 {
-	int len;
-	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
-	struct cvsroot *root;
+	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	RCSNUM *tag_rev;
 
@@ -264,17 +262,10 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	repo = CVS_DIR_REPO(cf);
-	root = CVS_DIR_ROOT(cf);
 	tag_rev = cf->cf_lrev;
 
-	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, cf->cf_name, RCS_FILE_EXT);
-	if (len == -1 || len >= (int)sizeof(rcspath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rcspath);
+	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
 		return (CVS_EX_DATA);
-	}
 
 	rf = rcs_open(rcspath, RCS_READ|RCS_WRITE);
 	if (rf == NULL) {

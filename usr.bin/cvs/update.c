@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.38 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.39 2005/07/14 06:50:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -219,15 +219,12 @@ cvs_update_remote(CVSFILE *cf, void *arg)
 static int
 cvs_update_local(CVSFILE *cf, void *arg)
 {
-	int ret, l;
-	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	int ret;
+	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
-	struct cvsroot *root;
 
 	ret = 0;
 	rf = NULL;
-	root = CVS_DIR_ROOT(cf);
-	repo = CVS_DIR_REPO(cf);
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
@@ -241,13 +238,8 @@ cvs_update_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_OK);
 	}
 
-	l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, cf->cf_name, RCS_FILE_EXT);
-	if (l == -1 || l >= (int)sizeof(rcspath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rcspath);
+	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
 		return (CVS_EX_DATA);
-	}
 
 	rf = rcs_open(rcspath, RCS_RDWR);
 	if (rf == NULL) {
