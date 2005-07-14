@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.57 2005/07/10 07:16:41 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.58 2005/07/14 19:22:20 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -52,8 +52,11 @@ User utilities fundamental to both single and multi-user environments.
 These programs are statically compiled and therefore do not depend on any
 system libraries to run.
 .It /bsd
-Pure kernel executable (the operating system loaded into memory
-at boot-time).
+Pure kernel executable
+(the operating system loaded into memory at boot-time).
+.It /bsd.mp
+Pure kernel executable
+for multi-processor machines.
 .It /bsd.rd
 Installation kernel.
 The built-in RAM disk contains utilities which can be run
@@ -138,6 +141,9 @@ List of radius servers and their associated shared secrets for
 Example
 .Sq .\&
 (dot) files for new accounts.
+.It skey/
+One-time password user database for
+.Xr skey 1 .
 .It sliphome/
 Configuration files for
 .Xr sliplogin 8 .
