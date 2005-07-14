@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faithd.8,v 1.30 2005/06/02 07:51:37 jmc Exp $
+.\"	$OpenBSD: faithd.8,v 1.31 2005/07/14 15:16:58 jmc Exp $
 .\"	$KAME: faithd.8,v 1.36 2002/05/09 13:59:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -304,14 +304,14 @@ setting.
 .Sh HISTORY
 The
 .Nm
-command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
+command first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh SECURITY CONSIDERATIONS
-It is very insecure to use IP-address based authentication, for connections relayed by
-.Nm faithd ,
-and any other TCP relaying services.
+It is very insecure to use IP-address-based authentication
+for connections relayed by
+.Nm .
 .Pp
-Administrators are advised to limit accesses to
+Administrators are advised to limit access to
 .Nm
 using
 .Pa faithd.conf ,
@@ -325,6 +325,6 @@ carefully configuring routing entries that point to
 using
 .Xr route 8 .
 IPv6 source addresses need to be filtered using a packet filter.
-Documents listed in
+The documents listed in
 .Sx SEE ALSO
 have more discussions on this topic.
