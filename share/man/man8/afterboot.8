@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.109 2005/06/01 10:23:29 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.110 2005/07/14 21:12:17 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -578,10 +578,8 @@ Edit
 if needed for remote booting.
 If you do not have HP computers doing remote booting, do not enable this.
 .Ss Kerberos
-If you are going to use Kerberos
-.Po see\ \&
-.Ql info heimdal
-.Pc
+If you are going to use
+.Xr kerberos 8
 for authentication, and you already have a
 Kerberos
 master, change directory to
@@ -899,6 +897,7 @@ boot time in the kernel image.
 .Xr ifconfig 8 ,
 .Xr inetd 8 ,
 .Xr kbd 8 ,
+.Xr kerberos 8 ,
 .Xr lpd 8 ,
 .Xr mount 8 ,
 .Xr mtree 8 ,
