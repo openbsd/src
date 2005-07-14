@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.44 2005/07/10 00:12:52 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.45 2005/07/14 07:38:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -624,7 +624,7 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	mode_t fmode;
 	char path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
 	BUF *fbuf;
-	struct cvs_ent *ep;
+	struct cvs_ent *ent;
 	struct timeval tv[2];
 
 	STRIP_SLASH(line);
@@ -637,9 +637,9 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	if (cvs_getln(root, path, sizeof(path)) < 0)
 		return (-1);
 
-	if ((ep = cvs_ent_parse(path)) == NULL)
+	if ((ent = cvs_ent_parse(path)) == NULL)
 		return (-1);
-	ret = snprintf(path, sizeof(path), "%s/%s", line, ep->ce_name);
+	ret = snprintf(path, sizeof(path), "%s/%s", line, ent->ce_name);
 	if (ret == -1 || ret >= (int)sizeof(path)) {
 		cvs_log(LP_ERR, "Entries path overflow in response");
 		return (-1);
@@ -650,21 +650,21 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 		return (-1);
 
 	if (cvs_modtime != CVS_DATE_DMSEC) {
-		ep->ce_mtime = cvs_modtime;
+		ent->ce_mtime = cvs_modtime;
 	} else
-		ep->ce_mtime = time(&(ep->ce_mtime));
+		ent->ce_mtime = time(&(ent->ce_mtime));
 
 	if ((type == CVS_RESP_UPDEXIST) || (type == CVS_RESP_UPDATED) ||
 	    (type == CVS_RESP_MERGED) || (type == CVS_RESP_CREATED)) {
-		if ((cvs_ent_remove(cvs_resp_lastent, ep->ce_name) < 0) &&
+		if ((cvs_ent_remove(cvs_resp_lastent, ent->ce_name) < 0) &&
 		    (type != CVS_RESP_CREATED)) {
 			cvs_log(LP_WARN, "failed to remove entry for '%s`",
-			    ep->ce_name);
+			    ent->ce_name);
 		}
 	}
 
-	if (cvs_ent_add(cvs_resp_lastent, ep) < 0) {
-		cvs_ent_free(ep);
+	if (cvs_ent_add(cvs_resp_lastent, ent) < 0) {
+		cvs_ent_free(ent);
 		return (-1);
 	}
 

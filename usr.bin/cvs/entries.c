@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.38 2005/06/17 15:09:55 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.39 2005/07/14 07:38:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -289,11 +289,11 @@ cvs_ent_remove(CVSENTRIES *ef, const char *name)
 struct cvs_ent*
 cvs_ent_get(CVSENTRIES *ef, const char *file)
 {
-	struct cvs_ent *ep;
+	struct cvs_ent *ent;
 
-	TAILQ_FOREACH(ep, &(ef->cef_ent), ce_list)
-		if (strcmp(ep->ce_name, file) == 0)
-			return (ep);
+	TAILQ_FOREACH(ent, &(ef->cef_ent), ce_list)
+		if (strcmp(ent->ce_name, file) == 0)
+			return (ent);
 
 	return (NULL);
 }
@@ -329,7 +329,7 @@ cvs_ent_parse(const char *entry)
 {
 	int i;
 	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
-	struct cvs_ent *entp;
+	struct cvs_ent *ent;
 
 	buf = strdup(entry);
 	if (buf == NULL) {
@@ -352,53 +352,53 @@ cvs_ent_parse(const char *entry)
 		return (NULL);
 	}
 
-	entp = (struct cvs_ent *)malloc(sizeof(*entp));
-	if (entp == NULL) {
+	ent = (struct cvs_ent *)malloc(sizeof(*ent));
+	if (ent == NULL) {
 		cvs_log(LP_ERRNO, "failed to allocate CVS entry");
 		return (NULL);
 	}
-	memset(entp, 0, sizeof(*entp));
-	entp->ce_buf = buf;
+	memset(ent, 0, sizeof(*ent));
+	ent->ce_buf = buf;
 
 	if (*fields[0] == '\0')
-		entp->ce_type = CVS_ENT_FILE;
+		ent->ce_type = CVS_ENT_FILE;
 	else if (*fields[0] == 'D')
-		entp->ce_type = CVS_ENT_DIR;
+		ent->ce_type = CVS_ENT_DIR;
 	else
-		entp->ce_type = CVS_ENT_NONE;
+		ent->ce_type = CVS_ENT_NONE;
 
-	entp->ce_status = CVS_ENT_REG;
-	entp->ce_name = fields[1];
+	ent->ce_status = CVS_ENT_REG;
+	ent->ce_name = fields[1];
 
-	if (entp->ce_type == CVS_ENT_FILE) {
+	if (ent->ce_type == CVS_ENT_FILE) {
 		if (*fields[2] == '-') {
-			entp->ce_status = CVS_ENT_REMOVED;
+			ent->ce_status = CVS_ENT_REMOVED;
 			sp = fields[2] + 1;
 		} else {
 			sp = fields[2];
 			if ((fields[2][0] == '0') && (fields[2][1] == '\0'))
-				entp->ce_status = CVS_ENT_ADDED;
+				ent->ce_status = CVS_ENT_ADDED;
 		}
 
-		if ((entp->ce_rev = rcsnum_parse(sp)) == NULL) {
-			cvs_ent_free(entp);
+		if ((ent->ce_rev = rcsnum_parse(sp)) == NULL) {
+			cvs_ent_free(ent);
 			return (NULL);
 		}
 
 		if (cvs_cmdop == CVS_OP_SERVER) {
 			if (!strcmp(fields[3], "up to date"))
-				entp->ce_status = CVS_ENT_UPTODATE;
+				ent->ce_status = CVS_ENT_UPTODATE;
 		} else {
 			if (strcmp(fields[3], CVS_DATE_DUMMY) == 0)
-				entp->ce_mtime = CVS_DATE_DMSEC;
+				ent->ce_mtime = CVS_DATE_DMSEC;
 			else
-				entp->ce_mtime = cvs_date_parse(fields[3]);
+				ent->ce_mtime = cvs_date_parse(fields[3]);
 		}
 	}
 
-	entp->ce_opts = fields[4];
-	entp->ce_tag = fields[5];
-	return (entp);
+	ent->ce_opts = fields[4];
+	ent->ce_tag = fields[5];
+	return (ent);
 }
 
 /*
