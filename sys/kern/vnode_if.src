@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.28 2005/07/03 20:14:00 drahn Exp $
+#	$OpenBSD: vnode_if.src,v 1.29 2005/07/14 09:04:59 pedro Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -256,8 +256,8 @@ vop_remove {
 };
 
 #
+#% link		dvp	L U U
 #% link		vp	U U U
-#% link		tdvp	L U U
 #
 vop_link {
 	IN SHOULDBELOCKED WILLPUT struct vnode *dvp;
