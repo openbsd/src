@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2005/07/12 06:33:41 uwe Exp $
+#	$OpenBSD: Makefile,v 1.9 2005/07/14 02:59:30 uwe Exp $
 
 TOP=    ${.CURDIR}/..
 IPK=	openbsd${OSrev}_arm.ipk
@@ -23,8 +23,9 @@ ${IPK}:
 
 	install -o ${BINOWN} -g ${BINGRP} -m 755 ${.CURDIR}/bootbsd \
 	    ${.OBJDIR}/data/opt/QtPalmtop/bin
-	install -o ${BINOWN} -g ${BINGRP} -m 755 ${.CURDIR}/bootbsd.desktop \
-	    ${.OBJDIR}/data/opt/QtPalmtop/apps/Applications
+	grep -v '^#' ${.CURDIR}/bootbsd.desktop > ${.OBJDIR}/bootbsd.desktmp
+	install -o ${BINOWN} -g ${BINGRP} -m 755 ${.OBJDIR}/bootbsd.desktmp \
+	    ${.OBJDIR}/data/opt/QtPalmtop/apps/Applications/bootbsd.desktop
 	uudecode < ${.CURDIR}/bootbsd.png.uu
 	install -o ${BINOWN} -g ${BINGRP} -m 755 ${.OBJDIR}/bootbsd.png \
 	    ${.OBJDIR}/data/opt/QtPalmtop/pics
@@ -64,7 +65,7 @@ install: ${IPK} Packages
 
 clean cleandir:
 	rm -rf data control ${IPK} debian-binary control.tar.gz data.tar.gz \
-	    bootbsd.png Packages
+	    bootbsd.desktmp bootbsd.png Packages
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
