@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.20 2005/07/11 18:05:09 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.21 2005/07/14 06:54:59 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -181,29 +181,19 @@ cvs_annotate_remote(CVSFILE *cf, void *arg)
 static int
 cvs_annotate_local(CVSFILE *cf, void *arg)
 {
-	int len;
-	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
-	struct cvsroot *root;
 
 	if (cf->cf_type == DT_DIR)
 		return (0);
-
-	root = CVS_DIR_ROOT(cf);
-	repo = CVS_DIR_REPO(cf);
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
 		return (0);
 
-	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, CVS_FILE_NAME(cf), RCS_FILE_EXT);
-	if (len == -1 || len >= (int)sizeof(rcspath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rcspath);
+	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
 		return (CVS_EX_DATA);
-	}
 
 	rf = rcs_open(rcspath, RCS_READ);
 	if (rf == NULL)
