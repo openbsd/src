@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.103 2005/05/26 06:11:09 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.104 2005/07/14 12:50:08 moritz Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -984,6 +984,7 @@ skipcert:
 	/* Enable RSA blinding.  */
 	if (RSA_blinding_on(sent_key, NULL) != 1) {
 		log_error("rsa_sig_encode_hash: RSA_blinding_on () failed.");
+		RSA_free(sent_key);
 		return -1;
 	}
 	/* XXX hashsize is not necessarily prf->blocksize.  */
@@ -991,10 +992,12 @@ skipcert:
 	if (!buf) {
 		log_error("rsa_sig_encode_hash: malloc (%lu) failed",
 		    (unsigned long)hashsize);
+		RSA_free(sent_key);
 		return -1;
 	}
 	if (ike_auth_hash(exchange, buf) == -1) {
 		free(buf);
+		RSA_free(sent_key);
 		return -1;
 	}
 	snprintf(header, sizeof header, "rsa_sig_encode_hash: HASH_%c",
@@ -1005,6 +1008,8 @@ skipcert:
 	if (!data) {
 		log_error("rsa_sig_encode_hash: malloc (%d) failed",
 		    RSA_size(sent_key));
+		free(buf);
+		RSA_free(sent_key);
 		return -1;
 	}
 	sigsize = RSA_private_encrypt(hashsize, buf, data, sent_key,
@@ -1021,6 +1026,7 @@ skipcert:
 	datalen = (u_int32_t) sigsize;
 
 	free(buf);
+	RSA_free(sent_key);
 
 	buf = realloc(data, ISAKMP_SIG_SZ + datalen);
 	if (!buf) {
