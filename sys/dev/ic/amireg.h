@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.14 2005/07/14 04:29:46 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.15 2005/07/14 04:41:04 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -660,18 +660,22 @@ struct ami_drivehistory {
 	} adh_fail[AMI_FAILHISTORY];
 };
 
-struct ami_phys_disk {
-	u_int32_t	apd_sectsz;
-	char		apd_vendor[9];
-	char		apd_prodid[17];
-	char		apd_revno[9];
-	u_int32_t	apd_scsitype;
-	union {
-		u_int8_t apd_scsi;	/* SCSI Opt ISO Ver */
-		u_int8_t apd_ide;	/* connection ID */
-	};
-	u_int8_t	apd_mederr;
-	u_int8_t	apd_otherr;
+struct ami_inq_data {
+	u_int8_t	aid_peri;
+	u_int8_t	aid_scsitype;
+	u_int8_t	aid_ver;
+	u_int8_t	aid_datatrans;
+	u_int8_t	aid_addlen;
+	u_int8_t	aid_resv[2];
+	u_int8_t	aid_scsival;
+	u_int8_t	aid_vendor[8];
+	u_int8_t	aid_prod[16];
+	u_int8_t	aid_prodver[4];
+	u_int8_t	aid_mederr;
+	u_int8_t	aid_otherr;
+	u_int8_t	aid_proctype;
+
+	u_int8_t	resv2[20];
 };
 
 #pragma pack()
