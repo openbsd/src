@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.20 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: lock.c,v 1.21 2005/07/14 14:42:28 jmc Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.20 2003/06/03 02:56:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.21 2005/07/14 14:42:28 jmc Exp $";
 #endif /* not lint */
 
 /*
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: %s [-n] [-p] [-a style] [-t timeout]\n",
+			    "usage: %s [-np] [-a style] [-t timeout]\n",
 			    __progname);
 			exit(1);
 	}

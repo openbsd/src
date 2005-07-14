@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lock.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
+.\"	$OpenBSD: lock.1,v 1.14 2005/07/14 14:42:28 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,8 +37,7 @@
 .Nd reserve a terminal
 .Sh SYNOPSIS
 .Nm lock
-.Op Fl n
-.Op Fl p
+.Op Fl np
 .Op Fl a Ar style
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
@@ -52,6 +51,19 @@ with the appropriate privileges.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar style
+The specified BSD Authentication login
+.Ar style
+(as specified in
+.Pa /etc/login.conf )
+will be used to authenticate the user.
+If the particular
+.Ar style
+requires a challenge/response handshake or a special prompt, the
+user may enter the name of the
+.Ar style
+to get the standard prompt for that
+.Ar style .
 .It Fl n
 Don't use a timeout value.
 Terminal will be locked forever.
@@ -67,19 +79,6 @@ prompt.
 The user will then be issued an S/Key
 challenge to which they may respond with a six-word S/Key one-time
 password.
-.It Fl a Ar style
-The specified BSD Authentication login
-.Ar style
-(as specified in
-.Pa /etc/login.conf )
-will be used to authenticate the user.
-If the particular
-.Ar style
-requires a challenge/response handshake or a special prompt, the
-user may enter the name of the
-.Ar style
-to get the standard prompt for that
-.Ar style .
 .It Fl t Ar timeout
 The time limit (default 15 minutes) is changed to
 .Ar timeout
