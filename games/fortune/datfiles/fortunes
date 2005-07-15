@@ -295,7 +295,7 @@ favored by God with an extraordinary genius for swathing the bitter
 facts of life in bandages of self-illusion.
 		-- H. L. Mencken
 %
-A general leading the State Department resembles  a dragon commanding
+A general leading the State Department resembles a dragon commanding
 ducks.
 		-- New York Times, Jan. 20, 1981
 %
@@ -3062,7 +3062,7 @@ come of nothing: speak again." -- King Lear.
 		-- Stan Kelly-Bootle, "The Devil's DP Dictionary"
 %
 #define BITCOUNT(x)	(((BX_(x)+(BX_(x)>>4)) & 0x0F0F0F0F) % 255)
-#define  BX_(x)		((x) - (((x)>>1)&0x77777777)	\
+#define BX_(x)		((x) - (((x)>>1)&0x77777777)	\
 			     - (((x)>>2)&0x33333333)	\
 			     - (((x)>>3)&0x11111111))
 
@@ -3123,7 +3123,7 @@ Result is demagogism, license, agitation, discontent, anarchy.
 		   since withdrawn.
 %
 Demographic polls show that you have lost credibility across the
-board.  Especially with  those 14 year-old Valley girls.
+board.  Especially with those 14 year-old Valley girls.
 %
 Dentist, n.:
 	A Prestidigitator who, putting metal in one's mouth, pulls
@@ -4855,7 +4855,7 @@ Graduate life: It's not just a job.  It's an indenture.
 Grandpa Charnock's Law:
 	You never really learn to swear until you learn to drive.
 %
-Gravity is a myth:  the Earth sucks.
+Gravity is a myth: the Earth sucks.
 %
 Gray's Law of Programming:
 	`_n+1' trivial tasks are expected to be accomplished in the same
@@ -5498,8 +5498,8 @@ back on the tray and bite another one and go, "Darn it!  Another
 cheese!" and so on.
 		-- Dave Barry, "The Stuff of Etiquette"
 %
-	How many seconds are there in a year?  If I tell you there  are
-3.155  x  10^7, you won't even try to remember it.  On the other hand,
+	How many seconds are there in a year?  If I tell you there are
+3.155 x 10^7, you won't even try to remember it.  On the other hand,
 who could forget that, to within half a percent, pi seconds is a
 nanocentury.
 		-- Tom Duff, Bell Labs
@@ -10559,11 +10559,11 @@ POPI	Punch Operator Immediately
 PVLC	Punch Variable Length Card
 RASC	Read And Shred Card
 RPM	Read Programmers Mind
-RSSC	reduce speed, step carefully  (for improved accuracy)
+RSSC	reduce speed, step carefully (for improved accuracy)
 RTAB	Rewind tape and break
 RWDSK	rewind disk
 RWOC	Read Writing On Card
-SCRBL	scribble to disk  - faster than a write
+SCRBL	scribble to disk - faster than a write
 SLC	Search for Lost Chord
 SPSW	Scramble Program Status Word
 SRSD	Seek Record and Scar Disk
@@ -12123,7 +12123,7 @@ Lover's Patties would be compressed into wads and sold as "Nuggets."
 The best book on programming for the layman is "Alice in Wonderland";
 but that's because it's the best book on anything for the layman.
 %
-The best cure for insomnia is to get a  lot of sleep.
+The best cure for insomnia is to get a lot of sleep.
 		-- W. C. Fields
 %
 The best defense against logic is ignorance.
@@ -14361,7 +14361,7 @@ Follow these simple suggestions:
 (2)  Use tape, magnets, or glue instead of paperweights.
 (3)  Give up skiing and skydiving for more horizontal sports like
      curling.
-(4)  Avoid showers .. take baths instead.
+(4)  Avoid showers ... take baths instead.
 (5)  Don't hang all your clothes in the closet ... Keep them in one big
      pile.
 (6)  Stop flipping pancakes
@@ -16072,7 +16072,7 @@ another $2 if he claims it will be His Pleasure to serve you and
 another $2 for each "special" he describes involving confusing terms
 such as "shallots," and $4 if the menu contains the word "fixin's."  In
 many restaurants, this means the waiter will actually owe you money.
-If you are traveling with a child  aged six months to three years, you
+If you are traveling with a child aged six months to three years, you
 should leave an additional amount equal to twice the bill to compensate
 for the fact that they will have to take the banquette out and burn it
 because the cracks are wedged solid with gobbets made of partially

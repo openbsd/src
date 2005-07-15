@@ -1529,7 +1529,7 @@ speaks in such a low voice I can hardly hear them.
 and waist, that it is almost impossible to reach one's shoelaces.  And the
 sizes don't run the way they used to.  The 12's and 14's are so much smaller.
 	Even people are changing.  They are so much younger than they used to
-be when I was their age.  On  the other hand people my age are so much older
+be when I was their age.  On the other hand people my age are so much older
 than I am.
 	I ran into an old classmate the other day and she has aged so much
 that she didn't recognize me.
@@ -1802,11 +1802,6 @@ of her blonde companion.
 %
 	"How many people work here?"
 	"Oh, about half."
-%
-	How many seconds are there in a year?  If I tell you there  are
-3.155  x  10^7, you won't even try to remember it.  On the other hand, who
-could forget that, to within half a percent, pi seconds is a nanocentury.
-		-- Tom Duff, Bell Labs
 %
 	"How would I know if I believe in love at first sight?" the sexy
 social climber said to her roommate.  "I mean, I've never seen a Porsche
@@ -2529,14 +2524,6 @@ a girl should not do before twenty."
 	"Your mother is right," said the executive, "I don't like a large
 audience, either."
 %
-	n = ((n >>  1) & 0x55555555) | ((n <<  1) & 0xaaaaaaaa);
-	n = ((n >>  2) & 0x33333333) | ((n <<  2) & 0xcccccccc);
-	n = ((n >>  4) & 0x0f0f0f0f) | ((n <<  4) & 0xf0f0f0f0);
-	n = ((n >>  8) & 0x00ff00ff) | ((n <<  8) & 0xff00ff00);
-	n = ((n >> 16) & 0x0000ffff) | ((n << 16) & 0xffff0000);
-
--- Reverse the bits in a word.
-%
 	Never ask your lover if he'd dive in front of an oncoming train for
 you.  He doesn't know.  Never ask your lover if she'd dive in front of an
 oncoming band of Hell's Angels for you.  She doesn't know.  Never ask how many
@@ -2551,7 +2538,7 @@ it.  The answer is obvious.  A Japanese tourist took the picture.
 	Never ask if your lover has had therapy.  Only people who have had
 therapy ask if people have had therapy.
 	Don't ask about plaster casts of male sex organs marked JIMI, JIM, etc.
-Assume that she bought them at a flea  market.
+Assume that she bought them at a flea market.
 		-- James Peterson and Kate Nolan
 %
 	NEW YORK-- Kraft Foods, Inc. announced today that its board of
@@ -3685,7 +3672,7 @@ his ticket at home.  Not wanting to miss any of the first inning, he went
 to the ticket booth and got in a long line for another seat.  After an hour's
 wait he was just a few feet from the booth when a voice called out, "Hey,
 Dave!"  The Aggie looked up, stepped out of line and tried to find the owner
-of the voice -- with no success.   Then he realized he had lost his place in
+of the voice -- with no success.  Then he realized he had lost his place in
 line and had to wait all over again.  When the fan finally bought his ticket,
 he was thirsty, so he went to buy a drink.  The line at the concession stand
 was long, too, but since the game hadn't started he decided to wait.  Just as
@@ -3693,7 +3680,7 @@ he got to the window, a voice called out, "Hey, Dave!"  Again the Aggie tried
 to find the voice -- but no luck.  He was very upset as he got back in line
 for his drink.  Finally the fan went to his seat, eager for the game to begin.
 As he waited for the pitch, he heard the voice calling, "Hey Dave!" once more.
-Furious, he stood up and yelled at the top of his lungs,  "My name is not
+Furious, he stood up and yelled at the top of his lungs, "My name is not
 Dave!"
 %
 	Them Toad Suckers
@@ -5395,7 +5382,7 @@ The remaining 10% takes the other 90% of the time.
 94% of the women in America are beautiful
 and the rest hang out around here.
 %
-A  truly great man will neither trample on a worm nor sneak to an emperor.
+A truly great man will neither trample on a worm nor sneak to an emperor.
 		-- B. Franklin
 %
 A bachelor is a man who never made the same mistake once.
@@ -7641,10 +7628,10 @@ Colonel's hat.  One shot took effect in his forehead.
 %
 According to a recent and unscientific national survey, smiling is something
 everyone should do at least 6 times a day.  In an effort to increase the
-national average  (the US ranks third among the world's superpowers in
+national average (the US ranks third among the world's superpowers in
 smiling), Xerox has instructed all personnel to be happy, effervescent, and
 most importantly, to smile.  Xerox employees agree, and even feel strongly
-that they can not only meet but surpass the national average...  except for
+that they can not only meet but surpass the national average... except for
 Tubby Ackerman.  But because Tubby does such a fine job of racing around
 parking lots with a large butterfly net retrieving floating IC chips, Xerox
 decided to give him a break.  If you see Tubby in a parking lot he may have
@@ -7840,7 +7827,7 @@ month than you did before.
 After his legs had been broken in an accident, Mr. Miller sued for damages,
 claiming that he was crippled and would have to spend the rest of his life
 in a wheelchair.  Although the insurance-company doctor testified that his
-bones had healed properly and that he was fully capable  of walking, the
+bones had healed properly and that he was fully capable of walking, the
 judge decided for the plaintiff and awarded him $500,000.
 	When he was wheeled into the insurance office to collect his check,
 Miller was confronted by several executives.  "You're not getting away with
@@ -9154,7 +9141,7 @@ nobody big, I mean -- except me.  And I'm standing on the edge of some crazy
 cliff.  What I have to do, I have to catch everybody if they start to go
 over the cliff -- I mean if they're running and they don't look where they're
 going I have to come out from somewhere and catch them.  That's all I'd do
-all day.  I'd just be the catcher in the rye.  I know it;  I know it's crazy,
+all day.  I'd just be the catcher in the rye.  I know it; I know it's crazy,
 but that's the only thing I'd really like to be.  I know it's crazy.
 		-- J.D. Salinger, "Catcher in the Rye"
 %
@@ -9425,7 +9412,7 @@ a few, three flies buzz down from the ceiling and lazily circle each drinker.
 Suddenly "buzzzzzzzzplooop", each fly does a kamakazi dive into a different
 glass.
 	The Englishman take a disgusted look at his pint, dips the fly out
-with a spoon,  flicks the fly over his shoulder, and drains the glass.
+with a spoon, flicks the fly over his shoulder, and drains the glass.
 	The Aussie notices the fly as he puts the glass to his lips.  With
 a quick puff he blows the bug out in a cloud of foam, and tosses the beer
 down in one gulp.
@@ -9864,7 +9851,7 @@ Business before pleasure."
 Back in the early 60's, touch tone phones only had 10 buttons.  Some
 military versions had 16, while the 12 button jobs were used only by people
 who had "diva" (digital inquiry, voice answerback) systems -- mainly banks.
-Since in those days, only Western Electric  made "data sets" (modems) the
+Since in those days, only Western Electric made "data sets" (modems) the
 problems of terminology were all Bell System.  We used to struggle with
 written descriptions of dial pads that were unfamiliar to most people
 (most phones were rotary then.)  Partly in jest, some AT&T engineering
@@ -10113,7 +10100,7 @@ Behind every great computer sits a skinny little geek.
 Behind every successful man you'll find a woman with nothing to wear.
 %
 Behold the fool saith, "Put not all thine eggs in the one basket" -- which
-is but a manner of saying,  "Scatter your money and  your attention"; but
+is but a manner of saying, "Scatter your money and your attention"; but
 the wise man saith, "Put all your eggs in the one basket and -- watch that
 basket!"
 		-- Mark Twain
@@ -10722,7 +10709,7 @@ Ever stopped to think or CARE
 "Tell 'em I lied."
 %
 But I always fired into the nearest hill or, failing that, into blackness.
-I meant no harm;  I just liked the explosions.  And I was careful never to
+I meant no harm; I just liked the explosions.  And I was careful never to
 kill more than I could eat.
 		-- Raoul Duke
 %
@@ -11310,7 +11297,7 @@ COBOL is for morons.
 %
 COBOL programmers are down in the dumps.
 %
-Coding is easy;  All you do is sit staring at a
+Coding is easy: all you do is sit staring at a
 terminal until the drops of blood form on your forehead.
 %
 Cogito cogito ergo cogito sum --
@@ -12134,7 +12121,7 @@ so post it as many places as you can.
 %
 Dear Sir,
 	I am firmly opposed to the spread of microchips either to the home or
-to the office,  We have more than enough of them foisted upon us in public
+to the office, we have more than enough of them foisted upon us in public
 places.  They are a disgusting Americanism, and can only result in the farmers
 being forced to grow smaller potatoes, which in turn will cause massive un-
 employment in the already severely depressed agricultural industry.
@@ -15453,7 +15440,7 @@ Yes, damn thing wouldn't keep still, kept mucking about, 'owling...
 Fourteen years in the professor dodge has taught me that one can argue
 ingeniously on behalf of any theory, applied to any piece of literature.
 This is rarely harmful, because normally no-one reads such essays.
-		-- Robert Parker, quoted in "Murder Ink",  ed. D. Wynn
+		-- Robert Parker, quoted in "Murder Ink", ed. D. Wynn
 %
 Frankly, Scarlett, I don't have a fix.
 		-- Rhett Buggler
@@ -15742,7 +15729,7 @@ Teach a man to fish, and he'll invite himself over for dinner.
 Give a small boy a hammer and he will find
 that everything he encounters needs pounding.
 %
-Give a woman an inch  and she'll park a car in it.
+Give a woman an inch and she'll park a car in it.
 %
 Give all orders verbally.  Never write anything down
 that might go into a "Pearl Harbor File".
@@ -16308,8 +16295,8 @@ Hackers are just a migratory lifeform with a tropism for computers.
 %
 Hacker's Guide To Cooking:
 2 pkg. cream cheese (the mushy white stuff in silver wrappings that doesn't
-	really  come from Philadelphia after all; anyway, about 16 oz.)
-1 tsp. vanilla  extract  (which is more alcohol than vanilla and pretty
+	really come from Philadelphia after all; anyway, about 16 oz.)
+1 tsp. vanilla extract (which is more alcohol than vanilla and pretty
 	strong so this part you *GOTTA* measure)
 1/4 cup sugar (but honey works fine too)
 8 oz. Cool Whip (the fluffy stuff devoid of nutritional value that you
@@ -16321,10 +16308,10 @@ Hacker's Guide To Cooking:
 	beater if you have a cat(1) that can climb wall(1s) to lick it off
 	the ceiling(3m).
 "Pour into a graham cracker crust..."  Aha, the BUGS section at last.  You
-	just happened  to have a GCC sitting around under /etc/food, right?
+	just happened to have a GCC sitting around under /etc/food, right?
 	If not, don't panic(8), merely crumble a rand(3m) handful of innocent
 	GCs into a suitable tempfile and mix in some melted butter.
-"...and  refrigerate for an hour."  Leave the  recipe's  stdout in a fridge
+"...and refrigerate for an hour."  Leave the recipe's stdout in a fridge
 	for 3.6E6 milliseconds while you work on cleaning up stderr, and
 	by time out your cheesecake will be ready for stdin.
 %
@@ -16727,7 +16714,7 @@ and heavy presence that you only see in a person who has abandoned
 all hope of ever behaving "normally."
 		-- Hunter S. Thompson, "Fear and Loathing '72"
 %
-He has been known by many names;  the Prince of Lies, the Director, Lucifer,
+He has been known by many names; the Prince of Lies, the Director, Lucifer,
 Belial, and once, at a party, some obnoxious drunk kept calling him "Dude".
 		-- Stig's Inferno
 %
@@ -18582,7 +18569,7 @@ in a while I turn it on and off.  On and off.  On and off.  One day I
 got a call from a woman in France who said "Cut it out!"
 		-- Steven Wright
 %
-I have a terrible headache,  I was putting on toilet water and the lid fell.
+I have a terrible headache, I was putting on toilet water and the lid fell.
 %
 I have a theory that it's impossible to prove anything,
 but I can't prove it.
@@ -19119,7 +19106,7 @@ and justice for all.
 I poured spot remover on my dog.  Now he's gone.
 		-- S. Wright
 %
-I prefer rogues to imbeciles  because they sometimes take a rest.
+I prefer rogues to imbeciles because they sometimes take a rest.
 		-- Alexandre Dumas the Younger
 %
 I prefer the most unjust peace to the most righteous war.
@@ -19210,7 +19197,7 @@ the train to come in, he said to me: "Excuse me, Mr. Cooke, I don't want to
 invade your privacy, but I have a bet with a friend of mine.  Who composed
 the opening theme music of `Omnibus'?  My friend said Virgil Thomson."  I
 asked him, "What do you say?" He replied, "I say Aaron Copeland." I said,
-"You're right."  The porter said,  "I knew Thomson doesn't write counterpoint
+"You're right."  The porter said, "I knew Thomson doesn't write counterpoint
 that way."  I told that to a network president, and he was deeply unimpressed.
 		-- Alistair Cooke
 %
@@ -19233,7 +19220,7 @@ I respect the institution of marriage.  I have always thought that every
 woman should marry -- and no man.
 		-- Benjamin Disraeli, "Lothair"
 %
-I reverently believe that the maker who made us all  makes everything in New
+I reverently believe that the maker who made us all makes everything in New
 England, but the weather.  I don't know who makes that, but I think it must be
 raw apprentices in the weather-clerks factory who experiment and learn how, in
 New England, for board and clothes, and then are promoted to make weather for
@@ -22256,7 +22243,7 @@ to Poincare having had a "... sleepless night which initiated all that
 memorable work ..." and gives the following, very revealing quote:
 
 	"One evening, contrary to my custom, I drank black coffee and
-	could not sleep.  Ideas rose in crowds;  I felt them collide
+	could not sleep.  Ideas rose in crowds; I felt them collide
 	until pairs interlocked, so to speak, making a stable
 	combination."
 
@@ -25114,7 +25101,7 @@ the earth, like because the first thing in saving this world, is getting
 rid of stupid and square attitudes and having fun.
 		-- Senior Year Quote
 %
-Like you,  I am frequently haunted by profound questions related to man's
+Like you, I am frequently haunted by profound questions related to man's
 place in the Scheme of Things.  Here are just a few:
 
 	Q -- Is there life after death?
@@ -26216,7 +26203,7 @@ oxide, bus grant cards, gummy worms, and some bits of old pdp backplane to
 hang above the machine room.  This totem must be blessed by the old and wise
 venerable god of unibus at once, before the idolatization of vme, q and pc
 bus drive him to bitter revenge.  Alas, if this fails, and the voodoo boxen
-aren't destroyed,  there may be more than worms in the apple. Next, the
+aren't destroyed, there may be more than worms in the apple. Next, the
 arrival of voodoo optico transmitigational magneto killer paramecium, capable
 of teleporting from cable to cable, screen to screen, ear to ear and hoof
 to mouth...
@@ -28408,7 +28395,7 @@ Talking politics and nuclear fission
 We see him and he's all washed up --
 Moving on into the body of a beetle
 Getting ready for a long long crawl
-He  ain't nothing -- he ain't nothing at all...
+He ain't nothing -- he ain't nothing at all...
 
 Death and Money make their point once more
 In the shape of Philosophical assassins
@@ -28512,7 +28499,7 @@ OCCAM'S ERASER:
 %
 OCCIDENT:
 	The part of the world lying west (or east) of the Orient.  It is
-	largely inhabited by Christians,  powerful sub-tribe of the
+	largely inhabited by Christians, powerful sub-tribe of the
 	Hypocrites, whose principal industries are murder and cheating,
 	which they are pleased to call "war" and "commerce."  These, also,
 	are the principal industries of the Orient.
@@ -29467,7 +29454,7 @@ Oral sex is like being attacked by a giant snail.
 Orcs really aren't so bad (if you use lots of catsup).
 %
 Order and simplification are the first steps toward
-mastery of  a subject -- the actual enemy is the unknown.
+mastery of a subject -- the actual enemy is the unknown.
 		-- Thomas Mann
 %
 OREGON:
@@ -29532,7 +29519,7 @@ but the trouble is they charge fifteen cents for them.
 Our government has kept us in a perpetual state of fear -- kept us in a
 continuous stampede of patriotic fervor -- with the cry of grave national
 emergency...  Always there has been some terrible evil to gobble us up if we
-did not blindly rally behind it  by furnishing the exorbitant sums demanded.
+did not blindly rally behind it by furnishing the exorbitant sums demanded.
 Yet, in retrospect, these disasters seem never to have happened, seem never
 to have been quite real.
 		-- General Douglas MacArthur, 1957
@@ -29671,7 +29658,7 @@ panic: kernel segmentation violation. core dumped		(only kidding)
 %
 Paprika Measure:
 
-	2 dashes    ==  1smidgen
+	2 dashes    ==  1 smidgen
 	2 smidgens  ==  1 pinch
 	3 pinches   ==  1 soupcon
 	2 soupcons  ==  too much paprika
@@ -31855,7 +31842,7 @@ Reception area, n:
 Recipe for a Pan Galactic Gargle Blaster:
 	(1) Take the juice from one bottle of Ol' Janx Spirit
 	(2) Pour into it one measure of water from the seas of
-		Santraginus V  (Oh, those Santraginean fish!)
+		Santraginus V.  (Oh, those Santraginean fish!)
 	(3) Allow 3 cubes of Arcturan Mega-gin to melt into the
 		mixture (properly iced or the benzine is lost.)
 	(4) Allow four liters of Fallian marsh gas to bubble through it.
@@ -32525,7 +32512,7 @@ Caption:
 	"I'm sorry you've seen me, Billy.  Now I'll have to kill you."
 %
 Schmidt's Observation:
-	All things being equal, a fat person  uses more soap
+	All things being equal, a fat person uses more soap
 	than a thin person.
 %
 Science and religion are in full accord but
@@ -34717,8 +34704,8 @@ That's where the money was.
 It's a rather pleasant experience to be alone in a bank at night.
 		-- Willie Sutton
 %
-The  White Rabbit put on his spectacles.
-	"Where shall  I  begin, please your Majesty ?" he asked.
+The White Rabbit put on his spectacles.
+	"Where shall I begin, please your Majesty ?" he asked.
 	"Begin at the beginning,", the King said, very gravely,
 "and go on till you come to the end: then stop."
 		-- Lewis Carroll
@@ -37662,7 +37649,7 @@ The propriety of some persons seems to consist in having improper
 thoughts about their neighbours.
 		-- F.H. Bradley
 %
-The public demands certainties;  it must be told definitely and a bit
+The public demands certainties; it must be told definitely and a bit
 raucously that this is true and that is false.  But there are no
 certainties.
 		-- H.L. Mencken, "Prejudice"
@@ -38872,7 +38859,7 @@ Proceed by induction:
 	So A = B.
 
 Assume that the theorem is true for some value k.  Take A and B with
-	MAX(A, B) = k+1.  Then  MAX((A-1), (B-1)) = k.  And hence
+	MAX(A, B) = k+1.  Then MAX((A-1), (B-1)) = k.  And hence
 	(A-1) = (B-1).  Consequently, A = B.
 %
 Theorem: All programs are dull.
@@ -39594,7 +39581,7 @@ There was a young man from Verdunne.
 There was an old Indian belief that by making love on the hide of
 their favorite animal, one could guarantee the health and prosperity
 of the offspring conceived thereupon.  And so it goes that one Indian
-couple made love on a buffalo  hide.  Nine months later, they were
+couple made love on a buffalo hide.  Nine months later, they were
 blessed with a healthy baby son.  Yet another couple huddled together
 on the hide of a deer and they too were blessed with a very healthy
 baby son.  But a third couple, whose favorite animal was a hippopotamus,
@@ -40035,10 +40022,10 @@ This "brain-damaged" epithet is getting sorely overworked.  When we can
 speak of someone or something being flawed, impaired, marred, spoiled;
 batty, bedlamite, bonkers, buggy, cracked, crazed, cuckoo, daft, demented,
 deranged, loco, lunatic, mad, maniac, mindless, non compos mentis, nuts,
-Reaganite, screwy, teched, unbalanced, unsound, witless, wrong;  senseless,
-spastic, spasmodic, convulsive; doped, spaced-out, stoned, zonked;  {beef,
+Reaganite, screwy, teched, unbalanced, unsound, witless, wrong; senseless,
+spastic, spasmodic, convulsive; doped, spaced-out, stoned, zonked; {beef,
 beetle,block,dung,thick}headed, dense, doltish, dull, duncical, numskulled,
-pinhead;  asinine, fatuous, foolish, silly, simple;  brute, lumbering, oafish;
+pinhead; asinine, fatuous, foolish, silly, simple; brute, lumbering, oafish;
 half-assed, incompetent; backward, retarded, imbecilic, moronic; when we have
 a whole precisely nuanced vocabulary of intellectual abuse to draw upon,
 individually and in combination, isn't it a little <fill in the blank> to be
@@ -41376,7 +41363,7 @@ And stood awhile in thought.		The Jabberstock, with clothes of tweed,
 Chip Black! Chip Blue! And through	And yuppied great with greed!
 	and through
 The forecast blade went snicker-snack!	"And hast thou slain the Jabberstock?
-It bit the dirt, and with its shirt,	Come to my firm,  V.P.ish  boy!
+It bit the dirt, and with its shirt,	Come to my firm, V.P.ish boy!
 He went rebounding back.		O big bucks day! Moolah! Good Play!"
 					He bought him a Mercedes Toy.
 'Twas panic, and the slithy brokers
@@ -46341,7 +46328,7 @@ If you want to get anywhere, you'll have to run much faster.
 You humans are all alike.
 %
 You just know when a relationship is about to end.  My girlfriend called me
-at work and asked me how you change a lightbulb in  the bathroom.  "It's very
+at work and asked me how you change a lightbulb in the bathroom.  "It's very
 simple," I said. "You start by filling up the bathtub with water..."
 %
 You just wait, I'll sin till I blow up!
