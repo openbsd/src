@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.63 2005/07/11 08:05:34 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.64 2005/07/15 03:34:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -405,7 +405,7 @@ priv_adjtime(void)
 	}
 
 	if ((peers = calloc(offset_cnt, sizeof(struct ntp_peer *))) == NULL)
-		fatal("calloc ntp_adjtime");
+		fatal("calloc priv_adjtime");
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
