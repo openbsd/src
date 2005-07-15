@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.4 2005/02/18 15:26:23 robert Exp $
+.\"	$OpenBSD: boot.8,v 1.5 2005/07/15 09:12:04 jmc Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -320,6 +320,10 @@ system bootstrap
 system bootstrap's startup file
 .It Pa /bsd
 kernel image
+.It Pa /bsd.mp
+kernel image for multiprocessor machines
+.It Pa /bsd.rd
+kernel image for installation/recovery
 .El
 .Sh EXAMPLES
 Boot the default kernel:

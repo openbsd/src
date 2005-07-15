@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.20 2004/04/03 10:15:37 jmc Exp $
+.\"	$OpenBSD: biosboot.8,v 1.21 2005/07/15 09:12:04 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
 .\" Copyright (c) 1997 Michael Shalayeff
@@ -241,6 +241,12 @@ PXE bootstrap
 .It Pa /bsd
 .Ox
 kernel
+.It Pa /bsd.mp
+.Ox
+kernel for multi-processor machines
+.It Pa /bsd.rd
+.Ox
+kernel for installation/recovery
 .El
 .Sh SEE ALSO
 .Xr boot 8 ,
