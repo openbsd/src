@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.22 2005/07/13 23:33:04 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.23 2005/07/15 10:40:27 henning Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -279,7 +279,11 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 				if (!isascii(data[k]) ||
 				    !isprint(data[k]))
 					break;
-			if (k == len) {
+	     /* If we found no bogus characters, or the bogus
+		character we found is a trailing NUL, it's
+		   okay to print this option as text. */
+
+			if (k == len || (k + 1 == len && data [k] == 0)) {      
 				fmtbuf[i] = 't';
 				numhunk = -2;
 			} else {
