@@ -1,0 +1,4 @@
+FOO=foobar
+
+a:
+	@echo ${FOO:f%r=te%st
