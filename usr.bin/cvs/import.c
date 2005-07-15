@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.23 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.24 2005/07/15 12:24:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -138,11 +138,15 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_import_pre_exec(struct cvsroot *root)
 {
+	size_t len;
 	char numbuf[64], repodir[MAXPATHLEN];
 
 	if (root->cr_method == CVS_METHOD_LOCAL) {
-		snprintf(repodir, sizeof(repodir), "%s/%s", root->cr_dir,
-		    module);
+		len = cvs_path_cat(root->cr_dir, module, repodir,
+		    sizeof(repodir));
+		if (len >= sizeof(repodir))
+			return (CVS_EX_DATA);
+
 		if (mkdir(repodir, 0700) == -1) {
 			cvs_log(LP_ERRNO, "failed to create %s", repodir);
 			return (CVS_EX_DATA);
@@ -171,8 +175,9 @@ cvs_import_post_exec(struct cvsroot *root)
 		if (conflicts > 0)
 			snprintf(buf, sizeof(buf), "%d", conflicts);
 
-		cvs_printf("\n%s conflicts created by this import\n\n",
-		    conflicts == 0 ? "No" : buf);
+		if (verbosity > 0)
+			cvs_printf("\n%s conflicts created by this import\n\n",
+			    conflicts == 0 ? "No" : buf);
 	}
 
 	return (CVS_EX_OK);
@@ -186,19 +191,16 @@ cvs_import_post_exec(struct cvsroot *root)
 static int
 cvs_import_remote(CVSFILE *cf, void *arg)
 {
-	int len;
-	size_t sz;
+	size_t len, sz;
 	struct cvsroot *root;
 	char fpath[MAXPATHLEN], repodir[MAXPATHLEN];
 	char repo[MAXPATHLEN], date[32];
 
 	root = CVS_DIR_ROOT(cf);
-	len = snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, module);
-	if (len == -1 || len >= (int)sizeof(repo)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", repo);
+
+	len = cvs_path_cat(root->cr_dir, module, repo, sizeof(repo));
+	if (len >= sizeof(repo))
 		return (CVS_EX_DATA);
-	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
@@ -206,13 +208,10 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 		if (!strcmp(cf->cf_name, "."))
 			strlcpy(repodir, repo, sizeof(repodir));
 		else {
-			len = snprintf(repodir, sizeof(repodir), "%s/%s",
-			    repo, fpath);
-			if (len == -1 || len >= (int)sizeof(repodir)) {
-				errno = ENAMETOOLONG;
-				cvs_log(LP_ERRNO, "%s", repodir);
+			len = cvs_path_cat(repo, fpath, repodir,
+			    sizeof(repodir));
+			if (len >= sizeof(repodir))
 				return (CVS_EX_DATA);
-			}
 		}
 
 		if (cvs_sendreq(root, CVS_REQ_DIRECTORY, fpath) < 0)
@@ -241,7 +240,7 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 static int
 cvs_import_local(CVSFILE *cf, void *arg)
 {
-	int len;
+	size_t len;
 	time_t stamp;
 	char fpath[MAXPATHLEN], rpath[MAXPATHLEN], repo[MAXPATHLEN];
 	const char *comment;
@@ -252,12 +251,10 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	RCSNUM *rev;
 
 	root = CVS_DIR_ROOT(cf);
-	len = snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, module);
-	if (len == -1 || len >= (int)sizeof(repo)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", repo);
+
+	len = cvs_path_cat(root->cr_dir, module, repo, sizeof(repo));
+	if (len >= sizeof(repo))
 		return (CVS_EX_DATA);
-	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
@@ -265,13 +262,9 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		if (!strcmp(cf->cf_name, "."))
 			strlcpy(rpath, repo, sizeof(rpath));
 		else {
-			len = snprintf(rpath, sizeof(rpath), "%s/%s",
-			    repo, fpath);
-			if (len == -1 || len >= (int)sizeof(rpath)) {
-				errno = ENAMETOOLONG;
-				cvs_log(LP_ERRNO, "%s", rpath);
+			len = cvs_path_cat(repo, fpath, rpath, sizeof(rpath));
+			if (len >= sizeof(rpath))
 				return (CVS_EX_DATA);
-			}
 
 			cvs_printf("Importing %s\n", rpath);
 			if (mkdir(rpath, 0700) == -1) {
