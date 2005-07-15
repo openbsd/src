@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.13 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.14 2005/07/15 20:43:23 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED,
     VarPattern		*pattern;
     const char		*cp, *cp2;
     int cnt = 0;
-    char startc = endc == ')' ? '(' : '}';
+    char startc = endc == ')' ? '(' : '{';
 
     for (cp = *p;; cp++) {
     	if (*cp == '=' && cnt == 0)
@@ -633,6 +633,8 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err UNUSED,
     for (cp2 = cp+1;; cp2++) {
     	if ((*cp2 == ':' || *cp2 == endc) && cnt == 0)
 	    break;
+	if (*cp2 == '\0')
+	    return NULL;
 	if (*cp2 == startc)
 	    cnt++;
 	else if (*cp2 == endc) {
@@ -1453,8 +1455,11 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 	if (DEBUG(VAR))
 	    printf("Result is \"%s\"\n", str);
     }
-    if (*tstr == '\0')
+    if (*tstr == '\0') {
 	Error("Unclosed variable specification");
+	/* make tstr point at the last char of the variable specification */
+	tstr--;
+    }
 
     *lengthPtr += tstr - start;
     return str;
