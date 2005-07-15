@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.64 2005/07/15 03:34:52 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.65 2005/07/15 03:36:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		fatal(NULL);
 
-	log_debug("using privsep user '%s' dir '%s'", pw->pw_name, pw->pw_dir);
 	if (stat(pw->pw_dir, &stb) == -1)
 		fatal("stat");
 	if (stb.st_uid != 0 || (stb.st_mode & (S_IWGRP|S_IWOTH)) != 0)
