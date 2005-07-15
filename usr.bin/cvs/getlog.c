@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.38 2005/07/14 06:50:50 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.39 2005/07/15 08:39:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -210,6 +210,15 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 	struct rcs_delta *rdp;
 	struct rcs_access *acp;
 
+	nrev = 0;
+
+	if (cf->cf_cvstat == CVS_FST_ADDED) {
+		if (verbosity > 0)
+			cvs_log(LP_WARN, "%s has been added, but not committed",
+			    cf->cf_name);
+		return (0);
+	}
+
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		if (verbosity > 0)
 			cvs_log(LP_WARN, "nothing known about %s", cf->cf_name);
@@ -221,8 +230,6 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 			cvs_log(LP_INFO, "Logging %s", cf->cf_name);
 		return (0);
 	}
-
-	nrev = 0;
 
 	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
 		return (CVS_EX_DATA);
