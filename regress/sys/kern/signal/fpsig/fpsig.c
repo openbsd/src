@@ -1,11 +1,11 @@
-/*	$OpenBSD: fpsig.c,v 1.1 2005/07/13 14:53:54 otto Exp $	*/
+/*	$OpenBSD: fpsig.c,v 1.2 2005/07/15 07:28:33 otto Exp $	*/
 
 /*
  * Public domain.  2005, Otto Moerbeek
  *
  * Try to check if fp registers are properly saved and restored while
  * calling a signal hander.  This is not supposed to catch all that
- * can go wrong, but trashed fp regsiters will typically get caught.
+ * can go wrong, but trashed fp registers will typically get caught.
  */
  
 #include <err.h>
@@ -16,8 +16,8 @@
 
 volatile sig_atomic_t count;
 
-double g1;
-double g2;
+volatile double g1;
+volatile double g2;
 
 void
 handler(int signo)
