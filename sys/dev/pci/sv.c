@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.18 2005/04/16 21:57:23 mickey Exp $ */
+/*      $OpenBSD: sv.c,v 1.19 2005/07/16 17:20:47 brad Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -72,12 +72,7 @@ static int	svdebug = 100;
 #define DPRINTFN(n,x)
 #endif
 
-#define __BROKEN_INDIRECT_CONFIG
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	sv_match(struct device *, void *, void *);
-#else
-int	sv_match(struct device *, struct cfdata *, void *);
-#endif
 static void	sv_attach(struct device *, struct device *, void *);
 int	sv_intr(void *);
 

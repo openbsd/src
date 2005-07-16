@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.14 2004/05/12 06:35:11 tedu Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.15 2005/07/16 17:20:47 brad Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -179,11 +179,7 @@ static void lmc_shutdown(void *arg);
 
 static int
 lmc_pci_probe(struct device *parent,
-#if defined (__BROKEN_INDIRECT_CONFIG) || defined(__OpenBSD__)
 	       void *match,
-#else
-	       struct cfdata *match,
-#endif
 	       void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;

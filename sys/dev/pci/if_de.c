@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.73 2005/06/26 01:38:39 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.74 2005/07/16 17:20:47 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4944,11 +4944,7 @@ static const int tulip_eisa_irqs[4] = { IRQ5, IRQ9, IRQ10, IRQ11 };
 static int
 tulip_pci_probe(
     struct device *parent,
-#ifdef __BROKEN_INDIRECT_CONFIG
     void *match,
-#else
-    struct cfdata *match,
-#endif
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
