@@ -32,10 +32,51 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.13 2005/07/16 17:08:02 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.14 2005/07/16 19:05:36 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
+
+#include "bpfilter.h"
+#include "vlan.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/sockio.h>
+#include <sys/mbuf.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_media.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#endif
+
+#if NVLAN > 0
+#include <net/if_types.h>
+#include <net/if_vlan_var.h>
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
+
+#include <uvm/uvm_extern.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_em_hw.h>
 
@@ -126,18 +167,12 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 #define EM_RADV                         64
 
-
 /*
  * This parameter controls the maximum no of times the driver will loop
  * in the isr.
  *           Minimum Value = 1
  */
 #define EM_MAX_INTR                     3
-
-/*
- * Inform the stack about transmit checksum offload capabilities.
- */
-#define EM_CHECKSUM_FEATURES            (CSUM_TCP | CSUM_UDP)
 
 /*
  * This parameter controls the duration of transmit watchdog timer.
@@ -183,7 +218,6 @@ POSSIBILITY OF SUCH DAMAGE.
                                          ADVERTISE_100_HALF | ADVERTISE_100_FULL | \
                                          ADVERTISE_1000_FULL)
 
-#define EM_VENDOR_ID                    0x8086
 #define EM_MMBA                         0x0010 /* Mem base address */
 #define EM_ROUNDUP(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
 
@@ -193,7 +227,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define EM_SMARTSPEED_MAX               15
 
 #define MAX_NUM_MULTICAST_ADDRESSES     128
-#define PCI_ANY_ID                      (~0U)
 
 /* Defines for printing debug information */
 #define DEBUG_INIT  0
