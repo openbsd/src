@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.75 2005/07/13 23:31:32 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.76 2005/07/16 14:09:51 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2048,7 +2048,7 @@ script_flush_env(struct client_state *client)
 }
 
 int
-dhcp_option_ev_name(char *buf, size_t buflen, struct option *option)
+dhcp_option_ev_name(char *buf, size_t buflen, const struct option *option)
 {
 	int i;
 

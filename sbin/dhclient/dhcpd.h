@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.42 2005/07/13 23:25:55 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.43 2005/07/16 14:09:51 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -292,7 +292,7 @@ void remove_protocol(struct protocol *);
 int interface_link_status(char *);
 
 /* tables.c */
-extern struct option dhcp_options[256];
+extern const struct option dhcp_options[256];
 
 /* convert.c */
 u_int32_t getULong(unsigned char *);
@@ -355,7 +355,7 @@ void client_envadd(struct client_state *,
 void script_set_env(struct client_state *, const char *, const char *,
     const char *);
 void script_flush_env(struct client_state *);
-int dhcp_option_ev_name(char *, size_t, struct option *);
+int dhcp_option_ev_name(char *, size_t, const struct option *);
 
 struct client_lease *packet_to_lease(struct packet *);
 void go_daemon(void);
@@ -393,7 +393,7 @@ void make_client_config(struct interface_info *, struct client_config *);
 void parse_client_lease_statement(FILE *, int);
 void parse_client_lease_declaration(FILE *, struct client_lease *,
     struct interface_info **);
-struct option *parse_option_decl(FILE *, struct option_data *);
+int parse_option_decl(FILE *, struct option_data *);
 void parse_string_list(FILE *, struct string_list **, int);
 void parse_reject_statement(FILE *, struct client_config *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.23 2005/07/15 22:33:04 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.24 2005/07/16 14:09:51 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -185,34 +185,32 @@ void
 parse_client_statement(FILE *cfile, struct interface_info *ip,
     struct client_config *config)
 {
-	int		 token;
+	int		 token, code;
 	char		*val;
-	struct option	*option;
 
 	switch (next_token(&val, cfile)) {
 	case SEND:
 		parse_option_decl(cfile, &config->send_options[0]);
 		return;
 	case DEFAULT:
-		option = parse_option_decl(cfile, &config->defaults[0]);
-		if (option)
-			config->default_actions[option->code] = ACTION_DEFAULT;
+		code = parse_option_decl(cfile, &config->defaults[0]);
+		if (code != -1)
+			config->default_actions[code] = ACTION_DEFAULT;
 		return;
 	case SUPERSEDE:
-		option = parse_option_decl(cfile, &config->defaults[0]);
-		if (option)
-			config->default_actions[option->code] =
-			    ACTION_SUPERSEDE;
+		code = parse_option_decl(cfile, &config->defaults[0]);
+		if (code != -1)
+			config->default_actions[code] = ACTION_SUPERSEDE;
 		return;
 	case APPEND:
-		option = parse_option_decl(cfile, &config->defaults[0]);
-		if (option)
-			config->default_actions[option->code] = ACTION_APPEND;
+		code = parse_option_decl(cfile, &config->defaults[0]);
+		if (code != -1)
+			config->default_actions[code] = ACTION_APPEND;
 		return;
 	case PREPEND:
-		option = parse_option_decl(cfile, &config->defaults[0]);
-		if (option)
-			config->default_actions[option->code] = ACTION_PREPEND;
+		code = parse_option_decl(cfile, &config->defaults[0]);
+		if (code != -1)
+			config->default_actions[code] = ACTION_PREPEND;
 		return;
 	case MEDIA:
 		parse_string_list(cfile, &config->media, 1);
@@ -659,7 +657,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 	}
 }
 
-struct option *
+int
 parse_option_decl(FILE *cfile, struct option_data *options)
 {
 	char		*val;
@@ -678,7 +676,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 		parse_warn("expecting identifier after option keyword.");
 		if (token != SEMI)
 			skip_to_semi(cfile);
-		return (NULL);
+		return (-1);
 	}
 
 	/* Look up the actual option info. */
@@ -690,7 +688,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	if (code > 255) {
 		parse_warn("no option named %s", val);
 		skip_to_semi(cfile);
-		return (NULL);
+		return (-1);
 	}
 
 	/* Parse the option data... */
@@ -709,14 +707,14 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				if (token != STRING) {
 					parse_warn("expecting string.");
 					skip_to_semi(cfile);
-					return (NULL);
+					return (-1);
 				}
 				len = strlen(val);
 				if (hunkix + len + 1 > sizeof(hunkbuf)) {
 					parse_warn("option data buffer %s",
 					    "overflow");
 					skip_to_semi(cfile);
-					return (NULL);
+					return (-1);
 				}
 				memcpy(&hunkbuf[hunkix], val, len + 1);
 				nul_term = 1;
@@ -724,7 +722,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				break;
 			case 'I': /* IP address. */
 				if (!parse_ip_addr(cfile, &ip_addr))
-					return (NULL);
+					return (-1);
 				len = ip_addr.len;
 				dp = ip_addr.iabuf;
 alloc:
@@ -732,7 +730,7 @@ alloc:
 					parse_warn("option data buffer "
 					    "overflow");
 					skip_to_semi(cfile);
-					return (NULL);
+					return (-1);
 				}
 				memcpy(&hunkbuf[hunkix], dp, len);
 				hunkix += len;
@@ -745,7 +743,7 @@ need_number:
 					parse_warn("expecting number.");
 					if (token != SEMI)
 						skip_to_semi(cfile);
-					return (NULL);
+					return (-1);
 				}
 				convert_num(buf, val, 0, 32);
 				len = 4;
@@ -776,7 +774,7 @@ need_number:
 bad_flag:
 					if (token != SEMI)
 						skip_to_semi(cfile);
-					return (NULL);
+					return (-1);
 				}
 				if (!strcasecmp(val, "true") ||
 				    !strcasecmp(val, "on"))
@@ -795,7 +793,7 @@ bad_flag:
 				warning("Bad format %c in parse_option_param.",
 				    *fmt);
 				skip_to_semi(cfile);
-				return (NULL);
+				return (-1);
 			}
 		}
 		token = next_token(&val, cfile);
@@ -804,7 +802,7 @@ bad_flag:
 	if (token != SEMI) {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
-		return (NULL);
+		return (-1);
 	}
 
 	options[code].data = malloc(hunkix + nul_term);
@@ -812,7 +810,7 @@ bad_flag:
 		error("out of memory allocating option data.");
 	memcpy(options[code].data, hunkbuf, hunkix + nul_term);
 	options[code].len = hunkix;
-	return (&dhcp_options[code]);
+	return (code);
 }
 
 void
