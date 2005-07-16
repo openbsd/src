@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.64 2005/07/13 20:25:46 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.65 2005/07/16 17:08:02 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include "bpfilter.h"
@@ -216,18 +216,6 @@ struct cfdriver em_cd = {
 };
 
 /*********************************************************************
- *  Tunable default values.
- *********************************************************************/
-
-#define E1000_TICKS_TO_USECS(ticks)     ((1024 * (ticks) + 500) / 1000)
-#define E1000_USECS_TO_TICKS(usecs)     ((1000 * (usecs) + 512) / 1024)
-
-int em_tx_int_delay_dflt = E1000_TICKS_TO_USECS(EM_TIDV);
-int em_rx_int_delay_dflt = E1000_TICKS_TO_USECS(EM_RDTR);
-int em_tx_abs_int_delay_dflt = E1000_TICKS_TO_USECS(EM_TADV);
-int em_rx_abs_int_delay_dflt = E1000_TICKS_TO_USECS(EM_RADV);
-
-/*********************************************************************
  *  Device identification routine
  *
  *  em_probe determines if the driver should be loaded on
@@ -282,6 +270,10 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Parameters (to be read from user) */
 	sc->num_tx_desc = EM_MIN_TXD;
 	sc->num_rx_desc = EM_MIN_RXD;
+	sc->tx_int_delay = EM_TIDV;
+	sc->tx_abs_int_delay = EM_TADV;
+	sc->rx_int_delay = EM_RDTR;
+	sc->rx_abs_int_delay = EM_RADV;
 	sc->hw.autoneg = DO_AUTO_NEG;
 	sc->hw.wait_autoneg_complete = WAIT_FOR_AUTO_NEG_DEFAULT;
 	sc->hw.autoneg_advertised = AUTONEG_ADV_DEFAULT;
@@ -326,7 +318,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	 * status.
 	 */
 	sc->hw.report_tx_early = 1;
-
 
 	if (em_allocate_pci_resources(sc)) {
 		printf("%s: Allocation of PCI resources failed\n", 
@@ -1916,10 +1907,9 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	}
 
 	E1000_WRITE_REG(&sc->hw, TIPG, reg_tipg);
-	E1000_WRITE_REG(&sc->hw, TIDV, sc->tx_int_delay.value);
+	E1000_WRITE_REG(&sc->hw, TIDV, sc->tx_int_delay);
 	if(sc->hw.mac_type >= em_82540)
-		E1000_WRITE_REG(&sc->hw, TADV,
-		    sc->tx_abs_int_delay.value);
+		E1000_WRITE_REG(&sc->hw, TADV, sc->tx_abs_int_delay);
 
 	/* Program the Transmit Control Register */
 	reg_tctl = E1000_TCTL_PSP | E1000_TCTL_EN |
@@ -1936,7 +1926,7 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	/* Setup Transmit Descriptor Settings for this adapter */   
 	sc->txd_cmd = E1000_TXD_CMD_IFCS | E1000_TXD_CMD_RS;
 
-	if (sc->tx_int_delay.value > 0)
+	if (sc->tx_int_delay > 0)
 		sc->txd_cmd |= E1000_TXD_CMD_IDE;
 
 	return;
@@ -2293,11 +2283,10 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 	/* Set the Receive Delay Timer Register */
 	E1000_WRITE_REG(&sc->hw, RDTR, 
-			sc->rx_int_delay.value | E1000_RDT_FPDB);
+			sc->rx_int_delay | E1000_RDT_FPDB);
 
 	if(sc->hw.mac_type >= em_82540) {
-		E1000_WRITE_REG(&sc->hw, RADV,
-		    sc->rx_abs_int_delay.value);
+		E1000_WRITE_REG(&sc->hw, RADV, sc->rx_abs_int_delay);
 
 		/* Set the interrupt throttling rate.  Value is calculated
 		 * as DEFAULT_ITR = 1/(MAX_INTS_PER_SEC * 256ns) */

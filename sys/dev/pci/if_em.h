@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.12 2005/07/02 06:15:44 deraadt Exp $ */
+/* $OpenBSD: if_em.h,v 1.13 2005/07/16 17:08:02 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -247,13 +247,6 @@ typedef enum _XSUM_CONTEXT_T {
 	OFFLOAD_UDP_IP
 } XSUM_CONTEXT_T;
 
-struct em_softc;
-struct em_int_delay_info {
-        struct em_softc *sc;    /* Back-pointer to the sc struct */
-        int offset;                     /* Register offset to read/write */
-        int value;                      /* Current value in usecs */
-};
-
 /* For 82544 PCIX  Workaround */
 typedef struct _ADDRESS_LENGTH_PAIR
 {
@@ -298,10 +291,10 @@ struct em_softc {
 	u_int16_t       link_speed;
 	u_int16_t       link_duplex;
 	u_int32_t       smartspeed;
-	struct em_int_delay_info tx_int_delay;
-	struct em_int_delay_info tx_abs_int_delay;
-	struct em_int_delay_info rx_int_delay;
-	struct em_int_delay_info rx_abs_int_delay;
+	u_int32_t       tx_int_delay;
+	u_int32_t       tx_abs_int_delay;
+	u_int32_t	rx_int_delay;
+	u_int32_t	rx_abs_int_delay;
 
 	XSUM_CONTEXT_T  active_checksum_context;
 
