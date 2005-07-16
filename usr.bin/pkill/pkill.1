@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.6 2005/07/16 11:48:46 jmc Exp $
+.\"	$OpenBSD: pkill.1,v 1.7 2005/07/16 11:58:10 jmc Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ command searches the process table on the running system and signals all
 processes that match the criteria given on the command line.
 .Pp
 The following options are available:
-.Bl -tag -width xxxxxxxx
+.Bl -tag -width Ds
 .It Fl d Ar delim
 Specify a delimiter to be printed between each process ID.
 The default is a newline.
@@ -133,7 +133,9 @@ Terminal names may be of the form
 .Sq ttyxx
 or the shortened form
 .Sq xx .
-A single dash (`-') matches processes not associated with a terminal.
+A single dash
+.Pq Sq -
+matches processes not associated with a terminal.
 .It Fl U Ar uid
 Restrict matches to processes with a real user ID in the comma-separated
 list
@@ -161,14 +163,15 @@ Note that a running
 .Nm pgrep
 or
 .Nm pkill
-process will never consider itself nor system processes (kernel threads) as
+process will never consider itself or system processes (kernel threads) as
 a potential match.
-.Sh EXIT STATUS
+.Pp
 .Nm pgrep
 and
 .Nm pkill
 return one of the following values upon exit:
-.Bl -tag -width foo
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It 0
 One or more processes were matched.
 .It 1
@@ -179,6 +182,7 @@ Invalid options were specified on the command line.
 An internal error occurred.
 .El
 .Sh SEE ALSO
+.Xr grep 1 ,
 .Xr kill 1 ,
 .Xr ps 1 ,
 .Xr kill 2 ,
