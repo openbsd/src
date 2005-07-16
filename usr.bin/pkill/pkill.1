@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.5 2005/03/27 20:56:47 robert Exp $
+.\"	$OpenBSD: pkill.1,v 1.6 2005/07/16 11:48:46 jmc Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,26 +44,26 @@
 .Sh SYNOPSIS
 .Nm pgrep
 .Op Fl flnvx
-.Op Fl G Ar gid
-.Op Fl P Ar ppid
-.Op Fl U Ar uid
 .Op Fl d Ar delim
+.Op Fl G Ar gid
 .Op Fl g Ar pgrp
+.Op Fl P Ar ppid
 .Op Fl s Ar sid
 .Op Fl t Ar tty
+.Op Fl U Ar uid
 .Op Fl u Ar euid
-.Op Ar pattern Op ...
+.Op Ar pattern ...
 .Nm pkill
 .Op Fl signal
 .Op Fl fnvx
 .Op Fl G Ar gid
-.Op Fl P Ar ppid
-.Op Fl U Ar uid
 .Op Fl g Ar pgrp
+.Op Fl P Ar ppid
 .Op Fl s Ar sid
 .Op Fl t Ar tty
+.Op Fl U Ar uid
 .Op Fl u Ar euid
-.Op Ar pattern Op ...
+.Op Ar pattern ...
 .Sh DESCRIPTION
 The
 .Nm pgrep
@@ -78,18 +78,6 @@ processes that match the criteria given on the command line.
 .Pp
 The following options are available:
 .Bl -tag -width xxxxxxxx
-.It Fl G Ar gid
-Restrict matches to processes with a real group ID in the comma-separated
-list
-.Ar gid .
-.It Fl P Ar ppid
-Restrict matches to processes with a parent process ID in the
-comma-separated list
-.Ar ppid .
-.It Fl U Ar uid
-Restrict matches to processes with a real user ID in the comma-separated
-list
-.Ar uid .
 .It Fl d Ar delim
 Specify a delimiter to be printed between each process ID.
 The default is a newline.
@@ -99,6 +87,10 @@ command.
 .It Fl f
 Match against full argument lists.
 The default is to match against process names.
+.It Fl G Ar gid
+Restrict matches to processes with a real group ID in the comma-separated
+list
+.Ar gid .
 .It Fl g Ar pgrp
 Restrict matches to processes with a process group ID in the comma-separated
 list
@@ -120,6 +112,10 @@ This option can only be used with the
 command.
 .It Fl n
 Match only the most recently created process, if any.
+.It Fl P Ar ppid
+Restrict matches to processes with a parent process ID in the
+comma-separated list
+.Ar ppid .
 .It Fl s Ar sid
 Restrict matches to processes with a session ID in the comma-separated
 list
@@ -138,6 +134,10 @@ Terminal names may be of the form
 or the shortened form
 .Sq xx .
 A single dash (`-') matches processes not associated with a terminal.
+.It Fl U Ar uid
+Restrict matches to processes with a real user ID in the comma-separated
+list
+.Ar uid .
 .It Fl u Ar euid
 Restrict matches to processes with an effective user ID in the
 comma-separated list
