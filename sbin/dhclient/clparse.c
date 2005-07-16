@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.24 2005/07/16 14:09:51 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.25 2005/07/16 18:38:45 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -835,7 +835,7 @@ parse_string_list(FILE *cfile, struct string_list **lp, int multiple)
 			return;
 		}
 
-		tmp = new_string_list(strlen(val) + 1);
+		tmp = malloc(sizeof(struct string_list) + strlen(val));
 		if (tmp == NULL)
 			error("no memory for string list entry.");
 		strlcpy(tmp->string, val, strlen(val) + 1);

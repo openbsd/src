@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.43 2005/07/16 14:09:51 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.44 2005/07/16 18:38:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -83,7 +83,7 @@ struct option_data {
 
 struct string_list {
 	struct string_list	*next;
-	char			*string;
+	char			string[1];	/* Actually bigger. */
 };
 
 struct iaddr {
@@ -183,8 +183,6 @@ struct client_state {
 	struct client_config	 *config;
 	char			**scriptEnv;
 	int			  scriptEnvsize;
-	struct string_list	 *env;
-	int			  envc;
 };
 
 struct interface_info {
@@ -265,9 +263,6 @@ time_t parse_date(FILE *);
 
 /* tree.c */
 pair cons(caddr_t, pair);
-
-/* alloc.c */
-struct string_list	*new_string_list(size_t size);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
