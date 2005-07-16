@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.10 2005/07/16 14:09:51 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.11 2005/07/16 16:31:46 henning Exp $	*/
 
 /* Tables of information... */
 
@@ -73,7 +73,7 @@ const struct option dhcp_options[256] = {
 	/*   9 */ { "lpr-servers", "IA" },
 	/*  10 */ { "impress-servers", "IA" },
 	/*  11 */ { "resource-location-servers", "IA" },
-	/*  12 */ { "host-name", "X" },
+	/*  12 */ { "host-name", "t" },
 	/*  13 */ { "boot-size", "S" },
 	/*  14 */ { "merit-dump", "t" },
 	/*  15 */ { "domain-name", "t" },
