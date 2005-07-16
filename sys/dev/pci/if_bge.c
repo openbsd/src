@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.75 2005/07/14 05:54:48 jsg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.76 2005/07/16 17:37:18 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -830,9 +830,8 @@ bge_newbuf_jumbo(sc, i, m)
 
 		/* Allocate the mbuf. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
+		if (m_new == NULL)
 			return(ENOBUFS);
-		}
 
 		/* Allocate the jumbo buffer */
 		buf = bge_jalloc(sc);
