@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.39 2004/06/26 20:12:48 claudio Exp $
+ * $OpenBSD: lcp.c,v 1.40 2005/07/17 07:33:22 brad Exp $
  */
 
 #include <sys/param.h>
@@ -218,6 +218,8 @@ lcp_ReportStatus(struct cmdargs const *arg)
 #endif
   prompt_Printf(arg->prompt, "           LQR =       %s\n",
                 command_ShowNegval(lcp->cfg.lqr));
+  prompt_Printf(arg->prompt, "           LCP ECHO =  %s\n",
+                lcp->cfg.echo ? "enabled" : "disabled");
   prompt_Printf(arg->prompt, "           PAP =       %s\n",
                 command_ShowNegval(lcp->cfg.pap));
   prompt_Printf(arg->prompt, "           PROTOCOMP = %s\n",
@@ -272,6 +274,7 @@ lcp_Init(struct lcp *lcp, struct bundle *bundle, struct link *l,
   lcp->cfg.chap81 = NEG_ACCEPTED;
 #endif
   lcp->cfg.lqr = NEG_ACCEPTED;
+  lcp->cfg.echo = 0;
   lcp->cfg.pap = NEG_ACCEPTED;
   lcp->cfg.protocomp = NEG_ENABLED|NEG_ACCEPTED;
   *lcp->cfg.ident = '\0';

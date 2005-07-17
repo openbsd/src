@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.h,v 1.13 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: lcp.h,v 1.14 2005/07/17 07:33:22 brad Exp $
  */
 
 /* callback::opmask values */
@@ -98,6 +98,7 @@ struct lcp {
     unsigned chap81 : 2;	/* Microsoft CHAP v2 */
 #endif
     unsigned lqr : 2;		/* Link Quality Report */
+    unsigned echo : 1;		/* Send echo Requests */
     unsigned pap : 2;		/* Password Authentication protocol */
     unsigned protocomp : 2;	/* Protocol field compression */
     char ident[DEF_MRU - 7];	/* SendIdentification() data */

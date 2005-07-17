@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.84 2005/07/12 03:08:12 brad Exp $
+ * $OpenBSD: command.c,v 1.85 2005/07/17 07:33:22 brad Exp $
  */
 
 #include <sys/param.h>
@@ -153,18 +153,19 @@
 #define NEG_CHAP80LM	43
 #define NEG_DEFLATE	44
 #define NEG_DNS		45
-#define NEG_ENDDISC	46
-#define NEG_LQR		47
-#define NEG_PAP		48
-#define NEG_PPPDDEFLATE	49
-#define NEG_PRED1	50
-#define NEG_PROTOCOMP	51
-#define NEG_SHORTSEQ	52
-#define NEG_VJCOMP	53
-#define NEG_MPPE	54
-#define NEG_CHAP81	55
+#define NEG_ECHO	46
+#define NEG_ENDDISC	47
+#define NEG_LQR		48
+#define NEG_PAP		49
+#define NEG_PPPDDEFLATE	50
+#define NEG_PRED1	51
+#define NEG_PROTOCOMP	52
+#define NEG_SHORTSEQ	53
+#define NEG_VJCOMP	54
+#define NEG_MPPE	55
+#define NEG_CHAP81	56
 
-const char Version[] = "3.1";
+const char Version[] = "3.4.2";
 
 static int ShowCommand(struct cmdargs const *);
 static int TerminalCommand(struct cmdargs const *);
@@ -2324,8 +2325,8 @@ static struct cmdtab const SetCommands[] = {
   "login script", "set login chat-script", (const void *) VAR_LOGIN},
   {"logout", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX,
   "logout script", "set logout chat-script", (const void *) VAR_LOGOUT},
-  {"lqrperiod", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX_OPT,
-  "LQR period", "set lqrperiod value", (const void *)VAR_LQRPERIOD},
+  {"lqrperiod", "echoperiod", SetVariable, LOCAL_AUTH | LOCAL_CX_OPT,
+  "LQR period", "set lqr/echo period value", (const void *)VAR_LQRPERIOD},
   {"mode", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX, "mode value",
   "set mode interactive|auto|ddial|background", (const void *)VAR_MODE},
   {"mrru", NULL, SetVariable, LOCAL_AUTH, "MRRU value",
@@ -2782,6 +2783,25 @@ NegotiateSet(struct cmdargs const *arg)
       arg->bundle->ncp.ipcp.cfg.ns.dns_neg &= keep;
       arg->bundle->ncp.ipcp.cfg.ns.dns_neg |= add;
       break;
+    case NEG_ECHO:	/* probably misplaced in this function ! */
+      if (cx->physical->link.lcp.cfg.echo && !add) {
+        cx->physical->link.lcp.cfg.echo = 0;
+        cx->physical->hdlc.lqm.method &= ~LQM_ECHO;
+        if (cx->physical->hdlc.lqm.method & LQM_ECHO &&
+            !cx->physical->link.lcp.want_lqrperiod && 
+            cx->physical->hdlc.lqm.timer.load) {
+          cx->physical->hdlc.lqm.timer.load = 0;
+          lqr_StopTimer(cx->physical);
+        }
+      } else if (!cx->physical->link.lcp.cfg.echo && add) {
+        cx->physical->link.lcp.cfg.echo = 1;
+        cx->physical->hdlc.lqm.method |= LQM_ECHO;
+        cx->physical->hdlc.lqm.timer.load =
+	    cx->physical->link.lcp.cfg.lqrperiod * SECTICKS;
+        if (cx->physical->link.lcp.fsm.state == ST_OPENED)
+          (*cx->physical->hdlc.lqm.timer.func)(&cx->physical->link.lcp);
+      }
+      break;
     case NEG_ENDDISC:
       arg->bundle->ncp.mp.cfg.negenddisc &= keep;
       arg->bundle->ncp.mp.cfg.negenddisc |= add;
@@ -2836,6 +2856,8 @@ NegotiateSet(struct cmdargs const *arg)
 }
 
 static struct cmdtab const NegotiateCommands[] = {
+  {"echo", NULL, NegotiateSet, LOCAL_AUTH | LOCAL_CX, "Send echo requests",
+  "disable|enable", (const void *)NEG_ECHO},
   {"filter-decapsulation", NULL, OptSet, LOCAL_AUTH,
   "filter on PPPoUDP payloads", "disable|enable",
   (const void *)OPT_FILTERDECAP},
@@ -2870,9 +2892,9 @@ static struct cmdtab const NegotiateCommands[] = {
   "disable|enable", (const void *)OPT_UTMP},
 
 #ifndef NOINET6
-#define OPT_MAX 13	/* accept/deny allowed below and not above */
+#define OPT_MAX 14	/* accept/deny allowed below and not above */
 #else
-#define OPT_MAX 11
+#define OPT_MAX 12
 #endif
 
   {"acfcomp", NULL, NegotiateSet, LOCAL_AUTH | LOCAL_CX,

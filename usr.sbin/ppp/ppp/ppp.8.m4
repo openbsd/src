@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.23 2005/03/29 20:23:48 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.24 2005/07/17 07:33:22 brad Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -2791,14 +2791,21 @@ below) as part of the LCP request.
 If the peer agrees, both sides will
 exchange LQR packets at the agreed frequency, allowing detailed link
 quality monitoring by enabling LQM logging.
-If the peer doesn't agree,
+If the peer doesn't agree, and if the
+.Dq echo
+option is enabled,
 .Nm
-will send ECHO LQR requests instead.
+will send
+.Em LCP ECHO
+requests instead.
 These packets pass no information of interest, but they
 .Em MUST
 be replied to by the peer.
 .Pp
-Whether using LQR or ECHO LQR,
+Whether using
+.Em LQR
+or
+.Em LCP ECHO ,
 .Nm
 will abruptly drop the connection if 5 unacknowledged packets have been
 sent rather than sending a 6th.
@@ -2808,6 +2815,12 @@ level, and any appropriate
 .Dq reconnect
 values are honoured as if the peer were responsible for dropping the
 connection.
+.Pp
+Refer to the
+.Dq enable echo
+command description for differences in behaviour prior to
+.Nm
+version 3.4.2.
 .It mppe
 Default: Enabled and Accepted.
 This is Microsoft Point to Point Encryption scheme.
@@ -2909,6 +2922,33 @@ This option determines if Van Jacobson header compression will be used.
 The following options are not actually negotiated with the peer.
 Therefore, accepting or denying them makes no sense.
 .Bl -tag -width 2n
+.It echo
+Default: Disabled.
+When this option is enabled,
+.Nm
+will send
+.Em LCP ECHO
+requests to the peer at the frequency defined by
+.Dq echoperiod .
+Note,
+.Em LQR
+requests will supersede
+.Em LCP ECHO
+requests if enabled and negotiated.
+See
+.Dq set lqrperiod
+below for details.
+.Pp
+Prior to
+.Nm
+version 3.4.2,
+.Dq echo
+was considered enabled if lqr was enabled and negotiated, otherwise it was
+considered disabled.
+For the same behaviour, it is now necessary to
+.Dq enable lqr echo
+rather than just
+.Dq enable lqr .
 .It filter-decapsulation
 Default: Disabled.
 When this option is enabled,
@@ -5009,18 +5049,24 @@ Escape sequences available in the dial script are also available here.
 This specifies the chat script that will be used to log out
 before the hangup script is called.
 It should not normally be necessary.
-.It Ic set lqrperiod Ar frequency
+.It Ic set lqrperiod|echoperiod Ar frequency
 This command sets the
 .Ar frequency
 in seconds at which
 .Em LQR
 or
-.Em ECHO LQR
+.Em LCP ECHO
 packets are sent.
 The default is 30 seconds.
 You must also use the
 .Ic enable lqr
-command if you wish to send LQR requests to the peer.
+and/or
+.Dq enable echo
+commands if you wish to send
+.Em LQR
+or
+.Em LCP ECHO
+requests to the peer.
 .It Xo
 .Ic set mode
 .Ar interactive | auto | ddial | background
