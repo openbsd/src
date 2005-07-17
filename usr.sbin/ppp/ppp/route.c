@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.31 2005/07/06 13:56:00 brad Exp $
+ * $OpenBSD: route.c,v 1.32 2005/07/17 18:34:09 brad Exp $
  */
 
 #include <sys/param.h>
@@ -712,6 +712,24 @@ memcpy_roundup(char *cp, const void *data, size_t len)
   return padlen;
 }
 
+#if defined(__KAME__) && !defined(NOINET6)
+static void
+add_scope(struct sockaddr *sa, int ifindex)
+{
+  struct sockaddr_in6 *sa6;
+
+  if (sa->sa_family != AF_INET6)
+    return;
+  sa6 = (struct sockaddr_in6 *)sa;
+  if (!IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr) &&
+      !IN6_IS_ADDR_MC_LINKLOCAL(&sa6->sin6_addr))
+    return;
+  if (*(u_int16_t *)&sa6->sin6_addr.s6_addr[2] != 0)
+    return;
+  *(u_int16_t *)&sa6->sin6_addr.s6_addr[2] = htons(ifindex);
+}
+#endif
+
 int
 rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
        const struct ncpaddr *gw, int bang, int quiet)
@@ -752,6 +770,9 @@ rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
   }
 
   ncprange_getsa(dst, &sadst, &samask);
+#if defined(__KAME__) && !defined(NOINET6)
+  add_scope((struct sockaddr *)&sadst, bundle->iface->index);
+#endif
 
   cp = rtmes.m_space;
   cp += memcpy_roundup(cp, &sadst, sadst.ss_len);
@@ -762,6 +783,9 @@ rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
       return result;
     }
     ncpaddr_getsa(gw, &sagw);
+#if defined(__KAME__) && !defined(NOINET6)
+    add_scope((struct sockaddr *)&sagw, bundle->iface->index);
+#endif
     if (ncpaddr_isdefault(gw)) {
       if (!quiet)
         log_Printf(LogERROR, "rt_Set: Cannot add a route with"
