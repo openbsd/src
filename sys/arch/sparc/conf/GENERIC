@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.83 2005/07/08 12:36:36 miod Exp $
+#	$OpenBSD: GENERIC,v 1.84 2005/07/17 12:21:25 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -116,6 +116,9 @@ stty*	at spif?
 sbpp*	at spif?
 
 bpp*	at sbus?					# parallel port
+
+# built-in modem on Tadpole SPARCbook
+com*	at obio?
 
 # SUNW,xbox SBus Expansion Subsystem
 xbox*	at sbus?					# SBus Expansion box

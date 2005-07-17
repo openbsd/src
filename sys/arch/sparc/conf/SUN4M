@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.68 2005/07/08 12:36:36 miod Exp $
+#	$OpenBSD: SUN4M,v 1.69 2005/07/17 12:21:25 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -77,6 +77,9 @@ stty*	at spif?
 sbpp*	at spif?
 
 bpp*	at sbus?					# parallel port
+
+# built-in modem on Tadpole SPARCbook
+com*	at obio?
 
 # SUNW,xbox SBus Expansion Subsystem
 xbox*	at sbus?					# SBus Expansion box

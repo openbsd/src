@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.69 2005/07/14 02:09:46 uwe Exp $
+#	$OpenBSD: files.sparc,v 1.70 2005/07/17 12:21:25 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -383,3 +383,7 @@ file	dev/sbus/stp4020.c		stp
 file	arch/sparc/dev/stp_sbus.c	stp_sbus
 
 include	"dev/pcmcia/files.pcmcia"
+
+# built-in modem on Tadpole SPARCbook
+attach	com at obio with com_obio
+file	arch/sparc/dev/com_obio.c	com_obio

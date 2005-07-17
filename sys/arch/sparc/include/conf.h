@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.19 2005/03/29 16:26:44 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.20 2005/07/17 12:21:28 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -84,6 +84,8 @@ cdev_decl(sbpp);
 	(dev_type_stop((*))) nullop, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 cdev_decl(scf);
+
+cdev_decl(com);
 
 /* open, close, ioctl, read, write */
 #define	cdev_flash_init(c,n) { \

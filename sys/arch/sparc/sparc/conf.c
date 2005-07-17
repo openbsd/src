@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.41 2005/04/19 21:30:20 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.42 2005/07/17 12:21:28 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -80,6 +80,7 @@
 #include "flash.h"
 #include "fga.h"
 #include "daadio.h"
+#include "com.h"
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -166,7 +167,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
 	cdev_notdef(),			/* 35 */
-	cdev_notdef(),			/* 36 */
+	cdev_tty_init(NCOM,com),	/* 36: SPARCbook modem */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
 	cdev_notdef(),			/* 39: was /dev/cgfour */
