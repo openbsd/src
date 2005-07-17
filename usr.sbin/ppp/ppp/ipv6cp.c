@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipv6cp.c,v 1.3 2004/11/23 15:55:21 brad Exp $
+ * $OpenBSD: ipv6cp.c,v 1.4 2005/07/17 19:13:24 brad Exp $
  */
 
 #include <sys/param.h>
@@ -35,6 +35,7 @@
 #include <net/if.h>
 #include <sys/un.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,6 +75,7 @@
 #include "async.h"
 #include "physical.h"
 #include "probe.h"
+#include "systems.h"
 
 
 #ifndef NOINET6

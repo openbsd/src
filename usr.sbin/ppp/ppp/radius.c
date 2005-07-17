@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.25 2005/07/06 13:56:00 brad Exp $
+ *	$OpenBSD: radius.c,v 1.26 2005/07/17 19:13:25 brad Exp $
  *
  */
 
@@ -49,6 +49,7 @@
 #ifndef NODES
 #include <md5.h>
 #endif
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *  $OpenBSD: link.c,v 1.14 2004/11/16 14:47:02 brad Exp $
+ *  $OpenBSD: link.c,v 1.15 2005/07/17 19:13:24 brad Exp $
  *
  */
 
@@ -34,6 +34,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <termios.h>

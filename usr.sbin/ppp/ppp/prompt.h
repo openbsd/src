@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: prompt.h,v 1.5 2001/08/02 20:53:00 brian Exp $
+ *	$OpenBSD: prompt.h,v 1.6 2005/07/17 19:13:25 brad Exp $
  */
 
 #define LOCAL_AUTH	0x01
@@ -76,10 +76,10 @@ extern void prompt_Printf(struct prompt *, const char *, ...)
 extern void prompt_Printf(struct prompt *, const char *, ...);
 #endif
 #ifdef __GNUC__
-extern void prompt_vPrintf(struct prompt *, const char *, _BSD_VA_LIST_)
+extern void prompt_vPrintf(struct prompt *, const char *, va_list)
 			   __attribute__ ((format (printf, 2, 0)));
 #else
-extern void prompt_vPrintf(struct prompt *, const char *, _BSD_VA_LIST_);
+extern void prompt_vPrintf(struct prompt *, const char *, va_list);
 #endif
 #define PROMPT_DONT_WANT_INT 1
 #define PROMPT_WANT_INT 0

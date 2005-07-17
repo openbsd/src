@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.33 2005/04/22 03:27:28 cloder Exp $
+ *	$OpenBSD: mp.c,v 1.34 2005/07/17 19:13:25 brad Exp $
  */
 
 #include <sys/param.h>
@@ -37,8 +37,9 @@
 
 #include <errno.h>
 #include <paths.h>
-#include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <termios.h>

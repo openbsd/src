@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.69 2004/01/28 01:35:16 kevlo Exp $
+ *	$OpenBSD: bundle.c,v 1.70 2005/07/17 19:13:24 brad Exp $
  */
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@
 #include <libutil.h>
 #endif
 #include <paths.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

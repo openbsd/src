@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: nat_cmd.c,v 1.24 2005/07/06 13:56:00 brad Exp $
+ *	$OpenBSD: nat_cmd.c,v 1.25 2005/07/17 19:13:25 brad Exp $
  */
 
 #include <sys/param.h>
@@ -37,6 +37,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

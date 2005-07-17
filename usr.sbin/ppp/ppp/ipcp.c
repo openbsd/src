@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipcp.c,v 1.40 2005/07/12 01:47:21 brad Exp $
+ * $OpenBSD: ipcp.c,v 1.41 2005/07/17 19:13:24 brad Exp $
  */
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <resolv.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>

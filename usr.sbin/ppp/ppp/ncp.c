@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ncp.c,v 1.3 2005/07/06 20:37:27 brad Exp $
+ * $OpenBSD: ncp.c,v 1.4 2005/07/17 19:13:25 brad Exp $
  */
 
 #include <sys/param.h>
@@ -36,6 +36,7 @@
 
 #include <errno.h>
 #include <resolv.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>

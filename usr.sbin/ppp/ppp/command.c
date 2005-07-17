@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.85 2005/07/17 07:33:22 brad Exp $
+ * $OpenBSD: command.c,v 1.86 2005/07/17 19:13:24 brad Exp $
  */
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
