@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.22 2004/05/05 20:19:48 millert Exp $
+.\"	$OpenBSD: dbopen.3,v 1.23 2005/07/17 09:10:36 jaredy Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -142,23 +142,27 @@ on error.
 The DB structure is defined in the
 .Aq Pa db.h
 include file, and contains at least the following fields:
-.Bd -literal
+.Bd -literal -offset indent
 typedef struct {
 	DBTYPE type;
 	int (*close)(const DB *db);
-	int (*del)(const DB *db, const DBT *key, u_int flags);
+	int (*del)(const DB *db, const DBT *key,
+	    unsigned int flags);
 	int (*fd)(const DB *db);
-	int (*get)(const DB *db, DBT *key, DBT *data, u_int flags);
-	int (*put)(const DB *db, DBT *key, const DBT *data, u_int flags);
+	int (*get)(const DB *db, DBT *key, DBT *data,
+	    unsigned int flags);
+	int (*put)(const DB *db, DBT *key, const DBT *data,
+	    unsigned int flags);
 	int (*sync)(const DB *db, u_int flags);
-	int (*seq)(const DB *db, DBT *key, DBT *data, u_int flags);
+	int (*seq)(const DB *db, DBT *key, DBT *data,
+	    unsigned int flags);
 } DB;
 .Ed
 .Pp
 These elements describe a database type and a set of functions performing
 various actions.
 These functions take a pointer to a structure as returned by
-.Fn dbopen dbopen ,
+.Fn dbopen ,
 and sometimes one or more pointers to key/data structures and a flag value.
 .Bl -tag -width XXXXX -offset indent
 .It Fa type
@@ -180,15 +184,15 @@ and 0 on success.
 A pointer to a routine to remove key/data pairs from the database.
 .Pp
 The parameter
-.Fa flag
+.Fa flags
 may be set to the following value:
-.Bl -tag -width XXXXX
+.Bl -tag -width R_NOOVERWRITE
 .It Dv R_CURSOR
 Delete the record referenced by the cursor.
 The cursor must have previously been initialized.
 .El
 .Pp
-.Fa delete
+.Fa del
 routines return \-1 on error (setting
 .Va errno ) ,
 0 on success, and 1 if the specified
@@ -210,10 +214,10 @@ and
 locking functions.
 The file descriptor is not necessarily associated with any of the
 underlying files used by the access method.
-No file descriptor is available for in memory databases.
+No file descriptor is available for in-memory databases.
 .Fa fd
 routines return \-1 on error (setting
-.Va errno ) ,
+.Va errno )
 and the file descriptor on success.
 .It Fa get
 A pointer to a routine which is the interface for keyed retrieval from
@@ -232,9 +236,9 @@ was not in the file.
 A pointer to a routine to store key/data pairs in the database.
 .Pp
 The parameter
-.Fa flag
+.Fa flags
 may be set to one of the following values:
-.Bl -tag -width XXXXX
+.Bl -tag -width R_NOOVERWRITE
 .It Dv R_CURSOR
 Replace the key/data pair referenced by the cursor.
 The cursor must have previously been initialized.
@@ -298,8 +302,7 @@ routines return \-1 on error (setting
 .Va errno ) ,
 0 on success, and 1 if the
 .Dv R_NOOVERWRITE
-.Fa flag
-was set and the key already exists in the file.
+flag was set and the key already exists in the file.
 .It Fa seq
 A pointer to a routine which is the interface for sequential
 retrieval from the database.
@@ -325,10 +328,12 @@ Modifications to the database during a sequential scan will be reflected
 in the scan, i.e., records inserted behind the cursor will not be returned
 while records inserted in front of the cursor will be returned.
 .Pp
-The flag value
+The
+.Fa flags
+value
 .Sy must
 be set to one of the following values:
-.Bl -tag -width XXXXX
+.Bl -tag -width R_NOOVERWRITE
 .It Dv R_CURSOR
 The data associated with the specified key is returned.
 This differs from the
@@ -382,7 +387,7 @@ order which does not change.
 .Fa seq
 routines return \-1 on error (setting
 .Va errno ) ,
-0 on success and 1 if there are no key/data pairs less than or greater
+0 on success, and 1 if there are no key/data pairs less than or greater
 than the specified or current key.
 If the
 .Dv DB_RECNO
@@ -397,13 +402,16 @@ If the database is in memory only, the
 .Fa sync
 routine has no effect and will always succeed.
 .Pp
-The flag value may be set to the following value:
-.Bl -tag -width XXXXX
+The
+.Fa flags
+value may be set to the following value:
+.Bl -tag -width R_NOOVERWRITE
 .It Dv R_RECNOSYNC
 If the
 .Dv DB_RECNO
-access method is being used, this flag causes
-the sync routine to apply to the btree file which underlies the
+access method is being used, this flag causes the
+.Fa sync
+routine to apply to the btree file which underlies the
 recno file, not the recno file itself.
 (See the
 .Fa bfname
@@ -420,23 +428,15 @@ and 0 on success.
 .Sh KEY/DATA PAIRS
 Access to all file types is based on key/data pairs.
 Both keys and data are represented by the following data structure:
-.Pp
-.Bl -item -compact
-.It
+.Bd -literal -offset indent
 typedef struct {
-.It
-.Bl -item -compact -offset indent
-.It
-void *data;
-.It
-size_t size;
-.El
-.It
+	void *data;
+	size_t size;
 } DBT;
-.El
+.Ed
 .Pp
 The elements of the DBT structure are defined as follows:
-.Bl -tag -width XXXXX
+.Bl -tag -width Ds -offset indent
 .It Fa data
 A pointer to a byte string.
 .It Fa size
@@ -466,7 +466,7 @@ A parameter has been specified (hash function, pad byte etc.) that is
 incompatible with the current file specification or which is not
 meaningful for the function (for example, use of the cursor without
 prior initialization) or there is a mismatch between the version
-number of file and the software.
+number of the file and the software.
 .El
 .Pp
 The
@@ -502,7 +502,7 @@ routines will fail and set
 .Va errno
 to
 .Er ENOENT
-for in memory databases.
+for in-memory databases.
 .Pp
 The
 .Fa sync

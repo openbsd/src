@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btree.3,v 1.17 2003/07/07 14:43:18 jmc Exp $
+.\"	$OpenBSD: btree.3,v 1.18 2005/07/17 09:10:36 jaredy Exp $
 .\"	$NetBSD: btree.3,v 1.6 1996/05/03 21:26:48 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -60,11 +60,11 @@ is defined in the
 include file as follows:
 .Bd -literal -offset indent
 typedef struct {
-	u_long flags;
-	u_int cachesize;
+	unsigned long flags;
+	unsigned int cachesize;
 	int maxkeypage;
 	int minkeypage;
-	u_int psize;
+	unsigned int psize;
 	int (*compare)(const DBT *key1, const DBT *key2);
 	size_t (*prefix)(const DBT *key1, const DBT *key2);
 	int lorder;
@@ -159,7 +159,7 @@ argument which are necessary to determine that it is greater than the first
 key argument.
 If the keys are equal, the key length should be returned.
 Note, the usefulness of this routine is very data dependent, but in some
-data sets can produce significantly reduced tree sizes and search times.
+data sets it can produce significantly reduced tree sizes and search times.
 If
 .Fa prefix
 is

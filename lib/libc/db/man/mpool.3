@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpool.3,v 1.13 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: mpool.3,v 1.14 2005/07/17 09:10:36 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,24 +46,25 @@
 .Fd #include <db.h>
 .Fd #include <mpool.h>
 .Ft MPOOL *
-.Fn mpool_open "DBT *key" "int fd" "pgno_t pagesize" "pgno_t maxcache"
+.Fn mpool_open "void *key" "int fd" "pgno_t pagesize" "pgno_t maxcache"
 .Ft void
-.Fn mpool_filter "MPOOL *mp" "void (*pgin)(void *, pgno_t, void *)" "void (*pgout)(void *, pgno_t, void *)" "void *pgcookie"
+.Fn mpool_filter "MPOOL *mp" "void (*pgin)(void *, pgno_t, void *)" \
+    "void (*pgout)(void *, pgno_t, void *)" "void *pgcookie"
 .Ft void *
-.Fn mpool_new "MPOOL *mp" "pgno_t *pgnoaddr" "u_int flags"
+.Fn mpool_new "MPOOL *mp" "pgno_t *pgnoaddr" "unsigned int flags"
 .Ft int
 .Fn mpool_delete "MPOOL *mp" "void *page"
 .Ft void *
-.Fn mpool_get "MPOOL *mp" "pgno_t pgno" "u_int flags"
+.Fn mpool_get "MPOOL *mp" "pgno_t pgno" "unsigned int flags"
 .Ft int
-.Fn mpool_put "MPOOL *mp" "void *pgaddr" "u_int flags"
+.Fn mpool_put "MPOOL *mp" "void *pgaddr" "unsigned int flags"
 .Ft int
 .Fn mpool_sync "MPOOL *mp"
 .Ft int
 .Fn mpool_close "MPOOL *mp"
 .Sh DESCRIPTION
 .Nm mpool
-is the library interface intended to provide page oriented buffer management
+is the library interface intended to provide page-oriented buffer management
 of files.
 The buffers may be shared between processes.
 .Pp
@@ -115,7 +116,7 @@ function is specified, it is called each time a buffer is written into the
 backing file.
 Both functions are called with the
 .Fa pgcookie
-pointer, the page number and a pointer to the page to being read or written.
+pointer, the page number, and a pointer to the page being read or written.
 .Pp
 The function
 .Fn mpool_new
@@ -193,7 +194,7 @@ returns 0 on success and \-1 if an error occurs.
 .Pp
 The
 .Fn mpool_close
-function free's up any allocated memory associated with the memory pool
+function frees up any allocated memory associated with the memory pool
 cookie.
 Modified pages are
 .Em not
@@ -205,8 +206,15 @@ The
 .Fn mpool_open
 function may fail and set
 .Va errno
-for any of the errors specified for the library routine
-.Xr malloc 3 .
+for any of the errors specified for the library routines
+.Xr fstat 2
+and
+.Xr malloc 3 ,
+or the following:
+.Bl -tag -width Er
+.It Bq Er ESPIPE
+The given file descriptor is a pipe.
+.El
 .Pp
 The
 .Fn mpool_get
@@ -225,8 +233,8 @@ and
 functions may fail and set
 .Va errno
 for any of the errors specified for the library routines
-.Xr read 2 ,
-.Xr write 2 ,
+.Xr pread 2 ,
+.Xr pwrite 2 ,
 and
 .Xr malloc 3 .
 .Pp
@@ -235,7 +243,7 @@ The
 function may fail and set
 .Va errno
 for any of the errors specified for the library routine
-.Xr write 2 .
+.Xr pwrite 2 .
 .Pp
 The
 .Fn mpool_close

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hash.3,v 1.13 2003/07/07 14:43:18 jmc Exp $
+.\"	$OpenBSD: hash.3,v 1.14 2005/07/17 09:10:36 jaredy Exp $
 .\"	$NetBSD: hash.3,v 1.6 1996/05/03 21:26:50 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -59,10 +59,10 @@ is defined in the
 include file as follows:
 .Bd -literal -offset indent
 typedef struct {
-	u_int bsize;
-	u_int ffactor;
-	u_int nelem;
-	u_int cachesize;
+	unsigned int bsize;
+	unsigned int ffactor;
+	unsigned int nelem;
+	unsigned int cachesize;
 	u_int32_t (*hash)(const void *, size_t);
 	int lorder;
 } HASHINFO;
@@ -118,16 +118,19 @@ value specified when the tree was created is used.
 If the file already exists (and the
 .Dv O_TRUNC
 flag is not specified), the
-values specified for the parameters bsize, ffactor, lorder and nelem are
-ignored and the values specified when the tree was created are used.
+values specified for the parameters
+.Fa bsize , ffactor , lorder
+and
+.Fa nelem
+are ignored and the values specified when the tree was created are used.
 .Pp
 If a hash function is specified,
-.Fa hash_open
+.Fn hash_open
 will attempt to determine if the hash function specified is the same as
 the one with which the database was created, and will fail if it is not.
 .Pp
 Backward compatible interfaces to the routines described in
-.Xr dbm 3 ,
+.Xr dbm 3
 and
 .Xr ndbm 3
 are provided, although these interfaces are not compatible with

@@ -1,5 +1,5 @@
 .\" David Leonard, 1998. Placed in the public domain.
-.\" $OpenBSD: ndbm.3,v 1.14 2004/05/03 17:27:50 millert Exp $
+.\" $OpenBSD: ndbm.3,v 1.15 2005/07/17 09:10:36 jaredy Exp $
 .Dd May 13, 1998
 .Dt NDBM 3
 .Os
@@ -14,6 +14,7 @@
 .Nm dbm_nextkey ,
 .Nm dbm_open ,
 .Nm dbm_pagfno ,
+.Nm dbm_rdonly ,
 .Nm dbm_store
 .Nd database access methods
 .Sh SYNOPSIS
@@ -39,6 +40,8 @@
 .Ft int
 .Fn dbm_pagfno "DBM *db"
 .Ft int
+.Fn dbm_rdonly "DBM *db"
+.Ft int
 .Fn dbm_store "DBM *db" "datum key" "datum content" "int store_mode"
 .Sh DESCRIPTION
 These functions provide a ndbm-compatible interface to the
@@ -53,7 +56,7 @@ data structure:
 typedef struct {
 	void *dptr;
 	size_t dsize;
-} datum
+} datum;
 .Ed
 .Pp
 The
@@ -71,6 +74,10 @@ parameter (see
 .Xr open 2 ) .
 Read-only access may be indicated by specifying
 .Dv DBM_RDONLY .
+The
+.Fn dbm_rdonly
+function may be used to determine if a database is opened for read-only
+access.
 .Pp
 Once the database is open,
 .Fn dbm_fetch
@@ -112,8 +119,9 @@ function returns the first record of the database, and thereafter
 .Fn dbm_nextkey
 returns the following records.
 The following code traverses the entire database:
-.Bd -literal
-  for (key = dbm_firstkey(db); key.dptr != NULL; key = dbm_nextkey(db))
+.Bd -literal -offset indent
+for (key = dbm_firstkey(db); key.dptr != NULL;
+    key = dbm_nextkey(db))
 .Ed
 .Pp
 The behaviour of

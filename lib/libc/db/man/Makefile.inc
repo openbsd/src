@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2004/06/24 04:43:33 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2005/07/17 09:10:36 jaredy Exp $
 
 .PATH: ${LIBCSRCDIR}/db/man
 
@@ -12,4 +12,4 @@ MLINKS+= mpool.3 mpool_sync.3 mpool.3 mpool_close.3
 MLINKS+= ndbm.3 dbm_clearerr.3 ndbm.3 dbm_close.3 ndbm.3 dbm_delete.3
 MLINKS+= ndbm.3 dbm_dirfno.3 ndbm.3 dbm_error.3 ndbm.3 dbm_fetch.3
 MLINKS+= ndbm.3 dbm_firstkey.3 ndbm.3 dbm_nextkey.3 ndbm.3 dbm_open.3
-MLINKS+= ndbm.3 dbm_pagfno.3 ndbm.3 dbm_store.3
+MLINKS+= ndbm.3 dbm_pagfno.3 ndbm.3 dbm_rdonly.3 ndbm.3 dbm_store.3

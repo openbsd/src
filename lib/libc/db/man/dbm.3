@@ -1,4 +1,4 @@
-.\" $OpenBSD: dbm.3,v 1.9 2004/05/03 17:27:50 millert Exp $
+.\" $OpenBSD: dbm.3,v 1.10 2005/07/17 09:10:36 jaredy Exp $
 .\"
 .\" Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -55,7 +55,7 @@ data structure:
 typedef struct {
 	void *dptr;
 	size_t dsize;
-} datum
+} datum;
 .Ed
 .Pp
 The
@@ -103,8 +103,8 @@ function returns the first record of the database, and thereafter
 .Fn nextkey
 returns the following records.
 The following code traverses the entire database:
-.Bd -literal
-  for (key = firstkey(); key.dptr != NULL; key = nextkey(key))
+.Bd -literal -offset indent
+for (key = firstkey(); key.dptr != NULL; key = nextkey(key))
 .Ed
 .Pp
 The behaviour of
@@ -114,7 +114,7 @@ is undefined if the database is modified after a call to
 .Pp
 The database is closed with the
 .Fn dbmclose
-function (you must close a database before opening a new one).
+function (it must be closed before a new one can be opened).
 .Ss Implementation notes
 The underlying database is a
 .Xr hash 3
@@ -141,7 +141,7 @@ field to
 .Sh BUGS
 Because the
 .Nm dbm
-routines are implemented on top of the
+routines are implemented on top of
 .Xr db 3 ,
 only a single file,
 .Pa file.pag ,
