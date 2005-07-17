@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.102 2005/07/11 23:41:58 uwe Exp $	*/
+/*	$OpenBSD: com.c,v 1.103 2005/07/17 12:20:50 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -81,9 +81,14 @@
 #endif
 
 #include <machine/bus.h>
+#if defined(__sparc64__) || !defined(__sparc__)
 #include <machine/intr.h>
+#endif
 
+#if !defined(__sparc__) && !defined(__sparc64__)
+#define	COM_CONSOLE
 #include <dev/cons.h>
+#endif
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -100,8 +105,6 @@
 #include <arch/zaurus/dev/zaurus_scoopvar.h>
 #endif
 
-#include "com.h"
-
 /* XXX: These belong elsewhere */
 cdev_decl(com);
 
@@ -117,16 +120,18 @@ struct cfdriver com_cd = {
 };
 
 int	comdefaultrate = TTYDEF_SPEED;
-int	comconsfreq;
-int	comconsinit;
-bus_addr_t comconsaddr;
 #ifdef COM_PXA2X0
 bus_addr_t comsiraddr;
 #endif
+#ifdef COM_CONSOLE
+int	comconsfreq;
+int	comconsinit;
+bus_addr_t comconsaddr;
 int	comconsattached;
 bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
+#endif
 
 int	commajor;
 
@@ -170,6 +175,7 @@ comspeed(freq, speed)
 #undef	divrnd
 }
 
+#ifdef COM_CONSOLE
 int
 comprobe1(iot, ioh)
 	bus_space_tag_t iot;
@@ -192,6 +198,7 @@ comprobe1(iot, ioh)
 
 	return 1;
 }
+#endif
 
 void
 com_attach_subr(sc)
@@ -209,6 +216,7 @@ com_attach_subr(sc)
 	/* disable interrupts */
 	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 
+#ifdef COM_CONSOLE
 	if (sc->sc_iobase == comconsaddr) {
 		comconsattached = 1;
 
@@ -220,6 +228,7 @@ com_attach_subr(sc)
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, COM_SW_SOFTCAR);
 	}
+#endif
 
 	/*
 	 * Probe for all known forms of UART.
@@ -362,6 +371,7 @@ com_attach_subr(sc)
 	}
 #endif /* KGDB */
 
+#ifdef COM_CONSOLE
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		int maj;
 
@@ -375,6 +385,7 @@ com_attach_subr(sc)
 
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
+#endif
 
 	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
 	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
@@ -393,8 +404,10 @@ com_attach_subr(sc)
 	if (!sc->enable)
 		sc->enabled = 1;
 
+#if defined(COM_CONSOLE) || defined(KGDB)
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
 		com_enable_debugport(sc);
+#endif
 }
 
 void
@@ -533,9 +546,11 @@ comopen(dev, flag, mode, p)
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
+#ifdef COM_CONSOLE
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 			tp->t_cflag = comconscflag;
 		else
+#endif
 			tp->t_cflag = TTYDEF_CFLAG;
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
 			SET(tp->t_cflag, CLOCAL);
@@ -713,9 +728,11 @@ comclose(dev, flag, mode, p)
 	struct tty *tp = sc->sc_tty;
 	int s;
 
+#ifdef COM_CONSOLE
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return 0;
+#endif
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	s = spltty();
@@ -736,11 +753,13 @@ comclose(dev, flag, mode, p)
 	splx(s);
 	ttyclose(tp);
 
+#ifdef COM_CONSOLE
 #ifdef notyet /* XXXX */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		ttyfree(tp);
 		sc->sc_tty = 0;
 	}
+#endif
 #endif
 	return 0;
 }
@@ -1389,7 +1408,7 @@ comintr(arg)
 			do {
 				data = bus_space_read_1(iot, ioh, com_data);
 				if (ISSET(lsr, LSR_BI)) {
-#ifdef DDB
+#if defined(COM_CONSOLE) && defined(DDB)
 					if (ISSET(sc->sc_hwflags,
 					    COM_HW_CONSOLE)) {
 						if (db_console)
@@ -1568,6 +1587,7 @@ cominit(iot, ioh, rate, frequency)
 	splx(s);
 }
 
+#ifdef COM_CONSOLE
 void  
 comcnprobe(cp)
 	struct consdev *cp;  
@@ -1691,6 +1711,7 @@ comcnpollc(dev, on)
 {
 
 }
+#endif	/* COM_CONSOLE */
 
 #ifdef KGDB
 int
@@ -1740,6 +1761,7 @@ com_kgdb_putc(arg, c)
 }
 #endif /* KGDB */
 
+#ifdef COM_PXA2X0
 int
 com_is_console(bus_space_tag_t iot, bus_addr_t iobase)
 {
@@ -1752,3 +1774,4 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase)
 #endif
 	return (0);
 }
+#endif
