@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.38 2005/05/20 10:55:09 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.39 2005/07/17 19:15:38 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -291,7 +291,7 @@ when it might be necessary to verify what data a server is sending
 in response to commands issued by the client.
 For example, to retrieve the home page of a web site:
 .Pp
-.Dl $ echo \&"GET\&" | nc host.example.com 80
+.Dl $ echo -n \&"GET / HTTP/1.0\er\en\er\en\&" | nc host.example.com 80
 .Pp
 Note that this also displays the headers sent by the web server.
 They can be filtered, using a tool such as
@@ -319,15 +319,11 @@ The
 .Fl z
 flag can be used to tell
 .Nm
-not to initiate a connection,
-together with the
-.Fl v
-.Pq verbose
-flag,
-to report open ports.
+to report open ports,
+rather than initiate a connection.
 For example:
 .Bd -literal -offset indent
-$ nc -vz host.example.com 20-30
+$ nc -z host.example.com 20-30
 Connection to host.example.com 22 port [tcp/ssh] succeeded!
 Connection to host.example.com 25 port [tcp/smtp] succeeded!
 .Ed
@@ -365,11 +361,6 @@ IP for the local end of the connection:
 .Pp
 .Dl $ nc -s 10.1.2.3 host.example.com 42
 .Pp
-Send UDP packets to ports 20-30 of host.example.com, and report which ones
-responded with an ICMP packet after three seconds:
-.Pp
-.Dl $ nc -uvz -w 3 host.example.com 20-30
-.Pp
 Create and listen on a Unix Domain Socket:
 .Pp
 .Dl $ nc -lU /var/tmp/dsocket
@@ -394,3 +385,9 @@ Original implementation by *Hobbit*
 .br
 Rewritten with IPv6 support by
 .An Eric Jackson Aq ericj@monkey.org .
+.Sh CAVEATS
+UDP port scans will always succeed
+(i.e. report the port as open),
+rendering the
+.Fl uz
+combination of flags relatively useless.
