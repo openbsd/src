@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.60 2005/06/02 07:34:14 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.61 2005/07/17 10:43:24 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -169,8 +169,6 @@ struct wsdisplay_softc {
 	int sc_focusidx;	/* available only if sc_focus isn't null */
 	struct wsscreen *sc_focus;
 
-	struct wseventvar sc_evar;
-
 #ifdef BURNER_SUPPORT
 	struct timeout sc_burner;
 	int	sc_burnoutintvl;
@@ -225,7 +223,6 @@ int	wsdisplayparam(struct tty *, struct termios *);
 #define ISWSDISPLAYCTL(dev)		(WSDISPLAYSCREEN(dev) == 255)
 #define WSDISPLAYMINOR(unit, screen)	(((unit) << 8) | (screen))
 
-#define	WSSCREEN_HAS_EMULATOR(scr)	((scr)->scr_dconf->wsemul != NULL)
 #define	WSSCREEN_HAS_TTY(scr)		((scr)->scr_tty != NULL)
 
 void	wsdisplay_common_attach(struct wsdisplay_softc *sc,
@@ -284,11 +281,10 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	if (console) {
 		dconf = &wsdisplay_console_conf;
 		/*
-		 * If there's an emulation, tell it about the callback argument.
+		 * Tell the emulation about the callback argument.
 		 * The other stuff is already there.
 		 */
-		if (dconf->wsemul != NULL)
-			(*dconf->wsemul->attach)(1, 0, 0, 0, 0, scr, 0);
+		(*dconf->wsemul->attach)(1, 0, 0, 0, 0, scr, 0);
 	} else { /* not console */
 		dconf = malloc(sizeof(struct wsscreen_internal),
 		    M_DEVBUF, M_NOWAIT);
@@ -298,18 +294,16 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 		}
 		dconf->emulops = type->textops;
 		dconf->emulcookie = cookie;
-		if (dconf->emulops) {
-			dconf->wsemul = wsemul_pick(emul);
-			if (dconf->wsemul == NULL) {
-				free(dconf, M_DEVBUF);
-				free(scr, M_DEVBUF);
-				return (NULL);
-			}
+		if (dconf->emulops != NULL &&
+		    (dconf->wsemul = wsemul_pick(emul)) != NULL) {
 			dconf->wsemulcookie =
 			    (*dconf->wsemul->attach)(0, type, cookie,
 				ccol, crow, scr, defattr);
-		} else
-			dconf->wsemul = NULL;
+		} else {
+			free(dconf, M_DEVBUF);
+			free(scr, M_DEVBUF);
+			return (NULL);
+		}
 		dconf->scrdata = type;
 	}
 
@@ -317,10 +311,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 
 	scr->scr_tty = ttymalloc();
 	scr->scr_hold_screen = 0;
-	if (WSSCREEN_HAS_EMULATOR(scr))
-		scr->scr_flags = 0;
-	else
-		scr->scr_flags = SCR_GRAPHICS;
+	scr->scr_flags = 0;
 
 	scr->scr_syncops = 0;
 	scr->sc = sc;
@@ -342,9 +333,8 @@ wsscreen_detach(struct wsscreen *scr)
 		timeout_del(&scr->scr_tty->t_rstrt_to);
 		ttyfree(scr->scr_tty);
 	}
-	if (WSSCREEN_HAS_EMULATOR(scr))
-		(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,
-		    &ccol, &crow);
+	(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,
+	    &ccol, &crow);
 	free(scr->scr_dconf, M_DEVBUF);
 	free(scr, M_DEVBUF);
 }
@@ -378,12 +368,9 @@ wsdisplay_addscreen_print(struct wsdisplay_softc *sc, int idx, int count)
 	printf("%s: screen %d", sc->sc_dv.dv_xname, idx);
 	if (count > 1)
 		printf("-%d", idx + (count-1));
-	printf(" added (%s", sc->sc_scr[idx]->scr_dconf->scrdata->name);
-	if (WSSCREEN_HAS_EMULATOR(sc->sc_scr[idx])) {
-		printf(", %s emulation",
-		    sc->sc_scr[idx]->scr_dconf->wsemul->name);
-	}
-	printf(")\n");
+	printf(" added (%s, %s emulation)\n",
+	    sc->sc_scr[idx]->scr_dconf->scrdata->name,
+	    sc->sc_scr[idx]->scr_dconf->wsemul->name);
 }
 
 int
@@ -787,13 +774,11 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct proc *p)
 		if (error)
 			return (error);
 
-		if (newopen && WSSCREEN_HAS_EMULATOR(scr)) {
+		if (newopen) {
 			/* set window sizes as appropriate, and reset
-			 the emulation */
+			   the emulation */
 			tp->t_winsize.ws_row = scr->scr_dconf->scrdata->nrows;
 			tp->t_winsize.ws_col = scr->scr_dconf->scrdata->ncols;
-
-			/* wsdisplay_set_emulation() */
 		}
 	}
 
@@ -835,15 +820,12 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (scr->scr_syncops)
 		(*scr->scr_syncops->destroy)(scr->scr_synccookie);
 
-	if (WSSCREEN_HAS_EMULATOR(scr)) {
-		scr->scr_flags &= ~SCR_GRAPHICS;
-		(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
-						 WSEMUL_RESET);
-		if (wsdisplay_clearonclose)
-			(*scr->scr_dconf->wsemul->reset)
-				(scr->scr_dconf->wsemulcookie,
-				 WSEMUL_CLEARSCREEN);
-	}
+	scr->scr_flags &= ~SCR_GRAPHICS;
+	(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
+					 WSEMUL_RESET);
+	if (wsdisplay_clearonclose)
+		(*scr->scr_dconf->wsemul->reset)
+			(scr->scr_dconf->wsemulcookie, WSEMUL_CLEARSCREEN);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (scr->scr_rawkbd) {
@@ -1036,51 +1018,45 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		    d != WSDISPLAYIO_MODE_DUMBFB)
 			return (EINVAL);
 
-	    if (WSSCREEN_HAS_EMULATOR(scr)) {
-		    scr->scr_flags &= ~SCR_GRAPHICS;
-		    if (d == WSDISPLAYIO_MODE_MAPPED ||
-			d == WSDISPLAYIO_MODE_DUMBFB) {
-			    scr->scr_flags |= SCR_GRAPHICS |
-				((d == WSDISPLAYIO_MODE_DUMBFB) ?
-				    SCR_DUMBFB : 0);
+		scr->scr_flags &= ~SCR_GRAPHICS;
+		if (d == WSDISPLAYIO_MODE_MAPPED ||
+		    d == WSDISPLAYIO_MODE_DUMBFB) {
+			scr->scr_flags |= SCR_GRAPHICS |
+			    ((d == WSDISPLAYIO_MODE_DUMBFB) ?  SCR_DUMBFB : 0);
 
 #ifdef WSMOUSED_SUPPORT
-			    /*
-			     * wsmoused cohabitation with X-Window support
-			     * X-Window is starting
-			     */
-			    wsmoused_release(sc);
+			/*
+			 * wsmoused cohabitation with X-Window support
+			 * X-Window is starting
+			 */
+			wsmoused_release(sc);
 #endif
 
 #ifdef BURNER_SUPPORT
-			    /* disable the burner while X is running */
-			    if (sc->sc_burnout)
-				    timeout_del(&sc->sc_burner);
+			/* disable the burner while X is running */
+			if (sc->sc_burnout)
+				timeout_del(&sc->sc_burner);
 #endif
-		    }
-		    else {
+		} else {
 #ifdef BURNER_SUPPORT
-			    /* reenable the burner after exiting from X */
-			    if (!sc->sc_burnman)
-				    wsdisplay_burn(sc, sc->sc_burnflags);
+			/* reenable the burner after exiting from X */
+			if (!sc->sc_burnman)
+				wsdisplay_burn(sc, sc->sc_burnflags);
 #endif
 
 #ifdef WSMOUSED_SUPPORT
-			    /*
-			     * wsmoused cohabitation with X-Window support
-			     * X-Window is ending
-			     */
-
-			    wsmoused_wakeup(sc);
+			/*
+			 * wsmoused cohabitation with X-Window support
+			 * X-Window is ending
+			 */
+			wsmoused_wakeup(sc);
 #endif
-		    }
-	    } else if (d == WSDISPLAYIO_MODE_EMUL)
-		    return (EINVAL);
+		}
 
-	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
+		(void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
 		    flag, p);
 
-	    return (0);
+		return (0);
 #undef d
 
 	case WSDISPLAYIO_USEFONT:
@@ -1090,7 +1066,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		d->data = 0;
 		error = (*sc->sc_accessops->load_font)(sc->sc_accesscookie,
 		    scr->scr_dconf->emulcookie, d);
-		if (!error && WSSCREEN_HAS_EMULATOR(scr))
+		if (!error)
 			(*scr->scr_dconf->wsemul->reset)
 			    (scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
 		return (error);
@@ -1352,7 +1328,6 @@ wsdisplaystart(struct tty *tp)
 	buf = tp->t_outq.c_cf;
 
 	if (!(scr->scr_flags & SCR_GRAPHICS)) {
-		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 #ifdef BURNER_SUPPORT
 		wsdisplay_burn(sc, WSDISPLAY_BURN_OUTPUT);
 #endif
@@ -1374,7 +1349,6 @@ wsdisplaystart(struct tty *tp)
 		buf = tp->t_outq.c_cf;
 
 		if (!(scr->scr_flags & SCR_GRAPHICS)) {
-			KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 #ifdef BURNER_SUPPORT
 			wsdisplay_burn(sc, WSDISPLAY_BURN_OUTPUT);
 #endif
@@ -1487,7 +1461,7 @@ wsdisplay_kbdinput(struct device *dev, keysym_t ks)
 
 	if (KS_GROUP(ks) == KS_GROUP_Ascii)
 		(*linesw[tp->t_line].l_rint)(KS_VALUE(ks), tp);
-	else if (WSSCREEN_HAS_EMULATOR(scr)) {
+	else {
 		count = (*scr->scr_dconf->wsemul->translate)
 		    (scr->scr_dconf->wsemulcookie, ks, &dp);
 		while (count-- > 0)
@@ -1792,8 +1766,6 @@ wsdisplay_reset(struct device *dev, enum wsdisplay_resetops op)
 
 	switch (op) {
 	case WSDISPLAY_RESETEMUL:
-		if (!WSSCREEN_HAS_EMULATOR(scr))
-			break;
 		(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
 		    WSEMUL_RESET);
 		break;
