@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.33 2005/07/17 19:13:25 brad Exp $
+ * $OpenBSD: route.c,v 1.34 2005/07/17 20:43:14 brad Exp $
  */
 
 #include <sys/param.h>
@@ -617,8 +617,13 @@ route_Add(struct sticky_route **rp, int type, const struct ncprange *dst,
       rp = &(*rp)->next;
   }
 
-  if (!r)
+  if (r == NULL) {
     r = (struct sticky_route *)malloc(sizeof(struct sticky_route));
+    if (r == NULL) {
+      log_Printf(LogERROR, "route_Add: Out of memory!\n");
+      return;
+    }
+  }
   r->type = type;
   r->next = NULL;
   ncprange_copy(&r->dst, dst);
