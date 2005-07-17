@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.13 2005/07/08 12:50:21 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.14 2005/07/17 12:16:16 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -535,9 +535,8 @@ tctrl_read_event_status(void *arg)
 	}
 	if (v & TS102_EVENT_STATUS_LID_STATUS_CHANGE) {
 		tctrl_read_ext_status(sc);
-		/* restore video if necessary */
-		if ((sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) == 0 &&
-		    sc->sc_tft_on)
+		/* blank or restore video if necessary */
+		if (sc->sc_tft_on)
 			tctrl_tft(sc);
 #ifdef TCTRLDEBUG
 		printf("%s: lid %s\n", sc->sc_dev.dv_xname,
