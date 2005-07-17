@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.27 2005/03/29 16:40:10 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.18 2005/06/02 20:09:38 tholo Exp 
+#	OpenBSD: MAKEDEV.common,v 1.19 2005/06/29 18:23:26 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -46,6 +46,7 @@
 # Terminal ports:
 #	cua[a-z]*	Zilog 8530 serial ports
 #	tty[a-z]*	Zilog 8530 serial ports
+#	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	magma*	Magma multiport cards
 #	spif*	"spif" multiport cards
 # Pseudo terminals:
@@ -411,6 +412,13 @@ magma*)
 	M bpp${nam}1 c 101 $(($offset+1)) 600
 	;;
 
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(h2d $U)
+	M tty$U c 36 $o 660 dialer uucp
+	M cua$U c 36 $(($o+128)) 660 dialer uucp
+	;;
+
 tty[a-z])
 	u=${i#tty*}
 	case $u in
@@ -505,8 +513,8 @@ all)
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
 	R fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 cuaa cuab cuac
 	R cuad ttya ttyb ttyc ttyd ptm local wscons audio0 uk0 random
-	R lkm apm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3
-	R std st0 st1 fd
+	R lkm tty00 tty01 tty02 tty03 apm pf systrace xd0 xd1 xd2 xd3
+	R raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*|raid*|ccd*)
