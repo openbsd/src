@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.16 2004/12/16 08:13:13 moritz Exp $
+.\"	$OpenBSD: lpd.8,v 1.17 2005/07/17 18:53:45 jmc Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -176,6 +176,13 @@ entry for the printer being accessed,
 requests will only be honored for those users with accounts on the
 machine with the printer.
 .Pp
+.Nm
+performs reverse DNS lookups on network clients.
+If a client hostname cannot be determined from its IP address,
+the print request will be silently dropped.
+This is important to note when debugging print problems
+in dynamic address environments.
+.Pp
 The file
 .Em minfree
 in each spool directory contains the number of disk blocks to leave free
@@ -346,8 +353,10 @@ but not under same administrative control.
 .Xr lpr 1 ,
 .Xr lprm 1 ,
 .Xr syslog 3 ,
+.Xr hosts 5 ,
 .Xr hosts.equiv 5 ,
 .Xr printcap 5 ,
+.Xr resolv.conf 5 ,
 .Xr lpc 8 ,
 .Xr pac 8
 .Rs
