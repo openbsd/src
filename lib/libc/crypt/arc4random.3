@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.18 2005/06/07 19:04:58 kjell Exp $
+.\" $OpenBSD: arc4random.3,v 1.19 2005/07/17 08:50:55 jaredy Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -59,7 +59,7 @@ On each call, an ARC4 generator is used to generate a new result.
 The
 .Fn arc4random
 function uses the ARC4 cipher key stream generator,
-which uses 8*8 8 bit S-Boxes.
+which uses 8*8 8-bit S-Boxes.
 The S-Boxes can be in about (2**1700) states.
 .Pp
 .Fn arc4random

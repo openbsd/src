@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.12 2003/08/28 12:35:00 jmc Exp $
+.\" $OpenBSD: blowfish.3,v 1.13 2005/07/17 08:50:55 jaredy Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -57,12 +57,12 @@
 .Sh DESCRIPTION
 .Pa Blowfish
 is a fast unpatented block cipher designed by Bruce Schneier.
-It basically consists of a 16 times iterated Feistel network.
-The block size is 64 bit and the maximum key size is 448 bit.
+It basically consists of a 16-round Feistel network.
+The block size is 64 bits and the maximum key size is 448 bits.
 .Pp
 The
 .Fn blf_key
-function initializes the 4 8bit S-boxes and the 18 Subkeys with
+function initializes the 4 8-bit S-boxes and the 18 Subkeys with
 the hexadecimal digits of Pi.
 The key is used for further randomization.
 The first argument to
