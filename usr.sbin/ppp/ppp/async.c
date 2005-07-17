@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: async.c,v 1.12 2004/11/16 14:47:02 brad Exp $
+ * $OpenBSD: async.c,v 1.13 2005/07/17 20:24:45 brad Exp $
  */
 
 #include <sys/types.h>
@@ -164,7 +164,7 @@ async_Decode(struct async *async, u_char c)
       async->mode |= MODE_ESC;
       break;
     }
-    /* Fall into ... */
+    /* FALLTHROUGH */
   default:
     if (async->length >= HDLCSIZE) {
       /* packet is too large, discard it */

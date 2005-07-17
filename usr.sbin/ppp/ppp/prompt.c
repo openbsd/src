@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: prompt.c,v 1.16 2005/07/11 22:36:17 brad Exp $
+ *	$OpenBSD: prompt.c,v 1.17 2005/07/17 20:24:45 brad Exp $
  */
 
 #include <sys/param.h>
@@ -228,7 +228,7 @@ prompt_Read(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
       prompt_TtyCommandMode(p);
       p->nonewline = 0;
       /* We'll get a prompt because of our status change */
-      /* Fall through */
+      /* FALLTHROUGH */
 
     default:
       /* Wait 'till we're in a state we care about */

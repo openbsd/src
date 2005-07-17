@@ -36,7 +36,7 @@
  * Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
  *
- * $OpenBSD: slcompress.c,v 1.19 2005/07/17 19:13:25 brad Exp $
+ * $OpenBSD: slcompress.c,v 1.20 2005/07/17 20:24:45 brad Exp $
  */
 
 #include <sys/param.h>
@@ -334,7 +334,7 @@ found:
 	ntohs(cs->cs_ip.ip_len) == hlen)
       break;
 
-    /* (fall through) */
+    /* FALLTHROUGH */
 
   case SPECIAL_I:
   case SPECIAL_D:

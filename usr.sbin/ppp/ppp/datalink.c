@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.45 2005/07/17 19:13:24 brad Exp $
+ *	$OpenBSD: datalink.c,v 1.46 2005/07/17 20:24:45 brad Exp $
  */
 
 #include <sys/param.h>
@@ -269,7 +269,7 @@ datalink_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e,
         datalink_Up(dl, 1, 1);
       else
         break;
-      /* fall through */
+      /* FALLTHROUGH */
 
     case DATALINK_OPENING:
       if (dl->dial.timer.state != TIMER_RUNNING) {
@@ -623,7 +623,7 @@ datalink_NCPUp(struct datalink *dl)
         /* First link in the bundle */
         auth_Select(dl->bundle, dl->peer.authname);
         bundle_CalculateBandwidth(dl->bundle);
-        /* fall through */
+        /* FALLTHROUGH */
       case MP_ADDED:
         /* We're in multilink mode ! */
         dl->physical->link.ccp.fsm.open_mode = OPEN_PASSIVE;	/* override */
@@ -758,12 +758,12 @@ datalink_LayerDown(void *v, struct fsm *fp)
         fsm2initial(&dl->physical->link.ccp.fsm);
         datalink_NewState(dl, DATALINK_LCP);  /* before parent TLD */
         (*dl->parent->LayerDown)(dl->parent->object, fp);
-        /* fall through (just in case) */
+        /* FALLTHROUGH (just in case) */
 
       case DATALINK_CBCP:
         if (!dl->cbcp.required)
           cbcp_Down(&dl->cbcp);
-        /* fall through (just in case) */
+        /* FALLTHROUGH (just in case) */
 
       case DATALINK_AUTH:
         timer_Stop(&dl->pap.authtimer);
@@ -982,7 +982,7 @@ datalink_Up(struct datalink *dl, int runscripts, int packetmode)
     case DATALINK_OPENING:
       if (!dl->script.run && runscripts)
         dl->script.run = 1;
-      /* fall through */
+      /* FALLTHROUGH */
 
     case DATALINK_DIAL:
     case DATALINK_LOGIN:
@@ -1006,7 +1006,7 @@ datalink_Close(struct datalink *dl, int how)
     case DATALINK_OPEN:
       peerid_Init(&dl->peer);
       fsm2initial(&dl->physical->link.ccp.fsm);
-      /* fall through */
+      /* FALLTHROUGH */
 
     case DATALINK_CBCP:
     case DATALINK_AUTH:
@@ -1032,7 +1032,7 @@ datalink_Down(struct datalink *dl, int how)
     case DATALINK_OPEN:
       peerid_Init(&dl->peer);
       fsm2initial(&dl->physical->link.ccp.fsm);
-      /* fall through */
+      /* FALLTHROUGH */
 
     case DATALINK_CBCP:
     case DATALINK_AUTH:
@@ -1040,7 +1040,7 @@ datalink_Down(struct datalink *dl, int how)
       fsm2initial(&dl->physical->link.lcp.fsm);
       if (dl->state == DATALINK_OPENING)
         return;			/* we're doing a callback... */
-      /* fall through */
+      /* FALLTHROUGH */
 
     default:
       datalink_ComeDown(dl, how);
