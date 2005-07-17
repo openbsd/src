@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.41 2005/03/15 20:19:24 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.42 2005/07/17 17:13:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -196,8 +196,11 @@ vgafb_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
-		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
-			fbwscons_setcolormap(&sc->sc_sunfb, vgafb_setcolor);
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+			if (sc->sc_console)	/* XXX needs sc_ofhandle */
+				fbwscons_setcolormap(&sc->sc_sunfb,
+				    vgafb_setcolor);
+		}
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
