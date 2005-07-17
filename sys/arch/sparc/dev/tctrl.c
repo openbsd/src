@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.14 2005/07/17 12:16:16 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.15 2005/07/17 12:16:51 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -1048,39 +1048,45 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case APM_IOC_GETPOWER:
 	        power = (struct apm_power_info *)data;
 
-		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_RATE;
-		req.cmdlen = 1;
-		req.rsplen = 2;
-		tctrl_request(sc, &req);
-		if (req.rspbuf[0] != 0)
-			power->battery_state = APM_BATT_CHARGING;
-		else
-			power->battery_state = APM_BATT_UNKNOWN;
+		if (sc->sc_ext_status &
+		    TS102_EXT_STATUS_INTERNAL_BATTERY_ATTACHED) {
+			req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_RATE;
+			req.cmdlen = 1;
+			req.rsplen = 2;
+			tctrl_request(sc, &req);
+			if (req.rspbuf[0] != 0)
+				power->battery_state = APM_BATT_CHARGING;
+			else
+				power->battery_state = APM_BATT_UNKNOWN;
 
-		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_LEVEL;
-		req.cmdlen = 1;
-		req.rsplen = 3;
-		tctrl_request(sc, &req);
+			req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_LEVEL;
+			req.cmdlen = 1;
+			req.rsplen = 3;
+			tctrl_request(sc, &req);
 
-		c = req.rspbuf[0];
-		if (c >= TS102_CHARGE_UNKNOWN)
-			power->battery_life = 0;
-		else {
-			power->battery_life = c;
-			if (power->battery_state != APM_BATT_CHARGING) {
-				if (c < 0x20)
-					power->battery_state = APM_BATT_CRITICAL;
-				else if (c < 0x40)
-					power->battery_state = APM_BATT_HIGH;
-				else if (c < 0x66)
-					power->battery_state = APM_BATT_HIGH;
+			c = req.rspbuf[0];
+			if (c >= TS102_CHARGE_UNKNOWN)
+				power->battery_life = 0;
+			else {
+				power->battery_life = c;
+				if (power->battery_state != APM_BATT_CHARGING) {
+					if (c < 0x20)
+						power->battery_state =
+						    APM_BATT_CRITICAL;
+					else if (c < 0x40)
+						power->battery_state =
+						    APM_BATT_HIGH;
+					else if (c < 0x66)
+						power->battery_state =
+						    APM_BATT_HIGH;
+				}
 			}
+		} else {
+			power->battery_state = APM_BATTERY_ABSENT;
+			power->battery_life = 0;
 		}
 		power->minutes_left = (u_int)-1;	/* unknown */
 
-#if 0
-		tctrl_read_ext_status(sc);
-#endif
 		if (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE)
 			power->ac_state = APM_AC_ON;
 		else
