@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.39 2005/07/17 19:15:38 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.40 2005/07/17 19:18:47 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -290,8 +290,9 @@ It can aid in troubleshooting,
 when it might be necessary to verify what data a server is sending
 in response to commands issued by the client.
 For example, to retrieve the home page of a web site:
-.Pp
-.Dl $ echo -n \&"GET / HTTP/1.0\er\en\er\en\&" | nc host.example.com 80
+.Bd -literal -offset indent
+$ echo -n "GET / HTTP/1.0\er\en\er\en" | nc host.example.com 80
+.Ed
 .Pp
 Note that this also displays the headers sent by the web server.
 They can be filtered, using a tool such as
