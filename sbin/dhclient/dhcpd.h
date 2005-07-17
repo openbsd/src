@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.44 2005/07/16 18:38:45 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.45 2005/07/17 19:33:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -71,10 +71,14 @@
 #include <unistd.h>
 
 #include "dhcp.h"
-#include "tree.h"
 
 #define	LOCAL_PORT	68
 #define	REMOTE_PORT	67
+
+struct option {
+	char *name;
+	char *format;
+};
 
 struct option_data {
 	unsigned int	 len;
@@ -256,13 +260,9 @@ char *parse_string(FILE *);
 int parse_ip_addr(FILE *, struct iaddr *);
 void parse_hardware_param(FILE *, struct hardware *);
 void parse_lease_time(FILE *, time_t *);
-unsigned char *parse_numeric_aggregate(FILE *, unsigned char *, int *,
-    int, int, int);
+int parse_numeric_aggregate(FILE *, unsigned char *, int, int, int);
 void convert_num(unsigned char *, char *, int, int);
 time_t parse_date(FILE *);
-
-/* tree.c */
-pair cons(caddr_t, pair);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.12 2005/07/16 16:19:23 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.13 2005/07/17 19:33:55 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -135,10 +135,8 @@ int
 parse_ip_addr(FILE *cfile, struct iaddr *addr)
 {
 	addr->len = 4;
-	if (parse_numeric_aggregate(cfile, addr->iabuf,
-	    &addr->len, DOT, 10, 8))
-		return (1);
-	return (0);
+	return (parse_numeric_aggregate(cfile, addr->iabuf, addr->len, DOT,
+	    10));
 }
 
 /*
@@ -148,20 +146,22 @@ parse_ip_addr(FILE *cfile, struct iaddr *addr)
 void
 parse_hardware_param(FILE *cfile, struct hardware *hardware)
 {
-	unsigned char *t;
-	int token, hlen;
+	int token;
 	char *val;
 
 	token = next_token(&val, cfile);
 	switch (token) {
 	case ETHERNET:
 		hardware->htype = HTYPE_ETHER;
+		hardware->hlen = 6;
 		break;
 	case TOKEN_RING:
 		hardware->htype = HTYPE_IEEE802;
+		hardware->hlen = 6;
 		break;
 	case FDDI:
 		hardware->htype = HTYPE_FDDI;
+		hardware->hlen = 6;
 		break;
 	default:
 		parse_warn("expecting a network hardware type");
@@ -169,31 +169,9 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 		return;
 	}
 
-	/*
-	 * Parse the hardware address information.   Technically, it
-	 * would make a lot of sense to restrict the length of the data
-	 * we'll accept here to the length of a particular hardware
-	 * address type.   Unfortunately, there are some broken clients
-	 * out there that put bogus data in the chaddr buffer, and we
-	 * accept that data in the lease file rather than simply failing
-	 * on such clients.   Yuck.
-	 */
-	hlen = 0;
-	t = parse_numeric_aggregate(cfile, NULL, &hlen, COLON, 16, 8);
-	if (!t)
+	if (parse_numeric_aggregate(cfile, hardware->haddr, hardware->hlen,
+	    COLON, 16) == 0)
 		return;
-	if (hlen > sizeof(hardware->haddr)) {
-		free(t);
-		parse_warn("hardware address too long");
-	} else {
-		hardware->hlen = hlen;
-		memcpy((unsigned char *)&hardware->haddr[0], t,
-		    hardware->hlen);
-		if (hlen < sizeof(hardware->haddr))
-			memset(&hardware->haddr[hlen], 0,
-			    sizeof(hardware->haddr) - hlen);
-		free(t);
-	}
 
 	token = next_token(&val, cfile);
 	if (token != SEMI) {
@@ -225,92 +203,38 @@ parse_lease_time(FILE *cfile, time_t *timep)
 }
 
 /*
- * No BNF for numeric aggregates - that's defined by the caller.  What
- * this function does is to parse a sequence of numbers separated by the
- * token specified in separator.  If max is zero, any number of numbers
- * will be parsed; otherwise, exactly max numbers are expected.  Base
- * and size tell us how to internalize the numbers once they've been
- * tokenized.
+ * Parse a sequence of numbers separated by the token specified in separator.
+ * Exactly max numbers are expected.
  */
-unsigned char *
-parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
-    int separator, int base, int size)
+int
+parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int max, int separator,
+    int base)
 {
-	unsigned char *bufp = buf, *s = NULL;
-	int token, count = 0;
-	char *val, *t;
-	pair c = NULL;
+	char *val;
+	int token, count;
 
-	if (!bufp && *max) {
-		bufp = malloc(*max * size / 8);
-		if (!bufp)
-			error("can't allocate space for numeric aggregate");
-	} else
-		s = bufp;
+	if (buf == NULL || max == 0)
+		error("no space for numeric aggregate");
 
-	do {
-		if (count) {
-			token = peek_token(&val, cfile);
-			if (token != separator) {
-				if (!*max)
-					break;
-				if (token != RBRACE && token != LBRACE)
-					token = next_token(&val, cfile);
-				parse_warn("too few numbers.");
-				if (token != SEMI)
-					skip_to_semi(cfile);
-				return (NULL);
-			}
+	for (count = 0; count < max; count++, buf++) {
+		if (count && (peek_token(&val, cfile) == separator))
 			token = next_token(&val, cfile);
-		}
+
 		token = next_token(&val, cfile);
 
-		if (token == EOF) {
-			parse_warn("unexpected end of file");
+		if (token == NUMBER || (base == 16 && token == NUMBER_OR_NAME))
+			/* XXX Need to check if conversion was successful. */
+			convert_num(buf, val, base, 8);
+		else
 			break;
-		}
+	};
 
-		/* Allow NUMBER_OR_NAME if base is 16. */
-		if (token != NUMBER &&
-		    (base != 16 || token != NUMBER_OR_NAME)) {
-			parse_warn("expecting numeric value.");
-			skip_to_semi(cfile);
-			return (NULL);
-		}
-		/*
-		 * If we can, convert the number now; otherwise, build a
-		 * linked list of all the numbers.
-		 */
-		if (s) {
-			convert_num(s, val, base, size);
-			s += size / 8;
-		} else {
-			t = malloc(strlen(val) + 1);
-			if (!t)
-				error("no temp space for number.");
-			strlcpy(t, val, strlen(val) + 1);
-			c = cons(t, c);
-		}
-	} while (++count != *max);
+	if (count < max) {
+		parse_warn("numeric aggregate too short.");
+		return (0);
+	}
 
-	/* If we had to cons up a list, convert it now. */
-	if (c) {
-		bufp = malloc(count * size / 8);
-		if (!bufp)
-			error("can't allocate space for numeric aggregate.");
-		s = bufp + count - size / 8;
-		*max = count;
-	}
-	while (c) {
-		pair cdr = c->cdr;
-		convert_num(s, (char *)c->car, base, size);
-		s -= size / 8;
-		/* Free up temp space. */
-		free(c->car);
-		free(c);
-		c = cdr;
-	}
-	return (bufp);
+	return (1);
 }
 
 void
