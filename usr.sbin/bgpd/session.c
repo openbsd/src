@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.230 2005/07/18 11:41:15 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.231 2005/07/18 11:51:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1486,79 +1486,78 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 	if (pfd->revents & POLLIN) {
 		if ((n = read(p->fd, p->rbuf->buf + p->rbuf->wpos,
 		    sizeof(p->rbuf->buf) - p->rbuf->wpos)) == -1) {
-				if (errno != EINTR && errno != EAGAIN) {
-					log_peer_warn(&p->conf, "read error");
-					bgp_fsm(p, EVNT_CON_FATAL);
-				}
-				return (1);
+			if (errno != EINTR && errno != EAGAIN) {
+				log_peer_warn(&p->conf, "read error");
+				bgp_fsm(p, EVNT_CON_FATAL);
 			}
-			if (n == 0) {	/* connection closed */
-				bgp_fsm(p, EVNT_CON_CLOSED);
-				return (1);
-			}
+			return (1);
+		}
+		if (n == 0) {	/* connection closed */
+			bgp_fsm(p, EVNT_CON_CLOSED);
+			return (1);
+		}
 
-			rpos = 0;
-			av = p->rbuf->wpos + n;
-			p->stats.last_read = time(NULL);
+		rpos = 0;
+		av = p->rbuf->wpos + n;
+		p->stats.last_read = time(NULL);
 
-			/*
-			 * session might drop to IDLE -> buffers deallocated
-			 * we MUST check rbuf != NULL before use
-			 */
-			for (;;) {
-				if (rpos + MSGSIZE_HEADER > av)
-					break;
-				if (p->rbuf == NULL)
-					break;
-				if (parse_header(p, p->rbuf->buf + rpos,
-				    &msglen, &msgtype) == -1)
-					return (0);
-				if (rpos + msglen > av)
-					break;
-				p->rbuf->rptr = p->rbuf->buf + rpos;
-
-				switch (msgtype) {
-				case OPEN:
-					bgp_fsm(p, EVNT_RCVD_OPEN);
-					p->stats.msg_rcvd_open++;
-					break;
-				case UPDATE:
-					bgp_fsm(p, EVNT_RCVD_UPDATE);
-					p->stats.msg_rcvd_update++;
-					break;
-				case NOTIFICATION:
-					bgp_fsm(p, EVNT_RCVD_NOTIFICATION);
-					p->stats.msg_rcvd_notification++;
-					break;
-				case KEEPALIVE:
-					bgp_fsm(p, EVNT_RCVD_KEEPALIVE);
-					p->stats.msg_rcvd_keepalive++;
-					break;
-				case RREFRESH:
-					parse_refresh(p);
-					p->stats.msg_rcvd_rrefresh++;
-					break;
-				default:	/* cannot happen */
-					session_notification(p, ERR_HEADER,
-					    ERR_HDR_TYPE, &msgtype, 1);
-					log_warnx("received message with "
-					    "unknown type %u", msgtype);
-					bgp_fsm(p, EVNT_CON_FATAL);
-				}
-				rpos += msglen;
-				if (++processed > MSG_PROCESS_LIMIT)
-					break;
-			}
+		/*
+		 * session might drop to IDLE -> buffers deallocated
+		 * we MUST check rbuf != NULL before use
+		 */
+		for (;;) {
+			if (rpos + MSGSIZE_HEADER > av)
+				break;
 			if (p->rbuf == NULL)
-				return (1);
+				break;
+			if (parse_header(p, p->rbuf->buf + rpos, &msglen,
+			    &msgtype) == -1)
+				return (0);
+			if (rpos + msglen > av)
+				break;
+			p->rbuf->rptr = p->rbuf->buf + rpos;
 
-			if (rpos < av) {
-				left = av - rpos;
-				memcpy(&p->rbuf->buf, p->rbuf->buf + rpos,
-				    left);
-				p->rbuf->wpos = left;
-			} else
-				p->rbuf->wpos = 0;
+			switch (msgtype) {
+			case OPEN:
+				bgp_fsm(p, EVNT_RCVD_OPEN);
+				p->stats.msg_rcvd_open++;
+				break;
+			case UPDATE:
+				bgp_fsm(p, EVNT_RCVD_UPDATE);
+				p->stats.msg_rcvd_update++;
+				break;
+			case NOTIFICATION:
+				bgp_fsm(p, EVNT_RCVD_NOTIFICATION);
+				p->stats.msg_rcvd_notification++;
+				break;
+			case KEEPALIVE:
+				bgp_fsm(p, EVNT_RCVD_KEEPALIVE);
+				p->stats.msg_rcvd_keepalive++;
+				break;
+			case RREFRESH:
+				parse_refresh(p);
+				p->stats.msg_rcvd_rrefresh++;
+				break;
+			default:	/* cannot happen */
+				session_notification(p, ERR_HEADER,
+				    ERR_HDR_TYPE, &msgtype, 1);
+				log_warnx("received message with "
+				    "unknown type %u", msgtype);
+				bgp_fsm(p, EVNT_CON_FATAL);
+			}
+			rpos += msglen;
+			if (++processed > MSG_PROCESS_LIMIT)
+				break;
+		}
+		if (p->rbuf == NULL)
+			return (1);
+
+		if (rpos < av) {
+			left = av - rpos;
+			memcpy(&p->rbuf->buf, p->rbuf->buf + rpos, left);
+			p->rbuf->wpos = left;
+		} else
+			p->rbuf->wpos = 0;
 
 		return (1);
 	}
