@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.161 2005/07/18 07:33:51 jsg Exp $
+$OpenBSD: usbdevs,v 1.162 2005/07/18 14:37:22 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -392,6 +392,7 @@ vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor ANALOG		0x1110	Analog Devices
 vendor JRC		0x1145	Japan Radio Company
+vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor TSUNAMI		0x1241	Tsunami
@@ -1724,6 +1725,9 @@ product SONY CLIE_TJ25		0x0169	Sony Clie tj25
 /* SOURCENEXT products */
 product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
 product SOURCENEXT KEIKAI8_CHG	0x012e	KeikaiDenwa 8 with charger
+
+/* Sphairon Access Systems GmbH products */
+product SPHAIRON UB801R		0x0110	UB801R
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	Communicator
