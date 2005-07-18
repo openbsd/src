@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.59 2005/07/09 16:27:34 niallo Exp $	*/
+/*	$OpenBSD: proto.c,v 1.60 2005/07/18 06:58:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -973,7 +973,7 @@ cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
 int
 cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 {
-	int l;
+	size_t len;
 	char lbuf[MAXPATHLEN], rbuf[MAXPATHLEN];
 
 	if (dir->cf_type != DT_DIR)
@@ -986,13 +986,10 @@ cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 	if (dir->cf_repo == NULL)
 		strlcpy(rbuf, root->cr_dir, sizeof(rbuf));
 	else {
-		l = snprintf(rbuf, sizeof(rbuf), "%s/%s", root->cr_dir,
-		    dir->cf_repo);
-		if (l == -1 || l >= (int)sizeof(rbuf)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", rbuf);
+		len = cvs_path_cat(root->cr_dir, dir->cf_repo, rbuf,
+		    sizeof(rbuf));
+		if (len >= sizeof(rbuf))
 			return (-1);
-		}
 	}
 
 
