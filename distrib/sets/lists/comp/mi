@@ -3001,6 +3001,7 @@
 ./usr/share/man/cat3/dbm_nextkey.0
 ./usr/share/man/cat3/dbm_open.0
 ./usr/share/man/cat3/dbm_pagfno.0
+./usr/share/man/cat3/dbm_rdonly.0
 ./usr/share/man/cat3/dbm_store.0
 ./usr/share/man/cat3/dbmclose.0
 ./usr/share/man/cat3/dbminit.0
