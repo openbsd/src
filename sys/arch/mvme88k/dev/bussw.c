@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.15 2004/07/30 19:02:05 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.16 2005/07/18 02:43:25 fgsch Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  *
@@ -178,7 +178,7 @@ busswintr_establish(int vec, struct intrhand *ih, const char *name)
 {
 #ifdef DIAGNOSTIC
 	if (vec < 0 || vec >= BS_NVEC)
-		panic("busswintr_establish: illegal vector 0x%x\n", vec);
+		panic("busswintr_establish: illegal vector 0x%x", vec);
 #endif
 
 	return intr_establish(BS_VECBASE + vec, ih, name);

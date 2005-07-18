@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.22 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.23 2005/07/18 02:43:25 fgsch Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -165,7 +165,7 @@ sysconintr_establish(int vec, struct intrhand *ih, const char *name)
 {
 #ifdef DIAGNOSTIC
 	if (vec < 0 || vec >= SYSCON_NVEC)
-		panic("sysconintr_establish: illegal vector 0x%x\n", vec);
+		panic("sysconintr_establish: illegal vector 0x%x", vec);
 #endif
 
 	return intr_establish(SYSCON_VECT + vec, ih, name);

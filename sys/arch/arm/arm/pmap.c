@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2005/02/01 15:41:24 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2005/07/18 02:43:24 fgsch Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4048,7 +4048,7 @@ pmap_set_pt_cache_mode(pd_entry_t *kl1, vaddr_t va)
 		pa = (paddr_t)(pde & L1_C_ADDR_MASK);
 		ptep = (pt_entry_t *)kernel_pt_lookup(pa);
 		if (ptep == NULL)
-			panic("pmap_bootstrap: No L2 for L2 @ va %p\n", ptep);
+			panic("pmap_bootstrap: No L2 for L2 @ va %p", ptep);
 
 		ptep = &ptep[l2pte_index(va)];
 		pte = *ptep;

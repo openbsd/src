@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.14 2005/05/27 10:41:11 kjell Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.15 2005/07/18 02:43:25 fgsch Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -200,7 +200,7 @@ cpu_attach(parent, self, aux)
 	if (caa->cpu_role != CPU_ROLE_AP) {
 		if (cpunum != cpu_number()) {
 			panic("%s: running cpu is at apic %d"
-			    " instead of at expected %d\n",
+			    " instead of at expected %d",
 			    self->dv_xname, cpu_number(), cpunum);
 		}
 
@@ -303,7 +303,7 @@ cpu_attach(parent, self, aux)
 		break;
 
 	default:
-		panic("unknown processor type??\n");
+		panic("unknown processor type??");
 	}
 
 	/* Mark this ID as taken if it's in the I/O APIC ID area */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.15 2005/06/07 02:29:30 henning Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.16 2005/07/18 02:43:25 fgsch Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -342,7 +342,7 @@ static int initialized = 0;
 	}
 
 	if (irq > 62 || irq < 1) {
-		panic("intr_establish: illegal irq %d\n", irq);
+		panic("intr_establish: illegal irq %d", irq);
 	}
 	irq += 1;	/* Adjust for softint 1 and 0 */
 

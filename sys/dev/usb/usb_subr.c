@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.36 2005/04/21 08:47:57 pascoe Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.37 2005/07/18 02:43:27 fgsch Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1055,7 +1055,7 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 				goto found;
 			}
 		}
-		panic("usbd_new_device: cannot find HS port\n");
+		panic("usbd_new_device: cannot find HS port");
 	found:
 		DPRINTFN(1,("usbd_new_device: high speed port %d\n", p));
 	} else {

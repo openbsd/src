@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.34 2005/06/15 01:33:50 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.35 2005/07/18 02:43:27 fgsch Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1284,7 +1284,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			goto next;
 		default:
 			/* XXX shorten rx ring, instead? */
-			panic("%s: could not load DMA map\n",
+			panic("%s: could not load DMA map",
 			    sc->sc_dev.dv_xname);
 		}
 
@@ -2059,7 +2059,7 @@ rtw_tune(struct rtw_softc *sc)
 
 	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	if (chan == IEEE80211_CHAN_ANY)
-		panic("%s: chan == IEEE80211_CHAN_ANY\n", __func__);
+		panic("%s: chan == IEEE80211_CHAN_ANY", __func__);
 
 	if (chan == sc->sc_cur_chan) {
 		RTW_DPRINTF(RTW_DEBUG_TUNE,
@@ -3169,7 +3169,7 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:
-		panic("%s: unexpected state IEEE80211_S_INIT\n", __func__);
+		panic("%s: unexpected state IEEE80211_S_INIT", __func__);
 		break;
 	case IEEE80211_S_SCAN:
 		if (ostate != IEEE80211_S_SCAN) {

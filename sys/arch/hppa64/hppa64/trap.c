@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.2 2005/07/18 02:43:25 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -388,7 +388,7 @@ trap(type, frame)
 			sv.sival_int = va;
 			trapsignal(p, SIGILL, type & ~T_USER, ILL_ILLTRP, sv);
 		} else
-			panic("trap: %s @ 0x%x:0x%x for 0x%x:0x%x irr 0x%08x\n",
+			panic("trap: %s @ 0x%x:0x%x for 0x%x:0x%x irr 0x%08x",
 			    tts, frame->tf_iisq[0], frame->tf_iioq[0],
 			    space, va, opcode);
 		break;

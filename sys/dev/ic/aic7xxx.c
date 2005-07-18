@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.65 2005/06/01 21:49:53 miod Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.66 2005/07/18 02:43:26 fgsch Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.65 2005/06/01 21:49:53 miod Exp $
+ * $Id: aic7xxx.c,v 1.66 2005/07/18 02:43:26 fgsch Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -6098,7 +6098,7 @@ ahc_calc_residual(struct ahc_softc *ahc, struct scb *scb)
 		/* Case 4 */
 		return;
 	} else if ((resid_sgptr & ~SG_PTR_MASK) != 0) {
-		panic("Bogus resid sgptr value 0x%x\n", resid_sgptr);
+		panic("Bogus resid sgptr value 0x%x", resid_sgptr);
 	} else {
 		struct ahc_dma_seg *sg;
 

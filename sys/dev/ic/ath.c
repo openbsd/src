@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.29 2005/05/28 23:45:10 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.30 2005/07/18 02:43:26 fgsch Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -655,7 +655,7 @@ ath_chan2flags(struct ieee80211com *ic, struct ieee80211_channel *chan)
 	case IEEE80211_MODE_TURBO:
 		return CHANNEL_T;
 	default:
-		panic("%s: unsupported mode %d\n", __func__, mode);
+		panic("%s: unsupported mode %d", __func__, mode);
 		return 0;
 	}
 }
@@ -2797,7 +2797,7 @@ ath_state_to_led(enum ieee80211_state state)
 	case IEEE80211_S_RUN:
 		return HAL_LED_RUN;
 	default:
-		panic("%s: unknown 802.11 state %d\n", __func__, state);
+		panic("%s: unknown 802.11 state %d", __func__, state);
 		return HAL_LED_INIT;
 	}
 }

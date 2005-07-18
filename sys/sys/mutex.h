@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.2 2004/10/01 04:08:46 jsg Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.3 2005/07/18 02:43:27 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -83,12 +83,12 @@ void mtx_init1(struct mutex *, int);
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
 	if ((mtx)->mtx_lock == 0)					\
-		panic("mutex %p not held in %s\n", (mtx), __func__);	\
+		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
 	if ((mtx)->mtx_lock != 0)					\
-		panic("mutex %p held in %s\n", (mtx), __func__);	\
+		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 #else
 #define MUTEX_ASSERT_LOCKED(mtx) do { } while (0)

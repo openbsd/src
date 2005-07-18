@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.26 2005/02/20 15:35:34 miod Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.27 2005/07/18 02:43:26 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1481,7 +1481,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 				break;
 			}
 			default:
-				panic("Unexpected TaskMgmt Func\n");
+				panic("Unexpected TaskMgmt Func");
 				break;
 			}
 		}
@@ -2037,7 +2037,7 @@ ahd_handle_lqiphase_error(struct ahd_softc *ahd, u_int lqistat1)
 			printf("LQIRETRY for LQIPHASE_NLQ\n");
 			ahd_outb(ahd, LQCTL2, LQIRETRY);
 		} else
-			panic("ahd_handle_lqiphase_error: No phase errors\n");
+			panic("ahd_handle_lqiphase_error: No phase errors");
 		ahd_dump_card_state(ahd);
 		ahd_outb(ahd, CLRINT, CLRSCSIINT);
 		ahd_unpause(ahd);
@@ -7327,7 +7327,7 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 		if (scb == NULL) {
 			printf("qinpos = %d, SCB index = %d\n",
 				qinpos, ahd->qinfifo[qinpos]);
-			panic("Loop 1\n");
+			panic("Loop 1");
 		}
 
 		if (ahd_match_scb(ahd, scb, target, channel, lun, tag, role)) {
@@ -7399,7 +7399,7 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 		if (scb == NULL) {
 			printf("%s: SCB = 0x%x Not Active!\n",
 			       ahd_name(ahd), scbid);
-			panic("Waiting TID List traversal\n");
+			panic("Waiting TID List traversal");
 		}
 		ahd_set_scbptr(ahd, scbid);
 		tid_next = ahd_inw_scbram(ahd, SCB_NEXT2);
@@ -7525,7 +7525,7 @@ ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
 		if (scb == NULL) {
 			printf("%s: SCB = %d Not Active!\n",
 			       ahd_name(ahd), scbid);
-			panic("Waiting List traversal\n");
+			panic("Waiting List traversal");
 		}
 		ahd_set_scbptr(ahd, scbid);
 		*list_tail = scbid;
@@ -8312,7 +8312,7 @@ ahd_calc_residual(struct ahd_softc *ahd, struct scb *scb)
 		aic_freeze_scb(scb);
 		return;
 	} else if ((resid_sgptr & ~SG_PTR_MASK) != 0) {
-		panic("Bogus resid sgptr value 0x%x\n", resid_sgptr);
+		panic("Bogus resid sgptr value 0x%x", resid_sgptr);
 		/* NOTREACHED */
 	} else {
 		struct ahd_dma_seg *sg;
@@ -10073,7 +10073,7 @@ ahd_update_scsiid(struct ahd_softc *ahd, u_int targid_mask)
 	u_int scsiid;
 
 	if ((ahd->features & AHD_MULTI_TID) == 0)
-		panic("ahd_update_scsiid called on non-multitid unit\n");
+		panic("ahd_update_scsiid called on non-multitid unit");
 
 	/*
 	 * Since we will rely on the TARGID mask
@@ -10375,7 +10375,7 @@ ahd_set_modes(struct ahd_softc *ahd, ahd_mode src, ahd_mode dst)
 #ifdef AHD_DEBUG
 	if (ahd->src_mode == AHD_MODE_UNKNOWN
 	 || ahd->dst_mode == AHD_MODE_UNKNOWN)
-		panic("Setting mode prior to saving it.\n");
+		panic("Setting mode prior to saving it.");
 	if ((ahd_debug & AHD_SHOW_MODEPTR) != 0)
 		printf("%s: Setting mode 0x%x\n", ahd_name(ahd),
 		       ahd_build_mode_state(ahd, src, dst));
@@ -10408,7 +10408,7 @@ ahd_assert_modes(struct ahd_softc *ahd, ahd_mode srcmode,
 #ifdef AHD_DEBUG
 	if ((srcmode & AHD_MK_MSK(ahd->src_mode)) == 0
 	 || (dstmode & AHD_MK_MSK(ahd->dst_mode)) == 0) {
-		panic("%s:%s:%d: Mode assertion failed.\n",
+		panic("%s:%s:%d: Mode assertion failed.",
 		       ahd_name(ahd), file, line);
 	}
 #endif
@@ -10961,7 +10961,7 @@ ahd_queue_scb(struct ahd_softc *ahd, struct scb *scb)
 	ahd_swap_with_next_hscb(ahd, scb);
 
 	if (SCBID_IS_NULL(SCB_GET_TAG(scb)))
-		panic("Attempt to queue invalid SCB tag %x\n",
+		panic("Attempt to queue invalid SCB tag %x",
 		      SCB_GET_TAG(scb));
 
 	/*
