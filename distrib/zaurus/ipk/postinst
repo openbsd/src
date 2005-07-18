@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: postinst,v 1.4 2005/07/12 06:33:41 uwe Exp $
+#	$OpenBSD: postinst,v 1.5 2005/07/18 00:15:59 uwe Exp $
 #
 # Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
 #
@@ -21,6 +21,16 @@ cd /root/etc/rc.d || exit $?
 rmmod zbsdmod 2>/dev/null
 
 mount -o remount,rw /
+
+# The C3100 has a 32M root filesystem, but it's full.
+rootsz=`df -k / | awk 'NR==2{print $2}'` || exit $?
+if [ ${rootsz:-0} -ge 32768 ]; then
+	# Make some room by moving this large dictionary.
+	if [ -f /usr/QtPalmtop.rom/etc/kanwadict ]; then
+		rm -f /home/QtPalmtop/etc/kanwadict
+		mv /usr/QtPalmtop.rom/etc/kanwadict /home/QtPalmtop/etc/kanwadict
+	fi
+fi
 
 if [ ! -f rc.rofilesys.openbsd ]; then
 	cp -p rc.rofilesys rc.rofilesys.openbsd
