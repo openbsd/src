@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.67 2005/07/08 01:49:51 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.68 2005/07/18 06:29:54 camield Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1449,9 +1449,6 @@ int ti_gibinit(sc)
 	rcb->ti_max_len = ETHER_MAX_LEN;
 	rcb->ti_flags = 0;
 	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
-#if NVLAN > 0
-	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
-#endif
 
 	/* Set up the jumbo receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_jumbo_rx_rcb;
@@ -1459,9 +1456,6 @@ int ti_gibinit(sc)
 	rcb->ti_max_len = ETHER_MAX_LEN_JUMBO;
 	rcb->ti_flags = 0;
 	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
-#if NVLAN > 0
-	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
-#endif
 
 	/*
 	 * Set up the mini ring. Only activated on the
@@ -1476,9 +1470,6 @@ int ti_gibinit(sc)
 	else
 		rcb->ti_flags = 0;
 	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
-#if NVLAN > 0
-	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
-#endif
 
 	/*
 	 * Set up the receive return ring.
@@ -1796,10 +1787,6 @@ void ti_rxeof(sc)
 		struct ti_rx_desc	*cur_rx;
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
-#if NVLAN > 0
-		u_int16_t		vlan_tag = 0;
-		int			have_tag = 0;
-#endif
 		int			sumflags = 0;
 #ifdef TI_CSUM_OFFLOAD
 		struct ip		*ip;
@@ -1810,13 +1797,6 @@ void ti_rxeof(sc)
 		    &sc->ti_rdata->ti_rx_return_ring[sc->ti_rx_saved_considx];
 		rxidx = cur_rx->ti_idx;
 		TI_INC(sc->ti_rx_saved_considx, TI_RETURN_RING_CNT);
-
-#if NVLAN > 0
-		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
-			have_tag = 1;
-			vlan_tag = cur_rx->ti_vlan_tag;
-		}
-#endif
 
 		if (cur_rx->ti_flags & TI_BDFLAG_JUMBO_RING) {
 			TI_INC(sc->ti_jumbo, TI_JUMBO_RX_RING_CNT);
@@ -1896,18 +1876,6 @@ void ti_rxeof(sc)
 		m->m_pkthdr.csum_flags = sumflags;
 		sumflags = 0;
 
-#if NVLAN > 0
-		/*
-		 * If we received a packet with a vlan tag, pass it
-		 * to vlan_input() instead of ether_input().
-		 */
-		if (have_tag) {
-			if (vlan_input_tag(m, vlan_tag) < 0)
-				ifp->if_data.ifi_noproto++;
-			have_tag = vlan_tag = 0;
-			continue;
-		}
-#endif
 		ether_input_mbuf(ifp, m);
 	}
 
