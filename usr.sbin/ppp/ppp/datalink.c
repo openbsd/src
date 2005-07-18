@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.46 2005/07/17 20:24:45 brad Exp $
+ *	$OpenBSD: datalink.c,v 1.47 2005/07/18 22:51:03 brad Exp $
  */
 
 #include <sys/param.h>
@@ -962,7 +962,8 @@ datalink_Destroy(struct datalink *dl)
 void
 datalink_Up(struct datalink *dl, int runscripts, int packetmode)
 {
-  if (dl->physical->type & (PHYS_DIRECT|PHYS_DEDICATED))
+  if (!Enabled(dl->bundle, OPT_FORCE_SCRIPTS) &&
+      (dl->physical->type & (PHYS_DIRECT|PHYS_DEDICATED)))
     /* Ignore scripts */
     runscripts = 0;
 
