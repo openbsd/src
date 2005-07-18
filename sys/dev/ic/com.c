@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.103 2005/07/17 12:20:50 miod Exp $	*/
+/*	$OpenBSD: com.c,v 1.104 2005/07/18 14:36:34 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1433,7 +1433,7 @@ comintr(arg)
 						    sc->sc_mcr);
 					}
 				}
-#ifdef DDB
+#if defined(COM_CONSOLE) && defined(DDB)
 			next:
 #endif
 				lsr = bus_space_read_1(iot, ioh, com_lsr);
