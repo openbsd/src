@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.54 2005/04/21 05:17:21 fgsch Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.55 2005/07/18 02:55:59 fgsch Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.54 2005/04/21 05:17:21 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.55 2005/07/18 02:55:59 fgsch Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -196,7 +196,8 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 
 		/* Open the output file.  */
 		if (strcmp(savefile, "-") != 0) {
-			out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+			out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC,
+			    0666);
 			if (out < 0) {
 				warn("Can't open %s", savefile);
 				goto cleanup_url_get;
@@ -333,54 +334,50 @@ again:
 
 	fin = fdopen(s, "r+");
 
+	if (verbose)
+		fprintf(ttyout, "Requesting %s", origline);
 	/*
 	 * Construct and send the request. Proxy requests don't want leading /.
 	 */
 	if (proxy) {
+		if (verbose)
+			fprintf(ttyout, " (via %s)\n", proxyenv);
 		/*
 		 * Host: directive must use the destination host address for
 		 * the original URI (path).  We do not attach it at this moment.
 		 */
-		if (verbose)
-			fprintf(ttyout, "Requesting %s (via %s)\n",
-			    origline, proxyenv);
-		fprintf(fin, "GET %s HTTP/1.0\r\n%s\r\n\r\n", path, HTTP_USER_AGENT);
+		fprintf(fin, "GET %s HTTP/1.0\r\n%s\r\n\r\n", path,
+		    HTTP_USER_AGENT);
 	} else {
-		if (verbose)
-			fprintf(ttyout, "Requesting %s\n", origline);
+		fprintf(fin, "GET /%s HTTP/1.1\r\nHost: ", path);
 		if (strchr(host, ':')) {
 			char *h, *p;
 
-			/* strip off scoped address portion, since it's local to node */
+			/*
+			 * strip off scoped address portion, since it's
+			 * local to node
+			 */
 			h = strdup(host);
 			if (h == NULL)
 				errx(1, "Can't allocate memory.");
 			if ((p = strchr(h, '%')) != NULL)
 				*p = '\0';
-			/*
-			 * Send port number only if it's specified and does not equal
-			 * 80. Some broken HTTP servers get confused if you explicitly
-			 * send them the port number.
-			 */
-			if (port && strcmp(port, "80") != 0)
-				fprintf(fin,
-				    "GET /%s HTTP/1.0\r\nHost: [%s]:%s\r\n%s\r\n\r\n",
-				    path, h, port, HTTP_USER_AGENT);
-			else
-				fprintf(fin,
-				    "GET /%s HTTP/1.0\r\nHost: [%s]\r\n%s\r\n\r\n",
-				    path, h, HTTP_USER_AGENT);
+			fprintf(fin, "[%s]", h);
 			free(h);
-		} else {
-			if (port && strcmp(port, "80") != 0)
-				fprintf(fin,
-				    "GET /%s HTTP/1.0\r\nHost: %s:%s\r\n%s\r\n\r\n",
-				    path, host, port, HTTP_USER_AGENT);
-			else
-				fprintf(fin,
-				    "GET /%s HTTP/1.0\r\nHost: %s\r\n%s\r\n\r\n",
-				    path, host, HTTP_USER_AGENT);
-		}
+		} else
+			fprintf(fin, "%s", host);
+
+		/*
+		 * Send port number only if it's specified and does not equal
+		 * 80. Some broken HTTP servers get confused if you explicitly
+		 * send them the port number.
+		 */
+		if (port && strcmp(port, "80") != 0)
+			fprintf(fin, ":%s", port);
+		fprintf(fin, "\r\nConnection: close\r\n%s\r\n\r\n",
+		    HTTP_USER_AGENT);
+		if (verbose)
+			fprintf(ttyout, "\n");
 	}
 	if (fflush(fin) == EOF) {
 		warn("Writing HTTP request");
