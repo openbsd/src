@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.7 2004/08/19 21:47:54 miod Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.8 2005/07/18 17:51:48 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -72,13 +72,13 @@
 int com_puc_match(struct device *, void *, void *);
 void com_puc_attach(struct device *, struct device *, void *);
 
-#if NCOM_PUC
+#if NCOM > 0
 struct cfattach com_puc_ca = {
 	sizeof(struct com_softc), com_puc_match, com_puc_attach
 };
 #endif
 
-#if NPCCOM_PUC
+#if NPCCOM > 0
 struct cfattach pccom_puc_ca = {
 	sizeof(struct com_softc), com_puc_match, com_puc_attach
 };
