@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.12 2005/07/18 01:29:19 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.13 2005/07/18 01:59:43 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 
 	atexit(cleanup);
 
-	while ((ch = getopt(argc, argv, "Dd:f:i")) != -1) {
+	while ((ch = getopt(argc, argv, "Dd:f:hi")) != -1) {
 		switch (ch) {
 		case 'D': /* debug */
 			debug = 1;
@@ -136,7 +136,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-Di] [-d device | -f disk]\n", __progname);
+	fprintf(stderr, "usage: %s [-Dhi] [-d device | -f disk]\n", __progname);
 
 	exit(1);
 }
