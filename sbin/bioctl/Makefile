@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.3 2005/07/01 21:53:40 marco Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/07/18 01:29:19 marco Exp $
 
 PROG=	bioctl
-LDADD=  -lutil
+CFLAGS=	-Wall
+LDADD=	-lutil
 MAN=	bioctl.8
 
 .include <bsd.prog.mk>
