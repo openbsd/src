@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.321 2005/06/26 19:23:53 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.322 2005/07/18 14:55:49 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2054,11 +2054,15 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
+#ifdef I686_CPU
+	extern char sigcode, sigcode_xmm;
+#endif
 	struct proc *p = curproc;
 	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
+	register_t sp;
 	int oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
@@ -2071,13 +2075,19 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
+		sp = (long)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size;
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else {
-		fp = (struct sigframe *)tf->tf_esp - 1;
+	} else
+		sp = tf->tf_esp;
+
+	frame.sf_fpstate = NULL;
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+		sp -= sizeof(union savefpu);
+		sp &= ~0xf;	/* foe XMM regs */
+		frame.sf_fpstate = (void *)sp;
 	}
 
+	fp = (struct sigframe *)sp - 1;
 	frame.sf_scp = &fp->sf_sc;
 	frame.sf_sip = NULL;
 	frame.sf_handler = catcher;
@@ -2146,6 +2156,10 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_eip = p->p_sigcode;
 	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
 	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
+#ifdef I686_CPU
+	if (i386_use_fxsave)
+		tf->tf_eip += &sigcode_xmm - &sigcode;
+#endif
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);

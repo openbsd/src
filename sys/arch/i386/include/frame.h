@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.6 2004/07/02 16:29:55 niklas Exp $	*/
+/*	$OpenBSD: frame.h,v 1.7 2005/07/18 14:55:54 mickey Exp $	*/
 /*	$NetBSD: frame.h,v 1.12 1995/10/11 04:20:08 mycroft Exp $	*/
 
 /*-
@@ -121,4 +121,5 @@ struct sigframe {
 	sig_t	sf_handler;
 	struct	sigcontext sf_sc;
 	siginfo_t sf_si;
+	void	*sf_fpstate;
 };

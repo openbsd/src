@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.90 2005/05/29 03:20:38 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.91 2005/07/18 14:55:49 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -736,8 +736,29 @@ NENTRY(proc_trampoline)
  * Signal trampoline; copied to top of user stack.
  */
 NENTRY(sigcode)
-	call	*SIGF_HANDLER(%esp)
-	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
+	movl	SIGF_FPSTATE(%esp),%esi	# FPU state area if need saving
+	testl	%esi,%esi
+	jz	1f
+	fnsave	(%esi)
+1:	call	*SIGF_HANDLER(%esp)
+	testl	%esi,%esi
+	jz	2f
+	frstor	(%esi)
+	jmp	2f
+
+	.globl  _C_LABEL(sigcode_xmm)
+_C_LABEL(sigcode_xmm):
+	movl	SIGF_FPSTATE(%esp),%esi	# FPU state area if need saving
+	testl	%esi,%esi
+	jz	1f
+	fxsave	(%esi)
+	fninit
+1:	call	*SIGF_HANDLER(%esp)
+	testl	%esi,%esi
+	jz	2f
+	fxrstor	(%esi)
+
+2:	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 	pushl	%eax
 	pushl	%eax			# junk to fake return address
