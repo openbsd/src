@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.50 2005/07/14 01:46:13 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.51 2005/07/18 14:50:11 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4933,6 +4933,7 @@ _C_LABEL(sigcode):
 	stda	%f48, [%l0] ASI_BLK_P
 2:
 	membar	#Sync
+	rd	%fprs, %l0		! reload fprs copy, for checking after
 	rd	%y, %l1			! in any case, save %y
 	lduw	[%fp + BIAS + 128], %o0	! sig
 	ldx	[%fp + BIAS + 128 + 8], %o1	! siginfo
