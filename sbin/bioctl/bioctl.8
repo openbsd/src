@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.10 2005/07/18 01:58:01 marco Exp $
+.\"	$OpenBSD: bioctl.8,v 1.11 2005/07/18 14:34:41 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -45,18 +45,23 @@ The options are as follows:
 .It Fl D
 Enable debug output.
 .It Fl d Ar device
-Select RAID controller e.g ami0.
-Use the -d option for controller operations that impact all disk devices.
+Select the RAID controller e.g. ami0.
+Use this option for controller operations that impact all disk devices.
 .It Fl f Ar device
-Select RAID disk e.g sd0.
+Select the RAID disk e.g. sd0.
 .It Fl h
 Online help.
 .It Fl i
-Depending on -d or -f enumerate all or only selected RAID device(s).
+Depending on whether the
+.Fl d
+or
+.Fl f
+option was selected,
+enumerate all or only the selected RAID device(s).
 .El
 .Sh SEE ALSO
-.Xr bio 4 ,
 .Xr ami 4 ,
+.Xr bio 4 ,
 .Xr scsi 4
 .Sh HISTORY
 The
