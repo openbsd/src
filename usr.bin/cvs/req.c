@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.23 2005/07/10 13:59:52 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.24 2005/07/18 08:13:03 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -582,6 +582,7 @@ cvs_req_globalopt(int reqid, char *line)
 		cvs_nolog = 1;
 		break;
 	case 'n':
+		cvs_noexec = 1;
 		break;
 	case 'Q':
 		verbosity = 0;
