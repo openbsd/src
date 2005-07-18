@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2004/06/13 21:49:17 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.31 2005/07/18 16:58:48 martin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -176,6 +176,7 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define MACH_MACP550		80
 #define MACH_MACCCLASSICII	83
 #define MACH_MACPB165		84
+#define MACH_MACPB190CS		85
 #define MACH_MACTV		88
 #define MACH_MACLC475		89
 #define MACH_MACLC475_33	90
@@ -187,6 +188,7 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define MACH_MACPB280		102
 #define MACH_MACPB280C		103
 #define MACH_MACPB150		115
+#define MACH_MACPB190		122
 
 /*
  * Machine classes.  These define subsets of the above machines.
