@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.229 2005/07/01 13:38:14 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.230 2005/07/18 11:41:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2131,6 +2131,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 		case IMSG_RECONF_LISTENER:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
+			if (nconf == NULL)
+				fatalx("IMSG_RECONF_LISTENER but no config");
 			nla = imsg.data;
 			TAILQ_FOREACH(la, conf->listen_addrs, entry)
 				if (!la_cmp(la, nla))
@@ -2138,7 +2140,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 
 			if (la == NULL) {
 				if (nla->reconf != RECONF_REINIT)
-					fatal("king bula sez: expected REINIT");
+					fatalx("king bula sez: "
+					    "expected REINIT");
 
 				if ((nla->fd = imsg_get_fd(ibuf)) == -1)
 					log_warnx("expected to receive fd for "
@@ -2157,7 +2160,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				    entry);
 			} else {
 				if (nla->reconf != RECONF_KEEP)
-					fatal("king bula sez: expected KEEP");
+					fatalx("king bula sez: expected KEEP");
 				la->reconf = RECONF_KEEP;
 			}
 
