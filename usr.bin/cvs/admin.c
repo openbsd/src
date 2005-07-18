@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.20 2005/07/14 06:50:50 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.21 2005/07/18 07:22:23 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -367,7 +367,8 @@ cvs_admin_local(CVSFILE *cf, void *arg)
 	}
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		cvs_log(LP_WARN, "I know nothing about %s", fpath);
+		if (verbosity > 1)
+			cvs_log(LP_WARN, "nothing known about %s", cf->cf_name);
 		return (0);
 	}
 

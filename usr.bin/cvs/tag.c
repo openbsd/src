@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.25 2005/07/14 06:50:50 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.26 2005/07/18 07:22:23 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -258,7 +258,8 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 	}
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		cvs_log(LP_WARN, "I know nothing about %s", fpath);
+		if (verbosity > 1)
+			cvs_log(LP_WARN, "nothing known about %s", fpath);
 		return (0);
 	}
 
