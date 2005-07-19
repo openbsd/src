@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.30 2005/07/18 02:43:26 fgsch Exp $  */
+/*      $OpenBSD: ath.c,v 1.31 2005/07/19 23:04:37 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1780,6 +1780,7 @@ int
 ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 {
 	struct ath_hal *ah = sc->sc_ah;
+	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 	struct mbuf *m;
 	struct ath_desc *ds;
@@ -1836,8 +1837,8 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 	 */
 	ds = bf->bf_desc;
 	bzero(ds, sizeof(struct ath_desc));
-
-	ds->ds_link = bf->bf_daddr;	/* link to self */
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+		ds->ds_link = bf->bf_daddr;	/* link to self */
 	ds->ds_data = bf->bf_segs[0].ds_addr;
 	ath_hal_setup_rx_desc(ah, ds
 		, m->m_len		/* buffer size */
@@ -1901,7 +1902,7 @@ ath_rx_proc(void *arg, int npending)
 		 * a self-linked list to avoid rx overruns.
 		 */
 		status = ath_hal_proc_rx_desc(ah, ds,
-				bf->bf_daddr, PA2DESC(sc, ds->ds_link));
+		    bf->bf_daddr, PA2DESC(sc, ds->ds_link));
 #ifdef AR_DEBUG
 		if (ath_debug & ATH_DEBUG_RECV_DESC)
 		    ath_printrxbuf(bf, status == HAL_OK);
@@ -2751,6 +2752,7 @@ ath_calibrate(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_channel *c;
 	HAL_CHANNEL hchan;
+	int s;
 
 	sc->sc_stats.ast_per_cal++;
 
@@ -2762,6 +2764,7 @@ ath_calibrate(void *arg)
 	hchan.channel = c->ic_freq;
 	hchan.channelFlags = ath_chan2flags(ic, c);
 
+	s = splnet();
 	DPRINTF(ATH_DEBUG_CALIBRATE,
 	    ("%s: channel %u/%x\n", __func__, c->ic_freq, c->ic_flags));
 
@@ -2780,6 +2783,7 @@ ath_calibrate(void *arg)
 		sc->sc_stats.ast_per_calfail++;
 	}
 	timeout_add(&sc->sc_cal_to, hz * ath_calinterval);
+	splx(s);
 }
 
 HAL_LED_STATE
