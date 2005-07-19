@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.162 2005/07/18 14:37:22 jsg Exp $
+$OpenBSD: usbdevs,v 1.163 2005/07/19 11:40:44 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -364,7 +364,7 @@ vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics
 vendor ASIX		0x0b95	ASIX Electronics
 vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
-vendor GREENHOUSE2	0x0bda	GREENHOUSE
+vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
@@ -953,9 +953,6 @@ product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
 /* GREENHOUSE products */
 product GREENHOUSE KANA21	0x0001	CF-writer/MP3 Player
-product GREENHOUSE2 USBKR100	0x8150	GH-USB100B Ethernet
-product GREENHOUSE2 USBKR100PNA	0x8151	GH-USB100B Ethernet PNA
-product GREENHOUSE2 RTL8187	0x8187	RTL8187
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
@@ -1574,6 +1571,11 @@ product RALINK RT2570_3		0x9020	RT2570
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
+
+/* Realtek products */
+product REALTEK RTL8150		0x8150	RTL8150
+product REALTEK RTL8151		0x8151	RTL8151 PNA
+product REALTEK RTL8187		0x8187	RTL8187
 
 /* Roland products */
 product ROLAND UA100            0x0000  UA-100 Audio I/F
