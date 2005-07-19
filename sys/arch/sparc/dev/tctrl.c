@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.15 2005/07/17 12:16:51 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.16 2005/07/19 09:36:04 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -159,6 +159,10 @@ struct tctrl_softc {
 	/* /dev/apm{,ctl} fields */
 	struct klist sc_note;
 	u_int	sc_apmflags;
+
+	/* external video control callback */
+	void (*sc_evcb)(void *, int);
+	void *sc_evdata;
 };
 
 int	tctrl_match(struct device *, void *, void *);
@@ -504,6 +508,15 @@ tctrl_read_event_status(void *arg)
 	tctrl_request(sc, &req);
 
 	v = req.rspbuf[0] * 256 + req.rspbuf[1];
+
+	/*
+	 * Read the new external status value if necessary
+	 */
+	if (v & (TS102_EVENT_STATUS_DC_STATUS_CHANGE |
+	    TS102_EVENT_STATUS_LID_STATUS_CHANGE |
+	    TS102_EVENT_STATUS_EXTERNAL_VGA_STATUS_CHANGE))
+		tctrl_read_ext_status(sc);
+
 	if (v & TS102_EVENT_STATUS_SHUTDOWN_REQUEST) {
 		printf("%s: SHUTDOWN REQUEST!\n", sc->sc_dev.dv_xname);
 	}
@@ -521,7 +534,6 @@ tctrl_read_event_status(void *arg)
 		apm_record_event(sc, APM_BATTERY_LOW);
 	}
 	if (v & TS102_EVENT_STATUS_DC_STATUS_CHANGE) {
-		tctrl_read_ext_status(sc);
 		if ((sc->sc_apmflags & SCFLAG_NOPRINT) == 0)
 			printf("%s: main power %s\n", sc->sc_dev.dv_xname,
 			    (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE) ?
@@ -534,7 +546,6 @@ tctrl_read_event_status(void *arg)
 #endif
 	}
 	if (v & TS102_EVENT_STATUS_LID_STATUS_CHANGE) {
-		tctrl_read_ext_status(sc);
 		/* blank or restore video if necessary */
 		if (sc->sc_tft_on)
 			tctrl_tft(sc);
@@ -543,6 +554,22 @@ tctrl_read_event_status(void *arg)
 		    (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) ?
 		      "closed" : "opened");
 #endif
+	}
+	if (v & TS102_EVENT_STATUS_EXTERNAL_VGA_STATUS_CHANGE) {
+		printf("%s: external vga %s\n", sc->sc_dev.dv_xname,
+		    sc->sc_ext_status & TS102_EXT_STATUS_EXTERNAL_VGA_ATTACHED ?
+		      "attached" : "detached");
+#ifdef TCTRLDEBUG
+		req.cmdbuf[0] = TS102_OP_RD_EXT_VGA_PORT;
+		req.cmdlen = 1;
+		req.rsplen = 2;
+		tctrl_request(sc, &req);
+		printf("%s: vga status %x\n", sc->sc_dev.dv_xname,
+		    req.rspbuf[0]);
+#endif
+		if (sc->sc_evcb != NULL)
+			(*sc->sc_evcb)(sc->sc_evdata, sc->sc_ext_status &
+			    TS102_EXT_STATUS_EXTERNAL_VGA_ATTACHED);
 	}
 }
 
@@ -825,6 +852,24 @@ tadpole_get_video()
 	status = sc->sc_tft_on ? TV_ON : 0;
 
 	return status;
+}
+
+void
+tadpole_register_extvideo(void (*cb)(void *, int), void *data)
+{
+	struct tctrl_softc *sc;
+
+	if (tctrl_cd.cd_devs == NULL
+	    || tctrl_cd.cd_ndevs == 0
+	    || tctrl_cd.cd_devs[0] == NULL) {
+		return;
+	}
+
+	sc = (struct tctrl_softc *)tctrl_cd.cd_devs[0];
+	sc->sc_evcb = cb;
+	sc->sc_evdata = data;
+
+	(*cb)(data, sc->sc_ext_status & TS102_EXT_STATUS_EXTERNAL_VGA_ATTACHED);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.37 2005/07/09 22:22:12 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.38 2005/07/19 09:36:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, Miodrag Vallat.
@@ -61,6 +61,7 @@
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/sbusvar.h>
 
+#include <dev/ic/ibm525reg.h>
 #include <dev/ic/p9000.h>
 
 #include "tctrl.h"
@@ -68,19 +69,31 @@
 #include <sparc/dev/tctrlvar.h>
 #endif
 
+/*
+ * SBus registers mappings
+ */
+#define	P9100_NREG		4
+#define	P9100_REG_CTL		0
+#define	P9100_REG_CMD		1
+#define	P9100_REG_VRAM		2
+#define	P9100_REG_CONFIG	3
+
 /* per-display variables */
 struct p9100_softc {
-	struct	sunfb sc_sunfb;		/* common base part */
-	struct	sbusdev sc_sd;		/* sbus device */
-	struct	rom_reg	sc_phys;	/* phys address description */
+	struct sunfb	sc_sunfb;	/* common base part */
+	struct sbusdev	sc_sd;		/* sbus device */
+	struct rom_reg	sc_phys;
 	volatile u_int8_t *sc_cmd;	/* command registers (dac, etc) */
 	volatile u_int8_t *sc_ctl;	/* control registers (draw engine) */
-	union	bt_cmap sc_cmap;	/* Brooktree color map */
-	struct	intrhand sc_ih;
+	union bt_cmap	sc_cmap;	/* Brooktree color map */
+	struct intrhand	sc_ih;
+	int		sc_flags;
+#define	SCF_EXTERNAL		0x01	/* external video enabled */
 	u_int32_t	sc_junk;	/* throwaway value */
 };
 
 void	p9100_burner(void *, u_int, u_int);
+void	p9100_external_video(void *, int);
 int	p9100_intr(void *);
 int	p9100_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static __inline__
@@ -89,6 +102,8 @@ void	p9100_loadcmap_immediate(struct p9100_softc *, u_int, u_int);
 paddr_t	p9100_mmap(void *, off_t, int);
 int	p9100_pick_romfont(struct p9100_softc *);
 void	p9100_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+u_int	p9100_read_ramdac(struct p9100_softc *, u_int);
+void	p9100_write_ramdac(struct p9100_softc *, u_int, u_int);
 
 struct wsdisplay_accessops p9100_accessops = {
 	p9100_ioctl,
@@ -120,14 +135,6 @@ struct cfattach pnozz_ca = {
 struct cfdriver pnozz_cd = {
 	NULL, "pnozz", DV_DULL
 };
-
-/*
- * SBus registers mappings
- */
-#define	P9100_NREG		3
-#define	P9100_REG_CTL		0
-#define	P9100_REG_CMD		1
-#define	P9100_REG_VRAM		2
 
 /*
  * IBM RGB525 RAMDAC registers
@@ -227,18 +234,20 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	int isconsole, fontswitch, clear;
 
 #ifdef DIAGNOSTIC
-	if (ca->ca_ra.ra_nreg < P9100_NREG) {
+	if (ca->ca_ra.ra_nreg < P9100_NREG - 1) {
 		printf(": expected %d registers, got only %d\n",
 		    P9100_NREG, ca->ca_ra.ra_nreg);
 		return;
 	}
 #endif
 
+	sc->sc_flags = 0;
+
 	sc->sc_phys = ca->ca_ra.ra_reg[P9100_REG_VRAM];
 
-	sc->sc_ctl = mapiodev(&(ca->ca_ra.ra_reg[P9100_REG_CTL]), 0,
+	sc->sc_ctl = mapiodev(&ca->ca_ra.ra_reg[P9100_REG_CTL], 0,
 	    ca->ca_ra.ra_reg[P9100_REG_CTL].rr_len);
-	sc->sc_cmd = mapiodev(&(ca->ca_ra.ra_reg[P9100_REG_CMD]), 0,
+	sc->sc_cmd = mapiodev(&ca->ca_ra.ra_reg[P9100_REG_CMD], 0,
 	    ca->ca_ra.ra_reg[P9100_REG_CMD].rr_len);
 
 	node = ca->ca_ra.ra_node;
@@ -266,7 +275,9 @@ p9100attach(struct device *parent, struct device *self, void *args)
 		fb_depth = 8;
 		break;
 	}
+
 	fb_setsize(&sc->sc_sunfb, fb_depth, 800, 600, node, ca->ca_bustype);
+
 	ri->ri_bits = mapiodev(&sc->sc_phys, 0,
 	    round_page(sc->sc_sunfb.sf_fbsize));
 	ri->ri_hw = sc;
@@ -300,6 +311,18 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	 * XXX there should be a rasops "clear margins" feature
 	 */
 	fontswitch = p9100_pick_romfont(sc);
+
+	/*
+	 * Register the external video control callback with tctrl; tctrl
+	 * will invoke it immediately to set the appropriate behaviour.
+	 * If tctrl is not configured, simply enable external video.
+	 */
+#if NTCTRL > 0
+	tadpole_register_extvideo(p9100_external_video, sc);
+#else
+	p9100_external_video(sc, 1);
+#endif
+
 	clear = !isconsole || fontswitch;
 	fbwscons_init(&sc->sc_sunfb, clear ? RI_CLEAR : 0);
 	if (!clear) {
@@ -435,7 +458,7 @@ p9100_mmap(void *v, off_t offset, int prot)
 {
 	struct p9100_softc *sc = v;
 
-	if (offset & PGOFSET)
+	if ((offset & PAGE_MASK) != 0)
 		return (-1);
 
 	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
@@ -481,6 +504,31 @@ p9100_loadcmap_deferred(struct p9100_softc *sc, u_int start, u_int ncolors)
 	P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE,
 	    IER_MASTER_ENABLE | IER_MASTER_INTERRUPT |
 	    IER_VBLANK_ENABLE | IER_VBLANK_INTERRUPT);
+}
+
+u_int
+p9100_read_ramdac(struct p9100_softc *sc, u_int reg)
+{
+	P9100_SELECT_DAC(sc);
+
+	P9100_WRITE_RAMDAC(sc, IBM525_IDXLOW, (reg & 0xff));
+	P9100_FLUSH_DAC(sc);
+	P9100_WRITE_RAMDAC(sc, IBM525_IDXHIGH, ((reg >> 8) & 0xff));
+	P9100_FLUSH_DAC(sc);
+	return (P9100_READ_RAMDAC(sc, IBM525_REGDATA));
+}
+
+void
+p9100_write_ramdac(struct p9100_softc *sc, u_int reg, u_int value)
+{
+	P9100_SELECT_DAC(sc);
+
+	P9100_WRITE_RAMDAC(sc, IBM525_IDXLOW, (reg & 0xff));
+	P9100_FLUSH_DAC(sc);
+	P9100_WRITE_RAMDAC(sc, IBM525_IDXHIGH, ((reg >> 8) & 0xff));
+	P9100_FLUSH_DAC(sc);
+	P9100_WRITE_RAMDAC(sc, IBM525_REGDATA, value);
+	P9100_FLUSH_DAC(sc);
 }
 
 void
@@ -834,4 +882,28 @@ p9100_pick_romfont(struct p9100_softc *sc)
 	}
 	
 	return (0);
+}
+
+/*
+ * External video control
+ */
+void
+p9100_external_video(void *v, int on)
+{
+	struct p9100_softc *sc = v;
+	int s;
+
+	s = splhigh();
+
+	if (on) {
+		p9100_write_ramdac(sc, IBM525_POWER,
+		    p9100_read_ramdac(sc, IBM525_POWER) & ~P_DAC_PWR_DISABLE);
+		sc->sc_flags |= SCF_EXTERNAL;
+	} else {
+		p9100_write_ramdac(sc, IBM525_POWER,
+		    p9100_read_ramdac(sc, IBM525_POWER) | P_DAC_PWR_DISABLE);
+		sc->sc_flags &= ~SCF_EXTERNAL;
+	}
+
+	splx(s);
 }
