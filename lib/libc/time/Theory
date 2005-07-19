@@ -1,5 +1,5 @@
-$OpenBSD: Theory,v 1.9 2004/06/28 14:47:41 millert Exp $
-@(#)Theory	7.15
+$OpenBSD: Theory,v 1.10 2005/07/19 15:51:29 millert Exp $
+@(#)Theory	7.16
 
 
 ----- Outline -----
@@ -132,8 +132,7 @@ These are the extensions that have been made to the POSIX.1 functions:
 	environment variable; portable applications should not, however, rely
 	on this behavior since it's not the way SVR2 systems behave.)
 
-*	These functions can account for leap seconds, thanks to Bradley White
-	(bww@k.cs.cmu.edu).
+*	These functions can account for leap seconds, thanks to Bradley White.
 
 Points of interest to folks with other systems:
 
@@ -360,7 +359,7 @@ and (in Paris only) 1871-05-06 through 1871-05-23.
 
 Russia
 
-From Chris Carrier <72157.3334@CompuServe.COM> (1996-12-02):
+From Chris Carrier (1996-12-02):
 On 1929-10-01 the Soviet Union instituted an ``Eternal Calendar''
 with 30-day months plus 5 holidays, with a 5-day week.
 On 1931-12-01 it changed to a 6-day week; in 1934 it reverted to the
@@ -375,7 +374,7 @@ by Frank Parise (1982, Facts on File, ISBN 0-8719-6467-8), page 377.  But:
 
 From: Petteri Sulonen (via Usenet)
 Date: 14 Jan 1999 00:00:00 GMT
-Message-ID: <Petteri.Sulonen-1401991626030001@lapin-kulta.in.helsinki.fi>
+...
 
 If your source is correct, how come documents between 1929 -- 1940 were
 still dated using the conventional, Gregorian calendar?
@@ -388,7 +387,7 @@ Executive Committee of the Supreme Soviet, if you like.
 
 Sweden (and Finland)
 
-From: msb@sq.com (Mark Brader)
+From: Mark Brader
 <a href="news:1996Jul6.012937.29190@sq.com">
 Subject: Re: Gregorian reform -- a part of locale?
 </a>
@@ -416,11 +415,11 @@ kalendervasen" by Lars-Olof Lode'n (no date was given).)
 
 Grotefend's data
 
-From: "Michael Palmer" <mpalmer@netcom.com> [with one obvious typo fixed]
+From: "Michael Palmer" [with one obvious typo fixed]
 Subject: Re: Gregorian Calendar (was Re: Another FHC related question
 Newsgroups: soc.genealogy.german
 Date: Tue, 9 Feb 1999 02:32:48 -800
-Message-ID: <199902091032.CAA09644@netcom10.netcom.com>
+...
 
 The following is a(n incomplete) listing, arranged chronologically, of
 European states, with the date they converted from the Julian to the
