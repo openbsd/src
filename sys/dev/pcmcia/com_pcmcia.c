@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.39 2005/01/27 17:04:55 millert Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.40 2005/07/19 15:39:16 deraadt Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -166,12 +166,12 @@ struct com_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 };
 
-#if NCOM_PCMCIA
+#if NCOM
 struct cfattach com_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
 	com_pcmcia_detach, com_pcmcia_activate
 };
-#elif NPCCOM_PCMCIA
+#elif NPCCOM
 struct cfattach pccom_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
 	com_pcmcia_detach, com_pcmcia_activate
