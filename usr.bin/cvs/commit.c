@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.40 2005/07/14 06:50:50 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.41 2005/07/19 00:32:26 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -61,7 +61,7 @@ struct cvs_cmd cvs_cmd_commit = {
 	cvs_commit_local,
 	NULL,
 	NULL,
-	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
+	CVS_CMD_SENDDIR | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
 };
 
 static char *mfile = NULL;
