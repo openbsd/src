@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.35 2005/07/13 16:20:44 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.36 2005/07/19 01:40:29 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -727,7 +727,7 @@ cvs_rcs_getpath(CVSFILE *file, char *buf, size_t len)
 	root = CVS_DIR_ROOT(file);
 	repo = CVS_DIR_REPO(file);
 
-	l = snprintf(buf, len, "%s/%s/%s%s",  
+	l = snprintf(buf, len, "%s/%s/%s%s",
 	    root->cr_dir, repo, file->cf_name, RCS_FILE_EXT);
 	if (l == -1 || l >= (int)len) {
 		errno = ENAMETOOLONG;
