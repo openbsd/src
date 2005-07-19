@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.60 2005/07/18 06:58:48 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.61 2005/07/19 00:51:01 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -316,10 +316,10 @@ cvs_connect(struct cvsroot *root)
 		cvs_log(LP_WARN, "failed to get remote version");
 
 	/* now share our global options with the server */
-	if ((verbosity == 1) &&
+	if ((verbosity <= 1) &&
 	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-q") < 0))
 		return (-1);
-	else if ((verbosity == 0) &&
+	if ((verbosity == 0) &&
 	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-Q") < 0))
 		return (-1);
 
