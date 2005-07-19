@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.5 2005/07/07 19:29:24 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.6 2005/07/19 17:46:12 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -52,6 +52,8 @@ volatile sig_atomic_t		sigchld = 0;
 static void	got_sigchld(int);
 static void	sig_to_child(int);
 static void	m_priv_pfkey_snap(int);
+static ssize_t	m_write(int, void *, size_t);
+static ssize_t	m_read(int, void *, size_t);
 
 pid_t
 monitor_init(void)
@@ -130,7 +132,7 @@ monitor_drain_input(void)
 	u_int8_t	tmp;
 
 	ioctl(m_state.s, FIONBIO, &one);
-	while (read(m_state.s, &tmp, 1) > 0)
+	while (m_read(m_state.s, &tmp, 1) > 0)
 		;
 	ioctl(m_state.s, FIONBIO, 0);
 }
@@ -156,7 +158,7 @@ monitor_loop(void)
 		}
 
 		/* Wait for next snapshot task. Disregard read data. */
-		if ((r = read(m_state.s, &v, sizeof v)) != sizeof v) {
+		if ((r = m_read(m_state.s, &v, sizeof v)) < 1) {
 			if (r == -1)
 				log_err(0, "monitor_loop: read() ");
 			break;
@@ -180,13 +182,13 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 
 	/* We write a (any) value to the monitor socket to start a snapshot. */
 	v = 0;
-	if (write(m_state.s, &v, sizeof v) < 1)
+	if (m_write(m_state.s, &v, sizeof v) < 1)
 		return -1;
 
 	/* Read SADB data. */
 	*sadb = *spd = NULL;
 	*spdsize = 0;
-	if (read(m_state.s, sadbsize, sizeof *sadbsize) < 1)
+	if (m_read(m_state.s, sadbsize, sizeof *sadbsize) < 1)
 		return -1;
 	if (*sadbsize) {
 		*sadb = (u_int8_t *)malloc(*sadbsize);
@@ -195,17 +197,16 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 			monitor_drain_input();
 			return -1;
 		}
-		rbytes = read(m_state.s, *sadb, *sadbsize);
-		if (rbytes != *sadbsize) {
-			if (rbytes > 0)
-				memset(*sadb, 0, rbytes);
+		rbytes = m_read(m_state.s, *sadb, *sadbsize);
+		if (rbytes < 1) {
+			memset(*sadb, 0, *sadbsize);
 			free(*sadb);
 			return -1;
 		}
 	}
 
 	/* Read SPD data */
-	if (read(m_state.s, spdsize, sizeof *spdsize) < 1) {
+	if (m_read(m_state.s, spdsize, sizeof *spdsize) < 1) {
 		if (*sadbsize) {
 			memset(*sadb, 0, *sadbsize);
 			free(*sadb);
@@ -223,10 +224,9 @@ monitor_get_pfkey_snap(u_int8_t **sadb, u_int32_t *sadbsize, u_int8_t **spd,
 			}
 			return -1;
 		}
-		rbytes = read(m_state.s, *spd, *spdsize);
-		if (rbytes != *spdsize) {
-			if (rbytes > 0)
-				memset(*spd, 0, rbytes);
+		rbytes = m_read(m_state.s, *spd, *spdsize);
+		if (rbytes < 1) {
+			memset(*spd, 0, *spdsize);
 			free(*spd);
 			if (*sadbsize) {
 				memset(*sadb, 0, *sadbsize);
@@ -304,12 +304,12 @@ m_priv_pfkey_snap(int s)
   out:
 	/* Return SADB data */
 	v = (u_int32_t)sadb_buflen;
-	if (write(s, &v, sizeof v) == -1) {
+	if (m_write(s, &v, sizeof v) == -1) {
 		log_err("m_priv_pfkey_snap: write");
 		return;
 	}
 	if (sadb_buflen) {
-		if (write(s, sadb_buf, sadb_buflen) == -1)
+		if (m_write(s, sadb_buf, sadb_buflen) == -1)
 			log_err("m_priv_pfkey_snap: write");
 		memset(sadb_buf, 0, sadb_buflen);
 		free(sadb_buf);
@@ -317,15 +317,61 @@ m_priv_pfkey_snap(int s)
 
 	/* Return SPD data */
 	v = (u_int32_t)spd_buflen;
-	if (write(s, &v, sizeof v) == -1) {
+	if (m_write(s, &v, sizeof v) == -1) {
 		log_err("m_priv_pfkey_snap: write");
 		return;
 	}
 	if (spd_buflen) {
-		if (write(s, spd_buf, spd_buflen) == -1)
+		if (m_write(s, spd_buf, spd_buflen) == -1)
 			log_err("m_priv_pfkey_snap: write");
 		memset(spd_buf, 0, spd_buflen);
 		free(spd_buf);
 	}
 	return;
+}
+
+ssize_t
+m_write(int sock, void *buf, size_t len)
+{
+	ssize_t n;
+	size_t pos = 0;
+	char *ptr = buf;
+
+	while (len > pos) {
+		switch (n = write(sock, ptr + pos, len - pos)) {
+		case -1:
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+			/* FALLTHROUGH */
+		case 0:
+			return n;
+			/* NOTREACHED */
+		default:
+			pos += n;
+		}
+	}
+	return pos;
+}
+
+ssize_t
+m_read(int sock, void *buf, size_t len)
+{
+	ssize_t n;
+	size_t pos = 0;
+	char *ptr = buf;
+
+	while (len > pos) {
+		switch (n = read(sock, ptr + pos, len - pos)) {
+		case -1:
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+			/* FALLTHROUGH */
+		case 0:
+			return n;
+			/* NOTREACHED */
+		default:
+			pos += n;
+		}
+	}
+	return pos;
 }
