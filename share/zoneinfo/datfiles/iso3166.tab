@@ -1,9 +1,9 @@
-# $OpenBSD: iso3166.tab,v 1.13 2005/07/05 02:21:55 millert Exp $
+# $OpenBSD: iso3166.tab,v 1.14 2005/07/19 15:48:37 millert Exp $
 # ISO 3166 alpha-2 country codes
 #
-# @(#)iso3166.tab	1.16
+# @(#)iso3166.tab	1.17
 #
-# From Paul Eggert <eggert@twinsun.com> (2004-06-14):
+# From Paul Eggert (2004-06-14):
 #
 # This file contains a table with the following columns:
 # 1.  ISO 3166-1 alpha-2 country code, current as of
