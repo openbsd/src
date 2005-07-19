@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.39 2005/07/15 08:39:14 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.40 2005/07/19 02:18:05 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -58,7 +58,7 @@ struct cvs_cmd cvs_cmd_log = {
 	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
 	"bd:hlNRr:s:tw:",
 	NULL,
-	CF_RECURSE,
+	CF_NOSYMS | CF_IGNORE | CF_SORT | CF_RECURSE,
 	cvs_getlog_init,
 	cvs_getlog_pre_exec,
 	cvs_getlog_remote,
@@ -76,7 +76,7 @@ struct cvs_cmd cvs_cmd_rlog = {
 	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
 	"d:hlRr:",
 	NULL,
-	CF_RECURSE,
+	CF_NOSYMS | CF_IGNORE | CF_SORT | CF_RECURSE,
 	cvs_getlog_init,
 	cvs_getlog_pre_exec,
 	cvs_getlog_remote,
