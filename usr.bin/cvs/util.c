@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.36 2005/07/19 01:40:29 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.37 2005/07/19 15:36:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -87,17 +87,13 @@ pid_t cvs_exec_pid;
 int
 cvs_readrepo(const char *dir, char *dst, size_t len)
 {
-	int l;
-	size_t dlen;
+	size_t dlen, l;
 	FILE *fp;
 	char repo_path[MAXPATHLEN];
 
-	l = snprintf(repo_path, sizeof(repo_path), "%s/CVS/Repository", dir);
-	if (l == -1 || l >= (int)sizeof(repo_path)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", repo_path);
+	l = cvs_path_cat(dir, "CVS/Repository", repo_path, sizeof(repo_path));
+	if (l >= sizeof(repo_path))
 		return (NULL);
-        }
 
 	fp = fopen(repo_path, "r");
 	if (fp == NULL)
@@ -426,18 +422,15 @@ cvs_freeargv(char **argv, int argc)
 int
 cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath)
 {
-	int l;
+	size_t l;
 	char path[MAXPATHLEN];
 	FILE *fp;
 	CVSENTRIES *ef;
 	struct stat st;
 
-	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_CVSDIR, dpath);
-	if (l == -1 || l >= (int)sizeof(path)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", path);
+	l = cvs_path_cat(dpath, CVS_PATH_CVSDIR, path, sizeof(path));
+	if (l >= sizeof(path))
 		return (-1);
-	}
 
 	if ((mkdir(path, 0755) == -1) && (errno != EEXIST)) {
 		cvs_log(LP_ERRNO, "failed to create directory %s", path);
@@ -448,12 +441,9 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath)
 	ef = cvs_ent_open(dpath, O_WRONLY);
 	(void)cvs_ent_close(ef);
 
-	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_ROOTSPEC, dpath);
-	if (l == -1 || l >= (int)sizeof(path)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", path);
+	l = cvs_path_cat(dpath, CVS_PATH_ROOTSPEC, path, sizeof(path));
+	if (l >= sizeof(path))
 		return (-1);
-	}
 
 	if ((stat(path, &st) != 0) && (errno == ENOENT)) {
 		fp = fopen(path, "w");
@@ -466,12 +456,9 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath)
 		(void)fclose(fp);
 	}
 
-	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_REPOSITORY, dpath);
-	if (l == -1 || l >= (int)sizeof(path)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", path);
+	l = cvs_path_cat(dpath, CVS_PATH_REPOSITORY, path, sizeof(path));
+	if (l >= sizeof(path))
 		return (-1);
-	}
 
 	if ((stat(path, &st) != 0) && (errno == ENOENT)) {
 		fp = fopen(path, "w");
