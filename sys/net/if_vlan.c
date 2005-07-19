@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.57 2005/07/18 19:18:33 camield Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.58 2005/07/19 11:50:20 camield Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -42,12 +42,10 @@
  * if_start(), rewrite them for use by the real outgoing interface,
  * and ask it to send them.
  *
- * Some devices support 802.1Q tag insertion and extraction in firmware.
- * The vlan interface behavior changes when the IFCAP_VLAN_HWTAGGING
- * capability is set on the parent.  In this case, vlan_start() will not
- * modify the ethernet header.  On input, the parent can call vlan_input_tag()
- * directly in order to supply us with an incoming mbuf and the vlan
- * tag value that goes with it.
+ * Some devices support 802.1Q tag insertion in firmware.  The
+ * vlan interface behavior changes when the IFCAP_VLAN_HWTAGGING
+ * capability is set on the parent.  In this case, vlan_start()
+ * will not modify the ethernet header.
  */
 
 #include "vlan.h"
@@ -254,69 +252,6 @@ vlan_start(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return;
-}
-
-int
-vlan_input_tag(struct mbuf *m, u_int16_t t)
-{
-	struct ifvlan *ifv;
-	struct ether_vlan_header vh;
-
-	t = EVL_VLANOFTAG(t);
-	LIST_FOREACH(ifv, &vlan_tagh[TAG_HASH(t)], ifv_list) {
-		if (m->m_pkthdr.rcvif == ifv->ifv_p && t == ifv->ifv_tag)
-			break;
-	}
-
-	if (ifv == NULL) {
-		if (m->m_pkthdr.len < ETHER_HDR_LEN) {
-			m_freem(m);
-			return (-1);
-		}
-		m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
-		vh.evl_proto = vh.evl_encap_proto;
-		vh.evl_tag = htons(t);
-		vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
-		m_adj(m, ETHER_HDR_LEN);
-		m = m_prepend(m, sizeof(struct ether_vlan_header), M_DONTWAIT);
-		if (m == NULL)
-			return (-1);
-		m->m_pkthdr.len += sizeof(struct ether_vlan_header);
-		if (m->m_len < sizeof(struct ether_vlan_header) &&
-		    (m = m_pullup(m, sizeof(struct ether_vlan_header))) == NULL)
-			return (-1);
-		m_copyback(m, 0, sizeof(struct ether_vlan_header), &vh);
-		ether_input_mbuf(m->m_pkthdr.rcvif, m);
-		return (-1);
-	}
-
-	if ((ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
-	    (IFF_UP|IFF_RUNNING)) {
-		m_freem(m);
-		return (-1);
-	}
-
-	/*
-	 * Having found a valid vlan interface corresponding to
-	 * the given source interface and vlan tag, run the
-	 * the real packet through ether_input().
-	 */
-	m->m_pkthdr.rcvif = &ifv->ifv_if;
-
-#if NBPFILTER > 0
-	if (ifv->ifv_if.if_bpf) {
-		/*
-		 * Do the usual BPF fakery.  Note that we don't support
-		 * promiscuous mode here, since it would require the
-		 * drivers to know about VLANs and we're not ready for
-		 * that yet.
-		 */
-		bpf_mtap(ifv->ifv_if.if_bpf, m);
-	}
-#endif
-	ifv->ifv_if.if_ipackets++;
-	ether_input_mbuf(&ifv->ifv_if, m);
-	return 0;
 }
 
 /*

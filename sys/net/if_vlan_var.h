@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.15 2005/06/07 17:35:17 camield Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.16 2005/07/19 11:50:20 camield Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -93,6 +93,5 @@ struct	vlanreq {
 
 #ifdef _KERNEL
 extern	int vlan_input(struct ether_header *eh, struct mbuf *m);
-extern	int vlan_input_tag(struct mbuf *m, u_int16_t t);
 #endif /* _KERNEL */
 #endif /* _NET_IF_VLAN_VAR_H_ */
