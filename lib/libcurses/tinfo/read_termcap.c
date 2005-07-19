@@ -920,6 +920,7 @@ _nc_read_termcap_entry
 #endif
 #if USE_GETCAP
     char *p, tc[TBUFSIZ];
+    int status;
     static char *source;
     static int lineno;
 
@@ -930,8 +931,8 @@ _nc_read_termcap_entry
 	_nc_set_source("TERMCAP");
     } else {
 	/* we're using getcap(3) */
-	if (_nc_tgetent(tc, &source, &lineno, tn) < 0)
-	    return (ERR);
+	if ((status = _nc_tgetent(tc, &source, &lineno, tn)) < 0)
+	    return (status == -1 ? 0 : -1);
 
 	_nc_curr_line = lineno;
 	_nc_set_source(source);
