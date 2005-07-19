@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.24 2005/07/18 08:13:03 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.25 2005/07/19 15:30:37 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -130,7 +130,7 @@ struct cvs_reqhdlr {
 	{ cvs_req_command       },
 	{ NULL                  },
 	{ NULL                  },
-	{ NULL                  },
+	{ cvs_req_command       },
 	{ cvs_req_command       },	/* 60 */
 	{ NULL                  },
 	{ cvs_req_command       },

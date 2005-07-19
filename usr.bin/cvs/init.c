@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.17 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.18 2005/07/19 15:30:37 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -49,6 +49,7 @@ struct cvsroot_file {
 	mode_t  cf_mode;
 } cvsroot_files[] = {
 	{ CVS_PATH_ROOT,   CFT_DIR, (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) },
+	{ CVS_PATH_EMPTYDIR, CFT_DIR, (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) },
 	{ CVS_PATH_COMMITINFO,  CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_CONFIG,      CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_CVSIGNORE,   CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
@@ -63,7 +64,8 @@ struct cvsroot_file {
 	{ CVS_PATH_VERIFYMSG,   CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 };
 
-int cvs_init_local(struct cvsroot *);
+static int cvs_init_pre_exec     (struct cvsroot *);
+static int cvs_init_create_files (struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_init = {
 	CVS_OP_INIT, CVS_REQ_INIT, "init",
@@ -74,7 +76,7 @@ struct cvs_cmd cvs_cmd_init = {
 	NULL,
 	0,
 	NULL,
-	NULL,
+	cvs_init_pre_exec,
 	NULL,
 	NULL,
 	NULL,
@@ -83,33 +85,66 @@ struct cvs_cmd cvs_cmd_init = {
 };
 
 /*
- * cvs_init_local()
+ * cvs_init_pre_exec()
  *
- * Local handler for the "cvs init" command.
+ * Local/remote handler for the "cvs init" command.
  * Returns 0 on success, -1 on failure.
  */
-int
-cvs_init_local(struct cvsroot *root)
+static int
+cvs_init_pre_exec(struct cvsroot *root)
 {
-	int fd, l;
+	if (root->cr_method == CVS_METHOD_LOCAL) {
+		if (cvs_init_create_files(root) < 0)
+			return (CVS_EX_FILE);
+	}
+
+	return (0);
+}
+
+/*
+ * cvs_init_create_files
+ *
+ * Create all required files for the "cvs init" command.
+ * Used by the local handlers.
+ * Returns 0 on success, -1 on failure.
+ *
+ */
+static int
+cvs_init_create_files(struct cvsroot *root)
+{
+	size_t len;
+	int fd;
 	u_int i;
 	char path[MAXPATHLEN];
 	RCSFILE *rfp;
+	struct stat st;
 
-	for (i = 0; i < sizeof(cvsroot_files)/sizeof(cvsroot_files[i]); i++) {
-		l = snprintf(path, sizeof(path), "%s/%s", root->cr_dir,
-		    cvsroot_files[i].cf_path);
-		if (l == -1 || l >= (int)sizeof(path)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", path);
-			return (-1);
+	/* Create repository root directory if it does not already exist */
+	if (mkdir(root->cr_dir, 0777) == -1) {
+		if (!(errno == EEXIST || (errno == EACCES &&
+		    (stat(root->cr_dir, &st) == 0) && S_ISDIR(st.st_mode)))) {
+			cvs_log(LP_ERRNO, "cannot make directory %s",
+			    root->cr_dir);
+			return (CVS_EX_FILE);
 		}
+	}
+
+	/* Create the repository administrative files */
+	for (i = 0; i < sizeof(cvsroot_files)/sizeof(cvsroot_files[i]); i++) {
+		len = cvs_path_cat(root->cr_dir, cvsroot_files[i].cf_path,
+		    path, sizeof(path));
+		if (len >= sizeof(path))
+			return (-1);
 
 		if (cvsroot_files[i].cf_type == CFT_DIR) {
 			if (mkdir(path, cvsroot_files[i].cf_mode) == -1) {
-				cvs_log(LP_ERRNO, "failed to create `%s'",
-				    path);
-				return (CVS_EX_FILE);
+				if (!(errno == EEXIST || (errno == EACCES &&
+				    (stat(path, &st) == 0) &&
+				    S_ISDIR(st.st_mode)))) {
+					cvs_log(LP_ERRNO,
+					    "cannot make directory %s", path);
+					return (CVS_EX_FILE);
+				}
 			}
 		} else if (cvsroot_files[i].cf_type == CFT_FILE) {
 			fd = open(path, O_WRONLY|O_CREAT|O_EXCL,
