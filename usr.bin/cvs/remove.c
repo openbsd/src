@@ -1,7 +1,7 @@
-/*	$OpenBSD: remove.c,v 1.19 2005/07/11 07:51:01 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.20 2005/07/20 06:59:27 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
+ * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,11 +42,13 @@
 extern char *__progname;
 
 
-static int cvs_remove_init (struct cvs_cmd *, int, char **, int *);
+static int cvs_remove_init   (struct cvs_cmd *, int, char **, int *);
 static int cvs_remove_remote (CVSFILE *, void *);
-static int cvs_remove_local (CVSFILE *, void *);
+static int cvs_remove_local  (CVSFILE *, void *);
+static int cvs_remove_file   (const char *);
 
 static int	force_remove = 0;	/* -f option */
+static int	nuked = 0;
 
 struct cvs_cmd cvs_cmd_remove = {
 	CVS_OP_REMOVE, CVS_REQ_REMOVE, "remove",
@@ -107,7 +109,7 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
 			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cf));
+			    cf->cf_name);
 		else
 			ret = cvs_senddir(root, cf);
 
@@ -118,21 +120,14 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	/* if -f option is used, physically remove the file */
-	if ((force_remove == 1) && !cvs_noexec) {
-		if((unlink(fpath) == -1) && (errno != ENOENT)) {
-			cvs_log(LP_ERRNO,
-			    "failed to unlink `%s'", fpath);
-			return (CVS_EX_FILE);
-		}
-	}
+	if (cvs_remove_file(fpath) < 0)
+		return (CVS_EX_FILE);
 
 	if (cvs_sendentry(root, cf) < 0)
 		return (CVS_EX_PROTO);
 
 	if (cf->cf_cvstat != CVS_FST_LOST && force_remove != 1) {
-		if (cvs_sendreq(root, CVS_REQ_MODIFIED,
-		    CVS_FILE_NAME(cf)) < 0) {
+		if (cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name < 0)) {
 			return (CVS_EX_PROTO);
 		}
 
@@ -146,15 +141,88 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 static int
 cvs_remove_local(CVSFILE *cf, void *arg)
 {
+	int existing, removed;
+	char fpath[MAXPATHLEN];
+
+	existing = removed = 0;
+
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
 			cvs_log(LP_INFO, "Removing %s", cf->cf_name);
 		return (0);
 	}
 
-	cvs_log(LP_INFO, "scheduling file `%s' for removal", cf->cf_name);
-	cvs_log(LP_INFO, "use `%s commit' to remove this file permanently",
-	    __progname);
+	if (cvs_cmdop != CVS_OP_SERVER) {
+		cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+		if (cvs_remove_file(fpath) < 0)
+			return (CVS_EX_FILE);
+	}
+
+	if (!nuked) {
+		existing++;
+		if (verbosity > 1)
+			cvs_log(LP_WARN, "file `%s' still in working directory",
+			    cf->cf_name);
+	} else if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+		if (verbosity > 1)
+			cvs_log(LP_WARN, "nothing known about `%s'",
+			    cf->cf_name);
+		return (0);
+	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
+		/* XXX remove ,t file */
+		if (verbosity > 1)
+			cvs_log(LP_INFO, "removed `%s'", cf->cf_name);
+		return (0);
+	} else if (cf->cf_cvstat == CVS_FST_REMOVED) {
+		if (verbosity > 1 )
+			cvs_log(LP_WARN,
+			    "file `%s' already scheduled for removal",
+			    cf->cf_name);
+		return (0);
+	} else {
+		if (verbosity > 1)
+			cvs_log(LP_INFO, "scheduling file `%s' for removal",
+			    cf->cf_name);
+		removed++;
+	}
+
+	if (removed) {
+		if (verbosity > 0)
+			cvs_log(LP_INFO, "use '%s commit' to remove %s "
+			    "permanently", __progname,
+			    (removed == 1) ? "file file" : "these files");
+		return (0);
+	}
+
+	if (existing) {
+		cvs_log(LP_WARN, ((existing == 1) ?
+		    "%d file exists; remove it first" :
+		    "%d files exist; remove them first"), existing);
+		return (0);
+	}
+
+	return (0);
+}
+
+/*
+ * cvs_remove_file()
+ *
+ * Physically remove the file.
+ * Used by both remote and local handlers.
+ * Returns 0 on success, -1 on failure.
+ */
+static
+int cvs_remove_file(const char *fpath)
+{
+	/* if -f option is used, physically remove the file */
+	if ((force_remove == 1) && !cvs_noexec) {
+		if((unlink(fpath) == -1) && (errno != ENOENT)) {
+			cvs_log(LP_ERRNO, "unable to remove %s", fpath);
+			return (-1);
+		}
+		nuked++;
+	}
 
 	return (0);
 }
