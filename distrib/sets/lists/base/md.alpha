@@ -98,7 +98,7 @@
 ./usr/lib/libusbhid.so.3.0
 ./usr/lib/libutil.so.11.0
 ./usr/lib/libwrap.so.4.0
-./usr/lib/libz.so.4.0
+./usr/lib/libz.so.4.1
 ./usr/libdata/perl5/alpha-openbsd
 ./usr/libdata/perl5/alpha-openbsd/5.8.6
 ./usr/libdata/perl5/alpha-openbsd/5.8.6/.packlist
