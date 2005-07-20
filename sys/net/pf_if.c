@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.39 2005/06/06 03:44:21 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.40 2005/07/20 17:06:30 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -119,7 +119,6 @@ pfi_kif_get(const char *kif_name)
 	TAILQ_INIT(&kif->pfik_dynaddrs);
 
 	RB_INSERT(pfi_ifhead, &pfi_ifs, kif);
-
 	return (kif);
 }
 
@@ -272,9 +271,9 @@ pfi_detach_ifgroup(struct ifg_group *ifg)
 	s = splsoftnet();
 	pfi_update++;
 
-	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	kif->pfik_group = NULL;
 	ifg->ifg_pf_kif = NULL;
+	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	splx(s);
 }
 
