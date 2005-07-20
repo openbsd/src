@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.23 2005/07/20 03:14:26 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.24 2005/07/20 03:20:06 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -451,8 +451,6 @@ mpt_attach(mpt_softc_t *mpt)
 #endif
 
 	mpt_prt(mpt, "IM support: %x", mpt->im_support);
-	/*mpt_prt(mpt, "IM support: %x %x", mpt->im_support,
-	    mpt->mpt_ioc_page2.CapabilitiesFlags);*/
 
 	(void) config_found(&mpt->mpt_dev, lptr, scsiprint);
 
@@ -875,13 +873,6 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		 *
 		 * Also report the xfer mode, if necessary.
 		 */
-#if 0 /*XXX report xfer mode not impl */
-		if (mpt->mpt_report_xfer_mode != 0) {
-			if ((mpt->mpt_report_xfer_mode &
-			    (1 << periph->periph_target)) != 0)
-				mpt_get_xfer_mode(mpt, periph);
-		}
-#endif
 		xs->error = XS_NOERROR;
 		xs->status = SCSI_OK;
 		xs->resid = 0;
@@ -913,12 +904,6 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	case MPI_IOCSTATUS_SCSI_RECOVERED_ERROR:
 		switch (xs->status) {
 		case SCSI_OK:
-#if 0 /* XXX xfer mode */
-			/* Report the xfer mode, if necessary. */
-			if ((mpt->mpt_report_xfer_mode &
-			    (1 << periph->periph_target)) != 0)
-				mpt_get_xfer_mode(mpt, periph);
-#endif
 			xs->resid = 0;
 			break;
 
@@ -1258,6 +1243,7 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 		/* XXX scsi_done called
 		return (TRY_AGAIN_LATER);
 		*/
+		/* XXX MP this does not look correct */
 		return (COMPLETE);
 	}
 
@@ -1500,15 +1486,7 @@ mpt_check_xfer_settings(mpt_softc_t *mpt, struct scsi_xfer *xs, MSG_SCSI_IO_REQU
 		mpt_req->Control |= MPI_SCSIIO_CONTROL_UNTAGGED;
 		mpt_req->Control |= MPI_SCSIIO_CONTROL_NO_DISCONNECT;
 	}
-#if 0
-	if (mpt->is_fc == 0 && (mpt->mpt_disc_enable &
-			(1 << linkp->target)) == 0)
-		mpt_req->Control |= MPI_SCSIIO_CONTROL_NO_DISCONNECT;
-#endif
-	return;
 }
-
-/* XXXJRT mpt_bus_reset() */
 
 /*****************************************************************************
  * SCSI interface routines
@@ -1521,22 +1499,8 @@ mpt_action(struct scsi_xfer *xfer)
 	int ret;
 
 	ret = mpt_run_xfer(mpt, xfer);
+
 	return ret;
-#if 0
-	switch (req) {
-	case ADAPTER_REQ_RUN_XFER:
-		mpt_run_xfer(mpt, (struct scsipi_xfer *) arg);
-		return;
-
-	case ADAPTER_REQ_GROW_RESOURCES:
-		/* Not supported. */
-		return;
-
-	case ADAPTER_REQ_SET_XFER_MODE:
-		mpt_set_xfer_mode(mpt, (struct scsipi_xfer_mode *) arg);
-		return;
-	}
-#endif
 }
 
 void
