@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.22 2005/07/20 03:05:32 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.23 2005/07/20 03:14:26 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -942,12 +942,11 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		}
 		break;
 
-#if 0 /* XS_RESOURCE_SHORTAGE not impl */
 	case MPI_IOCSTATUS_BUSY:
 	case MPI_IOCSTATUS_INSUFFICIENT_RESOURCES:
-		xs->error = XS_RESOURCE_SHORTAGE;
+		xs->error = XS_BUSY;
 		break;
-#endif
+
 	case MPI_IOCSTATUS_SCSI_INVALID_BUS:
 	case MPI_IOCSTATUS_SCSI_INVALID_TARGETID:
 	case MPI_IOCSTATUS_SCSI_DEVICE_NOT_THERE:
@@ -1091,7 +1090,6 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 		case ENOMEM:
 		case EAGAIN:
 			xs->error = XS_DRIVER_STUFFUP;
-			/* xs->error = XS_RESOURCE_SHORTAGE; */
 			goto out_bad;
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
