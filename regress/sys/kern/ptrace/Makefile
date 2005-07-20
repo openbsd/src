@@ -1,24 +1,24 @@
-#	$OpenBSD: Makefile,v 1.1 2005/07/20 15:31:43 art Exp $
+#	$OpenBSD: Makefile,v 1.2 2005/07/20 15:41:51 deraadt Exp $
 
 PROG=	ptrace
 
 read_i:
-	${PROG} -ri
+	${.OBJDIR}/${PROG} -ri
 read_d:
-	${PROG} -rd
+	${.OBJDIR}/${PROG} -rd
 read_i_bad:
-	${PROG} -rib
+	${.OBJDIR}/${PROG} -rib
 read_d_bad:
-	${PROG} -rdb
+	${.OBJDIR}/${PROG} -rdb
 
 io_read_i:
-	${PROG} -Iri
+	${.OBJDIR}/${PROG} -Iri
 io_read_d:
-	${PROG} -Ird
+	${.OBJDIR}/${PROG} -Ird
 io_read_i_bad:
-	${PROG} -Irib
+	${.OBJDIR}/${PROG} -Irib
 io_read_d_bad:
-	${PROG} -Irdb
+	${.OBJDIR}/${PROG} -Irdb
 
 REGRESS_TARGETS=read_i read_d read_i_bad read_d_bad \
 	io_read_i io_read_d io_read_i_bad io_read_d_bad
