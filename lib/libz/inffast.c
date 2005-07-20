@@ -1,4 +1,4 @@
-/*	$OpenBSD: inffast.c,v 1.6 2004/12/03 03:06:36 djm Exp $	*/
+/*	$OpenBSD: inffast.c,v 1.7 2005/07/20 15:56:41 millert Exp $	*/
 /* inffast.c -- fast decoding
  * Copyright (C) 1995-2004 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -75,6 +75,9 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
     unsigned char FAR *out;     /* local strm->next_out */
     unsigned char FAR *beg;     /* inflate()'s initial strm->next_out */
     unsigned char FAR *end;     /* while out < end, enough space available */
+#ifdef INFLATE_STRICT
+    unsigned dmax;              /* maximum distance from zlib header */
+#endif
     unsigned wsize;             /* window size or zero if not using window */
     unsigned whave;             /* valid bytes in the window */
     unsigned write;             /* window write index */
@@ -99,6 +102,9 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
     out = strm->next_out - OFF;
     beg = out - (start - strm->avail_out);
     end = out + (strm->avail_out - 257);
+#ifdef INFLATE_STRICT
+    dmax = state->dmax;
+#endif
     wsize = state->wsize;
     whave = state->whave;
     write = state->write;
@@ -168,6 +174,13 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                     }
                 }
                 dist += (unsigned)hold & ((1U << op) - 1);
+#ifdef INFLATE_STRICT
+                if (dist > dmax) {
+                    strm->msg = (char *)"invalid distance too far back";
+                    state->mode = BAD;
+                    break;
+                }
+#endif
                 hold >>= op;
                 bits -= op;
                 Tracevv((stderr, "inflate:         distance %u\n", dist));
