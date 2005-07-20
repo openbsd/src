@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.76 2005/07/16 17:37:18 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.77 2005/07/20 01:22:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -116,12 +116,9 @@
 
 #include <dev/pci/if_bgereg.h>
 
-/* #define BGE_CHECKSUM */
-
 const struct bge_revision * bge_lookup_rev(uint32_t);
 int bge_probe(struct device *, void *, void *);
 void bge_attach(struct device *, struct device *, void *);
-void bge_release_resources(struct bge_softc *);
 void bge_txeof(struct bge_softc *);
 void bge_rxeof(struct bge_softc *);
 
@@ -164,17 +161,8 @@ int bge_init_tx_ring(struct bge_softc *);
 int bge_chipinit(struct bge_softc *);
 int bge_blockinit(struct bge_softc *);
 
-#ifdef notdef
-u_int8_t bge_vpd_readbyte(struct bge_softc *, int);
-void bge_vpd_read_res(struct bge_softc *, struct vpd_res *, int);
-void bge_vpd_read(struct bge_softc *);
-#endif
-
 u_int32_t bge_readmem_ind(struct bge_softc *, int);
 void bge_writemem_ind(struct bge_softc *, int, int);
-#ifdef notdef
-u_int32_t bge_readreg_ind(struct bge_softc *, int);
-#endif
 void bge_writereg_ind(struct bge_softc *, int, int);
 
 int bge_miibus_readreg(struct device *, int, int);
@@ -285,19 +273,6 @@ bge_writemem_ind(sc, off, val)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MEMWIN_DATA, val);
 }
 
-#ifdef notdef
-u_int32_t
-bge_readreg_ind(sc, off)
-	struct bge_softc *sc;
-	int off;
-{
-	struct pci_attach_args	*pa = &(sc->bge_pa);
-
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_REG_BASEADDR, off);
-	return(pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_REG_DATA));
-}
-#endif
-
 void
 bge_writereg_ind(sc, off, val)
 	struct bge_softc *sc;
@@ -308,96 +283,6 @@ bge_writereg_ind(sc, off, val)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_REG_BASEADDR, off);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_REG_DATA, val);
 }
-
-#ifdef notdef
-u_int8_t
-bge_vpd_readbyte(sc, addr)
-	struct bge_softc *sc;
-	int addr;
-{
-	int i;
-	u_int32_t val;
-	struct pci_attach_args	*pa = &(sc->bge_pa);
-
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_VPD_ADDR, addr);
-	for (i = 0; i < BGE_TIMEOUT * 10; i++) {
-		DELAY(10);
-		if (pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_VPD_ADDR) &
-		    BGE_VPD_FLAG)
-			break;
-	}
-
-	if (i == BGE_TIMEOUT * 10) {
-		printf("%s: VPD read timed out\n", sc->bge_dev.dv_xname);
-		return(0);
-	}
-
-	val = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_VPD_DATA);
-
-	return((val >> ((addr % 4) * 8)) & 0xFF);
-}
-
-void
-bge_vpd_read_res(sc, res, addr)
-	struct bge_softc *sc;
-	struct vpd_res *res;
-	int addr;
-{
-	int i;
-	u_int8_t *ptr;
-
-	ptr = (u_int8_t *)res;
-	for (i = 0; i < sizeof(struct vpd_res); i++)
-		ptr[i] = bge_vpd_readbyte(sc, i + addr);
-}
-
-void
-bge_vpd_read(sc)
-	struct bge_softc *sc;
-{
-	int pos = 0, i;
-	struct vpd_res res;
-
-	if (sc->bge_vpd_prodname != NULL)
-		free(sc->bge_vpd_prodname, M_DEVBUF);
-	if (sc->bge_vpd_readonly != NULL)
-		free(sc->bge_vpd_readonly, M_DEVBUF);
-	sc->bge_vpd_prodname = NULL;
-	sc->bge_vpd_readonly = NULL;
-
-	bge_vpd_read_res(sc, &res, pos);
-
-	if (res.vr_id != VPD_RES_ID) {
-		printf("%s: bad VPD resource id: expected %x got %x\n",
-			sc->bge_dev.dv_xname, VPD_RES_ID, res.vr_id);
-		return;
-	}
-
-	pos += sizeof(res);
-	sc->bge_vpd_prodname = malloc(res.vr_len + 1, M_DEVBUF, M_NOWAIT);
-	if (sc->bge_vpd_prodname == NULL)
-		panic("bge_vpd_read");
-	for (i = 0; i < res.vr_len; i++)
-		sc->bge_vpd_prodname[i] = bge_vpd_readbyte(sc, i + pos);
-	sc->bge_vpd_prodname[i] = '\0';
-	pos += i;
-
-	bge_vpd_read_res(sc, &res, pos);
-
-	if (res.vr_id != VPD_RES_READ) {
-		printf("%s: bad VPD resource id: expected %x got %x\n",
-		    sc->bge_dev.dv_xname, VPD_RES_READ, res.vr_id);
-		return;
-	}
-
-	pos += sizeof(res);
-	sc->bge_vpd_readonly = malloc(res.vr_len, M_DEVBUF, M_NOWAIT);
-	if (sc->bge_vpd_readonly == NULL)
-		panic("bge_vpd_read");
-	for (i = 0; i < res.vr_len + 1; i++)
-		sc->bge_vpd_readonly[i] = bge_vpd_readbyte(sc, i + pos);
-}
-#endif
 
 /*
  * Read a byte of data stored in the EEPROM at address 'addr.' The
@@ -1954,7 +1839,6 @@ bge_attach(parent, self, aux)
 	if (bge_chipinit(sc)) {
 		printf("%s: chip initialization failed\n",
 		    sc->bge_dev.dv_xname);
-		bge_release_resources(sc);
 		error = ENXIO;
 		goto fail;
 	}
@@ -1974,7 +1858,6 @@ bge_attach(parent, self, aux)
 	} else if (bge_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
 		printf("bge%d: failed to read station address\n", unit);
-		bge_release_resources(sc);
 		error = ENXIO;
 		goto fail;
 	}
@@ -2158,17 +2041,6 @@ bge_attach(parent, self, aux)
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
 fail:
 	splx(s);
-}
-
-void
-bge_release_resources(sc)
-	struct bge_softc *sc;
-{
-	if (sc->bge_vpd_prodname != NULL)
-		free(sc->bge_vpd_prodname, M_DEVBUF);
-
-	if (sc->bge_vpd_readonly != NULL)
-		free(sc->bge_vpd_readonly, M_DEVBUF);
 }
 
 void
