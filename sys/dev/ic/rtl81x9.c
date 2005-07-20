@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.43 2005/07/20 22:59:52 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.44 2005/07/20 23:02:41 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -971,7 +971,11 @@ void rl_init(xsc)
 	 */
 	rl_stop(sc);
 
-	/* Init our MAC address */
+	/*
+	 * Init our MAC address.  Even though the chipset
+	 * documentation doesn't mention it, we need to enter "Config
+	 * register write enable" mode to modify the ID registers.
+	 */
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
 	CSR_WRITE_4(sc, RL_IDR0, *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[0]));
 	CSR_WRITE_4(sc, RL_IDR4, *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[4]));
