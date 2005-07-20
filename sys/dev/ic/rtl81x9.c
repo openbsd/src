@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.42 2005/07/02 23:20:05 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.43 2005/07/20 22:59:52 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -961,7 +961,7 @@ void rl_init(xsc)
 {
 	struct rl_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
-	int			s, i;
+	int			s;
 	u_int32_t		rxcfg = 0;
 
 	s = splimp();
@@ -972,9 +972,10 @@ void rl_init(xsc)
 	rl_stop(sc);
 
 	/* Init our MAC address */
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		CSR_WRITE_1(sc, RL_IDR0 + i, sc->sc_arpcom.ac_enaddr[i]);
-	}
+	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
+	CSR_WRITE_4(sc, RL_IDR0, *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[0]));
+	CSR_WRITE_4(sc, RL_IDR4, *(u_int32_t *)(&sc->sc_arpcom.ac_enaddr[4]));
+	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
 	/* Init the RX buffer pointer register. */
 	CSR_WRITE_4(sc, RL_RXADDR, sc->rl_cdata.rl_rx_buf_pa);
