@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.122 2005/05/24 04:20:26 markus Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.123 2005/07/20 16:56:12 miod Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.122 2005/05/24 04:20:26 markus Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.123 2005/07/20 16:56:12 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -1558,6 +1558,12 @@ sysctl_nchstats(char *string, char **bufpp, int mib[], int flags, int *typep)
 		break;
 	case KERN_NCHSTATS_2PASSES:
 		(void)printf("%ld\n", nch.ncs_2passes);
+		break;
+	case KERN_NCHSTATS_REVHITS:
+		(void)printf("%ld\n", nch.ncs_revhits);
+		break;
+	case KERN_NCHSTATS_REVMISS:
+		(void)printf("%ld\n", nch.ncs_revmiss);
 		break;
 	}
 	return (-1);
