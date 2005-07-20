@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.1 2005/07/20 15:31:43 art Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.2 2005/07/20 16:16:04 art Exp $	*/
 /*
  * Copyright (c) 2005 Artur Grabowski <art@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 
 static void
 usage(void)
@@ -129,7 +130,10 @@ main(int argc, char **argv)
 
 			if (ptrace(PT_IO, pid, (caddr_t)&piod, 0) == -1) {
 				warn("ptrace(PT_IO)");
-				ret = -1;
+				if (errno == EFAULT)
+					ret = 1;
+				else
+					ret = -1;
 				goto out;
 			}
 
