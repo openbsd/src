@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.13 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.14 2005/07/20 16:14:55 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -443,15 +443,14 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 
 	fd = mkstemp(template);
 	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to mkstemp file `%s': %s",
-		    template, strerror(errno));
+		cvs_log(LP_ERRNO, "failed to mkstemp file `%s'", template);
 		return (-1);
 	}
 
 	ret = cvs_buf_write_fd(b, fd);
 	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to write to temp file `%s': %s",
-		    template, strerror(errno));
+		cvs_log(LP_ERRNO, "failed to write to temp file `%s'",
+		    template);
 		(void)unlink(template);
 	}
 	(void)close(fd);
