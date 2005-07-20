@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.20 2004/12/28 14:38:27 deraadt Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.21 2005/07/20 02:48:39 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -381,11 +381,12 @@ mpt_run_ppr(mpt_softc_t *mpt, int flags)
 				    sc_link[target][0];
 				if ((sc_link != NULL)) {
 					/* got a device! run PPR */
-					/* FIXME: skip CPU devices since they
+					/* skip CPU devices since they
 					 * can crash at U320 speeds */
-					/*if (device == cpu) {
+					if ((sc_link->inqdata.device & SID_TYPE)
+					    == T_PROCESSOR) {
 						continue;
-					}*/
+					}
 					if (mpt_ppr(mpt, sc_link, U320, flags)){
 						mpt->mpt_negotiated_speed
 						    [target] = U320;
