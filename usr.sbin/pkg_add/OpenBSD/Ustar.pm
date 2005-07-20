@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.29 2005/06/26 15:39:19 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.30 2005/07/20 15:35:33 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -107,6 +107,8 @@ sub next
     $uname =~ s/\0*$//;
     $gname =~ s/\0*$//;
     $linkname =~ s/\0*$//;
+    $major = oct($major);
+    $minor = oct($minor);
     $uid = oct($uid);
     $gid = oct($gid);
     $uid = $uidcache->lookup($uname, $uid);
@@ -128,6 +130,8 @@ sub next
 	gname => $gname,
 	gid => $gid,
 	size => $size,
+	major => $major,
+	minor => $minor,
 	archive => $self,
 	destdir => $self->{destdir}
 	};
@@ -139,6 +143,12 @@ sub next
     	bless $result, 'OpenBSD::Ustar::SoftLink';
     } elsif ($type eq FILE || $type eq FILE1) {
     	bless $result, 'OpenBSD::Ustar::File';
+    } elsif ($type eq FIFO) {
+    	bless $result, 'OpenBSD::Ustar::Fifo';
+    } elsif ($type eq 'CHARDEVICE') {
+    	bless $result, 'OpenBSD::Ustar::CharDevice';
+    } elsif ($type eq 'BLOCKDEVICE') {
+    	bless $result, 'OpenBSD::Ustar::BlockDevice';
     } else {
     	die "Unsupported type";
     }
@@ -177,6 +187,14 @@ sub mkheader
 	my $size = $entry->{size};
 	if (!$entry->isFile()) {
 		$size = 0;
+	}
+	my ($major, $minor);
+	if ($entry->isDevice()) {
+		$major = $entry->{major};
+		$minor = $entry->{minor};
+	} else {
+		$major = 0;
+		$minor = 0;
 	}
 	if (defined $entry->{cwd}) {
 		my $cwd = $entry->{cwd};
@@ -217,7 +235,8 @@ sub mkheader
 		    'ustar', '00',
 		    $entry->{uname},
 		    $entry->{gname},
-		    "\0", "\0",
+		    sprintf("%07o", $major),
+		    sprintf("%07o", $minor),
 		    $prefix, "\0");
 		$cksum = sprintf("%07o", unpack("%C*", $header));
 	}
@@ -231,8 +250,8 @@ sub prepare
 	my $destdir = $self->{destdir};
 	my $realname = "$destdir/$filename";
 
-	my ($dev, $ino, $mode, $uid, $gid, $size, $mtime) = 
-	    (lstat $realname)[0,1,2,4,5,7,9];
+	my ($dev, $ino, $mode, $uid, $gid, $rdev, $size, $mtime) = 
+	    (lstat $realname)[0,1,2,4,5,6, 7,9];
 
 	my $entry = {
 		key => "$dev/$ino", 
@@ -245,6 +264,8 @@ sub prepare
 		mtime => $mtime,
 		uname => $unamecache->lookup($uid),
 		gname => $gnamecache->lookup($gid),
+		major => $rdev/256,
+		minor => $rdev%256,
 		archive => $self,
 		destdir => $self->{destdir}
 	};
@@ -255,6 +276,12 @@ sub prepare
 	} elsif (-l $realname) {
 		$entry->{linkname} = readlink($realname);
 		bless $entry, "OpenBSD::Ustar::SoftLink";
+	} elsif (-p _) {
+		bless $entry, "OpenBSD::Ustar::Fifo";
+	} elsif (-c _) {
+		bless $entry, "OpenBSD::Ustar::CharDevice";
+	} elsif (-b _) {
+		bless $entry, "OpenBSD::Ustar::BlockDevice";
 	} elsif (-d _) {
 		bless $entry, "OpenBSD::Ustar::Dir";
 	} else {
@@ -364,6 +391,8 @@ sub copy
 
 sub isDir() { 0 }
 sub isFile() { 0 }
+sub isDevice() { 0 }
+sub isFifo() { 0 }
 sub isLink() { 0 }
 sub isSymLink() { 0 }
 sub isHardLink() { 0 }
@@ -405,6 +434,7 @@ sub resolve_links
 	if (defined $arc->{key}->{$k}) {
 		$self->{linkname} = $arc->{key}->{$k};
 	} else {
+		print join("\n", keys(%{$arc->{key}})), "\n";
 		die "Can't copy link over: original for $k NOT available\n";
 	}
 }
@@ -429,6 +459,48 @@ sub isLink() { 1 }
 sub isSymLink() { 1 }
 
 sub type() { OpenBSD::Ustar::SOFTLINK }
+
+package OpenBSD::Ustar::Fifo;
+our @ISA=qw(OpenBSD::Ustar::Object);
+
+sub create
+{
+	my $self = shift;
+	$self->make_basedir($self->{name});
+	require POSIX;
+	POSIX::mkfifo($self->{destdir}.$self->{name}, $self->{mode}) or
+	    die "Can't create fifo $self->{name}: $!";
+	$self->SUPER::set_modes();
+}
+
+sub isFifo() { 1 }
+sub type() { OpenBSD::Ustar::FIFO }
+
+package OpenBSD::Ustar::BlockDevice;
+our @ISA=qw(OpenBSD::Ustar::Object);
+
+sub create
+{
+	my $self = shift;
+	$self->make_basedir($self->{name});
+	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, 'b', $self->{major}, $self->{minor});
+}
+
+sub isDevice() { 1 }
+sub type() { OpenBSD::Ustar::BLOCKDEVICE }
+
+package OpenBSD::Ustar::CharDevice;
+our @ISA=qw(OpenBSD::Ustar::Object);
+
+sub create
+{
+	my $self = shift;
+	$self->make_basedir($self->{name});
+	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, 'b', $self->{major}, $self->{minor});
+}
+
+sub isDevice() { 1 }
+sub type() { OpenBSD::Ustar::BLOCKDEVICE }
 
 package OpenBSD::CompactWriter;
 
