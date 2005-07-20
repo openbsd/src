@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.113 2005/06/26 20:49:24 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.114 2005/07/20 16:50:43 moritz Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -2118,7 +2118,8 @@ message_negotiate_sa(struct message *msg, int (*validate)(struct exchange *,
 	 */
 
 	sa = TAILQ_FIRST(&exchange->sa_list);
-	TAILQ_FOREACH(tp, &msg->payload[ISAKMP_PAYLOAD_TRANSFORM], link) {
+	for (tp = payload_first(msg, ISAKMP_PAYLOAD_TRANSFORM); tp;
+	    tp = next_tp) {
 		propp = tp->context;
 		sap = propp->context;
 		sap->flags |= PL_MARK;
