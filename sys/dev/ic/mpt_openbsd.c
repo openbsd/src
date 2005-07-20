@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.21 2005/07/20 02:48:39 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.22 2005/07/20 03:05:32 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -1023,9 +1023,6 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 	if (req == NULL) {
 		/* This should happen very infrequently. */
 		xs->error = XS_DRIVER_STUFFUP;
-		/*
-		xs->error = XS_RESOURCE_SHORTAGE;
-		*/
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		splx(s);
