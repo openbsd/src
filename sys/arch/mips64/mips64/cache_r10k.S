@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.1 2004/09/20 10:28:36 pefo Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.2 2005/07/20 21:36:32 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -590,7 +590,7 @@ SyncRD:
 	nop
 
 /*
- *  Sync for aligned read, no writeback requierd.
+ *  Sync for aligned read, no writeback required.
  */
 	jal	Mips10k_HitInvalidateSCache	# L2 cache
 	nop					# L1 done in parallel

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.15 2004/09/29 12:52:44 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.16 2005/07/20 21:36:32 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -133,7 +133,7 @@
 
 /*
  *  Due to a flaw in RM7000 1.x processors a pipleine 'drain' is
- *  requierd after some mtc0 instructions.
+ *  required after some mtc0 instructions.
  *  Ten nops in sequence does the trick.
  */
 #define NOP10	nop;nop;nop;nop;nop;\
@@ -969,7 +969,7 @@ SyncRD:
 	nop
 
 /*
- *  Sync for aligned read, no writeback requierd.
+ *  Sync for aligned read, no writeback required.
  */
 	lw	t0, CpuCacheType		# Aligned, do invalidate
 	and	t0, CTYPE_HAS_IL2		# Have internal L2?
