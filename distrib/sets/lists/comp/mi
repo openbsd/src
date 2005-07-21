@@ -2692,6 +2692,7 @@
 ./usr/share/man/cat3/addr.0
 ./usr/share/man/cat3/addstr.0
 ./usr/share/man/cat3/adler32.0
+./usr/share/man/cat3/adler32_combine.0
 ./usr/share/man/cat3/alarm.0
 ./usr/share/man/cat3/alloca.0
 ./usr/share/man/cat3/alphasort.0
@@ -2926,6 +2927,7 @@
 ./usr/share/man/cat3/cosh.0
 ./usr/share/man/cat3/coshf.0
 ./usr/share/man/cat3/crc32.0
+./usr/share/man/cat3/crc32_combine.0
 ./usr/share/man/cat3/creat.0
 ./usr/share/man/cat3/crypt.0
 ./usr/share/man/cat3/crypto.0
@@ -3021,6 +3023,8 @@
 ./usr/share/man/cat3/deflatePrime.0
 ./usr/share/man/cat3/deflateReset.0
 ./usr/share/man/cat3/deflateSetDictionary.0
+./usr/share/man/cat3/deflateSetHeader.0
+./usr/share/man/cat3/deflateTune.0
 ./usr/share/man/cat3/del_curterm.0
 ./usr/share/man/cat3/del_panel.0
 ./usr/share/man/cat3/delay_output.0
@@ -3454,6 +3458,7 @@
 ./usr/share/man/cat3/gtty.0
 ./usr/share/man/cat3/gzclearerr.0
 ./usr/share/man/cat3/gzclose.0
+./usr/share/man/cat3/gzdirect.0
 ./usr/share/man/cat3/gzdopen.0
 ./usr/share/man/cat3/gzeof.0
 ./usr/share/man/cat3/gzerror.0
@@ -3575,8 +3580,10 @@
 ./usr/share/man/cat3/inflateBackInit.0
 ./usr/share/man/cat3/inflateCopy.0
 ./usr/share/man/cat3/inflateEnd.0
+./usr/share/man/cat3/inflateGetHeader.0
 ./usr/share/man/cat3/inflateInit.0
 ./usr/share/man/cat3/inflateInit2.0
+./usr/share/man/cat3/inflatePrime.0
 ./usr/share/man/cat3/inflateReset.0
 ./usr/share/man/cat3/inflateSetDictionary.0
 ./usr/share/man/cat3/inflateSync.0
