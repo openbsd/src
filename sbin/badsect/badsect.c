@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.14 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.15 2005/07/21 16:38:54 fgsch Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: badsect.c,v 1.14 2004/08/08 19:04:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: badsect.c,v 1.15 2005/07/21 16:38:54 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 	strlcpy(&name[len+1], dp->d_name, sizeof name - (len+1));
 	closedir(dirp);
 	if (dp == NULL)
-		err(5, "Cannot find dev 0%o corresponding to %s\n",
+		err(5, "Cannot find dev 0%o corresponding to %s",
 			stbuf.st_rdev, argv[1]);
 
 	if ((fsi = open(name, 0)) < 0)

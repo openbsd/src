@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.2 2005/07/21 16:38:55 fgsch Exp $	*/
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpidump.c,v 1.1 2005/06/02 20:09:39 tholo Exp $
+ *	$Id: acpidump.c,v 1.2 2005/07/21 16:38:55 fgsch Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 
@@ -56,13 +56,13 @@ asl_dump_from_devmem()
 
 	rp = acpi_find_rsd_ptr();
 	if (!rp)
-		errx(1, "Can't find ACPI information\n");
+		errx(1, "Can't find ACPI information");
 
 	acpi_print_rsd_ptr(rp);
 	rsdp = (struct ACPIsdt *) acpi_map_sdt(rp->addr);
 	if (memcmp(rsdp->signature, "RSDT", 4) ||
 	    acpi_checksum(rsdp, rsdp->len))
-		errx(1, "RSDT is corrupted\n");
+		errx(1, "RSDT is corrupted");
 
 	acpi_handle_rsdt(rsdp);
 }

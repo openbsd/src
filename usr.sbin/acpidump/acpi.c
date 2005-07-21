@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.2 2005/06/04 02:25:53 cloder Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.3 2005/07/21 16:38:55 fgsch Exp $	*/
 /*-
  * Copyright (c) 1998 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpi.c,v 1.2 2005/06/04 02:25:53 cloder Exp $
+ *	$Id: acpi.c,v 1.3 2005/07/21 16:38:55 fgsch Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 #include <sys/types.h>
@@ -122,7 +122,7 @@ acpi_handle_facp(struct FACPbody *facp)
 	acpi_print_facp(facp);
 	dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->dsdt_ptr);
 	if (acpi_checksum(dsdp, dsdp->len))
-		errx(1, "DSDT is corrupt\n");
+		errx(1, "DSDT is corrupt");
 	acpi_handle_dsdt(dsdp);
 	aml_dump(dsdp);
 }
@@ -348,7 +348,7 @@ acpi_handle_rsdt(struct ACPIsdt *rsdp)
 	for (i = 0; i < entries; i++) {
 		sdp = (struct ACPIsdt *) acpi_map_sdt(rsdp->body[i]);
 		if (acpi_checksum(sdp, sdp->len))
-			errx(1, "RSDT entry %d is corrupt\n", i);
+			errx(1, "RSDT entry %d is corrupt", i);
 		if (!memcmp(sdp->signature, "FACP", 4)) {
 			acpi_handle_facp((struct FACPbody *) sdp->body);
 		} else {
