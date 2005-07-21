@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.55 2005/06/28 13:46:21 martin Exp $
+dnl	$OpenBSD: hardware,v 1.56 2005/07/21 10:10:44 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -124,8 +124,8 @@ Supported devices {:-include-:}:
 			Omnidirectional Control Technology USB TO Ethernet
 			Siemens SpeedStream USB
 			Smartbridges smartNIC 2
-			SMC 2202USB
-			SMC EZ Connect USB
+			SMC 2202USB/ETH
+			SMC 2206USB/ETH
 			SOHOware NUB100
 			SOHOware NUB110
 		Alteon Tigon I/II PCI Gigabit Ethernet boards (ti), including:

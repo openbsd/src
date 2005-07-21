@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.49 2005/07/21 09:47:57 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.50 2005/07/21 10:10:44 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -251,8 +251,8 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Melco Inc. LUA-TX
 		    Siemens SpeedStream USB
 		    SmartBridges smartNIC 2
-		    SMC 2202USB
-		    SMC EZ Connect USB
+		    SMC 2202USB/ETH
+		    SMC 2206USB/ETH
 		    SOHOware NUB100
 		ASIX Electronics AX88172 USB Ethernet adapters, including:
 		    ATEN UC210T

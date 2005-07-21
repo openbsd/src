@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.204 2005/07/21 09:47:57 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.205 2005/07/21 10:10:44 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -329,8 +329,8 @@ Supported hardware {:-include-:}:
 		    Melco Inc. LUA-TX
 		    Siemens SpeedStream USB
 		    SmartBridges smartNIC 2
-		    SMC 2202USB
-		    SMC EZ Connect USB
+		    SMC 2202USB/ETH
+		    SMC 2206USB/ETH
 		    SOHOware NUB100
 		ASIX Electronics AX88172 USB Ethernet adapters,
 		  including: [A] [B]
