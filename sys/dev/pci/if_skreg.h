@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.16 2005/03/14 01:15:14 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.17 2005/07/21 15:23:27 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1321,6 +1321,38 @@ struct sk_tx_desc {
 
 #define SK_TX_RING_CNT		512
 #define SK_RX_RING_CNT		256
+
+#define SK_CDOFF(x)	offsetof(struct sk_ring_data, x)
+#define SK_CDTXOFF(x)	SK_CDOFF(sk_tx_ring[(x)])
+#define SK_CDRXOFF(x)	SK_CDOFF(sk_rx_ring[(x)])
+
+#define SK_CDTXSYNC(sc, x, n, ops)					\
+do {									\
+	int __x, __n;							\
+									\
+	__x = (x);							\
+	__n = (n);							\
+									\
+	/* If it will wrap around, sync to the end of the ring. */	\
+	if ((__x + __n) > SK_TX_RING_CNT) {				\
+		bus_dmamap_sync((sc)->sk_softc->sc_dmatag,		\
+		    (sc)->sk_ring_map, SK_CDTXOFF(__x),			\
+		    sizeof(struct sk_tx_desc) *	 (SK_TX_RING_CNT - __x),\
+		    (ops));						\
+		__n -= (SK_TX_RING_CNT - __x);				\
+		__x = 0;						\
+	}								\
+									\
+	/* Now sync whatever is left. */				\
+	bus_dmamap_sync((sc)->sk_softc->sc_dmatag, (sc)->sk_ring_map,	\
+	    SK_CDTXOFF((__x)), sizeof(struct sk_tx_desc) * __n, (ops));	\
+} while (/*CONSTCOND*/0)
+
+#define SK_CDRXSYNC(sc, x, ops)						\
+do {									\
+	bus_dmamap_sync((sc)->sk_softc->sc_dmatag, (sc)->sk_ring_map,	\
+	    SK_CDRXOFF((x)), sizeof(struct sk_rx_desc), (ops));		\
+} while (/*CONSTCOND*/0)
 
 /*
  * Jumbo buffer stuff. Note that we must allocate more jumbo
