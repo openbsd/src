@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.494 2005/07/04 08:28:04 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.495 2005/07/21 08:02:26 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5789,6 +5789,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		}
 		if (dir == PF_IN && pf_check_proto_cksum(m, off,
 		    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET)) {
+			REASON_SET(&reason, PFRES_PROTCKSUM);
 			action = PF_DROP;
 			goto done;
 		}
@@ -5825,12 +5826,14 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(m,
 		    off, ntohs(h->ip_len) - off, IPPROTO_UDP, AF_INET)) {
 			action = PF_DROP;
+			REASON_SET(&reason, PFRES_PROTCKSUM);
 			goto done;
 		}
 		if (uh.uh_dport == 0 ||
 		    ntohs(uh.uh_ulen) > m->m_pkthdr.len - off ||
 		    ntohs(uh.uh_ulen) < sizeof(struct udphdr)) {
 			action = PF_DROP;
+			REASON_SET(&reason, PFRES_SHORT);
 			goto done;
 		}
 		action = pf_test_state_udp(&s, dir, kif, m, off, h, &pd);
@@ -5859,6 +5862,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		if (dir == PF_IN && pf_check_proto_cksum(m, off,
 		    ntohs(h->ip_len) - off, IPPROTO_ICMP, AF_INET)) {
 			action = PF_DROP;
+			REASON_SET(&reason, PFRES_PROTCKSUM);
 			goto done;
 		}
 		action = pf_test_state_icmp(&s, dir, kif, m, off, h, &pd,
@@ -6185,6 +6189,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		    ntohs(uh.uh_ulen) > m->m_pkthdr.len - off ||
 		    ntohs(uh.uh_ulen) < sizeof(struct udphdr)) {
 			action = PF_DROP;
+			REASON_SET(&reason, PFRES_SHORT);
 			goto done;
 		}
 		action = pf_test_state_udp(&s, dir, kif, m, off, h, &pd);
