@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.25 2005/07/19 15:30:37 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.26 2005/07/21 12:32:38 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -445,6 +445,7 @@ cvs_req_filestate(int reqid, char *line)
 		}
 		break;
 	case CVS_REQ_QUESTIONABLE:
+		cvs_printf("? %s\n", line);
 		break;
 	default:
 		cvs_log(LP_ERR, "wrong request id type");
