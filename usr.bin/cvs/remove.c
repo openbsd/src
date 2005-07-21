@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.20 2005/07/20 06:59:27 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.21 2005/07/21 16:59:24 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -141,8 +141,8 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 static int
 cvs_remove_local(CVSFILE *cf, void *arg)
 {
-	int existing, removed;
-	char fpath[MAXPATHLEN];
+	int existing, l, removed;
+	char buf[MAXPATHLEN], fpath[MAXPATHLEN];
 
 	existing = removed = 0;
 
@@ -170,7 +170,17 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			    cf->cf_name);
 		return (0);
 	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
-		/* XXX remove ,t file */
+		l = snprintf(buf, sizeof(buf), "%s/%s%s",
+		    CVS_PATH_CVSDIR, cf->cf_name, CVS_DESCR_FILE_EXT);
+		if (l == -1 || l >= (int)sizeof(buf)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", buf);
+			return (CVS_EX_DATA);
+		}
+		if (!cvs_noexec && (unlink(buf) == -1) && (errno != ENOENT)) {
+			cvs_log(LP_ERRNO, "cannot remove %s", buf);
+			return (CVS_EX_FILE);
+		}
 		if (verbosity > 1)
 			cvs_log(LP_INFO, "removed `%s'", cf->cf_name);
 		return (0);
