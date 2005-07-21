@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.39 2005/07/14 07:38:35 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.40 2005/07/21 11:42:24 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,7 +24,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <errno.h>

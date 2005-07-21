@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.50 2005/07/11 01:32:17 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.51 2005/07/21 11:42:24 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -126,7 +126,6 @@
  *	6n words for files of length n.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
