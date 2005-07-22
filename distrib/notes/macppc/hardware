@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.56 2005/07/21 10:10:44 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.57 2005/07/22 09:12:57 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -345,6 +345,37 @@ Supported devices {:-include-:}:
 			Z-Com XI-725/726
 			Z-Com XI-735
 			ZyXEL ZyAIR B-200
+		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
+			AMIT WL532U
+			ASUS WL-167g
+			Belkin F5D7050
+			Buffalo WLI-U2-KG54
+			Buffalo WLI-U2-KG54-AI
+			Buffalo WLI-U2-KG54-YB
+			CNet CWD-854
+			Compex WLU54G
+			Conceptronic C54RU
+			D-Link DWL-G122 (b1)
+			Dynalink WLG25USB
+			E-Tech WGUS02
+			Eminent 3035
+			Gigabyte GN-WBKG
+			Hercules HWGUSB2-54
+			KCORP LifeStyle KLS-685
+			Linksys WUSB54G v4
+			Linksys WUSB54GP v4
+			MSI MS-6861
+			MSI MS-6865
+			MSI MS-6869
+			SerComm UB801R
+			SMC 2862W-G v2
+			SparkLAN WL-685R
+			Sphairon UB801R
+			Surecom EP-9001-g
+			Tonze UW-6200C
+			Zaapa ZNWUSB-54
+			Zinwell ZWX-G261
+			Zonet ZEW2500P
 		Realtek RTL8180L based CardBus IEEE 802.11b adapters
 			Belkin F5D6020 V3
 			Buffalo WLI-CB-B11
