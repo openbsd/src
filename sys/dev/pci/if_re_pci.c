@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.2 2005/06/15 23:39:19 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.3 2005/07/22 11:47:26 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -69,6 +69,8 @@ const struct pci_matchid re_pci_devices[] = {
 	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902 },
 };
 
+#define RE_LINKSYS_EG1032_SUBID 0x00241737
+
 int re_pci_probe(struct device *, void *, void *);
 void re_pci_attach(struct device *, struct device *, void *);
 
@@ -88,6 +90,17 @@ struct cfattach re_pci_ca = {
 int
 re_pci_probe(struct device *parent, void *match, void *aux)
 {
+	struct pci_attach_args *pa = aux;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcireg_t subid;
+
+	subid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LINKSYS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032 &&
+	    subid == RE_LINKSYS_EG1032_SUBID)
+		return (1);
+
 	return (pci_matchbyid((struct pci_attach_args *)aux, re_pci_devices,
 	    sizeof(re_pci_devices)/sizeof(re_pci_devices[0])));
 }
