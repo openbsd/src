@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.29 2003/10/01 08:43:17 jmc Exp $
+.\"	$OpenBSD: compress.1,v 1.30 2005/07/22 08:38:46 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -47,26 +47,26 @@
 .Nm compress
 .Op Fl LV
 .Nm compress
-.Op Fl cdfghlOnNqrtv123456789
+.Op Fl 123456789cdfghlNnOqrtv
 .Op Fl b Ar bits
-.Op Fl S Ar suffix
 .Op Fl o Ar filename
+.Op Fl S Ar suffix
 .Op Ar
 .Nm uncompress
-.Op Fl cfhlnNqrtv
+.Op Fl cfhlNnqrtv
 .Op Fl o Ar filename
 .Op Ar
 .Pp
 .Nm gzip
 .Op Fl LV
 .Nm gzip
-.Op Fl cdfghlnNOqrtv123456789
+.Op Fl 123456789cdfghlNnOqrtv
 .Op Fl b Ar bits
-.Op Fl S Ar suffix
 .Op Fl o Ar filename
+.Op Fl S Ar suffix
 .Op Ar
 .Nm gunzip
-.Op Fl cfhnNqrltv
+.Op Fl cfhlNnqrtv
 .Op Fl o Ar filename
 .Op Ar
 .Pp
@@ -163,10 +163,21 @@ not removed, and the attributes of the input file are not retained.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl V
-Display the program version
-.Pq RCS IDs of the source files
-and exit.
+.It Fl 1...9
+Use deflate scheme with compression factor of
+.Fl 1
+to
+.Fl 9 .
+Compression factor
+.Fl 1
+is the fastest, but provides a poorer level of compression.
+Compression factor
+.Fl 9
+provides the best level of compression, but is relatively slow.
+The default is
+.Fl 6 .
+This option implies
+.Fl g .
 .It Fl b Ar bits
 Specify the
 .Ar bits
@@ -239,6 +250,12 @@ Date and time corresponding to the last data modification time
 option is specified, the time stamp stored in the compressed file
 is printed instead).
 .El
+.It Fl N
+When compressing, save the original file name and time stamp in the
+compressed file.
+This information is saved by default when the deflate scheme is used.
+When uncompressing or listing, use the time stamp and file name stored
+in the compressed file, if any, for the uncompressed version.
 .It Fl n
 When compressing, do not save the original file name and time stamp.
 This information is saved by default when the deflate scheme is used.
@@ -246,41 +263,24 @@ When uncompressing, do not restore the original file name and time stamp.
 By default, the uncompressed file inherits the time stamp of the
 compressed version and the uncompressed file name is generated from
 the name of the compressed file name as described above.
-.It Fl N
-When compressing, save the original file name and time stamp in the
-compressed file.
-This information is saved by default when the deflate scheme is used.
-When uncompressing or listing, use the time stamp and file name stored
-in the compressed file, if any, for the uncompressed version.
-.It Fl 1...9
-Use deflate scheme with compression factor of
-.Fl 1
-to
-.Fl 9 .
-Compression factor
-.Fl 1
-is the fastest, but provides a poorer level of compression.
-Compression factor
-.Fl 9
-provides the best level of compression, but is relatively slow.
-The default is
-.Fl 6 .
-This option implies
-.Fl g .
 .It Fl O
 Use old compression method.
 .It Fl o Ar filename
 Set the output file name.
-.It Fl S Ar suffix
-Set suffix for compressed files.
-.It Fl t
-Test the integrity of each file leaving any files intact.
+.It Fl q
+Be quiet, suppress all messages.
 .It Fl r
 Recursive mode,
 .Nm
 will descend into specified directories.
-.It Fl q
-Be quiet, suppress all messages.
+.It Fl S Ar suffix
+Set suffix for compressed files.
+.It Fl t
+Test the integrity of each file leaving any files intact.
+.It Fl V
+Display the program version
+.Pq RCS IDs of the source files
+and exit.
 .It Fl v
 Print the percentage reduction of each file and other information.
 .El

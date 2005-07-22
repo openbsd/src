@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2005/07/11 14:16:47 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.65 2005/07/22 08:38:46 jmc Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.64 2005/07/11 14:16:47 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.65 2005/07/22 08:38:46 jmc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -857,7 +857,8 @@ __dead void
 usage(int status)
 {
 	fprintf(stderr,
-	    "usage: %s [-cdfghOqrtvV] [-b bits] [-S suffix] [-[1-9]] [file ...]\n",
+	    "usage: %s [-123456789cdfghLlNnOqrtVv] [-b bits] [-o filename]\n"
+	    "\t[-S suffix] [file ...]\n",
 	    __progname);
 	exit(status);
 }
