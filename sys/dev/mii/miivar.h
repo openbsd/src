@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.23 2005/03/26 04:40:09 krw Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.24 2005/07/22 11:50:53 brad Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -243,6 +243,7 @@ int	mii_mediachg(struct mii_data *);
 void	mii_tick(struct mii_data *);
 void	mii_pollstat(struct mii_data *);
 void	mii_down(struct mii_data *);
+int	mii_anar(int);
 
 int	mii_phy_activate(struct device *, enum devact);
 int	mii_phy_detach(struct device *, int);
@@ -266,7 +267,11 @@ int	mii_phy_statusmsg(struct mii_softc *);
 
 void	ukphy_status(struct mii_softc *);
 
-int	mii_anar(int);
+int	mii_oui(int, int);
+#define	MII_OUI(id1, id2)	mii_oui(id1, id2)
+#define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
+#define	MII_REV(id2)		((id2) & IDR2_REV)
+
 #endif /* _KERNEL */
 
 #endif /* _DEV_MII_MIIVAR_H_ */
