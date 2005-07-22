@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.8 2005/02/25 03:12:43 cloder Exp $
+.\"	$OpenBSD: authenticate.3,v 1.9 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -57,11 +57,11 @@
 .Ft int
 .Fn auth_userresponse "auth_session_t *as" "char *response" "int more"
 .Ft int
-.Fn auth_approval "auth_session_t *as" "login_cap_t *lc" "char *name" "char *type"
+.Fn auth_approval "auth_session_t *as" "struct login_cap *lc" "char *name" "char *type"
 .Ft int
 .Fn auth_cat "char *file"
 .Ft void
-.Fn auth_checknologin "login_cap_t *lc"
+.Fn auth_checknologin "struct login_cap *lc"
 .Ft char *
 .Fn auth_mkvalue "char *value"
 .Ft auth_session_t *
@@ -83,16 +83,16 @@ and
 the
 .Fn auth_userokay
 function returns a simple yes/no response.
-A return value of 0 implies failure, a non-zero return value implies success.
+A return value of 0 implies failure; a non-zero return value implies success.
 If
 .Ar style
 is not
-.Dv NULL
+.Dv NULL ,
 it specifies the desired style of authentication to be used.
 If it is
 .Dv NULL
 then the default style for the user is used.
-In this case
+In this case,
 .Ar name
 may include the desired style by appending it to the user's name with a
 single colon
@@ -125,7 +125,7 @@ The
 function operates the same as the
 .Fn auth_userokay
 function except that it does not close the BSD Authentication session created.
-Rather than returning the status of the session it returns
+Rather than returning the status of the session, it returns
 a pointer to the newly created BSD Authentication session.
 .Pp
 The
@@ -174,10 +174,10 @@ The string
 will be prepended to
 .Ar type
 if missing.
-The resulting type is used to look up an entry in the
+The resulting type is used to look up an entry in
 .Pa /etc/login.conf
 for the user's class.
-If the entry is missing the generic entry for
+If the entry is missing, the generic entry for
 .Dq approve
 will be used.
 The
@@ -237,9 +237,8 @@ will be called with a value of 1.
 The
 .Fn auth_verify
 function is a front end to the
-.Fn auth_call
-function
-.Pq see Xr auth_subr 3 .
+.Xr auth_call 3
+function.
 It will open a BSD Authentication session, if needed, and will set
 the style and user name based on the
 .Ar style
@@ -255,16 +254,14 @@ those pointers will become invalid).
 The variable arguments are passed to
 .Fn auth_call
 via the
-.Fn auth_set_va_list
-function
-.Pq see Xr auth_subr 3 .
+.Xr auth_set_va_list 3
+function.
 The, possibly created, BSD Authentication session is returned.
 The
-.Fn auth_getstate
+.Xr auth_getstate 3
 or
-.Fn auth_close
+.Xr auth_close 3
 function
-.Pq see Xr auth_subr 3
 should be used to determine the outcome of the authentication request.
 .Pp
 The
@@ -292,9 +289,9 @@ The
 and
 .Fn auth_userchallenge
 functions call
-.Fn getpwnam
+.Xr getpwnam 3
 or
-.Fn getpwuid ,
+.Xr getpwuid 3 ,
 overwriting the static storage used by the
 .Xr getpwent 3
 family of routines.

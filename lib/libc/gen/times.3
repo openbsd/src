@@ -1,4 +1,4 @@
-.\"	$OpenBSD: times.3,v 1.10 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: times.3,v 1.11 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,17 +81,17 @@ The
 time charged for execution by the system on behalf of
 the process.
 .It Fa tms_cutime
-The sum of the
-.Fa tms_utime Ns 's
+The sum of
+.Fa tms_utime
 and
-.Fa tms_cutime Ns 's
-of the child processes.
+.Fa tms_cutime
+for all of the child processes.
 .It Fa tms_cstime
-The sum of the
-.Fa tms_stime Ns s
+The sum of
+.Fa tms_stime
 and
-.Fa tms_cstime Ns s
-of the child processes.
+.Fa tms_cstime
+for all of the child processes.
 .El
 .Pp
 All times are in
@@ -108,7 +108,7 @@ functions returns the process ID of the terminated child to the parent.
 If an error occurs,
 .Fn times
 returns the value
-.Pq Em clock_t No - 1 ,
+.Li "(clock_t)-1" ,
 and sets
 .Va errno
 to indicate the error.

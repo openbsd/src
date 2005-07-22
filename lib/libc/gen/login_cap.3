@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.12 2004/08/09 21:15:09 millert Exp $
+.\" $OpenBSD: login_cap.3,v 1.13 2005/07/22 03:16:58 jaredy Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
 .Dd July 16, 1996
@@ -56,7 +56,7 @@
 .Ft char *
 .Fn login_getstyle "login_cap_t *lc" "char *style" "char *type"
 .Ft int
-.Fn login_getcapbool "login_cap_t *lc" "char *cap" "u_int def"
+.Fn login_getcapbool "login_cap_t *lc" "char *cap" "unsigned int def"
 .Ft quad_t
 .Fn login_getcapnum "login_cap_t *lc" "char *cap" "quad_t def" "quad_t err"
 .Ft quad_t
@@ -70,9 +70,9 @@
 .Ft int
 .Fn secure_path "char *path"
 .Ft int
-.Fn setclasscontext "char *class" "u_int flags"
+.Fn setclasscontext "char *class" "unsigned flags"
 .Ft int
-.Fn setusercontext "login_cap_t *lc" "struct passwd *pwd" "uid_t uid" "u_int flags"
+.Fn setusercontext "login_cap_t *lc" "struct passwd *pwd" "uid_t uid" "unsigned flags"
 .Sh DESCRIPTION
 The
 .Fn login_getclass
@@ -131,8 +131,8 @@ If
 .Ar type
 is
 .Dv NULL
-then only "auth" will be looked at.
-(See
+then only "auth" will be looked at
+(see
 .Xr login.conf 5 ) .
 The
 .Fn login_getstyle
@@ -166,7 +166,7 @@ It returns
 .Ar def
 if no capabilities were found for this class (typically meaning that
 the default class was used and the
-.Li /etc/login.conf
+.Pa /etc/login.conf
 file is missing).
 It returns a non-zero value if
 .Ar cap ,
@@ -193,8 +193,8 @@ Only the
 .Dv LOGIN_SETRESOURCES ,
 and
 .Dv LOGIN_SETUMASK
-bits are used.
-(See
+bits are used
+(see
 .Fn setusercontext
 below).
 It returns 0 on success and \-1 on failure.
@@ -235,7 +235,7 @@ are:
 .It Dv LOGIN_SETENV
 Sets environment variables specified by the setenv keyword.
 .It Dv LOGIN_SETGROUP
-Set the group id and call
+Set the group ID and call
 .Xr initgroups 3 .
 Requires the
 .Ar pwd

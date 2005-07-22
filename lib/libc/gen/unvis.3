@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unvis.3,v 1.14 2004/10/17 20:25:31 otto Exp $
+.\"	$OpenBSD: unvis.3,v 1.15 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -141,7 +141,9 @@ The decoder is placed into the starting state.
 .Pp
 When all bytes in the stream have been processed, call
 .Fn unvis
-one more time with flag set to
+one more time with
+.Fa flag
+set to
 .Dv UNVIS_END
 to extract any remaining character (the character passed in is ignored).
 .Pp
@@ -152,7 +154,7 @@ the trailing NUL byte) or \-1 if an error occurred.
 .Pp
 The
 .Fn strnunvis
-function returns the number of bytes (not counting the trailing NUL byte),
+function returns the number of bytes (not counting the trailing NUL byte)
 that would be needed to fully convert the input string, or \-1 if an
 error occurred.
 .Sh EXAMPLES

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.19 2004/06/03 17:09:12 espie Exp $
+.\"	$OpenBSD: sysconf.3,v 1.20 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,7 +102,7 @@ The maximum number of weights that can be assigned to any entry of
 the LC_COLLATE order keyword in the locale definition file.
 .It Li _SC_EXPR_NEST_MAX
 The maximum number of expressions that can be nested within
-parenthesis by the
+parentheses by the
 .Xr expr 1
 utility.
 .It Li _SC_LINE_MAX
@@ -146,7 +146,7 @@ Return 1 if the system supports the Shared Memory Option, otherwise \-1.
 The maximum number of semaphores in the system or \-1 if the system
 does not support the Semaphores Option.
 .It Li _SC_SEM_VALUE_MAX
-The maximum value a semaphores may have or \-1 if the system
+The maximum value a semaphore may have or \-1 if the system
 does not support the Semaphores Option.
 .El
 .Sh RETURN VALUES
@@ -165,7 +165,7 @@ The
 .Fn sysconf
 function may fail and set
 .Va errno
-for any of the errors specified for the library functions
+for any of the errors specified for the library function
 .Xr sysctl 3 .
 In addition, the following error may be reported:
 .Bl -tag -width Er

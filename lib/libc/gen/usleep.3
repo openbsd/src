@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usleep.3,v 1.14 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: usleep.3,v 1.15 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,7 +80,7 @@ to the corresponding value.
 .Fn usleep
 was interrupted by the delivery of a signal.
 .It Bq Er EINVAL
-.Fa useconds
+.Fa microseconds
 specified a value of 1,000,000 or more microseconds.
 .El
 .Sh NOTES

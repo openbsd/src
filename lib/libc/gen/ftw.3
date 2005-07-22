@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftw.3,v 1.5 2004/01/25 14:48:32 jmc Exp $
+.\"	$OpenBSD: ftw.3,v 1.6 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -68,10 +68,10 @@ function passes the aforementioned arguments plus a pointer to a
 structure as defined by
 .Aq Pa ftw.h
 (shown below):
-.Bd -literal
+.Bd -literal -offset indent
 struct FTW {
-    int base;	/* offset of basename into pathname */
-    int level;	/* directory depth relative to starting point */
+	int base;  /* offset of basename into pathname */
+	int level; /* directory depth relative to starting point */
 };
 .Ed
 .Pp
@@ -121,7 +121,7 @@ function has an additional
 argument with the following possible values:
 .Bl -tag -width FTW_MOUNT
 .It Dv FTW_PHYS
-Physical walk, don't follow symbolic links.
+Physical walk: don't follow symbolic links.
 .It Dv FTW_MOUNT
 The walk will not cross a mount point.
 .It FTW_DEPTH
@@ -170,7 +170,7 @@ for any of the errors specified for the library functions
 and
 .Xr readdir 3 .
 If the
-.Dv FGTW_CHDIR
+.Dv FTW_CHDIR
 flag is set, the
 .Fn nftw
 function may fail and set

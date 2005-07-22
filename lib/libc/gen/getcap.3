@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.28 2005/02/25 03:12:43 cloder Exp $
+.\"	$OpenBSD: getcap.3,v 1.29 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -240,15 +240,15 @@ copy pointed to by
 expansion is done (see
 .Ic tc=
 comments below).
-Upon completion of the database 0 is returned, 1 is returned upon successful
-return of record with possibly more remaining (we haven't reached the end of
-the database yet), 2 is returned if the record contains an unresolved
+Upon completion of the database 0 is returned; 1 is returned upon successful
+return of a record with possibly more remaining (the end of the database has
+not been reached yet); 2 is returned if the record contains an unresolved
 .Ic tc
-expansion, \-1 is returned if an system error occurred, and \-2
+expansion; \-1 is returned if an system error occurred; and \-2
 is returned if a potential reference loop is detected (see
 .Ic tc=
 comments below).
-Upon completion of database (0 return) the database is closed.
+Upon completion of database (0 return), the database is closed.
 .Pp
 .Fn cgetclose
 closes the file descriptor and resets state used for sequential access.
@@ -324,7 +324,7 @@ giving four names that can be used to access the record.
 .Pp
 The remaining non-empty capabilities describe a set of (name, value)
 bindings, consisting of a name optionally followed by a typed value:
-.Bl -column "nameTvalue"
+.Bl -column "nameTvalue" -offset indent
 .It name Ta "typeless [boolean] capability"
 .Em name No "is present [true]"
 .It name Ns Em \&T Ns value Ta capability
@@ -434,7 +434,7 @@ Two types are predefined by
 .Fn cgetnum
 and
 .Fn cgetstr :
-.Bl -column "nameXnumber"
+.Bl -column "nameXnumber" -offset indent
 .Sm off
 .It Em name No \&# Em number Ta numeric
 capability
@@ -470,7 +470,7 @@ Non-printable
 .Dv ASCII
 codes, new lines, and colons may be conveniently represented by the use
 of escape sequences:
-.Bl -column "\e\|X,X\e\|X" "(ASCII octal nnn)"
+.Bl -column "\e\|X,X\e\|X" "(ASCII octal nnn)" -offset indent
 ^X	('\fIX\fP' & 037)	control-\fIX\fP
 \e\|b, \e\|B	(ASCII 010)	backspace
 \e\|t, \e\|T	(ASCII 011)	tab

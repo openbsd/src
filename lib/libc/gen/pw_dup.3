@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_dup.3,v 1.5 2003/06/17 21:56:23 millert Exp $
+.\"	$OpenBSD: pw_dup.3,v 1.6 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -35,13 +35,13 @@ This is useful as subsequent calls to
 .Fn getpwnam ,
 and
 .Fn getpwuid
-will overwrite the data from previous calls.
+will overwrite the data they returned from previous calls.
 .Pp
 The returned pointer may be deallocated by a single call to
 .Xr free 3 .
 Since
 .Fn pw_dup
-allocates space for the copy in one chunk it is not necessary to free
+allocates space for the copy in one chunk, it is not necessary to free
 the individual strings contained in the returned struct passwd.
 .Pp
 If insufficient memory is available,

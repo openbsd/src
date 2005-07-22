@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.24 2004/04/16 10:48:39 jmc Exp $
+.\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,9 @@ information.
 This parameter must be initialized before
 .Fn syslog_r
 is called.
-The SYSLOG_DATA_INIT constant is used for this purpose.
+The
+.Dv SYSLOG_DATA_INIT
+constant is used for this purpose.
 The
 .Fa syslog_data
 structure is composed of the following elements:
@@ -221,7 +223,7 @@ This option must be used in programs that call
 .Xr chroot 2
 where the new root does not have its own log socket.
 .It Dv LOG_PERROR
-Write the message to standard error output as well to the system log.
+Write the message to standard error output as well as to the system log.
 .It Dv LOG_PID
 Log the process ID with each message; useful for identifying
 instantiations of daemons.
@@ -299,7 +301,7 @@ The
 .Fn closelog
 function can be used to close the log file.
 .Fn closelog_r
-do the same thing but in a reentrant way and takes an additional
+does the same thing but in a reentrant way and takes an additional
 pointer on a
 .Fa syslog_data
 structure.
@@ -339,7 +341,7 @@ The
 .Fn openlog_r ,
 .Fn syslog ,
 .Fn syslog_r ,
-.Fn vsyslog
+.Fn vsyslog ,
 and
 .Fn vsyslog_r
 functions return no value.
@@ -381,9 +383,9 @@ The reentrant functions appeared in
 It is important never to pass a string with user-supplied data as a
 format without using
 .Ql %s .
-An attacker can put format specifiers in the string to mangle your stack,
+An attacker can put format specifiers in the string to mangle the stack,
 leading to a possible security hole.
-This holds true even if you have built the string
+This holds true even if the string has been built
 .Dq by hand
 using a function like
 .Fn snprintf ,
@@ -398,7 +400,7 @@ syslog(priority, "%s", string);
 .Pp
 .Fn syslog_r
 and the other reentrant functions should only be used where
-reentrancy is required (for instance in a signal handler).
+reentrancy is required (for instance, in a signal handler).
 .Fn syslog
 being not reentrant, only
 .Fn syslog_r

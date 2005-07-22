@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.15 2005/02/25 03:12:43 cloder Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.16 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -109,7 +109,9 @@ argument was zero.
 .It Bq Er EIO
 The process is a member of a background process attempting to read
 from its controlling terminal, the process is ignoring or blocking
-the SIGTTIN signal or the process group is orphaned.
+the
+.Dv SIGTTIN
+signal, or the process group is orphaned.
 .It Bq Er EMFILE
 The process has already reached its limit for open file descriptors.
 .It Bq Er ENFILE
@@ -123,29 +125,23 @@ flag was specified.
 .Fn readpassphrase
 will catch the following signals:
 .Bd -literal -offset indent
-SIGALRM
-SIGHUP
-SIGINT
-SIGPIPE
-SIGQUIT
-SIGTERM
-SIGTSTP
-SIGTTIN
-SIGTTOU
+SIGALRM		SIGHUP		SIGINT
+SIGPIPE		SIGQUIT		SIGTERM
+SIGTSTP		SIGTTIN		SIGTTOU
 .Ed
 .Pp
 When one of the above signals is intercepted, terminal echo will
 be restored if it had previously been turned off.
 If a signal handler was installed for the signal when
 .Fn readpassphrase
-was called that handler is then executed.
+was called, that handler is then executed.
 If no handler was previously installed for the signal then the
 default action is taken as per
 .Xr sigaction 2 .
 .Pp
 The
 .Dv SIGTSTP ,
-.Dv SIGTTIN
+.Dv SIGTTIN ,
 and
 .Dv SIGTTOU
 signals (stop signals generated from keyboard or due to terminal I/O

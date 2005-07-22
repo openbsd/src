@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lockf.3,v 1.9 2000/04/18 03:01:27 aaron Exp $
+.\"	$OpenBSD: lockf.3,v 1.10 2005/07/22 03:16:58 jaredy Exp $
 .\"	$NetBSD: lockf.3,v 1.1 1997/12/20 20:23:17 kleink Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -142,7 +142,9 @@ controlled by the process.
 Locked sections will be unlocked starting
 at the current file offset through
 .Fa size
-bytes or to the end of the file if size is 0.
+bytes or to the end of the file if
+.Fa size
+is 0.
 When all of a locked section
 is not released (that is, when the beginning or end of the area to be
 unlocked falls within a locked section), the remaining portions of
@@ -156,7 +158,9 @@ system-imposed limit, the request will fail.
 .Pp
 An
 .Dv F_ULOCK
-request in which size is non-zero and the offset of the last byte of
+request in which
+.Fa size
+is non-zero and the offset of the last byte of
 the requested section is the maximum value for an object of type
 .Li off_t ,
 when the process has an existing lock in which size is 0 and
@@ -176,7 +180,7 @@ locked region is unlocked would cause a deadlock and fails with an
 error.
 .Pp
 .Fn lockf ,
-.Xr fcntl 2
+.Xr fcntl 2 ,
 and
 .Xr flock 2
 locks may be safely used concurrently.
@@ -234,7 +238,7 @@ The argument
 is not one of
 .Dv F_ULOCK ,
 .Dv F_LOCK ,
-.Dv F_TLOCK
+.Dv F_TLOCK ,
 or
 .Dv F_TEST .
 .Pp
@@ -246,7 +250,7 @@ The argument
 .Fa function
 is
 .Dv F_ULOCK ,
-.Dv F_LOCK
+.Dv F_LOCK ,
 or
 .Dv F_TLOCK ,
 and satisfying the lock or unlock request would result in the number

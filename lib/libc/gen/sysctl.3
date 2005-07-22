@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.143 2005/07/22 03:00:57 jaredy Exp $
+.\"	$OpenBSD: sysctl.3,v 1.144 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -310,7 +310,7 @@ The number of CPUs.
 .It Dv HW_PAGESIZE
 The software page size.
 .It Dv HW_PHYSMEM
-The bytes of physical memory.
+The total physical memory, in bytes.
 .It Dv HW_SENSORS
 An array of
 .Li struct sensor
@@ -319,7 +319,7 @@ structures containing information from the hardware monitoring sensors.
 Current CPU performance
 .Pq percentage .
 .It Dv HW_USERMEM
-The bytes of non-kernel memory.
+The amount of available non-kernel memory in bytes.
 .El
 .Ss CTL_KERN
 The string and integer information available for the
@@ -402,11 +402,11 @@ information.
 .El
 .Bl -tag -width "123456"
 .It Dv KERN_ARGMAX
-The maximum bytes of argument to
+The maximum number of bytes allowed among the arguments to
 .Xr exec 3 .
 .It Dv KERN_ARND
 Returns a random integer from the kernel
-.Fn arc4random
+.Xr arc4random 9
 function.
 This can be useful if
 .Pa /dev/arandom
@@ -635,7 +635,9 @@ The fourth level name is one of:
 .Dv KERN_PROC_NARGV
 and
 .Dv KERN_PROC_NENV
-return the number of elements in the argv or env array.
+return the number of elements as an
+.Vt int
+in the argv or env array.
 .Dv KERN_PROC_ARGV
 returns the argv array and
 .Dv KERN_PROC_ENV
@@ -648,7 +650,7 @@ attempts to retrieve any of the
 values will fail with
 .Er EOPNOTSUPP .
 The third level names for the string and integer profiling information
-is detailed below.
+are detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
 .Bl -column "GPROFXGMONPARAMXXX" "struct gmonparamXXX" -offset indent
@@ -850,7 +852,7 @@ system, otherwise 0.
 Returns 1 if System V style semaphore functionality is available on this
 system, otherwise 0.
 .It Dv KERN_SYSVSHM
-Returns 1 if System V style share memory functionality is available on this
+Returns 1 if System V style shared memory functionality is available on this
 system, otherwise 0.
 .It Dv KERN_TIMECOUNTER
 Return statistics information about the kernel time counter.
@@ -931,7 +933,8 @@ Permits userland to use
 .Pa /dev/crypto
 for cryptographic support for asymmetric (public) key operations via hardware
 cryptographic devices.
-kern.usercrypto must also be set.
+.Dv KERN_USERCRYPTO
+(see below) must also be set.
 .It Dv KERN_USERCRYPTO
 Permits userland to use
 .Pa /dev/crypto
@@ -950,10 +953,11 @@ the system.
 The returned data consists of an array whose size depends on the
 current number of such objects in the system.
 Each element of the array contains the kernel address of a vnode
-.Li struct vnode *
+.Pq Li struct vnode *
 followed by the vnode itself
-.Li struct vnode .
+.Pq Li struct vnode .
 .It Dv KERN_WATCHDOG
+Return information on hardware watchdog timers.
 If the kernel does not support a hardware watchdog timer,
 attempts to retrieve or set any of the
 .Dv KERN_WATCHDOG
@@ -996,6 +1000,7 @@ privileges may change the value.
 .It Dv PF_ROUTE No "	routing messages	no"
 .It Dv PF_INET No "	IPv4 values	yes"
 .It Dv PF_INET6 No "	IPv6 values	yes"
+.It Dv PF_KEY No "	key management	yes"
 .El
 .Bl -tag -width "123456"
 .It Dv PF_ROUTE
@@ -1099,7 +1104,7 @@ The currently defined protocols and names are:
 The variables are as follows:
 .Bl -tag -width "123456"
 .It Li ah.enable
-If set to 1, enable Authentication Header
+If set to 1, enable the Authentication Header
 .Pq AH
 IPsec protocol.
 Enabled by default.
@@ -1107,18 +1112,23 @@ See
 .Xr ipsec 4
 for more information.
 .It Li bpf.bufsize
-The initial size of BPF buffers.
+The initial size of
+.Xr bpf 4
+buffers.
 .It Li bpf.maxbufsize
-The maximum size a user may request a BPF buffer to be.
+The maximum size a user may request a
+.Xr bpf 4
+buffer to be.
 .It Li carp.allow
 If set to 0, incoming
-.Tn CARP
+.Xr carp 4
 packets will not be processed.
 If set to any other value, processing will occur.
 Enabled by default.
 .It Li carp.arpbalance
-If set to any value other than 0, the ARP balancing functionality in carp is
-enabled.
+If set to any value other than 0, the ARP balancing functionality of
+.Xr carp 4
+is enabled.
 When ARP requests are received for an IP address which is part of any virtual
 host, carp will hash the source IP in the ARP request to select one of the
 virtual hosts from the set of all the virtual hosts which have that IP address.
@@ -1138,7 +1148,7 @@ If set to any other value, carp will become master of the virtual host if it
 believes it can send advertisements more frequently than the current master.
 Disabled by default.
 .It Li esp.enable
-If set to 1, enable Encapsulating Security Payload
+If set to 1, enable the Encapsulating Security Payload
 .Pq ESP
 IPsec protocol.
 Enabled by default.
@@ -1172,7 +1182,7 @@ and is thus not advised.
 .It Li icmp.errppslimit
 This variable specifies the maximum number of outgoing ICMP error messages
 per second.
-ICMP error messages that exceeded the value are subject to rate limitation
+ICMP error messages exceeding this value are subject to rate limitation
 and will not go out from the node.
 A negative value disables rate limitation.
 .It Li icmp.maskrepl
@@ -1185,7 +1195,7 @@ Note that routers will never accept ICMP redirect packets,
 and the variable is meaningful on IP hosts only.
 .It Li icmp.redirtimeout
 This variable specifies the lifetime of routing entries generated by incoming
-ICMP redirect.
+ICMP redirects.
 The default timeout is 10 minutes.
 .It Li icmp.tstamprepl
 If set to 1, reply to ICMP timestamp requests.
@@ -1262,8 +1272,8 @@ If set to any other value, it is left to the key management daemons to
 select an encryption algorithm for the security association.
 The default value is aes.
 .It Li ip.ipsec-expire-acquire
-How long should the kernel allow key management to dynamically acquire
-security associations, before re-sending a request.
+How long the kernel should allow key management to dynamically acquire
+security associations before re-sending a request.
 The default value is 30 seconds.
 .It Li ip.ipsec-firstuse
 The number of seconds after a security association is first used before
@@ -1393,9 +1403,9 @@ If set to 0, incoming MobileIP encapsulated packets (RFC 2004) will not be
 processed.
 If set to any other value, processing will occur.
 .It Li tcp.ackonpush
-Returns 1 if tcp segments with the
+Returns 1 if TCP segments with the
 .Dv TH_PUSH
-set are being acknowledged immediately, otherwise 0.
+flag set are being acknowledged immediately, otherwise 0.
 .It Li tcp.baddynamic
 An array of
 .Li in_port_t
@@ -1407,16 +1417,19 @@ by the kernel (i.e., they must be bound specifically by port number).
 .It Li tcp.ecn
 Returns 1 if Explicit Congestion Notifications for TCP are enabled.
 .It Li tcp.ident
-A structure
+A
 .Li struct tcp_ident_mapping
 specifying a local and foreign endpoint of a
 .Tn TCP
-socket is filled in with the euid and ruid of the process that owns the socket.
-If no such socket exists, then the euid and ruid values are both set to \-1.
+socket is filled in with the effective and real UIDs of the process that
+owns the socket.
+If no such socket exists, then the effective and real UID values are
+both set to \-1.
 .It Li tcp.keepidle
 If the socket option
-.Pa SO_KEEPALIVE
-has been set, time a connection needs to be idle before keepalives are sent.
+.Dv SO_KEEPALIVE
+has been set on a socket, then this value specifies how much time a
+connection needs to be idle before keepalives are sent.
 See also tcp.slowhz.
 .It Li tcp.keepinittime
 Unused.
@@ -1446,7 +1459,7 @@ Initial Window is increased, as specified in RFC 3390.
 .It Li tcp.rstppslimit
 This variable specifies the maximum number of outgoing TCP RST packets
 per second.
-TCP RST packets that exceeded the value are subject to rate limitation
+TCP RST packets exceeding this value are subject to rate limitation
 and will not go out from the node.
 A negative value disables rate limitation.
 .It Li tcp.sack
@@ -1461,9 +1474,9 @@ of a clock that ticks tcp.slowhz times per second.
 (That is, their values must be divided by the tcp.slowhz value to get times
 in seconds.)
 .It Li tcp.synbucketlimit
-The maximum number of entries allowed per hash bucket in the TCP syn cache.
+The maximum number of entries allowed per hash bucket in the TCP SYN cache.
 .It Li tcp.syncachelimit
-The maximum number of entries allowed in the TCP syn cache.
+The maximum number of entries allowed in the TCP SYN cache.
 .It Li udp.baddynamic
 Analogous to
 .Li tcp.baddynamic
@@ -1531,24 +1544,24 @@ The variables are as follows:
 .It Li icmp6.errppslimit
 This variable specifies the maximum number of outgoing ICMPv6 error messages
 per second.
-ICMPv6 error messages that exceeded the value are subject to rate limitation
+ICMPv6 error messages exceeding this value are subject to rate limitation
 and will not go out from the node.
 A negative value will disable the rate limitation.
 .Pp
 .It Li icmp6.mtudisc_hiwat
 .It Li icmp6.mtudisc_lowat
-These variables define the maximum number of routing table entries,
+These variables define the maximum number of routing table entries
 created due to path MTU discovery
 .Pq preventing denial-of-service attacks with ICMPv6 too big messages .
 After IPv6 path MTU discovery happens, path MTU information is kept in
 the routing table.
-If the number of routing table entries exceed the value,
+If the number of routing table entries exceeds this value,
 the kernel will not attempt to keep the path MTU information.
 .Li icmp6.mtudisc_hiwat
 is used when we have verified ICMPv6 too big messages.
 .Li icmp6.mtudisc_lowat
 is used when we have unverified ICMPv6 too big messages.
-Verification is performed by using address/port pairs kept in connected pcbs.
+Verification is performed by using address/port pairs kept in connected PCBs.
 A negative value disables the upper limit.
 .Pp
 .It Li icmp6.nd6_debug
@@ -1628,7 +1641,7 @@ for the option to be meaningful (see
 .Pp
 .It Li ip6.auto_flowlabel
 On connected transport protocol packets,
-fill IPv6 flowlabel field to help intermediate routers identify
+fill the IPv6 flowlabel field to help intermediate routers identify
 packet flows.
 .Pp
 .It Li ip6.dad_count
@@ -1708,7 +1721,7 @@ This variable specifies the interval between IPv6 router renumbering prefix
 babysitting in seconds.
 .Pp
 .It Li ip6.use_deprecated
-This variable controls use of deprecated addresses, specified in
+This variable controls the use of deprecated addresses, specified in
 RFC 2462 5.5.4.
 .Pp
 .It Li ip6.v6only
@@ -1837,13 +1850,13 @@ The changeable column shows whether a process with appropriate
 privileges may change the value.
 .Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
 .It Sy Second level name	Type	Changeable
-.It Dv VFS_GENERIC No "	vm generic info	no"
+.It Dv VFS_GENERIC No "	VM generic info	no"
 .It Dv filesystem # No "	filesystem info	no"
 .El
 .Bl -tag -width "123456"
 .It Dv VFS_GENERIC
 This second level identifier requests generic information about the
-vfs layer.
+VFS layer.
 Within it, the following third level identifiers exist:
 .Bl -column "Third level nameXXXXXX" "struct loadavgXXX" -offset indent
 .It Sy Third level name	Type	Changeable
@@ -1851,7 +1864,9 @@ Within it, the following third level identifiers exist:
 .It Dv VFS_MAXTYPENUM No "	int	no"
 .El
 .It filesystem #
-After finding the filesystem dependent vfc_typenum using
+After finding the filesystem dependent
+.Va vfc_typenum
+using
 .Dv VFS_GENERIC
 with
 .Dv VFS_CONF ,
@@ -1944,10 +1959,11 @@ The returned data consists of a
 .It Dv VM_NKMEMPAGES
 Number of pages in kmem_map.
 .It Dv VM_PSSTRINGS
-Returns address of struct ps_strings.
+Returns the address of the process
+.Li struct ps_strings .
 The
 .Xr ps 1
-program uses it to locate argv and environment strings.
+program uses it to locate the argument and environment strings.
 .It Dv VM_SWAPENCRYPT
 Contains statistics about swap encryption.
 The string and integer information available for the third level is

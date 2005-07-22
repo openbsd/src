@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popen.3,v 1.13 2005/02/25 03:12:43 cloder Exp $
+.\"	$OpenBSD: popen.3,v 1.14 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,7 +79,7 @@ stream in all respects
 except that it must be closed with
 .Fn pclose
 rather than
-.Fn fclose .
+.Xr fclose 3 .
 Writing to such a stream
 writes to the standard input of the command;
 the command's standard output is the same as that of the process that called
@@ -91,9 +91,9 @@ stream reads the command's standard output, and
 the command's standard input is the same as that of the process that called
 .Fn popen .
 .Pp
-Note that output
+Note that
 .Fn popen
-streams are fully buffered by default.
+output streams are fully buffered by default.
 .Pp
 The
 .Fn pclose
@@ -161,12 +161,12 @@ before
 .Fn popen .
 .Pp
 Failure to execute the shell is indistinguishable from the shell's
-failure to execute command, or an immediate exit of the command.
+failure to execute
+.Fa command ,
+or an immediate exit of the command.
 The only hint is an exit status of 127.
 .Pp
 The
 .Fn popen
 argument always calls
-.Xr sh 1 ;
-it never calls
-.Xr csh 1 .
+.Xr sh 1 .

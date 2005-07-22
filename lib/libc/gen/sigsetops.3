@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigsetops.3,v 1.8 2004/12/17 10:18:03 jmc Exp $
+.\"	$OpenBSD: sigsetops.3,v 1.9 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -91,8 +91,7 @@ is contained in the signal set.
 The
 .Fn sigismember
 function returns 1
-if the signal is a member of the set,
-a 0 otherwise.
+if the signal is a member of the set and 0 otherwise.
 The other functions return 0 upon success.
 A \-1 return value
 indicates an error occurred and the global variable

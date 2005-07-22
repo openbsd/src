@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.15 2004/08/03 19:43:31 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.16 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -61,7 +61,7 @@
 .Fd #include <login_cap.h>
 .Fd #include <bsd_auth.h>
 .Ft auth_session_t *
-.Fn auth_open
+.Fn auth_open "void"
 .Ft int
 .Fn auth_close "auth_session_t *as"
 .Ft int
@@ -100,7 +100,7 @@
 .Fn auth_setoption "auth_session_t *as" "char *name" "char *value"
 .Ft int
 .Fn auth_setpwd "auth_session_t *as" "struct passwd *pwd"
-.Ft int
+.Ft void
 .Fn auth_setstate "auth_session_t *as" "int state"
 .Sh DESCRIPTION
 These functions provide the lower level interface to the BSD
@@ -127,11 +127,11 @@ A return value of 0 implies the user was not authenticated.
 A non-zero return value is made up of 1 or more of the following values
 ORed together:
 .Bl -tag -width AUTH_ROOTOKAYXX
-.It Li AUTH_OKAY
+.It Dv AUTH_OKAY
 The user was authenticated.
-.It Li AUTH_ROOTOKAY
+.It Dv AUTH_ROOTOKAY
 The user was authenticated with a root instance.
-.It Li AUTH_SECURE
+.It Dv AUTH_SECURE
 The user was authenticated via a mechanism which is not subject to
 eavesdropping attacks (such as provided by token cards).
 .El
@@ -141,20 +141,20 @@ The full state of the session is returned by the
 function.
 In addition to the values above, it also may contain the bits:
 .Bl -tag -width AUTH_ROOTOKAYXX
-.It Li AUTH_SILENT
+.It Dv AUTH_SILENT
 Do not report an error, the user was not authenticated for access and
 was not expected to be.
-This is returned by login scripts that allow changing of the users password,
+This is returned by login scripts that allow changing of the user's password,
 for instance.
 This value is stripped off for normal returns.
-.It Li AUTH_CHALLENGE
+.It Dv AUTH_CHALLENGE
 The user was not authenticated for access and a challenge was issued.
 The challenge should be displayed to the user, a response retrieved,
 and the result verified.
 This value is stripped off for normal returns.
-.It Li AUTH_EXPIRED
+.It Dv AUTH_EXPIRED
 The user's account has expired.
-.It Li AUTH_PWEXPIRED
+.It Dv AUTH_PWEXPIRED
 The user's password has expired and needs to be changed.
 .El
 .Pp
@@ -186,9 +186,9 @@ does not pass the requirements of the
 function.
 .It Ar ...
 The remaining arguments, which should be of type
-.Ft char *
+.Vt char *
 and terminated with a
-.Dv NULL
+.Dv NULL ,
 are passed to the login script at the end of the command line.
 .El
 .Pp
@@ -246,7 +246,7 @@ The back channel data may also contain a file descriptor passed back
 from the login script.
 If this is the case, the login script will first send back the string
 .Dq fd
-to indidate that a file descriptor will be the next data item.
+to indicate that a file descriptor will be the next data item.
 The file descriptor will be passed back to the next invocation of
 the login script with a number specified by the
 .Fl v Ar fd
@@ -278,14 +278,14 @@ and
 .Ev SHELL .
 The
 .Ev PATH
-is set to the default path (
-.Pa /bin
+is set to the default path
+.Pa ( /bin
 and
 .Pa /usr/bin )
 while the
 .Ev SHELL
-is set to the default system shell (
-.Pa /bin/sh ) .
+is set to the default system shell
+.Pq Pa /bin/sh .
 .Pp
 The
 .Fn auth_challenge
@@ -323,7 +323,7 @@ or
 .Li AUTH_EXPIRED
 as well as clearing any bits which would indicate the authentication was
 successful.
-If the password or account has not expired they return the number of
+If the password or account has not expired, they return the number of
 seconds left until the account does expire.
 The return value of -1 can either indicate the password or account
 just expired or that no password entry was set for the current session.
@@ -349,18 +349,18 @@ function returns the value of
 The
 .Fa item
 may be one of:
-.Bl -tag -width AUTH_ROOTOKAYXX
-.It Li AUTH_CHALLENGE
+.Bl -tag -width AUTH_INTERACTIVE
+.It Dv AUTH_CHALLENGE
 The latest challenge, if any, set for the session.
-.It Li AUTH_CLASS
+.It Dv AUTH_CLASS
 The class of the user, as defined by the
 .Pa /etc/login.conf
 file.
 This value is not directly used by BSD Authentication, rather, it is
 passed to the login scripts for their possible use.
-.It Li AUTH_INTERACTIVE
-If set to any value then the session is tagged as interactive.
-If not set the session is not interactive.
+.It Dv AUTH_INTERACTIVE
+If set to any value, then the session is tagged as interactive.
+If not set, the session is not interactive.
 When the value is requested it is always either
 .Dv NULL
 or
@@ -368,14 +368,14 @@ or
 The auth subroutines may choose to provide additional information to
 standard output or standard error when the session is interactive.
 There is no functional change in the operation of the subroutines.
-.It Li AUTH_NAME
+.It Dv AUTH_NAME
 The name of the user being authenticated.
 The name should include the instance, if any, that is being requested.
-.It Li AUTH_SERVICE
+.It Dv AUTH_SERVICE
 The service requesting the authentication.
 Initially it is set to the default service which provides the traditional
 interactive service.
-.It Li AUTH_STYLE
+.It Dv AUTH_STYLE
 The style of authentication being performed, as defined by the
 .Pa /etc/login.conf
 file.

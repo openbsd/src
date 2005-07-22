@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.20 2004/03/02 19:11:38 millert Exp $
+.\"	$OpenBSD: setjmp.3,v 1.21 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -111,7 +111,7 @@ routines may not be called after the routine which called the
 .Fn setjmp
 routines returns.
 .Pp
-All accessible objects have values as of the time
+All accessible objects have values as of the time the
 .Fn longjmp
 routine was called, except that the values of objects of automatic storage
 invocation duration that do not have the
@@ -124,7 +124,7 @@ call are indeterminate.
 .Pp
 The
 .Fn setjmp Ns / Ns Fn longjmp
-function pairs save and restore the signal mask while
+function pairs save and restore the signal mask while the
 .Fn _setjmp Ns / Ns Fn _longjmp
 function pairs save and restore only the register set and the stack (see
 .Xr sigmask 3 ) .

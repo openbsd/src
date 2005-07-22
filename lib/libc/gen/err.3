@@ -1,4 +1,4 @@
-.\"	$OpenBSD: err.3,v 1.14 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: err.3,v 1.15 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -175,9 +175,9 @@ functions first appeared in
 It is important never to pass a string with user-supplied data as a
 format without using
 .Ql %s .
-An attacker can put format specifiers in the string to mangle your stack,
+An attacker can put format specifiers in the string to mangle the stack,
 leading to a possible security hole.
-This holds true even if you have built the string
+This holds true even if the string has been built
 .Dq by hand
 using a function like
 .Fn snprintf ,

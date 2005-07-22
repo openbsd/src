@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.21 2005/03/01 15:38:39 mpf Exp $
+.\"	$OpenBSD: fts.3,v 1.22 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -601,7 +601,7 @@ or
 .Fn fts_read
 on the same file hierarchy stream.
 .Pp
-.Fa option
+.Fa options
 may be set to the following value:
 .Bl -tag -width FTS_NAMEONLY
 .It Dv FTS_NAMEONLY
@@ -665,7 +665,7 @@ fields of the structure, when returned by
 .Fn fts_read ,
 will reflect the target of the symbolic link instead of the symbolic link
 itself.
-In either case, if the target of the symbolic link does not exist the
+In either case if the target of the symbolic link does not exist, the
 fields of the returned structure will be unchanged and the
 .Fa fts_info
 field will be set to
@@ -746,6 +746,6 @@ The specified option is invalid.
 .Sh STANDARDS
 The
 .Nm
-utility is expected to be included in a future
+API is expected to be included in a future
 .St -p1003.1-88
 revision.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getttyent.3,v 1.9 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: getttyent.3,v 1.10 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,17 +53,17 @@ and
 .Fn getttynam
 functions each return a pointer to an object, with the following structure,
 containing the broken-out fields of a line from the tty description file.
-.Bd -literal
+.Bd -literal -offset indent
 struct ttyent {
 	char	*ty_name;	/* terminal device name */
 	char	*ty_getty;	/* command to execute */
 	char	*ty_type;	/* terminal type */
 #define	TTY_ON		0x01	/* enable logins */
 #define	TTY_SECURE	0x02	/* allow uid of 0 to login */
-#define	TTY_LOCAL	0x04	/* set 'CLOCAL' on open (dev. specific) */
-#define	TTY_RTSCTS	0x08	/* set 'CRTSCTS' on open (dev. specific) */
-#define	TTY_SOFTCAR	0x10	/* ignore hardware carrier (dev. spec.) */
-#define	TTY_MDMBUF	0x20	/* set 'MDMBUF' on open (dev. specific) */
+#define	TTY_LOCAL	0x04	/* set 'CLOCAL' on open */
+#define	TTY_RTSCTS	0x08	/* set 'CRTSCTS' on open */
+#define	TTY_SOFTCAR	0x10	/* ignore hardware carrier */
+#define	TTY_MDMBUF	0x20	/* set 'MDMBUF' on open */
 	int	ty_status;	/* flag values */
 	char	*ty_window;	/* command for window manager */
 	char	*ty_comment;	/* comment field */
