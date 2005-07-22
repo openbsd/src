@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.30 2005/07/05 13:40:51 millert Exp $
+.\"	$OpenBSD: ctime.3,v 1.31 2005/07/22 03:23:37 jaredy Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -151,7 +151,7 @@ returns
 converts the broken-down time,
 expressed as local time,
 in the structure pointed to by
-.Li tm
+.Fa tm
 into a calendar time value with the same encoding as that of the values
 returned by the
 .Fn time
@@ -168,7 +168,7 @@ to their normal ranges.
 causes
 .Fn mktime
 to presume initially that summer time (for example, Daylight Saving Time
-in the U.S.A.)
+in the U.S.A.)\&
 respectively,
 is or is not in effect for the specified time.
 A negative value for
@@ -232,8 +232,8 @@ includes the following fields:
 	int tm_wday;	/* day of week (Sunday = 0) */
 	int tm_yday;	/* day of year (0 \- 365) */
 	int tm_isdst;	/* is summer time in effect? */
-	char *tm_zone;	/* abbreviation of timezone name */
 	long tm_gmtoff;	/* offset from UTC in seconds */
+	char *tm_zone;	/* abbreviation of timezone name */
 .Ed
 .Pp
 The

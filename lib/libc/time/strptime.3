@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.8 2003/05/07 08:52:42 jmc Exp $
+.\"	$OpenBSD: strptime.3,v 1.9 2005/07/22 03:23:37 jaredy Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,16 +58,21 @@ The
 string consists of zero or more directives.
 A directive is composed of either one or more whitespace characters as
 defined by
-.Fn isspace ,
-an ordinary character (neither `%' nor a whitespace), or a conversion
+.Xr isspace 3 ,
+an ordinary character (neither
+.Sq %
+nor a whitespace), or a conversion
 specification.
-A conversion specification consists of a percent sign `%'
+A conversion specification consists of a percent sign
+.Pq Sq %
 followed by one or two conversion characters which specify the
 replacement required.
 There must be whitespace or other
 non-alphanumeric characters between any two conversion specifications.
 .Pp
-The LC_TIME category defines the locale values for the conversion
+The
+.Dv LC_TIME
+category defines the locale values for the conversion
 specifications.
 The following conversion specifications are supported:
 .Bl -tag -width "xxxx"
@@ -159,8 +164,8 @@ the time, using the locale's time format.
 .It Cm \&%y
 the year within the current century.
 When a century is not otherwise
-specified, values in the range 69-99 refer to years in the twentieth
-century (1969 to 1999 inclusive); values in the range 00-68 refer
+specified, values in the range 69\-99 refer to years in the twentieth
+century (1969 to 1999 inclusive); values in the range 00\-68 refer
 to years in the twenty-first century (2000 to 2068 inclusive).
 Leading zeros are permitted but not required.
 .It Cm \&%Y
