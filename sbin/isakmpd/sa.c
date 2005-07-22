@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.98 2005/04/08 23:15:26 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.99 2005/07/22 11:36:43 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -329,7 +329,7 @@ sa_lookup(u_int8_t *cookies, u_int8_t *message_id)
 	 * time, and then masking, should do.  Doing it this way means we can
 	 * validate cookies very fast thus delimiting the effects of "Denial of
 	 * service"-attacks using packet flooding.
-         */
+	 */
 	for (i = 0; i < ISAKMP_HDR_COOKIES_LEN; i += 2) {
 		cp = cookies + i;
 		/* Doing it this way avoids alignment problems.  */
@@ -362,7 +362,7 @@ sa_create(struct exchange *exchange, struct transport *t)
 	/*
 	 * We want the SA zeroed for sa_free to be able to find out what fields
 	 * have been filled-in.
-         */
+	 */
 	sa = calloc(1, sizeof *sa);
 	if (!sa) {
 		log_error("sa_create: calloc (1, %lu) failed",
@@ -818,7 +818,7 @@ sa_isakmp_upgrade(struct message *msg)
 	/*
 	 * We don't install a transport in the initiator case as we don't know
 	 * what local address will be chosen.  Do it now instead.
-         */
+	 */
 	sa->transport = msg->transport;
 	transport_reference(sa->transport);
 	sa_enter(sa);
@@ -901,7 +901,7 @@ sa_validate_proto_xf(struct proto *match, struct payload *xf, int phase)
 	avs->phase = phase;
 
 	/* Load the "proposal candidate" attribute set.  */
-	(void) attribute_map(xf->p + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+	(void)attribute_map(xf->p + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 	    GET_ISAKMP_GEN_LENGTH(xf->p) - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 	    sa_validate_xf_attrs, avs);
 	xf_id = GET_ISAKMP_TRANSFORM_ID(xf->p);
@@ -1205,7 +1205,7 @@ sa_setup_expirations(struct sa *sa)
 	 * It is not good to do the decrease on the hard timeout, because then
 	 * we may drop our SA before our peer.
 	 * XXX Better scheme to come?
-         */
+	 */
 	if (!sa->soft_death) {
 		gettimeofday(&expiration, 0);
 		/*
