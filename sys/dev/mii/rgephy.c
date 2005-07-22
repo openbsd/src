@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.10 2005/05/27 08:04:15 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.11 2005/07/22 11:48:10 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -91,6 +91,8 @@ const struct mii_phy_funcs rgephy_funcs = {
 };
 
 static const struct mii_phydesc rgephys[] = {
+	{ MII_OUI_REALTEK2,		MII_MODEL_xxREALTEK_RTL8169S,
+	  MII_STR_xxREALTEK_RTL8169S },
 	{ MII_OUI_xxREALTEK,		MII_MODEL_xxREALTEK_RTL8169S,
 	  MII_STR_xxREALTEK_RTL8169S },
 
