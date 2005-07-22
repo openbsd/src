@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.141 2005/01/04 19:42:39 markus Exp $
+.\"	$OpenBSD: sysctl.3,v 1.142 2005/07/22 02:58:11 jaredy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,7 +142,8 @@ size_t len;
 mib[0] = CTL_KERN;
 mib[1] = KERN_MAXPROC;
 len = sizeof(maxproc);
-sysctl(mib, 2, &maxproc, &len, NULL, 0);
+if (sysctl(mib, 2, &maxproc, &len, NULL, 0) == -1)
+	err(1, "sysctl");
 .Ed
 .Pp
 To retrieve the standard search path for the system utilities:
@@ -153,9 +154,12 @@ char *p;
 
 mib[0] = CTL_USER;
 mib[1] = USER_CS_PATH;
-sysctl(mib, 2, NULL, &len, NULL, 0);
-p = malloc(len);
-sysctl(mib, 2, p, &len, NULL, 0);
+if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1)
+	err(1, "sysctl");
+if ((p = malloc(len)) == NULL)
+	err(1, NULL);
+if (sysctl(mib, 2, p, &len, NULL, 0) == -1)
+	err(1, "sysctl");
 .Ed
 .Ss CTL_DDB
 Integer information and settable variables are available for the
