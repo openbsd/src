@@ -1,4 +1,4 @@
-.\"     $OpenBSD: tctrl.4,v 1.7 2005/03/29 16:26:43 miod Exp $
+.\"     $OpenBSD: tctrl.4,v 1.8 2005/07/22 19:36:42 miod Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"	AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
-.Dd March 29, 2005
+.Dd July 22, 2005
 .Dt TCTRL 4 sparc
 .Os
 .Sh NAME
@@ -127,8 +127,8 @@ Battery has a critical state of charge.
 Battery is not high, low, or critical and is currently charging.
 .It Dv APM_BATT_UNKNOWN
 Can not read the current battery state.
-.\" .It Dv APM_BATTERY_ABSENT
-.\" No battery installed.
+.It Dv APM_BATTERY_ABSENT
+No battery installed.
 .El
 .Pp
 The following values are defined for
