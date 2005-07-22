@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.23 2005/07/07 19:06:12 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.24 2005/07/22 16:27:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -110,8 +110,6 @@ typedef struct cvs_file {
 #define cf_files  cf_td.cf_dir.cd_files
 #define cf_repo   cf_td.cf_dir.cd_repo
 #define cf_root   cf_td.cf_dir.cd_root
-
-#define CVS_FILE_NAME(cf)   (cf->cf_name)
 
 
 

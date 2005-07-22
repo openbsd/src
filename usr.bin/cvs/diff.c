@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.51 2005/07/21 11:42:24 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.52 2005/07/22 16:27:29 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -521,8 +521,7 @@ cvs_diff_remote(struct cvs_file *cfp, void *arg)
 	if (cfp->cf_type == DT_DIR) {
 		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
 			root = cfp->cf_parent->cf_root;
-			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cfp));
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
 		} else {
 			root = cfp->cf_root;
 #if 0
@@ -540,7 +539,7 @@ cvs_diff_remote(struct cvs_file *cfp, void *arg)
 	}
 
 	if (cfp->cf_cvstat == CVS_FST_LOST) {
-		cvs_log(LP_WARN, "cannot find file %s", CVS_FILE_NAME(cfp));
+		cvs_log(LP_WARN, "cannot find file %s", cfp->cf_name);
 		return (0);
 	}
 

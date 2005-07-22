@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.41 2005/07/19 00:32:26 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.42 2005/07/22 16:27:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -146,7 +146,7 @@ cvs_commit_pre_exec(struct cvsroot *root)
 	}
 
 	if (cvs_msg == NULL)
-		cvs_msg = cvs_logmsg_get(CVS_FILE_NAME(tmp),
+		cvs_msg = cvs_logmsg_get(tmp->cf_name,
 		    NULL, &cl, NULL);
 
 	cvs_file_free(tmp);
@@ -245,10 +245,8 @@ cvs_commit_remote(CVSFILE *cf, void *arg)
 		if (cf->cf_cvstat == CVS_FST_REMOVED)
 			return (0);
 
-		if (cvs_sendreq(root, CVS_REQ_MODIFIED,
-		    CVS_FILE_NAME(cf)) < 0) {
+		if (cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name) < 0)
 			return (CVS_EX_PROTO);
-		}
 
 		if (cvs_sendfile(root, fpath) < 0) {
 			return (CVS_EX_PROTO);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.41 2005/07/21 11:42:24 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.42 2005/07/22 16:27:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -165,7 +165,7 @@ cvs_getlog_remote(CVSFILE *cf, void *arg)
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
 			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cf));
+			    cf->cf_name);
 		else
 			ret = cvs_senddir(root, cf);
 		return (ret);

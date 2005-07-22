@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.98 2005/07/18 01:02:20 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.99 2005/07/22 16:27:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -550,7 +550,7 @@ cvs_file_find(CVSFILE *hier, const char *path)
 		}
 
 		SIMPLEQ_FOREACH(sf, &(cf->cf_files), cf_list)
-			if (cvs_file_cmpname(pp, CVS_FILE_NAME(sf)) == 0)
+			if (cvs_file_cmpname(pp, sf->cf_name) == 0)
 				break;
 		if (sf == NULL)
 			return (NULL);
@@ -584,7 +584,7 @@ cvs_file_getpath(CVSFILE *file, char *buf, size_t len)
 
 	/* find the top node */
 	for (top = file; (top != NULL) && (i > 0); top = top->cf_parent) {
-		fp = CVS_FILE_NAME(top);
+		fp = top->cf_name;
 
 		/* skip self-references */
 		if ((fp[0] == '.') && (fp[1] == '\0'))
@@ -886,7 +886,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 			cfp->cf_flags &= ~CVS_GDIR_IGNORE;
 
 		if (cvs_file_getdir(cfp, flags, np, cb, arg) < 0) {
-			cvs_log(LP_ERR, "failed to get %s", CVS_FILE_NAME(cfp));
+			cvs_log(LP_ERR, "failed to get %s", cfp->cf_name);
 			continue;
 		}
 	}
@@ -1020,7 +1020,7 @@ cvs_file_cmp(const void *f1, const void *f2)
 	const CVSFILE *cf1, *cf2;
 	cf1 = *(CVSFILE * const *)f1;
 	cf2 = *(CVSFILE * const *)f2;
-	return cvs_file_cmpname(CVS_FILE_NAME(cf1), CVS_FILE_NAME(cf2));
+	return cvs_file_cmpname(cf1->cf_name, cf2->cf_name);
 }
 
 

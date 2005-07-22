@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.45 2005/07/14 07:38:35 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.46 2005/07/22 16:27:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -452,10 +452,9 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 
 		/* add a directory entry to the parent */
 		if (entf != NULL) {
-			if ((ent = cvs_ent_get(entf,
-			    CVS_FILE_NAME(cf))) == NULL) {
+			if ((ent = cvs_ent_get(entf, cf->cf_name)) == NULL) {
 				snprintf(buf, sizeof(buf), "D/%s////",
-				    CVS_FILE_NAME(cf));
+				    cf->cf_name);
 				ent = cvs_ent_parse(buf);
 				if (ent == NULL)
 					cvs_log(LP_ERR,
