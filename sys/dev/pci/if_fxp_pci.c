@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.35 2005/05/27 06:37:21 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.36 2005/07/22 23:51:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -144,7 +144,7 @@ fxp_pci_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_dmat = pa->pa_dmat;
-	
+
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 
 	/*
@@ -191,20 +191,6 @@ fxp_pci_attach(parent, self, aux)
 
 		break;
 	}
-		break;
-	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_0:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_1:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
-	case PCI_PRODUCT_INTEL_82562EH_HPNA_0:
-	case PCI_PRODUCT_INTEL_82562EH_HPNA_1:
-	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
-		/*
-		 * ICH3 chips apparently have problems with the enhanced
-		 * features, so just treat them as an i82557.
-		 */
-		sc->sc_revision = 1;
 		break;
 	default:
 		break;
