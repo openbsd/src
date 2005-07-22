@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.14 2005/07/14 15:17:42 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.15 2005/07/22 15:34:05 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -134,29 +134,29 @@ cvs_release_yesno(void)
  * Returns 0 on success, or -1 on failure.
  */
 static int
-cvs_release_dir(CVSFILE *cdir, void *arg)
+cvs_release_dir(CVSFILE *cf, void *arg)
 {
 	FILE *fp;
 	int j, l;
 	size_t len;
 	char *wdir, cwd[MAXPATHLEN];
-	char buf[256], cdpath[MAXPATHLEN], dpath[MAXPATHLEN];
-	char updcmd[MAXPATHLEN];	/* XXX find a better size; malloc()?? */
+	char cdpath[MAXPATHLEN], dpath[MAXPATHLEN];
+	char buf[256], updcmd[1024];
 	struct stat st;
 	struct cvsroot *root;
 
 	j = 0;		/* number of altered files in the working copy */
 
-	root = CVS_DIR_ROOT(cdir);
+	root = CVS_DIR_ROOT(cf);
 
-	cvs_file_getpath(cdir, dpath, sizeof(dpath));
+	cvs_file_getpath(cf, dpath, sizeof(dpath));
 
 	len = cvs_path_cat(dpath, CVS_PATH_CVSDIR, cdpath, sizeof(cdpath));
 	if (len >= sizeof(cdpath))
 		return (CVS_EX_DATA);
 
-	if (cdir->cf_type == DT_DIR) {
-		if (!strcmp(CVS_FILE_NAME(cdir), "."))
+	if (cf->cf_type == DT_DIR) {
+		if (!strcmp(CVS_FILE_NAME(cf), "."))
 			return (0);
 		else {
 			/* test if dir has CVS/ directory */
