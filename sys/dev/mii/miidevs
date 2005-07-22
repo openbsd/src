@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.57 2005/06/21 03:24:50 brad Exp $
+$OpenBSD: miidevs,v 1.58 2005/07/22 11:39:36 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -60,6 +60,7 @@ oui NATSEMI			0x080017	National Semiconductor
 oui PLESSEY			0x046b40	Plessey Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui REALTEK			0x000020	Realtek Semiconductor
+oui REALTEK2			0x00e04c	Realtek Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
 oui TI				0x080028	Texas Instruments
@@ -157,6 +158,7 @@ model MARVELL E1000_4		0x0004 Marvell 88E1000S Gigabit PHY
 model MARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 model MARVELL E1000_6		0x0006 Marvell 88E1000 Gigabit PHY
 model MARVELL E1000_7		0x000c Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000_2		0x0002 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 
