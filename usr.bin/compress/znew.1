@@ -1,4 +1,4 @@
-.\"	$OpenBSD: znew.1,v 1.1 2003/08/02 20:52:50 otto Exp $
+.\"	$OpenBSD: znew.1,v 1.2 2005/07/22 09:34:16 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
 .\"
@@ -22,7 +22,7 @@
 .Nd convert compressed files to gzipped files
 .Sh SYNOPSIS
 .Nm
-.Op Fl ftv9K
+.Op Fl 9fKtv
 .Ar
 .Sh DESCRIPTION
 The
@@ -34,6 +34,10 @@ and recompresses them with
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 9
+Use the -9 mode of
+.Xr gzip 1 ,
+achieving better compression at the cost of slower execution.
 .It Fl f
 Overwrite existing
 .Sq .gz
@@ -41,6 +45,11 @@ files.
 Unless this option is specified,
 .Nm
 refuses to overwrite existing files.
+.It Fl K
+Keep the original
+.Sq .Z
+file if it uses less disk blocks than the gzipped one.
+A disk block is 1024 bytes.
 .It Fl t
 Test integrity of the gzipped file before deleting the original file.
 If the integrity check fails, the original
@@ -48,15 +57,6 @@ If the integrity check fails, the original
 file is not removed.
 .It Fl v
 Print a report specifying the achieved compression ratios.
-.It Fl 9
-Use the -9 mode of
-.Xr gzip 1 ,
-achieving better compression at the cost of slower execution.
-.It Fl K
-Keep the original
-.Sq .Z
-file if it uses less disk blocks than the gzipped one.
-A disk block is 1024 bytes.
 .El
 .Sh SEE ALSO
 .Xr gzip 1
@@ -64,6 +64,6 @@ A disk block is 1024 bytes.
 The
 .Nm
 utility tries to maintain the file mode of the original file.
-If the original file is not writable, it is not able to do that and
+If the original file is not writable, it will be unable to do so and
 .Nm
 will print a warning.

@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: znew,v 1.2 2003/08/05 18:22:17 deraadt Exp $
+# $OpenBSD: znew,v 1.3 2005/07/22 09:34:16 jmc Exp $
 #
 # Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
 #
@@ -96,7 +96,7 @@ process () {
 }
 
 prog=`basename "$0"`
-usage="usage: $prog [-ftv9K] file ..."
+usage="usage: $prog [-9fKtv] file ..."
 
 fflag=0
 tflag=0
