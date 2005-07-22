@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.33 2005/07/22 09:02:42 jmc Exp $
+.\"	$OpenBSD: compress.1,v 1.34 2005/07/22 09:30:51 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -356,24 +356,8 @@ The
 .Nm
 and
 .Nm gzip
-utilities exit with 0 on success, 1 if an error occurred, or 2 if one or
-more files were not compressed because they would have grown in
-size (and
-.Fl f
-was not specified).
-.Sh RETURN VALUES
-The
-.Nm
-utility exits with one of the following values:
-.Pp
-.Bl -tag -width flag -compact
-.It Li 0
-The file was compressed successfully.
-.It Li 1
-An error occurred.
-.It Li 2
-A warning occurred.
-.El
+utilities exit with 0 on success; 1 if an error occurred;
+or 2 if a warning occurred.
 .Sh SEE ALSO
 .Xr gzexe 1 ,
 .Xr zdiff 1 ,
