@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.21 2003/09/02 18:24:21 jmc Exp $
+.\"	$OpenBSD: glob.3,v 1.22 2005/07/22 02:54:19 jaredy Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -408,6 +408,19 @@ g.gl_pathv[0] = "ls";
 g.gl_pathv[1] = "-l";
 execvp("ls", g.gl_pathv);
 .Ed
+.Sh ERRORS
+The
+.Fn glob
+function may fail and set
+.Va errno
+for any of the errors specified for the library routines
+.Xr stat 2 ,
+.Xr closedir 3 ,
+.Xr opendir 3 ,
+.Xr readdir 3 ,
+.Xr malloc 3 ,
+and
+.Xr free 3 .
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr fnmatch 3 ,
@@ -444,16 +457,3 @@ functions first appeared in
 Patterns longer than
 .Dv MAXPATHLEN
 may cause unchecked errors.
-.Pp
-The
-.Fn glob
-function may fail and set
-.Va errno
-for any of the errors specified for the library routines
-.Xr stat 2 ,
-.Xr closedir 3 ,
-.Xr opendir 3 ,
-.Xr readdir 3 ,
-.Xr malloc 3 ,
-and
-.Xr free 3 .
