@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.74 2005/07/22 03:10:17 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.75 2005/07/22 03:49:19 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -828,8 +828,10 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	caddr_t			ptr, kva;
 	bus_dma_segment_t	seg;
-	int		i, rseg;
+	int		i, rseg, state, error;
 	struct sk_jpool_entry   *entry;
+
+	state = error = 0;
 
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, SK_JMEM, PAGE_SIZE, 0,
@@ -837,29 +839,33 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		printf("%s: can't alloc rx buffers\n", sc->sk_dev.dv_xname);
 		return (ENOBUFS);
 	}
+
+	state = 1;
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, SK_JMEM, &kva,
 			   BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		    sc->sk_dev.dv_xname, SK_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 2;
 	if (bus_dmamap_create(sc->sc_dmatag, SK_JMEM, 1, SK_JMEM, 0,
 	    BUS_DMA_NOWAIT, &sc_if->sk_cdata.sk_rx_jumbo_map)) {
 		printf("%s: can't create dma map\n", sc->sk_dev.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmatag, kva, SK_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 3;
 	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_cdata.sk_rx_jumbo_map,
 			    kva, SK_JMEM, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->sk_dev.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmatag,
-				   sc_if->sk_cdata.sk_rx_jumbo_map);
-		bus_dmamem_unmap(sc->sc_dmatag, kva, SK_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 4;
 	sc_if->sk_cdata.sk_jumbo_buf = (caddr_t)kva;
 	DPRINTFN(1,("sk_jumbo_buf = 0x%08X\n", sc_if->sk_cdata.sk_jumbo_buf));
 
@@ -877,16 +883,10 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		entry = malloc(sizeof(struct sk_jpool_entry),
 		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
-			bus_dmamap_unload(sc->sc_dmatag,
-			    sc_if->sk_cdata.sk_rx_jumbo_map);
-			bus_dmamap_destroy(sc->sc_dmatag,
-			    sc_if->sk_cdata.sk_rx_jumbo_map);
-			bus_dmamem_unmap(sc->sc_dmatag, kva, SK_JMEM);
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-			sc_if->sk_cdata.sk_jumbo_buf = NULL;
 			printf("%s: no memory for jumbo buffer queue!\n",
 			    sc->sk_dev.dv_xname);
-			return(ENOBUFS);
+			error = ENOBUFS;
+			goto out;
 		}
 		entry->slot = i;
 		if (i)
@@ -896,8 +896,26 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead,
 				 entry, jpool_entries);
 	}
+out:
+	if (error != 0) {
+		switch (state) {
+		case 4:
+			bus_dmamap_unload(sc->sc_dmatag,
+			    sc_if->sk_cdata.sk_rx_jumbo_map);
+		case 3:
+			bus_dmamap_destroy(sc->sc_dmatag,
+			    sc_if->sk_cdata.sk_rx_jumbo_map);
+		case 2:
+			bus_dmamem_unmap(sc->sc_dmatag, kva, SK_JMEM);
+		case 1:
+			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+			break;
+		default:
+			break;
+		}
+	}
 
-	return(0);
+	return (error);
 }
 
 /*
@@ -1922,8 +1940,6 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		/* pass it on. */
 		ether_input_mbuf(ifp, m);
 	}
-
-	sc_if->sk_cdata.sk_rx_prod = i;
 }
 
 void
