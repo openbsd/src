@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.73 2005/07/21 15:23:27 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.74 2005/07/22 03:10:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -221,7 +221,6 @@ const struct pci_matchid skc_devices[] = {
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE530T },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560T },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560T_2 },
-	{ PCI_VENDOR_LINKSYS,		PCI_PRODUCT_LINKSYS_EG1032 },
 	{ PCI_VENDOR_LINKSYS,		PCI_PRODUCT_LINKSYS_EG1064 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_SK_V2 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_SK_V2_BELKIN },
@@ -243,6 +242,8 @@ const struct pci_matchid skc_devices[] = {
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9Sxx },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9Exx },
 };
+
+#define SK_LINKSYS_EG1032_SUBID 0x00151737
 
 static inline u_int32_t
 sk_win_read_4(struct sk_softc *sc, u_int32_t reg)
@@ -1098,6 +1099,17 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 int
 skc_probe(struct device *parent, void *match, void *aux)
 {
+	struct pci_attach_args *pa = aux;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcireg_t subid;
+
+	subid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LINKSYS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LINKSYS_EG1032 &&
+	    subid == SK_LINKSYS_EG1032_SUBID)
+		return (1);
+
 	return (pci_matchbyid((struct pci_attach_args *)aux, skc_devices,
 	    sizeof(skc_devices)/sizeof(skc_devices[0])));
 }
