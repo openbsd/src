@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.142 2005/07/22 02:58:11 jaredy Exp $
+.\"	$OpenBSD: sysctl.3,v 1.143 2005/07/22 03:00:57 jaredy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -339,6 +339,7 @@ information.
 .It Dv KERN_CCPU No "	integer	no"
 .It Dv KERN_CLOCKRATE No "	struct clockinfo	no"
 .It Dv KERN_CPTIME No "	long[CPUSTATES]	no"
+.It Dv KERN_CPTIME2 No "	u_int64_t[CPUSTATES]	no"
 .It Dv KERN_CRYPTODEVALLOWSOFT No "	integer	yes"
 .It Dv KERN_DOMAINNAME No "	string	yes"
 .It Dv KERN_EMUL No "	node	not applicable"
@@ -429,8 +430,18 @@ skew rate.
 An array of longs of size
 .Li CPUSTATES
 is returned, containing statistics about the number of ticks spent by
-the system in interrupt processing, user processes (niced or normal),
+the system among all processors in interrupt processing,
+user processes
+.Po
+.Xr nice 1
+or normal
+.Pc ,
 system processing, or idling.
+.It Dv KERN_CPTIME2
+Similar to
+.Dv KERN_CPTIME ,
+but obtains information from only the single CPU specified by the
+third level name given.
 .It Dv KERN_CRYPTODEVALLOWSOFT
 Permits userland to use
 .Pa /dev/crypto
