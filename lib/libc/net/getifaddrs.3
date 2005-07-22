@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getifaddrs.3,v 1.11 2004/04/16 10:48:39 jmc Exp $
+.\"	$OpenBSD: getifaddrs.3,v 1.12 2005/07/22 04:50:51 jaredy Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -58,12 +58,12 @@ structure contains at least the following entries:
     struct sockaddr  *ifa_dstaddr;      /* P2P interface destination */
     void             *ifa_data;		/* Address specific data */
 .Ed
-.Bl -tag -width Ds
+.Bl -tag -width ifa_broadaddr
 .It Fa ifa_next
 Contains a pointer to the next structure on the list.
 This field is set to
 .Dv NULL
-in last structure on the list.
+in the last structure on the list.
 .It Fa ifa_name
 Contains the interface name.
 .It Fa ifa_flags
@@ -142,7 +142,7 @@ or
 The
 .Fn getifaddrs
 function first appeared in BSDI BSD/OS.
-The function is supplied on
+The function has been available on
 .Ox
 since
 .Ox 2.7 .

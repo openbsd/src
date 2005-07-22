@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.18 2003/09/09 12:00:39 jmc Exp $
+.\"	$OpenBSD: inet.3,v 1.19 2005/07/22 04:50:51 jaredy Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -70,7 +70,7 @@
 .Sh DESCRIPTION
 The routines
 .Fn inet_aton ,
-.Fn inet_addr
+.Fn inet_addr ,
 and
 .Fn inet_network
 interpret character strings representing
@@ -83,8 +83,8 @@ function converts a presentation format address (that is, printable form
 as held in a character string) to network format (usually a
 .Li struct in_addr
 or some other internal binary representation, in network byte order).
-It returns 1 if the address was valid for the specified address family, or
-0 if the address wasn't parseable in the specified address family, or \-1
+It returns 1 if the address was valid for the specified address family;
+0 if the address wasn't parseable in the specified address family; or \-1
 if some system error occurred (in which case
 .Va errno
 will have been set).
@@ -192,7 +192,7 @@ in a
 notation
 may be decimal, octal, or hexadecimal, as specified
 in the C language (i.e., a leading 0x or 0X implies
-hexadecimal; otherwise, a leading 0 implies octal;
+hexadecimal; a leading 0 implies octal;
 otherwise, the number is interpreted as decimal).
 .Sh INTERNET ADDRESSES (IP VERSION 6)
 In order to support scoped IPv6 addresses,
@@ -314,7 +314,7 @@ The
 .Nm inet_addr ,
 .Nm inet_network ,
 .Nm inet_makeaddr ,
-.Nm inet_lnaof
+.Nm inet_lnaof ,
 and
 .Nm inet_netof
 functions appeared in

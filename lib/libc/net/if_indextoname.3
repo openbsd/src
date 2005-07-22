@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_indextoname.3,v 1.8 2005/02/25 03:12:43 cloder Exp $
+.\"	$OpenBSD: if_indextoname.3,v 1.9 2005/07/22 04:50:51 jaredy Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -38,6 +38,7 @@
 .Nm if_freenameindex
 .Nd convert interface index to name, and vice versa
 .Sh SYNOPSIS
+.Fd #include <sys/socket.h>
 .Fd #include <net/if.h>
 .Ft "unsigned int"
 .Fn if_nametoindex "const char *ifname"
@@ -81,16 +82,16 @@ is returned.
 .Pp
 .Fn if_nameindex
 returns an array of
-.Fa if_nameindex
+.Vt if_nameindex
 structures.
-.Fa if_nametoindex
+.Vt if_nameindex
 is also defined in
 .Aq Pa net/if.h ,
 and is as follows:
-.Bd -literal -offset
+.Bd -literal -offset indent
 struct if_nameindex {
-    unsigned int   if_index;  /* 1, 2, ... */
-    char          *if_name;   /* NUL-terminated name: "le0", ... */
+	unsigned int	  if_index;	/* 1, 2, ... */
+	char		 *if_name;	/* NUL-terminated name */
 };
 .Ed
 .Pp
@@ -128,9 +129,15 @@ on errors.
 .Sh SEE ALSO
 .Xr getifaddrs 3 ,
 .Xr networking 4
-.Pp
-R. Gilligan, S.  Thomson, J. Bound, and W. Stevens,
-``Basic Socket Interface Extensions for IPv6,'' RFC 2553, March 1999.
+.Rs
+.%A R. Gilligan
+.%A S. Thomson
+.%A J. Bound
+.%A W. Stevens
+.%T Basic Socket Interface Extensions for IPv6
+.%R RFC 2553
+.%D March 1999
+.Re
 .Sh STANDARDS
 These functions are defined in ``Basic Socket Interface Extensions for IPv6''
 .Pq RFC 2533 .

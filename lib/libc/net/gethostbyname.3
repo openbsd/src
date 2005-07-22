@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.23 2005/06/08 18:32:34 millert Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.24 2005/07/22 04:50:51 jaredy Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Nd get network host entry
 .Sh SYNOPSIS
 .Fd #include <netdb.h>
-.Fd extern int h_errno;
+.Vt extern int h_errno ;
 .Ft struct hostent *
 .Fn gethostbyname "const char *name"
 .Ft struct hostent *
@@ -62,11 +62,11 @@
 .Sh DESCRIPTION
 The
 .Fn gethostbyname ,
-.Fn gethostbyname2
+.Fn gethostbyname2 ,
 and
 .Fn gethostbyaddr
 functions each return a pointer to an object with the following structure
-describing an internet host referenced by name or by address, respectively.
+describing an Internet host referenced by name or by address, respectively.
 This structure contains either information obtained from the name server (i.e.,
 .Xr resolver 3
 and
@@ -78,15 +78,15 @@ or database entries supplied by the
 system.
 .Xr resolv.conf 5
 describes how the particular database is chosen.
-.Bd -literal
+.Bd -literal -offset indent
 struct	hostent {
 	char	*h_name;	/* official name of host */
 	char	**h_aliases;	/* alias list */
 	int	h_addrtype;	/* host address type */
 	int	h_length;	/* length of address */
-	char	**h_addr_list;	/* list of addresses from name server */
+	char	**h_addr_list;	/* list of returned addresses */
 };
-#define	h_addr  h_addr_list[0]	/* address, for backward compatibility */
+#define	h_addr  h_addr_list[0]	/* address, for backward compat */
 .Ed
 .Pp
 The members of this structure are:
@@ -94,13 +94,13 @@ The members of this structure are:
 .It Fa h_name
 Official name of the host.
 .It Fa h_aliases
-A NULL-terminated array of alternate names for the host.
+A null-terminated array of alternate names for the host.
 .It Fa h_addrtype
 The type of address being returned.
 .It Fa h_length
 The length, in bytes, of the address.
 .It Fa h_addr_list
-A zero-terminated array of network addresses for the host.
+A null-terminated array of network addresses for the host.
 Host addresses are returned in network byte order.
 .It Fa h_addr
 The first address in
@@ -227,7 +227,7 @@ will result in an answer;
 for example, a mail-forwarder may be registered for this domain.
 .It Dv NETDB_INTERNAL
 An internal error occurred.
-This may occurs when an address family other than
+This may occur when an address family other than
 .Dv AF_INET
 or
 .Dv AF_INET6
@@ -287,6 +287,7 @@ function closes the file.
 These functions use static data storage;
 if the data is needed for future use, it should be
 copied before any subsequent calls overwrite it.
+.Pp
 Only the Internet
 address formats are currently understood.
 .Pp

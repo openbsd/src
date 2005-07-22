@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_net.3,v 1.10 2003/05/01 19:17:37 jmc Exp $
+.\"	$OpenBSD: inet_net.3,v 1.11 2005/07/22 04:50:51 jaredy Exp $
 .\"	$NetBSD: inet_net.3,v 1.1 1997/06/18 02:25:27 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -120,35 +120,36 @@ is not specified the number of bits in the network address is calculated
 as the larger of the number of bits in the class to which the address
 belongs and the number of bits provided rounded up modulo 8.
 Examples:
-.Bl -tag -width 10.1.2.3/24
+.Pp
+.Bl -tag -width 10.1.2.3/24 -offset indent -compact
 .It Li 10
-an 8 bit network number (class A), value
+an 8-bit network number (class A), value
 .Li 10.0.0.0 .
 .It Li 192
-a 24 bit network number (class C), value
+a 24-bit network number (class C), value
 .Li 192.0.0.0 .
 .It Li 10.10
-a 16 bit network number, value
+a 16-bit network number, value
 .Li 10.10.0.0 .
 .It Li 10.1.2
-a 24 bit network number, value
+a 24-bit network number, value
 .Li 10.1.2.0 .
 .It Li 10.1.2.3
-a 32 bit network number, value
+a 32-bit network number, value
 .Li 10.1.2.3 .
 .It Li 10.1.2.3/24
-a 24 bit network number (explicit), value
+a 24-bit network number (explicit), value
 .Li 10.1.2.3 .
 .El
 .Pp
 Note that when the number of bits is specified using
 .Dq Li /bits
-notation, the value of the address still includes all bits suplied
+notation, the value of the address still includes all bits supplied
 in the external representation, even those bits which are the host
-part of an internet address.
+part of an Internet address.
 Also, unlike
 .Xr inet_pton 3
-where the external representation is assumed to be an internet address, the
+where the external representation is assumed to be a host address, the
 external representation for
 .Fn inet_net_pton
 is assumed to be a network address.

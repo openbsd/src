@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getprotoent.3,v 1.15 2005/06/05 19:40:21 jmc Exp $
+.\"	$OpenBSD: getprotoent.3,v 1.16 2005/07/22 04:50:51 jaredy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,7 +87,7 @@ The members of this structure are:
 .It Fa p_name
 The official name of the protocol.
 .It Fa p_aliases
-A zero-terminated list of alternate names for the protocol.
+A null-terminated list of alternate names for the protocol.
 .It Fa p_proto
 The protocol number.
 .El
@@ -102,7 +102,7 @@ function opens and rewinds the file.
 If the
 .Fa stayopen
 flag is non-zero,
-the net database will not be closed after each call to
+the protocol database will not be closed after each call to
 .Fn getprotobyname
 or
 .Fn getprotobynumber .
@@ -129,7 +129,7 @@ and
 .Fn endprotoent_r
 functions are reentrant versions of the above functions that take a
 pointer to a
-.Fa protoent_data
+.Vt protoent_data
 structure which is used to store state information.
 The structure must be zero-filled before it is used
 and should be considered opaque for the sake of portability.
@@ -141,7 +141,7 @@ and
 .Fn getprotobyname_r
 functions
 also take a pointer to a
-.Fa protoent
+.Vt protoent
 structure which is used to store the results of the database lookup.
 .Sh RETURN VALUES
 The
@@ -150,7 +150,7 @@ The
 and
 .Fn getprotobyname
 functions return a pointer to a
-.Fa servent
+.Vt protoent
 structure on success or a null pointer if end-of-file
 is reached or an error occurs.
 .Pp
@@ -186,7 +186,7 @@ The
 and
 .Fn endprotoent_r
 functions are not currently standardized.
-This implementation follows the API used by HP, IBM and Digital.
+This implementation follows the API used by HP, IBM, and Digital.
 .Sh HISTORY
 The
 .Fn getprotoent ,

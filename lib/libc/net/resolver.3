@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.19 2005/04/05 22:14:20 fgsch Exp $
+.\"	$OpenBSD: resolver.3,v 1.20 2005/07/22 04:50:51 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Fa "const char *dname"
 .Fa "int class"
 .Fa "int type"
-.Fa "u_char *answer"
+.Fa "unsigned char *answer"
 .Fa "int anslen"
 .Fc
 .Ft int
@@ -57,7 +57,7 @@
 .Fa "const char *dname"
 .Fa "int class"
 .Fa "int type"
-.Fa "u_char *answer"
+.Fa "unsigned char *answer"
 .Fa "int anslen"
 .Fc
 .Ft int
@@ -66,17 +66,17 @@
 .Fa "const char *dname"
 .Fa "int class"
 .Fa "int type"
-.Fa "const u_char *data"
+.Fa "const unsigned char *data"
 .Fa "int datalen"
-.Fa "const u_char *newrr"
-.Fa "u_char *buf"
+.Fa "const unsigned char *newrr"
+.Fa "unsigned char *buf"
 .Fa "int buflen"
 .Fc
 .Ft int
 .Fo res_send
-.Fa "const u_char *msg"
+.Fa "const unsigned char *msg"
 .Fa "int msglen"
-.Fa "u_char *answer"
+.Fa "unsigned char *answer"
 .Fa "int anslen"
 .Fc
 .Ft int
@@ -84,16 +84,16 @@
 .Ft int
 .Fo dn_comp
 .Fa "const char *exp_dn"
-.Fa "u_char *comp_dn"
+.Fa "unsigned char *comp_dn"
 .Fa "int length"
-.Fa "u_char **dnptrs"
-.Fa "u_char **lastdnptr"
+.Fa "unsigned char **dnptrs"
+.Fa "unsigned char **lastdnptr"
 .Fc
 .Ft int
 .Fo dn_expand
-.Fa "const u_char *msg"
-.Fa "const u_char *eomorig"
-.Fa "const u_char *comp_dn"
+.Fa "const unsigned char *msg"
+.Fa "const unsigned char *eomorig"
+.Fa "const unsigned char *comp_dn"
 .Fa "char *exp_dn"
 .Fa "int length"
 .Fc
@@ -237,7 +237,7 @@ and
 .Fa type
 fields
 are defined in
-.Aq Pa arpa/nameserv.h .
+.Aq Pa arpa/nameser.h .
 .Pp
 The
 .Fn res_search
@@ -304,7 +304,7 @@ A side effect of
 is to update the list of pointers for labels inserted into the message
 as the name is compressed.
 If
-.Em dnptr
+.Fa dnptrs
 is
 .Dv NULL ,
 names are not compressed.

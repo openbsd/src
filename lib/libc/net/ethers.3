@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ethers.3,v 1.15 2005/03/28 06:21:48 tedu Exp $
+.\"	$OpenBSD: ethers.3,v 1.16 2005/07/22 04:50:51 jaredy Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
@@ -14,6 +14,9 @@
 .Nm ether_line
 .Nd get ethers entry
 .Sh SYNOPSIS
+.Fd #include <sys/socket.h>
+.Fd #include <net/if.h>
+.Fd #include <netinet/in.h>
 .Fd #include <netinet/if_ether.h>
 .Ft char *
 .Fn ether_ntoa "struct ether_addr *e"

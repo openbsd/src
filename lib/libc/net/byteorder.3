@@ -1,4 +1,4 @@
-.\"	$OpenBSD: byteorder.3,v 1.13 2003/09/26 17:06:50 fgsch Exp $
+.\"	$OpenBSD: byteorder.3,v 1.14 2005/07/22 04:50:51 jaredy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,7 +97,7 @@ byte orderings.
 The
 .Dq swap
 functions reverse the byte ordering of
-the given quantity, the others converts either from/to the native
+the given quantity; the others convert either from/to the native
 byte order used by the host to/from either little- or big-endian (a.k.a
 network) order.
 .Pp
@@ -165,7 +165,7 @@ The functions involving either
 or
 .Dq swap
 use the numbers
-16, 32 and 64 for specifying the bitwidth of the quantities they operate on.
+16, 32, or 64 for specifying the bitwidth of the quantities they operate on.
 Currently all supported architectures are either big- or little-endian
 so either the
 .Dq be

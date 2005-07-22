@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.13 2005/02/25 03:12:43 cloder Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.14 2005/07/22 04:50:51 jaredy Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -19,6 +19,7 @@
 .Dt GETRRSETBYNAME 3
 .Os
 .Sh NAME
+.Nm freerrset ,
 .Nm getrrsetbyname
 .Nd retrieve DNS records
 .Sh SYNOPSIS
@@ -32,7 +33,7 @@
 .Fn getrrsetbyname
 gets a set of resource records associated with a
 .Fa hostname ,
-.Fa rdclass
+.Fa rdclass ,
 and
 .Fa rdtype .
 .Fa hostname
@@ -74,22 +75,22 @@ bit is set, the data has been DNSSEC
 validated and the signatures verified.
 .Pp
 The following structures are used:
-.Bd -literal -offset
+.Bd -literal -offset indent
 struct  rdatainfo {
-        unsigned int            rdi_length;     /* length of data */
-        unsigned char           *rdi_data;      /* record data */
+	unsigned int	rdi_length;	/* length of data */
+	unsigned char	*rdi_data;	/* record data */
 };
 
 struct  rrsetinfo {
-        unsigned int            rri_flags;      /* RRSET_VALIDATED ... */
-        unsigned int            rri_rdclass;    /* class number */
-        unsigned int            rri_rdtype;     /* RR type number */
-        unsigned int            rri_ttl;        /* time to live */
-        unsigned int            rri_nrdatas;    /* size of rdatas array */
-        unsigned int            rri_nsigs;      /* size of sigs array */
-        char                    *rri_name;      /* canonical name */
-        struct rdatainfo        *rri_rdatas;    /* individual records */
-        struct rdatainfo        *rri_sigs;      /* individual signatures */
+	unsigned int	 rri_flags;	/* RRSET_VALIDATED ... */
+	unsigned int	 rri_rdclass;	/* class number */
+	unsigned int	 rri_rdtype;	/* RR type number */
+	unsigned int	 rri_ttl;	/* time to live */
+	unsigned int	 rri_nrdatas;	/* size of rdatas array */
+	unsigned int	 rri_nsigs;	/* size of sigs array */
+	char		 *rri_name;	/* canonical name */
+	struct rdatainfo *rri_rdatas;	/* individual records */
+	struct rdatainfo *rri_sigs;	/* individual signatures */
 };
 .Ed
 .Pp
@@ -110,7 +111,7 @@ is released by
 .Fn freerrset .
 .Li rrset
 is a pointer to a
-.Li struct rrset
+.Li struct rrsetinfo
 created by a call to
 .Fn getrrsetbyname .
 .Pp
@@ -123,17 +124,17 @@ will request DNSSEC authentication using the EDNS0 DNSSEC OK (DO) bit.
 returns zero on success, and one of the following error
 codes if an error occurred:
 .Pp
-.Bl -tag -width ERRSET_NOMEMORY -compact
-.It Dv ERRSET_NONAME
-the name does not exist
-.It Dv ERRSET_NODATA
-the name exists, but does not have data of the desired type
-.It Dv ERRSET_NOMEMORY
-memory could not be allocated
-.It Dv ERRSET_INVAL
-a parameter is invalid
-.It Dv ERRSET_FAIL
-other failure
+.Bl -tag -width ERRSET_NOMEMORY
+.It Bq Er ERRSET_NONAME
+The name does not exist.
+.It Bq Er ERRSET_NODATA
+The name exists, but does not have data of the desired type.
+.It Bq Er ERRSET_NOMEMORY
+Memory could not be allocated.
+.It Bq Er ERRSET_INVAL
+A parameter is invalid.
+.It Bq Er ERRSET_FAIL
+Other failure.
 .El
 .Sh SEE ALSO
 .Xr resolver 3 ,
