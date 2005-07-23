@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.58 2004/12/27 11:02:31 jmc Exp $
+#	$OpenBSD: services,v 1.59 2005/07/23 09:45:11 mbalmer Exp $
 #
 # Network services, Internet style
 #
@@ -220,6 +220,7 @@ kx		2111/tcp			# X over kerberos
 kip		2112/tcp			# IP over kerberos
 kauth		2120/tcp			# Remote kauth
 iprop		2121/tcp			# Kerberos incremental propagation
+netplan		2983/tcp			# netplan daemon
 daap		3689/tcp			# Digital Audio Access Protocol
 daap		3689/udp			# Digital Audio Access Protocol
 krb524		4444/tcp			# Kerberos 5->4
