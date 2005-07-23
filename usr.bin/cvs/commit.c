@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.42 2005/07/22 16:27:29 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.43 2005/07/23 00:03:00 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -68,6 +68,7 @@ static char *mfile = NULL;
 static char *rev = NULL;
 static char **commit_files = NULL;
 static int commit_fcount = 0;
+static int wantedstatus = 0;
 
 static int
 cvs_commit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
@@ -123,38 +124,67 @@ cvs_commit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 int
 cvs_commit_pre_exec(struct cvsroot *root)
 {
-	struct cvs_flist cl;
 	CVSFILE *cfp;
 	CVSFILE *tmp;
-	int flags = CF_RECURSE | CF_IGNORE | CF_SORT;
+	int i, flags = CF_RECURSE | CF_IGNORE | CF_SORT;
+	struct cvs_flist added, modified, removed, *cl[3];
+	int stattype[] = { CVS_FST_ADDED, CVS_FST_MODIFIED, CVS_FST_REMOVED };
 
-	SIMPLEQ_INIT(&cl);
+	SIMPLEQ_INIT(&added);
+	SIMPLEQ_INIT(&modified);
+	SIMPLEQ_INIT(&removed);
 
-	if (commit_fcount != 0) {
-		tmp = cvs_file_getspec(commit_files, commit_fcount,
-		    flags, cvs_commit_prepare, &cl);
-	} else {
-		tmp = cvs_file_get(".", flags, cvs_commit_prepare, &cl);
+	cl[0] = &added;
+	cl[1] = &modified;
+	cl[2] = &removed;
+
+	/*
+	 * Obtain the file lists for the logmessage.
+	 */
+	tmp = NULL;
+	for (i = 0; i < 3; i++) {
+		if (tmp != NULL)
+			cvs_file_free(tmp);
+
+		wantedstatus = stattype[i];
+
+		if (commit_fcount != 0) {
+			tmp = cvs_file_getspec(commit_files, commit_fcount,
+			    flags, cvs_commit_prepare, cl[i]);
+		} else {
+			tmp = cvs_file_get(".", flags, cvs_commit_prepare,
+			    cl[i]);
+		}
+
+		if (tmp == NULL)
+			return (CVS_EX_DATA);
 	}
 
-	if (tmp == NULL)
-		return (CVS_EX_DATA);
-
-	if (SIMPLEQ_EMPTY(&cl)) {
+	/*
+	 * If we didn't catch any file, don't call the editor.
+	 */
+	if (SIMPLEQ_EMPTY(&added) && SIMPLEQ_EMPTY(&modified) &&
+	    SIMPLEQ_EMPTY(&removed)) {
 		cvs_file_free(tmp);
 		return (0);
 	}
 
+	/*
+	 * Fetch the log message for real, with all the files.
+	 */
 	if (cvs_msg == NULL)
-		cvs_msg = cvs_logmsg_get(tmp->cf_name,
-		    NULL, &cl, NULL);
+		cvs_msg = cvs_logmsg_get(tmp->cf_name, &added, &modified,
+		    &removed);
 
 	cvs_file_free(tmp);
 
-	while (!SIMPLEQ_EMPTY(&cl)) {
-		cfp = SIMPLEQ_FIRST(&cl);
-		SIMPLEQ_REMOVE_HEAD(&cl, cf_list);
-		cvs_file_free(cfp);
+	/* free the file lists */
+	for (i = 0; i < 3; i++) {
+		while (!SIMPLEQ_EMPTY(cl[i])) {
+			cfp = SIMPLEQ_FIRST(cl[i]);
+			SIMPLEQ_REMOVE_HEAD(cl[i], cf_list);
+			cvs_file_free(cfp);
+		}
 	}
 
 	if (cvs_msg == NULL)
@@ -186,9 +216,7 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 	CVSFILE *copy;
 	struct cvs_flist *clp = (struct cvs_flist *)arg;
 
-	if ((cf->cf_type == DT_REG) && ((cf->cf_cvstat == CVS_FST_MODIFIED) ||
-	    (cf->cf_cvstat == CVS_FST_ADDED) ||
-	    (cf->cf_cvstat == CVS_FST_REMOVED))) {
+	if ((cf->cf_type == DT_REG) && (cf->cf_cvstat == wantedstatus)) {
 		copy = cvs_file_copy(cf);
 		if (copy == NULL)
 			return (CVS_EX_DATA);

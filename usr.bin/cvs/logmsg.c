@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.15 2005/06/02 16:05:38 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.16 2005/07/23 00:03:00 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -214,6 +214,9 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 
 	for (i = 0; i < 3; i++) {
 		if (files[i] == NULL)
+			continue;
+
+		if (SIMPLEQ_EMPTY(files[i]))
 			continue;
 
 		fprintf(fp, "%s %s Files:", CVS_LOGMSG_PREFIX,
