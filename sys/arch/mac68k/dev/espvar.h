@@ -1,4 +1,4 @@
-/*	$OpenBSD: espvar.h,v 1.6 2004/12/10 18:23:23 martin Exp $	*/
+/*	$OpenBSD: espvar.h,v 1.7 2005/07/23 16:28:19 martin Exp $	*/
 /*	$NetBSD: espvar.h,v 1.16 1996/10/13 02:59:50 christos Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ struct esp_softc {
 	size_t		sc_dmasize;
 	char		**sc_dmaaddr;
 	size_t		*sc_dmalen;
-	int	sc_tc;				/* only used in non-quick */
+	int		sc_tc;			/* only used in non-quick */
 	u_int16_t	*sc_pdmaddr;		/* only used in quick */
 	int		sc_pdmalen;		/* only used in quick */
 	size_t		sc_prevdmasize;		/* only used in quick */
