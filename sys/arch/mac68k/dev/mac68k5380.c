@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.20 2004/12/08 06:59:43 miod Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.21 2005/07/23 23:36:26 martin Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/dkstat.h>
 #include <sys/syslog.h>
 #include <sys/buf.h>
 #include <scsi/scsi_all.h>
@@ -92,9 +91,9 @@
 	static char *last_hit[DBG_PID];
 #	define	PID(a)	\
 	{ int i; \
-	  for (i=0; i< DBG_PID-1; i++) \
-		last_hit[i] = last_hit[i+1]; \
-	  last_hit[DBG_PID-1] = a; }
+	  for (i=0; i < DBG_PID-1; i++) \
+		last_hit[i] = last_hit[i + 1]; \
+	  last_hit[DBG_PID - 1] = a; }
 #else
 #	define	PID(a)
 #endif
@@ -119,7 +118,7 @@ struct scsi_5380 {
 	volatile u_char	scsi_5380[8*16]; /* 8 regs, 1 every 16th byte. */
 };
 
-extern vm_offset_t	SCSIBase;
+extern vaddr_t		SCSIBase;
 static volatile u_char	*ncr		= (volatile u_char *) 0x10000;
 static volatile u_char	*ncr_5380_with_drq	= (volatile u_char *)  0x6000;
 static volatile u_char	*ncr_5380_without_drq	= (volatile u_char *) 0x12000;
@@ -142,9 +141,9 @@ static		  int	transfer_pdma(u_char *phasep, u_char *data,
 					u_long *count);
 
 static __inline__ void
-scsi_clr_ipend()
+scsi_clr_ipend(void)
 {
-	int	tmp;
+	int tmp;
 
 	tmp = GET_5380_REG(NCR5380_IRCV);
 	scsi_clear_irq();
@@ -154,7 +153,7 @@ static void
 scsi_mach_init(sc)
 	struct ncr_softc	*sc;
 {
-	static int	initted = 0;
+	static int initted = 0;
 	static struct via2hand ih_irq, ih_drq;
 
 	if (initted++)
@@ -210,7 +209,7 @@ int		pdma_5380_sends = 0;
 int		pdma_5380_bytes = 0;
 
 void
-pdma_stat()
+pdma_stat(void)
 {
 	printf("PDMA SCSI: %d xfers completed for %d bytes.\n",
 		pdma_5380_sends, pdma_5380_bytes);
@@ -274,7 +273,7 @@ pdma_cleanup(void)
 #endif
 
 static __inline__ int
-pdma_ready()
+pdma_ready(void)
 {
 #if USE_PDMA
 	SC_REQ	*reqp = connected;
@@ -553,8 +552,8 @@ transfer_pdma(phasep, data, count)
 	u_char	*data;
 	u_long	*count;
 {
-	SC_REQ	*reqp = connected;
-	int	len = *count, s, scsi_timeout = SCSI_TIMEOUT_VAL;
+	SC_REQ *reqp = connected;
+	int len = *count, s, scsi_timeout = SCSI_TIMEOUT_VAL;
 
 	if (pdma_5380_dir) {
 		panic("ncrscsi: transfer_pdma called when operation already "
