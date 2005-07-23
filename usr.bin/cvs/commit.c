@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.43 2005/07/23 00:03:00 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.44 2005/07/23 11:19:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -126,7 +126,7 @@ cvs_commit_pre_exec(struct cvsroot *root)
 {
 	CVSFILE *cfp;
 	CVSFILE *tmp;
-	int i, flags = CF_RECURSE | CF_IGNORE | CF_SORT;
+	int ret, i, flags = CF_RECURSE | CF_IGNORE | CF_SORT;
 	struct cvs_flist added, modified, removed, *cl[3];
 	int stattype[] = { CVS_FST_ADDED, CVS_FST_MODIFIED, CVS_FST_REMOVED };
 
@@ -138,26 +138,26 @@ cvs_commit_pre_exec(struct cvsroot *root)
 	cl[1] = &modified;
 	cl[2] = &removed;
 
+	if ((tmp = cvs_file_loadinfo(".", CF_NOFILES, NULL, NULL, 1)) == NULL)
+		return (CVS_EX_DATA);
+
 	/*
 	 * Obtain the file lists for the logmessage.
 	 */
-	tmp = NULL;
 	for (i = 0; i < 3; i++) {
-		if (tmp != NULL)
-			cvs_file_free(tmp);
-
 		wantedstatus = stattype[i];
-
 		if (commit_fcount != 0) {
-			tmp = cvs_file_getspec(commit_files, commit_fcount,
-			    flags, cvs_commit_prepare, cl[i]);
+			ret = cvs_file_getspec(commit_files, commit_fcount,
+			    flags, cvs_commit_prepare, cl[i], NULL);
 		} else {
-			tmp = cvs_file_get(".", flags, cvs_commit_prepare,
-			    cl[i]);
+			ret = cvs_file_get(".", flags, cvs_commit_prepare,
+			    cl[i], NULL);
 		}
 
-		if (tmp == NULL)
+		if (ret != CVS_EX_OK) {
+			cvs_file_free(tmp);
 			return (CVS_EX_DATA);
+		}
 	}
 
 	/*

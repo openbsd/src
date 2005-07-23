@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.46 2005/07/22 16:27:29 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.47 2005/07/23 11:19:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -72,7 +72,7 @@ static int  cvs_resp_modxpand  (struct cvsroot *, int, char *);
 static int  cvs_resp_rcsdiff   (struct cvsroot *, int, char *);
 static int  cvs_resp_template  (struct cvsroot *, int, char *);
 static int  cvs_resp_copyfile  (struct cvsroot *, int, char *);
-
+static int  cvs_resp_createdir (char *);
 
 struct cvs_resphdlr {
 	int (*hdlr)(struct cvsroot *, int, char *);
@@ -345,7 +345,6 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 {
 	int fd, len;
 	char rpath[MAXPATHLEN], statpath[MAXPATHLEN];
-	struct stat dst;
 
 	/* remote directory line */
 	if (cvs_getln(root, rpath, sizeof(rpath)) < 0)
@@ -353,13 +352,11 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 
 	STRIP_SLASH(line);
 
-	/* if the directory doesn't exist, first create it */
-	if ((stat(line, &dst) == -1) && (errno == ENOENT)) {
-		if ((mkdir(line, 0755) == -1) && (errno != ENOENT)) {
-			cvs_log(LP_ERRNO, "failed to create %s", line);
-			return (-1);
-		}
-	}
+	/*
+	 * Create the directory if it does not exist.
+	 */
+	if (cvs_resp_createdir(line) < 0)
+		return (-1);
 
 	len = snprintf(statpath, sizeof(statpath), "%s/%s", line,
 	    CVS_PATH_STATICENTRIES);
@@ -395,16 +392,12 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
  * cvs_resp_sticky()
  *
  * Handler for the `Clear-sticky' and `Set-sticky' responses.  If the
- * specified directory doesn't exist, we create it and attach it to the
- * global file structure.
+ * specified directory doesn't exist, we create it.
  */
 static int
 cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 {
-	char buf[MAXPATHLEN], subdir[MAXPATHLEN], *file;
-	struct cvs_ent *ent;
-	CVSFILE *cf, *sdir;
-	CVSENTRIES *entf;
+	char buf[MAXPATHLEN];
 
 	/* get the remote path */
 	if (cvs_getln(root, buf, sizeof(buf)) < 0)
@@ -412,31 +405,44 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 
 	STRIP_SLASH(line);
 
-	cvs_splitpath(line, subdir, sizeof(subdir), &file);
-	sdir = cvs_file_find(cvs_files, subdir);
-	if (sdir == NULL) {
-		cvs_log(LP_ERR, "failed to find %s", subdir);
+	if (cvs_resp_createdir(line) < 0)
 		return (-1);
-	}
 
-	cf = cvs_file_find(sdir, file);
-	if (cf == NULL) {
-		/* attempt to create it */
-		cf = cvs_file_create(sdir, line, DT_DIR, 0755);
+	return (0);
+}
+
+/*
+ * Shared code for cvs_resp[static, sticky]
+ *
+ * Looks if the directory requested exists, if it doesn't it will
+ * create it plus all administrative files as well.
+ */
+static int
+cvs_resp_createdir(char *line)
+{
+	CVSFILE *base, *cf;
+	CVSENTRIES *entf;
+	struct stat st;
+	struct cvs_ent *ent;
+	char *file, subdir[MAXPATHLEN], buf[MAXPATHLEN];
+
+	cvs_splitpath(line, subdir, sizeof(subdir), &file);
+	base = cvs_file_loadinfo(subdir, CF_NOFILES, NULL, NULL, 1);
+	if (base == NULL)
+		return (-1);
+
+	/*
+	 * If <line> doesn't exist, we create it.
+	 */
+	if (stat(line, &st) == -1) {
+		if (errno != ENOENT) {
+			cvs_log(LP_ERRNO, "failed to stat '%s'", line);
+			return (-1);
+		}
+
+		cf = cvs_file_create(base, line, DT_DIR, 0755);
 		if (cf == NULL) {
-			return (-1);
-		}
-		cf->cf_repo = strdup(line);
-		if (cf->cf_repo == NULL) {
-			cvs_log(LP_ERRNO, "failed to duplicate `%s'", line);
-			cvs_file_free(cf);
-			return (-1);
-		}
-		cf->cf_root = root;
-		root->cr_ref++;
-
-		if (cvs_file_attach(sdir, cf) < 0) {
-			cvs_file_free(cf);
+			cvs_file_free(base);
 			return (-1);
 		}
 
@@ -466,13 +472,11 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 			if (strcmp(subdir, cvs_resp_lastdir))
 				cvs_ent_close(entf);
 		}
+
+		cvs_file_free(cf);
 	}
 
-	if (type == CVS_RESP_CLRSTICKY)
-		cf->cf_flags &= ~CVS_DIRF_STICKY;
-	else if (type == CVS_RESP_SETSTICKY)
-		cf->cf_flags |= CVS_DIRF_STICKY;
-
+	cvs_file_free(base);
 	return (0);
 }
 

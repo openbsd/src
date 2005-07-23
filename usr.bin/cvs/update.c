@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.40 2005/07/21 11:42:24 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.41 2005/07/23 11:19:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -188,6 +188,9 @@ cvs_update_remote(CVSFILE *cf, void *arg)
 
 	if (cvs_sendentry(root, cf) < 0)
 		return (CVS_EX_PROTO);
+
+	if (!(cf->cf_flags & CVS_FILE_ONDISK))
+		return (0);
 
 	switch (cf->cf_cvstat) {
 	case CVS_FST_UNKNOWN:

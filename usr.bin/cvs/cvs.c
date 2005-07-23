@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.72 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.73 2005/07/23 11:19:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -57,7 +57,7 @@ int   cvs_nolog = 0;
 int   cvs_readonly = 0;
 int   cvs_nocase = 0;   /* set to 1 to disable filename case sensitivity */
 int   cvs_noexec = 0;	/* set to 1 to disable disk operations (-n option) */
-
+int   cvs_error = -1;	/* set to the correct error code on failure */
 char *cvs_defargs;		/* default global arguments from .cvsrc */
 char *cvs_command;		/* name of the command we are running */
 int   cvs_cmdop;
@@ -69,7 +69,6 @@ char *cvs_msg = NULL;
 
 /* hierarchy of all the files affected by the command */
 CVSFILE *cvs_files;
-
 
 static TAILQ_HEAD(, cvs_var) cvs_variables;
 
@@ -211,6 +210,9 @@ main(int argc, char **argv)
 		    "No CVSROOT specified! Please use the `-d' option");
 		cvs_log(LP_ABORT,
 		    "or set the CVSROOT enviroment variable.");
+		break;
+	case CVS_EX_ERR:
+		cvs_log(LP_ABORT, "yeah, we failed, and we don't know why");
 		break;
 	default:
 		break;

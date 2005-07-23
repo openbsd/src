@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.30 2005/07/21 11:42:24 xsa Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.31 2005/07/23 11:19:46 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -148,7 +148,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	int ret;
 	struct cvsroot *root;
 	int (*ex_hdlr)(CVSFILE *, void *);
-	char fpath[MAXPATHLEN];
+	CVSFILE *cf;
 
 	/* if the command requested is the server one, just call the
 	 * cvs_server() function to handle it, and return after it.
@@ -187,17 +187,15 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		ex_hdlr = cmd->cmd_exec_remote;
 
 	if (argc > 0) {
-		cvs_files = cvs_file_getspec(argv, argc, cmd->file_flags,
-		    ex_hdlr, NULL);
+		ret = cvs_file_getspec(argv, argc, cmd->file_flags,
+		    ex_hdlr, NULL, NULL);
 	} else {
-		cvs_files = cvs_file_get(".", cmd->file_flags,
-		    ex_hdlr, NULL);
+		ret = cvs_file_get(".", cmd->file_flags,
+		    ex_hdlr, NULL, NULL);
 	}
 
-	if (cvs_files == NULL)
-		return (CVS_EX_DATA);
-
-	cvs_file_getpath(cvs_files, fpath, sizeof(fpath));
+	if (ret != CVS_EX_OK)
+		return (cvs_error);
 
 	if (cmd->cmd_post_exec != NULL) {
 		if ((ret = cmd->cmd_post_exec(root)) != 0)
@@ -205,9 +203,19 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
+		/*
+		 * If we have to send the directory the command
+		 * has been issued in, obtain it.
+		 */
 		if (cmd->cmd_flags & CVS_CMD_SENDDIR) {
-			if (cvs_senddir(root, cvs_files) < 0)
+			cf = cvs_file_loadinfo(".", CF_NOFILES, NULL, NULL, 1);
+			if (cf == NULL)
+				return (CVS_EX_DATA);
+			if (cvs_senddir(root, cf) < 0) {
+				cvs_file_free(cf);
 				return (CVS_EX_PROTO);
+			}
+			cvs_file_free(cf);
 		}
 
 		if (cmd->cmd_flags & CVS_CMD_SENDARGS2) {
@@ -217,7 +225,8 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 			}
 		}
 
-		if (cmd->cmd_req != CVS_REQ_NONE && cvs_sendreq(root, cmd->cmd_req,
+		if (cmd->cmd_req != CVS_REQ_NONE &&
+		    cvs_sendreq(root, cmd->cmd_req,
 		    (cmd->cmd_op == CVS_OP_INIT) ? root->cr_dir : NULL) < 0)
 			return (CVS_EX_PROTO);
 	}
@@ -225,8 +234,10 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	if (cmd->cmd_cleanup != NULL)
 		(*cmd->cmd_cleanup)();
 
+#if 0
 	if (cvs_cmdop != CVS_OP_SERVER && cmd->cmd_flags & CVS_CMD_PRUNEDIRS)
 		cvs_file_prune(fpath);
+#endif
 
 	if (root->cr_method != CVS_METHOD_LOCAL)
 		cvs_disconnect(root);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.99 2005/07/22 16:27:29 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.100 2005/07/23 11:19:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,7 +43,6 @@
 #include "file.h"
 #include "log.h"
 #include "strtab.h"
-
 
 #define CVS_IGN_STATIC    0x01     /* pattern is static, no need to glob */
 
@@ -106,8 +105,9 @@ static RCSNUM *cvs_addedrev;
 
 TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
 
+static int cvs_file_getdir(CVSFILE *, int, int (*)(CVSFILE *, void *),
+    void *, int);
 
-static int cvs_file_getdir(CVSFILE *, int, char *, int (*)(CVSFILE *, void *), void *);
 static int	cvs_load_dirinfo  (CVSFILE *, int);
 static int      cvs_file_sort    (struct cvs_flist *, u_int);
 static int      cvs_file_cmp     (const void *, const void *);
@@ -248,7 +248,6 @@ CVSFILE*
 cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 {
 	int fd, l;
-	int bail;
 	char fp[MAXPATHLEN], repo[MAXPATHLEN];
 	CVSFILE *cfp;
 	CVSENTRIES *ent;
@@ -257,32 +256,14 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 	if (cfp == NULL)
 		return (NULL);
 
-	bail = l = 0;
+	l = 0;
 	cfp->cf_mode = mode;
 	cfp->cf_parent = parent;
 
 	if (type == DT_DIR) {
 		cfp->cf_root = cvsroot_get(path);
-
-		/*
-		 * If we do not have a valid root for this, try looking at
-		 * the parent its root.
-		 */
 		if (cfp->cf_root == NULL) {
-			if (parent != NULL && parent->cf_root != NULL) {
-				cfp->cf_root =
-				    cvsroot_parse(parent->cf_root->cr_str);
-				if (cfp->cf_root == NULL)
-					bail = 1;
-			} else {
-				bail = 1;
-			}
-		}
-
-		/* we tried, too bad */
-		if (bail) {
-			cvs_log(LP_ERR, "failed to obtain root info for `%s'",
-			    path);
+			cvs_file_free(cfp);
 			return (NULL);
 		}
 
@@ -385,132 +366,283 @@ cvs_file_copy(CVSFILE *orig)
  * with cvs_file_free().
  */
 
-CVSFILE*
+int
 cvs_file_get(const char *path, int flags, int (*cb)(CVSFILE *, void *),
-    void *arg)
+    void *arg, struct cvs_flist *list)
 {
 	char *files[1];
 
 	files[0] = path;
-	return cvs_file_getspec(files, 1, flags, cb, arg);
+	return cvs_file_getspec(files, 1, flags, cb, arg, list);
 }
 
 
 /*
  * cvs_file_getspec()
  *
- * Load a specific set of files whose paths are given in the vector <fspec>,
- * whose size is given in <fsn>.
- * Returns a pointer to the lowest common subdirectory to all specified
- * files.
+ * Obtain the info about the supplied files or directories.
  */
-CVSFILE*
+int
 cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
-    void *arg)
+    void *arg, struct cvs_flist *list)
 {
-	int i;
-	int pwd;
-	char *sp, *np, pcopy[MAXPATHLEN];
-	CVSFILE *base, *nf;
-	CVSENTRIES *entfile;
-	struct cvs_ent *ent;
+	int i, freecf;
+	char pcopy[MAXPATHLEN];
+	CVSFILE *cf;
+	extern char *cvs_rootstr;
 
-	base = cvs_file_lget(".", 0, NULL, NULL);
-	if (base == NULL)
-		return (NULL);
+	freecf = (list == NULL);
+	cvs_error = CVS_EX_DATA;
 
-	entfile = cvs_ent_open(".", O_RDONLY);
+	/* init the list */
+	if (list != NULL)
+		SIMPLEQ_INIT(list);
 
 	/*
-	 * fill in the repository base (needed to construct repo's in
-	 * cvs_file_create).
+	 * Fetch the needed information about ".", so we can setup a few
+	 * things to get ourselfs going.
 	 */
-	if (base->cf_repo != NULL) {
-		cvs_repo_base = strdup(base->cf_repo);
+	cf = cvs_file_lget(".", 0, NULL, NULL);
+	if (cf == NULL) {
+		cvs_log(LP_ERR, "arrrr i failed captain!");
+		return (-1);
+	}
+
+	/*
+	 * save the base repository path so we can use it to create
+	 * the correct full repopath later on.
+	 */
+	if (cf->cf_repo != NULL) {
+		if (cvs_repo_base != NULL)
+			free(cvs_repo_base);
+		cvs_repo_base = strdup(cf->cf_repo);
 		if (cvs_repo_base == NULL) {
-			cvs_log(LP_ERR, "failed to duplicate repository base");
-			cvs_file_free(base);
-			if (entfile)
-				cvs_ent_close(entfile);
-			return (NULL);
+			cvs_log(LP_ERRNO, "strdup failed");
+			cvs_file_free(cf);
+			return (-1);
 		}
 	}
 
 	/*
-	 * XXX - needed for some commands
+	 * This will go away when we have support for multiple Roots.
 	 */
-	if (cb != NULL) {
-		if (cb(base, arg) != CVS_EX_OK) {
-			cvs_file_free(base);
-			if (entfile)
-				cvs_ent_close(entfile);
-			return (NULL);
+	if (cvs_rootstr == NULL && cf->cf_root != NULL) {
+		cvs_rootstr = strdup(cf->cf_root->cr_str);
+		if (cvs_rootstr == NULL) {
+			cvs_log(LP_ERRNO, "strdup failed");
+			cvs_file_free(cf);
+			return (-1);
 		}
 	}
+
+	cvs_error = CVS_EX_OK;
+	cvs_file_free(cf);
+
+	/*
+	 * Since some commands don't require any files to operate
+	 * we can stop right here for those.
+	 */
+	if (cvs_cmdop == CVS_OP_CHECKOUT || cvs_cmdop == CVS_OP_VERSION)
+		return (0);
 
 	for (i = 0; i < fsn; i++) {
 		strlcpy(pcopy, fspec[i], sizeof(pcopy));
-		sp = pcopy;
-		pwd = (!strcmp(pcopy, "."));
 
-		np = strchr(sp, '/');
-		if (np != NULL)
-			*np = '\0';
+		/*
+		 * Load the information.
+		 */
+		cf = cvs_file_loadinfo(pcopy, flags, cb, arg, freecf);
+		if (cf == NULL)
+			continue;
 
-		if (pwd) {
-			nf = base;
+		/*
+		 * If extra actions are needed, do them now.
+		 */
+		if (cf->cf_type == DT_DIR) {
+			/* do possible extra actions .. */
 		} else {
-			nf = cvs_file_find(base, pcopy);
-			if (nf == NULL) {
-				if (entfile != NULL)
-					ent = cvs_ent_get(entfile, pcopy);
-				else
-					ent = NULL;
-				nf = cvs_file_lget(pcopy, 0, base, ent);
-				if (nf == NULL) {
-					cvs_file_free(base);
-					if (entfile)
-						cvs_ent_close(entfile);
-					return (NULL);
-				}
-
-				if (cvs_file_attach(base, nf) < 0) {
-					cvs_file_free(base);
-					if (entfile)
-						cvs_ent_close(entfile);
-					return (NULL);
-				}
-			}
+			/* do possible extra actions .. */
 		}
 
-		if (nf->cf_type == DT_DIR) {
-			if (np != NULL)
-				*np++;
+		/*
+		 * Attach it to a list if requested, otherwise
+		 * just free it again.
+		 */
+		if (list != NULL)
+			SIMPLEQ_INSERT_TAIL(list, cf, cf_list);
+		else
+			cvs_file_free(cf);
+	}
 
-			if (cvs_file_getdir(nf, flags, np, cb, arg) < 0) {
-				cvs_file_free(base);
-				if (entfile)
-					cvs_ent_close(entfile);
-				return (NULL);
-			}
-		} else {
-			if (cb != NULL) {
-				if (cb(nf, arg) != CVS_EX_OK) {
-					cvs_file_free(base);
-					if (entfile)
-						cvs_ent_close(entfile);
-					return (NULL);
-				}
-			}
+	return (0);
+}
+
+/*
+ * Load the neccesary information about file or directory <path>.
+ * Returns a pointer to the loaded information on success, or NULL
+ * on failure.
+ *
+ * If cb is not NULL, the requested path will be passed to that callback
+ * with <arg> as an argument.
+ *
+ * the <freecf> argument is passed to cvs_file_getdir, if this is 1
+ * CVSFILE * structs will be free'd once we are done with them.
+ */
+CVSFILE * 
+cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
+    void *arg, int freecf)
+{
+	CVSFILE *cf, *base;
+	CVSENTRIES *entf;
+	struct cvs_ent *ent;
+	char *p;
+	char parent[MAXPATHLEN], item[MAXPATHLEN];
+	int type;
+	struct stat st;
+	struct cvsroot *root;
+
+	type = 0;
+	base = cf = NULL;
+	entf = NULL;
+	ent = NULL;
+
+	/*
+	 * We first have to find out what type of item we are
+	 * dealing with. A file or a directory.
+	 *
+	 * We can do this by stat(2)'ing the item, but since it
+	 * might be gone we also check the Entries file in the
+	 * parent directory.
+	 */
+
+	/* get parent directory */
+	if ((p = strrchr(path, '/')) != NULL) {
+		*p++ = '\0';
+		strlcpy(parent, path, sizeof(parent));
+		strlcpy(item, p, sizeof(item));
+		*--p = '/';
+	} else {
+		strlcpy(parent, ".", sizeof(parent));
+		strlcpy(item, path, sizeof(item));
+	}
+
+	/*
+	 * There might not be an Entries file, so do not fail if there
+	 * is none available to get the info from.
+	 */
+	entf = cvs_ent_open(parent, O_RDONLY);
+
+	/*
+	 * Load the Entry if we successfully opened the Entries file.
+	 */
+	if (entf != NULL)
+		ent = cvs_ent_get(entf, item);
+
+	/*
+	 * No Entry available? fall back to stat(2)'ing the item, if
+	 * that fails, bail out in client mode, or assume a file in
+	 * server mode (it will show up as CVS_FST_UNKNOWN).
+	 */
+	if (ent == NULL) {
+		if (stat(path, &st) == -1) {
+			if (cvs_cmdop != CVS_OP_SERVER)
+				goto fail;
+			type = DT_REG;
+		} else
+			type = IFTODT(st.st_mode);
+	} else {
+		if (ent->ce_type == CVS_ENT_DIR)
+			type = DT_DIR;
+		else
+			type = DT_REG;
+	}
+
+	/*
+	 * Get the base, which is <parent> for a normal file or
+	 * <path> for a directory.
+	 */
+	if (type == DT_DIR)
+		base = cvs_file_lget(path, flags, NULL, ent);
+	else
+		base = cvs_file_lget(parent, flags, NULL, NULL);
+
+	if (base == NULL) {
+		cvs_log(LP_ERR, "failed to obtain directory info for '%s'",
+		    parent);
+		goto fail;
+	}
+
+	/*
+	 * Sanity.
+	 */
+	if (base->cf_type != DT_DIR) {
+		cvs_log(LP_ERR, "base directory isn't a directory at all");
+		goto fail;
+	}
+
+	root = CVS_DIR_ROOT(base);
+	if (root == NULL) {
+		cvs_log(LP_ERR, "no Root in base directory found");
+		goto fail;
+	}
+
+	/*
+	 * If we have a normal file, get the info and link it
+	 * to the base.
+	 */
+	if (type != DT_DIR) {
+		cf = cvs_file_lget(path, flags, base, ent);
+		if (cf == NULL) {
+			cvs_log(LP_ERR, "failed to fetch '%s'", path);
+			goto fail;
+		}
+
+		cvs_file_attach(base, cf);
+	}
+
+	if (entf != NULL) {
+		cvs_ent_close(entf);
+		entf = NULL;
+	}
+
+	/*
+	 * Always pass the base directory, unless:
+	 * - we are running in server or local mode and the path is not "."
+	 * - the directory does not exist on disk.
+	 * - the callback is NULL.
+	 */
+	if (!(((cvs_cmdop == CVS_OP_SERVER) ||
+	    (root->cr_method == CVS_METHOD_LOCAL)) && (strcmp(path, "."))) &&
+	    (base->cf_flags & CVS_FILE_ONDISK) && (cb != NULL) &&
+	    ((cvs_error = cb(base, arg)) != CVS_EX_OK))
+		goto fail;
+
+	/*
+	 * If we have a normal file, pass it as well.
+	 */
+	if (type != DT_DIR) {
+		if ((cb != NULL) && ((cvs_error = cb(cf, arg)) != CVS_EX_OK))
+			goto fail;
+	} else {
+		/*
+		 * If the directory exists, recurse through it.
+		 */
+		if ((base->cf_flags & CVS_FILE_ONDISK) &&
+		    cvs_file_getdir(base, flags, cb, arg, freecf) < 0) {
+			cvs_log(LP_ERR, "cvs_file_getdir failed");
+			goto fail;
 		}
 	}
 
-	if (entfile)
-		cvs_ent_close(entfile);
-
 	return (base);
-}
 
+fail:
+	if (entf != NULL)
+		cvs_ent_close(entf);
+	if (base != NULL)
+		cvs_file_free(base);
+	return (NULL);
+}
 
 /*
  * cvs_file_find()
@@ -569,45 +701,20 @@ cvs_file_find(CVSFILE *hier, const char *path)
  * Get the full path of the file <file> and store it in <buf>, which is of
  * size <len>.  For portability, it is recommended that <buf> always be
  * at least MAXPATHLEN bytes long.
- * Returns a pointer to the start of the path on success, or NULL on failure.
+ * Returns a pointer to the start of the path.
  */
 char*
 cvs_file_getpath(CVSFILE *file, char *buf, size_t len)
 {
-	u_int i;
-	const char *fp, *namevec[CVS_FILE_MAXDEPTH];
-	CVSFILE *top;
-
-	buf[0] = '\0';
-	i = CVS_FILE_MAXDEPTH;
-	memset(namevec, 0, sizeof(namevec));
-
-	/* find the top node */
-	for (top = file; (top != NULL) && (i > 0); top = top->cf_parent) {
-		fp = top->cf_name;
-
-		/* skip self-references */
-		if ((fp[0] == '.') && (fp[1] == '\0'))
-			continue;
-		namevec[--i] = fp;
-	}
-
-	if (i == 0)
-		return (NULL);
-	else if (i == CVS_FILE_MAXDEPTH) {
-		strlcpy(buf, ".", len);
-		return (buf);
-	}
-
-	while (i < CVS_FILE_MAXDEPTH - 1) {
-		strlcat(buf, namevec[i++], len);
+	memset(buf, '\0', len);
+	if (file->cf_dir != NULL) {
+		strlcat(buf, file->cf_dir, len);
 		strlcat(buf, "/", len);
 	}
-	strlcat(buf, namevec[i], len);
 
+	strlcat(buf, file->cf_name, len);
 	return (buf);
 }
-
 
 /*
  * cvs_file_attach()
@@ -641,19 +748,20 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 	int l;
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+	/*
+	 * Try to obtain the Root for this given directory, if we cannot
+	 * get it, fail, unless we are dealing with a directory that is
+	 * unknown or not on disk.
+	 */
 	cf->cf_root = cvsroot_get(fpath);
 	if (cf->cf_root == NULL) {
-		/*
-		 * Do not fail here for an unknown directory.
-		 */
-		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN ||
+		    !(cf->cf_flags & CVS_FILE_ONDISK))
 			return (0);
 		return (-1);
 	}
-
-	if (flags & CF_MKADMIN)
-		cvs_mkadmin(fpath, cf->cf_root->cr_str, NULL);
-
+ 
 	/* if the CVS administrative directory exists, load the info */
 	l = snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);
 	if (l == -1 || l >= (int)sizeof(pbuf)) {
@@ -671,7 +779,24 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 				return (-1);
 			}
 		}
+	} else {
+		/*
+		 * Fill in the repo path ourselfs.
+		 */
+		l = snprintf(pbuf, sizeof(pbuf), "%s/%s",
+		    cvs_repo_base, fpath);
+		if (l == -1 || l >= (int)sizeof(pbuf))
+			return (-1);
+
+		cf->cf_repo = strdup(pbuf);
+		if (cf->cf_repo == NULL) {
+			cvs_log(LP_ERRNO, "failed to dup repo string");
+			return (-1);
+		}
 	}
+
+	if (flags & CF_MKADMIN)
+		cvs_mkadmin(fpath, cf->cf_root->cr_str, NULL);
 
 	return (0);
 }
@@ -684,191 +809,152 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
  * is performed by cvs_file_free().
  */
 static int
-cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *), void *arg)
+cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
+    void *arg, int freecf)
 {
-	int l, ret;
-	int check_entry;
-	u_int ndirs, nfiles;
-	char *cur, *np;
-	char pbuf[MAXPATHLEN], fpath[MAXPATHLEN];
-	struct dirent *ent;
+	int ret;
+	size_t len;
+	DIR *dp;
+	struct dirent *de;
+	char fpath[MAXPATHLEN], pbuf[MAXPATHLEN];
+	CVSENTRIES *entf;
 	CVSFILE *cfp;
-	struct cvs_ent *cvsent;
+	struct cvs_ent *ent;
 	struct cvs_flist dirs;
-	DIR *dirp;
-	CVSENTRIES *entfile;
-
-	ret = -1;
-	check_entry = 1;
-	ndirs = nfiles = 0;
-	SIMPLEQ_INIT(&dirs);
-
-	cvs_file_getpath(cf, fpath, sizeof(fpath));
-
-	cur = np = NULL;
-	if (path != NULL) {
-		cur = strchr(path, '/');
-		if (cur != NULL) {
-			*cur = '\0';
-			np = cur + 1;
-			if (np != NULL && *np == '\0')
-				np = NULL;
-		}
-	}
+	int nfiles, ndirs;
 
 	if ((flags & CF_KNOWN) && (cf->cf_cvstat == CVS_FST_UNKNOWN))
 		return (0);
 
-	/*
-	 * XXX - Do not call the callback for ".", this has
-	 * already been done in cvs_file_getspec().
-	 */
-	if (cb != NULL && strcmp(cf->cf_name, ".")) {
-		if (cb(cf, arg) != CVS_EX_OK)
-			return (-1);
+	nfiles = ndirs = 0;
+	SIMPLEQ_INIT(&dirs);
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+	if ((dp = opendir(fpath)) == NULL) {
+		cvs_log(LP_ERRNO, "failed to open directory '%s'", fpath);
+		return (-1);
 	}
 
-	cf->cf_root = cvsroot_get(fpath);
-	if (cf->cf_root == NULL) {
+	ret = -1;
+	entf = cvs_ent_open(fpath, O_RDONLY);
+	while ((de = readdir(dp)) != NULL) {
+		if (!strcmp(de->d_name, ".") ||
+		    !strcmp(de->d_name, ".."))
+			continue;
+
 		/*
-		 * Do not fail here for an unknown directory.
+		 * Do some filtering on the current directory item.
 		 */
-		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-			return (0);
-		return (-1);
-	}
-
-	dirp = opendir(fpath);
-	if (dirp == NULL) {
-		cvs_log(LP_ERRNO, "failed to open directory %s", fpath);
-		return (-1);
-	}
-
-	entfile = cvs_ent_open(fpath, O_RDONLY);
-	while ((ent = readdir(dirp)) != NULL) {
-		if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
+		if ((flags & CF_IGNORE) && cvs_file_chkign(de->d_name))
 			continue;
 
-		if ((flags & CF_NOSYMS) && (ent->d_type == DT_LNK))
-			continue;
-
-		if (!(flags & CF_RECURSE) && (ent->d_type == DT_DIR)) {
-			if (entfile != NULL)
-				(void)cvs_ent_remove(entfile,
-				    ent->d_name);
+		if (!(flags & CF_RECURSE) && (de->d_type == DT_DIR)) {
+			if (entf != NULL)
+				(void)cvs_ent_remove(entf, de->d_name);
 			continue;
 		}
 
-		if ((ent->d_type != DT_DIR) && (flags & CF_NOFILES))
+		if ((de->d_type != DT_DIR) && (flags & CF_NOFILES))
 			continue;
 
-		if (path != NULL) {
-			if (strcmp(path, ent->d_name))
-				continue;
-		}
+		/*
+		 * Obtain info about the item.
+		 */
+		len = cvs_path_cat(fpath, de->d_name, pbuf, sizeof(pbuf));
+		if (len >= sizeof(pbuf))
+			goto done;
 
-		l = snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
-		    ent->d_name);
-		if (l == -1 || l >= (int)sizeof(pbuf)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", pbuf);
-			closedir(dirp);
+		if (entf != NULL)
+			ent = cvs_ent_get(entf, de->d_name);
+		else
+			ent = NULL;
+
+		cfp = cvs_file_lget(pbuf, flags, cf, ent);
+		if (cfp == NULL) {
+			cvs_log(LP_ERR, "failed to get '%s'", pbuf);
 			goto done;
 		}
 
-		cfp = cvs_file_find(cf, ent->d_name);
-		if (cfp == NULL) {
-			if (entfile != NULL)
-				cvsent = cvs_ent_get(entfile, ent->d_name);
-			else
-				cvsent = NULL;
-
-			cfp = cvs_file_lget(pbuf, flags, cf, cvsent);
-
-			if (cfp == NULL) {
-				closedir(dirp);
-				goto done;
-			}
-			if (entfile != NULL)
-				cvs_ent_remove(entfile, cfp->cf_name);
-
-			if (cfp->cf_type != DT_DIR) {
-				SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp,
-				    cf_list);
-				nfiles++;
-			}
-		} else {
-			cfp->cf_flags |= CVS_GDIR_IGNORE;
-		}
-
-		if (cfp->cf_type == DT_DIR) {
-			ndirs++;
+		/*
+		 * A file is linked to the parent <cf>, a directory
+		 * is added to the dirs SIMPLEQ list for later use.
+		 */
+		if ((cfp->cf_type != DT_DIR) && !freecf) {
+			SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp, cf_list);
+			nfiles++;
+		} else if (cfp->cf_type == DT_DIR) {
 			SIMPLEQ_INSERT_TAIL(&dirs, cfp, cf_list);
-		} else {
-			/* callback for the file */
-			if (cb != NULL) {
-				if (cb(cfp, arg) != CVS_EX_OK) {
-					closedir(dirp);
-					goto done;
-				}
-			}
+			ndirs++;
 		}
 
-		if (path != NULL) {
-			check_entry = 0;
-			break;
-		}
-	}
-
-	closedir(dirp);
-
-	if (entfile != NULL && check_entry) {
-		while ((cvsent = cvs_ent_next(entfile)) != NULL) {
-			if (path != NULL) {
-				if (strcmp(cvsent->ce_name, path))
-					continue;
-			}
-
-			l = snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
-			    cvsent->ce_name);
-			if (l == -1 || l >= (int)sizeof(pbuf)) {
-				errno = ENAMETOOLONG;
-				cvs_log(LP_ERRNO, "%s", pbuf);
+		/*
+		 * Now, for a file, pass it to the callback if it was
+		 * supplied to us.
+		 */
+		if (cfp->cf_type != DT_DIR && cb != NULL) {
+			if ((cvs_error = cb(cfp, arg)) != CVS_EX_OK)
 				goto done;
-			}
-
-			cfp = cvs_file_find(cf, cvsent->ce_name);
-			if (cfp == NULL) {
-				cfp = cvs_file_lget(pbuf, flags, cf, cvsent);
-				if (cfp == NULL)
-					continue;
-
-				if (cfp->cf_type != DT_DIR) {
-					SIMPLEQ_INSERT_TAIL(&(cf->cf_files),
-					    cfp, cf_list);
-					nfiles++;
-				}
-			} else {
-				cfp->cf_flags |= CVS_GDIR_IGNORE;
-			}
-
-			if (cfp->cf_type == DT_DIR) {
-				ndirs++;
-				SIMPLEQ_INSERT_TAIL(&dirs, cfp,
-				    cf_list);
-			} else {
-				/* callback for the file */
-				if (cb != NULL) {
-					if (cb(cfp, arg) != CVS_EX_OK)
-						goto done;
-				}
-			}
-
-			if (path != NULL)
-				break;
 		}
+
+		/*
+		 * Remove it from the Entries list to make sure it won't
+		 * be picked up again when we look at the Entries.
+		 */
+		if (entf != NULL)
+			(void)cvs_ent_remove(entf, de->d_name);
+
+		/*
+		 * If we don't want to keep it, free it
+		 */
+		if ((cfp->cf_type != DT_DIR) && freecf)
+			cvs_file_free(cfp);
 	}
 
+	closedir(dp);
+	dp = NULL;
+
+	/*
+	 * Pass over all of the entries now, so we pickup any files
+	 * that might have been lost, or are for some reason not on disk.
+	 *
+	 * (Follows the same procedure as above ... can we merge them?)
+	 */
+	while ((entf != NULL) && ((ent = cvs_ent_next(entf)) != NULL)) {
+		if (!(flags & CF_RECURSE) && (ent->ce_type == CVS_ENT_DIR))
+			continue;
+		if ((flags & CF_NOFILES) && (ent->ce_type != CVS_ENT_DIR))
+			continue;
+
+		len = cvs_path_cat(fpath, ent->ce_name, pbuf, sizeof(pbuf));
+		if (len >= sizeof(pbuf))
+			goto done;
+
+		cfp = cvs_file_lget(pbuf, flags, cf, ent);
+		if (cfp == NULL) {
+			cvs_log(LP_ERR, "failed to fetch '%s'", pbuf);
+			goto done;
+		}
+
+		if ((cfp->cf_type != DT_DIR) && !freecf) {
+			SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp, cf_list);
+			nfiles++;
+		} else if (cfp->cf_type == DT_DIR) {
+			SIMPLEQ_INSERT_TAIL(&dirs, cfp, cf_list);
+			ndirs++;
+		}
+
+		if (cfp->cf_type != DT_DIR && cb != NULL) {
+			if ((cvs_error = cb(cfp, arg)) != CVS_EX_OK)
+				goto done;
+		}
+
+		if ((cfp->cf_type != DT_DIR) && freecf)
+			cvs_file_free(cfp);
+	}
+
+	/*
+	 * Sort files and dirs if requested.
+	 */
 	if (flags & CF_SORT) {
 		if (nfiles > 0)
 			cvs_file_sort(&(cf->cf_files), nfiles);
@@ -876,25 +962,48 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 			cvs_file_sort(&dirs, ndirs);
 	}
 
+	/*
+	 * Finally, run over the directories we have encountered.
+	 * Before calling cvs_file_getdir() on them, we pass them
+	 * to the callback first.
+	 */
 	while (!SIMPLEQ_EMPTY(&dirs)) {
 		cfp = SIMPLEQ_FIRST(&dirs);
 		SIMPLEQ_REMOVE_HEAD(&dirs, cf_list);
 
-		if (!(cfp->cf_flags & CVS_GDIR_IGNORE))
+		if (!freecf)
 			SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp, cf_list);
-		else
-			cfp->cf_flags &= ~CVS_GDIR_IGNORE;
 
-		if (cvs_file_getdir(cfp, flags, np, cb, arg) < 0) {
-			cvs_log(LP_ERR, "failed to get %s", cfp->cf_name);
-			continue;
+		if (cb != NULL) {
+			if ((cvs_error = cb(cfp, arg)) != CVS_EX_OK)
+				goto done;
 		}
+
+		if ((cfp->cf_flags & CVS_FILE_ONDISK) &&
+		    (cvs_file_getdir(cfp, flags, cb, arg, freecf) < 0))
+			goto done;
+
+		if (freecf)
+			cvs_file_free(cfp);
 	}
 
 	ret = 0;
+	cfp = NULL;
 done:
-	if (entfile != NULL)
-		cvs_ent_close(entfile);
+	if ((cfp != NULL) && freecf)
+		cvs_file_free(cfp);
+
+	while (!SIMPLEQ_EMPTY(&dirs)) {
+		cfp = SIMPLEQ_FIRST(&dirs);
+		SIMPLEQ_REMOVE_HEAD(&dirs, cf_list);
+
+		cvs_file_free(cfp);
+	}
+
+	if (entf != NULL)
+		cvs_ent_close(entf);
+	if (dp != NULL)
+		closedir(dp);
 
 	return (ret);
 }
@@ -912,6 +1021,9 @@ cvs_file_free(CVSFILE *cf)
 
 	if (cf->cf_name != NULL)
 		cvs_strfree(cf->cf_name);
+
+	if (cf->cf_dir != NULL)
+		cvs_strfree(cf->cf_dir);
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_root != NULL)
@@ -937,9 +1049,7 @@ cvs_file_free(CVSFILE *cf)
 /*
  * cvs_file_examine()
  *
- * Examine the contents of the CVS file structure <cf> with the function
- * <exam>.  The function is called for all subdirectories and files of the
- * root file.
+ * Walk through the files, calling the callback as we go.
  */
 int
 cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
@@ -947,16 +1057,8 @@ cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
 	int ret;
 	CVSFILE *fp;
 
-	if (cf->cf_type == DT_DIR) {
-		ret = (*exam)(cf, arg);
-		SIMPLEQ_FOREACH(fp, &(cf->cf_files), cf_list) {
-			ret = cvs_file_examine(fp, exam, arg);
-			if (ret != 0)
-				break;
-		}
-	} else
-		ret = (*exam)(cf, arg);
-
+	fp = NULL;
+	ret = 0;
 	return (ret);
 }
 
@@ -1033,6 +1135,7 @@ CVSFILE*
 cvs_file_alloc(const char *path, u_int type)
 {
 	CVSFILE *cfp;
+	char *p;
 
 	cfp = (CVSFILE *)malloc(sizeof(*cfp));
 	if (cfp == NULL) {
@@ -1055,6 +1158,22 @@ cvs_file_alloc(const char *path, u_int type)
 		return (NULL);
 	}
 
+	if ((p = strrchr(path, '/')) != NULL) {
+		*p = '\0';
+		if (strcmp(path, ".")) {
+			cfp->cf_dir = cvs_strdup(path);
+			if (cfp->cf_dir == NULL) {
+				cvs_log(LP_ERR,
+				    "failed to copy directory");
+				cvs_file_free(cfp);
+				return (NULL);
+			}
+		} else
+			cfp->cf_dir = NULL;
+		*p = '/';
+	} else
+		cfp->cf_dir = NULL;
+
 	return (cfp);
 }
 
@@ -1069,14 +1188,12 @@ cvs_file_alloc(const char *path, u_int type)
 static CVSFILE*
 cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 {
-	int ret, cwd;
+	int ret;
 	u_int type;
 	struct stat st;
 	CVSFILE *cfp;
 
 	type = DT_UNKNOWN;
-	cwd = (strcmp(path, ".") == 0) ? 1 : 0;
-
 	ret = stat(path, &st);
 	if (ret == 0)
 		type = IFTODT(st.st_mode);
@@ -1092,10 +1209,13 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 		cfp->cf_mode = st.st_mode & ACCESSPERMS;
 		if (cfp->cf_type == DT_REG)
 			cfp->cf_mtime = st.st_mtime;
+		cfp->cf_flags |= CVS_FILE_ONDISK;
 
 		if (ent == NULL)
-			cfp->cf_cvstat = (cwd == 1) ?
-			    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
+			if (cfp->cf_flags & CVS_DIRF_BASE)
+				cfp->cf_cvstat = CVS_FST_UPTODATE;
+			else
+				cfp->cf_cvstat = CVS_FST_UNKNOWN;
 		else {
 			/* always show directories as up-to-date */
 			if (ent->ce_type == CVS_ENT_DIR)
@@ -1171,6 +1291,24 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 	    !strcmp(cfp->cf_repo, path))
 		cfp->cf_cvstat = CVS_FST_UPTODATE;
 
+	/*
+	 * In server mode, we do a few extra checks.
+	 */
+	if (cvs_cmdop == CVS_OP_SERVER) {
+		/*
+		 * If for some reason a file was added,
+		 * but does not exist anymore, start complaining.
+		 */
+		if (!(cfp->cf_flags & CVS_FILE_ONDISK) &&
+	    	    (cfp->cf_cvstat == CVS_FST_ADDED) &&
+		    (cfp->cf_type != DT_DIR))
+			cvs_log(LP_WARN, "new-born %s has disappeared", path);
+
+		/*
+		 * Any other needed checks?
+		 */
+	}
+
 	return (cfp);
 }
 
@@ -1183,8 +1321,7 @@ cvs_file_cmpname(const char *name1, const char *name2)
 }
 
 /*
- * remove a directory if it does not contain
- * any files other than the CVS/ administrative files.
+ * remove any empty directories.
  */
 int
 cvs_file_prune(char *path)

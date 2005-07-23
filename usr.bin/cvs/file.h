@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.24 2005/07/22 16:27:29 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.25 2005/07/23 11:19:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -75,7 +75,15 @@ SIMPLEQ_HEAD(cvs_flist, cvs_file);
 
 typedef struct cvs_file {
 	struct cvs_file  *cf_parent;  /* parent directory (NULL if none) */
-	const char       *cf_name;
+
+	/*
+	 * cf_name contains the basename of the fullpath
+	 * cf_dir contains the parent directory the file or dir is in.
+	 * if cf_dir is NULL the file is in the parent directory.
+	 */
+	const char	 *cf_name;
+	const char       *cf_dir;
+
 	mode_t            cf_mode;
 	u_int8_t          cf_cvstat;  /* cvs status of the file */
 	u_int8_t          cf_type;    /* uses values from dirent.h */
@@ -116,8 +124,8 @@ typedef struct cvs_file {
 #define CVS_DIRF_STATIC    0x01
 #define CVS_DIRF_STICKY    0x02
 #define CVS_DIRF_BASE      0x04
-
 #define CVS_GDIR_IGNORE    0x08
+#define CVS_FILE_ONDISK    0x10
 
 #define CVS_DIR_ROOT(f)  ((((f)->cf_type == DT_DIR) && \
 	((f)->cf_root != NULL)) ? (f)->cf_root : \
@@ -130,8 +138,13 @@ typedef struct cvs_file {
 int      cvs_file_init    (void);
 int      cvs_file_ignore  (const char *);
 int      cvs_file_chkign  (const char *);
-CVSFILE* cvs_file_get     (const char *, int, int (*)(CVSFILE *, void *), void *);
-CVSFILE* cvs_file_getspec (char **, int, int, int (*)(CVSFILE *, void *), void *);
+int	 cvs_file_get     (const char *, int, int (*)(CVSFILE *, void *),
+			   void *, struct cvs_flist *);
+int      cvs_file_getspec (char **, int, int, int (*)(CVSFILE *, void *),
+			   void *, struct cvs_flist *);
+CVSFILE* cvs_file_loadinfo(char *, int, int (*)(CVSFILE *, void *), void *,
+int);
+
 CVSFILE* cvs_file_create  (CVSFILE *, const char *, u_int, mode_t);
 CVSFILE* cvs_file_copy    (CVSFILE *);
 int      cvs_file_attach  (CVSFILE *, CVSFILE *);
