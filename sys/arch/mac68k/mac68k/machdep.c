@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.116 2005/01/11 21:07:19 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.117 2005/07/23 23:30:56 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ volatile u_char *Via1Base, *Via2Base, *PSCBase = NULL;
 u_long  NuBusBase = NBBASE;
 u_long  IOBase;
 
-vm_offset_t SCSIBase;
+vaddr_t SCSIBase;
 
 /* These are used to map kernel space: */
 extern int numranges;
@@ -244,7 +244,7 @@ void
 mac68k_init()
 {
 	int i;
-	extern vm_offset_t avail_start;
+	extern vaddr_t avail_start;
 
 	/*
 	 * Tell the VM system about available physical memory.
@@ -327,7 +327,7 @@ cpu_startup(void)
 	unsigned i;
 	int vers;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
+	vaddr_t minaddr, maxaddr;
 	vm_size_t size = 0;	/* To avoid compiler warning */
 	int delay;
 
@@ -2424,7 +2424,7 @@ setmachdep()
  */
 void
 mac68k_set_io_offsets(base)
-	vm_offset_t base;
+	vaddr_t base;
 {
 	extern volatile u_char *sccA;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.31 2005/07/18 16:58:48 martin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.32 2005/07/23 23:30:55 martin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ void	PCIA(void);
 void	TBIA(void);
 void	TBIAS(void);
 void	TBIAU(void);
-void	TBIS(vm_offset_t);
+void	TBIS(vaddr_t);
 #if defined(M68040)
 void	DCFA(void);
 void	DCFP(paddr_t);
