@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.893 2005/07/21 09:39:17 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.894 2005/07/23 17:00:40 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2103,12 +2103,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "BCM4306",
 	},
 	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
-	    "BCM4401",
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4322,
+	    "BCM4322",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_SERIAL,
 	    "Serial",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
+	    "BCM4401",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5801,
