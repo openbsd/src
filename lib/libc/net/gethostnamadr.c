@@ -48,7 +48,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.63 2005/06/08 18:32:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.64 2005/07/23 04:15:49 jaredy Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -786,7 +786,7 @@ _endhtent(void)
 	}
 }
 
-struct hostent *
+static struct hostent *
 _gethtent(void)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
@@ -832,10 +832,12 @@ _gethtent(void)
 		goto again;
 	}
 	/* if this is not something we're looking for, skip it. */
-	if (host.h_addrtype != af)
-		goto again;
-	if (host.h_length != len)
-		goto again;
+	if (host.h_addrtype != AF_UNSPEC) {
+		if (host.h_addrtype != af)
+			goto again;
+		if (host.h_length != len)
+			goto again;
+	}
 	h_addr_ptrs[0] = (char *)host_addr;
 	h_addr_ptrs[1] = NULL;
 	host.h_addr_list = h_addr_ptrs;
@@ -869,26 +871,13 @@ _gethtent(void)
 }
 
 struct hostent *
-_gethtbyname(const char *name)
-{
-	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
-	struct hostent *hp;
-	extern struct hostent *_gethtbyname2(const char *, int);
-
-	if (_resp->options & RES_USE_INET6) {
-		hp = _gethtbyname2(name, AF_INET6);
-		if (hp)
-			return (hp);
-	}
-	return (_gethtbyname2(name, AF_INET));
-}
-
-struct hostent *
 _gethtbyname2(const char *name, int af)
 {
 	struct hostent *p;
 	char **cp;
 	
+	host.h_addrtype = af;
+
 	_sethtent(0);
 	while ((p = _gethtent())) {
 		if (p->h_addrtype != af)
@@ -914,7 +903,8 @@ _gethtbyaddr(const void *addr, socklen_t len, int af)
 
 	_sethtent(0);
 	while ((p = _gethtent()))
-		if (p->h_addrtype == af && !bcmp(p->h_addr, addr, len))
+		if (p->h_addrtype == af && p->h_length == len &&
+		    !bcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
 	return (p);
@@ -1093,6 +1083,7 @@ map_v4v6_hostent(struct hostent *hp, char **bpp, char *ep)
 struct hostent *
 gethostent(void)
 {
+	host.h_addrtype = AF_UNSPEC;
 	return (_gethtent());
 }
 
