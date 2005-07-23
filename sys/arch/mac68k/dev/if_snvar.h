@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_snvar.h,v 1.12 2004/11/26 21:21:24 miod Exp $      */
+/*    $OpenBSD: if_snvar.h,v 1.13 2005/07/23 23:28:58 martin Exp $      */
 /*    $NetBSD: if_snvar.h,v 1.8 1997/04/25 03:40:09 briggs Exp $      */
 
 /*
@@ -218,4 +218,4 @@ typedef struct sn_softc {
 int	snsetup(struct sn_softc *sc, u_int8_t *);
 int	snintr(void *);
 void	sn_get_enaddr(bus_space_tag_t t, bus_space_handle_t h,
-	    vm_offset_t o, u_char *dst);
+	    bus_addr_t o, u_char *dst);

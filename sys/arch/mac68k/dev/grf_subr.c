@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_subr.c,v 1.5 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: grf_subr.c,v 1.6 2005/07/23 23:28:58 martin Exp $	*/
 /*	$NetBSD: grf_subr.c,v 1.6 1997/02/20 00:23:28 scottr Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ grf_establish(sc, sp, g_mode, g_phys)
 	struct grfbus_softc *sc;
 	nubus_slot *sp;
 	int (*g_mode)(struct grf_softc *, int, void *);
-	caddr_t (*g_phys)(struct grf_softc *, vm_offset_t);
+	caddr_t (*g_phys)(struct grf_softc *, vaddr_t);
 {
 	struct grfmode *gm = &sc->curr_mode;
 	struct grfbus_attach_args ga;

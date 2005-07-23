@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbcvar.h,v 1.5 2004/12/08 06:59:43 miod Exp $	*/
+/*	$OpenBSD: sbcvar.h,v 1.6 2005/07/23 23:28:58 martin Exp $	*/
 /*	$NetBSD: sbcvar.h,v 1.1 1997/03/01 20:19:00 scottr Exp $	*/
 
 /*
@@ -77,8 +77,8 @@ struct sbc_softc {
 	struct ncr5380_softc ncr_sc;
 	struct via2hand	sc_ih_drq, sc_ih_irq;
 	volatile struct sbc_regs *sc_regs;
-	volatile vm_offset_t	sc_drq_addr;
-	volatile vm_offset_t	sc_nodrq_addr;
+	volatile vaddr_t	sc_drq_addr;
+	volatile vaddr_t	sc_nodrq_addr;
 	void			(*sc_clrintr)(struct ncr5380_softc *);
 	int			sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];

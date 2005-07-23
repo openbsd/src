@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.14 2005/04/26 21:09:35 martin Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.15 2005/07/23 23:28:58 martin Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ struct grf_softc {
 					/* mode-change on/off/mode function */
 	int	(*sc_mode)(struct grf_softc *, int, void *);
 					/* map virtual addr to physical addr */
-	caddr_t	(*sc_phys)(struct grf_softc *, vm_offset_t);
+	caddr_t	(*sc_phys)(struct grf_softc *, vaddr_t);
 };
 
 /*
@@ -86,10 +86,10 @@ struct grfbus_attach_args {
 	struct	grfmode *ga_grfmode;	/* forwarded ... */
 	nubus_slot	*ga_slot;
 	int	(*ga_mode)(struct grf_softc *, int, void *);
-	caddr_t	(*ga_phys)(struct grf_softc *, vm_offset_t);
+	caddr_t	(*ga_phys)(struct grf_softc *, vaddr_t);
 };
 
-typedef	caddr_t (*grf_phys_t)(struct grf_softc *gp, vm_offset_t addr);
+typedef	caddr_t (*grf_phys_t)(struct grf_softc *gp, vaddr_t addr);
 
 /* flags */
 #define	GF_ALIVE	0x01
@@ -152,5 +152,5 @@ int	grfunmap(dev_t dev, caddr_t addr, struct proc *p);
 
 void	grf_establish(struct grfbus_softc *, nubus_slot *,
 	    int (*)(struct grf_softc *, int, void *),
-	    caddr_t (*)(struct grf_softc *, vm_offset_t));
+	    caddr_t (*)(struct grf_softc *, vaddr_t));
 int	grfbusprint(void *, const char *);

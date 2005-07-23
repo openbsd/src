@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.36 2005/05/22 19:40:51 art Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.37 2005/07/23 23:28:58 martin Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -1183,7 +1183,7 @@ void
 sn_get_enaddr(t, h, o, dst)
 	bus_space_tag_t	t;
 	bus_space_handle_t h;
-	vm_offset_t o;
+	bus_addr_t o;
 	u_char *dst;
 {
 	int	i, do_bbr;

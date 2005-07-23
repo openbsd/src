@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.26 2005/05/26 16:35:56 miod Exp $	*/
+/*	$OpenBSD: grf.c,v 1.27 2005/07/23 23:28:58 martin Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -326,7 +326,7 @@ grfaddr(gp, off)
 	u_long	addr;
 
 	if (off >= 0 && off < m68k_round_page(gm->fbsize + gm->fboff)) {
-		addr = (u_long)(*gp->sc_phys)(gp, (vm_offset_t)gm->fbbase)+off;
+		addr = (u_long)(*gp->sc_phys)(gp, (vaddr_t)gm->fbbase)+off;
 		return m68k_btop(addr);
 	}
 	/* bogus */
@@ -364,7 +364,7 @@ grfmap(dev, addrp, p)
 	vn.v_specinfo = &si;	/* XXX */
 	vn.v_rdev = dev;	/* XXX */
 
-	error = uvm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
+	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 	    (vm_size_t)len, UVM_PROT_RW, UVM_PROT_RW, flags, (caddr_t)&vn, 0,
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
 
@@ -400,8 +400,8 @@ grfunmap(dev, addr, p)
 
 	size = round_page(gp->sc_grfmode->fbsize);
 
-	uvm_unmap(&p->p_vmspace->vm_map, (vm_offset_t)addr,
-	    (vm_offset_t)addr + size);
+	uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
+	    (vaddr_t)addr + size);
 
 	return (0);
 }
