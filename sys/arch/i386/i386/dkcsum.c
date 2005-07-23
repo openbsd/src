@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.16 2005/04/01 23:34:39 krw Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.17 2005/07/23 14:48:34 krw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -53,7 +53,7 @@ extern bios_diskinfo_t *bios_diskinfo;
 extern dev_t bootdev;
 
 void
-dkcsumattach()
+dkcsumattach(void)
 {
 	struct device *dv;
 	struct buf *bp;
@@ -106,7 +106,7 @@ dkcsumattach()
 		bp->b_flags = B_BUSY | B_READ;
 		bp->b_cylin = 0;
 		(*bdsw->d_strategy)(bp);
-		if (biowait(bp)) {
+		if ((error = biowait(bp))) {
 			/* XXX What to do here? */
 			printf("dkcsum: read of %s failed (%d)\n",
 			    dv->dv_xname, error);

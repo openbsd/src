@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.5 2005/04/01 23:34:38 krw Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.6 2005/07/23 14:48:35 krw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -73,14 +73,13 @@ dkcsumattach(void)
 	pribootdev = altbootdev = 0;
 
 	/*
-	 * XXX Whatif DEV_BSIZE is changed to something else than the BIOS
+	 * XXX What if DEV_BSIZE is changed to something else than the BIOS
 	 * blocksize?  Today, /boot doesn't cover that case so neither need
 	 * I care here.
 	 */
 	bp = geteblk(bios_cksumlen * DEV_BSIZE);	/* XXX error check?  */
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
-
 		if (dv->dv_class != DV_DISK)
 			continue;
 		bp->b_dev = dev = dev_rawpart(dv);
@@ -107,7 +106,7 @@ dkcsumattach(void)
 		bp->b_flags = B_BUSY | B_READ;
 		bp->b_cylin = 0;
 		(*bdsw->d_strategy)(bp);
-		if (biowait(bp)) {
+		if ((error = biowait(bp))) {
 			/* XXX What to do here? */
 			printf("dkcsum: read of %s failed (%d)\n",
 			    dv->dv_xname, error);
