@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.37 2005/07/19 15:36:54 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.38 2005/07/23 10:49:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -497,6 +497,24 @@ cvs_exec(int argc, char **argv, int fds[3])
 		cvs_log(LP_ERRNO, "failed to waitpid");
 
 	return (ret);
+}
+
+/*
+ * cvs_chdir()
+ *
+ * Change to directory.
+ * chdir() wrapper with an error message.
+ * Returns 0 on success, or -1 on failure.
+ */ 
+int
+cvs_chdir(const char *path)
+{
+	if (chdir(path) == -1) {
+		cvs_log(LP_ERRNO, "cannot change to dir `%s'", path);
+		return (-1);
+	}
+
+	return (0);
 }
 
 /*
