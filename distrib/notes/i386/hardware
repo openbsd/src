@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.207 2005/07/23 03:17:48 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.208 2005/07/23 03:45:03 brad Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -910,6 +910,8 @@ Supported hardware {:-include-:}:
 		    Corega CG-LAPCIGT (8169S)
 		    D-Link DGE-528T (8169S)
 		    Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S)
+		    LevelOne GNC-0105T (8169S)
+		    Linksys EG1032v3 (8169S)
 		    Netgear GA511 PC Card (8169)
 		    PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 		    Surecom EP-320G-TX1 (8169S)
