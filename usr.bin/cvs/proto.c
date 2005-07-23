@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.64 2005/07/23 11:19:46 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.65 2005/07/23 11:20:49 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -715,7 +715,6 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 	if (req->req_flags & CVS_REQF_RESP)
 		ret = cvs_getresp(root);
 
-	printf("cvs_sendreq returning %d\n", ret);
 	return (ret);
 }
 
@@ -757,7 +756,6 @@ cvs_getresp(struct cvsroot *root)
 		}
 
 		ret = cvs_resp_handle(root, cvs_proto_buf);
-		printf("(%s) (%d)\n", cvs_proto_buf, ret);
 		nbcmd++;
 	} while (ret == 0);
 
