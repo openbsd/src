@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2005/07/10 09:33:10 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2005/07/23 19:28:27 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -72,6 +72,7 @@ int			 symset(const char *, const char *, int);
 int			 cmdline_symset(char *);
 char			*symget(const char *);
 int			 atoul(char *, u_long *);
+int			 atospi(char *, u_int32_t *);
 u_int8_t		 x2i(unsigned char *);
 struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_addr	*host(const char *);
@@ -102,7 +103,10 @@ typedef struct {
 		} ids;
 		char		*id;
 		u_int16_t	 authtype;
-		u_int32_t	 spi;
+		struct {
+			u_int32_t	spiout;
+			u_int32_t	spiin;
+		} spis;
 		struct ipsec_key *key;
 	} v;
 	int lineno;
@@ -122,7 +126,7 @@ typedef struct {
 %type	<v.ids>			ids
 %type	<v.id>			id
 %type	<v.authtype>		authtype
-%type	<v.spi>			spi
+%type	<v.spis>		spispec
 %type	<v.key>			keyspec
 %%
 
@@ -153,10 +157,10 @@ number		: STRING			{
 flowrule	: FLOW ipsecrule		{ }
 		;
 
-tcpmd5rule	: TCPMD5 hosts spi keyspec	{
+tcpmd5rule	: TCPMD5 hosts spispec keyspec	{
 			struct ipsec_rule	*r;
 
-			r = create_sa($2.src, $2.dst, $3, $4);
+			r = create_sa($2.src, $2.dst, $3.spiout, $4);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -265,12 +269,28 @@ authtype	: /* empty */			{ $$ = 0; }
 		| PSK				{ $$ = AUTH_PSK; }
 		;
 
-spi		: SPI number			{
-			if ($2 >= SPI_RESERVED_MIN && $2 <= SPI_RESERVED_MAX) {
-			    yyerror("invalid spi 0x%lx", $2);
-			    YYERROR;
+spispec		: SPI STRING			{
+			u_int32_t	 spi;
+			char		*p = strchr($2, ':');
+
+			if (p != NULL) {
+				*p++ = 0;
+
+				if (atospi($2, &spi) == -1) {
+					yyerror("%s is not a valid spi", $2);
+					free($2);
+					YYERROR;
+				}
+				$$.spiin = spi;
 			}
-			$$ = $2;
+			if (atospi($2, &spi) == -1) {
+				yyerror("%s is not a valid spi", $2);
+				free($2);
+				YYERROR;
+			}
+			$$.spiout = spi;
+
+			free($2);
 		}
 		;
 
@@ -672,6 +692,19 @@ atoul(char *s, u_long *ulvalp)
 	if (errno == ERANGE && ulval == ULONG_MAX)
 		return (-1);
 	*ulvalp = ulval;
+	return (0);
+}
+
+int
+atospi(char *s, u_int32_t *spivalp)
+{
+	unsigned long	ulval;
+
+	if (atoul(s, &ulval) == -1)
+		return (-1);
+	if (ulval >= SPI_RESERVED_MIN && ulval <= SPI_RESERVED_MAX)
+		return (-1);
+	*spivalp = ulval;
 	return (0);
 }
 
