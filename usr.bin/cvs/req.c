@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.27 2005/07/22 17:55:35 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.28 2005/07/23 10:59:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -292,10 +292,8 @@ cvs_req_directory(int reqid, char *line)
 	 * Lets make sure we always start at the correct
 	 * directory.
 	 */
-	if (chdir(cvs_server_tmpdir) == -1) {
-		cvs_log(LP_ERRNO, "failed to change to top directory");
+	if (cvs_chdir(cvs_server_tmpdir) == -1)
 		return (-1);
-	}
 
 	/*
 	 * Set repository path.
@@ -661,10 +659,8 @@ cvs_req_command(int reqid, char *line)
 
 	/* switch to the correct directory */
 	if (cmdp->cmd_op != CVS_OP_VERSION) {
-		if (chdir(cvs_server_tmpdir) == -1) {
-			cvs_log(LP_ERRNO, "failed to change dir");
+		if (cvs_chdir(cvs_server_tmpdir) == -1)
 			return (-1);
-		}
 	}
 
 	ret = cvs_startcmd(cmdp, cvs_req_nargs, cvs_req_args);

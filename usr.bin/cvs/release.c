@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.16 2005/07/22 16:27:29 joris Exp $	*/
+/*	$OpenBSD: release.c,v 1.17 2005/07/23 10:59:47 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -176,11 +176,8 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 				cvs_log(LP_ERRNO, "cannot get current dir");
 
 			/* change dir before running the `cvs update' command */
-			if (chdir(dpath) == -1) {
-				cvs_log(LP_ERRNO, "cannot change to dir `%s'",
-				    dpath);
+			if (cvs_chdir(dpath) == -1)
 				return (CVS_EX_FILE);
-			}
 
 			/* construct `cvs update' command */
 			l = snprintf(updcmd, sizeof(updcmd), "%s %s %s update",
@@ -222,11 +219,8 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 			}
 
 			/* change back to original working dir */
-			if (chdir(wdir) == -1) {
-				cvs_log(LP_ERRNO, "cannot change to original "
-				    "working dir `%s'", wdir);
+			if (cvs_chdir(wdir) == -1)
 				return (CVS_EX_FILE);
-			}
 
 			if (dflag == 1) {
 				if (!cvs_noexec && cvs_remove_dir(dpath) != 0) {
