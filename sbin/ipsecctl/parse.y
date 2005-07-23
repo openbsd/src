@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2005/07/23 19:28:27 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2005/07/23 20:09:02 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,7 +107,10 @@ typedef struct {
 			u_int32_t	spiout;
 			u_int32_t	spiin;
 		} spis;
-		struct ipsec_key *key;
+		struct {
+			struct ipsec_key *keyout;
+			struct ipsec_key *keyin;
+		} keys;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -127,7 +130,7 @@ typedef struct {
 %type	<v.id>			id
 %type	<v.authtype>		authtype
 %type	<v.spis>		spispec
-%type	<v.key>			keyspec
+%type	<v.keys>		keyspec
 %%
 
 grammar		: /* empty */
@@ -160,7 +163,7 @@ flowrule	: FLOW ipsecrule		{ }
 tcpmd5rule	: TCPMD5 hosts spispec keyspec	{
 			struct ipsec_rule	*r;
 
-			r = create_sa($2.src, $2.dst, $3.spiout, $4);
+			r = create_sa($2.src, $2.dst, $3.spiout, $4.keyout);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -294,14 +297,26 @@ spispec		: SPI STRING			{
 		}
 		;
 
-keyspec		: /* empty */			{ $$ = NULL; }
+keyspec		: /* empty */			{
+			$$.keyout = NULL;
+			$$.keyin = NULL;
+		}
 		| KEY STRING			{
-			unsigned char	 *hex;
+			unsigned char	*hex;
+			unsigned char	*p = strchr($2, ':');
 			
+			if (p != NULL ) {
+				*p++ = 0;
+
+				if (!strncmp(p, "0x", 2))
+					p += 2;
+				$$.keyin = parsekey(p, strlen(p));
+			}
+
 			hex = $2;
 			if (!strncmp(hex, "0x", 2))
 				hex += 2;
-			$$ = parsekey(hex, strlen(hex));
+			$$.keyout = parsekey(hex, strlen(hex));
 
 			free($2);
 		}
@@ -323,7 +338,7 @@ keyspec		: /* empty */			{ $$ = NULL; }
 			if (read(fd, hex, sb.st_size) < sb.st_size)
 				err(1, "read");
 			close(fd);
-			$$ = parsekey(hex, sb.st_size);
+			$$.keyout = parsekey(hex, sb.st_size);
 
 			free($2);
 		}
