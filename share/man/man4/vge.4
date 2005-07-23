@@ -1,4 +1,4 @@
-.\" $OpenBSD: vge.4,v 1.5 2005/07/02 21:21:25 brad Exp $
+.\" $OpenBSD: vge.4,v 1.6 2005/07/23 03:57:10 brad Exp $
 .\" $FreeBSD: vge.4,v 1.6 2004/11/24 19:06:43 brueffer Exp $
 .\"
 .\" Copyright (c) 2004
@@ -51,9 +51,8 @@ The VT6122 is a 33/66Mhz 64-bit PCI device which combines a tri-speed MAC with
 an integrated 10/100/1000 copper PHY.
 (Some older cards use an external PHY.)
 The MAC supports IPv4 transmit/receive IP/TCP/UDP hardware
-checksum offload, VLAN tag insertion and stripping,
-as well as VLAN filtering, a 64-entry CAM filter and a 64-entry VLAN filter,
-64-bit multicast hash filter, 4 separate transmit DMA queues, flow control
+checksum offload, VLAN tag insertion, a 64-entry CAM filter and a 64-entry VLAN
+filter, 64-bit multicast hash filter, 4 separate transmit DMA queues, flow control
 and Jumbo frames up to 16K in size.
 The VT6122 has a 16K receive FIFO and 48K transmit FIFO.
 .Pp
@@ -69,10 +68,6 @@ groups, the driver will switch over to using the hash filter.
 The Jumbo frame support can be enabled by setting the interface MTU
 to any value larger than the default of 1500 bytes, up to a maximum
 of 9000 bytes.
-The receive and transmit checksum offload support
-can be toggled on and off using the
-.Xr ifconfig 8
-utility.
 .Pp
 The
 .Nm
