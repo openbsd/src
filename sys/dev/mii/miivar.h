@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.24 2005/07/22 11:50:53 brad Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.25 2005/07/23 01:42:16 brad Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -266,11 +266,6 @@ void	mii_phy_update(struct mii_softc *, int);
 int	mii_phy_statusmsg(struct mii_softc *);
 
 void	ukphy_status(struct mii_softc *);
-
-int	mii_oui(int, int);
-#define	MII_OUI(id1, id2)	mii_oui(id1, id2)
-#define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
-#define	MII_REV(id2)		((id2) & IDR2_REV)
 
 #endif /* _KERNEL */
 
