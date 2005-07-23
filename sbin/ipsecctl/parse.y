@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2005/07/23 20:09:02 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2005/07/23 20:35:04 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -79,6 +79,9 @@ struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
 struct ipsec_rule	*create_sa(struct ipsec_addr *, struct ipsec_addr *,
 			 u_int32_t, struct ipsec_key *);
+
+struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
+			     struct ipsec_key *);
 struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr *, struct
 			     ipsec_addr *, struct ipsec_addr *, u_int8_t,
 			     char *, char *, u_int16_t);
@@ -170,6 +173,17 @@ tcpmd5rule	: TCPMD5 hosts spispec keyspec	{
 
 			if (ipsecctl_add_rule(ipsec, r))
 				errx(1, "tcpmd5rule: ipsecctl_add_rule");
+
+			/* Create and add reverse SA rule. */
+			if ($3.spiin != 0 || $4.keyin != NULL) {
+				r = reverse_sa(r, $3.spiin, $4.keyin);
+				if (r == NULL)
+					YYERROR;
+				r->nr = ipsec->rule_nr++;
+
+				if (ipsecctl_add_rule(ipsec, r))
+					errx(1, "tcpmd5rule: ipsecctl_add_rule");
+			}
 		}
 		;
 
@@ -185,7 +199,7 @@ ipsecrule	: protocol dir hosts peer ids authtype	{
 			if (ipsecctl_add_rule(ipsec, r))
 				errx(1, "esprule: ipsecctl_add_rule");
 
-			/* Create and add reverse rule. */
+			/* Create and add reverse flow rule. */
 			if ($2 == IPSEC_INOUT) {
 				r = reverse_rule(r);	
 				r->nr = ipsec->rule_nr++;
@@ -279,8 +293,8 @@ spispec		: SPI STRING			{
 			if (p != NULL) {
 				*p++ = 0;
 
-				if (atospi($2, &spi) == -1) {
-					yyerror("%s is not a valid spi", $2);
+				if (atospi(p, &spi) == -1) {
+					yyerror("%s is not a valid spi", p);
 					free($2);
 					YYERROR;
 				}
@@ -292,6 +306,7 @@ spispec		: SPI STRING			{
 				YYERROR;
 			}
 			$$.spiout = spi;
+
 
 			free($2);
 		}
@@ -820,6 +835,9 @@ create_sa(struct ipsec_addr *src, struct ipsec_addr *dst, u_int32_t spi,
 {
 	struct ipsec_rule *r;
 
+	if (spi == 0 || key == NULL)
+		return (NULL);
+
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
 		err(1, "calloc");
@@ -832,6 +850,27 @@ create_sa(struct ipsec_addr *src, struct ipsec_addr *dst, u_int32_t spi,
 	r->key = key;
 
 	return r;
+}
+
+struct ipsec_rule *
+reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *key)
+{
+	struct ipsec_rule *reverse;
+
+	if (spi == 0 || key == NULL)
+		return (NULL);
+
+	reverse = calloc(1, sizeof(struct ipsec_rule));
+	if (reverse == NULL)
+		err(1, "calloc");
+
+	reverse->type = RULE_SA;
+	reverse->src = copyhost(rule->dst);
+	reverse->dst = copyhost(rule->src);
+	reverse->spi = spi;
+	reverse->key = key;
+
+	return (reverse);
 }
 
 struct ipsec_rule *
