@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.101 2005/07/24 18:34:13 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.102 2005/07/24 18:54:47 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -78,7 +78,7 @@ static const char *cvs_ign_std[] = {
 	"*.olb",
 	"CVS",
 	"core",
-	"cvslog.*",
+	"cvslog*",
 	"*.core",
 	".#*",
 	"*~",
