@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.18 2005/07/24 18:45:32 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.19 2005/07/24 19:35:46 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -366,11 +366,6 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	/* Enable bus mastering. */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
