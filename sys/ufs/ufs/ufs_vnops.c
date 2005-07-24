@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.66 2005/07/03 20:14:03 drahn Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.67 2005/07/24 05:43:36 millert Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -856,13 +856,9 @@ abortit:
 		if ((fcnp->cn_flags & SAVESTART) == 0)
 			panic("ufs_rename: lost from startdir");
 		fcnp->cn_nameiop = DELETE;
-		error = relookup(fdvp, &fvp, fcnp);
+		if ((error = relookup(fdvp, &fvp, fcnp)) != 0)
+			return (error);		/* relookup did vrele() */
 		vrele(fdvp);
-		if (error)
-			return (error);
-		if (fvp == NULL) {
-			return (ENOENT);
-		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 
@@ -1113,12 +1109,11 @@ abortit:
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 		panic("ufs_rename: lost from startdir");
-	error = relookup(fdvp, &fvp, fcnp);
-	vrele(fdvp);
-	if (error) {
+	if ((error = relookup(fdvp, &fvp, fcnp)) != 0) {
 		vrele(ap->a_fvp);
 		return (error);
 	}
+	vrele(fdvp);
 	if (fvp == NULL) {
 		/*
 		 * From name has disappeared.
