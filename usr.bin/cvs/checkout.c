@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.37 2005/07/08 08:54:43 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.38 2005/07/24 17:48:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -157,7 +157,7 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	co_mods = argv;
 	co_nmod = argc;
 
-	if (!statmod && (argc == 0)) {
+	if ((statmod == 0) && (argc == 0)) {
 		cvs_log(LP_ABORT,
 		    "must specify at least one module or directory");
 		return (-1);
@@ -231,7 +231,7 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 		if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
 			cvs_log(LP_ERR, "failed to expand module");
 
-		if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
+		if ((usehead == 1) && (cvs_sendarg(root, "-f", 0) < 0))
 			return (CVS_EX_PROTO);
 
 		if ((tgtdir != NULL) &&
@@ -239,7 +239,7 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 		    (cvs_sendarg(root, tgtdir, 0) < 0)))
 			return (CVS_EX_PROTO);
 
-		if (!shorten && cvs_sendarg(root, "-N", 0) < 0)
+		if ((shorten == 0) && cvs_sendarg(root, "-N", 0) < 0)
 			return (CVS_EX_PROTO);
 
 		if ((cvs_cmd_checkout.cmd_flags & CVS_CMD_PRUNEDIRS) &&

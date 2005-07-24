@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.24 2005/07/24 17:20:14 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.25 2005/07/24 17:48:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -159,7 +159,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			return (CVS_EX_FILE);
 	}
 
-	if (!nuked) {
+	if (nuked == 0) {
 		existing++;
 		if (verbosity > 1)
 			cvs_log(LP_WARN, "file `%s' still in working directory",
@@ -196,7 +196,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 		removed++;
 	}
 
-	if (removed) {
+	if (removed != 0) {
 		if (verbosity > 0)
 			cvs_log(LP_INFO, "use '%s commit' to remove %s "
 			    "permanently", __progname,
@@ -204,7 +204,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	if (existing) {
+	if (existing != 0) {
 		cvs_log(LP_WARN, ((existing == 1) ?
 		    "%d file exists; remove it first" :
 		    "%d files exist; remove them first"), existing);
