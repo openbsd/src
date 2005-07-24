@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.48 2005/07/24 16:46:40 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.49 2005/07/24 17:20:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -368,9 +368,7 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 
 	if (cvs_noexec == 0) {
 		if ((type == CVS_RESP_CLRSTATDIR) &&
-		    (unlink(statpath) == -1) && (errno != ENOENT)) {
-			cvs_log(LP_ERRNO, "failed to unlink %s file",
-			    CVS_PATH_STATICENTRIES);
+		    (cvs_unlink(statpath) == -1) && (errno != ENOENT)) {
 			return (-1);
 		} else if (type == CVS_RESP_SETSTATDIR) {
 			fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0644);

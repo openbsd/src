@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.23 2005/07/24 16:46:40 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.24 2005/07/24 17:20:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -177,11 +177,9 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			cvs_log(LP_ERRNO, "%s", buf);
 			return (CVS_EX_DATA);
 		}
-		if ((cvs_noexec == 0) &&
-		    (unlink(buf) == -1) && (errno != ENOENT)) {
-			cvs_log(LP_ERRNO, "cannot remove %s", buf);
+		if ((cvs_unlink(buf) == -1) && (errno != ENOENT))
 			return (CVS_EX_FILE);
-		}
+
 		if (verbosity > 1)
 			cvs_log(LP_INFO, "removed `%s'", cf->cf_name);
 		return (0);
@@ -227,11 +225,9 @@ static
 int cvs_remove_file(const char *fpath)
 {
 	/* if -f option is used, physically remove the file */
-	if ((force_remove == 1) && (cvs_noexec == 0)) {
-		if((unlink(fpath) == -1) && (errno != ENOENT)) {
-			cvs_log(LP_ERRNO, "unable to remove %s", fpath);
+	if (force_remove == 1) {
+		if((cvs_unlink(fpath) == -1) && (errno != ENOENT))
 			return (-1);
-		}
 		nuked++;
 	}
 
