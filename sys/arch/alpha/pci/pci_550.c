@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.12 2004/06/28 02:28:43 aaron Exp $ */
+/* $OpenBSD: pci_550.c,v 1.13 2005/07/24 14:21:29 miod Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -118,11 +118,10 @@ void    dec_550_pciide_compat_intr_disestablish(void *, void *);
 /*
  * Some Miata models, notably models with a Cypress PCI-ISA bridge, have
  * a PCI device (the OHCI USB controller) with interrupts tied to ISA IRQ
- * lines.  This IRQ is encoded as:
- *
- *	line = 0xe0 | isa_irq;
+ * lines.  This IRQ is encoded as: line = FLAG | isa_irq. Usually FLAG
+ * is 0xe0, however it can be 0xf0.  We don't allow 0xf0 | irq15.
  */
-#define	DEC_550_LINE_IS_ISA(line)	((line) >= 0xe0 && (line) <= 0xef)
+#define	DEC_550_LINE_IS_ISA(line)	((line) >= 0xe0 && (line) <= 0xfe)
 #define	DEC_550_LINE_ISA_IRQ(line)	((line) & 0x0f)
 
 struct alpha_shared_intr *dec_550_pci_intr;
@@ -249,9 +248,11 @@ dec_550_intr_map(ccv, bustag, buspin, line, ihp)
 	}
 #endif
 
-	if (DEC_550_LINE_IS_ISA(line) == 0 && line >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_map: dec 550 irq too large (%d)",
+	if (DEC_550_LINE_IS_ISA(line) == 0 && line >= DEC_550_MAX_IRQ) {
+		printf("dec_550_intr_map: dec 550 irq too large (%d)",
 		    line);
+		return (1);
+	}
 
 	*ihp = line;
 	return (0);
