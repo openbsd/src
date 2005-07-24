@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2005/07/23 20:35:04 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2005/07/24 10:06:38 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -842,7 +842,7 @@ create_sa(struct ipsec_addr *src, struct ipsec_addr *dst, u_int32_t spi,
 	if (r == NULL)
 		err(1, "calloc");
 
-	r->type = RULE_SA;
+	r->type |= RULE_SA;
 
 	r->src = src;
 	r->dst = dst;
@@ -864,7 +864,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *key)
 	if (reverse == NULL)
 		err(1, "calloc");
 
-	reverse->type = RULE_SA;
+	reverse->type |= RULE_SA;
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
 	reverse->spi = spi;
@@ -884,7 +884,7 @@ create_flow(u_int8_t dir, struct ipsec_addr *src, struct ipsec_addr *dst,
 	if (r == NULL)
 		err(1, "calloc");
 	
-	r->type = RULE_FLOW;
+	r->type |= RULE_FLOW;
 
 	if (dir == IPSEC_INOUT)
 		r->direction = IPSEC_OUT;
@@ -948,7 +948,7 @@ reverse_rule(struct ipsec_rule *rule)
 	if (reverse == NULL)
 		err(1, "calloc");
 
-	reverse->type = RULE_FLOW;
+	reverse->type |= RULE_FLOW;
 	
 	if (rule->direction == (u_int8_t)IPSEC_OUT) {
 		reverse->direction = (u_int8_t)IPSEC_IN;

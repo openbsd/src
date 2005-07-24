@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.10 2005/07/09 21:05:02 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.11 2005/07/24 10:06:38 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -28,9 +28,9 @@
 #define IPSECCTL_OPT_FLUSH		0x0100
 #define IPSECCTL_OPT_DELETE		0x0200
 
-enum {
-	RULE_UNKNOWN, RULE_FLOW, RULE_SA
-};
+#define RULE_FLOW	0x01
+#define RULE_SA		0x02
+
 enum {
 	DIRECTION_UNKNOWN, IPSEC_IN, IPSEC_OUT, IPSEC_INOUT
 };

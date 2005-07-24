@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.18 2005/07/09 21:41:08 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.19 2005/07/24 10:06:38 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -255,15 +255,10 @@ ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 
 	printf("%s", ruletype[r->type]);
 
-	switch (r->type) {
-	case RULE_FLOW:
+	if (r->type & RULE_FLOW)
 		ipsecctl_print_flow(r, opts);
-		break;
-	case RULE_SA:
+	if (r->type & RULE_SA)
 		ipsecctl_print_sa(r, opts);
-		break;
-	}
-
 	printf("\n");
 }
 
@@ -315,7 +310,7 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 		if (rule == NULL)
 			err(1, "malloc");
 		rule->nr = ipsec->rule_nr++;
-		rule->type = RULE_FLOW;
+		rule->type |= RULE_FLOW;
 
 		if (pfkey_parse(msg, rule))
 			errx(1, "failed to parse pfkey message");
