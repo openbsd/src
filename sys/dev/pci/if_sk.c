@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.75 2005/07/22 03:49:19 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.76 2005/07/24 20:18:17 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1301,26 +1301,18 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(struct sk_ring_data), &kva, BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc_if->sk_dev.dv_xname, sizeof(struct sk_ring_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct sk_ring_data), 1,
 	    sizeof(struct sk_ring_data), 0, BUS_DMA_NOWAIT,
             &sc_if->sk_ring_map)) {
 		printf("%s: can't create dma map\n", sc_if->sk_dev.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmatag, kva,
-		    sizeof(struct sk_ring_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_2;
 	}
 	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_ring_map, kva,
 	    sizeof(struct sk_ring_data), NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc_if->sk_dev.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
-		bus_dmamem_unmap(sc->sc_dmatag, kva,
-		    sizeof(struct sk_ring_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_3;
 	}
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
 	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
@@ -1328,7 +1320,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	/* Try to allocate memory for jumbo buffers. */
 	if (sk_alloc_jumbo_mem(sc_if)) {
 		printf("%s: jumbo buffer allocation failed\n", ifp->if_xname);
-		goto fail;
+		goto fail_3;
 	}
 
 	ifp = &sc_if->arpcom.ac_if;
@@ -1357,8 +1349,9 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	default:
 		printf("%s: unknown device type %d\n", sc->sk_dev.dv_xname,
-		      sc->sk_type);
-		goto fail;
+		    sc->sk_type);
+		/* dealloc jumbo on error */
+		goto fail_3;
 	}
 
  	DPRINTFN(2, ("sk_attach: 1\n"));
@@ -1407,6 +1400,12 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmatag, kva, sizeof(struct sk_ring_data));
+fail_1:
+	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 fail:
 	sc->sk_if[sa->skc_port] = NULL;
 }
@@ -1482,13 +1481,13 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_mapreg_map(pa, SK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sk_btag, &sc->sk_bhandle, NULL, &size, 0)) {
 		printf(": can't map i/o space\n");
-		goto fail;
+		return;
  	}
 #else
 	if (pci_mapreg_map(pa, SK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sk_btag, &sc->sk_bhandle, NULL, &size, 0)) {
  		printf(": can't map mem space\n");
-		goto fail;
+		return;
  	}
 #endif
 	sc->sc_dmatag = pa->pa_dmat;
@@ -1499,16 +1498,14 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	/* bail out here if chip is not recognized */
 	if (sc->sk_type != SK_GENESIS && ! SK_YUKON_FAMILY(sc->sk_type)) {
 		printf("%s: unknown chip type\n",sc->sk_dev.dv_xname);
-		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
-		goto fail;
+		goto fail_1;
 	}
 	DPRINTFN(2, ("skc_attach: allocate interrupt\n"));
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
-		goto fail;
+		goto fail_1;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
@@ -1518,8 +1515,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
-		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
-		goto fail;
+		goto fail_1;
 	}
 	printf(": %s\n", intrstr);
 
@@ -1551,9 +1547,8 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		default:
 			printf("%s: unknown ram size: %d\n",
-			       sc->sk_dev.dv_xname, skrs);
-			bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
-			goto fail_1;
+			    sc->sk_dev.dv_xname, skrs);
+			goto fail_2;
 			break;
 		}
 	} else {
@@ -1585,8 +1580,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	default:
 		printf("%s: unknown media type: 0x%x\n",
 		    sc->sk_dev.dv_xname, sk_win_read_1(sc, SK_PMDTYPE));
-		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
-		goto fail_1;
+		goto fail_2;
 	}
 
 	switch (sc->sk_type) {
@@ -1668,11 +1662,12 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	/* Turn on the 'driver is loaded' LED. */
 	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_ON);
 
-fail:
 	return;
 
-fail_1:
+fail_2:
 	pci_intr_disestablish(pc, sc->sk_intrhand);
+fail_1:
+	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
 }
 
 int
