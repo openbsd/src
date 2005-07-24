@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_sb.c,v 1.2 2005/06/17 20:40:32 espie Exp $	*/
+/*	$OpenBSD: multibyte_sb.c,v 1.3 2005/07/24 09:50:49 espie Exp $	*/
 /*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: multibyte_sb.c,v 1.2 2005/06/17 20:40:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: multibyte_sb.c,v 1.3 2005/07/24 09:50:49 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -73,34 +73,6 @@ mblen(const char *s, size_t n)
 	/* s may be NULL */
 
 	return mbrlen(s, n, NULL);
-}
-
-/*ARGSUSED*/
-size_t
-mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
-{
-
-	/* pwc may be NULL */
-	/* s may be NULL */
-	/* ps appears to be unused */
-
-	if (s == NULL)
-		return 0;
-	if (n == 0)
-		return -1;
-	if (pwc)
-		*pwc = (wchar_t) *s;
-	return (*s != '\0');
-}
-
-int
-mbtowc(wchar_t *pwc, const char *s, size_t n)
-{
-
-	/* pwc may be NULL */
-	/* s may be NULL */
-
-	return mbrtowc(pwc, s, n, NULL);
 }
 
 /*ARGSUSED*/
