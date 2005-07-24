@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.21 2005/02/09 11:07:13 espie Exp $
+# $OpenBSD: Delete.pm,v 1.22 2005/07/24 10:41:14 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -22,10 +22,11 @@ use OpenBSD::Error;
 use OpenBSD::Vstat;
 use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
+use File::Basename;
 
 sub keep_old_files
 {
-	my ($plist, $dir) = @_;
+	my ($state, $plist, $dir) = @_;
 	my $p = new OpenBSD::PackingList;
 	for my $i (qw(cvstags name no-default-conflict pkgcfl conflict) ) {
 		if (defined $plist->{$i}) {
@@ -40,6 +41,24 @@ sub keep_old_files
 		next unless $i->IsFile();
 		if (defined $i->{stillaround}) {
 			delete $i->{stillaround};
+			if ($state->{replacing}) {
+				require File::Temp;
+
+				my $n = $i->fullname();
+
+				my ($fh, $j) = File::Temp::mkstemp("$n.XXXXXXXX");
+				close $fh;
+				if (rename($n, $j)) {
+					print "Renaming $n to $j\n";
+					if ($i->{name} !~ m|^/| && $i->cwd() ne '.') {
+						my $c = $i->cwd();
+						$j =~ s|^\Q$c\E/||;
+					}
+					$i->{name} = $j;
+				} else {
+					print "Bad rename $n to $j: $!\n";
+				}
+			}
 			push(@{$p->{items}}, $i);
 		}
 	}
@@ -187,7 +206,7 @@ sub delete_plist
 		
 	return if $state->{not};
 	if ($state->{baddelete}) {
-	    my $borked = keep_old_files($plist, $dir);
+	    my $borked = keep_old_files($state, $plist, $dir);
 	    $state->print("Files kept as $borked package\n");
 	    delete $state->{baddelete};
 	}
