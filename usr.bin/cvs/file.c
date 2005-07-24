@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.102 2005/07/24 18:54:47 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.103 2005/07/24 19:04:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -541,15 +541,12 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 
 	/*
 	 * No Entry available? fall back to stat(2)'ing the item, if
-	 * that fails, bail out in client mode, or assume a file in
-	 * server mode (it will show up as CVS_FST_UNKNOWN).
+	 * that fails, assume a normal file. 
 	 */
 	if (ent == NULL) {
-		if (stat(path, &st) == -1) {
-			if (cvs_cmdop != CVS_OP_SERVER)
-				goto fail;
+		if (stat(path, &st) == -1)
 			type = DT_REG;
-		} else
+		else
 			type = IFTODT(st.st_mode);
 	} else {
 		if (ent->ce_type == CVS_ENT_DIR)
