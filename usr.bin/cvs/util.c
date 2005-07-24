@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.40 2005/07/24 17:12:25 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.41 2005/07/24 17:33:09 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -572,10 +572,8 @@ cvs_remove_dir(const char *path)
 		if (ent->d_type == DT_DIR) {
 			if (cvs_remove_dir(fpath) == -1)
 				goto done;
-		} else if ((unlink(fpath) == -1) && (errno != ENOENT)) {
-			cvs_log(LP_ERRNO, "failed to remove '%s'", fpath);
+		} else if ((cvs_unlink(fpath) == -1) && (errno != ENOENT))
 			goto done;
-		}
 	}
 
 
