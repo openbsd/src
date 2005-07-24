@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.65 2005/07/23 11:20:49 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.66 2005/07/24 16:46:40 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -323,13 +323,17 @@ cvs_connect(struct cvsroot *root)
 	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-Q") < 0))
 		return (-1);
 
-	if (cvs_noexec && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-n") < 0))
+	if ((cvs_noexec == 1) &&
+	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-n") < 0))
 		return (-1);
-	if (cvs_nolog && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-l") < 0))
+	if ((cvs_nolog == 1) &&
+	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-l") < 0))
 		return (-1);
-	if (cvs_readonly && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-r") < 0))
+	if ((cvs_readonly == 1) &&
+	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-r") < 0))
 		return (-1);
-	if (cvs_trace && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-t") < 0))
+	if ((cvs_trace == 1) &&
+	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-t") < 0))
 		return (-1);
 
 	/* not sure why, but we have to send this */
