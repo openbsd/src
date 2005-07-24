@@ -48,7 +48,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.64 2005/07/23 04:15:49 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.65 2005/07/24 18:47:59 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -832,12 +832,10 @@ _gethtent(void)
 		goto again;
 	}
 	/* if this is not something we're looking for, skip it. */
-	if (host.h_addrtype != AF_UNSPEC) {
-		if (host.h_addrtype != af)
-			goto again;
-		if (host.h_length != len)
-			goto again;
-	}
+	if (host.h_addrtype != AF_UNSPEC && host.h_addrtype != af)
+		goto again;
+	if (host.h_length != 0 && host.h_length != len)
+		goto again;
 	h_addr_ptrs[0] = (char *)host_addr;
 	h_addr_ptrs[1] = NULL;
 	host.h_addr_list = h_addr_ptrs;
@@ -877,11 +875,9 @@ _gethtbyname2(const char *name, int af)
 	char **cp;
 	
 	host.h_addrtype = af;
-
+	host.h_length = 0;
 	_sethtent(0);
 	while ((p = _gethtent())) {
-		if (p->h_addrtype != af)
-			continue;
 		if (strcasecmp(p->h_name, name) == 0)
 			break;
 		for (cp = p->h_aliases; *cp != 0; cp++)
@@ -1084,6 +1080,7 @@ struct hostent *
 gethostent(void)
 {
 	host.h_addrtype = AF_UNSPEC;
+	host.h_length = 0;
 	return (_gethtent());
 }
 
