@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.81 2005/05/28 16:57:48 marius Exp $ */
+/* $OpenBSD: netcat.c,v 1.82 2005/07/24 09:33:56 marius Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -544,7 +544,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 	res0 = res;
 	do {
 		if ((s = socket(res0->ai_family, res0->ai_socktype,
-		    res0->ai_protocol)) == 0)
+		    res0->ai_protocol)) < 0)
 			continue;
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
