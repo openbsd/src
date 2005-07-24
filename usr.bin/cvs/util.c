@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.39 2005/07/23 10:59:47 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.40 2005/07/24 17:12:25 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -511,6 +511,29 @@ cvs_chdir(const char *path)
 {
 	if (chdir(path) == -1) {
 		cvs_log(LP_ERRNO, "cannot change to dir `%s'", path);
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*
+ * cvs_unlink()
+ *
+ * Removes the link named by <path>.
+ * unlink() wrapper with an error message.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+cvs_unlink(const char *path)
+{
+	cvs_log(LP_TRACE, "cvs_unlink(%s)", path);
+
+	if (cvs_noexec == 1)
+		return (0);
+
+	if (unlink(path) == -1) {
+		cvs_log(LP_ERRNO, "cannot remove `%s'", path);
 		return (-1);
 	}
 
