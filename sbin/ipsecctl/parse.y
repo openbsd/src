@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2005/07/24 10:06:38 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2005/07/24 12:11:49 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -197,7 +197,7 @@ ipsecrule	: protocol dir hosts peer ids authtype	{
 			r->nr = ipsec->rule_nr++;
 
 			if (ipsecctl_add_rule(ipsec, r))
-				errx(1, "esprule: ipsecctl_add_rule");
+				errx(1, "ipsecrule: ipsecctl_add_rule");
 
 			/* Create and add reverse flow rule. */
 			if ($2 == IPSEC_INOUT) {
@@ -205,7 +205,7 @@ ipsecrule	: protocol dir hosts peer ids authtype	{
 				r->nr = ipsec->rule_nr++;
 
 				if (ipsecctl_add_rule(ipsec, r))
-					errx(1, "esprule: ipsecctl_add_rule");
+					errx(1, "ipsecrule: ipsecctl_add_rule");
 			}
 		}
 		;
