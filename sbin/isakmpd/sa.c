@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.99 2005/07/22 11:36:43 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.100 2005/07/25 14:56:42 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -488,7 +488,7 @@ report_spi(FILE *fd, const u_int8_t *buf, size_t sz, int spi)
 static void
 report_proto(FILE *fd, struct proto *proto)
 {
-	struct ipsec_proto *iproto = proto->data;
+	struct ipsec_proto *iproto;
 	int	keylen, hashlen;
 
 	switch (proto->proto) {
@@ -532,6 +532,13 @@ report_proto(FILE *fd, struct proto *proto)
 		}
 
 		fprintf(fd, "Authentication algorithm: ");
+
+		if (!proto->data) {
+			fprintf(fd, "none\n");
+			break;
+		}
+		iproto = proto->data;
+
 		switch (iproto->auth) {
 		case IPSEC_AUTH_HMAC_MD5:
 			fprintf(fd, "HMAC-MD5\n");
@@ -610,6 +617,75 @@ report_proto(FILE *fd, struct proto *proto)
 	}
 }
 
+/*
+ * Display SA lifetimes.
+ */
+static void
+report_lifetimes(FILE *fd, struct sa *sa)
+{
+	long timeout;
+
+	if (sa->seconds)
+		fprintf(fd, "Lifetime: %llu seconds\n", sa->seconds);
+
+	if (sa->soft_death) {
+		timeout = get_timeout(&sa->soft_death->expiration);
+		if (timeout < 0)
+			fprintf(fd, "<no soft timeout>\n");
+		else
+			fprintf(fd, "Soft timeout in %ld seconds\n", timeout);
+	}
+
+	if (sa->death) {
+		timeout = get_timeout(&sa->death->expiration);
+		if (timeout < 0)
+			fprintf(fd, "No hard timeout>\n");
+		else
+			fprintf(fd, "Hard timeout in %ld seconds\n", timeout);
+	}
+
+	if (sa->kilobytes)
+		fprintf(fd, "Lifetime: %llu kilobytes\n", sa->kilobytes);
+}
+
+/*
+ * Print phase 1 specific information.
+ */
+static void
+report_phase1(FILE *fd, struct sa *sa)
+{
+	/* Cookies. */
+	fprintf(fd, "icookie %08x%08x rcookie %08x%08x\n",
+	    decode_32(sa->cookies), decode_32(sa->cookies + 4),
+	    decode_32(sa->cookies + 8), decode_32(sa->cookies + 12));
+}
+
+/*
+ * Print phase 2 specific information.
+ */
+static void
+report_phase2(FILE *fd, struct sa *sa)
+{
+	struct proto	*proto;
+	int		 i;
+
+	/* Transform information. */
+	for (proto = TAILQ_FIRST(&sa->protos); proto;
+	    proto = TAILQ_NEXT(proto, link)) {
+
+		/* SPI values. */
+		for (i = 0; i < 2; i++)
+			if (proto->spi[i])
+				report_spi(fd, proto->spi[i],
+				    proto->spi_sz[i], i);
+			else
+				fprintf(fd, "SPI %d not defined.\n", i);
+
+		/* Proto values. */
+		report_proto(fd, proto);
+	}
+}
+
 /* Report all the SAs to the report channel.  */
 void
 sa_report(void)
@@ -622,42 +698,36 @@ sa_report(void)
 			sa_dump(LOG_REPORT, 0, "sa_report", sa);
 }
 
-
 /*
  * Print an SA's connection details to file SA_FILE.
  */
 static void
 sa_dump_all(FILE *fd, struct sa *sa)
 {
-	struct proto   *proto;
-	int             i;
-
 	/* SA name and phase. */
 	fprintf(fd, "SA name: %s", sa->name ? sa->name : "<unnamed>");
-	fprintf(fd, " (Phase %d)\n", sa->phase);
+	fprintf(fd, " (Phase %d%s)\n", sa->phase, sa->phase == 1 ?
+	    (sa->initiator ? "/Initiator" : "/Responder") : "");
 
 	/* Source and destination IPs. */
 	fprintf(fd, "%s", sa->transport == NULL ? "<no transport>" :
 	    sa->transport->vtbl->decode_ids(sa->transport));
 	fprintf(fd, "\n");
 
-	/* Transform information. */
-	for (proto = TAILQ_FIRST(&sa->protos); proto;
-	    proto = TAILQ_NEXT(proto, link)) {
-		/* SPI values. */
-		for (i = 0; i < 2; i++)
-			if (proto->spi[i])
-				report_spi(fd, proto->spi[i], proto->spi_sz[i],
-				    i);
-			else
-				fprintf(fd, "SPI %d not defined.", i);
+	/* Lifetimes */
+	report_lifetimes(fd, sa);
 
-		/* Proto values. */
-		report_proto(fd, proto);
-
-		/* SA separator. */
-		fprintf(fd, "\n");
+	if (sa->phase == 1)
+		report_phase1(fd, sa);
+	else if (sa->phase == 2)
+		report_phase2(fd, sa);
+	else {
+		/* Should not happen, but... */
+		fprintf(fd, "<unknown phase>\n");
 	}
+
+	/* SA separator. */
+	fprintf(fd, "\n");
 }
 
 /* Report info of all SAs to file 'fd'.  */
@@ -669,10 +739,7 @@ sa_report_all(FILE *fd)
 
 	for (i = 0; i <= bucket_mask; i++)
 		for (sa = LIST_FIRST(&sa_tab[i]); sa; sa = LIST_NEXT(sa, link))
-			if (sa->phase == 1)
-				fprintf(fd, "SA name: none (phase 1)\n\n");
-			else
-				sa_dump_all(fd, sa);
+			sa_dump_all(fd, sa);
 }
 
 /* Free the protocol structure pointed to by PROTO.  */

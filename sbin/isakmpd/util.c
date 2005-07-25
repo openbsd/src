@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.57 2005/04/08 23:15:26 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.58 2005/07/25 14:56:42 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -608,6 +608,21 @@ check_file_secrecy_fd(int fd, char *name, size_t *file_size)
 
 	return 0;
 }
+
+/* Calculate timeout.  Returns -1 on error. */
+long
+get_timeout(struct timeval *timeout)
+{
+	struct timeval	now, result;
+
+	if (gettimeofday(&now, NULL) < 0)
+		return -1;
+
+	timersub(timeout, &now, &result);
+
+	return result.tv_sec;
+}
+
 
 /* Special for compiling with Boehms GC. See Makefile and sysdep.h  */
 #if defined (USE_BOEHM_GC)
