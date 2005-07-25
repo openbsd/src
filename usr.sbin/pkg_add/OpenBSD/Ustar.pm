@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.30 2005/07/20 15:35:33 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.31 2005/07/25 11:26:01 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -476,31 +476,29 @@ sub create
 sub isFifo() { 1 }
 sub type() { OpenBSD::Ustar::FIFO }
 
-package OpenBSD::Ustar::BlockDevice;
+package OpenBSD::UStar::Device;
 our @ISA=qw(OpenBSD::Ustar::Object);
 
 sub create
 {
 	my $self = shift;
 	$self->make_basedir($self->{name});
-	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, 'b', $self->{major}, $self->{minor});
+	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, $self->devicetype(), $self->{major}, $self->{minor});
 }
 
 sub isDevice() { 1 }
+
+package OpenBSD::Ustar::BlockDevice;
+our @ISA=qw(OpenBSD::Ustar::Device);
+
 sub type() { OpenBSD::Ustar::BLOCKDEVICE }
+sub devicetype() { 'b' }
 
 package OpenBSD::Ustar::CharDevice;
-our @ISA=qw(OpenBSD::Ustar::Object);
+our @ISA=qw(OpenBSD::Ustar::Device);
 
-sub create
-{
-	my $self = shift;
-	$self->make_basedir($self->{name});
-	system('/sbin/mknod', 'mknod', '-m', $self->{mode}, $self->{destdir}.$self->{name}, 'b', $self->{major}, $self->{minor});
-}
-
-sub isDevice() { 1 }
 sub type() { OpenBSD::Ustar::BLOCKDEVICE }
+sub devicetype() { 'c' }
 
 package OpenBSD::CompactWriter;
 
