@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.894 2005/07/23 17:00:40 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.895 2005/07/25 06:51:20 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1271,6 +1271,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ISDN",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M241P,
+	    "Radeon Mobility X600",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600PRO,
 	    "Radeon 9600 Pro",
 	},
@@ -2105,6 +2109,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4322,
 	    "BCM4322",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4309,
+	    "BCM4309",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_SERIAL,
@@ -4183,14 +4191,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82845G/GL Video",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_HB,
-	    "915GM/PM/GMS Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_IGD,
-	    "915GM/GMS Video",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_IO_1,
 	    "82865G/PE/P CPU-I/0-1",
 	},
@@ -4253,6 +4253,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7221_IGD,
 	    "E7221 Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_HB,
+	    "915GM/PM/GMS Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_PCIE,
+	    "915PM/GM PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_IGD,
+	    "915GM/GMS Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC,
@@ -7785,6 +7797,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420_FW,
 	    "PCI7x20 FireWire",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515,
+	    "PCI6515 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515,
+	    "PCI6515 CardBus (Smart Card mode)",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
