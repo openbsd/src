@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.15 2005/06/02 19:49:23 hshoexer Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.16 2005/07/25 15:03:47 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -56,28 +56,30 @@ int	disable_nat_t = 0;
  * These seem to be the "well" known variants of this string in use by
  * products today.
  */
-static const char *isakmp_nat_t_cap_text[] = {
-	"draft-ietf-ipsec-nat-t-ike-02\n",	/* draft, V2 */
-	"draft-ietf-ipsec-nat-t-ike-03",	/* draft, V3 */
-	"RFC 3947"
+
+static struct nat_t_cap isakmp_nat_t_cap[] = {
+	{ VID_DRAFT_V2_N, EXCHANGE_FLAG_NAT_T_DRAFT,
+	  "draft-ietf-ipsec-nat-t-ike-02\n", NULL, 0 },
+	{ VID_DRAFT_V3, EXCHANGE_FLAG_NAT_T_DRAFT,
+	  "draft-ietf-ipsec-nat-t-ike-03", NULL, 0 },
+	{ VID_RFC3947, EXCHANGE_FLAG_NAT_T_RFC,
+	  "RFC 3947", NULL, 0 },
 };
+
+#define NUMNATTCAP	(sizeof isakmp_nat_t_cap / sizeof isakmp_nat_t_cap[0])
 
 /* In seconds. Recommended in draft-ietf-ipsec-udp-encaps-09.  */
 #define NAT_T_KEEPALIVE_INTERVAL	20
 
-/* The MD5 hashes of the above strings is put in this array.  */
-static char	**nat_t_hashes;
-static size_t	  nat_t_hashsize;
-
 static int	nat_t_setup_hashes(void);
-static int	nat_t_add_vendor_payload(struct message *, char *);
+static int	nat_t_add_vendor_payload(struct message *, struct nat_t_cap *);
 static int	nat_t_add_nat_d(struct message *, struct sockaddr *);
 static int	nat_t_match_nat_d_payload(struct message *, struct sockaddr *);
 
 void
 nat_t_init(void)
 {
-	nat_t_hashes = (char **)NULL;
+	nat_t_setup_hashes();
 }
 
 /* Generate the NAT-T capability marker hashes. Executed only once.  */
@@ -85,7 +87,7 @@ static int
 nat_t_setup_hashes(void)
 {
 	struct hash *hash;
-	int n = sizeof isakmp_nat_t_cap_text / sizeof isakmp_nat_t_cap_text[0];
+	int n = NUMNATTCAP;
 	int i;
 
 	/* The draft says to use MD5.  */
@@ -96,54 +98,44 @@ nat_t_setup_hashes(void)
 		    "could not find MD5 hash structure!");
 		return -1;
 	}
-	nat_t_hashsize = hash->hashsize;
 
-	/* Allocate one more than is necessary, i.e NULL terminated.  */
-	nat_t_hashes = (char **)calloc((size_t)(n + 1), sizeof(char *));
-	if (!nat_t_hashes) {
-		log_error("nat_t_setup_hashes: calloc (%lu,%lu) failed",
-		    (unsigned long)n, (unsigned long)sizeof(char *));
-		return -1;
-	}
-
-	/* Populate with hashes.  */
+	/* Populate isakmp_nat_t_cap with hashes.  */
 	for (i = 0; i < n; i++) {
-		nat_t_hashes[i] = (char *)malloc(nat_t_hashsize);
-		if (!nat_t_hashes[i]) {
+		isakmp_nat_t_cap[i].hashsize = hash->hashsize;
+		isakmp_nat_t_cap[i].hash = (char *)malloc(hash->hashsize);
+		if (!isakmp_nat_t_cap[i].hash) {
 			log_error("nat_t_setup_hashes: malloc (%lu) failed",
-			    (unsigned long)nat_t_hashsize);
+			    (unsigned long)hash->hashsize);
 			goto errout;
 		}
 
 		hash->Init(hash->ctx);
 		hash->Update(hash->ctx,
-		    (unsigned char *)isakmp_nat_t_cap_text[i],
-		    strlen(isakmp_nat_t_cap_text[i]));
-		hash->Final(nat_t_hashes[i], hash->ctx);
+		    (unsigned char *)isakmp_nat_t_cap[i].text,
+		    strlen(isakmp_nat_t_cap[i].text));
+		hash->Final(isakmp_nat_t_cap[i].hash, hash->ctx);
 
 		LOG_DBG((LOG_EXCHANGE, 50, "nat_t_setup_hashes: "
-		    "MD5(\"%s\") (%lu bytes)", isakmp_nat_t_cap_text[i],
-		    (unsigned long)nat_t_hashsize));
+		    "MD5(\"%s\") (%lu bytes)", isakmp_nat_t_cap[i].text,
+		    (unsigned long)hash->hashsize));
 		LOG_DBG_BUF((LOG_EXCHANGE, 50, "nat_t_setup_hashes",
-		    nat_t_hashes[i], nat_t_hashsize));
+		    isakmp_nat_t_cap[i].hash, hash->hashsize));
 	}
 
 	return 0;
 
   errout:
 	for (i = 0; i < n; i++)
-		if (nat_t_hashes[i])
-			free(nat_t_hashes[i]);
-	free(nat_t_hashes);
-	nat_t_hashes = NULL;
+		if (isakmp_nat_t_cap[i].hash)
+			free(isakmp_nat_t_cap[i].hash);
 	return -1;
 }
 
 /* Add one NAT-T VENDOR payload.  */
 static int
-nat_t_add_vendor_payload(struct message *msg, char *hash)
+nat_t_add_vendor_payload(struct message *msg, struct nat_t_cap *cap)
 {
-	size_t	 buflen = nat_t_hashsize + ISAKMP_GEN_SZ;
+	size_t	  buflen = cap->hashsize + ISAKMP_GEN_SZ;
 	u_int8_t *buf;
 
 	if (disable_nat_t)
@@ -157,7 +149,7 @@ nat_t_add_vendor_payload(struct message *msg, char *hash)
 	}
 
 	SET_ISAKMP_GEN_LENGTH(buf, buflen);
-	memcpy(buf + ISAKMP_VENDOR_ID_OFF, hash, nat_t_hashsize);
+	memcpy(buf + ISAKMP_VENDOR_ID_OFF, cap->hash, cap->hashsize);
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_VENDOR, buf, buflen, 1)) {
 		free(buf);
 		return -1;
@@ -169,16 +161,13 @@ nat_t_add_vendor_payload(struct message *msg, char *hash)
 int
 nat_t_add_vendor_payloads(struct message *msg)
 {
-	int i = 0;
+	int i;
 
 	if (disable_nat_t)
 		return 0;
 
-	if (!nat_t_hashes)
-		if (nat_t_setup_hashes())
-			return 0;  /* XXX should this be an error?  */
-	while (nat_t_hashes[i])
-		if (nat_t_add_vendor_payload(msg, nat_t_hashes[i++]))
+	for (i = 0; i < NUMNATTCAP; i++)
+		if (nat_t_add_vendor_payload(msg, &isakmp_nat_t_cap[i]))
 			return -1;
 	return 0;
 }
@@ -191,39 +180,33 @@ nat_t_check_vendor_payload(struct message *msg, struct payload *p)
 {
 	u_int8_t *pbuf = p->p;
 	size_t	  vlen;
-	int	  i = 0;
+	int	  i;
 
 	if (disable_nat_t)
 		return;
 
-	/* Already checked? */
-	if (p->flags & PL_MARK ||
-	    msg->exchange->flags & EXCHANGE_FLAG_NAT_T_CAP_PEER)
-		return;
-
-	if (!nat_t_hashes)
-		if (nat_t_setup_hashes())
-			return;
-
 	vlen = GET_ISAKMP_GEN_LENGTH(pbuf) - ISAKMP_GEN_SZ;
-	if (vlen != nat_t_hashsize) {
-		LOG_DBG((LOG_EXCHANGE, 50, "nat_t_check_vendor_payload: "
-		    "bad size %lu != %lu", (unsigned long)vlen,
-		    (unsigned long)nat_t_hashsize));
-		return;
-	}
 
-	while (nat_t_hashes[i])
-		if (memcmp(nat_t_hashes[i++], pbuf + ISAKMP_GEN_SZ,
+	for (i = 0; i < NUMNATTCAP; i++) {
+		if (vlen != isakmp_nat_t_cap[i].hashsize) {
+			LOG_DBG((LOG_EXCHANGE, 50, "nat_t_check_vendor_payload: "
+			    "bad size %lu != %lu", (unsigned long)vlen,
+			    (unsigned long)isakmp_nat_t_cap[i].hashsize));
+			continue;
+		}
+		if (memcmp(isakmp_nat_t_cap[i].hash, pbuf + ISAKMP_GEN_SZ,
 		    vlen) == 0) {
 			/* This peer is NAT-T capable.  */
 			msg->exchange->flags |= EXCHANGE_FLAG_NAT_T_CAP_PEER;
+			msg->exchange->flags |= isakmp_nat_t_cap[i].flags;
 			LOG_DBG((LOG_EXCHANGE, 10,
 			    "nat_t_check_vendor_payload: "
 			    "NAT-T capable peer detected"));
 			p->flags |= PL_MARK;
-			return;
 		}
+	}
+
+	return;
 }
 
 /* Generate the NAT-D payload hash : HASH(CKY-I | CKY-R | IP | Port).  */
@@ -268,6 +251,7 @@ nat_t_generate_nat_d_hash(struct message *msg, struct sockaddr *sa,
 static int
 nat_t_add_nat_d(struct message *msg, struct sockaddr *sa)
 {
+	int	  ret;
 	u_int8_t *hbuf, *buf;
 	size_t	  hbuflen, buflen;
 
@@ -290,7 +274,16 @@ nat_t_add_nat_d(struct message *msg, struct sockaddr *sa)
 	memcpy(buf + ISAKMP_NAT_D_DATA_OFF, hbuf, hbuflen);
 	free(hbuf);
 
-	if (message_add_payload(msg, ISAKMP_PAYLOAD_NAT_D_DRAFT, buf, buflen, 1)) {
+	if (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_RFC)
+		ret = message_add_payload(msg, ISAKMP_PAYLOAD_NAT_D, buf,
+		    buflen, 1);
+	else if (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_DRAFT)
+		ret = message_add_payload(msg, ISAKMP_PAYLOAD_NAT_D_DRAFT,
+		    buf, buflen, 1);
+	else
+		ret = -1;
+		
+	if (ret) {
 		free(buf);
 		return -1;
 	}
