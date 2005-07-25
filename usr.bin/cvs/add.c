@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.24 2005/07/23 11:19:46 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.25 2005/07/25 12:42:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,10 +40,10 @@
 extern char *__progname;
 
 
-static int cvs_add_remote(CVSFILE *, void *);
-static int cvs_add_local(CVSFILE *, void *);
-static int cvs_add_init(struct cvs_cmd *, int, char **, int *);
-static int cvs_add_pre_exec(struct cvsroot *);
+static int	cvs_add_remote(CVSFILE *, void *);
+static int	cvs_add_local(CVSFILE *, void *);
+static int	cvs_add_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_add_pre_exec(struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_add = {
 	CVS_OP_ADD, CVS_REQ_ADD, "add",
