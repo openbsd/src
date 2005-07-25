@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.68 2005/07/18 06:29:54 camield Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.69 2005/07/25 00:41:24 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -858,7 +858,7 @@ int ti_newbuf_jumbo(sc, i, m)
 	struct ti_rx_desc	*r;
 
 	if (m == NULL) {
-		caddr_t			*buf = NULL;
+		caddr_t			buf = NULL;
 
 		/* Allocate the mbuf. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -873,13 +873,8 @@ int ti_newbuf_jumbo(sc, i, m)
 		}
 
 		/* Attach the buffer to the mbuf. */
-		m_new->m_data = m_new->m_ext.ext_buf = (void *)buf;
-		m_new->m_flags |= M_EXT;
-		m_new->m_len = m_new->m_pkthdr.len =
-		    m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
-		m_new->m_ext.ext_free = ti_jfree;
-		m_new->m_ext.ext_arg = sc;
-		MCLINITREFERENCE(m_new);
+		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
+		MEXTADD(m_new, buf, ETHER_MAX_LEN_JUMBO, 0, ti_jfree, sc);
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
