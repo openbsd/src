@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.104 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.105 2005/07/25 12:58:22 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -373,7 +373,7 @@ cvs_file_get(const char *path, int flags, int (*cb)(CVSFILE *, void *),
 {
 	char *files[1];
 
-	files[0] = path;
+	*(const char **)files = path;
 	return cvs_file_getspec(files, 1, flags, cb, arg, list);
 }
 
