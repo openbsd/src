@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.896 2005/07/25 07:40:41 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.897 2005/07/25 07:46:21 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2104,7 +2104,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_LAN2	0x0086		/* nForce3 LAN */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_400_USB	0x0087		/* nForce2 400 USB */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_400_USB2	0x0088		/* nForce2 400 USB2 */
-#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_ACA	0x008b		/* nForce2 400 AC-97 Audio */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_ACA	0x008a		/* nForce2 400 AC-97 Audio */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB	0x008b		/* nForce2 400 PCI-PCI */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_LAN3	0x008c		/* nForce3 LAN */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA	0x008e		/* nForce2 400 SATA */
