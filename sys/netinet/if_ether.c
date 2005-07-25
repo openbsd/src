@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.58 2005/03/01 19:04:56 mcbride Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.59 2005/07/25 01:10:37 pascoe Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -556,9 +556,9 @@ in_arpinput(m)
 			index++;
 			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
 			    carp_iamatch(ia, ea->arp_sha,
-			    &count, index)) 
+			    &count, index))
 				break;
-		} else 
+		} else
 #endif
 			if (ia->ia_ifp == m->m_pkthdr.rcvif)
 				break;
@@ -630,7 +630,7 @@ in_arpinput(m)
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen) {
 		    if (bcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
-		  	if (rt->rt_flags & RTF_PERMANENT_ARP) {
+			if (rt->rt_flags & RTF_PERMANENT_ARP) {
 				log(LOG_WARNING,
 				   "arp: attempt to overwrite permanent "
 				   "entry for %s by %s on %s\n",
@@ -639,7 +639,7 @@ in_arpinput(m)
 				   ac->ac_if.if_xname);
 				goto out;
 			} else if (rt->rt_ifp != &ac->ac_if) {
-			        log(LOG_WARNING,
+				log(LOG_WARNING,
 				   "arp: attempt to overwrite entry for %s "
 				   "on %s by %s on %s\n",
 				   inet_ntoa(isaddr), rt->rt_ifp->if_xname,
@@ -649,7 +649,7 @@ in_arpinput(m)
 			} else {
 				log(LOG_INFO,
 				   "arp info overwritten for %s by %s on %s\n",
-			    	   inet_ntoa(isaddr),
+				   inet_ntoa(isaddr),
 				   ether_sprintf(ea->arp_sha),
 				   ac->ac_if.if_xname);
 				rt->rt_expire = 1; /* no longer static */
