@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.4 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: watch.c,v 1.5 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -37,12 +37,12 @@
 #include "log.h"
 #include "proto.h"
 
-static int cvs_watch_init   (struct cvs_cmd *, int, char **, int *);
-static int cvs_watch_remote (CVSFILE *, void*);
-static int cvs_watch_local  (CVSFILE *, void*);
+static int	cvs_watch_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_watch_remote(CVSFILE *, void*);
+static int	cvs_watch_local(CVSFILE *, void*);
 
-static int cvs_watchers_remote (CVSFILE *, void*);
-static int cvs_watchers_local  (CVSFILE *, void*);
+static int	cvs_watchers_remote(CVSFILE *, void*);
+static int	cvs_watchers_local(CVSFILE *, void*);
 
 
 struct cvs_cmd cvs_cmd_watch = {

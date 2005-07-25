@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.21 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: log.c,v 1.22 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -72,10 +72,10 @@ static u_int cvs_log_flags = 0;
 static struct syslog_data cvs_sl = SYSLOG_DATA_INIT;
 
 /* filter manipulation macros */
-#define CVS_LOG_FLTRRST()    (cvs_log_filters = 0)
-#define CVS_LOG_FLTRSET(l)   (cvs_log_filters |= (1 << l))
-#define CVS_LOG_FLTRGET(l)   (cvs_log_filters & (1 << l))
-#define CVS_LOG_FLTRCLR(l)   (cvs_log_filters &= ~(1 << l))
+#define CVS_LOG_FLTRRST()	(cvs_log_filters = 0)
+#define CVS_LOG_FLTRSET(l)	(cvs_log_filters |= (1 << l))
+#define CVS_LOG_FLTRGET(l)	(cvs_log_filters & (1 << l))
+#define CVS_LOG_FLTRCLR(l)	(cvs_log_filters &= ~(1 << l))
 
 static u_int cvs_log_filters;
 

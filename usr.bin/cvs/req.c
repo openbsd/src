@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.28 2005/07/23 10:59:47 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.29 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,22 +50,22 @@ extern int   cvs_nolog;
 extern int   cvs_readonly;
 
 
-static int  cvs_req_set          (int, char *);
-static int  cvs_req_noop         (int, char *);
-static int  cvs_req_root         (int, char *);
-static int  cvs_req_validreq     (int, char *);
-static int  cvs_req_validresp    (int, char *);
-static int  cvs_req_expandmod    (int, char *);
-static int  cvs_req_directory    (int, char *);
-static int  cvs_req_useunchanged (int, char *);
-static int  cvs_req_case         (int, char *);
-static int  cvs_req_argument     (int, char *);
-static int  cvs_req_globalopt    (int, char *);
-static int  cvs_req_gzipstream   (int, char *);
-static int  cvs_req_entry        (int, char *);
-static int  cvs_req_filestate    (int, char *);
+static int	cvs_req_set(int, char *);
+static int	cvs_req_noop(int, char *);
+static int	cvs_req_root(int, char *);
+static int	cvs_req_validreq(int, char *);
+static int	cvs_req_validresp(int, char *);
+static int	cvs_req_expandmod(int, char *);
+static int	cvs_req_directory(int, char *);
+static int	cvs_req_useunchanged(int, char *);
+static int	cvs_req_case(int, char *);
+static int	cvs_req_argument(int, char *);
+static int	cvs_req_globalopt(int, char *);
+static int	cvs_req_gzipstream(int, char *);
+static int	cvs_req_entry(int, char *);
+static int	cvs_req_filestate(int, char *);
 
-static int  cvs_req_command      (int, char *);
+static int	cvs_req_command(int, char *);
 
 
 struct cvs_reqhdlr {

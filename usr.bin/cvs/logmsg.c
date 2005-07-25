@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.17 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.18 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,9 +39,9 @@
 #include "proto.h"
 
 
-#define CVS_LOGMSG_BIGMSG     32000
-#define CVS_LOGMSG_FTMPL      "/tmp/cvsXXXXXXXXXX"
-#define CVS_LOGMSG_PREFIX     "CVS:"
+#define CVS_LOGMSG_BIGMSG	32000
+#define CVS_LOGMSG_FTMPL	"/tmp/cvsXXXXXXXXXX"
+#define CVS_LOGMSG_PREFIX	"CVS:"
 #define CVS_LOGMSG_LINE \
 "----------------------------------------------------------------------"
 

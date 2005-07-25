@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.6 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: repo.c,v 1.7 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 
 
-static CVSRPENT*  cvs_repo_loadrec (CVSREPO *, const char *);
+static CVSRPENT	*cvs_repo_loadrec(CVSREPO *, const char *);
 
 
 /*
@@ -53,7 +53,7 @@ static CVSRPENT*  cvs_repo_loadrec (CVSREPO *, const char *);
  * is specified in <base>.
  */
 
-CVSREPO*
+CVSREPO *
 cvs_repo_load(const char *base, int flags)
 {
 	struct stat st;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.25 2005/07/24 17:48:05 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.26 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -42,10 +42,10 @@
 extern char *__progname;
 
 
-static int cvs_remove_init   (struct cvs_cmd *, int, char **, int *);
-static int cvs_remove_remote (CVSFILE *, void *);
-static int cvs_remove_local  (CVSFILE *, void *);
-static int cvs_remove_file   (const char *);
+static int	cvs_remove_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_remove_remote(CVSFILE *, void *);
+static int	cvs_remove_local(CVSFILE *, void *);
+static int	cvs_remove_file(const char *);
 
 static int	force_remove = 0;	/* -f option */
 static int	nuked = 0;

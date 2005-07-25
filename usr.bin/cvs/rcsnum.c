@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.13 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.14 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
 #include "rcs.h"
 
 
-static int rcsnum_setsize  (RCSNUM *, u_int);
+static int	rcsnum_setsize(RCSNUM *, u_int);
 
 
 /*
@@ -44,7 +44,7 @@ static int rcsnum_setsize  (RCSNUM *, u_int);
  * Allocate an RCS number structure and return a pointer to it on success,
  * or NULL on failure.
  */
-RCSNUM*
+RCSNUM *
 rcsnum_alloc(void)
 {
 	RCSNUM *rnp;
@@ -65,7 +65,7 @@ rcsnum_alloc(void)
  *
  * Parse a string specifying an RCS number and return the corresponding RCSNUM.
  */
-RCSNUM*
+RCSNUM *
 rcsnum_parse(const char *str)
 {
 	char *ep;
@@ -267,7 +267,7 @@ rcsnum_aton_failed:
  * Increment the revision number specified in <num>.
  * Returns a pointer to the <num> on success, or NULL on failure.
  */
-RCSNUM*
+RCSNUM *
 rcsnum_inc(RCSNUM *num)
 {
 	if (num->rn_id[num->rn_len - 1] == RCSNUM_MAXNUM)
@@ -283,7 +283,7 @@ rcsnum_inc(RCSNUM *num)
  * If <num> is a branch revision, the returned value will be the same
  * number as the argument.
  */
-RCSNUM*
+RCSNUM *
 rcsnum_revtobr(const RCSNUM *num)
 {
 	RCSNUM *brnum;
@@ -308,7 +308,7 @@ rcsnum_revtobr(const RCSNUM *num)
  * Retrieve the initial revision number associated with the branch number <num>.
  * If <num> is a revision number, an error will be returned.
  */
-RCSNUM*
+RCSNUM *
 rcsnum_brtorev(const RCSNUM *brnum)
 {
 	RCSNUM *num;

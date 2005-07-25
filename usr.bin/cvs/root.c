@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.20 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: root.c,v 1.21 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -81,7 +81,7 @@ static u_int cvs_rcsz = 0;
  * Returns a pointer to the allocated information on success, or NULL
  * on failure.
  */
-struct cvsroot*
+struct cvsroot *
 cvsroot_parse(const char *str)
 {
 	u_int i;
@@ -257,7 +257,7 @@ cvsroot_free(struct cvsroot *root)
  * 2) the CVS/Root file found in checked-out trees
  * 3) the CVSROOT environment variable
  */
-struct cvsroot*
+struct cvsroot *
 cvsroot_get(const char *dir)
 {
 	int l;

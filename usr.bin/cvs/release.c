@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.17 2005/07/23 10:59:47 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.18 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -42,10 +42,10 @@
 
 extern char *__progname;
 
-static int cvs_release_init     (struct cvs_cmd *, int, char **, int *);
-static int cvs_release_pre_exec (struct cvsroot *);
-static int cvs_release_yesno    (void);
-static int cvs_release_dir      (CVSFILE *, void *);
+static int	cvs_release_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_release_pre_exec(struct cvsroot *);
+static int	cvs_release_yesno(void);
+static int	cvs_release_dir(CVSFILE *, void *);
 
 struct cvs_cmd cvs_cmd_release = {
 	CVS_OP_RELEASE, CVS_REQ_RELEASE, "release",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.67 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.68 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -58,10 +58,10 @@
 
 
 /* request flags */
-#define CVS_REQF_RESP    0x01
+#define CVS_REQF_RESP	0x01
 
 
-static int  cvs_initlog   (void);
+static int	cvs_initlog(void);
 
 struct cvs_req cvs_requests[] = {
 	{ CVS_REQ_DIRECTORY,     "Directory",         0             },
@@ -146,8 +146,8 @@ struct cvs_resp cvs_responses[] = {
 	{ CVS_RESP_COPYFILE,   "Copy-file"              },
 };
 
-#define CVS_NBREQ   (sizeof(cvs_requests)/sizeof(cvs_requests[0]))
-#define CVS_NBRESP  (sizeof(cvs_responses)/sizeof(cvs_responses[0]))
+#define CVS_NBREQ	(sizeof(cvs_requests)/sizeof(cvs_requests[0]))
+#define CVS_NBRESP	(sizeof(cvs_responses)/sizeof(cvs_responses[0]))
 
 /* hack to receive the remote version without outputting it */
 u_int cvs_version_sent = 0;

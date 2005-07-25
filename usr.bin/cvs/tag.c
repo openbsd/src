@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.27 2005/07/24 16:46:40 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.28 2005/07/25 12:13:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -37,10 +37,10 @@
 #include "proto.h"
 
 
-static int cvs_tag_init     (struct cvs_cmd *, int, char **, int *);
-static int cvs_tag_local    (CVSFILE *, void *);
-static int cvs_tag_remote   (CVSFILE *, void *);
-static int cvs_tag_pre_exec (struct cvsroot *);
+static int	cvs_tag_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_tag_local(CVSFILE *, void *);
+static int	cvs_tag_remote(CVSFILE *, void *);
+static int	cvs_tag_pre_exec(struct cvsroot *);
 
 static char *tag_name = NULL;
 static char *tag_date = NULL;
