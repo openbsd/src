@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.26 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.27 2005/07/25 20:15:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -200,7 +200,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 		if (verbosity > 0)
 			cvs_log(LP_INFO, "use '%s commit' to remove %s "
 			    "permanently", __progname,
-			    (removed == 1) ? "file file" : "these files");
+			    (removed == 1) ? "this file" : "these files");
 		return (0);
 	}
 
