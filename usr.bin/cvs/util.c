@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.42 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.43 2005/07/25 13:37:53 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -350,7 +350,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 		argc++;
 	}
 
-	if (err) {
+	if (err != 0) {
 		/* ditch the argument vector */
 		for (i = 0; i < (u_int)argc; i++)
 			free(argv[i]);
@@ -638,7 +638,7 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 		/*
 		 * Create administrative files if requested.
 		 */
-		if (create_adm) {
+		if (create_adm == 1) {
 			l = strlcat(rpath, d, sizeof(rpath));
 			if (l >= sizeof(rpath))
 				goto done;
