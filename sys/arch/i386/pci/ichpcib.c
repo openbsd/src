@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.7 2004/10/05 19:11:01 grange Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.8 2005/07/25 05:25:03 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -92,6 +92,7 @@ const struct pci_matchid ichpcib_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_LPC },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC }
 };
 
