@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.41 2005/07/09 23:18:53 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.42 2005/07/25 00:49:44 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1204,12 +1204,8 @@ nge_jalloc(sc)
 
 	entry = LIST_FIRST(&sc->nge_jfree_listhead);
 
-	if (entry == NULL) {
-#ifdef NGE_VERBOSE
-		printf("%s: no free jumbo buffers\n", sc->sc_dv.dv_xname);
-#endif
-		return(NULL);
-	}
+	if (entry == NULL)
+		return (NULL);
 
 	LIST_REMOVE(entry, jpool_entries);
 	LIST_INSERT_HEAD(&sc->nge_jinuse_listhead, entry, jpool_entries);

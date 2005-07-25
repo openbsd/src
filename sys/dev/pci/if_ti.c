@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.69 2005/07/25 00:41:24 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.70 2005/07/25 00:49:43 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -671,12 +671,8 @@ void *ti_jalloc(sc)
 
 	entry = SLIST_FIRST(&sc->ti_jfree_listhead);
 
-	if (entry == NULL) {
-#ifdef TI_VERBOSE
-		printf("%s: no free jumbo buffers\n", sc->sc_dv.dv_xname);
-#endif
-		return(NULL);
-	}
+	if (entry == NULL)
+		return (NULL);
 
 	SLIST_REMOVE_HEAD(&sc->ti_jfree_listhead, jpool_entries);
 	SLIST_INSERT_HEAD(&sc->ti_jinuse_listhead, entry, jpool_entries);

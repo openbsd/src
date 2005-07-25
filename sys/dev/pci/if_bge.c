@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.77 2005/07/20 01:22:25 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.78 2005/07/25 00:49:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -584,11 +584,8 @@ bge_jalloc(sc)
 
 	entry = SLIST_FIRST(&sc->bge_jfree_listhead);
 
-	if (entry == NULL) {
-		DPRINTFN(1,("%s: no free jumbo buffers\n",
-		    sc->bge_dev.dv_xname));
-		return(NULL);
-	}
+	if (entry == NULL)
+		return (NULL);
 
 	SLIST_REMOVE_HEAD(&sc->bge_jfree_listhead, jpool_entries);
 	SLIST_INSERT_HEAD(&sc->bge_jinuse_listhead, entry, jpool_entries);
