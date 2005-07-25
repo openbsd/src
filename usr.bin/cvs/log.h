@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.9 2005/06/05 20:47:44 joris Exp $	*/
+/*	$OpenBSD: log.h,v 1.10 2005/07/25 11:07:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -32,40 +32,40 @@
 #include <stdarg.h>
 
 /* log destinations */
-#define LD_STD      0x01
-#define LD_SYSLOG   0x02
-#define LD_CONS     0x04
+#define LD_STD		0x01
+#define LD_SYSLOG	0x02
+#define LD_CONS		0x04
 
-#define LD_ALL      (LD_STD|LD_SYSLOG|LD_CONS)
+#define LD_ALL		(LD_STD|LD_SYSLOG|LD_CONS)
 
 /* log flags */
-#define LF_PID     0x01     /* include PID in messages */
+#define LF_PID		0x01	/* include PID in messages */
 
 
 /* log priority levels */
-#define LP_DEBUG    0
-#define LP_INFO     1
-#define LP_NOTICE   2
-#define LP_WARN     3
-#define LP_ERR      4
-#define LP_ALERT    5
-#define LP_ERRNO    6
-#define LP_ABORT    7
-#define LP_TRACE    8
+#define LP_DEBUG	0
+#define LP_INFO		1
+#define LP_NOTICE	2
+#define LP_WARN		3
+#define LP_ERR		4
+#define LP_ALERT	5
+#define LP_ERRNO	6
+#define LP_ABORT	7
+#define LP_TRACE	8
 
-#define LP_MAX      8
-#define LP_ALL      255
+#define LP_MAX		8
+#define LP_ALL		255
 
 /* filtering methods */
-#define LP_FILTER_SET     0     /* set a filter */
-#define LP_FILTER_UNSET   1     /* remove a filter */
+#define LP_FILTER_SET	0	/* set a filter */
+#define LP_FILTER_UNSET	1	/* remove a filter */
 
-int   cvs_log_init    (u_int, u_int);
-void  cvs_log_cleanup (void);
-int   cvs_log_filter  (u_int, u_int);
-int   cvs_log         (u_int, const char *, ...);
-int   cvs_vlog        (u_int, const char *, va_list);
-int   cvs_printf      (const char *, ...);
-void  cvs_putchar     (int);
+int	cvs_log_init(u_int, u_int);
+void	cvs_log_cleanup(void);
+int	cvs_log_filter(u_int, u_int);
+int	cvs_log(u_int, const char *, ...);
+int	cvs_vlog(u_int, const char *, va_list);
+int	cvs_printf(const char *, ...);
+void	cvs_putchar(int);
 
-#endif /* LOG_H */
+#endif	/* LOG_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.25 2005/07/23 11:19:46 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.26 2005/07/25 11:07:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,18 +38,18 @@ struct cvs_file;
 struct cvs_entries;
 
 
-#define CVS_FILE_MAXDEPTH     32
+#define CVS_FILE_MAXDEPTH	32
 
 
-#define CF_STAT     0x01  /* obsolete */
-#define CF_IGNORE   0x02  /* apply regular ignore rules */
-#define CF_RECURSE  0x04  /* recurse on directory operations */
-#define CF_SORT     0x08  /* all files are sorted alphabetically */
-#define CF_KNOWN    0x10  /* only recurse in directories known to CVS */
-#define CF_CREATE   0x20  /* create if file does not exist */
-#define CF_MKADMIN  0x40  /* create administrative files if they're missing */
-#define CF_NOSYMS   0x80  /* ignore symbolic links */
-#define CF_NOFILES  0x100 /* don't load any files inside a directory */
+#define CF_STAT		0x01	/* obsolete */
+#define CF_IGNORE	0x02	/* apply regular ignore rules */
+#define CF_RECURSE	0x04	/* recurse on directory operations */
+#define CF_SORT		0x08	/* all files are sorted alphabetically */
+#define CF_KNOWN	0x10	/* only recurse in directories known to CVS */
+#define CF_CREATE	0x20	/* create if file does not exist */
+#define CF_MKADMIN	0x40	/* create admin files if they're missing */
+#define CF_NOSYMS	0x80	/* ignore symbolic links */
+#define CF_NOFILES	0x100	/* don't load any files inside a directory */
 
 /*
  * The cvs_file structure is used to represent any file or directory within
@@ -61,71 +61,71 @@ struct cvs_entries;
  * The <cf_cvstat> field gives the file's status with regards to the CVS
  * repository.  The file can be in any one of the CVS_FST_* states.
  */
-#define CVS_FST_UNKNOWN   0	/* Unknown */
-#define CVS_FST_UPTODATE  1	/* Up-to-date */
-#define CVS_FST_MODIFIED  2	/* Locally Modified */
-#define CVS_FST_ADDED     3	/* Locally Added */
-#define CVS_FST_REMOVED   4	/* Locally Removed */
-#define CVS_FST_CONFLICT  5	/* Unresolved Conflict */
-#define CVS_FST_PATCHED   6
-#define CVS_FST_LOST      7	/* Needs Checkout */
+#define CVS_FST_UNKNOWN		0	/* Unknown */
+#define CVS_FST_UPTODATE	1	/* Up-to-date */
+#define CVS_FST_MODIFIED	2	/* Locally Modified */
+#define CVS_FST_ADDED		3	/* Locally Added */
+#define CVS_FST_REMOVED		4	/* Locally Removed */
+#define CVS_FST_CONFLICT	5	/* Unresolved Conflict */
+#define CVS_FST_PATCHED		6
+#define CVS_FST_LOST		7	/* Needs Checkout */
 
 
 SIMPLEQ_HEAD(cvs_flist, cvs_file);
 
 typedef struct cvs_file {
-	struct cvs_file  *cf_parent;  /* parent directory (NULL if none) */
+	struct cvs_file	*cf_parent;	/* parent directory (NULL if none) */
 
 	/*
 	 * cf_name contains the basename of the fullpath
 	 * cf_dir contains the parent directory the file or dir is in.
 	 * if cf_dir is NULL the file is in the parent directory.
 	 */
-	const char	 *cf_name;
-	const char       *cf_dir;
+	const char	*cf_name;
+	const char	*cf_dir;
 
-	mode_t            cf_mode;
-	u_int8_t          cf_cvstat;  /* cvs status of the file */
-	u_int8_t          cf_type;    /* uses values from dirent.h */
-	u_int16_t         cf_flags;
+	mode_t		 cf_mode;
+	u_int8_t	 cf_cvstat;	/* cvs status of the file */
+	u_int8_t	 cf_type;	/* uses values from dirent.h */
+	u_int16_t	 cf_flags;
 
 	union {
 		struct {
-			RCSNUM  *cd_lrev;	/* local revision */
-			time_t   cd_etime;	/* time in Entries file */
-			time_t   cd_mtime;
-			char    *cd_tag;
-			char    *cd_opts;
+			RCSNUM	*cd_lrev;	/* local revision */
+			time_t	 cd_etime;	/* time in Entries file */
+			time_t	 cd_mtime;
+			char	*cd_tag;
+			char	*cd_opts;
 		} cf_reg;
 		struct {
-			char             *cd_repo;
-			struct cvsroot   *cd_root;
-			struct cvs_flist  cd_files;
+			char			*cd_repo;
+			struct cvsroot		*cd_root;
+			struct cvs_flist	cd_files;
 		} cf_dir;
 	} cf_td;
 
-	SIMPLEQ_ENTRY(cvs_file)  cf_list;
+	SIMPLEQ_ENTRY(cvs_file)	cf_list;
 } CVSFILE;
 
 /* only valid for regular files */
-#define cf_etime  cf_td.cf_reg.cd_etime
-#define cf_mtime  cf_td.cf_reg.cd_mtime
-#define cf_lrev   cf_td.cf_reg.cd_lrev
-#define cf_tag    cf_td.cf_reg.cd_tag
-#define cf_opts   cf_td.cf_reg.cd_opts
+#define cf_etime	cf_td.cf_reg.cd_etime
+#define cf_mtime	cf_td.cf_reg.cd_mtime
+#define cf_lrev		cf_td.cf_reg.cd_lrev
+#define cf_tag		cf_td.cf_reg.cd_tag
+#define cf_opts		cf_td.cf_reg.cd_opts
 
 /* only valid for directories */
-#define cf_files  cf_td.cf_dir.cd_files
-#define cf_repo   cf_td.cf_dir.cd_repo
-#define cf_root   cf_td.cf_dir.cd_root
+#define cf_files	cf_td.cf_dir.cd_files
+#define cf_repo		cf_td.cf_dir.cd_repo
+#define cf_root		cf_td.cf_dir.cd_root
 
 
 
-#define CVS_DIRF_STATIC    0x01
-#define CVS_DIRF_STICKY    0x02
-#define CVS_DIRF_BASE      0x04
-#define CVS_GDIR_IGNORE    0x08
-#define CVS_FILE_ONDISK    0x10
+#define CVS_DIRF_STATIC		0x01
+#define CVS_DIRF_STICKY		0x02
+#define CVS_DIRF_BASE		0x04
+#define CVS_GDIR_IGNORE		0x08
+#define CVS_FILE_ONDISK		0x10
 
 #define CVS_DIR_ROOT(f)  ((((f)->cf_type == DT_DIR) && \
 	((f)->cf_root != NULL)) ? (f)->cf_root : \
@@ -135,28 +135,28 @@ typedef struct cvs_file {
 	(f)->cf_repo : (((f)->cf_parent == NULL) ? \
 	NULL : (f)->cf_parent->cf_repo))
 
-int      cvs_file_init    (void);
-int      cvs_file_ignore  (const char *);
-int      cvs_file_chkign  (const char *);
-int	 cvs_file_get     (const char *, int, int (*)(CVSFILE *, void *),
-			   void *, struct cvs_flist *);
-int      cvs_file_getspec (char **, int, int, int (*)(CVSFILE *, void *),
-			   void *, struct cvs_flist *);
-CVSFILE* cvs_file_loadinfo(char *, int, int (*)(CVSFILE *, void *), void *,
-int);
+int	 cvs_file_init(void);
+int	 cvs_file_ignore(const char *);
+int	 cvs_file_chkign(const char *);
+int	 cvs_file_get(const char *, int, int (*)(CVSFILE *, void *),
+	    void *, struct cvs_flist *);
+int	 cvs_file_getspec(char **, int, int, int (*)(CVSFILE *, void *),
+	    void *, struct cvs_flist *);
+CVSFILE	*cvs_file_loadinfo(char *, int, int (*)(CVSFILE *, void *), void *,
+	    int);
 
-CVSFILE* cvs_file_create  (CVSFILE *, const char *, u_int, mode_t);
-CVSFILE* cvs_file_copy    (CVSFILE *);
-int      cvs_file_attach  (CVSFILE *, CVSFILE *);
-int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
+CVSFILE	*cvs_file_create(CVSFILE *, const char *, u_int, mode_t);
+CVSFILE	*cvs_file_copy(CVSFILE *);
+int	 cvs_file_attach(CVSFILE *, CVSFILE *);
+int	 cvs_file_examine(CVSFILE *, int (*)(CVSFILE *, void *), void *);
 
-int      cvs_file_init    (void);
-int      cvs_file_ignore  (const char *);
-int      cvs_file_chkign  (const char *);
-CVSFILE* cvs_file_load    (const char *, int);
-CVSFILE* cvs_file_find    (CVSFILE *, const char *);
-char*    cvs_file_getpath (CVSFILE *, char *, size_t);
-void     cvs_file_free    (CVSFILE *);
-int      cvs_file_prune   (char *);
+int	 cvs_file_init(void);
+int	 cvs_file_ignore(const char *);
+int	 cvs_file_chkign(const char *);
+CVSFILE	*cvs_file_load(const char *, int);
+CVSFILE	*cvs_file_find(CVSFILE *, const char *);
+char	*cvs_file_getpath(CVSFILE *, char *, size_t);
+void	 cvs_file_free(CVSFILE *);
+int	 cvs_file_prune(char *);
 
-#endif /* FILE_H */
+#endif	/* FILE_H */
