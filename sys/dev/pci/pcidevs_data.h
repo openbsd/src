@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.895 2005/07/25 06:51:20 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.896 2005/07/25 07:40:41 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7803,7 +7803,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI6515 CardBus",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515SC,
 	    "PCI6515 CardBus (Smart Card mode)",
 	},
 	{
