@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtab.h,v 1.2 2005/03/24 03:11:03 jfb Exp $	*/
+/*	$OpenBSD: strtab.h,v 1.3 2005/07/25 11:32:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,14 +27,14 @@
 #ifndef STRTAB_H
 #define STRTAB_H
 
-#define CVS_STRTAB_HASHBITS       8
-#define CVS_STRTAB_NBUCKETS      (1 << CVS_STRTAB_HASHBITS)
-#define CVS_STRTAB_FNVPRIME      0x01000193
-#define CVS_STRTAB_FNVINIT       0x811c9dc5
+#define CVS_STRTAB_HASHBITS	8
+#define CVS_STRTAB_NBUCKETS	(1 << CVS_STRTAB_HASHBITS)
+#define CVS_STRTAB_FNVPRIME	0x01000193
+#define CVS_STRTAB_FNVINIT	0x811c9dc5
 
-void  cvs_strtab_init    (void);
-void  cvs_strtab_cleanup (void);
-char* cvs_strdup         (const char *);
-void  cvs_strfree        (const char *);
+void	 cvs_strtab_init(void);
+void	 cvs_strtab_cleanup(void);
+char	*cvs_strdup(const char *);
+void	 cvs_strfree(const char *);
 
-#endif /* STRTAB_H */
+#endif	/* STRTAB_H */

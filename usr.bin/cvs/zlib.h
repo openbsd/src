@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.h,v 1.1 2005/01/13 18:59:03 jfb Exp $	*/
+/*	$OpenBSD: zlib.h,v 1.2 2005/07/25 11:32:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -36,9 +36,9 @@
 typedef struct cvs_zlib_ctx CVSZCTX;
 
 
-CVSZCTX* cvs_zlib_newctx  (int);
-void     cvs_zlib_free    (CVSZCTX *);
-int      cvs_zlib_deflate (CVSZCTX *, BUF *, u_char *, size_t);
-int      cvs_zlib_inflate (CVSZCTX *, BUF *, u_char *, size_t);
+CVSZCTX	*cvs_zlib_newctx(int);
+void	 cvs_zlib_free(CVSZCTX *);
+int	 cvs_zlib_deflate(CVSZCTX *, BUF *, u_char *, size_t);
+int	 cvs_zlib_inflate(CVSZCTX *, BUF *, u_char *, size_t);
 
-#endif /* CVSZLIB_H */
+#endif	/* CVSZLIB_H */

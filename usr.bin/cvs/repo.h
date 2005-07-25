@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.h,v 1.1 2005/02/16 15:41:15 jfb Exp $	*/
+/*	$OpenBSD: repo.h,v 1.2 2005/07/25 11:32:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,21 +31,21 @@
 #include <sys/queue.h>
 
 
-#define CVS_MODULE_ISALIAS     0x01
+#define CVS_MODULE_ISALIAS	0x01
 
 typedef struct cvs_module {
-	char  *cm_name;
-	int    cm_flags;
-	char  *cm_path;		/* subpath for aliases, NULL otherwise */
+	char	*cm_name;
+	int	 cm_flags;
+	char	*cm_path;	/* subpath for aliases, NULL otherwise */
 
-	TAILQ_ENTRY(cvs_module) cm_link;
+	TAILQ_ENTRY(cvs_module)	cm_link;
 } CVSMODULE;
 
 
 
-#define CVS_RPENT_UNKNOWN   0
-#define CVS_RPENT_DIR       1
-#define CVS_RPENT_RCSFILE   2
+#define CVS_RPENT_UNKNOWN	0
+#define CVS_RPENT_DIR		1
+#define CVS_RPENT_RCSFILE	2
 
 typedef struct cvs_repoent CVSRPENT;
 
@@ -85,72 +85,71 @@ typedef struct cvs_repoent CVSRPENT;
  *    process to lock those subdirectories as well.
  */
 
-#define CVS_LOCK_READ    1
-#define CVS_LOCK_WRITE   2
+#define CVS_LOCK_READ	1
+#define CVS_LOCK_WRITE	2
 
 
 struct cvs_lock {
-	pid_t     lk_owner;
-	int       lk_type;
-	CVSRPENT *lk_ent;		/* backpointer to the entry */
+	pid_t		 lk_owner;
+	int		 lk_type;
+	CVSRPENT	*lk_ent;	/* backpointer to the entry */
 
-	TAILQ_ENTRY(cvs_lock) lk_link;
-	TAILQ_ENTRY(cvs_lock) lk_chlink;
+	TAILQ_ENTRY(cvs_lock)	lk_link;
+	TAILQ_ENTRY(cvs_lock)	lk_chlink;
 };
 
 TAILQ_HEAD(cvs_lklist, cvs_lock);
 
 struct cvs_repoent {
-	char      *cr_name;
-	int        cr_type;
-	CVSRPENT  *cr_parent;
+	char		*cr_name;
+	int		 cr_type;
+	CVSRPENT	*cr_parent;
 
 	union {
-		TAILQ_HEAD(, cvs_repoent) files;
+		TAILQ_HEAD(, cvs_repoent)	files;
 	} cr_data;
 
-	struct cvs_lock   *cr_wlock;	/* write lock, NULL if none */
-	struct cvs_lklist  cr_rlocks;	/* read locks */
-	struct cvs_lklist  cr_lkreq;	/* pending lock requests */
+	struct cvs_lock		*cr_wlock;	/* write lock, NULL if none */
+	struct cvs_lklist	 cr_rlocks;	/* read locks */
+	struct cvs_lklist	 cr_lkreq;	/* pending lock requests */
 
-	TAILQ_ENTRY(cvs_repoent) cr_link;
+	TAILQ_ENTRY(cvs_repoent)	cr_link;
 };
 
-#define cr_files cr_data.files
+#define cr_files	cr_data.files
 
 
 
-#define CVS_REPO_LOCKED    0x01
-#define CVS_REPO_READONLY  0x02
-#define CVS_REPO_CHKPERM   0x04
+#define CVS_REPO_LOCKED		0x01
+#define CVS_REPO_READONLY	0x02
+#define CVS_REPO_CHKPERM	0x04
 
 TAILQ_HEAD(cvs_modlist, cvs_module);
 
 typedef struct cvs_repo {
-	char     *cr_path;
-	int       cr_flags;
-	CVSRPENT *cr_tree;
+	char		*cr_path;
+	int		 cr_flags;
+	CVSRPENT	*cr_tree;
 
-	struct cvs_modlist cr_modules;
-	TAILQ_ENTRY(cvs_repo) cr_link;
+	struct cvs_modlist	cr_modules;
+	TAILQ_ENTRY(cvs_repo)	cr_link;
 } CVSREPO;
 
 
 
 
-CVSREPO*  cvs_repo_load      (const char *, int);
-void      cvs_repo_free      (CVSREPO *);
-int       cvs_repo_alias     (CVSREPO *, const char *, const char *);
-int       cvs_repo_unalias   (CVSREPO *, const char *);
-int       cvs_repo_lockdir   (CVSREPO *, const char *, int, pid_t);
-int       cvs_repo_unlockdir (CVSREPO *, const char *, pid_t);
-int       cvs_repo_lockent   (CVSRPENT *, int, pid_t);
-int       cvs_repo_unlockent (CVSRPENT *, pid_t);
-void      cvs_repo_entfree   (CVSRPENT *);
-void      cvs_repo_modfree   (CVSMODULE *);
+CVSREPO		*cvs_repo_load(const char *, int);
+void		 cvs_repo_free(CVSREPO *);
+int		 cvs_repo_alias(CVSREPO *, const char *, const char *);
+int		 cvs_repo_unalias(CVSREPO *, const char *);
+int		 cvs_repo_lockdir(CVSREPO *, const char *, int, pid_t);
+int		 cvs_repo_unlockdir(CVSREPO *, const char *, pid_t);
+int		 cvs_repo_lockent(CVSRPENT *, int, pid_t);
+int		 cvs_repo_unlockent(CVSRPENT *, pid_t);
+void		 cvs_repo_entfree(CVSRPENT *);
+void		 cvs_repo_modfreeCVSMODULE *);
 
-CVSRPENT* cvs_repo_find      (CVSREPO *, const char *);
+CVSRPENT	*cvs_repo_find(CVSREPO *, const char *);
 
 
-
-#endif /* REPO_H */
+#endif	/* REPO_H */
