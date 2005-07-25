@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.41 2005/07/24 16:46:39 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.42 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,8 +37,8 @@
 #include "log.h"
 
 
-#define CVS_ENTRIES_NFIELDS  6
-#define CVS_ENTRIES_DELIM   '/'
+#define CVS_ENTRIES_NFIELDS	6
+#define CVS_ENTRIES_DELIM	'/'
 
 
 /*
@@ -48,7 +48,7 @@
  * Returns a pointer to the CVSENTRIES file structure on success, or NULL
  * on failure.
  */
-CVSENTRIES*
+CVSENTRIES *
 cvs_ent_open(const char *dir, int flags)
 {
 	size_t len;
@@ -285,7 +285,7 @@ cvs_ent_remove(CVSENTRIES *ef, const char *name)
  * <file>.
  * Returns a pointer to the cvs entry structure on success, or NULL on failure.
  */
-struct cvs_ent*
+struct cvs_ent *
 cvs_ent_get(CVSENTRIES *ef, const char *file)
 {
 	struct cvs_ent *ent;
@@ -306,7 +306,7 @@ cvs_ent_get(CVSENTRIES *ef, const char *file)
  * will return the entry following the last one returned.
  * Returns a pointer to the cvs entry structure on success, or NULL on failure.
  */
-struct cvs_ent*
+struct cvs_ent *
 cvs_ent_next(CVSENTRIES *ef)
 {
 	if (ef->cef_cur == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.c,v 1.2 2005/01/13 20:22:55 jfb Exp $	*/
+/*	$OpenBSD: zlib.c,v 1.3 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -33,12 +33,12 @@
 #include "cvs.h"
 #include "zlib.h"
 
-#define CVS_ZLIB_BUFSIZE  1024
+#define CVS_ZLIB_BUFSIZE	1024
 
 struct cvs_zlib_ctx {
-	int       z_level;
-	z_stream  z_instrm;
-	z_stream  z_destrm;
+	int		z_level;
+	z_stream	z_instrm;
+	z_stream	z_destrm;
 };
 
 
@@ -49,7 +49,7 @@ struct cvs_zlib_ctx {
  * of data with compression level <level>, which must be between 0 and 9.  A
  * value of 0 means no compression, and 9 is the highest level of compression.
  */
-CVSZCTX*
+CVSZCTX *
 cvs_zlib_newctx(int level)
 {
 	CVSZCTX *ctx;

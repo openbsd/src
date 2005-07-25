@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.31 2005/07/23 11:19:46 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.32 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -96,7 +96,7 @@ struct cvs_cmd *cvs_cdt[] = {
  * aliases matches <cmd>.
  * Returns a pointer to the command entry on success, NULL on failure.
  */
-struct cvs_cmd*
+struct cvs_cmd *
 cvs_findcmd(const char *cmd)
 {
 	int i, j;
@@ -121,7 +121,7 @@ cvs_findcmd(const char *cmd)
 	return (cmdp);
 }
 
-struct cvs_cmd*
+struct cvs_cmd *
 cvs_findcmdbyreq(int reqid)
 {
 	int i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.52 2005/07/22 16:27:29 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.53 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -147,7 +147,7 @@
 #include "proto.h"
 
 
-#define CVS_DIFF_DEFCTX    3   /* default context length */
+#define CVS_DIFF_DEFCTX	3	/* default context length */
 
 
 /*
@@ -175,14 +175,14 @@
 #define	D_SKIPPED2	9	/* path2 was a special file */
 
 struct cand {
-	int x;
-	int y;
-	int pred;
+	int	x;
+	int	y;
+	int	pred;
 } cand;
 
 struct line {
-	int serial;
-	int value;
+	int	serial;
+	int	value;
 } *file[2];
 
 /*
@@ -191,52 +191,53 @@ struct line {
  * understand the highly mnemonic field names)
  */
 struct context_vec {
-	int a;			/* start line in old file */
-	int b;			/* end line in old file */
-	int c;			/* start line in new file */
-	int d;			/* end line in new file */
+	int	a;	/* start line in old file */
+	int	b;	/* end line in old file */
+	int	c;	/* start line in new file */
+	int	d;	/* end line in new file */
 };
 
 struct diff_arg {
-	char  *rev1;
-	char  *rev2;
-	char  *date1;
-	char  *date2;
+	char	*rev1;
+	char	*rev2;
+	char	*date1;
+	char	*date2;
 };
 
 
-static int  cvs_diff_init      (struct cvs_cmd *, int, char **, int *);
-static int  cvs_diff_remote    (CVSFILE *, void *);
-static int  cvs_diff_local     (CVSFILE *, void *);
-static int  cvs_diff_pre_exec (struct cvsroot *);
-static int  cvs_diff_cleanup   (void);
-int  cvs_diffreg        (const char *, const char *);
+static int	cvs_diff_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_diff_remote(CVSFILE *, void *);
+static int	cvs_diff_local(CVSFILE *, void *);
+static int	cvs_diff_pre_exec(struct cvsroot *);
+static int	cvs_diff_cleanup(void);
+int		cvs_diffreg(const char *, const char *);
 
-static void output(const char *, FILE *, const char *, FILE *);
-static void check(FILE *, FILE *);
-static void range(int, int, char *);
-static void uni_range(int, int);
-static void dump_context_vec(FILE *, FILE *);
-static void dump_unified_vec(FILE *, FILE *);
-static int  prepare(int, FILE *, off_t);
-static void prune(void);
-static void equiv(struct line *, int, struct line *, int, int *);
-static void unravel(int);
-static void unsort(struct line *, int, int *);
-static void change(const char *, FILE *, const char *, FILE *, int, int, int, int);
-static void sort(struct line *, int);
-static int  ignoreline(char *);
-static int  asciifile(FILE *);
-static int  fetch(long *, int, int, FILE *, int, int);
-static int  newcand(int, int, int);
-static int  search(int *, int, int);
-static int  skipline(FILE *);
-static int  isqrt(int);
-static int  stone(int *, int, int *, int *);
-static int  readhash(FILE *);
-static int  files_differ(FILE *, FILE *);
-static char *match_function(const long *, int, FILE *);
-static char *preadline(int, size_t, off_t);
+static void	 output(const char *, FILE *, const char *, FILE *);
+static void	 check(FILE *, FILE *);
+static void	 range(int, int, char *);
+static void	 uni_range(int, int);
+static void	 dump_context_vec(FILE *, FILE *);
+static void	 dump_unified_vec(FILE *, FILE *);
+static int	 prepare(int, FILE *, off_t);
+static void	 prune(void);
+static void	 equiv(struct line *, int, struct line *, int, int *);
+static void	 unravel(int);
+static void	 unsort(struct line *, int, int *);
+static void	 change(const char *, FILE *, const char *, FILE *, int,
+		    int, int, int);
+static void	 sort(struct line *, int);
+static int	 ignoreline(char *);
+static int	 asciifile(FILE *);
+static int	 fetch(long *, int, int, FILE *, int, int);
+static int	 newcand(int, int, int);
+static int	 search(int *, int, int);
+static int	 skipline(FILE *);
+static int	 isqrt(int);
+static int	 stone(int *, int, int *, int *);
+static int	 readhash(FILE *);
+static int	 files_differ(FILE *, FILE *);
+static char	*match_function(const long *, int, FILE *);
+static char	*preadline(int, size_t, off_t);
 
 
 static int aflag, bflag, dflag, iflag, Nflag, pflag, tflag, Tflag, wflag;

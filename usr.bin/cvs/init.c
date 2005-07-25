@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.18 2005/07/19 15:30:37 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.19 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,14 +39,14 @@
 #include "proto.h"
 
 
-#define CFT_FILE   1
-#define CFT_DIR    2
+#define CFT_FILE	1
+#define CFT_DIR		2
 
 
 struct cvsroot_file {
-	char   *cf_path;   /* path relative to CVS root directory */
-	u_int   cf_type;
-	mode_t  cf_mode;
+	char	*cf_path;	/* path relative to CVS root directory */
+	u_int	 cf_type;
+	mode_t	 cf_mode;
 } cvsroot_files[] = {
 	{ CVS_PATH_ROOT,   CFT_DIR, (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) },
 	{ CVS_PATH_EMPTYDIR, CFT_DIR, (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) },
@@ -64,8 +64,8 @@ struct cvsroot_file {
 	{ CVS_PATH_VERIFYMSG,   CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 };
 
-static int cvs_init_pre_exec     (struct cvsroot *);
-static int cvs_init_create_files (struct cvsroot *);
+static int	cvs_init_pre_exec(struct cvsroot *);
+static int	cvs_init_create_files(struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_init = {
 	CVS_OP_INIT, CVS_REQ_INIT, "init",

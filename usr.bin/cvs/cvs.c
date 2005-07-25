@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.74 2005/07/24 17:48:05 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.75 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -73,9 +73,9 @@ CVSFILE *cvs_files;
 static TAILQ_HEAD(, cvs_var) cvs_variables;
 
 
-void         usage           (void);
-static void  cvs_read_rcfile (void);
-int          cvs_getopt(int, char **);
+void		usage(void);
+static void	cvs_read_rcfile(void);
+int		cvs_getopt(int, char **);
 
 /*
  * usage()
@@ -514,7 +514,7 @@ cvs_var_unset(const char *var)
  * value string on success, or NULL if the variable does not exist.
  */
 
-const char*
+const char *
 cvs_var_get(const char *var)
 {
 	struct cvs_var *vp;

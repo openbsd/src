@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.44 2005/07/23 11:19:46 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.45 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,11 +41,11 @@
 #include "proto.h"
 
 
-static int cvs_commit_init    (struct cvs_cmd *, int, char **, int *);
-static int cvs_commit_prepare (CVSFILE *, void *);
-static int cvs_commit_remote  (CVSFILE *, void *);
-static int cvs_commit_local   (CVSFILE *, void *);
-static int cvs_commit_pre_exec(struct cvsroot *);
+static int	cvs_commit_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_commit_prepare(CVSFILE *, void *);
+static int	cvs_commit_remote(CVSFILE *, void *);
+static int	cvs_commit_local(CVSFILE *, void *);
+static int	cvs_commit_pre_exec(struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_commit = {
 	CVS_OP_COMMIT, CVS_REQ_CI, "commit",

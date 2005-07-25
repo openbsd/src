@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.103 2005/07/24 19:04:55 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.104 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -44,16 +44,16 @@
 #include "log.h"
 #include "strtab.h"
 
-#define CVS_IGN_STATIC    0x01     /* pattern is static, no need to glob */
+#define CVS_IGN_STATIC	0x01	/* pattern is static, no need to glob */
 
-#define CVS_CHAR_ISMETA(c)  ((c == '*') || (c == '?') || (c == '['))
+#define CVS_CHAR_ISMETA(c)	((c == '*') || (c == '?') || (c == '['))
 
 
 /* ignore pattern */
 struct cvs_ignpat {
-	char  ip_pat[MAXNAMLEN];
-	int   ip_flags;
-	TAILQ_ENTRY (cvs_ignpat) ip_list;
+	char				ip_pat[MAXNAMLEN];
+	int				ip_flags;
+	TAILQ_ENTRY (cvs_ignpat)	ip_list;
 };
 
 
@@ -104,17 +104,17 @@ static const char *cvs_ign_std[] = {
 static RCSNUM *cvs_addedrev;
 
 
-TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
+TAILQ_HEAD(, cvs_ignpat)	cvs_ign_pats;
 
 static int cvs_file_getdir(CVSFILE *, int, int (*)(CVSFILE *, void *),
     void *, int);
 
-static int	cvs_load_dirinfo  (CVSFILE *, int);
-static int      cvs_file_sort    (struct cvs_flist *, u_int);
-static int      cvs_file_cmp     (const void *, const void *);
-static int      cvs_file_cmpname (const char *, const char *);
-static CVSFILE* cvs_file_alloc   (const char *, u_int);
-static CVSFILE* cvs_file_lget  (const char *, int, CVSFILE *, struct cvs_ent *);
+static int	 cvs_load_dirinfo(CVSFILE *, int);
+static int	 cvs_file_sort(struct cvs_flist *, u_int);
+static int	 cvs_file_cmp(const void *, const void *);
+static int	 cvs_file_cmpname(const char *, const char *);
+static CVSFILE	*cvs_file_alloc(const char *, u_int);
+static CVSFILE	*cvs_file_lget(const char *, int, CVSFILE *, struct cvs_ent *);
 
 
 /*
@@ -701,7 +701,7 @@ cvs_file_find(CVSFILE *hier, const char *path)
  * at least MAXPATHLEN bytes long.
  * Returns a pointer to the start of the path.
  */
-char*
+char *
 cvs_file_getpath(CVSFILE *file, char *buf, size_t len)
 {
 	memset(buf, '\0', len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.12 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.13 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -105,7 +105,7 @@ rcsnum_free(RCSNUM *rn)
  * <blen>.
  * Returns a pointer to the start of <buf> on success, or NULL on failure.
  */
-char*
+char *
 rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 {
 	u_int i;

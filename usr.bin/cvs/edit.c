@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.7 2005/07/10 21:51:23 joris Exp $	*/
+/*	$OpenBSD: edit.c,v 1.8 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,9 +40,9 @@
 
 
 
-static int cvs_edit_init   (struct cvs_cmd *, int, char **, int *);
-static int cvs_edit_remote (CVSFILE *, void *);
-static int cvs_edit_local  (CVSFILE *, void *);
+static int	cvs_edit_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_edit_remote(CVSFILE *, void *);
+static int	cvs_edit_local(CVSFILE *, void *);
 
 
 struct cvs_cmd cvs_cmd_edit = {

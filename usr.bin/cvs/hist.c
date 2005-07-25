@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.6 2005/07/21 11:42:24 xsa Exp $	*/
+/*	$OpenBSD: hist.c,v 1.7 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,12 +35,12 @@
 #include "cvs.h"
 #include "log.h"
 
-#define CVS_HIST_BUFSIZE    8192
+#define CVS_HIST_BUFSIZE	8192
 
 
 
-static int  cvs_hist_fillbuf  (CVSHIST *);
-static int  cvs_hist_fmt      (const struct cvs_hent *, char *, size_t);
+static int	cvs_hist_fillbuf(CVSHIST *);
+static int	cvs_hist_fmt(const struct cvs_hent *, char *, size_t);
 
 
 /*

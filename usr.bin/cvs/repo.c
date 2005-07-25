@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.5 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: repo.c,v 1.6 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -425,7 +425,7 @@ cvs_repo_find(CVSREPO *repo, const char *path)
  * at least MAXPATHLEN bytes long.
  * Returns a pointer to the start of the path on success, or NULL on failure.
  */
-char*
+char *
 cvs_repo_getpath(CVSRPENT *file, char *buf, size_t len)
 {
 	u_int i;

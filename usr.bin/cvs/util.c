@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.41 2005/07/24 17:33:09 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.42 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -367,7 +367,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
  * Allocate an argument vector large enough to accommodate for all the
  * arguments found in <line> and return it.
  */
-char**
+char **
 cvs_makeargv(const char *line, int *argc)
 {
 	int i, ret;
@@ -741,7 +741,7 @@ cvs_path_cat(const char *base, const char *end, char *dst, size_t dlen)
  * at least MAXPATHLEN bytes long.
  * Returns a pointer to the start of the path on success, or NULL on failure.
  */
-char*
+char *
 cvs_rcs_getpath(CVSFILE *file, char *buf, size_t len)
 {
 	int l;

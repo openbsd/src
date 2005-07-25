@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.16 2005/07/23 00:03:00 joris Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.17 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -60,7 +60,7 @@ static const char *cvs_logmsg_ops[3] = {
  * The returned value must later be free()d.
  * Returns a pointer to the allocated buffer on success, or NULL on failure.
  */
-char*
+char *
 cvs_logmsg_open(const char *path)
 {
 	int lcont;
@@ -164,7 +164,7 @@ cvs_logmsg_open(const char *path)
  * Returns the message in a dynamically allocated string on success, NULL on
  * failure.
  */
-char*
+char *
 cvs_logmsg_get(const char *dir, struct cvs_flist *added,
     struct cvs_flist *modified, struct cvs_flist *removed)
 {

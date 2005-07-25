@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtab.c,v 1.5 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: strtab.c,v 1.6 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,26 +42,26 @@
 #include "log.h"
 #include "strtab.h"
 
-#define CVS_STRTAB_HASHBITS       8
-#define CVS_STRTAB_NBUCKETS      (1 << CVS_STRTAB_HASHBITS)
-#define CVS_STRTAB_FNVPRIME      0x01000193
-#define CVS_STRTAB_FNVINIT       0x811c9dc5
+#define CVS_STRTAB_HASHBITS	8
+#define CVS_STRTAB_NBUCKETS	(1 << CVS_STRTAB_HASHBITS)
+#define CVS_STRTAB_FNVPRIME	0x01000193
+#define CVS_STRTAB_FNVINIT	0x811c9dc5
 
 struct cvs_str {
-	char *cs_str;
-	int   cs_ref;
-	SLIST_ENTRY(cvs_str) cs_link;
+	char			*cs_str;
+	int			 cs_ref;
+	SLIST_ENTRY(cvs_str)	 cs_link;
 };
 
 SLIST_HEAD(cvs_slist, cvs_str);
 
-static struct cvs_slist cvs_strtab[CVS_STRTAB_NBUCKETS];
+static struct cvs_slist	cvs_strtab[CVS_STRTAB_NBUCKETS];
 
 
-static struct cvs_str* cvs_strtab_insert (const char *);
-static struct cvs_str* cvs_strtab_lookup (const char *);
-static u_int32_t       cvs_strtab_hash   (const char *);
-static void            cvs_strtab_free   (const char *);
+static struct cvs_str	*cvs_strtab_insert(const char *);
+static struct cvs_str	*cvs_strtab_lookup(const char *);
+static u_int32_t	 cvs_strtab_hash(const char *);
+static void		 cvs_strtab_free(const char *);
 
 
 
@@ -70,7 +70,7 @@ static void            cvs_strtab_free   (const char *);
  *
  * Simple interface to the string table.
  */
-char*
+char *
 cvs_strdup(const char *s)
 {
 	struct cvs_str *csp;

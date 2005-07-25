@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.19 2005/05/31 08:58:48 xsa Exp $	*/
+/*	$OpenBSD: root.c,v 1.20 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -54,7 +54,7 @@ const char *cvs_methods[] = {
 	"fork",
 };
 
-#define CVS_NBMETHODS  (sizeof(cvs_methods)/sizeof(cvs_methods[0]))
+#define CVS_NBMETHODS	(sizeof(cvs_methods)/sizeof(cvs_methods[0]))
 
 /*
  * CVSROOT cache

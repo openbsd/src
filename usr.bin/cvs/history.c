@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.22 2005/07/21 11:42:24 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.23 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,25 +37,25 @@
 #include "log.h"
 #include "proto.h"
 
-#define CVS_HISTORY_MAXMOD    16
+#define CVS_HISTORY_MAXMOD	16
 
 /* history flags */
-#define CVS_HF_A     0x01
-#define CVS_HF_C     0x02
-#define CVS_HF_E     0x04
-#define CVS_HF_L     0x08
-#define CVS_HF_M     0x10
-#define CVS_HF_O     0x20
-#define CVS_HF_T     0x40
-#define CVS_HF_W     0x80
+#define CVS_HF_A	0x01
+#define CVS_HF_C	0x02
+#define CVS_HF_E	0x04
+#define CVS_HF_L	0x08
+#define CVS_HF_M	0x10
+#define CVS_HF_O	0x20
+#define CVS_HF_T	0x40
+#define CVS_HF_W	0x80
 
-#define CVS_HF_EXCL (CVS_HF_C|CVS_HF_E|CVS_HF_M|CVS_HF_O|CVS_HF_T|CVS_HF_X)
+#define CVS_HF_EXCL	(CVS_HF_C|CVS_HF_E|CVS_HF_M|CVS_HF_O|CVS_HF_T|CVS_HF_X)
 
-static int  cvs_history_init      (struct cvs_cmd *, int, char **, int *);
+static int	cvs_history_init(struct cvs_cmd *, int, char **, int *);
 #if 0
-static void cvs_history_print     (struct cvs_hent *);
+static void	cvs_history_print(struct cvs_hent *);
 #endif
-static int  cvs_history_pre_exec (struct cvsroot *);
+static int	cvs_history_pre_exec(struct cvsroot *);
 
 extern char *__progname;
 

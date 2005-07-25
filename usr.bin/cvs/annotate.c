@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.22 2005/07/21 11:42:24 xsa Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.23 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,10 +38,10 @@
 #include "proto.h"
 
 
-static int cvs_annotate_init     (struct cvs_cmd *, int, char **, int *);
-static int cvs_annotate_remote   (CVSFILE *, void *);
-static int cvs_annotate_local    (CVSFILE *, void *);
-static int cvs_annotate_pre_exec (struct cvsroot *);
+static int	cvs_annotate_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_annotate_remote(CVSFILE *, void *);
+static int	cvs_annotate_local(CVSFILE *, void *);
+static int	cvs_annotate_pre_exec(struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_annotate = {
 	CVS_OP_ANNOTATE, CVS_REQ_ANNOTATE, "annotate",

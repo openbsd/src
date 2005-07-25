@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.24 2005/07/15 12:24:50 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.25 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -38,16 +38,16 @@
 #include "proto.h"
 
 
-#define CVS_IMPORT_DEFBRANCH    "1.1.1"
+#define CVS_IMPORT_DEFBRANCH	"1.1.1"
 
 
-static int cvs_import_init     (struct cvs_cmd *, int, char **, int *);
-static int cvs_import_pre_exec (struct cvsroot *);
-static int cvs_import_pre_exec (struct cvsroot *);
-static int cvs_import_post_exec(struct cvsroot *);
-static int cvs_import_remote   (CVSFILE *, void *);
-static int cvs_import_local    (CVSFILE *, void *);
-static int cvs_import_cleanup  (void);
+static int	cvs_import_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_import_pre_exec(struct cvsroot *);
+static int	cvs_import_pre_exec(struct cvsroot *);
+static int	cvs_import_post_exec(struct cvsroot *);
+static int	cvs_import_remote(CVSFILE *, void *);
+static int	cvs_import_local(CVSFILE *, void *);
+static int	cvs_import_cleanup(void);
 
 static int dflag = 0;
 static int conflicts = 0;

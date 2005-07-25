@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.49 2005/07/24 17:20:14 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.50 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -44,7 +44,7 @@
 #include "proto.h"
 
 
-#define CVS_MTSTK_MAXDEPTH   16
+#define CVS_MTSTK_MAXDEPTH	16
 
 
 #define STRIP_SLASH(p)						\

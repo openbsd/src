@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.66 2005/07/24 16:46:40 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.67 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -412,7 +412,7 @@ cvs_req_getbyname(const char *rname)
  * Build a space-separated list of all the requests that this protocol
  * implementation supports.
  */
-char*
+char *
 cvs_req_getvalid(void)
 {
 	u_int i;
@@ -476,7 +476,7 @@ cvs_resp_getbyid(int respid)
 /*
  * cvs_resp_getbyname()
  */
-struct cvs_resp*
+struct cvs_resp *
 cvs_resp_getbyname(const char *rname)
 {
 	u_int i;
@@ -495,7 +495,7 @@ cvs_resp_getbyname(const char *rname)
  * Build a space-separated list of all the responses that this protocol
  * implementation supports.
  */
-char*
+char *
 cvs_resp_getvalid(void)
 {
 	u_int i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.56 2005/07/07 14:27:57 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.57 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,76 +40,76 @@
 #include "rcs.h"
 #include "strtab.h"
 
-#define RCS_BUFSIZE     16384
-#define RCS_BUFEXTSIZE   8192
+#define RCS_BUFSIZE	16384
+#define RCS_BUFEXTSIZE	8192
 
 
 /* RCS token types */
-#define RCS_TOK_ERR     -1
-#define RCS_TOK_EOF      0
-#define RCS_TOK_NUM      1
-#define RCS_TOK_ID       2
-#define RCS_TOK_STRING   3
-#define RCS_TOK_SCOLON   4
-#define RCS_TOK_COLON    5
+#define RCS_TOK_ERR	-1
+#define RCS_TOK_EOF	0
+#define RCS_TOK_NUM	1
+#define RCS_TOK_ID	2
+#define RCS_TOK_STRING	3
+#define RCS_TOK_SCOLON	4
+#define RCS_TOK_COLON	5
 
 
-#define RCS_TOK_HEAD     8
-#define RCS_TOK_BRANCH   9
-#define RCS_TOK_ACCESS   10
-#define RCS_TOK_SYMBOLS  11
-#define RCS_TOK_LOCKS    12
-#define RCS_TOK_COMMENT  13
-#define RCS_TOK_EXPAND   14
-#define RCS_TOK_DATE     15
-#define RCS_TOK_AUTHOR   16
-#define RCS_TOK_STATE    17
-#define RCS_TOK_NEXT     18
-#define RCS_TOK_BRANCHES 19
-#define RCS_TOK_DESC     20
-#define RCS_TOK_LOG      21
-#define RCS_TOK_TEXT     22
-#define RCS_TOK_STRICT   23
+#define RCS_TOK_HEAD		8
+#define RCS_TOK_BRANCH		9
+#define RCS_TOK_ACCESS		10
+#define RCS_TOK_SYMBOLS		11
+#define RCS_TOK_LOCKS		12
+#define RCS_TOK_COMMENT		13
+#define RCS_TOK_EXPAND		14
+#define RCS_TOK_DATE		15
+#define RCS_TOK_AUTHOR		16
+#define RCS_TOK_STATE		17
+#define RCS_TOK_NEXT		18
+#define RCS_TOK_BRANCHES	19
+#define RCS_TOK_DESC		20
+#define RCS_TOK_LOG		21
+#define RCS_TOK_TEXT		22
+#define RCS_TOK_STRICT		23
 
-#define RCS_ISKEY(t)    (((t) >= RCS_TOK_HEAD) && ((t) <= RCS_TOK_BRANCHES))
+#define RCS_ISKEY(t)	(((t) >= RCS_TOK_HEAD) && ((t) <= RCS_TOK_BRANCHES))
 
 
-#define RCS_NOSCOL   0x01   /* no terminating semi-colon */
-#define RCS_VOPT     0x02   /* value is optional */
+#define RCS_NOSCOL	0x01	/* no terminating semi-colon */
+#define RCS_VOPT	0x02	/* value is optional */
 
 
 /* opaque parse data */
 struct rcs_pdata {
-	u_int  rp_lines;
+	u_int	rp_lines;
 
-	char  *rp_buf;
-	size_t rp_blen;
-	char  *rp_bufend;
-	size_t rp_tlen;
+	char	*rp_buf;
+	size_t	 rp_blen;
+	char	*rp_bufend;
+	size_t	 rp_tlen;
 
 	/* pushback token buffer */
-	char   rp_ptok[128];
-	int    rp_pttype;       /* token type, RCS_TOK_ERR if no token */
+	char	rp_ptok[128];
+	int	rp_pttype;	/* token type, RCS_TOK_ERR if no token */
 
-	FILE  *rp_file;
+	FILE	*rp_file;
 };
 
 
 struct rcs_line {
-	char *rl_line;
-	int   rl_lineno;
-	TAILQ_ENTRY(rcs_line) rl_list;
+	char			*rl_line;
+	int			 rl_lineno;
+	TAILQ_ENTRY(rcs_line)	 rl_list;
 };
 TAILQ_HEAD(rcs_tqh, rcs_line);
 
 struct rcs_foo {
-	int       rl_nblines;
-	char     *rl_data;
-	struct rcs_tqh rl_lines;
+	int		 rl_nblines;
+	char		*rl_data;
+	struct rcs_tqh	 rl_lines;
 };
 
-#define RCS_TOKSTR(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
-#define RCS_TOKLEN(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_tlen
+#define RCS_TOKSTR(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
+#define RCS_TOKLEN(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_tlen
 
 
 
@@ -119,8 +119,8 @@ static const char rcs_sym_invch[] = RCS_SYM_INVALCHAR;
 
 /* comment leaders, depending on the file's suffix */
 static const struct rcs_comment {
-	const char  *rc_suffix;
-	const char  *rc_cstr;
+	const char	*rc_suffix;
+	const char	*rc_cstr;
 } rcs_comments[] = {
 	{ "1",    ".\\\" " },
 	{ "2",    ".\\\" " },
@@ -186,12 +186,12 @@ static const struct rcs_comment {
 	{ "yr",   " * "    },	/* yacc-ratfor	 */
 };
 
-#define NB_COMTYPES  (sizeof(rcs_comments)/sizeof(rcs_comments[0]))
+#define NB_COMTYPES	(sizeof(rcs_comments)/sizeof(rcs_comments[0]))
 
 #ifdef notyet
 static struct rcs_kfl {
-	char  rk_char;
-	int   rk_val;
+	char	rk_char;
+	int	rk_val;
 } rcs_kflags[] = {
 	{ 'k',   RCS_KWEXP_NAME },
 	{ 'v',   RCS_KWEXP_VAL  },
@@ -202,10 +202,10 @@ static struct rcs_kfl {
 #endif
 
 static struct rcs_key {
-	char  rk_str[16];
-	int   rk_id;
-	int   rk_val;
-	int   rk_flags;
+	char	rk_str[16];
+	int	rk_id;
+	int	rk_val;
+	int	rk_flags;
 } rcs_keys[] = {
 	{ "access",   RCS_TOK_ACCESS,   RCS_TOK_ID,     RCS_VOPT     },
 	{ "author",   RCS_TOK_AUTHOR,   RCS_TOK_ID,     0            },
@@ -225,14 +225,14 @@ static struct rcs_key {
 	{ "text",     RCS_TOK_TEXT,     RCS_TOK_STRING, RCS_NOSCOL   },
 };
 
-#define RCS_NKEYS   (sizeof(rcs_keys)/sizeof(rcs_keys[0]))
+#define RCS_NKEYS	(sizeof(rcs_keys)/sizeof(rcs_keys[0]))
 
 #ifdef notyet
 /*
  * Keyword expansion table
  */
 static struct rcs_kw {
-	char  kw_str[16];
+	char	kw_str[16];
 } rcs_expkw[] = {
 	{ "Author"    },
 	{ "Date"      },
@@ -262,27 +262,27 @@ static const char *rcs_errstrs[] = {
 int rcs_errno = RCS_ERR_NOERR;
 
 
-static int   rcs_write           (RCSFILE *);
-static int   rcs_parse           (RCSFILE *);
-static int   rcs_parse_admin     (RCSFILE *);
-static int   rcs_parse_delta     (RCSFILE *);
-static int   rcs_parse_deltatext (RCSFILE *);
+static int	rcs_write(RCSFILE *);
+static int	rcs_parse(RCSFILE *);
+static int	rcs_parse_admin(RCSFILE *);
+static int	rcs_parse_delta(RCSFILE *);
+static int	rcs_parse_deltatext(RCSFILE *);
 
-static int   rcs_parse_access    (RCSFILE *);
-static int   rcs_parse_symbols   (RCSFILE *);
-static int   rcs_parse_locks     (RCSFILE *);
-static int   rcs_parse_branches  (RCSFILE *, struct rcs_delta *);
-static void  rcs_freedelta       (struct rcs_delta *);
-static void  rcs_freepdata       (struct rcs_pdata *);
-static int   rcs_gettok          (RCSFILE *);
-static int   rcs_pushtok         (RCSFILE *, const char *, int);
-static int   rcs_growbuf         (RCSFILE *);
-static int   rcs_patch_lines     (struct rcs_foo *, struct rcs_foo *);
-static int   rcs_strprint        (const u_char *, size_t, FILE *);
+static int	rcs_parse_access(RCSFILE *);
+static int	rcs_parse_symbols(RCSFILE *);
+static int	rcs_parse_locks(RCSFILE *);
+static int	rcs_parse_branches(RCSFILE *, struct rcs_delta *);
+static void	rcs_freedelta(struct rcs_delta *);
+static void	rcs_freepdata(struct rcs_pdata *);
+static int	rcs_gettok(RCSFILE *);
+static int	rcs_pushtok(RCSFILE *, const char *, int);
+static int	rcs_growbuf(RCSFILE *);
+static int	rcs_patch_lines(struct rcs_foo *, struct rcs_foo *);
+static int	rcs_strprint(const u_char *, size_t, FILE *);
 
-static struct rcs_delta*  rcs_findrev    (RCSFILE *, const RCSNUM *);
-static struct rcs_foo*    rcs_splitlines (const char *);
-static void               rcs_freefoo    (struct rcs_foo *);
+static struct rcs_delta	*rcs_findrev(RCSFILE *, const RCSNUM *);
+static struct rcs_foo	*rcs_splitlines(const char *);
+static void		 rcs_freefoo(struct rcs_foo *);
 
 
 /*
@@ -933,7 +933,7 @@ rcs_lock_remove(RCSFILE *file, const RCSNUM *rev)
  *
  * Retrieve the description for the RCS file <file>.
  */
-const char*
+const char *
 rcs_desc_get(RCSFILE *file)
 {
 	return (file->rf_desc);
@@ -967,7 +967,7 @@ rcs_desc_set(RCSFILE *file, const char *desc)
  * Lookup the assumed comment leader based on a file's suffix.
  * Returns a pointer to the string on success, or NULL on failure.
  */
-const char*
+const char *
 rcs_comment_lookup(const char *filename)
 {
 	int i;
@@ -990,7 +990,7 @@ rcs_comment_lookup(const char *filename)
  *
  * Retrieve the comment leader for the RCS file <file>.
  */
-const char*
+const char *
 rcs_comment_get(RCSFILE *file)
 {
 	return (file->rf_comment);
@@ -1490,7 +1490,7 @@ rcs_kflag_get(const char *flags)
  *
  * Get the error string matching the RCS error code <code>.
  */
-const char*
+const char *
 rcs_errstr(int code)
 {
 	const char *esp;

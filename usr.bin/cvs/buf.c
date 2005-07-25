@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.14 2005/07/20 16:14:55 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.15 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,27 +40,27 @@
 #include "log.h"
 
 
-#define BUF_INCR   128
+#define BUF_INCR	128
 
 
 struct cvs_buf {
-	u_int    cb_flags;
+	u_int	cb_flags;
 
 	/* buffer handle and size */
-	u_char  *cb_buf;
-	size_t   cb_size;
+	u_char	*cb_buf;
+	size_t	 cb_size;
 
 	/* start and length of valid data in buffer */
-	u_char  *cb_cur;
-	size_t   cb_len;
+	u_char	*cb_cur;
+	size_t	 cb_len;
 };
 
 
 
-#define SIZE_LEFT(b)  ((size_t)(b->cb_buf - b->cb_cur) + b->cb_size)
+#define SIZE_LEFT(b)	((size_t)(b->cb_buf - b->cb_cur) + b->cb_size)
 
 
-static ssize_t   cvs_buf_grow (BUF *, size_t);
+static ssize_t	cvs_buf_grow(BUF *, size_t);
 
 
 
@@ -71,7 +71,7 @@ static ssize_t   cvs_buf_grow (BUF *, size_t);
  * uses dynamically-allocated memory and must be freed with cvs_buf_free(),
  * once the buffer is no longer needed.
  */
-BUF*
+BUF *
 cvs_buf_alloc(size_t len, u_int flags)
 {
 	BUF *b;
@@ -106,7 +106,7 @@ cvs_buf_alloc(size_t len, u_int flags)
  * buffer.
  * Returns the loaded buffer on success, or NULL on failure.
  */
-BUF*
+BUF *
 cvs_buf_load(const char *path, u_int flags)
 {
 	int fd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.21 2005/07/18 07:22:23 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.22 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -48,10 +48,10 @@
 #define FLAG_INTERACTIVE	0x04
 #define FLAG_QUIET		0x08
 
-static int cvs_admin_init     (struct cvs_cmd *, int, char **, int *);
-static int cvs_admin_pre_exec (struct cvsroot *);
-static int cvs_admin_remote   (CVSFILE *, void *);
-static int cvs_admin_local    (CVSFILE *, void *);
+static int	cvs_admin_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_admin_pre_exec(struct cvsroot *);
+static int	cvs_admin_remote(CVSFILE *, void *);
+static int	cvs_admin_local(CVSFILE *, void *);
 
 struct cvs_cmd cvs_cmd_admin = {
 	CVS_OP_ADMIN, CVS_REQ_ADMIN, "admin",

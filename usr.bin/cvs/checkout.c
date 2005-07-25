@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.38 2005/07/24 17:48:05 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.39 2005/07/25 12:05:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,11 +38,11 @@
 #include "proto.h"
 
 
-#define CVS_LISTMOD    1
-#define CVS_STATMOD    2
+#define CVS_LISTMOD	1
+#define CVS_STATMOD	2
 
-static int cvs_checkout_init     (struct cvs_cmd *, int, char **, int *);
-static int cvs_checkout_pre_exec (struct cvsroot *);
+static int	cvs_checkout_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_checkout_pre_exec(struct cvsroot *);
 
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_REQ_CO, "checkout",
