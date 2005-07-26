@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.8 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.9 2005/07/26 07:11:55 art Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -86,9 +86,13 @@ struct uvm_object {
 #ifdef _KERNEL
 
 extern struct uvm_pagerops uvm_vnodeops;
+extern struct uvm_pagerops uvm_deviceops;
 
 #define	UVM_OBJ_IS_VNODE(uobj)						\
 	((uobj)->pgops == &uvm_vnodeops)
+
+#define UVM_OBJ_IS_DEVICE(uobj)						\
+	((uobj)->pgops == &uvm_deviceops)
 
 #define	UVM_OBJ_IS_VTEXT(uobj)						\
 	((uobj)->pgops == &uvm_vnodeops &&				\

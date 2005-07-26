@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.26 2003/03/04 18:24:05 mickey Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.27 2005/07/26 07:11:55 art Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -206,6 +206,13 @@ uvm_coredump(p, vp, cred, chdr)
 		if (!(entry->protection & VM_PROT_WRITE))
 			continue;
 
+		/*
+		 * Don't dump mmaped devices.
+		 */
+		if (entry->object.uvm_obj != NULL &&
+		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj))
+			continue;
+
 		start = entry->start;
 		end = entry->end;
 
@@ -243,7 +250,11 @@ uvm_coredump(p, vp, cred, chdr)
 		    (caddr_t)&cseg, chdr->c_seghdrsize,
 		    offset, UIO_SYSSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-		if (error)
+		/*
+		 * We might get an EFAULT on objects mapped beyond
+		 * EOF. Ignore the error.
+		 */
+		if (error && error != EFAULT)
 			break;
 
 		offset += chdr->c_seghdrsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.36 2005/05/24 21:11:47 tedu Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.37 2005/07/26 07:11:55 art Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -52,23 +52,10 @@
 
 struct pool *uvm_aiobuf_pool;
 
-/*
- * list of uvm pagers in the system
- */
-
-extern struct uvm_pagerops uvm_deviceops;
-extern struct uvm_pagerops uvm_vnodeops;
-#ifdef UBC
-extern struct uvm_pagerops ubc_pager;
-#endif
-
 struct uvm_pagerops *uvmpagerops[] = {
 	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,
-#ifdef UBC
-	&ubc_pager,
-#endif
 };
 
 /*
