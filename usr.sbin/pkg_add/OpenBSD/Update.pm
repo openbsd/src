@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.51 2005/02/07 15:35:23 espie Exp $
+# $OpenBSD: Update.pm,v 1.52 2005/07/26 09:16:48 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -428,12 +428,17 @@ sub save_old_libraries
 				$stub_list->to_cache();
 				$old_plist->to_cache();
 			} else {
+				require OpenBSD::md5;
+
 				mkdir($dest);
 				my $oldname = $old_plist->pkgname();
-				open my $comment, '>', $dest.COMMENT;
-				print $comment "Stub libraries for $oldname";
-				close $comment;
-				link($dest.COMMENT, $dest.DESC);
+				open my $descr, '>', $dest.DESC;
+				print $descr "Stub libraries for $oldname\n";
+				print $descr "Stub libraries for $oldname\n";
+				close $descr;
+				my $f = OpenBSD::PackingElement::FDESC->add($stub_list, DESC);
+				$f->{ignore} = 1;
+				$f->{md5} = OpenBSD::md5::fromfile($dest.DESC);
 				$stub_list->to_installation();
 				$old_plist->to_installation();
 			}
