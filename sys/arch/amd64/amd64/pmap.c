@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2005/06/01 14:36:36 brad Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 2005/07/26 08:38:29 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -759,8 +759,6 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	/*
 	 * enable global TLB entries.
 	 */
-	lcr4(rcr4() | CR4_PGE);	/* enable hardware (via %cr4) */
-	tlbflush();
 	pmap_pg_g = PG_G;		/* enable software */
 
 	/* add PG_G attribute to already mapped kernel pages */
@@ -782,12 +780,6 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 	virtual_avail += PAGE_SIZE;
 	tmppte = PTE_BASE + pl1_i(tmpva);
-
-	/*
-	 * Enable large pages.
-	 */
-	lcr4(rcr4() | CR4_PSE);
-	tlbflush();
 
 	/*
 	 * Map the direct map. We steal pages for the page tables from

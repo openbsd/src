@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2004/07/20 20:17:16 art Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2005/07/26 08:38:29 art Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -149,3 +149,5 @@ export	PDIR_SLOT_PTE
 export	NKL4_KIMG_ENTRIES
 export	NKL3_KIMG_ENTRIES
 export	NKL2_KIMG_ENTRIES
+
+export	CR4_DEFAULT

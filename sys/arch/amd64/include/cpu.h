@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2005/04/19 15:14:11 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2005/07/26 08:38:29 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -342,5 +342,13 @@ void x86_bus_space_mallocok(void);
 	{ "apmhalt", CTLTYPE_INT }, \
 	{ "userldt", CTLTYPE_INT }, \
 }
+
+/*
+ * Default cr4 flags.
+ * Doesn't really belong here, but doesn't really belong anywhere else
+ * either. Just to avoid painful mismatches of cr4 flags since they are
+ * set in three different places.
+ */
+#define CR4_DEFAULT (CR4_PAE|CR4_PGE|CR4_PSE|CR4_OSFXSR|CR4_OSXMMEXCPT)
 
 #endif /* !_AMD64_CPU_H_ */

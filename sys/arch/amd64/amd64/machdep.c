@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2005/06/02 20:09:38 tholo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2005/07/26 08:38:29 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -272,22 +272,9 @@ cpu_startup(void)
 {
 	vaddr_t v;
 	vsize_t sz;
-	int x;
 	vaddr_t minaddr, maxaddr;
 
-	/*
-	 * Initialize error message buffer (et end of core).
-	 */
-	msgbuf_vaddr = uvm_km_valloc(kernel_map, x86_round_page(MSGBUFSIZE));
-	if (msgbuf_vaddr == 0)
-		panic("failed to valloc msgbuf_vaddr");
-
-	/* msgbuf_paddr was init'd in pmap */
-	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
-		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update(pmap_kenel());
-
+	msgbuf_vaddr = PMAP_DIRECT_MAP(msgbuf_paddr);
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);

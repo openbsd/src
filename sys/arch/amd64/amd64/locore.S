@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2005/05/29 03:20:36 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 2005/07/26 08:38:29 art Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ bi_size_ok:
 	 * 1. Enable PAE (and SSE while here).
 	 */
 	movl	%cr4,%eax
-	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT),%eax
+	orl	$(CR4_DEFAULT),%eax
 	movl	%eax,%cr4
 
 	/*
@@ -1025,8 +1025,7 @@ ENTRY(cpu_switchto)
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_C_LABEL(proc0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
-	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
+	.globl	_C_LABEL(proc0)
 ENTRY(switch_exit)
 #ifdef MULTIPROCESSOR
 	movq	CPUVAR(IDLE_PCB),%r8

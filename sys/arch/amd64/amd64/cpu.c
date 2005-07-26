@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2005/07/18 02:43:24 fgsch Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.10 2005/07/26 08:38:29 art Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -390,7 +390,7 @@ cpu_init(ci)
 		(*ci->cpu_setup)(ci);
 
 	lcr0(rcr0() | CR0_WP);
-	lcr4(rcr4() | CR4_PGE | CR4_PSE | CR4_OSFXSR | CR4_OSXMMEXCPT);
+	lcr4(rcr4() | CR4_DEFAULT);
 
 #ifdef MTRR
 	if ((ci->ci_flags & CPUF_AP) == 0)
