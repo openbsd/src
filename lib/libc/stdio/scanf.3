@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.12 2003/09/26 16:24:56 deraadt Exp $
+.\"	$OpenBSD: scanf.3,v 1.13 2005/07/26 03:27:04 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -262,9 +262,8 @@ array must be 1 larger for the terminating
 .Tn NUL
 character.
 .It Cm c
-Matches a sequence of
-.Li width
-count characters (default 1);
+Matches a sequence of characters consuming the number of bytes
+specified by the field width (defaults to 1 if unspecified);
 the next pointer must be a pointer to
 .Li char ,
 and there must be enough room for all the characters
