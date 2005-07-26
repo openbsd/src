@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt_long.3,v 1.10 2004/01/06 23:44:28 fgsch Exp $
+.\"	$OpenBSD: getopt_long.3,v 1.11 2005/07/26 04:17:44 jaredy Exp $
 .\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -78,11 +78,11 @@ in the
 structure passed to it for options that take arguments.
 Additionally, the long option's argument may be specified as a single
 argument with an equal sign, e.g.
-.Bd -literal
-myprogram --myoption=somevalue
+.Bd -literal -offset indent
+$ myprogram --myoption=somevalue
 .Ed
 .Pp
-When a long option is processed the call to
+When a long option is processed, the call to
 .Fn getopt_long
 will return 0.
 For this reason, long option processing without
@@ -98,7 +98,7 @@ The
 call requires a structure to be initialized describing the long
 options.
 The structure is:
-.Bd -literal
+.Bd -literal -offset indent
 struct option {
 	char *name;
 	int has_arg;
@@ -114,12 +114,13 @@ field should contain the option name without the leading double dash.
 The
 .Fa has_arg
 field should be one of:
-.Bl -tag -width "optional_argument"
-.It Li no_argument
-no argument to the option is expect.
-.It Li required_argument
+.Pp
+.Bl -tag -width "optional_argument" -compact -offset indent
+.It Dv no_argument
+no argument to the option is expected.
+.It Dv required_argument
 an argument to the option is required.
-.It Li optional_argument
+.It Dv optional_argument
 an argument to the option may be presented.
 .El
 .Pp
@@ -236,25 +237,34 @@ argv += optind;
 .Sh IMPLEMENTATION DIFFERENCES
 This section describes differences to the GNU implementation
 found in glibc-2.1.3:
-.Bl -tag -width "xxx"
-.It Li o
-handling of - as first char of option string in presence of
-environment variable POSIXLY_CORRECT:
+.Bl -bullet
+.It
+handling of
+.Ql -
+as the first character of the option string in the presence of the
+environment variable
+.Ev POSIXLY_CORRECT :
 .Bl -tag -width "OpenBSD"
-.It Li GNU
-ignores POSIXLY_CORRECT and returns non-options as
-arguments to option '\e1'.
-.It Li OpenBSD
-honors POSIXLY_CORRECT and stops at the first non-option.
+.It GNU
+ignores
+.Ev POSIXLY_CORRECT
+and returns non-options as arguments to option
+.Ql \e1 .
+.It OpenBSD
+honors
+.Ev POSIXLY_CORRECT
+and stops at the first non-option.
 .El
-.It Li o
-handling of - within the option string (not the first character):
+.It
+handling of
+.Ql -
+within the option string (not the first character):
 .Bl -tag -width "OpenBSD"
-.It Li GNU
+.It GNU
 treats a
 .Ql -
 on the command line as a non-argument.
-.It Li OpenBSD
+.It OpenBSD
 a
 .Ql -
 within the option string matches a
@@ -268,85 +278,157 @@ that use
 as an option flag.
 This practice is wrong, and should not be used in any current development.
 .El
-.It Li o
-handling of :: in options string in presence of POSIXLY_CORRECT:
+.It
+handling of
+.Ql ::
+in the option string in the presence of
+.Ev POSIXLY_CORRECT :
 .Bl -tag -width "OpenBSD"
-.It Li Both
-GNU and OpenBSD ignore POSIXLY_CORRECT here and take :: to
-mean the preceding option takes an optional argument.
+.It Both
+GNU and
+.Ox
+ignore
+.Ev POSIXLY_CORRECT
+here and take
+.Ql ::
+to mean the preceding option takes an optional argument.
 .El
-.It Li o
+.It
 return value in case of missing argument if first character
-(after + or -) in option string is not ':':
+(after
+.Ql +
+or
+.Ql - )
+in the option string is not
+.Ql \&: :
 .Bl -tag -width "OpenBSD"
-.It Li GNU
-returns '?'
+.It GNU
+returns
+.Ql \&?
 .It OpenBSD
-returns ':' (since OpenBSD's getopt does).
+returns
+.Ql \&:
+(since
+.Ox Ns 's
+.Xr getopt 3
+does).
 .El
-.It Li o
-handling of --a in getopt:
+.It
+handling of
+.Ql --a
+in
+.Xr getopt 3 :
 .Bl -tag -width "OpenBSD"
-.It Li GNU
-parses this as option '-', option 'a'.
-.It Li OpenBSD
-parses this as '--', and returns \-1 (ignoring the a).
-(Because the original getopt does.)
+.It GNU
+parses this as option
+.Ql - ,
+option
+.Ql a .
+.It OpenBSD
+parses this as
+.Ql -- ,
+and returns \-1 (ignoring the
+.Ql a )
+(because the original
+.Fn getopt
+did.)
 .El
-.It Li o
-setting of optopt for long options with flag !=
-.Dv NULL :
+.It
+setting of
+.Va optopt
+for long options with
+.Va flag
+.No non- Ns Dv NULL :
 .Bl -tag -width "OpenBSD"
-.It Li GNU
-sets optopt to val.
-.It Li OpenBSD
-sets optopt to 0 (since val would never be returned).
+.It GNU
+sets
+.Va optopt
+to
+.Va val .
+.It OpenBSD
+sets
+.Va optopt
+to 0 (since
+.Va val
+would never be returned).
 .El
-.It Li o
-handling of -W with W; in option string in getopt (not getopt_long):
+.It
+handling of
+.Ql -W
+with
+.Ql W;
+in the option string in
+.Xr getopt 3
+(not
+.Fn getopt_long ) :
 .Bl -tag -width "OpenBSD"
-.It Li GNU
-causes a segfault.
-.It Li OpenBSD
+.It GNU
+causes a segmentation fault.
+.It OpenBSD
 no special handling is done;
-.Dq W;
+.Ql W;
 is interpreted as two separate options, neither of which take an argument.
 .El
-.It Li o
-setting of optarg for long options without an argument that are
-invoked via -W (W; in option string):
+.It
+setting of
+.Va optarg
+for long options without an argument that are invoked via
+.Ql -W
+(with
+.Ql W;
+in the option string):
 .Bl -tag -width "OpenBSD"
-.It Li GNU
-sets optarg to the option name (the argument of -W).
-.It Li OpenBSD
-sets optarg to
+.It GNU
+sets
+.Va optarg
+to the option name (the argument of
+.Ql -W ) .
+.It OpenBSD
+sets
+.Va optarg
+to
 .Dv NULL
 (the argument of the long option).
 .El
-.It Li o
-handling of -W with an argument that is not (a prefix to) a known
-long option (W; in option string):
+.It
+handling of
+.Ql -W
+with an argument that is not (a prefix to) a known long option
+(with
+.Ql W;
+in the option string):
 .Bl -tag -width "OpenBSD"
-.It Li GNU
-returns -W with optarg set to the unknown option.
-.It Li OpenBSD
-treats this as an error (unknown option) and returns '?' with
-optopt set to 0 and optarg set to
+.It GNU
+returns
+.Ql -W
+with
+.Va optarg
+set to the unknown option.
+.It OpenBSD
+treats this as an error (unknown option) and returns
+.Ql \&?
+with
+.Va optopt
+set to 0 and
+.Va optarg
+set to
 .Dv NULL
 (as GNU's man page documents).
 .El
-.It Li o
+.It
 The error messages are different.
-.It Li o
-OpenBSD does not permute the argument vector at the same points in
+.It
+.Ox
+does not permute the argument vector at the same points in
 the calling sequence as GNU does.
 The aspects normally used by the caller
-(ordering after \-1 is returned, value of optind relative
-to current positions) are the same, though.
+(ordering after \-1 is returned, value of
+.Va optind
+relative to current positions) are the same, though.
 (We do fewer variable swaps.)
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width POSIXLY_CORRECT
+.Bl -tag -width Ev
 .It Ev POSIXLY_CORRECT
 If set, option processing stops when the first non-option is found and
 a leading
