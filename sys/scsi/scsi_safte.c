@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_safte.c,v 1.2 2005/07/26 16:28:28 jolan Exp $ */
+/*	$OpenBSD: scsi_safte.c,v 1.3 2005/07/26 22:32:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -52,7 +52,7 @@ struct safte_softc {
 	struct device	sc_dev;
 	struct scsi_link *sc_link;
 
-	enum safte_state {
+	enum {
 		SAFTE_ST_NONE,
 		SAFTE_ST_INIT,
 		SAFTE_ST_ERR
@@ -98,18 +98,14 @@ safte_match(struct device *parent, void *match, void *aux)
 	struct scsi_inquiry_data	*inq = sa->sa_inqbuf;
 	struct scsi_inquiry_data	inqbuf;
 	struct scsi_inquiry		cmd;
-	struct safte_inq		*si;
+	struct safte_inq		*si = (struct safte_inq *)&inqbuf.extra;
 
 	if (inq == NULL)
 		return (0);
 
-	if ((inq->device & SID_TYPE) != T_PROCESSOR)
-		return (0);
-
-	if ((inq->version & SID_ANSII) != SID_ANSII_SCSI2)
-		return (0);
-
-	if ((inq->response_format & SID_ANSII) != SID_ANSII_SCSI2)
+	if ((inq->device & SID_TYPE) != T_PROCESSOR ||
+	    (inq->version & SID_ANSII) != SID_ANSII_SCSI2 ||
+	    (inq->response_format & SID_ANSII) != SID_ANSII_SCSI2)
 		return (0);
 
 	memset(&cmd, 0, sizeof(cmd));
@@ -126,7 +122,6 @@ safte_match(struct device *parent, void *match, void *aux)
 	    SCSI_DATA_IN) != 0)
 		return (0);
 
-	si = (struct safte_inq *)&inqbuf.extra;
 	if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0)
 		return (24);
 
