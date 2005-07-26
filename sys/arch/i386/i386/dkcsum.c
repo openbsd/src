@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.17 2005/07/23 14:48:34 krw Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.18 2005/07/26 00:56:25 krw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -94,9 +94,10 @@ dkcsumattach(void)
 		error = (*bdsw->d_open)(dev, FREAD, S_IFCHR, curproc);
 		if (error) {
 			/* XXX What to do here? */
-			if (error != ENODEV)
-				printf("dkcsum: open of %s failed (%d)\n",
-				    dv->dv_xname, error);
+#ifdef DEBUG
+			printf("dkcsum: open of %s failed (%d)\n",
+			    dv->dv_xname, error);
+#endif
 			continue;
 		}
 
@@ -108,19 +109,25 @@ dkcsumattach(void)
 		(*bdsw->d_strategy)(bp);
 		if ((error = biowait(bp))) {
 			/* XXX What to do here? */
+#ifdef DEBUG
 			printf("dkcsum: read of %s failed (%d)\n",
 			    dv->dv_xname, error);
+#endif
 			error = (*bdsw->d_close)(dev, 0, S_IFCHR, curproc);
+#ifdef DEBUG
 			if (error)
 				printf("dkcsum: close of %s failed (%d)\n",
 				    dv->dv_xname, error);
+#endif
 			continue;
 		}
 		error = (*bdsw->d_close)(dev, FREAD, S_IFCHR, curproc);
 		if (error) {
 			/* XXX What to do here? */
+#ifdef DEBUG
 			printf("dkcsum: close of %s failed (%d)\n",
 			    dv->dv_xname, error);
+#endif
 			continue;
 		}
 
