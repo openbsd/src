@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.3 2005/04/08 07:07:06 jolan Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.4 2005/07/26 08:11:11 art Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -48,10 +48,10 @@ ENTRY(mtx_enter)
 1:	movl	MTX_WANTIPL(%rdi), %eax
 	movq	CPUVAR(SELF), %rcx
 	movl	CPU_INFO_ILEVEL(%rcx), %edx	# oipl = cpl;
-	cmpl	%edx, %eax			# if (cpl < mtx->mtx_wantipl)
-	jle	2f
+	cmpl	%eax, %edx			# if (cpl < mtx->mtx_wantipl)
+	cmovge	%edx, %eax
 	movl	%eax, CPU_INFO_ILEVEL(%rcx)	#	cpl = mtx->mtx_wantipl;
-2:	/*
+	/*
 	 * %edx - the old ipl
 	 * %rcx - curcpu()
 	 */
@@ -60,29 +60,29 @@ ENTRY(mtx_enter)
 	lock
 #endif
 	cmpxchgq	%rcx, MTX_OWNER(%rdi)	# test_and_set(mtx->mtx_owner)
-	jne	3f
+	jne	2f
 	movl	%edx, MTX_OLDIPL(%rdi)
 	ret
 
 	/* We failed to obtain the lock. splx, spin and retry. */
-3:	pushq	%rdi
+2:	pushq	%rdi
 	movl	%edx, %edi
 	call	_C_LABEL(spllower)
 	popq	%rdi
 #ifdef DIAGNOSTIC
 	movq	CPUVAR(SELF), %rcx
 	cmpq	MTX_OWNER(%rdi), %rcx
-	je	5f
+	je	4f
 #endif
-4:
+3:
 	movq	MTX_OWNER(%rdi), %rax
 	testq	%rax, %rax
 	jz	1b
-	jmp	4b
+	jmp	3b
 #ifdef DIAGNOSTIC
-5:	movq	$6f, %rdi
+4:	movq	$5f, %rdi
 	call	_C_LABEL(panic)
-6:	.asciz	"mtx_enter: locking against myself"
+5:	.asciz	"mtx_enter: locking against myself"
 #endif
 	
 ENTRY(mtx_leave)
@@ -91,5 +91,8 @@ ENTRY(mtx_leave)
 	movl	MTX_OLDIPL(%rax), %edi
 	movl	%ecx, MTX_OLDIPL(%rax)
 	movq	%rcx, MTX_OWNER(%rax)
+	cmpl	%edi, CPUVAR(ILEVEL)
+	je	1f
 	call	_C_LABEL(spllower)
+1:
 	ret
