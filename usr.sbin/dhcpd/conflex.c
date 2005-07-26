@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.4 2004/09/16 18:35:42 deraadt Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.5 2005/07/26 19:14:57 krw Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -101,7 +101,7 @@ get_char(FILE *cfile)
 			lpos = 1;
 			cur_line[0] = 0;
 		} else if (c != EOF) {
-			if (lpos <= 81) {
+			if (lpos < sizeof(line1)) {
 				cur_line[lpos - 1] = c;
 				cur_line[lpos] = 0;
 			}
