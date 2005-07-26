@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.34 2005/07/26 04:14:58 jaredy Exp $
+.\"	$OpenBSD: getopt.3,v 1.35 2005/07/26 04:20:23 jaredy Exp $
 .\"
 .Dd December 17, 2002
 .Dt GETOPT 3
@@ -207,7 +207,7 @@ If the
 function encounters a character not found in the string
 .Fa optstring
 or detects
-a missing option argument it writes an error message to
+a missing option argument, it writes an error message to
 .Em stderr
 and returns
 .Ql \&? .

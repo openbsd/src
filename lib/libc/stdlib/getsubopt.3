@@ -1,4 +1,4 @@
-.\" $OpenBSD: getsubopt.3,v 1.9 2005/02/25 03:12:44 cloder Exp $
+.\" $OpenBSD: getsubopt.3,v 1.10 2005/07/26 04:20:23 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 The
 .Fn getsubopt
 function parses a string containing tokens delimited by one or more
-tab, space or comma
+tab, space, or comma
 .Pq Ql \&,
 characters.
 It is intended for use in parsing groups of option arguments provided
@@ -90,7 +90,7 @@ will be set to point to the value portion of the token, or
 .Dv NULL
 if no value portion was present.
 .Sh EXAMPLES
-.Bd -literal -compact
+.Bd -literal
 char *tokens[] = {
 	#define	ONE	0
 		"one",

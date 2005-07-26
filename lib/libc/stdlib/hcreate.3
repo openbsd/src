@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: hcreate.3,v 1.1 2004/06/24 04:43:33 millert Exp $
+.\" 	$OpenBSD: hcreate.3,v 1.2 2005/07/26 04:20:23 jaredy Exp $
 .\" 	$NetBSD: hcreate.3,v 1.6 2003/04/16 13:34:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 .Sh DESCRIPTION
 The
 .Fn hcreate ,
-.Fn hdestroy
+.Fn hdestroy ,
 and
 .Fn hsearch
 functions manage hash search tables.
@@ -93,6 +93,7 @@ The
 argument is of type
 .Dv ENTRY ,
 a structural type which contains the following members:
+.Pp
 .Bl -tag -compact -offset indent -width voidX*dataXX
 .It Fa char *key
 comparison key.
@@ -111,7 +112,7 @@ The
 argument is of type
 .Dv ACTION ,
 an enumeration type which defines the following values:
-.Bl -tag -compact -offset indent -width ENTERXX
+.Bl -tag -offset indent -width ENTERXX
 .It Dv ENTER
 Insert
 .Fa item
@@ -145,7 +146,7 @@ returns no value.
 .Pp
 If successful, the
 .Fn hsearch
-function returns a pointer to hash table entry matching
+function returns a pointer to a hash table entry matching
 the provided key.
 If the action is
 .Dv FIND
@@ -178,7 +179,7 @@ Insufficient memory is available.
 .Sh STANDARDS
 The
 .Fn hcreate ,
-.Fn hdestroy
+.Fn hdestroy ,
 and
 .Fn hsearch
 functions conform to

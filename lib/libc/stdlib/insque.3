@@ -1,4 +1,4 @@
-.\"	$OpenBSD: insque.3,v 1.5 2005/07/26 04:13:18 jaredy Exp $
+.\"	$OpenBSD: insque.3,v 1.6 2005/07/26 04:20:23 jaredy Exp $
 .\" Copyright (c) 1993 John Brezak
 .\" All rights reserved.
 .\"
@@ -52,11 +52,11 @@ and
 manipulate queues built from doubly linked lists.
 The queue can be either circular or linear.
 Each element in the queue must be of the following form:
-.Bd -literal
+.Bd -literal -offset indent
 struct qelem {
-    struct qelem   *q_forw;
-    struct qelem   *q_back;
-    char            q_data[];
+	struct qelem   *q_forw;
+	struct qelem   *q_back;
+	char            q_data[];
 };
 .Ed
 .Pp
@@ -77,7 +77,7 @@ The
 function removes
 .Fa elem
 from the queue.
-.Sh DIAGNOSTICS
+.Pp
 These functions are not atomic unless that machine architecture allows it.
 .Sh SEE ALSO
 .Xr queue 3
@@ -96,7 +96,11 @@ The
 .Fn insque
 and
 .Fn remque
-functions are derived from the insque and remque instructions on a
+functions are derived from the
+.Li insque
+and
+.Li remque
+instructions on the
 .Tn VAX .
 They first appeared in
 .Bx 4.2 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lsearch.3,v 1.5 2005/07/07 07:50:38 jmc Exp $
+.\"	$OpenBSD: lsearch.3,v 1.6 2005/07/26 04:20:23 jaredy Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,12 +38,14 @@
 .Nd linear searching routines
 .Sh SYNOPSIS
 .Ft char *
-.Fn lsearch "const void *key" "const void *base" "size_t *nelp" "size_t width" "int (*compar)(void *, void *)"
+.Fn lsearch "const void *key" "const void *base" "size_t *nelp" \
+    "size_t width" "int (*compar)(void *, void *)"
 .Ft char *
-.Fn lfind "const void *key" "const void *base" "size_t *nelp" "size_t width" "int (*compar)(void *, void *)"
+.Fn lfind "const void *key" "const void *base" "size_t *nelp" \
+    "size_t width" "int (*compar)(void *, void *)"
 .Sh DESCRIPTION
 The functions
-.Fn lsearch ,
+.Fn lsearch
 and
 .Fn lfind
 provide basic linear searching functionality.
@@ -86,7 +88,7 @@ will return a null pointer and
 .Fn lsearch
 will add it to the array.
 When an element is added to the array by
-.Fn lsearch
+.Fn lsearch ,
 the location referenced by the argument
 .Fa nelp
 is incremented by one.

@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.40 2005/06/07 09:04:42 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.41 2005/07/26 04:20:23 jaredy Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -293,7 +293,10 @@ if successful; otherwise, a null pointer is returned and
 is set to
 .Er ENOMEM .
 .Sh ENVIRONMENT
+.Bl -tag -width Ev
+.It Ev MALLOC_OPTIONS
 See above.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/malloc.conf"
 .It Pa /etc/malloc.conf
@@ -318,7 +321,7 @@ option has been specified, warnings will also
 the process.
 .Pp
 Here is a brief description of the error messages and what they mean:
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Dq (ES): mumble mumble mumble
 .Fn malloc
 has been compiled with
@@ -346,7 +349,7 @@ internal freelist has been stomped on.
 .El
 .Pp
 Here is a brief description of the warning messages and what they mean:
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Dq chunk/page is already free.
 There was an attempt to free a chunk that had already been freed.
 .It Dq junk pointer, too high to make sense.
@@ -367,7 +370,11 @@ This pointer probably came from your data or bss segments.
 Nothing has ever been allocated, yet something is being freed or
 realloc'ed.
 .It Dq modified (chunk-/page-) pointer.
-The pointer passed to free or realloc has been modified.
+The pointer passed to
+.Fn free
+or
+.Fn realloc
+has been modified.
 .It Dq pointer to wrong page.
 The pointer that
 .Fn malloc
