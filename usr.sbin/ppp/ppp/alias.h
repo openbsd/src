@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias.h,v 1.12 2002/06/15 08:01:59 brian Exp $
+ * $OpenBSD: alias.h,v 1.13 2005/07/26 01:32:24 brad Exp $
  */
 
 /*-
@@ -45,6 +45,7 @@
 void	 PacketAliasInit(void);
 void	 PacketAliasSetAddress(struct in_addr _addr);
 void	 PacketAliasSetFWBase(unsigned int _base, unsigned int _num);
+void	 PacketAliasSetSkinnyPort(unsigned int _port);
 unsigned int
 	 PacketAliasSetMode(unsigned int _flags, unsigned int _mask);
 void	 PacketAliasUninit(void);

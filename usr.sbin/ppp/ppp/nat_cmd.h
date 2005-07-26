@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: nat_cmd.h,v 1.8 2001/11/23 11:17:03 brian Exp $
+ *	$OpenBSD: nat_cmd.h,v 1.9 2005/07/26 01:32:25 brad Exp $
  */
 
 struct cmdargs;
@@ -37,5 +37,6 @@ extern int nat_SetTarget(struct cmdargs const *);
 #ifndef NO_FW_PUNCH
 extern int nat_PunchFW(struct cmdargs const *);
 #endif
+extern int nat_SkinnyPort(struct cmdargs const *);
 
 extern struct layer natlayer;

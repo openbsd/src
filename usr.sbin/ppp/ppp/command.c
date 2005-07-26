@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.87 2005/07/18 22:51:03 brad Exp $
+ * $OpenBSD: command.c,v 1.88 2005/07/26 01:32:25 brad Exp $
  */
 
 #include <sys/param.h>
@@ -754,6 +754,8 @@ static struct cmdtab const NatCommands[] =
   {"punch_fw", NULL, nat_PunchFW, LOCAL_AUTH,
    "firewall control", "nat punch_fw [base count]"},
 #endif
+  {"skinny_port", NULL, nat_SkinnyPort, LOCAL_AUTH,
+   "TCP port used by Skinny Station protocol", "nat skinny_port [port]"},
   {"same_ports", NULL, NatOption, LOCAL_AUTH,
    "try to leave port numbers unchanged", "nat same_ports yes|no",
    (const void *) PKT_ALIAS_SAME_PORTS},

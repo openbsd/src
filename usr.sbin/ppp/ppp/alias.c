@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias.c,v 1.19 2002/06/15 08:01:59 brian Exp $
+ * $OpenBSD: alias.c,v 1.20 2005/07/26 01:32:24 brad Exp $
  */
 
 /*
@@ -136,6 +136,7 @@
 #define RTSP_CONTROL_PORT_NUMBER_2 7070
 #define TFTP_PORT_NUMBER 69
 #define PPTP_CONTROL_PORT_NUMBER 1723
+#define SKINNY_PORT_NUMBER 2000
 
 
 
@@ -908,6 +909,9 @@ TcpAliasIn(struct ip *pip)
         if (ntohs(tc->th_dport) == PPTP_CONTROL_PORT_NUMBER
          || ntohs(tc->th_sport) == PPTP_CONTROL_PORT_NUMBER)
             AliasHandlePptpIn(pip, link);
+        else if (skinnyPort != 0 && (ntohs(tc->th_dport) == skinnyPort
+         || ntohs(tc->th_sport) == skinnyPort))
+            AliasHandleSkinny(pip, link);
 
         alias_address = GetAliasAddress(link);
         original_address = GetOriginalAddress(link);
@@ -1089,6 +1093,9 @@ TcpAliasOut(struct ip *pip, int maxpacketsize)
         else if (ntohs(tc->th_dport) == PPTP_CONTROL_PORT_NUMBER
          || ntohs(tc->th_sport) == PPTP_CONTROL_PORT_NUMBER)
             AliasHandlePptpOut(pip, link);
+        else if (skinnyPort != 0 && (ntohs(tc->th_sport) == skinnyPort
+         || ntohs(tc->th_dport) == skinnyPort))
+            AliasHandleSkinny(pip, link);
 
 /* Adjust TCP checksum since source port is being aliased */
 /* and source address is being altered                    */

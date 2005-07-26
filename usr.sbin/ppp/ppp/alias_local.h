@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_local.h,v 1.14 2002/06/15 08:01:59 brian Exp $
+ * $OpenBSD: alias_local.h,v 1.15 2005/07/26 01:32:25 brad Exp $
  */
 
 /*
@@ -74,6 +74,7 @@
 /* Globals */
 
 extern int packetAliasMode;
+extern unsigned int skinnyPort;
 
 /* Prototypes */
 
@@ -211,6 +212,9 @@ int	 AliasHandleUdpNbtNS(struct ip *_pip, struct alias_link *_link,
 /* CUSeeMe routines */
 void	 AliasHandleCUSeeMeOut(struct ip *_pip, struct alias_link *_link);
 void	 AliasHandleCUSeeMeIn(struct ip *_pip, struct in_addr _original_addr);
+
+/* Skinny routines */
+void	 AliasHandleSkinny(struct ip *_pip, struct alias_link *_link);
 
 /* Transparent proxy routines */
 int	 ProxyCheck(struct ip *_pip, struct in_addr *_proxy_server_addr,
