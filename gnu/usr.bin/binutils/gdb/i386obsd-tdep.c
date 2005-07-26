@@ -51,6 +51,14 @@
 /* Default page size.  */
 static const int i386obsd_page_size = 4096;
 
+/* Offset for sigreturn(2).  */
+static const int i386obsd_sigreturn_offset[] = {
+  0x0a,				/* OpenBSD 3.2 */
+  0x14,				/* OpenBSD 3.6 */
+  0x3a,				/* OpenBSD 3.8 */
+  -1
+};
+
 /* Return whether the frame preceding NEXT_FRAME corresponds to an
    OpenBSD sigtramp routine.  */
 
@@ -66,6 +74,7 @@ i386obsd_sigtramp_p (struct frame_info *next_frame)
     0xcd, 0x80			/* int $0x80 */
   };
   size_t buflen = sizeof sigreturn;
+  const int *offset;
   char *name, *buf;
 
   /* If the function has a valid symbol name, it isn't a
@@ -82,21 +91,18 @@ i386obsd_sigtramp_p (struct frame_info *next_frame)
   /* Allocate buffer.  */
   buf = alloca (buflen);
 
-  /* If we can't read the instructions at START_PC, return zero.  */
-  if (!safe_frame_unwind_memory (next_frame, start_pc + 0x0a, buf, buflen))
-    return 0;
+  /* Loop over all offsets.  */
+  for (offset = i386obsd_sigreturn_offset; *offset != -1; offset++)
+    {
+      /* If we can't read the instructions, return zero.  */
+      if (!safe_frame_unwind_memory (next_frame, start_pc + *offset,
+				     buf, buflen))
+	return 0;
 
-  /* Check for sigreturn(2).  */
-  if (memcmp (buf, sigreturn, buflen) == 0)
-    return 1;
-
-  /* If we can't read the instructions at START_PC, return zero.  */
-  if (!safe_frame_unwind_memory (next_frame, start_pc + 0x14, buf, buflen))
-    return 0;
-
-  /* Check for sigreturn(2) (again).  */
-  if (memcmp (buf, sigreturn, buflen) == 0)
-    return 1;
+      /* Check for sigreturn(2).  */
+      if (memcmp (buf, sigreturn, buflen) == 0)
+	return 1;
+    }
 
   return 0;
 }
