@@ -122,6 +122,7 @@ _C_LABEL(splx):
  * (see pmap_tlb_shootnow).
  */
 IDTVEC(spllower)
+	_PROF_PROLOGUE
 	pushq	%rbx
 	pushq	%r13
 	pushq	%r12
