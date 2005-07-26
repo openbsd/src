@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.9 2005/07/18 02:43:24 fgsch Exp $	*/
+/*	$OpenBSD: intr.c,v 1.10 2005/07/26 08:07:39 art Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -721,8 +721,7 @@ splraise(int nlevel)
 	struct cpu_info *ci = curcpu();
 
 	olevel = ci->ci_ilevel;
-	if (nlevel > olevel)
-		ci->ci_ilevel = nlevel;
+	ci->ci_ilevel = MAX(ci->ci_ilevel, nlevel);
 	return (olevel);
 }
 
