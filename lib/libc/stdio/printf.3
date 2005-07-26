@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.48 2005/07/26 03:23:14 jaredy Exp $
+.\"	$OpenBSD: printf.3,v 1.49 2005/07/26 03:30:25 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -653,7 +653,7 @@ to five decimal places:
 fprintf(stdout, "pi = %.5f\en", 4 * atan(1.0));
 .Ed
 .Pp
-To allocate a 128 byte string and print into it:
+To allocate a 128-byte string and print into it:
 .Bd -literal -offset indent
 #include <stdarg.h>
 #include <stdio.h>
@@ -749,9 +749,9 @@ interface is not portable.
 It is important never to pass a string with user-supplied data as a
 format without using
 .Ql %s .
-An attacker can put format specifiers in the string to mangle your stack,
+An attacker can put format specifiers in the string to mangle the stack,
 leading to a possible security hole.
-This holds true even if you have built the string
+This holds true even if the string has been built
 .Dq by hand
 using a function like
 .Fn snprintf ,
@@ -764,8 +764,11 @@ Be sure to use the proper secure idiom:
 snprintf(buffer, sizeof(buffer), "%s", string);
 .Ed
 .Pp
-There is no way for printf to know the size of each argument passed.
-If you use positional arguments you must ensure that all parameters, up to the
+There is no way for
+.Fn printf
+to know the size of each argument passed.
+If positional arguments are used, care must be taken to ensure that all
+parameters, up to the
 last positionally specified parameter, are used in the format string.
 This allows for the format string to be parsed for this information.
-Failure to do this will mean your code is non-portable and liable to fail.
+Failure to do this will mean the code is non-portable and liable to fail.

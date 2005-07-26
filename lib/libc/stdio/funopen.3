@@ -1,4 +1,4 @@
-.\"	$OpenBSD: funopen.3,v 1.12 2005/07/26 03:25:01 jaredy Exp $
+.\"	$OpenBSD: funopen.3,v 1.13 2005/07/26 03:30:25 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,14 @@
 .Sh SYNOPSIS
 .Fd #include <stdio.h>
 .Ft FILE *
-.Fn funopen "const void  *cookie" "int  (*readfn)(void *, char *, int)" "int (*writefn)(void *, const char *, int)" "fpos_t (*seekfn)(void *, fpos_t, int)" "int (*closefn)(void *)"
+.Fn funopen "const void *cookie" "int (*readfn)(void *, char *, int)" \
+    "int (*writefn)(void *, const char *, int)" \
+    "fpos_t (*seekfn)(void *, fpos_t, int)" \
+    "int (*closefn)(void *)"
 .Ft FILE *
-.Fn fropen "const void  *cookie" "int  (*readfn)(void *, char *, int)"
+.Fn fropen "const void *cookie" "int (*readfn)(void *, char *, int)"
 .Ft FILE *
-.Fn fwopen "const void  *cookie" "int  (*writefn)(void *, const char *, int)"
+.Fn fwopen "const void *cookie" "int (*writefn)(void *, const char *, int)"
 .Sh DESCRIPTION
 The
 .Fn funopen

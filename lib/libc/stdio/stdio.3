@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdio.3,v 1.17 2004/06/20 21:09:30 jfb Exp $
+.\"	$OpenBSD: stdio.3,v 1.18 2005/07/26 03:30:25 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@ associated with the stream is positioned at the start of the file (byte
 zero), unless the file is opened with append mode.
 If append mode
 is used, the position indicator will be placed at the end-of-file.
-The position indicator is maintained by subsequent reads, writes
+The position indicator is maintained by subsequent reads, writes,
 and positioning requests.
 All input occurs as if the characters
 were read by successive calls to the
@@ -93,7 +93,9 @@ Other methods of program termination may not close files properly and hence
 buffered output may be lost.
 In particular,
 .Xr _exit 2
-does not flush stdio files.
+does not flush
+.Nm
+files.
 Neither does an exit due to a signal.
 Buffers are flushed by
 .Xr abort 3
@@ -165,7 +167,7 @@ The
 .Tn SYNOPSIS
 sections of the following manual pages indicate which include files
 are to be used, what the compiler declaration for the function
-looks like and which external variables are of interest.
+looks like, and which external variables are of interest.
 .Pp
 The following are defined as macros;
 these names may not be re-used
@@ -181,7 +183,7 @@ without first removing their current definitions with
 .Dv NULL ,
 .Dv SEEK_END ,
 .Dv SEEK_SET ,
-.Dv SEE_CUR ,
+.Dv SEEK_CUR ,
 .Dv TMP_MAX ,
 .Dv clearerr ,
 .Dv feof ,
@@ -197,15 +199,15 @@ without first removing their current definitions with
 .Dv stdin ,
 .Dv stdout .
 Function versions of the macro functions
-.Xr feof ,
-.Xr ferror ,
-.Xr clearerr ,
-.Xr fileno ,
-.Xr getc ,
-.Xr getchar ,
-.Xr putc ,
+.Xr feof 3 ,
+.Xr ferror 3 ,
+.Xr clearerr 3 ,
+.Xr fileno 3 ,
+.Xr getc 3 ,
+.Xr getchar 3 ,
+.Xr putc 3 ,
 and
-.Xr putchar
+.Xr putchar 3
 exist and will be used if the macro
 definitions are explicitly removed.
 .Sh LIST OF FUNCTIONS
@@ -289,6 +291,6 @@ library conforms to
 .Sh BUGS
 The standard buffered functions do not interact well with certain other
 library and system functions, especially
-.Xr vfork
+.Xr vfork 2
 and
-.Xr abort .
+.Xr abort 3 .

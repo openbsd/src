@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.36 2005/07/26 03:17:31 jaredy Exp $
+.\"	$OpenBSD: mktemp.3,v 1.37 2005/07/26 03:30:25 jaredy Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,14 +59,12 @@ appended
 to it, for example
 .Pa /tmp/temp.XXXXXX .
 The trailing
-.So Li X
-.Sc Ns s
+.So Li X Sc Ns s
 are replaced with the current process number and/or a
 unique letter combination.
 The number of unique file names that
 can be returned depends on the number of
-.So Li X
-.Sc Ns s
+.So Li X Sc Ns s
 provided; six
 .So Li X
 .Sc Ns s
@@ -111,7 +109,8 @@ except it permits a suffix to exist in the template.
 The template should be of the form
 .Pa /tmp/tmpXXXXXXXXXXsuffix .
 .Fn mkstemps
-is told the length of the suffix string, i.e., strlen("suffix");
+is told the length of the suffix string, i.e.,
+.Li strlen("suffix") .
 .Pp
 The
 .Fn mkdtemp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tmpnam.3,v 1.13 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: tmpnam.3,v 1.14 2005/07/26 03:30:25 jaredy Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,8 +60,8 @@ reference to it is closed.
 Since
 .Xr mkstemp 3
 creates the file with mode
-.Dv S_IRUSR | S_IWUSR ,
-after the unlink
+.Dv S_IRUSR \*(Ba S_IWUSR ,
+after the unlink,
 .Xr fchown 2
 and
 .Xr umask 2
