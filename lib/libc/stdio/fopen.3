@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fopen.3,v 1.16 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: fopen.3,v 1.17 2005/07/26 03:06:09 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,26 +60,20 @@ points to a string beginning with one of the following
 sequences (additional characters may follow these sequences):
 .Bl -tag -width indent
 .It Dq Li r
-Open text file for reading.
-The stream is positioned at the beginning of the file.
+Open file for reading.
 .It Dq Li r+
 Open for reading and writing.
-The stream is positioned at the beginning of the file.
 .It Dq Li w
 Truncate file to zero length or create text file for writing.
-The stream is positioned at the beginning of the file.
 .It Dq Li w+
 Open for reading and writing.
 The file is created if it does not exist, otherwise it is truncated.
-The stream is positioned at the beginning of the file.
 .It Dq Li a
 Open for writing.
 The file is created if it does not exist.
-The stream is positioned at the end of the file.
 .It Dq Li a+
 Open for reading and writing.
 The file is created if it does not exist.
-The stream is positioned at the end of the file.
 .El
 .Pp
 The
@@ -90,6 +84,18 @@ described above.
 This is strictly for compatibility with
 .St -ansiC
 and has no effect; the ``b'' is ignored.
+.Pp
+The
+.Fn fopen
+and
+.Fn freopen
+functions initially position the stream at the start of the file
+unless the file is opened in append mode,
+in which case the stream is initially positioned at the end of the file.
+.Pp
+Opening a file in append mode causes all subsequent writes to it
+to be forced to the current end-of-file, regardless of intervening
+repositioning of the stream.
 .Pp
 Any created files will have mode
 .Pf \\*q Dv S_IRUSR
@@ -121,6 +127,7 @@ function associates a stream with the existing file descriptor
 The
 .Fa mode
 of the stream must be compatible with the mode of the file descriptor.
+The stream is positioned at the file offset of the file descriptor.
 If
 .Fn fdopen
 fails, the file descriptor
