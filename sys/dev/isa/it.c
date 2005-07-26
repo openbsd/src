@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.14 2005/04/29 17:13:54 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.15 2005/07/26 19:08:09 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -283,31 +283,29 @@ it_generic_svolt(struct it_softc *sc, struct sensor *sensors)
 void
 it_generic_fanrpm(struct it_softc *sc, struct sensor *sensors)
 {
-	int i, sdata, divisor;
+	int i, sdata, divisor, odivisor, ndivisor;
 
-	divisor = it_readreg(sc, ITD_FAN);
-	for (i = 0; i < 3; i++) {
-		sdata = it_readreg(sc, ITD_SENSORFANBASE + i);
-		switch (i) {
-			case 2:
-				divisor = (divisor & 0x40) ? 3 : 1;
-				break;
-			case 1:
-				divisor = (divisor >> 3) & 0x7;
-				break;
-			case 0:
-				divisor = divisor & 0x7;
-				break;
-		}
-
-		if (sdata == 0xff) {
+	odivisor = ndivisor = divisor = it_readreg(sc, ITD_FAN);
+	for (i = 0; i < 3; i++, divisor >>= 3) {
+		sensors[i].flags &= ~SENSOR_FINVALID;
+		if ((sdata = it_readreg(sc, ITD_SENSORFANBASE + i)) == 0xff) {
 			sensors[i].flags |= SENSOR_FINVALID;
+			if (i == 2)
+				ndivisor ^= 0x40;
+			else {
+				ndivisor &= ~(7 << (i * 3));
+				ndivisor |= ((divisor + 1) & 7) << (i * 3);
+			}
 		} else if (sdata == 0) {
 			sensors[i].value = 0;
 		} else {
-			sensors[i].value = 1350000 / (sdata << divisor);
+			if (i == 2)
+				divisor = divisor & 1 ? 3 : 1;
+			sensors[i].value = 1350000 / (sdata << (divisor & 7));
 		}
 	}
+	if (ndivisor != odivisor)
+		it_writereg(sc, ITD_FAN, ndivisor);
 }
 
 /*
