@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_safte.c,v 1.3 2005/07/26 22:32:07 dlg Exp $ */
+/*	$OpenBSD: scsi_safte.c,v 1.4 2005/07/26 22:40:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -66,7 +66,7 @@ struct safte_softc {
 	int		sc_flags;
 #define SAFTE_FL_DOORLOCK	(1<<0)
 #define SAFTE_FL_ALARM		(1<<1)
-#define SAFTE_FL_CELCIUS	(1<<2)
+#define SAFTE_FL_CELSIUS	(1<<2)
 	size_t		sc_encstatlen;
 	u_char		*sc_encbuf;
 
@@ -288,7 +288,7 @@ safte_read_config(struct safte_softc *sc)
 	DPRINTF(("%s: nfans: %d npwrsup: %d nslots: %d doorlock: %d ntemps: %d"
 	    " alarm: %d celsius: %d ntherm: %d\n", DEVNAME(sc), config.nfans,
 	    config.npwrsup, config.nslots, config.doorlock, config.ntemps,
-	    config.alarm, SAFTE_CFG_CELCIUS(config.therm),
+	    config.alarm, SAFTE_CFG_CELSIUS(config.therm),
 	    SAFTE_CFG_NTHERM(config.therm)));
 
 	sc->sc_nfans = config.nfans;
@@ -298,7 +298,7 @@ safte_read_config(struct safte_softc *sc)
 	sc->sc_ntherm = SAFTE_CFG_NTHERM(config.therm);
 	sc->sc_flags = (config.doorlock ? SAFTE_FL_DOORLOCK : 0) |
 	    (config.alarm ? SAFTE_FL_ALARM : 0) |
-	    (SAFTE_CFG_CELCIUS(config.therm) ? SAFTE_FL_CELCIUS : 0);
+	    (SAFTE_CFG_CELSIUS(config.therm) ? SAFTE_FL_CELSIUS : 0);
 
 	return (0);
 }
@@ -353,7 +353,7 @@ safte_read_encstat(struct safte_softc *sc, int refresh)
 
 	i = 0;
 	while (i < sc->sc_ntemps) {
-		s->value = safte_temp2uK(*p, sc->sc_flags & SAFTE_FL_CELCIUS);
+		s->value = safte_temp2uK(*p, sc->sc_flags & SAFTE_FL_CELSIUS);
 		i++;
 		s++;
 		p++;
@@ -373,7 +373,7 @@ safte_temp2uK(u_int8_t measured, int celsius)
 	temp += SAFTE_TEMP_OFFSET;
 	temp *= 1000000; /* convert to micro (mu) degrees */
 	if (!celsius)
-		temp = ((temp - 32000000) * 5) / 9; /* convert to celsius */
+		temp = ((temp - 32000000) * 5) / 9; /* convert to Celsius */
 
 	temp += 273150000; /* convert to kelvin */
 

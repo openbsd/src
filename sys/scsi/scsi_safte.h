@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_safte.h,v 1.1 2005/07/25 23:32:33 dlg Exp $ */
+/*	$OpenBSD: scsi_safte.h,v 1.2 2005/07/26 22:40:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Daivd Gwynne <dlg@openbsd.org>
@@ -69,8 +69,8 @@ struct safte_config {
 	u_int8_t	ntemps;		/* number of temp sensors */
 	u_int8_t	alarm;		/* audible alarm installed */
 	u_int8_t	therm;		/* temps in C and num of thermostats */
-#define SAFTE_CFG_CELCIUSMASK	0x80
-#define SAFTE_CFG_CELCIUS(a)	((a) & SAFTE_CFG_CELCIUSMASK ? 1 : 0)
+#define SAFTE_CFG_CELSIUSMASK	0x80
+#define SAFTE_CFG_CELSIUS(a)	((a) & SAFTE_CFG_CELSIUSMASK ? 1 : 0)
 #define SAFTE_CFG_NTHERMMASK	0x0f
 #define SAFTE_CFG_NTHERM(a)	((a) & SAFTE_CFG_NTHERMMASK)
 	u_int8_t	reserved[56]; /* 7 to 62 */
