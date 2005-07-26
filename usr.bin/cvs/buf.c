@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.15 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.16 2005/07/26 20:58:44 moritz Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -56,8 +56,8 @@ struct cvs_buf {
 };
 
 
-
-#define SIZE_LEFT(b)	((size_t)(b->cb_buf - b->cb_cur) + b->cb_size)
+#define SIZE_LEFT(b)	(b->cb_size - (size_t)(b->cb_cur - b->cb_buf) \
+			    - b->cb_len)
 
 
 static ssize_t	cvs_buf_grow(BUF *, size_t);
@@ -135,7 +135,7 @@ cvs_buf_load(const char *path, u_int flags)
 	}
 
 	for (bp = buf->cb_cur; ; bp += (size_t)ret) {
-		len = MIN(SIZE_LEFT(buf), 4096);
+		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
 		if (ret == -1) {
 			cvs_log(LP_ERRNO, "read failed from buffer source");
@@ -193,6 +193,7 @@ cvs_buf_release(BUF *b)
 void
 cvs_buf_empty(BUF *b)
 {
+	memset(b->cb_buf, 0, b->cb_size);
 	b->cb_cur = b->cb_buf;
 	b->cb_len = 0;
 }
@@ -214,7 +215,7 @@ cvs_buf_copy(BUF *b, size_t off, void *dst, size_t len)
 		return (-1);
 
 	rc = MIN(len, (b->cb_len - off));
-	memcpy(dst, b->cb_buf, rc);
+	memcpy(dst, b->cb_buf + off, rc);
 
 	return (ssize_t)rc;
 }
@@ -223,11 +224,11 @@ cvs_buf_copy(BUF *b, size_t off, void *dst, size_t len)
 /*
  * cvs_buf_set()
  *
- * Set the contents of the buffer <b> to the first <len> bytes of data found
- * at <src>.  If the buffer was not created with BUF_AUTOEXT, as many bytes
- * as possible will be copied in the buffer.
+ * Set the contents of the buffer <b> at offset <off> to the first <len>
+ * bytes of data found at <src>.  If the buffer was not created with
+ * BUF_AUTOEXT, as many bytes as possible will be copied in the buffer.
  */
-int
+ssize_t
 cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 {
 	size_t rlen;
@@ -248,7 +249,7 @@ cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 		b->cb_len = rlen;
 	}
 
-	return (int)rlen;
+	return (rlen);
 }
 
 
@@ -344,12 +345,12 @@ cvs_buf_fappend(BUF *b, const char *fmt, ...)
 
 
 /*
- * cvs_buf_size()
+ * cvs_buf_len()
  *
  * Returns the size of the buffer that is being used.
  */
 size_t
-cvs_buf_size(BUF *b)
+cvs_buf_len(BUF *b)
 {
 	return (b->cb_len);
 }
@@ -386,7 +387,7 @@ cvs_buf_write_fd(BUF *b, int fd)
 	bp = b->cb_cur;
 
 	do {
-		ret = write(fd, bp, MIN(len, 8192));
+		ret = write(fd, bp, len);
 		if (ret == -1) {
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
