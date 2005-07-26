@@ -489,7 +489,7 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
 	
 	/* NOTE: We assume that there are no distinct address spaces
 	   for instruction and data.  */
-	piod.piod_op = writebuf ? PIOD_WRITE_D : PIOD_READ_D;
+	piod.piod_op = writebuf ? PIOD_WRITE_I : PIOD_READ_I;
 	piod.piod_addr = writebuf ? (void *) writebuf : readbuf;
 	piod.piod_offs = (void *) (long) offset;
 	piod.piod_len = len;
