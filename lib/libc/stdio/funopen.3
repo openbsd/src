@@ -1,4 +1,4 @@
-.\"	$OpenBSD: funopen.3,v 1.11 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: funopen.3,v 1.12 2005/07/26 03:25:01 jaredy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,12 +55,12 @@ Either
 or
 .Fa writefn
 must be specified;
-the others can be given as an appropriately typed
+the others may be given as
 .Dv NULL
-pointer.
+pointers.
 These
 .Tn I/O
-functions will be used to read, write, seek and close the new stream.
+functions will be used to read, write, seek, and close the new stream.
 .Pp
 In general, omitting a function means that any attempt to perform the
 associated operation on the resulting stream will fail.
