@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.29 2005/07/26 01:43:34 brad Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.30 2005/07/26 06:01:02 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -3908,9 +3908,10 @@ If no arguments are given, firewall punching is disabled.
 .It Ic nat skinny_port Op Ar port
 This command tells
 .Nm
-which TCP port is used by the Skinny Station protocol.  Skinny is used by
-Cisco IP phones to communicate with Cisco Call Managers to setup voice
-over IP calls.  The typical port used by Skinny is 2000.
+which TCP port is used by the Skinny Station protocol.
+Skinny is used by Cisco IP phones to communicate with
+Cisco Call Managers to set up voice over IP calls.
+The typical port used by Skinny is 2000.
 .Pp
 If no argument is given, skinny aliasing is disabled.
 .It Ic nat same_ports Ar yes | no
