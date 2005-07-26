@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.35 2005/05/27 17:45:56 millert Exp $
+.\"	$OpenBSD: mktemp.3,v 1.36 2005/07/26 03:17:31 jaredy Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,8 +128,10 @@ functions return a pointer to the template on success and
 on failure.
 The
 .Fn mkstemp
-function returns \-1 if no suitable file could be created.
-If either call fails an error code is placed in the global variable
+and
+.Fn mkstemps
+functions return \-1 if no suitable file could be created.
+If any call fails, an error code is placed in the global variable
 .Va errno .
 .Sh EXAMPLES
 Quite often a programmer will want to replace a use of
