@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_safte.c,v 1.1 2005/07/25 23:32:33 dlg Exp $ */
+/*	$OpenBSD: scsi_safte.c,v 1.2 2005/07/26 16:28:28 jolan Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -291,7 +291,7 @@ safte_read_config(struct safte_softc *sc)
 		return (1);
 
 	DPRINTF(("%s: nfans: %d npwrsup: %d nslots: %d doorlock: %d ntemps: %d"
-	    " alarm: %d celcius: %d ntherm: %d\n", DEVNAME(sc), config.nfans,
+	    " alarm: %d celsius: %d ntherm: %d\n", DEVNAME(sc), config.nfans,
 	    config.npwrsup, config.nslots, config.doorlock, config.ntemps,
 	    config.alarm, SAFTE_CFG_CELCIUS(config.therm),
 	    SAFTE_CFG_NTHERM(config.therm)));
@@ -370,15 +370,15 @@ safte_read_encstat(struct safte_softc *sc, int refresh)
 }
 
 int64_t
-safte_temp2uK(u_int8_t measured, int celcius)
+safte_temp2uK(u_int8_t measured, int celsius)
 {
 	int64_t				temp;
 
 	temp = (int64_t)measured;
 	temp += SAFTE_TEMP_OFFSET;
 	temp *= 1000000; /* convert to micro (mu) degrees */
-	if (!celcius)
-		temp = ((temp - 32000000) * 5) / 9; /* convert to celcius */
+	if (!celsius)
+		temp = ((temp - 32000000) * 5) / 9; /* convert to celsius */
 
 	temp += 273150000; /* convert to kelvin */
 
