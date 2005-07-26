@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.43 2005/07/25 13:37:53 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.44 2005/07/26 14:46:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -532,7 +532,7 @@ cvs_unlink(const char *path)
 	if (cvs_noexec == 1)
 		return (0);
 
-	if (unlink(path) == -1) {
+	if ((unlink(path) == -1) && (errno != ENOENT)) {
 		cvs_log(LP_ERRNO, "cannot remove `%s'", path);
 		return (-1);
 	}
