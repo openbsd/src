@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.160 2005/06/10 23:14:26 mjc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.161 2005/07/26 16:53:52 fgsch Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -664,14 +664,15 @@ will also clean dependencies.
 Can be overridden on a per-${PKGPATH} basis,
 by setting CLEANDEPENDS_${PKGPATH}.
 .It Ev COMMENT
-Comment used for the package, and in the INDEX.
+Short, one line description of the port, used for the package, and in the
+INDEX.
 .It Ev COMMENT-foo
-Comment used for sub package foo in a multi-package set up.
+Same as COMMENT but used for sub package foo in a multi-package set up.
 .It Ev COMMENT-vanilla
-Comment used for a flavored package, if the non-flavored comment is
-inappropriate.
+Same as COMMENT but used for a flavored package, if the non-flavored comment
+is inappropriate.
 .It Ev COMMENT-foo-vanilla
-Comment used for a sub-, flavored package.
+Same as COMMENT but used for a sub-, flavored package.
 .It Ev COMES_WITH
 The first release where the port was made part of the standard
 distribution.
@@ -1673,12 +1674,6 @@ Description for the port.
 Variables such as ${HOMEPAGE} and ${MAINTAINER} will be expanded
 (see SUBST_VARS).
 Multi-package ports will use DESCR${SUBPACKAGE}.
-.It Pa ${PKGDIR}/COMMENT
-Short, one line description of the port, that is displayed by
-.Xr pkg_info 1 ,
-and appears in
-.Pa ${PORTSDIR}/INDEX .
-Name will be adjusted for flavored and multi-packages ports.
 .It Pa ${PORTSDIR}/infrastructure/db/fake.mtree
 Specification used for populating ${WRKINST} at the start of
 .Ar fake .
@@ -1996,6 +1991,8 @@ to match other BSD, and save directories.
 .It Pa ${SCRIPTDIR}/{pre,do,post}-*
 Identical functionality can be obtained through a {pre,do,post}-* target,
 invoking the script manually if necessary.
+.It Pa ${PKGDIR}/COMMENT
+Use COMMENT variable instead.
 .It Pa ${PKGDIR}/PLIST.noshared
 Use PFRAG.shared or PFRAG.no-shared instead.
 PLIST.noshared was too easy to forget when updating ports.
