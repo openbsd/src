@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.35 2005/07/26 04:20:23 jaredy Exp $
+.\"	$OpenBSD: getopt.3,v 1.36 2005/07/26 13:38:41 jmc Exp $
 .\"
 .Dd December 17, 2002
 .Dt GETOPT 3
@@ -362,7 +362,6 @@ It is provided for backward compatibility
 .Em only .
 The following code fragment works in most cases and can handle mixed
 number and letter arguments.
-
 .Bd -literal -offset indent
 int aflag = 0, bflag = 0, ch, lastch = '\e0';
 int length = -1, newarg = 1, prevoptind = 1;
