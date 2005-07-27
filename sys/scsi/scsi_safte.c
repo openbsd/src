@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_safte.c,v 1.4 2005/07/26 22:40:04 dlg Exp $ */
+/*	$OpenBSD: scsi_safte.c,v 1.5 2005/07/27 15:06:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -227,6 +227,8 @@ safte_detach(struct device *self, int flags)
 {
 	struct safte_softc		*sc = (struct safte_softc *)self;
 	int				i;
+
+	timeout_del(&sc->sc_timeout);
 
 	if (sc->sc_state != SAFTE_ST_NONE) {
 		/*
