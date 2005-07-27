@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.29 2005/07/27 16:42:19 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.30 2005/07/27 17:14:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -181,7 +181,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			return (CVS_EX_FILE);
 
 		if (verbosity > 1)
-			cvs_log(LP_INFO, "removed `%s'", cf->cf_name);
+			cvs_log(LP_NOTICE, "removed `%s'", cf->cf_name);
 		return (0);
 	} else if (cf->cf_cvstat == CVS_FST_REMOVED) {
 		if (verbosity > 1 )
@@ -191,14 +191,14 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 		return (0);
 	} else {
 		if (verbosity > 1)
-			cvs_log(LP_INFO, "scheduling file `%s' for removal",
+			cvs_log(LP_NOTICE, "scheduling file `%s' for removal",
 			    cf->cf_name);
 		removed++;
 	}
 
 	if (removed != 0) {
 		if (verbosity > 0)
-			cvs_log(LP_INFO, "use '%s commit' to remove %s "
+			cvs_log(LP_NOTICE, "use '%s commit' to remove %s "
 			    "permanently", __progname,
 			    (removed == 1) ? "this file" : "these files");
 		return (0);
