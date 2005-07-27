@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.45 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.46 2005/07/27 16:42:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -291,7 +291,7 @@ cvs_commit_local(CVSFILE *cf, void *arg)
 
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
-			cvs_log(LP_INFO, "Examining %s", cf->cf_name);
+			cvs_log(LP_NOTICE, "Examining %s", cf->cf_name);
 		return (0);
 	}
 

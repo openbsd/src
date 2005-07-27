@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.22 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.23 2005/07/27 16:42:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -362,7 +362,7 @@ cvs_admin_local(CVSFILE *cf, void *arg)
 
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
-			cvs_log(LP_INFO, "Administrating %s", cf->cf_name);
+			cvs_log(LP_NOTICE, "Administrating %s", cf->cf_name);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.28 2005/07/26 14:58:58 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.29 2005/07/27 16:42:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -148,7 +148,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
-			cvs_log(LP_INFO, "Removing %s", cf->cf_name);
+			cvs_log(LP_NOTICE, "Removing %s", cf->cf_name);
 		return (0);
 	}
 

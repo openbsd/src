@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.53 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.54 2005/07/27 16:42:19 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -596,7 +596,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
-			cvs_log(LP_INFO, "Diffing %s", fpath);
+			cvs_log(LP_NOTICE, "Diffing %s", fpath);
 		return (0);
 	}
 
