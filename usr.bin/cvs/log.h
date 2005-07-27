@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.11 2005/07/27 13:06:04 xsa Exp $	*/
+/*	$OpenBSD: log.h,v 1.12 2005/07/27 15:45:44 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -44,8 +44,8 @@
 
 /* log priority levels */
 #define LP_DEBUG	0
-#define LP_NOTICE	1
-#define LP_INFO		2
+#define LP_INFO		1
+#define LP_NOTICE	2
 #define LP_WARN		3
 #define LP_ERR		4
 #define LP_ALERT	5

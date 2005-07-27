@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.23 2005/07/27 13:06:04 xsa Exp $	*/
+/*	$OpenBSD: log.c,v 1.24 2005/07/27 15:45:44 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -55,8 +55,8 @@ static char *cvs_log_levels[LP_MAX + 1] = {
 
 static int cvs_slpriomap[LP_MAX + 1] = {
 	LOG_DEBUG,
-	LOG_NOTICE,
 	LOG_INFO,
+	LOG_NOTICE,
 	LOG_WARNING,
 	LOG_ERR,
 	LOG_ALERT,
@@ -249,7 +249,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	}
 
 	if (cvs_log_dest & LD_STD) {
-		if (level <= LP_NOTICE)
+		if (level < LP_NOTICE)
 			out = stdout;
 		else
 			out = stderr;
