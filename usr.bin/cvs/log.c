@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.22 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: log.c,v 1.23 2005/07/27 13:06:04 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -55,8 +55,8 @@ static char *cvs_log_levels[LP_MAX + 1] = {
 
 static int cvs_slpriomap[LP_MAX + 1] = {
 	LOG_DEBUG,
-	LOG_INFO,
 	LOG_NOTICE,
+	LOG_INFO,
 	LOG_WARNING,
 	LOG_ERR,
 	LOG_ALERT,
