@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.25 2005/07/25 12:42:54 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.26 2005/07/27 17:53:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -144,8 +144,8 @@ cvs_add_remote(CVSFILE *cf, void *arg)
 static
 int cvs_add_local(CVSFILE *cf, void *arg)
 {
-	cvs_log(LP_INFO, "scheduling file `%s' for addition", cf->cf_name);
-	cvs_log(LP_INFO, "use `%s commit' to add this file permanently",
+	cvs_log(LP_NOTICE, "scheduling file `%s' for addition", cf->cf_name);
+	cvs_log(LP_NOTICE, "use `%s commit' to add this file permanently",
 	    __progname);
 
 	return (0);
