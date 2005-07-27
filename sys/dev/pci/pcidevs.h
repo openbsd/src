@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.897 2005/07/25 07:46:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.898 2005/07/27 23:45:10 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2573,6 +2573,7 @@
 
 /* Sundance products */
 #define	PCI_PRODUCT_SUNDANCE_ST201	0x0201		/* ST201 */
+#define	PCI_PRODUCT_SUNDANCE_ST1023	0x1023		/* ST1023 */
 #define	PCI_PRODUCT_SUNDANCE_ST2021	0x2021		/* ST2021 */
 
 /* Sunix */
