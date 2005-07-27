@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.45 2005/07/27 10:36:14 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.46 2005/07/27 10:38:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -554,6 +554,11 @@ cvs_rmdir(const char *path)
 	DIR *dirp;
 	struct dirent *ent;
 	char fpath[MAXPATHLEN];
+
+	cvs_log(LP_TRACE, "cvs_rmdir(%s)", path);
+
+	if (cvs_noexec == 1)
+		return (0);
 
 	if ((dirp = opendir(path)) == NULL) {
 		cvs_log(LP_ERRNO, "failed to open '%s'", path);
