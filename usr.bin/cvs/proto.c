@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.70 2005/07/26 20:58:44 moritz Exp $	*/
+/*	$OpenBSD: proto.c,v 1.71 2005/07/27 14:15:24 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -183,7 +183,7 @@ int
 cvs_connect(struct cvsroot *root)
 {
 	int argc, infd[2], outfd[2], errfd[2];
-	char *argv[16], *cvs_server_cmd, *vresp;
+	char *argv[16], *cvs_server_cmd, tmsg[1024], *vresp;
 
 	if (root->cr_method == CVS_METHOD_PSERVER) {
 		cvs_log(LP_ERR, "no pserver support due to security issues");
@@ -256,6 +256,15 @@ cvs_connect(struct cvsroot *root)
 		argv[argc++] = cvs_server_cmd;
 		argv[argc++] = "server";
 		argv[argc] = NULL;
+
+		if (cvs_trace == 1) {
+			tmsg[0] = '\0';
+			for (argc = 0; argv[argc] != NULL; argc++) {
+				strlcat(tmsg, argv[argc], sizeof(tmsg));
+				strlcat(tmsg, " ", sizeof(tmsg));
+			}
+		}
+		cvs_log(LP_TRACE, "Starting server: %s", tmsg);
 
 		execvp(argv[0], argv);
 		cvs_log(LP_ERRNO, "failed to exec");
