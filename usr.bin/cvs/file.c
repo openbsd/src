@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.105 2005/07/25 12:58:22 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.106 2005/07/27 10:36:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1381,7 +1381,7 @@ cvs_file_prune(char *path)
 
 	empty = (empty == 0);
 	if (empty) {
-		if (cvs_remove_dir(path) < 0) {
+		if (cvs_rmdir(path) < 0) {
 			cvs_log(LP_ERR, "failed to prune `%s'", path);
 			empty = 0;
 		}

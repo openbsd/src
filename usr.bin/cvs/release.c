@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.18 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.19 2005/07/27 10:36:14 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -223,12 +223,8 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 				return (CVS_EX_FILE);
 
 			if (dflag == 1) {
-				if (!cvs_noexec && cvs_remove_dir(dpath) != 0) {
-					cvs_log(LP_ERRNO,
-					    "deletion of directory `%s' failed",
-					    dpath);
+				if (cvs_rmdir(dpath) != 0)
 					return (CVS_EX_FILE);
-				}
 			}
 		}
 	} else {

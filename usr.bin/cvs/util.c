@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.44 2005/07/26 14:46:24 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.45 2005/07/27 10:36:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -541,13 +541,13 @@ cvs_unlink(const char *path)
 }
 
 /*
- * cvs_remove_dir()
+ * cvs_rmdir()
  *
  * Remove a directory tree from disk.
  * Returns 0 on success, or -1 on failure.
  */
 int
-cvs_remove_dir(const char *path)
+cvs_rmdir(const char *path)
 {
 	int ret = -1;
 	size_t len;
@@ -570,7 +570,7 @@ cvs_remove_dir(const char *path)
 			goto done;
 
 		if (ent->d_type == DT_DIR) {
-			if (cvs_remove_dir(fpath) == -1)
+			if (cvs_rmdir(fpath) == -1)
 				goto done;
 		} else if ((cvs_unlink(fpath) == -1) && (errno != ENOENT))
 			goto done;
