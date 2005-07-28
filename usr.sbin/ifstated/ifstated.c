@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.21 2005/02/07 12:38:44 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.22 2005/07/28 16:59:42 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -265,12 +265,14 @@ external_async_exec(struct ifsd_external *external)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	pid_t pid;
+	int s;
 
 	if (external->pid > 0) {
 		logit(IFSD_LOG_NORMAL,
 		    "previous command %s [%d] still running, killing it",
 		    external->command, external->pid);
 		kill(external->pid, SIGKILL);
+		waitpid(external->pid, &s, 0);
 		external->pid = 0;
 	}
 
@@ -354,6 +356,7 @@ void
 external_evtimer_setup(struct ifsd_state *state, int action)
 {
 	struct ifsd_external *external;
+	int s;
 
 	if (state != NULL) {
 		switch (action) {
@@ -378,6 +381,7 @@ external_evtimer_setup(struct ifsd_state *state, int action)
 			    &state->external_tests, entries) {
 				if (external->pid > 0) {
 					kill(external->pid, SIGKILL);
+					waitpid(external->pid, &s, 0);
 					external->pid = 0;
 				}
 				evtimer_del(&external->ev);
