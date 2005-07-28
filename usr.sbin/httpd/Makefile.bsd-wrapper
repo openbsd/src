@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.50 2005/07/28 19:12:39 jmc Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.51 2005/07/28 19:37:16 jmc Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -282,14 +282,12 @@ MANUALFILES= \
 	manual/misc/howto.html \
 	manual/misc/index.html \
 	manual/misc/known_client_problems.html \
-	manual/misc/nopgp.html \
 	manual/misc/perf-bsd44.html \
 	manual/misc/perf-tuning.html \
 	manual/misc/perf.html \
 	manual/misc/rewriteguide.html \
 	manual/misc/security_tips.html \
 	manual/misc/tutorials.html \
-	manual/misc/vif-info.html \
 	manual/misc/windoz_keepalive.html \
 	manual/sections.html.html \
 	manual/server-wide.html.html \
