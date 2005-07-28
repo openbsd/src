@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.37 2005/07/03 20:14:01 drahn Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.38 2005/07/28 23:11:25 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ const struct vfsops ext2fs_vfsops = {
 	ufs_check_export
 };
 
-struct pool ext2fs_inode_pool;
+/* struct pool ext2fs_inode_pool; */
 
 extern u_long ext2gennumber;
 

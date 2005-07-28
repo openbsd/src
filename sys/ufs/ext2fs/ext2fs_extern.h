@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.21 2005/04/30 13:58:55 niallo Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.22 2005/07/28 23:11:25 pedro Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ struct vfsconf;
 struct mbuf;
 struct componentname;
 
-extern struct pool ext2fs_inode_pool;		/* memory pool for inodes */
+/* extern struct pool ext2fs_inode_pool; */	/* memory pool for inodes */
 
 __BEGIN_DECLS
 
