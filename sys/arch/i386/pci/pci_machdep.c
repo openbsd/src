@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.28 2005/07/28 16:51:07 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.29 2005/07/28 17:22:28 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -140,6 +140,8 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4),
 	/* Triton needed for Connectix Virtual PC */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
+	/* Connectix Virtual PC 5 has a 440BX */
+	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
 	{0, 0xffffffff} /* patchable */
 };
 #undef _m1tag
