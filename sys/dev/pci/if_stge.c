@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.19 2005/07/24 19:35:46 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.20 2005/07/28 00:16:29 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -251,9 +251,7 @@ void	stge_shutdown(void *);
 void	stge_reset(struct stge_softc *);
 void	stge_rxdrain(struct stge_softc *);
 int	stge_add_rxbuf(struct stge_softc *, int);
-#if 0
 void	stge_read_eeprom(struct stge_softc *, int, uint16_t *);
-#endif
 void	stge_tick(void *);
 
 void	stge_stats_update(struct stge_softc *);
@@ -275,6 +273,7 @@ int	stge_match(struct device *, void *, void *);
 void	stge_attach(struct device *, struct device *, void *);
 
 int	stge_copy_small = 0;
+int  	stge_1023_bug = 0;	/* XXX: ST1023 works only in promisc mode */
 
 struct cfattach stge_ca = {
 	sizeof(struct stge_softc), stge_match, stge_attach,
@@ -303,6 +302,7 @@ const struct mii_bitbang_ops stge_mii_bitbang_ops = {
  * Devices supported by this driver.
  */
 const struct pci_matchid stge_devices[] = {
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST1023 },
 	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST2021 },
 	{ PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021 },
 	{ PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT },
@@ -489,20 +489,33 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 * Reading the station address from the EEPROM doesn't seem
 	 * to work, at least on my sample boards.  Instead, since
 	 * the reset sequence does AutoInit, read it from the station
-	 * address registers.
+	 * address registers. For Sundance 1023 you can only read it
+	 * from EEPROM.
 	 */
-	sc->sc_arpcom.ac_enaddr[0] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress0) & 0xff;
-	sc->sc_arpcom.ac_enaddr[1] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress0) >> 8;
-	sc->sc_arpcom.ac_enaddr[2] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress1) & 0xff;
-	sc->sc_arpcom.ac_enaddr[3] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress1) >> 8;
-	sc->sc_arpcom.ac_enaddr[4] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress2) & 0xff;
-	sc->sc_arpcom.ac_enaddr[5] = bus_space_read_2(sc->sc_st, sc->sc_sh,
-	    STGE_StationAddress2) >> 8;
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_SUNDANCE_ST1023) {
+		sc->sc_arpcom.ac_enaddr[0] = bus_space_read_2(sc->sc_st,
+		    sc->sc_sh, STGE_StationAddress0) & 0xff;
+		sc->sc_arpcom.ac_enaddr[1] = bus_space_read_2(sc->sc_st,
+		    sc->sc_sh, STGE_StationAddress0) >> 8;
+		sc->sc_arpcom.ac_enaddr[2] = bus_space_read_2(sc->sc_st,
+		    sc->sc_sh, STGE_StationAddress1) & 0xff;
+		sc->sc_arpcom.ac_enaddr[3] = bus_space_read_2(sc->sc_st,
+		    sc->sc_sh, STGE_StationAddress1) >> 8;
+		sc->sc_arpcom.ac_enaddr[4] = bus_space_read_2(sc->sc_st,
+		    sc->sc_sh, STGE_StationAddress2) & 0xff;
+		sc->sc_arpcom.ac_enaddr[5] = bus_space_read_2(sc->sc_st,
+		    sc->sc_sh, STGE_StationAddress2) >> 8;
+	} else {
+		uint16_t myaddr[ETHER_ADDR_LEN / 2];
+		for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
+			stge_read_eeprom(sc, STGE_EEPROM_StationAddress0 + i, 
+			    &myaddr[i]);
+			myaddr[i] = letoh16(myaddr[i]);
+		}
+		(void)memcpy(sc->sc_arpcom.ac_enaddr, myaddr,
+		    sizeof(sc->sc_arpcom.ac_enaddr));
+		stge_1023_bug = 1;
+	}
 
 	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
@@ -1600,7 +1613,6 @@ stge_stop(struct ifnet *ifp, int disable)
 		stge_rxdrain(sc);
 }
 
-#if 0
 static int
 stge_eeprom_wait(struct stge_softc *sc)
 {
@@ -1635,7 +1647,6 @@ stge_read_eeprom(struct stge_softc *sc, int offset, uint16_t *data)
 		    sc->sc_dev.dv_xname);
 	*data = bus_space_read_2(sc->sc_st, sc->sc_sh, STGE_EepromData);
 }
-#endif /* 0 */
 
 /*
  * stge_add_rxbuf:
@@ -1701,6 +1712,10 @@ stge_set_filter(struct stge_softc *sc)
 	sc->sc_ReceiveMode = RM_ReceiveUnicast;
 	if (ifp->if_flags & IFF_BROADCAST)
 		sc->sc_ReceiveMode |= RM_ReceiveBroadcast;
+
+	/* XXX: ST1023 only works in promiscuous mode */
+	if (stge_1023_bug)
+		ifp->if_flags |= IFF_PROMISC;
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		sc->sc_ReceiveMode |= RM_ReceiveAllFrames;
