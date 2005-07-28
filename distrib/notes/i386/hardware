@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.208 2005/07/23 03:45:03 brad Exp $
+dnl	$OpenBSD: hardware,v 1.209 2005/07/28 20:19:41 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1130,12 +1130,12 @@ Supported hardware {:-include-:}:
 		    VideoLogic Captivator PCI
 		    Zoltrix TV and Genie TV/FM
 		Hardware monitoring sensors, including: [G]
+		    ITE IT8705F, IT8712F
 		    National Semiconductor LM75, LM77, LM78, LM78-J, LM79
 		    National Semiconductor PC87366 LPC Super I/O VLM and TMS
-		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
-		    VIA VT82C686A, VT8231
-		    ITE IT8705F, IT8712F
 		    SiS SiS950
+		    VIA VT82C686A, VT8231
+		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
 		General Purpose Input/Output (GPIO) devices, including:
 		    National Semiconductor PC87366 LPC Super I/O GPIO
 		    National Semiconductor Geode SC1100 PCI-ISA bridge GPIO
