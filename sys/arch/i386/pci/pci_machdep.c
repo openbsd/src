@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.27 2005/06/27 02:36:06 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.28 2005/07/28 16:51:07 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@ extern bios_pciinfo_t *bios_pciinfo;
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #include "ioapic.h"
 
@@ -124,6 +125,25 @@ int pci_mode = -1;
 
 #define	PCI_MODE2_ENABLE_REG	0x0cf8
 #define	PCI_MODE2_FORWARD_REG	0x0cfa
+
+#define _m1tag(b, d, f) \
+	(PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8))
+#define _qe(bus, dev, fcn, vend, prod) \
+	{_m1tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
+struct {
+	u_int32_t tag;
+	pcireg_t id;
+} pcim1_quirk_tbl[] = {
+	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1),
+	/* XXX Triflex2 not tested */
+	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX2),
+	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4),
+	/* Triton needed for Connectix Virtual PC */
+	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
+	{0, 0xffffffff} /* patchable */
+};
+#undef _m1tag
+#undef _qe
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
@@ -360,8 +380,12 @@ pci_mode_detect()
 #error Invalid PCI configuration mode.
 #endif
 #else
+	u_int32_t sav, val;
+	int i;
+	pcireg_t idreg;
+
 	if (pci_mode != -1)
-		return pci_mode;
+		return (pci_mode);
 
 #if NBIOS > 0
 	/*
@@ -381,13 +405,66 @@ pci_mode_detect()
 #endif
 
 	/*
-	 * We try to divine which configuration mode the host bridge wants.  We
-	 * try mode 2 first, because our probe for mode 1 is likely to succeed
-	 * for mode 2 also.
+	 * We try to divine which configuration mode the host bridge wants.
 	 *
 	 * This should really be done using the PCI BIOS.  If we get here, the
 	 * PCI BIOS does not exist, or the boot blocks did not provide the
 	 * information.
+	 */
+
+	sav = inl(PCI_MODE1_ADDRESS_REG);
+
+	pci_mode = 1; /* assume this for now */
+	/*
+	 * catch some known buggy implementations of mode 1
+	 */
+	for (i = 0; i < sizeof(pcim1_quirk_tbl) / sizeof(pcim1_quirk_tbl[0]);
+	     i++) {
+		pcitag_t t;
+
+		if (!pcim1_quirk_tbl[i].tag)
+			break;
+		t.mode1 = pcim1_quirk_tbl[i].tag;
+		idreg = pci_conf_read(0, t, PCI_ID_REG); /* needs "pci_mode" */
+		if (idreg == pcim1_quirk_tbl[i].id) {
+#ifdef DEBUG
+			printf("known mode 1 PCI chipset (%08x)\n",
+			       idreg);
+#endif
+			return (pci_mode);
+		}
+	}
+
+	/*
+	 * Strong check for standard compliant mode 1:
+	 * 1. bit 31 ("enable") can be set
+	 * 2. byte/word access does not affect register
+ 	 */
+	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE);
+	outb(PCI_MODE1_ADDRESS_REG + 3, 0);
+	outw(PCI_MODE1_ADDRESS_REG + 2, 0);
+	val = inl(PCI_MODE1_ADDRESS_REG);
+	if ((val & 0x80fffffc) != PCI_MODE1_ENABLE) {
+#ifdef DEBUG
+		printf("pci_mode_detect: mode 1 enable failed (%x)\n",
+		       val);
+#endif
+		goto not1;
+	}
+	outl(PCI_MODE1_ADDRESS_REG, 0);
+	val = inl(PCI_MODE1_ADDRESS_REG);
+	if ((val & 0x80fffffc) != 0)
+		goto not1;
+	return (pci_mode);
+not1:
+	outl(PCI_MODE1_ADDRESS_REG, sav);
+ 
+	/*
+	 * This mode 2 check is quite weak (and known to give false
+	 * positives on some Compaq machines).
+	 * However, this doesn't matter, because this is the
+	 * last test, and simply no PCI devices will be found if
+	 * this happens.
 	 */
 	outb(PCI_MODE2_ENABLE_REG, 0);
 	outb(PCI_MODE2_FORWARD_REG, 0);
@@ -395,17 +472,7 @@ pci_mode_detect()
 	    inb(PCI_MODE2_FORWARD_REG) != 0)
 		goto not2;
 	return (pci_mode = 2);
-
 not2:
-	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE);
-	if (inl(PCI_MODE1_ADDRESS_REG) != PCI_MODE1_ENABLE)
-		goto not1;
-	outl(PCI_MODE1_ADDRESS_REG, 0);
-	if (inl(PCI_MODE1_ADDRESS_REG) != 0)
-		goto not1;
-	return (pci_mode = 1);
-
-not1:
 	return (pci_mode = 0);
 #endif
 }
