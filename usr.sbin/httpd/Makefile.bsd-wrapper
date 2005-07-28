@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.49 2005/07/27 21:00:33 jmc Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.50 2005/07/28 19:12:39 jmc Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -297,7 +297,6 @@ MANUALFILES= \
 	manual/sourcereorg.html \
 	manual/stopping.html.html \
 	manual/suexec.html.html \
-	manual/suexec_1_2.html \
 	manual/mod/mod_ssl/index.html \
 	manual/mod/mod_ssl/ssl_compat.gfont000.gif \
 	manual/mod/mod_ssl/ssl_compat.html \
@@ -407,7 +406,6 @@ MANUALFILES= \
 	manual/programs/rotatelogs.html \
 	manual/programs/suexec.html.html \
 	manual/vhosts/details.html \
-	manual/vhosts/details_1_2.html \
 	manual/vhosts/examples.html \
 	manual/vhosts/fd-limits.html.html \
 	manual/vhosts/host.html \
