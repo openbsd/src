@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.15 2005/07/09 21:23:45 brad Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.16 2005/07/28 02:15:15 brad Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -362,12 +362,14 @@ ifmedia_match(struct ifmedia *ifm, u_int target, u_int mask)
 	for (next = TAILQ_FIRST(&ifm->ifm_list); next != NULL;
 	     next = TAILQ_NEXT(next, ifm_list)) {
 		if ((next->ifm_media & mask) == (target & mask)) {
-#if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 			if (match) {
+#if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 				printf("ifmedia_match: multiple match for "
-				    "0x%x/0x%x\n", target, mask);
-			}
+				    "0x%x/0x%x, selected instance %d\n",
+				    target, mask, IFM_INST(match->ifm_media));
 #endif
+				break;
+			}
 			match = next;
 		}
 	}
