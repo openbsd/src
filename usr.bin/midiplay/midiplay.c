@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.6 2005/03/11 22:54:06 jmc Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.7 2005/07/28 10:59:11 jsg Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -240,6 +240,7 @@ send_sysex(u_char *p, u_int l)
 		memcpy(&event.arr[2], p, n);
 		send_event(&event);
 		l -= n;
+		p += n;
 	} while (l > 0);
 }
 
