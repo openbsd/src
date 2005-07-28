@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.98 2005/07/06 01:52:13 mickey Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.99 2005/07/28 01:45:05 brad Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -295,6 +295,7 @@ ef*	at isapnp?			# 3C515 ethernet
 le*	at pci?				# PCnet-PCI based ethernet
 ep*	at isapnp?			# 3C509 PnP ethernet
 le*	at isapnp?
+pcn*	at pci?				# AMD PCnet-PCI Ethernet
 de*	at pci?				# DC21X4X-based ethernet
 fxp*	at pci?				# EtherExpress 10/100B ethernet
 fxp*	at cardbus?			# Intel PRO/100 ethernet
