@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.57 2005/06/29 09:43:25 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.58 2005/07/28 20:32:33 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -376,6 +376,20 @@ which limits the sent
 messages to announcements of the local AS.
 The default for IBGP peers is
 .Ic all .
+.Pp
+.It Xo
+.Ic announce
+.Pq Ic IPv4 Ns \&| Ns Ic IPv6
+.Pq Ic none Ns \&| Ns Ic unicast
+.Xc
+For the given address family, control which subsequent address families
+(at the moment, only
+.Em none ,
+which disables the announcement of that address family, and
+.Em unicast
+are supported) are announced during the capabilities negotiation.
+Only routes for that address family and subsequent address family will be
+announced and processed.
 .Pp
 .It Ic depend on Ar interface
 The neighbor session will be kept in state
