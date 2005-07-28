@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.10 2004/08/08 00:23:15 deraadt Exp $ */
+/* $OpenBSD: radioctl.c,v 1.11 2005/07/28 17:15:11 robert Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -86,17 +86,17 @@ void	do_ioctls(int, struct opt_t *, int);
 
 void	print_value(int);
 void	change_value(const struct opt_t);
-void	update_value(int, u_long *, u_long);
+void	update_value(int, int *, int);
 
 void	warn_unsupported(int);
 void	usage(void);
 
 void	show_verbose(const char *, int);
-void	show_int_val(u_long, const char *, char *, int);
+void	show_int_val(int, const char *, char *, int);
 void	show_float_val(float, const char *, char *, int);
 void	show_char_val(const char *, const char *, int);
 int	str_to_opt(const char *);
-u_long	str_to_long(char *, int);
+u_int	str_to_int(char *, int);
 
 /*
  * Control behavior of a FM tuner - set frequency, volume etc
@@ -266,14 +266,14 @@ change_value(const struct opt_t o)
 
 	switch (o.option) {
 	case OPTION_VOLUME:
-		update_value(o.sign, (u_long *)&ri.volume, o.value);
+		update_value(o.sign, &ri.volume, o.value);
 		break;
 	case OPTION_FREQUENCY:
-		update_value(o.sign, (u_long *)&ri.freq, o.value);
+		update_value(o.sign, &ri.freq, o.value);
 		break;
 	case OPTION_REFERENCE:
 		if (ri.caps & RADIO_CAPS_REFERENCE_FREQ)
-			update_value(o.sign, (u_long *)&ri.rfreq, o.value);
+			update_value(o.sign, &ri.rfreq, o.value);
 		else
 			unsupported++;
 		break;
@@ -287,7 +287,7 @@ change_value(const struct opt_t o)
 		break;
 	case OPTION_SENSITIVITY:
 		if (ri.caps & RADIO_CAPS_LOCK_SENSITIVITY)
-			update_value(o.sign, (u_long *)&ri.lock, o.value);
+			update_value(o.sign, &ri.lock, o.value);
 		else
 			unsupported++;
 		break;
@@ -326,7 +326,7 @@ str_to_opt(const char *topt)
 }
 
 void
-update_value(int sign, u_long *value, u_long update)
+update_value(int sign, int *value, int update)
 {
 	switch (sign) {
 	case SIGN_NONE:
@@ -344,18 +344,18 @@ update_value(int sign, u_long *value, u_long update)
 /*
  * Convert string to unsigned integer
  */
-u_long
-str_to_long(char *str, int optval)
+u_int
+str_to_int(char *str, int optval)
 {
-	u_long val;
+	int val;
 
 	if (str == NULL || *str == '\0')
 		return VALUE_NONE;
 
 	if (optval == OPTION_FREQUENCY)
-		val = (u_long)1000 * atof(str);
+		val = (int)(1000 * atof(str));
 	else
-		val = (u_long)strtol(str, (char **)NULL, 10);
+		val = (int)strtol(str, (char **)NULL, 10);
 
 	return val;
 }
@@ -411,7 +411,7 @@ parse_opt(char *s, struct opt_t *o) {
 	case '+':
 	case '-':
 		o->sign = (*topt == '+') ? SIGN_PLUS : SIGN_MINUS;
-		o->value = str_to_long(&topt[1], o->option);
+		o->value = str_to_int(&topt[1], o->option);
 		break;
 	case 'o':
 		if (strncmp(topt, offchar,
@@ -431,7 +431,7 @@ parse_opt(char *s, struct opt_t *o) {
 		break;
 	default:
 		if (*topt > 47 && *topt < 58)
-			o->value = str_to_long(topt, o->option);
+			o->value = str_to_int(topt, o->option);
 		break;
 	}
 
@@ -481,10 +481,10 @@ print_value(int optval)
 }
 
 void
-show_int_val(u_long val, const char *nick, char *append, int silent)
+show_int_val(int val, const char *nick, char *append, int silent)
 {
 	show_verbose(nick, silent);
-	printf("%lu%s\n", val, append);
+	printf("%u%s\n", val, append);
 }
 
 void
