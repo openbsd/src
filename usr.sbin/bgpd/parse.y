@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.169 2005/07/28 16:27:01 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.170 2005/07/28 20:01:21 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1455,6 +1455,8 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "AS",			AS},
+		{ "IPv4",		IPV4},
+		{ "IPv6",		IPV6},
 		{ "ah",			AH},
 		{ "allow",		ALLOW},
 		{ "announce",		ANNOUNCE},
@@ -1474,8 +1476,6 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
-		{ "IPv4",		IPV4},
-		{ "IPv6",		IPV6},
 		{ "ignore",		IGNORE},
 		{ "ike",		IKE},
 		{ "in",			IN},
