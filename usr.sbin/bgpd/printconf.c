@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.45 2005/07/01 13:38:14 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.46 2005/07/28 20:14:29 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@ void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
 const char	*print_auth_alg(u_int8_t);
 const char	*print_enc_alg(u_int8_t);
+const char	*print_safi(u_int8_t);
 void		 print_rule(struct peer *, struct filter_rule *);
 const char *	 mrt_type(enum mrt_type);
 void		 print_mrt(u_int32_t, u_int32_t, const char *, const char *);
@@ -296,6 +297,9 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 	else if (p->auth.method == AUTH_IPSEC_IKE_ESP)
 		printf("%s\tipsec esp ike\n", c);
 
+	printf("%s\tannounce IPv4 %s\n", c, print_safi(p->capabilities.mp_v4));
+	printf("%s\tannounce IPv6 %s\n", c, print_safi(p->capabilities.mp_v6));
+
 	if (!TAILQ_EMPTY(&p->attrset))
 		printf("%s\t", c);
 	print_set(&p->attrset);
@@ -330,6 +334,19 @@ print_enc_alg(u_int8_t alg)
 		return ("aes");
 	default:
 		return ("???");
+	}
+}
+
+const char *
+print_safi(u_int8_t safi)
+{
+	switch (safi) {
+	case SAFI_NONE:
+		return ("none");
+	case SAFI_UNICAST:
+		return ("unicast");
+	default:
+		return ("?");
 	}
 }
 
