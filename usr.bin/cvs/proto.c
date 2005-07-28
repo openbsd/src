@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.71 2005/07/27 14:15:24 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.72 2005/07/28 15:52:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,8 @@
  *
  * The following code implements the CVS client/server protocol, which is
  * documented at the following URL:
- *	http://www.loria.fr/~molli/cvs/doc/cvsclient_toc.html
+ *	http://www.iam.unibe.ch/~til/documentation/cvs/cvsclient_toc.html
+ *	http://www.elegosoft.com/cvs/cvsclient_toc.html
  *
  * The protocol is split up into two parts; the first part is the client side
  * of things and is composed of all the response handlers, which are all named
