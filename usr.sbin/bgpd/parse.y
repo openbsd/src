@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.168 2005/07/04 09:37:24 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.169 2005/07/28 16:27:01 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,8 +158,10 @@ typedef struct {
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
+%token	IPV4 IPV6
 %token	<v.string>		STRING
 %type	<v.number>		number asnumber optnumber yesno inout espah
+%type	<v.number>		family
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -609,6 +611,32 @@ peeropts	: REMOTEAS asnumber	{
 			}
 			curpeer->conf.min_holdtime = $3;
 		}
+		| ANNOUNCE family STRING {
+			u_int8_t	safi;
+
+			if (!strcmp($3, "none"))
+				safi = SAFI_NONE;
+			else if (!strcmp($3, "unicast"))
+				safi = SAFI_UNICAST;
+			else {
+				yyerror("unknown/unsupported SAFI \"%s\"",
+				    $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+
+			switch ($2) {
+			case AFI_IPv4:
+				curpeer->conf.capabilities.mp_v4 = safi;
+				break;
+			case AFI_IPv6:
+				curpeer->conf.capabilities.mp_v6 = safi;
+				break;
+			default:
+				fatal("king bula sees borked AFI");
+			}
+		}
 		| ANNOUNCE STRING {
 			if (!strcmp($2, "self"))
 				curpeer->conf.announce_type = ANNOUNCE_SELF;
@@ -823,6 +851,10 @@ peeropts	: REMOTEAS asnumber	{
 			}
 			free($3);
 		}
+		;
+
+family		: IPV4	{ $$ = AFI_IPv4; }
+		| IPV6	{ $$ = AFI_IPv6; }
 		;
 
 espah		: ESP		{ $$ = 1; }
@@ -1442,6 +1474,8 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
+		{ "IPv4",		IPV4},
+		{ "IPv6",		IPV6},
 		{ "ignore",		IGNORE},
 		{ "ike",		IKE},
 		{ "in",			IN},
