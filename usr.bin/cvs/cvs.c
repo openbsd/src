@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.75 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.76 2005/07/28 13:41:38 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -120,6 +120,9 @@ main(int argc, char **argv)
 	    ((envstr = getenv("VISUAL")) != NULL) ||
 	    ((envstr = getenv("EDITOR")) != NULL))
 		cvs_editor = envstr;
+
+	if ((envstr = getenv("CVSREAD")) != NULL)
+		cvs_readonly = 1;
 
 	ret = cvs_getopt(argc, argv);
 
