@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.39 2005/07/03 20:14:01 drahn Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.40 2005/07/28 22:37:39 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1348,23 +1348,25 @@ ext2fs_reclaim(v)
 	struct inode *ip;
 	extern int prtactive;
 
-    if (prtactive && vp->v_usecount != 0) 
-        vprint("ext2fs_reclaim: pushing active", vp);
-    /*
-     * Remove the inode from its hash chain.
-     */
-    ip = VTOI(vp);
-    ufs_ihashrem(ip);
-    /*
-     * Purge old data structures associated with the inode.
-     */
-    cache_purge(vp);
-    if (ip->i_devvp) {
-        vrele(ip->i_devvp);
-    }
+	if (prtactive && vp->v_usecount != 0) 
+		vprint("ext2fs_reclaim: pushing active", vp);
+
+	/*
+	 * Remove the inode from its hash chain.
+	 */
+	ip = VTOI(vp);
+	ufs_ihashrem(ip);
+
+	/*
+	 * Purge old data structures associated with the inode.
+	 */
+	cache_purge(vp);
+	if (ip->i_devvp)
+		vrele(ip->i_devvp);
 
 	FREE(vp->v_data, M_EXT2FSNODE);
 	vp->v_data = NULL;
+
 	return (0);
 }
 
