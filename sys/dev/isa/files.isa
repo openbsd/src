@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.89 2005/03/08 20:00:25 tdeval Exp $
+#	$OpenBSD: files.isa,v 1.90 2005/07/28 20:12:13 grange Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -392,6 +392,11 @@ file	dev/isa/gscsio.c		gscsio
 device	it
 attach	it at isa
 file	dev/isa/it.c			it
+
+# VIA VT1211 LPC Super I/O
+device	viasio
+attach	viasio at isa
+file	dev/isa/viasio.c		viasio
 
 #
 # PCMCIA PCIC (i82365SL and compatibles):
