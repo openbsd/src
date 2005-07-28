@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.49 2005/07/21 16:08:21 fgsch Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.50 2005/07/28 18:39:32 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -2036,6 +2036,10 @@ void sis_stop(sc)
 	ifp->if_timer = 0;
 
 	timeout_del(&sc->sis_timeout);
+
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sis_stopped = 1;
+
 	CSR_WRITE_4(sc, SIS_IER, 0);
 	CSR_WRITE_4(sc, SIS_IMR, 0);
 	CSR_READ_4(sc, SIS_ISR); /* clear any interrupts already pending */
@@ -2083,11 +2087,6 @@ void sis_stop(sc)
 		bzero((char *)&sc->sis_ldata->sis_tx_list[i],
 		    sizeof(struct sis_desc) - sizeof(bus_dmamap_t));
 	}
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	sc->sis_stopped = 1;
-
-	return;
 }
 
 /*
