@@ -1,4 +1,4 @@
-.\"	$OpenBSD: viasio.4,v 1.1 2005/07/28 20:12:13 grange Exp $
+.\"	$OpenBSD: viasio.4,v 1.2 2005/07/28 21:08:35 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd Jul 24, 2005
+.Dd July 24, 2005
 .Dt VIASIO 4
 .Os
 .Sh NAME
@@ -27,9 +27,9 @@
 The
 .Nm
 driver provides support for the VIA VT1211 LPC Super I/O IC.
-Only hardware monitoring function is supported currently.
+Only the hardware monitoring function is currently supported.
 .Pp
-Hardware monitor provides hardware monitoring capabilities
+The hardware monitor provides hardware monitoring capabilities
 to be used with the
 .Xr sysctl 8
 interface.
@@ -47,10 +47,10 @@ The following monitoring sensors are available:
 .It Li "FAN2" Ta "RPM" Ta "Fan tachometer"
 .El
 .Pp
-If hardware monitor is not enabled by firmware the driver can try
+If the hardware monitor is not enabled by firmware, the driver can try
 to enable it if value 0x0001 is presented in the
 .Ar flags .
-Note that enabling hardware monitor can lead to unexpected results.
+Note that enabling the hardware monitor can lead to unexpected results.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,
