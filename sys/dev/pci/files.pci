@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.179 2005/07/06 01:52:13 mickey Exp $
+#	$OpenBSD: files.pci,v 1.180 2005/07/28 01:31:22 brad Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -201,6 +201,12 @@ file	dev/pci/if_fpa.c		fpa
 # device declaration in sys/conf/files
 attach	le at pci with le_pci
 file	dev/pci/if_le_pci.c		le_pci
+
+# AMD PCnet-PCI Ethernet controller family
+# Supersedes if_le_pci.c
+device pcn: ether, ifnet, ifmedia, mii
+attach pcn at pci
+file	dev/pci/if_pcn.c
 
 # common code for siop/esiop pci front end
 define	siop_pci_common
