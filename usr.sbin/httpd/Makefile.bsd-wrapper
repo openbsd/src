@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.52 2005/07/29 09:37:45 jmc Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.53 2005/07/29 23:57:17 jmc Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -237,20 +237,20 @@ MANUALFILES= \
 	manual/FAQ.html \
 	manual/howto/auth.html \
 	manual/howto/htaccess.html \
-	manual/howto/cgi.html.html \
-	manual/howto/ssi.html.html \
+	manual/howto/cgi.html \
+	manual/howto/ssi.html \
 	manual/LICENSE \
 	manual/bind.html \
-	manual/configuring.html.html \
-	manual/content-negotiation.html.html \
-	manual/custom-error.html.html \
-	manual/dns-caveats.html.html \
+	manual/configuring.html \
+	manual/content-negotiation.html \
+	manual/custom-error.html \
+	manual/dns-caveats.html \
 	manual/dso.html \
-	manual/env.html.html \
-	manual/handler.html.html \
-	manual/index.html.html \
-	manual/invoking.html.html \
-	manual/keepalive.html.html \
+	manual/env.html \
+	manual/handler.html \
+	manual/index.html \
+	manual/invoking.html \
+	manual/keepalive.html \
 	manual/location.html \
 	manual/logs.html \
 	manual/images/apache_header.gif \
@@ -268,7 +268,7 @@ MANUALFILES= \
 	manual/images/pixel.gif \
 	manual/images/sub.gif \
 	manual/multilogs.html \
-	manual/process-model.html.html \
+	manual/process-model.html \
 	manual/misc/API.html \
 	manual/misc/FAQ.html \
 	manual/misc/custom_errordocs.html \
@@ -283,12 +283,12 @@ MANUALFILES= \
 	manual/misc/rewriteguide.html \
 	manual/misc/security_tips.html \
 	manual/misc/tutorials.html \
-	manual/sections.html.html \
-	manual/server-wide.html.html \
+	manual/sections.html \
+	manual/server-wide.html \
 	manual/sitemap.html \
 	manual/sourcereorg.html \
-	manual/stopping.html.html \
-	manual/suexec.html.html \
+	manual/stopping.html \
+	manual/suexec.html \
 	manual/mod/mod_ssl/index.html \
 	manual/mod/mod_ssl/ssl_compat.gfont000.gif \
 	manual/mod/mod_ssl/ssl_compat.html \
@@ -334,16 +334,16 @@ MANUALFILES= \
 	manual/mod/mod_ssl/ssl_template.title-ref.gif \
 	manual/mod/mod_ssl/ssl_template.title-toc.gif \
 	manual/mod/mod_ssl/ssl_template.title-tutor.gif \
-	manual/mod/core.html.html \
-	manual/mod/directive-dict.html.html \
-	manual/mod/directives.html.html \
-	manual/mod/index-bytype.html.html \
-	manual/mod/index.html.html \
-	manual/mod/mod_access.html.html \
-	manual/mod/mod_actions.html.html \
-	manual/mod/mod_alias.html.html \
-	manual/mod/mod_asis.html.html \
-	manual/mod/mod_auth.html.html \
+	manual/mod/core.html \
+	manual/mod/directive-dict.html \
+	manual/mod/directives.html \
+	manual/mod/index-bytype.html \
+	manual/mod/index.html \
+	manual/mod/mod_access.html \
+	manual/mod/mod_actions.html \
+	manual/mod/mod_alias.html \
+	manual/mod/mod_asis.html \
+	manual/mod/mod_auth.html \
 	manual/mod/mod_auth_anon.html \
 	manual/mod/mod_auth_db.html \
 	manual/mod/mod_auth_dbm.html \
@@ -351,57 +351,57 @@ MANUALFILES= \
 	manual/mod/mod_autoindex.html \
 	manual/mod/mod_browser.html \
 	manual/mod/mod_cern_meta.html \
-	manual/mod/mod_cgi.html.html \
+	manual/mod/mod_cgi.html \
 	manual/mod/mod_cookies.html \
 	manual/mod/mod_define.html \
 	manual/mod/mod_digest.html \
-	manual/mod/mod_dir.html.html \
-	manual/mod/mod_env.html.html \
+	manual/mod/mod_dir.html \
+	manual/mod/mod_env.html \
 	manual/mod/mod_expires.html \
 	manual/mod/mod_headers.html \
 	manual/mod/mod_imap.html \
 	manual/mod/mod_include.html \
-	manual/mod/mod_info.html.html \
+	manual/mod/mod_info.html \
 	manual/mod/mod_log_agent.html \
 	manual/mod/mod_log_common.html \
-	manual/mod/mod_log_config.html.html \
+	manual/mod/mod_log_config.html \
 	manual/mod/mod_log_referer.html \
-	manual/mod/mod_mime.html.html \
+	manual/mod/mod_mime.html \
 	manual/mod/mod_mime_magic.html \
 	manual/mod/mod_mmap_static.html \
-	manual/mod/mod_negotiation.html.html \
+	manual/mod/mod_negotiation.html \
 	manual/mod/mod_proxy.html \
-	manual/mod/mod_rewrite.html.html \
-	manual/mod/mod_setenvif.html.html \
-	manual/mod/mod_so.html.html \
-	manual/mod/mod_speling.html.html \
+	manual/mod/mod_rewrite.html \
+	manual/mod/mod_setenvif.html \
+	manual/mod/mod_so.html \
+	manual/mod/mod_speling.html \
 	manual/mod/mod_status.html \
-	manual/mod/mod_unique_id.html.html \
-	manual/mod/mod_userdir.html.html \
+	manual/mod/mod_unique_id.html \
+	manual/mod/mod_userdir.html \
 	manual/mod/mod_usertrack.html \
 	manual/mod/mod_vhost_alias.html \
-	manual/mod/module-dict.html.html \
+	manual/mod/module-dict.html \
 	manual/urlmapping.html \
 	manual/programs/ab.html \
-	manual/programs/apachectl.html.html \
+	manual/programs/apachectl.html \
 	manual/programs/apxs.html \
 	manual/programs/dbmmanage.html \
 	manual/programs/htdigest.html \
-	manual/programs/htpasswd.html.html \
-	manual/programs/httpd.html.html \
-	manual/programs/index.html.html \
+	manual/programs/htpasswd.html \
+	manual/programs/httpd.html \
+	manual/programs/index.html \
 	manual/programs/logresolve.html \
 	manual/programs/other.html \
 	manual/programs/rotatelogs.html \
-	manual/programs/suexec.html.html \
+	manual/programs/suexec.html \
 	manual/vhosts/details.html \
 	manual/vhosts/examples.html \
-	manual/vhosts/fd-limits.html.html \
+	manual/vhosts/fd-limits.html \
 	manual/vhosts/host.html \
-	manual/vhosts/index.html.html \
+	manual/vhosts/index.html \
 	manual/vhosts/ip-based.html \
 	manual/vhosts/mass.html \
-	manual/vhosts/name-based.html.html \
+	manual/vhosts/name-based.html \
 	manual/vhosts/vhosts-in-depth.html \
 	manual/vhosts/virtual-host.html
 	
