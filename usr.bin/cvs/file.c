@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.106 2005/07/27 10:36:14 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.107 2005/07/29 00:33:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -781,16 +781,19 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 		/*
 		 * Fill in the repo path ourselfs.
 		 */
-		l = snprintf(pbuf, sizeof(pbuf), "%s/%s",
-		    cvs_repo_base, fpath);
-		if (l == -1 || l >= (int)sizeof(pbuf))
-			return (-1);
+		if (cvs_repo_base != NULL) {
+			l = snprintf(pbuf, sizeof(pbuf), "%s/%s",
+			    cvs_repo_base, fpath);
+			if (l == -1 || l >= (int)sizeof(pbuf))
+				return (-1);
 
-		cf->cf_repo = strdup(pbuf);
-		if (cf->cf_repo == NULL) {
-			cvs_log(LP_ERRNO, "failed to dup repo string");
-			return (-1);
-		}
+			cf->cf_repo = strdup(pbuf);
+			if (cf->cf_repo == NULL) {
+				cvs_log(LP_ERRNO, "failed to dup repo string");
+				return (-1);
+			}
+		} else
+			cf->cf_repo = NULL;
 	}
 
 	if (flags & CF_MKADMIN)
