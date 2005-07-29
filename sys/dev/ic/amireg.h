@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.18 2005/07/29 16:01:30 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.19 2005/07/29 16:30:02 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -223,14 +223,6 @@
 #define	AMI_HSPDIAG	0xb1
 #define	AMI_GESENSEINFO	0xb2	/* get extended sense info */
 #define	AMI_SYSFLUSH	0xfe	/* flush system */
-/* this needs to be removed when the new bioctl goes in */
-#define AMI_GETINQ	0xcf	/* get proc & drive inquiry data */
-#define AMI_ALARM	0x51	/* alarm functions */
-#define 	AMI_ALARM_OFF   0x00
-#define 	AMI_ALARM_ON    0x01
-#define 	AMI_ALARM_QUIET 0x02
-#define 	AMI_ALARM_GET   0x03
-#define 	AMI_ALARM_TEST  0x04 /* not all boards support this */
 
 /* command structures */
 #pragma pack(1)
