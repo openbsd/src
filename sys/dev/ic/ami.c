@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.48 2005/07/18 15:10:56 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.49 2005/07/29 16:01:30 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -136,11 +136,13 @@ void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 int  ami_inquire(struct ami_softc *sc, u_int8_t op);
 
 #if NBIO > 0
+int ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
+    size_t, void *);
+int ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, void *);
 int ami_ioctl(struct device *, u_long, caddr_t);
-int ami_ioctl_alarm(struct ami_softc *, bioc_alarm *);
-int ami_ioctl_startstop( struct ami_softc *, bioc_startstop *);
-int ami_ioctl_status( struct ami_softc *, bioc_status *);
-int ami_ioctl_passthru(struct ami_softc *, bioc_scsicmd *);
+int ami_ioctl_inq(struct ami_softc *, bioc_inq *);
+int ami_ioctl_vol(struct ami_softc *, bioc_vol *);
+int ami_ioctl_disk(struct ami_softc *, bioc_disk *);
 #endif /* NBIO > 0 */
 
 struct ami_ccb *
@@ -1680,6 +1682,7 @@ ami_scsi_ioctl(struct scsi_link *link, u_long cmd,
     caddr_t addr, int flag, struct proc *p)
 {
 	struct ami_softc *sc = (struct ami_softc *)link->adapter_softc;
+	/* u_int8_t target = link->target; */
 
 	if (sc->sc_ioctl)
 		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
@@ -1694,11 +1697,11 @@ ami_ioctl(dev, cmd, addr)
 	u_long cmd;
 	caddr_t addr;
 {
-	int error = 0;
 	struct ami_softc *sc = (struct ami_softc *)dev;
 	ami_lock_t lock;
+	int error = 0;
 
-	/* FIXME do we need to test for sc_dis_poll? */
+	AMI_DPRINTF(AMI_D_IOCTL, ("%s: ioctl ", sc->sc_dev.dv_xname));
 
 	if (sc->sc_flags & AMI_BROKEN)
 		return ENODEV; /* can't do this to broken device for now */
@@ -1710,11 +1713,9 @@ ami_ioctl(dev, cmd, addr)
 	}
 
 	switch (cmd) {
-	case BIOCALARM:
-	case BIOCBLINK:
-	case BIOCSTARTSTOP:
-	case BIOCSTATUS:
-	case BIOCSCSICMD:
+	case BIOCINQ:
+	case BIOCVOL:
+	case BIOCDISK:
 		sc->sc_flags |= AMI_CMDWAIT;
 		while (!TAILQ_EMPTY(&sc->sc_ccbq))
 			if (tsleep(&sc->sc_free_ccb, PRIBIO, "ami_ioctl",
@@ -1723,51 +1724,19 @@ ami_ioctl(dev, cmd, addr)
 	}
 
 	switch (cmd) {
-	case BIOCPING:
-		((bioc_ping *)addr)->x++;
-
-		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocping: %x\n",
-		    sc->sc_dev.dv_xname, ((bioc_ping *)addr)->x));
+	case BIOCINQ:
+		AMI_DPRINTF(AMI_D_IOCTL, ("inq "));
+		error = ami_ioctl_inq(sc, (bioc_inq *)addr);
 		break;
 
-	case BIOCCAPABILITIES:
-		((bioc_capabilities *)addr)->ioctls =
-		    BIOC_ALARM | BIOC_PING | BIOC_SCSICMD | BIOC_STARTSTOP |
-		    BIOC_STATUS | BIOC_BLINK;
-
-		((bioc_capabilities *)addr)->raid_types =
-		    BIOC_RAID0 | BIOC_RAID1 | BIOC_RAID5 |
-		    BIOC_RAID10 | BIOC_RAID50;
-
-		AMI_DPRINTF(AMI_D_IOCTL, ("%s: bioccapabilities:  ioctls: "
-		    "%016llx raid_types: %08lx\n",
-		    sc->sc_dev.dv_xname,
-		    ((bioc_capabilities *)addr)->ioctls,
-		    ((bioc_capabilities *)addr)->raid_types));
+	case BIOCVOL:
+		AMI_DPRINTF(AMI_D_IOCTL, ("vol "));
+		error = ami_ioctl_vol(sc, (bioc_vol *)addr);
 		break;
 
-	case BIOCALARM:
-		error = ami_ioctl_alarm(sc, (bioc_alarm *)addr);
-		break;
-
-	case BIOCBLINK:
-		error = EOPNOTSUPP; /* let userland land knows it must issue
-				   * a cdb to handle blinking. */
-		break;
-
-	case BIOCSTARTSTOP:
-		AMI_DPRINTF(AMI_D_IOCTL, ("start stop unit\n"));
-		error = ami_ioctl_startstop(sc, (bioc_startstop *)addr);
-		break;
-
-	case BIOCSTATUS:
-		AMI_DPRINTF(AMI_D_IOCTL, ("status\n"));
-		error = ami_ioctl_status(sc, (bioc_status *)addr);
-		break;
-
-	case BIOCSCSICMD:
-		AMI_DPRINTF(AMI_D_IOCTL, ("scsi cmd\n"));
-		error = ami_ioctl_passthru(sc, (bioc_scsicmd *)addr);
+	case BIOCDISK:
+		AMI_DPRINTF(AMI_D_IOCTL, ("disk "));
+		error = ami_ioctl_disk(sc, (bioc_disk *)addr);
 		break;
 
 	default:
@@ -1785,220 +1754,31 @@ ami_ioctl(dev, cmd, addr)
 }
 
 int
-ami_ioctl_alarm(sc, ra)
+ami_drv_inq(sc, ch, tg, inqbuf)
 	struct ami_softc *sc;
-	bioc_alarm *ra;
+	u_int8_t ch;
+	u_int8_t tg;
+	void *inqbuf;
 {
-	int error = 0;
-	struct ami_ccb	*ccb;
-	struct ami_iocmd *cmd;
-	void	*idata;
-	bus_dmamap_t idatamap;
-	bus_dma_segment_t idataseg[1];
-	paddr_t	pa;
-	u_int8_t *p;
-
-
-	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
-	    NBPG, 1, "ioctl data"))) {
-		ami_freemem(sc->dmat, &idatamap, idataseg,
-		    NBPG, 1, "ioctl data");
-		return ENOMEM;
-	}
-
-	pa = idataseg[0].ds_addr;
-	p = idata;
-
-	ccb = ami_get_ccb(sc);
-	ccb->ccb_data = NULL;
-	cmd = ccb->ccb_cmd;
-
-	cmd->acc_cmd = AMI_ALARM;
-	cmd->acc_io.aio_channel = 0;
-	cmd->acc_io.aio_param = 0;
-	cmd->acc_io.aio_data = htole32(pa);
-
-	switch(ra->opcode) {
-	case BIOCSALARM_DISABLE:
-		*p = AMI_ALARM_OFF;
-		break;
-
-	case BIOCSALARM_ENABLE:
-		*p = AMI_ALARM_ON;
-		break;
-
-	case BIOCSALARM_SILENCE:
-		*p = AMI_ALARM_QUIET;
-		break;
-
-	case BIOCGALARM_STATE:
-		*p = AMI_ALARM_GET;
-		break;
-
-	case BIOCSALARM_TEST:
-		*p = AMI_ALARM_TEST;
-		break;
-
-	default:
-		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
-		    sc->sc_dev.dv_xname, ra->opcode));
-		ami_put_ccb(ccb);
-		return EINVAL;
-	}
-
-	AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm: in: %x ",
-	    sc->sc_dev.dv_xname, *p));
-
-
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
-		AMI_DPRINTF(AMI_D_IOCTL, ("out %x\n", *p));
-		if (ra->opcode == BIOCGALARM_STATE)
-			ra->state = *p;
-		else
-			ra->state = 0;
-	}
-	else {
-		AMI_DPRINTF(AMI_D_IOCTL, ("failed\n"));
-		error = EINVAL;
-	}
-
-	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
-
-	return (error);
-}
-
-int
-ami_ioctl_startstop(sc, bs)
-	struct ami_softc *sc;
-	bioc_startstop *bs;
-{
-	int error = 0;
-	struct ami_ccb	*ccb;
-	struct ami_iocmd *cmd;
-
-	ccb = ami_get_ccb(sc);
-	ccb->ccb_data = NULL;
-	cmd = ccb->ccb_cmd;
-
-	AMI_DPRINTF(AMI_D_IOCTL, ("start/stop %d unit %d %d\n",
-	    bs->opcode, bs->channel, bs->target));
-
-	if (bs->opcode == BIOCSUNIT_START)
-		cmd->acc_cmd = AMI_STARTU;
-	else if (bs->opcode == BIOCSUNIT_STOP)
-		cmd->acc_cmd = AMI_STOPU;
-	else
-		return EINVAL;
-
-	/* FIXME test if channel and target are in range */
-	cmd->acc_io.aio_channel = bs->channel;
-	cmd->acc_io.aio_param = bs->target;
-	cmd->acc_io.aio_pad[0] = AMI_STARTU_SYNC;
-	cmd->acc_io.aio_data = NULL;
-
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
-		AMI_DPRINTF(AMI_D_IOCTL, ("%s\n",
-		    bs->opcode  == BIOCSUNIT_START ? "started" : "stopped"));
-	}
-	else {
-		AMI_DPRINTF(AMI_D_IOCTL, ("failed\n"));
-		error = EINVAL;
-	}
-
-	return (error);
-}
-
-int
-ami_ioctl_status(sc, bs)
-	struct ami_softc *sc;
-	bioc_status *bs;
-{
-	int error = 0;
-	struct ami_ccb	*ccb;
-	struct ami_iocmd *cmd;
-	void	*idata;
-	bus_dmamap_t idatamap;
-	bus_dma_segment_t idataseg[1];
-	paddr_t	pa;
-	u_int8_t *p;
-
-	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
-	    NBPG, 1, "ioctl data"))) {
-		ami_freemem(sc->dmat, &idatamap, idataseg,
-		    NBPG, 1, "ioctl data");
-		return ENOMEM;
-	}
-
-	pa = idataseg[0].ds_addr;
-	p = idata;
-
-	ccb = ami_get_ccb(sc);
-	ccb->ccb_data = NULL;
-	cmd = ccb->ccb_cmd;
-
-	cmd->acc_cmd = AMI_FCOP;
-	cmd->acc_io.aio_channel = AMI_FC_EINQ3;
-	cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
-	cmd->acc_io.aio_data = htole32(pa);
-
-	AMI_DPRINTF(AMI_D_IOCTL, ("status %d\n", bs->opcode));
-
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
-		AMI_DPRINTF(AMI_D_IOCTL, ("success\n"));
-	}
-	else {
-		AMI_DPRINTF(AMI_D_IOCTL, ("failed\n"));
-		error = EINVAL;
-	}
-
-	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
-
-	return (error);
-}
-
-int
-ami_ioctl_passthru(sc, bp)
-	struct ami_softc *sc;
-	bioc_scsicmd *bp;
-{
-	int error = 0;
-	struct ami_ccb	*ccb;
+	struct ami_ccb *ccb;
 	struct ami_iocmd *cmd;
 	struct ami_passthrough *ps;
-	void	*idata;
+	struct scsi_inquiry_data *pp;
+	void *idata;
 	bus_dmamap_t idatamap;
 	bus_dma_segment_t idataseg[1];
 	paddr_t	pa;
+	int error = 0;
 
-#ifdef AMI_DEBUG
-	u_int8_t i = 0;
-#endif /* AMI_DEBUG */
-
-	AMI_DPRINTF(AMI_D_IOCTL, ("in passthrough\n"));
-
-	/* FIXME: validate channel/target pair, or let the firmware bomb it?
-	 */
-
-	if (bp->cdblen > BIOC_MAX_CDB)
-		return (EINVAL);
-
-	if (bp->direction == BIOC_DIRIN &&
-	    (bp->datalen == 0 || bp->data == NULL))
-		/* if userland expects data give us a len and a pointer */
-		return (EINVAL);
-
-	if (bp->datalen > 1024)
-		return (EINVAL); /* cap at 1k for now */
-
-	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
-	    NBPG, 1, "ioctl data"))) {
-		ami_freemem(sc->dmat, &idatamap, idataseg,
-		    NBPG, 1, "ioctl data");
-		return (ENOMEM);
+	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG, 1,
+	    "ami mgmt"))) {
+	    	error = ENOMEM;
+		goto bail;
 	}
 
 	pa = idataseg[0].ds_addr;
 	ps = idata;
+	pp = idata + sizeof *ps;
 
 	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
@@ -2009,66 +1789,289 @@ ami_ioctl_passthru(sc, bp)
 
 	memset(ps, 0, sizeof *ps);
 
-	ps->apt_channel = bp->channel;
-	ps->apt_target = bp->target;
-	ps->apt_ncdb = bp->cdblen;
-	ps->apt_nsense = BIOC_MAX_SENSE; /* do not let userland dictate this */
-	memcpy(&ps->apt_cdb[0], &bp->cdb[0], bp->cdblen);
+	ps->apt_channel = ch;
+	ps->apt_target = tg;
+	ps->apt_ncdb = sizeof(struct scsi_inquiry);
+	ps->apt_nsense = sizeof(struct scsi_sense_data);
+
+	ps->apt_cdb[0] = INQUIRY;
+	ps->apt_cdb[1] = 0;
+	ps->apt_cdb[2] = 0;
+	ps->apt_cdb[3] = 0;
+	ps->apt_cdb[4] = sizeof(struct scsi_inquiry_data); /* INQUIRY length */
+	ps->apt_cdb[5] = 0;
 
 	ps->apt_data = htole32(pa + sizeof *ps);
-	ps->apt_datalen = bp->datalen;
+	ps->apt_datalen = sizeof(struct scsi_inquiry_data);
 
-	if (bp->direction == BIOC_DIROUT) {
-		/* userland sent us some data */
-		copyin(bp->data, idata + sizeof *ps, ps->apt_datalen);
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0)
+		memcpy(inqbuf, pp, sizeof(struct scsi_inquiry_data));
+	else 
+		error = EINVAL;
+
+bail:
+	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ami mgmt");
+
+	return (error);
+}
+
+int
+ami_mgmt(sc, opcode, par1, par2, size, buffer)
+	struct ami_softc *sc;
+	u_int8_t opcode;
+	u_int8_t par1;
+	u_int8_t par2;
+	size_t size;
+	void *buffer;
+{
+	struct ami_ccb *ccb;
+	struct ami_iocmd *cmd;
+	void *idata;
+	bus_dmamap_t idatamap;
+	bus_dma_segment_t idataseg[1];
+	paddr_t	pa;
+	int error = 0;
+
+	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG,
+	    (size / NBPG) + 1, "ami mgmt"))) {
+	    	error = ENOMEM;
+		goto bail;
 	}
 
-#ifdef AMI_DEBUG
-	AMI_DPRINTF(AMI_D_IOCTL, ("%s: ps->apt_channel: %x, ps->apt_target: %x "
-	    "ps->apt_cdblen: %x ps->apt_data: %x ps->apt_datalen: %x\n%s: cdb: "
-	    , sc->sc_dev.dv_xname, ps->apt_channel, ps->apt_target,
-	    ps->apt_ncdb, ps->apt_data, ps->apt_datalen, sc->sc_dev.dv_xname));
+	pa = idataseg[0].ds_addr;
 
-	for (i = 0; i < ps->apt_ncdb; i++) {
-		printf("%0x ", ps->apt_cdb[i]);
+	ccb = ami_get_ccb(sc);
+	ccb->ccb_data = NULL;
+	cmd = ccb->ccb_cmd;
+
+	cmd->acc_cmd = opcode;
+	cmd->acc_io.aio_channel = par1;
+	cmd->acc_io.aio_param = par2;
+	cmd->acc_io.aio_data = htole32(pa);
+
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0)
+		memcpy(buffer, idata, size);
+	else
+		error = EINVAL;
+
+bail:;
+	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, (size / NBPG) + 1,
+	    "ami mgmt");
+
+	return (error);
+}
+
+int
+ami_ioctl_inq(sc, bi)
+	struct ami_softc *sc;
+	bioc_inq *bi;
+{
+	char plist[AMI_BIG_MAX_PDRIVES];
+	struct ami_big_diskarray *p; /* struct too large for stack */
+	int i, s, t;
+	int off;
+	int error = 0;
+
+	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
+	if (!p) {
+		printf("%s: no memory for raw interface\n",sc->sc_dev.dv_xname);
+		return (ENOMEM);
 	}
-	printf("\n");
-#endif /* AMI_DEBUG */
 
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
-		AMI_DPRINTF(AMI_D_IOCTL, ("cdb issued\n"));
-		if (bp->direction == BIOC_DIRIN) {
-			/* userland expects data */
-			bp->datalen = ps->apt_datalen;
-			AMI_DPRINTF(AMI_D_IOCTL, ("%s: passthrough %x\n",
-			    sc->sc_dev.dv_xname, ps->apt_datalen));
-			copyout(idata + sizeof *ps, bp->data, ps->apt_datalen);
+	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, sizeof *p, p)) {
+		error = EINVAL;
+		goto bail;
+	}
+
+	memset(plist, 0, sizeof plist);
+
+	bi->novol = p->ada_nld;
+	bi->nodisk = 0;
+
+	/* do we actually care how many disks we have at this point? */
+	for (i = 0; i < p->ada_nld; i++)
+		for (s = 0; s < p->ald[i].adl_spandepth; s++)
+			for (t = 0; t < p->ald[i].adl_nstripes; t++) {
+				off = p->ald[i].asp[s].adv[t].add_channel *
+				    AMI_MAX_TARGET +
+				    p->ald[i].asp[s].adv[t].add_target;
+
+				if (!plist[off]) {
+					plist[off] = 1;
+					bi->nodisk++;
+
+				}
+			}
+
+bail:
+	free(p, M_DEVBUF);
+
+	return (error);
+}
+
+int
+ami_ioctl_vol(sc, bv)
+	struct ami_softc *sc;
+	bioc_vol *bv;
+{
+	struct ami_big_diskarray *p; /* struct too large for stack */
+	int i, s, t;
+	int error = 0;
+
+	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
+	if (!p) {
+		printf("%s: no memory for raw interface\n",sc->sc_dev.dv_xname);
+		return (ENOMEM);
+	}
+
+	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, sizeof *p, p)) {
+		error = EINVAL;
+		goto bail;
+	}
+
+	if (bv->volid > p->ada_nld) {
+		error = EINVAL;
+		goto bail;
+	}
+
+	i = bv->volid;
+
+	switch (p->ald[i].adl_status) {
+	case AMI_RDRV_OFFLINE:
+		bv->status = BIOC_SVOFFLINE;
+		break;
+
+	case AMI_RDRV_DEGRADED:
+		bv->status = BIOC_SVDEGRADED;
+		break;
+
+	case AMI_RDRV_OPTIMAL:
+		bv->status = BIOC_SVONLINE;
+		break;
+
+	default:
+		bv->status = BIOC_SVINVALID;
+	}
+
+	bv->size = 0;
+	bv->level = p->ald[i].adl_raidlvl;
+	bv->nodisk = 0;
+
+	for (s = 0; s < p->ald[i].adl_spandepth; s++) {
+		for (t = 0; t < p->ald[i].adl_nstripes; t++)
+			bv->nodisk++;
+
+		switch (bv->level) {
+		case 0:
+			bv->size += p->ald[i].asp[s].ads_length *
+			    p->ald[i].adl_nstripes;
+			break;
+
+		case 1:
+			bv->size += p->ald[i].asp[s].ads_length;
+			break;
+
+		case 5:
+			bv->size += p->ald[i].asp[s].ads_length *
+			    (p->ald[i].adl_nstripes - 1);
+			break;
 		}
 	}
-	else {
-		/* copy sense data back to user space */
-		memcpy(&bp->sensebuf[0], &ps->apt_sense[0], ps->apt_nsense);
-		bp->senselen = ps->apt_nsense;
-		/*
-		 * this needs to be checked in userland since error can't
-		 * be set. Setting it prevents it from being coppied back to
-		 * userland
-		 */
-		bp->status = 1;
 
-#ifdef AMI_DEBUG
-		AMI_DPRINTF(AMI_D_IOCTL, ("%s: passthrough failed %x %x\n%s: ",
-		    sc->sc_dev.dv_xname, bp->status, bp->senselen,
-		    sc->sc_dev.dv_xname));
+	if (p->ald[i].adl_spandepth > 1)
+		bv->level *= 10;
 
-		for (i = 0; i < bp->senselen; i++)
-			printf("%0x ", bp->sensebuf[i]);
+	bv->size *= (quad_t)512;
 
-		printf("\n");
-#endif /* AMI_DEBUG */
+bail:
+	free(p, M_DEVBUF);
+
+	return (error);
+}
+
+int
+ami_ioctl_disk(sc, bd)
+	struct ami_softc *sc;
+	bioc_disk *bd;
+{
+	struct scsi_inquiry_data inqbuf;
+	struct ami_big_diskarray *p; /* struct too large for stack */
+	int i, s, t, d;
+	int off;
+	int error = 0;
+
+	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
+	if (!p) {
+		printf("%s: no memory for raw interface\n",sc->sc_dev.dv_xname);
+		return (ENOMEM);
 	}
 
-	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
+	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, sizeof *p, p)) {
+		error = EINVAL;
+		goto bail;
+	}
+
+	if (bd->volid > p->ada_nld) {
+		error = EINVAL;
+		goto bail;
+	}
+
+	i = bd->volid;
+	error = EINVAL;
+
+	for (s = 0, d = 0; s < p->ald[i].adl_spandepth; s++) {
+		for (t = 0; t < p->ald[i].adl_nstripes; t++) {
+			if (d != bd->diskid) {
+				d++;
+				continue;
+			}
+
+			off = p->ald[i].asp[s].adv[t].add_channel *
+			    AMI_MAX_TARGET +
+			    p->ald[i].asp[s].adv[t].add_target;
+
+			switch (p->apd[off].adp_ostatus) {
+			case AMI_PD_UNCNF:
+				bd->status = BIOC_SDUNUSED;
+				break;
+
+			case AMI_PD_ONLINE:
+				bd->status = BIOC_SDONLINE;
+				break;
+
+			case AMI_PD_FAILED:
+				bd->status = BIOC_SDFAILED;
+				break;
+
+			case AMI_PD_RBLD:
+				bd->status = BIOC_SDREBUILD;
+				break;
+
+			case AMI_PD_HOTSPARE:
+				bd->status = BIOC_SDHOTSPARE;
+				break;
+
+			default:
+				bd->status = BIOC_SDINVALID;
+			}
+
+			bd->size = (quad_t)p->apd[off].adp_size * (quad_t)512;
+
+			if (!ami_drv_inq(sc,
+			    (p->ald[i].asp[s].adv[t].add_target >> 4),
+			    (p->ald[i].asp[s].adv[t].add_target & 0x0f),
+			    &inqbuf)) {
+				strlcpy(bd->vendor, inqbuf.vendor,
+				    8 + 16 + 4 + 1); /* vendor prod rev zero */
+			}
+
+			error = 0;
+			goto bail;
+		}
+	}
+
+bail:
+	free(p, M_DEVBUF);
 
 	return (error);
 }

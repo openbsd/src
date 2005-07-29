@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.17 2005/07/18 15:10:57 dlg Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.18 2005/07/29 16:01:30 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -223,6 +223,8 @@
 #define	AMI_HSPDIAG	0xb1
 #define	AMI_GESENSEINFO	0xb2	/* get extended sense info */
 #define	AMI_SYSFLUSH	0xfe	/* flush system */
+/* this needs to be removed when the new bioctl goes in */
+#define AMI_GETINQ	0xcf	/* get proc & drive inquiry data */
 #define AMI_ALARM	0x51	/* alarm functions */
 #define 	AMI_ALARM_OFF   0x00
 #define 	AMI_ALARM_ON    0x01
@@ -570,6 +572,7 @@ struct ami_diskarray {
 struct ami_big_diskarray {
 	u_int8_t	ada_nld;
 	u_int8_t	ada_pad[3];
+#define ald ada_ldrv
 	struct {
 		u_int8_t	adl_spandepth;
 		u_int8_t	adl_raidlvl;
@@ -579,15 +582,18 @@ struct ami_big_diskarray {
 		u_int8_t	adl_wrpolicy;
 		u_int8_t	adl_directio;
 		u_int8_t	adl_nstripes;
+#define 	asp adl_spans
 		struct {
 			u_int32_t	ads_start;
 			u_int32_t	ads_length;	/* blocks */
+#define 		adv ads_devs
 			struct {
 				u_int8_t	add_channel;
 				u_int8_t	add_target;
 			} ads_devs[AMI_BIG_MAX_DEVDEPTH];
 		} adl_spans[AMI_BIG_MAX_SPANDEPTH];
 	} ada_ldrv[AMI_BIG_MAX_LDRIVES];
+#define apd ada_pdrv
 	struct {
 		u_int8_t	adp_type;	/* SCSI device type */
 		u_int8_t	adp_ostatus;	/* status during config */

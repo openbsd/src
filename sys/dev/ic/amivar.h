@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.13 2005/07/18 15:10:57 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.14 2005/07/29 16:01:30 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff

@@ -1,7 +1,8 @@
-/*	$OpenBSD: biovar.h,v 1.7 2005/07/18 15:10:57 dlg Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.8 2005/07/29 16:01:29 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2005 Marco Peereboom.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,147 +51,78 @@ int	bio_register(struct device *, int (*)(struct device *, u_long,
 
 /* RAID section */
 
-#define BIOC_MAX_CDB   16
-#define BIOC_MAX_SENSE 32
-#define BIOC_MAX_PHYSDISK 128	/* based on FC arrays */
-#define BIOC_MAX_VIRTDISK 128	/* based on FC arrays */
-
-/* ioctl tunnel defines */
-/* SHALL be implemented */
-#define BIOCPING _IOWR('B', 32, bioc_ping)
-typedef struct _bioc_ping {
-	void *cookie;
-	int x;
-} bioc_ping;
-
-/* SHALL be implemented */
-#define BIOCCAPABILITIES _IOWR('B', 33, bioc_capabilities)
-typedef struct _bioc_capabilities {
-	void *cookie;
-	u_int64_t ioctls; /* bit field, 1 ioctl supported */
-#define BIOC_PING         0x01
-#define BIOC_ALARM        0x02
-#define BIOC_PREP_REMOVAL 0x04
-#define BIOC_REBUILD      0x08
-#define BIOC_STATUS       0x10
-#define BIOC_SCSICMD      0x20
-#define BIOC_STARTSTOP    0x40
-#define BIOC_BLINK        0x80
-	u_int32_t raid_types; /* bit field, 1 supported raid type */
-#define BIOC_RAID0  0x01
-#define BIOC_RAID1  0x02
-#define BIOC_RAID3  0x04
-#define BIOC_RAID5  0x08
-#define BIOC_RAID10 0x10
-#define BIOC_RAID01 0x20
-#define BIOC_RAID50 0x40
-} bioc_capabilities;
-
-/* OPTIONAL */
-#define BIOCALARM _IOWR('B', 34, bioc_alarm)
-typedef struct _bioc_alarm {
-	void *cookie;
-	u_int32_t opcode;
-#define BIOCSALARM_DISABLE 0x00
-#define BIOCSALARM_ENABLE  0x01
-#define BIOCSALARM_SILENCE 0x02
-#define BIOCGALARM_STATE   0x03
-#define BIOCSALARM_TEST    0x04
-	u_int8_t state; /* only used with GET function */
-} bioc_alarm;
-
-/* OPTIONAL */
-#define BIOCSCSICMD _IOWR('B', 35, bioc_scsicmd)
-typedef struct _bioc_scsicmd {
+#define BIOCINQ _IOWR('B', 32, bioc_inq)
+typedef struct _bioc_inq {
 	void *cookie;
 
-	/* in (kernel centric) */
-	u_int8_t channel;
-	u_int8_t target;
-	u_int8_t cdb[BIOC_MAX_CDB];
-	u_int8_t cdblen;
-	u_int8_t direction; /* 0 = out, 1 = in, this is userland centric */
-#define BIOC_DIROUT  0x00
-#define BIOC_DIRIN   0x01
-#define BIOC_DIRNONE 0x02
+	int novol;		/* nr of volumes */
+	int nodisk;		/* nr of total disks */
+} bioc_inq;
 
-	/* out (kernel centric) */
-	u_int8_t status;
-	u_int8_t sensebuf[BIOC_MAX_SENSE];
-	u_int8_t senselen;
-
-	/* in & out (kernel centric) */
-	void *data;
-	u_int32_t datalen; /* going in it governs the maximum buffer size
-			      going out it contains actual bytes transfered */
-} bioc_scsicmd;
-
-/* OPTIONAL */
-#define BIOCSTARTSTOP _IOWR('B', 36, bioc_startstop)
-typedef struct _bioc_startstop {
+#define BIOCDISK _IOWR('B', 33, bioc_disk)
+/* structure that represents a disk in a RAID volume */
+typedef struct _bioc_disk {
 	void *cookie;
-	u_int8_t opcode;
-#define BIOCSUNIT_START 0x00
-#define BIOCSUNIT_STOP  0x01
-	u_int8_t channel;
-	u_int8_t target;
-} bioc_startstop;
 
-/* SHALL be implemented */
-#define BIOCSTATUS _IOWR('B', 37, bioc_status)
-typedef struct _bioc_status {
+	int volid;		/* associate with volume, if -1 unused */
+	int diskid;		/* virtual disk id */
+	int status;		/* current status */
+#define BIOC_SDONLINE		0x00
+#define BIOC_SDONLINE_S		"Online"
+#define BIOC_SDOFFLINE		0x01
+#define BIOC_SDOFFLINE_S	"Offline"
+#define BIOC_SDFAILED		0x02
+#define BIOC_SDFAILED_S 	"Failed"
+#define BIOC_SDREBUILD		0x03
+#define BIOC_SDREBUILD_S	"Rebuild"
+#define BIOC_SDHOTSPARE		0x04
+#define BIOC_SDHOTSPARE_S	"Hot spare"
+#define BIOC_SDUNUSED		0x05
+#define BIOC_SDUNUSED_S		"Unused"
+#define BIOC_SDINVALID		0xff
+#define BIOC_SDINVALID_S	"Invalid"
+	int resv;		/* align */
+
+	quad_t size;		/* size of the disk */
+
+	/* this is provided by the physical disks if suported */
+	char vendor[8];		/* vendor string */
+	char product[16];	/* product string */
+	char revision[4];	/* revision string */
+	char pad[4];		/* zero terminate in here */
+
+	/* XXX get this too? */
+				/* serial number */
+} bioc_disk;
+
+#define BIOCVOL _IOWR('B', 34, bioc_vol)
+/* structure that represents a RAID volume */
+typedef struct _bioc_vol {
 	void *cookie;
-	u_int8_t opcode;
-#define BIOCGSTAT_CHANGE	0x00	/* any changes since last call? */
-#define BIOCGSTAT_ALL		0x01	/* get all status */
-#define BIOCGSTAT_PHYSDISK	0x02	/* get physical disk status only */
-#define BIOCGSTAT_VIRTDISK	0x03	/* get virtual disk status only */
-#define BIOCGSTAT_BATTERY	0x04	/* get battery status only */
-#define BIOCGSTAT_ENCLOSURE	0x05	/* get enclosure status only */
-#define BIOCGSTAT_TEMPERATURE	0x06	/* get temperature status only */
-	u_int8_t status;		/* global status flag */
-#define BIOC_STATOK	0x00		/* status is OK */
-#define BIOC_STATDEGRAD 0x01		/* status is degraded */
-#define BIOC_STATCRIT	0x02		/* status is critical */
-#define BIOC_STATBAT	0x04		/* something wrong with battery */
-#define BIOC_STATENC	0x08		/* something wrong with enclosure */
-#define BIOC_STATTEMP	0x10		/* something is over/under heating */
-	/* return fields used per request define in opcode */
-	u_int8_t	channels;	/* max channels */
-	u_int8_t	buswidth;	/* max physical drives per channel */
-	/* filled in when called with BIOCGSTAT_PHYSDISK set */
-	u_int8_t pdcount;		/* physical disk counter */
-	u_int8_t physdisk[BIOC_MAX_PHYSDISK];
-#define BIOC_PDUNUSED	0x00		/* disk not present */
-#define BIOC_PDONLINE	0x01		/* disk present */
-#define BIOC_PDOFFLINE	0x02		/* disk present but offline */
-#define BIOC_PDINUSE	0x04		/* critical operation in progress */
-	/* filled in when called with BIOCGSTAT_VIRTDISK set */
-	u_int8_t vdcount;		/* virtual disk counter */
-	u_int8_t virtdisk[BIOC_MAX_VIRTDISK];
-#define BIOC_VDUNUSED	0x00		/* disk not present */
-#define BIOC_VDONLINE	0x01		/* disk present */
-#define BIOC_VDOFFLINE	0x02		/* disk present but offline */
-#define BIOC_VDINUSE	0x04		/* critical operation in progress */
-	/* filled in when called with BIOCGSTAT_BATTERY set */
-	u_int8_t	batstat;	/* battery status */
-#define BIOC_BATNOTPRES	0x00		/* battery not present */
-#define BIOC_BATMISSING 0x01		/* battery removed */
-#define BIOC_BATVOLTERR	0x02		/* battery low/high power */
-#define BIOC_BATTEMP	0x04		/* battery over/under temp*/
-	/* NOTYET: encloure status & temperature status */
-} bioc_status;
 
-/* OPTIONAL */
-/* depending on the controller it is handled either in userland or in kernel */
-#define BIOCBLINK _IOWR('B', 38, bioc_blink)
-typedef struct _bioc_blink {
-	void *cookie;
-	u_int8_t opcode;
-#define BIOCSBLINK_BLINK   0x00
-#define BIOCSBLINK_UNBLINK 0x01
-#define BIOCSBLINK_ALERT   0x02
-	u_int8_t channel;
-	u_int8_t target;
-} bioc_blink;
+	int volid;		/* volume id */
+	int resv1;		/* for binary compatibility */
+	int status;		/* current status */
+#define BIOC_SVONLINE		0x00
+#define BIOC_SVONLINE_S		"Online"
+#define BIOC_SVOFFLINE		0x01
+#define BIOC_SVOFFLINE_S	"Offline"
+#define BIOC_SVDEGRADED		0x02
+#define BIOC_SVDEGRADED_S	"Degraded"
+#define BIOC_SVINVALID		0xff
+#define BIOC_SVINVALID_S	"Invalid"
+	int resv2;		/* align */
+	quad_t size;		/* size of the disk */
+	int level;		/* raid level */
+	int nodisk;		/* nr of drives */
 
+	/* this is provided by the RAID card */
+	char vendor[8];		/* vendor string */
+	char product[16];	/* product string */
+	char revision[4];	/* revision string */
+	char pad[4];		/* zero terminate in here */
+} bioc_vol;
+
+#define BIOC_INQ	0x01
+#define BIOC_DISK	0x02
+#define BIOC_VOL	0x04

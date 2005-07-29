@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.12 2005/07/18 15:10:56 dlg Exp $
+.\"	$OpenBSD: bioctl.8,v 1.13 2005/07/29 16:01:18 marco Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -32,12 +32,9 @@
 .Sh SYNOPSIS
 .Nm bioctl
 .Bk -words
-.Op Fl Dehpt
-.Op Fl a Ar function
-.Op Fl b Ar function
-.Op Fl l Ar device-list
-.Op Fl u Ar function
-.Fl d Ar device
+.Op Fl Dhi
+.Fl d Ar device |
+.Fl f Ar device
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -45,46 +42,21 @@ provides a generic interface for RAID management.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar function
-Get or set alarm state.
-Supported functions are: silence/quiet, enable, disable, get, and test.
-Or use the first letter of the function.
-.It Fl b Ar function
-Blink or unblink hard drive LED, if supported by the enclosure.
-Supported functions are: blink, alarm (fault LED) and unblink.
-Or use the first letter of the function.
 .It Fl D
 Enable debug output.
 .It Fl d Ar device
 Select RAID controller e.g ami0.
-Use the -d option for controller operations.
-.It Fl e
-Enumerate drives.
-.It Fl f Ar disk
-Select disk device e.g sd0.
-Use the -f option for disk operations.
-Either -f or -d must be selected.
+Use the -d option for controller operations that impact all disk devices.
+.It Fl f Ar device
+Select RAID disk e.g sd0.
 .It Fl h
 Online help.
-.It Fl l Ar device-list
-Device list to what the operation/function applies to.
-The format is channel:target,channel:target etc. e.g. 0:1,1:3
-.It Fl p
-Verify that adapter accepts bioctl commands.
-This is a sort of a "device ping".
-.It Fl t
-Issue a pass-through function to
-.Aq device-list .
-Supported functions are:
-read capacity, inquiry, and test unit ready (TUR).
-Or use the first letter of the function name.
-.It Fl u Ar function
-Start or stop physical disk.
-Supported functions are: go and stop.
-Or use the first letter of the function.
+.It Fl i
+Depending on -d or -f enumerate all or only selected RAID device(s).
 .El
 .Sh SEE ALSO
 .Xr bio 4 ,
+.Xr ami 4 ,
 .Xr scsi 4
 .Sh HISTORY
 The
