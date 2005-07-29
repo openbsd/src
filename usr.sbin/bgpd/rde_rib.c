@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.68 2005/07/01 09:19:24 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.69 2005/07/29 12:38:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -676,7 +676,9 @@ prefix_free(struct prefix *pref)
 	free(pref);
 }
 
-/* nexthop functions */
+/*
+ * nexthop functions
+ */
 struct nexthop_head	*nexthop_hash(struct bgpd_addr *);
 struct nexthop		*nexthop_lookup(struct bgpd_addr *);
 
@@ -748,9 +750,21 @@ nexthop_update(struct kroute_nexthop *msg)
 		memcpy(&nh->true_nexthop, &msg->gateway,
 		    sizeof(nh->true_nexthop));
 
-	nh->nexthop_netlen = msg->kr.kr4.prefixlen;
-	nh->nexthop_net.af = AF_INET;
-	nh->nexthop_net.v4.s_addr = msg->kr.kr4.prefix.s_addr;
+	switch (msg->nexthop.af) {
+	case AF_INET:
+		nh->nexthop_netlen = msg->kr.kr4.prefixlen;
+		nh->nexthop_net.af = AF_INET;
+		nh->nexthop_net.v4.s_addr = msg->kr.kr4.prefix.s_addr;
+		break;
+	case AF_INET6:
+		nh->nexthop_netlen = msg->kr.kr6.prefixlen;
+		nh->nexthop_net.af = AF_INET6;
+		memcpy(&nh->nexthop_net.v6, &msg->kr.kr6.prefix,
+		    sizeof(struct in6_addr));
+		break;
+	default:
+		fatalx("nexthop_update: unknown af");
+	}
 
 	if (rde_noevaluate())
 		/*

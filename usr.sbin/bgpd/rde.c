@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.166 2005/07/01 13:38:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.167 2005/07/29 12:38:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -66,6 +66,7 @@ void		 rde_dump_as(struct filter_as *, pid_t);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_prefix *, pid_t);
 void		 rde_update_queue_runner(void);
+void		 rde_update6_queue_runner(void);
 
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
@@ -694,6 +695,15 @@ rde_update_dispatch(struct imsg *imsg)
 		p += pos;
 		len -= pos;
 
+		if (peer->capa_received.mp_v4 == SAFI_NONE &&
+		    peer->capa_received.mp_v6 != SAFI_NONE) {
+			log_peer_warnx(&peer->conf, "bad AFI, IPv4 disabled");
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    NULL, 0);
+			path_put(asp);
+			return (-1);
+		}
+
 		/* input filter */
 		if (rde_filter(peer, NULL, &prefix, prefixlen,
 		    DIR_IN) == ACTION_DENY)
@@ -718,6 +728,14 @@ rde_update_dispatch(struct imsg *imsg)
 		mplen--;
 		switch (afi) {
 		case AFI_IPv6:
+			if (peer->capa_received.mp_v6 == SAFI_NONE) {
+				log_peer_warnx(&peer->conf, "bad AFI, "
+				    "IPv6 disabled");
+				rde_update_err(peer, ERR_UPDATE,
+				    ERR_UPD_OPTATTR, NULL, 0);
+				path_put(asp);
+				return (-1);
+			}
 			while (mplen > 0) {
 				if ((pos = rde_update_get_prefix6(mpp, mplen,
 				    &prefix, &prefixlen)) == -1) {
@@ -753,7 +771,8 @@ rde_update_dispatch(struct imsg *imsg)
 			}
 			break;
 		default:
-			fatalx("unsupported multipath AF");
+			/* silently ignore unsupported multiprotocol AF */
+			break;
 		}
 	}
 
@@ -789,6 +808,15 @@ rde_update_dispatch(struct imsg *imsg)
 
 		p += pos;
 		nlri_len -= pos;
+
+		if (peer->capa_received.mp_v4 == SAFI_NONE &&
+		    peer->capa_received.mp_v6 != SAFI_NONE) {
+			log_peer_warnx(&peer->conf, "bad AFI, IPv4 disabled");
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    NULL, 0);
+			path_put(asp);
+			return (-1);
+		}
 
 		/*
 		 * We need to copy attrs before calling the filter because
@@ -842,12 +870,20 @@ rde_update_dispatch(struct imsg *imsg)
 		mpp += pos;
 		mplen -= pos;
 
-		/* apply default overrides */
-		rde_apply_set(asp, &peer->conf.attrset, AF_INET6, peer,
-		    DIR_DEFAULT_IN);
-
 		switch (afi) {
 		case AFI_IPv6:
+			if (peer->capa_received.mp_v6 == SAFI_NONE) {
+				log_peer_warnx(&peer->conf, "bad AFI, "
+				    "IPv6 disabled");
+				rde_update_err(peer, ERR_UPDATE,
+				    ERR_UPD_OPTATTR, NULL, 0);
+				path_put(asp);
+				return (-1);
+			}
+			/* apply default overrides */
+			rde_apply_set(asp, &peer->conf.attrset, AF_INET6, peer,
+			    DIR_DEFAULT_IN);
+
 			while (mplen > 0) {
 				if ((pos = rde_update_get_prefix6(mpp, mplen,
 				    &prefix, &prefixlen)) == -1) {
@@ -895,8 +931,10 @@ rde_update_dispatch(struct imsg *imsg)
 				    &prefix, prefixlen);
 				path_update(peer, fasp, &prefix, prefixlen);
 			}
+			break;
 		default:
-			fatalx("unsupported AF");
+			/* silently ignore unsupported multiprotocol AF */
+			break;
 		}
 	}
 
@@ -1607,12 +1645,12 @@ rde_dump_prefix(struct ctl_show_rib_prefix *pref, pid_t pid)
 
 /*
  * kroute specific functions
- * XXX notyet IPv6 ready
  */
 void
 rde_send_kroute(struct prefix *new, struct prefix *old)
 {
 	struct kroute_label	 kl;
+	struct kroute6_label	 kl6;
 	struct bgpd_addr	 addr;
 	struct prefix		*p;
 	enum imsg_type		 type;
@@ -1628,8 +1666,6 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	    new->aspath->flags & F_PREFIX_ANNOUNCED))
 		return;
 
-	bzero(&kl, sizeof(kl));
-
 	if (new == NULL || new->aspath->nexthop == NULL ||
 	    new->aspath->nexthop->state != NEXTHOP_REACH ||
 	    new->aspath->flags & F_PREFIX_ANNOUNCED) {
@@ -1638,22 +1674,49 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	} else {
 		type = IMSG_KROUTE_CHANGE;
 		p = new;
-		kl.kr.nexthop.s_addr =
-		    p->aspath->nexthop->true_nexthop.v4.s_addr;
 	}
 
 	pt_getaddr(p->prefix, &addr);
-	kl.kr.prefix.s_addr = addr.v4.s_addr;
-	kl.kr.prefixlen = p->prefix->prefixlen;
-	if (p->aspath->flags & F_NEXTHOP_REJECT)
-		kl.kr.flags |= F_REJECT;
-	if (p->aspath->flags & F_NEXTHOP_BLACKHOLE)
-		kl.kr.flags |= F_BLACKHOLE;
-	strlcpy(kl.label, rtlabel_id2name(p->aspath->rtlabelid),
-	    sizeof(kl.label));
-
-	if (imsg_compose(ibuf_main, type, 0, 0, -1, &kl, sizeof(kl)) == -1)
-		fatal("imsg_compose error");
+	switch (addr.af) {
+	case AF_INET:
+		bzero(&kl, sizeof(kl));
+		kl.kr.prefix.s_addr = addr.v4.s_addr;
+		kl.kr.prefixlen = p->prefix->prefixlen;
+		if (p->aspath->flags & F_NEXTHOP_REJECT)
+			kl.kr.flags |= F_REJECT;
+		if (p->aspath->flags & F_NEXTHOP_BLACKHOLE)
+			kl.kr.flags |= F_BLACKHOLE;
+		if (type == IMSG_KROUTE_CHANGE)
+			kl.kr.nexthop.s_addr =
+			    p->aspath->nexthop->true_nexthop.v4.s_addr;
+		strlcpy(kl.label, rtlabel_id2name(p->aspath->rtlabelid),
+		    sizeof(kl.label));
+		if (imsg_compose(ibuf_main, type, 0, 0, -1, &kl,
+		    sizeof(kl)) == -1)
+			fatal("imsg_compose error");
+		break;
+	case AF_INET6:
+		bzero(&kl6, sizeof(kl6));
+		memcpy(&kl6.kr.prefix, &addr.v6, sizeof(struct in6_addr));
+		kl6.kr.prefixlen = p->prefix->prefixlen;
+		if (p->aspath->flags & F_NEXTHOP_REJECT)
+			kl6.kr.flags |= F_REJECT;
+		if (p->aspath->flags & F_NEXTHOP_BLACKHOLE)
+			kl6.kr.flags |= F_BLACKHOLE;
+		if (type == IMSG_KROUTE_CHANGE) {
+			type = IMSG_KROUTE6_CHANGE;
+			memcpy(&kl6.kr.nexthop,
+			    &p->aspath->nexthop->true_nexthop.v6,
+			    sizeof(struct in6_addr));
+		} else
+			type = IMSG_KROUTE6_DELETE;
+		strlcpy(kl6.label, rtlabel_id2name(p->aspath->rtlabelid),
+		    sizeof(kl6.label));
+		if (imsg_compose(ibuf_main, type, 0, 0, -1, &kl6,
+		    sizeof(kl6)) == -1)
+			fatal("imsg_compose error");
+		break;
+	}
 }
 
 /*
@@ -1772,6 +1835,61 @@ rde_update_queue_runner(void)
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 			    0, -1, queue_buf, wpos) == -1)
+				fatal("imsg_compose error");
+			sent++;
+		}
+	} while (sent != 0);
+}
+
+void
+rde_update6_queue_runner(void)
+{
+	struct rde_peer		*peer;
+	char			*b;
+	int			 sent;
+	u_int16_t		 len;
+
+	/* first withdraws ... */
+	do {
+		sent = 0;
+		LIST_FOREACH(peer, &peerlist, peer_l) {
+			if (peer->state != PEER_UP)
+				continue;
+			len = sizeof(queue_buf) - MSGSIZE_HEADER;
+			b = up_dump_mp_unreach(queue_buf, &len, peer);
+
+			if (b == NULL || len <= 4)
+				/*
+				 * No packet to send. The 4 bytes are the
+				 * needed withdraw and path attribute length.
+				 */
+				continue;
+			/* finally send message to SE */
+			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
+			    0, -1, b, len) == -1)
+				fatal("imsg_compose error");
+			sent++;
+		}
+	} while (sent != 0);
+
+	/* ... then updates */
+	do {
+		sent = 0;
+		LIST_FOREACH(peer, &peerlist, peer_l) {
+			if (peer->state != PEER_UP)
+				continue;
+			len = sizeof(queue_buf) - MSGSIZE_HEADER;
+			b = up_dump_mp_reach(queue_buf, &len, peer);
+
+			if (b == NULL || len <= 4)
+				/*
+				 * No packet to send. The 4 bytes are the
+				 * needed withdraw and path attribute length.
+				 */
+				continue;
+			/* finally send message to SE */
+			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
+			    0, -1, b, len) == -1)
 				fatal("imsg_compose error");
 			sent++;
 		}
@@ -1971,6 +2089,10 @@ peer_up(u_int32_t id, struct session_up *sup)
 	peer->remote_bgpid = ntohl(sup->remote_bgpid);
 	memcpy(&peer->remote_addr, &sup->remote_addr,
 	    sizeof(peer->remote_addr));
+	memcpy(&peer->capa_announced, &sup->capa_announced,
+	    sizeof(peer->capa_announced));
+	memcpy(&peer->capa_received, &sup->capa_received,
+	    sizeof(peer->capa_received));
 
 	peer_localaddrs(peer, &sup->local_addr);
 
@@ -2035,6 +2157,17 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 				return;
 			}
 			pt_dump(up_dump_upcall, peer, AF_INET);
+			return;
+		}
+	if (afi == AFI_ALL || afi == AFI_IPv6)
+		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
+		    safi == SAFI_BOTH) {
+			if (peer->conf.announce_type ==
+			    ANNOUNCE_DEFAULT_ROUTE) {
+				up_generate_default(peer, AF_INET6);
+				return;
+			}
+			pt_dump(up_dump_upcall, peer, AF_INET6);
 			return;
 		}
 

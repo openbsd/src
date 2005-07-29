@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.68 2005/07/01 12:10:21 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.69 2005/07/29 12:38:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -59,6 +59,8 @@ struct rde_peer {
 	struct uplist_prefix		 withdraws;
 	struct uplist_attr		 updates6;
 	struct uplist_prefix		 withdraws6;
+	struct capabilities		 capa_announced;
+	struct capabilities		 capa_received;
 	u_int32_t			 prefix_cnt;
 	u_int32_t			 remote_bgpid;
 	u_int32_t			 up_pcnt;
@@ -324,13 +326,15 @@ int		 nexthop_compare(struct nexthop *, struct nexthop *);
 void		 prefix_evaluate(struct prefix *, struct pt_entry *);
 void		 up_init(struct rde_peer *);
 void		 up_down(struct rde_peer *);
+void		 up_dump_upcall(struct pt_entry *, void *);
 void		 up_generate_updates(struct rde_peer *,
 		     struct prefix *, struct prefix *);
 void		 up_generate_default(struct rde_peer *, sa_family_t);
 int		 up_dump_prefix(u_char *, int, struct uplist_prefix *,
 		     struct rde_peer *);
 int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);
-void		 up_dump_upcall(struct pt_entry *, void *);
+char		*up_dump_mp_unreach(u_char *, u_int16_t *, struct rde_peer *);
+char		*up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *);
 
 /* rde_prefix.c */
 void		 pt_init(void);
