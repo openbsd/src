@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.5 2004/09/16 18:35:42 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.6 2005/07/29 17:26:28 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -276,7 +276,7 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 			if (length <= 0)
 				return (length);
 			interface->rbuf_offset = 0;
-			interface->rbuf_len = length;
+			interface->rbuf_len = BPF_WORDALIGN(length);
 		}
 
 		/*
@@ -310,7 +310,9 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		 * do is drop it.
 		 */
 		if (hdr.bh_caplen != hdr.bh_datalen) {
-			interface->rbuf_offset += hdr.bh_hdrlen = hdr.bh_caplen;
+			interface->rbuf_offset = BPF_WORDALIGN(
+			    interface->rbuf_offset + hdr.bh_hdrlen +
+			    hdr.bh_caplen);
 			continue;
 		}
 
@@ -327,7 +329,8 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		 * this packet.
 		 */
 		if (offset < 0) {
-			interface->rbuf_offset += hdr.bh_caplen;
+			interface->rbuf_offset = BPF_WORDALIGN(
+			    interface->rbuf_offset + hdr.bh_caplen);
 			continue;
 		}
 		interface->rbuf_offset += offset;
@@ -339,7 +342,8 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
-			interface->rbuf_offset += hdr.bh_caplen;
+			interface->rbuf_offset = BPF_WORDALIGN(
+			    interface->rbuf_offset + hdr.bh_caplen);
 			continue;
 		}
 		interface->rbuf_offset += offset;
@@ -351,14 +355,16 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		 * life, though).
 		 */
 		if (hdr.bh_caplen > len) {
-			interface->rbuf_offset += hdr.bh_caplen;
+			interface->rbuf_offset = BPF_WORDALIGN(
+			    interface->rbuf_offset + hdr.bh_caplen);
 			continue;
 		}
 
 		/* Copy out the data in the packet... */
 		memcpy(buf, interface->rbuf + interface->rbuf_offset,
 		    hdr.bh_caplen);
-		interface->rbuf_offset += hdr.bh_caplen;
+		interface->rbuf_offset = BPF_WORDALIGN(interface->rbuf_offset +
+		    hdr.bh_caplen);
 		return (hdr.bh_caplen);
 	} while (!length);
 	return (0);
