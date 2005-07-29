@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.37 2005/07/29 12:38:40 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.38 2005/07/29 22:26:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -965,25 +965,29 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 		buf++;
 	}
 	/* prepend header */
+	/* no IPv4 withdraws */
 	wpos = 0;
-	bzero(buf, 2);
-	wpos += 2;
+	bzero(buf, sizeof(u_int16_t));
+	wpos += sizeof(u_int16_t);
 
+	/* attribute length */
 	tmp = htons(attrlen);
-	memcpy(buf + wpos, &tmp, sizeof(tmp));
-	wpos += 2;
+	memcpy(buf + wpos, &tmp, sizeof(u_int16_t));
+	wpos += sizeof(u_int16_t);
 
+	/* mp attribute */
 	buf[wpos++] = flags;
 	buf[wpos++] = (u_char)ATTR_MP_UNREACH_NLRI;
 
 	if (datalen > 255) {
 		tmp = htons(datalen);
-		memcpy(buf + wpos, &tmp, sizeof(tmp));
-		wpos += 2;
+		memcpy(buf + wpos, &tmp, sizeof(u_int16_t));
+		wpos += sizeof(u_int16_t);
 	} else
 		buf[wpos++] = (u_char)datalen;
 
-	*len = datalen + wpos;
+	/* total length includes the two 2-bytes length fields. */
+	*len = attrlen + 2 * sizeof(u_int16_t);
 
 	return (buf);
 }
@@ -1000,12 +1004,12 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	 * It is possible that a queued path attribute has no nlri prefix.
 	 * Ignore and remove those path attributes.
 	 */
-	while ((upa = TAILQ_FIRST(&peer->updates)) != NULL)
+	while ((upa = TAILQ_FIRST(&peer->updates6)) != NULL)
 		if (TAILQ_EMPTY(&upa->prefix_h)) {
 			if (RB_REMOVE(uptree_attr, &peer->up_attrs,
 			    upa) == NULL)
 				log_warnx("dequeuing update failed.");
-			TAILQ_REMOVE(&peer->updates, upa, attr_l);
+			TAILQ_REMOVE(&peer->updates6, upa, attr_l);
 			free(upa->attr);
 			free(upa->mpattr);
 			free(upa);
@@ -1013,18 +1017,24 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 		} else
 			break;
 
+	if (upa == NULL)
+		return (NULL);
+
 	/*
-	 * reserve space for withdraw len, attr len, the attributes, the
-	 * mp attribute and the atributte header
+	 * reserve space for attr len, the attributes, the
+	 * mp attribute and the attribute header
 	 */
 	wpos = 2 + 2 + upa->attr_len + 4 + upa->mpattr_len;
 	if (*len < wpos)
 		return (NULL);
 
 	datalen = up_dump_prefix(buf + wpos, *len - wpos,
-	    &peer->withdraws6, peer);
+	    &upa->prefix_h, peer);
 	if (datalen == 0)
 		return (NULL);
+
+	if (upa->mpattr_len == 0 || upa->mpattr == NULL)
+		fatalx("mulitprotocol update without MP attrs");
 
 	datalen += upa->mpattr_len;
 	wpos -= upa->mpattr_len;
@@ -1063,7 +1073,7 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	if (TAILQ_EMPTY(&upa->prefix_h)) {
 		if (RB_REMOVE(uptree_attr, &peer->up_attrs, upa) == NULL)
 			log_warnx("dequeuing update failed.");
-		TAILQ_REMOVE(&peer->updates, upa, attr_l);
+		TAILQ_REMOVE(&peer->updates6, upa, attr_l);
 		free(upa->attr);
 		free(upa->mpattr);
 		free(upa);

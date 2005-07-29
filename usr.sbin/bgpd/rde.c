@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.167 2005/07/29 12:38:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.168 2005/07/29 22:26:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -249,6 +249,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		}
 
 		rde_update_queue_runner();
+		rde_update6_queue_runner();
 	}
 
 	rde_shutdown();
@@ -1858,7 +1859,7 @@ rde_update6_queue_runner(void)
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
 			b = up_dump_mp_unreach(queue_buf, &len, peer);
 
-			if (b == NULL || len <= 4)
+			if (b == NULL)
 				/*
 				 * No packet to send. The 4 bytes are the
 				 * needed withdraw and path attribute length.
@@ -1881,7 +1882,7 @@ rde_update6_queue_runner(void)
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
 			b = up_dump_mp_reach(queue_buf, &len, peer);
 
-			if (b == NULL || len <= 4)
+			if (b == NULL)
 				/*
 				 * No packet to send. The 4 bytes are the
 				 * needed withdraw and path attribute length.
@@ -2050,15 +2051,13 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 			if (ifa->ifa_addr->sa_family ==
 			    match->ifa_addr->sa_family)
 				ifa = match;
-			else {
-				if (IN6_IS_ADDR_LINKLOCAL(
-				    &((struct sockaddr_in6 *)ifa->
-				    ifa_addr)->sin6_addr) ||
-				    IN6_IS_ADDR_SITELOCAL(
-				    &((struct sockaddr_in6 *)ifa->
-				    ifa_addr)->sin6_addr))
-					continue;
-			}
+			else if (IN6_IS_ADDR_LINKLOCAL(
+			    &((struct sockaddr_in6 *)ifa->
+			    ifa_addr)->sin6_addr) ||
+			    IN6_IS_ADDR_SITELOCAL(
+			    &((struct sockaddr_in6 *)ifa->
+			    ifa_addr)->sin6_addr))
+				continue;
 			peer->local_v6_addr.af = AF_INET6;
 			memcpy(&peer->local_v6_addr.v6,
 			    &((struct sockaddr_in6 *)ifa->ifa_addr)->
@@ -2152,26 +2151,20 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
 		    safi == SAFI_BOTH) {
 			if (peer->conf.announce_type ==
-			    ANNOUNCE_DEFAULT_ROUTE) {
+			    ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(peer, AF_INET);
-				return;
-			}
-			pt_dump(up_dump_upcall, peer, AF_INET);
-			return;
+			else
+				pt_dump(up_dump_upcall, peer, AF_INET);
 		}
 	if (afi == AFI_ALL || afi == AFI_IPv6)
 		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
 		    safi == SAFI_BOTH) {
 			if (peer->conf.announce_type ==
-			    ANNOUNCE_DEFAULT_ROUTE) {
+			    ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(peer, AF_INET6);
-				return;
-			}
-			pt_dump(up_dump_upcall, peer, AF_INET6);
-			return;
+			else
+				pt_dump(up_dump_upcall, peer, AF_INET6);
 		}
-
-	log_peer_warnx(&peer->conf, "unsupported AFI, SAFI combination");
 }
 
 /*
