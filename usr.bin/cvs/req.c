@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.29 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.30 2005/07/29 10:38:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -298,11 +298,14 @@ cvs_req_directory(int reqid, char *line)
 	/*
 	 * Set repository path.
 	 */
-	s = cvs_req_currentdir + strlen(cvs_req_rootpath) + 1;
-	if (s >= (cvs_req_currentdir + dirlen)) {
-		cvs_log(LP_ERR, "you're bad, go away");
-		return (-1);
-	}
+	if (strlen(cvs_req_rootpath) < dirlen) {
+		s = cvs_req_currentdir + strlen(cvs_req_rootpath) + 1;
+		if (s >= (cvs_req_currentdir + dirlen)) {
+			cvs_log(LP_ERR, "you're bad, go away");
+			return (-1);
+		}
+	} else
+		s = cvs_req_currentdir;
 
 	if ((repo = strdup(s)) == NULL) {
 		cvs_log(LP_ERR, "failed to save repository path");
