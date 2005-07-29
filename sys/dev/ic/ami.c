@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.50 2005/07/29 16:56:13 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.51 2005/07/29 16:59:26 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1887,7 +1887,7 @@ ami_ioctl_inq(sc, bi)
 
 	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, sizeof *p, p)) {
 		error = EINVAL;
-		goto bail;
+		goto bail2;
 	}
 
 	memset(plist, 0, sizeof plist);
@@ -1910,6 +1910,7 @@ ami_ioctl_inq(sc, bi)
 				}
 			}
 
+bail2:
 	free(plist, M_DEVBUF);
 bail:
 	free(p, M_DEVBUF);
