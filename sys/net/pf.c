@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.495 2005/07/21 08:02:26 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.496 2005/07/29 06:26:43 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4480,6 +4480,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 	u_int16_t	 icmpid, *icmpsum;
 	u_int8_t	 icmptype;
 	int		 state_icmp = 0;
+	struct pf_state	 key;
 
 	switch (pd->proto) {
 #ifdef INET
@@ -4517,8 +4518,6 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		 * ICMP query/reply message not related to a TCP/UDP packet.
 		 * Search for an ICMP state.
 		 */
-		struct pf_state		key;
-
 		key.af = pd->af;
 		key.proto = pd->proto;
 		if (direction == PF_IN)	{
@@ -4694,7 +4693,6 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		case IPPROTO_TCP: {
 			struct tcphdr		 th;
 			u_int32_t		 seq;
-			struct pf_state		 key;
 			struct pf_state_peer	*src, *dst;
 			u_int8_t		 dws;
 			int			 copyback = 0;
@@ -4811,7 +4809,6 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		}
 		case IPPROTO_UDP: {
 			struct udphdr		uh;
-			struct pf_state		key;
 
 			if (!pf_pull_hdr(m, off2, &uh, sizeof(uh),
 			    NULL, reason, pd2.af)) {
@@ -4878,7 +4875,6 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 #ifdef INET
 		case IPPROTO_ICMP: {
 			struct icmp		iih;
-			struct pf_state		key;
 
 			if (!pf_pull_hdr(m, off2, &iih, ICMP_MINLEN,
 			    NULL, reason, pd2.af)) {
@@ -4930,7 +4926,6 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 #ifdef INET6
 		case IPPROTO_ICMPV6: {
 			struct icmp6_hdr	iih;
-			struct pf_state		key;
 
 			if (!pf_pull_hdr(m, off2, &iih,
 			    sizeof(struct icmp6_hdr), NULL, reason, pd2.af)) {
@@ -4982,8 +4977,6 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		}
 #endif /* INET6 */
 		default: {
-			struct pf_state		key;
-
 			key.af = pd2.af;
 			key.proto = pd2.proto;
 			if (direction == PF_IN)	{
