@@ -31,7 +31,7 @@
 .\" 
 .\"	$KTH: kafs.3,v 1.16 2003/04/16 13:58:27 lha Exp $
 .\"
-.Dd Mar 17, 2003
+.Dd March 17, 2003
 .Os HEIMDAL
 .Dt KAFS 3
 .Sh NAME
@@ -261,15 +261,14 @@ If any of these functions (apart from
 is called without AFS being present in the kernel, the process will
 usually (depending on the operating system) receive a SIGSYS signal.
 .Sh SEE ALSO
+.Xr krb5_appdefaults 3 ,
+.Xr krb5.conf 5
 .Rs
 .%A Transarc Corporation
 .%J AFS-3 Programmer's Reference
 .%T File Server/Cache Manager Interface
 .%D 1991
 .Re
-.Pp
-.Xr krb5_appdefaults 3 ,
-.Xr krb5.conf 5
 .Sh BUGS
 .Ev AFS_SYSCALL
 has no effect under AIX.
