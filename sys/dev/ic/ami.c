@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.49 2005/07/29 16:01:30 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.50 2005/07/29 16:56:13 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1866,16 +1866,23 @@ ami_ioctl_inq(sc, bi)
 	struct ami_softc *sc;
 	bioc_inq *bi;
 {
-	char plist[AMI_BIG_MAX_PDRIVES];
 	struct ami_big_diskarray *p; /* struct too large for stack */
+	char *plist;
 	int i, s, t;
 	int off;
 	int error = 0;
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 	if (!p) {
-		printf("%s: no memory for raw interface\n",sc->sc_dev.dv_xname);
+		printf("%s: no memory for disk array\n",sc->sc_dev.dv_xname);
 		return (ENOMEM);
+	}
+
+	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
+	if (!plist) {
+		printf("%s: no memory for disk list\n",sc->sc_dev.dv_xname);
+		error = ENOMEM;
+		goto bail;
 	}
 
 	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, sizeof *p, p)) {
@@ -1903,6 +1910,7 @@ ami_ioctl_inq(sc, bi)
 				}
 			}
 
+	free(plist, M_DEVBUF);
 bail:
 	free(p, M_DEVBUF);
 
