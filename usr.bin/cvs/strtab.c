@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtab.c,v 1.6 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: strtab.c,v 1.7 2005/07/29 17:04:42 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -134,7 +134,7 @@ cvs_strtab_cleanup(void)
  *
  * Insert the string <str> in the string table.
  */
-static struct cvs_str*
+static struct cvs_str *
 cvs_strtab_insert(const char *str)
 {
 	u_int32_t h;
@@ -187,7 +187,7 @@ cvs_strtab_hash(const char *str)
  * is found, a pointer to the string is returned and the entry's reference
  * count is increased.
  */
-static struct cvs_str*
+static struct cvs_str *
 cvs_strtab_lookup(const char *str)
 {
 	u_int32_t h;

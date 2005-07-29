@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.16 2005/07/26 20:58:44 moritz Exp $	*/
+/*	$OpenBSD: buf.c,v 1.17 2005/07/29 17:04:42 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -174,7 +174,7 @@ cvs_buf_free(BUF *b)
  * of the buffer.  Instead, they are returned and should be freed later using
  * free().
  */
-void*
+void *
 cvs_buf_release(BUF *b)
 {
 	u_char *tmp;
@@ -361,7 +361,7 @@ cvs_buf_len(BUF *b)
  *
  * Peek at the contents of the buffer <b> at offset <off>.
  */
-const void*
+const void *
 cvs_buf_peek(BUF *b, size_t off)
 {
 	if (off >= b->cb_len)

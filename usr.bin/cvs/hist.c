@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.7 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: hist.c,v 1.8 2005/07/29 17:04:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -49,7 +49,7 @@ static int	cvs_hist_fmt(const struct cvs_hent *, char *, size_t);
  * Open a CVS history file.
  * Returns the number of entries in the file on success, or -1 on error.
  */
-CVSHIST*
+CVSHIST *
 cvs_hist_open(const char *path)
 {
 	CVSHIST *histp;
@@ -114,7 +114,7 @@ cvs_hist_close(CVSHIST *histp)
  * Returns the next entry from the file on success, or NULL on failure or if
  * no entries are left.
  */
-struct cvs_hent*
+struct cvs_hent *
 cvs_hist_getnext(CVSHIST *histp)
 {
 	if (histp->chf_cindex == histp->chf_nbhent) {

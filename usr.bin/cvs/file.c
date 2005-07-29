@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.108 2005/07/29 13:56:00 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.109 2005/07/29 17:04:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -245,7 +245,7 @@ cvs_file_chkign(const char *file)
  * created.
  * Returns the created file on success, or NULL on failure.
  */
-CVSFILE*
+CVSFILE *
 cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 {
 	int fd, l;
@@ -324,7 +324,7 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
  * Returns the copied file on success, or NULL on failure.  The returned
  * structure should be freed using cvs_file_free().
  */
-CVSFILE*
+CVSFILE *
 cvs_file_copy(CVSFILE *orig)
 {
 	char path[MAXPATHLEN];
@@ -653,7 +653,7 @@ fail:
  * The file's pathname <path> must be relative to the base of <hier>.
  * Returns the entry on success, or NULL on failure.
  */
-CVSFILE*
+CVSFILE *
 cvs_file_find(CVSFILE *hier, const char *path)
 {
 	char *pp, *sp, pbuf[MAXPATHLEN];
@@ -1136,7 +1136,7 @@ cvs_file_cmp(const void *f1, const void *f2)
  *
  * Allocate a CVSFILE structure and initialize its internals.
  */
-CVSFILE*
+CVSFILE *
 cvs_file_alloc(const char *path, u_int type)
 {
 	CVSFILE *cfp;
@@ -1190,7 +1190,7 @@ cvs_file_alloc(const char *path, u_int type)
  * Returns a pointer to the created file structure on success, or NULL on
  * failure.
  */
-static CVSFILE*
+static CVSFILE *
 cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 {
 	int ret;
