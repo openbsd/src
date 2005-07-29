@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.107 2005/07/29 00:33:55 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.108 2005/07/29 13:56:00 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -453,8 +453,11 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 		 * Load the information.
 		 */
 		cf = cvs_file_loadinfo(pcopy, flags, cb, arg, freecf);
-		if (cf == NULL)
+		if (cf == NULL) {
+			if (cvs_error != CVS_EX_OK)
+				break;
 			continue;
+		}
 
 		/*
 		 * If extra actions are needed, do them now.
@@ -567,6 +570,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	if (base == NULL) {
 		cvs_log(LP_ERR, "failed to obtain directory info for '%s'",
 		    parent);
+		cvs_error = CVS_EX_FILE;
 		goto fail;
 	}
 
@@ -580,7 +584,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 
 	root = CVS_DIR_ROOT(base);
 	if (root == NULL) {
-		cvs_log(LP_ERR, "no Root in base directory found");
+		cvs_error = CVS_EX_BADROOT;
 		goto fail;
 	}
 
@@ -591,7 +595,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	if (type != DT_DIR) {
 		cf = cvs_file_lget(path, flags, base, ent);
 		if (cf == NULL) {
-			cvs_log(LP_ERR, "failed to fetch '%s'", path);
+			cvs_error = CVS_EX_DATA;
 			goto fail;
 		}
 
@@ -627,7 +631,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 		 */
 		if ((base->cf_flags & CVS_FILE_ONDISK) &&
 		    cvs_file_getdir(base, flags, cb, arg, freecf) < 0) {
-			cvs_log(LP_ERR, "cvs_file_getdir failed");
+			cvs_error = CVS_EX_FILE;
 			goto fail;
 		}
 	}
