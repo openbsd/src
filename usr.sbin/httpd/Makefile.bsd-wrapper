@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.51 2005/07/28 19:37:16 jmc Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.52 2005/07/29 09:37:45 jmc Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -249,7 +249,6 @@ MANUALFILES= \
 	manual/env.html.html \
 	manual/handler.html.html \
 	manual/index.html.html \
-	manual/install.html.html \
 	manual/invoking.html.html \
 	manual/keepalive.html.html \
 	manual/location.html \
@@ -268,14 +267,10 @@ MANUALFILES= \
 	manual/images/openssl_ics.gif \
 	manual/images/pixel.gif \
 	manual/images/sub.gif \
-	manual/man-template.html \
 	manual/multilogs.html \
 	manual/process-model.html.html \
 	manual/misc/API.html \
 	manual/misc/FAQ.html \
-	manual/misc/HTTP_Features.tsv \
-	manual/misc/client_block_api.html \
-	manual/misc/compat_notes.html \
 	manual/misc/custom_errordocs.html \
 	manual/misc/descriptors.html \
 	manual/misc/fin_wait_2.html \
@@ -288,7 +283,6 @@ MANUALFILES= \
 	manual/misc/rewriteguide.html \
 	manual/misc/security_tips.html \
 	manual/misc/tutorials.html \
-	manual/misc/windoz_keepalive.html \
 	manual/sections.html.html \
 	manual/server-wide.html.html \
 	manual/sitemap.html \
@@ -362,15 +356,12 @@ MANUALFILES= \
 	manual/mod/mod_define.html \
 	manual/mod/mod_digest.html \
 	manual/mod/mod_dir.html.html \
-	manual/mod/mod_dld.html \
 	manual/mod/mod_env.html.html \
-	manual/mod/mod_example.html \
 	manual/mod/mod_expires.html \
 	manual/mod/mod_headers.html \
 	manual/mod/mod_imap.html \
 	manual/mod/mod_include.html \
 	manual/mod/mod_info.html.html \
-	manual/mod/mod_isapi.html \
 	manual/mod/mod_log_agent.html \
 	manual/mod/mod_log_common.html \
 	manual/mod/mod_log_config.html.html \
