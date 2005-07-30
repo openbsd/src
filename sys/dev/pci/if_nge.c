@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.42 2005/07/25 00:49:44 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.43 2005/07/30 04:25:00 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1122,36 +1122,44 @@ nge_alloc_jumbo_mem(sc)
 	caddr_t			ptr, kva;
 	bus_dma_segment_t	seg;
 	bus_dmamap_t		dmamap;
-	int			i, rseg;
+	int			i, rseg, state, error;
 	struct nge_jpool_entry	*entry;
+
+	state = error = 0;
 
 	if (bus_dmamem_alloc(sc->sc_dmatag, NGE_JMEM, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 1;
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, NGE_JMEM, &kva,
 			   BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc->sc_dv.dv_xname, NGE_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 2;
 	if (bus_dmamap_create(sc->sc_dmatag, NGE_JMEM, 1,
 			      NGE_JMEM, 0, BUS_DMA_NOWAIT, &dmamap)) {
 		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmatag, kva, NGE_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 3;
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva, NGE_JMEM,
 			    NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->sc_dv.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-		bus_dmamem_unmap(sc->sc_dmatag, kva, NGE_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
         }
+
+	state = 4;
 	sc->nge_cdata.nge_jumbo_buf = (caddr_t)kva;
 	DPRINTFN(1,("%s: nge_jumbo_buf=%#x, NGE_MCLBYTES=%#x\n",
 		    sc->sc_dv.dv_xname , sc->nge_cdata.nge_jumbo_buf,
@@ -1176,21 +1184,34 @@ nge_alloc_jumbo_mem(sc)
 		entry = malloc(sizeof(struct nge_jpool_entry),
 			       M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
-			bus_dmamap_unload(sc->sc_dmatag, dmamap);
-			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-			bus_dmamem_unmap(sc->sc_dmatag, kva, NGE_JMEM);
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 			sc->nge_cdata.nge_jumbo_buf = NULL;
 			printf("%s: no memory for jumbo buffer queue!\n",
 			       sc->sc_dv.dv_xname);
-			return(ENOBUFS);
+			error = ENOBUFS;
+			goto out;
 		}
 		entry->slot = i;
 		LIST_INSERT_HEAD(&sc->nge_jfree_listhead, entry,
 				 jpool_entries);
 	}
-
-	return(0);
+out:
+	if (error != 0) {
+		switch (state) {
+		case 4:
+			bus_dmamap_unload(sc->sc_dmatag, dmamap);
+		case 3:
+			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
+		case 2:
+			bus_dmamem_unmap(sc->sc_dmatag, kva, NGE_JMEM);
+		case 1:
+			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+			break;
+		default:
+			break;
+		}
+	}
+ 
+	return (error);
 }
 
 /*

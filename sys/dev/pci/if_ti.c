@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.70 2005/07/25 00:49:43 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.71 2005/07/30 04:25:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -594,8 +594,10 @@ int ti_alloc_jumbo_mem(sc)
 {
 	caddr_t ptr, kva;
 	bus_dma_segment_t seg;
-	int i, rseg;
+	int i, rseg, state, error;
 	struct ti_jpool_entry *entry;
+
+	state = error = 0;
 
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, TI_JMEM, PAGE_SIZE, 0,
@@ -603,29 +605,33 @@ int ti_alloc_jumbo_mem(sc)
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
 		return (ENOBUFS);
 	}
+
+	state = 1;
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, TI_JMEM, &kva,
 	    BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		    sc->sc_dv.dv_xname, TI_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 2;
 	if (bus_dmamap_create(sc->sc_dmatag, TI_JMEM, 1, TI_JMEM, 0,
 	    BUS_DMA_NOWAIT, &sc->ti_cdata.ti_rx_jumbo_map)) {
 		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmatag, kva, TI_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 3;
 	if (bus_dmamap_load(sc->sc_dmatag, sc->ti_cdata.ti_rx_jumbo_map, kva,
 	    TI_JMEM, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->sc_dv.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmatag,
-				   sc->ti_cdata.ti_rx_jumbo_map);
-		bus_dmamem_unmap(sc->sc_dmatag, kva, TI_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 4;
 	sc->ti_cdata.ti_jumbo_buf = (caddr_t)kva;
 
 	SLIST_INIT(&sc->ti_jfree_listhead);
@@ -643,22 +649,35 @@ int ti_alloc_jumbo_mem(sc)
 		entry = malloc(sizeof(struct ti_jpool_entry),
 			       M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
-			bus_dmamap_unload(sc->sc_dmatag,
-					  sc->ti_cdata.ti_rx_jumbo_map);
-			bus_dmamap_destroy(sc->sc_dmatag,
-					   sc->ti_cdata.ti_rx_jumbo_map);
-			bus_dmamem_unmap(sc->sc_dmatag, kva, TI_JMEM);
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 			sc->ti_cdata.ti_jumbo_buf = NULL;
 			printf("%s: no memory for jumbo buffer queue\n",
 			    sc->sc_dv.dv_xname);
-			return(ENOBUFS);
+			error = ENOBUFS;
+			goto out;
 		}
 		entry->slot = i;
 		SLIST_INSERT_HEAD(&sc->ti_jfree_listhead, entry, jpool_entries);
 	}
-
-	return(0);
+out:
+	if (error != 0) {
+		switch (state) {
+		case 4:
+			bus_dmamap_unload(sc->sc_dmatag,
+			    sc->ti_cdata.ti_rx_jumbo_map);
+		case 3:
+			bus_dmamap_destroy(sc->sc_dmatag,
+			    sc->ti_cdata.ti_rx_jumbo_map);
+		case 2:
+			bus_dmamem_unmap(sc->sc_dmatag, kva, TI_JMEM);
+		case 1:
+			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+			break;
+		default:
+			break;
+		}
+	}
+ 
+	return (error);
 }
 
 /*
