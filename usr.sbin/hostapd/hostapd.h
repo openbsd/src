@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.4 2005/07/04 16:48:55 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.5 2005/07/30 17:18:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -328,7 +328,8 @@ void	 hostapd_fatal(const char *, ...);
 int	 hostapd_bpf_open(u_int);
 void	 hostapd_cleanup(struct hostapd_config *);
 int	 hostapd_check_file_secrecy(int, const char *);
-void	 hostapd_randval(u_int8_t *, const u_int);
+void	 hostapd_randval(u_int8_t *, const u_int)
+	    __attribute__((__bounded__(__buffer__, 1, 2)));
 
 struct hostapd_table *hostapd_table_add(struct hostapd_config *,
 	    const char *);
