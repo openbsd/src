@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.61 2005/07/03 16:59:15 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.62 2005/07/30 22:17:10 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -113,7 +113,7 @@ wskbd*	at ukbd? mux 1
 #udav*	at uhub?		# Davicom DM9601 based Ethernet
 #url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
-ural*	at uhub?		# Ralink RT2500
+#ural*	at uhub?		# Ralink RT2500
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
