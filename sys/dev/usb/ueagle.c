@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.4 2005/07/07 20:16:44 canacar Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.5 2005/07/30 07:16:09 brad Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -158,7 +158,7 @@ USB_ATTACH(ueagle)
 	USB_ATTACH_START(ueagle, sc, uaa);
 	struct ifnet *ifp = &sc->sc_if;
 	char devinfo[1024];
-	uint8_t addr[6];
+	uint8_t addr[ETHER_ADDR_LEN];
 
 	sc->sc_udev = uaa->device;
 	USB_ATTACH_SETUP;
