@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.22 2005/06/17 12:51:08 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.23 2005/07/30 17:13:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -620,6 +620,15 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 		    AR5K_AR5212_PHY_TIMING_3_DSC_EXP, ds_coef_exp);
 	}
 
+	if (hal->ah_radio == AR5K_AR5111) {
+		if (channel->c_channel_flags & IEEE80211_CHAN_B)
+			AR5K_REG_ENABLE_BITS(AR5K_AR5212_TXCFG,
+			    AR5K_AR5212_TXCFG_B_MODE);
+		else
+			AR5K_REG_DISABLE_BITS(AR5K_AR5212_TXCFG,
+			    AR5K_AR5212_TXCFG_B_MODE);
+	}
+
 	/* Set antenna mode */
 	AR5K_REG_MASKED_BITS(AR5K_AR5212_PHY(0x44),
 	    hal->ah_antenna[ee_mode][0], 0xfffffc06);
@@ -695,6 +704,14 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	ar5k_ar5212_set_opmode(hal);
 	AR5K_REG_WRITE(AR5K_AR5212_PISR, 0xffffffff);
 	AR5K_REG_WRITE(AR5K_AR5212_RSSI_THR, AR5K_TUNE_RSSI_THRES);
+
+	/*
+	 * Set Rx/Tx DMA Configuration
+	 */
+	AR5K_REG_WRITE_BITS(AR5K_AR5212_TXCFG, AR5K_AR5212_TXCFG_SDMAMR,
+	    AR5K_AR5212_DMASIZE_512B | AR5K_AR5212_TXCFG_DMASIZE);
+	AR5K_REG_WRITE_BITS(AR5K_AR5212_RXCFG, AR5K_AR5212_RXCFG_SDMAMW,
+	    AR5K_AR5212_DMASIZE_512B);
 
 	/*
 	 * Set channel and calibrate the PHY
@@ -1223,6 +1240,8 @@ ar5k_ar5212_stop_tx_dma(hal, queue)
 	struct ath_hal *hal;
 	u_int queue;
 {
+	int i = 100, pending;
+
 	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
 
 	/*
@@ -1230,14 +1249,14 @@ ar5k_ar5212_stop_tx_dma(hal, queue)
 	 */
 	AR5K_REG_WRITE_Q(AR5K_AR5212_QCU_TXD, queue);
 
-	ar5k_register_timeout(hal, AR5K_AR5212_QCU_STS(queue),
-	    AR5K_AR5212_QCU_STS_FRMPENDCNT, 0, AH_FALSE);
+	do {
+		pending = AR5K_REG_READ(AR5K_AR5212_QCU_STS(queue)) &
+		     AR5K_AR5212_QCU_STS_FRMPENDCNT;
+		delay(100);
+	} while (--i && pending);
 
 	/* Clear register */
 	AR5K_REG_WRITE(AR5K_AR5212_QCU_TXD, 0);
-
-	if (AR5K_REG_READ_Q(AR5K_AR5212_QCU_TXE, queue))
-		return (AH_FALSE);
 
 	return (AH_TRUE);
 }
@@ -1280,7 +1299,8 @@ ar5k_ar5212_setup_tx_desc(hal, desc, packet_length, header_length, type,
 	tx_desc->tx_control_1 =
 	    AR5K_REG_SM(type, AR5K_AR5212_DESC_TX_CTL1_FRAME_TYPE);
 	tx_desc->tx_control_2 =
-	    AR5K_REG_SM(tx_tries0, AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES0);
+	    AR5K_REG_SM(tx_tries0 + AR5K_TUNE_HWTXTRIES,
+	    AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES0);
 	tx_desc->tx_control_3 =
 	    tx_rate0 & AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE0;
 
@@ -2204,8 +2224,7 @@ ar5k_ar5212_set_slot_time(hal, slot_time)
 	if (slot_time < HAL_SLOT_TIME_9 || slot_time > HAL_SLOT_TIME_MAX)
 		return (AH_FALSE);
 
-	AR5K_REG_WRITE(AR5K_AR5212_DCU_GBL_IFS_SLOT,
-	    ar5k_htoclock(slot_time, hal->ah_turbo));
+	AR5K_REG_WRITE(AR5K_AR5212_DCU_GBL_IFS_SLOT, slot_time);
 
 	return (AH_TRUE);
 }
@@ -2214,8 +2233,7 @@ u_int
 ar5k_ar5212_get_slot_time(hal)
 	struct ath_hal *hal;
 {
-	return (ar5k_clocktoh(AR5K_REG_READ(AR5K_AR5212_DCU_GBL_IFS_SLOT) &
-	    0xffff, hal->ah_turbo));
+	return (AR5K_REG_READ(AR5K_AR5212_DCU_GBL_IFS_SLOT) & 0xffff);
 }
 
 HAL_BOOL

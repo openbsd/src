@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.6 2005/05/25 07:40:49 reyk Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.7 2005/07/30 17:13:17 reyk Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -158,6 +158,10 @@ struct ieee80211_radiotap_header {
  * IEEE80211_RADIOTAP_FCS           	u_int32_t       data
  *
  *	FCS from frame in network byte order.
+ *
+ * IEEE80211_RADIOTAP_HWQUEUE           u_int8_t       data
+ *
+ *	A specific hardware queue (used by WME)
  */
 enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_TSFT = 0,
@@ -175,6 +179,7 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_DB_ANTSIGNAL = 12,
 	IEEE80211_RADIOTAP_DB_ANTNOISE = 13,
 	IEEE80211_RADIOTAP_FCS = 14,
+	IEEE80211_RADIOTAP_HWQUEUE = 15,
 	IEEE80211_RADIOTAP_EXT = 31
 };
 

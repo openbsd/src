@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.12 2005/05/28 23:45:10 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.13 2005/07/30 17:13:17 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -150,6 +150,7 @@ struct ath_rx_radiotap_header {
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
 	(1 << IEEE80211_RADIOTAP_DBM_TX_POWER)	| \
 	(1 << IEEE80211_RADIOTAP_ANTENNA)	| \
+	(1 << IEEE80211_RADIOTAP_HWQUEUE)	| \
 	0)
 
 struct ath_tx_radiotap_header {
@@ -160,6 +161,7 @@ struct ath_tx_radiotap_header {
 	u_int16_t	wt_chan_flags;
 	u_int8_t	wt_txpower;
 	u_int8_t	wt_antenna;
+	u_int8_t	wt_hwqueue;
 } __packed;
 
 /* 
@@ -273,7 +275,7 @@ struct ath_softc {
 	u_int32_t		*sc_rxlink;	/* link ptr in last RX desc */
 	ath_task_t		sc_rxtask;	/* rx int processing */
 
-	u_int			sc_txhalq;	/* HAL q for outgoing frames */
+	u_int			sc_txhalq[HAL_NUM_TX_QUEUES];	/* HAL q for outgoing frames */
 	u_int32_t		*sc_txlink;	/* link ptr in last TX desc */
 	int			sc_tx_timer;	/* transmit timeout */
 	TAILQ_HEAD(, ath_buf)	sc_txbuf;	/* transmit buffer */
@@ -325,7 +327,6 @@ struct ath_softc {
 	 ((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8) |	\
 	 (((u_int8_t *)(p))[2] << 16) | (((u_int8_t *)(p))[3] << 24)))
 
-#define AR_DEBUG
 #ifdef AR_DEBUG
 enum {
 	ATH_DEBUG_XMIT		= 0x00000001,	/* basic xmit operation */
@@ -495,7 +496,8 @@ int	ath_enable(struct ath_softc *);
 	(*(_pcc) = (_ah)->ah_getcountrycode)
 #define	ath_hal_detach(_ah) \
 	((*(_ah)->ah_detach)(_ah))
-
+#define ath_hal_set_slot_time(_ah, _t) \
+	((*(_ah)->ah_set_slot_time)(_ah, _t))
 #define ath_hal_set_gpio_output(_ah, _gpio) \
 	((*(_ah)->ah_set_gpio_output)((_ah), (_gpio)))
 #define ath_hal_set_gpio_input(_ah, _gpio) \

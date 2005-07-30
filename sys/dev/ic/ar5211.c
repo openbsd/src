@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.18 2005/06/17 12:51:08 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.19 2005/07/30 17:13:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -509,6 +509,15 @@ ar5k_ar5211_reset(hal, op_mode, channel, change_channel, status)
 	 * Configure additional registers
 	 */
 
+	if (hal->ah_radio == AR5K_AR5111) {
+		if (channel->c_channel_flags & IEEE80211_CHAN_B)
+			AR5K_REG_ENABLE_BITS(AR5K_AR5211_TXCFG,
+			    AR5K_AR5211_TXCFG_B_MODE);
+		else
+			AR5K_REG_DISABLE_BITS(AR5K_AR5211_TXCFG,
+			    AR5K_AR5211_TXCFG_B_MODE);
+	}
+
 	/* Set antenna mode */
 	AR5K_REG_MASKED_BITS(AR5K_AR5211_PHY(0x44),
 	    hal->ah_antenna[ee_mode][0], 0xfffffc06);
@@ -577,6 +586,14 @@ ar5k_ar5211_reset(hal, op_mode, channel, change_channel, status)
 	ar5k_ar5211_set_opmode(hal);
 	AR5K_REG_WRITE(AR5K_AR5211_PISR, 0xffffffff);
 	AR5K_REG_WRITE(AR5K_AR5211_RSSI_THR, AR5K_TUNE_RSSI_THRES);
+
+	/*
+	 * Set Rx/Tx DMA Configuration
+	 */
+	AR5K_REG_WRITE_BITS(AR5K_AR5211_TXCFG, AR5K_AR5211_TXCFG_SDMAMR,
+	    AR5K_AR5211_DMASIZE_512B | AR5K_AR5211_TXCFG_DMASIZE);
+	AR5K_REG_WRITE_BITS(AR5K_AR5211_RXCFG, AR5K_AR5211_RXCFG_SDMAMW,
+	    AR5K_AR5211_DMASIZE_512B);
 
 	/*
 	 * Set channel and calibrate the PHY
@@ -1081,6 +1098,8 @@ ar5k_ar5211_stop_tx_dma(hal, queue)
 	struct ath_hal *hal;
 	u_int queue;
 {
+	int i = 100, pending;
+
 	AR5K_ASSERT_ENTRY(queue, hal->ah_capabilities.cap_queues.q_tx_num);
 
 	/*
@@ -1088,11 +1107,11 @@ ar5k_ar5211_stop_tx_dma(hal, queue)
 	 */
 	AR5K_REG_WRITE_Q(AR5K_AR5211_QCU_TXD, queue);
 
-	ar5k_register_timeout(hal, AR5K_AR5211_QCU_STS(queue),
-	    AR5K_AR5211_QCU_STS_FRMPENDCNT, 0, AH_FALSE);
-
-	if (AR5K_REG_READ_Q(AR5K_AR5211_QCU_TXE, queue))
-		return (AH_FALSE);
+	do {
+		pending = AR5K_REG_READ(AR5K_AR5211_QCU_STS(queue)) &
+		     AR5K_AR5211_QCU_STS_FRMPENDCNT;
+		delay(100);
+	} while (--i && pending);
 
 	/* Clear register */
 	AR5K_REG_WRITE(AR5K_AR5211_QCU_TXD, 0);
@@ -1896,8 +1915,7 @@ ar5k_ar5211_set_slot_time(hal, slot_time)
 	if (slot_time < HAL_SLOT_TIME_9 || slot_time > HAL_SLOT_TIME_MAX)
 		return (AH_FALSE);
 
-	AR5K_REG_WRITE(AR5K_AR5211_DCU_GBL_IFS_SLOT,
-	    ar5k_htoclock(slot_time, hal->ah_turbo));
+	AR5K_REG_WRITE(AR5K_AR5211_DCU_GBL_IFS_SLOT, slot_time);
 
 	return (AH_TRUE);
 }
@@ -1906,8 +1924,7 @@ u_int
 ar5k_ar5211_get_slot_time(hal)
 	struct ath_hal *hal;
 {
-	return (ar5k_clocktoh(AR5K_REG_READ(AR5K_AR5211_DCU_GBL_IFS_SLOT) &
-	    0xffff, hal->ah_turbo));
+	return (AR5K_REG_READ(AR5K_AR5211_DCU_GBL_IFS_SLOT) & 0xffff);
 }
 
 HAL_BOOL

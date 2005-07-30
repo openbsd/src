@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.22 2005/05/27 04:10:06 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.23 2005/07/30 17:13:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -379,19 +379,19 @@ typedef struct {
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,	\
 	3, 2, 1, 0, 255, 255, 255, 255 }, {				\
 	{ 1, IEEE80211_T_CCK, 1000, 27, 0x00, 130, 0 },			\
-	{ 1, IEEE80211_T_CCK, 2000, 26, 0x00, 132, 1 },			\
-	{ 1, IEEE80211_T_CCK, 5500, 25, 0x00, 139, 1 },			\
-	{ 1, IEEE80211_T_CCK, 11000, 24, 0x00, 150, 1 } }		\
+	{ 1, IEEE80211_T_CCK, 2000, 26, 0x04, 132, 1 },			\
+	{ 1, IEEE80211_T_CCK, 5500, 25, 0x04, 139, 1 },			\
+	{ 1, IEEE80211_T_CCK, 11000, 24, 0x04, 150, 1 } }		\
 }
 
 #define AR5K_RATES_11G { 12, {						\
 	255, 255, 255, 255, 255, 255, 255, 255, 10, 8, 6, 4,		\
 	11, 9, 7, 5, 255, 255, 255, 255, 255, 255, 255, 255,		\
 	3, 2, 1, 0, 255, 255, 255, 255 }, {				\
-	{ 1, IEEE80211_T_CCK, 1000, 27, 0x00, 130, 0 },			\
-	{ 1, IEEE80211_T_CCK, 2000, 26, 0x00, 132, 1 },			\
-	{ 1, IEEE80211_T_CCK, 5500, 25, 0x00, 139, 1 },			\
-	{ 1, IEEE80211_T_CCK, 11000, 24, 0x00, 150, 1 },		\
+	{ 1, IEEE80211_T_CCK, 1000, 27, 0x00, 2, 0 },			\
+	{ 1, IEEE80211_T_CCK, 2000, 26, 0x04, 4, 1 },			\
+	{ 1, IEEE80211_T_CCK, 5500, 25, 0x04, 11, 1 },			\
+	{ 1, IEEE80211_T_CCK, 11000, 24, 0x04, 22, 1 },			\
 	{ 0, IEEE80211_T_OFDM, 6000, 11, 0, 12, 4 },			\
 	{ 0, IEEE80211_T_OFDM, 9000, 15, 0, 18, 4 },			\
 	{ 1, IEEE80211_T_OFDM, 12000, 10, 0, 24, 6 },			\
@@ -449,9 +449,9 @@ typedef struct {
 
 } HAL_CHANNEL;
 
-#define HAL_SLOT_TIME_9		9
-#define HAL_SLOT_TIME_20	20
-#define HAL_SLOT_TIME_MAX	ar5k_clocktoh(0xffff, hal->ah_turbo)
+#define HAL_SLOT_TIME_9		396
+#define HAL_SLOT_TIME_20	880
+#define HAL_SLOT_TIME_MAX	0xffff
 
 #define CHANNEL_A	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM)
 #define CHANNEL_B	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_CCK)
@@ -1277,6 +1277,7 @@ typedef HAL_BOOL (ar5k_rfgain_t)
 #define AR5K_TUNE_DEFAULT_TXPOWER		30
 #define AR5K_TUNE_TPC_TXPOWER			AH_TRUE
 #define AR5K_TUNE_ANT_DIVERSITY			AH_TRUE
+#define AR5K_TUNE_HWTXTRIES			4
 
 /* Default regulation domain if stored value EEPROM value is invalid */
 #define AR5K_TUNE_REGDOMAIN	DMN_FCC1_FCCA
@@ -1298,7 +1299,7 @@ typedef HAL_BOOL (ar5k_rfgain_t)
 #define AR5K_INIT_PROG_IFS_TURBO		960
 #define AR5K_INIT_EIFS				3440
 #define AR5K_INIT_EIFS_TURBO			6880
-#define AR5K_INIT_SLOT_TIME			360
+#define AR5K_INIT_SLOT_TIME			396
 #define AR5K_INIT_SLOT_TIME_TURBO		480
 #define AR5K_INIT_ACK_CTS_TIMEOUT		1024
 #define AR5K_INIT_ACK_CTS_TIMEOUT_TURBO		0x08000800
