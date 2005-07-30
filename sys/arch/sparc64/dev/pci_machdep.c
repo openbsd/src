@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.18 2005/07/27 09:39:21 art Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.19 2005/07/30 20:50:35 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ pci_attach_hook(parent, self, pba)
 	struct device *self;
 	struct pcibus_attach_args *pba;
 {
-	/* Don't do nothing */
+	/* Don't do anything */
 }
 
 int
