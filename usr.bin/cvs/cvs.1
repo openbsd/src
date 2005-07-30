@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.69 2005/07/26 20:44:19 moritz Exp $
+.\"	$OpenBSD: cvs.1,v 1.70 2005/07/30 00:06:24 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -32,7 +32,7 @@
 .Nd OpenCVS Concurrent Versioning System
 .Sh SYNOPSIS
 .Nm
-.Op Fl flQqtv
+.Op Fl flQqrtv
 .Op Fl d Ar root
 .Op Fl e Ar editor
 .Xo
@@ -93,6 +93,8 @@ Be extra quiet.
 Only error messages will be displayed.
 .It Fl q
 Be quiet about reporting.
+.It Fl r
+Extract files in read-only mode.
 .It Fl s Ar var Ns = Ns Ar val
 Set the value of the internal variable
 .Ar var
@@ -1794,6 +1796,10 @@ Checked before
 .Ev EDITOR
 and
 .Ev VISUAL .
+.It Ev CVSREAD
+If set,
+.Nm
+extracts files in read-only mode.
 .It Ev CVSROOT
 When set, this variable should contain the string pointing to the root
 directory of the CVS repository.
