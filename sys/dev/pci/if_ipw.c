@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.48 2005/07/02 23:10:11 brad Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.49 2005/07/30 18:04:41 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -870,8 +870,8 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 
 		tap->wr_flags = 0;
 		tap->wr_antsignal = status->rssi;
-		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 
 		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
@@ -1154,8 +1154,8 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		struct ipw_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
-		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 
 		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
