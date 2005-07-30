@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.109 2005/07/29 17:04:42 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.110 2005/07/30 21:16:17 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -153,7 +153,8 @@ cvs_file_init(void)
 		if (ifp == NULL) {
 			if (errno != ENOENT)
 				cvs_log(LP_ERRNO,
-				    "failed to open user's cvsignore", path);
+				    "failed to open user's cvsignore file "
+				    "`%s'", path);
 		} else {
 			while (fgets(buf, sizeof(buf), ifp) != NULL) {
 				len = strlen(buf);
@@ -251,7 +252,6 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 	int fd, l;
 	char fp[MAXPATHLEN], repo[MAXPATHLEN];
 	CVSFILE *cfp;
-	CVSENTRIES *ent;
 
 	cfp = cvs_file_alloc(path, type);
 	if (cfp == NULL)
@@ -294,11 +294,6 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 		    (cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo) < 0)) {
 			cvs_file_free(cfp);
 			return (NULL);
-		}
-
-		ent = cvs_ent_open(path, O_RDWR);
-		if (ent != NULL) {
-			cvs_ent_close(ent);
 		}
 	} else {
 		fd = open(path, O_WRONLY|O_CREAT|O_EXCL, mode);

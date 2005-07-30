@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.47 2005/07/27 19:24:14 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.48 2005/07/30 21:16:17 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -439,7 +439,8 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath)
 
 	/* just create an empty Entries file */
 	ef = cvs_ent_open(dpath, O_WRONLY);
-	(void)cvs_ent_close(ef);
+	if (ef != NULL)
+		cvs_ent_close(ef);
 
 	l = cvs_path_cat(dpath, CVS_PATH_ROOTSPEC, path, sizeof(path));
 	if (l >= sizeof(path))
