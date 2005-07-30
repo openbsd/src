@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.81 2005/07/05 00:55:25 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.82 2005/07/30 15:54:45 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1332,10 +1332,10 @@ sd_get_parms(sd, dp, flags)
 {
 	struct scsi_mode_sense_buf buf;
 	union scsi_disk_pages *sense_pages;
-	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize;
+	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize, ssblksize;
 	u_int16_t rpm = 0;
 
-	dp->disksize = scsi_size(sd->sc_link, flags, &blksize);
+	dp->disksize = scsi_size(sd->sc_link, flags, &ssblksize);
 
 	switch (sd->sc_link->inqdata.device & SID_TYPE) {
 	case T_OPTICAL:
@@ -1395,6 +1395,11 @@ sd_get_parms(sd, dp, flags)
 
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
+	if (ssblksize > 0)
+		dp->blksize = ssblksize;
+	else
+		dp->blksize = (blksize == 0) ? 512 : blksize;
+
 
 	/*
 	 * Use Adaptec standard geometry values for anything we still don't
@@ -1402,7 +1407,6 @@ sd_get_parms(sd, dp, flags)
 	 */
 
 	dp->heads = (heads == 0) ? 64 : heads;
-	dp->blksize = (blksize == 0) ? 512 : blksize;
 	dp->sectors = (sectors == 0) ? 32 : sectors;
 	dp->rot_rate = (rpm == 0) ? 3600 : rpm;
 
