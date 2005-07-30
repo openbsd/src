@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.12 2004/06/23 00:29:56 tom Exp $
+#	$OpenBSD: Makefile,v 1.13 2005/07/30 17:25:19 millert Exp $
 
 .if ${MACHINE} == "i386"
-SUBDIR=	etc libsa libz mbr cdbr
+SUBDIR=	etc libsa libkern libz mbr cdbr
 .endif
 SUBDIR+= biosboot installboot boot pxeboot cdboot
 
