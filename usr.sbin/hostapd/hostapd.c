@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.15 2005/07/04 18:48:05 deraadt Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.16 2005/07/30 17:16:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -105,6 +105,9 @@ hostapd_printf(const char *fmt, ...)
 	if (vsnprintf(printbuf, sizeof(printbuf), newfmt, ap) == -1)
 		goto flush;
 	va_end(ap);
+
+	if (fmt[0] == '\n')
+		goto flush;
 }
 
 void
