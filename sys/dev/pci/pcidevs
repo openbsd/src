@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.899 2005/07/30 22:43:10 deraadt Exp $
+$OpenBSD: pcidevs,v 1.900 2005/07/30 22:51:07 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -109,7 +109,7 @@ vendor	DIAMOND		0x1092	Diamond Multimedia
 vendor	CMDTECH		0x1095	CMD Technology
 vendor	QUANTUMDESIGNS	0x1098	Quantum Designs
 vendor	BROOKTREE	0x109e	Brooktree
-vendor	SGI		0x10a9	Silicon Graphics
+vendor	SGI		0x10a9	SGI
 vendor	ACC		0x10aa	ACC Microelectronics
 vendor	SYMPHONY	0x10ad	Symphony Labs
 vendor	STB		0x10b4	STB Systems
@@ -177,7 +177,7 @@ vendor	CYCLADES	0x120e	Cyclades
 vendor	ESSENTIAL	0x120f	Essential Communications
 vendor	O2MICRO		0x1217	O2 Micro
 vendor	3DFX		0x121a	3DFX Interactive
-vendor	ATML		0x121b	Advanced Telecommunications Modules
+vendor	ATML		0x121b	ATML
 vendor	CCUBE		0x123f	C-Cube
 vendor	AVM		0x1244	AVM
 vendor	COREGA		0x1259	Corega
@@ -218,11 +218,11 @@ vendor	LAVA		0x1407	Lava
 vendor	SUNIX		0x1409	Sunix
 vendor	MICROSOFT	0x1414	Microsoft
 vendor	OXFORD2		0x1415	Oxford
-vendor	TAMARACK	0x143d	Tamarack Microelectronics
+vendor	TAMARACK	0x143d	Tamarack
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
 vendor	AIRONET		0x14b9	Aironet
-vendor	OXFORD		0x14d2	Oxford
+vendor	OXFORD		0x14d2	VScom
 vendor	AVLAB		0x14db	Avlab
 vendor	INVERTEX	0x14e1	Invertex
 vendor	BROADCOM	0x14e4	Broadcom
@@ -236,7 +236,7 @@ vendor	ARALION		0x1538	Aralion
 vendor	TERRATEC	0x153b	TerraTec
 vendor	SYMBOL		0x1562	Symbol
 vendor	SYBA		0x1592	Syba
-vendor	BLUESTEEL	0x15ab	Bluesteel Networks
+vendor	BLUESTEEL	0x15ab	Bluesteel
 vendor	VMWARE		0x15ad	VMware
 vendor	NDC		0x15e8	National Datacomm
 vendor	ZOLTRIX		0x15b0	Zoltrix
@@ -922,7 +922,7 @@ product C4T GPPCI		0x6773	GPPCI
 product CAVIUM NITROX		0x0001	Nitrox XL
 
 /* CCUBE products */
-product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
+product CCUBE CINEMASTER	0x8888	Cinemaster
 
 /* Chips and Technologies products */
 product CHIPS 64310		0x00b8	64310
@@ -1009,18 +1009,18 @@ product COMPAQ OHCI		0xa0f8	USB OpenHost
 product COMPAQ SMART2P		0xae10	SMART2P RAID
 product COMPAQ PCI_ISA_BRIDGE3	0xae29	ISA
 product COMPAQ PCI_ISAPNP	0xae2b	ISAPnP
-product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
+product COMPAQ N100TX		0xae32	Netelligent 10/100TX
 product COMPAQ IDE		0xae33	Netelligent IDE
 product COMPAQ N10T		0xae34	Netelligent 10 T
 product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
-product COMPAQ DPNet100TX	0xae40	DP Netelligent 10/100 TX
-product COMPAQ IntPL100TX	0xae43	ProLiant Netelligent 10/100 TX
+product COMPAQ DPNet100TX	0xae40	DP Netelligent 10/100TX
+product COMPAQ IntPL100TX	0xae43	ProLiant Netelligent 10/100TX
 product COMPAQ PCI_ISA_BRIDGE2	0xae69	ISA
 product COMPAQ HOST_PCI_BRIDGE1	0xae6c	PCI
 product COMPAQ HOST_PCI_BRIDGE2 0xae6d	PCI
-product COMPAQ DP4000		0xb011	Embedded Netelligent 10/100 TX
+product COMPAQ DP4000		0xb011	Embedded Netelligent 10/100TX
 product COMPAQ N10T2		0xb012	Netelligent 10 T/2 PCI
-product COMPAQ N10_TX_UTP	0xb030	Netelligent 10/100 TX
+product COMPAQ N10_TX_UTP	0xb030	Netelligent 10/100TX
 product COMPAQ CSA5300_2	0xb060	Smart Array 5300 rev.2
 product COMPAQ CSA5i_2		0xb178	Smart Array 5i/532 rev.2
 product COMPAQ NF3P		0xf130	NetFlex 3/P
@@ -1058,7 +1058,7 @@ product CREATIVELABS SBLIVE2	0x0006	SoundBlaster Live
 product CREATIVELABS AUDIGYLS	0x0007	SoundBlaster Audigy LS
 product CREATIVELABS FIWIRE	0x4001	Firewire
 product CREATIVELABS SBJOY	0x7002	PCI Gameport Joystick
-product CREATIVELABS AUDIGIN	0x7003	SoundBlaster Audigy Digital Input
+product CREATIVELABS AUDIGIN	0x7003	SoundBlaster Audigy Digital
 product CREATIVELABS SBJOY2	0x7004	PCI Gameport Joystick
 product CREATIVELABS EV1938	0x8938	Ectiva 1938
 
@@ -2225,20 +2225,20 @@ product OPTI 82C822		0xc822	82C822
 product OPTI 82C861		0xc861	82C861
 
 /* Oxford/ VScom */
-product OXFORD VSCOM_PCI010L	0x8001	VScom 010L
-product OXFORD VSCOM_PCI100L	0x8010	VScom 100L
-product OXFORD VSCOM_PCI110L	0x8011	VScom 110L
-product OXFORD VSCOM_PCI200L	0x8020	VScom 200L
-product OXFORD VSCOM_PCI210L	0x8021	VScom 210L
-product MOLEX VSCOM_PCI400L	0x8040	VScom 400L
-product OXFORD VSCOM_PCI800L	0x8080	VScom 800L
-product OXFORD VSCOM_PCIx10H	0xa000	VScom x10H
-product OXFORD VSCOM_PCI100H	0xa001	VScom 100H
-product OXFORD VSCOM_PCI200H	0xa005	VScom 200H
-product OXFORD VSCOM_PCI200HV2	0xe020	VScom 200HV2
-product OXFORD VSCOM_PCI800H_0	0xa003	VScom 400H/800H
-product OXFORD VSCOM_PCI800H_1	0xa004	VScom 800H
-product OXFORD2 VSCOM_PCI011H	0x8403	VScom 011H
+product OXFORD VSCOM_PCI010L	0x8001	010L
+product OXFORD VSCOM_PCI100L	0x8010	100L
+product OXFORD VSCOM_PCI110L	0x8011	110L
+product OXFORD VSCOM_PCI200L	0x8020	200L
+product OXFORD VSCOM_PCI210L	0x8021	210L
+product MOLEX VSCOM_PCI400L	0x8040	400L
+product OXFORD VSCOM_PCI800L	0x8080	800L
+product OXFORD VSCOM_PCIx10H	0xa000	x10H
+product OXFORD VSCOM_PCI100H	0xa001	100H
+product OXFORD VSCOM_PCI200H	0xa005	200H
+product OXFORD VSCOM_PCI200HV2	0xe020	200HV2
+product OXFORD VSCOM_PCI800H_0	0xa003	400H/800H
+product OXFORD VSCOM_PCI800H_1	0xa004	800H
+product OXFORD2 VSCOM_PCI011H	0x8403	011H
 product OXFORD2 EXSYS_EX41098	0x9511	Exsys EX-41098
 
 /* Packet Engines products */

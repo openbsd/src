@@ -114,7 +114,7 @@
 #define	PCI_VENDOR_CMDTECH	0x1095		/* CMD Technology */
 #define	PCI_VENDOR_QUANTUMDESIGNS	0x1098		/* Quantum Designs */
 #define	PCI_VENDOR_BROOKTREE	0x109e		/* Brooktree */
-#define	PCI_VENDOR_SGI	0x10a9		/* Silicon Graphics */
+#define	PCI_VENDOR_SGI	0x10a9		/* SGI */
 #define	PCI_VENDOR_ACC	0x10aa		/* ACC Microelectronics */
 #define	PCI_VENDOR_SYMPHONY	0x10ad		/* Symphony Labs */
 #define	PCI_VENDOR_STB	0x10b4		/* STB Systems */
@@ -182,7 +182,7 @@
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
 #define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
-#define	PCI_VENDOR_ATML	0x121b		/* Advanced Telecommunications Modules */
+#define	PCI_VENDOR_ATML	0x121b		/* ATML */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube */
 #define	PCI_VENDOR_AVM	0x1244		/* AVM */
 #define	PCI_VENDOR_COREGA	0x1259		/* Corega */
@@ -223,11 +223,11 @@
 #define	PCI_VENDOR_SUNIX	0x1409		/* Sunix */
 #define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORD2	0x1415		/* Oxford */
-#define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics */
+#define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
-#define	PCI_VENDOR_OXFORD	0x14d2		/* Oxford */
+#define	PCI_VENDOR_OXFORD	0x14d2		/* VScom */
 #define	PCI_VENDOR_AVLAB	0x14db		/* Avlab */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom */
@@ -241,7 +241,7 @@
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec */
 #define	PCI_VENDOR_SYMBOL	0x1562		/* Symbol */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
-#define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
+#define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_ZOLTRIX	0x15b0		/* Zoltrix */
@@ -927,7 +927,7 @@
 #define	PCI_PRODUCT_CAVIUM_NITROX	0x0001		/* Nitrox XL */
 
 /* CCUBE products */
-#define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster C 3.0 DVD Decoder */
+#define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster */
 
 /* Chips and Technologies products */
 #define	PCI_PRODUCT_CHIPS_64310	0x00b8		/* 64310 */
@@ -1014,18 +1014,18 @@
 #define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* SMART2P RAID */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE3	0xae29		/* ISA */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISAPNP	0xae2b		/* ISAPnP */
-#define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100TX */
 #define	PCI_PRODUCT_COMPAQ_IDE	0xae33		/* Netelligent IDE */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
-#define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* DP Netelligent 10/100 TX */
-#define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* DP Netelligent 10/100TX */
+#define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Netelligent 10/100TX */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE2	0xae69		/* ISA */
 #define	PCI_PRODUCT_COMPAQ_HOST_PCI_BRIDGE1	0xae6c		/* PCI */
 #define	PCI_PRODUCT_COMPAQ_HOST_PCI_BRIDGE2	0xae6d		/* PCI */
-#define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Embedded Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Embedded Netelligent 10/100TX */
 #define	PCI_PRODUCT_COMPAQ_N10T2	0xb012		/* Netelligent 10 T/2 PCI */
-#define	PCI_PRODUCT_COMPAQ_N10_TX_UTP	0xb030		/* Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_N10_TX_UTP	0xb030		/* Netelligent 10/100TX */
 #define	PCI_PRODUCT_COMPAQ_CSA5300_2	0xb060		/* Smart Array 5300 rev.2 */
 #define	PCI_PRODUCT_COMPAQ_CSA5i_2	0xb178		/* Smart Array 5i/532 rev.2 */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
@@ -1063,7 +1063,7 @@
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGYLS	0x0007		/* SoundBlaster Audigy LS */
 #define	PCI_PRODUCT_CREATIVELABS_FIWIRE	0x4001		/* Firewire */
 #define	PCI_PRODUCT_CREATIVELABS_SBJOY	0x7002		/* PCI Gameport Joystick */
-#define	PCI_PRODUCT_CREATIVELABS_AUDIGIN	0x7003		/* SoundBlaster Audigy Digital Input */
+#define	PCI_PRODUCT_CREATIVELABS_AUDIGIN	0x7003		/* SoundBlaster Audigy Digital */
 #define	PCI_PRODUCT_CREATIVELABS_SBJOY2	0x7004		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_EV1938	0x8938		/* Ectiva 1938 */
 
@@ -2230,20 +2230,20 @@
 #define	PCI_PRODUCT_OPTI_82C861	0xc861		/* 82C861 */
 
 /* Oxford/ VScom */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI010L	0x8001		/* VScom 010L */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI100L	0x8010		/* VScom 100L */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI110L	0x8011		/* VScom 110L */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI200L	0x8020		/* VScom 200L */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI210L	0x8021		/* VScom 210L */
-#define	PCI_PRODUCT_MOLEX_VSCOM_PCI400L	0x8040		/* VScom 400L */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI800L	0x8080		/* VScom 800L */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCIx10H	0xa000		/* VScom x10H */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI100H	0xa001		/* VScom 100H */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI200H	0xa005		/* VScom 200H */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI200HV2	0xe020		/* VScom 200HV2 */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0	0xa003		/* VScom 400H/800H */
-#define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1	0xa004		/* VScom 800H */
-#define	PCI_PRODUCT_OXFORD2_VSCOM_PCI011H	0x8403		/* VScom 011H */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI010L	0x8001		/* 010L */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI100L	0x8010		/* 100L */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI110L	0x8011		/* 110L */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI200L	0x8020		/* 200L */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI210L	0x8021		/* 210L */
+#define	PCI_PRODUCT_MOLEX_VSCOM_PCI400L	0x8040		/* 400L */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI800L	0x8080		/* 800L */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCIx10H	0xa000		/* x10H */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI100H	0xa001		/* 100H */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI200H	0xa005		/* 200H */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI200HV2	0xe020		/* 200HV2 */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0	0xa003		/* 400H/800H */
+#define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1	0xa004		/* 800H */
+#define	PCI_PRODUCT_OXFORD2_VSCOM_PCI011H	0x8403		/* 011H */
 #define	PCI_PRODUCT_OXFORD2_EXSYS_EX41098	0x9511		/* Exsys EX-41098 */
 
 /* Packet Engines products */
