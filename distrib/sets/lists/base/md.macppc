@@ -757,6 +757,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/aic7xxx_openbsd.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/aic7xxxvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/am7930reg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/am79900reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/am7990reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/am7990var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/am79c930reg.ph
@@ -848,6 +849,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ispmbox.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ispreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ispvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lancereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lemacreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lemacvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lm700x.ph
@@ -993,6 +995,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/isa/sbvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/isa/spkrio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/isa/vga_isavar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/isa/viasioreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/isa/wdsreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/isa/wssreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/isa/wssvar.ph
@@ -1083,6 +1086,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ngereg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_pcnreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_san_common.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_san_front_end.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_san_obsd.ph
@@ -1992,6 +1996,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_debug.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_disk.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_message.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_safte.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_scanner.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_ses.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_tape.ph

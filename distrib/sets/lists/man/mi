@@ -1413,6 +1413,7 @@
 ./usr/share/man/cat4/pckbc.0
 ./usr/share/man/cat4/pckbd.0
 ./usr/share/man/cat4/pcmcia.0
+./usr/share/man/cat4/pcn.0
 ./usr/share/man/cat4/pcppi.0
 ./usr/share/man/cat4/pcscp.0
 ./usr/share/man/cat4/pf.0
@@ -1448,6 +1449,7 @@
 ./usr/share/man/cat4/rtii.0
 ./usr/share/man/cat4/rtw.0
 ./usr/share/man/cat4/safe.0
+./usr/share/man/cat4/safte.0
 ./usr/share/man/cat4/san.0
 ./usr/share/man/cat4/sbus.0
 ./usr/share/man/cat4/scsi.0
@@ -1680,6 +1682,7 @@
 ./usr/share/man/cat4/vga.0
 ./usr/share/man/cat4/vge.0
 ./usr/share/man/cat4/viaenv.0
+./usr/share/man/cat4/viasio.0
 ./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
