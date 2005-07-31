@@ -1945,7 +1945,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/scsi_tape.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/sdvar.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/ses.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/ss_mustek.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/search.ph

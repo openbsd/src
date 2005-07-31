@@ -1950,7 +1950,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/scsi/scsi_tape.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/scsi/sdvar.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/scsi/ses.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/scsi/ss_mustek.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/search.ph
