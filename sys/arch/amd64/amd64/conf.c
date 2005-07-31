@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2005/06/02 20:09:38 tholo Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2005/07/31 06:39:06 dlg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -50,7 +50,6 @@ bdev_decl(fd);
 #include "wt.h"
 bdev_decl(wt);
 #include "sd.h"
-#include "ses.h"
 #include "st.h"
 #include "cd.h"
 #include "uk.h"
@@ -220,7 +219,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(), 			/* 21 */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
-	cdev_ses_init(NSES,ses),	/* 24: SES/SAF-TE SCSI */
+	cdev_notdef(),			/* 24 */
 #if 0
 	cdev_ocis_init(NPCMCIA,pcmcia), /* 25: PCMCIA Bus */
 #else

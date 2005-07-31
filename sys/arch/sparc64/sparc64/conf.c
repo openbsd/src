@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.39 2005/03/09 18:41:49 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.40 2005/07/31 06:39:07 dlg Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -96,7 +96,6 @@ cdev_decl(pci);
 #endif
 
 #include "rd.h"
-#include "ses.h"
 
 #include "usb.h"
 #include "uhid.h"
@@ -156,7 +155,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 1: tapemaster tape */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
-	cdev_ses_init(NSES,ses),	/* 4: SCSI SES/SAF-TE */
+	cdev_notdef(),			/* 4 */
 	cdev_notdef(),			/* 5: tapemaster tape */
 	cdev_notdef(),			/* 6: systech/versatec */
 	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */

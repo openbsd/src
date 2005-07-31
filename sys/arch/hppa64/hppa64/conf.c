@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2005/07/31 06:39:07 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,6 @@
 #include "cd.h"
 #include "ch.h"
 #include "ss.h"
-#include "ses.h"
 #include "uk.h"
 #include "wd.h"
 bdev_decl(wd);
@@ -168,7 +167,7 @@ struct cdevsw   cdevsw[] =
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
 	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */
-	cdev_ses_init(NSES,ses),	/* 37: SCSI SES/SAF-TE */
+	cdev_notdef(),			/* 37 */
 	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
 	cdev_disk_init(NWD,wd),		/* 39: ST506 disk */
 	cdev_lkm_dummy(),
