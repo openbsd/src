@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.29 2004/08/06 22:31:31 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.30 2005/07/31 15:31:17 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -87,7 +87,6 @@
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)
 
-#define	SSIZE		1		/* initial stack size in pages */
 #define	USPACE		8192
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 

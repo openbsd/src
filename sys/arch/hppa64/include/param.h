@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2005/07/31 15:31:13 miod Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -61,9 +61,6 @@
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define	MACHINE_STACK_GROWS_UP	1	/* stack grows to higher addresses */
-
-#define	SSIZE		(4)		/* initial stack size/NBPG */
-#define	SINCR		(1)		/* increment of stack/NBPG */
 
 #define	USPACE		(4 * NBPG)	/* pages for user struct and kstack */
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */

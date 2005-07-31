@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.15 2005/07/09 22:51:13 robert Exp $	*/
+/*	$OpenBSD: param.h,v 1.16 2005/07/31 15:31:17 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -112,8 +112,8 @@ extern int nbpg, pgofset, pgshift;
 #define	MAXPHYS		(64 * 1024)
 
 /* We get stack overflows w/8K stacks in 64-bit mode */
-#define	SSIZE		2		/* initial stack size in pages */
-#define	USPACE		(SSIZE*8192)
+#define	UPAGES		2		/* initial stack size in pages */
+#define	USPACE		(UPAGES*8192)
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 

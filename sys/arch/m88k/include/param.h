@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2004/09/30 21:48:56 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.5 2005/07/31 15:31:14 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -76,9 +76,6 @@
 #define DEV_BSIZE	(1 << DEV_BSHIFT)
 #define BLKDEV_IOSIZE	2048
 #define MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
-#define SSIZE		1		/* initial stack size/NBPG */
-#define SINCR		1		/* increment of stack/NBPG */
 
 #define UPAGES		2		/* pages of u-area */
 #define USPACE		(UPAGES * NBPG)

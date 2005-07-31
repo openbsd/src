@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 2004/08/06 22:31:31 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.11 2005/07/31 15:31:14 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -73,9 +73,6 @@
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #ifndef	SEGSHIFT
 #if defined(M68040) || defined(M68060)

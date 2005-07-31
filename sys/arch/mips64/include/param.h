@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.6 2005/01/31 21:35:49 grange Exp $ */
+/*      $OpenBSD: param.h,v 1.7 2005/07/31 15:31:15 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,9 +87,6 @@
 #define BLKDEV_IOSIZE	2048
 /* XXX Maxphys temporary changed to 32K while SCSI driver is fixed. */
 #define	MAXPHYS		(32 * 1024)	/* max raw I/O transfer size */
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #ifdef __LP64__
 #define	UPAGES		4		/* pages of u-area */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.5 2004/08/06 22:31:30 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 2005/07/31 15:31:12 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -53,8 +53,6 @@
 #define PGOFSET		(PAGE_SIZE - 1)
 #define	NPTEPG		(PAGE_SIZE/(sizeof (pt_entry_t)))
 
-#define SSIZE           1               /* initial stack size/NBPG */
-#define SINCR           1               /* increment of stack/NBPG */
 #define UPAGES          2               /* pages of u-area */
 #define USPACE          (UPAGES * PAGE_SIZE) /* total size of u-area */
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */

@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.25 2004/08/06 22:31:30 mickey Exp $ */
+/* $OpenBSD: param.h,v 1.26 2005/07/31 15:31:08 miod Exp $ */
 /* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
@@ -83,9 +83,6 @@
 #ifndef	MAXPHYS
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 #endif
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)		/* total size of u-area */
