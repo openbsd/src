@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.144 2005/06/16 11:10:47 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.145 2005/07/31 03:30:55 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2604,7 +2604,7 @@ bridge_send_icmp_err(struct bridge_softc *sc, struct ifnet *ifp,
 		m_freem(n);
 		return;
 	}
-	m = icmp_do_error(n, type, code, 0, ifp);
+	m = icmp_do_error(n, type, code, 0, ifp->if_mtu);
 	if (m == NULL) {
 		m_freem(n2);
 		return;

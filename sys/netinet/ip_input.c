@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.129 2005/06/15 07:24:05 markus Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.130 2005/07/31 03:30:55 pascoe Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1402,13 +1402,9 @@ ip_forward(m, srcrt)
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
 	struct rtentry *rt;
-	int error, type = 0, code = 0;
+	int error, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy;
 	n_long dest;
-	struct ifnet *destifp;
-#ifdef IPSEC
-	struct ifnet dummyifp;
-#endif
 
 	dest = 0;
 #ifdef DIAGNOSTIC
@@ -1505,7 +1501,6 @@ ip_forward(m, srcrt)
 	}
 	if (mcopy == NULL)
 		return;
-	destifp = NULL;
 
 	switch (error) {
 
@@ -1529,16 +1524,11 @@ ip_forward(m, srcrt)
 #ifdef IPSEC
 		if (ipforward_rt.ro_rt) {
 			struct rtentry *rt = ipforward_rt.ro_rt;
-			destifp = ipforward_rt.ro_rt->rt_ifp;
-			/*
-			 * XXX BUG ALERT
-			 * The "dummyifp" code relies upon the fact
-			 * that icmp_error() touches only ifp->if_mtu.
-			 */
-			if (rt->rt_rmx.rmx_mtu) {
-				dummyifp.if_mtu = rt->rt_rmx.rmx_mtu;
-				destifp = &dummyifp;
-			}
+
+			if (rt->rt_rmx.rmx_mtu)
+				destmtu = rt->rt_rmx.rmx_mtu;
+			else
+				destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
 		}
 #endif /*IPSEC*/
 		ipstat.ips_cantfrag++;
@@ -1562,7 +1552,7 @@ ip_forward(m, srcrt)
 #endif
 	}
 
-	icmp_error(mcopy, type, code, dest, destifp);
+	icmp_error(mcopy, type, code, dest, destmtu);
 }
 
 int

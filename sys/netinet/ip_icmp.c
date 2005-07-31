@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.67 2005/06/30 08:51:31 markus Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.68 2005/07/31 03:30:55 pascoe Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -128,8 +128,7 @@ icmp_init(void)
 }
 
 struct mbuf *
-icmp_do_error(struct mbuf *n, int type, int code, n_long dest,
-    struct ifnet *destifp)
+icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 {
 	struct ip *oip = mtod(n, struct ip *), *nip;
 	unsigned oiplen = oip->ip_hl << 2;
@@ -223,8 +222,8 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest,
 			icp->icmp_pptr = code;
 			code = 0;
 		} else if (type == ICMP_UNREACH &&
-		    code == ICMP_UNREACH_NEEDFRAG && destifp)
-			icp->icmp_nextmtu = htons(destifp->if_mtu);
+		    code == ICMP_UNREACH_NEEDFRAG && destmtu)
+			icp->icmp_nextmtu = htons(destmtu);
 	}
 
 	icp->icmp_code = code;
@@ -274,12 +273,11 @@ freeit:
  * The ip packet inside has ip_off and ip_len in host byte order.
  */
 void
-icmp_error(struct mbuf *n, int type, int code, n_long dest,
-    struct ifnet *destifp)
+icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 {
 	struct mbuf *m;
 
-	m = icmp_do_error(n, type, code, dest, destifp);
+	m = icmp_do_error(n, type, code, dest, destmtu);
 	if (m != NULL)
 		icmp_reflect(m);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.496 2005/07/29 06:26:43 pascoe Exp $ */
+/*	$OpenBSD: pf.c,v 1.497 2005/07/31 03:30:55 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1638,7 +1638,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		icmp_error(m0, type, code, 0, (void *)NULL);
+		icmp_error(m0, type, code, 0, 0);
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -5415,7 +5415,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		ipstat.ips_cantfrag++;
 		if (r->rt != PF_DUPTO) {
 			icmp_error(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
-			    ifp);
+			    ifp->if_mtu);
 			goto done;
 		} else
 			goto bad;
