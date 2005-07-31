@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.18 2005/07/31 03:52:18 pascoe Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.19 2005/07/31 03:53:38 pascoe Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -152,7 +152,7 @@ faithoutput(ifp, m, dst, rt)
 	}
 
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, dst->sa_family);
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
 #endif
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
