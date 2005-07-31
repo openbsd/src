@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.1 2005/07/28 20:12:13 grange Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.2 2005/07/31 16:17:42 grange Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -177,10 +177,9 @@ viasio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read device revision */
 	reg = viasio_conf_read(sc->sc_iot, sc->sc_ioh, VT1211_REV);
-	printf(": VT1211 rev 0x%02x\n", reg);
+	printf(": VT1211 rev 0x%02x", reg);
 
 	/* Initialize logical devices */
-	printf("%s", sc->sc_dev.dv_xname);
 	viasio_hm_init(sc);
 	printf("\n");
 
