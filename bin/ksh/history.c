@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.30 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.31 2005/07/31 16:12:52 espie Exp $	*/
 
 /*
  * command history
@@ -760,7 +760,7 @@ hist_shrink(unsigned char *oldbase, int oldbytes)
 	 *	create temp file
 	 */
 	(void) shf_snprintf(nfile, sizeof(nfile), "%s.%d", hname, procpid);
-	if ((fd = creat(nfile, 0600)) < 0)
+	if ((fd = open(nfile, O_CREAT | O_TRUNC | O_WRONLY, 0600)) < 0)
 		return 1;
 
 	if (sprinkle(fd)) {
