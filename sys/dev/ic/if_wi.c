@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.118 2005/07/12 17:23:19 jsg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.119 2005/07/31 23:08:58 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.118 2005/07/12 17:23:19 jsg Exp $";
+	"$OpenBSD: if_wi.c,v 1.119 2005/07/31 23:08:58 pascoe Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -764,17 +764,16 @@ wi_rxeof(sc)
 		if (sc->wi_use_wep &&
 		    rx_frame.wi_frame_ctl & htole16(WI_FCTL_WEP)) {
 			int len;
-			u_int8_t rx_buf[1596];
 
 			switch (sc->wi_crypto_algorithm) {
 			case WI_CRYPTO_FIRMWARE_WEP:
 				break;
 			case WI_CRYPTO_SOFTWARE_WEP:
 				m_copydata(m, 0, m->m_pkthdr.len,
-				    (caddr_t)rx_buf);
+				    (caddr_t)sc->wi_rxbuf);
 				len = m->m_pkthdr.len -
 				    sizeof(struct ether_header);
-				if (wi_do_hostdecrypt(sc, rx_buf +
+				if (wi_do_hostdecrypt(sc, sc->wi_rxbuf +
 				    sizeof(struct ether_header), len)) {
 					if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 						printf(WI_PRT_FMT ": Error decrypting incoming packet.\n", WI_PRT_ARG(sc));
@@ -793,7 +792,7 @@ wi_rxeof(sc)
 				m_copyback(m, sizeof(struct ether_header) -
 				    WI_ETHERTYPE_LEN, WI_ETHERTYPE_LEN +
 				    (len - WI_SNAPHDR_LEN),
-				    rx_buf + sizeof(struct ether_header) +
+				    sc->wi_rxbuf + sizeof(struct ether_header) +
 				    IEEE80211_WEP_IVLEN +
 				    IEEE80211_WEP_KIDLEN + WI_SNAPHDR_LEN);
 				m_adj(m, -(WI_ETHERTYPE_LEN +
