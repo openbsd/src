@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.497 2005/07/31 03:30:55 pascoe Exp $ */
+/*	$OpenBSD: pf.c,v 1.498 2005/07/31 05:20:56 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -105,8 +105,6 @@ u_int32_t		 ticket_altqs_active;
 u_int32_t		 ticket_altqs_inactive;
 int			 altqs_inactive_open;
 u_int32_t		 ticket_pabuf;
-
-struct timeout		 pf_expire_to;			/* expire timeout */
 
 struct pf_anchor_stackframe {
 	struct pf_ruleset			*rs;
@@ -861,18 +859,19 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *state)
 }
 
 void
-pf_purge_timeout(void *arg)
+pf_purge_thread(void *v)
 {
-	struct timeout	*to = arg;
-	int		 s;
+	int s;
 
-	s = splsoftnet();
-	pf_purge_expired_states();
-	pf_purge_expired_fragments();
-	pf_purge_expired_src_nodes();
-	splx(s);
-
-	timeout_add(to, pf_default_rule.timeout[PFTM_INTERVAL] * hz);
+	for (;;) {
+		tsleep(pf_purge_thread, PWAIT, "pftm",
+		    pf_default_rule.timeout[PFTM_INTERVAL] * hz);
+		s = splsoftnet();
+		pf_purge_expired_states();
+		pf_purge_expired_fragments();
+		pf_purge_expired_src_nodes();
+		splx(s);
+	}
 }
 
 u_int32_t
