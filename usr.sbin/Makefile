@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.121 2005/06/17 20:35:18 drahn Exp $
+#	$OpenBSD: Makefile,v 1.122 2005/07/31 06:25:44 dlg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SUBDIR=	ac accton adduser amd arp authpf bgpctl bgpd bind chroot \
 	mrouted mrinfo mtrace map-mbone netgroup_mkdb ntpd openssl \
 	ospfctl ospfd pkg_add popa3d portmap ppp pppd pppoe procmap \
 	pstat pwd_mkdb quot quotaon rarpd rbootd rdconfig rdate repquota \
-	rmt rpc.bootparamd rpc.lockd rwhod sa sasyncd sensorsd sesd sliplogin \
+	rmt rpc.bootparamd rpc.lockd rwhod sa sasyncd sensorsd sliplogin \
 	slstats spamdb spppcontrol spray syslogc syslogd tcpdrop \
 	tcpdump timed tokenadm tokeninit traceroute trpt usbdevs user \
 	vipw vnconfig wsmoused zdump zic ztsscale
