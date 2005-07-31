@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.20 2004/12/14 13:45:09 mickey Exp $
+#	$OpenBSD: mkioctls,v 1.21 2005/07/31 10:11:19 deraadt Exp $
 
 #
 # Copyright (c) 1994
@@ -81,7 +81,6 @@ BEGIN {
 	print "#include <dev/systrace.h>"
 	print "#include <dev/wscons/wsconsio.h>"
 	print "#include <dev/vndioctl.h>"
-	print "#include <scsi/ses.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print "#include \"kdump.h\""
