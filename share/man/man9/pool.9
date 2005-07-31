@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.28 2004/01/20 18:37:37 tedu Exp $
+.\"	$OpenBSD: pool.9,v 1.29 2005/07/31 03:26:45 pascoe Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 .Ft void
 .Fo pool_set_drain_hook
 .Fa "struct pool *pp"
-.Fa "void (*fun)(void *, int)"
+.Fa "void (*fn)(void *, int)"
 .Fa "void *arg"
 .Fc
 .Ft void *
@@ -192,7 +192,7 @@ The
 function can be used to specify a function that will be called when
 memory is running low.
 The callback
-.Fa fun
+.Fa fn
 will be called with the arguments
 .Fa arg
 which is the third argument to
