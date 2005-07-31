@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2004/12/08 20:35:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.44 2005/07/31 15:37:51 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ short	exframesize[] = {
 #ifdef M68040
 #define KDFAULT(c)	(mmutype == MMU_68040 ?			\
 			  ((c) & SSW4_TMMASK) == SSW4_TMKD : 	\
-			  ((c) & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))
+			  ((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
 #define WRFAULT(c)	(mmutype == MMU_68040 ?		\
 			  ((c) & SSW4_RW) == 0 : 	\
 			  ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
