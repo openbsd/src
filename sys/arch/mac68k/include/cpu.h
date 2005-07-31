@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.32 2005/07/23 23:30:55 martin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.33 2005/07/31 15:39:56 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -64,8 +64,6 @@
 /*
  * Exported definitions unique to mac68k/68k cpu support.
  */
-
-#include <machine/pcb.h>
 
 /*
  * Get common m68k definitions.
