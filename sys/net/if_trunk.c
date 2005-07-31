@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.3 2005/05/27 22:57:13 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.4 2005/07/31 03:52:18 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -669,15 +669,8 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 	trifp = &tr->tr_ac.ac_if;
 
 #if NBPFILTER > 0
-	if (trifp->if_bpf) {
-		struct mbuf m0;
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = ETHER_HDR_LEN;
-		m0.m_data = (char *)eh;
-		bpf_mtap(trifp->if_bpf, &m0);
-	}
+	if (trifp->if_bpf)
+		bpf_mtap_hdr(trifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m);
 #endif
 
 	error = (*tr->tr_input)(tr, tp, eh, m);

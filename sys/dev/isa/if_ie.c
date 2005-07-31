@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.30 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.31 2005/07/31 03:52:19 pascoe Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -1393,13 +1393,9 @@ ie_readframe(sc, num)
 	 * tho' it will make a copy for tcpdump.)
 	 */
 	if (bpf_gets_it) {
-		struct mbuf m0;
-		m0.m_len = sizeof eh;
-		m0.m_data = (caddr_t)&eh;
-		m0.m_next = m;
-
 		/* Pass it up. */
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, &m0);
+		bpf_mtap_hdr(sc->sc_arpcom.ac_if.if_bpf, (caddr_t)&eh,
+		    sizeof(eh), m);
 
 		/*
 		 * A signal passed up from the filtering code indicating that

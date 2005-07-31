@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.58 2005/07/19 11:50:20 camield Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.59 2005/07/31 03:52:18 pascoe Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -301,21 +301,8 @@ vlan_input(eh, m)
 	m->m_pkthdr.len -= EVL_ENCAPLEN;
 
 #if NBPFILTER > 0
-	if (ifv->ifv_if.if_bpf) {
-		/*
-		 * Do the usual BPF fakery.  Note that we don't support
-		 * promiscuous mode here, since it would require the
-		 * drivers to know about VLANs and we're not ready for
-		 * that yet.
-		 */
-		struct mbuf m0;
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = ETHER_HDR_LEN;
-		m0.m_data = (char *)eh;
-		bpf_mtap(ifv->ifv_if.if_bpf, &m0);
-	}
+	if (ifv->ifv_if.if_bpf)
+		bpf_mtap_hdr(ifv->ifv_if.if_bpf, (char *)eh, ETHER_HDR_LEN, m);
 #endif
 	ifv->ifv_if.if_ipackets++;
 	ether_input(&ifv->ifv_if, eh, m);

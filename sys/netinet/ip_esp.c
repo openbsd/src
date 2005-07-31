@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.92 2005/05/28 15:10:07 ho Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.93 2005/07/31 03:52:19 pascoe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -731,12 +731,11 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	struct cryptop *crp;
-
 #if NBPFILTER > 0
-	{
-		struct ifnet *ifn;
+	struct ifnet *ifn = &(encif[0].sc_if);
+
+	if (ifn->if_bpf) {
 		struct enchdr hdr;
-		struct mbuf m1;
 
 		bzero (&hdr, sizeof(hdr));
 
@@ -747,15 +746,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if (esph)
 			hdr.flags |= M_AUTH;
 
-		m1.m_flags = 0;
-		m1.m_next = m;
-		m1.m_len = ENC_HDRLEN;
-		m1.m_data = (char *) &hdr;
-
-		ifn = &(encif[0].sc_if);
-
-		if (ifn->if_bpf)
-			bpf_mtap(ifn->if_bpf, &m1);
+		bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, ENC_HDRLEN, m);
 	}
 #endif
 

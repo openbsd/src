@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.35 2005/06/12 06:23:43 henning Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.36 2005/07/31 03:52:18 pascoe Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -250,24 +250,8 @@ looutput(ifp, m, dst, rt)
 	 * looutput() is also called for SIMPLEX interfaces to duplicate
 	 * packets for local use. But don't dup them to bpf.
 	 */
-	if (ifp->if_bpf && (ifp->if_flags&IFF_LOOPBACK)) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer to it).
-		 */
-		struct mbuf m0;
-		u_int32_t af = htonl(dst->sa_family);
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = sizeof(af);
-		m0.m_data = (char *)&af;
-
-		bpf_mtap(ifp->if_bpf, &m0);
-	}
+	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK))
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
 #endif
 	m->m_pkthdr.rcvif = ifp;
 

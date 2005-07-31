@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.107 2005/06/19 18:17:02 pascoe Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.108 2005/07/31 03:52:19 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1251,21 +1251,8 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 	m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		/*
-		 * Do the usual BPF fakery.  Note that we don't support
-		 * promiscuous mode here, since it would require the
-		 * drivers to know about CARP and we're not ready for
-		 * that yet.
-		 */
-		struct mbuf m0;
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = ETHER_HDR_LEN;
-		m0.m_data = (char *)&eh;
-		bpf_mtap(ifp->if_bpf, &m0);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_hdr(ifp->if_bpf, (char *)&eh, ETHER_HDR_LEN, m);
 #endif
 	ifp->if_ipackets++;
 	ether_input(ifp, &eh, m);

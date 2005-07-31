@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.34 2005/06/08 06:35:04 henning Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.35 2005/07/31 03:52:18 pascoe Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -235,24 +235,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	m_tag_prepend(m, mtag);
 
 #if NBPFILTER >0
-	if (ifp->if_bpf) {
-		/*
-		 * We need to prepend the address family as a four
-		 * byte field.  Cons up a fake header to pacify bpf.
-		 * This is safe because bpf will only read from the
-		 * mbuf (i.e., it won't try to free it or keep a
-		 * pointer a to it).
-		 */
-		struct mbuf m0;
-		u_int32_t af = dst->sa_family;
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *) &af;
-
-		bpf_mtap(ifp->if_bpf, &m0);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
 #endif
 
 	if (sc->g_proto == IPPROTO_MOBILE) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.58 2005/04/20 19:52:42 reyk Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.59 2005/07/31 03:52:18 pascoe Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1186,6 +1186,50 @@ bpf_mtap(caddr_t arg, struct mbuf *m)
 	}
 
 	return (drop);
+}
+
+/*
+ * Incoming linkage from device drivers, where we have a mbuf chain
+ * but need to prepend some arbitrary header from a linear buffer.
+ *
+ * Con up a minimal dummy header to pacify bpf.  Allocate (only) a
+ * struct m_hdr on the stack.  This is safe as bpf only reads from the
+ * fields in this header that we initialize, and will not try to free
+ * it or keep a pointer to it.
+ */
+int
+bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m)
+{
+	struct m_hdr mh;
+
+	mh.mh_flags = 0;
+	mh.mh_next = m;
+	mh.mh_len = dlen;
+	mh.mh_data = data;
+
+	return bpf_mtap(arg, (struct mbuf *) &mh);
+}
+
+/*
+ * Incoming linkage from device drivers, where we have a mbuf chain
+ * but need to prepend the address family.
+ *
+ * Con up a minimal dummy header to pacify bpf.  We allocate (only) a
+ * struct m_hdr on the stack.  This is safe as bpf only reads from the
+ * fields in this header that we initialize, and will not try to free
+ * it or keep a pointer to it.
+ */
+int
+bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m)
+{
+	struct m_hdr mh;
+
+	mh.mh_flags = 0;
+	mh.mh_next = m;
+	mh.mh_len = 4;
+	mh.mh_data = (caddr_t)&af;
+
+	return bpf_mtap(arg, (struct mbuf *) &mh);
 }
 
 /*

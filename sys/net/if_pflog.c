@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.14 2005/05/27 20:17:31 dhartmei Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.15 2005/07/31 03:52:18 pascoe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -180,10 +180,13 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 #if NBPFILTER > 0
 	struct ifnet *ifn;
 	struct pfloghdr hdr;
-	struct mbuf m1;
 
 	if (kif == NULL || m == NULL || rm == NULL || pd == NULL)
 		return (-1);
+
+	ifn = &(pflogif[0].sc_if);
+	if (!ifn->if_bpf)
+		return (0);
 
 	bzero(&hdr, sizeof(hdr));
 	hdr.length = PFLOG_REAL_HDRLEN;
@@ -225,14 +228,7 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	}
 #endif /* INET */
 
-	m1.m_next = m;
-	m1.m_len = PFLOG_HDRLEN;
-	m1.m_data = (char *) &hdr;
-
-	ifn = &(pflogif[0].sc_if);
-
-	if (ifn->if_bpf)
-		bpf_mtap(ifn->if_bpf, &m1);
+	bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, PFLOG_HDRLEN, m);
 #endif
 
 	return (0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.17 2004/11/25 21:54:54 markus Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.18 2005/07/31 03:52:19 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -387,26 +387,18 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	struct cryptop *crp;
 	struct tdb_crypto *tc;
 	struct mbuf    *mi, *mo;
-
 #if NBPFILTER > 0
-	{
-		struct ifnet   *ifn;
+	struct ifnet   *ifn = &(encif[0].sc_if);
+
+	if (ifn->if_bpf) {
 		struct enchdr   hdr;
-		struct mbuf     m1;
 
 		bzero(&hdr, sizeof(hdr));
 
 		hdr.af = tdb->tdb_dst.sa.sa_family;
 		hdr.spi = tdb->tdb_spi;
 
-		m1.m_next = m;
-		m1.m_len = ENC_HDRLEN;
-		m1.m_data = (char *) &hdr;
-
-		ifn = &(encif[0].sc_if);
-
-		if (ifn->if_bpf)
-			bpf_mtap(ifn->if_bpf, &m1);
+		bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, ENC_HDRLEN, m);
 	}
 #endif
 	hlen = IPCOMP_HLENGTH;
