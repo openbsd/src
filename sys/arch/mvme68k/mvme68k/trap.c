@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2005/05/01 09:55:49 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.59 2005/07/31 15:38:12 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -789,7 +789,7 @@ writeback(fp, docachepush)
 					short tmp = wb1d;
 
 					err = copyout(&tmp,
-					    (caddr_t)f->f_wb1a, sizeof(long));
+					    (caddr_t)f->f_wb1a, sizeof(short));
 				}
 				break;
 		}
