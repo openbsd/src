@@ -1786,7 +1786,6 @@
 ./usr/sbin/edquota
 ./usr/sbin/faithd
 ./usr/sbin/fs
-./usr/sbin/getencstat
 ./usr/sbin/group
 ./usr/sbin/groupadd
 ./usr/sbin/groupdel
@@ -1881,9 +1880,6 @@
 ./usr/sbin/sasyncd
 ./usr/sbin/sendmail
 ./usr/sbin/sensorsd
-./usr/sbin/sesd
-./usr/sbin/setencstat
-./usr/sbin/setobjstat
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
 ./usr/sbin/snkadm
