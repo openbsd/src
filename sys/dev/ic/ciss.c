@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.1 2005/07/06 01:52:13 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.2 2005/08/01 23:55:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -898,22 +898,22 @@ ciss_scsi_ioctl(struct scsi_link *link, u_long cmd,
 int
 ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)	/* TODO */
 {
-	struct ciss_softc *sc = (struct ciss_softc *)dev;
+	/* struct ciss_softc *sc = (struct ciss_softc *)dev; */
+	ciss_lock_t lock;
 	int error;
 
+	lock = CISS_LOCK(sc);
 	switch (cmd) {
-	case BIOCPING:
-	case BIOCCAPABILITIES:
+	case BIOCINQ:
+	case BIOCVOL:
+	case BIOCDISK:
 	case BIOCALARM:
-	case BIOCBLINK:
-	case BIOCSTARTSTOP:
-	case BIOCSTATUS:
-	case BIOCSCSICMD:
 	default:
 		CISS_DPRINTF(CISS_D_IOCTL, ("%s: invalid ioctl\n",
 		    sc->sc_dev.dv_xname));
 		error = ENOTTY;
 	}
+	CISS_UNLOCK(sc, lock);
 
 	return error;
 }
