@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2005/07/30 14:37:39 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2005/08/01 13:20:23 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -23,7 +23,7 @@ SRCS+=	gidt.S alloca.S biosdev.c bioscons.c gateA20.c \
 	memprobe.c diskprobe.c time.c ## biosprobe.c
 
 .PATH:	${S}/stand/boot
-SRCS+=	boot.c cmd.c vars.c bootarg.c
+SRCS+=	cmd.c vars.c bootarg.c
 
 .PATH:	${S}/lib/libsa
 .PATH:	${S}/lib/libkern	# for strl* and gcc support
