@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.39 2005/08/01 11:54:24 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.40 2005/08/01 11:56:45 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -734,14 +734,18 @@ pmap_remove(pmap, sva, eva)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
+#ifdef M68K_MMU_HP
 	boolean_t firstpage, needcflush;
+#endif
 	int flags;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva));
 
+#ifdef M68K_MMU_HP
 	firstpage = TRUE;
 	needcflush = FALSE;
+#endif
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
 		nssva = m68k_trunc_seg(sva) + NBSEG;
@@ -783,36 +787,38 @@ pmap_remove(pmap, sva, eva)
 					if (!needcflush && !pmap_pte_ci(pte))
 						needcflush = TRUE;
 
+					firstpage = FALSE;
 				}
 #endif
 				pmap_remove_mapping(pmap, sva, pte, flags);
-				firstpage = FALSE;
 			}
 			pte++;
 			sva += PAGE_SIZE;
 		}
 	}
-	/*
-	 * Didn't do anything, no need for cache flushes
-	 */
-	if (firstpage)
-		return;
 #ifdef M68K_MMU_HP
-	/*
-	 * In a couple of cases, we don't need to worry about flushing
-	 * the VAC:
-	 * 	1. if this is a kernel mapping,
-	 *	   we have already done it
-	 *	2. if it is a user mapping not for the current process,
-	 *	   it won't be there
-	 */
-	if (pmap_aliasmask && !active_user_pmap(pmap))
-		needcflush = FALSE;
-	if (needcflush) {
-		if (pmap == pmap_kernel()) {
-			DCIS();
-		} else {
-			DCIU();
+	if (pmap_aliasmask) {
+		/*
+		 * Didn't do anything, no need for cache flushes
+		 */
+		if (firstpage)
+			return;
+		/*
+		 * In a couple of cases, we don't need to worry about flushing
+		 * the VAC:
+		 * 	1. if this is a kernel mapping,
+		 *	   we have already done it
+		 *	2. if it is a user mapping not for the current process,
+		 *	   it won't be there
+		 */
+		if (!active_user_pmap(pmap))
+			needcflush = FALSE;
+		if (needcflush) {
+			if (pmap == pmap_kernel()) {
+				DCIS();
+			} else {
+				DCIU();
+			}
 		}
 	}
 #endif
@@ -1332,15 +1338,19 @@ pmap_kremove(va, len)
 	struct pmap *pmap = pmap_kernel();
 	vaddr_t sva, eva, nssva;
 	pt_entry_t *pte;
+#ifdef M68K_MMU_HP
 	boolean_t firstpage, needcflush;
+#endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_kremove(%lx, %lx)\n", va, len));
 
 	sva = va;
 	eva = va + len;
+#ifdef M68K_MMU_HP
 	firstpage = TRUE;
 	needcflush = FALSE;
+#endif
 	while (sva < eva) {
 		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -1398,6 +1408,7 @@ pmap_kremove(va, len)
 					 */
 
 					needcflush = TRUE;
+					firstpage = FALSE;
 				}
 #endif
 				/*
@@ -1413,37 +1424,38 @@ pmap_kremove(va, len)
 
 				*pte = PG_NV;
 				TBIS(sva);
-				firstpage = FALSE;
 			}
 			pte++;
 			sva += PAGE_SIZE;
 		}
 	}
 
-	/*
-	 * Didn't do anything, no need for cache flushes
-	 */
-
-	if (firstpage)
-		return;
 #ifdef M68K_MMU_HP
+	if (pmap_aliasmask) {
+		/*
+		 * Didn't do anything, no need for cache flushes
+		 */
 
-	/*
-	 * In a couple of cases, we don't need to worry about flushing
-	 * the VAC:
-	 *      1. if this is a kernel mapping,
-	 *         we have already done it
-	 *      2. if it is a user mapping not for the current process,
-	 *         it won't be there
-	 */
+		if (firstpage)
+			return;
 
-	if (pmap_aliasmask && !active_user_pmap(pmap))
-		needcflush = FALSE;
-	if (needcflush) {
-		if (pmap == pmap_kernel()) {
-			DCIS();
-		} else {
-			DCIU();
+		/*
+		 * In a couple of cases, we don't need to worry about flushing
+		 * the VAC:
+		 *      1. if this is a kernel mapping,
+		 *         we have already done it
+		 *      2. if it is a user mapping not for the current process,
+		 *         it won't be there
+		 */
+
+		if (!active_user_pmap(pmap))
+			needcflush = FALSE;
+		if (needcflush) {
+			if (pmap == pmap_kernel()) {
+				DCIS();
+			} else {
+				DCIU();
+			}
 		}
 	}
 #endif
