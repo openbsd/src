@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.37 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.38 2005/08/01 04:27:31 deraadt Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -270,7 +270,7 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_set_mark,		1,	' '  },
 	{ XFUNC_kill_region,		0, CTRL('W') },
 	{ XFUNC_xchg_point_mark,	2, CTRL('X') },
-	{ XFUNC_version,		0, CTRL('V') },
+	{ XFUNC_literal,		0, CTRL('V') },
 #ifdef DEBUG
 	{ XFUNC_debug_info,		1, CTRL('H') },
 #endif
