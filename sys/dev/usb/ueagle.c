@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.5 2005/07/30 07:16:09 brad Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.6 2005/08/01 05:36:48 brad Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -157,7 +157,7 @@ USB_ATTACH(ueagle)
 {
 	USB_ATTACH_START(ueagle, sc, uaa);
 	struct ifnet *ifp = &sc->sc_if;
-	char devinfo[1024];
+	char *devinfop;
 	uint8_t addr[ETHER_ADDR_LEN];
 
 	sc->sc_udev = uaa->device;
@@ -179,8 +179,9 @@ USB_ATTACH(ueagle)
 		USB_ATTACH_SUCCESS_RETURN;
 	}
 
-	usbd_devinfo(sc->sc_udev, 0, devinfo, sizeof devinfo);
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_no(sc->sc_udev, UEAGLE_CONFIG_NO, 0) != 0) {
 		printf("%s: could not set configuration no\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.10 2005/03/18 00:33:28 reyk Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.11 2005/08/01 05:36:48 brad Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -263,15 +263,16 @@ USB_ATTACH(ubsa)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	const char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	struct ucom_attach_args uca;
 	int i;
 
-        usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
-        USB_ATTACH_SETUP;
-        printf("%s: %s\n", devname, devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	USB_ATTACH_SETUP;
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
 

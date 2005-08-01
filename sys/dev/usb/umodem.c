@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.17 2004/07/11 12:16:46 deraadt Exp $ */
+/*	$OpenBSD: umodem.c,v 1.18 2005/08/01 05:36:49 brad Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -201,13 +201,13 @@ USB_ATTACH(umodem)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usb_cdc_cm_descriptor_t *cmd;
-	char devinfo[1024];
+	char *devinfop;
 	usbd_status err;
 	int data_ifcno;
 	int i;
 	struct ucom_attach_args uca;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
 
 	sc->sc_udev = dev;
@@ -215,7 +215,8 @@ USB_ATTACH(umodem)
 
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
-	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
+	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
+	usbd_devinfo_free(devinfop);
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
 
 	umodem_get_caps(dev, &sc->sc_cm_cap, &sc->sc_acm_cap);

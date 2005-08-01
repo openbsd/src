@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.39 2005/07/18 14:41:15 jsg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.40 2005/08/01 05:36:48 brad Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -357,14 +357,15 @@ USB_ATTACH(ural)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status error;
-	char devinfo[1024];
+	char *devinfop;
 	int i;
 
 	sc->sc_udev = uaa->device;
 
-	usbd_devinfo(sc->sc_udev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_no(sc->sc_udev, RAL_CONFIG_NO, 0) != 0) {
 		printf("%s: could not set configuration no\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.41 2005/07/02 22:21:12 brad Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.42 2005/08/01 05:36:47 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -725,7 +725,7 @@ USB_MATCH(aue)
 USB_ATTACH(aue)
 {
 	USB_ATTACH_START(aue, sc, uaa);
-	char			devinfo[1024];
+	char			*devinfop;
 	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	struct ifnet		*ifp;
@@ -739,9 +739,10 @@ USB_ATTACH(aue)
 
 	DPRINTFN(5,(" : aue_attach: sc=%p", sc));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->aue_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->aue_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, AUE_CONFIG_NO, 1);
 	if (err) {

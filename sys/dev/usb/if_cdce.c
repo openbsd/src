@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.9 2005/07/02 22:21:12 brad Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.10 2005/08/01 05:36:48 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -126,7 +126,7 @@ USB_MATCH(cdce)
 USB_ATTACH(cdce)
 {
 	USB_ATTACH_START(cdce, sc, uaa);
-	char				 devinfo[1024];
+	char				 *devinfop;
 	int				 s;
 	struct ifnet			*ifp;
 	usbd_device_handle		 dev = uaa->device;
@@ -138,9 +138,10 @@ USB_ATTACH(cdce)
 	u_int16_t			 macaddr_hi;
 	int				 i;
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->cdce_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->cdce_udev = uaa->device;
 	sc->cdce_ctl_iface = uaa->iface;

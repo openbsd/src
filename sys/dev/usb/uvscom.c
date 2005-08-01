@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.5 2004/07/11 09:27:54 deraadt Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.6 2005/08/01 05:36:49 brad Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -274,15 +274,16 @@ USB_ATTACH(uvscom)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	const char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;
 
-        usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
         USB_ATTACH_SETUP;
-        printf("%s: %s\n", devname, devinfo);
+        printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
 

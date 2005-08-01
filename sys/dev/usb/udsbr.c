@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.7 2004/07/08 22:18:44 deraadt Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.8 2005/08/01 05:36:48 brad Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -122,14 +122,15 @@ USB_ATTACH(udsbr)
 {
 	USB_ATTACH_START(udsbr, sc, uaa);
 	usbd_device_handle	dev = uaa->device;
-	char			devinfo[1024];
+	char			*devinfop;
 	usbd_status		err;
 
 	DPRINTFN(10,("udsbr_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
 	if (err) {

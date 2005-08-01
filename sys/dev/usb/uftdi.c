@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.24 2005/05/24 03:26:05 pascoe Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.25 2005/08/01 05:36:48 brad Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ USB_ATTACH(uftdi)
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
 	int i;
 	usbd_status err;
@@ -204,9 +204,10 @@ USB_ATTACH(uftdi)
 	} else
 		iface = uaa->iface;
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfo);
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
 

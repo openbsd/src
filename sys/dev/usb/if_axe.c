@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.28 2005/07/18 07:38:43 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.29 2005/08/01 05:36:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -451,12 +451,12 @@ USB_ATTACH(axe)
 	usb_endpoint_descriptor_t *ed;
 	struct mii_data	*mii;
 	u_char eaddr[ETHER_ADDR_LEN];
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->axe_dev);
 	struct ifnet *ifp;
 	int i, s;
 
-        usbd_devinfo(dev, 0, devinfo, sizeof devinfo); 
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
 
 	sc->axe_unit = self->dv_unit; /*device_get_unit(self);*/
@@ -485,7 +485,8 @@ USB_ATTACH(axe)
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
 
-	printf("%s: %s", USBDEVNAME(sc->axe_dev), devinfo);
+	printf("%s: %s", USBDEVNAME(sc->axe_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {

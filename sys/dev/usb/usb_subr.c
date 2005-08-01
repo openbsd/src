@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.37 2005/07/18 02:43:27 fgsch Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.38 2005/08/01 05:36:49 brad Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -77,6 +77,7 @@ extern int usbdebug;
 #endif
 
 Static usbd_status usbd_set_config(usbd_device_handle, int);
+Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
 Static void usbd_devinfo_vp(usbd_device_handle, char *, char *, int);
 Static char *usbd_get_string(usbd_device_handle, int, char *);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
@@ -312,7 +313,7 @@ usbd_printBCD(char *cp, size_t len, int bcd)
 	return (l);
 }
 
-void
+Static void
 usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
@@ -342,6 +343,22 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 	snprintf(cp, base + len - cp, ", addr %d", dev->address);
 	cp += strlen(cp);
 	*cp = 0;
+}
+
+char *
+usbd_devinfo_alloc(usbd_device_handle dev, int showclass)
+{
+	char *devinfop;
+
+	devinfop = malloc(DEVINFOSIZE, M_TEMP, M_WAITOK);
+	usbd_devinfo(dev, showclass, devinfop, DEVINFOSIZE);
+	return devinfop;
+}
+
+void
+usbd_devinfo_free(char *devinfop)
+{
+	free(devinfop, M_TEMP);
 }
 
 /* Delay for a certain number of ms */

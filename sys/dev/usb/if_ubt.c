@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.2 2005/06/24 20:06:11 martin Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.3 2005/08/01 05:36:48 brad Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.2 2005/06/24 20:06:11 martin Exp $
+ * $Id: if_ubt.c,v 1.3 2005/08/01 05:36:48 brad Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -153,7 +153,7 @@ USB_ATTACH(ubt)
 	usb_config_descriptor_t		*cd = NULL;
 	usb_interface_descriptor_t	*id = NULL;
 	usb_endpoint_descriptor_t	*ed = NULL;
-	char				 devinfo[1024];
+	char				 *devinfop;
 	usbd_status			 error;
 	int				 i, ai, alt_no, isoc_in, isoc_out,
 					 isoc_isize, isoc_osize;
@@ -161,9 +161,11 @@ USB_ATTACH(ubt)
 
 	/* Get USB device info */
 	sc->sc_udev = uaa->device;
-	usbd_devinfo(sc->sc_udev, 0, devinfo, sizeof(devinfo));
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	/*
 	 * Initialize device softc structure

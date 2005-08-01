@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.31 2004/10/31 12:10:52 dlg Exp $ */
+/*	$OpenBSD: ugen.c,v 1.32 2005/08/01 05:36:48 brad Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -199,13 +199,14 @@ USB_ATTACH(ugen)
 {
 	USB_ATTACH_START(ugen, sc, uaa);
 	usbd_device_handle udev;
-	char devinfo[1024];
+	char *devinfop;
 	usbd_status err;
 	int conf;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = udev = uaa->device;
 

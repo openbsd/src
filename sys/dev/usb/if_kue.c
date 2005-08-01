@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.37 2005/07/02 22:21:12 brad Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.38 2005/08/01 05:36:48 brad Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -540,15 +540,16 @@ kue_attachhook(void *xsc)
 USB_ATTACH(kue)
 {
 	USB_ATTACH_START(kue, sc, uaa);
-	char			devinfo[1024];
+	char			*devinfop;
 	usbd_device_handle	dev = uaa->device;
 	usbd_status		err;
 
 	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
 	if (err) {

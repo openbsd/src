@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.9 2004/07/08 22:18:45 deraadt Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.10 2005/08/01 05:36:49 brad Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ USB_ATTACH(usscanner)
 	USB_ATTACH_START(usscanner, sc, uaa);
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
-	char			devinfo[1024];
+	char			*devinfop;
 	usbd_status		err;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t		epcount;
@@ -214,9 +214,10 @@ USB_ATTACH(usscanner)
 
 	DPRINTFN(10,("usscanner_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, USSCANNER_CONFIG_NO, 1);
 	if (err) {

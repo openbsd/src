@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.19 2005/07/02 22:21:12 brad Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.20 2005/08/01 05:36:48 brad Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ USB_MATCH(upl)
 USB_ATTACH(upl)
 {
 	USB_ATTACH_START(upl, sc, uaa);
-	char			devinfo[1024];
+	char			*devinfop;
 	int			s;
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
@@ -253,9 +253,10 @@ USB_ATTACH(upl)
 
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UPL_CONFIG_NO, 1);
 	if (err) {

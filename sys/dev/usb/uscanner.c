@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.17 2004/07/08 22:18:45 deraadt Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.18 2005/08/01 05:36:49 brad Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -307,13 +307,14 @@ USB_ATTACH(uscanner)
 	USB_ATTACH_START(uscanner, sc, uaa);
 	usb_interface_descriptor_t *id = 0;
 	usb_endpoint_descriptor_t *ed, *ed_bulkin = NULL, *ed_bulkout = NULL;
-	char devinfo[1024];
+	char *devinfop;
 	int i;
 	usbd_status err;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev_flags = uscanner_lookup(uaa->vendor, uaa->product)->flags;
 

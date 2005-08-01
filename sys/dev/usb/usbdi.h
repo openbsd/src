@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.23 2004/12/12 06:13:15 dlg Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.24 2005/08/01 05:36:49 brad Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -93,6 +93,8 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USB_CDEV_MAJOR 108
 #endif
 
+#define DEVINFOSIZE 1024
+
 usbd_status usbd_open_pipe(usbd_interface_handle iface, u_int8_t address,
 			   u_int8_t flags, usbd_pipe_handle *pipe);
 usbd_status usbd_close_pipe(usbd_pipe_handle pipe);
@@ -169,7 +171,9 @@ const char *usbd_errstr(usbd_status err);
 void usbd_add_dev_event(int, usbd_device_handle);
 void usbd_add_drv_event(int, usbd_device_handle, device_ptr_t);
 
-void usbd_devinfo(usbd_device_handle, int, char *, size_t);
+char *usbd_devinfo_alloc(usbd_device_handle dev, int showclass);
+void usbd_devinfo_free(char *devinfop);
+
 const struct usbd_quirks *usbd_get_quirks(usbd_device_handle);
 usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 			(usbd_interface_handle iface, u_int8_t address);

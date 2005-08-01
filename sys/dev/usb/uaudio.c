@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.21 2004/10/18 11:26:52 deraadt Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.22 2005/08/01 05:36:48 brad Exp $ */
 /*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
 
 /*
@@ -360,12 +360,13 @@ USB_ATTACH(uaudio)
 	USB_ATTACH_START(uaudio, sc, uaa);
 	usb_interface_descriptor_t *id;
 	usb_config_descriptor_t *cdesc;
-	char devinfo[1024];
+	char *devinfop;
 	usbd_status err;
 	int i, j, found;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
-	printf(": %s\n", devinfo);
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	printf(": %s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
 

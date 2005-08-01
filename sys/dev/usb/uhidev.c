@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.10 2004/07/08 22:18:44 deraadt Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.11 2005/08/01 05:36:48 brad Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -113,15 +113,17 @@ USB_ATTACH(uhidev)
 	int repsizes[256];
 	void *desc;
 	usbd_status err;
-	char devinfo[1024];
+	char *devinfop;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
+
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
-	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
+	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
+	usbd_devinfo_free(devinfop);
 
 	(void)usbd_set_idle(iface, 0, 0);
 #if 0

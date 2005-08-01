@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.42 2005/05/24 04:51:04 pascoe Exp $ */
+/*	$OpenBSD: umass.c,v 1.43 2005/08/01 05:36:49 brad Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -304,12 +304,14 @@ USB_ATTACH(umass)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	const char *sWire, *sCommand;
-	char devinfo[1024];
+	char *devinfop;
 	usbd_status err;
 	int i, bno, error;
 
-	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = uaa->iface;
@@ -380,8 +382,6 @@ USB_ATTACH(umass)
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
-
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	switch (sc->sc_wire) {
 	case UMASS_WPROTO_CBI:

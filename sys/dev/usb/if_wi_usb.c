@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.18 2005/02/18 06:47:03 jsg Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.19 2005/08/01 05:36:48 brad Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -281,7 +281,7 @@ USB_MATCH(wi_usb)
 USB_ATTACH(wi_usb)
 {
 	USB_ATTACH_START(wi_usb, sc, uaa);
-	char			devinfo[1024];
+	char			*devinfop;
 /*	int			s; */
 	usbd_device_handle	dev = uaa->device;
 	usbd_interface_handle	iface;
@@ -299,9 +299,10 @@ USB_ATTACH(wi_usb)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->wi_usb_dev), devinfo);
+	printf("%s: %s\n", USBDEVNAME(sc->wi_usb_dev), devinfop);
+	usbd_devinfo_free(devinfop);
 
 	/* XXX - any tasks? */
 

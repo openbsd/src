@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.19 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.20 2005/08/01 05:36:49 brad Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -207,16 +207,18 @@ USB_ATTACH(ulpt)
 	usb_interface_descriptor_t *id, *iend;
 	usb_config_descriptor_t *cdesc;
 	usbd_status err;
-	char devinfo[1024];
+	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t epcount;
 	int i, altno;
 
 	DPRINTFN(10,("ulpt_attach: sc=%p\n", sc));
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
-	       devinfo, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
+	       devinfop, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
+	usbd_devinfo_free(devinfop);
 
 	/* XXX
 	 * Stepping through the alternate settings needs to be abstracted out.
@@ -318,8 +320,8 @@ USB_ATTACH(ulpt)
 	req.bRequest = UR_GET_DEVICE_ID;
 	USETW(req.wValue, cd->bConfigurationValue);
 	USETW2(req.wIndex, id->bInterfaceNumber, id->bAlternateSetting);
-	USETW(req.wLength, sizeof devinfo - 1);
-	err = usbd_do_request_flags(dev, &req, devinfo, USBD_SHORT_XFER_OK,
+	USETW(req.wLength, DEVINFOSIZE - 1);
+	err = usbd_do_request_flags(dev, &req, devinfop, USBD_SHORT_XFER_OK,
 		  &alen, USBD_DEFAULT_TIMEOUT);
 	if (err) {
 		printf("%s: cannot get device id\n", USBDEVNAME(sc->sc_dev));
@@ -327,13 +329,13 @@ USB_ATTACH(ulpt)
 		printf("%s: empty device id, no printer connected?\n",
 		       USBDEVNAME(sc->sc_dev));
 	} else {
-		/* devinfo now contains an IEEE-1284 device ID */
-		len = ((devinfo[0] & 0xff) << 8) | (devinfo[1] & 0xff);
-		if (len > sizeof devinfo - 3)
-			len = sizeof devinfo - 3;
+		/* devinfop now contains an IEEE-1284 device ID */
+		len = ((devinfop[0] & 0xff) << 8) | (devinfop[1] & 0xff);
+		if (len > DEVINFOSIZE - 3)
+			len = DEVINFOSIZE - 3;
 		devinfo[len] = 0;
 		printf("%s: device id <", USBDEVNAME(sc->sc_dev));
-		ieee1284_print_id(devinfo+2);
+		ieee1284_print_id(devinfop+2);
 		printf(">\n");
 	}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.20 2005/02/23 02:24:30 deraadt Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.21 2005/08/01 05:36:49 brad Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ USB_ATTACH(uvisor)
 	struct uvisor_connection_info coninfo;
 	struct uvisor_palm_connection_info palmconinfo;
 	usb_endpoint_descriptor_t *ed;
-	char devinfo[1024];
+	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
 	int i, j, hasin, hasout, port;
 	usbd_status err;
@@ -241,9 +241,10 @@ USB_ATTACH(uvisor)
 		goto bad;
 	}
 
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfo);
+	printf("%s: %s\n", devname, devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uvisor_lookup(uaa->vendor, uaa->product)->uv_flags;
 
