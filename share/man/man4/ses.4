@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ses.4,v 1.14 2005/08/01 23:17:18 dlg Exp $
+.\"	$OpenBSD: ses.4,v 1.15 2005/08/01 23:52:49 dlg Exp $
 .\"
 .\" Copyright (c) David Gwynne <dlg@openbsd.org>
 .\" 
@@ -24,10 +24,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for SCSI enclosures using the SCSI Enclosure Service
-command set.
-It allows monitoring of the various environmental sensors present in the
-enclosure.
+driver provides support for monitoring the various environmental sensors
+present in SCSI enclosures using the SCSI Enclosure Services command set.
 The hardware monitor is used with the
 .Xr sysctl 8
 interface.
@@ -67,6 +65,3 @@ The
 .Nm
 driver was written by
 .An David Gwynne Aq dlg@openbsd.org .
-.Sh BUGS
-Only the temperature sensor is checked.
-Further sensor support is to be added.
