@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.19 2004/04/04 13:19:36 jmc Exp $
+.\"	$OpenBSD: random.9,v 1.20 2005/08/01 05:31:49 djm Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -49,6 +49,8 @@
 .Fn get_random_bytes "void *buf" "size_t nbytes"
 .Ft u_int32_t
 .Fn arc4random "void"
+.Ft void
+.Fn arc4random_bytes "void *buf" "size_t nbytes"
 .Sh DESCRIPTION
 The
 .Fn add_mouse_randomness ,
@@ -80,6 +82,8 @@ as it would by the
 device.
 .Pp
 .Fn arc4random
+and
+.Fn arc4random_bytes
 will give random 32 bit numbers hashed with
 the ARC4 algorithm, which appears to be faster and less abusive
 to the entropy pool.

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.98 2005/06/18 00:25:05 jmc Exp $
+#	$OpenBSD: Makefile,v 1.99 2005/08/01 05:31:49 djm Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -206,7 +206,8 @@ MLINKS+=random.9 add_true_randomness.9 \
 	random.9 add_disk_randomness.9 \
 	random.9 add_audio_randomness.9 \
 	random.9 get_random_bytes.9 \
-	random.9 arc4random.9
+	random.9 arc4random.9 \
+	random.9 arc4random_bytes.9
 MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 	rssadapt.9 ieee80211_rssadapt_input.9 \
 	rssadapt.9 ieee80211_rssadapt_lower_rate.9 \
