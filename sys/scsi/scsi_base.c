@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.85 2005/06/23 00:31:44 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.86 2005/08/01 22:42:50 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -227,6 +227,9 @@ scsi_size(sc_link, flags, blksize)
 	struct scsi_read_capacity scsi_cmd;
 	struct scsi_read_cap_data rdcap;
 	u_long max_addr;
+
+	if (blksize)
+		*blksize = 0;
 
 	/*
 	 * make up a scsi command and ask the scsi driver to do
