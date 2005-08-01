@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.7 2005/02/27 08:23:31 david Exp $
+dnl	$OpenBSD: prep,v 1.8 2005/08/01 19:58:59 kettenis Exp $
 Before you install your system, you should familiarize yourself with the
 ARCS setup and how to run programs from the Command monitor prompt.
 
@@ -6,8 +6,8 @@ Accessing the Maintenance Console:
 
     When the system starts up, press the ESC key or use the mouse and
     click the ``stop for maintenance'' button. Once in the System
-    Maintenance menu, select '5' (or click the appropriate icon if in
-    graphics console) to go into the Command Monitor.
+    Maintenance Menu, select '5' (or click the appropriate icon if you
+    are using the graphics console) to go into the Command Monitor.
 
     If the internal disk with the lowest SCSI ID does not contain a
     valid Volume Header, but is bootable, the Maintenance Console will

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.3 2004/09/10 19:41:40 miod Exp $
+dnl	$OpenBSD: contents,v 1.4 2005/08/01 19:58:59 kettenis Exp $
 TopPart
 
 OpenBSDdistsets
@@ -6,6 +6,8 @@ OpenBSDdistsets
 OpenBSDbsd
 
 OpenBSDrd
+
+OpenBSDcd
 
 DistributionDescription(ten)
 
