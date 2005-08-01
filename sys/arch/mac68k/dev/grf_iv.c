@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.24 2005/08/01 11:19:33 martin Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.25 2005/08/01 19:09:19 martin Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ grfiv_attach(parent, self, aux)
 			panic("failed to map space for DAFB regs.");
 		}
 		printf(": DAFB: Monitor sense %x.\n", R4(sc,0x1C)&7);
-		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x1000);
+		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x20);
 		break;
 	default:
 		printf(": Internal Video\n");
