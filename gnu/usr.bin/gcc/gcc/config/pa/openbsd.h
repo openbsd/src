@@ -31,6 +31,9 @@ Boston, MA 02111-1307, USA.  */
 #undef MAX_OFILE_ALIGNMENT
 #define	MAX_OFILE_ALIGNMENT 0x8000
 
+#undef TARGET_SCHED_DEFAULT
+#define TARGET_SCHED_DEFAULT "700"
+
 /* libc's profiling functions don't need gcc to allocate counters.  */
 #define NO_PROFILE_COUNTERS 1
 
