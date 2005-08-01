@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.6 2005/08/01 05:36:49 brad Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.7 2005/08/01 05:41:54 brad Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -281,8 +281,8 @@ USB_ATTACH(uvscom)
 	struct ucom_attach_args uca;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-        USB_ATTACH_SETUP;
-        printf("%s: %s\n", devname, devinfop);
+	USB_ATTACH_SETUP;
+	printf("%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;

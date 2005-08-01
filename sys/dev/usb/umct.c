@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.14 2005/08/01 05:36:49 brad Exp $	*/
+/*	$OpenBSD: umct.c,v 1.15 2005/08/01 05:41:54 brad Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -184,8 +184,8 @@ USB_ATTACH(umct)
 	struct ucom_attach_args uca;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-        USB_ATTACH_SETUP;
-        printf("%s: %s\n", devname, devinfop);
+	USB_ATTACH_SETUP;
+	printf("%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
