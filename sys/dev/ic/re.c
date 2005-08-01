@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.13 2005/05/24 00:46:18 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.14 2005/08/01 17:00:23 pvalchev Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1315,52 +1315,6 @@ re_tick(xsc)
 	timeout_add(&sc->timer_handle, hz);
 }
 
-#ifdef DEVICE_POLLING
-void
-re_poll (struct ifnet *ifp, enum poll_cmd cmd, int count)
-{
-	struct rl_softc *sc = ifp->if_softc;
-
-	RL_LOCK(sc);
-	if (!(ifp->if_capenable & IFCAP_POLLING)) {
-		ether_poll_deregister(ifp);
-		cmd = POLL_DEREGISTER;
-	}
-	if (cmd == POLL_DEREGISTER) { /* final call, enable interrupts */
-		CSR_WRITE_2(sc, RL_IMR, RL_INTRS_CPLUS);
-		goto done;
-	}
-
-	sc->rxcycles = count;
-	re_rxeof(sc);
-	re_txeof(sc);
-
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		(*ifp->if_start)(ifp);
-
-	if (cmd == POLL_AND_CHECK_STATUS) { /* also check status register */
-		u_int16_t       status;
-
-		status = CSR_READ_2(sc, RL_ISR);
-		if (status == 0xffff)
-			goto done;
-		if (status)
-			CSR_WRITE_2(sc, RL_ISR, status);
-
-		/*
-		 * XXX check behaviour on receiver stalls.
-		 */
-
-		if (status & RL_ISR_SYSTEM_ERR) {
-			re_reset(sc);
-			re_init(ifp);
-		}
-	}
-done:
-	RL_UNLOCK(sc);
-}
-#endif /* DEVICE_POLLING */
-
 int
 re_intr(arg)
 	void			*arg;
@@ -1374,17 +1328,6 @@ re_intr(arg)
 
 	if (!(ifp->if_flags & IFF_UP))
 		return (0);
-
-#ifdef DEVICE_POLLING
-	if  (ifp->if_flags & IFF_POLLING)
-		goto done;
-	if ((ifp->if_capenable & IFCAP_POLLING) &&
-	    ether_poll_register(re_poll, ifp)) { /* ok, disable interrupts */
-		CSR_WRITE_2(sc, RL_IMR, 0x0000);
-		re_poll(ifp, 0, 1);
-		goto done;
-	}
-#endif /* DEVICE_POLLING */
 
 	for (;;) {
 
@@ -1422,10 +1365,6 @@ re_intr(arg)
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		(*ifp->if_start)(ifp);
-
-#ifdef DEVICE_POLLING
-done:
-#endif
 
 	return (claimed);
 }
@@ -1717,14 +1656,6 @@ re_init(struct ifnet *ifp)
 	 */
 	re_setmulti(sc);
 
-#ifdef DEVICE_POLLING
-	/*
-	 * Disable interrupts if we are polling.
-	 */
-	if (ifp->if_flags & IFF_POLLING)
-		CSR_WRITE_2(sc, RL_IMR, 0);
-	else	/* otherwise ... */
-#endif /* DEVICE_POLLING */
 	/*
 	 * Enable interrupts.
 	 */
@@ -1937,9 +1868,6 @@ re_stop(sc)
 
 	timeout_del(&sc->timer_handle);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-#ifdef DEVICE_POLLING
-	ether_poll_deregister(ifp);
-#endif /* DEVICE_POLLING */
 
 	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
