@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2005/04/28 21:56:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/08/01 19:58:13 kettenis Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -36,6 +36,7 @@ ${CDROM}:
 	# would love to use -h 64, but boot is slightly too big
 	/usr/mdec/sgivol -f -i -h 88 svnd0 > ${.OBJDIR}/volhdr
 	/usr/mdec/sgivol -f -w boot ${.OBJDIR}/boot svnd0
+	/usr/mdec/sgivol -f -l boot sashARCS svnd0
 	vnconfig -u svnd0
 	dd if=${.OBJDIR}/${FFS} of=${.OBJDIR}/${CDROM} bs=512 \
 	    seek=`cat ${.OBJDIR}/volhdr | grep 'Volume Header' | awk '{print $$3}'`

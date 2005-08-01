@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.6 2005/04/27 04:37:33 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.7 2005/08/01 19:58:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -46,7 +46,13 @@ Elf32_Addr loadfile64(int, Elf64_Ehdr *);
 int loadsymtab32(int, Elf32_Ehdr *, int);
 int loadsymtab64(int, Elf64_Ehdr *, int);
 
-enum { AUTO_NONE, AUTO_YES, AUTO_NO, AUTO_DEBUG } bootauto = AUTO_NONE;
+enum {
+	AUTO_NONE,
+	AUTO_YES,
+	AUTO_NO,
+	AUTO_MINI,
+	AUTO_DEBUG
+} bootauto = AUTO_NONE;
 char *OSLoadPartition = NULL;
 char *OSLoadFilename = NULL;
 
@@ -125,6 +131,8 @@ dobootopts(int argc, char **argv)
 				bootauto = AUTO_YES;
 			else if (strcmp(&cp[14], "single") == 0)
 				bootauto = AUTO_NO;
+			else if (strcmp(&cp[14], "mini") == 0)
+				bootauto = AUTO_MINI;
 			else if (strcmp(&cp[14], "debug") == 0)
 				bootauto = AUTO_DEBUG;
 		} else if (strncmp(cp, "OSLoadPartition=", 16) == 0)
@@ -138,21 +146,17 @@ dobootopts(int argc, char **argv)
 	if (bootauto == AUTO_NONE && *argv[1] == '/')
 		OSLoadFilename = argv[1];
 
-	if (SystemPartition) {
-		printf("SystemPartition %s\n", SystemPartition);
-		if (strstr(SystemPartition, ")cdrom(")) {
-			static char syspart[64];
-			char *p;
+	if (bootauto == AUTO_MINI) {
+		static char loadpart[64];
+		char *p;
 
-			strlcpy(syspart, SystemPartition, sizeof syspart);
-			p = strstr(syspart, "partition(");
-			if (p) {
-				p += strlen("partition(");
-				if (*p == '8')
-					*p = '0';
-			}
-			OSLoadPartition = syspart;
-			printf("new OSLoadPartition=%s\n", OSLoadPartition);
+		strlcpy(loadpart, argv[0], sizeof loadpart);
+		p = strstr(loadpart, "partition(8)");
+		if (p) {
+			p += strlen("partition(");
+			p[0] = '0'; p[2] = 0;
+			OSLoadPartition = loadpart;
+			OSLoadFilename = "/bsd.rd";
 		}
 	}
 }
