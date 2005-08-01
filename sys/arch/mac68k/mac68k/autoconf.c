@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2005/08/01 14:49:55 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -474,7 +474,7 @@ getstr(cp, size)
 }
 
 
-u_long		bootdev;	/* should be dev_t, but not until 32 bits */
+dev_t		bootdev;
 
 /*
  * Yanked from i386/i386/autoconf.c (and tweaked a bit)
