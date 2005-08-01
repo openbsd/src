@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.181 2005/07/31 00:39:40 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.182 2005/08/01 03:03:14 david Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -215,7 +215,7 @@ file	dev/pci/siop_pci_common.c	siop_pci_common
 # Symbios 53c8xx SCSI chips
 # device declaration in sys/conf/files
 attach	siop at pci with siop_pci: siop_pci_common
-file	dev/pci/siop_pci.c	siop_pci
+file	dev/pci/siop_pci.c		siop_pci
 
 # NeoMagic 256AV and 256ZX
 device	neo: audio, auconv, mulaw, ac97, firmload
@@ -524,11 +524,11 @@ file	dev/pci/if_ral_pci.c		ral_pci
 # Sangoma PCI card
 device	san: ifnet, ifmedia, sppp
 attach	san at pci
-file	dev/pci/if_sandrv.c 		san
-file	dev/pci/if_san_common.c 	san
-file	dev/pci/if_san_obsd.c 		san
-file	dev/pci/if_san_te1.c 		san
-file	dev/pci/if_san_xilinx.c 	san
+file	dev/pci/if_sandrv.c		san
+file	dev/pci/if_san_common.c		san
+file	dev/pci/if_san_obsd.c		san
+file	dev/pci/if_san_te1.c		san
+file	dev/pci/if_san_xilinx.c		san
 
 # PIIX4 power management controller
 device	piixpm {}

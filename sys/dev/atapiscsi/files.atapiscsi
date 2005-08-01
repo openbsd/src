@@ -1,8 +1,8 @@
-#	$OpenBSD: files.atapiscsi,v 1.5 2005/03/08 20:00:24 tdeval Exp $
+#	$OpenBSD: files.atapiscsi,v 1.6 2005/08/01 03:03:14 david Exp $
 # ATAPI transport for SCSI protocol
 #
 
 device	atapiscsi: scsi
 attach	atapiscsi at atapi
-file	dev/atapiscsi/atapiscsi.c 	atapiscsi needs-flag
+file	dev/atapiscsi/atapiscsi.c	atapiscsi needs-flag
 
