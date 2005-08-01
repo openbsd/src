@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.900 2005/07/30 22:51:07 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.901 2005/08/01 22:52:47 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4395,6 +4395,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801FB IDE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GP_MCH,
+	    "82945GP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GP_PCIE,
+	    "82945GP PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915GM_IGD_S,
 	    "915GM/GMS Video",
 	},
@@ -4457,6 +4465,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_SMBUS,
 	    "82801GB SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_LAN,
+	    "82801GB LAN",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_ACM,
