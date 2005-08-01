@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.38 2005/04/27 00:12:41 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.39 2005/08/01 11:54:24 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2702,7 +2702,7 @@ pmap_proc_iflush(p, va, len)
 	vaddr_t		va;
 	vsize_t		len;
 {
-	(void)cachectl(p, 0x80000004, va, len);
+	(void)cachectl(p, CC_EXTPURGE | CC_IPURGE, va, len);
 }
 
 #ifdef DEBUG

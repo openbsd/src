@@ -1,6 +1,10 @@
-#	$OpenBSD: files.m68k,v 1.13 2005/07/14 02:09:46 uwe Exp $
+#	$OpenBSD: files.m68k,v 1.14 2005/08/01 11:54:23 miod Exp $
 #	$NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
+file	arch/m68k/m68k/bcopy.s
+file	arch/m68k/m68k/cachectl.c
+file	arch/m68k/m68k/copy.s
+file	arch/m68k/m68k/copypage.s
 file	arch/m68k/m68k/db_disasm.c		ddb
 file	arch/m68k/m68k/db_interface.c		ddb
 file	arch/m68k/m68k/db_trace.c		ddb
@@ -11,12 +15,9 @@ file	arch/m68k/m68k/m68k_machdep.c
 file	arch/m68k/m68k/mappedcopy.c		mappedcopy
 file	arch/m68k/m68k/oc_cksum.s		inet
 file	arch/m68k/m68k/process_machdep.c
-file	arch/m68k/m68k/sig_machdep.c
 file	arch/m68k/m68k/random.s
-file	arch/m68k/m68k/copy.s
-file	arch/m68k/m68k/bcopy.s
-file	arch/m68k/m68k/copypage.s
 file	arch/m68k/m68k/regdump.c
+file	arch/m68k/m68k/sig_machdep.c
 
 #
 # Older m68k4k executables binary compatibility

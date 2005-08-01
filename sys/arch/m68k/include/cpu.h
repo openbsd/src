@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2003/09/26 21:43:30 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2005/08/01 11:54:23 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -206,6 +206,12 @@ void userret(struct proc *, struct frame *, u_quad_t, u_int, int);
 struct trapframe;
 void regdump(struct trapframe *, int);
 
+/* sys_machdep.c */
+int	cachectl(struct proc *, int, vaddr_t, int);
+#define	CC_PURGE	0x00000001
+#define	CC_FLUSH	0x00000002
+#define	CC_IPURGE	0x00000004
+#define	CC_EXTPURGE	0x80000000
 
 #endif /* _KERNEL */
 
