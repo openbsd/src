@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.51 2005/07/29 16:59:26 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.52 2005/08/01 16:39:10 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -143,6 +143,7 @@ int ami_ioctl(struct device *, u_long, caddr_t);
 int ami_ioctl_inq(struct ami_softc *, bioc_inq *);
 int ami_ioctl_vol(struct ami_softc *, bioc_vol *);
 int ami_ioctl_disk(struct ami_softc *, bioc_disk *);
+int ami_ioctl_alarm(struct ami_softc *, bioc_alarm *);
 #endif /* NBIO > 0 */
 
 struct ami_ccb *
@@ -1716,6 +1717,7 @@ ami_ioctl(dev, cmd, addr)
 	case BIOCINQ:
 	case BIOCVOL:
 	case BIOCDISK:
+	case BIOCALARM:
 		sc->sc_flags |= AMI_CMDWAIT;
 		while (!TAILQ_EMPTY(&sc->sc_ccbq))
 			if (tsleep(&sc->sc_free_ccb, PRIBIO, "ami_ioctl",
@@ -1739,6 +1741,11 @@ ami_ioctl(dev, cmd, addr)
 		error = ami_ioctl_disk(sc, (bioc_disk *)addr);
 		break;
 
+	case BIOCALARM:
+		AMI_DPRINTF(AMI_D_IOCTL, ("alarm "));
+		error = ami_ioctl_alarm(sc, (bioc_alarm *)addr);
+		break;
+		
 	default:
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: invalid ioctl\n",
 		    sc->sc_dev.dv_xname));
@@ -1845,8 +1852,20 @@ ami_mgmt(sc, opcode, par1, par2, size, buffer)
 	cmd = ccb->ccb_cmd;
 
 	cmd->acc_cmd = opcode;
-	cmd->acc_io.aio_channel = par1;
-	cmd->acc_io.aio_param = par2;
+
+	/*
+	 * some commands require data to be written to idata before sending
+	 * command to fw
+	 */
+	switch (opcode) {
+	case AMI_SPEAKER:
+		*((char *)idata) = par1;
+		break;
+	default:
+		cmd->acc_io.aio_channel = par1;
+		cmd->acc_io.aio_param = par2;
+	};
+
 	cmd->acc_io.aio_data = htole32(pa);
 
 	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0)
@@ -1890,7 +1909,7 @@ ami_ioctl_inq(sc, bi)
 		goto bail2;
 	}
 
-	memset(plist, 0, sizeof plist);
+	memset(plist, 0, AMI_BIG_MAX_PDRIVES);
 
 	bi->novol = p->ada_nld;
 	bi->nodisk = 0;
@@ -2081,6 +2100,51 @@ ami_ioctl_disk(sc, bd)
 
 bail:
 	free(p, M_DEVBUF);
+
+	return (error);
+}
+
+int ami_ioctl_alarm(sc, ba)
+	struct ami_softc *sc;
+	bioc_alarm *ba;
+{
+	int error = 0;
+	u_int8_t func, ret;
+
+	switch(ba->opcode) {
+	case BIOC_SADISABLE:
+		func = AMI_SPKR_OFF;
+		break;
+
+	case BIOC_SAENABLE:
+		func = AMI_SPKR_ON;
+		break;
+
+	case BIOC_SASILENCE:
+		func = AMI_SPKR_SHUT;
+		break;
+
+	case BIOC_GASTATUS:
+		func = AMI_SPKR_GVAL;
+		break;
+
+	case BIOC_SATEST:
+		func = AMI_SPKR_TEST;
+		break;
+
+	default:
+		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
+		    sc->sc_dev.dv_xname, ba->opcode));
+		error = EINVAL;
+	}
+
+	if (ami_mgmt(sc, AMI_SPEAKER, func, 0, sizeof ret, &ret))
+		error = EINVAL;
+	else
+		if (ba->opcode == BIOC_GASTATUS)
+			ba->status = ret;
+		else
+			ba->status = 0;
 
 	return (error);
 }

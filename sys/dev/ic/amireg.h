@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.19 2005/07/29 16:30:02 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.20 2005/08/01 16:39:10 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -120,6 +120,7 @@
 #define		AMI_SPKR_ON	1
 #define		AMI_SPKR_SHUT	2
 #define		AMI_SPKR_GVAL	3
+#define		AMI_SPKR_TEST	4
 #define	AMI_GDUMP	0x52	/* get error condition in text */
 #define	AMI_SENSEDUMPA	0x53	/* get SCSI sense dump area */
 #define	AMI_STDIAG	0x54	/* start diagnostics -- 2.1 */
