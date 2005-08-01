@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.26 2005/06/08 04:17:14 marius Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.27 2005/08/01 22:23:55 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.26 2005/06/08 04:17:14 marius Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.27 2005/08/01 22:23:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -367,45 +367,47 @@ sidewaysintpr(u_int interval, u_int display)
 		getnfsstats(&nfsstats);
 
 		if (display & SHOW_CLIENT)
-		  printf("Client: %8d %8d %8d %8d %8d %8d %8d %8d\n",
-		    nfsstats.rpccnt[NFSPROC_GETATTR] -
-		    lastst.rpccnt[NFSPROC_GETATTR],
-		    nfsstats.rpccnt[NFSPROC_LOOKUP] -
-		    lastst.rpccnt[NFSPROC_LOOKUP],
-		    nfsstats.rpccnt[NFSPROC_READLINK] -
-		    lastst.rpccnt[NFSPROC_READLINK],
-		    nfsstats.rpccnt[NFSPROC_READ] -
-		    lastst.rpccnt[NFSPROC_READ],
-		    nfsstats.rpccnt[NFSPROC_WRITE] -
-		    lastst.rpccnt[NFSPROC_WRITE],
-		    nfsstats.rpccnt[NFSPROC_RENAME] -
-		    lastst.rpccnt[NFSPROC_RENAME],
-		    nfsstats.rpccnt[NFSPROC_ACCESS] -
-		    lastst.rpccnt[NFSPROC_ACCESS],
-		    (nfsstats.rpccnt[NFSPROC_READDIR] -
-		    lastst.rpccnt[NFSPROC_READDIR]) +
-		    (nfsstats.rpccnt[NFSPROC_READDIRPLUS] -
-		    lastst.rpccnt[NFSPROC_READDIRPLUS]));
+			printf("Client: "
+			    "%8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu\n",
+			    nfsstats.rpccnt[NFSPROC_GETATTR] -
+			    lastst.rpccnt[NFSPROC_GETATTR],
+			    nfsstats.rpccnt[NFSPROC_LOOKUP] -
+			    lastst.rpccnt[NFSPROC_LOOKUP],
+			    nfsstats.rpccnt[NFSPROC_READLINK] -
+			    lastst.rpccnt[NFSPROC_READLINK],
+			    nfsstats.rpccnt[NFSPROC_READ] -
+			    lastst.rpccnt[NFSPROC_READ],
+			    nfsstats.rpccnt[NFSPROC_WRITE] -
+			    lastst.rpccnt[NFSPROC_WRITE],
+			    nfsstats.rpccnt[NFSPROC_RENAME] -
+			    lastst.rpccnt[NFSPROC_RENAME],
+			    nfsstats.rpccnt[NFSPROC_ACCESS] -
+			    lastst.rpccnt[NFSPROC_ACCESS],
+			    (nfsstats.rpccnt[NFSPROC_READDIR] -
+			    lastst.rpccnt[NFSPROC_READDIR]) +
+			    (nfsstats.rpccnt[NFSPROC_READDIRPLUS] -
+			    lastst.rpccnt[NFSPROC_READDIRPLUS]));
 		if (display & SHOW_SERVER)
-		  printf("Server: %8d %8d %8d %8d %8d %8d %8d %8d\n",
-		    nfsstats.srvrpccnt[NFSPROC_GETATTR] -
-		    lastst.srvrpccnt[NFSPROC_GETATTR],
-		    nfsstats.srvrpccnt[NFSPROC_LOOKUP] -
-		    lastst.srvrpccnt[NFSPROC_LOOKUP],
-		    nfsstats.srvrpccnt[NFSPROC_READLINK] -
-		    lastst.srvrpccnt[NFSPROC_READLINK],
-		    nfsstats.srvrpccnt[NFSPROC_READ] -
-		    lastst.srvrpccnt[NFSPROC_READ],
-		    nfsstats.srvrpccnt[NFSPROC_WRITE] -
-		    lastst.srvrpccnt[NFSPROC_WRITE],
-		    nfsstats.srvrpccnt[NFSPROC_RENAME] -
-		    lastst.srvrpccnt[NFSPROC_RENAME],
-		    nfsstats.srvrpccnt[NFSPROC_ACCESS] -
-		    lastst.srvrpccnt[NFSPROC_ACCESS],
-		    (nfsstats.srvrpccnt[NFSPROC_READDIR] -
-		    lastst.srvrpccnt[NFSPROC_READDIR]) +
-		    (nfsstats.srvrpccnt[NFSPROC_READDIRPLUS] -
-		    lastst.srvrpccnt[NFSPROC_READDIRPLUS]));
+			printf("Server: "
+			    "%8llu %8llu %8llu %8llu %8llu %8llu %8llu %8llu\n",
+			    nfsstats.srvrpccnt[NFSPROC_GETATTR] -
+			    lastst.srvrpccnt[NFSPROC_GETATTR],
+			    nfsstats.srvrpccnt[NFSPROC_LOOKUP] -
+			    lastst.srvrpccnt[NFSPROC_LOOKUP],
+			    nfsstats.srvrpccnt[NFSPROC_READLINK] -
+			    lastst.srvrpccnt[NFSPROC_READLINK],
+			    nfsstats.srvrpccnt[NFSPROC_READ] -
+			    lastst.srvrpccnt[NFSPROC_READ],
+			    nfsstats.srvrpccnt[NFSPROC_WRITE] -
+			    lastst.srvrpccnt[NFSPROC_WRITE],
+			    nfsstats.srvrpccnt[NFSPROC_RENAME] -
+			    lastst.srvrpccnt[NFSPROC_RENAME],
+			    nfsstats.srvrpccnt[NFSPROC_ACCESS] -
+			    lastst.srvrpccnt[NFSPROC_ACCESS],
+			    (nfsstats.srvrpccnt[NFSPROC_READDIR] -
+			    lastst.srvrpccnt[NFSPROC_READDIR]) +
+			    (nfsstats.srvrpccnt[NFSPROC_READDIRPLUS] -
+			    lastst.srvrpccnt[NFSPROC_READDIRPLUS]));
 		lastst = nfsstats;
 		fflush(stdout);
 		sigemptyset(&emptyset);
