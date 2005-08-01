@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sgivol.8,v 1.3 2005/08/01 18:00:30 kettenis Exp $
+.\"	$OpenBSD: sgivol.8,v 1.4 2005/08/01 19:34:50 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt
 .\" All rights reserved.
@@ -42,15 +42,15 @@
 .Ar disk
 .Nm sgivol
 .Op Fl fq
+.Op Fl l Ar vhfilename1 Ar vhfilename2
+.Ar disk
+.Nm sgivol
+.Op Fl fq
 .Op Fl r Ar vhfilename Ar diskfilename
 .Ar disk
 .Nm sgivol
 .Op Fl fq
 .Op Fl w Ar vhfilename Ar diskfilename
-.Ar disk
-.Nm sgivol
-.Op Fl fq
-.Op Fl l Ar vhfilename1 Ar vhfilename2
 .Ar disk
 .Sh DESCRIPTION
 .Nm
@@ -76,6 +76,12 @@ Choose an alternate volume header size, in (512-byte) disk blocks.
 The default is 3135 blocks.
 .It Fl i
 Initialize a volume header on the supplied device.
+.It Fl l Ar vhfilename1 Ar vhfilename2
+Link the file
+.Ar vhfilename1
+to the file
+.Ar vhfilename2
+within the filesystem storage space in the volume header.
 .It Fl q
 Be quiet about various diagnostic issues.
 .It Fl r Ar vhfilename Ar diskfilename
@@ -90,12 +96,6 @@ Copy the standard file
 to the filesystem storage space in the volume header, placing
 it there with the name
 .Ar diskfilename .
-.It Fl l Ar vhfilename1 Ar vhfilename2
-Link the file
-.Ar vhfilename1
-to the file
-.Ar vhfilename2
-within the filesystem storage space in the volume header.
 .It Ar disk
 The name of the disk containing the partition in which the second-stage
 boot program resides and the first-stage boot program is to be installed.
