@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.24 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.25 2005/08/01 12:04:52 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -18,7 +18,6 @@ option		M68040		# support for 040
 option		M68060		# support for 060
 option		FPSP		# MC68040 floating point support
 option		M060SP		# ...and MC68060 support package
-option		FPU_EMULATE	# FPU emulation
 
 option		MVME147		# (requires M68030)
 option		MVME162		# (requires M68040, FPSP)
