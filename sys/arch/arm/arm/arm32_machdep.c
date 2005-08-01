@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.13 2005/04/26 01:12:27 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.14 2005/08/01 15:42:46 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -666,11 +666,8 @@ allocsys(caddr_t v)
 	 * i/o buffers.
 	 */
 	if (bufpages == 0) {
-		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / 10;
-		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-			    bufcachepercent / 100;
+		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
+		    bufcachepercent / 100;
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
