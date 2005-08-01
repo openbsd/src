@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2005/08/01 15:42:39 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 2005/08/01 16:18:43 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -280,6 +280,12 @@ cpu_startup(void)
 	printf("%s", version);
 
 	printf("real mem = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024);
+
+	if (physmem >= btoc(1ULL << 32)) {
+		extern int amdgart_enable;
+
+		amdgart_enable = 1;
+	}
 
 	/*
 	 * Find out how much space we need, allocate it,
