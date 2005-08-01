@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.99 2005/05/25 16:52:06 jaredy Exp $
+.\"	$OpenBSD: ksh.1,v 1.100 2005/08/01 08:12:30 otto Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -4883,11 +4883,8 @@ lines (earlier).
 Uppercase the next
 .Ar n
 words.
-.It version: ^V
-Display the version of
-.Nm .
-The current edit buffer is restored as soon as any
-key is pressed (the key is then processed, unless it is a space).
+.It quote: ^V
+Synonym for ^^.
 .It yank: ^Y
 Inserts the most recently killed text string at the current cursor position.
 .It yank-pop: ^[y
@@ -5109,10 +5106,6 @@ enumeration command).
 .It = and ^E
 Command/file name enumeration.
 List all the commands or files that match the current big-word.
-.It ^V
-Display the version of
-.Nm pdksh ;
-it is displayed until another key is pressed (this key is ignored).
 .It @ Ns Ar c
 Macro expansion.
 Execute the commands found in the alias
