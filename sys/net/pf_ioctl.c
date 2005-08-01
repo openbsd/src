@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.148 2005/07/31 05:20:57 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.149 2005/08/01 05:39:27 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -509,14 +509,13 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 		strlcat(pr->anchor_call, r->anchor->path,
 		    sizeof(pr->anchor_call));
 	} else {
-		char a[MAXPATHLEN], b[MAXPATHLEN], *p;
+		static char a[MAXPATHLEN], *p;
 		int i;
 
 		if (rs->anchor == NULL)
 			a[0] = 0;
 		else
 			strlcpy(a, rs->anchor->path, sizeof(a));
-		strlcpy(b, r->anchor->path, sizeof(b));
 		for (i = 1; i < r->anchor_relative; ++i) {
 			if ((p = strrchr(a, '/')) == NULL)
 				p = a;
@@ -524,13 +523,14 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 			strlcat(pr->anchor_call, "../",
 			    sizeof(pr->anchor_call));
 		}
-		if (strncmp(a, b, strlen(a))) {
-			printf("pf_anchor_copyout: '%s' '%s'\n", a, b);
+		if (strncmp(a, r->anchor->path, strlen(a))) {
+			printf("pf_anchor_copyout: '%s' '%s'\n", a,
+			    r->anchor->path);
 			return (1);
 		}
-		if (strlen(b) > strlen(a))
-			strlcat(pr->anchor_call, b + (a[0] ? strlen(a) + 1 : 0),
-			    sizeof(pr->anchor_call));
+		if (strlen(r->anchor->path) > strlen(a))
+			strlcat(pr->anchor_call, r->anchor->path + (a[0] ?
+			    strlen(a) + 1 : 0), sizeof(pr->anchor_call));
 	}
 	if (r->anchor_wildcard)
 		strlcat(pr->anchor_call, pr->anchor_call[0] ? "/*" : "*",
