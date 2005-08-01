@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.23 2005/07/23 23:28:58 martin Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.24 2005/08/01 11:19:33 martin Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ struct cfattach intvid_ca = {
 };
 
 #define QUADRA_DAFB_BASE	0xF9800000
+#define CIVIC_CONTROL_BASE	0x50036000
 
 static int
 grfiv_match(parent, vcf, aux)
@@ -130,6 +131,16 @@ grfiv_match(parent, vcf, aux)
 
 		break;
 
+	case MACH_CLASSAV:
+		if (bus_space_map(oa->oa_tag, CIVIC_CONTROL_BASE, 0x1000,
+					0, &bsh)) {
+			panic("failed to map space for CIVIC control regs.\n");	
+		}
+		/* Disable interrupts */
+		bus_space_write_1(oa->oa_tag, bsh, 0x120, 0);
+		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
+		break;
+
 	default:
 nodafb:
 		if (mac68k_vidlog == 0) {
@@ -166,6 +177,7 @@ grfiv_attach(parent, self, aux)
 			panic("failed to map space for DAFB regs.");
 		}
 		printf(": DAFB: Monitor sense %x.\n", R4(sc,0x1C)&7);
+		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x1000);
 		break;
 	default:
 		printf(": Internal Video\n");
