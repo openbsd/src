@@ -1,121 +1,72 @@
-.\" Copyright (c) 2000
-.\"	Matthew Jacob <mjacob@openbsd.org>.  All rights reserved.
+.\"	$OpenBSD: ses.4,v 1.14 2005/08/01 23:17:18 dlg Exp $
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\"
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\" $OpenBSD: ses.4,v 1.13 2005/03/01 22:20:41 jmc Exp $
-.\"
-.Dd February 22, 2000
+.\" Copyright (c) David Gwynne <dlg@openbsd.org>
+.\" 
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" TORTIOUS ACTION, ARISING OUT OF
+.\" PERFORMANCE OF THIS SOFTWARE.
+.Dd August 1, 2005
 .Dt SES 4
 .Os
 .Sh NAME
 .Nm ses
-.Nd SCSI Environmental Services Driver
+.Nd SCSI Enclosure Services
 .Sh SYNOPSIS
 .Cd "ses* at scsibus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for all
-.Tn SCSI
-devices of the environmental services class that are attached to the system
-through a supported
-.Tn SCSI
-Host Adapter, as well as emulated support for SAF-TE (SCSI Accessible
-Fault Tolerant Enclosures).
-The environmental services class generally are enclosure devices that
-provide environmental information such as number of power supplies (and
-state), temperature, device slots, and so on.
+driver provides support for SCSI enclosures using the SCSI Enclosure Service
+command set.
+It allows monitoring of the various environmental sensors present in the
+enclosure.
+The hardware monitor is used with the
+.Xr sysctl 8
+interface.
 .Pp
-A
-.Tn SCSI
-Host
-adapter must also be separately configured into the system
-before a
-.Tn SCSI
-Environmental Services device can be configured.
-.Sh IOCTLS
-The following
-.Xr ioctl 2
-calls apply to
-.Em SES
-devices.
-They are defined in the header file
-.Aq Pa scsi/ses.h .
-.Bl -tag -width SESIOC_GETENCSTAT
-.It Dv SESIOC_GETNOBJ
-Used to find out how many
-.Em SES
-objects are driven by this particular device instance.
-.It Dv SESIOC_GETOBJMAP
-Read, from the kernel, an array of
-.Em SES
-objects which contains the object identifier, which subenclosure it is in,
-and the
-.Em SES
-type of the object.
-.It Dv SESIOC_GETENCSTAT
-Get the overall enclosure status.
-.It Dv SESIOC_SETENCSTAT
-Set the overall enclosure status.
-.It Dv SESIOC_GETOBJSTAT
-Get the status of a particular object.
-.It Dv SESIOC_SETOBJSTAT
-Set the status of a particular object.
-.It Dv SESIOC_GETTEXT
-Get the associated help text for an object (not yet implemented).
-.Em SES
-devices often have descriptive text for an object which can provide
-information such as location (e.g. "power supply left").
-.It Dv SESIOC_INIT
-Initialize the enclosure.
+SES compliant devices can provide an arbitrary set of sensors which may
+include the following types:
+.Bl -column "Sensor" "Units" "Typical" -offset indent
+.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
+.It Li "temp" Ta "uK" Ta "temperature"
+.It Li "fan" Ta "RPM" Ta "fan"
+.It Li "psu" Ta "On/Off" Ta "power supply"
+.It Li "doorlock" Ta "On/Off" Ta "door lock"
+.It Li "alarm" Ta "On/Off" Ta "enclosure alarm"
 .El
-.Sh FILES
-.Bl -tag -width /dev/sesNN -compact
-.It /dev/ses Ns Ar N
-The
-.Ar N Ns Li th
-.Em SES
-device.
-.El
-.Sh DIAGNOSTICS
-When the kernel is configured with
-.Tn DEBUG
-enabled, the first open to an
-.Em SES
-device will spit out overall enclosure parameters to the console.
+.Pp
+Sensor data is updated every 10 seconds.
+.Pp
+An enclosure may provide environmental information using an alternative
+command set to the SCSI Enclosure Services used by this driver.
+Enclosures using the SCSI Accessed Fault-Tolerant Enclosure command set
+may be monitored by the
+.Xr safte 4
+driver.
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr scsi 4 ,
-.Xr getencstat 8 ,
-.Xr sesd 8 ,
-.Xr setencstat 8 ,
-.Xr setobjstat 8
+.Xr safte 4 ,
+.Xr scsibus 4 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
-driver was written for the
-.Tn SCSI
-subsystem by Matthew Jacob.
-This is the functional equivalent of a similar driver available in
-Solaris, Release 7.
+driver first appeared in
+.Ox 3.8 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An David Gwynne Aq dlg@openbsd.org .
+.Sh BUGS
+Only the temperature sensor is checked.
+Further sensor support is to be added.
