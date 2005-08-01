@@ -240,10 +240,8 @@
 ./var/www/htdocs/manual/mod/mod_auth_dbm.html
 ./var/www/htdocs/manual/mod/mod_auth_digest.html
 ./var/www/htdocs/manual/mod/mod_autoindex.html
-./var/www/htdocs/manual/mod/mod_browser.html
 ./var/www/htdocs/manual/mod/mod_cern_meta.html
 ./var/www/htdocs/manual/mod/mod_cgi.html
-./var/www/htdocs/manual/mod/mod_cookies.html
 ./var/www/htdocs/manual/mod/mod_define.html
 ./var/www/htdocs/manual/mod/mod_digest.html
 ./var/www/htdocs/manual/mod/mod_dir.html
