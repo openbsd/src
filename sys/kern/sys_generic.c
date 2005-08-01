@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.49 2004/06/24 19:35:24 tholo Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.50 2005/08/01 06:26:16 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 
 #include <uvm/uvm_extern.h>
 
-int selscan(struct proc *, fd_set *, fd_set *, int, register_t *);
+int selscan(struct proc *, fd_set *, fd_set *, int, int, register_t *);
 int seltrue(dev_t, int, struct proc *);
 void pollscan(struct proc *, struct pollfd *, u_int, register_t *);
 
@@ -652,7 +652,8 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		syscallarg(fd_set *) ex;
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
-	fd_set bits[6], *pibits[3], *pobits[3];
+	fd_mask bits[6];
+	fd_set *pibits[3], *pobits[3];
 	struct timeval atv, rtv, ttv;
 	int s, ncoll, error = 0, timo;
 	u_int nd, ni;
@@ -663,7 +664,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		nd = p->p_fd->fd_nfiles;
 	}
 	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
-	if (nd > FD_SETSIZE) {
+	if (nd > sizeof(bits[0])) {
 		caddr_t mbits;
 
 		mbits = malloc(ni * 6, M_TEMP, M_WAITOK);
@@ -676,12 +677,12 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		pobits[2] = (fd_set *)&mbits[ni * 5];
 	} else {
 		bzero(bits, sizeof(bits));
-		pibits[0] = &bits[0];
-		pibits[1] = &bits[1];
-		pibits[2] = &bits[2];
-		pobits[0] = &bits[3];
-		pobits[1] = &bits[4];
-		pobits[2] = &bits[5];
+		pibits[0] = (fd_set *)&bits[0];
+		pibits[1] = (fd_set *)&bits[1];
+		pibits[2] = (fd_set *)&bits[2];
+		pobits[0] = (fd_set *)&bits[3];
+		pobits[1] = (fd_set *)&bits[4];
+		pobits[2] = (fd_set *)&bits[5];
 	}
 
 #define	getbits(name, x) \
@@ -712,7 +713,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 retry:
 	ncoll = nselcoll;
 	p->p_flag |= P_SELECT;
-	error = selscan(p, pibits[0], pobits[0], nd, retval);
+	error = selscan(p, pibits[0], pobits[0], nd, ni, retval);
 	if (error || *retval)
 		goto done;
 	if (SCARG(uap, tv)) {
@@ -754,16 +755,17 @@ done:
 #undef putbits
 	}
 	
-	if (pibits[0] != &bits[0])
+	if (pibits[0] != (fd_set *)&bits[0])
 		free(pibits[0], M_TEMP);
 	return (error);
 }
 
 int
-selscan(p, ibits, obits, nfd, retval)
+selscan(p, ibits, obits, nfd, ni, retval)
 	struct proc *p;
 	fd_set *ibits, *obits;
 	int nfd;
+	int ni;
 	register_t *retval;
 {
 	caddr_t cibits = (caddr_t)ibits, cobits = (caddr_t)obits;
@@ -771,16 +773,8 @@ selscan(p, ibits, obits, nfd, retval)
 	register int msk, i, j, fd;
 	register fd_mask bits;
 	struct file *fp;
-	int ni, n = 0;
+	int n = 0;
 	static const int flag[3] = { POLLIN, POLLOUT, POLLPRI };
-
-	/*
-	 * if nfd > FD_SETSIZE then the fd_set's contain nfd bits (rounded
-	 * up to the next byte) otherwise the fd_set's are normal sized.
-	 */
-	ni = sizeof(fd_set);
-	if (nfd > FD_SETSIZE)
-		ni = howmany(nfd, NFDBITS) * sizeof(fd_mask);
 
 	for (msk = 0; msk < 3; msk++) {
 		fd_set *pibits = (fd_set *)&cibits[msk*ni];
