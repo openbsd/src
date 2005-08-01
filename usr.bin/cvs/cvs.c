@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.77 2005/07/30 00:10:39 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.78 2005/08/01 19:48:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -330,7 +330,7 @@ cvs_getopt(int argc, char **argv)
 static void
 cvs_read_rcfile(void)
 {
-	char rcpath[MAXPATHLEN], linebuf[128], *lp, *p;
+	char rcpath[MAXPATHLEN], linebuf[128], *envstr, *home, *lp, *p;
 	int l, linenum = 0;
 	size_t len;
 	struct cvs_cmd *cmdp;
@@ -343,7 +343,12 @@ cvs_read_rcfile(void)
 		return;
 	}
 
-	l = snprintf(rcpath, sizeof(rcpath), "%s/%s", pw->pw_dir, CVS_PATH_RC);
+	if ((envstr = getenv("HOME")) != NULL)
+		home = envstr;
+	else
+		home = pw->pw_dir;
+
+	l = snprintf(rcpath, sizeof(rcpath), "%s/%s", home, CVS_PATH_RC);
 	if (l == -1 || l >= (int)sizeof(rcpath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcpath);
