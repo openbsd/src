@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.8 2005/07/29 16:01:29 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.9 2005/08/01 17:23:14 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -123,6 +123,24 @@ typedef struct _bioc_vol {
 	char pad[4];		/* zero terminate in here */
 } bioc_vol;
 
-#define BIOC_INQ	0x01
-#define BIOC_DISK	0x02
-#define BIOC_VOL	0x04
+#define BIOCALARM _IOWR('B', 35, bioc_alarm)
+typedef struct _bioc_alarm {
+	void *cookie;
+
+	int resv1;		/* for binary compatibility */
+	int resv2;		/* for binary compatibility */
+	int status;		/* only used with get state */
+	int resv3;		/* for binary compatibility */
+
+	int opcode;
+#define BIOC_SADISABLE		0x00	/* disable alarm */
+#define BIOC_SAENABLE		0x01	/* enable alarm */
+#define BIOC_SASILENCE		0x02	/* silence alarm */
+#define BIOC_GASTATUS		0x03	/* get status */
+#define BIOC_SATEST		0x04	/* test alarm */
+} bioc_alarm;
+
+#define BIOC_INQ		0x01
+#define BIOC_DISK		0x02
+#define BIOC_VOL		0x04
+#define BIOC_ALARM		0x08
