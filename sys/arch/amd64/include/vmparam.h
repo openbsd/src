@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 2005/04/11 15:13:01 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 2005/08/01 19:44:53 jmc Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
  * the kernel stack.
  *
  * Immediately after the user structure is the page table map, and then
- * kernal address space.
+ * kernel address space.
  */
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 

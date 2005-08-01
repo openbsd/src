@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.12 2005/04/01 07:44:03 otto Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.13 2005/08/01 19:44:53 jmc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -39,7 +39,7 @@ static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.12 2005/04/01 07:44:03 otto Exp $
  * Memory based rpc for simple testing and timing.
  * Interface to create an rpc client and server in the same process.
  * This lets us similate rpc and get round trip overhead, without
- * any interference from the kernal.
+ * any interference from the kernel.
  */
 
 #include <stdio.h>

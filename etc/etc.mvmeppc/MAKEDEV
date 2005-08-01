@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.11 2003/10/11 07:20:46 tedu Exp $
+#	$OpenBSD: MAKEDEV,v 1.12 2005/08/01 19:44:53 jmc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -75,7 +75,7 @@
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
-#	*random	inkernal random data source
+#	*random	in-kernel random data source
 #
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin

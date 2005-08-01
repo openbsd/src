@@ -28,14 +28,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_raw.c,v 1.7 2005/04/01 07:44:04 otto Exp $";
+static char *rcsid = "$OpenBSD: svc_raw.c,v 1.8 2005/08/01 19:44:53 jmc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * svc_raw.c,   This a toy for simple testing and timing.
  * Interface to create an rpc client and server in the same UNIX process.
  * This lets us similate rpc and get rpc (round trip) overhead, without
- * any interference from the kernal.
+ * any interference from the kernel.
  *
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
