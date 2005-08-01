@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.19 2005/06/29 18:23:26 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.20 2005/08/01 22:22:12 deraadt Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -228,8 +228,6 @@ _mkdev(ss, ss*, {-M ss$U c major_ss_c Mult($U,16) 640 operator
 	M enss$U c major_ss_c Add(Mult($U,16),3) 640 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"-})dnl
-__devitem(ses, ses*, SES/SAF-TE SCSI devices)dnl
-_mkdev(ses, ses*, {-M ses$U c major_ses_c $U 640 operator-})dnl
 dnl XXX see ramdisk above
 __devitem(ramd, ramdisk, Ramdisk kernel devices,nothing)dnl
 _mkdev(ramd, ramdisk, {-dnl

@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.20 2004/08/20 00:18:08 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.21 2005/08/01 22:22:14 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -147,7 +147,6 @@ _DEV(fdesc, 53)
 _DEV(lkm, 28)
 _DEV(pf, 42)
 _DEV(rnd, 67)
-_DEV(ses, 124)
 _DEV(ss, 64)
 _DEV(systrace, 49)
 _DEV(tun, 57)
@@ -216,7 +215,6 @@ ht*|tm*|mt*|ts*|ut*)
 dnl
 dnl *** vax specific targets
 dnl
-dnl target(all, ses, 0)dnl
 dnl target(all, ut, 0)dnl
 dnl target(all, ch, 0)dnl
 target(all, ss, 0)dnl

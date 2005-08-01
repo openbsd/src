@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.32 2005/06/29 18:23:27 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.33 2005/08/01 22:22:13 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -89,7 +89,6 @@ _DEV(pf, 73)
 _DEV(radio, 76)
 _DEV(rmidi, 52)
 _DEV(rnd, 45)
-_DEV(ses, 24)
 _DEV(speak, 27)
 _DEV(ss, 19)
 _DEV(systrace, 78)
@@ -117,7 +116,6 @@ ttyc*)
 dnl
 dnl i386 specific targets
 dnl
-target(all, ses, 0)dnl
 target(all, ch, 0)dnl
 target(all, ss, 0, 1)dnl
 target(all, xfs, 0)dnl

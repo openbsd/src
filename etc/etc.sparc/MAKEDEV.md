@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.28 2005/07/17 12:23:14 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.29 2005/08/01 22:22:13 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -99,7 +99,6 @@ _DEV(lkm, 112)
 _DEV(oppr)
 _DEV(pf, 59)
 _DEV(rnd, 119)
-_DEV(ses, 124)
 _DEV(ss, 121)
 _DEV(systrace, 50)
 _DEV(tun, 111)
@@ -122,7 +121,6 @@ dnl *** some sparc-specific targets
 dnl
 twrget(all, s64_tzs, tty, a, b, c, d)dnl
 twrget(all, s64_czs, cua, a, b, c, d)dnl
-target(all, ses, 0)dnl
 target(all, ch, 0)dnl
 target(all, ss, 0, 1)dnl
 target(all, xfs, 0)dnl

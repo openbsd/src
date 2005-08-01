@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.10 2005/05/13 22:53:58 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.11 2005/08/01 22:22:13 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -93,7 +93,6 @@ _std(1, 2, 8, 3, 6)
 dnl
 dnl *** cats specific targets
 dnl
-target(all, ses, 0)dnl
 target(all, ch, 0)dnl
 target(all, ss, 0, 1)dnl
 target(all, xfs, 0)dnl

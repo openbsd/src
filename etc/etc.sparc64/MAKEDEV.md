@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.37 2005/03/01 18:22:34 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.38 2005/08/01 22:22:13 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -104,7 +104,6 @@ _DEV(mag, 71)
 _DEV(pci, 52)
 _DEV(pf, 73)
 _DEV(rnd, 119)
-_DEV(ses, 4)
 _DEV(ss, 59)
 _DEV(systrace, 50)
 _DEV(tun, 111)
@@ -129,7 +128,6 @@ twrget(wscons, wscons, ttyD, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 twrget(wscons, wscons, ttyE, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 twrget(wscons, wscons, ttyF, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
-target(all, ses, 0)dnl
 target(all, ch, 0)dnl
 target(all, ss, 0, 1)dnl
 target(all, xfs, 0)dnl
