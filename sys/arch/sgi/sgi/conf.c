@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2005/01/02 19:50:30 kettenis Exp $ */
+/*	$OpenBSD: conf.c,v 1.9 2005/08/01 15:43:51 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -245,7 +245,7 @@ int chrtoblktbl[] =  {
 	/* 5 */		NODEV,
 	/* 6 */		NODEV,
 	/* 7 */		NODEV,
-	/* 8 */		NODEV,
+	/* 8 */		3,
 	/* 9 */		0,
 	/* 10 */	NODEV,
 	/* 11 */	2,
@@ -260,6 +260,7 @@ int chrtoblktbl[] =  {
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	8,
+	/* 23 */	6
 };
 
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(int);
