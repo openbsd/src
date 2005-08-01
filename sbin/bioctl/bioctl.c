@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.16 2005/07/29 16:01:18 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.17 2005/08/01 16:39:22 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -66,14 +66,20 @@ main(int argc, char *argv[])
 	char *bioc_dev = NULL;
 	char *sd_dev = NULL;
 	char *realname = NULL;
+	char *al_arg = NULL; /* argument to alarm */
 
 	if (argc < 2)
 		usage();
 
 	atexit(cleanup);
 
-	while ((ch = getopt(argc, argv, "Dd:f:hi")) != -1) {
+	while ((ch = getopt(argc, argv, "a:Dd:f:hi")) != -1) {
 		switch (ch) {
+		case 'a': /* alarm */
+			func |= BIOC_ALARM;
+			al_arg = optarg;
+			break;
+
 		case 'D': /* debug */
 			debug = 1;
 			break;
@@ -123,6 +129,8 @@ main(int argc, char *argv[])
 
 	if (func & BIOC_INQ) {
 		bio_inq();
+	} else if (func == BIOC_ALARM) {
+		bio_alarm(al_arg);
 	}
 
 	return (0);
@@ -133,7 +141,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-Dhi] [-d device | -f disk]\n", __progname);
+	fprintf(stderr, "usage: %s [-aDhi] [-d device | -f disk]\n", __progname);
 
 	exit(1);
 }
@@ -255,5 +263,66 @@ bio_inq(void)
 			printf("\t\tvendor   : %s\n", bd.vendor);
 		}
 		printf("\n");
+	}
+}
+
+void
+bio_alarm(char *arg)
+{
+	int rv;
+	bioc_alarm ba;
+
+	if (debug)
+		printf("alarm in: %s, ", arg);
+
+	ba.cookie = bl.cookie;
+
+	switch (arg[0]) {
+	case 'q': /* silence alarm */
+		/* FALLTHROUGH */
+	case 's':
+		if (debug)
+			printf("silence\n");
+		ba.opcode = BIOC_SASILENCE;
+		break;
+
+	case 'e': /* enable alarm */
+		if (debug)
+			printf("enable\n");
+		ba.opcode = BIOC_SAENABLE;
+		break;
+
+	case 'd': /* disable alarm */
+		if (debug)
+			printf("disable\n");
+		ba.opcode = BIOC_SADISABLE;
+		break;
+
+	case 't': /* test alarm */
+		if (debug)
+			printf("test\n");
+		ba.opcode = BIOC_SATEST;
+		break;
+
+	case 'g': /* get alarm state */
+		if (debug)
+			printf("get state\n");
+		ba.opcode = BIOC_GASTATUS;
+		break;
+
+	default:
+		warnx("invalid alarm function: %s", arg);
+		return;
+	}
+
+	rv = ioctl(devh, BIOCALARM, &ba);
+	if (rv == -1) {
+		warnx("bioc_ioctl() call failed");
+		return;
+	}
+
+	if (arg[0] == 'g') {
+		printf("alarm is currently %s\n",
+		    ba.status ? "enabled" : "disabled");
 	}
 }
