@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.49 2005/07/12 17:40:51 mickey Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.50 2005/08/01 11:14:47 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -329,7 +329,7 @@ pfsync_input(struct mbuf *m, ...)
 		if (cp->ifname[0] == '\0') {
 			for (st = RB_MIN(pf_state_tree_id, &tree_id);
 			    st; st = nexts) {
-                		nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
+				nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
 				if (st->creatorid == creatorid) {
 					st->timeout = PFTM_PURGE;
 					pf_purge_expired_state(st);
@@ -455,7 +455,7 @@ pfsync_input(struct mbuf *m, ...)
 				 */
 				if (st->src.state > sp->src.state)
 					sfail = 5;
-				else if ( st->dst.state > sp->dst.state)
+				else if (st->dst.state > sp->dst.state)
 					sfail = 6;
 			}
 			if (sfail) {
@@ -982,7 +982,7 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 	h->action = action;
 
 	*sp = (void *)((char *)h + PFSYNC_HDRLEN);
-	if (action == PFSYNC_ACT_TDB_UPD) 
+	if (action == PFSYNC_ACT_TDB_UPD)
 		timeout_add(&sc->sc_tdb_tmo, hz);
 	else
 		timeout_add(&sc->sc_tmo, hz);
@@ -1434,7 +1434,7 @@ pfsync_sendout_mbuf(struct pfsync_softc *sc, struct mbuf *m)
 	struct sockaddr sa;
 	struct ip *ip;
 	
-	if (sc->sc_sync_ifp || 
+	if (sc->sc_sync_ifp ||
 	    sc->sc_sync_peer.s_addr != INADDR_PFSYNC_GROUP) {
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 		if (m == NULL) {
@@ -1485,13 +1485,13 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 		goto bad;
 
 	if (pt->dst.sa.sa_family == AF_INET)
-		pt->dst.sin.sin_addr.s_addr = 
+		pt->dst.sin.sin_addr.s_addr =
 		    htonl(pt->dst.sin.sin_addr.s_addr);
 
 	s = spltdb();
 	tdb = gettdb(pt->spi, &pt->dst, pt->sproto);
 	if (tdb) {
-		/* 
+		/*
 		 * When a failover happens, the master's rpl is probably above
 		 * what we see here (we may be up to a second late), so
 		 * increase it a bit to manage most such situations.
@@ -1512,7 +1512,7 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 		pt->cur_bytes = betoh64(pt->cur_bytes);
 
 		/* Neither replay nor byte counter should ever decrease. */
-		if (pt->rpl < tdb->tdb_rpl || 
+		if (pt->rpl < tdb->tdb_rpl ||
 		    pt->cur_bytes < tdb->tdb_cur_bytes) {
 			splx(s);
 			goto bad;
@@ -1566,7 +1566,7 @@ pfsync_update_tdb(struct tdb *tdb)
 		h = mtod(sc->sc_mbuf_tdb, struct pfsync_header *);
 		if (h->action != PFSYNC_ACT_TDB_UPD) {
 			/*
-			 * XXX will never happen as long as there's 
+			 * XXX will never happen as long as there's
 			 * only one "TDB action".
 			 */
 			pfsync_tdb_sendout(sc);
