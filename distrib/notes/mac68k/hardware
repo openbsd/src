@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.24 2005/05/26 20:36:40 martin Exp $
+dnl	$OpenBSD: hardware,v 1.25 2005/08/01 11:29:37 martin Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 8MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 120MB partition by installing just the minimum sets.
@@ -36,7 +36,7 @@ Supported devices:
 		- Autochangers (ch).
 		- Tape drives (st). 
 	* Internal sound (asc).
-	* NuBus internal expansion bus (nubus) (except on the 840AV).
+	* NuBus internal expansion bus (nubus).
 	* Most NuBus video cards.
 	* Both internal serial ports (zsc).
 	* ADB keyboards and mice (adb) (except on the IIfx, Quadra 900 and 950).
