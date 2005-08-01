@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.40 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.41 2005/08/01 17:04:47 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -186,6 +186,7 @@ struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
 };
+
 int
 cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
