@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.1 2005/07/28 01:31:22 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.2 2005/08/01 22:30:47 kettenis Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -639,7 +639,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(", %s, rev %d : %s, address %s\n", sc->sc_variant->pcv_desc,
+	printf(", %s, rev %d: %s, address %s\n", sc->sc_variant->pcv_desc,
 	    CHIPID_VER(chipid), intrstr, ether_sprintf(enaddr));
 
 	/*
