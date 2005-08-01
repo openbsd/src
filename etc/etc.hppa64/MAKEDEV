@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa64/MAKEDEV.md,v 1.2 2005/06/15 06:50:48 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.18 2005/06/02 20:09:38 tholo Exp 
+#	OpenBSD: etc.hppa64/MAKEDEV.md,v 1.3 2005/08/01 22:22:13 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.20 2005/08/01 22:22:12 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -65,7 +65,6 @@
 #	pdc	PDC device
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
-#	ses*	SES/SAF-TE SCSI devices
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
@@ -245,10 +244,6 @@ ss*)
 	M enss$U c 14 $(($(($U*16))+3)) 640 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
-	;;
-
-ses*)
-	M ses$U c 37 $U 640 operator
 	;;
 
 *random)
@@ -436,9 +431,9 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
 	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0
-	R ss1 ch0 ses0 ptm local wscons pci audio0 uk0 random lpa0
-	R lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto
-	R pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R ss1 ch0 ptm local wscons pci audio0 uk0 random lpa0 lpa1
+	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto pf
+	R systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
