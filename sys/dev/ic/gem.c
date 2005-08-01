@@ -1,8 +1,8 @@
-/*	$OpenBSD: gem.c,v 1.42 2005/07/02 23:10:16 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.43 2005/08/01 05:45:03 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
- * 
+ *
  * Copyright (C) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,12 +35,11 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/timeout.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -60,9 +59,9 @@
 #include <netinet/if_ether.h>
 #endif
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -228,11 +227,12 @@ gem_config(sc)
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
+
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* Initialize ifmedia structures and MII info */
 	mii->mii_ifp = ifp;
-	mii->mii_readreg = gem_mii_readreg; 
+	mii->mii_readreg = gem_mii_readreg;
 	mii->mii_writereg = gem_mii_writereg;
 	mii->mii_statchg = gem_mii_statchg;
 
@@ -408,7 +408,7 @@ gem_reset(sc)
 	/* Do a full reset */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX|GEM_RESET_TX);
 	for (i=TRIES; i--; delay(100))
-		if ((bus_space_read_4(t, h, GEM_RESET) & 
+		if ((bus_space_read_4(t, h, GEM_RESET) &
 			(GEM_RESET_RX|GEM_RESET_TX)) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RESET) &
@@ -441,7 +441,7 @@ gem_rxdrain(struct gem_softc *sc)
 	}
 }
 
-/* 
+/*
  * Reset the whole thing.
  */
 void
@@ -587,7 +587,7 @@ gem_disable_rx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	for (i = TRIES; i--; delay(100)) 
+	for (i = TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_MAC_RX_CONFIG) &
 			GEM_MAC_RX_ENABLE) == 0)
 			return (0);
@@ -611,7 +611,7 @@ gem_disable_tx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_TX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	for (i = TRIES; i--; delay(100)) 
+	for (i = TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_MAC_TX_CONFIG) &
 			GEM_MAC_TX_ENABLE) == 0)
 			return (0);
@@ -766,7 +766,7 @@ gem_init(struct ifnet *ifp)
 
 	/* Enable DMA */
 	v = gem_ringsize(GEM_NTXDESC /*XXX*/);
-	bus_space_write_4(t, h, GEM_TX_CONFIG, 
+	bus_space_write_4(t, h, GEM_TX_CONFIG,
 		v|GEM_TX_CONFIG_TXDMA_EN|
 		((0x400<<10)&GEM_TX_CONFIG_TXFIFO_TH));
 	bus_space_write_4(t, h, GEM_TX_KICK, 0);
@@ -1219,7 +1219,7 @@ gem_mii_writereg(self, phy, reg, val)
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
-		printf("gem_mii_writereg: phy %d reg %d val %x\n", 
+		printf("gem_mii_writereg: phy %d reg %d val %x\n",
 			phy, reg, val);
 #endif
 
@@ -1302,7 +1302,7 @@ gem_mii_statchg(dev)
 		default:
 			v &= ~GEM_MAC_XIF_GMII_MODE;
 		}
-	} else 
+	} else
 		/* Internal MII needs buf enable */
 		v |= GEM_MAC_XIF_MII_BUF_ENA;
 	bus_space_write_4(t, mac, GEM_MAC_XIF_CONFIG, v);

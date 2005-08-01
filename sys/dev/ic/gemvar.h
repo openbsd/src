@@ -1,8 +1,8 @@
-/*	$OpenBSD: gemvar.h,v 1.9 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.10 2005/08/01 05:45:03 brad Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
- * 
+ *
  * Copyright (C) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,13 +37,13 @@
 #include <sys/timeout.h>
 
 /*
- * Misc. definitions for the Sun ``Gem'' Ethernet controller family driver.  
+ * Misc. definitions for the Sun ``Gem'' Ethernet controller family driver.
  */
 
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
  * enough descriptors for 64 pending transmissions and 16 segments
- * per packet.  
+ * per packet.
  */
 #define	GEM_NTXSEGS		16
 
