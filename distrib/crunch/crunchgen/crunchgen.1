@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.1,v 1.15 2004/08/24 09:11:39 jmc Exp $
+.\"	$OpenBSD: crunchgen.1,v 1.16 2005/08/02 11:25:05 espie Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -142,6 +142,9 @@ These dirs are searched using the BSD
 convention.
 Multiple srcdirs lines can be specified.
 The directories are searched in the order they are given.
+.It libdirs Ar dirname
+A list of source trees in which the source directories for supplementary
+libraries can be found.
 .It progs Ar progname ...
 A list of programs that make up the crunched binary.
 Multiple progs lines can be specified.

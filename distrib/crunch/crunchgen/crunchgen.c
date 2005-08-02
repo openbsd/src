@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.21 2004/08/24 09:11:39 jmc Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.22 2005/08/02 11:25:05 espie Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -84,6 +84,7 @@ typedef struct prog {
 
 strlst_t       *srcdirs = NULL;
 strlst_t       *libs = NULL;
+strlst_t       *libdirs = NULL;
 prog_t         *progs = NULL;
 
 char            line[MAXLINELEN];
@@ -92,7 +93,6 @@ char            confname[MAXPATHLEN], infilename[MAXPATHLEN];
 char            outmkname[MAXPATHLEN], outcfname[MAXPATHLEN];
 char            cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
 char            topdir[MAXPATHLEN], execfname[MAXPATHLEN];
-char            libdir[MAXPATHLEN] = "/usr/lib";
 int             linenum = -1;
 int             goterror = 0;
 
@@ -158,8 +158,9 @@ main(int argc, char *argv[])
 			elf_names = 1;
 			break;
 		case 'L':
-			if (strlcpy(libdir, optarg, sizeof(libdir)) >= sizeof(libdir))
+			if (strlen(optarg) >= MAXPATHLEN)
 				usage();
+			add_string(&libdirs, optarg);
 			break;
 		default:
 			usage();
@@ -172,6 +173,8 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
+	if (libdirs == NULL)
+		add_string(&libdirs, "/usr/lib");
 	/*
          * generate filenames
          */
@@ -218,6 +221,7 @@ void            add_srcdirs(int argc, char **argv);
 void            add_progs(int argc, char **argv);
 void            add_link(int argc, char **argv);
 void            add_libs(int argc, char **argv);
+void            add_libdirs(int argc, char **argv);
 void            add_special(int argc, char **argv);
 
 prog_t         *find_prog(char *str);
@@ -271,6 +275,8 @@ parse_one_file(char *filename)
 			f = add_libs;
 		else if (!strcmp(fieldv[0], "special"))
 			f = add_special;
+		else if (!strcmp(fieldv[0], "libdirs"))
+			f = add_libdirs;
 		else {
 			fprintf(stderr, "%s:%d: skipping unknown command `%s'.\n",
 			    curfilename, linenum, fieldv[0]);
@@ -357,6 +363,57 @@ add_srcdirs(int argc, char **argv)
 		}
 	}
 }
+
+void 
+add_libdirs(int argc, char **argv)
+{
+	int             i;
+	char            tmppath[MAXPATHLEN];
+	char            tmppath2[MAXPATHLEN];
+	int             overflow;
+
+	for (i = 1; i < argc; i++) {
+		overflow = 0;
+		if (argv[i][0] == '/' || topdir[0] == '\0') {
+			if (strlcpy(tmppath, argv[i], sizeof(tmppath)) >=
+			    sizeof(tmppath))
+				overflow = 1;
+		} else {
+			if (strlcpy(tmppath, topdir, sizeof(tmppath)) >=
+			    sizeof(tmppath) ||
+			    strlcat(tmppath, "/", sizeof(tmppath)) >=
+			    sizeof(tmppath) ||
+			    strlcat(tmppath, argv[i], sizeof(tmppath)) >=
+			    sizeof(tmppath))
+				overflow = 1;
+		}
+		if (overflow) {
+			goterror = 1;
+			fprintf(stderr, "%s:%d: `%.40s...' is too long, skipping it.\n",
+			    curfilename, linenum, argv[i]);
+			continue;
+		}
+		if (is_dir(tmppath)) {
+			snprintf(tmppath2, sizeof(tmppath2), "%s/obj", tmppath);
+			if (is_dir(tmppath2))
+				add_string(&libdirs, tmppath2);
+			else {
+				snprintf(tmppath2, sizeof(tmppath2), 
+				    "%s/obj.%s", tmppath, MACHINE);
+				if (is_dir(tmppath2))
+					add_string(&libdirs, tmppath2);
+				else
+					add_string(&libdirs, tmppath);
+			}
+		}
+		else {
+			fprintf(stderr, "%s:%d: `%s' is not a directory, skipping it.\n",
+			    curfilename, linenum, tmppath);
+			goterror = 1;
+		}
+	}
+}
+
 
 void 
 add_progs(int argc, char **argv)
@@ -811,10 +868,14 @@ void
 top_makefile_rules(FILE * outmk)
 {
 	prog_t         *p;
+	strlst_t       *l;
+
 
 	fprintf(outmk, "STRIP=strip\n");
+	fprintf(outmk, "LINK=$(LD) -dc -r\n");
 	fprintf(outmk, "LIBS=");
-	fprintf(outmk, "-L%s ", libdir);
+	for (l = libdirs; l != NULL; l = l->next)
+		fprintf(outmk, " -L%s", l->str);
 	output_strlst(outmk, libs);
 
 	fprintf(outmk, "CRUNCHED_OBJS=");
@@ -829,13 +890,14 @@ top_makefile_rules(FILE * outmk)
 
 	fprintf(outmk, "%s: %s.o $(CRUNCHED_OBJS)\n",
 	    execfname, execfname);
-	fprintf(outmk, "\t$(CC) -static -o %s %s.o $(CRUNCHED_OBJS) $(LIBS)\n",
-	    execfname, execfname);
+	fprintf(outmk, "\t$(CC) -static -o $@ %s.o $(CRUNCHED_OBJS) $(LIBS)\n",
+	    execfname);
 	fprintf(outmk, "\t$(STRIP) %s\n", execfname);
 	fprintf(outmk, "all: objs exe\nobjs: $(SUBMAKE_TARGETS)\n");
 	fprintf(outmk, "exe: %s\n", execfname);
 	fprintf(outmk, "clean:\n\trm -f %s *.lo *.o *_stub.c\n",
 	    execfname);
+	fprintf(outmk, ".PHONY: all objs exe clean $(SUBMAKE_TARGETS)\n\n");
 }
 
 void 
@@ -848,7 +910,7 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 		fprintf(outmk, "%s_OBJS=", p->ident);
 		output_strlst(outmk, p->objs);
 		fprintf(outmk, "%s_make:\n", p->ident);
-		fprintf(outmk, "\t(cd $(%s_SRCDIR); make -f %s $(%s_OBJS))\n\n",
+		fprintf(outmk, "\tcd $(%s_SRCDIR) && $(MAKE) -f %s $(%s_OBJS)\n\n",
 		    p->ident, p->mf_name, p->ident);
 	} else
 		fprintf(outmk, "%s_make:\n\t@echo \"** cannot make objs for %s\"\n\n",
@@ -864,10 +926,10 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 	    p->ident, p->name);
 	fprintf(outmk, "%s.lo: %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->name, p->ident);
-	fprintf(outmk, "\t${LD} -dc -r -o %s.lo %s_stub.o $(%s_OBJPATHS)\n",
-	    p->name, p->name, p->ident);
-	fprintf(outmk, "\tcrunchide -k %s_crunched_%s_stub %s.lo\n",
-	    elf_names ? "" : "_", p->ident, p->name);
+	fprintf(outmk, "\t$(LINK) -o $@ %s_stub.o $(%s_OBJPATHS)\n",
+	    p->name, p->ident);
+	fprintf(outmk, "\tcrunchide -k %s_crunched_%s_stub $@\n",
+	    elf_names ? "" : "_", p->ident);
 }
 
 void 
