@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.93 2005/07/31 03:52:19 pascoe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.94 2005/08/02 10:51:47 djm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -898,7 +898,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		for (ilen = 0; ilen < padding - 2; ilen++)
 			pad[ilen] = ilen + 1;
 	else
-		get_random_bytes((void *) pad, padding - 2);
+		arc4random_bytes((void *) pad, padding - 2);
 
 	/* Fix padding length and Next Protocol in padding itself. */
 	pad[padding - 2] = padding - 2;
