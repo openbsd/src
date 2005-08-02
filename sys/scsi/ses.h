@@ -1,4 +1,4 @@
-/* $OpenBSD: ses.h,v 1.3 2005/08/01 23:14:31 dlg Exp $ */
+/* $OpenBSD: ses.h,v 1.4 2005/08/02 03:35:14 dlg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
@@ -148,6 +148,25 @@ struct ses_status {
 #define SES_S_DEV_RDYTOINS(d)	((d)->f2 & (1<<3)) /* ready to insert */
 #define SES_S_DEV_DONOTREM(d)	((d)->f2 & (1<<6)) /* no not remove */
 /* XXX FINISH THIS */
+
+/* cooling element */
+#define SES_S_COOL_IDENT(d)	((d)->f1 & (1<<6)) /* identify */
+#define SES_S_COOL_SPEED_MASK	0x03
+#define SES_S_COOL_SPEED(d)	((d)->f2 + \
+    ((u_int16_t)((d)->f2 & SES_S_COOL_SPEED_MASK) << 8)) 
+#define SES_S_COOL_FACTOR	10
+#define SES_S_COOL_CODE(d)	((d)->f3 & 0x7) /* actual speed code */
+#define SES_S_COOL_C_STOPPED	0x0 /* stopped */
+#define SES_S_COOL_C_LOW1	0x1 /* lowest speed */
+#define SES_S_COOL_C_LOW2	0x2 /* second lowest speed */
+#define SES_S_COOL_C_LOW3	0x3 /* third lowest speed */
+#define SES_S_COOL_C_INTER	0x4 /* intermediate speed */
+#define SES_S_COOL_C_HI3	0x5 /* third highest speed */
+#define SES_S_COOL_C_HI2	0x6 /* second highest speed */
+#define SES_S_COOL_C_HI1	0x7 /* highest speed */
+#define SES_S_COOL_OFF		((d)->f3 & (1<<4)) /* not cooling */
+#define SES_S_COOL_RQSTON	((d)->f3 & (1<<5)) /* manually on */
+#define SES_S_COOL_FAIL		((d)->f3 & (1<<6)) /* fail indic is on */
 
 /* temperature sensor */
 #define SES_S_TEMP_IDENT(d)	((d)->f1 & (1<<7)) /* identify */

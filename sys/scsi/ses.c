@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.9 2005/08/01 23:14:31 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.10 2005/08/02 03:35:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -90,7 +90,8 @@ int	ses_read_status(struct ses_softc *, int refresh);
 int	ses_make_sensors(struct ses_softc *, struct ses_type_desc *, int);
 int	ses_refresh_sensors(struct ses_softc *);
 
-int64_t	temp2uK(struct ses_status *);
+int64_t	ses_cool2rpm(struct ses_status *);
+int64_t	ses_temp2uK(struct ses_status *);
 
 #ifdef SES_DEBUG
 void	ses_dump_enc_desc(struct ses_enc_desc *);
@@ -343,10 +344,23 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 				continue;
 
 			switch (types[i].type) {
+			case SES_T_COOLING:
+				/*
+				 * if the fan is on but not showing an rpm
+				 * then skip it
+				 */
+				if ((SES_S_COOL_CODE(status) !=
+				    SES_S_COOL_C_STOPPED) &&
+				    SES_S_COOL_SPEED(status) == 0)
+					continue;
+
+				stype = SENSOR_FANRPM;
+				fmt = "fan%d";
+				break;
+
 			case SES_T_TEMP:
 				stype = SENSOR_TEMP;
 				fmt = "temp%d";
-
 				break;
 
 			default:
@@ -404,8 +418,12 @@ ses_refresh_sensors(struct ses_softc *sc)
 		    sensor->se_stat->f3);
 
 		switch (sensor->se_type) {
+		case SES_T_COOLING:
+			sensor->se_sensor.value = ses_cool2rpm(sensor->se_stat);
+			break;
+
 		case SES_T_TEMP:
-			sensor->se_sensor.value = temp2uK(sensor->se_stat);
+			sensor->se_sensor.value = ses_temp2uK(sensor->se_stat);
 			break;
 
 		default:
@@ -418,7 +436,18 @@ ses_refresh_sensors(struct ses_softc *sc)
 }
 
 int64_t
-temp2uK(struct ses_status *status)
+ses_cool2rpm(struct ses_status *status)
+{
+	int64_t				rpm;
+
+	rpm = (int64_t)SES_S_COOL_SPEED(status);
+	rpm *= SES_S_COOL_FACTOR;
+
+	return (rpm);
+}
+
+int64_t
+ses_temp2uK(struct ses_status *status)
 {
 	int64_t				temp;
 
