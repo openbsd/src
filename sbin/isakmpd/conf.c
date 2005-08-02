@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.83 2005/05/26 02:38:35 cloder Exp $	 */
+/* $OpenBSD: conf.c,v 1.84 2005/08/02 09:08:40 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -580,10 +580,16 @@ conf_reinit(void)
 	size_t	 sz;
 	char	*new_conf_addr = 0;
 
-	if ((fd = monitor_open(conf_path, O_RDONLY, 0)) != -1) {
-		if (check_file_secrecy_fd(fd, conf_path, &sz))
-			goto fail;
+	fd = monitor_open(conf_path, O_RDONLY, 0);
+	if (fd == -1 || check_file_secrecy_fd(fd, conf_path, &sz) == -1) {
+		if (fd == -1 && errno != ENOENT)
+			log_error("conf_reinit: open(\"%s\", O_RDONLY, 0) "
+			    "failed", conf_path);
+		if (fd != -1)
+			close(fd);
 
+		trans = conf_begin();
+	} else {
 		new_conf_addr = malloc(sz);
 		if (!new_conf_addr) {
 			log_error("conf_reinit: malloc (%lu) failed",
@@ -602,12 +608,6 @@ conf_reinit(void)
 
 		/* XXX Should we not care about errors and rollback?  */
 		conf_parse(trans, new_conf_addr, sz);
-	} else {
-		if (errno != ENOENT)
-			log_error("conf_reinit: open(\"%s\", O_RDONLY, 0) "
-			    "failed", conf_path);
-
-		trans = conf_begin();
 	}
 
 	/* Load default configuration values.  */
