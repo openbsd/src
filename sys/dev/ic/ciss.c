@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.2 2005/08/01 23:55:22 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.3 2005/08/02 23:56:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -167,6 +167,8 @@ ciss_attach(struct ciss_softc *sc)
 	bus_space_barrier(sc->iot, sc->ioh, CISS_IDB, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 	for (i = 1000000; i--; DELAY(1)) {
+		/* XXX maybe IDB is really 64bit? - hp dl380 needs this */
+		(void)bus_space_read_4(sc->iot, sc->ioh, CISS_IDB + 4);
 		if (!(bus_space_read_4(sc->iot, sc->ioh, CISS_IDB) & CISS_IDB_CFG))
 			break;
 		bus_space_barrier(sc->iot, sc->ioh, CISS_IDB, 4,
@@ -189,7 +191,7 @@ ciss_attach(struct ciss_softc *sc)
 	/* i'm ready for you and i hope you're ready for me */
 	for (i = 30000; i--; DELAY(1000)) {
 		if (bus_space_read_4(sc->iot, sc->cfg_ioh, sc->cfgoff +
-		    offsetof(struct ciss_config, amethod)) & CISS_METH_SIMPL)
+		    offsetof(struct ciss_config, amethod)) & CISS_METH_READY)
 			break;
 		bus_space_barrier(sc->iot, sc->cfg_ioh, sc->cfgoff +
 		    offsetof(struct ciss_config, amethod), 4,
@@ -619,7 +621,6 @@ ciss_inq(struct ciss_softc *sc, struct ciss_inquiry *inq)
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
 
-	inq = sc->scratch;
 	ccb = ciss_get_ccb(sc);
 	ccb->ccb_len = sizeof(*inq);
 	ccb->ccb_data = inq;
