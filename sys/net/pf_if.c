@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.40 2005/07/20 17:06:30 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.41 2005/08/02 12:40:42 pascoe Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -434,7 +434,6 @@ void
 pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 {
 	int			 e, size2 = 0;
-	struct pfr_table	 t;
 	struct ifg_member	*ifgm;
 
 	pfi_buffer_cnt = 0;
@@ -445,10 +444,8 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 		TAILQ_FOREACH(ifgm, &kif->pfik_group->ifg_members, ifgm_next)
 			pfi_instance_add(ifgm->ifgm_ifp, net, flags);
 
-	t = kt->pfrkt_t;
-	t.pfrt_flags = 0;
-	if ((e = pfr_set_addrs(&t, pfi_buffer, pfi_buffer_cnt, &size2,
-	    NULL, NULL, NULL, 0)))
+	if ((e = pfr_set_addrs(&kt->pfrkt_t, pfi_buffer, pfi_buffer_cnt, &size2,
+	    NULL, NULL, NULL, 0, PFR_TFLAG_ALLMASK)))
 		printf("pfi_table_update: cannot set %d new addresses "
 		    "into table %s: %d\n", pfi_buffer_cnt, kt->pfrkt_name, e);
 }

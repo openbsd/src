@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.66 2005/06/06 09:01:55 dhartmei Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.67 2005/08/02 12:40:42 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -404,7 +404,8 @@ _bad:
 
 int
 pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
-    int *size2, int *nadd, int *ndel, int *nchange, int flags)
+    int *size2, int *nadd, int *ndel, int *nchange, int flags,
+    u_int32_t ignore_pfrt_flags)
 {
 	struct pfr_ktable	*kt, *tmpkt;
 	struct pfr_kentryworkq	 addq, delq, changeq;
@@ -414,7 +415,8 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
-	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
+	if (pfr_validate_table(tbl, ignore_pfrt_flags, flags &
+	    PFR_FLAG_USERIOCTL))
 		return (EINVAL);
 	kt = pfr_lookup_table(tbl);
 	if (kt == NULL || !(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))

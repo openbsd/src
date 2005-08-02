@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.226 2005/07/31 05:20:57 pascoe Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.227 2005/08/02 12:40:42 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1501,7 +1501,7 @@ int	pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 int	pfr_del_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
 int	pfr_set_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
-	    int *, int *, int *, int);
+	    int *, int *, int *, int, u_int32_t);
 int	pfr_get_addrs(struct pfr_table *, struct pfr_addr *, int *, int);
 int	pfr_get_astats(struct pfr_table *, struct pfr_astats *, int *, int);
 int	pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *,
