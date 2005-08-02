@@ -2006,6 +2006,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_tape.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/sdvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/scsi/ses.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/ss_mustek.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/search.ph

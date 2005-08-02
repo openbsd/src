@@ -1954,6 +1954,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/scsi_tape.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/sdvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/ses.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/ss_mustek.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/search.ph
