@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.59 2005/07/23 03:45:04 brad Exp $
+dnl	$OpenBSD: hardware,v 1.60 2005/08/02 00:30:04 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -232,15 +232,22 @@ Supported devices {:-include-:}:
 			SMC 2104USB
 		Realtek RTL8150L based USB adapters (url), including:
 			Abocom RTL8151
+			BAFO BF-310
+			Billionton USBKR-100
+			Compex UE202-B
 			GreenHouse GH-USB100B
 			GreenHouse GH-USB100B with HomePNA
+			Hawking Technology HUF11
 			Linksys USB100M
 			Longshine LCS-8138TX
 			Melco Inc. LUA-KTX
 			Micronet SP128AR
+			NetComm NP1010
+			Repotec RP-USB100-A
 			SMC 2208USB/ETH
 			TrendNet TU-ET100C
 			Zt USB10/100
+			Z-TEK ZK-R02
 		RealTek 8129/8139-based adapters (rl), including:
 			Accton MPX 5030/5038
 			Allied Telesyn AT2550

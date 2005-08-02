@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.54 2005/07/28 20:19:42 grange Exp $
+dnl	$OpenBSD: hardware,v 1.55 2005/08/02 00:30:04 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -375,15 +375,22 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    SMC EZ Card 10/100 PCI 1211-TX
 		RealTek RTL8150L based USB adapters, including:
 		    Abocom RTL8151
+		    BAFO BF-310
+		    Billionton USBKR-100
+		    Compex UE202-B
 		    GreenHouse GH-USB100B
 		    GreenHouse GH-USB100B with HomePNA
+		    Hawking Technology HUF11
 		    Linksys USB100M
 		    Longshine LCS-8138TX
 		    Melco Inc. LUA-KTX
 		    Micronet SP128AR
+		    NetComm NP1010
+		    Repotec RP-USB100-A
 		    SMC 2208USB/ETH
 		    TrendNet TU-ET100C
 		    Zt USB10/100
+		    Z-TEK ZK-R02
 		SiS 900 and SiS 7016-based PCI adapters, including:
 		    Mototech ME313
 		    NetSurf NS-KFE30D

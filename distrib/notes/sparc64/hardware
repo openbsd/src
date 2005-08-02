@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.101 2005/07/23 03:45:04 brad Exp $
+dnl	$OpenBSD: hardware,v 1.102 2005/08/02 00:30:05 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Sun Blade 100/150
 	Sun Fire V100
@@ -223,15 +223,22 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    SMC 2102/2104USB
 		RealTek RTL8150L based USB adapters, including:
 		    Abocom RTL8151
+		    BAFO BF-310
+		    Billionton USBKR-100
+		    Compex UE202-B
 		    GreenHouse GH-USB100B
 		    GreenHouse GH-USB100B with HomePNA
+		    Hawking Technology HUF11
 		    Linksys USB100M
 		    Longshine LCS-8138TX
 		    Melco Inc. LUA-KTX
 		    Micronet SP128AR
+		    NetComm NP1010
+		    Repotec RP-USB100-A
 		    SMC 2208USB/ETH
 		    TrendNet TU-ET100C
 		    Zt USB10/100
+		    Z-TEK ZK-R02
 
 	Wireless Ethernet Adapters
 		Atmel AT76C50x based USB IEEE 802.11b adapters

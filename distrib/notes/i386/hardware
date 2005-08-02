@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.210 2005/07/28 20:28:50 grange Exp $
+dnl	$OpenBSD: hardware,v 1.211 2005/08/02 00:30:04 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -465,16 +465,23 @@ Supported hardware {:-include-:}:
 		    SMC EZ Card 10/100 PCI 1211-TX
 		RealTek RTL8150L based USB adapters, including: [A] [B] [C]
 		    Abocom RTL8151
+		    BAFO BF-310
+		    Billionton USBKR-100
+		    Compex UE202-B
 		    GreenHouse GH-USB100B
 		    GreenHouse GH-USB100B with HomePNA
+		    Hawking Technology HUF11
 		    Linksys USB100M
 		    Longshine LCS-8138TX
 		    Melco Inc. LUA-KTX
 		    Micronet SP128AR
-		    OQO model 01 Ethernet
+		    NetComm NP1010
+		    OQO model 01 (10/100) Ethernet
+		    Repotec RP-USB100-A
 		    SMC 2208USB/ETH
 		    TrendNet TU-ET100C
 		    Zt USB10/100
+		    Z-TEK ZK-R02
 		SiS 900 and SiS 7016-based PCI adapters, including: [B] [C]
 		    Mototech ME313
 		    NetSurf NS-KFE30D
