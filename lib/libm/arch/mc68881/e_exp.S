@@ -1,3 +1,4 @@
+/*	$OpenBSD: e_exp.S,v 1.3 2005/08/02 11:17:32 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,11 +33,6 @@
  */
 
 #include <machine/asm.h>
-
-;_sccsid:
-;.asciz	"from: @(#)exp.s	5.1 (Berkeley) 5/17/90"
-
-RCSID("$NetBSD: e_exp.S,v 1.3 1995/05/09 00:52:06 jtc Exp $")
 
 ENTRY(__ieee754_exp)
 	fetoxd	sp@(4),fp0

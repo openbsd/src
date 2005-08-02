@@ -1,3 +1,4 @@
+/*	$OpenBSD: e_exp.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
 /*	$NetBSD: e_exp.S,v 1.12 2002/02/27 16:32:46 christos Exp $	*/
 
 /*
@@ -38,11 +39,6 @@
 #include <machine/asm.h>
 
 #include "abi.h"
-
-RCSID("$NetBSD: e_exp.S,v 1.12 2002/02/27 16:32:46 christos Exp $")
-#if 0
-RCSID("$FreeBSD: src/lib/msun/i387/e_exp.S,v 1.8.2.1 2000/07/10 09:16:28 obrien Exp $")
-#endif
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_exp)

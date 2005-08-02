@@ -1,11 +1,10 @@
+/*	$OpenBSD: e_scalb.S,v 1.2 2005/08/02 11:17:32 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-RCSID("$NetBSD: e_scalb.S,v 1.4 1995/05/11 23:19:42 jtc Exp $")
 
 ENTRY(__ieee754_scalb)
 	fmoved	sp@(4),fp0

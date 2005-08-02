@@ -1,11 +1,10 @@
+/*	$OpenBSD: s_floorf.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-RCSID("$NetBSD: s_floorf.S,v 1.6 2003/07/26 19:25:02 salo Exp $")
 
 ENTRY(floorf)
 #ifdef __i386__

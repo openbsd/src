@@ -1,3 +1,4 @@
+/*	$OpenBSD: e_asin.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -6,8 +7,6 @@
 #include <machine/asm.h>
 
 #include "abi.h"
-
-RCSID("$NetBSD: e_asin.S,v 1.7 2003/07/26 19:24:58 salo Exp $")
 
 /* asin = atan (x / sqrt(1 - x^2)) */
 ENTRY(__ieee754_asin)

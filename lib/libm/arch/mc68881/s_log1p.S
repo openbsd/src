@@ -1,3 +1,4 @@
+/*	$OpenBSD: s_log1p.S,v 1.3 2005/08/02 11:17:32 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,11 +33,6 @@
  */
 
 #include <machine/asm.h>
-
-;_sccsid:
-;.asciz	"from: @(#)log1p.s	5.1 (Berkeley) 5/17/90"
-
-RCSID("$NetBSD: s_log1p.S,v 1.3 1995/05/09 02:20:35 jtc Exp $")
 
 ENTRY(log1p)
 	flognp1d	sp@(4),fp0

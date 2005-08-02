@@ -1,3 +1,4 @@
+/*	$OpenBSD: s_tanf.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -6,8 +7,6 @@
 #include <machine/asm.h>
 
 #include "abi.h"
-
-RCSID("$NetBSD: s_tanf.S,v 1.5 2003/07/26 19:25:04 salo Exp $")
 
 /* A float's domain isn't large enough to require argument reduction. */
 ENTRY(tanf)

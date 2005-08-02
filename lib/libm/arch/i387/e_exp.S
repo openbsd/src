@@ -1,11 +1,10 @@
+/*	$OpenBSD: e_exp.S,v 1.5 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-RCSID("$NetBSD: e_exp.S,v 1.4.6.1 1996/07/03 19:27:36 jtc Exp $")
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_exp)

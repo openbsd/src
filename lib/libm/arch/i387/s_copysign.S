@@ -1,11 +1,10 @@
+/*	$OpenBSD: s_copysign.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-RCSID("$NetBSD: s_copysign.S,v 1.4 1995/05/08 23:53:02 jtc Exp $")
 
 ENTRY(copysign)
 	movl	16(%esp),%edx

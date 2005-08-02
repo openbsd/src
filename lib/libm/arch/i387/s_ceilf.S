@@ -1,11 +1,10 @@
+/*	$OpenBSD: s_ceilf.S,v 1.3 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-RCSID("$NetBSD: s_ceilf.S,v 1.3 1995/05/08 23:52:44 jtc Exp $")
 
 ENTRY(ceilf)
 	subl	$8,%esp

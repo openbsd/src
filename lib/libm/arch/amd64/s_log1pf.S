@@ -1,3 +1,4 @@
+/*	$OpenBSD: s_log1pf.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -11,8 +12,6 @@
 #include <machine/asm.h>
 
 #include "abi.h"
-
-RCSID("$NetBSD: s_log1pf.S,v 1.10 2003/09/16 18:17:11 wennmach Exp $")
 
 /*
  * The log1pf() function is provided to compute an accurate value of

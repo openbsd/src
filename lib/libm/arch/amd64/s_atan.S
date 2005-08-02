@@ -1,3 +1,4 @@
+/*	$OpenBSD: s_atan.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -6,8 +7,6 @@
 #include <machine/asm.h>
 
 #include "abi.h"
-
-RCSID("$NetBSD: s_atan.S,v 1.6 2003/07/26 19:25:00 salo Exp $")
 
 ENTRY(atan)
 	XMM_ONE_ARG_DOUBLE_PROLOGUE

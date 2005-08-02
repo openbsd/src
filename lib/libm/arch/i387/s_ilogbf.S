@@ -1,11 +1,10 @@
+/*	$OpenBSD: s_ilogbf.S,v 1.5 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-RCSID("$NetBSD: s_ilogbf.S,v 1.4 1995/10/22 20:32:43 pk Exp $")
 
 ENTRY(ilogbf)
 	pushl	%ebp

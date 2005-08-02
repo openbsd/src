@@ -1,3 +1,4 @@
+/*	$OpenBSD: e_fmod.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -7,8 +8,6 @@
 
 #include "abi.h"
 
-
-RCSID("$NetBSD: e_fmod.S,v 1.7 2003/07/26 19:24:58 salo Exp $")
 
 ENTRY(__ieee754_fmod)
 	XMM_TWO_ARG_DOUBLE_PROLOGUE

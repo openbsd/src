@@ -1,3 +1,4 @@
+/*	$OpenBSD: e_acos.S,v 1.3 2005/08/02 11:17:31 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -6,8 +7,6 @@
 #include <machine/asm.h>
 
 #include "abi.h"
-
-RCSID("$NetBSD: e_acos.S,v 1.8 2003/07/26 19:24:57 salo Exp $")
 
 /* acos = atan (sqrt(1 - x^2) / x) */
 ENTRY(__ieee754_acos)

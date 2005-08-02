@@ -1,3 +1,4 @@
+/*	$OpenBSD: s_logb.S,v 1.3 2005/08/02 11:17:32 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,11 +33,6 @@
  */
 
 #include <machine/asm.h>
-
-;_sccsid:
-;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
-
-RCSID("$NetBSD: s_logb.S,v 1.4 1995/05/09 02:37:09 jtc Exp $")
 
 | logb(x)
 | returns the unbiased exponent of x, a signed integer in double precision,
