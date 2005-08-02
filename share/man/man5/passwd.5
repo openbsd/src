@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.30 2005/02/09 16:28:30 jmc Exp $
+.\"	$OpenBSD: passwd.5,v 1.31 2005/08/02 17:51:26 jmc Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -198,9 +198,13 @@ The office and phone number subfields, if they exist, are used by the
 .Xr finger 1
 program and possibly by other applications.
 .Pp
-The user's home directory is the full
+The
+.Ar home_dir
+field
+(the user's home directory)
+is the full
 .Tn UNIX
-path name where the user will be placed on login.
+pathname where the user will be placed on login.
 .Pp
 The
 .Ar shell
