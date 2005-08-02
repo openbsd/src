@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: findfp.c,v 1.7 2005/06/17 20:40:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: findfp.c,v 1.8 2005/08/02 08:59:47 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -130,6 +130,8 @@ found:
 	_FILEEXT_INIT(fp);
 	return (fp);
 }
+
+#define getdtablesize()	sysconf(_SC_OPEN_MAX)
 
 /*
  * XXX.  Force immediate allocation of internal memory.  Not used by stdio,
