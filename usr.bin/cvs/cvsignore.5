@@ -1,0 +1,125 @@
+.\"	$OpenBSD: cvsignore.5,v 1.1 2005/08/02 11:00:56 xsa Exp $
+.\"
+.\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd August 01, 2005
+.Dt CVSIGNORE 5
+.Os
+.Sh NAME
+.Nm cvsignore
+.Nd list of files and patterns ignored by CVS
+.Sh DESCRIPTION
+The
+.Nm
+file provides a list of files (or
+.Xr sh 1
+file name patterns) that should be ignored by
+.Xr cvs 1
+during the
+.Ic import ,
+.Ic release ,
+and
+.Ic update
+commands.
+.Pp
+The syntax of the
+.Nm
+file consists of a series of lines, each of which contains a
+space-separated list of filenames.
+There is currently no way of using comments in this file.
+.Pp
+Default patterns that are ignored by
+.Xr cvs 1
+are as follows:
+.Bd -filled
+CVS,
+RCS,
+RCSLOG,
+SCCS,
+TAGS,
+tags,
+core,
+cvslog*,
+*.o,
+*.so,
+*.a,
+*.bak,
+*.orig,
+*.rej,
+*.old,
+*.exe,
+*.depend,
+*.obj,
+*.elc,
+*.ln,
+*.olb,
+*.core,
+.#*,
+*~,
+_$*,
+*$,
+#*,
+,*.
+.Ed
+.Pp
+The list can be modified using the methods described below:
+.Pp
+.Bl -enum -compact
+.It
+The
+.Pa $CVSROOT/CVSROOT/cvsignore
+file appends patterns to ignore for the whole repository.
+.It
+The
+.Pa $HOME/.cvsignore
+file appends patterns to ignore for user only.
+.It
+The content of the
+.Ev CVSIGNORE
+variable is appended to the list.
+.It
+Options to the command line
+.Fl I
+flag, available for the
+.Ic import
+and
+.Ic update
+commands, appends patterns for the current command line action only.
+.It
+.Pa .cvsignore
+files placed in the repository directories allow to add patterns to
+ignore locally.
+They do not take effect on sub-directories.
+.El
+.Pp
+The
+.Sq !\&
+character can be used to reset the list of patterns using any of these
+five methods.
+.Pp
+For the
+.Ic update
+command,
+.Xr cvs 1
+handles files that are already present in the repository even if they
+are in the list to ignore.
+Files that are in the list to ignore but not in the repository will not
+be listed.
+This way, files preceeded by the
+.Sq ?\&
+character will not appear even if they should.
+.Sh SEE ALSO
+.Xr cvs 1 ,
+.Xr cvsintro 7
