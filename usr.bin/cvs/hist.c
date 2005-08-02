@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.8 2005/07/29 17:04:42 xsa Exp $	*/
+/*	$OpenBSD: hist.c,v 1.9 2005/08/02 20:05:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -79,6 +79,7 @@ cvs_hist_open(const char *path)
 	if (histp->chf_fd == -1) {
 		cvs_log(LP_ERRNO,
 		    "failed to open CVS history file `%s'", path);
+		cvs_nolog = 1;
 		free(histp->chf_buf);
 		free(histp);
 		return (NULL);
@@ -137,6 +138,9 @@ int
 cvs_hist_append(CVSHIST *histp, struct cvs_hent *hentp)
 {
 	char hbuf[128];
+
+	if (cvs_nolog == 1)
+		return (0);
 
 	if (cvs_hist_fmt(hentp, hbuf, sizeof(hbuf)) < 0) {
 		cvs_log(LP_ERR, "failed to append CVS history entry");
