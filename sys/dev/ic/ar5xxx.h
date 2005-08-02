@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.23 2005/07/30 17:13:17 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.24 2005/08/02 12:55:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1825,7 +1825,7 @@ u_int16_t		 ar5k_get_regdomain(struct ath_hal *);
 u_int32_t		 ar5k_bitswap(u_int32_t, u_int);
 u_int			 ar5k_clocktoh(u_int, HAL_BOOL);
 u_int			 ar5k_htoclock(u_int, HAL_BOOL);
-void			 ar5k_rt_copy(HAL_RATE_TABLE *, HAL_RATE_TABLE *);
+void			 ar5k_rt_copy(HAL_RATE_TABLE *, const HAL_RATE_TABLE *);
 
 HAL_BOOL		 ar5k_register_timeout(struct ath_hal *, u_int32_t,
     u_int32_t, u_int32_t, HAL_BOOL);

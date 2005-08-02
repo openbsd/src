@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.26 2005/06/17 12:51:08 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.27 2005/08/02 12:55:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -66,6 +66,12 @@ static const struct {
 	{ PCI_VENDOR_3COM2, PCI_PRODUCT_3COM2_3CRPAG175,
 	    ar5k_ar5212_attach }
 };
+
+static const HAL_RATE_TABLE ar5k_rt_11a = AR5K_RATES_11A;
+static const HAL_RATE_TABLE ar5k_rt_11b = AR5K_RATES_11B;
+static const HAL_RATE_TABLE ar5k_rt_11g = AR5K_RATES_11G;
+static const HAL_RATE_TABLE ar5k_rt_turbo = AR5K_RATES_TURBO;
+static const HAL_RATE_TABLE ar5k_rt_xr = AR5K_RATES_XR;
 
 int		 ar5k_eeprom_read_ants(struct ath_hal *, u_int32_t *, u_int);
 int		 ar5k_eeprom_read_modes(struct ath_hal *, u_int32_t *, u_int);
@@ -145,11 +151,6 @@ ath_hal_attach(device, sc, st, sh, status)
 	int *status;
 {
 	ieee80211_regdomain_t ieee_regdomain;
-	HAL_RATE_TABLE rt_11a = AR5K_RATES_11A;
-	HAL_RATE_TABLE rt_11b = AR5K_RATES_11B;
-	HAL_RATE_TABLE rt_11g = AR5K_RATES_11G;
-	HAL_RATE_TABLE rt_turbo = AR5K_RATES_TURBO;
-	HAL_RATE_TABLE rt_xr = AR5K_RATES_XR;
 	u_int16_t regdomain;
 	struct ath_hal *hal = NULL;
 	ar5k_attach_t *attach = NULL;
@@ -255,15 +256,15 @@ ath_hal_attach(device, sc, st, sh, status)
 
 	/* Get rate tables */
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_11A)
-		ar5k_rt_copy(&hal->ah_rt_11a, &rt_11a);
+		ar5k_rt_copy(&hal->ah_rt_11a, &ar5k_rt_11a);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_11B)
-		ar5k_rt_copy(&hal->ah_rt_11b, &rt_11b);
+		ar5k_rt_copy(&hal->ah_rt_11b, &ar5k_rt_11b);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_11G)
-		ar5k_rt_copy(&hal->ah_rt_11g, &rt_11g);
+		ar5k_rt_copy(&hal->ah_rt_11g, &ar5k_rt_11g);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_TURBO)
-		ar5k_rt_copy(&hal->ah_rt_turbo, &rt_turbo);
+		ar5k_rt_copy(&hal->ah_rt_turbo, &ar5k_rt_turbo);
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_XR)
-		ar5k_rt_copy(&hal->ah_rt_xr, &rt_xr);
+		ar5k_rt_copy(&hal->ah_rt_xr, &ar5k_rt_xr);
 
 	/* Initialize the gain optimization values */
 	if (hal->ah_radio == AR5K_AR5111) {
@@ -664,7 +665,7 @@ ar5k_clocktoh(clock, turbo)
 void
 ar5k_rt_copy(dst, src)
 	HAL_RATE_TABLE *dst;
-	HAL_RATE_TABLE *src;
+	const HAL_RATE_TABLE *src;
 {
 	bzero(dst, sizeof(HAL_RATE_TABLE));
 	dst->rateCount = src->rateCount;

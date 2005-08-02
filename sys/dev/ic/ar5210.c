@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.26 2005/06/17 12:51:08 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.27 2005/08/02 12:55:11 reyk Exp $        */
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -31,6 +31,12 @@ void		 ar5k_ar5210_init_tx_queue(struct ath_hal *, u_int, HAL_BOOL);
 const void	 ar5k_ar5210_fill(struct ath_hal *);
 HAL_BOOL	 ar5k_ar5210_do_calibrate(struct ath_hal *, HAL_CHANNEL *);
 HAL_BOOL	 ar5k_ar5210_noise_floor(struct ath_hal *, HAL_CHANNEL *);
+
+/*
+ * Initial register setting for the AR5210
+ */
+static const struct ar5k_ini ar5210_ini[] =
+    AR5K_AR5210_INI;
 
 AR5K_HAL_FUNCTIONS(extern, ar5k_ar5210,);
 
@@ -355,7 +361,6 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 	HAL_STATUS *status;
 {
 	int i;
-	struct ar5k_ini initial[] = AR5K_AR5210_INI;
 
 	/* Not used, keep for HAL compatibility */
 	*status = HAL_OK;
@@ -374,22 +379,22 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 	/*
 	 * Write initial mode register settings
 	 */
-	for (i = 0; i < AR5K_ELEMENTS(initial); i++) {
+	for (i = 0; i < AR5K_ELEMENTS(ar5210_ini); i++) {
 		if (change_channel == AH_TRUE &&
-		    initial[i].ini_register >= AR5K_AR5210_PCU_MIN &&
-		    initial[i].ini_register <= AR5K_AR5210_PCU_MAX)
+		    ar5210_ini[i].ini_register >= AR5K_AR5210_PCU_MIN &&
+		    ar5210_ini[i].ini_register <= AR5K_AR5210_PCU_MAX)
 			continue;
 
-		switch (initial[i].ini_mode) {
+		switch (ar5210_ini[i].ini_mode) {
 		case AR5K_INI_READ:
 			/* Cleared on read */
-			AR5K_REG_READ(initial[i].ini_register);
+			AR5K_REG_READ(ar5210_ini[i].ini_register);
 			break;
 
 		case AR5K_INI_WRITE:
 		default:
-			AR5K_REG_WRITE(initial[i].ini_register,
-			    initial[i].ini_value);
+			AR5K_REG_WRITE(ar5210_ini[i].ini_register,
+			    ar5210_ini[i].ini_value);
 		}
 	}
 
