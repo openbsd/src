@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.2 2005/07/09 21:47:20 mickey Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.3 2005/08/02 23:48:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -81,6 +81,7 @@ ciss_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int cfg_bar, memtype;
+	pcireg_t reg;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, CISS_BAR);
 	if (memtype != (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT) &&
@@ -96,10 +97,11 @@ ciss_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->dmat = pa->pa_dmat;
 
 	sc->iem = CISS_READYENA;
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPAQ &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_CSA5i ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_CSA532 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_CSA5312))
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	if (PCI_VENDOR(reg) == PCI_VENDOR_COMPAQ &&
+	    (PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA5i ||
+	     PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA532 ||
+	     PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA5312))
 		sc->iem = CISS_READYENAB;
 
 	cfg_bar = bus_space_read_2(sc->iot, sc->ioh, CISS_CFG_BAR);
