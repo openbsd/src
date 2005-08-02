@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.19 2005/07/24 10:06:38 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.20 2005/08/02 15:47:25 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -151,10 +151,13 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 
 		if (rp->peer)
 			free(rp->peer);
-		if (rp->auth.srcid)
-			free(rp->auth.srcid);
-		if (rp->auth.dstid)
-			free(rp->auth.dstid);
+		if (rp->auth) {
+			if (rp->auth->srcid)
+				free(rp->auth->srcid);
+			if (rp->auth->dstid)
+				free(rp->auth->dstid);
+			}
+			free(rp->auth);
 		if (rp->key) {
 			free(rp->key->data);
 			free(rp->key);
@@ -223,12 +226,12 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 	ipsecctl_print_addr(r->peer);
 
 	if (opts & IPSECCTL_OPT_VERBOSE) {
-		if (r->auth.srcid)
-			printf("\n\tsrcid %s", r->auth.srcid);
-		if (r->auth.dstid)
-			printf("\n\tdstid %s", r->auth.dstid);
-		if (r->auth.type > 0)
-			printf("\n\t%s", auth[r->auth.type]);
+		if (r->auth->srcid)
+			printf("\n\tsrcid %s", r->auth->srcid);
+		if (r->auth->dstid)
+			printf("\n\tdstid %s", r->auth->dstid);
+		if (r->auth->type > 0)
+			printf("\n\t%s", auth[r->auth->type]);
 		printf("\n\ttype %s", flowtype[r->flowtype]);
 	}
 }
@@ -357,10 +360,13 @@ ipsecctl_show_flows(int opts)
 		free(rp->src);
 		free(rp->dst);
 		free(rp->peer);
-		if (rp->auth.srcid)
-			free(rp->auth.srcid);
-		if (rp->auth.dstid)
-			free(rp->auth.dstid);
+		if (rp->auth) {
+			if (rp->auth->srcid)
+				free(rp->auth->srcid);
+			if (rp->auth->dstid)
+				free(rp->auth->dstid);
+			free(rp->auth);
+		}
 		free(rp);
 	}
 

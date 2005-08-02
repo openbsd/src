@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.16 2005/07/09 21:31:24 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.17 2005/08/02 15:47:25 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -43,7 +43,7 @@ static u_int32_t sadb_msg_seq = 1;
 
 static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t,
 		    struct ipsec_addr *, struct ipsec_addr *,
-		    struct ipsec_addr *, struct ipsec_auth, u_int8_t);
+		    struct ipsec_addr *, struct ipsec_auth *, u_int8_t);
 static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_addr *, struct ipsec_addr *,
 		    struct ipsec_key *);
@@ -56,7 +56,7 @@ int		pfkey_init(void);
 static int
 pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
     struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_addr *peer,
-    struct ipsec_auth auth, u_int8_t flowtype)
+    struct ipsec_auth *auth, u_int8_t flowtype)
 {
 	struct sadb_msg		 smsg;
 	struct sadb_address	 sa_src, sa_dst, sa_peer, sa_smask, sa_dmask;
@@ -172,33 +172,33 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	sa_peer.sadb_address_len =
 	    (sizeof(sa_peer) + ROUNDUP(speer.ss_len)) / 8;
 
-	if (auth.srcid) {
-		len = ROUNDUP(strlen(auth.srcid) + 1) + sizeof(*sa_srcid);
+	if (auth && auth->srcid) {
+		len = ROUNDUP(strlen(auth->srcid) + 1) + sizeof(*sa_srcid);
 
 		sa_srcid = calloc(len, sizeof(u_int8_t));
 		if (sa_srcid == NULL)
 			err(1, "calloc");
 
-		sa_srcid->sadb_ident_type = auth.idtype;
+		sa_srcid->sadb_ident_type = auth->idtype;
 		sa_srcid->sadb_ident_len = len / 8;
 		sa_srcid->sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
 
-		strlcpy((char *)(sa_srcid + 1), auth.srcid,
-		    ROUNDUP(strlen(auth.srcid) + 1));
+		strlcpy((char *)(sa_srcid + 1), auth->srcid,
+		    ROUNDUP(strlen(auth->srcid) + 1));
 	}
-	if (auth.dstid) {
-		len = ROUNDUP(strlen(auth.dstid) + 1) + sizeof(*sa_dstid);
+	if (auth && auth->dstid) {
+		len = ROUNDUP(strlen(auth->dstid) + 1) + sizeof(*sa_dstid);
 
 		sa_dstid = calloc(len, sizeof(u_int8_t));
 		if (sa_dstid == NULL)
 			err(1, "calloc");
 
-		sa_dstid->sadb_ident_type = auth.idtype;
+		sa_dstid->sadb_ident_type = auth->idtype;
 		sa_dstid->sadb_ident_len = len / 8;
 		sa_dstid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
 
-		strlcpy((char *)(sa_dstid + 1), auth.dstid,
-		    ROUNDUP(strlen(auth.dstid) + 1));
+		strlcpy((char *)(sa_dstid + 1), auth->dstid,
+		    ROUNDUP(strlen(auth->dstid) + 1));
 	}
 
 	iov_cnt = 0;
@@ -537,11 +537,11 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			len = (sident->sadb_ident_len * sizeof(uint64_t)) -
 			    sizeof(struct sadb_ident);
 
-			rule->auth.srcid = calloc(1, len);
-			if (rule->auth.srcid == NULL)
+			rule->auth->srcid = calloc(1, len);
+			if (rule->auth->srcid == NULL)
 				err(1, "calloc");
 
-			strlcpy(rule->auth.srcid, (char *)(sident + 1), len);
+			strlcpy(rule->auth->srcid, (char *)(sident + 1), len);
 			break;
 
 		case SADB_EXT_IDENTITY_DST:
@@ -549,11 +549,11 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			len = (sident->sadb_ident_len * sizeof(uint64_t)) -
 			    sizeof(struct sadb_ident);
 
-			rule->auth.dstid = calloc(1, len);
-			if (rule->auth.dstid == NULL)
+			rule->auth->dstid = calloc(1, len);
+			if (rule->auth->dstid == NULL)
 				err(1, "calloc");
 
-			strlcpy(rule->auth.dstid, (char *)(sident + 1), len);
+			strlcpy(rule->auth->dstid, (char *)(sident + 1), len);
 			break;
 
 		case SADB_X_EXT_PROTOCOL:
@@ -738,7 +738,7 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		case PFK_ACTION_DELETE:
 			/* No peer for flow deletion. */
 			ret = pfkey_flow(fd, satype, SADB_X_DELFLOW, direction,
-			    r->src, r->dst, NULL, r->auth, r->flowtype);
+			    r->src, r->dst, NULL, NULL, r->flowtype);
 			break;
 		default:
 			return -1;

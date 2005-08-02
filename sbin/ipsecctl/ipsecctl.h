@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.11 2005/07/24 10:06:38 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.12 2005/08/02 15:47:25 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -77,7 +77,7 @@ struct ipsec_rule {
 	struct ipsec_addr *src;
 	struct ipsec_addr *dst;
 	struct ipsec_addr *peer;
-	struct ipsec_auth  auth;
+	struct ipsec_auth *auth;
 	struct ipsec_key  *key;
 
 	u_int8_t	 proto;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2005/07/24 12:11:49 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2005/08/02 15:47:25 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -918,11 +918,14 @@ create_flow(u_int8_t dir, struct ipsec_addr *src, struct ipsec_addr *dst,
 		r->peer = peer;
 
 	r->proto = proto;
-	r->auth.srcid = srcid;
-	r->auth.dstid = dstid;
-	r->auth.idtype = ID_FQDN;	/* XXX For now only FQDN. */
+	r->auth = calloc(1, sizeof(struct ipsec_auth));
+	if (r->auth == NULL)
+		err(1, "calloc");
+	r->auth->srcid = srcid;
+	r->auth->dstid = dstid;
+	r->auth->idtype = ID_FQDN;	/* XXX For now only FQDN. */
 #ifdef notyet
-	r->auth.type = authtype;
+	r->auth->type = authtype;
 #endif
 
 	return r;
@@ -963,14 +966,17 @@ reverse_rule(struct ipsec_rule *rule)
 	reverse->peer = copyhost(rule->peer);
 	reverse->proto = (u_int8_t)rule->proto;
 
-	if (rule->auth.dstid && (reverse->auth.dstid =
-	    strdup(rule->auth.dstid)) == NULL)
+	reverse->auth = calloc(1, sizeof(struct ipsec_auth));
+	if (reverse->auth == NULL)
+		err(1, "calloc");
+	if (rule->auth->dstid && (reverse->auth->dstid =
+	    strdup(rule->auth->dstid)) == NULL)
 		err(1, "strdup");
-	if (rule->auth.srcid && (reverse->auth.srcid =
-	    strdup(rule->auth.srcid)) == NULL)
+	if (rule->auth->srcid && (reverse->auth->srcid =
+	    strdup(rule->auth->srcid)) == NULL)
 		err(1, "strdup");
-	reverse->auth.idtype = rule->auth.idtype;
-	reverse->auth.type = rule->auth.type;
+	reverse->auth->idtype = rule->auth->idtype;
+	reverse->auth->type = rule->auth->type;
 
 	return reverse;
 }
