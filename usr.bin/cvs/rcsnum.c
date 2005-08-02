@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.14 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.15 2005/08/02 11:48:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cvs.h"
 #include "log.h"
 #include "rcs.h"
 
@@ -207,6 +208,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	u_int32_t val;
 	const char *sp;
 	void *tmp;
+	char *s;
 
 	if (nump->rn_id == NULL) {
 		nump->rn_id = (u_int16_t *)malloc(sizeof(u_int16_t));
@@ -250,6 +252,50 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 
 	if (ep != NULL)
 		*(const char **)ep = sp;
+
+	/*
+	 * Handle "magic" RCS branch numbers.
+	 *
+	 * What are they?
+	 *
+	 * Magic branch numbers have an extra .0. at the second farmost
+	 * rightside of the branch number, so instead of having an odd
+	 * number of dot-separated decimals, it will have an even number.
+	 *
+	 * Now, according to all the documentation i've found on the net
+	 * about this, cvs does this for "efficiency reasons", i'd like
+	 * to hear one.
+	 *
+	 * We just make sure we remove the .0. from in the branch number.
+	 *
+	 * XXX - for compatibility reasons with GNU cvs we _need_
+	 * to skip this part for the 'log' command, apparently it does
+	 * show the magic branches for an unknown and probably
+	 * completely insane and not understandable reason in that output.
+	 *
+	 */
+	if ((nump->rn_len > 2) && (nump->rn_id[nump->rn_len - 1] == 0)
+	    && (cvs_cmdop != CVS_OP_LOG)) {
+		/*
+		 * Look for ".0.x" at the end of the branch number.
+		 */
+		if ((s = strrchr(str, '.')) != NULL) {
+			*s--;
+			while (*s != '.')
+				*s--;
+
+			/*
+			 * If we have a "magic" branch, adjust it
+			 * so the .0. is removed.
+			 */
+			if (!strncmp(s, RCS_MAGIC_BRANCH,
+			    strlen(RCS_MAGIC_BRANCH))) {
+				nump->rn_id[nump->rn_len - 1] =
+				    nump->rn_id[nump->rn_len];
+				nump->rn_len--;
+			}
+		}
+	}
 
 	nump->rn_len++;
 	return (nump->rn_len);

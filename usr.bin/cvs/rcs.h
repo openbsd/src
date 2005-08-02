@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.30 2005/07/25 11:28:59 xsa Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.31 2005/08/02 11:48:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -49,6 +49,7 @@
 #define RCS_SYM_INVALCHAR	"$,.:;@"
 
 
+#define RCS_MAGIC_BRANCH	".0."
 #define RCS_STATE_EXP		"Exp"
 #define RCS_STATE_DEAD		"dead"
 
