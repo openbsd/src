@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.61 2005/07/22 11:40:41 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.62 2005/08/02 00:20:11 jsg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.58 2005/07/22 11:39:36 brad Exp 
+ *	OpenBSD: miidevs,v 1.59 2005/08/02 00:19:36 jsg Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -214,6 +214,8 @@
 #define	MII_STR_xxMARVELL_E1000_3	"Marvell 88E1000 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1000_5	0x0005
 #define	MII_STR_xxMARVELL_E1000_5	"Marvell 88E1000 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1111	0x000c
+#define	MII_STR_xxMARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
 
 /* Contrived vendor/model for dcphy */
 #define	MII_MODEL_xxDEC_xxDC	0x0001
