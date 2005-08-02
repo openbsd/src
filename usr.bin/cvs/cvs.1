@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.73 2005/08/02 11:03:40 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.74 2005/08/02 16:28:34 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -1825,6 +1825,12 @@ Name of the editor to use when editing commit messages.
 This is traditionally a line-oriented editor,
 such as
 .Xr ex 1 .
+.It Ev HOME
+Directory where the
+.Pa .cvsignore
+and
+.Pa .cvsrc
+files are searched for.
 .It Ev VISUAL
 Name of the editor to use when editing commit messages.
 This is traditionally a screen-oriented editor,
