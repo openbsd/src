@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.25 2005/07/16 18:38:45 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.26 2005/08/02 02:34:03 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -43,8 +43,6 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 
-struct client_config top_level_config;
-struct interface_info *dummy_interfaces;
 extern struct interface_info *ifi;
 
 char client_script_name[] = "/sbin/dhclient-script";
@@ -58,72 +56,46 @@ char client_script_name[] = "/sbin/dhclient-script";
 int
 read_client_conf(void)
 {
-	FILE			*cfile;
-	char			*val;
-	int			 token;
-	struct client_config	*config;
+	struct client_config *config = ifi->client->config;
+	FILE *cfile;
+	char *val;
+	int token;
 
 	new_parse(path_dhclient_conf);
 
-	/* Initialize the top level client configuration. */
-	memset(&top_level_config, 0, sizeof(top_level_config));
-
 	/* Set some defaults... */
-	top_level_config.timeout = 60;
-	top_level_config.select_interval = 0;
-	top_level_config.reboot_timeout = 10;
-	top_level_config.retry_interval = 300;
-	top_level_config.backoff_cutoff = 15;
-	top_level_config.initial_interval = 3;
-	top_level_config.bootp_policy = ACCEPT;
-	top_level_config.script_name = client_script_name;
-	top_level_config.requested_options
-	    [top_level_config.requested_option_count++] = DHO_SUBNET_MASK;
-	top_level_config.requested_options
-	    [top_level_config.requested_option_count++] = DHO_BROADCAST_ADDRESS;
-	top_level_config.requested_options
-	    [top_level_config.requested_option_count++] = DHO_TIME_OFFSET;
-	top_level_config.requested_options
-	    [top_level_config.requested_option_count++] = DHO_ROUTERS;
-	top_level_config.requested_options
-	    [top_level_config.requested_option_count++] = DHO_DOMAIN_NAME;
-	top_level_config.requested_options
-	    [top_level_config.requested_option_count++] =
-	    DHO_DOMAIN_NAME_SERVERS;
-	top_level_config.requested_options
-	    [top_level_config.requested_option_count++] = DHO_HOST_NAME;
+	config->timeout = 60;
+	config->select_interval = 0;
+	config->reboot_timeout = 10;
+	config->retry_interval = 300;
+	config->backoff_cutoff = 15;
+	config->initial_interval = 3;
+	config->bootp_policy = ACCEPT;
+	config->script_name = client_script_name;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_SUBNET_MASK;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_BROADCAST_ADDRESS;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_TIME_OFFSET;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_ROUTERS;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_DOMAIN_NAME;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_DOMAIN_NAME_SERVERS;
+	config->requested_options
+	    [config->requested_option_count++] = DHO_HOST_NAME;
 
 	if ((cfile = fopen(path_dhclient_conf, "r")) != NULL) {
 		do {
 			token = peek_token(&val, cfile);
 			if (token == EOF)
 				break;
-			parse_client_statement(cfile, NULL, &top_level_config);
+			parse_client_statement(cfile);
 		} while (1);
 		token = next_token(&val, cfile); /* Clear the peek buffer */
 		fclose(cfile);
-	}
-
-	/*
-	 * Set up state and config structures for clients that don't
-	 * have per-interface configuration declarations.
-	 */
-	config = NULL;
-	if (!ifi->client) {
-		ifi->client = malloc(sizeof(struct client_state));
-		if (!ifi->client)
-			error("no memory for client state.");
-		memset(ifi->client, 0, sizeof(*(ifi->client)));
-	}
-	if (!ifi->client->config) {
-		if (!config) {
-			config = malloc(sizeof(struct client_config));
-			if (!config)
-				error("no memory for client config.");
-			memcpy(config, &top_level_config,
-				sizeof(top_level_config));
-		}
-		ifi->client->config = config;
 	}
 
 	return (!warnings_occurred);
@@ -182,11 +154,11 @@ read_client_leases(void)
  *	ALIAS client-lease-statement
  */
 void
-parse_client_statement(FILE *cfile, struct interface_info *ip,
-    struct client_config *config)
+parse_client_statement(FILE *cfile)
 {
-	int		 token, code;
-	char		*val;
+	struct client_config *config = ifi->client->config;
+	char *val;
+	int token, code;
 
 	switch (next_token(&val, cfile)) {
 	case SEND:
@@ -216,13 +188,7 @@ parse_client_statement(FILE *cfile, struct interface_info *ip,
 		parse_string_list(cfile, &config->media, 1);
 		return;
 	case HARDWARE:
-		if (ip)
-			parse_hardware_param(cfile, &ip->hw_address);
-		else {
-			parse_warn("hardware address parameter %s",
-				    "not allowed here.");
-			skip_to_semi(cfile);
-		}
+		parse_hardware_param(cfile, &ifi->hw_address);
 		return;
 	case REQUEST:
 		config->requested_option_count =
@@ -255,9 +221,7 @@ parse_client_statement(FILE *cfile, struct interface_info *ip,
 		config->script_name = parse_string(cfile);
 		return;
 	case INTERFACE:
-		if (ip)
-			parse_warn("nested interface declaration.");
-		parse_interface_declaration(cfile, config);
+		parse_interface_declaration(cfile);
 		return;
 	case LEASE:
 		parse_client_lease_statement(cfile, 1);
@@ -266,7 +230,7 @@ parse_client_statement(FILE *cfile, struct interface_info *ip,
 		parse_client_lease_statement(cfile, 2);
 		return;
 	case REJECT:
-		parse_reject_statement(cfile, config);
+		parse_reject_statement(cfile);
 		return;
 	default:
 		parse_warn("expecting a statement.");
@@ -374,11 +338,10 @@ parse_option_list(FILE *cfile, u_int8_t *list)
  *	INTERFACE string LBRACE client-declarations RBRACE
  */
 void
-parse_interface_declaration(FILE *cfile, struct client_config *outer_config)
+parse_interface_declaration(FILE *cfile)
 {
-	int			 token;
-	char			*val;
-	struct interface_info	*ip;
+	char *val;
+	int token;
 
 	token = next_token(&val, cfile);
 	if (token != STRING) {
@@ -387,13 +350,10 @@ parse_interface_declaration(FILE *cfile, struct client_config *outer_config)
 		return;
 	}
 
-	ip = interface_or_dummy(val);
-
-	if (!ip->client)
-		make_client_state(ip);
-
-	if (!ip->client->config)
-		make_client_config(ip, outer_config);
+	if (strcmp(ifi->name, val) != 0) {
+		skip_to_semi(cfile);
+		return;
+	}
 
 	token = next_token(&val, cfile);
 	if (token != LBRACE) {
@@ -410,56 +370,9 @@ parse_interface_declaration(FILE *cfile, struct client_config *outer_config)
 		}
 		if (token == RBRACE)
 			break;
-		parse_client_statement(cfile, ip, ip->client->config);
+		parse_client_statement(cfile);
 	} while (1);
 	token = next_token(&val, cfile);
-}
-
-struct interface_info *
-interface_or_dummy(char *name)
-{
-	struct interface_info	*ip;
-
-	/* Find the interface (if any) that matches the name. */
-	if (!strcmp(ifi->name, name))
-		return (ifi);
-
-	/* If it's not a real interface, see if it's on the dummy list. */
-	for (ip = dummy_interfaces; ip; ip = ip->next)
-		if (!strcmp(ip->name, name))
-			return (ip);
-
-	/*
-	 * If we didn't find an interface, make a dummy interface as a
-	 * placeholder.
-	 */
-	ip = malloc(sizeof(*ip));
-	if (!ip)
-		error("Insufficient memory to record interface %s", name);
-	memset(ip, 0, sizeof(*ip));
-	strlcpy(ip->name, name, IFNAMSIZ);
-	ip->next = dummy_interfaces;
-	dummy_interfaces = ip;
-	return (ip);
-}
-
-void
-make_client_state(struct interface_info *ip)
-{
-	ip->client = malloc(sizeof(*(ip->client)));
-	if (!ip->client)
-		error("no memory for state on %s", ip->name);
-	memset(ip->client, 0, sizeof(*(ip->client)));
-}
-
-void
-make_client_config(struct interface_info *ip, struct client_config *config)
-{
-	ip->client->config = malloc(sizeof(struct client_config));
-	if (!ip->client->config)
-		error("no memory for config for %s", ip->name);
-	memset(ip->client->config, 0, sizeof(*(ip->client->config)));
-	memcpy(ip->client->config, config, sizeof(*config));
 }
 
 /*
@@ -475,7 +388,7 @@ void
 parse_client_lease_statement(FILE *cfile, int is_static)
 {
 	struct client_lease	*lease, *lp, *pl;
-	struct interface_info	*ip;
+	struct interface_info	*ip = ifi;
 	int			 token;
 	char			*val;
 
@@ -491,8 +404,6 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		error("no memory for lease.");
 	memset(lease, 0, sizeof(*lease));
 	lease->is_static = is_static;
-
-	ip = NULL;
 
 	do {
 		token = peek_token(&val, cfile);
@@ -513,10 +424,6 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		free_client_lease(lease);
 		return;
 	}
-
-	/* Make sure there's a client state structure... */
-	if (!ip->client)
-		make_client_state(ip);
 
 	/* If this is an alias lease, it doesn't need to be sorted in. */
 	if (is_static == 2) {
@@ -602,9 +509,8 @@ void
 parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
     struct interface_info **ipp)
 {
-	int			 token;
-	char			*val;
-	struct interface_info	*ip;
+	char *val;
+	int token;
 
 	switch (next_token(&val, cfile)) {
 	case BOOTP:
@@ -617,8 +523,13 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 			skip_to_semi(cfile);
 			break;
 		}
-		ip = interface_or_dummy(val);
-		*ipp = ip;
+		if (strcmp(ifi->name, val) != 0) {
+			parse_warn("wrong interface name. Expecting '%s'.",
+			   ifi->name);
+			skip_to_semi(cfile);
+			break;
+		}
+		*ipp = ifi;
 		break;
 	case FIXED_ADDR:
 		if (!parse_ip_addr(cfile, &lease->address))
@@ -858,12 +769,13 @@ parse_string_list(FILE *cfile, struct string_list **lp, int multiple)
 }
 
 void
-parse_reject_statement(FILE *cfile, struct client_config *config)
+parse_reject_statement(FILE *cfile)
 {
-	int			 token;
-	char			*val;
-	struct iaddr		 addr;
-	struct iaddrlist	*list;
+	struct client_config *config = ifi->client->config;
+	struct iaddrlist *list;
+	struct iaddr addr;
+	char *val;
+	int token;
 
 	do {
 		if (!parse_ip_addr(cfile, &addr)) {
