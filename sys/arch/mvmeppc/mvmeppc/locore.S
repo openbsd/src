@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2004/12/24 22:50:30 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 2005/08/02 21:27:58 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1125,9 +1125,45 @@ _C_LABEL(setfault):
 	.type	_C_LABEL(sigcode),@function
 	.type	_C_LABEL(esigcode),@function
 _C_LABEL(sigcode):
-	addi	%r1,%r1,-16		/* reserved space for callee */
+	addi	%r1,%r1,-((16+FPSIG_SIZEOF+15)& ~0xf)		/* reserved space for callee */
+	addi	%r6,%r1,8
+	stfd	%f0,0(%r6)
+	stfd	%f1,8(%r6)
+	stfd	%f2,16(%r6)
+	stfd	%f3,24(%r6)
+	stfd	%f4,32(%r6)
+	stfd	%f5,40(%r6)
+	stfd	%f6,48(%r6)
+	stfd	%f7,56(%r6)
+	stfd	%f8,64(%r6)
+	stfd	%f9,72(%r6)
+	stfd	%f10,80(%r6)
+	stfd	%f11,88(%r6)
+	stfd	%f12,96(%r6)
+	stfd	%f13,104(%r6)
+	mffs	%f0
+	stfd	%f0,112(%r6)
+	lfd	%f0,0(%r6)	/* restore the clobbered register */
+		
 	blrl
-	addi	%r3,%r1,16+8		/* compute &sf_sc */
+	addi	%r6,%r1,8
+	lfd	%f0,112(%r6)
+	mtfsf	0xff,%f0
+	lfd	%f0,0(%r6)
+	lfd	%f1,8(%r6)
+	lfd	%f2,16(%r6)
+	lfd	%f3,24(%r6)
+	lfd	%f4,32(%r6)
+	lfd	%f5,40(%r6)
+	lfd	%f6,48(%r6)
+	lfd	%f7,56(%r6)
+	lfd	%f8,64(%r6)
+	lfd	%f9,72(%r6)
+	lfd	%f10,80(%r6)
+	lfd	%f11,88(%r6)
+	lfd	%f12,96(%r6)
+	lfd	%f13,104(%r6)
+	addi	%r3,%r1,((16+FPSIG_SIZEOF+15)&~0xf)+SF_SC	/* compute &sf_sc */
 	li	%r0,SYS_sigreturn
 	sc				/* sigreturn(scp) */
 	li	%r0,SYS_exit
