@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.52 2005/08/02 12:06:38 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.53 2005/08/02 12:08:13 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -418,6 +418,7 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_createdir(char *line)
 {
+	int l;
 	CVSFILE *base, *cf;
 	CVSENTRIES *entf;
 	struct stat st;
