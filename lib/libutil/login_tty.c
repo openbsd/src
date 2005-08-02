@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tty.c,v 1.6 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: login_tty.c,v 1.7 2005/08/02 21:46:23 espie Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,11 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)login_tty.c	8.1 (Berkeley) 6/4/93"; */
-static const char rcsid[] = "$Id: login_tty.c,v 1.6 2004/05/28 07:03:47 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

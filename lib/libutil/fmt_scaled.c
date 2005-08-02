@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.6 2005/03/09 09:27:57 otto Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.7 2005/08/02 21:46:23 espie Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -35,10 +35,6 @@
  * Formatting code was originally in OpenBSD "df", converted to library routine.
  * Scanning code written for OpenBSD libutil.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char ident[] = "$OpenBSD: fmt_scaled.c,v 1.6 2005/03/09 09:27:57 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

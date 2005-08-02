@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.13 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: pty.c,v 1.14 2005/08/02 21:46:23 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93"; */
-static const char rcsid[] = "$Id: pty.c,v 1.13 2004/05/28 07:03:47 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
 #include <sys/types.h>

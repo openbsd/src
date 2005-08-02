@@ -1,4 +1,4 @@
-/*	$OpenBSD: logwtmp.c,v 1.8 2004/09/18 19:22:09 deraadt Exp $	*/
+/*	$OpenBSD: logwtmp.c,v 1.9 2005/08/02 21:46:23 espie Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,11 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93"; */
-static const char rcsid[] = "$Id: logwtmp.c,v 1.8 2004/09/18 19:22:09 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>

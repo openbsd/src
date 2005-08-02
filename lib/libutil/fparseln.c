@@ -1,4 +1,4 @@
-/*	$OpenBSD: fparseln.c,v 1.5 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: fparseln.c,v 1.6 2005/08/02 21:46:23 espie Exp $	*/
 /*	$NetBSD: fparseln.c,v 1.7 1999/07/02 15:49:12 simonb Exp $	*/
 
 /*
@@ -29,10 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: fparseln.c,v 1.5 2004/05/28 07:03:47 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
 

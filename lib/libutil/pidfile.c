@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.6 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.7 2005/08/02 21:46:23 espie Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -36,10 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.6 2004/05/28 07:03:47 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <errno.h>
