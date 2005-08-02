@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.33 2005/05/27 04:55:28 mcbride Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.34 2005/08/02 11:05:44 markus Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -49,28 +49,15 @@ struct ipovly {
 };
 
 /*
- * Ip (reassembly or sequence) queue structures.
- *
- * XXX -- The following explains why the ipqe_m field is here, for TCP's use:
- * We want to avoid doing m_pullup on incoming packets but that
- * means avoiding dtom on the tcp reassembly code.  That in turn means
- * keeping an mbuf pointer in the reassembly queue (since we might
- * have a cluster).  As a quick hack, the source & destination
- * port numbers (which are no longer needed once we've located the
- * tcpcb) are overlayed with an mbuf pointer.
+ * Ip reassembly queue structures.
  */
 LIST_HEAD(ipqehead, ipqent);
 struct ipqent {
 	LIST_ENTRY(ipqent) ipqe_q;
-	union {
-		struct ip	*_ip;
-		struct tcphdr	*_tcp;
-	} _ipqe_u1;
+	struct ip	*ipqe_ip;
 	struct mbuf	*ipqe_m;	/* mbuf contains packet */
 	u_int8_t	ipqe_mff;	/* for IP fragmentation */
 };
-#define	ipqe_ip		_ipqe_u1._ip
-#define	ipqe_tcp	_ipqe_u1._tcp
 
 /*
  * Ip reassembly queue structure.  Each fragment

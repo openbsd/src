@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.188 2005/06/30 08:51:31 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.189 2005/08/02 11:05:44 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ tcp_reass(tp, th, m, tlen)
 	struct mbuf *m;
 	int *tlen;
 {
-	struct ipqent *p, *q, *nq, *tiqe;
+	struct tcpqent *p, *q, *nq, *tiqe;
 	struct socket *so = tp->t_inpcb->inp_socket;
 	int flags;
 
@@ -208,13 +208,11 @@ tcp_reass(tp, th, m, tlen)
 	 */
 	tiqe = pool_get(&tcpqe_pool, PR_NOWAIT);
 	if (tiqe == NULL) {
-		tiqe = LIST_FIRST(&tp->segq);
+		tiqe = TAILQ_LAST(&tp->t_segq, tcpqehead);
 		if (tiqe != NULL && th->th_seq == tp->rcv_nxt) {
 			/* Reuse last entry since new segment fills a hole */
-			while ((p = LIST_NEXT(tiqe, ipqe_q)) != NULL)
-				tiqe = p;
-			m_freem(tiqe->ipqe_m);
-			LIST_REMOVE(tiqe, ipqe_q);
+			m_freem(tiqe->tcpqe_m);
+			TAILQ_REMOVE(&tp->t_segq, tiqe, tcpqe_q);
 		}
 		if (tiqe == NULL || th->th_seq != tp->rcv_nxt) {
 			/* Flush segment queue for this connection */
@@ -228,9 +226,9 @@ tcp_reass(tp, th, m, tlen)
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (p = NULL, q = tp->segq.lh_first; q != NULL;
-	    p = q, q = q->ipqe_q.le_next)
-		if (SEQ_GT(q->ipqe_tcp->th_seq, th->th_seq))
+	for (p = NULL, q = TAILQ_FIRST(&tp->t_segq); q != NULL;
+	    p = q, q = TAILQ_NEXT(q, tcpqe_q))
+		if (SEQ_GT(q->tcpqe_tcp->th_seq, th->th_seq))
 			break;
 
 	/*
@@ -239,7 +237,7 @@ tcp_reass(tp, th, m, tlen)
 	 * segment.  If it provides all of our data, drop us.
 	 */
 	if (p != NULL) {
-		struct tcphdr *phdr = p->ipqe_tcp;
+		struct tcphdr *phdr = p->tcpqe_tcp;
 		int i;
 
 		/* conversion to int (in i) handles seq wraparound */
@@ -265,7 +263,7 @@ tcp_reass(tp, th, m, tlen)
 	 * if they are completely covered, dequeue them.
 	 */
 	for (; q != NULL; q = nq) {
-		struct tcphdr *qhdr = q->ipqe_tcp;
+		struct tcphdr *qhdr = q->tcpqe_tcp;
 		int i = (th->th_seq + *tlen) - qhdr->th_seq;
 
 		if (i <= 0)
@@ -273,23 +271,23 @@ tcp_reass(tp, th, m, tlen)
 		if (i < qhdr->th_reseqlen) {
 			qhdr->th_seq += i;
 			qhdr->th_reseqlen -= i;
-			m_adj(q->ipqe_m, i);
+			m_adj(q->tcpqe_m, i);
 			break;
 		}
-		nq = q->ipqe_q.le_next;
-		m_freem(q->ipqe_m);
-		LIST_REMOVE(q, ipqe_q);
+		nq = TAILQ_NEXT(q, tcpqe_q);
+		m_freem(q->tcpqe_m);
+		TAILQ_REMOVE(&tp->t_segq, q, tcpqe_q);
 		pool_put(&tcpqe_pool, q);
 	}
 
 	/* Insert the new segment queue entry into place. */
-	tiqe->ipqe_m = m;
+	tiqe->tcpqe_m = m;
 	th->th_reseqlen = *tlen;
-	tiqe->ipqe_tcp = th;
+	tiqe->tcpqe_tcp = th;
 	if (p == NULL) {
-		LIST_INSERT_HEAD(&tp->segq, tiqe, ipqe_q);
+		TAILQ_INSERT_HEAD(&tp->t_segq, tiqe, tcpqe_q);
 	} else {
-		LIST_INSERT_AFTER(p, tiqe, ipqe_q);
+		TAILQ_INSERT_AFTER(&tp->t_segq, p, tiqe, tcpqe_q);
 	}
 
 present:
@@ -299,25 +297,25 @@ present:
 	 */
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		return (0);
-	q = tp->segq.lh_first;
-	if (q == NULL || q->ipqe_tcp->th_seq != tp->rcv_nxt)
+	q = TAILQ_FIRST(&tp->t_segq);
+	if (q == NULL || q->tcpqe_tcp->th_seq != tp->rcv_nxt)
 		return (0);
-	if (tp->t_state == TCPS_SYN_RECEIVED && q->ipqe_tcp->th_reseqlen)
+	if (tp->t_state == TCPS_SYN_RECEIVED && q->tcpqe_tcp->th_reseqlen)
 		return (0);
 	do {
-		tp->rcv_nxt += q->ipqe_tcp->th_reseqlen;
-		flags = q->ipqe_tcp->th_flags & TH_FIN;
+		tp->rcv_nxt += q->tcpqe_tcp->th_reseqlen;
+		flags = q->tcpqe_tcp->th_flags & TH_FIN;
 
-		nq = q->ipqe_q.le_next;
-		LIST_REMOVE(q, ipqe_q);
+		nq = TAILQ_NEXT(q, tcpqe_q);
+		TAILQ_REMOVE(&tp->t_segq, q, tcpqe_q);
 		ND6_HINT(tp);
 		if (so->so_state & SS_CANTRCVMORE)
-			m_freem(q->ipqe_m);
+			m_freem(q->tcpqe_m);
 		else
-			sbappendstream(&so->so_rcv, q->ipqe_m);
+			sbappendstream(&so->so_rcv, q->tcpqe_m);
 		pool_put(&tcpqe_pool, q);
 		q = nq;
-	} while (q != NULL && q->ipqe_tcp->th_seq == tp->rcv_nxt);
+	} while (q != NULL && q->tcpqe_tcp->th_seq == tp->rcv_nxt);
 	sorwakeup(so);
 	return (flags);
 }
@@ -1067,7 +1065,7 @@ after_listen:
 				return;
 			}
 		} else if (th->th_ack == tp->snd_una &&
-		    tp->segq.lh_first == NULL &&
+		    TAILQ_EMPTY(&tp->t_segq) &&
 		    tlen <= sbspace(&so->so_rcv)) {
 			/*
 			 * This is a pure, in-sequence data packet
@@ -2020,7 +2018,7 @@ dodata:							/* XXX */
 	if ((tlen || (tiflags & TH_FIN)) &&
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 		tcp_reass_lock(tp);
-		if (th->th_seq == tp->rcv_nxt && tp->segq.lh_first == NULL &&
+		if (th->th_seq == tp->rcv_nxt && TAILQ_EMPTY(&tp->t_segq) &&
 		    tp->t_state == TCPS_ESTABLISHED) {
 			tcp_reass_unlock(tp);
 			TCP_SETUP_ACK(tp, tiflags);

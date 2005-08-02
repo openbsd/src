@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.76 2005/07/04 12:34:12 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.77 2005/08/02 11:05:44 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -35,6 +35,10 @@
 #ifndef _NETINET_TCP_VAR_H_
 #define _NETINET_TCP_VAR_H_
 
+/*
+ * Kernel variables for tcp.
+ */
+
 struct sackblk {
 	tcp_seq start;		/* start seq no. of sack block */
 	tcp_seq end; 		/* end seq no. */
@@ -49,14 +53,20 @@ struct sackhole {
 };
 
 /*
- * Kernel variables for tcp.
+ * TCP sequence queue structures.
  */
+TAILQ_HEAD(tcpqehead, tcpqent);
+struct tcpqent {
+	TAILQ_ENTRY(tcpqent) tcpqe_q;
+	struct tcphdr	*tcpqe_tcp;
+	struct mbuf	*tcpqe_m;	/* mbuf contains packet */
+};
 
 /*
  * Tcp control block, one per tcp; fields:
  */
 struct tcpcb {
-	struct ipqehead segq;		/* sequencing queue */
+	struct tcpqehead t_segq;		/* sequencing queue */
 	struct timeout t_timer[TCPT_NTIMERS];	/* tcp timers */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */

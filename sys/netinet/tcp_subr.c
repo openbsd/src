@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.90 2005/06/30 08:51:31 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.91 2005/08/02 11:05:44 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ tcp_init()
 #endif /* TCP_COMPAT_42 */
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    NULL);
-	pool_init(&tcpqe_pool, sizeof(struct ipqent), 0, 0, 0, "tcpqepl",
+	pool_init(&tcpqe_pool, sizeof(struct tcpqent), 0, 0, 0, "tcpqepl",
 	    NULL);
 	pool_sethardlimit(&tcpqe_pool, tcp_reass_limit, NULL, 0);
 #ifdef TCP_SACK
@@ -492,7 +492,7 @@ tcp_newtcpcb(struct inpcb *inp)
 	if (tp == NULL)
 		return ((struct tcpcb *)0);
 	bzero((char *) tp, sizeof(struct tcpcb));
-	LIST_INIT(&tp->segq);
+	TAILQ_INIT(&tp->t_segq);
 	tp->t_maxseg = tcp_mssdflt;
 	tp->t_maxopd = 0;
 
@@ -628,12 +628,12 @@ tcp_reaper(void *arg)
 int
 tcp_freeq(struct tcpcb *tp)
 {
-	struct ipqent *qe;
+	struct tcpqent *qe;
 	int rv = 0;
 
-	while ((qe = LIST_FIRST(&tp->segq)) != NULL) {
-		LIST_REMOVE(qe, ipqe_q);
-		m_freem(qe->ipqe_m);
+	while ((qe = TAILQ_FIRST(&tp->t_segq)) != NULL) {
+		TAILQ_REMOVE(&tp->t_segq, qe, tcpqe_q);
+		m_freem(qe->tcpqe_m);
 		pool_put(&tcpqe_pool, qe);
 		rv = 1;
 	}
