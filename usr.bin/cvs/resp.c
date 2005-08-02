@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.51 2005/07/26 14:58:58 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.52 2005/08/02 12:06:38 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -120,7 +120,7 @@ struct cvs_resphdlr {
  */
 static char cvs_resp_lastdir[MAXPATHLEN] = "";
 static CVSENTRIES *cvs_resp_lastent = NULL;
-static int resp_check_dir(const char *);
+static int resp_check_dir(struct cvsroot *, const char *);
 
 /*
  * The MT command uses scoping to tag the data.  Whenever we encouter a '+',
@@ -424,6 +424,8 @@ cvs_resp_createdir(char *line)
 	struct cvs_ent *ent;
 	char *file, subdir[MAXPATHLEN], buf[MAXPATHLEN];
 
+	entf = NULL;
+	cf = NULL;
 	cvs_splitpath(line, subdir, sizeof(subdir), &file);
 	base = cvs_file_loadinfo(subdir, CF_NOFILES, NULL, NULL, 1);
 	if (base == NULL)
@@ -439,41 +441,50 @@ cvs_resp_createdir(char *line)
 		}
 
 		cf = cvs_file_create(base, line, DT_DIR, 0755);
-		if (cf == NULL) {
-			cvs_file_free(base);
-			return (-1);
-		}
-
-		/*
-		 * If the Entries file for the parent is already
-		 * open, operate on that, instead of reopening it
-		 * and invalidating the opened list.
-		 */
-		if (!strcmp(subdir, cvs_resp_lastdir))
-			entf = cvs_resp_lastent;
-		else
-			entf = cvs_ent_open(subdir, O_WRONLY);
-
-		/* add a directory entry to the parent */
-		if (entf != NULL) {
-			if ((ent = cvs_ent_get(entf, cf->cf_name)) == NULL) {
-				snprintf(buf, sizeof(buf), "D/%s////",
-				    cf->cf_name);
-				ent = cvs_ent_parse(buf);
-				if (ent == NULL)
-					cvs_log(LP_ERR,
-					    "failed to create directory entry");
-				else
-					cvs_ent_add(entf, ent);
-			}
-
-			if (strcmp(subdir, cvs_resp_lastdir))
-				cvs_ent_close(entf);
-		}
-
-		cvs_file_free(cf);
+	} else {
+		cf = cvs_file_loadinfo(line, CF_NOFILES, NULL, NULL, 1);
 	}
 
+	if (cf == NULL) {
+		cvs_file_free(base);
+		return (-1);
+	}
+
+	/*
+	 * If the Entries file for the parent is already
+	 * open, operate on that, instead of reopening it
+	 * and invalidating the opened list.
+	 */
+	if (!strcmp(subdir, cvs_resp_lastdir))
+		entf = cvs_resp_lastent;
+	else
+		entf = cvs_ent_open(subdir, O_WRONLY);
+
+	/*
+	 * see if the entry is still present. If not, we add it again.
+	 */
+	if (entf != NULL) {
+		if ((ent = cvs_ent_get(entf, cf->cf_name)) == NULL) {
+			l = snprintf(buf, sizeof(buf), "D/%s////", cf->cf_name);
+			if (l == -1 || l >= (int)sizeof(buf)) {
+				cvs_file_free(cf);
+				cvs_file_free(base);
+				return (-1);
+			}
+
+			ent = cvs_ent_parse(buf);
+			if (ent == NULL)
+				cvs_log(LP_ERR,
+				    "failed to create directory entry");
+			else
+				cvs_ent_add(entf, ent);
+		}
+
+		if (strcmp(subdir, cvs_resp_lastdir))
+			cvs_ent_close(entf);
+	}
+
+	cvs_file_free(cf);
 	cvs_file_free(base);
 	return (0);
 }
@@ -499,7 +510,7 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 	if (cvs_getln(root, entbuf, sizeof(entbuf)) < 0)
 		return (-1);
 
-	if (resp_check_dir(line) < 0)
+	if (resp_check_dir(root, line) < 0)
 		return (-1);
 
 	if (type == CVS_RESP_NEWENTRY) {
@@ -647,7 +658,13 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	}
 	ret = 0;
 
-	if (resp_check_dir(line) < 0)
+	/*
+	 * Please be sure the directory does exist.
+	 */
+	if (cvs_resp_createdir(line) < 0)
+		return (-1);
+
+	if (resp_check_dir(root, line) < 0)
 		return (-1);
 
 	if (cvs_modtime != CVS_DATE_DMSEC) {
@@ -732,7 +749,7 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
 		return (-1);
 	}
 
-	if (resp_check_dir(line) < 0)
+	if (resp_check_dir(root, line) < 0)
 		return (-1);
 
 	(void)cvs_ent_remove(cvs_resp_lastent, file);
@@ -874,9 +891,35 @@ cvs_resp_template(struct cvsroot *root, int type, char *line)
  * received directory, if it's not, switch Entry files.
  */
 static int
-resp_check_dir(const char *dir)
+resp_check_dir(struct cvsroot *root, const char *dir)
 {
+	int l;
 	size_t len;
+	char cvspath[MAXPATHLEN], repo[MAXPATHLEN];
+	struct stat st;
+
+	/*
+	 * Make sure the CVS directory exists.
+	 */
+	l = snprintf(cvspath, sizeof(cvspath), "%s/%s", dir, CVS_PATH_CVSDIR);
+	if (l == -1 || l >= (int)sizeof(cvspath))
+		return (-1);
+
+	if (stat(cvspath, &st) == -1) {
+		if (errno != ENOENT)
+			return (-1);
+		if  (cvs_repo_base != NULL) {
+			l = snprintf(repo, sizeof(repo), "%s/%s", cvs_repo_base,
+			    dir);
+			if (l == -1 || l >= (int)sizeof(repo))
+				return (-1);
+		} else {
+			strlcpy(repo, dir, sizeof(repo));
+		}
+
+		if (cvs_mkadmin(dir, root->cr_str, repo) < 0)
+			return (-1);
+	}
 
 	if (strcmp(dir, cvs_resp_lastdir)) {
 		if (cvs_resp_lastent != NULL)
