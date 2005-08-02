@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.3 2005/08/01 05:36:48 brad Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.4 2005/08/02 12:32:07 reyk Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.3 2005/08/01 05:36:48 brad Exp $
+ * $Id: if_ubt.c,v 1.4 2005/08/02 12:32:07 reyk Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -162,7 +162,7 @@ USB_ATTACH(ubt)
 	/* Get USB device info */
 	sc->sc_udev = uaa->device;
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
+	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
