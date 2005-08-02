@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.62 2005/08/02 00:20:11 jsg Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.63 2005/08/02 03:46:52 pvalchev Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.59 2005/08/02 00:19:36 jsg Exp 
+ *	OpenBSD: miidevs,v 1.60 2005/08/02 03:46:07 pvalchev Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -77,8 +77,8 @@
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
 #define	MII_OUI_xxALTIMA	0x000895	/* Altima Communications */
 #define	MII_OUI_xxAMD	0x00606e	/* Advanced Micro Devices */
-
 #define	MII_OUI_xxINTEL	0x00f800	/* Intel (alt) */
+#define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor (alt) */
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
@@ -176,6 +176,8 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_CS8201B	0x0021
+#define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
