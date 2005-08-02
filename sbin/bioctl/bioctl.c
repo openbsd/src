@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.17 2005/08/01 16:39:22 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.18 2005/08/02 20:27:13 jmc Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -141,7 +141,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-aDhi] [-d device | -f disk]\n", __progname);
+	fprintf(stderr, "usage: %s [-Dhi] [-a function] -d device | -f device\n", __progname);
 
 	exit(1);
 }
