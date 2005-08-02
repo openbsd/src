@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.30 2005/04/16 22:19:28 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.31 2005/08/02 18:04:07 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/errno.h>
+#include <sys/malloc.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
 #include <sys/user.h>
@@ -87,12 +88,12 @@ sys_ptrace(p, v, retval)
 	struct uio uio;
 	struct iovec iov;
 	struct ptrace_io_desc piod;
-	struct reg regs;
+	struct reg *regs;
 #if defined (PT_SETFPREGS) || defined (PT_GETFPREGS)
-	struct fpreg fpregs;
+	struct fpreg *fpregs;
 #endif
 #if defined (PT_SETXMMREGS) || defined (PT_GETXMMREGS)
-	struct xmmregs xmmregs;
+	struct xmmregs *xmmregs;
 #endif
 #ifdef PT_WCOOKIE
 	register_t wcookie;
@@ -408,36 +409,43 @@ sys_ptrace(p, v, retval)
 		if ((error = procfs_checkioperm(p, t)) != 0)
 			return (error);
 
-		error = copyin(SCARG(uap, addr), &regs, sizeof(regs));
-		if (error)
-			return (error);
-		PHOLD(p);
-		error = process_write_regs(t, &regs);
-		PRELE(p);
+		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
+		error = copyin(SCARG(uap, addr), regs, sizeof(*regs));
+		if (error == 0) {
+			PHOLD(p);
+			error = process_write_regs(t, regs);
+			PRELE(p);
+		}
+		free(regs, M_TEMP);
 		return (error);
 	case  PT_GETREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
 		if ((error = procfs_checkioperm(p, t)) != 0)
 			return (error);
 
+		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
 		PHOLD(p);
-		error = process_read_regs(t, &regs);
+		error = process_read_regs(t, regs);
 		PRELE(p);
-		if (error)
-			return (error);
-		return (copyout(&regs, SCARG(uap, addr), sizeof (regs)));
+		if (error == 0)
+			error = copyout(regs,
+			    SCARG(uap, addr), sizeof (*regs));
+		free(regs, M_TEMP);
+		return (error);
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
 		if ((error = procfs_checkioperm(p, t)) != 0)
 			return (error);
 
-		error = copyin(SCARG(uap, addr), &fpregs, sizeof(fpregs));
-		if (error)
-			return (error);
-		PHOLD(p);
-		error = process_write_fpregs(t, &fpregs);
-		PRELE(p);
+		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
+		error = copyin(SCARG(uap, addr), fpregs, sizeof(*fpregs));
+		if (error == 0) {
+			PHOLD(p);
+			error = process_write_fpregs(t, fpregs);
+			PRELE(p);
+		}
+		free(fpregs, M_TEMP);
 		return (error);
 #endif
 #ifdef PT_GETFPREGS
@@ -446,12 +454,15 @@ sys_ptrace(p, v, retval)
 		if ((error = procfs_checkioperm(p, t)) != 0)
 			return (error);
 
+		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
 		PHOLD(p);
-		error = process_read_fpregs(t, &fpregs);
+		error = process_read_fpregs(t, fpregs);
 		PRELE(p);
-		if (error)
-			return (error);
-		return (copyout(&fpregs, SCARG(uap, addr), sizeof (fpregs)));
+		if (error == 0)
+			error = copyout(fpregs,
+			    SCARG(uap, addr), sizeof(*fpregs));
+		free(fpregs, M_TEMP);
+		return (error);
 #endif
 #ifdef PT_SETXMMREGS
 	case  PT_SETXMMREGS:
@@ -459,12 +470,14 @@ sys_ptrace(p, v, retval)
 		if ((error = procfs_checkioperm(p, t)) != 0)
 			return (error);
 
-		error = copyin(SCARG(uap, addr), &xmmregs, sizeof(xmmregs));
-		if (error)
-			return (error);
-		PHOLD(p);
-		error = process_write_xmmregs(t, &xmmregs);
-		PRELE(p);
+		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
+		error = copyin(SCARG(uap, addr), xmmregs, sizeof(*xmmregs));
+		if (error == 0) {
+			PHOLD(p);
+			error = process_write_xmmregs(t, xmmregs);
+			PRELE(p);
+		}
+		free(xmmregs, M_TEMP);
 		return (error);
 #endif
 #ifdef PT_GETXMMREGS
@@ -473,12 +486,15 @@ sys_ptrace(p, v, retval)
 		if ((error = procfs_checkioperm(p, t)) != 0)
 			return (error);
 
+		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
 		PHOLD(p);
-		error = process_read_xmmregs(t, &xmmregs);
+		error = process_read_xmmregs(t, xmmregs);
 		PRELE(p);
-		if (error)
-			return (error);
-		return (copyout(&xmmregs, SCARG(uap, addr), sizeof (xmmregs)));
+		if (error == 0)
+			error = copyout(xmmregs,
+			    SCARG(uap, addr), sizeof(*xmmregs));
+		free(xmmregs, M_TEMP);
+		return (error);
 #endif
 #ifdef PT_WCOOKIE
 	case  PT_WCOOKIE:
