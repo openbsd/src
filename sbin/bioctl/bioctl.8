@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.14 2005/07/29 16:59:13 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.15 2005/08/02 11:53:28 marco Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm bioctl
 .Bk -words
-.Op Fl Dhi
+.Op Fl aDhi
 .Fl d Ar device |
 .Fl f Ar device
 .Ek
@@ -42,6 +42,26 @@ provides a generic interface for RAID management.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar function
+Control the RAID card's alarm functionality,
+if it supports it.
+.Ar function
+may be one of:
+.Dq get
+(retrieve the current state of the alarm (enabled or disabled)),
+.Dq enable
+(enable the alarm on the RAID controller),
+.Dq disable
+(disable the alarm on the RAID controller),
+.Dq silence
+or
+.Dq quiet
+(silence the alarm if it is currently beeping).
+.Pp
+.Ar function
+may be specified as given above,
+or by the first letter only
+(e.g. -a e).
 .It Fl D
 Enable debug output.
 .It Fl d Ar device
@@ -62,6 +82,8 @@ was specified, enumerate all or only selected RAID device(s), respectively.
 .El
 .Sh SEE ALSO
 .Xr ami 4 ,
+.Xr gdt 4 ,
+.Xr mpt 4 ,
 .Xr bio 4 ,
 .Xr scsi 4
 .Sh HISTORY
