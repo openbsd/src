@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.20 2005/05/28 19:46:07 jsg Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.21 2005/08/02 21:49:46 pascoe Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ cardbus_attach_card(sc)
   cardbustag_t tag;
   cardbusreg_t id, class, cis_ptr;
   cardbusreg_t bhlc;
-  u_int8_t tuple[2048];
+  u_int8_t *tuple;
   int function, nfunction;
   struct cardbus_devfunc **previous_next = &(sc->sc_funcs);
   struct device *csc;
@@ -437,6 +437,11 @@ cardbus_attach_card(sc)
   bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
   DPRINTF(("%s bhlc 0x%08x -> ", sc->sc_dev.dv_xname, bhlc));
   nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
+
+  tuple = malloc(2048, M_TEMP, M_NOWAIT);
+  if (tuple == NULL) {
+     panic("no room for cardbus tuples");
+  }
 
   for(function = 0; function < nfunction; function++) {
     struct cardbus_attach_args ca;
@@ -527,7 +532,7 @@ cardbus_attach_card(sc)
     ca.ca_intrline = sc->sc_intrline;
 
     if (cis_ptr != 0) {
-	if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
+	if(cardbus_read_tuples(&ca, cis_ptr, tuple, 2048)) {
 	   printf("cardbus_attach_card: failed to read CIS\n");
 	} else {
 #ifdef CARDBUS_DEBUG
@@ -554,6 +559,7 @@ cardbus_attach_card(sc)
    * if no functions were attached).
    */
   disable_function(sc, 8);
+  free(tuple, M_TEMP);
 
   return no_work_funcs;
 }
