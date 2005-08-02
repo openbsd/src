@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.71 2005/07/31 18:16:19 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.72 2005/08/02 10:42:40 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -982,8 +982,11 @@ Aliases:
 .Ic his .
 .It Xo Ic import
 .Op Fl b Ar branch
+.Op Fl I Ar ign
+.Op Fl k Ar mode
 .Op Fl m Ar msg
-.Ar repository
+.Op Fl W Ar spec
+.Ar module
 .Ar vendortag
 .Ar releasetag
 .Xc
@@ -991,7 +994,7 @@ Aliases:
 Import sources into CVS using vendor branches.
 .Pp
 At least three arguments are required:
-.Ar repository
+.Ar module
 specifies the location of the sources to be imported;
 .Ar vendortag
 is a tag for the entire branch;
@@ -1005,8 +1008,19 @@ command takes the following options:
 .Bl -tag -width Ds -offset 3n
 .It Fl b Ar branch
 Specify the first-level branch number.
+.It Fl I Ar ign
+Ignore files specified by
+.Ar ign .
+This option can be used several times on the command line.
+To see all files, use the
+.Fl I Ar !\&
+specification.
+.It Fl k Ar mode
+Specify the keyword substitution mode (is sticky).
 .It Fl m Ar msg
 Specify the log message to send.
+.It Fl W Ar spec
+Wrappers specification line.
 .El
 .Pp
 Aliases:
