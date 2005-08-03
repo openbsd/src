@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.78 2005/08/01 19:48:18 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.79 2005/08/03 14:43:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,8 +64,9 @@ int   cvs_cmdop;
 char *cvs_rootstr;
 char *cvs_rsh = CVS_RSH_DEFAULT;
 char *cvs_editor = CVS_EDITOR_DEFAULT;
-char *cvs_repo_base = NULL;
+char *cvs_homedir = NULL;
 char *cvs_msg = NULL;
+char *cvs_repo_base = NULL;
 
 /* hierarchy of all the files affected by the command */
 CVSFILE *cvs_files;
@@ -97,6 +98,7 @@ main(int argc, char **argv)
 	char *envstr, *cmd_argv[CVS_CMD_MAXARG], **targv;
 	int i, ret, cmd_argc;
 	struct cvs_cmd *cmdp;
+	struct passwd *pw;
 
 	TAILQ_INIT(&cvs_variables);
 
@@ -123,6 +125,16 @@ main(int argc, char **argv)
 
 	if ((envstr = getenv("CVSREAD")) != NULL)
 		cvs_readonly = 1;
+
+	if ((cvs_homedir = getenv("HOME")) == NULL) {
+		pw = getpwuid(getuid());
+		if (pw == NULL) {
+			cvs_log(LP_NOTICE,
+				"failed to get user's password entry");
+			exit(1);
+		}
+		cvs_homedir = pw->pw_dir;
+        }
 
 	ret = cvs_getopt(argc, argv);
 
@@ -330,25 +342,13 @@ cvs_getopt(int argc, char **argv)
 static void
 cvs_read_rcfile(void)
 {
-	char rcpath[MAXPATHLEN], linebuf[128], *envstr, *home, *lp, *p;
+	char rcpath[MAXPATHLEN], linebuf[128], *lp, *p;
 	int l, linenum = 0;
 	size_t len;
 	struct cvs_cmd *cmdp;
-	struct passwd *pw;
 	FILE *fp;
 
-	pw = getpwuid(getuid());
-	if (pw == NULL) {
-		cvs_log(LP_NOTICE, "failed to get user's password entry");
-		return;
-	}
-
-	if ((envstr = getenv("HOME")) != NULL)
-		home = envstr;
-	else
-		home = pw->pw_dir;
-
-	l = snprintf(rcpath, sizeof(rcpath), "%s/%s", home, CVS_PATH_RC);
+	l = snprintf(rcpath, sizeof(rcpath), "%s/%s", cvs_homedir, CVS_PATH_RC);
 	if (l == -1 || l >= (int)sizeof(rcpath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcpath);

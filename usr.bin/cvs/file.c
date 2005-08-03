@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.110 2005/07/30 21:16:17 moritz Exp $	*/
+/*	$OpenBSD: file.c,v 1.111 2005/08/03 14:43:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -128,7 +128,6 @@ cvs_file_init(void)
 	size_t len;
 	char path[MAXPATHLEN], buf[MAXNAMLEN];
 	FILE *ifp;
-	struct passwd *pwd;
 
 	TAILQ_INIT(&cvs_ign_pats);
 
@@ -140,35 +139,30 @@ cvs_file_init(void)
 		cvs_file_ignore(cvs_ign_std[i]);
 
 	/* read the cvsignore file in the user's home directory, if any */
-	pwd = getpwuid(getuid());
-	if (pwd != NULL) {
-		l = snprintf(path, sizeof(path), "%s/.cvsignore", pwd->pw_dir);
-		if (l == -1 || l >= (int)sizeof(path)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", path);
-			return (-1);
-		}
+	l = snprintf(path, sizeof(path), "%s/.cvsignore", cvs_homedir);
+	if (l == -1 || l >= (int)sizeof(path)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", path);
+		return (-1);
+	}
 
-		ifp = fopen(path, "r");
-		if (ifp == NULL) {
-			if (errno != ENOENT)
-				cvs_log(LP_ERRNO,
-				    "failed to open user's cvsignore file "
-				    "`%s'", path);
-		} else {
-			while (fgets(buf, sizeof(buf), ifp) != NULL) {
-				len = strlen(buf);
-				if (len == 0)
-					continue;
-				if (buf[len - 1] != '\n') {
-					cvs_log(LP_ERR, "line too long in `%s'",
-					    path);
-				}
-				buf[--len] = '\0';
-				cvs_file_ignore(buf);
+	ifp = fopen(path, "r");
+	if (ifp == NULL) {
+		if (errno != ENOENT)
+			cvs_log(LP_ERRNO,
+			    "failed to open user's cvsignore file `%s'", path);
+	} else {
+		while (fgets(buf, sizeof(buf), ifp) != NULL) {
+			len = strlen(buf);
+			if (len == 0)
+				continue;
+			if (buf[len - 1] != '\n') {
+				cvs_log(LP_ERR, "line too long in `%s'", path);
 			}
-			(void)fclose(ifp);
+			buf[--len] = '\0';
+			cvs_file_ignore(buf);
 		}
+		(void)fclose(ifp);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.75 2005/07/27 10:36:13 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.76 2005/08/03 14:43:08 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -298,6 +298,7 @@ extern char *cvs_req_modulename;
 extern char *cvs_repo_base;
 extern char *cvs_command;
 extern char *cvs_editor;
+extern char *cvs_homedir;
 extern char *cvs_msg;
 extern char *cvs_rsh;
 
