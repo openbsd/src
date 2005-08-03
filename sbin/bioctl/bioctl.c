@@ -1,4 +1,5 @@
-/* $OpenBSD: bioctl.c,v 1.18 2005/08/02 20:27:13 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.19 2005/08/03 02:39:55 deraadt Exp $       */
+
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -56,56 +57,42 @@ int
 main(int argc, char *argv[])
 {
 	extern char *optarg;
-
 	u_int64_t func = 0;
 	/* u_int64_t subfunc = 0; */
-
-	int ch;
-	int rv;
-
-	char *bioc_dev = NULL;
-	char *sd_dev = NULL;
-	char *realname = NULL;
-	char *al_arg = NULL; /* argument to alarm */
+	char *bioc_dev = NULL, *sd_dev = NULL;
+	char *realname = NULL, *al_arg = NULL;
+	int ch, rv;
 
 	if (argc < 2)
 		usage();
 
-	atexit(cleanup);
-
-	while ((ch = getopt(argc, argv, "a:Dd:f:hi")) != -1) {
+	while ((ch = getopt(argc, argv, "a:Di")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
 			al_arg = optarg;
 			break;
-
 		case 'D': /* debug */
 			debug = 1;
 			break;
-
-		case 'd': /* bio device */
-			bioc_dev = optarg;
-			break;
-
-		case 'f': /* scsi device */
-			sd_dev = optarg;
-			break;
-
 		case 'i': /* inquiry */
 			func |= BIOC_INQ;
 			break;
-
-		case 'h': /* help/usage */
-			/* FALLTHROUGH */
 		default:
 			usage();
 			/* NOTREACHED */
 		}
 	}
+	argc -= optind;
+	argv += optind;
 
-	if (sd_dev && bioc_dev)
-		err(1, "-d and -f are mutually exclusive");
+	if (argc < 0 || argc > 1)
+		usage();
+
+	if (strncmp(argv[0], "sd", 2) == 0)
+		sd_dev = argv[0];
+	else
+		bioc_dev = argv[0];
 
 	if (bioc_dev) {
 		devh = open(bio_device, O_RDWR);
@@ -118,7 +105,7 @@ main(int argc, char *argv[])
 			errx(1, "Can't locate %s device via %s",
 			    bl.name, bio_device);
 	} else if (sd_dev) {
-	        devh = opendev(sd_dev, O_RDWR, OPENDEV_PART, &realname);
+		devh = opendev(sd_dev, O_RDWR, OPENDEV_PART, &realname);
 		if (devh == -1)
 			err(1, "Can't open %s", sd_dev);
 	} else
@@ -141,19 +128,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-Dhi] [-a function] -d device | -f device\n", __progname);
-
+	fprintf(stderr,
+	    "usage: %s [-Di] [-a function] [device | drive]\n", __progname);
 	exit(1);
-}
-
-void
-cleanup(void)
-{
-	if (debug)
-		printf("atexit\n");
-
-	if (devh != -1)
-		close(devh);
 }
 
 void
@@ -162,7 +139,6 @@ bio_inq(void)
 	bioc_inq bi;
 	bioc_vol bv;
 	bioc_disk bd;
-
 	int rv, i, d;
 
 	memset(&bi, 0, sizeof(bi));
