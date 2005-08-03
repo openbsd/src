@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.19 2005/04/15 03:13:03 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.20 2005/08/03 16:27:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -675,6 +675,8 @@ struct rl_softc {
 /*
  * register space access macros
  */
+#define CSR_WRITE_RAW_4(sc, csr, val) \
+	bus_space_write_raw_region_4(sc->rl_btag, sc->rl_bhandle, csr, val, 4)
 #define CSR_WRITE_4(sc, csr, val) \
 	bus_space_write_4(sc->rl_btag, sc->rl_bhandle, csr, val)
 #define CSR_WRITE_2(sc, csr, val) \
