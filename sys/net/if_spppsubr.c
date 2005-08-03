@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.34 2005/06/08 06:55:33 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.35 2005/08/03 21:50:21 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1269,6 +1269,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	int len = m->m_pkthdr.len;
 	int rv;
 	u_char *p;
+	u_long nmagic;
 
 	if (len < 4) {
 		if (debug)
@@ -1554,14 +1555,23 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				       SPP_ARGS(ifp), len);
 			break;
 		}
-		if (ntohl (*(long*)(h+1)) == sp->lcp.magic) {
+
+		nmagic = (u_long)p[0] << 24 |
+		    (u_long)p[1] << 16 | p[2] << 8 | p[3];
+
+		if (nmagic == sp->lcp.magic) {
 			/* Line loopback mode detected. */
 			printf(SPP_FMT "loopback\n", SPP_ARGS(ifp));
 			/* Shut down the PPP link. */
  			lcp.Close(sp);
 			break;
 		}
-		*(long*)(h+1) = htonl (sp->lcp.magic);
+
+		p[0] = sp->lcp.magic >> 24;
+		p[1] = sp->lcp.magic >> 16;
+		p[2] = sp->lcp.magic >> 8;
+		p[3] = sp->lcp.magic;
+
 		if (debug)
 			addlog(SPP_FMT "got lcp echo req, sending echo rep\n",
 			       SPP_ARGS(ifp));
@@ -1584,7 +1594,11 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (debug)
 			addlog(SPP_FMT "lcp got echo rep\n",
 			       SPP_ARGS(ifp));
-		if (ntohl (*(long*)(h+1)) != sp->lcp.magic)
+		    
+		nmagic = (u_long)p[0] << 24 |
+		    (u_long)p[1] << 16 | p[2] << 8 | p[3];
+
+		if (nmagic != sp->lcp.magic)
 			sp->pp_alivecnt = 0;
 		break;
 	default:
