@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.10 2002/04/16 15:37:04 miod Exp $
+#	$OpenBSD: Makefile,v 1.11 2005/08/03 00:16:01 millert Exp $
 
 RELOC=0x6F0000 
 SIZE?=	size
@@ -29,7 +29,8 @@ ALL=	${BOOTS}
 all: ${ALL}
 
 bootst.bug:	${OBJS} ${BUGCRT} ${LIBS}
-	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
+	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} \
+	    `cc -print-libgcc-file-name` -o $@
 	@${SIZE} bootst.bug
 
 bootst stboot: bootst.bug ${WRTVID}

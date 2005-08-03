@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2003/08/19 10:22:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2005/08/03 00:16:02 millert Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
@@ -19,11 +19,12 @@ MDEC_DIR?=/usr/mdec
 all:	sboot rboot
 
 sboot.tmp:	XSRT0.o oc_cksum.o ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -T 0x4000 XSRT0.o ${OBJS} oc_cksum.o -o $@ ${LIBS}
+	${LD} ${LDFLAGS} -T 0x4000 XSRT0.o ${OBJS} oc_cksum.o -o $@ \
+	    ${LIBS} `cc -print-libgcc-file-name`
 
 rboot.tmp:	XBUG.o XSRT0.o oc_cksum.o ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -T 0xffa00000 -Tdata 0x4000 XBUG.o XSRT0.o \
-	    ${OBJS} oc_cksum.o -o $@ ${LIBS}
+	    ${OBJS} oc_cksum.o -o $@ ${LIBS} `cc -print-libgcc-file-name`
 
 srec:	srec.c
 	${HOSTCC} -o $@ ${.CURDIR}/srec.c 

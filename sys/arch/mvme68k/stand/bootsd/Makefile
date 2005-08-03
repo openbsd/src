@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.13 2002/04/16 15:37:00 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2005/08/03 00:16:01 millert Exp $
 
 RELOC=0x6F0000 
 
@@ -19,7 +19,6 @@ CLEANFILES+=bootsd
 SRCS=   boot.c conf.c version.c
 
 LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} 
-#libgcc.a
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
@@ -30,7 +29,7 @@ all: ${ALL}
 
 bootsd: ${OBJS} ${BUGCRT} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${BUGCRT} ${OBJS} ${LIBS}
+		${BUGCRT} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
 #${SRTOBJ}
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
