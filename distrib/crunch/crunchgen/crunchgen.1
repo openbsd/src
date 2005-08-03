@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.1,v 1.16 2005/08/02 11:25:05 espie Exp $
+.\"	$OpenBSD: crunchgen.1,v 1.17 2005/08/03 22:39:54 espie Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -60,7 +60,9 @@ For each component program,
 .Nm
 can optionally attempt to determine the object (.o) files that make up
 the program from its source directory Makefile.
-This information is cached between runs.
+This information is cached in a file named
+.Pa <conf-name>.cache 
+between runs.
 .Nm
 uses the companion program
 .Xr crunchide 1

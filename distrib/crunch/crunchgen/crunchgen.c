@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.22 2005/08/02 11:25:05 espie Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.23 2005/08/03 22:39:54 espie Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -42,7 +42,7 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
-#define CRUNCH_VERSION	"0.2"
+#define CRUNCH_VERSION	"0.3"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -910,7 +910,7 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 		fprintf(outmk, "%s_OBJS=", p->ident);
 		output_strlst(outmk, p->objs);
 		fprintf(outmk, "%s_make:\n", p->ident);
-		fprintf(outmk, "\tcd $(%s_SRCDIR) && $(MAKE) -f %s $(%s_OBJS)\n\n",
+		fprintf(outmk, "\tcd $(%s_SRCDIR) && exec $(MAKE) -f %s $(%s_OBJS)\n\n",
 		    p->ident, p->mf_name, p->ident);
 	} else
 		fprintf(outmk, "%s_make:\n\t@echo \"** cannot make objs for %s\"\n\n",
@@ -922,8 +922,8 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 	fprintf(outmk, "%s_stub.c:\n", p->name);
 	fprintf(outmk, "\techo \""
 	    "int _crunched_%s_stub(int argc, char **argv, char **envp)"
-	    "{return main(argc,argv,envp);}\" >%s_stub.c\n",
-	    p->ident, p->name);
+	    "{return main(argc,argv,envp);}\" >$@\n",
+	    p->ident);
 	fprintf(outmk, "%s.lo: %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->name, p->ident);
 	fprintf(outmk, "\t$(LINK) -o $@ %s_stub.o $(%s_OBJPATHS)\n",
