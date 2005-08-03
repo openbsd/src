@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.4 2005/08/03 00:01:08 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.5 2005/08/03 00:09:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -157,6 +157,8 @@ ciss_attach(struct ciss_softc *sc)
 	sc->cfg.int_count = 0;
 	strlcpy(sc->cfg.hostname, "HUMPPA", sizeof(sc->cfg.hostname));
 	sc->cfg.driverf |= CISS_DRV_PRF;	/* enable prefetch */
+	if (!sc->cfg.maxsg)
+		sc->cfg.maxsg = MAXPHYS / PAGE_SIZE;
 
 	bus_space_write_region_4(sc->iot, sc->cfg_ioh, sc->cfgoff,
 	    (u_int32_t *)&sc->cfg, sizeof(sc->cfg) / 4);
