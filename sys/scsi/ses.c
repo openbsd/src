@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.10 2005/08/02 03:35:14 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.11 2005/08/03 15:00:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -90,8 +90,8 @@ int	ses_read_status(struct ses_softc *, int refresh);
 int	ses_make_sensors(struct ses_softc *, struct ses_type_desc *, int);
 int	ses_refresh_sensors(struct ses_softc *);
 
-int64_t	ses_cool2rpm(struct ses_status *);
-int64_t	ses_temp2uK(struct ses_status *);
+void	ses_cool2sensor(struct ses_sensor *);
+void	ses_temp2sensor(struct ses_sensor *);
 
 #ifdef SES_DEBUG
 void	ses_dump_enc_desc(struct ses_enc_desc *);
@@ -345,15 +345,6 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 
 			switch (types[i].type) {
 			case SES_T_COOLING:
-				/*
-				 * if the fan is on but not showing an rpm
-				 * then skip it
-				 */
-				if ((SES_S_COOL_CODE(status) !=
-				    SES_S_COOL_C_STOPPED) &&
-				    SES_S_COOL_SPEED(status) == 0)
-					continue;
-
 				stype = SENSOR_FANRPM;
 				fmt = "fan%d";
 				break;
@@ -417,13 +408,34 @@ ses_refresh_sensors(struct ses_softc *sc)
 		    sensor->se_stat->f1, sensor->se_stat->f2,
 		    sensor->se_stat->f3);
 
+		switch (SES_STAT_CODE(sensor->se_stat->com)) {
+		case SES_STAT_CODE_OK:
+			sensor->se_sensor.status = SENSOR_S_OK;
+			break;
+
+		case SES_STAT_CODE_CRIT:
+		case SES_STAT_CODE_UNREC:
+			sensor->se_sensor.status = SENSOR_S_CRIT;
+			break;
+
+		case SES_STAT_CODE_NONCRIT:
+			sensor->se_sensor.status = SENSOR_S_WARN;
+			break;
+
+		case SES_STAT_CODE_NOTINST:
+		case SES_STAT_CODE_UNKNOWN:
+		case SES_STAT_CODE_NOTAVAIL:
+			sensor->se_sensor.status = SENSOR_S_UNKNOWN;
+			break;
+		}
+
 		switch (sensor->se_type) {
 		case SES_T_COOLING:
-			sensor->se_sensor.value = ses_cool2rpm(sensor->se_stat);
+			ses_cool2sensor(sensor);
 			break;
 
 		case SES_T_TEMP:
-			sensor->se_sensor.value = ses_temp2uK(sensor->se_stat);
+			ses_temp2sensor(sensor);
 			break;
 
 		default:
@@ -435,28 +447,27 @@ ses_refresh_sensors(struct ses_softc *sc)
 	return (ret);
 }
 
-int64_t
-ses_cool2rpm(struct ses_status *status)
+void
+ses_cool2sensor(struct ses_sensor *s)
 {
-	int64_t				rpm;
+	s->se_sensor.value = (int64_t)SES_S_COOL_SPEED(s->se_stat);
+	s->se_sensor.value *= SES_S_COOL_FACTOR;
 
-	rpm = (int64_t)SES_S_COOL_SPEED(status);
-	rpm *= SES_S_COOL_FACTOR;
-
-	return (rpm);
+	/* if the fan is on but not showing an rpm then mark as unknown */
+	if (SES_S_COOL_CODE(s->se_stat) != SES_S_COOL_C_STOPPED &&
+	    s->se_sensor.value == 0)
+		s->se_sensor.flags |= SENSOR_FUNKNOWN;
+	else
+		s->se_sensor.flags &= ~SENSOR_FUNKNOWN;
 }
 
-int64_t
-ses_temp2uK(struct ses_status *status)
+void
+ses_temp2sensor(struct ses_sensor *s)
 {
-	int64_t				temp;
-
-	temp = (int64_t)SES_S_TEMP(status);
-	temp += SES_S_TEMP_OFFSET;
-	temp *= 1000000; /* convert to micro (mu) degrees */
-	temp += 273150000; /* convert to kelvin */
-
-	return (temp);
+	s->se_sensor.value = (int64_t)SES_S_TEMP(s->se_stat);
+	s->se_sensor.value += SES_S_TEMP_OFFSET;
+	s->se_sensor.value *= 1000000; /* convert to micro (mu) degrees */
+	s->se_sensor.value += 273150000; /* convert to kelvin */
 }
 
 #ifdef SES_DEBUG
