@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.21 2005/08/03 00:51:43 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.22 2005/08/03 01:12:19 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -296,10 +296,10 @@ int pfsync_pack_state(u_int8_t, struct pf_state *, int);
 	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
 #define pfsync_delete_state(st) do {				\
-	if (!st->sync_flags)					\
+	if (!st->sync_flags &&					\
+	    st->creatorid == pf_status.hostid)			\
 		pfsync_pack_state(PFSYNC_ACT_DEL, (st),		\
 		    PFSYNC_FLAG_COMPRESS);			\
-	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
 int pfsync_update_tdb(struct tdb *);
 #endif
