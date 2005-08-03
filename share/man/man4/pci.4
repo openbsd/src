@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.119 2005/07/28 01:43:31 brad Exp $
+.\"	$OpenBSD: pci.4,v 1.120 2005/08/03 00:23:49 mickey Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -155,6 +155,10 @@ MegaRAID family
 controllers.
 .It Xr cac 4
 Compaq Smart ARRAY
+.Tn RAID
+controllers.
+.It Xr ciss 4
+Compaq Smart ARRAY 5* and 6*
 .Tn RAID
 controllers.
 .It Xr dpt 4
@@ -492,6 +496,7 @@ driver.
 .Xr cac 4 ,
 .Xr cardbus 4 ,
 .Xr cia 4 ,
+.Xr ciss 4 ,
 .Xr clcs 4 ,
 .Xr clct 4 ,
 .Xr cmpci 4 ,
