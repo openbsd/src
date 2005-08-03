@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2005/06/17 23:50:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.8 2005/08/03 16:30:34 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -180,5 +180,7 @@ ukphy*		at mii?		# generic unknown PHYs
 #ch*	at scsibus?
 #ss*	at scsibus?
 #uk*	at scsibus?
+#safte*	at scsibus?
+#ses*	at scsibus?
 
 #pseudo-device	wsmux	2	# mouse and keyboard multiplexor

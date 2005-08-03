@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2005/06/17 23:50:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.28 2005/08/03 16:30:34 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -90,9 +90,11 @@ scsibus* at siop?
 sd*	at scsibus?		# SCSI disk drives
 st*	at scsibus?		# SCSI tape drives
 cd*	at scsibus?		# SCSI CD-ROM drives
-#ch*	at scsibus?		# SCSI auto-changers
-#uk*	at scsibus?		# SCSI unknown device
-#ss*	at scsibus?		# SCSI scanner
+ch*	at scsibus?		# SCSI auto-changers
+uk*	at scsibus?		# SCSI unknown device
+ss*	at scsibus?		# SCSI scanner
+safte*	at scsibus?		# SCSI accessed fault-tolerant enclosures
+ses*	at scsibus?		# SCSI enclosure services
 
 # PCI IDE Controllers and Devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
