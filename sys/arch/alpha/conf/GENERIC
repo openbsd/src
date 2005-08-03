@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.152 2005/06/20 23:09:28 martin Exp $
+#	$OpenBSD: GENERIC,v 1.153 2005/08/03 02:10:43 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -307,6 +307,8 @@ sd*	at scsibus?
 ss*	at scsibus?
 st*	at scsibus?
 ch*	at scsibus?
+safte*	at scsibus?
+ses*	at scsibus?
 uk*	at scsibus?
 
 # IDE controllers

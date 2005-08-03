@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.76 2005/06/21 17:43:34 martin Exp $
+#	$OpenBSD: GENERIC,v 1.77 2005/08/03 02:10:44 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -299,6 +299,8 @@ st*	at scsibus?
 cd*	at scsibus?
 ch*	at scsibus?
 ss*	at scsibus?
+safte*	at scsibus?
+ses*	at scsibus?
 uk*	at scsibus?
 
 pseudo-device	wsmux	2	# mouse and keyboard multiplexor

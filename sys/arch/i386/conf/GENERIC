@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.422 2005/07/28 20:12:13 grange Exp $
+#	$OpenBSD: GENERIC,v 1.423 2005/08/03 02:10:44 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -334,6 +334,8 @@ st*	at scsibus?		# SCSI tape drives
 cd*	at scsibus?		# SCSI CD-ROM drives
 ch*	at scsibus?		# SCSI autochangers
 ss*	at scsibus?		# SCSI scanners
+safte*	at scsibus?		# SCSI accessed fault-tolerant enclosures
+ses*	at scsibus?		# SCSI enclosure services
 uk*	at scsibus?		# unknown SCSI
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
