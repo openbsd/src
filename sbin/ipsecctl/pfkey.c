@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.17 2005/08/02 15:47:25 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.18 2005/08/03 15:27:01 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -537,6 +537,13 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			len = (sident->sadb_ident_len * sizeof(uint64_t)) -
 			    sizeof(struct sadb_ident);
 
+			if (rule->auth == NULL) {
+				rule->auth = calloc(1, sizeof(struct
+				    ipsec_auth));
+				if (rule->auth == NULL)
+					err(1, "calloc");
+			}
+
 			rule->auth->srcid = calloc(1, len);
 			if (rule->auth->srcid == NULL)
 				err(1, "calloc");
@@ -548,6 +555,13 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			sident = (struct sadb_ident *)ext;
 			len = (sident->sadb_ident_len * sizeof(uint64_t)) -
 			    sizeof(struct sadb_ident);
+
+			if (rule->auth == NULL) {
+				rule->auth = calloc(1, sizeof(struct
+				    ipsec_auth));
+				if (rule->auth == NULL)
+					err(1, "calloc");
+			}
 
 			rule->auth->dstid = calloc(1, len);
 			if (rule->auth->dstid == NULL)

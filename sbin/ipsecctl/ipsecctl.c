@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.20 2005/08/02 15:47:25 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.21 2005/08/03 15:27:01 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -226,12 +226,14 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 	ipsecctl_print_addr(r->peer);
 
 	if (opts & IPSECCTL_OPT_VERBOSE) {
-		if (r->auth->srcid)
-			printf("\n\tsrcid %s", r->auth->srcid);
-		if (r->auth->dstid)
-			printf("\n\tdstid %s", r->auth->dstid);
-		if (r->auth->type > 0)
-			printf("\n\t%s", auth[r->auth->type]);
+		if (r->auth) {
+			if (r->auth->srcid)
+				printf("\n\tsrcid %s", r->auth->srcid);
+			if (r->auth->dstid)
+				printf("\n\tdstid %s", r->auth->dstid);
+			if (r->auth->type > 0)
+				printf("\n\t%s", auth[r->auth->type]);
+		}
 		printf("\n\ttype %s", flowtype[r->flowtype]);
 	}
 }
