@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.123 2005/07/20 16:56:12 miod Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.124 2005/08/03 14:53:39 dlg Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.123 2005/07/20 16:56:12 miod Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.124 2005/08/03 14:53:39 dlg Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,6 +212,7 @@ int sysctl_shminfo(char *, char **, int *, int, int *);
 int sysctl_watchdog(char *, char **, int *, int, int *);
 int sysctl_tc(char *, char **, int *, int, int *);
 int sysctl_sensors(char *, char **, int *, int, int *);
+void print_sensor(struct sensor *);
 int sysctl_emul(char *, char *, int);
 #ifdef CPU_CHIPSET
 int sysctl_chipset(char *, char **, int *, int, int *);
@@ -950,24 +951,7 @@ parse(char *string, int flags)
 		if (size > 0 && (s->flags & SENSOR_FINVALID) == 0) {
 			if (!nflag)
 				printf("%s%s", string, equ);
-			printf("%s, %s, ", s->device, s->desc);
-			switch (s->type) {
-			case SENSOR_TEMP:
-				printf("temp, %.2f degC / %.2f degF",
-				    (s->value - 273150000) / 1000000.0,
-				    (s->value - 273150000) / 1000000.0 * 9 / 5 +
-				    32);
-				break;
-			case SENSOR_FANRPM:
-				printf("fanrpm, %lld RPM", s->value);
-				break;
-			case SENSOR_VOLTS_DC:
-				printf("volts_dc, %.2f V",
-				    s->value / 1000000.0);
-				break;
-			default:
-				printf("unknown");
-			}
+			print_sensor(s);
 			printf("\n");
 		}
 		return;
@@ -2125,6 +2109,46 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[2] = atoi(name);
 	*typep = CTLTYPE_STRUCT;
 	return (3);
+}
+
+void
+print_sensor(struct sensor *s)
+{
+	printf("%s, %s, ", s->device, s->desc);
+	switch (s->status) {
+	case SENSOR_S_OK:
+		printf("OK, ");
+		break;
+	case SENSOR_S_WARN:
+		printf("WARNING, ");
+		break;
+	case SENSOR_S_CRIT:
+		printf("CRITICAL, ");
+		break;
+	case SENSOR_S_UNKNOWN:
+		printf("UNKNOWN, ");
+		break;
+	}
+
+	if (s->flags & SENSOR_FUNKNOWN)
+		printf("unknown");
+	else {
+		switch (s->type) {
+		case SENSOR_TEMP:
+			printf("temp, %.2f degC / %.2f degF",
+			    (s->value - 273150000) / 1000000.0,
+			    (s->value - 273150000) / 1000000.0 * 9 / 5 + 32);
+			break;
+		case SENSOR_FANRPM:
+			printf("fanrpm, %lld RPM", s->value);
+			break;
+		case SENSOR_VOLTS_DC:
+			printf("volts_dc, %.2f V", s->value / 1000000.0);
+			break;
+		default:
+			printf("unknown");
+		}
+	}
 }
 
 struct emulname {

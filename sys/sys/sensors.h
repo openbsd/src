@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.5 2005/04/08 05:01:47 jolan Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.6 2005/08/03 14:53:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -43,6 +43,15 @@ enum sensor_type {
 	SENSOR_INTEGER			/* generic integer value */
 };
 
+/* Sensor states */
+enum sensor_status {
+	SENSOR_S_UNSPEC,		/* status is unspecified */
+	SENSOR_S_OK,			/* status is ok */
+	SENSOR_S_WARN,			/* status is warning */
+	SENSOR_S_CRIT,			/* status is critical */
+	SENSOR_S_UNKNOWN		/* status is unknown */
+};
+
 /* Sensor data */
 struct sensor {
 	SLIST_ENTRY(sensor) list;
@@ -52,8 +61,10 @@ struct sensor {
 	char desc[32];			/* sensor description */
 	int64_t value;			/* current value */
 	u_int rfact;			/* resistor factor */
+	enum sensor_status status;	/* sensor status */
 	int flags;			/* sensor flags */
 #define SENSOR_FINVALID		0x0001	/* sensor is invalid */
+#define SENSOR_FUNKNOWN		0x0002	/* sensor value is unknown */
 };
 
 SLIST_HEAD(sensors_head, sensor);
