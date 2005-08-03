@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.32 2005/07/14 19:27:18 jmc Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.33 2005/08/03 09:20:30 jmc Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -24,7 +24,7 @@
 initializes the system so you can use S/Key one-time passwords to log in.
 The program will ask you to enter a secret passphrase which is used by
 .Xr skey 1
-to generate one-time passwords;
+to generate one-time passwords:
 enter a phrase of several words in response.
 After the S/Key database
 has been updated you can log in using either your regular password
@@ -44,9 +44,9 @@ option.
 .Pp
 Before initializing an S/Key entry, the user must authenticate
 using either a standard password or an S/Key challenge.
-To use a one-time password for initial authentication, the
-.Dq Fl a Li skey
-option can be used.
+To use a one-time password for initial authentication,
+.Ic skeyinit -a skey
+can be used.
 The user will then be presented with the standard
 S/Key challenge and allowed to proceed if it is correct.
 .Pp
@@ -68,7 +68,9 @@ should match the one printed by
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar auth-type
-Specify an authentication type such as
+Before an S/Key entry can be initialised,
+the user must authenticate themselves to the system.
+This option allows the authentication type to be specified, such as
 .Dq krb5 ,
 .Dq passwd ,
 or
@@ -104,7 +106,8 @@ sequence at
 .It Fl r
 Removes the user's S/Key entry.
 .It Fl s
-Set secure mode where the user is expected to have used a secure
+Secure mode.
+The user is expected to have already used a secure
 machine to generate the first one-time password.
 Without the
 .Fl s
@@ -114,20 +117,7 @@ The
 .Fl s
 option also allows one to set the seed and count for complete
 control of the parameters.
-You can use
-.Ic skeyinit -s
-in combination with the
-.Nm skey
-command to set the seed and count if you do not like the defaults.
-To do this run
-.Nm
-in one window and put in your count and seed, then run
-.Nm skey
-in another window to generate the correct 6 English words for that
-count and seed.
-You can then "cut-and-paste" or type the words into the
-.Nm
-window.
+.Pp
 When the
 .Fl s
 option is specified,
@@ -137,11 +127,27 @@ will try to authenticate the user via S/Key, instead of the default listed in
 If a user has no entry in the S/Key database, an alternate authentication
 type must be specified via the
 .Fl a
-option.
+option
+(see above).
 Please note that entering a password or passphrase in plain text
 defeats the purpose of using
 .Dq secure
 mode.
+.Pp
+You can use
+.Ic skeyinit -s
+in combination with the
+.Nm skey
+command to set the seed and count if you do not like the defaults.
+To do this run
+.Ic skeyinit -s
+in one window and put in your count and seed, then run
+.Xr skey 1
+in another window to generate the correct 6 English words for that
+count and seed.
+You can then "cut-and-paste" or type the words into the
+.Nm
+window.
 .It Fl x
 Displays one-time passwords in hexadecimal instead of ASCII.
 .It Ar user
