@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.11 2005/08/03 15:00:26 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.12 2005/08/03 15:34:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -90,6 +90,7 @@ int	ses_read_status(struct ses_softc *, int refresh);
 int	ses_make_sensors(struct ses_softc *, struct ses_type_desc *, int);
 int	ses_refresh_sensors(struct ses_softc *);
 
+void	ses_psu2sensor(struct ses_sensor *);
 void	ses_cool2sensor(struct ses_sensor *);
 void	ses_temp2sensor(struct ses_sensor *);
 
@@ -344,6 +345,11 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 				continue;
 
 			switch (types[i].type) {
+			case SES_T_POWERSUPPLY:
+				stype = SENSOR_INDICATOR;
+				fmt = "psu%d";
+				break;
+
 			case SES_T_COOLING:
 				stype = SENSOR_FANRPM;
 				fmt = "fan%d";
@@ -430,6 +436,10 @@ ses_refresh_sensors(struct ses_softc *sc)
 		}
 
 		switch (sensor->se_type) {
+		case SES_T_POWERSUPPLY:
+			ses_psu2sensor(sensor);
+			break;
+
 		case SES_T_COOLING:
 			ses_cool2sensor(sensor);
 			break;
@@ -445,6 +455,12 @@ ses_refresh_sensors(struct ses_softc *sc)
 	}
 
 	return (ret);
+}
+
+void
+ses_psu2sensor(struct ses_sensor *s)
+{
+	s->se_sensor.value = SES_S_PSU_OFF(s->se_stat) ? 0 : 1;
 }
 
 void

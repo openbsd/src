@@ -1,4 +1,4 @@
-/* $OpenBSD: ses.h,v 1.4 2005/08/02 03:35:14 dlg Exp $ */
+/* $OpenBSD: ses.h,v 1.5 2005/08/03 15:34:13 dlg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
@@ -148,6 +148,19 @@ struct ses_status {
 #define SES_S_DEV_RDYTOINS(d)	((d)->f2 & (1<<3)) /* ready to insert */
 #define SES_S_DEV_DONOTREM(d)	((d)->f2 & (1<<6)) /* no not remove */
 /* XXX FINISH THIS */
+
+/* power supply element */
+#define SES_S_PSU_IDENT(d)	((d)->f1 & (1<<6)) /* identify */
+#define SES_S_PSU_DCOC(d)	((d)->f2 & (1<<1)) /* DC over current */
+#define SES_S_PSU_DCUV(d)	((d)->f2 & (1<<2)) /* DC under voltage */
+#define SES_S_PSU_DCOV(d)	((d)->f2 & (1<<3)) /* DC over voltage */
+#define SES_S_PSU_DCFAIL(d)	((d)->f3 & (1<<0)) /* DC fail */
+#define SES_S_PSU_ACFAIL(d)	((d)->f3 & (1<<1)) /* AC fail */
+#define SES_S_PSU_TEMPWARN(d)	((d)->f3 & (1<<2)) /* Temp warn */
+#define SES_S_PSU_OVERTEMP(d)	((d)->f3 & (1<<3)) /* over temp fail */
+#define SES_S_PSU_OFF(d)	((d)->f3 & (1<<4)) /* is the unit off */
+#define SES_S_PSU_RQSTON(d)	((d)->f3 & (1<<5)) /* manually on */
+#define SES_S_PSU_FAIL(d)	((d)->f3 & (1<<6)) /* fail is set on */
 
 /* cooling element */
 #define SES_S_COOL_IDENT(d)	((d)->f1 & (1<<6)) /* identify */
