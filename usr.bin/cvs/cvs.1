@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.74 2005/08/02 16:28:34 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.75 2005/08/03 07:38:11 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -1839,6 +1839,17 @@ such as
 .El
 .Sh FILES
 .Bl -tag -width Ds
+.It Pa $HOME/.cvsignore
+File containing a list of files (or
+.Xr sh 1
+file name patterns) that should be ignored by
+.Xr cvs 1
+during the
+.Ic import ,
+.Ic release ,
+and
+.Ic update
+commands.
 .It Pa $HOME/.cvsrc
 File containing a list of implicit options to pass to certain commands.
 This file is read on startup unless the
