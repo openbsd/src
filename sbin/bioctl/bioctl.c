@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.19 2005/08/03 02:39:55 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.20 2005/08/03 03:01:31 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <util.h>
 
 #include "bioctl.h"
@@ -89,7 +90,9 @@ main(int argc, char *argv[])
 	if (argc < 0 || argc > 1)
 		usage();
 
-	if (strncmp(argv[0], "sd", 2) == 0)
+	/* if at least glob sd[0-9]*, it is a drive identifier */
+	if (strncmp(argv[0], "sd", 2) == 0 && strlen(argv[0]) > 2 &&
+	    isdigit(argv[0][2]))
 		sd_dev = argv[0];
 	else
 		bioc_dev = argv[0];
