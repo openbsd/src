@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.50 2005/08/01 11:14:47 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.51 2005/08/03 00:55:07 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -332,7 +332,7 @@ pfsync_input(struct mbuf *m, ...)
 				nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
 				if (st->creatorid == creatorid) {
 					st->timeout = PFTM_PURGE;
-					pf_purge_expired_state(st);
+					st->sync_flags |= PFSTATE_FROMSYNC;
 				}
 			}
 		} else {
@@ -346,7 +346,7 @@ pfsync_input(struct mbuf *m, ...)
 				    &kif->pfik_lan_ext, st);
 				if (st->creatorid == creatorid) {
 					st->timeout = PFTM_PURGE;
-					pf_purge_expired_state(st);
+					st->sync_flags |= PFSTATE_FROMSYNC;
 				}
 			}
 		}
@@ -513,7 +513,6 @@ pfsync_input(struct mbuf *m, ...)
 			}
 			st->timeout = PFTM_PURGE;
 			st->sync_flags |= PFSTATE_FROMSYNC;
-			pf_purge_expired_state(st);
 		}
 		splx(s);
 		break;
@@ -636,7 +635,6 @@ pfsync_input(struct mbuf *m, ...)
 			}
 			st->timeout = PFTM_PURGE;
 			st->sync_flags |= PFSTATE_FROMSYNC;
-			pf_purge_expired_state(st);
 		}
 		splx(s);
 		break;
