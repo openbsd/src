@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.55 2005/08/02 00:30:04 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.56 2005/08/03 15:16:33 mickey Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -122,6 +122,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		      4250ES, 431
 		    Compaq SMART, SMART-2/E, SMART-2/P, SMART-2DH,
 		      SMART-2SL
+		Compaq/HP Smart ARRAY 5* and 6* adapters
 		DPT SmartCache and SmartRaid III/IV PCI adapters
 		Intel (and formerly ICP-Vortex) GDT series
 		I2O (intelligent I/O) RAID controllers, including:
