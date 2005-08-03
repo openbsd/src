@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.19 2005/08/03 15:20:55 mickey Exp $
+.\"	$OpenBSD: bioctl.8,v 1.20 2005/08/03 16:15:07 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -34,7 +34,7 @@
 .Bk -words
 .Op Fl Di
 .Op Fl a Ar function
-.Op Ar device | drive
+.Op Ar device
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -67,18 +67,12 @@ Enable debug output.
 .It Fl i
 Enumerate the selected RAID devices.
 .It Ar device
-Select RAID controller e.g. ami0.
-Use the
-.Fl d
-option for controller operations that impact all disk devices.
-.It Ar drive
-Select RAID disk e.g. sd0.
+Select a drive by name (e.g. sd0) or a RAID controller by name (e.g. ami0).
 .El
 .Sh SEE ALSO
 .Xr ami 4 ,
 .Xr bio 4 ,
 .Xr ciss 4 ,
-.Xr gdt 4 ,
 .Xr mpt 4 ,
 .Xr scsi 4
 .Sh HISTORY
