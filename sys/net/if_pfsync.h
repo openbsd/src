@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.20 2005/05/28 15:10:07 ho Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.21 2005/08/03 00:51:43 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -285,7 +285,8 @@ int pfsync_pack_state(u_int8_t, struct pf_state *, int);
 	    (st->proto == IPPROTO_PFSYNC))			\
 		st->sync_flags |= PFSTATE_NOSYNC;		\
 	else if (!st->sync_flags)				\
-		pfsync_pack_state(PFSYNC_ACT_INS, (st), 1);	\
+		pfsync_pack_state(PFSYNC_ACT_INS, (st), 	\
+		    PFSYNC_FLAG_COMPRESS);			\
 	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
 #define pfsync_update_state(st) do {				\
