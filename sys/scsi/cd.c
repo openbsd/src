@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.85 2005/06/11 14:49:54 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.86 2005/08/03 23:37:07 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1936,23 +1936,29 @@ dvd_read_disckey(cd, s)
 	struct cd_softc *cd;
 	union dvd_struct *s;
 {
-	struct scsi_generic cmd;
-	u_int8_t buf[4 + 2048];
+	struct scsi_read_dvd_structure cmd;
+	struct scsi_read_dvd_structure_data *buf;
 	int error;
+	
+	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK);
+	if (buf == NULL)
+		return (ENOMEM);
+	bzero(buf, sizeof(*buf));
 
-	bzero(cmd.bytes, sizeof(cmd.bytes));
-	bzero(buf, sizeof(buf));
+	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
-	cmd.bytes[6] = s->type;
-	_lto2b(sizeof(buf), &cmd.bytes[7]);
+	cmd.format = s->type;
+	cmd.agid = s->disckey.agid << 6;
+	_lto2b(sizeof(*buf), cmd.length);
 
-	cmd.bytes[9] = s->disckey.agid << 6;
-	error = scsi_scsi_cmd(cd->sc_link, &cmd, sizeof(cmd), buf, sizeof(buf),
-	    CDRETRIES, 30000, NULL, SCSI_DATA_IN);
-	if (error)
-		return (error);
-	bcopy(&buf[4], s->disckey.value, 2048);
-	return (0);
+	error = scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&cmd,
+	    sizeof(cmd), (u_char *)buf, sizeof(*buf), CDRETRIES, 30000, NULL,
+	    SCSI_DATA_IN);
+	if (error == 0)
+		bcopy(buf->data, s->disckey.value, sizeof(s->disckey.value));
+
+	free(buf, M_TEMP);
+	return (error);
 }
 
 int
@@ -1986,25 +1992,33 @@ dvd_read_manufact(cd, s)
 	struct cd_softc *cd;
 	union dvd_struct *s;
 {
-	struct scsi_generic cmd;
-	u_int8_t buf[4 + 2048];
+	struct scsi_read_dvd_structure cmd;
+	struct scsi_read_dvd_structure_data *buf;
 	int error;
+	
+	buf = malloc(sizeof(*buf), M_TEMP, M_WAITOK);
+	if (buf == NULL)
+		return (ENOMEM);
+	bzero(buf, sizeof(*buf));
 
-	bzero(cmd.bytes, sizeof(cmd.bytes));
-	bzero(buf, sizeof(buf));
+	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
-	cmd.bytes[6] = s->type;
-	_lto2b(sizeof(buf), &cmd.bytes[7]);
+	cmd.format = s->type;
+	_lto2b(sizeof(*buf), cmd.length);
 
-	error = scsi_scsi_cmd(cd->sc_link, &cmd, sizeof(cmd), buf, sizeof(buf),
-	    CDRETRIES, 30000, NULL, SCSI_DATA_IN);
-	if (error)
-		return (error);
-	s->manufact.len = _2btol(&buf[0]);
-	if (s->manufact.len < 0 || s->manufact.len > 2048)
-		return (EIO);
-	bcopy(&buf[4], s->manufact.value, s->manufact.len);
-	return (0);
+	error = scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&cmd,
+	    sizeof(cmd), (u_char *)buf, sizeof(*buf), CDRETRIES, 30000, NULL,
+	    SCSI_DATA_IN);
+	if (error == 0) {
+		s->manufact.len = _2btol(buf->len);
+		if (s->manufact.len >= 0 && s->manufact.len <= 2048)
+			bcopy(buf->data, s->manufact.value, s->manufact.len);
+		else
+			error = EIO;
+	}	
+
+	free(buf, M_TEMP);
+	return (error);
 }
 
 int

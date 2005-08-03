@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.8 2005/07/02 15:39:55 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.9 2005/08/03 23:37:07 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -210,6 +210,23 @@ struct cd_audio_page {
 #define CD_DA_DENSITY_CODE	0x82	/* from Toshiba CD-ROM specs */
 
 #define	CDRETRIES	4
+
+struct scsi_read_dvd_structure {
+	u_int8_t	opcode;		/* GPCMD_READ_DVD_STRUCTURE */
+	u_int8_t	reserved;
+	u_int8_t	address[4];
+	u_int8_t	layer;
+	u_int8_t	format;
+	u_int8_t	length[2];
+	u_int8_t	agid;		/* bottom 6 bits reserved */
+	u_int8_t	control;
+};
+
+struct scsi_read_dvd_structure_data {
+	u_int8_t	len[2];		/* Big-endian length of valid data. */
+	u_int8_t	reserved[2];
+	u_int8_t	data[2048];
+};
 
 #ifdef _KERNEL
 
