@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.3 2005/08/02 23:56:34 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.4 2005/08/03 00:01:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -166,7 +166,7 @@ ciss_attach(struct ciss_softc *sc)
 	bus_space_write_4(sc->iot, sc->ioh, CISS_IDB, CISS_IDB_CFG);
 	bus_space_barrier(sc->iot, sc->ioh, CISS_IDB, 4,
 	    BUS_SPACE_BARRIER_WRITE);
-	for (i = 1000000; i--; DELAY(1)) {
+	for (i = 1000; i--; DELAY(1000)) {
 		/* XXX maybe IDB is really 64bit? - hp dl380 needs this */
 		(void)bus_space_read_4(sc->iot, sc->ioh, CISS_IDB + 4);
 		if (!(bus_space_read_4(sc->iot, sc->ioh, CISS_IDB) & CISS_IDB_CFG))
