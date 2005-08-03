@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2005/02/07 12:41:53 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2005/08/03 16:29:36 sturm Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -251,7 +251,7 @@ init		: INIT {
 				curaction = curstate->init;
 			else
 				curaction = conf->always.init;
-		} optnl '{' optnl action_l '}' {
+		} action_block {
 			if (curstate != NULL)
 				curaction = curstate->always;
 			else
