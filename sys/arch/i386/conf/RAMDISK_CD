@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.99 2005/07/28 01:45:05 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.100 2005/08/03 22:12:46 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -203,8 +203,8 @@ scsibus* at ami?
 cac*	at pci?			# Compaq Smart ARRAY RAID controllers
 cac*	at eisa?
 scsibus* at cac?
-#ciss*	at pci?			# Compaq Smart ARRAY 5* Controllers
-#scsibus* at ciss?
+ciss*	at pci?			# Compaq Smart ARRAY 5* Controllers
+scsibus* at ciss?
 twe*	at pci?			# 3ware Escalade RAID controllers
 scsibus* at twe?
 iha*	at pci?			# Initio Ultra/UltraWide SCSI controllers
