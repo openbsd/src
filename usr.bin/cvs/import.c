@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.25 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.26 2005/08/04 12:20:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -59,9 +59,9 @@ struct cvs_cmd cvs_cmd_import = {
 	CVS_OP_IMPORT, CVS_REQ_IMPORT, "import",
 	{ "im", "imp" },
 	"Import sources into CVS, using vendor branches",
-	"[-d] [-b branch] [-I ign] [-k subst] [-m msg] repository "
-	"vendor-tag release-tags ...",
-	"b:dI:k:m:",
+	"[-d] [-b branch] [-I ign] [-k mode] [-m msg] [-W spec] module "
+	"vendortag releasetag ...",
+	"b:dI:k:m:W:",
 	NULL,
 	CF_RECURSE | CF_IGNORE | CF_NOSYMS,
 	cvs_import_init,
