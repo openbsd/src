@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.78 2005/05/23 21:08:43 frantzen Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.79 2005/08/04 09:48:27 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -231,13 +231,13 @@ parse_configline(char *line)
 	} while ((av[au++] = strsep(&cp, ";")) != NULL);
 
 	/* toss empty last entry to allow for trailing ; */
-	if (av[au - 1][0] == '\0');
+	while (au > 0 && (av[au - 1] == NULL || av[au - 1][0] == '\0'))
 		au--;
 
 	if (au < 1)
 		goto parse_error;
 	else
-		sdl_add(name, msg, av, au - 1);
+		sdl_add(name, msg, av, au);
 	return (0);
 
 parse_error:
