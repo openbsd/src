@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.8 2005/06/02 15:04:25 cloder Exp $ */
+/*	$OpenBSD: privsep.c,v 1.9 2005/08/04 14:21:04 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -56,17 +56,14 @@ buf_close(int sock, struct buf *buf)
 
 	do {
 		n = write(sock, buf->buf + buf->rpos, buf->size - buf->rpos);
-		if (n != -1)
-			buf->rpos += n;
 		if (n == 0) {			/* connection closed */
 			errno = 0;
 			return (-1);
 		}
-	} while (n == -1 && (errno == EAGAIN || errno == EINTR));
+		if (n != -1 && n < buf->size - buf->rpos)
+			error("short write");
 
-	if (buf->rpos < buf->size)
-		error("short write: wanted %lu got %ld bytes",
-		    (unsigned long)buf->size, (long)buf->rpos);
+	} while (n == -1 && (errno == EAGAIN || errno == EINTR));
 
 	free(buf->buf);
 	free(buf);
@@ -76,28 +73,20 @@ buf_close(int sock, struct buf *buf)
 ssize_t
 buf_read(int sock, void *buf, size_t nbytes)
 {
-	ssize_t	n, r = 0;
-	char *p = buf;
+	ssize_t	n;
 
 	do {
-		n = read(sock, p, nbytes);
+		n = read(sock, buf, nbytes);
 		if (n == 0)
 			error("connection closed");
-		if (n != -1) {
-			r += n;
-			p += n;
-			nbytes -= n;
-		}
+		if (n != -1 && n < nbytes)
+			error("short read");
 	} while (n == -1 && (errno == EINTR || errno == EAGAIN));
 
 	if (n == -1)
 		error("buf_read: %m");
 
-	if (r < nbytes)
-		error("short read: wanted %lu got %ld bytes",
-		    (unsigned long)nbytes, (long)r);
-
-	return (r);
+	return (n);
 }
 
 void
