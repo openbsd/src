@@ -925,30 +925,38 @@ xfs_symlink_common(struct vnode *dvp,
     d_thread_t *proc  = xfs_cnp_to_proc(cnp);
     struct ucred *cred = xfs_proc_to_cred(proc);
 #endif
-    struct xfs_message_symlink msg;
+    struct xfs_message_symlink *msg = NULL;
     const char *name = cnp->cn_nameptr;
     int error = 0;
 
     NNPFSDEB(XDEBVNOPS, ("xfs_symlink: %s\n", name));
 
-    msg.header.opcode = NNPFS_MSG_SYMLINK;
-    msg.parent_handle = xn->handle;
-    vattr2xfs_attr(vap, &msg.attr);
-    msg.cred.uid = cred->cr_uid;
-    msg.cred.pag = xfs_get_pag(cred);
-    if (strlcpy (msg.contents, target, sizeof(msg.contents)) >= NNPFS_MAX_SYMLINK_CONTENT) {
+    msg = malloc(sizeof(struct xfs_message_symlink), M_TEMP, M_WAITOK);
+    if (msg == NULL) {
+        error = ENOMEM;
+	goto done;
+    }
+    memset(msg, 0, sizeof(*msg));
+
+    msg->header.opcode = NNPFS_MSG_SYMLINK;
+    msg->parent_handle = xn->handle;
+    vattr2xfs_attr(vap, &msg->attr);
+    msg->cred.uid = cred->cr_uid;
+    msg->cred.pag = xfs_get_pag(cred);
+    if (strlcpy (msg->contents, target, sizeof(msg->contents)) >= NNPFS_MAX_SYMLINK_CONTENT) {
 	error = ENAMETOOLONG;
 	goto done;
     }
-    if (strlcpy(msg.name, name, sizeof(msg.name)) >= NNPFS_MAX_NAME) {
+    if (strlcpy(msg->name, name, sizeof(msg->name)) >= NNPFS_MAX_NAME) {
 	error = ENAMETOOLONG;
 	goto done;
     }
-    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), proc);
+    error = xfs_message_rpc(xfsp->fd, &msg->header, sizeof(*msg), proc);
     if (error == 0)
-	error = ((struct xfs_message_wakeup *) & msg)->error;
+	error = ((struct xfs_message_wakeup *) msg)->error;
 
  done:
+    free(msg, M_TEMP);
     return error;
 }
 

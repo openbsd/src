@@ -196,19 +196,34 @@ xfs_mount_common(struct mount *mp,
 		 struct nameidata *ndp,
 		 d_thread_t *p)
 {
-    char path[MAXPATHLEN];
-    char data[MAXPATHLEN];
+    char *path = NULL;
+    char *data = NULL;
     size_t count;
-    int error;
+    int error = 0;
+
+    data = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+    if (data == NULL) {
+        error = ENOMEM;
+	goto done;
+    }
+    path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+    if (path == NULL) {
+        error = ENOMEM;
+	goto done;
+    }
 
     error = copyinstr(user_path, path, MAXPATHLEN, &count);
     if (error)
-	return error;
+        goto done;      
 
     error = copyinstr(user_data, data, MAXPATHLEN, &count);
     if (error)
-	return error;
-    return xfs_mount_common_sys (mp, path, data, ndp, p);
+	goto done;
+    error = xfs_mount_common_sys (mp, path, data, ndp, p);
+done:
+    free(data, M_TEMP);
+    free(path, M_TEMP);		   	
+    return(error);	
 }
 
 #ifdef HAVE_KERNEL_DOFORCE
