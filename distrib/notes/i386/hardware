@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.212 2005/08/03 15:16:33 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.213 2005/08/04 15:34:19 brad Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -174,7 +174,7 @@ Supported hardware {:-include-:}:
 		    Dell PERC 4Si and 4Di
 		    HP NetRAID 438, 466 and T[567]
 		    LSI/Symbios 523 SATA
-		Compaq Smart ARRAY PCI/EISA adapters, including: [A] [C]
+		Compaq Smart ARRAY 2*, 3* and 4* adapters, including: [A] [C]
 		    Compaq Integrated Array
 		    Compaq IAES
 		    Compaq IDA, IDA-2
