@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.77 2005/08/04 14:01:36 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.78 2005/08/04 14:03:06 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -986,6 +986,7 @@ Aliases:
 .Ic hi ,
 .Ic his .
 .It Xo Ic import
+.Op Fl d
 .Op Fl b Ar branch
 .Op Fl I Ar ign
 .Op Fl k Ar mode
@@ -1013,6 +1014,9 @@ command takes the following options:
 .Bl -tag -width Ds -offset 3n
 .It Fl b Ar branch
 Specify the first-level branch number.
+.It Fl d
+Use the file's last modification time as the timestamp for the
+initial revisions.
 .It Fl I Ar ign
 Ignore files specified by
 .Ar ign .
