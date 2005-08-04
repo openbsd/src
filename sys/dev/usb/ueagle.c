@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.6 2005/08/01 05:36:48 brad Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.7 2005/08/04 06:59:36 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -43,6 +43,7 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_atm.h>
+#include <netinet/if_ether.h>
 #endif
 
 #include <dev/usb/usb.h>
@@ -179,7 +180,7 @@ USB_ATTACH(ueagle)
 		USB_ATTACH_SUCCESS_RETURN;
 	}
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
+	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
