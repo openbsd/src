@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.76 2005/08/03 21:31:38 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.77 2005/08/04 14:01:36 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -39,6 +39,7 @@
 .Oo Fl s
 .Ar var Ns = Ns Ar val Oc
 .Xc
+.Op Fl T Ar tmpdir
 .Op Fl z Ar level
 .Ar command Op Ar ...
 .Sh DESCRIPTION
@@ -100,6 +101,10 @@ Set the value of the internal variable
 .Ar var
 to the string
 .Ar val .
+.It Fl T Ar tmpdir
+Set the value of the directory where temporary files are to be created.
+The default is set to
+.Pa /tmp .
 .It Fl t
 Trace program execution.
 .It Fl v
@@ -1831,6 +1836,11 @@ Directory where the
 and
 .Pa .cvsrc
 files are searched for.
+.It Ev TMPDIR
+When set, this variable sets the directory where temporary files
+are to be created.
+The default is set to
+.Pa /tmp .
 .It Ev VISUAL
 Name of the editor to use when editing commit messages.
 This is traditionally a screen-oriented editor,
