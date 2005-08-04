@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.15 2005/05/27 08:04:15 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.16 2005/08/04 21:52:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -193,9 +193,8 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * If we're not polling our PHY instance, just return.
 		 */
-		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
+		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
-		}
 		break;
 
 	case MII_MEDIACHG:
@@ -203,9 +202,8 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If the media indicates a different PHY instance,
 		 * isolate ourselves.
 		 */
-		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
+		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
-		}
 
 		/*
 		 * If the interface is not up, don't do anything.
@@ -225,11 +223,6 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			sc->mii_flags &= ~MIIF_DOINGAUTO;
 			(void) dcphy_mii_phy_auto(sc, 0);
 			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
 		case IFM_100_TX:
 			PHY_RESET(sc);
 			DC_CLRBIT(dc_sc, DC_10BTCTRL, DC_TCTL_AUTONEGENBL);
@@ -325,9 +318,6 @@ dcphy_status(struct mii_softc *sc)
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
-
-	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-		return;
 
 	reg = CSR_READ_4(dc_sc, DC_10BTSTAT);
 	if (!(reg & DC_TSTAT_LS10) || !(reg & DC_TSTAT_LS100))
