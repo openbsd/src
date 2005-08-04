@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.37 2005/07/09 22:15:44 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.38 2005/08/04 13:57:29 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -155,6 +155,8 @@ const struct pciintr_icu_table {
 	{ PCI_VENDOR_INTEL,     PCI_PRODUCT_INTEL_82801DB_LPC,
 	  piix_init },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801EB_LPC,
+	  piix_init },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GB_LPC,
 	  piix_init },
 
 	{ PCI_VENDOR_OPTI,	PCI_PRODUCT_OPTI_82C558,
