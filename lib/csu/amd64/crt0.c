@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.1 2004/01/28 01:46:17 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.2 2005/08/04 16:33:05 espie Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -29,10 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.1 2004/01/28 01:46:17 mickey Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <stdlib.h>

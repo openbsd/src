@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.1 2005/04/01 10:56:43 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.2 2005/08/04 16:33:05 espie Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -27,10 +27,6 @@
  */
 
 int	global __asm ("$global$") = 0;
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: crt0.c,v 1.1 2005/04/01 10:56:43 mickey Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/syscall.h>
