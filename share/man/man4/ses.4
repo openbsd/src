@@ -1,11 +1,11 @@
-.\"	$OpenBSD: ses.4,v 1.15 2005/08/01 23:52:49 dlg Exp $
+.\"	$OpenBSD: ses.4,v 1.16 2005/08/04 14:25:36 dlg Exp $
 .\"
 .\" Copyright (c) David Gwynne <dlg@openbsd.org>
-.\" 
+.\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
-.\" 
+.\"
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
 .\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -26,9 +26,26 @@ The
 .Nm
 driver provides support for monitoring the various environmental sensors
 present in SCSI enclosures using the SCSI Enclosure Services command set.
-The hardware monitor is used with the
+The hardware monitoring is accessed via the
+.Va hw.sensors
 .Xr sysctl 8
-interface.
+variable.
+.Pp
+SCSI devices have a fairly high level interface to the system and talk to it
+via a SCSI host adapter (e.g.\&
+.Xr ahc 4 ) .
+A SCSI adapter must also be separately configured into the system before a
+SCSI enclosure can be configured.
+.Pp
+When the SCSI adapter is probed during boot, the SCSI bus is scanned for
+devices.
+Any SCSI-2 devices of type
+.Dq Enclosure service
+or SCSI-3 devices of type
+.Dq Processor
+will be attached to the
+.Nm
+driver.
 .Pp
 SES compliant devices can provide an arbitrary set of sensors which may
 include the following types:
