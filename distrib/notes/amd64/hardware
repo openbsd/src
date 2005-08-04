@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.56 2005/08/03 15:16:33 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.57 2005/08/04 16:01:48 brad Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -113,15 +113,6 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    HP NetRAID-4M
 		American Megatrends Inc. MegaRAID controllers in "Mass
 		  Storage" mode
-		Compaq Smart ARRAY PCI adapters, including:
-		    Compaq Integrated Array
-		    Compaq IAES
-		    Compaq IDA, IDA-2
-		    Compaq RAID LC2
-		    Compaq Smart Array 221, 3100ES, 3200, 4200,
-		      4250ES, 431
-		    Compaq SMART, SMART-2/E, SMART-2/P, SMART-2DH,
-		      SMART-2SL
 		Compaq/HP Smart ARRAY 5* and 6* adapters
 		DPT SmartCache and SmartRaid III/IV PCI adapters
 		Intel (and formerly ICP-Vortex) GDT series
