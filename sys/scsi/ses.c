@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.12 2005/08/03 15:34:13 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.13 2005/08/04 02:14:30 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -110,6 +110,11 @@ ses_match(struct device *parent, void *match, void *aux)
 
 	if ((inq->device & SID_TYPE) == T_ENCLOSURE &&
 	    (inq->version & SID_ANSII) >= SID_ANSII_SCSI2)
+		return (2);
+
+	/* match on dell enclosures */
+	if ((inq->device & SID_TYPE) == T_PROCESSOR &&
+	    (inq->version & SID_ANSII) == SID_ANSII_SCSI3)
 		return (2);
 
 	/* XXX apparently we can match on passthrough devs too? */
