@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.14 2005/08/04 14:28:51 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.15 2005/08/04 14:31:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -136,7 +136,6 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_thread = NULL;
 
 	printf("\n");
-	printf("%s: SCSI Enclosure Services\n", DEVNAME(sc));
 
 	if (ses_read_config(sc) != 0) {
 		printf("%s: unable to read enclosure configuration\n",
