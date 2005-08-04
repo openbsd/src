@@ -1925,7 +1925,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_message.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_safte.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_scanner.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_ses.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsi_tape.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/sdvar.ph

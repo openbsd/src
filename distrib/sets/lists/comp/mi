@@ -1261,7 +1261,6 @@
 ./usr/include/scsi/scsi_message.h
 ./usr/include/scsi/scsi_safte.h
 ./usr/include/scsi/scsi_scanner.h
-./usr/include/scsi/scsi_ses.h
 ./usr/include/scsi/scsi_tape.h
 ./usr/include/scsi/scsiconf.h
 ./usr/include/scsi/sdvar.h
