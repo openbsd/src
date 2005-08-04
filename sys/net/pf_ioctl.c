@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.150 2005/08/02 12:40:42 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.151 2005/08/04 20:33:45 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -314,11 +314,14 @@ pf_init_ruleset(struct pf_ruleset *ruleset)
 struct pf_anchor *
 pf_find_anchor(const char *path)
 {
-	static struct pf_anchor	 key;
+	struct pf_anchor	*key, *found;
 
-	memset(&key, 0, sizeof(key));
-	strlcpy(key.path, path, sizeof(key.path));
-	return (RB_FIND(pf_anchor_global, &pf_anchors, &key));
+	key = (struct pf_anchor *)malloc(sizeof(*key), M_TEMP, M_WAITOK);
+	memset(key, 0, sizeof(*key));
+	strlcpy(key->path, path, sizeof(key->path));
+	found = RB_FIND(pf_anchor_global, &pf_anchors, key);
+	free(key, M_TEMP);
+	return (found);
 }
 
 struct pf_ruleset *
@@ -340,8 +343,7 @@ pf_find_ruleset(const char *path)
 struct pf_ruleset *
 pf_find_or_create_ruleset(const char *path)
 {
-	static char		 p[MAXPATHLEN];
-	char			*q, *r;
+	char			*p, *q, *r;
 	struct pf_ruleset	*ruleset;
 	struct pf_anchor	*anchor, *dup, *parent = NULL;
 
@@ -350,7 +352,8 @@ pf_find_or_create_ruleset(const char *path)
 	ruleset = pf_find_ruleset(path);
 	if (ruleset != NULL)
 		return (ruleset);
-	strlcpy(p, path, sizeof(p));
+	p = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+	strlcpy(p, path, MAXPATHLEN);
 	while (parent == NULL && (q = strrchr(p, '/')) != NULL) {
 		*q = 0;
 		if ((ruleset = pf_find_ruleset(p)) != NULL) {
@@ -362,20 +365,26 @@ pf_find_or_create_ruleset(const char *path)
 		q = p;
 	else
 		q++;
-	strlcpy(p, path, sizeof(p));
-	if (!*q)
+	strlcpy(p, path, MAXPATHLEN);
+	if (!*q) {
+		free(p, M_TEMP);
 		return (NULL);
+	}
 	while ((r = strchr(q, '/')) != NULL || *q) {
 		if (r != NULL)
 			*r = 0;
 		if (!*q || strlen(q) >= PF_ANCHOR_NAME_SIZE ||
 		    (parent != NULL && strlen(parent->path) >=
-		    MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 1))
+		    MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 1)) {
+			free(p, M_TEMP);
 			return (NULL);
+		}
 		anchor = (struct pf_anchor *)malloc(sizeof(*anchor), M_TEMP,
 		    M_NOWAIT);
-		if (anchor == NULL)
+		if (anchor == NULL) {
+			free(p, M_TEMP);
 			return (NULL);
+		}
 		memset(anchor, 0, sizeof(*anchor));
 		RB_INIT(&anchor->children);
 		strlcpy(anchor->name, q, sizeof(anchor->name));
@@ -391,6 +400,7 @@ pf_find_or_create_ruleset(const char *path)
 			    "'%s' '%s' collides with '%s' '%s'\n",
 			    anchor->path, anchor->name, dup->path, dup->name);
 			free(anchor, M_TEMP);
+			free(p, M_TEMP);
 			return (NULL);
 		}
 		if (parent != NULL) {
@@ -404,6 +414,7 @@ pf_find_or_create_ruleset(const char *path)
 				RB_REMOVE(pf_anchor_global, &pf_anchors,
 				    anchor);
 				free(anchor, M_TEMP);
+				free(p, M_TEMP);
 				return (NULL);
 			}
 		}
@@ -415,6 +426,7 @@ pf_find_or_create_ruleset(const char *path)
 		else
 			*q = 0;
 	}
+	free(p, M_TEMP);
 	return (&anchor->ruleset);
 }
 
@@ -450,7 +462,7 @@ int
 pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
     const char *name)
 {
-	static char		*p, path[MAXPATHLEN];
+	char			*p, *path;
 	struct pf_ruleset	*ruleset;
 
 	r->anchor = NULL;
@@ -458,18 +470,20 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 	r->anchor_wildcard = 0;
 	if (!name[0])
 		return (0);
+	path = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	if (name[0] == '/')
-		strlcpy(path, name + 1, sizeof(path));
+		strlcpy(path, name + 1, MAXPATHLEN);
 	else {
 		/* relative path */
 		r->anchor_relative = 1;
 		if (s->anchor == NULL || !s->anchor->path[0])
 			path[0] = 0;
 		else
-			strlcpy(path, s->anchor->path, sizeof(path));
+			strlcpy(path, s->anchor->path, MAXPATHLEN);
 		while (name[0] == '.' && name[1] == '.' && name[2] == '/') {
 			if (!path[0]) {
 				printf("pf_anchor_setup: .. beyond root\n");
+				free(path, M_TEMP);
 				return (1);
 			}
 			if ((p = strrchr(path, '/')) != NULL)
@@ -480,14 +494,15 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 			name += 3;
 		}
 		if (path[0])
-			strlcat(path, "/", sizeof(path));
-		strlcat(path, name, sizeof(path));
+			strlcat(path, "/", MAXPATHLEN);
+		strlcat(path, name, MAXPATHLEN);
 	}
 	if ((p = strrchr(path, '/')) != NULL && !strcmp(p, "/*")) {
 		r->anchor_wildcard = 1;
 		*p = 0;
 	}
 	ruleset = pf_find_or_create_ruleset(path);
+	free(path, M_TEMP);
 	if (ruleset == NULL || ruleset->anchor == NULL) {
 		printf("pf_anchor_setup: ruleset\n");
 		return (1);
@@ -509,13 +524,14 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 		strlcat(pr->anchor_call, r->anchor->path,
 		    sizeof(pr->anchor_call));
 	} else {
-		static char a[MAXPATHLEN], *p;
-		int i;
+		char	*a, *p;
+		int	 i;
 
+		a = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 		if (rs->anchor == NULL)
 			a[0] = 0;
 		else
-			strlcpy(a, rs->anchor->path, sizeof(a));
+			strlcpy(a, rs->anchor->path, MAXPATHLEN);
 		for (i = 1; i < r->anchor_relative; ++i) {
 			if ((p = strrchr(a, '/')) == NULL)
 				p = a;
@@ -526,11 +542,13 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 		if (strncmp(a, r->anchor->path, strlen(a))) {
 			printf("pf_anchor_copyout: '%s' '%s'\n", a,
 			    r->anchor->path);
+			free(a, M_TEMP);
 			return (1);
 		}
 		if (strlen(r->anchor->path) > strlen(a))
 			strlcat(pr->anchor_call, r->anchor->path + (a[0] ?
 			    strlen(a) + 1 : 0), sizeof(pr->anchor_call));
+		free(a, M_TEMP);
 	}
 	if (r->anchor_wildcard)
 		strlcat(pr->anchor_call, pr->anchor_call[0] ? "/*" : "*",
@@ -2643,150 +2661,203 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCXBEGIN: {
-		struct pfioc_trans		*io = (struct pfioc_trans *)
-						    addr;
-		static struct pfioc_trans_e	 ioe;
-		static struct pfr_table		 table;
-		int				 i;
+		struct pfioc_trans	*io = (struct pfioc_trans *)addr;
+		struct pfioc_trans_e	*ioe;
+		struct pfr_table	*table;
+		int			 i;
 
-		if (io->esize != sizeof(ioe)) {
+		if (io->esize != sizeof(*ioe)) {
 			error = ENODEV;
 			goto fail;
 		}
+		ioe = (struct pfioc_trans_e *)malloc(sizeof(*ioe),
+		    M_TEMP, M_WAITOK);
+		table = (struct pfr_table *)malloc(sizeof(*table),
+		    M_TEMP, M_WAITOK);
 		for (i = 0; i < io->size; i++) {
-			if (copyin(io->array+i, &ioe, sizeof(ioe))) {
+			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
+				free(table, M_TEMP);
+				free(ioe, M_TEMP);
 				error = EFAULT;
 				goto fail;
 			}
-			switch (ioe.rs_num) {
+			switch (ioe->rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
-				if (ioe.anchor[0]) {
+				if (ioe->anchor[0]) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					error = EINVAL;
 					goto fail;
 				}
-				if ((error = pf_begin_altq(&ioe.ticket)))
+				if ((error = pf_begin_altq(&ioe->ticket))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail;
+				}
 				break;
 #endif /* ALTQ */
 			case PF_RULESET_TABLE:
-				bzero(&table, sizeof(table));
-				strlcpy(table.pfrt_anchor, ioe.anchor,
-				    sizeof(table.pfrt_anchor));
-				if ((error = pfr_ina_begin(&table,
-				    &ioe.ticket, NULL, 0)))
+				bzero(table, sizeof(*table));
+				strlcpy(table->pfrt_anchor, ioe->anchor,
+				    sizeof(table->pfrt_anchor));
+				if ((error = pfr_ina_begin(table,
+				    &ioe->ticket, NULL, 0))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail;
+				}
 				break;
 			default:
-				if ((error = pf_begin_rules(&ioe.ticket,
-				    ioe.rs_num, ioe.anchor)))
+				if ((error = pf_begin_rules(&ioe->ticket,
+				    ioe->rs_num, ioe->anchor))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail;
+				}
 				break;
 			}
-			if (copyout(&ioe, io->array+i, sizeof(io->array[i]))) {
+			if (copyout(ioe, io->array+i, sizeof(io->array[i]))) {
+				free(table, M_TEMP);
+				free(ioe, M_TEMP);
 				error = EFAULT;
 				goto fail;
 			}
 		}
+		free(table, M_TEMP);
+		free(ioe, M_TEMP);
 		break;
 	}
 
 	case DIOCXROLLBACK: {
-		struct pfioc_trans		*io = (struct pfioc_trans *)
-						    addr;
-		static struct pfioc_trans_e	 ioe;
-		static struct pfr_table		 table;
-		int				 i;
+		struct pfioc_trans	*io = (struct pfioc_trans *)addr;
+		struct pfioc_trans_e	*ioe;
+		struct pfr_table	*table;
+		int			 i;
 
-		if (io->esize != sizeof(ioe)) {
+		if (io->esize != sizeof(*ioe)) {
 			error = ENODEV;
 			goto fail;
 		}
+		ioe = (struct pfioc_trans_e *)malloc(sizeof(*ioe),
+		    M_TEMP, M_WAITOK);
+		table = (struct pfr_table *)malloc(sizeof(*table),
+		    M_TEMP, M_WAITOK);
 		for (i = 0; i < io->size; i++) {
-			if (copyin(io->array+i, &ioe, sizeof(ioe))) {
+			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
+				free(table, M_TEMP);
+				free(ioe, M_TEMP);
 				error = EFAULT;
 				goto fail;
 			}
-			switch (ioe.rs_num) {
+			switch (ioe->rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
-				if (ioe.anchor[0]) {
+				if (ioe->anchor[0]) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					error = EINVAL;
 					goto fail;
 				}
-				if ((error = pf_rollback_altq(ioe.ticket)))
+				if ((error = pf_rollback_altq(ioe->ticket))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail; /* really bad */
+				}
 				break;
 #endif /* ALTQ */
 			case PF_RULESET_TABLE:
-				bzero(&table, sizeof(table));
-				strlcpy(table.pfrt_anchor, ioe.anchor,
-				    sizeof(table.pfrt_anchor));
-				if ((error = pfr_ina_rollback(&table,
-				    ioe.ticket, NULL, 0)))
+				bzero(table, sizeof(*table));
+				strlcpy(table->pfrt_anchor, ioe->anchor,
+				    sizeof(table->pfrt_anchor));
+				if ((error = pfr_ina_rollback(table,
+				    ioe->ticket, NULL, 0))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail; /* really bad */
+				}
 				break;
 			default:
-				if ((error = pf_rollback_rules(ioe.ticket,
-				    ioe.rs_num, ioe.anchor)))
+				if ((error = pf_rollback_rules(ioe->ticket,
+				    ioe->rs_num, ioe->anchor))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail; /* really bad */
+				}
 				break;
 			}
 		}
+		free(table, M_TEMP);
+		free(ioe, M_TEMP);
 		break;
 	}
 
 	case DIOCXCOMMIT: {
-		struct pfioc_trans		*io = (struct pfioc_trans *)
-						    addr;
-		static struct pfioc_trans_e	 ioe;
-		static struct pfr_table		 table;
-		struct pf_ruleset		*rs;
-		int				 i;
+		struct pfioc_trans	*io = (struct pfioc_trans *)addr;
+		struct pfioc_trans_e	*ioe;
+		struct pfr_table	*table;
+		struct pf_ruleset	*rs;
+		int			 i;
 
-		if (io->esize != sizeof(ioe)) {
+		if (io->esize != sizeof(*ioe)) {
 			error = ENODEV;
 			goto fail;
 		}
+		ioe = (struct pfioc_trans_e *)malloc(sizeof(*ioe),
+		    M_TEMP, M_WAITOK);
+		table = (struct pfr_table *)malloc(sizeof(*table),
+		    M_TEMP, M_WAITOK);
 		/* first makes sure everything will succeed */
 		for (i = 0; i < io->size; i++) {
-			if (copyin(io->array+i, &ioe, sizeof(ioe))) {
+			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
+				free(table, M_TEMP);
+				free(ioe, M_TEMP);
 				error = EFAULT;
 				goto fail;
 			}
-			switch (ioe.rs_num) {
+			switch (ioe->rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
-				if (ioe.anchor[0]) {
+				if (ioe->anchor[0]) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					error = EINVAL;
 					goto fail;
 				}
-				if (!altqs_inactive_open || ioe.ticket !=
+				if (!altqs_inactive_open || ioe->ticket !=
 				    ticket_altqs_inactive) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					error = EBUSY;
 					goto fail;
 				}
 				break;
 #endif /* ALTQ */
 			case PF_RULESET_TABLE:
-				rs = pf_find_ruleset(ioe.anchor);
-				if (rs == NULL || !rs->topen || ioe.ticket !=
+				rs = pf_find_ruleset(ioe->anchor);
+				if (rs == NULL || !rs->topen || ioe->ticket !=
 				     rs->tticket) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					error = EBUSY;
 					goto fail;
 				}
 				break;
 			default:
-				if (ioe.rs_num < 0 || ioe.rs_num >=
+				if (ioe->rs_num < 0 || ioe->rs_num >=
 				    PF_RULESET_MAX) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					error = EINVAL;
 					goto fail;
 				}
-				rs = pf_find_ruleset(ioe.anchor);
+				rs = pf_find_ruleset(ioe->anchor);
 				if (rs == NULL ||
-				    !rs->rules[ioe.rs_num].inactive.open ||
-				    rs->rules[ioe.rs_num].inactive.ticket !=
-				    ioe.ticket) {
+				    !rs->rules[ioe->rs_num].inactive.open ||
+				    rs->rules[ioe->rs_num].inactive.ticket !=
+				    ioe->ticket) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					error = EBUSY;
 					goto fail;
 				}
@@ -2795,32 +2866,45 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		/* now do the commit - no errors should happen here */
 		for (i = 0; i < io->size; i++) {
-			if (copyin(io->array+i, &ioe, sizeof(ioe))) {
+			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
+				free(table, M_TEMP);
+				free(ioe, M_TEMP);
 				error = EFAULT;
 				goto fail;
 			}
-			switch (ioe.rs_num) {
+			switch (ioe->rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
-				if ((error = pf_commit_altq(ioe.ticket)))
+				if ((error = pf_commit_altq(ioe->ticket))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail; /* really bad */
+				}
 				break;
 #endif /* ALTQ */
 			case PF_RULESET_TABLE:
-				bzero(&table, sizeof(table));
-				strlcpy(table.pfrt_anchor, ioe.anchor,
-				    sizeof(table.pfrt_anchor));
-				if ((error = pfr_ina_commit(&table, ioe.ticket,
-				    NULL, NULL, 0)))
+				bzero(table, sizeof(*table));
+				strlcpy(table->pfrt_anchor, ioe->anchor,
+				    sizeof(table->pfrt_anchor));
+				if ((error = pfr_ina_commit(table, ioe->ticket,
+				    NULL, NULL, 0))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail; /* really bad */
+				}
 				break;
 			default:
-				if ((error = pf_commit_rules(ioe.ticket,
-				    ioe.rs_num, ioe.anchor)))
+				if ((error = pf_commit_rules(ioe->ticket,
+				    ioe->rs_num, ioe->anchor))) {
+					free(table, M_TEMP);
+					free(ioe, M_TEMP);
 					goto fail; /* really bad */
+				}
 				break;
 			}
 		}
+		free(table, M_TEMP);
+		free(ioe, M_TEMP);
 		break;
 	}
 
