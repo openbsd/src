@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.76 2005/08/03 14:43:08 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.77 2005/08/04 13:31:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -109,6 +109,7 @@
 #define CVS_SERVER_DEFAULT	"cvs"
 #define CVS_RSH_DEFAULT		"ssh"
 #define CVS_EDITOR_DEFAULT	"vi"
+#define CVS_TMPDIR_DEFAULT	"/tmp"
 
 /* extensions */
 #define CVS_DESCR_FILE_EXT	",t"
@@ -301,6 +302,7 @@ extern char *cvs_editor;
 extern char *cvs_homedir;
 extern char *cvs_msg;
 extern char *cvs_rsh;
+extern char *cvs_tmpdir;
 
 extern int  verbosity;
 extern int  cvs_trace;

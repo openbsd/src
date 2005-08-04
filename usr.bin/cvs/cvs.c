@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.79 2005/08/03 14:43:08 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.80 2005/08/04 13:31:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,6 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -67,6 +68,7 @@ char *cvs_editor = CVS_EDITOR_DEFAULT;
 char *cvs_homedir = NULL;
 char *cvs_msg = NULL;
 char *cvs_repo_base = NULL;
+char *cvs_tmpdir = CVS_TMPDIR_DEFAULT;
 
 /* hierarchy of all the files affected by the command */
 CVSFILE *cvs_files;
@@ -99,6 +101,7 @@ main(int argc, char **argv)
 	int i, ret, cmd_argc;
 	struct cvs_cmd *cmdp;
 	struct passwd *pw;
+	struct stat st;
 
 	TAILQ_INIT(&cvs_variables);
 
@@ -136,6 +139,9 @@ main(int argc, char **argv)
 		cvs_homedir = pw->pw_dir;
         }
 
+	if ((envstr = getenv("TMPDIR")) != NULL)
+		cvs_tmpdir = envstr;
+
 	ret = cvs_getopt(argc, argv);
 
 	argc -= ret;
@@ -144,7 +150,22 @@ main(int argc, char **argv)
 		usage();
 		exit(1);
 	}
+
 	cvs_command = argv[0];
+
+	/*
+	 * check the tmp dir, either specified through
+	 * the environment variable TMPDIR, or via
+	 * the global option -T <dir>
+	 */
+	if (stat(cvs_tmpdir, &st) == -1) {
+		cvs_log(LP_ERR, "failed to stat `%s'", cvs_tmpdir);
+		exit(1);
+	} else if (!S_ISDIR(st.st_mode)) {
+		cvs_log(LP_ERR, "`%s' is not valid temporary directory",
+		    cvs_tmpdir);
+		exit(1);
+	}
 
 	if (cvs_readrc == 1) {
 		cvs_read_rcfile();
@@ -250,7 +271,7 @@ cvs_getopt(int argc, char **argv)
 	int ret;
 	char *ep;
 
-	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrs:tvz:")) != -1) {
+	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrs:T:tvz:")) != -1) {
 		switch (ret) {
 		case 'b':
 			/*
@@ -295,6 +316,9 @@ cvs_getopt(int argc, char **argv)
 			*(ep++) = '\0';
 			if (cvs_var_set(optarg, ep) < 0)
 				exit(1);
+			break;
+		case 'T':
+			cvs_tmpdir = optarg;
 			break;
 		case 't':
 			(void)cvs_log_filter(LP_FILTER_UNSET, LP_TRACE);
