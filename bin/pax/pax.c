@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.27 2004/04/16 22:50:23 deraadt Exp $	*/
+/*	$OpenBSD: pax.c,v 1.28 2005/08/04 10:02:44 mpf Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: pax.c,v 1.27 2004/04/16 22:50:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pax.c,v 1.28 2005/08/04 10:02:44 mpf Exp $";
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ main(int argc, char **argv)
 	 */
 	cwdfd = open(".", O_RDONLY);
 	if (cwdfd < 0) {
-		syswarn(0, errno, "Can't open current working directory.");
+		syswarn(1, errno, "Can't open current working directory.");
 		return(exit_val);
 	}
 

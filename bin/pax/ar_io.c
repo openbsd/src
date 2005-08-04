@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.36 2004/06/20 16:22:08 niklas Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.37 2005/08/04 10:02:44 mpf Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ar_io.c,v 1.36 2004/06/20 16:22:08 niklas Exp $";
+static const char rcsid[] = "$OpenBSD: ar_io.c,v 1.37 2005/08/04 10:02:44 mpf Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ ar_open(const char *name)
 			arfd = STDIN_FILENO;
 			arcname = STDN;
 		} else if ((arfd = open(name, EXT_MODE, DMOD)) < 0)
-			syswarn(0, errno, "Failed open to read on %s", name);
+			syswarn(1, errno, "Failed open to read on %s", name);
 		if (arfd != -1 && gzip_program != NULL)
 			ar_start_gzip(arfd, gzip_program, 0);
 		break;
@@ -131,7 +131,7 @@ ar_open(const char *name)
 			arfd = STDOUT_FILENO;
 			arcname = STDO;
 		} else if ((arfd = open(name, AR_MODE, DMOD)) < 0)
-			syswarn(0, errno, "Failed open to write on %s", name);
+			syswarn(1, errno, "Failed open to write on %s", name);
 		else
 			can_unlnk = 1;
 		if (arfd != -1 && gzip_program != NULL)
@@ -142,7 +142,7 @@ ar_open(const char *name)
 			arfd = STDOUT_FILENO;
 			arcname = STDO;
 		} else if ((arfd = open(name, APP_MODE, DMOD)) < 0)
-			syswarn(0, errno, "Failed open to read/write on %s",
+			syswarn(1, errno, "Failed open to read/write on %s",
 				name);
 		break;
 	case COPY:
@@ -165,7 +165,7 @@ ar_open(const char *name)
 	 * set up is based on device type
 	 */
 	if (fstat(arfd, &arsb) < 0) {
-		syswarn(0, errno, "Failed stat on %s", arcname);
+		syswarn(1, errno, "Failed stat on %s", arcname);
 		(void)close(arfd);
 		arfd = -1;
 		can_unlnk = 0;
