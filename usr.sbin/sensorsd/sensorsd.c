@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.17 2005/08/03 17:30:05 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.18 2005/08/04 13:01:43 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -315,6 +315,9 @@ print_sensor(enum sensor_type type, int64_t value)
 	case SENSOR_VOLTS_DC:
 		snprintf(fbuf, RFBUFSIZ, "%.2fV", value / 1000.0 / 1000.0);
 		break;
+	case SENSOR_INTEGER:
+		snprintf(fbuf, RFBUFSIZ, "%lld", value);
+		break;
 	default:
 		snprintf(fbuf, RFBUFSIZ, "%lld ???", value);
 	}
@@ -402,6 +405,9 @@ get_val(char *buf, int upper, enum sensor_type type)
 		if (*p != 'V')
 			errx(1, "unknown unit %s for voltage sensor", p);
 		rval = val * 1000 * 1000;
+		break;
+	case SENSOR_INTEGER:
+		rval = val;
 		break;
 	default:
 		errx(1, "unsupported sensor type");
