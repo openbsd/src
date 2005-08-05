@@ -986,6 +986,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/ad1848var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/ahareg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/apsreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/apsvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/ariareg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/cs4231var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/egavar.ph
@@ -1936,12 +1938,12 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/cd.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/scsi/safte.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_all.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_changer.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_debug.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_disk.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_message.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_safte.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_scanner.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_tape.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsiconf.ph

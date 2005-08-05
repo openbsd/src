@@ -363,6 +363,8 @@
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
 ./usr/include/dev/isa/ahareg.h
+./usr/include/dev/isa/apsreg.h
+./usr/include/dev/isa/apsvar.h
 ./usr/include/dev/isa/ariareg.h
 ./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/egavar.h
@@ -1254,12 +1256,12 @@
 ./usr/include/sched.h
 ./usr/include/scsi
 ./usr/include/scsi/cd.h
+./usr/include/scsi/safte.h
 ./usr/include/scsi/scsi_all.h
 ./usr/include/scsi/scsi_changer.h
 ./usr/include/scsi/scsi_debug.h
 ./usr/include/scsi/scsi_disk.h
 ./usr/include/scsi/scsi_message.h
-./usr/include/scsi/scsi_safte.h
 ./usr/include/scsi/scsi_scanner.h
 ./usr/include/scsi/scsi_tape.h
 ./usr/include/scsi/scsiconf.h
