@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.46 2005/08/02 02:34:03 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.47 2005/08/05 16:23:30 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -383,10 +383,3 @@ void parse_client_lease_declaration(FILE *, struct client_lease *,
 int parse_option_decl(FILE *, struct option_data *);
 void parse_string_list(FILE *, struct string_list **, int);
 void parse_reject_statement(FILE *);
-
-/* privsep.c */
-struct buf	*buf_open(size_t);
-int		 buf_add(struct buf *, void *, size_t);
-int		 buf_close(int, struct buf *);
-ssize_t		 buf_read(int, void *, size_t);
-void		 dispatch_imsg(int);
