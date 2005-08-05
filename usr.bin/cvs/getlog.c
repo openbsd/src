@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.44 2005/07/27 16:42:19 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.45 2005/08/05 10:17:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -259,7 +259,7 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 	TAILQ_FOREACH(acp, &(rf->rf_access), ra_list)
 		cvs_printf("\t%s\n", acp->ra_name);
 
-	if (!log_notags) {
+	if (log_notags == 0) {
 		cvs_printf("symbolic names:\n");
 		TAILQ_FOREACH(sym, &(rf->rf_symbols), rs_list)
 			cvs_printf("\t%s: %s\n", sym->rs_name,
@@ -271,15 +271,15 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 
 	cvs_printf("total revisions: %u;", rf->rf_ndelta);
 
-	if (!log_honly && !log_lhonly)
+	if ((log_honly == 0) && (log_lhonly == 0))
 		cvs_printf("\tselected revisions: %u", nrev);
 
 	cvs_printf("\n");
 
-	if (!log_honly || log_lhonly)
+	if ((log_honly == 0) || (log_lhonly == 1))
 		cvs_printf("description:\n%s", rf->rf_desc);
 
-	if (!log_honly && !log_lhonly) {
+	if ((log_honly == 0) && (log_lhonly == 0)) {
 		TAILQ_FOREACH(rdp, &(rf->rf_delta), rd_list) {
 			rcsnum_tostr(rdp->rd_num, numbuf, sizeof(numbuf));
 			cvs_printf(CVS_GETLOG_REVSEP "\nrevision %s\n", numbuf);
