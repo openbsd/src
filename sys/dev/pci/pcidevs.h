@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.901 2005/08/01 22:52:47 brad Exp 
+ *	OpenBSD: pcidevs,v 1.902 2005/08/05 16:57:58 mpf Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1006,6 +1006,7 @@
 #define	PCI_PRODUCT_COMPAQ_CSA6400	0x409c		/* Smart Array 6400 */
 #define	PCI_PRODUCT_COMPAQ_CSA6400EM	0x409d		/* Smart Array 6400 EM */
 #define	PCI_PRODUCT_COMPAQ_CSA6422	0x409e		/* Smart Array 6422 */
+#define	PCI_PRODUCT_COMPAQ_CSA64XX	0x0046		/* Smart Array 64xx */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB */
 #define	PCI_PRODUCT_COMPAQ_FXP	0xa0f0		/* Netelligent ASMC */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1	0xa0f3		/* ISA */
