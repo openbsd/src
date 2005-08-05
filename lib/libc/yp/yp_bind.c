@@ -1,3 +1,4 @@
+/*	$OpenBSD: yp_bind.c,v 1.15 2005/08/05 13:02:16 espie Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -23,10 +24,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_bind.c,v 1.14 2003/06/02 03:48:42 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

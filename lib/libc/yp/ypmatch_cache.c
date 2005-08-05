@@ -1,3 +1,4 @@
+/*	$OpenBSD: ypmatch_cache.c,v 1.12 2005/08/05 13:02:16 espie Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -24,26 +25,17 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ypmatch_cache.c,v 1.11 2003/06/25 21:51:56 marc Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
 
+#ifdef YPMATCHCACHE
 static bool_t ypmatch_add(const char *, const char *, u_int, char *, u_int);
 static bool_t ypmatch_find(const char *, const char *, u_int, char **, u_int *);
 
@@ -148,6 +140,7 @@ ypmatch_find(const char *map, const char *key, u_int keylen, char **val,
 	}
 	return 0;
 }
+#endif
 
 int
 yp_match(const char *indomain, const char *inmap, const char *inkey,

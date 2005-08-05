@@ -1,3 +1,4 @@
+/*	$OpenBSD: yp_get_default_domain.c,v 1.6 2005/08/05 13:02:16 espie Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -24,19 +25,8 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_get_default_domain.c,v 1.5 2003/06/02 03:48:42 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
