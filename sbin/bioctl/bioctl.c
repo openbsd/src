@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.22 2005/08/05 02:34:52 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.23 2005/08/05 02:40:36 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -135,7 +135,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-Di] [-a function] device\n", __progname);
+	    "usage: %s [-Di] [-a alarm-function] device\n", __progname);
 	exit(1);
 }
 
