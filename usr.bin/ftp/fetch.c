@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.55 2005/07/18 02:55:59 fgsch Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.56 2005/08/05 21:01:53 fgsch Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.55 2005/07/18 02:55:59 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.56 2005/08/05 21:01:53 fgsch Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -349,7 +349,7 @@ again:
 		fprintf(fin, "GET %s HTTP/1.0\r\n%s\r\n\r\n", path,
 		    HTTP_USER_AGENT);
 	} else {
-		fprintf(fin, "GET /%s HTTP/1.1\r\nHost: ", path);
+		fprintf(fin, "GET /%s HTTP/1.0\r\nHost: ", path);
 		if (strchr(host, ':')) {
 			char *h, *p;
 
@@ -374,8 +374,7 @@ again:
 		 */
 		if (port && strcmp(port, "80") != 0)
 			fprintf(fin, ":%s", port);
-		fprintf(fin, "\r\nConnection: close\r\n%s\r\n\r\n",
-		    HTTP_USER_AGENT);
+		fprintf(fin, "\r\n%s\r\n\r\n", HTTP_USER_AGENT);
 		if (verbose)
 			fprintf(ttyout, "\n");
 	}
