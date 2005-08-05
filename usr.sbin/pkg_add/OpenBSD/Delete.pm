@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.22 2005/07/24 10:41:14 espie Exp $
+# $OpenBSD: Delete.pm,v 1.23 2005/08/05 09:52:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -114,6 +114,7 @@ sub validate_plist($$)
 		}
 	}
 	Fatal "fatal issues" if $problems;
+	$totsize = 1 if $totsize == 0;
 	$plist->{totsize} = $totsize;
 }
 

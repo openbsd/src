@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.33 2005/06/21 19:12:31 espie Exp $
+# $OpenBSD: Add.pm,v 1.34 2005/08/05 09:52:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -125,6 +125,7 @@ sub validate_plist($$)
 		OpenBSD::CollisionReport::collision_report($colliding, $state);
 	}
 	Fatal "fatal issues in installing $pkgname" if $problems;
+	$totsize = 1 if $totsize == 0;
 	return $totsize;
 }
 
