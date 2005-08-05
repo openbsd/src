@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.32 2005/08/05 10:01:38 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.33 2005/08/05 10:03:10 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -152,11 +152,11 @@ sub next
     } else {
     	die "Unsupported type";
     }
-#    if (!$result->isFile()) {
-#    	if ($size != 0) {
-#		die "Bad archive: non null size for non file entry\n";
-#	}
-#    }
+    if (!$result->isFile()) {
+    	if ($size != 0) {
+		die "Bad archive: non null size for non file entry\n";
+	}
+    }
     # adjust swallow
     $self->{swallow} = $size;
     if ($size % 512) {
