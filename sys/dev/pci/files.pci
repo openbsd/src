@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.182 2005/08/01 03:03:14 david Exp $
+#	$OpenBSD: files.pci,v 1.183 2005/08/05 16:16:01 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -159,7 +159,7 @@ attach	aac at pci with aac_pci
 file	dev/pci/aac_pci.c		aac_pci
 file	dev/ic/aac.c			aac
 
-# Compaq Array Controllers
+# Compaq Smart ARRAY Controllers
 attach	cac at pci with cac_pci
 file	dev/pci/cac_pci.c		cac_pci
 
