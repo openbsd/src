@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.48 2005/01/18 13:32:56 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.49 2005/08/05 03:36:28 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1926,7 +1926,7 @@ Lspldone:
 /*
  * _delay(u_int N)
  *
- * Delay for at least (N/256) microsecends.
+ * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
  */
