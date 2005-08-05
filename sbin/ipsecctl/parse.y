@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2005/08/05 14:39:02 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2005/08/05 15:44:57 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -75,6 +75,7 @@ int			 atoul(char *, u_long *);
 int			 atospi(char *, u_int32_t *);
 u_int8_t		 x2i(unsigned char *);
 struct ipsec_key	*parsekey(unsigned char *, size_t);
+struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
 struct ipsec_rule	*create_sa(struct ipsec_addr *, struct ipsec_addr *,
@@ -118,6 +119,10 @@ typedef struct {
 			struct ipsec_key *keyout;
 			struct ipsec_key *keyin;
 		} enckeys;
+		struct {
+			struct ipsec_key *keyout;
+			struct ipsec_key *keyin;
+		} keys;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -125,7 +130,7 @@ typedef struct {
 %}
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
-%token	AUTHKEY ENCKEY KEYFILE ERROR
+%token	AUTHKEY ENCKEY FILENAME ERROR
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -139,6 +144,7 @@ typedef struct {
 %type	<v.spis>		spispec
 %type	<v.authkeys>		authkeyspec
 %type	<v.enckeys>		enckeyspec
+%type	<v.keys>		keyspec
 %%
 
 grammar		: /* empty */
@@ -318,9 +324,25 @@ authkeyspec	: /* empty */			{
 			$$.keyout = NULL;
 			$$.keyin = NULL;
 		}
-		| AUTHKEY STRING			{
+		| AUTHKEY keyspec		{
+			$$.keyout = $2.keyout;
+			$$.keyin = $2.keyin;
+		}
+		;
+
+enckeyspec	: /* empty */			{
+			$$.keyout = NULL;
+			$$.keyin = NULL;
+		}
+		| ENCKEY keyspec		{
+			$$.keyout = $2.keyout;
+			$$.keyin = $2.keyin;
+		}
+		;
+
+keyspec		: STRING			{
 			unsigned char	*hex;
-			unsigned char	*p = strchr($2, ':');
+			unsigned char	*p = strchr($1, ':');
 			
 			if (p != NULL ) {
 				*p++ = 0;
@@ -330,38 +352,24 @@ authkeyspec	: /* empty */			{
 				$$.keyin = parsekey(p, strlen(p));
 			}
 
-			hex = $2;
+			hex = $1;
 			if (!strncmp(hex, "0x", 2))
 				hex += 2;
 			$$.keyout = parsekey(hex, strlen(hex));
 
-			free($2);
+			free($1);
 		}
-		| KEYFILE STRING		{
-			struct stat	 sb;
-			int		 fd;
-			unsigned char	*hex;
+		| FILENAME STRING		{
+			unsigned char	*p = strchr($2, ':');
 
-			if (stat($2, &sb) < 0)
-				err(1, "stat");
-			if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
-				errx(1, "key too %s", sb.st_size ? "large" :
-				    "small");
-			if ((hex = calloc(sb.st_size, sizeof(unsigned char)))
-			    == NULL)
-				err(1, "calloc");
-			if ((fd = open($2, O_RDONLY)) < 0)
-				err(1, "open");
-			if (read(fd, hex, sb.st_size) < sb.st_size)
-				err(1, "read");
-			close(fd);
-			$$.keyout = parsekey(hex, sb.st_size);
-
+			if (p != NULL) {
+				*p++ = 0;
+				$$.keyin = parsekeyfile(p);
+			}
+			$$.keyout = parsekeyfile($2);
 			free($2);
 		}
 		;
-
-mode		: /* empty */			{ };
 %%
 
 struct keywords {
@@ -400,10 +408,10 @@ lookup(char *s)
 		{ "dstid",		DSTID},
 		{ "enckey",		ENCKEY},
 		{ "esp",		ESP},
+		{ "file",		FILENAME},
 		{ "flow",		FLOW},
 		{ "from",		FROM},
 		{ "in",			IN},
-		{ "keyfile",		KEYFILE},
 		{ "out",		OUT},
 		{ "peer",		PEER},
 		{ "psk",		PSK},
@@ -754,7 +762,7 @@ x2i(unsigned char *s)
 
 	if (!isxdigit(s[0]) || !isxdigit(s[1])) {
 		yyerror("keys need to be specified in hex digits");
-		return -1;
+		return (-1);
 	}
 	return ((u_int8_t)strtoul(ss, NULL, 16));
 }
@@ -778,6 +786,29 @@ parsekey(unsigned char *hexkey, size_t len)
 		key->data[i] = x2i(hexkey + 2 * i);
 
 	return (key);
+}
+
+struct ipsec_key *
+parsekeyfile(char *filename)
+{
+	struct stat	 sb;
+	int		 fd;
+	unsigned char	*hex;
+
+	if (stat(filename, &sb) < 0)
+		err(1, "stat");
+	if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
+		errx(1, "key too %s", sb.st_size ? "large" :
+		    "small");
+	if ((hex = calloc(sb.st_size, sizeof(unsigned char)))
+	    == NULL)
+		err(1, "calloc");
+	if ((fd = open(filename, O_RDONLY)) < 0)
+		err(1, "open");
+	if (read(fd, hex, sb.st_size) < sb.st_size)
+		err(1, "read");
+	close(fd);
+	return (parsekey(hex, sb.st_size));
 }
 
 struct ipsec_addr *
