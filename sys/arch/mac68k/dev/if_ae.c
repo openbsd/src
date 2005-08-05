@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.25 2005/01/15 05:24:09 brad Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.26 2005/08/05 14:22:21 martin Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -50,8 +50,6 @@
 #include "if_aereg.h"
 #include "if_aevar.h"
 
-#define INTERFACE_NAME_LEN	32
-
 #define inline			/* XXX for debugging porpoises */
 
 static inline void ae_rint(struct ae_softc *);
@@ -61,7 +59,6 @@ static inline int ae_ring_copy( struct ae_softc *, int, caddr_t, int);
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
-
 
 #define NIC_GET(sc, reg)	(bus_space_read_1((sc)->sc_regt,	\
 				    (sc)->sc_regh,			\
@@ -956,6 +953,7 @@ aeget(sc, src, total_len)
 		if (total_len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
 				m_freem(top);
 				return 0;
 			}
