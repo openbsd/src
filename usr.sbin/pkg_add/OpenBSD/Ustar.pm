@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.33 2005/08/05 10:03:10 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.34 2005/08/05 10:36:53 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -166,23 +166,27 @@ sub next
     return $result;
 }
 
-sub mkheader
+sub split_name
 {
-	my ($entry, $type) = @_;
-	my ($name, $prefix);
-	$name = $entry->{name};
-	if (length($name) <= MAXFILENAME) {
-		$prefix = '';
-	} elsif (length($name) > MAXFILENAME+MAXPREFIX+1) {
-		die "Can't fit such a name $name\n";
-	} else {
-		$prefix = '';
-		while (length($name) > MAXFILENAME && $name =~ m/^(.*?\/)(.*)$/) {
+	my $name = shift;
+	my $prefix = '';
+
+	my $l = length $name;
+	if ($l > MAXFILENAME && $l <= MAXFILENAME+MAXPREFIX+1) {
+		while (length($name) > MAXFILENAME && 
+		    $name =~ m/^(.*?\/)(.*)$/) {
 			$prefix .= $1;
 			$name = $2;
 		}
 		$prefix =~ s|/$||;
 	}
+	return ($prefix, $name);
+}
+
+sub mkheader
+{
+	my ($entry, $type) = @_;
+	my ($prefix, $name) = split_name($entry->{name});
 	my $linkname = $entry->{linkname};
 	my $size = $entry->{size};
 	if (!$entry->isFile()) {
