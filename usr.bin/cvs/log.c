@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.24 2005/07/27 15:45:44 xsa Exp $	*/
+/*	$OpenBSD: log.c,v 1.25 2005/08/05 16:21:41 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -203,7 +203,7 @@ int
 cvs_vlog(u_int level, const char *fmt, va_list vap)
 {
 	int ecp;
-	char prefix[64], buf[1024], ebuf[32];
+	char prefix[64], buf[1024], ebuf[255];
 	FILE *out;
 	struct cvs_cmd *cmdp;
 
