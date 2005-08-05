@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.3 2005/08/02 23:48:59 mickey Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.4 2005/08/05 17:00:09 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -57,6 +57,7 @@ const struct pci_matchid ciss_pci_devices[] = {
 	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_CSA6400 },
 	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_CSA6400EM },
 	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_CSA6422 },
+	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_CSA64XX },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAV100 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP800 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSAP600 },
