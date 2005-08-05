@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.18 2005/08/03 15:27:01 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.19 2005/08/05 14:39:02 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -762,11 +762,11 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		switch (action) {
 		case PFK_ACTION_ADD:
 			ret = pfkey_sa(fd, satype, SADB_ADD, r->spi,
-			    r->src, r->dst, r->key);
+			    r->src, r->dst, r->authkey);
 			break;
 		case PFK_ACTION_DELETE:
 			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi,
-			    r->src, r->dst, r->key);
+			    r->src, r->dst, r->authkey);
 			break;
 		default:
 			return -1;

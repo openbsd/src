@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2005/08/05 14:09:27 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2005/08/05 14:39:02 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,15 +113,19 @@ typedef struct {
 		struct {
 			struct ipsec_key *keyout;
 			struct ipsec_key *keyin;
-		} keys;
+		} authkeys;
+		struct {
+			struct ipsec_key *keyout;
+			struct ipsec_key *keyin;
+		} enckeys;
 	} v;
 	int lineno;
 } YYSTYPE;
 
 %}
 
-%token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI KEY
-%token	KEYFILE ERROR
+%token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
+%token	AUTHKEY ENCKEY KEYFILE ERROR
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -133,7 +137,8 @@ typedef struct {
 %type	<v.id>			id
 %type	<v.authtype>		authtype
 %type	<v.spis>		spispec
-%type	<v.keys>		keyspec
+%type	<v.authkeys>		authkeyspec
+%type	<v.enckeys>		enckeyspec
 %%
 
 grammar		: /* empty */
@@ -160,7 +165,7 @@ number		: STRING			{
 			free($1);
 		}
 
-tcpmd5rule	: TCPMD5 hosts spispec keyspec	{
+tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			struct ipsec_rule	*r;
 
 			r = create_sa($2.src, $2.dst, $3.spiout, $4.keyout);
@@ -309,11 +314,11 @@ spispec		: SPI STRING			{
 		}
 		;
 
-keyspec		: /* empty */			{
+authkeyspec	: /* empty */			{
 			$$.keyout = NULL;
 			$$.keyin = NULL;
 		}
-		| KEY STRING			{
+		| AUTHKEY STRING			{
 			unsigned char	*hex;
 			unsigned char	*p = strchr($2, ':');
 			
@@ -355,6 +360,8 @@ keyspec		: /* empty */			{
 			free($2);
 		}
 		;
+
+mode		: /* empty */			{ };
 %%
 
 struct keywords {
@@ -389,12 +396,13 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "ah",			AH},
+		{ "authkey",		AUTHKEY},
 		{ "dstid",		DSTID},
+		{ "enckey",		ENCKEY},
 		{ "esp",		ESP},
 		{ "flow",		FLOW},
 		{ "from",		FROM},
 		{ "in",			IN},
-		{ "key",		KEY},
 		{ "keyfile",		KEYFILE},
 		{ "out",		OUT},
 		{ "peer",		PEER},
@@ -828,11 +836,11 @@ copyhost(const struct ipsec_addr *src)
 
 struct ipsec_rule *
 create_sa(struct ipsec_addr *src, struct ipsec_addr *dst, u_int32_t spi,
-    struct ipsec_key *key)
+    struct ipsec_key *authkey)
 {
 	struct ipsec_rule *r;
 
-	if (spi == 0 || key == NULL)
+	if (spi == 0 || authkey == NULL)
 		return (NULL);
 
 	r = calloc(1, sizeof(struct ipsec_rule));
@@ -844,17 +852,17 @@ create_sa(struct ipsec_addr *src, struct ipsec_addr *dst, u_int32_t spi,
 	r->src = src;
 	r->dst = dst;
 	r->spi = spi;
-	r->key = key;
+	r->authkey = authkey;
 
 	return r;
 }
 
 struct ipsec_rule *
-reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *key)
+reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey)
 {
 	struct ipsec_rule *reverse;
 
-	if (spi == 0 || key == NULL)
+	if (spi == 0 || authkey == NULL)
 		return (NULL);
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
@@ -865,7 +873,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *key)
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
 	reverse->spi = spi;
-	reverse->key = key;
+	reverse->authkey = authkey;
 
 	return (reverse);
 }

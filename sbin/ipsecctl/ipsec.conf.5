@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.12 2005/07/23 20:44:36 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.13 2005/08/05 14:39:02 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -119,7 +119,7 @@ following rule:
 .Aq Ar dst
 .Ar spi
 .Aq Ar number
-.Ar key
+.Ar authkey
 .Aq Ar hex string
 .Xc
 This rule applies for packets with source address
@@ -130,17 +130,17 @@ All addresses are specified in CIDR notation.
 The parameter
 .Ar spi
 is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
-The key to be used is a hexadecimal string of arbitrary length.
+The authentication key to be used is a hexadecimal string of arbitrary length.
 For both
 .Ar spi
 and
-.Ar key
+.Ar authkey
 it is possible to specify two values separated by a colon.
 .Xr ipsecctl 8
 will then generate the matching incoming SA using the second values for
 .Ar spi
 and
-.Ar key .
+.Ar authkey .
 .El
 .Pp
 For details on how to enable TCP MD5 signatures see
@@ -163,7 +163,7 @@ flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 
 # Set up keys for TCP MD5 signatures
 tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \\
-	key 0xdeadbeef:0xbeefdead
+	authkey 0xdeadbeef:0xbeefdead
 .Ed
 .Sh SEE ALSO
 .Xr ipsec 4 ,

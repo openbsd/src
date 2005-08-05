@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.21 2005/08/03 15:27:01 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.22 2005/08/05 14:39:02 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -158,9 +158,9 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 				free(rp->auth->dstid);
 			}
 			free(rp->auth);
-		if (rp->key) {
-			free(rp->key->data);
-			free(rp->key);
+		if (rp->authkey) {
+			free(rp->authkey->data);
+			free(rp->authkey);
 		}
 		free(rp);
 	}
@@ -246,9 +246,9 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 	printf(" to ");
 	ipsecctl_print_addr(r->dst);
 	printf(" spi 0x%08x", r->spi);
-	if (r->key) {
-		printf(" key 0x");
-		ipsecctl_print_key(r->key);
+	if (r->authkey) {
+		printf(" authkey 0x");
+		ipsecctl_print_key(r->authkey);
 	}
 }
 
