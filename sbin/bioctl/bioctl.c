@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.21 2005/08/03 16:12:53 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.22 2005/08/05 02:34:52 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -89,6 +89,9 @@ main(int argc, char *argv[])
 
 	if (argc < 0 || argc > 1)
 		usage();
+
+	if (func == 0)
+		func |= BIOC_INQ;
 
 	/* if at least glob sd[0-9]*, it is a drive identifier */
 	if (strncmp(argv[0], "sd", 2) == 0 && strlen(argv[0]) > 2 &&
