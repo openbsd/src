@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2005/08/02 15:47:25 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2005/08/05 14:09:27 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -160,9 +160,6 @@ number		: STRING			{
 			free($1);
 		}
 
-flowrule	: FLOW ipsecrule		{ }
-		;
-
 tcpmd5rule	: TCPMD5 hosts spispec keyspec	{
 			struct ipsec_rule	*r;
 
@@ -187,25 +184,25 @@ tcpmd5rule	: TCPMD5 hosts spispec keyspec	{
 		}
 		;
 
-ipsecrule	: protocol dir hosts peer ids authtype	{
+flowrule	: FLOW protocol dir hosts peer ids authtype	{
 			struct ipsec_rule	*r;
 
-			r = create_flow($2, $3.src, $3.dst, $4, $1, $5.srcid,
-			    $5.dstid, $6);
+			r = create_flow($3, $4.src, $4.dst, $5, $2, $6.srcid,
+			    $6.dstid, $7);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
 
 			if (ipsecctl_add_rule(ipsec, r))
-				errx(1, "ipsecrule: ipsecctl_add_rule");
+				errx(1, "flowrule: ipsecctl_add_rule");
 
 			/* Create and add reverse flow rule. */
-			if ($2 == IPSEC_INOUT) {
+			if ($3 == IPSEC_INOUT) {
 				r = reverse_rule(r);	
 				r->nr = ipsec->rule_nr++;
 
 				if (ipsecctl_add_rule(ipsec, r))
-					errx(1, "ipsecrule: ipsecctl_add_rule");
+					errx(1, "flowrule: ipsecctl_add_rule");
 			}
 		}
 		;
