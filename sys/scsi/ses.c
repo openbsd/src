@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.15 2005/08/04 14:31:53 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.16 2005/08/05 00:34:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -130,37 +130,29 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ses_softc		*sc = (struct ses_softc *)self;
 	struct scsibus_attach_args	*sa = aux;
-	struct ses_sensor		*sensor;
 
 	sc->sc_link = sa->sa_sc_link;
 	sc->sc_thread = NULL;
 
 	printf("\n");
 
-	if (ses_read_config(sc) != 0) {
-		printf("%s: unable to read enclosure configuration\n",
-		    DEVNAME(sc));
-		return;
-	}
-
 	sc->sc_thread = malloc(sizeof(struct ses_thread), M_DEVBUF, M_NOWAIT);
 	if (sc->sc_thread == NULL) {
-		free(sc->sc_buf, M_DEVBUF);
-		while (!TAILQ_EMPTY(&sc->sc_sensors)) {
-			sensor = TAILQ_FIRST(&sc->sc_sensors);
-			TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
-			free(sensor, M_DEVBUF);
-		}
 		printf("%s: unable to allocate thread information\n",
 		    DEVNAME(sc));
 		return;
 	}
-	
+
 	sc->sc_thread->sc = sc;
 	sc->sc_thread->running = 1;
 
-	TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry)
-		SENSOR_ADD(&sensor->se_sensor);
+	if (ses_read_config(sc) != 0) {
+		free(sc->sc_thread, M_DEVBUF);
+		sc->sc_thread = NULL;
+		printf("%s: unable to read enclosure configuration\n",
+		    DEVNAME(sc));
+		return;
+	}
 
 	kthread_create_deferred(ses_create_thread, sc);
 }
@@ -427,6 +419,8 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 		status++;
 	}
 
+	TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry)
+		SENSOR_ADD(&sensor->se_sensor);
 	return (0);
 error:
 	while (!TAILQ_EMPTY(&sc->sc_sensors)) {
