@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.29 2005/04/21 21:47:18 beck Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.30 2005/08/05 08:30:10 djm Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: pat_rep.c,v 1.29 2005/04/21 21:47:18 beck Exp $";
+static const char rcsid[] = "$OpenBSD: pat_rep.c,v 1.30 2005/08/05 08:30:10 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -614,7 +614,7 @@ mod_name(ARCHD *arcn)
 	 * Strip off leading '/' if appropriate.
 	 * Currently, this option is only set for the tar format.
 	 */
-	if (rmleadslash && arcn->name[0] == '/') {
+	while (rmleadslash && arcn->name[0] == '/') {
 		if (arcn->name[1] == '\0') {
 			arcn->name[0] = '.';
 		} else {
@@ -627,7 +627,7 @@ mod_name(ARCHD *arcn)
 			paxwarn(0, "Removing leading / from absolute path names in the archive");
 		}
 	}
-	if (rmleadslash && arcn->ln_name[0] == '/' &&
+	while (rmleadslash && arcn->ln_name[0] == '/' &&
 	    (arcn->type == PAX_HLK || arcn->type == PAX_HRG)) {
 		if (arcn->ln_name[1] == '\0') {
 			arcn->ln_name[0] = '.';
