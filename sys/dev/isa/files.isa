@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.90 2005/07/28 20:12:13 grange Exp $
+#	$OpenBSD: files.isa,v 1.91 2005/08/05 03:52:32 jsg Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -397,6 +397,11 @@ file	dev/isa/it.c			it
 device	viasio
 attach	viasio at isa
 file	dev/isa/viasio.c		viasio
+
+# ThinkPad Active Protection System accelerometer
+device	aps
+attach	aps at isa
+file	dev/isa/aps.c			aps
 
 #
 # PCMCIA PCIC (i82365SL and compatibles):

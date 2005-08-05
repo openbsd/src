@@ -1,0 +1,65 @@
+.\"	$OpenBSD: aps.4,v 1.1 2005/08/05 03:52:32 jsg Exp $
+.\"
+.\" Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd August 5, 2005
+.Dt APS 4
+.Os
+.Sh NAME
+.Nm aps
+.Nd ThinkPad Active Protection System accelerometer
+.Sh SYNOPSIS
+.Cd "aps0 at isa? port 0x1600"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for several sensors found in some ThinkPad laptops.
+.Pp
+The sensors currently exposed via the
+.Xr sysctl 8
+interface are:
+.Bl -column "Sensor" "Units" "Typical" -offset indent
+.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
+.It Li "X_ACCEL" Ta "Unknown" Ta "X Acceleration"
+.It Li "Y_ACCEL" Ta "Unknown" Ta "Y Acceleration"
+.It Li "X_VAR" Ta "Unknown" Ta "Weighted X Acceleration?"
+.It Li "Y_VAR" Ta "Unknown" Ta "Weighted Y Acceleration?"
+.It Li "Temp1" Ta "uK" Ta "Unknown"
+.It Li "Temp2" Ta "uK" Ta "Unknown"
+.It Li "KBD_ACT" Ta "boolean" Ta "Keyboard activity"
+.It Li "MS_ACT" Ta "boolean" Ta "Mouse activity"
+.It Li "LID_OPEN" Ta "boolean" Ta "Lid state"
+.It Li "unknown" Ta "Unknown" Ta "Unknown"
+.El
+.Sh SEE ALSO
+.Xr sensorsd 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.8 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Jonathan Gray Aq jsg@openbsd.org .
+.Sh CAVEATS
+The
+.Nm
+driver does not yet maintain state and take evasive action when it
+thinks the hard disk is in danger.
+As IBM provides no documentation it is not known what all the available
+sensors are used for.
