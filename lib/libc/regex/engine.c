@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.14 2005/01/03 19:51:14 otto Exp $	*/
+/*	$OpenBSD: engine.c,v 1.15 2005/08/05 13:03:00 espie Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -34,10 +34,6 @@
  *
  *	@(#)engine.c	8.5 (Berkeley) 3/20/94
  */
-
-#if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.14 2005/01/03 19:51:14 otto Exp $";
-#endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
  * The matching engine and friends.  This file is #included by regexec.c

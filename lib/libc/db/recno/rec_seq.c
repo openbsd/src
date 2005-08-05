@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_seq.c,v 1.7 2005/03/23 19:34:59 otto Exp $	*/
+/*	$OpenBSD: rec_seq.c,v 1.8 2005/08/05 13:03:00 espie Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)rec_utils.c	8.6 (Berkeley) 7/16/94";
-#else
-static const char rcsid[] = "$OpenBSD: rec_seq.c,v 1.7 2005/03/23 19:34:59 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 

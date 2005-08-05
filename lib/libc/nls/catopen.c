@@ -1,3 +1,4 @@
+/*	$OpenBSD: catopen.c,v 1.12 2005/08/05 13:03:00 espie Exp $ */
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,10 +34,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: catopen.c,v 1.11 2005/03/23 21:13:28 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
 

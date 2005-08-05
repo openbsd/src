@@ -1,3 +1,4 @@
+/*	$OpenBSD: regexec.c,v 1.11 2005/08/05 13:03:00 espie Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -32,14 +33,6 @@
  *
  *	@(#)regexec.c	8.3 (Berkeley) 3/20/94
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
-#else
-static char rcsid[] = "$OpenBSD: regexec.c,v 1.10 2004/11/30 17:04:23 otto Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * the outer shell of regexec()

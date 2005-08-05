@@ -1,3 +1,4 @@
+/*	$OpenBSD: rec_utils.c,v 1.7 2005/08/05 13:03:00 espie Exp $ */
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -26,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: rec_utils.c,v 1.6 2005/03/23 19:34:59 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 

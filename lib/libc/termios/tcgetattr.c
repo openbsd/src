@@ -1,3 +1,4 @@
+/*	$OpenBSD: tcgetattr.c,v 1.5 2005/08/05 13:03:00 espie Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -26,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tcgetattr.c,v 1.4 2003/06/11 21:03:09 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/ioctl.h>
 #include <termios.h>

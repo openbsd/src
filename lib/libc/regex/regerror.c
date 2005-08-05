@@ -1,3 +1,4 @@
+/*	$OpenBSD: regerror.c,v 1.13 2005/08/05 13:03:00 espie Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -32,14 +33,6 @@
  *
  *	@(#)regerror.c	8.4 (Berkeley) 3/20/94
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
-#else
-static char rcsid[] = "$OpenBSD: regerror.c,v 1.12 2004/11/30 17:04:23 otto Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stdio.h>

@@ -1,11 +1,8 @@
+/*	$OpenBSD: _catopen.c,v 1.6 2005/08/05 13:03:00 espie Exp $ */
 /*
  * Written by J.T. Conklin, 10/05/94
  * Public domain.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: _catopen.c,v 1.5 2005/03/23 21:13:28 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
 

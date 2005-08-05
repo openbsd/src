@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.19 2005/03/23 19:34:59 otto Exp $	*/
+/*	$OpenBSD: hash.c,v 1.20 2005/08/05 13:03:00 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
-#else
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.19 2005/03/23 19:34:59 otto Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

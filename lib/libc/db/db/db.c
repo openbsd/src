@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.9 2005/03/23 19:34:59 otto Exp $	*/
+/*	$OpenBSD: db.c,v 1.10 2005/08/05 13:03:00 espie Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
-#else
-static const char rcsid[] = "$OpenBSD: db.c,v 1.9 2005/03/23 19:34:59 otto Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
