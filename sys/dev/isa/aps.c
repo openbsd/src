@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.2 2005/08/05 07:29:02 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.3 2005/08/05 09:22:48 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 /*
  * A driver for the ThinkPad Active Protection System based on notes from
- * http://www.almaden.ibm.com/cs/people/marksmith/aps.html
+ * http://www.almaden.ibm.com/cs/people/marksmith/tpaps.html
  */
 
 #include <sys/param.h>
