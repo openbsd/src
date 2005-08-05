@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.34 2005/01/27 17:03:23 millert Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.35 2005/08/05 18:21:04 fgsch Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -512,22 +512,16 @@ pcmcia_function_enable(pf)
 	pcmcia_ccr_write(pf, PCMCIA_CCR_SOCKETCOPY, 0);
 	
 	if (pcmcia_mfc(pf->sc)) {
-		long tmp, iosize;
-
-		tmp = pf->pf_mfc_iomax - pf->pf_mfc_iobase;
-		/* round up to nearest (2^n)-1 */
-		for (iosize = 1; iosize < tmp; iosize <<= 1)
-			;
-		iosize--;
-
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0,
-				 pf->pf_mfc_iobase & 0xff);
+				 (pf->pf_mfc_iobase >>  0) & 0xff);
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1,
-				 (pf->pf_mfc_iobase >> 8) & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE2, 0);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE3, 0);
-
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iosize);
+				 (pf->pf_mfc_iobase >>  8) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE2, 
+				 (pf->pf_mfc_iobase >> 16) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE3,
+				 (pf->pf_mfc_iobase >> 24) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE,
+				 pf->pf_mfc_iomax - pf->pf_mfc_iobase);
 	}
 
 #ifdef PCMCIADEBUG
@@ -644,33 +638,29 @@ pcmcia_io_map(pf, width, offset, size, pcihp, windowp)
 	 */
 
 	if (pcmcia_mfc(pf->sc)) {
-		long tmp, iosize;
+		bus_addr_t iobase = pcihp->addr;
+		bus_addr_t iomax = pcihp->addr + pcihp->size - 1;
 
 		if (pf->pf_mfc_iomax == 0) {
-			pf->pf_mfc_iobase = pcihp->addr + offset;
-			pf->pf_mfc_iomax = pf->pf_mfc_iobase + size;
+			pf->pf_mfc_iobase = iobase;
+			pf->pf_mfc_iomax = iomax;
 		} else {
-			/* This makes the assumption that nothing overlaps. */
-			if (pf->pf_mfc_iobase > pcihp->addr + offset)
-				pf->pf_mfc_iobase = pcihp->addr + offset;
-			if (pf->pf_mfc_iomax < pcihp->addr + offset + size)
-				pf->pf_mfc_iomax = pcihp->addr + offset + size;
+			if (iobase < pf->pf_mfc_iobase)
+				pf->pf_mfc_iobase = iobase;
+			if (iomax > pf->pf_mfc_iomax)
+				pf->pf_mfc_iomax = iomax;
 		}
 
-		tmp = pf->pf_mfc_iomax - pf->pf_mfc_iobase;
-		/* round up to nearest (2^n)-1 */
-		for (iosize = 1; iosize >= tmp; iosize <<= 1)
-			;
-		iosize--;
-
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0,
-				 pf->pf_mfc_iobase & 0xff);
+				 (pf->pf_mfc_iobase >>  0) & 0xff);
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1,
-				 (pf->pf_mfc_iobase >> 8) & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE2, 0);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE3, 0);
-
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iosize);
+				 (pf->pf_mfc_iobase >>  8) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE2,
+				 (pf->pf_mfc_iobase >> 16) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE3,
+				 (pf->pf_mfc_iobase >> 24) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE,
+				 pf->pf_mfc_iomax - pf->pf_mfc_iobase);
 
 		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 		reg |= PCMCIA_CCR_OPTION_ADDR_DECODE;

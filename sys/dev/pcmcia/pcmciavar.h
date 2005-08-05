@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.18 2005/01/27 17:03:23 millert Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.19 2005/08/05 18:21:04 fgsch Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -126,8 +126,8 @@ struct pcmcia_function {
 #define	pf_ccr_realsize	pf_pcmh.realsize
 	bus_addr_t	pf_ccr_offset;
 	int		pf_ccr_window;
-	long		pf_mfc_iobase;
-	long		pf_mfc_iomax;
+	bus_addr_t	pf_mfc_iobase;
+	bus_addr_t	pf_mfc_iomax;
 	int		(*ih_fct)(void *);
 	void		*ih_arg;
 	int		ih_ipl;
