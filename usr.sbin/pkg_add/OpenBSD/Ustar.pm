@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.31 2005/07/25 11:26:01 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.32 2005/08/05 10:01:38 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -177,8 +177,8 @@ sub mkheader
 		die "Can't fit such a name $name\n";
 	} else {
 		$prefix = '';
-		while (length($name) > MAXFILENAME && $name =~ m/^(.*\/)(.*)$/) {
-			$prefix =$1;
+		while (length($name) > MAXFILENAME && $name =~ m/^(.*?\/)(.*)$/) {
+			$prefix .= $1;
 			$name = $2;
 		}
 		$prefix =~ s|/$||;
