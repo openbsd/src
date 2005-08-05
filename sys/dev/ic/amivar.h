@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.14 2005/07/29 16:01:30 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.15 2005/08/05 04:16:51 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -36,7 +36,14 @@ struct ami_ccb {
 	struct ami_sgent	*ccb_sglist;
 	paddr_t			ccb_sglistpa;
 	struct scsi_xfer	*ccb_xs;
-	struct ami_ccb		*ccb_ccb1;	/* for passthrough */
+	struct {
+		bus_dmamap_t idatamap;
+		bus_dma_segment_t idataseg[1];
+		void *idata;
+		int dir;
+#define AMI_PT_IN	(0x00)
+#define AMI_PT_OUT	(0x01)
+	} ami_pt;
 	TAILQ_ENTRY(ami_ccb)	ccb_link;
 	enum {
 		AMI_CCB_FREE, AMI_CCB_READY, AMI_CCB_QUEUED, AMI_CCB_PREQUEUED

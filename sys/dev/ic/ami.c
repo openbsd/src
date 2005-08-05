@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.52 2005/08/01 16:39:10 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.53 2005/08/05 04:16:51 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -322,7 +322,7 @@ int
 ami_attach(sc)
 	struct ami_softc *sc;
 {
-	/* struct ami_rawsoftc *rsc; */
+	struct ami_rawsoftc *rsc;
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
 	struct ami_sgent *sg;
@@ -616,7 +616,6 @@ ami_attach(sc)
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
-#if 0
 	rsc = malloc(sizeof(struct ami_rawsoftc) * sc->sc_channels,
 	    M_DEVBUF, M_NOWAIT);
 	if (!rsc) {
@@ -638,12 +637,12 @@ ami_attach(sc)
 		rsc->sc_link.adapter_softc = rsc;
 		rsc->sc_link.adapter = &ami_raw_switch;
 		/* TODO fetch it from the controller */
-		rsc->sc_link.adapter_target = sc->sc_targets;
-		rsc->sc_link.adapter_buswidth = sc->sc_targets;
+		rsc->sc_link.adapter_target = 16;
+		rsc->sc_link.adapter_buswidth = 16;
 
 		config_found(&sc->sc_dev, &rsc->sc_link, scsiprint);
 	}
-#endif
+
 	return 0;
 }
 
@@ -1239,6 +1238,18 @@ ami_done(sc, idx)
 			    (xs->flags & SCSI_DATA_IN) ?
 			    BUS_DMASYNC_POSTREAD :
 			    BUS_DMASYNC_POSTWRITE);
+
+			if (ccb->ami_pt.idata) {
+				if (ccb->ami_pt.dir == AMI_PT_IN)
+					memcpy(xs->data, ccb->ami_pt.idata +
+					    sizeof(struct ami_passthrough),
+					    xs->datalen);
+
+				ccb->ami_pt.idata = NULL;
+				ami_freemem(sc->dmat, &ccb->ami_pt.idatamap,
+				    ccb->ami_pt.idataseg, NBPG, 1, "ami raw");
+			}
+
 			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 		}
 		ccb->ccb_xs = NULL;
@@ -1309,15 +1320,56 @@ ami_scsi_raw_cmd(xs)
 	struct ami_rawsoftc *rsc = link->adapter_softc;
 	struct ami_softc *sc = rsc->sc_softc;
 	u_int8_t channel = rsc->sc_channel, target = link->target;
-	struct ami_ccb *ccb, *ccb1;
+	struct ami_ccb *ccb;
 	struct ami_iocmd *cmd;
 	struct ami_passthrough *ps;
 	int error;
+	int direction;
 	ami_lock_t lock;
+	paddr_t pa;
+	char type;
 
 	AMI_DPRINTF(AMI_D_CMD, ("ami_scsi_raw_cmd "));
 
 	lock = AMI_LOCK_AMI(sc);
+
+	/*
+	 * do this early to prevent default cases later on that don't make sense
+	 */
+	switch (xs->cmd->opcode) {
+	/* to target */
+	case TEST_UNIT_READY:
+	case START_STOP:
+	case PREVENT_ALLOW:
+	case WRITE_COMMAND:
+	case WRITE_BIG:
+	case SYNCHRONIZE_CACHE:
+		direction = AMI_PT_OUT;
+		break;
+	/* from target */
+	case REQUEST_SENSE:
+	case INQUIRY:
+	case MODE_SENSE:
+	case READ_CAPACITY:
+	case READ_COMMAND:
+	case READ_BIG:
+	case READ_BUFFER:
+	case RECEIVE_DIAGNOSTIC:
+		direction = AMI_PT_IN;
+		break;
+
+	default:
+		printf("%s: unsupported command(%d)\n", sc->sc_dev.dv_xname,
+		    xs->cmd->opcode);
+		bzero(&xs->sense, sizeof(xs->sense));
+		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
+		xs->error = XS_SENSE;
+		scsi_done(xs);
+		AMI_UNLOCK_AMI(sc, lock);
+		return (COMPLETE);
+	}
 
 	if (xs->cmdlen > AMI_MAX_CDB) {
 		AMI_DPRINTF(AMI_D_CMD, ("CDB too big %p ", xs));
@@ -1326,6 +1378,15 @@ ami_scsi_raw_cmd(xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
+		scsi_done(xs);
+		AMI_UNLOCK_AMI(sc, lock);
+		return (COMPLETE);
+	}
+
+	if (xs->datalen > NBPG - 128) {
+		printf("%s: xs->datalen too big(%d)\n", sc->sc_dev.dv_xname,
+		    xs->datalen);
+		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		AMI_UNLOCK_AMI(sc, lock);
 		return (COMPLETE);
@@ -1343,49 +1404,72 @@ ami_scsi_raw_cmd(xs)
 		return (COMPLETE);
 	}
 
-	if ((ccb1 = ami_get_ccb(sc)) == NULL) {
-		ami_put_ccb(ccb);
+	if (!(ccb->ami_pt.idata = ami_allocmem(sc->dmat,
+	    &ccb->ami_pt.idatamap, ccb->ami_pt.idataseg, NBPG, 1,
+	    "ami raw"))) {
+	    	ami_put_ccb(ccb);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		AMI_UNLOCK_AMI(sc, lock);
 		return (COMPLETE);
 	}
 
-	ccb->ccb_xs = xs;
-	ccb->ccb_ccb1 = ccb1;
-	ccb->ccb_len  = xs->datalen;
-	ccb->ccb_data = xs->data;
+	ccb->ami_pt.dir = direction;
+	ps = ccb->ami_pt.idata;
+	pa = ccb->ami_pt.idataseg[0].ds_addr;
 
-	ps = (struct ami_passthrough *)ccb1->ccb_cmd;
+	memset(ps, 0, sizeof *ps);
+
+	ccb->ccb_xs = xs;
+	ccb->ccb_len  = xs->datalen;
+	ccb->ccb_data = NULL;
+	
 	ps->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ps->apt_channel = channel;
 	ps->apt_target = target;
 	bcopy(xs->cmd, ps->apt_cdb, AMI_MAX_CDB);
 	ps->apt_ncdb = xs->cmdlen;
 	ps->apt_nsense = AMI_MAX_SENSE;
+	ps->apt_data = htole32(pa + sizeof *ps);
+	ps->apt_datalen = xs->datalen;
 
 	cmd = ccb->ccb_cmd;
 	cmd->acc_cmd = AMI_PASSTHRU;
-	cmd->acc_passthru.apt_data = ccb1->ccb_cmdpa;
+	cmd->acc_passthru.apt_data = htole32(pa);
+
+	if (ccb->ami_pt.dir == AMI_PT_OUT)
+		memcpy(ccb->ami_pt.idata + sizeof *ps, xs->data, xs->datalen);
 
 	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
+		ccb->ami_pt.idata = NULL;
+		ami_freemem(sc->dmat, &ccb->ami_pt.idatamap,
+		    ccb->ami_pt.idataseg, NBPG, 1, "ami raw");
 
-		AMI_DPRINTF(AMI_D_CMD, ("failed %p ", xs));
-		if (xs->flags & SCSI_POLL) {
-			xs->error = XS_TIMEOUT;
-			AMI_UNLOCK_AMI(sc, lock);
-			return (TRY_AGAIN_LATER);
-		} else {
-			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-			AMI_UNLOCK_AMI(sc, lock);
-			return (COMPLETE);
-		}
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		AMI_UNLOCK_AMI(sc, lock);
+		return (COMPLETE);
 	}
 
 
 	if (xs->flags & SCSI_POLL) {
+		if (xs->cmd->opcode == INQUIRY) {
+			type = *((char *)ccb->ami_pt.idata + sizeof *ps) &
+			    SID_TYPE;
+
+			if (!(type == T_PROCESSOR || type == T_ENCLOSURE))
+				xs->error = XS_DRIVER_STUFFUP;
+		}
+
+		if (ccb->ami_pt.dir == AMI_PT_IN)
+			memcpy(xs->data, ccb->ami_pt.idata + sizeof *ps,
+			    xs->datalen);
+
+		ccb->ami_pt.idata = NULL;
+		ami_freemem(sc->dmat, &ccb->ami_pt.idatamap,
+		    ccb->ami_pt.idataseg, NBPG, 1, "ami raw");
+
 		scsi_done(xs);
 		AMI_UNLOCK_AMI(sc, lock);
 		return (COMPLETE);
@@ -1584,7 +1668,6 @@ ami_scsi_cmd(xs)
 		}
 
 		ccb->ccb_xs = xs;
-		ccb->ccb_ccb1 = NULL;
 		ccb->ccb_len  = xs->datalen;
 		ccb->ccb_data = xs->data;
 		cmd = ccb->ccb_cmd;
