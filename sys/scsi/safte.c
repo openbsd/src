@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.4 2005/08/05 01:03:13 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.5 2005/08/05 01:06:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -136,31 +136,11 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 	struct safte_softc		*sc = (struct safte_softc *)self;
 	struct scsibus_attach_args	*sa = aux;
 
-	struct scsi_inquiry		cmd;
-	struct scsi_inquiry_data	inq;
-	struct safte_inq		*si = (struct safte_inq *)&inq.extra;
-	char				rev[5]; /* sizeof(si->revision) + 1 */
 	int				i;
 
 	sc->sc_link = sa->sa_sc_link;
-	sc->sc_thread = NULL;
 
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = INQUIRY;
-	cmd.length = SAFTE_INQ_LEN;
-	memset(&inq, 0, sizeof(inq));
-	memset(&inq.extra, ' ', sizeof(inq.extra));
-	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&inq, cmd.length, 2, 10000, NULL,
-	    SCSI_DATA_IN) != 0) {
-		printf(": unable to get inquiry information\n");
-		return;
-	}
-
-	memset(rev, 0, sizeof(rev));
-	memcpy(rev, si->revision, sizeof(si->revision));
-
-	printf(": rev %s\n", rev);
+	printf("\n");
 
 	sc->sc_thread = malloc(sizeof(struct safte_thread), M_DEVBUF, M_NOWAIT);
 	if (sc->sc_thread == NULL) {
