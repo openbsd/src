@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.94 2005/08/02 10:51:47 djm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.95 2005/08/05 12:16:13 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -102,6 +102,12 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	struct enc_xform *txform = NULL;
 	struct auth_hash *thash = NULL;
 	struct cryptoini cria, crie;
+
+	if (!ii->ii_encalg && !ii->ii_authalg) {
+		DPRINTF(("esp_init(): neither authentication nor encryption "       
+		    "algorithm given"));                                            
+		return EINVAL;                                                      
+	}                                 
 
 	if (ii->ii_encalg) {
 		switch (ii->ii_encalg) {
