@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.151 2005/08/04 20:33:45 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.152 2005/08/05 09:03:19 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -123,9 +123,9 @@ TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
 #if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
 #error PF_QNAME_SIZE must be equal to PF_TAG_NAME_SIZE
 #endif
-static u_int16_t	 tagname2tag(struct pf_tags *, char *);
-static void		 tag2tagname(struct pf_tags *, u_int16_t, char *);
-static void		 tag_unref(struct pf_tags *, u_int16_t);
+u_int16_t		 tagname2tag(struct pf_tags *, char *);
+void			 tag2tagname(struct pf_tags *, u_int16_t, char *);
+void			 tag_unref(struct pf_tags *, u_int16_t);
 int			 pf_rtlabel_add(struct pf_addr_wrap *);
 void			 pf_rtlabel_remove(struct pf_addr_wrap *);
 void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
@@ -642,7 +642,7 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 	pool_put(&pf_rule_pl, rule);
 }
 
-static	u_int16_t
+u_int16_t
 tagname2tag(struct pf_tags *head, char *tagname)
 {
 	struct pf_tagname	*tag, *p = NULL;
@@ -687,7 +687,7 @@ tagname2tag(struct pf_tags *head, char *tagname)
 	return (tag->tag);
 }
 
-static	void
+void
 tag2tagname(struct pf_tags *head, u_int16_t tagid, char *p)
 {
 	struct pf_tagname	*tag;
@@ -699,7 +699,7 @@ tag2tagname(struct pf_tags *head, u_int16_t tagid, char *p)
 		}
 }
 
-static	void
+void
 tag_unref(struct pf_tags *head, u_int16_t tag)
 {
 	struct pf_tagname	*p, *next;
