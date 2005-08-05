@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.2 2005/08/05 00:17:02 deraadt Exp $ */
+/*	$OpenBSD: safte.c,v 1.3 2005/08/05 00:31:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -270,7 +270,7 @@ safte_read_config(struct safte_softc *sc)
 	int				flags;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = SAFTE_RD_OPCODE;
+	cmd.opcode = READ_BUFFER;
 	cmd.flags |= SAFTE_RD_MODE;
 	cmd.bufferid = SAFTE_RD_CONFIG;
 	cmd.length = htobe16(sizeof(config));
@@ -311,7 +311,7 @@ safte_read_encstat(struct safte_softc *sc, int refresh)
 	struct sensor			*s = sc->sc_sensors;
 
 	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = SAFTE_RD_OPCODE;
+	cmd.opcode = READ_BUFFER;
 	cmd.flags |= SAFTE_RD_MODE;
 	cmd.bufferid = SAFTE_RD_ENCSTAT;
 	cmd.length = htobe16(sc->sc_encstatlen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.h,v 1.1 2005/08/05 00:08:58 dlg Exp $ */
+/*	$OpenBSD: safte.h,v 1.2 2005/08/05 00:31:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Daivd Gwynne <dlg@openbsd.org>
@@ -34,8 +34,7 @@ struct safte_inq {
 #define SAFTE_INQ_LEN		54
 
 struct safte_readbuf_cmd {
-	u_int8_t	opcode;
-#define SAFTE_RD_OPCODE		0x3c	/* READ BUFFER */
+	u_int8_t	opcode;		/* READ_BUFFER */
 	u_int8_t	flags;
 #define SAFTE_RD_LUNMASK	0xe0	/* the lun should always be 0 */
 #define SAFTE_RD_MODEMASK	0x07
