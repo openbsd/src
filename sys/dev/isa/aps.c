@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.1 2005/08/05 03:52:32 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.2 2005/08/05 07:29:02 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -80,6 +80,11 @@ aps_match(struct device *parent, void *match, void *aux)
 	/* See if this machine has APS */
 	bus_space_write_1(iot, ioh, APS_INIT, 0x13);
 	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
+
+	/* ask again as the X40 is slightly deaf in one ear */
+	bus_space_write_1(iot, ioh, APS_INIT, 0x13);
+	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
+
 	if (!aps_mem_read_1(iot, ioh, APS_CMD, 0x00)) {
 		bus_space_unmap(iot, ioh, APS_ADDR_SIZE);
 		return (0);
