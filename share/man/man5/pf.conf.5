@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.335 2005/06/14 18:18:14 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.336 2005/08/05 22:35:59 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2610,6 +2610,7 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "state-policy" ( "if-bound" | "floating" ) ]
                  [ "require-order" ( "yes" | "no" ) ]
                  [ "fingerprints" filename ] |
+                 [ "skip on" ( interface-name | "{" interface-list "}" ) ] |
                  [ "debug" ( "none" | "urgent" | "misc" | "loud" ) ] )
 
 pf-rule        = action [ ( "in" | "out" ) ]
