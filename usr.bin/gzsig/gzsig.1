@@ -1,5 +1,5 @@
-.\" $OpenBSD: gzsig.1,v 1.7 2005/08/05 14:02:26 jmc Exp $
-.\" $Id: gzsig.1,v 1.7 2005/08/05 14:02:26 jmc Exp $
+.\" $OpenBSD: gzsig.1,v 1.8 2005/08/05 14:17:55 jmc Exp $
+.\" $Id: gzsig.1,v 1.8 2005/08/05 14:17:55 jmc Exp $
 .\"
 .\"  Copyright (c) 2001 Dug Song <dugsong@arbor.net>
 .\"  Copyright (c) 2001 Arbor Networks, Inc.
@@ -34,12 +34,14 @@
 .Nm gzsig
 .Nd gzip signing utility
 .Sh SYNOPSIS
-.Nm gzsig sign
+.Nm gzsig
+.Ic sign
 .Op Fl q
+.Op Fl f Ar secret_file
 .Ar privkey
 .Op Ar
-.Pp
-.Nm gzsig verify
+.Nm gzsig
+.Ic verify
 .Op Fl q
 .Op Fl f Ar secret_file
 .Ar pubkey
@@ -56,30 +58,30 @@ operands are processed in command-line order.
 If
 .Ar file
 is a single dash
-.Pq Sq \&-
+.Pq Sq -
 or absent,
 .Nm
 reads from the standard input.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Nm sign
-Sign the input using the private key in
-.Ar privkey .
-.It Nm verify
-Verify the signature using the public key in
-.Ar pubkey .
-.It Fl q
-Enable quiet mode.
 .It Fl f Ar secret_file
 Indicates that the passphrase for the key should be read from
 .Ar secret_file
 instead of being supplied manually.
+.It Fl q
+Enable quiet mode.
+.It Ic sign
+Sign the input using the private key in
+.Ar privkey .
+.It Ic verify
+Verify the signature using the public key in
+.Ar pubkey .
 .El
 .Pp
 The
 .Nm
-utility exits 0 on success or >0 if an error occurred.
+utility exits 0 on success or \*(Gt0 if an error occurred.
 .Sh EXAMPLES
 Sign
 .Ar file1
@@ -95,22 +97,21 @@ Sign
 with the SSH2 identity key, saving the signed file in
 .Ar file2 :
 .Pp
-.Dl $ gzsig sign ~/.ssh/id_rsa < file1 > file2
+.Dl $ gzsig sign ~/.ssh/id_rsa \*(Ltfile1 \*(Gtfile2
 .Pp
 Verify the signature on
 .Ar file1
 using the SSL certificate in
 .Ar /etc/ssl/server.crt :
 .Pp
-.Dl $ gzsig verify /etc/ssl/server.crt < file1
+.Dl $ gzsig verify /etc/ssl/server.crt \*(Ltfile1
 .Sh SEE ALSO
 .Xr gzip 1 ,
 .Xr ssh-keygen 1 ,
 .Xr ssl 8
 .Sh AUTHORS
 Dug Song
-.Aq dugsong@arbor.net
-.Pp
+.Aq dugsong@arbor.net .
 SSH2 support by
 Marius Eriksen
-.Aq marius@openbsd.org
+.Aq marius@openbsd.org .
