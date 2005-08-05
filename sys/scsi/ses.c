@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.16 2005/08/05 00:34:51 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.17 2005/08/05 03:20:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -384,7 +384,7 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 				break;
 
 			case SES_T_COOLING:
-				stype = SENSOR_FANRPM;
+				stype = SENSOR_PERCENT;
 				fmt = "fan%d";
 				break;
 
@@ -498,15 +498,32 @@ ses_psu2sensor(struct ses_sensor *s)
 void
 ses_cool2sensor(struct ses_sensor *s)
 {
-	s->se_sensor.value = (int64_t)SES_S_COOL_SPEED(s->se_stat);
-	s->se_sensor.value *= SES_S_COOL_FACTOR;
-
-	/* if the fan is on but not showing an rpm then mark as unknown */
-	if (SES_S_COOL_CODE(s->se_stat) != SES_S_COOL_C_STOPPED &&
-	    s->se_sensor.value == 0)
-		s->se_sensor.flags |= SENSOR_FUNKNOWN;
-	else
-		s->se_sensor.flags &= ~SENSOR_FUNKNOWN;
+	switch (SES_S_COOL_CODE(s->se_stat)) {
+	case SES_S_COOL_C_STOPPED:
+		s->se_sensor.value = 0;
+		break;
+	case SES_S_COOL_C_LOW1:
+		s->se_sensor.value = 15000; /* 14.28%*/
+		break;
+	case SES_S_COOL_C_LOW2:
+		s->se_sensor.value = 30000; /* 28.57% */
+		break;
+	case SES_S_COOL_C_LOW3:
+		s->se_sensor.value = 45000; /* 42.85% */
+		break;
+	case SES_S_COOL_C_INTER:
+		s->se_sensor.value = 60000; /* 57.14% */
+		break;
+	case SES_S_COOL_C_HI3:
+		s->se_sensor.value = 75000; /* 71.42% */
+		break;
+	case SES_S_COOL_C_HI2:
+		s->se_sensor.value = 85000; /* 85.71% */
+		break;
+	case SES_S_COOL_C_HI1:
+		s->se_sensor.value = 100000; /* 100.00% */
+		break;
+	}
 }
 
 void
