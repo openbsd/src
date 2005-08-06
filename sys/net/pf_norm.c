@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.101 2005/06/13 20:17:25 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.102 2005/08/06 12:11:09 pascoe Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -412,7 +412,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 			break;
 		}
 
-		/* This fragment is completely overlapped, loose it */
+		/* This fragment is completely overlapped, lose it */
 		next = LIST_NEXT(frea, fr_next);
 		m_freem(frea->fr_m);
 		LIST_REMOVE(frea, fr_next);
@@ -1746,7 +1746,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 	 * timestamps.  And require all data packets to contain a timestamp
 	 * if the first does.  PAWS implicitly requires that all data packets be
 	 * timestamped.  But I think there are middle-man devices that hijack
-	 * TCP streams immedietly after the 3whs and don't timestamp their
+	 * TCP streams immediately after the 3whs and don't timestamp their
 	 * packets (seen in a WWW accelerator or cache).
 	 */
 	if (pd->p_len > 0 && src->scrub && (src->scrub->pfss_flags &
