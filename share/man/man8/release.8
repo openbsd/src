@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.37 2005/04/27 11:52:45 jmc Exp $
+.\"	$OpenBSD: release.8,v 1.38 2005/08/06 23:07:13 aanriot Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -46,8 +46,8 @@ ports trees
 and
 .Pa /usr/ports
 respectively)
-are preceded by a percent sign
-.Pq Sq % .
+are preceded by a dollar sign
+.Pq Sq $ .
 Commands that must be run as the superuser are preceded by a hash mark
 .Pq Sq # .
 .Ss "1. Update sources"
@@ -94,9 +94,9 @@ contains errata, no new features.
 To update your sources to the versions identified by one of the above
 tags use the commands:
 .Bd -literal -offset indent
-% cd /usr/src && cvs up -r TAG -Pd
-% cd XF4SRC && cvs up -r TAG -Pd
-% cd PORTSPATH && cvs up -r TAG -Pd
+$ cd /usr/src && cvs up -r TAG -Pd
+$ cd XF4SRC && cvs up -r TAG -Pd
+$ cd PORTSPATH && cvs up -r TAG -Pd
 .Ed
 .Pp
 Replace
@@ -127,12 +127,12 @@ when needed.
 To build a kernel the steps are:
 .Pp
 .Bl -tag -width 3n -offset indent -compact
-.It Li "% cd /sys/arch/${ARCH}/conf"
+.It Li "$ cd /sys/arch/${ARCH}/conf"
 where
 .Va ${ARCH}
 is the architecture of your machine, e.g.,
 .Li i386 .
-.It Li "% vi ${NAME}"
+.It Li "$ vi ${NAME}"
 where
 .Va ${NAME}
 is your kernel configuration file.
@@ -148,13 +148,13 @@ And yes, you may use
 .Li vi ,
 .Li mg ,
 or any other editor you choose.
-.It Li "% config ${NAME}"
-.It Li "% cd ../compile/${NAME}"
-.It Li "% make clean depend bsd"
+.It Li "$ config ${NAME}"
+.It Li "$ cd ../compile/${NAME}"
+.It Li "$ make clean depend bsd"
 In this instance
 .Li "make clean"
 is your friend.
-.It Li "% su"
+.It Li "$ su"
 .It Li "# mv /bsd /bsd.old && mv bsd / && chown root:wheel /bsd"
 .It Li "# shutdown -r now"
 .El
@@ -168,15 +168,15 @@ them before the build.
 The steps are:
 .Pp
 .Bl -tag -width 3n -offset indent -compact
-.It Li "% cd /usr/obj && mkdir -p .old && sudo mv * .old && \e"
+.It Li "$ cd /usr/obj && mkdir -p .old && sudo mv * .old && \e"
 .It Li "sudo rm -rf .old &"
 This moves all your existing object files out of the way and then removes
 them in the background.
-.It Li "% cd /usr/src && nice make obj"
+.It Li "$ cd /usr/src && nice make obj"
 This re-builds your obj directories.
-.It Li "% cd /usr/src/etc && env DESTDIR=/ sudo make distrib-dirs"
+.It Li "$ cd /usr/src/etc && env DESTDIR=/ sudo make distrib-dirs"
 This creates directories that might be missing.
-.It Li "% su"
+.It Li "$ su"
 .It Li "# cd /usr/src && nice make build"
 If you have set
 .Xr sudo 8
@@ -236,11 +236,11 @@ images require a special tool which is created first.
 The release process is:
 .Pp
 .Bl -tag -width 3n -offset indent -compact
-.It Li "% su"
+.It Li "$ su"
 You must be root to create a release.
 .It Li "# cd /usr/src/distrib/crunch && make obj depend all install"
 Create the special tools needed to build the release.
-.It Li "# setenv DESTDIR your-destdir; setenv RELEASEDIR your-releasedir"
+.It Li "# export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir"
 .It Li "# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && \e"
 .It Li "rm -rf ${DESTDIR}- &"
 .It Li "# mkdir -p ${DESTDIR} ${RELEASEDIR}"
@@ -257,7 +257,7 @@ This checks that the contents of
 .Va ${DESTDIR}
 pretty much match the contents of the release
 .Sq tarballs .
-.It Li "# unsetenv RELEASEDIR DESTDIR"
+.It Li "# unset RELEASEDIR DESTDIR"
 .El
 .Pp
 At this point you have most of an
@@ -286,7 +286,7 @@ Once you've selected
 .Va XF4BLD
 the build process is:
 .Bd -literal -offset indent
-% su
+$ su
 # test -d XF4BLD && mv XF4BLD XF4BLD- && rm -rf XF4BLD- &
 # mkdir -p XF4BLD
 # cd XF4BLD && lndir XF4SRC && nice make build
@@ -342,12 +342,12 @@ release checklist processing).
 The steps to build the release are (assuming you are still root, and still in
 .Va XF4BLD ) :
 .Bd -literal -offset indent
-# setenv DESTDIR your-destdir; setenv RELEASEDIR your-releasedir
+# export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
 # test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && \e
 	rm -rf ${DESTDIR}- &
 # mkdir -p ${DESTDIR} ${RELEASEDIR}
 # nice make release
-# unsetenv RELEASEDIR DESTDIR
+# unset RELEASEDIR DESTDIR
 .Ed
 .Pp
 At this point you have both
@@ -368,8 +368,8 @@ Packages are created by selecting an application to build
 (we'll call this one CATEGORY/PORT) and then running the following:
 as root:
 .Bd -literal -offset indent
-% cd /usr/ports/CATEGORY/PORT
-% su
+$ cd /usr/ports/CATEGORY/PORT
+$ su
 # make package
 .Ed
 .Pp
