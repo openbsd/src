@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: atexit.3,v 1.5 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: atexit.3,v 1.6 2005/08/06 18:43:23 deraadt Exp $
 .\"
 .Dd June 29, 1991
 .Dt ATEXIT 3
@@ -54,6 +54,12 @@ Functions so registered are called in reverse order;
 no arguments are passed.
 At least 32 functions can always be registered,
 and more are allowed as long as sufficient memory can be allocated.
+.Pp
+.Fn atexit
+is very difficult to use correctly without creating
+.Xr exit 3 Ns -time
+races.
+Unless absolutely neccessary, please avoid using it.
 .Sh RETURN VALUES
 .Rv -std atexit
 .Sh ERRORS
