@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.15 2005/07/23 23:28:58 martin Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.16 2005/08/06 19:51:43 martin Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 
 /*
@@ -48,15 +48,18 @@ struct grfbus_softc {
 	struct	device	sc_dev;
 	nubus_slot	sc_slot;
 
+	bus_addr_t		sc_basepa;	/* base of video space */
+	bus_addr_t		sc_fbofs;	/* offset to framebuffer */
+
 	bus_space_tag_t		sc_tag;
+	bus_space_handle_t	sc_handle;
 	bus_space_handle_t	sc_regh;
-	bus_space_handle_t	sc_fbh;
 
 	struct	grfmode curr_mode;	/* hardware desc(for ioctl)	*/
 	u_int32_t	card_id;	/* DrHW value for nubus cards	*/
-	u_int32_t	cli_offset;	/* Offset of byte to clear intr */
+	bus_size_t	cli_offset;	/* Offset of byte to clear intr */
 					/* for cards where that's suff.  */
-	unsigned char	cli_value;	/* Value to write at cli_offset */
+	u_int32_t	cli_value;	/* Value to write at cli_offset */
 	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
 };
 
@@ -69,24 +72,26 @@ struct grf_softc {
 	bus_space_tag_t		sc_tag;
 	bus_space_handle_t	sc_regh;
 
-	int	sc_flags;		/* software flags */
+	int	sc_flags;		/* driver flags */
+	u_long	sc_phys;		/* PA of framebuffer */
+
 	struct	grfmode *sc_grfmode;	/* forwarded ... */
 	nubus_slot	*sc_slot;
 					/* mode-change on/off/mode function */
 	int	(*sc_mode)(struct grf_softc *, int, void *);
-					/* map virtual addr to physical addr */
-	caddr_t	(*sc_phys)(struct grf_softc *, vaddr_t);
 };
 
 /*
  * Attach grf and ite semantics to Mac video hardware.
  */
 struct grfbus_attach_args {
-	char	*ga_name;		/* name of semantics to attach */
-	struct	grfmode *ga_grfmode;	/* forwarded ... */
+	char		*ga_name;	/* name of semantics to attach */
+	bus_space_tag_t	ga_tag;
+	bus_space_handle_t ga_handle;
+	struct grfmode	*ga_grfmode;
 	nubus_slot	*ga_slot;
-	int	(*ga_mode)(struct grf_softc *, int, void *);
-	caddr_t	(*ga_phys)(struct grf_softc *, vaddr_t);
+	bus_addr_t	ga_phys;
+	int		(*ga_mode)(struct grf_softc *, int, void *);
 };
 
 typedef	caddr_t (*grf_phys_t)(struct grf_softc *gp, vaddr_t addr);
@@ -151,6 +156,5 @@ int	grfmap(dev_t dev, caddr_t *addrp, struct proc *p);
 int	grfunmap(dev_t dev, caddr_t addr, struct proc *p);
 
 void	grf_establish(struct grfbus_softc *, nubus_slot *,
-	    int (*)(struct grf_softc *, int, void *),
-	    caddr_t (*)(struct grf_softc *, vaddr_t));
+	    int (*)(struct grf_softc *, int, void *));
 int	grfbusprint(void *, const char *);

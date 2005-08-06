@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.30 2005/08/01 12:10:23 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.31 2005/08/06 19:51:44 martin Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -67,7 +67,6 @@ u_long	high[8];
 u_long	maxaddr;	/* PA of the last physical page */
 int	vidlen;
 #define VIDMAPSIZE	btoc(vidlen)
-extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	videoaddr;
 extern u_int32_t	videorowbytes;
@@ -166,8 +165,6 @@ do { \
 	if (vidlen != 0) { \
 		newvideoaddr = iiobase + m68k_ptob(IIOMAPSIZE + ROMMAPSIZE) \
 				+ (mac68k_vidphys & PGOFSET); \
-		if (mac68k_vidlog) \
-			mac68k_vidlog = newvideoaddr; \
 	} \
 } while (0)
 

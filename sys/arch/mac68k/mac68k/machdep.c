@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.117 2005/07/23 23:30:56 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.118 2005/08/06 19:51:44 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -2044,7 +2044,7 @@ struct {
 	int	machineid;
 	caddr_t	fbbase;
 	u_long	fblen;
-} intvid_info[] =  {
+} intvid_info[] = {
 	{ MACH_MACCLASSICII,	(caddr_t)0xfee09a80,	21888 },
 	{ MACH_MACPB140,	(caddr_t)0xfee00000,	32 * 1024 },
 	{ MACH_MACPB145,	(caddr_t)0xfee00000,	32 * 1024 },
@@ -2053,26 +2053,30 @@ struct {
 	{ MACH_MACPB160,	(caddr_t)0x60000000,	128 * 1024 },
 	{ MACH_MACPB165,	(caddr_t)0x60000000,	128 * 1024 },
 	{ MACH_MACPB180,	(caddr_t)0x60000000,	128 * 1024 },
+	{ MACH_MACIICI,		(caddr_t)0x0,		320 * 1024 },
+	{ MACH_MACIISI,		(caddr_t)0x0,		320 * 1024 },
 	{ MACH_MACCCLASSIC,	(caddr_t)0x50f40000,	512 * 1024 },
 	{ MACH_MACPB165C,	(caddr_t)0xfc040000,	512 * 1024 },
 	{ MACH_MACPB180C,	(caddr_t)0xfc040000,	512 * 1024 },
 	{ MACH_MACPB500,	(caddr_t)0x60000000,	512 * 1024 },
-	{ MACH_MACLC520,	(caddr_t)0x60000000,	1024 * 1024 },
-	{ MACH_MACLC475,	(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACLC475_33,	(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACLC575,	(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACC610,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACC650,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACP580,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ605,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ605_33,	(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ610,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ630,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ650,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ700,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ800,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ900,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ950,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACLC520,	(caddr_t)0x60000000,	1 * 1024 * 1024 },
+	{ MACH_MACLC475,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACLC475_33,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACLC575,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACC610,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACC650,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACP580,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ605,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ605_33,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ610,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ630,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ650,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACC660AV,	(caddr_t)0x50100000,	1 * 1024 * 1024 },
+	{ MACH_MACQ700,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ800,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ900,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ950,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ840AV,	(caddr_t)0x50100000,	2 * 1024 * 1024 },
 	{ 0,			(caddr_t)0x0,		0 },
 };				/* End of intvid_info[] initialization. */
 
@@ -2277,7 +2281,6 @@ setmachdep()
 {
 	int setup_mrg_vectors = 0;
 	struct cpu_model_info *cpui;
-	int i;
 
 	/*
 	 * First, set things that need to be set on the first pass only
@@ -2394,19 +2397,6 @@ setmachdep()
 	default:
 	case MACH_CLASSH:
 		break;
-	}
-
-	/*
-	 * Set `internal' framebuffer location and length, if we know
-	 * what they are.
-	 */
-	for (i = 0; intvid_info[i].machineid; i++) {
-		if (mac68k_machine.machineid == intvid_info[i].machineid) {
-			mac68k_vidlog = mac68k_vidphys =
-			    (u_int32_t)intvid_info[i].fbbase;
-			mac68k_vidlen = (u_int32_t)intvid_info[i].fblen;
-			break;
-		}
 	}
 
 	/*
@@ -2558,10 +2548,10 @@ extern int get_pte(u_int addr, u_long pte[2], u_short * psr);
 u_long
 get_physical(u_int addr, u_long * phys)
 {
+	extern u_int macos_tc;
 	u_long pte[2], ph, mask;
 	u_short psr;
 	int i, numbits;
-	extern u_int macos_tc;
 
 	if (mmutype == MMU_68040) {
 		ph = ptest040((caddr_t)addr, FC_SUPERD);
@@ -2688,15 +2678,46 @@ get_mapping(void)
 	}
 #endif
 
+	/*
+	 * Find on-board video, if we have an idea of where to look
+	 * on this system.
+	 */
+	for (i = 0; intvid_info[i].machineid; i++)
+		if (mac68k_machine.machineid == intvid_info[i].machineid)
+			break;
+
+	if (mac68k_machine.machineid == intvid_info[i].machineid &&
+	    get_physical(videoaddr, &phys) &&
+	    phys >= (u_long)intvid_info[i].fbbase &&
+	    phys < (u_long)(intvid_info[i].fbbase + intvid_info[i].fblen)) {
+		mac68k_vidphys = phys;
+		mac68k_vidlen = 32768;
+		if (mac68k_vidlen > intvid_info[i].fblen) {
+			mac68k_vidlen = intvid_info[i].fblen;
+		} else {
+			addr = videoaddr + 32768;
+			while (get_physical(addr, &phys)) {
+				if ((phys - mac68k_vidphys) != mac68k_vidlen)
+					break;
+				if (mac68k_vidlen + 32768 >
+				    intvid_info[i].fblen) {
+					mac68k_vidlen = intvid_info[i].fblen;
+					break;
+				}
+				mac68k_vidlen += 32768;
+				addr += 32768;
+			}
+		}
+	}
+
 	if (mac68k_vidlen > 0) {
 		/*
-		 * We've already figured out where internal video is in
-		 * setmachdep() (by using intvid_info[]).  Tell the user
-		 * what we know.
+		 * We've already figured out where internal video is.
+		 * Tell the user what we know.
 		 */
 #ifdef DIAGNOSTIC
-		printf("On-board video at addr 0x%x (phys 0x%x), len 0x%x.\n",
-		    mac68k_vidlog, mac68k_vidphys, mac68k_vidlen);
+		printf("On-board video at addr 0x%lx (phys 0x%x), len 0x%x.\n",
+		    videoaddr, mac68k_vidphys, mac68k_vidlen);
 #endif
 	} else {
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.24 2005/07/23 23:28:58 martin Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.25 2005/08/06 19:51:43 martin Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -69,7 +69,6 @@ static int	grfmv_intr_radius_gsc(void *vsc);
 static int	grfmv_intr_radius_gx(void *vsc);
 
 static int	grfmv_mode(struct grf_softc *gp, int cmd, void *arg);
-static caddr_t	grfmv_phys(struct grf_softc *gp, vaddr_t addr);
 static int	grfmv_match(struct device *, void *, void *);
 static void	grfmv_attach(struct device *, struct device *, void *);
 
@@ -150,9 +149,11 @@ grfmv_attach(parent, self, aux)
 
 	sc->sc_tag = na->na_tag;
 	sc->card_id = na->drhw;
+	sc->sc_basepa = (bus_addr_t)NUBUS_SLOT2PA(na->slot);
+	sc->sc_fbofs = 0;
 
-	if (bus_space_map(sc->sc_tag,
-	    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &sc->sc_regh)) {
+	if (bus_space_map(sc->sc_tag, sc->sc_basepa, NBMEMSIZE,
+	    0, &sc->sc_regh)) {
 		printf(": grfmv_attach: failed to map slot %d\n", na->slot);
 		return;
 	}
@@ -374,7 +375,7 @@ bad:
 	}
 
 	/* Perform common video attachment. */
-	grf_establish(sc, &sc->sc_slot, grfmv_mode, grfmv_phys);
+	grf_establish(sc, &sc->sc_slot, grfmv_mode);
 }
 
 static int
@@ -395,15 +396,6 @@ grfmv_mode(gp, cmd, arg)
 		break;
 	}
 	return EINVAL;
-}
-
-static caddr_t
-grfmv_phys(gp, addr)
-	struct grf_softc *gp;
-	vaddr_t addr;
-{
-	return (caddr_t)(NUBUS_SLOT2PA(gp->sc_slot->slot) +
-	    (addr - gp->sc_regh));	/* XXX evil hack */
 }
 
 /* Interrupt handlers... */
