@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.33 2005/06/17 21:36:20 drahn Exp $
+.\"	$OpenBSD: malloc.9,v 1.34 2005/08/06 17:04:07 miod Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 16, 1996
+.Dd August 6, 2005
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -98,18 +98,23 @@ if the request cannot be immediately fulfilled due to resource shortage.
 Otherwise,
 .Fn malloc
 may call sleep to wait for resources to be released by other processes.
-If this flag is not set,
-.Fn malloc
-will never return
-.Dv NULL .
 Note that
 .Dv M_WAITOK
 is conveniently defined to be 0, and hence may be or'ed into the
 .Fa flags
 argument to indicate that it's OK to wait for resources.
+.It Dv M_CANFAIL
+In the
+.Dv M_WAITOK
+case, if not enough memory is available, return
+.Dv NULL
+instead of calling
+.Xr panic 9 .
+.Dv M_CANFAIL
+has no effect if
+.Dv M_NOWAIT
+is specified.
 .El
-.Pp
-Currently, only one flag is defined.
 .Pp
 The
 .Fa type
@@ -140,8 +145,6 @@ Interface addresses.
 Socket options.
 .It Dv M_SYSCTL
 Sysctl persistent buffers.
-.It Dv M_NAMEI
-Namei path name buffers.
 .It Dv M_IOCTLOPS
 Ioctl data buffers.
 .It Dv M_IOV
@@ -166,6 +169,10 @@ UFS mount structures.
 SVID compatible shared memory segments.
 .It Dv M_VMMAP
 VM map structures.
+.It Dv M_SEM
+SVID compatible semaphores.
+.It Dv M_DIRHASH
+UFS directory hash structures.
 .It Dv M_VMPMAP
 VM pmap data.
 .It Dv M_FILE
@@ -226,16 +233,12 @@ Pfkey data.
 Transforms database.
 .It Dv M_XDATA
 IPsec data.
-.It Dv M_VFS
-VFS file systems.
 .It Dv M_PAGEDEP
 File page dependencies.
 .It Dv M_INODEDEP
 Inode dependencies.
 .It Dv M_NEWBLK
 New block allocation.
-.It Dv M_VMSWAP
-VM swap structures.
 .It Dv M_RAIDFRAME
 RAIDframe data.
 .It Dv M_UVMAMAP
@@ -250,6 +253,9 @@ USB device driver.
 USB host controller.
 .It Dv M_MEMDESC
 Memory range.
+.It Dv M_CRYPTO_DATA
+.Xr crypto 4
+data buffers.
 .It Dv M_CREDENTIALS
 .Xr ipsec 4
 related credentials.
@@ -289,6 +295,13 @@ NTFS resident data.
 NTFS decompression temporary storage.
 .It Dv M_NTFSRUN
 NTFS vrun storage.
+.It Dv M_KEVENT
+.Xr kqueue 2
+data structures.
+.It Dv M_BLUETOOTH
+Bluetooth data structures.
+.It Dv M_BWMETER
+Multicast upcall bandwidth meters.
 .It Dv M_UDFMOUNT
 UDF mount structures.
 .It Dv M_UDFFENTRY
