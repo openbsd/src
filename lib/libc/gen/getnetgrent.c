@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.15 2004/05/18 02:05:52 jfb Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.16 2005/08/06 17:03:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.15 2004/05/18 02:05:52 jfb Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.16 2005/08/06 17:03:56 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -367,8 +367,8 @@ addgroup(char *ypdom, struct stringlist *sl, char *grp)
 #endif
 	/* check for cycles */
 	if (_ng_sl_find(sl, grp) != NULL) {
-		free(grp);
 		_warnx("netgroup: Cycle in group `%s'", grp);
+		free(grp);
 		return;
 	}
 	_ng_sl_add(sl, grp);
@@ -445,8 +445,8 @@ in_find(char *ypdom, struct stringlist *sl, char *grp, const char *host,
 #endif
 	/* check for cycles */
 	if (_ng_sl_find(sl, grp) != NULL) {
-		free(grp);
 		_warnx("netgroup: Cycle in group `%s'", grp);
+		free(grp);
 		return 0;
 	}
 	_ng_sl_add(sl, grp);
