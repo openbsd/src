@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.10 2003/08/10 00:03:21 miod Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.11 2005/08/06 12:10:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -182,13 +182,8 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)

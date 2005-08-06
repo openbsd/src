@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.18 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.19 2005/08/06 12:10:28 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 /*
- * Machinde-dependent bits for HP-UX binary compatibility.
+ * Machine-dependent bits for HP-UX binary compatibility.
  */
 
 #include <sys/param.h>
@@ -506,13 +506,9 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+		free((caddr_t)kfp, M_TEMP);
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 	frame->f_regs[SP] = (int)fp;
 

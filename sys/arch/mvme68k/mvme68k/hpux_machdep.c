@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.12 2003/08/01 18:37:28 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.13 2005/08/06 12:10:28 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.9 1997/03/16 10:00:45 thorpej Exp $	*/
 
 /*
@@ -544,13 +544,9 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+		free((caddr_t)kfp, M_TEMP);
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 	frame->f_regs[SP] = (int)fp;
 

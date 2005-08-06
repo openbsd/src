@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_machdep.c,v 1.16 2003/08/01 18:37:28 miod Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.17 2005/08/06 12:10:28 miod Exp $	*/
 /*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
 
 /*
@@ -116,12 +116,8 @@ sunos_sendsig(catcher, sig, mask, code, type, val)
 	 * have the process die unconditionally. 
 	 */
 	if (ft >= FMT9) {
-		SIGACTION(p, sig) = SIG_DFL;
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, sig);
-		return;
+		sigexit(p, sig);
+		/* NOTREACHED */
 	}
 
 	/*
@@ -173,13 +169,8 @@ sunos_sendsig(catcher, sig, mask, code, type, val)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 
 	frame->f_regs[SP] = (int)fp;
