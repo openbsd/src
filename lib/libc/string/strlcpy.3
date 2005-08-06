@@ -1,4 +1,4 @@
-.\" $OpenBSD: strlcpy.3,v 1.16 2003/06/17 21:56:24 millert Exp $
+.\" $OpenBSD: strlcpy.3,v 1.17 2005/08/06 03:21:36 jaredy Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -49,7 +49,7 @@ is larger than 0 or, in the case of
 .Fn strlcat ,
 as long as there is at least one byte free in
 .Fa dst ) .
-Note that you should include a byte for the NUL in
+Note that a byte for the NUL should be included in
 .Fa size .
 Also note that
 .Fn strlcpy
@@ -105,10 +105,10 @@ that means the initial length of
 plus
 the length of
 .Fa src .
-While this may seem somewhat confusing it was done to make
+While this may seem somewhat confusing, it was done to make
 truncation detection simple.
 .Pp
-Note however, that if
+Note, however, that if
 .Fn strlcat
 traverses
 .Fa size
@@ -152,8 +152,8 @@ if (strlcat(pname, file, sizeof(pname)) >= sizeof(pname))
 	goto toolong;
 .Ed
 .Pp
-Since we know how many characters we copied the first time, we can
-speed things up a bit by using a copy instead of an append:
+Since it is known how many characters were copied the first time, things
+can be sped up a bit by using a copy instead of an append:
 .Bd -literal -offset indent
 char *dir, *file, pname[MAXPATHLEN];
 size_t n;

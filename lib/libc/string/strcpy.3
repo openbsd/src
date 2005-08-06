@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcpy.3,v 1.13 2005/02/25 03:12:44 cloder Exp $
+.\"	$OpenBSD: strcpy.3,v 1.14 2005/08/06 03:21:36 jaredy Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRCPY 3
@@ -100,7 +100,8 @@ and does
 .Em not
 NUL terminate
 .Va chararray
-because the source string is >= the length parameter.
+because the length of the source string is greater than or equal to the
+length parameter.
 .Fn strncpy
 .Em only
 NUL terminates the destination string when the length of the source
@@ -118,7 +119,7 @@ Because
 .Fn strncpy
 does
 .Em not
-guarantee to NUL terminate the string itself, we must do this by hand.
+guarantee to NUL terminate the string itself, it must be done by hand.
 .Bd -literal -offset indent
 char buf[BUFSIZ];
 
