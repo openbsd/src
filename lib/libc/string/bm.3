@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: bm.3,v 1.7 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: bm.3,v 1.8 2005/08/06 03:19:23 jaredy Exp $
 .\"
 .Dd June 29, 1999
 .Dt BM 3
@@ -42,9 +42,10 @@
 .Fd #include <sys/types.h>
 .Fd #include <bm.h>
 .Ft bm_pat *
-.Fn bm_comp "u_char *pattern" "size_t patlen" "u_char freq[256]"
-.Ft u_char *
-.Fn bm_exec "bm_pat *pdesc" "u_char *text" "size_t len"
+.Fn bm_comp "const unsigned char *pattern" "size_t patlen" \
+    "const unsigned char freq[256]"
+.Ft unsigned char *
+.Fn bm_exec "bm_pat *pdesc" "unsigned char *text" "size_t len"
 .Ft void
 .Fn bm_free "bm_pat *pdesc"
 .Sh DESCRIPTION
