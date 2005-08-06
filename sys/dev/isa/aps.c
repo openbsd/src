@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.3 2005/08/05 09:22:48 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.4 2005/08/06 01:30:33 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -82,6 +82,7 @@ aps_match(struct device *parent, void *match, void *aux)
 	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
 
 	/* ask again as the X40 is slightly deaf in one ear */
+	bus_space_read_1(iot, ioh, APS_CMD);
 	bus_space_write_1(iot, ioh, APS_INIT, 0x13);
 	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
 
