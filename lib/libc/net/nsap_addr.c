@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsap_addr.c,v 1.5 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: nsap_addr.c,v 1.6 2005/08/06 20:30:03 espie Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -16,14 +16,6 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char rcsid[] = "$From: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp $";
-#else
-static char rcsid[] = "$OpenBSD: nsap_addr.c,v 1.5 2005/03/25 13:24:12 otto Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

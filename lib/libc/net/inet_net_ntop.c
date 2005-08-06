@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_net_ntop.c,v 1.5 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: inet_net_ntop.c,v 1.6 2005/08/06 20:30:03 espie Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -16,14 +16,6 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static const char rcsid[] = "$From: inet_net_ntop.c,v 8.2 1996/08/08 06:54:44 vixie Exp $";
-#else
-static const char rcsid[] = "$OpenBSD: inet_net_ntop.c,v 1.5 2005/03/25 13:24:12 otto Exp $";
-#endif
-#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>

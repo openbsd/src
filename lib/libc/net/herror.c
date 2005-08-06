@@ -1,4 +1,4 @@
-/*	$OpenBSD: herror.c,v 1.7 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: herror.c,v 1.8 2005/08/06 20:30:03 espie Exp $	*/
 
 /*
  * ++Copyright++ 1987, 1993
@@ -50,15 +50,6 @@
  * -
  * --Copyright--
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$From: herror.c,v 8.3 1996/08/05 08:31:35 vixie Exp $";
-#else
-static char rcsid[] = "$OpenBSD: herror.c,v 1.7 2005/03/25 13:24:12 otto Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

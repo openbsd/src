@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.16 2005/03/30 02:58:28 tedu Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.17 2005/08/06 20:30:04 espie Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -50,15 +50,6 @@
  * -
  * --Copyright--
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$From: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp $";
-#else
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.16 2005/03/30 02:58:28 tedu Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

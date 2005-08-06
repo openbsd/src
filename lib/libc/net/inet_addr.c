@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_addr.c,v 1.8 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: inet_addr.c,v 1.9 2005/08/06 20:30:03 espie Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1990, 1993
@@ -50,15 +50,6 @@
  * -
  * --Copyright--
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "$From: inet_addr.c,v 8.5 1996/08/05 08:31:35 vixie Exp $";
-#else
-static char rcsid[] = "$OpenBSD: inet_addr.c,v 1.8 2005/03/25 13:24:12 otto Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.19 2005/03/28 06:19:58 tedu Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.20 2005/08/06 20:30:03 espie Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,10 +21,6 @@
  * Originally Written by Roland McGrath <roland@frob.com> 10/14/93.
  * Substantially modified by Todd C. Miller <Todd.Miller@courtesan.com>
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.19 2005/03/28 06:19:58 tedu Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.6 2005/03/25 13:24:12 otto Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.7 2005/08/06 20:30:03 espie Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -15,14 +15,6 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char rcsid[] = "$From: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp $";
-#else
-static char rcsid[] = "$OpenBSD: inet_ntop.c,v 1.6 2005/03/25 13:24:12 otto Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

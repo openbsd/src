@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.18 2005/03/30 02:58:28 tedu Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.19 2005/08/06 20:30:04 espie Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -54,15 +54,6 @@
 #ifndef INET6
 #define INET6
 #endif
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
-#else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.18 2005/03/30 02:58:28 tedu Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 	/* change this to "0"
 	 * if you talk to a lot

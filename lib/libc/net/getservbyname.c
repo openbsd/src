@@ -1,3 +1,4 @@
+/*	$OpenBSD: getservbyname.c,v 1.10 2005/08/06 20:30:03 espie Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -26,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.9 2004/10/25 03:09:01 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
 #include <stdio.h>

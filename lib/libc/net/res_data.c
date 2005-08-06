@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_data.c,v 1.2 2003/06/02 20:18:36 millert Exp $	*/
+/*	$OpenBSD: res_data.c,v 1.3 2005/08/06 20:30:03 espie Exp $	*/
 
 /*
  * ++Copyright++ 1995
@@ -50,14 +50,6 @@
  * -
  * --Copyright--
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char rcsid[] = "$From: res_data.c,v 8.2 1996/08/05 08:31:35 vixie Exp $";
-#else
-static char rcsid[] = "$OpenBSD: res_data.c,v 1.2 2003/06/02 20:18:36 millert Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
