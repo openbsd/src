@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.16 2003/11/17 17:12:10 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.17 2005/08/06 16:22:26 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,10 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
 
 /*
  * look.c
