@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.336 2005/08/05 22:35:59 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.337 2005/08/06 19:52:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1084,7 +1084,7 @@ or to the firewall itself.
 Note that redirecting external incoming connections to the loopback
 address, as in
 .Bd -literal -offset indent
-rdr on ne3 inet proto tcp to port 8025 -> 127.0.0.1 port 25
+rdr on ne3 inet proto tcp to port spamd -> 127.0.0.1 port smtp
 .Ed
 .Pp
 will effectively allow an external host to connect to daemons

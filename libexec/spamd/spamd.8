@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.56 2005/05/17 08:25:55 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.57 2005/08/06 19:52:36 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -180,14 +180,13 @@ to simplify handling.
 .Bd -literal -offset 4n
 table <spamd> persist
 rdr pass inet proto tcp from <spamd> to any \e
-    port smtp -> 127.0.0.1 port 8025
+    port smtp -> 127.0.0.1 port spamd
 .Ed
 .Pp
 Any addresses in table
 .Em <spamd>
 are then redirected to
-.Nm
-running on port 8025.
+.Nm .
 Addresses can be loaded into the
 .Em table ,
 like:
@@ -300,9 +299,9 @@ example:
 table <spamd> persist
 table <spamd-white> persist
 rdr pass inet proto tcp from <spamd> to any \e
-    port smtp -> 127.0.0.1 port 8025
+    port smtp -> 127.0.0.1 port spamd
 rdr pass inet proto tcp from !<spamd-white> to any \e
-    port smtp -> 127.0.0.1 port 8025
+    port smtp -> 127.0.0.1 port spamd
 .Ed
 .Pp
 With this configuration,
