@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.55 2005/06/14 16:13:25 jaredy Exp $
+.\"	$OpenBSD: pf.4,v 1.56 2005/08/06 04:38:41 pascoe Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -541,7 +541,7 @@ contains a table of
 .Vt pfr_table
 structures.
 On exit,
-.Va pfrio_nadd
+.Va pfrio_ndel
 contains the number of tables effectively deleted.
 .It Dv DIOCRGETTABLES Fa "struct pfioc_table *io"
 Get the list of all tables.
