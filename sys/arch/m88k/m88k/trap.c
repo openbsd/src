@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2005/05/18 16:44:41 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2005/08/06 09:53:36 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1831,7 +1831,6 @@ cache_flush(struct trapframe *tf)
 
 	if ((p = curproc) == NULL)
 		p = &proc0;
-	p = curproc;
 
 	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
