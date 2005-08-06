@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2004/12/06 20:12:25 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.30 2005/08/06 17:09:10 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -418,27 +418,6 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 #endif
 			goto bad;
 		}
-	}
-	/*
-	 * XXX ***TAKE THIS OUT SOON***
-	 * this is an evil hack to get around incongruities in (some) syscall 
-	 * argument types
-	 */ 
-	switch(frame->code) {
-		case SYS_open:
-			args[2] &= 0xffff;
-			break;
-
-		case SYS_mkdir:
-		case SYS_chmod:
-		case SYS_fchmod:
-		case SYS_mkfifo:
-		case SYS_mknod:
-			args[1] &= 0xffff;
-			break;
-
-		case SYS_umask:
-			args[0] &= 0xffff;
 	}
 
 #ifdef KTRACE
