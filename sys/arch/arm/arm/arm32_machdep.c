@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.14 2005/08/01 15:42:46 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.15 2005/08/06 14:26:51 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ pv_addr_t kernelstack;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;

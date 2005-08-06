@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.72 2005/06/08 17:03:03 henning Exp $ */
+/* $OpenBSD: machdep.c,v 1.73 2005/08/06 14:26:52 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -139,7 +139,6 @@ extern int virtual_avail, virtual_end;
  */
 int		want_resched;
 char		machine[] = MACHINE;		/* from <machine/param.h> */
-char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 int		physmem;
 int		dumpsize = 0;
 int		cold = 1; /* coldstart */

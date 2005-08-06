@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2005/08/06 14:26:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -123,7 +123,7 @@ struct pdc_model pdc_model PDC_ALIGNMENT;
 u_int	cpu_ticksnum, cpu_ticksdenom;
 
 	/* exported info */
-char	machine[] = MACHINE_ARCH;
+char	machine[] = MACHINE;
 char	cpu_model[128];
 int	cpu_hvers;
 enum hppa_cpu_type cpu_type;

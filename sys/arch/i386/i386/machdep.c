@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.322 2005/07/18 14:55:49 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.323 2005/08/06 14:26:52 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -181,8 +181,7 @@ extern struct proc *npxproc;
 #define FREE_PGS(pgs) uvm_pglistfree(&(pgs))
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "i386";		/* cpu "architecture" */
-char machine_arch[] = "i386";		/* machine == machine_arch */
+char machine[] = MACHINE;
 
 /*
  * Declare these as initialized data so we can patch them.

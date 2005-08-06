@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2004/09/29 07:34:42 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.88 2005/08/06 14:26:52 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -115,7 +115,7 @@
 #include <uvm/uvm_extern.h>
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "mvme68k";		/* cpu "architecture" */
+char machine[] = MACHINE;		/* cpu "architecture" */
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;

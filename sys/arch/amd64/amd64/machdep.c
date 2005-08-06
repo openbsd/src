@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 2005/08/01 16:18:43 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 2005/08/06 14:26:50 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -148,8 +148,7 @@ extern struct acpi_softc *acpi_softc;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "amd64";		/* cpu "architecture" */
-char machine_arch[] = "amd64";		/* machine == machine_arch */
+char machine[] = MACHINE;
 
 #ifdef CPURESET_DELAY
 int	cpureset_delay = CPURESET_DELAY;

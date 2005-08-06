@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.40 2005/04/19 21:30:20 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.41 2005/08/06 14:26:52 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -81,7 +81,6 @@
 
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	*cpu_class = "sun4";
 char	cpu_model[130];
 char	cpu_hotfix[40];
