@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2005/08/07 14:18:04 espie Exp $
+# $OpenBSD: Makefile,v 1.26 2005/08/07 16:25:35 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ PACKAGES= \
     OpenBSD/ArcCheck.pm \
     OpenBSD/CollisionReport.pm \
     OpenBSD/Delete.pm \
+    OpenBSD/Dependencies.pm \
     OpenBSD/Error.pm \
     OpenBSD/Getopt.pm \
     OpenBSD/IdCache.pm \
