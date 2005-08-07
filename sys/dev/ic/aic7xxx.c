@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.66 2005/07/18 02:43:26 fgsch Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.67 2005/08/07 17:14:57 deraadt Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.66 2005/07/18 02:43:26 fgsch Exp $
+ * $Id: aic7xxx.c,v 1.67 2005/08/07 17:14:57 deraadt Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -86,6 +86,7 @@ struct ahc_hard_error_entry {
 	char *errmesg;
 };
 
+#if !defined(SMALL_KERNEL)
 static struct ahc_hard_error_entry ahc_hard_errors[] = {
 	{ ILLHADDR,	"Illegal Host Access" },
 	{ ILLSADDR,	"Illegal Sequencer Address referrenced" },
@@ -97,6 +98,7 @@ static struct ahc_hard_error_entry ahc_hard_errors[] = {
 	{ CIOPARERR,	"CIOBUS Parity Error" },
 };
 static const u_int num_errors = NUM_ELEMENTS(ahc_hard_errors);
+#endif /* !defined(SMALL_KERNEL) */
 
 static struct ahc_phase_table_entry ahc_phase_table[] =
 {
@@ -432,6 +434,7 @@ ahc_handle_brkadrint(struct ahc_softc *ahc)
 	 * We upset the sequencer :-(
 	 * Lookup the error message
 	 */
+#ifndef SMALL_KERNEL
 	int i;
 	int error;
 
@@ -444,6 +447,7 @@ ahc_handle_brkadrint(struct ahc_softc *ahc)
 	       (ahc_inb(ahc, SEQADDR1) << 8));
 
 	ahc_dump_card_state(ahc);
+#endif
 
 	/* Tell everyone that this HBA is no longer available */
 	ahc_abort_scbs(ahc, CAM_TARGET_WILDCARD, ALL_CHANNELS,
@@ -888,6 +892,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		       "  Tag == 0x%x.\n",
 		       ahc_phase_table[i].phasemsg,
   		       scb->hscb->tag);
+#ifndef SMALL_KERNEL
 		ahc_print_path(ahc, scb);
 		printf("%s seen Data Phase.  Length = %ld.  NumSGs = %d.\n",
 		       ahc_inb(ahc, SEQ_FLAGS) & DPHASE ? "Have" : "Haven't",
@@ -904,6 +909,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 				       & AHC_SG_LEN_MASK);
 			}
 		}
+#endif
 		/*
 		 * Set this and it will take effect when the
 		 * target does a command complete.
@@ -981,6 +987,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 	}
 	case OUT_OF_RANGE:
 	{
+#ifndef SMALL_KERNEL
 		printf("%s: BTT calculation out of range\n", ahc_name(ahc));
 		printf("SAVED_SCSIID == 0x%x, SAVED_LUN == 0x%x, "
 		       "ARG_1 == 0x%x ACCUM = 0x%x\n",
@@ -1001,6 +1008,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		       ahc_inb(ahc, SCB_CONTROL));
 		printf("SCSIBUSL == 0x%x, SCSISIGI == 0x%x\n",
 		       ahc_inb(ahc, SCSIBUSL), ahc_inb(ahc, SCSISIGI));
+#endif
 		ahc_dump_card_state(ahc);
 		panic("for safety");
 		break;
@@ -6572,6 +6580,7 @@ done:
 void
 ahc_dump_card_state(struct ahc_softc *ahc)
 {
+#ifndef SMALL_KERNEL
 	struct	scb *scb;
 	struct	scb_tailq *untagged_q;
 	u_int	cur_col;
@@ -6750,6 +6759,7 @@ ahc_dump_card_state(struct ahc_softc *ahc)
 	ahc_outb(ahc, SCBPTR, saved_scbptr);
 	if (paused == 0)
 		ahc_unpause(ahc);
+#endif
 }
 
 /************************* Target Mode ****************************************/
