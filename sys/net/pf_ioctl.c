@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.152 2005/08/05 09:03:19 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.153 2005/08/07 11:37:33 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2195,6 +2195,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCADDADDR: {
 		struct pfioc_pooladdr	*pp = (struct pfioc_pooladdr *)addr;
 
+		if (pp->ticket != ticket_pabuf) {
+			error = EBUSY;
+			break;
+		}
 #ifndef INET
 		if (pp->af == AF_INET) {
 			error = EAFNOSUPPORT;
