@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.78 2005/08/03 22:42:45 brad Exp $
+#	$OpenBSD: GENERIC,v 1.79 2005/08/07 20:08:45 mickey Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -348,6 +348,7 @@ eap*	at pci?				# Ensoniq AudioPCI S5016
 #neo*	at pci?				# NeoMagic 256AV/ZX
 #cmpci*	at pci?				# C-Media CMI8338/8738
 auich*	at pci? flags 0x0000		# i82801 ICH AC'97 audio
+auixp*	at pci?				# ATI IXP AC'97 Audio
 #autri*	at pci? flags 0x0000		# Trident 4D WAVE
 auvia*	at pci?				# VIA VT82C686A
 #clcs*	at pci?				# CS4280 CrystalClear audio
@@ -379,6 +380,7 @@ audio*	at eap?
 #audio*	at clcs?
 #audio*	at clct?
 audio*	at auich?
+audio*	at auixp?
 #audio*	at autri?
 audio*	at auvia?
 #audio*	at fms?
