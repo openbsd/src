@@ -1,0 +1,18 @@
+/*	$NetBSD: ja_JP.ISO-2022-JP.src,v 1.2 2001/03/26 19:56:36 tshiozak Exp $	*/
+/*	@(#)Japanese	8.1 (Berkeley) 6/6/93 */
+
+/*
+ * LOCALE_CTYPE definitions using iso-2022-jp (RFC1468)
+ */
+
+ENCODING	"ISO2022"
+
+VARIABLE	INIT0=94B CODESET=ISO2022-JP
+
+#include "charset/ASCII"
+#include "charset/JISX0201-left"
+#if 1
+/* obsolete, should not be used... */
+#include "charset/JISX0208-1978"
+#endif
+#include "charset/JISX0208-1983"
