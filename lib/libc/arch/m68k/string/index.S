@@ -1,3 +1,4 @@
+/*	$OpenBSD: index.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,11 +33,6 @@
  */
 
 #include "DEFS.h"
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: index.S,v 1.4 2003/06/02 20:18:31 millert Exp $"
-#endif /* LIBC_SCCS */
 
 #ifdef STRCHR
 ENTRY(strchr)

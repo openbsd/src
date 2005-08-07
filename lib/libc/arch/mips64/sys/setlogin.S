@@ -1,3 +1,4 @@
+/*	$OpenBSD: setlogin.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,11 +33,6 @@
 
 #include "SYS.h"
 #error not used!!
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: setlogin.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
-#endif /* SYSLIBC_SCCS */
 
 FRAMESZ= MKFSIZ(1,1)
 GPOFF= FRAMESZ-2*REGSZ

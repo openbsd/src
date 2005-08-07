@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.1 2005/04/01 10:54:27 mickey Exp $	*/
+/*	$OpenBSD: brk.S,v 1.2 2005/08/07 16:40:14 espie Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -27,12 +27,6 @@
  */
 
 #include "SYS.h"
-
-#ifdef SYSLIBC_SCCS
-	.text
-	.asciz "$OpenBSD: brk.S,v 1.1 2005/04/01 10:54:27 mickey Exp $"
-	.align	4
-#endif
 
 	.import	__curbrk, data
 	.import	end, data

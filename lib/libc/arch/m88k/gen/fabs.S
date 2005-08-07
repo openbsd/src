@@ -1,3 +1,4 @@
+/* $OpenBSD: fabs.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
 /*-
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -27,11 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS)
-	.data
-	.string "$OpenBSD: fabs.S,v 1.4 2004/07/22 08:52:36 miod Exp $"
-#endif /* LIBC_SCCS */
 
 #include "DEFS.h"
 

@@ -1,3 +1,4 @@
+/* $OpenBSD: sigsetjmp.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1995,
  *	The Regents of the University of California.  All rights reserved.
@@ -33,11 +34,6 @@
 #include <machine/asm.h>
 #include <machine/regnum.h>
 #include <machine/setjmp.h>
-
-#if defined(LIBC_SCCS) 
-	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.4 2004/09/10 12:45:35 pefo Exp $"
-#endif /* LIBC_SCCS */
 
 /*
  * trampolines for sigsetjmp and  siglongjmp save and restore mask.

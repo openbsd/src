@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.3 1996/11/13 22:05:07 niklas Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.4 2005/08/07 16:40:13 espie Exp $	*/
 /*	$NetBSD: bzero.S,v 1.2 1996/10/17 03:08:12 cgd Exp $	*/
 
 /*
@@ -29,11 +29,6 @@
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: bzero.S,v 1.3 1996/11/13 22:05:07 niklas Exp $"
-#endif
 
 LEAF(bzero,2)
 	ble	a1,bzero_done

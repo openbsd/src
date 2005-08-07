@@ -1,3 +1,4 @@
+/* $OpenBSD: sigsetjmp.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -28,11 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#if defined(LIBC_SCCS) 
-	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.4 2003/04/22 19:57:57 jason Exp $"
-#endif /* LIBC_SCCS */
 
 #include "SYS.h"
 

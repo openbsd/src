@@ -1,3 +1,4 @@
+/* $OpenBSD: umul.S,v 1.6 2005/08/07 16:40:15 espie Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) 
-	.text
-	.asciz "$OpenBSD: umul.S,v 1.5 2003/06/02 20:18:32 millert Exp $"
-#endif /* LIBC_SCCS */
 
 /*
  * Unsigned multiply.  Returns %o0 * %o1 in %o1%o0 (i.e., %o1 holds the

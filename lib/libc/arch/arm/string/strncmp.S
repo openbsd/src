@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncmp.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: strncmp.S,v 1.3 2005/08/07 16:40:14 espie Exp $	*/
 /*      $NetBSD: strncmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*
@@ -30,8 +30,6 @@
  */
 
 #include <machine/asm.h>
-
-RCSID("$NetBSD: strncmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $")
 
 ENTRY(strncmp)
 /* if ((len - 1) < 0) return 0 */

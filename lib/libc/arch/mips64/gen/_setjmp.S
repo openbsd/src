@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.3 2004/09/10 12:45:35 pefo Exp $ */
+/*	$OpenBSD: _setjmp.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
 
 /*
  * Copyright (c) 2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -32,11 +32,6 @@
 #include <machine/asm.h>
 #include <machine/regnum.h>
 #include <machine/signal.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: _setjmp.S,v 1.3 2004/09/10 12:45:35 pefo Exp $"
-#endif /* LIBC_SCCS */
 
 /*
  * _setjmp, _longjmp (not restoring signal state)

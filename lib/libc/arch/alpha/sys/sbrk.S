@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.5 2002/10/06 23:31:21 art Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.6 2005/08/07 16:40:13 espie Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.4 1996/10/17 03:08:20 cgd Exp $	*/
 
 /*
@@ -29,11 +29,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: sbrk.S,v 1.5 2002/10/06 23:31:21 art Exp $"
-#endif /* SYSLIBC_SCCS */
 
 	.globl	_end
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: brk.S,v 1.6 2005/08/07 16:40:15 espie Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(SYSLIBC_SCCS) 
-	.text
-	.asciz "$OpenBSD: brk.S,v 1.5 2003/12/25 18:49:07 miod Exp $"
-#endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 

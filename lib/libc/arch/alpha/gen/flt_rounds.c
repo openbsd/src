@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.4 1997/08/01 21:36:25 deraadt Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
 /*	$NetBSD: flt_rounds.c,v 1.1 1995/04/29 05:09:53 cgd Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: flt_rounds.c,v 1.4 1997/08/01 21:36:25 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/float.h>

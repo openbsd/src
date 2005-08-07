@@ -1,3 +1,4 @@
+/*	$OpenBSD: setlogin.S,v 1.4 2005/08/07 16:40:16 espie Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,11 +29,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: setlogin.S,v 1.3 2003/06/02 20:18:33 millert Exp $"
-#endif /* SYSLIBC_SCCS */
 
 .globl	___logname_valid		/* in getlogin() */
 

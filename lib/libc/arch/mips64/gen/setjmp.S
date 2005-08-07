@@ -1,4 +1,4 @@
-/*      $OpenBSD: setjmp.S,v 1.4 2004/09/10 12:45:35 pefo Exp $ */
+/*      $OpenBSD: setjmp.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -33,11 +33,6 @@
 #include <machine/asm.h>
 #include <machine/regnum.h>
 #include <machine/signal.h>
-
-#if defined(LIBC_SCCS) 
-	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.4 2004/09/10 12:45:35 pefo Exp $"
-#endif /* LIBC_SCCS */
 
 /*
  * setjmp, longjmp implementation for libc. this code depends

@@ -1,8 +1,4 @@
-/*	$OpenBSD: infinity.c,v 1.4 2003/01/29 15:02:02 drahn Exp $	*/
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: infinity.c,v 1.4 2003/01/29 15:02:02 drahn Exp $";
-#endif /* not lint */
+/*	$OpenBSD: infinity.c,v 1.5 2005/08/07 16:40:15 espie Exp $	*/
 
 /* infinity.c */
 

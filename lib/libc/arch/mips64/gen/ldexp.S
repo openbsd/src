@@ -1,3 +1,4 @@
+/* $OpenBSD: ldexp.S,v 1.6 2005/08/07 16:40:15 espie Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,11 +32,6 @@
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS) 
-	.text
-	.asciz "$OpenBSD: ldexp.S,v 1.5 2004/10/18 18:41:06 pefo Exp $"
-#endif /* LIBC_SCCS */
 
 #define DEXP_INF	0x7ff
 #define DEXP_BIAS	1023

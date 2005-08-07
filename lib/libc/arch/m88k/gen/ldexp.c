@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldexp.c,v 1.4 2003/06/02 20:18:31 millert Exp $	*/
+/*	$OpenBSD: ldexp.c,v 1.5 2005/08/07 16:40:14 espie Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,10 +33,6 @@
  *
  * from: Header: ldexp.c,v 1.1 91/07/07 04:28:19 torek Exp
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "$OpenBSD: ldexp.c,v 1.4 2003/06/02 20:18:31 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>

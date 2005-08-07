@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetmask.c,v 1.4 2003/03/01 00:19:08 miod Exp $	*/
+/*	$OpenBSD: fpsetmask.c,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
 /*	$NetBSD: fpsetmask.c,v 1.3 2002/01/13 21:45:40 thorpej Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: fpsetmask.c,v 1.4 2003/03/01 00:19:08 miod Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <ieeefp.h>

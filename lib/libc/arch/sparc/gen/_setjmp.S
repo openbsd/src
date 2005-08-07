@@ -1,3 +1,4 @@
+/* $OpenBSD: _setjmp.S,v 1.7 2005/08/07 16:40:15 espie Exp $ */
 /*
  *
  * Copyright (c) 1992, 1993
@@ -31,11 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: _setjmp.S,v 1.6 2004/05/04 15:57:04 miod Exp $"
-#endif /* LIBC_SCCS */
 
 /*
  * C library -- _setjmp, _longjmp

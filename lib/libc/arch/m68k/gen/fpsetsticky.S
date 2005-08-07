@@ -1,12 +1,8 @@
+/* $OpenBSD: fpsetsticky.S,v 1.3 2005/08/07 16:40:14 espie Exp $ */
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
  * Public domain.
  */
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: fpsetsticky.S,v 1.2 1996/08/19 08:14:22 tholo Exp $"
-#endif /* LIBC_SCCS */
 
 #include <machine/asm.h>
 

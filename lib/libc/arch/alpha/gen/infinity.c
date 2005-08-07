@@ -1,4 +1,4 @@
-/*	$OpenBSD: infinity.c,v 1.4 2001/01/24 07:46:50 art Exp $	*/
+/*	$OpenBSD: infinity.c,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
 /*	$NetBSD: infinity.c,v 1.1 1995/02/10 17:50:23 cgd Exp $	*/
 
 /*
@@ -27,10 +27,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: infinity.c,v 1.4 2001/01/24 07:46:50 art Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <math.h>
 

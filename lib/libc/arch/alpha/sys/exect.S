@@ -1,4 +1,4 @@
-/*	$OpenBSD: exect.S,v 1.4 1999/01/06 06:10:13 d Exp $	*/
+/*	$OpenBSD: exect.S,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
 /*	$NetBSD: exect.S,v 1.2 1996/10/17 03:08:18 cgd Exp $	*/
 
 /*
@@ -29,11 +29,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: exect.S,v 1.4 1999/01/06 06:10:13 d Exp $"
-#endif /* SYSLIBC_SCCS */
 
 SYSLEAF(exect, 3)
 	CALLSYS_ERROR(execve)

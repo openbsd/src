@@ -1,7 +1,4 @@
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: infinity.c,v 1.3 2000/10/10 12:39:29 hugh Exp $";
-#endif /* LIBC_SCCS and not lint */
-
+/*	$OpenBSD: infinity.c,v 1.4 2005/08/07 16:40:15 espie Exp $ */
 /*
  * XXX - This is not correct, but what can we do about it?
  */

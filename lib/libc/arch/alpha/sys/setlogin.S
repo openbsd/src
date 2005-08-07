@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlogin.S,v 1.3 1996/11/13 22:05:14 niklas Exp $	*/
+/*	$OpenBSD: setlogin.S,v 1.4 2005/08/07 16:40:13 espie Exp $	*/
 /*	$NetBSD: setlogin.S,v 1.1 1995/02/10 17:50:39 cgd Exp $	*/
 
 /*
@@ -29,11 +29,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: setlogin.S,v 1.3 1996/11/13 22:05:14 niklas Exp $"
-#endif /* SYSLIBC_SCCS */
 
 IMPORT(__logname_valid, 4)			/* in getlogin() */
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: memmove.S,v 1.5 2005/08/07 16:40:15 espie Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -26,11 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: memmove.S,v 1.4 2003/06/02 20:18:33 millert Exp $"
-#endif /* LIBC_SCCS */
 
 /*
  * void *memmove(dst, src, size)

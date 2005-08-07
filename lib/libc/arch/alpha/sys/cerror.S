@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.4 2002/10/06 23:23:18 art Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
 /*	$NetBSD: cerror.S,v 1.3 1996/10/17 03:08:17 cgd Exp $	*/
 
 /*
@@ -29,11 +29,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: cerror.S,v 1.4 2002/10/06 23:23:18 art Exp $"
-#endif /* SYSLIBC_SCCS */
 
 IMPORT(errno, 4)
 

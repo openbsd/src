@@ -1,3 +1,4 @@
+/*	$OpenBSD: sigreturn.S,v 1.2 2005/08/07 16:40:15 espie Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,11 +32,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: sigreturn.S,v 1.1 2004/08/11 17:31:00 pefo Exp $"
-#endif /* SYSLIBC_SCCS */
 
 /*
  * We must preserve the state of the registers as the user has set them up.

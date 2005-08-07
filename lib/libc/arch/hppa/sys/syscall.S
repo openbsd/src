@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.5 2003/06/02 20:28:04 mickey Exp $	*/
+/*	$OpenBSD: syscall.S,v 1.6 2005/08/07 16:40:14 espie Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -27,12 +27,6 @@
  */
 
 #include "SYS.h"
-
-#ifdef SYSLIBC_SCCS
-	.text
-	.asciz "$OpenBSD: syscall.S,v 1.5 2003/06/02 20:28:04 mickey Exp $"
-	.align	4
-#endif
 
 RSYSCALL(syscall)
 

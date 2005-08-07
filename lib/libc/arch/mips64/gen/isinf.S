@@ -1,3 +1,4 @@
+/* $OpenBSD: isinf.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,11 +32,6 @@
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS) 
-	.text
-	.asciz "$OpenBSD: isinf.S,v 1.3 2004/10/02 12:34:53 pefo Exp $"
-#endif /* LIBC_SCCS */
 
 #define DEXP_INF	0x7ff
 
