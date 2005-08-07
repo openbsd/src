@@ -20,6 +20,7 @@ use OpenBSD::PackingList;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
 use OpenBSD::Ustar;
+use OpenBSD::ArcCheck;
 use File::Copy;
 use File::Path;
 
@@ -40,18 +41,18 @@ sub copy_over
 {
 	my ($self, $wrarc, $prefix, $pkg) = @_;
 	my $e = $pkg->{pkg}->next();
-	if ($e->{name} ne $self->{name}) {
+	if (!$e->check_name($self->{name})) {
 		die "Names don't match: ", $e->{name}, " ", $self->{name};
 	}
 	$e->{name} = $prefix."/".$e->{name};
-	$e->copy($wrarc);
+	$e->copy_long($wrarc);
 }
 
 sub make_alias
 {
 	my ($self, $wrarc, $prefix, $pkg, $alias) = @_;
 	my $e = $pkg->{pkg}->next();
-	if ($e->{name} ne $self->{name}) {
+	if (!$e->check_name($self->{name})) {
 		die "Names don't match: ", $e->{name}, " ", $self->{name};
 	}
 	$e->{name} = $prefix."/".$e->{name};

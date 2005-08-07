@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.34 2005/08/05 09:52:08 espie Exp $
+# $OpenBSD: Add.pm,v 1.35 2005/08/07 14:18:05 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,6 +20,7 @@ use warnings;
 package OpenBSD::Add;
 use OpenBSD::Error;
 use OpenBSD::PackageInfo;
+use OpenBSD::ArcCheck;
 use File::Copy;
 
 sub manpages_index
@@ -342,10 +343,11 @@ sub prepare_to_extract
 	my $destdir = $state->{destdir};
 
 	my $file=$state->{archive}->next();
+	$file->{cwd} = $self->cwd();
 	if (!defined $file) {
 		Fatal "Error: truncated archive\n";
 	}
-	if ($file->{name} ne $self->{name}) {
+	if (!$file->check_name($self->{name})) {
 		Fatal "Error: archive does not match ", $file->{name}, "!=",
 		$self->{name}, "\n";
 	}
@@ -353,7 +355,7 @@ sub prepare_to_extract
 		unless (defined $self->{symlink} && $file->isSymLink()) {
 			Fatal "Error: bogus symlink ", $self->{name}, "\n";
 		}
-		if ($self->{symlink} ne $file->{linkname}) {
+		if (!$file->check_linkname($self->{symlink})) {
 			Fatal "Error: archive sl does not match ", $file->{linkname}, "!=",
 			$self->{symlink}, "\n";
 		}
@@ -361,18 +363,13 @@ sub prepare_to_extract
 		unless (defined $self->{link} && $file->isHardLink()) {
 			Fatal "Error: bogus hardlink ", $self->{name}, "\n";
 		}
-		my $linkname = $file->{linkname};
-		if (defined $self->{cwd}) {
-			$linkname = $self->cwd().'/'.$linkname;
-		}
-		if ($self->{link} ne $linkname) {
-			Fatal "Error: archive hl does not match ", $linkname, "!=",
+		if (!$file->check_linkname($self->{link})) {
+			Fatal "Error: archive hl does not match ", $file->{linkname}, "!=",
 			$self->{link}, "!!!\n";
 		}
 	}
 
 	$file->{name} = $fullname;
-	$file->{cwd} = $self->cwd();
 	$file->{destdir} = $destdir;
 	# faked installation are VERY weird
 	if (defined $self->{symlink} && $state->{do_faked}) {
