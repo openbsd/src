@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.26 2004/06/22 23:52:18 jfb Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.27 2005/08/07 00:18:33 deraadt Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -522,18 +522,20 @@ svr4_sys_uname(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_uname_args *uap = v;
-	struct svr4_utsname	sut;
+	struct svr4_utsname	*sut;
 	extern char hostname[], machine[];
 	const char *cp;
 	char *dp, *ep;
+	int error;
 
-	bzero(&sut, sizeof(sut));
-	strlcpy(sut.sysname, ostype, sizeof(sut.sysname));
-	strlcpy(sut.nodename, hostname, sizeof(sut.nodename));
-	strlcpy(sut.release, osrelease, sizeof(sut.release));
+	sut = malloc(sizeof(*sut), M_TEMP, M_WAITOK); 
+	bzero(sut, sizeof(*sut));
+	strlcpy(sut->sysname, ostype, sizeof(sut->sysname));
+	strlcpy(sut->nodename, hostname, sizeof(sut->nodename));
+	strlcpy(sut->release, osrelease, sizeof(sut->release));
 
-	dp = sut.version;
-	ep = &sut.version[sizeof(sut.version) - 1];
+	dp = sut->version;
+	ep = &sut->version[sizeof(sut->version) - 1];
 	for (cp = version; *cp && *cp != '('; cp++)
 		;
 	for (cp++; *cp && *cp != ')' && dp < ep; cp++)
@@ -544,10 +546,11 @@ svr4_sys_uname(p, v, retval)
 		*dp++ = *cp;
 	*dp = '\0';
 
-	strlcpy(sut.machine, machine, sizeof(sut.machine));
+	strlcpy(sut->machine, machine, sizeof(sut->machine));
 
-	return copyout((caddr_t) &sut, (caddr_t) SCARG(uap, name),
-		       sizeof(struct svr4_utsname));
+	error = copyout(sut, SCARG(uap, name), sizeof(struct svr4_utsname));
+	free(sut, M_TEMP);
+	return (error);
 }
 
 int
