@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.41 2005/08/02 12:40:42 pascoe Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.42 2005/08/07 11:35:59 pascoe Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -235,9 +235,9 @@ pfi_detach_ifnet(struct ifnet *ifp)
 	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
 		pfi_dynaddr_update(dyn);
 
-	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	kif->pfik_ifp = NULL;
 	ifp->if_pf_kif = NULL;
+	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	splx(s);
 }
 
