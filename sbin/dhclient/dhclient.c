@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.77 2005/08/02 02:34:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.78 2005/08/07 01:35:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1685,7 +1685,6 @@ script_init(char *reason, struct string_list *medium)
 	size_t		 len, mediumlen = 0;
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
-	int		 errs;
 
 	if (medium != NULL && medium->string != NULL)
 		mediumlen = strlen(medium->string);
@@ -1695,23 +1694,17 @@ script_init(char *reason, struct string_list *medium)
 	    sizeof(size_t) + mediumlen +
 	    sizeof(size_t) + strlen(reason);
 
-	if ((buf = buf_open(hdr.len)) == NULL)
-		error("buf_open: %m");
+	buf = buf_open(hdr.len);
 
-	errs = 0;
-	errs += buf_add(buf, &hdr, sizeof(hdr));
-	errs += buf_add(buf, &mediumlen, sizeof(mediumlen));
+	buf_add(buf, &hdr, sizeof(hdr));
+	buf_add(buf, &mediumlen, sizeof(mediumlen));
 	if (mediumlen > 0)
-		errs += buf_add(buf, medium->string, mediumlen);
+		buf_add(buf, medium->string, mediumlen);
 	len = strlen(reason);
-	errs += buf_add(buf, &len, sizeof(len));
-	errs += buf_add(buf, reason, len);
+	buf_add(buf, &len, sizeof(len));
+	buf_add(buf, reason, len);
 
-	if (errs)
-		error("buf_add: %m");
-
-	if (buf_close(privfd, buf) == -1)
-		error("buf_close: %m");
+	buf_close(privfd, buf);
 }
 
 void
@@ -1859,7 +1852,7 @@ script_write_params(char *prefix, struct client_lease *lease)
 	size_t		 fn_len = 0, sn_len = 0, pr_len = 0;
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
-	int		 errs, i;
+	int		 i;
 
 	if (lease->filename != NULL)
 		fn_len = strlen(lease->filename);
@@ -1878,31 +1871,25 @@ script_write_params(char *prefix, struct client_lease *lease)
 
 	scripttime = time(NULL);
 
-	if ((buf = buf_open(hdr.len)) == NULL)
-		error("buf_open: %m");
+	buf = buf_open(hdr.len);
 
-	errs = 0;
-	errs += buf_add(buf, &hdr, sizeof(hdr));
-	errs += buf_add(buf, lease, sizeof(struct client_lease));
-	errs += buf_add(buf, &fn_len, sizeof(fn_len));
-	errs += buf_add(buf, lease->filename, fn_len);
-	errs += buf_add(buf, &sn_len, sizeof(sn_len));
-	errs += buf_add(buf, lease->server_name, sn_len);
-	errs += buf_add(buf, &pr_len, sizeof(pr_len));
-	errs += buf_add(buf, prefix, pr_len);
+	buf_add(buf, &hdr, sizeof(hdr));
+	buf_add(buf, lease, sizeof(struct client_lease));
+	buf_add(buf, &fn_len, sizeof(fn_len));
+	buf_add(buf, lease->filename, fn_len);
+	buf_add(buf, &sn_len, sizeof(sn_len));
+	buf_add(buf, lease->server_name, sn_len);
+	buf_add(buf, &pr_len, sizeof(pr_len));
+	buf_add(buf, prefix, pr_len);
 
 	for (i = 0; i < 256; i++) {
-		errs += buf_add(buf, &lease->options[i].len,
+		buf_add(buf, &lease->options[i].len,
 		    sizeof(lease->options[i].len));
-		errs += buf_add(buf, lease->options[i].data,
+		buf_add(buf, lease->options[i].data,
 		    lease->options[i].len);
 	}
 
-	if (errs)
-		error("buf_add: %m");
-
-	if (buf_close(privfd, buf) == -1)
-		error("buf_close: %m");
+	buf_close(privfd, buf);
 }
 
 int
@@ -1917,14 +1904,10 @@ script_go(void)
 	hdr.code = IMSG_SCRIPT_GO;
 	hdr.len = sizeof(struct imsg_hdr);
 
-	if ((buf = buf_open(hdr.len)) == NULL)
-		error("buf_open: %m");
+	buf = buf_open(hdr.len);
 
-	if (buf_add(buf, &hdr, sizeof(hdr)))
-		error("buf_add: %m");
-
-	if (buf_close(privfd, buf) == -1)
-		error("buf_close: %m");
+	buf_add(buf, &hdr, sizeof(hdr));
+	buf_close(privfd, buf);
 
 	bzero(&hdr, sizeof(hdr));
 	buf_read(privfd, &hdr, sizeof(hdr));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.3 2005/08/05 16:23:30 moritz Exp $ */
+/*	$OpenBSD: privsep.h,v 1.4 2005/08/07 01:35:11 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@ struct imsg_hdr {
 };
 
 struct buf	*buf_open(size_t);
-int		 buf_add(struct buf *, void *, size_t);
-int		 buf_close(int, struct buf *);
-ssize_t		 buf_read(int, void *, size_t);
+void		 buf_add(struct buf *, void *, size_t);
+void		 buf_close(int, struct buf *);
+void		 buf_read(int, void *, size_t);
 void		 dispatch_imsg(int);
