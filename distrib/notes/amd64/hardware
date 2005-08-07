@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.57 2005/08/04 16:01:48 brad Exp $
+dnl	$OpenBSD: hardware,v 1.58 2005/08/07 20:12:23 mickey Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -738,6 +738,7 @@ dnl		    See above
 		"PS/2"-style mice
 		Serial mice (uses serial port driver)
 	Sound Devices
+		ATI IXP series integrated AC'97 
 		C-Media CMI8[37]38
 		Cirrus Logic CrystalClear CS4280, CS4281
 		Ensoniq AudioPCI
