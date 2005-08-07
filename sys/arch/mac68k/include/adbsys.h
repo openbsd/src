@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.7 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.8 2005/08/07 14:43:53 martin Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.5 1996/05/05 14:34:07 briggs Exp $	*/
 
 /*-
@@ -80,21 +80,52 @@ typedef struct adb_dev_s {
 } adb_dev_t;
 
 /* Interesting default addresses */
-#define ADBADDR_MAP	2
-#define ADBADDR_REL	3
-#define ADBADDR_ABS	4
+#define ADBADDR_SECURE	1		/* Security dongles */
+#define ADBADDR_MAP	2		/* Mapped devices (keyboards/pads) */
+#define ADBADDR_REL	3		/* Relative positioning devices */
+#define ADBADDR_ABS	4		/* Absolute positioning devices */
+#define ADBADDR_DATATX	5
+#define ADBADDR_RSRVD	6		/* Reserved by Apple */
+#define ADBADDR_MISC	7		/* Miscellaneous appliances */
+#define ADBADDR_DONGLE	ADBADDR_SECURE
 #define ADBADDR_KBD	ADBADDR_MAP
 #define ADBADDR_MS	ADBADDR_REL
 #define ADBADDR_TABLET	ADBADDR_ABS
+#define ADBADDR_MODEM	ADBADDR_DATATX
 
-/* Interesting handler IDs */
+/* Interesting keyboard handler IDs */
 #define ADB_STDKBD	1
 #define ADB_EXTKBD	2
+#define ADB_ISOKBD	4
+#define ADB_EXTISOKBD	5
+#define ADB_KBDII	8
+#define ADB_ISOKBDII	9
 #define ADB_PBKBD	12
+#define ADB_PBISOKBD	13
+#define ADB_ADJKPD	14
+#define ADB_ADJKBD	16
+#define ADB_ADJISOKBD	17
+#define ADB_ADJJAPKBD	18
+#define ADB_PBEXTISOKBD	20
+#define ADB_PBEXTJAPKBD	21
+#define ADB_JPKBDII	22
+#define ADB_PBEXTKBD	24
+#define ADB_DESIGNKBD	27	/* XXX Needs to be verified XXX */
+#define ADB_PBJPKBD	30
+
+/* Interesting mouse handler IDs */
 #define ADBMS_100DPI	1
 #define ADBMS_200DPI	2
-#define ADBMS_EXTENDED	4
+#define ADBMS_MSA3	3	/* Mouse Systems A3 Mouse */
+#define ADBMS_EXTENDED	4	/* Extended mouse protocol */
 #define ADBMS_USPEED	47	/* MicroSpeed mouse */
+#define ADBMS_UCONTOUR	102	/* Contour mouse */
+
+/* Interesting tablet handler ID */
+#define ADB_ARTPAD	58	/* WACOM ArtPad II tablet */
+
+/* Interesting miscellaneous handler ID */
+#define ADB_POWERKEY	34	/* Sophisticated Circuits PowerKey */
 
 /* Get device info from ADB system */
 typedef struct adb_devinfo_s {
