@@ -1,7 +1,4 @@
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: infinity.c,v 1.3 1996/09/15 09:30:42 tholo Exp $";
-#endif /* LIBC_SCCS and not lint */
-
+/*	$OpenBSD: infinity.c,v 1.4 2005/08/07 11:30:38 espie Exp $ */
 /* infinity.c */
 
 #include <math.h>

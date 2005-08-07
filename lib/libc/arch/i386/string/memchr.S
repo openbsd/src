@@ -1,14 +1,10 @@
+/*	$OpenBSD: memchr.S,v 1.3 2005/08/07 11:30:38 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: memchr.S,v 1.2 1996/08/19 08:13:01 tholo Exp $"
-#endif
 
 ENTRY(memchr)
 	pushl	%edi

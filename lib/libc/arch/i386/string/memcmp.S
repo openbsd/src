@@ -1,14 +1,10 @@
+/*	$OpenBSD: memcmp.S,v 1.4 2005/08/07 11:30:38 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: memcmp.S,v 1.3 1997/07/23 20:55:21 kstailey Exp $"
-#endif
 
 ENTRY(memcmp)
 	pushl	%edi

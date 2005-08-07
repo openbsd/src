@@ -1,3 +1,4 @@
+/*	$OpenBSD: rfork.S,v 1.3 2005/08/07 11:30:38 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,11 +32,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: rfork.S,v 1.2 2003/06/02 20:18:30 millert Exp $"
-#endif /* SYSLIB_SCCS */
 
 SYSCALL(rfork)
 	decl	%edx	/* from 1 to 0 in child, 0 to -1 in parent */

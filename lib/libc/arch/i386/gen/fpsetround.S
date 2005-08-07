@@ -1,14 +1,10 @@
+/* $OpenBSD: fpsetround.S,v 1.3 2005/08/07 11:30:38 espie Exp $ */
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: fpsetround.S,v 1.2 1996/08/19 08:12:26 tholo Exp $"
-#endif
 
 ENTRY(fpsetround)
 	subl $4,%esp

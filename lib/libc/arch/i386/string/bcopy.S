@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.4 2003/06/02 20:18:30 millert Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.5 2005/08/07 11:30:38 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,11 +32,6 @@
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: bcopy.S,v 1.4 2003/06/02 20:18:30 millert Exp $"
-#endif
 
 	/*
 	 * (ov)bcopy (src,dst,cnt)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: syscall.S,v 1.8 2005/08/07 11:30:38 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,11 +32,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: syscall.S,v 1.7 2004/10/29 21:14:16 hshoexer Exp $"
-#endif /* SYSLIBC_SCCS */
 
 SYSENTRY(syscall)
 	pop	%ecx	/* rta */

@@ -1,14 +1,10 @@
+/* $OpenBSD: flt_rounds.S,v 1.3 2005/08/07 11:30:38 espie Exp $ */
 /*
  * Written by J.T. Conklin, Apr 4, 1995
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: flt_rounds.S,v 1.2 1996/08/19 08:12:20 tholo Exp $"
-#endif
 
 	.text
 	.align 2

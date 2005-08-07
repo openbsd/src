@@ -1,14 +1,10 @@
+/*	$OpenBSD: strlen.S,v 1.3 2005/08/07 11:30:38 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: strlen.S,v 1.2 1996/08/19 08:13:19 tholo Exp $"
-#endif
 
 ENTRY(strlen)
 	pushl	%edi

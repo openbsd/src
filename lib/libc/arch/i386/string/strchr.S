@@ -1,7 +1,3 @@
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: strchr.S,v 1.2 1996/08/19 08:13:14 tholo Exp $"
-#endif
-
+/*	$OpenBSD: strchr.S,v 1.3 2005/08/07 11:30:38 espie Exp $ */
 #define STRCHR
 #include "index.S"

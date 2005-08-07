@@ -1,3 +1,4 @@
+/*	$OpenBSD: strcpy.S,v 1.8 2005/08/07 11:30:38 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -10,11 +11,6 @@
 	.section .gnu.warning.strcpy
 	.ascii "warning: strcpy() is almost always misused, please use strlcpy()"
 #NO_APP
-#endif
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: strcpy.S,v 1.7 2005/03/25 22:22:30 kettenis Exp $"
 #endif
 
 /*

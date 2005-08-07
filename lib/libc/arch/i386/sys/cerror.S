@@ -1,3 +1,4 @@
+/*	$OpenBSD: cerror.S,v 1.7 2005/08/07 11:30:38 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,11 +32,6 @@
  */
 
 #include "SYS.h"
-
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: cerror.S,v 1.6 2004/06/21 21:22:05 drahn Exp $"
-#endif /* SYSLIB_SCCS */
 
 	.globl	_C_LABEL(errno)
 _ENTRY(CERROR)
