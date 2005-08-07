@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.153 2005/08/07 11:37:33 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.154 2005/08/07 11:54:02 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1696,7 +1696,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		}
 		pf_purge_expired_states();
-		pf_status.states = 0;
 		psk->psk_af = killed;
 #if NPFSYNC
 		pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
