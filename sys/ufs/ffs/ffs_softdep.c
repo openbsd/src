@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.60 2005/07/20 16:30:34 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.61 2005/08/08 09:48:02 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -457,6 +457,8 @@ static __inline void
 softdep_freequeue_process(void)
 {
 	struct worklist *wk;
+
+	splassert(IPL_BIO);
 
 	while ((wk = LIST_FIRST(&softdep_freequeue)) != NULL) {
 		LIST_REMOVE(wk, wk_list);
@@ -994,6 +996,8 @@ pagedep_lookup(ip, lbn, flags, pagedeppp)
 	struct mount *mp;
 	int i;
 
+	splassert(IPL_BIO);
+
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
 		panic("pagedep_lookup: lock not held");
@@ -1064,6 +1068,8 @@ inodedep_lookup(fs, inum, flags, inodedeppp)
 	struct inodedep *inodedep;
 	struct inodedep_hashhead *inodedephd;
 	int firsttry;
+
+	splassert(IPL_BIO);
 
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
@@ -1375,6 +1381,8 @@ bmsafemap_lookup(bp)
 	struct bmsafemap *bmsafemap;
 	struct worklist *wk;
 
+	splassert(IPL_BIO);
+
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
 		panic("bmsafemap_lookup: lock not held");
@@ -1551,6 +1559,8 @@ allocdirect_merge(adphead, newadp, oldadp)
 	struct worklist *wk;
 	struct freefrag *freefrag;
 	struct newdirblk *newdirblk;
+
+	splassert(IPL_BIO);
 
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
@@ -2141,6 +2151,8 @@ free_allocdirect(adphead, adp, delay)
 	struct newdirblk *newdirblk;
 	struct worklist *wk;
 
+	splassert(IPL_BIO);
+
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
 		panic("free_allocdirect: lock not held");
@@ -2182,6 +2194,8 @@ free_newdirblk(newdirblk)
 	struct pagedep *pagedep;
 	struct diradd *dap;
 	int i;
+
+	splassert(IPL_BIO);
 
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
@@ -2276,6 +2290,7 @@ STATIC int
 check_inode_unwritten(inodedep)
 	struct inodedep *inodedep;
 {
+	splassert(IPL_BIO);
 
 	if ((inodedep->id_state & DEPCOMPLETE) != 0 ||
 	    LIST_FIRST(&inodedep->id_pendinghd) != NULL ||
@@ -2483,6 +2498,8 @@ free_allocindir(aip, inodedep)
 	struct inodedep *inodedep;
 {
 	struct freefrag *freefrag;
+
+	splassert(IPL_BIO);
 
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
@@ -2731,6 +2748,8 @@ free_diradd(dap)
 	struct pagedep *pagedep;
 	struct inodedep *inodedep;
 	struct mkdir *mkdir, *nextmd;
+
+	splassert(IPL_BIO);
 
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
@@ -3621,6 +3640,8 @@ handle_allocdirect_partdone(adp)
 	struct inodedep *inodedep;
 	long bsize, delay;
 
+	splassert(IPL_BIO);
+
 	if ((adp->ad_state & ALLCOMPLETE) != ALLCOMPLETE)
 		return;
 	if (adp->ad_buf != NULL)
@@ -3692,6 +3713,8 @@ handle_allocindir_partdone(aip)
 {
 	struct indirdep *indirdep;
 
+	splassert(IPL_BIO);
+
 	if ((aip->ai_state & ALLCOMPLETE) != ALLCOMPLETE)
 		return;
 	if (aip->ai_buf != NULL)
@@ -3725,6 +3748,8 @@ handle_written_inodeblock(inodedep, bp)
 	struct allocdirect *adp, *nextadp;
 	struct ufs1_dinode *dp;
 	int hadchanges;
+
+	splassert(IPL_BIO);
 
 	if ((inodedep->id_state & IOSTARTED) == 0)
 		panic("handle_written_inodeblock: not started");
@@ -3874,6 +3899,8 @@ diradd_inode_written(dap, inodedep)
 {
 	struct pagedep *pagedep;
 
+	splassert(IPL_BIO);
+
 	dap->da_state |= COMPLETE;
 	if ((dap->da_state & ALLCOMPLETE) == ALLCOMPLETE) {
 		if (dap->da_state & DIRCHG)
@@ -3896,6 +3923,8 @@ handle_written_mkdir(mkdir, type)
 {
 	struct diradd *dap;
 	struct pagedep *pagedep;
+
+	splassert(IPL_BIO);
 
 	if (mkdir->md_state != type)
 		panic("handle_written_mkdir: bad type");
@@ -3931,6 +3960,8 @@ handle_written_filepage(pagedep, bp)
 	struct diradd *dap, *nextdap;
 	struct direct *ep;
 	int i, chgs;
+
+	splassert(IPL_BIO);
 
 	if ((pagedep->pd_state & IOSTARTED) == 0)
 		panic("handle_written_filepage: not started");
@@ -4132,6 +4163,8 @@ merge_inode_lists(inodedep)
 	struct inodedep *inodedep;
 {
 	struct allocdirect *listadp, *newadp;
+
+	splassert(IPL_BIO);
 
 	newadp = TAILQ_FIRST(&inodedep->id_newinoupdt);
 	for (listadp = TAILQ_FIRST(&inodedep->id_inoupdt); listadp && newadp;) {
@@ -4611,6 +4644,8 @@ flush_inodedep_deps(fs, ino)
 	int error, waitfor;
 	struct buf *bp;
 
+	splassert(IPL_BIO);
+
 	/*
 	 * This work is done in two passes. The first pass grabs most
 	 * of the buffers and begins asynchronously writing them. The
@@ -4704,6 +4739,8 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 	int gotit, error = 0;
 	struct buf *bp;
 	ino_t inum;
+
+	splassert(IPL_BIO);
 
 	ump = VFSTOUFS(mp);
 	while ((dap = LIST_FIRST(diraddhdp)) != NULL) {
@@ -5177,6 +5214,8 @@ getdirtybuf(bpp, waitfor)
 	struct buf *bp;
 	int s;
 
+	splassert(IPL_BIO);
+
 	for (;;) {
 		if ((bp = *bpp) == NULL)
 			return (0);
@@ -5206,9 +5245,12 @@ drain_output(vp, islocked)
 	int islocked;
 {
 	int s;
-	
+
 	if (!islocked)
 		ACQUIRE_LOCK(&lk);
+
+	splassert(IPL_BIO);
+
 	while (vp->v_numoutput) {
 		vp->v_bioflag |= VBIOWAIT;
 		s = FREE_LOCK_INTERLOCKED(&lk);
