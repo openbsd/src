@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.25 2005/08/08 18:57:16 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.26 2005/08/08 20:26:21 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -259,7 +259,12 @@ bio_inq(char *name)
 			snprintf(scsiname, sizeof scsiname,
 			    "%u:%u.%u",
 			    bd.bd_channel, bd.bd_target, bd.bd_lun);
-			snprintf(encname, sizeof encname, "ses#");
+			if (bd.bd_procdev[0])
+				snprintf(encname, sizeof encname, "%s",
+				    bd.bd_procdev);
+			else
+				snprintf(encname, sizeof encname, "%s",
+				    "noencl");
 
 			printf("    %3u %-10s %14s %-7s %-6s <%s>\n",
 			    bd.bd_diskid, status, size, scsiname, encname,
