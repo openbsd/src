@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.29 2005/07/27 16:42:19 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.30 2005/08/08 11:40:07 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -70,7 +70,7 @@ struct cvs_cmd cvs_cmd_tag = {
 
 struct cvs_cmd cvs_cmd_rtag = {
 	CVS_OP_RTAG, CVS_REQ_TAG, "rtag",
-	{  },
+	{ "rt", "rfreeze" },
 	"Add a symbolic tag to a module",
 	"[-abdFflnR] [-D date | -r rev] symbolic_tag modules ...",
 	"abD:fFflnRr:",
