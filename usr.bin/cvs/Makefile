@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.12 2005/08/02 11:00:56 xsa Exp $
+#	$OpenBSD: Makefile,v 1.13 2005/08/08 14:59:41 xsa Exp $
 
 PROG=	cvs
-MAN=	cvs.1 cvsignore.5 cvsrc.5 cvsintro.7
+MAN=	cvs.1 cvsignore.5 cvsrc.5 cvswrappers.5 cvsintro.7
 
 SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c date.y \
 	diff.c edit.c entries.c file.c getlog.c history.c hist.c \

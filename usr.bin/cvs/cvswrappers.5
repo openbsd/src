@@ -1,0 +1,97 @@
+.\"	$OpenBSD: cvswrappers.5,v 1.1 2005/08/08 14:59:41 xsa Exp $
+.\"
+.\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd August 01, 2005
+.Dt CVSWRAPPERS 5
+.Os
+.Sh NAME
+.Nm cvswrappers
+.Nd CVS filters
+.Sh DESCRIPTION
+The
+.Nm
+file, located in
+.Pa $CVSROOT/CVSROOT
+and/or
+.Pa $HOME/.cvswrappers ,
+provides a way to configure filters for
+.Xr cvs 1
+based on file type (name).
+This works by specifying a pattern to match for varying file types.
+.Pp
+The format of each line is as follows:
+.Pp
+.Dl pattern [option 'value'] [option 'value'] ...
+.Pp
+The following options are supported:
+.Bl -tag -width Ds
+.It Fl f Ar filter
+Execute
+.Ar filter
+when the file is extracted from the repository (for the
+.Ic checkout ,
+.Ic export ,
+and
+.Ic update
+commands).
+.It Fl k Ar mode
+Specify the keyword substitution mode.
+See the
+.Sx KEYWORD SUBSTITUTION
+section of
+.Xr cvs 1
+for more information.
+.It Fl m Ar method
+Specify the merge methodology to be used when a file is updated.
+.Pp
+The methods are as follows:
+.Bl -tag -width Ds
+.It COPY
+When the
+.Ic update
+command is used,
+.Xr cvs 1
+will merely copy one version over another and let the user do the merge
+by himself.
+This method is used by default on binary files (see the
+.Fl k Ar b
+option).
+.It MERGE
+Try to merge the files.
+This method is the default.
+.El
+.It Fl t Ar filter
+Execute
+.Ar filter
+before the file is archived in the repository (for the
+.Ic commit ,
+and
+.Ic import
+commands).
+.El
+.Sh EXAMPLES
+Handle jpeg files as binaries:
+.Bd -literal -offset indent
+*.jpg -k 'b'
+.Ed
+.Pp
+Indent C files before archiving them:
+.Bd -literal -offset indent
+*.[ch] -t 'indent %s'
+.Ed
+.Sh SEE ALSO
+.Xr cvs 1 ,
+.Xr cvsintro 7
