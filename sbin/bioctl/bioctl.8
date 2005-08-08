@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.22 2005/08/05 02:40:30 deraadt Exp $
+.\"	$OpenBSD: bioctl.8,v 1.23 2005/08/08 04:04:13 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm bioctl
 .Bk -words
-.Op Fl Di
+.Op Fl Dhi
 .Op Fl a Ar alarm-function
 .Ar device
 .Ek
@@ -64,6 +64,11 @@ or by the first letter only
 (e.g. -a e).
 .It Fl D
 Enable debug output.
+.It Fl h
+Where neccessary, produce "human-readable" output.
+Use unit suffixes: Byte, Kilobyte, Megabyte,
+Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
+digits to four or less.
 .It Fl i
 Enumerate the selected RAID devices.
 .It Ar device

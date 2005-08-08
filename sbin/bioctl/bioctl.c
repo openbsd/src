@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.23 2005/08/05 02:40:36 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.24 2005/08/08 04:04:13 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <err.h>
 #include <fcntl.h>
+#include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,13 +45,18 @@
 #include <ctype.h>
 #include <util.h>
 
-#include "bioctl.h"
+void usage(void);
+void cleanup(void);
+
+void bio_inq(char *);
+void bio_alarm(char *);
 
 /* globals */
 const char *bio_device = "/dev/bio";
 
 int devh = -1;
 int debug = 0;
+int human = 0;
 
 struct bio_locate bl;
 
@@ -67,7 +73,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:Di")) != -1) {
+	while ((ch = getopt(argc, argv, "ha:Di")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -75,6 +81,9 @@ main(int argc, char *argv[])
 			break;
 		case 'D': /* debug */
 			debug = 1;
+			break;
+		case 'h':
+			human = 1;
 			break;
 		case 'i': /* inquiry */
 			func |= BIOC_INQ;
@@ -87,7 +96,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 0 || argc > 1)
+	if (argc != 1)
 		usage();
 
 	if (func == 0)
@@ -105,11 +114,11 @@ main(int argc, char *argv[])
 		if (devh == -1)
 			err(1, "Can't open %s", bio_device);
 
-		bl.name = bioc_dev;
+		bl.bl_name = bioc_dev;
 		rv = ioctl(devh, BIOCLOCATE, &bl);
 		if (rv == -1)
 			errx(1, "Can't locate %s device via %s",
-			    bl.name, bio_device);
+			    bl.bl_name, bio_device);
 	} else if (sd_dev) {
 		devh = opendev(sd_dev, O_RDWR, OPENDEV_PART, &realname);
 		if (devh == -1)
@@ -118,10 +127,10 @@ main(int argc, char *argv[])
 		errx(1, "need -d or -f parameter");
 
 	if (debug)
-		warnx("cookie = %p", bl.cookie);
+		warnx("cookie = %p", bl.bl_cookie);
 
 	if (func & BIOC_INQ) {
-		bio_inq();
+		bio_inq(sd_dev);
 	} else if (func == BIOC_ALARM) {
 		bio_alarm(al_arg);
 	}
@@ -135,24 +144,25 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-Di] [-a alarm-function] device\n", __progname);
+	    "usage: %s [-Dhi] [-a alarm-function] device\n", __progname);
 	exit(1);
 }
 
 void
-bio_inq(void)
+bio_inq(char *name)
 {
-	bioc_inq bi;
-	bioc_vol bv;
-	bioc_disk bd;
-	int rv, i, d;
+	char *status, size[64], scsiname[16], encname[16];
+	int rv, i, d, volheader;
+	struct bioc_disk bd;
+	struct bioc_inq bi;
+	struct bioc_vol bv;
 
 	memset(&bi, 0, sizeof(bi));
 
 	if (debug)
 		printf("bio_inq\n");
 
-	bi.cookie = bl.cookie;
+	bi.bi_cookie = bl.bl_cookie;
 
 	rv = ioctl(devh, BIOCINQ, &bi);
 	if (rv == -1) {
@@ -160,13 +170,11 @@ bio_inq(void)
 		return;
 	}
 
-	printf("RAID volumes   : %d\n", bi.novol);
-	printf("Physical disks : %d\n\n", bi.nodisk);
-
-	for (i = 0; i < bi.novol; i++) {
+	volheader = 0;
+	for (i = 0; i < bi.bi_novol; i++) {
 		memset(&bv, 0, sizeof(bv));
-		bv.cookie = bl.cookie;
-		bv.volid = i;
+		bv.bv_cookie = bl.bl_cookie;
+		bv.bv_volid = i;
 
 		rv = ioctl(devh, BIOCVOL, &bv);
 		if (rv == -1) {
@@ -174,34 +182,45 @@ bio_inq(void)
 			return;
 		}
 
-		printf("\tvolume id: %d\n", bv.volid);
-		printf("\tstatus   : ");
-		switch (bv.status) {
+		if (name && strcmp(name, bv.bv_dev) != 0)
+			continue;
+
+		if (!volheader) {
+			volheader = 1;
+			printf("%-7s %-10s %-14s %-8s\n",
+			    "Volume", "Status", "Size", "Device");
+		}
+		
+		switch (bv.bv_status) {
 		case BIOC_SVONLINE:
-			printf("%s\n", BIOC_SVONLINE_S);
+			status = BIOC_SVONLINE_S;
 			break;
-
 		case BIOC_SVOFFLINE:
-			printf("%s\n", BIOC_SVOFFLINE_S);
+			status = BIOC_SVOFFLINE_S;
 			break;
-
 		case BIOC_SVDEGRADED:
-			printf("%s\n", BIOC_SVDEGRADED_S);
+			status = BIOC_SVDEGRADED_S;
 			break;
-
 		case BIOC_SVINVALID:
 		default:
-			printf("%s\n", BIOC_SVINVALID_S);
+			status = BIOC_SVINVALID_S;
 		}
-		printf("\tsize     : %lld\n", bv.size);
-		printf("\traid     : %d\n", bv.level);
-		printf("\tnr disks : %d\n", bv.nodisk);
 
-		for (d = 0; d < bv.nodisk; d++) {
+		snprintf(scsiname, sizeof scsiname, "%s %u",
+		    bi.bi_dev, bv.bv_volid);
+		if (human)
+			fmt_scaled(bv.bv_size, size);
+		else
+			snprintf(size, sizeof size, "%14llu",
+			    bv.bv_size);
+		printf("%7s %-10s %14s %-8s RAID%u\n",
+		    scsiname, status, size, bv.bv_dev, bv.bv_level);
+
+		for (d = 0; d < bv.bv_nodisk; d++) {
 			memset(&bd, 0, sizeof(bd));
-			bd.cookie = bl.cookie;
-			bd.diskid = d;
-			bd.volid = i;
+			bd.bd_cookie = bl.bl_cookie;
+			bd.bd_diskid = d;
+			bd.bd_volid = i;
 
 			rv = ioctl(devh, BIOCDISK, &bd);
 			if (rv == -1) {
@@ -209,87 +228,79 @@ bio_inq(void)
 				return;
 			}
 
-			printf("\t\tdisk id  : %d\n", bd.diskid);
-			printf("\t\tstatus   : ");
-			switch (bd.status) {
+			switch (bd.bd_status) {
 			case BIOC_SDONLINE:
-				printf("%s\n", BIOC_SDONLINE_S);
+				status = BIOC_SDONLINE_S;
 				break;
-
 			case BIOC_SDOFFLINE:
-				printf("%s\n", BIOC_SDOFFLINE_S);
+				status = BIOC_SDOFFLINE_S;
 				break;
-
 			case BIOC_SDFAILED:
-				printf("%s\n", BIOC_SDFAILED_S);
+				status = BIOC_SDFAILED_S;
 				break;
-
 			case BIOC_SDREBUILD:
-				printf("%s\n", BIOC_SDREBUILD_S);
+				status = BIOC_SDREBUILD_S;
 				break;
-
 			case BIOC_SDHOTSPARE:
-				printf("%s\n", BIOC_SDHOTSPARE_S);
+				status = BIOC_SDHOTSPARE_S;
 				break;
-
 			case BIOC_SDUNUSED:
-				printf("%s\n", BIOC_SDUNUSED_S);
+				status = BIOC_SDUNUSED_S;
 				break;
-
 			case BIOC_SDINVALID:
 			default:
-				printf("%s\n", BIOC_SDINVALID_S);
+				status = BIOC_SDINVALID_S;
 			}
-			printf("\t\tvolume id: %d\n", bd.volid);
-			printf("\t\tsize     : %lld\n", bd.size);
-			printf("\t\tvendor   : %s\n", bd.vendor);
+			if (human)
+				fmt_scaled(bd.bd_size, size);
+			else
+				snprintf(size, sizeof size, "%14llu",
+				    bd.bd_size);
+			if (bd.bd_lun)
+				snprintf(scsiname, sizeof scsiname,
+				    "scsi%u:%u", bd.bd_target, bd.bd_lun);
+			else
+				snprintf(scsiname, sizeof scsiname,
+				    "scsi%u", bd.bd_target);
+			snprintf(encname, sizeof encname, "ses#");
+
+			printf("    %3u %-10s %14s %-7s %-6s <%s>\n",
+			    bd.bd_diskid, status, size, scsiname, encname,
+			    bd.bd_vendor);
 		}
-		printf("\n");
 	}
+	/* printf("where are my spares?\n"); */
 }
 
 void
 bio_alarm(char *arg)
 {
 	int rv;
-	bioc_alarm ba;
+	struct bioc_alarm ba;
 
-	if (debug)
-		printf("alarm in: %s, ", arg);
-
-	ba.cookie = bl.cookie;
+	ba.ba_cookie = bl.bl_cookie;
 
 	switch (arg[0]) {
 	case 'q': /* silence alarm */
 		/* FALLTHROUGH */
 	case 's':
-		if (debug)
-			printf("silence\n");
-		ba.opcode = BIOC_SASILENCE;
+		ba.ba_opcode = BIOC_SASILENCE;
 		break;
 
 	case 'e': /* enable alarm */
-		if (debug)
-			printf("enable\n");
-		ba.opcode = BIOC_SAENABLE;
+		ba.ba_opcode = BIOC_SAENABLE;
 		break;
 
 	case 'd': /* disable alarm */
-		if (debug)
-			printf("disable\n");
-		ba.opcode = BIOC_SADISABLE;
+		ba.ba_opcode = BIOC_SADISABLE;
 		break;
 
 	case 't': /* test alarm */
-		if (debug)
-			printf("test\n");
-		ba.opcode = BIOC_SATEST;
+		ba.ba_opcode = BIOC_SATEST;
 		break;
 
 	case 'g': /* get alarm state */
-		if (debug)
-			printf("get state\n");
-		ba.opcode = BIOC_GASTATUS;
+		ba.ba_opcode = BIOC_GASTATUS;
 		break;
 
 	default:
@@ -305,6 +316,7 @@ bio_alarm(char *arg)
 
 	if (arg[0] == 'g') {
 		printf("alarm is currently %s\n",
-		    ba.status ? "enabled" : "disabled");
+		    ba.ba_status ? "enabled" : "disabled");
+
 	}
 }
