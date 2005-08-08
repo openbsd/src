@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.19 2005/06/26 19:22:12 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.20 2005/08/08 08:38:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -333,7 +333,7 @@ kr_redistribute(int type, struct kroute *kr)
 	/* Dynamic routes are not redistributable. */
 	if (kr->flags & F_DYNAMIC)
 		return;
-	
+
 	/*
 	 * We consider the loopback net, multicast and experimental addresses
 	 * as not redistributable.
