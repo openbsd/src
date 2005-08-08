@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 2005/03/29 19:34:07 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2005/08/08 19:48:37 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -301,6 +301,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;
 	tf2->tf_out[1] = 1;
+
+	/* Skip trap instruction. */
+	tf2->tf_pc = tf2->tf_npc;
+	tf2->tf_npc += 4;
 
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);

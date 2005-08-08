@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.51 2005/07/18 14:50:11 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.52 2005/08/08 19:48:37 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6095,13 +6095,9 @@ ENTRY(proc_trampoline)
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_TSTATE]
 #else	/* 0 */
 	mov	PSTATE_USER, %g1		! XXXX user pstate (no need to load it)
-	ldx	[%sp + CC64FSZ + BIAS + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
 	sllx	%g1, TSTATE_PSTATE_SHIFT, %g1	! Shift it into place
-	add	%g2, 4, %g3			! npc = pc+4
 	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
-	stx	%g3, [%sp + CC64FSZ + BIAS + TF_NPC]
 	or	%g1, %g5, %g1
-	stx	%g2, [%sp + CC64FSZ + BIAS + TF_PC]
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_TSTATE]
 #endif	/* 0 */
 	CHKPT %o3,%o4,0x35
