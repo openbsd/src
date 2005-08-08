@@ -16,7 +16,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.65 2005/07/17 07:17:55 djm Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.66 2005/08/08 13:22:48 jaredy Exp $");
 
 #include <glob.h>
 #include <histedit.h>
@@ -1230,7 +1230,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 	char *dir = NULL;
 	char cmd[2048];
 	struct sftp_conn *conn;
-	int err;
+	int err, interactive;
 	EditLine *el = NULL;
 	History *hl = NULL;
 	HistEvent hev;
@@ -1289,6 +1289,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(infile, NULL, _IOLBF, 0);
 
+	interactive = !batchmode && isatty(STDIN_FILENO);
 	err = 0;
 	for (;;) {
 		char *cp;
@@ -1298,16 +1299,24 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 		signal(SIGINT, SIG_IGN);
 
 		if (el == NULL) {
-			printf("sftp> ");
+			if (interactive)
+				printf("sftp> ");
 			if (fgets(cmd, sizeof(cmd), infile) == NULL) {
+				if (interactive)
+					printf("\n");
+				break;
+			}
+			if (!interactive) { /* Echo command */
+				printf("sftp> %s", cmd);
+				if (strlen(cmd) > 0 &&
+				    cmd[strlen(cmd) - 1] != '\n')
+					printf("\n");
+			}
+		} else {
+			if ((line = el_gets(el, &count)) == NULL || count <= 0) {
 				printf("\n");
 				break;
 			}
-			if (batchmode) /* Echo command */
-				printf("%s", cmd);
-		} else {
-			if ((line = el_gets(el, &count)) == NULL || count <= 0)
-				break;
 			history(hl, &hev, H_ENTER, line);
 			if (strlcpy(cmd, line, sizeof(cmd)) >= sizeof(cmd)) {
 				fprintf(stderr, "Error: input line too long\n");
@@ -1328,6 +1337,9 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 			break;
 	}
 	xfree(pwd);
+
+	if (el != NULL)
+		el_end(el);
 
 	/* err == 1 signifies normal "quit" exit */
 	return (err >= 0 ? 0 : -1);
