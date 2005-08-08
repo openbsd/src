@@ -1,4 +1,4 @@
-/*	$OpenBSD: watchdogd.c,v 1.1 2005/08/08 12:08:56 mbalmer Exp $ */
+/*	$OpenBSD: watchdogd.c,v 1.2 2005/08/08 12:48:06 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Marc Balmer <marc@msys.ch>
@@ -26,7 +26,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-volatile sig_atomic_t quit = 0;
+volatile sig_atomic_t	quit = 0;
+
+__dead void	usage(void);
+void		sighdlr(int);
+int		main(int, char *[]);
 
 __dead void
 usage(void)
@@ -47,16 +51,12 @@ sighdlr(int signum)
 int
 main(int argc, char *argv[])
 {
-	int ch;
-	unsigned int interval;
-	int period, nperiod;
-	int trigauto;
-	int sauto, speriod;
-	size_t len;
-	int mib[3];
-	const char *errstr;
-	int daemonize;
-	int retval;
+	const char	*errstr;
+	size_t		 len;
+	u_int		 interval;
+	int		 ch, period, nperiod, trigauto, sauto, speriod;
+	int		 daemonize, retval;
+	int		 mib[3];
 
 	interval = 0;
 	period = 30;
@@ -84,17 +84,13 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (interval == 0) {
-		interval = period / 3;
-		if (interval == 0)
-			interval = 1;
-	}
+	if (interval == 0 && (interval = period / 3) == 0)
+		interval = 1;
 
 	if (period <= interval)
 		errx(1, "retrigger interval too long");
 
 	/* save kern.watchdog.period and kern.watchdog.auto for restore */
-
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_WATCHDOG;
 	mib[2] = KERN_WATCHDOG_PERIOD;
@@ -108,15 +104,13 @@ main(int argc, char *argv[])
 	}
 
 	mib[2] = KERN_WATCHDOG_AUTO;
-
 	len = sizeof(sauto);
 	trigauto = 0;
 
 	if (sysctl(mib, 3, &sauto, &len, &trigauto, sizeof(trigauto)) == -1)
-		err(1, "can't access kern.watchdog.auto"); 
+		err(1, "can't access kern.watchdog.auto");
 
 	/* Double check the timeout period, some devices change the value */
-
 	mib[2] = KERN_WATCHDOG_PERIOD;
 	len = sizeof(nperiod);
 	if (sysctl(mib, 3, &nperiod, &len, NULL, 0) == -1) {
@@ -153,5 +147,5 @@ restore:
 	mib[2] = KERN_WATCHDOG_AUTO;
 	sysctl(mib, 3, NULL, 0, &sauto, sizeof(sauto));
 
-	return retval; 
+	return (retval);
 }
