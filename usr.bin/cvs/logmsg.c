@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.18 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.19 2005/08/08 14:28:59 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,7 +40,6 @@
 
 
 #define CVS_LOGMSG_BIGMSG	32000
-#define CVS_LOGMSG_FTMPL	"/tmp/cvsXXXXXXXXXX"
 #define CVS_LOGMSG_PREFIX	"CVS:"
 #define CVS_LOGMSG_LINE \
 "----------------------------------------------------------------------"
@@ -184,7 +183,8 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 	fds[0] = -1;
 	fds[1] = -1;
 	fds[2] = -1;
-	strlcpy(path, CVS_LOGMSG_FTMPL, sizeof(path));
+	strlcpy(path, cvs_tmpdir, sizeof(path));
+	strlcat(path, "/cvsXXXXXXXXXX", sizeof(path));
 	argc = 0;
 	argv[argc++] = cvs_editor;
 	argv[argc++] = path;

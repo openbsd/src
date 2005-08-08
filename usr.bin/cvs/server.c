@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.20 2005/07/27 10:36:14 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.21 2005/08/08 14:28:59 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,7 +28,6 @@
 #include <sys/stat.h>
 
 #include <errno.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,7 +86,7 @@ cvs_server(int argc, char **argv)
 
 	/* create the temporary directory */
 	l = snprintf(cvs_server_tmpdir, sizeof(cvs_server_tmpdir),
-	    "%scvs-serv%d", _PATH_TMP, getpid());
+	    "%s/cvs-serv%d", cvs_tmpdir, getpid());
 	if (l == -1 || l >= (int)sizeof(cvs_server_tmpdir)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", cvs_server_tmpdir);
