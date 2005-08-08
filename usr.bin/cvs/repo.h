@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.h,v 1.2 2005/07/25 11:32:20 xsa Exp $	*/
+/*	$OpenBSD: repo.h,v 1.3 2005/08/08 11:47:53 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -147,7 +147,7 @@ int		 cvs_repo_unlockdir(CVSREPO *, const char *, pid_t);
 int		 cvs_repo_lockent(CVSRPENT *, int, pid_t);
 int		 cvs_repo_unlockent(CVSRPENT *, pid_t);
 void		 cvs_repo_entfree(CVSRPENT *);
-void		 cvs_repo_modfreeCVSMODULE *);
+void		 cvs_repo_modfree(CVSMODULE *);
 
 CVSRPENT	*cvs_repo_find(CVSREPO *, const char *);
 
