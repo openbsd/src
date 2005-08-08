@@ -1,3 +1,4 @@
+/*	$OpenBSD: strtod.c,v 1.21 2005/08/08 08:05:37 espie Exp $ */
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -87,10 +88,6 @@
  *	appropriate.  If MALLOC is undefined, malloc will be invoked
  *	directly -- and assumed always to succeed.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.20 2005/03/30 18:51:49 pat Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \

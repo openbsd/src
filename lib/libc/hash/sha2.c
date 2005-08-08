@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.10 2004/05/28 15:10:27 millert Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.11 2005/08/08 08:05:35 espie Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -33,10 +33,6 @@
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: sha2.c,v 1.10 2004/05/28 15:10:27 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: svc_raw.c,v 1.9 2005/08/08 08:05:35 espie Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -26,10 +27,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_raw.c,v 1.8 2005/08/01 19:44:53 jmc Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * svc_raw.c,   This a toy for simple testing and timing.

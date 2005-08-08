@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt2.c,v 1.2 2004/09/14 22:56:57 deraadt Exp $	*/
+/*	$OpenBSD: crypt2.c,v 1.3 2005/08/08 08:05:33 espie Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -45,10 +45,6 @@
  * attention of the author).  A list of errata for this book has been
  * posted to the sci.crypt newsgroup by the author and is available for FTP.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt2.c,v 1.2 2004/09/14 22:56:57 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

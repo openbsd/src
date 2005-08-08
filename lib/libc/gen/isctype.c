@@ -1,3 +1,4 @@
+/*	$OpenBSD: isctype.c,v 1.11 2005/08/08 08:05:34 espie Exp $ */
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,10 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: isctype.c,v 1.10 2004/05/18 02:05:52 jfb Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #define _ANSI_LIBRARY
 #include <ctype.h>

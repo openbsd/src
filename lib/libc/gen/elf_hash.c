@@ -1,3 +1,4 @@
+/*	$OpenBSD: elf_hash.c,v 1.8 2005/08/08 08:05:33 espie Exp $ */
 /*
  * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
@@ -24,10 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: elf_hash.c,v 1.7 2005/03/25 15:38:47 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,13 +1,9 @@
-/*	$OpenBSD: ffs.c,v 1.6 2003/06/11 21:08:16 deraadt Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.7 2005/08/08 08:05:37 espie Exp $	*/
 
 /*
  * Public domain.
  * Written by Dale Rahn.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ffs.c,v 1.6 2003/06/11 21:08:16 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>

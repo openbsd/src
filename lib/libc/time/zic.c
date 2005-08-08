@@ -1,12 +1,8 @@
+/*	$OpenBSD: zic.c,v 1.25 2005/08/08 08:05:38 espie Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** Feb 14, 2003 by Arthur David Olson (arthur_david_olson@nih.gov).
 */
-
-#if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char	elsieid[] = "@(#)zic.c	7.124";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.24 2005/07/05 13:40:51 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 /*
 ** Regardless of the type of time_t, we do our work using this type.

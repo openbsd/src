@@ -1,4 +1,4 @@
-/*	$OpenBSD: getsubopt.c,v 1.3 2005/03/30 18:51:49 pat Exp $	*/
+/*	$OpenBSD: getsubopt.c,v 1.4 2005/08/08 08:05:36 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)getsubopt.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$OpenBSD: getsubopt.c,v 1.3 2005/03/30 18:51:49 pat Exp $";
-#endif
-#endif /* not lint */
 
 #include <unistd.h>
 #include <stdlib.h>

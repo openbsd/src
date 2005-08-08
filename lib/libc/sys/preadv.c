@@ -1,4 +1,4 @@
-/*	$OpenBSD: preadv.c,v 1.7 2005/04/06 16:56:45 millert Exp $	*/
+/*	$OpenBSD: preadv.c,v 1.8 2005/08/08 08:05:37 espie Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: preadv.c,v 1.7 2005/04/06 16:56:45 millert Exp $";
-#endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>

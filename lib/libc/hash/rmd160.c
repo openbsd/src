@@ -31,10 +31,6 @@
 #include <sys/endian.h>
 #include <rmd160.h>
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rmd160.c,v 1.17 2004/05/28 15:10:27 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #define PUT_64BIT_LE(cp, value) do {                                    \
 	(cp)[7] = (value) >> 56;                                        \
 	(cp)[6] = (value) >> 48;                                        \

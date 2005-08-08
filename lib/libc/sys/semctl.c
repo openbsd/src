@@ -1,3 +1,4 @@
+/*	$OpenBSD: semctl.c,v 1.7 2005/08/08 08:05:37 espie Exp $ */
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -28,10 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: semctl.c,v 1.6 2002/02/19 19:39:37 millert Exp $";
-#endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/ipc.h>

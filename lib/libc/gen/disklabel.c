@@ -27,10 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.10 2005/03/25 15:38:47 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <sys/param.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>

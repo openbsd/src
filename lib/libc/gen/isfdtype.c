@@ -1,4 +1,4 @@
-/*	$OpenBSD: isfdtype.c,v 1.3 2003/06/17 21:56:23 millert Exp $	*/
+/*	$OpenBSD: isfdtype.c,v 1.4 2005/08/08 08:05:34 espie Exp $	*/
 
 /*
  * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -19,10 +19,6 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: isfdtype.c,v 1.3 2003/06/17 21:56:23 millert Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

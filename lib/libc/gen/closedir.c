@@ -1,3 +1,4 @@
+/*	$OpenBSD: closedir.c,v 1.6 2005/08/08 08:05:33 espie Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	Regents of the University of California.  All rights reserved.
@@ -26,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: closedir.c,v 1.5 2003/06/11 21:03:10 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <dirent.h>

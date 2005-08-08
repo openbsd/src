@@ -1,4 +1,4 @@
-/*	$OpenBSD: llabs.c,v 1.1 2003/07/21 20:20:04 millert Exp $	*/
+/*	$OpenBSD: llabs.c,v 1.2 2005/08/08 08:05:36 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,13 +33,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: llabs.c,v 1.1 2003/07/21 20:20:04 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <stdlib.h>
 
-long long llabs(long long j)
+long long
+llabs(long long j)
 {
 	return (j < 0 ? -j : j);
 }

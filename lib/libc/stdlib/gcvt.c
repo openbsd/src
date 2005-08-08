@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcvt.c,v 1.5 2003/06/17 21:56:24 millert Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.6 2005/08/08 08:05:36 espie Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -19,10 +19,6 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gcvt.c,v 1.5 2003/06/17 21:56:24 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

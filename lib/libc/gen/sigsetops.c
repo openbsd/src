@@ -1,3 +1,4 @@
+/*	$OpenBSD: sigsetops.c,v 1.5 2005/08/08 08:05:34 espie Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,10 +29,6 @@
  *
  *	@(#)sigsetops.c	8.1 (Berkeley) 6/4/93
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sigsetops.c,v 1.4 2004/05/18 02:05:52 jfb Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <signal.h>

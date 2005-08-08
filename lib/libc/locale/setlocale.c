@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.13 2005/08/08 05:53:01 espie Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.14 2005/08/08 08:05:35 espie Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,10 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setlocale.c,v 1.13 2005/08/08 05:53:01 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
 #include <locale.h>

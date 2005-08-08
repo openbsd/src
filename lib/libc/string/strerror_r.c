@@ -1,9 +1,5 @@
-/* $OpenBSD: strerror_r.c,v 1.5 2005/05/26 12:56:01 otto Exp $ */
+/* $OpenBSD: strerror_r.c,v 1.6 2005/08/08 08:05:37 espie Exp $ */
 /* Public Domain <marc@snafu.org> */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strerror_r.c,v 1.5 2005/05/26 12:56:01 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
 #define catclose	_catclose

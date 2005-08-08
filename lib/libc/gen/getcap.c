@@ -1,3 +1,4 @@
+/*	$OpenBSD: getcap.c,v 1.23 2005/08/08 08:05:34 espie Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,10 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: getcap.c,v 1.22 2004/05/18 02:05:52 jfb Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 

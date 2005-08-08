@@ -1,3 +1,4 @@
+/*	$OpenBSD: strxfrm.c,v 1.6 2005/08/08 08:05:37 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -29,10 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strxfrm.c,v 1.5 2003/09/06 22:43:12 tedu Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: svc_run.c,v 1.16 2005/08/08 08:05:35 espie Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -26,10 +27,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_run.c,v 1.15 2005/04/01 07:44:04 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * This is the rpc server side idle loop

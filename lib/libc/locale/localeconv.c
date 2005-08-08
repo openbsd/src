@@ -1,11 +1,8 @@
+/*	$OpenBSD: localeconv.c,v 1.5 2005/08/08 08:05:35 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: localeconv.c,v 1.4 2005/03/23 21:13:28 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
 #include <locale.h>

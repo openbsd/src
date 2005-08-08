@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemcmp.c,v 1.3 2005/08/08 05:53:01 espie Exp $	*/
+/*	$OpenBSD: wmemcmp.c,v 1.4 2005/08/08 08:05:37 espie Exp $	*/
 /*	$NetBSD: wmemcmp.c,v 1.3 2003/04/06 18:33:23 tshiozak Exp $	*/
 
 /*-
@@ -28,10 +28,6 @@
  *
  *	citrus Id: wmemcmp.c,v 1.2 2000/12/20 14:08:31 itojun Exp
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wmemcmp.c,v 1.3 2005/08/08 05:53:01 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 #include "locale/runetype.h"

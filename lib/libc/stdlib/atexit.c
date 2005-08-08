@@ -1,3 +1,4 @@
+/*	$OpenBSD: atexit.c,v 1.10 2005/08/08 08:05:36 espie Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -27,10 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: atexit.c,v 1.9 2005/06/17 21:38:59 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>

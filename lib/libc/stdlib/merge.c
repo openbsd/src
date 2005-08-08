@@ -1,3 +1,4 @@
+/*	$OpenBSD: merge.c,v 1.8 2005/08/08 08:05:37 espie Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,10 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: merge.c,v 1.7 2005/03/30 18:51:49 pat Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * Hybrid exponential search/linear search merge sort with hybrid

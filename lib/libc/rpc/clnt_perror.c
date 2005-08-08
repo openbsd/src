@@ -1,3 +1,4 @@
+/*	$OpenBSD: clnt_perror.c,v 1.18 2005/08/08 08:05:35 espie Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -26,10 +27,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.17 2005/04/11 18:34:09 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * clnt_perror.c

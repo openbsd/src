@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetws.c,v 1.1 2005/06/17 20:40:32 espie Exp $	*/
+/*	$OpenBSD: fgetws.c,v 1.2 2005/08/08 08:05:36 espie Exp $	*/
 /* $NetBSD: fgetws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
@@ -30,10 +30,6 @@
  * FreeBSD: src/lib/libc/stdio/fgetws.c,v 1.4 2002/09/20 13:25:40 tjr Exp
  *
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fgetws.c,v 1.1 2005/06/17 20:40:32 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <stdio.h>

@@ -1,11 +1,8 @@
+/*	$OpenBSD: a64l.c,v 1.5 2005/08/08 08:05:36 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: a64l.c,v 1.4 2005/03/30 18:51:49 pat Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <stdlib.h>

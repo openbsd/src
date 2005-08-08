@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.19 2004/05/28 15:10:27 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.20 2005/08/08 08:05:35 espie Exp $	*/
 
 /*
  * SHA-1 in C
@@ -13,10 +13,6 @@
  * A million repetitions of "a"
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: sha1.c,v 1.19 2004/05/28 15:10:27 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <string.h>

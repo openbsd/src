@@ -1,4 +1,4 @@
-/*	$OpenBSD: vasprintf.c,v 1.10 2005/04/30 09:25:17 espie Exp $	*/
+/*	$OpenBSD: vasprintf.c,v 1.11 2005/08/08 08:05:36 espie Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vasprintf.c,v 1.10 2005/04/30 09:25:17 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

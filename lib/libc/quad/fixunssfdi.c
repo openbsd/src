@@ -1,3 +1,4 @@
+/*	$OpenBSD: fixunssfdi.c,v 1.5 2005/08/08 08:05:35 espie Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,10 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fixunssfdi.c,v 1.4 2004/04/27 17:46:46 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
 

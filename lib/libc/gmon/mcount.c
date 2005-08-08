@@ -1,3 +1,4 @@
+/*	$OpenBSD: mcount.c,v 1.10 2005/08/08 08:05:34 espie Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -26,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: mcount.c,v 1.9 2005/03/23 19:32:09 otto Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/gmon.h>

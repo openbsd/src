@@ -1,6 +1,4 @@
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: timer_delete.c,v 1.4 2003/06/11 21:03:10 deraadt Exp $";
-#endif /* SYSLIBC_SCCS and not lint */
+/*	$OpenBSD: timer_delete.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
 
 #include <signal.h>
 #include <time.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_dup.c,v 1.6 2005/02/27 22:13:10 pat Exp $	*/
+/*	$OpenBSD: pw_dup.c,v 1.7 2005/08/08 08:05:34 espie Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -19,10 +19,6 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: pw_dup.c,v 1.6 2005/02/27 22:13:10 pat Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 

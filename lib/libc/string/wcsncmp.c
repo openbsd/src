@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsncmp.c,v 1.3 2005/08/08 05:53:01 espie Exp $	*/
+/*	$OpenBSD: wcsncmp.c,v 1.4 2005/08/08 08:05:37 espie Exp $	*/
 /*	$NetBSD: wcsncmp.c,v 1.5 2003/08/07 16:43:54 agc Exp $	*/
 
 /*
@@ -29,10 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wcsncmp.c,v 1.3 2005/08/08 05:53:01 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 #include "locale/runetype.h"

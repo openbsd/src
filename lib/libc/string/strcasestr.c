@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcasestr.c,v 1.1 2005/03/30 03:04:19 deraadt Exp $	*/
+/*	$OpenBSD: strcasestr.c,v 1.2 2005/08/08 08:05:37 espie Exp $	*/
 /*	$NetBSD: strcasestr.c,v 1.2 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*-
@@ -32,10 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strcasestr.c,v 1.1 2005/03/30 03:04:19 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
 #include <string.h>

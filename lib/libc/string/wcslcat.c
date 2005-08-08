@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcslcat.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
+/*	$OpenBSD: wcslcat.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
 /*	$NetBSD: wcslcat.c,v 1.2 2001/01/03 14:33:02 lukem Exp $	*/
 /*	from OpenBSD: strlcat.c,v 1.3 2000/11/24 11:10:02 itojun Exp 	*/
 
@@ -28,10 +28,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wcslcat.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <wchar.h>

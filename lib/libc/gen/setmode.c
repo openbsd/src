@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.16 2005/03/01 13:51:47 miod Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.17 2005/08/08 08:05:34 espie Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
-#else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.16 2005/03/01 13:51:47 miod Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

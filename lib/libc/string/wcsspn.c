@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsspn.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
+/*	$OpenBSD: wcsspn.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
 /*	$NetBSD: wcsspn.c,v 1.3 2001/09/21 16:09:15 yamt Exp $	*/
 
 /*-
@@ -28,10 +28,6 @@
  *
  *	$Citrus: xpg4dl/FreeBSD/lib/libc/string/wcsspn.c,v 1.3 2001/09/21 16:06:43 yamt Exp $
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wcsspn.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 

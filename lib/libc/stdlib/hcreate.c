@@ -1,4 +1,4 @@
-/*	$OpenBSD: hcreate.c,v 1.1 2004/06/24 04:43:33 millert Exp $	*/
+/*	$OpenBSD: hcreate.c,v 1.2 2005/08/08 08:05:36 espie Exp $	*/
 /*	$NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $	*/
 
 /*
@@ -46,15 +46,6 @@
  * I tried to look at Knuth (as cited by the Solaris manual page), but
  * nobody had a copy in the office, so...
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 2001 Christopher G. Demetriou.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: hcreate.c,v 1.1 2004/06/24 04:43:33 millert Exp $";
-#endif /* not lint */
 
 #include "namespace.h"
 #include <assert.h>

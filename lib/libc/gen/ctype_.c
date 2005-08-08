@@ -1,3 +1,4 @@
+/*	$OpenBSD: ctype_.c,v 1.9 2005/08/08 08:05:33 espie Exp $ */
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,10 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ctype_.c,v 1.8 2005/08/08 05:53:00 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
 #include "ctype_private.h"

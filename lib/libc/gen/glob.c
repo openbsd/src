@@ -1,3 +1,4 @@
+/*	$OpenBSD: glob.c,v 1.25 2005/08/08 08:05:34 espie Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,14 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
-#else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.24 2004/10/07 16:34:04 millert Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * glob(3) -- a superset of the one defined in POSIX 1003.2.

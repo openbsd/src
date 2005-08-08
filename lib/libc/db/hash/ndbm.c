@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.20 2004/09/15 00:26:07 deraadt Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.21 2005/08/08 08:05:33 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)dbm.c	8.6 (Berkeley) 11/7/95";
-#else
-static const char rcsid[] = "$OpenBSD: ndbm.c,v 1.20 2004/09/15 00:26:07 deraadt Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 

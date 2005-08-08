@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.c,v 1.6 2004/11/28 07:16:54 mickey Exp $	*/
+/*	$OpenBSD: bzero.c,v 1.7 2005/08/08 08:05:37 espie Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bzero.c,v 1.6 2004/11/28 07:16:54 mickey Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>

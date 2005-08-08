@@ -1,13 +1,9 @@
-/*	$OpenBSD: pause.c,v 1.5 2004/05/18 02:05:52 jfb Exp $	*/
+/*	$OpenBSD: pause.c,v 1.6 2005/08/08 08:05:34 espie Exp $	*/
 
 /*
  * Written by Todd C. Miller <Todd.Miller@courtesan.com>
  * Public domain.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: pause.c,v 1.5 2004/05/18 02:05:52 jfb Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
 #include <unistd.h>

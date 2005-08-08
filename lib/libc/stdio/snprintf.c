@@ -1,3 +1,4 @@
+/*	$OpenBSD: snprintf.c,v 1.13 2005/08/08 08:05:36 espie Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,10 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: snprintf.c,v 1.12 2005/05/28 00:54:50 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <limits.h>
 #include <stdio.h>

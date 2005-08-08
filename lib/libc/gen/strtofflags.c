@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtofflags.c,v 1.4 2004/05/18 02:05:52 jfb Exp $	*/
+/*	$OpenBSD: strtofflags.c,v 1.5 2005/08/08 08:05:34 espie Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)stat_flags.c	8.1 (Berkeley) 5/31/93";
-static const char rcsid[] =
-  "$FreeBSD: src/lib/libc/gen/strtofflags.c,v 1.18 2000/06/17 11:09:24 joe Exp $";
-#else
-static const char rcsid[] =
-	"$OpenBSD: strtofflags.c,v 1.4 2004/05/18 02:05:52 jfb Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

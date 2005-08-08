@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.12 2005/03/02 12:27:26 millert Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.13 2005/08/08 08:05:33 espie Exp $	*/
 
 /*
  * Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: dirname.c,v 1.12 2005/03/02 12:27:26 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <libgen.h>

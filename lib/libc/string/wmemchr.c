@@ -1,4 +1,4 @@
-/*	$OpenBSD: wmemchr.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
+/*	$OpenBSD: wmemchr.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
 /*	$NetBSD: wmemchr.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -28,10 +28,6 @@
  *
  *	citrus Id: wmemchr.c,v 1.2 2000/12/20 14:08:31 itojun Exp
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wmemchr.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 

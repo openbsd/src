@@ -1,4 +1,4 @@
-/*	$OpenBSD: frexp.c,v 1.1 2005/02/01 15:12:28 millert Exp $	*/
+/*	$OpenBSD: frexp.c,v 1.2 2005/08/08 08:05:34 espie Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -27,10 +27,6 @@
  *
  * $FreeBSD: frexp.c,v 1.1 2004/07/18 21:23:39 das Exp $
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: frexp.c,v 1.1 2005/02/01 15:12:28 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>

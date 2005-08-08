@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.18 2005/03/30 18:51:49 pat Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.19 2005/08/08 08:05:36 espie Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -55,10 +55,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.18 2005/03/30 18:51:49 pat Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
 #include <errno.h>

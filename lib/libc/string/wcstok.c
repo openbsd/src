@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcstok.c,v 1.2 2005/06/19 22:12:07 espie Exp $	*/
+/*	$OpenBSD: wcstok.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
 /* $NetBSD: wcstok.c,v 1.3 2003/07/10 08:50:48 tshiozak Exp $ */
 
 /*-
@@ -41,10 +41,6 @@
  * Original version ID:
  * FreeBSD: src/lib/libc/string/wcstok.c,v 1.1 2002/09/07 08:16:57 tjr Exp
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: wcstok.c,v 1.2 2005/06/19 22:12:07 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 

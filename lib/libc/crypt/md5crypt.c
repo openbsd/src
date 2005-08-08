@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5crypt.c,v 1.13 2003/08/07 00:30:21 deraadt Exp $	*/
+/*	$OpenBSD: md5crypt.c,v 1.14 2005/08/08 08:05:33 espie Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -11,10 +11,6 @@
  * $FreeBSD: crypt.c,v 1.5 1996/10/14 08:34:02 phk Exp $
  *
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.13 2003/08/07 00:30:21 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
 #include <stdio.h>

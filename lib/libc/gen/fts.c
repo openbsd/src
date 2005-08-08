@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.36 2005/06/17 20:36:55 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.37 2005/08/08 08:05:34 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
-#else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.36 2005/06/17 20:36:55 millert Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

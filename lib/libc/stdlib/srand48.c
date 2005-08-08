@@ -1,3 +1,4 @@
+/*	$OpenBSD: srand48.c,v 1.3 2005/08/08 08:05:37 espie Exp $ */
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.
@@ -10,10 +11,6 @@
  * of any kind. I shall in no event be liable for anything that happens
  * to anyone/anything when using this software.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: srand48.c,v 1.2 1996/08/19 08:33:49 tholo Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include "rand48.h"
 

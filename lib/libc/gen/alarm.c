@@ -1,3 +1,4 @@
+/*	$OpenBSD: alarm.c,v 1.7 2005/08/08 08:05:33 espie Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -26,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: alarm.c,v 1.6 2005/03/25 15:38:46 otto Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * Backwards compatible alarm.

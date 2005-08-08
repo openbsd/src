@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockf.c,v 1.3 2003/06/11 21:03:10 deraadt Exp $	*/
+/*	$OpenBSD: lockf.c,v 1.4 2005/08/08 08:05:34 espie Exp $	*/
 /*	$NetBSD: lockf.c,v 1.1 1997/12/20 20:23:18 kleink Exp $	*/
 
 /*-
@@ -36,10 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: lockf.c,v 1.3 2003/06/11 21:03:10 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <fcntl.h>

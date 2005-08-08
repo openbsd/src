@@ -1,8 +1,5 @@
+/*	$OpenBSD: errno.c,v 1.5 2005/08/08 08:05:34 espie Exp $ */
 /* PUBLIC DOMAIN: No Rights Reserved.   Marco S Hyman <marc@snafu.org> */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: errno.c,v 1.4 2004/07/17 20:38:43 marc Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #undef errno

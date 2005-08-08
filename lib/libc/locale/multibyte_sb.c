@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_sb.c,v 1.3 2005/07/24 09:50:49 espie Exp $	*/
+/*	$OpenBSD: multibyte_sb.c,v 1.4 2005/08/08 08:05:35 espie Exp $	*/
 /*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -29,10 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: multibyte_sb.c,v 1.3 2005/07/24 09:50:49 espie Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
 #include <stdlib.h>

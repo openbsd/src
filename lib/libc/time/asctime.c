@@ -1,3 +1,4 @@
+/*	$OpenBSD: asctime.c,v 1.13 2005/08/08 08:05:38 espie Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
@@ -8,11 +9,6 @@
 ** the output of strftime is supposed to be locale specific
 ** whereas the output of asctime is supposed to be constant.
 */
-
-#if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)asctime.c	7.31";
-static char rcsid[] = "$OpenBSD: asctime.c,v 1.12 2005/07/05 13:40:51 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
 
