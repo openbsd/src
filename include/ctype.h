@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.17 2004/04/02 22:37:12 avsm Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.18 2005/08/08 05:53:00 espie Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -147,14 +147,14 @@ __CTYPE_INLINE int isxdigit(int c)
 
 __CTYPE_INLINE int tolower(int c)
 {
-	if ((unsigned int)c > 0177)
+	if ((unsigned int)c > 255)
 		return (c);
 	return ((_tolower_tab_ + 1)[c]);
 }
 
 __CTYPE_INLINE int toupper(int c)
 {
-	if ((unsigned int)c > 0177)
+	if ((unsigned int)c > 255)
 		return (c);
 	return ((_toupper_tab_ + 1)[c]);
 }

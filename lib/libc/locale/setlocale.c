@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.12 2005/03/23 21:13:28 otto Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.13 2005/08/08 05:53:01 espie Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setlocale.c,v 1.12 2005/03/23 21:13:28 otto Exp $";
+static char rcsid[] = "$OpenBSD: setlocale.c,v 1.13 2005/08/08 05:53:01 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -44,6 +44,8 @@ static char rcsid[] = "$OpenBSD: setlocale.c,v 1.12 2005/03/23 21:13:28 otto Exp
 #include <string.h>
 #include <unistd.h>
 
+#include "rune.h"
+#include "rune_local.h"
 /*
  * Category names for getenv()
  */
@@ -76,11 +78,13 @@ static char current_categories[_LC_LAST][32] = {
 static char new_categories[_LC_LAST][32];
 
 static char current_locale_string[_LC_LAST * 33];
-static char *PathLocale;
 
 static char	*currentlocale(void);
+static void revert_to_default(int);
+static int force_locale_enable(int);
+static int load_locale_sub(int, const char *, int);
 static char	*loadlocale(int);
-static const char *__get_locale_env __P((int));
+static const char *__get_locale_env(int);
 
 char *
 setlocale(int category, const char *locale)
@@ -90,9 +94,9 @@ setlocale(int category, const char *locale)
 	const char *env, *r;
 
 	if (issetugid() != 0 ||
-	    ((!PathLocale && !(PathLocale = getenv("PATH_LOCALE"))) ||
-	     !*PathLocale))
-		PathLocale = _PATH_LOCALE;
+	    ((!_PathLocale && !(_PathLocale = getenv("PATH_LOCALE"))) ||
+	     !*_PathLocale))
+		_PathLocale = _PATH_LOCALE;
 
 	if (category < 0 || category >= _LC_LAST)
 		return (NULL);
@@ -197,48 +201,82 @@ currentlocale(void)
 	return (current_locale_string);
 }
 
-static char *
-loadlocale(int category)
+static void
+revert_to_default(int category)
+{
+	switch (category) {
+	case LC_CTYPE:
+		(void)_xpg4_setrunelocale("C");
+		__install_currentrunelocale_ctype();
+		break;
+	case LC_MESSAGES:
+	case LC_COLLATE:
+	case LC_MONETARY:
+	case LC_NUMERIC:
+	case LC_TIME:
+		break;
+	}
+}
+
+static int
+force_locale_enable(int category)
+{
+	revert_to_default(category);
+
+	return 0;
+}
+
+static int
+load_locale_sub(int category, const char *locname, int isspecial)
 {
 	char name[PATH_MAX];
 
+	/* check for the default locales */
+	if (!strcmp(new_categories[category], "C") ||
+	    !strcmp(new_categories[category], "POSIX")) {
+		revert_to_default(category);
+		return 0;
+	}
+
+	/* sanity check */
+	if (strchr(locname, '/') != NULL)
+		return -1;
+
+	(void)snprintf(name, sizeof(name), "%s/%s/%s",
+		       _PathLocale, locname, categories[category]);
+
+	switch (category) {
+	case LC_CTYPE:
+		if (_xpg4_setrunelocale(locname) == -1)
+			return -1;
+		__install_currentrunelocale_ctype();
+		break;
+
+	case LC_MESSAGES:
+	case LC_COLLATE:
+	case LC_MONETARY:
+	case LC_NUMERIC:
+	case LC_TIME:
+		return -1;
+	}
+
+	return 0;
+}
+
+static char *
+loadlocale(int category)
+{
 	if (strcmp(new_categories[category],
 	    current_categories[category]) == 0)
 		return (current_categories[category]);
 
-	if (!strcmp(new_categories[category], "C") ||
-	    !strcmp(new_categories[category], "POSIX")) {
-
-		/*
-		 * Some day this will need to reset the locale to the default
-		 * C locale.  Since we have no way to change them as of yet,
-		 * there is no need to reset them.
-		 */
+	if (!load_locale_sub(category, new_categories[category], 0)) {
 		(void)strlcpy(current_categories[category],
-		    new_categories[category],
-		    sizeof(current_categories[category]));
-		return (current_categories[category]);
+		    new_categories[category], sizeof(current_categories[category]));
+		return current_categories[category];
+	} else {
+		return NULL;
 	}
-
-	/*
-	 * Some day we will actually look at this file.
-	 */
-	(void)snprintf(name, sizeof(name), "%s/%s/%s",
-	    PathLocale, new_categories[category], categories[category]);
-
-	switch (category) {
-	case LC_CTYPE:
-	case LC_COLLATE:
-	case LC_MESSAGES:
-	case LC_MONETARY:
-	case LC_NUMERIC:
-	case LC_TIME:
-		return (NULL);
-	}
-
-	(void)strlcpy(current_categories[category],
-	    new_categories[category], sizeof(current_categories[category]));
-	return current_categories[category];
 }
 
 static const char *

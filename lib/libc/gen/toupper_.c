@@ -4,12 +4,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: toupper_.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: toupper_.c,v 1.8 2005/08/08 05:53:00 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _ANSI_LIBRARY
 #include <ctype.h>
 #include <stdio.h>
+
+#include "ctype_private.h"
 
 const short _C_toupper_[1 + 256] = {
 	EOF,
@@ -53,7 +55,7 @@ const short *_toupper_tab_ = _C_toupper_;
 int
 toupper(int c)
 {
-	if ((unsigned int)c > 0177)
+	if ((unsigned int)c > 255)
 		return(c);
 	return((_toupper_tab_ + 1)[c]);
 }
