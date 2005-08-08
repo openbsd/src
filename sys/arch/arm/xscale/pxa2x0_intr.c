@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.11 2005/05/27 20:21:15 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.12 2005/08/08 16:30:47 uwe Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -180,6 +180,11 @@ pxa2x0_intr_bootstrap(vaddr_t addr)
 	pxaic_base = addr;
 }
 
+/*
+ * Cotulla's integrated ICU doesn't have IRQ0..7, PXA27x has useful
+ * interrupts 0..3, so we map software interrupts to bit 4..7.
+ */
+#define SI_TO_IRQBIT(si)  (1U<<(4+(si)))
 
 /*
  * Map a software interrupt queue to an interrupt priority level.
@@ -638,12 +643,6 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 
 	return pxa2x0_intr_establish(irq, level, ih_fun, ih_arg, name);
 }
-
-/*
- * Cotulla's integrated ICU doesn't have IRQ0..7, so
- * we map software interrupts to bit 0..3
- */
-#define SI_TO_IRQBIT(si)  (1U<<(si))
 
 void
 pxa2x0_setipl(int new)

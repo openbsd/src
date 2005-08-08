@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.22 2005/04/15 00:09:06 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.23 2005/08/08 16:30:47 uwe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -126,15 +126,19 @@
 #define PXA2X0_USBHC_SIZE	0x70
 
 /* width of interrupt controller */
-#define ICU_LEN			32   /* but [0..7,15,16] is not used */
-#define ICU_INT_HWMASK		0xffffff00
+#define ICU_LEN			32	/* but some are not used */
+#define ICU_INT_HWMASK		0xffffff0f
 #define PXA2X0_IRQ_MIN		1
 
-#define PXA2X0_INT_USBH2	2
-#define PXA2X0_INT_USBH1	3	/* OHCI */
+/*
+ * [4..7] are used as soft intrs by SI_TO_IRQBIT,
+ * and [0,1,15,16] are not used by us.
+ */
+#define PXA2X0_INT_USBH2	2	/* USB host (all other events) */
+#define PXA2X0_INT_USBH1	3	/* USB host (OHCI) */
 #define PXA2X0_INT_GPIO0	8
 #define PXA2X0_INT_GPIO1	9
-#define PXA2X0_INT_GPION	10	/* irq from GPIO[2..80] */
+#define PXA2X0_INT_GPION	10	/* IRQ from GPIO[2..80] */
 #define PXA2X0_INT_USB  	11
 #define PXA2X0_INT_PMU  	12
 #define PXA2X0_INT_I2S  	13

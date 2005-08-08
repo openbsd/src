@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.h,v 1.7 2005/05/27 20:21:15 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_intr.h,v 1.8 2005/08/08 16:30:47 uwe Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -62,7 +62,6 @@ extern __volatile int softint_pending;
 extern int pxa2x0_imask[];
 void pxa2x0_do_pending(void);
 
-#define SI_TO_IRQBIT(si)  (1U<<(si))
 void pxa2x0_setipl(int new);
 void pxa2x0_splx(int new);
 int pxa2x0_splraise(int ipl);
