@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.47 2005/04/14 19:58:32 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.48 2005/08/08 20:27:22 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.47 2005/04/14 19:58:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.48 2005/08/08 20:27:22 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo,
 	 * Verify that its last block can actually be accessed.
 	 */
 	if (fssize <= 0)
-		errx(13, "preposterous size %d", fssize);
+		errx(13, "preposterous size %u, max is %u", fssize, INT_MAX);
 	wtfs(fssize - 1, sectorsize, (char *)&sblock);
 recalc:
 	/*
