@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.27 2005/05/26 22:22:37 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.28 2005/08/08 12:22:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -371,7 +371,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			if (nbr->self) {
 				lsa_merge(nbr, lsa, v);
-				start_spf_timer(rdeconf);
 				break;
 			}
 
@@ -395,8 +394,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					imsg_compose(ibuf_ospfe, IMSG_LS_FLOOD,
 					    v->nbr->peerid, 0, -1,
 					    v->lsa, ntohs(v->lsa->hdr.len));
-
-				start_spf_timer(rdeconf);
 			} else if (rde_req_list_exists(nbr, &lsa->hdr)) {
 				imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
 				    imsg.hdr.peerid, 0, -1, NULL, 0);

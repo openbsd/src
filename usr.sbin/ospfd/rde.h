@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.19 2005/06/27 18:59:41 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.20 2005/08/08 12:22:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -135,7 +135,7 @@ void		 cand_list_clr(void);
 int		 cand_list_empty(void);
 
 void		 spf_timer(int, short, void *);
-int		 start_spf_timer(struct ospfd_conf *);
+int		 start_spf_timer(void);
 int		 stop_spf_timer(struct ospfd_conf *);
 int		 start_spf_holdtimer(struct ospfd_conf *);
 

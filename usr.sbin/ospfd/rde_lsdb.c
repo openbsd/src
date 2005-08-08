@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.18 2005/05/25 15:21:39 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.19 2005/08/08 12:22:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -32,6 +32,7 @@ struct vertex	*vertex_get(struct lsa *, struct rde_nbr *);
 int		 lsa_router_check(struct lsa *, u_int16_t);
 void		 lsa_timeout(int, short, void *);
 void		 lsa_refresh(struct vertex *);
+int		 lsa_equal(struct lsa *, struct lsa *);
 
 struct lsa_tree	*global_lsa_tree;
 
@@ -337,11 +338,16 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 
 	new = vertex_get(lsa, nbr);
 	old = RB_INSERT(lsa_tree, tree, new);
+
 	if (old != NULL) {
+		if (!lsa_equal(new->lsa, old->lsa))
+			start_spf_timer();
 		RB_REMOVE(lsa_tree, tree, old);
 		vertex_free(old);
 		RB_INSERT(lsa_tree, tree, new);
-	}
+	} else
+		start_spf_timer();
+
 
 	/* timeout handling either MAX_AGE or LS_REFRESH_TIME */
 	timerclear(&tv);
@@ -582,11 +588,7 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	lsa->hdr.seq_num = v->lsa->hdr.seq_num;
 
 	/* compare LSA most header fields are equal so don't check them */
-	if (lsa->hdr.len == v->lsa->hdr.len &&
-	    lsa->hdr.opts == v->lsa->hdr.opts &&
-	    lsa->hdr.age != htons(MAX_AGE) &&
-	    memcmp(&lsa->data, &v->lsa->data, ntohs(lsa->hdr.len) -
-	    sizeof(struct lsa_hdr)) == 0) {
+	if (lsa_equal(lsa, v->lsa)) {
 		free(lsa);
 		return;
 	}
@@ -594,6 +596,7 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	/* overwrite the lsa all other fields are unaffected */
 	free(v->lsa);
 	v->lsa = lsa;
+	start_spf_timer();
 
 	/* set correct timeout for reflooding the LSA */
 	now = time(NULL);
@@ -623,5 +626,28 @@ lsa_remove_invalid_sums(struct area *area)
 			lsa_timeout(0, 0, v);
 		}
 	}
+}
+
+int
+lsa_equal(struct lsa *a, struct lsa *b)
+{
+	/*
+	 * compare LSA that already have same type, adv_rtr and ls_id
+	 * so not all header need to be compared
+	 */
+	if (a == NULL || b == NULL)
+		return (0);
+	if (a->hdr.len != b->hdr.len)
+	       return (0);
+	if (a->hdr.opts != b->hdr.opts)
+		return (0);
+	/* LSA with age MAX_AGE are never equal */
+	if (a->hdr.age == htons(MAX_AGE) || b->hdr.age == htons(MAX_AGE))
+		return (0);
+	if (memcmp(&a->data, &b->data, ntohs(a->hdr.len) -
+	    sizeof(struct lsa_hdr)))
+		return (0);
+
+	return (1);
 }
 

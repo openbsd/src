@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.30 2005/08/08 08:51:47 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.31 2005/08/08 12:22:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -353,7 +353,7 @@ spf_calc(struct area *area)
 	    inet_ntoa(area->id));
 
 	area->num_spf_calc++;
-	start_spf_timer(rdeconf);
+	start_spf_timer();
 
 	return;
 }
@@ -558,7 +558,7 @@ spf_timer(int fd, short event, void *arg)
 		LIST_FOREACH(area, &conf->area_list, entry)
 			lsa_remove_invalid_sums(area);
 
-		start_spf_holdtimer(rdeconf);
+		start_spf_holdtimer(conf);
 		break;
 	case SPF_HOLD:
 		log_debug("spf_timer: state HOLD -> IDLE");
@@ -570,23 +570,23 @@ spf_timer(int fd, short event, void *arg)
 }
 
 int
-start_spf_timer(struct ospfd_conf *conf)
+start_spf_timer(void)
 {
 	struct timeval	tv;
 
-	switch (conf->spf_state) {
+	switch (rdeconf->spf_state) {
 	case SPF_IDLE:
 		log_debug("start_spf_timer: IDLE -> DELAY");
 		timerclear(&tv);
-		tv.tv_sec = conf->spf_delay;
-		conf->spf_state = SPF_DELAY;
-		return (evtimer_add(&conf->spf_timer, &tv));
+		tv.tv_sec = rdeconf->spf_delay;
+		rdeconf->spf_state = SPF_DELAY;
+		return (evtimer_add(&rdeconf->spf_timer, &tv));
 	case SPF_DELAY:
 		/* ignore */
 		break;
 	case SPF_HOLD:
 		log_debug("start_spf_timer: HOLD -> HOLDQUEUE");
-		conf->spf_state = SPF_HOLDQUEUE;
+		rdeconf->spf_state = SPF_HOLDQUEUE;
 		break;
 	case SPF_HOLDQUEUE:
 		/* ignore */
