@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.54 2005/08/08 03:11:36 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.55 2005/08/08 04:02:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -140,10 +140,10 @@ int ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
     size_t, void *);
 int ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, void *);
 int ami_ioctl(struct device *, u_long, caddr_t);
-int ami_ioctl_inq(struct ami_softc *, bioc_inq *);
-int ami_ioctl_vol(struct ami_softc *, bioc_vol *);
-int ami_ioctl_disk(struct ami_softc *, bioc_disk *);
-int ami_ioctl_alarm(struct ami_softc *, bioc_alarm *);
+int ami_ioctl_inq(struct ami_softc *, struct bioc_inq *);
+int ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
+int ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
+int ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
 #endif /* NBIO > 0 */
 
 struct ami_ccb *
@@ -1818,22 +1818,22 @@ ami_ioctl(dev, cmd, addr)
 	switch (cmd) {
 	case BIOCINQ:
 		AMI_DPRINTF(AMI_D_IOCTL, ("inq "));
-		error = ami_ioctl_inq(sc, (bioc_inq *)addr);
+		error = ami_ioctl_inq(sc, (struct bioc_inq *)addr);
 		break;
 
 	case BIOCVOL:
 		AMI_DPRINTF(AMI_D_IOCTL, ("vol "));
-		error = ami_ioctl_vol(sc, (bioc_vol *)addr);
+		error = ami_ioctl_vol(sc, (struct bioc_vol *)addr);
 		break;
 
 	case BIOCDISK:
 		AMI_DPRINTF(AMI_D_IOCTL, ("disk "));
-		error = ami_ioctl_disk(sc, (bioc_disk *)addr);
+		error = ami_ioctl_disk(sc, (struct bioc_disk *)addr);
 		break;
 
 	case BIOCALARM:
 		AMI_DPRINTF(AMI_D_IOCTL, ("alarm "));
-		error = ami_ioctl_alarm(sc, (bioc_alarm *)addr);
+		error = ami_ioctl_alarm(sc, (struct bioc_alarm *)addr);
 		break;
 		
 	default:
@@ -1973,7 +1973,7 @@ bail:;
 int
 ami_ioctl_inq(sc, bi)
 	struct ami_softc *sc;
-	bioc_inq *bi;
+	struct bioc_inq *bi;
 {
 	struct ami_big_diskarray *p; /* struct too large for stack */
 	char *plist;
@@ -2001,10 +2001,10 @@ ami_ioctl_inq(sc, bi)
 
 	memset(plist, 0, AMI_BIG_MAX_PDRIVES);
 
-	bi->novol = p->ada_nld;
-	bi->nodisk = 0;
+	bi->bi_novol = p->ada_nld;
+	bi->bi_nodisk = 0;
 
-	strlcpy(bi->dev, sc->sc_dev.dv_xname, sizeof(bi->dev));
+	strlcpy(bi->bi_dev, sc->sc_dev.dv_xname, sizeof(bi->bi_dev));
 
 	/* do we actually care how many disks we have at this point? */
 	for (i = 0; i < p->ada_nld; i++)
@@ -2016,7 +2016,7 @@ ami_ioctl_inq(sc, bi)
 
 				if (!plist[off]) {
 					plist[off] = 1;
-					bi->nodisk++;
+					bi->bi_nodisk++;
 
 				}
 			}
@@ -2032,7 +2032,7 @@ bail:
 int
 ami_ioctl_vol(sc, bv)
 	struct ami_softc *sc;
-	bioc_vol *bv;
+	struct bioc_vol *bv;
 {
 	struct ami_big_diskarray *p; /* struct too large for stack */
 	int i, s, t;
@@ -2049,61 +2049,61 @@ ami_ioctl_vol(sc, bv)
 		goto bail;
 	}
 
-	if (bv->volid > p->ada_nld) {
+	if (bv->bv_volid > p->ada_nld) {
 		error = EINVAL;
 		goto bail;
 	}
 
-	i = bv->volid;
+	i = bv->bv_volid;
 
 	switch (p->ald[i].adl_status) {
 	case AMI_RDRV_OFFLINE:
-		bv->status = BIOC_SVOFFLINE;
+		bv->bv_status = BIOC_SVOFFLINE;
 		break;
 
 	case AMI_RDRV_DEGRADED:
-		bv->status = BIOC_SVDEGRADED;
+		bv->bv_status = BIOC_SVDEGRADED;
 		break;
 
 	case AMI_RDRV_OPTIMAL:
-		bv->status = BIOC_SVONLINE;
+		bv->bv_status = BIOC_SVONLINE;
 		break;
 
 	default:
-		bv->status = BIOC_SVINVALID;
+		bv->bv_status = BIOC_SVINVALID;
 	}
 
-	bv->size = 0;
-	bv->level = p->ald[i].adl_raidlvl;
-	bv->nodisk = 0;
+	bv->bv_size = 0;
+	bv->bv_level = p->ald[i].adl_raidlvl;
+	bv->bv_nodisk = 0;
 
 	for (s = 0; s < p->ald[i].adl_spandepth; s++) {
 		for (t = 0; t < p->ald[i].adl_nstripes; t++)
-			bv->nodisk++;
+			bv->bv_nodisk++;
 
-		switch (bv->level) {
+		switch (bv->bv_level) {
 		case 0:
-			bv->size += p->ald[i].asp[s].ads_length *
+			bv->bv_size += p->ald[i].asp[s].ads_length *
 			    p->ald[i].adl_nstripes;
 			break;
 
 		case 1:
-			bv->size += p->ald[i].asp[s].ads_length;
+			bv->bv_size += p->ald[i].asp[s].ads_length;
 			break;
 
 		case 5:
-			bv->size += p->ald[i].asp[s].ads_length *
+			bv->bv_size += p->ald[i].asp[s].ads_length *
 			    (p->ald[i].adl_nstripes - 1);
 			break;
 		}
 	}
 
 	if (p->ald[i].adl_spandepth > 1)
-		bv->level *= 10;
+		bv->bv_level *= 10;
 
-	bv->size *= (u_quad_t)512;
+	bv->bv_size *= (u_quad_t)512;
 
-	strlcpy(bv->dev, sc->sc_hdr[i].dev, sizeof(bv->dev));
+	strlcpy(bv->bv_dev, sc->sc_hdr[i].dev, sizeof(bv->bv_dev));
 	
 bail:
 	free(p, M_DEVBUF);
@@ -2114,7 +2114,7 @@ bail:
 int
 ami_ioctl_disk(sc, bd)
 	struct ami_softc *sc;
-	bioc_disk *bd;
+	struct bioc_disk *bd;
 {
 	struct scsi_inquiry_data inqbuf;
 	struct ami_big_diskarray *p; /* struct too large for stack */
@@ -2134,17 +2134,17 @@ ami_ioctl_disk(sc, bd)
 		goto bail;
 	}
 
-	if (bd->volid > p->ada_nld) {
+	if (bd->bd_volid > p->ada_nld) {
 		error = EINVAL;
 		goto bail;
 	}
 
-	i = bd->volid;
+	i = bd->bd_volid;
 	error = EINVAL;
 
 	for (s = 0, d = 0; s < p->ald[i].adl_spandepth; s++) {
 		for (t = 0; t < p->ald[i].adl_nstripes; t++) {
-			if (d != bd->diskid) {
+			if (d != bd->bd_diskid) {
 				d++;
 				continue;
 			}
@@ -2155,41 +2155,41 @@ ami_ioctl_disk(sc, bd)
 
 			switch (p->apd[off].adp_ostatus) {
 			case AMI_PD_UNCNF:
-				bd->status = BIOC_SDUNUSED;
+				bd->bd_status = BIOC_SDUNUSED;
 				break;
 
 			case AMI_PD_ONLINE:
-				bd->status = BIOC_SDONLINE;
+				bd->bd_status = BIOC_SDONLINE;
 				break;
 
 			case AMI_PD_FAILED:
-				bd->status = BIOC_SDFAILED;
+				bd->bd_status = BIOC_SDFAILED;
 				break;
 
 			case AMI_PD_RBLD:
-				bd->status = BIOC_SDREBUILD;
+				bd->bd_status = BIOC_SDREBUILD;
 				break;
 
 			case AMI_PD_HOTSPARE:
-				bd->status = BIOC_SDHOTSPARE;
+				bd->bd_status = BIOC_SDHOTSPARE;
 				break;
 
 			default:
-				bd->status = BIOC_SDINVALID;
+				bd->bd_status = BIOC_SDINVALID;
 			}
 
-			bd->size = (u_quad_t)p->apd[off].adp_size *
+			bd->bd_size = (u_quad_t)p->apd[off].adp_size *
 			    (u_quad_t)512;
 
 			ch = p->ald[i].asp[s].adv[t].add_target >> 4;
 			tg = p->ald[i].asp[s].adv[t].add_target & 0x0f;
 
 			if (!ami_drv_inq(sc, ch, tg, &inqbuf))
-				strlcpy(bd->vendor, inqbuf.vendor,
+				strlcpy(bd->bd_vendor, inqbuf.vendor,
 				    8 + 16 + 4 + 1); /* vendor prod rev zero */
 
-			bd->channel = ch;
-			bd->target = tg;
+			bd->bd_channel = ch;
+			bd->bd_target = tg;
 
 			error = 0;
 			goto bail;
@@ -2204,12 +2204,12 @@ bail:
 
 int ami_ioctl_alarm(sc, ba)
 	struct ami_softc *sc;
-	bioc_alarm *ba;
+	struct bioc_alarm *ba;
 {
 	int error = 0;
 	u_int8_t func, ret;
 
-	switch(ba->opcode) {
+	switch(ba->ba_opcode) {
 	case BIOC_SADISABLE:
 		func = AMI_SPKR_OFF;
 		break;
@@ -2232,17 +2232,17 @@ int ami_ioctl_alarm(sc, ba)
 
 	default:
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
-		    sc->sc_dev.dv_xname, ba->opcode));
+		    sc->sc_dev.dv_xname, ba->ba_opcode));
 		error = EINVAL;
 	}
 
 	if (ami_mgmt(sc, AMI_SPEAKER, func, 0, sizeof ret, &ret))
 		error = EINVAL;
 	else
-		if (ba->opcode == BIOC_GASTATUS)
-			ba->status = ret;
+		if (ba->ba_opcode == BIOC_GASTATUS)
+			ba->ba_status = ret;
 		else
-			ba->status = 0;
+			ba->ba_status = 0;
 
 	return (error);
 }

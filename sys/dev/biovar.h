@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.10 2005/08/08 03:11:36 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.11 2005/08/08 04:02:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -35,13 +35,13 @@
 #include <sys/types.h>
 
 struct bio_common {
-	void *cookie;
+	void	*bc_cookie;
 };
 
 #define BIOCLOCATE _IOWR('B', 0, struct bio_locate)
 struct bio_locate {
-	void *cookie;
-	char *name;
+	void	*bl_cookie;
+	char	*bl_name;
 };
 
 #ifdef _KERNEL
@@ -51,24 +51,23 @@ int	bio_register(struct device *, int (*)(struct device *, u_long,
 
 /* RAID section */
 
-#define BIOCINQ _IOWR('B', 32, bioc_inq)
-typedef struct _bioc_inq {
-	void *cookie;
+#define BIOCINQ _IOWR('B', 32, struct bioc_inq)
+struct bioc_inq {
+	void	*bi_cookie;
 
-	int novol;		/* nr of volumes */
-	int nodisk;		/* nr of total disks */
+	char	bi_dev[16];		/* controller device */
+	int	bi_novol;		/* nr of volumes */
+	int	bi_nodisk;		/* nr of total disks */
+};
 
-	char dev[16];		/* controller device */
-} bioc_inq;
-
-#define BIOCDISK _IOWR('B', 33, bioc_disk)
+#define BIOCDISK _IOWR('B', 33, struct bioc_disk)
 /* structure that represents a disk in a RAID volume */
-typedef struct _bioc_disk {
-	void *cookie;
+struct bioc_disk {
+	void		*bd_cookie;
 
-	int volid;		/* associate with volume, if -1 unused */
-	int diskid;		/* virtual disk id */
-	int status;		/* current status */
+	int		bd_volid;		/* associate with volume, if -1 unused */
+	int		bd_diskid;		/* virtual disk id */
+	int		bd_status;		/* current status */
 #define BIOC_SDONLINE		0x00
 #define BIOC_SDONLINE_S		"Online"
 #define BIOC_SDOFFLINE		0x01
@@ -83,34 +82,29 @@ typedef struct _bioc_disk {
 #define BIOC_SDUNUSED_S		"Unused"
 #define BIOC_SDINVALID		0xff
 #define BIOC_SDINVALID_S	"Invalid"
-	int resv;		/* align */
-
-	u_quad_t size;		/* size of the disk */
-
-	/* this is provided by the physical disks if suported */
-	char vendor[8];		/* vendor string */
-	char product[16];	/* product string */
-	char revision[4];	/* revision string */
-	char pad[4];		/* zero terminate in here */
+	int		bd_resv;		/* align */
+	u_quad_t	bd_size;		/* size of the disk */
 
 	/* physical data */
-	u_int16_t channel;
-	u_int16_t target;
-	u_int16_t lun;
-	u_int16_t other_id;	/* unused for now but needed for sas/fc */
+	u_int16_t	bd_channel;
+	u_int16_t	bd_target;
+	u_int16_t	bd_lun;
+	u_int16_t	bd_other_id;	/* unused for now but needed for sas/fc */
+	char		bd_vendor[8];		/* vendor string */
+	char		bd_product[16];		/* product string */
+	char		bd_revision[4];		/* revision string */
+	char		bd_pad[4];		/* zero terminate in here */
+	char		bd_serial[16];
+};
 
-	/* XXX get this too? */
-				/* serial number */
-} bioc_disk;
-
-#define BIOCVOL _IOWR('B', 34, bioc_vol)
+#define BIOCVOL _IOWR('B', 34, struct bioc_vol)
 /* structure that represents a RAID volume */
-typedef struct _bioc_vol {
-	void *cookie;
+struct bioc_vol {
+	void		*bv_cookie;
 
-	int	volid;		/* volume id */
-	int	resv1;		/* for binary compatibility */
-	int	status;		/* current status */
+	int		bv_volid;		/* volume id */
+	int		bv_resv1;		/* for binary compatibility */
+	int		bv_status;		/* current status */
 #define BIOC_SVONLINE		0x00
 #define BIOC_SVONLINE_S		"Online"
 #define BIOC_SVOFFLINE		0x01
@@ -119,37 +113,34 @@ typedef struct _bioc_vol {
 #define BIOC_SVDEGRADED_S	"Degraded"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
-	int	resv2;		/* align */
-	u_quad_t size;		/* size of the disk */
-	int	level;		/* raid level */
-	int	nodisk;		/* nr of drives */
+	int		bv_resv2;		/* align */
+	u_quad_t	bv_size;		/* size of the disk */
+	int		bv_level;		/* raid level */
+	int		bv_nodisk;		/* nr of drives */
 
-	/* this is provided by the RAID card */
-	char	vendor[8];	/* vendor string */
-	char	product[16];	/* product string */
-	char	revision[4];	/* revision string */
-	char	pad[4];		/* zero terminate in here */
+	char		bv_dev[16];		/* device */
+	char		bv_vendor[8];		/* vendor string */
+	char		bv_product[16];		/* product string */
+	char		bv_revision[4];		/* revision string */
+	char		bv_pad[4];		/* zero terminate in here */
+};
 
-	/* physical data */
-	char	dev[16];	/* device */
-} bioc_vol;
+#define BIOCALARM _IOWR('B', 35, struct bioc_alarm)
+struct bioc_alarm {
+	void	*ba_cookie;
 
-#define BIOCALARM _IOWR('B', 35, bioc_alarm)
-typedef struct _bioc_alarm {
-	void *cookie;
+	int	ba_resv1;		/* for binary compatibility */
+	int	ba_resv2;		/* for binary compatibility */
+	int	ba_status;		/* only used with get state */
+	int	ba_resv3;		/* for binary compatibility */
 
-	int resv1;		/* for binary compatibility */
-	int resv2;		/* for binary compatibility */
-	int status;		/* only used with get state */
-	int resv3;		/* for binary compatibility */
-
-	int opcode;
+	int	ba_opcode;
 #define BIOC_SADISABLE		0x00	/* disable alarm */
 #define BIOC_SAENABLE		0x01	/* enable alarm */
 #define BIOC_SASILENCE		0x02	/* silence alarm */
 #define BIOC_GASTATUS		0x03	/* get status */
 #define BIOC_SATEST		0x04	/* test alarm */
-} bioc_alarm;
+};
 
 #define BIOC_INQ		0x01
 #define BIOC_DISK		0x02

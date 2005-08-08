@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.4 2005/04/01 20:02:27 marco Exp $	*/
+/*	$OpenBSD: bio.c,v 1.5 2005/08/08 04:02:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -97,20 +97,20 @@ bioioctl(dev, cmd, addr, flag, p)
 	switch (cmd) {
 	case BIOCLOCATE:
 		locate = (struct bio_locate *)addr;
-		error = copyinstr(locate->name, name, 16, &len);
+		error = copyinstr(locate->bl_name, name, 16, &len);
 		if (error != 0)
 			return (error);
-		locate->cookie = bio_lookup(name);
-		if (locate->cookie == NULL)
+		locate->bl_cookie = bio_lookup(name);
+		if (locate->bl_cookie == NULL)
 			return (ENOENT);
 		break;
 
 	default:
 		common = (struct bio_common *)addr;
-		if (!bio_validate(common->cookie))
+		if (!bio_validate(common->bc_cookie))
 			return (ENOENT);
 		return (bio_delegate_ioctl(
-		    (struct bio_mapping *)common->cookie, cmd, addr));
+		    (struct bio_mapping *)common->bc_cookie, cmd, addr));
 	}
 	return (0);
 }
