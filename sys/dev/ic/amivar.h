@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.16 2005/08/08 03:11:36 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.17 2005/08/08 20:23:46 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -59,6 +59,9 @@ struct ami_rawsoftc {
 	struct scsi_link sc_link;
 	struct ami_softc *sc_softc;
 	u_int8_t	sc_channel;
+
+	int		sc_proctarget;	/* ses/safte target id */
+	char		sc_procdev[16];	/* ses/safte device */
 };
 
 struct ami_softc {

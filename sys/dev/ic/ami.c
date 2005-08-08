@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.55 2005/08/08 04:02:31 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.56 2005/08/08 20:23:46 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -636,6 +636,7 @@ ami_attach(sc)
 		rsc->sc_link.openings = sc->sc_maxcmds;
 		rsc->sc_link.adapter_softc = rsc;
 		rsc->sc_link.adapter = &ami_raw_switch;
+		rsc->sc_proctarget = -1;
 		/* TODO fetch it from the controller */
 		rsc->sc_link.adapter_target = 16;
 		rsc->sc_link.adapter_buswidth = 16;
@@ -1320,6 +1321,7 @@ ami_scsi_raw_cmd(xs)
 	struct ami_rawsoftc *rsc = link->adapter_softc;
 	struct ami_softc *sc = rsc->sc_softc;
 	u_int8_t channel = rsc->sc_channel, target = link->target;
+	struct device *dev = link->device_softc;
 	struct ami_ccb *ccb;
 	struct ami_iocmd *cmd;
 	struct ami_passthrough *ps;
@@ -1355,6 +1357,11 @@ ami_scsi_raw_cmd(xs)
 	case READ_BIG:
 	case READ_BUFFER:
 	case RECEIVE_DIAGNOSTIC:
+		if (!cold)	/* XXX bogus */
+			if (target == rsc->sc_proctarget)
+				strlcpy(rsc->sc_procdev, dev->dv_xname,
+				    sizeof(rsc->sc_procdev));
+
 		direction = AMI_PT_IN;
 		break;
 
@@ -1460,7 +1467,10 @@ ami_scsi_raw_cmd(xs)
 
 			if (!(type == T_PROCESSOR || type == T_ENCLOSURE))
 				xs->error = XS_DRIVER_STUFFUP;
+			else
+				rsc->sc_proctarget = target; /* save off target */
 		}
+
 
 		if (ccb->ami_pt.dir == AMI_PT_IN)
 			memcpy(xs->data, ccb->ami_pt.idata + sizeof *ps,
@@ -2190,6 +2200,9 @@ ami_ioctl_disk(sc, bd)
 
 			bd->bd_channel = ch;
 			bd->bd_target = tg;
+
+			strlcpy(bd->bd_procdev, sc->sc_rawsoftcs[ch].sc_procdev,
+			    sizeof(bd->bd_procdev));
 
 			error = 0;
 			goto bail;

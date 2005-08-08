@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.11 2005/08/08 04:02:30 deraadt Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.12 2005/08/08 20:23:46 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -94,7 +94,8 @@ struct bioc_disk {
 	char		bd_product[16];		/* product string */
 	char		bd_revision[4];		/* revision string */
 	char		bd_pad[4];		/* zero terminate in here */
-	char		bd_serial[16];
+	char		bd_serial[16];		/* serial number */
+	char		bd_procdev[16];		/* processor device */
 };
 
 #define BIOCVOL _IOWR('B', 34, struct bioc_vol)
