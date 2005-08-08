@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.65 2005/07/15 03:36:10 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.66 2005/08/08 14:42:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -227,7 +227,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			}
 		}
 
-		if (trial_cnt > 0 && sent_cnt == 0 && conf->settime)
+		if (conf->settime &&
+		    ((trial_cnt > 0 && sent_cnt == 0) || peer_cnt == 0))
 			priv_settime(0);	/* no good peers, don't wait */
 
 		if (ibuf_main->w.queued > 0)
