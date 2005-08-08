@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.20 2005/08/08 09:15:09 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.21 2005/08/08 14:19:16 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -45,7 +45,8 @@ static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t,
 		    struct ipsec_addr *, struct ipsec_addr *,
 		    struct ipsec_addr *, struct ipsec_auth *, u_int8_t);
 static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
-		    struct ipsec_addr *, struct ipsec_addr *,
+		    struct ipsec_addr *, struct ipsec_addr *, const struct
+		    ipsec_xf *, const struct ipsec_xf *, struct ipsec_key *,
 		    struct ipsec_key *);
 static int	pfkey_reply(int);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
@@ -303,12 +304,14 @@ out:
 
 static int
 pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
-    struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_key *key)
+    struct ipsec_addr *src, struct ipsec_addr *dst, const struct ipsec_xf
+    *authxf, const struct ipsec_xf *encxf, struct ipsec_key *authkey,
+    struct ipsec_key *enckey)
 {
 	struct sadb_msg		smsg;
 	struct sadb_sa		sa;
 	struct sadb_address	sa_src, sa_dst;
-	struct sadb_key		sa_key;
+	struct sadb_key		sa_authkey, sa_enckey;
 	struct sockaddr_storage	ssrc, sdst;
 	struct iovec	 	iov[IOV_CNT];
 	ssize_t		 	n;
@@ -354,6 +357,72 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	sa.sadb_sa_spi = htonl(spi);
 	sa.sadb_sa_state = SADB_SASTATE_MATURE;
 
+	if (authxf) {
+		switch (authxf->id) {
+		case AUTHXF_NONE:
+			break;
+		case AUTHXF_HMAC_MD5:
+			sa.sadb_sa_auth = SADB_AALG_MD5HMAC;
+			break;
+		case AUTHXF_HMAC_RIPEMD160:
+			sa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
+			break;
+		case AUTHXF_HMAC_SHA1:
+			sa.sadb_sa_auth = SADB_AALG_SHA1HMAC;
+			break;
+		case AUTHXF_HMAC_SHA2_256:
+			sa.sadb_sa_auth = SADB_X_AALG_SHA2_256;
+			break;
+		case AUTHXF_HMAC_SHA2_384:
+			sa.sadb_sa_auth = SADB_X_AALG_SHA2_384;
+			break;
+		case AUTHXF_HMAC_SHA2_512:
+			sa.sadb_sa_auth = SADB_X_AALG_SHA2_512;
+			break;
+		case AUTHXF_MD5:
+			sa.sadb_sa_auth = SADB_X_AALG_MD5;
+			break;
+		case AUTHXF_SHA1:
+			sa.sadb_sa_auth = SADB_X_AALG_SHA1;
+			break;
+		default:
+			warnx("unsupported authentication algorithm %d",
+			    authxf->id);
+		}
+	}
+	if (encxf) {
+		switch (encxf->id) {
+		case ENCXF_NONE:
+			break;
+		case ENCXF_3DES_CBC:
+			sa.sadb_sa_encrypt = SADB_EALG_3DESCBC;
+			break;
+		case ENCXF_DES_CBC:
+			sa.sadb_sa_encrypt = SADB_EALG_DESCBC;
+			break;
+		case ENCXF_AES:
+			sa.sadb_sa_encrypt = SADB_X_EALG_AES;
+			break;
+		case ENCXF_AESCTR:
+			sa.sadb_sa_encrypt = SADB_X_EALG_AESCTR;
+			break;
+		case ENCXF_BLOWFISH:
+			sa.sadb_sa_encrypt = SADB_X_EALG_BLF;
+			break;
+		case ENCXF_CAST128:
+			sa.sadb_sa_encrypt = SADB_X_EALG_CAST;
+			break;
+		case ENCXF_NULL:
+			sa.sadb_sa_encrypt = SADB_EALG_NULL;
+			break;
+		case ENCXF_SKIPJACK:
+			sa.sadb_sa_encrypt = SADB_X_EALG_SKIPJACK;
+			break;
+		default:
+			warnx("unsupported encryption algorithm %d", encxf->id);
+		}
+	}
+
 	bzero(&sa_src, sizeof(sa_src));
 	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;
 	sa_src.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
@@ -362,16 +431,23 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
 	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 
-	if (action == SADB_ADD) {
-		if (!key) {
-			warnx("no key specified");
-			return -1;
-		}
-		bzero(&sa_key, sizeof(sa_key));
-		sa_key.sadb_key_len = (sizeof(sa_key) + ((key->len + 7) / 8)
-		    * 8) / 8;
-		sa_key.sadb_key_exttype = SADB_EXT_KEY_AUTH;
-		sa_key.sadb_key_bits = 8 * key->len;
+	if (action == SADB_ADD && !authkey && !enckey) { /* XXX ENCNULL */
+		warnx("no key specified");
+		return -1;
+	}
+	if (authkey) {
+		bzero(&sa_authkey, sizeof(sa_authkey));
+		sa_authkey.sadb_key_len = (sizeof(sa_authkey) +
+		    ((authkey->len + 7) / 8) * 8) / 8;
+		sa_authkey.sadb_key_exttype = SADB_EXT_KEY_AUTH;
+		sa_authkey.sadb_key_bits = 8 * authkey->len;
+	}
+	if (enckey) {
+		bzero(&sa_enckey, sizeof(sa_enckey));
+		sa_enckey.sadb_key_len = (sizeof(sa_enckey) +
+		    ((enckey->len + 7) / 8) * 8) / 8;
+		sa_enckey.sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
+		sa_enckey.sadb_key_bits = 8 * enckey->len;
 	}
 
 	iov_cnt = 0;
@@ -405,14 +481,24 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	smsg.sadb_msg_len += sa_dst.sadb_address_len;
 	iov_cnt++;
 
-	if (action == SADB_ADD) {
-		/* key */
-		iov[iov_cnt].iov_base = &sa_key;
-		iov[iov_cnt].iov_len = sizeof(sa_key);
+	if (authkey) {
+		/* authentication key */
+		iov[iov_cnt].iov_base = &sa_authkey;
+		iov[iov_cnt].iov_len = sizeof(sa_authkey);
 		iov_cnt++;
-		iov[iov_cnt].iov_base = key->data;
-		iov[iov_cnt].iov_len = ((key->len + 7) / 8) * 8;
-		smsg.sadb_msg_len += sa_key.sadb_key_len;
+		iov[iov_cnt].iov_base = authkey->data;
+		iov[iov_cnt].iov_len = ((authkey->len + 7) / 8) * 8;
+		smsg.sadb_msg_len += sa_authkey.sadb_key_len;
+		iov_cnt++;
+	}
+	if (enckey) {
+		/* encryption key */
+		iov[iov_cnt].iov_base = &sa_enckey;
+		iov[iov_cnt].iov_len = sizeof(sa_enckey);
+		iov_cnt++;
+		iov[iov_cnt].iov_base = enckey->data;
+		iov[iov_cnt].iov_len = ((enckey->len + 7) / 8) * 8;
+		smsg.sadb_msg_len += sa_enckey.sadb_key_len;
 		iov_cnt++;
 	}
 
@@ -759,6 +845,12 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		}
 	} else if (r->type == RULE_SA) {
 		switch (r->proto) {
+		case IPSEC_AH:
+			satype = SADB_SATYPE_AH;
+			break;
+		case IPSEC_ESP:
+			satype = SADB_SATYPE_ESP;
+			break;
 		case IPSEC_TCPMD5:
 			satype = SADB_X_SATYPE_TCPSIGNATURE;
 			break;
@@ -768,11 +860,12 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		switch (action) {
 		case PFK_ACTION_ADD:
 			ret = pfkey_sa(fd, satype, SADB_ADD, r->spi,
-			    r->src, r->dst, r->authkey);
+			    r->src, r->dst, r->encxf, r->authxf,
+			    r->authkey, r->enckey);
 			break;
 		case PFK_ACTION_DELETE:
 			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi,
-			    r->src, r->dst, r->authkey);
+			    r->src, r->dst, r->encxf, r->authxf, NULL, NULL);
 			break;
 		default:
 			return -1;
