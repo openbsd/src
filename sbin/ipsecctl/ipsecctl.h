@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.14 2005/08/08 09:15:09 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.15 2005/08/08 13:29:00 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -48,10 +48,13 @@ enum {
 	TYPE_BYPASS, TYPE_DONTACQ
 };
 enum {
-	ENC_NONE
+	AUTHXF_UNKNOWN, AUTHXF_NONE, AUTHXF_HMAC_MD5, AUTHXF_HMAC_RIPEMD160,
+	AUTHXF_HMAC_SHA1, AUTHXF_HMAC_SHA2_256, AUTHXF_HMAC_SHA2_384,
+	AUTHXF_HMAC_SHA2_512, AUTHXF_MD5, AUTHXF_SHA1
 };
 enum {
-	AUTH_NONE
+	ENCXF_UNKNOWN,ENCXF_NONE, ENCXF_3DES_CBC, ENCXF_DES_CBC, ENCXF_AES,
+	ENCXF_AESCTR, ENCXF_BLOWFISH, ENCXF_CAST128, ENCXF_NULL, ENCXF_SKIPJACK
 };
 
 struct ipsec_addr {
@@ -76,6 +79,16 @@ struct ipsec_key {
 	u_int8_t	*data;
 };
 
+struct ipsec_xf {
+	char		*name;
+	u_int16_t	 id;
+	size_t		 keymin;
+	size_t		 keymax;
+};
+
+extern const struct ipsec_xf authxfs[];
+extern const struct ipsec_xf encxfs[];
+
 /* Complete state of one rule. */
 struct ipsec_rule {
 	u_int8_t	 type;
@@ -84,6 +97,8 @@ struct ipsec_rule {
 	struct ipsec_addr *dst;
 	struct ipsec_addr *peer;
 	struct ipsec_auth *auth;
+	const struct ipsec_xf *authxf;
+	const struct ipsec_xf *encxf;
 	struct ipsec_key  *authkey;
 	struct ipsec_key  *enckey;
 

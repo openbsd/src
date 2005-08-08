@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2005/08/08 09:15:09 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2005/08/08 13:29:00 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,6 +50,34 @@ static int		 lineno = 1;
 static int		 errors = 0;
 static int		 debug = 0;
 
+const struct ipsec_xf authxfs[] = {
+	{"unknown",		AUTHXF_UNKNOWN,		0,	0},
+	{"none",		AUTHXF_NONE,		0,	0},
+	{"hmac-md5",		AUTHXF_HMAC_MD5,	16,	0},
+	{"hmac-ripemd160",	AUTHXF_HMAC_RIPEMD160,	20,	0},
+	{"hmac-sha1",		AUTHXF_HMAC_SHA1,	20,	0},
+	{"hmac-sha2-256",	AUTHXF_HMAC_SHA2_256,	32,	0},
+	{"hmac-sha2-384",	AUTHXF_HMAC_SHA2_384,	48,	0},
+	{"hmac-sha2-512",	AUTHXF_HMAC_SHA2_512,	64,	0},
+	{"md5",			AUTHXF_MD5,		16,	0},
+	{"sha1",		AUTHXF_SHA1,		20,	0},
+	{NULL,			0,			0,	0},
+};
+
+const struct ipsec_xf encxfs[] = {
+	{"unknown",		ENCXF_UNKNOWN,		0,	0},
+	{"none",		ENCXF_NONE,		0,	0},
+	{"3des-cbc",		ENCXF_3DES_CBC,		8,	8},
+	{"des-cbc",		ENCXF_DES_CBC,		8,	8},
+	{"aes",			ENCXF_AES,		16,	32},
+	{"aesctr",		ENCXF_AESCTR,		16+4,	32+4},
+	{"blowfish",		ENCXF_BLOWFISH,		5,	56},
+	{"cast128",		ENCXF_CAST128,		5,	16},
+	{"null",		ENCXF_NULL,		0,	0},
+	{"skipjack",		ENCXF_SKIPJACK,		10,	10},
+	{NULL,			0,			0,	0},
+};
+
 int			 yyerror(const char *, ...);
 int			 yyparse(void);
 int			 kw_cmp(const void *, const void *);
@@ -78,9 +106,14 @@ struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
+const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
+int			 validate_sa(u_int32_t, u_int8_t,
+			     const struct ipsec_xf *, const struct ipsec_xf *,
+			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*create_sa(u_int8_t, struct ipsec_addr *,
-			     struct ipsec_addr *, u_int32_t, u_int16_t,
-			     u_int16_t, struct ipsec_key *, struct ipsec_key *);
+			     struct ipsec_addr *, u_int32_t,
+			     const struct ipsec_xf *, const struct ipsec_xf *,
+			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr *, struct
@@ -123,6 +156,10 @@ typedef struct {
 			struct ipsec_key *keyout;
 			struct ipsec_key *keyin;
 		} keys;
+		struct {
+			const struct ipsec_xf *authxf;
+			const struct ipsec_xf *encxf;
+		} transforms;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -130,7 +167,7 @@ typedef struct {
 %}
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
-%token	AUTHKEY ENCKEY FILENAME ERROR
+%token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -145,11 +182,13 @@ typedef struct {
 %type	<v.authkeys>		authkeyspec
 %type	<v.enckeys>		enckeyspec
 %type	<v.keys>		keyspec
+%type	<v.transforms>		transforms
 %%
 
 grammar		: /* empty */
 		| grammar '\n'
 		| grammar flowrule '\n'
+		| grammar sarule '\n'
 		| grammar tcpmd5rule '\n'
 		| grammar error '\n'		{ errors++; }
 		;
@@ -175,7 +214,7 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			struct ipsec_rule	*r;
 
 			r = create_sa(IPSEC_TCPMD5, $2.src, $2.dst, $3.spiout,
-			    AUTH_NONE, ENC_NONE, $4.keyout, NULL);
+			    NULL, NULL, $4.keyout, NULL);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -192,6 +231,32 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 
 				if (ipsecctl_add_rule(ipsec, r))
 					errx(1, "tcpmd5rule: ipsecctl_add_rule");
+			}
+		}
+		;
+
+sarule		: protocol hosts spispec transforms authkeyspec enckeyspec {
+			struct ipsec_rule	*r;
+
+			r = create_sa($1, $2.src, $2.dst, $3.spiout,
+			    $4.authxf, $4.encxf, $5.keyout, $6.keyout);
+			if (r == NULL)
+				YYERROR;
+			r->nr = ipsec->rule_nr++;
+
+			if (ipsecctl_add_rule(ipsec, r))
+				errx(1, "sarule: ipsecctl_add_rule");
+
+			/* Create and add reverse SA rule. */
+			if ($3.spiin != 0 || $5.keyin || $6.keyin) {
+				r = reverse_sa(r, $3.spiin, $5.keyin,
+				    $6.keyin);
+				if (r == NULL)
+					YYERROR;
+				r->nr = ipsec->rule_nr++;
+
+				if (ipsecctl_add_rule(ipsec, r))
+					errx(1, "sarule: ipsecctl_add_rule");
 			}
 		}
 		;
@@ -321,6 +386,44 @@ spispec		: SPI STRING			{
 		}
 		;
 
+transforms	: /* empty */			{
+			$$.authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
+			$$.encxf = &encxfs[ENCXF_AESCTR];
+		}
+		| AUTHXF STRING ENCXF STRING	{
+			$$.authxf = parse_xf($2, authxfs);
+			free($2);
+			if ($$.authxf == NULL) {
+				yyerror("could not parse authentication xf");
+				YYERROR;
+			}
+			$$.encxf = parse_xf($4, encxfs);
+			free($4);
+			if ($$.encxf == NULL) {
+				yyerror("could not parse encryption xf");
+				YYERROR;
+			}
+		}
+		| AUTHXF STRING			{
+			$$.encxf = &encxfs[ENCXF_AESCTR];
+			$$.authxf = parse_xf($2, authxfs);
+			free($2);
+			if ($$.authxf == NULL) {
+				yyerror("could not parse authentication xf");
+				YYERROR;
+			}
+		}
+		| ENCXF STRING			{
+			$$.authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
+			$$.encxf = parse_xf($2, encxfs);
+			free($2);
+			if ($$.encxf == NULL) {
+				yyerror("could not parse encryption xf");
+				YYERROR;
+			}
+		}
+		;
+
 authkeyspec	: /* empty */			{
 			$$.keyout = NULL;
 			$$.keyin = NULL;
@@ -405,8 +508,10 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "ah",			AH},
+		{ "auth",		AUTHXF},
 		{ "authkey",		AUTHKEY},
 		{ "dstid",		DSTID},
+		{ "enc",		ENCXF},
 		{ "enckey",		ENCKEY},
 		{ "esp",		ESP},
 		{ "file",		FILENAME},
@@ -746,8 +851,10 @@ atospi(char *s, u_int32_t *spivalp)
 
 	if (atoul(s, &ulval) == -1)
 		return (-1);
-	if (ulval >= SPI_RESERVED_MIN && ulval <= SPI_RESERVED_MAX)
+	if (ulval >= SPI_RESERVED_MIN && ulval <= SPI_RESERVED_MAX) {
+		yyerror("illegal SPI value");
 		return (-1);
+	}
 	*spivalp = ulval;
 	return (0);
 }
@@ -866,16 +973,72 @@ copyhost(const struct ipsec_addr *src)
 	return dst;
 }
 
+const struct ipsec_xf *
+parse_xf(const char *name, const struct ipsec_xf xfs[])
+{
+	int		i;
+
+	for (i = 0; xfs[i].name != NULL; i++) {
+		if (strncmp(name, xfs[i].name, strlen(name)))
+			continue;
+		return &xfs[i];
+	}
+	return (NULL);
+}
+
+int
+validate_sa(u_int32_t spi, u_int8_t protocol, const struct ipsec_xf *authxf,
+    const struct ipsec_xf *encxf, struct ipsec_key *authkey,
+    struct ipsec_key *enckey)
+{
+	/* Sanity checks */
+	if (spi == 0) {
+		yyerror("no SPI specified");
+		return (0);
+	}
+	if (protocol == IPSEC_TCPMD5 && authkey == NULL) {
+		yyerror("authentication key needed for tcpmd5");
+		return (0);
+	}
+	if (authxf) {
+		if (!authkey) {
+			yyerror("no authentication key specified");
+			return (0);
+		}
+		if (authkey->len != authxf->keymin) {
+			yyerror("wrong authentication key length, needs to be "
+			    "%d bits", authxf->keymin * 8);
+			return (0);
+		}
+	}
+	if (encxf) {
+		if (!enckey) {
+			yyerror("no encryption key specified");
+			return (0);
+		}
+		if (enckey->len < encxf->keymin) {
+			yyerror("encryption key too short, minimum %d bits",
+			    encxf->keymin * 8);
+			return (0);
+		}
+		if (encxf->keymax < enckey->len) {
+			yyerror("encryption key too long, maximum %d bits",
+			    encxf->keymax * 8);
+			return (0);
+		}
+	}
+
+	return 1;
+}
+
 struct ipsec_rule *
 create_sa(u_int8_t protocol, struct ipsec_addr *src, struct ipsec_addr *dst,
-    u_int32_t spi, u_int16_t authxf, u_int16_t encxf,
+    u_int32_t spi, const struct ipsec_xf *authxf, const struct ipsec_xf *encxf,
     struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
 	struct ipsec_rule *r;
 
-	if (spi == 0)
-		return (NULL);
-	if (protocol == IPSEC_TCPMD5 && authkey == NULL)
+	if (validate_sa(spi, protocol, authxf, encxf, authkey, enckey) == 0)
 		return (NULL);
 
 	r = calloc(1, sizeof(struct ipsec_rule));
@@ -887,6 +1050,8 @@ create_sa(u_int8_t protocol, struct ipsec_addr *src, struct ipsec_addr *dst,
 	r->src = src;
 	r->dst = dst;
 	r->spi = spi;
+	r->authxf = authxf;
+	r->encxf = encxf;
 	r->authkey = authkey;
 	r->enckey = enckey;
 
@@ -899,9 +1064,8 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 {
 	struct ipsec_rule *reverse;
 
-	if (spi == 0)
-		return (NULL);
-	if (rule->proto == IPSEC_TCPMD5 && authkey == NULL)
+	if (validate_sa(spi, rule->proto, rule->authxf, rule->encxf, authkey,
+	    enckey) == 0)
 		return (NULL);
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
@@ -913,6 +1077,8 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
 	reverse->spi = spi;
+	reverse->authxf = rule->authxf;
+	reverse->encxf = rule->encxf;
 	reverse->authkey = authkey;
 	reverse->enckey = enckey;
 

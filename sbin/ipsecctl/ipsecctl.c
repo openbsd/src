@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.23 2005/08/08 09:15:09 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.24 2005/08/08 13:29:00 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -246,12 +246,27 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 	printf(" to ");
 	ipsecctl_print_addr(r->dst);
 	printf(" spi 0x%08x", r->spi);
+
+	if (r->proto != IPSEC_TCPMD5) {
+		if (r->authxf)
+			printf(" auth %s", r->authxf->name);
+		if (r->encxf)
+			printf(" enc %s", r->encxf->name);
+	}
 	if (r->authkey) {
-		printf(" authkey 0x");
+		if (r->proto == IPSEC_TCPMD5)
+			printf(" ");
+		else
+			printf("\n\t");
+		printf("authkey 0x");
 		ipsecctl_print_key(r->authkey);
 	}
 	if (r->enckey) {
-		printf(" enckey 0x");
+		if (r->proto == IPSEC_TCPMD5)
+			printf(" ");
+		else
+			printf("\n\t");
+		printf("enckey 0x");
 		ipsecctl_print_key(r->enckey);
 	}
 }
