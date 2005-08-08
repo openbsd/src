@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.74 2005/06/09 09:03:38 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.75 2005/08/08 16:37:18 uwe Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -297,6 +297,7 @@ ASUS SpaceLink WL-110:Prism-2.5:CF
 ASUS WL-140:Prism-3:USB
 Belkin F5D6020 (version 1 only):Prism-2:PCMCIA
 Belkin F5D6001 (version 1 only):Prism-2:PCI
+Belkin F5D6060 (version 1 only):Prism-2.5:CF
 Buffalo AirStation:Prism-2:PCMCIA
 Buffalo AirStation:Prism-2:CF
 Cabletron RoamAbout:Hermes:PCMCIA
