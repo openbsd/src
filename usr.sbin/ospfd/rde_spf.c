@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.29 2005/06/27 18:59:41 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.30 2005/08/08 08:51:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -155,9 +155,6 @@ spf_calc(struct area *area)
 				log_debug("spf_calc: w has no link to v");
 				continue;
 			}
-			if (w->cost != LS_INFINITY && w->prev != NULL &&
-			    !cand_list_present(w))
-				continue;
 
 			if (v->type == LSA_TYPE_ROUTER)
 				d = v->cost + ntohs(rtr_link->metric);
@@ -175,9 +172,9 @@ spf_calc(struct area *area)
 
 				calc_next_hop(w, v);
 			} else {
-				if (w->cost == LS_INFINITY) {
-					w->cost = 0;
-					w->cost += d;
+				if (w->cost == LS_INFINITY ||
+				    w->prev == NULL) {
+					w->cost = d;
 
 					cand_list_add(w);
 					w->prev = v;
@@ -236,7 +233,7 @@ spf_calc(struct area *area)
 			    v->lsa->data.rtr.flags, 0);
 			break;
 		case LSA_TYPE_NETWORK:
-			if (v->cost == LS_INFINITY || v->nexthop.s_addr == 0)
+			if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
 				continue;
 
 			addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
@@ -262,9 +259,9 @@ spf_calc(struct area *area)
 
 			v->nexthop = w->nexthop;
 			v->cost = w->cost +
-			    ntohl(v->lsa->data.sum.metric);
+			    (ntohl(v->lsa->data.sum.metric) & LSA_METRIC_MASK);
 
-			if (v->cost == LS_INFINITY || v->nexthop.s_addr == 0)
+			if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
 				continue;
 
 			adv_rtr.s_addr = htonl(v->adv_rtr);
@@ -309,10 +306,16 @@ spf_calc(struct area *area)
 			    v->lsa->data.asext.fw_addr)) == NULL)
 				continue;
 
-			/* XXX the nexthop is choosen in a more extreme way */
+#if 0
+			if (r->p_type != PT_INTRA_AREA &&
+			    r->p_type != PT_INTER_AREA)
+				continue;
+#endif
+
+			/* XXX RFC1583Compatibility */
 			if (r->connected) {
 				if (v->lsa->data.asext.fw_addr != 0)
-					v->nexthop.s_addr = 
+					v->nexthop.s_addr =
 					    v->lsa->data.asext.fw_addr;
 				else
 					v->nexthop.s_addr = htonl(v->adv_rtr);
@@ -447,9 +450,12 @@ cand_list_add(struct vertex *v)
 {
 	struct vertex	*c = NULL;
 
-	/* XXX TODO: network vertex takes precedence over router vertex */
 	TAILQ_FOREACH(c, &cand_list, cand) {
 		if (c->cost > v->cost) {
+			TAILQ_INSERT_BEFORE(c, v, cand);
+			return;
+		} else if (c->cost == v->cost && c->type == LSA_TYPE_ROUTER &&
+		    v->type == LSA_TYPE_NETWORK) {
 			TAILQ_INSERT_BEFORE(c, v, cand);
 			return;
 		}
@@ -761,6 +767,7 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
      u_int8_t flags, u_int8_t connected)
 {
 	struct rt_node	*rte;
+	int		 better = 0;
 
 	if (nexthop.s_addr == 0)	/* XXX remove */
 		fatalx("rt_update: invalid nexthop");
@@ -795,9 +802,37 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 			rte->invalid = 0;
 			rte->connected = connected;
 		} else {
-			/* XXX better route ? */
-			/* consider intra vs. inter */
-			if (cost < rte->cost) {
+			/* order:
+			 * 1. intra-area
+			 * 2. inter-area
+			 * 3. type 1 as ext
+			 * 4. type 2 as ext
+			 */
+			if (p_type < rte->p_type)
+				better = 1;
+			else if (p_type == rte->p_type)
+				switch (p_type) {
+				case PT_INTRA_AREA:
+				case PT_INTER_AREA:
+					if (cost < rte->cost)
+						better = 1;
+					/* ignore equal pathes */
+					break;
+				case PT_TYPE1_EXT:
+					/* XXX rfc1583 compat */
+					if (cost < rte->cost)
+						better = 1;
+					break;
+				case PT_TYPE2_EXT:
+					if (cost2 < rte->cost2)
+						better = 1;
+					/* XXX rfc1583 compat */
+					else if (cost2 == rte->cost2 &&
+					    cost < rte->cost)
+						better = 1;
+					break;
+				}
+			if (better) {
 				rte->nexthop.s_addr = nexthop.s_addr;
 				rte->adv_rtr.s_addr = adv_rtr.s_addr;
 				rte->cost = cost;
