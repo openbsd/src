@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.9 2005/08/01 17:23:14 beck Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.10 2005/08/08 03:11:36 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -57,6 +57,8 @@ typedef struct _bioc_inq {
 
 	int novol;		/* nr of volumes */
 	int nodisk;		/* nr of total disks */
+
+	char dev[16];		/* controller device */
 } bioc_inq;
 
 #define BIOCDISK _IOWR('B', 33, bioc_disk)
@@ -83,13 +85,19 @@ typedef struct _bioc_disk {
 #define BIOC_SDINVALID_S	"Invalid"
 	int resv;		/* align */
 
-	quad_t size;		/* size of the disk */
+	u_quad_t size;		/* size of the disk */
 
 	/* this is provided by the physical disks if suported */
 	char vendor[8];		/* vendor string */
 	char product[16];	/* product string */
 	char revision[4];	/* revision string */
 	char pad[4];		/* zero terminate in here */
+
+	/* physical data */
+	u_int16_t channel;
+	u_int16_t target;
+	u_int16_t lun;
+	u_int16_t other_id;	/* unused for now but needed for sas/fc */
 
 	/* XXX get this too? */
 				/* serial number */
@@ -100,9 +108,9 @@ typedef struct _bioc_disk {
 typedef struct _bioc_vol {
 	void *cookie;
 
-	int volid;		/* volume id */
-	int resv1;		/* for binary compatibility */
-	int status;		/* current status */
+	int	volid;		/* volume id */
+	int	resv1;		/* for binary compatibility */
+	int	status;		/* current status */
 #define BIOC_SVONLINE		0x00
 #define BIOC_SVONLINE_S		"Online"
 #define BIOC_SVOFFLINE		0x01
@@ -111,16 +119,19 @@ typedef struct _bioc_vol {
 #define BIOC_SVDEGRADED_S	"Degraded"
 #define BIOC_SVINVALID		0xff
 #define BIOC_SVINVALID_S	"Invalid"
-	int resv2;		/* align */
-	quad_t size;		/* size of the disk */
-	int level;		/* raid level */
-	int nodisk;		/* nr of drives */
+	int	resv2;		/* align */
+	u_quad_t size;		/* size of the disk */
+	int	level;		/* raid level */
+	int	nodisk;		/* nr of drives */
 
 	/* this is provided by the RAID card */
-	char vendor[8];		/* vendor string */
-	char product[16];	/* product string */
-	char revision[4];	/* revision string */
-	char pad[4];		/* zero terminate in here */
+	char	vendor[8];	/* vendor string */
+	char	product[16];	/* product string */
+	char	revision[4];	/* revision string */
+	char	pad[4];		/* zero terminate in here */
+
+	/* physical data */
+	char	dev[16];	/* device */
 } bioc_vol;
 
 #define BIOCALARM _IOWR('B', 35, bioc_alarm)

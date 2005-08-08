@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.53 2005/08/05 04:16:51 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.54 2005/08/08 03:11:36 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1485,6 +1485,7 @@ ami_scsi_cmd(xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct ami_softc *sc = link->adapter_softc;
+	struct device *dev = link->device_softc;
 	struct ami_ccb *ccb;
 	struct ami_iocmd *cmd;
 	struct scsi_inquiry_data inq;
@@ -1521,6 +1522,11 @@ ami_scsi_cmd(xs)
 
 	switch (xs->cmd->opcode) {
 	case TEST_UNIT_READY:
+		/* save off sd? after autoconf */
+		if (!cold)	/* XXX bogus */
+			strlcpy(sc->sc_hdr[target].dev, dev->dv_xname,
+			    sizeof(sc->sc_hdr[target].dev));
+
 	case START_STOP:
 #if 0
 	case VERIFY:
@@ -1766,6 +1772,7 @@ ami_scsi_ioctl(struct scsi_link *link, u_long cmd,
     caddr_t addr, int flag, struct proc *p)
 {
 	struct ami_softc *sc = (struct ami_softc *)link->adapter_softc;
+	/* struct device *dev = (struct device *)link->device_softc; */
 	/* u_int8_t target = link->target; */
 
 	if (sc->sc_ioctl)
@@ -1997,6 +2004,8 @@ ami_ioctl_inq(sc, bi)
 	bi->novol = p->ada_nld;
 	bi->nodisk = 0;
 
+	strlcpy(bi->dev, sc->sc_dev.dv_xname, sizeof(bi->dev));
+
 	/* do we actually care how many disks we have at this point? */
 	for (i = 0; i < p->ada_nld; i++)
 		for (s = 0; s < p->ald[i].adl_spandepth; s++)
@@ -2092,8 +2101,10 @@ ami_ioctl_vol(sc, bv)
 	if (p->ald[i].adl_spandepth > 1)
 		bv->level *= 10;
 
-	bv->size *= (quad_t)512;
+	bv->size *= (u_quad_t)512;
 
+	strlcpy(bv->dev, sc->sc_hdr[i].dev, sizeof(bv->dev));
+	
 bail:
 	free(p, M_DEVBUF);
 
@@ -2110,6 +2121,7 @@ ami_ioctl_disk(sc, bd)
 	int i, s, t, d;
 	int off;
 	int error = 0;
+	u_int16_t ch, tg;
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 	if (!p) {
@@ -2166,15 +2178,18 @@ ami_ioctl_disk(sc, bd)
 				bd->status = BIOC_SDINVALID;
 			}
 
-			bd->size = (quad_t)p->apd[off].adp_size * (quad_t)512;
+			bd->size = (u_quad_t)p->apd[off].adp_size *
+			    (u_quad_t)512;
 
-			if (!ami_drv_inq(sc,
-			    (p->ald[i].asp[s].adv[t].add_target >> 4),
-			    (p->ald[i].asp[s].adv[t].add_target & 0x0f),
-			    &inqbuf)) {
+			ch = p->ald[i].asp[s].adv[t].add_target >> 4;
+			tg = p->ald[i].asp[s].adv[t].add_target & 0x0f;
+
+			if (!ami_drv_inq(sc, ch, tg, &inqbuf))
 				strlcpy(bd->vendor, inqbuf.vendor,
 				    8 + 16 + 4 + 1); /* vendor prod rev zero */
-			}
+
+			bd->channel = ch;
+			bd->target = tg;
 
 			error = 0;
 			goto bail;

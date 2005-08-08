@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.15 2005/08/05 04:16:51 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.16 2005/08/08 03:11:36 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -116,6 +116,7 @@ struct ami_softc {
 		u_int8_t	hd_prop;
 		u_int8_t	hd_stat;
 		u_int32_t	hd_size;
+		char		dev[16];
 	} sc_hdr[AMI_BIG_MAX_LDRIVES];
 	struct ami_rawsoftc *sc_rawsoftcs;
 };
