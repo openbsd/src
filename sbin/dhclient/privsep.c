@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.10 2005/08/07 01:35:11 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.11 2005/08/08 14:33:46 moritz Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -63,6 +63,9 @@ buf_close(int sock, struct buf *buf)
 			error("buf_close (short write): %m");
 
 	} while (n == -1 && (errno == EAGAIN || errno == EINTR));
+
+	if (n == -1)
+		error("buf_close: %m");
 
 	free(buf->buf);
 	free(buf);
