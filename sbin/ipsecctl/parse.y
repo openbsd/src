@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2005/08/05 15:44:57 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.19 2005/08/08 09:15:09 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -78,11 +78,11 @@ struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
-struct ipsec_rule	*create_sa(struct ipsec_addr *, struct ipsec_addr *,
-			 u_int32_t, struct ipsec_key *);
-
+struct ipsec_rule	*create_sa(u_int8_t, struct ipsec_addr *,
+			     struct ipsec_addr *, u_int32_t, u_int16_t,
+			     u_int16_t, struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
-			     struct ipsec_key *);
+			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr *, struct
 			     ipsec_addr *, struct ipsec_addr *, u_int8_t,
 			     char *, char *, u_int16_t);
@@ -174,7 +174,8 @@ number		: STRING			{
 tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			struct ipsec_rule	*r;
 
-			r = create_sa($2.src, $2.dst, $3.spiout, $4.keyout);
+			r = create_sa(IPSEC_TCPMD5, $2.src, $2.dst, $3.spiout,
+			    AUTH_NONE, ENC_NONE, $4.keyout, NULL);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -184,7 +185,7 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 
 			/* Create and add reverse SA rule. */
 			if ($3.spiin != 0 || $4.keyin != NULL) {
-				r = reverse_sa(r, $3.spiin, $4.keyin);
+				r = reverse_sa(r, $3.spiin, $4.keyin, NULL);
 				if (r == NULL)
 					YYERROR;
 				r->nr = ipsec->rule_nr++;
@@ -866,12 +867,15 @@ copyhost(const struct ipsec_addr *src)
 }
 
 struct ipsec_rule *
-create_sa(struct ipsec_addr *src, struct ipsec_addr *dst, u_int32_t spi,
-    struct ipsec_key *authkey)
+create_sa(u_int8_t protocol, struct ipsec_addr *src, struct ipsec_addr *dst,
+    u_int32_t spi, u_int16_t authxf, u_int16_t encxf,
+    struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
 	struct ipsec_rule *r;
 
-	if (spi == 0 || authkey == NULL)
+	if (spi == 0)
+		return (NULL);
+	if (protocol == IPSEC_TCPMD5 && authkey == NULL)
 		return (NULL);
 
 	r = calloc(1, sizeof(struct ipsec_rule));
@@ -879,21 +883,25 @@ create_sa(struct ipsec_addr *src, struct ipsec_addr *dst, u_int32_t spi,
 		err(1, "calloc");
 
 	r->type |= RULE_SA;
-
+	r->proto = protocol;
 	r->src = src;
 	r->dst = dst;
 	r->spi = spi;
 	r->authkey = authkey;
+	r->enckey = enckey;
 
 	return r;
 }
 
 struct ipsec_rule *
-reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey)
+reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
+    struct ipsec_key *enckey)
 {
 	struct ipsec_rule *reverse;
 
-	if (spi == 0 || authkey == NULL)
+	if (spi == 0)
+		return (NULL);
+	if (rule->proto == IPSEC_TCPMD5 && authkey == NULL)
 		return (NULL);
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
@@ -901,10 +909,12 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey)
 		err(1, "calloc");
 
 	reverse->type |= RULE_SA;
+	reverse->proto = rule->proto;
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
 	reverse->spi = spi;
 	reverse->authkey = authkey;
+	reverse->enckey = enckey;
 
 	return (reverse);
 }

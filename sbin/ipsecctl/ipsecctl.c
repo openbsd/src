@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.22 2005/08/05 14:39:02 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.23 2005/08/08 09:15:09 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -64,11 +64,10 @@ static const char *showopt_list[] = {
 	"flow", "sa", "all", NULL
 };
 
-static const char *ruletype[] = {"?", "flow", "tcpmd5"};
 static const char *direction[] = {"?", "in", "out"};
 static const char *flowtype[] = {"?", "use", "acquire", "require", "deny",
     "bypass", "dontacq"};
-static const char *proto[] = {"?", "esp", "ah"};
+static const char *proto[] = {"?", "esp", "ah", "ipcomp", "tcpmd5"};
 static const char *auth[] = {"?", "psk", "rsa"};
 
 int
@@ -216,7 +215,7 @@ ipsecctl_print_key(struct ipsec_key *key)
 void
 ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 {
-	printf(" %s %s", proto[r->proto], direction[r->direction]);
+	printf("flow %s %s", proto[r->proto], direction[r->direction]);
 
 	printf(" from ");
 	ipsecctl_print_addr(r->src);
@@ -241,7 +240,8 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 void
 ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 {
-	printf(" from ");
+	printf("%s ", proto[r->proto]);
+	printf("from ");
 	ipsecctl_print_addr(r->src);
 	printf(" to ");
 	ipsecctl_print_addr(r->dst);
@@ -250,6 +250,10 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 		printf(" authkey 0x");
 		ipsecctl_print_key(r->authkey);
 	}
+	if (r->enckey) {
+		printf(" enckey 0x");
+		ipsecctl_print_key(r->enckey);
+	}
 }
 
 void
@@ -257,8 +261,6 @@ ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 {
 	if (opts & IPSECCTL_OPT_VERBOSE2)
 		printf("@%d ", r->nr);
-
-	printf("%s", ruletype[r->type]);
 
 	if (r->type & RULE_FLOW)
 		ipsecctl_print_flow(r, opts);

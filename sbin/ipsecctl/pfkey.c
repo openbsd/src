@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.19 2005/08/05 14:39:02 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.20 2005/08/08 09:15:09 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -758,7 +758,13 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 			return -1;
 		}
 	} else if (r->type == RULE_SA) {
-		satype = SADB_X_SATYPE_TCPSIGNATURE;
+		switch (r->proto) {
+		case IPSEC_TCPMD5:
+			satype = SADB_X_SATYPE_TCPSIGNATURE;
+			break;
+		default:
+			return -1;
+		}
 		switch (action) {
 		case PFK_ACTION_ADD:
 			ret = pfkey_sa(fd, satype, SADB_ADD, r->spi,
