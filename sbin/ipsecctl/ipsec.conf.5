@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.13 2005/08/05 14:39:02 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.14 2005/08/09 14:00:07 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -120,7 +120,7 @@ following rule:
 .Ar spi
 .Aq Ar number
 .Ar authkey
-.Aq Ar hex string
+.Aq Ar keyspec
 .Xc
 This rule applies for packets with source address
 .Aq Ar src
@@ -130,7 +130,19 @@ All addresses are specified in CIDR notation.
 The parameter
 .Ar spi
 is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
+.Pp
 The authentication key to be used is a hexadecimal string of arbitrary length.
+It is also possible to read the key from a file using this format:
+.Bd -literal -offset -indent
+authkey file "filename"
+.Ed
+.Pp
+It is very important that the key is not guessable.
+One practical way of generating 160-bit (20-byte) keys is a follows:
+.Bd -literal -offset indent
+$ openssl rand 20 | hexdump -e '20/1 "%02x"'
+.Ed
+.Pp
 For both
 .Ar spi
 and
@@ -164,6 +176,10 @@ flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 # Set up keys for TCP MD5 signatures
 tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \\
 	authkey 0xdeadbeef:0xbeefdead
+
+# Set up keys for TCP MD5 signatures, read keys from files
+tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \\
+	authkey file "/path/to/key1:/path/to/key2"
 .Ed
 .Sh SEE ALSO
 .Xr ipsec 4 ,
