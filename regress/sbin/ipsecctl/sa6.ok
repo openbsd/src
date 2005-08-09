@@ -30,10 +30,10 @@ esp from 2.2.2.2 to 1.1.1.5 spi 0xbeef5ead auth hmac-sha1 enc aesctr
 	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 esp from 1.1.1.6 to 2.2.2.2 spi 0x6eadbeef auth hmac-sha1 enc blowfish
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-	enckey 0xeeeeeeeeeeeeeeee
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 esp from 2.2.2.2 to 1.1.1.6 spi 0xbeef6ead auth hmac-sha1 enc blowfish
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-	enckey 0xeeeeeeeeeeeeeeee
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 esp from 1.1.1.7 to 2.2.2.2 spi 0x7eadbeef auth hmac-sha1 enc cast128
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
