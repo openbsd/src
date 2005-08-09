@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.30 2005/08/05 00:25:15 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.31 2005/08/09 14:27:56 marco Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct scsi_sense {
 struct scsi_inquiry {
 	u_int8_t opcode;
 	u_int8_t byte2;
+#define SI_EVPD		0x01
 	u_int8_t unused[2];
 	u_int8_t length;
 	u_int8_t control;
@@ -240,6 +241,14 @@ struct scsi_inquiry_data {
 #define SID_QAS		0x02
 #define SID_CLOCKING	0x0c /* 0 == ST only, 1 == DT only, 3 == both */
 	u_int8_t reserved;
+};
+
+struct scsi_inquiry_vpd {
+	u_int8_t device;
+	u_int8_t page_code;
+	u_int8_t reserved;
+	u_int8_t page_length;
+	char serial[32];
 };
 
 struct scsi_sense_data_unextended {
