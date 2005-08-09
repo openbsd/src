@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.100 2005/07/25 14:56:42 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.101 2005/08/09 12:50:08 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -896,6 +896,7 @@ sa_isakmp_upgrade(struct message *msg)
 struct attr_validation_state {
 	u_int8_t       *attrp[ATTRS_SIZE];
 	u_int8_t        checked[ATTRS_SIZE];
+	u_int16_t	len[ATTRS_SIZE];
 	int             phase;	/* IKE (1) or IPSEC (2) attrs? */
 	int             mode;	/* 0 = 'load', 1 = check */
 };
@@ -905,6 +906,8 @@ static int
 sa_validate_xf_attrs(u_int16_t type, u_int8_t *value, u_int16_t len,
     void *arg)
 {
+	int val0, val1;
+
 	struct attr_validation_state *avs =
 	    (struct attr_validation_state *)arg;
 
@@ -925,6 +928,7 @@ sa_validate_xf_attrs(u_int16_t type, u_int8_t *value, u_int16_t len,
 
 	if (avs->mode == 0) {	/* Load attrs.  */
 		avs->attrp[type] = value;
+		avs->len[type] = len;
 		return 0;
 	}
 	/* Checking for a missing attribute is an immediate failure.  */
@@ -933,7 +937,28 @@ sa_validate_xf_attrs(u_int16_t type, u_int8_t *value, u_int16_t len,
 
 	/* Match the loaded attribute against this one, mark it as checked.  */
 	avs->checked[type]++;
-	return memcmp(avs->attrp[type], value, len);
+	switch (len) {
+	case 2:
+		val0 = (int)decode_16(value);
+		break;
+	case 4:
+		val0 = (int)decode_32(value);
+		break;
+	default:
+		return 1;
+	}
+	switch (avs->len[type]) {
+	case 2:
+		val1 = (int)decode_16(avs->attrp[type]);
+		break;
+	case 4:
+		val1 = (int)decode_32(avs->attrp[type]);
+		break;
+	default:
+		return 1;
+	}
+	/* Return 0 when the values are equal. */
+	return (val0 != val1);
 }
 
 /*
