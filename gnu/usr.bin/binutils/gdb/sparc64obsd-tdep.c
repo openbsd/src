@@ -80,7 +80,7 @@ sparc64obsd_supply_gregset (const struct regset *regset,
    OpenBSD 3.5 and earlier releases, we find it at offset 0xe8.  */
 
 static const int sparc64obsd_page_size = 8192;
-static const int sparc64obsd_sigreturn_offset[] = { 0xec, 0xe8, -1 };
+static const int sparc64obsd_sigreturn_offset[] = { 0xf0, 0xec, 0xe8, -1 };
 
 static int
 sparc64obsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
