@@ -1,11 +1,9 @@
-dnl	$OpenBSD: install,v 1.36 2005/03/09 18:41:46 miod Exp $
+dnl	$OpenBSD: install,v 1.37 2005/08/09 16:48:11 deraadt Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD installation
-dnl XXX change back if more than one floppy again.
-dnl CD-ROM, or an installation floppy.
-CD-ROM, or the installation floppy.
+CD-ROM, or an installation floppy.
 
 If your machine is hooked up to a network, try and find a server to
 arrange for a diskless setup. This is a convenient way to install on a
@@ -38,9 +36,9 @@ Booting from Floppy Disk installation media:
        ok boot floppy bsd
 
 This will cause the kernel contained in the floppy to be booted.
-Please note that PCI systems are not able to boot from floppy; also,
-Ultra 1, 1E, and 2 systems might need a firmware update to be able to boot
-from floppy; refer to the ``Updating your firmware'' section earlier in
+Not all systems are ablt to boot from floppy; also, Ultra 1, 1E, and 2
+systems might need a firmware update to be able to boot from floppy;
+refer to the ``Updating your firmware'' section earlier in
 this document for details.
 
 
