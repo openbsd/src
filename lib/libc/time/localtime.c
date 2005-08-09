@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.27 2005/08/08 08:05:38 espie Exp $ */
+/*	$OpenBSD: localtime.c,v 1.28 2005/08/09 03:21:14 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
@@ -1171,7 +1171,7 @@ struct tm *p_tm;
 {
 	_THREAD_PRIVATE_MUTEX_LOCK(lcl);
 	tzset_basic();
-	localsub(timep, 0L, p_tm);
+	p_tm = localsub(timep, 0L, p_tm);
 	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
 	return p_tm;
 }
