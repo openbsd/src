@@ -1,4 +1,4 @@
-/*	$OpenBSD: watchdogd.c,v 1.3 2005/08/08 13:08:09 mbalmer Exp $ */
+/*	$OpenBSD: watchdogd.c,v 1.4 2005/08/09 15:09:06 mickey Exp $ */
 
 /*
  * Copyright (c) 2005 Marc Balmer <marc@msys.ch>
@@ -132,6 +132,8 @@ main(int argc, char *argv[])
 		warn("can't daemonize, restoring original values");
 		goto restore;
 	}
+
+	(void)mlockall(MCL_CURRENT | MCL_FUTURE);
 
 	signal(SIGTERM, sighdlr);
 
