@@ -1920,6 +1920,7 @@
 ./usr/sbin/visudo
 ./usr/sbin/vnconfig
 ./usr/sbin/vos
+./usr/sbin/watchdogd
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit
 ./usr/sbin/yppoll
