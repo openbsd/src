@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.122 2005/07/31 06:25:44 dlg Exp $
+#	$OpenBSD: Makefile,v 1.123 2005/08/09 16:56:50 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SUBDIR=	ac accton adduser amd arp authpf bgpctl bgpd bind chroot \
 	rmt rpc.bootparamd rpc.lockd rwhod sa sasyncd sensorsd sliplogin \
 	slstats spamdb spppcontrol spray syslogc syslogd tcpdrop \
 	tcpdump timed tokenadm tokeninit traceroute trpt usbdevs user \
-	vipw vnconfig wsmoused zdump zic ztsscale
+	vipw vnconfig watchdogd wsmoused zdump zic ztsscale
 
 # IPv6
 SUBDIR+=faithd ndp rip6query route6d rtadvd rtsold traceroute6
