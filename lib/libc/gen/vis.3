@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.20 2005/02/25 03:12:43 cloder Exp $
+.\"	$OpenBSD: vis.3,v 1.21 2005/08/09 19:38:31 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 9, 1993
+.Dd August 8, 2005
 .Dt VIS 3
 .Os
 .Sh NAME
@@ -163,6 +163,14 @@ except space, tab, and newline are encoded
 The following flags
 alter this:
 .Bl -tag -width VIS_WHITEX
+.It Dv VIS_GLOB
+Also encode magic characters recognized by
+.Xr glob 3
+.Ql ( * ,
+.Ql \&? ,
+.Ql \&[ )
+and
+.Ql # .
 .It Dv VIS_SP
 Also encode space.
 .It Dv VIS_TAB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.h,v 1.10 2004/10/17 20:25:31 otto Exp $	*/
+/*	$OpenBSD: vis.h,v 1.11 2005/08/09 19:38:31 millert Exp $	*/
 /*	$NetBSD: vis.h,v 1.4 1994/10/26 00:56:41 cgd Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
  * other
  */
 #define	VIS_NOSLASH	0x40	/* inhibit printing '\' */
+#define	VIS_GLOB	0x100	/* encode glob(3) magics and '#' */
 
 /*
  * unvis return codes
