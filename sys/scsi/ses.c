@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.18 2005/08/08 18:42:08 marco Exp $ */
+/*	$OpenBSD: ses.c,v 1.19 2005/08/09 11:37:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -60,6 +60,11 @@ struct ses_thread;
 struct ses_softc {
 	struct device		sc_dev;
 	struct scsi_link	*sc_link;
+
+	enum {
+		SES_ENC_STD,
+		SES_ENC_DELL
+	}			sc_enctype;
 	
 	u_char			*sc_buf;
 	ssize_t			sc_buflen;
@@ -93,9 +98,9 @@ int	ses_read_status(struct ses_softc *);
 int	ses_make_sensors(struct ses_softc *, struct ses_type_desc *, int);
 int	ses_refresh_sensors(struct ses_softc *);
 
-void	ses_psu2sensor(struct ses_sensor *);
-void	ses_cool2sensor(struct ses_sensor *);
-void	ses_temp2sensor(struct ses_sensor *);
+void	ses_psu2sensor(struct ses_softc *, struct ses_sensor *);
+void	ses_cool2sensor(struct ses_softc *, struct ses_sensor *);
+void	ses_temp2sensor(struct ses_softc *, struct ses_sensor *);
 
 #ifdef SES_DEBUG
 void	ses_dump_enc_desc(struct ses_enc_desc *);
@@ -134,6 +139,12 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link = sa->sa_sc_link;
 	sc->sc_thread = NULL;
 	sa->sa_sc_link->device_softc = sc;
+
+	if (strncasecmp(sc->sc_link->inqdata.vendor, "dell",
+	    sizeof(sc->sc_link->inqdata.vendor)) == 0)
+		sc->sc_enctype = SES_ENC_DELL;
+	else
+		sc->sc_enctype = SES_ENC_STD;
 
 	printf("\n");
 
@@ -470,15 +481,15 @@ ses_refresh_sensors(struct ses_softc *sc)
 
 		switch (sensor->se_type) {
 		case SES_T_POWERSUPPLY:
-			ses_psu2sensor(sensor);
+			ses_psu2sensor(sc, sensor);
 			break;
 
 		case SES_T_COOLING:
-			ses_cool2sensor(sensor);
+			ses_cool2sensor(sc, sensor);
 			break;
 
 		case SES_T_TEMP:
-			ses_temp2sensor(sensor);
+			ses_temp2sensor(sc, sensor);
 			break;
 
 		default:
@@ -491,44 +502,62 @@ ses_refresh_sensors(struct ses_softc *sc)
 }
 
 void
-ses_psu2sensor(struct ses_sensor *s)
+ses_psu2sensor(struct ses_softc *sc, struct ses_sensor *s)
 {
 	s->se_sensor.value = SES_S_PSU_OFF(s->se_stat) ? 0 : 1;
 }
 
 void
-ses_cool2sensor(struct ses_sensor *s)
+ses_cool2sensor(struct ses_softc *sc, struct ses_sensor *s)
 {
-	switch (SES_S_COOL_CODE(s->se_stat)) {
-	case SES_S_COOL_C_STOPPED:
-		s->se_sensor.value = 0;
+	switch (sc->sc_enctype) {
+	case SES_ENC_STD:
+		switch (SES_S_COOL_CODE(s->se_stat)) {
+		case SES_S_COOL_C_STOPPED:
+			s->se_sensor.value = 0;
+			break;
+		case SES_S_COOL_C_LOW1:
+		case SES_S_COOL_C_LOW2:
+		case SES_S_COOL_C_LOW3:
+			s->se_sensor.value = 33333;
+			break;
+		case SES_S_COOL_C_INTER:
+		case SES_S_COOL_C_HI3:
+		case SES_S_COOL_C_HI2:
+			s->se_sensor.value = 66666;
+			break;
+		case SES_S_COOL_C_HI1:
+			s->se_sensor.value = 100000;
+			break;
+		}
 		break;
-	case SES_S_COOL_C_LOW1:
-		s->se_sensor.value = 15000; /* 14.28%*/
-		break;
-	case SES_S_COOL_C_LOW2:
-		s->se_sensor.value = 30000; /* 28.57% */
-		break;
-	case SES_S_COOL_C_LOW3:
-		s->se_sensor.value = 45000; /* 42.85% */
-		break;
-	case SES_S_COOL_C_INTER:
-		s->se_sensor.value = 60000; /* 57.14% */
-		break;
-	case SES_S_COOL_C_HI3:
-		s->se_sensor.value = 75000; /* 71.42% */
-		break;
-	case SES_S_COOL_C_HI2:
-		s->se_sensor.value = 85000; /* 85.71% */
-		break;
-	case SES_S_COOL_C_HI1:
-		s->se_sensor.value = 100000; /* 100.00% */
+
+	/* Dell only use the first three codes to represent speed */
+	case SES_ENC_DELL:
+		switch (SES_S_COOL_CODE(s->se_stat)) {
+		case SES_S_COOL_C_STOPPED:
+			s->se_sensor.value = 0;
+			break;
+		case SES_S_COOL_C_LOW1:
+			s->se_sensor.value = 33333;
+			break;
+		case SES_S_COOL_C_LOW2:
+			s->se_sensor.value = 66666;
+			break;
+		case SES_S_COOL_C_LOW3:
+		case SES_S_COOL_C_INTER:
+		case SES_S_COOL_C_HI3:
+		case SES_S_COOL_C_HI2:
+		case SES_S_COOL_C_HI1:
+			s->se_sensor.value = 100000;
+			break;
+		}
 		break;
 	}
 }
 
 void
-ses_temp2sensor(struct ses_sensor *s)
+ses_temp2sensor(struct ses_softc *sc, struct ses_sensor *s)
 {
 	s->se_sensor.value = (int64_t)SES_S_TEMP(s->se_stat);
 	s->se_sensor.value += SES_S_TEMP_OFFSET;
