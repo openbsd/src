@@ -1,4 +1,4 @@
-.\" $OpenBSD: watchdogd.8,v 1.1 2005/08/08 12:08:56 mbalmer Exp $
+.\" $OpenBSD: watchdogd.8,v 1.2 2005/08/09 09:30:13 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Marc Balmer <marc@msys.ch>
 .\"
@@ -27,21 +27,45 @@
 .Op Fl p Ar period
 .Sh DESCRIPTION
 .Nm
-is a daemon to periodically retrigger the watchdog timer device from
-userland.  The watchdog timeout period and the retrigger
-interval can be specified on the command line.  The period defaults to
-30 seconds.  If no interval is specified, the value of the period divided
-by three is used.  The daemon will detach from the controlling terminal
-and run in the background unless the
-.Fl d
-command line option is set.
+is a daemon to periodically retrigger the
+.Xr watchdog 4
+timer device from userland.
+After every
+.Ar interval
+seconds,
+.Nm
+resets the hardware timer to
+.Ar period .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground.
+.It Fl i Ar interval
+Specify how often, in seconds,
+.Nm
+should retrigger the hardware timer.
+If no interval is specified,
+the value of
+.Ar period
+(see below)
+divided by three is used.
+.It Fl p Ar period
+Set the hardware timer to expire in
+.Ar period
+seconds.
+The default is 30 seconds.
+.El
 .Sh SEE ALSO
-.Xr watchdog 4 ,
 .Xr elansc 4 ,
-.Xr geodesc 4
+.Xr geodesc 4 ,
+.Xr watchdog 4
 .Sh HISTORY
 The
 .Nm
-program 
+program
 first appeared in
 .Ox 3.8 .
