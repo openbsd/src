@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.27 2005/08/09 01:43:33 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.28 2005/08/09 03:08:27 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -217,7 +217,7 @@ bio_inq(char *name)
 		else
 			snprintf(size, sizeof size, "%14llu",
 			    bv.bv_size);
-		printf("%7s %-10s %14s %-8s RAID%u\n",
+		printf("%7s %-10s %14s %-7s RAID%u\n",
 		    scsiname, status, size, bv.bv_dev, bv.bv_level);
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
