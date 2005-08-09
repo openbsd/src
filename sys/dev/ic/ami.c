@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.56 2005/08/08 20:23:46 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.57 2005/08/09 14:29:18 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -138,7 +138,7 @@ int  ami_inquire(struct ami_softc *sc, u_int8_t op);
 #if NBIO > 0
 int ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
     size_t, void *);
-int ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, void *);
+int ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t, void *);
 int ami_ioctl(struct device *, u_long, caddr_t);
 int ami_ioctl_inq(struct ami_softc *, struct bioc_inq *);
 int ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
@@ -1861,10 +1861,11 @@ ami_ioctl(dev, cmd, addr)
 }
 
 int
-ami_drv_inq(sc, ch, tg, inqbuf)
+ami_drv_inq(sc, ch, tg, page, inqbuf)
 	struct ami_softc *sc;
 	u_int8_t ch;
 	u_int8_t tg;
+	u_int8_t page;
 	void *inqbuf;
 {
 	struct ami_ccb *ccb;
@@ -1907,6 +1908,11 @@ ami_drv_inq(sc, ch, tg, inqbuf)
 	ps->apt_cdb[3] = 0;
 	ps->apt_cdb[4] = sizeof(struct scsi_inquiry_data); /* INQUIRY length */
 	ps->apt_cdb[5] = 0;
+
+	if (page != 0) {
+		ps->apt_cdb[1] = SI_EVPD;
+		ps->apt_cdb[2] = page;
+	}
 
 	ps->apt_data = htole32(pa + sizeof *ps);
 	ps->apt_datalen = sizeof(struct scsi_inquiry_data);
@@ -2127,6 +2133,7 @@ ami_ioctl_disk(sc, bd)
 	struct bioc_disk *bd;
 {
 	struct scsi_inquiry_data inqbuf;
+	struct scsi_inquiry_vpd vpdbuf;
 	struct ami_big_diskarray *p; /* struct too large for stack */
 	int i, s, t, d;
 	int off;
@@ -2194,9 +2201,15 @@ ami_ioctl_disk(sc, bd)
 			ch = p->ald[i].asp[s].adv[t].add_target >> 4;
 			tg = p->ald[i].asp[s].adv[t].add_target & 0x0f;
 
-			if (!ami_drv_inq(sc, ch, tg, &inqbuf))
+			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf))
 				strlcpy(bd->bd_vendor, inqbuf.vendor,
 				    8 + 16 + 4 + 1); /* vendor prod rev zero */
+
+			if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf))
+				strlcpy(bd->bd_serial, vpdbuf.serial,
+				    vpdbuf.page_length < sizeof(bd->bd_serial) ?
+				    vpdbuf.page_length : sizeof(bd->bd_serial));
+
 
 			bd->bd_channel = ch;
 			bd->bd_target = tg;
