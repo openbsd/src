@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.58 2005/07/28 20:32:33 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.59 2005/08/09 20:27:25 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -239,6 +239,23 @@ network 192.168.7.0/24 set localpref 220
 See also the
 .Sx ATTRIBUTE SET
 section.
+.Pp
+.It Xo
+.Ic rde
+.Ic med
+.Ic compare
+.Pq Ic always Ns \&| Ns Ic strict
+.Xc
+If set to
+.Ic always ,
+the
+.Em MED
+attributes will be comapared always.
+The default is
+.Ic strict
+where the
+.Em MED
+is only compared between peers belonging to the same AS.
 .Pp
 .It Xo
 .Ic rde
