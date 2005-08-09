@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.43 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.44 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -51,7 +51,7 @@ usebuffer(int f, int n)
 
 	if (bufp == NULL)
 		return (ABORT);
-	if (bufn[0] == 0 && curbp->b_altb != NULL)
+	if (bufp[0] == '\0' && curbp->b_altb != NULL)
 		bp = curbp->b_altb;
 	else if ((bp = bfind(bufn, TRUE)) == NULL)
 		return (FALSE);
@@ -82,7 +82,7 @@ poptobuffer(int f, int n)
 			bufn, NBUFN, EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
 	if (bufp == NULL)
 		return (ABORT);
-	if (bufp[0] == 0 && curbp->b_altb != NULL)
+	if (bufp[0] == '\0' && curbp->b_altb != NULL)
 		bp = curbp->b_altb;
 	else if ((bp = bfind(bufn, TRUE)) == NULL)
 		return (FALSE);
@@ -112,7 +112,7 @@ killbuffer_cmd(int f, int n)
 	if ((bufp = eread("Kill buffer: (default %s) ", bufn, NBUFN,
 	    EFNUL | EFNEW | EFBUF, curbp->b_bname)) == NULL)
 		return (ABORT);
-	else if (bufp[0] == 0)
+	else if (bufp[0] == '\0')
 		bp = curbp;
 	else if ((bp = bfind(bufn, FALSE)) == NULL)
 		return (FALSE);

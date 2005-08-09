@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.35 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.36 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -86,7 +86,8 @@ eyesno(const char *sp)
 	if (inmacro)
 		return (TRUE);
 #endif /* !NO_MACRO */
-	rep = ereply("%s? (yes or no) ", buf, sizeof(buf), sp);
+	rep = eread("%s? (yes or no) ", buf, sizeof(buf),
+	    EFNUL | EFNEW | EFCR, sp);
 	for (;;) {
 		if (rep == NULL)
 			return (ABORT);
@@ -110,37 +111,19 @@ eyesno(const char *sp)
 			    (rep[2] == '\0'))
 				return (FALSE);
 		}
-		rep = ereply("Please answer yes or no.  %s? (yes or no) ",
-		    buf, sizeof(buf), sp);
+		rep = eread("Please answer yes or no.  %s? (yes or no) ",
+		    buf, sizeof(buf), EFNUL | EFNEW | EFCR, sp);
 	}
 	/* NOTREACHED */
-}
-
-/*
- * Write out a prompt and read back a reply.  The prompt is now written
- * out with full "ewprintf" formatting, although the arguments are in a
- * rather strange place.  This is always a new message, there is no auto
- * completion, and the return is echoed as such.
- */
-/* VARARGS */
-char *
-ereply(const char *fmt, char *buf, size_t nbuf, ...)
-{
-	va_list	 ap;
-	char	*rep;
-
-	va_start(ap, nbuf);
-	rep = veread(fmt, buf, nbuf, EFNEW | EFCR, ap);
-	va_end(ap);
-	return (rep);
 }
 
 /*
  * This is the general "read input from the echo line" routine.  The basic
  * idea is that the prompt string "prompt" is written to the echo line, and
  * a one line reply is read back into the supplied "buf" (with maximum
- * length "len"). The "flag" contains EFNEW (a new prompt), an EFFUNC
- * (autocomplete), or EFCR (echo the carriage return as CR).
+ * length "len").
+ * XXX: When checking for an empty return value, always check rep, *not* buf
+ * as buf may be freed in pathological cases.
  */
 /* VARARGS */
 char *
@@ -205,7 +188,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 			c = CCHR('M');
 			/* FALLTHROUGH */
 		case CCHR('M'):			/* return, done */
-			/* if there's nothing in the minibuffer, quit */
+			/* if there's nothing in the minibuffer, abort */
 			if (cpos == 0 && !(flag & EFNUL)) {
 				(void)ctrlg(FFRAND, 0);
 				ttflush();

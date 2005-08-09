@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.7 2005/04/29 07:22:38 otto Exp $ */
+/* $OpenBSD: autoexec.c,v 1.8 2005/08/09 00:53:47 kjell Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -86,11 +86,13 @@ auto_execute(int f, int n)
 	char	patbuf[128], funcbuf[128], *patp, *funcp;
 	int	s;
 
-	if ((patp = ereply("Filename pattern: ", patbuf, sizeof(patbuf))) == NULL)
+	if ((patp = eread("Filename pattern: ", patbuf, sizeof(patbuf),
+	    EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (patp[0] == '\0')
 		return (FALSE);
-	if ((funcp = ereply("Execute: ", funcbuf, sizeof(funcbuf))) == NULL)
+	if ((funcp = eread("Execute: ", funcbuf, sizeof(funcbuf),
+	    EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (funcp[0] == '\0')
 		return (FALSE);

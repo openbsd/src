@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.17 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.18 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -414,12 +414,13 @@ re_readpattern(char *prompt)
 	char		tpat[NPAT], *rep;
 
 	if (re_pat[0] == '\0')
-		rep = ereply("%s: ", tpat, NPAT, prompt);
+		rep = eread("%s: ", tpat, NPAT, EFNEW | EFCR, prompt);
 	else
 		rep = eread("%s: (default %s) ", tpat, NPAT,
 		    EFNUL | EFNEW | EFCR, prompt, re_pat);
-
-	if (rep != NULL && *rep != '\0') {
+	if (rep == NULL)
+		return (ABORT);
+	if (rep[0] != '\0') {
 		/* New pattern given */
 		(void)strlcpy(re_pat, tpat, sizeof(re_pat));
 		if (casefoldsearch)

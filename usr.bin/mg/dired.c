@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.20 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.21 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -127,7 +127,7 @@ dired(int f, int n)
 	}
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
-		strlcpy(dirname, curbp->b_fname, sizeof(dirname));
+		(void)strlcpy(dirname, curbp->b_fname, sizeof(dirname));
 		if ((slash = strrchr(dirname, '/')) != NULL) {
 			*(slash + 1) = '\0';
 		}
@@ -136,8 +136,11 @@ dired(int f, int n)
 			dirname[0] = '\0';
 	}
 
-	if ((bufp = eread("Dired: ", dirname, NFILEN, EFDEF | EFNEW | EFCR)) == NULL)
+	if ((bufp = eread("Dired: ", dirname, NFILEN,
+	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
+	if (bufp[0] == '\0')
+		return (FALSE);
 	if ((bp = dired_(bufp)) == NULL)
 		return (FALSE);
 	bp->b_modes[0] = name_mode("fundamental");
@@ -157,8 +160,10 @@ d_otherwindow(int f, int n)
 
 	dirname[0] = '\0';
 	if ((bufp = eread("Dired other window: ", dirname, NFILEN,
-	    EFNEW | EFCR)) == NULL)
+	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
+	else if (bufp[0] == '\0')
+		return (FALSE);
 	if ((bp = dired_(bufp)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
@@ -319,8 +324,8 @@ d_copy(int f, int n)
 		ewprintf("Directory name too long");
 		return (FALSE);
 	}
-	if ((bufp = eread("Copy %s to: ", toname + off, sizeof(toname) - off,
-	    EFNEW | EFCR, basename(frname))) == NULL)
+	if ((bufp = eread("Copy %s to: ", toname, sizeof(toname),
+	    EFDEF | EFNEW | EFCR, basename(frname))) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
@@ -349,8 +354,8 @@ d_rename(int f, int n)
 		ewprintf("Directory name too long");
 		return (FALSE);
 	}
-	if ((bufp = eread("Rename %s to: ", toname + off,
-	    sizeof(toname) - off, EFNEW | EFCR, basename(frname))) == NULL)
+	if ((bufp = eread("Rename %s to: ", toname,
+	    sizeof(toname), EFDEF | EFNEW | EFCR, basename(frname))) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
@@ -396,18 +401,18 @@ d_shell_command(int f, int n)
 	}
 
 	command[0] = '\0';
-	if ((bufp = eread("! on %s: ", command, sizeof(command), 0,
+	if ((bufp = eread("! on %s: ", command, sizeof(command), EFNEW,
 	    basename(fname))) == NULL)
 		return (ABORT);
 	infd = open(fname, O_RDONLY);
 	if (infd == -1) {
 		ewprintf("Can't open input file : %s", strerror(errno));
-		return (ABORT);
+		return (FALSE);
 	}
 	if (pipe(fds) == -1) {
 		ewprintf("Can't create pipe : %s", strerror(errno));
 		close(infd);
-		return (ABORT);
+		return (FALSE);
 	}
 
 	newa.sa_handler = reaper;
@@ -472,15 +477,15 @@ d_create_directory(int f, int n)
 	off = strlcpy(tocreate, curbp->b_fname, sizeof(tocreate));
 	if (off >= sizeof(tocreate) - 1)
 		return (FALSE);
-	if ((bufp = ereply("Create directory: ", tocreate + off,
-	    sizeof(tocreate) - off)) == NULL)
+	if ((bufp = eread("Create directory: ", tocreate,
+	    sizeof(tocreate), EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
 	if (mkdir(tocreate, 0755) == -1) {
 		ewprintf("Creating directory: %s, %s", strerror(errno),
 		    tocreate);
-		return (ABORT);
+		return (FALSE);
 	}
 	bp = dired_(curbp->b_fname);
 	return (showbuffer(bp, curwp, WFHARD | WFMODE));

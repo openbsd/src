@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.34 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.35 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -367,8 +367,8 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 	if (unbind)
 		funct = rescan;
 	else {
-		if ((bufp = eread("%s to command: ", prompt, 80, EFFUNC | EFNEW,
-		    prompt)) == NULL)
+		if ((bufp = eread("%s to command: ", prompt, sizeof(prompt),
+		    EFFUNC | EFNEW, prompt)) == NULL)
 			return (ABORT);
 		else if (bufp[0] == '\0')
 			return (FALSE);
@@ -496,7 +496,7 @@ define_key(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	strlcat(buf, tmp, sizeof(buf));
+	(void)strlcat(buf, tmp, sizeof(buf));
 	if ((mp = name_map(tmp)) == NULL) {
 		ewprintf("Unknown map %s", tmp);
 		return (FALSE);
@@ -580,7 +580,8 @@ evalexpr(int f, int n)
 {
 	char	 exbuf[128], *bufp;
 
-	if ((bufp = ereply("Eval: ", exbuf, sizeof(exbuf))) == NULL)
+	if ((bufp = eread("Eval: ", exbuf, sizeof(exbuf),
+	    EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
@@ -623,7 +624,8 @@ evalfile(int f, int n)
 {
 	char	 fname[NFILEN], *bufp;
 
-	if ((bufp = ereply("Load file: ", fname, NFILEN)) == NULL)
+	if ((bufp = eread("Load file: ", fname, NFILEN,
+	    EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);

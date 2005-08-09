@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.24 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: help.c,v 1.25 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -181,7 +181,8 @@ apropos_command(int f, int n)
 	LIST		*fnames, *el;
 	char		 string[32], *bufp;
 
-	if ((bufp = eread("apropos: ", string, sizeof(string), EFNEW)) == NULL)
+	if ((bufp = eread("apropos: ", string, sizeof(string),
+	   EFNUL | EFNEW)) == NULL)
 		return (ABORT);
 	/* FALSE means we got a 0 character string, which is fine */
 	bp = bfind("*help*", TRUE);

@@ -1,4 +1,4 @@
-/* $OpenBSD: mail.c,v 1.5 2005/04/03 02:09:28 db Exp $ */
+/* $OpenBSD: mail.c,v 1.6 2005/08/09 00:53:48 kjell Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -60,9 +60,10 @@ mail_set_limit(int f, int n)
 	if ((f & FFARG) != 0) {
 		limit = n;
 	} else {
-		if ((rep = ereply("Margin: ", buf, sizeof(buf))) == NULL)
+		if ((rep = eread("Margin: ", buf, sizeof(buf),
+		    EFNEW | EFCR)) == NULL)
 			return (ABORT);
-		else if (*rep == '\0')
+		else if (rep[0] == '\0')
 			return (FALSE);
 		limit = atoi(rep);
 	}

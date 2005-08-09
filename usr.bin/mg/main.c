@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -203,7 +203,7 @@ quit(int f, int n)
 	if ((s = anycb(FALSE)) == ABORT)
 		return (ABORT);
 	if (s == FALSE
-	    || eyesno("Some modified buffers exist, really exit") == TRUE) {
+	    || eyesno("Modified buffers exist; really exit") == TRUE) {
 		vttidy();
 #ifdef SYSCLEANUP
 		SYSCLEANUP;

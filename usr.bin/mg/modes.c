@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.11 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: modes.c,v 1.12 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -119,7 +119,8 @@ set_default_mode(int f, int n)
 	MAPS	*m;
 	char	 mode[32], *bufp;
 
-	if ((bufp = eread("Set Default Mode: ", mode, 32, EFNEW)) == NULL)
+	if ((bufp = eread("Set Default Mode: ", mode, sizeof(mode),
+	    EFNEW)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);

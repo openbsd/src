@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.13 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: dir.c,v 1.14 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -37,10 +37,12 @@ changedir(int f, int n)
 {
 	char	bufc[NPAT], *bufp;
 
-	if ((bufp = ereply("Change default directory: ", bufc, NPAT)) == NULL)
+	(void)strlcpy(bufc, wdir, sizeof(bufc));
+	if ((bufp = eread("Change default directory: ", bufc, NPAT,
+	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
-	if (bufc[0] == '\0')
-		(void)strlcpy(bufc, wdir, sizeof(bufc));
+	else if (bufp[0] == '\0')
+		return (FALSE);
 	if (chdir(bufc) == -1) {
 		ewprintf("Can't change dir to %s", bufc);
 		return (FALSE);

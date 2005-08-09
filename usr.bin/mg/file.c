@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.37 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.38 2005/08/09 00:53:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -52,7 +52,8 @@ filevisit(int f, int n)
 	else
 		fname[0] = '\0';
 
-	bufp = eread("Find file: ", fname, NFILEN, EFNEW | EFCR | EFFILE | EFDEF);
+	bufp = eread("Find file: ", fname, NFILEN,
+	    EFNEW | EFCR | EFFILE | EFDEF);
 	if (bufp == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
