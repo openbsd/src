@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.18 2004/12/10 20:47:30 mickey Exp $	*/
+/*	$OpenBSD: day.c,v 1.19 2005/08/09 12:32:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: day.c,v 1.18 2004/12/10 20:47:30 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: day.c,v 1.19 2005/08/09 12:32:58 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ settime(now)
 		cumdays = daytab[0];
 	/* Friday displays Monday's events */
 	offset = tp->tm_wday == 5 ? 3 : 1;
-	if (f_dayAfter)
+	if (f_SetdayAfter)
 		offset = 0;	/* Except not when range is set explicitly */
 	header[5].iov_base = dayname;
 
