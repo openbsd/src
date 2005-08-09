@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.23 2005/08/05 09:52:08 espie Exp $
+# $OpenBSD: Delete.pm,v 1.24 2005/08/09 20:55:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -461,7 +461,10 @@ sub delete
 	}
 	return if $state->{not};
 	return unless -e $realname;
-	if ($state->{extra}) {
+	if ($state->{replacing}) {
+		$state->print("Remember to update $realname\n");
+		$self->mark_dir($state, dirname($name));
+	} elsif ($state->{extra}) {
 		unlink($realname) or 
 		    print "problem deleting extra file $realname\n";
 	} else {
@@ -477,6 +480,7 @@ sub delete
 	my ($self, $state) = @_;
 	return unless $state->{extra};
 	my $realname = $state->{destdir}.$self->fullname();
+	return if $state->{replacing};
 	if ($state->{extra}) {
 		$self->SUPER::delete($state);
 	} else {
