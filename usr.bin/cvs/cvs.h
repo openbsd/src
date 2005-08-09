@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.77 2005/08/04 13:31:14 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.78 2005/08/09 10:33:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -213,6 +213,8 @@ struct cvsroot {
 	FILE   *cr_srverr;
 	char   *cr_version;     /* version of remote server */
 	u_char  cr_vrmask[16];  /* mask of valid requests supported by server */
+
+	TAILQ_ENTRY(cvsroot) root_cache;
 };
 
 #define CVS_SETVR(rt, rq) ((rt)->cr_vrmask[(rq) / 8] |=  (1 << ((rq) % 8)))

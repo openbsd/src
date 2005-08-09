@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.21 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: root.c,v 1.22 2005/08/09 10:33:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -65,11 +65,7 @@ const char *cvs_methods[] = {
  * increases the reference count).  Otherwise, it does the parsing and adds
  * the result to the cache for future hits.
  */
-
-static struct cvsroot **cvs_rcache = NULL;
-static u_int cvs_rcsz = 0;
-
-
+static TAILQ_HEAD(, cvsroot) cvs_rcache = TAILQ_HEAD_INITIALIZER(cvs_rcache);
 
 /*
  * cvsroot_parse()
@@ -86,13 +82,18 @@ cvsroot_parse(const char *str)
 {
 	u_int i;
 	char *cp, *sp, *pp;
-	void *tmp;
 	struct cvsroot *root;
 
-	for (i = 0; i < cvs_rcsz; i++) {
-		if (strcmp(str, cvs_rcache[i]->cr_str) == 0) {
-			cvs_rcache[i]->cr_ref++;
-			return (cvs_rcache[i]);
+	/*
+	 * Look if we have it in cache, if we found it add it to the cache
+	 * at the first position again.
+	 */
+	TAILQ_FOREACH(root, &cvs_rcache, root_cache) {
+		if (strcmp(str, root->cr_str) == 0) {
+			TAILQ_REMOVE(&cvs_rcache, root, root_cache);
+			TAILQ_INSERT_HEAD(&cvs_rcache, root, root_cache);
+			root->cr_ref++;
+			return (root);
 		}
 	}
 
@@ -214,13 +215,7 @@ cvsroot_parse(const char *str)
 	}
 
 	/* add to the cache */
-	tmp = realloc(cvs_rcache, (cvs_rcsz + 1) * sizeof(struct cvsroot *));
-	if (tmp != NULL) {
-		cvs_rcache = (struct cvsroot **)tmp;
-		cvs_rcache[cvs_rcsz++] = root;
-		root->cr_ref++;
-	}
-
+	TAILQ_INSERT_HEAD(&cvs_rcache, root, root_cache);
 	return (root);
 }
 
@@ -236,6 +231,7 @@ cvsroot_free(struct cvsroot *root)
 {
 	root->cr_ref--;
 	if (root->cr_ref == 0) {
+		TAILQ_REMOVE(&cvs_rcache, root, root_cache);
 		if (root->cr_str != NULL)
 			free(root->cr_str);
 		if (root->cr_buf != NULL)
