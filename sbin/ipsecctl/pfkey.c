@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.21 2005/08/08 14:19:16 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.22 2005/08/09 12:37:45 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -45,8 +45,8 @@ static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t,
 		    struct ipsec_addr *, struct ipsec_addr *,
 		    struct ipsec_addr *, struct ipsec_auth *, u_int8_t);
 static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
-		    struct ipsec_addr *, struct ipsec_addr *, const struct
-		    ipsec_xf *, const struct ipsec_xf *, struct ipsec_key *,
+		    struct ipsec_addr *, struct ipsec_addr *,
+		    struct ipsec_transforms *, struct ipsec_key *,
 		    struct ipsec_key *);
 static int	pfkey_reply(int);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
@@ -303,10 +303,9 @@ out:
 }
 
 static int
-pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
-    struct ipsec_addr *src, struct ipsec_addr *dst, const struct ipsec_xf
-    *authxf, const struct ipsec_xf *encxf, struct ipsec_key *authkey,
-    struct ipsec_key *enckey)
+pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi, struct
+    ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_transforms *xfs,
+    struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
 	struct sadb_msg		smsg;
 	struct sadb_sa		sa;
@@ -357,8 +356,8 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	sa.sadb_sa_spi = htonl(spi);
 	sa.sadb_sa_state = SADB_SASTATE_MATURE;
 
-	if (authxf) {
-		switch (authxf->id) {
+	if (xfs && xfs->authxf) {
+		switch (xfs->authxf->id) {
 		case AUTHXF_NONE:
 			break;
 		case AUTHXF_HMAC_MD5:
@@ -387,11 +386,11 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 			break;
 		default:
 			warnx("unsupported authentication algorithm %d",
-			    authxf->id);
+			    xfs->authxf->id);
 		}
 	}
-	if (encxf) {
-		switch (encxf->id) {
+	if (xfs && xfs->encxf) {
+		switch (xfs->encxf->id) {
 		case ENCXF_NONE:
 			break;
 		case ENCXF_3DES_CBC:
@@ -419,7 +418,8 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 			sa.sadb_sa_encrypt = SADB_X_EALG_SKIPJACK;
 			break;
 		default:
-			warnx("unsupported encryption algorithm %d", encxf->id);
+			warnx("unsupported encryption algorithm %d",
+			    xfs->encxf->id);
 		}
 	}
 
@@ -860,12 +860,11 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		switch (action) {
 		case PFK_ACTION_ADD:
 			ret = pfkey_sa(fd, satype, SADB_ADD, r->spi,
-			    r->src, r->dst, r->encxf, r->authxf,
-			    r->authkey, r->enckey);
+			    r->src, r->dst, r->xfs, r->authkey, r->enckey);
 			break;
 		case PFK_ACTION_DELETE:
 			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi,
-			    r->src, r->dst, r->encxf, r->authxf, NULL, NULL);
+			    r->src, r->dst, r->xfs, NULL, NULL);
 			break;
 		default:
 			return -1;

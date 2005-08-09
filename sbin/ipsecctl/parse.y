@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2005/08/09 12:35:25 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2005/08/09 12:37:45 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,13 +107,15 @@ struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
+struct ipsec_transforms *transforms(const char *, const char *);
+struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
 int			 validate_sa(u_int32_t, u_int8_t,
-			     const struct ipsec_xf *, const struct ipsec_xf *,
-			     struct ipsec_key *, struct ipsec_key *);
+			     struct ipsec_transforms *, struct ipsec_key *,
+			     struct ipsec_key *);
 struct ipsec_rule	*create_sa(u_int8_t, struct ipsec_addr *,
 			     struct ipsec_addr *, u_int32_t,
-			     const struct ipsec_xf *, const struct ipsec_xf *,
-			     struct ipsec_key *, struct ipsec_key *);
+			     struct ipsec_transforms *, struct ipsec_key *,
+			     struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr *, struct
@@ -156,10 +158,7 @@ typedef struct {
 			struct ipsec_key *keyout;
 			struct ipsec_key *keyin;
 		} keys;
-		struct {
-			const struct ipsec_xf *authxf;
-			const struct ipsec_xf *encxf;
-		} transforms;
+		struct ipsec_transforms *transforms;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -214,7 +213,7 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			struct ipsec_rule	*r;
 
 			r = create_sa(IPSEC_TCPMD5, $2.src, $2.dst, $3.spiout,
-			    NULL, NULL, $4.keyout, NULL);
+			    NULL, $4.keyout, NULL);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -238,8 +237,8 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 sarule		: protocol hosts spispec transforms authkeyspec enckeyspec {
 			struct ipsec_rule	*r;
 
-			r = create_sa($1, $2.src, $2.dst, $3.spiout,
-			    $4.authxf, $4.encxf, $5.keyout, $6.keyout);
+			r = create_sa($1, $2.src, $2.dst, $3.spiout, $4,
+			    $5.keyout, $6.keyout);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -387,40 +386,38 @@ spispec		: SPI STRING			{
 		;
 
 transforms	: /* empty */			{
-			$$.authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
-			$$.encxf = &encxfs[ENCXF_AESCTR];
+			struct ipsec_transforms *xfs;
+
+			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
+			    == NULL)
+				err(1, "calloc");
+			$$ = xfs;
 		}
 		| AUTHXF STRING ENCXF STRING	{
-			$$.authxf = parse_xf($2, authxfs);
+			if (($$ = transforms($2, $4)) == NULL) {
+				free($2);
+				free($4);
+				yyerror("could not parse transforms");
+				YYERROR;
+			}
 			free($2);
-			if ($$.authxf == NULL) {
-				yyerror("could not parse authentication xf");
-				YYERROR;
-			}
-			$$.encxf = parse_xf($4, encxfs);
 			free($4);
-			if ($$.encxf == NULL) {
-				yyerror("could not parse encryption xf");
-				YYERROR;
-			}
 		}
 		| AUTHXF STRING			{
-			$$.encxf = &encxfs[ENCXF_AESCTR];
-			$$.authxf = parse_xf($2, authxfs);
-			free($2);
-			if ($$.authxf == NULL) {
-				yyerror("could not parse authentication xf");
+			if (($$ = transforms($2, NULL)) == NULL) {
+				free($2);
+				yyerror("could not parse transforms");
 				YYERROR;
 			}
+			free($2);
 		}
 		| ENCXF STRING			{
-			$$.authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
-			$$.encxf = parse_xf($2, encxfs);
-			free($2);
-			if ($$.encxf == NULL) {
-				yyerror("could not parse encryption xf");
+			if (($$ = transforms(NULL, $2)) == NULL) {
+				free($2);
+				yyerror("could not parse transforms");
 				YYERROR;
 			}
+			free($2);
 		}
 		;
 
@@ -986,45 +983,101 @@ parse_xf(const char *name, const struct ipsec_xf xfs[])
 	return (NULL);
 }
 
+struct ipsec_transforms *
+transforms(const char *authname, const char *encname)
+{
+	struct ipsec_transforms *xfs;
+
+	xfs = calloc(1, sizeof(struct ipsec_transforms));
+	if (xfs == NULL)
+		err(1, "calloc");
+
+	if (authname)
+		xfs->authxf = parse_xf(authname, authxfs);
+	if (encname)
+		xfs->encxf = parse_xf(encname, encxfs);
+
+	return (xfs);
+}
+
+struct ipsec_transforms *
+copytransforms(const struct ipsec_transforms *xfs)
+{
+	struct ipsec_transforms *newxfs;
+
+	if (xfs == NULL)
+		return (NULL);
+
+	newxfs = calloc(1, sizeof(struct ipsec_transforms));
+	if (newxfs == NULL)
+		err(1, "calloc");
+
+	memcpy(newxfs, xfs, sizeof(struct ipsec_transforms));
+	return (newxfs);
+}
+
 int
-validate_sa(u_int32_t spi, u_int8_t protocol, const struct ipsec_xf *authxf,
-    const struct ipsec_xf *encxf, struct ipsec_key *authkey,
-    struct ipsec_key *enckey)
+validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
+    struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
 	/* Sanity checks */
 	if (spi == 0) {
 		yyerror("no SPI specified");
 		return (0);
 	}
+	if (protocol == IPSEC_AH) {
+		if (!xfs) {
+			yyerror("no transforms specified");
+			return (0);
+		}
+		if (!xfs->authxf)
+			xfs->authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
+		if (xfs->encxf) {
+			yyerror("ah does not provide encryption");
+			return (0);
+		}
+	}
+	if (protocol == IPSEC_ESP) {
+		if (!xfs) {
+			yyerror("no transforms specified");
+			return (0);
+		}
+		if (!xfs->authxf)
+			xfs->authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
+		if (!xfs->encxf)
+			xfs->encxf = &encxfs[ENCXF_AESCTR];
+	}
 	if (protocol == IPSEC_TCPMD5 && authkey == NULL) {
 		yyerror("authentication key needed for tcpmd5");
 		return (0);
 	}
-	if (authxf) {
+	if (xfs && xfs->authxf) {
 		if (!authkey) {
 			yyerror("no authentication key specified");
 			return (0);
 		}
-		if (authkey->len != authxf->keymin) {
+		if (authkey->len != xfs->authxf->keymin) {
 			yyerror("wrong authentication key length, needs to be "
-			    "%d bits", authxf->keymin * 8);
+			    "%d bits", xfs->authxf->keymin * 8);
 			return (0);
 		}
 	}
-	if (encxf) {
-		if (!enckey) {
+	if (xfs && xfs->encxf) {
+		if (!enckey && xfs->encxf != &encxfs[ENCXF_NULL]) {
 			yyerror("no encryption key specified");
 			return (0);
 		}
-		if (enckey->len < encxf->keymin) {
+		if (enckey) {
+		if (enckey->len < xfs->encxf->keymin) {
 			yyerror("encryption key too short, minimum %d bits",
-			    encxf->keymin * 8);
+			    xfs->encxf->keymin * 8);
 			return (0);
 		}
-		if (encxf->keymax < enckey->len) {
+		if (xfs->encxf->keymax < enckey->len) {
 			yyerror("encryption key too long, maximum %d bits",
-			    encxf->keymax * 8);
+			    xfs->encxf->keymax * 8);
 			return (0);
+		}
 		}
 	}
 
@@ -1033,12 +1086,12 @@ validate_sa(u_int32_t spi, u_int8_t protocol, const struct ipsec_xf *authxf,
 
 struct ipsec_rule *
 create_sa(u_int8_t protocol, struct ipsec_addr *src, struct ipsec_addr *dst,
-    u_int32_t spi, const struct ipsec_xf *authxf, const struct ipsec_xf *encxf,
-    struct ipsec_key *authkey, struct ipsec_key *enckey)
+    u_int32_t spi, struct ipsec_transforms *xfs, struct ipsec_key *authkey,
+    struct ipsec_key *enckey)
 {
 	struct ipsec_rule *r;
 
-	if (validate_sa(spi, protocol, authxf, encxf, authkey, enckey) == 0)
+	if (validate_sa(spi, protocol, xfs, authkey, enckey) == 0)
 		return (NULL);
 
 	r = calloc(1, sizeof(struct ipsec_rule));
@@ -1050,8 +1103,7 @@ create_sa(u_int8_t protocol, struct ipsec_addr *src, struct ipsec_addr *dst,
 	r->src = src;
 	r->dst = dst;
 	r->spi = spi;
-	r->authxf = authxf;
-	r->encxf = encxf;
+	r->xfs = xfs;
 	r->authkey = authkey;
 	r->enckey = enckey;
 
@@ -1064,8 +1116,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 {
 	struct ipsec_rule *reverse;
 
-	if (validate_sa(spi, rule->proto, rule->authxf, rule->encxf, authkey,
-	    enckey) == 0)
+	if (validate_sa(spi, rule->proto, rule->xfs, authkey, enckey) == 0)
 		return (NULL);
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
@@ -1077,8 +1128,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
 	reverse->spi = spi;
-	reverse->authxf = rule->authxf;
-	reverse->encxf = rule->encxf;
+	reverse->xfs = copytransforms(rule->xfs);
 	reverse->authkey = authkey;
 	reverse->enckey = enckey;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.15 2005/08/08 13:29:00 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.16 2005/08/09 12:37:45 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -86,6 +86,11 @@ struct ipsec_xf {
 	size_t		 keymax;
 };
 
+struct ipsec_transforms {
+	const struct ipsec_xf *authxf;
+	const struct ipsec_xf *encxf;
+};
+
 extern const struct ipsec_xf authxfs[];
 extern const struct ipsec_xf encxfs[];
 
@@ -97,8 +102,7 @@ struct ipsec_rule {
 	struct ipsec_addr *dst;
 	struct ipsec_addr *peer;
 	struct ipsec_auth *auth;
-	const struct ipsec_xf *authxf;
-	const struct ipsec_xf *encxf;
+	struct ipsec_transforms *xfs;
 	struct ipsec_key  *authkey;
 	struct ipsec_key  *enckey;
 

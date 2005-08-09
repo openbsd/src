@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.24 2005/08/08 13:29:00 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.25 2005/08/09 12:37:45 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -157,9 +157,15 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 				free(rp->auth->dstid);
 			}
 			free(rp->auth);
+		if (rp->xfs)
+			free(rp->xfs);
 		if (rp->authkey) {
 			free(rp->authkey->data);
 			free(rp->authkey);
+		}
+		if (rp->enckey) {
+			free(rp->enckey->data);
+			free(rp->enckey);
 		}
 		free(rp);
 	}
@@ -248,10 +254,10 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 	printf(" spi 0x%08x", r->spi);
 
 	if (r->proto != IPSEC_TCPMD5) {
-		if (r->authxf)
-			printf(" auth %s", r->authxf->name);
-		if (r->encxf)
-			printf(" enc %s", r->encxf->name);
+		if (r->xfs && r->xfs->authxf)
+			printf(" auth %s", r->xfs->authxf->name);
+		if (r->xfs && r->xfs->encxf)
+			printf(" enc %s", r->xfs->encxf->name);
 	}
 	if (r->authkey) {
 		if (r->proto == IPSEC_TCPMD5)
