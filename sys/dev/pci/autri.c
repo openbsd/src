@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.15 2005/04/16 21:57:23 mickey Exp $	*/
+/*	$OpenBSD: autri.c,v 1.16 2005/08/09 04:10:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -502,7 +502,6 @@ autri_attach(parent, self, aux)
 	char const *intrstr;
 	mixer_ctrl_t ctl;
 	int i, r;
-	u_int32_t reg;
 
 	sc->sc_devid = pa->pa_id;
 	sc->sc_class = pa->pa_class;
@@ -538,11 +537,6 @@ autri_attach(parent, self, aux)
 	sc->sc_dmatag = pa->pa_dmat;
 	sc->sc_pc = pc;
 	sc->sc_pt = pa->pa_tag;
-
-	/* enable the device */
-	reg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	reg |= (PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/* initialize the device */
 	autri_init(sc);
@@ -631,7 +625,7 @@ autri_init(sc_)
 	void *sc_;
 {
 	struct autri_softc *sc = sc_;
-	u_int32_t reg;
+	pcireg_t reg;
 
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t pt = sc->sc_pt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.7 2004/12/29 06:57:12 deraadt Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.8 2005/08/09 04:10:13 mickey Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -206,16 +206,6 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map device registers\n");
 		return;
 	}
-
-	/*
-	 * Make sure the PCI command register is properly configured.
-	 */
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	reg |= PCI_COMMAND_MASTER_ENABLE;
-	/* XXX PCI_COMMAND_INVALIDATE_ENABLE */
-	/* XXX PCI_COMMAND_PARITY_ENABLE */
-	/* XXX PCI_COMMAND_SERR_ENABLE */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Ensure that the ROM is diabled.

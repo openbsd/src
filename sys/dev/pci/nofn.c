@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.13 2004/05/07 14:42:26 millert Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.14 2005/08/09 04:10:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -116,10 +116,6 @@ nofn_attach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
 	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping\n");
 		goto fail;

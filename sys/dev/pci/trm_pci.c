@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm_pci.c,v 1.1 2002/02/18 01:55:30 krw Exp $
+/*	$OpenBSD: trm_pci.c,v 1.2 2005/08/09 04:10:13 mickey Exp $
  * ------------------------------------------------------------
  *       O.S     : OpenBSD
  *    FILE NAME  : trm_pci.c                          
@@ -106,19 +106,9 @@ trm_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct trm_softc *sc = (void *)self;
 	bus_space_tag_t iot;   /* bus space tag    */
 	const char *intrstr;
-	pcireg_t command;
 	int unit;
 
 	unit = sc->sc_device.dv_unit;
-
-	/*
-	 * These cards do not allow memory mapped accesses.
-	 * pa_pc:  chipset tag
-	 * pa_tag: pci tag
-	 */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_TEKRAM2_DC3X5U)
 		return;

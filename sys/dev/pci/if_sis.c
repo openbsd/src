@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.50 2005/07/28 18:39:32 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.51 2005/08/09 04:10:12 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -858,7 +858,7 @@ void sis_attach(parent, self, aux)
 {
 	int			i, s;
 	const char		*intrstr = NULL;
-	u_int32_t		command;
+	pcireg_t		command;
 	struct sis_softc	*sc = (struct sis_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
@@ -913,10 +913,6 @@ void sis_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef SIS_USEIOSPACE

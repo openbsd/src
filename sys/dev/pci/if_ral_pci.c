@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.4 2005/02/22 10:41:30 damien Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.5 2005/08/09 04:10:12 mickey Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -95,16 +95,10 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	bus_addr_t base;
 	pci_intr_handle_t ih;
-	pcireg_t reg;
 	int error;
 	
 	sc->sc_dmat = pa->pa_dmat;
 	psc->sc_pc = pa->pa_pc;
-
-	/* enable the appropriate bits in the PCI CSR */
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/* map control/status registers */
 	error = pci_mapreg_map(pa, RAL_PCI_BAR0, PCI_MAPREG_TYPE_MEM |

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.22 2004/12/19 16:10:46 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.23 2005/08/09 04:10:10 mickey Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -618,11 +618,6 @@ cs4280_attach(parent, self, aux)
 	}
 
 	sc->sc_dmatag = pa->pa_dmat;
-
-	/* Enable the device (set bus master flag) */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	   pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	   PCI_COMMAND_MASTER_ENABLE);
 
 	/* LATENCY_TIMER setting */
 	mem = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);

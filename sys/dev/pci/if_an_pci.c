@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.10 2005/06/20 22:42:29 jsg Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.11 2005/08/09 04:10:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -118,7 +118,6 @@ an_pci_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot = pa->pa_iot;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcireg_t csr;
 	const char *intrstr;
 
 	/* Map the I/O ports. */
@@ -129,11 +128,6 @@ an_pci_attach(parent, self, aux)
 	}
 	sc->an_btag = iot;
 	sc->an_bhandle = ioh;
-
-	/* Enable the card. */
-	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {

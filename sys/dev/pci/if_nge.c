@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.43 2005/07/30 04:25:00 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.44 2005/08/09 04:10:12 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -771,10 +771,6 @@ nge_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 	DPRINTFN(5, ("%s: map control/status regs\n", sc->sc_dv.dv_xname));
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	  PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef NGE_USEIOSPACE

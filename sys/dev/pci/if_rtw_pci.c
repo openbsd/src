@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.5 2005/05/29 02:58:31 reyk Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.6 2005/08/09 04:10:12 mickey Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -235,13 +235,6 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	/*
-	 * Make sure bus mastering is enabled.
-	 */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
 
 	/*
 	 * Map and establish our interrupt.

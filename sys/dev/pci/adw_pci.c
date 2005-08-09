@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw_pci.c,v 1.12 2002/11/19 18:40:16 jason Exp $ */
+/*	$OpenBSD: adw_pci.c,v 1.13 2005/08/09 04:10:10 mickey Exp $ */
 /* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
@@ -119,7 +119,7 @@ adw_pci_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	u_int32_t       command;
+	pcireg_t	command;
 	const char     *intrstr;
 
 	/*
@@ -144,17 +144,10 @@ adw_pci_attach(parent, self, aux)
 		return;
 	}
 
-	/*
-	 * Make sure IO/MEM/MASTER are enabled
-	 */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-			PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-
-	if ( (command & PCI_COMMAND_PARITY_ENABLE) == 0) {
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if ( (command & PCI_COMMAND_PARITY_ENABLE) == 0)
 		sc->cfg.control_flag |= CONTROL_FLAG_IGNORE_PERR;
-	}
+
 	/*
 	 * Map Device Registers for I/O
 	 */

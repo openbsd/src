@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.19 2005/07/16 17:20:47 brad Exp $ */
+/*      $OpenBSD: sv.c,v 1.20 2005/08/09 04:10:13 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -279,7 +279,6 @@ sv_attach(parent, self, aux)
   pci_intr_handle_t ih;
   bus_addr_t iobase;
   bus_size_t iosize;
-  pcireg_t csr;
   char const *intrstr;
   u_int32_t  dmareg, dmaio; 
   u_int8_t   reg;
@@ -344,11 +343,6 @@ sv_attach(parent, self, aux)
 
   /* Enable the device. */
  enable:
-  csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-  pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		 csr | PCI_COMMAND_MASTER_ENABLE 
-		 /* | PCI_COMMAND_IO_ENABLE | PCI_COMMAND_PARITY_ENABLE */);
-
   sv_write_indirect(sc, SV_ANALOG_POWER_DOWN_CONTROL, 0);
   sv_write_indirect(sc, SV_DIGITAL_POWER_DOWN_CONTROL, 0);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.198 2005/07/21 09:47:57 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.199 2005/08/09 04:10:13 mickey Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -875,11 +875,8 @@ pciide_match(struct device *parent, void *match, void *aux)
 void
 pciide_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
-	pcireg_t csr;
+	struct pci_attach_args *pa = aux;
 
 	sc->sc_pp = pciide_lookup_product(pa->pa_id);
 	if (sc->sc_pp == NULL)
@@ -903,12 +900,6 @@ pciide_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_tag, pa->pa_class), DEBUG_PROBE);
 
 	sc->sc_pp->chip_map(sc, pa);
-
-	if (sc->sc_dma_ok) {
-		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-		csr |= PCI_COMMAND_MASTER_ENABLE;
-		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-	}
 
 	WDCDEBUG_PRINT(("pciide: command/status register=0x%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);

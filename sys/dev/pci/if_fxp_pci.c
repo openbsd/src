@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.37 2005/08/01 22:54:46 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.38 2005/08/09 04:10:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -214,11 +214,6 @@ fxp_pci_attach(parent, self, aux)
 	    (PCI_PRODUCT(pa->pa_id) == 0x1229 &&
 	    (sc->sc_revision >= 8 && sc->sc_revision <= 13))))
 		sc->sc_flags |= FXPF_DISABLE_STANDBY;
-
-	/* enable bus mastering */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    PCI_COMMAND_MASTER_ENABLE |
-	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG));
 
 	/*
 	 * enable PCI Memory Write and Invalidate command

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.4 2005/01/03 19:59:18 jsg Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.5 2005/08/09 04:10:11 mickey Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -151,7 +151,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 	struct ath_softc *sc = &psc->sc_sc;
-	u_int32_t res;
+	pcireg_t res;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t iot;
@@ -162,11 +162,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	psc->sc_pc = pc;
 
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	        PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
 	res = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
 	if ((res & PCI_COMMAND_MEM_ENABLE) == 0) {
 		printf(": couldn't enable memory mapping\n");
 		goto bad;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.27 2005/07/18 02:43:27 fgsch Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.28 2005/08/09 04:10:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -214,11 +214,6 @@ ami_pci_attach(parent, self, aux)
 		sc->sc_poll = ami_quartz_poll;
 	}
 	sc->dmat = pa->pa_dmat;
-
-	/* enable bus mastering (should not it be mi?) */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");

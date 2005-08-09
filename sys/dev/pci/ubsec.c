@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.135 2004/05/07 14:42:26 millert Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.136 2005/08/09 04:10:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -193,9 +193,6 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
 	}
 
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {

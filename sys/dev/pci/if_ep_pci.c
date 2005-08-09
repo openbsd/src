@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.23 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.24 2005/08/09 04:10:12 mickey Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -139,11 +139,6 @@ ep_pci_attach(parent, self, aux)
 	printf(":");
 
 	epconfig(sc, EP_CHIPSET_VORTEX, NULL);
-
-	/* Enable the card. */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {

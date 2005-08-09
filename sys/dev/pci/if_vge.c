@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.15 2005/07/03 02:38:23 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.16 2005/08/09 04:10:12 mickey Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -715,11 +715,6 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
 	if ((command & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) == 0) {
 		printf(": neither i/o nor mem enabled\n");
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.16 2003/10/07 14:11:04 fgsch Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.17 2005/08/09 04:10:10 mickey Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -295,7 +295,6 @@ cs4281_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
 	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
 	/* Map I/O register */
@@ -332,11 +331,6 @@ cs4281_attach(parent, self, aux)
 			    PCI_PMCSR_STATE_D0);
 		}
 	}
-
-	/* Enable the device (set bus master flag) */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {

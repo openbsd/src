@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.6 2005/04/11 08:09:32 dlg Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.7 2005/08/09 04:10:11 mickey Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	usbd_status r;
@@ -134,11 +133,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
-
-	/* Enable the device. */
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);

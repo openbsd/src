@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.36 2005/04/08 02:07:49 brad Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.37 2005/08/09 04:10:13 mickey Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -647,7 +647,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (IS_23XX(isp)) {
 		isp->isp_touched = 1;
 	}
-	data |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_INVALIDATE_ENABLE;
+	data |= PCI_COMMAND_INVALIDATE_ENABLE;
 
 	/*
 	 * Not so sure about these- but I think it's important that they get

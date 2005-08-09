@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.50 2005/03/26 15:49:09 mickey Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.51 2005/08/09 04:10:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -211,7 +211,7 @@ void dc_pci_attach(parent, self, aux)
 {
 	int			s;
 	const char		*intrstr = NULL;
-	u_int32_t		command;
+	pcireg_t		command;
 	struct dc_softc		*sc = (struct dc_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
@@ -228,17 +228,11 @@ void dc_pci_attach(parent, self, aux)
 	 */
 	dc_pci_acpi(self, aux);
 
+	sc->dc_csid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	sc->dc_csid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-
 #ifdef DC_USEIOSPACE
 	if (pci_mapreg_map(pa, DC_PCI_CFBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->dc_btag, &sc->dc_bhandle, NULL, &iosize, 0)) {

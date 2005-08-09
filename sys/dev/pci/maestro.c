@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.18 2005/04/16 21:57:23 mickey Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.19 2005/08/09 04:10:13 mickey Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -324,7 +324,6 @@ maestro_attach(parent, self, aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	int error;
-	pcireg_t data;
 	u_int16_t cdata;
 	int dmastage = 0;
 	int rseg;
@@ -362,12 +361,6 @@ maestro_attach(parent, self, aux)
 		printf(", couldn't map i/o space\n");
 		goto bad;
 	};
-
-	/* Enable bus mastering */
-	data = pci_conf_read(sc->pc, sc->pt, PCI_COMMAND_STATUS_REG);
-	if ((data & PCI_COMMAND_MASTER_ENABLE) == 0)
-		pci_conf_write(sc->pc, sc->pt, PCI_COMMAND_STATUS_REG,
-			data | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Allocate fixed DMA segment :-( */
 	sc->dmasize = MAESTRO_BUFSIZ * 16;

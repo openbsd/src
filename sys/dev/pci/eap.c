@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.27 2005/04/25 19:53:44 niallo Exp $ */
+/*      $OpenBSD: eap.c,v 1.28 2005/08/09 04:10:11 mickey Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -545,7 +545,6 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	struct audio_hw_if *eap_hw_if;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
 	mixer_ctrl_t ctl;
 	int i;
 	int revision, ct5880;
@@ -572,11 +571,6 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmatag = pa->pa_dmat;
-
-	/* Enable the device. */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {

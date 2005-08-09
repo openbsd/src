@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.20 2004/07/16 06:08:05 deraadt Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.21 2005/08/09 04:10:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -223,10 +223,6 @@ xl_pci_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    PCI_COMMAND_MASTER_ENABLE |
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG));
-
 #ifdef XL_USEIOSPACE
 	if (pci_mapreg_map(pa, XL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->xl_btag, &sc->xl_bhandle, NULL, &iosize, 0)) {

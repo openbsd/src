@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.5 2005/06/26 04:00:23 brad Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.6 2005/08/09 04:10:11 mickey Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -226,13 +226,6 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	/*
-	 * Make sure bus mastering is enabled.
-	 */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
 
 	/*
 	 * Get the cacheline size.

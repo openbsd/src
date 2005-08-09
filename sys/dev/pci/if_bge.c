@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.78 2005/07/25 00:49:43 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.79 2005/08/09 04:10:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1716,7 +1716,6 @@ bge_attach(parent, self, aux)
 	int			s, rseg;
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
-	u_int32_t		command;
 	u_int32_t		pm_ctl;
 	struct ifnet		*ifp;
 	int			unit, error = 0;
@@ -1729,19 +1728,6 @@ bge_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	DPRINTFN(5, ("Map control/status regs\n"));
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf("%s: failed to enable memory mapping!\n",
-		    sc->bge_dev.dv_xname);
-		error = ENXIO;
-		goto fail;
-	}
-
 	DPRINTFN(5, ("pci_mem_find\n"));
 	if (pci_mem_find(pc, pa->pa_tag, BGE_PCI_BAR0, &iobase,
 			 &iosize, NULL)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.8 2005/07/03 07:47:23 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.9 2005/08/09 04:10:11 mickey Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -250,7 +250,6 @@ bce_attach(parent, self, aux)
 	caddr_t         kva;
 	bus_dma_segment_t seg;
 	int             rseg;
-	u_int32_t       command;
 	struct ifnet   *ifp;
 	pcireg_t        memtype;
 	bus_addr_t      memaddr;
@@ -268,16 +267,6 @@ bce_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		APRINT_ERROR("%s: failed to enable memory mapping!\n",
-		    sc->bce_dev.dv_xname);
-		return;
-	}
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BCE_PCI_BAR0);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:

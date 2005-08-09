@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.9 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.10 2005/08/09 04:10:13 mickey Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.11 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*-
@@ -184,7 +184,6 @@ pcscp_attach(parent, self, aux)
 	int ioh_valid, memh_valid;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	pcireg_t csr;
 	bus_dma_segment_t seg;
 	int error, rseg;
 
@@ -215,10 +214,6 @@ pcscp_attach(parent, self, aux)
 	esc->sc_sh = sh;
 	esc->sc_dmat = pa->pa_dmat;
 
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE);
-				     
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
 	 * XXX should we really poke around the chip that much in

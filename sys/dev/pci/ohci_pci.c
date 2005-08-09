@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.25 2005/04/21 12:30:02 pascoe Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.26 2005/08/09 04:10:13 mickey Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -98,10 +98,8 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct ohci_pci_softc *sc = (struct ohci_pci_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
 	usbd_status r;
 	int s;
 	const char *vendor;
@@ -130,11 +128,6 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
-
-	/* Enable the device. */
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);

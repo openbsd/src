@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.66 2005/07/16 19:05:36 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.67 2005/08/09 04:10:12 mickey Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1394,15 +1394,6 @@ em_identify_hardware(struct em_softc *sc)
 	/* Make sure our PCI config space has the necessary stuff set */
 	sc->hw.pci_cmd_word = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					    PCI_COMMAND_STATUS_REG);
-	if (!((sc->hw.pci_cmd_word & PCI_COMMAND_MASTER_ENABLE) &&
-	      (sc->hw.pci_cmd_word & PCI_COMMAND_MEM_ENABLE))) {
-		printf("%s: Memory Access and/or Bus Master bits were not set!\n", 
-		       sc->sc_dv.dv_xname);
-		sc->hw.pci_cmd_word |= 
-		(PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-			       sc->hw.pci_cmd_word);
-	}
 
 	/* Save off the information about this board */
 	sc->hw.vendor_id = PCI_VENDOR(pa->pa_id);

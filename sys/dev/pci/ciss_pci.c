@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.4 2005/08/05 17:00:09 mpf Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.5 2005/08/09 04:10:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -130,11 +130,6 @@ ciss_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* disable interrupts until ready */
 	bus_space_write_4(sc->iot, sc->ioh, CISS_IMR,
 	    bus_space_read_4(sc->iot, sc->ioh, CISS_IMR) | sc->iem);
-
-	/* enable bus mastering (should not it be mi?) */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");

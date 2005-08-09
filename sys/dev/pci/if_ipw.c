@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.49 2005/07/30 18:04:41 claudio Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.50 2005/08/09 04:10:12 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -180,11 +180,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
-
-	/* enable bus-mastering */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
-	data |= PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, data);
 
 	/* map the register window */
 	error = pci_mapreg_map(pa, IPW_PCI_BAR0, PCI_MAPREG_TYPE_MEM |

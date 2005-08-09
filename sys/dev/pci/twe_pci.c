@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.7 2003/06/02 19:24:23 mickey Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.8 2005/08/09 04:10:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -79,7 +79,6 @@ twe_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	bus_size_t size;
-	pcireg_t csr;
 
 	if (pci_mapreg_map(pa, TWE_BAR, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->iot, &sc->ioh, NULL, &size, 0)) {
@@ -87,11 +86,6 @@ twe_pci_attach(parent, self, aux)
 		return;
 	}
 	sc->dmat = pa->pa_dmat;
-
-	/* enable bus mastering (should not it be mi?) */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");

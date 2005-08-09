@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.11 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.12 2005/08/09 04:10:12 mickey Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -203,7 +203,6 @@ ne_pci_attach(parent, self, aux)
 	const char *intrstr;
 	const struct ne_pci_product *npp;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
 
 	npp = ne_pci_lookup(pa);
 	if (npp == NULL) {
@@ -243,12 +242,6 @@ ne_pci_attach(parent, self, aux)
 
 	nsc->sc_asict = asict;
 	nsc->sc_asich = asich;
-
-	/* Enable the card. */
-	csr = pci_conf_read(pc, pa->pa_tag,
-	    PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;

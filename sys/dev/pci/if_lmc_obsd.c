@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.15 2005/07/16 17:20:47 brad Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.16 2005/08/09 04:10:12 mickey Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -318,11 +318,6 @@ lmc_pci_attach(struct device * const parent,
 			       sc->lmc_dev.dv_xname);
 			return;
 		}
-		/* Make sure bus mastering is enabled. */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-			       pci_conf_read(pa->pa_pc, pa->pa_tag,
-					     PCI_COMMAND_STATUS_REG) |
-			       PCI_COMMAND_MASTER_ENABLE);
 	}
 
 	lmc_initcsrs(sc, csr_base + csroffset, csrsize);

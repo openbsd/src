@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt_pci.c,v 1.4 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: dpt_pci.c,v 1.5 2005/08/09 04:10:11 mickey Exp $	*/
 /*	$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ dpt_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	pcireg_t csr;
 
 	sc = (struct dpt_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -123,11 +122,6 @@ dpt_pci_attach(parent, self, aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	/* Enable the device. */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {

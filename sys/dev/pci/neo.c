@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.18 2004/12/12 06:50:20 deraadt Exp $       */
+/*      $OpenBSD: neo.c,v 1.19 2005/08/09 04:10:13 mickey Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -566,7 +566,6 @@ neo_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
 	int error;
 
 	sc->type = pa->pa_id;
@@ -606,11 +605,6 @@ neo_attach(parent, self, aux)
 
 	if ((error = nm_init(sc)) != 0)
 		return;
-
-	/* Enable the device. */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	sc->host_if.arg = sc;
 

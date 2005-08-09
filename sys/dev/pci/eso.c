@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.21 2005/04/14 12:42:16 mickey Exp $	*/
+/*	$OpenBSD: eso.c,v 1.22 2005/08/09 04:10:11 mickey Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -254,12 +254,6 @@ eso_attach(parent, self, aux)
 
 	sc->sc_pa = *pa;
 
-	/* Enable bus mastering. */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       pci_conf_read(pa->pa_pc, pa->pa_tag,
-				     PCI_COMMAND_STATUS_REG) |
-		       PCI_COMMAND_MASTER_ENABLE);
-	
 	eso_setup(sc, 1);
 
 	/* map and establish the interrupt. */

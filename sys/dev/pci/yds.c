@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.26 2005/05/27 00:49:56 jason Exp $	*/
+/*	$OpenBSD: yds.c,v 1.27 2005/08/09 04:10:13 mickey Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -708,14 +708,6 @@ yds_attach(parent, self, aux)
 	reg = pci_conf_read(pc, pa->pa_tag, YDS_PCI_LEGACY);
 	pci_conf_write(pc, pa->pa_tag, YDS_PCI_LEGACY,
 		       reg & YDS_PCI_LEGACY_LAD);
-
-	/* Enable the device. */
-	reg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	reg |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-		PCI_COMMAND_MASTER_ENABLE);
-
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
-	reg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	/* Mute all volumes */
 	for (i = 0x80; i < 0xc0; i += 2)

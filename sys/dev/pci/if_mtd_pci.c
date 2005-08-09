@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.9 2003/09/29 10:05:07 miod Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.10 2005/08/09 04:10:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -87,7 +87,6 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_devid = PCI_PRODUCT(pa->pa_id);
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MASTER_ENABLE;
 	if (sc->sc_devid == PCI_PRODUCT_MYSON_MTD800 &&
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, MTD_PCI_LOIO) & 0x300) {
 		pa->pa_flags &= ~PCI_FLAGS_IO_ENABLED;

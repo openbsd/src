@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.8 2003/10/07 14:11:04 fgsch Exp $	*/
+/*	$OpenBSD: esa.c,v 1.9 2005/08/09 04:10:11 mickey Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1015,7 +1015,6 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	struct esa_card_type *card;
 	const char *intrstr;
-	u_int32_t data;
 	int i, len;
 
 	for (card = esa_card_types; card->pci_vendor_id; card++)
@@ -1026,11 +1025,6 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 			sc->delay2 = card->delay2;
 			break;
 		}
-
-	data = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	data |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE
-	    | PCI_COMMAND_MASTER_ENABLE);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, data);
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,

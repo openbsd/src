@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop_pci.c,v 1.4 2002/03/31 05:25:10 nate Exp $	*/
+/*	$OpenBSD: iop_pci.c,v 1.5 2005/08/09 04:10:12 mickey Exp $	*/
 /*	$NetBSD: iop_pci.c,v 1.4 2001/03/20 13:21:00 ad Exp $	*/
 
 /*-
@@ -132,11 +132,6 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_bus_memt = pa->pa_memt;
 	sc->sc_bus_iot = pa->pa_iot;
-
-	/* Enable the device. */
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       reg | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt.  XXX IPL_BIO. */
 	if (pci_intr_map(pa, &ih)) {

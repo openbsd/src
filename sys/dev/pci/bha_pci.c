@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_pci.c,v 1.6 2003/02/28 15:26:23 mickey Exp $	*/
+/*	$OpenBSD: bha_pci.c,v 1.7 2005/08/09 04:10:10 mickey Exp $	*/
 /*	$NetBSD: bha_pci.c,v 1.16 1998/08/15 10:10:53 mycroft Exp $	*/
 
 /*-
@@ -114,7 +114,6 @@ bha_pci_attach(parent, self, aux)
 	struct bha_probe_data bpd;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
 	const char *model, *intrstr;
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC)
@@ -140,10 +139,6 @@ bha_pci_attach(parent, self, aux)
 	}
 
 	sc->sc_dmaflags = 0;
-
-	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE);
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");

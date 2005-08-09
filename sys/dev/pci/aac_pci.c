@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.14 2004/11/23 04:02:25 marco Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.15 2005/08/09 04:10:10 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -208,7 +208,7 @@ aac_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct aac_softc *sc = (void *)self;
-	u_int16_t command;
+	pcireg_t command;
 	bus_addr_t membase;
 	bus_size_t memsize;
 	pci_intr_handle_t ih;
@@ -235,9 +235,6 @@ aac_pci_attach(parent, self, aux)
 	/*
 	 * Verify that the adapter is correctly set up in PCI space.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	AAC_DPRINTF(AAC_D_MISC, ("pci command status reg 0x08x "));
 	if (!(command & PCI_COMMAND_MASTER_ENABLE)) {

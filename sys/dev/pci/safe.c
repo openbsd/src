@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.14 2004/05/07 14:42:26 millert Exp $	*/
+/*	$OpenBSD: safe.c,v 1.15 2005/08/09 04:10:13 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -167,9 +167,6 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT(&sc->sc_pkq);
 	sc->sc_dmat = pa->pa_dmat;
 
-	cmd = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 	cmd = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {

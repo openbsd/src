@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.11 2004/12/19 06:17:54 krw Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.12 2005/08/09 04:10:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -504,11 +504,6 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 		pci_conf_write(pa->pa_pc, pa->pa_tag, DEVCONFIG, devconfig);
 	}
 	
-	/* Ensure busmastering is enabled */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-
 	ahd_softc_init(ahd);
 
 	/*
