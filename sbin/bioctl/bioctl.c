@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.26 2005/08/08 20:26:21 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.27 2005/08/09 01:43:33 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -55,8 +55,9 @@ void bio_alarm(char *);
 const char *bio_device = "/dev/bio";
 
 int devh = -1;
-int debug = 0;
-int human = 0;
+int debug;
+int human;
+int verbose;
 
 struct bio_locate bl;
 
@@ -73,7 +74,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "ha:Di")) != -1) {
+	while ((ch = getopt(argc, argv, "ha:Div")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -87,6 +88,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i': /* inquiry */
 			func |= BIOC_INQ;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		default:
 			usage();
@@ -144,14 +148,14 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-Dhi] [-a alarm-function] device\n", __progname);
+	    "usage: %s [-Dhiv] [-a alarm-function] device\n", __progname);
 	exit(1);
 }
 
 void
 bio_inq(char *name)
 {
-	char *status, size[64], scsiname[16], encname[16];
+	char *status, size[64], scsiname[16], encname[16], serial[32];
 	int rv, i, d, volheader;
 	struct bioc_disk bd;
 	struct bioc_inq bi;
@@ -260,15 +264,20 @@ bio_inq(char *name)
 			    "%u:%u.%u",
 			    bd.bd_channel, bd.bd_target, bd.bd_lun);
 			if (bd.bd_procdev[0])
-				snprintf(encname, sizeof encname, "%s",
-				    bd.bd_procdev);
+				strlcpy(encname, bd.bd_procdev, sizeof encname);
 			else
-				snprintf(encname, sizeof encname, "%s",
-				    "noencl");
+				strlcpy(encname, "noencl", sizeof encname);
+			if (bd.bd_serial[0])
+				strlcpy(serial, bd.bd_serial, sizeof serial);
+			else
+				strlcpy(serial, "unknown serial", sizeof serial);
 
 			printf("    %3u %-10s %14s %-7s %-6s <%s>\n",
 			    bd.bd_diskid, status, size, scsiname, encname,
 			    bd.bd_vendor);
+			if (verbose)
+				printf("    %3s %-10s %14s %-7s %-6s '%s'\n",
+				    "", "", "", "", "", serial);
 		}
 	}
 	/* printf("where are my spares?\n"); */

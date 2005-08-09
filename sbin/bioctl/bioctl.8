@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.23 2005/08/08 04:04:13 deraadt Exp $
+.\"	$OpenBSD: bioctl.8,v 1.24 2005/08/09 01:43:33 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm bioctl
 .Bk -words
-.Op Fl Dhi
+.Op Fl Dhiv
 .Op Fl a Ar alarm-function
 .Ar device
 .Ek
@@ -73,6 +73,8 @@ digits to four or less.
 Enumerate the selected RAID devices.
 .It Ar device
 Select a drive by name (e.g. sd0) or a RAID controller by name (e.g. ami0).
+.It Fl v
+Be more verbose in output.
 .El
 .Sh SEE ALSO
 .Xr ami 4 ,
