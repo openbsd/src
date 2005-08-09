@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.21 2005/07/18 02:43:25 fgsch Exp $	*/
+/*	$OpenBSD: esp.c,v 1.22 2005/08/09 09:15:53 martin Exp $	*/
 /*	$NetBSD: esp.c,v 1.17 1998/09/05 15:15:35 pk Exp $	*/
 
 /*
@@ -165,16 +165,14 @@ espmatch(parent, vcf, aux)
 	void *vcf, *aux;
 {
 	struct cfdata *cf = vcf;
-	int	found = 0;
 
 	if ((cf->cf_unit == 0) && mac68k_machine.scsi96) {
-		found = 1;
+		return 1;
 	}
 	if ((cf->cf_unit == 1) && mac68k_machine.scsi96_2) {
-		found = 1;
+		return 1;
 	}
-	
-	return found;
+	return 0;
 }
 
 /*
@@ -186,7 +184,7 @@ espattach(parent, self, aux)
 	void *aux;
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
-	extern vm_offset_t	SCSIBase;
+	extern vaddr_t		SCSIBase;
 	struct esp_softc	*esc = (void *)self;
 	struct ncr53c9x_softc	*sc = &esc->sc_ncr53c9x;
 	int			quick = 0;
@@ -198,7 +196,7 @@ espattach(parent, self, aux)
 	/*
 	 * For Wombat, Primus and Optimus motherboards, DREQ is
 	 * visible on bit 0 of the IOSB's emulated VIA2 vIFR (and
-	 * the scsi registers are offset 0x1000 bytes from IOBase).
+	 * the SCSI registers are offset 0x1000 bytes from IOBase).
 	 *
 	 * For the Q700/900/950 it's at f9800024 for bus 0 and
 	 * f9800028 for bus 1 (900/950).  For these machines, that is also
@@ -255,6 +253,7 @@ espattach(parent, self, aux)
 		via2_register_irq(&esc->sc_ih, self->dv_xname);
 		esc->irq_mask = V2IF_SCSIIRQ;
 		if (reg_offset == 0x10000) {
+			/* From the Q650 developer's note */
 			sc->sc_freq = 16500000;
 		} else {
 			sc->sc_freq = 25000000;
@@ -266,12 +265,13 @@ espattach(parent, self, aux)
 		sc->sc_freq = 25000000;
 	}
 
+	if (quick) {
+		printf(" (pseudo-DMA)");
+	}
+
 #ifdef DEBUG
 	printf(" address %p", esc->sc_reg);
 #endif
-	if (esp_glue.gl_dma_go == esp_quick_dma_go) {
-		printf(" (pseudo-DMA)");
-	}
 
 	sc->sc_id = 7;
 
@@ -299,14 +299,13 @@ espattach(parent, self, aux)
 	 */
 	sc->sc_minsync = 1000 / sc->sc_freq;
 
-	sc->sc_minsync = 0;	/* No synchronous xfers w/o DMA */
-	/* Really no limit, but since we want to fit into the TCR... */
-	sc->sc_maxxfer = 8 * 1024; /*64 * 1024; XXX */
+	/* We need this to fit into the TCR... */
+	sc->sc_maxxfer = 64 * 1024;
 
-	/*
-	 * Now try to attach all the sub-devices
-	 */
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+	if (quick == 0) {
+		sc->sc_minsync = 0;	/* No synchronous xfers w/o DMA */
+		sc->sc_maxxfer = 8 * 1024;
+	}
 
 	/*
 	 * Configure interrupts.
@@ -316,6 +315,11 @@ espattach(parent, self, aux)
 		via2_reg(vIFR) = esc->irq_mask;
 		via2_reg(vIER) = 0x80 | esc->irq_mask;
 	}
+
+	/*
+	 * Now try to attach all the sub-devices
+	 */
+	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
 }
 
 /*
@@ -385,11 +389,11 @@ int
 esp_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	register struct esp_softc *esc = (struct esp_softc *)sc;
-	register u_char	*p;
+	struct esp_softc *esc = (struct esp_softc *)sc;
 	volatile u_char *cmdreg, *intrreg, *statreg, *fiforeg;
-	register u_int	espphase, espstat, espintr;
-	register int	cnt;
+	u_char	*p;
+	u_int	espphase, espstat, espintr;
+	int	cnt;
 
 	if (esc->sc_active == 0) {
 		printf("dma_intr--inactive DMA\n");
