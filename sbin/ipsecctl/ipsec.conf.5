@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.14 2005/08/09 14:00:07 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.15 2005/08/10 08:49:33 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -138,7 +138,7 @@ authkey file "filename"
 .Ed
 .Pp
 It is very important that the key is not guessable.
-One practical way of generating 160-bit (20-byte) keys is a follows:
+One practical way of generating 160-bit (20-byte) keys is as follows:
 .Bd -literal -offset indent
 $ openssl rand 20 | hexdump -e '20/1 "%02x"'
 .Ed
@@ -174,11 +174,11 @@ flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 
 # Set up keys for TCP MD5 signatures
-tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \\
+tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 	authkey 0xdeadbeef:0xbeefdead
 
 # Set up keys for TCP MD5 signatures, read keys from files
-tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \\
+tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 	authkey file "/path/to/key1:/path/to/key2"
 .Ed
 .Sh SEE ALSO
