@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.26 2005/05/25 05:23:24 pascoe Exp $
+.\"	$OpenBSD: fcntl.2,v 1.27 2005/08/10 01:29:26 jaredy Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -64,7 +64,7 @@ The commands are:
 .It Dv F_DUPFD
 Return a new descriptor as follows:
 .Pp
-.Bl -bullet -compact -offset 4n
+.Bl -bullet -compact
 .It
 Lowest numbered available descriptor greater than or equal to
 .Fa arg
@@ -229,11 +229,11 @@ taken as a pointer to a
 (see above).
 .Dv F_SETLK
 is used to establish shared (or read) locks
-.Dv (F_RDLCK)
-or exclusive (or write) locks,
-.Dv (F_WRLCK) ,
+.Pq Dv F_RDLCK
+or exclusive (or write) locks
+.Pq Dv F_WRLCK ,
 as well as remove either type of lock
-.Dv (F_UNLCK) .
+.Pq Dv F_UNLCK .
 If a shared or exclusive lock cannot be set,
 .Fn fcntl
 returns immediately with
@@ -333,7 +333,9 @@ locks conflicts with the type specified in the request.
 This interface follows the completely stupid semantics of System V and
 .St -p1003.1-88
 that require that all locks associated with a file for a given process are
-removed when \fIany\fP file descriptor for that file is closed by that process.
+removed when
+.Em any
+file descriptor for that file is closed by that process.
 This semantic means that applications must be aware of any files that
 a subroutine library may access.
 For example if an application for updating the password file locks the
@@ -403,18 +405,18 @@ The argument
 is
 .Dv F_SETLK ,
 the type of lock
-.Fa (l_type)
+.Pq Fa l_type
 is a shared lock
-.Dv (F_RDLCK)
+.Pq Dv F_RDLCK
 or exclusive lock
-.Dv (F_WRLCK) ,
+.Pq Dv F_WRLCK ,
 and the segment of a file to be locked is already
 exclusive-locked by another process;
 or the type is an exclusive lock and some portion of the
 segment of a file to be locked is already shared-locked or
 exclusive-locked by another process.
 .It Bq Er EBADF
-.Fa fildes
+.Fa fd
 is not a valid open file descriptor.
 .Pp
 The argument
@@ -424,11 +426,11 @@ is
 or
 .Dv F_SETLKW ,
 the type of lock
-.Fa (l_type)
+.Pq Fa l_type
 is a shared lock
-.Dv (F_RDLCK) ,
+.Pq Dv F_RDLCK ,
 and
-.Fa fildes
+.Fa fd
 is not a valid file descriptor open for reading.
 .Pp
 The argument
@@ -438,18 +440,12 @@ is
 or
 .Dv F_SETLKW ,
 the type of lock
-.Fa (l_type)
+.Pq Fa l_type
 is an exclusive lock
-.Dv (F_WRLCK) ,
+.Pq Dv F_WRLCK ,
 and
-.Fa fildes
+.Fa fd
 is not a valid file descriptor open for writing.
-.It Bq Er EMFILE
-.Fa cmd
-is
-.Dv F_DUPFD
-and the maximum allowed number of file descriptors are currently
-open.
 .It Bq Er EDEADLK
 The argument
 .Fa cmd
@@ -482,14 +478,14 @@ or
 and the data to which
 .Fa arg
 points is not valid, or
-.Fa fildes
+.Fa fd
 refers to a file that does not support locking.
 .It Bq Er EMFILE
 The argument
 .Fa cmd
 is
 .Dv F_DUPFD
-and the maximum number of file descriptors permitted for the
+and the maximum number of open file descriptors permitted for the
 process are already in use,
 or no file descriptors greater than or equal to
 .Fa arg
@@ -507,8 +503,9 @@ number of locked regions in the system exceeding a system-imposed limit.
 .Fa cmd
 is
 .Dv F_SETOWN
-and
-the process ID given as argument is not in use.
+and the process ID given in
+.Fa arg
+is not in use.
 .El
 .Sh SEE ALSO
 .Xr close 2 ,
