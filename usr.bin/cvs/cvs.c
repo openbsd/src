@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.81 2005/08/09 08:31:49 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.82 2005/08/10 07:39:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -134,7 +134,7 @@ main(int argc, char **argv)
 		if (pw == NULL) {
 			cvs_log(LP_NOTICE,
 				"failed to get user's password entry");
-			exit(1);
+			exit(CVS_EX_DATA);
 		}
 		cvs_homedir = pw->pw_dir;
         }
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 	argv += ret;
 	if (argc == 0) {
 		usage();
-		exit(1);
+		exit(CVS_EX_USAGE);
 	}
 
 	cvs_command = argv[0];
@@ -160,11 +160,11 @@ main(int argc, char **argv)
 	 */
 	if (stat(cvs_tmpdir, &st) == -1) {
 		cvs_log(LP_ERR, "failed to stat `%s'", cvs_tmpdir);
-		exit(1);
+		exit(CVS_EX_FILE);
 	} else if (!S_ISDIR(st.st_mode)) {
 		cvs_log(LP_ERR, "`%s' is not valid temporary directory",
 		    cvs_tmpdir);
-		exit(1);
+		exit(CVS_EX_FILE);
 	}
 
 	if (cvs_readrc == 1) {
@@ -176,7 +176,7 @@ main(int argc, char **argv)
 				cvs_log(LP_ERR,
 				    "failed to load default arguments to %s",
 				    __progname);
-				exit(1);
+				exit(CVS_EX_DATA);
 			}
 
 			cvs_getopt(i, targv);
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 
 	if (cvs_file_init() < 0) {
 		cvs_log(LP_ERR, "failed to initialize file support");
-		exit(1);
+		exit(CVS_EX_FILE);
 	}
 
 	ret = -1;
@@ -218,7 +218,7 @@ main(int argc, char **argv)
 		if (ret < 0) {
 			cvs_log(LP_ERRNO, "failed to generate argument vector "
 			    "from default arguments");
-			exit(1);
+			exit(CVS_EX_DATA);
 		}
 		cmd_argc += ret;
 	}
@@ -311,11 +311,11 @@ cvs_getopt(int argc, char **argv)
 			ep = strchr(optarg, '=');
 			if (ep == NULL) {
 				cvs_log(LP_ERR, "no = in variable assignment");
-				exit(1);
+				exit(CVS_EX_USAGE);
 			}
 			*(ep++) = '\0';
 			if (cvs_var_set(optarg, ep) < 0)
-				exit(1);
+				exit(CVS_EX_USAGE);
 			break;
 		case 'T':
 			cvs_tmpdir = optarg;
@@ -344,7 +344,7 @@ cvs_getopt(int argc, char **argv)
 			break;
 		default:
 			usage();
-			exit(1);
+			exit(CVS_EX_USAGE);
 		}
 	}
 
