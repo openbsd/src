@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.83 2005/08/10 08:05:00 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.84 2005/08/10 23:04:42 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -32,6 +32,7 @@
 .Nd OpenCVS Concurrent Versioning System
 .Sh SYNOPSIS
 .Nm
+.Bk -words
 .Op Fl flnQqrtvw
 .Op Fl d Ar root
 .Op Fl e Ar editor
@@ -42,6 +43,7 @@
 .Op Fl T Ar tmpdir
 .Op Fl z Ar level
 .Ar command Op Ar ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -1891,7 +1893,6 @@ The
 utility exits 0 on success, or with one of the following return codes.
 The numerical values corresponding to the symbolic ones are given in
 parentheses for easy reference.
-.Pp
 .Bl -tag -width Ds
 .It Dv CVS_EX_USAGE Pq 1
 The
