@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.29 2005/08/01 05:36:48 brad Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.30 2005/08/10 23:07:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -154,6 +154,7 @@ Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_UF200}, 0 },
 	{ { USB_VENDOR_ACERCM, USB_PRODUCT_ACERCM_EP1427X2}, 0 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88172}, 0 },
+	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88178}, AX178 },
 	{ { USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC210T}, 0 },
 	{ { USB_VENDOR_BILLIONTON, USB_PRODUCT_BILLIONTON_SNAPPORT}, 0 },
 	{ { USB_VENDOR_BILLIONTON, USB_PRODUCT_BILLIONTON_USB2AR}, 0},
@@ -261,6 +262,8 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	 * PHYs attached to the chip, so only read from those.
 	 */
 
+	DPRINTF(("axe_miibus_readreg: phy 0x%x reg 0x%x\n", phy, reg));
+
 	if (sc->axe_phyaddrs[0] != AXE_NOPHY && phy != sc->axe_phyaddrs[0])
 		return (0);
 
@@ -324,6 +327,11 @@ axe_miibus_statchg(device_ptr_t dev)
 		val = AXE_MEDIA_FULL_DUPLEX;
 	else
 		val = 0;
+	
+	if (sc->axe_flags & AX178)
+		val |= (AXE_178_MEDIA_RX_EN | AXE_178_MEDIA_MAGIC |
+		    AXE_178_MEDIA_ENCK);
+
 	DPRINTF(("axe_miibus_statchg: val=0x%x\n", val));
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
 	if (err) {
@@ -450,11 +458,12 @@ USB_ATTACH(axe)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct mii_data	*mii;
+	u_int16_t eeprom;
 	u_char eaddr[ETHER_ADDR_LEN];
 	char *devinfop;
 	char *devname = USBDEVNAME(sc->axe_dev);
 	struct ifnet *ifp;
-	int i, s;
+	int i, s, gpio0 = 0, phymode = 0;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
@@ -467,6 +476,8 @@ USB_ATTACH(axe)
 		    sc->axe_unit);
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	sc->axe_flags = axe_lookup(uaa->vendor, uaa->product)->axe_flags;
 
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
 	lockinit(&sc->axe_mii_lock, PZERO, "axemii", 0, LK_CANRECURSE);
@@ -509,16 +520,65 @@ USB_ATTACH(axe)
 
 	s = splnet();
 
+	if (sc->axe_flags & AX178) {
+		axe_cmd(sc, AXE_CMD_SROM_WR_ENABLE, 0, 0, NULL);
+		/* XXX magic */
+		axe_cmd(sc, AXE_CMD_SROM_READ, 0, 0x0017, &eeprom);
+		axe_cmd(sc, AXE_CMD_SROM_WR_DISABLE, 0, 0, NULL);
+
+		DPRINTF((" EEPROM is 0x%x\n", eeprom));
+
+		/* if EEPROM is invalid we have to use to GPIO0 */
+		if (eeprom == 0xffff) {
+			phymode = 0;
+			gpio0 = 1;
+		} else {
+			phymode = eeprom & 7;
+			if (eeprom & 0x80)
+				gpio0 = 0;
+		}
+
+		DPRINTF(("use gpio0: %d, phymode %d\n", gpio0, phymode));
+
+		/* GPIO voodoo required to turn on PHY */
+		if (gpio0)
+			printf("gpio0 path not done! PHY not enabled\n");
+		else {
+			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x008c, NULL);
+			if (phymode != 1) {
+				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
+				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x001c, NULL);
+				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
+			} else {
+				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x0004, NULL);
+				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x000c, NULL);
+			}
+		}
+
+		axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0, NULL);
+		/* soft reset */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+		    AXE_178_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
+		delay(500);
+		axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
+	}
+
 	/*
 	 * Get station address.
 	 */
-	axe_cmd(sc, AXE_CMD_READ_NODEID, 0, 0, &eaddr);
+	if (sc->axe_flags & AX178)
+		axe_cmd(sc, AXE_178_CMD_READ_NODEID, 0, 0, &eaddr);
+	else
+		axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, &eaddr);
 
 	/*
 	 * Load IPG values and PHY indexes.
 	 */
 	axe_cmd(sc, AXE_CMD_READ_IPG012, 0, 0, (void *)&sc->axe_ipgs);
 	axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, (void *)&sc->axe_phyaddrs);
+
+	DPRINTF((" phyaddrs[0]: %x phyaddrs[1]: %x\n",
+	    sc->axe_phyaddrs[0], sc->axe_phyaddrs[1]));
 
 	/*
 	 * Work around broken adapters that appear to lie about
@@ -1115,12 +1175,20 @@ axe_init(void *xsc)
 	}
 
 	/* Set transmitter IPG values */
-	axe_cmd(sc, AXE_CMD_WRITE_IPG0, 0, sc->axe_ipgs[0], NULL);
-	axe_cmd(sc, AXE_CMD_WRITE_IPG1, 0, sc->axe_ipgs[1], NULL);
-	axe_cmd(sc, AXE_CMD_WRITE_IPG2, 0, sc->axe_ipgs[2], NULL);
+	if (sc->axe_flags & AX178)
+		axe_cmd(sc, AXE_178_CMD_WRITE_IPG012, 0,
+		    (sc->axe_ipgs[0] << 2) | (sc->axe_ipgs[1] << 1) |
+		    (sc->axe_ipgs[2]), NULL);
+	else {
+		axe_cmd(sc, AXE_172_CMD_WRITE_IPG0, 0, sc->axe_ipgs[0], NULL);
+		axe_cmd(sc, AXE_172_CMD_WRITE_IPG1, 0, sc->axe_ipgs[1], NULL);
+		axe_cmd(sc, AXE_172_CMD_WRITE_IPG2, 0, sc->axe_ipgs[2], NULL);
+	}
 
 	/* Enable receiver, set RX mode */
-	rxmode = AXE_RXCMD_UNICAST|AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
+	rxmode = AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
+	if (!(sc->axe_flags & AX178))
+		rxmode |= AXE_172_RXCMD_UNICAST;
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
