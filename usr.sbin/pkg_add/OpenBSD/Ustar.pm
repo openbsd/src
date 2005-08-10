@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.34 2005/08/05 10:36:53 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.35 2005/08/10 14:02:22 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -145,9 +145,9 @@ sub next
     	bless $result, 'OpenBSD::Ustar::File';
     } elsif ($type eq FIFO) {
     	bless $result, 'OpenBSD::Ustar::Fifo';
-    } elsif ($type eq 'CHARDEVICE') {
+    } elsif ($type eq CHARDEVICE) {
     	bless $result, 'OpenBSD::Ustar::CharDevice';
-    } elsif ($type eq 'BLOCKDEVICE') {
+    } elsif ($type eq BLOCKDEVICE) {
     	bless $result, 'OpenBSD::Ustar::BlockDevice';
     } else {
     	die "Unsupported type";
