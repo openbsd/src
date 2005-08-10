@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.17 2004/12/31 18:34:32 matthieu Exp $
+.\"	$OpenBSD: accept.2,v 1.18 2005/08/10 00:54:38 jaredy Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -52,7 +52,7 @@ and is listening for connections after a
 .Xr listen 2 .
 The
 .Fn accept
-argument extracts the first connection request on the queue of pending
+call extracts the first connection request on the queue of pending
 connections, creates a new socket with the same properties of
 .Fa s ,
 and allocates a new file descriptor for the socket.
@@ -101,10 +101,7 @@ a socket for the purposes of doing an
 .Fn accept
 by selecting it for read.
 .Pp
-For certain protocols which require an explicit confirmation, such as
-.Tn ISO
-or
-.Tn DATAKIT ,
+For certain protocols which require an explicit confirmation,
 .Fn accept
 can be thought of as merely dequeuing the next connection
 request and not implying confirmation.
@@ -143,8 +140,8 @@ socklen_t len = sizeof(addr);
 int retcode;
 
 retcode = accept(s, (struct sockaddr *)&addr, &len);
-if (retcode < 0)
-	errx(1, "accept");
+if (retcode == -1)
+	err(1, "accept");
 .Ed
 .Sh ERRORS
 The
@@ -165,7 +162,9 @@ has not yet been called).
 .It Bq Er EFAULT
 The
 .Fa addr
-parameter is not in a writable part of the user address space.
+or
+.Fa addrlen
+parameter is not in a valid part of the process address space.
 .It Bq Er EWOULDBLOCK
 The socket is marked non-blocking and no connections
 are present to be accepted.
