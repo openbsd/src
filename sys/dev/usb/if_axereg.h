@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.5 2005/08/10 23:07:33 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.6 2005/08/10 23:17:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -55,11 +55,11 @@
 #define AXE_CMD_LEN(x)	(((x) & 0xF000) >> 12)
 #define AXE_CMD_CMD(x)	((x) & 0x00FF)
 
-#define AXE_172_CMD_READ_RXTX_SRAM			0x2002
-#define AXE_182_CMD_READ_RXTX_SRAM			0x8002
-#define AXE_172_CMD_WRITE_RX_SRAM			0x0103
-#define AXE_172_CMD_WRITE_TX_SRAM			0x0104
-#define AXE_182_CMD_WRITE_RXTX_SRAM			0x8103
+#define AXE_172_CMD_READ_RXTX_SRAM		0x2002
+#define AXE_182_CMD_READ_RXTX_SRAM		0x8002
+#define AXE_172_CMD_WRITE_RX_SRAM		0x0103
+#define AXE_172_CMD_WRITE_TX_SRAM		0x0104
+#define AXE_182_CMD_WRITE_RXTX_SRAM		0x8103
 #define AXE_CMD_MII_OPMODE_SW			0x0106
 #define AXE_CMD_MII_READ_REG			0x2007
 #define AXE_CMD_MII_WRITE_REG			0x2108
