@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.40 2005/07/19 15:39:16 deraadt Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.41 2005/08/10 21:19:54 fgsch Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ found:
 
 #ifdef notyet
 	sc->enabled = 0;
-	
+
 	com_pcmcia_disable1(sc);
 #endif
 }
@@ -429,13 +429,14 @@ com_pcmcia_disable1(sc)
 	pcmcia_function_disable(psc->sc_pf);
 }
 
-/* 
+/*
  * XXX This should be handled by a generic attach
  */
 void
 com_pcmcia_attach2(sc)
 	struct com_softc *sc;
 {
+	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t lcr;
@@ -506,7 +507,7 @@ com_pcmcia_attach2(sc)
 	}
 #endif
 #endif
-	
+
 	/* Reset the LCR (latch access is probably enabled). */
 	bus_space_write_1(iot, ioh, com_lcr, lcr);
 	if (sc->sc_uarttype == COM_UART_16450) { /* Probe for 8250 */
@@ -549,9 +550,15 @@ com_pcmcia_attach2(sc)
 		printf(": st16650, no working fifo\n");
 		break;
 	case COM_UART_ST16650V2:
-		printf(": st16650, 32 byte fifo\n");
+		if (psc->sc_pf->sc->card.manufacturer ==
+		    PCMCIA_VENDOR_AUDIOVOX &&
+		    psc->sc_pf->sc->card.product ==
+		    PCMCIA_PRODUCT_AUDIOVOX_RTM8000)
+			sc->sc_fifolen = 16;
+		else
+			sc->sc_fifolen = 32;
+		printf(": st16650, %d byte fifo\n", sc->sc_fifolen);
 		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 32;
 		break;
 #if NPCCOM > 0
 #ifdef i386
