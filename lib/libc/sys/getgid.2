@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgid.2,v 1.12 2003/10/17 09:24:13 jmc Exp $
+.\"	$OpenBSD: getgid.2,v 1.13 2005/08/10 01:36:45 jaredy Exp $
 .\"	$NetBSD: getgid.2,v 1.5 1995/02/27 12:32:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -47,9 +47,9 @@
 .Sh DESCRIPTION
 The
 .Fn getgid
-function returns the real group ID of the calling process,
+function returns the real group ID of the calling process and the
 .Fn getegid
-returns the effective group ID of the calling process.
+function returns the effective group ID of the calling process.
 .Pp
 The real group ID is specified at login time.
 .Pp
