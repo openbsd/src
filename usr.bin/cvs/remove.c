@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.32 2005/07/29 23:56:56 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.33 2005/08/10 15:34:46 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -226,8 +226,8 @@ cvs_remove_local(CVSFILE *cf, void *arg)
  * Used by both remote and local handlers.
  * Returns 0 on success, -1 on failure.
  */
-static
-int cvs_remove_file(const char *fpath)
+static int
+cvs_remove_file(const char *fpath)
 {
 	/* if -f option is used, physically remove the file */
 	if (force_remove == 1) {
