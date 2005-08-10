@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.69 2005/07/29 12:38:40 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.70 2005/08/10 08:34:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -350,7 +350,7 @@ void		 pt_dump(void (*)(struct pt_entry *, void *), void *,
 
 /* rde_filter.c */
 enum filter_actions rde_filter(struct rde_peer *, struct rde_aspath *,
-    struct bgpd_addr *, u_int8_t, enum directions);
+    struct bgpd_addr *, u_int8_t, struct rde_peer *, enum directions);
 void		 rde_apply_set(struct rde_aspath *, struct filter_set_head *,
 		     sa_family_t, struct rde_peer *, enum directions);
 int		 rde_filter_community(struct rde_aspath *, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.38 2005/07/29 22:26:30 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.39 2005/08/10 08:34:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -360,8 +360,8 @@ up_generate_updates(struct rde_peer *peer,
 
 		/* default override not needed here as this is a withdraw */
 
-		if (rde_filter(peer, fasp, &addr,
-		    old->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
+		if (rde_filter(peer, fasp, &addr, old->prefix->prefixlen,
+		    old->peer, DIR_OUT) == ACTION_DENY) {
 			path_put(fasp);
 			return;
 		}
@@ -471,13 +471,13 @@ up_generate_updates(struct rde_peer *peer,
 
 		/*
 		 * apply default outgoing overrides,
-		 * actually only prepend-self
+		 * actually only prepend-self and nexthop no-modify
 		 */
 		rde_apply_set(fasp, &peer->conf.attrset, new->prefix->af,
-		    fasp->peer, DIR_DEFAULT_OUT);
+		    new->aspath->peer, DIR_DEFAULT_OUT);
 
-		if (rde_filter(peer, fasp, &addr,
-		    new->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
+		if (rde_filter(peer, fasp, &addr, new->prefix->prefixlen,
+		    new->peer, DIR_OUT) == ACTION_DENY) {
 			path_put(fasp);
 			up_generate_updates(peer, NULL, old);
 			return;
@@ -561,7 +561,11 @@ up_generate_default(struct rde_peer *peer, sa_family_t af)
 	/* filter as usual */
 	bzero(&addr, sizeof(addr));
 	addr.af = af;
-	if (rde_filter(peer, asp, &addr, 0, DIR_OUT) == ACTION_DENY) {
+	/*
+	 * XXX we should pass peerself here. This will be fixed with the
+	 * apply default overrides.
+	 */
+	if (rde_filter(peer, asp, &addr, 0, NULL, DIR_OUT) == ACTION_DENY) {
 		path_put(asp);
 		return;
 	}

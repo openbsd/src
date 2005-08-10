@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.33 2005/07/04 09:37:24 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.34 2005/08/10 08:34:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -31,7 +31,8 @@ int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
 
 enum filter_actions
 rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
-    struct bgpd_addr *prefix, u_int8_t prefixlen, enum directions dir)
+    struct bgpd_addr *prefix, u_int8_t prefixlen, struct rde_peer *from,
+    enum directions dir)
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_ALLOW; /* default allow */
@@ -48,7 +49,7 @@ rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
 		if (rde_filter_match(f, asp, prefix, prefixlen)) {
 			if (asp != NULL)
 				rde_apply_set(asp, &f->set, prefix->af,
-				    asp->peer, dir);
+				    from, dir);
 			if (f->action != ACTION_NONE)
 				action = f->action;
 			if (f->quick)
@@ -60,7 +61,7 @@ rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
 
 void
 rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
-    sa_family_t af, struct rde_peer *peer, enum directions dir)
+    sa_family_t af, struct rde_peer *from, enum directions dir)
 {
 	struct filter_set	*set;
 	struct aspath		*new;
@@ -149,7 +150,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			asp->aspath = new;
 			break;
 		case ACTION_SET_PREPEND_PEER:
-			as = peer->conf.remote_as;
+			if (from == NULL)
+				break;
+			as = from->conf.remote_as;
 			prepend = set->action.prepend;
 			new = aspath_prepend(asp->aspath, as, prepend);
 			aspath_put(asp->aspath);
