@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.64 2005/07/11 08:04:28 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.65 2005/08/10 13:48:36 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -246,7 +246,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	p->reply[p->shift].rcvd = time(NULL);
 	p->reply[p->shift].good = 1;
 
-	p->reply[p->shift].status.leap = (msg.status & LIMASK) >> 6;
+	p->reply[p->shift].status.leap = (msg.status & LIMASK);
 	p->reply[p->shift].status.precision = msg.precision;
 	p->reply[p->shift].status.rootdelay = sfp_to_d(msg.rootdelay);
 	p->reply[p->shift].status.rootdispersion = sfp_to_d(msg.dispersion);

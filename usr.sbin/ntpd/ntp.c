@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.66 2005/08/08 14:42:32 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.67 2005/08/10 13:48:36 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -138,7 +138,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		client_peer_init(p);
 
 	bzero(&conf->status, sizeof(conf->status));
-	conf->status.leap = LI_ALARM;
+	conf->status.synced = 0;
 	clock_getres(CLOCK_REALTIME, &tp);
 	b = 1000000000 / tp.tv_nsec;	/* convert to Hz */
 	for (a = 0; b > 1; a--, b >>= 1)
@@ -308,12 +308,12 @@ ntp_dispatch_imsg(void)
 		switch (imsg.hdr.type) {
 		case IMSG_ADJTIME:
 			memcpy(&n, imsg.data, sizeof(n));
-			if (n == 1 && conf->status.leap == LI_ALARM) {
+			if (n == 1 && !conf->status.synced) {
 				log_info("clock is now synced");
-				conf->status.leap = LI_NOWARNING;
-			} else if (n == 0 && conf->status.leap != LI_ALARM) {
+				conf->status.synced = 1;
+			} else if (n == 0 && conf->status.synced) {
 				log_info("clock is now unsynced");
-				conf->status.leap = LI_ALARM;
+				conf->status.synced = 0;
 			}
 			break;
 		case IMSG_HOST_DNS:
@@ -433,6 +433,7 @@ priv_adjtime(void)
 			conf->status.stratum =
 			    peers[offset_cnt / 2]->update.status.stratum;
 		}
+		conf->status.leap = peers[offset_cnt / 2]->update.status.leap;
 
 		imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
 		    &offset_median, sizeof(offset_median));
