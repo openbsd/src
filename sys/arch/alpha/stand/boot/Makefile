@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2001/05/16 00:38:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2005/08/10 16:58:42 todd Exp $
 #	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -20,9 +20,6 @@ CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
 
 
 DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ELF
-#.if !defined(BOOT_NO_ECOFF)
-#DEFNS+=-DALPHA_BOOT_ECOFF
-#.endif
 
 AFLAGS += -DASSEMBLER ${DEFNS}
 CPPFLAGS += -I${.CURDIR}/../../../../lib/libsa -I${.CURDIR}/../.. -I${S} ${DEFNS}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: headersize.c,v 1.7 2001/01/15 12:07:35 art Exp $	*/
+/*	$OpenBSD: headersize.c,v 1.8 2005/08/10 16:58:42 todd Exp $	*/
 /*	$NetBSD: headersize.c,v 1.5 1996/09/23 04:32:59 cgd Exp $	*/
 
 /*
@@ -48,9 +48,6 @@ main(argc, argv)
 	char *argv[];
 {
 	char buf[HDR_BUFSIZE], *fname;
-#ifdef ALPHA_BOOT_ECOFF
-	struct ecoff_exechdr *ecoffp;
-#endif
 #ifdef ALPHA_BOOT_ELF
 	Elf64_Ehdr *elfp;
 #endif
@@ -68,19 +65,10 @@ main(argc, argv)
 
 	if (read(fd, &buf, HDR_BUFSIZE) < HDR_BUFSIZE)
 		err(1, "%s: read failed", fname);
-#ifdef ALPHA_BOOT_ECOFF
-	ecoffp = (struct ecoff_exechdr *)buf;
-#endif
 #ifdef ALPHA_BOOT_ELF
 	elfp = (Elf64_Ehdr *)buf;
 #endif
 
-#ifdef ALPHA_BOOT_ECOFF
-	if (!ECOFF_BADMAG(ecoffp)) {
-		printf("%ld\n", ECOFF_TXTOFF(ecoffp));
-	}
-	else
-#endif
 #ifdef ALPHA_BOOT_ELF
 	if (memcmp(ELFMAG, elfp->e_ident, SELFMAG) == 0) {
 		Elf64_Phdr phdr;

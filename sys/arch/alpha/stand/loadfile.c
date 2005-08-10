@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.16 2004/12/01 20:55:07 deraadt Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.17 2005/08/10 16:58:42 todd Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -53,9 +53,6 @@
 #define _KERNEL
 #include "include/pte.h"
 
-#ifdef ALPHA_BOOT_ECOFF
-static int coff_exec(int, struct ecoff_exechdr *, u_int64_t *);
-#endif
 #ifdef ALPHA_BOOT_ELF
 static int elf_exec(int, Elf64_Ehdr *, u_int64_t *);
 #endif
@@ -76,9 +73,6 @@ loadfile(fname, entryp)
 {
 	struct devices *dp;
 	union {
-#ifdef ALPHA_BOOT_ECOFF
-		struct ecoff_exechdr coff;
-#endif
 #ifdef ALPHA_BOOT_ELF
 		Elf64_Ehdr elf;
 #endif
@@ -100,11 +94,6 @@ loadfile(fname, entryp)
 		goto err;
 	}
 
-#ifdef ALPHA_BOOT_ECOFF
-	if (!ECOFF_BADMAG(&hdr.coff)) {
-		rval = coff_exec(fd, &hdr.coff, entryp);
-	} else
-#endif
 #ifdef ALPHA_BOOT_ELF
 	if (memcmp(ELFMAG, hdr.elf.e_ident, SELFMAG) == 0) {
 		rval = elf_exec(fd, &hdr.elf, entryp);
@@ -119,116 +108,6 @@ err:
 		(void)close(fd);
 	return (rval);
 }
-
-#ifdef ALPHA_BOOT_ECOFF
-static int
-coff_exec(fd, coff, entryp)
-	int fd;
-	struct ecoff_exechdr *coff;
-	u_int64_t *entryp;
-{
-	struct nlist *symtab;
-	struct ecoff_symhdr symhdr;
-	struct ecoff_extsym sym;
-	int symsize, nesyms;
-
-	/* Read in text. */
-	(void)printf("%lu", coff->a.tsize);
-	if (lseek(fd, ECOFF_TXTOFF(coff), SEEK_SET) == -1) {
-		WARN(("seek to text: %s\n", strerror(errno)));
-		return (1);
-	}
-	if (read(fd, (void *)coff->a.text_start, coff->a.tsize) !=
-	    coff->a.tsize) {
-		WARN(("read text: %s\n", strerror(errno)));
-		return (1);
-	}
-
-	/* Read in data. */
-	if (coff->a.dsize != 0) {
-		(void)printf("+%lu", coff->a.dsize);
-		if (read(fd, (void *)coff->a.data_start, coff->a.dsize) !=
-		    coff->a.dsize) {
-			WARN(("read data: %s\n", strerror(errno)));
-			return (1);
-		}
-	}
-
-
-	/* Zero out bss. */
-	if (coff->a.bsize != 0) {
-		(void)printf("+%lu", coff->a.bsize);
-		bzero((void *)coff->a.bss_start, coff->a.bsize);
-	}
-
-	ffp_save = coff->a.text_start + coff->a.tsize;
-	if (ffp_save < coff->a.data_start + coff->a.dsize)
-		ffp_save = coff->a.data_start + coff->a.dsize;
-	if (ffp_save < coff->a.bss_start + coff->a.bsize)
-		ffp_save = coff->a.bss_start + coff->a.bsize;
-
-	/* Get symbols if there for DDB's sake.  */
-	if (coff->f.f_symptr && coff->f.f_nsyms) {
-		if (lseek(fd, coff->f.f_symptr, SEEK_SET) == -1) {
-			WARN(("seek to symbol table header: %s\n",
-			    strerror(errno)));
-			return (1);
-		}
-		if (read(fd, &symhdr, coff->f.f_nsyms) != coff->f.f_nsyms) {
-			WARN(("read symbol table header: %s\n",
-			    strerror(errno)));
-			return (1);
-		}
-		*(long *)ffp_save = symsize =
-		    symhdr.esymMax * sizeof(struct nlist);
-		ffp_save += sizeof(long);
-		printf("+[%d", symsize);
-		symtab = (struct nlist *)ffp_save;
-		bzero(symtab, symsize);
-		if (lseek(fd, symhdr.cbExtOffset, SEEK_SET) == -1) {
-			WARN(("lseek to symbol table: %s\n", strerror(errno)));
-			return (1);
-		}
-		nesyms = symhdr.esymMax;
-		while (nesyms--) {
-			if (read(fd, &sym, sizeof(sym)) != sizeof(sym)) {
-				WARN(("read symbols: %s\n", strerror(errno)));
-				return (1);
-			}
-			symtab->n_un.n_strx = sym.es_strindex + sizeof(int);
-			symtab->n_value = sym.es_value;
-			symtab->n_type = N_EXT;
-			if (sym.es_class == 1)		/* scText */
-				symtab->n_type != N_TEXT;
-			symtab++;
-		}
-		ffp_save += symsize;
-		*(int *)ffp_save = symhdr.estrMax + sizeof(int);
-		ffp_save += sizeof(int);
-		if (lseek(fd, symhdr.cbSsExtOffset, SEEK_SET) == -1) {
-			WARN(("seek to string table: %s\n", strerror(errno)));
-			return (1);
-		}
-		if (read(fd, (char *)ffp_save, symhdr.estrMax) !=
-		    symhdr.estrMax) {
-			WARN(("read string table: %s\n", strerror(errno)));
-			return (1);
-		}
-		ffp_save += symhdr.estrMax;
-		printf("+%d]", symhdr.estrMax);
-		esym = ((ffp_save + sizeof(int) - 1) & ~(sizeof(int) - 1));
-		ssym = (vaddr_t)symtab;
-	}
-
-	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET)) >>
-	    PGSHIFT;
-	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
-
-	(void)printf("\n");
-	*entryp = coff->a.entry;
-	return (0);
-}
-#endif /* ALPHA_BOOT_ECOFF */
 
 #ifdef ALPHA_BOOT_ELF
 static int

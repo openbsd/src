@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.3 1996/10/30 22:40:36 niklas Exp $	*/
+/*	$OpenBSD: start.S,v 1.4 2005/08/10 16:58:42 todd Exp $	*/
 /*	$NetBSD: start.S,v 1.4 1996/10/17 02:50:40 cgd Exp $	*/
 
 /*  
@@ -54,11 +54,7 @@ Lstartgp:
 	lda	sp,-ENTRY_FRAME(sp)
 #endif
 
-#ifdef ECOFF_COMPAT
-	lda	a0,_EDATA
-#else
 	lda	a0,_edata
-#endif
 	lda	a1,_end
 	subq	a1,a0,a1
 	CALL(bzero)
