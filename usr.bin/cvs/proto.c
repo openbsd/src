@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.73 2005/08/10 08:14:07 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.74 2005/08/10 14:49:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -751,7 +751,7 @@ cvs_getresp(struct cvsroot *root)
 
 	do {
 		/* wait for incoming data */
-		if (fgets(cvs_proto_buf, sizeof(cvs_proto_buf),
+		if (fgets(cvs_proto_buf, (int)sizeof(cvs_proto_buf),
 		    root->cr_srvout) == NULL) {
 			if (feof(root->cr_srvout))
 				return (0);
@@ -798,7 +798,7 @@ cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 	else
 		in = root->cr_srvout;
 
-	if (fgets(lbuf, len, in) == NULL) {
+	if (fgets(lbuf, (int)len, in) == NULL) {
 		if (ferror(in)) {
 			cvs_log(LP_ERRNO, "failed to read line");
 			return (-1);
@@ -867,7 +867,7 @@ cvs_getreq(void)
 
 	do {
 		/* wait for incoming data */
-		if (fgets(cvs_proto_buf, sizeof(cvs_proto_buf),
+		if (fgets(cvs_proto_buf, (int)sizeof(cvs_proto_buf),
 		    stdin) == NULL) {
 			if (feof(stdin))
 				return (0);

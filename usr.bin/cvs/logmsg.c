@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.19 2005/08/08 14:28:59 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.20 2005/08/10 14:49:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -84,7 +84,7 @@ cvs_logmsg_open(const char *path)
 			fprintf(stderr,
 			    "The specified message file seems big.  "
 			    "Proceed anyways? (y/n) ");
-			if (fgets(lbuf, sizeof(lbuf), stdin) == NULL) {
+			if (fgets(lbuf, (int)sizeof(lbuf), stdin) == NULL) {
 				cvs_log(LP_ERRNO,
 				    "failed to read from standard input");
 				return (NULL);
@@ -122,7 +122,7 @@ cvs_logmsg_open(const char *path)
 	 */
 	lcont = 0;
 
-	while (fgets(lbuf, sizeof(lbuf), fp) != NULL) {
+	while (fgets(lbuf, (int)sizeof(lbuf), fp) != NULL) {
 		len = strlen(lbuf);
 		if (len == 0)
 			continue;
@@ -273,7 +273,7 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 		    "c)ontinue, e)dit, !)reuse this message unchanged "
 		    "for remaining dirs\nAction: (continue) ");
 
-		if (fgets(buf, sizeof(buf), stdin) == NULL) {
+		if (fgets(buf, (int)sizeof(buf), stdin) == NULL) {
 			cvs_log(LP_ERRNO, "failed to read from standard input");
 			break;
 		}

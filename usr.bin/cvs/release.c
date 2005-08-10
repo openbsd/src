@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.20 2005/08/01 11:18:10 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.21 2005/08/10 14:49:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -192,7 +192,7 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 				return (CVS_EX_DATA);
 			}
 
-			while (fgets(buf, sizeof(buf), fp) != NULL) {
+			while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
 				if (strchr("ACMPRU", buf[0]))
 					j++;
 				(void)fputs(buf, stdout);

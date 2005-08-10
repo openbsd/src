@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.21 2005/08/08 14:28:59 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.22 2005/08/10 14:49:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -103,7 +103,7 @@ cvs_server(int argc, char **argv)
 		return (CVS_EX_FILE);
 
 	for (;;) {
-		if (fgets(reqbuf, sizeof(reqbuf), stdin) == NULL) {
+		if (fgets(reqbuf, (int)sizeof(reqbuf), stdin) == NULL) {
 			if (feof(stdin))
 				break;
 			else if (ferror(stdin))

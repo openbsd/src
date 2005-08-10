@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.22 2005/08/09 10:33:46 joris Exp $	*/
+/*	$OpenBSD: root.c,v 1.23 2005/08/10 14:49:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -286,7 +286,7 @@ cvsroot_get(const char *dir)
 		}
 	}
 
-	if (fgets(line, sizeof(line), fp) == NULL) {
+	if (fgets(line, (int)sizeof(line), fp) == NULL) {
 		cvs_log(LP_ERR, "failed to read line from %s",
 		    CVS_PATH_ROOTSPEC);
 		(void)fclose(fp);

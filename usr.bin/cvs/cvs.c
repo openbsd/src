@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.83 2005/08/10 08:05:00 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.84 2005/08/10 14:49:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -390,7 +390,7 @@ cvs_read_rcfile(void)
 		return;
 	}
 
-	while (fgets(linebuf, sizeof(linebuf), fp) != NULL) {
+	while (fgets(linebuf, (int)sizeof(linebuf), fp) != NULL) {
 		linenum++;
 		if ((len = strlen(linebuf)) == 0)
 			continue;
