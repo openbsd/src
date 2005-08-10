@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.24 2004/11/21 19:36:04 otto Exp $	*/
+/*	$OpenBSD: create.c,v 1.25 2005/08/10 00:42:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.24 2004/11/21 19:36:04 otto Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.25 2005/08/10 00:42:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,8 @@ static gid_t gid;
 static uid_t uid;
 static mode_t mode;
 
-static void	output(int, int *, const char *, ...);
+static void	output(int, int *, const char *, ...)
+		    __attribute__((__format__ (printf, 3, 4)));
 static int	statd(FTS *, FTSENT *, uid_t *, gid_t *, mode_t *);
 static void	statf(int, FTSENT *);
 
@@ -145,7 +146,8 @@ statf(int indent, FTSENT *p)
 	escaped_name = malloc(esc_len);
 	if (escaped_name == NULL)
 		error("statf: %s", strerror(errno));
- 	strnvis(escaped_name, p->fts_name, esc_len, VIS_WHITE | VIS_OCTAL);
+ 	strnvis(escaped_name, p->fts_name, esc_len,
+	    VIS_WHITE | VIS_OCTAL | VIS_GLOB);
 
 	if (iflag || S_ISDIR(p->fts_statp->st_mode))
 		offset = printf("%*s%s", indent, "", escaped_name);
@@ -196,7 +198,7 @@ statf(int indent, FTSENT *p)
 		    p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
-		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0 ||
+		if ((fd = open(p->fts_accpath, MTREE_O_FLAGS, 0)) < 0 ||
 		    crc(fd, &val, &len))
 			error("%s: %s", p->fts_accpath, strerror(errno));
 		(void)close(fd);

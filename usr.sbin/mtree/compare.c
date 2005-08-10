@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.20 2004/11/21 19:36:04 otto Exp $	*/
+/*	$OpenBSD: compare.c,v 1.21 2005/08/10 00:42:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: compare.c,v 1.20 2004/11/21 19:36:04 otto Exp $";
+static const char rcsid[] = "$OpenBSD: compare.c,v 1.21 2005/08/10 00:42:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ typeerr:		LABEL;
 		}
 	}
 	if (s->flags & F_CKSUM) {
-		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0) {
+		if ((fd = open(p->fts_accpath, MTREE_O_FLAGS, 0)) < 0) {
 			LABEL;
 			(void)printf("%scksum: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));

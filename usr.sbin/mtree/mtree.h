@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.h,v 1.10 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: mtree.h,v 1.11 2005/08/10 00:42:09 millert Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -34,6 +34,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+
+#define	MTREE_O_FLAGS \
+	(O_RDONLY | O_NONBLOCK | O_NOFOLLOW)
 
 #define	KEYDEFAULT \
 	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | F_TIME | F_UID)

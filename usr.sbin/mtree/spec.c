@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.22 2004/08/01 18:32:20 deraadt Exp $	*/
+/*	$OpenBSD: spec.c,v 1.23 2005/08/10 00:42:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.22 2004/08/01 18:32:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.23 2005/08/10 00:42:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,37 +62,40 @@ spec(void)
 	char *p;
 	NODE ginfo, *root;
 	int c_cur, c_next;
-	char buf[2048];
+	char *buf, *tbuf = NULL;
 	size_t len;
 
 	centry = last = root = NULL;
 	bzero(&ginfo, sizeof(ginfo));
 	c_cur = c_next = 0;
-	for (lineno = 1; fgets(buf, sizeof(buf), stdin);
+	for (lineno = 1; (buf = fgetln(stdin, &len));
 	    ++lineno, c_cur = c_next, c_next = 0) {
-		/* Skip empty lines. */
-		if (buf[0] == '\n')
-			continue;
-
-		/* Find end of line. */
-		if ((p = strchr(buf, '\n')) == NULL)
-			error("line %d too long", lineno);
-
-		/* See if next line is continuation line. */
-		if (p[-1] == '\\') {
-			--p;
-			c_next = 1;
+		/* Null-terminate the line. */
+		if (buf[len - 1] == '\n') {
+			buf[--len] = '\0';
+		} else {
+			/* EOF with no newline. */
+			tbuf = malloc(len + 1);
+			memcpy(tbuf, buf, len);
+			tbuf[len] = '\0';
+			buf = tbuf;
 		}
 
-		/* Null-terminate the line. */
-		*p = '\0';
-
 		/* Skip leading whitespace. */
-		for (p = buf; *p && isspace(*p); ++p);
+		for (p = buf; isspace((unsigned char)*p); p++)
+			;
 
 		/* If nothing but whitespace or comment char, continue. */
-		if (!*p || *p == '#')
+		if (*p == '\0' || *p == '#')
 			continue;
+
+		/* See if next line is continuation line. */
+		if (buf[len - 1] == '\\') {
+			if (--len == 0)
+				continue;
+			buf[len] = '\0';
+			c_next = 1;
+		}
 
 #ifdef DEBUG
 		(void)fprintf(stderr, "line %d: {%s}\n", lineno, p);
@@ -164,6 +167,7 @@ noparent:		error("no parent node");
 			last = last->next = centry;
 		}
 	}
+	free(tbuf);
 	return (root);
 }
 
