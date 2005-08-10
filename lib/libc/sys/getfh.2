@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfh.2,v 1.9 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getfh.2,v 1.10 2005/08/10 01:33:06 jaredy Exp $
 .\"	$NetBSD: getfh.2,v 1.7 1995/10/12 15:40:53 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
 .Nm getfh
 .Nd get file handle
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
+.Fd #include <sys/param.h>
 .Fd #include <sys/mount.h>
 .Ft int
 .Fn getfh "const char *path" "fhandle_t *fhp"
@@ -84,6 +84,8 @@ Too many symbolic links were encountered in translating
 The effective user ID is not the superuser.
 .It Bq EFAULT
 .Fa fhp
+or
+.Fa path
 points to an invalid address.
 .It Bq EIO
 An
