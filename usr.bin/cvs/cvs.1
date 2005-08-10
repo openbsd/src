@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.82 2005/08/09 08:44:12 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.83 2005/08/10 08:05:00 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -32,7 +32,7 @@
 .Nd OpenCVS Concurrent Versioning System
 .Sh SYNOPSIS
 .Nm
-.Op Fl flnQqrtv
+.Op Fl flnQqrtvw
 .Op Fl d Ar root
 .Op Fl e Ar editor
 .Xo
@@ -109,6 +109,16 @@ The default is set to
 Trace program execution.
 .It Fl v
 Display version information and exit.
+.It Fl w
+Extract new files in read-write mode.
+Overrides the setting of the
+.Ev CVSREAD
+environment variable.
+This is the default unless
+.Ev CVSREAD
+is set or the
+.Fl r
+option is specified.
 .It Fl z Ar level
 Specify the compression level to
 .Xr gzip 1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.82 2005/08/10 07:39:48 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.83 2005/08/10 08:05:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -89,7 +89,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-flnQqrtv] [-d root] [-e editor] [-s var=val] "
+	    "Usage: %s [-flnQqrtvw] [-d root] [-e editor] [-s var=val] "
 	    "[-T tmpdir] [-z level] command [...]\n", __progname);
 }
 
@@ -271,7 +271,7 @@ cvs_getopt(int argc, char **argv)
 	int ret;
 	char *ep;
 
-	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrs:T:tvz:")) != -1) {
+	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrs:T:tvwz:")) != -1) {
 		switch (ret) {
 		case 'b':
 			/*
@@ -328,6 +328,9 @@ cvs_getopt(int argc, char **argv)
 			printf("%s\n", CVS_VERSION);
 			exit(0);
 			/* NOTREACHED */
+			break;
+		case 'w':
+			cvs_readonly = 0;
 			break;
 		case 'x':
 			/*
