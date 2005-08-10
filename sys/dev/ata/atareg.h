@@ -1,4 +1,4 @@
-/*	$OpenBSD: atareg.h,v 1.12 2004/09/24 07:15:22 grange Exp $	*/
+/*	$OpenBSD: atareg.h,v 1.13 2005/08/10 15:22:39 jsg Exp $	*/
 /*	$NetBSD: atareg.h,v 1.5 1999/01/18 20:06:24 bouyer Exp $	*/
 
 /*
@@ -191,6 +191,7 @@ struct ataparams {
 #define ATA_CMD2_RWQ	0x0002
 #define WDC_CMD2_DM	0x0001 /* Download Microcode supported */
     u_int16_t	atap_cmd_ext;		/* 84: command/features supp. ext. */
+#define ATAPI_CMDE_IIUF	0x2000 /* IDLE IMMEDIATE with UNLOAD FEATURE */	
 #define ATAPI_CMDE_MSER	0x0004 /* Media serial number supported */
 #define ATAPI_CMDE_TEST	0x0002 /* SMART self-test supported */
 #define ATAPI_CMDE_SLOG	0x0001 /* SMART error logging supported */
