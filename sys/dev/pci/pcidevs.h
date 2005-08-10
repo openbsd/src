@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.902 2005/08/05 16:57:58 mpf Exp 
+ *	OpenBSD: pcidevs,v 1.903 2005/08/10 17:44:28 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -227,6 +227,7 @@
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
+#define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
 #define	PCI_VENDOR_OXFORD	0x14d2		/* VScom */
 #define	PCI_VENDOR_AVLAB	0x14db		/* Avlab */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
@@ -1894,6 +1895,9 @@
 #define	PCI_PRODUCT_MYLEX_960P_V5	0x0020		/* DAC960P V5 RAID */
 #define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID */
 #define	PCI_PRODUCT_MYLEX_EXTREMERAID	0xba56		/* eXtremeRAID */
+
+/* Myricom */
+#define	PCI_PRODUCT_MYRICOM_LANAI_92	0x8043		/* MyriNet LANai 9.2 */
 
 /* Myson Century products */
 #define	PCI_PRODUCT_MYSON_MTD800	0x0800		/* MTD800 10/100 */

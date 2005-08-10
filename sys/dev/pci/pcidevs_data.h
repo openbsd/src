@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.902 2005/08/05 16:57:58 mpf Exp 
+ *	OpenBSD: pcidevs,v 1.903 2005/08/10 17:44:28 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5395,6 +5395,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "eXtremeRAID",
 	},
 	{
+	    PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_LANAI_92,
+	    "MyriNet LANai 9.2",
+	},
+	{
 	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD800,
 	    "MTD800 10/100",
 	},
@@ -9841,6 +9845,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_AIRONET,
 	    "Aironet",
+	},
+	{
+	    PCI_VENDOR_MYRICOM,
+	    "Myricom",
 	},
 	{
 	    PCI_VENDOR_OXFORD,
