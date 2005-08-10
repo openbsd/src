@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.1 2005/08/07 16:25:35 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.2 2005/08/10 11:36:28 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -90,6 +90,7 @@ sub solve
 		}
 		push(@deps, $candidates[0]);
 		$to_register->{$candidates[0]} = 1;
+		next;
 	    }
 	    # can't get a list of packages, assume default
 	    # will be there.
