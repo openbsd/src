@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.902 2005/08/05 16:57:58 mpf Exp $
+$OpenBSD: pcidevs,v 1.903 2005/08/10 17:44:28 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -222,6 +222,7 @@ vendor	TAMARACK	0x143d	Tamarack
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
 vendor	AIRONET		0x14b9	Aironet
+vendor	MYRICOM		0x14c1	Myricom
 vendor	OXFORD		0x14d2	VScom
 vendor	AVLAB		0x14db	Avlab
 vendor	INVERTEX	0x14e1	Invertex
@@ -1889,6 +1890,9 @@ product MYLEX 960P_V4		0x0010	DAC960P V4 RAID
 product MYLEX 960P_V5		0x0020	DAC960P V5 RAID
 product MYLEX ACCELERAID	0x0050	AcceleRAID
 product MYLEX EXTREMERAID	0xba56	eXtremeRAID
+
+/* Myricom */
+product	MYRICOM LANAI_92	0x8043	MyriNet LANai 9.2
 
 /* Myson Century products */
 product MYSON MTD800		0x0800	MTD800 10/100
