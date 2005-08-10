@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.19 2005/08/10 08:45:11 claudio Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.20 2005/08/10 15:10:35 claudio Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -214,16 +214,16 @@ int	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
 #define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
 #define	IFM_IEEE80211_DS1	8	/* Direct Sequence  1Mbps*/
-#define IFM_IEEE80211_DS22      9	/* Direct Sequence 22Mbps */ 
-#define IFM_IEEE80211_OFDM6     10	/* OFDM 6Mbps */
-#define IFM_IEEE80211_OFDM9     11	/* OFDM 9Mbps */
-#define IFM_IEEE80211_OFDM12    12	/* OFDM 12Mbps */
-#define IFM_IEEE80211_OFDM18    13	/* OFDM 18Mbps */
-#define IFM_IEEE80211_OFDM24    14	/* OFDM 24Mbps */
-#define IFM_IEEE80211_OFDM36    15	/* OFDM 36Mbps */
-#define IFM_IEEE80211_OFDM48    16	/* OFDM 48Mbps */
-#define IFM_IEEE80211_OFDM54    17	/* OFDM 54Mbps */
-#define IFM_IEEE80211_OFDM72    18	/* OFDM 72Mbps */
+#define IFM_IEEE80211_DS22	9	/* Direct Sequence 22Mbps */ 
+#define IFM_IEEE80211_OFDM6	10	/* OFDM 6Mbps */
+#define IFM_IEEE80211_OFDM9	11	/* OFDM 9Mbps */
+#define IFM_IEEE80211_OFDM12	12	/* OFDM 12Mbps */
+#define IFM_IEEE80211_OFDM18	13	/* OFDM 18Mbps */
+#define IFM_IEEE80211_OFDM24	14	/* OFDM 24Mbps */
+#define IFM_IEEE80211_OFDM36	15	/* OFDM 36Mbps */
+#define IFM_IEEE80211_OFDM48	16	/* OFDM 48Mbps */
+#define IFM_IEEE80211_OFDM54	17	/* OFDM 54Mbps */
+#define IFM_IEEE80211_OFDM72	18	/* OFDM 72Mbps */
 
 #define	IFM_IEEE80211_ADHOC	0x100	/* Operate in Adhoc mode */
 #define	IFM_IEEE80211_HOSTAP	0x200	/* Operate in Host AP mode */
@@ -242,7 +242,7 @@ int	ifmedia_baudrate(int);
  * Digitally multiplexed "Carrier" Serial Interfaces
  */
 #define	IFM_TDM		0x000000a0
-#define IFM_TDM_T1		3	/* T1 B8ZS+ESF 24 ts  */
+#define IFM_TDM_T1		3	/* T1 B8ZS+ESF 24 ts */
 #define IFM_TDM_T1_AMI		4	/* T1 AMI+SF 24 ts */
 #define IFM_TDM_E1		5	/* E1 HDB3+G.703 clearchannel 32 ts */
 #define IFM_TDM_E1_G704		6	/* E1 HDB3+G.703+G.704 channelized 31 ts */
@@ -337,9 +337,9 @@ int	ifmedia_baudrate(int);
  * Macro to create a media word.
  */
 #define	IFM_MAKEWORD(type, subtype, options, instance)			\
-    ((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
-#define IFM_MAKEMODE(mode)                                              \
-           (((mode) << IFM_MSHIFT) & IFM_MMASK)
+	((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
+#define IFM_MAKEMODE(mode)						\
+	(((mode) << IFM_MSHIFT) & IFM_MMASK)
 /*
  * NetBSD extension not defined in the BSDI API.  This is used in various
  * places to get the canonical description for a given type/subtype.
@@ -469,15 +469,15 @@ struct ifmedia_description {
 	{ 0, NULL },							\
 }
 
-#define IFM_MODE_DESCRIPTIONS {                                         \
-        { IFM_AUTO,                             "autoselect" },         \
-        { IFM_AUTO,                             "auto" },               \
-        { IFM_IEEE80211|IFM_IEEE80211_11A,      "11a" },                \
-        { IFM_IEEE80211|IFM_IEEE80211_11B,      "11b" },                \
-        { IFM_IEEE80211|IFM_IEEE80211_11G,      "11g" },                \
-        { IFM_IEEE80211|IFM_IEEE80211_FH,       "fh" },                 \
+#define IFM_MODE_DESCRIPTIONS {						\
+	{ IFM_AUTO,				"autoselect" },		\
+	{ IFM_AUTO,				"auto" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_11A,	"11a" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_11B,	"11b" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_11G,	"11g" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH,	"fh" },			\
 	{ IFM_TDM|IFM_TDM_MASTER,		"master" },		\
-        { 0, NULL },                                                    \
+	{ 0, NULL },							\
 }
 
 #define	IFM_OPTION_DESCRIPTIONS {					\
