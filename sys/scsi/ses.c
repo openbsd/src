@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.19 2005/08/09 11:37:02 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.20 2005/08/10 10:55:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -94,7 +94,7 @@ void	ses_create_thread(void *);
 void	ses_refresh(void *);
 
 int	ses_read_config(struct ses_softc *);
-int	ses_read_status(struct ses_softc *);
+int	ses_read_status(struct ses_softc *, int);
 int	ses_make_sensors(struct ses_softc *, struct ses_type_desc *, int);
 int	ses_refresh_sensors(struct ses_softc *);
 
@@ -331,7 +331,7 @@ ses_read_config(struct ses_softc *sc)
 }
 
 int
-ses_read_status(struct ses_softc *sc)
+ses_read_status(struct ses_softc *sc, int autoconf)
 {
 	struct ses_scsi_diag		cmd;
 	int				flags;
@@ -345,6 +345,8 @@ ses_read_status(struct ses_softc *sc)
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
+	if (autoconf)
+		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), sc->sc_buf, sc->sc_buflen, 2, 3000, NULL, flags) != 0)
@@ -365,7 +367,7 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 	int				typecnt[SES_NUM_TYPES];
 	int				i, j;
 
-	if (ses_read_status(sc) != 0)
+	if (ses_read_status(sc, 1) != 0)
 		return (1);
 
 	memset(typecnt, 0, sizeof(typecnt));
@@ -449,7 +451,7 @@ ses_refresh_sensors(struct ses_softc *sc)
 	struct ses_sensor		*sensor;
 	int				ret = 0;
 
-	if (ses_read_status(sc) != 0)
+	if (ses_read_status(sc, 0) != 0)
 		return (1);
 
 	TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.6 2005/08/08 18:43:09 marco Exp $ */
+/*	$OpenBSD: safte.c,v 1.7 2005/08/10 10:55:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -89,7 +89,7 @@ struct safte_thread {
 void	safte_create_thread(void *);
 void	safte_refresh(void *);
 int	safte_read_config(struct safte_softc *);
-int	safte_read_encstat(struct safte_softc *);
+int	safte_read_encstat(struct safte_softc *, int);
 
 int64_t	safte_temp2uK(u_int8_t, int);
 
@@ -121,7 +121,7 @@ safte_match(struct device *parent, void *match, void *aux)
 
 	if (scsi_scsi_cmd(sa->sa_sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&inqbuf, cmd.length, 2, 10000, NULL,
-	    SCSI_DATA_IN) != 0)
+	    SCSI_DATA_IN|SCSI_AUTOCONF) != 0)
 		return (0);
 
 	if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0)
@@ -202,7 +202,7 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (safte_read_encstat(sc) != 0) {
+	if (safte_read_encstat(sc, 1) != 0) {
 		free(sc->sc_encbuf, M_DEVBUF);
 		free(sc->sc_sensors, M_DEVBUF);
 		free(sc->sc_thread, M_DEVBUF);
@@ -262,7 +262,7 @@ safte_refresh(void *arg)
 	int				ok = 1;
 
 	while (thread->running) {
-		if (safte_read_encstat(sc) != 0) {
+		if (safte_read_encstat(sc, 0) != 0) {
 			if (ok)
 				printf("%s: error getting enclosure status\n",
 				    DEVNAME(sc));
@@ -293,7 +293,7 @@ safte_read_config(struct safte_softc *sc)
 	cmd.flags |= SAFTE_RD_MODE;
 	cmd.bufferid = SAFTE_RD_CONFIG;
 	cmd.length = htobe16(sizeof(config));
-	flags = SCSI_DATA_IN;
+	flags = SCSI_DATA_IN | SCSI_AUTOCONF;
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
@@ -322,7 +322,7 @@ safte_read_config(struct safte_softc *sc)
 }
 
 int
-safte_read_encstat(struct safte_softc *sc)
+safte_read_encstat(struct safte_softc *sc, int autoconf)
 {
 	struct safte_readbuf_cmd	cmd;
 	int				flags, i;
@@ -338,6 +338,8 @@ safte_read_encstat(struct safte_softc *sc)
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
+	if (autoconf)
+		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), sc->sc_encbuf, sc->sc_encstatlen, 2, 30000, NULL,
