@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeereid.2,v 1.6 2003/11/27 14:31:24 jmc Exp $
+.\"	$OpenBSD: getpeereid.2,v 1.7 2005/08/10 01:40:49 jaredy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,34 +40,40 @@
 .Sh DESCRIPTION
 .Fn getpeereid
 returns the effective user ID and group ID of the peer connected to
-a UNIX domain socket (see
+a
+.Ux
+domain socket (see
 .Xr unix 4 ) .
 The argument
 .Fa s
 must be of type
 .Dv SOCK_STREAM .
 .Pp
-One common use is for UNIX domain servers to determine the credentials
+One common use is for
+.Ux
+domain servers to determine the credentials
 of clients that have connected to it.
 .Pp
 .Fn getpeereid
 takes three parameters:
-.Pp
+.Bl -bullet
+.It
 .Fa s
-Contains the file descriptor of the socket whose peer credentials
+contains the file descriptor of the socket whose peer credentials
 should be looked up.
-.Pp
+.It
 .Fa euid
-Points to a
+points to a
 .Li uid_t
 variable into which the effective user ID for the connected peer will
 be stored.
-.Pp
+.It
 .Fa egid
-Points to a
+points to a
 .Li gid_t
 variable into which the effective group ID for the connected peer will
 be stored.
+.El
 .Sh RETURN VALUES
 If the call succeeds, a 0 is returned and
 .Fa euid
@@ -91,7 +97,9 @@ The argument
 .Fa s
 is a file, not a socket.
 .It Bq Er EOPNOTSUPP
-The socket is not in the UNIX domain.
+The socket is not in the
+.Ux
+domain.
 .It Bq Er ENOTCONN
 The socket is not connected.
 .It Bq Er ENOBUFS
