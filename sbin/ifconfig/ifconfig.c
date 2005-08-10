@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.147 2005/06/24 15:26:33 jolan Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.148 2005/08/10 19:31:55 sturm Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3164,7 +3164,7 @@ pppoe_status(void)
 		}
 		printf(" time: ");
 		if (day != 0) printf("%ldd ", day);
-		printf("%ld:%ld:%ld", hour, min, sec);
+		printf("%02ld:%02ld:%02ld", hour, min, sec);
 	}
 	putchar('\n');
 }
