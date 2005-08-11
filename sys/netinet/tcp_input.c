@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.189 2005/08/02 11:05:44 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.190 2005/08/11 11:39:36 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2257,6 +2257,8 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 				continue;
 			if (!(th->th_flags & TH_SYN))
 				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
+				continue;
 			bcopy((char *) cp + 2, (char *) &mss, sizeof(mss));
 			NTOHS(mss);
 			oi->maxseg = mss;
@@ -2266,6 +2268,8 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 			if (optlen != TCPOLEN_WINDOW)
 				continue;
 			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
 				continue;
 			tp->t_flags |= TF_RCVD_SCALE;
 			tp->requested_s_scale = min(cp[2], TCP_MAX_WINSHIFT);
@@ -2280,24 +2284,29 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
 			NTOHL(oi->ts_ecr);
 
+			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
+				continue;
 			/*
 			 * A timestamp received in a SYN makes
 			 * it ok to send timestamp requests and replies.
 			 */
-			if (th->th_flags & TH_SYN) {
-				tp->t_flags |= TF_RCVD_TSTMP;
-				tp->ts_recent = oi->ts_val;
-				tp->ts_recent_age = tcp_now;
-			}
+			tp->t_flags |= TF_RCVD_TSTMP;
+			tp->ts_recent = oi->ts_val;
+			tp->ts_recent_age = tcp_now;
 			break;
 
 #ifdef TCP_SACK
 		case TCPOPT_SACK_PERMITTED:
 			if (!tp->sack_enable || optlen!=TCPOLEN_SACK_PERMITTED)
 				continue;
-			if (th->th_flags & TH_SYN)
-				/* MUST only be set on SYN */
-				tp->t_flags |= TF_SACK_PERMIT;
+			if (!(th->th_flags & TH_SYN))
+				continue;
+			if (TCPS_HAVERCVDSYN(tp->t_state))
+				continue;
+			/* MUST only be set on SYN */
+			tp->t_flags |= TF_SACK_PERMIT;
 			break;
 		case TCPOPT_SACK:
 			tcp_sack_option(tp, th, cp, optlen);
@@ -3965,10 +3974,10 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 #endif
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 #ifdef TCP_SIGNATURE
-		tb.t_state = TCPS_LISTEN;
 		if (tp->t_flags & TF_SIGNATURE)
 			tb.t_flags |= TF_SIGNATURE;
 #endif
+		tb.t_state = TCPS_LISTEN;
 		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi))
 			return (0);
 	} else
