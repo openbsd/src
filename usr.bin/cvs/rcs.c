@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.57 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.58 2005/08/11 14:10:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -476,13 +476,15 @@ rcs_write(RCSFILE *rfp)
 
 	if (rfp->rf_comment != NULL) {
 		fputs("comment\t@", fp);
-		rcs_strprint(rfp->rf_comment, strlen(rfp->rf_comment), fp);
+		rcs_strprint((const u_char *)rfp->rf_comment,
+		    strlen(rfp->rf_comment), fp);
 		fputs("@;\n", fp);
 	}
 
 	if (rfp->rf_expand != NULL) {
 		fputs("expand @", fp);
-		rcs_strprint(rfp->rf_expand, strlen(rfp->rf_expand), fp);
+		rcs_strprint((const u_char *)rfp->rf_expand,
+		    strlen(rfp->rf_expand), fp);
 		fputs("@;\n", fp);
 	}
 
@@ -509,7 +511,8 @@ rcs_write(RCSFILE *rfp)
 
 	fputs("\ndesc\n@", fp);
 	if (rfp->rf_desc != NULL)
-		rcs_strprint(rfp->rf_desc, strlen(rfp->rf_desc), fp);
+		rcs_strprint((const u_char *)rfp->rf_desc,
+		    strlen(rfp->rf_desc), fp);
 	fputs("@\n\n", fp);
 
 	/* deltatexts */
@@ -517,7 +520,8 @@ rcs_write(RCSFILE *rfp)
 		fprintf(fp, "\n%s\n", rcsnum_tostr(rdp->rd_num, numbuf,
 		    sizeof(numbuf)));
 		fputs("log\n@", fp);
-		rcs_strprint(rdp->rd_log, strlen(rdp->rd_log), fp);
+		rcs_strprint((const u_char *)rdp->rd_log,
+		    strlen(rdp->rd_log), fp);
 		fputs("@\ntext\n@", fp);
 		rcs_strprint(rdp->rd_text, rdp->rd_tlen, fp);
 		fputs("@\n\n", fp);
