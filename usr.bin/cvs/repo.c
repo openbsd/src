@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.7 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: repo.c,v 1.8 2005/08/11 11:45:06 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -544,7 +544,7 @@ cvs_repo_loadrec(CVSREPO *repo, const char *path)
 		}
 
 		do {
-			ret = getdirentries(fd, fbuf, sizeof(fbuf), &base);
+			ret = getdirentries(fd, fbuf, (int)sizeof(fbuf), &base);
 			if (ret == -1) {
 				cvs_log(LP_ERRNO,
 				    "failed to get directory entries");
