@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.111 2005/08/03 14:43:08 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.112 2005/08/11 11:54:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -152,7 +152,7 @@ cvs_file_init(void)
 			cvs_log(LP_ERRNO,
 			    "failed to open user's cvsignore file `%s'", path);
 	} else {
-		while (fgets(buf, sizeof(buf), ifp) != NULL) {
+		while (fgets(buf, (int)sizeof(buf), ifp) != NULL) {
 			len = strlen(buf);
 			if (len == 0)
 				continue;
