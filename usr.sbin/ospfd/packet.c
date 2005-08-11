@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.10 2005/05/27 07:24:51 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.11 2005/08/11 16:28:07 henning Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -105,9 +105,8 @@ recv_packet(int fd, short event, void *bula)
 		fatal("recv_packet");
 
 	if ((r = recvfrom(fd, buf, READ_BUF_SIZE, 0, NULL, NULL)) == -1) {
-		if (errno != EAGAIN) {
+		if (errno != EAGAIN && errno != EINTR)
 			log_debug("recv_packet: error receiving packet");
-		}
 		goto done;
 	}
 
