@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.51 2005/08/03 00:55:07 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.52 2005/08/11 17:58:58 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1523,7 +1523,6 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 	return;
 
   bad:
-	printf("pfsync_update_net_tdb: badness\n");
 	if (pf_status.debug >= PF_DEBUG_MISC)
 		printf("pfsync_insert: PFSYNC_ACT_TDB_UPD: "
 		    "invalid value\n");
