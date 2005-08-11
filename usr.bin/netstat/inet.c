@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.97 2005/08/11 12:55:31 mpf Exp $	*/
+/*	$OpenBSD: inet.c,v 1.98 2005/08/11 15:52:14 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.97 2005/08/11 12:55:31 mpf Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.98 2005/08/11 15:52:14 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -1095,6 +1095,14 @@ tcp_dump(u_long off)
 	p("%u", ts_recent, ", ");
 	p("%u", ts_recent_age, "\n");
 	p("%u", last_ack_sent, "\n");
+	HTONS(tcpcb.t_pmtud_ip_len);
+	HTONS(tcpcb.t_pmtud_nextmtu);
+	p("%u", t_pmtud_mss_acked, ", ");
+	p("%u", t_pmtud_mtu_sent, "\n");
+	p("%u", t_pmtud_nextmtu, ", ");
+	p("%u", t_pmtud_ip_len, ", ");
+	p("%u", t_pmtud_ip_hl, "\n");
+	p("%u", t_pmtud_th_seq, "\n");
 	p("%u", pf, "\n");
 #undef	p
-};
+}
