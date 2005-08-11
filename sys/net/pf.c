@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.498 2005/07/31 05:20:56 pascoe Exp $ */
+/*	$OpenBSD: pf.c,v 1.499 2005/08/11 05:09:29 joel Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -634,6 +634,7 @@ pf_src_connlimit(struct pf_state **state)
 	int bad = 0;
 
 	(*state)->src_node->conn++;
+	(*state)->src.tcp_est = 1;
 	pf_add_threshold(&(*state)->src_node->conn_rate);
 
 	if ((*state)->rule.ptr->max_src_conn &&
@@ -940,8 +941,7 @@ pf_src_tree_remove_state(struct pf_state *s)
 
 	if (s->src_node != NULL) {
 		if (s->proto == IPPROTO_TCP) {
-			if (s->src.state == PF_TCPS_PROXY_DST ||
-			    s->timeout >= PFTM_TCP_ESTABLISHED)
+			if (s->src.tcp_est)
 				--s->src_node->conn;
 		}
 		if (--s->src_node->states <= 0) {

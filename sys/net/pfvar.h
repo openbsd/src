@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.227 2005/08/02 12:40:42 pascoe Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.228 2005/08/11 05:09:30 joel Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -666,7 +666,9 @@ struct pf_state_peer {
 	u_int8_t	state;		/* active state level		*/
 	u_int8_t	wscale;		/* window scaling factor	*/
 	u_int16_t	mss;		/* Maximum segment size option	*/
+	u_int8_t	tcp_est;	/* Did we reach TCPS_ESTABLISHED */
 	struct pf_state_scrub	*scrub;	/* state is scrubbed		*/
+	u_int8_t	pad[3];
 };
 
 TAILQ_HEAD(pf_state_queue, pf_state);
