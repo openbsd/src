@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_sb.c,v 1.4 2005/08/08 08:05:35 espie Exp $	*/
+/*	$OpenBSD: multibyte_sb.c,v 1.5 2005/08/11 20:51:56 espie Exp $	*/
 /*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ mbsrtowcs(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps)
 	if (n != 0) {
 		if (pwcs != NULL) {
 			do {
-				if ((*pwcs++ = (wchar_t) *(*s)++) == 0)
+				if ((*pwcs++ = (wchar_t)(unsigned char)*(*s)++) == 0)
 					break;
 				count++;
 			} while (--n != 0);

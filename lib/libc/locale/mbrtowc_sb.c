@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbrtowc_sb.c,v 1.2 2005/08/08 08:05:35 espie Exp $	*/
+/*	$OpenBSD: mbrtowc_sb.c,v 1.3 2005/08/11 20:51:56 espie Exp $	*/
 /*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 	if (n == 0)
 		return -1;
 	if (pwc)
-		*pwc = (wchar_t) *s;
+		*pwc = (wchar_t)(unsigned char)*s;
 	return (*s != '\0');
 }
 
