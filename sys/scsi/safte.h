@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.h,v 1.2 2005/08/05 00:31:04 dlg Exp $ */
+/*	$OpenBSD: safte.h,v 1.3 2005/08/11 12:57:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Daivd Gwynne <dlg@openbsd.org>
@@ -91,7 +91,7 @@ struct safte_config {
 #define SAFTE_PWR_MF_OFF	0x11	/* malfunctioning and off */
 #define SAFTE_PWR_NOTINST	0x20	/* not present */
 #define SAFTE_PWR_PRESENT	0x21	/* present */
-#define SAFTE_PWR_UNKOWN	0x80	/* unknown status or unreportable */
+#define SAFTE_PWR_UNKNOWN	0x80	/* unknown status or unreportable */
 
 /* scsi id fields */
 /* are integers, not bitfields */
@@ -99,7 +99,7 @@ struct safte_config {
 /* door lock status */
 #define SAFTE_DOOR_LOCKED	0x00	/* locked */
 #define SAFTE_DOOR_UNLOCKED	0x01	/* unlocked or uncontrollable */
-#define SAFTE_DOOR_UNKOWN	0x80	/* unknown status or unreportable */
+#define SAFTE_DOOR_UNKNOWN	0x80	/* unknown status or unreportable */
 
 /* speaker status */
 #define SAFTE_SPKR_OFF		0x00	/* off or not installed */
