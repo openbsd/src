@@ -1,3 +1,5 @@
+.\"	$OpenBSD: mklocale.1,v 1.2 2005/08/11 14:30:53 jmc Exp $
+.\"
 .\" $NetBSD: mklocale.1,v 1.13 2004/01/24 17:03:26 wiz Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
@@ -42,9 +44,7 @@
 .Sh SYNOPSIS
 .Nm mklocale
 .Op Fl d
-\*[Lt]
-.Ar src-file
-\*[Gt]
+.Op Ar src-file
 .Ar language/LC_CTYPE
 .Nm mklocale
 .Op Fl d
@@ -59,22 +59,22 @@ utility reads an
 source file from standard input and produces an
 .Dv LC_CTYPE
 binary file on standard output suitable for placement in
-.Pa /usr/share/locale/\*[Lt]language\*[Gt]/LC_CTYPE .
+.Pa /usr/share/locale/\*(Ltlanguage\*(Gt/LC_CTYPE .
 .Pp
 The format of
 .Ar src-file
-is quite simple.
-It consists of a series of lines which start with a keyword and have
+is quite simple:
+it consists of a series of lines which start with a keyword and have
 associated data following.
-C style comments are used
+C-style comments are used
 to place comments in the file.
 .Pp
-Following options are available:
-.Bl -tag -width XXX
+The following options are available:
+.Bl -tag -width Ds
 .It Fl d
 Turns on debugging messages.
 .It Fl o
-Specify output file.
+Specify an output file.
 .El
 .Pp
 Besides the keywords which will be listed below,
@@ -114,17 +114,18 @@ A decimal number representing a rune code.
 A string enclosed in double quotes (").
 .It Dv THRU
 Either
-.Dv ...
+.Sq ...
 or
-.Dv - .
+.Sq - .
 Used to indicate ranges.
 .It Ar literal
 The follow characters are taken literally:
-.Bl -tag -width "\*[Lt]\|\|(\|\|["
-.It Dv "\*[Lt]\|(\|["
+.Pp
+.Bl -tag -width XXXXXXXXXX -compact
+.It Dv "\*(Lt \*(Ba ( \*(Ba ["
 Used to start a mapping.
 All are equivalent.
-.It Dv "\*[Gt]\|\^)\|]"
+.It Dv "\*(Gt \*(Ba ) \*(Ba ]"
 Used to end a mapping.
 All are equivalent.
 .It Dv :
@@ -144,8 +145,7 @@ The current encodings are:
 No translation and the default.
 .It Dv UTF2
 .Dv "Universal character set Transformation Format"
-adopted from
-.Nm "Plan 9 from Bell Labs" .
+adopted from Plan 9 from Bell Labs.
 .It Dv EUC
 .Dv EUC
 encoding as used by several
@@ -170,8 +170,7 @@ follows and is used as the invalid rune for this locale.
 .Pp
 The following keywords may appear multiple times and have the following
 format for data:
-.in +.5i
-.Bl -tag -width "XXRUNE1 THRU RUNEn : RUNE2XX"
+.Bl -tag -width "XXRUNE1 THRU RUNEn : RUNE2XX" -offset indent
 .It Aq Dv RUNE1 RUNE2
 .Dv RUNE1
 is mapped to
@@ -185,9 +184,7 @@ are mapped to
 .Dv RUNE2
 through
 .Dv RUNE2
-+ n-1.
 .El
-.in -.5i
 .Bl -tag -width PHONOGRAM
 .It Dv MAPLOWER
 Defines the tolower mappings.
@@ -263,10 +260,10 @@ Controls character set for subsequent runes.
 .El
 .Sh SEE ALSO
 .\"Xr colldef 1 ,
-.Xr setlocale 3 ,
+.Xr setlocale 3
 .\" .Xr euc 4 ,
 .\" .Xr utf8 4
-.Xr nls 7
+.\" .Xr nls 7
 .Sh HISTORY
 The
 .Nm mklocale
