@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2005/08/09 14:58:09 hshoexer Exp $
+# $OpenBSD: Makefile,v 1.6 2005/08/11 09:57:24 hshoexer Exp $
 
 # TARGETS
 # ipsec: feed ipsecNN.in through ipsecctl and check wether the output matches
@@ -18,25 +18,24 @@ SHELL=/bin/sh
 IPSEC_TARGETS+=ipsec${n}
 
 ipsec${n}:
-	ipsecctl -nv -f - < ${.CURDIR}/ipsec${n}.in | \
-	    diff -u ${.CURDIR}/ipsec${n}.ok /dev/stdin
-
+	cat ${.CURDIR}/ipsec${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
+	    ipsecctl -nv -f - | diff -u ${.CURDIR}/ipsec${n}.ok /dev/stdin
 .endfor
 
 .for n in ${TCPMD5TESTS}
 TCPMD5_TARGETS+=tcpmd5${n}
 
 tcpmd5${n}:
-	ipsecctl -nv -f - < ${.CURDIR}/tcpmd5${n}.in | \
-	    diff -u ${.CURDIR}/tcpmd5${n}.ok /dev/stdin
+	cat ${.CURDIR}/tcpmd5${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
+	    ipsecctl -nv -f - | diff -u ${.CURDIR}/tcpmd5${n}.ok /dev/stdin
 .endfor
 
 .for n in ${SATESTS}
 SA_TARGETS+=sa${n}
 
 sa${n}:
-	ipsecctl -nv -f - < ${.CURDIR}/sa${n}.in | \
-	    diff -u ${.CURDIR}/sa${n}.ok /dev/stdin
+	cat ${.CURDIR}/sa${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
+	    ipsecctl -nv -f - | diff -u ${.CURDIR}/sa${n}.ok /dev/stdin
 .endfor
 
 ipsec:		${IPSEC_TARGETS}

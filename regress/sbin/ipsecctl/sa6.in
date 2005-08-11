@@ -1,34 +1,34 @@
 esp from 1.1.1.1 to 2.2.2.2 spi 0x1eadbeef:0xbeef1ead \
-	authkey file "ak256:ak256" \
-	enckey file "ek160:ek160"
+	authkey file "DIR/ak256:DIR/ak256" \
+	enckey file "DIR/ek160:DIR/ek160"
 esp from 1.1.1.2 to 2.2.2.2 spi 0x2eadbeef:0xbeef2ead auth hmac-sha1 \
 	enc 3des-cbc \
-	authkey file "ak160:ak160" \
-	enckey file "ek192:ek192"
+	authkey file "DIR/ak160:DIR/ak160" \
+	enckey file "DIR/ek192:DIR/ek192"
 esp from 1.1.1.3 to 2.2.2.2 spi 0x3eadbeef:0xbeef3ead auth hmac-sha1 \
 	enc des-cbc \
-	authkey file "ak160:ak160" \
-	enckey file "ek64:ek64"
+	authkey file "DIR/ak160:DIR/ak160" \
+	enckey file "DIR/ek64:DIR/ek64"
 esp from 1.1.1.4 to 2.2.2.2 spi 0x4eadbeef:0xbeef4ead auth hmac-sha1 \
 	enc aes \
-	authkey file "ak160:ak160" \
-	enckey file "ek128:ek128"
+	authkey file "DIR/ak160:DIR/ak160" \
+	enckey file "DIR/ek128:DIR/ek128"
 esp from 1.1.1.5 to 2.2.2.2 spi 0x5eadbeef:0xbeef5ead auth hmac-sha1 \
 	enc aesctr \
-	authkey file "ak160:ak160" \
-	enckey file "ek160:ek160"
+	authkey file "DIR/ak160:DIR/ak160" \
+	enckey file "DIR/ek160:DIR/ek160"
 esp from 1.1.1.6 to 2.2.2.2 spi 0x6eadbeef:0xbeef6ead auth hmac-sha1 \
 	enc blowfish \
-	authkey file "ak160:ak160" \
-	enckey file "ek160:ek160"
+	authkey file "DIR/ak160:DIR/ak160" \
+	enckey file "DIR/ek160:DIR/ek160"
 esp from 1.1.1.7 to 2.2.2.2 spi 0x7eadbeef:0xbeef7ead auth hmac-sha1 \
 	enc cast128 \
-	authkey file "ak160:ak160" \
-	enckey file "ek128:ek128"
+	authkey file "DIR/ak160:DIR/ak160" \
+	enckey file "DIR/ek128:DIR/ek128"
 esp from 1.1.1.8 to 2.2.2.2 spi 0x8eadbeef:0xbeef8ead auth hmac-sha1 \
 	enc null \
-	authkey file "ak160:ak160"
+	authkey file "DIR/ak160:DIR/ak160"
 esp from 1.1.1.9 to 2.2.2.2 spi 0x9eadbeef:0xbeef9ead auth hmac-sha1 \
 	enc skipjack \
-	authkey file "ak160:ak160" \
-	enckey file "ek80:ek80"
+	authkey file "DIR/ak160:DIR/ak160" \
+	enckey file "DIR/ek80:DIR/ek80"
