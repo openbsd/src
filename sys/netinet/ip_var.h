@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.34 2005/08/02 11:05:44 markus Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.35 2005/08/11 12:55:31 mpf Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ struct	ipstat {
 	u_long	ips_badaddr;		/* invalid address on header */
 	u_long	ips_inhwcsum;		/* hardware checksummed on input */
 	u_long	ips_outhwcsum;		/* hardware checksummed on output */
+	u_long	ips_notmember;		/* multicasts for unregistered groups */
 };
 
 #ifdef _KERNEL

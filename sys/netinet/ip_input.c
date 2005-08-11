@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.130 2005/07/31 03:30:55 pascoe Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.131 2005/08/11 12:55:31 mpf Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -446,7 +446,9 @@ ipv4_input(m)
 		 */
 		IN_LOOKUP_MULTI(ip->ip_dst, m->m_pkthdr.rcvif, inm);
 		if (inm == NULL) {
-			ipstat.ips_cantforward++;
+			ipstat.ips_notmember++;
+			if (!IN_LOCAL_GROUP(ip->ip_dst.s_addr))
+				ipstat.ips_cantforward++;
 			m_freem(m);
 			return;
 		}

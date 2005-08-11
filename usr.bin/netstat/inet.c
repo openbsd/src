@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.96 2005/06/15 10:53:23 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.97 2005/08/11 12:55:31 mpf Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.96 2005/06/15 10:53:23 markus Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.97 2005/08/11 12:55:31 mpf Exp $";
 #endif
 #endif /* not lint */
 
@@ -453,6 +453,7 @@ ip_stats(u_long off, char *name)
 	p(ips_badaddr, "\t%lu datagram%s with bad address in header\n");
 	p(ips_inhwcsum, "\t%lu input datagram%s checksum-processed by hardware\n");
 	p(ips_outhwcsum, "\t%lu output datagram%s checksum-processed by hardware\n");
+	p(ips_notmember, "\t%lu multicast packet%s which we don't join\n");
 #undef p
 #undef p1
 }
