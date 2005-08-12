@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.7 2005/08/10 10:55:33 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.8 2005/08/12 08:50:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -48,27 +48,36 @@ int	safte_match(struct device *, void *, void *);
 void	safte_attach(struct device *, struct device *, void *);
 int	safte_detach(struct device *, int);
 
+struct safte_sensor {
+	struct sensor		se_sensor;
+	enum {
+		SAFTE_T_FAN,
+		SAFTE_T_PWRSUP,
+		SAFTE_T_DOORLOCK,
+		SAFTE_T_ALARM,
+		SAFTE_T_TEMP
+	}			se_type;
+	u_int8_t		*se_field;
+};
+
 struct safte_thread;
 
 struct safte_softc {
-	struct device	sc_dev;
-	struct scsi_link *sc_link;
+	struct device		sc_dev;
+	struct scsi_link	 *sc_link;
 
-	u_int		sc_nfans;
-	u_int		sc_npwrsup;
-	u_int		sc_nslots;
-	u_int		sc_ntemps;
-	u_int		sc_ntherm;
-	int		sc_flags;
-#define SAFTE_FL_DOORLOCK	(1<<0)
-#define SAFTE_FL_ALARM		(1<<1)
-#define SAFTE_FL_CELSIUS	(1<<2)
-	size_t		sc_encstatlen;
-	u_char		*sc_encbuf;
+	u_int			sc_encbuflen;
+	u_char			*sc_encbuf;
 
-	int		sc_nsensors;
-	struct sensor	*sc_sensors;
-	struct safte_thread *sc_thread;
+	int			sc_nsensors;
+	struct safte_sensor	*sc_sensors;
+
+	int			sc_celsius;
+	int			sc_ntemps;
+	struct safte_sensor	*sc_temps;
+	u_int16_t		*sc_temperrs;
+
+	struct safte_thread	*sc_thread;
 };
 
 struct cfattach safte_ca = {
@@ -82,14 +91,14 @@ struct cfdriver safte_cd = {
 #define DEVNAME(s)	((s)->sc_dev.dv_xname)
 
 struct safte_thread {
-	struct safte_softc *sc;
-	volatile int	running;
+	struct safte_softc	*sc;
+	volatile int		running;
 };
 
 void	safte_create_thread(void *);
 void	safte_refresh(void *);
 int	safte_read_config(struct safte_softc *);
-int	safte_read_encstat(struct safte_softc *, int);
+int	safte_read_encstat(struct safte_softc *);
 
 int64_t	safte_temp2uK(u_int8_t, int);
 
@@ -136,8 +145,6 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 	struct safte_softc		*sc = (struct safte_softc *)self;
 	struct scsibus_attach_args	*sa = aux;
 
-	int				i;
-
 	sc->sc_link = sa->sa_sc_link;
 	sa->sa_sc_link->device_softc = sc;
 
@@ -161,61 +168,6 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_nsensors = sc->sc_ntemps; /* XXX we could do more than temp */
-	if (sc->sc_nsensors == 0) {
-		free(sc->sc_thread, M_DEVBUF);
-		sc->sc_thread = NULL;
-		return;
-	}
-
-	sc->sc_sensors = malloc(sc->sc_nsensors * sizeof(struct sensor),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->sc_sensors == NULL) {
-		free(sc->sc_thread, M_DEVBUF);
-		sc->sc_thread = NULL;
-		printf("%s: unable to allocate sensor storage\n", DEVNAME(sc));
-		return;
-	}
-	memset(sc->sc_sensors, 0, sc->sc_nsensors * sizeof(struct sensor));
-
-	for (i = 0; i < sc->sc_ntemps; i++) {
-		sc->sc_sensors[i].type = SENSOR_TEMP;
-		snprintf(sc->sc_sensors[i].desc,
-		    sizeof(sc->sc_sensors[i].desc), "temp%d", i);
-	}
-
-	sc->sc_encstatlen = sc->sc_nfans * sizeof(u_int8_t) + /* fan status */
-	    sc->sc_npwrsup * sizeof(u_int8_t) + /* power supply status */
-	    sc->sc_nslots * sizeof(u_int8_t) + /* device scsi id (lun) */
-	    sizeof(u_int8_t) + /* door lock status */
-	    sizeof(u_int8_t) + /* speaker status */
-	    sc->sc_ntemps * sizeof(u_int8_t) + /* temp sensors */
-	    sizeof(u_int16_t); /* temp out of range sensors */
-
-	sc->sc_encbuf = malloc(sc->sc_encstatlen, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_encbuf == NULL) {
-		free(sc->sc_sensors, M_DEVBUF);
-		free(sc->sc_thread, M_DEVBUF);
-		sc->sc_thread = NULL;
-		printf("%s: unable to allocate enclosure status buffer\n",
-		    DEVNAME(sc));
-		return;
-	}
-
-	if (safte_read_encstat(sc, 1) != 0) {
-		free(sc->sc_encbuf, M_DEVBUF);
-		free(sc->sc_sensors, M_DEVBUF);
-		free(sc->sc_thread, M_DEVBUF);
-		sc->sc_thread = NULL;
-		printf("%s: unable to read enclosure status\n", DEVNAME(sc));
-		return;
-	}
-
-	for (i = 0; i < sc->sc_nsensors; i++) {
-		strlcpy(sc->sc_sensors[i].device, DEVNAME(sc),
-		    sizeof(sc->sc_sensors[i].device));
-		SENSOR_ADD(&sc->sc_sensors[i]);
-	}
 
 	kthread_create_deferred(safte_create_thread, sc);
 }
@@ -236,7 +188,7 @@ safte_detach(struct device *self, int flags)
 		 * take them out of the sensor list. mark them invalid instead.
 		 */
 		for (i = 0; i < sc->sc_nsensors; i++)
-			sc->sc_sensors[i].flags |= SENSOR_FINVALID;
+			sc->sc_sensors[i].se_sensor.flags |= SENSOR_FINVALID;
 
 		free(sc->sc_encbuf, M_DEVBUF);
 	}
@@ -262,7 +214,7 @@ safte_refresh(void *arg)
 	int				ok = 1;
 
 	while (thread->running) {
-		if (safte_read_encstat(sc, 0) != 0) {
+		if (safte_read_encstat(sc) != 0) {
 			if (ok)
 				printf("%s: error getting enclosure status\n",
 				    DEVNAME(sc));
@@ -286,7 +238,8 @@ safte_read_config(struct safte_softc *sc)
 {
 	struct safte_readbuf_cmd	cmd;
 	struct safte_config		config;
-	int				flags;
+	struct safte_sensor		*s;
+	int				flags, i, j;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ_BUFFER;
@@ -309,75 +262,224 @@ safte_read_config(struct safte_softc *sc)
 	    config.alarm, SAFTE_CFG_CELSIUS(config.therm),
 	    SAFTE_CFG_NTHERM(config.therm)));
 
-	sc->sc_nfans = config.nfans;
-	sc->sc_npwrsup = config.npwrsup;
-	sc->sc_nslots = config.nslots;
-	sc->sc_ntemps = config.ntemps;
-	sc->sc_ntherm = SAFTE_CFG_NTHERM(config.therm);
-	sc->sc_flags = (config.doorlock ? SAFTE_FL_DOORLOCK : 0) |
-	    (config.alarm ? SAFTE_FL_ALARM : 0) |
-	    (SAFTE_CFG_CELSIUS(config.therm) ? SAFTE_FL_CELSIUS : 0);
+	sc->sc_encbuflen = config.nfans * sizeof(u_int8_t) + /* fan status */
+	    config.npwrsup * sizeof(u_int8_t) + /* power supply status */
+	    config.nslots * sizeof(u_int8_t) + /* device scsi id (lun) */
+	    sizeof(u_int8_t) + /* door lock status */
+	    sizeof(u_int8_t) + /* speaker status */
+	    config.ntemps * sizeof(u_int8_t) + /* temp sensors */
+	    sizeof(u_int16_t); /* temp out of range sensors */
+
+	sc->sc_encbuf = malloc(sc->sc_encbuflen, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_encbuf == NULL)
+		return (1);
+
+	sc->sc_nsensors = config.nfans + config.npwrsup + config.ntemps + 
+		(config.doorlock ? 1 : 0) + (config.alarm ? 1 : 0);
+
+	sc->sc_sensors = malloc(sc->sc_nsensors * sizeof(struct safte_sensor),
+	    M_DEVBUF, M_NOWAIT);
+	if (sc->sc_sensors == NULL) {
+		free(sc->sc_sensors, M_DEVBUF);
+		return (1);
+	}
+
+	memset(sc->sc_sensors, 0,
+	    sc->sc_nsensors * sizeof(struct safte_sensor));
+	s = sc->sc_sensors;
+
+	for (i = 0; i < config.nfans; i++) {
+		s->se_type = SAFTE_T_FAN;
+		s->se_field = (u_int8_t *)(sc->sc_encbuf + i);
+		s->se_sensor.type = SENSOR_INDICATOR;
+		snprintf(s->se_sensor.desc, sizeof(s->se_sensor.desc),
+		    "fan%d", i);
+
+		s++;
+	}
+	j = config.nfans;
+
+	for (i = 0; i < config.npwrsup; i++) {
+		s->se_type = SAFTE_T_PWRSUP;
+		s->se_field = (u_int8_t *)(sc->sc_encbuf + j++ + i);
+		s->se_sensor.type = SENSOR_INDICATOR;
+		snprintf(s->se_sensor.desc, sizeof(s->se_sensor.desc),
+		    "psu%d", i);
+
+		s++;
+	}
+	j += config.npwrsup + config.nslots; /* skip the slots for now */
+
+	if (config.doorlock) {
+		s->se_type = SAFTE_T_DOORLOCK;
+		s->se_field = (u_int8_t *)(sc->sc_encbuf + j);
+		s->se_sensor.type = SENSOR_INDICATOR;
+		strlcpy(s->se_sensor.desc, "doorlock",
+		    sizeof(s->se_sensor.desc));
+
+		s++;
+	}
+	j++;
+
+	if (config.alarm) {
+		s->se_type = SAFTE_T_ALARM;
+		s->se_field = (u_int8_t *)(sc->sc_encbuf + j);
+		s->se_sensor.type = SENSOR_INDICATOR;
+		strlcpy(s->se_sensor.desc, "alarm", sizeof(s->se_sensor.desc));
+
+		s++;
+	}
+	j++;
+
+	/*
+	 * stash the temp info so we can get out of range status. limit the
+	 * number so the out of temp checks cant go into memory it doesnt own
+	 */
+	sc->sc_ntemps = (config.ntemps > 15) ? 15 : config.ntemps;
+	sc->sc_temps = s;
+	sc->sc_celsius = SAFTE_CFG_CELSIUS(config.therm);
+	for (i = 0; i < config.ntemps; i++) {
+		s->se_type = SAFTE_T_TEMP;
+		s->se_field = (u_int8_t *)(sc->sc_encbuf + j + i);
+		s->se_sensor.type = SENSOR_TEMP;
+		snprintf(s->se_sensor.desc, sizeof(s->se_sensor.desc),
+		    "temp%d", i);
+
+		s++;
+	}
+	j += config.ntemps;
+
+	sc->sc_temperrs = (u_int16_t *)(sc->sc_encbuf + j);
+
+	for (i = 0; i < sc->sc_nsensors; i++) {
+		strlcpy(sc->sc_sensors[i].se_sensor.device, DEVNAME(sc),
+		    sizeof(sc->sc_sensors[i].se_sensor.device));
+		SENSOR_ADD(&sc->sc_sensors[i].se_sensor);
+	}
 
 	return (0);
 }
 
 int
-safte_read_encstat(struct safte_softc *sc, int autoconf)
+safte_read_encstat(struct safte_softc *sc)
 {
 	struct safte_readbuf_cmd	cmd;
 	int				flags, i;
-	u_int8_t			*p = sc->sc_encbuf;
-	struct sensor			*s = sc->sc_sensors;
+	struct safte_sensor		*s;
+	u_int16_t			oot;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ_BUFFER;
 	cmd.flags |= SAFTE_RD_MODE;
 	cmd.bufferid = SAFTE_RD_ENCSTAT;
-	cmd.length = htobe16(sc->sc_encstatlen);
+	cmd.length = htobe16(sc->sc_encbuflen);
 	flags = SCSI_DATA_IN;
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
-	if (autoconf)
-		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
-	    sizeof(cmd), sc->sc_encbuf, sc->sc_encstatlen, 2, 30000, NULL,
+	    sizeof(cmd), sc->sc_encbuf, sc->sc_encbuflen, 2, 30000, NULL,
 	    flags) != 0)
 		return (1);
 
-	i = 0;
-	while (i < sc->sc_nfans) {
-		i++;
-		p++;
+	for (i = 0; i < sc->sc_nsensors; i++) {
+		s = &sc->sc_sensors[i];
+		s->se_sensor.flags &= ~SENSOR_FUNKNOWN;
+
+		DPRINTF(("%s: %d type: %d field: 0x%02x\n", DEVNAME(sc), i,
+		    s->se_type, *s->se_field));
+
+		switch (s->se_type) {
+		case SAFTE_T_FAN:
+			switch (*s->se_field) {
+			case SAFTE_FAN_OP:
+				s->se_sensor.value = 1;
+				s->se_sensor.status = SENSOR_S_OK;
+				break;
+			case SAFTE_FAN_MF:
+				s->se_sensor.value = 0;
+				s->se_sensor.status = SENSOR_S_CRIT;
+				break;
+			case SAFTE_FAN_NOTINST:
+			case SAFTE_FAN_UNKNOWN:
+			default:
+				s->se_sensor.value = 0;
+				s->se_sensor.status = SENSOR_S_UNKNOWN;
+				s->se_sensor.flags |= SENSOR_FUNKNOWN;
+				break;
+			}
+			break;
+
+		case SAFTE_T_PWRSUP:
+			switch (*s->se_field) {
+			case SAFTE_PWR_OP_ON:
+				s->se_sensor.value = 1;
+				s->se_sensor.status = SENSOR_S_OK;
+				break;
+			case SAFTE_PWR_OP_OFF:
+				s->se_sensor.value = 0;
+				s->se_sensor.status = SENSOR_S_OK;
+				break;
+			case SAFTE_PWR_MF_ON:
+				s->se_sensor.value = 1;
+				s->se_sensor.status = SENSOR_S_CRIT;
+				break;
+			case SAFTE_PWR_MF_OFF:
+				s->se_sensor.value = 0;
+				s->se_sensor.status = SENSOR_S_CRIT;
+				break;
+			case SAFTE_PWR_NOTINST:
+			case SAFTE_PWR_PRESENT:
+			case SAFTE_PWR_UNKNOWN:
+				s->se_sensor.value = 0;
+				s->se_sensor.status = SENSOR_S_UNKNOWN;
+				s->se_sensor.flags |= SENSOR_FUNKNOWN;
+				break;
+			}
+			break;
+
+		case SAFTE_T_DOORLOCK:
+			switch (*s->se_field) {
+			case SAFTE_DOOR_LOCKED:
+				s->se_sensor.value = 1;
+				s->se_sensor.status = SENSOR_S_OK;
+				break;
+			case SAFTE_DOOR_UNLOCKED:
+				s->se_sensor.value = 0;
+				s->se_sensor.status = SENSOR_S_CRIT;
+				break;
+			case SAFTE_DOOR_UNKNOWN:
+				s->se_sensor.value = 0;
+				s->se_sensor.status = SENSOR_S_CRIT;
+				s->se_sensor.flags |= SENSOR_FUNKNOWN;
+				break;
+			}
+			break;
+
+		case SAFTE_T_ALARM:
+			switch (*s->se_field) {
+			case SAFTE_SPKR_OFF:
+				s->se_sensor.value = 0;
+				s->se_sensor.status = SENSOR_S_OK;
+				break;
+			case SAFTE_SPKR_ON:
+				s->se_sensor.value = 1;
+				s->se_sensor.status = SENSOR_S_CRIT;
+				break;
+			}
+
+		case SAFTE_T_TEMP:
+			s->se_sensor.value = safte_temp2uK(*s->se_field,
+			    sc->sc_celsius);
+			break;
+		}
 	}
 
-	i = 0;
-	while (i < sc->sc_npwrsup) {
-		i++;
-		p++;
-	}
-
-	i = 0;
-	while (i < sc->sc_nslots) {
-		i++;
-		p++;
-	}
-
-	/* doorlock */
-	p++;
-	/* alarm */
-	p++;
-
-	i = 0;
-	while (i < sc->sc_ntemps) {
-		s->value = safte_temp2uK(*p, sc->sc_flags & SAFTE_FL_CELSIUS);
-		i++;
-		s++;
-		p++;
-	}
-
-	/* temp over threshold (u_int16_t) */
+	oot = betoh16(*sc->sc_temperrs);
+	for (i = 0; i < sc->sc_ntemps; i++)
+		sc->sc_temps[i].se_sensor.status = 
+		    (oot & (1 << i)) ? SENSOR_S_CRIT : SENSOR_S_OK;
 
 	return(0);
 }
