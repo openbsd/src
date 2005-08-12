@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.154 2005/08/07 11:54:02 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.155 2005/08/12 04:15:38 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1791,6 +1791,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
 		struct pf_state		*state;
 		u_int32_t		 nr;
+		int 			 secs;
 
 		nr = 0;
 		RB_FOREACH(state, pf_state_tree_id, &tree_id) {
@@ -1802,15 +1803,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 			break;
 		}
-		bcopy(state, &ps->state, sizeof(struct pf_state));
+		secs = time_second;
+		bcopy(state, &ps->state, sizeof(ps->state));
+		strlcpy(ps->state.u.ifname, state->u.s.kif->pfik_name,
+		    sizeof(ps->state.u.ifname));
 		ps->state.rule.nr = state->rule.ptr->nr;
 		ps->state.nat_rule.nr = (state->nat_rule.ptr == NULL) ?
 		    -1 : state->nat_rule.ptr->nr;
 		ps->state.anchor.nr = (state->anchor.ptr == NULL) ?
 		    -1 : state->anchor.ptr->nr;
+		ps->state.creation = secs - ps->state.creation;
 		ps->state.expire = pf_state_expires(state);
-		if (ps->state.expire > time_second)
-			ps->state.expire -= time_second;
+		if (ps->state.expire > secs)
+			ps->state.expire -= secs;
 		else
 			ps->state.expire = 0;
 		break;
