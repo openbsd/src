@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.16 2005/07/03 04:03:25 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.17 2005/08/12 01:49:08 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -236,93 +236,102 @@ struct scsi_reassign_blocks_data {
 	} defect_descriptor[1];
 };
 
-union scsi_disk_pages {
-#define	DISK_PGCODE	0x3F	/* only 6 bits valid */
-	struct page_disk_format {
-		u_int8_t pg_code;	/* page code (should be 3) */
-		u_int8_t pg_length;	/* page length (should be 0x16) */
-		u_int8_t trk_z[2];	/* tracks per zone */
-		u_int8_t alt_sec[2];	/* alternate sectors per zone */
-		u_int8_t alt_trk_z[2];	/* alternate tracks per zone */
-		u_int8_t alt_trk_v[2];	/* alternate tracks per volume */
-		u_int8_t ph_sec_t[2];	/* physical sectors per track */
-		u_int8_t bytes_s[2];	/* bytes per sector */
-		u_int8_t interleave[2];	/* interleave */
-		u_int8_t trk_skew[2];	/* track skew factor */
-		u_int8_t cyl_skew[2];	/* cylinder skew */
-		u_int8_t flags;		/* various */
+#define	DISK_PGCODE	0x3F	/* Only 6 bits of pg_code are valid. */
+
+struct page_disk_format {
+	u_int8_t pg_code;	/* page code (should be 3) */
+	u_int8_t pg_length;	/* page length (should be 0x16) */
+	u_int8_t trk_z[2];	/* tracks per zone */
+	u_int8_t alt_sec[2];	/* alternate sectors per zone */
+	u_int8_t alt_trk_z[2];	/* alternate tracks per zone */
+	u_int8_t alt_trk_v[2];	/* alternate tracks per volume */
+	u_int8_t ph_sec_t[2];	/* physical sectors per track */
+	u_int8_t bytes_s[2];	/* bytes per sector */
+	u_int8_t interleave[2];	/* interleave */
+	u_int8_t trk_skew[2];	/* track skew factor */
+	u_int8_t cyl_skew[2];	/* cylinder skew */
+	u_int8_t flags;		/* various */
 #define	DISK_FMT_SURF	0x10
 #define	DISK_FMT_RMB	0x20
 #define	DISK_FMT_HSEC	0x40
 #define	DISK_FMT_SSEC	0x80
-		u_int8_t reserved1;
-		u_int8_t reserved2;
-		u_int8_t reserved3;
-	} disk_format;
-	struct page_rigid_geometry {
-		u_int8_t pg_code;	/* page code (should be 4) */
-		u_int8_t pg_length;	/* page length (should be 0x16)	*/
-		u_int8_t ncyl[3];	/* number of cylinders */
-		u_int8_t nheads;	/* number of heads */
-		u_int8_t st_cyl_wp[3];	/* starting cyl., write precomp */
-		u_int8_t st_cyl_rwc[3];	/* starting cyl., red. write cur */
-		u_int8_t driv_step[2];	/* drive step rate */
-		u_int8_t land_zone[3];	/* landing zone cylinder */
-		u_int8_t sp_sync_ctl;	/* spindle synch control */
+	u_int8_t reserved1;
+	u_int8_t reserved2;
+	u_int8_t reserved3;
+};
+
+struct page_rigid_geometry {
+	u_int8_t pg_code;	/* page code (should be 4) */
+	u_int8_t pg_length;	/* page length (should be 0x16)	*/
+	u_int8_t ncyl[3];	/* number of cylinders */
+	u_int8_t nheads;	/* number of heads */
+	u_int8_t st_cyl_wp[3];	/* starting cyl., write precomp */
+	u_int8_t st_cyl_rwc[3];	/* starting cyl., red. write cur */
+	u_int8_t driv_step[2];	/* drive step rate */
+	u_int8_t land_zone[3];	/* landing zone cylinder */
+	u_int8_t sp_sync_ctl;	/* spindle synch control */
 #define SPINDLE_SYNCH_MASK	0x03	/* mask of valid bits */
 #define SPINDLE_SYNCH_NONE	0x00	/* synch disabled or not supported */
 #define SPINDLE_SYNCH_SLAVE	0x01	/* disk is a slave */
 #define SPINDLE_SYNCH_MASTER	0x02	/* disk is a master */
 #define SPINDLE_SYNCH_MCONTROL	0x03	/* disk is a master control */
-		u_int8_t rot_offset;	/* rotational offset (for spindle synch) */
-		u_int8_t reserved1;
-		u_int8_t rpm[2];	/* media rotation speed */
-		u_int8_t reserved2;
-		u_int8_t reserved3;
-    	} rigid_geometry;
-	struct page_flex_geometry {
-		u_int8_t pg_code;	/* page code (should be 5) */
-		u_int8_t pg_length;	/* page length (should be 0x1e) */
-		u_int8_t xfr_rate[2];
-		u_int8_t nheads;	/* number of heads */
-		u_int8_t ph_sec_tr;	/* physical sectors per track */
-		u_int8_t bytes_s[2];	/* bytes per sector */
-		u_int8_t ncyl[2];	/* number of cylinders */
-		u_int8_t st_cyl_wp[2];	/* start cyl., write precomp */
-		u_int8_t st_cyl_rwc[2];	/* start cyl., red. write cur */
-		u_int8_t driv_step[2];	/* drive step rate */
-		u_int8_t driv_step_w;	/* drive step pulse width */
-		u_int8_t head_settle[2];/* head settle delay */
-		u_int8_t motor_on;	/* motor on delay */
-		u_int8_t motor_off;	/* motor off delay */
-		u_int8_t flags;		/* various flags */
+	u_int8_t rot_offset;	/* rotational offset (for spindle synch) */
+	u_int8_t reserved1;
+	u_int8_t rpm[2];	/* media rotation speed */
+	u_int8_t reserved2;
+	u_int8_t reserved3;
+};
+
+struct page_flex_geometry {
+	u_int8_t pg_code;	/* page code (should be 5) */
+	u_int8_t pg_length;	/* page length (should be 0x1e) */
+	u_int8_t xfr_rate[2];
+	u_int8_t nheads;	/* number of heads */
+	u_int8_t ph_sec_tr;	/* physical sectors per track */
+	u_int8_t bytes_s[2];	/* bytes per sector */
+	u_int8_t ncyl[2];	/* number of cylinders */
+	u_int8_t st_cyl_wp[2];	/* start cyl., write precomp */
+	u_int8_t st_cyl_rwc[2];	/* start cyl., red. write cur */
+	u_int8_t driv_step[2];	/* drive step rate */
+	u_int8_t driv_step_w;	/* drive step pulse width */
+	u_int8_t head_settle[2];/* head settle delay */
+	u_int8_t motor_on;	/* motor on delay */
+	u_int8_t motor_off;	/* motor off delay */
+	u_int8_t flags;		/* various flags */
 #define MOTOR_ON		0x20	/* motor on (pin 16)? */
 #define START_AT_SECTOR_1	0x40	/* start at sector 1  */
 #define READY_VALID		0x20	/* RDY (pin 34) valid */
-		u_int8_t step_p_cyl;	/* step pulses per cylinder */
-		u_int8_t write_pre;	/* write precompensation */
-		u_int8_t head_load;	/* head load delay */
-		u_int8_t head_unload;	/* head unload delay */
-		u_int8_t pin_34_2;	/* pin 34 (6) pin 2 (7/11) definition */
-		u_int8_t pin_4_1;	/* pin 4 (8/9) pin 1 (13) definition */
-		u_int8_t rpm[2];	/* media rotation speed */
-		u_int8_t reserved1;
-		u_int8_t reserved2;
-	} flex_geometry;
-	struct page_reduced_geometry {
-		u_int8_t pg_code;	/* page code (should be 6) */
-		u_int8_t pg_length;	/* page length (should be 0x0B) */
-		u_int8_t wcd;		/* bit 0 = write cache disable */
-		u_int8_t bytes_s[2];	/* bytes per sector */
-		u_int8_t sectors[5];	/* total number of sectors */
-		u_int8_t pow_perf;	/* power/performance level */
-		u_int8_t flags;		/* various */
+	u_int8_t step_p_cyl;	/* step pulses per cylinder */
+	u_int8_t write_pre;	/* write precompensation */
+	u_int8_t head_load;	/* head load delay */
+	u_int8_t head_unload;	/* head unload delay */
+	u_int8_t pin_34_2;	/* pin 34 (6) pin 2 (7/11) definition */
+	u_int8_t pin_4_1;	/* pin 4 (8/9) pin 1 (13) definition */
+	u_int8_t rpm[2];	/* media rotation speed */
+	u_int8_t reserved1;
+	u_int8_t reserved2;
+};
+
+struct page_reduced_geometry {
+	u_int8_t pg_code;	/* page code (should be 6) */
+	u_int8_t pg_length;	/* page length (should be 0x0B) */
+	u_int8_t wcd;		/* bit 0 = write cache disable */
+	u_int8_t bytes_s[2];	/* bytes per sector */
+	u_int8_t sectors[5];	/* total number of sectors */
+	u_int8_t pow_perf;	/* power/performance level */
+	u_int8_t flags;		/* various */
 #define	LOCK_DISABLED	0x1
 #define	FORMAT_DISABLED	0x2
 #define	WRITE_DISABLED	0x4
 #define	READ_DISABLED	0x8
-		u_int8_t reserved;
-	} reduced_geometry;
+	u_int8_t reserved;
+};
+
+union scsi_disk_pages {
+	struct page_disk_format		disk_format;
+	struct page_rigid_geometry	rigid_geometry;
+	struct page_flex_geometry	flex_geometry;
+	struct page_reduced_geometry	reduced_geometry;
 };
 
 #endif /* _SCSI_SCSI_DISK_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.82 2005/07/30 15:54:45 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.83 2005/08/12 01:49:08 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1331,7 +1331,9 @@ sd_get_parms(sd, dp, flags)
 	int flags;
 {
 	struct scsi_mode_sense_buf buf;
-	union scsi_disk_pages *sense_pages;
+	struct page_rigid_geometry	*rigid;
+	struct page_flex_geometry	*flex;
+	struct page_reduced_geometry	*reduced;
 	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize, ssblksize;
 	u_int16_t rpm = 0;
 
@@ -1344,48 +1346,43 @@ sd_get_parms(sd, dp, flags)
 
 	case T_RDIRECT:
 		/* T_RDIRECT only supports RBC Device Parameter Page (6). */
-		scsi_do_mode_sense(sd->sc_link, 6, &buf, (void **)&sense_pages,
-		    NULL, NULL, &blksize, sizeof(sense_pages->reduced_geometry),
-		    flags | SCSI_SILENT, NULL);
-		if (sense_pages) {
+		scsi_do_mode_sense(sd->sc_link, 6, &buf, (void **)&reduced,
+		    NULL, NULL, &blksize, sizeof(*reduced), flags | SCSI_SILENT,
+		    NULL);
+		if (reduced) {
 			if (dp->disksize == 0)
-				dp->disksize = _5btol(sense_pages->
-				    reduced_geometry.sectors);
+				dp->disksize = _5btol(reduced->sectors);
 			if (blksize == 0)
-				blksize = _2btol(sense_pages->
-				    reduced_geometry.bytes_s);
+				blksize = _2btol(reduced->bytes_s);
 		}
 		break;
 
 	default:
-		sense_pages = NULL;
+		rigid = NULL;
 		if (((sd->sc_link->flags & SDEV_ATAPI) == 0) ||
 		    ((sd->sc_link->flags & SDEV_REMOVABLE) == 0))
 			/* Try mode sense page 4 (RIGID GEOMETRY). */
 			scsi_do_mode_sense(sd->sc_link, 4, &buf,
-			    (void **)&sense_pages, NULL, NULL, &blksize,
-			    sizeof(sense_pages->rigid_geometry),
-			    flags | SCSI_SILENT, NULL);
-		if (sense_pages) { 
-			heads = sense_pages->rigid_geometry.nheads;
-			cyls = _3btol(sense_pages->rigid_geometry.ncyl);
-			rpm = _2btol(sense_pages->rigid_geometry.rpm);
+			    (void **)&rigid, NULL, NULL, &blksize,
+			    sizeof(*rigid), flags | SCSI_SILENT, NULL);
+		if (rigid) { 
+			heads = rigid->nheads;
+			cyls = _3btol(rigid->ncyl);
+			rpm = _2btol(rigid->rpm);
 			if (heads * cyls > 0)
 				sectors = dp->disksize / (heads * cyls);
 		} else {
 			/* * Try page 5 (FLEX GEOMETRY). */
-			scsi_do_mode_sense(sd->sc_link, 5, &buf,
-			    (void **)&sense_pages, NULL, NULL, &blksize,
-			    sizeof(sense_pages->flex_geometry),
+			scsi_do_mode_sense(sd->sc_link, 5, &buf, (void **)&flex,
+			    NULL, NULL, &blksize, sizeof(*flex),
 			    flags | SCSI_SILENT, NULL);
-			if (sense_pages) {
-				sectors = sense_pages->flex_geometry.ph_sec_tr;
-				heads = sense_pages->flex_geometry.nheads;
-				cyls = _2btol(sense_pages->flex_geometry.ncyl);
-				rpm = _2btol(sense_pages->flex_geometry.rpm);
+			if (flex) {
+				sectors = flex->ph_sec_tr;
+				heads = flex->nheads;
+				cyls = _2btol(flex->ncyl);
+				rpm = _2btol(flex->rpm);
 				if (blksize == 0)
-					blksize = _2btol(sense_pages->
-					    flex_geometry.bytes_s);
+					blksize = _2btol(flex->bytes_s);
 				if (dp->disksize == 0)
 					dp->disksize = heads * cyls * sectors;
 			}	
@@ -1399,7 +1396,6 @@ sd_get_parms(sd, dp, flags)
 		dp->blksize = ssblksize;
 	else
 		dp->blksize = (blksize == 0) ? 512 : blksize;
-
 
 	/*
 	 * Use Adaptec standard geometry values for anything we still don't
