@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsmoused.8,v 1.12 2003/11/08 08:49:51 jmc Exp $
+.\"	$OpenBSD: wsmoused.8,v 1.13 2005/08/12 21:08:38 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Baptiste Marchand
 .\" All rights reserved.
@@ -35,7 +35,10 @@
 .Op Fl 2df
 .Op Fl C Ar thresh
 .Op Fl I Ar file
-.Op Fl M Ar N=M
+.Oo
+.Fl M
+.Ar N Ns = Ns Ar M
+.Oc
 .Op Fl p Ar device
 .Op Fl t Ar type
 .Nm wsmoused
@@ -52,14 +55,14 @@ driver through the
 interface.
 Its purpose is to provide copy/paste functionality on the PC console.
 .Pp
-By default, the left mouse button is used to select text (in the familiar
-click-and-drag fashion), the right button is used to extend the selection,
+By default, the left mouse button is used to select text
+(in the familiar click-and-drag fashion);
+the right button is used to extend the selection;
 and the middle button pastes.
 This behavior can be modified through the use of
 .Fl M ,
-i.e.,
-.Fl M
-.Ar 2=3
+e.g.\&
+.Li -M 2=3
 maps the right mouse button to paste.
 .Pp
 The options are as follows:
@@ -86,7 +89,7 @@ If omitted, the process ID will be stored in
 .Pa /var/run/wsmoused.pid .
 .It Fl i
 Print the type and the protocol of the mouse and exit.
-.It Fl M Ar N=M
+.It Fl M Ar N Ns = Ns Ar M
 Assign the physical button
 .Ar M
 to the logical button
@@ -99,7 +102,7 @@ physical buttons is held down.
 Do not put space around
 .Ql = .
 .It Fl p Ar device
-Use device
+Use
 .Ar device
 to communicate with the mouse.
 If this option is not present, the device opened is
