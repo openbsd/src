@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.33 2005/08/10 15:34:46 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.34 2005/08/12 06:36:14 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -175,6 +175,9 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			    cf->cf_name);
 		return (0);
 	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
+
+		/* XXX scratch it from CVS/Entries */
+
 		l = snprintf(buf, sizeof(buf), "%s/%s%s",
 		    CVS_PATH_CVSDIR, cf->cf_name, CVS_DESCR_FILE_EXT);
 		if (l == -1 || l >= (int)sizeof(buf)) {
@@ -195,6 +198,9 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			    cf->cf_name);
 		return (0);
 	} else {
+
+		/* XXX prefix file version with the `-' char in CVS/Entries */
+
 		if (verbosity > 1)
 			cvs_log(LP_NOTICE, "scheduling file `%s' for removal",
 			    cf->cf_name);
