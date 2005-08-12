@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.2,v 1.13 2005/03/16 20:31:08 jmc Exp $
+.\"	$OpenBSD: chown.2,v 1.14 2005/08/12 18:56:40 jmc Exp $
 .\"	$NetBSD: chown.2,v 1.10 1995/10/12 15:40:47 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -70,7 +70,7 @@ set-user-ID and set-group-ID programs.
 This behaviour can be overridden by setting the
 .Xr sysctl 8
 variable
-.Va fs.posix.suid
+.Va fs.posix.setuid
 to zero.
 .Pp
 .Fn lchown
