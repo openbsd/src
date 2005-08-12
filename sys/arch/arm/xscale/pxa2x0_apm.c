@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.14 2005/08/09 21:29:26 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.15 2005/08/12 03:23:02 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -353,12 +353,16 @@ apm_handle_event(struct pxa2x0_apm_softc *sc, u_int type)
 		break;
 	case APM_CRIT_SUSPEND_REQ:
 		DPRINTF(("suspend required immediately\n"));
+#if 0
+		/* XXX apmd would make us suspend again after resume. */
 		(void)apm_record_event(sc, type);
+#endif
 		/*
 		 * We ignore APM_CRIT_RESUME and just suspend here as usual
 		 * to simplify the actual apm_get_event() implementation.
 		 */
 		apm_suspends++;
+		ret = 1;
 		break;
 	case APM_USER_SUSPEND_REQ:
 	case APM_SUSPEND_REQ:
