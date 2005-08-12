@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.43 2005/08/10 14:49:20 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.44 2005/08/12 18:46:53 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -100,7 +100,7 @@ cvs_ent_open(const char *dir, int flags)
 
 	fp = fopen(entpath, mode);
 	if (fp == NULL) {
-		if (!nodir)
+		if (nodir == 0)
 			cvs_log(LP_ERRNO, "cannot open %s for %s", entpath,
 			    mode[1] == '+' ? "writing" : "reading");
 		return (NULL);
@@ -257,6 +257,8 @@ int
 cvs_ent_remove(CVSENTRIES *ef, const char *name)
 {
 	struct cvs_ent *ent;
+
+	cvs_log(LP_TRACE, "cvs_ent_remove(%s)", name);
 
 	ent = cvs_ent_get(ef, name);
 	if (ent == NULL)
