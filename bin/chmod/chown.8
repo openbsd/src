@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.8,v 1.7 2005/03/16 20:31:08 jmc Exp $
+.\"	$OpenBSD: chown.8,v 1.8 2005/08/12 18:54:04 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -129,7 +129,7 @@ set-user-ID and set-group-ID programs.
 This behaviour can be overridden by setting the
 .Xr sysctl 8
 variable
-.Va fs.posix.suid
+.Va fs.posix.setuid
 to zero.
 .Pp
 Only the superuser is permitted to change the owner of a file.
