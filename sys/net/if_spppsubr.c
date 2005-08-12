@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.35 2005/08/03 21:50:21 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.36 2005/08/12 21:29:10 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -458,6 +458,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifqueue *inq = 0;
 	struct sppp *sp = (struct sppp *)ifp;
 	struct timeval tv;
+	void *prej;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	int s;
 
@@ -483,7 +484,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	if (sp->pp_flags & PP_NOFRAMING) {
-		memcpy(&ht.protocol, mtod(m, void *), 2);
+		prej = mtod(m, void *);
+		memcpy(&ht.protocol, prej, sizeof(ht.protocol));
 		m_adj(m, 2);
 		ht.control = PPP_UI;
 		ht.address = PPP_ALLSTATIONS;
@@ -491,6 +493,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		/* Get PPP header. */
 		h = mtod (m, struct ppp_header*);
+		prej = &h->protocol;
 		m_adj (m, PPP_HEADER_LEN);
 	}
 
@@ -511,8 +514,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		default:
 			if (sp->state[IDX_LCP] == STATE_OPENED)
 				sppp_cp_send (sp, PPP_LCP, PROTO_REJ,
-					++sp->pp_seq, m->m_pkthdr.len + 2,
-					&h->protocol);
+				    ++sp->pp_seq, m->m_pkthdr.len + 2, prej);
 			if (debug)
 				log(LOG_DEBUG,
 				    SPP_FMT "invalid input protocol "
