@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.18 2004/01/04 21:41:12 drahn Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.19 2005/08/12 21:13:34 jmc Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -488,9 +488,8 @@ wsmoused(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-2df] [-C thresh] [-I file] [-M N=M] \
+	fprintf(stderr, "usage: %s [-2dfi] [-C thresh] [-I file] [-M N=M] \
 [-p device] [-t type]\n", __progname);
-	fprintf(stderr, "       %s -i [-p device]\n", __progname);
 	exit(1);
 }
 

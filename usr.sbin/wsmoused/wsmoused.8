@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsmoused.8,v 1.13 2005/08/12 21:08:38 jmc Exp $
+.\"	$OpenBSD: wsmoused.8,v 1.14 2005/08/12 21:13:34 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Baptiste Marchand
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Nd wsmouse daemon
 .Sh SYNOPSIS
 .Nm wsmoused
-.Op Fl 2df
+.Op Fl 2dfi
 .Op Fl C Ar thresh
 .Op Fl I Ar file
 .Oo
@@ -41,9 +41,6 @@
 .Oc
 .Op Fl p Ar device
 .Op Fl t Ar type
-.Nm wsmoused
-.Fl i
-.Op Fl p Ar device
 .Sh DESCRIPTION
 .Nm
 listens for mouse events on the specified
