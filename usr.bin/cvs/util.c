@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.48 2005/07/30 21:16:17 moritz Exp $	*/
+/*	$OpenBSD: util.c,v 1.49 2005/08/12 14:41:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -512,6 +512,28 @@ cvs_chdir(const char *path)
 {
 	if (chdir(path) == -1) {
 		cvs_log(LP_ERRNO, "cannot change to dir `%s'", path);
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*
+ * cvs_rename()
+ * Change the name of a file.
+ * rename() wrapper with an error message.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+cvs_rename(const char *from, const char *to)
+{
+	cvs_log(LP_TRACE, "cvs_rename(%s,%s)", from, to);
+
+	if (cvs_noexec == 1)
+		return (0);
+
+	if (rename(from, to) == -1) {
+		cvs_log(LP_ERRNO, "cannot rename file `%s' to `%s'", from, to);
 		return (-1);
 	}
 
