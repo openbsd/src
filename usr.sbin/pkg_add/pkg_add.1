@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.37 2005/04/09 21:36:57 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.38 2005/08/12 18:00:33 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -447,6 +447,8 @@ to a suitable area, as
 does not check for noexec status except by failing to run installation
 scripts.
 .Sh BUGS
-The
-.Fl r
-option has not seen wide-testing yet and is almost certainly full of bugs.
+.Xr scp 1
+processes do not die like they should when their pipe is closed,
+and so using
+.Nm
+over scp consumes an insane amount of resources.
