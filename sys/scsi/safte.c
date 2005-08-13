@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.8 2005/08/12 08:50:08 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.9 2005/08/13 01:38:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -114,6 +114,11 @@ safte_match(struct device *parent, void *match, void *aux)
 	if (inq == NULL)
 		return (0);
 
+	/* match on dell enclosures */
+	if ((inq->device & SID_TYPE) == T_PROCESSOR &&
+	    (inq->version & SID_ANSII) == SID_ANSII_SCSI3)
+		return (2);
+
 	if ((inq->device & SID_TYPE) != T_PROCESSOR ||
 	    (inq->version & SID_ANSII) != SID_ANSII_SCSI2 ||
 	    (inq->response_format & SID_ANSII) != SID_ANSII_SCSI2)
@@ -134,7 +139,7 @@ safte_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0)
-		return (24);
+		return (2);
 
 	return (0);
 }
