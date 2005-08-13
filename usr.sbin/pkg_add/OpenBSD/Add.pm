@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.36 2005/08/13 15:47:57 espie Exp $
+# $OpenBSD: Add.pm,v 1.37 2005/08/13 16:46:35 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -142,7 +142,7 @@ sub borked_installation
 
 	# last file may have not copied correctly
 	my $last = $plist->{items}->[@{$plist->{items}}-1];
-	if ($last->IsFile()) {
+	if ($last->IsFile() && defined($last->{md5})) {
 	    require OpenBSD::md5;
 
 	    my $old = $last->{md5};
