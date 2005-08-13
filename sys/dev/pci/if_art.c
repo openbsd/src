@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_art.c,v 1.1 2005/08/13 22:49:48 claudio Exp $ */
-/*	$Id: if_art.c,v 1.1 2005/08/13 22:49:48 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.2 2005/08/13 22:58:05 claudio Exp $ */
+/*	$Id: if_art.c,v 1.2 2005/08/13 22:58:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -155,7 +155,7 @@ art_softc_attach(struct device *parent, struct device *self, void *aux)
 	    IFM_MAKEWORD(IFM_TDM, IFM_TDM_E1_G704_CRC4, IFM_TDM_PPP |
 	    IFM_TDM_MASTER, 0), 0, NULL);
 
-	printf(": E1/T1 framer\n");
+	printf("\n");
 
 	if (bt8370_reset(sc) != 0)
 		return;
