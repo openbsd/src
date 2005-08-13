@@ -1,6 +1,18 @@
 - handle n-to-1 updates: mostly need to allow for a list of replaced packages.
 The tricky part is that the replaced packages will often have 
 inter-dependencies, and we must ignore those inter-dependencies.
+- clean up the interface of the dependencies module, to be able to use it in
+n-to-1 updates.
 - rewrite of PackageLocator to make listing of distant packages effective,
-which is the first step of pkg updates.
+which is the first step of pkg updates (done, to be committed after 3.8)
+- write an update mode (done, to be committed after 3.8)
+- in interactive mode, make it ask questions whenever the user could get
+frustrated.
 - finish pulling the pkg_add code into Add.pm/Update.pm.
+- make some hard decisions about what to update (automatically update
+depencencies).
+- figure out when to continue after some errors, which should not stop a
+full update, for instance... or ignore already installed packages.
+- make sure all user-interface is done through a few functions, so that it's
+easy to plug another interface in.
+- add needed annotations to handle updates correctly.
