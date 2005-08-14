@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.19 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getitimer.2,v 1.20 2005/08/14 06:24:55 jaredy Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -190,6 +190,10 @@ parameter specified a bad address.
 A
 .Fa value
 parameter specified a time that was too large to be handled.
+.It Bq Er EINVAL
+An unrecognized value for
+.Fa which
+was specified.
 .El
 .Sh SEE ALSO
 .Xr gettimeofday 2 ,
