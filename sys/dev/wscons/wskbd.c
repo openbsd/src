@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.45 2005/07/08 02:26:07 marc Exp $ */
+/* $OpenBSD: wskbd.c,v 1.46 2005/08/14 11:00:15 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -953,6 +953,18 @@ wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
 	int len, error;
 
 	switch (cmd) {
+	case WSKBDIO_BELL:
+	case WSKBDIO_COMPLEXBELL:
+	case WSKBDIO_SETBELL:
+	case WSKBDIO_SETKEYREPEAT:
+	case WSKBDIO_SETDEFAULTKEYREPEAT:
+	case WSKBDIO_SETMAP:
+	case WSKBDIO_SETENCODING:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
+	}
+
+	switch (cmd) {
 #define	SETBELL(dstp, srcp, dfltp)					\
     do {								\
 	(dstp)->pitch = ((srcp)->which & WSKBD_BELL_DOPITCH) ?		\
@@ -965,22 +977,16 @@ wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
     } while (0)
 
 	case WSKBDIO_BELL:
-		if ((flag & FWRITE) == 0)
-			return (EACCES);
 		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
 		    WSKBDIO_COMPLEXBELL, (caddr_t)&sc->sc_bell_data, flag, p));
 
 	case WSKBDIO_COMPLEXBELL:
-		if ((flag & FWRITE) == 0)
-			return (EACCES);
 		ubdp = (struct wskbd_bell_data *)data;
 		SETBELL(ubdp, ubdp, &sc->sc_bell_data);
 		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
 		    WSKBDIO_COMPLEXBELL, (caddr_t)ubdp, flag, p));
 
 	case WSKBDIO_SETBELL:
-		if ((flag & FWRITE) == 0)
-			return (EACCES);
 		kbdp = &sc->sc_bell_data;
 setbell:
 		ubdp = (struct wskbd_bell_data *)data;
@@ -1017,8 +1023,6 @@ getbell:
     } while (0)
 
 	case WSKBDIO_SETKEYREPEAT:
-		if ((flag & FWRITE) == 0)
-			return (EACCES);
 		kkdp = &sc->sc_keyrepeat_data;
 setkeyrepeat:
 		ukdp = (struct wskbd_keyrepeat_data *)data;
@@ -1046,8 +1050,6 @@ getkeyrepeat:
 #undef SETKEYREPEAT
 
 	case WSKBDIO_SETMAP:
-		if ((flag & FWRITE) == 0)
-			return (EACCES);
 		umdp = (struct wskbd_map_data *)data;
 		if (umdp->maplen > WSKBDIO_MAXMAPLEN)
 			return (EINVAL);
@@ -1080,8 +1082,6 @@ getkeyrepeat:
 		return(0);
 
 	case WSKBDIO_SETENCODING:
-		if ((flag & FWRITE) == 0)
-			return (EACCES);
 		enc = *((kbd_t *)data);
 		if (KB_ENCODING(enc) == KB_USER) {
 			/* user map must already be loaded */

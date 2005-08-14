@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.16 2005/06/01 18:50:30 miod Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.17 2005/08/14 11:00:15 miod Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -590,6 +590,15 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 	/*
 	 * Try the generic ioctls that the wsmouse interface supports.
 	 */
+
+	switch (cmd) {
+	case FIOASYNC:
+	case FIOSETOWN:
+	case TIOCSPGRP:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
+	}
+
 	switch (cmd) {
 	case FIONBIO:		/* we will remove this someday (soon???) */
 		return (0);

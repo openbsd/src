@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.14 2005/05/15 19:03:47 deraadt Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.15 2005/08/14 11:00:15 miod Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -377,9 +377,19 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 
 	switch (cmd) {
 	case WSMUXIO_INJECTEVENT:
+	case WSMUXIO_ADD_DEVICE:
+	case WSMUXIO_REMOVE_DEVICE:
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+#endif
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
+	}
+
+	switch (cmd) {
+	case WSMUXIO_INJECTEVENT:
 		/* Inject an event, e.g., from moused. */
 		DPRINTF(("%s: inject\n", sc->sc_base.me_dv.dv_xname));
-
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL) {
 			/* No event sink, so ignore it. */
@@ -627,7 +637,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 				DPRINTF(("wsmux_attach_sc: %s set rawkbd=%d\n",
 					 me->me_dv.dv_xname, sc->sc_rawkbd));
 				(void)wsevsrc_ioctl(me, WSKBDIO_SETMODE,
-						    &sc->sc_rawkbd, 0, 0);
+						    &sc->sc_rawkbd, FWRITE, 0);
 #endif
 				if (sc->sc_kbd_layout != KB_NONE)
 					(void)wsevsrc_ioctl(me,

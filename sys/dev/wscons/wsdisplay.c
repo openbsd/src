@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.61 2005/07/17 10:43:24 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.62 2005/08/14 11:00:15 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -831,7 +831,7 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (scr->scr_rawkbd) {
 		int kbmode = WSKBD_TRANSLATED;
 		(void) wsdisplay_internal_ioctl(sc, scr, WSKBDIO_SETMODE,
-		    (caddr_t)&kbmode, 0, p);
+		    (caddr_t)&kbmode, FWRITE, p);
 	}
 #endif
 
@@ -983,10 +983,12 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	switch (cmd) {
-	    case WSKBDIO_SETMODE:
+	case WSKBDIO_SETMODE:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
 		scr->scr_rawkbd = (*(int *)data == WSKBD_RAW);
 		return (wsdisplay_update_rawkbd(sc, scr));
-	    case WSKBDIO_GETMODE:
+	case WSKBDIO_GETMODE:
 		*(int *)data = (scr->scr_rawkbd ?
 				WSKBD_RAW : WSKBD_TRANSLATED);
 		return (0);
@@ -999,6 +1001,18 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	if (error >= 0)
 		return (error);
 #endif /* NWSKBD > 0 */
+
+	switch (cmd) {
+	case WSDISPLAYIO_SMODE:
+	case WSDISPLAYIO_USEFONT:
+#ifdef BURNER_SUPPORT
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_SBURNER:
+#endif
+	case WSDISPLAYIO_SETSCREEN:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
+	}
 
 	switch (cmd) {
 	case WSDISPLAYIO_GMODE:
@@ -1125,7 +1139,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		}
 		return (error);
 #undef d
-#endif
+#endif	/* BURNER_SUPPORT */
 	case WSDISPLAYIO_GETSCREEN:
 		return (wsdisplay_getscreen(sc,
 		    (struct wsdisplay_addscreendata *)data));
@@ -1492,7 +1506,7 @@ wsdisplay_update_rawkbd(struct wsdisplay_softc *sc, struct wsscreen *scr)
 		splx(s);
 		return (ENXIO);
 	}
-	error = wsevsrc_display_ioctl(inp, WSKBDIO_SETMODE, &data, 0, 0);
+	error = wsevsrc_display_ioctl(inp, WSKBDIO_SETMODE, &data, FWRITE, 0);
 	if (!error)
 		sc->sc_rawkbd = raw;
 	splx(s);
