@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.36 2005/07/21 13:00:30 jmc Exp $
+.\"	$OpenBSD: sk.4,v 1.37 2005/08/14 22:04:05 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Cd "skc* at pci?"
 .Cd "sk* at skc?"
+.Cd "brgphy* at mii?"
 .Cd "eephy* at mii?"
 .Cd "xmphy* at mii?"
 .Sh DESCRIPTION
@@ -161,6 +162,7 @@ the network connection (cable).
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr brgphy 4 ,
 .Xr eephy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
