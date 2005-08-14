@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2005/03/23 17:14:45 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2005/08/14 10:58:36 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -173,7 +173,8 @@ void	vmeintr_establish(int vec, int level, struct intrhand *, int, const char *)
  * interrupt vectors (vectors that are not shared and are handled in the
  * trap window).  Such functions must be written in assembly.
  */
-void	intr_fasttrap(int level, void (*vec)(void));
+int	intr_fasttrap(int, void (*)(void), int (*)(void *), void *);
+void	intr_fastuntrap(int);
 
 /* auxreg.c */
 void led_blink(void *);

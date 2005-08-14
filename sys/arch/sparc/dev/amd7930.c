@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.29 2005/07/09 22:23:13 miod Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.30 2005/08/14 10:58:33 miod Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -57,6 +57,11 @@ int     amd7930debug = 0;
 #endif
 
 /*
+ * Define AUDIO_C_HANDLER to force using non-fast trap routines.
+ */
+/* #define AUDIO_C_HANDLER */
+
+/*
  * Software state, per AMD79C30 audio chip.
  */
 struct amd7930_softc {
@@ -84,8 +89,6 @@ struct amd7930_softc {
 };
 
 /* interrupt interfaces */
-#ifdef AUDIO_C_HANDLER
-int	amd7930hwintr(void *);
 #if defined(SUN4M)
 #define AUDIO_SET_SWINTR do {		\
 	if (CPU_ISSUN4M)		\
@@ -96,14 +99,17 @@ int	amd7930hwintr(void *);
 #else
 #define AUDIO_SET_SWINTR ienab_bis(IE_L4)
 #endif /* defined(SUN4M) */
-#else
+
+#ifndef AUDIO_C_HANDLER
 struct auio *auiop;
 #endif /* AUDIO_C_HANDLER */
+int	amd7930hwintr(void *);
 int	amd7930swintr(void *);
 
 /* forward declarations */
 void	audio_setmap(volatile struct amd7930 *, struct mapreg *);
 static void init_amd(volatile struct amd7930 *);
+int	amd7930_shareintr(void *);
 
 /* autoconfiguration driver */
 void	amd7930attach(struct device *, struct device *, void *);
@@ -294,17 +300,30 @@ amd7930attach(parent, self, args)
 
 	init_amd(amd);
 
+	/*
+	 * Register interrupt handlers.  We'll prefer a fast trap (unless
+	 * AUDIO_C_HANDLER is defined), with a sharing callback so that we
+	 * can revert into a regular trap vector if necessary.
+	 */
 #ifndef AUDIO_C_HANDLER
-	auiop = &sc->sc_au;
 	sc->sc_hwih.ih_vec = pri;
-	evcount_attach(&sc->sc_hwih.ih_count, sc->sc_dev.dv_xname,
-	    &sc->sc_hwih.ih_vec, &evcount_intr);
-	intr_fasttrap(pri, amd7930_trap);
-#else
-	sc->sc_hwih.ih_fun = amd7930hwintr;
-	sc->sc_hwih.ih_arg = &sc->sc_au;
-	intr_establish(pri, &sc->sc_hwih, IPL_AUHARD, sc->sc_dev.dv_xname);
+	if (intr_fasttrap(pri, amd7930_trap, amd7930_shareintr, sc) == 0) {
+		auiop = &sc->sc_au;
+		evcount_attach(&sc->sc_hwih.ih_count, sc->sc_dev.dv_xname,
+		    &sc->sc_hwih.ih_vec, &evcount_intr);
+	} else {
+#ifdef AUDIO_DEBUG
+		printf("%s: unable to register fast trap handler\n",
+		    self->dv_xname);
 #endif
+#else
+	{
+#endif
+		sc->sc_hwih.ih_fun = amd7930hwintr;
+		sc->sc_hwih.ih_arg = &sc->sc_au;
+		intr_establish(pri, &sc->sc_hwih, IPL_AUHARD,
+		    sc->sc_dev.dv_xname);
+	}
 	sc->sc_swih.ih_fun = amd7930swintr;
 	sc->sc_swih.ih_arg = sc;
 	intr_establish(IPL_AUSOFT, &sc->sc_swih, IPL_AUSOFT,
@@ -767,7 +786,6 @@ amd7930_query_devinfo(addr, dip)
 	return (0);
 }
 
-#ifdef AUDIO_C_HANDLER
 int
 amd7930hwintr(au0)
 	void *au0;
@@ -811,7 +829,6 @@ amd7930hwintr(au0)
 
 	return (-1);
 }
-#endif /* AUDIO_C_HANDLER */
 
 int
 amd7930swintr(sc0)
@@ -842,3 +859,28 @@ amd7930swintr(sc0)
 		splx(s);
 	return (ret);
 }
+
+#ifndef AUDIO_C_HANDLER
+int
+amd7930_shareintr(void *arg)
+{
+	struct amd7930_softc *sc = arg;
+
+	/*
+	 * We are invoked at splhigh(), so there is no need to prevent the chip
+	 * from interrupting while we are messing with the handlers. We
+	 * however need to properly untie the event counter from the chain,
+	 * since it will be reused immediately by intr_establish()...
+	 */
+
+	intr_fastuntrap(sc->sc_hwih.ih_vec);
+	evcount_detach(&sc->sc_hwih.ih_count);
+
+	sc->sc_hwih.ih_fun = amd7930hwintr;
+	sc->sc_hwih.ih_arg = &sc->sc_au;
+	intr_establish(sc->sc_hwih.ih_vec, &sc->sc_hwih, IPL_AUHARD,
+	    sc->sc_dev.dv_xname);
+
+	return (0);
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.27 2004/09/29 07:35:14 miod Exp $ */
+/*	$OpenBSD: intr.c,v 1.28 2005/08/14 10:58:36 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -244,6 +244,11 @@ struct intrhand *intrhand[15] = {
 };
 
 static int fastvec;		/* marks fast vectors (see below) */
+static struct {
+	int (*cb)(void *);
+	void *data;
+} fastvec_share[15];
+
 #ifdef DIAGNOSTIC
 extern int sparc_interrupt4m[];
 extern int sparc_interrupt44c[];
@@ -251,7 +256,7 @@ extern int sparc_interrupt44c[];
 
 /*
  * Attach an interrupt handler to the vector chain for the given level.
- * This is not possible if it has been taken away as a fast vector.
+ * This may not be possible if it has been taken away as a fast vector.
  */
 void
 intr_establish(level, ih, ipl_block, name)
@@ -294,9 +299,19 @@ intr_establish(level, ih, ipl_block, name)
 		evcount_attach(&ih->ih_count, name, &ih->ih_vec, &evcount_intr);
 
 	s = splhigh();
-	if (fastvec & (1 << level))
-		panic("intr_establish: level %d interrupt tied to fast vector",
-		    level);
+
+	/*
+	 * Check if this interrupt is already being handled by a fast trap.
+	 * If so, attempt to change it back to a regular (thus) shareable
+	 * trap.
+	 */
+	if (fastvec & (1 << level)) {
+		if (fastvec_share[level].cb == NULL ||
+		    (*fastvec_share[level].cb)(fastvec_share[level].data) != 0)
+			panic("intr_establish: level %d interrupt tied to fast vector",
+			    level);
+	}
+
 #ifdef DIAGNOSTIC
 	/* double check for legal hardware interrupt */
 	if ((level != 1 && level != 4 && level != 6) || CPU_ISSUN4M ) {
@@ -329,11 +344,13 @@ intr_establish(level, ih, ipl_block, name)
 /*
  * Like intr_establish, but wires a fast trap vector.  Only one such fast
  * trap is legal for any interrupt, and it must be a hardware interrupt.
+ * In case some other device wants to share the interrupt, we also register
+ * a callback which will be able to revert this and register a slower, but
+ * shareable trap vector if necessary (for example, to share int 13 between
+ * audioamd and stp).
  */
-void
-intr_fasttrap(level, vec)
-	int level;
-	void (*vec)(void);
+int
+intr_fasttrap(int level, void (*vec)(void), int (*share)(void *), void *cbdata)
 {
 	struct trapvec *tv;
 	u_long hi22, lo10;
@@ -349,9 +366,16 @@ intr_fasttrap(level, vec)
 	hi22 = ((u_long)vec) >> 10;
 	lo10 = ((u_long)vec) & 0x3ff;
 	s = splhigh();
-	if ((fastvec & (1 << level)) != 0 || intrhand[level] != NULL)
-		panic("intr_fasttrap: already handling level %d interrupts",
-		    level);
+
+	/*
+	 * If this interrupt is already being handled, fail; the caller will
+	 * either panic or try to register a slow (shareable) trap.
+	 */
+	if ((fastvec & (1 << level)) != 0 || intrhand[level] != NULL) {
+		splx(s);
+		return (EBUSY);
+	}
+
 #ifdef DIAGNOSTIC
 	displ = (CPU_ISSUN4M)
 		? &sparc_interrupt4m[0] - &tv->tv_instr[1]
@@ -371,11 +395,55 @@ intr_fasttrap(level, vec)
 	instr[1] = I_JMPLri(I_G0, I_L3, lo10);	/* jmpl %l3+%lo(vec),%g0 */
 	instr[2] = I_RDPSR(I_L0);		/* mov %psr, %l0 */
 
+	fastvec_share[level].cb = share;
+	fastvec_share[level].data = cbdata;
+
 	tvp = (char *)tv->tv_instr;
 	instrp = (char *)instr;
 	for (i = 0; i < sizeof(int) * 3; i++, instrp++, tvp++)
 		pmap_writetext(tvp, *instrp);
 	fastvec |= 1 << level;
+	splx(s);
+
+	return (0);
+}
+
+void
+intr_fastuntrap(int level)
+{
+	struct trapvec *tv;
+	int i, s;
+	int displ;
+	int instr[3];
+	char *instrp;
+	char *tvp;
+
+	tv = &trapbase[T_L1INT - 1 + level];
+
+	/* restore to `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
+	displ = (CPU_ISSUN4M)
+		? &sparc_interrupt4m[0] - &tv->tv_instr[1]
+		: &sparc_interrupt44c[0] - &tv->tv_instr[1];
+	instr[0] = I_MOVi(I_L3, level);
+	instr[1] = I_BA(0, displ);
+	instr[2] = I_RDPSR(I_L0);
+
+	s = splhigh();
+
+#ifdef DIAGNOSTIC
+	if ((fastvec & (1 << level)) == 0) {
+		splx(s);
+		return;
+	}
+#endif
+
+	tvp = (char *)tv->tv_instr;
+	instrp = (char *)instr;
+	for (i = 0; i < sizeof(int) * 3; i++, instrp++, tvp++)
+		pmap_writetext(tvp, *instrp);
+	fastvec &= ~(1 << level);
+	fastvec_share[level].cb = NULL;
+
 	splx(s);
 }
 

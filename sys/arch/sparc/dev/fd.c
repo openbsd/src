@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.41 2005/03/23 17:10:22 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.42 2005/08/14 10:58:33 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -442,6 +442,7 @@ fdcattach(parent, self, aux)
 	TAILQ_INIT(&fdc->sc_drives);
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
+	printf(" pri %d, softpri %d: ", pri, IPL_FDSOFT);
 #ifdef FDC_C_HANDLER
 	fdc->sc_hih.ih_fun = (void *)fdc_c_hwintr;
 	fdc->sc_hih.ih_arg = fdc;
@@ -449,9 +450,12 @@ fdcattach(parent, self, aux)
 #else
 	fdciop = &fdc->sc_io;
 	fdc->sc_hih.ih_vec = pri;
+	if (intr_fasttrap(pri, fdchwintr, NULL, NULL) != 0) {
+		printf("unable to register fast trap handler\n");
+		return;
+	}
 	evcount_attach(&fdc->sc_hih.ih_count, self->dv_xname,
 	    &fdc->sc_hih.ih_vec, &evcount_intr);
-	intr_fasttrap(pri, fdchwintr);
 #endif
 	fdc->sc_sih.ih_fun = (void *)fdcswintr;
 	fdc->sc_sih.ih_arg = fdc;
@@ -500,7 +504,7 @@ fdcattach(parent, self, aux)
 			printf(" CFGLOCK: unexpected response");
 	}
 
-	printf(" pri %d, softpri %d: chip 8207%c\n", pri, IPL_FDSOFT, code);
+	printf("chip 8207%c\n", code);
 
 	/*
 	 * Controller and drives are represented by one and the same
