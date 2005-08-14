@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.47 2004/12/30 21:28:48 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.48 2005/08/14 12:52:40 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1646,16 +1646,6 @@ _C_LABEL(_DCIS):
 	rts
 Lmotommu9:
 #endif
-	rts
-
-| Invalid single cache line
-ENTRY(DCIAS)
-_C_LABEL(_DCIAS):
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060
-	jle	Ldciasx
-	movl	sp@(4),a0
-	.word	0xf468			| cpushl dc,a0@
-Ldciasx:
 	rts
 
 ENTRY(DCIU)

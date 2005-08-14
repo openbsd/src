@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2005/08/01 11:54:25 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.21 2005/08/14 12:52:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -203,7 +203,6 @@ void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 void	DCIA(void);
 void	DCIS(void);
-void	DCIAS(vaddr_t);
 void	DCIU(void);
 void	ICIA(void);
 void	ICPA(void);
