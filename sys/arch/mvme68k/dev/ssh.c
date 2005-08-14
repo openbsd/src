@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.12 2004/12/25 23:02:25 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.13 2005/08/14 12:48:12 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -753,10 +753,10 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 #endif
 
 	/* push data cache for all data the 53c710 needs to access */
-	dma_cachectl ((caddr_t)acb, sizeof (struct ssh_acb));
-	dma_cachectl (cbuf, clen);
+	dma_cachectl((caddr_t)acb, sizeof (struct ssh_acb));
+	dma_cachectl(cbuf, clen);
 	if (buf != NULL && len != 0)
-		dma_cachectl (buf, len);
+		dma_cachectl(buf, len);
 
 #ifdef DEBUG
 	if (ssh_debug & 0x100 && rp->ssh_sbcl & SSH_BSY) {
@@ -818,7 +818,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 	++sshints;
 #if 0
 	if (ssh_debug & 0x100) {
-		DCIAS(&acb->stat[0]);	/* XXX */
+		dma_cachectl(&acb->stat[0], 1);
 		printf ("sshchkintr: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 				  istat, dstat, sstat0, rp->ssh_dsps, rp->ssh_sbcl, acb->stat[0], acb->msg[0]);
 		printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
@@ -943,7 +943,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 				}
 			}
 #endif
-			dma_cachectl ((caddr_t)acb, sizeof(*acb));
+			dma_cachectl((caddr_t)acb, sizeof(*acb));
 		}
 #ifdef DEBUG
 		SSH_TRACE('m',rp->ssh_sbcl,(rp->ssh_dsp>>8),rp->ssh_dsp);
@@ -1125,8 +1125,9 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 				acb->ds.chain[j].datalen = acb->ds.chain[i].datalen;
 			}
 			if (j < DMAMAXIO)
-				acb->ds.chain[j].datalen = 0;
-			DCIAS(kvtop((vaddr_t)&acb->ds.chain));
+				acb->ds.chain[j++].datalen = 0;
+			dma_cachectl((caddr_t)&acb->ds.chain,
+			    j * sizeof(acb->ds.chain[0]));
 		}
 		++sc->sc_tinfo[target].dconns;
 		/*
@@ -1182,7 +1183,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			sc->sc_nexus = acb;
 			sc->sc_flags |= acb->status;
 			acb->status = 0;
-			DCIAS(kvtop((vaddr_t)&acb->stat[0]));
+			dma_cachectl(&acb->stat[0], 1);	/* XXX necessary? */
 			rp->ssh_dsa = kvtop((vaddr_t)&acb->ds);
 			rp->ssh_sxfer = sc->sc_sync[acb->xs->sc_link->target].sxfer;
 			rp->ssh_sbcl = sc->sc_sync[acb->xs->sc_link->target].sbcl;
@@ -1194,7 +1195,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 					 TAILQ_FIRST(&sc->nexus_list));
 			panic("unable to find reselecting device");
 		}
-		dma_cachectl ((caddr_t)acb, sizeof(*acb));
+		dma_cachectl((caddr_t)acb, sizeof(*acb));
 		rp->ssh_temp = 0;
 		rp->ssh_dcntl |= SSH_DCNTL_STD;
 		return (0);
@@ -1236,11 +1237,10 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			printf("%s: Bad message-in with no active command?\n",
 					 sc->sc_dev.dv_xname);
 		/* Unrecognized message in byte */
-		dma_cachectl (&acb->msg[1],1);
+		dma_cachectl(&acb->msg[1],1);
 		printf ("%s: Unrecognized message in data sfbr %x msg %x sbcl %x\n",
 				  sc->sc_dev.dv_xname, rp->ssh_sfbr, acb->msg[1], rp->ssh_sbcl);
 		/* what should be done here? */
-		DCIAS(kvtop((vaddr_t)&acb->msg[1]));
 		rp->ssh_dsp = sc->sc_scriptspa + Ent_switch;
 		return (0);
 	}
@@ -1255,8 +1255,8 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		}
 	}
 	if (sstat0 == 0 && dstat & SSH_DSTAT_SIR) {
-		dma_cachectl (&acb->stat[0], 1);
-		dma_cachectl (&acb->msg[0], 1);
+		dma_cachectl(&acb->stat[0], 1);
+		dma_cachectl(&acb->msg[0], 1);
 		printf ("SSH interrupt: %lx sts %x msg %x %x sbcl %x\n",
 				  rp->ssh_dsps, acb->stat[0], acb->msg[0], acb->msg[1],
 				  rp->ssh_sbcl);
@@ -1384,7 +1384,7 @@ sshintr(sc)
 
 #ifdef DEBUG
 	if (ssh_debug & 5) {
-		DCIAS(kvtop(&sc->sc_nexus->stat[0]));
+		dma_cachectl(&sc->sc_nexus->stat[0], 1);
 		printf ("%s: intr istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 				  sc->sc_dev.dv_xname, istat, dstat, sstat0,
 				  rp->ssh_dsps,  rp->ssh_sbcl,
