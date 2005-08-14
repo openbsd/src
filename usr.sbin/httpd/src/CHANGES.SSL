@@ -545,7 +545,7 @@
 
    *) Fixed a typo related to a RAND_status call in ssl_engine_rand.c
       which was introduced in 2.6.1 and which caused mod_ssl fail to
-      compile if OpenSSL >= 0.9.5 was used [Sorry, my gcc hasn't catched
+      compile if OpenSSL >= 0.9.5 was used [Sorry, my gcc hasn't caught
       this typo :-(...]
 
    *) Added also some random files which exists under Mach/Rhapshody

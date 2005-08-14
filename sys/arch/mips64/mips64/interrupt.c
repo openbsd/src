@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.17 2005/07/20 21:55:50 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.18 2005/08/14 11:02:30 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -562,10 +562,10 @@ intrmask_t
 generic_iointr(intrmask_t pending, struct trap_frame *cf)
 {
 	struct intrhand *ih;
-	intrmask_t catched, vm;
+	intrmask_t caught, vm;
 	int v;
 
-	catched = 0;
+	caught = 0;
 
 	set_ipending((pending >> 8) & cpl);
 	pending &= ~(cpl << 8);
@@ -579,14 +579,14 @@ generic_iointr(intrmask_t pending, struct trap_frame *cf)
 			while (ih) {
 				ih->frame = cf;
 				if ((*ih->ih_fun)(ih->ih_arg)) {
-					catched |= vm;
+					caught |= vm;
 					ih->ih_count.ec_count++;
 				}
 				ih = ih->ih_next;
 			}
 		}
 	}
-	return catched;
+	return caught;
 }
 
 #ifndef INLINE_SPLRAISE

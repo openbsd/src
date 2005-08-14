@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.12 2005/07/18 02:43:25 fgsch Exp $ */
+/*	$OpenBSD: macebus.c,v 1.13 2005/08/14 11:02:32 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -688,7 +688,7 @@ intrmask_t
 macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 {
 	struct intrhand *ih;
-	intrmask_t catched, vm;
+	intrmask_t caught, vm;
 	int v;
 	intrmask_t pending;
 	u_int64_t intstat, isastat, mask;
@@ -697,7 +697,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 	intstat &= 0xffff;
 
 	isastat = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT);
-	catched = 0;
+	caught = 0;
 
 	/* Mask off masked interrupts and save them as pending */
 	if (intstat & cf->cpl) {
@@ -705,7 +705,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 		mask = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK);
 		mask &= ~ipending;
 		bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, mask);
-		catched++;
+		caught++;
 	}
 
 	/* Scan all unmasked. Scan the first 16 for now */
@@ -719,7 +719,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 			while (ih) {
 				ih->frame = cf;
 				if ((*ih->ih_fun)(ih->ih_arg)) {
-					catched |= vm;
+					caught |= vm;
 					ih->ih_count.ec_count++;
 				}
 				ih = ih->ih_next;
@@ -727,7 +727,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 		}
 	}
 
-	if (catched)
+	if (caught)
 		return CR_INT_0;
 
 	return 0;  /* Non found here */

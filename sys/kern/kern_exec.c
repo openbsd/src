@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.94 2005/08/01 07:02:39 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.95 2005/08/14 11:02:33 miod Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -455,7 +455,7 @@ sys_execve(p, v, retval)
 
 	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
-	execsigs(p);		/* reset catched signals */
+	execsigs(p);		/* reset caught signals */
 
 	/* set command name & other accounting info */
 	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);

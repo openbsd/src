@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.10 2004/08/03 00:09:54 deraadt Exp $	*/
+/*	$OpenBSD: decl.c,v 1.11 2005/08/14 11:02:33 miod Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.10 2004/08/03 00:09:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.11 2005/08/14 11:02:33 miod Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1974,7 +1974,7 @@ isredec(dsym, warn)
 		return(0);
 	if (rsym->s_scl == EXTERN && rsym->s_def == DEF) {
 		/*
-		 * All cases except "int a = 1; static int a;" are catched
+		 * All cases except "int a = 1; static int a;" are caught
 		 * above with or without a warning
 		 */
 		/* redeclaration of %s */

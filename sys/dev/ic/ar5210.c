@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.27 2005/08/02 12:55:11 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.28 2005/08/14 11:02:32 miod Exp $        */
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -2319,7 +2319,7 @@ ar5k_ar5210_get_isr(hal, interrupt_mask)
 		*interrupt_mask |= HAL_INT_FATAL;
 
 	/*
-	 * Special interrupt handling (not catched by the driver)
+	 * Special interrupt handling (not caught by the driver)
 	 */
 	if (((*interrupt_mask) & AR5K_AR5210_ISR_RXPHY) &&
 	    hal->ah_radar.r_enabled == AH_TRUE)
