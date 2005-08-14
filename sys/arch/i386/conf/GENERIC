@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.429 2005/08/13 23:03:38 claudio Exp $
+#	$OpenBSD: GENERIC,v 1.430 2005/08/14 21:52:46 claudio Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -437,7 +437,6 @@ hme*	at pci?				# Sun Happy Meal
 bce*	at pci?				# Broadcom BCM4401
 vge*	at pci?				# VIA VT612x
 #musycc*	at pci?			# Conexant HDLC controller
-#ebus*	at pci?				# extension bus of above
 #art*	at musycc?			# Accoom Artery E1/T1 cards
 
 # Wireless network cards
