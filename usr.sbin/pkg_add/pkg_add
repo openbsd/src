@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.177 2005/08/07 16:25:35 espie Exp $
+# $OpenBSD: pkg_add,v 1.178 2005/08/14 09:03:37 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -204,12 +204,14 @@ sub really_add($$)
 	$plist->{dir} = $dir;
 	$state->set_pkgname($pkgname);
 	$state->{replacing} = 0;
+	my $replacing = 0;
 	if (@{$plist->{replacing}}) {
-		$state->{replacing} = 1;
+		$replacing = 1;
 	} 
 	if (defined $plist->{old_libs}) {
-		$state->{replacing} = 1;
+		$replacing = 1;
 	}
+	$state->{replacing} = $replacing;
 
 	my $header = $pkgname;
 
@@ -240,12 +242,12 @@ sub really_add($$)
 		$interrupted = 1;
 	};
 
-	if ($state->{replacing} == 1) {
+	if ($replacing) {
 		require OpenBSD::Update;
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (extracting)");
 
-		if (defined $plist->{replacing}) {
+		if (@{$plist->{replacing}}) {
 			OpenBSD::Update::save_old_libraries($plist, $state);
 		}
 
@@ -296,11 +298,24 @@ sub really_add($$)
 		$state->set_pkgname($pkgname);
 	}
 
-	do_script($plist, REQUIRE, $state, "INSTALL");
+	if ($replacing) {
+		try {
+			do_script($plist, REQUIRE, $state, "INSTALL");
+			do_script($plist, INSTALL, $state, "PRE-INSTALL");
+		} catchall {
+			Warn $_;
+			$errors++;
+		};
 
-	do_script($plist, INSTALL, $state, "PRE-INSTALL");
+		if ($interrupted || $errors) {
+			OpenBSD::Add::borked_installation($plist, $dir, 
+			    "Installation of $pkgname failed");
+		}
+	} else {
+		do_script($plist, REQUIRE, $state, "INSTALL");
+		do_script($plist, INSTALL, $state, "PRE-INSTALL");
+	}
 
-	$plist->{done} = [];
 	my $donesize = 0;
 	$state->{end_faked} = 0;
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
@@ -311,7 +326,9 @@ sub really_add($$)
 			$errors++;
 		};
 		last if $errors;
-		push(@{$plist->{done}}, $item);
+		if (!$replacing) {
+			push(@{$plist->{done}}, $item);
+		}
 		if (defined $item->{size}) {
                         $donesize += $item->{size};
                         OpenBSD::ProgressMeter::show($donesize, $totsize);
