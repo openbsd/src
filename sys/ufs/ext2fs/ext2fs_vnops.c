@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.40 2005/07/28 22:37:39 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.41 2005/08/14 12:41:44 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1194,8 +1194,7 @@ ext2fs_symlink(v)
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
 		    (struct proc *)0);
 bad:	
-	if (error)
-		vput(vp);
+	vput(vp);
 	return (error);
 }
 
