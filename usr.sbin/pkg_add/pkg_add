@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.178 2005/08/14 09:03:37 espie Exp $
+# $OpenBSD: pkg_add,v 1.179 2005/08/14 09:06:53 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -203,7 +203,6 @@ sub really_add($$)
 	$state->{archive} = $handle;
 	$plist->{dir} = $dir;
 	$state->set_pkgname($pkgname);
-	$state->{replacing} = 0;
 	my $replacing = 0;
 	if (@{$plist->{replacing}}) {
 		$replacing = 1;
