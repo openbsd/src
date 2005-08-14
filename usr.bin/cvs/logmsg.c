@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.20 2005/08/10 14:49:20 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.21 2005/08/14 19:49:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -110,7 +110,7 @@ cvs_logmsg_open(const char *path)
 		return (NULL);
 	}
 
-	bp = cvs_buf_alloc(128, BUF_AUTOEXT);
+	bp = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 	if (bp == NULL) {
 		(void)fclose(fp);
 		return (NULL);

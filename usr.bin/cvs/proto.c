@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.74 2005/08/10 14:49:20 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.75 2005/08/14 19:49:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -290,8 +290,8 @@ cvs_connect(struct cvsroot *root)
 	}
 
 	/* make the streams line-buffered */
-	(void)setvbuf(root->cr_srvin, NULL, _IOLBF, 0);
-	(void)setvbuf(root->cr_srvout, NULL, _IOLBF, 0);
+	(void)setvbuf(root->cr_srvin, NULL, _IOLBF, (size_t)0);
+	(void)setvbuf(root->cr_srvout, NULL, _IOLBF, (size_t)0);
 
 	cvs_initlog();
 
@@ -430,12 +430,12 @@ cvs_req_getvalid(void)
 	char *vrstr;
 	BUF *buf;
 
-	buf = cvs_buf_alloc(512, BUF_AUTOEXT);
+	buf = cvs_buf_alloc((size_t)512, BUF_AUTOEXT);
 	if (buf == NULL)
 		return (NULL);
 
 	cvs_buf_set(buf, cvs_requests[0].req_str,
-	    strlen(cvs_requests[0].req_str), 0);
+	    strlen(cvs_requests[0].req_str), (size_t)0);
 
 	for (i = 1; i < CVS_NBREQ; i++) {
 		if ((cvs_buf_putc(buf, ' ') < 0) ||
@@ -459,7 +459,7 @@ cvs_req_getvalid(void)
 		return (NULL);
 	}
 
-	cvs_buf_copy(buf, 0, vrstr, len);
+	cvs_buf_copy(buf, (size_t)0, vrstr, len);
 	cvs_buf_free(buf);
 
 	return (vrstr);
@@ -513,12 +513,12 @@ cvs_resp_getvalid(void)
 	char *vrstr;
 	BUF *buf;
 
-	buf = cvs_buf_alloc(512, BUF_AUTOEXT);
+	buf = cvs_buf_alloc((size_t)512, BUF_AUTOEXT);
 	if (buf == NULL)
 		return (NULL);
 
 	cvs_buf_set(buf, cvs_responses[0].resp_str,
-	    strlen(cvs_responses[0].resp_str), 0);
+	    strlen(cvs_responses[0].resp_str), (size_t)0);
 
 	for (i = 1; i < CVS_NBRESP; i++) {
 		if ((cvs_buf_putc(buf, ' ') < 0) ||
@@ -542,7 +542,7 @@ cvs_resp_getvalid(void)
 		return (NULL);
 	}
 
-	cvs_buf_copy(buf, 0, vrstr, len);
+	cvs_buf_copy(buf, (size_t)0, vrstr, len);
 	cvs_buf_free(buf);
 
 	return (vrstr);
@@ -1185,8 +1185,8 @@ cvs_initlog(void)
 	}
 
 	/* make the streams line-buffered */
-	setvbuf(cvs_server_inlog, NULL, _IOLBF, 0);
-	setvbuf(cvs_server_outlog, NULL, _IOLBF, 0);
+	setvbuf(cvs_server_inlog, NULL, _IOLBF, (size_t)0);
+	setvbuf(cvs_server_outlog, NULL, _IOLBF, (size_t)0);
 
 	cvs_server_logon = 1;
 

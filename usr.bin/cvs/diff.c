@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.54 2005/07/27 16:42:19 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.55 2005/08/14 19:49:18 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -841,8 +841,8 @@ files_differ(FILE *f1, FILE *f2)
 	if (stb1.st_size != stb2.st_size)
 		return (1);
 	for (;;) {
-		i = fread(buf1, 1, sizeof(buf1), f1);
-		j = fread(buf2, 1, sizeof(buf2), f2);
+		i = fread(buf1, (size_t)1, sizeof(buf1), f1);
+		j = fread(buf2, (size_t)1, sizeof(buf2), f2);
 		if (i != j)
 			return (1);
 		if (i == 0 && j == 0) {
@@ -1320,7 +1320,7 @@ ignoreline(char *line)
 {
 	int ret;
 
-	ret = regexec(&ignore_re, line, 0, NULL, 0);
+	ret = regexec(&ignore_re, line, (size_t)0, NULL, 0);
 	free(line);
 	return (ret == 0);	/* if it matched, it should be ignored. */
 }
@@ -1586,7 +1586,7 @@ asciifile(FILE *f)
 		return (1);
 
 	rewind(f);
-	cnt = fread(buf, 1, sizeof(buf), f);
+	cnt = fread(buf, (size_t)1, sizeof(buf), f);
 	for (i = 0; i < cnt; i++)
 		if (!isprint(buf[i]) && !isspace(buf[i]))
 			return (0);
@@ -1607,7 +1607,7 @@ match_function(const long *f, int pos, FILE *fp)
 		nc = f[pos] - f[pos - 1];
 		if (nc >= sizeof(buf))
 			nc = sizeof(buf) - 1;
-		nc = fread(buf, 1, nc, fp);
+		nc = fread(buf, (size_t)1, nc, fp);
 		if (nc > 0) {
 			buf[nc] = '\0';
 			p = strchr((const char *)buf, '\n');

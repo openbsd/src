@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.22 2005/08/10 14:49:20 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.23 2005/08/14 19:49:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -81,8 +81,8 @@ cvs_server(int argc, char **argv)
 	}
 
 	/* make sure standard in and standard out are line-buffered */
-	(void)setvbuf(stdin, NULL, _IOLBF, 0);
-	(void)setvbuf(stdout, NULL, _IOLBF, 0);
+	(void)setvbuf(stdin, NULL, _IOLBF, (size_t)0);
+	(void)setvbuf(stdout, NULL, _IOLBF, (size_t)0);
 
 	/* create the temporary directory */
 	l = snprintf(cvs_server_tmpdir, sizeof(cvs_server_tmpdir),

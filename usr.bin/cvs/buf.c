@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.17 2005/07/29 17:04:42 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.18 2005/08/14 19:49:18 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -268,7 +268,7 @@ cvs_buf_putc(BUF *b, int c)
 	if (bp == (b->cb_buf + b->cb_size)) {
 		/* extend */
 		if (!(b->cb_flags & BUF_AUTOEXT) ||
-		    (cvs_buf_grow(b, BUF_INCR) < 0))
+		    (cvs_buf_grow(b, (size_t)BUF_INCR) < 0))
 			return (-1);
 
 		/* the buffer might have been moved */
@@ -338,7 +338,7 @@ cvs_buf_fappend(BUF *b, const char *fmt, ...)
 		return (-1);
 	}
 
-	ret = cvs_buf_append(b, str, ret);
+	ret = cvs_buf_append(b, str, (size_t)ret);
 	free(str);
 	return (ret);
 }

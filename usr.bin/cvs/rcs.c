@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.58 2005/08/11 14:10:20 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.59 2005/08/14 19:49:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1554,7 +1554,7 @@ rcs_parse(RCSFILE *rfp)
 		return (-1);
 	}
 
-	pdp->rp_buf = (char *)malloc(RCS_BUFSIZE);
+	pdp->rp_buf = (char *)malloc((size_t)RCS_BUFSIZE);
 	if (pdp->rp_buf == NULL) {
 		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to allocate RCS parser buffer");

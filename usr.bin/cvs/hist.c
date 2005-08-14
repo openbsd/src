@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.9 2005/08/02 20:05:42 xsa Exp $	*/
+/*	$OpenBSD: hist.c,v 1.10 2005/08/14 19:49:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -61,7 +61,7 @@ cvs_hist_open(const char *path)
 	}
 	memset(histp, 0, sizeof(*histp));
 
-	histp->chf_buf = (char *)malloc(CVS_HIST_BUFSIZE);
+	histp->chf_buf = (char *)malloc((size_t)CVS_HIST_BUFSIZE);
 	if (histp->chf_buf == NULL) {
 		cvs_log(LP_ERRNO,
 		    "failed to allocate CVS history parse buffer");
