@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.76 2005/06/21 19:12:31 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.77 2005/08/14 12:01:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1134,6 +1134,12 @@ sub add_md5
 {
 	my ($self, $md5) = @_;
 	$self->{md5} = $md5;
+}
+
+sub add_size
+{
+	my ($self, $sz) = @_;
+	$self->{size} = $sz;
 }
 
 sub needs_keyword { 0 }
