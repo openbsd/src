@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.4 2005/08/14 21:50:49 claudio Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.5 2005/08/14 22:06:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -41,7 +41,6 @@
 #include <dev/pci/pcidevs.h>
 
 int	musycc_match(struct device *, void *, void *);
-int	musyccbus_match(struct device *, void *, void *);
 void	musycc_softc_attach(struct device *, struct device *, void *);
 void	musycc_ebus_attach(struct device *, struct musycc_softc *,
 	    struct pci_attach_args *);
