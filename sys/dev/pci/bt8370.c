@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt8370.c,v 1.2 2005/08/13 23:52:49 claudio Exp $ */
+/*	$OpenBSD: bt8370.c,v 1.3 2005/08/14 22:28:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -791,7 +791,7 @@ bt8370_link_status(struct art_softc *ac)
 	if ((alm1 & (ALM1_RLOS)) ||
 	    (alm2 & (ALM2_TSHORT)))
 		status = -1;
-	
+
 	return (status);
 }
 
@@ -911,7 +911,7 @@ bt8370_print_status(struct art_softc *ac)
 			printf("repeated one frame\n");
 		else
 			printf("deleted one frame\n");
-        }
+	}
 
 	/* Loopback Status. */
 	loop = ebus_read(&ac->art_ebus, Bt8370_LOOP);

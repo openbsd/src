@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.4 2005/08/14 21:50:49 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.5 2005/08/14 22:28:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -76,9 +76,9 @@ art_softc_attach(struct device *parent, struct device *self, void *aux)
 	struct art_softc		*sc = (struct art_softc *)self;
 	struct musycc_softc		*psc = (struct musycc_softc *)parent;
 	struct musycc_attach_args	*ma = aux;
-	
+
 	printf(" \"%s\"", ma->ma_product);
-	
+
 	if (ebus_attach_device(&sc->art_ebus, psc, ma->ma_base,
 	    ma->ma_size) != 0) {
 		printf(": could not map framer\n");
@@ -95,7 +95,7 @@ art_softc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": could not alloc channel descriptor\n");
 		return;
 	}
-		
+
 	if (musycc_channel_attach(psc, sc->art_channel, self, sc->art_gnum) ==
 	    -1) {
 		printf(": unable to attach to hdlc controller\n");
@@ -216,7 +216,7 @@ art_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		} else if ((ifr->ifr_flags & IFF_UP) == 0 &&
 		    cc->cc_state == CHAN_RUNNING)
 			musycc_stop_channel(cc);
-	       	rv = sppp_ioctl(ifp, command, data);
+		rv = sppp_ioctl(ifp, command, data);
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
@@ -228,7 +228,7 @@ art_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			rv = EINVAL;
 		break;
 	default:
-	       	rv = sppp_ioctl(ifp, command, data);
+		rv = sppp_ioctl(ifp, command, data);
 		break;
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.3 2005/08/14 21:50:49 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.4 2005/08/14 22:28:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -453,9 +453,9 @@ musycc_set_chandesc(struct musycc_group *mg, int chan, int nslots, int proto)
 
 	if (idx > n)
 		return (EBUSY);
-	
+
 	mg->mg_fifomask |= mask << idx;
-	
+
 	/* setup channel descriptor */
 	mg->mg_group->tx_cconf[chan] = htole32(MUSYCC_CHAN_BUFIDX_SET(idx) |
 	    MUSYCC_CHAN_BUFLEN_SET(nslots * 2 - 1) |
@@ -553,13 +553,13 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 
 	musycc_activate_channel(mg, chan);
 	tsleep(cc, PZERO | PCATCH, "musycc", hz);
-	
+
 	/*
 	 * XXX we could actually check if the activation of the channels was
 	 * successful but what type of error should we return?
 	 */
 	return (0);
-	
+
 fail:
 	splx(s);
 	cc->cc_state = CHAN_IDLE; /* force idle state */
@@ -625,7 +625,7 @@ musycc_free_channel(struct musycc_group *mg, int chan)
 			    chan)
 				mg->mg_group->rx_tsmap[i] = 0;
 	}
-	
+
 	/* clear channel descriptor, especially free FIFO space */
 	idx = MUSYCC_CHAN_BUFIDX_GET(letoh32(mg->mg_group->tx_cconf[chan]));
 	slots = MUSYCC_CHAN_BUFLEN_GET(letoh32(mg->mg_group->tx_cconf[chan]));
@@ -635,7 +635,7 @@ musycc_free_channel(struct musycc_group *mg, int chan)
 	mg->mg_fifomask &= ~mask;
 	mg->mg_group->tx_cconf[chan] = 0;
 	mg->mg_group->rx_cconf[chan] = 0;
-	
+
 	/* free dma rings */
 	musycc_list_rx_free(mg, chan);
 	musycc_list_tx_free(mg, chan);
@@ -814,7 +814,7 @@ musycc_list_rx_init(struct musycc_group *mg, int c, int size)
 
 	dd->nextdesc = last;
 	dd->next = htole32(base + (caddr_t)last - mg->mg_listkva);
-	
+
 	mg->mg_group->rx_headp[c] = htole32(base + (caddr_t)dd -
 	    mg->mg_listkva);
 
@@ -831,7 +831,7 @@ musycc_list_tx_free(struct musycc_group *mg, int c)
 	struct dma_desc		*dd, *tmp;
 
 	md = &mg->mg_dma_d[c];
-	
+
 	ACCOOM_PRINTF(2, ("musycc_list_tx_free\n"));
 	dd = md->tx_pend;
 	do {
@@ -861,7 +861,7 @@ musycc_list_rx_free(struct musycc_group *mg, int c)
 	struct dma_desc		*dd, *tmp;
 
 	md = &mg->mg_dma_d[c];
-	
+
 	ACCOOM_PRINTF(2, ("musycc_list_rx_free\n"));
 	dd = md->rx_prod;
 	do {
@@ -1033,11 +1033,11 @@ musycc_encap(struct musycc_group *mg, struct mbuf *m_head, int c)
 
 		cur->status = htole32(status);
 		cur->data = htole32(map->dm_segs[i].ds_addr);
-		
+
 		bus_dmamap_sync(mg->mg_dmat, mg->mg_listmap,
 		    ((caddr_t)cur - mg->mg_listkva), sizeof(struct dma_desc),
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-		
+
 		if (++i >= map->dm_nsegs)
 			break;
 		cur = cur->nextdesc;
@@ -1117,7 +1117,7 @@ musycc_start(struct ifnet *ifp)
 
 		/* now we are committed to transmit the packet */
 		sppp_dequeue(ifp);
-		
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -1482,7 +1482,7 @@ musycc_sreq(struct musycc_group *mg, int channel, u_int32_t req, int dir,
 	int	needskick;
 
 	needskick = (mg->mg_sreqpend == mg->mg_sreqprod);
-	
+
 	ACCOOM_PRINTF(4, ("musycc_sreq: g# %d c# %d req %x dir %x\n",
 	    mg->mg_gnum, channel, req, dir));
 
@@ -1607,7 +1607,7 @@ musycc_attach_sppp(struct channel_softc *cc,
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_PPP, PPP_HEADER_LEN);
 #endif /* NBPFILTER > 0 */
-	
+
 }
 
 struct channel_softc *
@@ -1712,7 +1712,7 @@ musycc_dump_group(int level, struct musycc_group *mg)
 	int			 i;
 
 	if (level > accoom_debug)
-	       return;
+		return;
 
 	printf("%s: dumping group %d\n",
 	    mg->mg_hdlc->mc_dev.dv_xname, mg->mg_gnum);
@@ -1800,7 +1800,7 @@ musycc_dump_desc(int level, struct musycc_group *mg)
 	int		i;
 
 	if (level > accoom_debug)
-	       return;
+		return;
 
 	printf("%s: dumping descriptor %d\n",
 	    mg->mg_hdlc->mc_dev.dv_xname, mg->mg_gnum);
@@ -1876,7 +1876,7 @@ musycc_dump_dma(int level, struct musycc_group *mg, int dir)
 	int			 i;
 
 	if (level > accoom_debug)
-	       return;
+		return;
 
 	printf("DMA Pointers:\n%8s %8s %8s %8s\n",
 	    "tx head", "tx msg", "rx head", "rx msg");
@@ -1925,7 +1925,7 @@ musycc_dump_dma(int level, struct musycc_group *mg, int dir)
 		dd = mg->mg_dma_d[i].rx_prod;
 		do {
 			addr = htole32(base + ((caddr_t)dd - mg->mg_listkva));
-			printf("%p %08x %08x %08x %08x %p\n", dd, addr, 
+			printf("%p %08x %08x %08x %08x %p\n", dd, addr,
 			    dd->next, dd->status, dd->data, dd->mbuf);
 			dd = dd->nextdesc;
 		} while (dd != mg->mg_dma_d[i].rx_prod);

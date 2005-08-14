@@ -1,4 +1,4 @@
-/*	$OpenBSD: musyccvar.h,v 1.3 2005/08/14 21:50:49 claudio Exp $ */
+/*	$OpenBSD: musyccvar.h,v 1.4 2005/08/14 22:28:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -100,7 +100,7 @@ struct musycc_group {
 	int			 mg_freecnt;
 
 	struct {
-		u_int32_t	 	sreq;
+		u_int32_t		sreq;
 		enum musycc_event	event;
 	}			 mg_sreq[MUSYCC_SREQNUM];
 	int			 mg_sreqpend;

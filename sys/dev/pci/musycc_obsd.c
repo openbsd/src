@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.5 2005/08/14 22:06:06 claudio Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.6 2005/08/14 22:28:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -78,7 +78,7 @@ musycc_softc_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t	 pc = pa->pa_pc;
 	pci_intr_handle_t	 ih;
 	const char		*intrstr = NULL;
-	
+
 	if (pci_mapreg_map(pa, MUSYCC_PCI_BAR,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->mc_st, &sc->mc_sh, NULL, &sc->mc_iosize, 0)) {
@@ -179,7 +179,7 @@ musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
 
 	intrstr = pci_intr_string(pc, ih);
 	esc->mc_ih = pci_intr_establish(pc, ih, IPL_NET, ebus_intr, esc,
-	    self->dv_xname);
+	    esc->mc_dev.dv_xname);
 	if (esc->mc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -192,7 +192,7 @@ musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
 	printf(": %s\n", intrstr);
 #endif
 
-	if (ebus_attach_device(&rom, sc, 0, 0x400) != 0) {	
+	if (ebus_attach_device(&rom, sc, 0, 0x400) != 0) {
 		printf(": failed to map rom @ %05p\n", 0);
 		goto failed;
 	}
@@ -216,11 +216,11 @@ musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
 	esc->mc_ledmask = baseconf.ledmask;
 	ebus_set_led(esc, 0);
 
-	printf(": card rev %d \n", ntohs(baseconf.rev));
+	printf("\n");
 
 	for (i = 0; i < baseconf.numframer; i++) {
 		if (offset >= 0x400) {
-			printf(": bad rom\n");
+			printf("%s: bad rom\n", esc->mc_dev.dv_xname);
 			goto failed;
 		}
 		ebus_read_buf(&rom, offset, &framerconf, sizeof(framerconf));
