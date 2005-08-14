@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.27 2005/07/03 20:14:01 drahn Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.28 2005/08/14 12:45:24 pedro Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -68,7 +68,8 @@ ext2fs_size(struct inode *ip)
 
         if ((ip->i_e2fs_mode & IFMT) == IFREG)
                 size |= (u_int64_t)ip->i_e2fs_dacl << 32;
-        return size;
+
+        return (size);
 }
 
 int
@@ -82,7 +83,7 @@ ext2fs_setsize(struct inode *ip, u_int64_t size)
 
                         if (fs->e2fs.e2fs_rev <= E2FS_REV0) {
                                 /* Linux automagically upgrades to REV1 here! */
-                                return EFBIG;
+                                return (EFBIG);
                         }
                         if (!(fs->e2fs.e2fs_features_rocompat
                             & EXT2F_ROCOMPAT_LARGEFILE)) {
@@ -92,11 +93,11 @@ ext2fs_setsize(struct inode *ip, u_int64_t size)
                         }
                 }
         } else if (size >= 0x80000000U)
-                return EFBIG;
+                return (EFBIG);
 
         ip->i_e2fs_size = size;
 
-        return 0;
+        return (0);
 }
 
 
