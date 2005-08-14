@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.1 2004/10/11 09:44:06 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.2 2005/08/14 23:23:34 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -200,7 +200,11 @@ sub subpattern_match
 			    check_flavor($flavor, $flavorspec)) {
 			    	push(@result, $_);
 			}
-	    	}
+	    	} else {
+			if ($vspec eq '') {
+				push(@result, $_);
+			}
+		}
 	}
 		
 	return @result;
