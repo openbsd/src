@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrusage.2,v 1.10 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getrusage.2,v 1.11 2005/08/14 06:23:16 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,10 +136,14 @@ and
 account only for real
 I/O; data supplied by the caching mechanism is charged only
 to the first process to read or write the data.
+.Sh RETURN VALUES
+Upon success, a value of zero is returned.
+Otherwise, \-1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh ERRORS
 .Fn getrusage
-returns \-1 on error.
-The possible errors are:
+will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The
