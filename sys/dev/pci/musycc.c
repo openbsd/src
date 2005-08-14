@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.2 2005/08/13 23:52:49 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.3 2005/08/14 21:50:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -1520,15 +1520,9 @@ musycc_sreq(struct musycc_group *mg, int channel, u_int32_t req, int dir,
 int
 ebus_intr(void *arg)
 {
-	struct ebus_softc	*ec = arg;
-#if 0
-	struct framer_softc	*fc;
+	struct musycc_softc	*sc = arg;
 
-	SLIST_FOREACH(fc, &sc->sc_hdlc->sc_framers, list) {
-		f->sc_intr(f);
-	}
-#endif
-	printf("%s: interrupt\n", ec->ec_dev.dv_xname);
+	printf("%s: interrupt\n", sc->mc_dev.dv_xname);
 	return (1);
 }
 
@@ -1536,12 +1530,12 @@ int
 ebus_attach_device(struct ebus_dev *e, struct musycc_softc *mc,
     bus_size_t offset, bus_size_t size)
 {
-	struct ebus_softc	*ec = mc->mc_ebus;
+	struct musycc_softc	*ec = mc->mc_other;
 
 	e->base = offset << 2;
 	e->size = size;
-	e->st = ec->ec_st;
-	return (bus_space_subregion(ec->ec_st, ec->ec_sh, offset << 2,
+	e->st = ec->mc_st;
+	return (bus_space_subregion(ec->mc_st, ec->mc_sh, offset << 2,
 	    size, &e->sh));
 }
 
@@ -1575,10 +1569,10 @@ ebus_read_buf(struct ebus_dev *rom, bus_size_t offset, void *buf, size_t size)
 }
 
 void
-ebus_set_led(struct ebus_softc *esc, u_int8_t value)
+ebus_set_led(struct musycc_softc *esc, u_int8_t value)
 {
-	bus_space_write_1(esc->ec_st, esc->ec_sh, esc->ec_ledbase << 2, value);
-	bus_space_barrier(esc->ec_st, esc->ec_sh, esc->ec_ledbase << 2, 1,
+	bus_space_write_1(esc->mc_st, esc->mc_sh, esc->mc_ledbase << 2, value);
+	bus_space_barrier(esc->mc_st, esc->mc_sh, esc->mc_ledbase << 2, 1,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 }
 

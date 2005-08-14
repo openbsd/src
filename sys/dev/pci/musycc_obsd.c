@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.3 2005/08/14 11:43:46 deraadt Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.4 2005/08/14 21:50:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -43,23 +43,16 @@
 int	musycc_match(struct device *, void *, void *);
 int	musyccbus_match(struct device *, void *, void *);
 void	musycc_softc_attach(struct device *, struct device *, void *);
-void	musyccbus_softc_attach(struct device *, struct device *, void *);
-int	musyccbus_print(void *, const char *);
+void	musycc_ebus_attach(struct device *, struct musycc_softc *,
+	    struct pci_attach_args *);
+int	musycc_ebus_print(void *, const char *);
 
 struct cfattach musycc_ca = {
 	sizeof(struct musycc_softc), musycc_match, musycc_softc_attach
 };
 
-struct cfattach musyccbus_ca = {
-	sizeof(struct ebus_softc), musyccbus_match, musyccbus_softc_attach
-};
-
 struct cfdriver musycc_cd = {
 	NULL, "musycc", DV_DULL
-};
-
-struct cfdriver musyccbus_cd = {
-	NULL, "ebus", DV_DULL
 };
 
 SLIST_HEAD(, musycc_softc) msc_list = SLIST_HEAD_INITIALIZER(msc_list);
@@ -74,27 +67,8 @@ const struct pci_matchid musycc_pci_devices[] = {
 int
 musycc_match(struct device *parent, void *match, void *aux)
 {
-	int			 rv;
-	struct pci_attach_args  *pa = aux;
-	
-	rv = pci_matchbyid((struct pci_attach_args *)aux, musycc_pci_devices,
-	    sizeof(musycc_pci_devices)/sizeof(musycc_pci_devices[0]));
-	if (rv != 0 && pa->pa_function == 0)
-		return (rv);
-	return (0);
-}
-
-int
-musyccbus_match(struct device *parent, void *match, void *aux)
-{
-	int			 rv;
-	struct pci_attach_args  *pa = aux;
-	
-	rv = pci_matchbyid((struct pci_attach_args *)aux, musycc_pci_devices,
-	    sizeof(musycc_pci_devices)/sizeof(musycc_pci_devices[0]));
-	if (rv != 0 && pa->pa_function == 1)
-		return (rv);
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, musycc_pci_devices,
+	    sizeof(musycc_pci_devices)/sizeof(musycc_pci_devices[0])));
 }
 
 void
@@ -133,6 +107,9 @@ musycc_softc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
+	if (pa->pa_function == 1)
+		return (musycc_ebus_attach(parent, sc, pa));
+
 	sc->bus = parent->dv_unit;
 	sc->device = pa->pa_device;
 	SLIST_INSERT_HEAD(&msc_list, sc, list);
@@ -163,13 +140,12 @@ musycc_softc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-musyccbus_softc_attach(struct device *parent, struct device *self, void *aux)
+musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
+    struct pci_attach_args *pa)
 {
 	struct ebus_dev			 rom;
 	struct musycc_attach_args	 ma;
-	struct ebus_softc		*esc = (struct ebus_softc *)self;
 	struct musycc_softc		*sc;
-	struct pci_attach_args		*pa = aux;
 	pci_chipset_tag_t		 pc = pa->pa_pc;
 #if 0
 	pci_intr_handle_t		 ih;
@@ -190,18 +166,8 @@ musyccbus_softc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* ... and link them together */
-	esc->ec_hdlc = sc;
-	sc->mc_ebus = esc;
-
-	if (pci_mapreg_map(pa, MUSYCC_PCI_BAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &esc->ec_st, &esc->ec_sh, NULL, &iosize, 0)) {
-		printf(": can't map mem space\n");
-		pci_intr_disestablish(pc, sc->mc_ih);
-		bus_space_unmap(sc->mc_st, sc->mc_sh, sc->mc_iosize);
-		return;
-	}
-	esc->ec_dmat = pa->pa_dmat;
+	esc->mc_other = sc;
+	sc->mc_other = esc;
 
 #if 0
 	/*
@@ -213,9 +179,9 @@ musyccbus_softc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih);
-	esc->ec_ih = pci_intr_establish(pc, ih, IPL_NET, ebus_intr, esc,
+	esc->mc_ih = pci_intr_establish(pc, ih, IPL_NET, ebus_intr, esc,
 	    self->dv_xname);
-	if (esc->ec_ih == NULL) {
+	if (esc->mc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -227,7 +193,7 @@ musyccbus_softc_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 #endif
 
-	if (ebus_attach_device(&rom, esc->ec_hdlc, 0, 0x400) != 0) {	
+	if (ebus_attach_device(&rom, sc, 0, 0x400) != 0) {	
 		printf(": failed to map rom @ %05p\n", 0);
 		goto failed;
 	}
@@ -247,8 +213,8 @@ musyccbus_softc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map and reset leds */
 	/* (15 * 0x4000) << 2 */
-	esc->ec_ledbase = ntohl(baseconf.ledbase);
-	esc->ec_ledmask = baseconf.ledmask;
+	esc->mc_ledbase = ntohl(baseconf.ledbase);
+	esc->mc_ledmask = baseconf.ledmask;
 	ebus_set_led(esc, 0);
 
 	printf(": card rev %d \n", ntohs(baseconf.rev));
@@ -269,22 +235,22 @@ musyccbus_softc_attach(struct device *parent, struct device *self, void *aux)
 		ma.ma_port = framerconf.port;
 		ma.ma_slot = framerconf.slot;
 
-		(void)config_found(&sc->mc_dev, &ma, ebus_print);
+		(void)config_found(&sc->mc_dev, &ma, musycc_ebus_print);
 	}
 
 	return;
 failed:
 	/* Failed! */
 	pci_intr_disestablish(pc, sc->mc_ih);
-	if (esc->ec_ih != NULL)
-		pci_intr_disestablish(pc, esc->ec_ih);
+	if (esc->mc_ih != NULL)
+		pci_intr_disestablish(pc, esc->mc_ih);
 	bus_space_unmap(sc->mc_st, sc->mc_sh, sc->mc_iosize);
-	bus_space_unmap(esc->ec_st, esc->ec_sh, iosize);
+	bus_space_unmap(esc->mc_st, esc->mc_sh, iosize);
 	return;
 }
 
 int
-musyccbus_print(void *aux, const char *pnp)
+musycc_ebus_print(void *aux, const char *pnp)
 {
 	struct musycc_attach_args *ma = aux;
 

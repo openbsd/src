@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.3 2005/08/13 23:52:49 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.4 2005/08/14 21:50:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -321,18 +321,18 @@ art_onesec(void *arg)
 	case 1:
 		link_state = LINK_STATE_UP;
 		/* set led green but ask sppp if red is needed */
-		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_ebus, 1);
+		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_other, 1);
 		ac->art_status |= IFM_ACTIVE;
 		break;
 	case 0:
 		link_state = LINK_STATE_DOWN;
 		/* set led green & red */
-		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_ebus, 3);
+		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_other, 3);
 		break;
 	default:
 		link_state = LINK_STATE_DOWN;
 		/* set led red */
-		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_ebus, 2);
+		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_other, 2);
 		break;
 	}
 

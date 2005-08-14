@@ -1,4 +1,4 @@
-/*	$OpenBSD: musyccvar.h,v 1.2 2005/08/13 23:52:49 claudio Exp $ */
+/*	$OpenBSD: musyccvar.h,v 1.3 2005/08/14 21:50:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -173,22 +173,11 @@ struct musycc_softc {
 	int			 mc_ngroups;
 	int			 mc_nports;
 
+	struct musycc_softc	*mc_other;	/* the other EBUS/HDLC dev */
+	bus_size_t		 mc_ledbase;
+	u_int8_t		 mc_ledmask;
 	int			 bus, device;	/* location of card */
-	struct ebus_softc	*mc_ebus;	/* corresponding EBUS bridge */
 	SLIST_ENTRY(musycc_softc) list;		/* list of all hdlc ctrls */
-};
-
-/* Softc for the EBUS bridge (function 1) */
-struct ebus_softc {
-	struct device		 ec_dev;	/* generic device structures */
-	void			*ec_ih;		/* interrupt handler cookie */
-	bus_space_tag_t		 ec_st;		/* bus space tag */
-	bus_space_handle_t	 ec_sh;		/* bus space handle */
-	bus_dma_tag_t		 ec_dmat;	/* bus dma tag */
-	struct musycc_softc	*ec_hdlc;	/* corresponding HDLC
-						   controller */
-	bus_size_t		 ec_ledbase;
-	u_int8_t		 ec_ledmask;
 };
 
 int	musycc_attach_common(struct musycc_softc *, u_int32_t, u_int32_t);
@@ -207,7 +196,7 @@ int		ebus_attach_device(struct ebus_dev *, struct musycc_softc *,
 u_int8_t	ebus_read(struct ebus_dev *, bus_size_t);
 void		ebus_write(struct ebus_dev *, bus_size_t, u_int8_t);
 void		ebus_read_buf(struct ebus_dev *, bus_size_t, void *, size_t);
-void		ebus_set_led(struct ebus_softc *, u_int8_t);
+void		ebus_set_led(struct musycc_softc *, u_int8_t);
 
 /* channel API */
 struct channel_softc	*musycc_channel_create(const char *, u_int8_t);
