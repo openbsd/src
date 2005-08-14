@@ -1150,6 +1150,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/bktr/bktr_os.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/bktr/bktr_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/bktr/bktr_tuner.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/bt8370reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/cs4280reg.ph
@@ -1170,6 +1171,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ichreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_art.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_bcereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_bgereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_devar.ph
@@ -1211,6 +1213,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/lofnvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/maestro_reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/musyccreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/musyccvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/neoreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/noctreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/noctvar.ph

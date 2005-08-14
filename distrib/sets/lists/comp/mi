@@ -468,6 +468,7 @@
 ./usr/include/dev/pci/bktr/bktr_os.h
 ./usr/include/dev/pci/bktr/bktr_reg.h
 ./usr/include/dev/pci/bktr/bktr_tuner.h
+./usr/include/dev/pci/bt8370reg.h
 ./usr/include/dev/pci/cmpcireg.h
 ./usr/include/dev/pci/cmpcivar.h
 ./usr/include/dev/pci/cs4280reg.h
@@ -488,6 +489,7 @@
 ./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/i82365_pcivar.h
 ./usr/include/dev/pci/ichreg.h
+./usr/include/dev/pci/if_art.h
 ./usr/include/dev/pci/if_bcereg.h
 ./usr/include/dev/pci/if_bgereg.h
 ./usr/include/dev/pci/if_devar.h
@@ -529,6 +531,8 @@
 ./usr/include/dev/pci/lofnreg.h
 ./usr/include/dev/pci/lofnvar.h
 ./usr/include/dev/pci/maestro_reg.h
+./usr/include/dev/pci/musyccreg.h
+./usr/include/dev/pci/musyccvar.h
 ./usr/include/dev/pci/neoreg.h
 ./usr/include/dev/pci/noctreg.h
 ./usr/include/dev/pci/noctvar.h
