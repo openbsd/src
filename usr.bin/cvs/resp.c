@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.53 2005/08/02 12:08:13 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.54 2005/08/14 23:24:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -427,6 +427,14 @@ cvs_resp_createdir(char *line)
 
 	entf = NULL;
 	cf = NULL;
+
+	/*
+	 * we do not want to handle the '.' case,
+	 * so return early.
+	 */
+	if (!strcmp(line, "."))
+		return (0);
+
 	cvs_splitpath(line, subdir, sizeof(subdir), &file);
 	base = cvs_file_loadinfo(subdir, CF_NOFILES, NULL, NULL, 1);
 	if (base == NULL)
