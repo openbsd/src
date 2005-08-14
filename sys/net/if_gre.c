@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.35 2005/07/31 03:52:18 pascoe Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.36 2005/08/14 09:55:56 markus Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -523,15 +523,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				RTFREE(sc->route.ro_rt);
 				sc->route.ro_rt = (struct rtentry *) 0;
 			}
-
 			gre_compute_route(sc);
-			if (sc->route.ro_rt == 0)
-			{
-				sc->g_src.s_addr = INADDR_ANY;
-				sc->g_dst.s_addr = INADDR_ANY;
-				splx(s);
-				return EIO; /* Is this is good ? */
-			}
 			ifp->if_flags |= IFF_UP;
 		}
 		break;
