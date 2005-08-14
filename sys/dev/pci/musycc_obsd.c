@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.2 2005/08/13 23:52:49 claudio Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.3 2005/08/14 11:43:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -41,24 +41,24 @@
 #include <dev/pci/pcidevs.h>
 
 int	musycc_match(struct device *, void *, void *);
-int	ebus_match(struct device *, void *, void *);
+int	musyccbus_match(struct device *, void *, void *);
 void	musycc_softc_attach(struct device *, struct device *, void *);
-void	ebus_softc_attach(struct device *, struct device *, void *);
-int	ebus_print(void *, const char *);
+void	musyccbus_softc_attach(struct device *, struct device *, void *);
+int	musyccbus_print(void *, const char *);
 
 struct cfattach musycc_ca = {
 	sizeof(struct musycc_softc), musycc_match, musycc_softc_attach
 };
 
-struct cfattach ebus_ca = {
-	sizeof(struct ebus_softc), ebus_match, ebus_softc_attach
+struct cfattach musyccbus_ca = {
+	sizeof(struct ebus_softc), musyccbus_match, musyccbus_softc_attach
 };
 
 struct cfdriver musycc_cd = {
 	NULL, "musycc", DV_DULL
 };
 
-struct cfdriver ebus_cd = {
+struct cfdriver musyccbus_cd = {
 	NULL, "ebus", DV_DULL
 };
 
@@ -85,7 +85,7 @@ musycc_match(struct device *parent, void *match, void *aux)
 }
 
 int
-ebus_match(struct device *parent, void *match, void *aux)
+musyccbus_match(struct device *parent, void *match, void *aux)
 {
 	int			 rv;
 	struct pci_attach_args  *pa = aux;
@@ -163,7 +163,7 @@ musycc_softc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-ebus_softc_attach(struct device *parent, struct device *self, void *aux)
+musyccbus_softc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ebus_dev			 rom;
 	struct musycc_attach_args	 ma;
@@ -284,7 +284,7 @@ failed:
 }
 
 int
-ebus_print(void *aux, const char *pnp)
+musyccbus_print(void *aux, const char *pnp)
 {
 	struct musycc_attach_args *ma = aux;
 
