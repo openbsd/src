@@ -1,4 +1,4 @@
-/*	$OpenBSD: tputs.c,v 1.3 2003/06/02 20:18:42 millert Exp $	*/
+/*	$OpenBSD: tputs.c,v 1.4 2005/08/14 17:15:19 espie Exp $	*/
 /*	$NetBSD: tputs.c,v 1.5 1995/06/06 08:14:37 pk Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$OpenBSD: tputs.c,v 1.3 2003/06/02 20:18:42 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sgtty.h>
 #include <ctype.h>

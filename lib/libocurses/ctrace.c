@@ -1,3 +1,4 @@
+/*	$OpenBSD: ctrace.c,v 1.5 2005/08/14 17:15:19 espie Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -26,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
-#endif /* not lint */
 
 #ifdef DEBUG
 #include <stdio.h>

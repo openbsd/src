@@ -1,3 +1,4 @@
+/*	$OpenBSD: cr_put.c,v 1.6 2005/08/14 17:15:19 espie Exp $ */
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -26,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
-#endif	/* not lint */
 
 #include <string.h>
 
