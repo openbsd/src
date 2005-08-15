@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.57 2005/08/09 14:29:18 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.58 2005/08/15 23:22:45 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -141,6 +141,10 @@ int ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
 int ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t, void *);
 int ami_ioctl(struct device *, u_long, caddr_t);
 int ami_ioctl_inq(struct ami_softc *, struct bioc_inq *);
+int ami_global_hsvol(struct ami_softc *, struct bioc_vol *,
+    struct ami_big_diskarray *);
+int ami_global_hsdisk(struct ami_softc *, struct bioc_disk *,
+    struct ami_big_diskarray *);
 int ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
 int ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
 int ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
@@ -2033,9 +2037,21 @@ ami_ioctl_inq(sc, bi)
 				if (!plist[off]) {
 					plist[off] = 1;
 					bi->bi_nodisk++;
-
 				}
 			}
+
+	/* count global hotspares as volumes */
+	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++)
+		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
+		    && p->apd[i].adp_type == 0) {
+			bi->bi_novol++;
+
+			if (!plist[i]) {
+				plist[i] = 1;
+				bi->bi_nodisk++;
+			}
+		}
 
 bail2:
 	free(plist, M_DEVBUF);
@@ -2043,6 +2059,88 @@ bail:
 	free(p, M_DEVBUF);
 
 	return (error);
+}
+
+int
+ami_global_hsvol(sc, bv, p)
+	struct ami_softc *sc;
+	struct bioc_vol *bv;
+	struct ami_big_diskarray *p;
+{
+	int i;
+	int ld = p->ada_nld;
+
+	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++)
+		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
+		    && p->apd[i].adp_type == 0) {
+			if (ld == bv->bv_volid) {
+				/* found hs, fake data */
+				bv->bv_status = BIOC_SVONLINE;
+				bv->bv_size = (u_quad_t)p->apd[i].adp_size *
+				    (u_quad_t)512;
+				bv->bv_level = -1;
+				bv->bv_nodisk = 1;
+				strlcpy(bv->bv_dev,
+				    sc->sc_hdr[bv->bv_volid].dev,
+				    sizeof(bv->bv_dev));
+
+				return (0);
+			}
+			ld++;
+		}
+
+	return (EINVAL);
+}
+
+int
+ami_global_hsdisk(sc, bd, p)
+	struct ami_softc *sc;
+	struct bioc_disk *bd;
+	struct ami_big_diskarray *p;
+{
+	struct scsi_inquiry_data inqbuf;
+	struct scsi_inquiry_vpd vpdbuf;
+	int i;
+	int ld = p->ada_nld;
+	u_int8_t ch, tg;
+
+	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++)
+		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
+		    && p->apd[i].adp_type == 0) {
+			if (ld == bd->bd_volid) {
+				bd->bd_status = BIOC_SDHOTSPARE;
+				bd->bd_size = (u_quad_t)p->apd[i].adp_size *
+				    (u_quad_t)512;
+
+				ch = (i & 0xf0) >> 4;
+				tg = i & 0x0f;
+
+				if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf))
+					strlcpy(bd->bd_vendor, inqbuf.vendor,
+					    8 + 16 + 4 + 1);
+
+				if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf))
+					strlcpy(bd->bd_serial, vpdbuf.serial,
+					    vpdbuf.page_length <
+					    sizeof(bd->bd_serial) ?
+					    vpdbuf.page_length :
+					    sizeof(bd->bd_serial));
+
+				bd->bd_channel = ch;
+				bd->bd_target = tg;
+
+				strlcpy(bd->bd_procdev,
+				    sc->sc_rawsoftcs[ch].sc_procdev,
+				    sizeof(bd->bd_procdev));
+
+				return (0);
+			}
+			ld++;
+		}
+
+	return (EINVAL);
 }
 
 int
@@ -2065,8 +2163,9 @@ ami_ioctl_vol(sc, bv)
 		goto bail;
 	}
 
-	if (bv->bv_volid > p->ada_nld) {
-		error = EINVAL;
+	if (bv->bv_volid >= p->ada_nld) {
+		/* is this a global hot spare? */
+		error = ami_global_hsvol(sc, bv, p);
 		goto bail;
 	}
 
@@ -2114,6 +2213,8 @@ ami_ioctl_vol(sc, bv)
 		}
 	}
 
+	/* XXX adjust disk count to account for dedicated hot spares */
+
 	if (p->ald[i].adl_spandepth > 1)
 		bv->bv_level *= 10;
 
@@ -2151,15 +2252,15 @@ ami_ioctl_disk(sc, bd)
 		goto bail;
 	}
 
-	if (bd->bd_volid > p->ada_nld) {
-		error = EINVAL;
+	if (bd->bd_volid >= p->ada_nld) {
+		error = ami_global_hsdisk(sc, bd, p);
 		goto bail;
 	}
 
 	i = bd->bd_volid;
 	error = EINVAL;
 
-	for (s = 0, d = 0; s < p->ald[i].adl_spandepth; s++) {
+	for (s = 0, d = 0; s < p->ald[i].adl_spandepth; s++)
 		for (t = 0; t < p->ald[i].adl_nstripes; t++) {
 			if (d != bd->bd_diskid) {
 				d++;
@@ -2220,8 +2321,8 @@ ami_ioctl_disk(sc, bd)
 			error = 0;
 			goto bail;
 		}
-	}
 
+	/* XXX if we reach this do dedicated hotspare magic*/
 bail:
 	free(p, M_DEVBUF);
 

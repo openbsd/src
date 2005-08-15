@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.28 2005/08/09 04:10:10 mickey Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.29 2005/08/15 23:22:46 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -212,6 +212,7 @@ ami_pci_attach(parent, self, aux)
 		sc->sc_exec = ami_quartz_exec;
 		sc->sc_done = ami_quartz_done;
 		sc->sc_poll = ami_quartz_poll;
+		sc->sc_flags |= AMI_QUARTZ;
 	}
 	sc->dmat = pa->pa_dmat;
 
@@ -276,9 +277,7 @@ ami_pci_attach(parent, self, aux)
 
 	if ((i = ami_pci_find_device(aux)) != -1) {
 		if (ami_pci_devices[i].flags & AMI_BROKEN)
-			sc->sc_flags = AMI_BROKEN;
-		else
-			sc->sc_flags = 0x0000;
+			sc->sc_flags |= AMI_BROKEN;
 	}
 	else {
 		/* this device existed at _match() should never happen */

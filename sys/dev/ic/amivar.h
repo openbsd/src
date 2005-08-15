@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.17 2005/08/08 20:23:46 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.18 2005/08/15 23:22:46 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -72,6 +72,7 @@ struct ami_softc {
 /* don't use 0x0001 */
 #define AMI_BROKEN 	0x0002
 #define	AMI_CMDWAIT	0x0004
+#define AMI_QUARTZ	0x0008
 	u_int	sc_flags;
 
 	/* low-level interface */
