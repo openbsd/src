@@ -6,7 +6,7 @@ divert(-1)
 # Note that lines beginning with "dnl" below are comments.
 
 divert(0)dnl
-VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.10 $')dnl
+VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.11 $')dnl
 OSTYPE(openbsd)dnl
 dnl
 dnl If you have a non-static IP address you may wish to forward outgoing mail
@@ -19,7 +19,7 @@ dnl
 dnl Disable EXPN and VRFY to help thwart address harvesters and require
 dnl senders to say hello.
 dnl
-define(`confPRIVACY_FLAGS', `authwarnings,needmailhelo,noexpn,novrfy')dnl
+define(`confPRIVACY_FLAGS', `authwarnings,needmailhelo,noexpn,novrfy,nobodyreturn')dnl
 dnl
 dnl We wish to make the existence of the local-host-names and
 dnl trusted-users files optional, hence the "-o" below.
