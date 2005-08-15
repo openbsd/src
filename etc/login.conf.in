@@ -1,4 +1,4 @@
-# $OpenBSD: login.conf,v 1.22 2005/08/12 18:48:20 millert Exp $
+# $OpenBSD: login.conf.in,v 1.1 2005/08/15 00:40:17 millert Exp $
 
 #
 # Sample login.conf file.  See login.conf(5) for details.
@@ -40,11 +40,11 @@ auth-ftp-defaults:auth-ftp=passwd:
 default:\
 	:path=/usr/bin /bin /usr/sbin /sbin /usr/X11R6/bin /usr/local/bin:\
 	:umask=022:\
-	:datasize-max=512M:\
-	:datasize-cur=512M:\
-	:maxproc-max=128:\
-	:maxproc-cur=64:\
-	:openfiles-cur=64:\
+	:datasize-max=@DEF_DATASIZE_MAX@:\
+	:datasize-cur=@DEF_DATASIZE_CUR@:\
+	:maxproc-max=@DEF_MAXPROC_MAX@:\
+	:maxproc-cur=@DEF_MAXPROC_CUR@:\
+	:openfiles-cur=@DEF_OPENFILES_CUR@:\
 	:stacksize-cur=4M:\
 	:localcipher=blowfish,6:\
 	:ypcipher=old:\
@@ -69,10 +69,10 @@ daemon:\
 # Staff have fewer restrictions and can login even when nologins are set.
 #
 staff:\
-	:datasize-cur=512M:\
-	:datasize-max=infinity:\
-	:maxproc-max=256:\
-	:maxproc-cur=128:\
+	:datasize-cur=@STAFF_DATASIZE_CUR@:\
+	:datasize-max=@STAFF_DATASIZE_MAX@:\
+	:maxproc-max=@STAFF_MAXPROC_MAX@:\
+	:maxproc-cur=@STAFF_MAXPROC_CUR@:\
 	:ignorenologin:\
 	:requirehome@:\
 	:tc=default:
