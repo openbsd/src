@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.9 2005/08/13 01:38:19 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.10 2005/08/15 21:48:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -285,7 +285,7 @@ safte_read_config(struct safte_softc *sc)
 	sc->sc_sensors = malloc(sc->sc_nsensors * sizeof(struct safte_sensor),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_sensors == NULL) {
-		free(sc->sc_sensors, M_DEVBUF);
+		free(sc->sc_encbuf, M_DEVBUF);
 		return (1);
 	}
 
