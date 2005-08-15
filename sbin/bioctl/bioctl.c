@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.28 2005/08/09 03:08:27 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.29 2005/08/15 23:13:24 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -155,8 +155,9 @@ usage(void)
 void
 bio_inq(char *name)
 {
-	char *status, size[64], scsiname[16], encname[16], serial[32];
-	int rv, i, d, volheader;
+	char *status, size[64], scsiname[16], volname[32];
+	int rv, i, d, volheader, hotspare;
+	char encname[16], serial[32];
 	struct bioc_disk bd;
 	struct bioc_inq bi;
 	struct bioc_vol bv;
@@ -210,15 +211,21 @@ bio_inq(char *name)
 			status = BIOC_SVINVALID_S;
 		}
 
-		snprintf(scsiname, sizeof scsiname, "%s %u",
+		snprintf(volname, sizeof volname, "%s %u",
 		    bi.bi_dev, bv.bv_volid);
-		if (human)
-			fmt_scaled(bv.bv_size, size);
-		else
-			snprintf(size, sizeof size, "%14llu",
-			    bv.bv_size);
-		printf("%7s %-10s %14s %-7s RAID%u\n",
-		    scsiname, status, size, bv.bv_dev, bv.bv_level);
+		if (bv.bv_level == -1 && bv.bv_nodisk == 1)
+			hotspare = 1;
+		else {
+			hotspare = 0;
+
+			if (human)
+				fmt_scaled(bv.bv_size, size);
+			else
+				snprintf(size, sizeof size, "%14llu",
+				    bv.bv_size);
+			printf("%7s %-10s %14s %-7s RAID%u\n",
+			    volname, status, size, bv.bv_dev, bv.bv_level);
+		}
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
 			memset(&bd, 0, sizeof(bd));
@@ -255,6 +262,13 @@ bio_inq(char *name)
 			default:
 				status = BIOC_SDINVALID_S;
 			}
+
+			if (hotspare)
+				;	/* use volname from parent volume */
+			else
+				snprintf(volname, sizeof volname, "    %3u",
+				    bd.bd_diskid);
+
 			if (human)
 				fmt_scaled(bd.bd_size, size);
 			else
@@ -272,15 +286,14 @@ bio_inq(char *name)
 			else
 				strlcpy(serial, "unknown serial", sizeof serial);
 
-			printf("    %3u %-10s %14s %-7s %-6s <%s>\n",
-			    bd.bd_diskid, status, size, scsiname, encname,
+			printf("%7s %-10s %14s %-7s %-6s <%s>\n",
+			    volname, status, size, scsiname, encname,
 			    bd.bd_vendor);
 			if (verbose)
-				printf("    %3s %-10s %14s %-7s %-6s '%s'\n",
+				printf("%7s %-10s %14s %-7s %-6s '%s'\n",
 				    "", "", "", "", "", serial);
 		}
 	}
-	/* printf("where are my spares?\n"); */
 }
 
 void
