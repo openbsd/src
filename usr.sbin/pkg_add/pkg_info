@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.29 2005/06/08 09:43:40 espie Exp $
+# $OpenBSD: pkg_info,v 1.30 2005/08/16 08:59:38 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -268,7 +268,7 @@ set_usage('pkg_info [-cDdfIiKkLMpqRrsUv] [-E fname] [-e pkgname] [-l str] pkgnam
 
 my $locked;
 try { 
-	getopts('cDdfhIikKLmpqRrsvhe:E:MU:l:aA',
+	getopts('cDdfhIikKLmpqRrsUve:E:Ml:aA',
 	    {'e' =>
 		    sub {
 			    my $pat = shift;
