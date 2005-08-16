@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.54 2005/08/16 18:37:06 espie Exp $
+# $OpenBSD: Update.pm,v 1.55 2005/08/16 21:34:10 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -277,7 +277,7 @@ sub can_do
 	$state->{journal} = [];
 	$plist->visit('can_update', 0, $state);
 	if ($state->{okay} == 0) {
-		Warn "Old package ", $plist->pkgname(), " contains unsafe operations\n";
+		Warn "Old package ", $plist->pkgname(), " contains potentially unsafe operations\n";
 		for my $i (@{$state->{journal}}) {
 			Warn "\t$i\n";
 		}
@@ -325,7 +325,7 @@ sub is_safe
 	$plist->visit('can_update', 1, $state);
 	if ($state->{okay} == 0) {
 		Warn "New package ", $plist->pkgname(), 
-		    " contains unsafe operations\n";
+		    " contains potentially unsafe operations\n";
 		for my $i (@{$state->{journal}}) {
 			Warn "\t$i\n";
 		}
