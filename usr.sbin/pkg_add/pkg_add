@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.182 2005/08/16 12:05:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.183 2005/08/16 13:52:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -202,8 +202,19 @@ sub really_add($$)
 	$state->{archive} = $handle;
 	$plist->{dir} = $dir;
 	$state->set_pkgname($pkgname);
+
+	# XXX in `combined' updates, some dependencies may remove extra 
+	# packages, so we do a double-take on the list of packages we 
+	# are actually replacing.
+	my @toreplace = ();
+	for my $pl2 (@{$plist->{replacing}}) {
+		if (is_installed($pl2->pkgname())) {
+			push(@toreplace, $pl2);
+		}
+	}
+	
 	my $replacing = 0;
-	if (@{$plist->{replacing}}) {
+	if (@toreplace) {
 		$replacing = 1;
 	} 
 	if (defined $plist->{old_libs}) {
@@ -216,8 +227,8 @@ sub really_add($$)
 	if (defined $state->{deptree}->{$pkgname}) {
 	    $header = $state->{deptree}->{$pkgname}.":".$header;
 	}
-	if (@{$plist->{replacing}}) {
-		$header.=" (replacing ". join(', ', (map {$_->pkgname()}@{$plist->{replacing}})). ")";
+	if (@toreplace) {
+		$header.=" (replacing ". join(', ', (map {$_->pkgname()}@toreplace)). ")";
 	}
 	if (!OpenBSD::ProgressMeter::set_header($header)) {
 	    print $state->{not} ? "Pretending to add " : "Adding ";
@@ -245,7 +256,7 @@ sub really_add($$)
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (extracting)");
 
-		if (@{$plist->{replacing}}) {
+		if (@toreplace) {
 			OpenBSD::Update::save_old_libraries($plist, $state);
 		}
 
@@ -271,7 +282,7 @@ sub really_add($$)
 			    "Installation of $pkgname failed");
 		}
 
-		for my $op (@{$plist->{replacing}}) {
+		for my $op (@toreplace) {
 			OpenBSD::ProgressMeter::set_header($op->pkgname()." (deleting)");
 			$state->set_pkgname($op->pkgname());
 			require OpenBSD::Delete;
@@ -376,7 +387,7 @@ sub really_add($$)
 		$plist->get(DISPLAY)->prepare($state);
 	}
 	# and add dependencies corresponding to the replacement
-	for my $op (@{$plist->{replacing}}) {
+	for my $op (@toreplace) {
 		require OpenBSD::RequiredBy;
 		require OpenBSD::Update;
 		my $opkgname = $op->pkgname();
