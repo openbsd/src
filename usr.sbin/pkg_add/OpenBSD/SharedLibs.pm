@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.7 2005/08/12 16:57:15 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.8 2005/08/16 20:05:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -152,7 +152,10 @@ sub add_package_libs
 sub add_bogus_package_libs
 {
 	my $pkgname = $_[0];
-	return if defined $done_plist->{$pkgname} && $done_plist->{$pkgname} == 2;
+	if (!defined $done_plist->{$pkgname}) {
+		add_package_libs($pkgname);
+	}
+	return if $done_plist->{$pkgname} == 2;
 	$done_plist->{$pkgname} = 2;
 	my $plist = OpenBSD::PackingList->from_installation($pkgname);
 	if (!defined $plist) {

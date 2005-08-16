@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.185 2005/08/16 16:24:23 espie Exp $
+# $OpenBSD: pkg_add,v 1.186 2005/08/16 20:05:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -89,6 +89,7 @@ sub can_install($$$)
 
 	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
 		if (!OpenBSD::Update::is_needed($plist, $state)) {
+			    OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 			    $state->{installed}->{$pkgname} = 1;
 			    return undef;
 			}
@@ -470,6 +471,7 @@ sub install_package
 	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
 		if ($state->{replace}) {
 			if (!OpenBSD::Update::is_needed($plist, $state)) {
+				OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 				$state->{installed}->{$handle->{pkgname}} = 1;
 				$handle->close();
 				return ();
