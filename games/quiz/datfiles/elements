@@ -10,10 +10,10 @@ F:9:18.998:Fluorine
 Ne:10:20.18{0}:Neon
 Na:11:22.99{0}:[Sod|Natr]ium
 Mg:12:24.305:Magnesium
-Al:13:26.982:Aluminum
+Al:13:26.982:Alumin{i}um
 Si:14:28.086:Silicon
 P:15:30.974:Phosphorus
-S:16:32.066:Sul[ph|f]ur
+S:16:32.066:Sul[f|ph]ur
 Cl:17:35.453:Chlorine
 Ar:18:39.948:Argon
 K:19:39.098:[Potass|Kal]ium
@@ -52,7 +52,7 @@ Sb:51:121.76:Antimony
 Te:52:127.6{0}:Tellurium
 I:53:126.9{0}:Iodine
 Xe:54:131.29:Xenon
-Cs:55:132.91:Cesium
+Cs:55:132.91:C{a}esium
 Ba:56:137.33:Barium
 La:57:138.91:Lanthanum
 Ce:58:140.12:Cerium
