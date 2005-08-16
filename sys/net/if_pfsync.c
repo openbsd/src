@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.52 2005/08/11 17:58:58 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.53 2005/08/16 11:22:43 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -82,6 +82,8 @@ struct pfsyncstats	pfsyncstats;
 
 void	pfsyncattach(int);
 void	pfsync_setmtu(struct pfsync_softc *, int);
+int	pfsync_alloc_scrub_memory(struct pfsync_state_peer *,
+	    struct pf_state_peer *);
 int	pfsync_insert_net_state(struct pfsync_state *);
 void	pfsync_update_net_tdb(struct pfsync_tdb *);
 int	pfsyncoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -166,6 +168,20 @@ pfsyncstart(struct ifnet *ifp)
 }
 
 int
+pfsync_alloc_scrub_memory(struct pfsync_state_peer *s,
+    struct pf_state_peer *d)
+{
+	if (s->scrub.scrub_flag && d->scrub == NULL) {
+		d->scrub = pool_get(&pf_state_scrub_pl, PR_NOWAIT);
+		if (d->scrub == NULL)
+			return (ENOMEM);
+		bzero(d->scrub, sizeof(*d->scrub));
+	}
+
+	return (0);
+}
+
+int
 pfsync_insert_net_state(struct pfsync_state *sp)
 {
 	struct pf_state	*st = NULL;
@@ -201,6 +217,16 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	}
 	bzero(st, sizeof(*st));
 
+	/* allocate memory for scrub info */
+	if (pfsync_alloc_scrub_memory(&sp->src, &st->src) ||
+	    pfsync_alloc_scrub_memory(&sp->dst, &st->dst)) {
+		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
+		if (st->src.scrub)
+			pool_put(&pf_state_scrub_pl, st->src.scrub);
+		pool_put(&pf_state_pl, st);
+		return (ENOMEM);
+	}
+
 	st->rule.ptr = r;
 	/* XXX get pointers to nat_rule and anchor */
 
@@ -230,11 +256,14 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	st->creatorid = sp->creatorid;
 	st->sync_flags = PFSTATE_FROMSYNC;
 
-
 	if (pf_insert_state(kif, st)) {
 		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		/* XXX when we have nat_rule/anchors, use STATE_DEC_COUNTERS */
 		r->states--;
+		if (st->dst.scrub)
+			pool_put(&pf_state_scrub_pl, st->dst.scrub);
+		if (st->src.scrub)
+			pool_put(&pf_state_scrub_pl, st->src.scrub);
 		pool_put(&pf_state_pl, st);
 		return (EINVAL);
 	}

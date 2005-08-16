@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.23 2005/08/13 08:56:14 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.24 2005/08/16 11:22:43 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -35,6 +35,7 @@
 struct pfsync_state_scrub {
 	u_int16_t	pfss_flags;
 	u_int8_t	pfss_ttl;	/* stashed TTL		*/
+#define PFSYNC_SCRUB_FLAG_VALID 	0x01
 	u_int8_t	scrub_flag;
 	u_int32_t	pfss_ts_mod;	/* timestamp modulation	*/
 } __packed;
@@ -54,8 +55,7 @@ struct pfsync_state_peer {
 	u_int16_t	mss;		/* Maximum segment size option	*/
 	u_int8_t	state;		/* active state level		*/
 	u_int8_t	wscale;		/* window scaling factor	*/
-	u_int8_t	scrub_flag;
-	u_int8_t	pad[5];
+	u_int8_t	pad[6];
 } __packed;
 
 struct pfsync_state {
@@ -254,6 +254,12 @@ struct pfsyncreq {
 	(d)->mss = htons((s)->mss);		\
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
+	if ((s)->scrub) {						\
+		(d)->scrub.pfss_flags = htons((s)->scrub->pfss_flags);	\
+		(d)->scrub.pfss_ttl = (s)->scrub->pfss_ttl;		\
+		(d)->scrub.pfss_ts_mod = htonl((s)->scrub->pfss_ts_mod);\
+		(d)->scrub.scrub_flag = PFSYNC_SCRUB_FLAG_VALID;	\
+	}								\
 } while (0)
 
 #define pf_state_peer_ntoh(s,d) do {		\
@@ -264,6 +270,13 @@ struct pfsyncreq {
 	(d)->mss = ntohs((s)->mss);		\
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
+	if ((s)->scrub.scrub_flag == PFSYNC_SCRUB_FLAG_VALID && 	\
+	    (d)->scrub != NULL) {					\
+		(d)->scrub->pfss_flags =				\
+		    ntohs((s)->scrub.pfss_flags) & PFSS_TIMESTAMP;	\
+		(d)->scrub->pfss_ttl = (s)->scrub.pfss_ttl;		\
+		(d)->scrub->pfss_ts_mod = ntohl((s)->scrub.pfss_ts_mod);\
+	}								\
 } while (0)
 
 #define pf_state_host_hton(s,d) do {				\
