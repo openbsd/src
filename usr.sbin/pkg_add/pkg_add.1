@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.40 2005/08/16 10:01:16 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.41 2005/08/16 10:37:06 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,7 +26,7 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acInqrvx
+.Op Fl acInqruvx
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl F Ar keywords
@@ -160,6 +160,10 @@ of packages to install, and proceed after weeding out conflicts.
 library specifications may not be fulfilled.
 .It Ar nonroot
 install even if not running as root.
+.It Ar pkgpath
+with
+.Fl u ,
+do not check the pkgpath matches if only one candidate is found.
 .It Ar scripts
 external scripts may fail.
 .It Ar update
@@ -232,6 +236,21 @@ use
 .Fl F Ar updatedepends
 to force the update
 .Pc .
+.It Fl u
+Display the name of packages to use for an update of the given
+.Ar pkgname(s) .
+With this option, if no
+.Ar pkgname
+is given,
+.Nm
+will display update names for all installed packages.
+This relies on
+.Ev PKG_PATH
+to figure out the new package names.
+After
+.Ox 3.8
+rolls out and enough tests are conducted, this will become a true update 
+switch and will proceed with the update proper.
 .It Fl v
 Turn on verbose output.
 Several
