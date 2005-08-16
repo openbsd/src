@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.39 2005/08/13 06:41:55 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.40 2005/08/16 10:01:16 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -215,6 +215,23 @@ Allow replacing existing packages.
 The code will try to take every precaution to make sure the update can
 proceed before removing the old package and adding the new one, and it
 should also handle shared libraries correctly.
+Among other things,
+.Nm
+will refuse to update packages as soon as it needs to run scripts that
+might fail 
+.Po
+use
+.Fl F Ar update
+to force the update
+.Pc ;
+.Nm
+will also refuse to update packages when the dependencies don't quite
+match
+.Po
+use
+.Fl F Ar updatedepends
+to force the update
+.Pc .
 .It Fl v
 Turn on verbose output.
 Several
@@ -452,3 +469,13 @@ processes do not die like they should when their pipe is closed,
 so using
 .Nm
 over SCP consumes an insane amount of resources.
+.Pp
+Using
+.Nm
+over FTP requires that the distant host supports
+.Cm ABORT
+commands, otherwise it may hang for long periods.
+.Xr ftp-proxy 8
+currently does not forward
+.Cm ABORT
+requests correctly.
