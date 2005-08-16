@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.53 2005/08/10 12:10:26 espie Exp $
+# $OpenBSD: Update.pm,v 1.54 2005/08/16 18:37:06 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -503,10 +503,9 @@ sub is_needed
 	$oplist->visit('build_context', $old_context);
 	my $n = join(',', sort keys %$new_context);
 	my $o = join(',', sort keys %$old_context);
-	print "Comparing full signature \"$o\" vs. \"$n\"\n" 
+	print "Comparing full signature for ", $plist->pkgname(), " \"$o\" vs. \"$n\": ", $n eq $o ? "equal\n" : "different\n" 
 	    if $state->{very_verbose};
-	return join(',', sort keys %$new_context) ne 
-	    join(',', sort keys %$old_context);
+	return $n ne $o;
 }
 
 sub figure_out_libs
