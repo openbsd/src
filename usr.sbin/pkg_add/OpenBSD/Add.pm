@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.37 2005/08/13 16:46:35 espie Exp $
+# $OpenBSD: Add.pm,v 1.38 2005/08/16 16:24:24 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -132,9 +132,11 @@ sub validate_plist($$)
 
 sub borked_installation
 {
-	my ($plist, $dir, @msg) = @_;
+	my ($plist, $dir, $not, @msg) = @_;
 
+	Fatal @msg if $not;
 	use OpenBSD::PackingElement;
+
 
 	my $borked = borked_package($plist->pkgname());
 	# fix packing list for pkg_delete

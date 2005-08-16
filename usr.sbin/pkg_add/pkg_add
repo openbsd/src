@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.184 2005/08/16 16:15:28 espie Exp $
+# $OpenBSD: pkg_add,v 1.185 2005/08/16 16:24:23 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -201,7 +201,6 @@ sub really_add($$)
 {
 	my ($handle, $state) = @_;
 	my $destdir = $state->{destdir};
-	my $not = $state->{not};
 	my $plist = $handle->{plist};
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
@@ -284,7 +283,8 @@ sub really_add($$)
 		}
 		OpenBSD::ProgressMeter::next();
 		if ($interrupted || $errors) {
-			OpenBSD::Add::borked_installation($plist, $dir, 
+			OpenBSD::Add::borked_installation($plist, $dir,
+			    $state->{not},
 			    "Installation of $pkgname failed");
 		}
 
@@ -297,6 +297,7 @@ sub really_add($$)
 			} catchall {
 				Warn $_;
 				OpenBSD::Add::borked_installation($plist, $dir, 
+				    $state->{not},
 				    "Deinstallation of ", 
 				    $op->pkgname(), " failed");
 			};
@@ -324,6 +325,7 @@ sub really_add($$)
 
 		if ($interrupted || $errors) {
 			OpenBSD::Add::borked_installation($plist, $dir, 
+			    $state->{not},
 			    "Installation of $pkgname failed");
 		}
 	} else {
@@ -371,6 +373,7 @@ sub really_add($$)
 	unlink($dir.CONTENTS);
 	if ($interrupted || $errors) {
 		OpenBSD::Add::borked_installation($plist, $dir, 
+		    $state->{not},
 		    "Installation of $pkgname failed");
 	}
 	OpenBSD::SharedLibs::add_plist_libs($plist);
