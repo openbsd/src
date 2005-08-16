@@ -1,11 +1,24 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.2 2004/10/19 09:51:45 espie Exp $
+# $OpenBSD: check-name,v 1.3 2005/08/16 15:41:56 espie Exp $
 # Written by Marc Espie
 # Public domain
 
-use Test::Simple tests => 1;
+use Test::Simple tests => 5;
 use OpenBSD::PkgSpec;
 
-my @list=qw(py-MxDateTime-2.0.1-py2.1);
+@list = qw(py-MxDateTime-2.0.1-py2.1);
+ok(OpenBSD::PkgSpec::match('py-MxDateTime->=2.0-py2.1', @list) == 1,
+	'flavor with number');
+# packages without a version number should work
+my @list = qw(hugs98-Nov2003);
+ok(OpenBSD::PkgSpec::match('hugs98-Nov2003', @list) == 1,
+	'no version number');
 
-ok(OpenBSD::PkgSpec::match('py-MxDateTime->=2.0-py2.1', @list) == 1);
+@list = qw(foo-1.0 foo-1.0p0 foo-1.0p25);
+my @result = OpenBSD::PkgSpec::match('foo-<1.0p0', @list);
+ok(@result == 1 && $result[0] eq 'foo-1.0',
+	'before 1.0p0 came 1.0');
+ok(OpenBSD::PkgSpec::match('foo-<=1.0p0', @list) == 2,
+	'1.0 and 1.0p0 both match <=1.0p0'); 
+ok(OpenBSD::PkgSpec::match('foo-1.0', @list) == 3,
+	'any 1.0p* matches 1.0');
