@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.41 2005/08/16 10:37:06 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.42 2005/08/16 12:05:58 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -158,6 +158,10 @@ will install everything and the kitchen sink: randomly reorder the list
 of packages to install, and proceed after weeding out conflicts.
 .It Ar libdepends
 library specifications may not be fulfilled.
+.It Ar noclosure
+do not compute the closure of dependencies to figure out which packages to
+update when using
+.Fl u .
 .It Ar nonroot
 install even if not running as root.
 .It Ar pkgpath

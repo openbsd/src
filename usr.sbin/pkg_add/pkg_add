@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.181 2005/08/16 11:25:48 espie Exp $
+# $OpenBSD: pkg_add,v 1.182 2005/08/16 12:05:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -518,25 +518,54 @@ sub install_package
 	return ();
 }
 
+sub compute_closure
+{
+	require OpenBSD::RequiredBy;
+
+	my $old = shift;
+	my @todo;
+	my %done;
+	my %toupdate = map {($_, 1)} @$old;
+	push(@todo, keys %toupdate);
+	while (my $pkgname = pop @todo) {
+		next if $done{$pkgname};
+		$done{$pkgname} = 1;
+		for my $dep (OpenBSD::Requiring->new($pkgname)->list()) {
+			next if defined $done{$dep};
+			next if defined $toupdate{$dep};
+			$toupdate{$dep} = 1;
+			push(@todo, $dep);
+		}
+	}
+	return keys %toupdate;
+}
+
 sub find_updates
 {
 	my ($old, $new, $state) = @_;
-	my @cantupdate = ();
-	my $hash = OpenBSD::PackageName::compile_stemlist(OpenBSD::PackageLocator::distant_available());
+	my @list = ();
 
 	for my $pkgname (@$old) {
-		my $stem = $pkgname;
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
 			my @l = OpenBSD::PackageName::findstem($pkgname,
 			    installed_packages());
 			if (@l == 1) {
-				$pkgname = $l[0];
+				push(@list, $l[0]);
 			} else {
-				Fatal("Ambiguous: $stem could be", join(',', @l));
+				Fatal("Ambiguous: $pkgname could be", join(',', @l));
 			}
 		} else {
-			$stem = OpenBSD::PackageName::splitstem($pkgname);
+			push(@list, $pkgname);
 		}
+	}
+	unless (defined $state->{full_update} or defined $state->{forced}->{noclosure}) {
+		@list = compute_closure(\@list);
+	}
+	my @cantupdate = ();
+	my $hash = OpenBSD::PackageName::compile_stemlist(OpenBSD::PackageLocator::distant_available());
+
+	for my $pkgname (@list) {
+		my $stem = OpenBSD::PackageName::splitstem($pkgname);
 		my @l = $hash->findstem($stem);
 		if (@l == 0) {
 			push(@cantupdate, $pkgname);
@@ -682,6 +711,7 @@ lock_db($state->{not});
 if ($opt_u) {
 	if (@ARGV == 0) {
 		@ARGV = sort(installed_packages());
+		$state->{full_update} = 1;
 	}
 	my @todo = ();
 	my @cantupdate = find_updates(\@ARGV, \@todo, $state);
