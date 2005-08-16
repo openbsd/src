@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.24 2005/08/16 11:22:43 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.25 2005/08/16 11:26:48 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -255,7 +255,8 @@ struct pfsyncreq {
 	(d)->state = (s)->state;		\
 	(d)->wscale = (s)->wscale;		\
 	if ((s)->scrub) {						\
-		(d)->scrub.pfss_flags = htons((s)->scrub->pfss_flags);	\
+		(d)->scrub.pfss_flags = 				\
+		    htons((s)->scrub->pfss_flags & PFSS_TIMESTAMP);	\
 		(d)->scrub.pfss_ttl = (s)->scrub->pfss_ttl;		\
 		(d)->scrub.pfss_ts_mod = htonl((s)->scrub->pfss_ts_mod);\
 		(d)->scrub.scrub_flag = PFSYNC_SCRUB_FLAG_VALID;	\
