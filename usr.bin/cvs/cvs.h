@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.79 2005/08/12 14:41:54 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.80 2005/08/16 16:34:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -243,6 +243,8 @@ struct cvsroot {
 #define CVS_ENT_ADDED		1
 #define CVS_ENT_REMOVED		2
 #define CVS_ENT_UPTODATE	3
+
+#define CVS_ENT_MAXLINELEN	1024
 
 #define CVS_ENTF_SYNC	0x01	/* contents of disk and memory match */
 #define CVS_ENTF_WR	0x02	/* file is opened for writing too */

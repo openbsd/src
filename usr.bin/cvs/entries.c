@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.44 2005/08/12 18:46:53 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.45 2005/08/16 16:34:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,7 +53,8 @@ cvs_ent_open(const char *dir, int flags)
 {
 	size_t len;
 	int exists, nodir;
-	char cdpath[MAXPATHLEN], entpath[MAXPATHLEN], ebuf[128], mode[4];
+	char cdpath[MAXPATHLEN], ebuf[CVS_ENT_MAXLINELEN], entpath[MAXPATHLEN];
+	char mode[4];
 	FILE *fp;
 	struct stat st;
 	struct cvs_ent *ent;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.54 2005/08/14 23:24:55 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.55 2005/08/16 16:34:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -508,7 +508,7 @@ cvs_resp_createdir(char *line)
 static int
 cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 {
-	char entbuf[128];
+	char entbuf[CVS_ENT_MAXLINELEN];
 	struct cvs_ent *ent;
 
 	/* get the remote path */
