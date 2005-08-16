@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.183 2005/08/16 13:52:15 espie Exp $
+# $OpenBSD: pkg_add,v 1.184 2005/08/16 16:15:28 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -87,6 +87,12 @@ sub can_install($$$)
 
 	require OpenBSD::Update;
 
+	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
+		if (!OpenBSD::Update::is_needed($plist, $state)) {
+			    $state->{installed}->{$pkgname} = 1;
+			    return undef;
+			}
+	}
 	if (!OpenBSD::Update::is_safe($plist, $state)) {
 		print "Can't safely update to $pkgname\n";
 		$errors++;
