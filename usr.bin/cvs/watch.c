@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.5 2005/07/25 12:13:08 xsa Exp $	*/
+/*	$OpenBSD: watch.c,v 1.6 2005/08/16 06:37:57 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -76,7 +76,7 @@ struct cvs_cmd cvs_cmd_watchers = {
 	cvs_watchers_local,
 	NULL,
 	NULL,
-	0
+	CVS_CMD_SENDDIR | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
 };
 
 
@@ -117,7 +117,7 @@ cvs_watch_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
  *
  */
 static int
-cvs_watch_remote(CVSFILE *file, void *arg)
+cvs_watch_remote(CVSFILE *cf, void *arg)
 {
 	return (CVS_EX_OK);
 }
@@ -128,7 +128,7 @@ cvs_watch_remote(CVSFILE *file, void *arg)
  *
  */
 static int
-cvs_watch_local(CVSFILE *file, void *arg)
+cvs_watch_local(CVSFILE *cf, void *arg)
 {
 	return (CVS_EX_OK);
 }
@@ -139,9 +139,49 @@ cvs_watch_local(CVSFILE *file, void *arg)
  *
  */
 static int
-cvs_watchers_remote(CVSFILE *file, void *arg)
+cvs_watchers_remote(CVSFILE *cf, void *arg)
 {
-	return (CVS_EX_OK);
+	int ret;
+	struct cvsroot *root;
+
+	ret = 0;
+	root = CVS_DIR_ROOT(cf);
+
+	if (cf->cf_type == DT_DIR) {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    cf->cf_name);
+		else
+			ret = cvs_senddir(root, cf);
+
+		if (ret == -1)
+			ret = CVS_EX_PROTO;
+
+		return (ret);
+	}
+
+	if (cvs_sendentry(root, cf) < 0)
+		return (CVS_EX_PROTO);
+
+	switch (cf->cf_cvstat) {
+	case CVS_FST_UNKNOWN:
+		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		break;
+	case CVS_FST_UPTODATE:
+		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+		break;
+	case CVS_FST_ADDED:
+	case CVS_FST_MODIFIED:
+		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
+		break;
+	default:
+		break;
+	}
+
+	if (ret == -1)
+		ret = CVS_EX_PROTO;
+
+	return (ret);
 }
 
 /*
@@ -149,7 +189,7 @@ cvs_watchers_remote(CVSFILE *file, void *arg)
  *
  */
 static int
-cvs_watchers_local(CVSFILE *file, void *arg)
+cvs_watchers_local(CVSFILE *cf, void *arg)
 {
 	return (CVS_EX_OK);
 }
