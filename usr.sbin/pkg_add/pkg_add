@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.179 2005/08/14 09:06:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.180 2005/08/16 10:28:53 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -38,7 +38,6 @@ use File::Path;
 our %forced = ();
 
 package main;
-our $not;
 
 my $errors = 0;
 
@@ -519,6 +518,60 @@ sub install_package
 	return ();
 }
 
+sub find_updates
+{
+	my ($old, $new, $state) = @_;
+	my @cantupdate = ();
+	my $hash = OpenBSD::PackageName::compile_stemlist(OpenBSD::PackageLocator::distant_available());
+
+	for my $pkgname (@$old) {
+		my $stem = $pkgname;
+		if (OpenBSD::PackageName::is_stem($pkgname)) {
+			my @l = OpenBSD::PackageName::findstem($pkgname,
+			    installed_packages());
+			if (@l == 1) {
+				$pkgname = $l[0];
+			} else {
+				Fatal("Ambiguous: $stem could be", join(',', @l));
+			}
+		} else {
+			$stem = OpenBSD::PackageName::splitstem($pkgname);
+		}
+		my $l = $hash->findstem($stem);
+		if (!defined $l) {
+			push(@cantupdate, $pkgname);
+			next;
+		}
+		my @l2 = ();
+		if (@$l == 1 && $state->{forced}->{pkgpath}) {
+			print "Directly updating $pkgname -> ", $l->[0], "\n";
+			push(@$new, $l->[0]);
+			next;
+		}
+		my $plist = OpenBSD::PackingList->from_installation($pkgname, \&OpenBSD::PackingList::ExtraInfoOnly);
+		for my $candidate (@$l) {
+		    my $handle = OpenBSD::PackageLocator->find($candidate, $state->{arch});
+		    if (!$handle) {
+			    next;
+		    }
+		    $handle->close();
+		    my $dir = $handle->info();
+		    my $p2 = OpenBSD::PackingList->fromfile($dir.CONTENTS,
+			\&OpenBSD::PackingList::ExtraInfoOnly);
+		    if ($p2->{extrainfo}->{subdir} eq $plist->{extrainfo}->{subdir}) {
+			push(@l2, $candidate);
+		    }
+		}
+		print "Updating $pkgname -> ", join(' ', @l2), "\n";
+		if (@l2 == 1) {
+			push(@$new, $l2[0]);
+		} else {
+			push(@cantupdate, $pkgname);
+		}
+	}
+	return @cantupdate;
+}
+
 sub reorder
 {
 	my $l = shift;
@@ -535,10 +588,10 @@ sub reorder
 set_usage('pkg_add [-acInqrvvx] [-A arch] [-B pkg-destdir] [-F keywords]',
 '[-L localbase] [-P type] [-Q quick-destdir] pkgname [...]');
 
-our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c);
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c, $opt_u);
 $opt_v = 0;
 try { 
-	getopts('aqchvnrxIL:f:F:B:A:P:Q:',
+	getopts('aqchuvnrxIL:f:F:B:A:P:Q:',
 	{'v' => sub {++$opt_v;},
 	 'h' => sub { Usage(); },
 	 'F' => sub { 
@@ -602,8 +655,7 @@ if (defined $state->{destdir}) {
 }
 
 
-$state->{not} = $opt_n;
-$not = $opt_n;
+$state->{not} = $opt_n || $opt_u;
 $state->{quick} = $opt_q;
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
@@ -611,7 +663,7 @@ $state->{very_verbose} = $opt_v >= 2;
 $state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
 
-if (@ARGV == 0) {
+if (@ARGV == 0 && !$opt_u) {
 	Usage "Missing pkgname";
 }
 if (!$opt_x && !$state->{beverbose}) {
@@ -626,7 +678,20 @@ if ($< && !$forced{nonroot}) {
 	}
 }
 
-lock_db($opt_n);
+lock_db($state->{not});
+if ($opt_u) {
+	if (@ARGV == 0) {
+		@ARGV = sort(installed_packages());
+	}
+	my @todo = ();
+	my @cantupdate = find_updates(\@ARGV, \@todo, $state);
+	print "Update using pkg_add -r ", join(' ', @todo), "\n";
+	if (@cantupdate > 0) {
+		print "Cannot find updates for ",join(' ', @cantupdate), "\n";
+	}
+	exit(0);
+}
+
 my @todo = (@ARGV);
 if (defined $state->{forced}->{kitchensink}) {
 	reorder(\@todo);
