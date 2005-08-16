@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.16 2005/08/16 09:44:07 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.17 2005/08/16 10:24:23 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -334,6 +334,15 @@ sub available
 	my @l = ();
 	foreach my $loc (@pkgpath) {
 		push(@l, $loc->simplelist());
+	}
+	return @l;
+}
+
+sub distant_available
+{
+	my @l = ();
+	foreach my $loc (@pkgpath) {
+		push(@l, $loc->list());
 	}
 	return @l;
 }
