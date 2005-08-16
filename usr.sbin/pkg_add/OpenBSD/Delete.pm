@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.24 2005/08/09 20:55:26 espie Exp $
+# $OpenBSD: Delete.pm,v 1.25 2005/08/16 17:27:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -111,6 +111,19 @@ sub validate_plist($$)
 		if ($s->{ro}) {
 			Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
 			$problems++;
+		}
+	}
+	my $dir = installed_info($plist->pkgname());
+	for my $i (info_names()) {
+		my $fname = $dir.$i;
+		if (-e $fname) {
+			my $size = (stat _)[7];
+			my $s = OpenBSD::Vstat::remove($fname, $size);
+			next unless defined $s;
+			if ($s->{ro}) {
+				Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
+				$problems++;
+			}
 		}
 	}
 	Fatal "fatal issues" if $problems;
