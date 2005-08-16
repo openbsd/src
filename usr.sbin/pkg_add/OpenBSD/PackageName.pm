@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.7 2005/08/16 10:24:23 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.8 2005/08/16 11:25:48 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -75,8 +75,8 @@ sub compile_stemlist
 	my $hash = {};
 	for my $n (@_) {
 		my $stem = splitstem($n);
-		$hash->{$stem} = [] unless defined $hash->{$stem};
-		push(@{$hash->{$stem}}, $n);
+		$hash->{$stem} = {} unless defined $hash->{$stem};
+		$hash->{$stem}->{$n} = 1;
 	}
 	bless $hash, "OpenBSD::PackageLocator::_compiled_stemlist";
 }
@@ -86,7 +86,7 @@ package OpenBSD::PackageLocator::_compiled_stemlist;
 sub findstem
 {
 	my ($self, $stem) = @_;
-	return $self->{$stem};
+	return keys %{$self->{$stem}};
 }
 	
 1;
