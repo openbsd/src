@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.186 2005/08/16 20:05:12 espie Exp $
+# $OpenBSD: pkg_add,v 1.187 2005/08/16 21:48:34 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -197,6 +197,19 @@ sub do_script
 	$plist->get($name)->run($state, $args);
 }
 
+sub thunderbird_special_case
+{
+	my $plist = shift;
+	for my $item (@{$plist->{items}}) {
+		next unless $item->IsFile();
+		my $t = $item->{tempname};
+		if (defined $t && $t =~ s/^(.*\/mozilla-thunderbird)\/extensions(.*)\/pkg\./$1\/pkg\./) {
+			rename $item->{tempname}, $t;
+			rmdir("$1/extensions$2");
+			$item->{tempname} = $t;
+		}
+	}
+}
 
 sub really_add($$)
 {
@@ -292,6 +305,10 @@ sub really_add($$)
 		for my $op (@toreplace) {
 			OpenBSD::ProgressMeter::set_header($op->pkgname()." (deleting)");
 			$state->set_pkgname($op->pkgname());
+			if (OpenBSD::PkgSpec::match("mozilla-thunderbird-<=1.0.2p0",
+			    ($op->pkgname()))) {
+			    	thunderbird_special_case($plist);
+			}
 			require OpenBSD::Delete;
 			try {
 			    OpenBSD::Delete::delete_plist($op, $state);
