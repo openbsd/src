@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.15 2005/08/16 09:35:15 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.16 2005/08/16 09:44:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -61,13 +61,9 @@ sub close
 	$object->_close();
 }
 
-
-# open method that tracks opened files per-host.
-sub open
+sub make_room
 {
-	my ($self, $object) = @_;
-
-	return undef unless $self->may_exist($object->{name});
+	my $self = shift;
 
 	# kill old files if too many
 	my $already = $self->opened();
@@ -81,6 +77,18 @@ sub open
 			$self->close($o);
 		}
 	}
+	return $already;
+}
+
+# open method that tracks opened files per-host.
+sub open
+{
+	my ($self, $object) = @_;
+
+	return undef unless $self->may_exist($object->{name});
+
+	# kill old files if too many
+	my $already = $self->make_room();
 
 	my $p = $self->pipename($object->{name});
 	
@@ -232,6 +240,7 @@ our @ISA=qw(OpenBSD::PackageLocation::HTTPorFTP OpenBSD::PackageLocation);
 sub list
 {
 	my ($self) = @_;
+	$self->make_room();
 	my $fullname = $self->{location};
 	my @l =();
 	local $_;
@@ -254,6 +263,7 @@ our @ISA=qw(OpenBSD::PackageLocation::HTTPorFTP OpenBSD::PackageLocation OpenBSD
 sub list
 {
 	my ($self) = @_;
+	$self->make_room();
 	my $fullname = $self->{location};
 	return $self->_list("echo nlist *.tgz|ftp -o - $fullname 2>/dev/null");
 }
