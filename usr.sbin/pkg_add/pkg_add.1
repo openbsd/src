@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.42 2005/08/16 12:05:58 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.43 2005/08/16 12:20:21 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -314,10 +314,9 @@ For packages tagged with architecture constraints,
 verifies that the current machine architecture agrees with the constraints.
 .It
 All package dependencies (from
-.Cm @pkgdep ,
-.Cm @libdepend ,
+.Cm @depend
 and
-.Cm @newdepend
+.Cm @wantlib
 directives; see
 .Xr pkg_create 1 )
 are read from the packing list.
