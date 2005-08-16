@@ -1567,11 +1567,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ansi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cacheops.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cacheops_20.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cacheops_30.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cacheops_40.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cacheops_60.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cpu.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/db_machdep.ph
