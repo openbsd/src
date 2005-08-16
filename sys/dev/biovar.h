@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.13 2005/08/09 14:29:18 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.14 2005/08/16 01:12:46 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -90,10 +90,7 @@ struct bioc_disk {
 	u_int16_t	bd_target;
 	u_int16_t	bd_lun;
 	u_int16_t	bd_other_id;	/* unused for now but needed for sas/fc */
-	char		bd_vendor[8];		/* vendor string */
-	char		bd_product[16];		/* product string */
-	char		bd_revision[4];		/* revision string */
-	char		bd_pad[4];		/* zero terminate in here */
+	char		bd_vendor[32];		/* scsi string */
 	char		bd_serial[32];		/* serial number */
 	char		bd_procdev[16];		/* processor device */
 };
@@ -120,10 +117,7 @@ struct bioc_vol {
 	int		bv_nodisk;		/* nr of drives */
 
 	char		bv_dev[16];		/* device */
-	char		bv_vendor[8];		/* vendor string */
-	char		bv_product[16];		/* product string */
-	char		bv_revision[4];		/* revision string */
-	char		bv_pad[4];		/* zero terminate in here */
+	char		bv_vendor[32];		/* scsi string */
 };
 
 #define BIOCALARM _IOWR('B', 35, struct bioc_alarm)

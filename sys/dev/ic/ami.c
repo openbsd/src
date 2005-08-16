@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.58 2005/08/15 23:22:45 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.59 2005/08/16 01:12:46 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2119,7 +2119,7 @@ ami_global_hsdisk(sc, bd, p)
 
 				if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf))
 					strlcpy(bd->bd_vendor, inqbuf.vendor,
-					    8 + 16 + 4 + 1);
+					    sizeof(bd->bd_vendor));
 
 				if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf))
 					strlcpy(bd->bd_serial, vpdbuf.serial,
@@ -2304,7 +2304,7 @@ ami_ioctl_disk(sc, bd)
 
 			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf))
 				strlcpy(bd->bd_vendor, inqbuf.vendor,
-				    8 + 16 + 4 + 1); /* vendor prod rev zero */
+				    sizeof(bd->bd_vendor));
 
 			if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf))
 				strlcpy(bd->bd_serial, vpdbuf.serial,
