@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.905 2005/08/13 22:35:37 claudio Exp 
+ *	OpenBSD: pcidevs,v 1.906 2005/08/16 16:35:32 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1057,6 +1057,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8151_AGP,
 	    "8151 AGP",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8132_PCIX,
+	    "8132 PCIX",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8132_PCIX_IOAPIC,
+	    "8132 PCIX IOAPIC",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_PPB,
