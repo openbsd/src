@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.14 2005/06/26 16:41:08 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.15 2005/08/16 09:35:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -121,7 +121,7 @@ sub list
 	my ($self) = @_;
 	my $host = $self->{host};
 	my $path = $self->{path};
-	return _list("ssh $host ls -l $path");
+	return $self->_list("ssh $host ls -l $path");
 }
 
 package OpenBSD::PackageLocation::Local;
@@ -235,7 +235,7 @@ sub list
 	my $fullname = $self->{location};
 	my @l =();
 	local $_;
-	open(my $fh, '-|', "echo ls|ftp -o - $fullname 2>/dev/null") or return undef;
+	open(my $fh, '-|', "ftp -o - $fullname 2>/dev/null") or return undef;
 	# XXX assumes a pkg HREF won't cross a line. Is this the case ?
 	while(<$fh>) {
 		chomp;
@@ -255,7 +255,7 @@ sub list
 {
 	my ($self) = @_;
 	my $fullname = $self->{location};
-	return _list("echo ls|ftp -o - $fullname 2>/dev/null");
+	return $self->_list("echo nlist *.tgz|ftp -o - $fullname 2>/dev/null");
 }
 
 
