@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.114 2005/08/17 08:35:53 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.115 2005/08/17 16:23:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -114,7 +114,8 @@ static int	 cvs_file_sort(struct cvs_flist *, u_int);
 static int	 cvs_file_cmp(const void *, const void *);
 static int	 cvs_file_cmpname(const char *, const char *);
 static CVSFILE	*cvs_file_alloc(const char *, u_int);
-static CVSFILE	*cvs_file_lget(const char *, int, CVSFILE *, struct cvs_ent *);
+static CVSFILE	*cvs_file_lget(const char *, int, CVSFILE *, CVSENTRIES *,
+		    struct cvs_ent *);
 
 
 /*
@@ -392,7 +393,7 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 	 * Fetch the needed information about ".", so we can setup a few
 	 * things to get ourselfs going.
 	 */
-	cf = cvs_file_lget(".", 0, NULL, NULL);
+	cf = cvs_file_lget(".", 0, NULL, NULL, NULL);
 	if (cf == NULL) {
 		cvs_log(LP_ERR, "arrrr i failed captain!");
 		return (-1);
@@ -523,7 +524,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	 * There might not be an Entries file, so do not fail if there
 	 * is none available to get the info from.
 	 */
-	entf = cvs_ent_open(parent, O_RDONLY);
+	entf = cvs_ent_open(parent, O_RDWR);
 
 	/*
 	 * Load the Entry if we successfully opened the Entries file.
@@ -552,9 +553,9 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	 * <path> for a directory.
 	 */
 	if (type == DT_DIR)
-		base = cvs_file_lget(path, flags, NULL, ent);
+		base = cvs_file_lget(path, flags, NULL, entf, ent);
 	else
-		base = cvs_file_lget(parent, flags, NULL, NULL);
+		base = cvs_file_lget(parent, flags, NULL, entf, NULL);
 
 	if (base == NULL) {
 		cvs_log(LP_ERR, "failed to obtain directory info for '%s'",
@@ -582,18 +583,13 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	 * to the base.
 	 */
 	if (type != DT_DIR) {
-		cf = cvs_file_lget(path, flags, base, ent);
+		cf = cvs_file_lget(path, flags, base, entf, ent);
 		if (cf == NULL) {
 			cvs_error = CVS_EX_DATA;
 			goto fail;
 		}
 
 		cvs_file_attach(base, cf);
-	}
-
-	if (entf != NULL) {
-		cvs_ent_close(entf);
-		entf = NULL;
 	}
 
 	/*
@@ -607,6 +603,11 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	    (base->cf_flags & CVS_FILE_ONDISK) && (cb != NULL) &&
 	    ((cvs_error = cb(base, arg)) != CVS_EX_OK))
 		goto fail;
+
+	if (entf != NULL) {
+		cvs_ent_close(entf);
+		entf = NULL;
+	}
 
 	/*
 	 * If we have a normal file, pass it as well.
@@ -830,7 +831,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 	}
 
 	ret = -1;
-	entf = cvs_ent_open(fpath, O_RDONLY);
+	entf = cvs_ent_open(fpath, O_RDWR);
 	while ((de = readdir(dp)) != NULL) {
 		if (!strcmp(de->d_name, ".") ||
 		    !strcmp(de->d_name, ".."))
@@ -863,7 +864,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 		else
 			ent = NULL;
 
-		cfp = cvs_file_lget(pbuf, flags, cf, ent);
+		cfp = cvs_file_lget(pbuf, flags, cf, entf, ent);
 		if (cfp == NULL) {
 			cvs_log(LP_ERR, "failed to get '%s'", pbuf);
 			goto done;
@@ -923,7 +924,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 		if (len >= sizeof(pbuf))
 			goto done;
 
-		cfp = cvs_file_lget(pbuf, flags, cf, ent);
+		cfp = cvs_file_lget(pbuf, flags, cf, entf, ent);
 		if (cfp == NULL) {
 			cvs_log(LP_ERR, "failed to fetch '%s'", pbuf);
 			goto done;
@@ -1180,7 +1181,8 @@ cvs_file_alloc(const char *path, u_int type)
  * failure.
  */
 static CVSFILE *
-cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
+cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
+    struct cvs_ent *ent)
 {
 	int ret;
 	u_int type;
@@ -1195,6 +1197,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 	if ((cfp = cvs_file_alloc(path, type)) == NULL)
 		return (NULL);
 	cfp->cf_parent = parent;
+	cfp->cf_entry = pent;
 
 	if ((cfp->cf_type == DT_DIR) && (cfp->cf_parent == NULL))
 		cfp->cf_flags |= CVS_DIRF_BASE;
@@ -1276,9 +1279,11 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 		}
 	}
 
-	if ((cfp->cf_type == DT_DIR) && (cvs_load_dirinfo(cfp, flags) < 0)) {
-		cvs_file_free(cfp);
-		return (NULL);
+	if (cfp->cf_type == DT_DIR) {
+		if (cvs_load_dirinfo(cfp, flags) < 0) {
+			cvs_file_free(cfp);
+			return (NULL);
+		}
 	}
 
 	if ((cfp->cf_repo != NULL) && (cfp->cf_type == DT_DIR) &&

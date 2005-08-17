@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.27 2005/07/31 21:08:17 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.28 2005/08/17 16:23:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -84,6 +84,9 @@ typedef struct cvs_file {
 	const char	*cf_name;
 	const char	*cf_dir;
 
+	/* pointer to the parent directory's entry file */
+	void		*cf_entry;
+
 	mode_t		 cf_mode;
 	u_int8_t	 cf_cvstat;	/* cvs status of the file */
 	u_int8_t	 cf_type;	/* uses values from dirent.h */
@@ -118,7 +121,6 @@ typedef struct cvs_file {
 #define cf_files	cf_td.cf_dir.cd_files
 #define cf_repo		cf_td.cf_dir.cd_repo
 #define cf_root		cf_td.cf_dir.cd_root
-
 
 
 #define CVS_DIRF_STATIC		0x01
