@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.5 2005/08/09 04:10:11 mickey Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.6 2005/08/17 12:58:39 reyk Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -42,8 +42,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
@@ -54,14 +54,14 @@
 #include <sys/gpio.h>
 
 #include <machine/bus.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
 #include <net/if_arp.h>
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
 
@@ -82,51 +82,27 @@
 
 struct ath_pci_softc {
 	struct ath_softc	sc_sc;
-#ifdef __FreeBSD__
-	struct resource		*sc_sr;		/* memory resource */
-	struct resource		*sc_irq;	/* irq resource */
-#else
 	pci_chipset_tag_t	sc_pc;
-#endif
 	void			*sc_ih;		/* intererupt handler */
 	u_int8_t		sc_saved_intline;
 	u_int8_t		sc_saved_cachelinesz;
 	u_int8_t		sc_saved_lattimer;
 };
 
-#define	BS_BAR	0x10
+/* Base Address Register */
+#define ATH_BAR0	0x10
 
-int ath_pci_match(struct device *, void *, void *);
-void ath_pci_attach(struct device *, struct device *, void *);
-void ath_pci_shutdown(void *);
-int ath_pci_detach(struct device *, int);
-u_int16_t ath_product(pcireg_t);
+int	 ath_pci_match(struct device *, void *, void *);
+void	 ath_pci_attach(struct device *, struct device *, void *);
+void	 ath_pci_shutdown(void *);
+int	 ath_pci_detach(struct device *, int);
 
 struct cfattach ath_pci_ca = {
-	sizeof (struct ath_softc), 
+	sizeof(struct ath_softc),
 	ath_pci_match,
-	ath_pci_attach, 
+	ath_pci_attach,
 	ath_pci_detach
 };
-
-/*
- * translate some product code.  it is a workaround until HAL gets updated.
- */
-u_int16_t
-ath_product(pcireg_t pa_id)
-{
-	u_int16_t prodid;
-
-	prodid = PCI_PRODUCT(pa_id);
-	switch (prodid) {
-	case 0x1014:	/* IBM 31P9702 minipci a/b/g card */
-		prodid = PCI_PRODUCT_ATHEROS_AR5212;
-		break;
-	default:
-		break;
-	}
-	return prodid;
-}
 
 int
 ath_pci_match(struct device *parent, void *match, void *aux)
@@ -136,11 +112,10 @@ ath_pci_match(struct device *parent, void *match, void *aux)
 	pci_vendor_id_t vendor;
 
 	vendor = PCI_VENDOR(pa->pa_id);
-	/* XXX HACK until HAL is updated. */
 	if (vendor == 0x128c)
 		vendor = PCI_VENDOR_ATHEROS;
-	devname = ath_hal_probe(vendor, ath_product(pa->pa_id));
-	if (devname) 
+	devname = ath_hal_probe(vendor, PCI_PRODUCT(pa->pa_id));
+	if (devname)
 		return 1;
 
 	return 0;
@@ -176,7 +151,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* 
 	 * Setup memory-mapping of PCI registers.
 	 */
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh, 
+	if (pci_mapreg_map(pa, ATH_BAR0, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh,
 	    NULL, NULL, 0)) {
 		printf(": cannot map register space\n");
 		goto bad;
@@ -194,9 +169,9 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad1;
 	}
 
-	intrstr = pci_intr_string(pc, ih); 
+	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ath_intr, sc,
-					sc->sc_dev.dv_xname);
+	    sc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
 		printf(": couldn't map interrupt\n");
 		goto bad2;
@@ -212,7 +187,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad3;
 	}
 
-	if (ath_attach(ath_product(pa->pa_id), sc) == 0)
+	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
 		return;
 
 	shutdownhook_disestablish(hook);
