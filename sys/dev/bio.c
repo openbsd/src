@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.5 2005/08/08 04:02:30 deraadt Exp $	*/
+/*	$OpenBSD: bio.c,v 1.6 2005/08/17 02:32:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -129,6 +129,22 @@ bio_register(dev, ioctl)
 	bm->bm_ioctl = ioctl;
 	LIST_INSERT_HEAD(&bios, bm, bm_link);
 	return (0);
+}
+
+void
+bio_unregister(dev)
+	struct device *dev;
+{
+	struct bio_mapping *bm, *next;
+
+	for (bm = LIST_FIRST(&bios); bm != NULL; bm = next) {
+		next = LIST_NEXT(bm, bm_link);
+
+		if (dev == bm->bm_dev) {
+			LIST_REMOVE(bm, bm_link);
+			free(bm, M_DEVBUF);
+		}
+	}
 }
 
 struct bio_mapping *

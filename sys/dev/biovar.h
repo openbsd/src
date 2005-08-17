@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.14 2005/08/16 01:12:46 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.15 2005/08/17 02:32:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -47,6 +47,7 @@ struct bio_locate {
 #ifdef _KERNEL
 int	bio_register(struct device *, int (*)(struct device *, u_long,
     caddr_t));
+void	bio_unregister(struct device *);
 #endif
 
 /* RAID section */
