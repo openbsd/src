@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.192 2005/08/17 18:24:52 espie Exp $
+# $OpenBSD: pkg_add,v 1.193 2005/08/17 18:48:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -564,7 +564,9 @@ sub find_updates
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
 			my @l = OpenBSD::PackageName::findstem($pkgname,
 			    installed_packages());
-			if (@l == 1) {
+			if (@l == 0) {
+			    Fatal("Can't resolve $pkgname to an installed package name");
+			} elsif (@l == 1) {
 				push(@list, $l[0]);
 			} else {
 				Fatal("Ambiguous: $pkgname could be", join(',', @l));
