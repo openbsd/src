@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.88 2005/08/17 09:24:53 espie Exp $
+# $OpenBSD: pkg_delete,v 1.89 2005/08/17 18:37:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -213,9 +213,6 @@ eval {
 		$done{$pkgname} = 1;
 		$removed++;
 	}
-	# we're not actually doing anything, so we can't expect this loop 
-	# to ever finish
-	last if $opt_n;
 } while ($removed); } };
 
 my $dielater = $@;
