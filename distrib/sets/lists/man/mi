@@ -919,12 +919,15 @@
 ./usr/share/man/cat3p/O.0
 ./usr/share/man/cat3p/ODBM_File.0
 ./usr/share/man/cat3p/Opcode.0
+./usr/share/man/cat3p/OpenBSD::Getopt.0
 ./usr/share/man/cat3p/OpenBSD::IdCache.0
 ./usr/share/man/cat3p/OpenBSD::Mtree.0
+./usr/share/man/cat3p/OpenBSD::PackageName.0
 ./usr/share/man/cat3p/OpenBSD::PackingElement.0
 ./usr/share/man/cat3p/OpenBSD::PackingList.0
 ./usr/share/man/cat3p/OpenBSD::PkgCfl.0
 ./usr/share/man/cat3p/OpenBSD::PkgSpec.0
+./usr/share/man/cat3p/OpenBSD::RequiredBy.0
 ./usr/share/man/cat3p/OpenBSD::Ustar.0
 ./usr/share/man/cat3p/OpenBSD::Vstat.0
 ./usr/share/man/cat3p/POSIX.0
