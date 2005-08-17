@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.60 2005/08/17 06:07:31 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.61 2005/08/17 06:23:52 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2000,8 +2000,6 @@ ami_ioctl_inq(sc, bi)
 	int i, s, t;
 	int off;
 	int error = 0;
-	struct scsi_inquiry_data inqbuf;
-	u_int8_t ch, tg;
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 	if (!p) {
@@ -2042,10 +2040,9 @@ ami_ioctl_inq(sc, bi)
 				}
 			}
 
-	//printf("before bi->bi_novol: %d   bi->bi_nodisk %d\n", bi->bi_novol, bi->bi_nodisk);
+	/* count global hotspares as volumes */
 	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
-	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
-		/* count global hotspares as volumes */
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++)
 		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
 		    && p->apd[i].adp_type == 0) {
 			bi->bi_novol++;
@@ -2054,25 +2051,7 @@ ami_ioctl_inq(sc, bi)
 				plist[i] = 1;
 				bi->bi_nodisk++;
 			}
-
 		}
-
-		/* count unused disks as a volume too */
-		if (p->apd[i].adp_size) {
-			ch = (i & 0xf0) >> 4;
-			tg = i & 0x0f;
-
-			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
-				if (!plist[i]) {
-					/* if it isnt claimed its unused */
-					bi->bi_novol++;
-
-					plist[i] = 1;
-					bi->bi_nodisk++;
-				}
-			}
-		}
-	}
 
 bail2:
 	free(plist, M_DEVBUF);
@@ -2127,16 +2106,7 @@ ami_global_hsdisk(sc, bd, p)
 	u_int8_t ch, tg;
 
 	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
-	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
-		/*
-		printf("%02x: type: %u status: %u tag: %u sneg: %u size: %u\n",
-		i,
-		p->apd[i].adp_type,
-		p->apd[i].adp_ostatus,
-		p->apd[i].adp_tagdepth,
-		p->apd[i].adp_sneg,
-		p->apd[i].adp_size);
-		*/
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++)
 		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
 		    && p->apd[i].adp_type == 0) {
 			if (ld == bd->bd_volid) {
@@ -2149,7 +2119,7 @@ ami_global_hsdisk(sc, bd, p)
 
 				if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf))
 					strlcpy(bd->bd_vendor, inqbuf.vendor,
-					    sizeof(bd->bd_vendor) -3);
+					    sizeof(bd->bd_vendor));
 
 				if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf))
 					strlcpy(bd->bd_serial, vpdbuf.serial,
@@ -2169,7 +2139,6 @@ ami_global_hsdisk(sc, bd, p)
 			}
 			ld++;
 		}
-	}
 
 	return (EINVAL);
 }
@@ -2335,7 +2304,7 @@ ami_ioctl_disk(sc, bd)
 
 			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf))
 				strlcpy(bd->bd_vendor, inqbuf.vendor,
-				    sizeof(bd->bd_vendor) -3);
+				    sizeof(bd->bd_vendor));
 
 			if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf))
 				strlcpy(bd->bd_serial, vpdbuf.serial,
