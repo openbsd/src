@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.65 2005/08/17 19:38:27 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.66 2005/08/17 20:31:18 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -522,8 +522,7 @@ ami_attach(sc)
 		if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 			AMI_DPRINTF(AMI_D_MISC, ("getting io completion values"
 			    " failed\n"));
-		}
-		else {
+		} else {
 			ccb = ami_get_ccb(sc);
 			ccb->ccb_data = NULL;
 			cmd = ccb->ccb_cmd;
@@ -541,8 +540,7 @@ ami_attach(sc)
 			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 				AMI_DPRINTF(AMI_D_MISC, ("setting io completion"
 				    " values failed\n"));
-			}
-			else {
+			} else {
 				AMI_DPRINTF(AMI_D_MISC, ("setting io completion"
 				    " values succeeded\n"));
 			}
@@ -552,8 +550,7 @@ ami_attach(sc)
 			sc->sc_link.openings = 1;
 			sc->sc_maxcmds = 1;
 			sc->sc_maxunits = 1;
-		}
-		else {
+		} else {
 			sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
 			if (sc->sc_maxcmds > AMI_MAXCMDS)
 				sc->sc_maxcmds = AMI_MAXCMDS;
@@ -870,8 +867,7 @@ ami_quartz_poll(sc, cmd)
 			status = 0;
 		else
 			status = 1; /* failed */
-	}
-	else /* need to clean up ccb ourselves */
+	} else /* need to clean up ccb ourselves */
 		ami_put_ccb(ccb);
 #endif
 
@@ -1084,8 +1080,7 @@ ami_cmd(ccb, flags, wait)
 		}
 		/* always free ccb */
 		ami_put_ccb(ccb);
-	}
-	else if ((error = ami_start(ccb, wait))) {
+	} else if ((error = ami_start(ccb, wait))) {
 		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
 		__asm __volatile(".globl _bpamierr\n_bpamierr:");
 		if (ccb->ccb_data)
