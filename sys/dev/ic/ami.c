@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.61 2005/08/17 06:23:52 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.62 2005/08/17 06:31:01 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -141,9 +141,13 @@ int ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
 int ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t, void *);
 int ami_ioctl(struct device *, u_long, caddr_t);
 int ami_ioctl_inq(struct ami_softc *, struct bioc_inq *);
-int ami_global_hsvol(struct ami_softc *, struct bioc_vol *,
+int ami_sparevol(struct ami_softc *, struct bioc_vol *,
     struct ami_big_diskarray *);
-int ami_global_hsdisk(struct ami_softc *, struct bioc_disk *,
+int ami_unusedvol(struct ami_softc *, struct bioc_vol *,
+    struct ami_big_diskarray *);
+int ami_sparedisk(struct ami_softc *, struct bioc_disk *,
+    struct ami_big_diskarray *);
+int ami_unuseddisk(struct ami_softc *, struct bioc_disk *,
     struct ami_big_diskarray *);
 int ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
 int ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
@@ -2000,6 +2004,8 @@ ami_ioctl_inq(sc, bi)
 	int i, s, t;
 	int off;
 	int error = 0;
+	struct scsi_inquiry_data inqbuf;
+	u_int8_t ch, tg;
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 	if (!p) {
@@ -2040,9 +2046,9 @@ ami_ioctl_inq(sc, bi)
 				}
 			}
 
-	/* count global hotspares as volumes */
 	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
-	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++)
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
+		/* count global hotspares as volumes */
 		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
 		    && p->apd[i].adp_type == 0) {
 			bi->bi_novol++;
@@ -2051,7 +2057,32 @@ ami_ioctl_inq(sc, bi)
 				plist[i] = 1;
 				bi->bi_nodisk++;
 			}
+
 		}
+
+		/*
+		 * hack warning!
+		 * Megaraid cards sometimes return a size in the PD structure
+		 * even though there is no disk in that slot.  Work around
+		 * that by issuing an INQUIRY to determine if there is
+		 * an actual disk in the slot.
+		 */
+
+		/* count unused disks as a volume too */
+		if (p->apd[i].adp_size) {
+			ch = (i & 0xf0) >> 4;
+			tg = i & 0x0f;
+
+			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
+				if (!plist[i]) {
+					/* if it isnt claimed its unused */
+					bi->bi_novol++;
+					plist[i] = 1;
+					bi->bi_nodisk++;
+				}
+			}
+		}
+	}
 
 bail2:
 	free(plist, M_DEVBUF);
@@ -2062,7 +2093,7 @@ bail:
 }
 
 int
-ami_global_hsvol(sc, bv, p)
+ami_sparevol(sc, bv, p)
 	struct ami_softc *sc;
 	struct bioc_vol *bv;
 	struct ami_big_diskarray *p;
@@ -2094,7 +2125,86 @@ ami_global_hsvol(sc, bv, p)
 }
 
 int
-ami_global_hsdisk(sc, bd, p)
+ami_unusedvol(sc, bv, p)
+	struct ami_softc *sc;
+	struct bioc_vol *bv;
+	struct ami_big_diskarray *p;
+{
+	struct scsi_inquiry_data inqbuf;
+	char *plist;
+	int error = EINVAL;
+	int i;
+	int ld = p->ada_nld;
+	u_int8_t ch, tg;
+
+	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
+	if (!plist) {
+		printf("%s: no memory for disk list\n",sc->sc_dev.dv_xname);
+		return (ENOMEM);
+	}
+
+	memset(plist, 0, AMI_BIG_MAX_PDRIVES);
+
+	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
+		/* skip hot spares and adjust counter and mark them used */
+		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
+		    && p->apd[i].adp_type == 0) {
+			if (!plist[i]) {
+				plist[i] = 1;
+				ld++;
+			}
+
+			continue;
+		}
+
+		/* skip everything else that is in use */
+		if (p->apd[i].adp_ostatus != BIOC_SDONLINE) {
+			if (!plist[i])
+				plist[i] = 1;
+
+			continue;
+		}
+	}
+
+	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
+		if (plist[i])
+			continue;
+
+		if (p->apd[i].adp_size) {
+			ch = (i & 0xf0) >> 4;
+			tg = i & 0x0f;
+
+			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
+				if (ld == bv->bv_volid) {
+					/* if it isnt claimed its unused */
+					bv->bv_status = BIOC_SVONLINE;
+					bv->bv_size = (u_quad_t)
+					    p->apd[i].adp_size * (u_quad_t)512;
+					bv->bv_level = -2;
+					bv->bv_nodisk = 1;
+					strlcpy(bv->bv_dev,
+					    sc->sc_hdr[bv->bv_volid].dev,
+					    sizeof(bv->bv_dev));
+
+					error = 0;
+					goto bail;
+				}
+				ld++;
+			}
+		}
+	}
+
+bail:
+	free(plist, M_DEVBUF);
+
+	return (error);
+}
+
+/* XXX consolidate this with ami_sparevol() */
+int
+ami_sparedisk(sc, bd, p)
 	struct ami_softc *sc;
 	struct bioc_disk *bd;
 	struct ami_big_diskarray *p;
@@ -2106,7 +2216,7 @@ ami_global_hsdisk(sc, bd, p)
 	u_int8_t ch, tg;
 
 	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
-	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++)
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
 		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
 		    && p->apd[i].adp_type == 0) {
 			if (ld == bd->bd_volid) {
@@ -2117,16 +2227,30 @@ ami_global_hsdisk(sc, bd, p)
 				ch = (i & 0xf0) >> 4;
 				tg = i & 0x0f;
 
-				if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf))
-					strlcpy(bd->bd_vendor, inqbuf.vendor,
-					    sizeof(bd->bd_vendor));
 
-				if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf))
-					strlcpy(bd->bd_serial, vpdbuf.serial,
-					    vpdbuf.page_length <
-					    sizeof(bd->bd_serial) ?
-					    vpdbuf.page_length :
+				if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
+					char vend[8+16+4+1];
+
+					bcopy(inqbuf.vendor, vend,
+					    sizeof vend - 1);
+
+					vend[sizeof vend - 1] = '\0';
+					strlcpy(bd->bd_vendor, vend,
+					    sizeof(bd->bd_vendor));
+				}
+
+				if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf)) {
+					char ser[32 + 1];
+
+					bcopy(vpdbuf.serial, ser,
+					    sizeof ser - 1);
+
+					ser[sizeof ser - 1] = '\0';
+					if (vpdbuf.page_length < sizeof ser)
+						ser[vpdbuf.page_length] = '\0';
+					strlcpy(bd->bd_serial, ser,
 					    sizeof(bd->bd_serial));
+				}
 
 				bd->bd_channel = ch;
 				bd->bd_target = tg;
@@ -2139,8 +2263,117 @@ ami_global_hsdisk(sc, bd, p)
 			}
 			ld++;
 		}
+	}
 
 	return (EINVAL);
+}
+
+/* XXX consolidate this with ami_unusedvol() */
+int
+ami_unuseddisk(sc, bd, p)
+	struct ami_softc *sc;
+	struct bioc_disk *bd;
+	struct ami_big_diskarray *p;
+{
+	struct scsi_inquiry_data inqbuf;
+	struct scsi_inquiry_vpd vpdbuf;
+	char *plist;
+	int error = EINVAL;
+	int i;
+	int ld = p->ada_nld;
+	u_int8_t ch, tg;
+
+	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
+	if (!plist) {
+		printf("%s: no memory for disk list\n",sc->sc_dev.dv_xname);
+		return (ENOMEM);
+	}
+
+	memset(plist, 0, AMI_BIG_MAX_PDRIVES);
+
+	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
+		/* skip hot spares and adjust counter and mark them used */
+		if (p->apd[i].adp_ostatus == AMI_PD_HOTSPARE
+		    && p->apd[i].adp_type == 0) {
+			if (!plist[i]) {
+				plist[i] = 1;
+				ld++;
+			}
+
+			continue;
+		}
+
+		/* skip everything else that is in use */
+		if (p->apd[i].adp_ostatus != BIOC_SDONLINE) {
+			if (!plist[i])
+				plist[i] = 1;
+
+			continue;
+		}
+	}
+
+	for(i = 0; i < ((sc->sc_flags & AMI_QUARTZ) ?
+	    AMI_BIG_MAX_PDRIVES : AMI_MAX_PDRIVES); i++) {
+		if (plist[i])
+			continue;
+
+		if (p->apd[i].adp_size) {
+			ch = (i & 0xf0) >> 4;
+			tg = i & 0x0f;
+
+			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
+				if (ld == bd->bd_volid) {
+					/* if it isnt claimed its unused */
+					char vend[8+16+4+1];
+
+					bcopy(inqbuf.vendor, vend,
+					    sizeof vend - 1);
+
+					vend[sizeof vend - 1] = '\0';
+					strlcpy(bd->bd_vendor, vend,
+					    sizeof(bd->bd_vendor));
+
+					if (!ami_drv_inq(sc, ch, tg, 0x80,
+					    &vpdbuf)) {
+						char ser[32 + 1];
+
+						bcopy(vpdbuf.serial, ser,
+						    sizeof ser - 1);
+
+						ser[sizeof ser - 1] = '\0';
+						if (vpdbuf.page_length <
+						    sizeof ser)
+							ser[vpdbuf.page_length] = '\0';
+						strlcpy(bd->bd_serial, ser,
+						    sizeof(bd->bd_serial));
+					}
+
+
+					bd->bd_status = BIOC_SDUNUSED;
+					bd->bd_size = (u_quad_t)
+					    p->apd[i].adp_size *
+					    (u_quad_t)512;
+
+					bd->bd_channel = ch;
+					bd->bd_target = tg;
+
+					strlcpy(bd->bd_procdev,
+					    sc->sc_rawsoftcs[ch].sc_procdev,
+					    sizeof(bd->bd_procdev));
+
+					error = 0;
+					goto bail;
+				}
+				ld++;
+			}
+		}
+	}
+
+bail:
+	free(plist, M_DEVBUF);
+
+	return (error);
 }
 
 int
@@ -2164,8 +2397,13 @@ ami_ioctl_vol(sc, bv)
 	}
 
 	if (bv->bv_volid >= p->ada_nld) {
-		/* is this a global hot spare? */
-		error = ami_global_hsvol(sc, bv, p);
+		/* is this a hot spare? */
+		error = ami_sparevol(sc, bv, p);
+		if (error == 0)
+			goto bail;
+
+		/* is this an unused disk? */
+		error = ami_unusedvol(sc, bv, p);
 		goto bail;
 	}
 
@@ -2213,8 +2451,6 @@ ami_ioctl_vol(sc, bv)
 		}
 	}
 
-	/* XXX adjust disk count to account for dedicated hot spares */
-
 	if (p->ald[i].adl_spandepth > 1)
 		bv->bv_level *= 10;
 
@@ -2253,7 +2489,13 @@ ami_ioctl_disk(sc, bd)
 	}
 
 	if (bd->bd_volid >= p->ada_nld) {
-		error = ami_global_hsdisk(sc, bd, p);
+		/* is this a hot spare? */
+		error = ami_sparedisk(sc, bd, p);
+		if (error == 0)
+			goto bail;
+
+		/* is this an unused disk? */
+		error = ami_unuseddisk(sc, bd, p);
 		goto bail;
 	}
 
@@ -2302,15 +2544,27 @@ ami_ioctl_disk(sc, bd)
 			ch = p->ald[i].asp[s].adv[t].add_target >> 4;
 			tg = p->ald[i].asp[s].adv[t].add_target & 0x0f;
 
-			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf))
-				strlcpy(bd->bd_vendor, inqbuf.vendor,
+			if (!ami_drv_inq(sc, ch, tg, 0, &inqbuf)) {
+				char vend[8+16+4+1];
+
+				bcopy(inqbuf.vendor, vend, sizeof vend - 1);
+
+				vend[sizeof vend - 1] = '\0';
+				strlcpy(bd->bd_vendor, vend,
 				    sizeof(bd->bd_vendor));
+			}
 
-			if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf))
-				strlcpy(bd->bd_serial, vpdbuf.serial,
-				    vpdbuf.page_length < sizeof(bd->bd_serial) ?
-				    vpdbuf.page_length : sizeof(bd->bd_serial));
+			if (!ami_drv_inq(sc, ch, tg, 0x80, &vpdbuf)) {
+				char ser[32 + 1];
 
+				bcopy(vpdbuf.serial, ser, sizeof ser - 1);
+
+				ser[sizeof ser - 1] = '\0';
+				if (vpdbuf.page_length < sizeof ser)
+					ser[vpdbuf.page_length] = '\0';
+				strlcpy(bd->bd_serial, ser,
+				    sizeof(bd->bd_serial));
+			}
 
 			bd->bd_channel = ch;
 			bd->bd_target = tg;

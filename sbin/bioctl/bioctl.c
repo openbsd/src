@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.29 2005/08/15 23:13:24 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.30 2005/08/17 06:31:01 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -156,7 +156,7 @@ void
 bio_inq(char *name)
 {
 	char *status, size[64], scsiname[16], volname[32];
-	int rv, i, d, volheader, hotspare;
+	int rv, i, d, volheader, hotspare, unused;
 	char encname[16], serial[32];
 	struct bioc_disk bd;
 	struct bioc_inq bi;
@@ -171,7 +171,7 @@ bio_inq(char *name)
 
 	rv = ioctl(devh, BIOCINQ, &bi);
 	if (rv == -1) {
-		warnx("bioc_ioctl() call failed");
+		warnx("bioc_ioctl(BIOCINQ) call failed");
 		return;
 	}
 
@@ -183,7 +183,7 @@ bio_inq(char *name)
 
 		rv = ioctl(devh, BIOCVOL, &bv);
 		if (rv == -1) {
-			warnx("bioc_ioctl() call failed");
+			warnx("bioc_ioctl(BIOCVOL) call failed");
 			return;
 		}
 
@@ -213,9 +213,13 @@ bio_inq(char *name)
 
 		snprintf(volname, sizeof volname, "%s %u",
 		    bi.bi_dev, bv.bv_volid);
+
 		if (bv.bv_level == -1 && bv.bv_nodisk == 1)
 			hotspare = 1;
+		else if (bv.bv_level == -2 && bv.bv_nodisk == 1)
+			unused = 1;
 		else {
+			unused = 0;
 			hotspare = 0;
 
 			if (human)
@@ -235,7 +239,7 @@ bio_inq(char *name)
 
 			rv = ioctl(devh, BIOCDISK, &bd);
 			if (rv == -1) {
-				warnx("bioc_ioctl() call failed");
+				warnx("bioc_ioctl(BIOCDISK) call failed");
 				return;
 			}
 
@@ -263,7 +267,7 @@ bio_inq(char *name)
 				status = BIOC_SDINVALID_S;
 			}
 
-			if (hotspare)
+			if (hotspare || unused)
 				;	/* use volname from parent volume */
 			else
 				snprintf(volname, sizeof volname, "    %3u",
