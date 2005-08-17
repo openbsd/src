@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.63 2005/08/17 06:41:06 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.64 2005/08/17 15:39:03 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1354,6 +1354,8 @@ ami_scsi_raw_cmd(xs)
 	case WRITE_COMMAND:
 	case WRITE_BIG:
 	case SYNCHRONIZE_CACHE:
+	case SEND_DIAGNOSTIC:
+	case WRITE_BUFFER:
 		direction = AMI_PT_OUT;
 		break;
 	/* from target */
@@ -1363,7 +1365,6 @@ ami_scsi_raw_cmd(xs)
 	case READ_CAPACITY:
 	case READ_COMMAND:
 	case READ_BIG:
-	case WRITE_BUFFER:
 	case READ_BUFFER:
 	case RECEIVE_DIAGNOSTIC:
 		if (!cold)	/* XXX bogus */
