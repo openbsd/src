@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.62 2005/08/17 06:31:01 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.63 2005/08/17 06:41:06 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1363,6 +1363,7 @@ ami_scsi_raw_cmd(xs)
 	case READ_CAPACITY:
 	case READ_COMMAND:
 	case READ_BIG:
+	case WRITE_BUFFER:
 	case READ_BUFFER:
 	case RECEIVE_DIAGNOSTIC:
 		if (!cold)	/* XXX bogus */
@@ -1374,8 +1375,8 @@ ami_scsi_raw_cmd(xs)
 		break;
 
 	default:
-		printf("%s: unsupported command(%d)\n", sc->sc_dev.dv_xname,
-		    xs->cmd->opcode);
+		printf("%s: unsupported command(0x%02x)\n",
+		    sc->sc_dev.dv_xname, xs->cmd->opcode);
 		bzero(&xs->sense, sizeof(xs->sense));
 		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
