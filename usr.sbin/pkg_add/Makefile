@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2005/08/17 08:17:44 espie Exp $
+# $OpenBSD: Makefile,v 1.28 2005/08/17 08:32:28 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -47,6 +47,7 @@ SCRIPTS= \
 LIBBASE=/usr/libdata/perl5
 
 PODS= \
+    OpenBSD::Getopt \
     OpenBSD::IdCache \
     OpenBSD::Mtree \
     OpenBSD::PackageName \
