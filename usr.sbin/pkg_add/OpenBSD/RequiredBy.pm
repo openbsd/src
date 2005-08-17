@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.10 2005/08/17 09:19:09 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.11 2005/08/17 18:24:53 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -128,6 +128,24 @@ sub forget
 		$cache->{$f}->{entries} = {};
 		$cache->{$f}->{nonempty} = 0;
 	}
+}
+
+sub compute_closure
+{
+	my ($class, @seed) = @_;
+
+	my @todo = @seed;
+	my %done = ();
+
+	while (my $pkgname = pop @todo) {
+		next if $done{$pkgname};
+		$done{$pkgname} = 1;
+		for my $dep ($class->new($pkgname)->list()) {
+			next if defined $done{$dep};
+			push(@todo, $dep);
+		}
+	}
+	return keys %done;
 }
 
 package OpenBSD::RequiredBy;

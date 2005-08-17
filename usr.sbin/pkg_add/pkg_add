@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.191 2005/08/17 11:01:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.192 2005/08/17 18:24:52 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -555,28 +555,6 @@ sub install_package
 	return ();
 }
 
-sub compute_closure
-{
-	require OpenBSD::RequiredBy;
-
-	my $old = shift;
-	my @todo;
-	my %done;
-	my %toupdate = map {($_, 1)} @$old;
-	push(@todo, keys %toupdate);
-	while (my $pkgname = pop @todo) {
-		next if $done{$pkgname};
-		$done{$pkgname} = 1;
-		for my $dep (OpenBSD::Requiring->new($pkgname)->list()) {
-			next if defined $done{$dep};
-			next if defined $toupdate{$dep};
-			$toupdate{$dep} = 1;
-			push(@todo, $dep);
-		}
-	}
-	return keys %toupdate;
-}
-
 sub find_updates
 {
 	my ($old, $new, $state) = @_;
@@ -596,7 +574,9 @@ sub find_updates
 		}
 	}
 	unless (defined $state->{full_update} or defined $state->{forced}->{noclosure}) {
-		@list = compute_closure(\@list);
+		require OpenBSD::RequiredBy;
+
+		@list = OpenBSD::Requiring->compute_closure(@list);
 	}
 	my @cantupdate = ();
 	my $hash = OpenBSD::PackageName::compile_stemlist(OpenBSD::PackageLocator::distant_available());
