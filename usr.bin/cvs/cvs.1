@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.84 2005/08/10 23:04:42 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.85 2005/08/17 08:33:42 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -1886,6 +1886,141 @@ Directory containing repository administrative files.
 .It Pa $CVSROOT/CVSROOT/loginfo
 File containing associations between modules and handlers for
 post-commit logging.
+.El
+.Pp
+Each directory that is managed by
+.Nm
+contains a
+.Pa CVS
+directory.
+This directory is used by various
+.Nm
+commands to record the status of files in the current working directory.
+These files should not be modified manually by the user but by the
+.Nm
+commands instead.
+Files that are always stored in every
+.Pa CVS
+directory are as follows:
+.Bl -tag -width Ds
+.It Pa CVS/Entries
+File containing a list of files managed by
+.Nm .
+.Pa Entries
+has one line per file or directory describing the state of it with
+regard to the source repository.
+These lines have the following format:
+.Pp
+.Dl /name/revision/timestamp/options/tag
+.Bl -tag -width Ds
+.It name
+Name of the file in the directory.
+.It revision
+Revision of the file in the working directory.
+The revision is equal to
+.Sq 0
+if the file has been added with the
+.Ic add
+command or preceeded by the
+.Sq -
+character if the file has been removed with the
+.Ic remove
+command.
+.It timestamp
+Contains the timestamp of the file at the time
+.Nm
+created it.
+If the timestamp is different from the actual modification time of the file,
+it means that the file has been modified.
+.It options
+Contains the keyword substitution mode used for this file.
+.It tag
+Contains
+.Sq T
+followed by a tagname or
+.Sq D
+followed by a date.
+.El
+.Pp
+Entries corresponding to directories have the following format:
+.Pp
+.Dl D/name////
+.Pp
+The lines in the
+.Pa Entries
+file can be in any order.
+.It Pa CVS/Repository
+File containing the path to the corresponding directory in the
+source repository.
+.It Pa CVS/Root
+File containing the value of the
+.Ev CVSROOT
+variable at the time of checkout.
+This file is used by all
+.Nm
+commands instead of
+.Ev CVSROOT
+once
+.Nm
+has checked for its existence.
+.El
+.Pp
+Depending on the circumstances, other files may exist in the
+.Pa CVS
+directory:
+.Bl -tag -width Ds
+.It Pa CVS/Base
+If pseudo-lock mode is enabled in client-server mode,
+the
+.Pa Base
+directory contains a copy of the file on which the
+.Ic edit
+command has been issued.
+This allows the
+.Ic unedit
+command to operate even if the CVS server is unreachable.
+.It Pa CVS/Baserev
+File listing the revisions for each file contained in the
+.Pa Base
+directory under the following format:
+.Pp
+.Dl name/revision/
+.It Pa CVS/Checkin.prog
+File containing the path to the command specified with the
+.Fl i
+option in the
+.Pa CVSROOT/modules
+file.
+.It Pa CVS/Entries.Static
+Tells
+.Nm
+to not add files to the directory unless the
+.Ic update
+command is issued with the
+.Fl d
+option.
+.It Pa CVS/Notify
+File containing the notifications that could not be sent to the
+CVS server but will be sent at the next successful connection.
+.It Pa CVS/Tag
+File containing the symbolic revision that was used at checkout.
+.It Pa CVS/Update.prog
+File containing the path to the command specified with the
+.Fl u
+option in the
+.Pa CVSROOT/modules
+file.
+.It Pa CVS/<name>,t
+File containing the description of the file
+.Pa file
+that has been added with the
+.Ic add
+command.
+This description is used by
+.Nm
+when archiving this file with the
+.Ic commit
+command.
 .El
 .Sh DIAGNOSTICS
 The
