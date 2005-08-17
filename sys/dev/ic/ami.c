@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.66 2005/08/17 20:31:18 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.67 2005/08/17 21:49:14 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -136,7 +136,7 @@ void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 int  ami_inquire(struct ami_softc *sc, u_int8_t op);
 
 #if NBIO > 0
-int ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
+int ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t, u_int8_t,
     size_t, void *);
 int ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t, void *);
 int ami_ioctl(struct device *, u_long, caddr_t);
@@ -1930,11 +1930,12 @@ bail:
 }
 
 int
-ami_mgmt(sc, opcode, par1, par2, size, buffer)
+ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	struct ami_softc *sc;
 	u_int8_t opcode;
 	u_int8_t par1;
 	u_int8_t par2;
+	u_int8_t par3;
 	size_t size;
 	void *buffer;
 {
@@ -1971,12 +1972,15 @@ ami_mgmt(sc, opcode, par1, par2, size, buffer)
 	default:
 		cmd->acc_io.aio_channel = par1;
 		cmd->acc_io.aio_param = par2;
+		cmd->acc_io.aio_pad[0] = par3;
 	};
 
 	cmd->acc_io.aio_data = htole32(pa);
 
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0)
-		memcpy(buffer, idata, size);
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
+		if (buffer)
+			memcpy(buffer, idata, size);
+	}
 	else
 		error = EINVAL;
 
@@ -2013,7 +2017,7 @@ ami_ioctl_inq(sc, bi)
 		goto bail;
 	}
 
-	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, sizeof *p, p)) {
+	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)) {
 		error = EINVAL;
 		goto bail2;
 	}
@@ -2272,7 +2276,7 @@ ami_ioctl_vol(sc, bv)
 		return (ENOMEM);
 	}
 
-	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, sizeof *p, p)) {
+	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)) {
 		error = EINVAL;
 		goto bail;
 	}
@@ -2358,7 +2362,7 @@ ami_ioctl_disk(sc, bd)
 		return (ENOMEM);
 	}
 
-	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, sizeof *p, p)) {
+	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)) {
 		error = EINVAL;
 		goto bail;
 	}
@@ -2486,7 +2490,7 @@ int ami_ioctl_alarm(sc, ba)
 		error = EINVAL;
 	}
 
-	if (ami_mgmt(sc, AMI_SPEAKER, func, 0, sizeof ret, &ret))
+	if (ami_mgmt(sc, AMI_SPEAKER, func, 0, 0, sizeof ret, &ret))
 		error = EINVAL;
 	else
 		if (ba->ba_opcode == BIOC_GASTATUS)
