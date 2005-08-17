@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.21 2005/08/17 20:13:53 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.22 2005/08/17 21:36:42 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -72,11 +72,11 @@
 #define	AMI_EINQUIRY	0x04	/* extended inquiry */
 #define	AMI_INQUIRY	0x05	/* inquiry */
 #define	AMI_CHSTATE	0x06	/* pad[0] -- state */
-#define	AMI_RCONFIG	0x07	/* read configuration up to 4 spans */
-#define	AMI_REBUILDPD	0x08	/* rebuild physical drive */
 #define		AMI_STATE_ON	3
 #define		AMI_STATE_FAIL	4
 #define		AMI_STATE_SPARE	6
+#define	AMI_RCONFIG	0x07	/* read configuration up to 4 spans */
+#define	AMI_REBUILDPD	0x08	/* rebuild physical drive */
 #define	AMI_CHECK	0x09	/* check consistency */
 #define	AMI_FLUSH	0x0a
 #define	AMI_ILDRIVE	0x0b	/* init logical drive */
