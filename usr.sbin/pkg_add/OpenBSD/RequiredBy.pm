@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.9 2004/12/21 18:12:06 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.10 2005/08/17 09:19:09 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -120,7 +120,7 @@ sub new
 	return $cache->{$f};
 }
 
-sub erase
+sub forget
 {
 	my ($class, $dir) = @_;
 	my $f = $dir.$class->filename();

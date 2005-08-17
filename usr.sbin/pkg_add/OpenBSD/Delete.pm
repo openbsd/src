@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.25 2005/08/16 17:27:40 espie Exp $
+# $OpenBSD: Delete.pm,v 1.26 2005/08/17 09:19:09 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -138,8 +138,8 @@ sub remove_packing_info
 	for my $fname (info_names()) {
 		unlink($dir.$fname);
 	}
-	OpenBSD::RequiredBy->erase($dir);
-	OpenBSD::Requiring->erase($dir);
+	OpenBSD::RequiredBy->forget($dir);
+	OpenBSD::Requiring->forget($dir);
 	rmdir($dir) or Fatal "Can't finish removing directory $dir: $!";
 }
 
