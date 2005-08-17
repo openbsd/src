@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.16 2005/07/30 17:16:09 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.17 2005/08/17 13:18:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -244,7 +244,7 @@ hostapd_udp_init(struct hostapd_config *cfg)
 
 	/*
 	 * The revised 802.11F standard requires IAPP messages to be
-	 * send via multicast to the group 224.0.1.178. Nevertheless,
+	 * sent via multicast to the group 224.0.1.178. Nevertheless,
 	 * some implementations still use broadcasts for IAPP
 	 * messages.
 	 */
@@ -380,7 +380,7 @@ main(int argc, char *argv[])
 		case 'D':
 			if (hostapd_parse_symset(optarg) < 0)
 				hostapd_fatal("could not parse macro "
-				    "definition %s", optarg);
+				    "definition %s\n", optarg);
 			break;
 		case 'd':
 			debug++;
@@ -464,7 +464,7 @@ main(int argc, char *argv[])
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGCHLD, SIG_IGN);
 
-	/* Initialize the IAPP protcol handler */
+	/* Initialize the IAPP protocol handler */
 	hostapd_iapp_init(cfg);
 
 	/*

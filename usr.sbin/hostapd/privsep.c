@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.12 2005/06/17 19:13:35 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.13 2005/08/17 13:18:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -95,10 +95,10 @@ hostapd_priv_init(struct hostapd_config *cfg)
 
 	/* Create sockets */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
-		hostapd_fatal("failed to get socket pair");
+		hostapd_fatal("failed to get socket pair\n");
 
 	if ((child_pid = fork()) < 0)
-		hostapd_fatal("failed to fork child process");
+		hostapd_fatal("failed to fork child process\n");
 
 	/*
 	 * Unprivileged child process
@@ -113,7 +113,7 @@ hostapd_priv_init(struct hostapd_config *cfg)
 		if (chroot(pw->pw_dir) == -1)
 			hostapd_fatal("failed to change root directory\n");
 		if (chdir("/") == -1)
-			hostapd_fatal("failed to change directory");
+			hostapd_fatal("failed to change directory\n");
 
 		/*
 		 * Drop privileges and clear the group access list
@@ -121,7 +121,7 @@ hostapd_priv_init(struct hostapd_config *cfg)
 		if (setgroups(1, &pw->pw_gid) == -1 ||
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-			hostapd_fatal("can't drop privileges");
+			hostapd_fatal("can't drop privileges\n");
 
 		close(socks[0]);
 		priv_fd = socks[1];
