@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.189 2005/08/17 10:00:18 espie Exp $
+# $OpenBSD: pkg_add,v 1.190 2005/08/17 10:45:13 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -615,6 +615,9 @@ sub find_updates
 			next;
 		}
 		my $plist = OpenBSD::PackingList->from_installation($pkgname, \&OpenBSD::PackingList::ExtraInfoOnly);
+		if (!defined $plist) {
+			Fatal("Can't locate $pkgname");
+		}
 		for my $candidate (@l) {
 		    my $handle = OpenBSD::PackageLocator->find($candidate, $state->{arch});
 		    if (!$handle) {
