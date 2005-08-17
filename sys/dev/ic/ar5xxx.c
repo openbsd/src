@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.27 2005/08/02 12:55:11 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.28 2005/08/17 12:22:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1494,7 +1494,7 @@ ar5k_rfregs_gain_adjust(hal)
  done:
 #ifdef AR5K_DEBUG
 	AR5K_PRINTF("ret %d, gain step %u, current gain %u, target gain %u\n",
-	    g,
+	    ret,
 	    hal->ah_gain.g_step_idx,
 	    hal->ah_gain.g_current,
 	    hal->ah_gain.g_target);
