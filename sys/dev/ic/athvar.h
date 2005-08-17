@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.13 2005/07/30 17:13:17 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.14 2005/08/17 13:14:17 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -228,11 +228,11 @@ struct ath_softc {
 	struct mtx		sc_mtx;		/* master lock (recursive) */
 #endif
 	struct ath_hal		*sc_ah;		/* Atheros HAL */
-	unsigned int		sc_invalid  : 1,/* disable hardware accesses */
-				sc_doani    : 1,/* dynamic noise immunity */
-				sc_has_veol  : 1,/* tx VEOL support */
-				sc_probing  : 1;/* probing AP on beacon miss */
-						/* rate tables */
+	unsigned int		sc_invalid : 1,	/* disable hardware accesses */
+				sc_doani : 1,	/* dynamic noise immunity */
+				sc_veol : 1,	/* tx VEOL support */
+				sc_softled : 1,	/* GPIO software LED */
+				sc_probing : 1;	/* probing AP on beacon miss */
 	u_int			sc_nchan;	/* number of valid channels */
 	const HAL_RATE_TABLE	*sc_rates[IEEE80211_MODE_MAX];
 	const HAL_RATE_TABLE	*sc_currates;	/* current rate table */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.32 2005/07/30 17:13:17 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.33 2005/08/17 13:14:17 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -80,6 +80,7 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/gpio/gpiovar.h>
 #include <dev/ic/athvar.h>
 
@@ -126,7 +127,7 @@ int	ath_startrecv(struct ath_softc *);
 void	ath_next_scan(void *);
 int	ath_set_slot_time(struct ath_softc *);
 void	ath_calibrate(void *);
-HAL_LED_STATE ath_state_to_led(enum ieee80211_state);
+void	ath_ledstate(struct ath_softc *, enum ieee80211_state);
 int	ath_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	ath_newassoc(struct ieee80211com *,
 	    struct ieee80211_node *, int);
@@ -141,7 +142,7 @@ void	ath_recv_mgmt(struct ieee80211com *, struct mbuf *,
 void	ath_disable(struct ath_softc *);
 void	ath_power(int, void *);
 
-int	ath_gpio_attach(struct ath_softc *);
+int	ath_gpio_attach(struct ath_softc *, u_int16_t);
 int	ath_gpio_pin_read(void *, int);
 void	ath_gpio_pin_write(void *, int, int);
 void	ath_gpio_pin_ctl(void *, int, int);
@@ -315,9 +316,11 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	for (i = 0; i <= HAL_TX_QUEUE_ID_DATA_MAX; i++) {
 		bzero(&qinfo, sizeof(qinfo));
 		qinfo.tqi_subtype = i; /* should be mapped to WME types */
-		sc->sc_txhalq[i] = ath_hal_setup_tx_queue(ah, HAL_TX_QUEUE_DATA, &qinfo);
+		sc->sc_txhalq[i] = ath_hal_setup_tx_queue(ah,
+		    HAL_TX_QUEUE_DATA, &qinfo);
 		if (sc->sc_txhalq[i] == (u_int) -1) {
-			if_printf(ifp, "unable to setup a data xmit queue %u!\n", i);
+			if_printf(ifp,
+			    "unable to setup a data xmit queue %u!\n", i);
 			goto bad2;
 		}
 	}
@@ -353,7 +356,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 * Not all chips have the VEOL support we want to use with
 	 * IBSS beacon; check here for it.
 	 */
-	sc->sc_has_veol = ath_hal_has_veol(ah);
+	sc->sc_veol = ath_hal_has_veol(ah);
 
 	/* get mac address from hardware */
 	ath_hal_get_lladdr(ah, ic->ic_myaddr);
@@ -411,7 +414,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	printf(", %s, address %s\n", ieee80211_regdomain2name(ath_regdomain),
 	    ether_sprintf(ic->ic_myaddr));
 
-	if (ath_gpio_attach(sc) == 0)
+	if (ath_gpio_attach(sc, devid) == 0)
 		sc->sc_flags |= ATH_GPIO;
 
 	return 0;
@@ -842,7 +845,8 @@ ath_reset(struct ath_softc *sc, int full)
 	ath_draintxq(sc);		/* stop xmit side */
 	ath_stoprecv(sc);		/* stop recv side */
 	/* NB: indicate channel change so we do a full reset */
-	if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, full ? AH_TRUE : AH_FALSE, &status)) {
+	if (!ath_hal_reset(ah, ic->ic_opmode, &hchan,
+	    full ? AH_TRUE : AH_FALSE, &status)) {
 		if_printf(ifp, "%s: unable to reset hardware; hal status %u\n",
 			__func__, status);
 	}
@@ -1324,7 +1328,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 	ds = bf->bf_desc;
 	bzero(ds, sizeof(struct ath_desc));
 
-	if (ic->ic_opmode == IEEE80211_M_IBSS && sc->sc_has_veol) {
+	if (ic->ic_opmode == IEEE80211_M_IBSS && sc->sc_veol) {
 		ds->ds_link = bf->bf_daddr;	/* link to self */
 		flags |= HAL_TXDESC_VEOL;
 	} else {
@@ -1528,7 +1532,7 @@ ath_beacon_config(struct ath_softc *sc)
 			 * deal with things.
 			 */
 			intval |= HAL_BEACON_ENA;
-			if (!sc->sc_has_veol)
+			if (!sc->sc_veol)
 				sc->sc_imask |= HAL_INT_SWBA;
 		} else if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			/*
@@ -1544,7 +1548,7 @@ ath_beacon_config(struct ath_softc *sc)
 		 * When using a self-linked beacon descriptor in IBBS
 		 * mode load it once here.
 		 */
-		if (ic->ic_opmode == IEEE80211_M_IBSS && sc->sc_has_veol)
+		if (ic->ic_opmode == IEEE80211_M_IBSS && sc->sc_veol)
 			ath_beacon_proc(sc, 0);
 	}
 }
@@ -2551,8 +2555,8 @@ ath_draintxq(struct ath_softc *sc)
 			(void) ath_hal_stop_tx_dma(ah, sc->sc_txhalq[i]);
 			DPRINTF(ATH_DEBUG_RESET,
 			    ("%s: tx queue %d (%p), link %p\n", __func__, i,
-			    (caddr_t)(u_intptr_t) ath_hal_get_tx_buf(ah, sc->sc_txhalq[i]),
-			    sc->sc_txlink));
+			    (caddr_t)(u_intptr_t)ath_hal_get_tx_buf(ah,
+			    sc->sc_txhalq[i]), sc->sc_txlink));
 		}
 		(void) ath_hal_stop_tx_dma(ah, sc->sc_bhalq);
 		DPRINTF(ATH_DEBUG_RESET,
@@ -2807,23 +2811,35 @@ ath_calibrate(void *arg)
 	splx(s);
 }
 
-HAL_LED_STATE
-ath_state_to_led(enum ieee80211_state state)
+void
+ath_ledstate(struct ath_softc *sc, enum ieee80211_state state)
 {
+	HAL_LED_STATE led = HAL_LED_INIT;
+	u_int32_t softled = AR5K_SOFTLED_OFF;
+
 	switch (state) {
 	case IEEE80211_S_INIT:
-		return HAL_LED_INIT;
+		break;
 	case IEEE80211_S_SCAN:
-		return HAL_LED_SCAN;
+		led = HAL_LED_SCAN;
+		break;
 	case IEEE80211_S_AUTH:
-		return HAL_LED_AUTH;
+		led = HAL_LED_AUTH;
+		break;
 	case IEEE80211_S_ASSOC:
-		return HAL_LED_ASSOC;
+		led = HAL_LED_ASSOC;
+		softled = AR5K_SOFTLED_ON;
+		break;
 	case IEEE80211_S_RUN:
-		return HAL_LED_RUN;
-	default:
-		panic("%s: unknown 802.11 state %d", __func__, state);
-		return HAL_LED_INIT;
+		led = HAL_LED_RUN;
+		softled = AR5K_SOFTLED_ON;
+		break;
+	}
+
+	ath_hal_set_ledstate(sc->sc_ah, led);
+	if (sc->sc_softled) {
+		ath_hal_set_gpio_output(sc->sc_ah, AR5K_SOFTLED_PIN);
+		ath_hal_set_gpio(sc->sc_ah, AR5K_SOFTLED_PIN, softled);
 	}
 }
 
@@ -2844,7 +2860,7 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	timeout_del(&sc->sc_scan_to);
 	timeout_del(&sc->sc_cal_to);
-	ath_hal_set_ledstate(ah, ath_state_to_led(nstate));	/* set LED */
+	ath_ledstate(sc, nstate);
 
 	if (nstate == IEEE80211_S_INIT) {
 		sc->sc_imask &= ~(HAL_INT_SWBA | HAL_INT_BMISS);
@@ -3258,7 +3274,7 @@ ath_printtxbuf(struct ath_buf *bf, int done)
 #endif /* AR_DEBUG */
 
 int
-ath_gpio_attach(struct ath_softc *sc)
+ath_gpio_attach(struct ath_softc *sc, u_int16_t devid)
 {
 	struct ath_hal *ah = sc->sc_ah;
 	struct gpiobus_attach_args gba;
@@ -3280,6 +3296,14 @@ ath_gpio_attach(struct ath_softc *sc)
 		/* Get pin input */
 		sc->sc_gpio_pins[i].pin_state = ath_hal_get_gpio(ah, i) ?
 		    GPIO_PIN_HIGH : GPIO_PIN_LOW;
+	}
+
+	/* Enable GPIO-controlled software LED if available */
+	if ((ah->ah_version == AR5K_AR5211) ||
+	    (devid == PCI_PRODUCT_ATHEROS_AR5212_IBM)) {
+		sc->sc_softled = 1;
+		ath_hal_set_gpio_output(ah, AR5K_SOFTLED_PIN);
+		ath_hal_set_gpio(ah, AR5K_SOFTLED_PIN, AR5K_SOFTLED_OFF);
 	}
 
 	/* Create gpio controller tag */

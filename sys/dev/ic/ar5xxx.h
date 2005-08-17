@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.24 2005/08/02 12:55:11 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.25 2005/08/17 13:14:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -524,6 +524,11 @@ typedef enum ieee80211_state HAL_LED_STATE;
 #define HAL_LED_AUTH	IEEE80211_S_AUTH
 #define HAL_LED_ASSOC	IEEE80211_S_ASSOC
 #define HAL_LED_RUN	IEEE80211_S_RUN
+
+/* GPIO-controlled software LED */
+#define AR5K_SOFTLED_PIN	0
+#define AR5K_SOFTLED_ON		0
+#define AR5K_SOFTLED_OFF	1
 
 /*
  * Gain settings
