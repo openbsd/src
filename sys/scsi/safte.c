@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.10 2005/08/15 21:48:03 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.11 2005/08/17 00:07:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -306,7 +306,7 @@ safte_read_config(struct safte_softc *sc)
 
 	for (i = 0; i < config.npwrsup; i++) {
 		s->se_type = SAFTE_T_PWRSUP;
-		s->se_field = (u_int8_t *)(sc->sc_encbuf + j++ + i);
+		s->se_field = (u_int8_t *)(sc->sc_encbuf + j + i);
 		s->se_sensor.type = SENSOR_INDICATOR;
 		snprintf(s->se_sensor.desc, sizeof(s->se_sensor.desc),
 		    "psu%d", i);
