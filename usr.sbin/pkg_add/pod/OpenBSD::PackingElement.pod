@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.3 2005/08/17 08:42:37 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.4 2005/08/17 08:58:00 espie Exp $
 
 =head1 NAME
 
@@ -69,6 +69,64 @@ the local base for the package.
 =item ::NoDefaultConflict
 
 special annotation that package should not have any C<stem-*> conflict marker.
+
+=item ::SpecialFile
+
+special files like the package description or install script
+
+=over 4
+
+=item ::FCONTENTS
+
+contents file.
+
+=item ::FCOMMENT
+
+comment file. Deprecated.
+
+=item ::FDESC
+
+package description
+
+=item FREQUIRE
+
+registration of dependencies
+
+=item FREQUIRED_BY
+
+registration of reverse dependencies
+
+=item FMTREE_DIRS
+
+deprecated
+
+=item DisplayFile
+
+abstract class for special files that can be displayed.
+
+=over 4
+
+=item FDISPLAY
+
+=item FUNDISPLAY
+
+=back
+
+=item ::ScriptFile
+
+abstract class for special files that can be run.
+
+=over 4
+
+=item FINSTALL
+
+=item FDEINSTALL
+
+=item FREQUIRE
+
+=back
+
+=back
 
 =back
 
@@ -209,6 +267,8 @@ shared library files.
 
 file objects not present in the packing-list.
 
+=for comment  ::Extra and ::Extradir intentionally not documented yet.
+
 =back
 
 =item ::DirlikeObject
@@ -232,6 +292,8 @@ abstract class for directories.
 =item ::Fontdir
 
 =item ::Mandir
+
+=item ::Sampledir
 
 =back
 
