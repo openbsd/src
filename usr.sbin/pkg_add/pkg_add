@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.188 2005/08/17 09:24:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.189 2005/08/17 10:00:18 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -624,6 +624,11 @@ sub find_updates
 		    my $dir = $handle->info();
 		    my $p2 = OpenBSD::PackingList->fromfile($dir.CONTENTS,
 			\&OpenBSD::PackingList::ExtraInfoOnly);
+		    if ($p2->has('arch')) {
+			unless ($p2->{arch}->check($state->{arch})) {
+			    next;
+			}
+		    }
 		    if ($p2->{extrainfo}->{subdir} eq $plist->{extrainfo}->{subdir}) {
 			push(@l2, $candidate);
 		    }
