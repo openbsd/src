@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.32 2004/12/29 17:32:44 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.33 2005/08/17 11:34:16 mpf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -494,8 +494,10 @@ digest_filelist(const char *file, struct hash_functions *defhash)
 
 		if (strcmp(checksum, digest) == 0)
 			(void)printf("(%s) %s: OK\n", algorithm, filename);
-		else
+		else {
 			(void)printf("(%s) %s: FAILED\n", algorithm, filename);
+			error = 1;
+		}
 	}
 	if (fp != stdin)
 		fclose(fp);
