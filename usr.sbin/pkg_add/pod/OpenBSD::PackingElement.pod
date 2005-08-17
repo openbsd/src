@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.4 2005/08/17 08:58:00 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.5 2005/08/17 09:15:22 espie Exp $
 
 =head1 NAME
 
@@ -90,7 +90,9 @@ package description
 
 =item FREQUIRE
 
-registration of dependencies
+registration of dependencies. 
+
+=for comment See L<OpenBSD::RequiredBy(3p)
 
 =item FREQUIRED_BY
 
@@ -103,26 +105,38 @@ deprecated
 =item DisplayFile
 
 abstract class for special files that can be displayed.
+provides method C<prepare($state)> to display the file.
 
 =over 4
 
 =item FDISPLAY
 
+message displayed during package install.
+
 =item FUNDISPLAY
+
+message displayed during package uninstall.
 
 =back
 
 =item ::ScriptFile
 
 abstract class for special files that can be run.
+provides method C<run($state, @args)> to run the script.
 
 =over 4
 
 =item FINSTALL
 
+INSTALL script.
+
 =item FDEINSTALL
 
+DEINSTALL script.
+
 =item FREQUIRE
+
+REQUIRE script.
 
 =back
 
@@ -167,7 +181,11 @@ shared library needed for the package.
 
 =item ::Dependency
 
-package needed.
+package needed, with the following properties: C<pkgpath> is the path
+used to create the dependency, C<pattern> is the L<OpenBSD::PkgSpec(3p)>
+pattern used to match the dependency, C<def> is the default value of
+the dependency computed during build, to use for comparing package signatures
+and to fullfill default dependencies.
 
 =back
 
@@ -225,6 +243,9 @@ somewhat concrete elements in packing-lists.
 This is the base class for objects with a location in the filesystem.
 It defineds method C<fullname>, to access the complete name of the object.
 
+Note that all objects with file names use relative names except for
+C<::Extra>, C<::Sample> and C<::Sampledir>
+
 =over 4
 
 =item ::FileObject
@@ -279,21 +300,33 @@ abstract class for directories.
 
 =item ::DirRm
 
+deprecated.
+
 =item ::DirBase
 
 =over 4
 
 =item ::Dir
 
+normal directory, with specialized versions.
+
 =over 4
 
 =item ::Infodir
 
+directory holds GNU info files.
+
 =item ::Fontdir
+
+directory holds X11 fonts.
 
 =item ::Mandir
 
+directory is the root of a set of manpages.
+
 =item ::Sampledir
+
+directory is used to hold configuration files or similar objects.
 
 =back
 
@@ -323,15 +356,21 @@ C<sysctl(8)> property needed for the package to work.
 
 =item ::ExeclikeAction
 
-escape mechanism for extra code that needs to be run.
+escape mechanism for embedded code that needs to be run.
 
 =over 4
 
 =item ::Exec
 
+code to run during installation.
+
 =item ::Unexec
 
+code to run during deinstallation.
+
 =item ::Extraunexec
+
+extra code to run during deinstallation with -c.
 
 =back
 
@@ -340,19 +379,27 @@ escape mechanism for extra code that needs to be run.
 =item ::State
 
 annotation-like stuff that can't be easily moved around because it influences
-surrounding objects.
+surrounding objects (mostly derived from C<::FileObject>).
 
 =over 4
 
 =item ::Cwd
 
+change the current working directory.
+
 =item ::EndFake
 
 =item ::Owner
 
+change the current file owner.
+
 =item ::Group
 
+change the current file group.
+
 =item ::Mode
+
+change the current file mode.
 
 =back
 
