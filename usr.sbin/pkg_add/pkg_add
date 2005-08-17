@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.190 2005/08/17 10:45:13 espie Exp $
+# $OpenBSD: pkg_add,v 1.191 2005/08/17 11:01:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -636,7 +636,39 @@ sub find_updates
 			push(@l2, $candidate);
 		    }
 		}
+
 		print "Updating $pkgname -> ", join(' ', @l2), "\n";
+		# if all packages have the same version, but distinct p,
+		# grab the most recent.
+		# XXX dirty as hell, clean-up after 3.8
+		if (@l2 > 1) {
+		    my ($bestbase, $bestp, $best);
+		    my ($base, $p);
+		    for my $i (@l2) {
+			if ($i =~ m/p(\d+)$/) {
+			    $base = $`;
+			    $p = $1;
+			} else {
+			    $base = $i;
+			    $p = -1;
+			}
+			if (!defined $bestbase) {
+			    ($bestbase, $bestp, $best) = ($base, $p, $i);
+			} else {
+			    if ($base ne $bestbase) {
+				undef $best;
+				last;
+			    }
+			    if ($p > $bestp) {
+			    	($bestp, $best) = ($p, $i);
+			    }
+			}
+		    }
+		    if (defined $best) {
+		    	@l2 = ($best);
+		    }
+		}
+			
 		if (@l2 == 1) {
 			push(@$new, $l2[0]);
 		} else {
