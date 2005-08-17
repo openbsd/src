@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.2 2005/03/04 11:24:35 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.3 2005/08/17 08:42:37 espie Exp $
 
 =head1 NAME
 
@@ -125,6 +125,8 @@ deprecated.
 
 =back
 
+=back
+
 =item ::Annotation
 
 stuff that doesn't really exist as objects, but is used to add
@@ -230,6 +232,8 @@ abstract class for directories.
 =item ::Fontdir
 
 =item ::Mandir
+
+=back
 
 =back
 
