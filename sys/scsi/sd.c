@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.83 2005/08/12 01:49:08 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.84 2005/08/17 02:17:51 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1345,11 +1345,11 @@ sd_get_parms(sd, dp, flags)
 		break;
 
 	case T_RDIRECT:
-		/* T_RDIRECT only supports RBC Device Parameter Page (6). */
-		scsi_do_mode_sense(sd->sc_link, 6, &buf, (void **)&reduced,
-		    NULL, NULL, &blksize, sizeof(*reduced), flags | SCSI_SILENT,
-		    NULL);
-		if (reduced) {
+		/* T_RDIRECT supports only PAGE_REDUCED_GEOMETRY (6). */
+		scsi_do_mode_sense(sd->sc_link, PAGE_REDUCED_GEOMETRY, &buf,
+		    (void **)&reduced, NULL, NULL, &blksize, sizeof(*reduced),
+		    flags | SCSI_SILENT, NULL);
+		if (DISK_PGCODE(reduced, PAGE_REDUCED_GEOMETRY)) {
 			if (dp->disksize == 0)
 				dp->disksize = _5btol(reduced->sectors);
 			if (blksize == 0)
@@ -1361,22 +1361,20 @@ sd_get_parms(sd, dp, flags)
 		rigid = NULL;
 		if (((sd->sc_link->flags & SDEV_ATAPI) == 0) ||
 		    ((sd->sc_link->flags & SDEV_REMOVABLE) == 0))
-			/* Try mode sense page 4 (RIGID GEOMETRY). */
-			scsi_do_mode_sense(sd->sc_link, 4, &buf,
-			    (void **)&rigid, NULL, NULL, &blksize,
+			scsi_do_mode_sense(sd->sc_link, PAGE_RIGID_GEOMETRY,
+			    &buf, (void **)&rigid, NULL, NULL, &blksize,
 			    sizeof(*rigid), flags | SCSI_SILENT, NULL);
-		if (rigid) { 
+		if (DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
 			heads = rigid->nheads;
 			cyls = _3btol(rigid->ncyl);
 			rpm = _2btol(rigid->rpm);
 			if (heads * cyls > 0)
 				sectors = dp->disksize / (heads * cyls);
 		} else {
-			/* * Try page 5 (FLEX GEOMETRY). */
-			scsi_do_mode_sense(sd->sc_link, 5, &buf, (void **)&flex,
-			    NULL, NULL, &blksize, sizeof(*flex),
-			    flags | SCSI_SILENT, NULL);
-			if (flex) {
+			scsi_do_mode_sense(sd->sc_link, PAGE_FLEX_GEOMETRY,
+			    &buf, (void **)&flex, NULL, NULL, &blksize,
+			    sizeof(*flex), flags | SCSI_SILENT, NULL);
+			if (DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
 				sectors = flex->ph_sec_tr;
 				heads = flex->nheads;
 				cyls = _2btol(flex->ncyl);

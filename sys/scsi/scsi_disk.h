@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.17 2005/08/12 01:49:08 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.18 2005/08/17 02:17:51 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -236,7 +236,12 @@ struct scsi_reassign_blocks_data {
 	} defect_descriptor[1];
 };
 
-#define	DISK_PGCODE	0x3F	/* Only 6 bits of pg_code are valid. */
+/* Only the lower 6 bits of the pg_code field are used for page #. */
+#define	DISK_PGCODE(pg, n)	((pg) != NULL) && (((pg)->pg_code & 0x3f) == n)
+#define PAGE_DISK_FORMAT	3
+#define PAGE_RIGID_GEOMETRY	4
+#define PAGE_FLEX_GEOMETRY	5
+#define PAGE_REDUCED_GEOMETRY	6
 
 struct page_disk_format {
 	u_int8_t pg_code;	/* page code (should be 3) */
