@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.113 2005/08/14 19:49:18 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.114 2005/08/17 08:35:53 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -481,7 +481,7 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
  * the <freecf> argument is passed to cvs_file_getdir, if this is 1
  * CVSFILE * structs will be free'd once we are done with them.
  */
-CVSFILE * 
+CVSFILE *
 cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
     void *arg, int freecf)
 {
@@ -533,7 +533,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 
 	/*
 	 * No Entry available? fall back to stat(2)'ing the item, if
-	 * that fails, assume a normal file. 
+	 * that fails, assume a normal file.
 	 */
 	if (ent == NULL) {
 		if (stat(path, &st) == -1)
@@ -752,7 +752,7 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 			return (0);
 		return (-1);
 	}
- 
+
 	/* if the CVS administrative directory exists, load the info */
 	l = snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);
 	if (l == -1 || l >= (int)sizeof(pbuf)) {

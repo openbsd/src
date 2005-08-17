@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.44 2005/08/08 11:37:41 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.45 2005/08/17 08:35:53 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -284,7 +284,7 @@ cvs_status_local(CVSFILE *cf, void *arg)
 				    sizeof(numbuf));
 
 				cvs_printf("\t%-25s\t(%s: %s)\n",
-				    sym->rs_name,  
+				    sym->rs_name,
 				    RCSNUM_ISBRANCH(sym->rs_num) ? "branch" :
 				    "revision", numbuf);
 			}
