@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.5 2005/08/17 09:15:22 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.6 2005/08/17 19:28:24 espie Exp $
 
 =head1 NAME
 
@@ -14,7 +14,7 @@ OpenBSD::PackingElement - C<pkg_add(1)> packing-elements object hierarchy
     package OpenBSD::PackingElement::Depend;
     sub method
     {
-    	my ($self, $args) = @_;
+    	my ($self, @args) = @_;
 	# do something
     }
 
@@ -27,7 +27,7 @@ OpenBSD::PackingElement - C<pkg_add(1)> packing-elements object hierarchy
 =head1 DESCRIPTION
 
 C<OpenBSD::PackingElement> is the base class for all elements in a 
-packing-list (see L<OpenBSD::PackingList> and C<pkg_create(1)>).
+packing-list (see L<OpenBSD::PackingList(3p)> and C<pkg_create(1)>).
 
 Manipulation of packing-lists mostly occurs through visitor patterns
 such as C<OpenBSD::PackingList::visit>: client code defines a method for
@@ -56,7 +56,7 @@ architecture requirements.
 
 =item ::ExtraInfo
 
-some unique properties, like C<PKGPATH> and ftp status.
+some unique properties, like C<PKGPATH> and allowed-for-ftp status.
 
 =item ::Name
 
@@ -72,7 +72,7 @@ special annotation that package should not have any C<stem-*> conflict marker.
 
 =item ::SpecialFile
 
-special files like the package description or install script
+special files like the package description or install script.
 
 =over 4
 
@@ -86,34 +86,32 @@ comment file. Deprecated.
 
 =item ::FDESC
 
-package description
+package description.
 
-=item FREQUIRE
+=item ::FREQUIRE
 
-registration of dependencies. 
+registration of forward dependencies (see L<OpenBSD::RequiredBy(3p)>).
 
-=for comment See L<OpenBSD::RequiredBy(3p)
+=item ::FREQUIRED_BY
 
-=item FREQUIRED_BY
+registration of reverse dependencies.
 
-registration of reverse dependencies
-
-=item FMTREE_DIRS
+=item ::FMTREE_DIRS
 
 deprecated
 
-=item DisplayFile
+=item ::DisplayFile
 
 abstract class for special files that can be displayed.
 provides method C<prepare($state)> to display the file.
 
 =over 4
 
-=item FDISPLAY
+=item ::FDISPLAY
 
 message displayed during package install.
 
-=item FUNDISPLAY
+=item ::FUNDISPLAY
 
 message displayed during package uninstall.
 
@@ -126,15 +124,15 @@ provides method C<run($state, @args)> to run the script.
 
 =over 4
 
-=item FINSTALL
+=item ::FINSTALL
 
 INSTALL script.
 
-=item FDEINSTALL
+=item ::FDEINSTALL
 
 DEINSTALL script.
 
-=item FREQUIRE
+=item ::FREQUIRE
 
 REQUIRE script.
 
@@ -165,15 +163,15 @@ all dependency information.
 
 =item ::PkgDep
 
-deprecated
+deprecated.
 
 =item ::NewDepend
 
-deprecated
+deprecated.
 
 =item ::LibDepend
 
-deprecated
+deprecated.
 
 =item ::Wantlib
 
