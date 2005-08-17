@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.187 2005/08/16 21:48:34 espie Exp $
+# $OpenBSD: pkg_add,v 1.188 2005/08/17 09:24:53 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -35,12 +35,10 @@ use OpenBSD::Add;
 use OpenBSD::SharedLibs;
 use File::Path;
 
-our %forced = ();
-
-package main;
-
 my $errors = 0;
 
+our %forced = ();
+our $not;
 
 sub can_install($$$)
 {
@@ -724,6 +722,8 @@ if (defined $state->{destdir}) {
 
 
 $state->{not} = $opt_n || $opt_u;
+# XXX RequiredBy
+$not = $opt_n;
 $state->{quick} = $opt_q;
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;

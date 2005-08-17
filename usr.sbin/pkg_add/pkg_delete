@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.87 2005/01/22 13:00:35 espie Exp $
+# $OpenBSD: pkg_delete,v 1.88 2005/08/17 09:24:53 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -78,6 +78,7 @@ my $removed;
 try {
 my $state = new OpenBSD::Error;
 $state->{not} = $opt_n;
+# XXX RequiredBy
 $not = $opt_n;
 $state->{quick} = $opt_q;
 $state->{verbose} = $opt_v >= 2;
