@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.32 2005/08/18 12:19:08 dlg Exp $       */
+/* $OpenBSD: bioctl.c,v 1.33 2005/08/18 12:53:22 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -172,8 +172,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-Dhiv] [-a alarm-function] [-b targ]"
-	    " [-H chan:targ[.lun]] device\n", __progname);
+	fprintf(stderr, "usage: %s [-Dhiv] [-a alarm-function]"
+	    " [[-bH] chan:targ[.lun]] device\n", __progname);
 	exit(1);
 }
 
@@ -191,17 +191,17 @@ str2locator(const char *string, struct locator *location)
 	lun = strchr(targ, TL_SEP);
 	if (lun != NULL) {
 		*lun++ = '\0';
-		location->lun = strtonum(lun, 0, 256 /* XXX */, NULL);
+		location->lun = strtonum(lun, 0, 256, NULL);
 		if (errno)
 			return (-1);
 	} else
 		location->lun = 0;
 
-	location->target = strtonum(targ, 0, 256 /* XXX */, NULL);
+	location->target = strtonum(targ, 0, 256, NULL);
 	if (errno)
 		return (-1);
-	
-	location->channel = strtonum(string, 0, 256 /* XXX */, NULL);
+
+	location->channel = strtonum(string, 0, 256, NULL);
 	if (errno)
 		return (-1);
 
@@ -251,7 +251,7 @@ bio_inq(char *name)
 			printf("%-7s %-10s %-14s %-8s\n",
 			    "Volume", "Status", "Size", "Device");
 		}
-		
+
 		switch (bv.bv_status) {
 		case BIOC_SVONLINE:
 			status = BIOC_SVONLINE_S;
@@ -405,15 +405,15 @@ bio_alarm(char *arg)
 	}
 }
 
-void bio_setstate(char *arg)
+void
+bio_setstate(char *arg)
 {
-	int rv;
 	struct bioc_setstate bs;
 	struct locator location;
+	int rv;
 
 	if (str2locator(arg, &location) != 0)
 		errx(1, "invalid channel:target[.lun]");
-	
 
 	bs.bs_cookie = bl.bl_cookie;
 	bs.bs_status = BIOC_SSHOTSPARE;
@@ -432,8 +432,8 @@ void
 bio_blink(char *arg)
 {
 	struct bioc_blink blink;
-	int target, rv;
 	const char *errstr;
+	int target, rv;
 
 	target = strtonum(arg, 0, 255, &errstr);
 	if (errstr != NULL)
