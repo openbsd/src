@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.29 2005/08/18 12:53:22 deraadt Exp $
+.\"	$OpenBSD: bioctl.8,v 1.30 2005/08/18 13:31:37 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -34,7 +34,8 @@
 .Bk -words
 .Op Fl Dhiv
 .Op Fl a Ar alarm-function
-.Op Op Fl bH Ar channel:target[.lun]
+.Op Fl b Ar channel:target[.lun]
+.Op Fl H Ar channel:target[.lun]
 .Ar device
 .Ek
 .Sh DESCRIPTION
