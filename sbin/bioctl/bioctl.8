@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.26 2005/08/18 04:49:52 marco Exp $
+.\"	$OpenBSD: bioctl.8,v 1.27 2005/08/18 09:16:16 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -66,8 +66,10 @@ or by the first letter only
 .It Fl D
 Enable debug output.
 .It Fl H Ar channel:target[.lun]
-Make a hot spare out of disk channel:target[.lun] on the specified controller
-(e.g. bioctl -H 0:15)
+Make a hot spare out of disk
+.Ar channel:target[.lun]
+on the specified controller
+(e.g. bioctl -H 0:15).
 .It Fl h
 Where neccessary, produce "human-readable" output.
 Use unit suffixes: Byte, Kilobyte, Megabyte,
