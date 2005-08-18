@@ -1,4 +1,4 @@
-/* $OpenBSD: ses.h,v 1.6 2005/08/18 12:26:40 dlg Exp $ */
+/* $OpenBSD: ses.h,v 1.7 2005/08/18 21:04:47 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
@@ -34,6 +34,7 @@ struct ses_scsi_diag {
 	u_int8_t	opcode; /* SEND_DIAGNOSTIC or RECEIVE_DIAGNOSTIC */
 	u_int8_t	flags;
 #define SES_DIAG_PCV		(1<<0)	/* page code valid */
+#define SES_DIAG_PF		(1<<4)	/* set this bit if page code is valid */
 	u_int8_t	pgcode;
 #define SES_PAGE_CONFIG		0x01	/* Configuration */
 #define SES_PAGE_STATUS		0x02	/* Enclosure Status */
@@ -136,6 +137,7 @@ struct ses_status {
 #define SES_STAT_SWAP		(1<<4)	/* element has been swapped */
 #define SES_STAT_DISABLED	(1<<5)	/* disabled */
 #define SES_STAT_PRDFAIL	(1<<6)	/* predicted failure */
+#define SES_STAT_SELECT		(1<<7)	/* set to modify element */
 
 	u_int8_t	f1;	/* use of these flags depends on the SES_T */
 	u_int8_t	f2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.22 2005/08/18 12:26:39 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.23 2005/08/18 21:04:47 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -147,8 +147,6 @@ ses_match(struct device *parent, void *match, void *aux)
 	if ((inq->device & SID_TYPE) == T_PROCESSOR &&
 	    (inq->version & SID_ANSII) == SID_ANSII_SCSI3)
 		return (3);
-
-	/* XXX apparently we can match on passthrough devs too? */
 
 	return (0);
 }
@@ -399,8 +397,6 @@ ses_read_status(struct ses_softc *sc, int autoconf)
 	    sizeof(cmd), sc->sc_buf, sc->sc_buflen, 2, 3000, NULL, flags) != 0)
 		return (1);
 
-	/* XXX should we check any values in the status header? */
-
 	return (0);
 }
 
@@ -607,7 +603,7 @@ ses_write_config(struct ses_softc *sc)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = SEND_DIAGNOSTIC;
-	cmd.flags |= SES_DIAG_PCV;
+	cmd.flags |= SES_DIAG_PF;
 	cmd.length = htobe16(sc->sc_buflen);
 	flags = SCSI_DATA_OUT;
 #ifndef SCSIDEBUG
@@ -624,10 +620,8 @@ ses_write_config(struct ses_softc *sc)
 int
 ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 {
-#if notyet
 	struct ses_slot			*slot;
 
-	/* XXX isnt strictly needed? */
 	if (ses_read_status(sc, 1) != 0)
 		return (EIO);
 
@@ -640,9 +634,10 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 		return (EINVAL);
 
 	/* zero out the config fields */
-	/* XXX previous config is lost */
 	slot->sl_stat->f2 = 0x00;
 	slot->sl_stat->f3 = 0x00;
+
+	slot->sl_stat->com = SES_STAT_SELECT;
 
 	switch (blink->bb_status) {
 	case BIOC_SBUNBLINK:
@@ -662,7 +657,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 
 	if (ses_write_config(sc) != 0)
 		return (EIO);
-#endif /* notyet */
+
 	return (0);
 }
 #endif
