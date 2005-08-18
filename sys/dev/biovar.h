@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.18 2005/08/18 04:49:52 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.19 2005/08/18 09:10:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -151,11 +151,6 @@ struct bioc_blink {
 #define BIOC_SBUNBLINK		0x00	/* disable blinking */
 #define BIOC_SBBLINK		0x01	/* enable blink */
 #define BIOC_SBALARM		0x02	/* enable alarm blink */
-
-	u_int16_t	bs_channel;
-	u_int16_t	bs_target;
-	u_int16_t	bs_lun;
-	u_int16_t	bs_other_id;	/* unused for now  */
 };
 
 #define BIOCSETSTATE _IOWR('B', 37, struct bioc_setstate)
