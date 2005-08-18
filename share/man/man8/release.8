@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.39 2005/08/18 14:18:55 jmc Exp $
+.\"	$OpenBSD: release.8,v 1.40 2005/08/18 14:21:03 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -50,7 +50,7 @@ are preceded by a dollar sign
 .Pq Sq $ .
 Commands that must be run as the superuser are preceded by a hash mark
 .Pq Sq # .
-.Ss "1. Update sources"
+.Ss 1. Update sources
 A
 .Nm
 should always start from a known set of
@@ -119,7 +119,7 @@ tags are
 See
 .Xr cvs 1
 for more information.
-.Ss "2. Build and install a new kernel"
+.Ss 2. Build and install a new kernel
 For safety, you should always build and install a new kernel before
 building the programs that will use the kernel.
 This ensures that any new system calls, for example, will be present
@@ -171,7 +171,7 @@ $ su
 .Pp
 If the system does not come up you can boot using
 .Pa bsd.old .
-.Ss "3. Build a new system"
+.Ss 3. Build a new system
 Now that you are running using your new kernel you can build a new system.
 It's safer (but slower) to remove your object directories and re-create
 them before the build.
@@ -213,7 +213,7 @@ by hand.
 .Pp
 At this point your system is up-to-date and running the code that you
 are going to make into a release.
-.Ss "4. Make and validate the system release"
+.Ss 4. Make and validate the system release
 The system release consists of a generic kernel, one
 .Tn CD-ROM
 and two floppy boot-able file-systems, the release
@@ -288,7 +288,7 @@ At this point you have most of an
 release.
 The only thing missing is the X Window System
 (which is covered in the next section).
-.Ss "5. Build and install XF4"
+.Ss 5. Build and install XF4
 The
 .Va XF4
 tree is primarily
@@ -349,7 +349,7 @@ before the build and copy any local configuration from
 to
 .Pa xdm
 after the build.
-.Ss "6. Make and validate the XF4 release"
+.Ss 6. Make and validate the XF4 release
 .Va XF4
 uses
 .Va DESTDIR
@@ -378,7 +378,7 @@ At this point you have both
 system and X Window System
 .Sq tarballs
 in your release directory.
-.Ss "7. Make the third party packages"
+.Ss 7. Make the third party packages
 The
 .Sq ports
 sub-system of contributed applications is described in
