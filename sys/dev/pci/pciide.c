@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.199 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.200 2005/08/18 13:05:59 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -511,15 +511,15 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	  sis_chip_map
 	},
 	{ PCI_PRODUCT_SIS_180,		/* SIS 180 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_SIS_181,		/* SIS 181 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_SIS_182,		/* SIS 182 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	}
 };
