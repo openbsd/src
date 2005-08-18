@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.156 2005/08/18 10:28:14 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.157 2005/08/18 10:32:56 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1824,7 +1824,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCGETSTATES: {
 		struct pfioc_states	*ps = (struct pfioc_states *)addr;
 		struct pf_state		*state;
-		struct pf_state		*p, pstore;
+		struct pf_state		*p, *pstore;
 		struct pfi_kif		*kif;
 		u_int32_t		 nr = 0;
 		int			 space = ps->ps_len;
@@ -1836,6 +1836,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
+		pstore = malloc(sizeof(*pstore), M_TEMP, M_WAITOK);
+
 		p = ps->ps_states;
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states)
 			RB_FOREACH(state, pf_state_tree_ext_gwy,
@@ -1845,27 +1847,31 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if ((nr+1) * sizeof(*p) > (unsigned)ps->ps_len)
 					break;
 
-				bcopy(state, &pstore, sizeof(pstore));
-				strlcpy(pstore.u.ifname, kif->pfik_name,
-				    sizeof(pstore.u.ifname));
-				pstore.rule.nr = state->rule.ptr->nr;
-				pstore.nat_rule.nr = (state->nat_rule.ptr ==
+				bcopy(state, pstore, sizeof(*pstore));
+				strlcpy(pstore->u.ifname, kif->pfik_name,
+				    sizeof(pstore->u.ifname));
+				pstore->rule.nr = state->rule.ptr->nr;
+				pstore->nat_rule.nr = (state->nat_rule.ptr ==
 				    NULL) ? -1 : state->nat_rule.ptr->nr;
-				pstore.anchor.nr = (state->anchor.ptr ==
+				pstore->anchor.nr = (state->anchor.ptr ==
 				    NULL) ? -1 : state->anchor.ptr->nr;
-				pstore.creation = secs - pstore.creation;
-				pstore.expire = pf_state_expires(state);
-				if (pstore.expire > secs)
-					pstore.expire -= secs;
+				pstore->creation = secs - pstore->creation;
+				pstore->expire = pf_state_expires(state);
+				if (pstore->expire > secs)
+					pstore->expire -= secs;
 				else
-					pstore.expire = 0;
-				error = copyout(&pstore, p, sizeof(*p));
-				if (error)
+					pstore->expire = 0;
+				error = copyout(pstore, p, sizeof(*p));
+				if (error) {
+					free(pstore, M_TEMP);
 					goto fail;
+				}
 				p++;
 				nr++;
 			}
 		ps->ps_len = sizeof(struct pf_state) * nr;
+
+		free(pstore, M_TEMP);
 		break;
 	}
 
@@ -2918,8 +2924,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCGETSRCNODES: {
 		struct pfioc_src_nodes	*psn = (struct pfioc_src_nodes *)addr;
-		struct pf_src_node	*n;
-		struct pf_src_node *p, pstore;
+		struct pf_src_node	*n, *p, *pstore;
 		u_int32_t		 nr = 0;
 		int			 space = psn->psn_len;
 
@@ -2930,6 +2935,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
+		pstore = malloc(sizeof(*pstore), M_TEMP, M_WAITOK);
+
 		p = psn->psn_src_nodes;
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
 			int	secs = time_second, diff;
@@ -2937,31 +2944,35 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
 				break;
 
-			bcopy(n, &pstore, sizeof(pstore));
+			bcopy(n, pstore, sizeof(*pstore));
 			if (n->rule.ptr != NULL)
-				pstore.rule.nr = n->rule.ptr->nr;
-			pstore.creation = secs - pstore.creation;
-			if (pstore.expire > secs)
-				pstore.expire -= secs;
+				pstore->rule.nr = n->rule.ptr->nr;
+			pstore->creation = secs - pstore->creation;
+			if (pstore->expire > secs)
+				pstore->expire -= secs;
 			else
-				pstore.expire = 0;
+				pstore->expire = 0;
 
 			/* adjust the connection rate estimate */
 			diff = secs - n->conn_rate.last;
 			if (diff >= n->conn_rate.seconds)
-				pstore.conn_rate.count = 0;
+				pstore->conn_rate.count = 0;
 			else
-				pstore.conn_rate.count -=
+				pstore->conn_rate.count -=
 				    n->conn_rate.count * diff /
 				    n->conn_rate.seconds;
 
-			error = copyout(&pstore, p, sizeof(*p));
-			if (error)
+			error = copyout(pstore, p, sizeof(*p));
+			if (error) {
+				free(pstore, M_TEMP);
 				goto fail;
+			}
 			p++;
 			nr++;
 		}
 		psn->psn_len = sizeof(struct pf_src_node) * nr;
+
+		free(pstore, M_TEMP);
 		break;
 	}
 
