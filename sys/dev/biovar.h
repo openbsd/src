@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.19 2005/08/18 09:10:40 dlg Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.20 2005/08/18 09:42:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -142,15 +142,15 @@ struct bioc_alarm {
 struct bioc_blink {
 	void		*bb_cookie;
 
-	int		bb_volid;	/* volume */
-	int		bb_diskid;	/* virtual disk id, -1 all */
+	int		bb_resv1;	/* for binary compatibility */
+	int		bb_resv2;	/* for binary compatibility */
 	int		bb_status;	/* current status */
-	int		bb_resv;	/* for binary compatibility */
-
-	int		bb_opcode;
 #define BIOC_SBUNBLINK		0x00	/* disable blinking */
 #define BIOC_SBBLINK		0x01	/* enable blink */
 #define BIOC_SBALARM		0x02	/* enable alarm blink */
+	int		bb_resv3;	/* for binary compatibility */
+
+	int		bb_target;
 };
 
 #define BIOCSETSTATE _IOWR('B', 37, struct bioc_setstate)
