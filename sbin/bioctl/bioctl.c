@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.35 2005/08/18 15:00:37 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.36 2005/08/18 22:14:27 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -58,8 +58,8 @@ void cleanup(void);
 void bio_inq(char *);
 void bio_alarm(char *);
 void bio_setstate(char *);
-void bio_setblink(char *, char *);
-void bio_blink(char *, int);
+void bio_setblink(char *, char *, int);
+void bio_blink(char *, int, int);
 
 int devh = -1;
 int debug;
@@ -77,12 +77,12 @@ main(int argc, char *argv[])
 	char *bioc_dev = NULL, *sd_dev = NULL;
 	char *realname = NULL, *al_arg = NULL;
 	char *bl_arg = NULL;
-	int ch, rv;
+	int ch, rv, blink;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:H:ha:Div")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:u:H:ha:Div")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -90,6 +90,17 @@ main(int argc, char *argv[])
 			break;
 		case 'b': /* blink */
 			func |= BIOC_BLINK;
+			blink = BIOC_SBBLINK;
+			bl_arg = optarg;
+			break;
+		case 'B': /* alarm blink */
+			func |= BIOC_BLINK;
+			blink = BIOC_SBALARM;
+			bl_arg = optarg;
+			break;
+		case 'u': /* unblink */
+			func |= BIOC_BLINK;
+			blink = BIOC_SBUNBLINK;
 			bl_arg = optarg;
 			break;
 		case 'D': /* debug */
@@ -154,7 +165,7 @@ main(int argc, char *argv[])
 	} else if (func == BIOC_ALARM) {
 		bio_alarm(al_arg);
 	} else if (func == BIOC_BLINK) {
-		bio_setblink(sd_dev, bl_arg);
+		bio_setblink(sd_dev, bl_arg, blink);
 	} else if (func == BIOC_SETSTATE) {
 		bio_setstate(al_arg);
 	}
@@ -168,7 +179,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-Dhiv] [-a alarm-function]"
-	    " [[-bH] chan:targ[.lun]] device\n", __progname);
+	    " [[-bBHu] chan:targ[.lun]] device\n", __progname);
 	exit(1);
 }
 
@@ -425,7 +436,7 @@ bio_setstate(char *arg)
 }
 
 void
-bio_setblink(char *name, char *arg)
+bio_setblink(char *name, char *arg, int blink)
 {
 	struct locator		location;
 	struct bioc_inq		bi;
@@ -476,7 +487,7 @@ bio_setblink(char *name, char *arg)
 			    bd.bd_lun == location.lun) {
 				if (bd.bd_procdev[0] != '\0') {
 					bio_blink(bd.bd_procdev,
-					    location.target);
+					    location.target, blink);
 				} else
 					warnx("Disk %s is not in an enclosure", arg);
 				return;
@@ -489,7 +500,7 @@ bio_setblink(char *name, char *arg)
 }
 
 void
-bio_blink(char *enclosure, int target)
+bio_blink(char *enclosure, int target, int blinktype)
 {
 	int			bioh;
 	struct bio_locate	bio;
@@ -507,7 +518,7 @@ bio_blink(char *enclosure, int target)
 
 	memset(&blink, 0, sizeof(blink));
 	blink.bb_cookie = bio.bl_cookie;
-	blink.bb_status = BIOC_SBBLINK;
+	blink.bb_status = blinktype;
 	blink.bb_target = target;
 
 	rv = ioctl(bioh, BIOCBLINK, &blink);
