@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.11 2004/07/20 03:50:27 deraadt Exp $	*/
+/*	$OpenBSD: files.c,v 1.12 2005/08/18 14:56:25 jaredy Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)files.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: files.c,v 1.11 2004/07/20 03:50:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: files.c,v 1.12 2005/08/18 14:56:25 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -267,10 +267,10 @@ seq(FILE *fp, DBT *line, DBT *key)
 	if (flag) {
 		flag = 0;
 		buf = (char *) linebuf;
-		end = buf + linebuf_size;
 		line->data = buf;
 	}
 	pos = buf;
+	end = buf + linebuf_size;
 	while ((c = getc(fp)) != EOF) {
 		if ((*pos++ = c) == REC_D) {
 			line->size = pos - buf;
