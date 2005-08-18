@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.27 2005/08/18 09:16:16 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.28 2005/08/18 12:19:08 dlg Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -34,6 +34,7 @@
 .Bk -words
 .Op Fl Dhiv
 .Op Fl a Ar alarm-function
+.Op Fl b Ar target
 .Op Fl H Ar channel:target[.lun]
 .Ar device
 .Ek
@@ -63,6 +64,12 @@ The
 may be specified as given above,
 or by the first letter only
 (e.g. -a e).
+.It Fl b Ar target
+Instructs the slot in the enclosure containing the device specified by
+.Ar target
+to blink.
+.Ar device
+is the enclosure.
 .It Fl D
 Enable debug output.
 .It Fl H Ar channel:target[.lun]

@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.31 2005/08/18 04:49:52 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.32 2005/08/18 12:19:08 dlg Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -61,6 +61,7 @@ void cleanup(void);
 void bio_inq(char *);
 void bio_alarm(char *);
 void bio_setstate(char *);
+void bio_blink(char *);
 
 /* globals */
 const char *bio_device = "/dev/bio";
@@ -80,16 +81,21 @@ main(int argc, char *argv[])
 	/* u_int64_t subfunc = 0; */
 	char *bioc_dev = NULL, *sd_dev = NULL;
 	char *realname = NULL, *al_arg = NULL;
+	char *bl_arg = NULL;
 	int ch, rv;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "H:ha:Div")) != -1) {
+	while ((ch = getopt(argc, argv, "b:H:ha:Div")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
 			al_arg = optarg;
+			break;
+		case 'b': /* blink */
+			func |= BIOC_BLINK;
+			bl_arg = optarg;
 			break;
 		case 'D': /* debug */
 			debug = 1;
@@ -152,6 +158,8 @@ main(int argc, char *argv[])
 		bio_inq(sd_dev);
 	} else if (func == BIOC_ALARM) {
 		bio_alarm(al_arg);
+	} else if (func == BIOC_BLINK) {
+		bio_blink(bl_arg);
 	} else if (func == BIOC_SETSTATE) {
 		bio_setstate(al_arg);
 	}
@@ -164,9 +172,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr,
-	    "usage: %s [-Dhiv] [-a alarm-function] [-H channel:target[.lun]] "
-	        "device\n", __progname);
+	fprintf(stderr, "usage: %s [-Dhiv] [-a alarm-function] [-b targ]"
+	    " [-H chan:targ[.lun]] device\n", __progname);
 	exit(1);
 }
 
@@ -419,4 +426,25 @@ void bio_setstate(char *arg)
 		warnx("bioc_ioctl(BIOCSETSTATE) call failed");
 		return;
 	}
+}
+
+void
+bio_blink(char *arg)
+{
+	struct bioc_blink blink;
+	int target, rv;
+	const char *errstr;
+
+	target = strtonum(arg, 0, 255, &errstr);
+	if (errstr != NULL)
+		errx(1, "target is %s", errstr);
+
+	memset(&blink, 0, sizeof(blink));
+	blink.bb_cookie = bl.bl_cookie;
+	blink.bb_status = BIOC_SBBLINK;
+	blink.bb_target = target;
+
+	rv = ioctl(devh, BIOCBLINK, &blink);
+	if (rv == -1)
+		err(1, "blink unable to be set");
 }
