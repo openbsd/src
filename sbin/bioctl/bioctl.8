@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.30 2005/08/18 13:31:37 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.31 2005/08/18 13:32:59 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -72,7 +72,7 @@ Enable debug output.
 Make a hot spare out of disk
 .Ar channel:target[.lun]
 on the specified controller
-(e.g. bioctl -H 0:15).
+(e.g. bioctl -H 0:15 ami0).
 .It Fl h
 Where neccessary, produce "human-readable" output.
 Use unit suffixes: Byte, Kilobyte, Megabyte,
