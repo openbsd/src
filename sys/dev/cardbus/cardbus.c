@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.21 2005/08/02 21:49:46 pascoe Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.22 2005/08/18 16:01:29 fgsch Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -968,11 +968,11 @@ print_tuple(tuple, len, data)
 {
     int i;
 
-    printf("tuple: %s len %d\n", tuple_name(tuple[0]), len);
+    printf("tuple: %s/%d len %d\n", tuple_name(tuple[0]), tuple[0], len);
 
     for (i = 0; i < len; ++i) {
 	if (i % 16 == 0) {
-	    printf("  0x%2x:", i);
+	    printf("  0x%02x:", i);
 	}
 	printf(" %x",tuple[i]);
 	if (i % 16 == 15) {
