@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.31 2005/08/18 13:32:59 deraadt Exp $
+.\"	$OpenBSD: bioctl.8,v 1.32 2005/08/18 22:14:43 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -35,18 +35,24 @@
 .Op Fl Dhiv
 .Op Fl a Ar alarm-function
 .Op Fl b Ar channel:target[.lun]
+.Op Fl B Ar channel:target[.lun]
 .Op Fl H Ar channel:target[.lun]
+.Op Fl u Ar channel:target[.lun]
 .Ar device
 .Ek
 .Sh DESCRIPTION
-.Nm
-provides a generic interface for RAID management.
+RAID device drivers which support management functionality can
+register their services with the
+.Xr bio 4
+driver.
+.Nm bioctl
+then can be used to maintain RAID volumes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar alarm-function
 Control the RAID card's alarm functionality, if supported.
-.Ar function
+.Ar alarm-function
 may be one of:
 .Bl -tag -width Ds
 .It Ar get
@@ -65,14 +71,30 @@ may be specified as given above,
 or by the first letter only
 (e.g. -a e).
 .It Fl b Ar channel:target[.lun]
-Instruct a particular device to blink.
+Instruct the device at
+.Ar channel:target[.lun]
+to start blinking, if there is
+.Xr ses 4
+or
+.Xr safte 4
+support in the enclosure.
+.It Fl B Ar channel:target[.lun]
+Instruct the device at
+.Ar channel:target[.lun]
+to start blinking  with the alarm LED, if there is
+.Xr ses 4
+or
+.Xr safte 4
+support in the enclosure.
 .It Fl D
 Enable debug output.
 .It Fl H Ar channel:target[.lun]
-Make a hot spare out of disk
+If the device at
 .Ar channel:target[.lun]
-on the specified controller
-(e.g. bioctl -H 0:15 ami0).
+is currently marked
+.Va Unused ,
+promote it to being a
+.Va Hot Spare.
 .It Fl h
 Where neccessary, produce "human-readable" output.
 Use unit suffixes: Byte, Kilobyte, Megabyte,
@@ -80,6 +102,14 @@ Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
 digits to four or less.
 .It Fl i
 Enumerate the selected RAID devices.
+.It Fl u Ar channel:target[.lun]
+Instruct the device at
+.Ar channel:target[.lun]
+to cease blinking, if there is
+.Xr ses 4
+or
+.Xr safte 4
+support in the enclosure.
 .It Fl v
 Be more verbose in output.
 .It Ar device
