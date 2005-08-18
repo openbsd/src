@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.7 2005/05/26 03:52:07 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -24,6 +24,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -37,6 +38,7 @@
 #include <arm/xscale/pxa2x0_i2c.h>
 #include <arm/xscale/pxa2x0_i2s.h>
 #include <arm/xscale/pxa2x0_dmac.h>
+#include <arm/xscale/pxa2x0_gpio.h>
 
 #include <zaurus/dev/zaurus_scoopvar.h>
 #include <dev/i2c/wm8750reg.h>
@@ -59,6 +61,14 @@ void	zaudio_power(int, void *);
 #define ZAUDIO_OP_SPKR	0
 #define ZAUDIO_OP_HP	1
 
+#define ZAUDIO_JACK_STATE_OUT	0
+#define ZAUDIO_JACK_STATE_IN	1
+#define ZAUDIO_JACK_STATE_INS	2
+#define ZAUDIO_JACK_STATE_REM	3
+
+/* GPIO pins */
+#define GPIO_HP_IN_C3000	116
+
 struct zaudio_volume {
 	u_int8_t		left;
 	u_int8_t		right;
@@ -79,6 +89,10 @@ struct zaudio_softc {
 
 	struct zaudio_volume	sc_volume[2];
 	char			sc_unmute[2];
+
+	int			sc_state;
+	int			sc_icount;
+	struct timeout		sc_to; 
 };
 
 struct cfattach zaudio_ca = {
@@ -97,6 +111,8 @@ struct audio_device wm8750_device = {
 };
 
 void zaudio_init(struct zaudio_softc *);
+int zaudio_jack_intr(void *);
+void zaudio_jack(void *);
 void zaudio_standby(struct zaudio_softc *);
 void zaudio_update_volume(struct zaudio_softc *, int);
 void zaudio_update_mutes(struct zaudio_softc *);
@@ -221,6 +237,12 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_volume[ZAUDIO_OP_HP].right = 180;
 	sc->sc_unmute[ZAUDIO_OP_HP] = 0;
 
+	/* Configure headphone jack state change handling. */
+	timeout_set(&sc->sc_to, zaudio_jack, sc);
+	pxa2x0_gpio_set_function(GPIO_HP_IN_C3000, GPIO_IN);
+	(void)pxa2x0_gpio_intr_establish(GPIO_HP_IN_C3000,
+	    IST_EDGE_BOTH, IPL_BIO, zaudio_jack_intr, sc, "hpjk");
+
 	zaudio_init(sc);
 
 	printf(": I2C, I2S, WM8750 Audio\n");
@@ -261,6 +283,7 @@ zaudio_power(int why, void *arg)
 	switch (why) {
 	case PWR_STANDBY:
 	case PWR_SUSPEND:
+		timeout_del(&sc->sc_to);
 		zaudio_standby(sc);
 		break;
 
@@ -294,6 +317,76 @@ zaudio_init(struct zaudio_softc *sc)
 	scoop_set_headphone(0);
 
 	pxa2x0_i2c_close(&sc->sc_i2c);
+
+	/* Assume that the jack state has changed. */ 
+	zaudio_jack(sc);
+
+}
+
+int
+zaudio_jack_intr(void *v)
+{
+	struct zaudio_softc *sc = v;
+
+	if (!timeout_triggered(&sc->sc_to))
+		zaudio_jack(sc);
+	
+	return (1);
+}
+
+void
+zaudio_jack(void *v)
+{
+	struct zaudio_softc *sc = v;
+
+	switch (sc->sc_state) {
+	case ZAUDIO_JACK_STATE_OUT:
+		if (pxa2x0_gpio_get_bit(GPIO_HP_IN_C3000)) {
+			sc->sc_state = ZAUDIO_JACK_STATE_INS;
+			sc->sc_icount = 0;
+		}
+		break;
+	case ZAUDIO_JACK_STATE_INS:
+		if (sc->sc_icount++ > 2) {
+			if (pxa2x0_gpio_get_bit(GPIO_HP_IN_C3000)) {
+				sc->sc_state = ZAUDIO_JACK_STATE_IN;
+				sc->sc_unmute[ZAUDIO_OP_SPKR] = 0;
+				sc->sc_unmute[ZAUDIO_OP_HP] = 1;
+				goto update_mutes;
+			} else 
+				sc->sc_state = ZAUDIO_JACK_STATE_OUT;
+		}
+		break;
+	case ZAUDIO_JACK_STATE_IN:
+		if (!pxa2x0_gpio_get_bit(GPIO_HP_IN_C3000)) {
+			sc->sc_state = ZAUDIO_JACK_STATE_REM;
+			sc->sc_icount = 0;
+		}
+		break;
+	case ZAUDIO_JACK_STATE_REM: 
+		if (sc->sc_icount++ > 2) {
+			if (!pxa2x0_gpio_get_bit(GPIO_HP_IN_C3000)) {
+				sc->sc_state = ZAUDIO_JACK_STATE_OUT;
+				sc->sc_unmute[ZAUDIO_OP_SPKR] = 1;
+				sc->sc_unmute[ZAUDIO_OP_HP] = 0;
+				goto update_mutes;
+			} else
+				sc->sc_state = ZAUDIO_JACK_STATE_IN;
+		}
+		break;
+	}
+	
+	timeout_add(&sc->sc_to, hz/4);
+	return;
+
+update_mutes:
+	timeout_del(&sc->sc_to);
+
+	if (sc->sc_playing) {
+		pxa2x0_i2c_open(&sc->sc_i2c);
+		zaudio_update_mutes(sc);
+		pxa2x0_i2c_close(&sc->sc_i2c);
+	}
 }
 
 void
@@ -705,8 +798,9 @@ int
 zaudio_set_port(void *hdl, struct mixer_ctrl *mc)
 {
 	struct zaudio_softc *sc = hdl;
-	int error = EINVAL;
+	int error = EINVAL, s;
 
+	s = splbio();
 	pxa2x0_i2c_open(&sc->sc_i2c);
 
 	switch (mc->dev) {
@@ -757,6 +851,7 @@ zaudio_set_port(void *hdl, struct mixer_ctrl *mc)
 	}
 
 	pxa2x0_i2c_close(&sc->sc_i2c);
+	splx(s);
 
 	return error;
 }
