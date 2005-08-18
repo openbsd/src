@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.200 2005/08/18 13:05:59 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.201 2005/08/18 13:40:00 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -699,6 +699,10 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  0,
 	  nforce_chip_map
 	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
+	  0,
+	  sata_chip_map
+	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_IDE,
 	  0,
 	  nforce_chip_map
@@ -707,9 +711,21 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  0,
 	  nforce_chip_map
 	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA,
+	  0,
+	  sata_chip_map
+	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
 	  0,
 	  nforce_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE4_SATA1,
+	  0,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE4_SATA2,
+	  0,
+	  sata_chip_map
 	}
 };
 
