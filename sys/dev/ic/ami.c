@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.67 2005/08/17 21:49:14 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.68 2005/08/18 04:49:52 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -148,6 +148,7 @@ int ami_disk(struct ami_softc *, struct bioc_disk *,
 int ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
 int ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
 int ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
+int ami_ioctl_setstate(struct ami_softc *, struct bioc_setstate *);
 #endif /* NBIO > 0 */
 
 struct ami_ccb *
@@ -1819,6 +1820,7 @@ ami_ioctl(dev, cmd, addr)
 	case BIOCVOL:
 	case BIOCDISK:
 	case BIOCALARM:
+	case BIOCSETSTATE:
 		sc->sc_flags |= AMI_CMDWAIT;
 		while (!TAILQ_EMPTY(&sc->sc_ccbq))
 			if (tsleep(&sc->sc_free_ccb, PRIBIO, "ami_ioctl",
@@ -1846,7 +1848,12 @@ ami_ioctl(dev, cmd, addr)
 		AMI_DPRINTF(AMI_D_IOCTL, ("alarm "));
 		error = ami_ioctl_alarm(sc, (struct bioc_alarm *)addr);
 		break;
-		
+
+	case BIOCSETSTATE:
+		AMI_DPRINTF(AMI_D_IOCTL, ("setstate "));
+		error = ami_ioctl_setstate(sc, (struct bioc_setstate *)addr);
+		break;
+
 	default:
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: invalid ioctl\n",
 		    sc->sc_dev.dv_xname));
@@ -2487,7 +2494,7 @@ int ami_ioctl_alarm(sc, ba)
 	default:
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
 		    sc->sc_dev.dv_xname, ba->ba_opcode));
-		error = EINVAL;
+		return (EINVAL);
 	}
 
 	if (ami_mgmt(sc, AMI_SPEAKER, func, 0, 0, sizeof ret, &ret))
@@ -2499,6 +2506,39 @@ int ami_ioctl_alarm(sc, ba)
 			ba->ba_status = 0;
 
 	return (error);
+}
+
+int
+ami_ioctl_setstate(sc, bs)
+	struct ami_softc *sc;
+	struct bioc_setstate *bs;
+{
+	int func;
+
+	switch (bs->bs_status) {
+	case BIOC_SSONLINE:
+		func = AMI_STATE_ON;
+		break;
+
+	case BIOC_SSOFFLINE:
+		func = AMI_STATE_FAIL;
+		break;
+
+	case BIOC_SSHOTSPARE:
+		func = AMI_STATE_SPARE;
+		break;
+
+	default:
+		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocsetstate invalid opcode %x\n"
+		    , sc->sc_dev.dv_xname, bs->bs_status));
+		return (EINVAL);
+	}
+
+	if (ami_mgmt(sc, AMI_CHSTATE, bs->bs_channel, bs->bs_target, func,
+	    0, NULL))
+		return (EINVAL);
+
+	return (0);
 }
 #endif /* NBIO > 0 */
 

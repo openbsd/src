@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.17 2005/08/17 22:28:54 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.18 2005/08/18 04:49:52 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -151,21 +151,31 @@ struct bioc_blink {
 #define BIOC_SBUNBLINK		0x00	/* disable blinking */
 #define BIOC_SBBLINK		0x01	/* enable blink */
 #define BIOC_SBALARM		0x02	/* enable alarm blink */
+
+	u_int16_t	bs_channel;
+	u_int16_t	bs_target;
+	u_int16_t	bs_lun;
+	u_int16_t	bs_other_id;	/* unused for now  */
 };
 
 #define BIOCSETSTATE _IOWR('B', 37, struct bioc_setstate)
 struct bioc_setstate {
 	void		*bs_cookie;
 
-	int		bs_volid;	/* volume */
-	int		bs_diskid;	/* virtual disk */
-	int		bs_status;	/* current status */
+	int		bs_resv1;	/* for binary compatibility */
+	int		bs_resv2;	/* for binary compatibility */
+	int		bs_status;	/* change to this status */
 #define BIOC_SSONLINE		0x00	/* online disk */
 #define BIOC_SSOFFLINE		0x01	/* offline disk */
 #define BIOC_SSHOTSPARE		0x02	/* mark as hotspare */
-	int		bs_resv1;	/* for binary compatibility */
+	int		bs_resv3;	/* for binary compatibility */
 
-	int		bs_resv2;
+	u_int16_t	bs_channel;
+	u_int16_t	bs_target;
+	u_int16_t	bs_lun;
+	u_int16_t	bs_other_id;	/* unused for now  */
+
+	int		bs_resv4;
 };
 
 #define BIOC_INQ		0x0001

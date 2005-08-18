@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.30 2005/08/17 06:31:01 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.31 2005/08/18 04:49:52 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -45,11 +45,22 @@
 #include <ctype.h>
 #include <util.h>
 
+#define CT_SEP	':'
+#define TL_SEP	'.'
+
+struct locator {
+	int channel;
+	int target;
+	int lun;
+};
+
 void usage(void);
+int str2locator(const char *, struct locator *);
 void cleanup(void);
 
 void bio_inq(char *);
 void bio_alarm(char *);
+void bio_setstate(char *);
 
 /* globals */
 const char *bio_device = "/dev/bio";
@@ -74,7 +85,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "ha:Div")) != -1) {
+	while ((ch = getopt(argc, argv, "H:ha:Div")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -82,6 +93,10 @@ main(int argc, char *argv[])
 			break;
 		case 'D': /* debug */
 			debug = 1;
+			break;
+		case 'H': /* set hotspare */
+			func |= BIOC_SETSTATE;
+			al_arg = optarg;
 			break;
 		case 'h':
 			human = 1;
@@ -137,6 +152,8 @@ main(int argc, char *argv[])
 		bio_inq(sd_dev);
 	} else if (func == BIOC_ALARM) {
 		bio_alarm(al_arg);
+	} else if (func == BIOC_SETSTATE) {
+		bio_setstate(al_arg);
 	}
 
 	return (0);
@@ -148,8 +165,40 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-Dhiv] [-a alarm-function] device\n", __progname);
+	    "usage: %s [-Dhiv] [-a alarm-function] [-H channel:target[.lun]] "
+	        "device\n", __progname);
 	exit(1);
+}
+
+int
+str2locator(const char *string, struct locator *location)
+{
+	char *targ, *lun;
+
+	targ = strchr(string, CT_SEP);
+	if (targ == NULL)
+		return (-1);
+
+	*targ++ = '\0';
+
+	lun = strchr(targ, TL_SEP);
+	if (lun != NULL) {
+		*lun++ = '\0';
+		location->lun = strtonum(lun, 0, 256 /* XXX */, NULL);
+		if (errno)
+			return (-1);
+	} else
+		location->lun = 0;
+
+	location->target = strtonum(targ, 0, 256 /* XXX */, NULL);
+	if (errno)
+		return (-1);
+	
+	location->channel = strtonum(string, 0, 256 /* XXX */, NULL);
+	if (errno)
+		return (-1);
+
+	return (0);
 }
 
 void
@@ -338,7 +387,7 @@ bio_alarm(char *arg)
 
 	rv = ioctl(devh, BIOCALARM, &ba);
 	if (rv == -1) {
-		warnx("bioc_ioctl() call failed");
+		warnx("bioc_ioctl(ALARM) call failed");
 		return;
 	}
 
@@ -346,5 +395,28 @@ bio_alarm(char *arg)
 		printf("alarm is currently %s\n",
 		    ba.ba_status ? "enabled" : "disabled");
 
+	}
+}
+
+void bio_setstate(char *arg)
+{
+	int rv;
+	struct bioc_setstate bs;
+	struct locator location;
+
+	if (str2locator(arg, &location) != 0)
+		errx(1, "invalid channel:target[.lun]");
+	
+
+	bs.bs_cookie = bl.bl_cookie;
+	bs.bs_status = BIOC_SSHOTSPARE;
+	bs.bs_channel = location.channel;
+	bs.bs_target = location.target;
+	bs.bs_lun = location.lun;
+
+	rv = ioctl(devh, BIOCSETSTATE, &bs);
+	if (rv == -1) {
+		warnx("bioc_ioctl(BIOCSETSTATE) call failed");
+		return;
 	}
 }
