@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.38 2005/08/06 23:07:13 aanriot Exp $
+.\"	$OpenBSD: release.8,v 1.39 2005/08/18 14:18:55 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -126,14 +126,14 @@ This ensures that any new system calls, for example, will be present
 when needed.
 To build a kernel the steps are:
 .Pp
-.Bl -tag -width 3n -offset indent -compact
-.It Li "$ cd /sys/arch/${ARCH}/conf"
-where
+Change the current working directory.
 .Va ${ARCH}
-is the architecture of your machine, e.g.,
+is the architecture of your machine, e.g.\&
 .Li i386 .
-.It Li "$ vi ${NAME}"
-where
+.Pp
+.Dl $ cd /sys/arch/${ARCH}/conf
+.Pp
+Edit the kernel configuration file.
 .Va ${NAME}
 is your kernel configuration file.
 You should
@@ -145,19 +145,29 @@ If using
 .Li GENERIC
 you can skip this step.
 And yes, you may use
-.Li vi ,
-.Li mg ,
+.Xr vi 1 ,
+.Xr mg 1 ,
 or any other editor you choose.
-.It Li "$ config ${NAME}"
-.It Li "$ cd ../compile/${NAME}"
-.It Li "$ make clean depend bsd"
-In this instance
+.Pp
+.Dl $ vi ${NAME}
+.Pp
+Build the kernel compilation directory and compile the kernel:
+.Bd -literal -offset indent
+$ config ${NAME}
+$ cd ../compile/${NAME}
+$ make clean depend bsd
+.Ed
+.Pp
+(In this instance
 .Li "make clean"
-is your friend.
-.It Li "$ su"
-.It Li "# mv /bsd /bsd.old && mv bsd / && chown root:wheel /bsd"
-.It Li "# shutdown -r now"
-.El
+is your friend.)
+.Pp
+Replace the old kernel and reboot:
+.Bd -literal -offset indent
+$ su
+# mv /bsd /bsd.old && mv bsd / && chown root:wheel /bsd
+# shutdown -r now
+.Ed
 .Pp
 If the system does not come up you can boot using
 .Pa bsd.old .
@@ -167,32 +177,39 @@ It's safer (but slower) to remove your object directories and re-create
 them before the build.
 The steps are:
 .Pp
-.Bl -tag -width 3n -offset indent -compact
-.It Li "$ cd /usr/obj && mkdir -p .old && sudo mv * .old && \e"
-.It Li "sudo rm -rf .old &"
-This moves all your existing object files out of the way and then removes
-them in the background.
-.It Li "$ cd /usr/src && nice make obj"
-This re-builds your obj directories.
-.It Li "$ cd /usr/src/etc && env DESTDIR=/ sudo make distrib-dirs"
-This creates directories that might be missing.
-.It Li "$ su"
-.It Li "# cd /usr/src && nice make build"
+Move all your existing object files out of the way and then remove
+them in the background:
+.Bd -literal -offset indent
+$ cd /usr/obj && mkdir -p .old && sudo mv * .old && \e
+	sudo rm -rf .old &
+.Ed
+.Pp
+Re-build your obj directories:
+.Pp
+.Dl $ cd /usr/src && nice make obj
+.Pp
+Create directories that might be missing:
+.Pp
+.Dl $ cd /usr/src/etc && env DESTDIR=/ sudo make distrib-dirs
+.Pp
+Begin the build:
+.Bd -literal -offset indent
+$ su
+# cd /usr/src && nice make build
+.Ed
+.Pp
 If you have set
 .Xr sudo 8
 up, you can combine this with the previous step using the command
-.Bd -literal -offset indent -compact
-nice make SUDO=sudo build
-.Ed
-.El
-.Bd -filled -offset indent -compact
+.Pp
+.Dl # nice make SUDO=sudo build
+.Pp
 Update
 .Pa /etc ,
 .Pa /var ,
 and
 .Pa /dev/MAKEDEV
 by hand.
-.Ed
 .Pp
 At this point your system is up-to-date and running the code that you
 are going to make into a release.
@@ -235,15 +252,19 @@ The floppy and
 images require a special tool which is created first.
 The release process is:
 .Pp
-.Bl -tag -width 3n -offset indent -compact
-.It Li "$ su"
-You must be root to create a release.
-.It Li "# cd /usr/src/distrib/crunch && make obj depend all install"
-Create the special tools needed to build the release.
-.It Li "# export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir"
-.It Li "# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && \e"
-.It Li "rm -rf ${DESTDIR}- &"
-.It Li "# mkdir -p ${DESTDIR} ${RELEASEDIR}"
+You must be root to create a release:
+.Pp
+.Dl $ su
+.Pp
+Create the special tools needed to build the release:
+.Bd -literal -offset indent
+# cd /usr/src/distrib/crunch && make obj depend all install
+# export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
+# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && \e
+	rm -rf ${DESTDIR}- &
+# mkdir -p ${DESTDIR} ${RELEASEDIR}
+.Ed
+.Pp
 The last two steps ensure
 .Va ${DESTDIR}
 exists as an empty directory and
@@ -251,14 +272,16 @@ exists as an empty directory and
 exists.
 .Va ${RELEASEDIR}
 need not be empty.
-.It Li "# cd /usr/src/etc && nice make release"
-.It Li "# cd /usr/src/distrib/sets && sh checkflist"
-This checks that the contents of
+.Pp
+Check that the contents of
 .Va ${DESTDIR}
 pretty much match the contents of the release
-.Sq tarballs .
-.It Li "# unset RELEASEDIR DESTDIR"
-.El
+.Sq tarballs :
+.Bd -literal -offset indent
+# cd /usr/src/etc && nice make release
+# cd /usr/src/distrib/sets && sh checkflist
+# unset RELEASEDIR DESTDIR
+.Ed
 .Pp
 At this point you have most of an
 .Ox
