@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.65 2005/08/18 18:40:51 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4829,9 +4829,9 @@ ENTRY(proc_trampoline)
 	 */
 	mov	PSR_S, %l0		! user psr (no need to load it)
 	!?wr	%g0, 2, %wim		! %wim = 2
-	ld	[%sp + CCFSZ + 8], %l1	! pc = tf->tf_npc from execve/fork
+	ld	[%sp + CCFSZ + 4], %l1	! pc
 	b	return_from_syscall
-	 add	%l1, 4, %l2		! npc = pc+4
+	 ld	[%sp + CCFSZ + 8], %l2	! npc
 
 /* probeget and probeset are meant to be used during autoconfiguration */
 
