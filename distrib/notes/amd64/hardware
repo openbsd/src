@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.59 2005/08/18 13:58:15 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.60 2005/08/18 14:09:08 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -37,7 +37,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		ITE IT8212F (RAID mode is not supported)
 		National Semiconductor PC87415
 		National Semiconductor SCx200 (found on SC1100 SoC)
-		NVIDIA nForce/nForce2/nForce3/nForce3-250
+		NVIDIA nForce/nForce2/nForce2-400/nForce3/nForce3-250/nForce4
 		Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268,
 		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276,
 		    PDC20277, PDC20376 (RAID mode is not supported)
