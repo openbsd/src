@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.33 2005/08/18 12:53:22 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.34 2005/08/18 14:40:37 dlg Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -45,9 +45,6 @@
 #include <ctype.h>
 #include <util.h>
 
-#define CT_SEP	':'
-#define TL_SEP	'.'
-
 struct locator {
 	int channel;
 	int target;
@@ -61,7 +58,8 @@ void cleanup(void);
 void bio_inq(char *);
 void bio_alarm(char *);
 void bio_setstate(char *);
-void bio_blink(char *);
+void bio_setblink(char *, char *);
+void bio_blink(char *, int);
 
 /* globals */
 const char *bio_device = "/dev/bio";
@@ -159,7 +157,7 @@ main(int argc, char *argv[])
 	} else if (func == BIOC_ALARM) {
 		bio_alarm(al_arg);
 	} else if (func == BIOC_BLINK) {
-		bio_blink(bl_arg);
+		bio_setblink(sd_dev, bl_arg);
 	} else if (func == BIOC_SETSTATE) {
 		bio_setstate(al_arg);
 	}
@@ -180,29 +178,30 @@ usage(void)
 int
 str2locator(const char *string, struct locator *location)
 {
+	const char *errstr;
 	char *targ, *lun;
 
-	targ = strchr(string, CT_SEP);
+	targ = strchr(string, ':');
 	if (targ == NULL)
 		return (-1);
 
 	*targ++ = '\0';
 
-	lun = strchr(targ, TL_SEP);
+	lun = strchr(targ, '.');
 	if (lun != NULL) {
 		*lun++ = '\0';
-		location->lun = strtonum(lun, 0, 256, NULL);
-		if (errno)
+		location->lun = strtonum(lun, 0, 256, &errstr);
+		if (errstr)
 			return (-1);
 	} else
 		location->lun = 0;
 
-	location->target = strtonum(targ, 0, 256, NULL);
-	if (errno)
+	location->target = strtonum(targ, 0, 256, &errstr);
+	if (errstr)
 		return (-1);
 
-	location->channel = strtonum(string, 0, 256, NULL);
-	if (errno)
+	location->channel = strtonum(string, 0, 256, &errstr);
+	if (errstr)
 		return (-1);
 
 	return (0);
@@ -429,22 +428,92 @@ bio_setstate(char *arg)
 }
 
 void
-bio_blink(char *arg)
+bio_setblink(char *name, char *arg)
 {
-	struct bioc_blink blink;
-	const char *errstr;
-	int target, rv;
+	struct locator			location;
+	struct bioc_inq			bi;
+	struct bioc_vol			bv;
+	struct bioc_disk		bd;
+	int				v, d, rv;
 
-	target = strtonum(arg, 0, 255, &errstr);
-	if (errstr != NULL)
-		errx(1, "target is %s", errstr);
+	if (str2locator(arg, &location) != 0)
+		errx(1, "invalid channel:target[.lun]");
+
+	memset(&bi, 0, sizeof(bi));
+	bi.bi_cookie = bl.bl_cookie;
+	rv = ioctl(devh, BIOCINQ, &bi);
+	if (rv == -1) {
+		warn("bio ioctl(BIOCINQ) call failed");
+		return;
+	}
+
+	for (v = 0; v < bi.bi_novol; v++) {
+		memset(&bv, 0, sizeof(bv));
+		bv.bv_cookie = bl.bl_cookie;
+		bv.bv_volid = v;
+		rv = ioctl(devh, BIOCVOL, &bv);
+		if (rv == -1) {
+			warn("bio ioctl(BIOCVOL) call failed");
+			return;
+		}
+
+		if (name && strcmp(name, bv.bv_dev) != 0)
+			continue;
+
+		for (d = 0; d < bv.bv_nodisk; d++) {
+			memset(&bd, 0, sizeof(bd));
+			bd.bd_cookie = bl.bl_cookie;
+			bd.bd_volid = v;
+			bd.bd_diskid = d;
+
+			rv = ioctl(devh, BIOCDISK, &bd);
+			if (rv == -1) {
+				warn("bio ioctl(BIOCDISK) call failed");
+				return;
+			}
+
+			if (bd.bd_channel == location.channel &&
+			    bd.bd_target == location.target &&
+			    bd.bd_lun == location.lun) {
+				if (bd.bd_procdev[0] != '\0') {
+					bio_blink(bd.bd_procdev,
+					    location.target);
+				} else
+					warnx("Disk is not in an enclosure");
+				return;
+			}
+		}
+	}
+
+	warnx("Disk does not exist");
+	return;
+}
+
+void
+bio_blink(char *enclosure, int target)
+{
+	int			bioh;
+	struct bio_locate	bio;
+	struct bioc_blink	blink;
+	int			rv;
+
+	bioh = open(bio_device, O_RDWR);
+	if (bioh == -1)
+		err(1, "Can't open %s", bio_device);
+
+	bio.bl_name = enclosure;
+	rv = ioctl(bioh, BIOCLOCATE, &bio);
+	if (rv == -1)
+		errx(1, "Can't locate %s device via %s", enclosure, bio_device);
 
 	memset(&blink, 0, sizeof(blink));
-	blink.bb_cookie = bl.bl_cookie;
+	blink.bb_cookie = bio.bl_cookie;
 	blink.bb_status = BIOC_SBBLINK;
 	blink.bb_target = target;
 
-	rv = ioctl(devh, BIOCBLINK, &blink);
+	rv = ioctl(bioh, BIOCBLINK, &blink);
 	if (rv == -1)
-		err(1, "blink unable to be set");
+		warn("bio ioctl(BIOCBLINK) call failed");
+
+	close(bioh);
 }
