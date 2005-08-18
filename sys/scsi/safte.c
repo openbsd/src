@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.11 2005/08/17 00:07:08 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.12 2005/08/18 09:51:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "bio.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -29,6 +31,10 @@
 #include <sys/queue.h>
 #include <sys/kthread.h>
 #include <sys/sensors.h>
+
+#if NBIO > 0
+#include <dev/biovar.h>
+#endif
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -77,6 +83,11 @@ struct safte_softc {
 	struct safte_sensor	*sc_temps;
 	u_int16_t		*sc_temperrs;
 
+#if NBIO > 0
+	int			sc_nslots;
+	u_int8_t		*sc_slots;
+#endif
+
 	struct safte_thread	*sc_thread;
 };
 
@@ -99,6 +110,11 @@ void	safte_create_thread(void *);
 void	safte_refresh(void *);
 int	safte_read_config(struct safte_softc *);
 int	safte_read_encstat(struct safte_softc *);
+
+#if NBIO > 0
+int	safte_ioctl(struct device *, u_long, caddr_t);
+int	safte_bio_blink(struct safte_softc *, struct bioc_blink *);
+#endif
 
 int64_t	safte_temp2uK(u_int8_t, int);
 
@@ -165,14 +181,24 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_thread->sc = sc;
 	sc->sc_thread->running = 1;
 
+#if NBIO > 0
+	if (bio_register(self, safte_ioctl) != 0) {
+		free(sc->sc_thread, M_DEVBUF);
+		printf("%s: unable to register ioctl with bio\n", DEVNAME(sc));
+		return;
+	}
+#endif
+
 	if (safte_read_config(sc) != 0) {
+#if NBIO > 0
+		bio_unregister(self);
+#endif
 		free(sc->sc_thread, M_DEVBUF);
 		sc->sc_thread = NULL;
 		printf("%s: unable to read enclosure configuration\n",
 		    DEVNAME(sc));
 		return;
 	}
-
 
 	kthread_create_deferred(safte_create_thread, sc);
 }
@@ -187,6 +213,10 @@ safte_detach(struct device *self, int flags)
 		sc->sc_thread->running = 0;
 		wakeup(sc->sc_thread);
 		sc->sc_thread = NULL;
+
+#if NBIO > 0
+		bio_unregister(self);
+#endif
 
 		/*
 		 * we can't free the sensors since there is no mechanism to
@@ -313,7 +343,13 @@ safte_read_config(struct safte_softc *sc)
 
 		s++;
 	}
-	j += config.npwrsup + config.nslots; /* skip the slots for now */
+	j += config.npwrsup;
+
+#if NBIO > 0
+	sc->sc_nslots = config.nslots;
+	sc->sc_slots = (u_int8_t *)(sc->sc_encbuf + j);
+#endif
+	j += config.nslots;
 
 	if (config.doorlock) {
 		s->se_type = SAFTE_T_DOORLOCK;
@@ -488,6 +524,74 @@ safte_read_encstat(struct safte_softc *sc)
 
 	return(0);
 }
+
+#if NBIO > 0
+int
+safte_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	struct safte_softc		*sc = (struct safte_softc *)dev;
+	int				error = 0;
+
+	switch (cmd) {
+	case BIOCBLINK:
+		error = safte_bio_blink(sc, (struct bioc_blink *)addr);
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return (error);
+}
+
+int
+safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
+{
+	struct safte_writebuf_cmd	cmd;
+	struct safte_slotop		*op;
+	int				slot;
+	int				flags;
+
+	if (blink->bb_status != BIOC_SBBLINK)
+		return (EINVAL);
+
+	for (slot = 0; slot < sc->sc_nslots; slot++) {
+		if (sc->sc_slots[slot] == blink->bb_target)
+			break;
+	}
+
+	if (slot >= sc->sc_nslots)
+		return (ENODEV);
+
+	op = malloc(sizeof(struct safte_slotop), M_TEMP, 0);
+
+	memset(op, 0, sizeof(struct safte_slotop));
+	op->opcode = SAFTE_WRITE_SLOTOP;
+	op->slot = slot;
+	op->flags |= SAFTE_SLOTOP_IDENTIFY;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = WRITE_BUFFER;
+	cmd.flags |= SAFTE_WR_MODE;
+	cmd.length = htobe16(sizeof(struct safte_slotop));
+	flags = SCSI_DATA_OUT;
+#ifndef SCSIDEBUG
+	flags |= SCSI_SILENT;
+#endif
+
+	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
+	    sizeof(cmd), (u_char *)op, sizeof(struct safte_slotop),
+	    2, 30000, NULL, flags) != 0) {
+		free(op, M_TEMP);
+		return (EIO);
+	}
+
+	free(op, M_TEMP);
+
+	return (0);
+}
+#endif /* NBIO > 0 */
 
 int64_t
 safte_temp2uK(u_int8_t measured, int celsius)

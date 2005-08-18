@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.h,v 1.3 2005/08/11 12:57:13 dlg Exp $ */
+/*	$OpenBSD: safte.h,v 1.4 2005/08/18 09:51:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Daivd Gwynne <dlg@openbsd.org>
@@ -47,6 +47,17 @@ struct safte_readbuf_cmd {
 #define SAFTE_RD_SLOTSTAT	0x04	/* slot status */
 #define SAFTE_RD_GLOBALS	0x05	/* global flags */
 	u_int32_t	reserved1;
+	u_int16_t	length;		/* transfer length (big endian) */
+	u_int8_t	reserved2;
+} __packed;
+
+struct safte_writebuf_cmd {
+	u_int8_t	opcode;		/* WRITE_BUFFER */
+	u_int8_t	flags;
+#define SAFTE_WR_LUNMASK	0xe0	/* the lun should always be 0 */
+#define SAFTE_WR_MODEMASK	0x07
+#define SAFTE_WR_MODE		0x01	/* 0x01 is the SAF-TE command mode */
+	u_int8_t	reserved1[5];
 	u_int16_t	length;		/* transfer length (big endian) */
 	u_int8_t	reserved2;
 } __packed;
@@ -150,5 +161,17 @@ struct safte_globals {
 	u_int8_t	flags3;
 	u_int8_t	reserved[13];
 };
+
+
+/*  perform slot operation */
+struct safte_slotop {
+	u_int8_t	opcode;		/* SAFTE_WRITE_SLOTOP */
+	u_int8_t	slot;
+	u_int8_t	flags;
+#define SAFTE_SLOTOP_OPERATE	(1<<0)	/* prepare for operation */
+#define SAFTE_SLOTOP_INSREM	(1<<1)	/* prepare for insert/removal */
+#define SAFTE_SLOTOP_IDENTIFY	(1<<2)	/* identify */
+	u_int8_t	reserved[61];	/* zero these */
+} __packed;
 
 #endif /* _SCSI_SAFTE_H_ */
