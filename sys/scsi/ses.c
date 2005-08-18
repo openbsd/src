@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.21 2005/08/13 01:38:19 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.22 2005/08/18 12:26:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "bio.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -27,6 +29,10 @@
 #include <sys/queue.h>
 #include <sys/kthread.h>
 #include <sys/sensors.h>
+
+#if NBIO > 0
+#include <dev/biovar.h>
+#endif
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -55,6 +61,14 @@ struct ses_sensor {
 	TAILQ_ENTRY(ses_sensor)	se_entry;
 };
 
+#if NBIO > 0
+struct ses_slot {
+	struct ses_status	*sl_stat;
+
+	TAILQ_ENTRY(ses_slot)	sl_entry;
+};
+#endif
+
 struct ses_thread;
 
 struct ses_softc {
@@ -69,6 +83,9 @@ struct ses_softc {
 	u_char			*sc_buf;
 	ssize_t			sc_buflen;
 
+#if NBIO > 0
+	TAILQ_HEAD(, ses_slot)	sc_slots;
+#endif
 	TAILQ_HEAD(, ses_sensor) sc_sensors;
 	struct ses_thread	*sc_thread;
 };
@@ -97,6 +114,12 @@ int	ses_read_config(struct ses_softc *);
 int	ses_read_status(struct ses_softc *, int);
 int	ses_make_sensors(struct ses_softc *, struct ses_type_desc *, int);
 int	ses_refresh_sensors(struct ses_softc *);
+
+#if NBIO > 0
+int	ses_ioctl(struct device *, u_long, caddr_t);
+int	ses_write_config(struct ses_softc *);
+int	ses_bio_blink(struct ses_softc *, struct bioc_blink *);
+#endif
 
 void	ses_psu2sensor(struct ses_softc *, struct ses_sensor *);
 void	ses_cool2sensor(struct ses_softc *, struct ses_sensor *);
@@ -158,7 +181,19 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_thread->sc = sc;
 	sc->sc_thread->running = 1;
 
+#if NBIO > 0
+	if (bio_register(self, ses_ioctl) != 0) {
+		free(sc->sc_thread, M_DEVBUF);
+		sc->sc_thread = NULL;
+		printf("%s: unable to register ioctl\n", DEVNAME(sc));
+		return;
+	}
+#endif
+
 	if (ses_read_config(sc) != 0) {
+#if NBIO > 0
+		bio_unregister(self);
+#endif
 		free(sc->sc_thread, M_DEVBUF);
 		sc->sc_thread = NULL;
 		printf("%s: unable to read enclosure configuration\n",
@@ -174,11 +209,24 @@ ses_detach(struct device *self, int flags)
 {
 	struct ses_softc		*sc = (struct ses_softc *)self;
 	struct ses_sensor		*sensor;
+#if NBIO > 0
+	struct ses_slot			*slot;
+#endif
 
 	if (sc->sc_thread != NULL) {
 		sc->sc_thread->running = 0;
 		wakeup(sc->sc_thread);
 		sc->sc_thread = NULL;
+
+#if NBIO > 0
+		bio_unregister(self);
+
+		while (!TAILQ_EMPTY(&sc->sc_slots)) {
+			slot = TAILQ_FIRST(&sc->sc_slots);
+			TAILQ_REMOVE(&sc->sc_slots, slot, sl_entry);
+			free(slot, M_DEVBUF);
+		}
+#endif
 
 		/*
 		 * We can't free the sensors once theyre in the systems sensor
@@ -212,15 +260,14 @@ ses_refresh(void *arg)
 	while (thread->running) {
 		if (ses_refresh_sensors(sc) != 0) {
 			if (ok)
-				printf("%s: error reading enclosure status\n",
-				    DEVNAME(sc));
+				printf("%s: status read error\n", DEVNAME(sc));
 			ok = 0;
 		} else {
 			if (!ok)
-				printf("%s: reading enclosure status\n",
-				    DEVNAME(sc));
+				printf("%s: status read ok\n", DEVNAME(sc));
 			ok = 1;
 		}
+
 		tsleep(thread, PWAIT, "timeout", 10 * hz);
 	}
 
@@ -362,6 +409,9 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 {
 	struct ses_status		*status;
 	struct ses_sensor		*sensor;
+#if NBIO > 0
+	struct ses_slot			*slot;
+#endif
 	enum sensor_type		stype;
 	char				*fmt;
 	int				typecnt[SES_NUM_TYPES];
@@ -372,6 +422,9 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 
 	memset(typecnt, 0, sizeof(typecnt));
 	TAILQ_INIT(&sc->sc_sensors);
+#if NBIO > 0
+	TAILQ_INIT(&sc->sc_slots);
+#endif
 
 	status = (struct ses_status *)(sc->sc_buf + SES_STAT_HDRLEN);
 	for (i = 0; i < ntypes; i++) {
@@ -392,6 +445,22 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 				continue;
 
 			switch (types[i].type) {
+#if NBIO > 0
+			case SES_T_DEVICE:
+				slot = malloc(sizeof(struct ses_slot),
+				    M_DEVBUF, M_NOWAIT);
+				if (slot == NULL)
+					goto error;
+
+				memset(slot, 0, sizeof(struct ses_slot));
+				slot->sl_stat = status;
+
+				TAILQ_INSERT_TAIL(&sc->sc_slots, slot,
+				    sl_entry);
+
+				continue;
+#endif
+
 			case SES_T_POWERSUPPLY:
 				stype = SENSOR_INDICATOR;
 				fmt = "psu%d";
@@ -437,6 +506,13 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 		SENSOR_ADD(&sensor->se_sensor);
 	return (0);
 error:
+#if NBIO > 0
+	while (!TAILQ_EMPTY(&sc->sc_slots)) {
+		slot = TAILQ_FIRST(&sc->sc_slots);
+		TAILQ_REMOVE(&sc->sc_slots, slot, sl_entry);
+		free(slot, M_DEVBUF);
+	}
+#endif
 	while (!TAILQ_EMPTY(&sc->sc_sensors)) {
 		sensor = TAILQ_FIRST(&sc->sc_sensors);
 		TAILQ_REMOVE(&sc->sc_sensors, sensor, se_entry);
@@ -502,6 +578,94 @@ ses_refresh_sensors(struct ses_softc *sc)
 
 	return (ret);
 }
+
+#if NBIO > 0
+int
+ses_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	struct ses_softc		*sc = (struct ses_softc *)dev;
+	int				error = 0;
+
+	switch (cmd) {
+	case BIOCBLINK:
+		error = ses_bio_blink(sc, (struct bioc_blink *)addr);
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return (error);
+}
+
+int
+ses_write_config(struct ses_softc *sc)
+{
+	struct ses_scsi_diag		cmd;
+	int				flags;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = SEND_DIAGNOSTIC;
+	cmd.flags |= SES_DIAG_PCV;
+	cmd.length = htobe16(sc->sc_buflen);
+	flags = SCSI_DATA_OUT;
+#ifndef SCSIDEBUG
+	flags |= SCSI_SILENT;
+#endif
+
+	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
+	    sizeof(cmd), sc->sc_buf, sc->sc_buflen, 2, 3000, NULL, flags) != 0)
+		return (1);
+
+	return (0);
+}
+
+int
+ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
+{
+#if notyet
+	struct ses_slot			*slot;
+
+	/* XXX isnt strictly needed? */
+	if (ses_read_status(sc, 1) != 0)
+		return (EIO);
+
+	TAILQ_FOREACH(slot, &sc->sc_slots, sl_entry) {
+		if (SES_S_DEV_ADDR(slot->sl_stat) == blink->bb_target)
+			break;
+	}
+
+	if (slot == TAILQ_END(&sc->sc_slots))
+		return (EINVAL);
+
+	/* zero out the config fields */
+	/* XXX previous config is lost */
+	slot->sl_stat->f2 = 0x00;
+	slot->sl_stat->f3 = 0x00;
+
+	switch (blink->bb_status) {
+	case BIOC_SBUNBLINK:
+		break;
+
+	case BIOC_SBBLINK:
+		SES_C_DEV_IDENT(slot->sl_stat);
+		break;
+
+	case BIOC_SBALARM:
+		SES_C_DEV_FAULT(slot->sl_stat);
+		break;
+
+	default:
+		return (EINVAL);
+	}
+
+	if (ses_write_config(sc) != 0)
+		return (EIO);
+#endif /* notyet */
+	return (0);
+}
+#endif
 
 void
 ses_psu2sensor(struct ses_softc *sc, struct ses_sensor *s)
