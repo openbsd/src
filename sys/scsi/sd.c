@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.84 2005/08/17 02:17:51 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.85 2005/08/18 22:59:21 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1394,6 +1394,25 @@ sd_get_parms(sd, dp, flags)
 		dp->blksize = ssblksize;
 	else
 		dp->blksize = (blksize == 0) ? 512 : blksize;
+
+	/*
+	 * Restrict blksize values to powers of two between 512 and 64k.
+	 */
+	switch (dp->blksize) {
+	case 0x200:	/* == 512, == DEV_BSIZE on all architectures. */
+	case 0x400:
+	case 0x800:
+	case 0x1000:
+	case 0x2000:
+	case 0x4000:
+	case 0x8000:
+	case 0x10000:
+		break;
+	default:
+		SC_DEBUG(sd->sc_link, SDEV_DB1,
+		    ("sd_get_parms: bad blksize: %#x\n", dp->blksize));
+		return (SDGP_RESULT_OFFLINE);
+	}
 
 	/*
 	 * Use Adaptec standard geometry values for anything we still don't
