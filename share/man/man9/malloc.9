@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.34 2005/08/06 17:04:07 miod Exp $
+.\"	$OpenBSD: malloc.9,v 1.35 2005/08/18 14:32:23 dlg Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,20 +89,21 @@ argument further qualifies
 .Fn malloc Ns 's
 operational characteristics as follows:
 .Bl -tag -width xxx -offset indent
+.It Dv M_WAITOK
+This is defined to be 0, and is therefore most useful as an aid to code
+readability.
+In effect, it is the same as having no other
+.Fa flags
+specified.
+If memory is currently unavailable,
+.Fn malloc
+may call sleep to wait for resources to be released by other processes.
 .It Dv M_NOWAIT
 Causes
 .Fn malloc
 to return
 .Dv NULL
 if the request cannot be immediately fulfilled due to resource shortage.
-Otherwise,
-.Fn malloc
-may call sleep to wait for resources to be released by other processes.
-Note that
-.Dv M_WAITOK
-is conveniently defined to be 0, and hence may be or'ed into the
-.Fa flags
-argument to indicate that it's OK to wait for resources.
 .It Dv M_CANFAIL
 In the
 .Dv M_WAITOK
