@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.499 2005/08/11 05:09:29 joel Exp $ */
+/*	$OpenBSD: pf.c,v 1.500 2005/08/18 10:28:13 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -212,7 +212,7 @@ int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
 static int		 pf_add_mbuf_tag(struct mbuf *, u_int);
 struct pf_state		*pf_find_state_recurse(struct pfi_kif *,
-			    struct pf_state *, u_int8_t);
+			    struct pf_state_cmp *, u_int8_t);
 int			 pf_src_connlimit(struct pf_state **);
 int			 pf_check_congestion(struct ifqueue *);
 
@@ -524,14 +524,14 @@ pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 #endif /* INET6 */
 
 struct pf_state *
-pf_find_state_byid(struct pf_state *key)
+pf_find_state_byid(struct pf_state_cmp *key)
 {
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
-	return (RB_FIND(pf_state_tree_id, &tree_id, key));
+	return (RB_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
 }
 
 struct pf_state *
-pf_find_state_recurse(struct pfi_kif *kif, struct pf_state *key, u_int8_t tree)
+pf_find_state_recurse(struct pfi_kif *kif, struct pf_state_cmp *key, u_int8_t tree)
 {
 	struct pf_state *s;
 
@@ -540,18 +540,18 @@ pf_find_state_recurse(struct pfi_kif *kif, struct pf_state *key, u_int8_t tree)
 	switch (tree) {
 	case PF_LAN_EXT:
 		if ((s = RB_FIND(pf_state_tree_lan_ext, &kif->pfik_lan_ext,
-		    key)) != NULL)
+		    (struct pf_state *)key)) != NULL)
 			return (s);
 		if ((s = RB_FIND(pf_state_tree_lan_ext, &pfi_all->pfik_lan_ext,
-		    key)) != NULL)
+		    (struct pf_state *)key)) != NULL)
 			return (s);
 		return (NULL);
 	case PF_EXT_GWY:
 		if ((s = RB_FIND(pf_state_tree_ext_gwy, &kif->pfik_ext_gwy,
-		    key)) != NULL)
+		    (struct pf_state *)key)) != NULL)
 			return (s);
 		if ((s = RB_FIND(pf_state_tree_ext_gwy, &pfi_all->pfik_ext_gwy,
-		    key)) != NULL)
+		    (struct pf_state *)key)) != NULL)
 			return (s);
 		return (NULL);
 	default:
@@ -560,7 +560,7 @@ pf_find_state_recurse(struct pfi_kif *kif, struct pf_state *key, u_int8_t tree)
 }
 
 struct pf_state *
-pf_find_state_all(struct pf_state *key, u_int8_t tree, int *more)
+pf_find_state_all(struct pf_state_cmp *key, u_int8_t tree, int *more)
 {
 	struct pf_state *s, *ss = NULL;
 	struct pfi_kif	*kif;
@@ -571,7 +571,7 @@ pf_find_state_all(struct pf_state *key, u_int8_t tree, int *more)
 	case PF_LAN_EXT:
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
 			s = RB_FIND(pf_state_tree_lan_ext,
-			    &kif->pfik_lan_ext, key);
+			    &kif->pfik_lan_ext, (struct pf_state *)key);
 			if (s == NULL)
 				continue;
 			if (more == NULL)
@@ -583,7 +583,7 @@ pf_find_state_all(struct pf_state *key, u_int8_t tree, int *more)
 	case PF_EXT_GWY:
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states) {
 			s = RB_FIND(pf_state_tree_ext_gwy,
-			    &kif->pfik_ext_gwy, key);
+			    &kif->pfik_ext_gwy, (struct pf_state *)key);
 			if (s == NULL)
 				continue;
 			if (more == NULL)
@@ -2153,7 +2153,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
     struct pf_addr *naddr, u_int16_t *nport, u_int16_t low, u_int16_t high,
     struct pf_src_node **sn)
 {
-	struct pf_state		key;
+	struct pf_state_cmp	key;
 	struct pf_addr		init_addr;
 	u_int16_t		cut;
 
@@ -3978,7 +3978,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
     struct mbuf *m, int off, void *h, struct pf_pdesc *pd,
     u_short *reason)
 {
-	struct pf_state		 key;
+	struct pf_state_cmp	 key;
 	struct tcphdr		*th = pd->hdr.tcp;
 	u_int16_t		 win = ntohs(th->th_win);
 	u_int32_t		 ack, end, seq, orig_seq;
@@ -4415,7 +4415,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct pfi_kif *kif,
     struct mbuf *m, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_state_peer	*src, *dst;
-	struct pf_state		 key;
+	struct pf_state_cmp	 key;
 	struct udphdr		*uh = pd->hdr.udp;
 
 	key.af = pd->af;
@@ -4479,7 +4479,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 	u_int16_t	 icmpid, *icmpsum;
 	u_int8_t	 icmptype;
 	int		 state_icmp = 0;
-	struct pf_state	 key;
+	struct pf_state_cmp key;
 
 	switch (pd->proto) {
 #ifdef INET
@@ -5038,7 +5038,7 @@ pf_test_state_other(struct pf_state **state, int direction, struct pfi_kif *kif,
     struct pf_pdesc *pd)
 {
 	struct pf_state_peer	*src, *dst;
-	struct pf_state		 key;
+	struct pf_state_cmp	 key;
 
 	key.af = pd->af;
 	key.proto = pd->proto;

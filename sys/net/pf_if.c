@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.42 2005/08/07 11:35:59 pascoe Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.43 2005/08/18 10:28:14 pascoe Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -102,11 +102,12 @@ pfi_initialize(void)
 struct pfi_kif *
 pfi_kif_get(const char *kif_name)
 {
-	struct pfi_kif	s, *kif;
+	struct pfi_kif		*kif;
+	struct pfi_kif_cmp	 s;
 
 	bzero(&s, sizeof(s));
 	strlcpy(s.pfik_name, kif_name, sizeof(s.pfik_name));
-	if ((kif = RB_FIND(pfi_ifhead, &pfi_ifs, &s)) != NULL)
+	if ((kif = RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&s)) != NULL)
 		return (kif);
 
 	/* create new one */
@@ -606,12 +607,13 @@ pfi_if_compare(struct pfi_kif *p, struct pfi_kif *q)
 void
 pfi_fill_oldstatus(struct pf_status *pfs)
 {
-	struct pfi_kif	*p, key;
-	int		 i, j, k, s;
+	struct pfi_kif		*p;
+	struct pfi_kif_cmp 	 key;
+	int			 i, j, k, s;
 
 	strlcpy(key.pfik_name, pfs->ifname, sizeof(key.pfik_name));
 	s = splsoftnet();
-	p = RB_FIND(pfi_ifhead, &pfi_ifs, &key);
+	p = RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&key);
 	if (p == NULL) {
 		splx(s);
 		return;

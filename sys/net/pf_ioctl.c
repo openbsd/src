@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.155 2005/08/12 04:15:38 pascoe Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.156 2005/08/18 10:28:14 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1903,7 +1903,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCNATLOOK: {
 		struct pfioc_natlook	*pnl = (struct pfioc_natlook *)addr;
 		struct pf_state		*state;
-		struct pf_state		 key;
+		struct pf_state_cmp	 key;
 		int			 m = 0, direction = pnl->direction;
 
 		key.af = pnl->af;

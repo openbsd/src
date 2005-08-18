@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.53 2005/08/16 11:22:43 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.54 2005/08/18 10:28:13 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -277,7 +277,8 @@ pfsync_input(struct mbuf *m, ...)
 	struct ip *ip = mtod(m, struct ip *);
 	struct pfsync_header *ph;
 	struct pfsync_softc *sc = &pfsyncif;
-	struct pf_state *st, key;
+	struct pf_state *st;
+	struct pf_state_cmp key;
 	struct pfsync_state *sp;
 	struct pfsync_state_upd *up;
 	struct pfsync_state_del *dp;

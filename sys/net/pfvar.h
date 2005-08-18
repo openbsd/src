@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.228 2005/08/11 05:09:30 joel Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.229 2005/08/18 10:28:14 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -673,8 +673,36 @@ struct pf_state_peer {
 
 TAILQ_HEAD(pf_state_queue, pf_state);
 
+/* keep synced with struct pf_state, used in RB_FIND */
+struct pf_state_cmp {
+	u_int64_t	 id;
+	u_int32_t	 creatorid;
+	struct pf_state_host lan;
+	struct pf_state_host gwy;
+	struct pf_state_host ext;
+	sa_family_t	 af;
+	u_int8_t	 proto;
+	u_int8_t	 direction;
+	u_int8_t	 pad;
+};
+
 struct pf_state {
 	u_int64_t	 id;
+	u_int32_t	 creatorid;
+	struct pf_state_host lan;
+	struct pf_state_host gwy;
+	struct pf_state_host ext;
+	sa_family_t	 af;
+	u_int8_t	 proto;
+	u_int8_t	 direction;
+	u_int8_t	 pad;
+	u_int8_t	 log;
+	u_int8_t	 allow_opts;
+	u_int8_t	 timeout;
+	u_int8_t	 sync_flags;
+#define	PFSTATE_NOSYNC	 0x01
+#define	PFSTATE_FROMSYNC 0x02
+#define	PFSTATE_STALE	 0x04
 	union {
 		struct {
 			RB_ENTRY(pf_state)	 entry_lan_ext;
@@ -685,9 +713,6 @@ struct pf_state {
 		} s;
 		char	 ifname[IFNAMSIZ];
 	} u;
-	struct pf_state_host lan;
-	struct pf_state_host gwy;
-	struct pf_state_host ext;
 	struct pf_state_peer src;
 	struct pf_state_peer dst;
 	union pf_rule_ptr rule;
@@ -702,19 +727,7 @@ struct pf_state {
 	u_int32_t	 pfsync_time;
 	u_int32_t	 packets[2];
 	u_int32_t	 bytes[2];
-	u_int32_t	 creatorid;
 	u_int16_t	 tag;
-	sa_family_t	 af;
-	u_int8_t	 proto;
-	u_int8_t	 direction;
-	u_int8_t	 log;
-	u_int8_t	 allow_opts;
-	u_int8_t	 timeout;
-	u_int8_t	 sync_flags;
-#define	PFSTATE_NOSYNC	 0x01
-#define	PFSTATE_FROMSYNC 0x02
-#define	PFSTATE_STALE	 0x04
-	u_int8_t	 pad;
 };
 
 TAILQ_HEAD(pf_rulequeue, pf_rule);
@@ -866,9 +879,14 @@ RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state,
 TAILQ_HEAD(pfi_statehead, pfi_kif);
 RB_HEAD(pfi_ifhead, pfi_kif);
 
-struct pfi_kif {
-	RB_ENTRY(pfi_kif)		 pfik_tree;
+/* keep synced with pfi_kif, used in RB_FIND */
+struct pfi_kif_cmp {
 	char				 pfik_name[IFNAMSIZ];
+};
+
+struct pfi_kif {
+	char				 pfik_name[IFNAMSIZ];
+	RB_ENTRY(pfi_kif)		 pfik_tree;
 	u_int64_t			 pfik_packets[2][2][2];
 	u_int64_t			 pfik_bytes[2][2][2];
 	u_int32_t			 pfik_tzero;
@@ -1416,8 +1434,8 @@ extern int			 pf_insert_src_node(struct pf_src_node **,
 				    struct pf_rule *, struct pf_addr *,
 				    sa_family_t);
 void				 pf_src_tree_remove_state(struct pf_state *);
-extern struct pf_state		*pf_find_state_byid(struct pf_state *);
-extern struct pf_state		*pf_find_state_all(struct pf_state *key,
+extern struct pf_state		*pf_find_state_byid(struct pf_state_cmp *);
+extern struct pf_state		*pf_find_state_all(struct pf_state_cmp *key,
 				    u_int8_t tree, int *more);
 extern void			 pf_print_state(struct pf_state *);
 extern void			 pf_print_flags(u_int8_t);
