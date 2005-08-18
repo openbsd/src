@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.34 2005/08/18 14:40:37 dlg Exp $       */
+/* $OpenBSD: bioctl.c,v 1.35 2005/08/18 15:00:37 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -52,7 +52,7 @@ struct locator {
 };
 
 void usage(void);
-int str2locator(const char *, struct locator *);
+const char *str2locator(const char *, struct locator *);
 void cleanup(void);
 
 void bio_inq(char *);
@@ -60,9 +60,6 @@ void bio_alarm(char *);
 void bio_setstate(char *);
 void bio_setblink(char *, char *);
 void bio_blink(char *, int);
-
-/* globals */
-const char *bio_device = "/dev/bio";
 
 int devh = -1;
 int debug;
@@ -133,15 +130,15 @@ main(int argc, char *argv[])
 		bioc_dev = argv[0];
 
 	if (bioc_dev) {
-		devh = open(bio_device, O_RDWR);
+		devh = open("/dev/bio", O_RDWR);
 		if (devh == -1)
-			err(1, "Can't open %s", bio_device);
+			err(1, "Can't open %s", "/dev/bio");
 
 		bl.bl_name = bioc_dev;
 		rv = ioctl(devh, BIOCLOCATE, &bl);
 		if (rv == -1)
 			errx(1, "Can't locate %s device via %s",
-			    bl.bl_name, bio_device);
+			    bl.bl_name, "/dev/bio");
 	} else if (sd_dev) {
 		devh = opendev(sd_dev, O_RDWR, OPENDEV_PART, &realname);
 		if (devh == -1)
@@ -175,16 +172,16 @@ usage(void)
 	exit(1);
 }
 
-int
+const char *
 str2locator(const char *string, struct locator *location)
 {
 	const char *errstr;
-	char *targ, *lun;
+	char parse[80], *targ, *lun;
 
-	targ = strchr(string, ':');
+	strlcpy(parse, string, sizeof parse);
+	targ = strchr(parse, ':');
 	if (targ == NULL)
-		return (-1);
-
+		return ("target not specified");
 	*targ++ = '\0';
 
 	lun = strchr(targ, '.');
@@ -192,19 +189,17 @@ str2locator(const char *string, struct locator *location)
 		*lun++ = '\0';
 		location->lun = strtonum(lun, 0, 256, &errstr);
 		if (errstr)
-			return (-1);
+			return (errstr);
 	} else
 		location->lun = 0;
 
 	location->target = strtonum(targ, 0, 256, &errstr);
 	if (errstr)
-		return (-1);
-
-	location->channel = strtonum(string, 0, 256, &errstr);
+		return (errstr);
+	location->channel = strtonum(parse, 0, 256, &errstr);
 	if (errstr)
-		return (-1);
-
-	return (0);
+		return (errstr);
+	return (NULL);
 }
 
 void
@@ -407,12 +402,14 @@ bio_alarm(char *arg)
 void
 bio_setstate(char *arg)
 {
-	struct bioc_setstate bs;
-	struct locator location;
-	int rv;
+	struct bioc_setstate	bs;
+	struct locator		location;
+	const char		*errstr;
+	int			rv;
 
-	if (str2locator(arg, &location) != 0)
-		errx(1, "invalid channel:target[.lun]");
+	errstr = str2locator(arg, &location);
+	if (errstr)
+		errx(1, "Target %s: %s", arg, errstr);
 
 	bs.bs_cookie = bl.bl_cookie;
 	bs.bs_status = BIOC_SSHOTSPARE;
@@ -430,14 +427,16 @@ bio_setstate(char *arg)
 void
 bio_setblink(char *name, char *arg)
 {
-	struct locator			location;
-	struct bioc_inq			bi;
-	struct bioc_vol			bv;
-	struct bioc_disk		bd;
-	int				v, d, rv;
+	struct locator		location;
+	struct bioc_inq		bi;
+	struct bioc_vol		bv;
+	struct bioc_disk	bd;
+	const char		*errstr;
+	int			v, d, rv;
 
-	if (str2locator(arg, &location) != 0)
-		errx(1, "invalid channel:target[.lun]");
+	errstr = str2locator(arg, &location);
+	if (errstr)
+		errx(1, "Target %s: %s", arg, errstr);
 
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_cookie = bl.bl_cookie;
@@ -479,13 +478,13 @@ bio_setblink(char *name, char *arg)
 					bio_blink(bd.bd_procdev,
 					    location.target);
 				} else
-					warnx("Disk is not in an enclosure");
+					warnx("Disk %s is not in an enclosure", arg);
 				return;
 			}
 		}
 	}
 
-	warnx("Disk does not exist");
+	warnx("Disk %s does not exist", arg);
 	return;
 }
 
@@ -497,14 +496,14 @@ bio_blink(char *enclosure, int target)
 	struct bioc_blink	blink;
 	int			rv;
 
-	bioh = open(bio_device, O_RDWR);
+	bioh = open("/dev/bio", O_RDWR);
 	if (bioh == -1)
-		err(1, "Can't open %s", bio_device);
+		err(1, "Can't open %s", "/dev/bio");
 
 	bio.bl_name = enclosure;
 	rv = ioctl(bioh, BIOCLOCATE, &bio);
 	if (rv == -1)
-		errx(1, "Can't locate %s device via %s", enclosure, bio_device);
+		errx(1, "Can't locate %s device via %s", enclosure, "/dev/bio");
 
 	memset(&blink, 0, sizeof(blink));
 	blink.bb_cookie = bio.bl_cookie;
