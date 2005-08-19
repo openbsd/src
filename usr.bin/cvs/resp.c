@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.56 2005/08/17 16:43:39 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.57 2005/08/19 08:28:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -269,7 +269,7 @@ cvs_resp_m(struct cvsroot *root, int type, char *line)
 		} else {
 			if (strcmp(line, "newline") == 0)
 				putc('\n', stdout);
-			else if (strncmp(line, "fname ", 6) == 0)
+			else if (strncmp(line, "fname ", (size_t)6) == 0)
 				printf("%s", line + 6);
 			else {
 				/* assume text */
