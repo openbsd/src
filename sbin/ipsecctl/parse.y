@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2005/08/09 12:37:45 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2005/08/19 08:47:56 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -901,7 +901,7 @@ parsekeyfile(char *filename)
 	unsigned char	*hex;
 
 	if (stat(filename, &sb) < 0)
-		err(1, "stat");
+		err(1, "stat %s", filename);
 	if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
 		errx(1, "key too %s", sb.st_size ? "large" :
 		    "small");
