@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.104 2005/06/07 09:09:50 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.105 2005/08/19 08:55:56 hshoexer Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -136,6 +136,8 @@ There are currently two key exchange methods available:
 .It
 manual keying:
 .Xr ipsecadm 8
+or
+.Xr ipsecctl 8
 .It
 automated keying:
 .Xr isakmpd 8
@@ -215,6 +217,38 @@ command line.
 However, another user could view the keys by using the
 .Xr ps 1
 command at the appropriate time (or use a program for doing so).
+.Pp
+Instead of
+.Xr ipsecadm 8 ,
+the
+.Xr ipsecctl 8
+utility can be used to define SAs.
+It uses a rule based syntax similar to
+.Xr pf.conf 5 .
+On gateway A add these lines to the file
+.Xr ipsec.conf 5 :
+.Bd -literal -offset indent
+esp from 192.168.1.13 to 192.168.1.15 spi 0xdeadbeef:0xbeefdead \e
+	authkey file "/path/to/gateA.auth:/path/to/gateB.auth" \e
+	enckey file "/path/to/gateA.enc:/path/to/gateB.enc"
+.Ed
+.Pp
+Similarly on gateway B add these lines to
+.Xr ipsec.conf 5 :
+.Bd -literal -offset indent
+esp from 192.168.1.15 to 192.168.1.13 spi 0xbeefdead:0xdeadbeef \e
+	authkey file "/path/to/gateB.auth:/path/to/gateA.auth" \e
+	enckey file "/path/to/gateB.enc:/path/to/gateA.enc"
+.Ed
+.Pp
+Note that when no authentication and encryption algorithms are defined,
+.Xr ipsecctl 8
+will automatically use HMAC-SHA2-256 for authentication and AES-128 in
+countermode for encryption.
+Therefore the authentication key needs to be 256 bits long; the encryption key
+128 bits.
+For details see
+.Xr ipsec.conf 5 .
 .Ss Creating IPsec Flows [manual keying]
 Both IPsec gateways need to configure
 .Xr ipsec 4
@@ -243,6 +277,31 @@ On the security gateway of subnet B:
 # ipsecadm flow -in -require -proto esp \e
     -src $GATEWAY_B -dst $GATEWAY_A \e
     -addr $NETWORK_A $NETWORK_B
+.Ed
+.Pp
+Again it is possible to use
+.Xr ipsecctl 8
+to define flows.
+On gateway A add this line to
+.Xr ipsec.conf 5 :
+.Bd -literal -offset indent
+flow esp from 10.0.50.0/24 to 10.0.99.0/24 peer 192.168.1.15
+.Ed
+.Pp
+And on gateway B this line:
+.Bd -literal -offset indent
+flow from 10.0.99.0/24 to 10.0.50.0/24 peer 192.168.1.13
+.Ed
+.Pp
+Note that
+.Xr ipsecctl 8
+will automatically use ESP in tunnel mode.
+For details see
+.Xr ipsec.conf 5 .
+.Pp
+To activate the SAs and flows, run this command on both gateways:
+.Bd -literal -offset indent
+# ipsecctl -f /etc/ipsec.conf
 .Ed
 .Ss Configuring the Keying Daemon [automated keying]
 Unless manual keying is used, both security gateways need to use the
@@ -475,18 +534,18 @@ ext_if="ne0"
 # $ext_if is the only interface going to the outside.
 block log on { enc0, $ext_if } all
 
-# Passing in encrypted traffic from security gateways
+# Pass encrypted traffic to/from security gateways
 pass in proto esp from $GATEWAY_B to $GATEWAY_A
 pass out proto esp from $GATEWAY_A to $GATEWAY_B
 
 # Need to allow ipencap traffic on enc0.
 pass in on enc0 proto ipencap from $GATEWAY_B to $GATEWAY_A
 
-# Passing in traffic from the designated subnets.
+# Pass traffic to/from the designated subnets.
 pass in on enc0 from $NETWORK_B to $NETWORK_A
 pass out on enc0 from $NETWORK_A to $NETWORK_B
 
-# Passing in isakmpd(8) traffic from the security gateways
+# Pass isakmpd(8) traffic to/from the security gateways
 pass in on $ext_if proto udp from $GATEWAY_B port = 500 \e
 	to $GATEWAY_A port = 500
 pass out on $ext_if proto udp from $GATEWAY_A port = 500 \e
@@ -664,11 +723,13 @@ Sample VPN configuration file.
 .Xr enc 4 ,
 .Xr ipsec 4 ,
 .Xr keynote 4 ,
+.Xr ipsec.conf 5 ,
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
 .Xr pf.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr ipsecadm 8 ,
+.Xr ipsecctl 8 ,
 .Xr isakmpd 8 ,
 .Xr pfctl 8 ,
 .Xr ping 8 ,
