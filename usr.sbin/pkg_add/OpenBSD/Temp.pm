@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.3 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: Temp.pm,v 1.4 2005/08/19 00:09:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,12 +20,24 @@ use warnings;
 package OpenBSD::Temp;
 
 use File::Temp;
+use File::Path;
+
 our $tempbase = $ENV{'PKG_TMPDIR'} || '/var/tmp';
+
+my $dirs = [];
+
+$SIG{'INT'} = sub {
+	File::Path::rmtree($dirs);
+	$SIG{'INT'} = 'DEFAULT';
+	kill 'INT', $$;
+};
 
 sub dir()
 {
-	return File::Temp::tempdir("pkginfo.XXXXXXXXXXX", DIR => $tempbase,
+	my $dir = File::Temp::tempdir("pkginfo.XXXXXXXXXXX", DIR => $tempbase,
 	    CLEANUP => 1).'/';
+	push(@$dirs, $dir);
+	return $dir;
 }
 
 sub list($)
