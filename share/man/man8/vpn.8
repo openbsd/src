@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.105 2005/08/19 08:55:56 hshoexer Exp $
+.\" $OpenBSD: vpn.8,v 1.106 2005/08/19 15:38:39 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -705,6 +705,9 @@ it is suggested that the administrator review the steps above,
 paying particular notice to the firewall configuration procedures.
 .Sh FILES
 .Bl -tag -width "/etc/isakmpd/isakmpd.policyXX" -compact
+.It Pa /etc/ipsec.conf
+.Xr ipsecctl 8
+configuration file.
 .It Pa /etc/isakmpd/isakmpd.conf
 .Xr isakmpd 8
 configuration file.
