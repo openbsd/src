@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.32 2005/08/18 22:14:43 deraadt Exp $
+.\"	$OpenBSD: bioctl.8,v 1.33 2005/08/19 05:23:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -34,8 +34,8 @@
 .Bk -words
 .Op Fl Dhiv
 .Op Fl a Ar alarm-function
-.Op Fl b Ar channel:target[.lun]
 .Op Fl B Ar channel:target[.lun]
+.Op Fl b Ar channel:target[.lun]
 .Op Fl H Ar channel:target[.lun]
 .Op Fl u Ar channel:target[.lun]
 .Ar device
@@ -54,15 +54,16 @@ The options are as follows:
 Control the RAID card's alarm functionality, if supported.
 .Ar alarm-function
 may be one of:
-.Bl -tag -width Ds
-.It Ar get
-Retrieve the current alarm state (enabled or disabled)
-.It Ar enable
-Enable the alarm on the RAID controller
+.Pp
+.Bl -tag -width disable -compact
 .It Ar disable
-Disable the alarm on the RAID controller
+Disable the alarm on the RAID controller.
+.It Ar enable
+Enable the alarm on the RAID controller.
+.It Ar get
+Retrieve the current alarm state (enabled or disabled).
 .It Ar silence | Ar quiet
-Silence the alarm if it is currently beeping
+Silence the alarm if it is currently beeping.
 .El
 .Pp
 The
@@ -70,18 +71,18 @@ The
 may be specified as given above,
 or by the first letter only
 (e.g. -a e).
-.It Fl b Ar channel:target[.lun]
-Instruct the device at
-.Ar channel:target[.lun]
-to start blinking, if there is
-.Xr ses 4
-or
-.Xr safte 4
-support in the enclosure.
 .It Fl B Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]
 to start blinking  with the alarm LED, if there is
+.Xr ses 4
+or
+.Xr safte 4
+support in the enclosure.
+.It Fl b Ar channel:target[.lun]
+Instruct the device at
+.Ar channel:target[.lun]
+to start blinking, if there is
 .Xr ses 4
 or
 .Xr safte 4
@@ -92,9 +93,9 @@ Enable debug output.
 If the device at
 .Ar channel:target[.lun]
 is currently marked
-.Va Unused ,
+.Dq Unused ,
 promote it to being a
-.Va Hot Spare.
+.Em Hot Spare .
 .It Fl h
 Where neccessary, produce "human-readable" output.
 Use unit suffixes: Byte, Kilobyte, Megabyte,
@@ -120,7 +121,9 @@ Select a drive by name (e.g. sd0) or a RAID controller by name (e.g. ami0).
 .Xr bio 4 ,
 .Xr ciss 4 ,
 .Xr mpt 4 ,
-.Xr scsi 4
+.Xr safte 4 ,
+.Xr scsi 4 ,
+.Xr ses 4
 .Sh HISTORY
 The
 .Nm
