@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.115 2005/08/17 16:23:19 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.116 2005/08/19 13:36:50 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -604,11 +604,6 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	    ((cvs_error = cb(base, arg)) != CVS_EX_OK))
 		goto fail;
 
-	if (entf != NULL) {
-		cvs_ent_close(entf);
-		entf = NULL;
-	}
-
 	/*
 	 * If we have a normal file, pass it as well.
 	 */
@@ -624,6 +619,11 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 			cvs_error = CVS_EX_FILE;
 			goto fail;
 		}
+	}
+
+	if (entf != NULL) {
+		cvs_ent_close(entf);
+		entf = NULL;
 	}
 
 	return (base);
