@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.18 2005/08/16 11:09:28 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.19 2005/08/19 00:10:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -429,6 +429,9 @@ OKAY:
 			}
 		}
 		$self->close();
+
+		require File::Path;
+		File::Path::rmtree($dir);
 		return undef;
 	}
 }
