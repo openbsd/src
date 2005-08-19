@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.906 2005/08/16 16:35:32 brad Exp 
+ *	OpenBSD: pcidevs,v 1.907 2005/08/19 11:17:12 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1711,6 +1711,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mach64 VV",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_HB,
+	    "RS300 Host",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP9100_HB,
 	    "Radeon IGP 9100 Host",
 	},
@@ -1791,8 +1795,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X300",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600,
+	    "Radeon X600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_RV370,
+	    "FireGL V3100",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_2,
 	    "Radeon X300 Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_2,
+	    "Radeon X600 Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_RV370_2,
+	    "FireGL V3100 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_M,

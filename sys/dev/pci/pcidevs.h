@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.906 2005/08/16 16:35:32 brad Exp 
+ *	OpenBSD: pcidevs,v 1.907 2005/08/19 11:17:12 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -774,6 +774,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VU	0x5655		/* Mach64 VU */
 #define	PCI_PRODUCT_ATI_MACH64_VV	0x5656		/* Mach64 VV */
+#define	PCI_PRODUCT_ATI_RS300_HB	0x5831		/* RS300 Host */
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100_HB	0x5833		/* Radeon IGP 9100 Host */
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100	0x5835		/* Radeon Mobility IGP 9100 */
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100_AGP	0x5838		/* Radeon IGP 9100 AGP */
@@ -794,7 +795,11 @@
 #define	PCI_PRODUCT_ATI_RADEON_RC410	0x5a61		/* Radeon XPRESS 200 */
 #define	PCI_PRODUCT_ATI_RADEON_RC410_B	0x5a62		/* Radeon XPRESS 200M */
 #define	PCI_PRODUCT_ATI_RADEON_X300	0x5b60		/* Radeon X300 */
+#define	PCI_PRODUCT_ATI_RADEON_X600	0x5b62		/* Radeon X600 */
+#define	PCI_PRODUCT_ATI_FIREGL_RV370	0x5b64		/* FireGL V3100 */
 #define	PCI_PRODUCT_ATI_RADEON_X300_2	0x5b70		/* Radeon X300 Sec */
+#define	PCI_PRODUCT_ATI_RADEON_X600_2	0x5b72		/* Radeon X600 Sec */
+#define	PCI_PRODUCT_ATI_FIREGL_RV370_2	0x5b74		/* FireGL V3100 Sec */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_M	0x5c61		/* Radeon Mobility 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_M9PLUS	0x5c63		/* Radeon Mobility 9200 (M9+) */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_SE	0x5d44		/* Radeon 9200 SE */
