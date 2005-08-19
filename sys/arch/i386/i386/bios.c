@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.55 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: bios.c,v 1.56 2005/08/19 01:10:42 marco Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -110,7 +110,7 @@ biosprobe(parent, match, aux)
 	if (bios_cd.cd_ndevs || strcmp(bia->bios_dev, bios_cd.cd_name))
 		return 0;
 
-	if (!(bootapiver & BAPIV_VECTOR) || bootargp == NULL )
+	if (!(bootapiver & BAPIV_VECTOR) || bootargp == NULL)
 		return 0;
 
 	return 1;
