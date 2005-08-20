@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.25 2005/06/26 19:24:22 deraadt Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.26 2005/08/20 00:27:08 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@
 #define CPUID_3DNOW	0x40000000	/* has 3DNow! instructions (AMD) */
 #define CPUID_LONG	0x20000000	/* long mode (AMD64, ext cpuid) */
 
-#define CPUIDECX_PNI	0x00000001	/* Prescott New Instructions */
+#define CPUIDECX_SSE3	0x00000001	/* has SSE3 instructions */
 #define CPUIDECX_MWAIT	0x00000008	/* Monitor/Mwait */
 #define CPUIDECX_EST	0x00000080	/* enhanced SpeedStep */
 #define CPUIDECX_TM2	0x00000100	/* thermal monitor 2 */
