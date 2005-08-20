@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.5 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.6 2005/08/20 00:33:59 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -91,6 +91,8 @@ const struct {
 	{ CPUID_LONG,	"LONG" },
 	{ CPUID_3DNOW2,	"3DNOW2" },
 	{ CPUID_3DNOW,	"3DNOW" }
+}, cpu_cpuid_ecxfeatures[] = {
+	{ CPUIDECX_SSE3, "SSE3" }
 };
 
 int
@@ -156,6 +158,10 @@ identifycpu(struct cpu_info *ci)
 	for (i = 0; i < max; i++)
 		if (ci->ci_feature_flags & cpu_cpuid_features[i].bit)
 			printf("%s%s", i? "," : "", cpu_cpuid_features[i].str);
+	max = sizeof(cpu_cpuid_ecxfeatures) / sizeof(cpu_cpuid_ecxfeatures[0]);
+	for (i = 0; i < max; i++)
+		if (cpu_ecxfeature & cpu_cpuid_ecxfeatures[i].bit)
+			printf(",%s", cpu_cpuid_ecxfeatures[i].str);
 	max = sizeof(cpu_ecpuid_features) / sizeof(cpu_ecpuid_features[0]);
 	for (i = 0; i < max; i++)
 		if (ci->ci_feature_eflags & cpu_ecpuid_features[i].bit)

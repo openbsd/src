@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.2 2004/02/09 22:15:52 mickey Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.3 2005/08/20 00:33:59 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -125,6 +125,8 @@
 #define	CPUID_TM	0x20000000	/* thermal monitor (TCC) */
 #define	CPUID_IA64	0x40000000	/* IA-64 architecture */
 #define	CPUID_SBF	0x80000000	/* signal break on FERR */
+
+#define	CPUIDECX_SSE3	0x00000001	/* streaming SIMD extensions #3 */
 
 /*
  * AMD/VIA processor specific flags.

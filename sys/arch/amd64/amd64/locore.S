@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.20 2005/07/26 08:38:29 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.21 2005/08/20 00:33:59 jsg Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ _C_LABEL(lapic_isr):
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl	_C_LABEL(cpu_ecxfeature)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto),_C_LABEL(bootdev)
 	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
@@ -185,6 +186,7 @@ _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
 					#   instruction
+_C_LABEL(cpu_ecxfeature):.long	0	# extended feature flags from 'cpuid'
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
 _C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
@@ -310,6 +312,7 @@ bi_size_ok:
 	movl	$1,%eax
 	cpuid
 	movl	%eax,RELOC(cpu_id)
+	movl	%ecx,RELOC(cpu_ecxfeature)
 	movl	%edx,RELOC(cpu_feature)
 
 	movl	$0x80000001, %eax
