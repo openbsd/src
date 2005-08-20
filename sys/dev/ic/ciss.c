@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.5 2005/08/03 00:09:38 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.6 2005/08/20 18:01:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -411,7 +411,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	struct ciss_ccb *ccb1;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	u_int32_t id;
-	int i, error = 0;
+	int i, tohz, error = 0;
 
 	if (ccb->ccb_state != CISS_CCB_READY) {
 		printf("%s: ccb %d not ready state=%b\n", sc->sc_dev.dv_xname,
@@ -470,18 +470,34 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	bus_space_write_4(sc->iot, sc->ioh, CISS_INQ, ccb->ccb_cmdpa);
 
 	if (wait) {
+		struct timeval tv;
+		int etick;
 		CISS_DPRINTF(CISS_D_CMD, ("waiting "));
 
-		for (;;) {
+		i = ccb->ccb_xs? ccb->ccb_xs->timeout : 60000;
+		tv.tv_sec = i / 1000;
+		tv.tv_usec = (i % 1000) * 1000;
+		tohz = tvtohz(&tv);
+		if (tohz == 0)
+			tohz = 1;
+		for (i *= 100, etick = tick + tohz; i--; ) {
 			if (!(wait & SCSI_NOSLEEP)) {
 				ccb->ccb_state = CISS_CCB_POLL;
-				tsleep(ccb, PRIBIO + 1, "ciss_cmd", 0);
-				/* handle FAIL TODO */
-				if (ccb->ccb_state != CISS_CCB_ONQ)
+				CISS_DPRINTF(CISS_D_CMD, ("tsleep(%d) ", tohz));
+				if (tsleep(ccb, PRIBIO + 1, "ciss_cmd",
+				    tohz) == EWOULDBLOCK) {
+					break;
+				}
+				if (ccb->ccb_state != CISS_CCB_ONQ) {
+					tohz = etick - tick;
+					if (tohz <= 0)
+						break;
+					CISS_DPRINTF(CISS_D_CMD, ("T"));
 					continue;
+				}
 				ccb1 = ccb;
 			} else {
-				DELAY(1);
+				DELAY(10);
 
 				if (!(bus_space_read_4(sc->iot, sc->ioh,
 				    CISS_ISR) & sc->iem)) {
@@ -503,6 +519,12 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			error = ciss_done(ccb1);
 			if (ccb1 == ccb)
 				break;
+		}
+
+		/* if never got a chance to be done above... */
+		if (ccb->ccb_state != CISS_CCB_FREE) {
+			ccb->ccb_err.cmd_stat = CISS_ERR_TMO;
+			error = ciss_done(ccb);
 		}
 
 		CISS_DPRINTF(CISS_D_CMD, ("done %d:%d",
