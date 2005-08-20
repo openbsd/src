@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.62 2005/08/14 11:00:15 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.63 2005/08/20 17:09:45 matthieu Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -995,11 +995,11 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	}
 #endif
 	inp = sc->sc_input;
-	if (inp == NULL)
-		return (ENXIO);
-	error = wsevsrc_display_ioctl(inp, cmd, data, flag, p);
-	if (error >= 0)
-		return (error);
+	if (inp != NULL) {
+		error = wsevsrc_display_ioctl(inp, cmd, data, flag, p);
+		if (error >= 0)
+			return (error);
+	}
 #endif /* NWSKBD > 0 */
 
 	switch (cmd) {
