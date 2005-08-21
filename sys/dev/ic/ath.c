@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.34 2005/08/21 11:17:51 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.35 2005/08/21 18:40:17 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -699,6 +699,12 @@ ath_init1(struct ath_softc *sc)
 	 * whether this is the first time through or not.
 	 */
 	ath_stop(ifp);
+
+	/*
+	 * Reset the link layer address to the latest value.
+	 */
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	ath_hal_set_lladdr(ah, ic->ic_myaddr);
 
 	/*
 	 * The basic interface to setting the hardware in a good
