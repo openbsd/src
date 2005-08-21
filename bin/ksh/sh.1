@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.67 2005/06/01 03:32:05 jaredy Exp $
+.\"	$OpenBSD: sh.1,v 1.68 2005/08/21 17:40:42 millert Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -3375,7 +3375,7 @@ except zero padding is used instead of space padding.
 .Pp
 .It Xo
 .Ic ulimit
-.Op Fl acdfHlmnpSstv
+.Op Fl acdfHlmnpSst
 .Op Ar value
 .Xc
 Display or set process limits.
@@ -3439,10 +3439,10 @@ kilobytes on the size of the stack area.
 Impose a time limit of
 .Ar n
 CPU seconds spent in user mode to be used by each process.
-.It Fl v Ar n
-Impose a limit of
-.Ar n
-kilobytes on the amount of virtual memory used.
+.\".It Fl v Ar n
+.\"Impose a limit of
+.\".Ar n
+.\"kilobytes on the amount of virtual memory used.
 .El
 .Pp
 As far as
