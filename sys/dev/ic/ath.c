@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.33 2005/08/17 13:14:17 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.34 2005/08/21 11:17:51 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -349,7 +349,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	    | IEEE80211_C_HOSTAP	/* hostap mode */
 	    | IEEE80211_C_MONITOR	/* monitor mode */
 	    | IEEE80211_C_SHSLOT	/* short slot time supported */
-	    | IEEE80211_C_SCANALL	/* scan all channels */
 	    | IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
 	/*
