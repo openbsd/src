@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.36 2005/08/18 22:14:27 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.37 2005/08/21 23:37:24 dlg Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -442,12 +442,24 @@ bio_setblink(char *name, char *arg, int blink)
 	struct bioc_inq		bi;
 	struct bioc_vol		bv;
 	struct bioc_disk	bd;
+	struct bioc_blink	bb;
 	const char		*errstr;
 	int			v, d, rv;
 
 	errstr = str2locator(arg, &location);
 	if (errstr)
 		errx(1, "Target %s: %s", arg, errstr);
+
+	/* try setting blink on the device directly */
+	memset(&bb, 0, sizeof(bb));
+	bb.bb_cookie = bl.bl_cookie;
+	bb.bb_status = blink;
+	bb.bb_target = location.target;
+	rv = ioctl(devh, BIOCBLINK, &bb);
+	if (rv == 0)
+		return;
+
+	/* if the blink didnt work, try to find something that will */
 
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_cookie = bl.bl_cookie;
