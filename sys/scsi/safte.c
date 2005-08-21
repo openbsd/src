@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.12 2005/08/18 09:51:05 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.13 2005/08/21 23:28:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -552,9 +552,18 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	struct safte_slotop		*op;
 	int				slot;
 	int				flags;
+	int				wantblink;
 
-	if (blink->bb_status != BIOC_SBBLINK)
+	switch (blink->bb_status) {
+	case BIOC_SBBLINK:
+		wantblink = 1;
+		break;
+	case BIOC_SBUNBLINK:
+		wantblink = 0;
+		break;
+	default:
 		return (EINVAL);
+	}
 
 	for (slot = 0; slot < sc->sc_nslots; slot++) {
 		if (sc->sc_slots[slot] == blink->bb_target)
@@ -569,7 +578,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	memset(op, 0, sizeof(struct safte_slotop));
 	op->opcode = SAFTE_WRITE_SLOTOP;
 	op->slot = slot;
-	op->flags |= SAFTE_SLOTOP_IDENTIFY;
+	op->flags |= wantblink ? SAFTE_SLOTOP_IDENTIFY : 0;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE_BUFFER;
