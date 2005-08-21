@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.21 2005/07/03 22:31:27 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.22 2005/08/21 02:31:13 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -95,7 +95,7 @@ int	aac_init(struct aac_softc *);
 int	aac_internal_cache_cmd(struct scsi_xfer *);
 int	aac_map_command(struct aac_ccb *);
 #ifdef AAC_DEBUG
-void	aac_print_fib(struct aac_softc *, struct aac_fib *, char *);
+void	aac_print_fib(struct aac_softc *, struct aac_fib *, const char *);
 #endif
 int	aac_raw_scsi_cmd(struct scsi_xfer *);
 int	aac_scsi_cmd(struct scsi_xfer *);
@@ -1874,7 +1874,7 @@ out:
  * Print a FIB
  */
 void
-aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
+aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, const char *caller)
 {
 	printf("%s: FIB @ %p\n", caller, fib);
 	printf("  XferState %b\n", fib->Header.XferState, "\20"
