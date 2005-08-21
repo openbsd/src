@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.18 2005/08/17 02:17:51 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.19 2005/08/21 16:25:52 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ struct page_disk_format {
 
 struct page_rigid_geometry {
 	u_int8_t pg_code;	/* page code (should be 4) */
-	u_int8_t pg_length;	/* page length (should be 0x16)	*/
+	u_int8_t pg_length;	/* page length (should be 0x12 or 0x16)	*/
 	u_int8_t ncyl[3];	/* number of cylinders */
 	u_int8_t nheads;	/* number of heads */
 	u_int8_t st_cyl_wp[3];	/* starting cyl., write precomp */
@@ -289,7 +289,7 @@ struct page_rigid_geometry {
 
 struct page_flex_geometry {
 	u_int8_t pg_code;	/* page code (should be 5) */
-	u_int8_t pg_length;	/* page length (should be 0x1e) */
+	u_int8_t pg_length;	/* page length (should be 0x1a or 0x1e) */
 	u_int8_t xfr_rate[2];
 	u_int8_t nheads;	/* number of heads */
 	u_int8_t ph_sec_tr;	/* physical sectors per track */

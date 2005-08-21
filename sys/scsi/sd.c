@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.85 2005/08/18 22:59:21 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.86 2005/08/21 16:25:52 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1358,12 +1358,19 @@ sd_get_parms(sd, dp, flags)
 		break;
 
 	default:
+		/*
+		 * NOTE: Some devices leave off the last four bytes of 
+		 * PAGE_RIGID_GEOMETRY and PAGE_FLEX_GEOMETRY mode sense pages.
+		 * The only information in those four bytes is RPM information
+		 * so accept the page. The extra bytes will be zero and RPM will
+		 * end up with the default value of 3600.
+		 */
 		rigid = NULL;
 		if (((sd->sc_link->flags & SDEV_ATAPI) == 0) ||
 		    ((sd->sc_link->flags & SDEV_REMOVABLE) == 0))
 			scsi_do_mode_sense(sd->sc_link, PAGE_RIGID_GEOMETRY,
 			    &buf, (void **)&rigid, NULL, NULL, &blksize,
-			    sizeof(*rigid), flags | SCSI_SILENT, NULL);
+			    sizeof(*rigid) - 4, flags | SCSI_SILENT, NULL);
 		if (DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
 			heads = rigid->nheads;
 			cyls = _3btol(rigid->ncyl);
@@ -1373,7 +1380,7 @@ sd_get_parms(sd, dp, flags)
 		} else {
 			scsi_do_mode_sense(sd->sc_link, PAGE_FLEX_GEOMETRY,
 			    &buf, (void **)&flex, NULL, NULL, &blksize,
-			    sizeof(*flex), flags | SCSI_SILENT, NULL);
+			    sizeof(*flex) - 4, flags | SCSI_SILENT, NULL);
 			if (DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
 				sectors = flex->ph_sec_tr;
 				heads = flex->nheads;
