@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.194 2005/08/22 11:37:23 espie Exp $
+# $OpenBSD: pkg_add,v 1.195 2005/08/22 12:18:06 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -210,6 +210,19 @@ sub thunderbird_special_case
 	}
 }
 
+sub failed_install
+{
+	my ($handle, $not, $interrupted) = @_;
+	my $plist = $handle->{plist};
+	my $dir = $handle->info();
+	my $pkgname = $plist->pkgname();
+	my $msg = "Installation of $pkgname failed";
+	if ($interrupted) {
+		$msg ="Caught SIG$interrupted. $msg";
+	}
+	OpenBSD::Add::borked_installation($plist, $dir, $not, $msg);
+}
+
 sub really_add($$)
 {
 	my ($handle, $state) = @_;
@@ -265,9 +278,14 @@ sub really_add($$)
 	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 
 	my $interrupted;
-	local $SIG{'INT'} = sub {
-		$interrupted = 1;
+	my $handler = sub {
+		$interrupted = shift;
 	};
+	local $SIG{'INT'} = $handler;
+	local $SIG{'QUIT'} = $handler;
+	local $SIG{'HUP'} = $handler;
+	local $SIG{'KILL'} = $handler;
+	local $SIG{'TERM'} = $handler;
 
 	if ($replacing) {
 		require OpenBSD::Update;
@@ -296,9 +314,7 @@ sub really_add($$)
 		}
 		OpenBSD::ProgressMeter::next();
 		if ($interrupted || $errors) {
-			OpenBSD::Add::borked_installation($plist, $dir,
-			    $state->{not},
-			    "Installation of $pkgname failed");
+			failed_install($handle, $state->{not}, $interrupted);
 		}
 
 		for my $op (@toreplace) {
@@ -341,9 +357,7 @@ sub really_add($$)
 		};
 
 		if ($interrupted || $errors) {
-			OpenBSD::Add::borked_installation($plist, $dir, 
-			    $state->{not},
-			    "Installation of $pkgname failed");
+			failed_install($handle, $state->{not}, $interrupted);
 		}
 	} else {
 		do_script($plist, REQUIRE, $state, "INSTALL");
@@ -389,9 +403,7 @@ sub really_add($$)
 
 	unlink($dir.CONTENTS);
 	if ($interrupted || $errors) {
-		OpenBSD::Add::borked_installation($plist, $dir, 
-		    $state->{not},
-		    "Installation of $pkgname failed");
+		failed_install($handle, $state->{not}, $interrupted);
 	}
 	OpenBSD::SharedLibs::add_plist_libs($plist);
 	$plist->to_cache();
@@ -827,5 +839,8 @@ if (defined $state->{forced}->{kitchensink}) {
 rethrow $dielater;
 } catch {
 	print STDERR "$0: $_\n";
+	if ($_ =~ m/^Caught SIG(\w+)/) {
+		kill $1, $$;
+	}
 	exit(1);
 };
