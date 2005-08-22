@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.68 2005/08/18 04:49:52 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.69 2005/08/22 20:39:39 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2514,6 +2514,9 @@ ami_ioctl_setstate(sc, bs)
 	struct bioc_setstate *bs;
 {
 	int func;
+	struct ami_big_diskarray *p;
+	struct scsi_inquiry_data inqbuf;
+	int off;
 
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
@@ -2525,6 +2528,27 @@ ami_ioctl_setstate(sc, bs)
 		break;
 
 	case BIOC_SSHOTSPARE:
+		p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
+		if (!p) {
+			printf("%s: no memory for setstate\n",
+			    sc->sc_dev.dv_xname);
+			return (ENOMEM);
+		}
+
+		if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p))
+			goto bail;
+
+		off = bs->bs_channel * AMI_MAX_TARGET + bs->bs_target;
+
+		if (p->apd[off].adp_ostatus != AMI_PD_UNCNF)
+			goto bail;
+
+		if (ami_drv_inq(sc, bs->bs_channel, bs->bs_target, 0,
+		    &inqbuf))
+			goto bail;
+
+		free(p, M_DEVBUF);
+
 		func = AMI_STATE_SPARE;
 		break;
 
@@ -2539,6 +2563,11 @@ ami_ioctl_setstate(sc, bs)
 		return (EINVAL);
 
 	return (0);
+
+bail:
+	free(p, M_DEVBUF);
+
+	return (EINVAL);
 }
 #endif /* NBIO > 0 */
 
