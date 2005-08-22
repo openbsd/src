@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.85 2005/08/17 08:33:42 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.86 2005/08/22 14:12:45 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -1883,6 +1883,27 @@ This file is read on startup unless the
 option is specified.
 .It Pa $CVSROOT/CVSROOT
 Directory containing repository administrative files.
+.It Pa $CVSROOT/CVSROOT/history
+File containing reports of
+.Ic checkout ,
+.Ic commit ,
+.Ic export ,
+.Ic release ,
+.Ic rtag ,
+and
+.Ic update
+commands that have been issued.
+By default, the
+.Ic init
+command creates the
+.Pa history
+file.
+To disable history logging, the
+.Pa history
+file should be removed manually.
+The
+.Ic history
+command shows these reports according to several criteria.
 .It Pa $CVSROOT/CVSROOT/loginfo
 File containing associations between modules and handlers for
 post-commit logging.
