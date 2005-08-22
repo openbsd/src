@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.22 2005/08/18 16:01:29 fgsch Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.23 2005/08/22 18:00:37 fgsch Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -874,7 +874,7 @@ cardbus_matchbyid(struct cardbus_attach_args *ca, const struct cardbus_matchid *
  */
 
 static u_int8_t *
-decode_tuple(u_int8_t *tuple, tuple_decode_func func, void *data);
+decode_tuple(u_int8_t *, u_int8_t *, tuple_decode_func, void *);
 
 static int
 decode_tuples(tuple, buflen, func, data)
@@ -890,19 +890,17 @@ decode_tuples(tuple, buflen, func, data)
     return 0;
   }
 
-  while (NULL != (tp = decode_tuple(tp, func, data))) {
-    if (tuple + buflen < tp) {
-      break;
-    }
-  }
+  while ((tp = decode_tuple(tp, tuple + buflen, func, data)) != NULL)
+    ;
   
   return 1;
 }
 
 
 static u_int8_t *
-decode_tuple(tuple, func, data)
+decode_tuple(tuple, end, func, data)
      u_int8_t *tuple;
+     u_int8_t *end;
      tuple_decode_func func;
      void *data;
 {
@@ -910,11 +908,24 @@ decode_tuple(tuple, func, data)
     u_int8_t len;
 
     type = tuple[0];
-    len = tuple[1] + 2;
+    switch (type) {
+    case PCMCIA_CISTPL_NULL:
+    case PCMCIA_CISTPL_END:
+        len = 1;
+        break;
+    default:
+        if (tuple + 2 > end)
+            return NULL;
+        len = tuple[1] + 2;
+        break;
+    }
+
+    if (tuple + len > end)
+        return NULL;
 
     (*func)(tuple, len, data);
 
-    if (PCMCIA_CISTPL_END == type) {
+    if (PCMCIA_CISTPL_END == type || tuple + len == end) {
 	return NULL;
     }
 
