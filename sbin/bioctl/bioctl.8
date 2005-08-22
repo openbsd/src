@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.36 2005/08/22 04:27:17 david Exp $
+.\"	$OpenBSD: bioctl.8,v 1.37 2005/08/22 14:11:12 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -116,7 +116,8 @@ Be more verbose in output.
 .It Ar device
 Select a drive by name (e.g. sd0) or a RAID controller by name (e.g. ami0).
 For operations which will be performed against
-.Xr ses 4 or
+.Xr ses 4
+or
 .Xr safte 4
 enclosures, it is also possible to directly specify the enclosure name
 (e.g. safte0).
