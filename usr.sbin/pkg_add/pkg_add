@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.193 2005/08/17 18:48:10 espie Exp $
+# $OpenBSD: pkg_add,v 1.194 2005/08/22 11:37:23 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -160,7 +160,8 @@ sub pre_add($$)
 	}
 	my $pkgname = $handle->{pkgname} = $plist->pkgname();
 	if ($pkg ne '-') {
-		if (OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
+		if (!defined $pkgname or 
+		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
 			print "Package name is not consistent ???\n";
 			$errors++;
 			return undef;
