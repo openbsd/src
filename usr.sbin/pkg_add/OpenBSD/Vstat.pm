@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.10 2004/12/29 11:28:59 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.11 2005/08/22 11:11:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -84,7 +84,7 @@ sub ask_df($)
 		chomp;
 		if (m/^Filesystem\s+(\d+)\-blocks/) {
 			$blocksize = $1;
-		} elsif (m/^(.*?)\s+\d+\s+\d+\s+(\d+)\s+\d+\%\s+\/.*?$/) {
+		} elsif (m/^(.*?)\s+\d+\s+\d+\s+(\-?\d+)\s+\d+\%\s+\/.*?$/) {
 			my ($dev, $avail) = ($1, $2);
 			$info = $devinfo->{$dev};
 			if (!defined $info) {
