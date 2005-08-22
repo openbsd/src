@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.23 2005/08/18 21:04:47 marco Exp $ */
+/*	$OpenBSD: ses.c,v 1.24 2005/08/22 19:24:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -305,6 +305,9 @@ ses_read_config(struct ses_softc *sc)
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
+
+	if (scsi_autoconf)
+		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), buf, SES_BUFLEN, 2, 3000, NULL, flags) != 0) {

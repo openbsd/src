@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.13 2005/08/21 23:28:59 deraadt Exp $ */
+/*	$OpenBSD: safte.c,v 1.14 2005/08/22 19:24:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -285,6 +285,9 @@ safte_read_config(struct safte_softc *sc)
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
+
+	if (scsi_autoconf)
+		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&config, sizeof(config), 2, 30000, NULL,
