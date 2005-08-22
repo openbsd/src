@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.24 2005/07/16 16:31:05 henning Exp $	*/
+/*	$OpenBSD: options.c,v 1.25 2005/08/22 20:30:52 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -222,7 +222,7 @@ cons_options(unsigned char *buf, const int buflen, struct option_data *options)
 
 			length -= incr;
 			ix += incr;
-			bufix += 2 + incr;
+			bufix += incr;
 		}
 	}
 
