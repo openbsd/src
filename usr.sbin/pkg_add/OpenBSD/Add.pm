@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.38 2005/08/16 16:24:24 espie Exp $
+# $OpenBSD: Add.pm,v 1.39 2005/08/22 11:25:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -88,14 +88,26 @@ sub validate_plist($$)
 		my $s = OpenBSD::Vstat::add($fname, $item->{size}, \$pkgname);
 		next unless defined $s;
 		if ($s->{ro}) {
-			Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
+			if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+				Warn "Error: ", $s->{dev}, 
+				    " is read-only ($fname)\n";
+			} elsif ($s->{problems} == 4) {
+				Warn "Error: ... more files can't be written to ",
+					$s->{dev}, "\n";
+			}
 			$problems++;
 		}
 		if ($state->{forced}->{kitchensink} && $state->{not}) {
 			next;
 		}
 		if ($s->avail() < 0) {
-			Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
+			if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+				Warn "Error: ", $s->{dev}, 
+				    " is not large enough ($fname)\n";
+			} elsif ($s->{problems} == 4) {
+				Warn "Error: ... more files do not fit on ",
+					$s->{dev}, "\n";
+			}
 			$problems++;
 		}
 	}

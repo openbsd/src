@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.11 2005/08/22 11:11:39 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.12 2005/08/22 11:25:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -37,7 +37,7 @@ sub create_device($)
 	my $dev = shift;
 	my $n = $devinfo->{$dev};
 	if (!defined $n) {
-		$n = { dev => $dev, used => 0 };
+		$n = { dev => $dev, used => 0, problems => 0 };
 		bless $n, "OpenBSD::Vstat::MountPoint";
 		$devinfo->{$dev} = $n;
 	}
