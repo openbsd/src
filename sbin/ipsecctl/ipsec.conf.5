@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.17 2005/08/22 04:27:18 david Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.18 2005/08/22 22:10:02 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -224,6 +224,151 @@ will then generate the matching incoming SA using the second values for
 .Ar authkey ,
 and
 .Ar enckey .
+.Sh AUTOMATIC KEYING USING ISAKMP/IKE
+Rules can also specify IPsec flows and SAs to be established automatically by
+.Xr isakmpd 8 .
+This is accomplished by the following rule:
+.Bl -tag -width xxxx
+.It Ic ike esp
+Creates an IPsec tunnel using ESP.
+.El
+.Pp
+Note that AH and transport mode are not yet supported.
+See
+.Xr isakmpd 8
+for details on ISAKMP/IKE.
+.Pp
+Parameters specify the packets that will go through the tunnel and which
+cryptographic transforms are used for
+.Xr isakmpd 8 .
+Some parameters are optional.
+.Bl -tag -width xxxx
+.It Xo
+.Ar passive
+.Xc
+When
+.Ar passive
+is specified
+.Xr isakmpd 8
+will not immediately start negotiation of this tunnel, but wait for an incoming
+request of the remote peer.
+If not specified,
+.Xr isakmpd 8
+will start negotiation at once.
+.It Xo
+.Ar from
+.Aq Ar src
+.Ar to
+.Aq Ar dst
+.Ar peer
+.Aq Ar remote
+.Xc
+This rule applies for packets with source address
+.Aq Ar src
+and destination address
+.Aq Ar dst .
+All addresses are specified in CIDR notation.
+The
+.Ar peer
+parameter specifies the address of the remote endpoint of this particular
+flow.
+For host-to-host connections where
+.Aq Ar dst
+is identical to
+.Aq Ar remote ,
+the
+.Ar peer
+specification can be left out.
+.It Xo
+.Ar main auth
+.Aq Ar algorithm
+.Ar enc
+.Aq Ar algorithm
+.Xc
+These paramters define the cryptographic transforms to be used for main mode.
+Possible values for
+.Aq Ar auth
+are
+.Ar sha1
+and
+.Ar md5 .
+For
+.Aq Ar enc
+the values
+.Ar des ,
+.Ar 3des ,
+.Ar aes,
+.Ar blowfish
+and
+.Ar cast
+are allowed.
+If omitted,
+.Xr isakmpd 8
+will use the default values
+.Aq Ar sha1
+and
+.Aq Ar 3des .
+.It Xo
+.Ar quick auth
+.Aq Ar algorithm
+.Ar enc
+.Aq Ar algorithm
+.Xc
+Similar to
+.Ar main
+.Ar quick
+defines the transforms to be used for quick mode.
+However, the possible values for
+.Aq Ar auth
+are
+.Ar hmac-md5 ,
+.Ar hmac-sha1 ,
+.Ar hmac-ripemd160 ,
+.Ar hmac-sha2-256 ,
+.Ar hmac-sha2-384
+and
+.Ar hmac-sha2-512 .
+For
+.Ar enc
+valid values are again
+.Ar des ,
+.Ar 3des ,
+.Ar aes,
+.Ar blowfish
+and
+.Ar cast .
+If no quick mode transforms are specified
+the default values
+.Ar hmac-sha2-256
+and
+.Ar aes
+are choosen.
+.It Xo
+.Ar srcid
+.Aq Ar fqdn
+.Xc
+This optional parameter defines a FQDN that will be used by
+.Xr isakmpd 8
+as identity of the local peer.
+.It Xo
+.Ar dstid
+.Aq Ar fqdn
+.Xc
+Similar to
+.Ar srcid
+this optional parameter defines a FQDN to be used by the remote peer.
+.El
+.Pp
+Note that
+.Xr isamkpd 8
+will use RSA authentication.
+By default, the system startup script
+.Xr rc 8
+generates a key-pair when starting, if one does not already exist.
+.Pp
+See also
+.Sx ISAKMP EXAMPLES
+below .
 .Sh TCP MD5 SIGNATURES
 RFC 2385 describes a mechanism to protect
 .Xr tcp 4
@@ -297,7 +442,10 @@ flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
 	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
 	enckey file "enc14:enc12"
+.Ed
 
+.Sh TCPMD5 EXAMPLES
+.Bd -literal
 # Set up keys for TCP MD5 signatures
 tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 	authkey 0xdeadbeef:0xbeefdead
@@ -305,6 +453,15 @@ tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 # Set up keys for TCP MD5 signatures, read keys from files
 tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 	authkey file "/path/to/key1:/path/to/key2"
+.Ed
+.Sh ISAKMP EXAMPLES
+.Bd -literal
+# Set up two tunnels:
+# First between the networks 10.1.1.0/24 and 10.1.2.0/24.
+# Second between the machines 192.168.3.1 and 192.168.3.2
+
+ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
+ike esp from 192.168.3.1 to 192.168.3.2
 .Ed
 .Sh SEE ALSO
 .Xr ipsec 4 ,

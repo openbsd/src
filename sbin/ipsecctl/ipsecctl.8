@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.13 2005/07/10 07:11:37 jmc Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.14 2005/08/22 22:10:02 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -30,9 +30,14 @@ The
 .Nm
 utility controls flows that determine which packets are to be processed by
 IPsec.
-It allows ruleset configuration and retrieval of status information from the
+It allows ruleset configuration, and retrieval of status information from the
 kernel's SPD (Security Policy Database) and SADB (Security Association
 Database).
+.Pp
+It also can control
+.Xr isakmpd 8
+and establish tunnels using automatic keying with
+.Xr isakmpd 8 .
 .Pp
 Additionally,
 .Nm
@@ -96,7 +101,8 @@ will produce even more verbose output.
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
-.Xr ipsec.conf 5
+.Xr ipsec.conf 5 ,
+.Xr isakmpd 8
 .\" .Sh STANDARDS
 .\" .Sh HISTORY
 .\" .Sh AUTHORS
