@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.34 2005/08/12 06:36:14 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.35 2005/08/22 11:17:26 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -26,6 +26,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -148,8 +149,10 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 {
 	int existing, l, removed;
 	char buf[MAXPATHLEN], fpath[MAXPATHLEN];
+	CVSENTRIES *entf;
 
 	existing = removed = 0;
+	entf = (CVSENTRIES *)cf->cf_entry;
 
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
@@ -175,8 +178,8 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			    cf->cf_name);
 		return (0);
 	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
-
-		/* XXX scratch it from CVS/Entries */
+		if (cvs_ent_remove(entf, cf->cf_name) == -1)
+			return (CVS_EX_FILE);
 
 		l = snprintf(buf, sizeof(buf), "%s/%s%s",
 		    CVS_PATH_CVSDIR, cf->cf_name, CVS_DESCR_FILE_EXT);
@@ -185,6 +188,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			cvs_log(LP_ERRNO, "%s", buf);
 			return (CVS_EX_DATA);
 		}
+
 		if (cvs_unlink(buf) == -1)
 			return (CVS_EX_FILE);
 
@@ -235,11 +239,16 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 static int
 cvs_remove_file(const char *fpath)
 {
+	struct stat st;
+
 	/* if -f option is used, physically remove the file */
 	if (force_remove == 1) {
 		if(cvs_unlink(fpath) == -1)
 			return (-1);
 		nuked++;
+	} else {
+		if ((stat(fpath, &st) == -1) && (errno == ENOENT))
+			nuked++;
 	}
 
 	return (0);
