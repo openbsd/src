@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.19 2005/08/19 00:10:56 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.20 2005/08/22 11:30:30 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -398,7 +398,12 @@ OKAY:
 	while (my $e = $self->next()) {
 		if ($e->isFile() && is_info_name($e->{name})) {
 			$e->{name}=$dir.$e->{name};
-			eval { $e->create(); }
+			eval { $e->create(); };
+			if ($@) {
+				unlink($e->{name});
+				$@ =~ s/\s+at.*//;
+				print STDERR $@;
+			}
 		} else {
 			$self->unput();
 			last;
