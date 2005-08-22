@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.25 2005/08/09 12:37:45 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.26 2005/08/22 17:26:46 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -97,9 +97,9 @@ ipsecctl_rules(char *filename, int opts)
 		error = 1;
 	} else {
 		if (opts & IPSECCTL_OPT_DELETE)
-			action = PFK_ACTION_DELETE;
+			action = ACTION_DELETE;
 		else
-			action = PFK_ACTION_ADD;
+			action = ACTION_ADD;
 
 		if ((opts & IPSECCTL_OPT_NOACTION) == 0)
 			if (ipsecctl_commit(action, &ipsec))
@@ -141,22 +141,31 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 	while ((rp = TAILQ_FIRST(&ipsec->rule_queue))) {
 		TAILQ_REMOVE(&ipsec->rule_queue, rp, entries);
 
-		if (pfkey_ipsec_establish(action, rp) == -1)
-			warnx("failed to add rule %d", rp->nr);
+		if (rp->type & RULE_IKE) {
+			if (ike_ipsec_establish(action, rp) == -1)
+				warnx("failed to add rule %d", rp->nr);
+		} else {
+			if (pfkey_ipsec_establish(action, rp) == -1)
+				warnx("failed to add rule %d", rp->nr);
+		}
 
 		/* src and dst are always used. */
+		free(rp->src->name);
 		free(rp->src);
+		free(rp->dst->name);
 		free(rp->dst);
 
-		if (rp->peer)
+		if (rp->peer) {
+			free(rp->peer->name);
 			free(rp->peer);
+		}
 		if (rp->auth) {
 			if (rp->auth->srcid)
 				free(rp->auth->srcid);
 			if (rp->auth->dstid)
 				free(rp->auth->dstid);
-			}
 			free(rp->auth);
+		}
 		if (rp->xfs)
 			free(rp->xfs);
 		if (rp->authkey) {
@@ -241,6 +250,7 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 		}
 		printf("\n\ttype %s", flowtype[r->flowtype]);
 	}
+	printf("\n");
 }
 
 void
@@ -275,6 +285,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 		printf("enckey 0x");
 		ipsecctl_print_key(r->enckey);
 	}
+	printf("\n");
 }
 
 void
@@ -287,7 +298,8 @@ ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 		ipsecctl_print_flow(r, opts);
 	if (r->type & RULE_SA)
 		ipsecctl_print_sa(r, opts);
-	printf("\n");
+	if (r->type & RULE_IKE)
+		ike_print_config(r, opts);
 }
 
 int
@@ -382,8 +394,11 @@ ipsecctl_show_flows(int opts)
 
 		ipsecctl_print_rule(rp, ipsec.opts);
 
+		free(rp->src->name);
 		free(rp->src);
+		free(rp->dst->name);
 		free(rp->dst);
+		free(rp->peer->name);
 		free(rp->peer);
 		if (rp->auth) {
 			if (rp->auth->srcid)

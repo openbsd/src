@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.22 2005/08/09 12:37:45 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.23 2005/08/22 17:26:46 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -831,11 +831,11 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		}
 
 		switch (action) {
-		case PFK_ACTION_ADD:
+		case ACTION_ADD:
 			ret = pfkey_flow(fd, satype, SADB_X_ADDFLOW, direction,
 			    r->src, r->dst, r->peer, r->auth, r->flowtype);
 			break;
-		case PFK_ACTION_DELETE:
+		case ACTION_DELETE:
 			/* No peer for flow deletion. */
 			ret = pfkey_flow(fd, satype, SADB_X_DELFLOW, direction,
 			    r->src, r->dst, NULL, NULL, r->flowtype);
@@ -858,11 +858,11 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 			return -1;
 		}
 		switch (action) {
-		case PFK_ACTION_ADD:
+		case ACTION_ADD:
 			ret = pfkey_sa(fd, satype, SADB_ADD, r->spi,
 			    r->src, r->dst, r->xfs, r->authkey, r->enckey);
 			break;
-		case PFK_ACTION_DELETE:
+		case ACTION_DELETE:
 			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi,
 			    r->src, r->dst, r->xfs, NULL, NULL);
 			break;

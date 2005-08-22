@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.16 2005/08/09 12:37:45 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.17 2005/08/22 17:26:46 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -28,8 +28,13 @@
 #define IPSECCTL_OPT_FLUSH		0x0100
 #define IPSECCTL_OPT_DELETE		0x0200
 
+enum {
+	ACTION_ADD, ACTION_DELETE
+};
+
 #define RULE_FLOW	0x01
 #define RULE_SA		0x02
+#define RULE_IKE	0x04
 
 enum {
 	DIRECTION_UNKNOWN, IPSEC_IN, IPSEC_OUT, IPSEC_INOUT
@@ -56,15 +61,19 @@ enum {
 	ENCXF_UNKNOWN,ENCXF_NONE, ENCXF_3DES_CBC, ENCXF_DES_CBC, ENCXF_AES,
 	ENCXF_AESCTR, ENCXF_BLOWFISH, ENCXF_CAST128, ENCXF_NULL, ENCXF_SKIPJACK
 };
+enum {
+	IKE_ACTIVE, IKE_PASSIVE
+};
 
 struct ipsec_addr {
-	struct in_addr  v4;
+	struct in_addr   v4;
 	union {
 		struct in_addr  mask;
 		u_int32_t	mask32;
-	}		v4mask;
-	int		netaddress;
-	sa_family_t	af;
+	}		 v4mask;
+	int		 netaddress;
+	sa_family_t	 af;
+	char		*name;
 };
 
 struct ipsec_auth {
@@ -103,12 +112,15 @@ struct ipsec_rule {
 	struct ipsec_addr *peer;
 	struct ipsec_auth *auth;
 	struct ipsec_transforms *xfs;
+	struct ipsec_transforms *mmxfs;
+	struct ipsec_transforms *qmxfs;
 	struct ipsec_key  *authkey;
 	struct ipsec_key  *enckey;
 
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 	u_int8_t	 flowtype;
+	u_int8_t	 ikemode;
 	u_int32_t	 spi;
 	u_int32_t	 nr;
 
@@ -126,5 +138,7 @@ struct ipsecctl {
 int	parse_rules(FILE *, struct ipsecctl *);
 int	ipsecctl_add_rule(struct ipsecctl * ipsec, struct ipsec_rule *);
 void	ipsecctl_get_rules(struct ipsecctl *);
+int	ike_print_config(struct ipsec_rule *, int);
+int	ike_ipsec_establish(int, struct ipsec_rule *);
 
 #endif				/* _IPSECCTL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2005/08/19 08:47:56 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2005/08/22 17:26:46 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -122,13 +122,17 @@ struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr *, struct
 			     ipsec_addr *, struct ipsec_addr *, u_int8_t,
 			     char *, char *, u_int16_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
+struct ipsec_rule	*create_ike(struct ipsec_addr *, struct ipsec_addr *,
+			     struct ipsec_addr *, struct ipsec_transforms *,
+			     struct ipsec_transforms *, u_int8_t, u_int8_t,
+			     char *, char *);
 
 typedef struct {
 	union {
 		u_int32_t	 number;
+		u_int8_t	 ikemode;
 		u_int8_t	 dir;
 		char		*string;
-		int		 log;
 		u_int8_t	 protocol;
 		struct {
 			struct ipsec_addr *src;
@@ -159,6 +163,8 @@ typedef struct {
 			struct ipsec_key *keyin;
 		} keys;
 		struct ipsec_transforms *transforms;
+		struct ipsec_transforms *mmxfs;
+		struct ipsec_transforms *qmxfs;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -166,7 +172,8 @@ typedef struct {
 %}
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
-%token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR
+%token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
+%token	ACTIVE
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -182,10 +189,14 @@ typedef struct {
 %type	<v.enckeys>		enckeyspec
 %type	<v.keys>		keyspec
 %type	<v.transforms>		transforms
+%type	<v.mmxfs>		mmxfs
+%type	<v.qmxfs>		qmxfs
+%type	<v.ikemode>		ikemode
 %%
 
 grammar		: /* empty */
 		| grammar '\n'
+		| grammar ikerule '\n'
 		| grammar flowrule '\n'
 		| grammar sarule '\n'
 		| grammar tcpmd5rule '\n'
@@ -282,6 +293,19 @@ flowrule	: FLOW protocol dir hosts peer ids authtype	{
 			}
 		}
 		;
+
+ikerule		: IKE ikemode protocol hosts peer mmxfs qmxfs ids {
+			struct ipsec_rule	*r;
+
+			r = create_ike($4.src, $4.dst, $5, $6, $7, $3, $2,
+			    $8.srcid, $8.dstid);
+			if (r == NULL)
+				YYERROR;
+			r->nr = ipsec->rule_nr++;
+
+			if (ipsecctl_add_rule(ipsec, r))
+				errx(1, "ikerule: ipsecctl_add_rule");
+		};
 
 protocol	: /* empty */			{ $$ = IPSEC_ESP; }
 		| ESP				{ $$ = IPSEC_ESP; }
@@ -388,6 +412,7 @@ spispec		: SPI STRING			{
 transforms	: /* empty */			{
 			struct ipsec_transforms *xfs;
 
+			/* We create just an empty transform */
 			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
 			    == NULL)
 				err(1, "calloc");
@@ -419,6 +444,30 @@ transforms	: /* empty */			{
 			}
 			free($2);
 		}
+		;
+
+mmxfs		: /* empty */			{
+			struct ipsec_transforms *xfs;
+
+			/* We create just an empty transform */
+			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
+			    == NULL)
+				err(1, "calloc");
+			$$ = xfs;
+		}
+		| MAIN transforms		{ $$ = $2; }
+		; 
+
+qmxfs		: /* empty */			{
+			struct ipsec_transforms *xfs;
+
+			/* We create just an empty transform */
+			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
+			    == NULL)
+				err(1, "calloc");
+			$$ = xfs;
+		}
+		| QUICK transforms		{ $$ = $2; }
 		;
 
 authkeyspec	: /* empty */			{
@@ -471,6 +520,10 @@ keyspec		: STRING			{
 			free($2);
 		}
 		;
+ikemode		: /* empty */			{ $$ = IKE_ACTIVE; }
+		| PASSIVE			{ $$ = IKE_PASSIVE; }
+		| ACTIVE			{ $$ = IKE_ACTIVE; }
+		;
 %%
 
 struct keywords {
@@ -504,6 +557,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "active",		ACTIVE},
 		{ "ah",			AH},
 		{ "auth",		AUTHXF},
 		{ "authkey",		AUTHKEY},
@@ -514,10 +568,14 @@ lookup(char *s)
 		{ "file",		FILENAME},
 		{ "flow",		FLOW},
 		{ "from",		FROM},
+		{ "ike",		IKE},
 		{ "in",			IN},
+		{ "main",		MAIN},
 		{ "out",		OUT},
+		{ "passive",		PASSIVE},
 		{ "peer",		PEER},
 		{ "psk",		PSK},
+		{ "quick",		QUICK},
 		{ "rsa",		RSA},
 		{ "spi",		SPI},
 		{ "srcid",		SRCID},
@@ -927,17 +985,22 @@ host(const char *s)
 	ipa = calloc(1, sizeof(struct ipsec_addr));
 	if (ipa == NULL)
 		err(1, "calloc");
+
+	if ((ipa->name = strdup(s)) == NULL)
+		err(1, "strdup");
 	
 	if (strrchr(s, '/') != NULL) {
 		bits = inet_net_pton(AF_INET, s, &ipa->v4, sizeof(ipa->v4));
 		if (bits == -1 || bits > 32) {
+			free(ipa->name);
 			free(ipa);
 			return(NULL);
 		}
 	} else {
 		if (inet_pton(AF_INET, s, &ipa->v4) != 1) {
+			free(ipa->name);
 			free(ipa);
-			return NULL;
+			return (NULL);
 		}
 	}
 
@@ -954,7 +1017,7 @@ host(const char *s)
 
 	ipa->af = AF_INET;
 
-	return ipa;
+	return (ipa);
 }
 
 struct ipsec_addr *
@@ -965,8 +1028,12 @@ copyhost(const struct ipsec_addr *src)
 	dst = calloc(1, sizeof(struct ipsec_addr));
 	if (dst == NULL)
 		err(1, "calloc");
-	
+
 	memcpy(dst, src, sizeof(struct ipsec_addr));
+
+	if ((dst->name = strdup(src->name)) == NULL)
+		err(1, "strdup");
+	
 	return dst;
 }
 
@@ -992,10 +1059,16 @@ transforms(const char *authname, const char *encname)
 	if (xfs == NULL)
 		err(1, "calloc");
 
-	if (authname)
+	if (authname) {
 		xfs->authxf = parse_xf(authname, authxfs);
-	if (encname)
+		if (xfs->authxf == NULL)
+			yyerror("%s not a valid transform", authname);
+	}
+	if (encname) {
 		xfs->encxf = parse_xf(encname, encxfs);
+		if (xfs->encxf == NULL)
+			yyerror("%s not a valid transform", encname);
+	}
 
 	return (xfs);
 }
@@ -1241,4 +1314,63 @@ reverse_rule(struct ipsec_rule *rule)
 	reverse->auth->type = rule->auth->type;
 
 	return reverse;
+}
+
+struct ipsec_rule *
+create_ike(struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_addr *
+    peer, struct ipsec_transforms *mmxfs, struct ipsec_transforms *qmxfs,
+    u_int8_t proto, u_int8_t mode, char *srcid, char *dstid)
+{
+	struct ipsec_rule *r;
+
+	r = calloc(1, sizeof(struct ipsec_rule));
+	if (r == NULL)
+		err(1, "calloc");
+
+	r->type = RULE_IKE;
+
+	r->src = src;
+	r->dst = dst;
+
+	if (peer == NULL) {
+		/* Set peer to remote host.  Must be a host address. */
+		if (r->direction == IPSEC_IN) {
+			if (r->src->netaddress) {
+				yyerror("no peer specified");
+				goto errout;
+			}
+			r->peer = copyhost(r->src);
+		} else {
+			if (r->dst->netaddress) {
+				yyerror("no peer specified");
+				goto errout;
+			}
+			r->peer = copyhost(r->dst);
+		}
+	} else
+		r->peer = peer;
+
+	r->proto = proto;
+	r->ikemode = mode;
+	r->mmxfs = mmxfs;
+	r->qmxfs = qmxfs;
+	r->auth = calloc(1, sizeof(struct ipsec_auth));
+	if (r->auth == NULL)
+		err(1, "calloc");
+	r->auth->srcid = srcid;
+	r->auth->dstid = dstid;
+	r->auth->idtype = ID_FQDN;	/* XXX For now only FQDN. */
+
+	return (r);
+
+errout:
+	free(r);
+	if (srcid)
+		free(srcid);
+	if (dstid)
+		free(dstid);
+	free(src);
+	free(dst);
+
+	return (NULL);
 }

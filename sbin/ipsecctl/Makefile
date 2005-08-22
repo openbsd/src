@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2005/05/27 05:19:55 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/08/22 17:26:46 hshoexer Exp $
 
 PROG=	ipsecctl
 MAN=	ipsecctl.8 ipsec.conf.5
 
-SRCS=	ipsecctl.c pfkey.c pfkdump.c parse.y
+SRCS=	ike.c ipsecctl.c pfkey.c pfkdump.c parse.y
 
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
