@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.167 2005/07/14 14:48:47 moritz Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.168 2005/08/22 17:49:37 mickey Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.167 2005/07/14 14:48:47 moritz Exp $";
+    "$OpenBSD: ftpd.c,v 1.168 2005/08/22 17:49:37 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1189,9 +1189,12 @@ retrieve(char *cmd, char *name)
 			n = restart_point;
 			i = 0;
 			while (i++ < n) {
-				if ((c=getc(fin)) == EOF) {
-					perror_reply(550, name);
-					goto done;
+				if ((c = getc(fin)) == EOF) {
+					if (ferror(fin)) {
+						perror_reply(550, name);
+						goto done;
+					} else
+						break;
 				}
 				if (c == '\n')
 					i++;
@@ -1259,9 +1262,12 @@ store(char *name, char *mode, int unique)
 			n = restart_point;
 			i = 0;
 			while (i++ < n) {
-				if ((c=getc(fout)) == EOF) {
-					perror_reply(550, name);
-					goto done;
+				if ((c = getc(fout)) == EOF) {
+					if (ferror(fout)) {
+						perror_reply(550, name);
+						goto done;
+					} else
+						break;
 				}
 				if (c == '\n')
 					i++;
