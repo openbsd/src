@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.h,v 1.4 2005/08/18 09:51:05 dlg Exp $ */
+/*	$OpenBSD: safte.h,v 1.5 2005/08/22 04:23:58 david Exp $ */
 
 /*
  * Copyright (c) 2005 Daivd Gwynne <dlg@openbsd.org>
@@ -150,7 +150,7 @@ struct safte_globals {
 #define SAFTE_GLOBAL_WARNING	(1<<2)	/* global warning indication */
 #define SAFTE_GLOBAL_POWER	(1<<3)	/* enclosure power */
 #define	SAFTE_GLOBAL_COOLING	(1<<4)	/* cooling failure */
-#define SAFTE_GLOBAL_PWRFAIL	(1<<5)	/* power failture */
+#define SAFTE_GLOBAL_PWRFAIL	(1<<5)	/* power failure */
 #define SAFTE_GLOBAL_DRVFAIL	(1<<6)	/* drive failure */
 #define SAFTE_GLOBAL_DRVWARN	(1<<6)	/* drive warning */
 	u_int8_t	flags2;

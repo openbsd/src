@@ -1,4 +1,4 @@
-/* $OpenBSD: ses.h,v 1.7 2005/08/18 21:04:47 marco Exp $ */
+/* $OpenBSD: ses.h,v 1.8 2005/08/22 04:23:58 david Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
@@ -212,7 +212,7 @@ struct ses_status {
 #define SES_S_TEMP(d)		((d)->f2)
 #define SES_S_TEMP_OFFSET	(-20)
 #define SES_S_TEMP_UTWARN	((d)->f3 & (1<<0)) /* under temp warning */
-#define SES_S_TEMP_UTFAIL	((d)->f3 & (1<<1)) /* under temp failture */
+#define SES_S_TEMP_UTFAIL	((d)->f3 & (1<<1)) /* under temp failure */
 #define SES_S_TEMP_OTWARN	((d)->f3 & (1<<2)) /* over temp warning */
 #define SES_S_TEMP_OTFAIL	((d)->f3 & (1<<3)) /* over temp failure */
 
