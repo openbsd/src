@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.37 2005/08/21 23:37:24 dlg Exp $       */
+/* $OpenBSD: bioctl.c,v 1.38 2005/08/23 03:59:32 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -232,7 +232,7 @@ bio_inq(char *name)
 
 	rv = ioctl(devh, BIOCINQ, &bi);
 	if (rv == -1) {
-		warnx("bioc_ioctl(BIOCINQ) call failed");
+		warn("BIOCINQ");
 		return;
 	}
 
@@ -244,7 +244,7 @@ bio_inq(char *name)
 
 		rv = ioctl(devh, BIOCVOL, &bv);
 		if (rv == -1) {
-			warnx("bioc_ioctl(BIOCVOL) call failed");
+			warn("BIOCVOL");
 			return;
 		}
 
@@ -300,7 +300,7 @@ bio_inq(char *name)
 
 			rv = ioctl(devh, BIOCDISK, &bd);
 			if (rv == -1) {
-				warnx("bioc_ioctl(BIOCDISK) call failed");
+				warn("BIOCDISK");
 				return;
 			}
 
@@ -399,7 +399,7 @@ bio_alarm(char *arg)
 
 	rv = ioctl(devh, BIOCALARM, &ba);
 	if (rv == -1) {
-		warnx("bioc_ioctl(ALARM) call failed");
+		warn("BIOCALARM");
 		return;
 	}
 
@@ -430,7 +430,7 @@ bio_setstate(char *arg)
 
 	rv = ioctl(devh, BIOCSETSTATE, &bs);
 	if (rv == -1) {
-		warnx("bioc_ioctl(BIOCSETSTATE) call failed");
+		warn("BIOCSETSTATE");
 		return;
 	}
 }
@@ -465,7 +465,7 @@ bio_setblink(char *name, char *arg, int blink)
 	bi.bi_cookie = bl.bl_cookie;
 	rv = ioctl(devh, BIOCINQ, &bi);
 	if (rv == -1) {
-		warn("bio ioctl(BIOCINQ) call failed");
+		warn("BIOCINQ");
 		return;
 	}
 
@@ -475,7 +475,7 @@ bio_setblink(char *name, char *arg, int blink)
 		bv.bv_volid = v;
 		rv = ioctl(devh, BIOCVOL, &bv);
 		if (rv == -1) {
-			warn("bio ioctl(BIOCVOL) call failed");
+			warn("BIOCVOL");
 			return;
 		}
 
@@ -490,7 +490,7 @@ bio_setblink(char *name, char *arg, int blink)
 
 			rv = ioctl(devh, BIOCDISK, &bd);
 			if (rv == -1) {
-				warn("bio ioctl(BIOCDISK) call failed");
+				warn("BIOCDISK");
 				return;
 			}
 
@@ -535,7 +535,7 @@ bio_blink(char *enclosure, int target, int blinktype)
 
 	rv = ioctl(bioh, BIOCBLINK, &blink);
 	if (rv == -1)
-		warn("bio ioctl(BIOCBLINK) call failed");
+		warn("BIOCBLINK");
 
 	close(bioh);
 }
