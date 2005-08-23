@@ -1,4 +1,4 @@
-.\"     $OpenBSD: txp.4,v 1.15 2004/12/14 09:09:22 jmc Exp $
+.\"     $OpenBSD: txp.4,v 1.16 2005/08/23 18:15:59 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -53,8 +53,7 @@ This driver supports the following cards:
 .El
 .Pp
 Basic Ethernet functions are provided as well as support for
-.Xr vlan 4
-tag removal and insertion assistance, receive
+VLAN tag removal and insertion assistance, receive
 .Xr ip 4 ,
 .Xr tcp 4 ,
 and
@@ -132,7 +131,6 @@ which is loaded on demand when the device is attached:
 .Xr pci 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
-.Xr vlan 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
