@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.8 2004/03/15 02:50:29 tedu Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.9 2005/08/23 13:43:53 espie Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static const char rcsid[] = "$OpenBSD: lprint.c,v 1.8 2004/03/15 02:50:29 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: lprint.c,v 1.9 2005/08/23 13:43:53 espie Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,6 +83,7 @@ lprint(PERSON *pn)
 	struct tm *tp;
 	int oddfield;
 	char *t, *tzn;
+	struct storage *mem = NULL;
 
 	cpr = 0;
 	/*
@@ -95,7 +96,7 @@ lprint(PERSON *pn)
 	 *	mail status
 	 */
 	(void)printf("Login: %-15s\t\t\tName: %s\nDirectory: %-25s",
-	    pn->name, pn->realname, pn->dir);
+	    vs(&mem, pn->name), vs(&mem, pn->realname), pn->dir);
 	(void)printf("\tShell: %-s\n", *pn->shell ? pn->shell : _PATH_BSHELL);
 
 	/*
@@ -109,27 +110,28 @@ lprint(PERSON *pn)
 	    strlen(pn->office) + strlen(pn->officephone) +
 	    sizeof(OFFICE_TAG) + 2 <= 5 * TAB_LEN) {
 		(void)snprintf(tbuf, sizeof(tbuf),
-		    "%s: %s, %s", OFFICE_TAG, pn->office,
-		    prphone(pn->officephone));
+		    "%s: %s, %s", OFFICE_TAG, vs(&mem, pn->office),
+		    vs(&mem, prphone(pn->officephone)));
 		oddfield = demi_print(tbuf, oddfield);
 	} else {
 		if (pn->office) {
 			(void)snprintf(tbuf, sizeof(tbuf),
-			    "%s: %s", OFFICE_TAG, pn->office);
+			    "%s: %s", OFFICE_TAG, vs(&mem, pn->office));
 			oddfield = demi_print(tbuf, oddfield);
 		}
 		if (pn->officephone) {
 			(void)snprintf(tbuf, sizeof(tbuf),
 			    "%s: %s", OFFICE_PHONE_TAG,
-			    prphone(pn->officephone));
+			    vs(&mem, prphone(pn->officephone)));
 			oddfield = demi_print(tbuf, oddfield);
 		}
 	}
 	if (pn->homephone) {
 		(void)snprintf(tbuf, sizeof(tbuf), "%s: %s", "Home Phone",
-		    prphone(pn->homephone));
+		    vs(&mem, prphone(pn->homephone)));
 		oddfield = demi_print(tbuf, oddfield);
 	}
+	free_storage(mem);
 	if (oddfield)
 		putchar('\n');
 

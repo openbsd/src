@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2005/03/15 12:28:48 niallo Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2005/08/23 13:43:53 espie Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static const char rcsid[] = "$OpenBSD: util.c,v 1.21 2005/03/15 12:28:48 niallo Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.22 2005/08/23 13:43:53 espie Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,6 +60,23 @@ char	*estrdup(char *);
 WHERE	*walloc(PERSON *pn);
 void	find_idle_and_ttywrite(WHERE *);
 void	userinfo(PERSON *, struct passwd *);
+
+struct storage {
+	struct storage *next;
+	char a[1];
+};
+
+void
+free_storage(struct storage *st)
+{
+	struct storage *nx;
+
+	while (st != NULL) {
+		nx = st->next;
+		free(st);
+		st = nx;
+	}
+}
 
 void
 find_idle_and_ttywrite(WHERE *w)
@@ -376,12 +393,17 @@ prphone(char *num)
  * The caller is responsible for free()'ing the returned string.
  */
 char *
-vs(char *src)
+vs(struct storage **exist, char *src)
 {
 	char *dst;
+	struct storage *n;
 
-	if ((dst = malloc((4 * strlen(src)) + 1)) == NULL)
+	if ((n = malloc(sizeof(struct storage) + 4 * strlen(src))) == NULL)
 		err(1, "malloc failed");
+	n->next = *exist;
+	*exist = n;
+
+	dst = n->a;
 
 	strvis(dst, src, VIS_SAFE|VIS_NOSLASH);
 	return (dst);

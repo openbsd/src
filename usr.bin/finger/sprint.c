@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.10 2004/03/15 02:50:29 tedu Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.11 2005/08/23 13:43:53 espie Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static const char rcsid[] = "$OpenBSD: sprint.c,v 1.10 2004/03/15 02:50:29 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: sprint.c,v 1.11 2005/08/23 13:43:53 espie Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,6 +55,7 @@ sflag_print(void)
 	int cnt;
 	char *p;
 	PERSON **list;
+	struct storage *mem;
 
 	list = sort();
 	/*
@@ -84,10 +85,11 @@ sflag_print(void)
 	for (cnt = 0; cnt < entries; ++cnt) {
 		pn = list[cnt];
 		for (w = pn->whead; w != NULL; w = w->next) {
+			mem =  NULL;
 			(void)printf("%-*.*s %-*.*s ",
-			    NAME_WIDTH, UT_NAMESIZE, vs(pn->name),
+			    NAME_WIDTH, UT_NAMESIZE, vs(&mem, pn->name),
 			    MAXREALNAME, MAXREALNAME,
-			    pn->realname ? vs(pn->realname) : "");
+			    pn->realname ? vs(&mem, pn->realname) : "");
 			if (!w->loginat) {
 				(void)printf("  *     *  No logins   ");
 				goto office;
@@ -119,15 +121,16 @@ office:
 			if (oflag) {
 				if (pn->office)
 					(void)printf("%-10.10s",
-					    vs(pn->office));
+					    vs(&mem, pn->office));
 				else if (pn->officephone)
 					(void)printf("%-10.10s", " ");
 				if (pn->officephone)
 					(void)printf(" %-.15s",
-					    vs(prphone(pn->officephone)));
+					    vs(&mem, prphone(pn->officephone)));
 			} else
 				(void)printf("%.*s", MAXHOSTNAME, w->host);
 			putchar('\n');
+			free_storage(mem);
 		}
 	}
 }
