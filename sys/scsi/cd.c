@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.86 2005/08/03 23:37:07 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.87 2005/08/23 23:38:00 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1364,29 +1364,33 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 	struct cd_softc *cd;
 	int p0, p1, p2, p3, flags;
 {
-	struct scsi_mode_sense_buf data;
+	struct scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
 	int error, big;
 
-	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
+	data = malloc(sizeof(*data), M_TEMP, M_NOWAIT);
+	if (data == NULL)
+		return (ENOMEM);
+
+	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, data,
 	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
-	if (error != 0)
-		return (error);
-	if (audio == NULL)
-		return (EIO);
+	if (error == 0 && audio == NULL)
+		error = EIO;
 
-	audio->port[LEFT_PORT].channels = p0;
-	audio->port[RIGHT_PORT].channels = p1;
-	audio->port[2].channels = p2;
-	audio->port[3].channels = p3;
+	if (error == 0) {
+		audio->port[LEFT_PORT].channels = p0;
+		audio->port[RIGHT_PORT].channels = p1;
+		audio->port[2].channels = p2;
+		audio->port[3].channels = p3;
+		if (big)
+			error = scsi_mode_select_big(cd->sc_link, SMS_PF,
+			    &data->headers.hdr_big, flags, 20000);
+		else
+			error = scsi_mode_select(cd->sc_link, SMS_PF,
+			    &data->headers.hdr, flags, 20000);
+	}	
 
-	if (big)
-		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    &data.headers.hdr_big, flags, 20000);
-	else
-		error = scsi_mode_select(cd->sc_link, SMS_PF, &data.headers.hdr,
-		    flags, 20000);
-
+	free(data, M_TEMP);
 	return (error);
 }
 
@@ -1396,22 +1400,27 @@ cd_getvol(cd, arg, flags)
 	struct ioc_vol *arg;
 	int flags;
 {
-	struct scsi_mode_sense_buf data;
+	struct scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
 	int error;
 
-	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
-	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, NULL);
-	if (error != 0)
-		return (error);
-	if (audio == NULL)
-		return (EIO);
-		
-	arg->vol[0] = audio->port[0].volume;
-	arg->vol[1] = audio->port[1].volume;
-	arg->vol[2] = audio->port[2].volume;
-	arg->vol[3] = audio->port[3].volume;
+	data = malloc(sizeof(*data), M_TEMP, M_NOWAIT);
+	if (data == NULL)
+		return (ENOMEM);
 
+	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, data,
+	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, NULL);
+	if (error == 0 && audio == NULL)
+		error = EIO;
+
+	if (error == 0) {
+		arg->vol[0] = audio->port[0].volume;
+		arg->vol[1] = audio->port[1].volume;
+		arg->vol[2] = audio->port[2].volume;
+		arg->vol[3] = audio->port[3].volume;
+	}		
+
+	free(data, M_TEMP);
 	return (0);
 }
 
@@ -1421,30 +1430,38 @@ cd_setvol(cd, arg, flags)
 	const struct ioc_vol *arg;
 	int flags;
 {
-	struct scsi_mode_sense_buf data;
+	struct scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
 	u_int8_t mask_volume[4];
 	int error, big;
 
+	data = malloc(sizeof(*data), M_TEMP, M_NOWAIT);
+	if (data == NULL)
+		return (ENOMEM);
+
 	error = scsi_do_mode_sense(cd->sc_link,
-	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE, &data, (void **)&audio, NULL,
+	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE, data, (void **)&audio, NULL,
 	    NULL, NULL, sizeof(*audio), flags, NULL);
-	if (error != 0)
+	if (error == 0 && audio == NULL)
+		error = EIO;
+	if (error != 0) {
+		free(data, M_TEMP);
 		return (error);
-	if (audio == NULL)
-		return (EIO);
+	}	
 
 	mask_volume[0] = audio->port[0].volume;
 	mask_volume[1] = audio->port[1].volume;
 	mask_volume[2] = audio->port[2].volume;
 	mask_volume[3] = audio->port[3].volume;
 
-	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
+	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, data,
 	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
-	if (error != 0)
+	if (error == 0 && audio == NULL)
+		error = EIO;
+	if (error != 0) {
+		free(data, M_TEMP);
 		return (error);
-	if (audio == NULL)
-		return (EIO);
+	}	
 
 	audio->port[0].volume = arg->vol[0] & mask_volume[0];
 	audio->port[1].volume = arg->vol[1] & mask_volume[1];
@@ -1453,11 +1470,12 @@ cd_setvol(cd, arg, flags)
 
 	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    &data.headers.hdr_big, flags, 20000);
+		    &data->headers.hdr_big, flags, 20000);
 	else
-		error = scsi_mode_select(cd->sc_link, SMS_PF, &data.headers.hdr,
-		    flags, 20000);
+		error = scsi_mode_select(cd->sc_link, SMS_PF,
+		    &data->headers.hdr, flags, 20000);
 
+	free(data, M_TEMP);
 	return (error);
 }
 
@@ -1482,7 +1500,7 @@ cd_set_pa_immed(cd, flags)
 	struct cd_softc *cd;
 	int flags;
 {
-	struct scsi_mode_sense_buf data;
+	struct scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
 	int error, oflags, big;
 
@@ -1490,26 +1508,31 @@ cd_set_pa_immed(cd, flags)
 		/* XXX Noop? */
 		return (0);
 
-	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, &data,
+	data = malloc(sizeof(*data), M_TEMP, M_NOWAIT);
+	if (data == NULL)
+		return (ENOMEM);
+
+	error = scsi_do_mode_sense(cd->sc_link, AUDIO_PAGE, data,
 	    (void **)&audio, NULL, NULL, NULL, sizeof(*audio), flags, &big);
-	if (error != 0)
-		return (error);
-	if (audio == NULL)
-		return (EIO);
-		
-	oflags = audio->flags;
-	audio->flags &= ~CD_PA_SOTC;
-	audio->flags |= CD_PA_IMMED;
-	if (audio->flags == oflags)
-		return (0);
+	if (error == 0 && audio == NULL)
+		error = EIO;
 
-	if (big)
-		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    &data.headers.hdr_big, flags, 20000);
-	else
-		error = scsi_mode_select(cd->sc_link, SMS_PF, &data.headers.hdr,
-		    flags, 20000);
+	if (error == 0) {
+		oflags = audio->flags;
+		audio->flags &= ~CD_PA_SOTC;
+		audio->flags |= CD_PA_IMMED;
+		if (audio->flags != oflags) {
+			if (big)
+				error = scsi_mode_select_big(cd->sc_link,
+				    SMS_PF, &data->headers.hdr_big, flags,
+				    20000);
+			else
+				error = scsi_mode_select(cd->sc_link, SMS_PF,
+				    &data->headers.hdr, flags, 20000);
+		}
+	}
 
+	free(data, M_TEMP);
 	return (error);
 }
 

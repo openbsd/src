@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.21 2005/08/13 17:56:34 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.22 2005/08/23 23:38:00 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -613,22 +613,27 @@ ch_get_params(sc, flags)
 	struct ch_softc *sc;
 	int flags;
 {
-	struct scsi_mode_sense_buf data;
+	struct scsi_mode_sense_buf *data;
 	struct page_element_address_assignment *ea;
 	struct page_device_capabilities *cap;
 	int error, from;
 	u_int8_t *moves, *exchanges;
 
+	data = malloc(sizeof(*data), M_TEMP, M_NOWAIT);
+	if (data == NULL)
+		return (ENOMEM);
+
 	/*
 	 * Grab info from the element address assignment page (0x1d).
 	 */
-	error = scsi_do_mode_sense(sc->sc_link, 0x1d, &data,
+	error = scsi_do_mode_sense(sc->sc_link, 0x1d, data,
 	    (void **)&ea, NULL, NULL, NULL, sizeof(*ea), flags, NULL);
-	if (ea == NULL)
+	if (error == 0 && ea == NULL)
 		error = EIO;
 	if (error != 0) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
+		free(data, M_TEMP);
 		return (error);
 	}
 
@@ -646,13 +651,14 @@ ch_get_params(sc, flags)
 	/*
 	 * Grab info from the capabilities page (0x1f).
 	 */
-	error = scsi_do_mode_sense(sc->sc_link, 0x1f, &data,
+	error = scsi_do_mode_sense(sc->sc_link, 0x1f, data,
 	    (void **)&cap, NULL, NULL, NULL, sizeof(*cap), flags, NULL);
 	if (cap == NULL)
 		error = EIO;
 	if (error != 0) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
+		free(data, M_TEMP);
 		return (error);
 	}
 
@@ -666,6 +672,7 @@ ch_get_params(sc, flags)
 	}
 
 	sc->sc_link->flags |= SDEV_MEDIA_LOADED;
+	free(data, M_TEMP);
 	return (0);
 }
 

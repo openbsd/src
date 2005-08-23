@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.87 2005/08/23 23:31:04 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.88 2005/08/23 23:38:00 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1328,14 +1328,18 @@ sd_get_parms(sd, dp, flags)
 	struct disk_parms *dp;
 	int flags;
 {
-	struct scsi_mode_sense_buf buf;
-	struct page_rigid_geometry	*rigid;
-	struct page_flex_geometry	*flex;
-	struct page_reduced_geometry	*reduced;
+	struct scsi_mode_sense_buf *buf;
+	struct page_rigid_geometry *rigid;
+	struct page_flex_geometry *flex;
+	struct page_reduced_geometry *reduced;
 	u_int32_t heads = 0, sectors = 0, cyls = 0, blksize, ssblksize;
 	u_int16_t rpm = 0;
 
 	dp->disksize = scsi_size(sd->sc_link, flags, &ssblksize);
+
+	buf = malloc(sizeof(*buf) ,M_TEMP, M_NOWAIT);
+	if (buf == NULL)
+		goto validate;
 
 	switch (sd->sc_link->inqdata.device & SID_TYPE) {
 	case T_OPTICAL:
@@ -1344,7 +1348,7 @@ sd_get_parms(sd, dp, flags)
 
 	case T_RDIRECT:
 		/* T_RDIRECT supports only PAGE_REDUCED_GEOMETRY (6). */
-		scsi_do_mode_sense(sd->sc_link, PAGE_REDUCED_GEOMETRY, &buf,
+		scsi_do_mode_sense(sd->sc_link, PAGE_REDUCED_GEOMETRY, buf,
 		    (void **)&reduced, NULL, NULL, &blksize, sizeof(*reduced),
 		    flags | SCSI_SILENT, NULL);
 		if (DISK_PGCODE(reduced, PAGE_REDUCED_GEOMETRY)) {
@@ -1367,7 +1371,7 @@ sd_get_parms(sd, dp, flags)
 		if (((sd->sc_link->flags & SDEV_ATAPI) == 0) ||
 		    ((sd->sc_link->flags & SDEV_REMOVABLE) == 0))
 			scsi_do_mode_sense(sd->sc_link, PAGE_RIGID_GEOMETRY,
-			    &buf, (void **)&rigid, NULL, NULL, &blksize,
+			    buf, (void **)&rigid, NULL, NULL, &blksize,
 			    sizeof(*rigid) - 4, flags | SCSI_SILENT, NULL);
 		if (DISK_PGCODE(rigid, PAGE_RIGID_GEOMETRY)) {
 			heads = rigid->nheads;
@@ -1377,7 +1381,7 @@ sd_get_parms(sd, dp, flags)
 				sectors = dp->disksize / (heads * cyls);
 		} else {
 			scsi_do_mode_sense(sd->sc_link, PAGE_FLEX_GEOMETRY,
-			    &buf, (void **)&flex, NULL, NULL, &blksize,
+			    buf, (void **)&flex, NULL, NULL, &blksize,
 			    sizeof(*flex) - 4, flags | SCSI_SILENT, NULL);
 			if (DISK_PGCODE(flex, PAGE_FLEX_GEOMETRY)) {
 				sectors = flex->ph_sec_tr;
@@ -1393,8 +1397,11 @@ sd_get_parms(sd, dp, flags)
 		break;
 	}
 
-	if (dp->disksize == 0)
+validate:	
+	if (dp->disksize == 0) {
+		free(buf, M_TEMP);
 		return (SDGP_RESULT_OFFLINE);
+	}
 	if (ssblksize > 0)
 		dp->blksize = ssblksize;
 	else
@@ -1416,6 +1423,7 @@ sd_get_parms(sd, dp, flags)
 	default:
 		SC_DEBUG(sd->sc_link, SDEV_DB1,
 		    ("sd_get_parms: bad blksize: %#x\n", dp->blksize));
+		free(buf, M_TEMP);
 		return (SDGP_RESULT_OFFLINE);
 	}
 
@@ -1437,6 +1445,7 @@ sd_get_parms(sd, dp, flags)
 	dp->cyls = (cyls == 0) ? dp->disksize / (dp->heads * dp->sectors) :
 	    cyls;
 
+	free(buf, M_TEMP);
 	return (SDGP_RESULT_OK);
 }
 

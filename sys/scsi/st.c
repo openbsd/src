@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.48 2005/06/24 20:48:25 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.49 2005/08/23 23:38:00 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1421,7 +1421,7 @@ st_mode_sense(st, flags)
 	struct st_softc *st;
 	int flags;
 {
-	struct scsi_mode_sense_buf data;
+	struct scsi_mode_sense_buf *data;
 	struct scsi_link *sc_link = st->sc_link;
 	u_int64_t block_count;
 	u_int32_t density, block_size;
@@ -1429,20 +1429,26 @@ st_mode_sense(st, flags)
 	u_int8_t dev_spec;
 	int error, big;
 
+	data = malloc(sizeof(*data), M_TEMP, M_NOWAIT);
+	if (data == NULL)
+		return (ENOMEM);
+
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data.
 	 */
-	error = scsi_do_mode_sense(sc_link, 0, &data, (void **)&page0,
+	error = scsi_do_mode_sense(sc_link, 0, data, (void **)&page0,
 	    &density, &block_count, &block_size, 1, flags | SCSI_SILENT, &big);
-	if (error != 0)
+	if (error != 0) {
+		free(data, M_TEMP);
 		return (error);
+	}	
 
 	/* It is valid for no page0 to be available. */
 	
 	if (big)
-		dev_spec = data.headers.hdr_big.dev_spec;
+		dev_spec = data->headers.hdr_big.dev_spec;
 	else
-		dev_spec = data.headers.hdr.dev_spec;
+		dev_spec = data->headers.hdr.dev_spec;
 
 	if (dev_spec & SMH_DSP_WRITE_PROT)
 		st->flags |= ST_READONLY;
@@ -1461,8 +1467,9 @@ st_mode_sense(st, flags)
 	    ("%sbuffered\n", dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 
 	sc_link->flags |= SDEV_MEDIA_LOADED;
-
-	return 0;
+	
+	free(data, M_TEMP);
+	return (0);
 }
 
 /*
@@ -1474,11 +1481,20 @@ st_mode_select(st, flags)
 	struct st_softc *st;
 	int flags;
 {
-	struct scsi_mode_sense_buf inbuf, outbuf;
+	struct scsi_mode_sense_buf *inbuf, *outbuf;
 	struct scsi_blk_desc general;
 	struct scsi_link *sc_link = st->sc_link;
 	u_int8_t *page0 = NULL;
 	int error, big, page0_size;
+
+	inbuf = malloc(sizeof(*inbuf), M_TEMP, M_NOWAIT);
+	if (inbuf == NULL)
+		return (ENOMEM);
+	outbuf = malloc(sizeof(*outbuf), M_TEMP, M_NOWAIT);
+	if (outbuf == NULL) {
+		free(inbuf, M_TEMP);
+		return (ENOMEM);
+	}		
 
 	/*
 	 * This quirk deals with drives that have only one valid mode and think
@@ -1489,13 +1505,18 @@ st_mode_select(st, flags)
 		SC_DEBUG(sc_link, SDEV_DB3,
 		    ("not setting density 0x%x blksize 0x%x\n",
 		    st->density, st->blksize));
-		return 0;
+		free(inbuf, M_TEMP);
+		free(outbuf, M_TEMP);
+		return (0);
 	}
 
-	if (sc_link->flags & SDEV_ATAPI)
-		return 0;
+	if (sc_link->flags & SDEV_ATAPI) {
+		free(inbuf, M_TEMP);
+		free(outbuf, M_TEMP);
+		return (0);
+	}	
 
-	bzero(&outbuf, sizeof(outbuf));
+	bzero(outbuf, sizeof(*outbuf));
 	bzero(&general, sizeof(general));
 
 	general.density = st->density;
@@ -1505,25 +1526,29 @@ st_mode_select(st, flags)
 	/*
 	 * Ask for page 0 (vendor specific) mode sense data.
 	 */
-	error = scsi_do_mode_sense(sc_link, 0, &inbuf, (void **)&page0, NULL,
+	error = scsi_do_mode_sense(sc_link, 0, inbuf, (void **)&page0, NULL,
 	    NULL, NULL, 1, flags | SCSI_SILENT, &big);
-	if (error != 0)
+	if (error != 0) {
+		free(inbuf, M_TEMP);
+		free(outbuf, M_TEMP);
 		return (error);
+	}
 
 	if (page0 == NULL) {
 		page0_size = 0;
 	} else if (big == 0) {
-		page0_size = inbuf.headers.hdr.data_length +
-		    sizeof(inbuf.headers.hdr.data_length) -
-		    sizeof(inbuf.headers.hdr) - inbuf.headers.hdr.blk_desc_len;
-		memcpy(&outbuf.headers.buf[sizeof(outbuf.headers.hdr)+
+		page0_size = inbuf->headers.hdr.data_length +
+		    sizeof(inbuf->headers.hdr.data_length) -
+		    sizeof(inbuf->headers.hdr) -
+		    inbuf->headers.hdr.blk_desc_len;
+		memcpy(&outbuf->headers.buf[sizeof(outbuf->headers.hdr)+
 		    sizeof(general)], page0, page0_size);
 	} else {
-		page0_size = _2btol(inbuf.headers.hdr_big.data_length) +
-		    sizeof(inbuf.headers.hdr_big.data_length) -
-		    sizeof(inbuf.headers.hdr_big) -
-		    _2btol(inbuf.headers.hdr_big.blk_desc_len);
-		memcpy(&outbuf.headers.buf[sizeof(outbuf.headers.hdr_big) + 
+		page0_size = _2btol(inbuf->headers.hdr_big.data_length) +
+		    sizeof(inbuf->headers.hdr_big.data_length) -
+		    sizeof(inbuf->headers.hdr_big) -
+		    _2btol(inbuf->headers.hdr_big.blk_desc_len);
+		memcpy(&outbuf->headers.buf[sizeof(outbuf->headers.hdr_big) + 
 		    sizeof(general)], page0, page0_size);
 	}
 
@@ -1531,29 +1556,36 @@ st_mode_select(st, flags)
 	 * Set up for a mode select.
 	 */
 	if (big == 0) {
-		outbuf.headers.hdr.data_length = sizeof(outbuf.headers.hdr) +
+		outbuf->headers.hdr.data_length = sizeof(outbuf->headers.hdr) +
 		    sizeof(general) + page0_size -
-		    sizeof(outbuf.headers.hdr.data_length);
+		    sizeof(outbuf->headers.hdr.data_length);
 		if ((st->flags & ST_DONTBUFFER) == 0)
-			outbuf.headers.hdr.dev_spec = SMH_DSP_BUFF_MODE_ON;
-		outbuf.headers.hdr.blk_desc_len = sizeof(general);
-		memcpy(&outbuf.headers.buf[sizeof(outbuf.headers.hdr)],
+			outbuf->headers.hdr.dev_spec = SMH_DSP_BUFF_MODE_ON;
+		outbuf->headers.hdr.blk_desc_len = sizeof(general);
+		memcpy(&outbuf->headers.buf[sizeof(outbuf->headers.hdr)],
 		    &general, sizeof(general));
-		return (scsi_mode_select(st->sc_link, 0, &outbuf.headers.hdr,
-		    flags, ST_CTL_TIME)); 
+		error = scsi_mode_select(st->sc_link, 0, &outbuf->headers.hdr,
+		    flags, ST_CTL_TIME);
+		free(inbuf, M_TEMP);
+		free(outbuf, M_TEMP);
+		return (error);
 	}
 
 	/* MODE SENSE (10) header was returned, so use MODE SELECT (10). */
-	_lto2b((sizeof(outbuf.headers.hdr_big) + sizeof(general) + page0_size -
-	    sizeof(outbuf.headers.hdr_big.data_length)),
-	    outbuf.headers.hdr_big.data_length);
+	_lto2b((sizeof(outbuf->headers.hdr_big) + sizeof(general) + page0_size -
+	    sizeof(outbuf->headers.hdr_big.data_length)),
+	    outbuf->headers.hdr_big.data_length);
 	if ((st->flags & ST_DONTBUFFER) == 0)
-		outbuf.headers.hdr_big.dev_spec = SMH_DSP_BUFF_MODE_ON;
-	_lto2b(sizeof(general), outbuf.headers.hdr_big.blk_desc_len);
-	memcpy(&outbuf.headers.buf[sizeof(outbuf.headers.hdr_big)], &general,
+		outbuf->headers.hdr_big.dev_spec = SMH_DSP_BUFF_MODE_ON;
+	_lto2b(sizeof(general), outbuf->headers.hdr_big.blk_desc_len);
+	memcpy(&outbuf->headers.buf[sizeof(outbuf->headers.hdr_big)], &general,
 	    sizeof(general));
-	return (scsi_mode_select_big(st->sc_link, 0, &outbuf.headers.hdr_big,
-	    flags, ST_CTL_TIME)); 
+
+	error = scsi_mode_select_big(st->sc_link, 0, &outbuf->headers.hdr_big,
+	    flags, ST_CTL_TIME); 
+	free(inbuf, M_TEMP);
+	free(outbuf, M_TEMP);
+	return (error);
 }
 
 /*
