@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.14 2005/08/22 19:24:45 deraadt Exp $ */
+/*	$OpenBSD: safte.c,v 1.15 2005/08/23 05:29:42 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -126,6 +126,7 @@ safte_match(struct device *parent, void *match, void *aux)
 	struct scsi_inquiry_data	inqbuf;
 	struct scsi_inquiry		cmd;
 	struct safte_inq		*si = (struct safte_inq *)&inqbuf.extra;
+	int				flags;
 
 	if (inq == NULL)
 		return (0);
@@ -149,9 +150,13 @@ safte_match(struct device *parent, void *match, void *aux)
 	memset(&inqbuf, 0, sizeof(inqbuf));
 	memset(&inqbuf.extra, ' ', sizeof(inqbuf.extra));
 
+	flags = SCSI_DATA_IN;
+	if (cold)
+		flags |= SCSI_AUTOCONF;
+
 	if (scsi_scsi_cmd(sa->sa_sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&inqbuf, cmd.length, 2, 10000, NULL,
-	    SCSI_DATA_IN|SCSI_AUTOCONF) != 0)
+	    flags) != 0)
 		return (0);
 
 	if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0)
@@ -281,12 +286,12 @@ safte_read_config(struct safte_softc *sc)
 	cmd.flags |= SAFTE_RD_MODE;
 	cmd.bufferid = SAFTE_RD_CONFIG;
 	cmd.length = htobe16(sizeof(config));
-	flags = SCSI_DATA_IN | SCSI_AUTOCONF;
+	flags = SCSI_DATA_IN;
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
 
-	if (scsi_autoconf)
+	if (cold)
 		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
@@ -421,6 +426,9 @@ safte_read_encstat(struct safte_softc *sc)
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
+
+	if (cold)
+		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), sc->sc_encbuf, sc->sc_encbuflen, 2, 30000, NULL,
@@ -591,6 +599,8 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
+	if (cold)
+		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)op, sizeof(struct safte_slotop),

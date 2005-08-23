@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.24 2005/08/22 19:24:45 deraadt Exp $ */
+/*	$OpenBSD: ses.c,v 1.25 2005/08/23 05:29:41 marco Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -111,7 +111,7 @@ void	ses_create_thread(void *);
 void	ses_refresh(void *);
 
 int	ses_read_config(struct ses_softc *);
-int	ses_read_status(struct ses_softc *, int);
+int	ses_read_status(struct ses_softc *);
 int	ses_make_sensors(struct ses_softc *, struct ses_type_desc *, int);
 int	ses_refresh_sensors(struct ses_softc *);
 
@@ -306,9 +306,9 @@ ses_read_config(struct ses_softc *sc)
 	flags |= SCSI_SILENT;
 #endif
 
-	if (scsi_autoconf)
-		flags |= SCSI_AUTOCONF;
-
+	if (cold)
+ 		flags |= SCSI_AUTOCONF;
+ 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), buf, SES_BUFLEN, 2, 3000, NULL, flags) != 0) {
 		free(buf, M_DEVBUF);
@@ -379,7 +379,7 @@ ses_read_config(struct ses_softc *sc)
 }
 
 int
-ses_read_status(struct ses_softc *sc, int autoconf)
+ses_read_status(struct ses_softc *sc)
 {
 	struct ses_scsi_diag		cmd;
 	int				flags;
@@ -393,7 +393,7 @@ ses_read_status(struct ses_softc *sc, int autoconf)
 #ifndef SCSIDEBUG
 	flags |= SCSI_SILENT;
 #endif
-	if (autoconf)
+	if (cold)
 		flags |= SCSI_AUTOCONF;
 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
@@ -416,7 +416,7 @@ ses_make_sensors(struct ses_softc *sc, struct ses_type_desc *types, int ntypes)
 	int				typecnt[SES_NUM_TYPES];
 	int				i, j;
 
-	if (ses_read_status(sc, 1) != 0)
+	if (ses_read_status(sc) != 0)
 		return (1);
 
 	memset(typecnt, 0, sizeof(typecnt));
@@ -526,7 +526,7 @@ ses_refresh_sensors(struct ses_softc *sc)
 	struct ses_sensor		*sensor;
 	int				ret = 0;
 
-	if (ses_read_status(sc, 0) != 0)
+	if (ses_read_status(sc) != 0)
 		return (1);
 
 	TAILQ_FOREACH(sensor, &sc->sc_sensors, se_entry) {
@@ -613,6 +613,9 @@ ses_write_config(struct ses_softc *sc)
 	flags |= SCSI_SILENT;
 #endif
 
+	if (cold)
+		flags |= SCSI_AUTOCONF;
+ 
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), sc->sc_buf, sc->sc_buflen, 2, 3000, NULL, flags) != 0)
 		return (1);
@@ -625,7 +628,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 {
 	struct ses_slot			*slot;
 
-	if (ses_read_status(sc, 1) != 0)
+	if (ses_read_status(sc) != 0)
 		return (EIO);
 
 	TAILQ_FOREACH(slot, &sc->sc_slots, sl_entry) {
