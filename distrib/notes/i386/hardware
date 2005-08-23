@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.216 2005/08/18 14:09:09 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.217 2005/08/23 02:25:54 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -835,7 +835,6 @@ Supported hardware {:-include-:}:
 		    MSI MS-6865
 		    MSI MS-6869
 		    SerComm UB801R
-		    SMC 2862W-G v2
 		    SparkLAN WL-685R
 		    Sphairon UB801R
 		    Surecom EP-9001-g

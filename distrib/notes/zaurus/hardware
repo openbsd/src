@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.12 2005/08/02 00:30:05 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.13 2005/08/23 02:25:54 jsg Exp $
 dnl When more than one models is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus C3000 only at the moment.
 Support for the C-760 and C-860 is under development.
@@ -205,7 +205,6 @@ Supported devices {:-include-:}:
 		    MSI MS-6865
 		    MSI MS-6869
 		    SerComm UB801R
-		    SMC 2862W-G v2
 		    SparkLAN WL-685R
 		    Sphairon UB801R
 		    Surecom EP-9001-g
