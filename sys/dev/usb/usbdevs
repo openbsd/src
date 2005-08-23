@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.164 2005/08/04 13:27:32 jsg Exp $
+$OpenBSD: usbdevs,v 1.165 2005/08/23 02:23:41 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1697,7 +1697,6 @@ product SMC 2206USB		0x0201	EZ Connect Ethernet
 product SMC2 2020HUB            0x2020  Hub
 product SMC3 2662WV1		0xa001	EZ Connect 11Mbps
 product SMC3 2662WV2		0xa002	EZ Connect 11Mbps v2
-product SMC RT2570		0xee13	RT2570
 
 /* SOHOware products */
 product SOHOWARE NUB100		0x9100	NUB100 Ethernet
