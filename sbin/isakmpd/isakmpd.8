@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.81 2005/06/04 17:22:42 hshoexer Exp $
+.\" $OpenBSD: isakmpd.8,v 1.82 2005/08/23 15:02:31 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -481,6 +481,20 @@ See
 .Sx KEYNOTE AUTHENTICATION
 below.
 .El
+.Pp
+When configuring
+.Nm
+for key- and certificate-based authentication,
+the
+.Dq Transforms
+tag in
+.Xr isakmpd.conf 5
+should include
+.Dq RSA_SIG .
+For example, the transform
+.Dq 3DES-SHA-RSA_SIG
+means:
+3DES encryption, SHA hash, authentication using RSA signatures.
 .Sh PUBLIC KEY AUTHENTICATION
 It is possible to store trusted public keys to make them directly
 usable by
