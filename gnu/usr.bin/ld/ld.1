@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.1,v 1.15 2005/08/23 08:44:57 jmc Exp $
+.\"	$OpenBSD: ld.1,v 1.16 2005/08/23 08:49:00 jmc Exp $
 .\"	$NetBSD: ld.1,v 1.14 1998/02/20 03:12:50 jonathan Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -249,7 +249,8 @@ Make an old-style
 .Dv ZMAGIC
 output file.
 This means no flags and no machine ID in the magic.
-.Sh
+.El
+.Pp
 The following long options are exceptions to the normal option syntax
 described above, and are provided for compatibility with later versions of
 GNU
@@ -280,7 +281,7 @@ include every object file from the archive in the link, rather than
 searching the archive for the required object files.
 This is normally used
 when building shared libraries.
-
+.Pp
 The positional syntax is not currently implemented;
 .Fl \&-whole-archive
 is treated exactly as
