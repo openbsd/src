@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.87 2005/08/23 08:17:44 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.88 2005/08/23 14:17:37 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -1330,6 +1330,21 @@ is scheduled to be removed from the repository.
 Files are not actually removed from the repository until the
 .Ic commit
 command has been run subsequently.
+.Pp
+There is no way to remove a directory with the
+.Ic remove
+command.
+.Nm
+will only remove a directory if it is empty and if the
+.Ic checkout
+or
+.Ic update
+commands are run with the
+.Fl P
+option.
+(Note that the
+.Ic export
+command always removes empty directories.)
 .Pp
 The
 .Ic remove
