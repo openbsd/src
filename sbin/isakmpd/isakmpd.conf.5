@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.106 2005/06/11 08:31:40 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.107 2005/08/23 13:19:22 jmc Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -83,7 +83,7 @@ to fully specify the Main Mode transforms and Quick Mode suites, protocols,
 and transforms.
 .Pp
 For Main Mode:
-.\" .Ar {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5,14}][-{DSS,RSA_SIG}]
+.\" .Ar {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5,14}][-RSA_SIG]
 .Bl -inset -compact
 .It Xo
 .Sm off
@@ -96,9 +96,9 @@ For Main Mode:
 .No {
 .Ar 1 , 2 , 5 , 14
 .No }]
-.No [-{
-.Ar DSS , RSA_SIG
-.No }]
+.No [-
+.Ar RSA_SIG
+.No ]
 .Sm on
 .Xc
 .El
