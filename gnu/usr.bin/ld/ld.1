@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.1,v 1.14 2002/12/31 20:24:01 millert Exp $
+.\"	$OpenBSD: ld.1,v 1.15 2005/08/23 08:44:57 jmc Exp $
 .\"	$NetBSD: ld.1,v 1.14 1998/02/20 03:12:50 jonathan Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -60,7 +60,8 @@
 .Sh DESCRIPTION
 .Nm
 combines the object and archive files given on the command line into a new
-object file. The output object file is either an executable program, a
+object file.
+The output object file is either an executable program, a
 shared object suitable for loading at run-time, or an object file that can
 once again be processed by
 .Nm ld.
@@ -73,13 +74,14 @@ The options are as follows:
 The symbol-file is taken as a base for link-editing the object files
 on the command line.
 .It Fl assert Ar keyword
-This option has currently no effect. It is here for compatibility with
-SunOS ld. All conditions which would cause a Sun assertion to fail will
+This option has currently no effect.
+It is here for compatibility with SunOS ld.
+All conditions which would cause a Sun assertion to fail will
 currently always cause error or warning messages from
 .Nm ld .
 .It Fl Bdynamic
-Specifies that linking against dynamic libraries can take place. If a library
-specifier of the form
+Specifies that linking against dynamic libraries can take place.
+If a library specifier of the form
 .Fl l Ns Ar spec
 appears on the command line,
 .Nm ld
@@ -88,7 +90,8 @@ searches for a library of the from
 (see the
 .Fl l
 option)
-according to the search rules in effect. If such a file can not be
+according to the search rules in effect.
+If such a file can not be
 found a traditional archive is looked for.
 This option can appear anywhere on the command line and is complementary
 to
@@ -99,7 +102,8 @@ The counterpart of
 This option turns off dynamic linking for
 all library specifiers until a
 .Fl Bdynamic
-is once again given. Any explicitly
+is once again given.
+Any explicitly
 mentioned shared object encountered on the command line while this option is
 in effect is flagged as an error.
 .It Fl Bshareable
@@ -107,27 +111,33 @@ Instructs the linker to build a shared object from the object files rather
 than a normal executable image.
 .It Fl Bsymbolic
 This option causes all symbolic references in the output to be resolved in
-this link-edit session. The only remaining run-time relocation requirements are
+this link-edit session.
+The only remaining run-time relocation requirements are
 .Em base-relative
-relocations, i.e. translation with respect to the load address. Failure to
+relocations, i.e. translation with respect to the load address.
+Failure to
 resolve any symbolic reference causes an error to be reported.
 .It Fl Bforcearchive
 Force all members of archives to be loaded, whether or not such members
-contribute a definition to any plain object files. Useful for making a
+contribute a definition to any plain object files.
+Useful for making a
 shared library from an archive of PIC objects without having to unpack
 the archive.
 .It Fl Bsilly
 Search for
 .Pa \.sa
-silly archive companions of shared objects. Useful for compatibility with
+silly archive companions of shared objects.
+Useful for compatibility with
 version 3 shared objects.
 .It Fl D Ar data-size
-Set the size of the data segment. For sanity's sake, this should be larger
+Set the size of the data segment.
+For sanity's sake, this should be larger
 than the cumulative data sizes of the input files.
 .It Fl d\ c
 Force allocation of commons even producing relocatable output.
 .It Fl d\ p
-Force alias definitions of procedure calls in non-PIC code. Useful to
+Force alias definitions of procedure calls in non-PIC code.
+Useful to
 obtain shareable code in the presence of run-time relocations as such
 calls will be re-directed through the Procedure Linkage Table (see
 .Xr link 5 . )
@@ -141,7 +151,8 @@ to the list of directories to search for libraries specified with the
 option.
 .It Fl l Ns Ar spec
 This option specifies a library to be considered for inclusion in the
-output. If the
+output.
+If the
 .Fl Bdynamic
 option is in effect, a shared library of the
 form
@@ -182,7 +193,8 @@ for
 .Fl l
 specified libraries.
 .It Fl o Ar filename
-Specifies the name of the output file. Defaults to
+Specifies the name of the output file.
+Defaults to
 .Dq Pa a.out .
 .It Fl p
 Make the data segment start on a page boundary.
@@ -210,13 +222,15 @@ Leave a trace of the input files as they are processed.
 .It Fl u Ar symbol
 Force
 .Ar symbol
-to be marked as undefined. Useful to force loading of an archive member
+to be marked as undefined.
+Useful to force loading of an archive member
 in the absence of any other references to that member.
 .It Fl V Ar version
 Put the given version number into the output shared library
 .Pq if one is created .
 Useful to make shared libraries compatible with other operating
-systems. E.g., SunOS 4.x libraries use version number 3. Defaults to 8.
+systems, e.g. SunOS 4.x libraries use version number 3.
+Defaults to 8.
 .It Fl X
 Discard local symbols in the input files that start with the letter
 .Dq L .
@@ -228,11 +242,13 @@ Trace the manipulations inflicted on
 .It Fl z
 Make a
 .Dv ZMAGIC
-output file.  This is the default.
+output file.
+This is the default.
 .It Fl Z
 Make an old-style
 .Dv ZMAGIC
-output file.  This means no flags and no machine ID in the magic.
+output file.
+This means no flags and no machine ID in the magic.
 .Sh
 The following long options are exceptions to the normal option syntax
 described above, and are provided for compatibility with later versions of
@@ -252,7 +268,8 @@ than a normal executable image.
 .It Fl soname Ar library-name
 This option and its
 .Ar library-name
-argument are ignored. They are provided for compatibility with versions of
+argument are ignored.
+They are provided for compatibility with versions of
 .Nm ld 
 which allow the user to specify an internal name and version number
 for dynamically-linked shared libraries.
@@ -260,7 +277,8 @@ for dynamically-linked shared libraries.
 A positional qualifier to force loading from archives.
 For each archive mentioned on the commandline after this option,
 include every object file from the archive in the link, rather than
-searching the archive for the required object files.  This is normally used
+searching the archive for the required object files.
+This is normally used
 when building shared libraries.
 
 The positional syntax is not currently implemented;
@@ -295,7 +313,8 @@ command-line flag.
 .Xr link 5
 .Sh CAVEATS
 An entry point must now explicitly be given if the output is intended to be
-a normal executable program. This was not the case for the previous version of
+a normal executable program.
+This was not the case for the previous version of
 .Nm ld .
 .Sh BUGS
 Shared objects are not properly checked for undefined symbols.
