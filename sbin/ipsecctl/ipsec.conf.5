@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.18 2005/08/22 22:10:02 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.19 2005/08/23 07:48:04 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -251,7 +251,7 @@ When
 is specified
 .Xr isakmpd 8
 will not immediately start negotiation of this tunnel, but wait for an incoming
-request of the remote peer.
+request from the remote peer.
 If not specified,
 .Xr isakmpd 8
 will start negotiation at once.
@@ -297,7 +297,7 @@ For
 the values
 .Ar des ,
 .Ar 3des ,
-.Ar aes,
+.Ar aes ,
 .Ar blowfish
 and
 .Ar cast
@@ -315,7 +315,7 @@ and
 .Aq Ar algorithm
 .Xc
 Similar to
-.Ar main
+.Ar main ,
 .Ar quick
 defines the transforms to be used for quick mode.
 However, the possible values for
@@ -333,34 +333,34 @@ For
 valid values are again
 .Ar des ,
 .Ar 3des ,
-.Ar aes,
+.Ar aes ,
 .Ar blowfish
 and
 .Ar cast .
-If no quick mode transforms are specified
+If no quick mode transforms are specified,
 the default values
 .Ar hmac-sha2-256
 and
 .Ar aes
-are choosen.
+are chosen.
 .It Xo
 .Ar srcid
 .Aq Ar fqdn
 .Xc
 This optional parameter defines a FQDN that will be used by
 .Xr isakmpd 8
-as identity of the local peer.
+as the identity of the local peer.
 .It Xo
 .Ar dstid
 .Aq Ar fqdn
 .Xc
 Similar to
-.Ar srcid
+.Ar srcid ,
 this optional parameter defines a FQDN to be used by the remote peer.
 .El
 .Pp
 Note that
-.Xr isamkpd 8
+.Xr isakmpd 8
 will use RSA authentication.
 By default, the system startup script
 .Xr rc 8
@@ -368,7 +368,7 @@ generates a key-pair when starting, if one does not already exist.
 .Pp
 See also
 .Sx ISAKMP EXAMPLES
-below .
+below.
 .Sh TCP MD5 SIGNATURES
 RFC 2385 describes a mechanism to protect
 .Xr tcp 4
@@ -443,21 +443,20 @@ esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
 	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
 	enckey file "enc14:enc12"
 .Ed
-
-.Sh TCPMD5 EXAMPLES
+.Sh TCP MD5 EXAMPLES
 .Bd -literal
 # Set up keys for TCP MD5 signatures
 tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 	authkey 0xdeadbeef:0xbeefdead
 
-# Set up keys for TCP MD5 signatures, read keys from files
+# Set up keys for TCP MD5 signatures; read keys from files
 tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 	authkey file "/path/to/key1:/path/to/key2"
 .Ed
 .Sh ISAKMP EXAMPLES
 .Bd -literal
 # Set up two tunnels:
-# First between the networks 10.1.1.0/24 and 10.1.2.0/24.
+# First between the networks 10.1.1.0/24 and 10.1.2.0/24
 # Second between the machines 192.168.3.1 and 192.168.3.2
 
 ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
