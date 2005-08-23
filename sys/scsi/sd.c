@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.86 2005/08/21 16:25:52 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.87 2005/08/23 23:31:04 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -216,10 +216,9 @@ sdattach(parent, self, aux)
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
-	/* Try to start the unit if it wasn't ready. */
-	if (error == EIO)
-		error = scsi_start(sc_link, SSS_START,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+	/* Spin up the unit ready or not. */
+	error = scsi_start(sc_link, SSS_START, scsi_autoconf | SCSI_SILENT |
+	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
@@ -386,11 +385,10 @@ sdopen(dev, flag, fmt, p)
 		    (part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0 |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
-		/* Try to start the unit if it wasn't ready. */
-		if (error == EIO)
-			error = scsi_start(sc_link, SSS_START,
-			    SCSI_IGNORE_ILLEGAL_REQUEST |
-			    SCSI_IGNORE_MEDIA_CHANGE);
+		/* Spin up the unit, ready or not. */
+		error = scsi_start(sc_link, SSS_START,
+		    (part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0 |
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 		if (error) {
 			if (part == RAW_PART && fmt == S_IFCHR) {
