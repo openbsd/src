@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.37 2005/08/22 14:11:12 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.38 2005/08/23 23:20:23 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -34,7 +34,6 @@
 .Bk -words
 .Op Fl Dhiv
 .Op Fl a Ar alarm-function
-.Op Fl B Ar channel:target[.lun]
 .Op Fl b Ar channel:target[.lun]
 .Op Fl H Ar channel:target[.lun]
 .Op Fl u Ar channel:target[.lun]
@@ -71,14 +70,6 @@ The
 may be specified as given above,
 or by the first letter only
 (e.g. -a e).
-.It Fl B Ar channel:target[.lun]
-Instruct the device at
-.Ar channel:target[.lun]
-to start blinking  with the alarm LED, if there is
-.Xr ses 4
-or
-.Xr safte 4
-support in the enclosure.
 .It Fl b Ar channel:target[.lun]
 Instruct the device at
 .Ar channel:target[.lun]

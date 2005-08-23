@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.38 2005/08/23 03:59:32 deraadt Exp $       */
+/* $OpenBSD: bioctl.c,v 1.39 2005/08/23 23:20:23 deraadt Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:B:u:H:ha:Div")) != -1) {
+	while ((ch = getopt(argc, argv, "b:u:H:ha:Div")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -91,11 +91,6 @@ main(int argc, char *argv[])
 		case 'b': /* blink */
 			func |= BIOC_BLINK;
 			blink = BIOC_SBBLINK;
-			bl_arg = optarg;
-			break;
-		case 'B': /* alarm blink */
-			func |= BIOC_BLINK;
-			blink = BIOC_SBALARM;
 			bl_arg = optarg;
 			break;
 		case 'u': /* unblink */
@@ -179,7 +174,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-Dhiv] [-a alarm-function]"
-	    " [[-bBHu] chan:targ[.lun]] device\n", __progname);
+	    " [[-bHu] chan:targ[.lun]] device\n", __progname);
 	exit(1);
 }
 
