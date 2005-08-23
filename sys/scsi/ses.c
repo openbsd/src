@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.25 2005/08/23 05:29:41 marco Exp $ */
+/*	$OpenBSD: ses.c,v 1.26 2005/08/23 23:44:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -632,34 +632,37 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 		return (EIO);
 
 	TAILQ_FOREACH(slot, &sc->sc_slots, sl_entry) {
-		if (SES_S_DEV_ADDR(slot->sl_stat) == blink->bb_target)
+		if (slot->sl_stat->f1 == blink->bb_target)
 			break;
 	}
 
 	if (slot == TAILQ_END(&sc->sc_slots))
 		return (EINVAL);
 
-	/* zero out the config fields */
-	slot->sl_stat->f2 = 0x00;
-	slot->sl_stat->f3 = 0x00;
+	DPRINTFN(3, "%s: 0x%02x 0x%02x 0x%02x 0x%02x\n", DEVNAME(sc),
+	    slot->sl_stat->com, slot->sl_stat->f1, slot->sl_stat->f2,
+	    slot->sl_stat->f3);
 
 	slot->sl_stat->com = SES_STAT_SELECT;
+	slot->sl_stat->f2 &= SES_C_DEV_F2MASK;
+	slot->sl_stat->f3 &= SES_C_DEV_F3MASK;
 
 	switch (blink->bb_status) {
 	case BIOC_SBUNBLINK:
+		slot->sl_stat->f2 &= ~SES_C_DEV_IDENT;
 		break;
 
 	case BIOC_SBBLINK:
-		SES_C_DEV_IDENT(slot->sl_stat);
-		break;
-
-	case BIOC_SBALARM:
-		SES_C_DEV_FAULT(slot->sl_stat);
+		slot->sl_stat->f2 |= SES_C_DEV_IDENT;
 		break;
 
 	default:
 		return (EINVAL);
 	}
+
+	DPRINTFN(3, "%s: 0x%02x 0x%02x 0x%02x 0x%02x\n", DEVNAME(sc),
+	    slot->sl_stat->com, slot->sl_stat->f1, slot->sl_stat->f2,
+	    slot->sl_stat->f3);
 
 	if (ses_write_config(sc) != 0)
 		return (EIO);

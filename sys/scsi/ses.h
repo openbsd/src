@@ -1,4 +1,4 @@
-/* $OpenBSD: ses.h,v 1.8 2005/08/22 04:23:58 david Exp $ */
+/* $OpenBSD: ses.h,v 1.9 2005/08/23 23:44:28 dlg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
@@ -146,34 +146,43 @@ struct ses_status {
 #define SES_STAT_ELEMLEN	sizeof(struct ses_status)
 
 /* device status */
-#define SES_S_DEV_ADDR(d)	((d)->f1)
-#define SES_S_DEV_REPORT(d)	((d)->f2 & (1<<0)) /* enc report in progress */
-#define SES_S_DEV_IDENT(d)	((d)->f2 & (1<<1)) /* currently identifying */
-#define SES_S_DEV_REMOVE(d)	((d)->f2 & (1<<2)) /* ready to remove */
-#define SES_S_DEV_INSERT(d)	((d)->f2 & (1<<3)) /* ready to insert */
-#define SES_S_DEV_ENCBYPB(d)	((d)->f2 & (1<<4)) /* port B bypassed by enc */
-#define SES_S_DEV_ENCBYPA(d)	((d)->f2 & (1<<5)) /* port A bypassed by enc */
-#define SES_S_DEV_DONOTREM(d)	((d)->f2 & (1<<6)) /* do not remove */
-#define SES_S_DEV_APPCLBYPA(d)	((d)->f2 & (1<<7)) /* port A bypassed by app */
-#define SES_S_DEV_DEVBYPB(d)	((d)->f3 & (1<<0)) /* port B bypassed by dev */
-#define SES_S_DEV_DEVBYPA(d)	((d)->f3 & (1<<1)) /* port A bypassed by dev */
-#define SES_S_DEV_BYPB(d)	((d)->f3 & (1<<2))
-#define SES_S_DEV_BYPA(d)	((d)->f3 & (1<<3))
-#define SES_S_DEV_OFF(d)	((d)->f3 & (1<<4)) /* device is off */
-#define SES_S_DEV_FAULTRQST(d)	((d)->f3 & (1<<5)) /* fault indicator rqsted */
-#define SES_S_DEV_FAULTSENSE(d)	((d)->f3 & (1<<6)) /* fault sensed */
-#define SES_S_DEV_APPCLBYPB(d)	((d)->f3 & (1<<7)) /* port B bypassed by app */
+/* f1 is the device address */
+/* f2 */
+#define SES_S_DEV_REPORT	(1<<0)	/* enc report in progress */
+#define SES_S_DEV_IDENT		(1<<1)	/* currently identifying */
+#define SES_S_DEV_REMOVE	(1<<2)	/* ready to remove */
+#define SES_S_DEV_INSERT	(1<<3)	/* ready to insert */
+#define SES_S_DEV_ENCBYPB	(1<<4)	/* port B bypassed by enc */
+#define SES_S_DEV_ENCBYPA	(1<<5)	/* port A bypassed by enc */
+#define SES_S_DEV_DONOTREM	(1<<6)	/* do not remove */
+#define SES_S_DEV_APPCLBYPA	(1<<7)	/* port A bypassed by app */
+/* f3 */
+#define SES_S_DEV_DEVBYPB	(1<<0)	/* port B bypassed by dev */
+#define SES_S_DEV_DEVBYPA	(1<<1)	/* port A bypassed by dev */
+#define SES_S_DEV_BYPB		(1<<2)
+#define SES_S_DEV_BYPA		(1<<3)
+#define SES_S_DEV_OFF		(1<<4)	/* device is off */
+#define SES_S_DEV_FAULTRQST	(1<<5)	/* fault indicator rqsted */
+#define SES_S_DEV_FAULTSENSE	(1<<6)	/* fault sensed */
+#define SES_S_DEV_APPCLBYPB	(1<<7)	/* port B bypassed by app */
 
 /* device configuration */
-#define SES_C_DEV_IDENT(d)	((d)->f2 |= (1<<1)) /* ident */
-#define SES_C_DEV_REMOVE(d)	((d)->f2 |= (1<<2)) /* remove */
-#define SES_C_DEV_INSERT(d)	((d)->f2 |= (1<<3)) /* insert */
-#define SES_C_DEV_DONOTREM(d)	((d)->f2 |= (1<<6)) /* do not remove */
-#define SES_C_DEV_ACTIVE(d)	((d)->f2 |= (1<<7)) /* active indicator */
-#define SES_C_DEV_BYPB(d)	((d)->f3 |= (1<<2)) /* port B bypass */
-#define SES_C_DEV_BYPA(d)	((d)->f3 |= (1<<3)) /* port A bypass */
-#define SES_C_DEV_OFF(d)	((d)->f3 |= (1<<4)) /* off */
-#define SES_C_DEV_FAULT(d)	((d)->f3 |= (1<<5)) /* fault indicator */
+/* f1 is reserved */
+/* f2 */
+#define SES_C_DEV_IDENT		(1<<1)	/* ident */
+#define SES_C_DEV_REMOVE	(1<<2)	/* remove */
+#define SES_C_DEV_INSERT	(1<<3)	/* insert */
+#define SES_C_DEV_DONOTREM	(1<<6)	/* do not remove */
+#define SES_C_DEV_ACTIVE	(1<<7)	/* active indicator */
+#define SES_C_DEV_F2MASK	(SES_C_DEV_IDENT | SES_C_DEV_REMOVE | \
+    SES_C_DEV_INSERT | SES_C_DEV_DONOTREM | SES_C_DEV_ACTIVE )
+/* f3 */
+#define SES_C_DEV_BYPB		(1<<2)	/* port B bypass */
+#define SES_C_DEV_BYPA		(1<<3)	/* port A bypass */
+#define SES_C_DEV_OFF		(1<<4)	/* off */
+#define SES_C_DEV_FAULT		(1<<5)	/* fault indicator */
+#define SES_C_DEV_F3MASK	(SES_C_DEV_BYPB | SES_C_DEV_BYPA | \
+    SES_C_DEV_OFF | SES_C_DEV_FAULT)
 
 /* power supply element */
 #define SES_S_PSU_IDENT(d)	((d)->f1 & (1<<6)) /* identify */
