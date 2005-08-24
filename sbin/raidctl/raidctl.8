@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.33 2005/03/12 12:21:08 jmc Exp $
+.\"	$OpenBSD: raidctl.8,v 1.34 2005/08/24 22:47:28 jmc Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1362,10 +1362,14 @@ ever fail -- it is better to use RAID 0 and get the additional space
 and speed, than it is to use parity, but not keep the parity correct.
 At least with RAID 0 there is no perception of increased data security.
 .Sh FILES
-.Bl -tag -width /dev/XXrXraidX -compact
+.Bl -tag -width "/etc/raid[0-3].conf" -compact
 .It Pa /dev/{,r}raid*
 .Cm raid
 device special files.
+.It Pa /etc/raid[0-3].conf
+Files used by
+.Xr rc 8
+to configure arrays at startup.
 .El
 .Sh SEE ALSO
 .Xr ccd 4 ,
