@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.14 2004/07/07 23:10:46 deraadt Exp $ */
+/* $OpenBSD: ncr.c,v 1.15 2005/08/24 21:01:35 deraadt Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -324,7 +324,10 @@ found:
 	dh->dh_flags = SIDH_BUSY;
 	dh->dh_addr = ncr_sc->sc_dataptr;
 	dh->dh_len = xlen;
-	dh->dh_proc = xs->bp->b_proc;
+	if (xs->bp)
+		dh->dh_proc = xs->bp->b_proc;
+	else
+		dh->dh_proc = NULL;
 
 	/* Remember dest buffer parameters */
 	if (xs->flags & SCSI_DATA_OUT)
