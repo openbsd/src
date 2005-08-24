@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.908 2005/08/23 03:31:34 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.909 2005/08/24 19:18:33 marco Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2059,6 +2059,7 @@
 #define	PCI_PRODUCT_SYMBIOS_FC919_1	0x0625		/* FC919 */
 #define	PCI_PRODUCT_SYMBIOS_MEGARAID	0x1960		/* MegaRAID */
 #define	PCI_PRODUCT_SYMBIOS_MEGARAID_320	0x0407		/* MegaRAID 320 */
+#define	PCI_PRODUCT_SYMBIOS_MEGARAID_3202E	0x0408		/* MegaRAID 320-2E */
 #define	PCI_PRODUCT_SYMBIOS_SATA8	0x0409		/* MegaRAID SATA 8x */
 
 /* Packet Engines products */
