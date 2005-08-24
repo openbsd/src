@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.88 2005/08/23 23:38:00 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.89 2005/08/24 01:19:47 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1269,7 +1269,7 @@ sddump(dev, blkno, va, size)
 		xs->cmdlen = sizeof(cmd);
 		xs->resid = nwrt * sectorsize;
 		xs->error = XS_NOERROR;
-		xs->bp = 0;
+		xs->bp = NULL;
 		xs->data = va;
 		xs->datalen = nwrt * sectorsize;
 
