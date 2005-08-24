@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.88 2005/08/23 14:17:37 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.89 2005/08/24 09:19:38 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -476,6 +476,8 @@ Display the list of available modules.
 .It Fl D Ar date
 Check out as of the latest revision no later than
 .Ar date
+(implies
+.Fl P )
 (is sticky).
 .It Fl d Ar dir
 Check out in directory
