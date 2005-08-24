@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.15 2005/08/23 05:29:42 marco Exp $ */
+/*	$OpenBSD: safte.c,v 1.16 2005/08/24 03:39:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -144,8 +144,11 @@ safte_match(struct device *parent, void *match, void *aux)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = INQUIRY;
 	cmd.length = inq->additional_length + SAFTE_EXTRA_OFFSET;
-	if (cmd.length > sizeof(inqbuf) || cmd.length < SAFTE_INQ_LEN)
-		return(0);
+	if (cmd.length < SAFTE_INQ_LEN)
+		return (0);
+
+	if (cmd.length > sizeof(inqbuf))
+		cmd.length = sizeof(inqbuf);
 
 	memset(&inqbuf, 0, sizeof(inqbuf));
 	memset(&inqbuf.extra, ' ', sizeof(inqbuf.extra));
