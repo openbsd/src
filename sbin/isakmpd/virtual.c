@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.21 2005/04/08 23:15:26 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.22 2005/08/25 09:57:58 markus Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -592,20 +592,6 @@ virtual_report(struct transport *t)
 static void
 virtual_handle_message(struct transport *t)
 {
-	if (t->virtual == default_transport ||
-	    t->virtual == default_transport6) {
-		/* XXX drain pending message. See udp_handle_message().  */
-
-		virtual_reinit();
-
-		/*
-		 * As we don't know the actual destination address of the
-		 * packet, we can't really deal with it. So, just ignore it
-		 * and hope we catch the retransmission.
-		 */
-		return;
-	}
-
 	/*
 	 * As per the NAT-T draft, in case we have already switched ports,
 	 * any messages recieved on the old (500) port SHOULD be discarded.

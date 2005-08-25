@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.17 2005/06/04 21:54:55 hshoexer Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.18 2005/08/25 09:57:58 markus Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -363,6 +363,18 @@ udp_encap_handle_message(struct transport *t)
 	if (n == -1) {
 		log_error("recvfrom (%d, %p, %d, %d, %p, %p)", u->s, buf,
 		    UDP_SIZE, 0, &from, &len);
+		return;
+	}
+
+	if (t->virtual == (struct transport *)virtual_get_default(AF_INET) ||
+	    t->virtual == (struct transport *)virtual_get_default(AF_INET6)) {
+		t->virtual->vtbl->reinit();
+
+		/*
+		 * As we don't know the actual destination address of the
+		 * packet, we can't really deal with it. So, just ignore it
+		 * and hope we catch the retransmission.
+		 */
 		return;
 	}
 

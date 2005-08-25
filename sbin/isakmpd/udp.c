@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.90 2005/06/04 21:54:55 hshoexer Exp $	 */
+/* $OpenBSD: udp.c,v 1.91 2005/08/25 09:57:58 markus Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -419,6 +419,19 @@ udp_handle_message(struct transport *t)
 		    UDP_SIZE, 0, &from, &len);
 		return;
 	}
+
+	if (t->virtual == (struct transport *)virtual_get_default(AF_INET) ||
+	    t->virtual == (struct transport *)virtual_get_default(AF_INET6)) {
+		t->virtual->vtbl->reinit();
+
+		/*
+		 * As we don't know the actual destination address of the
+		 * packet, we can't really deal with it. So, just ignore it
+		 * and hope we catch the retransmission.
+		 */
+		return;
+	}
+
 	/*
 	 * Make a specialized UDP transport structure out of the incoming
 	 * transport and the address information we got from recvfrom(2).
