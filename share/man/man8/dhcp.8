@@ -1,4 +1,4 @@
-.\"     $OpenBSD: dhcp.8,v 1.17 2004/12/23 15:19:56 espie Exp $
+.\"     $OpenBSD: dhcp.8,v 1.18 2005/08/25 16:38:02 henning Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
@@ -109,7 +109,7 @@ daemon at boot-time and listen for DHCP requests on the local network.
 To start it manually, execute the following commands:
 .Pp
 .Dl # touch /var/db/dhcpd.leases
-.Dl # /usr/sbin/dhcpd -q [netif1 netif2 ...]
+.Dl # /usr/sbin/dhcpd [netif1 netif2 ...]
 .It
 Ensure the kernel has been compiled with BPF (Berkeley Packet Filter) support
 and at least one
