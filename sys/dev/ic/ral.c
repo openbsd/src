@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.56 2005/07/02 23:14:42 brad Exp $  */
+/*	$OpenBSD: ral.c,v 1.57 2005/08/25 20:28:11 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -99,7 +99,7 @@ void		ral_decryption_intr(struct ral_softc *);
 void		ral_rx_intr(struct ral_softc *);
 void		ral_beacon_expire(struct ral_softc *);
 void		ral_wakeup_expire(struct ral_softc *);
-int		ral_ack_rate(int);
+int		ral_ack_rate(struct ieee80211com *, int);
 uint16_t	ral_txtime(int, int, uint32_t);
 uint8_t		ral_plcp_signal(int);
 void		ral_setup_tx_desc(struct ral_softc *, struct ral_tx_desc *,
@@ -910,6 +910,18 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		ral_set_chan(sc, ic->ic_bss->ni_chan);
 
+		/* update basic rate set */
+		if (ic->ic_curmode == IEEE80211_MODE_11B) {
+			/* 11b basic rates: 1, 2Mbps */
+			RAL_WRITE(sc, RAL_ARSP_PLCP_1, 0x3);
+		} else if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+			/* 11a basic rates: 6, 12, 24Mbps */
+			RAL_WRITE(sc, RAL_ARSP_PLCP_1, 0x150);
+		} else {
+			/* 11g basic rates: 1, 2, 5.5, 11, 6, 12, 24Mbps */
+			RAL_WRITE(sc, RAL_ARSP_PLCP_1, 0x15f);
+		}
+
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			ral_set_bssid(sc, ic->ic_bss->ni_bssid);
 			ral_update_slot(sc);
@@ -1461,14 +1473,16 @@ ral_intr(void *arg)
 
 #define RAL_ACK_SIZE	14	/* 10 + 4(FCS) */
 #define RAL_CTS_SIZE	14	/* 10 + 4(FCS) */
-#define RAL_SIFS	10
+
+#define RAL_SIFS		10	/* us */
+#define RAL_RXTX_TURNAROUND	10	/* us */
 
 /*
  * Return the expected ack rate for a frame transmitted at rate `rate'.
  * XXX: this should depend on the destination node basic rate set.
  */
 int
-ral_ack_rate(int rate)
+ral_ack_rate(struct ieee80211com *ic, int rate)
 {
 	switch (rate) {
 	/* CCK rates */
@@ -1477,7 +1491,7 @@ ral_ack_rate(int rate)
 	case 4:
 	case 11:
 	case 22:
-		return 4;
+		return (ic->ic_curmode == IEEE80211_MODE_11B) ? 4 : rate;
 
 	/* OFDM rates */
 	case 12:
@@ -1579,7 +1593,7 @@ ral_setup_tx_desc(struct ral_softc *sc, struct ral_tx_desc *desc,
 		desc->flags |= htole32(RAL_TX_OFDM);
 
 	desc->physaddr = htole32(physaddr);
-	desc->wme = htole16(RAL_LOGCWMAX(8) | RAL_LOGCWMIN(3) | RAL_AIFSN(2));
+	desc->wme = htole16(RAL_AIFSN(3) | RAL_LOGCWMIN(4) | RAL_LOGCWMAX(6));
 
 	/*
 	 * Fill PLCP fields.
@@ -1820,7 +1834,7 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		int rtsrate, ackrate;
 
 		rtsrate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
-		ackrate = ral_ack_rate(rate);
+		ackrate = ral_ack_rate(ic, rate);
 
 		dur = ral_txtime(m0->m_pkthdr.len + 4, rate, ic->ic_flags) +
 		      ral_txtime(RAL_CTS_SIZE, rtsrate, ic->ic_flags) +
@@ -1953,7 +1967,7 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		flags |= RAL_TX_ACK;
 
-		dur = ral_txtime(RAL_ACK_SIZE, ral_ack_rate(rate),
+		dur = ral_txtime(RAL_ACK_SIZE, ral_ack_rate(ic, rate),
 		    ic->ic_flags) + RAL_SIFS;
 		*(uint16_t *)wh->i_dur = htole16(dur);
 	}
@@ -2396,11 +2410,10 @@ ral_update_slot(struct ral_softc *sc)
 	slottime = (ic->ic_curmode == IEEE80211_MODE_11A) ? 9 : 20;
 
 	/* define the MAC slot boundaries */
-	sifs = RAL_SIFS;
+	sifs = RAL_SIFS - RAL_RXTX_TURNAROUND;
 	pifs = sifs + slottime;
 	difs = sifs + 2 * slottime;
-	eifs = sifs + ral_txtime(RAL_ACK_SIZE,
-	    (ic->ic_curmode == IEEE80211_MODE_11A) ? 12 : 2, 0) + difs;
+	eifs = (ic->ic_curmode == IEEE80211_MODE_11B) ? 364 : 60;
 
 	tmp = RAL_READ(sc, RAL_CSR11);
 	tmp = (tmp & ~0x1f00) | slottime << 8;
@@ -2653,7 +2666,7 @@ ral_init(struct ifnet *ifp)
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	ral_set_macaddr(sc, ic->ic_myaddr);
 
-	/* set supported basic rates (1, 2, 6, 12, 24) */
+	/* set basic rate set (will be updated later) */
 	RAL_WRITE(sc, RAL_ARSP_PLCP_1, 0x153);
 
 	ral_set_txantenna(sc, 1);
