@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.h,v 1.3 2005/08/14 22:28:47 claudio Exp $ */
+/*	$OpenBSD: if_art.h,v 1.4 2005/08/27 13:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -22,6 +22,12 @@
 
 #define	MUSYCC_FRAMER_BT8370	0x8370
 
+enum art_sbi_type {
+	ART_SBI_SINGLE,
+	ART_SBI_MASTER,
+	ART_SBI_SLAVE
+};
+
 struct art_softc {
 	struct device		 art_dev;	/* generic device structures */
 	struct ebus_dev		 art_ebus;	/* ebus attachement */
@@ -32,22 +38,10 @@ struct art_softc {
 
 	int			 art_status;	/* if_media status */
 	u_int			 art_media;	/* if_media media */
+	enum art_sbi_type	 art_type;	/* System Bus Type */
 	u_int8_t		 art_gnum;	/* group number */
 	u_int8_t		 art_port;	/* port number */
 	char			 art_slot;	/* TDM slot */
-};
-
-int	bt8370_reset(struct art_softc *);
-int	bt8370_set_frame_mode(struct art_softc *, u_int, u_int);
-void	bt8370_intr_enable(struct art_softc *, int);
-void	bt8370_intr(struct art_softc *);
-int	bt8370_link_status(struct art_softc *);
-
-enum art_sbi_type {
-	ART_SBI_MASTER,
-	ART_SBI_SLAVE,
-	ART_SBI_SINGLE_T1,
-	ART_SBI_SINGLE_E1
 };
 
 enum art_sbi_mode {
@@ -78,5 +72,12 @@ enum art_loopback {
 
 #define ART_DL1_BOP	1
 #define ART_BOP_ESF	1
+
+int	bt8370_reset(struct art_softc *);
+int	bt8370_set_frame_mode(struct art_softc *, enum art_sbi_type, u_int,
+	    u_int);
+void	bt8370_intr_enable(struct art_softc *, int);
+void	bt8370_intr(struct art_softc *);
+int	bt8370_link_status(struct art_softc *);
 
 #endif

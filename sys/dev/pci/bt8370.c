@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt8370.c,v 1.3 2005/08/14 22:28:47 claudio Exp $ */
+/*	$OpenBSD: bt8370.c,v 1.4 2005/08/27 13:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -36,6 +36,7 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
+#include "musyccreg.h"
 #include "musyccvar.h"
 #include "if_art.h"
 #include "bt8370reg.h"
@@ -78,7 +79,8 @@ bt8370_reset(struct art_softc *ac)
 }
 
 int
-bt8370_set_frame_mode(struct art_softc *ac, u_int mode, u_int clockmode)
+bt8370_set_frame_mode(struct art_softc *ac, enum art_sbi_type type, u_int mode,
+    u_int clockmode)
 {
 	int channels;
 
@@ -100,8 +102,7 @@ bt8370_set_frame_mode(struct art_softc *ac, u_int mode, u_int clockmode)
 		ebus_write(&ac->art_ebus, Bt8370_DL3_TS, 0x00);
 
 		/* Timing and Clock Config */
-		bt8370_set_sbi_clock_mode(ac, ART_SBI_SINGLE_E1, clockmode,
-		    channels);
+		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
 		ebus_write(&ac->art_ebus, Bt8370_RCR0, RCR0_HDB3 |
@@ -147,8 +148,7 @@ bt8370_set_frame_mode(struct art_softc *ac, u_int mode, u_int clockmode)
 		ebus_write(&ac->art_ebus, Bt8370_DL3_TS, 0x00);
 
 		/* Timing and Clock Config */
-		bt8370_set_sbi_clock_mode(ac, ART_SBI_SINGLE_E1, clockmode,
-		    channels);
+		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
 		bt8370_set_line_buildout(ac, 0);
@@ -204,8 +204,7 @@ bt8370_set_frame_mode(struct art_softc *ac, u_int mode, u_int clockmode)
 		ebus_write(&ac->art_ebus, Bt8370_DL3_TS, 0x00);
 
 		/* Timing and Clock Config */
-		bt8370_set_sbi_clock_mode(ac, ART_SBI_SINGLE_E1, clockmode,
-		    channels);
+		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
 		bt8370_set_line_buildout(ac, 0);
@@ -255,8 +254,7 @@ bt8370_set_frame_mode(struct art_softc *ac, u_int mode, u_int clockmode)
 		ebus_write(&ac->art_ebus, Bt8370_DL3_TS, 0x00);
 
 		/* Timing and Clock Config */
-		bt8370_set_sbi_clock_mode(ac, ART_SBI_SINGLE_T1, clockmode,
-		    channels);
+		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
 		bt8370_set_line_buildout(ac, 0);
@@ -306,8 +304,7 @@ bt8370_set_frame_mode(struct art_softc *ac, u_int mode, u_int clockmode)
 		ebus_write(&ac->art_ebus, Bt8370_DL3_TS, 0x00);
 
 		/* Timing and Clock Config */
-		bt8370_set_sbi_clock_mode(ac, ART_SBI_SINGLE_T1, clockmode,
-		    channels);
+		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
 		bt8370_set_line_buildout(ac, 0);
@@ -385,6 +382,8 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 	 */
 	switch (mode) {
 	case ART_SBI_MASTER:
+		ACCOOM_PRINTF(1, ("%s: set to MASTER\n",
+		    ac->art_dev.dv_xname));
 		/*
 		 * ONESEC pulse output,
 		 * RDL/TDL/INDY ignored,
@@ -394,8 +393,8 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 		 * TMSYNC Transmit MultiFrame Sync output.
 		 */
 		ebus_write(&ac->art_ebus, Bt8370_PIO, PIO_ONESEC_IO |
-		    PIO_RFSYNC_IO | PIO_RMSYNC_IO | PIO_TFSYNC_IO |
-		    PIO_TMSYNC_IO);
+		    PIO_TDL_IO | PIO_RFSYNC_IO | PIO_RMSYNC_IO |
+		    PIO_TFSYNC_IO | PIO_TMSYNC_IO);
 		/*
 		 * TDL/RDL/INDY/TCKO three-stated.
 		 * CLADO enabled, drives SBI bus RCLK, TCLK and
@@ -413,6 +412,8 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 			CMUX_CLADI_CLADI;
 		break;
 	case ART_SBI_SLAVE:
+		ACCOOM_PRINTF(1, ("%s: set to SLAVE\n",
+		    ac->art_dev.dv_xname));
 		/*
 		 * ONESEC pulse input,
 		 * RDL/TDL/INDY ignored,
@@ -421,11 +422,11 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 		 * TFYNC Transmit Frame Sync input,
 		 * TMSYNC Transmit MultiFrame Sync input.
 		 */
-		ebus_write(&ac->art_ebus, Bt8370_PIO, 0x00);
+		ebus_write(&ac->art_ebus, Bt8370_PIO, PIO_TDL_IO);
 		/*
 		 * TDL/RDL/INDY/TCKO three-stated.
 		 * CLADO enabled, is connected to own ACKI and
-		 *  RSBCKI, ACKI on master.
+		 * RSBCKI, ACKI on master.
 		 * RCKO enabled, is connected to TCKI on master.
 		 */
 		ebus_write(&ac->art_ebus, Bt8370_POE, POE_TDL_OE |
@@ -437,14 +438,15 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 		cmux = CMUX_RSBCKI_TSBCKI | CMUX_TSBCKI_TSBCKI |
 			CMUX_CLADI_CLADI;
 		break;
-	case ART_SBI_SINGLE_T1:
-	case ART_SBI_SINGLE_E1:
+	case ART_SBI_SINGLE:
+		ACCOOM_PRINTF(1, ("%s: set to SINGLE\n",
+		    ac->art_dev.dv_xname));
 		/*
 		 * ONESEC pulse output,
 		 * RDL/TDL/INDY ignored,
 		 * RFSYNC Receive Frame Sync output,
 		 * RMSYNC Reveice MultiFrame Sync output,
-		 * TFYNC Transmit Frame Sync output,
+		 * TFSYNC Transmit Frame Sync output,
 		 * TMSYNC Transmit MultiFrame Sync output.
 		 */
 		ebus_write(&ac->art_ebus, Bt8370_PIO, PIO_ONESEC_IO |
@@ -468,6 +470,8 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 	/* Transmit clock from where? */
 	switch (linemode) {
 	case IFM_TDM_MASTER:
+		ACCOOM_PRINTF(1, ("%s: clock MASTER\n",
+		    ac->art_dev.dv_xname));
 		if (mode == ART_SBI_MASTER)
 			cmux |= CMUX_TCKI_RSBCKI;
 		else
@@ -476,6 +480,8 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 		break;
 	/* case ART_CLOCK_EXTREF: */
 	default:
+		ACCOOM_PRINTF(1, ("%s: clock LINE\n",
+		    ac->art_dev.dv_xname));
 		cmux |= CMUX_TCKI_RCKO;
 		jatcr = JAT_CR_JEN | JAT_CR_JDIR_RX | JAT_CR_JSIZE32;
 		break;
@@ -490,6 +496,7 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 		ebus_write(&ac->art_ebus, Bt8370_CSEL, CSEL_VSEL_4096 |
 		    CSEL_OSEL_4096);
 		bt8370_set_bus_mode(ac, SBI_MODE_4096_A, channels);
+		/* no need to set musycc port mode */
 		break;
 	case ART_SBI_SLAVE:
 		/*
@@ -497,17 +504,26 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 		 * of the master.
 		 */
 		bt8370_set_bus_mode(ac, SBI_MODE_4096_B, channels);
+		/* no need to set musycc port mode */
 		break;
-	case ART_SBI_SINGLE_T1:
-		ebus_write(&ac->art_ebus, Bt8370_CSEL, CSEL_VSEL_1544 |
-		    CSEL_OSEL_1544);
-		bt8370_set_bus_mode(ac, SBI_MODE_1544, channels);
-		break;
-	case ART_SBI_SINGLE_E1:
-		ebus_write(&ac->art_ebus, Bt8370_CSEL, CSEL_VSEL_2048 |
-		    CSEL_OSEL_2048);
-		bt8370_set_bus_mode(ac, SBI_MODE_2048, channels);
-		break;
+	case ART_SBI_SINGLE:
+		if (channels == 25) {
+			ACCOOM_PRINTF(1, ("%s: SINGLE T1\n",
+			    ac->art_dev.dv_xname));
+			ebus_write(&ac->art_ebus, Bt8370_CSEL, CSEL_VSEL_1544 |
+			    CSEL_OSEL_1544);
+			bt8370_set_bus_mode(ac, SBI_MODE_1544, channels);
+			musycc_set_port(ac->art_channel->cc_group,
+			    MUSYCC_PORT_MODE_T1);
+		} else {
+			ACCOOM_PRINTF(1, ("%s: SINGLE E1\n",
+			    ac->art_dev.dv_xname));
+			ebus_write(&ac->art_ebus, Bt8370_CSEL, CSEL_VSEL_2048 |
+			    CSEL_OSEL_2048);
+			bt8370_set_bus_mode(ac, SBI_MODE_2048, channels);
+			musycc_set_port(ac->art_channel->cc_group,
+			    MUSYCC_PORT_MODE_E1);
+		}
 	}
 	ebus_write(&ac->art_ebus, Bt8370_CLAD_CR, CLAD_CR_LFGAIN);
 }
@@ -522,13 +538,14 @@ bt8370_set_bus_mode(struct art_softc *ac, enum art_sbi_mode mode, int nchannels)
 	 * 'raising edge' in the port config for this to work correctly.
 	 * All others (including RSYNC) are on 'falling edge'.
 	 */
-	ebus_write(&ac->art_ebus, Bt8370_RSB_CR, RSB_CR_SIG_OFF |
-	    RSB_CR_RPCM_NEG | RSB_CR_RSYN_NEG | RSB_CR_RSB_CTR |
-	    TSB_CR_TSB_NORMAL);
+	ebus_write(&ac->art_ebus, Bt8370_RSB_CR, RSB_CR_BUS_RSB |
+	    RSB_CR_SIG_OFF | RSB_CR_RPCM_NEG | RSB_CR_RSYN_NEG |
+	    RSB_CR_RSB_CTR | TSB_CR_TSB_NORMAL);
 	ebus_write(&ac->art_ebus, Bt8370_RSYNC_BIT, 0x00);
 	ebus_write(&ac->art_ebus, Bt8370_RSYNC_TS, 0x00);
-	ebus_write(&ac->art_ebus, Bt8370_TSB_CR, TSB_CR_TPCM_NEG |
-	    TSB_CR_TSYN_NEG | TSB_CR_TSB_CTR | TSB_CR_TSB_NORMAL);
+	ebus_write(&ac->art_ebus, Bt8370_TSB_CR, TSB_CR_BUS_TSB |
+	    TSB_CR_TPCM_NEG | TSB_CR_TSYN_NEG | TSB_CR_TSB_CTR |
+	    TSB_CR_TSB_NORMAL);
 	ebus_write(&ac->art_ebus, Bt8370_TSYNC_BIT, 0x00);
 	ebus_write(&ac->art_ebus, Bt8370_TSYNC_TS, 0x00);
 	ebus_write(&ac->art_ebus, Bt8370_RSIG_CR, 0x00);

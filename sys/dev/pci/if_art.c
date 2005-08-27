@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.6 2005/08/27 13:18:02 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.7 2005/08/27 13:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -89,6 +89,7 @@ art_softc_attach(struct device *parent, struct device *self, void *aux)
 	sc->art_port = ma->ma_port;
 	sc->art_slot = ma->ma_slot;
 	sc->art_gnum = ma->ma_gnum;
+	sc->art_type = ma->ma_flags & 0x03;
 
 	sc->art_channel = musycc_channel_create(self->dv_xname, 1);
 	if (sc->art_channel == NULL) {
@@ -167,7 +168,7 @@ art_softc_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_set(&sc->art_ifm, IFM_TDM|IFM_TDM_E1_G704_CRC4);
 	sc->art_media = sc->art_ifm.ifm_media;
 
-	bt8370_set_frame_mode(sc, IFM_TDM_E1_G704_CRC4, 0);
+	bt8370_set_frame_mode(sc, sc->art_type, IFM_TDM_E1_G704_CRC4, 0);
 	musycc_attach_sppp(sc->art_channel, art_ioctl);
 
 	/*
@@ -260,8 +261,9 @@ art_ifm_change(struct ifnet *ifp)
 		ACCOOM_PRINTF(0, ("%s: art_ifm_change type %d mode %x\n",
 		    ifp->if_xname, IFM_SUBTYPE(ifm->ifm_media),
 		    IFM_MODE(ifm->ifm_media)));
-		bt8370_set_frame_mode(ac, IFM_SUBTYPE(ifm->ifm_media),
-		    IFM_MODE(ifm->ifm_media));
+		bt8370_set_frame_mode(ac, ac->art_type,
+		    IFM_SUBTYPE(ifm->ifm_media), IFM_MODE(ifm->ifm_media));
+		/* adjust timeslot map on media change */
 	}
 	ac->art_media = ifm->ifm_media;
 
@@ -321,18 +323,19 @@ art_onesec(void *arg)
 	case 1:
 		link_state = LINK_STATE_UP;
 		/* set led green but ask sppp if red is needed */
-		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_other, 1);
+		ebus_set_led(ac->art_channel, MUSYCC_LED_GREEN);
 		ac->art_status |= IFM_ACTIVE;
 		break;
 	case 0:
 		link_state = LINK_STATE_DOWN;
 		/* set led green & red */
-		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_other, 3);
+		ebus_set_led(ac->art_channel,
+		    MUSYCC_LED_GREEN | MUSYCC_LED_RED);
 		break;
 	default:
 		link_state = LINK_STATE_DOWN;
 		/* set led red */
-		ebus_set_led(ac->art_channel->cc_group->mg_hdlc->mc_other, 2);
+		ebus_set_led(ac->art_channel, MUSYCC_LED_RED);
 		break;
 	}
 

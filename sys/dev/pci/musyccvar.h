@@ -1,4 +1,4 @@
-/*	$OpenBSD: musyccvar.h,v 1.5 2005/08/27 13:18:02 claudio Exp $ */
+/*	$OpenBSD: musyccvar.h,v 1.6 2005/08/27 13:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -126,6 +126,7 @@ struct musycc_attach_args {
 	u_int32_t			ma_type;
 	u_int8_t			ma_gnum;
 	u_int8_t			ma_port;
+	u_int8_t			ma_flags;
 	char				ma_slot;
 };
 
@@ -178,11 +179,13 @@ struct musycc_softc {
 	struct musycc_softc	*mc_other;	/* the other EBUS/HDLC dev */
 	bus_size_t		 mc_ledbase;
 	u_int8_t		 mc_ledmask;
+	u_int8_t		 mc_ledstate;	/* current state of the LEDs */
 	int			 bus, device;	/* location of card */
 	SLIST_ENTRY(musycc_softc) list;		/* list of all hdlc ctrls */
 };
 
 int	musycc_attach_common(struct musycc_softc *, u_int32_t, u_int32_t);
+void	musycc_set_port(struct musycc_group *, int);
 int	musycc_init_channel(struct channel_softc *, char);
 void	musycc_stop_channel(struct channel_softc *);
 void	musycc_free_channel(struct musycc_group *, int);
@@ -199,7 +202,11 @@ int		ebus_attach_device(struct ebus_dev *, struct musycc_softc *,
 u_int8_t	ebus_read(struct ebus_dev *, bus_size_t);
 void		ebus_write(struct ebus_dev *, bus_size_t, u_int8_t);
 void		ebus_read_buf(struct ebus_dev *, bus_size_t, void *, size_t);
-void		ebus_set_led(struct musycc_softc *, u_int8_t);
+void		ebus_set_led(struct channel_softc *, u_int8_t);
+
+#define MUSYCC_LED_GREEN	0x1
+#define MUSYCC_LED_RED		0x2
+#define MUSYCC_LED_MASK		0x3
 
 /* channel API */
 struct channel_softc	*musycc_channel_create(const char *, u_int8_t);

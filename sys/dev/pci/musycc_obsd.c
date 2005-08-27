@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.7 2005/08/27 12:53:17 claudio Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.8 2005/08/27 13:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -212,9 +212,10 @@ musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
 
 	/* map and reset leds */
 	/* (15 * 0x4000) << 2 */
-	esc->mc_ledbase = ntohl(baseconf.ledbase);
+	esc->mc_ledbase = ntohl(baseconf.ledbase) << 2;
 	esc->mc_ledmask = baseconf.ledmask;
-	ebus_set_led(esc, 0);
+	esc->mc_ledstate = 0;
+	bus_space_write_1(esc->mc_st, esc->mc_sh, esc->mc_ledbase, 0);
 
 	printf("\n");
 
@@ -232,6 +233,7 @@ musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
 		ma.ma_type = ntohl(framerconf.type);
 		ma.ma_gnum = framerconf.gnum;
 		ma.ma_port = framerconf.port;
+		ma.ma_flags = framerconf.flags;
 		ma.ma_slot = framerconf.slot;
 
 		(void)config_found(&sc->mc_dev, &ma, musycc_ebus_print);

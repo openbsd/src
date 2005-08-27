@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.6 2005/08/27 13:18:02 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.7 2005/08/27 13:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -54,8 +54,7 @@ void	musycc_free_intqueue(struct musycc_softc *);
 void	musycc_free_dmadesc(struct musycc_group *);
 void	musycc_free_group(struct musycc_group *);
 void	musycc_set_group(struct musycc_group *, int, int, int);
-void	musycc_set_port(struct musycc_group *, int);
-int	musycc_set_tsmap(struct musycc_group *, int, u_int32_t [4]);
+int	musycc_set_tsmap(struct musycc_group *, struct channel_softc *, char);
 int	musycc_set_chandesc(struct musycc_group *, int, int, int);
 void	musycc_activate_channel(struct musycc_group *, int);
 void	musycc_state_engine(struct musycc_group *, int, enum musycc_event);
@@ -408,31 +407,72 @@ musycc_set_port(struct musycc_group *mg, int mode)
 	 */
 	mg->mg_group->port_conf = htole32(MUSYCC_PORT_TSYNC_EDGE |
 	    MUSYCC_PORT_TRITX | (mode & MUSYCC_PORT_MODEMASK));
+
+	if (mg->mg_loaded)
+		musycc_sreq(mg, 0, MUSYCC_SREQ_SET(21), MUSYCC_SREQ_RX,
+		    EV_NULL);
 }
 
 /*
  * Channel specifc calls
  */
 int
-musycc_set_tsmap(struct musycc_group *mg, int chan, u_int32_t tslots[4])
+musycc_set_tsmap(struct musycc_group *mg, struct channel_softc *cc, char slot)
 {
-	int i, nslots = 0;
+	int		i, nslots = 0, off, scale;
+	u_int32_t	tslots = cc->cc_tslots;
 
-	/* setup timeslot map but first make sure no timeslot is already used */
-	/* note: 56kbps mode for T1-SF needs to be set in here */
-	for (i = 0; i < sizeof(tslots) * 8; i++)
-		if ((1 << (i & 31)) & tslots[i >> 5])
-			if (mg->mg_group->tx_tsmap[i] & MUSYCC_TSLOT_ENABLED ||
-			    mg->mg_group->rx_tsmap[i] & MUSYCC_TSLOT_ENABLED)
-				return (-1);
+	ACCOOM_PRINTF(1, ("%s: musycc_set_tsmap %08x slot %c\n",
+	    cc->cc_ifp->if_xname, tslots, slot));
+	
+	switch (slot) {
+	case 'A':		/* single port, non interleaved */
+		off = 0;
+		scale = 1;
+		break;
+	case 'a':		/* dual port, interleaved */
+	case 'b':
+		off = slot - 'a';
+		scale = 2;
+		break;
+	case '1':		/* possible quad port, interleaved */
+	case '2':
+	case '3':
+	case '4':
+		off = slot - '1';
+		scale = 4;
+		break;
+	default:
+		/* impossible */
+		log(LOG_ERR, "%s: accessing unsupported slot %c",
+		    cc->cc_ifp->if_xname, slot);
+		return (-1);
+	}
 
-	for (i = 0; i < sizeof(tslots) * 8; i++)
-		if ((1 << (i & 31)) & tslots[i >> 5]) {
+	/*
+	 * setup timeslot map but first make sure no timeslot is already used 
+	 * note: 56kbps mode for T1-SF needs to be set in here
+	 * note2: if running with port mapping the other group needs to be
+	 * checked too or we may get funny results. Currenly not possible
+	 * because of the slot offsets (odd, even slots).
+	 */
+	for (i = 0; i < sizeof(u_int32_t) * 8; i++)
+		if (tslots & (1 << i))
+			if (mg->mg_group->tx_tsmap[i * scale + off] &
+			    MUSYCC_TSLOT_ENABLED ||
+			    mg->mg_group->rx_tsmap[i * scale + off] &
+			    MUSYCC_TSLOT_ENABLED)
+				return (0);
+
+	for (i = 0; i < sizeof(u_int32_t) * 8; i++)
+		if (tslots & (1 << i)) {
 			nslots++;
-			mg->mg_group->tx_tsmap[i] =
-			    MUSYCC_TSLOT_CHAN(chan) | MUSYCC_TSLOT_ENABLED;
-			mg->mg_group->rx_tsmap[i] =
-			    MUSYCC_TSLOT_CHAN(chan) | MUSYCC_TSLOT_ENABLED;
+			mg->mg_group->tx_tsmap[i * scale + off] =
+			    MUSYCC_TSLOT_CHAN(cc->cc_channel) |
+			    MUSYCC_TSLOT_ENABLED;
+			mg->mg_group->rx_tsmap[i * scale + off] =
+			    MUSYCC_TSLOT_CHAN(cc->cc_channel) |
+			    MUSYCC_TSLOT_ENABLED;
 		}
 
 	return (nslots);
@@ -480,8 +520,7 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 {
 	struct musycc_group	*mg;
 	struct ifnet		*ifp = cc->cc_ifp;
-	u_int32_t		 tslots[4];
-	int			 chan, nslots, rv, s;
+	int			 nslots, rv, s;
 
 	if (cc->cc_state == CHAN_FLOAT)
 		return (ENOTTY);
@@ -501,46 +540,26 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 		}
 	}
 
-
-	bzero(tslots, sizeof(tslots));
-	switch (slot) {
-	case 'A':
-		tslots[0] = cc->cc_tslots;
-		break;
-	case 'B':
-		tslots[1] = cc->cc_tslots;
-		break;
-	case 'C':
-		tslots[2] = cc->cc_tslots;
-		break;
-	case 'D':
-		tslots[3] = cc->cc_tslots;
-		break;
-	default:
-		/* impossible */
-		log(LOG_ERR, "%s: accessing unsupported slot %c",
-		    cc->cc_ifp->if_xname, slot);
-		cc->cc_state = CHAN_IDLE; /* force idle state */
-		musycc_free_channel(mg, chan);
-		return (EINVAL);
-	}
-
 	s = splnet();
 	/* setup timeslot map */
-	chan = cc->cc_channel;
-	nslots = musycc_set_tsmap(mg, chan, tslots);
+	nslots = musycc_set_tsmap(mg, cc, slot);
 	if (nslots == -1) {
+		rv = EINVAL;
+		goto fail;
+	} else if (nslots == 0) {
 		rv = EBUSY;
 		goto fail;
 	}
 
-	if ((rv = musycc_set_chandesc(mg, chan, nslots, MUSYCC_PROTO_HDLC16)))
+	if ((rv = musycc_set_chandesc(mg, cc->cc_channel, nslots,
+	    MUSYCC_PROTO_HDLC16)))
 		goto fail;
 
 	/* setup tx DMA chain */
-	musycc_list_tx_init(mg, chan, nslots);
+	musycc_list_tx_init(mg, cc->cc_channel, nslots);
 	/* setup rx DMA chain */
-	if ((rv = musycc_list_rx_init(mg, chan, MUSYCC_DMA_MIN + nslots))) {
+	if ((rv = musycc_list_rx_init(mg, cc->cc_channel,
+	    MUSYCC_DMA_MIN + nslots))) {
 		ACCOOM_PRINTF(0, ("%s: initialization failed: "
 		    "no memory for rx buffers\n", cc->cc_ifp->if_xname));
 		goto fail;
@@ -552,7 +571,8 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 	cc->cc_state = CHAN_TRANSIENT;
 	splx(s);
 
-	musycc_activate_channel(mg, chan);
+	musycc_dump_group(1, mg);
+	musycc_activate_channel(mg, cc->cc_channel);
 	tsleep(cc, PZERO | PCATCH, "musycc", hz);
 
 	/*
@@ -564,7 +584,7 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 fail:
 	splx(s);
 	cc->cc_state = CHAN_IDLE; /* force idle state */
-	musycc_free_channel(mg, chan);
+	musycc_free_channel(mg, cc->cc_channel);
 	return (rv);
 }
 
@@ -1600,11 +1620,21 @@ ebus_read_buf(struct ebus_dev *rom, bus_size_t offset, void *buf, size_t size)
 }
 
 void
-ebus_set_led(struct musycc_softc *esc, u_int8_t value)
+ebus_set_led(struct channel_softc *cc, u_int8_t value)
 {
-	bus_space_write_1(esc->mc_st, esc->mc_sh, esc->mc_ledbase << 2, value);
-	bus_space_barrier(esc->mc_st, esc->mc_sh, esc->mc_ledbase << 2, 1,
+	struct musycc_softc	*sc = cc->cc_group->mg_hdlc->mc_other;
+	u_int8_t		 mask;
+
+	value <<= cc->cc_group->mg_gnum * 2;
+	mask = MUSYCC_LED_MASK << (cc->cc_group->mg_gnum * 2);
+	
+	value = (value & mask) | (sc->mc_ledstate & ~mask);
+
+	bus_space_write_1(sc->mc_st, sc->mc_sh, sc->mc_ledbase, value);
+	bus_space_barrier(sc->mc_st, sc->mc_sh, sc->mc_ledbase, 1,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+
+	sc->mc_ledstate = value;
 }
 
 /*
