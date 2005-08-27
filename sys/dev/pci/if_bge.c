@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.79 2005/08/09 04:10:11 mickey Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.80 2005/08/27 14:12:36 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1617,6 +1617,10 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5752_A0,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5752 A0" },
+
+	{ BGE_CHIPID_BCM5752_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5752 A1" },
 
 	{ 0, 0, NULL }
 };
