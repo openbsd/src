@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.4 2005/08/14 22:28:47 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.5 2005/08/27 13:07:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -100,7 +100,6 @@ musycc_attach_common(struct musycc_softc *sc, u_int32_t portmap, u_int32_t mode)
 	    MUSYCC_SREQ_SET(1));
 	bus_space_barrier(sc->mc_st, sc->mc_sh, MUSYCC_SERREQ(0),
 	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
-	(void) bus_space_read_4(sc->mc_st, sc->mc_sh, MUSYCC_SERREQ(0));
 
 	if (musycc_alloc_groupdesc(sc) == -1) {
 		printf(": couldn't alloc group descriptors\n");
@@ -153,7 +152,7 @@ musycc_attach_common(struct musycc_softc *sc, u_int32_t portmap, u_int32_t mode)
 		mg->mg_group = (struct musycc_grpdesc *)
 		    (sc->mc_groupkva + MUSYCC_GROUPBASE(i));
 		bzero(mg->mg_group, sizeof(struct musycc_grpdesc));
-		musycc_set_group(mg, MUSYCC_GRCFG_POLL16, MUSYCC_MAXFRM_MAX,
+		musycc_set_group(mg, MUSYCC_GRCFG_POLL32, MUSYCC_MAXFRM_MAX,
 		    MUSYCC_MAXFRM_MAX);
 		musycc_set_port(mg, mode);
 
@@ -178,6 +177,14 @@ musycc_attach_common(struct musycc_softc *sc, u_int32_t portmap, u_int32_t mode)
 	 */
 	bus_space_write_4(sc->mc_st, sc->mc_sh, MUSYCC_INTQLEN,
 	    MUSYCC_INTLEN - 1);
+
+	/* Configure groups, needs to be done only once per group */
+	for (i = 0; i < sc->mc_ngroups; i++) {
+		mg = &sc->mc_groups[i];
+		musycc_sreq(mg, 0, MUSYCC_SREQ_SET(5), MUSYCC_SREQ_BOTH,
+		    EV_NULL);
+		mg->mg_loaded = 1;
+	}
 
 	return (0);
 }
@@ -378,9 +385,9 @@ musycc_set_group(struct musycc_group *mg, int poll, int maxa, int maxb)
 
 	/* group config */
 	mg->mg_group->group_conf = htole32(MUSYCC_GRCFG_RXENBL |
-	    MUSYCC_GRCFG_TXENBL | MUSYCC_GRCFG_SUBDSBL | MUSYCC_GRCFG_MSKCOFA |
-	    MUSYCC_GRCFG_MSKOOF | MUSYCC_GRCFG_MCENBL |
-	    (poll & MUSYCC_GRCFG_POLL64));
+	    MUSYCC_GRCFG_TXENBL | MUSYCC_GRCFG_SUBDSBL |
+	    MUSYCC_GRCFG_MSKCOFA | MUSYCC_GRCFG_MSKOOF |
+	    MUSYCC_GRCFG_MCENBL | (poll & MUSYCC_GRCFG_POLL64));
 
 	/* memory protection, not supported by device */
 
@@ -388,7 +395,6 @@ musycc_set_group(struct musycc_group *mg, int poll, int maxa, int maxb)
 	/* this is currently not used and the max is limited to 4094 bytes */
 	mg->mg_group->msglen_conf = htole32(maxa);
 	mg->mg_group->msglen_conf |= htole32(maxb << MUSYCC_MAXFRM2_SHIFT);
-
 }
 
 void
@@ -438,8 +444,8 @@ musycc_set_chandesc(struct musycc_group *mg, int chan, int nslots, int proto)
 	u_int64_t	mask = ULLONG_MAX;
 	int		idx, n;
 
-	ACCOOM_PRINTF(1, ("%s: musycc_set_chandesc nslots %d\n",
-	    mg->mg_channels[chan]->cc_ifp->if_xname, nslots));
+	ACCOOM_PRINTF(1, ("%s: musycc_set_chandesc nslots %d proto %d\n",
+	    mg->mg_channels[chan]->cc_ifp->if_xname, nslots, proto));
 
 	if (nslots == 0 || nslots > 32)
 		return (EINVAL);
@@ -483,6 +489,7 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 
 	ACCOOM_PRINTF(2, ("%s: musycc_init_channel [state %d] slot %c\n",
 	    cc->cc_ifp->if_xname, cc->cc_state, slot));
+
 	if (cc->cc_state != CHAN_IDLE) {
 		musycc_sreq(mg, cc->cc_channel, MUSYCC_SREQ_SET(9),
 		    MUSYCC_SREQ_BOTH, EV_STOP);
@@ -494,12 +501,6 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 		}
 	}
 
-	if (mg->mg_loaded == 0) {
-		/* needs only be done once per group */
-		musycc_sreq(mg, 0, MUSYCC_SREQ_SET(5), MUSYCC_SREQ_BOTH,
-		    EV_NULL);
-		mg->mg_loaded = 1;
-	}
 
 	bzero(tslots, sizeof(tslots));
 	switch (slot) {
@@ -671,6 +672,7 @@ musycc_state_engine(struct musycc_group *mg, int chan, enum musycc_event ev)
 		break;
 	case EV_STOP:
 		/* channel disabled now free dma rings et al. */
+		mg->mg_channels[chan]->cc_state = CHAN_TRANSIENT;
 		musycc_free_channel(mg, chan);
 		return;
 	case EV_IDLE:
@@ -1320,6 +1322,7 @@ musycc_intr(void *arg)
 	int			 i, n, chan;
 
 	intstatus = bus_space_read_4(mc->mc_st, mc->mc_sh, MUSYCC_INTRSTATUS);
+
 	if (intstatus & MUSYCC_INTCNT_MASK) {
 		bus_dmamap_sync(mc->mc_dmat, mc->mc_intrmap,
 		    offsetof(struct musycc_intdesc, md_intrq[0]),
@@ -1336,6 +1339,10 @@ musycc_intr(void *arg)
 
 			ACCOOM_PRINTF(4, ("%s: interrupt %s\n",
 			    mc->mc_dev.dv_xname, musycc_intr_print(id)));
+
+			if (id & MUSYCC_INTD_ILOST)
+				ACCOOM_PRINTF(0, ("%s: interrupt lost\n",
+				    mc->mc_dev.dv_xname));
 
 			switch (MUSYCC_INTD_EVENT(id)) {
 			case MUSYCC_INTEV_NONE:
@@ -1370,12 +1377,10 @@ musycc_intr(void *arg)
 					break;
 				if (mg->mg_channels[chan]->cc_state !=
 				    CHAN_RUNNING) {
-#if 0
-				if (mg->mg_sreqpend != mg->mg_sreqprod) {
-#endif
-					ACCOOM_PRINTF(1, ("%s: COFA ignored\n",
-					    mg->mg_channels[chan]->
-					    cc_ifp->if_xname));
+					/*
+					 * ignore COFA for TX side if card is
+					 * not running
+					 */
 					break;
 				}
 				ACCOOM_PRINTF(0, ("%s: error: %s\n",
@@ -1385,7 +1390,6 @@ musycc_intr(void *arg)
 				/* digest already transmitted packets */
 				musycc_txeom(mg, chan);
 
-				musycc_dump_dma(mg);
 				/* adjust head pointer */
 				musycc_dump_dma(mg);
 				mg->mg_group->tx_headp[chan] =
