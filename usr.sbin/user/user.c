@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.64 2005/07/08 18:58:32 millert Exp $ */
+/* $OpenBSD: user.c,v 1.65 2005/08/27 23:12:36 deraadt Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -120,7 +120,7 @@ enum {
 #endif
 
 #ifndef DEF_SHELL
-#define DEF_SHELL	_PATH_CSHELL
+#define DEF_SHELL	_PATH_KSHELL
 #endif
 
 #ifndef DEF_COMMENT
