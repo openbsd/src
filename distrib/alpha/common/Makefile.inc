@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2005/08/26 18:38:12 henning Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2005/08/27 06:40:51 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -22,7 +22,7 @@ INSTALLBOOT?=	/usr/mdec/installboot -v
 XNAME?=		floppy
 FLOPPY?=	${XNAME}${REV}.fs
 FLOPPYBLKS?=	2880
-FLOPPYTYPE?=	floppy3
+FLOPPYTYPE?=	floppyx
 BOOT?=		/usr/mdec/boot
 BOOTXX?=	/usr/mdec/bootxx
 
