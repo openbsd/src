@@ -183,7 +183,6 @@
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/SYSCALLS.c.X
-./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/cc1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/cc1obj
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/cc1plus
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/f771

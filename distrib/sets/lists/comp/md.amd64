@@ -227,7 +227,6 @@
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/amd64-unknown-openbsd3.8/3.3.5/SYSCALLS.c.X
-./usr/lib/gcc-lib/amd64-unknown-openbsd3.8/3.3.5/cc1
 ./usr/lib/gcc-lib/amd64-unknown-openbsd3.8/3.3.5/cc1obj
 ./usr/lib/gcc-lib/amd64-unknown-openbsd3.8/3.3.5/cc1plus
 ./usr/lib/gcc-lib/amd64-unknown-openbsd3.8/3.3.5/f771

@@ -61,6 +61,7 @@
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd3.8
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd3.8/3.3.5
+./usr/lib/gcc-lib/hppa64-unknown-openbsd3.8/3.3.5/cc1
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd3.8/3.3.5/collect2
 ./usr/lib/gcc-lib/hppa64-unknown-openbsd3.8/3.3.5/specs
 ./usr/lib/libasn1.so.15.0

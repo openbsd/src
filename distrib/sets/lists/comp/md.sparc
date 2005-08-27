@@ -176,7 +176,6 @@
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.8/2.95.3/SYSCALLS.c.X
-./usr/lib/gcc-lib/sparc-unknown-openbsd3.8/2.95.3/cc1
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.8/2.95.3/cc1obj
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.8/2.95.3/cc1plus
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.8/2.95.3/f771

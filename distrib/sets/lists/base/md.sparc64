@@ -59,6 +59,7 @@
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd3.8
+./usr/lib/gcc-lib/sparc64-unknown-openbsd3.8/3.3.5/cc1
 ./usr/lib/libasn1.so.15.0
 ./usr/lib/libc.so.38.2
 ./usr/lib/libcom_err.so.15.0

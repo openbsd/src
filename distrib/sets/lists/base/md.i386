@@ -69,6 +69,7 @@
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.8
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.8/3.3.5
+./usr/lib/gcc-lib/i386-unknown-openbsd3.8/3.3.5/cc1
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.8/3.3.5/collect2
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.8/3.3.5/include
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.8/3.3.5/specs

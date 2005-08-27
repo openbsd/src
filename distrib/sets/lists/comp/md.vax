@@ -165,7 +165,6 @@
 ./usr/include/vax/vmparam.h
 ./usr/include/vax/vsbus.h
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.8/2.95.3/SYSCALLS.c.X
-./usr/lib/gcc-lib/vax-unknown-openbsd3.8/2.95.3/cc1
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.8/2.95.3/cc1obj
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.8/2.95.3/cc1plus
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.8/2.95.3/f771

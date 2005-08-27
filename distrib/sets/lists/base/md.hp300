@@ -24,6 +24,7 @@
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3
+./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/cc1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/collect2
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/cpp0
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/include
