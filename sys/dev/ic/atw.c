@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.34 2005/07/18 02:43:26 fgsch Exp $	*/
+/*	$OpenBSD: atw.c,v 1.35 2005/08/27 09:13:50 avsm Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3030,11 +3030,11 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 
 	if ((bits & ATW_NAR_ST) != 0 && (stsr & ATW_INTR_TPS) == 0 &&
 	    (test0 & ATW_TEST0_TS_MASK) != ATW_TEST0_TS_STOPPED) {
-		printf("%s: transmit process not idle [%s]\n",
+		DPRINTF2(sc, ("%s: transmit process not idle [%s]\n",
 		    sc->sc_dev.dv_xname,
-		    atw_tx_state[MASK_AND_RSHIFT(test0, ATW_TEST0_TS_MASK)]);
-		printf("%s: bits %08x test0 %08x stsr %08x\n",
-		    sc->sc_dev.dv_xname, bits, test0, stsr);
+		    atw_tx_state[MASK_AND_RSHIFT(test0, ATW_TEST0_TS_MASK)]));
+		DPRINTF2(sc, ("%s: bits %08x test0 %08x stsr %08x\n",
+		    sc->sc_dev.dv_xname, bits, test0, stsr));
 	}
 
 	if ((bits & ATW_NAR_SR) != 0 && (stsr & ATW_INTR_RPS) == 0 &&
