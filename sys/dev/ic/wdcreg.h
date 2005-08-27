@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.13 2004/09/24 07:05:44 grange Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.14 2005/08/27 14:08:38 jsg Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -118,6 +118,14 @@
 #define WDCC_WRITEDMA_EXT	0x35 /* write 48-bit addressing with DMA */
 
 #define WDCC_FLUSHCACHE_EXT	0xea /* 48-bit addressing flush cache */
+
+/* security mode commands */
+#define WDCC_SEC_SET_PASSWORD		0xf1 /* set user or master password */
+#define WDCC_SEC_UNLOCK			0xf2 /* authenticate */
+#define WDCC_SEC_ERASE_PREPARE		0xf3 
+#define WDCC_SEC_ERASE_UNIT		0xf4 /* erase all user data */
+#define WDCC_SEC_FREEZE_LOCK		0xf5 /* prevent password changes */
+#define WDCC_SEC_DISABLE_PASSWORD	0xf6
 
 /* Subcommands for SET_FEATURES (features register ) */
 #define WDSF_8BIT_PIO_EN	0x01 /* Enable 8bit PIO (CFA featureset) */
