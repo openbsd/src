@@ -1,4 +1,4 @@
-/*	$OpenBSD: musyccreg.h,v 1.2 2005/08/13 23:52:49 claudio Exp $ */
+/*	$OpenBSD: musyccreg.h,v 1.3 2005/08/27 12:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -167,7 +167,7 @@ struct musycc_grpdesc {
 
 /* Message Length Descriptor [page 5-20] */
 #define MUSYCC_MAXFRM_MAX	4094		/* maximum message length */
-#define MUSYCC_MAXFRM_MASK	0x0eff
+#define MUSYCC_MAXFRM_MASK	0x0fff
 #define MUSYCC_MAXFRM2_SHIFT	16
 
 /* Time Slot Descriptor [page 5-23] */

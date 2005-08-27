@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.6 2005/08/14 22:28:47 claudio Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.7 2005/08/27 12:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -152,7 +152,7 @@ musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
 #endif
 	struct musycc_rom		 baseconf;
 	struct musycc_rom_framer	 framerconf;
-	bus_size_t			 iosize, offset;
+	bus_size_t			 offset;
 	int				 i;
 
 	/* find HDLC controller softc ... */
@@ -220,7 +220,7 @@ musycc_ebus_attach(struct device *parent, struct musycc_softc *esc,
 
 	for (i = 0; i < baseconf.numframer; i++) {
 		if (offset >= 0x400) {
-			printf("%s: bad rom\n", esc->mc_dev.dv_xname);
+			printf("%s: bad rom\n", sc->mc_dev.dv_xname);
 			goto failed;
 		}
 		ebus_read_buf(&rom, offset, &framerconf, sizeof(framerconf));
@@ -244,7 +244,7 @@ failed:
 	if (esc->mc_ih != NULL)
 		pci_intr_disestablish(pc, esc->mc_ih);
 	bus_space_unmap(sc->mc_st, sc->mc_sh, sc->mc_iosize);
-	bus_space_unmap(esc->mc_st, esc->mc_sh, iosize);
+	bus_space_unmap(esc->mc_st, esc->mc_sh, esc->mc_iosize);
 	return;
 }
 
