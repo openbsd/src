@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.5 2005/08/14 22:28:47 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.6 2005/08/27 13:18:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -354,6 +354,11 @@ art_onesec(void *arg)
 		splx(s);
 	}
 
+	/*
+	 * run musycc onesec job
+	 */
+	musycc_tick(ac->art_channel);
+	
 	/*
 	 * Schedule another timeout one second from now.
 	 */

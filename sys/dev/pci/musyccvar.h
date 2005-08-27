@@ -1,4 +1,4 @@
-/*	$OpenBSD: musyccvar.h,v 1.4 2005/08/14 22:28:47 claudio Exp $ */
+/*	$OpenBSD: musyccvar.h,v 1.5 2005/08/27 13:18:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -28,6 +28,7 @@
 #define MUSYCC_NUMPORT		8	/* max 8 ports per controller */
 #define MUSYCC_SREQNUM		16	/* pending SREQ */
 #define MUSYCC_SREQMASK		(MUSYCC_SREQNUM - 1)
+#define MUSYCC_SREQTIMEOUT	2
 
 /* dma ring sizes */
 #define MUSYCC_DMA_CNT		256
@@ -100,6 +101,7 @@ struct musycc_group {
 	int			 mg_freecnt;
 
 	struct {
+		long			timeout;
 		u_int32_t		sreq;
 		enum musycc_event	event;
 	}			 mg_sreq[MUSYCC_SREQNUM];
@@ -186,6 +188,7 @@ void	musycc_stop_channel(struct channel_softc *);
 void	musycc_free_channel(struct musycc_group *, int);
 void	musycc_start(struct ifnet *);
 void	musycc_watchdog(struct ifnet *);
+void	musycc_tick(struct channel_softc *);
 
 int	musycc_intr(void *);
 int	ebus_intr(void *);

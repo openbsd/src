@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.5 2005/08/27 13:07:56 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.6 2005/08/27 13:18:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -1483,9 +1483,11 @@ musycc_sreq(struct musycc_group *mg, int channel, u_int32_t req, int dir,
 			    mg->mg_hdlc->mc_dev.dv_xname);	\
 	} while (0)
 
-	int	needskick;
+	struct timeval	tv;
+	int		needskick;
 
 	needskick = (mg->mg_sreqpend == mg->mg_sreqprod);
+	getmicrouptime(&tv);
 
 	ACCOOM_PRINTF(4, ("musycc_sreq: g# %d c# %d req %x dir %x\n",
 	    mg->mg_gnum, channel, req, dir));
@@ -1494,6 +1496,8 @@ musycc_sreq(struct musycc_group *mg, int channel, u_int32_t req, int dir,
 		req &= ~MUSYCC_SREQ_TXDIR & ~MUSYCC_SREQ_MASK;
 		req |= MUSYCC_SREQ_CHSET(channel);
 		mg->mg_sreq[mg->mg_sreqprod].sreq = req;
+		mg->mg_sreq[mg->mg_sreqprod].timeout = tv.tv_sec +
+		    MUSYCC_SREQTIMEOUT;
 		if (dir == MUSYCC_SREQ_RX)
 			mg->mg_sreq[mg->mg_sreqprod].event = event;
 		else
@@ -1504,6 +1508,8 @@ musycc_sreq(struct musycc_group *mg, int channel, u_int32_t req, int dir,
 		req &= ~MUSYCC_SREQ_MASK;
 		req |= MUSYCC_SREQ_TXDIR;
 		req |= MUSYCC_SREQ_CHSET(channel);
+		mg->mg_sreq[mg->mg_sreqprod].timeout = tv.tv_sec +
+		    MUSYCC_SREQTIMEOUT;
 		mg->mg_sreq[mg->mg_sreqprod].sreq = req;
 		mg->mg_sreq[mg->mg_sreqprod].event = event;
 		MUSYCC_SREQINC(mg->mg_sreqprod, mg->mg_sreqpend);
@@ -1515,8 +1521,29 @@ musycc_sreq(struct musycc_group *mg, int channel, u_int32_t req, int dir,
 #undef	MUSYCC_SREQINC
 }
 
+void
+musycc_tick(struct channel_softc *cc)
+{
+	struct musycc_group	*mg = cc->cc_group;
+	struct timeval		 tv;
 
+	if (mg->mg_sreqpend == mg->mg_sreqprod)
+		return;
 
+	getmicrouptime(&tv);
+	if (mg->mg_sreq[mg->mg_sreqpend].timeout < tv.tv_sec) {
+		log(LOG_ERR, "%s: service request timeout\n",
+		    cc->cc_ifp->if_xname);
+		mg->mg_sreqpend++;
+		/* digest all timed out SREQ */
+		while (mg->mg_sreq[mg->mg_sreqpend].timeout < tv.tv_sec &&
+		    mg->mg_sreqpend != mg->mg_sreqprod)
+			mg->mg_sreqpend++;
+
+		if (mg->mg_sreqpend != mg->mg_sreqprod)
+			musycc_kick(mg);
+	}
+}
 
 /*
  * Extension Bus API
