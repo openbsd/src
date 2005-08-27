@@ -895,8 +895,6 @@ back_raw_line(curr_pos, linep)
 		if (n <= 0)
 		{
 			int old_size_linebuf = size_linebuf;
-			char *fm;
-			char *to;
 			if (expand_linebuf())
 			{
 				/*
@@ -909,11 +907,8 @@ back_raw_line(curr_pos, linep)
 			/*
 			 * Shift the data to the end of the new linebuf.
 			 */
-			for (fm = linebuf + old_size_linebuf,
-			      to = linebuf + size_linebuf;
-			     fm >= linebuf;  fm--, to--)
-				*to = *fm;
 			n = size_linebuf - old_size_linebuf;
+			memmove(linebuf + n, linebuf, old_size_linebuf);
 		}
 		linebuf[--n] = c;
 	}
