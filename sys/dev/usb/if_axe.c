@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.36 2005/08/28 02:53:49 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.37 2005/08/28 02:55:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -584,9 +584,9 @@ USB_ATTACH(axe)
 			}
 		}
 
-		axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0, NULL);
-		usbd_delay_ms(sc->axe_udev, 150);
 		/* soft reset */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0, NULL);
+		usbd_delay_ms(sc->axe_udev, 150);
 		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
 		    AXE_178_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
 		usbd_delay_ms(sc->axe_udev, 150);
