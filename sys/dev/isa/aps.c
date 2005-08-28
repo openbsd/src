@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.4 2005/08/06 01:30:33 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.5 2005/08/28 03:52:37 djm Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -43,10 +43,12 @@
 int aps_match(struct device *, void *, void *);
 void aps_attach(struct device *, struct device *, void *);
 
+int aps_init(bus_space_tag_t, bus_space_handle_t);
 u_int8_t aps_mem_read_1(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
 int aps_read_data(struct aps_softc *);
 void aps_refresh_sensor_data(struct aps_softc *sc);
 void aps_refresh(void *);
+void aps_power(int, void *);
 
 struct cfattach aps_ca = {
 	sizeof(struct aps_softc),
@@ -141,35 +143,7 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	bus_space_write_1(iot, ioh, APS_INIT, 0x17);
-	bus_space_write_1(iot, ioh, APS_STATE, 0x81);
-	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
-	if (!aps_mem_read_1(iot, ioh, APS_CMD, 0x00))
-		goto out;
-	if (!aps_mem_read_1(iot, ioh, APS_STATE, 0x00))
-		goto out;
-	if (!aps_mem_read_1(iot, ioh, APS_XACCEL, 0x60))
-		goto out;
-	if (!aps_mem_read_1(iot, ioh, APS_XACCEL + 1, 0x00))
-		goto out;
-	bus_space_write_1(iot, ioh, APS_INIT, 0x14);
-	bus_space_write_1(iot, ioh, APS_STATE, 0x01);
-	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
-	if (!aps_mem_read_1(iot, ioh, APS_CMD, 0x00))
-		goto out;
-	bus_space_write_1(iot, ioh, APS_INIT, 0x10);
-	bus_space_write_1(iot, ioh, APS_STATE, 0xc8);
-	bus_space_write_1(iot, ioh, APS_XACCEL, 0x00);
-	bus_space_write_1(iot, ioh, APS_XACCEL + 1, 0x02);
-	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
-	if (!aps_mem_read_1(iot, ioh, APS_CMD, 0x00))
-		goto out;
-	/* refresh data */
-	bus_space_write_1(iot, ioh, APS_INIT, 0x11);
-	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
-	if (!aps_mem_read_1(iot, ioh, APS_ACCEL_STATE, 0x50))
-		goto out;
-	if (!aps_mem_read_1(iot, ioh, APS_STATE, 0x00))
+	if (!aps_init(iot, ioh))
 		goto out;
 
 	sc->numsensors = APS_NUM_SENSORS;
@@ -229,6 +203,8 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 		SENSOR_ADD(&sc->sensors[i]);
 	}
 
+	powerhook_establish(aps_power, (void *)sc);
+
 	/* Refresh sensor data every 0.5 seconds */
 	timeout_set(&aps_timeout, aps_refresh, sc);
 	timeout_add(&aps_timeout, (5 * hz) / 10);
@@ -236,6 +212,43 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 out:
 	printf("%s: failed to initialise\n", sc->sc_dev.dv_xname);
 	return;
+}
+
+int
+aps_init(bus_space_tag_t iot, bus_space_handle_t ioh)
+{
+	bus_space_write_1(iot, ioh, APS_INIT, 0x17);
+	bus_space_write_1(iot, ioh, APS_STATE, 0x81);
+	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
+	if (!aps_mem_read_1(iot, ioh, APS_CMD, 0x00))
+		return (0);
+	if (!aps_mem_read_1(iot, ioh, APS_STATE, 0x00))
+		return (0);
+	if (!aps_mem_read_1(iot, ioh, APS_XACCEL, 0x60))
+		return (0);
+	if (!aps_mem_read_1(iot, ioh, APS_XACCEL + 1, 0x00))
+		return (0);
+	bus_space_write_1(iot, ioh, APS_INIT, 0x14);
+	bus_space_write_1(iot, ioh, APS_STATE, 0x01);
+	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
+	if (!aps_mem_read_1(iot, ioh, APS_CMD, 0x00))
+		return (0);
+	bus_space_write_1(iot, ioh, APS_INIT, 0x10);
+	bus_space_write_1(iot, ioh, APS_STATE, 0xc8);
+	bus_space_write_1(iot, ioh, APS_XACCEL, 0x00);
+	bus_space_write_1(iot, ioh, APS_XACCEL + 1, 0x02);
+	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
+	if (!aps_mem_read_1(iot, ioh, APS_CMD, 0x00))
+		return (0);
+	/* refresh data */
+	bus_space_write_1(iot, ioh, APS_INIT, 0x11);
+	bus_space_write_1(iot, ioh, APS_CMD, 0x01);
+	if (!aps_mem_read_1(iot, ioh, APS_ACCEL_STATE, 0x50))
+		return (0);
+	if (!aps_mem_read_1(iot, ioh, APS_STATE, 0x00))
+		return (0);
+
+	return (1);
 }
 
 u_int8_t
@@ -333,3 +346,33 @@ aps_refresh(void *arg)
 	aps_refresh_sensor_data(sc);
 	timeout_add(&aps_timeout, (5 * hz) / 10);
 }
+
+void
+aps_power(int why, void *arg)
+{
+	struct aps_softc *sc = (struct aps_softc *)arg;
+	bus_space_tag_t iot = sc->aps_iot;
+	bus_space_handle_t ioh = sc->aps_ioh;
+
+	if (why != PWR_RESUME) {
+		if (timeout_pending(&aps_timeout))
+			timeout_del(&aps_timeout);
+	} else {
+		/*
+		 * Redo the init sequence on resume, because APS is 
+		 * as forgetful as it is deaf.
+		 */
+		bus_space_write_1(iot, ioh, APS_INIT, 0x13);
+		bus_space_write_1(iot, ioh, APS_CMD, 0x01);
+		bus_space_read_1(iot, ioh, APS_CMD);
+		bus_space_write_1(iot, ioh, APS_INIT, 0x13);
+		bus_space_write_1(iot, ioh, APS_CMD, 0x01);
+	
+		if (aps_mem_read_1(iot, ioh, APS_CMD, 0x00) &&
+		    aps_init(iot, ioh))
+			timeout_add(&aps_timeout, (5 * hz) / 10);
+		else
+			printf("aps: failed to wake up\n");
+	}
+}
+
