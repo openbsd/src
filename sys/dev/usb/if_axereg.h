@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.9 2005/08/28 02:51:05 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.10 2005/08/28 03:34:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -180,6 +180,11 @@ struct axe_cdata {
 	int			axe_tx_cnt;
 	int			axe_rx_prod;
 };
+
+struct axe_sframe_hdr {
+	u_int16_t		len;
+	u_int16_t		ilen;
+} __packed;
 
 #define AXE_INC(x, y)		(x) = (x + 1) % y
 

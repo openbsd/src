@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.37 2005/08/28 02:55:18 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.38 2005/08/28 03:34:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -178,7 +178,7 @@ USB_DECLARE_DRIVER_CLASS(axe, DV_IFNET);
 
 Static int axe_tx_list_init(struct axe_softc *);
 Static int axe_rx_list_init(struct axe_softc *);
-Static int axe_newbuf(struct axe_softc *, struct axe_chain *, struct mbuf *);
+Static struct mbuf *axe_newbuf(void);
 Static int axe_encap(struct axe_softc *, struct mbuf *, int);
 Static void axe_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void axe_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -770,42 +770,25 @@ axe_activate(device_ptr_t self, enum devact act)
 	return (0);
 }
 
-/*
- * Initialize an RX descriptor and attach an MBUF cluster.
- */
-Static int
-axe_newbuf(struct axe_softc *sc, struct axe_chain *c, struct mbuf *m)
+Static struct mbuf *
+axe_newbuf(void)
 {
-	struct mbuf		*m_new = NULL;
+	struct mbuf		*m;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev),__func__));
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (NULL);
 
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", USBDEVNAME(sc->axe_dev));
-			return (ENOBUFS);
-		}
-
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", USBDEVNAME(sc->axe_dev));
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-	} else {
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_new->m_data = m_new->m_ext.ext_buf;
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return (NULL);
 	}
 
-	m_adj(m_new, ETHER_ALIGN);
-	c->axe_mbuf = m_new;
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	m_adj(m, ETHER_ALIGN);
 
-	return (0);
+	return (m);
 }
 
 Static int
@@ -822,8 +805,7 @@ axe_rx_list_init(struct axe_softc *sc)
 		c = &cd->axe_rx_chain[i];
 		c->axe_sc = sc;
 		c->axe_idx = i;
-		if (axe_newbuf(sc, c, NULL) == ENOBUFS)
-			return (ENOBUFS);
+		c->axe_mbuf = NULL;
 		if (c->axe_xfer == NULL) {
 			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
 			if (c->axe_xfer == NULL)
@@ -881,11 +863,7 @@ axe_rxstart(struct ifnet *ifp)
 	axe_lock_mii(sc);
 	c = &sc->axe_cdata.axe_rx_chain[sc->axe_cdata.axe_rx_prod];
 
-	if (axe_newbuf(sc, c, NULL) == ENOBUFS) {
-		ifp->if_ierrors++;
-		axe_unlock_mii(sc);
-		return;
-	}
+	memset(c->axe_buf, 0, sc->axe_bufsz);
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_RX],
@@ -905,16 +883,15 @@ axe_rxstart(struct ifnet *ifp)
 Static void
 axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	struct axe_softc	*sc;
-	struct axe_chain	*c;
-	struct ifnet		*ifp;
-	struct mbuf		*m;
+	struct axe_chain	*c = (struct axe_chain *)priv;
+	struct axe_softc	*sc = c->axe_sc;
+	struct ifnet		*ifp = GET_IFP(sc);
+	u_char			*buf = c->axe_buf;
 	u_int32_t		total_len;
+	u_int16_t		pktlen = 0;
+	struct mbuf		*m;
+	struct axe_sframe_hdr	hdr;
 	int			s;
-
-	c = priv;
-	sc = c->axe_sc;
-	ifp = GET_IFP(sc);
 
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev),__func__));
 
@@ -938,43 +915,62 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	m = c->axe_mbuf;
+	do {
+		if (sc->axe_flags & AX178) {
+			if (total_len < sizeof(hdr)) {
+				ifp->if_ierrors++;
+				goto done;
+			}
 
-	if (total_len <= sizeof(struct ether_header)) {
-		ifp->if_ierrors++;
-		goto done;
-	}
+			if ((pktlen % 2) != 0)
+				pktlen++;
 
-	ifp->if_ipackets++;
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = m->m_len = total_len;
+			buf += pktlen;
 
+			memcpy(&hdr, buf, sizeof(hdr));
+			total_len -= sizeof(hdr);
 
-	memcpy(mtod(c->axe_mbuf, char *), c->axe_buf, total_len);
+			if ((hdr.len ^ hdr.ilen) != 0xffff ||
+			    (hdr.len > total_len)) {
+				ifp->if_ierrors++;
+				goto done;
+			}
 
-	/* No errors; receive the packet. */
-	total_len -= ETHER_CRC_LEN + 4;
+			pktlen = hdr.len;
+			buf += sizeof(hdr);
+			total_len -= pktlen + (pktlen % 2);
+		} else {
+			pktlen = total_len; /* crc on the end? */
+			total_len = 0;
+		}
 
-	s = splnet();
+		m = axe_newbuf();
+		if (m == NULL) {
+			ifp->if_ierrors++;
+			goto done;
+		}
 
-	/* XXX ugly */
-	if (axe_newbuf(sc, c, NULL) == ENOBUFS) {
-		ifp->if_ierrors++;
-		goto done1;
-	}
+		ifp->if_ipackets++;
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = pktlen;
 
+		memcpy(mtod(m, char *), buf, pktlen);
+
+		/* push the packet up */
+		s = splnet();
 #if NBPFILTER > 0
-	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
+		if (ifp->if_bpf)
+			BPF_MTAP(ifp, m);
 #endif
 
-	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->axe_dev),
-		    __func__, m->m_len));
-	IF_INPUT(ifp, m);
- done1:
-	splx(s);
+		IF_INPUT(ifp, m);
 
- done:
+		splx(s);
+
+	} while (total_len > 0);
+
+done:
+	memset(c->axe_buf, 0, sc->axe_bufsz);
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->axe_ep[AXE_ENDPT_RX],
@@ -983,8 +979,8 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	    USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(xfer);
 
-	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->axe_dev),
-		    __func__));
+	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->axe_dev), __func__));
+
 	return;
 }
 
@@ -1100,18 +1096,37 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 {
 	struct axe_chain	*c;
 	usbd_status		err;
+	struct axe_sframe_hdr	hdr;
+	int			length;
 
 	c = &sc->axe_cdata.axe_tx_chain[idx];
 
-	/*
-	 * Copy the mbuf data into a contiguous buffer, leaving two
-	 * bytes at the beginning to hold the frame length.
-	 */
-	m_copydata(m, 0, m->m_pkthdr.len, c->axe_buf);
+	if (sc->axe_flags & AX178) {
+		hdr.len = m->m_pkthdr.len;
+		hdr.ilen = ~hdr.len;
+
+		memcpy(c->axe_buf, &hdr, sizeof(hdr));
+		length = sizeof(hdr);
+
+		m_copydata(m, 0, m->m_pkthdr.len, c->axe_buf + length);
+		length += m->m_pkthdr.len;
+
+		if ((length % 512) == 0) {
+			hdr.len = 0x0000;
+			hdr.ilen = 0xffff;
+			memcpy(c->axe_buf + length, &hdr, sizeof(hdr));
+			length += sizeof(hdr);
+		}
+
+	} else {
+		m_copydata(m, 0, m->m_pkthdr.len, c->axe_buf);
+		length = m->m_pkthdr.len;
+	}
+
 	c->axe_mbuf = m;
 
 	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_TX],
-	    c, c->axe_buf, m->m_pkthdr.len, USBD_FORCE_SHORT_XFER, 10000,
+	    c, c->axe_buf, length, USBD_FORCE_SHORT_XFER, 10000,
 	    axe_txeof);
 
 	/* Transmit */
