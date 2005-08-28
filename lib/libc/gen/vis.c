@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.16 2005/08/09 19:38:31 millert Exp $ */
+/*	$OpenBSD: vis.c,v 1.17 2005/08/28 23:05:13 millert Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,16 +36,15 @@
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
 #define	isvisible(c)							\
-	(((u_int)(c) <= UCHAR_MAX && isascii((u_char)(c))) &&   	\
-	(((((c) != '*' && (c) != '?' && (c) != '[' && (c) != '#') ||	\
-		(flag & VIS_GLOB) == 0) &&				\
-		isgraph((u_char)(c))) ||				\
+	(((u_int)(c) <= UCHAR_MAX && isascii((u_char)(c)) &&		\
+	(((c) != '*' && (c) != '?' && (c) != '[' && (c) != '#') ||	\
+		(flag & VIS_GLOB) == 0) && isgraph((u_char)(c))) ||	\
 	((flag & VIS_SP) == 0 && (c) == ' ') ||				\
 	((flag & VIS_TAB) == 0 && (c) == '\t') ||			\
 	((flag & VIS_NL) == 0 && (c) == '\n') ||			\
 	((flag & VIS_SAFE) && ((c) == '\b' ||				\
 		(c) == '\007' || (c) == '\r' ||				\
-		isgraph((u_char)(c))))))
+		isgraph((u_char)(c)))))
 
 /*
  * vis - visually encode characters
@@ -105,7 +104,7 @@ vis(char *dst, int c, int flag, int nextc)
 			goto done;
 		}
 	}
-	if (((c & 0177) == ' ') || isgraph(c) || (flag & VIS_OCTAL)) {	
+	if (((c & 0177) == ' ') || isgraph((u_char)c) || (flag & VIS_OCTAL)) {	
 		*dst++ = '\\';
 		*dst++ = ((u_char)c >> 6 & 07) + '0';
 		*dst++ = ((u_char)c >> 3 & 07) + '0';
@@ -118,7 +117,7 @@ vis(char *dst, int c, int flag, int nextc)
 		c &= 0177;
 		*dst++ = 'M';
 	}
-	if (iscntrl(c)) {
+	if (iscntrl((u_char)c)) {
 		*dst++ = '^';
 		if (c == 0177)
 			*dst++ = '?';
@@ -161,10 +160,9 @@ strvis(char *dst, const char *src, int flag)
 int
 strnvis(char *dst, const char *src, size_t siz, int flag)
 {
-	char c;
 	char *start, *end;
 	char tbuf[5];
-	int  i;
+	int c, i;
 
 	i = 0;
 	for (start = dst, end = start + siz - 1; (c = *src) && dst < end; ) {
