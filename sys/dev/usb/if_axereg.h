@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.6 2005/08/10 23:17:46 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.7 2005/08/28 02:46:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -114,7 +114,7 @@
 #define AXE_178_MEDIA_JUMBO_EN			0x0040
 #define AXE_178_MEDIA_LTPF_ONLY			0x0080
 #define AXE_178_MEDIA_RX_EN			0x0100
-#define AXE_178_MEDIA_PORT_SPEED		0x0200
+#define AXE_178_MEDIA_100TX			0x0200
 #define AXE_178_MEDIA_SBP			0x0800
 #define AXE_178_MEDIA_SUPERMAC			0x1000
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.32 2005/08/12 11:56:16 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.33 2005/08/28 02:46:12 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -330,9 +330,21 @@ axe_miibus_statchg(device_ptr_t dev)
 	else
 		val = 0;
 	
-	if (sc->axe_flags & AX178)
-		val |= (AXE_178_MEDIA_RX_EN | AXE_178_MEDIA_MAGIC |
-		    AXE_178_MEDIA_ENCK);
+	if (sc->axe_flags & AX178) {
+		val |= (AXE_178_MEDIA_RX_EN | AXE_178_MEDIA_MAGIC);
+
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
+		case IFM_1000_T:
+			val |= AXE_178_MEDIA_GMII | AXE_178_MEDIA_ENCK;
+			break;
+		case IFM_100_TX:
+			val |=  AXE_178_MEDIA_100TX;
+			break;
+		case IFM_10_T:
+			/* doesn't need to be handled */
+			break;
+		}
+	}
 
 	DPRINTF(("axe_miibus_statchg: val=0x%x\n", val));
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
