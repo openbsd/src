@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.7 2005/08/28 02:46:13 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.8 2005/08/28 02:49:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -129,7 +129,9 @@
 #define AXE_NOPHY				0xE0
 
 #define AXE_TIMEOUT		1000
-#define AXE_BUFSZ		1536
+#define AXE_172_BUFSZ		1536
+#define AXE_178_MIN_BUFSZ	2048
+#define AXE_178_MAX_BUFSZ	16384
 #define AXE_MIN_FRAMELEN	60
 #define AXE_RX_FRAMES		1
 #define AXE_TX_FRAMES		1
@@ -220,6 +222,7 @@ struct axe_softc {
 	unsigned char		axe_ipgs[3];
 	unsigned char 		axe_phyaddrs[2];
 	struct timeval		axe_rx_notice;
+	u_int			axe_bufsz;
 };
 
 #if 0

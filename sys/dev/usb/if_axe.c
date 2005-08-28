@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.33 2005/08/28 02:46:12 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.34 2005/08/28 02:49:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -513,6 +513,12 @@ USB_ATTACH(axe)
 	printf("%s: %s", USBDEVNAME(sc->axe_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
+	/* decide on what our bufsize will be */
+	if (sc->axe_flags & AX178)
+		sc->axe_bufsz = AXE_178_MAX_BUFSZ;
+	else
+		sc->axe_bufsz = AXE_172_BUFSZ;
+
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->axe_iface, i);
@@ -822,7 +828,8 @@ axe_rx_list_init(struct axe_softc *sc)
 			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
 			if (c->axe_xfer == NULL)
 				return (ENOBUFS);
-			c->axe_buf = usbd_alloc_buffer(c->axe_xfer, AXE_BUFSZ);
+			c->axe_buf = usbd_alloc_buffer(c->axe_xfer,
+			    sc->axe_bufsz);
 			if (c->axe_buf == NULL) {
 				usbd_free_xfer(c->axe_xfer);
 				return (ENOBUFS);
@@ -852,7 +859,8 @@ axe_tx_list_init(struct axe_softc *sc)
 			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
 			if (c->axe_xfer == NULL)
 				return (ENOBUFS);
-			c->axe_buf = usbd_alloc_buffer(c->axe_xfer, AXE_BUFSZ);
+			c->axe_buf = usbd_alloc_buffer(c->axe_xfer,
+			    sc->axe_bufsz);
 			if (c->axe_buf == NULL) {
 				usbd_free_xfer(c->axe_xfer);
 				return (ENOBUFS);
@@ -881,7 +889,7 @@ axe_rxstart(struct ifnet *ifp)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_RX],
-	    c, c->axe_buf, AXE_BUFSZ,
+	    c, c->axe_buf, sc->axe_bufsz,
 	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(c->axe_xfer);
@@ -970,7 +978,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->axe_ep[AXE_ENDPT_RX],
-	    c, c->axe_buf, AXE_BUFSZ,
+	    c, c->axe_buf, sc->axe_bufsz,
 	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(xfer);
@@ -1251,7 +1259,7 @@ axe_init(void *xsc)
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
 		c = &sc->axe_cdata.axe_rx_chain[i];
 		usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_RX],
-		    c, c->axe_buf, AXE_BUFSZ,
+		    c, c->axe_buf, sc->axe_bufsz,
 		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 		    USBD_NO_TIMEOUT, axe_rxeof);
 		usbd_transfer(c->axe_xfer);
