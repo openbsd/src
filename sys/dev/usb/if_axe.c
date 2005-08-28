@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.34 2005/08/28 02:49:25 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.35 2005/08/28 02:51:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -1223,6 +1223,9 @@ axe_init(void *xsc)
 	rxmode = AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
 	if (!(sc->axe_flags & AX178))
 		rxmode |= AXE_172_RXCMD_UNICAST;
+	else
+		/* largest possible USB buffer size for AX88178 */
+		rxmode |= AXE_178_RXCMD_MFB;
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.8 2005/08/28 02:49:25 jsg Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.9 2005/08/28 02:51:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -125,6 +125,7 @@
 #define AXE_RXCMD_BROADCAST			0x0008
 #define AXE_RXCMD_MULTICAST			0x0010
 #define AXE_RXCMD_ENABLE			0x0080
+#define AXE_178_RXCMD_MFB			0x0300
 
 #define AXE_NOPHY				0xE0
 
