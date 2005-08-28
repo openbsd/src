@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2005/08/03 16:30:34 martin Exp $
+#	$OpenBSD: GENERIC,v 1.29 2005/08/28 05:30:43 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -144,6 +144,7 @@ lxtphy*	at mii?			# Level One LXT-970 PHYs
 nsphy*	at mii?			# NS83840 PHYs
 nsphyter* at mii?		# NS83843 PHYs
 qsphy*	at mii?			# Quality Semiconductor QS6612 PHYs
+eephy*	at mii?			# Marvell 88E1000 series PHY
 rlphy* at mii?			# RealTek 8139 internal PHYs
 sqphy*	at mii?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii?			# ThunderLAN PHYs

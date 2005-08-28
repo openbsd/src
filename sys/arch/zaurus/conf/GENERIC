@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2005/06/17 23:50:38 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.44 2005/08/28 05:30:43 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -171,7 +171,7 @@ amphy*	at mii?				# AMD 79C873 PHYs
 tqphy*	at mii?				# TDK 78Q212x PHYs
 bmtphy*	at mii?				# Broadcom 10/100 PHYs
 #brgphy* at mii?			# Broadcom Gigabit PHYs
-#eephy* at mii?				# Marvell 88E1000 series PHY
+eephy* at mii?				# Marvell 88E1000 series PHY
 #xmphy*	at mii?				# XaQti XMAC-II PHYs
 nsgphy*	at mii?				# NS gigabit PHYs
 urlphy*	at mii?				# Realtek RTL8150L internal PHY

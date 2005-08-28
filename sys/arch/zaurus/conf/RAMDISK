@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.30 2005/06/16 21:06:55 uwe Exp $
+#	$OpenBSD: RAMDISK,v 1.31 2005/08/28 05:30:43 deraadt Exp $
 
 machine	zaurus	arm
 
@@ -139,7 +139,7 @@ amphy*	at mii?			# AMD 79C873 PHYs
 tqphy*	at mii?			# TDK 78Q212x PHYs
 bmtphy*	at mii?			# Broadcom 10/100 PHYs
 #brgphy* at mii?		# Broadcom Gigabit PHYs
-#eephy* at mii?			# Marvell 88E1000 series PHY
+eephy* at mii?			# Marvell 88E1000 series PHY
 #xmphy*	at mii?			# XaQti XMAC-II PHYs
 nsgphy*	at mii?			# NS gigabit PHYs
 urlphy*	at mii?			# Realtek RTL8150L internal PHY
