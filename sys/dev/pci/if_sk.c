@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.77 2005/07/25 00:49:43 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.78 2005/08/29 02:53:25 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1431,11 +1431,11 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct skc_attach_args skca;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	pcireg_t command, memtype;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t size;
 	u_int8_t skrs;
-	u_int32_t command;
 	char *revstr = NULL;
 
 	DPRINTFN(2, ("begin skc_attach\n"));
@@ -1481,11 +1481,18 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		return;
  	}
 #else
-	if (pci_mapreg_map(pa, SK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sk_btag, &sc->sk_bhandle, NULL, &size, 0)) {
- 		printf(": can't map mem space\n");
+	memtype = pci_mapreg_type(pc, pa->pa_tag, SK_PCI_LOMEM);
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		if (pci_mapreg_map(pa, SK_PCI_LOMEM,
+				   memtype, 0, &sc->sk_btag, &sc->sk_bhandle,
+				   NULL, &size, 0) == 0)
+			break;
+	default:
+		printf(": can't map mem space\n");
 		return;
- 	}
+	}
 #endif
 	sc->sc_dmatag = pa->pa_dmat;
 
@@ -1512,6 +1519,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
+		printf("\n");
 		goto fail_1;
 	}
 	printf(": %s\n", intrstr);
