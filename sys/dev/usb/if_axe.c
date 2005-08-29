@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.38 2005/08/28 03:34:33 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.39 2005/08/29 09:21:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -97,6 +97,8 @@
 #include <sys/rnd.h>
 #endif
 
+#include <machine/bus.h>
+
 #include <net/if.h>
 #if defined(__NetBSD__)
 #include <net/if_arp.h>
@@ -134,6 +136,7 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_axereg.h>
@@ -515,7 +518,8 @@ USB_ATTACH(axe)
 
 	/* decide on what our bufsize will be */
 	if (sc->axe_flags & AX178)
-		sc->axe_bufsz = AXE_178_MAX_BUFSZ;
+		sc->axe_bufsz = (sc->axe_udev->speed == USB_SPEED_HIGH) ? 
+		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ; 
 	else
 		sc->axe_bufsz = AXE_172_BUFSZ;
 
@@ -1097,11 +1101,13 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	struct axe_chain	*c;
 	usbd_status		err;
 	struct axe_sframe_hdr	hdr;
-	int			length;
+	int			length, boundary;
 
 	c = &sc->axe_cdata.axe_tx_chain[idx];
 
 	if (sc->axe_flags & AX178) {
+		boundary = (sc->axe_udev->speed == USB_SPEED_HIGH) ? 512 : 64;
+
 		hdr.len = m->m_pkthdr.len;
 		hdr.ilen = ~hdr.len;
 
@@ -1111,7 +1117,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 		m_copydata(m, 0, m->m_pkthdr.len, c->axe_buf + length);
 		length += m->m_pkthdr.len;
 
-		if ((length % 512) == 0) {
+		if ((length % boundary) == 0) {
 			hdr.len = 0x0000;
 			hdr.ilen = 0xffff;
 			memcpy(c->axe_buf + length, &hdr, sizeof(hdr));
@@ -1238,7 +1244,7 @@ axe_init(void *xsc)
 	rxmode = AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
 	if (!(sc->axe_flags & AX178))
 		rxmode |= AXE_172_RXCMD_UNICAST;
-	else
+	else if (sc->axe_udev->speed == USB_SPEED_HIGH)
 		/* largest possible USB buffer size for AX88178 */
 		rxmode |= AXE_178_RXCMD_MFB;
 
