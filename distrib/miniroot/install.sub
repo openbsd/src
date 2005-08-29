@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.389 2005/08/09 00:46:12 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.390 2005/08/29 17:47:55 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -460,9 +460,11 @@ makedev() {
 # $1 - IP address (v6 if it contains ':', else v4)
 # $2 - symbolic name
 addhostent() {
-	local _addr=$1 _name=$2
+	local _addr=$1 _name=$2 _delim="."
 
-	sed "/^[0-9a-fA-F]*[:.].* $_name\$/d" /tmp/hosts >/tmp/hosts.new
+	[[ $_addr == *:* ]] && _delim=":"
+
+	sed "/^[0-9a-fA-F]*[$_delim].* $_name\$/d" /tmp/hosts >/tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
 	echo "$_addr $_name" >>/tmp/hosts
