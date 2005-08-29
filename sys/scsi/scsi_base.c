@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.86 2005/08/01 22:42:50 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.87 2005/08/29 00:41:44 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -384,7 +384,10 @@ scsi_mode_sense(sc_link, byte2, page, data, len, flags, timeout)
 	scsi_cmd.opcode = MODE_SENSE;
 	scsi_cmd.byte2 = byte2;
 	scsi_cmd.page = page;
-	scsi_cmd.length = len & 0xff;
+
+	if (len > 0xff) 
+		len = 0xff;
+	scsi_cmd.length = len;
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
@@ -417,6 +420,9 @@ scsi_mode_sense_big(sc_link, byte2, page, data, len, flags, timeout)
 	scsi_cmd.opcode = MODE_SENSE_BIG;
 	scsi_cmd.byte2 = byte2;
 	scsi_cmd.page = page;
+
+	if (len > 0xffff)
+		len = 0xffff;
 	_lto2b(len, scsi_cmd.length);
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
