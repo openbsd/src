@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.8 2005/08/16 11:25:48 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.9 2005/08/29 00:42:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -55,6 +55,46 @@ sub is_stem
 	} else {
 		return 1;
 	}
+}
+
+sub splitp
+{
+	local $_ = shift;
+
+	if (/^(.*\-\d[^-]*)p(\d+)/) {
+		return ($1.$', $2);
+	} else {
+		return ($_,-1);
+	}
+}
+
+sub rebuildp
+{
+	my ($pkg, $p) = @_;
+	if ($p == -1) {
+		return $pkg;
+	}
+	if ($pkg =~ m/\-\d[^-]*/) {
+		return "$`$&p$p$'";
+	} else {
+		return $pkg."p".$p;
+	}
+}
+
+sub keep_most_recent
+{
+	my $h = {};
+	for my $pkgname (@_) {
+		my ($p, $v) = splitp($pkgname);
+		if (!defined $h->{$p} || $h->{$p} < $v) {
+			$h->{$p} = $v;
+		}
+	}
+	my @list = ();
+	while (my ($p, $v) = each %$h) {
+		push(@list, rebuildp($p, $v));
+	}
+	return @list;
 }
 
 sub findstem
