@@ -1,11 +1,11 @@
-dnl	$OpenBSD: install,v 1.25 2005/03/18 13:31:13 miod Exp $
+dnl	$OpenBSD: install,v 1.26 2005/08/29 19:07:39 mickey Exp $
 OpenBSDInstallPrelude
 
-dnl XXX document mopbooting, and bootp netbooting from the SRM console.
 There are several ways to install OpenBSD onto a disk.  The easiest way is
 to boot from the bootable CD-ROM mini image, then install from your favorite
 source. You can also use one of the OpenBSD installation floppies, if your
-machine has a floppy drive.
+machine has a floppy drive. Network booting is supported through means of
+dhcpd(8) and tftpd(8).
 
 Booting from Floppy Disk installation media:
 
@@ -50,12 +50,56 @@ Booting from CD-ROM installation media:
 	your MACHINE is not currently supported by OpenBSD; try booting
 	from a floppy instead if possible.
 
+Booting from Network:
 
-Installing using the Floppy or CD-ROM procedure:
+In order to bootstrap via the network, you must provide a second system to
+act as a boot server. It is convenient if this is a second OpenBSD machine
+as the necessary services are already installed, although source code for
+such programs as mopd can be found in OpenBSD's source tree, and should be
+reasonably portable to other UN*X-like operating systems. More information
+on diskless booting can be found in the OpenBSD diskless(8) manual page.
+
+In this case, you will need to set up dhcpd on the server, which can
+serve bootp protocol requests.  Start by editing the /etc/dhcpd.conf on 
+the bootserver, and declare an information block. Here is an example:
+
+	subnet 10.0.0.0 netmask 255.0.0.0 {
+		host piper {
+			filename "netboot";
+			option root-path "/alpha";
+			hardware ethernet 00:02:56:00:73:31;
+			fixed-address 10.42.42.42;
+		}
+	}
+
+Do not forget to enable dhcpd, either as a standalone process.
+
+You will also need to enable tftpd, for the MACHINE to download the
+"netboot" from the server in the /tftpboot directory.
+
+Only uncompressed kernels are supported for booting i this release.
+this means you have to execute the following command on your boot
+server before installing a new kernel for your MACHINE to boot:
+
+	# gzip -dc bsd.rd > /alpha/bsd
+
+This assumes you have path /alpha exported via NFS.
+
+Once loaded netboot will mount /alpha over NFS and load the
+kernel from there.
+
+Installing using the Floppy, CD-ROM or Network procedure:
 
 OpenBSDInstallPart2
 
 	Boot your machine from the installation media as described above.
+
+	It will take a while to load the miniroot image, especially from
+	a slow network connection or a CD-ROM, most likely more than a minute.
+	If some action doesn't eventually happen, or the spinning cursor
+	has stopped and nothing further has happened, either your boot
+	media is bad, your diskless setup is incorrect, or you may have
+	a hardware or configuration problem.
 
 OpenBSDBootMsgs
 
