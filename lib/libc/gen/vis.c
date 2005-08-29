@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.17 2005/08/28 23:05:13 millert Exp $ */
+/*	$OpenBSD: vis.c,v 1.18 2005/08/29 18:38:41 otto Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -104,7 +104,7 @@ vis(char *dst, int c, int flag, int nextc)
 			goto done;
 		}
 	}
-	if (((c & 0177) == ' ') || isgraph((u_char)c) || (flag & VIS_OCTAL)) {	
+	if (((c & 0177) == ' ') || (flag & VIS_OCTAL)) {	
 		*dst++ = '\\';
 		*dst++ = ((u_char)c >> 6 & 07) + '0';
 		*dst++ = ((u_char)c >> 3 & 07) + '0';
