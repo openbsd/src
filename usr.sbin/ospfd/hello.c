@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.8 2005/06/13 08:22:39 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.9 2005/08/30 21:07:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -117,9 +117,9 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
     u_int16_t len)
 {
 	struct hello_hdr	 hello;
-	struct nbr		*nbr = NULL;
+	struct nbr		*nbr = NULL, *dr;
 	u_int32_t		 nbr_id;
-	int			 twoway = 0, nbr_change = 0;
+	int			 nbr_change = 0;
 
 	if (len < sizeof(hello) && (len & 0x03)) {
 		log_warnx("recv_hello: bad packet size, interface %s",
@@ -186,8 +186,14 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 		fatalx("recv_hello: unknown interface type");
 	}
 
-	if (!nbr)
+	if (!nbr) {
 		nbr = nbr_new(rtr_id, iface, 0);
+		/* set neighbor parameters */
+		nbr->dr.s_addr = hello.d_rtr;
+		nbr->bdr.s_addr = hello.bd_rtr;
+		nbr->priority = hello.rtr_priority;
+		nbr_change = 1;
+	}
 
 	/* actually the neighbor address shouldn't be stored on virtual links */
 	nbr->addr.s_addr = src.s_addr;
@@ -199,8 +205,8 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 		memcpy(&nbr_id, buf, sizeof(nbr_id));
 		if (nbr_id == iface->rtr_id.s_addr) {
 			/* seen myself */
-			if (nbr->state < NBR_STA_XSTRT)
-				twoway = 1;
+			if (nbr->state & NBR_STA_PRELIM)
+				nbr_fsm(nbr, NBR_EVT_2_WAY_RCVD);
 			break;
 		}
 		buf += sizeof(nbr_id);
@@ -222,9 +228,25 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 	}
 
 	if (iface->state & IF_STA_WAITING &&
-	    ((hello.d_rtr == nbr->addr.s_addr && hello.bd_rtr == 0) ||
-	    hello.bd_rtr == nbr->addr.s_addr))
+	    hello.d_rtr == nbr->addr.s_addr && hello.bd_rtr == 0) {
+		log_debug("hello: DR seen with NO BDR");
 		if_fsm(iface, IF_EVT_BACKUP_SEEN);
+	}
+
+	if (iface->state & IF_STA_WAITING && hello.bd_rtr == nbr->addr.s_addr) {
+		/*
+		 * In case we see the BDR make sure that the DR is around
+		 * with a bidirectional (2_WAY or better) connection
+		 */
+		log_debug("hello: BDR seen");
+		LIST_FOREACH(dr, &iface->nbr_list, entry)
+			if (hello.d_rtr == dr->addr.s_addr &&
+			    dr->state & NBR_STA_BIDIR) {
+				log_debug("hello: BDR seen & DR %s is BIDIR",
+				    inet_ntoa(dr->addr));
+				if_fsm(iface, IF_EVT_BACKUP_SEEN);
+			}
+	}
 
 	if ((nbr->addr.s_addr == nbr->dr.s_addr &&
 	    nbr->addr.s_addr != hello.d_rtr) ||
@@ -241,15 +263,6 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 
 	nbr->dr.s_addr = hello.d_rtr;
 	nbr->bdr.s_addr = hello.bd_rtr;
-
-	if (twoway) {
-		/*
-		 * event 2 way received needs to be delayed after the
-		 * interface neighbor change check else the DR and BDR
-		 * may not be set correctly.
-		 */
-		nbr_fsm(nbr, NBR_EVT_2_WAY_RCVD);
-	}
 
 	if (nbr_change)
 		if_fsm(iface, IF_EVT_NBR_CHNG);
