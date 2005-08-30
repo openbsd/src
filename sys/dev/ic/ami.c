@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.69 2005/08/22 20:39:39 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.70 2005/08/30 02:40:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -125,9 +125,8 @@ void ami_copyhds(struct ami_softc *sc, const u_int32_t *sizes,
 	const u_int8_t *props, const u_int8_t *stats);
 void *ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map,
 	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname);
-void ami_freemem(bus_dma_tag_t dmat, bus_dmamap_t *map,
+void ami_freemem(caddr_t p, bus_dma_tag_t dmat, bus_dmamap_t *map,
 	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname);
-void ami_dispose(struct ami_softc *sc);
 void ami_stimeout(void *v);
 int  ami_cmd(struct ami_ccb *ccb, int flags, int wait);
 int  ami_start(struct ami_ccb *ccb, int wait);
@@ -240,64 +239,63 @@ ami_allocmem(dmat, map, segp, isize, nent, iname)
 	int error, rseg;
 
 	/* XXX this is because we might have no dmamem_load_raw */
+	if ((error = bus_dmamap_create(dmat, total, 1,
+	    total, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, map))) {
+		printf(": cannot create %s dmamap (%d)\n", iname, error);
+		return (NULL);
+	}
+
 	if ((error = bus_dmamem_alloc(dmat, total, PAGE_SIZE, 0, segp, 1,
 	    &rseg, BUS_DMA_NOWAIT))) {
 		printf(": cannot allocate %s%s (%d)\n",
 		    iname, nent==1? "": "s", error);
-		return (NULL);
+		goto destroy;
 	}
 
 	if ((error = bus_dmamem_map(dmat, segp, rseg, total, &p,
 	    BUS_DMA_NOWAIT))) {
 		printf(": cannot map %s%s (%d)\n",
 		    iname, nent==1? "": "s", error);
-		return (NULL);
+		goto free;
 	}
 
-	bzero(p, total);
-	if ((error = bus_dmamap_create(dmat, total, 1,
-	    total, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, map))) {
-		printf(": cannot create %s dmamap (%d)\n", iname, error);
-		return (NULL);
-	}
 	if ((error = bus_dmamap_load(dmat, *map, p, total, NULL,
 	    BUS_DMA_NOWAIT))) {
 		printf(": cannot load %s dma map (%d)\n", iname, error);
-		return (NULL);
+		goto unmap;
 	}
 
+	bzero(p, total);
+
 	return (p);
+
+unmap:
+	bus_dmamem_unmap(dmat, p, total);
+free:
+	bus_dmamem_free(dmat, segp, 1);
+destroy:
+	bus_dmamap_destroy(dmat, *map);
+
+	return (NULL);
 }
 
 void
-ami_freemem(dmat, map, segp, isize, nent, iname)
+ami_freemem(p, dmat, map, segp, isize, nent, iname)
+	caddr_t p;
 	bus_dma_tag_t dmat;
 	bus_dmamap_t *map;
 	bus_dma_segment_t *segp;
 	size_t isize, nent;
 	const char *iname;
 {
+	size_t total = isize * nent;
+
+	bus_dmamap_unload(dmat, *map);
+	bus_dmamem_unmap(dmat, p, total);
 	bus_dmamem_free(dmat, segp, 1);
 	bus_dmamap_destroy(dmat, *map);
 	*map = NULL;
 }
-
-void
-ami_dispose(sc)
-	struct ami_softc *sc;
-{
-	register struct ami_ccb *ccb;
-
-	/* traverse the ccbs and destroy the maps */
-	for (ccb = &sc->sc_ccbs[AMI_MAXCMDS - 1]; ccb > sc->sc_ccbs; ccb--)
-		if (ccb->ccb_dmamap)
-			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
-	ami_freemem(sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
-	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS, "sglist");
-	ami_freemem(sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
-	    sizeof(struct ami_iocmd), AMI_MAXCMDS + 1, "command");
-}
-
 
 void
 ami_copyhds(sc, sizes, props, stats)
@@ -339,28 +337,18 @@ ami_attach(sc)
 	/* u_int32_t *pp; */
 
 	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
-	    NBPG, 1, "init data"))) {
-		ami_freemem(sc->dmat, &idatamap, idataseg,
-		    NBPG, 1, "init data");
+	    NBPG, 1, "init data")))
 		return 1;
-	}
 
 	sc->sc_cmds = ami_allocmem(sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
 	    sizeof(struct ami_iocmd), AMI_MAXCMDS+1, "command");
-	if (!sc->sc_cmds) {
-		ami_dispose(sc);
-		ami_freemem(sc->dmat, &idatamap,
-		    idataseg, NBPG, 1, "init data");
-		return 1;
-	}
+	if (!sc->sc_cmds)
+		goto free_idata;
+
 	sc->sc_sgents = ami_allocmem(sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
 	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS+1, "sglist");
-	if (!sc->sc_sgents) {
-		ami_dispose(sc);
-		ami_freemem(sc->dmat, &idatamap,
-		    idataseg, NBPG, 1, "init data");
-		return 1;
-	}
+	if (!sc->sc_sgents)
+		goto free_cmds;
 
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_ccbdone);
@@ -382,10 +370,7 @@ ami_attach(sc)
 			if (error) {
 				printf(": cannot create ccb dmamap (%d)\n",
 				    error);
-				ami_dispose(sc);
-				ami_freemem(sc->dmat, &idatamap,
-				    idataseg, NBPG, 1, "init data");
-				return (1);
+				goto destroy;
 			}
 			ccb->ccb_sc = sc;
 			ccb->ccb_cmd = cmd;
@@ -472,10 +457,7 @@ ami_attach(sc)
 				if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 					AMI_UNLOCK_AMI(sc, lock);
 					printf(": cannot do inquiry\n");
-					ami_dispose(sc);
-					ami_freemem(sc->dmat, &idatamap,
-					    idataseg, NBPG, 1, "init data");
-					return (1);
+					goto destroy;
 				}
 			}
 
@@ -565,7 +547,7 @@ ami_attach(sc)
 
 		AMI_UNLOCK_AMI(sc, lock);
 	}
-	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
+	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
 
 	/* hack for hp netraid version encoding */
 	if ('A' <= sc->sc_fwver[2] && sc->sc_fwver[2] <= 'Z' &&
@@ -647,6 +629,21 @@ ami_attach(sc)
 	}
 
 	return 0;
+
+destroy:
+	for (ccb = &sc->sc_ccbs[AMI_MAXCMDS - 1]; ccb > sc->sc_ccbs; ccb--)
+		if (ccb->ccb_dmamap)
+			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
+
+	ami_freemem(sc->sc_sgents, sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
+	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS+1, "sglist");
+free_cmds:
+	ami_freemem(sc->sc_cmds, sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
+	    sizeof(struct ami_iocmd), AMI_MAXCMDS+1, "command");
+free_idata:
+	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
+
+	return 1;
 }
 
 int
@@ -1232,24 +1229,22 @@ ami_done(sc, idx)
 
 	if (xs) {
 		timeout_del(&xs->stimeout);
-		if (xs->cmd->opcode != PREVENT_ALLOW &&
-		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
-			    ccb->ccb_dmamap->dm_mapsize,
-			    (xs->flags & SCSI_DATA_IN) ?
-			    BUS_DMASYNC_POSTREAD :
-			    BUS_DMASYNC_POSTWRITE);
+		if (ccb->ami_pt.idata) {/* this is on the pt bus */
+			if (ccb->ami_pt.dir == AMI_PT_IN)
+				memcpy(xs->data, ccb->ami_pt.idata +
+				    sizeof(struct ami_passthrough),
+				    xs->datalen);
 
-			if (ccb->ami_pt.idata) {
-				if (ccb->ami_pt.dir == AMI_PT_IN)
-					memcpy(xs->data, ccb->ami_pt.idata +
-					    sizeof(struct ami_passthrough),
-					    xs->datalen);
-
-				ccb->ami_pt.idata = NULL;
-				ami_freemem(sc->dmat, &ccb->ami_pt.idatamap,
-				    ccb->ami_pt.idataseg, NBPG, 1, "ami raw");
-			}
+			wakeup(ccb->ami_pt.idata);
+			ccb->ami_pt.idata = NULL;
+		} else {
+			if (xs->cmd->opcode != PREVENT_ALLOW &&
+			    xs->cmd->opcode != SYNCHRONIZE_CACHE)
+				bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+				    ccb->ccb_dmamap->dm_mapsize,
+				    (xs->flags & SCSI_DATA_IN) ?
+				    BUS_DMASYNC_POSTREAD :
+				    BUS_DMASYNC_POSTWRITE);
 
 			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 		}
@@ -1328,6 +1323,9 @@ ami_scsi_raw_cmd(xs)
 	int error;
 	int direction;
 	ami_lock_t lock;
+	void *idata;
+	bus_dmamap_t idatamap;
+	bus_dma_segment_t idataseg[1];
 	paddr_t pa;
 	char type;
 
@@ -1413,8 +1411,7 @@ ami_scsi_raw_cmd(xs)
 		return (COMPLETE);
 	}
 
-	if (!(ccb->ami_pt.idata = ami_allocmem(sc->dmat,
-	    &ccb->ami_pt.idatamap, ccb->ami_pt.idataseg, NBPG, 1,
+	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG, 1,
 	    "ami raw"))) {
 	    	ami_put_ccb(ccb);
 		xs->error = XS_DRIVER_STUFFUP;
@@ -1423,9 +1420,11 @@ ami_scsi_raw_cmd(xs)
 		return (COMPLETE);
 	}
 
+	ccb->ami_pt.idata = idata;
 	ccb->ami_pt.dir = direction;
-	ps = ccb->ami_pt.idata;
-	pa = ccb->ami_pt.idataseg[0].ds_addr;
+	ps = idata;
+	pa = idataseg[0].ds_addr;
+	ps = (struct ami_passthrough *)idata;
 
 	memset(ps, 0, sizeof *ps);
 
@@ -1449,11 +1448,11 @@ ami_scsi_raw_cmd(xs)
 	if (ccb->ami_pt.dir == AMI_PT_OUT)
 		memcpy(ccb->ami_pt.idata + sizeof *ps, xs->data, xs->datalen);
 
-	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
+	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP) ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
+		ami_freemem(ccb->ami_pt.idata, sc->dmat, &idatamap, idataseg,
+		    NBPG, 1, "ami raw");
 		ccb->ami_pt.idata = NULL;
-		ami_freemem(sc->dmat, &ccb->ami_pt.idatamap,
-		    ccb->ami_pt.idataseg, NBPG, 1, "ami raw");
 
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
@@ -1461,34 +1460,26 @@ ami_scsi_raw_cmd(xs)
 		return (COMPLETE);
 	}
 
-
 	if (xs->flags & SCSI_POLL) {
 		if (xs->cmd->opcode == INQUIRY) {
-			type = *((char *)ccb->ami_pt.idata + sizeof *ps) &
-			    SID_TYPE;
+			type = *((char *)idata + sizeof *ps) & SID_TYPE;
 
 			if (!(type == T_PROCESSOR || type == T_ENCLOSURE))
 				xs->error = XS_DRIVER_STUFFUP;
 			else
 				rsc->sc_proctarget = target; /* save off target */
 		}
-
-
-		if (ccb->ami_pt.dir == AMI_PT_IN)
-			memcpy(xs->data, ccb->ami_pt.idata + sizeof *ps,
-			    xs->datalen);
-
-		ccb->ami_pt.idata = NULL;
-		ami_freemem(sc->dmat, &ccb->ami_pt.idatamap,
-		    ccb->ami_pt.idataseg, NBPG, 1, "ami raw");
+		if (direction == AMI_PT_IN)
+			memcpy(xs->data, idata + sizeof *ps, xs->datalen);
 
 		scsi_done(xs);
-		AMI_UNLOCK_AMI(sc, lock);
-		return (COMPLETE);
-	}
+	} else
+		tsleep(ccb->ami_pt.idata, PRIBIO, "ami_pt", 0);
+
+	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "ami raw");
 
 	AMI_UNLOCK_AMI(sc, lock);
-	return (SUCCESSFULLY_QUEUED);
+	return (COMPLETE);
 }
 
 int
@@ -1887,10 +1878,8 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	int error = 0;
 
 	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG, 1,
-	    "ami mgmt"))) {
-	    	error = ENOMEM;
-		goto bail;
-	}
+	    "ami mgmt")))
+	    	return (ENOMEM);
 
 	pa = idataseg[0].ds_addr;
 	ps = idata;
@@ -1930,8 +1919,7 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	else 
 		error = EINVAL;
 
-bail:
-	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ami mgmt");
+	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "ami mgmt");
 
 	return (error);
 }
@@ -1955,10 +1943,8 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	int error = 0;
 
 	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG,
-	    (size / NBPG) + 1, "ami mgmt"))) {
-	    	error = ENOMEM;
-		goto bail;
-	}
+	    (size / NBPG) + 1, "ami mgmt")))
+		return (ENOMEM);
 
 	pa = idataseg[0].ds_addr;
 
@@ -1991,9 +1977,8 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	else
 		error = EINVAL;
 
-bail:;
-	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, (size / NBPG) + 1,
-	    "ami mgmt");
+	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG,
+	    (size / NBPG) + 1, "ami mgmt");
 
 	return (error);
 }

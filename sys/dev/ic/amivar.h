@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.18 2005/08/15 23:22:46 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.19 2005/08/30 02:40:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -37,8 +37,6 @@ struct ami_ccb {
 	paddr_t			ccb_sglistpa;
 	struct scsi_xfer	*ccb_xs;
 	struct {
-		bus_dmamap_t idatamap;
-		bus_dma_segment_t idataseg[1];
 		void *idata;
 		int dir;
 #define AMI_PT_IN	(0x00)
