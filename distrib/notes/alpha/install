@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.26 2005/08/29 19:07:39 mickey Exp $
+dnl	$OpenBSD: install,v 1.27 2005/08/30 17:05:31 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way is
@@ -52,16 +52,18 @@ Booting from CD-ROM installation media:
 
 Booting from Network:
 
-In order to bootstrap via the network, you must provide a second system to
-act as a boot server. It is convenient if this is a second OpenBSD machine
-as the necessary services are already installed, although source code for
-such programs as mopd can be found in OpenBSD's source tree, and should be
-reasonably portable to other UN*X-like operating systems. More information
-on diskless booting can be found in the OpenBSD diskless(8) manual page.
+	In order to bootstrap via the network, you must provide a second
+	system to act as a boot server. It is convenient if this is a second
+	OpenBSD machine as the necessary services are already installed,
+	although source code for such programs as dhcpd can be found in
+	OpenBSD's source tree, and should be reasonably portable to other
+	UN*X-like operating systems. More information on diskless booting
+	can be found in the OpenBSD diskless(8) manual page.
 
-In this case, you will need to set up dhcpd on the server, which can
-serve bootp protocol requests.  Start by editing the /etc/dhcpd.conf on 
-the bootserver, and declare an information block. Here is an example:
+	In this case, you will need to set up dhcpd on the server, which can
+	serve bootp protocol requests.  Start by editing the /etc/dhcpd.conf
+	on the bootserver, and declare an information block. Here is an
+	example:
 
 	subnet 10.0.0.0 netmask 255.0.0.0 {
 		host piper {
@@ -72,21 +74,21 @@ the bootserver, and declare an information block. Here is an example:
 		}
 	}
 
-Do not forget to enable dhcpd, either as a standalone process.
+	Do not forget to enable dhcpd.
 
-You will also need to enable tftpd, for the MACHINE to download the
-"netboot" from the server in the /tftpboot directory.
+	You will also need to enable tftpd, for the MACHINE to download the
+	"netboot" from the server in the /tftpboot directory.
 
-Only uncompressed kernels are supported for booting i this release.
-this means you have to execute the following command on your boot
-server before installing a new kernel for your MACHINE to boot:
+	Only uncompressed kernels are supported for booting in this release.
+	This means you have to execute the following command on your boot
+	server before installing a new kernel for your MACHINE to boot:
 
 	# gzip -dc bsd.rd > /alpha/bsd
 
-This assumes you have path /alpha exported via NFS.
+	This assumes you have path /alpha exported via NFS.
 
-Once loaded netboot will mount /alpha over NFS and load the
-kernel from there.
+	Once loaded, netboot will mount /alpha over NFS and load the kernel
+	from there.
 
 Installing using the Floppy, CD-ROM or Network procedure:
 

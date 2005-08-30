@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.16 2005/04/03 15:55:26 martin Exp $
+dnl	$OpenBSD: contents,v 1.17 2005/08/30 17:05:31 miod Exp $
 TopPart
 
 dnl uncomment as stuff becomes available
@@ -57,24 +57,24 @@ dnl useful for the installation.
 
 DistributionDescription(eleven)
 
-OpenBSDbase(36648848,106875727,shared)
+OpenBSDbase(41102457,117311408,shared)
 
-OpenBSDcomp(25897405,91331885,shared)
+OpenBSDcomp(24775527,89544582,shared)
 
-OpenBSDetc(1693842,6529112)
+OpenBSDetc(1149172,3827682)
 
-OpenBSDgame(2678580,6132942)
+OpenBSDgame(2690100,6163444)
 
-OpenBSDman(7233813,25874611)
+OpenBSDman(7408769,26554721)
 
-OpenBSDmisc(2245699,7365432)
+OpenBSDmisc(2276157,7482333)
 
-OpenBSDxbase(10534730,32318591)
+OpenBSDxbase(11647881,36054708)
 
-OpenBSDxetc(455263,2349057)
+OpenBSDxetc(96443,376392)
 
-OpenBSDxfont(32509363,36041353)
+OpenBSDxfont(33215907,37555046)
 
-OpenBSDxserv(8129012,22373464)
+OpenBSDxserv(9704114,27071333)
 
-OpenBSDxshare(1933557,9968263)
+OpenBSDxshare(2034353,10734067)

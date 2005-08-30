@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.14 2004/09/10 19:41:39 miod Exp $
+dnl	$OpenBSD: contents,v 1.15 2005/08/30 17:05:31 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -16,25 +16,25 @@ dnl	installboot	The OpenBSD/MACHINE boot loader installation program
 
 DistributionDescription(ten)
 
-OpenBSDbase(38129606,100089333,shared)
+OpenBSDbase(41805353,108152368,shared)
 
-OpenBSDcomp(24882531,74676118,shared)
+OpenBSDcomp(23936541,73719049,shared)
 
-OpenBSDetc(1694618,6691691)
+OpenBSDetc(1149836,3990243)
 
-OpenBSDgame(2762797,6122402)
+OpenBSDgame(2752864,6108792)
 
-OpenBSDman(7234234,25874609)
+OpenBSDman(7409404,26554719)
 
-OpenBSDmisc(2245673,7365432)
+OpenBSDmisc(2276240,7482333)
 
-OpenBSDxbase(8047467,19017627)
+OpenBSDxbase(13028061,32312706)
 
-OpenBSDxetc(458352,2332273)
+OpenBSDxetc(87082,315963)
 
-OpenBSDxfont(33473489,37456744)
+OpenBSDxfont(33217264,37555046)
 
-dnl Do not list xserv, on purpose. No X11 support yet.
-dnl OpenBSDxserv(6674720,15649025)
+dnl Do not list xserv, on purpose. No real X11 server yet.
+dnl OpenBSDxserv(3417985,7966494)
 dnl
-OpenBSDxshare(1933960,9968263)
+OpenBSDxshare(2035265,10734070)

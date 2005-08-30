@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.65 2005/03/21 22:31:06 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.66 2005/08/30 17:05:28 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -70,6 +70,17 @@ dnl
 dnl ========== Distribution files description
 dnl (usually used by arch/contents)
 dnl
+dnl printsize(value)
+dnl
+dnl Prints a size in KB if it is less than 10^6, in MB otherwise.
+dnl The size is rounded down (this means you can still get 0.9 MB for
+dnl a size between 1,000,000 and 1,048,576 bytes).
+dnl Used by showsize() below.
+dnl
+define({:-printsize-:},{:-ifelse(substr($1,6),,dnl
+eval($1/1024).eval($1*10/1024%10) KB,dnl
+eval($1/1024/1024).eval($1/1024*10/1024%10) MB)-:})dnl
+dnl
 dnl showsize(gzipped size, uncompressed size)
 dnl
 dnl If both the 1st and the 2nd argument exist, show the sizes.
@@ -82,8 +93,7 @@ dnl                  - empty 2nd arg, for files where only compressed size
 dnl                    is known
 dnl
 define({:-showsize-:},{:-ifelse(X$1,X,,X$2,X,,X,X,{:-
-		 [ eval($1/1024/1024).eval($1/1024*10/1024%10) MB gzipped, dnl
-eval($2/1024/1024).eval($2/1024*10/1024%10) MB uncompressed ]-:})-:})dnl
+		 [ printsize($1) gzipped, printsize($2) uncompressed ]-:})-:})dnl
 dnl
 dnl
 dnl

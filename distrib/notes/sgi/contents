@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.4 2005/08/01 19:58:59 kettenis Exp $
+dnl	$OpenBSD: contents,v 1.5 2005/08/30 17:05:32 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -11,26 +11,26 @@ OpenBSDcd
 
 DistributionDescription(ten)
 
-OpenBSDbase(39581389,148973487,shared)
+OpenBSDbase(43796594,140757990,shared)
 
-OpenBSDcomp(20738167,76962824,shared)
+OpenBSDcomp(20028867,82494167,shared)
 
-OpenBSDetc(1695182,6693854)
+OpenBSDetc(1149543,3828298)
 
-OpenBSDgame(2822883,8450526)
+OpenBSDgame(2789223,6676332)
 
-OpenBSDman(6830855,24467213)
+OpenBSDman(7409189,26554717)
 
-OpenBSDmisc(2245656,7365432)
+OpenBSDmisc(2276164,7482333)
 
-OpenBSDxbase(8688529,23316480)
+OpenBSDxbase(12666388,43893140)
 
-OpenBSDxetc(500550,3020800)
+OpenBSDxetc(76223,286963)
 
-OpenBSDxfont(33473489,40878080)
+OpenBSDxfont(33216858,37555046)
 
 dnl Do not list xserv, on purpose. No X11 support yet.
 dnl OpenBSDxserv(6682003,15800320)
 dnl
-OpenBSDxshare(1660865,9687040)
+OpenBSDxshare(2035235,10734070)
 

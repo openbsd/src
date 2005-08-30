@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.3 2005/03/19 01:28:34 uwe Exp $
+dnl	$OpenBSD: contents,v 1.4 2005/08/30 17:05:33 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -21,24 +21,24 @@ dnl OpenBSDcd
 
 DistributionDescription(eleven)
 
-OpenBSDbase(42397502,111254895,shared)
+OpenBSDbase(43114040,112902251,shared)
 
-OpenBSDcomp(17814778,59292414,shared)
+OpenBSDcomp(18013852,60296645,shared)
 
-OpenBSDetc(1699887,6711364)
+OpenBSDetc(1154044,4006767)
 
-OpenBSDgame(2648211,5962900)
+OpenBSDgame(2648224,5961956)
 
-OpenBSDman(7321462,26208011)
+OpenBSDman(7410059,26554734)
 
-OpenBSDmisc(2275916,7480471)
+OpenBSDmisc(2276231,7482333)
 
-OpenBSDxbase(13283350,36790409)
+OpenBSDxbase(11919869,33155457)
 
-OpenBSDxetc(84593,312250)
+OpenBSDxetc(97854,377443)
 
-OpenBSDxfont(33193003,37048786)
+OpenBSDxfont(33219336,37555046)
 
-OpenBSDxserv(10691512,28944061)
+OpenBSDxserv(8168467,21630641)
 
-OpenBSDxshare(1983150,10193779)
+OpenBSDxshare(2035786,10734070)
