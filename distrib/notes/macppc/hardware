@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.61 2005/08/23 02:25:54 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.62 2005/08/30 15:20:26 grunk Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -398,7 +398,7 @@ Supported devices {:-include-:}:
 			Netgear MA521
 			Ovislink AirLive WL-1120PCM
 			Planet WL-3553
-			TrendNET TEW-266PC
+			TRENDnet TEW-226PC
 			VCTnet PC-11B1
 
 	Tape drives
