@@ -1,7 +1,7 @@
-dnl	$OpenBSD: hardware,v 1.13 2005/08/23 02:25:54 jsg Exp $
-dnl When more than one models is supported, turn this into a list...
-OpenBSD/MACHINE runs on the Sharp Zaurus C3000 only at the moment.
-Support for the C-760 and C-860 is under development.
+dnl	$OpenBSD: hardware,v 1.14 2005/08/30 18:38:54 uwe Exp $
+dnl When more than one model is supported, turn this into a list...
+OpenBSD/MACHINE runs on the Sharp Zaurus C3000 and C3100 only, at
+the moment. Support for the C760 and C860 is under development.
 
 Supported devices {:-include-:}:
 	Ethernet Adapters
@@ -176,12 +176,15 @@ Supported devices {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
-		Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
+		Intersil PRISM 2-3 based IEEE 802.11b Compact Flash adapters
+		    ASUS WL-110
+		    Belkin F5D6060 (version 1)
 		    Buffalo AirStation
 		    D-Link DCF-660W
 		    ELSA XI800
 		    Linksys WCF12
 		    Netgear MA701
+		    Senao NL-2511CF
 		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
 		    AMIT WL532U
 		    ASUS WL-167g
@@ -213,7 +216,9 @@ Supported devices {:-include-:}:
 		    Zinwell ZWX-G261
 		    Zonet ZEW2500P
 	Serial ports
-		Onboard serial (pxacom) port
+		On-board serial (com) ports
+		Most modems, digital cellular modems, and serial
+		cards should work
 	Universal Serial Bus (USB) Devices
 		USB Audio
 		USB Diamond Multimedia Rio MP3 players
