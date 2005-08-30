@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.14 2005/04/14 21:58:06 deraadt Exp $
+dnl	$OpenBSD: install,v 1.15 2005/08/30 19:22:56 niallo Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -73,7 +73,7 @@ and becoming root, perform the following operation:
 A few seconds later, OpenBSD will boot on your Zaurus.
 
 If you already have a bsd.rd or bsd kernel contained in a FFS
-partition on the C3000 hard drive, you can instead use 
+partition on the C3000/C3100 hard drive, you can instead use 
 
 	# insmod zbsdmod.o
 	# ./zboot
@@ -105,7 +105,7 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	defined on the disk, these will usually show up as partition
 	'h', 'i' and so on.-:})
 
-	One of the three partitions on the Zaurus C3000 hard drive is
+	One of the three partitions on the Zaurus C3000/C3100 hard drive is
 	a 3GB MSDOS filesystem.  This partition can be a lot smaller,
 	it is therefore recommended that you cut most of the space off
 	this large MSDOS partition, and create a new A6 partition
