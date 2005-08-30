@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2005/04/01 16:00:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.39 2005/08/30 05:02:40 uwe Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -27,13 +27,18 @@ manual.c:	disklabel.cat8
 CFLAGS+= -DSEEALSO="\"fdisk(8), installboot(8)\""
 .endif
 
-.if (${MACHINE} == "cats") || (${MACHINE} == "zaurus")
+.if (${MACHINE} == "cats")
 CFLAGS+= -DSEEALSO="\"fdisk(8)\""
 .endif
 
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64")
 CFLAGS+= -DNUMBOOT=2 -DDOSLABEL
 CFLAGS+= -DSEEALSO="\"fdisk(8), installboot(8)\""
+.endif
+
+.if (${MACHINE} == "zaurus")
+CFLAGS+= -DNUMBOOT=2 -DDOSLABEL
+CFLAGS+= -DSEEALSO="\"fdisk(8)\""
 .endif
 
 
