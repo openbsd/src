@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.18 2005/06/14 19:15:35 millert Exp $	*/
+/*	$OpenBSD: rm.c,v 1.19 2005/08/30 21:00:05 jmc Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.18 2005/06/14 19:15:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.19 2005/08/30 21:00:05 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -421,6 +421,6 @@ checkdot(char **argv)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-dfiPRrW] file ...\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-dfiPRr] file ...\n", __progname);
 	exit(1);
 }
