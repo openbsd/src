@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.26 2005/08/27 14:12:36 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.27 2005/08/30 03:18:30 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -244,6 +244,7 @@
 #define BGE_CHIPID_BCM5704_A1		0x20010000
 #define BGE_CHIPID_BCM5704_A2		0x20020000
 #define BGE_CHIPID_BCM5704_A3		0x20030000
+#define BGE_CHIPID_BCM5704_B0		0x21000000
 #define BGE_CHIPID_BCM5705_A0		0x30000000
 #define BGE_CHIPID_BCM5705_A1		0x30010000
 #define BGE_CHIPID_BCM5705_A2		0x30020000
@@ -257,6 +258,7 @@
 #define BGE_CHIPID_BCM5714_A0		0x50000000
 #define BGE_CHIPID_BCM5752_A0		0x60000000
 #define BGE_CHIPID_BCM5752_A1		0x60010000
+#define BGE_CHIPID_BCM5714		0x80000000
 
 /* shorthand one */
 #define BGE_ASICREV(x)			((x) >> 28)
@@ -268,6 +270,7 @@
 #define BGE_ASICREV_BCM5750		0x04
 #define BGE_ASICREV_BCM5714		0x05
 #define BGE_ASICREV_BCM5752		0x06
+#define BGE_ASICREV_BCM5780		0x08
 
 /* chip revisions */
 #define BGE_CHIPREV(x)			((x) >> 24)
@@ -278,6 +281,8 @@
 #define BGE_CHIPREV_5703_AX		0x10
 #define BGE_CHIPREV_5704_AX		0x20
 #define BGE_CHIPREV_5704_BX		0x21
+#define BGE_CHIPREV_5750_AX		0x40
+#define BGE_CHIPREV_5750_BX		0x41
 
 /* PCI DMA Read/Write Control register */
 #define BGE_PCIDMARWCTL_MINDMA		0x000000FF
