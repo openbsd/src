@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.31 2005/08/08 12:22:48 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.32 2005/08/30 21:02:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -152,7 +152,12 @@ spf_calc(struct area *area)
 			}
 
 			if (!linked(w, v)) {
-				log_debug("spf_calc: w has no link to v");
+				a.s_addr = htonl(w->ls_id);
+				log_debug("spf_calc: w id %s type %d has ",
+				    inet_ntoa(a), w->type);
+				a.s_addr = htonl(v->ls_id);
+				log_debug("    no link to v id %s type %d",
+				    inet_ntoa(a), v->type);
 				continue;
 			}
 
@@ -168,19 +173,15 @@ spf_calc(struct area *area)
 				if (d < w->cost) {
 					w->cost = d;
 					w->prev = v;
-				}
-
-				calc_next_hop(w, v);
-			} else {
-				if (w->cost == LS_INFINITY ||
-				    w->prev == NULL) {
-					w->cost = d;
-
-					cand_list_add(w);
-					w->prev = v;
-
 					calc_next_hop(w, v);
 				}
+			} else if (w->cost == LS_INFINITY && d < LS_INFINITY) {
+				w->cost = d;
+
+				cand_list_add(w);
+				w->prev = v;
+
+				calc_next_hop(w, v);
 			}
 		}
 
@@ -201,7 +202,7 @@ spf_calc(struct area *area)
 		switch (v->type) {
 		case LSA_TYPE_ROUTER:
 			/* stub networks */
-			if (v->cost == LS_INFINITY || v->nexthop.s_addr == 0)
+			if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
 				continue;
 
 			for (i = 0; i < lsa_num_links(v); i++) {
