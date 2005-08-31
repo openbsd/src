@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.71 2005/08/31 12:52:36 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.72 2005/08/31 17:59:09 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -160,7 +160,6 @@ ami_get_ccb(sc)
 	if (ccb) {
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
 		ccb->ccb_state = AMI_CCB_READY;
-		ccb->ccb_type = 0;
 	}
 	return ccb;
 }
@@ -172,7 +171,8 @@ ami_put_ccb(ccb)
 	struct ami_softc *sc = ccb->ccb_sc;
 
 	ccb->ccb_state = AMI_CCB_FREE;
-	ccb->ccb_type = 0;
+	ccb->ccb_done = NULL;
+	ccb->ami_pt.idata = NULL;
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 }
 
@@ -1236,9 +1236,6 @@ ami_done(sc, idx)
 				memcpy(xs->data, ccb->ami_pt.idata +
 				    sizeof(struct ami_passthrough),
 				    xs->datalen);
-
-			wakeup(ccb->ami_pt.idata);
-			ccb->ami_pt.idata = NULL;
 		} else {
 			if (xs->cmd->opcode != PREVENT_ALLOW &&
 			    xs->cmd->opcode != SYNCHRONIZE_CACHE)
@@ -1268,9 +1265,9 @@ ami_done(sc, idx)
 		}
 	}
 
-	if (ccb->ccb_type == AMI_MGMT_CCB) {
-		wakeup(sc);
-		ccb->ccb_type = 0;
+	if (ccb->ccb_done) {
+		*ccb->ccb_done = 1;
+		wakeup((void *)ccb->ccb_done);
 	}
 
 	ami_put_ccb(ccb);
@@ -1328,6 +1325,7 @@ ami_scsi_raw_cmd(xs)
 	struct ami_passthrough *ps;
 	int error;
 	int direction;
+	volatile int done = 0;
 	ami_lock_t lock;
 	void *idata;
 	bus_dmamap_t idatamap;
@@ -1434,6 +1432,7 @@ ami_scsi_raw_cmd(xs)
 	ccb->ccb_xs = xs;
 	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = NULL;
+	ccb->ccb_done = &done;
 	
 	ps->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ps->apt_channel = channel;
@@ -1450,6 +1449,9 @@ ami_scsi_raw_cmd(xs)
 
 	if (ccb->ami_pt.dir == AMI_PT_OUT)
 		memcpy(ccb->ami_pt.idata + sizeof *ps, xs->data, xs->datalen);
+
+	if (xs->flags & SCSI_POLL)
+		done = 1; /* Don't wait for completion twice. */
 
 	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP) ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
@@ -1476,8 +1478,10 @@ ami_scsi_raw_cmd(xs)
 			memcpy(xs->data, idata + sizeof *ps, xs->datalen);
 
 		scsi_done(xs);
-	} else
-		tsleep(ccb->ami_pt.idata, PRIBIO, "ami_pt", 0);
+	}
+
+	while (!done)
+		tsleep((void *)&done, PRIBIO, "ami_pt", 0);
 
 	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "ami raw");
 
@@ -1864,18 +1868,24 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	bus_dma_segment_t idataseg[1];
 	paddr_t	pa;
 	int error = 0;
+	volatile int done = 0;
+
+	ccb = ami_get_ccb(sc);
+	if (ccb == NULL)
+		return (ENOMEM);
 
 	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG, 1,
-	    "ami mgmt")))
+	    "ami mgmt"))) {
+		ami_put_ccb(ccb);
 	    	return (ENOMEM);
+	}
 
 	pa = idataseg[0].ds_addr;
 	ps = idata;
 	pp = idata + sizeof *ps;
 
-	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
-	ccb->ccb_type = AMI_MGMT_CCB;
+	ccb->ccb_done = &done;
 	cmd = ccb->ccb_cmd;
 
 	cmd->acc_cmd = AMI_PASSTHRU;
@@ -1904,10 +1914,12 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	ps->apt_datalen = sizeof(struct scsi_inquiry_data);
 
 	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
-		if (tsleep(sc, PRIBIO, "ami_drv_inq", 15 * hz) == EWOULDBLOCK) {
-			error = EINVAL;
-			goto bail;
-		}
+		while (!done)
+			if (tsleep((void *)&done, PRIBIO, "ami_drv_inq",
+			    15 * hz) == EWOULDBLOCK) {
+				error = EINVAL;
+				goto bail;
+			}
 
 		if (ps->apt_scsistat == 0x00) {
 			memcpy(inqbuf, pp, sizeof(struct scsi_inquiry_data));
@@ -1946,16 +1958,22 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	bus_dma_segment_t idataseg[1];
 	paddr_t	pa;
 	int error = 0;
+	volatile int done = 0;
+
+	ccb = ami_get_ccb(sc);
+	if (ccb == NULL)
+		return (ENOMEM);
 
 	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG,
-	    (size / NBPG) + 1, "ami mgmt")))
+	    (size / NBPG) + 1, "ami mgmt"))) {
+		ami_put_ccb(ccb);
 		return (ENOMEM);
+	}
 
 	pa = idataseg[0].ds_addr;
 
-	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
-	ccb->ccb_type = AMI_MGMT_CCB;
+	ccb->ccb_done = &done;
 	cmd = ccb->ccb_cmd;
 
 	cmd->acc_cmd = opcode;
@@ -1977,10 +1995,12 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	cmd->acc_io.aio_data = htole32(pa);
 
 	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
-		if (tsleep(sc, PRIBIO,"ami_mgmt", 15 * hz) == EWOULDBLOCK) {
-			error = EINVAL;
-			goto bail;
-		}
+		while (!done)
+			if (tsleep((void *)&done, PRIBIO,"ami_mgmt",
+			    15 * hz) == EWOULDBLOCK) {
+				error = EINVAL;
+				goto bail;
+			}
 
 		/* XXX how do commands fail? */
 		
