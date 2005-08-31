@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.72 2005/08/31 17:59:09 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.73 2005/08/31 18:27:31 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2558,9 +2558,6 @@ ami_ioctl_setstate(sc, bs)
 			goto bail;
 
 		off = bs->bs_channel * AMI_MAX_TARGET + bs->bs_target;
-
-		if (p->apd[off].adp_ostatus != AMI_PD_UNCNF)
-			goto bail;
 
 		if (ami_drv_inq(sc, bs->bs_channel, bs->bs_target, 0,
 		    &inqbuf))
