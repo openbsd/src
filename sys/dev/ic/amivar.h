@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.19 2005/08/30 02:40:26 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.20 2005/08/31 12:52:36 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -42,6 +42,9 @@ struct ami_ccb {
 #define AMI_PT_IN	(0x00)
 #define AMI_PT_OUT	(0x01)
 	} ami_pt;
+	int			ccb_type;
+#define AMI_IO_CCB	(0x00)
+#define AMI_MGMT_CCB	(0x01)
 	TAILQ_ENTRY(ami_ccb)	ccb_link;
 	enum {
 		AMI_CCB_FREE, AMI_CCB_READY, AMI_CCB_QUEUED, AMI_CCB_PREQUEUED

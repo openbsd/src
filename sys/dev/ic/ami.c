@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.70 2005/08/30 02:40:25 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.71 2005/08/31 12:52:36 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -160,6 +160,7 @@ ami_get_ccb(sc)
 	if (ccb) {
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
 		ccb->ccb_state = AMI_CCB_READY;
+		ccb->ccb_type = 0;
 	}
 	return ccb;
 }
@@ -171,6 +172,7 @@ ami_put_ccb(ccb)
 	struct ami_softc *sc = ccb->ccb_sc;
 
 	ccb->ccb_state = AMI_CCB_FREE;
+	ccb->ccb_type = 0;
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 }
 
@@ -179,7 +181,7 @@ ami_write_inbound_db(sc, v)
 	struct ami_softc *sc;
 	u_int32_t v;
 {
-	AMI_DPRINTF(AMI_D_CMD, ("awi %xn", v));
+	AMI_DPRINTF(AMI_D_CMD, ("awi %x ", v));
 
 	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, v);
 	bus_space_barrier(sc->iot, sc->ioh,
@@ -1266,6 +1268,11 @@ ami_done(sc, idx)
 		}
 	}
 
+	if (ccb->ccb_type == AMI_MGMT_CCB) {
+		wakeup(sc);
+		ccb->ccb_type = 0;
+	}
+
 	ami_put_ccb(ccb);
 
 	if (xs) {
@@ -1273,9 +1280,8 @@ ami_done(sc, idx)
 		xs->flags |= ITSDONE;
 		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
 		scsi_done(xs);
-		if (sc->sc_flags & AMI_CMDWAIT && TAILQ_EMPTY(&sc->sc_ccbq))
-			wakeup(&sc->sc_free_ccb);
 	}
+
 	AMI_UNLOCK_AMI(sc, lock);
 
 	return (0);
@@ -1398,9 +1404,6 @@ ami_scsi_raw_cmd(xs)
 		AMI_UNLOCK_AMI(sc, lock);
 		return (COMPLETE);
 	}
-
-	while (sc->sc_flags & AMI_CMDWAIT)
-		tsleep(&sc->sc_ccbq, PRIBIO + 1, "ami_raw", 0);
 
 	xs->error = XS_NOERROR;
 
@@ -1664,9 +1667,6 @@ ami_scsi_cmd(xs)
 			}
 		}
 
-		while (sc->sc_flags & AMI_CMDWAIT)
-			tsleep(&sc->sc_ccbq, PRIBIO + 1, "ami_cmd", 0);
-
 		if ((ccb = ami_get_ccb(sc)) == NULL) {
 			AMI_DPRINTF(AMI_D_CMD, ("no more ccbs "));
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1806,18 +1806,7 @@ ami_ioctl(dev, cmd, addr)
 		return EBUSY;
 	}
 
-	switch (cmd) {
-	case BIOCINQ:
-	case BIOCVOL:
-	case BIOCDISK:
-	case BIOCALARM:
-	case BIOCSETSTATE:
-		sc->sc_flags |= AMI_CMDWAIT;
-		while (!TAILQ_EMPTY(&sc->sc_ccbq))
-			if (tsleep(&sc->sc_free_ccb, PRIBIO, "ami_ioctl",
-			    100 * 60) == EWOULDBLOCK)
-				return EWOULDBLOCK;
-	}
+	sc->sc_flags |= AMI_CMDWAIT;
 
 	switch (cmd) {
 	case BIOCINQ:
@@ -1852,7 +1841,6 @@ ami_ioctl(dev, cmd, addr)
 	}
 
 	sc->sc_flags &= ~AMI_CMDWAIT;
-	wakeup(&sc->sc_ccbq);
 
 	AMI_UNLOCK_AMI(sc, lock);
 
@@ -1887,6 +1875,7 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 
 	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
+	ccb->ccb_type = AMI_MGMT_CCB;
 	cmd = ccb->ccb_cmd;
 
 	cmd->acc_cmd = AMI_PASSTHRU;
@@ -1914,11 +1903,27 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	ps->apt_data = htole32(pa + sizeof *ps);
 	ps->apt_datalen = sizeof(struct scsi_inquiry_data);
 
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0)
-		memcpy(inqbuf, pp, sizeof(struct scsi_inquiry_data));
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
+		if (tsleep(sc, PRIBIO, "ami_drv_inq", 15 * hz) == EWOULDBLOCK) {
+			error = EINVAL;
+			goto bail;
+		}
+
+		if (ps->apt_scsistat == 0x00) {
+			memcpy(inqbuf, pp, sizeof(struct scsi_inquiry_data));
+
+			if (pp->device != T_DIRECT)
+				error = EINVAL;
+
+			goto bail;
+		}
+
+		error = EINVAL;
+	}
 	else 
 		error = EINVAL;
 
+bail:
 	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "ami mgmt");
 
 	return (error);
@@ -1950,6 +1955,7 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 
 	ccb = ami_get_ccb(sc);
 	ccb->ccb_data = NULL;
+	ccb->ccb_type = AMI_MGMT_CCB;
 	cmd = ccb->ccb_cmd;
 
 	cmd->acc_cmd = opcode;
@@ -1970,13 +1976,21 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 
 	cmd->acc_io.aio_data = htole32(pa);
 
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 1) == 0) {
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
+		if (tsleep(sc, PRIBIO,"ami_mgmt", 15 * hz) == EWOULDBLOCK) {
+			error = EINVAL;
+			goto bail;
+		}
+
+		/* XXX how do commands fail? */
+		
 		if (buffer)
 			memcpy(buffer, idata, size);
 	}
 	else
 		error = EINVAL;
 
+bail:
 	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG,
 	    (size / NBPG) + 1, "ami mgmt");
 
