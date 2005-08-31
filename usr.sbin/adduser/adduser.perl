@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.49 2005/03/30 22:12:38 millert Exp $
+#	$OpenBSD: adduser.perl,v 1.50 2005/08/31 17:28:15 kettenis Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -91,7 +91,7 @@ sub variables {
     $etc_login_conf = "/etc/login.conf";
     @pwd_mkdb = ("pwd_mkdb", "-p");	# program for building passwd database
     $encryptionmethod = "auto";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.49 2005/03/30 22:12:38 millert Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.50 2005/08/31 17:28:15 kettenis Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -100,7 +100,7 @@ sub variables {
 
     @encryption_methods = ('auto', 'blowfish', 'md5', 'des', 'old');
 
-    $defaultshell = 'sh';	# defaultshell if not empty
+    $defaultshell = 'ksh';	# defaultshell if not empty
     $group_uniq = 'USER';
     $defaultgroup = $group_uniq;# login groupname, $group_uniq means username
     $defaultclass = 'default';  # default user login class
