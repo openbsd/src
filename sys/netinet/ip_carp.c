@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.108 2005/07/31 03:52:19 pascoe Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.109 2005/08/31 04:49:21 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2108,7 +2108,11 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 				break;
 			}
 		}
-		KASSERT(mc != NULL);
+		/*
+		 * XXX We don't actually want KASSERT(mc != NULL) here
+		 * because we mess with the multicast addresses elsewhere.
+		 * Clean up after release.
+		 */
 	} else
 		(void)ether_addmulti(ifr, (struct arpcom *)&sc->sc_ac);
 	return (error);
