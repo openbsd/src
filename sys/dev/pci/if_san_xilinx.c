@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.10 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.11 2005/09/01 23:35:42 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -164,11 +164,6 @@ typedef struct {
 
 	void		*prot_ch;
 	wan_trace_t	trace_info;
-
-	u_int8_t		tx_dma_status;
-	bus_dma_segment_t	tx_dma_seg;
-	int			tx_dma_rseg;
-	caddr_t			tx_dma_vaddr;
 }xilinx_softc_t;
 #define WAN_IFP_TO_SOFTC(ifp)	(xilinx_softc_t *)((ifp)->if_softc)
 
@@ -571,14 +566,6 @@ wan_xilinx_down(struct ifnet *ifp)
 		m = sc->rx_dma_mbuf;
 		aft_init_requeue_free_m(sc, m);
 		sc->rx_dma_mbuf = NULL;
-	}
-	if (bit_test((u_int8_t *)&sc->tx_dma_status, TX_DMA_BUF_INIT)){
-		bus_dma_tag_t	dmat;
-
-		sdla_getcfg(card->hw, SDLA_DMATAG, &dmat);
-		bus_dmamem_unmap(dmat, sc->tx_dma_vaddr, sc->dma_mtu);
-		bus_dmamem_free(dmat, &sc->tx_dma_seg, sc->tx_dma_rseg);
-		bit_clear((u_int8_t *)&sc->tx_dma_status, TX_DMA_BUF_INIT);
 	}
 
 	/* If there is something in rx_complete_list, then
@@ -1852,58 +1839,16 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 		}
 
 		if (mtod(m, u_int32_t)  & 0x03) {
-			if (!bit_test((u_int8_t *)&sc->tx_dma_status,
-							TX_DMA_BUF_INIT)) {
-				bus_dma_tag_t	dmat;
-				int err;
-
-				sdla_getcfg(card->hw, SDLA_DMATAG, &dmat);
-				err = bus_dmamem_alloc(
-						dmat,
-						sc->dma_mtu,
-						PAGE_SIZE,
-						0,
-						&sc->tx_dma_seg,
-						1,
-						&sc->tx_dma_rseg,
-						BUS_DMA_NOWAIT);
-				if (err) {
-					log(LOG_INFO,
-					"%s: Failed allocate DMA buffer!\n",
-						sc->if_name);
-					m_freem(m);
-					bit_clear((u_int8_t *)&sc->dma_status,
-								TX_BUSY);
-					return (EINVAL);
-				}
-				err = bus_dmamem_map(
-						dmat,
-						&sc->tx_dma_seg,
-						sc->tx_dma_rseg,
-						sc->dma_mtu,
-						(caddr_t*)&sc->tx_dma_vaddr,
-						BUS_DMA_NOWAIT);
-				if (err) {
-					log(LOG_INFO,
-					"%s: Failed to map DMA buffer!\n",
-						sc->if_name);
-					bus_dmamem_free(
-						dmat,
-						&sc->tx_dma_seg,
-						sc->tx_dma_rseg);
-					m_freem(m);
-					bit_clear((u_int8_t *)&sc->dma_status,
-								TX_BUSY);
-					return (EINVAL);
-				}
-				bit_set((u_int8_t *)&sc->tx_dma_status,
-							TX_DMA_BUF_INIT);
-			}
-			memcpy(sc->tx_dma_vaddr, mtod(m, caddr_t), m->m_len);
-			sc->tx_dma_addr = kvtop(sc->tx_dma_vaddr);
-		} else {
-			sc->tx_dma_addr = kvtop(mtod(m, caddr_t));
+			/* The mbuf should already be aligned */
+			log(LOG_INFO, "%s: TX packed not aligned "
+			    "(%s:%d)!\n", sc->if_name,
+			    MAX_XILINX_TX_DMA_SIZE, __FUNCTION__, __LINE__);
+			m_freem(m);
+			bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
+			return (EINVAL);
 		}
+			
+		sc->tx_dma_addr = kvtop(mtod(m, caddr_t));
 		sc->tx_dma_len = len;
 	}
 

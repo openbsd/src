@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.8 2005/04/05 20:11:10 canacar Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.9 2005/09/01 23:35:42 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -383,56 +383,91 @@ sdla_isr(void *pcard)
 	return (1);
 }
 
-// XXX check usage, why is len not used ???
 struct mbuf* 
 wan_mbuf_alloc(int len)
 {
 	struct mbuf	*m;
 
-	if (len)
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-	else
-		MGET(m, M_DONTWAIT, MT_DATA);
+	/* XXX handle len > MCLBYTES */
+	if (len <= 0 || len > MCLBYTES)
+		return (NULL);
 
-	if (m != NULL) {
-		if (m->m_flags & M_PKTHDR)
-			m->m_pkthdr.len = 0;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
 
-		m->m_len = 0;
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_freem(m);
-			return NULL;
-		}
+	if (m == NULL || len < MHLEN)
+		return (m);
 
-		m->m_data += 16;
+	m->m_pkthdr.len = 0;
+	m->m_len = 0;
+	MCLGET(m, M_DONTWAIT);
+
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return (NULL);
 	}
+
 	return (m);
 }
 
-// XXX check len while copy?
 int 
 wan_mbuf_to_buffer(struct mbuf **m_org)
 {
-	struct mbuf	*m = *m_org, *new = NULL;
+	struct mbuf	*m, *m0, *tmp;
+	char		*buffer;
+	size_t	 	 len;
+
+	if (m_org == NULL || *m_org == NULL)
+		return (EINVAL);
+
+	m0 = *m_org;
+#if 0
+	/* no need to copy if it is a single, properly aligned mbuf */
+	if (m0->m_next == NULL && (mtod(m0, u_int32_t)  & 0x03) == 0)
+		return (0);
+#endif
+	MGET(m, M_DONTWAIT, MT_DATA);
 
 	if (m == NULL)
-		return EINVAL;
+		return (ENOMEM);
 
-	new = wan_mbuf_alloc(0);
-	if (new){
-		struct mbuf	*tmp = m;
-		char	*buffer = new->m_data;
+	MCLGET(m, M_DONTWAIT);
 
-		for( ; tmp; tmp = tmp->m_next) {
-			bcopy(mtod(tmp, caddr_t), buffer, tmp->m_len);
-			buffer += tmp->m_len;
-			new->m_len += tmp->m_len;
-		}
+	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		*m_org = new;
-		return 0;
+		return (ENOMEM);
 	}
-	return EINVAL;
-}
 
+	m->m_len = 0;
+
+	/* XXX handle larger packets? */
+	len = MCLBYTES ;
+	buffer = mtod(m, caddr_t);
+
+	len -= 16;
+	buffer += 16;
+
+	/* make sure the buffer is aligned to an 8-byte boundary */
+	if (mtod(m, u_int32_t) & 0x03) {
+		unsigned int inc = 4 - (mtod(m, u_int32_t) & 0x03);
+		buffer += inc;
+		len -= inc;
+	}
+
+	m->m_data = buffer;
+
+	for (tmp = m0; tmp; tmp = tmp->m_next) {
+		if (tmp->m_len > len) {
+			m_freem(m);
+			return (EINVAL);
+		}
+		bcopy(mtod(tmp, caddr_t), buffer, tmp->m_len);
+		buffer += tmp->m_len;
+		m->m_len += tmp->m_len;
+		len -= tmp->m_len;
+	}
+
+	m_freem(m0);
+	*m_org = m;
+
+	return (0);
+}
