@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.37 2005/08/14 22:04:05 brad Exp $
+.\"	$OpenBSD: sk.4,v 1.38 2005/09/01 13:19:13 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -38,7 +38,7 @@
 .Sh NAME
 .Nm sk ,
 .Nm skc
-.Nd SysKonnect XMAC II and Marvell GMAC based Gigabit Ethernet
+.Nd SysKonnect XMAC II and Marvell Yukon based Gigabit Ethernet
 .Sh SYNOPSIS
 .Cd "skc* at pci?"
 .Cd "sk* at skc?"
@@ -97,7 +97,6 @@ allowing dual-port NIC configurations.
 .Pp
 The Marvell based adapters are a single integrated circuit, but are
 still presented as a separate MAC (sk) and controller ASIC (skc).
-At this time, there are no dual-port Marvell based NICs.
 .Pp
 The
 .Nm
@@ -108,11 +107,11 @@ to separate networks.
 .Pp
 The XaQti XMAC II supports full and half duplex operation with
 autonegotiation.
-The XMAC also supports unlimited frame sizes.
+The XMAC also supports up to a 9000 byte frame size.
 Support for Jumbo frames is provided via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
-utility configures the adapter to receive and transmit Jumbo frames.
+utility configures the adapter to transmit Jumbo frames.
 Using Jumbo frames can greatly improve performance for certain tasks,
 such as file transfers and data streaming.
 .Pp
