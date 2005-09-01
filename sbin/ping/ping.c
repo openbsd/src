@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.71 2005/05/27 04:55:27 mcbride Exp $	*/
+/*	$OpenBSD: ping.c,v 1.72 2005/09/01 17:59:13 otto Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.71 2005/05/27 04:55:27 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.72 2005/09/01 17:59:13 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -158,9 +158,9 @@ struct itimerval interstr;	/* interval structure for use with setitimer */
 /* timing */
 int timing;			/* flag to do timing */
 unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
-quad_t tmin = 999999999;	/* minimum round trip time in millisec */
-quad_t tmax = 0;		/* maximum round trip time in millisec */
-quad_t tsum = 0;		/* sum of all times in millisec, for doing average */
+quad_t tmin = 999999999;	/* minimum round trip time in usec */
+quad_t tmax = 0;		/* maximum round trip time in usec */
+quad_t tsum = 0;		/* sum of all times in usec, for doing average */
 quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
 
 int bufspace = IP_MAXPACKET;
