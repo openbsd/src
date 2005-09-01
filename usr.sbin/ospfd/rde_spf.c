@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.32 2005/08/30 21:02:35 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.33 2005/09/01 19:09:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -721,6 +721,9 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 	struct rt_node		*r;
 
 	RB_FOREACH(r, rt_tree, &rt) {
+		if (r->invalid)
+			continue;
+
 		if (r->area.s_addr != area.s_addr)
 			continue;
 
@@ -854,12 +857,17 @@ rt_lookup(enum dst_type type, in_addr_t addr)
 	struct rt_node	*rn;
 	u_int8_t	 i = 32;
 
-	if (type == DT_RTR)
-		return (rt_find(addr, 32, type));
+	if (type == DT_RTR) {
+		rn = rt_find(addr, 32, type);
+		if (rn && rn->invalid == 0)
+			return (rn);
+		return (NULL);
+	}
 
 	/* type == DT_NET */
 	do {
-		if ((rn = rt_find(addr & prefixlen2mask(i), i, type)))
+		if ((rn = rt_find(addr & prefixlen2mask(i), i, type)) &&
+		    rn->invalid == 0)
 			return (rn);
 	} while (i-- != 0);
 
