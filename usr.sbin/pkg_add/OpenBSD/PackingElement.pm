@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.77 2005/08/14 12:01:08 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.78 2005/09/04 22:47:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -138,6 +138,8 @@ sub IsFile() { 0 }
 
 sub NoDuplicateNames() { 0 }
 
+sub signature {}
+
 # Basic class hierarchy
 
 # various stuff that's only linked to objects before/after them
@@ -243,6 +245,12 @@ sub add_object
 # all dependency information
 package OpenBSD::PackingElement::Depend;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+sub signature
+{
+	my ($self, $hash) = @_;
+	$hash->{$self->{def}} = 1;
+}
 
 # Abstract class for all file-like elements
 package OpenBSD::PackingElement::FileBase;
@@ -647,6 +655,10 @@ sub category() { "pkgcfl" }
 package OpenBSD::PackingElement::PkgDep;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
 
+sub signature
+{
+}
+
 __PACKAGE__->setKeyword('pkgdep');
 sub keyword() { "pkgdep" }
 sub category() { "pkgdep" }
@@ -706,6 +718,11 @@ __PACKAGE__->setKeyword('wantlib');
 sub category() { "wantlib" }
 sub keyword() { "wantlib" }
 
+sub signature
+{
+	my ($self, $hash) = @_;
+	$hash->{$self->{name}} = 1;
+}
 
 package OpenBSD::PackingElement::LibDepend;
 our @ISA=qw(OpenBSD::PackingElement::Depend);
@@ -734,6 +751,63 @@ sub stringize($)
 	my $self = $_[0];
 	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
 	    ':'.$self->{libspec}.':'.$self->{pattern}.':'.$self->{def};
+}
+
+package OpenBSD::PackingElement::PkgPath;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+__PACKAGE__->setKeyword('pkgpath');
+sub keyword() { "pkgpath" }
+sub category() { "pkgpath" }
+
+package OpenBSD::PackingElement::Incompatibility;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+__PACKAGE__->setKeyword('incompatibility');
+sub keyword() { "incompatibility" }
+sub category() { "incompatibility" }
+
+package OpenBSD::PackingElement::UpdateSet;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+__PACKAGE__->setKeyword('updateset');
+sub keyword() { "updateset" }
+sub category() { "updateset" }
+
+package OpenBSD::PackingElement::Module;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+use OpenBSD::PackageInfo;
+
+__PACKAGE__->setKeyword('module');
+sub keyword() { "module" }
+sub category() { "module" }
+
+my $installed_modules = {};
+
+sub add
+{
+	my ($class, $plist, @args) = @_;
+
+	require OpenBSD::PkgSpec;
+
+	my @candidates = OpenBSD::PkgSpec::match($args[0], installed_packages());
+	if (@candidates == 1) {
+		if (!defined $installed_modules->{$candidates[0]}) {
+			# pull in the module right here and now;
+			my $f = installed_info($candidates[0]).MODULE;
+			eval "require \"$f\";";
+			if ($@) {
+				die "Error in reading module $f: $@";
+			}
+		}
+	} elsif (@candidates == 0) {
+		$plist->{need_modules} = 1;
+	} else {
+		die "Ambiguous module: ", $args[0];
+	}
+		
+	$class->SUPER::add($plist, @args);
 }
 
 package OpenBSD::PackingElement::NewUser;
@@ -1152,6 +1226,10 @@ sub write
 package OpenBSD::PackingElement::FCONTENTS;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub category() { OpenBSD::PackageInfo::CONTENTS }
+
+package OpenBSD::PackingElement::FMODULE;
+our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+sub category() { OpenBSD::PackageInfo::MODULE }
 
 package OpenBSD::PackingElement::ScriptFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);

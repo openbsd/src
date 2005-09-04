@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.46 2005/08/17 19:22:31 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.47 2005/09/04 22:47:56 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,7 +26,7 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acInqruvx
+.Op Fl aciInqruvx
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl F Ar keywords
@@ -175,6 +175,10 @@ unsafe update: old packing-list will run scripts that may fail.
 .It Ar updatedepends
 force update even if forward dependencies no longer match.
 .El
+.It Fl i
+Switch on interactive mode.
+.Nm
+may ask questions to the user if faced with difficult decisions.
 .It Fl I
 If scripts exist for a given package, do not execute them.
 .It Fl L Ar localbase

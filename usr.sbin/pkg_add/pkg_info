@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.30 2005/08/16 08:59:38 espie Exp $
+# $OpenBSD: pkg_info,v 1.31 2005/09/04 22:47:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,45 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
 use OpenBSD::Getopt;
 use OpenBSD::Error;
+
+package OpenBSD::PackingElement;
+sub dump_file
+{
+}
+
+sub hunt_file
+{
+}
+
+sub sum_up
+{
+	my ($self, $rsize) = @_;
+	if (defined $self->{size}) {
+		$$rsize += $self->{size};
+	}
+}
+
+package OpenBSD::PackingElement::FileBase;
+sub dump_file
+{
+	my ($item, $opt_K) = @_;
+	if ($opt_K) {
+		print '@', $item->keyword(), " ";
+	}
+	print $item->fullname(), "\n";
+}
+
+sub hunt_file
+{
+	my ($item, $h, $pkgname, $l) = @_;
+	my $fname = $item->fullname();
+	if (defined $h->{$fname}) {
+		push(@{$h->{$fname}}, $pkgname);
+		push(@$l, $pkgname);
+	}
+}
+
+package main;
 
 my $total_size = 0;
 my $pkgs = 0;
@@ -115,14 +154,7 @@ sub filter_files
 				
 			my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS,
 			    \&OpenBSD::PackingList::FilesOnly);
-			for my $item (@{$plist->{items}}) {
-				next unless $item->IsFile();
-				my $fname = $item->fullname();
-				if (defined $search->{"$fname"}) {
-					push(@{$search->{$fname}}, $pkg);
-					push(@result, $pkg);
-				}
-			}
+			$plist->visit('hunt_file', $search, $pkg, \@result);
 		    });
 	}
 	return @result;
@@ -158,7 +190,7 @@ sub find_by_path
 
 our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, $opt_L, 
     $opt_m, $opt_p, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h, $opt_l, 
-    $opt_a, $opt_M, $opt_U, $opt_A);
+    $opt_a, $opt_M, $opt_U, $opt_A, $opt_S);
 my $terse = 0;
 my $exit_code = 0;
 my @sought_files;
@@ -220,11 +252,11 @@ sub print_info
 			print "\n";
 		}
 		my $plist;
-		if ($opt_f || $opt_L || $opt_s) {
+		if ($opt_f || $opt_L || $opt_s || $opt_S) {
 			require OpenBSD::PackingOld;
 			require OpenBSD::PackingList;
 
-			if ($opt_f || $opt_s) {
+			if ($opt_f || $opt_s || $opt_S) {
 				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 			} else {
 				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FilesOnly);
@@ -233,26 +265,20 @@ sub print_info
 		}
 		if ($opt_L) {
 			print $opt_l, "Files:\n" unless $opt_q;
-			for my $item (@{$plist->{items}}) {
-				next unless $item->IsFile();
-				if ($opt_K) {
-					print '@', $item->keyword(), " ";
-				}
-				print $item->fullname(), "\n";
-			}
+			$plist->visit('dump_file', $opt_K);
 			print "\n";
 		}
 		if ($opt_s) {
 			my $size = 0;
-			for my $item (@{$plist->{items}}) {
-				next unless $item->IsFile();
-				if (defined $item->{size}) {
-					$size += $item->{size};
-				}
-			}
-			print "Size: $size\n";
+			$plist->visit('sum_up', \$size);
+			print "Size: " unless $opt_q;
+			print "$size\n";
 			$total_size += $size;
 			$pkgs++;
+		}
+		if ($opt_S) {
+			print "Signature: " unless $opt_q;
+			print $plist->signature(), "\n";
 		}
 
 		if ($opt_f) {
@@ -264,11 +290,11 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-cDdfIiKkLMpqRrsUv] [-E fname] [-e pkgname] [-l str] pkgname...', 'pkg_info [-Aa flags]');
+set_usage('pkg_info [-cDdfIiKkLMpqRrsSUv] [-E fname] [-e pkgname] [-l str] pkgname...', 'pkg_info [-Aa flags]');
 
 my $locked;
 try { 
-	getopts('cDdfhIikKLmpqRrsUve:E:Ml:aA',
+	getopts('cDdfhIikKLmpqRrsSUve:E:Ml:aA',
 	    {'e' =>
 		    sub {
 			    my $pat = shift;
@@ -306,7 +332,8 @@ if ($opt_D) {
 }
 
 unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
-	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r || $opt_s || $terse) {
+	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r || $opt_s || 
+	$opt_S || $terse) {
 	if (@ARGV == 0) {
 		$opt_I = $opt_a = 1;
 	} else {
@@ -316,7 +343,7 @@ unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
 
 if ($opt_v) {
 	$opt_c = $opt_d = $opt_f = $opt_i = $opt_k = $opt_r = $opt_M =
-	    $opt_U = $opt_m = $opt_R = $opt_s = 1;
+	    $opt_U = $opt_m = $opt_R = $opt_s = $opt_S = 1;
 }
 
 if (!defined $opt_l) {

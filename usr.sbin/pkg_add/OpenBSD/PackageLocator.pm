@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.20 2005/08/22 11:30:30 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.21 2005/09/04 22:47:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -89,7 +89,6 @@ sub open
 
 	# kill old files if too many
 	my $already = $self->make_room();
-
 	my $p = $self->pipename($object->{name});
 	
 	open(my $fh, '-|', $p) or return undef;
@@ -100,20 +99,32 @@ sub open
 	return $fh;
 }
 
-# by default, we don't know how to list packages there.
-sub simplelist
-{
-}
-
 package OpenBSD::PackageLocation::SCP;
 our @ISA=qw(OpenBSD::PackageLocation OpenBSD::PackageLocation::FTPorSCP);
+
+our %distant = ();
+
+sub maxcount
+{
+	return 2;
+}
+
+sub opened
+{
+	my $self = $_[0];
+	my $k = $self->{key};
+	if (!defined $distant{$k}) {
+		$distant{$k} = [];
+	}
+	return $distant{$k};
+}
 
 sub _new
 {
 	my ($class, $location) = @_;
 	$location =~ s/scp\:\/\///i;
 	$location =~ m/\//;
-	bless {	host => $`, path => "/$'" }, $class;
+	bless {	host => $`, key => $`, path => "/$'" }, $class;
 }
 
 sub pipename
@@ -127,9 +138,12 @@ sub pipename
 sub list
 {
 	my ($self) = @_;
-	my $host = $self->{host};
-	my $path = $self->{path};
-	return $self->_list("ssh $host ls -l $path");
+	if (!defined $self->{list}) {
+		my $host = $self->{host};
+		my $path = $self->{path};
+		$self->{list} = $self->_list("ssh $host ls -l $path");
+	}
+	return $self->{list};
 }
 
 package OpenBSD::PackageLocation::Local;
@@ -151,21 +165,16 @@ sub may_exist
 sub list
 {
 	my $self = shift;
-	my @l = ();
+	my $l = [];
 	my $dname = $self->{location};
-	opendir(my $dir, $dname) or return undef;
+	opendir(my $dir, $dname) or return $l;
 	while (my $e = readdir $dir) {
 		next unless -f "$dname/$e";
 		next unless $e =~ m/\.tgz$/;
-		push(@l, $`);
+		push(@$l, $`);
 	}
 	close($dir);
-	return @l;
-}
-
-sub simplelist
-{
-	return $_[0]->list();
+	return $l;
 }
 
 package OpenBSD::PackageLocation::Local::Pipe;
@@ -186,22 +195,22 @@ package OpenBSD::PackageLocation::FTPorSCP;
 sub _list
 {
 	my ($self, $cmd) = @_;
-	my @l =();
+	my $l =[];
 	local $_;
 	open(my $fh, '-|', "$cmd") or return undef;
 	while(<$fh>) {
 		chomp;
 		next if m/^d.*\s+\S/;
 		next unless m/([^\s]+)\.tgz\s*$/;
-		push(@l, $1);
+		push(@$l, $1);
 	}
 	close($fh);
-	return @l;
+	return $l;
 }
 
 package OpenBSD::PackageLocation::HTTPorFTP;
 
-my %distant = ();
+our %distant = ();
 
 sub maxcount
 {
@@ -240,21 +249,23 @@ our @ISA=qw(OpenBSD::PackageLocation::HTTPorFTP OpenBSD::PackageLocation);
 sub list
 {
 	my ($self) = @_;
-	$self->make_room();
-	my $fullname = $self->{location};
-	my @l =();
-	local $_;
-	open(my $fh, '-|', "ftp -o - $fullname 2>/dev/null") or return undef;
-	# XXX assumes a pkg HREF won't cross a line. Is this the case ?
-	while(<$fh>) {
-		chomp;
-		for my $pkg (m/\<A\s+HREF=\"(.*?)\.tgz\"\>/gi) {
-			next if $pkg =~ m|/|;
-			push(@l, $pkg);
+	if (!defined $self->{list}) {
+		$self->make_room();
+		my $fullname = $self->{location};
+		my $l = $self->{list} = [];
+		local $_;
+		open(my $fh, '-|', "ftp -o - $fullname 2>/dev/null") or return undef;
+		# XXX assumes a pkg HREF won't cross a line. Is this the case ?
+		while(<$fh>) {
+			chomp;
+			for my $pkg (m/\<A\s+HREF=\"(.*?)\.tgz\"\>/gi) {
+				next if $pkg =~ m|/|;
+				push(@$l, $pkg);
+			}
 		}
+		close($fh);
 	}
-	close($fh);
-	return @l;
+	return $self->{list};
 }
 
 package OpenBSD::PackageLocation::FTP;
@@ -263,9 +274,12 @@ our @ISA=qw(OpenBSD::PackageLocation::HTTPorFTP OpenBSD::PackageLocation OpenBSD
 sub list
 {
 	my ($self) = @_;
-	$self->make_room();
-	my $fullname = $self->{location};
-	return $self->_list("echo nlist|ftp -o - $fullname 2>/dev/null");
+	if (!defined $self->{list}) {
+		$self->make_room();
+		my $fullname = $self->{location};
+		$self->{list} = $self->_list("echo nlist *.tgz|ftp -o - $fullname 2>/dev/null");
+	}
+	return $self->{list};
 }
 
 
@@ -279,14 +293,18 @@ use OpenBSD::Temp;
 
 my %packages;
 my @pkgpath;
+my $need_new_cache = 1;
+my $available_packages = {};
+my @pkglist = ();
+
 
 if (defined $ENV{PKG_PATH}) {
-	my @tentative = split /\:/, $ENV{PKG_PATH};
+	my $pkgpath = $ENV{PKG_PATH};
+	$pkgpath =~ s/^\:+//;
+	$pkgpath =~ s/\:+$//;
+	my @tentative = split /\/\:/, $pkgpath;
 	@pkgpath = ();
 	while (my $i = shift @tentative) {
-		if ($i =~ m/^(?:ftp|http|scp)$/i) {
-			$i.= ":".(shift @tentative);
-		}
 		$i =~ m|/$| or $i.='/';
 		push @pkgpath, OpenBSD::PackageLocation->new($i);
 	}
@@ -318,6 +336,7 @@ sub find
 		$package = $class->openAbsolute($location, $pkgname, $arch);
 		if (defined $package) {
 			push(@pkgpath, $location);
+			$need_new_cache = 1;
 		}
 	} else {
 		for my $p (@pkgpath) {
@@ -331,20 +350,17 @@ sub find
 
 sub available
 {
-	my @l = ();
-	foreach my $loc (@pkgpath) {
-		push(@l, $loc->simplelist());
+	if ($need_new_cache) {
+		$available_packages = {};
+		foreach my $loc (reverse @pkgpath) {
+		    foreach my $pkg (@{$loc->list()}) {
+		    	$available_packages->{$pkg} = $loc;
+		    }
+		}
+		@pkglist = keys %$available_packages;
+		$need_new_cache = 0;
 	}
-	return @l;
-}
-
-sub distant_available
-{
-	my @l = ();
-	foreach my $loc (@pkgpath) {
-		push(@l, $loc->list());
-	}
-	return @l;
+	return @pkglist;
 }
 
 sub info

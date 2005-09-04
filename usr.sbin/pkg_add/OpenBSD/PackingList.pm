@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.47 2005/08/17 10:00:19 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.48 2005/09/04 22:47:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -74,6 +74,10 @@ sub read
 			next if m/^\s*$/;
 			chomp;
 			OpenBSD::PackingElement::Factory($_, $plist);
+			if ($plist->{need_modules}) {
+				close($fh);
+				open($fh, '<', '/dev/null');
+			}
 		});
 	return $plist;
 }
@@ -155,6 +159,27 @@ sub ExtraInfoOnly
 			return;
 		}
 		next unless m/^\@(?:name\b|comment\s+subdir\=)/o;
+		&$cont($_);
+	}
+}
+
+sub UpdateInfoOnly
+{
+	my ($fh, $cont) = @_;
+	local $_;
+	while (<$fh>) {
+		# XXX optimization
+		if (m/^\@arch\b/o) {
+			while (<$fh>) {
+			    if (m/^\@(?:depend|wantlib|pkgdep|newdepend|libdepend|pkgpath)\b/o) {
+				    &$cont($_);
+			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
+				    last;
+			    }
+			}
+			return;
+		}
+		next unless m/^\@(?:name\b|depend\b|wantlib\b|pkgdep\b|newdepend\b|libdepend\b|pkgpath\b|comment\s+subdir\=|arch\b)/o;
 		&$cont($_);
 	}
 }
@@ -306,6 +331,16 @@ sub pkgbase($)
     }
 }
 
+our @unique_categories =
+    (qw(name no-default-conflict manual-installation extrainfo arch));
+
+our @list_categories =
+    (qw(pkgcfl conflict depend wantlib pkgdep newdepend 
+    	libdepend module groups users items));
+
+our @cache_categories =
+    (qw(depend wantlib pkgdep newdepend libdepend));
+	
 sub visit
 {
 	my ($self, $method, @l) = @_;
@@ -320,7 +355,7 @@ sub visit
 		}
 	}
 
-	for my $unique_item (qw(name no-default-conflict manual-installation extrainfo arch)) {
+	for my $unique_item (@unique_categories) {
 		$self->{$unique_item}->$method(@l) if defined $self->{$unique_item};
 	}
 
@@ -328,7 +363,7 @@ sub visit
 		$self->{$special}->$method(@l) if defined $self->{$special};
 	}
 
-	for my $listname (qw(modules pkgcfl conflict depend wantlib pkgdep newdepend libdepend groups users items)) {
+	for my $listname (@list_categories) {
 		if (defined $self->{$listname}) {
 			for my $item (@{$self->{$listname}}) {
 				$item->$method(@l);
@@ -368,7 +403,7 @@ sub to_cache
 	my ($self) = @_;
 	return if defined $plist_cache->{$self->pkgname()};
 	my $plist = new OpenBSD::PackingList;
-	for my $c (qw(depend wantlib pkgdep newdepend libdepend)) {
+	for my $c (@cache_categories) {
 		if (defined $self->{$c}) {
 			$plist->{$c} = $self->{$c};
 		}
@@ -387,6 +422,14 @@ sub to_installation
 	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname()));
 }
 
+
+sub signature
+{
+	my $self = shift;
+	my $k = {};
+	$self->visit('signature', $k);
+	return join(',', $self->pkgname(), sort keys %$k);
+}
 
 sub forget
 {

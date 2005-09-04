@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingList.pod,v 1.2 2005/03/02 20:10:25 espie Exp $
+$OpenBSD: OpenBSD::PackingList.pod,v 1.3 2005/09/04 22:47:56 espie Exp $
 
 =head1 NAME
 
@@ -32,6 +32,10 @@ OpenBSD::PackingList - C<pkg_add(1)> packing-list manipulations
 
     # processing packing-lists
     $p4->visit('method', @args);
+
+    # signatures
+    if ($p3->signature() eq $p4->signature()) {
+    }
 
 =head1 DESCRIPTION
 
@@ -78,6 +82,10 @@ read only dependency information.
 
 read only the extra information field.
 
+=item UpdateInfoOnly
+
+read only what is needed to decide to update a package.
+
 =back
 
 A complete packing-list C<$plist> may be written to disk using the 
@@ -108,4 +116,8 @@ the C<add_object> method, which takes an existing packing element and adds it
 to the packing-list (note that C<add_object> only makes sense for subclasses
 of C<OpenBSD::PackingElement::Object>).
 See L<OpenBSD::PackingElement> for more details.
+
+C<$plist-E<gt>pkgname()> retrieves a packing-list name (mandatory).
+C<$plist-E<gt>signature()> retrieves a packing-list full signature, composed
+of the package name and dependency information.
 

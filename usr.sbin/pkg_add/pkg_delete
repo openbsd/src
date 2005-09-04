@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.90 2005/08/17 18:44:24 espie Exp $
+# $OpenBSD: pkg_delete,v 1.91 2005/09/04 22:47:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -24,19 +24,20 @@ use OpenBSD::PackingOld;
 use OpenBSD::RequiredBy;
 use OpenBSD::Error;
 use OpenBSD::ProgressMeter;
+use OpenBSD::Interactive;
 use OpenBSD::Delete;
 use OpenBSD::PackageInfo;
 
 our %forced = ();
 our $not;
 
-set_usage('pkg_delete [-cInqvx] [-B pkg-destdir] [-F keywords] pkgname [...]');
-our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_x);
+set_usage('pkg_delete [-ciInqvx] [-B pkg-destdir] [-F keywords] pkgname [...]');
+our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_i, $opt_x);
 
 $opt_v = 0;
 
 try { 
-	getopts('vchxDdnf:F:qpS:L:B:I',
+	getopts('vchixDdnf:F:qpS:L:B:I',
 	    {'v' => sub {++$opt_v;},
 	     'h' => sub { Usage(); },
 	     'F' => sub { 
@@ -88,6 +89,7 @@ $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
 $state->{forced} = \%forced;
 $state->{destdir} = $opt_B;
+$state->{interactive} = $opt_i;
 if ($opt_B eq '') {
     $state->{destdirname} = '';
 } else {
@@ -114,31 +116,8 @@ if ($< && !$forced{nonroot}) {
 my @realnames;
 my $bad;
 
-for my $pkgname (@ARGV) {
-    $pkgname =~ s/\.tgz$//;
-    if (is_installed($pkgname)) {
-	push(@realnames, installed_name($pkgname));
-    } else {
-	if (OpenBSD::PackageName::is_stem($pkgname)) {
-	    my @l = OpenBSD::PackageName::findstem($pkgname, 
-		installed_packages());
-	    if (@l == 0) {
-		print "Can't resolve $pkgname to an installed package name\n";
-		$bad = 1 unless $forced{uninstalled};
-	    } elsif (@l == 1) {
-		push(@realnames, $l[0]);
-	    } elsif (@l != 0) {
-		print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
-		if ($forced{ambiguous}) {
-		    print "(removing them all)\n";
-		    push(@realnames, @l);
-		} else {
-		    $bad = 1;
-		}
-	    }
-	}
-    }
-}
+OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames, 
+    "(removing them all)", $state);
 
 my @todo = OpenBSD::RequiredBy->compute_closure(@realnames);
 
@@ -149,12 +128,11 @@ if (@todo > @realnames) {
 	}
 	print "Can't remove ", join(' ', @ARGV), " without also removing:\n",
 	    join(' ', keys(%extra_rm)), "\n";
-	if ($forced{dependencies}) {
-		if (keys(%extra_rm) > 1) {
-			print "(removing them as well)\n";
-		} else {
-			print "(removing it as well)\n";
-		}
+	my $them = keys(%extra_rm) > 1 ? 'them' : 'it';
+	if ($forced{dependencies} or 
+	    OpenBSD::Interactive::confirm("Do you want to remove $them as well", $state->{interactive}, 0)) {
+		print "(removing $them as well)\n";
+		push(@realnames, keys(%extra_rm));
 	} else {
 		$bad = 1;
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.17 2005/01/16 11:16:23 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.18 2005/09/04 22:47:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,13 +21,14 @@ package OpenBSD::PackageInfo;
 our @ISA=qw(Exporter);
 our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name 
     lock_db unlock_db
-    add_installed delete_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE 
+    add_installed delete_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE MODULE
     REQUIRED_BY REQUIRING DISPLAY UNDISPLAY MTREE_DIRS);
 
 use OpenBSD::PackageName;
 use constant {
 	CONTENTS => '+CONTENTS',
 	COMMENT => '+COMMENT',
+	MODULE => '+MODULE.pm' ,
 	DESC => '+DESC',
 	INSTALL => '+INSTALL',
 	DEINSTALL => '+DEINSTALL',
@@ -43,13 +44,14 @@ my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
 our $list;
 
-our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, REQUIRING, DISPLAY, UNDISPLAY, MTREE_DIRS);
+our @info = (CONTENTS, COMMENT, DESC, REQUIRE, INSTALL, DEINSTALL, REQUIRED_BY, REQUIRING, DISPLAY, UNDISPLAY, MTREE_DIRS, MODULE);
 
 our %info = ();
 for my $i (@info) {
 	my $j = $i;
 	$j =~ s/\+/F/;
 	$info{$i} = $j;
+	$info{'+MODULE.pm'} = 'FMODULE';
 }
 
 sub _init_list
@@ -191,6 +193,51 @@ sub unlock_db()
 		flock($dlock, LOCK_UN);
 		close($dlock);
 	}
+}
+
+
+sub solve_installed_names
+{
+	my ($old, $new, $msg, $state) = @_;
+
+	my $installed;
+	my $bad = 0;
+
+	for my $pkgname (@$old) {
+	    $pkgname =~ s/\.tgz$//;
+	    if (is_installed($pkgname)) {
+		push(@$new, installed_name($pkgname));
+	    } else {
+		if (OpenBSD::PackageName::is_stem($pkgname)) {
+		    if (!defined $installed) {
+		    	$installed = OpenBSD::PackageName::compile_stemlist(installed_packages());
+		    }
+		    my @l = $installed->findstem($pkgname);
+		    if (@l == 0) {
+			print "Can't resolve $pkgname to an installed package name\n";
+			$bad = 1;
+		    } elsif (@l == 1) {
+			push(@$new, $l[0]);
+		    } elsif (@l != 0) {
+			print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
+			if ($state->{forced}->{ambiguous}) {
+			    print "$msg\n";
+			    push(@$new, @l);
+			} else {
+			    if ($state->{interactive}) {
+			    	require OpenBSD::ProgressMeter;
+
+				my $result = OpenBSD::ProgressMeter::ask_list('Choose one package', 1, ("<None>", sort @l));
+				push(@$new, $result) if $result ne '<None>';
+			    } else {
+				$bad = 1;
+			    }
+			}
+		    }
+		}
+	    }
+    	}
+	return $bad;
 }
 
 1;
