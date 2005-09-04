@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.11 2005/09/01 23:35:42 canacar Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.12 2005/09/04 18:27:28 brad Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -1800,7 +1800,7 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 	}
 
 
-	/* check queue pointers befor start transmittion */
+	/* check queue pointers before starting transmission */
 
 	/* sanity check: make sure that DMA is in ready state */
 	dma_descr = (sc->logic_ch_num << 4) + XILINX_TxDMA_DESCRIPTOR_HI;
@@ -1828,7 +1828,7 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 		len = m->m_len;
 		if (len > MAX_XILINX_TX_DMA_SIZE) {
 			/* FIXME: We need to split this frame into
-			 *        multiple parts.  For now thought
+			 *        multiple parts.  For now though
 			 *        just drop it :) */
 			log(LOG_INFO, "%s: Tx len %d > %d (MAX TX DMA LEN) "
 			    "(%s:%d)!\n", sc->if_name, len,
@@ -1840,7 +1840,7 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 
 		if (mtod(m, u_int32_t)  & 0x03) {
 			/* The mbuf should already be aligned */
-			log(LOG_INFO, "%s: TX packed not aligned "
+			log(LOG_INFO, "%s: TX packet not aligned "
 			    "(%s:%d)!\n", sc->if_name,
 			    MAX_XILINX_TX_DMA_SIZE, __FUNCTION__, __LINE__);
 			m_freem(m);
@@ -1854,7 +1854,7 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 
 	if (sc->tx_dma_addr & 0x03) {
 		log(LOG_INFO, "%s: Error: Tx Ptr not aligned "
-		    "to 32bit boudary!\n", card->devname);
+		    "to 32bit boundary!\n", card->devname);
 
 		if (m) {
 			m_freem(m);
@@ -1866,7 +1866,7 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 
 	sc->tx_dma_mbuf = m;
 
-	/* WARNING: Do ont use the "skb" pointer from
+	/* WARNING: Do not use the "skb" pointer from
 	 *          here on.  The skb pointer might not exist if
 	 *          we are in transparent mode */
 
