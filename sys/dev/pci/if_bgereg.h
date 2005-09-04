@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.27 2005/08/30 03:18:30 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.28 2005/09/04 20:28:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -268,7 +268,7 @@
 #define BGE_ASICREV_BCM5704		0x02
 #define BGE_ASICREV_BCM5705		0x03
 #define BGE_ASICREV_BCM5750		0x04
-#define BGE_ASICREV_BCM5714		0x05
+#define BGE_ASICREV_BCM5714		0x05	/* 5714, 5715 */
 #define BGE_ASICREV_BCM5752		0x06
 #define BGE_ASICREV_BCM5780		0x08
 
