@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.19 2005/07/30 20:50:35 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.20 2005/09/04 20:40:53 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -449,16 +449,6 @@ pci_intr_string(pc, ih)
 	DPRINTF(SPDB_INTR, ("; returning %s\n", str));
 
 	return (str);
-}
-
-const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
 }
 
 void *
