@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.6 2005/06/25 21:00:56 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.7 2005/09/04 19:19:40 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -592,16 +592,6 @@ pci_intr_string(pc, ih)
 #endif
 	return (irqstr);
 
-}
-
-const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
 }
 
 void *
