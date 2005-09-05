@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.10 2005/08/14 19:49:18 xsa Exp $	*/
+/*	$OpenBSD: hist.c,v 1.11 2005/09/05 19:45:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -74,6 +74,8 @@ cvs_hist_open(const char *path)
 	histp->chf_sindex = 0;
 	histp->chf_cindex = 0;
 	histp->chf_nbhent = 0;
+
+	cvs_log(LP_TRACE, "cvs_hist_open(%s)", path);
 
 	histp->chf_fd = open(path, O_RDONLY, 0);
 	if (histp->chf_fd == -1) {
