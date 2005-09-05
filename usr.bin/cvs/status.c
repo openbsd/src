@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.46 2005/08/17 18:33:55 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.47 2005/09/05 20:03:22 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -201,6 +201,10 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	}
 
 	buf[0] = '\0';
+
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+		cvs_log(LP_WARN, "nothing known about %s", cf->cf_name);
+
 	if (cf->cf_cvstat == CVS_FST_LOST || cf->cf_cvstat == CVS_FST_UNKNOWN)
 		strlcpy(buf, "no file ", sizeof(buf));
 	strlcat(buf, cf->cf_name, sizeof(buf));
