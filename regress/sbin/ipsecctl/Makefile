@@ -1,14 +1,16 @@
-# $OpenBSD: Makefile,v 1.6 2005/08/11 09:57:24 hshoexer Exp $
+# $OpenBSD: Makefile,v 1.7 2005/09/05 08:50:47 hshoexer Exp $
 
 # TARGETS
 # ipsec: feed ipsecNN.in through ipsecctl and check wether the output matches
 # 	 ipsecNN.ok
 # tcpmd5: same as above, but for tcpmd5 rules
 # sa:	 same as above, but for SA rules.
+# ike:	 same as above, but for ike rules.
 
 IPSECTESTS=1 2 3 4 5 6 7 8 9 10 11 12
 TCPMD5TESTS=1 2 3
 SATESTS=1 2 3 4 5 6
+IKETESTS=1 2 3 4 5 6 7
 
 SHELL=/bin/sh
 
@@ -38,6 +40,14 @@ sa${n}:
 	    ipsecctl -nv -f - | diff -u ${.CURDIR}/sa${n}.ok /dev/stdin
 .endfor
 
+.for n in ${IKETESTS}
+IKE_TARGETS+=ike${n}
+
+ike${n}:
+	cat ${.CURDIR}/ike${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
+	    ipsecctl -nv -f - | diff -u ${.CURDIR}/ike${n}.ok /dev/stdin
+.endfor
+
 ipsec:		${IPSEC_TARGETS}
 REGRESS_TARGETS+=ipsec
 
@@ -46,6 +56,9 @@ REGRESS_TARGETS+=tcpmd5
 
 sa:		${SA_TARGETS}
 REGRESS_TARGETS+=sa
+
+ike:		${IKE_TARGETS}
+REGRESS_TARGETS+=ike
 
 alltests: ${REGRESS_TARGETS}
 
