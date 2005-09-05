@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.59 2005/08/14 19:49:18 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.60 2005/09/05 19:25:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -297,7 +297,7 @@ static void		 rcs_freefoo(struct rcs_foo *);
  * fail.
  * Returns a handle to the opened file on success, or NULL on failure.
  */
-RCSFILE*
+RCSFILE *
 rcs_open(const char *path, int flags, ...)
 {
 	int ret;
@@ -538,7 +538,7 @@ rcs_write(RCSFILE *rfp)
  *
  * Retrieve the revision number of the head revision for the RCS file <file>.
  */
-const RCSNUM*
+const RCSNUM *
 rcs_head_get(RCSFILE *file)
 {
 	return (file->rf_head);
@@ -576,7 +576,7 @@ rcs_head_set(RCSFILE *file, const RCSNUM *rev)
  * Returns the number on success.  If NULL is returned, then there is no
  * default branch for this file.
  */
-const RCSNUM*
+const RCSNUM *
 rcs_branch_get(RCSFILE *file)
 {
 	return (file->rf_branch);
@@ -771,7 +771,7 @@ rcs_sym_remove(RCSFILE *file, const char *sym)
  * should be freed by the caller once they are done with it.
  * Returns the RCSNUM on success, or NULL on failure.
  */
-RCSNUM*
+RCSNUM *
 rcs_sym_getrev(RCSFILE *file, const char *sym)
 {
 	RCSNUM *num;
@@ -1028,7 +1028,7 @@ rcs_comment_set(RCSFILE *file, const char *comment)
  * Retrieve the revision number corresponding to the tag <tag> for the RCS
  * file <file>.
  */
-RCSNUM*
+RCSNUM *
 rcs_tag_resolve(RCSFILE *file, const char *tag)
 {
 	RCSNUM *num;
