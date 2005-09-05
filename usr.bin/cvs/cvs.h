@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.80 2005/08/16 16:34:19 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.81 2005/09/05 19:29:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -139,6 +139,7 @@
 #define CVS_PATH_LOGENTRIES	CVS_PATH_CVSDIR "/Entries.Log"
 #define CVS_PATH_ROOTSPEC	CVS_PATH_CVSDIR "/Root"
 #define CVS_PATH_REPOSITORY	CVS_PATH_CVSDIR "/Repository"
+#define CVS_PATH_TAG		CVS_PATH_CVSDIR "/Tag"
 
 
 /* flags for cmd_flags */
@@ -367,7 +368,7 @@ void		 cvsroot_free(struct cvsroot *);
 struct cvsroot	*cvsroot_get(const char *);
 
 
-/* Entries API */
+/* entries.c */
 CVSENTRIES	*cvs_ent_open(const char *, int);
 struct cvs_ent	*cvs_ent_get(CVSENTRIES *, const char *);
 struct cvs_ent	*cvs_ent_next(CVSENTRIES *);
@@ -412,6 +413,8 @@ int	  cvs_create_dir(const char *, int, char *, char *);
 char	 *cvs_rcs_getpath(CVSFILE *, char *, size_t);
 char	**cvs_makeargv(const char *, int *);
 void	  cvs_freeargv(char **, int);
+void	  cvs_write_tagfile(char *, char *, int);
+void	  cvs_parse_tagfile(char **, char **, int *);
 size_t	  cvs_path_cat(const char *, const char *, char *, size_t);
 
 

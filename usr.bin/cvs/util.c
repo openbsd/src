@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.50 2005/08/17 08:35:53 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.51 2005/09/05 19:29:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -280,7 +280,6 @@ cvs_splitpath(const char *path, char *base, size_t blen, char **file)
 
 	return (0);
 }
-
 
 /*
  * cvs_getargv()
@@ -788,4 +787,123 @@ cvs_rcs_getpath(CVSFILE *file, char *buf, size_t len)
 	}
 
 	return (buf);
+}
+
+/*
+ * cvs_write_tagfile()
+ *
+ * Write the CVS/Tag file for current directory.
+ */ 
+void
+cvs_write_tagfile(char *tag, char *date, int nb)
+{
+	FILE *fp;
+	char tagpath[MAXPATHLEN];
+
+	if (cvs_noexec == 1)
+		return;
+
+	if (strlcpy(tagpath, CVS_PATH_TAG, sizeof(tagpath)) >= sizeof(tagpath))
+		return;
+
+	if ((tag != NULL) || (date != NULL)) {
+		fp = fopen(tagpath, "w+");
+		if (fp == NULL) {
+			if (errno != ENOENT)
+				cvs_log(LP_NOTICE,
+				    "failed to open `%s' : %s", tagpath,
+				    strerror(errno));
+			return;
+		}
+		if (tag != NULL) {
+			if (nb != 0)
+				fprintf(fp, "N%s\n", tag);
+			else
+				fprintf(fp, "T%s\n", tag);
+		} else {
+			fprintf(fp, "D%s\n", date);
+		}
+		(void)fclose(fp);
+	} else {
+		cvs_unlink(tagpath);
+		return;
+	}
+}
+
+/*
+ * cvs_parse_tagfile()
+ *
+ * Parse the CVS/Tag file for current directory.
+ *
+ * If it contains a branch tag, sets <tagp>.
+ * If it contains a date, sets <datep>.
+ * If it contains a non-branch tag, sets <nbp>.
+ * 
+ * Returns nothing but an error message, and sets <tagp>, <datep> to NULL
+ * and <nbp> to 0.
+ */
+void
+cvs_parse_tagfile(char **tagp, char **datep, int *nbp)
+{
+	FILE *fp;
+	int linenum;
+	size_t len;
+	char linebuf[128], tagpath[MAXPATHLEN];
+
+	if (tagp != NULL)
+		*tagp = (char *)NULL;
+
+	if (datep != NULL)
+		*datep = (char *)NULL;
+
+	if (nbp != NULL)
+		*nbp = 0;
+
+	if (strlcpy(tagpath, CVS_PATH_TAG, sizeof(tagpath)) >= sizeof(tagpath))
+		return;
+
+	fp = fopen(tagpath, "r");
+	if (fp == NULL) {
+		if (errno != ENOENT)
+			cvs_log(LP_NOTICE, "failed to open `%s' : %s", tagpath,
+			    strerror(errno));
+		return;
+	}
+
+	linenum = 0;
+
+	while (fgets(linebuf, (int)sizeof(linebuf), fp) != NULL) {
+		linenum++;
+		if ((len = strlen(linebuf)) == 0)
+			continue;
+		if (linebuf[len -1] != '\n') {
+			cvs_log(LP_WARN, "line too long in `%s:%d'", tagpath,
+			    linenum);
+			break;
+		}
+		linebuf[--len] = '\0';
+
+		switch(*linebuf) {
+		case 'T':
+			if (tagp != NULL)
+				*tagp = strdup(linebuf);
+			break;
+		case 'D':
+			if (datep != NULL)
+				*datep = strdup(linebuf);
+			break;
+		case 'N':
+			if (tagp != NULL)
+				*tagp = strdup(linebuf);
+			if (nbp != NULL)
+				*nbp = 1;
+			break;
+		default:
+			break;
+		}
+	}
+	if (ferror(fp))
+		cvs_log(LP_NOTICE, "failed to read line from `%s'", tagpath);
+
+	(void)fclose(fp);
 }
