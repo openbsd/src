@@ -1,6 +1,7 @@
-/*	$OpenBSD: add.c,v 1.27 2005/07/30 00:01:50 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.28 2005/09/05 19:49:31 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+ * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +45,9 @@ static int	cvs_add_remote(CVSFILE *, void *);
 static int	cvs_add_local(CVSFILE *, void *);
 static int	cvs_add_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_add_pre_exec(struct cvsroot *);
+#if 0
+static int	cvs_add_build_entry(CVSFILE *);
+#endif
 
 struct cvs_cmd cvs_cmd_add = {
 	CVS_OP_ADD, CVS_REQ_ADD, "add",
@@ -64,6 +68,7 @@ struct cvs_cmd cvs_cmd_add = {
 
 static int kflag = RCS_KWEXP_DEFAULT;
 static char *koptstr;
+static char kbuf[16];
 
 static int
 cvs_add_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
@@ -102,14 +107,16 @@ cvs_add_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_add_pre_exec(struct cvsroot *root)
 {
-	char buf[16];
+	kbuf[0] = '\0';
 
-	if ((root->cr_method != CVS_METHOD_LOCAL) &&
-	    (kflag != RCS_KWEXP_DEFAULT)) {
-		strlcpy(buf, "-k", sizeof(buf));
-		strlcat(buf, koptstr, sizeof(buf));
-		if (cvs_sendarg(root, buf, 0) < 0)
-			return (CVS_EX_PROTO);
+	if (kflag != RCS_KWEXP_DEFAULT) {
+		strlcpy(kbuf, "-k", sizeof(kbuf));
+		strlcat(kbuf, koptstr, sizeof(kbuf));
+
+		if (root->cr_method != CVS_METHOD_LOCAL) {
+			if (cvs_sendarg(root, kbuf, 0) < 0)
+				return (CVS_EX_PROTO);
+		}
 	}
 
 	return (0);
@@ -141,12 +148,128 @@ cvs_add_remote(CVSFILE *cf, void *arg)
 	return (ret);
 }
 
-static
-int cvs_add_local(CVSFILE *cf, void *arg)
+static int
+cvs_add_local(CVSFILE *cf, void *arg)
 {
-	cvs_log(LP_NOTICE, "scheduling file `%s' for addition", cf->cf_name);
-	cvs_log(LP_NOTICE, "use `%s commit' to add this file permanently",
-	    __progname);
+	int added;
+	char numbuf[64];
+
+	added = 0;
+
+	if ((!(cf->cf_flags & CVS_FILE_ONDISK)) &&
+	    (cf->cf_cvstat != CVS_FST_LOST) &&
+	    (cf->cf_cvstat != CVS_FST_REMOVED)) {
+		if (verbosity > 1)
+			cvs_log(LP_WARN, "nothing known about `%s'",
+			    cf->cf_name);
+		return (0);
+	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
+		if (verbosity > 1)
+			cvs_log(LP_WARN, "`%s' has already been entered",
+			    cf->cf_name);
+		return (0);
+	} else if (cf->cf_cvstat == CVS_FST_REMOVED) {
+
+		/* XXX remove '-' from CVS/Entries */
+
+		/* XXX check the file out */
+
+		rcsnum_tostr(cf->cf_lrev, numbuf, sizeof(numbuf));
+		cvs_log(LP_WARN, "%s, version %s, resurrected",
+		    cf->cf_name, numbuf);
+
+		return (0);
+	} else if ((cf->cf_cvstat == CVS_FST_CONFLICT) ||
+	    (cf->cf_cvstat == CVS_FST_LOST) || 
+	    (cf->cf_cvstat == CVS_FST_MODIFIED) ||
+	    (cf->cf_cvstat == CVS_FST_UPTODATE)) {
+		if (verbosity > 1) {
+			rcsnum_tostr(cf->cf_lrev, numbuf, sizeof(numbuf));
+			cvs_log(LP_WARN,
+			    "%s already exists, with version number %s",
+			    cf->cf_name, numbuf);
+		}
+		return (0);
+	}
+
+	if (verbosity > 1) {
+		cvs_log(LP_NOTICE, "scheduling file `%s' for addition",
+		    cf->cf_name);
+		added++;
+	}
+
+	if (added != 0) {
+		if (verbosity > 0)
+			cvs_log(LP_NOTICE, "use '%s commit' to add %s "
+			    "permanently", __progname,
+			    (added == 1) ? "this file" : "these files");
+		return (0);
+	}
 
 	return (0);
 }
+
+#if 0
+static int
+cvs_add_build_entry(CVSFILE *cf)
+{
+	int l;
+	char entry[CVS_ENT_MAXLINELEN], path[MAXPATHLEN];
+	FILE *fp;
+	CVSENTRIES *entf;
+	struct cvs_ent *ent;
+
+	entf = (CVSENTRIES *)cf->cf_entry;
+
+	if (cvs_noexec == 1)
+		return (0);
+
+	/* Build the path to the <file>,t file. */
+	l = snprintf(path, sizeof(path), "%s/%s%s",
+	    CVS_PATH_CVSDIR, cf->cf_name, CVS_DESCR_FILE_EXT);
+	if (l == -1 || l >= (int)sizeof(path)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", path);
+		return (CVS_EX_DATA);
+	}
+
+	fp = fopen(path, "w+");
+	if (fp == NULL) {
+		cvs_log(LP_ERRNO, "failed to open `%s'", path);
+		return (CVS_EX_FILE);
+	}
+
+	if (cvs_msg != NULL) {
+		if (fputs(cvs_msg, fp) == EOF) {
+			cvs_log(LP_ERRNO, "cannot write to `%s'", path);
+			(void)fclose(fp);
+			return (CVS_EX_FILE);
+		}
+	}
+	(void)fclose(fp);
+
+	/* XXX Build the Entries line. */
+	l = snprintf(entry, sizeof(entry), "/%s/0/Initial %s/%s/",
+	    cf->cf_name, cf->cf_name, kbuf);
+	if (l == -1 || l >= (int)sizeof(entry)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", entry);
+		(void)cvs_unlink(path);
+		return (CVS_EX_DATA);
+	}
+
+	if ((ent = cvs_ent_parse(entry)) == NULL) {
+		cvs_log(LP_ERR, "failed to parse entry");
+		(void)cvs_unlink(path);
+		return (CVS_EX_DATA);
+	}	
+
+	if (cvs_ent_add(entf, ent) < 0) {
+		cvs_log(LP_ERR, "failed to add entry");
+		(void)cvs_unlink(path);
+		return (CVS_EX_DATA);
+	}
+
+	return (0);
+}
+#endif
