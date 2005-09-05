@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.23 2005/08/22 18:00:37 fgsch Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.24 2005/09/05 20:25:27 fgsch Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
     char *p;
     switch(tuple[0]) {
     case PCMCIA_CISTPL_MANFID:
-	if(tuple[1] != 5) {
+	if(tuple[1] < 4) {
 	    DPRINTF(("%s: wrong length manufacturer id (%d)\n", 
 		     func, tuple[1]));
 	    break;
