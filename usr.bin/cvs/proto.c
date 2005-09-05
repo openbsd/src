@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.76 2005/08/16 06:37:57 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.77 2005/09/05 19:31:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1043,7 +1043,7 @@ int
 cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 {
 	int l;
-	char ebuf[128], numbuf[64];
+	char ebuf[CVS_ENT_MAXLINELEN], numbuf[64];
 
 	if (file->cf_type != DT_REG) {
 		cvs_log(LP_ERR, "attempt to send Entry for non-regular file");
