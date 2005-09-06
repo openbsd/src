@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.38 2005/03/02 10:12:15 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.39 2005/09/06 15:33:21 espie Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,17 +155,29 @@ Calls a built-in by its
 .Fa name ,
 overriding possible redefinitions.
 .It Fn changecom startcomment endcomment
-Change the start and end comment sequences.
-The default is the pound sign
-.Pq Sq #
+Changes the start comment and end comment sequences.
+Comment sequences may be up to five characters long.
+The default values are the pound sign
 and the newline character.
-With no arguments comments are turned off.
-The maximum length for a comment marker is five characters.
+.Bd -literal -offset indent
+# This is a comment
+.Ed
+.Pp
+With no arguments, comments are turned off.
+With one single argument, the end comment sequence is set
+to the newline character.
 .It Fn changequote beginquote endquote
-Defines the quote symbols to be the first and second arguments.
-The symbols may be up to five characters long.
-If no arguments are
-given it restores the default open and close single quotes.
+Defines the open quote and close quote sequences.
+Quote sequences may be up to five characters long.
+The default values are the backquote character and the quote
+character.
+.Bd -literal -offset indent
+`Here is a quoted string'
+.Ed
+.Pp
+With no arguments, the default quotes are restored.
+With one single argument, the close quote sequence is set
+to the newline character.
 .It Fn decr arg
 Decrements the argument
 .Fa arg
@@ -386,18 +398,10 @@ Returns the current file's name.
 .El
 .Sh STANDARDS
 .Nm
-follows the Single Unix 2 specification, along with a few extensions taken
+follows the Single Unix 3 specification, along with a few extensions taken
 from
 .Nm gnu-m4 .
 .Pp
-The
-.Fl s
-option
-.Po
-.Xr cpp 1 's
-#line directives
-.Pc
-is currently not supported.
 Flags
 .Fl I ,
 .Fl d ,

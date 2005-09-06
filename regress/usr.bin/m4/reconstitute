@@ -1,0 +1,24 @@
+#! /usr/bin/perl
+# $OpenBSD: reconstitute,v 1.1 2005/09/06 15:33:21 espie Exp $
+
+# Written by Marc Espie, 2005
+# Public domain
+
+# This simple perl script puts back line numbers everywhere.
+# This is suitable for testing synchronization, as we don't really
+# care how many synchronization marks we emit, as long as the line
+# numbers match
+
+use File::Basename;
+
+my ($lineno, $file) = (-1, "<unknown>");
+
+while (<>) {
+	if (m/^#line\s+(\d+)\s+\"(.*)\"/) {
+		($lineno, $file) = ($1, $2);
+		$file=basename($file);
+	} else {
+		print "$file:$lineno:$_";
+		$lineno++;
+	}
+}

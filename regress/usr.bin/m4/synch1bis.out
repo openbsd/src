@@ -1,0 +1,7 @@
+stdin:1:This is a test for multi MARK1
+stdin:2:line synchronization stuff MARK2
+stdin:3:# Let's include comments to see MARK3
+stdin:4:quoted string MARK4
+stdin:7:Return to normal MARK5
+stdin:11:And let's see where we are now. MARK6
+stdin:13:MARK7

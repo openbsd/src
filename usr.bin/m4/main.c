@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.67 2005/08/06 16:22:26 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.68 2005/09/06 15:33:21 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -296,9 +296,9 @@ do_look_ahead(int t, const char *token)
 	for (i = 1; *++token; i++) {
 		t = gpbc();
 		if (t == EOF || (unsigned char)t != (unsigned char)*token) {
-			putback(t);
+			pushback(t);
 			while (--i)
-				putback(*--token);
+				pushback(*--token);
 			return 0;
 		}
 	}
@@ -322,10 +322,57 @@ macro(void)
 
 	cycle {
 		t = gpbc();
-		if (t == '_' || isalpha(t)) {
+
+		if (LOOK_AHEAD(t,lquote)) {	/* strip quotes */
+			nlpar = 0;
+			record(quotes, nlpar++);
+			/*
+			 * Opening quote: scan forward until matching
+			 * closing quote has been found.
+			 */
+			do {
+
+				l = gpbc();
+				if (LOOK_AHEAD(l,rquote)) {
+					if (--nlpar > 0)
+						outputstr(rquote);
+				} else if (LOOK_AHEAD(l,lquote)) {
+					record(quotes, nlpar++);
+					outputstr(lquote);
+				} else if (l == EOF) {
+					if (nlpar == 1)
+						warnx("unclosed quote:");
+					else
+						warnx("%d unclosed quotes:", nlpar);
+					dump_stack(quotes, nlpar);
+					exit(1);
+				} else {
+					if (nlpar > 0) {
+						if (sp < 0)
+							reallyputchar(l);
+						else
+							CHRSAVE(l);
+					}
+				}
+			}
+			while (nlpar != 0);
+		} else if (sp < 0 && LOOK_AHEAD(t, scommt)) {
+			reallyoutputstr(scommt);
+
+			for(;;) {
+				t = gpbc();
+				if (LOOK_AHEAD(t, ecommt)) {
+					reallyoutputstr(ecommt);
+					break;
+				}
+				if (t == EOF)
+					break;
+				reallyputchar(t);
+			}
+		} else if (t == '_' || isalpha(t)) {
 			p = inspect(t, token);
 			if (p != NULL)
-				putback(l = gpbc());
+				pushback(l = gpbc());
 			if (p == NULL || (l != LPAREN && 
 			    (macro_getdef(p)->type & NEEDARGS) != 0))
 				outputstr(token);
@@ -371,62 +418,7 @@ macro(void)
 			emit_synchline();
 			bufbase = bbase[ilevel];
 			continue;
-		}
-	/*
-	 * non-alpha token possibly seen..
-	 * [the order of else if .. stmts is important.]
-	 */
-		else if (LOOK_AHEAD(t,lquote)) {	/* strip quotes */
-			nlpar = 0;
-			record(quotes, nlpar++);
-			/*
-			 * Opening quote: scan forward until matching
-			 * closing quote has been found.
-			 */
-			do {
-
-				l = gpbc();
-				if (LOOK_AHEAD(l,rquote)) {
-					if (--nlpar > 0)
-						outputstr(rquote);
-				} else if (LOOK_AHEAD(l,lquote)) {
-					record(quotes, nlpar++);
-					outputstr(lquote);
-				} else if (l == EOF) {
-					if (nlpar == 1)
-						warnx("unclosed quote:");
-					else
-						warnx("%d unclosed quotes:", nlpar);
-					dump_stack(quotes, nlpar);
-					exit(1);
-				} else {
-					if (nlpar > 0) {
-						if (sp < 0)
-							reallyputchar(l);
-						else
-							CHRSAVE(l);
-					}
-				}
-			}
-			while (nlpar != 0);
-		}
-
-		else if (sp < 0 && LOOK_AHEAD(t, scommt)) {
-			reallyoutputstr(scommt);
-
-			for(;;) {
-				t = gpbc();
-				if (LOOK_AHEAD(t, ecommt)) {
-					reallyoutputstr(ecommt);
-					break;
-				}
-				if (t == EOF)
-					break;
-				reallyputchar(t);
-			}
-		}
-
-		else if (sp < 0) {		/* not in a macro at all */
+		} else if (sp < 0) {		/* not in a macro at all */
 			reallyputchar(t);	/* output directly..	 */
 		}
 
@@ -437,7 +429,7 @@ macro(void)
 				chrsave(t);
 			while (isspace(l = gpbc()))
 				;		/* skip blank, tab, nl.. */
-			putback(l);
+			pushback(l);
 			record(paren, PARLEV++);
 			break;
 
@@ -464,7 +456,7 @@ macro(void)
 				chrsave(EOS);		/* new argument   */
 				while (isspace(l = gpbc()))
 					;
-				putback(l);
+				pushback(l);
 				pushs(ep);
 			} else
 				chrsave(t);
@@ -550,7 +542,7 @@ inspect(int c, char *tp)
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
 		*tp++ = c;
 	if (c != EOF)
-		PUTBACK(c);
+		PUSHBACK(c);
 	*tp = EOS;
 	/* token is too long, it won't match anything, but it can still
 	 * be output. */

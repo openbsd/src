@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.32 2005/08/06 16:22:26 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.33 2005/09/06 15:33:21 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -76,10 +76,10 @@ indx(const char *s1, const char *s2)
 		return (t - s1);
 }
 /*
- *  putback - push character back onto input
+ *  pushback - push character back onto input
  */
 void
-putback(int c)
+pushback(int c)
 {
 	if (c == EOF)
 		return;
@@ -90,7 +90,7 @@ putback(int c)
 
 /*
  *  pbstr - push string back onto input
- *          putback is replicated to improve
+ *          pushback is replicated to improve
  *          performance.
  */
 void
@@ -129,7 +129,7 @@ pbnumbase(int n, int base, int d)
 
 	num = (n < 0) ? -n : n;
 	do {
-		putback(digits[num % base]);
+		pushback(digits[num % base]);
 		printed++;
 	}
 	while ((num /= base) > 0);
@@ -137,10 +137,10 @@ pbnumbase(int n, int base, int d)
 	if (n < 0)
 		printed++;
 	while (printed++ < d)
-		putback('0');
+		pushback('0');
 
 	if (n < 0)
-		putback('-');
+		pushback('-');
 }
 
 /*
@@ -150,7 +150,7 @@ void
 pbunsigned(unsigned long n)
 {
 	do {
-		putback(n % 10 + '0');
+		pushback(n % 10 + '0');
 	}
 	while ((n /= 10) > 0);
 }
@@ -332,10 +332,11 @@ obtain_char(struct input_file *f)
 {
 	if (f->c == EOF)
 		return EOF;
-	else if (f->c == '\n')
-		f->lineno++;
 
 	f->c = fgetc(f->file);
+	if (f->c == '\n')
+		f->lineno++;
+
 	return f->c;
 }
 

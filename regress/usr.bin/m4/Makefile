@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2005/05/17 20:37:11 espie Exp $
+#	$OpenBSD: Makefile,v 1.22 2005/09/06 15:33:21 espie Exp $
 
 FIBOMAX=25
 M4=m4
@@ -10,7 +10,7 @@ REGRESS_TARGETS= test-ff_after_dnl test-m4wrap test-m4wrap2 \
     test-m4wrap3 test-gm4wrap3 test-fibo \
     test-patterns trip test-strangequotes test-redef test-quotes \
     test-weird test-args test-esyscmd test-eval test-gnupatterns \
-    test-gnupatterns2
+    test-gnupatterns2 test-comments test-synch1 test-synch1bis
 
 test-ff_after_dnl: ff_after_dnl.m4
 	${M4} ff_after_dnl.m4 | diff - ${.CURDIR}/ff_after_dnl.out
@@ -52,8 +52,9 @@ test-quotes:
 	${M4} ${.CURDIR}/quotes.m4 2>&1|	\
 		sed -e 's,\( *\).*/quotes.m4,\1quotes.m4,' | \
 		diff - ${.CURDIR}/quotes.out
-	${M4} -g ${.CURDIR}/quotes.m4 2>&1|diff - ${.CURDIR}/quotes.gnu.out
 
+test-comments:
+	${M4} ${.CURDIR}/comments.m4 | diff - ${.CURDIR}/comments.out
 test-strangequotes: strangequotes.m4
 	${M4} strangequotes.m4| diff - ${.CURDIR}/strangequotes.out
 
@@ -71,6 +72,14 @@ test-esyscmd:
 
 test-eval:
 	${M4} ${.CURDIR}/eval.m4 | diff -u - ${.CURDIR}/eval.out
+
+test-synch1:
+	${M4} -s ${.CURDIR}/synch1.m4|perl ${.CURDIR}/reconstitute|\
+		grep MARK| diff - ${.CURDIR}/synch1.out
+
+test-synch1bis:
+	${M4} -s <${.CURDIR}/synch1.m4|perl ${.CURDIR}/reconstitute|\
+		grep MARK| diff - ${.CURDIR}/synch1bis.out
 
 .PHONY:	${REGRESS_TARGETS}
 
