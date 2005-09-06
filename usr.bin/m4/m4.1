@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.39 2005/09/06 15:33:21 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.40 2005/09/06 15:50:19 espie Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,8 +135,7 @@ Turn tracing on for
 .Ar macro .
 .It Fl g
 Activate GNU-m4 compatibility mode.
-In this mode, changequote with
-two empty parameters deactivates quotes, translit handles simple character
+In this mode, translit handles simple character
 ranges (e.g., a-z), regular expressions mimic emacs behavior,
 multiple m4wrap calls are handled as a stack,
 and the number of diversions is unlimited.
