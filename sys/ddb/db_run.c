@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.17 2005/01/04 21:11:44 espie Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.18 2005/09/06 19:49:21 miod Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -120,9 +120,7 @@ db_stop_at_pc(regs, is_breakpoint)
 # ifdef SET_PC_REGS
 		SET_PC_REGS(regs, old_pc);
 # else
-#  ifndef m88k
 		PC_REGS(regs) = old_pc;
-#  endif
 # endif
 #endif
 	}
