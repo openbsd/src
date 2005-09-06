@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.29 2005/06/17 09:40:48 markus Exp $
+.\"	$OpenBSD: top.1,v 1.30 2005/09/06 23:28:23 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -391,12 +391,17 @@ used to map user ID to name
 kernel image
 .El
 .Sh SEE ALSO
+.Xr fstat 1 ,
 .Xr kill 1 ,
+.Xr netstat 1 ,
 .Xr ps 1 ,
 .Xr stty 1 ,
 .Xr systat 1 ,
 .Xr mem 4 ,
-.Xr renice 8
+.Xr iostat 8 ,
+.Xr pstat 8 ,
+.Xr renice 8 ,
+.Xr vmstat 8 ,
 .Sh AUTHORS
 William LeFebvre, EECS Department, Northwestern University
 .Sh BUGS

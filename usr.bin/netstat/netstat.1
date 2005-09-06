@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.46 2005/07/25 20:32:12 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.47 2005/09/06 23:28:23 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -373,8 +373,11 @@ The first line of each screen of information contains a summary since the
 system was last rebooted.
 Subsequent lines of output show values accumulated over the preceding interval.
 .Sh SEE ALSO
+.Xr fstat 1 ,
 .Xr nfsstat 1 ,
 .Xr ps 1 ,
+.Xr systat 1 ,
+.Xr top 1 ,
 .Xr inet 3 ,
 .Xr netintro 4 ,
 .Xr route 4 ,
@@ -384,6 +387,7 @@ Subsequent lines of output show values accumulated over the preceding interval.
 .Xr services 5 ,
 .Xr iostat 8 ,
 .Xr portmap 8 ,
+.Xr pstat 8 ,
 .Xr route 8 ,
 .Xr tcpdrop 8 ,
 .Xr trpt 8 ,
