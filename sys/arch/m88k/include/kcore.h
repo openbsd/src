@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcore.h,v 1.2 2004/09/30 21:46:35 miod Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.3 2005/09/06 19:28:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Miodrag Vallat.
@@ -25,8 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MVME88K_KCORE_H_
-#define	_MVME88K_KCORE_H_
+#ifndef	_M88K_KCORE_H_
+#define	_M88K_KCORE_H_
 
 /* Keep this define consistent with VM_PHYSSEG_MAX in <machine/vmparam.h> */
 #define	NPHYS_RAM_SEGS	1
@@ -36,4 +36,4 @@ typedef struct cpu_kcore_hdr {
 	phys_ram_seg_t	ram_segs[NPHYS_RAM_SEGS];
 } cpu_kcore_hdr_t;
 
-#endif	/* _MVME88K_KCORE_H_ */
+#endif	/* _M88K_KCORE_H_ */

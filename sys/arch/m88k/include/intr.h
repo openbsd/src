@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2005/05/01 09:55:49 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2005/09/06 19:28:22 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -70,4 +70,4 @@ void splassert_check(int, const char *);
 #define splx(x)			((x) ? setipl((x)) : spl0())
 
 #endif /* _KERNEL */
-#endif /* _MVME88K_INTR_H_ */
+#endif /* _M88K_INTR_H_ */
