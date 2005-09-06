@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.61 2005/08/08 09:48:02 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.62 2005/09/06 17:02:09 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -3239,6 +3239,7 @@ softdep_disk_io_initiation(bp)
 {
 	struct worklist *wk, *nextwk;
 	struct indirdep *indirdep;
+	struct buf *sbp;
 
 	/*
 	 * We only care about write operations. There should never
@@ -3246,6 +3247,9 @@ softdep_disk_io_initiation(bp)
 	 */
 	if (bp->b_flags & B_READ)
 		panic("softdep_disk_io_initiation: read");
+
+	ACQUIRE_LOCK(&lk);
+
 	/*
 	 * Do any necessary pre-I/O processing.
 	 */
@@ -3271,17 +3275,21 @@ softdep_disk_io_initiation(bp)
 			 * dependency can be freed.
 			 */
 			if (LIST_FIRST(&indirdep->ir_deplisthd) == NULL) {
-				indirdep->ir_savebp->b_flags |= B_INVAL | B_NOCACHE;
-				brelse(indirdep->ir_savebp);
+				sbp = indirdep->ir_savebp;
+				sbp->b_flags |= B_INVAL | B_NOCACHE;
 				/* inline expand WORKLIST_REMOVE(wk); */
 				wk->wk_state &= ~ONWORKLIST;
 				LIST_REMOVE(wk, wk_list);
 				WORKITEM_FREE(indirdep, D_INDIRDEP);
+				FREE_LOCK(&lk);
+				brelse(sbp);
+				ACQUIRE_LOCK(&lk);
 				continue;
 			}
 			/*
 			 * Replace up-to-date version with safe version.
 			 */
+			FREE_LOCK(&lk);
 			indirdep->ir_saveddata = malloc(bp->b_bcount,
 			    M_INDIRDEP, M_WAITOK);
 			ACQUIRE_LOCK(&lk);
@@ -3290,7 +3298,6 @@ softdep_disk_io_initiation(bp)
 			bcopy(bp->b_data, indirdep->ir_saveddata, bp->b_bcount);
 			bcopy(indirdep->ir_savebp->b_data, bp->b_data,
 			    bp->b_bcount);
-			FREE_LOCK(&lk);
 			continue;
 
 		case D_MKDIR:
@@ -3300,11 +3307,14 @@ softdep_disk_io_initiation(bp)
 			continue;
 
 		default:
+			FREE_LOCK(&lk);
 			panic("handle_disk_io_initiation: Unexpected type %s",
 			    TYPENAME(wk->wk_type));
 			/* NOTREACHED */
 		}
 	}
+
+	FREE_LOCK(&lk);
 }
 
 /*
@@ -3332,7 +3342,6 @@ initiate_write_filepage(pagedep, bp)
 		return;
 	}
 	pagedep->pd_state |= IOSTARTED;
-	ACQUIRE_LOCK(&lk);
 	for (i = 0; i < DAHASHSZ; i++) {
 		LIST_FOREACH(dap, &pagedep->pd_diraddhd[i], da_pdlist) {
 			ep = (struct direct *)
@@ -3351,7 +3360,6 @@ initiate_write_filepage(pagedep, bp)
 			dap->da_state |= UNDONE;
 		}
 	}
-	FREE_LOCK(&lk);
 }
 
 /*
@@ -3373,8 +3381,10 @@ initiate_write_inodeblock(inodedep, bp)
 #endif
 	int i, deplist;
 
-	if (inodedep->id_state & IOSTARTED)
+	if (inodedep->id_state & IOSTARTED) {
+		FREE_LOCK(&lk);
 		panic("initiate_write_inodeblock: already started");
+	}
 	inodedep->id_state |= IOSTARTED;
 	fs = inodedep->id_fs;
 	dp = (struct ufs1_dinode *)bp->b_data +
@@ -3384,10 +3394,14 @@ initiate_write_inodeblock(inodedep, bp)
 	 * inode cannot be written to disk.
 	 */
 	if ((inodedep->id_state & DEPCOMPLETE) == 0) {
-		if (inodedep->id_savedino != NULL)
+		if (inodedep->id_savedino != NULL) {
+			FREE_LOCK(&lk);
 			panic("initiate_write_inodeblock: already doing I/O");
+		}
+		FREE_LOCK(&lk);
 		MALLOC(inodedep->id_savedino, struct ufs1_dinode *,
 		    sizeof(struct ufs1_dinode), M_INODEDEP, M_WAITOK);
+		ACQUIRE_LOCK(&lk);
 		*inodedep->id_savedino = *dp;
 		bzero((caddr_t)dp, sizeof(struct ufs1_dinode));
 		return;
@@ -3401,7 +3415,6 @@ initiate_write_inodeblock(inodedep, bp)
 	/*
 	 * Set the dependencies to busy.
 	 */
-	ACQUIRE_LOCK(&lk);
 	for (deplist = 0, adp = TAILQ_FIRST(&inodedep->id_inoupdt); adp;
 	     adp = TAILQ_NEXT(adp, ad_next)) {
 #ifdef DIAGNOSTIC
@@ -3468,7 +3481,6 @@ initiate_write_inodeblock(inodedep, bp)
 #endif /* DIAGNOSTIC */
 			dp->di_ib[i] = 0;
 		}
-		FREE_LOCK(&lk);
 		return;
 	}
 	/*
@@ -3497,7 +3509,6 @@ initiate_write_inodeblock(inodedep, bp)
 	 */
 	for (; adp; adp = TAILQ_NEXT(adp, ad_next))
 		dp->di_ib[adp->ad_lbn - NDADDR] = 0;
-	FREE_LOCK(&lk);
 }
 
 /*
