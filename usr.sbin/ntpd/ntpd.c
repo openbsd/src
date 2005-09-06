@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.39 2005/07/11 08:08:06 dtucker Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.40 2005/09/06 21:27:10 wvdputte Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -275,10 +275,10 @@ dispatch_imsg(struct ntpd_conf *conf)
 				fatalx("invalid IMSG_SETTIME received");
 			if (!conf->settime)
 				break;
+			log_init(conf->debug);
 			memcpy(&d, imsg.data, sizeof(d));
 			ntpd_settime(d);
 			/* daemonize now */
-			log_init(conf->debug);
 			if (!conf->debug)
 				if (daemon(1, 0))
 					fatal("daemon");
