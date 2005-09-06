@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.38 2005/04/07 00:54:06 mickey Exp $
+$OpenBSD: cpudevs,v 1.39 2005/09/06 23:49:28 mickey Exp $
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -308,12 +308,16 @@ bus	ROPES	15	Ropes
 bus	MERCED	16	Merced
 
 cpu	SOFTEMU	0x01	Software Emulation
-cpu	PCXT2	0x0b	PCXT'
-cpu	PCXL	0x0d	PCXL
-cpu	PCXU	0x0e	PCXU
-cpu	PCXL2	0x0f	PCXL2
-cpu	PCXUP	0x10	PCXU+
-cpu	PCXW	0x11	PCXW
+cpu	PCXT2	0x0b	PCXT' (Thunderbird')
+cpu	PCXL	0x0d	PCXL (Hummingbird)
+cpu	PCXU	0x0e	PCXU (Onyx)
+cpu	PCXL2	0x0f	PCXL2 (Velociraptor)
+cpu	PCXUP	0x10	PCXU+ (Vulcan)
+cpu	PCXW	0x11	PCXW (Vulcan)
+#cpu	PCXWP	0x??	PCXW+ (Landshark)
+#cpu	PCXW2	0x??	PCXW2 (Piranha)
+#cpu	PCXM	0x??	PCXM (Mako)
+#cpu	PCXM2	0x??	PCXM2 (Mako2)
 
 fpu	SOFTEMU	0x01	Software Emulation
 fpu	INDIGO	0x02	Indigo
