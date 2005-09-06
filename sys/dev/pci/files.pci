@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.188 2005/08/20 22:51:38 brad Exp $
+#	$OpenBSD: files.pci,v 1.189 2005/09/06 02:22:37 krw Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -56,7 +56,7 @@ file	dev/pci/dpt_pci.c		dpt_pci
 attach	adv at pci with adv_pci
 file	dev/pci/adv_pci.c		adv_pci
 file	dev/ic/advlib.c			adv_pci
-file	dev/ic/advmcode.c		adv_pci
+file	dev/microcode/adw/advmcode.c	adv_pci
 
 # AdvanSys ULTRA WIDE SCSI controllers
 # device declaration in sys/conf/files

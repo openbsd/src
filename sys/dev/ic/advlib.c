@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.c,v 1.11 2004/01/10 00:13:36 brad Exp $	*/
+/*	$OpenBSD: advlib.c,v 1.12 2005/09/06 02:22:37 krw Exp $	*/
 /*      $NetBSD: advlib.c,v 1.7 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -71,7 +71,8 @@
 
 #include <dev/ic/adv.h>
 #include <dev/ic/advlib.h>
-#include <dev/ic/advmcode.h>
+
+#include <dev/microcode/adw/advmcode.h>
 
 
 /* #define ASC_DEBUG */
