@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.117 2005/09/06 15:29:33 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.118 2005/09/06 17:08:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1256,7 +1256,6 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 	if (ent != NULL) {
 		/* steal the RCSNUM */
 		cfp->cf_lrev = ent->ce_rev;
-		ent->ce_rev = NULL;
 
 		if (ent->ce_type == CVS_ENT_FILE) {
 			if (ent->ce_tag[0] != '\0') {
