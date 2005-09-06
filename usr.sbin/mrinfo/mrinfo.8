@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mrinfo.8,v 1.9 2003/06/12 12:59:51 jmc Exp $
+.\"	$OpenBSD: mrinfo.8,v 1.10 2005/09/06 22:26:49 jmc Exp $
 .\"	$NetBSD: mrinfo.8,v 1.2 1995/10/03 23:20:39 thorpej Exp $
 .\"
 .\" Written Wed Mar 24 1993 by Van Jacobson (adapted from the
@@ -86,8 +86,8 @@ attempts to display the configuration information from the specified
 .Ar multicast_router .
 .Pp
 .Nm
-uses the ASK_NEIGHBORS IGMP message to the specified multicast
-router. If it router responds, the version number and a list of their
+uses the ASK_NEIGHBORS IGMP message to query the specified multicast
+router. If the router responds, the version number and a list of their
 neighboring multicast router addresses is part of the response.
 If the responding router has a recent multicast version number, then
 .Nm
@@ -133,7 +133,7 @@ reply. The default timeout is 4 seconds.
 .Pp
 For each neighbor of the queried multicast router, the IP of the queried router
 is displayed, followed by the IP and name of the neighbor. In square brackets
-the metric (cost of connection), the threshold (multicast ttl) is displayed. If
+the metric (cost of connection) and threshold (multicast ttl) is displayed. If
 the queried multicast router has a newer version number, the type (tunnel,
 srcrt) and status (disabled, down) of the connection is displayed.
 .Sh SEE ALSO
