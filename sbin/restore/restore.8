@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.25 2003/06/03 13:16:09 jmc Exp $
+.\"	$OpenBSD: restore.8,v 1.26 2005/09/06 22:58:35 jmc Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -171,6 +171,8 @@ command to list the inode numbers of all entries.
 It also causes
 .Nm
 to print out information about each file as it is extracted.
+.It Ic what
+List dump header information.
 .El
 .It Fl R
 .Nm
@@ -325,7 +327,6 @@ Always try to skip over the bad block(s) and continue.
 .Sh ENVIRONMENT
 If the following environment variable exists it will be utilized by
 .Nm restore :
-.Pp
 .Bl -tag -width "TMPDIR"
 .It Ev TMPDIR
 The directory given in
