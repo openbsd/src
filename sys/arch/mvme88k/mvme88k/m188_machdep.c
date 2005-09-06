@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.8 2005/05/01 09:55:49 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.9 2005/09/06 19:41:28 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -80,14 +80,14 @@ void	m188_startup(void);
  * *int_mask_reg[CPU]
  * Points to the hardware interrupt status register for each CPU.
  */
-unsigned int *volatile int_mask_reg[MAX_CPUS] = {
+unsigned int *volatile int_mask_reg[] = {
 	(unsigned int *)IEN0_REG,
 	(unsigned int *)IEN1_REG,
 	(unsigned int *)IEN2_REG,
 	(unsigned int *)IEN3_REG
 };
 
-unsigned int m188_curspl[MAX_CPUS] = {0, 0, 0, 0};
+unsigned int m188_curspl[] = {0, 0, 0, 0};
 
 unsigned int int_mask_val[INT_LEVEL] = {
 	MASK_LVL_0,
