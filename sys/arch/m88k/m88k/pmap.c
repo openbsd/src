@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2005/05/22 19:40:51 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2005/09/06 19:21:57 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -210,7 +210,7 @@ boolean_t pmap_testbit(struct vm_page *, int);
 static __inline__ void
 flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 {
-#if NCPUS > 1
+#if defined(MULTIPROCESSOR)
 	int cpu;
 
 	if (users == 0)

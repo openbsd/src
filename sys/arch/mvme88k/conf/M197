@@ -1,4 +1,4 @@
-#	$OpenBSD: M197,v 1.27 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: M197,v 1.28 2005/09/06 19:21:57 miod Exp $
 
 machine mvme88k m88k
 
@@ -8,8 +8,6 @@ include "../../../conf/GENERIC"
 option		M88110
 
 option		MVME197		# support for 197 (requires M88110)
-
-option		"NCPUS=1"	# Number of cpus supported (max 4)
 
 maxusers 64
 

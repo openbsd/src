@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2005/08/03 02:10:44 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.11 2005/09/06 19:21:55 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -12,8 +12,6 @@
 machine		luna88k m88k
 include		"../../../conf/GENERIC"
 maxusers	64			# estimated number of users
-
-option		"NCPUS=1"	# number of CPUs supported (max 4)
 
 # Processor type
 option		M88100		# 88100 support; mandatory

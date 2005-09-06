@@ -1,4 +1,4 @@
-#	$OpenBSD: M188,v 1.24 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: M188,v 1.25 2005/09/06 19:21:57 miod Exp $
 
 machine mvme88k m88k
 
@@ -9,8 +9,6 @@ option		M88100
 option		M88110
 
 option		MVME188		# support for 188 (requires M88100)
-
-option		"NCPUS=1"	# Number of cpus supported (max 4)
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR

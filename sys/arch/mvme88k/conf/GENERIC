@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2005/08/03 02:10:44 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.49 2005/09/06 19:21:57 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -20,7 +20,6 @@ option		M88110
 option		MVME187			# support for 187 (requires M88100)
 option		MVME188			# support for 188 (requires M88100)
 option		MVME197			# support for 197 (requires M88110)
-option		"NCPUS=1"		# number of CPUs supported (max 4)
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR
