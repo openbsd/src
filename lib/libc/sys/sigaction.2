@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.41 2004/04/15 19:52:18 jmc Exp $
+.\"	$OpenBSD: sigaction.2,v 1.42 2005/09/06 22:13:19 jmc Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -38,8 +38,8 @@
 .Nd software signal facilities
 .Sh SYNOPSIS
 .Fd #include <signal.h>
+.Pp
 .Bd -literal
-
 struct sigaction {
 	union {		/* signal handler */
 		void	(*__sa_handler)(int);
@@ -48,10 +48,10 @@ struct sigaction {
 	sigset_t sa_mask;          /* signal mask to apply */
 	int	 sa_flags;         /* see signal options below */
 };
-
+.Ed
+.Pp
 .Fd #define sa_handler	__sigaction_u.__sa_handler
 .Fd #define sa_sigaction	__sigaction_u.__sa_sigaction
-.Ed
 .Ft int
 .Fn sigaction "int sig" "const struct sigaction *act" "struct sigaction *oact"
 .Sh DESCRIPTION
