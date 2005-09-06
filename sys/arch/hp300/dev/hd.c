@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.25 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.26 2005/09/06 19:01:00 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ hdident(parent, sc, ha)
 #endif
 
 	/*
-	 * Take care of a couple of anomolies:
+	 * Take care of a couple of anomalies:
 	 * 1. 7945A and 7946A both return same HW id
 	 * 2. 9122S and 9134D both return same HW id
 	 * 3. 9122D and 9134L both return same HW id
