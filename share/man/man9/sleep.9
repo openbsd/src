@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.9,v 1.4 2000/10/12 18:06:03 aaron Exp $
+.\"	$OpenBSD: sleep.9,v 1.5 2005/09/06 22:17:28 jmc Exp $
 .\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 .Nm wakeup
 .Nd process context sleep and wakeup
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
+.Fd #include <sys/param.h>
 .Fd #include <sys/proc.h>
 .Ft int
 .Fn "tsleep" "void *ident" "int priority" "const char *wmesg" "int timo"
