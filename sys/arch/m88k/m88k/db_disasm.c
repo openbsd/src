@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.3 2005/05/15 14:12:22 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.4 2005/09/06 19:30:32 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -104,11 +104,11 @@ static const char *m88110_ctrlreg[64] = {
 	NULL,
 	"cr14(RES1) ",
 	"cr15(RES2) ",
-	"cr16(SR0)  ",
-	"cr17(SR1)  ",
-	"cr18(SR2)  ",
-	"cr19(SR3)  ",
-	"cr20(SR4)  ",
+	"cr16(SRX)  ",
+	"cr17(SR0)  ",
+	"cr18(SR1)  ",
+	"cr19(SR2)  ",
+	"cr20(SR3)  ",
 	"fcr0(FPECR)",
 	NULL,
 	NULL,
