@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.55 2005/07/03 20:14:01 drahn Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.56 2005/09/06 16:42:21 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1302,15 +1302,7 @@ fail:
 	return (0);
 }
 
-/*
- * Determine whether an inode can be allocated.
- *
- * Check to see if an inode is available, and if it is,
- * allocate it using the following policy:
- *   1) allocate the requested inode.
- *   2) allocate the next available inode after the requested
- *      inode in the specified cylinder group.
- */
+/* inode allocation routine */
 static daddr_t
 ffs_nodealloccg(ip, cg, ipref, mode)
 	struct inode *ip;
@@ -1323,41 +1315,79 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 	struct buf *bp;
 	int error, start, len, loc, map, i;
 
+	/*
+	 * For efficiency, before looking at the bitmaps for free inodes,
+	 * check the counters kept in the superblock cylinder group summaries,
+	 * and in the cylinder group itself.
+	 */
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nifree == 0)
 		return (0);
+
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (0);
 	}
+
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp) || cgp->cg_cs.cs_nifree == 0) {
 		brelse(bp);
 		return (0);
 	}
+
+	/*
+	 * We are committed to the allocation from now on, so update the time
+	 * on the cylinder group.
+	 */
 	cgp->cg_time = time_second;
+
+	/*
+	 * If there was a preferred location for the new inode, try to find it.
+	 */
 	if (ipref) {
 		ipref %= fs->fs_ipg;
 		if (isclr(cg_inosused(cgp), ipref))
-			goto gotit;
+			goto gotit; /* inode is free, grab it. */
 	}
+
+	/*
+	 * Otherwise, look for the next available inode, starting at cg_irotor
+	 * (the position in the bitmap of the last used inode).
+	 */
 	start = cgp->cg_irotor / NBBY;
 	len = howmany(fs->fs_ipg - cgp->cg_irotor, NBBY);
 	loc = skpc(0xff, len, &cg_inosused(cgp)[start]);
 	if (loc == 0) {
+		/*
+		 * If we didn't find a free inode in the upper part of the
+		 * bitmap (from cg_irotor to the end), then look at the bottom
+		 * part (from 0 to cg_irotor).
+		 */
 		len = start + 1;
 		start = 0;
 		loc = skpc(0xff, len, &cg_inosused(cgp)[0]);
 		if (loc == 0) {
+			/*
+			 * If we failed again, then either the bitmap or the
+			 * counters kept for the cylinder group are wrong.
+			 */
 			printf("cg = %d, irotor = %d, fs = %s\n",
 			    cg, cgp->cg_irotor, fs->fs_fsmnt);
 			panic("ffs_nodealloccg: map corrupted");
 			/* NOTREACHED */
 		}
 	}
+
+	/* skpc() returns the position relative to the end */
 	i = start + len - loc;
+
+	/*
+	 * Okay, so now in 'i' we have the location in the bitmap of a byte
+	 * holding a free inode. Find the corresponding bit and set it,
+	 * updating cg_irotor as well, accordingly.
+	 */
 	map = cg_inosused(cgp)[i];
 	ipref = i * NBBY;
 	for (i = 1; i < (1 << NBBY); i <<= 1, ipref++) {
@@ -1366,24 +1396,33 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 			goto gotit;
 		}
 	}
+
 	printf("fs = %s\n", fs->fs_fsmnt);
 	panic("ffs_nodealloccg: block not in map");
 	/* NOTREACHED */
+
 gotit:
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_inomapdep(bp, ip, cg * fs->fs_ipg + ipref);
 
 	setbit(cg_inosused(cgp), ipref);
+
+	/* Update the counters we keep on free inodes */
 	cgp->cg_cs.cs_nifree--;
 	fs->fs_cstotal.cs_nifree--;
 	fs->fs_cs(fs, cg).cs_nifree--;
-	fs->fs_fmod = 1;
+	fs->fs_fmod = 1; /* file system was modified */
+
+	/* Update the counters we keep on allocated directories */
 	if ((mode & IFMT) == IFDIR) {
 		cgp->cg_cs.cs_ndir++;
 		fs->fs_cstotal.cs_ndir++;
 		fs->fs_cs(fs, cg).cs_ndir++;
 	}
+
 	bdwrite(bp);
+
+	/* Return the allocated inode number */
 	return (cg * fs->fs_ipg + ipref);
 }
 
