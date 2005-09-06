@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.75 2005/08/09 04:10:11 mickey Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.76 2005/09/06 00:41:41 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
  *   This driver supports the DEC DE435 or any other PCI
  *   board which support 21040, 21041, or 21140 (mostly).
  */
-#define	TULIP_HDR_DATA
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +52,7 @@
 #include <sys/timeout.h>
 
 #include <net/if.h>
-#if defined(SIOCSIFMEDIA) && !defined(TULIP_NOIFMEDIA)
 #include <net/if_media.h>
-#endif
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
@@ -82,12 +79,11 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/ic/dc21040reg.h>
-#define	DEVAR_INCLUDE	"dev/pci/if_devar.h"
 
 /*
  * Intel CPUs should use I/O mapped access.
  */
-#if defined(__i386__) || defined(TULIP_EISA)
+#if defined(__i386__)
 #define	TULIP_IOMAPPED
 #endif
 
@@ -103,13 +99,9 @@
 #define TULIP_PERFSTATS
 #endif
 
-#if 0
-#define	TULIP_USE_SOFTINTR
-#endif
-
 #define	TULIP_HZ	10
 
-#include DEVAR_INCLUDE
+#include <dev/pci/if_devar.h>
 /*
  * This module supports
  *	the DEC 21040 PCI Ethernet Controller.
@@ -132,10 +124,8 @@ static void tulip_mii_writereg(tulip_softc_t * const sc, unsigned devaddr, unsig
 static int tulip_mii_map_abilities(tulip_softc_t * const sc, unsigned abilities);
 static tulip_media_t tulip_mii_phy_readspecific(tulip_softc_t * const sc);
 static int tulip_srom_decode(tulip_softc_t * const sc);
-#if defined(IFM_ETHER)
 static int tulip_ifmedia_change(struct ifnet * const ifp);
 static void tulip_ifmedia_status(struct ifnet * const ifp, struct ifmediareq *req);
-#endif
 /* static void tulip_21140_map_media(tulip_softc_t *sc); */
 
 static void
@@ -165,30 +155,6 @@ tulip_timeout(
     sc->tulip_flags |= TULIP_TIMEOUTPENDING;
     timeout_add(&sc->tulip_stmo, (hz + TULIP_HZ / 2) / TULIP_HZ);
 }
-
-#if defined(TULIP_NEED_FASTTIMEOUT)
-static void
-tulip_fasttimeout_callback(
-    void *arg)
-{
-    tulip_softc_t * const sc = arg;
-    tulip_spl_t s = TULIP_RAISESPL();
-
-    sc->tulip_flags &= ~TULIP_FASTTIMEOUTPENDING;
-    (sc->tulip_boardsw->bd_media_poll)(sc, TULIP_MEDIAPOLL_FASTTIMER);
-    TULIP_RESTORESPL(s);
-}
-
-static void
-tulip_fasttimeout(
-    tulip_softc_t * const sc)
-{
-    if (sc->tulip_flags & TULIP_FASTTIMEOUTPENDING)
-	return;
-    sc->tulip_flags |= TULIP_FASTTIMEOUTPENDING;
-    timeout_add(&sc->tulip_ftmo, 1);
-}
-#endif
 
 static int
 tulip_txprobe(
@@ -231,11 +197,7 @@ tulip_txprobe(
     return 1;
 }
 
-#ifdef BIG_PACKET
-#define TULIP_SIAGEN_WATCHDOG	(sc->tulip_if.if_mtu > ETHERMTU ? TULIP_WATCHDOG_RXDISABLE|TULIP_WATCHDOG_TXDISABLE : 0)
-#else
 #define	TULIP_SIAGEN_WATCHDOG	0
-#endif
 
 static void
 tulip_media_set(
@@ -372,19 +334,6 @@ tulip_linkup(
 	sc->tulip_flags |= TULIP_PRINTLINKUP;
     sc->tulip_flags |= TULIP_LINKUP;
     sc->tulip_if.if_flags &= ~IFF_OACTIVE;
-#if 0 /* XXX how does with work with ifmedia? */
-    if ((sc->tulip_flags & TULIP_DIDNWAY) == 0) {
-	if (sc->tulip_if.if_flags & IFF_FULLDUPLEX) {
-	    if (TULIP_CAN_MEDIA_FD(media)
-		    && sc->tulip_mediums[TULIP_FD_MEDIA_OF(media)] != NULL)
-		media = TULIP_FD_MEDIA_OF(media);
-	} else {
-	    if (TULIP_IS_MEDIA_FD(media)
-		    && sc->tulip_mediums[TULIP_HD_MEDIA_OF(media)] != NULL)
-		media = TULIP_HD_MEDIA_OF(media);
-	}
-    }
-#endif
     if (sc->tulip_media != media) {
 #ifdef TULIP_DEBUG
 	sc->tulip_dbg.dbg_last_media = sc->tulip_media;
@@ -437,69 +386,6 @@ tulip_media_print(
 	sc->tulip_flags &= ~TULIP_PRINTLINKUP;
     }
 }
-
-#if defined(TULIP_DO_GPR_SENSE)
-static tulip_media_t
-tulip_21140_gpr_media_sense(
-    tulip_softc_t * const sc)
-{
-    tulip_media_t maybe_media = TULIP_MEDIA_UNKNOWN;
-    tulip_media_t last_media = TULIP_MEDIA_UNKNOWN;
-    tulip_media_t media;
-
-    /*
-     * If one of the media blocks contained a default media flag,
-     * use that.
-     */
-    for (media = TULIP_MEDIA_UNKNOWN; media < TULIP_MEDIA_MAX; media++) {
-	const tulip_media_info_t *mi;
-	/*
-	 * Media is not supported (or is full-duplex).
-	 */
-	if ((mi = sc->tulip_mediums[media]) == NULL || TULIP_IS_MEDIA_FD(media))
-	    continue;
-	if (mi->mi_type != TULIP_MEDIAINFO_GPR)
-	    continue;
-
-	/*
-	 * Remember the media is this is the "default" media.
-	 */
-	if (mi->mi_default && maybe_media == TULIP_MEDIA_UNKNOWN)
-	    maybe_media = media;
-
-	/*
-	 * No activity mask?  Can't see if it is active if there's no mask.
-	 */
-	if (mi->mi_actmask == 0)
-	    continue;
-
-	/*
-	 * Does the activity data match?
-	 */
-	if ((TULIP_CSR_READ(sc, csr_gp) & mi->mi_actmask) != mi->mi_actdata)
-	    continue;
-
-#if defined(TULIP_DEBUG)
-	printf(TULIP_PRINTF_FMT ": gpr_media_sense: %s: 0x%02x & 0x%02x == 0x%02x\n",
-	       TULIP_PRINTF_ARGS, tulip_mediums[media],
-	       TULIP_CSR_READ(sc, csr_gp) & 0xFF,
-	       mi->mi_actmask, mi->mi_actdata);
-#endif
-	/*
-	 * It does!  If this is the first media we detected, then
-	 * remember this media.  If isn't the first, then there were
-	 * multiple matches which we equate to no match (since we don't
-	 * which to select (if any).
-	 */
-	if (last_media == TULIP_MEDIA_UNKNOWN) {
-	    last_media = media;
-	} else if (last_media != media) {
-	    last_media = TULIP_MEDIA_UNKNOWN;
-	}
-    }
-    return (last_media != TULIP_MEDIA_UNKNOWN) ? last_media : maybe_media;
-}
-#endif /* TULIP_DO_GPR_SENSE */
 
 static tulip_link_status_t
 tulip_media_link_monitor(
@@ -722,32 +608,6 @@ tulip_media_poll(
     }
 
     if (sc->tulip_probe_state == TULIP_PROBE_GPRTEST) {
-#if defined(TULIP_DO_GPR_SENSE)
-	/*
-	 * Check for media via the general purpose register.
-	 *
-	 * Try to sense the media via the GPR.  If the same value
-	 * occurs 3 times in a row then just use that.
-	 */
-	if (sc->tulip_probe_timeout > 0) {
-	    tulip_media_t new_probe_media = tulip_21140_gpr_media_sense(sc);
-#if defined(TULIP_DEBUG)
-	    printf(TULIP_PRINTF_FMT ": media_poll: gpr sensing = %s\n",
-		   TULIP_PRINTF_ARGS, tulip_mediums[new_probe_media]);
-#endif
-	    if (new_probe_media != TULIP_MEDIA_UNKNOWN) {
-		if (new_probe_media == sc->tulip_probe_media) {
-		    if (--sc->tulip_probe_count == 0)
-			tulip_linkup(sc, sc->tulip_probe_media);
-		} else {
-		    sc->tulip_probe_count = 10;
-		}
-	    }
-	    sc->tulip_probe_media = new_probe_media;
-	    tulip_timeout(sc);
-	    return;
-	}
-#endif /* TULIP_DO_GPR_SENSE */
 	/*
 	 * Brute force.  We cycle through each of the media types
 	 * and try to transmit a packet.
@@ -1256,19 +1116,6 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       "Seeq 80225"
 #endif
     },
-#if 0
-    { 0x0015F420, 0,	/* 00-A0-7D */
-      {
-	{ 0x12, 0x0010, 0x0000 },	/* 10T */
-	{ },				/* 100TX */
-	{ 0x12, 0x0010, 0x0010 },	/* 100T4 */
-	{ 0x12, 0x0008, 0x0008 },	/* FULL_DUPLEX */
-      },
-#if defined(TULIP_DEBUG)
-      "Broadcom BCM5000"
-#endif
-    },
-#endif
     { 0x0281F400, 0,		/* 00-A0-BE */
       {
 	{ 0x11, 0x8000, 0x0000 },	/* 10T */
@@ -2570,9 +2417,6 @@ tulip_srom_decode(
 		    if (data & TULIP_SROM_2114X_NOINDICATOR) {
 			mi->mi_actmask = 0;
 		    } else {
-#if 0
-			mi->mi_default = (data & TULIP_SROM_2114X_DEFAULT) != 0;
-#endif
 			mi->mi_actmask = TULIP_SROM_2114X_BITPOS(data);
 			mi->mi_actdata = (data & TULIP_SROM_2114X_POLARITY) ? 0 : mi->mi_actmask;
 		    }
@@ -2767,16 +2611,6 @@ tulip_srom_decode(
 		    mi++;
 		    break;
 		}
-#if 0
-		case 5: {	/* 21143 Reset block */
-		    mi->mi_type = TULIP_MEDIAINFO_RESET;
-		    mi->mi_reset_length = *dp++;
-		    mi->mi_reset_offset = dp - sc->tulip_rombuf;
-		    dp += 2 * mi->mi_reset_length;
-		    mi++;
-		    break;
-		}
-#endif
 		default: {
 		}
 	    }
@@ -2827,20 +2661,6 @@ tulip_read_macaddr(
 	    sc->tulip_rombuf[idx] = csr & 0xFF;
 	}
 	sc->tulip_boardsw = &tulip_21040_boardsw;
-#if defined(TULIP_EISA)
-    } else if (sc->tulip_chipid == TULIP_DE425) {
-	int cnt;
-	for (idx = 0, cnt = 0; idx < sizeof(testpat) && cnt < 32; cnt++) {
-	    tmpbuf[idx] = TULIP_CSR_READBYTE(sc, csr_enetrom);
-	    if (tmpbuf[idx] == testpat[idx])
-		++idx;
-	    else
-		idx = 0;
-	}
-	for (idx = 0; idx < 32; idx++)
-	    sc->tulip_rombuf[idx] = TULIP_CSR_READBYTE(sc, csr_enetrom);
-	sc->tulip_boardsw = &tulip_21040_boardsw;
-#endif /* TULIP_EISA */
     } else {
 	if (sc->tulip_chipid == TULIP_21041) {
 	    /*
@@ -2857,18 +2677,7 @@ tulip_read_macaddr(
 
 	    sc->tulip_boardsw = &tulip_21140_eb_boardsw;
 	}
-#ifdef NEED_PCI_ETHER_HW_ADDR_FUNC
-	if(pci_ether_hw_addr(sc->tulip_pc, (u_char *)(&sc->tulip_rombuf),
-	    sc->tulip_pci_busno, sc->tulip_pci_devno)) {
-		if(sc->tulip_boardsw == &tulip_21041_boardsw)
-		    sc->tulip_boardsw = &tulip_21041np_boardsw;
-	}
-	else {
-		tulip_srom_read(sc);
-	}
-#else
 	tulip_srom_read(sc);
-#endif
 	if (tulip_srom_crcok(sc->tulip_rombuf)) {
 	    /*
 	     * SROM CRC is valid therefore it must be in the
@@ -3037,7 +2846,6 @@ tulip_read_macaddr(
     return 0;
 }
 
-#if defined(IFM_ETHER)
 static void
 tulip_ifmedia_add(
     tulip_softc_t * const sc)
@@ -3112,7 +2920,6 @@ tulip_ifmedia_status(
 
     req->ifm_active = tulip_media_to_ifmedia[sc->tulip_media];
 }
-#endif
 
 static void
 tulip_addr_filter(
@@ -3253,7 +3060,7 @@ tulip_reset(
 
     TULIP_CSR_WRITE(sc, csr_txlist, TULIP_KVATOPHYS(sc, &sc->tulip_txinfo.ri_first[0]));
     TULIP_CSR_WRITE(sc, csr_rxlist, TULIP_KVATOPHYS(sc, &sc->tulip_rxinfo.ri_first[0]));
-#ifdef powerpc
+#ifdef __powerpc__
     TULIP_CSR_WRITE(sc, csr_busmode,
 		    (4 << 2)	/* Descriptor skip length */
 		    |TULIP_BUSMODE_CACHE_ALIGN8
@@ -3440,9 +3247,8 @@ tulip_rx_intr(
 		break;
 
 	    /*
-	     * It is possible (though improbable unless the BIG_PACKET support
-	     * is enabled or MCLBYTES < 1518) for a received packet to cross
-	     * more than one receive descriptor.
+	     * It is possible (though improbable unless MCLBYTES < 1518) for
+	     * a received packet to cross more than one receive descriptor.
 	     */
 	    while ((DESC_BO(((volatile tulip_desc_t *) eop)->d_status) & TULIP_DSTS_RxLASTDESC) == 0) {
 		if (++eop == ri->ri_last)
@@ -3483,14 +3289,7 @@ tulip_rx_intr(
 	 */
 	total_len = ((DESC_BO(eop->d_status) >> 16) & 0x7FFF) - 4;
 	if ((sc->tulip_flags & TULIP_RXIGNORE) == 0
-		&& ((DESC_BO(eop->d_status) & TULIP_DSTS_ERRSUM) == 0
-#ifdef BIG_PACKET
-		     || (total_len <= sc->tulip_if.if_mtu + sizeof(struct ether_header) &&
-			 (DESC_BO(eop->d_status) & (TULIP_DSTS_RxBADLENGTH|TULIP_DSTS_RxRUNT|
-					  TULIP_DSTS_RxCOLLSEEN|TULIP_DSTS_RxBADCRC|
-					  TULIP_DSTS_RxOVERFLOW)) == 0)
-#endif
-		)) {
+		&& ((DESC_BO(eop->d_status) & TULIP_DSTS_ERRSUM) == 0)) {
 	    me->m_len = total_len - last_offset;
 	    eh = *mtod(ms, struct ether_header *);
 #if NBPFILTER > 0
@@ -3583,9 +3382,6 @@ tulip_rx_intr(
 		ms->m_pkthdr.rcvif = ifp;
 		ether_input(ifp, &eh, ms);
 #else
-#ifdef BIG_PACKET
-#error BIG_PACKET is incompatible with TULIP_COPY_RXDATA
-#endif
 		if (ms == me)
 		    bcopy(mtod(ms, caddr_t) + sizeof(struct ether_header),
 			  mtod(m0, caddr_t), total_len);
@@ -3917,103 +3713,6 @@ tulip_intr_handler(
     TULIP_PERFEND(intr);
 }
 
-#if defined(TULIP_USE_SOFTINTR)
-/*
- * This is a experimental idea to alleviate problems due to interrupt
- * livelock.  What is interrupt livelock?  It's when you spend all your
- * time servicing device interrupts and never drop below device ipl
- * to do "useful" work.
- *
- * So what we do here is see if the device needs service and if so,
- * disable interrupts (dismiss the interrupt), place it in a list of devices
- * needing service, and issue a network software interrupt.
- *
- * When our network software interrupt routine gets called, we simply
- * walk done the list of devices that we have created and deal with them
- * at splnet/splsoftnet.
- *
- */
-static void
-tulip_hardintr_handler(
-    tulip_softc_t * const sc,
-    int *progress_p)
-{
-    if (TULIP_CSR_READ(sc, csr_status) & (TULIP_STS_NORMALINTR|TULIP_STS_ABNRMLINTR) == 0)
-	return;
-    *progress_p = 1;
-    /*
-     * disable interrupts
-     */
-    TULIP_CSR_WRITE(sc, csr_intr, 0);
-    /*
-     * mark it as needing a software interrupt
-     */
-    tulip_softintr_mask |= (1U << sc->tulip_unit);
-}
-
-static void
-tulip_softintr(
-    void)
-{
-    u_int32_t softintr_mask, mask;
-    int progress = 0;
-    int unit;
-    tulip_spl_t s;
-
-    /*
-     * Copy mask to local copy and reset global one to 0.
-     */
-    s = TULIP_RAISESPL();
-    softintr_mask = tulip_softintr_mask;
-    tulip_softintr_mask = 0;
-    TULIP_RESTORESPL(s);
-
-    /*
-     * Optimize for the single unit case.
-     */
-    if (tulip_softintr_max_unit == 0) {
-	if (softintr_mask & 1) {
-	    tulip_softc_t * const sc = TULIP_UNIT_TO_SOFTC(0);
-	    /*
-	     * Handle the "interrupt" and then reenable interrupts
-	     */
-	    softintr_mask = 0;
-	    tulip_intr_handler(sc, &progress);
-	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
-	}
-	return;
-    }
-
-    /*
-     * Handle all "queued" interrupts in a round robin fashion.
-     * This is done so as not to favor a particular interface.
-     */
-    unit = tulip_softintr_last_unit;
-    mask = (1U << unit);
-    while (softintr_mask != 0) {
-	if (tulip_softintr_max_unit == unit) {
-	    unit  = 0; mask   = 1;
-	} else {
-	    unit += 1; mask <<= 1;
-	}
-	if (softintr_mask & mask) {
-	    tulip_softc_t * const sc = TULIP_UNIT_TO_SOFTC(unit);
-	    /*
-	     * Handle the "interrupt" and then reenable interrupts
-	     */
-	    softintr_mask ^= mask;
-	    tulip_intr_handler(sc, &progress);
-	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
-	}
-    }
-
-    /*
-     * Save where we ending up.
-     */
-    tulip_softintr_last_unit = unit;
-}
-#endif	/* TULIP_USE_SOFTINTR */
-
 static tulip_intrfunc_t
 tulip_intr_shared(
     void *arg)
@@ -4025,19 +3724,9 @@ tulip_intr_shared(
 #if defined(TULIP_DEBUG)
 	sc->tulip_dbg.dbg_intrs++;
 #endif
-#if defined(TULIP_USE_SOFTINTR)
-	tulip_hardintr_handler(sc, &progress);
-#else
 	tulip_intr_handler(sc, &progress);
-#endif
     }
-#if defined(TULIP_USE_SOFTINTR)
-    if (progress)
-	schednetisr(NETISR_DE);
-#endif
-#if !defined(TULIP_VOID_INTRFUNC)
     return progress;
-#endif
 }
 
 static tulip_intrfunc_t
@@ -4050,16 +3739,9 @@ tulip_intr_normal(
 #if defined(TULIP_DEBUG)
     sc->tulip_dbg.dbg_intrs++;
 #endif
-#if defined(TULIP_USE_SOFTINTR)
-    tulip_hardintr_handler(sc, &progress);
-    if (progress)
-	schednetisr(NETISR_DE);
-#else
     tulip_intr_handler(sc, &progress);
-#endif
-#if !defined(TULIP_VOID_INTRFUNC)
+
     return progress;
-#endif
 }
 
 static struct mbuf *
@@ -4067,7 +3749,7 @@ tulip_mbuf_compress(
     struct mbuf *m)
 {
     struct mbuf *m0;
-#if MCLBYTES >= ETHERMTU + 18 && !defined(BIG_PACKET)
+#if MCLBYTES >= ETHERMTU + 18
     MGETHDR(m0, M_DONTWAIT, MT_DATA);
     if (m0 != NULL) {
 	if (m->m_pkthdr.len > MHLEN) {
@@ -4174,11 +3856,6 @@ tulip_txput(
 
 	while (len > 0) {
 	    unsigned slen = min(len, clsize);
-#ifdef BIG_PACKET
-	    int partial = 0;
-	    if (slen >= 2048)
-		slen = 2040, partial = 1;
-#endif
 	    segcnt++;
 	    if (segcnt > TULIP_MAX_TXSEG) {
 		/*
@@ -4259,10 +3936,6 @@ tulip_txput(
 	    d_status = TULIP_DSTS_OWNER;
 	    len -= slen;
 	    addr += slen;
-#ifdef BIG_PACKET
-	    if (partial)
-		continue;
-#endif
 	    clsize = PAGE_SIZE;
 	}
     } while ((m0 = m0->m_next) != NULL);
@@ -4466,11 +4139,8 @@ tulip_txput_setup(
     }
 }
 
-
 /*
- * This routine is entered at splnet() (splsoftnet() on OpenBSD)
- * and thereby imposes no problems when TULIP_USE_SOFTINTR is
- * defined or not.
+ * This routine is entered at splnet().
  */
 static int
 tulip_ifioctl(
@@ -4485,11 +4155,8 @@ tulip_ifioctl(
     tulip_spl_t s;
     int error = 0;
 
-#if defined(TULIP_USE_SOFTINTR)
-    s = TULIP_RAISESOFTSPL();
-#else
     s = TULIP_RAISESPL();
-#endif
+
     switch (cmd) {
     case SIOCSIFADDR: {
 	ifp->if_flags |= IFF_UP;
@@ -4517,44 +4184,15 @@ tulip_ifioctl(
     }
 
     case SIOCSIFFLAGS: {
-#if !defined(IFM_ETHER)
-	int flags = 0;
-	if (ifp->if_flags & IFF_LINK0) flags |= 1;
-	if (ifp->if_flags & IFF_LINK1) flags |= 2;
-	if (ifp->if_flags & IFF_LINK2) flags |= 4;
-	if (flags == 7) {
-	    ifp->if_flags &= ~(IFF_LINK0|IFF_LINK1|IFF_LINK2);
-	    sc->tulip_media = TULIP_MEDIA_UNKNOWN;
-	    sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
-	    sc->tulip_flags &= ~(TULIP_WANTRXACT|TULIP_LINKUP|TULIP_NOAUTOSENSE);
-	    tulip_reset(sc);
-	} else if (flags) {
-	    tulip_media_t media;
-	    for (media = TULIP_MEDIA_UNKNOWN; media < TULIP_MEDIA_MAX; media++) {
-		if (sc->tulip_mediums[media] != NULL && --flags == 0) {
-		    sc->tulip_flags |= TULIP_NOAUTOSENSE;
-		    if (sc->tulip_media != media || (sc->tulip_flags & TULIP_DIDNWAY)) {
-			sc->tulip_flags &= ~TULIP_DIDNWAY;
-			tulip_linkup(sc, media);
-		    }
-		    break;
-		}
-	    }
-	    if (flags)
-		printf(TULIP_PRINTF_FMT ": ignored invalid media request\n", TULIP_PRINTF_ARGS);
-	}
-#endif
 	tulip_init(sc);
 	break;
     }
 
-#if defined(SIOCSIFMEDIA)
     case SIOCSIFMEDIA:
     case SIOCGIFMEDIA: {
 	error = ifmedia_ioctl(ifp, ifr, &sc->tulip_ifmedia, cmd);
 	break;
     }
-#endif
 
     case SIOCADDMULTI:
     case SIOCDELMULTI: {
@@ -4579,21 +4217,11 @@ tulip_ifioctl(
 	/*
 	 * Set the interface MTU.
 	 */
-	if (ifr->ifr_mtu > ETHERMTU
-#ifdef BIG_PACKET
-	    && sc->tulip_chipid != TULIP_21140
-	    && sc->tulip_chipid != TULIP_21140A
-	    && sc->tulip_chipid != TULIP_21041
-#endif
-	    ) {
+	if (ifr->ifr_mtu > ETHERMTU) {
 	    error = EINVAL;
 	    break;
 	}
 	ifp->if_mtu = ifr->ifr_mtu;
-#ifdef BIG_PACKET
-	tulip_reset(sc);
-	tulip_init(sc);
-#endif
 	break;
 
 #ifdef SIOCGADDRROM
@@ -4626,9 +4254,7 @@ tulip_ifioctl(
  * copy and modify the mbuf passed.
  */
 /*
- * These routines gets called at device spl (from ether_output).  This might
- * pose a problem for TULIP_USE_SOFTINTR if ether_output is called at
- * device spl from another driver.
+ * These routines gets called at device spl (from ether_output).
  */
 
 static ifnet_ret_t
@@ -4680,13 +4306,6 @@ tulip_ifstart_one(
     TULIP_PERFEND(ifstart_one);
 }
 
-/*
- * Even though this routine runs at device spl, it does not break
- * our use of splnet (splsoftnet under OpenBSD) for the majority
- * of this driver (if TULIP_USE_SOFTINTR defined) since
- * if_watcbog is called from if_watchdog which is called from
- * splsoftclock which is below spl[soft]net.
- */
 static void
 tulip_ifwatchdog(
     struct ifnet *ifp)
@@ -4770,9 +4389,6 @@ tulip_ifwatchdog(
 #ifdef printf
 #undef printf
 #endif
-#if !defined(IFF_NOTRAILERS)
-#define IFF_NOTRAILERS		0
-#endif
 
 static void
 tulip_attach(
@@ -4787,9 +4403,6 @@ tulip_attach(
     ifp->if_timer = 1;
 
     timeout_set(&sc->tulip_stmo, tulip_timeout_callback, sc);
-#if defined(TULIP_NEED_FASTTIMEOUT)
-    timeout_set(&sc->tulip_ftmo, tulip_fasttimeout_callback, sc);
-#endif
 
     printf(
 	   TULIP_PRINTF_FMT ": %s%s pass %d.%d%s address " TULIP_EADDR_FMT "\n",
@@ -4807,33 +4420,11 @@ tulip_attach(
 	   TULIP_EADDR_ARGS(sc->tulip_enaddr));
 
     (*sc->tulip_boardsw->bd_media_probe)(sc);
-#if defined(IFM_ETHER)
     ifmedia_init(&sc->tulip_ifmedia, 0,
 		 tulip_ifmedia_change,
 		 tulip_ifmedia_status);
-#else
-    {
-	tulip_media_t media;
-	int cnt;
-	printf(TULIP_PRINTF_FMT ": media:", TULIP_PRINTF_ARGS);
-	for (media = TULIP_MEDIA_UNKNOWN, cnt = 1; cnt < 7 && media < TULIP_MEDIA_MAX; media++) {
-	    if (sc->tulip_mediums[media] != NULL) {
-		printf(" %d=\"%s\"", cnt, tulip_mediums[media]);
-		cnt++;
-	    }
-	}
-	if (cnt == 1) {
-	    sc->tulip_features |= TULIP_HAVE_NOMEDIA;
-	    printf(" none\n");
-	} else {
-	    printf("\n");
-	}
-    }
-#endif
     sc->tulip_flags &= ~TULIP_DEVICEPROBE;
-#if defined(IFM_ETHER)
     tulip_ifmedia_add(sc);
-#endif
 
     tulip_reset(sc);
 
@@ -4868,9 +4459,6 @@ tulip_initcsrs(
     sc->tulip_csrs.csr_13		= csr_base + 13 * csr_size;
     sc->tulip_csrs.csr_14		= csr_base + 14 * csr_size;
     sc->tulip_csrs.csr_15		= csr_base + 15 * csr_size;
-#if defined(TULIP_EISA)
-    sc->tulip_csrs.csr_enetrom		= csr_base + DE425_ENETROM_OFFSET;
-#endif
 }
 
 static void
@@ -4893,19 +4481,6 @@ tulip_initring(
     pci_sync_cache(sc->tulip_pc, (vm_offset_t)descs, ndescs * sizeof(tulip_desc_t));
     descs = (tulip_desc_t *)TULIP_KVATOPHYS(sc, descs);
     descs = (tulip_desc_t *)PHYS_TO_UNCACHED((int)descs & 0x3fffffff);
-#endif
-#ifdef PPC_MPC106_BUG
-    /*
-     * This is a workaround for the powerpc MPC106 chip not snooping
-     * accesses to the descriptor area correctly.
-     */
-    tulip_desc_t *xdesc = descs;
-    xdesc = (tulip_desc_t *)(roundup((int)descs, 32) - 4);
-    if(xdesc < descs) {
-	ndescs--;
-	xdesc++;
-    }
-    descs = xdesc;
 #endif
     ri->ri_max = ndescs;
     ri->ri_first = descs;
@@ -4934,10 +4509,6 @@ tulip_initring(
 #define	PCI_CBMA	0x14	/* Configuration Base Memory Address */
 #define	PCI_CFIT	0x3c	/* Configuration Interrupt */
 #define	PCI_CFDA	0x40	/* Configuration Driver Area */
-
-#if defined(TULIP_EISA)
-static const int tulip_eisa_irqs[4] = { IRQ5, IRQ9, IRQ10, IRQ11 };
-#endif
 
 #define	TULIP_PCI_ATTACH_ARGS	struct device * const parent, struct device * const self, void * const aux
 #define	TULIP_SHUTDOWN_ARGS	void *arg
@@ -5153,10 +4724,6 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 	if (sc->tulip_ats == NULL)
 	    printf("%s: warning: couldn't establish shutdown hook\n",
 		   sc->tulip_xname);
-#if defined(TULIP_USE_SOFTINTR)
-	if (sc->tulip_unit > tulip_softintr_max_unit)
-	    tulip_softintr_max_unit = sc->tulip_unit;
-#endif
 
 	s = TULIP_RAISESPL();
 	tulip_attach(sc);
