@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pstat.8,v 1.29 2005/09/06 23:28:23 jmc Exp $
+.\"	$OpenBSD: pstat.8,v 1.30 2005/09/06 23:35:29 jmc Exp $
 .\"	$NetBSD: pstat.8,v 1.9.4.1 1996/06/02 09:08:17 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -180,7 +180,7 @@ Enclosing session.
 .It PGID
 Process group for which this is controlling terminal.
 .It DISC
-Line discipline;
+Line discipline:
 .Ql term
 for
 TTYDISC (see
@@ -194,9 +194,11 @@ for SLIPDISC (see
 .Ql ppp
 for PPPDISC (see
 .Xr ppp 4 ) ,
+and
 .Ql strip
-for STRIPDISC (see
-.Xr strip 4 ) .
+for STRIPDISC .
+.\" (see
+.\" .Xr strip 4 ) .
 .El
 .It Fl v
 Print the active vnodes.
