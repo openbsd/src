@@ -1,4 +1,4 @@
-#	$OpenBSD: audio,v 1.7 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: audio,v 1.8 2005/09/06 21:05:55 fgsch Exp $
 
 #------------------------------------------------------------------------------
 # audio:  file(1) magic for sound formats (see also "iff")
@@ -226,3 +226,40 @@
 >3	byte&0xc0	0x40		joint-stereo
 >3	byte&0xc0	0x80		dual-channel
 >3	byte&0xc0	0xc0		mono
+
+# Free lossless audio codec <http://flac.sourceforge.net>
+# From: Przemyslaw Augustyniak <silvathraec@rpg.pl>
+0	string			fLaC		FLAC audio bitstream data
+>4	byte&0x7f		>0		\b, unknown version
+>4	byte&0x7f		0		\b
+# some common bits/sample values
+>>20	beshort&0x1f0		0x030		\b, 4 bit
+>>20	beshort&0x1f0		0x050		\b, 6 bit
+>>20	beshort&0x1f0		0x070		\b, 8 bit
+>>20	beshort&0x1f0		0x0b0		\b, 12 bit
+>>20	beshort&0x1f0		0x0f0		\b, 16 bit
+>>20	beshort&0x1f0		0x170		\b, 24 bit
+>>20	byte&0xe		0x0		\b, mono
+>>20	byte&0xe		0x2		\b, stereo
+>>20	byte&0xe		0x4		\b, 3 channels
+>>20	byte&0xe		0x6		\b, 4 channels
+>>20	byte&0xe		0x8		\b, 5 channels
+>>20	byte&0xe		0xa		\b, 6 channels
+>>20	byte&0xe		0xc		\b, 7 channels
+>>20	byte&0xe		0xe		\b, 8 channels
+# some common sample rates
+>>17	belong&0xfffff0		0x0ac440	\b, 44.1 kHz
+>>17	belong&0xfffff0		0x0bb800	\b, 48 kHz
+>>17	belong&0xfffff0		0x07d000	\b, 32 kHz
+>>17	belong&0xfffff0		0x056220	\b, 22.05 kHz
+>>17	belong&0xfffff0		0x05dc00	\b, 24 kHz
+>>17	belong&0xfffff0		0x03e800	\b, 16 kHz
+>>17	belong&0xfffff0		0x02b110	\b, 11.025 kHz
+>>17	belong&0xfffff0		0x02ee00	\b, 12 kHz
+>>17	belong&0xfffff0		0x01f400	\b, 8 kHz
+>>17	belong&0xfffff0		0x177000	\b, 96 kHz
+>>17	belong&0xfffff0		0x0fa000	\b, 64 kHz
+>>21	byte&0xf		>0		\b, >4G samples
+>>21	byte&0xf		0		\b
+>>>22	belong			>0		\b, %u samples
+>>>22	belong			0		\b, length unknown
