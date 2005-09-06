@@ -1,7 +1,7 @@
-/*	$OpenBSD: dino.c,v 1.15 2004/09/18 07:02:23 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.16 2005/09/06 23:53:38 mickey Exp $	*/
 
 /*
- * Copyright (c) 2003 Michael Shalayeff
+ * Copyright (c) 2003-2005 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -186,9 +186,18 @@ dino_conf_read(void *v, pcitag_t tag, int reg)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 	pcireg_t data;
+	u_int32_t pamr;
+
+	/* fix arbitration errata by disabling all pci devs on config read */
+	pamr = r->pamr;
+	r->pamr = 0;
 
 	r->pci_addr = tag | reg;
 	data = r->pci_conf_data;
+
+	/* restore arbitration */
+	r->pamr = pamr;
+
 	return (letoh32(data));
 }
 
@@ -198,13 +207,21 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 	pcireg_t data1;
+	u_int32_t pamr;
 
-	/* fix coalescing config writes errata by interleaving w/ a read */
-	r->pci_addr = tag | PCI_ID_REG;
-	data1 = r->pci_conf_data;
+	/* fix arbitration errata by disabling all pci devs on config read */
+	pamr = r->pamr;
+	r->pamr = 0;
 
 	r->pci_addr = tag | reg;
 	r->pci_conf_data = htole32(data);
+
+	/* fix coalescing config and io writes by interleaving w/ a read */
+	r->pci_addr = tag | PCI_ID_REG;
+	data1 = r->pci_conf_data;
+
+	/* restore arbitration */
+	r->pamr = pamr;
 }
 
 int
