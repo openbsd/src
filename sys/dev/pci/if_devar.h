@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.19 2005/09/06 00:41:41 brad Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.20 2005/09/06 16:03:40 brad Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -823,10 +823,6 @@ extern struct cfdriver de_cd;
 #define	tulip_name	tulip_if.if_name
 #define	tulip_enaddr	tulip_ac.ac_enaddr
 #define	tulip_multicnt	tulip_ac.ac_multicnt
-
-#define	TULIP_ETHERCOM(sc)		(&(sc)->tulip_ac)
-#define	TULIP_ARP_IFINIT(sc, ifa)	arp_ifinit(TULIP_ETHERCOM(sc), (ifa))
-#define	TULIP_ETHER_IFATTACH(sc)	ether_ifattach(&(sc)->tulip_if)
 
 #define	tulip_bpf	tulip_if.if_bpf
 

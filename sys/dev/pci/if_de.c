@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_de.c,v 1.76 2005/09/06 00:41:41 brad Exp $	*/
-/*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.77 2005/09/06 16:03:40 brad Exp $	*/
+/*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -631,13 +631,6 @@ tulip_media_poll(
 		 */
 		sc->tulip_probe_mediamask |= sc->tulip_mediums[sc->tulip_probe_media]->mi_mediamask;
 		sc->tulip_probe_timeout = 0;
-#ifdef notyet
-		if (sc->tulip_probe_state == TULIP_PROBE_FAILED)
-		    break;
-		if (sc->tulip_probe_media != tulip_mii_phy_readspecific(sc))
-		    break;
-		sc->tulip_probe_timeout = TULIP_IS_MEDIA_TP(sc->tulip_probe_media) ? 2500 : 300;
-#endif
 		break;
 	    }
 	    case TULIP_PROBE_PHYAUTONEG: {
@@ -736,10 +729,6 @@ tulip_media_poll(
 		if (TULIP_CSR_READ(sc, csr_sia_status) & TULIP_SIASTS_LINKFAIL)
 		    return;
 		tulip_linkup(sc, sc->tulip_probe_media);
-#ifdef notyet
-		if (sc->tulip_features & TULIP_HAVE_MII)
-		    tulip_timeout(sc);
-#endif
 		return;
 	    }
 	    break;
@@ -882,15 +871,6 @@ tulip_21041_mediainfo_init(
 {
     tulip_media_info_t * const mi = sc->tulip_mediainfo;
 
-#ifdef notyet
-    if (sc->tulip_revinfo >= 0x20) {
-	TULIP_MEDIAINFO_SIA_INIT(sc, &mi[0], 21041P2, 10BASET);
-	TULIP_MEDIAINFO_SIA_INIT(sc, &mi[1], 21041P2, 10BASET_FD);
-	TULIP_MEDIAINFO_SIA_INIT(sc, &mi[0], 21041P2, AUI);
-	TULIP_MEDIAINFO_SIA_INIT(sc, &mi[1], 21041P2, BNC);
-	return;
-    }
-#endif
     TULIP_MEDIAINFO_SIA_INIT(sc, &mi[0], 21041, 10BASET);
     TULIP_MEDIAINFO_SIA_INIT(sc, &mi[1], 21041, 10BASET_FD);
     TULIP_MEDIAINFO_SIA_INIT(sc, &mi[2], 21041, AUI);
@@ -945,12 +925,6 @@ tulip_21041_media_poll(
     if (event == TULIP_MEDIAPOLL_START) {
 	sc->tulip_if.if_flags |= IFF_OACTIVE;
 	sc->tulip_cmdmode &= ~(TULIP_CMD_FULLDUPLEX|TULIP_CMD_RXRUN);
-#ifdef notyet
-	if (sc->tulip_revinfo >= 0x20) {
-	    sc->tulip_cmdmode |= TULIP_CMD_FULLDUPLEX;
-	    sc->tulip_flags |= TULIP_DIDNWAY;
-	}
-#endif
 	TULIP_CSR_WRITE(sc, csr_command, sc->tulip_cmdmode);
 	sc->tulip_probe_state = TULIP_PROBE_MEDIATEST;
 	sc->tulip_probe_media = TULIP_MEDIA_10BASET;
@@ -2370,14 +2344,6 @@ tulip_srom_decode(
 	    if (data & TULIP_SROM_21041_EXTENDED)
 		dp += 6;
 	}
-#ifdef notdef
-	if (blocks == 0) {
-	    TULIP_MEDIAINFO_SIA_INIT(sc, mi, 21041, BNC); mi++;
-	    TULIP_MEDIAINFO_SIA_INIT(sc, mi, 21041, AUI); mi++;
-	    TULIP_MEDIAINFO_SIA_INIT(sc, mi, 21041, 10BASET); mi++;
-	    TULIP_MEDIAINFO_SIA_INIT(sc, mi, 21041, 10BASET_FD); mi++;
-	}
-#endif
     } else {
 	unsigned length, type;
 	tulip_media_t gp_media = TULIP_MEDIA_UNKNOWN;
@@ -2932,9 +2898,7 @@ tulip_addr_filter(
     sc->tulip_flags |= TULIP_WANTSETUP|TULIP_WANTTXSTART;
     sc->tulip_cmdmode &= ~TULIP_CMD_RXRUN;
     sc->tulip_intrmask &= ~TULIP_STS_RXSTOPPED;
-#if defined(IFF_ALLMULTI)
     sc->tulip_if.if_flags &= ~IFF_ALLMULTI;
-#endif
     sc->tulip_if.if_start = tulip_ifstart;	/* so the setup packet gets queued */
     if (sc->tulip_multicnt > 14) {
 	u_int32_t *sp = sc->tulip_setupdata;
@@ -2956,7 +2920,7 @@ tulip_addr_filter(
 	 * hash and one perfect hardware).
 	 */
 	bzero(sc->tulip_setupdata, sizeof(sc->tulip_setupdata));
-	ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
+	ETHER_FIRST_MULTI(step, &sc->tulip_ac, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 		    hash = tulip_mchash(enm->enm_addrlo);
@@ -2992,7 +2956,7 @@ tulip_addr_filter(
 	    /*
 	     * Else can get perfect filtering for 16 addresses.
 	     */
-	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
+	    ETHER_FIRST_MULTI(step, &sc->tulip_ac, enm);
 	    for (; enm != NULL; idx++) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 		    *sp++ = FILT_BO(((u_int16_t *) enm->enm_addrlo)[0]);
@@ -3021,10 +2985,8 @@ tulip_addr_filter(
 	    *sp++ = FILT_BO(((u_int16_t *) sc->tulip_enaddr)[2]);
 	}
     }
-#if defined(IFF_ALLMULTI)
     if (sc->tulip_flags & TULIP_ALLMULTI)
 	sc->tulip_if.if_flags |= IFF_ALLMULTI;
-#endif
 }
 
 static void
@@ -3421,9 +3383,6 @@ tulip_rx_intr(
 	    ri->ri_nextout->d_addr1 =
 		    DESC_BO(TULIP_KVATOPHYS(sc, mtod(ms, caddr_t)));
 	    ri->ri_nextout->d_status = DESC_BO(TULIP_DSTS_OWNER);
-#if defined(__mips__)
-	    pci_sync_cache(sc->tulip_pc, (vm_offset_t)mtod(ms, caddr_t),TULIP_RX_BUFLEN);
-#endif
 	    if (++ri->ri_nextout == ri->ri_last)
 		ri->ri_nextout = ri->ri_first;
 	    me = ms->m_next;
@@ -3930,9 +3889,6 @@ tulip_txput(
 		    eop->u.f = DESC_BO(u.f); /* copy the bitfields */
 		}
 	    }
-#if defined(__mips__)
-	    pci_sync_cache(sc->tulip_pc, (vm_offset_t)addr, slen);
-#endif
 	    d_status = TULIP_DSTS_OWNER;
 	    len -= slen;
 	    addr += slen;
@@ -4051,7 +4007,7 @@ tulip_txput(
     TULIP_PERFEND(txput);
     return m;
 }
-
+
 static void
 tulip_txput_setup(
     tulip_softc_t * const sc)
@@ -4090,9 +4046,6 @@ tulip_txput_setup(
      */
     sc->tulip_flags ^= TULIP_WANTSETUP|TULIP_DOINGSETUP;
     ri->ri_free--;
-#if defined(__mips__)
-    pci_sync_cache(sc->tulip_pc, (vm_offset_t)sc->tulip_setupbuf, sizeof(sc->tulip_setupbuf));
-#endif
     nextout = ri->ri_nextout;
     {
 	u_int32_t d_flag;
@@ -4157,6 +4110,11 @@ tulip_ifioctl(
 
     s = TULIP_RAISESPL();
 
+    if ((error = ether_ioctl(ifp, &sc->tulip_ac, cmd, data)) > 0) {
+		TULIP_RESTORESPL(s);
+		return (error);
+    }
+
     switch (cmd) {
     case SIOCSIFADDR: {
 	ifp->if_flags |= IFF_UP;
@@ -4164,7 +4122,7 @@ tulip_ifioctl(
 #ifdef INET
 	case AF_INET: {
 	    tulip_init(sc);
-	    TULIP_ARP_IFINIT(sc, ifa);
+	    arp_ifinit(&sc->tulip_ac, ifa);
 	    break;
 	}
 #endif /* INET */
@@ -4174,12 +4132,6 @@ tulip_ifioctl(
 	    break;
 	}
 	}
-	break;
-    }
-    case SIOCGIFADDR: {
-	bcopy((caddr_t) sc->tulip_enaddr,
-	      (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-	      ETHER_ADDR_LEN);
 	break;
     }
 
@@ -4200,9 +4152,9 @@ tulip_ifioctl(
 	 * Update multicast listeners
 	 */
 	if (cmd == SIOCADDMULTI)
-	    error = ether_addmulti(ifr, TULIP_ETHERCOM(sc));
+	    error = ether_addmulti(ifr, &sc->tulip_ac);
 	else
-	    error = ether_delmulti(ifr, TULIP_ETHERCOM(sc));
+	    error = ether_delmulti(ifr, &sc->tulip_ac);
 
 	if (error == ENETRESET) {
 	    if (ifp->if_flags & IFF_RUNNING) {
@@ -4213,29 +4165,17 @@ tulip_ifioctl(
 	}
 	break;
     }
+
     case SIOCSIFMTU:
 	/*
 	 * Set the interface MTU.
 	 */
-	if (ifr->ifr_mtu > ETHERMTU) {
+	if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 	    error = EINVAL;
-	    break;
-	}
-	ifp->if_mtu = ifr->ifr_mtu;
+	else if (ifp->if_mtu != ifr->ifr_mtu)
+	    ifp->if_mtu = ifr->ifr_mtu;
 	break;
 
-#ifdef SIOCGADDRROM
-    case SIOCGADDRROM: {
-	error = copyout(sc->tulip_rombuf, ifr->ifr_data, sizeof(sc->tulip_rombuf));
-	break;
-    }
-#endif
-#ifdef SIOCGCHIPID
-    case SIOCGCHIPID: {
-	ifr->ifr_metric = (int) sc->tulip_chipid;
-	break;
-    }
-#endif
     default: {
 	error = EINVAL;
 	break;
@@ -4430,7 +4370,7 @@ tulip_attach(
 
     IFQ_SET_READY(&ifp->if_snd);
     if_attach(ifp);
-    TULIP_ETHER_IFATTACH(sc);
+    ether_ifattach(ifp);
 
 #if NBPFILTER > 0
     TULIP_BPF_ATTACH(sc);
@@ -4468,20 +4408,6 @@ tulip_initring(
     tulip_desc_t *descs,
     int ndescs)
 {
-#if defined(__mips__)
-    tulip_desc_t *xdesc = descs;
-    /*
-     * Someone moved the descriptors into the softc struct.
-     * Avoid cache line conflicts by aligning on cache line.
-     */
-    descs = (tulip_desc_t *)(roundup((int)descs, 16));
-    if(xdesc != descs) {
-	ndescs--;
-    }
-    pci_sync_cache(sc->tulip_pc, (vm_offset_t)descs, ndescs * sizeof(tulip_desc_t));
-    descs = (tulip_desc_t *)TULIP_KVATOPHYS(sc, descs);
-    descs = (tulip_desc_t *)PHYS_TO_UNCACHED((int)descs & 0x3fffffff);
-#endif
     ri->ri_max = ndescs;
     ri->ri_first = descs;
     ri->ri_last = ri->ri_first + ri->ri_max;
