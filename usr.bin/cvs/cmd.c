@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.33 2005/07/26 16:03:20 xsa Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.34 2005/09/07 17:43:15 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -26,6 +26,7 @@
 
 #include <sys/queue.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -87,7 +88,9 @@ struct cvs_cmd *cvs_cdt[] = {
 	NULL
 };
 
-
+#define MISSING_CVS_DIR		0x01
+#define MISSING_CVS_ENTRIES	0x02
+#define MISSING_CVS_REPO	0x04
 
 /*
  * cvs_findcmd()
@@ -144,11 +147,11 @@ cvs_findcmdbyreq(int reqid)
 int
 cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 {
-	int i;
-	int ret;
+	int i, ret, error;
 	struct cvsroot *root;
 	int (*ex_hdlr)(CVSFILE *, void *);
 	CVSFILE *cf;
+	struct stat st;
 
 	/* if the command requested is the server one, just call the
 	 * cvs_server() function to handle it, and return after it.
@@ -167,6 +170,51 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 
 	argc -= i;
 	argv += i;
+
+	/*
+	 * Check if we have the administrative files present, if we are
+	 * missing one, we will error out because we cannot continue.
+	 *
+	 * We are not checking for CVS/Root since we fetched the root
+	 * above via cvsroot_get().
+	 *
+	 * checkout, export, import and release do not depend on these files.
+	 */
+	error = 0;
+	if ((cmd->cmd_op != CVS_OP_CHECKOUT) && (cmd->cmd_op != CVS_OP_EXPORT) &&
+	    (cmd->cmd_op != CVS_OP_IMPORT) && (cmd->cmd_op != CVS_OP_RELEASE)) {
+		/* check for the CVS directory */
+		ret = stat(CVS_PATH_CVSDIR, &st);
+		if (((ret == -1) && (errno == ENOENT)) || ((ret != -1) &&
+		    !(S_ISDIR(st.st_mode))))
+			error |= MISSING_CVS_DIR;
+
+		/* check if the CVS/Entries file exists */
+		ret = stat(CVS_PATH_ENTRIES, &st);
+		if (((ret == -1) && (errno == ENOENT)) || ((ret != -1) &&
+		    !(S_ISREG(st.st_mode))))
+			error |= MISSING_CVS_ENTRIES;
+
+		/* check if the CVS/Repository file exists */
+		ret = stat(CVS_PATH_REPOSITORY, &st);
+		if (((ret == -1) && (errno == ENOENT)) || ((ret != -1) &&
+		    !(S_ISREG(st.st_mode))))
+			error |= MISSING_CVS_REPO;
+	}
+
+	if (error > 0) {
+		if (error & MISSING_CVS_DIR) {
+			cvs_log(LP_ABORT, "missing '%s' directory",
+			    CVS_PATH_CVSDIR);
+			return (CVS_EX_FILE);
+		}
+
+		if (error & MISSING_CVS_ENTRIES)
+			cvs_log(LP_ABORT, "missing '%s' file", CVS_PATH_ENTRIES);
+		if (error & MISSING_CVS_REPO)
+			cvs_log(LP_ABORT, "missing '%s' file", CVS_PATH_REPOSITORY);
+		return (CVS_EX_FILE);
+	}
 
 	if (!(cmd->cmd_flags & CVS_CMD_ALLOWSPEC) && (argc > 0))
 		return (CVS_EX_USAGE);
