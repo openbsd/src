@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidivar.h,v 1.8 2004/06/27 19:44:48 deraadt Exp $ */
+/*	$OpenBSD: umidivar.h,v 1.9 2005/09/07 06:57:09 jsg Exp $ */
 /*	$NetBSD: umidivar.h,v 1.5 2002/09/12 21:00:42 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,9 @@
 struct umidi_packet {
 	unsigned	status;
 	unsigned	index;
-	unsigned char	buffer[UMIDI_PACKET_SIZE];
+	unsigned char	buffer_rt[UMIDI_PACKET_SIZE];	/* real time packet */
+	unsigned char	buffer_com[UMIDI_PACKET_SIZE];	/* common/voice packet */
+	unsigned char  *buffer;
 };
 
 /*
