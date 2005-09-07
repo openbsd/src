@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.77 2005/09/06 16:03:40 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.78 2005/09/07 13:32:14 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -140,7 +140,6 @@ tulip_timeout_callback(
     sc->tulip_flags &= ~TULIP_TIMEOUTPENDING;
     sc->tulip_probe_timeout -= 1000 / TULIP_HZ;
     (sc->tulip_boardsw->bd_media_poll)(sc, TULIP_MEDIAPOLL_TIMER);
-    TULIP_RESTORESPL(s);
 
     TULIP_PERFEND(timeout);
     TULIP_RESTORESPL(s);
