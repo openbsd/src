@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.89 2005/08/24 09:19:38 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.90 2005/09/07 16:24:22 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -2042,6 +2042,19 @@ File containing the notifications that could not be sent to the
 CVS server but will be sent at the next successful connection.
 .It Pa CVS/Tag
 File containing the symbolic revision that was used at checkout.
+The first character of the line is a single letter indicating the
+type of tag:
+.Sq D ,
+.Sq N ,
+or
+.Sq T,
+for date, non-branch tag, or branch tag, respectively.
+The rest of the line is the tag or date itself.
+The
+.Pa Tag
+file should not be removed manually:
+instead, use
+.Dq update -A .
 .It Pa CVS/Update.prog
 File containing the path to the command specified with the
 .Fl u
