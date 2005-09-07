@@ -1,4 +1,4 @@
-.\"	$OpenBSD: split.1,v 1.9 2003/06/03 02:56:16 millert Exp $
+.\"	$OpenBSD: split.1,v 1.10 2005/09/07 12:45:59 jmc Exp $
 .\"	$NetBSD: split.1,v 1.5 1994/12/21 08:20:35 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
@@ -38,7 +38,12 @@
 .Nd split a file into pieces
 .Sh SYNOPSIS
 .Nm split
-.Op Fl b Ar byte_count[k|m]
+.Oo
+.Fl b
+.Sm off
+.Ar byte_count Op Ar k | m
+.Sm on
+.Oc
 .Op Fl l Ar line_count
 .Op Fl p Ar pattern
 .Op Ar file Op Ar name
@@ -52,7 +57,13 @@ and breaks it up into files of 1000 lines each.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b
+.It Xo
+.Fl b
+.Sm off
+.Ar byte_count
+.Op Ar k | m
+.Sm on
+.Xc
 Create smaller files
 .Ar byte_count
 bytes in length.
@@ -66,9 +77,9 @@ If
 is appended to the number, the file is split into
 .Ar byte_count
 megabyte pieces.
-.It Fl l
+.It Fl l Ar line_count
 Create smaller files
-.Ar n
+.Ar line_count
 lines in length.
 .It Fl p Ar pattern
 The file is split whenever an input line matches
