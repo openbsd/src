@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissreg.h,v 1.1 2005/07/06 01:52:13 mickey Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.2 2005/09/07 04:00:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -116,6 +116,13 @@ struct ciss_ldmap {
 		u_int32_t tgt;
 		u_int32_t tgt2;
 	} map[1];
+} __packed;
+
+struct ciss_flush {
+	u_int16_t	flush;
+#define	CISS_FLUSH_ENABLE	0
+#define	CISS_FLUSH_DISABLE	1
+	u_int16_t	resv[255];
 } __packed;
 
 struct ciss_cmd {

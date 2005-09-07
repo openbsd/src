@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissvar.h,v 1.1 2005/07/06 01:52:13 mickey Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.2 2005/09/07 04:00:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -25,6 +25,7 @@ struct ciss_softc {
 	void		*sc_ih;
 	void		*sc_sh;
 	struct proc	*sc_thread;
+	int		sc_flush;
 
 	u_int	sc_flags;
 	int ccblen, maxcmd, maxsg, nbus, ndrives, maxunits;
@@ -50,9 +51,11 @@ struct ciss_rawsoftc {
 	u_int8_t	sc_channel;
 };
 
-/* XXX These have to become spinlocks in case of SMP */
+/* XXX These have to become spinlocks in case of fine SMP */
 #define	CISS_LOCK(sc) splbio()
 #define	CISS_UNLOCK(sc, lock) splx(lock)
+#define	CISS_LOCK_SCRATCH(sc) splbio()
+#define	CISS_UNLOCK_SCRATCH(sc, lock) splx(lock)
 typedef	int ciss_lock_t;
 
 int	ciss_attach(struct ciss_softc *sc);
