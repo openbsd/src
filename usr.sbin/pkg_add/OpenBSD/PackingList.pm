@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.48 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.49 2005/09/07 10:39:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -335,8 +335,8 @@ our @unique_categories =
     (qw(name no-default-conflict manual-installation extrainfo arch));
 
 our @list_categories =
-    (qw(pkgcfl conflict depend wantlib pkgdep newdepend 
-    	libdepend module groups users items));
+    (qw(pkgcfl conflict pkgpath incompatibility updateset depend 
+    	wantlib pkgdep newdepend libdepend module groups users items));
 
 our @cache_categories =
     (qw(depend wantlib pkgdep newdepend libdepend));
