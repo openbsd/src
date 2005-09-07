@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.5 2005/08/09 04:10:10 mickey Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.6 2005/09/07 02:17:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -37,7 +37,6 @@
 
 #define	CISS_BAR	0x10
 
-int	ciss_pci_find_device(void *);
 int	ciss_pci_match(struct device *, void *, void *);
 void	ciss_pci_attach(struct device *, struct device *, void *);
 
