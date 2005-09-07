@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.38 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: pkg_create,v 1.39 2005/09/07 14:01:59 jmc Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -274,7 +274,7 @@ set_usage(
 'pkg_create [-hnv] [-A arches] [-B pkg-destdir] [-D name=value]',
 '[-i iscript] [-k dscript] [-L localbase] [-M module] [-M displayfile]',
 '[-P pkg-dependency] [-p prefix] [-r rscript] [-S pkg-destdir]',
-'[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkgname');
+'[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkg-name');
 
 my $plist = new OpenBSD::PackingList;
 try { 
