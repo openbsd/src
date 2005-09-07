@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_compat.c,v 1.3 2004/10/04 16:01:46 mickey Exp $	*/
+/*	$OpenBSD: ieee80211_compat.c,v 1.4 2005/09/07 05:40:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_compat.c,v 1.3 2003/09/23 15:57:25 dyoung Exp $	*/
 
 /*-
@@ -34,11 +34,6 @@
 #include <net/if.h>
 #include <net80211/ieee80211_compat.h>
 
-#ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_compat.c,v 1.3 2003/09/23 15:57:25 dyoung Exp $");
-#endif
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 void
 if_printf(struct ifnet *ifp, const char *fmt, ...)
 {
@@ -51,4 +46,3 @@ if_printf(struct ifnet *ifp, const char *fmt, ...)
 	va_end(ap);
 	return;
 }
-#endif

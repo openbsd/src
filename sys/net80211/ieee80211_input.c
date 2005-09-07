@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.6 2005/05/07 02:50:47 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.7 2005/09/07 05:40:11 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -34,15 +34,6 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__FreeBSD__)
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
-#elif defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $");
-#endif
-
-#if defined(__NetBSD__)
-#include "opt_inet.h"
-#endif
 
 #include "bpfilter.h"
 
@@ -55,26 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung 
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
-#ifdef __FreeBSD__
-#include <sys/bus.h>
-#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/endian.h>
-
-#ifdef __FreeBSD__
-#include <machine/atomic.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#if defined(__FreeBSD__)
-#include <net/ethernet.h>
-#elif defined(__NetBSD__)
-#include <net/if_ether.h>
-#endif
 #include <net/if_llc.h>
 
 #if NBPFILTER > 0
@@ -83,19 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung 
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#else
-#include <net/if_ether.h>
-#endif
 #endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 
-#ifdef __OpenBSD__
 #include <dev/rndvar.h>
-#endif
 
 const struct timeval ieee80211_merge_print_intvl = {
     .tv_sec = 1, 
@@ -127,9 +100,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	int error, len;
 	u_int8_t dir, type, subtype;
 	u_int16_t rxseq;
-#if !defined(__OpenBSD__)
-	ALTQ_DECL(struct altq_pktattr pktattr;)
-#endif
 
 	IASSERT(ni != NULL, ("null node"));
 
@@ -260,13 +230,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if (ic->ic_state != IEEE80211_S_SCAN &&
 			    !IEEE80211_ADDR_EQ(wh->i_addr3,
 				ic->ic_bss->ni_bssid) &&
-#ifdef __OpenBSD__
 			    !IEEE80211_ADDR_EQ(wh->i_addr3,
 				etherbroadcastaddr)) {
-#else
-			    !IEEE80211_ADDR_EQ(wh->i_addr3,
- 			        ifp->if_broadcastaddr)) {
-#endif
 				/* Destination is not our BSS or broadcast. */
 				IEEE80211_DPRINTF2(
 				    ("%s: discard data frame to DA %s\n",
@@ -283,13 +248,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if (ic->ic_state != IEEE80211_S_SCAN &&
 			    !IEEE80211_ADDR_EQ(wh->i_addr1,
 				ic->ic_bss->ni_bssid) &&
-#ifdef __OpenBSD__
 			    !IEEE80211_ADDR_EQ(wh->i_addr1,
 				etherbroadcastaddr)) {
-#else
-			    !IEEE80211_ADDR_EQ(wh->i_addr1,
- 			        ifp->if_broadcastaddr)) {
-#endif
 				/* BSS is not us or broadcast. */
 				IEEE80211_DPRINTF2(
 				    ("%s: discard data frame to BSS %s\n",
@@ -374,13 +334,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				}
 			}
 			if (m1 != NULL) {
-#if !defined(__OpenBSD__)
-#ifdef ALTQ
-				if (ALTQ_IS_ENABLED(&ifp->if_snd))
-					altq_etherclassify(&ifp->if_snd, m1,
-					    &pktattr);
-#endif
-#endif
 				len = m1->m_pkthdr.len;
 				IFQ_ENQUEUE(&ifp->if_snd, m1, NULL, error);
 				if (error)
@@ -401,11 +354,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			if (ifp->if_bpf && m1 == NULL)
 				BPF_MTAP(ifp->if_bpf, m);
 #endif
-#if defined(__OpenBSD__)
  			ether_input_mbuf(ifp, m);
-#else
-			(*ifp->if_input)(ifp, m);
-#endif
 		}
 		return;
 
@@ -555,13 +504,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 					m_freem(m);
 					return NULL;
 				}
-#if defined(__FreeBSD__)
-				M_MOVE_PKTHDR(n, m);
-#elif defined(__OpenBSD__)
 				M_DUP_PKTHDR(n, m);
-#else
-				M_COPY_PKTHDR(n, m);
-#endif
 				n->m_len = MHLEN;
 			} else {
 				MGET(n, M_DONTWAIT, MT_DATA);

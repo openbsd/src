@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.5 2005/05/25 07:40:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.6 2005/09/07 05:40:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -34,15 +34,6 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__FreeBSD__)
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
-#elif defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $");
-#endif
-
-#if defined(__NetBSD__)
-#include "opt_inet.h"
-#endif
 
 #include "bpfilter.h"
 
@@ -55,25 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung E
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
-#ifdef __FreeBSD__
-#include <sys/bus.h>
-#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-
-#ifdef __FreeBSD__
-#include <machine/atomic.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#if defined(__FreeBSD__)
-#include <net/ethernet.h>
-#elif defined(__NetBSD__)
-#include <net/if_ether.h>
-#endif
 #include <net/if_llc.h>
 
 #if NBPFILTER > 0
@@ -82,19 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung E
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#else
-#include <net/if_ether.h>
-#endif
 #endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 
-#ifdef __OpenBSD__
 #include <dev/rndvar.h>
-#endif
 
 static struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
 static void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
@@ -111,11 +84,7 @@ static struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *)
 static void ieee80211_node_cleanup(struct ieee80211com *,
                 struct ieee80211_node *);
 
-#ifdef __NetBSD__
-MALLOC_DEFINE(M_80211_NODE, "80211node", "802.11 node state");
-#else
 #define M_80211_NODE	M_DEVBUF
-#endif
 
 void
 ieee80211_node_attach(struct ifnet *ifp)

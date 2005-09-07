@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.4 2005/03/13 13:48:45 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.5 2005/09/07 05:40:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -34,19 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__FreeBSD__)
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
-#elif defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $");
-#endif
 
 /*
  * IEEE 802.11 protocol support.
  */
-
-#if defined(__NetBSD__)
-#include "opt_inet.h"
-#endif
 
 #include "bpfilter.h"
 
@@ -58,25 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung E
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
-#ifdef __FreeBSD__
-#include <sys/bus.h>
-#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-
-#ifdef __FreeBSD__
-#include <machine/atomic.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#if defined(__FreeBSD__)
-#include <net/ethernet.h>
-#elif defined(__NetBSD__)
-#include <net/if_ether.h>
-#endif
 #include <net/if_llc.h>
 
 #if NBPFILTER > 0
@@ -85,11 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung E
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#else
-#include <net/if_ether.h>
-#endif
 #endif
 
 #include <net80211/ieee80211_var.h>
@@ -129,10 +104,6 @@ ieee80211_proto_attach(struct ifnet *ifp)
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
 	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
 
-#ifdef __FreeBSD__
-	mtx_init(&ic->ic_mgtq.ifq_mtx, ifp->if_xname, "mgmt send q", MTX_DEF);
-#endif
-
 	/* protocol state change handler */
 	ic->ic_newstate = ieee80211_newstate;
 
@@ -146,13 +117,8 @@ ieee80211_proto_detach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
-#ifdef __FreeBSD__
-	IF_DRAIN(&ic->ic_mgtq);
-	mtx_destroy(&ic->ic_mgtq.ifq_mtx);
-#else
 	IF_PURGE(&ic->ic_mgtq);
 	IF_PURGE(&ic->ic_pwrsaveq);
-#endif
 }
 
 void
@@ -401,12 +367,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_SCAN:
 			ic->ic_mgt_timer = 0;
-#ifdef __FreeBSD__
-			IF_DRAIN(&ic->ic_mgtq);
-#else
 			IF_PURGE(&ic->ic_mgtq);
 			IF_PURGE(&ic->ic_pwrsaveq);
-#endif
 			if (ic->ic_wep_ctx != NULL) {
 				free(ic->ic_wep_ctx, M_DEVBUF);
 				ic->ic_wep_ctx = NULL;
@@ -418,13 +380,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 	case IEEE80211_S_SCAN:
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
 		/* initialize bss for probe request */
-#if defined(__OpenBSD__)
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, etherbroadcastaddr);
 		IEEE80211_ADDR_COPY(ni->ni_bssid, etherbroadcastaddr);
-#else
-		IEEE80211_ADDR_COPY(ni->ni_macaddr, ifp->if_broadcastaddr);
-		IEEE80211_ADDR_COPY(ni->ni_bssid, ifp->if_broadcastaddr);
-#endif
 		ni->ni_rates = ic->ic_sup_rates[
 			ieee80211_chan2mode(ic, ni->ni_chan)];
 		ni->ni_associd = 0;

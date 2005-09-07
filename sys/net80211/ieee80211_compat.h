@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_compat.h,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_compat.h,v 1.2 2005/09/07 05:40:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_compat.h,v 1.5 2004/01/13 23:37:30 dyoung Exp $	*/
 
 /*-
@@ -30,34 +30,17 @@
 #ifndef _NET80211_IEEE80211_COMPAT_H_
 #define _NET80211_IEEE80211_COMPAT_H_
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define IASSERT(cond, complaint) if (!(cond)) panic complaint
-#else
-#define IASSERT(cond, complaint) KASSERT(cond, complaint)
-#endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 void if_printf(struct ifnet *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-#endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define ieee80211_node_critsec_decl(v) int v
 #define ieee80211_node_critsec_begin(ic, v) do { v = splnet(); } while (0)
 #define ieee80211_node_critsec_end(ic, v) splx(v)
-#else
-#define ieee80211_node_critsec_decl(v) /* empty */
-#define ieee80211_node_critsec_begin(ic, v) mtx_lock(&(ic)->ic_nodelock)
-#define ieee80211_node_critsec_end(ic, v) mtx_unlock(&ic->ic_nodelock)
-#endif
 
-#if defined(__OpenBSD__)
 #define BPF_ATTACH(ifp_x,dlt_x,dlf_x,bpf_x) \
 		bpfattach(bpf_x,ifp_x,dlt_x,dlf_x)
-#else
-#define BPF_ATTACH(ifp_x,dlt_x,dlf_x,bpf_x) \
-		bpfattach2(ifp_x,dlt_x,dlf_x,bpf_x)
-#endif
 #define BPF_DETACH(ifp_x) bpfdetach(ifp_x)
 #define BPF_MTAP(bpf_x,mbf_x) bpf_mtap(bpf_x,mbf_x)
 

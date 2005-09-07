@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.9 2005/04/20 19:52:43 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.10 2005/09/07 05:40:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -34,15 +34,6 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__FreeBSD__)
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
-#elif defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $");
-#endif
-
-#ifdef __NetBSD__
-#include "opt_inet.h"
-#endif
 
 #include "bpfilter.h"
 
@@ -54,25 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
-#ifdef __FreeBSD__
-#include <sys/bus.h>
-#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-
-#ifdef __FreeBSD__
-#include <machine/atomic.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#if defined(__FreeBSD__)
-#include <net/ethernet.h>
-#elif defined(__NetBSD__)
-#include <net/if_ether.h>
-#endif
 #include <net/if_llc.h>
 
 #if NBPFILTER > 0
@@ -81,11 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#else
-#include <net/if_ether.h>
-#endif
 #endif
 
 #include <net80211/ieee80211_var.h>
@@ -184,9 +159,6 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
-#ifdef __FreeBSD__
-	KASSERT(m->m_pkthdr.rcvif == NULL, ("rcvif not null"));
-#endif
 	m->m_pkthdr.rcvif = (void *)ni;
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -587,16 +559,9 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 	struct mbuf *m;
 
 	IASSERT(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
-#ifdef __FreeBSD__
-	if (pktlen <= MHLEN)
-		MGETHDR(m, flags, type);
-	else
-		m = m_getcl(flags, type, M_PKTHDR);
-#else
 	MGETHDR(m, flags, type);
 	if (m != NULL && pktlen > MHLEN)
 		MCLGET(m, flags);
-#endif
 	return m;
 }
 

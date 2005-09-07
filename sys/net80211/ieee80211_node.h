@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.4 2005/05/25 07:40:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.5 2005/09/07 05:40:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -129,7 +129,6 @@ struct ieee80211_node {
 	u_int32_t		*ni_challenge;	/* shared-key challenge */
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define ieee80211_node_incref(ni)			\
 	do {						\
 		int _s = splnet();			\
@@ -147,19 +146,6 @@ ieee80211_node_decref(struct ieee80211_node *ni)
 	return refcnt;
 }
 
-#else
-#define ieee80211_node_incref(ni) atomic_add_int(&(ni)->ni_refcnt, 1)
-static __inline int
-ieee80211_node_decref(struct ieee80211_node *ni)
-{
-	int orefcnt;
-	do {
-		orefcnt = ni->ni_refcnt;
-	} while (atomic_cmpset_int(&ni->ni_refcnt, orefcnt, orefcnt - 1) == 0);
-	return orefcnt - 1;
-}
-#endif
-
 static __inline struct ieee80211_node *
 ieee80211_ref_node(struct ieee80211_node *ni)
 {
@@ -174,23 +160,12 @@ ieee80211_unref_node(struct ieee80211_node **ni)
 	*ni = NULL;			/* guard against use */
 }
 
-#ifdef __FreeBSD__
-typedef struct mtx ieee80211_node_lock_t;
-#define	IEEE80211_NODE_LOCK_INIT(_ic, _name) \
-	mtx_init(&(_ic)->ic_nodelock, _name, "802.11 node table", MTX_DEF)
-#define	IEEE80211_NODE_LOCK_DESTROY(_ic)	mtx_destroy(&(_ic)->ic_nodelock)
-#define	IEEE80211_NODE_LOCK(_ic)		mtx_lock(&(_ic)->ic_nodelock)
-#define	IEEE80211_NODE_UNLOCK(_ic)		mtx_unlock(&(_ic)->ic_nodelock)
-#define	IEEE80211_NODE_LOCK_ASSERT(_ic) \
-	mtx_assert(&(_ic)->ic_nodelock, MA_OWNED)
-#else
 typedef int ieee80211_node_lock_t;
 #define	IEEE80211_NODE_LOCK_INIT(_ic, _name)
 #define	IEEE80211_NODE_LOCK_DESTROY(_ic)
 #define	IEEE80211_NODE_LOCK(_ic)		(_ic)->ic_nodelock = splnet()
 #define	IEEE80211_NODE_UNLOCK(_ic)		splx((_ic)->ic_nodelock)
 #define	IEEE80211_NODE_LOCK_ASSERT(_ic)
-#endif
 #define	IEEE80211_NODE_LOCK_BH		IEEE80211_NODE_LOCK
 #define	IEEE80211_NODE_UNLOCK_BH	IEEE80211_NODE_UNLOCK
 

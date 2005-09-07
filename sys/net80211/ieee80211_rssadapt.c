@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_rssadapt.c,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_rssadapt.c,v 1.2 2005/09/07 05:40:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 dyoung Exp $	*/
 
 /*-
@@ -38,17 +38,10 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
-#ifdef __FreeBSD__
-#include <net/ethernet.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#else
-#include <net/if_ether.h>
-#endif
 #endif
 
 #include <net80211/ieee80211_var.h>
@@ -90,129 +83,6 @@ static struct ieee80211_rssadapt_expavgctl master_expavgctl = {
 	rc_avgrssi_denom : 8,
 	rc_avgrssi_old : 4
 };
-
-#ifdef __NetBSD__
-#ifdef IEEE80211_DEBUG
-/* TBD factor with sysctl_ath_verify, sysctl_ieee80211_verify. */
-static int
-sysctl_ieee80211_rssadapt_debug(SYSCTLFN_ARGS)
-{
-	int error, t;
-	struct sysctlnode node;
-
-	node = *rnode;
-	t = *(int*)rnode->sysctl_data;
-	node.sysctl_data = &t;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	IEEE80211_DPRINTF(("%s: t = %d, nodenum = %d, rnodenum = %d\n",
-	    __func__, t, node.sysctl_num, rnode->sysctl_num));
-
-	if (t < 0 || t > 2)
-		return (EINVAL);
-	*(int*)rnode->sysctl_data = t;
-
-	return (0);
-}
-#endif /* IEEE80211_DEBUG */
-
-/* TBD factor with sysctl_ath_verify, sysctl_ieee80211_verify. */
-static int
-sysctl_ieee80211_rssadapt_expavgctl(SYSCTLFN_ARGS)
-{
-	struct ieee80211_rssadapt_expavgctl rc;
-	int error;
-	struct sysctlnode node;
-
-	node = *rnode;
-	rc = *(struct ieee80211_rssadapt_expavgctl *)rnode->sysctl_data;
-	node.sysctl_data = &rc;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	IEEE80211_DPRINTF(("%s: decay = %d/%d, thresh = %d/%d, "
-	    "avgrssi = %d/%d, nodenum = %d, rnodenum = %d\n",
-	    __func__, rc.rc_decay_old, rc.rc_decay_denom,
-	    rc.rc_thresh_old, rc.rc_thresh_denom,
-	    rc.rc_avgrssi_old, rc.rc_avgrssi_denom,
-	    node.sysctl_num, rnode->sysctl_num));
-
-	if (rc.rc_decay_old < 0 ||
-	    rc.rc_decay_denom < rc.rc_decay_old)
-		return (EINVAL);
-
-	if (rc.rc_thresh_old < 0 ||
-	    rc.rc_thresh_denom < rc.rc_thresh_old)
-		return (EINVAL);
-
-	if (rc.rc_avgrssi_old < 0 ||
-	    rc.rc_avgrssi_denom < rc.rc_avgrssi_old)
-		return (EINVAL);
-
-	*(struct ieee80211_rssadapt_expavgctl *)rnode->sysctl_data = rc;
-
-	return (0);
-}
-
-/*
- * Setup sysctl(3) MIB, net.ieee80211.*
- *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
- */
-SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
-    "sysctl ieee80211 rssadapt subtree setup")
-{
-	int rc;
-	struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,
-	    NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &node, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link", NULL,
-	    NULL, 0, NULL, 0, PF_LINK, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &node, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211", NULL,
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &node, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "rssadapt",
-	    SYSCTL_DESCR("Received Signal Strength adaptation controls"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
-		goto err;
-
-#ifdef IEEE80211_DEBUG
-	/* control debugging printfs */
-	if ((rc = sysctl_createv(clog, 0, &node, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
-	    SYSCTL_DESCR("Enable RSS adaptation debugging output"),
-	    sysctl_ieee80211_rssadapt_debug, 0, &ieee80211_rssadapt_debug, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
-		goto err;
-#endif /* IEEE80211_DEBUG */
-
-	/* control rate of decay for exponential averages */
-	if ((rc = sysctl_createv(clog, 0, &node, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_STRUCT,
-	    "expavgctl", SYSCTL_DESCR("RSS exponential averaging control"),
-	    sysctl_ieee80211_rssadapt_expavgctl, 0,
-	    &master_expavgctl, sizeof(master_expavgctl), CTL_CREATE,
-	    CTL_EOL)) != 0)
-		goto err;
-
-	return;
-err:
-	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
-}
-#endif /* __NetBSD__ */
 
 int
 ieee80211_rssadapt_choose(struct ieee80211_rssadapt *ra,

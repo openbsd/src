@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.3 2004/06/28 19:29:40 millert Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.4 2005/09/07 05:40:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -34,15 +34,6 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__FreeBSD__)
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.3 2003/10/17 23:15:30 sam Exp $");
-#elif defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $");
-#endif
-
-#if defined(__NetBSD__)
-#include "opt_inet.h"
-#endif
 
 #include "bpfilter.h"
 
@@ -55,25 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung 
 #include <sys/sockio.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
-#ifdef __FreeBSD__
-#include <sys/bus.h>
-#endif
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-
-#ifdef __FreeBSD__
-#include <machine/atomic.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
-#if defined(__FreeBSD__)
-#include <net/ethernet.h>
-#elif defined(__NetBSD__)
-#include <net/if_ether.h>
-#endif
 #include <net/if_llc.h>
 
 #if NBPFILTER > 0
@@ -82,30 +61,17 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung 
 
 #ifdef INET
 #include <netinet/in.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#else
-#include <net/if_ether.h>
-#endif
 #endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 
-#if defined(__FreeBSD__)
-#include <crypto/rc4/rc4.h>
-#define	arc4_ctxlen()			sizeof (struct rc4_state)
-#define	arc4_setkey(_c,_k,_l)		rc4_init(_c,_k,_l)
-#define	arc4_encrypt(_c,_d,_s,_l)	rc4_crypt(_c,_s,_d,_l)
-#elif defined(__OpenBSD__)
 #include <dev/rndvar.h>
 #include <crypto/arc4.h>
 #define	arc4_ctxlen()			sizeof (struct rc4_ctx)
 #define	arc4_setkey(_c,_k,_l)		rc4_keysetup(_c,_k,_l)
 #define	arc4_encrypt(_c,_d,_s,_l)	rc4_crypt(_c,_s,_d,_l)
-#else
-#include <crypto/arc4/arc4.h>
-#endif
 
 static	void ieee80211_crc_init(void);
 static	u_int32_t ieee80211_crc_update(u_int32_t crc, u_int8_t *buf, int len);
@@ -166,13 +132,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 			ic->ic_stats.is_rx_nombuf++;
 		goto fail;
 	}
-#if defined(__FreeBSD__)
-	M_MOVE_PKTHDR(n, m);
-#elif defined(__OpenBSD__)
 	M_DUP_PKTHDR(n, m);
-#else
-	M_COPY_PKTHDR(n, m);
-#endif
 	len = IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN;
 	if (txflag) {
 		n->m_pkthdr.len += len;
