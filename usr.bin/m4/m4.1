@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.41 2005/09/07 13:22:24 jmc Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.42 2005/09/07 13:59:02 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -159,7 +159,7 @@ overriding possible redefinitions.
 .It Fn changecom startcomment endcomment
 Changes the start comment and end comment sequences.
 Comment sequences may be up to five characters long.
-The default values are the pound sign
+The default values are the hash sign
 and the newline character.
 .Bd -literal -offset indent
 # This is a comment
@@ -400,8 +400,10 @@ Returns the current file's name.
 .El
 .Sh STANDARDS
 .Nm
-follows the Single Unix 3 specification, along with a few extensions taken
-from
+is expected to be
+.St -p1003.1-2004
+compliant,
+along with a few extensions taken from
 .Nm gnu-m4 .
 .Pp
 Flags
