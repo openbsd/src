@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.40 2005/09/06 15:50:19 espie Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.41 2005/09/07 13:22:24 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,16 +38,19 @@
 .Nd macro language processor
 .Sh SYNOPSIS
 .Nm m4
-.Op Fl d Ar flags
-.Op Fl t Ar name
-.Op Fl o Ar filename
-.Op Fl g
-.Op Fl s
+.Op Fl gs
 .Oo
-.Fl D Ns Ar name Ns Op Ar =value
+.Sm off
+.Fl D Ar name Op No = Ar value
+.Sm on
 .Oc
-.Op Fl U Ns Ar name
+.Op Fl d Ar flags
 .Op Fl I Ar dirname
+.Op Fl o Ar filename
+.Bk -words
+.Op Fl t Ar macro
+.Op Fl U Ns Ar name
+.Ek
 .Sh DESCRIPTION
 The
 .Nm m4
@@ -87,19 +90,12 @@ recognized as special when not followed by an open parenthesis.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl D Ns Ar name Ns Oo
-.Ar =value
+.Pf = Ns Ar value
 .Oc
 Define the symbol
 .Ar name
 to have some value (or
 .Dv NULL ) .
-.It Fl "U" Ns Ar "name"
-Undefine the symbol
-.Ar name .
-.It Fl I Ar "dirname"
-Add directory
-.Ar dirname
-to the include path.
 .It Fl d Ar "flags"
 Set trace flags.
 .Ar flags
@@ -127,21 +123,28 @@ turn on all options.
 .Pp
 By default, trace is set to
 .Qq eq .
-.It Fl o Ar filename
-Send trace output to
-.Ar filename .
-.It Fl t Ar macro
-Turn tracing on for
-.Ar macro .
 .It Fl g
 Activate GNU-m4 compatibility mode.
 In this mode, translit handles simple character
 ranges (e.g., a-z), regular expressions mimic emacs behavior,
 multiple m4wrap calls are handled as a stack,
 and the number of diversions is unlimited.
+.It Fl I Ar "dirname"
+Add directory
+.Ar dirname
+to the include path.
+.It Fl o Ar filename
+Send trace output to
+.Ar filename .
 .It Fl s
 Output line synchronization directives, suitable for
 .Xr cpp 1 .
+.It Fl t Ar macro
+Turn tracing on for
+.Ar macro .
+.It Fl "U" Ns Ar "name"
+Undefine the symbol
+.Ar name .
 .El
 .Sh SYNTAX
 .Nm m4
