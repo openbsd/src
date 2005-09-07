@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.91 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: pkg_delete,v 1.92 2005/09/07 09:24:19 jmc Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -31,7 +31,7 @@ use OpenBSD::PackageInfo;
 our %forced = ();
 our $not;
 
-set_usage('pkg_delete [-ciInqvx] [-B pkg-destdir] [-F keywords] pkgname [...]');
+set_usage('pkg_delete [-cIinqvx] [-B pkg-destdir] [-F keywords] pkgname [...]');
 our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_i, $opt_x);
 
 $opt_v = 0;
