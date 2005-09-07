@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.12 2005/08/01 05:36:49 brad Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.13 2005/09/07 05:27:47 jsg Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1162,7 +1162,7 @@ out_jack_output(struct umidi_jack *out_jack, int d)
 	if (!out_jack->opened) {
 		return ENODEV;
 	}
-	
+
 	if (out_build_packet(out_jack->cable_number, &out_jack->packet, d)) {
 		DPR_PACKET(out, sc, &out_jack->packet);
 		s = splusb();
@@ -1266,16 +1266,17 @@ static int
 out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 {
 	if (data >= 0xf8) {		/* is it a realtime message ? */
-		packet->buffer[0] = data >> 4 | cable_number << 4;
-		packet->buffer[1] = data;
-		packet->buffer[2] = 0;
-		packet->buffer[3] = 0;
+		packet->buffer_rt[0] = data >> 4 | cable_number << 4;
+		packet->buffer_rt[1] = data;
+		packet->buffer_rt[2] = 0;
+		packet->buffer_rt[3] = 0;
+		packet->buffer = packet->buffer_rt;
 		return 1;
 	}
 	if (data >= 0xf0) {		/* is it a common message ? */
 		switch(data) {
 		case EV_SYSEX:
-			packet->buffer[1] = packet->status = data;
+			packet->buffer_com[1] = packet->status = data;
 			packet->index = 2;
 			break;
 		case EV_SYSEX_STOP:
@@ -1283,12 +1284,12 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 			if (packet->index == 0)
 				packet->index = 1; 
 			packet->status = data;
-			packet->buffer[packet->index++] = data;
-			packet->buffer[0] = (0x4 - 1 + packet->index) | cable_number << 4;
+			packet->buffer_com[packet->index++] = data;
+			packet->buffer_com[0] = (0x4 - 1 + packet->index) | cable_number << 4;
 			goto packetready;
 		case EV_TUNE_REQ: 
 			packet->status = data;
-			packet->buffer[0] = 0x5 | cable_number << 4;
+			packet->buffer_com[0] = 0x5 | cable_number << 4;
 			packet->index = 1;
 			goto packetready;
 		default:
@@ -1310,27 +1311,27 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 			if (packet->index == 0)
 				packet->index = 1; 
 
-			packet->buffer[packet->index++] = data;
+			packet->buffer_com[packet->index++] = data;
 			if (packet->index >= UMIDI_PACKET_SIZE) {
-				packet->buffer[0] = 0x4 | cable_number << 4;
+				packet->buffer_com[0] = 0x4 | cable_number << 4;
 				goto packetready;
 			}
 			break;
 		case EV_MTC:		/* messages with 1 data byte */
 		case EV_SONGSEL:	
-			packet->buffer[0] = 0x2 | cable_number << 4;
-			packet->buffer[1] = packet->status;
-			packet->buffer[2] = data;
+			packet->buffer_com[0] = 0x2 | cable_number << 4;
+			packet->buffer_com[1] = packet->status;
+			packet->buffer_com[2] = data;
 			packet->index = 3;
 			goto packetready;
 		case EV_SPP:		/* messages with 2 data bytes */
 			if (packet->index == 0) {
-				packet->buffer[0] = 0x3 | cable_number << 4;
+				packet->buffer_com[0] = 0x3 | cable_number << 4;
 				packet->index = 1;
 			}
-			packet->buffer[packet->index++] = data;
+			packet->buffer_com[packet->index++] = data;
 			if (packet->index >= UMIDI_PACKET_SIZE) {
-				packet->buffer[1] = packet->status;
+				packet->buffer_com[1] = packet->status;
 				goto packetready;
 			}
 			break;
@@ -1341,11 +1342,11 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 	}
 	if (packet->status >= 0x80) {	/* is it a voice message ? */
 		if (packet->index == 0) {
-			packet->buffer[0] = packet->status >> 4 | cable_number << 4;
-			packet->buffer[1] = packet->status;
+			packet->buffer_com[0] = packet->status >> 4 | cable_number << 4;
+			packet->buffer_com[1] = packet->status;
 			packet->index = 2;
 		}
-		packet->buffer[packet->index++] = data;
+		packet->buffer_com[packet->index++] = data;
 		if (packet->index >= UMIDI_VOICELEN(packet->status))
 			goto packetready;
 	}
@@ -1354,8 +1355,9 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 	
 packetready:
 	while (packet->index < UMIDI_PACKET_SIZE)
-		packet->buffer[packet->index++] = 0;
+		packet->buffer_com[packet->index++] = 0;
 		
 	packet->index = 0;
+	packet->buffer = packet->buffer_com;
 	return 1;
 }
