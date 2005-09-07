@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.61 2005/08/23 02:25:53 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.62 2005/09/07 08:21:11 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -44,7 +44,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		ServerWorks OSB4, CSB5, CSB6 (including support for the third
 		    channel)
 		Silicon Image SiI3112 (including ATI IXP SATA), SiI3512, SiI3114
-		Silicon Integrated System 180, 181, 182, 5513 (5597/5598), 540,
+		Silicon Integrated System 180, 181, 5513 (5597/5598), 540,
 		    550, 620, 630, 630S, 633, 635, 640, 645, 645DX, 648, 650,
 		    651, 652, 661, 655, 658, 730, 733, 735, 740, 745, 746, 748,
 		    750, 751, 752, 755, 760, 962, 963
