@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: auth.c,v 1.18 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: auth.c,v 1.19 2005/09/07 01:36:02 brad Exp $
  */
 
 #include <sys/param.h>
@@ -37,6 +37,7 @@
 
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
