@@ -866,8 +866,8 @@ int ssl_hook_Access(request_rec *r)
                     && (nVerify    != SSL_VERIFY_NONE))
                 || (  !(nVerifyOld &  SSL_VERIFY_PEER)
                     && (nVerify    &  SSL_VERIFY_PEER))
-                || (  !(nVerifyOld &  (SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
-                    && (nVerify    &  (SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT)))) {
+                || (  !(nVerifyOld &  SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
+                    && (nVerify    &  SSL_VERIFY_FAIL_IF_NO_PEER_CERT))) {
                 renegotiate = TRUE;
                 /* optimization */
                 if (   dc->nOptions & SSL_OPT_OPTRENEGOTIATE
