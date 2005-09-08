@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.8 2005/09/08 17:23:21 reyk Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.9 2005/09/08 17:43:26 reyk Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -83,9 +83,6 @@ struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
 	void			*sc_ih;		/* interrupt handler */
-	u_int8_t		sc_saved_intline;
-	u_int8_t		sc_saved_cachelinesz;
-	u_int8_t		sc_saved_lattimer;
 };
 
 /* Base Address Register */
