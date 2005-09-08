@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.7 2005/09/08 12:44:55 jsg Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.8 2005/09/08 17:23:21 reyk Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@
 struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
-	void			*sc_ih;		/* intererupt handler */
+	void			*sc_ih;		/* interrupt handler */
 	u_int8_t		sc_saved_intline;
 	u_int8_t		sc_saved_cachelinesz;
 	u_int8_t		sc_saved_lattimer;
@@ -97,7 +97,7 @@ void	 ath_pci_shutdown(void *);
 int	 ath_pci_detach(struct device *, int);
 
 struct cfattach ath_pci_ca = {
-	sizeof(struct ath_softc),
+	sizeof(struct ath_pci_softc),
 	ath_pci_match,
 	ath_pci_attach,
 	ath_pci_detach
