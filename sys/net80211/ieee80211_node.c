@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.8 2005/09/08 09:11:08 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.9 2005/09/08 12:44:55 jsg Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #include <dev/rndvar.h>
 
@@ -136,7 +135,8 @@ ieee80211_node_lateattach(struct ifnet *ifp)
 	struct ieee80211_node *ni;
 
 	ni = ieee80211_alloc_node_helper(ic);
-	IASSERT(ni != NULL, ("unable to setup inital BSS node"));
+	if (ni == NULL)
+		panic("unable to setup inital BSS node");
 	ni->ni_chan = IEEE80211_CHAN_ANYC;
 	ic->ic_bss = ieee80211_ref_node(ni);
 	ic->ic_txpower = IEEE80211_TXPOWER_MAX;
@@ -851,7 +851,8 @@ ieee80211_lookup_node(struct ieee80211com *ic,
 static void
 ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	IASSERT(ni != ic->ic_bss, ("freeing bss node"));
+	if (ni == ic->ic_bss)
+		panic("freeing bss node");
 
 	IEEE80211_DPRINTF(("%s %s\n", __func__, ether_sprintf(ni->ni_macaddr)));
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
@@ -1003,9 +1004,8 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 void
 ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-
-	IASSERT(ic->ic_opmode == IEEE80211_M_HOSTAP,
-	    ("not in ap mode, mode %u", ic->ic_opmode));
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+		panic("not in ap mode, mode %u", ic->ic_opmode);
 	/*
 	 * If node wasn't previously associated all
 	 * we need to do is reclaim the reference.

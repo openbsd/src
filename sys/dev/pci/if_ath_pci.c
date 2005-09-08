@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.6 2005/08/17 12:58:39 reyk Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.7 2005/09/08 12:44:55 jsg Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_var.h>
 
 #include <dev/gpio/gpiovar.h>

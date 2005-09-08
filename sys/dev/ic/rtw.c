@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.35 2005/07/18 02:43:27 fgsch Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.36 2005/09/08 12:44:55 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -67,7 +67,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/rtwreg.h>

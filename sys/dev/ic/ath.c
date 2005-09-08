@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.36 2005/09/08 09:11:07 jsg Exp $  */
+/*      $OpenBSD: ath.c,v 1.37 2005/09/08 12:44:55 jsg Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -78,7 +78,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/gpio/gpiovar.h>

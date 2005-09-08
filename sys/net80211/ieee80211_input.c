@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.8 2005/09/08 09:11:08 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.9 2005/09/08 12:44:55 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -66,7 +66,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #include <dev/rndvar.h>
 
@@ -101,7 +100,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	u_int8_t dir, type, subtype;
 	u_int16_t rxseq;
 
-	IASSERT(ni != NULL, ("null node"));
+	if (ni == NULL)
+		panic("null mode");
 
 	/* trim CRC here so WEP can find its own CRC at the end of packet. */
 	if (m->m_flags & M_HASFCS) {
@@ -302,7 +302,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 #if NBPFILTER > 0
 		/* copy to listener after decrypt */
 		if (ic->ic_rawbpf)
-			BPF_MTAP(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m);
 #endif
 		m = ieee80211_decap(ifp, m);
 		if (m == NULL) {
@@ -352,7 +352,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			 * we don't need to duplicate for DLT_EN10MB.
 			 */
 			if (ifp->if_bpf && m1 == NULL)
-				BPF_MTAP(ifp->if_bpf, m);
+				bpf_mtap(ifp->if_bpf, m);
 #endif
  			ether_input_mbuf(ifp, m);
 		}
@@ -407,7 +407,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		}
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			BPF_MTAP(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m);
 #endif
 		(*ic->ic_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 		m_freem(m);
@@ -440,7 +440,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	if (m != NULL) {
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			BPF_MTAP(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m);
 #endif
 		m_freem(m);
 	}

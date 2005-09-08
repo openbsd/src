@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.11 2005/09/08 09:11:08 jsg Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.12 2005/09/08 12:44:55 jsg Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #ifdef IEEE80211_DEBUG
 int	ieee80211_debug = 0;
@@ -108,8 +107,8 @@ ieee80211_ifattach(struct ifnet *ifp)
 	ifp->if_output = ieee80211_output;
 
 #if NBPFILTER > 0
-	BPF_ATTACH(ifp, DLT_IEEE802_11,
-	    sizeof(struct ieee80211_frame_addr4), &ic->ic_rawbpf);
+	bpfattach(&ic->ic_rawbpf, ifp, DLT_IEEE802_11,
+	    sizeof(struct ieee80211_frame_addr4)); 
 #endif
 	ieee80211_crypto_attach(ifp);
 
@@ -182,7 +181,7 @@ ieee80211_ifdetach(struct ifnet *ifp)
 	LIST_REMOVE(ic, ic_list);
         ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
 #if NBPFILTER > 0
-	BPF_DETACH(ifp);
+	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 }
@@ -674,7 +673,8 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 * Verify at least one channel is present in the available
 	 * channel list before committing to the new mode.
 	 */
-	IASSERT(mode < N(chanflags), ("Unexpected mode %u", mode));
+	if (mode >= N(chanflags))
+		panic("Unexpected mode %u", mode);
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
@@ -721,11 +721,11 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 				ic->ic_ibss_chan = &ic->ic_channels[i];
 				break;
 			}
-		IASSERT(ic->ic_ibss_chan != NULL &&
-		    isset(ic->ic_chan_active,
-			ieee80211_chan2ieee(ic, ic->ic_ibss_chan)),
-		    ("Bad IBSS channel %u\n",
-		     ieee80211_chan2ieee(ic, ic->ic_ibss_chan)));
+		if ((ic->ic_ibss_chan == NULL) ||
+		    isclr(ic->ic_chan_active,
+		       ieee80211_chan2ieee(ic, ic->ic_ibss_chan))) 
+			panic("Bad IBSS channel %u\n",
+			    ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.11 2005/09/08 09:11:08 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.12 2005/09/08 12:44:55 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -64,7 +64,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 /*
  * IEEE 802.11 output routine. Normally this will directly call the
@@ -142,7 +141,8 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_frame *wh;
 
-	IASSERT(ni != NULL, ("null node"));
+	if (ni == NULL)
+		panic("null node");
 	ni->ni_inact = 0;
 
 	/*
@@ -561,7 +561,8 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 {
 	struct mbuf *m;
 
-	IASSERT(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
+	if (pktlen > MCLBYTES)
+		panic("802.11 packet too large: %u", pktlen);
 	MGETHDR(m, flags, type);
 	if (m != NULL && pktlen > MHLEN)
 		MCLGET(m, flags);
@@ -585,7 +586,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int16_t capinfo;
 	int has_challenge, is_shared_key, ret, timer;
 
-	IASSERT(ni != NULL, ("null node"));
+	if (ni == NULL)
+		panic("null node");
 
 	/*
 	 * Hold a reference on the node so it doesn't go away until after
@@ -967,9 +969,9 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	frm = ieee80211_add_xrates(frm, rs);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 	m->m_pkthdr.rcvif = (void *)ni;
-	IASSERT(m->m_pkthdr.len <= pktlen,
-		("beacon bigger than expected, len %u calculated %u",
-		m->m_pkthdr.len, pktlen));
+	if (m->m_pkthdr.len > pktlen)
+		panic("beacon bigger than expected, len %u calculated %u",
+		    m->m_pkthdr.len, pktlen);
 	return m;
 }
 

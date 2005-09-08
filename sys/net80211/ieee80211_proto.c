@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.6 2005/09/08 09:11:08 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.7 2005/09/08 12:44:55 jsg Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #define	IEEE80211_RATE2MBS(r)	(((r) & IEEE80211_RATE_VAL) / 2)
 
@@ -310,7 +309,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
-	ieee80211_node_critsec_decl(s);
+	int s;
 
 	ostate = ic->ic_state;
 	IEEE80211_DPRINTF(("%s: %s -> %s\n", __func__,
@@ -330,7 +329,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 				    IEEE80211_REASON_ASSOC_LEAVE);
 				break;
 			case IEEE80211_M_HOSTAP:
-				ieee80211_node_critsec_begin(ic, s);
+				s = splnet();
 				TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
 					if (ni->ni_associd == 0)
 						continue;
@@ -338,7 +337,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 					    IEEE80211_FC0_SUBTYPE_DISASSOC,
 					    IEEE80211_REASON_ASSOC_LEAVE);
 				}
-				ieee80211_node_critsec_end(ic, s);
+				splx(s);
 				break;
 			default:
 				break;
@@ -352,13 +351,13 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 				    IEEE80211_REASON_AUTH_LEAVE);
 				break;
 			case IEEE80211_M_HOSTAP:
-				ieee80211_node_critsec_begin(ic, s);
+				s = splnet();
 				TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
 					IEEE80211_SEND_MGMT(ic, ni,
 					    IEEE80211_FC0_SUBTYPE_DEAUTH,
 					    IEEE80211_REASON_AUTH_LEAVE);
 				}
-				ieee80211_node_critsec_end(ic, s);
+				splx(s);
 				break;
 			default:
 				break;
@@ -493,9 +492,9 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			break;
 		case IEEE80211_S_SCAN:		/* adhoc/hostap mode */
 		case IEEE80211_S_ASSOC:		/* infra mode */
-			IASSERT(ni->ni_txrate < ni->ni_rates.rs_nrates,
-				("%s: bogus xmit rate %u setup\n", __func__,
-				ni->ni_txrate));
+			if (ni->ni_txrate >= ni->ni_rates.rs_nrates)
+				panic("%s: bogus xmit rate %u setup\n",
+				    __func__, ni->ni_txrate);
 			if (ifp->if_flags & IFF_DEBUG) {
 				printf("%s: %s with %s ssid ",
 				    ifp->if_xname,

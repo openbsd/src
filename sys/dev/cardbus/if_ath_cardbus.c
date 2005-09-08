@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.5 2005/06/08 05:36:33 henning Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.6 2005/09/08 12:44:56 jsg Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -62,7 +62,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_var.h>
 
 #if NBPFILTER > 0 

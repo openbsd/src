@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.5 2005/09/08 09:11:08 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.6 2005/09/08 12:44:55 jsg Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 
 #include <dev/rndvar.h>
 #include <crypto/arc4.h>

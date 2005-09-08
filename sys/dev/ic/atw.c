@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.35 2005/08/27 09:13:50 avsm Exp $	*/
+/*	$OpenBSD: atw.c,v 1.36 2005/09/08 12:44:55 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $");
 #endif
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <machine/bus.h>
@@ -3814,7 +3813,8 @@ atw_start(struct ifnet *ifp)
 			lasttx = nexttx;
 		}
 
-		IASSERT(lasttx != -1, ("bad lastx"));
+		if (lasttx == -1)
+			panic("%s: bad lastx", ifp->if_xname);
 		/* Set `first segment' and `last segment' appropriately. */
 		sc->sc_txdescs[sc->sc_txnext].at_flags |=
 		    htole32(ATW_TXFLAG_FS);
