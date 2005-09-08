@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.79 2005/09/08 00:59:49 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.80 2005/09/08 01:29:19 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -780,7 +780,6 @@ tulip_21040_mediainfo_init(
     if (media == TULIP_MEDIA_10BASET || media == TULIP_MEDIA_UNKNOWN) {
 	TULIP_MEDIAINFO_SIA_INIT(sc, &sc->tulip_mediainfo[0], 21040, 10BASET);
 	TULIP_MEDIAINFO_SIA_INIT(sc, &sc->tulip_mediainfo[1], 21040, 10BASET_FD);
-
 	sc->tulip_intrmask |= TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
     }
 
@@ -893,7 +892,7 @@ tulip_21041_media_probe(
     sc->tulip_if.if_baudrate = 10000000;
     sc->tulip_cmdmode |= TULIP_CMD_CAPTREFFCT|TULIP_CMD_ENHCAPTEFFCT
 	|TULIP_CMD_THRSHLD160|TULIP_CMD_BACKOFFCTR;
-    sc->tulip_intrmask |= TULIP_STS_LINKPASS;
+    sc->tulip_intrmask |= TULIP_STS_LINKPASS|TULIP_STS_LINKFAIL;
     tulip_21041_mediainfo_init(sc);
 }
 
