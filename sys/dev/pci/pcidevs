@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.910 2005/08/29 03:00:23 brad Exp $
+$OpenBSD: pcidevs,v 1.911 2005/09/08 18:09:31 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -494,6 +494,7 @@ product ADP2 AIC7899B		0x00c1	AIC-7899B
 product ADP2 AIC7899D		0x00c3	AIC-7899D
 product ADP2 AIC7899F		0x00c5	AIC-7899F
 product ADP2 AIC7899		0x00cf	AIC-7899 U160
+product ADP2 SERVERAID		0x0250	ServeRAID
 product ADP2 AAC2622		0x0282	AAC-2622
 product ADP2 ASR2200S		0x0285	ASR-2200S
 product ADP2 ASR2120S		0x0286	ASR-2120S
@@ -1315,6 +1316,7 @@ product IBM OLYMPIC		0x003e	Olympic
 product IBM I82557B		0x0057	i82557B 10/100
 product IBM FIREGL2		0x0170	FireGL2
 product IBM PCIX		0x01a7	PCIX-PCIX
+product IBM SERVERAID2		0x01bd	ServeRAID
 
 /* IDT products */
 product IDT 77201		0x0001	77201/77211 ATM (NICStAR)
