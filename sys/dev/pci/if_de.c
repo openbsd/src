@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.78 2005/09/07 13:32:14 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.79 2005/09/08 00:59:49 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3173,7 +3173,6 @@ tulip_rx_intr(
 
     for (;;) {
 	TULIP_PERFSTART(rxget)
-	struct ether_header eh;
 	tulip_desc_t *eop = ri->ri_nextin;
 	int total_len = 0, last_offset = 0;
 	struct mbuf *ms = NULL, *me = NULL;
@@ -3252,7 +3251,6 @@ tulip_rx_intr(
 	if ((sc->tulip_flags & TULIP_RXIGNORE) == 0
 		&& ((DESC_BO(eop->d_status) & TULIP_DSTS_ERRSUM) == 0)) {
 	    me->m_len = total_len - last_offset;
-	    eh = *mtod(ms, struct ether_header *);
 #if NBPFILTER > 0
 	    if (sc->tulip_bpf != NULL) {
 		if (me == ms)
@@ -3263,7 +3261,6 @@ tulip_rx_intr(
 #endif
 	    sc->tulip_flags |= TULIP_RXACT;
 	    accept = 1;
-	    total_len -= sizeof(struct ether_header);
 	} else {
 	    ifp->if_ierrors++;
 	    if (DESC_BO(eop->d_status) & (TULIP_DSTS_RxBADLENGTH|TULIP_DSTS_RxOVERFLOW|TULIP_DSTS_RxWATCHDOG)) {
@@ -3320,7 +3317,7 @@ tulip_rx_intr(
 	    MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	    if (m0 != NULL) {
 #if defined(TULIP_COPY_RXDATA)
-		if (!accept || total_len >= MHLEN) {
+		if (!accept || total_len >= (MHLEN - 2)) {
 #endif
 		    MCLGET(m0, M_DONTWAIT);
 		    if ((m0->m_flags & M_EXT) == 0) {
@@ -3337,20 +3334,15 @@ tulip_rx_intr(
 #endif
 		) {
 #if !defined(TULIP_COPY_RXDATA)
-		ms->m_data += sizeof(struct ether_header);
-		ms->m_len -= sizeof(struct ether_header);
 		ms->m_pkthdr.len = total_len;
 		ms->m_pkthdr.rcvif = ifp;
-		ether_input(ifp, &eh, ms);
+		ether_input_mbuf(ifp, ms);
 #else
-		if (ms == me)
-		    bcopy(mtod(ms, caddr_t) + sizeof(struct ether_header),
-			  mtod(m0, caddr_t), total_len);
-		else
-		    m_copydata(ms, 0, total_len, mtod(m0, caddr_t));
+		m0->m_data += 2;	/* align data after header */
+		m_copydata(ms, 0, total_len, mtod(m0, caddr_t));
 		m0->m_len = m0->m_pkthdr.len = total_len;
 		m0->m_pkthdr.rcvif = ifp;
-		ether_input(ifp, &eh, m0);
+		ether_input_mbuf(ifp, m0);
 		m0 = ms;
 #endif
 	    }
