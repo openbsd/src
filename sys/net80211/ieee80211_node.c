@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.6 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.7 2005/09/08 08:36:12 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -165,7 +165,7 @@ ieee80211_node_detach(struct ifnet *ifp)
  * Initialize the active channel set based on the set
  * of available channels and the current PHY mode.
  */
-static void
+void
 ieee80211_reset_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -173,7 +173,7 @@ ieee80211_reset_scan(struct ifnet *ifp)
 	memcpy(ic->ic_chan_scan, ic->ic_chan_active,
 		sizeof(ic->ic_chan_active));
 	/* NB: hack, setup so next_scan starts with the first channel */
-	if (ic->ic_bss->ni_chan == IEEE80211_CHAN_ANYC)
+	if (ic->ic_bss != NULL && ic->ic_bss->ni_chan == IEEE80211_CHAN_ANYC)
 		ic->ic_bss->ni_chan = &ic->ic_channels[IEEE80211_CHAN_MAX];
 }
 
@@ -202,21 +202,22 @@ ieee80211_begin_scan(struct ifnet *ifp)
 		if_printf(ifp, "begin %s scan\n",
 			(ic->ic_flags & IEEE80211_F_ASCAN) ?
 				"active" : "passive");
+
 	/*
-	 * Clear scan state and flush any previously seen
-	 * AP's.  Note that the latter assumes we don't act
-	 * as both an AP and a station, otherwise we'll
-	 * potentially flush state of stations associated
-	 * with us.
+	 * Flush any previously seen AP's. Note that the latter 
+	 * assumes we don't act as both an AP and a station,
+	 * otherwise we'll potentially flush state of stations
+	 * associated with us.
 	 */
-	ieee80211_reset_scan(ifp);
 	ieee80211_free_allnodes(ic);
 
-	/* Reset the current mode. */
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO) {
+	/*
+	 * Reset the current mode. Setting the current mode will also
+	 * reset scan state.
+	 */
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
-		ieee80211_setmode(ic, ic->ic_curmode);
-	}
+	ieee80211_setmode(ic, ic->ic_curmode);
 
 	ic->ic_scan_count = 0;
 
@@ -436,7 +437,6 @@ ieee80211_end_scan(struct ifnet *ifp)
 		/*
 		 * Reset the list of channels to scan and start again.
 		 */
-		ieee80211_reset_scan(ifp);
 		ieee80211_next_scan(ifp);
 		return;
 	}

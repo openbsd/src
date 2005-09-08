@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.5 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.6 2005/09/08 08:36:12 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -182,6 +182,7 @@ extern	void ieee80211_node_detach(struct ifnet *);
 extern	void ieee80211_begin_scan(struct ifnet *);
 extern	void ieee80211_next_scan(struct ifnet *);
 extern	void ieee80211_end_scan(struct ifnet *);
+extern	void ieee80211_reset_scan(struct ifnet *);
 extern	struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *,
 		u_int8_t *);
 extern	struct ieee80211_node *ieee80211_dup_bss(struct ieee80211com *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.9 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.10 2005/09/08 08:36:12 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -648,6 +648,7 @@ int
 ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 {
 #define	N(a)	(sizeof(a) / sizeof(a[0]))
+	struct ifnet *ifp = &ic->ic_if;
 	static const u_int chanflags[] = {
 		0,			/* IEEE80211_MODE_AUTO */
 		IEEE80211_CHAN_A,	/* IEEE80211_MODE_11A */
@@ -726,6 +727,12 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	}
 
 	/*
+	 * Reset the scan state for the new mode. This avoids scanning
+	 * of invalid channels, ie. 5GHz channels in 11b mode.
+	 */
+	ieee80211_reset_scan(ifp);
+
+	/*
 	 * Set/reset state flags that influence beacon contents, etc.
 	 *
 	 * XXX what if we have stations already associated???
@@ -756,8 +763,14 @@ ieee80211_next_mode(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO)
-		return (IEEE80211_MODE_AUTO);	/* Indicate a wrap around */
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO) {
+		/*
+		 * Reset the scan state and indicate a wrap around
+		 * if we're running in a fixed, user-specified phy mode.
+		 */
+		ieee80211_reset_scan(ifp);
+		return (IEEE80211_MODE_AUTO);
+	}
 
 	/*
 	 * Get the next supported mode
