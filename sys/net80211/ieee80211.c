@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.12 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.13 2005/09/08 13:24:52 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@
 int	ieee80211_debug = 0;
 #endif
 
-int 	ieee80211_cache_size = IEEE80211_CACHE_SIZE;
+int ieee80211_cache_size = IEEE80211_CACHE_SIZE;
 
 struct ieee80211com_head ieee80211com_head =
     LIST_HEAD_INITIALIZER(ieee80211com_head);
@@ -179,7 +179,7 @@ ieee80211_ifdetach(struct ifnet *ifp)
 	ieee80211_crypto_detach(ifp);
 	ieee80211_node_detach(ifp);
 	LIST_REMOVE(ic, ic_list);
-        ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
+	ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
@@ -630,11 +630,14 @@ ieee80211_setbasicrates(struct ieee80211com *ic)
 		rs = &ic->ic_sup_rates[mode];
 		for (i = 0; i < rs->rs_nrates; i++) {
 			rs->rs_rates[i] &= IEEE80211_RATE_VAL;
-			for (j = 0; j < basic[mode].rs_nrates; j++)
-				if (basic[mode].rs_rates[j] == rs->rs_rates[i]) {
-					rs->rs_rates[i] |= IEEE80211_RATE_BASIC;
+			for (j = 0; j < basic[mode].rs_nrates; j++) {
+				if (basic[mode].rs_rates[j] ==
+				    rs->rs_rates[i]) {
+					rs->rs_rates[i] |=
+					    IEEE80211_RATE_BASIC;
 					break;
 				}
+			}
 		}
 	}
 }
@@ -714,16 +717,15 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 * available channel from the active list.  This is likely
 	 * not the right one.
 	 */
-	if (ic->ic_ibss_chan == NULL ||
-	    isclr(ic->ic_chan_active, ieee80211_chan2ieee(ic, ic->ic_ibss_chan))) {
+	if (ic->ic_ibss_chan == NULL || isclr(ic->ic_chan_active,
+	    ieee80211_chan2ieee(ic, ic->ic_ibss_chan))) {
 		for (i = 0; i <= IEEE80211_CHAN_MAX; i++)
 			if (isset(ic->ic_chan_active, i)) {
 				ic->ic_ibss_chan = &ic->ic_channels[i];
 				break;
 			}
-		if ((ic->ic_ibss_chan == NULL) ||
-		    isclr(ic->ic_chan_active,
-		       ieee80211_chan2ieee(ic, ic->ic_ibss_chan))) 
+		if ((ic->ic_ibss_chan == NULL) || isclr(ic->ic_chan_active,
+		    ieee80211_chan2ieee(ic, ic->ic_ibss_chan)))
 			panic("Bad IBSS channel %u\n",
 			    ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
 	}
@@ -760,7 +762,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 #undef N
 }
 
-enum ieee80211_phymode 
+enum ieee80211_phymode
 ieee80211_next_mode(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
@@ -834,7 +836,8 @@ ieee80211_chan2mode(struct ieee80211com *ic, struct ieee80211_channel *chan)
  * ieee80211 rate is in unit of 0.5Mbps.
  */
 int
-ieee80211_rate2media(struct ieee80211com *ic, int rate, enum ieee80211_phymode mode)
+ieee80211_rate2media(struct ieee80211com *ic, int rate,
+    enum ieee80211_phymode mode)
 {
 #define	N(a)	(sizeof(a) / sizeof(a[0]))
 	static const struct {

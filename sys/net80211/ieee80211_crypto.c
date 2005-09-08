@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.6 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.7 2005/09/08 13:24:52 reyk Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -96,7 +96,9 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 }
 
 /* Round up to a multiple of IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN */
-#define klen_round(x)	(((x) + (IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN - 1)) & ~(IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN - 1))
+#define klen_round(x)							\
+	(((x) + (IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN - 1)) &	\
+	~(IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN - 1))
 
 struct mbuf *
 ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
@@ -274,7 +276,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	m_freem(m0);
 	return n0;
 
-  fail:
+ fail:
 	m_freem(m0);
 	m_freem(n0);
 	return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.7 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.8 2005/09/08 13:24:53 reyk Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -206,7 +206,8 @@ ieee80211_dump_pkt(u_int8_t *buf, int len, int rate, int rssi)
 }
 
 int
-ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags)
+ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
+    int flags)
 {
 #define	RV(v)	((v) & IEEE80211_RATE_VAL)
 	int i, j, ignore, error;
@@ -225,7 +226,8 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 			 * Sort rates.
 			 */
 			for (j = i + 1; j < nrs->rs_nrates; j++) {
-				if (RV(nrs->rs_rates[i]) > RV(nrs->rs_rates[j])) {
+				if (RV(nrs->rs_rates[i]) >
+				    RV(nrs->rs_rates[j])) {
 					r = nrs->rs_rates[i];
 					nrs->rs_rates[i] = nrs->rs_rates[j];
 					nrs->rs_rates[j] = r;
@@ -304,18 +306,21 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 }
 
 static int
-ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt)
+ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
+    int mgt)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
+	u_int mbps;
 	int s;
 
 	ostate = ic->ic_state;
 	IEEE80211_DPRINTF(("%s: %s -> %s\n", __func__,
-		ieee80211_state_name[ostate], ieee80211_state_name[nstate]));
+	    ieee80211_state_name[ostate], ieee80211_state_name[nstate]));
 	ic->ic_state = nstate;			/* state transition */
 	ni = ic->ic_bss;			/* NB: no reference held */
+	mbps = IEEE80211_RATE2MBS(ni->ni_rates.rs_rates[ni->ni_txrate]);
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		switch (ostate) {
@@ -504,8 +509,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 				ieee80211_print_essid(ic->ic_bss->ni_essid,
 				    ni->ni_esslen);
 				printf(" channel %d start %uMb\n",
-				    ieee80211_chan2ieee(ic, ni->ni_chan),
-				    IEEE80211_RATE2MBS(ni->ni_rates.rs_rates[ni->ni_txrate]));
+				    ieee80211_chan2ieee(ic, ni->ni_chan), mbps);
 			}
 			ic->ic_mgt_timer = 0;
 			(*ifp->if_start)(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.9 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.10 2005/09/08 13:24:53 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -71,17 +71,17 @@
 static struct ieee80211_node *ieee80211_node_alloc(struct ieee80211com *);
 static void ieee80211_node_free(struct ieee80211com *, struct ieee80211_node *);
 static void ieee80211_node_copy(struct ieee80211com *,
-		struct ieee80211_node *, const struct ieee80211_node *);
+    struct ieee80211_node *, const struct ieee80211_node *);
 static u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
-		struct ieee80211_node *);
-
+    struct ieee80211_node *);
 static void ieee80211_setup_node(struct ieee80211com *ic,
-		struct ieee80211_node *ni, u_int8_t *macaddr);
+    struct ieee80211_node *ni, u_int8_t *macaddr);
 static void ieee80211_free_node(struct ieee80211com *,
-		struct ieee80211_node *);
-static struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
+    struct ieee80211_node *);
+static struct ieee80211_node *
+    ieee80211_alloc_node_helper(struct ieee80211com *);
 static void ieee80211_node_cleanup(struct ieee80211com *,
-                struct ieee80211_node *);
+    struct ieee80211_node *);
 
 #define M_80211_NODE	M_DEVBUF
 
@@ -153,8 +153,8 @@ ieee80211_node_detach(struct ifnet *ifp)
 	}
 	ieee80211_free_allnodes(ic);
 	IEEE80211_NODE_LOCK_DESTROY(ic);
-        if (ic->ic_aid_bitmap != NULL)
-                FREE(ic->ic_aid_bitmap, M_DEVBUF);
+	if (ic->ic_aid_bitmap != NULL)
+		FREE(ic->ic_aid_bitmap, M_DEVBUF);
 }
 
 /*
@@ -299,8 +299,8 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 int
 ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-        u_int8_t rate;
-        int fail;
+	u_int8_t rate;
+	int fail;
 
 	fail = 0;
 	if (isclr(ic->ic_chan_active, ieee80211_chan2ieee(ic, ni->ni_chan)))
@@ -408,7 +408,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	}
 	if (ni == NULL) {
 		IEEE80211_DPRINTF(("%s: no scan candidate\n", __func__));
-  notfound:
+ notfound:
 		if (ic->ic_opmode == IEEE80211_M_IBSS &&
 		    (ic->ic_flags & IEEE80211_F_IBSSON) &&
 		    ic->ic_des_esslen != 0) {
@@ -516,10 +516,10 @@ ieee80211_node_alloc(struct ieee80211com *ic)
 static void
 ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-        if (ni->ni_challenge != NULL) {
-                FREE(ni->ni_challenge, M_DEVBUF);
-                ni->ni_challenge = NULL;
-        }
+	if (ni->ni_challenge != NULL) {
+		FREE(ni->ni_challenge, M_DEVBUF);
+		ni->ni_challenge = NULL;
+	}
 }
 
 static void
@@ -772,7 +772,7 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 	u_int8_t *bssid;
 
 	if (!ieee80211_needs_rxnode(ic, wh, &bssid))
-	        return ieee80211_ref_node(ic->ic_bss);
+		return ieee80211_ref_node(ic->ic_bss);
 
 	IEEE80211_NODE_LOCK(ic);
 	ni = _ieee80211_find_node(ic, wh->i_addr2);
@@ -943,7 +943,8 @@ ieee80211_clean_nodes(struct ieee80211com *ic)
 }
 
 void
-ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f, void *arg)
+ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
+    void *arg)
 {
 	struct ieee80211_node *ni;
 

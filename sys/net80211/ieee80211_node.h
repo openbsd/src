@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.6 2005/09/08 08:36:12 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.7 2005/09/08 13:24:53 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -37,8 +37,8 @@
 #ifndef _NET80211_IEEE80211_NODE_H_
 #define _NET80211_IEEE80211_NODE_H_
 
-#define	IEEE80211_PSCAN_WAIT 	5		/* passive scan wait */
-#define	IEEE80211_TRANS_WAIT 	5		/* transition wait */
+#define	IEEE80211_PSCAN_WAIT	5		/* passive scan wait */
+#define	IEEE80211_TRANS_WAIT	5		/* transition wait */
 #define	IEEE80211_INACT_WAIT	5		/* inactivity timer interval */
 #define	IEEE80211_INACT_MAX	(300/IEEE80211_INACT_WAIT)
 #define	IEEE80211_CACHE_SIZE	100
@@ -193,11 +193,11 @@ extern	struct ieee80211_node *ieee80211_find_rxnode(struct ieee80211com *,
 		struct ieee80211_frame *);
 extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
 		u_int8_t *);
-extern	struct ieee80211_node *ieee80211_find_node_for_beacon(
-	        struct ieee80211com *, u_int8_t *macaddr,
-		struct ieee80211_channel *, char *ssid);
+extern	struct ieee80211_node *
+		ieee80211_find_node_for_beacon(struct ieee80211com *,
+		u_int8_t *, struct ieee80211_channel *, char *);
 extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
-		u_int8_t *macaddr, struct ieee80211_channel *);
+		u_int8_t *, struct ieee80211_channel *);
 extern	void ieee80211_release_node(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_free_allnodes(struct ieee80211com *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.10 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.11 2005/09/08 13:24:53 reyk Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ enum ieee80211_phymode {
 
 enum ieee80211_opmode {
 	IEEE80211_M_STA		= 1,	/* infrastructure station */
-	IEEE80211_M_IBSS 	= 0,	/* IBSS (adhoc) station */
+	IEEE80211_M_IBSS	= 0,	/* IBSS (adhoc) station */
 	IEEE80211_M_AHDEMO	= 3,	/* Old lucent compatible adhoc demo */
 	IEEE80211_M_HOSTAP	= 6,	/* Software Access Point */
 	IEEE80211_M_MONITOR	= 8	/* Monitor mode */

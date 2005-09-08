@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_rssadapt.c,v 1.3 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_rssadapt.c,v 1.4 2005/09/08 13:24:53 reyk Exp $	*/
 /*	$NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 dyoung Exp $	*/
 
 /*-
@@ -51,9 +51,9 @@
 #ifdef interpolate
 #undef interpolate
 #endif
-#define interpolate(parm, old, new) ((parm##_old * (old) + \
-                                     (parm##_denom - parm##_old) * (new)) / \
-				    parm##_denom)
+#define interpolate(parm, old, new)				\
+	((parm##_old * (old) +					\
+	(parm##_denom - parm##_old) * (new)) / parm##_denom)
 
 #ifdef IEEE80211_DEBUG
 static	struct timeval lastrateadapt;	/* time of last rate adaptation msg */
@@ -163,7 +163,7 @@ ieee80211_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
 #endif
 
 	ra->ra_avg_rssi = interpolate(master_expavgctl.rc_avgrssi,
-	                              ra->ra_avg_rssi, (rssi << 8));
+	    ra->ra_avg_rssi, (rssi << 8));
 
 	RSSADAPT_PRINTF(("%s: src %s rssi %d avg %d -> %d\n",
 	    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr),
@@ -191,7 +191,7 @@ ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
 		RSSADAPT_PRINTF(("ieee80211_rssadapt_lower_rate: "
 		    "%s rate #%d > #%d out of bounds\n",
 		    ether_sprintf(ni->ni_macaddr), id->id_rateidx,
-		        rs->rs_nrates - 1));
+		    rs->rs_nrates - 1));
 		return;
 	}
 
@@ -206,7 +206,7 @@ ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
 	last_thr = ra->ra_rate_thresh[thridx][id->id_rateidx];
 	ra->ra_rate_thresh[thridx][id->id_rateidx] =
 	    interpolate(master_expavgctl.rc_thresh, last_thr,
-	                (id->id_rssi << 8));
+	    (id->id_rssi << 8));
 
 	RSSADAPT_PRINTF(("%s: dst %s rssi %d threshold[%d, %d.%d] %d -> %d\n",
 	    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr),
@@ -265,7 +265,8 @@ ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
 		printf("%s: dst %s thresholds\n", ic->ic_if.if_xname,
 		    ether_sprintf(ni->ni_macaddr));
 		for (i = 0; i < IEEE80211_RSSADAPT_BKTS; i++) {
-			printf("%d-byte", IEEE80211_RSSADAPT_BKT0 << (IEEE80211_RSSADAPT_BKTPOWER * i));
+			printf("%d-byte", IEEE80211_RSSADAPT_BKT0 <<
+			    (IEEE80211_RSSADAPT_BKTPOWER * i));
 			for (j = 0; j < rs->rs_nrates; j++) {
 				rate = (rs->rs_rates[j] & IEEE80211_RATE_VAL);
 				printf(", T[%d.%d] = %d", rate / 2,

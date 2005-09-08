@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_rssadapt.h,v 1.1 2004/06/22 22:53:52 millert Exp $ */
+/* $OpenBSD: ieee80211_rssadapt.h,v 1.2 2005/09/08 13:24:53 reyk Exp $ */
 /* $NetBSD: ieee80211_rssadapt.h,v 1.3 2004/05/06 03:03:20 dyoung Exp $ */
 
 /*-
@@ -71,7 +71,7 @@ struct ieee80211_rssadapt {
 	u_int32_t		ra_pktrate;
 	/* RSSI threshold for each Tx rate */
 	u_int16_t		ra_rate_thresh[IEEE80211_RSSADAPT_BKTS]
-					      [IEEE80211_RATE_SIZE];
+				    [IEEE80211_RATE_SIZE];
 	struct timeval		ra_last_raise;
 	struct timeval		ra_raise_interval;
 };

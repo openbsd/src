@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.4 2005/05/25 07:40:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.5 2005/09/08 13:24:52 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -216,7 +216,8 @@ struct ieee80211_nodereq {
 };
 
 #define IEEE80211_NODEREQ_STATE(_s)	(1 << _s)
-#define IEEE80211_NODEREQ_STATE_BITS	"\20\01CACHE\02BSS\03AUTH\04ASSOC\05COLLECT"
+#define IEEE80211_NODEREQ_STATE_BITS					\
+	"\20\01CACHE\02BSS\03AUTH\04ASSOC\05COLLECT"
 
 #define IEEE80211_NODEREQ_STA		0x00	/* station */
 #define IEEE80211_NODEREQ_AP		0x01	/* access point */

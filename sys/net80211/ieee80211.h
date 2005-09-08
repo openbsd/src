@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.9 2005/05/25 07:40:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.10 2005/09/08 13:24:52 reyk Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -314,7 +314,10 @@ typedef u_int8_t *ieee80211_mgt_beacon_t;
 /* bit 12 is reserved */
 #define	IEEE80211_CAPINFO_DSSSOFDM		0x2000
 /* bits 14-15 are reserved */
-#define IEEE80211_CAPINFO_BITS                  "\20\01ESS\02IBSS\03POLLABLE\04POLLREQ\05PRIVACY\06SHORT_PREAMBLE\07PBCC\10CHNL_AGILITY\13SHORT_SLOTTIME\14RSN\16DSSSOFDM"
+#define IEEE80211_CAPINFO_BITS					\
+	"\20\01ESS\02IBSS\03POLLABLE\04POLLREQ\05PRIVACY"	\
+	"\06SHORT_PREAMBLE\07PBCC\10CHNL_AGILITY"		\
+	"\13SHORT_SLOTTIME\14RSN\16DSSSOFDM"
 
 /* 
  * Channel attributes
@@ -626,7 +629,7 @@ enum {
  */
 #define	IEEE80211_AID_MAX		2007
 #define	IEEE80211_AID_DEF		1800
- 
+
 #define	IEEE80211_AID(b)		((b) &~ 0xc000)
 #define	IEEE80211_AID_SET(b, w) \
 	((w)[IEEE80211_AID(b) / 32] |= (1 << (IEEE80211_AID(b) % 32)))
