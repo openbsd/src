@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.38 2005/09/08 17:34:30 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.39 2005/09/08 17:38:11 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -135,6 +135,7 @@ int	ath_getchannels(struct ath_softc *, u_int cc, HAL_BOOL outdoor,
 int	ath_rate_setup(struct ath_softc *sc, u_int mode);
 void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 void	ath_rate_ctl_reset(struct ath_softc *, enum ieee80211_state);
+void	ath_rate_ctl_tx_reset(void *, struct ieee80211_node *);
 void	ath_rate_ctl(void *, struct ieee80211_node *);
 void	ath_recv_mgmt(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int, int, u_int32_t);
@@ -3148,20 +3149,15 @@ ath_rate_ctl_reset(struct ath_softc *sc, enum ieee80211_state state)
 	struct ieee80211_node *ni;
 	struct ath_node *an;
 
-	if (ic->ic_opmode != IEEE80211_M_STA) {
-		/*
-		 * When operating as a station the node table holds
-		 * the AP's that were discovered during scanning.
-		 * For any other operating mode we want to reset the
-		 * tx rate state of each node.
-		 */
-		TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
-			ni->ni_txrate = 0;		/* use lowest rate */
-			an = (struct ath_node *) ni;
-			an->an_tx_ok = an->an_tx_err = an->an_tx_retr =
-			    an->an_tx_upper = 0;
-		}
-	}
+	/*
+	 * When operating as a station the node table holds
+	 * the AP's that were discovered during scanning.
+	 * For any other operating mode we want to reset the
+	 * tx rate state of each node.
+	 */
+	if (ic->ic_opmode != IEEE80211_M_STA)
+		ieee80211_iterate_nodes(ic, ath_rate_ctl_tx_reset, NULL);
+
 	/*
 	 * Reset local xmit state; this is really only meaningful
 	 * when operating in station or adhoc mode.
@@ -3179,6 +3175,15 @@ ath_rate_ctl_reset(struct ath_softc *sc, enum ieee80211_state state)
 		/* use lowest rate */
 		ni->ni_txrate = 0;
 	}
+}
+
+void
+ath_rate_ctl_tx_reset(void *arg, struct ieee80211_node *ni)
+{
+	struct ath_node *an = (struct ath_node *) ni;
+	ni->ni_txrate = 0;		/* use lowest rate */
+	an->an_tx_ok = an->an_tx_err = an->an_tx_retr =
+	    an->an_tx_upper = 0;
 }
 
 /* 
@@ -3294,7 +3299,7 @@ ath_gpio_attach(struct ath_softc *sc, u_int16_t devid)
 		return 0;
 
 	/* Initialize gpio pins array */
-	for (i = 0; i < ah->ah_gpio_npins; i++) {
+	for (i = 0; i < ah->ah_gpio_npins && i < AR5K_MAX_GPIO; i++) {
 		sc->sc_gpio_pins[i].pin_num = i;
 		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT |
 		    GPIO_PIN_OUTPUT;
