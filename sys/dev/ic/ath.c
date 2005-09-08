@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.37 2005/09/08 12:44:55 jsg Exp $  */
+/*      $OpenBSD: ath.c,v 1.38 2005/09/08 17:34:30 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1463,7 +1463,7 @@ ath_beacon_config(struct ath_softc *sc)
 
 	nexttbtt = (LE_READ_4(ni->ni_tstamp + 4) << 22) |
 	    (LE_READ_4(ni->ni_tstamp) >> 10);
-	intval = MS_TO_TU(ni->ni_intval) & HAL_BEACON_PERIOD;
+	intval = MAX(1, ni->ni_intval) & HAL_BEACON_PERIOD;
 	if (nexttbtt == 0) {	/* e.g. for ap mode */
 		nexttbtt = intval;
 	} else if (intval) {
@@ -1488,7 +1488,7 @@ ath_beacon_config(struct ath_softc *sc)
 		 * TU's and then calculate based on the beacon interval.
 		 * Note that we clamp the result to at most 10 beacons.
 		 */
-		bmisstime = MS_TO_TU(ic->ic_bmisstimeout);
+		bmisstime = MAX(7, ic->ic_bmisstimeout);
 		bs.bs_bmissthreshold = howmany(bmisstime, intval);
 		if (bs.bs_bmissthreshold > 7) {
 			bs.bs_bmissthreshold = 7;
