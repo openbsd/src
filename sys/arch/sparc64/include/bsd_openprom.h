@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_openprom.h,v 1.4 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: bsd_openprom.h,v 1.5 2005/09/08 15:25:55 martin Exp $	*/
 /*	$NetBSD: bsd_openprom.h,v 1.2 2000/03/13 23:52:34 soren Exp $ */
 
 /*
@@ -254,10 +254,10 @@ struct promvec {
 	 * easily.
 	 */
 	void	(*pv_setctxt)(int ctxt, caddr_t va, int pmeg);
-#if defined(SUN4M) && defined(notyet)
+#if defined(notyet)
 	/*
 	 * The following are V3 ROM functions to handle MP machines in the
-	 * Sun4m series. They have undefined results when run on a uniprocessor!
+	 * Sun4u series. They have undefined results when run on a uniprocessor!
 	 */
 	int	(*pv_v3cpustart)(u_int module, u_int ctxtbl,
 				      int context, caddr_t pc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.22 2005/03/05 01:44:52 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.23 2005/09/08 15:25:54 martin Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -570,7 +570,7 @@ sbus_establish(struct sbusdev *sd, struct device *dev)
 
 	/*
 	 * We have to look for the sbus by name, since it is not necessarily
-	 * our immediate parent (i.e. sun4m /iommu/sbus/espdma/esp)
+	 * our immediate parent.
 	 * We don't just use the device structure of the above-attached
 	 * sbus, since we support multiple sbus's.
 	 */
