@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.81 2005/08/30 03:18:30 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.82 2005/09/08 19:19:50 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1722,45 +1722,43 @@ bge_attach(parent, self, aux)
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	const struct bge_revision *br;
+	pcireg_t		pm_ctl, memtype;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	bus_addr_t		iobase;
-	bus_size_t		iosize;
+	bus_size_t		size;
 	bus_dma_segment_t	seg;
-	int			s, rseg;
+	int			rseg;
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
-	u_int32_t		pm_ctl;
 	struct ifnet		*ifp;
 	int			unit, error = 0;
 	caddr_t			kva;
-
-	s = splimp();
 
 	sc->bge_pa = *pa;
 
 	/*
 	 * Map control/status registers.
 	 */
-	DPRINTFN(5, ("pci_mem_find\n"));
-	if (pci_mem_find(pc, pa->pa_tag, BGE_PCI_BAR0, &iobase,
-			 &iosize, NULL)) {
+	DPRINTFN(5, ("Map control/status regs\n"));
+
+	DPRINTFN(5, ("pci_mapreg_map\n"));
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR0);
+ 	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		if (pci_mapreg_map(pa, BGE_PCI_BAR0,
+		    memtype, 0, &sc->bge_btag, &sc->bge_bhandle,
+		    NULL, &size, 0) == 0)
+			break;
+	default:
 		printf(": can't find mem space\n");
-		goto fail;
+		return;
 	}
-
-	DPRINTFN(5, ("bus_space_map\n"));
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->bge_bhandle)) {
-		printf(": can't map mem space\n");
-		goto fail;
-	}
-
-	sc->bge_btag = pa->pa_memt;
 
 	DPRINTFN(5, ("pci_intr_map\n"));
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 
 	DPRINTFN(5, ("pci_intr_string\n"));
@@ -1769,13 +1767,12 @@ bge_attach(parent, self, aux)
 	DPRINTFN(5, ("pci_intr_establish\n"));
 	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc,
 	    sc->bge_dev.dv_xname);
-
 	if (sc->bge_intrhand == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 
 	/*
@@ -1837,7 +1834,7 @@ bge_attach(parent, self, aux)
 		printf("%s: chip initialization failed\n",
 		    sc->bge_dev.dv_xname);
 		error = ENXIO;
-		goto fail;
+		goto fail_2;
 	}
 
 	/*
@@ -1856,7 +1853,7 @@ bge_attach(parent, self, aux)
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
 		printf("bge%d: failed to read station address\n", unit);
 		error = ENXIO;
-		goto fail;
+		goto fail_2;
 	}
 
 	/*
@@ -1871,7 +1868,7 @@ bge_attach(parent, self, aux)
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->bge_dev.dv_xname);
-		goto fail;
+		goto fail_2;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg,
@@ -1879,28 +1876,20 @@ bge_attach(parent, self, aux)
 			   BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		    sc->bge_dev.dv_xname, sizeof(struct bge_ring_data));
-		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_3;
 	}
 	DPRINTFN(5, ("bus_dmamem_create\n"));
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
 	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
 		printf("%s: can't create dma map\n", sc->bge_dev.dv_xname);
-		bus_dmamem_unmap(sc->bge_dmatag, kva,
-				 sizeof(struct bge_ring_data));
-		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_4;
 	}
 	DPRINTFN(5, ("bus_dmamem_load\n"));
 	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_ring_map, kva,
 			    sizeof(struct bge_ring_data), NULL,
 			    BUS_DMA_NOWAIT)) {
-		bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
-		bus_dmamem_unmap(sc->bge_dmatag, kva,
-				 sizeof(struct bge_ring_data));
-		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_5;
 	}
 
 	DPRINTFN(5, ("bzero\n"));
@@ -1917,7 +1906,7 @@ bge_attach(parent, self, aux)
 			printf("%s: jumbo buffer allocation failed\n",
 			    sc->bge_dev.dv_xname);
 			error = ENXIO;
-			goto fail;
+			goto fail_5;
 		}
 	}
 
@@ -2036,8 +2025,24 @@ bge_attach(parent, self, aux)
 	ether_ifattach(ifp);
 	DPRINTFN(5, ("timeout_set\n"));
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
-fail:
-	splx(s);
+
+	return;
+
+fail_5:
+	bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
+
+fail_4:
+	bus_dmamem_unmap(sc->bge_dmatag, kva,
+	    sizeof(struct bge_ring_data));
+
+fail_3:
+	bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
+
+fail_2:
+	pci_intr_disestablish(pc, sc->bge_intrhand);
+
+fail_1:
+	bus_space_unmap(sc->bge_btag, sc->bge_bhandle, size);
 }
 
 void
@@ -2045,7 +2050,8 @@ bge_reset(sc)
 	struct bge_softc *sc;
 {
 	struct pci_attach_args *pa = &sc->bge_pa;
-	u_int32_t cachesize, command, pcistate, new_pcistate, reset;
+	pcireg_t cachesize, command, pcistate, new_pcistate;
+	u_int32_t reset;
 	int i, val = 0;
 
 	/* Save some important PCI state. */
@@ -2078,7 +2084,7 @@ bge_reset(sc)
 	/* XXX: Broadcom Linux driver. */
 	if (sc->bge_pcie) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM5750_A0) {
-			uint32_t v;
+			pcireg_t v;
 
 			DELAY(500000); /* wait for link training to complete */
 			v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0xc4);
