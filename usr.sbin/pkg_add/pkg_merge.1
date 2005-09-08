@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_merge.1,v 1.1 2005/06/28 20:34:55 espie Exp $
+.\"	$OpenBSD: pkg_merge.1,v 1.2 2005/09/08 14:03:35 jmc Exp $
 .\" Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -23,15 +23,15 @@
 .Nm pkg_merge
 .Op Fl v
 .Fl o Ar filename
-.Ar pkg-name1 pkg-name2 Op Ar ...
+.Ar pkg1 pkg2 Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm
 command is used to merge
 independent packages
-.Ar pkg-name1 ,
-.Ar pkg-name2 ,
-.Op Ar ...
+.Ar pkg1 ,
+.Ar pkg2 ,
+.Ar ... ,
 into a fat package
 .Ar filename
 that contains all the information necessary
@@ -54,7 +54,8 @@ install based on package name and architecture.
 The options are as follows:
 .Bl -tag -width opt
 .It Fl o Ar filename
-Store the result into filename.
+Store the result in
+.Ar filename .
 .It Fl v
 Process individual files verbosely, showing what files
 get shared in the fat package.
