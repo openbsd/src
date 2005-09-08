@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.10 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.11 2005/09/08 09:11:08 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -105,7 +105,8 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		if (error) {
 			/* mbuf is already freed */
 			splx(s);
-			if_printf(ifp, "failed to queue raw tx frame\n");
+			printf("%s: failed to queue raw tx frame\n",
+			    ifp->if_xname);
 			return (error);
 		}
 		ifp->if_obytes += m->m_pkthdr.len;
@@ -187,7 +188,8 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 #endif
 		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-			if_printf(ifp, "sending %s to %s on channel %u\n",
+			printf("%s: sending %s to %s on channel %u\n",
+			    ifp->if_xname,
 			    ieee80211_mgt_subtype_name[
 			    (type & IEEE80211_FC0_SUBTYPE_MASK)
 			    >> IEEE80211_FC0_SUBTYPE_SHIFT],
@@ -255,8 +257,9 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		if (ni == NULL)
 			ni = ieee80211_ref_node(ic->ic_bss);
 		if (ni == NULL) {
-			if_printf(ifp, "no node for dst %s, "
-			    "discard raw tx frame\n", ether_sprintf(addr));
+			printf("%s: no node for dst %s, "
+			    "discard raw tx frame\n", ifp->if_xname,
+			    ether_sprintf(addr));
 			ic->ic_stats.is_tx_nonode++;
 			goto bad;
 		}
@@ -738,8 +741,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	case IEEE80211_FC0_SUBTYPE_DEAUTH:
 		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "station %s deauthenticate (reason %d)\n",
-			    ether_sprintf(ni->ni_macaddr), arg);
+			printf("%s: station %s deauthenticate (reason %d)\n",
+			    ifp->if_xname, ether_sprintf(ni->ni_macaddr), arg);
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
@@ -850,8 +853,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	case IEEE80211_FC0_SUBTYPE_DISASSOC:
 		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "station %s disassociate (reason %d)\n",
-			    ether_sprintf(ni->ni_macaddr), arg);
+			printf("%s: station %s disassociate (reason %d)\n",
+			    ifp->if_xname, ether_sprintf(ni->ni_macaddr), arg);
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);

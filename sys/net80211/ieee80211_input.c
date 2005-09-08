@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.7 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.8 2005/09/08 09:11:08 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -399,7 +399,8 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			doprint += ieee80211_debug;
 #endif
 			if (doprint)
-				if_printf(ifp, "received %s from %s rssi %d\n",
+				printf("%s: received %s from %s rssi %d\n",
+				    ifp->if_xname,
 				    ieee80211_mgt_subtype_name[subtype
 				    >> IEEE80211_FC0_SUBTYPE_SHIFT],
 				    ether_sprintf(wh->i_addr2), rssi);
@@ -689,8 +690,8 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		IEEE80211_SEND_MGMT(ic, ni,
 			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
 		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "station %s %s authenticated (open)\n",
-			    ether_sprintf(ni->ni_macaddr),
+			printf("%s: station %s %s authenticated (open)\n",
+			    ifp->if_xname, ether_sprintf(ni->ni_macaddr),
 			    ni->ni_state != IEEE80211_STA_CACHE ?
 			    "newly" : "already");
 		ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
@@ -708,10 +709,9 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		}
 		if (status != 0) {
 			if (ifp->if_flags & IFF_DEBUG)
-				if_printf(&ic->ic_if,
-				    "open authentication failed (reason %d) "
-				    "for %s\n", status,
-				    ether_sprintf(wh->i_addr3));
+				printf("%s: open authentication failed "
+				    "(reason %d) for %s\n", ifp->if_xname,
+				    status, ether_sprintf(wh->i_addr3));
 			if (ni != ic->ic_bss)
 				ni->ni_fails++;
 			ic->ic_stats.is_rx_auth_fail++;
@@ -809,8 +809,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			     --i >= 0; )
 				ni->ni_challenge[i] = arc4random();
 			if (ifp->if_flags & IFF_DEBUG)
-				if_printf(ifp, "station %s shared key "
-					"%sauthentication\n",
+				printf("%s: station %s shared key "
+					"%sauthentication\n", ifp->if_xname,
 					ether_sprintf(ni->ni_macaddr),
 					ni->ni_state != IEEE80211_STA_CACHE ?
 				        "" : "re");
@@ -835,8 +835,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				return;
 			}
 			if (ifp->if_flags & IFF_DEBUG)
-				if_printf(ifp, "station %s authenticated "
-					"(shared key)\n",
+				printf("%s: station %s authenticated "
+					"(shared key)\n", ifp->if_xname,
 					ether_sprintf(ni->ni_macaddr));
 			ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
 			break;
@@ -860,9 +860,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				ni->ni_challenge = NULL;
 			}
 			if (status != 0) {
-				if_printf(&ic->ic_if,
-				    "%s: shared authentication failed "
-				    "(reason %d) for %s\n",
+				printf("%s: %s: shared authentication failed "
+				    "(reason %d) for %s\n", ifp->if_xname,
 				    __func__, status,
 				    ether_sprintf(wh->i_addr3));
 				if (ni != ic->ic_bss)
@@ -1359,8 +1358,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		frm += 2;
 		if (status != 0) {
 			if (ifp->if_flags & IFF_DEBUG)
-				if_printf(ifp,
-				    "%sassociation failed (reason %d) for %s\n",
+				printf("%s: %sassociation failed (reason %d)"
+				    " for %s\n", ifp->if_xname,
 				    ISREASSOC(subtype) ?  "re" : "",
 				    status, ether_sprintf(wh->i_addr3));
 			if (ni != ic->ic_bss)
@@ -1411,9 +1410,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		case IEEE80211_M_HOSTAP:
 			if (ni != ic->ic_bss) {
 				if (ifp->if_flags & IFF_DEBUG)
-					if_printf(ifp,
-					    "station %s deauthenticated "
+					printf("%s: station %s deauthenticated "
 					    "by peer (reason %d)\n",
+					    ifp->if_xname,
 					    ether_sprintf(ni->ni_macaddr),
 					    reason);
 				ieee80211_node_leave(ic, ni);
@@ -1442,9 +1441,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		case IEEE80211_M_HOSTAP:
 			if (ni != ic->ic_bss) {
 				if (ifp->if_flags & IFF_DEBUG)
-					if_printf(ifp,
-					    "station %s disassociated "
+					printf("%s: station %s disassociated "
 					    "by peer (reason %d)\n",
+					    ifp->if_xname,
 					    ether_sprintf(ni->ni_macaddr),
 					    reason);
 				ieee80211_node_leave(ic, ni);

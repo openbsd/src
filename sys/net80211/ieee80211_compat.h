@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_compat.h,v 1.2 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_compat.h,v 1.3 2005/09/08 09:11:08 jsg Exp $	*/
 /*	$NetBSD: ieee80211_compat.h,v 1.5 2004/01/13 23:37:30 dyoung Exp $	*/
 
 /*-
@@ -31,9 +31,6 @@
 #define _NET80211_IEEE80211_COMPAT_H_
 
 #define IASSERT(cond, complaint) if (!(cond)) panic complaint
-
-void if_printf(struct ifnet *, const char *, ...)
-    __attribute__((__format__(__printf__,2,3)));
 
 #define ieee80211_node_critsec_decl(v) int v
 #define ieee80211_node_critsec_begin(ic, v) do { v = splnet(); } while (0)

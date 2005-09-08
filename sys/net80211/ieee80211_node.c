@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.7 2005/09/08 08:36:12 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.8 2005/09/08 09:11:08 jsg Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ ieee80211_begin_scan(struct ifnet *ifp)
 	} else
 		ic->ic_stats.is_scan_passive++;
 	if (ifp->if_flags & IFF_DEBUG)
-		if_printf(ifp, "begin %s scan\n",
+		printf("%s: begin %s scan\n", ifp->if_xname,
 			(ic->ic_flags & IEEE80211_F_ASCAN) ?
 				"active" : "passive");
 
@@ -268,7 +268,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 
 	ni = ic->ic_bss;
 	if (ifp->if_flags & IFF_DEBUG)
-		if_printf(ifp, "creating ibss\n");
+		printf("%s: creating ibss\n", ifp->if_xname);
 	ic->ic_flags |= IEEE80211_F_SIBSS;
 	ni->ni_chan = chan;
 	ni->ni_rates = ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
@@ -371,7 +371,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	int i, fail;
 
 	if (ifp->if_flags & IFF_DEBUG)
-		if_printf(ifp, "end %s scan\n",
+		printf("%s: end %s scan\n", ifp->if_xname,
 			(ic->ic_flags & IEEE80211_F_ASCAN) ?
 				"active" : "passive");
 

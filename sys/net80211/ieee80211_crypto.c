@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.4 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.5 2005/09/08 09:11:08 jsg Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -261,7 +261,8 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 		if (crc != letoh32(*(u_int32_t *)crcbuf)) {
 #ifdef IEEE80211_DEBUG
 			if (ieee80211_debug) {
-				if_printf(ifp, "decrypt CRC error\n");
+				printf("%s: decrypt CRC error\n",
+				    ifp->if_xname);
 				if (ieee80211_debug > 1)
 					ieee80211_dump_pkt(n0->m_data,
 					    n0->m_len, -1, -1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.5 2005/09/07 05:40:11 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.6 2005/09/08 09:11:08 jsg Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -410,8 +410,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			/* beacon miss */
 			if (ifp->if_flags & IFF_DEBUG) {
 				/* XXX bssid clobbered above */
-				if_printf(ifp, "no recent beacons from %s;"
-				    " rescanning\n",
+				printf("%s: no recent beacons from %s;"
+				    " rescanning\n", ifp->if_xname,
 				    ether_sprintf(ic->ic_bss->ni_bssid));
 			}
 			ieee80211_free_allnodes(ic);
@@ -497,7 +497,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 				("%s: bogus xmit rate %u setup\n", __func__,
 				ni->ni_txrate));
 			if (ifp->if_flags & IFF_DEBUG) {
-				if_printf(ifp, "%s with %s ssid ",
+				printf("%s: %s with %s ssid ",
+				    ifp->if_xname,
 				    ic->ic_opmode == IEEE80211_M_STA ?
 				    "associated" : "synchronized",
 				    ether_sprintf(ni->ni_bssid));

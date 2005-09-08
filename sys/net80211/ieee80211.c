@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.10 2005/09/08 08:36:12 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.11 2005/09/08 09:11:08 jsg Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -127,9 +127,10 @@ ieee80211_ifattach(struct ifnet *ifp)
 			 * Verify driver passed us valid data.
 			 */
 			if (i != ieee80211_chan2ieee(ic, c)) {
-				if_printf(ifp, "bad channel ignored; "
+				printf("%s: bad channel ignored; "
 					"freq %u flags %x number %u\n",
-					c->ic_freq, c->ic_flags, i);
+					ifp->if_xname, c->ic_freq, c->ic_flags,
+					i);
 				c->ic_flags = 0;	/* NB: remove */
 				continue;
 			}
@@ -218,16 +219,17 @@ ieee80211_mhz2ieee(u_int freq, u_int flags)
 u_int
 ieee80211_chan2ieee(struct ieee80211com *ic, struct ieee80211_channel *c)
 {
+	struct ifnet *ifp = &ic->ic_if;
 	if (ic->ic_channels <= c && c <= &ic->ic_channels[IEEE80211_CHAN_MAX])
 		return c - ic->ic_channels;
 	else if (c == IEEE80211_CHAN_ANYC)
 		return IEEE80211_CHAN_ANY;
 	else if (c != NULL) {
-		if_printf(&ic->ic_if, "invalid channel freq %u flags %x\n",
-			c->ic_freq, c->ic_flags);
+		printf("%s: invalid channel freq %u flags %x\n",
+			ifp->if_xname, c->ic_freq, c->ic_flags);
 		return 0;		/* XXX */
 	} else {
-		if_printf(&ic->ic_if, "invalid channel (NULL)\n");
+		printf("%s: invalid channel (NULL)\n", ifp->if_xname);
 		return 0;		/* XXX */
 	}
 }
