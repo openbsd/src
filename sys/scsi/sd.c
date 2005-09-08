@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.90 2005/08/27 03:50:04 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.91 2005/09/08 03:33:55 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1398,10 +1398,12 @@ sd_get_parms(sd, dp, flags)
 	}
 
 validate:	
-	if (dp->disksize == 0) {
+	if (buf)
 		free(buf, M_TEMP);
+
+	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
-	}
+
 	if (ssblksize > 0)
 		dp->blksize = ssblksize;
 	else
@@ -1423,7 +1425,6 @@ validate:
 	default:
 		SC_DEBUG(sd->sc_link, SDEV_DB1,
 		    ("sd_get_parms: bad blksize: %#x\n", dp->blksize));
-		free(buf, M_TEMP);
 		return (SDGP_RESULT_OFFLINE);
 	}
 
@@ -1445,7 +1446,6 @@ validate:
 	dp->cyls = (cyls == 0) ? dp->disksize / (dp->heads * dp->sectors) :
 	    cyls;
 
-	free(buf, M_TEMP);
 	return (SDGP_RESULT_OK);
 }
 
