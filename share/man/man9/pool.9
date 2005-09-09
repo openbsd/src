@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.30 2005/09/09 03:38:08 pedro Exp $
+.\"	$OpenBSD: pool.9,v 1.31 2005/09/09 08:51:54 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -162,10 +162,10 @@ The back-end allocator used to manage the memory for the pool.
 .Fa palloc
 may be
 .Dv NULL ,
-in which case the pool manager uses a interrupt safe allocator.
-It is recommended to set this to
+in which case the pool manager uses an interrupt safe allocator.
+It is recommended that this be set to
 .Em pool_allocator_nointr
-if the pool will never be accessed in interrupt context.
+if the pool will never be accessed in an interrupt context.
 .El
 .Ss DESTROYING A POOL
 The
