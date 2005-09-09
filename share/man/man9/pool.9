@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.29 2005/07/31 03:26:45 pascoe Exp $
+.\"	$OpenBSD: pool.9,v 1.30 2005/09/09 03:38:08 pedro Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ resources currently available from the system-wide memory allocator
 .Pq Xr malloc 9 .
 The pool manager obtains memory by using the special-purpose memory
 allocator
-.Fn palloc
+.Fa palloc
 passed to
 .Fn pool_init ,
 for extra pool items in case the number of allocations exceeds
@@ -159,25 +159,13 @@ if
 must wait for items to be returned to the pool.
 .It Fa palloc
 The back-end allocator used to manage the memory for the pool.
-.Fn palloc
+.Fa palloc
 may be
 .Dv NULL ,
-in which case the pool manager uses the
-.Em pool_allocator_kmem
-allocator which uses
-.Xr uvm_km_kmemalloc 9
-and
-.Xr uvm_km_free 9
-to allocate and release memory using the
-.Em kmem_map
-.Po
-see
-.Xr uvm 9
-.Pc .
+in which case the pool manager uses a interrupt safe allocator.
 It is recommended to set this to
 .Em pool_allocator_nointr
-if the pool will never be accessed in interrupt context, since that
-allocator is much more efficient.
+if the pool will never be accessed in interrupt context.
 .El
 .Ss DESTROYING A POOL
 The
@@ -226,7 +214,7 @@ returns
 If
 .Dv PR_URGENT
 is specified and no items are available and
-.Fn palloc
+.Fa palloc
 cannot allocate a new page,
 the system will panic
 .Pq XXX .
