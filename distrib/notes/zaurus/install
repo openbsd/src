@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.15 2005/08/30 19:22:56 niallo Exp $
+dnl	$OpenBSD: install,v 1.16 2005/09/09 08:51:56 dlg Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -170,7 +170,7 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	the disk, they are actually ext3fs partitions and you will thereby
 	corrupt their journals.  This will make them into ext2fs partitions.
 	Linux will not be able to boot, and you will need to use the
-	processes above to get to the point where Linux will mount them as
+	processes below to get to the point where Linux will mount them as
 	ext2fs partitions:
 
 		Login as root.
@@ -188,7 +188,7 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 		cat rc.rofilesys | sed -e '/^LINUXFMT=ext3$/s/^/#/' \
 			-e '/^#LINUXFMT=ext2$/s/^#//' > ext2
 		diff -u rc.rofilesys ext2		# to double check
-		cp rc.rofilesys rc.rofilesys.ext2
+		cp rc.rofilesys rc.rofilesys.ext3
 		cp ext2 rc.rofilesys
 
 	If you have created an 'A6' OpenBSD partition earlier using fdisk,
