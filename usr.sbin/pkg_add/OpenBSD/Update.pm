@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.56 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: Update.pm,v 1.57 2005/09/09 09:11:38 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -452,7 +452,6 @@ sub save_old_libraries
 				mkdir($dest);
 				my $oldname = $old_plist->pkgname();
 				open my $descr, '>', $dest.DESC;
-				print $descr "Stub libraries for $oldname\n";
 				print $descr "Stub libraries for $oldname\n";
 				close $descr;
 				my $f = OpenBSD::PackingElement::FDESC->add($stub_list, DESC);
