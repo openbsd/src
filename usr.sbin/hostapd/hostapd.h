@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.5 2005/07/30 17:18:24 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.6 2005/09/09 13:21:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -22,6 +22,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -136,6 +137,7 @@ struct hostapd_entry {
 		struct in_addr		a_ipv4;
 	}				e_addr;
 
+	RB_ENTRY(hostapd_entry)		e_nodes;
 	TAILQ_ENTRY(hostapd_entry)	e_entries;
 };
 
@@ -143,10 +145,8 @@ struct hostapd_entry {
 #define e_ipv4				e_addr.a_ipv4
 
 #define HOSTAPD_TABLE_NAMELEN		32
-#define HOSTAPD_TABLE_HASHSIZE		256
-#define HOSTAPD_TABLE_HASH(_a)		(((((					\
-	(0 ^ (_a)[0]) ^ (_a)[1]) ^ (_a)[2]) ^ (_a)[3]) ^ (_a)[4]) ^ (_a)[5]	\
-)
+
+RB_HEAD(hostapd_tree, hostapd_entry);
 
 struct hostapd_table {
 	char				t_name[HOSTAPD_TABLE_NAMELEN];
@@ -154,7 +154,7 @@ struct hostapd_table {
 
 #define HOSTAPD_TABLE_F_CONST		0x01
 
-	TAILQ_HEAD(, hostapd_entry)	t_head[HOSTAPD_TABLE_HASHSIZE];
+	struct hostapd_tree		t_tree;
 	TAILQ_HEAD(, hostapd_entry)	t_mask_head;
 	TAILQ_ENTRY(hostapd_table)	t_entries;
 };
@@ -341,6 +341,9 @@ struct hostapd_entry *hostapd_entry_lookup(struct hostapd_table *,
 	    u_int8_t *);
 void	 hostapd_entry_update(struct hostapd_table *,
 	    struct hostapd_entry *);
+int	 hostapd_entry_cmp(struct hostapd_entry *, struct hostapd_entry *);
+
+RB_PROTOTYPE(hostapd_tree, hostapd_entry, e_nodes, hostapd_entry_cmp);
 
 int	 hostapd_parse_file(struct hostapd_config *);
 int	 hostapd_parse_symset(char *);
