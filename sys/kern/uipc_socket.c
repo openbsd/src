@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.59 2005/08/11 18:20:10 millert Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.60 2005/09/10 19:13:32 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -955,6 +955,8 @@ soshutdown(so, how)
 {
 	register struct protosw *pr = so->so_proto;
 
+	if ((so->so_state & SS_ISCONNECTED) == 0)
+		return (ENOTCONN);
 	switch (how) {
 	case SHUT_RD:
 	case SHUT_RDWR:
