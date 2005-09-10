@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.912 2005/09/09 15:16:41 mickey Exp $
+$OpenBSD: pcidevs,v 1.913 2005/09/10 00:37:10 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -255,6 +255,7 @@ vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
 vendor	BELKIN2		0x1799	Belkin
 vendor	HAWKING		0x17b3	Hawking Technology
+vendor	NETERION	0x17d5	Neterion
 vendor	INPROCOMM	0x17fe	INPROCOMM
 vendor	LANERGY		0x1812	Lanergy
 vendor	RALINK		0x1814	Ralink
@@ -1962,6 +1963,9 @@ product NEOMAGIC NM2230		0x0025	MagicMedia 256AV+
 product NEOMAGIC NM256XLP	0x0016	MagicMedia 256XL+
 product NEOMAGIC NM256AV	0x8005	MagicMedia 256AV
 product NEOMAGIC NM256ZX	0x8006	MagicMedia 256ZX
+
+/* Neterion products */
+product NETERION XFRAME		0x5831	Xframe 10GbE
 
 /* Netgear products */
 product NETGEAR MA301		0x4100	MA301
