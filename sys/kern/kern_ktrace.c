@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.35 2005/06/02 17:32:02 mickey Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.36 2005/09/10 21:05:27 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/ktrace.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 
 #include <sys/mount.h>
 #include <sys/syscall.h>
@@ -105,10 +106,14 @@ ktrsyscall(p, code, argsize, args)
 	struct	ktr_syscall *ktp;
 	unsigned int len = sizeof(struct ktr_syscall) + argsize;
 	register_t *argp;
+	u_int nargs = 0;
 	int i;
 
-	if (code == SYS___sysctl)
-		len += args[1] * sizeof(int);
+	if (code == SYS___sysctl) {
+		if (args[1] > 0)
+			nargs = min(args[1], CTL_MAXNAME);
+		len += nargs * sizeof(int);
+	}
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_SYSCALL);
 	ktp = malloc(len, M_TEMP, M_WAITOK);
@@ -117,9 +122,9 @@ ktrsyscall(p, code, argsize, args)
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof *argp); i++)
 		*argp++ = args[i];
-	if (code == SYS___sysctl &&
-	    copyin((void *)args[0], argp, args[1] * sizeof(int)))
-		bzero(argp, args[1] * sizeof(int));
+	if (code == SYS___sysctl && nargs &&
+	    copyin((void *)args[0], argp, nargs * sizeof(int)))
+		bzero(argp, nargs * sizeof(int));
 	kth.ktr_buf = (caddr_t)ktp;
 	kth.ktr_len = len;
 	ktrwrite(p, &kth);
