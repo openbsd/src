@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.914 2005/09/10 01:04:45 brad Exp $
+$OpenBSD: pcidevs,v 1.915 2005/09/10 02:00:10 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -218,6 +218,7 @@ vendor	LAVA		0x1407	Lava
 vendor	SUNIX		0x1409	Sunix
 vendor	MICROSOFT	0x1414	Microsoft
 vendor	OXFORD2		0x1415	Oxford
+vendor	CHELSIO		0x1425	Chelsio
 vendor	TAMARACK	0x143d	Tamarack
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
@@ -937,6 +938,9 @@ product CAVIUM NITROX		0x0001	Nitrox XL
 
 /* CCUBE products */
 product CCUBE CINEMASTER	0x8888	Cinemaster
+
+/* Chelsio products */
+product CHELSIO Nx10		0x0006	Nx10 10GbE
 
 /* Chips and Technologies products */
 product CHIPS 64310		0x00b8	64310
