@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.43 2005/08/01 05:45:03 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.44 2005/09/10 20:42:32 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -732,6 +732,7 @@ gem_init(struct ifnet *ifp)
 	gem_meminit(sc);
 
 	/* step 4. TX MAC registers & counters */
+	bcopy(sc->sc_arpcom.ac_enaddr, sc->sc_enaddr, ETHER_ADDR_LEN);
 	gem_init_regs(sc);
 	max_frame_size = ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN;
 	v = (max_frame_size) | (0x2000 << 16) /* Burst size */;
