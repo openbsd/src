@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.27 2005/06/02 17:32:02 mickey Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.28 2005/09/10 21:06:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.27 2005/06/02 17:32:02 mickey Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.28 2005/09/10 21:06:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@ static char *rcsid = "$OpenBSD: kdump.c,v 1.27 2005/06/02 17:32:02 mickey Exp $"
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
+#include <sys/sysctl.h>
 #define _KERNEL
 #include <sys/errno.h>
 #undef _KERNEL
@@ -383,6 +384,8 @@ ktrsyscall(struct ktr_syscall *ktr)
 				int *np, n;
 
 				n = ap[1];
+				if (n > CTL_MAXNAME)
+					n = CTL_MAXNAME;
 				np = (int *)(ap + 6);
 				for (; n--; np++) {
 					if (c)
