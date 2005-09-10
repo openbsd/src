@@ -223,6 +223,7 @@
 #define	PCI_VENDOR_SUNIX	0x1409		/* Sunix */
 #define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORD2	0x1415		/* Oxford */
+#define	PCI_VENDOR_CHELSIO	0x1425		/* Chelsio */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
@@ -942,6 +943,9 @@
 
 /* CCUBE products */
 #define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster */
+
+/* Chelsio products */
+#define	PCI_PRODUCT_CHELSIO_Nx10	0x0006		/* Nx10 10GbE */
 
 /* Chips and Technologies products */
 #define	PCI_PRODUCT_CHIPS_64310	0x00b8		/* 64310 */

@@ -2251,6 +2251,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Cinemaster",
 	},
 	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_Nx10,
+	    "Nx10 10GbE",
+	},
+	{
 	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_64310,
 	    "64310",
 	},
@@ -9917,6 +9921,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_OXFORD2,
 	    "Oxford",
+	},
+	{
+	    PCI_VENDOR_CHELSIO,
+	    "Chelsio",
 	},
 	{
 	    PCI_VENDOR_TAMARACK,
