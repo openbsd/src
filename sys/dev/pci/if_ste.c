@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.32 2005/08/09 04:10:12 mickey Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.33 2005/09/10 23:21:05 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -84,6 +84,7 @@ void ste_attach(struct device *, struct device *, void *);
 int ste_intr(void *);
 void ste_shutdown(void *);
 void ste_init(void *);
+void ste_rxeoc(struct ste_softc *);
 void ste_rxeof(struct ste_softc *);
 void ste_txeoc(struct ste_softc *);
 void ste_txeof(struct ste_softc *);
@@ -537,8 +538,7 @@ allmulti:
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto allmulti;
 		}
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
-		    0x0000003F;
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3F;
 		if (h < 32)
 			hashes[0] |= (1 << h);
 		else
@@ -579,14 +579,21 @@ int ste_intr(xsc)
 
 		claimed = 1;
 
-		if (status & STE_ISR_RX_DMADONE)
+		if (status & STE_ISR_RX_DMADONE) {
+			ste_rxeoc(sc);
 			ste_rxeof(sc);
+		}
 
 		if (status & STE_ISR_TX_DMADONE)
 			ste_txeof(sc);
 
 		if (status & STE_ISR_TX_DONE)
 			ste_txeoc(sc);
+
+		if (status & STE_ISR_STATS_OFLOW) {
+			timeout_del(&sc->sc_stats_tmo);
+			ste_stats_update(sc);
+		}
 
 		if (status & STE_ISR_LINKEVENT)
 			mii_pollstat(&sc->sc_mii);
@@ -606,6 +613,26 @@ int ste_intr(xsc)
 	return claimed;
 }
 
+void
+ste_rxeoc(struct ste_softc *sc)
+{
+	struct ste_chain_onefrag *cur_rx;
+
+	if (sc->ste_cdata.ste_rx_head->ste_ptr->ste_status == 0) {
+		cur_rx = sc->ste_cdata.ste_rx_head;
+		do {
+			cur_rx = cur_rx->ste_next;
+			/* If the ring is empty, just return. */
+			if (cur_rx == sc->ste_cdata.ste_rx_head)
+				return;
+		} while (cur_rx->ste_ptr->ste_status == 0);
+		if (sc->ste_cdata.ste_rx_head->ste_ptr->ste_status == 0) {
+			/* We've fallen behind the chip: catch it. */
+			sc->ste_cdata.ste_rx_head = cur_rx;
+		}
+	}
+}
+
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
@@ -620,20 +647,6 @@ void ste_rxeof(sc)
 	u_int32_t		rxstat;
 
 	ifp = &sc->arpcom.ac_if;
-
-	if (sc->ste_cdata.ste_rx_head->ste_ptr->ste_status == 0) {
-		cur_rx = sc->ste_cdata.ste_rx_head;
-		do {
-			cur_rx = cur_rx->ste_next;
-			/* If the ring is empty, just return. */
-			if (cur_rx == sc->ste_cdata.ste_rx_head)
-				return;
-		} while (cur_rx->ste_ptr->ste_status == 0);
-
-		if (sc->ste_cdata.ste_rx_head->ste_ptr->ste_status == 0)
-		/* We've fallen behind the chip: catch it. */
-			sc->ste_cdata.ste_rx_head = cur_rx;
-	}
 
 	while((rxstat = sc->ste_cdata.ste_rx_head->ste_ptr->ste_status)
 	      & STE_RXSTAT_DMADONE) {
@@ -685,9 +698,10 @@ void ste_rxeof(sc)
 			continue;
 		}
 
-		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
+
+		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -758,12 +772,9 @@ void ste_txeof(sc)
 		if (!(cur_tx->ste_ptr->ste_ctl & STE_TXCTL_DMADONE))
 			break;
 
-		if (cur_tx->ste_mbuf != NULL) {
-			m_freem(cur_tx->ste_mbuf);
-			cur_tx->ste_mbuf = NULL;
-			ifp->if_flags &= ~IFF_OACTIVE;
-		}
-
+		m_freem(cur_tx->ste_mbuf);
+		cur_tx->ste_mbuf = NULL;
+		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
 
 		STE_INC(idx, STE_TX_LIST_CNT);
@@ -794,12 +805,21 @@ void ste_stats_update(xsc)
 	    + CSR_READ_1(sc, STE_MULTI_COLLS)
 	    + CSR_READ_1(sc, STE_SINGLE_COLLS);
 
-	mii_tick(mii);
-	if (!sc->ste_link && mii->mii_media_status & IFM_ACTIVE &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-		sc->ste_link++;
-		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-			ste_start(ifp);
+	if (!sc->ste_link) {
+		mii_pollstat(mii);
+		if (mii->mii_media_status & IFM_ACTIVE &&
+		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+			sc->ste_link++;
+			/*
+			 * we don't get a call-back on re-init so do it
+			 * otherwise we get stuck in the wrong link state
+			 */
+#if 0
+			ste_miibus_statchg(&mii->mii_dev.dv_parent);
+#endif
+			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+				ste_start(ifp);
+		}
 	}
 
 	timeout_add(&sc->sc_stats_tmo, hz);
@@ -840,8 +860,7 @@ void ste_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	struct ifnet		*ifp;
-	bus_addr_t		iobase;
-	bus_size_t		iosize;
+	bus_size_t		size;
 
 	/*
 	 * Handle power management nonsense.
@@ -884,42 +903,27 @@ void ste_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef STE_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports\n");
-		goto fail;
+	if (pci_mapreg_map(pa, STE_PCI_LOIO,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &sc->ste_btag, &sc->ste_bhandle, NULL, &size, 0)) {
+		printf(": can't map i/o space\n");
+		return;
 	}
-	if (pci_io_find(pc, pa->pa_tag, STE_PCI_LOIO, &iobase, &iosize)) {
-		printf(": can't find I/O space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->ste_bhandle)) {
-		printf(": can't map I/O space\n");
-		goto fail;
-	}
-	sc->ste_btag = pa->pa_iot;
-#else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		goto fail;
-	}
-	if (pci_mem_find(pc, pa->pa_tag, STE_PCI_LOMEM, &iobase, &iosize,NULL)){
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->ste_bhandle)) {
+ #else
+	if (pci_mapreg_map(pa, STE_PCI_LOMEM,
+	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &sc->ste_btag, &sc->ste_bhandle, NULL, &size, 0)) {
 		printf(": can't map mem space\n");
-		goto fail;
+		return;
 	}
-	sc->ste_btag = pa->pa_memt;
 #endif
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ste_intr, sc,
@@ -929,7 +933,7 @@ void ste_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 	printf(": %s", intrstr);
 
@@ -943,17 +947,17 @@ void ste_attach(parent, self, aux)
 	    STE_EEADDR_NODE0, 3, 0)) {
 		printf("%s: failed to read station address\n",
 		    sc->sc_dev.dv_xname);
-		goto fail_1;
+		goto fail_2;
 	}
 
-	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	sc->ste_ldata_ptr = malloc(sizeof(struct ste_list_data) + 8,
 	    M_DEVBUF, M_DONTWAIT);
 	if (sc->ste_ldata_ptr == NULL) {
 		printf("%s: no memory for list buffers!\n",
 		    sc->sc_dev.dv_xname);
-		goto fail_1;
+		goto fail_2;
 	}
 
 	sc->ste_ldata = (struct ste_list_data *)sc->ste_ldata_ptr;
@@ -994,11 +998,13 @@ void ste_attach(parent, self, aux)
 
 	shutdownhook_establish(ste_shutdown, sc);
 
-fail:
 	return;
 
-fail_1:
+fail_2:
 	pci_intr_disestablish(pc, sc->sc_ih);
+
+fail_1:
+	bus_space_unmap(sc->ste_btag, sc->ste_bhandle, size);
 }
 
 int ste_newbuf(sc, c, m)
@@ -1433,7 +1439,7 @@ void ste_start(ifp)
 {
 	struct ste_softc	*sc;
 	struct mbuf		*m_head = NULL;
-	struct ste_chain	*cur_tx = NULL;
+	struct ste_chain	*cur_tx;
 	int			idx;
 
 	sc = ifp->if_softc;
@@ -1501,8 +1507,8 @@ void ste_start(ifp)
 
 		STE_INC(idx, STE_TX_LIST_CNT);
 		ifp->if_timer = 5;
-		sc->ste_cdata.ste_tx_prod = idx;
 	}
+	sc->ste_cdata.ste_tx_prod = idx;
 
 	return;
 }
@@ -1519,6 +1525,7 @@ void ste_watchdog(ifp)
 
 	ste_txeoc(sc);
 	ste_txeof(sc);
+	ste_rxeoc(sc);
 	ste_rxeof(sc);
 	ste_reset(sc);
 	ste_init(sc);
