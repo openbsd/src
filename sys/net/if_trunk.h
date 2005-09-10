@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.2 2005/05/24 07:51:53 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.3 2005/09/10 22:40:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -102,6 +102,28 @@ struct trunk_port {
 
 #define tp_ifname		tp_if->if_xname		/* interface name */
 #define tp_link_state		tp_if->if_link_state	/* link state */
+#define tp_capabilities		tp_if->if_capabilities	/* capabilities */
+
+struct trunk_mc {
+	union {
+		struct ether_multi	*mcu_enm;
+	} mc_u;
+	struct sockaddr_storage		mc_addr;
+
+	SLIST_ENTRY(trunk_mc)		mc_entries;
+};
+
+#define mc_enm	mc_u.mcu_enm
+
+struct trunk_ifreq {
+	union {
+		struct ifreq ifreq;
+		struct {
+			char ifr_name[IFNAMSIZ];
+			struct sockaddr_storage ifr_ss;
+		} ifreq_storage;
+	} ifreq;
+};
 
 struct trunk_softc {
 	struct arpcom			tr_ac;		/* virtual interface */
@@ -115,16 +137,21 @@ struct trunk_softc {
 	SLIST_HEAD(__tplhd, trunk_port)	tr_ports;	/* list of interfaces */
 	SLIST_ENTRY(trunk_softc)	tr_entries;
 
+	SLIST_HEAD(__mclhd, trunk_mc)	tr_mc_head;	/* multicast addresses */
+
 	/* Trunk protocol callbacks */
 	int	(*tr_detach)(struct trunk_softc *);
 	int	(*tr_start)(struct trunk_softc *, struct mbuf *);
 	int	(*tr_watchdog)(struct trunk_softc *);
 	int	(*tr_input)(struct trunk_softc *, struct trunk_port *,
 		    struct ether_header *, struct mbuf *);
+	int	(*tr_port_create)(struct trunk_port *);
+	void	(*tr_port_destroy)(struct trunk_port *);
 };
 
-#define tr_ifflags		tr_ac.ac_if.if_flags	/* interface flags */
-#define tr_ifname		tr_ac.ac_if.if_xname	/* interface name */
+#define tr_ifflags		tr_ac.ac_if.if_flags		/* flags */
+#define tr_ifname		tr_ac.ac_if.if_xname		/* name */
+#define tr_capabilities		tr_ac.ac_if.if_capabilities	/* capabilities */
 
 void	 trunk_port_ifdetach(struct ifnet *);
 int	 trunk_input(struct ifnet *, struct ether_header *, struct mbuf *);

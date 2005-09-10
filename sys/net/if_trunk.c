@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.4 2005/07/31 03:52:18 pascoe Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.5 2005/09/10 22:40:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -56,6 +56,7 @@ void	 trunkattach(int);
 int	 trunk_clone_create(struct if_clone *, int);
 int	 trunk_clone_destroy(struct ifnet *);
 void	 trunk_lladdr(struct trunk_softc *, u_int8_t *);
+int	 trunk_capabilities(struct trunk_softc *);
 int	 trunk_port_create(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_destroy(struct trunk_port *);
 void	 trunk_port_watchdog(struct ifnet *);
@@ -64,6 +65,11 @@ struct trunk_port *trunk_port_get(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_checkstacking(struct trunk_softc *);
 void	 trunk_port2req(struct trunk_port *, struct trunk_reqport *);
 int	 trunk_ioctl(struct ifnet *, u_long, caddr_t);
+int	 trunk_ether_addmulti(struct trunk_softc *, struct ifreq *);
+int	 trunk_ether_delmulti(struct trunk_softc *, struct ifreq *);
+void	 trunk_ether_purgemulti(struct trunk_softc *);
+int	 trunk_ether_cmdmulti(struct trunk_port *, u_long);
+int	 trunk_ioctl_allports(struct trunk_softc *, u_long, caddr_t);
 void	 trunk_start(struct ifnet *);
 void	 trunk_watchdog(struct ifnet *);
 int	 trunk_media_change(struct ifnet *);
@@ -77,6 +83,7 @@ struct if_clone trunk_cloner =
 /* Simple round robin */
 int	 trunk_rr_attach(struct trunk_softc *);
 int	 trunk_rr_detach(struct trunk_softc *);
+void	 trunk_rr_port_destroy(struct trunk_port *);
 int	 trunk_rr_start(struct trunk_softc *, struct mbuf *);
 int	 trunk_rr_watchdog(struct trunk_softc *);
 int	 trunk_rr_input(struct trunk_softc *, struct trunk_port *,
@@ -140,6 +147,7 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = trunk_ioctl;
 	ifp->if_output = ether_output;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
+	ifp->if_capabilities = trunk_capabilities(tr);
 
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -166,6 +174,9 @@ trunk_clone_destroy(struct ifnet *ifp)
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
 	struct trunk_port *tp;
 	int error, s;
+
+	/* Remove any multicast groups that we may have joined. */
+	trunk_ether_purgemulti(tr);
 
 	s = splnet();
 
@@ -205,6 +216,23 @@ trunk_lladdr(struct trunk_softc *tr, u_int8_t *lladdr)
 	sdl->sdl_alen = ETHER_ADDR_LEN;
 	bcopy(lladdr, LLADDR(sdl), ETHER_ADDR_LEN);
 	bcopy(lladdr, tr->tr_ac.ac_enaddr, ETHER_ADDR_LEN);
+}
+
+int
+trunk_capabilities(struct trunk_softc *tr)
+{
+	struct trunk_port *tp;
+	int cap = ~0;
+
+	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
+		cap &= tp->tp_capabilities;
+
+	if (tr->tr_ifflags & IFF_DEBUG) {
+		printf("%s: capabilities 0x%08x\n",
+		    tr->tr_ifname, cap == ~0 ? 0 : cap);
+	}
+
+	return (cap == ~0 ? 0 : cap);
 }
 
 int
@@ -273,7 +301,16 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	SLIST_INSERT_HEAD(&tr->tr_ports, tp, tp_entries);
 	tr->tr_count++;
 
-	return (0);
+	/* Update trunk capabilities */
+	tr->tr_capabilities = trunk_capabilities(tr);
+
+	/* Add multicast addresses to this port */
+	trunk_ether_cmdmulti(tp, SIOCADDMULTI);
+
+	if (tr->tr_port_create != NULL)
+		error = (*tr->tr_port_create)(tp);
+
+	return (error);
 }
 
 int
@@ -282,7 +319,7 @@ trunk_port_checkstacking(struct trunk_softc *tr)
 	struct trunk_softc *tr_ptr;
 	struct trunk_port *tp;
 	int m = 0;
-	
+
 	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
 		if (tp->tp_flags & TRUNK_PORT_STACK) {
 			tr_ptr = (struct trunk_softc *)tp->tp_if->if_softc;
@@ -299,6 +336,12 @@ trunk_port_destroy(struct trunk_port *tp)
 	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
 	struct trunk_port *tp_ptr;
 	struct ifnet *ifp = tp->tp_if;
+
+	if (tr->tr_port_destroy != NULL)
+		(*tr->tr_port_destroy)(tp);
+
+	/* Remove multicast addresses from this port */
+	trunk_ether_cmdmulti(tp, SIOCDELMULTI);
 
 	/* Port has to be down */
 	if (ifp->if_flags & IFF_UP)
@@ -331,6 +374,9 @@ trunk_port_destroy(struct trunk_port *tp)
 	}
 
 	free(tp, M_DEVBUF);
+
+	/* Update trunk capabilities */
+	tr->tr_capabilities = trunk_capabilities(tr);
 
 	return (0);
 }
@@ -581,10 +627,10 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_flags &= ~IFF_RUNNING;
 		break;
 	case SIOCADDMULTI:
-		error = ether_addmulti(ifr, &tr->tr_ac);
+		error = trunk_ether_addmulti(tr, ifr);
 		break;
 	case SIOCDELMULTI:
-		error = ether_delmulti(ifr, &tr->tr_ac);
+		error = trunk_ether_delmulti(tr, ifr);
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
@@ -601,15 +647,149 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
+int
+trunk_ether_addmulti(struct trunk_softc *tr, struct ifreq *ifr)
+{
+	struct trunk_mc *mc;
+	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	int error;
+
+	/* Ignore ENETRESET error code */
+	if ((error = ether_addmulti(ifr, &tr->tr_ac)) != ENETRESET)
+		return (error);
+
+	if ((mc = (struct trunk_mc *)malloc(sizeof(struct trunk_mc),
+	    M_DEVBUF, M_NOWAIT)) == NULL) {
+		error = ENOMEM;
+		goto failed;
+	}
+
+	ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, &tr->tr_ac, mc->mc_enm);
+	bcopy(&ifr->ifr_addr, &mc->mc_addr, ifr->ifr_addr.sa_len);
+	SLIST_INSERT_HEAD(&tr->tr_mc_head, mc, mc_entries);
+
+	if ((error = trunk_ioctl_allports(tr, SIOCADDMULTI,
+	    (caddr_t)ifr)) != 0) {
+		trunk_ether_delmulti(tr, ifr);
+		return (error);
+	}
+
+	return (error);
+
+ failed:
+	ether_delmulti(ifr, &tr->tr_ac);
+
+	return (error);
+}
+
+int
+trunk_ether_delmulti(struct trunk_softc *tr, struct ifreq *ifr)
+{
+	struct ether_multi *enm;
+	struct trunk_mc *mc;
+	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	int error;
+
+	if ((error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi)) != 0)
+		return (error);
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, &tr->tr_ac, enm);
+
+	if ((error = ether_delmulti(ifr, &tr->tr_ac)) != ENETRESET)
+		return (error);
+
+	if ((error = trunk_ioctl_allports(tr, SIOCDELMULTI,
+	    (caddr_t)ifr)) != 0) {
+		/* XXX At least one port failed to remove the address */
+		if (tr->tr_ifflags & IFF_DEBUG) {
+			printf("%s: failed to remove multicast address "
+			    "on all ports\n", tr->tr_ifname);
+		}
+	}
+
+	SLIST_FOREACH(mc, &tr->tr_mc_head, mc_entries) {
+		if (mc->mc_enm == enm) {
+			SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
+			free(mc, M_DEVBUF);
+			break;
+		}
+	}
+
+	return (0);
+}
+
+void
+trunk_ether_purgemulti(struct trunk_softc *tr)
+{
+	struct trunk_mc *mc;
+	struct trunk_ifreq ifs;
+	struct ifreq *ifr = &ifs.ifreq.ifreq;
+
+	while ((mc = SLIST_FIRST(&tr->tr_mc_head)) != NULL) {
+		bcopy(&mc->mc_addr, &ifr->ifr_addr, mc->mc_addr.ss_len);
+
+		/* Try to remove multicast address on all ports */
+		trunk_ioctl_allports(tr, SIOCDELMULTI, (caddr_t)ifr);
+
+		SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
+		free(mc, M_DEVBUF);
+	}
+}
+
+int
+trunk_ether_cmdmulti(struct trunk_port *tp, u_long cmd)
+{
+	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
+	struct trunk_mc *mc;
+	struct trunk_ifreq ifs;
+	struct ifreq *ifr = &ifs.ifreq.ifreq;
+	int ret, error = 0;
+
+	bcopy(tp->tp_ifname, ifr->ifr_name, IFNAMSIZ);
+	SLIST_FOREACH(mc, &tr->tr_mc_head, mc_entries) {
+		bcopy(&mc->mc_addr, &ifr->ifr_addr, mc->mc_addr.ss_len);
+
+		if ((ret = tp->tp_ioctl(tp->tp_if, cmd, (caddr_t)ifr)) != 0) {
+			if (tr->tr_ifflags & IFF_DEBUG) {
+				printf("%s: ioctl %lu failed on %s: %d\n",
+				    tr->tr_ifname, cmd, tp->tp_ifname, ret);
+			}
+			/* Store last known error and continue */
+			error = ret;
+		}
+	}
+
+	return (error);
+}
+
+int
+trunk_ioctl_allports(struct trunk_softc *tr, u_long cmd, caddr_t data)
+{
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct trunk_port *tp;
+	int ret, error = 0;
+
+	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
+		bcopy(tp->tp_ifname, ifr->ifr_name, IFNAMSIZ);
+		if ((ret = tp->tp_ioctl(tp->tp_if, cmd, data)) != 0) {
+			if (tr->tr_ifflags & IFF_DEBUG) {
+				printf("%s: ioctl %lu failed on %s: %d\n",
+				    tr->tr_ifname, cmd, tp->tp_ifname, ret);
+			}
+			/* Store last known error and continue */
+			error = ret;
+		}
+	}
+
+	return (error);
+}
+
 void
 trunk_start(struct ifnet *ifp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
 	struct mbuf *m;
 	int error = 0;
-
-	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: start\n", ifp->if_xname);
 
 	for (;; error = 0) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
@@ -754,6 +934,8 @@ trunk_rr_attach(struct trunk_softc *tr)
 	tr->tr_detach = trunk_rr_detach;
 	tr->tr_start = trunk_rr_start;
 	tr->tr_input = trunk_rr_input;
+	tr->tr_port_create = NULL;
+	tr->tr_port_destroy = trunk_rr_port_destroy;
 
 	tp = SLIST_FIRST(&tr->tr_ports);
 	tr->tr_psc = (caddr_t)tp;
@@ -766,6 +948,15 @@ trunk_rr_detach(struct trunk_softc *tr)
 {
 	tr->tr_psc = NULL;
 	return (0);
+}
+
+void
+trunk_rr_port_destroy(struct trunk_port *tp)
+{
+	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
+
+	if (tp == (struct trunk_port *)tr->tr_psc)
+		tr->tr_psc = NULL;
 }
 
 int
