@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.67 2005/08/09 04:10:12 mickey Exp $ */
+/* $OpenBSD: if_em.c,v 1.68 2005/09/10 23:25:41 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -46,7 +46,6 @@ int             em_display_debug_stats = 0;
  *********************************************************************/
 
 struct em_softc *em_adapter_list = NULL;
-
 
 /*********************************************************************
  *  Driver version
@@ -409,14 +408,15 @@ em_start_locked(struct ifnet *ifp)
 	struct em_softc *sc = ifp->if_softc;
 
 	mtx_assert(&sc->mtx, MA_OWNED);
-	
+
 	if (!sc->link_active)
 		return;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m_head);
 
-		if (m_head == NULL) break;
+		if (m_head == NULL)
+			break;
 
 		/*
 		 * em_encap() can modify our pointer, and or make it NULL on
@@ -950,7 +950,7 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
 	}
 
 #if 0
-	em_transmit_checksum_setup(sc,	m_head, &txd_upper, &txd_lower);
+	em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
 #endif
 	txd_upper = txd_lower = 0;
 
