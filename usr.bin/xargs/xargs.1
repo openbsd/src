@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.13 2003/06/12 17:55:01 jmc Exp $
+.\"	$OpenBSD: xargs.1,v 1.14 2005/09/10 23:00:29 brad Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .Nm xargs
 .Bk -words
-.Op Fl 0opt
+.Op Fl 0oprt
 .Op Fl E Ar eofstr
 .Oo
 .Fl I Ar replstr
@@ -74,7 +74,8 @@ upon each invocation, followed by some number of the arguments read
 from standard input.
 The
 .Ar utility
-is repeatedly executed until standard input is exhausted.
+is repeatedly executed one or more times until standard input
+is exhausted.
 .Pp
 Spaces, tabs and newlines may be embedded in arguments using single
 .Pq Ql '
@@ -222,6 +223,10 @@ will do replacement in.
 If
 .Ar replacements
 is negative, the number of arguments in which to replace is unbounded.
+.It Fl r
+Do not run the command if there are no arguments.
+Normally the command is executed at least once
+even if there are no arguments.
 .It Fl s Ar size
 Set the maximum number of bytes for the command line length provided to
 .Ar utility .
@@ -311,9 +316,9 @@ utility is expected to be
 .St -p1003.2
 compliant.
 The
-.Fl J , o , P
+.Fl J , o , P , R
 and
-.Fl R
+.Fl r
 options are non-standard
 extensions which may not be available on other operating systems.
 .Pp

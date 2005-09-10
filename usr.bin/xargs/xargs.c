@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.20 2005/06/20 18:52:19 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.21 2005/09/10 23:00:29 brad Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: xargs.c,v 1.20 2005/06/20 18:52:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: xargs.c,v 1.21 2005/09/10 23:00:29 brad Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static char **av, **bxp, **ep, **endxp, **xp;
 static char *argp, *bbp, *ebp, *inpline, *p, *replstr;
 static const char *eofstr;
 static int count, insingle, indouble, oflag, pflag, tflag, Rflag, rval, zflag;
-static int cnt, Iflag, jfound, Lflag, wasquoted, xflag;
+static int cnt, Iflag, jfound, Lflag, wasquoted, xflag, runeof = 1;
 static int curprocs, maxprocs;
 static size_t inpsize;
 
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 		nline -= strlen(*ep++) + 1 + sizeof(*ep);
 	}
 	maxprocs = 1;
-	while ((ch = getopt(argc, argv, "0E:I:J:L:n:oP:pR:s:tx")) != -1)
+	while ((ch = getopt(argc, argv, "0E:I:J:L:n:oP:pR:rs:tx")) != -1)
 		switch (ch) {
 		case 'E':
 			eofstr = optarg;
@@ -155,6 +155,9 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			pflag = 1;
+			break;
+		case 'r':
+			runeof = 0;
 			break;
 		case 'R':
 			Rflag = strtol(optarg, &endptr, 10);
@@ -257,6 +260,8 @@ parse_input(int argc, char *argv[])
 	case EOF:
 		/* No arguments since last exec. */
 		if (p == bbp) {
+			if (runeof)
+				prerun(0, av);
 			waitchildren(*argv, 1);
 			exit(rval);
 		}
@@ -404,6 +409,7 @@ prerun(int argc, char *argv[])
 	int repls;
 
 	repls = Rflag;
+	runeof = 0;
 
 	if (argc == 0 || repls == 0) {
 		*xp = NULL;
