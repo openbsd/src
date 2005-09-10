@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.30 2005/08/05 05:12:56 jsg Exp $
+.\"	$OpenBSD: isa.4,v 1.31 2005/09/10 02:50:46 jsg Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -244,6 +244,8 @@ National Semiconductor LM78, LM79 and compatible hardware monitors.
 .It Xr pcic 4
 .Tn ISA
 PCMCIA controllers.
+.It Xr viasio 4
+VIA VT1211 LPC Super I/O
 .El
 .Pp
 Note that some
@@ -301,6 +303,7 @@ These are listed in
 .Xr sm 4 ,
 .Xr uha 4 ,
 .Xr usb 4 ,
+.Xr viasio 4 ,
 .Xr wdc 4 ,
 .\" no manpage .Xr wds 4 ,
 .Xr we 4 ,
