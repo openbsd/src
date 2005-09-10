@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.912 2005/09/09 15:16:41 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.913 2005/09/10 00:37:10 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -260,6 +260,7 @@
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_BELKIN2	0x1799		/* Belkin */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
+#define	PCI_VENDOR_NETERION	0x17d5		/* Neterion */
 #define	PCI_VENDOR_INPROCOMM	0x17fe		/* INPROCOMM */
 #define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink */
@@ -1967,6 +1968,9 @@
 #define	PCI_PRODUCT_NEOMAGIC_NM256XLP	0x0016		/* MagicMedia 256XL+ */
 #define	PCI_PRODUCT_NEOMAGIC_NM256AV	0x8005		/* MagicMedia 256AV */
 #define	PCI_PRODUCT_NEOMAGIC_NM256ZX	0x8006		/* MagicMedia 256ZX */
+
+/* Neterion products */
+#define	PCI_PRODUCT_NETERION_XFRAME	0x5831		/* Xframe 10GbE */
 
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 */

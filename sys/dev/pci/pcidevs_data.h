@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.912 2005/09/09 15:16:41 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.913 2005/09/10 00:37:10 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5627,6 +5627,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MagicMedia 256ZX",
 	},
 	{
+	    PCI_VENDOR_NETERION, PCI_PRODUCT_NETERION_XFRAME,
+	    "Xframe 10GbE",
+	},
+	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301,
 	    "MA301",
 	},
@@ -10053,6 +10057,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_HAWKING,
 	    "Hawking Technology",
+	},
+	{
+	    PCI_VENDOR_NETERION,
+	    "Neterion",
 	},
 	{
 	    PCI_VENDOR_INPROCOMM,
