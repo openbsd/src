@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.8 2003/06/06 21:45:33 jmc Exp $
+.\"	$OpenBSD: installboot.8,v 1.9 2005/09/10 14:20:24 martin Exp $
 .\"	$NetBSD: installboot.8,v 1.2 1997/04/06 08:41:11 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -110,8 +110,13 @@ from
 you would install the first-stage boot program on the disk
 (and therefore make the disk bootable) by using the command:
 .Bd -literal -offset indent
-installboot /boot /usr/mdec/bootxx /dev/rsd0c
+# cp /usr/mdec/boot /boot
+# /usr/mdec/installboot -n -v /boot /usr/mdec/bootxx /dev/rsd0c
 .Ed
+.Pp
+And if the information supplied looks right, run the above without the
+.Fl n
+flag.
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr init 8 ,
