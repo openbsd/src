@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.913 2005/09/10 00:37:10 brad Exp 
+ *	OpenBSD: pcidevs,v 1.914 2005/09/10 01:04:45 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1155,6 +1155,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Uni-N",
 	},
 	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHETH_FW,
+	    "Uni-N Eth Firewire",
+	},
+	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_USB,
 	    "USB",
 	},
@@ -1291,8 +1295,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9600 Pro",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600,
-	    "Radeon 9600",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600LE,
+	    "Radeon 9600 LE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600XT,
@@ -1307,8 +1311,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9600 Pro Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600XT_2,
-	    "Radeon 9600 XT 2nd",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600LE_S,
+	    "Radeon 9600 LE Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600XT_S,
+	    "Radeon 9600 XT Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_BB,
@@ -1587,7 +1595,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9500/9700 Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R350_2,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R350_S,
 	    "Radeon 9800 Pro Sec",
 	},
 	{
@@ -1731,12 +1739,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon IGP 9100 AGP",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_PRO_2,
-	    "Radeon 9200 PRO 2nd",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_PRO_S,
+	    "Radeon 9200 PRO Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_2,
-	    "Radeon 9200 2nd",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_S,
+	    "Radeon 9200 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_HB,
@@ -1763,8 +1771,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9200",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_SE_2,
-	    "Radeon 9200 SE 2nd",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_SE_S,
+	    "Radeon 9200 SE Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS482,
@@ -1807,15 +1815,15 @@ static const struct pci_known_product pci_known_products[] = {
 	    "FireGL V3100",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_2,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_S,
 	    "Radeon X300 Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_2,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_S,
 	    "Radeon X600 Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_RV370_2,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_RV370_S,
 	    "FireGL V3100 Sec",
 	},
 	{
