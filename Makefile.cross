@@ -1,7 +1,24 @@
-# $OpenBSD: Makefile.cross,v 1.10 2005/09/11 23:08:30 miod Exp $
+# $OpenBSD: Makefile.cross,v 1.11 2005/09/11 23:10:07 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
+
+# Have to compute TARGET_ARCH directly in the Makefile, for .if tests involving
+# this variable to work.
+.if	(${TARGET} == "cats" || ${TARGET} == "zaurus")
+TARGET_ARCH=	arm
+.elif	(${TARGET} == "hp300" || ${TARGET} == "mac68k" || \
+	 ${TARGET} == "mvme68k")
+TARGET_ARCH=	m68k
+.elif	(${TARGET} == "luna88k" || ${TARGET} == "mvme88k")
+TARGET_ARCH=	m88k
+.elif	(${TARGET} == "sgi")
+TARGET_ARCH=	mips64
+.elif	(${TARGET} == "macppc" || ${TARGET} == "mvmeppc")
+TARGET_ARCH=	powerpc
+.else
+TARGET_ARCH=	${TARGET}
+.endif
 
 CROSSCPPFLAGS?=	-nostdinc -I${CROSSDIR}/usr/include
 CROSSLDFLAGS?=	-nostdlib -L${CROSSDIR}/usr/lib -static
@@ -18,7 +35,7 @@ CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		STRIP=${CROSSDIR}/usr/bin/strip \
 		HOSTCC=\"${CC}\" HOSTCXX=\"${CXX}\" NOMAN= DESTDIR=${CROSSDIR} \
 		HOSTCFLAGS=\"${CFLAGS}\" HOSTCXXFLAGS=\"${CXXFLAGS}\" \
-		HOSTLDFLAGS=\"${LDFLAGS} \" \
+		HOSTLDFLAGS=\"${LDFLAGS}\" \
 		CFLAGS=\"${CROSSCFLAGS}\" CPPFLAGS=\"${CROSSCPPFLAGS}\" \
 		CXXFLAGS=\"${CROSSCXXFLAGS}\" \
 		LDFLAGS=\"${CROSSLDFLAGS}\"
@@ -26,7 +43,6 @@ CROSSPATH=	${PATH}:${CROSSDIR}/usr/bin
 CROSSLANGS?=	c c++
 
 TARGET_CANON=`cat ${CROSSDIR}/TARGET_CANON`
-TARGET_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`
 
 CROSSDIRS=	${CROSSDIR}/.dirs_done
 CROSSOBJ=	${CROSSDIR}/usr/obj/.obj_done
@@ -55,22 +71,7 @@ cross-env:
 
 ${CROSSDIRS}:
 	@-mkdir -p ${CROSSDIR}
-	@case ${TARGET} in \
-		alpha|amd64|hppa|hppa64|i386|m68k|m88k|powerpc|sparc|sparc64|vax) \
-			echo ${TARGET} ;;\
-		amiga|hp300|mac68k|mvme68k) \
-			echo m68k ;;\
-		luna88k|mvme88k) \
-			echo m88k ;;\
-		macppc|mvmeppc) \
-			echo powerpc ;;\
-		sgi) \
-			echo mips64 ;;\
-		cats|zaurus) \
-			echo arm ;;\
-		*) \
-			(echo Unknown arch ${TARGET} >&2) ; exit 1;; \
-	esac > ${CROSSDIR}/TARGET_ARCH
+	@echo ${TARGET_ARCH} > ${CROSSDIR}/TARGET_ARCH
 	@echo TARGET_ARCH is `cat ${CROSSDIR}/TARGET_ARCH`
 	@eval `grep '^osr=' sys/conf/newvers.sh`; \
 	   sed "s/\$$/-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
@@ -108,8 +109,8 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 	    ${MAKE} DESTDIR=${CROSSDIR} includes)
 	@touch ${CROSSINCLUDES}
 
-.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
-    ${MACHINE_ARCH} == "vax"
+.if (${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
+     ${TARGET_ARCH} == "vax")
 BINUTILS=	ar as ld nm ranlib objcopy objdump strings strip
 NEW_BINUTILS?=	No
 .else
@@ -186,9 +187,9 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	@touch ${CROSSBINUTILS}
 
 # bsd.own.mk can't do it for us
-.if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
-    ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "vax"
+.if ${TARGET_ARCH} == "alpha" || \
+    ${TARGET_ARCH} == "m68k" || ${TARGET_ARCH} == "m88k" || \
+    ${TARGET_ARCH} == "sparc" || ${TARGET_ARCH} == "vax"
 TARGET_USE_GCC3=No
 .else
 TARGET_USE_GCC3=Yes
