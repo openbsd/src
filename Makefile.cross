@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.9 2005/09/11 23:07:21 miod Exp $
+# $OpenBSD: Makefile.cross,v 1.10 2005/09/11 23:08:30 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -137,7 +137,7 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/as \
-	    ${CROSSDIR}/usr/${TARGET_ARCH}/bin/as
+	    ${CROSSDIR}/usr/${TARGET_CANON}/bin/as
 	(cd ${.CURDIR}/gnu/usr.bin/ld; \
 	    TARGET_MACHINE_ARCH=${TARGET_ARCH} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
