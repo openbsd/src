@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.29 2005/04/13 02:33:08 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.30 2005/09/11 18:08:47 otto Exp $	*/
 
 /*
  * Command line editing - common code
@@ -92,9 +92,6 @@ x_read(char *buf, size_t len)
 {
 	int	i;
 
-	if (got_sigwinch)
-		check_sigwinch();
-
 	x_mode(true);
 #ifdef EMACS
 	if (Flag(FEMACS) || Flag(FGMACS))
@@ -108,6 +105,7 @@ x_read(char *buf, size_t len)
 #endif
 		i = -1;		/* internal error */
 	x_mode(false);
+	check_sigwinch();
 	return i;
 }
 
