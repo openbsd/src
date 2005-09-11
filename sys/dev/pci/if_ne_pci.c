@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.12 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.13 2005/09/11 18:17:08 mickey Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -192,10 +192,7 @@ ne_pci_attach(parent, self, aux)
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-#ifndef __NetBSD__
-	bus_addr_t iobase;
 	bus_size_t iosize;
-#endif
 	bus_space_tag_t nict;
 	bus_space_handle_t nich;
 	bus_space_tag_t asict;
@@ -210,30 +207,17 @@ ne_pci_attach(parent, self, aux)
 		panic("ne_pci_attach: impossible");
 	}
 
-#ifdef __NetBSD__
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-	    &nict, &nich, NULL, NULL, 0)) {
+	    &nict, &nich, NULL, &iosize, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-#else
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf(": can't find I/O base\n");
-		return;
-	}
-
-	nict = pa->pa_iot;
-
-	if (bus_space_map(nict, iobase, iosize, 0, &nich)) {
-		printf(": can't map I/O space\n");
-		return;
-	}
-#endif
 
 	asict = nict;
 	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET,
 	    NE2000_ASIC_NPORTS, &asich)) {
 		printf(": can't subregion i/o space\n");
+		bus_space_unmap(nict, nich, iosize);
 		return;
 	}
 
@@ -254,6 +238,7 @@ ne_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(nict, nich, iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -264,6 +249,7 @@ ne_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(nict, nich, iosize);
 		return;
 	}
 	printf(": %s\n", intrstr);

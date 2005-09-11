@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.34 2005/07/02 22:52:16 brad Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.35 2005/09/11 18:17:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1996,7 +1996,6 @@ tl_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	bus_addr_t iobase;
 	bus_size_t iosize;
 	u_int32_t command;
 	int i, rseg;
@@ -2014,35 +2013,27 @@ tl_attach(parent, self, aux)
 		printf(": failed to enable I/O ports\n");
 		return;
 	}
-	if (pci_io_find(pc, pa->pa_tag, TL_PCI_LOIO, &iobase, &iosize)) {
-		if (pci_io_find(pc, pa->pa_tag, TL_PCI_LOMEM,
-		    &iobase, &iosize)) {
-			printf(": failed to find i/o space\n");
+	if (pci_mapreg_map(pa, TL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)) {
+		if (pci_mapreg_map(pa, TL_PCI_LOMEM, PCI_MAPREG_TYPE_IO, 0,
+		    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)) {
+			printf(": failed to map i/o space\n");
 			return;
 		}
 	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->tl_bhandle)) {
-		printf(": failed map i/o space\n");
-		return;
-	}
-	sc->tl_btag = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping\n");
 		return;
 	}
-	if (pci_mem_find(pc, pa->pa_tag, TL_PCI_LOMEM, &iobase, &iosize, NULL)){
-		if (pci_mem_find(pc, pa->pa_tag, TL_PCI_LOIO,
-		    &iobase, &iosize, NULL)) {
-			printf(": failed to find memory space\n");
+	if (pci_mapreg_map(pa, TL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)){
+		if (pci_mapreg_map(pa, TL_PCI_LOIO, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)){
+			printf(": failed to map memory space\n");
 			return;
 		}
 	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->tl_bhandle)) {
-		printf(": failed map memory space\n");
-		return;
-	}
-	sc->tl_btag = pa->pa_memt;
 #endif
 
 	/*
@@ -2057,6 +2048,7 @@ tl_attach(parent, self, aux)
 	 */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->tl_btag, sc->tl_bhandle, iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -2067,6 +2059,7 @@ tl_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->tl_btag, sc->tl_bhandle, iosize);
 		return;
 	}
 	printf(": %s", intrstr);
@@ -2075,6 +2068,7 @@ tl_attach(parent, self, aux)
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct tl_list_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc list\n", sc->sc_dev.dv_xname);
+		bus_space_unmap(sc->tl_btag, sc->tl_bhandle, iosize);
 		return;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(struct tl_list_data),
@@ -2089,6 +2083,7 @@ tl_attach(parent, self, aux)
 		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct tl_list_data));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_space_unmap(sc->tl_btag, sc->tl_bhandle, iosize);
 		return;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva,
@@ -2097,6 +2092,7 @@ tl_attach(parent, self, aux)
 		bus_dmamap_destroy(sc->sc_dmat, dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct tl_list_data));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_space_unmap(sc->tl_btag, sc->tl_bhandle, iosize);
 		return;
 	}
 	sc->tl_ldata = (struct tl_list_data *)kva;
@@ -2130,7 +2126,8 @@ tl_attach(parent, self, aux)
 	    sc->tl_eeaddr, ETHER_ADDR_LEN)) {
 		printf("\n%s: failed to read station address\n",
 		    sc->sc_dev.dv_xname);
-	    return;
+		bus_space_unmap(sc->tl_btag, sc->tl_bhandle, iosize);
+		return;
 	}
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_OLICOM) {

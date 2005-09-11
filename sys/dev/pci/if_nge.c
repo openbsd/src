@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.44 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.45 2005/09/11 18:17:08 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -724,7 +724,6 @@ nge_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	bus_addr_t		iobase;
 	bus_size_t		iosize;
 	bus_dma_segment_t	seg;
 	bus_dmamap_t		dmamap;
@@ -745,7 +744,7 @@ nge_attach(parent, self, aux)
 	if (command == 0x01) {
 		command = pci_conf_read(pc, pa->pa_tag, NGE_PCI_PWRMGMTCTRL);
 		if (command & NGE_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			pcireg_t	iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = pci_conf_read(pc, pa->pa_tag, NGE_PCI_LOIO);
@@ -783,17 +782,12 @@ nge_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	DPRINTFN(5, ("%s: pci_io_find\n", sc->sc_dv.dv_xname));
-	if (pci_io_find(pc, pa->pa_tag, NGE_PCI_LOIO, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		goto fail;
-	}
-	DPRINTFN(5, ("%s: bus_space_map\n", sc->sc_dv.dv_xname));
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->nge_bhandle)) {
+	DPRINTFN(5, ("%s: pci_mapreg_map\n", sc->sc_dv.dv_xname));
+	if (pci_mapreg_map(pa, NGE_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->nge_btag, &sc->nge_bhandle, NULL, &iosize, 0)) {
 		printf(": can't map i/o space\n");
 		goto fail;
 	}
-	sc->nge_btag = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf("%s: failed to enable memory mapping!\n",
@@ -801,19 +795,12 @@ nge_attach(parent, self, aux)
 		error = ENXIO;
 		goto fail;
 	}
-	DPRINTFN(5, ("%s: pci_mem_find\n", sc->sc_dv.dv_xname));
-	if (pci_mem_find(pc, pa->pa_tag, NGE_PCI_LOMEM, &iobase,
-			 &iosize, NULL)) {
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	DPRINTFN(5, ("%s: bus_space_map\n", sc->sc_dv.dv_xname));
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->nge_bhandle)) {
+	DPRINTFN(5, ("%s: pci_mapreg_map\n", sc->sc_dv.dv_xname));
+	if (pci_mapreg_map(pa, NGE_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->nge_btag, &sc->nge_bhandle, NULL, &iosize, 0)) {
 		printf(": can't map mem space\n");
 		goto fail;
 	}
-
-	sc->nge_btag = pa->pa_memt;
 #endif
 
 	/* Disable all interrupts */
@@ -822,7 +809,7 @@ nge_attach(parent, self, aux)
 	DPRINTFN(5, ("%s: pci_intr_map\n", sc->sc_dv.dv_xname));
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 
 	DPRINTFN(5, ("%s: pci_intr_string\n", sc->sc_dv.dv_xname));
@@ -835,7 +822,7 @@ nge_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 	printf(": %s", intrstr);
 
@@ -863,7 +850,7 @@ nge_attach(parent, self, aux)
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct nge_list_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		goto fail;
+		goto fail_1;
 	}
 	DPRINTFN(5, ("%s: bus_dmamem_map\n", sc->sc_dv.dv_xname));
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
@@ -872,7 +859,7 @@ nge_attach(parent, self, aux)
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc->sc_dv.dv_xname, sizeof(struct nge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	DPRINTFN(5, ("%s: bus_dmamem_create\n", sc->sc_dv.dv_xname));
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct nge_list_data), 1,
@@ -882,7 +869,7 @@ nge_attach(parent, self, aux)
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 				 sizeof(struct nge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	DPRINTFN(5, ("%s: bus_dmamem_load\n", sc->sc_dv.dv_xname));
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
@@ -892,7 +879,7 @@ nge_attach(parent, self, aux)
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 				 sizeof(struct nge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 
 	DPRINTFN(5, ("%s: bzero\n", sc->sc_dv.dv_xname));
@@ -904,7 +891,7 @@ nge_attach(parent, self, aux)
 	if (nge_alloc_jumbo_mem(sc)) {
 		printf("%s: jumbo buffer allocation failed\n",
 		       sc->sc_dv.dv_xname);
-		goto fail;
+		goto fail_1;
 	}
 
 	ifp = &sc->arpcom.ac_if;
@@ -982,6 +969,8 @@ nge_attach(parent, self, aux)
 	timeout_set(&sc->nge_timeout, nge_tick, sc);
 	timeout_add(&sc->nge_timeout, hz);
 
+fail_1:
+	bus_space_unmap(sc->nge_btag, sc->nge_bhandle, iosize);
 fail:
 	splx(s);
 }

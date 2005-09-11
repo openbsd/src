@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.37 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.38 2005/09/11 18:17:08 mickey Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -398,55 +398,42 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int ioh_valid, memh_valid;
-	bus_addr_t iobase, mbase;
 	bus_size_t iosize, msize;
 
 	ioh_valid = memh_valid = 0;
 
 #if	SCSI_ISP_PREFER_MEM_MAP == 1
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, MEM_MAP_REG, &mbase, &msize,
-	    NULL)) {
-		printf(": can't find mem space\n");
-	} else if (bus_space_map(pa->pa_memt, mbase, msize, 0, &memh)) {
+	if (pci_mapreg_map(pa, MEM_MAP_REG, PCI_MAPREG_TYPE_MEM, 0,
+	    &memt, &memh, NULL, &msize, 0)) {
 		printf(": can't map mem space\n");
 	} else  {
-		memt = pa->pa_memt;
 		st = memt;
 		sh = memh;
 		memh_valid = 1;
 	}
 	if (memh_valid == 0) {
-		if (pci_io_find(pa->pa_pc, pa->pa_tag, IO_MAP_REG, &iobase,
-		    &iosize)) {
-			printf(": can't find i/o space\n");
-		} else if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &ioh)) {
-			printf(": can't map i/o space\n");
+		if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
+		    &iot, &ioh, NULL, &iosize, 0)) {
 		} else {
-			iot = pa->pa_iot;
 			st = iot;
 			sh = ioh;
 			ioh_valid = 1;
 		}
 	}
 #else
-	if (pci_io_find(pa->pa_pc, pa->pa_tag, IO_MAP_REG, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-	} else if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &ioh)) {
+	if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, &iosize, 0)) {
 		printf(": can't map i/o space\n");
 	} else {
-		iot = pa->pa_iot;
 		st = iot;
 		sh = ioh;
 		ioh_valid = 1;
 	}
 	if (ioh_valid == 0) {
-		if (pci_mem_find(pa->pa_pc, pa->pa_tag, MEM_MAP_REG, &mbase,
-		    &msize, NULL)) {
-			printf(": can't find mem space\n");
-		} else if (bus_space_map(pa->pa_memt, mbase, msize, 0, &memh)) {
+		if (pci_mapreg_map(pa, MEM_MAP_REG, PCI_MAPREG_TYPE_MEM, 0,
+		    &memt, &memh, NULL, &msize, 0)) {
 			printf(": can't map mem space\n");
 		} else  {
-			memt = pa->pa_memt;
 			st = memt;
 			sh = memh;
 			memh_valid = 1;

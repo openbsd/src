@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.5 2003/08/15 20:32:17 tedu Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.6 2005/09/11 18:17:08 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -149,17 +149,14 @@ wdtattach (parent, self, aux)
 {
 	struct wdt_softc *wdt = (struct wdt_softc *)self;
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
-	int unit;
 	bus_size_t iosize;
-	bus_addr_t iobase;
-
-	wdt->iot = pa->pa_iot;
+	int unit;
 
 	unit = wdt->wdt_dev.dv_unit;
 
 	/* retrieve the I/O region (BAR2) */
-	if (pci_io_find(pa->pa_pc, pa->pa_tag, 0x18, &iobase,
-	    &iosize) != 0) {
+	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
+	    &wdt->iot, &wdt->ioh, NULL, &iosize, 0) != 0) {
 		printf("wdt%d: couldn't find PCI I/O region\n", unit);
 		return;
 	}
@@ -167,12 +164,6 @@ wdtattach (parent, self, aux)
 	/* sanity check I/O size */
 	if (iosize != (bus_size_t)16) {
 		printf("wdt%d: invalid I/O region size\n", unit);
-		return;
-	}
-
-	/* map I/O region */
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &wdt->ioh) != 0) {
-		printf("wdt%d: couldn't map PCI I/O region\n", unit);
 		return;
 	}
 

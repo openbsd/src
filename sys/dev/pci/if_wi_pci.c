@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.40 2004/12/08 15:40:40 markus Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.41 2005/09/11 18:17:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -298,7 +298,6 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	bus_space_tag_t localt;
 	bus_space_tag_t iot = pa->pa_iot;
 	bus_space_tag_t memt = pa->pa_memt;
-	bus_addr_t localbase;
 	bus_size_t localsize, memsize, iosize;
 	u_int32_t intcsr;
 
@@ -329,17 +328,9 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	localsize = 0;
 	if (pci_mapreg_type(pa->pa_pc, pa->pa_tag, WI_PLX_LOCALRES)
 	    == PCI_MAPREG_TYPE_IO) {
-		if (pci_io_find(pa->pa_pc, pa->pa_tag,
-		    WI_PLX_LOCALRES, &localbase, &localsize) != 0)
-			printf(": can't find PLX I/O space\n");
-		if (localsize != 0) {
-			if (bus_space_map(pa->pa_iot, localbase,
-			    localsize, 0, &localh) != 0) {
-				printf(": can't map PLX I/O space\n");
-				localsize = 0;
-			} else
-				localt = pa->pa_iot;
-		}
+		if (pci_mapreg_map(pa, WI_PLX_LOCALRES, PCI_MAPREG_TYPE_IO,
+		    0, &localt, &localh, NULL, &localsize, 0) != 0)
+			printf(": can't map PLX I/O space\n");
 	}
 
 	if (wi_pci_common_attach(pa, sc) != 0) {

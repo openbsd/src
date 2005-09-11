@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.46 2005/07/06 02:22:28 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.47 2005/09/11 18:17:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -646,7 +646,6 @@ vr_attach(parent, self, aux)
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
-	bus_addr_t		iobase;
 	bus_size_t		iosize;
 	int rseg;
 	caddr_t kva;
@@ -662,7 +661,7 @@ vr_attach(parent, self, aux)
 		command = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    VR_PCI_PWRMGMTCTRL);
 		if (command & VR_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			pcireg_t	iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = pci_conf_read(pa->pa_pc, pa->pa_tag,
@@ -698,35 +697,27 @@ vr_attach(parent, self, aux)
 		printf(": failed to enable I/O ports\n");
 		goto fail;
 	}
-	if (pci_io_find(pc, pa->pa_tag, VR_PCI_LOIO, &iobase, &iosize)) {
-		printf(": failed to find i/o space\n");
+	if (pci_mapreg_map(pa, VR_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->vr_btag, &sc->vr_bhandle, NULL, &iosize, 0)) {
+		printf(": failed to map i/o space\n");
 		goto fail;
 	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->vr_bhandle)) {
-		printf(": failed map i/o space\n");
-		goto fail;
-	}
-	sc->vr_btag = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping\n");
 		goto fail;
 	}
-	if (pci_mem_find(pc, pa->pa_tag, VR_PCI_LOMEM, &iobase, &iosize)) {
-		printf(": failed to find memory space\n");
+	if (pci_mapreg_map(pa, VR_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->vr_btag, &sc->vr_bhandle, NULL, &iosize, 0)) {
+		printf(": failed to map memory space\n");
 		goto fail;
 	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->vr_bhandle)) {
-		printf(": failed map memory space\n");
-		goto fail;
-	}
-	sc->vr_btag = pa->pa_memt;
 #endif
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, vr_intr, sc,
@@ -736,7 +727,7 @@ vr_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 	printf(": %s", intrstr);
 
@@ -780,21 +771,21 @@ vr_attach(parent, self, aux)
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vr_list_data),
 	    PAGE_SIZE, 0, &sc->sc_listseg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc list\n", sc->sc_dev.dv_xname);
-		goto fail;
+		goto fail_1;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_listseg, rseg,
 	    sizeof(struct vr_list_data), &kva, BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		    sc->sc_dev.dv_xname, sizeof(struct vr_list_data));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct vr_list_data), 1,
 	    sizeof(struct vr_list_data), 0, BUS_DMA_NOWAIT, &sc->sc_listmap)) {
 		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_listmap, kva,
 	    sizeof(struct vr_list_data), NULL, BUS_DMA_NOWAIT)) {
@@ -802,7 +793,7 @@ vr_attach(parent, self, aux)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_listmap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	sc->vr_ldata = (struct vr_list_data *)kva;
 	bzero(sc->vr_ldata, sizeof(struct vr_list_data));
@@ -842,6 +833,8 @@ vr_attach(parent, self, aux)
 
 	shutdownhook_establish(vr_shutdown, sc);
 
+fail_1:
+	bus_space_unmap(sc->vr_btag, sc->vr_bhandle, iosize);
 fail:
 	splx(s);
 	return;

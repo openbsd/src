@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.21 2005/09/11 18:04:02 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.22 2005/09/11 18:17:08 mickey Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -335,6 +335,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	bus_dma_segment_t seg;
+	bus_size_t iosize;
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
 	pcireg_t pmode;
@@ -349,10 +350,10 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ioh_valid = (pci_mapreg_map(pa, STGE_PCI_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL, 0) == 0);
+	    &iot, &ioh, NULL, &iosize, 0) == 0);
 	memh_valid = (pci_mapreg_map(pa, STGE_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL, 0) == 0);
+	    &memt, &memh, NULL, &iosize, 0) == 0);
 
 	if (memh_valid) {
 		sc->sc_st = memt;
@@ -391,7 +392,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": unable to map interrupt\n");
-		return;
+		goto fail_0;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, stge_intr, sc,
@@ -401,7 +402,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;
+		goto fail_0;
 	}
 	printf(": %s", intrstr);
 
@@ -620,6 +621,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
+	bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 	return;
 }
 

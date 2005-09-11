@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.20 2005/08/09 04:10:13 mickey Exp $ */
+/*      $OpenBSD: sv.c,v 1.21 2005/09/11 18:17:08 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -277,7 +277,6 @@ sv_attach(parent, self, aux)
   struct pci_attach_args *pa = aux;
   pci_chipset_tag_t pc = pa->pa_pc;
   pci_intr_handle_t ih;
-  bus_addr_t iobase;
   bus_size_t iosize;
   char const *intrstr;
   u_int32_t  dmareg, dmaio; 
@@ -287,15 +286,10 @@ sv_attach(parent, self, aux)
   sc->sc_pci_tag = pa->pa_tag;
 
   /* Map the enhanced port only */
-  if (pci_io_find(pc, pa->pa_tag, SV_ENHANCED_PORTBASE_SLOT, 
-		  &iobase, &iosize)) {
-    printf (": Couldn't find enhanced synth I/O range\n");
+  if (pci_mapreg_map(pa, SV_ENHANCED_PORTBASE_SLOT, PCI_MAPREG_TYPE_IO, 0,
+      &sc->sc_iot, &sc->sc_ioh, NULL, &iosize, 0)) {
+    printf (": Couldn't map enhanced synth I/O range\n");
     return;
-  }
-
-  if (bus_space_map(sc->sc_iot, iobase, iosize, 0, &sc->sc_ioh)) {
-      printf(": can't map i/o space\n");
-      return;
   }
 
   sc->sc_dmatag = pa->pa_dmat;

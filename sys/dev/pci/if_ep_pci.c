@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.24 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.25 2005/09/11 18:17:08 mickey Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -112,24 +112,17 @@ ep_pci_attach(parent, self, aux)
 	struct ep_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_space_tag_t iot = pa->pa_iot;
-	bus_addr_t iobase;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	pcireg_t i;
 	const char *intrstr = NULL;
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		return;
-	}
-
-	if (bus_space_map(iot, iobase, iosize, 0, &sc->sc_ioh)) {
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	sc->sc_iot = iot;
 	sc->bustype = EP_BUS_PCI;
 
 	i = pci_conf_read(pc, pa->pa_tag, PCI_CONN);
@@ -143,6 +136,7 @@ ep_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(", couldn't map interrupt\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -153,6 +147,7 @@ ep_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 		return;
 	}
 	printf(" %s\n", intrstr);

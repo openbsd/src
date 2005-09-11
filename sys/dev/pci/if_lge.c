@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.22 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.23 2005/09/11 18:17:08 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -428,7 +428,6 @@ void lge_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	bus_addr_t		iobase;
 	bus_size_t		iosize;
 	bus_dma_segment_t	seg;
 	bus_dmamap_t		dmamap;
@@ -451,7 +450,7 @@ void lge_attach(parent, self, aux)
 	if (command == 0x01) {
 		command = pci_conf_read(pc, pa->pa_tag, LGE_PCI_PWRMGMTCTRL);
 		if (command & LGE_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			pcireg_t	iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = pci_conf_read(pc, pa->pa_tag, LGE_PCI_LOIO);
@@ -489,17 +488,12 @@ void lge_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	DPRINTFN(5, ("pci_io_find\n"));
-	if (pci_io_find(pc, pa->pa_tag, LGE_PCI_LOIO, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		goto fail;
-	}
-	DPRINTFN(5, ("bus_space_map\n"));
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->lge_bhandle)) {
+	DPRINTFN(5, ("pci_mapreg_map\n"));
+	if (pci_mapreg_map(pa, LGE_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->lge_btag, &sc->lge_bhandle, NULL, &iosize, 0)) {
 		printf(": can't map i/o space\n");
 		goto fail;
 	}
-	sc->lge_btag = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf("%s: failed to enable memory mapping!\n",
@@ -507,25 +501,18 @@ void lge_attach(parent, self, aux)
 		error = ENXIO;
 		goto fail;
 	}
-	DPRINTFN(5, ("pci_mem_find\n"));
-	if (pci_mem_find(pc, pa->pa_tag, LGE_PCI_LOMEM, &iobase,
-			 &iosize, NULL)) {
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	DPRINTFN(5, ("bus_space_map\n"));
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->lge_bhandle)) {
+	DPRINTFN(5, ("pci_mapreg_map\n"));
+	if (pci_mapreg_map(pa, LGE_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->lge_btag, &sc->lge_bhandle, NULL, &iosize, 0)) {
 		printf(": can't map mem space\n");
 		goto fail;
 	}
-	
-	sc->lge_btag = pa->pa_memt;
 #endif
 
 	DPRINTFN(5, ("pci_intr_map\n"));
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 
 	DPRINTFN(5, ("pci_intr_string\n"));
@@ -538,7 +525,7 @@ void lge_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 	printf(": %s", intrstr);
 
@@ -566,7 +553,7 @@ void lge_attach(parent, self, aux)
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct lge_list_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		goto fail;
+		goto fail_1;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
@@ -575,7 +562,7 @@ void lge_attach(parent, self, aux)
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc->sc_dv.dv_xname, sizeof(struct lge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	DPRINTFN(5, ("bus_dmamem_create\n"));
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct lge_list_data), 1,
@@ -585,7 +572,7 @@ void lge_attach(parent, self, aux)
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 				 sizeof(struct lge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	DPRINTFN(5, ("bus_dmamem_load\n"));
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
@@ -595,7 +582,7 @@ void lge_attach(parent, self, aux)
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 				 sizeof(struct lge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 
 	DPRINTFN(5, ("bzero\n"));
@@ -607,7 +594,7 @@ void lge_attach(parent, self, aux)
 	if (lge_alloc_jumbo_mem(sc)) {
 		printf("%s: jumbo buffer allocation failed\n",
 		       sc->sc_dv.dv_xname);
-		goto fail;
+		goto fail_1;
 	}
 
 	ifp = &sc->arpcom.ac_if;
@@ -660,6 +647,8 @@ void lge_attach(parent, self, aux)
 	timeout_set(&sc->lge_timeout, lge_tick, sc);
 	timeout_add(&sc->lge_timeout, hz);
 
+fail_1:
+	bus_space_unmap(sc->lge_btag, sc->lge_bhandle, iosize);
 fail:
 	splx(s);
 }

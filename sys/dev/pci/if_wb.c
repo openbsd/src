@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.29 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.30 2005/09/11 18:17:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -715,7 +715,6 @@ wb_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	bus_addr_t iobase;
 	bus_size_t iosize;
 	int s, rseg;
 	pcireg_t command;
@@ -766,35 +765,27 @@ wb_attach(parent, self, aux)
 		printf(": failed to enable I/O ports!\n");
 		goto fail;
 	}
-	if (pci_io_find(pc, pa->pa_tag, WB_PCI_LOIO, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->wb_bhandle)) {
+	if (pci_mapreg_map(pa, WB_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->wb_btag, &sc->wb_bhandle, NULL, &iosize, 0)) {
 		printf(": can't map i/o space\n");
 		goto fail;
 	}
-	sc->wb_btag = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping!\n");
 		goto fail;
 	}
-	if (pci_mem_find(pc, pa->pa_tag, WB_PCI_LOMEM, &iobase, &iosize, NULL)){
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->wb_bhandle)) {
+	if (pci_mapreg_map(pa, WB_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->wb_btag, &sc->wb_bhandle, NULL, &iosize, 0)){
 		printf(": can't map mem space\n");
 		goto fail;
 	}
-	sc->wb_btag = pa->pa_memt;
 #endif
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wb_intr, sc,
@@ -804,7 +795,7 @@ wb_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 	printf(": %s", intrstr);
 
@@ -822,14 +813,14 @@ wb_attach(parent, self, aux)
 	if (bus_dmamem_alloc(pa->pa_dmat, sizeof(struct wb_list_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc list data\n", sc->sc_dev.dv_xname);
-		goto fail;
+		goto fail_1;
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg,
 	    sizeof(struct wb_list_data), &kva, BUS_DMA_NOWAIT)) {
 		printf("%s: can't map list data, size %d\n",
 		    sc->sc_dev.dv_xname, sizeof(struct wb_list_data));
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	if (bus_dmamap_create(pa->pa_dmat, sizeof(struct wb_list_data), 1,
 	    sizeof(struct wb_list_data), 0, BUS_DMA_NOWAIT, &dmamap)) {
@@ -837,7 +828,7 @@ wb_attach(parent, self, aux)
 		bus_dmamem_unmap(pa->pa_dmat, kva,
 		    sizeof(struct wb_list_data));
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	if (bus_dmamap_load(pa->pa_dmat, dmamap, kva,
 	    sizeof(struct wb_list_data), NULL, BUS_DMA_NOWAIT)) {
@@ -846,7 +837,7 @@ wb_attach(parent, self, aux)
 		bus_dmamem_unmap(pa->pa_dmat, kva,
 		    sizeof(struct wb_list_data));
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		goto fail;
+		goto fail_1;
 	}
 	sc->wb_ldata = (struct wb_list_data *)kva;
 	bzero(sc->wb_ldata, sizeof(struct wb_list_data));
@@ -888,6 +879,8 @@ wb_attach(parent, self, aux)
 
 	shutdownhook_establish(wb_shutdown, sc);
 
+fail_1:
+	bus_space_unmap(sc->wb_btag, sc->wb_bhandle, iosize);
 fail:
 	splx(s);
 	return;

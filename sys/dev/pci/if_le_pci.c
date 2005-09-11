@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.22 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.23 2005/09/11 18:17:08 mickey Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -146,10 +146,9 @@ le_pci_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
-	bus_addr_t iobase;
 	bus_size_t iosize;
 	bus_space_handle_t ioh;
-	bus_space_tag_t iot = pa->pa_iot;
+	bus_space_tag_t iot;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int i, rseg;
 	const char *intrstr;
@@ -164,12 +163,9 @@ le_pci_attach(parent, self, aux)
 		break;
 	}
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf(": can't find I/O base\n");
-		return;
-	}
-	if (bus_space_map(iot, iobase, iosize, 0, &ioh)) {
-		printf(": can't map I/O space\n");
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, &iosize, 0)) {
+		printf(": can't map I/O base\n");
 		return;
 	}
 
@@ -182,12 +178,14 @@ le_pci_attach(parent, self, aux)
 	if (bus_dmamem_alloc(pa->pa_dmat, PCNET_MEMSIZE, PAGE_SIZE,
 	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf(": couldn't allocate memory for card\n");
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, PCNET_MEMSIZE,
 	    &kva, BUS_DMA_NOWAIT)) {
 		printf(": couldn't map memory for card\n");
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
 	if (bus_dmamap_create(pa->pa_dmat, PCNET_MEMSIZE, 1, PCNET_MEMSIZE,
@@ -195,6 +193,7 @@ le_pci_attach(parent, self, aux)
 		printf(": couldn't create dma map\n");
 		bus_dmamem_unmap(pa->pa_dmat, kva, PCNET_MEMSIZE);
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
 	if (bus_dmamap_load(pa->pa_dmat, dmamap, kva, PCNET_MEMSIZE,
@@ -203,6 +202,7 @@ le_pci_attach(parent, self, aux)
 		bus_dmamap_destroy(pa->pa_dmat, dmamap);
 		bus_dmamem_unmap(pa->pa_dmat, kva, PCNET_MEMSIZE);
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
 	sc->sc_mem = kva;
@@ -211,6 +211,10 @@ le_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_dmamap_destroy(pa->pa_dmat, dmamap);
+		bus_dmamem_unmap(pa->pa_dmat, kva, PCNET_MEMSIZE);
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -221,6 +225,10 @@ le_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_dmamap_destroy(pa->pa_dmat, dmamap);
+		bus_dmamem_unmap(pa->pa_dmat, kva, PCNET_MEMSIZE);
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
 	printf(": %s\n", intrstr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_en_pci.c,v 1.10 2002/06/19 18:46:41 fgsch Exp $	*/
+/*	$OpenBSD: if_en_pci.c,v 1.11 2005/09/11 18:17:08 mickey Exp $	*/
 
 /*
  *
@@ -191,12 +191,10 @@ void *aux;
   struct en_softc *sc = (void *)self;
   struct en_pci_softc *scp = (void *)self;
   struct pci_attach_args *pa = aux;
-  bus_addr_t membase;
   pci_intr_handle_t ih;
   const char *intrstr;
   int retval;
 
-  sc->en_memt = pa->pa_memt;
   sc->is_adaptec = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADP) ? 1 : 0;
   scp->en_pc = pa->pa_pc;
 
@@ -224,11 +222,8 @@ void *aux;
    * memory map
    */
 
-  retval = pci_mem_find(scp->en_pc, pa->pa_tag, PCI_CBMA,
-				&membase, &sc->en_obmemsz, NULL);
-  if (retval == 0)
-    retval = bus_space_map(sc->en_memt, membase, sc->en_obmemsz, 0,
-      &sc->en_base);
+  retval = pci_mapreg_map(pa, PCI_CBMA, PCI_MAPREG_TYPE_MEM, 0,
+    &sc->en_memt, &sc->en_base, NULL, &sc->en_obmemsz, 0);
  
   if (retval) {
     printf(": couldn't map memory\n");

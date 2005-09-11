@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv_pci.c,v 1.7 2002/11/19 18:40:16 jason Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.8 2005/09/11 18:17:08 mickey Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
@@ -127,7 +127,6 @@ adv_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	ASC_SOFTC      *sc = (void *) self;
 	bus_space_handle_t ioh;
-	bus_addr_t advbase;
 	bus_size_t advsize;
 	pci_intr_handle_t ih;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -162,15 +161,12 @@ adv_pci_attach(parent, self, aux)
 	/*
 	 * Map Device Registers for I/O
 	 */
-	retval = pci_io_find(pc, pa->pa_tag, PCI_CBIO, &advbase, &advsize);
-	if (retval == 0)
-		retval = bus_space_map(pa->pa_iot, advbase, advsize, 0, &ioh);
+	retval = pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sc_iot, &ioh, NULL, &advsize, 0);
 	if (retval) {
-		printf("\n%s: unable to map device registers\n",
-		       sc->sc_dev.dv_xname);
+		printf(": unable to map device registers\n");
 		return;
 	}
-	sc->sc_iot = pa->pa_iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = pa->pa_dmat;
 	sc->pci_device_id = pa->pa_id;
@@ -179,14 +175,18 @@ adv_pci_attach(parent, self, aux)
 	/*
 	 * Initialize the board
 	 */
-	if (adv_init(sc))
-		panic("adv_pci_attach: adv_init failed");
+	if (adv_init(sc)) {
+		printf(": adv_init failed\n");
+		bus_space_unmap(sc->sc_iot, ioh, advsize);
+		return;
+	}
 
 	/*
 	 * Map Interrupt line
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("\n%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->sc_iot, ioh, advsize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -197,11 +197,11 @@ adv_pci_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, adv_intr, sc,
 				       sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("\n%s: couldn't establish interrupt",
-		       sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc_iot, ioh, advsize);
 		return;
 	}
 	printf(": %s\n", intrstr);

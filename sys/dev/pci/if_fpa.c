@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.23 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.24 2005/09/11 18:17:08 mickey Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -108,9 +108,7 @@ pdq_pci_attach(parent, self, aux)
 	u_int32_t data;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
-	bus_addr_t csrbase;
 	bus_size_t csrsize;
-	int cacheable = 0;
 
 	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(data) < DEFPA_LATENCY) {
@@ -129,28 +127,22 @@ pdq_pci_attach(parent, self, aux)
 	 * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
 	 */
 #ifdef PDQ_IOMAPPED
-	sc->sc_csrtag = pa->pa_iot;
-	if (pci_io_find(pa->pa_pc, pa->pa_tag, DEFPA_CBIO, &csrbase, &csrsize)){
-		printf(": can't find I/O space!\n");
+	if (pci_mapreg_map(pa, DEFPA_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sc_csrtag, &sc->sc_csrhandle, NULL, &csrsize, 0)) {
+		printf(": can't map I/O space!\n");
 		return;
 	}
 #else
-	sc->sc_csrtag = pa->pa_memt;
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, DEFPA_CBMA, &csrbase, &csrsize,
-	    &cacheable)) {
-		printf(": can't find memory space!\n");
+	if (pci_mapreg_map(pa, DEFPA_CBMA, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_csrtag, &sc->sc_csrhandle, NULL, &csrsize, 0)) {
+		printf(": can't map memory space!\n");
 		return;
 	}
 #endif
 
-	if (bus_space_map(sc->sc_csrtag, csrbase, csrsize, cacheable,
-	    &sc->sc_csrhandle)) {
-		printf(": can't map CSRs!\n");
-		return;
-	}
-
 	if (pci_intr_map(pa, &intrhandle)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->sc_csrtag, sc->sc_csrhandle, csrsize);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
@@ -161,6 +153,7 @@ pdq_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc_csrtag, sc->sc_csrhandle, csrsize);
 		return;
 	}
 	if (intrstr != NULL)
@@ -170,6 +163,7 @@ pdq_pci_attach(parent, self, aux)
 	    sc->sc_if.if_xname, 0, (void *) sc, PDQ_DEFPA);
 	if (sc->sc_pdq == NULL) {
 		printf(": initialization failed\n");
+		bus_space_unmap(sc->sc_csrtag, sc->sc_csrhandle, csrsize);
 		return;
 	}
 
