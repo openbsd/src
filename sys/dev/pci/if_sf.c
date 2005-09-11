@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.32 2005/09/11 18:17:08 mickey Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.33 2005/09/11 19:41:34 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -592,7 +592,6 @@ void sf_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	struct ifnet		*ifp;
-	bus_addr_t		iobase;
 	bus_size_t		iosize;
 
 	s = splimp();
