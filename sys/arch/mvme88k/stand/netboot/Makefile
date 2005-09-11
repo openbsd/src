@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2003/10/01 22:50:29 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2005/09/11 13:36:00 deraadt Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -28,7 +28,7 @@ all:	netboot.bin
 
 netboot: ${OBJS} ${SINGLE} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${SINGLE} ${OBJS} ${LIBS}
+		${SINGLE} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
 #	@${SIZE} $@
 
 netboot.bin: netboot

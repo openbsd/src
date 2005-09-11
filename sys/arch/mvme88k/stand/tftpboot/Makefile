@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/01/26 19:48:34 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2005/09/11 13:36:00 deraadt Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -26,7 +26,7 @@ all:	tftpboot.bin
 
 tftpboot: ${OBJS} ${SINGLE} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${SINGLE} ${OBJS} ${LIBS}
+		${SINGLE} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
 #	@${SIZE} $@
 
 tftpboot.bin: tftpboot
