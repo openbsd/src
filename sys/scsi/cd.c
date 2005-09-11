@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.87 2005/08/23 23:38:00 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.88 2005/09/11 17:34:27 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1364,7 +1364,7 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 	struct cd_softc *cd;
 	int p0, p1, p2, p3, flags;
 {
-	struct scsi_mode_sense_buf *data;
+	union scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
 	int error, big;
 
@@ -1384,10 +1384,10 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 		audio->port[3].channels = p3;
 		if (big)
 			error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-			    &data->headers.hdr_big, flags, 20000);
+			    &data->hdr_big, flags, 20000);
 		else
 			error = scsi_mode_select(cd->sc_link, SMS_PF,
-			    &data->headers.hdr, flags, 20000);
+			    &data->hdr, flags, 20000);
 	}	
 
 	free(data, M_TEMP);
@@ -1400,7 +1400,7 @@ cd_getvol(cd, arg, flags)
 	struct ioc_vol *arg;
 	int flags;
 {
-	struct scsi_mode_sense_buf *data;
+	union scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
 	int error;
 
@@ -1430,7 +1430,7 @@ cd_setvol(cd, arg, flags)
 	const struct ioc_vol *arg;
 	int flags;
 {
-	struct scsi_mode_sense_buf *data;
+	union scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
 	u_int8_t mask_volume[4];
 	int error, big;
@@ -1470,10 +1470,10 @@ cd_setvol(cd, arg, flags)
 
 	if (big)
 		error = scsi_mode_select_big(cd->sc_link, SMS_PF,
-		    &data->headers.hdr_big, flags, 20000);
+		    &data->hdr_big, flags, 20000);
 	else
 		error = scsi_mode_select(cd->sc_link, SMS_PF,
-		    &data->headers.hdr, flags, 20000);
+		    &data->hdr, flags, 20000);
 
 	free(data, M_TEMP);
 	return (error);
@@ -1500,7 +1500,7 @@ cd_set_pa_immed(cd, flags)
 	struct cd_softc *cd;
 	int flags;
 {
-	struct scsi_mode_sense_buf *data;
+	union scsi_mode_sense_buf *data;
 	struct cd_audio_page *audio = NULL;
 	int error, oflags, big;
 
@@ -1524,11 +1524,11 @@ cd_set_pa_immed(cd, flags)
 		if (audio->flags != oflags) {
 			if (big)
 				error = scsi_mode_select_big(cd->sc_link,
-				    SMS_PF, &data->headers.hdr_big, flags,
+				    SMS_PF, &data->hdr_big, flags,
 				    20000);
 			else
 				error = scsi_mode_select(cd->sc_link, SMS_PF,
-				    &data->headers.hdr, flags, 20000);
+				    &data->hdr, flags, 20000);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.33 2005/08/29 00:33:55 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.34 2005/09/11 17:34:27 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -338,13 +338,11 @@ struct scsi_mode_header_big {
 	u_int8_t blk_desc_len[2];
 };
 
-struct scsi_mode_sense_buf {
-	union {
-		struct scsi_mode_header hdr;
-		struct scsi_mode_header_big hdr_big;
-		u_char buf[255];	/* 256 bytes breaks some devices. */
-	} __packed headers;		/* Ensure sizeof() is 255! */
-} __packed;
+union scsi_mode_sense_buf {
+	struct scsi_mode_header hdr;
+	struct scsi_mode_header_big hdr_big;
+	u_char buf[255];	/* 256 bytes breaks some devices. */
+} __packed;			/* Ensure sizeof() is 255! */
 
 /*
  * SPI status information unit. See section 14.3.5 of SPI-3.

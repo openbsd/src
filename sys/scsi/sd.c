@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.92 2005/09/11 17:18:53 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.93 2005/09/11 17:34:27 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1328,7 +1328,7 @@ sd_get_parms(sd, dp, flags)
 	struct disk_parms *dp;
 	int flags;
 {
-	struct scsi_mode_sense_buf *buf = NULL;
+	union scsi_mode_sense_buf *buf = NULL;
 	struct page_rigid_geometry *rigid;
 	struct page_flex_geometry *flex;
 	struct page_reduced_geometry *reduced;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.87 2005/08/29 00:41:44 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.88 2005/09/11 17:34:27 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -471,7 +471,7 @@ int
 scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
     block_size, page_len, flags, big)
 	struct scsi_link *sc_link;
-	struct scsi_mode_sense_buf *buf;
+	union scsi_mode_sense_buf *buf;
 	int page, page_len, flags, *big;
 	u_int32_t *density, *block_size;
 	u_int64_t *block_count;
@@ -500,13 +500,12 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 		 * with SMS_DBD. Check returned data length to ensure that
 		 * at least a header (3 additional bytes) is returned.
 		 */
-		error = scsi_mode_sense(sc_link, 0, page, &buf->headers.hdr,
+		error = scsi_mode_sense(sc_link, 0, page, &buf->hdr,
 		    sizeof(*buf), flags, 20000);
-		if (error == 0 && buf->headers.hdr.data_length > 2) {
-			*page_data = scsi_mode_sense_page(&buf->headers.hdr,
-			    page_len);
+		if (error == 0 && buf->hdr.data_length > 2) {
+			*page_data = scsi_mode_sense_page(&buf->hdr, page_len);
 			offset = sizeof(struct scsi_mode_header);
-			blk_desc_len = buf->headers.hdr.blk_desc_len;
+			blk_desc_len = buf->hdr.blk_desc_len;
 			goto blk_desc;
 		}	
 	}	
@@ -516,18 +515,18 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	 * SMS_LLBAA. Bail out if the returned information is less than
 	 * a big header in size (6 additional bytes).
 	 */
-	error = scsi_mode_sense_big(sc_link, 0, page, &buf->headers.hdr_big,
+	error = scsi_mode_sense_big(sc_link, 0, page, &buf->hdr_big,
 	    sizeof(*buf), flags, 20000);
 	if (error != 0)
 		return (error);
-	if (_2btol(buf->headers.hdr_big.data_length) < 6)
+	if (_2btol(buf->hdr_big.data_length) < 6)
 		return (EIO);
 
 	if (big)
 		*big = 1;
 	offset = sizeof(struct scsi_mode_header_big);
-	*page_data = scsi_mode_sense_big_page(&buf->headers.hdr_big, page_len);
-	blk_desc_len = _2btol(buf->headers.hdr_big.blk_desc_len);
+	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, page_len);
+	blk_desc_len = _2btol(buf->hdr_big.blk_desc_len);
 
 blk_desc:
 	/* Both scsi_blk_desc and scsi_direct_blk_desc are 8 bytes. */
@@ -539,7 +538,7 @@ blk_desc:
 		/*
 		 * XXX What other device types return general block descriptors?
 		 */
-		general = (struct scsi_blk_desc *)&buf->headers.buf[offset];	
+		general = (struct scsi_blk_desc *)&buf->buf[offset];	
 		if (density)
 			*density = general->density;
 		if (block_size)
@@ -549,8 +548,7 @@ blk_desc:
 		break;
 
 	default:
-		direct = (struct scsi_direct_blk_desc *)&buf->
-		    headers.buf[offset];
+		direct = (struct scsi_direct_blk_desc *)&buf->buf[offset];
 		if (density)
 			*density = direct->density;
 		if (block_size)

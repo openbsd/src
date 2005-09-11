@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.22 2005/08/23 23:38:00 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.23 2005/09/11 17:34:27 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -613,7 +613,7 @@ ch_get_params(sc, flags)
 	struct ch_softc *sc;
 	int flags;
 {
-	struct scsi_mode_sense_buf *data;
+	union scsi_mode_sense_buf *data;
 	struct page_element_address_assignment *ea;
 	struct page_device_capabilities *cap;
 	int error, from;
