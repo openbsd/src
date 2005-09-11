@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.165 2005/04/30 16:42:37 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.166 2005/09/11 23:05:37 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -139,7 +139,11 @@ u_int (*md_getipl)(void);
 u_int (*md_setipl)(u_int);
 u_int (*md_raiseipl)(u_int);
 
+#ifdef MVME188
+volatile u_int8_t *ivec[8 + 1];
+#else
 volatile u_int8_t *ivec[8];
+#endif
 
 int ssir;
 int want_ast;
@@ -338,7 +342,7 @@ identifycpu()
 
 /*
  * Set up real-time clocks.
- * These function pointers are set in dev/clock.c and dev/sclock.c
+ * These function pointers are set in dev/clock.c.
  */
 void
 cpu_initclocks()
