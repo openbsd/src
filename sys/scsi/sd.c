@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.91 2005/09/08 03:33:55 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.92 2005/09/11 17:18:53 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1328,7 +1328,7 @@ sd_get_parms(sd, dp, flags)
 	struct disk_parms *dp;
 	int flags;
 {
-	struct scsi_mode_sense_buf *buf;
+	struct scsi_mode_sense_buf *buf = NULL;
 	struct page_rigid_geometry *rigid;
 	struct page_flex_geometry *flex;
 	struct page_reduced_geometry *reduced;
@@ -1337,7 +1337,15 @@ sd_get_parms(sd, dp, flags)
 
 	dp->disksize = scsi_size(sd->sc_link, flags, &ssblksize);
 
-	buf = malloc(sizeof(*buf) ,M_TEMP, M_NOWAIT);
+	/*
+	 * Many UMASS devices choke when asked about their geometry. Most
+	 * don't have a meaningful geometry anyway, so just fake it if
+	 * scsi_size() worked.
+	 */
+	if ((sd->sc_link->flags & SDEV_UMASS) && (dp->disksize > 0))
+		goto validate;	 /* N.B. buf will be NULL at validate. */
+
+	buf = malloc(sizeof(*buf), M_TEMP, M_NOWAIT);
 	if (buf == NULL)
 		goto validate;
 
