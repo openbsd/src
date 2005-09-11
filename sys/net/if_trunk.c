@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.5 2005/09/10 22:40:36 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.6 2005/09/11 16:17:01 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -607,10 +607,11 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = trunk_port_destroy(tp);
 		break;
 	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+
 #ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET) {
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&tr->tr_ac, ifa);
-		}
 #endif /* INET */
 		break;
 	case SIOCSIFMTU:
