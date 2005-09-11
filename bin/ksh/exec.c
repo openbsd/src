@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.41 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.42 2005/09/11 18:02:27 otto Exp $	*/
 
 /*
  * execute command tree
@@ -1187,7 +1187,7 @@ herein(const char *content, int sub)
 		s = pushs(SSTRING, ATEMP);
 		s->start = s->str = content;
 		source = s;
-		if (yylex(ONEWORD) != LWORD)
+		if (yylex(ONEWORD|HEREDOC) != LWORD)
 			internal_errorf(1, "herein: yylex");
 		source = osource;
 		shf_puts(evalstr(yylval.cp, 0), shf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.h,v 1.9 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: lex.h,v 1.10 2005/09/11 18:02:27 otto Exp $	*/
 
 /*
  * Source input, lexer and parser
@@ -111,6 +111,7 @@ typedef union {
 #define ESACONLY BIT(7)		/* only accept esac keyword */
 #define CMDWORD BIT(8)		/* parsing simple command (alias related) */
 #define HEREDELIM BIT(9)	/* parsing <<,<<- delimiter */
+#define HEREDOC BIT(10)		/* parsing heredoc */
 
 #define	HERES	10		/* max << in line */
 
