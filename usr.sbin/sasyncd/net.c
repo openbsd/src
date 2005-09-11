@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.8 2005/05/27 20:47:11 ho Exp $	*/
+/*	$OpenBSD: net.c,v 1.9 2005/09/11 15:24:08 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -669,7 +669,7 @@ static u_int8_t *
 net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 {
 	u_int8_t	*msg, *blob, *rhash, *iv, hash[SHA_DIGEST_LENGTH];
-	u_int32_t	 v, blob_len;
+	u_int32_t	 v, blob_len, pos = 0;
 	int		 padlen = 0, offset = 0, r;
 	SHA_CTX		 ctx;
 
@@ -694,16 +694,21 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 		log_err("net_read: malloc()");
 		return NULL;
 	}
-	r = read(p->socket, blob, blob_len);
-	if (r < 1) {
-		net_disconnect_peer(p);
-		free(blob);
-		return NULL;
-	} else if (r < (ssize_t)blob_len) {
-		/* XXX wait and read more? */
-		fprintf(stderr, "net_read: wanted %d, got %d\n", blob_len, r);
-		free(blob);
-		return NULL;
+
+	while (blob_len > pos) {
+		switch (r = read(p->socket, blob + pos, blob_len - pos)) {
+		case -1:
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+                        /* FALLTHROUGH */
+		case 0:
+			net_disconnect_peer(p);
+			free(blob);
+			return NULL;
+                        /* NOTREACHED */
+		default:
+			pos += r;
+		}
 	}
 
 	offset = 0;
