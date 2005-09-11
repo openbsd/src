@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.8 2005/06/28 23:10:36 martin Exp $
+# $OpenBSD: Makefile.cross,v 1.9 2005/09/11 23:07:21 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -232,6 +232,7 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	    ${CROSSDIR}/usr/libexec/cpp
 	sed -e 's#/usr/libexec/cpp#${CROSSDIR}/usr/libexec/cpp#' \
 	    -e 's#/usr/include#${CROSSDIR}/usr/include#' \
+	    -e 's/@dollaropt@/-$$/' \
 	    ${.CURDIR}/usr.bin/cpp/cpp.sh > ${CROSSDIR}/usr/bin/cpp
 	chmod ${BINMODE} ${CROSSDIR}/usr/bin/cpp
 	chown ${BINOWN}:${BINGRP} ${CROSSDIR}/usr/bin/cpp
