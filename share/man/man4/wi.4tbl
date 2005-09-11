@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.76 2005/08/08 16:48:05 uwe Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.77 2005/09/11 14:45:36 uwe Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -288,6 +288,7 @@ Addtron AWA-100:Prism-2:PCI
 Addtron AWP-100:Prism-2:PCMCIA
 Agere ORiNOCO:Hermes:PCMCIA
 AirVast WM168b:Prism-3:USB
+AmbiCom WL1100C-CF:Prism-3:CF
 Ambit WLAN:Prism-3:USB
 Apacer Wireless Steno MB112:Prism-3:USB
 Apple Airport:Hermes:macobio
@@ -364,8 +365,8 @@ Proxim Harmony:Prism-2:PCMCIA
 Proxim RangeLAN-DS:Prism-2:PCMCIA
 Samsung MagicLAN SWL-2000N:Prism-2:PCMCIA
 Samsung MagicLAN SWL-2210P:Prism-2:PCI
-Senao NL-2511MP:Prism-2.5:PCI
 Senao NL-2511CF:Prism-3:CF
+Senao NL-2511MP:Prism-2.5:PCI
 Siemens SpeedStream SS1021:Prism-2:PCMCIA
 Siemens SpeedStream SS1022:Prism-3:USB
 Sitecom WL-022:Prism-3:USB
