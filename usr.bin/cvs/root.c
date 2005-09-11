@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.24 2005/08/10 16:01:27 joris Exp $	*/
+/*	$OpenBSD: root.c,v 1.25 2005/09/11 14:16:48 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -66,6 +66,7 @@ const char *cvs_methods[] = {
  * the result to the cache for future hits.
  */
 static TAILQ_HEAD(, cvsroot) cvs_rcache = TAILQ_HEAD_INITIALIZER(cvs_rcache);
+static void cvsroot_free(struct cvsroot *);
 
 /*
  * cvsroot_parse()
@@ -220,6 +221,20 @@ cvsroot_parse(const char *str)
 	return (root);
 }
 
+/*
+ * cvsroot_remove()
+ *
+ * Remove a CVSROOT structure from the cache, and free it.
+ */
+void
+cvsroot_remove(struct cvsroot *root)
+{
+	root->cr_ref--;
+	if (root->cr_ref == 0) {
+		TAILQ_REMOVE(&cvs_rcache, root, root_cache);
+		cvsroot_free(root);
+	}
+}
 
 /*
  * cvsroot_free()
@@ -227,22 +242,17 @@ cvsroot_parse(const char *str)
  * Free a CVSROOT structure previously allocated and returned by
  * cvsroot_parse().
  */
-void
+static void
 cvsroot_free(struct cvsroot *root)
 {
-	root->cr_ref--;
-	if (root->cr_ref == 0) {
-		TAILQ_REMOVE(&cvs_rcache, root, root_cache);
-		if (root->cr_str != NULL)
-			free(root->cr_str);
-		if (root->cr_buf != NULL)
-			free(root->cr_buf);
-		if (root->cr_version != NULL)
-			free(root->cr_version);
-		free(root);
-	}
+	if (root->cr_str != NULL)
+		free(root->cr_str);
+	if (root->cr_buf != NULL)
+		free(root->cr_buf);
+	if (root->cr_version != NULL)
+		free(root->cr_version);
+	free(root);
 }
-
 
 /*
  * cvsroot_get()

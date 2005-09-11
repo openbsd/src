@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.82 2005/09/06 15:29:33 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.83 2005/09/11 14:16:48 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -371,7 +371,7 @@ const char	*cvs_var_get(const char *);
 
 /* root.c */
 struct cvsroot	*cvsroot_parse(const char *);
-void		 cvsroot_free(struct cvsroot *);
+void		 cvsroot_remove(struct cvsroot *);
 struct cvsroot	*cvsroot_get(const char *);
 
 

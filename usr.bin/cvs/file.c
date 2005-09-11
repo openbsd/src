@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.118 2005/09/06 17:08:05 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.119 2005/09/11 14:16:48 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1020,7 +1020,7 @@ cvs_file_free(CVSFILE *cf)
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_root != NULL)
-			cvsroot_free(cf->cf_root);
+			cvsroot_remove(cf->cf_root);
 		if (cf->cf_repo != NULL)
 			free(cf->cf_repo);
 		while (!SIMPLEQ_EMPTY(&(cf->cf_files))) {
