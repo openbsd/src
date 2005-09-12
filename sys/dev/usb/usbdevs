@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.165 2005/08/23 02:23:41 jsg Exp $
+$OpenBSD: usbdevs,v 1.166 2005/09/12 11:18:18 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -351,6 +351,7 @@ vendor BOCASYSTEMS	0x0a43	Boca Systems
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
+vendor ZYDAS		0x0ace	ZyDAS Technology
 vendor NEODIO		0x0aec  Neodio
 vendor OPTION		0x0af0  Option
 vendor TODOS		0x0b0c	Todos Data System
@@ -1905,6 +1906,11 @@ product ZINWELL RT2570		0x0260	RT2570
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax Modem
+
+/* ZyDAS Technology products */
+product ZYDAS ZD1201		0x1201	ZD1201
+product ZYDAS ZD1211		0x1211	ZD1211
+product ZYDAS ZD1211B		0x1215	ZD1211B
 
 /* ZyXEL Communication Co. products */
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
