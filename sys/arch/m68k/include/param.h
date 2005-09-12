@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2005/07/31 15:31:14 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 2005/09/12 09:59:51 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -135,6 +135,7 @@
 #define	m68k_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
 #define	m68k_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
 #define	m68k_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define	m68k_page_offset(x)	((unsigned)(x) & PGOFSET)
 #define	m68k_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define	m68k_ptob(x)		((unsigned)(x) << PGSHIFT)
 
