@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.43 2004/09/20 18:52:38 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.44 2005/09/12 17:10:40 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -216,7 +216,7 @@ beforeinstall:
 realinstall:
 #	ranlib lib${LIB}.a
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
-	    ${DESTDIR}${LIBDIR}
+	    ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .endif
