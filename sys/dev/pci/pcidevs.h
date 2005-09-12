@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.914 2005/09/10 01:04:45 brad Exp 
+ *	OpenBSD: pcidevs,v 1.916 2005/09/12 11:16:26 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -249,6 +249,7 @@
 #define	PCI_VENDOR_ZOLTRIX	0x15b0		/* Zoltrix */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
+#define	PCI_VENDOR_ZYDAS	0x167b		/* ZyDAS Technology */
 #define	PCI_VENDOR_SAMSUNG	0x167d		/* Samsung */
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
@@ -3052,3 +3053,8 @@
 /* Zoran products */
 #define	PCI_PRODUCT_ZORAN_ZR36057	0x6057		/* TV */
 #define	PCI_PRODUCT_ZORAN_ZR36120	0x6120		/* DVD */
+
+/* ZyDAS Technology products */
+#define	PCI_PRODUCT_ZYDAS_ZD1201	0x2100		/* ZD1201 */
+#define	PCI_PRODUCT_ZYDAS_ZD1202	0x2102		/* ZD1202 */
+#define	PCI_PRODUCT_ZYDAS_ZD1205	0x2105		/* ZD1205 */

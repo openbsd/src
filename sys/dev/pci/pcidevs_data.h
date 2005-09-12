@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.914 2005/09/10 01:04:45 brad Exp 
+ *	OpenBSD: pcidevs,v 1.916 2005/09/12 11:16:26 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -9230,6 +9230,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36120,
 	    "DVD",
 	},
+	{
+	    PCI_VENDOR_ZYDAS, PCI_PRODUCT_ZYDAS_ZD1201,
+	    "ZD1201",
+	},
+	{
+	    PCI_VENDOR_ZYDAS, PCI_PRODUCT_ZYDAS_ZD1202,
+	    "ZD1202",
+	},
+	{
+	    PCI_VENDOR_ZYDAS, PCI_PRODUCT_ZYDAS_ZD1205,
+	    "ZD1205",
+	},
 	{ 0, 0, NULL, }
 };
 
@@ -10025,6 +10037,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETSEC,
 	    "NetSec",
+	},
+	{
+	    PCI_VENDOR_ZYDAS,
+	    "ZyDAS Technology",
 	},
 	{
 	    PCI_VENDOR_SAMSUNG,
