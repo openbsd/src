@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.26 2005/08/06 19:51:43 martin Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.27 2005/09/12 10:07:29 martin Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ grfiv_attach(parent, self, aux)
 		break;
 	default:
 		sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
-		sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+		sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 		length = mac68k_vidlen + sc->sc_fbofs;
 
 		printf(" @ %lx: On-board video\n",
@@ -294,7 +294,7 @@ grfiv_attach(parent, self, aux)
 
 	if (sc->sc_basepa <= mac68k_vidphys &&
 	    mac68k_vidphys < (sc->sc_basepa + length))
-		videoaddr = sc->sc_handle + sc->sc_fbofs; /* XXX big ol' hack */
+		videoaddr = sc->sc_handle.base + sc->sc_fbofs; /* XXX big ol' hack */
 
 	gm = &(sc->curr_mode);
 	gm->mode_id = 0;
@@ -306,7 +306,7 @@ grfiv_attach(parent, self, aux)
 	gm->hres = 80;				/* XXX Hack */
 	gm->vres = 80;				/* XXX Hack */
 	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)sc->sc_handle;	/* XXX yet another hack */
+	gm->fbbase = (caddr_t)sc->sc_handle.base; /* XXX yet another hack */
 	gm->fboff = sc->sc_fbofs;
 
 	/* Perform common video attachment. */

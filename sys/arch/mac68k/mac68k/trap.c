@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2005/07/31 15:37:51 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2005/09/12 10:07:29 martin Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -710,7 +710,7 @@ writeback(fp, docachepush)
 				   trunc_page((vaddr_t)f->f_fa), VM_PROT_WRITE,
 				   VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
-			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
+			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);

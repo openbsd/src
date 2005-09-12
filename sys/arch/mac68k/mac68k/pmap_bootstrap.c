@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.31 2005/08/06 19:51:44 martin Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.32 2005/09/12 10:07:29 martin Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -121,7 +121,7 @@ extern caddr_t kernel_start;
 	int i; \
 	\
 	vidlen = round_page(((videosize >> 16) & 0xffff) * videorowbytes + \
-	    (mac68k_vidphys & PGOFSET));
+	    m68k_page_offset(mac68k_vidphys));
 
 #define PMAP_MD_RELOC1() \
 do { \
@@ -149,7 +149,7 @@ do { \
 	if (vidlen != 0) { \
 		pte = PA2VA(vidpa, u_int *); \
 		epte = pte + VIDMAPSIZE; \
-		protopte = (mac68k_vidphys & ~PGOFSET) | \
+		protopte = m68k_trunc_page(mac68k_vidphys) | \
 		    PG_RW | PG_V | PG_CI; \
 		while (pte < epte) { \
 			*pte++ = protopte; \
@@ -164,7 +164,7 @@ do { \
 	ROMBase = (char *)(iiobase + m68k_ptob(IIOMAPSIZE)); \
 	if (vidlen != 0) { \
 		newvideoaddr = iiobase + m68k_ptob(IIOMAPSIZE + ROMMAPSIZE) \
-				+ (mac68k_vidphys & PGOFSET); \
+				+ m68k_page_offset(mac68k_vidphys); \
 	} \
 } while (0)
 

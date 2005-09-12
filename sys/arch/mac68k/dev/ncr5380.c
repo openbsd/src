@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.24 2004/01/13 21:15:06 miod Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.25 2005/09/12 10:07:29 martin Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -1790,7 +1790,7 @@ SC_REQ	*reqp;
 	 */
 	dm->dm_addr = phy_buf = kvtop(req_addr);
 	while (req_len) {
-		if (req_len < (phy_len = NBPG - ((u_long)req_addr & PGOFSET)))
+		if (req_len < (phy_len = NBPG - m68k_page_offset(req_addr)))
 			phy_len = req_len;
 
 		req_addr     += phy_len;

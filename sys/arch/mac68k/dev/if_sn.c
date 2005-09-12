@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.37 2005/07/23 23:28:58 martin Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.38 2005/09/12 10:07:29 martin Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -1008,8 +1008,8 @@ sonicrxint(sc)
 		len = SRO(bitmode, rda, RXPKT_BYTEC) -
 			sizeof(struct ether_header) - FCSSIZE;
 		if (status & RCR_PRX) {
-			caddr_t pkt =
-			    sc->rbuf[orra & RBAMASK] + (rxpkt_ptr & PGOFSET);
+			caddr_t pkt = sc->rbuf[orra & RBAMASK] +
+			    m68k_page_offset(rxpkt_ptr);
 			if (sonic_read(sc, pkt, len))
 				sc->sc_if.if_ipackets++;
 			else
