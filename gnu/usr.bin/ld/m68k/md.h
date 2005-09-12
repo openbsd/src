@@ -1,4 +1,4 @@
-/* * $OpenBSD: md.h,v 1.7 2002/09/20 19:54:11 deraadt Exp $*/
+/* * $OpenBSD: md.h,v 1.8 2005/09/12 20:04:53 miod Exp $*/
 /*
  *	- m68k dependent definitions
  */
@@ -10,15 +10,7 @@
 #define NEED_SWAP
 #endif
 
-#undef __LDPGSZ
-#undef ELF_TARG_DATA
-#undef ELF_TARG_MACH
-#undef relocation_info
-#undef MID_MACHINE
-#define MID_MACHINE MID_M68K
-#include <m68k/exec.h>
 #endif
-
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 

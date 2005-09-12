@@ -1,4 +1,4 @@
-/* * $OpenBSD: md.h,v 1.6 2002/07/17 20:33:29 marc Exp $*/
+/* * $OpenBSD: md.h,v 1.7 2005/09/12 20:04:54 miod Exp $*/
 /*
  *	- m88k dependent definitions
  */
@@ -10,13 +10,6 @@
 #define NEED_SWAP
 #endif
 
-#undef __LDPGSZ
-#undef ELF_TARG_DATA
-#undef ELF_TARG_MACH
-#undef relocation_info
-#undef MID_MACHINE
-#define MID_MACHINE MID_M88K
-#include <mvme88k/exec.h>
 #endif
 
 #define	MAX_ALIGNMENT		(sizeof (double))
