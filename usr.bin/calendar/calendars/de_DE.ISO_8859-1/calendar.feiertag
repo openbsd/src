@@ -1,7 +1,7 @@
 /*
  * Feiertage
  *
- * $OpenBSD: calendar.feiertag,v 1.1 1996/12/05 06:04:53 millert Exp $
+ * $OpenBSD: calendar.feiertag,v 1.2 2005/09/12 21:07:28 sturm Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_feiertag_
@@ -23,8 +23,8 @@ Easter+50	Pfingstmontag
 Easter+39	Christi Himmelfahrt
 
 /*  Gedenktage - nicht arbeitsfreie Feiertage :-( */
+01/27	Befreiung des KZ Auschwitz durch die Rote Armee, 1945
 06/17	Arbeiteraufstand am 17. Juni 1953
-/* ??/?? Befreiung des KZs Auschwitz */
 
 /* Jahreszeiten */
 03/21*	Frühlingsanfang

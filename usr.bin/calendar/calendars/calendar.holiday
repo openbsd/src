@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.14 2004/10/31 19:40:51 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.15 2005/09/12 21:07:28 sturm Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -30,7 +30,7 @@
 01/19	Confederate Heroes Day in Texas
 01/19	Ethopian Epiphany in Ethiopia
 01/19	Nameday of Archbishop Makarios in Cyprus
-01/20	Army Day in Mali 
+01/20	Army Day in Mali
 01/20	National Heroes Day in Guinea-Bissau
 01/SunThird	Martin Luther King Day in New York (3rd Sunday)
 01/MonThird	Robert E. Lee's Birthday in Alabama & Mississippi (3rd Monday)
@@ -68,7 +68,7 @@
 03/04	Vermont Admission Day (admitted as 14th state in 1791)
 03/05	Independence Day in Equatorial Guinea
 03/06	Lantern Day, Bejing
-03/07*	Purim - Feast of Lots 
+03/07*	Purim - Feast of Lots
 03/08	First Annual International Women's Day, 1909
 03/08	International Women's Day in U.S.S.R.
 03/08	Syrian National Day in Libyan Arab Republic
@@ -138,7 +138,7 @@
 04/24	Victory Day in Togo
 04/24*	Pesach - First Day of Passover - Festival of Freedom
 04/25	Anzac Day in Australia, New Zealand, Tonga, Western Samoa
-04/25	Liberation Day in Italy 
+04/25	Liberation Day in Italy
 04/25	National Flag Day in Swaziland
 04/26	Confederate Memorial Day in Florida & Georgia
 04/26	Union Day in Tanzania
@@ -188,7 +188,7 @@
 05/25	African Liberation Day in Chad, Mauritania, Zambia
 05/25	Independence Day in Jordan
 05/25	Memorial Day in New Mexico & Puerto Rico
-05/26*	First Day of Shavuot 
+05/26*	First Day of Shavuot
 05/27*	Bank Holiday in UK
 05/28	Mothers Day in Central African Republic
 05/31	Pya Martyrs Day in Togo
@@ -389,7 +389,7 @@
 10/21	Revolution Days (2 days) in Somalia
 10/23	Chulalongkron's Day in Thailand
 10/24	Independence Day in Zambia
-10/24	United Nations Day 
+10/24	United Nations Day
 10/25	Labor Day in New Zealand
 10/25	Taiwan Restoration Day in Taiwan
 10/26	Agam Day in Nauru

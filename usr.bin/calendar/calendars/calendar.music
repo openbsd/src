@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.17 2005/06/15 20:25:36 mickey Exp $
+ * $OpenBSD: calendar.music,v 1.18 2005/09/12 21:07:28 sturm Exp $
  */
 
 #ifndef _calendar_music_
@@ -135,7 +135,7 @@
 05/27	Louis Durey is born in Paris, France, 1888
 05/29	Igor Stravinsky's ballet "Le sacre du printemps" premiere sparks
 	riot in Paris, France, 1913
-05/29	Claude Debussy's ballet "L'Apres-midi d'un faune" premieres in 
+05/29	Claude Debussy's ballet "L'Apres-midi d'un faune" premieres in
 	Paris, France, 1912
 05/31	The Who perform the loudest concert ever -- 76,000 watts of PA, 1976
 05/31	Joseph Haydn dies in Vienna, Austria, 1809
@@ -299,7 +299,7 @@
 12/16	Zoltan Kodaly is born in Kecskemet, Hungary, 1882
 12/17	Ludwig van Beethoven is born in Bonn, Germany, 1770
 12/21	Frank Zappa is born in Baltimore, 1940
-12/22	Beethoven's Symphony No. 5 and Symphony No. 6 premier, underrehearsed, 
+12/22	Beethoven's Symphony No. 5 and Symphony No. 6 premier, underrehearsed,
 	at Theater an der Wien in Vienna, Austria, 1808
 12/23	First Gilbert and Sullivan collaboration, Thespis, 1871
 12/23	Joe Strummer (born John Mellor) dies in Broomfield, England, 2002

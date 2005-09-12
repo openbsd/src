@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.31 2005/09/06 23:44:43 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.32 2005/09/12 21:07:27 sturm Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -268,7 +268,7 @@
 10/27	Gerald M. Weinberg born, 1933
 10/27	James Cook is born, 1728
 10/31	Chiang Kai-Shek born, 1887
-10/31	Dale Evans born, 1912 
+10/31	Dale Evans born, 1912
 11/01	Joseph Stalin's burial, 1961
 11/02	Daniel Boone born near Reading, PA, 1734
 11/04	King William III of Orange born, 1650

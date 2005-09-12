@@ -1,7 +1,7 @@
 /*
  * Literatur
  *
- * $OpenBSD: calendar.literatur,v 1.4 2002/10/15 20:48:30 markus Exp $
+ * $OpenBSD: calendar.literatur,v 1.5 2005/09/12 21:07:28 sturm Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_literatur_
@@ -35,7 +35,7 @@ LANG=de_DE.ISO_8859-1
 12/30	Theodor Fontane in Neuruppin geboren, 1819
 
 /* Verlage */
-03/09	"die tageszeitung" als erste täglich aktualisierte deutsche 
+03/09	"die tageszeitung" als erste täglich aktualisierte deutsche
 	Tageszeitung im WWW, 1995, Betatest, vollständige Ausgabe
 05/05	Schweriner Volkszeitung als erste deutsche Tageszeitung im WWW, 1995
 05/12	"die tageszeitung" offiziell im WWW, 1995
