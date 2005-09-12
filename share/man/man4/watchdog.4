@@ -1,4 +1,4 @@
-.\"	$OpenBSD: watchdog.4,v 1.2 2005/05/25 07:54:24 david Exp $
+.\"	$OpenBSD: watchdog.4,v 1.3 2005/09/12 10:05:14 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Michael Knudsen <mk@molioner.dk>
 .\"
@@ -71,9 +71,11 @@ can be done.
 .Xr ddb 4 ,
 .Xr elansc 4 ,
 .Xr geodesc 4 ,
+.Xr ichwdt 4 ,
 .Xr wdt 4 ,
 .Xr config 8 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr watchdogd 8
 .Sh BUGS
 For systems with multiple watchdog timers available, only a single
 one can be used at a time.
