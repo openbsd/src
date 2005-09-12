@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.21 2005/09/10 23:00:29 brad Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.22 2005/09/12 09:44:59 jmc Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: xargs.c,v 1.21 2005/09/10 23:00:29 brad Exp $";
+static const char rcsid[] = "$OpenBSD: xargs.c,v 1.22 2005/09/12 09:44:59 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -619,7 +619,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-"usage: xargs [-0opt] [-E eofstr] [-I replstr [-R replacements]] [-J replstr]\n"
+"usage: xargs [-0oprt] [-E eofstr] [-I replstr [-R replacements]] [-J replstr]\n"
 "             [-L number] [-n number [-x]] [-P maxprocs] [-s size]\n"
 "             [utility [argument ...]]\n");
 	exit(1);
