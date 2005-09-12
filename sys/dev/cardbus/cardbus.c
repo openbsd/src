@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.26 2005/09/12 17:16:48 fgsch Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.27 2005/09/12 18:47:50 miod Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -243,11 +243,11 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 				break;
 			}
 
+		out:
 			while ((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&rom_image, next);
 				free(p, M_DEVBUF);
 			}
-		out:
 			exrom = cardbus_conf_read(cc, cf, tag, reg);
 			cardbus_conf_write(cc, cf, tag, reg, exrom & ~1);
 			splx(save);
