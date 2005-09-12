@@ -20,7 +20,7 @@
          and therefore subject to change.
 */
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && (defined(__i386__) || defined(__amd64__))
 /* Instability reported with egcs on a RedHat Linux 7.3.
    Let's comment it out:
    #define FASTCALL __attribute__((stdcall, regparm(3)))
