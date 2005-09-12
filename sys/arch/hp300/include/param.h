@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.23 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: param.h,v 1.24 2005/09/12 23:05:05 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:38 veego Exp $	*/
 
 /*
@@ -64,13 +64,6 @@
 #include <m68k/param.h>
 
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((2 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((2 * 1024 * 1024) >> PAGE_SHIFT)
 
 #define MSGBUFSIZE 4096
 

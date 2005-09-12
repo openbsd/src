@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.5 2005/07/31 15:31:14 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.6 2005/09/12 23:05:05 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -102,7 +102,7 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 #define MSGBUFSIZE	PAGE_SIZE
 

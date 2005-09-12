@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.8 2005/08/07 07:29:44 miod Exp $ */
+/*      $OpenBSD: param.h,v 1.9 2005/09/12 23:05:05 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,7 @@
 
 /* Default malloc arena size */
 #define	NKMEMPAGES_MIN_DEFAULT  ((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT  ((64 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
 #define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))

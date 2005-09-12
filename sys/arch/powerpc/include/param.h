@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.25 2004/08/06 22:31:31 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.26 2005/09/12 23:05:05 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -68,6 +68,13 @@
 #define	UPAGES		4
 #define	USPACE		(UPAGES * NBPG)
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
+
+/*
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Constants related to network buffer management.
