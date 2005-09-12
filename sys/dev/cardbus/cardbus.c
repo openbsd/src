@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.25 2005/09/09 21:27:45 fgsch Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.26 2005/09/12 17:16:48 fgsch Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -308,12 +308,13 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 		p = cis->cis1_info_buf + 2;
 		while (i <
 		    sizeof(cis->cis1_info) / sizeof(cis->cis1_info[0])) {
+			if (p >= cis->cis1_info_buf + tuple[1] || *p == '\xff')
+				break;
 			cis->cis1_info[i++] = p;
 			while (*p != '\0' && *p != '\xff')
 				p++;
-			if (*p == '\xff')
-				break;
-			p++;
+			if (*p == '\0')
+				p++;
 		}
 		break;
 	case PCMCIA_CISTPL_BAR:
