@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.25 2005/09/13 10:25:33 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.26 2005/09/13 10:44:06 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -563,7 +563,7 @@ sub add
 	}
 }
 
-sub find
+sub openPackage
 {
 	my ($self, $pkgname, $arch) = @_;
 
@@ -574,7 +574,7 @@ sub find
 	return undef;
 }
 
-sub available
+sub list
 {
 	my $self = shift;
 
@@ -637,7 +637,7 @@ sub find
 			$pkgpath->add($repository);
 		}
 	} else {
-		$package = $pkgpath->find($_, $arch);
+		$package = $pkgpath->openPackage($_, $arch);
 	}
 	$packages{$_} = $package if defined($package);
 	return $package;
@@ -645,7 +645,7 @@ sub find
 
 sub available
 {
-	return $pkgpath->available();
+	return $pkgpath->list();
 }
 
 1;
