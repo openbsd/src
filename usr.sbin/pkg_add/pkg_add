@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.200 2005/09/07 09:11:22 jmc Exp $
+# $OpenBSD: pkg_add,v 1.201 2005/09/13 20:57:14 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -34,7 +34,6 @@ use OpenBSD::ProgressMeter;
 use OpenBSD::Interactive;
 use OpenBSD::Add;
 use OpenBSD::SharedLibs;
-use File::Path;
 
 my $errors = 0;
 
@@ -194,7 +193,7 @@ sub pre_add($$)
 		return $handle;
 	} else {
 		$handle->close();
-		rmtree($handle->info());
+		$handle->wipe_info();
 		delete $handle->{plist};
 		$handle->{finished} = 1;
 		if ($state->{forced}->{kitchensink}) {
@@ -592,7 +591,7 @@ sub install_package
 		return () unless $forced{libdepends};
 	}
 	really_add($handle, $state);
-	rmtree($handle->info());
+	$handle->wipe_info();
 	delete $handle->{plist};
 	$state->{installed}->{$handle->{pkgname}} = 1;
 	return ();
