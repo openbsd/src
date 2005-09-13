@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.26 2005/09/13 10:44:06 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.27 2005/09/13 19:40:30 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -109,7 +109,7 @@ sub open
 	return $fh;
 }
 
-sub openPackage
+sub find
 {
 	my ($repository, $name, $arch) = @_;
 	my $self = OpenBSD::PackageLocation->new($repository, $name);
@@ -161,7 +161,7 @@ sub pipename
 	return "scp $host:$path$name /dev/stdout 2> /dev/null|gzip -d -c -q - 2> /dev/null";
 }
 
-sub list
+sub available
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
@@ -188,7 +188,7 @@ sub may_exist
 	return -r $self->{baseurl}.$name;
 }
 
-sub list
+sub available
 {
 	my $self = shift;
 	my $l = [];
@@ -272,7 +272,7 @@ sub pipename
 
 package OpenBSD::PackageRepository::HTTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP OpenBSD::PackageRepository);
-sub list
+sub available
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
@@ -297,7 +297,7 @@ sub list
 package OpenBSD::PackageRepository::FTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP OpenBSD::PackageRepository OpenBSD::PackageRepository::FTPorSCP);
 
-sub list
+sub available
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
@@ -447,11 +447,11 @@ sub openPackage
 	}
 	# hopeless
 	$self->close();
-	$self->wipe();
+	$self->wipe_info();
 	return undef;
 }
 
-sub wipe
+sub wipe_info
 {
 	my $self = shift;
 	$self->{repository}->wipe_info($self);
@@ -510,8 +510,7 @@ sub next
 }
 
 sub unput
-{
-	my $self = shift;
+{ my $self = shift;
 	$self->{_unput} = 1;
 }
 
@@ -563,25 +562,36 @@ sub add
 	}
 }
 
-sub openPackage
+sub find
 {
 	my ($self, $pkgname, $arch) = @_;
 
 	for my $repo (@{$self->{list}}) {
-		my $pkg = $repo->openPackage($pkgname, $arch);
+		my $pkg = $repo->find($pkgname, $arch);
 		return $pkg if defined $pkg;
 	}
 	return undef;
 }
 
-sub list
+sub grabPlist
+{
+	my ($self, $pkgname, $arch, $code) = @_;
+
+	for my $repo (@{$self->{list}}) {
+		my $plist = $repo->grabPlist($pkgname, $arch, $code);
+		return $plist if defined $plist;
+	}
+	return undef;
+}
+
+sub available
 {
 	my $self = shift;
 
 	if (!defined $self->{avail}) {
 		my $available_packages = {};
 		foreach my $loc (reverse @{$self->{list}}) {
-		    foreach my $pkg (@{$loc->list()}) {
+		    foreach my $pkg (@{$loc->available()}) {
 		    	$available_packages->{$pkg} = $loc;
 		    }
 		}
@@ -619,7 +629,7 @@ sub find
 
 	if ($_ eq '-') {
 		my $repository = OpenBSD::PackageRepository::Local::Pipe->_new('./');
-		my $package = $repository->openPackage(undef, $arch);
+		my $package = $repository->find(undef, $arch);
 		return $package;
 	}
 	$_.=".tgz" unless m/\.tgz$/;
@@ -632,12 +642,12 @@ sub find
 
 		my ($pkgname, $path) = fileparse($_);
 		my $repository = OpenBSD::PackageRepository->new($path);
-		$package = $repository->openPackage($pkgname, $arch);
+		$package = $repository->find($pkgname, $arch);
 		if (defined $package) {
 			$pkgpath->add($repository);
 		}
 	} else {
-		$package = $pkgpath->openPackage($_, $arch);
+		$package = $pkgpath->find($_, $arch);
 	}
 	$packages{$_} = $package if defined($package);
 	return $package;
@@ -645,7 +655,14 @@ sub find
 
 sub available
 {
-	return $pkgpath->list();
+	return $pkgpath->available();
+}
+
+sub grabPlist
+{
+	my ($self, $pkgname, $arch, $code) = @_;
+
+	return $pkgpath->grabPlist($pkgname, $arch, $code);
 }
 
 1;
