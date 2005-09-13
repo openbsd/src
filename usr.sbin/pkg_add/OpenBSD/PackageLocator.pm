@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.29 2005/09/13 20:44:08 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.30 2005/09/13 21:08:14 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -477,7 +477,7 @@ sub openPackage
 			if ($plist->{arch}->check($arch)) {
 				$self->{filter} = $prefix;
 				bless $self, "OpenBSD::FatPackageLocation";
-				$self->grabInfoFile();
+				$self->grabInfoFiles();
 				return $self;
 			}
 		}
