@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.23 2005/09/13 09:30:55 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.24 2005/09/13 10:00:48 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -329,6 +329,18 @@ sub grabInfoFiles
 	my $self = shift;
 	my $dir = $self->{dir};
 
+	if (defined $self->{plist}) {
+		require OpenBSD::PackingList;
+
+		$self->{plist}->tofile($dir.CONTENTS);
+		delete $self->{plist};
+	} elsif (defined $self->{contents}) {
+		open my $fh, '>', $dir.CONTENTS or die "Permission denied";
+		print $fh $self->{contents};
+		close $fh;
+		delete $self->{contents};
+	}
+
 	while (my $e = $self->next()) {
 		if ($e->isFile() && is_info_name($e->{name})) {
 			$e->{name}=$dir.$e->{name};
@@ -354,12 +366,15 @@ sub grabPlist
 		return undef;
 	}
 
-	# maybe it's a fat package.
 	while (my $e = $self->next()) {
-		unless ($e->{name} eq CONTENTS or $e->{name} =~ m/\/\+CONTENTS$/) {
-			last;
+		if ($e->{name} ne CONTENTS) {
+			if ($e->{name} =~ m/\/\+CONTENTS$/) {
+				$self->{prefix} = $';
+				bless $self, "OpenBSD:FatPackageLocation";
+			} else {
+				last;
+			}
 		}
-		my $prefix = $`;
 		my $value = $e->contents();
 		open my $fh,  '<', \$value or next;
 		require OpenBSD::PackingList;
@@ -369,6 +384,11 @@ sub grabPlist
 		next if defined $pkgname and $plist->pkgname() ne $pkgname;
 		if ($plist->has('arch')) {
 			if ($plist->{arch}->check($arch)) {
+				if (!defined $code) {
+					$self->{plist} = $plist;
+				} else {
+					$self->{contents} = $value;
+				}
 				return $plist;
 			}
 		}
