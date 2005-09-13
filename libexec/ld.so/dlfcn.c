@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.48 2005/05/23 19:22:11 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.49 2005/09/13 03:32:15 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -181,8 +181,9 @@ dlsym(void *handle, const char *name)
 	if (sym != NULL) {
 		retval += sym->st_value;
 #ifdef __hppa__
-		retval = (void *)_dl_md_plabel((Elf_Addr)retval,
-		    object->dyn.pltgot);
+		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
+			retval = (void *)_dl_md_plabel((Elf_Addr)retval,
+			    object->dyn.pltgot);
 #endif
 		DL_DEB(("dlsym: %s in %s: %p\n",
 		    name, object->load_name, retval));
