@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_isapnp.c,v 1.5 2005/09/13 12:11:03 reyk Exp $	*/
+/*	$OpenBSD: if_an_isapnp.c,v 1.6 2005/09/13 14:15:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -31,7 +31,7 @@
 #include <sys/device.h>
 #include <sys/timeout.h>
 #include <sys/socket.h>
-#include <sys/mbuf.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
