@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.22 2005/09/13 09:21:01 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.23 2005/09/13 09:30:55 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -105,6 +105,14 @@ sub openPackage
 	my $self = OpenBSD::PackageLocation->new($repository, $name);
 
 	return $self->openPackage($name, $arch);
+}
+
+sub grabPlist
+{
+	my ($repository, $name, $arch, $code) = @_;
+	my $self = OpenBSD::PackageLocation->new($repository, $name);
+
+	return $self->grabPlist($name, $arch, $code);
 }
 
 package OpenBSD::PackageRepository::SCP;
@@ -337,6 +345,38 @@ sub grabInfoFiles
 		}
 	}
 	return 1;
+}
+
+sub grabPlist
+{
+	my ($self, $pkgname, $arch, $code) = @_;
+	if (!$self->openArchive()) {
+		return undef;
+	}
+
+	# maybe it's a fat package.
+	while (my $e = $self->next()) {
+		unless ($e->{name} eq CONTENTS or $e->{name} =~ m/\/\+CONTENTS$/) {
+			last;
+		}
+		my $prefix = $`;
+		my $value = $e->contents();
+		open my $fh,  '<', \$value or next;
+		require OpenBSD::PackingList;
+		$pkgname =~ s/\.tgz$//;
+		my $plist = OpenBSD::PackingList->read($fh, $code);
+		close $fh;
+		next if defined $pkgname and $plist->pkgname() ne $pkgname;
+		if ($plist->has('arch')) {
+			if ($plist->{arch}->check($arch)) {
+				return $plist;
+			}
+		}
+	}
+	# hopeless
+	$self->close();
+
+	return undef;
 }
 
 sub openPackage

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.35 2005/08/10 14:02:22 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.36 2005/09/13 09:30:55 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -597,6 +597,19 @@ sub create
 	}
 	$out->close() or die "Error closing $self->{destdir}$self->{name}: $!";
 	$self->SUPER::set_modes();
+}
+
+sub contents
+{
+	my $self = shift;
+	my $toread = $self->{size};
+	my $buffer;
+
+	if (!defined read($self->{archive}->{fh}, $buffer, $toread)) {
+		die "Error reading from archive: $!";
+	}
+	$self->{archive}->{swallow} -= $toread;
+	return $buffer;
 }
 
 sub write_contents
