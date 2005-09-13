@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.14 2005/06/20 22:42:29 jsg Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.15 2005/09/13 12:11:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -31,6 +31,7 @@
 #include <sys/device.h>
 #include <sys/timeout.h>
 #include <sys/socket.h>
+#include <sys/mbuf.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.7 2005/09/08 13:24:53 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.8 2005/09/13 12:11:03 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -43,11 +43,6 @@
 #define	IEEE80211_INACT_MAX	(300/IEEE80211_INACT_WAIT)
 #define	IEEE80211_CACHE_SIZE	100
 
-#define	IEEE80211_NODE_HASHSIZE	32
-/* simple hash is enough for variation of macaddr */
-#define	IEEE80211_NODE_HASH(addr)	\
-	(((u_int8_t *)(addr))[IEEE80211_ADDR_LEN - 1] % IEEE80211_NODE_HASHSIZE)
-
 struct ieee80211_rateset {
 	u_int8_t		rs_nrates;
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
@@ -77,8 +72,8 @@ enum ieee80211_node_state {
  * the ieee80211com structure.
  */
 struct ieee80211_node {
-	TAILQ_ENTRY(ieee80211_node)	ni_list;
-	LIST_ENTRY(ieee80211_node)	ni_hash;
+	RB_ENTRY(ieee80211_node)	ni_node;
+
 	u_int			ni_refcnt;
 	u_int			ni_scangen;	/* gen# for timeout scan */
 
@@ -128,6 +123,8 @@ struct ieee80211_node {
 	int			ni_state;
 	u_int32_t		*ni_challenge;	/* shared-key challenge */
 };
+
+RB_HEAD(ieee80211_tree, ieee80211_node);
 
 #define ieee80211_node_incref(ni)			\
 	do {						\
@@ -195,7 +192,7 @@ extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
 		u_int8_t *);
 extern	struct ieee80211_node *
 		ieee80211_find_node_for_beacon(struct ieee80211com *,
-		u_int8_t *, struct ieee80211_channel *, char *);
+		u_int8_t *, struct ieee80211_channel *, char *, u_int8_t);
 extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
 		u_int8_t *, struct ieee80211_channel *);
 extern	void ieee80211_release_node(struct ieee80211com *,
@@ -210,9 +207,12 @@ extern	void ieee80211_node_join(struct ieee80211com *,
 		struct ieee80211_node *, int);
 extern	void ieee80211_node_leave(struct ieee80211com *,
 		struct ieee80211_node *);
-
 extern	int ieee80211_match_bss(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_create_ibss(struct ieee80211com* ,
 		struct ieee80211_channel *);
+
+extern	int ieee80211_node_cmp(struct ieee80211_node *, struct ieee80211_node *);
+RB_PROTOTYPE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
+
 #endif /* _NET80211_IEEE80211_NODE_H_ */

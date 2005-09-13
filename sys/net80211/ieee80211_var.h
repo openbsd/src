@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.11 2005/09/08 13:24:53 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.12 2005/09/13 12:11:03 reyk Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -193,12 +193,9 @@ struct ieee80211com {
 					const struct ieee80211_node *);
 	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *,
 					struct ieee80211_node *);
-	TAILQ_HEAD(, ieee80211_node) ic_node;	/* information of all nodes
-						 * LRU at tail
-						 */
+	struct ieee80211_tree	ic_tree;
 	int			ic_nnodes;	/* length of ic_nnodes */
 	int			ic_max_nnodes;	/* max length of ic_nnodes */
-	LIST_HEAD(, ieee80211_node) ic_hash[IEEE80211_NODE_HASHSIZE];
 	u_int16_t		ic_lintval;	/* listen interval */
 	u_int16_t		ic_holdover;	/* PM hold over duration */
 	u_int16_t		ic_txmin;	/* min tx retry count */

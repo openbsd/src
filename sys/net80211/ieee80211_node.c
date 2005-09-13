@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.10 2005/09/08 13:24:53 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.11 2005/09/13 12:11:03 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -92,7 +93,7 @@ ieee80211_node_attach(struct ifnet *ifp)
 	int size;
 
 	IEEE80211_NODE_LOCK_INIT(ic, ifp->if_xname);
-	TAILQ_INIT(&ic->ic_node);
+	RB_INIT(&ic->ic_tree);
 	ic->ic_node_alloc = ieee80211_node_alloc;
 	ic->ic_node_free = ieee80211_node_free;
 	ic->ic_node_copy = ieee80211_node_copy;
@@ -378,7 +379,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	if (ic->ic_scan_count)
 		ic->ic_flags &= ~IEEE80211_F_ASCAN;
 
-	ni = TAILQ_FIRST(&ic->ic_node);
+	ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
 
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		/* XXX off stack? */
@@ -390,10 +391,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 		 * an unnoccupied one.  If that fails, pick a random
 		 * channel from the active set.
 		 */
-		for (; ni != NULL; ni = nextbs) {
-			nextbs = TAILQ_NEXT(ni, ni_list);
+		RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
 			setbit(occupied, ieee80211_chan2ieee(ic, ni->ni_chan));
-		}
 		for (i = 0; i < IEEE80211_CHAN_MAX; i++)
 			if (isset(ic->ic_chan_active, i) && isclr(occupied, i))
 				break;
@@ -443,7 +442,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	selbs = NULL;
 
 	for (; ni != NULL; ni = nextbs) {
-		nextbs = TAILQ_NEXT(ni, ni_list);
+		nextbs = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
 		if (ni->ni_fails) {
 			/*
 			 * The configuration of the access points may change
@@ -548,11 +547,8 @@ static void
 ieee80211_setup_node(struct ieee80211com *ic,
 	struct ieee80211_node *ni, u_int8_t *macaddr)
 {
-	int hash;
-
 	IEEE80211_DPRINTF(("%s %s\n", __func__, ether_sprintf(macaddr)));
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
-	hash = IEEE80211_NODE_HASH(macaddr);
 	ieee80211_node_newstate(ni, IEEE80211_STA_CACHE);
 	IEEE80211_NODE_LOCK_BH(ic);
 
@@ -566,10 +562,9 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	 * ourself because the inactivity timer will kick us off.
 	 */
 	if (ic->ic_opmode != IEEE80211_M_STA &&
-	    TAILQ_EMPTY(&ic->ic_node))
+	    RB_EMPTY(&ic->ic_tree))
 		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
-	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
-	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
+	RB_INSERT(ieee80211_tree, &ic->ic_tree, ni);
 	IEEE80211_NODE_UNLOCK_BH(ic);
 }
 
@@ -600,35 +595,13 @@ ieee80211_dup_bss(struct ieee80211com *ic, u_int8_t *macaddr)
 	return ni;
 }
 
-static struct ieee80211_node *
-_ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
-{
-	struct ieee80211_node *ni;
-	int hash;
-
-	IEEE80211_NODE_LOCK_ASSERT(ic);
-
-	hash = IEEE80211_NODE_HASH(macaddr);
-	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
-		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr)) {
-			/* least-recently used is at tail */
-			TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
-			TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
-			return ni;
-		}
-	}
-	return NULL;
-}
-
 struct ieee80211_node *
 ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
 {
-	struct ieee80211_node *ni;
+	struct ieee80211_node ni;
 
-	IEEE80211_NODE_LOCK(ic);
-	ni = _ieee80211_find_node(ic, macaddr);
-	IEEE80211_NODE_UNLOCK(ic);
-	return ni;
+	IEEE80211_ADDR_COPY(ni.ni_macaddr, macaddr);
+	return (RB_FIND(ieee80211_tree, &ic->ic_tree, &ni));
 }
 
 /*
@@ -653,7 +626,7 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
 
 	/* XXX can't hold lock across dup_bss 'cuz of recursive locking */
 	IEEE80211_NODE_LOCK(ic);
-	ni = _ieee80211_find_node(ic, macaddr);
+	ni = ieee80211_find_node(ic, macaddr);
 	IEEE80211_NODE_UNLOCK(ic);
 	if (ni == NULL) {
 		if (ic->ic_opmode != IEEE80211_M_IBSS &&
@@ -775,7 +748,7 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 		return ieee80211_ref_node(ic->ic_bss);
 
 	IEEE80211_NODE_LOCK(ic);
-	ni = _ieee80211_find_node(ic, wh->i_addr2);
+	ni = ieee80211_find_node(ic, wh->i_addr2);
 	IEEE80211_NODE_UNLOCK(ic);
 
 	if (ni != NULL)
@@ -800,52 +773,27 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 	return ieee80211_ref_node(ni);
 }
 
-/*
- * Like find but search based on the channel too.
- *
- * Note that ieee80211_find_node_for_beacon does not increase the
- * reference count before returning the node, because drivers are not
- * expected to call it.
- */
 struct ieee80211_node *
 ieee80211_find_node_for_beacon(struct ieee80211com *ic, u_int8_t *macaddr,
-    struct ieee80211_channel *chan, char *ssid)
+    struct ieee80211_channel *chan, char *ssid, u_int8_t rssi)
 {
-	struct ieee80211_node *ni, *best;
-	int hash, best_score, score;
+	struct ieee80211_node *ni, *keep = NULL;
+	int score = 0;
 
-	best = NULL;
-	best_score = -1;
+	if ((ni = ieee80211_find_node(ic, macaddr)) != NULL) {
+		IEEE80211_NODE_LOCK(ic);
 
-	hash = IEEE80211_NODE_HASH(macaddr);
-	IEEE80211_NODE_LOCK(ic);
-	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
-		if (!IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr))
-			continue;
-
-		score = (ni->ni_chan == chan) ? 1 : 0;
-
-		if (ssid[1] == 0 || ni->ni_esslen == 0)
+		if (ni->ni_chan != chan && ni->ni_rssi >= rssi)
 			score++;
-		else if (ssid[1] != ni->ni_esslen ||
-		     memcmp(ssid + 2, ni->ni_essid, ssid[1]) != 0)
-			continue;
+		if (ssid[1] == 0 && ni->ni_esslen != 0)
+			score++;
+		if (score > 0)
+			keep = ni;
 
-		if (score > best_score) {
-			best = ni;
-			best_score = score;
-		}
+		IEEE80211_NODE_UNLOCK(ic);
 	}
-	IEEE80211_NODE_UNLOCK(ic);
-	return best;
-}
 
-struct ieee80211_node *
-ieee80211_lookup_node(struct ieee80211com *ic,
-	u_int8_t *macaddr, struct ieee80211_channel *chan)
-{
-	char ssid[2] = { 0, 0 };
-	return ieee80211_find_node_for_beacon(ic, macaddr, chan, ssid);
+	return (keep);
 }
 
 static void
@@ -856,15 +804,14 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	IEEE80211_DPRINTF(("%s %s\n", __func__, ether_sprintf(ni->ni_macaddr)));
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
-	TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
-	LIST_REMOVE(ni, ni_hash);
+	RB_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes--;
 	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
 		IF_PURGE(&ni->ni_savedq);
 		if (ic->ic_set_tim)
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 	}
-	if (TAILQ_EMPTY(&ic->ic_node))
+	if (RB_EMPTY(&ic->ic_tree))
 		ic->ic_inact_timer = 0;
 	(*ic->ic_node_free)(ic, ni);
 	/* TBD indicate to drivers that a new node can be allocated */
@@ -890,7 +837,7 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 
 	IEEE80211_DPRINTF(("%s\n", __func__));
 	IEEE80211_NODE_LOCK_BH(ic);
-	while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
+	while ((ni = RB_MIN(ieee80211_tree, &ic->ic_tree)) != NULL)
 		ieee80211_free_node(ic, ni);
 	IEEE80211_NODE_UNLOCK_BH(ic);
 
@@ -914,8 +861,8 @@ ieee80211_clean_nodes(struct ieee80211com *ic)
 	u_int gen = ic->ic_scangen++;		/* NB: ok 'cuz single-threaded*/
 
 	IEEE80211_NODE_LOCK(ic);
-	for (ni = TAILQ_FIRST(&ic->ic_node); ni != NULL; ni = next_ni) {
-		next_ni = TAILQ_NEXT(ni, ni_list);
+	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree); ni != NULL; ni = next_ni) {
+		next_ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
 		if (ic->ic_nnodes <= ic->ic_max_nnodes)
 			break;
 		if (ni->ni_scangen == gen)	/* previously handled */
@@ -949,7 +896,7 @@ ieee80211_iterate_nodes(struct ieee80211com *ic, ieee80211_iter_func *f,
 	struct ieee80211_node *ni;
 
 	IEEE80211_NODE_LOCK(ic);
-	TAILQ_FOREACH(ni, &ic->ic_node, ni_list)
+	RB_FOREACH(ni, ieee80211_tree, &ic->ic_tree)
 		(*f)(arg, ni);
 	IEEE80211_NODE_UNLOCK(ic);
 }
@@ -1017,3 +964,18 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	ni->ni_associd = 0;
 	ieee80211_node_newstate(ni, IEEE80211_STA_COLLECT);
 }
+
+/*
+ * Compare nodes in the tree by lladdr
+ */
+int
+ieee80211_node_cmp(struct ieee80211_node *b1, struct ieee80211_node *b2)
+{
+	return (memcmp(b1->ni_macaddr, b2->ni_macaddr, IEEE80211_ADDR_LEN));
+}
+
+/*
+ * Generate red-black tree function logic
+ */
+RB_GENERATE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
+

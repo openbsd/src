@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.10 2005/09/08 13:24:52 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.11 2005/09/13 12:11:03 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1047,17 +1047,17 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 
 		/*
-		 * Use mac and channel for lookup so we collect all
-		 * potential AP's when scanning.  Otherwise we may
-		 * see the same AP on multiple channels and will only
-		 * record the last one.  We could filter APs here based
-		 * on rssi, etc. but leave that to the end of the scan
-		 * so we can keep the selection criteria in one spot.
-		 * This may result in a bloat of the scanned AP list but
-		 * it shouldn't be too much.
+		 * Use mac, channel and rssi so we collect only the
+		 * best potential AP with the equal bssid while scanning.
+		 * Collecting all potential APs may result in bloat of
+		 * the node tree. This call will return NULL if the node
+		 * for this APs does not exist or if the new node is the
+		 * potential better one.
 		 */
-		ni = ieee80211_find_node_for_beacon(ic, wh->i_addr2,
-		    &ic->ic_channels[chan], ssid);
+		if ((ni = ieee80211_find_node_for_beacon(ic, wh->i_addr2,
+		    &ic->ic_channels[chan], ssid, rssi)) != NULL)
+			break;
+
 #ifdef IEEE80211_DEBUG
 		if (ieee80211_debug &&
 		    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN)) {
@@ -1079,7 +1079,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			}
 		}
 #endif
-		if (ni == NULL) {
+
+		if ((ni = ieee80211_find_node(ic, wh->i_addr2)) == NULL) {
 			ni = ieee80211_alloc_node(ic, wh->i_addr2);
 			if (ni == NULL)
 				return;

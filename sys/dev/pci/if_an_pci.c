@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.11 2005/08/09 04:10:11 mickey Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.12 2005/09/13 12:11:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -59,6 +59,7 @@
 #include <sys/device.h>
 #include <sys/timeout.h>
 #include <sys/socket.h>
+#include <sys/mbuf.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

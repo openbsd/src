@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.12 2005/05/25 07:40:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.13 2005/09/13 12:11:03 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 #include <sys/systm.h>
 #include <sys/endian.h>
 #include <sys/proc.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -498,7 +499,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCG80211ALLNODES:
 		na = (struct ieee80211_nodereq_all *)data;
 		na->na_nodes = i = 0;
-		ni = TAILQ_FIRST(&ic->ic_node);
+		ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
 		while (ni && na->na_size >=
 		    i + sizeof(struct ieee80211_nodereq)) {
 			ieee80211_node2req(ic, ni, &nrbuf);
@@ -508,7 +509,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 			i += sizeof(struct ieee80211_nodereq);
 			na->na_nodes++;
-			ni = TAILQ_NEXT(ni, ni_list);
+			ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
 		}
 		break;
 	default:
