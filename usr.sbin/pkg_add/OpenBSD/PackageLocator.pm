@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.21 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.22 2005/09/13 09:21:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -18,25 +18,25 @@
 use strict;
 use warnings;
 
-package OpenBSD::PackageLocation;
+package OpenBSD::PackageRepository;
 
 sub _new
 {
-	my ($class, $location) = @_;
-	bless { location => $location }, $class;
+	my ($class, $address) = @_;
+	bless { baseurl => $address }, $class;
 }
 
 sub new
 {
-	my ($class, $location) = @_;
-	if ($location =~ m/^ftp\:/i) {
-		return OpenBSD::PackageLocation::FTP->_new($location);
-	} elsif ($location =~ m/^http\:/i) {
-		return OpenBSD::PackageLocation::HTTP->_new($location);
-	} elsif ($location =~ m/^scp\:/i) {
-		return OpenBSD::PackageLocation::SCP->_new($location);
+	my ($class, $baseurl) = @_;
+	if ($baseurl =~ m/^ftp\:/i) {
+		return OpenBSD::PackageRepository::FTP->_new($baseurl);
+	} elsif ($baseurl =~ m/^http\:/i) {
+		return OpenBSD::PackageRepository::HTTP->_new($baseurl);
+	} elsif ($baseurl =~ m/^scp\:/i) {
+		return OpenBSD::PackageRepository::SCP->_new($baseurl);
 	} else {
-		return OpenBSD::PackageLocation::Local->_new($location);
+		return OpenBSD::PackageRepository::Local->_new($baseurl);
 	}
 }
 
@@ -58,7 +58,7 @@ sub close
 {
 	my ($self, $object) = @_;
 	close($object->{fh}) if defined $object->{fh};
-	$object->_close();
+	$object->deref();
 }
 
 sub make_room
@@ -99,8 +99,16 @@ sub open
 	return $fh;
 }
 
-package OpenBSD::PackageLocation::SCP;
-our @ISA=qw(OpenBSD::PackageLocation OpenBSD::PackageLocation::FTPorSCP);
+sub openPackage
+{
+	my ($repository, $name, $arch) = @_;
+	my $self = OpenBSD::PackageLocation->new($repository, $name);
+
+	return $self->openPackage($name, $arch);
+}
+
+package OpenBSD::PackageRepository::SCP;
+our @ISA=qw(OpenBSD::PackageRepository OpenBSD::PackageRepository::FTPorSCP);
 
 our %distant = ();
 
@@ -121,9 +129,9 @@ sub opened
 
 sub _new
 {
-	my ($class, $location) = @_;
-	$location =~ s/scp\:\/\///i;
-	$location =~ m/\//;
+	my ($class, $baseurl) = @_;
+	$baseurl =~ s/scp\:\/\///i;
+	$baseurl =~ m/\//;
 	bless {	host => $`, key => $`, path => "/$'" }, $class;
 }
 
@@ -146,27 +154,27 @@ sub list
 	return $self->{list};
 }
 
-package OpenBSD::PackageLocation::Local;
-our @ISA=qw(OpenBSD::PackageLocation);
+package OpenBSD::PackageRepository::Local;
+our @ISA=qw(OpenBSD::PackageRepository);
 
 sub pipename
 {
 	my ($self, $name) = @_;
-	my $fullname = $self->{location}.$name;
+	my $fullname = $self->{baseurl}.$name;
 	return "gzip -d -c -q -f 2>/dev/null $fullname";
 }
 
 sub may_exist
 {
 	my ($self, $name) = @_;
-	return -r $self->{location}.$name;
+	return -r $self->{baseurl}.$name;
 }
 
 sub list
 {
 	my $self = shift;
 	my $l = [];
-	my $dname = $self->{location};
+	my $dname = $self->{baseurl};
 	opendir(my $dir, $dname) or return $l;
 	while (my $e = readdir $dir) {
 		next unless -f "$dname/$e";
@@ -177,8 +185,8 @@ sub list
 	return $l;
 }
 
-package OpenBSD::PackageLocation::Local::Pipe;
-our @ISA=qw(OpenBSD::PackageLocation::Local);
+package OpenBSD::PackageRepository::Local::Pipe;
+our @ISA=qw(OpenBSD::PackageRepository::Local);
 
 sub may_exist
 {
@@ -190,7 +198,7 @@ sub pipename
 	return "gzip -d -c -q -f 2>/dev/null -";
 }
 
-package OpenBSD::PackageLocation::FTPorSCP;
+package OpenBSD::PackageRepository::FTPorSCP;
 
 sub _list
 {
@@ -208,7 +216,7 @@ sub _list
 	return $l;
 }
 
-package OpenBSD::PackageLocation::HTTPorFTP;
+package OpenBSD::PackageRepository::HTTPorFTP;
 
 our %distant = ();
 
@@ -229,29 +237,29 @@ sub opened
 
 sub _new
 {
-	my ($class, $location) = @_;
+	my ($class, $baseurl) = @_;
 	my $distant_host;
-	if ($location =~ m/^(http|ftp)\:\/\/(.*?)\//i) {
+	if ($baseurl =~ m/^(http|ftp)\:\/\/(.*?)\//i) {
 	    $distant_host = $&;
 	}
-	bless { location => $location, key => $distant_host }, $class;
+	bless { baseurl => $baseurl, key => $distant_host }, $class;
 }
 
 sub pipename
 {
 	my ($self, $name) = @_;
-	my $fullname = $self->{location}.$name;
+	my $fullname = $self->{baseurl}.$name;
 	return "ftp -o - $fullname 2>/dev/null|gzip -d -c -q - 2>/dev/null";
 }
 
-package OpenBSD::PackageLocation::HTTP;
-our @ISA=qw(OpenBSD::PackageLocation::HTTPorFTP OpenBSD::PackageLocation);
+package OpenBSD::PackageRepository::HTTP;
+our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP OpenBSD::PackageRepository);
 sub list
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
 		$self->make_room();
-		my $fullname = $self->{location};
+		my $fullname = $self->{baseurl};
 		my $l = $self->{list} = [];
 		local $_;
 		open(my $fh, '-|', "ftp -o - $fullname 2>/dev/null") or return undef;
@@ -268,99 +276,112 @@ sub list
 	return $self->{list};
 }
 
-package OpenBSD::PackageLocation::FTP;
-our @ISA=qw(OpenBSD::PackageLocation::HTTPorFTP OpenBSD::PackageLocation OpenBSD::PackageLocation::FTPorSCP);
+package OpenBSD::PackageRepository::FTP;
+our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP OpenBSD::PackageRepository OpenBSD::PackageRepository::FTPorSCP);
 
 sub list
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
 		$self->make_room();
-		my $fullname = $self->{location};
+		my $fullname = $self->{baseurl};
 		$self->{list} = $self->_list("echo nlist *.tgz|ftp -o - $fullname 2>/dev/null");
 	}
 	return $self->{list};
 }
 
-
-package OpenBSD::PackageLocator;
-
-# this returns an archive handle from an uninstalled package name, currently
-# There is a cache available.
+package OpenBSD::PackageLocation;
 
 use OpenBSD::PackageInfo;
 use OpenBSD::Temp;
 
-my %packages;
-my @pkgpath;
-my $need_new_cache = 1;
-my $available_packages = {};
-my @pkglist = ();
-
-
-if (defined $ENV{PKG_PATH}) {
-	my $pkgpath = $ENV{PKG_PATH};
-	$pkgpath =~ s/^\:+//;
-	$pkgpath =~ s/\:+$//;
-	my @tentative = split /\/\:/, $pkgpath;
-	@pkgpath = ();
-	while (my $i = shift @tentative) {
-		$i =~ m|/$| or $i.='/';
-		push @pkgpath, OpenBSD::PackageLocation->new($i);
-	}
-} else {
-	@pkgpath=(OpenBSD::PackageLocation->new("./"));
+sub new
+{
+	my ($class, $repository, $name) = @_;
+	my $self = { repository => $repository, name => $name};
+	bless $self, $class;
 }
 
-sub find
+sub openArchive
 {
-	my $class = shift;
-	local $_ = shift;
-	my $arch = shift;
+	my $self = shift;
 
-	if ($_ eq '-') {
-		my $location = OpenBSD::PackageLocation::Local::Pipe->_new('./');
-		my $package = $class->openAbsolute($location, '', $arch);
-		return $package;
+	my $fh = $self->{repository}->open($self);
+	if (!defined $fh) {
+		return undef;
 	}
-	$_.=".tgz" unless m/\.tgz$/;
-	if (exists $packages{$_}) {
-		return $packages{$_};
-	}
-	my $package;
-	if (m/\//) {
-		use File::Basename;
+	require OpenBSD::Ustar;
 
-		my ($pkgname, $path) = fileparse($_);
-		my $location = OpenBSD::PackageLocation->new($path);
-		$package = $class->openAbsolute($location, $pkgname, $arch);
-		if (defined $package) {
-			push(@pkgpath, $location);
-			$need_new_cache = 1;
-		}
-	} else {
-		for my $p (@pkgpath) {
-			$package = $class->openAbsolute($p, $_, $arch);
-			last if defined $package;
-		}
-	}
-	$packages{$_} = $package if defined($package);
-	return $package;
+	my $archive = new OpenBSD::Ustar $fh;
+	$self->{_archive} = $archive;
 }
 
-sub available
+sub grabInfoFiles
 {
-	if ($need_new_cache) {
-		$available_packages = {};
-		foreach my $loc (reverse @pkgpath) {
-		    foreach my $pkg (@{$loc->list()}) {
-		    	$available_packages->{$pkg} = $loc;
-		    }
+	my $self = shift;
+	my $dir = $self->{dir};
+
+	while (my $e = $self->next()) {
+		if ($e->isFile() && is_info_name($e->{name})) {
+			$e->{name}=$dir.$e->{name};
+			eval { $e->create(); };
+			if ($@) {
+				unlink($e->{name});
+				$@ =~ s/\s+at.*//;
+				print STDERR $@;
+				return 0;
+			}
+		} else {
+			$self->unput();
+			last;
 		}
-		@pkglist = keys %$available_packages;
-		$need_new_cache = 0;
 	}
-	return @pkglist;
+	return 1;
+}
+
+sub openPackage
+{
+	my ($self, $pkgname, $arch) = @_;
+	if (!$self->openArchive()) {
+		return undef;
+	}
+	my $dir = OpenBSD::Temp::dir();
+	$self->{dir} = $dir;
+
+	$self->grabInfoFiles();
+
+	if (-f $dir.CONTENTS) {
+		return $self;
+	} 
+
+	# maybe it's a fat package.
+	while (my $e = $self->next()) {
+		unless ($e->{name} =~ m/\/\+CONTENTS$/) {
+			last;
+		}
+		my $prefix = $`;
+		$e->{name}=$dir.CONTENTS;
+		eval { $e->create(); };
+		require OpenBSD::PackingList;
+		$pkgname =~ s/\.tgz$//;
+		my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FatOnly);
+		next if defined $pkgname and $plist->pkgname() ne $pkgname;
+		if ($plist->has('arch')) {
+			if ($plist->{arch}->check($arch)) {
+				$self->{filter} = $prefix;
+				bless $self, "OpenBSD::FatPackageLocation";
+				$self->grabInfoFile();
+				return $self;
+			}
+		}
+	}
+	# hopeless
+	$self->close();
+
+	require File::Path;
+	File::Path::rmtree($dir);
+	delete $self->{dir};
+	return undef;
 }
 
 sub info
@@ -372,95 +393,20 @@ sub info
 sub close
 {
 	my $self = shift;
-	$self->{location}->close($self);
+	$self->{repository}->close($self);
 }
 
-sub _close
+sub deref
 {
 	my $self = shift;
 	$self->{fh} = undef;
 	$self->{_archive} = undef;
 }
 
-sub _open
-{
-	my $self = shift;
-
-	my $fh = $self->{location}->open($self);
-	if (!defined $fh) {
-		return undef;
-	}
-	require OpenBSD::Ustar;
-
-	my $archive = new OpenBSD::Ustar $fh;
-	$self->{_archive} = $archive;
-}
-
-sub openAbsolute
-{
-	my ($class, $location, $name, $arch) = @_;
-	my $self = { location => $location, name => $name};
-	bless $self, $class;
-
-
-	if (!$self->_open()) {
-		return undef;
-	}
-	my $dir = OpenBSD::Temp::dir();
-	$self->{dir} = $dir;
-
-	# check that Open worked
-OKAY:
-	while (my $e = $self->next()) {
-		if ($e->isFile() && is_info_name($e->{name})) {
-			$e->{name}=$dir.$e->{name};
-			eval { $e->create(); };
-			if ($@) {
-				unlink($e->{name});
-				$@ =~ s/\s+at.*//;
-				print STDERR $@;
-			}
-		} else {
-			$self->unput();
-			last;
-		}
-	}
-	if (-f $dir.CONTENTS) {
-#		$self->close();
-		return $self;
-	} else {
-		# maybe it's a fat package.
-		while (my $e = $self->next()) {
-			unless ($e->{name} =~ m/\/\+CONTENTS$/) {
-				last;
-			}
-			my $prefix = $`;
-			$e->{name}=$dir.CONTENTS;
-			eval { $e->create(); };
-			require OpenBSD::PackingList;
-			my $pkgname = $name;
-			$pkgname =~ s/\.tgz$//;
-			my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FatOnly);
-			next if $pkgname ne '-' and $plist->pkgname() ne $pkgname;
-			if ($plist->has('arch')) {
-				if ($plist->{arch}->check($arch)) {
-					$self->{filter} = $prefix;
-					goto OKAY;
-				}
-			}
-		}
-		$self->close();
-
-		require File::Path;
-		File::Path::rmtree($dir);
-		return undef;
-	}
-}
-
 sub reopen
 {
 	my $self = shift;
-	if (!$self->_open()) {
+	if (!$self->openArchive()) {
 		return undef;
 	}
 	while (my $e = $self->{_archive}->next()) {
@@ -484,18 +430,6 @@ sub next
 	}
 	if (!$self->{_unput}) {
 		my $e = $self->{_archive}->next();
-		if (defined $self->{filter}) {
-			if ($e->{name} =~ m/^(.*?)\/(.*)$/) {
-				my ($beg, $name) = ($1, $2);
-				if (index($beg, $self->{filter}) == -1) {
-					return $self->next();
-				}
-				$e->{name} = $name;
-				if ($e->isHardLink()) {
-					$e->{linkname} =~ s/^(.*?)\///;
-				}
-			}
-		}
 		$self->{_current} = $e;
 	}
 	$self->{_unput} = 0;
@@ -506,6 +440,115 @@ sub unput
 {
 	my $self = shift;
 	$self->{_unput} = 1;
+}
+
+package OpenBSD::FatPackageLocation;
+our @ISA=qw(OpenBSD::PackageLocation);
+
+# proxy for archive operations
+sub next
+{
+	my $self = shift;
+
+	if (!defined $self->{fh}) {
+		if (!$self->reopen()) {
+			return undef;
+		}
+	}
+	if (!$self->{_unput}) {
+		my $e = $self->{_archive}->next();
+		if ($e->{name} =~ m/^(.*?)\/(.*)$/) {
+			my ($beg, $name) = ($1, $2);
+			if (index($beg, $self->{filter}) == -1) {
+				return $self->next();
+			}
+			$e->{name} = $name;
+			if ($e->isHardLink()) {
+				$e->{linkname} =~ s/^(.*?)\///;
+			}
+		}
+		$self->{_current} = $e;
+	}
+	$self->{_unput} = 0;
+	return $self->{_current};
+}
+
+
+package OpenBSD::PackageLocator;
+
+# this returns an archive handle from an uninstalled package name, currently
+# There is a cache available.
+
+my %packages;
+my @pkgpath;
+my $need_new_cache = 1;
+my $available_packages = {};
+my @pkglist = ();
+
+
+if (defined $ENV{PKG_PATH}) {
+	my $pkgpath = $ENV{PKG_PATH};
+	$pkgpath =~ s/^\:+//;
+	$pkgpath =~ s/\:+$//;
+	my @tentative = split /\/\:/, $pkgpath;
+	@pkgpath = ();
+	while (my $i = shift @tentative) {
+		$i =~ m|/$| or $i.='/';
+		push @pkgpath, OpenBSD::PackageRepository->new($i);
+	}
+} else {
+	@pkgpath=(OpenBSD::PackageRepository->new("./"));
+}
+
+sub find
+{
+	my $class = shift;
+	local $_ = shift;
+	my $arch = shift;
+
+	if ($_ eq '-') {
+		my $repository = OpenBSD::PackageRepository::Local::Pipe->_new('./');
+		my $package = $repository->openPackage(undef, $arch);
+		return $package;
+	}
+	$_.=".tgz" unless m/\.tgz$/;
+	if (exists $packages{$_}) {
+		return $packages{$_};
+	}
+	my $package;
+	if (m/\//) {
+		use File::Basename;
+
+		my ($pkgname, $path) = fileparse($_);
+		my $repository = OpenBSD::PackageRepository->new($path);
+		$package = $repository->openPackage($pkgname, $arch);
+		if (defined $package) {
+			push(@pkgpath, $repository);
+			$need_new_cache = 1;
+		}
+	} else {
+		for my $p (@pkgpath) {
+			$package = $p->openPackage($_, $arch);
+			last if defined $package;
+		}
+	}
+	$packages{$_} = $package if defined($package);
+	return $package;
+}
+
+sub available
+{
+	if ($need_new_cache) {
+		$available_packages = {};
+		foreach my $loc (reverse @pkgpath) {
+		    foreach my $pkg (@{$loc->list()}) {
+		    	$available_packages->{$pkg} = $loc;
+		    }
+		}
+		@pkglist = keys %$available_packages;
+		$need_new_cache = 0;
+	}
+	return @pkglist;
 }
 
 1;
