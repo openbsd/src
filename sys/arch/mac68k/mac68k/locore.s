@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.44 2004/12/30 21:28:48 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.45 2005/09/13 14:05:49 martin Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -85,7 +85,15 @@
 	.text
 GLOBAL(kernel_text)
 
-#include <mac68k/mac68k/macglobals.s>
+/*
+ * Mac OS global variable space; storage for global variables used by
+ * Mac ROM traps and glue routines (see macrom.c, macrom.h macromasm.s)
+ *
+ * Some routine running before ADBReInit chooses to write to 0x1fb8.
+ * With the trap table from 0x0 to 0x3ff, this additional space of
+ * 0x2a00 should be sufficient.
+ */
+	.space 0x2a00
 
 /*
  * Initialization
