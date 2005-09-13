@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.119 2005/09/11 14:16:48 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.120 2005/09/13 17:38:35 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -491,7 +491,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	struct cvs_ent *ent;
 	char *p;
 	char parent[MAXPATHLEN], item[MAXPATHLEN];
-	int type;
+	int type, callit;
 	struct stat st;
 	struct cvsroot *root;
 
@@ -598,11 +598,23 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	 * - the directory does not exist on disk.
 	 * - the callback is NULL.
 	 */
-	if (!(((cvs_cmdop == CVS_OP_SERVER) ||
-	    (root->cr_method == CVS_METHOD_LOCAL)) && (strcmp(path, "."))) &&
-	    (base->cf_flags & CVS_FILE_ONDISK) && (cb != NULL) &&
-	    ((cvs_error = cb(base, arg)) != CVS_EX_OK))
-		goto fail;
+	callit = 1;
+	if (cb == NULL)
+		callit = 0;
+
+	if (cvs_cmdop == CVS_OP_SERVER && type != DT_DIR)
+		callit = 0;
+
+	if (root->cr_method == CVS_METHOD_LOCAL && type != DT_DIR)
+		callit = 0;
+
+	if (!(base->cf_flags & CVS_FILE_ONDISK))
+		callit = 0;
+
+	if (callit != 0) {
+		if ((cvs_error = cb(base,arg)) != CVS_EX_OK)
+			goto fail;
+	}
 
 	/*
 	 * If we have a normal file, pass it as well.
