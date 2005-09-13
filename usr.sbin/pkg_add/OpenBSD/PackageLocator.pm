@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.24 2005/09/13 10:00:48 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.25 2005/09/13 10:25:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -40,6 +40,16 @@ sub new
 	}
 }
 
+sub wipe_info
+{
+	my ($self, $pkg) = @_;
+
+	require File::Path;
+	my $dir = $pkg->info();
+
+	File::Path::rmtree($dir);
+	delete $pkg->{dir};
+}
 
 # by default, all objects may exist
 sub may_exist
@@ -437,11 +447,14 @@ sub openPackage
 	}
 	# hopeless
 	$self->close();
-
-	require File::Path;
-	File::Path::rmtree($dir);
-	delete $self->{dir};
+	$self->wipe();
 	return undef;
+}
+
+sub wipe
+{
+	my $self = shift;
+	$self->{repository}->wipe_info($self);
 }
 
 sub info
@@ -533,6 +546,49 @@ sub next
 	return $self->{_current};
 }
 
+package OpenBSD::PackageRepositoryList;
+
+sub new
+{
+	my $class = shift;
+	return bless {list => [], avail => undef }, $class;
+}
+
+sub add
+{
+	my $self = shift;
+	push @{$self->{list}}, @_;
+	if (@_ > 0) {
+		$self->{avail} = undef;
+	}
+}
+
+sub find
+{
+	my ($self, $pkgname, $arch) = @_;
+
+	for my $repo (@{$self->{list}}) {
+		my $pkg = $repo->openPackage($pkgname, $arch);
+		return $pkg if defined $pkg;
+	}
+	return undef;
+}
+
+sub available
+{
+	my $self = shift;
+
+	if (!defined $self->{avail}) {
+		my $available_packages = {};
+		foreach my $loc (reverse @{$self->{list}}) {
+		    foreach my $pkg (@{$loc->list()}) {
+		    	$available_packages->{$pkg} = $loc;
+		    }
+		}
+		$self->{avail} = $available_packages;
+	}
+	return keys %{$self->{avail}};
+}
 
 package OpenBSD::PackageLocator;
 
@@ -540,24 +596,19 @@ package OpenBSD::PackageLocator;
 # There is a cache available.
 
 my %packages;
-my @pkgpath;
-my $need_new_cache = 1;
-my $available_packages = {};
-my @pkglist = ();
-
+my $pkgpath = OpenBSD::PackageRepositoryList->new();
 
 if (defined $ENV{PKG_PATH}) {
-	my $pkgpath = $ENV{PKG_PATH};
-	$pkgpath =~ s/^\:+//;
-	$pkgpath =~ s/\:+$//;
-	my @tentative = split /\/\:/, $pkgpath;
-	@pkgpath = ();
+	my $v = $ENV{PKG_PATH};
+	$v =~ s/^\:+//;
+	$v =~ s/\:+$//;
+	my @tentative = split /\/\:/, $v;
 	while (my $i = shift @tentative) {
 		$i =~ m|/$| or $i.='/';
-		push @pkgpath, OpenBSD::PackageRepository->new($i);
+		$pkgpath->add(OpenBSD::PackageRepository->new($i));
 	}
 } else {
-	@pkgpath=(OpenBSD::PackageRepository->new("./"));
+	$pkgpath->add(OpenBSD::PackageRepository->new("./"));
 }
 
 sub find
@@ -583,14 +634,10 @@ sub find
 		my $repository = OpenBSD::PackageRepository->new($path);
 		$package = $repository->openPackage($pkgname, $arch);
 		if (defined $package) {
-			push(@pkgpath, $repository);
-			$need_new_cache = 1;
+			$pkgpath->add($repository);
 		}
 	} else {
-		for my $p (@pkgpath) {
-			$package = $p->openPackage($_, $arch);
-			last if defined $package;
-		}
+		$package = $pkgpath->find($_, $arch);
 	}
 	$packages{$_} = $package if defined($package);
 	return $package;
@@ -598,17 +645,7 @@ sub find
 
 sub available
 {
-	if ($need_new_cache) {
-		$available_packages = {};
-		foreach my $loc (reverse @pkgpath) {
-		    foreach my $pkg (@{$loc->list()}) {
-		    	$available_packages->{$pkg} = $loc;
-		    }
-		}
-		@pkglist = keys %$available_packages;
-		$need_new_cache = 0;
-	}
-	return @pkglist;
+	return $pkgpath->available();
 }
 
 1;
