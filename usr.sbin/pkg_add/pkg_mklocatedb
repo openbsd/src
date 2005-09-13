@@ -114,12 +114,8 @@ if (@ARGV==0) {
 } else {
 	for my $pkgname (@ARGV) {
 		print STDERR "$pkgname\n" unless $opt_q;
-		my $true_package = OpenBSD::PackageLocator->find($pkgname);
-		next unless $true_package;
-		my $dir = $true_package->info();
-		$true_package->close();
-		my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
+		my $plist = OpenBSD::PackageLocator->grabPlist($pkgname);
+		next unless $plist;
 		$plist->visit('print_name', $fh, $plist->pkgname());
-		rmtree($dir);
 	}
 }
