@@ -1,7 +1,7 @@
 /*
  * Public Domain 2003 Dale Rahn
  *
- * $OpenBSD: ab.C,v 1.1.1.1 2005/09/13 20:51:39 drahn Exp $
+ * $OpenBSD: ab.C,v 1.2 2005/09/13 21:03:46 drahn Exp $
  */
 
 #include <iostream>
@@ -10,7 +10,9 @@
 
 extern int a;
 
-extern "C" char *libname = "libab";
+extern "C" {
+char *libname = "libab";
+};
 
 extern "C" void
 lib_entry()

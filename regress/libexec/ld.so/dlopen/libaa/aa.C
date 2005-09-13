@@ -1,14 +1,16 @@
 /*
  * Public Domain 2003 Dale Rahn
  *
- * $OpenBSD: aa.C,v 1.1.1.1 2005/09/13 20:51:39 drahn Exp $
+ * $OpenBSD: aa.C,v 1.2 2005/09/13 21:03:46 drahn Exp $
  */
 
 #include <iostream>
 #include "aa.h"
 int a;
 
-extern "C" char *libname = "libaa";
+extern "C" { 
+char *libname = "libaa";
+};
 
 extern "C" void
 lib_entry()
