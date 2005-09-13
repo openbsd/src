@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.28 2005/09/13 20:03:29 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.29 2005/09/13 20:44:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -697,9 +697,31 @@ sub available
 
 sub grabPlist
 {
-	my ($self, $pkgname, $arch, $code) = @_;
+	my $class = shift;
+	local $_ = shift;
+	my $arch = shift;
+	my $code = shift;
 
-	return $pkgpath->grabPlist($pkgname, $arch, $code);
+	if ($_ eq '-') {
+		my $repository = OpenBSD::PackageRepository::Local::Pipe->_new('./');
+		my $plist = $repository->grabPlist(undef, $arch, $code);
+		return $plist;
+	}
+	$_.=".tgz" unless m/\.tgz$/;
+	my $plist;
+	if (m/\//) {
+		use File::Basename;
+
+		my ($pkgname, $path) = fileparse($_);
+		my $repository = OpenBSD::PackageRepository->new($path);
+		$plist = $repository->grabPlist($pkgname, $arch, $code);
+		if (defined $plist) {
+			$pkgpath->add($repository);
+		}
+	} else {
+		$plist = $pkgpath->grabPlist($_, $arch, $code);
+	}
+	return $plist;
 }
 
 1;
