@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_exrom.c,v 1.3 2005/09/12 22:52:50 miod Exp $	*/
+/*	$OpenBSD: cardbus_exrom.c,v 1.4 2005/09/13 18:44:38 fgsch Exp $	*/
 /*	$NetBSD: cardbus_exrom.c,v 1.4 2000/02/03 06:47:31 thorpej Exp $	*/
 
 /*
@@ -108,26 +108,26 @@ cardbus_read_exrom(bus_space_tag_t romt, bus_space_handle_t romh,
 	size_t image_size;
 	struct cardbus_rom_image *image;
 	u_int16_t val;
-    
+
 	SIMPLEQ_INIT(head);
 	do {
 		val = READ_INT16(romt, romh, addr + CARDBUS_EXROM_SIGNATURE);
 		if (val != 0xaa55) {
-			DPRINTF(("%s: bad header signature in ROM image %u: 0x%04x\n",
-			    __func__, rom_image, val));
+			DPRINTF(("%s: bad header signature in ROM image "
+			    "%u: 0x%04x\n", __func__, rom_image, val));
 			return (1);
 		}
-		dataptr = addr +
-		    READ_INT16(romt, romh, addr + CARDBUS_EXROM_DATA_PTR);
+		dataptr = addr + READ_INT16(romt, romh,
+		    addr + CARDBUS_EXROM_DATA_PTR);
 
 		/* get the ROM image size, in blocks */
-		image_size = READ_INT16(romt, romh, 
+		image_size = READ_INT16(romt, romh,
 		    dataptr + CARDBUS_EXROM_DATA_IMAGE_LENGTH);
 		/* XXX
 		 * Some ROMs seem to have this as zero, can we assume
 		 * this means 1 block?
 		 */
-		if (image_size == 0) 
+		if (image_size == 0)
 			image_size = 1;
 		image_size <<= 9;
 
@@ -150,48 +150,6 @@ cardbus_read_exrom(bus_space_tag_t romt, bus_space_handle_t romh,
 		rom_image++;
 	} while ((bus_space_read_1(romt, romh,
 	    dataptr + CARDBUS_EXROM_DATA_INDICATOR) & 0x80) == 0);
+
 	return (0);
 }
-
-#if 0
-struct cardbus_exrom_data_structure {
-	char		signature[4];
-	cardbusreg_t	id;		/* vendor & device id */
-	u_int16_t	structure_length;
-	u_int8_t	structure_revision;
-	cardbusreg_t	class;		/* class code in upper 24 bits */
-	u_int16_t	image_length;
-	u_int16_t	data_revision;
-	u_int8_t	code_type;
-	u_int8_t	indicator;
-};
-
-int
-pci_exrom_parse_data_structure(bus_space_tag_t tag,
-    bus_space_handle_t handle, struct pci_exrom_data_structure *ds)
-{
-	unsigned char hdr[16];
-	int length;
-
-	bus_space_read_region_1(tag, handle, dataptr, hdr, sizeof(hdr));
-	memcpy(header->signature, hdr + PCI_EXROM_DATA_SIGNATURE, 4);
-#define LEINT16(B, O)	((B)[(O)] | ((B)[(O) + 1] << 8))
-	header->id = LEINT16(hdr, PCI_EXROM_DATA_VENDOR_ID) |
-	    (LEINT16(hdr, PCI_EXROM_DATA_DEVICE_ID) << 16);
-	header->structure_length = LEINT16(hdr, PCI_EXROM_DATA_LENGTH);
-	header->structure_rev = hdr[PCI_EXROM_DATA_REV];
-	header->class = (hdr[PCI_EXROM_DATA_CLASS_CODE] << 8) |
-	    (hdr[PCI_EXROM_DATA_CLASS_CODE + 1] << 16) |
-	    (hdr[PCI_EXROM_DATA_CLASS_CODE + 2] << 24);
-	header->image_length = LEINT16(hdr, PCI_EXROM_DATA_IMAGE_LENGTH) << 16;
-	header->data_revision = LEINT16(hdr, PCI_EXROM_DATA_DATA_REV);
-	header->code_type = hdr[PCI_EXROM_DATA_CODE_TYPE];
-	header->indicator = hdr[PCI_EXROM_DATA_INDICATOR];
-
-	length = min(length, header->image_length - 0x18 - offset);
-	bus_space_read_region_1(tag, handle, dataptr + 0x18 + offset,
-	    buf, length);
-
-	return (length);
-}
-#endif

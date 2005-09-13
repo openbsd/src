@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.28 2005/09/13 15:21:24 mickey Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.29 2005/09/13 18:44:38 fgsch Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -64,17 +63,16 @@
 
 STATIC void cardbusattach(struct device *, struct device *, void *);
 /* STATIC int cardbusprint(void *, const char *); */
-int cardbus_attach_card(struct cardbus_softc *);
 
 STATIC int cardbusmatch(struct device *, void *, void *);
 static int cardbussubmatch(struct device *, void *, void *);
 static int cardbusprint(void *, const char *);
 
-typedef void (*tuple_decode_func)(u_int8_t*, int, void *);
+typedef void (*tuple_decode_func)(u_int8_t *, int, void *);
 
 static int decode_tuples(u_int8_t *, int, tuple_decode_func, void *);
 #ifdef CARDBUS_DEBUG
-static void print_tuple(u_int8_t*, int, void *);
+static void print_tuple(u_int8_t *, int, void *);
 #endif
 
 static int cardbus_read_tuples(struct cardbus_attach_args *,

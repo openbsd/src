@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.8 2004/07/09 19:12:40 brad Exp $ */
+/*	$OpenBSD: rbus.c,v 1.9 2005/09/13 18:44:38 fgsch Exp $	*/
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -30,9 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -55,164 +52,140 @@
 #endif
 
 
-
 static rbus_tag_t rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent,
 				    struct extent *ex, bus_addr_t start,
 				    bus_addr_t end, bus_addr_t offset,
 				    int flags);
 
-
 int
-rbus_space_alloc(rbt, addr, size, mask, align, flags, addrp, bshp)
-     rbus_tag_t rbt;
-     bus_addr_t addr;
-     bus_size_t size;
-     bus_addr_t mask, align;
-     int flags;
-     bus_addr_t *addrp;
-     bus_space_handle_t *bshp;
+rbus_space_alloc(rbus_tag_t rbt, bus_addr_t addr, bus_size_t size,
+    bus_addr_t mask, bus_addr_t align, int flags, bus_addr_t *addrp,
+    bus_space_handle_t *bshp)
 {
-  return rbus_space_alloc_subregion(rbt, rbt->rb_start, rbt->rb_end, addr,
-				    size, mask, align, flags, addrp, bshp);
+	return (rbus_space_alloc_subregion(rbt, rbt->rb_start, rbt->rb_end,
+	    addr, size, mask, align, flags, addrp, bshp));
 }
 
-
-
-
 int
-rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags, addrp, bshp)
-     rbus_tag_t rbt;
-     bus_addr_t addr;
-     bus_addr_t substart;
-     bus_addr_t subend;
-     bus_size_t size;
-     bus_addr_t mask, align;
-     int flags;
-     bus_addr_t *addrp;
-     bus_space_handle_t *bshp;
+rbus_space_alloc_subregion(rbus_tag_t rbt, bus_addr_t substart,
+    bus_addr_t subend, bus_addr_t addr, bus_size_t size,
+    bus_addr_t mask, bus_addr_t align, int flags, bus_addr_t *addrp,
+    bus_space_handle_t *bshp)
 {
-  bus_addr_t decodesize = mask + 1;
-  bus_addr_t boundary, search_addr;
-  int val;
-  u_long result;
-  int exflags = EX_FAST | EX_NOWAIT | EX_MALLOCOK;
+	bus_addr_t decodesize = mask + 1;
+	bus_addr_t boundary, search_addr;
+	int val;
+	u_long result;
+	int exflags = EX_FAST | EX_NOWAIT | EX_MALLOCOK;
 
-  DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
-	   (u_long)addr, (u_long)size, (u_long)mask, (u_long)align));
+	DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
+	    (u_long)addr, (u_long)size, (u_long)mask, (u_long)align));
 
-  addr += rbt->rb_offset;
+	addr += rbt->rb_offset;
 
-  if (mask == 0) {
-    /* FULL Decode */
-    decodesize = 0;
-  }
-
-  if (rbt->rb_flags == RBUS_SPACE_ASK_PARENT) {
-    return rbus_space_alloc(rbt->rb_parent, addr, size, mask, align, flags,
-			    addrp, bshp);
-  } else if (rbt->rb_flags == RBUS_SPACE_SHARE ||
-	     rbt->rb_flags == RBUS_SPACE_DEDICATE) {
-    /* rbt has its own sh_extent */
-
-    /* sanity check: the subregion [substart, subend] should be
-       smaller than the region included in sh_extent */
-    if (substart < rbt->rb_ext->ex_start || subend > rbt->rb_ext->ex_end) {
-      DPRINTF(("rbus: out of range\n"));
-      return 1;
-    }
-
-    if (decodesize == align) {
-      if(extent_alloc_subregion(rbt->rb_ext, substart, subend, size, align, 0,
-				0, exflags, &result)) {
-	return 1;
-      }
-    } else if (decodesize == 0) {
-      /* maybe, the register is overflowed. */
-      
-      if (extent_alloc_subregion(rbt->rb_ext, addr, addr + size, size,
-				 1, 0, 0, exflags, &result)) {
-	return 1;
-      }
-    } else {
-
-      boundary = decodesize > align ? decodesize : align;
-
-      search_addr = (substart & ~(boundary - 1)) + addr;
-
-      if (search_addr < substart) {
-	search_addr += boundary;
-      }
-
-      val = 1;
-      for (; search_addr + size <= subend; search_addr += boundary) {
-	val = extent_alloc_subregion(rbt->rb_ext,search_addr, search_addr+size,
-				size, align, 0, 0, exflags, &result);
-        DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
-	    (u_long)search_addr,
-	    (u_long)search_addr+size, (u_long)align));
-	if (val == 0) {
-	  break;
+	if (mask == 0) {
+		/* FULL Decode */
+		decodesize = 0;
 	}
-      }
-      if (val != 0) {
-        /* no space found */
-        DPRINTF(("rbus: no space found\n"));
-	return 1;
-      }
-    }
 
-    if(md_space_map(rbt->rb_bt, result, size, flags, bshp)) {
-      /* map failed */
-      extent_free(rbt->rb_ext, result, size, exflags);
-      return 1;
-    }
+	if (rbt->rb_flags == RBUS_SPACE_ASK_PARENT) {
+		return (rbus_space_alloc(rbt->rb_parent, addr, size, mask,
+		    align, flags, addrp, bshp));
+	} else if (rbt->rb_flags == RBUS_SPACE_SHARE ||
+	    rbt->rb_flags == RBUS_SPACE_DEDICATE) {
+		/* rbt has its own sh_extent */
 
-    if (addrp != NULL) {
-      *addrp = result + rbt->rb_offset;
-    }
-    return 0;
-  } else {
-    /* error!! */
-    DPRINTF(("rbus: no rbus type\n"));
-    return 1;
-  }
+		/* sanity check: the subregion [substart, subend] should be
+		   smaller than the region included in sh_extent */
+		if (substart < rbt->rb_ext->ex_start ||
+		    subend > rbt->rb_ext->ex_end) {
+			DPRINTF(("rbus: out of range\n"));
+			return (1);
+		}
+
+		if (decodesize == align) {
+			if (extent_alloc_subregion(rbt->rb_ext, substart,
+			    subend, size, align, 0, 0, exflags, &result))
+				return (1);
+		} else if (decodesize == 0) {
+			/* maybe, the register is overflowed. */
+
+			if (extent_alloc_subregion(rbt->rb_ext, addr,
+			    addr + size, size, 1, 0, 0, exflags, &result))
+				return (1);
+		} else {
+			boundary = decodesize > align ? decodesize : align;
+
+			search_addr = (substart & ~(boundary - 1)) + addr;
+
+			if (search_addr < substart)
+				search_addr += boundary;
+
+			val = 1;
+			for (; search_addr + size <= subend;
+			    search_addr += boundary) {
+				val = extent_alloc_subregion(
+				    rbt->rb_ext,search_addr,
+				    search_addr + size, size, align, 0, 0,
+				    exflags, &result);
+				DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
+				    (u_long)search_addr,
+				    (u_long)search_addr + size,
+				    (u_long)align));
+				if (val == 0)
+					break;
+			}
+
+			if (val != 0) {
+				/* no space found */
+				DPRINTF(("rbus: no space found\n"));
+				return (1);
+			}
+		}
+
+		if (md_space_map(rbt->rb_bt, result, size, flags, bshp)) {
+			/* map failed */
+			extent_free(rbt->rb_ext, result, size, exflags);
+			return (1);
+		}
+
+		if (addrp != NULL)
+			*addrp = result + rbt->rb_offset;
+		return (0);
+	} else {
+		/* error!! */
+		DPRINTF(("rbus: no rbus type\n"));
+		return (1);
+	}
 }
-
-
-
-
 
 int
-rbus_space_free(rbt, bsh, size, addrp)
-     rbus_tag_t rbt;
-     bus_space_handle_t bsh;
-     bus_size_t size;
-     bus_addr_t *addrp;
+rbus_space_free(rbus_tag_t rbt, bus_space_handle_t bsh, bus_size_t size,
+    bus_addr_t *addrp)
 {
-  int exflags = EX_FAST | EX_NOWAIT;
-  bus_addr_t addr;
-  int status = 1;
+	int exflags = EX_FAST | EX_NOWAIT;
+	bus_addr_t addr;
+	int status = 1;
 
-  if (rbt->rb_flags == RBUS_SPACE_ASK_PARENT) {
-    status = rbus_space_free(rbt->rb_parent, bsh, size, &addr);
-  } else if (rbt->rb_flags == RBUS_SPACE_SHARE ||
-	     rbt->rb_flags == RBUS_SPACE_DEDICATE) {
-    md_space_unmap(rbt->rb_bt, bsh, size, &addr);
+	if (rbt->rb_flags == RBUS_SPACE_ASK_PARENT) {
+		status = rbus_space_free(rbt->rb_parent, bsh, size, &addr);
+	} else if (rbt->rb_flags == RBUS_SPACE_SHARE ||
+	    rbt->rb_flags == RBUS_SPACE_DEDICATE) {
+		md_space_unmap(rbt->rb_bt, bsh, size, &addr);
 
-    extent_free(rbt->rb_ext, addr, size, exflags);
+		extent_free(rbt->rb_ext, addr, size, exflags);
 
-    status = 0;
-  } else {
-    /* error. INVALID rbustag */
-    status = 1;
-  }
-  if (addrp != NULL) {
-    *addrp = addr;
-  }
-  return status;
+		status = 0;
+	} else {
+		/* error. INVALID rbustag */
+		status = 1;
+	}
+
+	if (addrp != NULL)
+		*addrp = addr;
+
+	return (status);
 }
-
-
 
 /*
  * static rbus_tag_t
@@ -222,48 +195,44 @@ rbus_space_free(rbt, bsh, size, addrp)
  *
  */
 static rbus_tag_t
-rbus_new_body(bt, parent, ex, start, end, offset, flags)
-     bus_space_tag_t bt;
-     rbus_tag_t parent;
-     struct extent *ex;
-     bus_addr_t start, end, offset;
-     int flags;
+rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent, struct extent *ex,
+    bus_addr_t start, bus_addr_t end, bus_addr_t offset, int flags)
 {
-  rbus_tag_t rb;
+	rbus_tag_t rb;
 
-  /* sanity check */
-  if (parent != NULL) {
-    if (start < parent->rb_start || end > parent->rb_end) {
-      /* out of range: [start, size] should be contained in parent space */
-      return 0;
-      /* Should I invoke panic? */
-    }
-  }
+	/* sanity check */
+	if (parent != NULL) {
+		if (start < parent->rb_start || end > parent->rb_end) {
+			/* out of range: [start, size] should be contained
+			 * in parent space
+			 */
+			return (0);
+			/* Should I invoke panic? */
+		}
+	}
 
-  if (NULL == (rb = (rbus_tag_t)malloc(sizeof(struct rbustag), M_DEVBUF,
-					 M_NOWAIT))) {
-    panic("no memory for rbus instance");
-  }
-  
-  rb->rb_bt = bt;
-  rb->rb_parent = parent;
-  rb->rb_start = start;
-  rb->rb_end = end;
-  rb->rb_offset = offset;
-  rb->rb_flags = flags;
-  rb->rb_ext = ex;
+	if ((rb = (rbus_tag_t)malloc(sizeof(struct rbustag), M_DEVBUF,
+	    M_NOWAIT)) == NULL) {
+		panic("no memory for rbus instance");
+	}
 
-  DPRINTF(("rbus_new_body: [%lx, %lx] type %s name [%s]\n",
-	   (u_long)start, (u_long)end,
+	rb->rb_bt = bt;
+	rb->rb_parent = parent;
+	rb->rb_start = start;
+	rb->rb_end = end;
+	rb->rb_offset = offset;
+	rb->rb_flags = flags;
+	rb->rb_ext = ex;
+
+	DPRINTF(("rbus_new_body: [%lx, %lx] type %s name [%s]\n",
+	    (u_long)start, (u_long)end,
 	   flags == RBUS_SPACE_SHARE ? "share" :
 	   flags == RBUS_SPACE_DEDICATE ? "dedicated" :
 	   flags == RBUS_SPACE_ASK_PARENT ? "parent" : "invalid",
 	   ex != NULL ? ex->ex_name : "noname"));
 
-  return rb;
+	return (rb);
 }
-
-
 
 /*
  * rbus_tag_t rbus_new(rbus_tag_t parent, bus_addr_t start, bus_size_t
@@ -272,43 +241,34 @@ rbus_new_body(bt, parent, ex, start, end, offset, flags)
  *  This function makes a new child rbus instance.
  */
 rbus_tag_t
-rbus_new(parent, start, size, offset, flags)
-     rbus_tag_t parent;
-     bus_addr_t start;
-     bus_size_t size;
-     bus_addr_t offset;
-     int flags;
+rbus_new(rbus_tag_t parent, bus_addr_t start, bus_size_t size,
+    bus_addr_t offset, int flags)
 {
-  rbus_tag_t rb;
-  struct extent *ex = NULL;
-  bus_addr_t end = start + size;
+	rbus_tag_t rb;
+	struct extent *ex = NULL;
+	bus_addr_t end = start + size;
 
-  if (flags == RBUS_SPACE_SHARE) {
-    ex = parent->rb_ext;
-  } else if (flags == RBUS_SPACE_DEDICATE) {
-    if (NULL == (ex = extent_create("rbus", start, end, M_DEVBUF, NULL, 0, 
-				    EX_NOCOALESCE|EX_NOWAIT))) {
-      return NULL;
-    }
-  } else if (flags == RBUS_SPACE_ASK_PARENT) {
-    ex = NULL;
-  } else {
-    /* Invalid flag */
-    return 0;
-  }
+	if (flags == RBUS_SPACE_SHARE) {
+		ex = parent->rb_ext;
+	} else if (flags == RBUS_SPACE_DEDICATE) {
+		if ((ex = extent_create("rbus", start, end, M_DEVBUF, NULL, 0,
+		    EX_NOCOALESCE|EX_NOWAIT)) == NULL)
+			return (NULL);
+	} else if (flags == RBUS_SPACE_ASK_PARENT) {
+		ex = NULL;
+	} else {
+		/* Invalid flag */
+		return (0);
+	}
 
-  rb = rbus_new_body(parent->rb_bt, parent, ex, start, start + size,
-		     offset, flags);
+	rb = rbus_new_body(parent->rb_bt, parent, ex, start, start + size,
+	    offset, flags);
 
-  if ((rb == NULL) && (flags == RBUS_SPACE_DEDICATE)) {
-    extent_destroy(ex);
-  }
+	if ((rb == NULL) && (flags == RBUS_SPACE_DEDICATE))
+		extent_destroy(ex);
 
-  return rb;
+	return (rb);
 }
-
-
-
 
 /*
  * rbus_tag_t rbus_new_root_delegate(bus_space_tag, bus_addr_t,
@@ -317,31 +277,24 @@ rbus_new(parent, start, size, offset, flags)
  *  This function makes a root rbus instance.
  */
 rbus_tag_t
-rbus_new_root_delegate(bt, start, size, offset)
-     bus_space_tag_t bt;
-     bus_addr_t start;
-     bus_size_t size;
-     bus_addr_t offset;
+rbus_new_root_delegate(bus_space_tag_t bt, bus_addr_t start, bus_size_t size,
+    bus_addr_t offset)
 {
-  rbus_tag_t rb;
-  struct extent *ex;
+	rbus_tag_t rb;
+	struct extent *ex;
 
-  if (NULL == (ex = extent_create("rbus root", start, start + size, M_DEVBUF,
-				  NULL, 0, EX_NOCOALESCE|EX_NOWAIT))) {
-    return NULL;
-  }
-  
-  rb = rbus_new_body(bt, NULL, ex, start, start + size, offset,
-		     RBUS_SPACE_DEDICATE);
+	if ((ex = extent_create("rbus root", start, start + size, M_DEVBUF,
+	    NULL, 0, EX_NOCOALESCE|EX_NOWAIT)) == NULL)
+		return (NULL);
 
-  if (rb == NULL) {
-    extent_destroy(ex);
-  }
+	rb = rbus_new_body(bt, NULL, ex, start, start + size, offset,
+	    RBUS_SPACE_DEDICATE);
 
-  return rb;
+	if (rb == NULL)
+		extent_destroy(ex);
+
+	return (rb);
 }
-
-
 
 /*
  * rbus_tag_t rbus_new_root_share(bus_space_tag, struct extent *,
@@ -350,27 +303,21 @@ rbus_new_root_delegate(bt, start, size, offset)
  *  This function makes a root rbus instance.
  */
 rbus_tag_t
-rbus_new_root_share(bt, ex, start, size, offset)
-     bus_space_tag_t bt;
-     struct extent *ex;
-     bus_addr_t start;
-     bus_size_t size;
-     bus_addr_t offset;
+rbus_new_root_share(bus_space_tag_t bt, struct extent *ex, bus_addr_t start,
+    bus_size_t size, bus_addr_t offset)
 {
-  /* sanity check */
-  if (start < ex->ex_start || start + size > ex->ex_end) {
-    /* out of range: [start, size] should be contained in parent space */
-    return 0;
-    /* Should I invoke panic? */
-  }
+	/* sanity check */
+	if (start < ex->ex_start || start + size > ex->ex_end) {
+		/* out of range: [start, size] should be contained in
+		 * parent space
+		 */
+		return (0);
+		/* Should I invoke panic? */
+	}
 
-  return rbus_new_body(bt, NULL, ex, start, start + size, offset,
-		       RBUS_SPACE_SHARE);
+	return (rbus_new_body(bt, NULL, ex, start, start + size, offset,
+	    RBUS_SPACE_SHARE));
 }
-
-
-
-
 
 /*
  * int rbus_delete (rbus_tag_t rb)
@@ -378,16 +325,15 @@ rbus_new_root_share(bt, ex, start, size, offset)
  *   This function deletes the rbus structure pointed in the argument.
  */
 int
-rbus_delete(rb)
-     rbus_tag_t rb;
+rbus_delete(rbus_tag_t rb)
 {
-  DPRINTF(("rbus_delete called [%s]\n",
-	   rb->rb_ext != NULL ? rb->rb_ext->ex_name : "noname"));
-  if (rb->rb_flags == RBUS_SPACE_DEDICATE) {
-    extent_destroy(rb->rb_ext);
-  }
+	DPRINTF(("rbus_delete called [%s]\n", rb->rb_ext != NULL ?
+	    rb->rb_ext->ex_name : "noname"));
 
-  free(rb, M_DEVBUF);
+	if (rb->rb_flags == RBUS_SPACE_DEDICATE)
+		extent_destroy(rb->rb_ext);
 
-  return 0;
+	free(rb, M_DEVBUF);
+
+	return (0);
 }

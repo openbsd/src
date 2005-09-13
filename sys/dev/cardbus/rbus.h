@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.h,v 1.3 2002/05/27 23:39:55 tdeval Exp $ */
+/*	$OpenBSD: rbus.h,v 1.4 2005/09/13 18:44:38 fgsch Exp $ */
 /*	$NetBSD: rbus.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
 /*
  * Copyright (c) 1999
@@ -39,7 +39,7 @@
  * This file defines rbus (pseudo) class
  *
  * What is rbus?
- * 
+ *
  *  Ths rbus is a recursive bus-space administrator.  This means a
  *  parent bus-space administrator, which usually belongs to a bus
  *  bridge, makes some child bus-space administrators and gives
@@ -70,7 +70,6 @@
 
 #define rbus 1
 
-
 struct extent;
 
 
@@ -84,35 +83,30 @@ struct extent;
  *    allocate from rb_ext.
  */
 struct rbustag {
-  bus_space_tag_t rb_bt;
-  struct rbustag *rb_parent;
-  struct extent *rb_ext;
-  bus_addr_t rb_start;
-  bus_addr_t rb_end;
-  bus_addr_t rb_offset;
+	bus_space_tag_t rb_bt;
+	struct rbustag *rb_parent;
+	struct extent *rb_ext;
+	bus_addr_t rb_start;
+	bus_addr_t rb_end;
+	bus_addr_t rb_offset;
 #if notyet
-  int (*rb_space_alloc)(struct rbustag *,
-			     bus_addr_t start, bus_addr_t end,
-			     bus_addr_t addr, bus_size_t size,
-			     bus_addr_t mask, bus_addr_t align,
-			     int flags,
-			     bus_addr_t *addrp, bus_space_handle_t *bshp);
-  int (*rbus_space_free)(struct rbustag *, bus_space_handle_t,
-			      bus_size_t size, bus_addr_t *addrp);
+	int (*rb_space_alloc)(struct rbustag *, bus_addr_t, bus_addr_t,
+	    bus_addr_t, bus_size_t, bus_addr_t, bus_addr_t,
+	    int, bus_addr_t *, bus_space_handle_t *);
+	int (*rbus_space_free)(struct rbustag *, bus_space_handle_t,
+	    bus_size_t, bus_addr_t *);
 #endif
-  int rb_flags;
+	int rb_flags;
 #define RBUS_SPACE_INVALID   0x00
 #define RBUS_SPACE_SHARE     0x01
 #define RBUS_SPACE_DEDICATE  0x02
 #define RBUS_SPACE_MASK      0x03
 #define RBUS_SPACE_ASK_PARENT 0x04
-  /* your own data below */
-  void *rb_md;
+	/* your own data below */
+	void *rb_md;
 };
 
 typedef struct rbustag *rbus_tag_t;
-
-
 
 
 /*
@@ -120,20 +114,15 @@ typedef struct rbustag *rbus_tag_t;
  * easier.  These functions should be member functions of rbus
  * `class'.
  */
-int rbus_space_alloc(rbus_tag_t,
-			  bus_addr_t addr, bus_size_t size, bus_addr_t mask,
-			  bus_addr_t align, int flags,
-			  bus_addr_t *addrp, bus_space_handle_t *bshp);
+int	rbus_space_alloc(rbus_tag_t, bus_addr_t, bus_size_t, bus_addr_t,
+	    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *);
 
-int rbus_space_alloc_subregion(rbus_tag_t,
-				    bus_addr_t start, bus_addr_t end,
-				    bus_addr_t addr, bus_size_t size,
-				    bus_addr_t mask, bus_addr_t align,
-				    int flags,
-				    bus_addr_t *addrp, bus_space_handle_t *bshp);
+int	rbus_space_alloc_subregion(rbus_tag_t, bus_addr_t, bus_addr_t,
+	    bus_addr_t, bus_size_t, bus_addr_t, bus_addr_t, int,
+	    bus_addr_t *, bus_space_handle_t *);
 
-int rbus_space_free(rbus_tag_t, bus_space_handle_t, bus_size_t size,
-			 bus_addr_t *addrp);
+int	rbus_space_free(rbus_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_addr_t *);
 
 
 /*
@@ -143,19 +132,18 @@ int rbus_space_free(rbus_tag_t, bus_space_handle_t, bus_size_t size,
  * rbus_new is a constructor which make an rbus instance from a parent
  * rbus.
  */
-rbus_tag_t rbus_new(rbus_tag_t parent, bus_addr_t start, bus_size_t size,
-			 bus_addr_t offset, int flags);
+rbus_tag_t	rbus_new(rbus_tag_t, bus_addr_t, bus_size_t, bus_addr_t, int);
 
-rbus_tag_t rbus_new_root_delegate(bus_space_tag_t, bus_addr_t, bus_size_t,
-				       bus_addr_t offset);
-rbus_tag_t rbus_new_root_share(bus_space_tag_t, struct extent *,
-				    bus_addr_t, bus_size_t,bus_addr_t offset);
+rbus_tag_t	rbus_new_root_delegate(bus_space_tag_t, bus_addr_t, bus_size_t,
+		    bus_addr_t);
+rbus_tag_t	rbus_new_root_share(bus_space_tag_t, struct extent *,
+		    bus_addr_t, bus_size_t, bus_addr_t);
 
 /*
  * This function release bus-space used by the argument.  This
  * function is so-called-as a destructor.
  */
-int rbus_delete(rbus_tag_t);
+int	rbus_delete(rbus_tag_t);
 
 
 /*
