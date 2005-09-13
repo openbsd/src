@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.30 2005/09/13 21:08:14 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.31 2005/09/13 21:20:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -539,47 +539,44 @@ sub next
 		}
 	}
 	if (!$self->{_unput}) {
-		my $e = $self->{_archive}->next();
-		$self->{_current} = $e;
+		$self->{_current} = $self->getNext();
 	}
 	$self->{_unput} = 0;
 	return $self->{_current};
 }
 
 sub unput
-{ my $self = shift;
+{ 	
+	my $self = shift;
 	$self->{_unput} = 1;
+}
+
+sub getNext
+{
+	my $self = shift;
+
+	return $self->{_archive}->next();
 }
 
 package OpenBSD::FatPackageLocation;
 our @ISA=qw(OpenBSD::PackageLocation);
 
-# proxy for archive operations
-sub next
+sub getNext
 {
 	my $self = shift;
 
-	if (!defined $self->{fh}) {
-		if (!$self->reopen()) {
-			return undef;
+	my $e = $self->SUPER::getNext();
+	if ($e->{name} =~ m/^(.*?)\/(.*)$/) {
+		my ($beg, $name) = ($1, $2);
+		if (index($beg, $self->{filter}) == -1) {
+			return $self->next();
+		}
+		$e->{name} = $name;
+		if ($e->isHardLink()) {
+			$e->{linkname} =~ s/^(.*?)\///;
 		}
 	}
-	if (!$self->{_unput}) {
-		my $e = $self->{_archive}->next();
-		if ($e->{name} =~ m/^(.*?)\/(.*)$/) {
-			my ($beg, $name) = ($1, $2);
-			if (index($beg, $self->{filter}) == -1) {
-				return $self->next();
-			}
-			$e->{name} = $name;
-			if ($e->isHardLink()) {
-				$e->{linkname} =~ s/^(.*?)\///;
-			}
-		}
-		$self->{_current} = $e;
-	}
-	$self->{_unput} = 0;
-	return $self->{_current};
+	return $e;
 }
 
 package OpenBSD::PackageRepositoryList;
