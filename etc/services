@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.59 2005/07/23 09:45:11 mbalmer Exp $
+#	$OpenBSD: services,v 1.60 2005/09/13 20:05:50 ian Exp $
 #
 # Network services, Internet style
 #
@@ -203,6 +203,10 @@ krbupdate	760/tcp		kreg		# BSD Kerberos registration
 #
 socks		1080/tcp			# Socks
 kpop		1109/tcp			# Pop with Kerberos
+ms-sql-s	1433/tcp	Microsoft-SQL-Server 
+ms-sql-s	1433/udp	Microsoft-SQL-Server 
+ms-sql-m	1434/tcp	Microsoft-SQL-Monitor
+ms-sql-m	1434/udp	Microsoft-SQL-Monitor 
 ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp			# Prospero non-privileged
