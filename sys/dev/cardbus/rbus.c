@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.9 2005/09/13 18:44:38 fgsch Exp $	*/
+/*	$OpenBSD: rbus.c,v 1.10 2005/09/13 18:53:01 fgsch Exp $	*/
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -52,10 +52,8 @@
 #endif
 
 
-static rbus_tag_t rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent,
-				    struct extent *ex, bus_addr_t start,
-				    bus_addr_t end, bus_addr_t offset,
-				    int flags);
+static rbus_tag_t rbus_new_body(bus_space_tag_t, rbus_tag_t, struct extent *,
+		      bus_addr_t, bus_addr_t, bus_addr_t, int);
 
 int
 rbus_space_alloc(rbus_tag_t rbt, bus_addr_t addr, bus_size_t size,

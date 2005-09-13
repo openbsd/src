@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.29 2005/09/13 18:44:38 fgsch Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.30 2005/09/13 18:53:01 fgsch Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -282,9 +282,6 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 static void
 parse_tuple(u_int8_t *tuple, int len, void *data)
 {
-#ifdef CARDBUS_DEBUG
-	static const char func[] = "parse_tuple";
-#endif
 	struct cardbus_cis_info *cis = data;
 	int bar_index;
 	int i;
@@ -294,7 +291,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 	case PCMCIA_CISTPL_MANFID:
 		if (tuple[1] < 4) {
 			DPRINTF(("%s: wrong length manufacturer id (%d)\n",
-			    func, tuple[1]));
+			    __func__, tuple[1]));
 			break;
 		}
 		cis->manufacturer = tuple[2] | (tuple[3] << 8);
@@ -317,13 +314,14 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 		break;
 	case PCMCIA_CISTPL_BAR:
 		if (tuple[1] != 6) {
-			DPRINTF(("%s: BAR with short length (%d)\n", func,
-			    tuple[1]));
+			DPRINTF(("%s: BAR with short length (%d)\n",
+			    __func__, tuple[1]));
 			break;
 		}
 		bar_index = tuple[2] & 7;
 		if (bar_index == 0) {
-			DPRINTF(("%s: invalid ASI in BAR tuple\n", func));
+			DPRINTF(("%s: invalid ASI in BAR tuple\n",
+			    __func__));
 			break;
 		}
 		bar_index--;
@@ -351,7 +349,8 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 				if (tuple[3] >
 				    sizeof(cis->funce.network.netid)) {
 					DPRINTF(("%s: unknown network id type"
-					    " (len = %d)\n", func, tuple[3]));
+					    " (len = %d)\n", __func__,
+					    tuple[3]));
 				} else {
 					cis->funce.network.netid_present = 1;
 					bcopy(tuple + 4,
