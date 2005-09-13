@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.28 2005/09/05 19:49:31 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.29 2005/09/13 17:35:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -26,6 +26,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -45,6 +46,7 @@ static int	cvs_add_remote(CVSFILE *, void *);
 static int	cvs_add_local(CVSFILE *, void *);
 static int	cvs_add_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_add_pre_exec(struct cvsroot *);
+static int	cvs_add_directory(CVSFILE *);
 #if 0
 static int	cvs_add_build_entry(CVSFILE *);
 #endif
@@ -156,6 +158,12 @@ cvs_add_local(CVSFILE *cf, void *arg)
 
 	added = 0;
 
+	if (cf->cf_type == DT_DIR) {
+		if (cvs_add_directory(cf) == -1)
+			return (CVS_EX_FILE);
+		return (0);
+	}
+
 	if ((!(cf->cf_flags & CVS_FILE_ONDISK)) &&
 	    (cf->cf_cvstat != CVS_FST_LOST) &&
 	    (cf->cf_cvstat != CVS_FST_REMOVED)) {
@@ -205,6 +213,107 @@ cvs_add_local(CVSFILE *cf, void *arg)
 			    (added == 1) ? "this file" : "these files");
 		return (0);
 	}
+
+	return (0);
+}
+
+/*
+ * cvs_add_directory()
+ *
+ * Add a directory to the repository.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+cvs_add_directory(CVSFILE *cf)
+{
+	int l, nb;
+	char *date, *repo, *tag;
+	char entry[CVS_ENT_MAXLINELEN], fpath[MAXPATHLEN], rcsdir[MAXPATHLEN];
+	char msg[1024];
+	CVSENTRIES *entf;
+	struct cvsroot *root;
+	struct stat st;
+	struct cvs_ent *ent;
+
+	entf = (CVSENTRIES *)cf->cf_entry;
+
+	root = CVS_DIR_ROOT(cf);
+	repo = CVS_DIR_REPO(cf);
+
+	if (strlcpy(fpath, cf->cf_name, sizeof(fpath)) >= sizeof(fpath))
+		return (-1);
+
+	if (strchr(fpath, '/') != NULL) {
+		cvs_log(LP_ERR,
+		    "directory %s not added; must be a direct sub-directory",
+		    fpath);
+		return (-1);
+	}
+
+	/* Let's see if we have any per-directory tags first */
+	cvs_parse_tagfile(&tag, &date, &nb);
+
+	l = snprintf(rcsdir, sizeof(rcsdir), "%s/%s",
+	    root->cr_dir, repo);
+	if (l == -1 || l >= (int)sizeof(rcsdir)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rcsdir);
+		return (-1);
+	}
+
+	if ((stat(rcsdir, &st) == 0) && !(S_ISDIR(st.st_mode))) {
+		cvs_log(LP_ERRNO,
+		    "%s is not a directory; %s not added", rcsdir, fpath);
+		return (-1);
+	}
+
+	snprintf(msg, sizeof(msg),
+	    "Directory %s added to the repository", rcsdir);
+
+	if (tag != NULL) {
+		strlcat(msg, "\n--> Using per-directory sticky tag ",
+		    sizeof(msg));
+		strlcat(msg, tag, sizeof(msg));
+	}
+	if (date != NULL) {
+		strlcat(msg, "\n--> Using per-directory sticky date ",
+		    sizeof(msg));
+		strlcat(msg, date, sizeof(msg));
+	}
+	strlcat(msg, "\n", sizeof(msg));
+
+	if (cvs_noexec == 0) {
+		if (mkdir(rcsdir, 0777) == -1) {
+			cvs_log(LP_ERRNO, "failed to create %s", rcsdir);
+			return (-1);
+		}
+	}
+
+	/* create CVS/ admin files */
+	if (cvs_noexec == 0)
+		if (cvs_mkadmin(fpath, root->cr_str, repo) == -1)
+			return (-1);
+
+	/* XXX Build the Entries line. */
+	l = snprintf(entry, sizeof(entry), "D/%s////", fpath);
+	if (l == -1 || l >= (int)sizeof(entry)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", entry);
+		return (-1);
+        }
+
+	if ((ent = cvs_ent_parse(entry)) == NULL) {
+		cvs_log(LP_ERR, "failed to parse entry");
+		return (-1);
+	}        
+
+	if (cvs_ent_add(entf, ent) < 0) {
+		cvs_log(LP_ERR, "failed to add entry");
+		return (-1);
+	}
+
+	cvs_printf("%s", msg);
 
 	return (0);
 }
