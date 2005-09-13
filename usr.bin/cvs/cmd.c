@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.34 2005/09/07 17:43:15 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.35 2005/09/13 17:24:38 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -182,7 +182,8 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	 */
 	error = 0;
 	if ((cmd->cmd_op != CVS_OP_CHECKOUT) && (cmd->cmd_op != CVS_OP_EXPORT) &&
-	    (cmd->cmd_op != CVS_OP_IMPORT) && (cmd->cmd_op != CVS_OP_RELEASE)) {
+	    (cmd->cmd_op != CVS_OP_IMPORT) && (cmd->cmd_op != CVS_OP_RELEASE) &&
+	    (cmd->cmd_op != CVS_OP_VERSION)) {
 		/* check for the CVS directory */
 		ret = stat(CVS_PATH_CVSDIR, &st);
 		if (((ret == -1) && (errno == ENOENT)) || ((ret != -1) &&
