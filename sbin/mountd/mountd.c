@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.63 2005/04/08 20:09:38 jaredy Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.64 2005/09/13 02:53:28 drahn Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -702,9 +702,20 @@ get_exportlist(void)
 	struct grouplist *grp, *tgrp;
 	struct exportlist **epp;
 	struct dirlist *dirhead;
-	struct statfs fsb, *fsp;
+	struct statfs fsb, *ofsp, *fsp;
 	struct hostent *hpe;
 	struct ucred anon;
+	union {
+		struct ufs_args ua;
+		struct iso_args ia;
+		struct mfs_args ma;
+		struct msdosfs_args da;
+		struct adosfs_args aa;
+	} targs;
+	struct fsarray {
+		int exflags;
+		char *mntonname;
+	} *fstbl;
 
 	/*
 	 * First, get rid of the old list
@@ -731,15 +742,17 @@ get_exportlist(void)
 	 * XXX: Should know how to handle all local exportable file systems
 	 *      instead of just MOUNT_FFS.
 	 */
-	num = getmntinfo(&fsp, MNT_NOWAIT);
+	num = getmntinfo(&ofsp, MNT_NOWAIT);
+	if (num == 0 && errno)
+		syslog(LOG_ERR, "getmntinfo: %s", strerror(errno));
+
+	fsp = ofsp;
+
+	fstbl = calloc(num, sizeof (fstbl[0]));
+	if (fstbl == NULL)
+		out_of_mem();
+
 	for (i = 0; i < num; i++) {
-		union {
-			struct ufs_args ua;
-			struct iso_args ia;
-			struct mfs_args ma;
-			struct msdosfs_args da;
-			struct adosfs_args aa;
-		} targs;
 
 		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
@@ -747,13 +760,8 @@ get_exportlist(void)
 		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
-			bzero((char *)&targs, sizeof(targs));
-			targs.ua.fspec = NULL;
-			targs.ua.export_info.ex_flags = MNT_DELEXPORT;
-			if (mount(fsp->f_fstypename, fsp->f_mntonname,
-			    fsp->f_flags | MNT_UPDATE, &targs) < 0)
-				syslog(LOG_ERR, "Can't delete exports for %s: %m",
-				    fsp->f_mntonname);
+			fstbl[i].exflags = MNT_DELEXPORT;
+			fstbl[i].mntonname = fsp->f_mntonname;
 		}
 		fsp++;
 	}
@@ -966,6 +974,26 @@ get_exportlist(void)
 		 */
 		grp = tgrp;
 		do {
+
+			/*
+			 * remove filesystem from unexport list
+			 * add MNT_DELEXPORT to exflags to clean up
+			 * any old addrlist in the kernel
+			 */
+
+			for (i = 0; i < num; i++) {
+				if ((fstbl[i].mntonname != NULL) &&
+				    (strcmp (dirp, fstbl[i].mntonname) == 0) &&
+				    (fstbl[i].exflags & MNT_DELEXPORT)) {
+					exflags |= MNT_DELEXPORT;
+					fstbl[i].exflags = 0;
+					if (debug)
+						fprintf(stderr, "removing  %s %s from unexport list\n", dirp, fstbl[i].mntonname);
+				}
+			}
+
+			if (debug)
+				fprintf(stderr, "exporting %s\n", dirp);
 			/*
 			 * Non-zero return indicates an error.  Return
 			 * val of 1 means line is invalid (not just entry).
@@ -1020,6 +1048,21 @@ nextline:
 			dirhead = NULL;
 		}
 	}
+
+	fsp = ofsp;
+	for (i = 0; i < num; i++, fsp++) {
+		if ((fstbl[i].exflags & MNT_DELEXPORT) == 0)
+			continue;
+		if (debug)
+			fprintf(stderr, "unexporting %s %s\n",
+			    fsp->f_mntonname, fstbl[i].mntonname);
+		bzero(&targs, sizeof(targs));
+		if (mount(fsp->f_fstypename, fsp->f_mntonname,
+		    fsp->f_flags | MNT_UPDATE, &targs) < 0)
+			syslog(LOG_ERR, "Can't delete exports for %s: %m",
+			    fsp->f_mntonname);
+	}
+	free(fstbl);
 	fclose(exp_file);
 }
 
