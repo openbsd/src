@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.27 2005/09/13 19:40:30 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.28 2005/09/13 20:03:29 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -123,6 +123,43 @@ sub grabPlist
 	my $self = OpenBSD::PackageLocation->new($repository, $name);
 
 	return $self->grabPlist($name, $arch, $code);
+}
+
+package OpenBSD::PackageRepository::Installed;
+use OpenBSD::PackageInfo;
+
+sub find
+{
+	my ($repository, $name, $arch) = @_;
+	my $self;
+
+	if (is_installed($name)) {
+		$self = OpenBSD::PackageLocation->new($repository, $name);
+		$self->{dir} = installed_info($name);
+	}
+	return $self;
+}
+
+sub grabPlist
+{
+	my ($repository, $name, $arch, $code) = @_;
+	require OpenBSD::PackingList;
+	return  OpenBSD::PackingList->from_installation($name, $code);
+}
+
+sub available
+{
+	return installed_packages();
+}
+
+sub wipe_info
+{
+}
+
+sub may_exist
+{
+	my ($self, $name) = @_;
+	return is_installed($name);
 }
 
 package OpenBSD::PackageRepository::SCP;
