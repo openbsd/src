@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.31 2005/09/13 21:20:01 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.32 2005/09/14 09:50:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -232,8 +232,8 @@ sub available
 	my $dname = $self->{baseurl};
 	opendir(my $dir, $dname) or return $l;
 	while (my $e = readdir $dir) {
-		next unless -f "$dname/$e";
 		next unless $e =~ m/\.tgz$/;
+		next unless -f "$dname/$e";
 		push(@$l, $`);
 	}
 	close($dir);
