@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.37 2005/09/14 23:20:17 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.38 2005/09/14 23:40:23 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -202,10 +202,6 @@ int	 rtw_rf_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
 int	 rtw_rf_tune(struct rtw_softc *, u_int);
 int	 rtw_rf_txpower(struct rtw_softc *, u_int8_t);
 int	 rtw_rfbus_write(struct rtw_softc *, int, u_int, u_int32_t);
-int	 rtw_sa2400_create(struct rtw_softc *);
-int	 rtw_max2820_create(struct rtw_softc *);
-int 	 rtw_rtl8225_create(struct rtw_softc *);
-int	 rtw_rtl8255_create(struct rtw_softc *);
 int	 rtw_phy_init(struct rtw_softc *);
 int	 rtw_bbp_preinit(struct rtw_regs *, u_int, int, u_int);
 int	 rtw_bbp_init(struct rtw_regs *, struct rtw_bbpset *, int,
@@ -3474,6 +3470,8 @@ rtw_txdesc_blk_setup_all(struct rtw_softc *sc)
 int
 rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 {
+	struct rtw_bbpset *bb = &sc->sc_bbpset;
+
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
 	case RTW_RFCHIPID_RTL8255:
@@ -3491,19 +3489,41 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
-		rtw_rtl8225_create(sc);
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
 		break;
 	case RTW_RFCHIPID_RTL8255:
-		rtw_rtl8255_create(sc);
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
 		break;
 	case RTW_RFCHIPID_MAXIM2820:
-		rtw_max2820_create(sc);
+		/* XXX magic */
+		bb->bb_antatten = RTW_BBP_ANTATTEN_MAXIM_MAGIC;
+		bb->bb_chestlim =	0x00;
+		bb->bb_chsqlim =	0x9f;
+		bb->bb_ifagcdet =	0x64;
+		bb->bb_ifagcini =	0x90;
+		bb->bb_ifagclimit =	0x1a;
+		bb->bb_lnadet =		0xf8;
+		bb->bb_sys1 =		0x88;
+		bb->bb_sys2 =		0x47;
+		bb->bb_sys3 =		0x9b;
+		bb->bb_trl =		0x88;
+		bb->bb_txagc =		0x08;
 		sc->sc_pwrstate_cb = rtw_maxim_pwrstate;
 		break;
 	case RTW_RFCHIPID_PHILIPS:
-		rtw_sa2400_create(sc);
+		/* XXX magic */
+		bb->bb_antatten = RTW_BBP_ANTATTEN_PHILIPS_MAGIC;
+		bb->bb_chestlim =	0x00;
+		bb->bb_chsqlim =	0xa0;
+		bb->bb_ifagcdet =	0x64;
+		bb->bb_ifagcini =	0x90;
+		bb->bb_ifagclimit =	0x1a;
+		bb->bb_lnadet =		0xe0;
+		bb->bb_sys1 =		0x98;
+		bb->bb_sys2 =		0x47;
+		bb->bb_sys3 =		0x90;
+		bb->bb_trl =		0x88;
+		bb->bb_txagc =		0x38;
 		sc->sc_pwrstate_cb = rtw_philips_pwrstate;
 		break;
 	case RTW_RFCHIPID_RFMD2948:
@@ -4265,28 +4285,6 @@ rtw_sa2400_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
 	return rtw_sa2400_pwrstate(sc, power);
 }
 
-int
-rtw_sa2400_create(struct rtw_softc *sc)
-{
-	struct rtw_bbpset *bb = &sc->sc_bbpset;
-
-	/* XXX magic */
-	bb->bb_antatten = RTW_BBP_ANTATTEN_PHILIPS_MAGIC;
-	bb->bb_chestlim =	0x00;
-	bb->bb_chsqlim =	0xa0;
-	bb->bb_ifagcdet =	0x64;
-	bb->bb_ifagcini =	0x90;
-	bb->bb_ifagclimit =	0x1a;
-	bb->bb_lnadet =		0xe0;
-	bb->bb_sys1 =		0x98;
-	bb->bb_sys2 =		0x47;
-	bb->bb_sys3 =		0x90;
-	bb->bb_trl =		0x88;
-	bb->bb_txagc =		0x38;
-
-	return (0);
-}
-
 /* freq is in MHz */
 int
 rtw_max2820_tune(struct rtw_softc *sc, u_int freq)
@@ -4366,28 +4364,6 @@ rtw_max2820_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 }
 
 int
-rtw_max2820_create(struct rtw_softc *sc)
-{
-	struct rtw_bbpset *bb = &sc->sc_bbpset;
-
-	/* XXX magic */
-	bb->bb_antatten = RTW_BBP_ANTATTEN_MAXIM_MAGIC;
-	bb->bb_chestlim =	0;
-	bb->bb_chsqlim =	159;
-	bb->bb_ifagcdet =	100;
-	bb->bb_ifagcini =	144;
-	bb->bb_ifagclimit =	26;
-	bb->bb_lnadet =		248;
-	bb->bb_sys1 =		136;
-	bb->bb_sys2 =		71;
-	bb->bb_sys3 =		155;
-	bb->bb_trl =		136;
-	bb->bb_txagc =		8;
-
-	return (0);
-}
-
-int
 rtw_rtl8225_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
 	return (0);
@@ -4408,12 +4384,6 @@ rtw_rtl8225_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 
 int
 rtw_rtl8225_tune(struct rtw_softc *sc, u_int freq)
-{
-	return (0);
-}
-
-int
-rtw_rtl8225_create(struct rtw_softc *sc)
 {
 	return (0);
 }
@@ -4441,12 +4411,6 @@ int
 rtw_rtl8255_tune(struct rtw_softc *sc, u_int freq)
 {
 	return (0);
-}
-
-int
-rtw_rtl8255_create(struct rtw_softc *sc)
-{
-	return(0);
 }
 
 int
