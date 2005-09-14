@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.120 2005/09/13 17:38:35 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.121 2005/09/14 16:32:08 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -602,10 +602,10 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	if (cb == NULL)
 		callit = 0;
 
-	if (cvs_cmdop == CVS_OP_SERVER && type != DT_DIR)
+	if ((cvs_cmdop == CVS_OP_SERVER) && (type != DT_DIR))
 		callit = 0;
 
-	if (root->cr_method == CVS_METHOD_LOCAL && type != DT_DIR)
+	if ((root->cr_method == CVS_METHOD_LOCAL) && (type != DT_DIR))
 		callit = 0;
 
 	if (!(base->cf_flags & CVS_FILE_ONDISK))
