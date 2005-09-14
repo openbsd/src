@@ -1,4 +1,4 @@
-.\" $OpenBSD: watchdogd.8,v 1.4 2005/09/12 10:10:45 jmc Exp $
+.\" $OpenBSD: watchdogd.8,v 1.5 2005/09/14 08:12:23 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Marc Balmer <marc@msys.ch>
 .\"
@@ -30,12 +30,23 @@
 is a daemon to periodically retrigger the
 .Xr watchdog 4
 timer device from userland.
-After every
+.Nm
+is designed to work in high load environments,
+where other methods
+(such as a shell script invoking
+.Xr sysctl 8 )
+would involve too much overhead.
+.Pp
+The basic premise is that
+after every
 .Ar interval
 seconds,
 .Nm
 resets the hardware timer to
 .Ar period .
+See also
+.Xr watchdog 4
+for more information on how watchdog timers work.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
