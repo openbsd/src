@@ -1,4 +1,4 @@
-.\"	$OpenBSD: watchdog.4,v 1.3 2005/09/12 10:05:14 jmc Exp $
+.\"	$OpenBSD: watchdog.4,v 1.4 2005/09/14 08:10:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Michael Knudsen <mk@molioner.dk>
 .\"
@@ -25,7 +25,10 @@ hangs.
 The kernel continually resets the watchdog clock on a regular basis.
 Thus, if the kernel halts, the clock will time out and reset the machine.
 Some watchdog timers may be configured to be reset from userland,
-causing a reboot if process scheduling fails.
+causing a reboot if process scheduling fails;
+see
+.Xr watchdogd 8
+for further information.
 .Pp
 A few watchdog drivers are supported, and most support timeout
 configuration via
