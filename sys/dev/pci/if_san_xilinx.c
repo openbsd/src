@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.12 2005/09/04 18:27:28 brad Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.13 2005/09/14 05:08:05 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -94,7 +94,7 @@ enum {
 # define HARD_FIFO_CODE 0x01
 #endif
 
-static int aft_rx_copyback = 1000;
+static int aft_rx_copyback = MHLEN;
 
 
 /*
@@ -1695,12 +1695,6 @@ static int xilinx_dma_rx(sdla_t *card, xilinx_softc_t *sc)
 
 	bus_addr = kvtop(mtod(sc->rx_dma_mbuf, caddr_t) +
 	    sc->rx_dma_mbuf->m_len);
-
-	if (!bus_addr) {
-		log(LOG_INFO, "%s: %s Critical error pci_map_single() "
-		    "failed!\n", sc->if_name, __FUNCTION__);
-		return EINVAL;
-	}
 
 	rx_el->dma_addr = bus_addr;
 
