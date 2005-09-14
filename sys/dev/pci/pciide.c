@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.202 2005/09/05 13:21:49 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.203 2005/09/14 06:13:22 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -132,6 +132,7 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pciide_nforce_reg.h>
 #include <dev/pci/pciide_i31244_reg.h>
 #include <dev/pci/pciide_ite_reg.h>
+#include <dev/pci/pciide_ixp_reg.h>
 #include <dev/pci/cy82c693var.h>
 
 /* inlines for reading/writing 8-bit PCI registers */
@@ -260,6 +261,9 @@ void artisea_chip_map(struct pciide_softc *, struct pci_attach_args *);
 
 void ite_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void ite_setup_channel(struct channel_softc *);
+
+void ixp_chip_map(struct pciide_softc *, struct pci_attach_args *);
+void ixp_setup_channel(struct channel_softc *);
 
 u_int8_t pciide_dmacmd_read(struct pciide_softc *, int);
 void pciide_dmacmd_write(struct pciide_softc *, int, u_int8_t);
@@ -736,6 +740,18 @@ const struct pciide_product_desc pciide_ite_products[] = {
 };
 
 const struct pciide_product_desc pciide_ati_products[] = {
+	{ PCI_PRODUCT_ATI_IXP_IDE_200,
+	  0,
+	  ixp_chip_map
+	},
+	{ PCI_PRODUCT_ATI_IXP_IDE_300,
+	  0,
+	  ixp_chip_map
+	},
+	{ PCI_PRODUCT_ATI_IXP_IDE_400,
+	  0,
+	  ixp_chip_map
+	},
 	{ PCI_PRODUCT_ATI_IXP_SATA_400_1,
 	  0,
 	  sii3112_chip_map
@@ -7339,6 +7355,138 @@ pio:
 	pci_conf_write(sc->sc_pc, sc->sc_tag, IT_CFG, cfg);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, IT_MODE, modectl);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, IT_TIM(channel), tim);
+
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL(channel), idedma_ctl);
+	}
+
+	pciide_print_modes(cp);
+}
+
+void
+ixp_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	int channel;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 6;
+
+	sc->sc_wdcdev.set_modes = ixp_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->hw_ok == 0) {
+			pciide_unmap_compat_intr(pa, cp, channel, interface);
+			continue;
+		}
+		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+	}
+}
+
+void
+ixp_setup_channel(struct channel_softc *chp)
+{
+	struct ata_drive_datas *drvp;
+	int drive, mode;
+	u_int32_t idedma_ctl;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int channel = chp->channel;
+	pcireg_t udma, mdma_timing, pio, pio_timing;
+
+	pio_timing = pci_conf_read(sc->sc_pc, sc->sc_tag, IXP_PIO_TIMING);
+	pio = pci_conf_read(sc->sc_pc, sc->sc_tag, IXP_PIO_CTL);
+	mdma_timing = pci_conf_read(sc->sc_pc, sc->sc_tag, IXP_MDMA_TIMING);
+	udma = pci_conf_read(sc->sc_pc, sc->sc_tag, IXP_UDMA_CTL);
+
+	/* Setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	/* Per channel settings */
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) != 0 &&
+		    (drvp->drive_flags & DRIVE_UDMA) != 0) {
+			/* Setup UltraDMA mode */
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+			IXP_UDMA_ENABLE(udma, chp->channel, drive);
+			IXP_SET_MODE(udma, chp->channel, drive,
+			    drvp->UDMA_mode);
+			mode = drvp->PIO_mode;
+		} else if ((chp->wdc->cap & WDC_CAPABILITY_DMA) != 0 &&
+		    (drvp->drive_flags & DRIVE_DMA) != 0) {
+			/* Setup multiword DMA mode */
+			drvp->drive_flags &= ~DRIVE_UDMA;
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+			IXP_UDMA_DISABLE(udma, chp->channel, drive);
+			IXP_SET_TIMING(mdma_timing, chp->channel, drive,
+			    ixp_mdma_timings[drvp->DMA_mode]);
+
+			/* mode = min(pio, dma + 2) */
+			if (drvp->PIO_mode <= (drvp->DMA_mode + 2))
+				mode = drvp->PIO_mode;
+			else
+				mode = drvp->DMA_mode + 2;
+		} else {
+			mode = drvp->PIO_mode;
+		}
+
+		/* Setup PIO mode */
+		drvp->PIO_mode = mode;
+		if (mode < 2)
+			drvp->DMA_mode = 0;
+		else
+			drvp->DMA_mode = mode - 2;
+		/*
+		 * Set PIO mode and timings
+		 * Linux driver avoids PIO mode 1, let's do it too.
+		 */
+		if (drvp->PIO_mode == 1)
+			drvp->PIO_mode = 0;
+
+		IXP_SET_MODE(pio, chp->channel, drive, drvp->PIO_mode);
+		IXP_SET_TIMING(pio_timing, chp->channel, drive,
+		    ixp_pio_timings[drvp->PIO_mode]);
+	}
+
+	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_UDMA_CTL, udma);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_MDMA_TIMING, mdma_timing);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_PIO_CTL, pio);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_PIO_TIMING, pio_timing);
 
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
