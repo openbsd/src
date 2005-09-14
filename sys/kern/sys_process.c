@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.31 2005/08/02 18:04:07 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.32 2005/09/14 20:55:59 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -88,6 +88,7 @@ sys_ptrace(p, v, retval)
 	struct uio uio;
 	struct iovec iov;
 	struct ptrace_io_desc piod;
+	struct ptrace_event pe;
 	struct reg *regs;
 #if defined (PT_SETFPREGS) || defined (PT_GETFPREGS)
 	struct fpreg *fpregs;
@@ -179,6 +180,9 @@ sys_ptrace(p, v, retval)
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
+	case  PT_SET_EVENT_MASK:
+	case  PT_GET_EVENT_MASK:
+	case  PT_GET_PROCESS_STATE:
 	case  PT_GETREGS:
 	case  PT_SETREGS:
 #ifdef PT_GETFPREGS
@@ -232,6 +236,10 @@ sys_ptrace(p, v, retval)
 		/* Just set the trace flag. */
 		SET(t->p_flag, P_TRACED);
 		t->p_oppid = t->p_pptr->p_pid;
+		if (t->p_ptstat == NULL)
+			t->p_ptstat = malloc(sizeof(*t->p_ptstat),
+			    M_SUBPROC, M_WAITOK);
+		bzero(t->p_ptstat, sizeof(*t->p_ptstat));
 		return (0);
 
 	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
@@ -366,6 +374,8 @@ sys_ptrace(p, v, retval)
 		CLR(t->p_flag, P_TRACED|P_WAITED);
 
 	sendsig:
+		bzero(t->p_ptstat, sizeof(*t->p_ptstat));
+
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
 			t->p_xstat = SCARG(uap, data);
@@ -401,8 +411,31 @@ sys_ptrace(p, v, retval)
 		t->p_oppid = t->p_pptr->p_pid;
 		if (t->p_pptr != p)
 			proc_reparent(t, p);
+		if (t->p_ptstat == NULL)
+			t->p_ptstat = malloc(sizeof(*t->p_ptstat),
+			    M_SUBPROC, M_WAITOK);
 		SCARG(uap, data) = SIGSTOP;
 		goto sendsig;
+
+	case  PT_GET_EVENT_MASK:
+		if (SCARG(uap, data) != sizeof(pe))
+			return (EINVAL);
+		bzero(&pe, sizeof(pe));
+		pe.pe_set_event = t->p_ptmask;
+		return (copyout(&pe, SCARG(uap, addr), sizeof(pe)));
+	case  PT_SET_EVENT_MASK:
+		if (SCARG(uap, data) != sizeof(pe))
+			return (EINVAL);
+		if ((error = copyin(SCARG(uap, addr), &pe, sizeof(pe))))
+			return (error);
+		t->p_ptmask = pe.pe_set_event;
+		return (0);
+
+	case  PT_GET_PROCESS_STATE:
+		if (SCARG(uap, data) != sizeof(*t->p_ptstat))
+			return (EINVAL);
+		return (copyout(t->p_ptstat, SCARG(uap, addr),
+		    sizeof(*t->p_ptstat)));
 
 	case  PT_SETREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.54 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.55 2005/09/14 20:55:59 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -540,6 +540,8 @@ void
 proc_zap(struct proc *p)
 {
 	pool_put(&rusage_pool, p->p_ru);
+	if (p->p_ptstat)
+		free(p->p_ptstat, M_SUBPROC);
 
 	/*
 	 * Finally finished with old proc entry.

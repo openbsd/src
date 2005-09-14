@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ptrace.2,v 1.19 2005/07/20 21:51:36 miod Exp $
+.\"	$OpenBSD: ptrace.2,v 1.20 2005/09/14 20:55:59 kettenis Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
@@ -232,6 +232,69 @@ will return
 .Li -1
 and set
 .Va errno .
+.It Dv PT_SET_EVENT_MASK
+This request can be used to specify which events in the traced process
+should be reported to the tracing process.
+These events are specified in a
+.Dq Li "struct ptrace_event"
+defined as:
+.Bd -literal -offset indent
+typedef struct ptrace_event {
+	int	pe_set_event;
+} ptrace_event_t;
+.Ed
+Where
+.Fa pe_set_event
+is the set of events to be reported.
+This set is formed by OR'ing together the following values:
+.Bl -tag -width 18n
+.It PTRACE_FORK
+Report
+.Xr fork 2 .
+.El
+.Pp
+A pointer to this structure is passed in
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_event) .
+.It Dv PT_GET_EVENT_MASK
+This request can be used to determine which events in the traced
+process will be reported.
+The information is read into the
+.Dq Li struct ptrace_event
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_event) .
+.It Dv PT_GET_PROCESS_STATE
+This request reads the state information associated with the event
+that stopped the traced process.
+The information is reported in a
+.Dq Li "struct ptrace_state"
+defined as:
+.Bd -literal -offset indent
+typedef struct ptrace_state {
+	int	pe_report_event;
+	pid_t	pe_other_pid;
+} ptrace_state_t;
+.Ed
+Where
+.Fa pe_report_event
+is the event being reported.
+If the event being reported is
+.Dv PTRACE_FORK ,
+.Fa pe_other_pid
+will be set to the process ID of the other end of the fork.
+A pointer to this structure is passed in
+.Fa addr .
+The
+.Fa data
+argument should be set to
+.Li sizeof(struct ptrace_state) .
 .El
 .Pp
 Additionally, machine-specific requests can exist.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.79 2005/05/29 03:20:42 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.80 2005/09/14 20:55:59 kettenis Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -186,6 +186,9 @@ struct	proc {
 
 	void	*p_systrace;		/* Back pointer to systrace */
 
+	int	p_ptmask;		/* Ptrace event mask */
+	struct	ptrace_state *p_ptstat;	/* Ptrace state */
+
 	int	p_siglist;		/* Signals arrived but not delivered. */
 
 	struct	vnode *p_textvp;	/* Vnode of executable. */
@@ -357,6 +360,7 @@ struct uidinfo *uid_find(uid_t);
 #define FORK_NOZOMBIE	0x00000040
 #define FORK_SHAREVM	0x00000080
 #define FORK_SIGHAND	0x00000200
+#define FORK_PTRACE	0x00000400
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
