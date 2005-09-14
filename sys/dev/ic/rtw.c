@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.36 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.37 2005/09/14 23:20:17 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -124,8 +124,7 @@ void	 rtw_set_access1(struct rtw_regs *, enum rtw_access);
 int	 rtw_srom_parse(struct rtw_softc *);
 int	 rtw_srom_read(struct rtw_regs *, u_int32_t, struct rtw_srom *,
 	    const char *);
-void	 rtw_set_rfprog(struct rtw_regs *, enum rtw_rfchipid,
-	    const char *);
+void	 rtw_set_rfprog(struct rtw_regs *, int, const char *);
 u_int8_t rtw_chan2txpower(struct rtw_srom *, struct ieee80211com *,
 	    struct ieee80211_channel *);
 int	 rtw_txsoft_blk_init(struct rtw_txsoft_blk *);
@@ -152,7 +151,7 @@ struct mbuf *rtw_dmamap_load_txbuf(bus_dma_tag_t, bus_dmamap_t, struct mbuf *,
 int	 rtw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int	 rtw_media_change(struct ifnet *);
 int	 rtw_txsoft_blk_setup_all(struct rtw_softc *);
-struct rtw_rf * rtw_rf_attach(struct rtw_softc *, enum rtw_rfchipid, int);
+int	 rtw_rf_attach(struct rtw_softc *, int);
 u_int8_t rtw_check_phydelay(struct rtw_regs *, u_int32_t);
 int	 rtw_chip_reset1(struct rtw_regs *, const char *);
 int	 rtw_chip_reset(struct rtw_regs *, const char *);
@@ -197,51 +196,50 @@ void	 rtw_led_slowblink(void *);
 void	 rtw_led_fastblink(void *);
 void	 rtw_led_set(struct rtw_led_state *, struct rtw_regs *, u_int);
 void	 rtw_led_newstate(struct rtw_softc *, enum ieee80211_state);
-struct rtw_rf *rtw_sa2400_create(struct rtw_regs *, rtw_rf_write_t, int);
-struct rtw_rf *rtw_max2820_create(struct rtw_regs *, rtw_rf_write_t, int);
-struct rtw_rf *rtw_rtl8225_create(struct rtw_regs *, rtw_rf_write_t);
-struct rtw_rf *rtw_rtl8255_create(struct rtw_regs *, rtw_rf_write_t);
-int	 rtw_phy_init(struct rtw_regs *, struct rtw_rf *, u_int8_t, u_int8_t,
-	    u_int, int, int, enum rtw_pwrstate);
+
+int	 rtw_rf_init(struct rtw_softc *, u_int, u_int8_t, enum rtw_pwrstate);
+int	 rtw_rf_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
+int	 rtw_rf_tune(struct rtw_softc *, u_int);
+int	 rtw_rf_txpower(struct rtw_softc *, u_int8_t);
+int	 rtw_rfbus_write(struct rtw_softc *, int, u_int, u_int32_t);
+int	 rtw_sa2400_create(struct rtw_softc *);
+int	 rtw_max2820_create(struct rtw_softc *);
+int 	 rtw_rtl8225_create(struct rtw_softc *);
+int	 rtw_rtl8255_create(struct rtw_softc *);
+int	 rtw_phy_init(struct rtw_softc *);
 int	 rtw_bbp_preinit(struct rtw_regs *, u_int, int, u_int);
 int	 rtw_bbp_init(struct rtw_regs *, struct rtw_bbpset *, int,
 	    int, u_int8_t, u_int);
 void	 rtw_verify_syna(u_int, u_int32_t);
-int	 rtw_sa2400_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
-int	 rtw_sa2400_txpower(struct rtw_rf *, u_int8_t);
-int	 rtw_sa2400_tune(struct rtw_rf *, u_int);
-int	 rtw_sa2400_manrx_init(struct rtw_sa2400 *);
-int	 rtw_sa2400_vcocal_start(struct rtw_sa2400 *, int);
-int	 rtw_sa2400_vco_calibration(struct rtw_sa2400 *);
-int	 rtw_sa2400_filter_calibration(struct rtw_sa2400 *);
-int	 rtw_sa2400_dc_calibration(struct rtw_sa2400 *);
-int	 rtw_sa2400_agc_init(struct rtw_sa2400 *);
-void	 rtw_sa2400_destroy(struct rtw_rf *);
-int	 rtw_sa2400_calibrate(struct rtw_rf *, u_int);
-int	 rtw_sa2400_init(struct rtw_rf *, u_int, u_int8_t,
+int	 rtw_sa2400_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
+int	 rtw_sa2400_txpower(struct rtw_softc *, u_int8_t);
+int	 rtw_sa2400_tune(struct rtw_softc *, u_int);
+int	 rtw_sa2400_manrx_init(struct rtw_softc *);
+int	 rtw_sa2400_vcocal_start(struct rtw_softc *, int);
+int	 rtw_sa2400_vco_calibration(struct rtw_softc *);
+int	 rtw_sa2400_filter_calibration(struct rtw_softc *);
+int	 rtw_sa2400_dc_calibration(struct rtw_softc *);
+int	 rtw_sa2400_agc_init(struct rtw_softc *);
+int	 rtw_sa2400_calibrate(struct rtw_softc *, u_int);
+int	 rtw_sa2400_init(struct rtw_softc *, u_int, u_int8_t,
 	    enum rtw_pwrstate);
-int	 rtw_max2820_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
-void	 rtw_max2820_destroy(struct rtw_rf *);
-int	 rtw_max2820_init(struct rtw_rf *, u_int, u_int8_t,
+int	 rtw_max2820_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
+int	 rtw_max2820_init(struct rtw_softc *, u_int, u_int8_t,
 	    enum rtw_pwrstate);
-int	 rtw_max2820_txpower(struct rtw_rf *, u_int8_t);
-int	 rtw_max2820_tune(struct rtw_rf *, u_int);
-int	 rtw_rtl8225_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
-void	 rtw_rtl8225_destroy(struct rtw_rf *);
-int	 rtw_rtl8225_init(struct rtw_rf *, u_int, u_int8_t,
+int	 rtw_max2820_txpower(struct rtw_softc *, u_int8_t);
+int	 rtw_max2820_tune(struct rtw_softc *, u_int);
+int	 rtw_rtl8225_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
+int	 rtw_rtl8225_init(struct rtw_softc *, u_int, u_int8_t,
 	    enum rtw_pwrstate);
-int	 rtw_rtl8225_txpower(struct rtw_rf *, u_int8_t);
-int	 rtw_rtl8225_tune(struct rtw_rf *, u_int);
-int	 rtw_rtl8255_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
-void	 rtw_rtl8255_destroy(struct rtw_rf *);
-int	 rtw_rtl8255_init(struct rtw_rf *, u_int, u_int8_t,
+int	 rtw_rtl8225_txpower(struct rtw_softc *, u_int8_t);
+int	 rtw_rtl8225_tune(struct rtw_softc *, u_int);
+int	 rtw_rtl8255_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
+int	 rtw_rtl8255_init(struct rtw_softc *, u_int, u_int8_t,
 	    enum rtw_pwrstate);
-int	 rtw_rtl8255_txpower(struct rtw_rf *, u_int8_t);
-int	 rtw_rtl8255_tune(struct rtw_rf *, u_int);
-int	 rtw_rf_hostwrite(struct rtw_regs *, enum rtw_rfchipid, u_int,
-	    u_int32_t);
-int	 rtw_rf_macwrite(struct rtw_regs *, enum rtw_rfchipid, u_int,
-	    u_int32_t);
+int	 rtw_rtl8255_txpower(struct rtw_softc *, u_int8_t);
+int	 rtw_rtl8255_tune(struct rtw_softc *, u_int);
+int	 rtw_rf_hostwrite(struct rtw_regs *, int, u_int, u_int32_t);
+int	 rtw_rf_macwrite(struct rtw_regs *, int, u_int, u_int32_t);
 u_int8_t rtw_bbp_read(struct rtw_regs *, u_int);
 int	 rtw_bbp_write(struct rtw_regs *, u_int, u_int);
 u_int32_t rtw_grf5101_host_crypt(u_int, u_int32_t);
@@ -250,7 +248,7 @@ u_int32_t rtw_grf5101_mac_crypt(u_int, u_int32_t);
 void	 rtw_rf_hostbangbits(struct rtw_regs *, u_int32_t, int, u_int);
 void	 rtw_rf_rtl8225_hostbangbits(struct rtw_regs *, u_int32_t, int, u_int);
 int	 rtw_rf_macbangbits(struct rtw_regs *, u_int32_t);
-const char *rtw_rfchipid_string(enum rtw_rfchipid);
+const char *rtw_rfchipid_string(int);
 
 #ifdef RTW_DEBUG
 void	 rtw_print_txdesc(struct rtw_softc *, const char *,
@@ -559,7 +557,7 @@ rtw_srom_parse(struct rtw_softc *sc)
 	struct rtw_srom *sr = &sc->sc_srom;
 	u_int32_t *flags = &sc->sc_flags;
 	u_int8_t *cs_threshold = &sc->sc_csthr;
-	enum rtw_rfchipid *rfchipid = &sc->sc_rfchipid;
+	int *rfchipid = &sc->sc_rfchipid;
 	u_int32_t *rcr = &sc->sc_rcr;
 	enum rtw_locale *locale = &sc->sc_locale;
 	const char *rfname, *paname = NULL;
@@ -763,7 +761,7 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 }
 
 void
-rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
+rtw_set_rfprog(struct rtw_regs *regs, int rfchipid,
     const char *dvname)
 {
 	u_int8_t cfg4;
@@ -2023,7 +2021,7 @@ rtw_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 		return 0;
 
 	rtw_pwrstate0(sc, power, 1, sc->sc_flags & RTW_F_DIGPHY);
-	rc = rtw_rf_pwrstate(sc->sc_rf, power);
+	rc = rtw_rf_pwrstate(sc, power);
 	rtw_pwrstate0(sc, power, 0, sc->sc_flags & RTW_F_DIGPHY);
 
 	switch (power) {
@@ -2051,8 +2049,6 @@ rtw_tune(struct rtw_softc *sc)
 	u_int chan, idx;
 	u_int8_t txpower;
 	int rc;
-	int antdiv = sc->sc_flags & RTW_F_ANTDIV,
-	    dflantb = sc->sc_flags & RTW_F_DFLANTB;
 
 	KASSERT(ic->ic_bss->ni_chan != NULL);
 
@@ -2081,10 +2077,7 @@ rtw_tune(struct rtw_softc *sc)
 	     idx - RTW_SR_TXPOWER1 + 1));
 	txpower =  RTW_SR_GET(&sc->sc_srom, idx);
 
-	if ((rc = rtw_phy_init(&sc->sc_regs, sc->sc_rf,
-	    rtw_chan2txpower(&sc->sc_srom, ic, ic->ic_bss->ni_chan),
-	    sc->sc_csthr, ic->ic_bss->ni_chan->ic_freq, antdiv,
-	    dflantb, RTW_ON)) != 0) {
+	if ((rc = rtw_phy_init(sc)) != 0) {
 		/* XXX condition on powersaving */
 		printf("%s: phy init failed\n", sc->sc_dev.dv_xname);
 	}
@@ -3478,42 +3471,39 @@ rtw_txdesc_blk_setup_all(struct rtw_softc *sc)
 	    RTW_RING_OFFSET(hd_bcn), RTW_RING_BASE(sc, hd_bcn));
 }
 
-struct rtw_rf *
-rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid, int digphy)
+int
+rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 {
-	rtw_rf_write_t rf_write;
-	struct rtw_rf *rf;
-
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
 	case RTW_RFCHIPID_RTL8255:
 	default:
-		rf_write = rtw_rf_hostwrite;
+		sc->sc_rf_write = rtw_rf_hostwrite;
 		break;
 	case RTW_RFCHIPID_INTERSIL:
 	case RTW_RFCHIPID_PHILIPS:
 	case RTW_RFCHIPID_GCT: /* XXX a guess */
 	case RTW_RFCHIPID_RFMD2948:
-		rf_write = (rtw_host_rfio) ? rtw_rf_hostwrite : rtw_rf_macwrite;
+		sc->sc_rf_write = (rtw_host_rfio) ? rtw_rf_hostwrite :
+		    rtw_rf_macwrite;
 		break;
-
 	}
 
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
-		rf = rtw_rtl8225_create(&sc->sc_regs, rf_write);
+		rtw_rtl8225_create(sc);
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
 		break;
 	case RTW_RFCHIPID_RTL8255:
-		rf = rtw_rtl8255_create(&sc->sc_regs, rf_write);
+		rtw_rtl8255_create(sc);
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
 		break;
 	case RTW_RFCHIPID_MAXIM2820:
-		rf = rtw_max2820_create(&sc->sc_regs, rf_write, 0);
+		rtw_max2820_create(sc);
 		sc->sc_pwrstate_cb = rtw_maxim_pwrstate;
 		break;
 	case RTW_RFCHIPID_PHILIPS:
-		rf = rtw_sa2400_create(&sc->sc_regs, rf_write, digphy);
+		rtw_sa2400_create(sc);
 		sc->sc_pwrstate_cb = rtw_philips_pwrstate;
 		break;
 	case RTW_RFCHIPID_RFMD2948:
@@ -3521,12 +3511,9 @@ rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid, int digphy)
 		sc->sc_pwrstate_cb = rtw_rfmd_pwrstate;
 		/*FALLTHROUGH*/
 	default:
-		return NULL;
+		return (1);
 	}
-	rf->rf_continuous_tx_cb =
-	    (rtw_continuous_tx_cb_t)rtw_continuous_tx_enable;
-	rf->rf_continuous_tx_arg = (void *)sc;
-	return rf;
+	return (0);
 }
 
 /* Revision C and later use a different PHY delay setting than
@@ -3701,10 +3688,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	NEXT_ATTACH_STATE(sc, FINISH_PARSE_SROM);
 
-	sc->sc_rf = rtw_rf_attach(sc, sc->sc_rfchipid,
-	    sc->sc_flags & RTW_F_DIGPHY);
-
-	if (sc->sc_rf == NULL) {
+	if ((rtw_rf_attach(sc, sc->sc_rfchipid)) != 0) {
 		printf("\n%s: attach failed, could not attach RF\n",
 		    sc->sc_dev.dv_xname);
 		goto err;
@@ -3827,9 +3811,6 @@ rtw_detach(struct rtw_softc *sc)
 		break;
 	case FINISH_ID_STA:
 	case FINISH_RF_ATTACH:
-		rtw_rf_destroy(sc->sc_rf);
-		sc->sc_rf = NULL;
-		/*FALLTHROUGH*/
 	case FINISH_PARSE_SROM:
 	case FINISH_READ_SROM:
 		sr = &sc->sc_srom;
@@ -3876,42 +3857,79 @@ rtw_detach(struct rtw_softc *sc)
 	return 0;
 }
 
-void
-rtw_rf_destroy(struct rtw_rf *rf)
-{
-	(*rf->rf_destroy)(rf);
-}
-
 int
-rtw_rf_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+rtw_rf_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
-	return (*rf->rf_init)(rf, freq, opaque_txpower, power);
+	switch (sc->sc_rfchipid) {
+	case RTW_RFCHIPID_PHILIPS:
+		return rtw_sa2400_init(sc, freq, opaque_txpower, power);
+	case RTW_RFCHIPID_MAXIM2820:
+		return rtw_max2820_init(sc, freq, opaque_txpower, power);
+	case RTW_RFCHIPID_RTL8225:
+		return rtw_rtl8225_init(sc, freq, opaque_txpower, power);
+	case RTW_RFCHIPID_RTL8255:
+		return rtw_rtl8255_init(sc, freq, opaque_txpower, power);
+	default:
+		return (1);	
+	}
 }
 
 int
-rtw_rf_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+rtw_rf_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
-	return (*rf->rf_pwrstate)(rf, power);
+	switch (sc->sc_rfchipid) {
+	case RTW_RFCHIPID_PHILIPS:
+		return rtw_sa2400_pwrstate(sc, power);
+	case RTW_RFCHIPID_MAXIM2820:
+		return rtw_max2820_pwrstate(sc, power);
+	case RTW_RFCHIPID_RTL8225:
+		return rtw_rtl8225_pwrstate(sc, power);
+	case RTW_RFCHIPID_RTL8255:
+		return rtw_rtl8255_pwrstate(sc, power);
+	default:
+		return (1);	
+	}
 }
 
 int
-rtw_rf_tune(struct rtw_rf *rf, u_int freq)
+rtw_rf_tune(struct rtw_softc *sc, u_int freq)
 {
-	return (*rf->rf_tune)(rf, freq);
+	switch (sc->sc_rfchipid) {
+	case RTW_RFCHIPID_PHILIPS:
+		return rtw_sa2400_tune(sc, freq);
+	case RTW_RFCHIPID_MAXIM2820:
+		return rtw_max2820_tune(sc, freq);
+	case RTW_RFCHIPID_RTL8225:
+		return rtw_rtl8225_tune(sc, freq);
+	case RTW_RFCHIPID_RTL8255:
+		return rtw_rtl8255_tune(sc, freq);
+	default:
+		return (1);	
+	}
 }
 
 int
-rtw_rf_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+rtw_rf_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 {
-	return (*rf->rf_txpower)(rf, opaque_txpower);
+	switch (sc->sc_rfchipid) {
+	case RTW_RFCHIPID_PHILIPS:
+		return rtw_sa2400_txpower(sc, opaque_txpower);
+	case RTW_RFCHIPID_MAXIM2820:
+		return rtw_max2820_txpower(sc, opaque_txpower);
+	case RTW_RFCHIPID_RTL8225:
+		return rtw_rtl8225_txpower(sc, opaque_txpower);
+	case RTW_RFCHIPID_RTL8255:
+		return rtw_rtl8255_txpower(sc, opaque_txpower);
+	default:
+		return (1);	
+	}
 }
 
 int
-rtw_rfbus_write(struct rtw_rfbus *bus, enum rtw_rfchipid rfchipid, u_int addr,
-    u_int32_t val)
+rtw_rfbus_write(struct rtw_softc *sc, int rfchipid, u_int addr, u_int32_t val)
 {
-	return (*bus->b_write)(bus->b_regs, rfchipid, addr, val);
+	return (*sc->sc_rf_write)(&(sc->sc_regs), rfchipid, addr, val);
 }
 
 /*
@@ -3966,12 +3984,9 @@ rtw_bbp_init(struct rtw_regs *regs, struct rtw_bbpset *bb, int antdiv,
 }
 
 int
-rtw_sa2400_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+rtw_sa2400_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 {
-	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
-	struct rtw_rfbus *bus = &sa->sa_bus;
-
-	return rtw_rfbus_write(bus, RTW_RFCHIPID_PHILIPS, SA2400_TX,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_TX,
 	    opaque_txpower);
 }
 
@@ -4030,10 +4045,8 @@ rtw_verify_syna(u_int freq, u_int32_t val)
 
 /* freq is in MHz */
 int
-rtw_sa2400_tune(struct rtw_rf *rf, u_int freq)
+rtw_sa2400_tune(struct rtw_softc *sc, u_int freq)
 {
-	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
-	struct rtw_rfbus *bus = &sa->sa_bus;
 	int rc;
 	u_int32_t syna, synb, sync;
 
@@ -4057,23 +4070,21 @@ rtw_sa2400_tune(struct rtw_rf *rf, u_int freq)
 
 	sync = SA2400_SYNC_CP_NORMAL;
 
-	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_PHILIPS, SA2400_SYNA,
+	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_SYNA,
 	    syna)) != 0)
 		return rc;
-	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_PHILIPS, SA2400_SYNB,
+	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_SYNB,
 	    synb)) != 0)
 		return rc;
-	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_PHILIPS, SA2400_SYNC,
+	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_SYNC,
 	    sync)) != 0)
 		return rc;
-	return rtw_rfbus_write(bus, RTW_RFCHIPID_PHILIPS, SA2400_SYND, 0x0);
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_SYND, 0x0);
 }
 
 int
-rtw_sa2400_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+rtw_sa2400_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
-	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
-	struct rtw_rfbus *bus = &sa->sa_bus;
 	u_int32_t opmode;
 	opmode = SA2400_OPMODE_DEFAULTS;
 	switch (power) {
@@ -4088,15 +4099,15 @@ rtw_sa2400_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
 		break;
 	}
 
-	if (sa->sa_digphy)
+	if (sc->sc_flags & RTW_F_DIGPHY)
 		opmode |= SA2400_OPMODE_DIGIN;
 
-	return rtw_rfbus_write(bus, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
 	    opmode);
 }
 
 int
-rtw_sa2400_manrx_init(struct rtw_sa2400 *sa)
+rtw_sa2400_manrx_init(struct rtw_softc *sc)
 {
 	u_int32_t manrx;
 
@@ -4107,12 +4118,12 @@ rtw_sa2400_manrx_init(struct rtw_sa2400 *sa)
 	manrx |= SA2400_MANRX_TEN;
 	manrx |= LSHIFT(1023, SA2400_MANRX_RXGAIN_MASK);
 
-	return rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_MANRX,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_MANRX,
 	    manrx);
 }
 
 int
-rtw_sa2400_vcocal_start(struct rtw_sa2400 *sa, int start)
+rtw_sa2400_vcocal_start(struct rtw_softc *sc, int start)
 {
 	u_int32_t opmode;
 
@@ -4122,50 +4133,49 @@ rtw_sa2400_vcocal_start(struct rtw_sa2400 *sa, int start)
 	else
 		opmode |= SA2400_OPMODE_MODE_SLEEP;
 
-	if (sa->sa_digphy)
+	if (sc->sc_flags & RTW_F_DIGPHY)
 		opmode |= SA2400_OPMODE_DIGIN;
 
-	return rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
 	    opmode);
 }
 
 int
-rtw_sa2400_vco_calibration(struct rtw_sa2400 *sa)
+rtw_sa2400_vco_calibration(struct rtw_softc *sc)
 {
 	int rc;
 	/* calibrate VCO */
-	if ((rc = rtw_sa2400_vcocal_start(sa, 1)) != 0)
+	if ((rc = rtw_sa2400_vcocal_start(sc, 1)) != 0)
 		return rc;
 	DELAY(2200);	/* 2.2 milliseconds */
 	/* XXX superfluous: SA2400 automatically entered SLEEP mode. */
-	return rtw_sa2400_vcocal_start(sa, 0);
+	return rtw_sa2400_vcocal_start(sc, 0);
 }
 
 int
-rtw_sa2400_filter_calibration(struct rtw_sa2400 *sa)
+rtw_sa2400_filter_calibration(struct rtw_softc *sc)
 {
 	u_int32_t opmode;
 
 	opmode = SA2400_OPMODE_DEFAULTS | SA2400_OPMODE_MODE_FCALIB;
-	if (sa->sa_digphy)
+	if (sc->sc_flags & RTW_F_DIGPHY)
 		opmode |= SA2400_OPMODE_DIGIN;
 
-	return rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
 	    opmode);
 }
 
 int
-rtw_sa2400_dc_calibration(struct rtw_sa2400 *sa)
+rtw_sa2400_dc_calibration(struct rtw_softc *sc)
 {
-	struct rtw_rf *rf = &sa->sa_rf;
 	int rc;
 	u_int32_t dccal;
 
-	(*rf->rf_continuous_tx_cb)(rf->rf_continuous_tx_arg, 1);
+	rtw_continuous_tx_enable(sc, 1);
 
 	dccal = SA2400_OPMODE_DEFAULTS | SA2400_OPMODE_MODE_TXRX;
 
-	rc = rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
+	rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
 	    dccal);
 	if (rc != 0)
 		return rc;
@@ -4177,20 +4187,20 @@ rtw_sa2400_dc_calibration(struct rtw_sa2400 *sa)
 	dccal &= ~SA2400_OPMODE_MODE_MASK;
 	dccal |= SA2400_OPMODE_MODE_DCALIB;
 
-	rc = rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
+	rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
 	    dccal);
 	if (rc != 0)
 		return rc;
 
 	DELAY(20);	/* calibration takes at most 20 microseconds */
 
-	(*rf->rf_continuous_tx_cb)(rf->rf_continuous_tx_arg, 0);
+	rtw_continuous_tx_enable(sc, 0);
 
 	return 0;
 }
 
 int
-rtw_sa2400_agc_init(struct rtw_sa2400 *sa)
+rtw_sa2400_agc_init(struct rtw_softc *sc)
 {
 	u_int32_t agc;
 
@@ -4199,96 +4209,66 @@ rtw_sa2400_agc_init(struct rtw_sa2400 *sa)
 	agc |= LSHIFT(15, SA2400_AGC_LNADELAY_MASK);
 	agc |= LSHIFT(27, SA2400_AGC_RXONDELAY_MASK);
 
-	return rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_AGC,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_AGC,
 	    agc);
 }
 
-void
-rtw_sa2400_destroy(struct rtw_rf *rf)
-{
-	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
-	bzero(sa, sizeof(*sa));
-	free(sa, M_DEVBUF);
-}
-
 int
-rtw_sa2400_calibrate(struct rtw_rf *rf, u_int freq)
+rtw_sa2400_calibrate(struct rtw_softc *sc, u_int freq)
 {
-	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
 	int i, rc;
 
 	/* XXX reference driver calibrates VCO twice. Is it a bug? */
 	for (i = 0; i < 2; i++) {
-		if ((rc = rtw_sa2400_vco_calibration(sa)) != 0)
+		if ((rc = rtw_sa2400_vco_calibration(sc)) != 0)
 			return rc;
 	}
 	/* VCO calibration erases synthesizer registers, so re-tune */
-	if ((rc = rtw_sa2400_tune(rf, freq)) != 0)
+	if ((rc = rtw_sa2400_tune(sc, freq)) != 0)
 		return rc;
-	if ((rc = rtw_sa2400_filter_calibration(sa)) != 0)
+	if ((rc = rtw_sa2400_filter_calibration(sc)) != 0)
 		return rc;
 	/* analog PHY needs DC calibration */
-	if (!sa->sa_digphy)
-		return rtw_sa2400_dc_calibration(sa);
+	if (!(sc->sc_flags & RTW_F_DIGPHY))
+		return rtw_sa2400_dc_calibration(sc);
 	return 0;
 }
 
 int
-rtw_sa2400_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+rtw_sa2400_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
-	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
 	int rc;
 
-	if ((rc = rtw_sa2400_txpower(rf, opaque_txpower)) != 0)
+	if ((rc = rtw_sa2400_txpower(sc, opaque_txpower)) != 0)
 		return rc;
 
 	/* skip configuration if it's time to sleep or to power-down. */
 	if (power == RTW_SLEEP || power == RTW_OFF)
-		return rtw_sa2400_pwrstate(rf, power);
+		return rtw_sa2400_pwrstate(sc, power);
 
 	/* go to sleep for configuration */
-	if ((rc = rtw_sa2400_pwrstate(rf, RTW_SLEEP)) != 0)
+	if ((rc = rtw_sa2400_pwrstate(sc, RTW_SLEEP)) != 0)
 		return rc;
 
-	if ((rc = rtw_sa2400_tune(rf, freq)) != 0)
+	if ((rc = rtw_sa2400_tune(sc, freq)) != 0)
 		return rc;
-	if ((rc = rtw_sa2400_agc_init(sa)) != 0)
+	if ((rc = rtw_sa2400_agc_init(sc)) != 0)
 		return rc;
-	if ((rc = rtw_sa2400_manrx_init(sa)) != 0)
+	if ((rc = rtw_sa2400_manrx_init(sc)) != 0)
 		return rc;
 
-	if ((rc = rtw_sa2400_calibrate(rf, freq)) != 0)
+	if ((rc = rtw_sa2400_calibrate(sc, freq)) != 0)
 		return rc;
 
 	/* enter Tx/Rx mode */
-	return rtw_sa2400_pwrstate(rf, power);
+	return rtw_sa2400_pwrstate(sc, power);
 }
 
-struct rtw_rf *
-rtw_sa2400_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
+int
+rtw_sa2400_create(struct rtw_softc *sc)
 {
-	struct rtw_sa2400 *sa;
-	struct rtw_rfbus *bus;
-	struct rtw_rf *rf;
-	struct rtw_bbpset *bb;
-
-	sa = malloc(sizeof(*sa), M_DEVBUF, M_NOWAIT);
-	if (sa == NULL)
-		return NULL;
-	bzero(sa, sizeof(struct rtw_sa2400));
-
-	sa->sa_digphy = digphy;
-
-	rf = &sa->sa_rf;
-	bus = &sa->sa_bus;
-
-	rf->rf_init = rtw_sa2400_init;
-	rf->rf_destroy = rtw_sa2400_destroy;
-	rf->rf_txpower = rtw_sa2400_txpower;
-	rf->rf_tune = rtw_sa2400_tune;
-	rf->rf_pwrstate = rtw_sa2400_pwrstate;
-	bb = &rf->rf_bbpset;
+	struct rtw_bbpset *bb = &sc->sc_bbpset;
 
 	/* XXX magic */
 	bb->bb_antatten = RTW_BBP_ANTATTEN_PHILIPS_MAGIC;
@@ -4304,93 +4284,72 @@ rtw_sa2400_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
 	bb->bb_trl =		0x88;
 	bb->bb_txagc =		0x38;
 
-	bus->b_regs = regs;
-	bus->b_write = rf_write;
-
-	return &sa->sa_rf;
+	return (0);
 }
 
 /* freq is in MHz */
 int
-rtw_max2820_tune(struct rtw_rf *rf, u_int freq)
+rtw_max2820_tune(struct rtw_softc *sc, u_int freq)
 {
-	struct rtw_max2820 *mx = (struct rtw_max2820 *)rf;
-	struct rtw_rfbus *bus = &mx->mx_bus;
-
 	if (freq < 2400 || freq > 2499)
 		return -1;
 
-	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820, MAX2820_CHANNEL,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_CHANNEL,
 	    LSHIFT(freq - 2400, MAX2820_CHANNEL_CF_MASK));
 }
 
-void
-rtw_max2820_destroy(struct rtw_rf *rf)
-{
-	struct rtw_max2820 *mx = (struct rtw_max2820 *)rf;
-	bzero(mx, sizeof(*mx));
-	free(mx, M_DEVBUF);
-}
-
 int
-rtw_max2820_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+rtw_max2820_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
-	struct rtw_max2820 *mx = (struct rtw_max2820 *)rf;
-	struct rtw_rfbus *bus = &mx->mx_bus;
 	int rc;
 
-	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820, MAX2820_TEST,
+	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_TEST,
 	    MAX2820_TEST_DEFAULT)) != 0)
 		return rc;
 
-	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820, MAX2820_ENABLE,
+	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_ENABLE,
 	    MAX2820_ENABLE_DEFAULT)) != 0)
 		return rc;
 
 	/* skip configuration if it's time to sleep or to power-down. */
-	if ((rc = rtw_max2820_pwrstate(rf, power)) != 0)
+	if ((rc = rtw_max2820_pwrstate(sc, power)) != 0)
 		return rc;
 	else if (power == RTW_OFF || power == RTW_SLEEP)
 		return 0;
 
-	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820, MAX2820_SYNTH,
+	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_SYNTH,
 	    MAX2820_SYNTH_R_44MHZ)) != 0)
 		return rc;
 
-	if ((rc = rtw_max2820_tune(rf, freq)) != 0)
+	if ((rc = rtw_max2820_tune(sc, freq)) != 0)
 		return rc;
 
 	/* XXX The MAX2820 datasheet indicates that 1C and 2C should not
 	 * be changed from 7, however, the reference driver sets them
 	 * to 4 and 1, respectively.
 	 */
-	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820, MAX2820_RECEIVE,
+	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_RECEIVE,
 	    MAX2820_RECEIVE_DL_DEFAULT |
 	    LSHIFT(4, MAX2820A_RECEIVE_1C_MASK) |
 	    LSHIFT(1, MAX2820A_RECEIVE_2C_MASK))) != 0)
 		return rc;
 
-	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820, MAX2820_TRANSMIT,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_TRANSMIT,
 	    MAX2820_TRANSMIT_PA_DEFAULT);
 }
 
 int
-rtw_max2820_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+rtw_max2820_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 {
 	/* TBD */
 	return 0;
 }
 
 int
-rtw_max2820_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+rtw_max2820_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
 	uint32_t enable;
-	struct rtw_max2820 *mx;
-	struct rtw_rfbus *bus;
-
-	mx = (struct rtw_max2820 *)rf;
-	bus = &mx->mx_bus;
 
 	switch (power) {
 	case RTW_OFF:
@@ -4402,34 +4361,14 @@ rtw_max2820_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
 		enable = MAX2820_ENABLE_DEFAULT;
 		break;
 	}
-	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM2820,
+	return rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820,
 	    MAX2820_ENABLE, enable);
 }
 
-struct rtw_rf *
-rtw_max2820_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int is_a)
+int
+rtw_max2820_create(struct rtw_softc *sc)
 {
-	struct rtw_max2820 *mx;
-	struct rtw_rfbus *bus;
-	struct rtw_rf *rf;
-	struct rtw_bbpset *bb;
-
-	mx = malloc(sizeof(*mx), M_DEVBUF, M_NOWAIT);
-	if (mx == NULL)
-		return NULL;
-	bzero(mx, sizeof(struct rtw_max2820));
-
-	mx->mx_is_a = is_a;
-
-	rf = &mx->mx_rf;
-	bus = &mx->mx_bus;
-
-	rf->rf_init = rtw_max2820_init;
-	rf->rf_destroy = rtw_max2820_destroy;
-	rf->rf_txpower = rtw_max2820_txpower;
-	rf->rf_tune = rtw_max2820_tune;
-	rf->rf_pwrstate = rtw_max2820_pwrstate;
-	bb = &rf->rf_bbpset;
+	struct rtw_bbpset *bb = &sc->sc_bbpset;
 
 	/* XXX magic */
 	bb->bb_antatten = RTW_BBP_ANTATTEN_MAXIM_MAGIC;
@@ -4445,164 +4384,105 @@ rtw_max2820_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int is_a)
 	bb->bb_trl =		136;
 	bb->bb_txagc =		8;
 
-	bus->b_regs = regs;
-	bus->b_write = rf_write;
-
-	return &mx->mx_rf;
+	return (0);
 }
 
 int
-rtw_rtl8225_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+rtw_rtl8225_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
 	return (0);
 }
 
-void
-rtw_rtl8225_destroy(struct rtw_rf *rf)
-{
-	struct rtw_rtl8225 *rt = (struct rtw_rtl8225 *)rf;
-	bzero(rt, sizeof(*rt));
-	free(rt, M_DEVBUF);
-}
-
 int
-rtw_rtl8225_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+rtw_rtl8225_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
 	return (0);
 }
 
 int
-rtw_rtl8225_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+rtw_rtl8225_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 {
 	return (0);
 }
 
 int
-rtw_rtl8225_tune(struct rtw_rf *rf, u_int freq)
+rtw_rtl8225_tune(struct rtw_softc *sc, u_int freq)
 {
 	return (0);
 }
 
-struct rtw_rf *
-rtw_rtl8225_create(struct rtw_regs *regs, rtw_rf_write_t rf_write)
-{
-	struct rtw_rtl8225 *rt;
-	struct rtw_rfbus *bus;
-	struct rtw_rf *rf;
-	struct rtw_bbpset *bb;
-
-	rt = malloc(sizeof(*rt), M_DEVBUF, M_NOWAIT);
-	if (rt == NULL)
-		return NULL;
-	bzero(rt, sizeof(struct rtw_rtl8225));
-
-	rf = &rt->rt_rf;
-	bus = &rt->rt_bus;
-
-	rf->rf_init = rtw_rtl8225_init;
-	rf->rf_destroy = rtw_rtl8225_destroy;
-	rf->rf_txpower = rtw_rtl8225_txpower;
-	rf->rf_tune = rtw_rtl8225_tune;
-	rf->rf_pwrstate = rtw_rtl8225_pwrstate;
-	bb = &rf->rf_bbpset;
-
-	bus->b_regs = regs;
-	bus->b_write = rf_write;
-
-	return (&rt->rt_rf);
-}
-
 int
-rtw_rtl8255_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
+rtw_rtl8225_create(struct rtw_softc *sc)
 {
 	return (0);
 }
 
-void
-rtw_rtl8255_destroy(struct rtw_rf *rf)
+int
+rtw_rtl8255_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
-	struct rtw_rtl8255 *rt = (struct rtw_rtl8255 *)rf;
-	bzero(rt, sizeof(*rt));
-	free(rt, M_DEVBUF);
+	return (0);
 }
 
 int
-rtw_rtl8255_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+rtw_rtl8255_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
 	return (0);
 }
 
 int
-rtw_rtl8255_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+rtw_rtl8255_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 {
 	return (0);
 }
 
 int
-rtw_rtl8255_tune(struct rtw_rf *rf, u_int freq)
+rtw_rtl8255_tune(struct rtw_softc *sc, u_int freq)
 {
 	return (0);
 }
 
-struct rtw_rf *
-rtw_rtl8255_create(struct rtw_regs *regs, rtw_rf_write_t rf_write)
+int
+rtw_rtl8255_create(struct rtw_softc *sc)
 {
-	struct rtw_rtl8255 *rt;
-	struct rtw_rfbus *bus;
-	struct rtw_rf *rf;
-	struct rtw_bbpset *bb;
-
-	rt = malloc(sizeof(*rt), M_DEVBUF, M_NOWAIT);
-	if (rt == NULL)
-		return NULL;
-	bzero(rt, sizeof(struct rtw_rtl8255));
-
-	rf = &rt->rt_rf;
-	bus = &rt->rt_bus;
-
-	rf->rf_init = rtw_rtl8255_init;
-	rf->rf_destroy = rtw_rtl8255_destroy;
-	rf->rf_txpower = rtw_rtl8255_txpower;
-	rf->rf_tune = rtw_rtl8255_tune;
-	rf->rf_pwrstate = rtw_rtl8255_pwrstate;
-	bb = &rf->rf_bbpset;
-
-	bus->b_regs = regs;
-	bus->b_write = rf_write;
-
-	return (&rt->rt_rf);
+	return(0);
 }
 
-/* freq is in MHz */
 int
-rtw_phy_init(struct rtw_regs *regs, struct rtw_rf *rf, u_int8_t opaque_txpower,
-    u_int8_t cs_threshold, u_int freq, int antdiv, int dflantb,
-    enum rtw_pwrstate power)
+rtw_phy_init(struct rtw_softc *sc)
 {
 	int rc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct rtw_regs *regs = &sc->sc_regs;
+	int antdiv = sc->sc_flags & RTW_F_ANTDIV;
+	int dflantb = sc->sc_flags & RTW_F_DFLANTB;
+	u_int freq = ic->ic_bss->ni_chan->ic_freq;	/* freq is in MHz */
+	u_int8_t opaque_txpower = rtw_chan2txpower(&sc->sc_srom, ic, ic->ic_bss->ni_chan);
+	u_int8_t cs_threshold = sc->sc_csthr;
+	enum rtw_pwrstate power = RTW_ON;
+
 	RTW_DPRINTF(RTW_DEBUG_PHY,
 	    ("%s: txpower %u csthresh %u freq %u antdiv %u dflantb %u "
 	     "pwrstate %s\n", __func__, opaque_txpower, cs_threshold, freq,
 	     antdiv, dflantb, rtw_pwrstate_string(power)));
 
 	/* XXX is this really necessary? */
-	if ((rc = rtw_rf_txpower(rf, opaque_txpower)) != 0)
+	if ((rc = rtw_rf_txpower(sc, opaque_txpower)) != 0)
 		return rc;
-	if ((rc = rtw_bbp_preinit(regs, rf->rf_bbpset.bb_antatten, dflantb,
+	if ((rc = rtw_bbp_preinit(regs, sc->sc_bbpset.bb_antatten, dflantb,
 	    freq)) != 0)
 		return rc;
-	if ((rc = rtw_rf_tune(rf, freq)) != 0)
+	if ((rc = rtw_rf_tune(sc, freq)) != 0)
 		return rc;
 	/* initialize RF  */
-	if ((rc = rtw_rf_init(rf, freq, opaque_txpower, power)) != 0)
+	if ((rc = rtw_rf_init(sc, freq, opaque_txpower, power)) != 0)
 		return rc;
 #if 0	/* what is this redundant tx power setting here for? */
-	if ((rc = rtw_rf_txpower(rf, opaque_txpower)) != 0)
+	if ((rc = rtw_rf_txpower(sc, opaque_txpower)) != 0)
 		return rc;
 #endif
-	return rtw_bbp_init(regs, &rf->rf_bbpset, antdiv, dflantb,
+	return rtw_bbp_init(regs, &sc->sc_bbpset, antdiv, dflantb,
 	    cs_threshold, freq);
 }
 
@@ -4844,7 +4724,7 @@ rtw_grf5101_mac_crypt(u_int addr, u_int32_t val)
 }
 
 const char *
-rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
+rtw_rfchipid_string(int rfchipid)
 {
 	switch (rfchipid) {
 	case RTW_RFCHIPID_MAXIM2820:
@@ -4868,8 +4748,7 @@ rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
 
 /* Bang bits over the 3-wire interface. */
 int
-rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    u_int addr, u_int32_t val)
+rtw_rf_hostwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
 {
 	u_int nbits;
 	int lo_to_hi;
@@ -4944,8 +4823,7 @@ rtw_maxim_swizzle(u_int addr, u_int32_t val)
 
 /* Tell the MAC what to bang over the 3-wire interface. */
 int
-rtw_rf_macwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    u_int addr, u_int32_t val)
+rtw_rf_macwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
 {
 	u_int32_t reg;
 

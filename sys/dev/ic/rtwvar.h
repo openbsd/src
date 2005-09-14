@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.13 2005/06/15 01:33:50 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.14 2005/09/14 23:20:17 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -95,19 +95,17 @@ enum rtw_locale {
 	RTW_LOCALE_UNKNOWN
 };
 
-enum rtw_rfchipid {
-	RTW_RFCHIPID_RESERVED	= 0x00,
-	RTW_RFCHIPID_INTERSIL	= 0x01,
-	RTW_RFCHIPID_RFMD2948	= 0x02,
-	RTW_RFCHIPID_PHILIPS	= 0x03,
-	RTW_RFCHIPID_MAXIM2820	= 0x04,
-	RTW_RFCHIPID_GCT	= 0x05,
-	RTW_RFCHIPID_RFMD2958	= 0x06,
-	RTW_RFCHIPID_MAXIM2822	= 0x07,
-	RTW_RFCHIPID_MAXIM2825	= 0x08,
-	RTW_RFCHIPID_RTL8225	= 0x09,
-	RTW_RFCHIPID_RTL8255	= 0x0a
-};
+#define	RTW_RFCHIPID_RESERVED	0x00
+#define	RTW_RFCHIPID_INTERSIL	0x01
+#define	RTW_RFCHIPID_RFMD2948	0x02
+#define	RTW_RFCHIPID_PHILIPS	0x03
+#define	RTW_RFCHIPID_MAXIM2820	0x04
+#define	RTW_RFCHIPID_GCT	0x05
+#define	RTW_RFCHIPID_RFMD2958	0x06
+#define	RTW_RFCHIPID_MAXIM2822	0x07
+#define	RTW_RFCHIPID_MAXIM2825	0x08
+#define	RTW_RFCHIPID_RTL8225	0x09
+#define	RTW_RFCHIPID_RTL8255	0x0a
 
 /* sc_flags */
 #define RTW_F_ENABLED		0x00000001	/* chip is enabled */
@@ -299,8 +297,6 @@ struct rtw_mtbl {
 
 enum rtw_pwrstate { RTW_OFF = 0, RTW_SLEEP, RTW_ON };
 
-typedef void (*rtw_continuous_tx_cb_t)(void *arg, int);
-
 struct rtw_phy {
 	struct rtw_rf	*p_rf;
 	struct rtw_regs	*p_regs;
@@ -321,58 +317,8 @@ struct rtw_bbpset {
 	u_int	bb_txagc;
 };
 
-struct rtw_rf {
-	void	(*rf_destroy)(struct rtw_rf *);
-	/* args: frequency, txpower, power state */
-	int	(*rf_init)(struct rtw_rf *, u_int, u_int8_t,
-		    enum rtw_pwrstate);
-	/* arg: power state */
-	int	(*rf_pwrstate)(struct rtw_rf *, enum rtw_pwrstate);
-	/* arg: frequency */
-	int	(*rf_tune)(struct rtw_rf *, u_int);
-	/* arg: txpower */
-	int	(*rf_txpower)(struct rtw_rf *, u_int8_t);
-	rtw_continuous_tx_cb_t	rf_continuous_tx_cb;
-	void			*rf_continuous_tx_arg;
-	struct rtw_bbpset	rf_bbpset;
-};
-
-typedef int (*rtw_rf_write_t)(struct rtw_regs *, enum rtw_rfchipid, u_int,
+typedef int (*rtw_rf_write_t)(struct rtw_regs *, int, u_int,
     u_int32_t);
-
-struct rtw_rfbus {
-	struct rtw_regs		*b_regs;
-	rtw_rf_write_t		b_write;
-};
-
-void rtw_rf_destroy(struct rtw_rf *);
-int rtw_rf_init(struct rtw_rf *, u_int, u_int8_t, enum rtw_pwrstate);
-int rtw_rf_pwrstate(struct rtw_rf *, enum rtw_pwrstate);
-int rtw_rf_tune(struct rtw_rf *, u_int);
-int rtw_rf_txpower(struct rtw_rf *, u_int8_t);
-int rtw_rfbus_write(struct rtw_rfbus *, enum rtw_rfchipid, u_int, u_int32_t);
-
-struct rtw_max2820 {
-	struct rtw_rf		mx_rf;
-	struct rtw_rfbus	mx_bus;
-	int			mx_is_a;	/* 1: MAX2820A/MAX2821A */
-};
-
-struct rtw_sa2400 {
-	struct rtw_rf		sa_rf;
-	struct rtw_rfbus	sa_bus;
-	int			sa_digphy;	/* 1: digital PHY */
-};
-
-struct rtw_rtl8225 {
-	struct rtw_rf		rt_rf;
-	struct rtw_rfbus	rt_bus;
-};
-
-struct rtw_rtl8255 {
-	struct rtw_rf		rt_rf;
-	struct rtw_rfbus	rt_bus;
-};
 
 typedef void (*rtw_pwrstate_t)(struct rtw_regs *, enum rtw_pwrstate, int, int);
 
@@ -407,9 +353,11 @@ struct rtw_softc {
 	u_int32_t		sc_flags;
 
 	enum rtw_attach_state	sc_attach_state;
-	enum rtw_rfchipid	sc_rfchipid;
+	int			sc_rfchipid;
 	enum rtw_locale		sc_locale;
 	u_int8_t		sc_phydelay;
+	struct rtw_bbpset       sc_bbpset;
+	rtw_rf_write_t		sc_rf_write;
 
 	/* s/w Tx/Rx descriptors */
 	struct rtw_txsoft_blk	sc_txsoft_blk[RTW_NTXPRI];
@@ -430,8 +378,6 @@ struct rtw_softc {
 	enum rtw_pwrstate	sc_pwrstate;
 
 	rtw_pwrstate_t		sc_pwrstate_cb;
-
-	struct rtw_rf		*sc_rf;
 
 	u_int16_t		sc_inten;
 
