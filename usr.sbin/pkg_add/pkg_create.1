@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.24 2004/12/01 12:17:40 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.25 2005/09/14 10:38:02 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -559,6 +559,23 @@ directives may be used if the package depends on multiple other packages.
 Deprecated, use
 .Cm @depend
 instead.
+.Pp
+.It Cm @pkgpath Ar pkgpath
+Declare an extra
+.Ar pkgpath
+for the package.
+This is used for updates:
+.Nm pkg_add
+.Fl u
+normally checks that the
+.Ar pkgpath
+embedded in the package corresponds to the old package,
+to solve ambiguities when packages with similar names are involved.
+When ports get renamed, or flavors change, extra
+.Cm @pkgpath
+annotations can help
+.Nm pkg_add
+get a sense of continuity.
 .Pp
 .It Cm @sample Ar filename
 Last preceding
