@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.103 2005/08/23 02:25:54 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.104 2005/09/14 06:37:59 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Sun Blade 100/150
 	Sun Fire V100
@@ -287,11 +287,15 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    Z-Com M4Y-750
 		Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
 		  (will be detected as PCMCIA adapters)
+		    AmbiCom WL1100C-CF
+		    ASUS WL-110
+		    Belkin F5D6060 (version 1)
 		    Buffalo AirStation
 		    D-Link DCF-660W
 		    ELSA XI800
 		    Linksys WCF12
 		    Netgear MA701
+		    Senao NL-2511CF
 		Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
 		  based PCMCIA IEEE 802.11b adapters
 		    3Com AirConnect 3CRWE737A

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.14 2005/08/30 18:38:54 uwe Exp $
+dnl	$OpenBSD: hardware,v 1.15 2005/09/14 06:37:59 jsg Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus C3000 and C3100 only, at
 the moment. Support for the C760 and C860 is under development.
@@ -177,6 +177,7 @@ Supported devices {:-include-:}:
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
 		Intersil PRISM 2-3 based IEEE 802.11b Compact Flash adapters
+		    AmbiCom WL1100C-CF
 		    ASUS WL-110
 		    Belkin F5D6060 (version 1)
 		    Buffalo AirStation

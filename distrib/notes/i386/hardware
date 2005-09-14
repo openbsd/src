@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.220 2005/09/14 06:14:44 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.221 2005/09/14 06:37:59 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -614,11 +614,15 @@ Supported hardware {:-include-:}:
 		  IEEE 802.11a/b/g adapters [G]
 		Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
 		(will be detected as PCMCIA adapters) [A] [B]
+		    AmbiCom WL1100C-CF
+		    ASUS WL-110
+		    Belkin F5D6060 (version 1)
 		    Buffalo AirStation
 		    D-Link DCF-660W
 		    ELSA XI800
 		    Linksys WCF12
 		    Netgear MA701
+		    Senao NL-2511CF
 		Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
 		  based PCMCIA IEEE 802.11b adapters [A] [B]
 		    3Com AirConnect 3CRWE737A

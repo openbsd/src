@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.69 2005/04/27 03:07:16 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.70 2005/09/14 06:37:59 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original SPARC with VME. Many hardware bugs.
@@ -174,11 +174,15 @@ Supported devices {:-include-:}:
 	- Wireless Ethernet adapters (wi)
 	  + Intersil PRISM-2-3 based IEEE 802.11b Compact Flash adapters
 	    (will be detected as PCMCIA adapters)
+	      AmbiCom WL1100C-CF
+	      ASUS WL-110
+	      Belkin F5D6060 (version 1)
 	      Buffalo AirStation
 	      D-Link DCF-660W
 	      ELSA XI800
 	      Linksys WCF12
 	      Netgear MA701
+	      Senao NL-2511CF
 	  + Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
 	    based PCMCIA IEEE 802.11b adapters
 	      3Com AirConnect 3CRWE737A
