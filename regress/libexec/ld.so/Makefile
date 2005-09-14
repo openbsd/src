@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 2004/07/20 07:09:26 david Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/09/14 16:05:08 kurt Exp $
 
-SUBDIR+= elf weak
+SUBDIR+= elf weak dlsym
 #SUBDIR+= constructor link-order
 
 install:
