@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.91 2005/07/18 14:55:49 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.92 2005/09/14 05:38:48 marco Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1537,7 +1537,7 @@ NENTRY(remrunqueue)
 #endif /* DIAGNOSTIC */
 
 #if NAPM > 0
-	.globl _C_LABEL(apm_cpu_idle),_C_LABEL(apm_cpu_busy),_C_LABEL(apm_dobusy)
+	.globl _C_LABEL(apm_cpu_idle),_C_LABEL(apm_cpu_busy)
 #endif
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
