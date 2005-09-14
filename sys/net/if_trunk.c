@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.6 2005/09/11 16:17:01 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.7 2005/09/14 08:07:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -613,6 +613,8 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&tr->tr_ac, ifa);
 #endif /* INET */
+
+		error = ENETRESET;
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > ETHERMTU) {
@@ -622,10 +624,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP)
-			ifp->if_flags |= IFF_RUNNING;
-		else
-			ifp->if_flags &= ~IFF_RUNNING;
+		error = ENETRESET;
 		break;
 	case SIOCADDMULTI:
 		error = trunk_ether_addmulti(tr, ifr);
@@ -640,6 +639,19 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		error = EINVAL;
 		break;
+	}
+
+	if (error == ENETRESET) {
+		/*
+		 * We don't need a trunk init at this point but we mark the
+		 * interface as up and running or remove the running flag
+		 * if it's down.
+		 */
+		if (ifp->if_flags & IFF_UP)
+			ifp->if_flags |= IFF_RUNNING;
+		else
+			ifp->if_flags &= ~IFF_RUNNING;
+		error = 0;
 	}
 
  out:
