@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.3 2005/04/27 14:07:09 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.4 2005/09/15 21:07:04 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -128,6 +128,7 @@ typedef u_int32_t	pt_entry_t;
 #define	PG_PROT		0x00000004
 #define	PG_U		0x00000008
 #define	PG_M		0x00000010
+#define	PG_M_U		0x00000018
 #define	PG_RO		0x00000004
 #define	PG_RW		0x00000000
 #define	PG_SO		0x00000100

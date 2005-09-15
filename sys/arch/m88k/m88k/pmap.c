@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2005/09/06 19:21:57 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 2005/09/15 21:07:05 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1117,7 +1117,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 	 * Invalidate the pte.
 	 */
 
-	opte = invalidate_pte(pte) & (PG_U | PG_M);
+	opte = invalidate_pte(pte) & PG_M_U;
 	flush_atc_entry(users, va, kflush);
 
 	pg = PHYS_TO_VM_PAGE(pa);
@@ -1746,7 +1746,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		template |= CACHE_GLOBAL;
 
 	if (flags & VM_PROT_WRITE)
-		template |= PG_U | PG_M;
+		template |= PG_M_U;
 	else if (flags & VM_PROT_ALL)
 		template |= PG_U;
 
@@ -1755,7 +1755,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * back the modified bit and/or the reference bit by
 	 * any other cpu.
 	 */
-	template |= invalidate_pte(pte) & (PG_U | PG_M);
+	template |= invalidate_pte(pte) & PG_M_U;
 	*pte = template | pa;
 	flush_atc_entry(users, va, kflush);
 #ifdef DEBUG
@@ -1767,7 +1767,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Cache attribute flags
 	 */
 	if (pvl != NULL)
-		pvl->pv_flags |= (template & (PG_U | PG_M));
+		pvl->pv_flags |= template & PG_M_U;
 
 	PMAP_UNLOCK(pmap, spl);
 
