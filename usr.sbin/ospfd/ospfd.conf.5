@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.10 2005/05/24 20:38:20 claudio Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.11 2005/09/15 20:24:46 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -164,7 +164,8 @@ If the auth-type is set to crypt, up to 16 characters can be specified.
 Multiple keys may be specified.
 .It Ic auth-md-keyid Ar key-id
 Configure which key-id to use when using crypt authentication.
-The default key-id is 0.
+The default key-id is 1.
+While key-id 0 is valid, it is unavailable on Cisco devices.
 .It Xo
 .Ic auth-type
 .Po Ic none Ns \&| Ns
