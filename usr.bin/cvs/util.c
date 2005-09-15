@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.51 2005/09/05 19:29:42 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.52 2005/09/15 17:01:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -419,13 +419,17 @@ cvs_freeargv(char **argv, int argc)
  * Returns 0 on success, or -1 on failure.
  */
 int
-cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath)
+cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
+    char *tag, char *date, int nb)
 {
 	size_t l;
 	char path[MAXPATHLEN];
 	FILE *fp;
 	CVSENTRIES *ef;
 	struct stat st;
+
+	cvs_log(LP_TRACE, "cvs_mkadmin(%s, %s, %s, %s, %s, %d)",
+	    dpath, rootpath, repopath, tag ? tag : "", date ? date : "", nb);
 
 	l = cvs_path_cat(dpath, CVS_PATH_CVSDIR, path, sizeof(path));
 	if (l >= sizeof(path))
@@ -470,6 +474,9 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath)
 			fprintf(fp, "%s\n", repopath);
 		(void)fclose(fp);
 	}
+
+	/* create CVS/Tag file (if needed) */
+	(void)cvs_write_tagfile(tag, date, nb);
 
 	return (0);
 }
@@ -674,7 +681,7 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 			if (l >= sizeof(rpath))
 				goto done;
 
-			if (cvs_mkadmin(d, root, rpath) < 0) {
+			if (cvs_mkadmin(d, root, rpath, NULL, NULL, 0) < 0) {
 				cvs_log(LP_ERR, "failed to create adm files");
 				goto done;
 			}

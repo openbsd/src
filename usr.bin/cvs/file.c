@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.121 2005/09/14 16:32:08 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.122 2005/09/15 17:01:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -286,7 +286,8 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 		}
 
 		if (((mkdir(path, mode) == -1) && (errno != EEXIST)) ||
-		    (cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo) < 0)) {
+		    (cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo,
+		        NULL, NULL, 0) < 0)) {
 			cvs_file_free(cfp);
 			return (NULL);
 		}
@@ -597,7 +598,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	 * - we are running in server or local mode and the path is not "."
 	 * - the directory does not exist on disk.
 	 * - the callback is NULL.
-	 */
+	*/
 	callit = 1;
 	if (cb == NULL)
 		callit = 0;
@@ -803,7 +804,7 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 	}
 
 	if (flags & CF_MKADMIN)
-		cvs_mkadmin(fpath, cf->cf_root->cr_str, NULL);
+		cvs_mkadmin(fpath, cf->cf_root->cr_str, NULL, NULL, NULL, 0);
 
 	return (0);
 }

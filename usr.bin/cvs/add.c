@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.29 2005/09/13 17:35:00 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.30 2005/09/15 17:01:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -254,6 +254,8 @@ cvs_add_directory(CVSFILE *cf)
 	/* Let's see if we have any per-directory tags first */
 	cvs_parse_tagfile(&tag, &date, &nb);
 
+	/* XXX check for <dir>/CVS */
+
 	l = snprintf(rcsdir, sizeof(rcsdir), "%s/%s",
 	    root->cr_dir, repo);
 	if (l == -1 || l >= (int)sizeof(rcsdir)) {
@@ -292,7 +294,7 @@ cvs_add_directory(CVSFILE *cf)
 
 	/* create CVS/ admin files */
 	if (cvs_noexec == 0)
-		if (cvs_mkadmin(fpath, root->cr_str, repo) == -1)
+		if (cvs_mkadmin(fpath, root->cr_str, repo, tag, date, nb) == -1)
 			return (-1);
 
 	/* XXX Build the Entries line. */
