@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.3 2003/10/16 04:30:09 drahn Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.4 2005/09/15 20:42:33 kettenis Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1997/04/16 20:29:16 thorpej Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ alloc(unsigned size)
 		f->size = size;
 #ifdef ALLOC_TRACE
 		printf("=%lx (new chunk size %u)\n",
-		    (u_long)(help + OVERHEAD), f->f_size);
+		    (u_long)(help + OVERHEAD), f->size);
 #endif
 		goto out;
 	}
