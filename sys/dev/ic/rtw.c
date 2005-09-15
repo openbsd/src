@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.39 2005/09/15 00:33:48 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.40 2005/09/15 00:59:11 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -209,12 +209,10 @@ void	 rtw_verify_syna(u_int, u_int32_t);
 int	 rtw_sa2400_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
 int	 rtw_sa2400_txpower(struct rtw_softc *, u_int8_t);
 int	 rtw_sa2400_tune(struct rtw_softc *, u_int);
-int	 rtw_sa2400_manrx_init(struct rtw_softc *);
 int	 rtw_sa2400_vcocal_start(struct rtw_softc *, int);
 int	 rtw_sa2400_vco_calibration(struct rtw_softc *);
 int	 rtw_sa2400_filter_calibration(struct rtw_softc *);
 int	 rtw_sa2400_dc_calibration(struct rtw_softc *);
-int	 rtw_sa2400_agc_init(struct rtw_softc *);
 int	 rtw_sa2400_calibrate(struct rtw_softc *, u_int);
 int	 rtw_sa2400_init(struct rtw_softc *, u_int, u_int8_t,
 	    enum rtw_pwrstate);
@@ -4100,21 +4098,6 @@ rtw_sa2400_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 }
 
 int
-rtw_sa2400_manrx_init(struct rtw_softc *sc)
-{
-	u_int32_t manrx;
-
-	/* XXX we are not supposed to be in RXMGC mode when we do
-	 * this?
-	 */
-	manrx = SA2400_MANRX_AHSN;
-	manrx |= SA2400_MANRX_TEN;
-	manrx |= LSHIFT(1023, SA2400_MANRX_RXGAIN_MASK);
-
-	return rtw_rf_macwrite(sc, SA2400_MANRX, manrx);
-}
-
-int
 rtw_sa2400_vcocal_start(struct rtw_softc *sc, int start)
 {
 	u_int32_t opmode;
@@ -4189,19 +4172,6 @@ rtw_sa2400_dc_calibration(struct rtw_softc *sc)
 }
 
 int
-rtw_sa2400_agc_init(struct rtw_softc *sc)
-{
-	u_int32_t agc;
-
-	agc = LSHIFT(25, SA2400_AGC_MAXGAIN_MASK);
-	agc |= LSHIFT(7, SA2400_AGC_BBPDELAY_MASK);
-	agc |= LSHIFT(15, SA2400_AGC_LNADELAY_MASK);
-	agc |= LSHIFT(27, SA2400_AGC_RXONDELAY_MASK);
-
-	return rtw_rf_macwrite(sc, SA2400_AGC, agc);
-}
-
-int
 rtw_sa2400_calibrate(struct rtw_softc *sc, u_int freq)
 {
 	int i, rc;
@@ -4227,6 +4197,7 @@ rtw_sa2400_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
 	int rc;
+	u_int32_t agc, manrx;
 
 	if ((rc = rtw_sa2400_txpower(sc, opaque_txpower)) != 0)
 		return rc;
@@ -4241,9 +4212,21 @@ rtw_sa2400_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
 
 	if ((rc = rtw_sa2400_tune(sc, freq)) != 0)
 		return rc;
-	if ((rc = rtw_sa2400_agc_init(sc)) != 0)
+
+	agc = LSHIFT(25, SA2400_AGC_MAXGAIN_MASK);
+	agc |= LSHIFT(7, SA2400_AGC_BBPDELAY_MASK);
+	agc |= LSHIFT(15, SA2400_AGC_LNADELAY_MASK);
+	agc |= LSHIFT(27, SA2400_AGC_RXONDELAY_MASK);
+
+	if ((rc = rtw_rf_macwrite(sc, SA2400_AGC, agc)) != 0)
 		return rc;
-	if ((rc = rtw_sa2400_manrx_init(sc)) != 0)
+
+	/* XXX we are not supposed to be in RXMGC mode when we do this? */
+	manrx = SA2400_MANRX_AHSN;
+	manrx |= SA2400_MANRX_TEN;
+	manrx |= LSHIFT(1023, SA2400_MANRX_RXGAIN_MASK);
+
+	if ((rc = rtw_rf_macwrite(sc, SA2400_MANRX, manrx)) != 0)
 		return rc;
 
 	if ((rc = rtw_sa2400_calibrate(sc, freq)) != 0)
