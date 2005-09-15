@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ptrace.2,v 1.20 2005/09/14 20:55:59 kettenis Exp $
+.\"	$OpenBSD: ptrace.2,v 1.21 2005/09/15 14:07:40 jmc Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
@@ -190,7 +190,7 @@ and
 The I/O request is encoded in a
 .Dq Li "struct ptrace_io_desc"
 defined as:
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 struct ptrace_io_desc {
 	int     piod_op;
 	void    *piod_offs;
@@ -198,6 +198,7 @@ struct ptrace_io_desc {
 	size_t  piod_len;
 };
 .Ed
+.Pp
 Where
 .Fa piod_offs
 is the offset within the traced process where the I/O operation should be
@@ -210,7 +211,8 @@ The
 .Fa piod_op
 member specifies what operation needs to be done.
 Possible values are:
-.Bl -tag -width 18n
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It PIOD_READ_D
 .It PIOD_WRITE_D
 .It PIOD_READ_I
@@ -243,6 +245,7 @@ typedef struct ptrace_event {
 	int	pe_set_event;
 } ptrace_event_t;
 .Ed
+.Pp
 Where
 .Fa pe_set_event
 is the set of events to be reported.
@@ -282,6 +285,7 @@ typedef struct ptrace_state {
 	pid_t	pe_other_pid;
 } ptrace_state_t;
 .Ed
+.Pp
 Where
 .Fa pe_report_event
 is the event being reported.
