@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.5 2005/09/15 21:09:29 miod Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.6 2005/09/15 21:16:33 miod Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -107,9 +107,7 @@
 
 #define MAXARGS 8
 
-void syscall_intern(struct proc *);
-void syscall_plain(struct trapframe *, struct proc *, u_int32_t);
-void syscall_fancy(struct trapframe *, struct proc *, u_int32_t);
+void syscall(struct trapframe *, struct proc *, u_int32_t);
 
 void
 swi_handler(trapframe_t *frame)
@@ -185,157 +183,11 @@ swi_handler(trapframe_t *frame)
 
 	uvmexp.syscalls++;
 
-#if 0 
-	(*(void(*)(struct trapframe *, struct proc *, u_int32_t))
-	    (p->p_md.md_syscall))(frame, p, insn);
-#else
-	syscall_fancy(frame, p, insn);
-#endif
+	syscall(frame, p, insn);
 }
 
 void
-syscall_intern(struct proc *p)
-{
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-#if NSYSTRACE > 0
-	if (p->p_flag & P_SYSTRACE) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-	p->p_md.md_syscall = syscall_plain;
-}
-
-void
-syscall_plain(struct trapframe *frame, struct proc *p, u_int32_t insn)
-{
-	const struct sysent *callp;
-	int code, error;
-	u_int nap, nargs;
-	register_t *ap, *args, copyargs[MAXARGS], rval[2];
-	union sigval sv;
-
-	switch (insn & SWI_OS_MASK) { /* Which OS is the SWI from? */
-	case SWI_OS_ARM: /* ARM-defined SWIs */
-		code = insn & 0x00ffffff;
-		switch (code) {
-		case SWI_IMB:
-		case SWI_IMBrange:
-			/*
-			 * Do nothing as there is no prefetch unit that needs
-			 * flushing
-			 */
-			break;
-		default:
-			/* Undefined so illegal instruction */
-			sv.sival_ptr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
-			trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
-			break;
-		}
-
-		userret(p, frame->tf_pc, p->p_sticks);
-		return;
-	case 0x000000: /* Old unofficial NetBSD range. */
-	case SWI_OS_NETBSD: /* New official NetBSD range. */
-		nap = 4;
-		break;
-	default:
-		/* Undefined so illegal instruction */
-		sv.sival_ptr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
-		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
-		userret(p, frame->tf_pc, p->p_sticks);
-		return;
-	}
-
-	code = insn & 0x000fffff;
-
-	ap = &frame->tf_r0;
-	callp = p->p_emul->e_sysent;
-
-	switch (code) {	
-	case SYS_syscall:
-		code = *ap++;
-		nap--;
-		break;
-        case SYS___syscall:
-		code = ap[_QUAD_LOWWORD];
-		ap += 2;
-		nap -= 2;
-		break;
-	}
-
-	if (code < 0 || code >= p->p_emul->e_nsysent) {
-		callp += p->p_emul->e_nosys;
-	} else {
-		callp += code;
-	}
-	nargs = callp->sy_argsize / sizeof(register_t);
-	if (nargs <= nap)
-		args = ap;
-	else {
-		KASSERT(nargs <= MAXARGS);
-		memcpy(copyargs, ap, nap * sizeof(register_t));
-		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
-		    (nargs - nap) * sizeof(register_t));
-		if (error)
-			goto bad;
-		args = copyargs;
-	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-	rval[0] = 0;
-	rval[1] = frame->tf_r1;
-	error = (*callp->sy_call)(p, args, rval);
-
-	switch (error) {
-	case 0:
-		frame->tf_r0 = rval[0];
-		frame->tf_r1 = rval[1];
-
-#ifdef __PROG32
-		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
-#else
-		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
-#endif
-		break;
-
-	case ERESTART:
-		/*
-		 * Reconstruct the pc to point at the swi.
-		 */
-		frame->tf_pc -= INSN_SIZE;
-		break;
-
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-
-	default:
-	bad:
-		frame->tf_r0 = error;
-#ifdef __PROG32
-		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
-#else
-		frame->tf_r15 |= R15_FLAG_C;	/* carry bit */
-#endif
-		break;
-	}
-#ifdef SYSCALL_DEBUG
-        scdebug_ret(p, code, error, rval); 
-#endif  
-
-	userret(p, frame->tf_pc, p->p_sticks);
-}
-
-void
-syscall_fancy(struct trapframe *frame, struct proc *p, u_int32_t insn)
+syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 {
 	const struct sysent *callp;
 	int code, error, orig_error;

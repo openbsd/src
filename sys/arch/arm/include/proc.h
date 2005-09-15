@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: proc.h,v 1.2 2005/09/15 21:16:35 miod Exp $	*/
 /*	$NetBSD: proc.h,v 1.5 2003/03/01 04:36:39 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 struct trapframe;
 
 struct mdproc {
-	void	(*md_syscall)(struct trapframe *, struct proc *, u_int32_t);
 	int	pmc_enabled;		/* bitfield of enabled counters */
 	void	*pmc_state;		/* port-specific pmc state */
 };
