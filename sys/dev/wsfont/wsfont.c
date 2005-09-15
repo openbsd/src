@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.13 2005/05/05 23:32:48 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.14 2005/09/15 20:23:10 miod Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -37,9 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-//__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $");
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +46,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
+
+#include "wsfont_glue.h"	/* NRASOPS_ROTATION */
 
 #undef HAVE_FONT
 
@@ -127,10 +126,6 @@
 
 #ifdef FONT_GALLANT12x22
 #include <dev/wsfont/gallant12x22.h>
-#endif
-
-#ifdef __zaurus__
-void wsfont_rotate(struct wsdisplay_font *, int);
 #endif
 
 /* Placeholder struct used for linked list */
@@ -217,7 +212,7 @@ static const u_char reverse[256] = {
 	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff, 
 };
 
-static struct	font *wsfont_find0(int);
+static struct font *wsfont_find0(int);
 static void	wsfont_revbit(struct wsdisplay_font *);
 static void	wsfont_revbyte(struct wsdisplay_font *);
 
@@ -289,19 +284,35 @@ wsfont_enum(cb)
 	splx(s);
 }
 
-#ifdef __zaurus__
-void wsfont_rotate(struct wsdisplay_font *font, int static_orig)
+#if NRASOPS_ROTATION > 0
+
+struct wsdisplay_font *wsfont_rotate_internal(struct wsdisplay_font *);
+
+struct wsdisplay_font *
+wsfont_rotate_internal(struct wsdisplay_font *font)
 {
 	int b, n, r, newstride;
-	char *newfont;
+	struct wsdisplay_font *newfont;
+	char *newbits;
+
+	/* Duplicate the existing font... */
+	newfont = malloc(sizeof *font, M_DEVBUF, M_WAITOK);
+	if (newfont == NULL)
+		return (NULL);
+
+	bcopy(font, newfont, sizeof *font);
+	newfont->cookie = NULL;
 
 	/* Allocate a buffer big enough for the rotated font. */
 	newstride = (font->fontheight + 7) / 8;
-	newfont = malloc(newstride * font->fontwidth * font->numchars,
+	newbits = malloc(newstride * font->fontwidth * font->numchars,
 	    M_DEVBUF, M_WAITOK);
-	if (newfont == NULL)
-		return;
-	bzero(newfont, newstride * font->fontwidth * font->numchars);
+	if (newbits == NULL) {
+		free(newfont, M_DEVBUF);
+		return (NULL);
+	}
+
+	bzero(newbits, newstride * font->fontwidth * font->numchars);
 
 	/* Rotate the font a bit at a time. */
 	for (n = 0; n < font->numchars; n++) {
@@ -315,7 +326,7 @@ void wsfont_rotate(struct wsdisplay_font *font, int static_orig)
 				if (*rb & (0x80 >> (b % 8))) {
 					unsigned char *rrb;
 
-					rrb = newfont + newstride - 1 - (r / 8)
+					rrb = newbits + newstride - 1 - (r / 8)
 					    + (n * newstride * font->fontwidth)
 					    + (newstride * b);
 					*rrb |= (1 << (r % 8));
@@ -324,28 +335,48 @@ void wsfont_rotate(struct wsdisplay_font *font, int static_orig)
 		}
 	}
 
-	/*
-	 * If the rotated font will fit into the memory the font originally
-	 * used, copy it into there, otherwise use our new buffer.
-	 */
-	if ((newstride * font->fontwidth * font->numchars) <=
-	    (font->stride * font->fontheight * font->numchars)) {
-		memcpy(font->data, newfont, newstride *
-		    font->fontwidth * font->numchars);
-		free(newfont, M_DEVBUF);
-	} else {
-		if (!static_orig)
-			free(font->data, M_DEVBUF);
-		font->data = newfont;
-	}
+	newfont->data = newbits;
 
 	/* Update font sizes. */
-	font->stride = newstride;
-	newstride = font->fontwidth;	 /* temp */
-	font->fontwidth = font->fontheight;
-	font->fontheight = newstride;
+	newfont->stride = newstride;
+	newfont->fontwidth = font->fontheight;
+	newfont->fontheight = font->fontwidth;
+
+	if (wsfont_add(newfont, 0) != 0) {
+		/*
+		 * If we seem to have rotated this font already, drop the
+		 * new one...
+		 */
+		free(newbits, M_DEVBUF);
+		free(newfont, M_DEVBUF);
+		newfont = NULL;
+	}
+
+	return (newfont);
 }
-#endif
+
+int
+wsfont_rotate(int cookie)
+{
+	int s, ncookie;
+	struct wsdisplay_font *font;
+	struct font *origfont;
+
+	s = splhigh();
+	origfont = wsfont_find0(cookie);
+	splx(s);
+
+	font = wsfont_rotate_internal(origfont->font);
+	if (font == NULL)
+		return (-1);
+
+	ncookie = wsfont_find(font->name, font->fontwidth, font->fontheight, 
+	    font->stride);
+
+	return (ncookie);
+}
+
+#endif	/* NRASOPS_ROTATION */
 
 /*
  * Initialize list with WSFONT_BUILTIN fonts
@@ -360,11 +391,6 @@ wsfont_init(void)
 		return;
 	again = 1;
 		
-#ifdef __zaurus__
-	for (i = 0; builtin_fonts[i].font != NULL; i++)
-		wsfont_rotate(builtin_fonts[i].font, 1);
-#endif
-
 	for (i = 0; builtin_fonts[i].font != NULL; i++) {
 		builtin_fonts[i].next = list;
 		list = &builtin_fonts[i];
@@ -466,16 +492,12 @@ wsfont_add(font, copy)
 		ent->flg = 0;
 	}
 
-#ifdef __zaurus__
-	wsfont_rotate(ent->font, 0);
-#endif
-	
 	/* Now link into the list and return */
 	list = ent;
 	splx(s);	
 	return (0);
 }
-			
+
 /*
  * Remove a font.
  */

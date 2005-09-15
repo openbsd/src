@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.6 2005/04/30 23:13:47 pascoe Exp $ */
+/*	$OpenBSD: rasops.h,v 1.7 2005/09/15 20:23:10 miod Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -44,17 +44,21 @@
 #define	RASOPS_SMALL
 #endif
 
+#include "rasops_glue.h"
+
 struct wsdisplay_font;
 
 /* For rasops_info::ri_flg */
-#define RI_FULLCLEAR	0x01	/* eraserows() hack to clear full screen */
-#define RI_FORCEMONO	0x02	/* monochrome output even if we can do color */
-#define RI_BSWAP	0x04	/* framebuffer endianness doesn't match CPU */
-#define RI_CURSOR	0x08	/* cursor is switched on */
-#define RI_CLEAR	0x10	/* clear display on startup */
-#define RI_CENTER	0x20	/* center onscreen output */
-#define RI_CURSORCLIP	0x40	/* cursor is currently clipped */
-#define RI_CFGDONE	0x80	/* rasops_reconfig() completed successfully */
+#define RI_FULLCLEAR	0x0001	/* eraserows() hack to clear full screen */
+#define RI_FORCEMONO	0x0002	/* monochrome output even if we can do color */
+#define RI_BSWAP	0x0004	/* framebuffer endianness doesn't match CPU */
+#define RI_CURSOR	0x0008	/* cursor is switched on */
+#define RI_CLEAR	0x0010	/* clear display on startup */
+#define	RI_CLEARMARGINS	0x0020	/* clear display margins on startup */
+#define RI_CENTER	0x0040	/* center onscreen output */
+#define RI_CURSORCLIP	0x0080	/* cursor is currently clipped */
+#define	RI_ROTATE_CW	0x0100	/* display is rotated, quarter clockwise */
+#define RI_CFGDONE	0x0200	/* rasops_reconfig() completed successfully */
 
 struct rasops_info {
 	/* These must be filled in by the caller */
@@ -111,7 +115,7 @@ struct rasops_info {
 	void	(*ri_do_cursor)(struct rasops_info *);
 	void	(*ri_updatecursor)(struct rasops_info *);
 
-#ifdef __zaurus__
+#if NRASOPS_ROTATION > 0
 	/* Used to intercept putchar to permit display rotation */
 	struct	wsdisplay_emulops ri_real_ops;
 #endif
@@ -151,7 +155,6 @@ int	rasops_reconfig(struct rasops_info *, int, int);
 void	rasops_unpack_attr(long, int *, int *, int *);
 void	rasops_eraserows(void *, int, int, long);
 void	rasops_erasecols(void *, int, int, int, long);
-void	rasops_copycols(void *, int, int, int, int);
 
 extern const u_char	rasops_isgray[16];
 extern const u_char	rasops_cmap[256*3];

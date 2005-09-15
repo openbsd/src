@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.h,v 1.3 2002/03/14 03:16:08 millert Exp $ */
+/*	$OpenBSD: wsfont.h,v 1.4 2005/09/15 20:23:10 miod Exp $ */
 /* 	$NetBSD: wsfont.h,v 1.12 2000/06/13 13:37:07 ad Exp $	*/
 
 /*-
@@ -82,5 +82,6 @@ int	wsfont_lock(int, struct wsdisplay_font **, int, int);
 int	wsfont_unlock(int);
 int	wsfont_getflg(int, int *, int *);
 int	wsfont_map_unichar(struct wsdisplay_font *, int);
+int	wsfont_rotate(int);
 
 #endif	/* !_WSFONT_H_ */

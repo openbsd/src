@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.19 2005/05/23 23:59:19 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.20 2005/09/15 20:23:10 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -563,7 +563,7 @@ pxa2x0_lcd_setup_rasops(struct rasops_info *rinfo,
     const struct lcd_panel_geometry *geom)
 {
 
-	rinfo->ri_flg = 0;
+	rinfo->ri_flg = descr->flags;
 	rinfo->ri_depth = descr->depth;
 	rinfo->ri_width = geom->panel_width;
 	rinfo->ri_height = geom->panel_height;

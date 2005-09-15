@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.16 2005/07/01 23:57:28 uwe Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.17 2005/09/15 20:23:10 miod Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -60,6 +60,8 @@
 #include <zaurus/dev/zaurus_scoopvar.h>
 #include <zaurus/dev/zaurus_sspvar.h>
 
+#include <dev/rasops/rasops.h>
+
 void	lcd_attach(struct device *, struct device *, void *);
 int	lcd_match(struct device *, void *, void *);
 int	lcd_cnattach(void (*)(u_int, int));
@@ -72,7 +74,8 @@ lcd_bpp16_screen = {
 	{
 		"std"
 	},
-	16				/* bits per pixel */
+	16,				/* bits per pixel */
+	RI_ROTATE_CW			/* quarter clockwise rotation */
 };
 
 static const struct wsscreen_descr *lcd_scr_descr[] = {

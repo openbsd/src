@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.16 2005/07/01 23:51:55 uwe Exp $
+#	$OpenBSD: files.pxa2x0,v 1.17 2005/09/15 20:23:10 miod Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -56,7 +56,7 @@ attach	ohci at pxaip with pxaohci
 file	arch/arm/xscale/pxa2x0_ohci.c		pxaohci
 
 # LCD controller
-device	lcd: wsemuldisplaydev, rasops16, rasops8, rasops4
+device	lcd: wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation
 file	arch/arm/xscale/pxa2x0_lcd.c		lcd needs-flag
 
 # Inter-Integrated Circuit controller

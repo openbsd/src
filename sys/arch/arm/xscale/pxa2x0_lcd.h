@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.h,v 1.9 2005/04/11 03:32:48 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.h,v 1.10 2005/09/15 20:23:10 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.h,v 1.2 2003/06/17 09:43:14 bsh Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -125,6 +125,7 @@ struct lcd_panel_geometry {
 struct pxa2x0_wsscreen_descr {
 	struct wsscreen_descr  c;	/* standard descriptor */
 	int depth;			/* bits per pixel */
+	int flags;			/* rasops flags */
 };
 
 void	pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *,

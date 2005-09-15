@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.349 2005/09/08 09:11:07 jsg Exp $
+#	$OpenBSD: files,v 1.350 2005/09/15 20:23:10 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -47,6 +47,7 @@ define	rasops15
 define	rasops16
 define	rasops24
 define	rasops32
+define	rasops_rotation
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # and fddi.
