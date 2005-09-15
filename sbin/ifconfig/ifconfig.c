@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.148 2005/08/10 19:31:55 sturm Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.149 2005/09/15 13:52:39 pedro Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -674,12 +674,13 @@ printgroup(char *groupname, int ifaliases)
 	getsock(AF_INET);
 	bzero(&ifgr, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, groupname, sizeof(ifgr.ifgr_name));
-	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
 		if (errno == EINVAL || errno == ENOTTY ||
 		    errno == ENOENT)
 			return (-1);
 		else
 			err(1, "SIOCGIFGMEMB");
+	}
 
 	len = ifgr.ifgr_len;
 	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
@@ -705,7 +706,7 @@ printif(char *ifname, int ifaliases)
 	const char *namep;
 	char *oname = NULL;
 	struct ifreq *ifrp;
-	int nlen, count = 0, noinet = 1;
+	int nlen = 0, count = 0, noinet = 1;
 
 	if (getifaddrs(&ifap) != 0)
 		err(1, "getifaddrs");
@@ -1542,6 +1543,7 @@ ieee80211_listnodes(void)
 
 	bzero(&ifr, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ret = 1;
 
 	if (ioctl(s, SIOCS80211SCAN, (caddr_t)&ifr) != 0)
 		goto done;
@@ -1551,7 +1553,6 @@ ieee80211_listnodes(void)
 	na.na_node = nr;
 	na.na_size = sizeof(nr);
 	strlcpy(na.na_ifname, name, sizeof(na.na_ifname));
-	ret = 1;
 
 	if (ioctl(s, SIOCG80211ALLNODES, &na) != 0) {
 		warn("SIOCG80211ALLNODES");
@@ -1575,13 +1576,12 @@ ieee80211_listnodes(void)
 
 	if (ret != 0)
 		exit(1);
-
 }
 
 void
 ieee80211_printnode(struct ieee80211_nodereq *nr)
 {
-	int len, i, isap;
+	int len;
 
 	if (nr->nr_flags & IEEE80211_NODEREQ_AP) {
 		len = nr->nr_nwid_len;
@@ -3106,7 +3106,6 @@ pppoe_status(void)
 	struct timeval temp_time;
 	long diff_time;
 	unsigned long day, hour, min, sec;
-	int e;
 
 	day = hour = min = sec = 0; /* XXX make gcc happy */
 
@@ -3567,18 +3566,19 @@ usage(int value)
 void
 getifgroups(void)
 {
-	int			 len, cnt, n;
+	int			 len, cnt;
 	struct ifgroupreq	 ifgr;
 	struct ifg_req		*ifg;
 
 	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
 
-	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1) {
 		if (errno == EINVAL || errno == ENOTTY)
 			return;
 		else
 			err(1, "SIOCGIFGROUP");
+	}
 
 	len = ifgr.ifgr_len;
 	ifgr.ifgr_groups =
