@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbsvar.h,v 1.1 2001/06/29 06:05:03 niklas Exp $	*/
+/*	$OpenBSD: ioprbsvar.h,v 1.2 2005/09/15 05:33:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -65,9 +65,6 @@ struct ioprbs_softc {
 	int	sc_maxxfer;			/* max xfer size in bytes */
 	int	sc_maxqueuecnt;			/* maximum h/w queue depth */
 	int	sc_queuecnt;			/* current h/w queue depth */
-	int	sc_ncylinders;			/* # cylinders */
-	int	sc_nheads;			/* # heads */
-	int	sc_nsectors;			/* # sectors per track */
 
 	struct ioprbs_ccb sc_ccbs[IOPRBS_MAX_CCBS];
 	TAILQ_HEAD(, ioprbs_ccb) sc_free_ccb, sc_ccbq;

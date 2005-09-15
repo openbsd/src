@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.19 2005/07/03 22:31:27 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.20 2005/09/15 05:33:39 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -558,11 +558,6 @@ cac_scsi_cmd(xs)
 	struct cac_drive_info *dinfo;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;
-	struct {
-		struct scsi_mode_header hd;
-		struct scsi_blk_desc bd;
-		union scsi_disk_pages dp;
-	} mpd;
 	struct scsi_read_cap_data rcd;
 	u_int8_t target = link->target;
 	u_int32_t blockno, blockcnt, size;
@@ -622,43 +617,6 @@ cac_scsi_cmd(xs)
 		    p, target);
 		strlcpy(inq.revision, "   ", sizeof inq.revision);
 		cac_copy_internal_data(xs, &inq, sizeof inq);
-		break;
-
-	case MODE_SENSE:
-		if (cac_get_dinfo(sc, target)) {
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		}
-		bzero(&mpd, sizeof mpd);
-		switch (((struct scsi_mode_sense *)xs->cmd)->page) {
-		case 4:
-			/* scsi_disk.h says this should be 0x16 */
-			mpd.dp.rigid_geometry.pg_length = 0x16;
-			mpd.hd.data_length = sizeof mpd.hd -
-			    sizeof mpd.hd.data_length + sizeof mpd.bd +
-			    sizeof mpd.dp.rigid_geometry;
-			mpd.hd.blk_desc_len = sizeof mpd.bd;
-
-			/* XXX */
-			mpd.hd.dev_spec = 0;
-			_lto3b(CAC_SECTOR_SIZE, mpd.bd.blklen);
-			mpd.dp.rigid_geometry.pg_code = 4;
-			_lto3b(CAC_GET2(dinfo->ncylinders),
-			    mpd.dp.rigid_geometry.ncyl);
-			mpd.dp.rigid_geometry.nheads =
-			    CAC_GET1(dinfo->nheads);
-			cac_copy_internal_data(xs, (u_int8_t *)&mpd,
-			    sizeof mpd);
-			break;
-
-		default:
-			printf("%s: mode sense page %d not simulated\n",
-			    sc->sc_dv.dv_xname,
-			    ((struct scsi_mode_sense *)xs->cmd)->page);
-			xs->error = XS_DRIVER_STUFFUP;
-			splx(s);
-			return (TRY_AGAIN_LATER);
-		}
 		break;
 
 	case READ_CAPACITY:
@@ -748,6 +706,8 @@ cac_scsi_cmd(xs)
 			return (SUCCESSFULLY_QUEUED);
 
 	default:
+		SC_DEBUG(link, SDEV_DB1, ("unsupported scsi command %#x "
+		    "tgt %d ", xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.19 2005/08/21 16:25:52 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.20 2005/09/15 05:33:39 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -331,12 +331,4 @@ struct page_reduced_geometry {
 #define	READ_DISABLED	0x8
 	u_int8_t reserved;
 };
-
-union scsi_disk_pages {
-	struct page_disk_format		disk_format;
-	struct page_rigid_geometry	rigid_geometry;
-	struct page_flex_geometry	flex_geometry;
-	struct page_reduced_geometry	reduced_geometry;
-};
-
 #endif /* _SCSI_SCSI_DISK_H */

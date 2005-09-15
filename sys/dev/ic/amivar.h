@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.21 2005/08/31 17:59:09 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.22 2005/09/15 05:33:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -114,8 +114,6 @@ struct ami_softc {
 	struct {
 		u_int8_t	hd_present;
 		u_int8_t	hd_is_logdrv;
-		u_int8_t	hd_heads;
-		u_int8_t	hd_secs;
 		u_int8_t	hd_prop;
 		u_int8_t	hd_stat;
 		u_int32_t	hd_size;

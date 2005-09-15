@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.73 2005/08/31 18:27:31 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.74 2005/09/15 05:33:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -313,13 +313,6 @@ ami_copyhds(sc, sizes, props, stats)
 		sc->sc_hdr[i].hd_size = letoh32(sizes[i]);
 		sc->sc_hdr[i].hd_prop = props[i];
 		sc->sc_hdr[i].hd_stat = stats[i];
-		if (sc->sc_hdr[i].hd_size > 0x200000) {
-			sc->sc_hdr[i].hd_heads = 255;
-			sc->sc_hdr[i].hd_secs = 63;
-		} else {
-			sc->sc_hdr[i].hd_heads = 64;
-			sc->sc_hdr[i].hd_secs = 32;
-		}
 	}
 }
 
@@ -1500,11 +1493,6 @@ ami_scsi_cmd(xs)
 	struct ami_iocmd *cmd;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;
-	struct {
-		struct scsi_mode_header hd;
-		struct scsi_blk_desc bd;
-		union scsi_disk_pages dp;
-	} mpd;
 	struct scsi_read_cap_data rcd;
 	u_int8_t target = link->target;
 	u_int32_t blockno, blockcnt;
@@ -1569,40 +1557,6 @@ ami_scsi_cmd(xs)
 		    target);
 		strlcpy(inq.revision, "   ", sizeof inq.revision);
 		ami_copy_internal_data(xs, &inq, sizeof inq);
-		break;
-
-	case MODE_SENSE:
-		AMI_DPRINTF(AMI_D_CMD, ("MODE SENSE tgt %d ", target));
-
-		bzero(&mpd, sizeof mpd);
-		switch (((struct scsi_mode_sense *)xs->cmd)->page) {
-		case 4:
-			/* scsi_disk.h says this should be 0x16 */
-			mpd.dp.rigid_geometry.pg_length = 0x16;
-			mpd.hd.data_length = sizeof mpd.hd -
-			    sizeof mpd.hd.data_length + sizeof mpd.bd +
-			    sizeof mpd.dp.rigid_geometry;
-			mpd.hd.blk_desc_len = sizeof mpd.bd;
-
-			mpd.hd.dev_spec = 0;	/* writeprotect ? XXX */
-			_lto3b(AMI_SECTOR_SIZE, mpd.bd.blklen);
-			mpd.dp.rigid_geometry.pg_code = 4;
-			_lto3b(sc->sc_hdr[target].hd_size /
-			    sc->sc_hdr[target].hd_heads /
-			    sc->sc_hdr[target].hd_secs,
-			    mpd.dp.rigid_geometry.ncyl);
-			mpd.dp.rigid_geometry.nheads =
-			    sc->sc_hdr[target].hd_heads;
-			ami_copy_internal_data(xs, (u_int8_t *)&mpd,
-			    sizeof mpd);
-			break;
-
-		default:
-			printf("%s: mode sense page %d not simulated\n",
-			    sc->sc_dev.dv_xname,
-			    ((struct scsi_mode_sense *)xs->cmd)->page);
-			xs->error = XS_DRIVER_STUFFUP;
-		}
 		break;
 
 	case READ_CAPACITY:
@@ -1727,7 +1681,8 @@ ami_scsi_cmd(xs)
 			return (SUCCESSFULLY_QUEUED);
 
 	default:
-		AMI_DPRINTF(AMI_D_CMD, ("unknown opc %d ", xs->cmd->opcode));
+		AMI_DPRINTF(AMI_D_CMD, ("unsupported scsi command %#x tgt %d ",
+		    xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 

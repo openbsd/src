@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.8 2005/08/24 01:19:47 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.9 2005/09/15 05:33:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -261,22 +261,6 @@ ioprbs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_secsize = letoh32(param.p.bdi.blocksize);
 	sc->sc_secperunit = (int)
 	    (letoh64(param.p.bdi.capacity) / sc->sc_secsize);
-
-	/* Build synthetic geometry. */
-	if (sc->sc_secperunit <= 528 * 2048)		/* 528MB */
-		sc->sc_nheads = 16;
-	else if (sc->sc_secperunit <= 1024 * 2048)	/* 1GB */
-		sc->sc_nheads = 32;
-	else if (sc->sc_secperunit <= 21504 * 2048)	/* 21GB */
-		sc->sc_nheads = 64;
-	else if (sc->sc_secperunit <= 43008 * 2048)	/* 42GB */
-		sc->sc_nheads = 128;
-	else
-		sc->sc_nheads = 255;
-
-	sc->sc_nsectors = 63;
-	sc->sc_ncylinders = sc->sc_secperunit / 
-	    (sc->sc_nheads * sc->sc_nsectors);
 
 	switch (param.p.bdi.type) {
 	case I2O_RBS_TYPE_DIRECT:
@@ -736,11 +720,6 @@ ioprbs_internal_cache_cmd(xs)
 	u_int8_t target = link->target;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;
-	struct {
-		struct scsi_mode_header hd;
-		struct scsi_blk_desc bd;
-		union scsi_disk_pages dp;
-	} mpd;
 	struct scsi_read_cap_data rcd;
 
 	DPRINTF(("ioprbs_internal_cache_cmd "));
@@ -794,38 +773,6 @@ ioprbs_internal_cache_cmd(xs)
 		ioprbs_copy_internal_data(xs, (u_int8_t *)&inq, sizeof inq);
 		break;
 
-	case MODE_SENSE:
-		DPRINTF(("MODE SENSE tgt %d ", target));
-
-		bzero(&mpd, sizeof mpd);
-		switch (((struct scsi_mode_sense *)xs->cmd)->page) {
-		case 4:
-			/* scsi_disk.h says this should be 0x16 */
-			mpd.dp.rigid_geometry.pg_length = 0x16;
-			mpd.hd.data_length = sizeof mpd.hd -
-			    sizeof mpd.hd.data_length + sizeof mpd.bd +
-			    sizeof mpd.dp.rigid_geometry;
-			mpd.hd.blk_desc_len = sizeof mpd.bd;
-
-			/* XXX */
-			mpd.hd.dev_spec = 0;
-			_lto3b(IOPRBS_BLOCK_SIZE, mpd.bd.blklen);
-			mpd.dp.rigid_geometry.pg_code = 4;
-			_lto3b(sc->sc_ncylinders, mpd.dp.rigid_geometry.ncyl);
-			mpd.dp.rigid_geometry.nheads = sc->sc_nheads;
-			ioprbs_copy_internal_data(xs, (u_int8_t *)&mpd,
-			    sizeof mpd);
-			break;
-
-		default:
-			printf("%s: mode sense page %d not simulated\n",
-			    sc->sc_dv.dv_xname,
-			    ((struct scsi_mode_sense *)xs->cmd)->page);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (0);
-		}
-		break;
-
 	case READ_CAPACITY:
 		DPRINTF(("READ CAPACITY tgt %d ", target));
 		bzero(&rcd, sizeof rcd);
@@ -835,8 +782,8 @@ ioprbs_internal_cache_cmd(xs)
 		break;
 
 	default:
-		printf("ioprbs_internal_cache_cmd got bad opcode: %d\n",
-		    xs->cmd->opcode);
+		DPRINTF(("unsupported scsi command %#x tgt %d ",
+		    xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
 		return (0);
 	}

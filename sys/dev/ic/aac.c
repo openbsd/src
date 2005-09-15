@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.23 2005/08/24 01:19:47 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.24 2005/09/15 05:33:39 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -812,11 +812,6 @@ aac_internal_cache_cmd(xs)
 	struct aac_softc *sc = link->adapter_softc;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;
-	struct {
-		struct scsi_mode_header hd;
-		struct scsi_blk_desc bd;
-		union scsi_disk_pages dp;
-	} mpd;
 	struct scsi_read_cap_data rcd;
 	u_int8_t target = link->target;
 
@@ -860,42 +855,6 @@ aac_internal_cache_cmd(xs)
 		aac_copy_internal_data(xs, (u_int8_t *)&inq, sizeof inq);
 		break;
 
-	case MODE_SENSE:
-		AAC_DPRINTF(AAC_D_CMD, ("MODE SENSE tgt %d ", target));
-
-		bzero(&mpd, sizeof mpd);
-		switch (((struct scsi_mode_sense *)xs->cmd)->page) {
-		case 4:
-			/* scsi_disk.h says this should be 0x16 */
-			mpd.dp.rigid_geometry.pg_length = 0x16;
-			mpd.hd.data_length = sizeof mpd.hd -
-			    sizeof mpd.hd.data_length + sizeof mpd.bd +
-			    sizeof mpd.dp.rigid_geometry;
-			mpd.hd.blk_desc_len = sizeof mpd.bd;
-
-			/* XXX */
-			mpd.hd.dev_spec = 0;
-			_lto3b(AAC_BLOCK_SIZE, mpd.bd.blklen);
-			mpd.dp.rigid_geometry.pg_code = 4;
-			_lto3b(sc->sc_hdr[target].hd_size /
-			    sc->sc_hdr[target].hd_heads /
-			    sc->sc_hdr[target].hd_secs,
-			    mpd.dp.rigid_geometry.ncyl);
-			mpd.dp.rigid_geometry.nheads =
-			    sc->sc_hdr[target].hd_heads;
-			aac_copy_internal_data(xs, (u_int8_t *)&mpd,
-			    sizeof mpd);
-			break;
-
-		default:
-			printf("%s: mode sense page %d not simulated\n",
-			    sc->sc_dev.dv_xname,
-			    ((struct scsi_mode_sense *)xs->cmd)->page);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (0);
-		}
-		break;
-
 	case READ_CAPACITY:
 		AAC_DPRINTF(AAC_D_CMD, ("READ CAPACITY tgt %d ", target));
 		bzero(&rcd, sizeof rcd);
@@ -905,8 +864,8 @@ aac_internal_cache_cmd(xs)
 		break;
 
 	default:
-		printf("aac_internal_cache_cmd got bad opcode: %d\n",
-		    xs->cmd->opcode);
+		AAC_DPRINTF(AAC_D_CMD, ("unsupported scsi command %#x tgt %d ",
+		    xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
 		return (0);
 	}
