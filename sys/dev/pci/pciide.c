@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.203 2005/09/14 06:13:22 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.204 2005/09/15 06:43:02 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -288,7 +288,8 @@ struct pciide_product_desc {
 };
 
 /* Flags for ide_flags */
-#define IDE_16BIT_IOSPACE	0x0001	/* I/O space BARS ignore upper word */
+#define IDE_PCI_CLASS_OVERRIDE	0x0001	/* accept even if class != pciide */
+#define IDE_16BIT_IOSPACE	0x0002	/* I/O space BARS ignore upper word */
 
 /* Default product description for devices not known from this controller */
 const struct pciide_product_desc default_product_desc = {
@@ -359,7 +360,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801ER_SATA, /* Intel 82801ER (ICH5R) SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 #ifdef notyet
@@ -369,39 +370,39 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	},
 #endif
 	{ PCI_PRODUCT_INTEL_6300ESB_IDE, /* Intel 6300ESB IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_6300ESB_SATA, /* Intel 6300ESB SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_6300ESB_SATA2, /* Intel 6300ESB SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FB_IDE,  /* Intel 82801FB (ICH6) IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FBM_IDE,  /* Intel 82801FBM (ICH6M) IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FB_SATA, /* Intel 82801FB (ICH6) SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801FR_SATA, /* Intel 82801FR (ICH6R) SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GB_IDE,  /* Intel 82801GB (ICH7) IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GB_SATA_1, /* Intel 82801GB (ICH7) SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	}
 };
@@ -457,31 +458,31 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 	  cmd0643_9_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_648,	/* CMD Technology PCI0648 */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  cmd0643_9_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_649,	/* CMD Technology PCI0649 */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  cmd0643_9_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_680,	/* CMD Technology PCI0680 */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  cmd680_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_3112,	/* SiI3112 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_3512,	/* SiI3512 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_AAR_1210SA, /* Adaptec AAR-1210SA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_CMDTECH_3114,	/* SiI3114 */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3114_chip_map
 	}
 };
@@ -496,7 +497,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	  apollo_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA, /* VIA VT8237 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	}
 };
@@ -514,15 +515,15 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	  sis_chip_map
 	},
 	{ PCI_PRODUCT_SIS_180,		/* SIS 180 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_SIS_181,		/* SIS 181 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_SIS_182,		/* SIS 182 SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	}
 };
@@ -547,125 +548,125 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 
 const struct pciide_product_desc pciide_triones_products[] =  {
 	{ PCI_PRODUCT_TRIONES_HPT366,	/* Highpoint HPT36x/37x IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  hpt_chip_map,
 	},
 	{ PCI_PRODUCT_TRIONES_HPT372A,	/* Highpoint HPT372A IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  hpt_chip_map
 	},
 	{ PCI_PRODUCT_TRIONES_HPT302,	/* Highpoint HPT302 IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  hpt_chip_map
 	},
 	{ PCI_PRODUCT_TRIONES_HPT371,	/* Highpoint HPT371 IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  hpt_chip_map
 	},
 	{ PCI_PRODUCT_TRIONES_HPT374,	/* Highpoint HPT374 IDE */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  hpt_chip_map
 	}
 };
 
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20246,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20262,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20265,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20267,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20268,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20268R,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20269,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20271,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20275,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20276,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20277,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20318,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20319,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20371,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20375,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20376,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20377,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20378,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20379,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  pdcsata_chip_map,
 	}
 };
 
 const struct pciide_product_desc pciide_acard_products[] =  {
 	{ PCI_PRODUCT_ACARD_ATP850U,	/* Acard ATP850U Ultra33 Controller */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP860,	/* Acard ATP860 Ultra66 Controller */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP860A,	/* Acard ATP860-A Ultra66 Controller */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP865A,	/* Acard ATP865-A Ultra133 Controller */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP865R,	/* Acard ATP865-R Ultra133 Controller */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  acard_chip_map,
 	}
 };
@@ -734,7 +735,7 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 
 const struct pciide_product_desc pciide_ite_products[] = {
 	{ PCI_PRODUCT_ITEXPRESS_IT8212F,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  ite_chip_map
 	}
 };
@@ -753,11 +754,11 @@ const struct pciide_product_desc pciide_ati_products[] = {
 	  ixp_chip_map
 	},
 	{ PCI_PRODUCT_ATI_IXP_SATA_400_1,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
 	},
 	{ PCI_PRODUCT_ATI_IXP_SATA_400_2,
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  sii3112_chip_map
 	}
 };
@@ -871,6 +872,7 @@ int
 pciide_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	const struct pciide_product_desc *pp;
 
 	/*
  	 * Some IDE controllers have severe bugs when used in PCI mode.
@@ -894,8 +896,10 @@ pciide_match(struct device *parent, void *match, void *aux)
  	 * Some controllers (e.g. promise Ultra-33) don't claim to be PCI IDE
 	 * controllers. Let see if we can deal with it anyway.
 	 */
-	if (pciide_lookup_product(pa->pa_id)) 
+	pp = pciide_lookup_product(pa->pa_id);
+	if (pp  && (pp->ide_flags & IDE_PCI_CLASS_OVERRIDE)) {
 		return (1);
+	}
 
 	return (0);
 }
