@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.19 2003/05/20 22:49:13 millert Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.20 2005/09/15 07:12:18 espie Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -73,6 +73,14 @@ realinstall:
 	    ${.CURDIR}/${POSTINSTALL} ${DESTDIR}${LKMDIR}
 .endif
 .endif
+.if defined(LINKS) && !empty(LINKS)
+.  for lnk file in ${LINKS}
+	@l=${DESTDIR}${LKMDIR}${lnk}; \
+	 t=${DESTDIR}${LKMDIR}${file}; \
+	 echo $$t -\> $$l; \
+	 rm -f $$t; ln $$l $$t
+.  endfor
+.endif
 .endif
 
 
@@ -87,18 +95,6 @@ unload:
 	modunload -n $(LKM)
 
 install: maninstall _SUBDIRUSE
-.if defined(LINKS) && !empty(LINKS)
-	@set ${LINKS}; \
-	while test $$# -ge 2; do \
-		l=${DESTDIR}${LKMDIR}/$$1; \
-		shift; \
-		t=${DESTDIR}${LKMDIR}/$$1; \
-		shift; \
-		echo $$t -\> $$l; \
-		rm -f $$t; \
-		ln $$l $$t; \
-	done; true
-.endif
 
 maninstall: afterinstall
 afterinstall: realinstall
