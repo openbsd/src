@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.31 2005/08/30 21:07:58 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.32 2005/09/15 19:42:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -189,11 +189,15 @@ if_new(struct kif *kif)
 		err(1, "if_new: socket");
 
 	/* get type */
-	if ((kif->flags & IFF_POINTOPOINT))
+	if (kif->flags & IFF_POINTOPOINT)
 		iface->type = IF_TYPE_POINTOPOINT;
-	if ((kif->flags & IFF_BROADCAST) &&
-	    (kif->flags & IFF_MULTICAST))
+	if (kif->flags & IFF_BROADCAST &&
+	    kif->flags & IFF_MULTICAST)
 		iface->type = IF_TYPE_BROADCAST;
+	if (kif->flags & IFF_LOOPBACK) {
+		iface->type = IF_TYPE_POINTOPOINT;
+		iface->state = IF_STA_LOOPBACK;
+	}
 
 	/* get mtu, index and flags */
 	iface->mtu = kif->mtu;
@@ -214,7 +218,7 @@ if_new(struct kif *kif)
 	iface->mask = sain->sin_addr;
 
 	/* get p2p dst address */
-	if (iface->type == IF_TYPE_POINTOPOINT) {
+	if (kif->flags & IFF_POINTOPOINT) {
 		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)ifr) < 0)
 			err(1, "if_new: cannot get dst addr");
 		sain = (struct sockaddr_in *) &ifr->ifr_addr;
