@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.14 2005/09/14 23:20:17 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.15 2005/09/15 00:33:48 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -357,7 +357,6 @@ struct rtw_softc {
 	enum rtw_locale		sc_locale;
 	u_int8_t		sc_phydelay;
 	struct rtw_bbpset       sc_bbpset;
-	rtw_rf_write_t		sc_rf_write;
 
 	/* s/w Tx/Rx descriptors */
 	struct rtw_txsoft_blk	sc_txsoft_blk[RTW_NTXPRI];

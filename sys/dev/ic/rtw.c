@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.38 2005/09/14 23:40:23 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.39 2005/09/15 00:33:48 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -201,7 +201,6 @@ int	 rtw_rf_init(struct rtw_softc *, u_int, u_int8_t, enum rtw_pwrstate);
 int	 rtw_rf_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
 int	 rtw_rf_tune(struct rtw_softc *, u_int);
 int	 rtw_rf_txpower(struct rtw_softc *, u_int8_t);
-int	 rtw_rfbus_write(struct rtw_softc *, int, u_int, u_int32_t);
 int	 rtw_phy_init(struct rtw_softc *);
 int	 rtw_bbp_preinit(struct rtw_regs *, u_int, int, u_int);
 int	 rtw_bbp_init(struct rtw_regs *, struct rtw_bbpset *, int,
@@ -234,8 +233,8 @@ int	 rtw_rtl8255_init(struct rtw_softc *, u_int, u_int8_t,
 	    enum rtw_pwrstate);
 int	 rtw_rtl8255_txpower(struct rtw_softc *, u_int8_t);
 int	 rtw_rtl8255_tune(struct rtw_softc *, u_int);
-int	 rtw_rf_hostwrite(struct rtw_regs *, int, u_int, u_int32_t);
-int	 rtw_rf_macwrite(struct rtw_regs *, int, u_int, u_int32_t);
+int	 rtw_rf_hostwrite(struct rtw_softc *, u_int, u_int32_t);
+int	 rtw_rf_macwrite(struct rtw_softc *, u_int, u_int32_t);
 u_int8_t rtw_bbp_read(struct rtw_regs *, u_int);
 int	 rtw_bbp_write(struct rtw_regs *, u_int, u_int);
 u_int32_t rtw_grf5101_host_crypt(u_int, u_int32_t);
@@ -3474,21 +3473,6 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
-	case RTW_RFCHIPID_RTL8255:
-	default:
-		sc->sc_rf_write = rtw_rf_hostwrite;
-		break;
-	case RTW_RFCHIPID_INTERSIL:
-	case RTW_RFCHIPID_PHILIPS:
-	case RTW_RFCHIPID_GCT: /* XXX a guess */
-	case RTW_RFCHIPID_RFMD2948:
-		sc->sc_rf_write = (rtw_host_rfio) ? rtw_rf_hostwrite :
-		    rtw_rf_macwrite;
-		break;
-	}
-
-	switch (rfchipid) {
-	case RTW_RFCHIPID_RTL8225:
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
 		break;
 	case RTW_RFCHIPID_RTL8255:
@@ -3946,12 +3930,6 @@ rtw_rf_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 	}
 }
 
-int
-rtw_rfbus_write(struct rtw_softc *sc, int rfchipid, u_int addr, u_int32_t val)
-{
-	return (*sc->sc_rf_write)(&(sc->sc_regs), rfchipid, addr, val);
-}
-
 /*
  * PHY specific functions
  */
@@ -4006,8 +3984,7 @@ rtw_bbp_init(struct rtw_regs *regs, struct rtw_bbpset *bb, int antdiv,
 int
 rtw_sa2400_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 {
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_TX,
-	    opaque_txpower);
+	return rtw_rf_macwrite(sc, SA2400_TX, opaque_txpower);
 }
 
 /* make sure we're using the same settings as the reference driver */
@@ -4090,16 +4067,13 @@ rtw_sa2400_tune(struct rtw_softc *sc, u_int freq)
 
 	sync = SA2400_SYNC_CP_NORMAL;
 
-	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_SYNA,
-	    syna)) != 0)
+	if ((rc = rtw_rf_macwrite(sc, SA2400_SYNA, syna)) != 0)
 		return rc;
-	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_SYNB,
-	    synb)) != 0)
+	if ((rc = rtw_rf_macwrite(sc, SA2400_SYNB, synb)) != 0)
 		return rc;
-	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_SYNC,
-	    sync)) != 0)
+	if ((rc = rtw_rf_macwrite(sc, SA2400_SYNC, sync)) != 0)
 		return rc;
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_SYND, 0x0);
+	return rtw_rf_macwrite(sc, SA2400_SYND, 0x0);
 }
 
 int
@@ -4122,8 +4096,7 @@ rtw_sa2400_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 	if (sc->sc_flags & RTW_F_DIGPHY)
 		opmode |= SA2400_OPMODE_DIGIN;
 
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
-	    opmode);
+	return rtw_rf_macwrite(sc, SA2400_OPMODE, opmode);
 }
 
 int
@@ -4138,8 +4111,7 @@ rtw_sa2400_manrx_init(struct rtw_softc *sc)
 	manrx |= SA2400_MANRX_TEN;
 	manrx |= LSHIFT(1023, SA2400_MANRX_RXGAIN_MASK);
 
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_MANRX,
-	    manrx);
+	return rtw_rf_macwrite(sc, SA2400_MANRX, manrx);
 }
 
 int
@@ -4156,8 +4128,7 @@ rtw_sa2400_vcocal_start(struct rtw_softc *sc, int start)
 	if (sc->sc_flags & RTW_F_DIGPHY)
 		opmode |= SA2400_OPMODE_DIGIN;
 
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
-	    opmode);
+	return rtw_rf_macwrite(sc, SA2400_OPMODE, opmode);
 }
 
 int
@@ -4181,8 +4152,7 @@ rtw_sa2400_filter_calibration(struct rtw_softc *sc)
 	if (sc->sc_flags & RTW_F_DIGPHY)
 		opmode |= SA2400_OPMODE_DIGIN;
 
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
-	    opmode);
+	return rtw_rf_macwrite(sc, SA2400_OPMODE, opmode);
 }
 
 int
@@ -4195,8 +4165,8 @@ rtw_sa2400_dc_calibration(struct rtw_softc *sc)
 
 	dccal = SA2400_OPMODE_DEFAULTS | SA2400_OPMODE_MODE_TXRX;
 
-	rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
-	    dccal);
+	rc = rtw_rf_macwrite(sc, SA2400_OPMODE, dccal);
+
 	if (rc != 0)
 		return rc;
 
@@ -4207,8 +4177,7 @@ rtw_sa2400_dc_calibration(struct rtw_softc *sc)
 	dccal &= ~SA2400_OPMODE_MODE_MASK;
 	dccal |= SA2400_OPMODE_MODE_DCALIB;
 
-	rc = rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,
-	    dccal);
+	rc = rtw_rf_macwrite(sc, SA2400_OPMODE, dccal);
 	if (rc != 0)
 		return rc;
 
@@ -4229,8 +4198,7 @@ rtw_sa2400_agc_init(struct rtw_softc *sc)
 	agc |= LSHIFT(15, SA2400_AGC_LNADELAY_MASK);
 	agc |= LSHIFT(27, SA2400_AGC_RXONDELAY_MASK);
 
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_PHILIPS, SA2400_AGC,
-	    agc);
+	return rtw_rf_macwrite(sc, SA2400_AGC, agc);
 }
 
 int
@@ -4292,7 +4260,7 @@ rtw_max2820_tune(struct rtw_softc *sc, u_int freq)
 	if (freq < 2400 || freq > 2499)
 		return -1;
 
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_CHANNEL,
+	return rtw_rf_hostwrite(sc, MAX2820_CHANNEL,
 	    LSHIFT(freq - 2400, MAX2820_CHANNEL_CF_MASK));
 }
 
@@ -4302,11 +4270,11 @@ rtw_max2820_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
 {
 	int rc;
 
-	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_TEST,
+	if ((rc = rtw_rf_hostwrite(sc, MAX2820_TEST,
 	    MAX2820_TEST_DEFAULT)) != 0)
 		return rc;
 
-	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_ENABLE,
+	if ((rc = rtw_rf_hostwrite(sc, MAX2820_ENABLE,
 	    MAX2820_ENABLE_DEFAULT)) != 0)
 		return rc;
 
@@ -4316,7 +4284,7 @@ rtw_max2820_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
 	else if (power == RTW_OFF || power == RTW_SLEEP)
 		return 0;
 
-	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_SYNTH,
+	if ((rc = rtw_rf_hostwrite(sc, MAX2820_SYNTH,
 	    MAX2820_SYNTH_R_44MHZ)) != 0)
 		return rc;
 
@@ -4327,13 +4295,13 @@ rtw_max2820_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
 	 * be changed from 7, however, the reference driver sets them
 	 * to 4 and 1, respectively.
 	 */
-	if ((rc = rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_RECEIVE,
+	if ((rc = rtw_rf_hostwrite(sc, MAX2820_RECEIVE,
 	    MAX2820_RECEIVE_DL_DEFAULT |
 	    LSHIFT(4, MAX2820A_RECEIVE_1C_MASK) |
 	    LSHIFT(1, MAX2820A_RECEIVE_2C_MASK))) != 0)
 		return rc;
 
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820, MAX2820_TRANSMIT,
+	return rtw_rf_hostwrite(sc, MAX2820_TRANSMIT,
 	    MAX2820_TRANSMIT_PA_DEFAULT);
 }
 
@@ -4359,8 +4327,7 @@ rtw_max2820_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 		enable = MAX2820_ENABLE_DEFAULT;
 		break;
 	}
-	return rtw_rfbus_write(sc, RTW_RFCHIPID_MAXIM2820,
-	    MAX2820_ENABLE, enable);
+	return rtw_rf_hostwrite(sc, MAX2820_ENABLE, enable);
 }
 
 int
@@ -4712,7 +4679,7 @@ rtw_rfchipid_string(int rfchipid)
 
 /* Bang bits over the 3-wire interface. */
 int
-rtw_rf_hostwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
+rtw_rf_hostwrite(struct rtw_softc *sc, u_int addr, u_int32_t val)
 {
 	u_int nbits;
 	int lo_to_hi;
@@ -4723,7 +4690,7 @@ rtw_rf_hostwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
 	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
 	    rtw_rfchipid_string(rfchipid), addr, val));
 
-	switch (rfchipid) {
+	switch (sc->sc_rfchipid) {
 	case RTW_RFCHIPID_MAXIM2820:
 		nbits = 16;
 		lo_to_hi = 0;
@@ -4742,7 +4709,7 @@ rtw_rf_hostwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
 	case RTW_RFCHIPID_RFMD2948:
 		KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
 		KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
-		if (rfchipid == RTW_RFCHIPID_GCT)
+		if (sc->sc_rfchipid == RTW_RFCHIPID_GCT)
 			bits = rtw_grf5101_host_crypt(addr, val);
 		else {
 			bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
@@ -4763,11 +4730,11 @@ rtw_rf_hostwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
 		break;
 	case RTW_RFCHIPID_INTERSIL:
 	default:
-		printf("%s: unknown rfchipid %d\n", __func__, rfchipid);
+		printf("%s: unknown rfchipid %d\n", __func__, sc->sc_rfchipid);
 		return -1;
 	}
 
-	(*rf_bangbits)(regs, bits, lo_to_hi, nbits);
+	(*rf_bangbits)(&sc->sc_regs, bits, lo_to_hi, nbits);
 
 	return 0;
 }
@@ -4787,14 +4754,14 @@ rtw_maxim_swizzle(u_int addr, u_int32_t val)
 
 /* Tell the MAC what to bang over the 3-wire interface. */
 int
-rtw_rf_macwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
+rtw_rf_macwrite(struct rtw_softc *sc, u_int addr, u_int32_t val)
 {
 	u_int32_t reg;
 
 	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
-	    rtw_rfchipid_string(rfchipid), addr, val));
+	    addr, val));
 
-	switch (rfchipid) {
+	switch (sc->sc_rfchipid) {
 	case RTW_RFCHIPID_GCT:
 		reg = rtw_grf5101_mac_crypt(addr, val);
 		break;
@@ -4812,7 +4779,7 @@ rtw_rf_macwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
 		    LSHIFT(val, RTW8180_PHYCFG_MAC_PHILIPS_DATA_MASK);
 	}
 
-	switch (rfchipid) {
+	switch (sc->sc_rfchipid) {
 	case RTW_RFCHIPID_GCT:
 	case RTW_RFCHIPID_MAXIM2820:
 	case RTW_RFCHIPID_RFMD2948:
@@ -4825,9 +4792,9 @@ rtw_rf_macwrite(struct rtw_regs *regs, int rfchipid, u_int addr, u_int32_t val)
 		reg |= RTW8180_PHYCFG_MAC_RFTYPE_PHILIPS;
 		break;
 	default:
-		printf("%s: unknown rfchipid %d\n", __func__, rfchipid);
+		printf("%s: unknown rfchipid %d\n", __func__, sc->sc_rfchipid);
 		return -1;
 	}
 
-	return rtw_rf_macbangbits(regs, reg);
+	return rtw_rf_macbangbits(&sc->sc_regs, reg);
 }
