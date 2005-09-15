@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.4 2004/02/23 19:09:57 drahn Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.5 2005/09/15 21:09:29 miod Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -486,9 +486,11 @@ child_return(arg)
 #endif
 
 	userret(p, frame->tf_pc, 0);
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(p,
+		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 	}
 #endif
 }

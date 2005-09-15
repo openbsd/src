@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.7 2004/05/13 20:20:24 sturm Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.8 2005/09/15 21:09:29 miod Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -206,7 +206,8 @@ child_return(void *arg)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(p,
+		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(p);
 	}
 #endif

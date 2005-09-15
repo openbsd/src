@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2005/05/30 22:12:32 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2005/09/15 21:09:29 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -697,7 +697,8 @@ child_return(void *arg)
 
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(p,
+		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }
 

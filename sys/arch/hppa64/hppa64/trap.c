@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 2005/08/14 10:54:17 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 2005/09/15 21:09:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -558,7 +558,8 @@ child_return(arg)
 	userret(p, tf->tf_iioq[0], 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(p,
+		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }
 
