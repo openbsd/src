@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.84 2005/09/15 17:01:10 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.85 2005/09/15 22:12:23 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -250,7 +250,13 @@ struct cvsroot {
 #define CVS_ENTF_SYNC	0x01	/* contents of disk and memory match */
 #define CVS_ENTF_WR	0x02	/* file is opened for writing too */
 
-
+#define STRIP_SLASH(p)					\
+	do {						\
+		size_t _slen;				\
+		_slen = strlen(p);			\
+		while ((_slen > 0) && (p[_slen - 1] == '/'))	\
+			p[--_slen] = '\0';		\
+	} while (0)
 struct cvs_ent {
 	char			*ce_buf;
 	u_int16_t		 ce_type;

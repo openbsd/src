@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.122 2005/09/15 17:01:10 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.123 2005/09/15 22:12:23 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -439,6 +439,11 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 
 	for (i = 0; i < fsn; i++) {
 		strlcpy(pcopy, fspec[i], sizeof(pcopy));
+
+		/*
+		 * get rid of any trailing slashes.
+		 */
+		STRIP_SLASH(pcopy);
 
 		/*
 		 * Load the information.

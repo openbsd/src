@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.58 2005/09/15 17:01:10 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.59 2005/09/15 22:12:23 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -45,15 +45,6 @@
 
 
 #define CVS_MTSTK_MAXDEPTH	16
-
-
-#define STRIP_SLASH(p)						\
-	do {							\
-		size_t _slen;					\
-		_slen = strlen(p);				\
-		while ((_slen > 0) && (p[_slen - 1] == '/'))	\
-			p[--_slen] = '\0';			\
-	} while (0)
 
 
 static int  cvs_resp_validreq  (struct cvsroot *, int, char *);
