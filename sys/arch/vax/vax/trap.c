@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2005/09/15 21:09:30 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.32 2005/09/15 21:14:27 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -430,7 +430,6 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	else
 #endif
 		err = (*callp->sy_call)(curproc, args, rval);
-	exptr = curproc->p_addr->u_pcb.framep;
 
 #ifdef TRAPDEBUG
 if(startsysc)

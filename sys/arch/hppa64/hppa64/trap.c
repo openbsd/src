@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 2005/09/15 21:09:29 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 2005/09/15 21:14:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -683,8 +683,6 @@ syscall(struct trapframe *frame)
 	else
 #endif
 		oerror = error = (*callp->sy_call)(p, args, rval);
-	p = curproc;
-	frame = p->p_md.md_regs;
 	switch (error) {
 	case 0:
 		frame->tf_ret0 = rval[0];

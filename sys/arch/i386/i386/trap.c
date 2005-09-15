@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.70 2005/09/15 21:09:29 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.71 2005/09/15 21:14:27 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -771,11 +771,6 @@ syscall(frame)
 	KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 */
-		p = curproc;
 		frame.tf_eax = rval[0];
 		frame.tf_edx = rval[1];
 		frame.tf_eflags &= ~PSL_C;	/* carry bit */

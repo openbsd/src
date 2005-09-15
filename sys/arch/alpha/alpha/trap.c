@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.47 2005/09/15 21:09:27 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.48 2005/09/15 21:14:25 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -694,15 +694,9 @@ syscall(code, framep)
 		break;
 	}
 
-        /*
-         * Reinitialize proc pointer `p' as it may be different
-         * if this is a child returning from fork syscall.
-         */
-	p = curproc;
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-
 	userret(p, framep->tf_regs[FRAME_PC], sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))

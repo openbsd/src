@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2005/09/15 21:09:29 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2005/09/15 21:14:27 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -529,14 +529,6 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		else
 #endif
 			i = (*callp->sy_call)(p, &args, rval);
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 */
-		p = curproc;
-		locr0 = p->p_md.md_regs;
-
-		trapdebug_enter(locr0, -code);
 
 		switch (i) {
 		case 0:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2005/09/15 21:09:29 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2005/09/15 21:14:27 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1206,15 +1206,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 
 	switch (error) {
 	case 0:
-		/*
-		 * If fork succeeded and we are the child, our stack
-		 * has moved and the pointer tf is no longer valid,
-		 * and p is wrong.  Compute the new trapframe pointer.
-		 * (The trap frame invariably resides at the
-		 * tippity-top of the u. area.)
-		 */
-		p = curproc;
-		tf = (struct trapframe *)USER_REGS(p);
 		tf->tf_r[2] = rval[0];
 		tf->tf_r[3] = rval[1];
 		tf->tf_epsr &= ~PSR_C;
@@ -1378,8 +1369,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		 * (The trap frame invariably resides at the
 		 * tippity-top of the u. area.)
 		 */
-		p = curproc;
-		tf = (struct trapframe *)USER_REGS(p);
 		tf->tf_r[2] = rval[0];
 		tf->tf_r[3] = rval[1];
 		tf->tf_epsr &= ~PSR_C;
