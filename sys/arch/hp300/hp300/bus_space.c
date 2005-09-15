@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.2 2005/01/23 16:55:17 miod Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.3 2005/09/15 18:52:44 martin Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 	/*
 	 * Allocate virtual address space from the extio extent map.
 	 */
-	size = m68k_round_page(size);
+	size = round_page(size);
 	error = extent_alloc(extio, size, PAGE_SIZE, 0, EX_NOBOUNDARY,
 	    EX_NOWAIT | EX_MALLOCOK, &kva);
 	if (error)
@@ -180,7 +180,7 @@ bus_space_unmap(t, bsh, size)
 		panic("bus_space_unmap: bad space tag");
 	}
 
-	size = m68k_round_page(size);
+	size = round_page(size);
 
 #ifdef DIAGNOSTIC
 	if (bsh & PGOFSET)

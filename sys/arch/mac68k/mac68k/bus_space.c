@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.18 2005/09/12 10:07:29 martin Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.19 2005/09/15 18:52:44 martin Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -77,8 +77,8 @@ bus_space_map(t, bpa, size, flags, bshp)
 	if (error)
 		return (error);
 
-	pa = m68k_trunc_page(bpa + t);
-	endpa = m68k_round_page((bpa + t + size) - 1);
+	pa = trunc_page(bpa + t);
+	endpa = round_page((bpa + t + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
@@ -157,8 +157,8 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	vaddr_t va;
 	pt_entry_t *pte;
 
-	pa = m68k_trunc_page(bpa);
-	endpa = m68k_round_page((bpa + size) - 1);
+	pa = trunc_page(bpa);
+	endpa = round_page((bpa + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
@@ -222,8 +222,8 @@ bus_space_unmap(t, bsh, size)
 	vaddr_t va, endva;
 	bus_addr_t bpa;
 
-	va = m68k_trunc_page(bsh.base);
-	endva = m68k_round_page((bsh.base + size) - 1);
+	va = trunc_page(bsh.base);
+	endva = round_page((bsh.base + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endva <= va)

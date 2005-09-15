@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.32 2005/09/12 10:07:29 martin Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.33 2005/09/15 18:52:44 martin Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -91,7 +91,7 @@ void	bootstrap_mac68k(int);
 #define PA2VA(v, t)	*((t*)((u_int)&(v) - firstpa))
 
 extern caddr_t kernel_start;
-#define	PMAP_MD_RWLOW	m68k_btop(m68k_round_page((vaddr_t)&kernel_start))
+#define	PMAP_MD_RWLOW	m68k_btop(round_page((vaddr_t)&kernel_start))
 
 /*
  * Present a totally tricky view of the world here...
@@ -149,7 +149,7 @@ do { \
 	if (vidlen != 0) { \
 		pte = PA2VA(vidpa, u_int *); \
 		epte = pte + VIDMAPSIZE; \
-		protopte = m68k_trunc_page(mac68k_vidphys) | \
+		protopte = trunc_page(mac68k_vidphys) | \
 		    PG_RW | PG_V | PG_CI; \
 		while (pte < epte) { \
 			*pte++ = protopte; \

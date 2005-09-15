@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.28 2005/08/06 19:51:43 martin Exp $	*/
+/*	$OpenBSD: grf.c,v 1.29 2005/09/15 18:52:44 martin Exp $	*/
 /*	$NetBSD: grf.c,v 1.53 1998/06/02 02:14:20 scottr Exp $	*/
 
 /*
@@ -264,8 +264,8 @@ grfmmap(dev, off, prot)
 		printf("grfmmap(%x): off %x, prot %x\n", dev, off, prot);
 #endif
 
-	if (off < m68k_trunc_page(gm->fboff) ||
-	    off >= m68k_round_page(gm->fbsize + gm->fboff))
+	if (off < trunc_page(gm->fboff) ||
+	    off >= round_page(gm->fbsize + gm->fboff))
 		addr = (-1);	/* XXX bogus */
 	else
 		addr = m68k_btop(gp->sc_phys + off);

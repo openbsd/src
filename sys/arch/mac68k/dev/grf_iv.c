@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.27 2005/09/12 10:07:29 martin Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.28 2005/09/15 18:52:44 martin Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -74,6 +74,8 @@
 #include <machine/cpu.h>
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <mac68k/dev/nubus.h>
 #include <mac68k/dev/obiovar.h>
@@ -277,7 +279,7 @@ grfiv_attach(parent, self, aux)
 		printf(": Civic\n");
 		break;
 	default:
-		sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
+		sc->sc_basepa = trunc_page(mac68k_vidphys);
 		sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 		length = mac68k_vidlen + sc->sc_fbofs;
 
