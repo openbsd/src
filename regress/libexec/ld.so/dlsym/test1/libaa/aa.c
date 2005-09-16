@@ -1,4 +1,4 @@
-/*	$OpenBSD: aa.c,v 1.2 2005/09/15 13:28:31 kurt Exp $	*/
+/*	$OpenBSD: aa.c,v 1.3 2005/09/16 23:30:25 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -54,14 +54,14 @@ aaTest()
 		printf("sigprocmask       == %p\n", &sigprocmask);
 		printf("libaa_sigprocmask == %p\n", libaa_sigprocmask);
 		printf("libc_sigprocmask  == %p\n", libc_sigprocmask);
-		return (-1);
+		return (1);
 	}
 
 	value = dlsym(RTLD_DEFAULT, "sigprocmask");
 	if (value != &sigprocmask) {
 		printf("dlsym(RTLD_DEFAULT, \"sigprocmask\") == %p FAILED\n", value);
 		printf("\twas expecting == %p (&sigprocmask)\n", &sigprocmask);
-		ret = -1;
+		ret = 1;
 	}
 
 	value = dlsym(RTLD_SELF, "sigprocmask");
@@ -69,21 +69,21 @@ aaTest()
 		printf("dlsym(RTLD_SELF, \"sigprocmask\") == %p FAILED\n", value);
 		printf("\twas expecting == %p (libaa_sigprocmask)\n", libaa_sigprocmask);
 		printf("FAILED\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	value = dlsym(RTLD_NEXT, "sigprocmask");
 	if (value != libc_sigprocmask) {
 		printf("dlsym(RTLD_NEXT, \"sigprocmask\") == %p FAILED\n", value);
 		printf("\twas expecting == %p (libc_sigprocmask)\n", libc_sigprocmask);
-		ret = -1;
+		ret = 1;
 	}
 
 	value = dlsym(NULL, "sigprocmask");
 	if (value != libaa_sigprocmask) {
 		printf("dlsym(NULL, \"sigprocmask\") == %p FAILED\n", value);
 		printf("\twas expecting == %p (libaa_sigprocmask)\n", libaa_sigprocmask);
-		ret = -1;
+		ret = 1;
 	}
 
 	return (ret);

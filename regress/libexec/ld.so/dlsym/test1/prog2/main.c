@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1.1.1 2005/09/15 15:37:15 kurt Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 2005/09/16 23:30:25 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -32,27 +32,27 @@ main()
 
 	if (dlsym(RTLD_DEFAULT, "aaSymbol") == NULL) {
 		printf("dlsym(RTLD_DEFAULT, \"aaSymbol\") FAILED\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	if (dlsym(RTLD_SELF, "aaSymbol") == NULL) {
 		printf("dlsym(RTLD_SELF, \"aaSymbol\") FAILED\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	if (dlsym(RTLD_NEXT, "aaSymbol") == NULL) {
 		printf("dlsym(RTLD_NEXT, \"aaSymbol\") FAILED\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	if (dlsym(NULL, "aaSymbol") == NULL) {
 		printf("dlsym(RTLD_NEXT, \"aaSymbol\") FAILED\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	if (dlsym(exe_handle, "aaSymbol") == NULL) {
 		printf("dlsym(exe_handle, \"aaSymbol\") FAILED\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	dlclose(exe_handle);

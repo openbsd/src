@@ -1,4 +1,4 @@
-/*	$OpenBSD: bb.c,v 1.1.1.1 2005/09/15 22:16:27 kurt Exp $	*/
+/*	$OpenBSD: bb.c,v 1.2 2005/09/16 23:30:25 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -36,61 +36,61 @@ bbTest1(void *libbb)
 	/* check RTLD_DEFAULT can see symbols in main object group */
 	if (dlsym(RTLD_DEFAULT, "mainSymbol") == NULL) {
 		printf("dlsym(RTLD_DEFAULT, \"mainSymbol\") == NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check RTLD_SELF can *not* see symbols in main object group */
 	if (dlsym(RTLD_SELF, "aaSymbol") != NULL) {
 		printf("dlsym(RTLD_SELF, \"aaSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check RTLD_NEXT can *not* see symbols in main object group */
 	if (dlsym(RTLD_NEXT, "aaSymbol") != NULL) {
 		printf("dlsym(RTLD_NEXT, \"aaSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check NULL can *not* see symbols in main object group */
 	if (dlsym(NULL, "aaSymbol") != NULL) {
 		printf("dlsym(NULL, \"aaSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check RTLD_SELF can see symbols in local object group */
 	if (dlsym(RTLD_SELF, "ccSymbol") == NULL) {
 		printf("dlsym(RTLD_SELF, \"ccSymbol\") == NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check RTLD_NEXT can see symbols in local object group */
 	if (dlsym(RTLD_NEXT, "ccSymbol") == NULL) {
 		printf("dlsym(RTLD_NEXT, \"ccSymbol\") == NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check NULL can see symbols in local object group */
 	if (dlsym(NULL, "ccSymbol") == NULL) {
 		printf("dlsym(NULL, \"ccSymbol\") == NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check RTLD_NEXT skips libbb and can't find bbSymbol */
 	if (dlsym(RTLD_NEXT, "bbSymbol") != NULL) {
 		printf("dlsym(RTLD_NEXT, \"bbSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check dlsym(libbb,..) can *not* see symbols in libaa */
 	if (dlsym(libbb, "aaSymbol") != NULL) {
 		printf("dlsym(libbb, \"aaSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* check dlsym(libbb,..) can see symbols in libcc */
 	if (dlsym(libbb, "ccSymbol") == NULL) {
 		printf("dlsym(libbb, \"ccSymbol\") == NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	return (ret);

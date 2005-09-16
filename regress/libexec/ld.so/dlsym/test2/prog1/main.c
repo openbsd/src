@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1.1.1 2005/09/15 22:16:27 kurt Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 2005/09/16 23:30:26 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -34,37 +34,37 @@ main()
 
 	if (libbb == NULL) {
 		printf("dlopen(\"libbb.so\", RTLD_LAZY) FAILED\n");
-		return (-1);
+		return (1);
 	}
 
 	/* RTLD_DEFAULT should see bbSymbol */
 	if (dlsym(RTLD_DEFAULT, "bbSymbol") == NULL) {
 		printf("dlsym(RTLD_DEFAULT, \"bbSymbol\") == NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* RTLD_SELF should *not* see bbSymbol (different load group) */
 	if (dlsym(RTLD_SELF, "bbSymbol") != NULL) {
 		printf("dlsym(RTLD_SELF, \"bbSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* RTLD_NEXT should *not* see bbSymbol (different load group) */
 	if (dlsym(RTLD_NEXT, "bbSymbol") != NULL) {
 		printf("dlsym(RTLD_NEXT, \"bbSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* NULL should *not* see bbSymbol (different load group) */
 	if (dlsym(NULL, "bbSymbol") != NULL) {
 		printf("dlsym(NULL, \"bbSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	/* exe handle should *not* see bbSymbol (different load group) */
 	if (dlsym(exe_handle, "bbSymbol") != NULL) {
 		printf("dlsym(exe_handle, \"bbSymbol\") != NULL\n");
-		ret = -1;
+		ret = 1;
 	}
 
 	dlclose(exe_handle);
