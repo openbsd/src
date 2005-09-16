@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.337 2005/08/06 19:52:36 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.338 2005/09/16 10:18:29 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2615,7 +2615,7 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
 
 pf-rule        = action [ ( "in" | "out" ) ]
                  [ "log" [ "(" logopts ")"] ] [ "quick" ]
-                 [ "on" ifspec ] [ route ] [ af ] [ protospec ]
+                 [ "on" ifspec ] [ "fastroute" | route ] [ af ] [ protospec ]
                  hosts [ filteropt-list ]
 
 logopts        = logopt [ "," logopts ]
@@ -2693,8 +2693,7 @@ icmp6code      = ( icmp6-code-name | icmp6-code-number )
 
 ifspec         = ( [ "!" ] interface-name ) | "{" interface-list "}"
 interface-list = [ "!" ] interface-name [ [ "," ] interface-list ]
-route          = "fastroute" |
-                 ( "route-to" | "reply-to" | "dup-to" )
+route          = ( "route-to" | "reply-to" | "dup-to" )
                  ( routehost | "{" routehost-list "}" )
                  [ pooltype ]
 af             = "inet" | "inet6"
@@ -2712,7 +2711,7 @@ hosts          = "all" |
 ipspec         = "any" | host | "{" host-list "}"
 host           = [ "!" ] ( address [ "/" mask-bits ] | "<" string ">" )
 redirhost      = address [ "/" mask-bits ]
-routehost      = ( interface-name [ address [ "/" mask-bits ] ] )
+routehost      = "(" interface-name [ address [ "/" mask-bits ] ] ")"
 address        = ( interface-name | "(" interface-name ")" | hostname |
                  ipv4-dotted-quad | ipv6-coloned-hex )
 host-list      = host [ [ "," ] host-list ]
