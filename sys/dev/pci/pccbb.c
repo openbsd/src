@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.36 2005/08/03 23:08:22 fgsch Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.37 2005/09/16 02:20:23 fgsch Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -492,7 +492,7 @@ pccbbattach(parent, self, aux)
 
 	/*
 	 * XXX pccbbintr should be called under the priority lower
-	 * than any other hard interrputs.
+	 * than any other hard interrupts.
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc,
 	    sc->sc_dev.dv_xname);
@@ -578,7 +578,7 @@ pccbb_pci_callback(self)
 		}
 		sc->sc_base_memt = sc->sc_memt;
 		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus resister address 0x%lx -> 0x%x\n",
+		DPRINTF(("%s: CardBus register address 0x%lx -> 0x%x\n",
 		    sc->sc_dev.dv_xname, sockbase, pci_conf_read(pc, sc->sc_tag,
 		    PCI_SOCKBASE)));
 #else
@@ -592,7 +592,7 @@ pccbb_pci_callback(self)
 			return;
 		}
 		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus resister address 0x%x -> 0x%x\n",
+		DPRINTF(("%s: CardBus register address 0x%x -> 0x%x\n",
 		    sc->sc_dev.dv_xname, sock_base, pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
 #endif
