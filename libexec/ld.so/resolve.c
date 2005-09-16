@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.28 2005/09/16 23:19:41 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.29 2005/09/16 23:41:05 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -260,7 +260,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 	unsigned long h = 0;
 	const char *p = name;
 	elf_object_t *object = NULL, *weak_object = NULL;
-	int found = 0, lastchance = 0;
+	int found = 0;
 	struct dep_node *n, *m;
 
 
@@ -280,8 +280,6 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 			goto found;
 		}
 
-
-retry_nonglobal_dlo:
 	if (flags & SYM_SEARCH_OBJ) {
 		if (_dl_find_symbol_obj(req_obj, name, h, flags, ref,
 		    &weak_sym, &weak_object)) {
@@ -354,8 +352,7 @@ retry_nonglobal_dlo:
 		 * and and it's children
 		 */
 		TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
-			if ((lastchance == 0) &&
-			    ((n->data->obj_flags & RTLD_GLOBAL) == 0) &&
+			if (((n->data->obj_flags & RTLD_GLOBAL) == 0) &&
 			    (n->data != req_obj->load_object))
 				continue;
 
@@ -382,12 +379,6 @@ found:
 
 
 	if (found == 0) {
-#if 1
-		if (lastchance == 0) {
-			lastchance = 1;
-			goto retry_nonglobal_dlo;
-		}
-#endif
 		if (flags & SYM_WARNNOTFOUND)
 			_dl_printf("%s:%s: undefined symbol '%s'\n",
 			    _dl_progname, req_obj->load_name, name);
