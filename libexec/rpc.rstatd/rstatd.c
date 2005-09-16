@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.20 2004/09/16 10:53:03 otto Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.21 2005/09/16 23:50:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.20 2004/09/16 10:53:03 otto Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.21 2005/09/16 23:50:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ extern void rstat_service(struct svc_req *, SVCXPRT *);
 
 void my_svc_run(void);
 
-int from_inetd = 1;     /* started from inetd ? */
+int from_inetd = 1;	/* started from inetd ? */
 int closedown = 20;	/* how long to wait before going dormant */
 
 volatile sig_atomic_t gotsig;
@@ -149,7 +149,8 @@ my_svc_run(void)
 {
 	extern volatile sig_atomic_t wantupdatestat;
 	extern void updatestat(void);
-	fd_set *fds;
+	struct pollfd *pfd = NULL, *newp;
+	int nready, saved_max_pollfd = 0;
 
 	for (;;) {
 		if (wantupdatestat) {
@@ -162,32 +163,30 @@ my_svc_run(void)
 			(void) pmap_unset(RSTATPROG, RSTATVERS_ORIG);
 			exit(0);
 		}
-
-		if (__svc_fdset) {
-			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
-			    sizeof(fd_mask);
-			fds = (fd_set *)malloc(bytes);  /* XXX */
-			memcpy(fds, __svc_fdset, bytes);
-		} else
-			fds = NULL;
-		switch (select(svc_maxfd+1, fds, 0, 0, (struct timeval *)0)) {
-		case -1:
-			if (errno == EINTR) {
-				if (fds)
-					free(fds);
-				continue;
+		if (svc_max_pollfd > saved_max_pollfd) {
+			newp = realloc(pfd, sizeof(*pfd) * svc_max_pollfd);
+			if (newp == NULL) {
+				free(pfd);
+				perror("svc_run: - realloc failed");
+				return;
 			}
-			perror("svc_run: - select failed");
-			if (fds)
-				free(fds);
+			pfd = newp;
+			saved_max_pollfd = svc_max_pollfd;
+		}
+		memcpy(pfd, svc_pollfd, sizeof(*pfd) * svc_max_pollfd);
+
+		nready = poll(pfd, svc_max_pollfd, INFTIM);
+		switch (nready) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			perror("svc_run: - poll failed");
+			free(pfd);
 			return;
 		case 0:
-			if (fds)
-				free(fds);
 			continue;
 		default:
-			svc_getreqset2(fds, svc_maxfd+1);
-			free(fds);
+			svc_getreq_poll(pfd, nready);
 		}
 	}
 }
