@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2004/05/25 21:42:48 mickey Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.7 2005/09/16 23:19:42 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -235,12 +235,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			} else {
 				this = NULL;
 				ooff = _dl_find_symbol_bysym(object,
-				    ELF_R_SYM(rels->r_info),
-				    _dl_objects, &this, NULL,
+				    ELF_R_SYM(rels->r_info), &this,
 				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
 				    ((type == R_TYPE(JUMP_SLOT)) ?
 					SYM_PLT : SYM_NOTPLT),
-				    sym->st_size);
+				    sym->st_size, NULL);
 				if (this == NULL) {
 resolve_failed:
 					_dl_printf("%s: %s: can't resolve "
@@ -269,9 +268,9 @@ resolve_failed:
 			size_t size = dstsym->st_size;
 			Elf_Addr soff;
 
-			soff = _dl_find_symbol(symn, object->next, &srcsym,
-			    NULL, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    size, object);
+			soff = _dl_find_symbol(symn, &srcsym,
+			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
+			    size, object, NULL);
 			if (srcsym == NULL)
 				goto resolve_failed;
 
@@ -347,14 +346,16 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->got_addr = NULL;
 	object->got_size = 0;
 	this = NULL;
-	ooff = _dl_find_symbol("__got_start", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	ooff = _dl_find_symbol("__got_start", &this,
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, 0,
+	    object, NULL);
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
-	ooff = _dl_find_symbol("__got_end", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	ooff = _dl_find_symbol("__got_end", &this,
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, 0,
+	    object, NULL);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
@@ -408,8 +409,9 @@ _dl_bind(elf_object_t *object, int relidx)
 	sym += ELF_R_SYM(rel->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
-	ooff = _dl_find_symbol(symn, _dl_objects, &this, NULL,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size, object);
+	ooff = _dl_find_symbol(symn,  &this,
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size,
+	    object, NULL);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */

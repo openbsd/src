@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.35 2004/05/25 21:42:48 mickey Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.36 2005/09/16 23:19:42 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -194,10 +194,10 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
 			ooff = _dl_find_symbol_bysym(object,
-			    ELF32_R_SYM(relas->r_info), _dl_objects,
-			    &this, NULL, SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
+			    ELF32_R_SYM(relas->r_info), &this,
+			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
 			    ((type == RELOC_JMP_SLOT) ? SYM_PLT:SYM_NOTPLT),
-			    sym->st_size);
+			    sym->st_size, NULL);
 
 			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: %s :can't resolve reference '%s'\n",
@@ -360,38 +360,27 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 		    }
 			break;
 		case RELOC_COPY:
+		{
 #ifdef DL_PRINTF_DEBUG
 			_dl_printf("copy r_addr %x, sym %x [%s] size %d val %x\n",
 			    r_addr, sym, symn, sym->st_size,
 			    (ooff + this->st_value+
 			    relas->r_addend));
 #endif
-		    {
 			/*
 			 * we need to find a symbol, that is not in the current
 			 * object, start looking at the beginning of the list,
 			 * searching all objects but _not_ the current object,
 			 * first one found wins.
 			 */
-			elf_object_t *cobj;
 			const Elf32_Sym *cpysrc = NULL;
 			Elf32_Addr src_loff;
 			int size;
 
 			src_loff = 0;
-			for (cobj = _dl_objects; cobj != NULL && cpysrc == NULL;
-			    cobj = cobj->next) {
-				if (object != cobj) {
-					/* only look in this object */
-					src_loff = _dl_find_symbol_bysym(object,
-					    ELF32_R_SYM(relas->r_info),
-					    cobj, &cpysrc, NULL,
-					    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|
-					    ((type == RELOC_JMP_SLOT) ?
-					        SYM_PLT : SYM_NOTPLT),
-					    sym->st_size);
-				}
-			}
+			src_loff = _dl_find_symbol(symn, &cpysrc,
+			    SYM_SEARCH_OTHER|SYM_NOWARNNOTFOUND| SYM_NOTPLT,
+			    sym->st_size, object, NULL);
 			if (cpysrc == NULL) {
 				_dl_printf("symbol not found [%s] \n", symn);
 			} else {
@@ -458,28 +447,32 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->got_addr = NULL;
 	object->got_size = 0;
 	this = NULL;
-	ooff = _dl_find_symbol("__got_start", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	ooff = _dl_find_symbol("__got_start", &this,
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT|SYM_DLSYM, 0,
+	    object, NULL);
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
-	ooff = _dl_find_symbol("__got_end", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	ooff = _dl_find_symbol("__got_end", &this,
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT|SYM_DLSYM, 0,
+	    object, NULL);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
 	plt_addr = 0;
 	object->plt_size = 0;
 	this = NULL;
-	ooff = _dl_find_symbol("__plt_start", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	ooff = _dl_find_symbol("__plt_start", &this,
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT|SYM_DLSYM, 0,
+	    object, NULL);
 	if (this != NULL)
 		plt_addr = ooff + this->st_value;
 
 	this = NULL;
-	ooff = _dl_find_symbol("__plt_end", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	ooff = _dl_find_symbol("__plt_end", &this,
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT|SYM_DLSYM, 0,
+	    object, NULL);
 	if (this != NULL)
 		object->plt_size = ooff + this->st_value  - plt_addr;
 
@@ -562,8 +555,9 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	r_addr = (Elf_Addr *)(object->load_offs + relas->r_offset);
 	this = NULL;
-	ooff = _dl_find_symbol(symn, _dl_objects, &this, NULL,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size, object);
+	ooff = _dl_find_symbol(symn, &this,
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size,
+	    object, NULL);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
@@ -620,7 +614,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		_dl_dcbf(&r_addr[0]);
 	}
 
-	/* if PLT is (to be protected, change back to RO/X */
+	/* if PLT is to be protected, change back to RO/X */
 	if (object->plt_size != 0) {
 		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */

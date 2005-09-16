@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2005/01/09 17:57:40 mickey Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.8 2005/09/16 23:19:42 drahn Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -160,10 +160,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		ooff = 0;
 		if (ELF_R_SYM(rela->r_info) && sym->st_name) {
 			ooff = _dl_find_symbol_bysym(object,
-			    ELF_R_SYM(rela->r_info), _dl_objects,
-			    &this, &sobj, SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
+			    ELF_R_SYM(rela->r_info), &this,
+			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
 			    ((type == RELOC_DIR32) ? SYM_NOTPLT : SYM_PLT),
-			    sym->st_size);
+			    sym->st_size, &sobj);
 			if (!this) {
 				_dl_printf("%s: %s: can't resolve reference '%s'\n",
 				    _dl_progname, object->load_name, symn);
@@ -235,9 +235,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		case RELOC_COPY:
 			size = sym->st_size;
-			ooff = _dl_find_symbol(symn, object->next, &sym, NULL,
-			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    size, object);
+			ooff = _dl_find_symbol(symn, &sym,
+			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
+			    size, object, NULL);
 			if (sym) {
 				_dl_bcopy((void *)(ooff + sym->st_value),
 				    pt, sym->st_size);
@@ -277,14 +277,14 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->got_addr = NULL;
 	object->got_size = 0;
 	this = NULL;
-	ooff = _dl_find_symbol("__got_start", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	ooff = _dl_find_symbol("__got_start", &this,
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object, NULL );
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
-	ooff = _dl_find_symbol("__got_end", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	ooff = _dl_find_symbol("__got_end", &this,
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object, NULL);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
@@ -343,8 +343,9 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
 	this = NULL;
-	ooff = _dl_find_symbol(symn, _dl_objects, &this, &sobj,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size, object);
+	ooff = _dl_find_symbol(symn, &this,
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size,
+	    object, &sobj);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.2 2004/06/07 15:18:19 mickey Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.3 2005/09/16 23:19:42 drahn Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -67,6 +67,12 @@ RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	_dl_exit(20);
 }
 
+/*
+ * !!!!! WARNING: THIS CODE CANNOT HANDLE ld.so RELOCATIONS OF THE FORM
+ * 0000bde8 R_PARISC_DIR32    .data+0x00000048
+ * these can be caused by static intialization foo = &bar;
+ * prepare to code around this problem, or fix it here.
+ */
 static inline void
 RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {

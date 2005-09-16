@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.27 2005/05/10 03:36:07 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.28 2005/09/16 23:19:41 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -38,6 +38,7 @@
 
 elf_object_t *_dl_objects;
 elf_object_t *_dl_last_object;
+elf_object_t *_dl_loading_object;
 
 /*
  * Add a new dynamic object to the object list.
@@ -68,7 +69,7 @@ _dl_add_object(elf_object_t *object)
  * Initialize a new dynamic object.
  */
 elf_object_t *
-_dl_finalize_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
+_dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
     const int objtype, const long laddr, const long loff)
 {
 	elf_object_t *object;
@@ -140,12 +141,24 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
 	object->load_addr = laddr;
 	object->load_offs = loff;
 	object->load_name = _dl_strdup(objname);
+	if (_dl_loading_object == NULL) {
+		/*
+		 * no loading object, object is the loading object,
+		 * as it is either executable, or dlopened()
+		 */
+		_dl_loading_object = object->load_object = object;
+		DL_DEB(("head %s\n", object->load_name ));
+	} else {
+		object->load_object = _dl_loading_object;
+	}
+	DL_DEB(("obj %s has %s as head\n", object->load_name,
+	    _dl_loading_object->load_name ));
 	object->refcount = 1;
-	object->first_child = NULL;
-	object->last_child = NULL;
+	TAILQ_INIT(&object->child_list);
 	/* default dev, inode for dlopen-able objects. */
 	object->dev = 0;
 	object->inode = 0;
+	TAILQ_INIT(&object->dload_list);
 
 	return(object);
 }
@@ -198,8 +211,7 @@ int _dl_symcachestat_lookups;
 
 Elf_Addr
 _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
-    elf_object_t *startlook, const Elf_Sym **ref, const elf_object_t **pobj,
-    int flags, int req_size)
+    const Elf_Sym **ref, int flags, int req_size, const elf_object_t **pobj)
 {
 	Elf_Addr ret;
 	const Elf_Sym *sym;
@@ -225,8 +237,7 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 	sym += symidx;
 	symn = req_obj->dyn.strtab + sym->st_name;
 
-	ret = _dl_find_symbol(symn, startlook, ref, &sobj,
-	    flags, req_size, req_obj);
+	ret = _dl_find_symbol(symn, ref, flags, req_size, req_obj, &sobj);
 
 	if (pobj)
 		*pobj = sobj;
@@ -242,16 +253,16 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 }
 
 Elf_Addr
-_dl_find_symbol(const char *name, elf_object_t *startlook,
-    const Elf_Sym **ref, const elf_object_t **pobj,
-    int flags, int req_size, elf_object_t *req_obj)
+_dl_find_symbol(const char *name, const Elf_Sym **ref,
+    int flags, int req_size, elf_object_t *req_obj, const elf_object_t **pobj)
 {
 	const Elf_Sym *weak_sym = NULL;
 	unsigned long h = 0;
 	const char *p = name;
-	elf_object_t *object, *weak_object = NULL;
-	int found = 0;
-	int lastchance = 0;
+	elf_object_t *object = NULL, *weak_object = NULL;
+	int found = 0, lastchance = 0;
+	struct dep_node *n, *m;
+
 
 	while (*p) {
 		unsigned long g;
@@ -269,20 +280,96 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 			goto found;
 		}
 
+
 retry_nonglobal_dlo:
-	for (object = startlook; object;
-	    object = ((flags & SYM_SEARCH_SELF) ? 0 : object->next)) {
-
-		if ((lastchance == 0) &&
-		    ((object->obj_flags & RTLD_GLOBAL) == 0) &&
-		    (object->obj_type == OBJTYPE_DLO) &&
-		    (object != req_obj))
-			continue;
-
-		if (_dl_find_symbol_obj(object, name, h, flags, ref, &weak_sym,
-		    &weak_object)) {
+	if (flags & SYM_SEARCH_OBJ) {
+		if (_dl_find_symbol_obj(req_obj, name, h, flags, ref,
+		    &weak_sym, &weak_object)) {
+			object = req_obj;
 			found = 1;
-			break;
+		}
+	} else if ((flags & SYM_SEARCH_SELF) || (flags & SYM_SEARCH_NEXT)) {
+		/* search after req_obj in the objects's load group */
+		int skip = 1;
+
+		TAILQ_FOREACH(n, &req_obj->load_object->dload_list, next_sib) {
+
+			if (n->data == req_obj && skip == 1) {
+				skip = 0;
+				if (flags & SYM_SEARCH_NEXT)
+					continue;
+			}
+			if (skip == 1)
+				continue;
+			if (_dl_find_symbol_obj(n->data, name, h, flags, ref,
+			    &weak_sym, &weak_object)) {
+				object = n->data;
+				found = 1;
+				break;
+			}
+		}
+	} else if (flags & SYM_DLSYM) {
+		if (_dl_find_symbol_obj(req_obj, name, h, flags, ref,
+		    &weak_sym, &weak_object)) {
+			object = req_obj;
+			found = 1;
+		}
+		if (weak_object != NULL && found == 0) {
+			object=weak_object;
+			*ref = weak_sym;
+			found = 1;
+		}
+		/* search dlopened obj and all children */
+
+		if (found == 0) {
+			TAILQ_FOREACH(n, &req_obj->load_object->dload_list,
+			    next_sib) {
+				if (_dl_find_symbol_obj(n->data, name, h,
+				    flags, ref,
+				    &weak_sym, &weak_object)) {
+					object = n->data;
+					found = 1;
+					break;
+				}
+			}
+		}
+	} else {
+		/* search main program and it's libs */
+		TAILQ_FOREACH(n, &_dl_objects->dload_list, next_sib) {
+			if ((flags & SYM_SEARCH_OTHER) &&
+			    (n->data == req_obj)) {
+				continue;
+			}
+
+			if (_dl_find_symbol_obj(n->data, name, h, flags,
+			    ref, &weak_sym, &weak_object)) {
+				object = n->data;
+				found = 1;
+				goto found;
+			}
+		}
+
+		/*
+		 * search dlopened objects: global or req_obj == dlopened_obj
+		 * and and it's children
+		 */
+		TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
+			if ((lastchance == 0) &&
+			    ((n->data->obj_flags & RTLD_GLOBAL) == 0) &&
+			    (n->data != req_obj->load_object))
+				continue;
+
+			TAILQ_FOREACH(m, &n->data->dload_list, next_sib) {
+				if ((flags & SYM_SEARCH_OTHER) &&
+				    (m->data == req_obj))
+					continue;
+				if (_dl_find_symbol_obj(m->data, name, h, flags,
+				    ref, &weak_sym, &weak_object)) {
+					object = m->data;
+					found = 1;
+					break;
+				}
+			}
 		}
 	}
 
@@ -293,11 +380,14 @@ found:
 		found = 1;
 	}
 
+
 	if (found == 0) {
+#if 1
 		if (lastchance == 0) {
 			lastchance = 1;
 			goto retry_nonglobal_dlo;
 		}
+#endif
 		if (flags & SYM_WARNNOTFOUND)
 			_dl_printf("%s:%s: undefined symbol '%s'\n",
 			    _dl_progname, req_obj->load_name, name);

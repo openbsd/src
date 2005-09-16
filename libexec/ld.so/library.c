@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.40 2005/05/23 19:22:11 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.41 2005/09/16 23:19:41 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -66,7 +66,7 @@ _dl_unload_shlib(elf_object_t *object)
 
 
 elf_object_t *
-_dl_tryload_shlib(const char *libname, int type)
+_dl_tryload_shlib(const char *libname, int type, int flags)
 {
 	int	libfile, i, align = _dl_pagesz - 1;
 	struct load_list *next_load, *load_list = NULL;
@@ -85,6 +85,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	object = _dl_lookup_object(libname);
 	if (object) {
 		object->refcount++;
+		object->load_object->obj_flags |= flags & RTLD_GLOBAL;
 		return(object);		/* Already loaded */
 	}
 
@@ -102,6 +103,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	for (object = _dl_objects; object != NULL; object = object->next) {
 		if (object->dev == sb.st_dev &&
 		    object->inode == sb.st_ino) {
+			object->load_object->obj_flags |= flags & RTLD_GLOBAL;
 			_dl_close(libfile);
 			return(object);
 		}
@@ -223,6 +225,7 @@ _dl_tryload_shlib(const char *libname, int type)
 		/* set inode, dev from stat info */
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
+		object->obj_flags = flags;
 	} else {
 		/* XXX not possible. object cannot come back NULL */
 		_dl_munmap((void *)libaddr, maxva - minva);

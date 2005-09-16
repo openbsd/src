@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.5 2005/05/23 19:22:11 drahn Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.6 2005/09/16 23:19:41 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/syslimits.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <dirent.h>
 
 #include "archdep.h"
@@ -41,11 +42,11 @@
 
 #define DEFAULT_PATH "/usr/lib"
 
-static void _dl_unload_dlopen_recurse(struct dep_node *node);
 
 /* STATIC DATA */
-static struct dep_node *_dlopened_first_child;
-static struct dep_node *_dlopened_last_child;
+struct dlochld _dlopened_child_list;
+
+
 
 /*
  * _dl_match_file()
@@ -254,7 +255,7 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
 	ignore_hints = 0;
 
 	if (_dl_strchr(libname, '/')) {
-		object = _dl_tryload_shlib(libname, type);
+		object = _dl_tryload_shlib(libname, type, flags);
 		return(object);
 	}
 
@@ -274,10 +275,9 @@ again:
 				    "using it anyway\n",
 				    sod.sod_name, sod.sod_major,
 				    req_sod.sod_minor, sod.sod_minor);
-			object = _dl_tryload_shlib(hint, type);
+			object = _dl_tryload_shlib(hint, type, flags);
 			if (object != NULL) {
 				_dl_free((char *)sod.sod_name);
-				object->obj_flags = flags;
 				return (object);
 			}
 		}
@@ -296,10 +296,9 @@ again:
 				    "using it anyway\n",
 				    sod.sod_name, sod.sod_major,
 				    req_sod.sod_minor, sod.sod_minor);
-			object = _dl_tryload_shlib(hint, type);
+			object = _dl_tryload_shlib(hint, type, flags);
 			if (object != NULL) {
 				_dl_free((char *)sod.sod_name);
-				object->obj_flags = flags;
 				return (object);
 			}
 		}
@@ -314,10 +313,9 @@ again:
 			    "using it anyway\n",
 			    sod.sod_name, sod.sod_major,
 			    req_sod.sod_minor, sod.sod_minor);
-		object = _dl_tryload_shlib(hint, type);
+		object = _dl_tryload_shlib(hint, type, flags);
 		if (object != NULL) {
 			_dl_free((char *)sod.sod_name);
-			object->obj_flags = flags;
 			return(object);
 		}
 	}
@@ -344,12 +342,7 @@ _dl_link_dlopen(elf_object_t *dep)
 		_dl_exit(5);
 
 	n->data = dep;
-	n->next_sibling = NULL;
-	if (_dlopened_first_child) {
-		_dlopened_last_child->next_sibling = n;
-		_dlopened_last_child = n;
-	} else
-		_dlopened_first_child = _dlopened_last_child = n;
+	TAILQ_INSERT_TAIL(&_dlopened_child_list, n, next_sib);
 
 	DL_DEB(("linking %s as dlopen()ed\n", dep->load_name));
 }
@@ -357,34 +350,19 @@ _dl_link_dlopen(elf_object_t *dep)
 void
 _dl_unlink_dlopen(elf_object_t *dep)
 {
-	struct dep_node **dnode;
-	struct dep_node *pnode;
-	struct dep_node *next;
 
-	dnode = &_dlopened_first_child;
+	struct dep_node *dnode;
 
-	if (_dlopened_first_child == NULL)
-		return;
-
-	if (_dlopened_first_child->data == dep) {
-		next = _dlopened_first_child->next_sibling;
-		_dl_free(_dlopened_first_child);
-		_dlopened_first_child = next;
-		return;
-	}
-	pnode = _dlopened_first_child;
-
-	while (pnode->next_sibling != NULL) {
-		if (pnode->next_sibling->data == dep) {
-			next = pnode->next_sibling->next_sibling;
-			if (pnode->next_sibling == _dlopened_last_child)
-				_dlopened_last_child = pnode;
-			_dl_free(pnode->next_sibling);
-			pnode->next_sibling = next;
+	TAILQ_FOREACH(dnode, &_dlopened_child_list, next_sib)
+		if (dnode->data == dep)
 			break;
-		}
-		pnode = pnode->next_sibling;
-	}
+
+	if (dnode == NULL) /* XXX - not found? */
+		return;
+
+	TAILQ_REMOVE(&_dlopened_child_list, dnode, next_sib);
+
+	_dl_free(dnode);
 }
 
 void
@@ -393,33 +371,25 @@ _dl_notify_unload_shlib(elf_object_t *object)
 	struct dep_node *n;
 
 	if (--object->refcount == 0)
-		for (n = object->first_child; n; n = n->next_sibling)
+		TAILQ_FOREACH(n, &object->child_list, next_sib)
 			_dl_notify_unload_shlib(n->data);
 }
 
 void
 _dl_unload_dlopen(void)
 {
-	if (_dlopened_first_child != NULL)
-		_dl_unload_dlopen_recurse(_dlopened_first_child);
-}
+	struct dep_node *node;
 
-/*
- * is recursion here a good thing? 
- */
-void
-_dl_unload_dlopen_recurse(struct dep_node *node)
-{
-	if (node->next_sibling != NULL) {
-		_dl_unload_dlopen_recurse(node->next_sibling);
+	TAILQ_FOREACH_REVERSE(node, &_dlopened_child_list, dlochld, next_sib) {
+		_dl_notify_unload_shlib(node->data);
+		_dl_run_all_dtors();
+		if (_dl_exiting == 0)
+			_dl_unload_shlib(node->data);
+
+		TAILQ_REMOVE(&_dlopened_child_list, node, next_sib);
+		_dl_free(node);
 	}
-	_dl_notify_unload_shlib(node->data);
-	_dl_run_all_dtors();
-	if (_dl_exiting == 0)
-		_dl_unload_shlib(node->data);
-	_dl_free(node);
 }
-
 
 void
 _dl_link_sub(elf_object_t *dep, elf_object_t *p)
@@ -428,14 +398,24 @@ _dl_link_sub(elf_object_t *dep, elf_object_t *p)
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
-		_dl_exit(5);
+		_dl_exit(7);
 	n->data = dep;
-	n->next_sibling = NULL;
-	if (p->first_child) {
-		p->last_child->next_sibling = n;
-		p->last_child = n;
-	} else
-		p->first_child = p->last_child = n;
+	TAILQ_INSERT_TAIL(&p->child_list, n, next_sib);
+
+	/*
+	 * because two child libraries can refer to the same library
+	 * and we only want to deal with each one once, check for dups
+	 * before adding new, dup libs will have the same dep pointer.
+	 */
+	TAILQ_FOREACH(n, &_dl_loading_object->dload_list, next_sib)
+		if (n->data == dep)
+			return; /* found, dont bother adding */
+
+	n = _dl_malloc(sizeof *n);
+	if (n == NULL)
+		_dl_exit(8);
+	n->data = dep;
+	TAILQ_INSERT_TAIL(&_dl_loading_object->dload_list, n, next_sib);
 
 	DL_DEB(("linking dep %s as child of %s\n", dep->load_name,
 	    p->load_name));

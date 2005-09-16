@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.22 2005/05/31 14:31:36 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.23 2005/09/16 23:19:41 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -70,7 +70,7 @@ _dl_unload_shlib(elf_object_t *object)
 
 
 elf_object_t *
-_dl_tryload_shlib(const char *libname, int type)
+_dl_tryload_shlib(const char *libname, int type, int flags)
 {
 	int	libfile, i, align = _dl_pagesz - 1;
 	struct load_list *ld, *lowld = NULL;
@@ -90,6 +90,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	object = _dl_lookup_object(libname);
 	if (object) {
 		object->refcount++;
+		object->load_object->obj_flags |= flags & RTLD_GLOBAL;
 		return(object);		/* Already loaded */
 	}
 
@@ -107,6 +108,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	for (object = _dl_objects; object != NULL; object = object->next) {
 		if (object->dev == sb.st_dev &&
 		    object->inode == sb.st_ino) {
+			object->load_object->obj_flags |= flags & RTLD_GLOBAL;
 			_dl_close(libfile);
 			return(object);
 		}
@@ -261,6 +263,8 @@ retry:
 		/* set inode, dev from stat info */
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
+		object->obj_flags = flags;
+
 	} else {
 		/* XXX no point. object is never returned NULL */
 		_dl_load_list_free(lowld);

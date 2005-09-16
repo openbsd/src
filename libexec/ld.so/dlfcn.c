@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.49 2005/09/13 03:32:15 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.50 2005/09/16 23:19:41 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -49,6 +49,7 @@ dlopen(const char *libname, int flags)
 {
 	elf_object_t *object, *dynobj;
 	Elf_Dyn	*dynp;
+	struct dep_node *n;
 
 	if (libname == NULL)
 		return _dl_objects;
@@ -56,18 +57,28 @@ dlopen(const char *libname, int flags)
 	DL_DEB(("dlopen: loading: %s\n", libname));
 
 	_dl_thread_kern_stop();
+
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, flags);
 	if (object == 0) {
 		_dl_thread_kern_go();
 		return((void *)0);
 	}
-	/* this add_object should not be here, XXX */
-	_dl_add_object(object);
-	_dl_link_sub(object, _dl_objects);
-	_dl_thread_kern_go();
-
 	if (object->refcount > 1)
 		return((void *)object);	/* Already loaded */
+
+	/* this add_object should not be here, XXX */
+	_dl_add_object(object);
+
+	DL_DEB(("head [%s]\n", object->load_name ));
+	object->load_object = object;
+	_dl_loading_object = object;
+
+	n = _dl_malloc(sizeof *n);
+	if (n == NULL)
+		_dl_exit(5);
+	n->data = object;
+	TAILQ_INSERT_TAIL(&object->dload_list, n, next_sib);
+
 
 	/*
 	 * Check for 'needed' objects. For each 'needed' object we
@@ -90,7 +101,6 @@ dlopen(const char *libname, int flags)
 			deplibname = dynobj->dyn.strtab + dynp->d_un.d_val;
 			DL_DEB(("dlopen: loading: %s required by %s\n",
 			    deplibname, libname));
-			_dl_thread_kern_stop();
 			depobj = _dl_load_shlib(deplibname, dynobj, OBJTYPE_LIB,
 				flags|RTLD_GLOBAL);
 			if (!depobj)
@@ -98,7 +108,6 @@ dlopen(const char *libname, int flags)
 			/* this add_object should not be here, XXX */
 			_dl_add_object(depobj);
 			_dl_link_sub(depobj, dynobj);
-			_dl_thread_kern_go();
 
 			tmpobj->dep_next = _dl_malloc(sizeof(elf_object_t));
 			tmpobj->dep_next->next = depobj;
@@ -107,11 +116,13 @@ dlopen(const char *libname, int flags)
 		dynobj = dynobj->next;
 	}
 
+	_dl_link_dlopen(object);
 	_dl_rtld(object);
 	_dl_call_init(object);
 
-	_dl_link_dlopen(object);
 
+	_dl_loading_object = NULL;
+	DL_DEB(("tail %s\n", object->load_name ));
 
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
@@ -119,6 +130,8 @@ dlopen(const char *libname, int flags)
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)(void))_dl_debug_map->r_brk))();
 	}
+
+	_dl_thread_kern_go();
 
 	DL_DEB(("dlopen: %s: done.\n", libname));
 
@@ -132,7 +145,7 @@ dlsym(void *handle, const char *name)
 	elf_object_t	*dynobj;
 	void		*retval;
 	const Elf_Sym	*sym = NULL;
-	int		flags;
+	int flags;
 
 	if (handle == NULL || handle == RTLD_NEXT ||
 	    handle == RTLD_SELF) {
@@ -145,25 +158,19 @@ dlsym(void *handle, const char *name)
 			return(0);
 		}
 
-		if (handle == RTLD_NEXT) {
-			object = object->next;
-			if (object == NULL) {
-				_dl_errno = DL_NO_SYMBOL;
-				return(0);
-			}
-		}
-
-		if (handle == NULL)
+		if (handle == RTLD_NEXT)
+			flags = SYM_SEARCH_NEXT|SYM_PLT;
+		else if (handle == RTLD_SELF)
 			flags = SYM_SEARCH_SELF|SYM_PLT;
 		else
-			flags = SYM_SEARCH_ALL|SYM_PLT;
+			flags = SYM_DLSYM|SYM_PLT;
 
 	} else if (handle == RTLD_DEFAULT) {
 		object = _dl_objects;
 		flags = SYM_SEARCH_ALL|SYM_PLT;
 	} else {
 		object = (elf_object_t *)handle;
-		flags = SYM_SEARCH_SELF|SYM_NOTPLT;
+		flags = SYM_DLSYM|SYM_PLT;
 
 		dynobj = _dl_objects;
 		while (dynobj && dynobj != object)
@@ -175,8 +182,8 @@ dlsym(void *handle, const char *name)
 		}
 	}
 
-	retval = (void *)_dl_find_symbol(name, object, &sym, NULL,
-	    flags|SYM_NOWARNNOTFOUND, 0, object);
+	retval = (void *)_dl_find_symbol(name, &sym,
+	    flags|SYM_NOWARNNOTFOUND, 0, object, NULL);
 
 	if (sym != NULL) {
 		retval += sym->st_value;
@@ -219,7 +226,11 @@ dlclose(void *handle)
 	if (handle == _dl_objects)
 		return 0;
 
+	_dl_thread_kern_stop();
+
 	retval = _dl_real_close(handle);
+
+	_dl_thread_kern_go();
 
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_DELETE;
@@ -246,9 +257,10 @@ _dl_real_close(void *handle)
 		return (1);
 	}
 
-	_dl_unlink_dlopen(object);
+
 	_dl_notify_unload_shlib(object);
 	_dl_run_all_dtors();
+	_dl_unlink_dlopen(object);
 	_dl_unload_shlib(object);
 	return (0);
 }
@@ -307,8 +319,6 @@ dlerror(void)
 void
 _dl_show_objects(void)
 {
-	extern int _dl_symcachestat_hits;
-	extern int _dl_symcachestat_lookups;
 	elf_object_t *object;
 	char *objtypename;
 	int outputfd;

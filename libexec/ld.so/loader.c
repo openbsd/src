@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.86 2005/05/10 03:36:07 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.87 2005/09/16 23:19:41 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -112,9 +112,8 @@ _dl_run_all_dtors()
 			    (node->refcount == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0))
-				for (dnode = node->first_child;
-				    dnode != NULL;
-				    dnode = dnode->next_sibling)
+				TAILQ_FOREACH(dnode, &node->child_list,
+				    next_sib)
 					dnode->data->status &= ~STAT_FINI_READY;
 		}
 
@@ -141,16 +140,11 @@ _dl_run_dtors(elf_object_t *object)
 {
 	struct dep_node *n;
 
-	for (n = object->first_child; n; n = n->next_sibling) {
+	TAILQ_FOREACH(n, &object->child_list, next_sib)
 		_dl_notify_unload_shlib(n->data);
-	}
 
 	_dl_run_all_dtors();
 
-
-	if (_dl_exiting == 0)
-		for (n = object->first_child; n; n = n->next_sibling)
-			_dl_unload_shlib(n->data);
 }
 
 /*
@@ -271,6 +265,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	char *us = "";
 	unsigned int i;
 	int libcnt = 0;
+	struct dep_node *n;
 
 	_dl_setup_env(envp);
 
@@ -308,6 +303,9 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 
 	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 
+	/* init this in runtime, not statically */
+	TAILQ_INIT(&_dlopened_child_list);
+
 	exe_obj = NULL;
 	/*
 	 * Examine the user application and set up object information.
@@ -324,6 +322,15 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		}
 		phdp++;
 	}
+	exe_obj->load_object = exe_obj;
+	TAILQ_INIT(&exe_obj->dload_list);
+
+	n = _dl_malloc(sizeof *n);
+	if (n == NULL)
+		_dl_exit(9);
+	n->data = exe_obj;
+	TAILQ_INSERT_TAIL(&exe_obj->dload_list, n, next_sib);
+
 
 	if (_dl_preload != NULL)
 		_dl_dopreload(_dl_preload);
@@ -356,12 +363,10 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 
 			for (dynp = dynobj->load_dyn, i = 0;
 			    dynp->d_tag;
-			    dynp++) {
-				if (dynp->d_tag == DT_NEEDED) {
+			    dynp++)
+				if (dynp->d_tag == DT_NEEDED)
 					liblist[i++].dynp = dynp;
-				}
 
-			}
 			/* Randomize these */
 			for (i = 0; i < libcnt; i++)
 				randomlist[i] = i;
@@ -414,6 +419,13 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	dyn_obj = _dl_finalize_object(us, dynp, 0, OBJTYPE_LDR,
 	    dl_data[AUX_base], loff);
 	_dl_add_object(dyn_obj);
+
+	n = _dl_malloc(sizeof *n);
+	if (n == NULL)
+		_dl_exit(5);
+	n->data = dyn_obj;
+	TAILQ_INSERT_TAIL(&exe_obj->dload_list, n, next_sib);
+
 	dyn_obj->status |= STAT_RELOC_DONE;
 
 	/*
@@ -486,8 +498,9 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		Elf_Addr ooff;
 
 		sym = NULL;
-		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, &sobj,
-		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, dyn_obj);
+		ooff = _dl_find_symbol("atexit", &sym,
+		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
+		    0, dyn_obj, &sobj);
 		if (sym == NULL)
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
 		else
@@ -743,7 +756,7 @@ _dl_call_init(elf_object_t *object)
 {
 	struct dep_node *n;
 
-	for (n = object->first_child; n; n = n->next_sibling) {
+	TAILQ_FOREACH(n, &object->child_list, next_sib) {
 		if (n->data->status & STAT_INIT_DONE)
 			continue;
 		_dl_call_init(n->data);
@@ -820,8 +833,8 @@ _dl_fixup_user_env(void)
 	dummy_obj.load_name = "ld.so";
 
 	sym = NULL;
-	ooff = _dl_find_symbol("environ", _dl_objects, &sym, NULL,
-	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, &dummy_obj);
+	ooff = _dl_find_symbol("environ", &sym,
+	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, &dummy_obj, NULL);
 	if (sym != NULL)
 		*((char ***)(sym->st_value + ooff)) = _dl_so_envp;
 }
