@@ -1,4 +1,4 @@
-/* $OpenBSD: ringbuf.c,v 1.5 2005/09/16 03:59:12 djm Exp $ */
+/* $OpenBSD: ringbuf.c,v 1.6 2005/09/16 04:00:50 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -84,10 +84,13 @@ ringbuf_append_line(struct ringbuf *rb, char *line)
 		return (-1);
 
 	llen = strlen(line);
+	if (llen == 0)
+		return (-1);
+
 	if (line[llen - 1] != '\n')
 		llen++; /* one extra for appended '\n' */
 
-	if (rb == NULL || llen == 0 || llen >= rb->len)
+	if (llen >= rb->len)
 		return (-1);
 
 	/*
