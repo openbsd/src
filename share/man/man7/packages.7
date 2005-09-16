@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.18 2003/12/25 18:35:00 espie Exp $
+.\" $OpenBSD: packages.7,v 1.19 2005/09/16 19:52:04 aanriot Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -82,12 +82,9 @@ Such a problem is a bug and should be reported.
 .Ss "Packages install to /usr/local"
 This includes X11 packages, which no longer install under
 .Pa /usr/X11R6 .
-The only exceptions are
+The only exception is
 Japanese dictionaries, which install under
-.Pa /var/dict ,
-.Nm bind8 ,
-which installs under
-.Pa / .
+.Pa /var/dict.
 .Pp
 Some packages installation scripts will also create new configuration
 files in
@@ -182,7 +179,9 @@ package that holds those files, and is not useful as a stand-alone package.
 Most package names follow the pattern
 .Qq name-version-flavor ,
 where
-.Qq name
+.Qq name ,
+(also called stem, see
+.Xr packages-specs 7 )
 is the actual package name,
 .Qq version
 is the version number, and
