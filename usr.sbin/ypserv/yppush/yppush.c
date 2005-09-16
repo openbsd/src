@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.22 2005/05/14 02:32:33 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.23 2005/09/16 23:53:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush.c,v 1.22 2005/05/14 02:32:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yppush.c,v 1.23 2005/09/16 23:53:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,40 +71,38 @@ usage(void)
 }
 
 static void
-_svc_run(void)
+my_svc_run(void)
 {
-	fd_set *readfdsp = NULL;
-	extern fd_set *__svc_fdset;
-	extern int __svc_fdsetsize;
-	struct timeval timeout;
-
-	timeout.tv_sec = 60;
-	timeout.tv_usec = 0;
+	struct pollfd *pfd = NULL, *newp;
+	int nready, saved_max_pollfd = 0;
 
 	for (;;) {
-		if (readfdsp)
-			free(readfdsp);
-		readfdsp = (fd_set *)calloc(howmany(__svc_fdsetsize, NFDBITS),
-		    sizeof(fd_mask));
-		if (readfdsp == NULL) {
-			perror("calloc");
-			return;
+		if (svc_max_pollfd > saved_max_pollfd) {
+			newp = realloc(pfd, sizeof(*pfd) * svc_max_pollfd);
+			if (newp == NULL) {
+				free(pfd);
+				perror("svc_run: - realloc failed");
+				return;
+			}
+			pfd = newp;
+			saved_max_pollfd = svc_max_pollfd;
 		}
-		bcopy(__svc_fdset, readfdsp, howmany(__svc_fdsetsize, NFDBITS) *
-		    sizeof(fd_mask));
+		memcpy(pfd, svc_pollfd, sizeof(*pfd) * svc_max_pollfd);
 
-		switch (select(svc_maxfd+1, readfdsp, NULL,
-		    NULL, &timeout)) {
+		nready = poll(pfd, svc_max_pollfd, 60 * 1000);
+		switch (nready) {
 		case -1:
 			if (errno == EINTR)
 				continue;
-			perror("yppush: _svc_run: select failed");
+			perror("yppush: my_svc_run: poll failed");
+			free(pfd);
 			return;
 		case 0:
 			fprintf(stderr, "yppush: Callback timed out.\n");
 			exit(0);
 		default:
-			svc_getreqset2(readfdsp, svc_maxfd+1);
+			svc_getreq_poll(pfd, nready);
+			free(pfd);
 			break;
 		}
 	}
@@ -193,7 +191,7 @@ push(int inlen, char *indata)
 		fprintf(stderr, "yppush: Cannot fork.\n");
 		exit(1);
 	case 0:
-		_svc_run();
+		my_svc_run();
 		exit(0);
 	default:
 		close(transp->xp_sock);
