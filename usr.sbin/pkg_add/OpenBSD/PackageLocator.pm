@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.32 2005/09/14 09:50:40 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.33 2005/09/16 10:00:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -38,6 +38,13 @@ sub new
 	} else {
 		return OpenBSD::PackageRepository::Local->_new($baseurl);
 	}
+}
+
+sub available
+{
+	my $self = shift;
+
+	return @{$self->list()};
 }
 
 sub wipe_info
@@ -112,6 +119,7 @@ sub open
 sub find
 {
 	my ($repository, $name, $arch) = @_;
+	$name.=".tgz" unless $name =~ m/\.tgz$/;
 	my $self = OpenBSD::PackageLocation->new($repository, $name);
 
 	return $self->openPackage($name, $arch);
@@ -120,6 +128,7 @@ sub find
 sub grabPlist
 {
 	my ($repository, $name, $arch, $code) = @_;
+	$name.=".tgz" unless $name =~ m/\.tgz$/;
 	my $self = OpenBSD::PackageLocation->new($repository, $name);
 
 	return $self->grabPlist($name, $arch, $code);
@@ -150,6 +159,12 @@ sub grabPlist
 sub available
 {
 	return installed_packages();
+}
+
+sub list
+{
+	my @list = installed_packages();
+	return \@list;
 }
 
 sub wipe_info
@@ -198,7 +213,7 @@ sub pipename
 	return "scp $host:$path$name /dev/stdout 2> /dev/null|gzip -d -c -q - 2> /dev/null";
 }
 
-sub available
+sub list
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
@@ -225,7 +240,7 @@ sub may_exist
 	return -r $self->{baseurl}.$name;
 }
 
-sub available
+sub list
 {
 	my $self = shift;
 	my $l = [];
@@ -309,7 +324,7 @@ sub pipename
 
 package OpenBSD::PackageRepository::HTTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP OpenBSD::PackageRepository);
-sub available
+sub list
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
@@ -334,7 +349,7 @@ sub available
 package OpenBSD::PackageRepository::FTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP OpenBSD::PackageRepository OpenBSD::PackageRepository::FTPorSCP);
 
-sub available
+sub list
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
@@ -666,7 +681,6 @@ sub find
 		my $package = $repository->find(undef, $arch);
 		return $package;
 	}
-	$_.=".tgz" unless m/\.tgz$/;
 	if (exists $packages{$_}) {
 		return $packages{$_};
 	}
@@ -704,7 +718,6 @@ sub grabPlist
 		my $plist = $repository->grabPlist(undef, $arch, $code);
 		return $plist;
 	}
-	$_.=".tgz" unless m/\.tgz$/;
 	my $plist;
 	if (m/\//) {
 		use File::Basename;
