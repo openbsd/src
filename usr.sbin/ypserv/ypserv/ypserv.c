@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.32 2004/01/23 03:48:43 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.33 2005/09/16 23:55:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.32 2004/01/23 03:48:43 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.33 2005/09/16 23:55:04 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -72,10 +72,6 @@ void	sig_child(int);
 void	sig_hup(int);
 volatile sig_atomic_t wantsighup;
 
-extern	int __svc_fdsetsize;
-extern	fd_set *__svc_fdset;
-extern	void svc_getreqset2(fd_set *, int);
-
 static void
 _msgout(char *msg)
 {
@@ -89,22 +85,21 @@ _msgout(char *msg)
 #endif
 }
 
+/* ARGSUSED */
 static void
 closedown(int sig)
 {
 	int save_errno = errno;
 
 	if (_rpcsvcdirty == 0) {
-		extern fd_set *__svc_fdset;
-		extern int __svc_fdsetsize;
 		int i, openfd;
 
 		if (_rpcfdtype == SOCK_DGRAM)
 			exit(0);
-		for (i = 0, openfd = 0; i < __svc_fdsetsize && openfd < 2; i++)
-			if (FD_ISSET(i, __svc_fdset))
+		for (i = 0, openfd = 0; i < svc_max_pollfd && openfd < 2; i++)
+			if (svc_pollfd[i].fd != -1)
 				openfd++;
-		if (openfd <= (_rpcpmstart?0:1))
+		if (openfd <= (_rpcpmstart ? 0 : 1))
 			_exit(0);
 	}
 	(void) alarm(_RPCSVC_CLOSEDOWN);
@@ -348,38 +343,38 @@ hup(void)
 static void
 my_svc_run(void)
 {
-	fd_set *fds;
+	struct pollfd *pfd = NULL, *newp;
+	int nready, saved_max_pollfd = 0;
 
 	for (;;) {
 		if (wantsighup) {
-			hup();
 			wantsighup = 0;
+			hup();
 		}
-		if (__svc_fdset) {
-			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
-			    sizeof(fd_mask);
-			fds = (fd_set *)malloc(bytes);	/* XXX */
-			memcpy(fds, __svc_fdset, bytes);
-		} else
-			fds = NULL;
-		switch (select(svc_maxfd+1, fds, 0, 0, (struct timeval *)0)) {
-		case -1:
-			if (errno == EINTR) {
-				if (fds)
-					free(fds);
-				continue;
+		if (svc_max_pollfd > saved_max_pollfd) {
+			newp = realloc(pfd, sizeof(*pfd) * svc_max_pollfd);
+			if (newp == NULL) {
+				free(pfd);
+				perror("svc_run: - realloc failed");
+				return;
 			}
-			perror("svc_run: - select failed");
-			if (fds)
-				free(fds);
+			pfd = newp;
+			saved_max_pollfd = svc_max_pollfd;
+		}
+		memcpy(pfd, svc_pollfd, sizeof(*pfd) * svc_max_pollfd);
+
+		nready = poll(pfd, svc_max_pollfd, INFTIM);
+		switch (nready) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			perror("svc_run: - poll failed");
+			free(pfd);
 			return;
 		case 0:
-			if (fds)
-				free(fds);
 			continue;
 		default:
-			svc_getreqset2(fds, svc_maxfd+1);
-			free(fds);
+			svc_getreq_poll(pfd, nready);
 		}
 	}
 }
@@ -546,6 +541,7 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
+/* ARGSUSED */
 void
 sig_child(int signo)
 {
@@ -556,6 +552,7 @@ sig_child(int signo)
 	errno = save_errno;
 }
 
+/* ARGSUSED */
 void
 sig_hup(int signo)
 {
