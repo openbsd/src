@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.c,v 1.7 2003/07/29 18:39:23 deraadt Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.8 2005/09/16 23:47:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -236,8 +236,11 @@ tokendb_open(void)
 static	void
 tokendb_close(void)
 {
-	(void)flock((tokendb->fd)(tokendb), LOCK_UN);
-	(tokendb->close)(tokendb);
+	if (tokendb) {
+		(void)flock((tokendb->fd)(tokendb), LOCK_UN);
+		(tokendb->close)(tokendb);
+		tokendb = NULL;
+	}
 }
 
 /*
