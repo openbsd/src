@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.33 2005/09/16 10:00:59 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.34 2005/09/16 20:03:50 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -640,7 +640,7 @@ sub available
 	if (!defined $self->{avail}) {
 		my $available_packages = {};
 		foreach my $loc (reverse @{$self->{list}}) {
-		    foreach my $pkg (@{$loc->available()}) {
+		    foreach my $pkg (@{$loc->list()}) {
 		    	$available_packages->{$pkg} = $loc;
 		    }
 		}
