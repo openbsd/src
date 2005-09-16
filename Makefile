@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.112 2005/01/09 20:36:20 espie Exp $
+#	$OpenBSD: Makefile,v 1.113 2005/09/16 12:28:34 jmc Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -8,7 +8,8 @@
 # Building recommendations:
 #
 # 1) If at all possible, put this source tree in /usr/src.  If /usr/src
-# must be a symbolic link, setenv BSDSRCDIR to point to the real location.
+# must be a symbolic link, set BSDSRCDIR in the environment to point to
+# the real location.
 #
 # 2) It is also recommended that you compile with objects outside the
 # source tree. To do this, ensure /usr/obj exists or points to some
