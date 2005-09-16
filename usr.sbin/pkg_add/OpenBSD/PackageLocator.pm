@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.34 2005/09/16 20:03:50 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.35 2005/09/16 23:17:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -106,9 +106,10 @@ sub open
 
 	# kill old files if too many
 	my $already = $self->make_room();
-	my $p = $self->pipename($object->{name});
-	
-	open(my $fh, '-|', $p) or return undef;
+	my $fh = $self->open_pipe($object);
+	if (!defined $fh) {
+		return undef;
+	}
 	$object->{fh} = $fh;
 	if (defined $already) {
 		push @$already, $object;
@@ -177,61 +178,29 @@ sub may_exist
 	return is_installed($name);
 }
 
-package OpenBSD::PackageRepository::SCP;
-our @ISA=qw(OpenBSD::PackageRepository OpenBSD::PackageRepository::FTPorSCP);
-
-our %distant = ();
-
-sub maxcount
-{
-	return 2;
-}
-
-sub opened
-{
-	my $self = $_[0];
-	my $k = $self->{key};
-	if (!defined $distant{$k}) {
-		$distant{$k} = [];
-	}
-	return $distant{$k};
-}
-
-sub _new
-{
-	my ($class, $baseurl) = @_;
-	$baseurl =~ s/scp\:\/\///i;
-	$baseurl =~ m/\//;
-	bless {	host => $`, key => $`, path => "/$'" }, $class;
-}
-
-sub pipename
-{
-	my ($self, $name) = @_;
-	my $host = $self->{host};
-	my $path = $self->{path};
-	return "scp $host:$path$name /dev/stdout 2> /dev/null|gzip -d -c -q - 2> /dev/null";
-}
-
-sub list
-{
-	my ($self) = @_;
-	if (!defined $self->{list}) {
-		my $host = $self->{host};
-		my $path = $self->{path};
-		$self->{list} = $self->_list("ssh $host ls -l $path");
-	}
-	return $self->{list};
-}
-
 package OpenBSD::PackageRepository::Local;
 our @ISA=qw(OpenBSD::PackageRepository);
 
-sub pipename
+sub open_pipe
 {
-	my ($self, $name) = @_;
-	my $fullname = $self->{baseurl}.$name;
-	return "gzip -d -c -q -f 2>/dev/null $fullname";
+	my ($self, $object) = @_;
+	my $pid = open(my $fh, "-|");
+	if (!defined $pid) {
+		die "Cannot fork: $!";
+	}
+	if ($pid) {
+		return $fh;
+	} else {
+		open STDERR, ">/dev/null";
+		exec {"/usr/bin/gzip"} 
+		    "gzip", 
+		    "-d", 
+		    "-c", 
+		    "-q", 
+		    "-f", 
+		    $self->{baseurl}.$object->{name};
+		exit(1);
+	}
 }
 
 sub may_exist
@@ -263,12 +232,121 @@ sub may_exist
 	return 1;
 }
 
-sub pipename
+sub open_pipe
 {
-	return "gzip -d -c -q -f 2>/dev/null -";
+	my ($self, $object) = @_;
+	my $fullname = $self->{baseurl}.$object->{name};
+	my $pid = open(my $fh, "-|");
+	if (!defined $pid) {
+		die "Cannot fork: $!";
+	}
+	if ($pid) {
+		return $fh;
+	} else {
+		open STDERR, ">/dev/null";
+		exec {"/usr/bin/gzip"} 
+		    "gzip", 
+		    "-d", 
+		    "-c", 
+		    "-q", 
+		    "-f", 
+		    "-"
+		or die "can't run gzip";
+	}
 }
 
-package OpenBSD::PackageRepository::FTPorSCP;
+package OpenBSD::PackageRepository::Distant;
+our @ISA=qw(OpenBSD::PackageRepository);
+
+my $buffsize = 2 * 1024 * 1024;
+
+sub pkg_copy
+{
+	my ($in, $dir, $name) = @_;
+
+	require File::Temp;
+	my $template = $name;
+	$template =~ s/\.tgz$/.XXXXXXXX/;
+
+	my ($copy, $filename) = File::Temp::tempfile($template,
+	    DIR => $dir) or die "Can't write copy to cache";
+	chmod 0644, $filename;
+	my $handler = sub {
+		my ($sig) = @_;
+		unlink $filename;
+		$SIG{$sig} = 'DEFAULT';
+		kill $sig, $$;
+	};
+
+	{
+
+	local $SIG{'PIPE'} =  $handler;
+	local $SIG{'INT'} =  $handler;
+	local $SIG{'HUP'} =  $handler;
+	local $SIG{'QUIT'} =  $handler;
+	local $SIG{'KILL'} =  $handler;
+	local $SIG{'TERM'} =  $handler;
+
+	my ($buffer, $n);
+	# copy stuff over
+	do {
+		$n = sysread($in, $buffer, $buffsize);
+		if (!defined $n) {
+			die "Error reading\n";
+		}
+		syswrite $copy, $buffer;
+		syswrite STDOUT, $buffer;
+	} while ($n != 0);
+	close($copy);
+	}
+
+	rename $filename, "$dir/$name";
+}
+
+sub open_pipe
+{
+	my ($self, $object) = @_;
+	my $pid = open(my $fh, "-|");
+	if (!defined $pid) {
+		die "Cannot fork: $!";
+	}
+	if ($pid) {
+		return $fh;
+	} else {
+		open STDERR, ">/dev/null";
+
+		my $pid2 = open(STDIN, "-|");
+
+		if (!defined $pid2) {
+			die "Cannot fork: $!";
+		}
+		if ($pid2) {
+			exec {"/usr/bin/gzip"} 
+			    "gzip", 
+			    "-d", 
+			    "-c", 
+			    "-q", 
+			    "-" 
+			or die "can't run gzip";
+		} else {
+			if (defined $ENV{'PKG_CACHE'}) {
+				my $pid3 = open(my $in, "-|");
+				if (!defined $pid3) {
+					die "Cannot fork: $!";
+				}
+				if ($pid3) {
+					pkg_copy($in, $ENV{'PKG_CACHE'}, 
+					    $object->{name});
+					exit(0);
+				} else {
+					$self->grab_object($object);
+				}
+			} else {
+				$self->grab_object($object);
+			}
+		}
+	}
+}
 
 sub _list
 {
@@ -286,9 +364,73 @@ sub _list
 	return $l;
 }
 
-package OpenBSD::PackageRepository::HTTPorFTP;
+
+package OpenBSD::PackageRepository::SCP;
+our @ISA=qw(OpenBSD::PackageRepository::Distant);
+
+
+sub grab_object
+{
+	my ($self, $object) = @_;
+
+	exec {"/usr/bin/scp"} 
+	    "scp", 
+	    $self->{host}.":".$self->{path}.$object->{name}, 
+	    "/dev/stdout"
+	or die "can't run scp";
+}
 
 our %distant = ();
+
+sub maxcount
+{
+	return 2;
+}
+
+sub opened
+{
+	my $self = $_[0];
+	my $k = $self->{key};
+	if (!defined $distant{$k}) {
+		$distant{$k} = [];
+	}
+	return $distant{$k};
+}
+
+sub _new
+{
+	my ($class, $baseurl) = @_;
+	$baseurl =~ s/scp\:\/\///i;
+	$baseurl =~ m/\//;
+	bless {	host => $`, key => $`, path => "/$'" }, $class;
+}
+
+sub list
+{
+	my ($self) = @_;
+	if (!defined $self->{list}) {
+		my $host = $self->{host};
+		my $path = $self->{path};
+		$self->{list} = $self->_list("ssh $host ls -l $path");
+	}
+	return $self->{list};
+}
+
+package OpenBSD::PackageRepository::HTTPorFTP;
+our @ISA=qw(OpenBSD::PackageRepository::Distant);
+
+our %distant = ();
+
+
+sub grab_object
+{
+	my ($self, $object) = @_;
+	exec {"/usr/bin/ftp"} 
+	    "ftp", 
+	    "-o", 
+	    "-", $self->{baseurl}.$object->{name}
+	or die "can't run ftp";
+}
 
 sub maxcount
 {
@@ -315,15 +457,10 @@ sub _new
 	bless { baseurl => $baseurl, key => $distant_host }, $class;
 }
 
-sub pipename
-{
-	my ($self, $name) = @_;
-	my $fullname = $self->{baseurl}.$name;
-	return "ftp -o - $fullname 2>/dev/null|gzip -d -c -q - 2>/dev/null";
-}
 
 package OpenBSD::PackageRepository::HTTP;
-our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP OpenBSD::PackageRepository);
+our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
+
 sub list
 {
 	my ($self) = @_;
@@ -347,7 +484,7 @@ sub list
 }
 
 package OpenBSD::PackageRepository::FTP;
-our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP OpenBSD::PackageRepository OpenBSD::PackageRepository::FTPorSCP);
+our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
 
 sub list
 {
