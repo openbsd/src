@@ -1,4 +1,4 @@
-/* $OpenBSD: ringbuf.c,v 1.4 2005/06/06 23:22:04 djm Exp $ */
+/* $OpenBSD: ringbuf.c,v 1.5 2005/09/16 03:59:12 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -22,12 +22,9 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/uio.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "syslogd.h"
 
