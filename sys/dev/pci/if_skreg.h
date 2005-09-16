@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.17 2005/07/21 15:23:27 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.18 2005/09/16 00:43:31 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1443,13 +1443,9 @@ struct sk_softc {
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
 	void			*sk_intrhand;	/* irq handler handle */
-	struct resource		*sk_irq;	/* IRQ resource handle */
-	struct resource		*sk_res;	/* I/O or shared mem handle */
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
 	char			*sk_name;
-	char			*sk_vpd_prodname;
-	char			*sk_vpd_readonly;
 	u_int32_t		sk_rboff;	/* RAMbuffer offset */
 	u_int32_t		sk_ramsize;	/* amount of RAM on NIC */
 	u_int32_t		sk_pmd;		/* physical media type */
@@ -1487,6 +1483,8 @@ struct sk_if_softc {
 
 struct skc_attach_args {
 	u_int16_t	skc_port;
+	u_int8_t	skc_type;
+	u_int8_t	skc_rev;
 };
 
 #define SK_MAXUNIT	256

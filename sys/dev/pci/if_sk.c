@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.78 2005/08/29 02:53:25 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.79 2005/09/16 00:43:31 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -163,9 +163,6 @@ void *sk_jalloc(struct sk_if_softc *);
 void sk_jfree(caddr_t, u_int, void *);
 int sk_init_rx_ring(struct sk_if_softc *);
 int sk_init_tx_ring(struct sk_if_softc *);
-u_int8_t sk_vpd_readbyte(struct sk_softc *, int);
-void sk_vpd_read_res(struct sk_softc *, struct vpd_res *, int);
-void sk_vpd_read(struct sk_softc *);
 
 int sk_xmac_miibus_readreg(struct device *, int, int);
 void sk_xmac_miibus_writereg(struct device *, int, int, int);
@@ -309,93 +306,6 @@ sk_win_write_1(struct sk_softc *sc, u_int32_t reg, u_int8_t x)
 #else
 	CSR_WRITE_1(sc, reg, x);
 #endif
-}
-
-/*
- * The VPD EEPROM contains Vital Product Data, as suggested in
- * the PCI 2.1 specification. The VPD data is separared into areas
- * denoted by resource IDs. The SysKonnect VPD contains an ID string
- * resource (the name of the adapter), a read-only area resource
- * containing various key/data fields and a read/write area which
- * can be used to store asset management information or log messages.
- * We read the ID string and read-only into buffers attached to
- * the controller softc structure for later use. At the moment,
- * we only use the ID string during sk_attach().
- */
-u_int8_t
-sk_vpd_readbyte(struct sk_softc *sc, int addr)
-{
-	int			i;
-
-	sk_win_write_2(sc, SK_PCI_REG(SK_PCI_VPD_ADDR), addr);
-	for (i = 0; i < SK_TIMEOUT; i++) {
-		DELAY(1);
-		if (sk_win_read_2(sc,
-		    SK_PCI_REG(SK_PCI_VPD_ADDR)) & SK_VPD_FLAG)
-			break;
-	}
-
-	if (i == SK_TIMEOUT)
-		return(0);
-
-	return(sk_win_read_1(sc, SK_PCI_REG(SK_PCI_VPD_DATA)));
-}
-
-void
-sk_vpd_read_res(struct sk_softc *sc, struct vpd_res *res, int addr)
-{
-	int			i;
-	u_int8_t		*ptr;
-
-	ptr = (u_int8_t *)res;
-	for (i = 0; i < sizeof(struct vpd_res); i++)
-		ptr[i] = sk_vpd_readbyte(sc, i + addr);
-}
-
-void
-sk_vpd_read(struct sk_softc *sc)
-{
-	int			pos = 0, i;
-	struct vpd_res		res;
-
-	if (sc->sk_vpd_prodname != NULL)
-		free(sc->sk_vpd_prodname, M_DEVBUF);
-	if (sc->sk_vpd_readonly != NULL)
-		free(sc->sk_vpd_readonly, M_DEVBUF);
-	sc->sk_vpd_prodname = NULL;
-	sc->sk_vpd_readonly = NULL;
-
-	sk_vpd_read_res(sc, &res, pos);
-
-	if (res.vr_id != VPD_RES_ID) {
-		printf("%s: bad VPD resource id: expected %x got %x\n",
-		    sc->sk_dev.dv_xname, VPD_RES_ID, res.vr_id);
-		return;
-	}
-
-	pos += sizeof(res);
-	sc->sk_vpd_prodname = malloc(res.vr_len + 1, M_DEVBUF, M_NOWAIT);
-	if (sc->sk_vpd_prodname == NULL)
-		panic("sk_vpd_read");
-	for (i = 0; i < res.vr_len; i++)
-		sc->sk_vpd_prodname[i] = sk_vpd_readbyte(sc, i + pos);
-	sc->sk_vpd_prodname[i] = '\0';
-	pos += i;
-
-	sk_vpd_read_res(sc, &res, pos);
-
-	if (res.vr_id != VPD_RES_READ) {
-		printf("%s: bad VPD resource id: expected %x got %x\n",
-		    sc->sk_dev.dv_xname, VPD_RES_READ, res.vr_id);
-		return;
-	}
-
-	pos += sizeof(res);
-	sc->sk_vpd_readonly = malloc(res.vr_len, M_DEVBUF, M_NOWAIT);
-	if (sc->sk_vpd_readonly == NULL)
-		panic("sk_vpd_read");
-	for (i = 0; i < res.vr_len; i++)
-		sc->sk_vpd_readonly[i] = sk_vpd_readbyte(sc, i + pos);
 }
 
 int
@@ -1186,7 +1096,15 @@ sk_probe(struct device *parent, void *match, void *aux)
 	if (sa->skc_port != SK_PORT_A && sa->skc_port != SK_PORT_B)
 		return(0);
 
-	return (1);
+	switch (sa->skc_type) {
+	case SK_GENESIS:
+	case SK_YUKON:
+	case SK_YUKON_LITE:
+	case SK_YUKON_LP:
+		return (1);
+	}
+
+	return (0);
 }
 
 /*
@@ -1527,9 +1445,6 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	/* Reset the adapter. */
 	sk_reset(sc);
 
-	/* Read and save vital product data from EEPROM. */
-	sk_vpd_read(sc);
-
 	skrs = sk_win_read_1(sc, SK_EPROM0);
 	if (sc->sk_type == SK_GENESIS) {
 		/* Read and save RAM size and RAMbuffer offset */
@@ -1657,10 +1572,14 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	printf(" (0x%x)\n", sc->sk_rev);
 
 	skca.skc_port = SK_PORT_A;
+	skca.skc_type = sc->sk_type;
+	skca.skc_rev = sc->sk_rev;
 	(void)config_found(&sc->sk_dev, &skca, skcprint);
 
 	if (!(sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC)) {
 		skca.skc_port = SK_PORT_B;
+		skca.skc_type = sc->sk_type;
+		skca.skc_rev = sc->sk_rev;
 		(void)config_found(&sc->sk_dev, &skca, skcprint);
 	}
 
