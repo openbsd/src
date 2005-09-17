@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.36 2005/09/17 09:30:16 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.37 2005/09/17 12:10:32 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -35,6 +35,8 @@ sub new
 		return OpenBSD::PackageRepository::HTTP->_new($baseurl);
 	} elsif ($baseurl =~ m/^scp\:/i) {
 		return OpenBSD::PackageRepository::SCP->_new($baseurl);
+	} elsif ($baseurl =~ m/src\:/i) {
+		return OpenBSD::PackageRepository::Source->_new($baseurl);
 	} else {
 		return OpenBSD::PackageRepository::Local->_new($baseurl);
 	}
@@ -119,7 +121,7 @@ sub open
 
 sub find
 {
-	my ($repository, $name, $arch) = @_;
+	my ($repository, $name, $arch, $srcpath) = @_;
 	$name.=".tgz" unless $name =~ m/\.tgz$/;
 	my $self = OpenBSD::PackageLocation->new($repository, $name);
 
@@ -140,7 +142,7 @@ use OpenBSD::PackageInfo;
 
 sub find
 {
-	my ($repository, $name, $arch) = @_;
+	my ($repository, $name, $arch, $srcpath) = @_;
 	my $self;
 
 	if (is_installed($name)) {
@@ -176,6 +178,41 @@ sub may_exist
 {
 	my ($self, $name) = @_;
 	return is_installed($name);
+}
+
+package PackageRepository::Source;
+
+sub find
+{
+	my ($repository, $name, $arch, $srcpath) = @_;
+	my $dir;
+	my $make;
+	if (defined $ENV{'MAKE'}) {
+		$make = $ENV{'MAKE'};
+	} else {
+		$make = '/usr/bin/make';
+	}
+	if (defined $repository->{baseurl} && $repository->{baseurl} ne '') {
+		$dir = $repository->{baseurl}
+	} elsif (defined $ENV{PORTSDIR}) {
+		$dir = $ENV{PORTSDIR};
+	} else {
+		$dir = '/usr/ports';
+	}
+	# figure out the repository name and the pkgname
+	my $pkgfile = `cd $dir && SUBDIR=$srcpath ECHO_MSG=: $make show=PKGFILE`;
+	chomp $pkgfile;
+	if (! -f $pkgfile) {
+		system "cd $dir && SUBDIR=$srcpath $make package BULK=Yes";
+	}
+	if (! -f $pkgfile) {
+		return undef;
+	}
+	$pkgfile =~ m|(.*/)([^/]*)|;
+	my ($base, $fname) = ($1, $2);
+
+	my $repo = OpenBSD::PackageRepository::Local->_new($base);
+	return $repo->find($fname);
 }
 
 package OpenBSD::PackageRepository::Local;
@@ -750,10 +787,10 @@ sub add
 
 sub find
 {
-	my ($self, $pkgname, $arch) = @_;
+	my ($self, $pkgname, $arch, $srcpath) = @_;
 
 	for my $repo (@{$self->{list}}) {
-		my $pkg = $repo->find($pkgname, $arch);
+		my $pkg = $repo->find($pkgname, $arch, $srcpath);
 		return $pkg if defined $pkg;
 	}
 	return undef;
@@ -812,10 +849,11 @@ sub find
 	my $class = shift;
 	local $_ = shift;
 	my $arch = shift;
+	my $srcpath = shift;
 
 	if ($_ eq '-') {
 		my $repository = OpenBSD::PackageRepository::Local::Pipe->_new('./');
-		my $package = $repository->find(undef, $arch);
+		my $package = $repository->find(undef, $arch, $srcpath);
 		return $package;
 	}
 	if (exists $packages{$_}) {
@@ -827,12 +865,12 @@ sub find
 
 		my ($pkgname, $path) = fileparse($_);
 		my $repository = OpenBSD::PackageRepository->new($path);
-		$package = $repository->find($pkgname, $arch);
+		$package = $repository->find($pkgname, $arch, $srcpath);
 		if (defined $package) {
 			$pkgpath->add($repository);
 		}
 	} else {
-		$package = $pkgpath->find($_, $arch);
+		$package = $pkgpath->find($_, $arch, $srcpath);
 	}
 	$packages{$_} = $package if defined($package);
 	return $package;
