@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.49 2005/09/17 09:16:21 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.50 2005/09/17 09:47:32 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -71,6 +71,9 @@ If the given package names are not found in the current working directory,
 will search for them in each directory named by the
 .Ev PKG_PATH
 environment variable.
+Since a few url schemes contain colons,
+.Nm
+relies on each directory ending in a / to split the path correctly.
 Specifying
 .Ql -
 as a package name causes
@@ -494,11 +497,12 @@ the directories named by
 .Ev PKG_PATH
 are searched.
 It should contain a series of entries separated by colons.
-Each entry consists of a directory name.
+Each entry consists of a directory name, ending in a slash.
+URL schemes such as ftp, http, or scp are also appropriate.
 The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
 period
-.Pq Ql \&. .
+.Pq Ql \&./ .
 .It Ev PKG_TMPDIR
 Temporary area where package information files will be extracted, instead of
 .Pa /var/tmp .
