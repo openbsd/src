@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.60 2005/09/05 19:25:00 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.61 2005/09/17 23:47:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1113,14 +1113,14 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 		    (*ep != ' ')) {
 			cvs_log(LP_ERR,
 			    "invalid line specification in RCS patch");
-			return (NULL);
+			return (-1);
 		}
 		ep++;
 		nbln = (int)strtol(ep, &ep, 10);
 		if ((nbln <= 0) || (*ep != '\0')) {
 			cvs_log(LP_ERR,
 			    "invalid line number specification in RCS patch");
-			return (NULL);
+			return (-1);
 		}
 
 		/* find the appropriate line */
@@ -1141,7 +1141,7 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 		if (dlp == NULL) {
 			cvs_log(LP_ERR,
 			    "can't find referenced line in RCS patch");
-			return (NULL);
+			return (-1);
 		}
 
 		if (op == 'd') {
