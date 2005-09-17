@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.50 2005/09/17 09:47:32 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.51 2005/09/17 11:14:03 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -440,7 +440,7 @@ using conflicts.
 A check is made to determine whether the old package will be deleted without
 issue, and whether the new package will install correctly.
 This includes refusing to run any code (unless -F update), and verifying
-that the new package still matches dependencies.
+that the new package still matches dependencies (unless -F updatedepends).
 .It
 Shared libraries deserve special treatment: each shared library from the old
 package that does no longer exist in the new package, but that is required
@@ -457,10 +457,55 @@ in cases the installation fails.
 The old package is deleted as usual, except that some packages may still depend 
 on it.
 .It
-The new package is installed as usal, except that files are already present
+The new package is installed as usual, except that the files are already present
 and only need to be renamed.
 .It
 Dependencies from the old package are adjusted to point to the new package.
+.El
+.Pp
+To update packages in -u mode,
+.Nm
+performs the following steps.
+.Bl -enum
+.It
+Packages to update are checked for dependencies, and their dependencies are
+marked for update as well, unless -F noclosure.
+.It
+Each package name is reduced to its stem, and every package name with matching
+stem available through
+.Ev PKG_PATH
+is considered as an update candidate.
+.It
+Some minimal version matching occurs: out of all p* variations of a given
+package, only the most recent package is kept (unless -F allversions
+is given).
+Note that
+.Nm pkg_add
+does not try to compare versions in a smarter way, thus
+.Ev PKG_PATH
+should point to a snapshot of packages for a given version of
+.Ox ,
+similar to the organization on the ftp sites.
+.It
+Candidates are then matched according to their source paths (the subdirectory of
+the ports dir, plus flavors and multi-packages modifiers), in order to weed
+out similar packages with distinct options.
+.It
+The signature of the candidate is compared to the signature of the already
+installed package: identical signatures mean no update needed.
+.It
+If several candidates are left,
+.Nm
+will ask the user in interactive mode, and not perform the update in
+non-interactive mode.
+.It
+Once a suitable update candidate has been found for every package,
+.Nm
+proceeds to print out the list of new packages, and then performs the update.
+.It
+If some updates can't be solved,
+.Nm
+stops before the update, unless -F alwaysupdate.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
