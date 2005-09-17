@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.51 2005/09/17 11:14:03 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.52 2005/09/17 21:49:40 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -71,7 +71,7 @@ If the given package names are not found in the current working directory,
 will search for them in each directory named by the
 .Ev PKG_PATH
 environment variable.
-Since a few url schemes contain colons,
+Since a few URL schemes contain colons,
 .Nm
 relies on each directory ending in a / to split the path correctly.
 Specifying
@@ -451,10 +451,10 @@ The new package is extracted to the filesystem, using temporary filenames
 of the form
 .Pa pkg.XXXXXXX
 since the old package is still there.
-The packing-list is amended to record these names as @temp annotations, 
+The packing-list is amended to record these names as @temp annotations,
 in cases the installation fails.
 .It
-The old package is deleted as usual, except that some packages may still depend 
+The old package is deleted as usual, except that some packages may still depend
 on it.
 .It
 The new package is installed as usual, except that the files are already present
@@ -485,7 +485,7 @@ does not try to compare versions in a smarter way, thus
 .Ev PKG_PATH
 should point to a snapshot of packages for a given version of
 .Ox ,
-similar to the organization on the ftp sites.
+similar to the organization on the FTP sites.
 .It
 Candidates are then matched according to their source paths (the subdirectory of
 the ports dir, plus flavors and multi-packages modifiers), in order to weed
@@ -543,7 +543,7 @@ the directories named by
 are searched.
 It should contain a series of entries separated by colons.
 Each entry consists of a directory name, ending in a slash.
-URL schemes such as ftp, http, or scp are also appropriate.
+URL schemes such as FTP, HTTP, or SCP are also appropriate.
 The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
 period
