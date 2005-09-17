@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2005/09/16 23:30:26 kurt Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 2005/09/17 00:31:59 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -37,9 +37,9 @@ main()
 		return (1);
 	}
 
-	/* RTLD_DEFAULT should see bbSymbol */
-	if (dlsym(RTLD_DEFAULT, "bbSymbol") == NULL) {
-		printf("dlsym(RTLD_DEFAULT, \"bbSymbol\") == NULL\n");
+	/* RTLD_DEFAULT should *not* see bbSymbol */
+	if (dlsym(RTLD_DEFAULT, "bbSymbol") != NULL) {
+		printf("dlsym(RTLD_DEFAULT, \"bbSymbol\") != NULL\n");
 		ret = 1;
 	}
 
