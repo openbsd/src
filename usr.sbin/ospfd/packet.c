@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.11 2005/08/11 16:28:07 henning Exp $ */
+/*	$OpenBSD: packet.c,v 1.12 2005/09/17 20:03:35 msf Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -49,7 +49,7 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 	bzero(&ospf_hdr, sizeof(ospf_hdr));
 	ospf_hdr.version = OSPF_VERSION;
 	ospf_hdr.type = type;
-	ospf_hdr.rtr_id = iface->rtr_id.s_addr;
+	ospf_hdr.rtr_id = ospfe_router_id();
 	if (iface->type != IF_TYPE_VIRTUALLINK)
 		ospf_hdr.area_id = iface->area->id.s_addr;
 	ospf_hdr.auth_type = htons(iface->auth_type);

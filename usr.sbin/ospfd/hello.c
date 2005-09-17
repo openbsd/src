@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.9 2005/08/30 21:07:58 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.10 2005/09/17 20:03:35 msf Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -203,7 +203,7 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 
 	while (len >= sizeof(nbr_id)) {
 		memcpy(&nbr_id, buf, sizeof(nbr_id));
-		if (nbr_id == iface->rtr_id.s_addr) {
+		if (nbr_id == ospfe_router_id()) {
 			/* seen myself */
 			if (nbr->state & NBR_STA_PRELIM)
 				nbr_fsm(nbr, NBR_EVT_2_WAY_RCVD);

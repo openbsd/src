@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.12 2005/05/27 05:51:22 norby Exp $ */
+/*	$OpenBSD: database.c,v 1.13 2005/09/17 20:03:35 msf Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -215,7 +215,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 		if (dd_hdr.bits == (OSPF_DBD_I | OSPF_DBD_M | OSPF_DBD_MS)) {
 			/* if nbr Router ID is larger than own -> slave */
 			if ((ntohl(nbr->id.s_addr)) >
-			    ntohl(nbr->iface->rtr_id.s_addr)) {
+			    ntohl(ospfe_router_id())) {
 				/* slave */
 				nbr->master = 0;
 				nbr->dd_seq_num = ntohl(dd_hdr.dd_seq_num);

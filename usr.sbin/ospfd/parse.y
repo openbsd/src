@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2005/09/15 20:24:46 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.18 2005/09/17 20:03:35 msf Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <ifaddrs.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -62,6 +63,7 @@ int	 findeol(void);
 int	 yylex(void);
 void	 clear_config(struct ospfd_conf *xconf);
 int	 check_file_secrecy(int fd, const char *fname);
+u_int32_t	get_rtr_id(void);
 
 static struct {
 	u_int32_t	dead_interval;
@@ -430,7 +432,6 @@ interface	: INTERFACE STRING	{
 			iface->area = area;
 			LIST_INSERT_HEAD(&area->iface_list,
 			    iface, entry);
-			iface->rtr_id = conf->rtr_id;
 			iface->passive = 0;
 		} interface_block {
 			iface = NULL;
@@ -821,6 +822,9 @@ parse_config(char *filename, int opts)
 		return (NULL);
 	}
 
+	if (conf->rtr_id.s_addr == 0)
+		conf->rtr_id.s_addr = get_rtr_id();
+	
 	return (conf);
 }
 
@@ -968,4 +972,32 @@ clear_config(struct ospfd_conf *xconf)
 {
 	/* XXX clear conf */
 		/* ... */
+}
+
+u_int32_t
+get_rtr_id(void)
+{
+	struct ifaddrs		*ifap, *ifa;
+	u_int32_t		 ip = 0, cur, localnet;
+
+	localnet = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		cur = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
+		if ((cur & localnet) == localnet)	/* skip 127/8 */
+			continue;
+		if (cur > ip || ip == 0)
+			ip = cur;
+	}
+	freeifaddrs(ifap);
+	
+	if (ip == 0)
+		fatal("router-id is 0.0.0.0");
+
+	return (ip);
 }

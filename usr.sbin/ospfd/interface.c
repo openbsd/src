@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.32 2005/09/15 19:42:51 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.33 2005/09/17 20:03:35 msf Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -598,7 +598,7 @@ if_to_ctl(struct iface *iface)
 	memcpy(ictl.name, iface->name, sizeof(ictl.name));
 	memcpy(&ictl.addr, &iface->addr, sizeof(ictl.addr));
 	memcpy(&ictl.mask, &iface->mask, sizeof(ictl.mask));
-	memcpy(&ictl.rtr_id, &iface->rtr_id, sizeof(ictl.rtr_id));
+	ictl.rtr_id.s_addr = ospfe_router_id();
 	memcpy(&ictl.area, &iface->area->id, sizeof(ictl.area));
 	if (iface->dr) {
 		memcpy(&ictl.dr_id, &iface->dr->id, sizeof(ictl.dr_id));
