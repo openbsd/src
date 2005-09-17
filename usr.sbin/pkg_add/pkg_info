@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.32 2005/09/07 09:40:50 jmc Exp $
+# $OpenBSD: pkg_info,v 1.33 2005/09/17 12:10:52 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -65,6 +65,33 @@ package main;
 my $total_size = 0;
 my $pkgs = 0;
 
+sub find_pkg_plist
+{
+	my ($pkg, $filter, $code) = @_;
+
+	require OpenBSD::PackingOld;
+	require OpenBSD::PackingList;
+
+	if (is_installed($pkg)) {
+		&$code($pkg, OpenBSD::PackingList->from_installation($pkg, $filter));
+		return;
+	}
+	if (OpenBSD::PackageName::is_stem($pkg)) {
+		my @l = sort (OpenBSD::PackageName::findstem($pkg, installed_packages()));
+		if (@l != 0) {
+			for my $p (@l) {
+				&$code($p, OpenBSD::PackingList->from_installation($p, $filter));
+			}
+			return;
+		}
+	}
+				
+	require OpenBSD::PackageLocator;
+
+	my $plist = OpenBSD::PackageLocator->grabPlist($pkg, $filter);
+	return unless $plist;
+	&$code($pkg, $plist);
+}
 
 sub find_pkg
 {
@@ -91,6 +118,7 @@ sub find_pkg
 	&$code($pkg, $dir);
 	$true_package->close();
 }
+
 sub printfile
 {
 	my $filename = shift;
@@ -148,12 +176,10 @@ sub filter_files
 	my $search = shift;
 	my @result = ();
 	for my $arg (@_) {
-		find_pkg($arg,
+		find_pkg_plist($arg, \&OpenBSD::PackingList::FilesOnly,
 		    sub {
-		    	my ($pkg, $dir) = @_;
+		    	my ($pkg, $plist) = @_;
 				
-			my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS,
-			    \&OpenBSD::PackingList::FilesOnly);
 			$plist->visit('hunt_file', $search, $pkg, \@result);
 		    });
 	}
@@ -290,6 +316,43 @@ sub print_info
 	}
 }
 
+sub print_plist_info
+{
+	my ($pkg, $plist) = @_;
+	unless (defined $plist) {
+		print STDERR "Error printing info for $pkg: no info ?\n";
+	}
+	if ($terse) {
+		print $opt_l, $pkg, "\n" unless $opt_q;
+	} else {
+		print $opt_l, "Information for ", $pkg, "\n\n" unless $opt_q;
+	}
+	if ($opt_L) {
+		print $opt_l, "Files:\n" unless $opt_q;
+		$plist->visit('dump_file', $opt_K);
+		print "\n";
+	}
+	if ($opt_s) {
+		my $size = 0;
+		$plist->visit('sum_up', \$size);
+		print "Size: " unless $opt_q;
+		print "$size\n";
+		$total_size += $size;
+		$pkgs++;
+	}
+	if ($opt_S) {
+		print "Signature: " unless $opt_q;
+		print $plist->signature(), "\n";
+	}
+
+	if ($opt_f) {
+		print $opt_l, "Packing list:\n" unless $opt_q;
+		$plist->write(\*STDOUT);
+		print "\n";
+	}
+	print $opt_l, "\n" unless $opt_q || $terse;
+}
+
 set_usage('pkg_info [-cDdfIiKkLMpqRrSsUv] [-E filename] [-e pkg-name] [-l str] pkg-name [...]', 'pkg_info [-Aa flags]');
 
 my $locked;
@@ -380,7 +443,12 @@ if (@sought_files) {
 }
 
 for my $pkg (@ARGV) {
-	find_pkg($pkg, \&print_info);
+	if ($opt_I || $opt_c || $opt_R || $opt_d || $opt_M || $opt_U ||
+	    $opt_i || $opt_k || $opt_r) {
+		find_pkg($pkg, \&print_info);
+	} else {
+		find_pkg_plist($pkg, undef, \&print_plist_info);
+	}
 }
 if ($pkgs > 1) {
 	print "Total size: $total_size\n";
