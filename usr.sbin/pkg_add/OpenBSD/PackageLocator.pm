@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.37 2005/09/17 12:10:32 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.38 2005/09/17 12:45:49 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -687,6 +687,15 @@ sub info
 {
 	my $self = shift;
 	return $self->{dir};
+}
+
+sub plist
+{
+	my ($self, $code) = @_;
+
+	require OpenBSD::PackingList;
+
+	return OpenBSD::PackingList->fromfile($self->info().CONTENTS, $code);
 }
 
 sub close
