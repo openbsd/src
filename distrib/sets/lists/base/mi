@@ -837,6 +837,7 @@
 ./usr/libdata/perl5/OpenBSD/Error.pm
 ./usr/libdata/perl5/OpenBSD/Getopt.pm
 ./usr/libdata/perl5/OpenBSD/IdCache.pm
+./usr/libdata/perl5/OpenBSD/Interactive.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis
 ./usr/libdata/perl5/OpenBSD/Makewhatis.pm
 ./usr/libdata/perl5/OpenBSD/Makewhatis/Check.pm
@@ -2388,6 +2389,7 @@
 ./usr/share/man/cat1/help.0
 ./usr/share/man/cat1/man.0
 ./usr/share/man/cat1/pkg_add.0
+./usr/share/man/cat4/i386/wds.0
 ./usr/share/man/cat7
 ./usr/share/man/cat7/packages.0
 ./usr/share/man/cat8

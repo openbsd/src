@@ -159,7 +159,6 @@
 ./usr/include/dev/ic/ad1848reg.h
 ./usr/include/dev/ic/adv.h
 ./usr/include/dev/ic/advlib.h
-./usr/include/dev/ic/advmcode.h
 ./usr/include/dev/ic/adw.h
 ./usr/include/dev/ic/adwlib.h
 ./usr/include/dev/ic/aic6360reg.h
@@ -552,6 +551,7 @@
 ./usr/include/dev/pci/pciide_hpt_reg.h
 ./usr/include/dev/pci/pciide_i31244_reg.h
 ./usr/include/dev/pci/pciide_ite_reg.h
+./usr/include/dev/pci/pciide_ixp_reg.h
 ./usr/include/dev/pci/pciide_natsemi_reg.h
 ./usr/include/dev/pci/pciide_nforce_reg.h
 ./usr/include/dev/pci/pciide_opti_reg.h
@@ -990,7 +990,6 @@
 ./usr/include/net/zlib.h
 ./usr/include/net80211
 ./usr/include/net80211/ieee80211.h
-./usr/include/net80211/ieee80211_compat.h
 ./usr/include/net80211/ieee80211_crypto.h
 ./usr/include/net80211/ieee80211_ioctl.h
 ./usr/include/net80211/ieee80211_node.h

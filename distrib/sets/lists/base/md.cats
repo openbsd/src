@@ -840,7 +840,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ad1848reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/adv.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/advlib.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/advmcode.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/adw.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/adwlib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/aic6360reg.ph
@@ -1233,6 +1232,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_hpt_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_i31244_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_ite_reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_ixp_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_natsemi_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_nforce_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_opti_reg.ph
@@ -1745,7 +1745,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/zlib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_compat.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_crypto.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_ioctl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_node.ph
