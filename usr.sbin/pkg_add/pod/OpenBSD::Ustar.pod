@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.8 2005/06/26 16:48:30 espie Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.9 2005/09/17 10:35:27 espie Exp $
 
 =head1 NAME
 
@@ -78,6 +78,9 @@ needs to scan through them multiple times in a row.
 Actual extraction is performed through C<$o-E<gt>extract()> and is not 
 mandatory. Thus, client code can control whether it wants to extract archive
 elements or not.
+
+Small files can also be directly extracted to a scalar using 
+C<$v = $o-E<gt>contents()>.
 
 Actual writing is performed through C<$o-E<gt>write()> and is not mandatory
 either.
