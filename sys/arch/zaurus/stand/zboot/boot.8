@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.2 2005/07/15 09:12:04 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.3 2005/09/17 20:18:14 uwe Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -73,16 +73,16 @@ The sequence of
 .Nm
 operations is as follows:
 .Bl -enum
-.\" .It
-.\" Probe for console devices, which includes the (default) PC VGA+Keyboard
-.\" console
-.\" .Pq Li pc0
-.\" and up to four serial consoles
-.\" .Pf ( Li com0
-.\" through
-.\" .Li com3 )
-.\" connected to the serial ports.
-.\" Display messages to the default console about the devices found.
+.It
+Probe for console devices, which includes the (default) LCD+Keyboard
+console
+.Pq Li cn0
+and up to three serial consoles
+.Pf ( Li com0
+through
+.Li com2 )
+connected to the serial ports.
+Display messages to the default console about the devices found.
 .\" .It
 .\" Detect memory.
 .\" Conventional memory is detected by querying the BIOS.
@@ -154,41 +154,30 @@ When selecting the
 .Ar device
 to boot from,
 .Nm
-.\" makes no distinction between SCSI and IDE type drives;
-.\" they are detected as
-.\" .Sq hd
-.\" devices.
-.\" Therefore, to boot kernel
-.\" .Pa /bsd
-.\" from slice
-.\" .Sq a
-.\" on the first hard drive
-.\" .Pq irrespective of device type ,
-.\" specify
-.\" .Dq boot hd0a:/bsd .
-makes no distinction between the type of drives;
-the device name is passed directly to the primary bootstrap loader.
+makes no distinction between SCSI and IDE type drives;
+they are detected as
+.Sq hd
+devices.
 Therefore, to boot kernel
 .Pa /bsd
 from slice
 .Sq a
-in the fourth primary partition on the first hard drive, specify
-.Dq boot /dev/hda4:/bsd .
+on the first hard drive
+.Pq irrespective of device type ,
+specify
+.Dq boot hd0a:/bsd .
 .Pp
 .Em Note:
 Normally, the internal hard disk is designated by the
 .Ar device
-prefix
-.Sq /dev/hda .
+name
+.Sq hd0 .
 If a CF hard disk is present in the socket when the system starts,
 the internal hard disk is instead designated by the prefix
-.Sq /dev/hdc ,
+.Sq hd1 ,
 and
-.Sq /dev/hda
+.Sq hd0
 will access the CF hard disk.
-See also
-.Sx BUGS ,
-below.
 .Bl -tag -width _a_
 .It Fl a
 Causes the kernel to ask for the
@@ -248,9 +237,7 @@ was compiled with DEBUG defined.
 .It Nm device
 Boot device name (e.g.,
 .\" .Li fd0a ,
-.\" .Li hd0a ) .
-.Li /dev/hda4 ,
-.Li /dev/hdc1 ) .
+.Li hd0a ) .
 .It Nm howto
 Options to pass to the loaded kernel.
 .It Nm image
@@ -320,7 +307,7 @@ Invoke the serial console at every boot:
 .Pp
 Boot the kernel named
 .Pa /bsd
-from the fourth primary partition on the first hard disk in
+from the second hard disk in
 .Dq User Kernel Configuration
 mode (see
 .Xr boot_config 8 ) .
@@ -332,8 +319,7 @@ Once booted, such changes can be made permanent by using
 .Fl e
 option.
 .Pp
-.\" .Dl boot> boot hd1a:/bsd -c
-.Dl boot> boot /dev/hda4:/bsd -c
+.Dl boot> boot hd1a:/bsd -c
 .Sh SEE ALSO
 .\" .Xr gzip 1 ,
 .Xr autoconf 4 ,
@@ -354,13 +340,5 @@ This program was written by Michael Shalayeff for
 and adapted to zaurus by Uwe Stuehler for
 .Ox 3.7 .
 .Sh BUGS
-Alternative console devices are not probed for and can not be
-selected.
-.Pp
-Non-IDE disks do not get selected for loading /etc/boot.conf or
+Non-IDE disks can not be used to load /etc/boot.conf or
 the kernel from them.
-.Pp
-The
-.Nm boot
-command should accept abstract disk device names instead of
-just forwarding the device name to the primary bootstrap.
