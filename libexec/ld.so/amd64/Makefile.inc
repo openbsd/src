@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2005/05/04 03:59:24 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2005/09/17 01:06:53 deraadt Exp $
 
-CFLAGS += -fPIC 
+CFLAGS += -fPIC
 AFLAGS += -fpic
