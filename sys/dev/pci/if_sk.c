@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.79 2005/09/16 00:43:31 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.80 2005/09/17 02:53:09 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1484,23 +1484,41 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		     sc->sk_rboff));
 
 	/* Read and save physical media type */
-	switch(sk_win_read_1(sc, SK_PMDTYPE)) {
-	case SK_PMD_1000BASESX:
-		sc->sk_pmd = IFM_1000_SX;
-		break;
-	case SK_PMD_1000BASELX:
-		sc->sk_pmd = IFM_1000_LX;
-		break;
-	case SK_PMD_1000BASECX:
-		sc->sk_pmd = IFM_1000_CX;
-		break;
-	case SK_PMD_1000BASETX:
-		sc->sk_pmd = IFM_1000_T;
-		break;
-	default:
-		printf("%s: unknown media type: 0x%x\n",
-		    sc->sk_dev.dv_xname, sk_win_read_1(sc, SK_PMDTYPE));
-		goto fail_2;
+	skrs = sk_win_read_1(sc, SK_PMDTYPE);
+	if (SK_IS_YUKON2(sc)) {
+		switch (skrs) {
+		case 'L':
+			sc->sk_pmd = IFM_1000_LX;
+			break;
+		case 'S':
+			sc->sk_pmd = IFM_1000_SX;
+			break;
+		case SK_PMD_1000BASETX:
+		case SK_PMD_1000BASETX_ALT:
+		default:
+			sc->sk_pmd = IFM_1000_T;
+			break;
+		}
+	} else {
+		switch (skrs) {
+		case SK_PMD_1000BASESX:
+			sc->sk_pmd = IFM_1000_SX;
+			break;
+		case SK_PMD_1000BASELX:
+			sc->sk_pmd = IFM_1000_LX;
+			break;
+		case SK_PMD_1000BASECX:
+			sc->sk_pmd = IFM_1000_CX;
+			break;
+		case SK_PMD_1000BASETX:
+		case SK_PMD_1000BASETX_ALT:
+			sc->sk_pmd = IFM_1000_T;
+			break;
+		default:
+			printf("%s: unknown media type: 0x%x\n",
+			    sc->sk_dev.dv_xname, sk_win_read_1(sc, SK_PMDTYPE));
+			goto fail_2;
+		}
 	}
 
 	switch (sc->sk_type) {
@@ -1576,11 +1594,27 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	skca.skc_rev = sc->sk_rev;
 	(void)config_found(&sc->sk_dev, &skca, skcprint);
 
-	if (!(sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC)) {
-		skca.skc_port = SK_PORT_B;
-		skca.skc_type = sc->sk_type;
-		skca.skc_rev = sc->sk_rev;
-		(void)config_found(&sc->sk_dev, &skca, skcprint);
+	if (SK_IS_YUKON2(sc)) {
+		u_int8_t hw;
+
+		hw = sk_win_read_1(sc, SK_Y2_HWRES);
+		if ((hw & SK_Y2_HWRES_LINK_MASK) == SK_Y2_HWRES_LINK_DUAL) {
+			if ((sk_win_read_1(sc, SK_Y2_CLKGATE) &
+			    SK_Y2_CLKGATE_LINK2_INACTIVE) == 0) {
+				skca.skc_port = SK_PORT_B;
+				skca.skc_type = sc->sk_type;
+				skca.skc_rev = sc->sk_rev;
+				(void)config_found(&sc->sk_dev, &skca,
+				    skcprint);
+			}
+		}
+	} else {
+		if (!(sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC)) {
+			skca.skc_port = SK_PORT_B;
+			skca.skc_type = sc->sk_type;
+			skca.skc_rev = sc->sk_rev;
+			(void)config_found(&sc->sk_dev, &skca, skcprint);
+		}
 	}
 
 	/* Turn on the 'driver is loaded' LED. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.18 2005/09/16 00:43:31 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.19 2005/09/17 02:53:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -277,8 +277,10 @@
 #define SK_CONFIG	0x011A
 #define SK_CHIPVER	0x011B
 #define SK_EPROM0	0x011C
-#define SK_EPROM1	0x011D
-#define SK_EPROM2	0x011E
+#define SK_EPROM1	0x011D		/* yukon/genesis */
+#define	SK_Y2_CLKGATE	0x011D		/* yukon 2 */
+#define SK_EPROM2	0x011E		/* yukon/genesis */
+#define SK_Y2_HWRES	0x011E		/* yukon 2 */
 #define SK_EPROM3	0x011F
 #define SK_EP_ADDR	0x0120
 #define SK_EP_DATA	0x0124
@@ -317,6 +319,8 @@
 #define SK_YUKON_FE		0xB7
 
 #define SK_YUKON_FAMILY(x) ((x) & 0xB0)
+#define	SK_IS_YUKON2(sc)	\
+    ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_FE)
 
 /* Known revisions in SK_CONFIG */
 #define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
@@ -371,9 +375,10 @@
 #define SK_CONFIG_SINGLEMAC	0x01
 #define SK_CONFIG_DIS_DSL_CLK	0x02
 
+#define SK_PMD_1000BASETX_ALT	0x31
+#define SK_PMD_1000BASECX	0x43
 #define SK_PMD_1000BASELX	0x4C
 #define SK_PMD_1000BASESX	0x53
-#define SK_PMD_1000BASECX	0x43
 #define SK_PMD_1000BASETX	0x54
 
 /* GPIO bits */
@@ -397,6 +402,20 @@
 #define SK_GPIO_DIR7		0x00800000
 #define SK_GPIO_DIR8		0x01000000
 #define SK_GPIO_DIR9           0x02000000
+
+#define	SK_Y2_CLKGATE_LINK2_INACTIVE	0x80	/* port 2 inactive */
+#define	SK_Y2_CLKGATE_LINK2_GATE_DIS	0x40	/* disable clock gate, 2 */
+#define	SK_Y2_CLKGATE_LINK2_CORE_DIS	0x20	/* disable core clock, 2 */
+#define	SK_Y2_CLKGATE_LINK2_PCI_DIS	0x10	/* disable pci clock, 2 */
+#define	SK_Y2_CLKGATE_LINK1_INACTIVE	0x08	/* port 1 inactive */
+#define	SK_Y2_CLKGATE_LINK1_GATE_DIS	0x04	/* disable clock gate, 1 */
+#define	SK_Y2_CLKGATE_LINK1_CORE_DIS	0x02	/* disable core clock, 1 */
+#define	SK_Y2_CLKGATE_LINK1_PCI_DIS	0x01	/* disable pci clock, 1 */
+
+#define	SK_Y2_HWRES_LINK_1	0x01
+#define	SK_Y2_HWRES_LINK_2	0x02
+#define	SK_Y2_HWRES_LINK_MASK	(SK_Y2_HWRES_LINK_1 | SK_Y2_HWRES_LINK_2)
+#define	SK_Y2_HWRES_LINK_DUAL	(SK_Y2_HWRES_LINK_1 | SK_Y2_HWRES_LINK_2)
 
 /* Block 3 Ram interface and MAC arbiter registers */
 #define SK_RAMADDR	0x0180
