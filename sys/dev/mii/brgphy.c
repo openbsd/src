@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.30 2005/09/17 20:09:55 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.31 2005/09/17 20:16:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -123,9 +123,9 @@ brgphy_probe(struct device *parent, void *match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (mii_phy_match(ma, brgphys) != NULL)
-		return(10);
+		return (10);
 
-	return(0);
+	return (0);
 }
 
 void
@@ -145,8 +145,10 @@ brgphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
-	sc->mii_flags = ma->mii_flags | MIIF_NOISOLATE;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
+
+	sc->mii_flags |= MIIF_NOISOLATE;
 
 	PHY_RESET(sc);
 
