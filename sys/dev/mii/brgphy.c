@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.28 2005/08/27 14:15:47 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.29 2005/09/17 20:05:47 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -193,8 +193,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		if (sc->mii_model != MII_MODEL_xxBROADCOM_BCM5701)
-			PHY_RESET(sc); /* XXX hardware bug work-around */
+		PHY_RESET(sc); /* XXX hardware bug work-around */
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
@@ -278,7 +277,7 @@ setit:
 		 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
 		if (++sc->mii_ticks <= sc->mii_anegticks)
-			return (0);
+			break;
 
 		sc->mii_ticks = 0;
 		brgphy_mii_phy_auto(sc);
@@ -295,7 +294,6 @@ setit:
 	if (sc->mii_media_active != mii->mii_media_active || 
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
-		mii_phy_update(sc, cmd);
 		switch (sc->mii_model) {
 		case MII_MODEL_BROADCOM_BCM5400:
 		case MII_MODEL_xxBROADCOM_BCM5401:
@@ -304,6 +302,7 @@ setit:
 			break;
 		}
 	}
+	mii_phy_update(sc, cmd);
 
 	return (0);
 }
@@ -374,7 +373,7 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 	int ktcr = 0;
 
 	brgphy_loop(sc);
-	/* XXX need 'PHY_RESET(sc);'? Was done before getting here ... */
+	PHY_RESET(sc);
 	ktcr = BRGPHY_1000CTL_AFD|BRGPHY_1000CTL_AHD;
 	if (sc->mii_model == MII_MODEL_xxBROADCOM_BCM5701)
 		ktcr |= BRGPHY_1000CTL_MSE|BRGPHY_1000CTL_MSC;
