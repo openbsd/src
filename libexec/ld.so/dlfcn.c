@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.50 2005/09/16 23:19:41 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.51 2005/09/17 03:02:37 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -50,6 +50,8 @@ dlopen(const char *libname, int flags)
 	elf_object_t *object, *dynobj;
 	Elf_Dyn	*dynp;
 	struct dep_node *n;
+	int failed = 0;
+	const char *deplibname = NULL;
 
 	if (libname == NULL)
 		return _dl_objects;
@@ -60,6 +62,7 @@ dlopen(const char *libname, int flags)
 
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, flags);
 	if (object == 0) {
+		DL_DEB(("dlopen: failed to open %s\n", libname));
 		_dl_thread_kern_go();
 		return((void *)0);
 	}
@@ -92,7 +95,6 @@ dlopen(const char *libname, int flags)
 		elf_object_t *tmpobj = dynobj;
 
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
-			const char *deplibname;
 			elf_object_t *depobj;
 
 			if (dynp->d_tag != DT_NEEDED)
@@ -103,8 +105,10 @@ dlopen(const char *libname, int flags)
 			    deplibname, libname));
 			depobj = _dl_load_shlib(deplibname, dynobj, OBJTYPE_LIB,
 				flags|RTLD_GLOBAL);
-			if (!depobj)
-				_dl_exit(4);
+			if (!depobj) {
+				failed = 1;
+				break;
+			}
 			/* this add_object should not be here, XXX */
 			_dl_add_object(depobj);
 			_dl_link_sub(depobj, dynobj);
@@ -116,13 +120,21 @@ dlopen(const char *libname, int flags)
 		dynobj = dynobj->next;
 	}
 
-	_dl_link_dlopen(object);
-	_dl_rtld(object);
-	_dl_call_init(object);
-
-
 	_dl_loading_object = NULL;
-	DL_DEB(("tail %s\n", object->load_name ));
+
+	if (failed == 1) {
+		if (deplibname != NULL) {
+			DL_DEB(("dlopen: failed to open %s\n", deplibname));
+		}
+		_dl_real_close(object);
+		object = NULL;
+		_dl_errno = DL_CANT_LOAD_OBJ;
+	} else {
+		DL_DEB(("tail %s\n", object->load_name ));
+		_dl_link_dlopen(object);
+		_dl_rtld(object);
+		_dl_call_init(object);
+	}
 
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
@@ -133,7 +145,8 @@ dlopen(const char *libname, int flags)
 
 	_dl_thread_kern_go();
 
-	DL_DEB(("dlopen: %s: done.\n", libname));
+	DL_DEB(("dlopen: %s: done (%s).\n", libname,
+	    failed ? "failed" : "success"));
 
 	return((void *)object);
 }
@@ -307,6 +320,9 @@ dlerror(void)
 		break;
 	case DL_CANT_FIND_OBJ:
 		errmsg = "Cannot determine caller's shared object";
+		break;
+	case DL_CANT_LOAD_OBJ:
+		errmsg = "Cannot load specified object";
 		break;
 	default:
 		errmsg = "Unknown error";
