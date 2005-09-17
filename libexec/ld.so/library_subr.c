@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.6 2005/09/16 23:19:41 drahn Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.7 2005/09/17 02:52:43 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -288,6 +288,23 @@ again:
 	 */
 	if (parent->dyn.rpath != NULL) {
 		hint = _dl_find_shlib(&req_sod, parent->dyn.rpath,
+		    ignore_hints);
+		if (hint != NULL) {
+			if (req_sod.sod_minor < sod.sod_minor)
+				_dl_printf("warning: lib%s.so.%d.%d: "
+				    "minor version >= %d expected, "
+				    "using it anyway\n",
+				    sod.sod_name, sod.sod_major,
+				    req_sod.sod_minor, sod.sod_minor);
+			object = _dl_tryload_shlib(hint, type, flags);
+			if (object != NULL) {
+				_dl_free((char *)sod.sod_name);
+				return (object);
+			}
+		}
+	}
+	if (parent != _dl_objects && _dl_objects->dyn.rpath != NULL) {
+		hint = _dl_find_shlib(&req_sod, _dl_objects->dyn.rpath,
 		    ignore_hints);
 		if (hint != NULL) {
 			if (req_sod.sod_minor < sod.sod_minor)
