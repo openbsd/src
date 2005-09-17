@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.48 2005/09/07 09:11:22 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.49 2005/09/17 09:16:21 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -77,6 +77,11 @@ as a package name causes
 .Nm
 to read from the standard input.
 .Pp
+If the environment variable
+.Ev PKG_CACHE
+is set, every package retrieved from a distant location will also be
+copied here.
+.Pp
 Some packages may depend on other packages.
 When resolving dependencies
 .Nm
@@ -144,6 +149,12 @@ should be waived.
 These include:
 .Pp
 .Bl -tag -width "updatedependsXX" -compact
+.It Ar allversions
+do not trim older p* variants of packages for updates.
+.It Ar alwaysupdate
+proceed with an update even if
+.Nm
+can't find new packages for all installed packages.
 .It Ar arch
 architecture recorded in package may not match.
 .It Ar boguslibs
@@ -409,8 +420,45 @@ Note that it is safe to interrupt
 .Nm pkg_add
 through
 .Dv SIGINT ,
-as it will safely record an interrupted install as
+.Dv SIGHUP ,
+and other signals, as it will safely record an interrupted install as
 .Pa partial-<pkgname>[.n] .
+.Pp
+When replacing packages, the procedure is slightly different.
+.Bl -enum
+.It
+A check is made to determine if a similar package is already installed.
+If its signature is identical to that of the new package, no replacement
+is performed (unless -F installed is specified).
+.It
+A check is made to determine what old package the new package should replace,
+using conflicts.
+.It
+A check is made to determine whether the old package will be deleted without
+issue, and whether the new package will install correctly.
+This includes refusing to run any code (unless -F update), and verifying
+that the new package still matches dependencies.
+.It
+Shared libraries deserve special treatment: each shared library from the old
+package that does no longer exist in the new package, but that is required
+from a wantlib of another package is kept along in a stub package named
+.Pa \&.libs-<pkgname> .
+.It
+The new package is extracted to the filesystem, using temporary filenames
+of the form
+.Pa pkg.XXXXXXX
+since the old package is still there.
+The packing-list is amended to record these names as @temp annotations, 
+in cases the installation fails.
+.It
+The old package is deleted as usual, except that some packages may still depend 
+on it.
+.It
+The new package is installed as usal, except that files are already present
+and only need to be renamed.
+.It
+Dependencies from the old package are adjusted to point to the new package.
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
 .It Ev FTPMODE
@@ -437,6 +485,9 @@ value passed to any
 or
 .Cm REQUIRE
 script invoked from the package.
+.It Ev PKG_CACHE
+If set, any package retrieved from a distant location will be copied to
+that directory as well.
 .It Ev PKG_PATH
 If a given package name cannot be found,
 the directories named by
