@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.1.1.1 2005/09/15 22:16:27 kurt Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2005/09/18 11:56:34 kurt Exp $
 
 .include <bsd.obj.mk>
 
@@ -17,6 +17,3 @@ BB_OBJDIR!=	if [ -d $(BB_DIR)/${__objdir} ]; then \
 		else \
 			echo "$(BB_DIR)"; \
 		fi
-
-run-regress-${PROG}: ${PROG}
-	LD_LIBRARY_PATH=$(BB_OBJDIR) ./${PROG}
