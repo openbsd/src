@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.26 2005/05/23 06:44:58 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.27 2005/09/18 19:29:41 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.26 2005/05/23 06:44:58 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.27 2005/09/18 19:29:41 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -931,17 +931,19 @@ void
 yyerror(char *s)
 {
 	char	*str, *p;
+	int	n;
 
 	if (feof(yyin))
-		asprintf(&str, "%s: %s:%d: %s: unexpected EOF",
+		n = asprintf(&str, "%s: %s:%d: %s: unexpected EOF",
 		    __progname, filename, lineno, s);
 	else if (isspace(yytext[0]) || !isprint(yytext[0]))
-		asprintf(&str, "%s: %s:%d: %s: ascii char 0x%02x unexpected",
+		n = asprintf(&str,
+		    "%s: %s:%d: %s: ascii char 0x%02x unexpected",
 		    __progname, filename, lineno, s, yytext[0]);
 	else
-		asprintf(&str, "%s: %s:%d: %s: %s unexpected",
+		n = asprintf(&str, "%s: %s:%d: %s: %s unexpected",
 		    __progname, filename, lineno, s, yytext);
-	if (str == NULL)
+	if (n == -1)
 		err(1, NULL);
 
 	fputs("c[", stdout);
