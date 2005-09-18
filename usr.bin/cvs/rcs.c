@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.62 2005/09/18 00:33:40 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.63 2005/09/18 06:19:10 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,6 +29,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <libgen.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -227,25 +228,42 @@ static struct rcs_key {
 
 #define RCS_NKEYS	(sizeof(rcs_keys)/sizeof(rcs_keys[0]))
 
-#ifdef notyet
 /*
  * Keyword expansion table
  */
+#define RCS_KW_AUTHOR		0x1000
+#define RCS_KW_DATE		0x2000
+#define RCS_KW_LOG		0x4000
+#define RCS_KW_NAME		0x8000
+#define RCS_KW_RCSFILE		0x0100
+#define RCS_KW_REVISION		0x0200
+#define RCS_KW_SOURCE		0x0400
+#define RCS_KW_STATE		0x0800
+#define RCS_KW_FULLPATH		0x0010
+
+#define RCS_KW_ID \
+	(RCS_KW_RCSFILE | RCS_KW_REVISION | RCS_KW_DATE \
+	| RCS_KW_AUTHOR | RCS_KW_STATE)
+
+#define RCS_KW_HEADER	(RCS_KW_ID | RCS_KW_FULLPATH)
+
 static struct rcs_kw {
 	char	kw_str[16];
+	int	kw_type;
 } rcs_expkw[] = {
-	{ "Author"    },
-	{ "Date"      },
-	{ "Header"    },
-	{ "Id"        },
-	{ "Log"       },
-	{ "Name"      },
-	{ "RCSfile"   },
-	{ "Revision"  },
-	{ "Source"    },
-	{ "State"     }
+	{ "Author",	RCS_KW_AUTHOR   },
+	{ "Date",	RCS_KW_DATE     },
+	{ "Header",	RCS_KW_HEADER   },
+	{ "Id",		RCS_KW_ID       },
+	{ "Log",	RCS_KW_LOG      },
+	{ "Name",	RCS_KW_NAME     },
+	{ "RCSfile",	RCS_KW_RCSFILE  },
+	{ "Revision",	RCS_KW_REVISION },
+	{ "Source",	RCS_KW_SOURCE   },
+	{ "State",	RCS_KW_STATE    },
 };
-#endif
+
+#define RCS_NKWORDS	(sizeof(rcs_expkw)/sizeof(rcs_expkw[0]))
 
 static const char *rcs_errstrs[] = {
 	"No error",
@@ -280,10 +298,11 @@ static int	rcs_growbuf(RCSFILE *);
 static int	rcs_patch_lines(struct rcs_foo *, struct rcs_foo *);
 static int	rcs_strprint(const u_char *, size_t, FILE *);
 
+static int	rcs_expand_keywords(char *, struct rcs_delta *, char *, char *,
+		    size_t, int);
 static struct rcs_delta	*rcs_findrev(RCSFILE *, const RCSNUM *);
 static struct rcs_foo	*rcs_splitlines(const char *);
 static void		 rcs_freefoo(struct rcs_foo *);
-
 
 /*
  * rcs_open()
@@ -1197,12 +1216,15 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 BUF*
 rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 {
-	int res;
+	int expmode, res;
 	size_t len;
 	void *bp;
 	RCSNUM *crev;
-	BUF *rbuf;
+	BUF *rbuf, *dbuf;
 	struct rcs_delta *rdp = NULL;
+	struct rcs_foo *lines;
+	struct rcs_line *lp;
+	char out[1024];				/* XXX */
 
 	if (rfp->rf_head == NULL)
 		return (NULL);
@@ -1258,7 +1280,41 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 		rcsnum_free(crev);
 	}
 
-	return (rbuf);
+	/*
+	 * Do keyword expansion if required.
+	 */
+	if (rfp->rf_expand != NULL)
+		expmode = rcs_kwexp_get(rfp);
+	else
+		expmode = RCS_KWEXP_DEFAULT;
+
+	if ((rbuf != NULL) && !(expmode & RCS_KWEXP_NONE)) {
+		if ((dbuf = cvs_buf_alloc(len, BUF_AUTOEXT)) == NULL)
+			return (rbuf);
+		if ((rdp = rcs_findrev(rfp, rev)) == NULL)
+			return (rbuf);
+
+		if (cvs_buf_putc(rbuf, '\0') < 0) {
+			cvs_buf_free(dbuf);
+			return (rbuf);
+		}
+
+		bp = cvs_buf_release(rbuf);
+		if ((lines = rcs_splitlines((char *)bp)) != NULL) {
+			res = 0;
+			TAILQ_FOREACH(lp, &lines->rl_lines, rl_list) {
+				if (res++ == 0)
+					continue;
+				rcs_expand_keywords(rfp->rf_path, rdp,
+				    lp->rl_line, out, sizeof(out), expmode);
+				cvs_buf_fappend(dbuf, "%s\n", out);
+			}
+			rcs_freefoo(lines);
+		}
+		free(bp);
+	}
+
+	return (dbuf);
 }
 
 /*
@@ -2604,6 +2660,157 @@ rcs_strprint(const u_char *str, size_t slen, FILE *stream)
 		if (*ap == '@')
 			putc('@', stream);
 		sp = ap + 1;
+	}
+
+	return (0);
+}
+
+/*
+ * rcs_expand_keywords()
+ *
+ * Expand any RCS keywords in <line> into <out>
+ */
+static int
+rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
+    size_t len, int mode)
+{
+	int kwtype;
+	u_int i, j, found;
+	char *c, *kwstr, *start;
+	char expbuf[128], buf[128];
+
+	i = 0;
+
+	/*
+	 * Keyword formats:
+	 * $Keyword$
+	 * $Keyword: value$
+	 */
+	memset(out, '\0', len);
+	for (c = line; *c != '\0' && i < len; *c++) {
+		out[i++] = *c;
+		if (*c == '$') {
+			/* remember start of this possible keyword */
+			start = c;
+
+			/* first following character has to be alphanumeric */
+			*c++;
+			if (!isalpha(*c)) {
+				c = start;
+				continue;
+			}
+
+			/* look for any matching keywords */
+			found = 0;
+			for (j = 0; j < RCS_NKWORDS; j++) {
+				if (!strncmp(c, rcs_expkw[j].kw_str,
+				    strlen(rcs_expkw[j].kw_str))) {
+					found = 1;
+					kwstr = rcs_expkw[j].kw_str;
+					kwtype = rcs_expkw[j].kw_type;
+					break;
+				}
+			}
+
+			/* unknown keyword, continue looking */
+			if (found == 0) {
+				c = start;
+				continue;
+			}
+
+			/* next character has to be ':' or '$' */
+			c += strlen(kwstr);
+			if (*c != ':' && *c != '$') {
+				c = start;
+				continue;
+			}
+
+			/*
+			 * if the next character was ':' we need to look for
+			 * an '$' before the end of the line to be sure it is
+			 * in fact a keyword.
+			 */
+			if (*c == ':') {
+				while (*c++) {
+					if (*c == '$' || *c == '\n')
+						break;
+				}
+
+				if (*c != '$') {
+					c = start;
+					continue;
+				}
+			}
+
+			/* start constructing the expansion */
+			expbuf[0] = '\0';
+
+			if (mode & RCS_KWEXP_NAME) {
+				strlcat(expbuf, "$", sizeof(expbuf));
+				strlcat(expbuf, kwstr, sizeof(expbuf));
+				if (mode & RCS_KWEXP_VAL)
+					strlcat(expbuf, ": ", sizeof(expbuf));
+			}
+
+			/*
+			 * order matters because of RCS_KW_ID and RCS_KW_HEADER here
+			 */
+			if (mode & RCS_KWEXP_VAL) {
+				if (kwtype & RCS_KW_RCSFILE) {
+					if (!(kwtype & RCS_KW_FULLPATH))
+						strlcat(expbuf, basename(rcsfile),
+						    sizeof(expbuf));
+					else
+						strlcat(expbuf, rcsfile,
+						    sizeof(expbuf));
+					strlcat(expbuf, " ", sizeof(expbuf));
+				}
+
+				if (kwtype & RCS_KW_REVISION) {
+					rcsnum_tostr(rdp->rd_num, buf, sizeof(buf));
+					strlcat(buf, " ", sizeof(buf));
+					strlcat(expbuf, buf, sizeof(expbuf));
+				}
+
+				if (kwtype & RCS_KW_DATE) {
+					strftime(buf, sizeof(buf),
+					    "%Y/%m/%d %H:%M:%S ", &rdp->rd_date);
+					strlcat(expbuf, buf, sizeof(expbuf));
+				}
+
+				if (kwtype & RCS_KW_AUTHOR) {
+					strlcat(expbuf, rdp->rd_author,
+					    sizeof(expbuf));
+					strlcat(expbuf, " ", sizeof(expbuf));
+				}
+
+				if (kwtype & RCS_KW_STATE) {
+					strlcat(expbuf, rdp->rd_state,
+					    sizeof(expbuf));
+					strlcat(expbuf, " ", sizeof(expbuf));
+				}
+
+				/* order does not matter anymore below */
+				if (kwtype & RCS_KW_LOG)
+					strlcat(expbuf, " ", sizeof(expbuf));
+
+				if (kwtype & RCS_KW_SOURCE) {
+					strlcat(expbuf, rcsfile, sizeof(expbuf));
+					strlcat(expbuf, " ", sizeof(expbuf));
+				}
+
+				if (kwtype & RCS_KW_NAME)
+					strlcat(expbuf, " ", sizeof(expbuf));
+			}
+
+			/* end the expansion */
+			if (mode & RCS_KWEXP_NAME)
+				strlcat(expbuf, "$", sizeof(expbuf));
+
+			out[--i] = '\0';
+			strlcat(out, expbuf, len);
+			i += strlen(expbuf);
+		}
 	}
 
 	return (0);
