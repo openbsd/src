@@ -1,9 +1,11 @@
-# $OpenBSD: Makefile,v 1.32 2005/09/18 00:54:28 espie Exp $
+# $OpenBSD: Makefile,v 1.33 2005/09/18 02:56:12 deraadt Exp $
 
 .include <bsd.own.mk>
 
-MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg_merge.1 \
-	pkg.1 pkg_mklocatedb.1 package.5
+MAN1=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg_merge.1 \
+	pkg.1 pkg_mklocatedb.1
+MAN5=package.5
+MAN=${MAN1} ${MAN5}
 
 POD2MAN=/usr/bin/pod2man
 
@@ -81,9 +83,11 @@ $p.3p: pod/$p.pod
 	${POD2MAN} --section=3p --official --name=$p ${.ALLSRC} $@
 .endfor
 .ifndef NOMAN
-MANALL+=${MAN:S/.1$/.cat1/}
+MANALL+=${MAN1:S/.1$/.cat1/}
+MANALL+=${MAN5:S/.5$/.cat5/}
 .  ifdef MANPS
-PSALL+= ${MAN:S/.1$/.ps1/}
+PSALL+= ${MAN1:S/.1$/.ps1/}
+PSALL+= ${MAN5:S/.5$/.ps5/}
 .  endif
 .endif
 
