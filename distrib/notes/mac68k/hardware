@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.25 2005/08/01 11:29:37 martin Exp $
+dnl	$OpenBSD: hardware,v 1.26 2005/09/18 23:42:03 martin Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 8MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 120MB partition by installing just the minimum sets.
@@ -67,7 +67,6 @@ OpenBSD/MACHINE OSREV does NOT run on these machines:
 	  available in OpenBSD.
 
 Hardware that we do NOT currently support, but get many questions about:
-	* LCPDS Ethernet cards.
 	* Apple Communication Slot (CS) Ethernet cards.
 	* Floppy drive.
 	* IOP ADB subsystem on the IIfx, Quadra 900 and 950.
