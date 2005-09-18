@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.61 2005/09/17 23:47:17 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.62 2005/09/18 00:33:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1250,6 +1250,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 			}
 			bp = cvs_buf_release(rbuf);
 			rbuf = rcs_patch((char *)bp, (char *)rdp->rd_text);
+			free(bp);
 			if (rbuf == NULL)
 				break;
 		} while (rcsnum_cmp(crev, rev, 0) != 0);
