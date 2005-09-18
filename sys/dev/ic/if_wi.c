@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.119 2005/07/31 23:08:58 pascoe Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.120 2005/09/18 09:24:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.119 2005/07/31 23:08:58 pascoe Exp $";
+	"$OpenBSD: if_wi.c,v 1.120 2005/09/18 09:24:03 jsg Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -451,8 +451,7 @@ wi_intr_ack(struct wi_softc *sc, int mode)
 }
 
 int
-wi_intr(vsc)
-	void			*vsc;
+wi_intr(void *vsc)
 {
 	struct wi_softc		*sc = vsc;
 	struct ifnet		*ifp;
@@ -523,8 +522,7 @@ wi_get_fid_io(struct wi_softc *sc, int fid)
 
 
 void
-wi_rxeof(sc)
-	struct wi_softc		*sc;
+wi_rxeof(struct wi_softc *sc)
 {
 	struct ifnet		*ifp;
 	struct ether_header	*eh;
@@ -830,9 +828,7 @@ wi_rxeof(sc)
 }
 
 void
-wi_txeof(sc, status)
-	struct wi_softc		*sc;
-	int			status;
+wi_txeof(struct wi_softc *sc, int status)
 {
 	struct ifnet		*ifp;
 
@@ -850,8 +846,7 @@ wi_txeof(sc, status)
 }
 
 void
-wi_inquire(xsc)
-	void			*xsc;
+wi_inquire(void *xsc)
 {
 	struct wi_softc		*sc;
 	struct ifnet		*ifp;
@@ -877,8 +872,7 @@ wi_inquire(xsc)
 }
 
 void
-wi_update_stats(sc)
-	struct wi_softc		*sc;
+wi_update_stats(struct wi_softc *sc)
 {
 	struct wi_ltv_gen	gen;
 	u_int16_t		id;
@@ -928,12 +922,7 @@ wi_update_stats(sc)
 }
 
 STATIC int
-wi_cmd_io(sc, cmd, val0, val1, val2)
-	struct wi_softc		*sc;
-	int			cmd;
-	int			val0;
-	int			val1;
-	int			val2;
+wi_cmd_io(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 {
 	int			i, s = 0;
 
@@ -982,8 +971,7 @@ wi_cmd_io(sc, cmd, val0, val1, val2)
 }
 
 STATIC void
-wi_reset(sc)
-	struct wi_softc		*sc;
+wi_reset(struct wi_softc *sc)
 {
 	int error, tries = 3;
 
@@ -1016,8 +1004,7 @@ wi_reset(sc)
 }
 
 STATIC void
-wi_cor_reset(sc)
-	struct wi_softc		*sc;
+wi_cor_reset(struct wi_softc *sc)
 {
 	u_int8_t cor_value;
 
@@ -1047,9 +1034,7 @@ wi_cor_reset(sc)
  * Read an LTV record from the NIC.
  */
 STATIC int
-wi_read_record_io(sc, ltv)
-	struct wi_softc		*sc;
-	struct wi_ltv_gen	*ltv;
+wi_read_record_io(struct wi_softc *sc, struct wi_ltv_gen *ltv)
 {
 	u_int8_t		*ptr;
 	int			len, code;
@@ -1149,9 +1134,7 @@ wi_read_record_io(sc, ltv)
  * Same as read, except we inject data instead of reading it.
  */
 STATIC int
-wi_write_record_io(sc, ltv)
-	struct wi_softc		*sc;
-	struct wi_ltv_gen	*ltv;
+wi_write_record_io(struct wi_softc *sc, struct wi_ltv_gen *ltv)
 {
 	u_int8_t		*ptr;
 	u_int16_t		val = 0;
@@ -1269,9 +1252,7 @@ wi_write_record_io(sc, ltv)
 }
 
 STATIC int
-wi_seek(sc, id, off, chan)
-	struct wi_softc		*sc;
-	int			id, off, chan;
+wi_seek(struct wi_softc *sc, int id, int off, int chan)
 {
 	int			i;
 	int			selreg, offreg;
@@ -1305,11 +1286,7 @@ wi_seek(sc, id, off, chan)
 }
 
 STATIC int
-wi_read_data_io(sc, id, off, buf, len)
-	struct wi_softc		*sc;
-	int			id, off;
-	caddr_t			buf;
-	int			len;
+wi_read_data_io(struct wi_softc *sc, int id, int off, caddr_t buf, int len)
 {
 	u_int8_t		*ptr;
 
@@ -1335,11 +1312,7 @@ wi_read_data_io(sc, id, off, buf, len)
  * we expect them, we preform the transfer over again.
  */
 STATIC int
-wi_write_data_io(sc, id, off, buf, len)
-	struct wi_softc		*sc;
-	int			id, off;
-	caddr_t			buf;
-	int			len;
+wi_write_data_io(struct wi_softc *sc, int id, int off, caddr_t buf, int len)
 {
 	u_int8_t		*ptr;
 
@@ -1373,10 +1346,7 @@ again:
  * it out.
  */
 STATIC int
-wi_alloc_nicmem_io(sc, len, id)
-	struct wi_softc		*sc;
-	int			len;
-	int			*id;
+wi_alloc_nicmem_io(struct wi_softc *sc, int len, int *id)
 {
 	int			i;
 
@@ -1407,8 +1377,7 @@ wi_alloc_nicmem_io(sc, len, id)
 }
 
 STATIC void
-wi_setmulti(sc)
-	struct wi_softc		*sc;
+wi_setmulti(struct wi_softc *sc)
 {
 	struct ifnet		*ifp;
 	int			i = 0;
@@ -1453,9 +1422,7 @@ allmulti:
 }
 
 STATIC int
-wi_setdef(sc, wreq)
-	struct wi_softc		*sc;
-	struct wi_req		*wreq;
+wi_setdef(struct wi_softc *sc, struct wi_req *wreq)
 {
 	struct ifnet		*ifp;
 	int error = 0;
@@ -1559,10 +1526,7 @@ wi_setdef(sc, wreq)
 }
 
 STATIC int
-wi_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	int			s, error = 0;
 	struct wi_softc		*sc;
@@ -1879,8 +1843,7 @@ wi_ioctl(ifp, command, data)
 }
 
 STATIC void
-wi_init_io(sc)
-	struct wi_softc		*sc;
+wi_init_io(struct wi_softc *sc)
 {
 	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	int			s;
@@ -2212,8 +2175,7 @@ wi_do_hostdecrypt(struct wi_softc *sc, caddr_t buf, int len)
 }
 
 void
-wi_start(ifp)
-	struct ifnet		*ifp;
+wi_start(struct ifnet *ifp)
 {
 	struct wi_softc		*sc;
 	struct mbuf		*m0;
@@ -2377,10 +2339,7 @@ nextpkt:
 }
 
 STATIC int
-wi_mgmt_xmit(sc, data, len)
-	struct wi_softc		*sc;
-	caddr_t			data;
-	int			len;
+wi_mgmt_xmit(struct wi_softc *sc, caddr_t data, int len)
 {
 	struct wi_frame		tx_frame;
 	int			id;
@@ -2418,8 +2377,7 @@ wi_mgmt_xmit(sc, data, len)
 }
 
 void
-wi_stop(sc)
-	struct wi_softc		*sc;
+wi_stop(struct wi_softc *sc)
 {
 	struct ifnet		*ifp;
 
@@ -2445,8 +2403,7 @@ wi_stop(sc)
 
 
 void
-wi_watchdog(ifp)
-	struct ifnet		*ifp;
+wi_watchdog(struct ifnet *ifp)
 {
 	struct wi_softc		*sc;
 
@@ -2463,8 +2420,7 @@ wi_watchdog(ifp)
 }
 
 void
-wi_detach(sc)
-	struct wi_softc *sc;
+wi_detach(struct wi_softc *sc)
 {
 	struct ifnet *ifp;
 	ifp = &sc->sc_arpcom.ac_if;
@@ -2479,8 +2435,7 @@ wi_detach(sc)
 }
 
 STATIC void
-wi_shutdown(arg)
-	void			*arg;
+wi_shutdown(void *arg)
 {
 	struct wi_softc		*sc;
 
@@ -2491,8 +2446,7 @@ wi_shutdown(arg)
 }
 
 STATIC void
-wi_get_id(sc)
-	struct wi_softc *sc;
+wi_get_id(struct wi_softc *sc)
 {
 	struct wi_ltv_ver		ver;
 	const struct wi_card_ident	*id;
@@ -2576,10 +2530,7 @@ wi_get_id(sc)
 }
 
 STATIC int
-wi_sync_media(sc, ptype, txrate)
-	struct wi_softc *sc;
-	int ptype;
-	int txrate;
+wi_sync_media(struct wi_softc *sc, int ptype, int txrate)
 {
 	int media = sc->sc_media.ifm_cur->ifm_media;
 	int options = IFM_OPTIONS(media);
@@ -2638,8 +2589,7 @@ wi_sync_media(sc, ptype, txrate)
 }
 
 STATIC int
-wi_media_change(ifp)
-	struct ifnet *ifp;
+wi_media_change(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	int otype = sc->wi_ptype;
@@ -2706,9 +2656,7 @@ wi_media_change(ifp)
 }
 
 STATIC void
-wi_media_status(ifp, imr)
-	struct ifnet *ifp;
-	struct ifmediareq *imr;
+wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	struct wi_req wreq;
@@ -2767,9 +2715,7 @@ wi_media_status(ifp, imr)
 }
 
 STATIC int
-wi_set_nwkey(sc, nwkey)
-	struct wi_softc *sc;
-	struct ieee80211_nwkey *nwkey;
+wi_set_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 {
 	int i, len, error;
 	struct wi_req wreq;
@@ -2830,9 +2776,7 @@ wi_set_nwkey(sc, nwkey)
 }
 
 STATIC int
-wi_get_nwkey(sc, nwkey)
-	struct wi_softc *sc;
-	struct ieee80211_nwkey *nwkey;
+wi_get_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 {
 	int i, len, error;
 	struct wi_ltv_keys *wk = &sc->wi_keys;
@@ -2978,10 +2922,7 @@ wi_get_txpower(struct wi_softc *sc, struct ieee80211_txpower *txpower)
 }
 
 STATIC int
-wi_set_ssid(ws, id, len)
-	struct ieee80211_nwid *ws;
-	u_int8_t *id;
-	int len;
+wi_set_ssid(struct ieee80211_nwid *ws, u_int8_t *id, int len)
 {
 
 	if (len > IEEE80211_NWID_LEN)
@@ -2992,9 +2933,7 @@ wi_set_ssid(ws, id, len)
 }
 
 STATIC int
-wi_get_debug(sc, wreq)
-	struct wi_softc		*sc;
-	struct wi_req		*wreq;
+wi_get_debug(struct wi_softc *sc, struct wi_req *wreq)
 {
 	int			error = 0;
 
@@ -3051,9 +2990,7 @@ wi_get_debug(sc, wreq)
 }
 
 STATIC int
-wi_set_debug(sc, wreq)
-	struct wi_softc		*sc;
-	struct wi_req		*wreq;
+wi_set_debug(struct wi_softc *sc, struct wi_req *wreq)
 {
 	int				error = 0;
 	u_int16_t			cmd, param0 = 0, param1 = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.62 2005/03/13 04:34:43 dlg Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.63 2005/09/18 09:24:04 jsg Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -327,8 +327,7 @@ static const struct wi_pcmcia_product {
 static const struct wi_pcmcia_product *wi_lookup(struct pcmcia_attach_args *pa);
 
 const struct wi_pcmcia_product *
-wi_lookup(pa)
-	struct pcmcia_attach_args *pa;
+wi_lookup(struct pcmcia_attach_args *pa)
 {
 	const struct wi_pcmcia_product *pp;
 	const struct wi_pcmcia_product *epp = wi_pcmcia_products +
@@ -361,9 +360,7 @@ wi_lookup(pa)
 }
 
 int
-wi_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+wi_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -373,9 +370,7 @@ wi_pcmcia_match(parent, match, aux)
 }
 
 void
-wi_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wi_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wi_pcmcia_softc	*psc = (struct wi_pcmcia_softc *)self;
 	struct wi_softc		*sc = &psc->sc_wi;
@@ -447,9 +442,7 @@ bad:
 }
 
 int
-wi_pcmcia_detach(dev, flags)
-	struct device *dev;
-	int flags;
+wi_pcmcia_detach(struct device *dev, int flags)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
@@ -472,9 +465,7 @@ wi_pcmcia_detach(dev, flags)
 }
 
 int
-wi_pcmcia_activate(dev, act)
-	struct device *dev;
-	enum devact act;
+wi_pcmcia_activate(struct device *dev, enum devact act)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
