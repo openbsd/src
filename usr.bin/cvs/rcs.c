@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.63 2005/09/18 06:19:10 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.64 2005/09/18 15:27:38 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1385,6 +1385,8 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date)
 
 	TAILQ_INSERT_HEAD(&(rf->rf_delta), rdp, rd_list);
 	rf->rf_ndelta++;
+	/* not synced anymore */
+	rf->rf_flags &= ~RCS_SYNCED;
 
 	return (0);
 }
@@ -1493,6 +1495,8 @@ rcs_kwexp_set(RCSFILE *file, int mode)
 	if (file->rf_expand != NULL)
 		cvs_strfree(file->rf_expand);
 	file->rf_expand = tmp;
+	/* not synced anymore */
+	file->rf_flags &= ~RCS_SYNCED;
 
 	return (0);
 }
