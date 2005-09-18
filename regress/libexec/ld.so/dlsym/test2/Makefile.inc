@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2005/09/18 11:56:34 kurt Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2005/09/18 12:17:29 kurt Exp $
 
 .include <bsd.obj.mk>
 
@@ -16,4 +16,12 @@ BB_OBJDIR!=	if [ -d $(BB_DIR)/${__objdir} ]; then \
 			echo "$(BB_DIR)/${__objdir}"; \
 		else \
 			echo "$(BB_DIR)"; \
+		fi
+
+CC_DIR=${.CURDIR}/../libcc
+
+CC_OBJDIR!=	if [ -d $(CC_DIR)/${__objdir} ]; then \
+			echo "$(CC_DIR)/${__objdir}"; \
+		else \
+			echo "$(CC_DIR)"; \
 		fi
