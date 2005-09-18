@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.1.1.1 2005/09/15 22:16:27 kurt Exp $	*/
+/*	$OpenBSD: cc.c,v 1.2 2005/09/18 11:59:26 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -15,8 +15,5 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <dlfcn.h>
-#include <stdio.h>
 
 int ccSymbol;
