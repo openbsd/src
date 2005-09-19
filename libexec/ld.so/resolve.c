@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.30 2005/09/19 02:31:04 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.31 2005/09/19 21:08:43 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -342,7 +342,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 				    ref, &weak_sym, &weak_object)) {
 					object = m->data;
 					found = 1;
-					break;
+					goto found;
 				}
 			}
 		}
