@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslotvar.h,v 1.2 2002/03/14 01:26:53 millert Exp $ */
+/*	$OpenBSD: cardslotvar.h,v 1.3 2005/09/19 19:05:39 fgsch Exp $	*/
 /*	$NetBSD: cardslotvar.h,v 1.5 2000/03/13 23:52:38 soren Exp $	*/
 
 /*
@@ -46,18 +46,20 @@ struct cardslot_event;
  * PCMCIA (including CardBus and 16-bit card) slot.
  */
 struct cardslot_attach_args {
-  char *caa_busname;
+	char *caa_busname;
 
-  int caa_slot;
+	int caa_slot;
 
-  /* for cardbus... */
-  struct cbslot_attach_args *caa_cb_attach;
+	/* for cardbus... */
+	struct cbslot_attach_args *caa_cb_attach;
 
-  /* for 16-bit pcmcia */
-  struct pcmciabus_attach_args *caa_16_attach;
+	/* for 16-bit pcmcia */
+	struct pcmciabus_attach_args *caa_16_attach;
 
-  /* XXX: for 16-bit pcmcia.  dirty!  This should be removed to achieve MI. */
-  struct pcic_handle *caa_ph;
+	/* XXX: for 16-bit pcmcia.  dirty!
+	 * This should be removed to achieve MI.
+	 */
+	struct pcic_handle *caa_ph;
 };
 
 
@@ -66,20 +68,20 @@ struct cardslot_attach_args {
  * PCMCIA (including CardBus and 16-bit card) slot.
  */
 struct cardslot_softc {
-  struct device sc_dev;
+	struct device sc_dev;
 
-  int sc_slot;			/* slot number */
-  int sc_status;		/* the status of slot */
+	int sc_slot;			/* slot number */
+	int sc_status;			/* the status of slot */
 
-  struct cardbus_softc *sc_cb_softc;
-  struct pcmcia_softc *sc_16_softc;
+	struct cardbus_softc *sc_cb_softc;
+	struct pcmcia_softc *sc_16_softc;
 
-  struct proc *sc_event_thread;
-  int sc_th_enable;		/* true if the thread is enabled */
+	struct proc *sc_event_thread;
+	int sc_th_enable;		/* true if the thread is enabled */
 
-  /* An event queue for the thread which processes slot state events. */
+	/* An event queue for the thread which processes slot state events. */
 
-  SIMPLEQ_HEAD(, cardslot_event) sc_events;
+	SIMPLEQ_HEAD(, cardslot_event) sc_events;
 };
 
 #define CARDSLOT_STATUS_CARD_MASK     0x07
@@ -104,9 +106,9 @@ struct cardslot_softc {
 
 
 struct cardslot_event {
-  SIMPLEQ_ENTRY(cardslot_event) ce_q;
+	SIMPLEQ_ENTRY(cardslot_event) ce_q;
 
-  int ce_type;
+	int ce_type;
 };
 
 typedef struct cardslot_softc *cardslot_t;
@@ -120,6 +122,6 @@ typedef struct cardslot_softc *cardslot_t;
 
 #define IS_CARDSLOT_INSERT_REMOVE_EV(x) (0 <= (x) && (x) <= 3)
 
-void cardslot_event_throw(cardslot_t cs, int ev);
+void	cardslot_event_throw(cardslot_t, int);
 
 #endif /* !_DEV_CARDBUS_CARDSLOTVAR_H_ */
