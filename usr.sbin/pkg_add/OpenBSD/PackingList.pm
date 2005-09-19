@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.49 2005/09/07 10:39:25 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.50 2005/09/19 09:51:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -155,7 +155,13 @@ sub ExtraInfoOnly
 	while (<$fh>) {
 		# XXX optimization
 		if (m/^\@arch\b/o) {
-			&$cont($_);
+			while (<$fh>) {
+			    if (m/^\@(?:pkgpath)\b/o) {
+				    &$cont($_);
+			    } elsif (m/^\@(?:groups|users|cwd)\b/o) {
+				    last;
+			    }
+			}
 			return;
 		}
 		next unless m/^\@(?:name\b|comment\s+subdir\=)/o;
