@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.51 2005/09/17 03:02:37 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.52 2005/09/19 03:16:47 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -104,7 +104,7 @@ dlopen(const char *libname, int flags)
 			DL_DEB(("dlopen: loading: %s required by %s\n",
 			    deplibname, libname));
 			depobj = _dl_load_shlib(deplibname, dynobj, OBJTYPE_LIB,
-				flags|RTLD_GLOBAL);
+				flags);
 			if (!depobj) {
 				failed = 1;
 				break;
