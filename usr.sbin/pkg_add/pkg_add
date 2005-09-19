@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.202 2005/09/14 10:16:08 espie Exp $
+# $OpenBSD: pkg_add,v 1.203 2005/09/19 10:19:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -161,9 +161,7 @@ sub pre_add($$)
 	if ($handle->{finished}) {
 		return undef;
 	}
-	my $dir = $handle->info();
-    	my $plist = $handle->{plist} = 
-	    OpenBSD::PackingList->fromfile($dir.CONTENTS);
+    	my $plist = $handle->{plist} = $handle->plist();
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
 		$errors++;
@@ -230,13 +228,12 @@ sub failed_install
 {
 	my ($handle, $not, $interrupted) = @_;
 	my $plist = $handle->{plist};
-	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
 	my $msg = "Installation of $pkgname failed";
 	if ($interrupted) {
 		$msg ="Caught SIG$interrupted. $msg";
 	}
-	OpenBSD::Add::borked_installation($plist, $dir, $not, $msg);
+	OpenBSD::Add::borked_installation($plist, $handle->info(), $not, $msg);
 }
 
 sub really_add($$)
@@ -519,9 +516,7 @@ sub install_package
 			    return (@deps, $pkg);
 		    }
 	    } else {
-		    my $dir = $handle->info();
-		    $plist = $handle->{plist} = 
-			OpenBSD::PackingList->fromfile($dir.CONTENTS);
+		    $plist = $handle->{plist} = $handle->plist();
 	    }
 	}
 
@@ -671,9 +666,10 @@ sub find_updates
 			    next;
 		    }
 		    $handle->close();
-		    my $dir = $handle->info();
-		    my $p2 = OpenBSD::PackingList->fromfile($dir.CONTENTS,
-			\&OpenBSD::PackingList::UpdateInfoOnly);
+		    my $p2 = $handle->plist(\&OpenBSD::PackingList::UpdateInfoOnly);
+		    if (!$p2) {
+		    	next;
+		    }
 		    if ($p2->has('arch')) {
 			unless ($p2->{arch}->check($state->{arch})) {
 			    next;
