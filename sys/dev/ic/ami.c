@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.74 2005/09/15 05:33:39 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.75 2005/09/19 04:11:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1506,7 +1506,7 @@ ami_scsi_cmd(xs)
 	lock = AMI_LOCK_AMI(sc);
 	if (target >= sc->sc_nunits || !sc->sc_hdr[target].hd_present ||
 	    link->lun != 0) {
-		AMI_DPRINTF(AMI_D_CMD, ("no taget %d ", target));
+		AMI_DPRINTF(AMI_D_CMD, ("no target %d ", target));
 		/* XXX should be XS_SENSE and sense filled out */
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
