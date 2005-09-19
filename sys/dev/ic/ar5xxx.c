@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.29 2005/09/10 14:36:46 jsg Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.30 2005/09/19 10:27:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -522,7 +522,7 @@ ar5k_printver(enum ar5k_srev_type type, u_int32_t val)
 		if (names[i].sr_type != type ||
 		    names[i].sr_val == AR5K_SREV_UNKNOWN)
 			continue;
-		if (val < names[i + 1].sr_val) {
+		if ((val & 0xff) < names[i + 1].sr_val) {
 			name = names[i].sr_name;
 			break;
 		}

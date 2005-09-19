@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.25 2005/09/10 14:36:46 jsg Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.26 2005/09/19 10:27:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -190,18 +190,19 @@ ar5k_ar5212_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 
 	/* Get MAC, PHY and RADIO revisions */
 	srev = AR5K_REG_READ(AR5K_AR5212_SREV);
+	hal->ah_mac_srev = srev;
 	hal->ah_mac_version = AR5K_REG_MS(srev, AR5K_AR5212_SREV_VER);
 	hal->ah_mac_revision = AR5K_REG_MS(srev, AR5K_AR5212_SREV_REV);
 	hal->ah_phy_revision = AR5K_REG_READ(AR5K_AR5212_PHY_CHIP_ID) &
 	    0x00ffffffff;
-
 	hal->ah_radio_5ghz_revision =
 	    ar5k_ar5212_radio_revision(hal, HAL_CHIP_5GHZ);
+	hal->ah_radio_2ghz_revision =
+	    ar5k_ar5212_radio_revision(hal, HAL_CHIP_2GHZ);
 
-	/* Get the 2GHz radio revision if it's supported */
-	if (hal->ah_mac_version >= AR5K_SREV_VER_AR5211)
-		hal->ah_radio_2ghz_revision =
-		    ar5k_ar5212_radio_revision(hal, HAL_CHIP_2GHZ);
+	/* Single chip radio */
+	if (hal->ah_radio_2ghz_revision == hal->ah_radio_5ghz_revision)
+		hal->ah_radio_2ghz_revision = 0;
 
 	/* Identify the chipset (this has to be done in an early step) */
 	hal->ah_version = AR5K_AR5212;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.39 2005/09/08 17:38:11 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.40 2005/09/19 10:27:08 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -238,18 +238,25 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	}
 
 	printf("%s: AR%s %u.%u phy %u.%u", ifp->if_xname,
-	    ar5k_printver(AR5K_VERSION_VER, ah->ah_macVersion),
-	    ah->ah_macVersion, ah->ah_macRev,
-	    ah->ah_phyRev >> 4, ah->ah_phyRev & 0xf);
+	    ar5k_printver(AR5K_VERSION_VER, ah->ah_mac_srev),
+	    ah->ah_mac_version, ah->ah_mac_revision,
+	    ah->ah_phy_revision >> 4, ah->ah_phy_revision & 0xf);
 	printf(" rf%s %u.%u",
-	    ar5k_printver(AR5K_VERSION_RAD, ah->ah_analog5GhzRev),
-	    ah->ah_analog5GhzRev >> 4,
-	    ah->ah_analog5GhzRev & 0xf);
-	if (ah->ah_analog2GhzRev != 0) {
+	    ar5k_printver(AR5K_VERSION_RAD, ah->ah_radio_5ghz_revision),
+	    ah->ah_radio_5ghz_revision >> 4,
+	    ah->ah_radio_5ghz_revision & 0xf);
+	if (ah->ah_radio_2ghz_revision != 0) {
 		printf(" rf%s %u.%u",
-		    ar5k_printver(AR5K_VERSION_RAD, ah->ah_analog2GhzRev),
-		    ah->ah_analog2GhzRev >> 4,
-		    ah->ah_analog2GhzRev & 0xf);
+		    ar5k_printver(AR5K_VERSION_RAD,
+		    ah->ah_radio_2ghz_revision),
+		    ah->ah_radio_2ghz_revision >> 4,
+		    ah->ah_radio_2ghz_revision & 0xf);
+	}
+
+	if (ah->ah_radio_5ghz_revision >= AR5K_SREV_RAD_UNSUPP ||
+	    ah->ah_radio_2ghz_revision >= AR5K_SREV_RAD_UNSUPP) {
+		printf(": RF radio not supported\n");
+		goto bad;
 	}
 
 	sc->sc_ah = ah;
@@ -282,8 +289,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	error = ath_desc_alloc(sc);
 	if (error != 0) {
-		printf("%s: failed to allocate descriptors: %d\n",
-		    ifp->if_xname, error);
+		printf(": failed to allocate descriptors: %d\n", error);
 		goto bad;
 	}
 	timeout_set(&sc->sc_scan_to, ath_next_scan, sc);
@@ -310,8 +316,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 */
 	sc->sc_bhalq = ath_hal_setup_tx_queue(ah,HAL_TX_QUEUE_BEACON,NULL);
 	if (sc->sc_bhalq == (u_int) -1) {
-		printf("%s: unable to setup a beacon xmit queue!\n",
-		    ifp->if_xname);
+		printf(": unable to setup a beacon xmit queue!\n");
 		goto bad2;
 	}
 
@@ -321,8 +326,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		sc->sc_txhalq[i] = ath_hal_setup_tx_queue(ah,
 		    HAL_TX_QUEUE_DATA, &qinfo);
 		if (sc->sc_txhalq[i] == (u_int) -1) {
-			printf("%s: unable to setup a data xmit queue %u!\n",
-			    ifp->if_xname, i);
+			printf(": unable to setup a data xmit queue %u!\n", i);
 			goto bad2;
 		}
 	}
@@ -403,15 +407,12 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 * Make sure the interface is shutdown during reboot.
 	 */
 	sc->sc_sdhook = shutdownhook_establish(ath_shutdown, sc);
-	if (sc->sc_sdhook == NULL) {
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-			sc->sc_dev.dv_xname);
-	}
+	if (sc->sc_sdhook == NULL)
+		printf(": WARNING: unable to establish shutdown hook\n");
 	sc->sc_powerhook = powerhook_establish(ath_power, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
-	}
+	if (sc->sc_powerhook == NULL)
+		printf(": WARNING: unable to establish power hook\n");
+
 	printf(", %s, address %s\n", ieee80211_regdomain2name(ath_regdomain),
 	    ether_sprintf(ic->ic_myaddr));
 
@@ -434,10 +435,10 @@ ath_detach(struct ath_softc *sc, int flags)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
-	config_detach_children(&sc->sc_dev, flags);
-
 	if ((sc->sc_flags & ATH_ATTACHED) == 0)
 		return (0);
+
+	config_detach_children(&sc->sc_dev, flags);
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
 

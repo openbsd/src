@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.26 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.27 2005/09/19 10:27:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1107,7 +1107,8 @@ struct ath_hal {
 	HAL_RATE_TABLE		ah_rt_turbo;
 	HAL_RATE_TABLE		ah_rt_xr;
 
-	u_int32_t		ah_mac_version;
+	u_int32_t		ah_mac_srev;
+	u_int16_t		ah_mac_version;
 	u_int16_t		ah_mac_revision;
 	u_int16_t		ah_phy_revision;
 	u_int16_t		ah_radio_5ghz_revision;
@@ -1120,11 +1121,6 @@ struct ath_hal {
 	HAL_BOOL		ah_5ghz;
 	HAL_BOOL		ah_2ghz;
 
-#define ah_macVersion		ah_mac_version
-#define ah_macRev		ah_mac_revision
-#define ah_phyRev		ah_phy_revision
-#define ah_analog5GhzRev	ah_radio_5ghz_revision
-#define ah_analog2GhzRev	ah_radio_2ghz_revision
 #define ah_regdomain		ah_capabilities.cap_regdomain.reg_current
 #define ah_modes		ah_capabilities.cap_mode
 #define ah_ee_version		ah_capabilities.cap_eeprom.ee_version
@@ -1197,31 +1193,27 @@ struct ar5k_srev_name {
 	{ "5311b",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5311B },\
 	{ "5211",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5211 },	\
 	{ "5212",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5212 },	\
+	{ "5213",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5213 },	\
 	{ "xxxx",	AR5K_VERSION_VER,	AR5K_SREV_UNKNOWN },	\
 	{ "5110",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_5110 },	\
 	{ "5111",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_5111 },	\
 	{ "2111",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_2111 },	\
 	{ "5112",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_5112 },	\
 	{ "2112",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_2112 },	\
+	{ "2112a",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_2112A },	\
 	{ "xxxx",	AR5K_VERSION_RAD,	AR5K_SREV_UNKNOWN }	\
 }
 
 #define AR5K_SREV_UNKNOWN	0xffff
 
-#define AR5K_SREV_REV_FPGA	1
-#define AR5K_SREV_REV_PROTO	2
-#define AR5K_SREV_REV_PROTOA	3
-#define AR5K_SREV_REV_AR5210	4
-#define AR5K_SREV_REV_AR5210M	5
-#define AR5K_SREV_REV_AR5210M23	7
-#define AR5K_SREV_REV_AR521023	8
-
-#define AR5K_SREV_VER_AR5210	0
-#define AR5K_SREV_VER_AR5311	1
-#define AR5K_SREV_VER_AR5311A	2
-#define AR5K_SREV_VER_AR5311B	3
-#define AR5K_SREV_VER_AR5211	4
-#define AR5K_SREV_VER_AR5212	5
+#define AR5K_SREV_VER_AR5210	0x00
+#define AR5K_SREV_VER_AR5311	0x10
+#define AR5K_SREV_VER_AR5311A	0x20
+#define AR5K_SREV_VER_AR5311B	0x30
+#define AR5K_SREV_VER_AR5211	0x40
+#define AR5K_SREV_VER_AR5212	0x50
+#define AR5K_SREV_VER_AR5213	0x55
+#define AR5K_SREV_VER_UNSUPP	0x60
 
 #define AR5K_SREV_RAD_5110	0x00
 #define AR5K_SREV_RAD_5111	0x10
@@ -1231,6 +1223,7 @@ struct ar5k_srev_name {
 #define AR5K_SREV_RAD_5112A	0x35
 #define AR5K_SREV_RAD_2112	0x40
 #define AR5K_SREV_RAD_2112A	0x45
+#define AR5K_SREV_RAD_UNSUPP	0x50
 
 /*
  * Misc defines
