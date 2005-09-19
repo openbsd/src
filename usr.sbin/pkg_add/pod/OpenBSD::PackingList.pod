@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingList.pod,v 1.4 2005/09/08 08:51:27 espie Exp $
+$OpenBSD: OpenBSD::PackingList.pod,v 1.5 2005/09/19 09:30:28 espie Exp $
 
 =head1 NAME
 
@@ -11,7 +11,8 @@ OpenBSD::PackingList - C<pkg_add(1)> packing-list manipulations
     my $p1 = OpenBSD::PackingList->new();	# empty
     my $p2 = OpenBSD::PackingList->read($fh);
     my $p3 = OpenBSD::PackingList->fromfile($filename);
-    my $p4 = OpenBSD::PackingList->from_installation($pkgname);
+    my $p4 = OpenBSD::PackingList->fromfile(\$scalar);
+    my $p5 = OpenBSD::PackingList->from_installation($pkgname);
 
     # writing packing-lists
     $p2->write($fh);
@@ -52,6 +53,7 @@ The C<OpenBSD::PackingList> class handles all that.
 Packing-lists can be obtained using the following methods: from an
 opened file handle using C<OpenBSD::PackingList-E<gt>read($fh)>, from
 an existing file using C<OpenBSD::PackingList-E<gt>fromfile($filename)>,
+from a scalar in memory using C<OpenBSD::PackingList-E<gt>fromfile(\$scalar)>,
 or from an installed package using 
 C<OpenBSD::PackingList-E<gt>from_installation($pkgname)>.
 
