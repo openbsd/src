@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.24 2004/06/16 02:38:23 itojun Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.25 2005/09/19 19:36:49 brad Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -569,7 +569,6 @@ struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *, int *);
 void	in6_delmulti(struct in6_multi *);
 struct in6_multi_mship *in6_joingroup(struct ifnet *, struct in6_addr *, int *);
 int	in6_leavegroup(struct in6_multi_mship *);
-int	in6_ifindex2scopeid(int);
 int	in6_mask2len(struct in6_addr *, u_char *);
 int	in6_control(struct socket *, u_long, caddr_t, struct ifnet *,
 	struct proc *);
