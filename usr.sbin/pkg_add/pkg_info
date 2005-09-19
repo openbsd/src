@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.33 2005/09/17 12:10:52 espie Exp $
+# $OpenBSD: pkg_info,v 1.34 2005/09/19 09:51:49 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -115,7 +115,7 @@ sub find_pkg
 	my $true_package = OpenBSD::PackageLocator->find($pkg);
 	return unless $true_package;
 	my $dir = $true_package->info();
-	&$code($pkg, $dir);
+	&$code($pkg, $dir, $true_package);
 	$true_package->close();
 }
 
@@ -188,6 +188,15 @@ sub filter_files
 
 my $path_info;
 
+sub add_to_path_info
+{
+	my ($path, $pkgname) = @_;
+
+	$path_info->{$path} = [] unless 
+	    defined $path_info->{$path};
+	push(@{$path_info->{$path}}, $pkgname);
+}
+
 sub find_by_path
 {
 	my $pat = shift;
@@ -201,10 +210,14 @@ sub find_by_path
 			my $plist =
 				OpenBSD::PackingList->from_installation($pkg,
 				    \&OpenBSD::PackingList::ExtraInfoOnly);
-			my $path = $plist->{extrainfo}->{subdir};
-			$path_info->{$path} = [] unless 
-			    defined $path_info->{$path};
-			push(@{$path_info->{$path}}, $plist->pkgname());
+			add_to_path_info($plist->{extrainfo}->{subdir}, 
+			    $plist->pkgname());
+			if ($plist->has('pkgpath')) {
+				for my $p (@{$plist->{pkgpath}}) {
+					add_to_path_info($p->{name}, 
+					    $plist->pkgname());
+				}
+			}
 		}
 	}
 	if (defined $path_info->{$pat}) {
@@ -223,7 +236,7 @@ my @sought_files;
 
 sub print_info
 {
-	my ($pkg, $dir) = @_;
+	my ($pkg, $dir, $handle) = @_;
 	unless (-d $dir) {
 		print STDERR "Error printing info for $pkg: no info ?\n";
 	}
@@ -283,9 +296,9 @@ sub print_info
 			require OpenBSD::PackingList;
 
 			if ($opt_f || $opt_s || $opt_S) {
-				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
+				$plist = $handle->plist();
 			} else {
-				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FilesOnly);
+				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 			}
 			Fatal "Bad packing list" unless defined $plist;
 		}
