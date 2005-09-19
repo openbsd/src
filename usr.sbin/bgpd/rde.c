@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.169 2005/08/10 08:34:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.170 2005/09/19 15:58:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2240,18 +2240,18 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 	memcpy(&pid, ptr, sizeof(pid));
 
 	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-	    if (p->aspath->flags & F_PREFIX_ANNOUNCED) {
-		    bzero(&k, sizeof(k));
-		    pt_getaddr(p->prefix, &addr);
-		    k.prefix.s_addr = addr.v4.s_addr;
-		    k.prefixlen = p->prefix->prefixlen;
-		    if (p->peer == &peerself)
-			    k.flags = F_KERNEL;
-		    if (imsg_compose(ibuf_se, IMSG_CTL_SHOW_NETWORK, 0, pid,
-			-1, &k, sizeof(k)) == -1)
-			    log_warnx("network_dump_upcall: "
-				"imsg_compose error");
-	    }
+		if (p->aspath->flags & F_PREFIX_ANNOUNCED) {
+			bzero(&k, sizeof(k));
+			pt_getaddr(p->prefix, &addr);
+			k.prefix.s_addr = addr.v4.s_addr;
+			k.prefixlen = p->prefix->prefixlen;
+			if (p->peer == &peerself)
+				k.flags = F_KERNEL;
+			if (imsg_compose(ibuf_se, IMSG_CTL_SHOW_NETWORK, 0, pid,
+			    -1, &k, sizeof(k)) == -1)
+				log_warnx("network_dump_upcall: "
+				    "imsg_compose error");
+		}
 }
 
 void
