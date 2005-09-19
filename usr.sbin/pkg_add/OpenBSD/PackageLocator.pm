@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.39 2005/09/19 09:49:51 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.40 2005/09/19 10:15:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -141,7 +141,13 @@ sub grabPlist
 }
 
 package OpenBSD::PackageRepository::Installed;
+our @ISA=qw(OpenBSD::PackageRepository);
 use OpenBSD::PackageInfo;
+
+sub new
+{
+	bless {}, shift;
+}
 
 sub find
 {
@@ -628,6 +634,7 @@ sub grabPlist
 	if (defined $pkg) {
 		my $plist = $self->plist($code);
 		$pkg->wipe_info();
+		$pkg->close();
 		return $plist;
 	} else {
 		return undef;
