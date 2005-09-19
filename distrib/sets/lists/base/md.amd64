@@ -656,6 +656,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/internal_types.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/intr.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/intrdefs.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/isa_machdep.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/kcore.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/limits.ph
@@ -2246,6 +2247,7 @@
 ./usr/mdec/pxeboot
 ./usr/sbin/acpid
 ./usr/sbin/acpidump
+./usr/sbin/fdformat
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload

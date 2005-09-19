@@ -144,6 +144,7 @@
 ./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/alpha
 ./usr/share/man/cat1/amd64
+./usr/share/man/cat1/amd64/fdformat.0
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
 ./usr/share/man/cat1/arch.0
