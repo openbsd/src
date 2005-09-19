@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.271 2005/07/25 19:18:44 mcbride Exp $
+#	$OpenBSD: rc,v 1.272 2005/09/19 15:47:45 fgsch Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -610,7 +610,7 @@ fi
 
 
 if [ X"${lpd_flags}" != X"NO" ]; then
-	echo -n ' printer';		lpd ${lpd_flags}
+	echo -n ' lpd';			lpd ${lpd_flags}
 fi
 
 # $sendmail_flags is imported from /etc/rc.conf;
