@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2005/09/15 15:37:15 kurt Exp $
+# $OpenBSD: Makefile,v 1.2 2005/09/19 01:19:15 kurt Exp $
 
 .include <bsd.obj.mk>
 
@@ -13,6 +13,9 @@ AA_OBJDIR!=	if [ -d $(AA_DIR)/${__objdir} ]; then \
 PROG=		prog2
 SRCS=		main.c
 CPPFLAGS+= 	-I$(AA_DIR)
-LDADD=		-Wl,-E -Wl,-rpath,$(AA_OBJDIR) -L$(AA_OBJDIR) -laa
+LDADD+=		-laa
+LDFLAGS+=	-Wl,-E
+LDFLAGS+=	-Wl,-rpath,$(AA_OBJDIR)
+LDFLAGS+=	-L$(AA_OBJDIR)
 
 .include <bsd.regress.mk>
