@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.79 2005/03/24 01:47:30 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.80 2005/09/19 19:03:57 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -469,6 +469,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
       PCMCIA_CIS_DLINK_DFE670TXD,
       0, -1, { 0x00, 0x11, 0x95 } },
+
+     { PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
+       PCMCIA_CIS_DLINK_DFE670TXD,
+       0, -1, { 0x00, 0x0d, 0x88 } },
 
     { PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA411,
       PCMCIA_CIS_NETGEAR_FA411,
