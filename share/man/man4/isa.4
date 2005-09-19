@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.33 2005/09/10 09:54:26 jmc Exp $
+.\"	$OpenBSD: isa.4,v 1.34 2005/09/19 21:21:12 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -41,6 +41,10 @@
 .Cd "# amd64 and i386"
 .Cd "isa0 at mainbus0"
 .Cd "isa0 at pcib?"
+.Pp
+.Cd "# i386"
+.Cd "isa0 at ichpcib?"
+.Cd "isa0 at gscpcib?"
 .Pp
 .Cd "# alpha"
 .Cd "isa* at pceb?"
