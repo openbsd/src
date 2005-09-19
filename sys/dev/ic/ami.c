@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.75 2005/09/19 04:11:03 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.76 2005/09/19 07:45:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -171,7 +171,7 @@ ami_put_ccb(ccb)
 	struct ami_softc *sc = ccb->ccb_sc;
 
 	ccb->ccb_state = AMI_CCB_FREE;
-	ccb->ccb_done = NULL;
+	ccb->ccb_wakeup = 0;
 	ccb->ami_pt.idata = NULL;
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 }
@@ -1071,8 +1071,12 @@ ami_cmd(ccb, flags, wait)
 		if ((error = sc->sc_poll(sc, ccb->ccb_cmd))) {
 			AMI_DPRINTF(AMI_D_MISC, ("pf "));
 		}
-		/* always free ccb */
-		ami_put_ccb(ccb);
+		if (ccb->ccb_data)
+			bus_dmamap_unload(sc->dmat, dmap);
+		if (ccb->ccb_wakeup)
+			ccb->ccb_wakeup = 0;
+		else
+			ami_put_ccb(ccb);
 	} else if ((error = ami_start(ccb, wait))) {
 		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
 		__asm __volatile(".globl _bpamierr\n_bpamierr:");
@@ -1258,12 +1262,11 @@ ami_done(sc, idx)
 		}
 	}
 
-	if (ccb->ccb_done) {
-		*ccb->ccb_done = 1;
-		wakeup((void *)ccb->ccb_done);
-	}
-
-	ami_put_ccb(ccb);
+	if (ccb->ccb_wakeup) {
+		ccb->ccb_wakeup = 0;
+		wakeup(ccb);
+	} else
+		ami_put_ccb(ccb);
 
 	if (xs) {
 		xs->resid = 0;
@@ -1318,7 +1321,6 @@ ami_scsi_raw_cmd(xs)
 	struct ami_passthrough *ps;
 	int error;
 	int direction;
-	volatile int done = 0;
 	ami_lock_t lock;
 	void *idata;
 	bus_dmamap_t idatamap;
@@ -1425,7 +1427,6 @@ ami_scsi_raw_cmd(xs)
 	ccb->ccb_xs = xs;
 	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = NULL;
-	ccb->ccb_done = &done;
 	
 	ps->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ps->apt_channel = channel;
@@ -1443,8 +1444,8 @@ ami_scsi_raw_cmd(xs)
 	if (ccb->ami_pt.dir == AMI_PT_OUT)
 		memcpy(ccb->ami_pt.idata + sizeof *ps, xs->data, xs->datalen);
 
-	if (xs->flags & SCSI_POLL)
-		done = 1; /* Don't wait for completion twice. */
+	if ((xs->flags & SCSI_POLL) == 0)
+		ccb->ccb_wakeup = 1;
 
 	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP) ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
@@ -1471,10 +1472,12 @@ ami_scsi_raw_cmd(xs)
 			memcpy(xs->data, idata + sizeof *ps, xs->datalen);
 
 		scsi_done(xs);
-	}
+	} else {
+		while (ccb->ccb_wakeup)
+			tsleep(ccb, PRIBIO, "ami_pt", 0);
 
-	while (!done)
-		tsleep((void *)&done, PRIBIO, "ami_pt", 0);
+		ami_put_ccb(ccb);
+	}
 
 	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "ami raw");
 
@@ -1823,7 +1826,6 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	bus_dma_segment_t idataseg[1];
 	paddr_t	pa;
 	int error = 0;
-	volatile int done = 0;
 
 	ccb = ami_get_ccb(sc);
 	if (ccb == NULL)
@@ -1840,7 +1842,7 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	pp = idata + sizeof *ps;
 
 	ccb->ccb_data = NULL;
-	ccb->ccb_done = &done;
+	ccb->ccb_wakeup = 1;
 	cmd = ccb->ccb_cmd;
 
 	cmd->acc_cmd = AMI_PASSTHRU;
@@ -1869,12 +1871,10 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	ps->apt_datalen = sizeof(struct scsi_inquiry_data);
 
 	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
-		while (!done)
-			if (tsleep((void *)&done, PRIBIO, "ami_drv_inq",
-			    15 * hz) == EWOULDBLOCK) {
-				error = EINVAL;
-				goto bail;
-			}
+		while (ccb->ccb_wakeup)
+			tsleep(ccb, PRIBIO, "ami_drv_inq", 0);
+
+		ami_put_ccb(ccb);
 
 		if (ps->apt_scsistat == 0x00) {
 			memcpy(inqbuf, pp, sizeof(struct scsi_inquiry_data));
@@ -1913,7 +1913,6 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	bus_dma_segment_t idataseg[1];
 	paddr_t	pa;
 	int error = 0;
-	volatile int done = 0;
 
 	ccb = ami_get_ccb(sc);
 	if (ccb == NULL)
@@ -1928,7 +1927,7 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	pa = idataseg[0].ds_addr;
 
 	ccb->ccb_data = NULL;
-	ccb->ccb_done = &done;
+	ccb->ccb_wakeup = 1;
 	cmd = ccb->ccb_cmd;
 
 	cmd->acc_cmd = opcode;
@@ -1950,12 +1949,10 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	cmd->acc_io.aio_data = htole32(pa);
 
 	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
-		while (!done)
-			if (tsleep((void *)&done, PRIBIO,"ami_mgmt",
-			    15 * hz) == EWOULDBLOCK) {
-				error = EINVAL;
-				goto bail;
-			}
+		while (ccb->ccb_wakeup)
+			tsleep(ccb, PRIBIO,"ami_mgmt", 0);
+
+		ami_put_ccb(ccb);
 
 		/* XXX how do commands fail? */
 		
@@ -1965,7 +1962,6 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 	else
 		error = EINVAL;
 
-bail:
 	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG,
 	    (size / NBPG) + 1, "ami mgmt");
 
