@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.87 2005/09/16 23:19:41 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.88 2005/09/19 02:31:04 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -322,8 +322,15 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		}
 		phdp++;
 	}
+	exe_obj->obj_flags = RTLD_GLOBAL;
 	exe_obj->load_object = exe_obj;
 	TAILQ_INIT(&exe_obj->dload_list);
+
+	n = _dl_malloc(sizeof *n);
+	if (n == NULL)
+		_dl_exit(5);
+	n->data = exe_obj;
+	TAILQ_INSERT_TAIL(&_dlopened_child_list, n, next_sib);
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)

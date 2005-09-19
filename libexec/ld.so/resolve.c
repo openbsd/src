@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.29 2005/09/16 23:41:05 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.30 2005/09/19 02:31:04 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -286,26 +286,6 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 			object = req_obj;
 			found = 1;
 		}
-	} else if ((flags & SYM_SEARCH_SELF) || (flags & SYM_SEARCH_NEXT)) {
-		/* search after req_obj in the objects's load group */
-		int skip = 1;
-
-		TAILQ_FOREACH(n, &req_obj->load_object->dload_list, next_sib) {
-
-			if (n->data == req_obj && skip == 1) {
-				skip = 0;
-				if (flags & SYM_SEARCH_NEXT)
-					continue;
-			}
-			if (skip == 1)
-				continue;
-			if (_dl_find_symbol_obj(n->data, name, h, flags, ref,
-			    &weak_sym, &weak_object)) {
-				object = n->data;
-				found = 1;
-				break;
-			}
-		}
 	} else if (flags & SYM_DLSYM) {
 		if (_dl_find_symbol_obj(req_obj, name, h, flags, ref,
 		    &weak_sym, &weak_object)) {
@@ -332,21 +312,11 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 			}
 		}
 	} else {
-		/* search main program and it's libs */
-		TAILQ_FOREACH(n, &_dl_objects->dload_list, next_sib) {
-			if ((flags & SYM_SEARCH_OTHER) &&
-			    (n->data == req_obj)) {
-				continue;
-			}
+		int skip = 0;
 
-			if (_dl_find_symbol_obj(n->data, name, h, flags,
-			    ref, &weak_sym, &weak_object)) {
-				object = n->data;
-				found = 1;
-				goto found;
-			}
-		}
-
+		if ((flags & SYM_SEARCH_SELF) || (flags & SYM_SEARCH_NEXT))
+			skip = 1;
+		
 		/*
 		 * search dlopened objects: global or req_obj == dlopened_obj
 		 * and and it's children
@@ -357,6 +327,14 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 				continue;
 
 			TAILQ_FOREACH(m, &n->data->dload_list, next_sib) {
+				if (skip == 1) {
+					if (m->data == req_obj) {
+						skip = 0;
+						if (flags & SYM_SEARCH_NEXT)
+							continue;
+					} else
+						continue;
+				}
 				if ((flags & SYM_SEARCH_OTHER) &&
 				    (m->data == req_obj))
 					continue;
