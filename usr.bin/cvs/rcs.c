@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.64 2005/09/18 15:27:38 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.65 2005/09/19 15:47:14 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1220,7 +1220,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 	size_t len;
 	void *bp;
 	RCSNUM *crev;
-	BUF *rbuf, *dbuf;
+	BUF *rbuf, *dbuf = NULL;
 	struct rcs_delta *rdp = NULL;
 	struct rcs_foo *lines;
 	struct rcs_line *lp;
@@ -2683,6 +2683,8 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
 	char *c, *kwstr, *start;
 	char expbuf[128], buf[128];
 
+	kwtype = 0;
+	kwstr = NULL;
 	i = 0;
 
 	/*
