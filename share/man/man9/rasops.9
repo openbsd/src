@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rasops.9,v 1.5 2005/09/15 20:23:08 miod Exp $
+.\"	$OpenBSD: rasops.9,v 1.6 2005/09/19 16:08:29 jmc Exp $
 .\"     $NetBSD: rasops.9,v 1.4 2002/02/13 08:18:50 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -134,16 +134,14 @@ struct rasops_info {
 .Pp
 The value of the
 .Em ri_flg
-member is formed by
-.Tn OR Ns 'ing
-the following values:
+member is formed by OR'ing the following values:
 .Pp
 .Bl -tag -offset indent -width RI_CURSORCLIP -compact
 .It RI_FULLCLEAR
 Force eraserows() to clear the whole screen instead of only text lines,
-when invoked with a
+when invoked with an
 .Em nrows
-paramete equal to the number of text lines.
+parameter equal to the number of text lines.
 .It RI_FORCEMONO
 Do not output coloured text, even if the display supports it.
 .It RI_BSWAP
