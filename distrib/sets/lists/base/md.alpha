@@ -33,10 +33,8 @@
 ./sbin/fdisk
 ./sbin/iopctl
 ./sbin/kbd
-./sbin/ldconfig
 ./sbin/wicontrol
 ./sbin/wsconsctl
-./usr/bin/ldd
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so

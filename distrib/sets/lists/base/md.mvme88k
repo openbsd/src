@@ -1,5 +1,3 @@
-./sbin/ldconfig
-./usr/bin/ldd
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.8
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.8/2.95.3
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.8/2.95.3/cc1

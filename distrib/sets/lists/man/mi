@@ -310,6 +310,7 @@
 ./usr/share/man/cat1/lam.0
 ./usr/share/man/cat1/last.0
 ./usr/share/man/cat1/lastcomm.0
+./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/leave.0
 ./usr/share/man/cat1/less.0
 ./usr/share/man/cat1/lesskey.0
@@ -1745,6 +1746,7 @@
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/alpha
 ./usr/share/man/cat5/amd64
+./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/bgpd.conf.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bridgename.if.0
@@ -1837,6 +1839,7 @@
 ./usr/share/man/cat5/portal.conf.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
+./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
@@ -2098,6 +2101,7 @@
 ./usr/share/man/cat8/kpasswdd.0
 ./usr/share/man/cat8/ktutil.0
 ./usr/share/man/cat8/kvm_mkdb.0
+./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/lmccontrol.0
 ./usr/share/man/cat8/locate.updatedb.0
 ./usr/share/man/cat8/login_activ.0
@@ -2616,5 +2620,3 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
-./usr/share/man/cat1/ldd.0
-./usr/share/man/cat8/ldconfig.0

@@ -26,11 +26,9 @@
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./sbin/fdisk
-./sbin/ldconfig
 ./sbin/pdisk
 ./sbin/wsconsctl
 ./usr/bin/addr2line
-./usr/bin/ldd
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so

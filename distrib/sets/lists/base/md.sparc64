@@ -33,11 +33,9 @@
 ./etc/firmware/yds
 ./etc/firmware/yds-license
 ./sbin/kbd
-./sbin/ldconfig
 ./sbin/wicontrol
 ./sbin/wsconsctl
 ./usr/bin/gccbug
-./usr/bin/ldd
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so

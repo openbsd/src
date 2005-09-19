@@ -34,11 +34,9 @@
 ./etc/firmware/yds-license
 ./sbin/iopctl
 ./sbin/kbd
-./sbin/ldconfig
 ./sbin/wsconsctl
 ./usr/bin/addr2line
 ./usr/bin/gccbug
-./usr/bin/ldd
 ./usr/bin/readelf
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so

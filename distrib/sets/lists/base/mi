@@ -103,6 +103,7 @@
 ./sbin/ipsecadm
 ./sbin/ipsecctl
 ./sbin/isakmpd
+./sbin/ldconfig
 ./sbin/lmccontrol
 ./sbin/mkfifo
 ./sbin/mknod
@@ -292,6 +293,7 @@
 ./usr/bin/lam
 ./usr/bin/last
 ./usr/bin/lastcomm
+./usr/bin/ldd
 ./usr/bin/leave
 ./usr/bin/less
 ./usr/bin/lesskey
