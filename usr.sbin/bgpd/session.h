@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.77 2005/06/04 22:50:20 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.78 2005/09/19 16:15:54 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -168,6 +168,7 @@ struct peer {
 	time_t			 IdleHoldResetTimer;
 	int			 fd;
 	int			 lasterr;
+	u_int			 errcnt;
 	u_int			 IdleHoldTime;
 	u_int32_t		 remote_bgpid;
 	enum session_state	 state;
@@ -175,6 +176,7 @@ struct peer {
 	u_int16_t		 holdtime;
 	u_int8_t		 auth_established;
 	u_int8_t		 depend_ok;
+	u_int8_t		 passive;
 };
 
 struct peer	*peers;

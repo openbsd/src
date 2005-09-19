@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.233 2005/09/08 10:46:40 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.234 2005/09/19 16:15:54 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -379,6 +379,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 					p->IdleHoldTime =
 					    INTERVAL_IDLE_HOLD_INITIAL;
 					p->IdleHoldResetTimer = 0;
+					p->errcnt = 0;
 				} else
 					p->IdleHoldResetTimer =
 					    time(NULL) + p->IdleHoldTime;
@@ -579,7 +580,8 @@ bgp_fsm(struct peer *peer, enum session_events event)
 
 			if (!peer->depend_ok)
 				peer->ConnectRetryTimer = 0;
-			else if (peer->conf.passive || peer->conf.template) {
+			else if (peer->passive || peer->conf.passive ||
+			    peer->conf.template) {
 				change_state(peer, STATE_ACTIVE, event);
 				peer->ConnectRetryTimer = 0;
 			} else {
@@ -588,6 +590,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 				    time(NULL) + INTERVAL_CONNECTRETRY;
 				session_connect(peer);
 			}
+			peer->passive = 0;
 			break;
 		default:
 			/* ignore */
@@ -870,9 +873,7 @@ change_state(struct peer *peer, enum session_state state,
 	case STATE_OPENCONFIRM:
 		break;
 	case STATE_ESTABLISHED:
-		if (peer->IdleHoldTime > INTERVAL_IDLE_HOLD_INITIAL)
-			peer->IdleHoldResetTimer =
-			    time(NULL) + peer->IdleHoldTime;
+		peer->IdleHoldResetTimer = time(NULL) + peer->IdleHoldTime;
 		session_up(peer);
 		break;
 	default:		/* something seriously fucked */
@@ -912,6 +913,12 @@ session_accept(int listenfd)
 	}
 
 	p = getpeerbyip((struct sockaddr *)&cliaddr);
+
+	if (p != NULL && p->state == STATE_IDLE && p->errcnt < 2) {
+		/* fast reconnect after clear */
+		p->passive = 1;
+		bgp_fsm(p, EVNT_START);
+	}
 
 	if (p != NULL &&
 	    (p->state == STATE_CONNECT || p->state == STATE_ACTIVE)) {
@@ -1916,6 +1923,7 @@ parse_notification(struct peer *peer)
 	datalen -= sizeof(subcode);
 
 	log_notification(peer, errcode, subcode, p, datalen);
+	peer->errcnt++;
 
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_CAPA) {
 		if (datalen == 0) {	/* zebra likes to send those.. humbug */
