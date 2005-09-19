@@ -1,4 +1,4 @@
-.\" $OpenBSD: bge.4,v 1.26 2005/08/24 01:13:56 brad Exp $
+.\" $OpenBSD: bge.4,v 1.27 2005/09/19 05:45:49 brad Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -201,20 +201,11 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "bge%d: couldn't map memory"
-A fatal initialization error has occurred.
-.It "bge%d: couldn't map ports"
+.It "bge%d: can't find mem space"
 A fatal initialization error has occurred.
 .It "bge%d: couldn't map interrupt"
 A fatal initialization error has occurred.
-.It "bge%d: no memory for softc struct!"
-The driver failed to allocate memory for per-device instance information
-during initialization.
-.It "bge%d: failed to enable memory mapping!"
-The driver failed to initialize PCI shared memory mapping.
-This might
-happen if the card is not in a bus-master slot.
-.It "bge%d: no memory for jumbo buffers!"
+.It "bge%d: no memory for jumbo buffer queue!"
 The driver failed to allocate memory for jumbo frames during
 initialization.
 .It "bge%d: watchdog timeout"
