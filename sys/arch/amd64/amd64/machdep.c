@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 2005/08/06 14:26:50 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 2005/09/19 01:28:04 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1377,6 +1377,7 @@ init_x86_64(first_avail)
 			printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
 			    "IOMEM EXTENT MAP!\n");
 		}
+#if 0
 #if NISADMA > 0
 		/*
 		 * Some motherboards/BIOSes remap the 384K of RAM that would
@@ -1398,6 +1399,7 @@ init_x86_64(first_avail)
 			    pbuf);
 			biosextmem = (15*1024);
 		}
+#endif
 #endif
 		mem_clusters[1].start = IOM_END;
 		mem_clusters[1].size = trunc_page(KBTOB(biosextmem));

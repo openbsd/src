@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.3 2004/06/28 01:52:26 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.4 2005/09/19 01:28:04 deraadt Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -126,7 +126,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _I386_BUS_DMA_PRIVATE
+#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/intr.h>
@@ -194,7 +194,7 @@ void	_isa_dma_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
  * the generic functions that understand how to deal with bounce
  * buffers, if necessary.
  */
-struct i386_bus_dma_tag isa_bus_dma_tag = {
+struct x86_bus_dma_tag isa_bus_dma_tag = {
 	NULL,			/* _cookie */
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,
@@ -519,7 +519,7 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	int flags;
 	bus_dmamap_t *dmamp;
 {
-	struct i386_isa_dma_cookie *cookie;
+	struct x86_isa_dma_cookie *cookie;
 	bus_dmamap_t map;
 	int error, cookieflags;
 	void *cookiestore;
@@ -534,7 +534,7 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map = *dmamp;
 	map->_dm_cookie = NULL;
 
-	cookiesize = sizeof(struct i386_isa_dma_cookie);
+	cookiesize = sizeof(struct x86_isa_dma_cookie);
 
 	/*
 	 * ISA only has 24-bits of address space.  This means
@@ -575,7 +575,7 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 		goto out;
 	}
 	bzero(cookiestore, cookiesize);
-	cookie = (struct i386_isa_dma_cookie *)cookiestore;
+	cookie = (struct x86_isa_dma_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
 	map->_dm_cookie = cookie;
 
@@ -607,7 +607,7 @@ _isa_bus_dmamap_destroy(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct i386_isa_dma_cookie *cookie = map->_dm_cookie;
+	struct x86_isa_dma_cookie *cookie = map->_dm_cookie;
 
 	/*
 	 * Free any bounce pages this map might hold.
@@ -631,7 +631,7 @@ _isa_bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	struct i386_isa_dma_cookie *cookie = map->_dm_cookie;
+	struct x86_isa_dma_cookie *cookie = map->_dm_cookie;
 	int error;
 
 	STAT_INCR(isa_dma_stats_loads);
@@ -744,7 +744,7 @@ _isa_bus_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct i386_isa_dma_cookie *cookie = map->_dm_cookie;
+	struct x86_isa_dma_cookie *cookie = map->_dm_cookie;
 
 	/*
 	 * If we have bounce pages, free them, unless they're
@@ -773,7 +773,7 @@ _isa_bus_dmamap_sync(t, map, offset, len, op)
 	bus_size_t len;
 	int op;
 {
-	struct i386_isa_dma_cookie *cookie = map->_dm_cookie;
+	struct x86_isa_dma_cookie *cookie = map->_dm_cookie;
 
 #ifdef DEBUG
 	if ((op & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0) {
@@ -982,7 +982,7 @@ _isa_dma_alloc_bouncebuf(t, map, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	struct i386_isa_dma_cookie *cookie = map->_dm_cookie;
+	struct x86_isa_dma_cookie *cookie = map->_dm_cookie;
 	int error = 0;
 
 	cookie->id_bouncebuflen = round_page(size);
@@ -1014,7 +1014,7 @@ _isa_dma_free_bouncebuf(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	struct i386_isa_dma_cookie *cookie = map->_dm_cookie;
+	struct x86_isa_dma_cookie *cookie = map->_dm_cookie;
 
 	STAT_DECR(isa_dma_stats_nbouncebufs);
 

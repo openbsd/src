@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.79 2005/08/07 20:08:45 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.80 2005/09/19 01:28:04 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -38,7 +38,7 @@ mainbus0 at root
 
 cpu0	at mainbus?
 isa0	at mainbus0
-#isa0	at pcib?
+isa0	at pcib?
 pci*	at mainbus0
 
 #acpi0	at mainbus?
@@ -55,7 +55,7 @@ pchb*	at pci?			# PCI-Host bridges
 ppb*	at pci?			# PCI-PCI bridges
 pci*	at ppb?
 pci*	at pchb?
-#pcib*	at pci?			# PCI-ISA bridge
+pcib*	at pci?			# PCI-ISA bridge
 
 # power management and other environmental stuff
 #amdpm*	at pci?			# AMD768MPX
@@ -153,7 +153,7 @@ ural*	at uhub?		# Ralink RT2500
 
 puc*	at pci?				# PCI "universal" communication device
 
-#isadma0	at isa?
+isadma0	at isa?
 
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
@@ -241,9 +241,9 @@ safte*	at scsibus?			# SCSI accessed fault-tolerant encl
 ses*	at scsibus?			# SCSI enclosure services
 uk*	at scsibus?			# unknown SCSI
 
-#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370
-#fd*	at fdc? flags 0x00
+fd*	at fdc? flags 0x00
 
 # IDE controllers
 pciide* at pci? flags 0x0000

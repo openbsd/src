@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.16 2003/06/02 23:28:02 millert Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.17 2005/09/19 01:28:04 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/fdreg.h>
 
-#if defined(i386)
+#if defined(__i386__) || defined(__amd64__)	/* XXX */
 #include <dev/ic/mc146818reg.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
 #endif
@@ -169,7 +169,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, fdcintr, fdc, fdc->sc_dev.dv_xname);
 
-#if defined(i386)
+#if defined(__i386__) || defined(__amd64__)
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
 	 * `primary' floppy controller.

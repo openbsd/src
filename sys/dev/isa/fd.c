@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.50 2005/03/16 19:58:40 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.51 2005/09/19 01:28:04 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/fdreg.h>
 
-#if defined(i386)
+#if defined(__i386__) || defined(__amd64__)	/* XXX */
 #include <i386/isa/nvram.h>
 #endif
 
