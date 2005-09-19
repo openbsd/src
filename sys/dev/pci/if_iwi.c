@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.48 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.49 2005/09/19 20:01:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -102,6 +102,7 @@ void iwi_release(struct iwi_softc *);
 int iwi_media_change(struct ifnet *);
 void iwi_media_status(struct ifnet *, struct ifmediareq *);
 u_int16_t iwi_read_prom_word(struct iwi_softc *, u_int8_t);
+int iwi_find_txnode(struct iwi_softc *, const u_int8_t *);
 int iwi_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void iwi_frame_intr(struct iwi_softc *, struct iwi_rx_buf *, int,
     struct iwi_frame *);
@@ -234,8 +235,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_WEP | IEEE80211_C_TXPMGT |
-	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_MONITOR | IEEE80211_C_SCANALL;
+	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_PMGT | IEEE80211_C_WEP |
+	    IEEE80211_C_TXPMGT | IEEE80211_C_SHPREAMBLE | IEEE80211_C_MONITOR |
+	    IEEE80211_C_SCANALL;
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
@@ -633,6 +635,37 @@ iwi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 #undef N
 }
 
+/*
+ * This is only used for IBSS mode where the firmware expect an index to an
+ * internal node table instead of a destination address.
+ */
+int
+iwi_find_txnode(struct iwi_softc *sc, const u_int8_t *macaddr)
+{
+	struct iwi_node node;
+	int i;
+
+	for (i = 0; i < sc->nsta; i++)
+		if (IEEE80211_ADDR_EQ(sc->sta[i], macaddr))
+			return i;	/* already existing node */
+
+	if (i == IWI_MAX_NODE)
+		return -1;	/* no place left in neighbor table */
+
+	/* save this new node in our softc table */
+	IEEE80211_ADDR_COPY(sc->sta[i], macaddr);
+	sc->nsta = i;
+
+	/* write node information into NIC memory */
+	bzero(&node, sizeof node);
+	IEEE80211_ADDR_COPY(node.bssid, macaddr);
+
+	CSR_WRITE_REGION_1(sc, IWI_CSR_NODE_BASE + i * sizeof node,
+	    (u_int8_t *)&node, sizeof node);
+
+	return i;
+}
+
 int
 iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
@@ -648,9 +681,10 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_RUN:
-		if (ic->ic_opmode == IEEE80211_M_IBSS)
+		if (ic->ic_opmode == IEEE80211_M_IBSS) {
+			sc->nsta = 0;	/* flush IBSS nodes */
 			ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
-		else if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		} else if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			iwi_set_chan(sc, ic->ic_ibss_chan);
 		break;
 
@@ -1077,7 +1111,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	struct iwi_tx_buf *buf;
 	struct iwi_tx_desc *desc;
 	struct mbuf *mnew;
-	int error, i;
+	int error, i, station = 0;
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -1103,6 +1137,16 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	/* save and trim IEEE802.11 header */
 	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (caddr_t)&desc->wh);
 	m_adj(m0, sizeof (struct ieee80211_frame));
+
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
+		station = iwi_find_txnode(sc, desc->wh.i_addr1);
+		if (station == -1) {
+			m_freem(m0);
+			ieee80211_release_node(ic, ni);
+			ifp->if_oerrors++;
+			return 0;
+		}
+	}
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m0, BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
@@ -1150,6 +1194,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->hdr.flags = IWI_HDR_FLAG_IRQ;
 	desc->cmd = IWI_DATA_CMD_TX;
 	desc->len = htole16(m0->m_pkthdr.len);
+	desc->station = station;
 	desc->flags = 0;
 
 	if (!IEEE80211_IS_MULTICAST(desc->wh.i_addr1))
@@ -1203,7 +1248,7 @@ iwi_start(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 
-		if (sc->tx_queued >= IWI_TX_RING_SIZE - 4) {
+		if (sc->tx_queued >= IWI_TX_RING_SIZE - 8) {
 			IF_PREPEND(&ifp->if_snd, m0);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -1724,6 +1769,22 @@ iwi_config(struct iwi_softc *sc)
 	if (error != 0)
 		return error;
 
+	/* if we have a desired ESSID, set it now */
+	if (ic->ic_des_esslen != 0) {
+#ifdef IWI_DEBUG
+		if (iwi_debug > 0) {
+			printf("Setting desired ESSID to ");
+			ieee80211_print_essid(ic->ic_des_essid,
+			    ic->ic_des_esslen);
+			printf("\n");
+		}
+#endif
+		error = iwi_cmd(sc, IWI_CMD_SET_ESSID, ic->ic_des_essid,
+		    ic->ic_des_esslen, 0);
+		if (error != 0)
+			return error;
+	}
+
 	data = htole32(arc4random());
 	DPRINTF(("Setting initialization vector to %u\n", letoh32(data)));
 	error = iwi_cmd(sc, IWI_CMD_SET_IV, &data, sizeof data, 0);
@@ -1778,7 +1839,8 @@ iwi_scan(struct iwi_softc *sc)
 	int i, count;
 
 	bzero(&scan, sizeof scan);
-	scan.type = IWI_SCAN_TYPE_BROADCAST;
+	scan.type = (ic->ic_des_esslen != 0) ? IWI_SCAN_TYPE_BDIRECTED :
+	    IWI_SCAN_TYPE_BROADCAST;
 	scan.intval = htole16(40);
 
 	p = scan.channels;

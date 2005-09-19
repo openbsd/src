@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.15 2005/05/22 16:05:47 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.16 2005/09/19 20:01:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -59,6 +59,7 @@
 #define IWI_CSR_RX_BASE		0x0500
 #define IWI_CSR_TABLE0_SIZE	0x0700
 #define IWI_CSR_TABLE0_BASE	0x0704
+#define IWI_CSR_NODE_BASE	0x0c0c
 #define IWI_CSR_CURRENT_TX_RATE	IWI_CSR_TABLE0_BASE
 #define IWI_CSR_CMD_WRITE_INDEX	0x0f80
 #define IWI_CSR_TX1_WRITE_INDEX	0x0f84
@@ -209,7 +210,9 @@ struct iwi_frame {
 /* header for transmission */
 struct iwi_tx_desc {
 	struct iwi_hdr	hdr;
-	u_int32_t	reserved1[2];
+	u_int32_t	reserved1;
+	u_int8_t	station;
+	u_int8_t	reserved2[3];
 	u_int8_t	cmd;
 #define IWI_DATA_CMD_TX	0x0b
 	u_int8_t	seq;
@@ -224,7 +227,7 @@ struct iwi_tx_desc {
 	u_int8_t	wepkey[IEEE80211_KEYBUF_SIZE];
 	u_int8_t	rate;
 	u_int8_t	antenna;
-	u_int8_t	reserved2[10];
+	u_int8_t	reserved3[10];
 
 	struct ieee80211_qosframe_addr4	wh;
 	u_int32_t	iv[2];
@@ -257,6 +260,12 @@ struct iwi_cmd_desc {
 	u_int8_t	len;
 	u_int16_t	reserved;
 	u_int8_t	data[120];
+} __packed;
+
+/* node information (IBSS) */
+struct iwi_node {
+	u_int8_t	bssid[IEEE80211_ADDR_LEN];
+	u_int8_t	reserved[2];
 } __packed;
 
 /* constants for 'mode' fields */
@@ -319,7 +328,9 @@ struct iwi_associate {
 struct iwi_scan {
 	u_int8_t	type;
 #define IWI_SCAN_TYPE_PASSIVE	1
+#define IWI_SCAN_TYPE_DIRECTED	2
 #define IWI_SCAN_TYPE_BROADCAST	3
+#define IWI_SCAN_TYPE_BDIRECTED	4
 	u_int16_t	intval;
 	u_int8_t	channels[54];
 #define IWI_CHAN_5GHZ	(0 << 6)
@@ -402,6 +413,9 @@ struct iwi_wep_key {
 #define CSR_WRITE_4(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
+#define CSR_WRITE_REGION_1(sc, offset, datap, count)			\
+	bus_space_write_region_1((sc)->sc_st, (sc)->sc_sh, (offset),	\
+	    (datap), (count))
 /*
  * indirect memory space access macros
  */

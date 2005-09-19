@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwivar.h,v 1.11 2005/07/07 07:55:19 kevlo Exp $	*/
+/*	$OpenBSD: if_iwivar.h,v 1.12 2005/09/19 20:01:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -92,6 +92,10 @@ struct iwi_softc {
 	} rx_buf[IWI_RX_RING_SIZE];
 
 	int			rx_cur;
+
+#define IWI_MAX_NODE	32
+	u_int8_t		sta[IWI_MAX_NODE][IEEE80211_ADDR_LEN];
+	u_int8_t		nsta;
 
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
