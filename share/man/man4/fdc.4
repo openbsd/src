@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdc.4,v 1.13 2005/03/10 12:04:14 jmc Exp $
+.\"	$OpenBSD: fdc.4,v 1.14 2005/09/19 01:29:09 deraadt Exp $
 .\"	$NetBSD: fdc.4,v 1.6 1996/03/22 01:55:14 andrew Exp $
 .\"
 .\" Copyright (c) 1996 Andrew C. Wheadon
@@ -38,7 +38,7 @@
 .Nm fdc
 .Nd NEC765 compatible floppy disk driver
 .Sh SYNOPSIS
-.Cd "fdc0 at isa? port 0x3f0 irq 6 drq 2    " Pq alpha and i386
+.Cd "fdc0 at isa? port 0x3f0 irq 6 drq 2    " Pq alpha, amd64, i386
 .Cd "fdc0 at mainbus0                       " Pq sun4c sparc
 .Cd "fdc0 at obio0                          " Pq sun4m sparc
 .Cd "fdc* at sbus?                          " Pq sparc64
