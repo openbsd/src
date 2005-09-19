@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.76 2005/09/19 07:45:28 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.77 2005/09/19 08:17:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1042,7 +1042,7 @@ ami_cmd(ccb, flags, wait)
 		if(dmap->dm_nsegs > 1) {
 			struct ami_sgent *sgl = ccb->ccb_sglist;
 
-			cmd->acc_mbox.amb_nsge = htole32(dmap->dm_nsegs);
+			cmd->acc_mbox.amb_nsge = dmap->dm_nsegs;
 			cmd->acc_mbox.amb_data = ccb->ccb_sglistpa;
 
 			for (i = 0; i < dmap->dm_nsegs; i++, sgd++) {
@@ -1053,7 +1053,7 @@ ami_cmd(ccb, flags, wait)
 					    sgd->ds_addr, sgd->ds_len));
 			}
 		} else {
-			cmd->acc_mbox.amb_nsge = htole32(0);
+			cmd->acc_mbox.amb_nsge = 0;
 			cmd->acc_mbox.amb_data = htole32(sgd->ds_addr);
 		}
 		AMI_DPRINTF(AMI_D_DMA, ("> "));
@@ -1061,7 +1061,7 @@ ami_cmd(ccb, flags, wait)
 		bus_dmamap_sync(sc->dmat, dmap, 0, dmap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 	} else
-		ccb->ccb_cmd->acc_mbox.amb_nsge = htole32(0);
+		ccb->ccb_cmd->acc_mbox.amb_nsge = 0;
 	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, sc->sc_cmdmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
