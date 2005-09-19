@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.19 2005/08/23 07:48:04 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.20 2005/09/19 15:44:35 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -438,7 +438,7 @@ flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 
-# Set up IPsec SAs for a flows between 192.168.3.14 and 192.168.3.12
+# Set up IPsec SAs for flows between 192.168.3.14 and 192.168.3.12
 esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e
 	auth hmac-sha2-256 enc aesctr authkey file "auth14:auth12" \e
 	enckey file "enc14:enc12"
