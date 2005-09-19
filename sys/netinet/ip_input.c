@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.132 2005/09/19 01:47:42 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.133 2005/09/19 01:48:05 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ ipv4_input(m)
 			}
 
 			/*
-			 * The process-level routing demon needs to receive
+			 * The process-level routing daemon needs to receive
 			 * all multicast IGMP packets, whether or not this
 			 * host belongs to their destination groups.
 			 */
