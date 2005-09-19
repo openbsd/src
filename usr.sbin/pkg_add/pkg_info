@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.34 2005/09/19 09:51:49 espie Exp $
+# $OpenBSD: pkg_info,v 1.35 2005/09/19 10:16:32 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -65,58 +65,34 @@ package main;
 my $total_size = 0;
 my $pkgs = 0;
 
-sub find_pkg_plist
-{
-	my ($pkg, $filter, $code) = @_;
-
-	require OpenBSD::PackingOld;
-	require OpenBSD::PackingList;
-
-	if (is_installed($pkg)) {
-		&$code($pkg, OpenBSD::PackingList->from_installation($pkg, $filter));
-		return;
-	}
-	if (OpenBSD::PackageName::is_stem($pkg)) {
-		my @l = sort (OpenBSD::PackageName::findstem($pkg, installed_packages()));
-		if (@l != 0) {
-			for my $p (@l) {
-				&$code($p, OpenBSD::PackingList->from_installation($p, $filter));
-			}
-			return;
-		}
-	}
-				
-	require OpenBSD::PackageLocator;
-
-	my $plist = OpenBSD::PackageLocator->grabPlist($pkg, $filter);
-	return unless $plist;
-	&$code($pkg, $plist);
-}
-
 sub find_pkg
 {
-	my ($pkg, $code) = @_;
-	if (is_installed($pkg)) {
-		&$code($pkg, installed_info($pkg));
+	my ($pkgname, $code) = @_;
+	require OpenBSD::PackageLocator;
+	my $repo = OpenBSD::PackageRepository::Installed->new();
+	my $pkg;
+
+	$pkg = $repo->find($pkgname);
+	if (defined $pkg) {
+		&$code($pkgname, $pkg);
 		return;
 	}
-	if (OpenBSD::PackageName::is_stem($pkg)) {
-		my @l = sort (OpenBSD::PackageName::findstem($pkg, installed_packages()));
+	if (OpenBSD::PackageName::is_stem($pkgname)) {
+		my @l = sort (OpenBSD::PackageName::findstem($pkgname, $repo->available()));
 		if (@l != 0) {
 			for my $p (@l) {
-				&$code($p, installed_info($p));
+				&$code($p, $repo->find($p));
 			}
 			return;
 		}
 	}
 				
-	require OpenBSD::PackageLocator;
-
-	my $true_package = OpenBSD::PackageLocator->find($pkg);
-	return unless $true_package;
-	my $dir = $true_package->info();
-	&$code($pkg, $dir, $true_package);
-	$true_package->close();
+	$pkg = OpenBSD::PackageLocator->find($pkgname);
+	if (defined $pkg) {
+		&$code($pkgname, $pkg);
+		$pkg->close();
+		$pkg->wipe_info();
+	}
 }
 
 sub printfile
@@ -176,11 +152,13 @@ sub filter_files
 	my $search = shift;
 	my @result = ();
 	for my $arg (@_) {
-		find_pkg_plist($arg, \&OpenBSD::PackingList::FilesOnly,
+		find_pkg($arg, 
 		    sub {
-		    	my ($pkg, $plist) = @_;
+		    	my ($pkgname, $handle) = @_;
+
+			my $plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
 				
-			$plist->visit('hunt_file', $search, $pkg, \@result);
+			$plist->visit('hunt_file', $search, $pkgname, \@result);
 		    });
 	}
 	return @result;
@@ -236,14 +214,14 @@ my @sought_files;
 
 sub print_info
 {
-	my ($pkg, $dir, $handle) = @_;
-	unless (-d $dir) {
+	my ($pkg, $handle) = @_;
+	unless (defined $handle) {
 		print STDERR "Error printing info for $pkg: no info ?\n";
 	}
 	if ($opt_I) {
 		my $l = 20 - length($pkg);
 		$l = 1 if $l <= 0;
-		print $pkg, " "x$l, get_comment($dir), "\n";
+		print $pkg, " "x$l, get_comment($handle->info()), "\n";
 	} else {
 		if ($terse) {
 			print $opt_l, $pkg, "\n" unless $opt_q;
@@ -252,42 +230,42 @@ sub print_info
 		}
 		if ($opt_c) {
 			print $opt_l, "Comment:\n" unless $opt_q;
-			print get_comment($dir), "\n";
+			print get_comment($handle->info()), "\n";
 			print "\n";
 		}
-		if ($opt_R && -f $dir.REQUIRED_BY) {
+		if ($opt_R && -f $handle->info().REQUIRED_BY) {
 			print $opt_l, "Required by:\n" unless $opt_q;
-			printfile($dir.REQUIRED_BY);
+			printfile($handle->info().REQUIRED_BY);
 			print "\n";
 		}
 		if ($opt_d) {
 			print $opt_l, "Description:\n" unless $opt_q;
-			print_description($dir);
+			print_description($handle->info());
 			print "\n";
 		}
-		if ($opt_M && -f $dir.DISPLAY) {
+		if ($opt_M && -f $handle->info().DISPLAY) {
 			print $opt_l, "Install notice:\n" unless $opt_q;
-			printfile($dir.DISPLAY);
+			printfile($handle->info().DISPLAY);
 			print "\n";
 		}
-		if ($opt_U && -f $dir.UNDISPLAY) {
+		if ($opt_U && -f $handle->info().UNDISPLAY) {
 			print $opt_l, "Deinstall notice:\n" unless $opt_q;
-			printfile($dir.UNDISPLAY);
+			printfile($handle->info().UNDISPLAY);
 			print "\n";
 		}
-		if ($opt_i && -f $dir.INSTALL) {
+		if ($opt_i && -f $handle->info().INSTALL) {
 			print $opt_l, "Install script:\n" unless $opt_q;
-			printfile($dir.INSTALL);
+			printfile($handle->info().INSTALL);
 			print "\n";
 		}
-		if ($opt_k && -f $dir.DEINSTALL) {
+		if ($opt_k && -f $handle->info().DEINSTALL) {
 			print $opt_l, "De-Install script:\n" unless $opt_q;
-			printfile($dir.DEINSTALL, \*STDOUT);
+			printfile($handle->info().DEINSTALL, \*STDOUT);
 			print "\n";
 		}
-		if ($opt_r && -f $dir.REQUIRE) {
+		if ($opt_r && -f $handle->info().REQUIRE) {
 			print $opt_l, "Require script:\n" unless $opt_q;
-			printfile($dir.REQUIRE, \*STDOUT);
+			printfile($handle->info().REQUIRE, \*STDOUT);
 			print "\n";
 		}
 		my $plist;
@@ -327,43 +305,6 @@ sub print_info
 		}
 		print $opt_l, "\n" unless $opt_q || $terse;
 	}
-}
-
-sub print_plist_info
-{
-	my ($pkg, $plist) = @_;
-	unless (defined $plist) {
-		print STDERR "Error printing info for $pkg: no info ?\n";
-	}
-	if ($terse) {
-		print $opt_l, $pkg, "\n" unless $opt_q;
-	} else {
-		print $opt_l, "Information for ", $pkg, "\n\n" unless $opt_q;
-	}
-	if ($opt_L) {
-		print $opt_l, "Files:\n" unless $opt_q;
-		$plist->visit('dump_file', $opt_K);
-		print "\n";
-	}
-	if ($opt_s) {
-		my $size = 0;
-		$plist->visit('sum_up', \$size);
-		print "Size: " unless $opt_q;
-		print "$size\n";
-		$total_size += $size;
-		$pkgs++;
-	}
-	if ($opt_S) {
-		print "Signature: " unless $opt_q;
-		print $plist->signature(), "\n";
-	}
-
-	if ($opt_f) {
-		print $opt_l, "Packing list:\n" unless $opt_q;
-		$plist->write(\*STDOUT);
-		print "\n";
-	}
-	print $opt_l, "\n" unless $opt_q || $terse;
 }
 
 set_usage('pkg_info [-cDdfIiKkLMpqRrSsUv] [-E filename] [-e pkg-name] [-l str] pkg-name [...]', 'pkg_info [-Aa flags]');
@@ -456,12 +397,7 @@ if (@sought_files) {
 }
 
 for my $pkg (@ARGV) {
-	if ($opt_I || $opt_c || $opt_R || $opt_d || $opt_M || $opt_U ||
-	    $opt_i || $opt_k || $opt_r) {
-		find_pkg($pkg, \&print_info);
-	} else {
-		find_pkg_plist($pkg, undef, \&print_plist_info);
-	}
+	find_pkg($pkg, \&print_info);
 }
 if ($pkgs > 1) {
 	print "Total size: $total_size\n";
