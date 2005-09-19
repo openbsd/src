@@ -1,11 +1,12 @@
 /*
  * Public Domain 2003 Dale Rahn
  *
- * $OpenBSD: ab.C,v 1.3 2005/09/18 19:58:50 drahn Exp $
+ * $OpenBSD: ab.C,v 1.4 2005/09/19 18:39:37 deraadt Exp $
  */
 
 #include <iostream>
 #include <stdlib.h>
+#include <string.h>
 #include "ab.h"
 
 char strbuf[512];
