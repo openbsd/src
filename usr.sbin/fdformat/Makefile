@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.4 2005/03/09 18:41:50 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/09/19 01:28:59 deraadt Exp $
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+.if ${MACHINE} == "i386" || ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64" || ${MACHINE} == "amd64"
 PROG=	fdformat
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
