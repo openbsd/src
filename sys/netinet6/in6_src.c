@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.16 2003/12/10 03:30:21 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.17 2005/09/19 19:38:34 brad Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 *      sin6_scope_id field, so this part will be rewritten in
 	 *      the near future.
 	 */
-	if ((IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MULTICAST(dst)) &&
+	if ((IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MC_LINKLOCAL(dst)) &&
 	    dstsock->sin6_scope_id) {
 		/*
 		 * I'm not sure if boundary check for scope_id is done
