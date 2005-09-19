@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbreg.h,v 1.4 2004/07/14 21:54:19 mickey Exp $ */
+/*	$OpenBSD: pccbbreg.h,v 1.5 2005/09/19 19:04:19 fgsch Exp $ */
 /*	$NetBSD: pccbbreg.h,v 1.5 2000/06/07 09:02:47 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -139,7 +139,7 @@
 #define CB_BCRI_RL_3E2_ENA 0x10000000
 
 /*
- * Special resister definition for Toshiba ToPIC95/97
+ * Special register definition for Toshiba ToPIC95/97
  * These values are borrowed from pcmcia-cs/Linux.
  */
 #define TOPIC_SOCKET_CTRL  0x90
