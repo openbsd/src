@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.21 2004/05/23 01:59:10 deraadt Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.22 2005/09/19 06:40:01 krw Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -546,7 +546,7 @@ igmp_sendpkt(inm, type, addr)
 #endif
 	/*
 	 * Request loopback of the report if we are acting as a multicast
-	 * router, so that the process-level routing demon can hear it.
+	 * router, so that the process-level routing daemon can hear it.
 	 */
 #ifdef MROUTING
 	imo.imo_multicast_loop = (ip_mrouter != NULL);
