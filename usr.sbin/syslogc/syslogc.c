@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.9 2005/04/03 03:42:47 djm Exp $ */
+/* $OpenBSD: syslogc.c,v 1.10 2005/09/19 23:34:52 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -21,7 +21,6 @@
 #include <sys/un.h>
 
 #include <err.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,10 +54,6 @@ struct ctl_reply_hdr {
 	u_int32_t	flags;
 	/* Reply text follows, up to MAX_MEMBUF long */
 };
-
-/* Protocol parameters - must match syslogd */
-#define CTL_VERSION		0
-#define CTL_HDR_LEN		8
 
 static void
 usage(void)
