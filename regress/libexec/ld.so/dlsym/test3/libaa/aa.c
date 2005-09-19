@@ -1,4 +1,4 @@
-/*	$OpenBSD: aa.c,v 1.1.1.1 2005/09/19 03:34:18 kurt Exp $	*/
+/*	$OpenBSD: aa.c,v 1.2 2005/09/19 21:50:27 drahn Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -17,3 +17,4 @@
  */
 
 int aaSymbol;
+int commonSymbol;
