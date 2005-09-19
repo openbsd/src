@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.93 2005/09/11 17:34:27 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.94 2005/09/19 04:25:00 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -344,11 +344,12 @@ sdopen(dev, flag, fmt, p)
 {
 	struct scsi_link *sc_link;
 	struct sd_softc *sd;
-	int unit, part;
-	int error = 0;
+	int error = 0, part, rawopen, unit;
 
 	unit = SDUNIT(dev);
 	part = SDPART(dev);
+
+	rawopen = (part == RAW_PART) && (fmt == S_IFCHR);
 
 	sd = sdlookup(unit);
 	if (sd == NULL)
@@ -370,7 +371,7 @@ sdopen(dev, flag, fmt, p)
 		 * disallow further opens of non-raw partition.
 		 */
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-			if (part == RAW_PART && fmt == S_IFCHR)
+			if (rawopen)
 				goto out;
 			error = EIO;
 			goto bad;
@@ -381,17 +382,16 @@ sdopen(dev, flag, fmt, p)
 
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
-		    TEST_READY_RETRIES_DEFAULT,
-		    ((part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0) |
+		    TEST_READY_RETRIES_DEFAULT, (rawopen ? SCSI_SILENT : 0) |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 
 		/* Spin up the unit, ready or not. */
 		error = scsi_start(sc_link, SSS_START,
-		    ((part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0) |
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    (rawopen ? SCSI_SILENT : 0) | SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE);
 
 		if (error) {
-			if (part == RAW_PART && fmt == S_IFCHR) {
+			if (rawopen) {
 				error = 0;
 				goto out;
 			} else
