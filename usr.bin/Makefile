@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.96 2005/08/08 05:52:59 espie Exp $
+#	$OpenBSD: Makefile,v 1.97 2005/09/19 13:01:26 deraadt Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos arch asa asn1_compile at aucat audioctl awk banner \
+SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 	basename bc bdes \
 	biff cal calendar cap_mkdb cdio checknr chpass cmp col \
 	colcrt colrm column comm compile_et compress cpp crontab ctags cut \
@@ -15,8 +15,8 @@ SUBDIR= apply apropos arch asa asn1_compile at aucat audioctl awk banner \
 	midiplay mixerctl mkdep mklocale mkstr mktemp modstat msgs nc netstat \
 	newsyslog \
 	nfsstat nice nm nohup oldrdist pagesize passwd paste patch pctr pkill \
-	pmdb pr printenv printf quota radioctl rdist rdistd readlink renice \
-	rev rpcgen rpcinfo rs rsh \
+	pmdb pr printenv printf quota radioctl ranlib rdist rdistd readlink \
+	renice rev rpcgen rpcinfo rs rsh \
 	rup ruptime rusers rwall rwho script sectok sed shar showmount skey \
 	skeyaudit skeyinfo skeyinit sort spell split ssh stat su sup systat \
 	sudo tail talk tcopy tee telnet tftp tic time tip tn3270 top touch \
@@ -31,7 +31,7 @@ SUBDIR+=ypcat ypmatch ypwhich
 .endif
 
 .if (${ELF_TOOLCHAIN:L} == "no")
-SUBDIR+= ar ranlib strip strings
+SUBDIR+= strip strings
 .endif
 
 .if   make(clean) || make(cleandir) || make(obj)
