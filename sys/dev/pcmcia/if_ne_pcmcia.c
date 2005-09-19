@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.80 2005/09/19 19:03:57 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.81 2005/09/19 20:19:02 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ const struct ne2000dev {
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-      PCMCIA_CIS_ADDTRON_W89C926, 
+      PCMCIA_CIS_ADDTRON_W89C926,
       0, -1, { 0x00, 0x40, 0x33 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
@@ -395,12 +395,12 @@ const struct ne2000dev {
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
 
     { PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_8041TX,
-	  PCMCIA_CIS_IODATA_8041TX,
-	  0, -1, { 0x00, 0x04, 0xe2 } },
+      PCMCIA_CIS_IODATA_8041TX,
+      0, -1, { 0x00, 0x04, 0xe2 } },
 
     { PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8041,
-	  PCMCIA_CIS_SMC_8041,
-	  0, -1, { 0x00, 0x04, 0xe2 } },
+      PCMCIA_CIS_SMC_8041,
+      0, -1, { 0x00, 0x04, 0xe2 } },
 
     { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
       PCMCIA_CIS_SOCKET_LP_ETHER_CF,
