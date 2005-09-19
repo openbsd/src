@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.21 2005/08/02 21:02:48 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.22 2005/09/19 04:16:24 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -133,6 +133,8 @@ start:
  * No processes are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
  */
+	.globl	_C_LABEL(idle)
+	.type	_C_LABEL(idle),@function
 _C_LABEL(idle):
 	mfmsr	%r3
 	/* disable interrupts while manipulating runque */
