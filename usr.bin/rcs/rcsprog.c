@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.5 2005/09/20 04:30:57 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.6 2005/09/20 05:01:31 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
@@ -104,6 +104,7 @@ int
 rcs_main(int argc, char **argv)
 {
 	int i, ch, flags, kflag, lkmode;
+	char fpath[MAXPATHLEN];
 	char *oldfile, *alist, *comment, *elist, *unp, *sp;
 	mode_t fmode;
 	RCSFILE *file;
@@ -175,11 +176,16 @@ rcs_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		printf("RCS file: %s\n", argv[i]);
-		file = rcs_open(argv[i], flags, fmode);
-		if (file == NULL) {
-			return (1);
-		}
+		/*
+		 * Our RCS API does not append the RCS_FILE_EXT extension
+		 * automaticly in rcs_open(), so we add it here.
+		 */
+		snprintf(fpath, sizeof(fpath), "%s%s", argv[i], RCS_FILE_EXT);
+
+		printf("RCS file: %s\n", fpath);
+		file = rcs_open(fpath, flags, fmode);
+		if (file == NULL)
+			continue;
 
 		/* entries to add to the access list */
 		if (alist != NULL) {
