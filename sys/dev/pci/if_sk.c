@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.80 2005/09/17 02:53:09 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.81 2005/09/20 00:24:04 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -131,6 +131,7 @@
 /* #define SK_USEIOSPACE */
 
 #include <dev/pci/if_skreg.h>
+#include <dev/pci/if_skvar.h>
 #include <dev/pci/xmaciireg.h>
 #include <dev/pci/yukonreg.h>
 
