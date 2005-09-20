@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.64 2005/09/13 02:53:28 drahn Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.65 2005/09/20 22:40:35 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -999,6 +999,7 @@ get_exportlist(void)
 			 * val of 1 means line is invalid (not just entry).
 			 */
 			i = do_mount(ep, grp, exflags, &anon, dirp, dirplen, &fsb);
+			exflags &= ~MNT_DELEXPORT;
 			if (i == 1) {
 				getexp_err(ep, tgrp);
 				goto nextline;
