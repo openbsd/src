@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.19 2005/09/20 13:47:08 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.20 2005/09/20 13:48:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,6 +92,7 @@ static const struct token t_show[] = {
 	{ KEYWORD,	"fib",		SHOW_FIB,	t_show_fib},
 	{ KEYWORD,	"interfaces",	SHOW_INTERFACE,	NULL},
 	{ KEYWORD,	"neighbor",	SHOW_NEIGHBOR,	t_show_neighbor},
+	{ KEYWORD,	"network",	NETWORK_SHOW,	t_network_show},
 	{ KEYWORD,	"nexthop",	SHOW_NEXTHOP,	NULL},
 	{ KEYWORD,	"rib",		SHOW_RIB,	t_show_rib},
 	{ KEYWORD,	"ip",		NONE,		t_show_ip},
