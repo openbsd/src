@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.89 2005/09/20 13:31:53 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.90 2005/09/20 13:51:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -754,7 +754,7 @@ show_nexthop_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEXTHOP:
 		p = imsg->data;
-		printf("%-20s %-10s", inet_ntoa(p->addr.v4),
+		printf("%-20s %-10s", log_addr(&p->addr),
 		    p->valid ? "valid" : "invalid");
 		if (p->kif.ifname[0]) {
 			printf("%-8s", p->kif.ifname);
