@@ -577,10 +577,9 @@
 ./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
 ./usr/include/dev/pci/wdt50x.h
-./usr/include/dev/pci/xmaciireg.h
+./usr/include/dev/pci/if_skvar.h
 ./usr/include/dev/pci/ydsreg.h
 ./usr/include/dev/pci/ydsvar.h
-./usr/include/dev/pci/yukonreg.h
 ./usr/include/dev/pckbc
 ./usr/include/dev/pckbc/pckbdreg.h
 ./usr/include/dev/pckbc/pckbdvar.h
