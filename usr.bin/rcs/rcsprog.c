@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.2 2005/04/15 15:59:11 deraadt Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.3 2005/09/20 04:24:41 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,15 +27,15 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <err.h>
-#include <pwd.h>
-#include <errno.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <err.h>
+#include <errno.h>
+#include <pwd.h>
 #include <signal.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "rcs.h"
