@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.128 2005/07/31 04:36:51 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.129 2005/09/20 21:04:15 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -460,7 +460,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 		bzero(cp_time, sizeof(cp_time));
 
-		for (CPU_INFO_FOREACH(cii, ci)) {
+		CPU_INFO_FOREACH(cii, ci) {
 			for (i = 0; i < CPUSTATES; i++)
 				cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
 		}
@@ -1902,7 +1902,7 @@ sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	i = name[0];
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	CPU_INFO_FOREACH(cii, ci) {
 		if (i-- == 0)
 			break;
 	}

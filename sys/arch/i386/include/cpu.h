@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.68 2005/05/27 10:41:11 kjell Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.69 2005/09/20 21:04:15 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -167,8 +167,8 @@ extern struct cpu_info cpu_info_primary;
 extern struct cpu_info *cpu_info_list;
 
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
-					ci != NULL; ci = ci->ci_next
+#define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
+					    ci != NULL; ci = ci->ci_next)
 
 #define CPU_INFO_UNIT(ci)	((ci)->ci_dev.dv_unit)
 
