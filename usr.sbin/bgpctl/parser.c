@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.18 2005/07/01 18:59:15 fgsch Exp $ */
+/*	$OpenBSD: parser.c,v 1.19 2005/09/20 13:47:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -66,6 +66,7 @@ static const struct token t_show_as[];
 static const struct token t_show_prefix[];
 static const struct token t_show_ip[];
 static const struct token t_network[];
+static const struct token t_network_show[];
 static const struct token t_prefix[];
 static const struct token t_set[];
 static const struct token t_community[];
@@ -174,13 +175,19 @@ static const struct token t_network[] = {
 	{ KEYWORD,	"add",		NETWORK_ADD,	t_prefix},
 	{ KEYWORD,	"delete",	NETWORK_REMOVE,	t_prefix},
 	{ KEYWORD,	"flush",	NETWORK_FLUSH,	NULL},
-	{ KEYWORD,	"show",		NETWORK_SHOW,	NULL},
+	{ KEYWORD,	"show",		NETWORK_SHOW,	t_network_show},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_prefix[] = {
 	{ PREFIX,	"",		NONE,		t_set},
 	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_network_show[] = {
+	{ NOTOKEN,	"",		NONE,			NULL},
+	{ FAMILY,	"",		NONE,			NULL},
+	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 
 static const struct token t_set[] = {
