@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.36 2005/09/13 09:30:55 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.37 2005/09/20 20:06:48 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -217,8 +217,14 @@ sub mkheader
 	if (length $linkname > MAXLINKNAME) {
 		die "Linkname too long $linkname\n";
 	}
+	if (!defined $entry->{uname}) {
+		die "No user name for ", $entry->{name}, " (uid ", $entry->{uid}, ")\n";
+	}
 	if (length $entry->{uname} > MAXUSERNAME) {
 		die "Username too long ", $entry->{uname}, "\n";
+	}
+	if (!defined $entry->{gname}) {
+		die "No group name for ", $entry->{name}, " (gid ", $entry->{gid}. "\n";
 	}
 	if (length $entry->{gname} > MAXGROUPNAME) {
 		die "Groupname too long ", $entry->{gname}, "\n";
