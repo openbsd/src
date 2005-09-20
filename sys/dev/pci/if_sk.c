@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.82 2005/09/20 00:56:33 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.83 2005/09/20 01:02:22 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1100,6 +1100,11 @@ sk_probe(struct device *parent, void *match, void *aux)
 	case SK_YUKON:
 	case SK_YUKON_LITE:
 	case SK_YUKON_LP:
+#ifdef not_quite_yet
+	case SK_YUKON_XL:
+	case SK_YUKON_EC:
+	case SK_YUKON_FE:
+#endif
 		return (1);
 	}
 
@@ -1156,8 +1161,12 @@ sk_attach(struct device *parent, struct device *self, void *aux)
  	 * receiver and b) between the two XMACs, if this is a
 	 * dual port NIC. Our algorithm is to divide up the memory
 	 * evenly so that everyone gets a fair share.
+	 *
+	 * Just to be contrary, Yukon2 appears to have separate memory
+	 * for each MAC.
 	 */
-	if (sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC) {
+	if (SK_IS_YUKON2(sc) ||
+	    sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC) {
 		u_int32_t		chunk, val;
 
 		chunk = sc->sk_ramsize / 2;
@@ -1203,6 +1212,12 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unsupported PHY type: %d\n",
 		    sc->sk_dev.dv_xname, sc_if->sk_phytype);
 		return;
+	}
+	if (SK_IS_YUKON2(sc) && sc_if->sk_phytype < SK_PHYTYPE_MARV_COPPER &&
+	    sc->sk_pmd != IFM_1000_SX && sc->sk_pmd != IFM_1000_LX) {
+		/* not initialized, punt */
+		sc_if->sk_phytype = SK_PHYTYPE_MARV_COPPER;
+		sc_if->sk_phyaddr = SK_PHYADDR_MARV;
 	}
 
 	/* Allocate the descriptor queues. */
@@ -1259,6 +1274,9 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	case SK_YUKON:
 	case SK_YUKON_LITE:
 	case SK_YUKON_LP:
+	case SK_YUKON_XL:
+	case SK_YUKON_EC:
+	case SK_YUKON_FE:
 		sk_init_yukon(sc_if);
 		break;
 	default:
@@ -1271,19 +1289,15 @@ sk_attach(struct device *parent, struct device *self, void *aux)
  	DPRINTFN(2, ("sk_attach: 1\n"));
 
 	sc_if->sk_mii.mii_ifp = ifp;
-	switch (sc->sk_type) {
-	case SK_GENESIS:
+	if (sc->sk_type == SK_GENESIS) {
 		sc_if->sk_mii.mii_readreg = sk_xmac_miibus_readreg;
 		sc_if->sk_mii.mii_writereg = sk_xmac_miibus_writereg;
 		sc_if->sk_mii.mii_statchg = sk_xmac_miibus_statchg;
-		break;
-	case SK_YUKON:
-	case SK_YUKON_LITE:
-	case SK_YUKON_LP:
+	} else {
+		/* yukon/yukon2 */
 		sc_if->sk_mii.mii_readreg = sk_marv_miibus_readreg;
 		sc_if->sk_mii.mii_writereg = sk_marv_miibus_writereg;
 		sc_if->sk_mii.mii_statchg = sk_marv_miibus_statchg;
-		break;
 	}
 
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
