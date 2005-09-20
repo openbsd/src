@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 5.t,v 1.3 2003/06/02 23:30:10 millert Exp $
+.\"	$OpenBSD: 5.t,v 1.4 2005/09/20 20:36:09 krw Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1004,7 +1004,7 @@ where \f2loop\f1 is set to 0 to disable loopback,
 and set to 1 to enable loopback.
 This option
 improves performance for applications that may have no more than one
-instance on a single host (such as a router demon), by eliminating
+instance on a single host (such as a router daemon), by eliminating
 the overhead of receiving their own transmissions.  It should generally not
 be used by applications for which there may be more than one instance on a
 single host (such as a conferencing program) or for which the sender does
