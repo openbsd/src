@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.170 2005/09/19 15:58:43 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.171 2005/09/20 13:31:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -280,6 +280,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct filter_set	*s;
 	pid_t			 pid;
 	int			 n;
+	sa_family_t		 af = AF_UNSPEC;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_session: imsg_read error");
@@ -378,12 +379,13 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			TAILQ_INSERT_TAIL(session_set, s, entry);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(af)) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
 			pid = imsg.hdr.pid;
-			pt_dump(network_dump_upcall, &pid, AF_UNSPEC);
+			memcpy(&af, imsg.data, sizeof(af));
+			pt_dump(network_dump_upcall, &pid, af);
 			imsg_compose(ibuf_se, IMSG_CTL_END, 0, pid, -1,
 			    NULL, 0);
 			break;
@@ -2234,13 +2236,16 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 {
 	struct prefix		*p;
 	struct kroute		 k;
+	struct kroute6		 k6;
 	struct bgpd_addr	 addr;
 	pid_t			 pid;
 
 	memcpy(&pid, ptr, sizeof(pid));
 
-	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-		if (p->aspath->flags & F_PREFIX_ANNOUNCED) {
+	LIST_FOREACH(p, &pt->prefix_h, prefix_l) {
+		if (!(p->aspath->flags & F_PREFIX_ANNOUNCED))
+			continue;
+		if (p->prefix->af == AF_INET) {
 			bzero(&k, sizeof(k));
 			pt_getaddr(p->prefix, &addr);
 			k.prefix.s_addr = addr.v4.s_addr;
@@ -2252,6 +2257,19 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 				log_warnx("network_dump_upcall: "
 				    "imsg_compose error");
 		}
+		if (p->prefix->af == AF_INET6) {
+			bzero(&k6, sizeof(k6));
+			pt_getaddr(p->prefix, &addr);
+			memcpy(&k6.prefix, &addr.v6, sizeof(k6.prefix));
+			k6.prefixlen = p->prefix->prefixlen;
+			if (p->peer == &peerself)
+				k6.flags = F_KERNEL;
+			if (imsg_compose(ibuf_se, IMSG_CTL_SHOW_NETWORK6, 0,
+			    pid, -1, &k6, sizeof(k6)) == -1)
+				log_warnx("network_dump_upcall: "
+				    "imsg_compose error");
+		}
+	}
 }
 
 void

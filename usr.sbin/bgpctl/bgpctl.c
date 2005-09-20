@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.88 2005/07/01 18:59:14 fgsch Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.89 2005/09/20 13:31:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -260,7 +260,8 @@ main(int argc, char *argv[])
 		done = 1;
 		break;
 	case NETWORK_SHOW:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1,
+		    &res->af, sizeof(res->af));
 		show_network_head();
 		break;
 	}
@@ -708,6 +709,7 @@ show_fib_msg(struct imsg *imsg)
 
 		break;
 	case IMSG_CTL_KROUTE6:
+	case IMSG_CTL_SHOW_NETWORK6:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct kroute6))
 			errx(1, "wrong imsg len");
 		k6 = imsg->data;
