@@ -1,3 +1,4 @@
+C set [Phase 1]:131.188.33.29=peer-131.188.33.29
 C set [peer-131.188.33.29]:Phase=1 force
 C set [peer-131.188.33.29]:Address=131.188.33.29 force
 C set [IPsec-10.1.1.0/24-10.1.2.0/24]:Phase=2 force
@@ -13,8 +14,10 @@ C set [lid-10.1.1.0/24]:Netmask=255.255.255.0 force
 C set [rid-10.1.2.0/24]:ID-type=IPV4_ADDR_SUBNET force
 C set [rid-10.1.2.0/24]:Network=10.1.2.0 force
 C set [rid-10.1.2.0/24]:Netmask=255.255.255.0 force
+C add [Phase 2]:Connections=IPsec-10.1.1.0/24-10.1.2.0/24
 t IPsec-10.1.1.0/24-10.1.2.0/24
 c IPsec-10.1.1.0/24-10.1.2.0/24
+C set [Phase 1]:131.188.33.29=peer-131.188.33.29
 C set [peer-131.188.33.29]:Phase=1 force
 C set [peer-131.188.33.29]:Address=131.188.33.29 force
 C set [IPsec-131.188.33.51-131.188.33.29]:Phase=2 force
@@ -28,5 +31,6 @@ C set [lid-131.188.33.51]:ID-type=IPV4_ADDR force
 C set [lid-131.188.33.51]:Address=131.188.33.51 force
 C set [rid-131.188.33.29]:ID-type=IPV4_ADDR force
 C set [rid-131.188.33.29]:Address=131.188.33.29 force
+C add [Phase 2]:Connections=IPsec-131.188.33.51-131.188.33.29
 t IPsec-131.188.33.51-131.188.33.29
 c IPsec-131.188.33.51-131.188.33.29
