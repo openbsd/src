@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.3 2005/09/20 04:24:41 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.4 2005/09/20 04:29:51 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -174,8 +174,8 @@ rcs_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		printf("RCS file: %s\n", argv[0]);
-		file = rcs_open(argv[0], flags, fmode);
+		printf("RCS file: %s\n", argv[i]);
+		file = rcs_open(argv[i], flags, fmode);
 		if (file == NULL) {
 			return (1);
 		}
