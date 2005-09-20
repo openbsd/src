@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.81 2005/09/20 00:24:04 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.82 2005/09/20 00:56:33 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -132,8 +132,6 @@
 
 #include <dev/pci/if_skreg.h>
 #include <dev/pci/if_skvar.h>
-#include <dev/pci/xmaciireg.h>
-#include <dev/pci/yukonreg.h>
 
 int skc_probe(struct device *, void *, void *);
 void skc_attach(struct device *, struct device *self, void *aux);
