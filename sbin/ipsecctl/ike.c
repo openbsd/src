@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.1 2005/08/22 17:26:46 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.2 2005/09/20 17:29:19 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -285,6 +285,8 @@ ike_connect(u_int8_t mode, struct ipsec_addr *src, struct ipsec_addr *dst,
 {
 	switch (mode) {
 	case IKE_ACTIVE:
+		fprintf(fd, ADD "[Phase 2]:Connections=IPsec-%s-%s\n",
+		    src->name, dst->name);
 		fprintf(fd, "t IPsec-%s-%s\n", src->name, dst->name);
 		fprintf(fd, "c IPsec-%s-%s\n", src->name, dst->name);
 		break;
