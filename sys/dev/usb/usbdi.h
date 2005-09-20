@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.24 2005/08/01 05:36:49 brad Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.25 2005/09/20 08:03:59 dlg Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -181,6 +181,14 @@ usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 usbd_status usbd_reload_device_desc(usbd_device_handle);
 
 int usbd_ratecheck(struct timeval *last);
+
+/* An iterator for descriptors. */
+typedef struct {
+	const uByte *cur;
+	const uByte *end;
+} usbd_desc_iter_t;
+void usb_desc_iter_init(usbd_device_handle, usbd_desc_iter_t *);
+const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
 
 /*
  * The usb_task structs form a queue of things to run in the USB event

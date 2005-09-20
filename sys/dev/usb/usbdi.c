@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.25 2004/07/08 22:18:45 deraadt Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.26 2005/09/20 08:03:59 dlg Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -1135,6 +1135,38 @@ usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
 		tbl = (const struct usb_devno *)((const char *)tbl + sz);
 	}
 	return (NULL);
+}
+
+void
+usb_desc_iter_init(usbd_device_handle dev, usbd_desc_iter_t *iter)
+{
+	const usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
+
+	iter->cur = (const uByte *)cd;
+	iter->end = (const uByte *)cd + UGETW(cd->wTotalLength);
+}
+
+const usb_descriptor_t *
+usb_desc_iter_next(usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+
+	if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
+		if (iter->cur != iter->end)
+			printf("usb_desc_iter_next: bad descriptor\n");
+		return NULL;
+	}
+	desc = (const usb_descriptor_t *)iter->cur;
+	if (desc->bLength == 0) {
+		printf("usb_desc_iter_next: descriptor length = 0\n");
+		return NULL;
+	}
+	iter->cur += desc->bLength;
+	if (iter->cur > iter->end) {
+		printf("usb_desc_iter_next: descriptor length too large\n");
+		return NULL;
+	}
+	return desc;
 }
 
 #if defined(__FreeBSD__)
