@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.2 2005/09/20 17:29:19 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.3 2005/09/20 17:30:58 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -56,6 +56,7 @@ int		ike_ipsec_establish(int, struct ipsec_rule *);
 static void
 ike_section_peer(struct ipsec_addr *peer, FILE *fd)
 {
+	fprintf(fd, SET "[Phase 1]:%s=peer-%s\n", peer->name, peer->name);
 	fprintf(fd, SET "[peer-%s]:Phase=1 force\n", peer->name);
 	fprintf(fd, SET "[peer-%s]:Address=%s force\n", peer->name, peer->name);
 }
