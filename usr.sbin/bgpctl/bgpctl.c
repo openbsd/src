@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.90 2005/09/20 13:51:05 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.91 2005/09/20 14:40:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 			    &msg, sizeof(msg));
 		} else
 			imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, -1,
-			    NULL, 0);
+			    &res->af, sizeof(res->af));
 		show_rib_summary_head();
 		break;
 	case RELOAD:
