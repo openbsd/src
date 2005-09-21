@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.82 2005/09/21 10:36:14 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.83 2005/09/21 10:54:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1738,82 +1738,56 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	void *inqbuf;
 {
 	struct ami_ccb *ccb;
-	struct ami_iocmd *cmd;
-	struct ami_passthrough *ps;
-	struct scsi_inquiry_data *pp;
-	void *idata;
-	bus_dmamap_t idatamap;
-	bus_dma_segment_t idataseg[1];
-	paddr_t	pa;
-	int error = 0;
+	struct ami_passthrough *pt;
+	struct scsi_inquiry_data *inq = inqbuf;
 
 	ccb = ami_get_ccb(sc);
 	if (ccb == NULL)
 		return (ENOMEM);
 
-	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG, 1,
-	    "ami mgmt"))) {
-		ami_put_ccb(ccb);
-	    	return (ENOMEM);
-	}
-
-	pa = idataseg[0].ds_addr;
-	ps = idata;
-	pp = idata + sizeof *ps;
-
-	ccb->ccb_data = NULL;
 	ccb->ccb_wakeup = 1;
-	cmd = ccb->ccb_cmd;
+	ccb->ccb_data = inqbuf;
+	ccb->ccb_len = sizeof(struct scsi_inquiry_data);
+	ccb->ccb_dir = AMI_CCB_IN;
 
-	cmd->acc_cmd = AMI_PASSTHRU;
-	cmd->acc_passthru.apt_data = htole32(pa);
+	ccb->ccb_cmd->acc_cmd = AMI_PASSTHRU;
 
-	memset(ps, 0, sizeof *ps);
+	pt = ccb->ccb_pt;
 
-	ps->apt_channel = ch;
-	ps->apt_target = tg;
-	ps->apt_ncdb = sizeof(struct scsi_inquiry);
-	ps->apt_nsense = sizeof(struct scsi_sense_data);
+	memset(pt, 0, sizeof(struct ami_passthrough));
+	pt->apt_channel = ch;
+	pt->apt_target = tg;
+	pt->apt_ncdb = sizeof(struct scsi_inquiry);
+	pt->apt_nsense = sizeof(struct scsi_sense_data);
+	pt->apt_datalen = sizeof(struct scsi_inquiry_data);
 
-	ps->apt_cdb[0] = INQUIRY;
-	ps->apt_cdb[1] = 0;
-	ps->apt_cdb[2] = 0;
-	ps->apt_cdb[3] = 0;
-	ps->apt_cdb[4] = sizeof(struct scsi_inquiry_data); /* INQUIRY length */
-	ps->apt_cdb[5] = 0;
+	pt->apt_cdb[0] = INQUIRY;
+	pt->apt_cdb[1] = 0;
+	pt->apt_cdb[2] = 0;
+	pt->apt_cdb[3] = 0;
+	pt->apt_cdb[4] = sizeof(struct scsi_inquiry_data); /* INQUIRY length */
+	pt->apt_cdb[5] = 0;
 
 	if (page != 0) {
-		ps->apt_cdb[1] = SI_EVPD;
-		ps->apt_cdb[2] = page;
+		pt->apt_cdb[1] = SI_EVPD;
+		pt->apt_cdb[2] = page;
 	}
 
-	ps->apt_data = htole32(pa + sizeof *ps);
-	ps->apt_datalen = sizeof(struct scsi_inquiry_data);
+	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) != 0)
+		return (EIO);
 
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
-		while (ccb->ccb_wakeup)
-			tsleep(ccb, PRIBIO, "ami_drv_inq", 0);
+	while (ccb->ccb_wakeup)
+		tsleep(ccb, PRIBIO, "ami_drv_inq", 0);
 
-		ami_put_ccb(ccb);
+	ami_put_ccb(ccb);
 
-		if (ps->apt_scsistat == 0x00) {
-			memcpy(inqbuf, pp, sizeof(struct scsi_inquiry_data));
+	if (pt->apt_scsistat != 0x00)
+		return (EIO);
 
-			if (pp->device != T_DIRECT)
-				error = EINVAL;
+	if ((inq->device & SID_TYPE) != T_DIRECT)
+		return (EINVAL);
 
-			goto bail;
-		}
-
-		error = EINVAL;
-	}
-	else 
-		error = EINVAL;
-
-bail:
-	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "ami mgmt");
-
-	return (error);
+	return (0);
 }
 
 int
