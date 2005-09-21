@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.1 2005/09/17 02:58:54 drahn Exp $
+# $OpenBSD: Makefile,v 1.2 2005/09/21 18:02:44 drahn Exp $
 
 .include <bsd.obj.mk>
 
 PROG=prog4
 
-SRCS=main.C
+SRCS=main.c
 
 AA_DIR=${.CURDIR}/../libaa
 AA_OBJDIR!=    if [ -d $(AA_DIR)/${__objdir} ]; then \
