@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.33 2005/09/21 14:08:51 brad Exp $
+ *	$OpenBSD: radius.c,v 1.34 2005/09/21 15:04:29 brad Exp $
  *
  */
 
@@ -828,10 +828,8 @@ radius_Authenticate(struct radius *r, struct authinfo *authp, const char *name,
   int got;
   char hostname[MAXHOSTNAMELEN];
   char *mac_addr;
-#if 0
   struct hostent *hp;
   struct in_addr hostaddr;
-#endif
 #ifndef NODES
   struct mschap_response msresp;
   struct mschap2_response msresp2;
@@ -949,8 +947,8 @@ radius_Authenticate(struct radius *r, struct authinfo *authp, const char *name,
   if (gethostname(hostname, sizeof hostname) != 0)
     log_Printf(LogERROR, "rad_put: gethostname(): %s\n", strerror(errno));
   else {
-#if 0
-    if ((hp = gethostbyname(hostname)) != NULL) {
+    if (Enabled(authp->physical->dl->bundle, OPT_NAS_IP_ADDRESS) &&
+        (hp = gethostbyname(hostname)) != NULL) {
       hostaddr.s_addr = *(u_long *)hp->h_addr;
       if (rad_put_addr(r->cx.rad, RAD_NAS_IP_ADDRESS, hostaddr) != 0) {
         log_Printf(LogERROR, "rad_put: rad_put_string: %s\n",
@@ -959,8 +957,8 @@ radius_Authenticate(struct radius *r, struct authinfo *authp, const char *name,
         return 0;
       }
     }
-#endif
-    if (rad_put_string(r->cx.rad, RAD_NAS_IDENTIFIER, hostname) != 0) {
+    if (Enabled(authp->physical->dl->bundle, OPT_NAS_IDENTIFIER) &&
+        rad_put_string(r->cx.rad, RAD_NAS_IDENTIFIER, hostname) != 0) {
       log_Printf(LogERROR, "rad_put: rad_put_string: %s\n",
                  rad_strerror(r->cx.rad));
       rad_close(r->cx.rad);
@@ -1024,10 +1022,8 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
   int got;
   char hostname[MAXHOSTNAMELEN];
   char *mac_addr;
-#if 0
   struct hostent *hp;
   struct in_addr hostaddr;
-#endif
 
   if (!*r->cfg.file)
     return;
@@ -1133,8 +1129,8 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
   if (gethostname(hostname, sizeof hostname) != 0)
     log_Printf(LogERROR, "rad_put: gethostname(): %s\n", strerror(errno));
   else {
-#if 0
-    if ((hp = gethostbyname(hostname)) != NULL) {
+    if (Enabled(dl->bundle, OPT_NAS_IP_ADDRESS) &&
+        (hp = gethostbyname(hostname)) != NULL) {
       hostaddr.s_addr = *(u_long *)hp->h_addr;
       if (rad_put_addr(r->cx.rad, RAD_NAS_IP_ADDRESS, hostaddr) != 0) {
         log_Printf(LogERROR, "rad_put: rad_put_string: %s\n",
@@ -1143,7 +1139,6 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
         return;
       }
     }
-#endif
     if (rad_put_string(r->cx.rad, RAD_NAS_IDENTIFIER, hostname) != 0) {
       log_Printf(LogERROR, "rad_put: rad_put_string: %s\n",
                  rad_strerror(r->cx.rad));
