@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.79 2005/09/21 08:36:35 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.80 2005/09/21 08:39:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1059,7 +1059,7 @@ ami_cmd(ccb, flags, wait)
 			struct ami_sgent *sgl = ccb->ccb_sglist;
 
 			if (cmd->acc_cmd == AMI_PASSTHRU) {
-				ccb->ccb_pt->apt_nsg = dmap->dm_nsegs;
+				ccb->ccb_pt->apt_nsge = dmap->dm_nsegs;
 				ccb->ccb_pt->apt_data = ccb->ccb_sglistpa;
 			} else {
 				cmd->acc_mbox.amb_nsge = dmap->dm_nsegs;
@@ -1075,7 +1075,7 @@ ami_cmd(ccb, flags, wait)
 			}
 		} else {
 			if (cmd->acc_cmd == AMI_PASSTHRU) {
-				ccb->ccb_pt->apt_nsg = 0;
+				ccb->ccb_pt->apt_nsge = 0;
 				ccb->ccb_pt->apt_data = htole32(sgd->ds_addr);
 			} else {
 				cmd->acc_mbox.amb_nsge = 0;

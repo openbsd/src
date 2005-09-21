@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.23 2005/09/18 06:59:32 dlg Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.24 2005/09/21 08:39:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -360,7 +360,7 @@ struct ami_passthrough {
 	u_int8_t	apt_nsense;
 #define	AMI_MAX_SENSE	32
 	u_int8_t	apt_sense[AMI_MAX_SENSE];
-	u_int8_t	apt_nsg;
+	u_int8_t	apt_nsge;
 	u_int8_t	apt_scsistat;
 	u_int32_t	apt_data;
 	u_int32_t	apt_datalen;
