@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.13 2005/03/30 07:52:32 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.14 2005/09/21 21:08:35 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -561,29 +561,4 @@ disklabel_bsd_to_sun(lp, cp)
 	sl->sl_cksum = cksum;
 
 	return (0);
-}
-
-/*
- * Search the bad sector table looking for the specified sector.
- * Return index if found.
- * Return -1 if not found.
- */
-int
-isbad(bt, cyl, trk, sec)
-	struct dkbad *bt;
-	int cyl, trk, sec;
-{
-	int i;
-	long blk, bblk;
-
-	blk = ((long)cyl << 16) + (trk << 8) + sec;
-	for (i = 0; i < 126; i++) {
-		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) +
-			bt->bt_bad[i].bt_trksec;
-		if (blk == bblk)
-			return (i);
-		if (blk < bblk || bblk < 0)
-			break;
-	}
-	return (-1);
 }

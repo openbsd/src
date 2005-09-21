@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.28 2005/04/22 11:59:11 miod Exp $
+#	$OpenBSD: files.hp300,v 1.29 2005/09/21 21:08:31 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -187,7 +187,6 @@ file	arch/hp300/hp300/clock.c
 file	arch/hp300/hp300/conf.c
 file	arch/hp300/hp300/db_memrw.c		ddb | kgdb
 file	arch/hp300/hp300/disksubr.c
-file	arch/hp300/hp300/dkbad.c
 file	arch/hp300/hp300/kgdb_machdep.c		kgdb
 file	arch/hp300/hp300/machdep.c
 file	arch/hp300/hp300/intr.c
