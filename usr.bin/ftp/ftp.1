@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.52 2005/07/06 10:35:36 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.53 2005/09/21 22:31:47 fgsch Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -38,7 +38,7 @@
 .Nd ARPANET file transfer program
 .Sh SYNOPSIS
 .Nm ftp
-.Op Fl 46AadegimnptVv
+.Op Fl 46AadEegimnptVv
 .Op Fl P Ar port
 .Op Fl r Ar seconds
 .Op Ar host Op Ar port
@@ -104,6 +104,8 @@ Causes
 to bypass the normal login procedure and use an anonymous login instead.
 .It Fl d
 Enables debugging.
+.It Fl E
+Disables EPSV/EPRT command on IPv4 connections.
 .It Fl e
 Disables command line editing.
 Useful for Emacs ange-ftp.

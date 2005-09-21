@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2004/07/20 03:50:26 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2005/09/21 22:31:47 fgsch Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: main.c,v 1.58 2004/07/20 03:50:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.59 2005/09/21 22:31:47 fgsch Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -172,7 +172,7 @@ main(volatile int argc, char *argv[])
 	if (isatty(fileno(ttyout)) && !dumb_terminal && foregroundproc())
 		progress = 1;		/* progress bar on if tty is usable */
 
-	while ((ch = getopt(argc, argv, "46Aadegimno:pP:r:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "46AadEegimno:pP:r:tvV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -192,6 +192,10 @@ main(volatile int argc, char *argv[])
 		case 'd':
 			options |= SO_DEBUG;
 			debug++;
+			break;
+
+		case 'E':
+			epsv4 = 0;
 			break;
 
 		case 'e':
@@ -723,7 +727,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-46AadegimnptVv] [-P port] [-r seconds] [host [port]]\n"
+	    "usage: %s [-46AadEegimnptVv] [-P port] [-r seconds] [host [port]]\n"
 	    "       %s [-o output] ftp://[user:password@]host[:port]/file[/]\n"
 	    "       %s [-o output] http://host[:port]/file\n"
 	    "       %s [-o output] host:[/path/]file[/]\n",
