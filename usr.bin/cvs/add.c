@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.30 2005/09/15 17:01:10 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.31 2005/09/21 16:30:03 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -158,11 +158,8 @@ cvs_add_local(CVSFILE *cf, void *arg)
 
 	added = 0;
 
-	if (cf->cf_type == DT_DIR) {
-		if (cvs_add_directory(cf) == -1)
-			return (CVS_EX_FILE);
-		return (0);
-	}
+	if (cf->cf_type == DT_DIR)
+		return cvs_add_directory(cf);
 
 	if ((!(cf->cf_flags & CVS_FILE_ONDISK)) &&
 	    (cf->cf_cvstat != CVS_FST_LOST) &&
@@ -242,13 +239,13 @@ cvs_add_directory(CVSFILE *cf)
 	repo = CVS_DIR_REPO(cf);
 
 	if (strlcpy(fpath, cf->cf_name, sizeof(fpath)) >= sizeof(fpath))
-		return (-1);
+		return (CVS_EX_DATA);
 
 	if (strchr(fpath, '/') != NULL) {
 		cvs_log(LP_ERR,
 		    "directory %s not added; must be a direct sub-directory",
 		    fpath);
-		return (-1);
+		return (CVS_EX_FILE);
 	}
 
 	/* Let's see if we have any per-directory tags first */
@@ -261,13 +258,13 @@ cvs_add_directory(CVSFILE *cf)
 	if (l == -1 || l >= (int)sizeof(rcsdir)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcsdir);
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	if ((stat(rcsdir, &st) == 0) && !(S_ISDIR(st.st_mode))) {
 		cvs_log(LP_ERRNO,
 		    "%s is not a directory; %s not added", rcsdir, fpath);
-		return (-1);
+		return (CVS_EX_FILE);
 	}
 
 	snprintf(msg, sizeof(msg),
@@ -288,31 +285,31 @@ cvs_add_directory(CVSFILE *cf)
 	if (cvs_noexec == 0) {
 		if (mkdir(rcsdir, 0777) == -1) {
 			cvs_log(LP_ERRNO, "failed to create %s", rcsdir);
-			return (-1);
+			return (CVS_EX_FILE);
 		}
 	}
 
 	/* create CVS/ admin files */
 	if (cvs_noexec == 0)
 		if (cvs_mkadmin(fpath, root->cr_str, repo, tag, date, nb) == -1)
-			return (-1);
+			return (CVS_EX_FILE);
 
 	/* XXX Build the Entries line. */
 	l = snprintf(entry, sizeof(entry), "D/%s////", fpath);
 	if (l == -1 || l >= (int)sizeof(entry)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", entry);
-		return (-1);
+		return (CVS_EX_DATA);
         }
 
 	if ((ent = cvs_ent_parse(entry)) == NULL) {
 		cvs_log(LP_ERR, "failed to parse entry");
-		return (-1);
+		return (CVS_EX_DATA);
 	}        
 
 	if (cvs_ent_add(entf, ent) < 0) {
 		cvs_log(LP_ERR, "failed to add entry");
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	cvs_printf("%s", msg);
