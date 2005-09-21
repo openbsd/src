@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.81 2005/09/21 08:52:44 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.82 2005/09/21 10:36:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1208,14 +1208,15 @@ ami_stimeout(v)
 		printf("%s: timeout ccb %d\n",
 		    sc->sc_dev.dv_xname, cmd->acc_id);
 		AMI_DPRINTF(AMI_D_CMD, ("timeout(%d) ", cmd->acc_id));
-		if (xs->cmd->opcode != PREVENT_ALLOW &&
-		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+
+		/* XXX ccb might complete and overwrite this mem */
+		if (ccb->ccb_data != NULL) {
 			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
 			    ccb->ccb_dmamap->dm_mapsize,
-			    (xs->flags & SCSI_DATA_IN) ?
-			    BUS_DMASYNC_POSTREAD :
-			    BUS_DMASYNC_POSTWRITE);
+			    (ccb->ccb_dir == AMI_CCB_IN) ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
+			ccb->ccb_data = NULL;
 		}
 		TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 		ami_put_ccb(ccb);
@@ -1251,35 +1252,28 @@ ami_done(sc, idx)
 	ccb->ccb_state = AMI_CCB_READY;
 	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 
-	if (xs) {
-		timeout_del(&xs->stimeout);
+	/* dma sync cmd/pt/sglist */
 
-		if (xs->cmd->opcode != PREVENT_ALLOW &&
-		    xs->cmd->opcode != SYNCHRONIZE_CACHE)
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
-			    ccb->ccb_dmamap->dm_mapsize,
-			    (xs->flags & SCSI_DATA_IN) ?
-			    BUS_DMASYNC_POSTREAD :
-			    BUS_DMASYNC_POSTWRITE);
+	if (ccb->ccb_data != NULL) {
+		bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize,
+		    (ccb->ccb_dir == AMI_CCB_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 
-		ccb->ccb_xs = NULL;
-	} else {
-		struct ami_iocmd *cmd = ccb->ccb_cmd;
+		ccb->ccb_data = NULL;
+	}
 
-		switch (cmd->acc_cmd) {
-		case AMI_INQUIRY:
-		case AMI_EINQUIRY:
-		case AMI_EINQUIRY3:
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
-			    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
-			break;
-		default:
-			/* no data */
-			break;
-		}
+	if (xs) {
+		timeout_del(&xs->stimeout);
+
+		xs->resid = 0;
+		xs->flags |= ITSDONE;
+		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
+		scsi_done(xs);
+
+		ccb->ccb_xs = NULL;
 	}
 
 	if (ccb->ccb_wakeup) {
@@ -1287,13 +1281,6 @@ ami_done(sc, idx)
 		wakeup(ccb);
 	} else
 		ami_put_ccb(ccb);
-
-	if (xs) {
-		xs->resid = 0;
-		xs->flags |= ITSDONE;
-		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
-		scsi_done(xs);
-	}
 
 	AMI_UNLOCK_AMI(sc, lock);
 
@@ -1337,7 +1324,6 @@ ami_scsi_raw_cmd(xs)
 	u_int8_t channel = rsc->sc_channel, target = link->target;
 	struct device *dev = link->device_softc;
 	struct ami_ccb *ccb;
-	struct ami_iocmd *cmd;
 	int error;
 	ami_lock_t lock;
 	char type;
@@ -1371,12 +1357,14 @@ ami_scsi_raw_cmd(xs)
 		return (COMPLETE);
 	}
 
-	memset(ccb->ccb_pt, 0, sizeof(struct ami_passthrough));
-
 	ccb->ccb_xs = xs;
-	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = xs->data;
+	ccb->ccb_len = xs->datalen;
+	ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ? AMI_CCB_IN : AMI_CCB_OUT;
+
+	ccb->ccb_cmd->acc_cmd = AMI_PASSTHRU;
 	
+	memset(ccb->ccb_pt, 0, sizeof(struct ami_passthrough));
 	ccb->ccb_pt->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ccb->ccb_pt->apt_channel = channel;
 	ccb->ccb_pt->apt_target = target;
@@ -1384,9 +1372,6 @@ ami_scsi_raw_cmd(xs)
 	ccb->ccb_pt->apt_ncdb = xs->cmdlen;
 	ccb->ccb_pt->apt_nsense = AMI_MAX_SENSE;
 	ccb->ccb_pt->apt_datalen = xs->datalen;
-
-	cmd = ccb->ccb_cmd;
-	cmd->acc_cmd = AMI_PASSTHRU;
 
 	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP) ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
@@ -1570,8 +1555,11 @@ ami_scsi_cmd(xs)
 		}
 
 		ccb->ccb_xs = xs;
-		ccb->ccb_len  = xs->datalen;
 		ccb->ccb_data = xs->data;
+		ccb->ccb_len = xs->datalen;
+		ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ?
+		    AMI_CCB_IN : AMI_CCB_OUT;
+
 		cmd = ccb->ccb_cmd;
 		cmd->acc_mbox.amb_nsect = htole16(blockcnt);
 		cmd->acc_mbox.amb_lba = htole32(blockno);
