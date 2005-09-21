@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.29 2005/09/21 01:59:26 brad Exp $
+ *	$OpenBSD: radius.c,v 1.30 2005/09/21 02:07:25 brad Exp $
  *
  */
 
@@ -987,8 +987,8 @@ radius_Account_Set_Ip(struct radacct *ac, struct in_addr *peer_ip,
 		      struct in_addr *netmask)
 {
   ac->proto = PROTO_IPCP;
-  memcpy(&ac->ip.addr, peer_ip, sizeof(ac->ip.addr));
-  memcpy(&ac->ip.mask, netmask, sizeof(ac->ip.mask));
+  memcpy(&ac->peer.ip.addr, peer_ip, sizeof(ac->peer.ip.addr));
+  memcpy(&ac->peer.ip.mask, netmask, sizeof(ac->peer.ip.mask));
 }
 
 #ifndef NOINET6
@@ -997,7 +997,7 @@ void
 radius_Account_Set_Ipv6(struct radacct *ac, u_char *ifid)
 {
   ac->proto = PROTO_IPV6CP;
-  memcpy(&ac->ipv6.ifid, ifid, sizeof(ac->ipv6.ifid));
+  memcpy(&ac->peer.ipv6.ifid, ifid, sizeof(ac->peer.ipv6.ifid));
 }
 #endif
 
@@ -1074,8 +1074,10 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
   }
   switch (ac->proto) {
   case PROTO_IPCP:
-    if (rad_put_addr(r->cx.rad, RAD_FRAMED_IP_ADDRESS, ac->ip.addr) != 0 ||
-	rad_put_addr(r->cx.rad, RAD_FRAMED_IP_NETMASK, ac->ip.mask) != 0) {
+    if (rad_put_addr(r->cx.rad, RAD_FRAMED_IP_ADDRESS,
+		     ac->peer.ip.addr) != 0 || \
+	rad_put_addr(r->cx.rad, RAD_FRAMED_IP_NETMASK,
+		     ac->peer.ip.mask) != 0) {
       log_Printf(LogERROR, "rad_put: %s\n", rad_strerror(r->cx.rad));
       rad_close(r->cx.rad);
       return;
@@ -1083,8 +1085,8 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
     break;
 #ifndef NOINET6
   case PROTO_IPV6CP:
-    if (rad_put_attr(r->cx.rad, RAD_FRAMED_INTERFACE_ID, ac->ipv6.ifid,
-		     sizeof(ac->ipv6.ifid)) != 0) {
+    if (rad_put_attr(r->cx.rad, RAD_FRAMED_INTERFACE_ID, ac->peer.ipv6.ifid,
+		     sizeof(ac->peer.ipv6.ifid)) != 0) {
       log_Printf(LogERROR, "rad_put_attr: %s\n", rad_strerror(r->cx.rad));
       rad_close(r->cx.rad);
       return;
