@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipv6cp.c,v 1.6 2005/09/19 19:31:46 brad Exp $
+ * $OpenBSD: ipv6cp.c,v 1.7 2005/09/21 01:16:05 brad Exp $
  */
 
 #include <sys/param.h>
@@ -253,7 +253,7 @@ ipcp_SetIPv6address(struct ipv6cp *ipv6cp, u_char *myifid, u_char *hisifid)
 
 #ifndef NORADIUS
   if (bundle->radius.valid)
-    route_Change(bundle, bundle->radius.routes, &ipv6cp->myaddr,
+    route_Change(bundle, bundle->radius.ipv6routes, &ipv6cp->myaddr,
                  &ipv6cp->hisaddr);
 #endif
 
