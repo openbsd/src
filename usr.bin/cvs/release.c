@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.21 2005/08/10 14:49:20 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.22 2005/09/21 16:55:28 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -54,7 +54,7 @@ struct cvs_cmd cvs_cmd_release = {
 	"[-d]",
 	"d",
 	NULL,
-	0,
+	CF_NOFILES,
 	cvs_release_init,
 	cvs_release_pre_exec,
 	cvs_release_dir,
@@ -138,99 +138,101 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 {
 	FILE *fp;
 	int j, l;
-	size_t len;
 	char *wdir, cwd[MAXPATHLEN];
-	char cdpath[MAXPATHLEN], dpath[MAXPATHLEN];
-	char buf[256], updcmd[1024];
+	char buf[256], dpath[MAXPATHLEN], updcmd[1024];
 	struct stat st;
 	struct cvsroot *root;
 
-	j = 0;		/* number of altered files in the working copy */
+	j = 0;
 
 	root = CVS_DIR_ROOT(cf);
 
-	cvs_file_getpath(cf, dpath, sizeof(dpath));
+	/* XXX kept for compat reason of `cvs update' output */
+	/* save current working directory for further use */
+	if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL) {
+		cvs_log(LP_ERRNO, "cannot get current dir");
+		return (CVS_EX_FILE);
+	}
 
-	len = cvs_path_cat(dpath, CVS_PATH_CVSDIR, cdpath, sizeof(cdpath));
-	if (len >= sizeof(cdpath))
-		return (CVS_EX_DATA);
+	cvs_file_getpath(cf, dpath, sizeof(dpath));
 
 	if (cf->cf_type == DT_DIR) {
 		if (!strcmp(cf->cf_name, "."))
 			return (0);
-		else {
-			/* test if dir has CVS/ directory */
-			if (stat(cdpath, &st) == -1) {
-				if (verbosity > 0)
-					cvs_log(LP_ERR,
-					    "no repository directory: %s",
-					    dpath);
-				return (0);
-			}
-		}
 
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			/* XXX kept for compat reason of `cvs update' output */
-			/* save current working directory for further use */
-			if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL)
-				cvs_log(LP_ERRNO, "cannot get current dir");
+		/* chdir before running the `cvs update' command */
+		if (cvs_chdir(dpath) == -1)
+			return (CVS_EX_FILE);
 
-			/* change dir before running the `cvs update' command */
-			if (cvs_chdir(dpath) == -1)
-				return (CVS_EX_FILE);
-
-			/* construct `cvs update' command */
-			l = snprintf(updcmd, sizeof(updcmd), "%s %s %s update",
-			    __progname, UPDCMD_FLAGS, root->cr_str);
-			if (l == -1 || l >= (int)sizeof(updcmd))
-				return (CVS_EX_DATA);
-
-			/* XXX we should try to avoid a new connection ... */
-			if ((fp = popen(updcmd, "r")) == NULL) {
-				cvs_log(LP_ERR, "cannot run command `%s'",
-				    updcmd);
-				return (CVS_EX_DATA);
-			}
-
-			while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
-				if (strchr("ACMPRU", buf[0]))
-					j++;
-				(void)fputs(buf, stdout);
-			}
-
-			if (pclose(fp) != 0) {
-				cvs_log(LP_ERR, "unable to release `%s'",
-				    dpath);
-				return (CVS_EX_DATA);
-			}
-
-			printf("You have [%d] altered file%s in this "
-			    "repository.\n", j, j > 1 ? "s" : "");
-
-			printf("Are you sure you want to release "
-			    "%sdirectory `%s': ",
-			    dflag ? "(and delete) " : "", dpath);
-
-			if (cvs_release_yesno() == -1) {	/* No */
-				(void)fprintf(stderr,
-				    "** `%s' aborted by user choice.\n",
-				    cvs_command);
-				return (-1);
-			}
-
-			/* change back to original working dir */
-			if (cvs_chdir(wdir) == -1)
-				return (CVS_EX_FILE);
-
-			if (dflag == 1) {
-				if (cvs_rmdir(dpath) != 0)
-					return (CVS_EX_FILE);
-			}
+		/* test if dir has CVS/ directory */
+		if (stat(CVS_PATH_CVSDIR, &st) == -1) {
+			if (verbosity > 0)
+				cvs_log(LP_ERR,
+				    "no repository directory: %s", dpath);
+			return (0);
 		}
 	} else {
 		if (verbosity > 0)
 			cvs_log(LP_ERR, "no such directory: %s", dpath);
+		return (0);
+	}
+
+	/* construct `cvs update' command */
+	l = snprintf(updcmd, sizeof(updcmd), "%s %s %s update",
+	    __progname, UPDCMD_FLAGS, root->cr_str);
+	if (l == -1 || l >= (int)sizeof(updcmd))
 		return (CVS_EX_DATA);
+
+	/* XXX we should try to avoid a new connection ... */
+	cvs_log(LP_TRACE, "cvs_release_dir() popen(%s,r)", updcmd);
+	if ((fp = popen(updcmd, "r")) == NULL) {
+		cvs_log(LP_ERR, "cannot run command `%s'", updcmd);
+		return (CVS_EX_DATA);
+	}
+
+	while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
+		if (strchr("ACMPRU", buf[0]))
+			j++;
+		(void)fputs(buf, stdout);
+	}
+
+	if (pclose(fp) != 0) {
+		cvs_log(LP_ERR, "unable to release `%s'", dpath);
+
+		/* change back to original working dir */
+		if (cvs_chdir(wdir) == -1)
+			return (CVS_EX_FILE);
+	}
+
+	printf("You have [%d] altered file%s in this repository.\n",
+	    j, j > 1 ? "s" : "");
+	while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
+		if (strchr("ACMPRU", buf[0]))
+			j++;
+		(void)fputs(buf, stdout);
+	}
+
+	printf("Are you sure you want to release %sdirectory `%s': ",
+	    dflag ? "(and delete) " : "", dpath);
+
+	if (cvs_release_yesno() == -1) {	/* No */
+		fprintf(stderr,
+		    "** `%s' aborted by user choice.\n", cvs_command);
+
+		/* change back to original working dir */
+		if (cvs_chdir(wdir) == -1)
+			return (CVS_EX_FILE);
+
+		return (-1);
+	}
+
+	/* change back to original working dir */
+	if (cvs_chdir(wdir) == -1)
+		return (CVS_EX_FILE);
+
+	if (dflag == 1) {
+		if (cvs_rmdir(dpath) != 0)
+			return (CVS_EX_FILE);
 	}
 
 	return (0);
