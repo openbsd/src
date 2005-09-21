@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.88 2005/09/11 17:34:27 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.89 2005/09/21 03:10:57 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ cdopen(dev, flag, fmt, p)
 		 * and don't ignore NOT_READY.
 		 */
 		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_CD,
-		    (part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0 |
+		    ((part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0) |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 			
 		/* Start the cd spinning if necessary. */
