@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.8 2005/09/16 23:19:42 drahn Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.9 2005/09/21 23:12:10 drahn Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -152,18 +152,19 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		if (type == RELOC_NONE)
 			continue;
 
-		this = sym = object->dyn.symtab + ELF_R_SYM(rela->r_info);
+		sym = object->dyn.symtab + ELF_R_SYM(rela->r_info);
 		sobj = object;
 		symn = object->dyn.strtab + sym->st_name;
 		pt = (Elf_Addr *)(rela->r_offset + loff);
 
 		ooff = 0;
+		this = 	NULL;
 		if (ELF_R_SYM(rela->r_info) && sym->st_name) {
 			ooff = _dl_find_symbol_bysym(object,
 			    ELF_R_SYM(rela->r_info), &this,
 			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
 			    ((type == RELOC_DIR32) ? SYM_NOTPLT : SYM_PLT),
-			    sym->st_size, &sobj);
+			    sym, &sobj);
 			if (!this) {
 				_dl_printf("%s: %s: can't resolve reference '%s'\n",
 				    _dl_progname, object->load_name, symn);
@@ -234,21 +235,23 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			break;
 
 		case RELOC_COPY:
+		{
+			const Elf32_Sym *cpysrc = NULL;
 			size = sym->st_size;
-			ooff = _dl_find_symbol(symn, &sym,
+			ooff = _dl_find_symbol(symn, &cpysrc,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    size, object, NULL);
-			if (sym) {
-				_dl_bcopy((void *)(ooff + sym->st_value),
+			    sym, object, NULL);
+			if (cpysrc) {
+				_dl_bcopy((void *)(ooff + cpysrc->st_value),
 				    pt, sym->st_size);
 				DL_DEB(("[%x]COPY: %s[%x]:%s -> %p[%x] in %s\n",
-				    i, symn, ooff + sym->st_value,
+				    i, symn, ooff + cpysrc->st_value,
 				    object->load_name, pt, sym->st_size,
 				    sobj->load_name));
 			} else
 				DL_DEB(("[%x]COPY: no sym\n", i));
 			break;
-
+		}
 		default:
 			DL_DEB(("[%x]UNKNOWN(%d): type=%d off=0x%lx "
 			    "addend=0x%lx rel=0x%x\n", i, type,
@@ -278,13 +281,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->got_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object, NULL );
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL );
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object, NULL);
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
@@ -344,8 +347,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size,
-	    object, &sobj);
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */

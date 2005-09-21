@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2005/09/16 23:19:42 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.8 2005/09/21 23:12:10 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -239,7 +239,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 				    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
 				    ((type == R_TYPE(JUMP_SLOT)) ?
 					SYM_PLT : SYM_NOTPLT),
-				    sym->st_size, NULL);
+				    sym, NULL);
 				if (this == NULL) {
 resolve_failed:
 					_dl_printf("%s: %s: can't resolve "
@@ -265,17 +265,16 @@ resolve_failed:
 			void *dstaddr = where;
 			const void *srcaddr;
 			const Elf_Sym *dstsym = sym, *srcsym = NULL;
-			size_t size = dstsym->st_size;
 			Elf_Addr soff;
 
 			soff = _dl_find_symbol(symn, &srcsym,
 			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    size, object, NULL);
+			    dstsym, object, NULL);
 			if (srcsym == NULL)
 				goto resolve_failed;
 
 			srcaddr = (void *)(soff + srcsym->st_value);
-			_dl_bcopy(srcaddr, dstaddr, size);
+			_dl_bcopy(srcaddr, dstaddr, dstsym->st_size);
 			continue;
 		}
 
@@ -347,15 +346,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->got_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, 0,
-	    object, NULL);
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__got_end", &this,
-	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, 0,
-	    object, NULL);
+	    SYM_SEARCH_OBJ|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, object, NULL);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
@@ -409,8 +406,9 @@ _dl_bind(elf_object_t *object, int relidx)
 	sym += ELF_R_SYM(rel->r_info);
 	symn = object->dyn.strtab + sym->st_name;
 
+	this = NULL;
 	ooff = _dl_find_symbol(symn,  &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size,
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym,
 	    object, NULL);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");

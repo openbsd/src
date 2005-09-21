@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.88 2005/09/19 02:31:04 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.89 2005/09/21 23:12:09 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -507,7 +507,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		sym = NULL;
 		ooff = _dl_find_symbol("atexit", &sym,
 		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
-		    0, dyn_obj, &sobj);
+		    NULL, dyn_obj, &sobj);
 		if (sym == NULL)
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
 		else
@@ -841,7 +841,7 @@ _dl_fixup_user_env(void)
 
 	sym = NULL;
 	ooff = _dl_find_symbol("environ", &sym,
-	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, &dummy_obj, NULL);
+	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, NULL, &dummy_obj, NULL);
 	if (sym != NULL)
 		*((char ***)(sym->st_value + ooff)) = _dl_so_envp;
 }

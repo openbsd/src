@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.31 2005/09/19 21:08:43 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.32 2005/09/21 23:12:09 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -211,7 +211,7 @@ int _dl_symcachestat_lookups;
 
 Elf_Addr
 _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
-    const Elf_Sym **ref, int flags, int req_size, const elf_object_t **pobj)
+    const Elf_Sym **this, int flags, const Elf_Sym *ref_sym, const elf_object_t **pobj)
 {
 	Elf_Addr ret;
 	const Elf_Sym *sym;
@@ -227,7 +227,7 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 
 		_dl_symcachestat_hits++;
 		sobj = _dl_symcache[symidx].obj;
-		*ref = _dl_symcache[symidx].sym;
+		*this = _dl_symcache[symidx].sym;
 		if (pobj)
 			*pobj = sobj;
 		return sobj->load_offs;
@@ -237,14 +237,14 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 	sym += symidx;
 	symn = req_obj->dyn.strtab + sym->st_name;
 
-	ret = _dl_find_symbol(symn, ref, flags, req_size, req_obj, &sobj);
+	ret = _dl_find_symbol(symn, this, flags, ref_sym, req_obj, &sobj);
 
 	if (pobj)
 		*pobj = sobj;
 
 	if ((_dl_symcache != NULL) &&
 	     (symidx < req_obj->nchains)) {
-		_dl_symcache[symidx].sym = *ref;
+		_dl_symcache[symidx].sym = *this;
 		_dl_symcache[symidx].obj = sobj;
 		_dl_symcache[symidx].flags = flags;
 	}
@@ -253,8 +253,9 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 }
 
 Elf_Addr
-_dl_find_symbol(const char *name, const Elf_Sym **ref,
-    int flags, int req_size, elf_object_t *req_obj, const elf_object_t **pobj)
+_dl_find_symbol(const char *name, const Elf_Sym **this,
+    int flags, const Elf_Sym *ref_sym, elf_object_t *req_obj,
+    const elf_object_t **pobj)
 {
 	const Elf_Sym *weak_sym = NULL;
 	unsigned long h = 0;
@@ -273,7 +274,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 	}
 
 	if (req_obj->dyn.symbolic)
-		if (_dl_find_symbol_obj(req_obj, name, h, flags, ref, &weak_sym,
+		if (_dl_find_symbol_obj(req_obj, name, h, flags, this, &weak_sym,
 		    &weak_object)) {
 			object = req_obj;
 			found = 1;
@@ -281,20 +282,20 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 		}
 
 	if (flags & SYM_SEARCH_OBJ) {
-		if (_dl_find_symbol_obj(req_obj, name, h, flags, ref,
+		if (_dl_find_symbol_obj(req_obj, name, h, flags, this,
 		    &weak_sym, &weak_object)) {
 			object = req_obj;
 			found = 1;
 		}
 	} else if (flags & SYM_DLSYM) {
-		if (_dl_find_symbol_obj(req_obj, name, h, flags, ref,
+		if (_dl_find_symbol_obj(req_obj, name, h, flags, this,
 		    &weak_sym, &weak_object)) {
 			object = req_obj;
 			found = 1;
 		}
 		if (weak_object != NULL && found == 0) {
 			object=weak_object;
-			*ref = weak_sym;
+			*this = weak_sym;
 			found = 1;
 		}
 		/* search dlopened obj and all children */
@@ -303,7 +304,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 			TAILQ_FOREACH(n, &req_obj->load_object->dload_list,
 			    next_sib) {
 				if (_dl_find_symbol_obj(n->data, name, h,
-				    flags, ref,
+				    flags, this,
 				    &weak_sym, &weak_object)) {
 					object = n->data;
 					found = 1;
@@ -339,7 +340,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 				    (m->data == req_obj))
 					continue;
 				if (_dl_find_symbol_obj(m->data, name, h, flags,
-				    ref, &weak_sym, &weak_object)) {
+				    this, &weak_sym, &weak_object)) {
 					object = m->data;
 					found = 1;
 					goto found;
@@ -351,7 +352,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **ref,
 found:
 	if (weak_object != NULL && found == 0) {
 		object=weak_object;
-		*ref = weak_sym;
+		*this = weak_sym;
 		found = 1;
 	}
 
@@ -363,8 +364,9 @@ found:
 		return (0);
 	}
 
-	if (req_size != (*ref)->st_size && req_size != 0 &&
-	    (ELF_ST_TYPE((*ref)->st_info) != STT_FUNC)) {
+	if (ref_sym != NULL && ref_sym->st_size != 0 &&
+	    (ref_sym->st_size != (*this)->st_size)  &&
+	    (ELF_ST_TYPE((*this)->st_info) != STT_FUNC) ) {
 		_dl_printf("%s:%s: %s : WARNING: "
 		    "symbol(%s) size mismatch, relink your program\n",
 		    _dl_progname, req_obj->load_name,
@@ -379,7 +381,7 @@ found:
 
 int
 _dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
-    int flags, const Elf_Sym **ref, const Elf_Sym **weak_sym,
+    int flags, const Elf_Sym **this, const Elf_Sym **weak_sym,
     elf_object_t **weak_object)
 {
 	const Elf_Sym	*symt = object->dyn.symtab;
@@ -400,7 +402,7 @@ _dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
 			continue;
 
 		symn = strt + sym->st_name;
-		if (sym != *ref && _dl_strcmp(symn, name))
+		if (sym != *this && _dl_strcmp(symn, name))
 			continue;
 
 		/* allow this symbol if we are referring to a function
@@ -417,7 +419,7 @@ _dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
 		}
 
 		if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-			*ref = sym;
+			*this = sym;
 			return 1;
 		} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
 			if (!*weak_sym) {
