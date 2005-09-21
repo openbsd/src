@@ -65,6 +65,8 @@
 	#define	RAD_MICROSOFT_MS_SECONDARY_NBNS_SERVER		31
 	#define	RAD_MICROSOFT_MS_ARAP_CHALLENGE			33
 
+#define SALT_LEN    2
+
 struct rad_handle;
 
 __BEGIN_DECLS
