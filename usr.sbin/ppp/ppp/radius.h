@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.h,v 1.12 2005/09/21 01:16:05 brad Exp $
+ *	$OpenBSD: radius.h,v 1.13 2005/09/21 01:43:07 brad Exp $
  */
 
 #define	MPPE_POLICY_ALLOWED	1
@@ -74,8 +74,18 @@ struct radacct {
   char session_id[256];		/* Unique session ID */
   char multi_session_id[51];	/* Unique MP session ID */
   int  authentic;		/* How the session has been authenticated */
-  struct in_addr ip;
-  struct in_addr mask;
+  u_short proto;		/* Protocol number */
+  union {
+    struct {
+      struct in_addr addr;
+      struct in_addr mask;
+    } ip;
+#ifndef NOINET6
+    struct {
+      u_char ifid[8];
+    } ipv6;
+#endif
+  };
 };
 
 #define descriptor2radius(d) \
@@ -90,9 +100,13 @@ extern void radius_Show(struct radius *, struct prompt *);
 extern int radius_Authenticate(struct radius *, struct authinfo *,
                                const char *, const char *, int,
                                const char *, int);
+extern void radius_Account_Set_Ip(struct radacct *, struct in_addr *,
+				  struct in_addr *);
+#ifndef NOINET6
+extern void radius_Account_Set_Ipv6(struct radacct *, u_char *);
+#endif
 extern void radius_Account(struct radius *, struct radacct *,
-                           struct datalink *, int, struct in_addr *,
-                           struct in_addr *, struct pppThroughput *);
+                           struct datalink *, int, struct pppThroughput *);
 
 /* An (int) parameter to radius_Account, from radlib.h */
 #if !defined(RAD_START)
