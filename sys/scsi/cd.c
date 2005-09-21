@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.89 2005/09/21 03:10:57 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.90 2005/09/21 03:36:07 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -314,11 +314,12 @@ cdopen(dev, flag, fmt, p)
 {
 	struct scsi_link *sc_link;
 	struct cd_softc *cd;
-	int unit, part;
-	int error = 0;
+	int error = 0, part, rawopen, unit;
 
 	unit = CDUNIT(dev);
 	part = CDPART(dev);
+
+	rawopen = (part == RAW_PART) && (fmt == S_IFCHR);
 
 	cd = cdlookup(unit);
 	if (cd == NULL)
@@ -340,7 +341,7 @@ cdopen(dev, flag, fmt, p)
 		 * disallow further opens.
 		 */
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-			if (part == RAW_PART && fmt == S_IFCHR)
+			if (rawopen)
 				goto out;
 			error = EIO;
 			goto bad;
@@ -352,8 +353,8 @@ cdopen(dev, flag, fmt, p)
 		 * and don't ignore NOT_READY.
 		 */
 		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_CD,
-		    ((part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0) |
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    (rawopen ? SCSI_SILENT : 0) | SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE);
 			
 		/* Start the cd spinning if necessary. */
 		if (error == EIO)
@@ -362,7 +363,7 @@ cdopen(dev, flag, fmt, p)
 			    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
 		if (error) {
-			if (part == RAW_PART && fmt == S_IFCHR) {
+			if (rawopen) {
 				error = 0;
 				goto out;
 			} else
