@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.8,v 1.7 2005/07/09 07:53:26 jmc Exp $
+.\" $OpenBSD: sasyncd.8,v 1.8 2005/09/21 07:44:06 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm sasyncd
-.Nd IPSec SA synchronization daemon for failover gateways
+.Nd IPsec SA synchronization daemon for failover gateways
 .Sh SYNOPSIS
 .Nm
 .Op Fl dv
@@ -40,7 +40,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon synchronizes IPSec SA and SPD information between a number of
+daemon synchronizes IPsec SA and SPD information between a number of
 failover IPsec gateways.
 The most typical scenario is to run
 .Nm
@@ -54,7 +54,7 @@ tracks all local IPsec SA changes and sends this information along to
 all slaves so they will have the same data.
 .Pp
 When a slave connects, or reconnects, the master will transmit a
-snapshot of all it's current IPsec SA and SPD information.
+snapshot of all its current IPsec SA and SPD information.
 .Ss Failover
 .Nm
 does not itself do any failover processing; the normal mode of
@@ -71,7 +71,7 @@ the daemon to a particular state; see
 .Ss sasyncd to sasyncd communication
 As
 .Nm
-will transmit IPSec SA key and policy information over a network not
+will transmit IPsec SA key and policy information over a network not
 guaranteed to be private,
 .Nm
 messages are protected using AES and SHA.
