@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.33 2005/09/21 15:04:29 brad Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.34 2005/09/21 16:28:47 brad Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -2341,6 +2341,14 @@ Generate LQR reports.
 Phase transition log output.
 .It Li Physical
 Dump physical level packet in hex.
+.It Li Radius
+Dump RADIUS information.
+RADIUS information resulting from the link coming up or down is logged at
+.Dq Phase
+level unless
+.Dq Radius
+logging is enabled.
+This log level is most useful for monitoring RADIUS alive information.
 .It Li Sync
 Dump sync level packet in hex.
 .It Li TCP/IP
@@ -5549,6 +5557,16 @@ to function.
 .Pp
 Values received from the RADIUS server may be viewed using
 .Ic show bundle .
+.It Ic set rad_alive Ar timeout
+When RADIUS is configured, setting
+.Dq rad_alive
+to a non-zero
+.Ar timeout
+value will tell
+.Nm
+to sent RADIUS accounting information to the RADIUS server every
+.Ar timeout
+seconds.
 .It Ic set reconnect Ar timeout ntries
 Should the line drop unexpectedly (due to loss of CD or LQR
 failure), a connection will be re-established after the given

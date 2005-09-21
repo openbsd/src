@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.90 2005/09/21 15:04:28 brad Exp $
+ * $OpenBSD: command.c,v 1.91 2005/09/21 16:28:47 brad Exp $
  */
 
 #include <sys/param.h>
@@ -142,6 +142,7 @@
 #define	VAR_IFQUEUE	35
 #define	VAR_MPPE	36
 #define	VAR_IPV6CPRETRY	37
+#define	VAR_RAD_ALIVE	38
 
 /* ``accept|deny|disable|enable'' masks */
 #define NEG_HISMASK (1)
@@ -2028,6 +2029,29 @@ SetVariable(struct cmdargs const *arg)
     }
     break;
 
+#ifndef NORADIUS
+  case VAR_RAD_ALIVE:
+    if (arg->argc > arg->argn + 2) {
+      log_Printf(LogWARN, "Too many RADIUS alive interval values\n");
+      res = 1;
+    } else if (arg->argc == arg->argn) {
+      log_Printf(LogWARN, "Too few RADIUS alive interval values\n");
+      res = 1;
+    } else {
+      arg->bundle->radius.alive.interval = atoi(argp);
+      if (arg->bundle->radius.alive.interval && !arg->bundle->radius.cfg.file) {
+        log_Printf(LogWARN, "rad_alive requires radius to be configured\n");
+	res = 1;
+      } else if (arg->bundle->ncp.ipcp.fsm.state == ST_OPENED) {
+	if (arg->bundle->radius.alive.interval)
+	  radius_StartTimer(arg->bundle);
+	else
+	  radius_StopTimer(&arg->bundle->radius);
+      }
+    }
+    break;
+#endif
+
   case VAR_LQRPERIOD:
     long_val = atol(argp);
     if (long_val < MIN_LQRPERIOD) {
@@ -2343,7 +2367,7 @@ static struct cmdtab const SetCommands[] = {
    "set lcpretry value [attempts]", (const void *)VAR_LCPRETRY},
   {"log", NULL, log_SetLevel, LOCAL_AUTH, "log level",
   "set log [local] [+|-]all|async|cbcp|ccp|chat|command|connect|debug|dns|hdlc|"
-  "id0|ipcp|lcp|lqm|phase|physical|sync|tcp/ip|timer|tun..."},
+  "id0|ipcp|lcp|lqm|phase|physical|radius|sync|tcp/ip|timer|tun..."},
   {"login", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX,
   "login script", "set login chat-script", (const void *) VAR_LOGIN},
   {"logout", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX,
@@ -2373,6 +2397,9 @@ static struct cmdtab const SetCommands[] = {
 #ifndef NORADIUS
   {"radius", NULL, SetVariable, LOCAL_AUTH,
   "RADIUS Config", "set radius cfgfile", (const void *)VAR_RADIUS},
+  {"rad_alive", NULL, SetVariable, LOCAL_AUTH,
+  "Raduis alive interval", "set rad_alive value",
+  (const void *)VAR_RAD_ALIVE},  
 #endif
   {"reconnect", NULL, datalink_SetReconnect, LOCAL_AUTH | LOCAL_CX,
   "Reconnect timeout", "set reconnect value ntries"},
