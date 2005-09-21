@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.78 2005/09/21 08:33:03 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.79 2005/09/21 08:36:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1047,6 +1047,9 @@ ami_cmd(ccb, flags, wait)
 			return (error);
 		}
 
+		if (cmd->acc_cmd == AMI_PASSTHRU)
+			cmd->acc_passthru.apt_data = ccb->ccb_ptpa;
+
 		sgd = dmap->dm_segs;
 		AMI_DPRINTF(AMI_D_DMA, ("data=%p/%u<0x%lx/%u",
 		    ccb->ccb_data, ccb->ccb_len,
@@ -1055,8 +1058,13 @@ ami_cmd(ccb, flags, wait)
 		if(dmap->dm_nsegs > 1) {
 			struct ami_sgent *sgl = ccb->ccb_sglist;
 
-			cmd->acc_mbox.amb_nsge = dmap->dm_nsegs;
-			cmd->acc_mbox.amb_data = ccb->ccb_sglistpa;
+			if (cmd->acc_cmd == AMI_PASSTHRU) {
+				ccb->ccb_pt->apt_nsg = dmap->dm_nsegs;
+				ccb->ccb_pt->apt_data = ccb->ccb_sglistpa;
+			} else {
+				cmd->acc_mbox.amb_nsge = dmap->dm_nsegs;
+				cmd->acc_mbox.amb_data = ccb->ccb_sglistpa;
+			}
 
 			for (i = 0; i < dmap->dm_nsegs; i++, sgd++) {
 				sgl[i].asg_addr = htole32(sgd->ds_addr);
@@ -1066,8 +1074,13 @@ ami_cmd(ccb, flags, wait)
 					    sgd->ds_addr, sgd->ds_len));
 			}
 		} else {
-			cmd->acc_mbox.amb_nsge = 0;
-			cmd->acc_mbox.amb_data = htole32(sgd->ds_addr);
+			if (cmd->acc_cmd == AMI_PASSTHRU) {
+				ccb->ccb_pt->apt_nsg = 0;
+				ccb->ccb_pt->apt_data = htole32(sgd->ds_addr);
+			} else {
+				cmd->acc_mbox.amb_nsge = 0;
+				cmd->acc_mbox.amb_data = htole32(sgd->ds_addr);
+			}
 		}
 		AMI_DPRINTF(AMI_D_DMA, ("> "));
 
@@ -1331,64 +1344,17 @@ ami_scsi_raw_cmd(xs)
 	struct device *dev = link->device_softc;
 	struct ami_ccb *ccb;
 	struct ami_iocmd *cmd;
-	struct ami_passthrough *ps;
 	int error;
-	int direction;
 	ami_lock_t lock;
-	void *idata;
-	bus_dmamap_t idatamap;
-	bus_dma_segment_t idataseg[1];
-	paddr_t pa;
 	char type;
 
 	AMI_DPRINTF(AMI_D_CMD, ("ami_scsi_raw_cmd "));
 
 	lock = AMI_LOCK_AMI(sc);
 
-	/*
-	 * do this early to prevent default cases later on that don't make sense
-	 */
-	switch (xs->cmd->opcode) {
-	/* to target */
-	case TEST_UNIT_READY:
-	case START_STOP:
-	case PREVENT_ALLOW:
-	case WRITE_COMMAND:
-	case WRITE_BIG:
-	case SYNCHRONIZE_CACHE:
-	case SEND_DIAGNOSTIC:
-	case WRITE_BUFFER:
-		direction = AMI_PT_OUT;
-		break;
-	/* from target */
-	case REQUEST_SENSE:
-	case INQUIRY:
-	case MODE_SENSE:
-	case READ_CAPACITY:
-	case READ_COMMAND:
-	case READ_BIG:
-	case READ_BUFFER:
-	case RECEIVE_DIAGNOSTIC:
-		if (!cold)	/* XXX bogus */
-			if (target == rsc->sc_proctarget)
-				strlcpy(rsc->sc_procdev, dev->dv_xname,
-				    sizeof(rsc->sc_procdev));
-
-		direction = AMI_PT_IN;
-		break;
-
-	default:
-		printf("%s: unsupported command(0x%02x)\n",
-		    sc->sc_dev.dv_xname, xs->cmd->opcode);
-		bzero(&xs->sense, sizeof(xs->sense));
-		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
-		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
-		xs->error = XS_SENSE;
-		scsi_done(xs);
-		AMI_UNLOCK_AMI(sc, lock);
-		return (COMPLETE);
-	}
+	if (!cold && target == rsc->sc_proctarget)
+		strlcpy(rsc->sc_procdev, dev->dv_xname,
+		    sizeof(rsc->sc_procdev));
 
 	if (xs->cmdlen > AMI_MAX_CDB) {
 		AMI_DPRINTF(AMI_D_CMD, ("CDB too big %p ", xs));
@@ -1397,15 +1363,6 @@ ami_scsi_raw_cmd(xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
-		scsi_done(xs);
-		AMI_UNLOCK_AMI(sc, lock);
-		return (COMPLETE);
-	}
-
-	if (xs->datalen > NBPG - 128) {
-		printf("%s: xs->datalen too big(%d)\n", sc->sc_dev.dv_xname,
-		    xs->datalen);
-		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		AMI_UNLOCK_AMI(sc, lock);
 		return (COMPLETE);
@@ -1420,52 +1377,25 @@ ami_scsi_raw_cmd(xs)
 		return (COMPLETE);
 	}
 
-	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG, 1,
-	    "ami raw"))) {
-	    	ami_put_ccb(ccb);
-		xs->error = XS_DRIVER_STUFFUP;
-		scsi_done(xs);
-		AMI_UNLOCK_AMI(sc, lock);
-		return (COMPLETE);
-	}
-
-	ccb->ami_pt.idata = idata;
-	ccb->ami_pt.dir = direction;
-	ps = idata;
-	pa = idataseg[0].ds_addr;
-	ps = (struct ami_passthrough *)idata;
-
-	memset(ps, 0, sizeof *ps);
+	memset(ccb->ccb_pt, 0, sizeof(struct ami_passthrough));
 
 	ccb->ccb_xs = xs;
 	ccb->ccb_len  = xs->datalen;
-	ccb->ccb_data = NULL;
+	ccb->ccb_data = xs->data;
 	
-	ps->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
-	ps->apt_channel = channel;
-	ps->apt_target = target;
-	bcopy(xs->cmd, ps->apt_cdb, AMI_MAX_CDB);
-	ps->apt_ncdb = xs->cmdlen;
-	ps->apt_nsense = AMI_MAX_SENSE;
-	ps->apt_data = htole32(pa + sizeof *ps);
-	ps->apt_datalen = xs->datalen;
+	ccb->ccb_pt->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
+	ccb->ccb_pt->apt_channel = channel;
+	ccb->ccb_pt->apt_target = target;
+	bcopy(xs->cmd, ccb->ccb_pt->apt_cdb, AMI_MAX_CDB);
+	ccb->ccb_pt->apt_ncdb = xs->cmdlen;
+	ccb->ccb_pt->apt_nsense = AMI_MAX_SENSE;
+	ccb->ccb_pt->apt_datalen = xs->datalen;
 
 	cmd = ccb->ccb_cmd;
 	cmd->acc_cmd = AMI_PASSTHRU;
-	cmd->acc_passthru.apt_data = htole32(pa);
-
-	if (ccb->ami_pt.dir == AMI_PT_OUT)
-		memcpy(ccb->ami_pt.idata + sizeof *ps, xs->data, xs->datalen);
-
-	if ((xs->flags & SCSI_POLL) == 0)
-		ccb->ccb_wakeup = 1;
 
 	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP) ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
-		ami_freemem(ccb->ami_pt.idata, sc->dmat, &idatamap, idataseg,
-		    NBPG, 1, "ami raw");
-		ccb->ami_pt.idata = NULL;
-
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		AMI_UNLOCK_AMI(sc, lock);
@@ -1474,28 +1404,23 @@ ami_scsi_raw_cmd(xs)
 
 	if (xs->flags & SCSI_POLL) {
 		if (xs->cmd->opcode == INQUIRY) {
-			type = *((char *)idata + sizeof *ps) & SID_TYPE;
+			type = ((struct scsi_inquiry_data *)xs->data)->device
+			    & SID_TYPE;
 
 			if (!(type == T_PROCESSOR || type == T_ENCLOSURE))
 				xs->error = XS_DRIVER_STUFFUP;
 			else
-				rsc->sc_proctarget = target; /* save off target */
+				rsc->sc_proctarget = target; /* save target */
 		}
-		if (direction == AMI_PT_IN)
-			memcpy(xs->data, idata + sizeof *ps, xs->datalen);
 
 		scsi_done(xs);
-	} else {
-		while (ccb->ccb_wakeup)
-			tsleep(ccb, PRIBIO, "ami_pt", 0);
-
-		ami_put_ccb(ccb);
 	}
 
-	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "ami raw");
-
 	AMI_UNLOCK_AMI(sc, lock);
-	return (COMPLETE);
+	if (xs->flags & SCSI_POLL)
+		return (COMPLETE);
+	else
+		return (SUCCESSFULLY_QUEUED);
 }
 
 int
