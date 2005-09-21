@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.35 2005/09/21 16:28:47 brad Exp $
+ *	$OpenBSD: radius.c,v 1.36 2005/09/21 16:58:34 brad Exp $
  *
  */
 
@@ -680,6 +680,25 @@ static void
 radius_Read(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
 {
   radius_Continue(descriptor2radius(d), 1);
+}
+
+/*
+ * Flush any pending transactions
+ */
+void
+radius_Flush(struct radius *r)
+{
+  struct timeval tv;
+  fd_set s;
+
+  while (r->cx.fd != -1) {
+    FD_ZERO(&s);
+    FD_SET(r->cx.fd, &s);
+    tv.tv_sec = 0;
+    tv.tv_usec = TICKUNIT;
+    select(r->cx.fd + 1, &s, NULL, NULL, &tv);
+    radius_Continue(r, 1);
+  }
 }
 
 /*

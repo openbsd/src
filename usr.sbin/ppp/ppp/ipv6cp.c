@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipv6cp.c,v 1.8 2005/09/21 01:43:07 brad Exp $
+ * $OpenBSD: ipv6cp.c,v 1.9 2005/09/21 16:58:34 brad Exp $
  */
 
 #include <sys/param.h>
@@ -526,6 +526,7 @@ ipv6cp_LayerDown(struct fsm *fp)
     log_Printf(LogIPV6CP, "%s: LayerDown: %s\n", fp->link->name, addr);
 
 #ifndef NORADIUS
+    radius_Flush(&fp->bundle->radius);
     radius_Account(&fp->bundle->radius, &fp->bundle->radacct6,
 		   fp->bundle->links, RAD_STOP, &ipv6cp->throughput);
 

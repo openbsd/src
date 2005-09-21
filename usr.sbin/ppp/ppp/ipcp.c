@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipcp.c,v 1.43 2005/09/21 16:28:47 brad Exp $
+ * $OpenBSD: ipcp.c,v 1.44 2005/09/21 16:58:34 brad Exp $
  */
 
 #include <sys/param.h>
@@ -872,6 +872,7 @@ IpcpLayerDown(struct fsm *fp)
     log_Printf(LogIPCP, "%s: LayerDown: %s\n", fp->link->name, addr);
 
 #ifndef NORADIUS
+    radius_Flush(&fp->bundle->radius);
     radius_Account(&fp->bundle->radius, &fp->bundle->radacct,
                    fp->bundle->links, RAD_STOP, &ipcp->throughput);
 
