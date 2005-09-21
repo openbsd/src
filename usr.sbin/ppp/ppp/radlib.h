@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib.h,v 1.5 2005/09/21 00:50:56 brad Exp $
+ *	$OpenBSD: radlib.h,v 1.6 2005/09/21 13:44:55 brad Exp $
  */
 
 #ifndef _RADLIB_H_
@@ -98,6 +98,8 @@
 #define RAD_FRAMED_APPLETALK_NETWORK	38	/* Integer */
 #define RAD_FRAMED_APPLETALK_ZONE	39	/* Integer */
      /* reserved for accounting		40-59 */
+#define RAD_ACCT_INPUT_GIGAWORDS	52
+#define RAD_ACCT_OUTPUT_GIGAWORDS	53
 #define RAD_CHAP_CHALLENGE		60	/* String */
 #define RAD_NAS_PORT_TYPE		61	/* Integer */
 	#define RAD_ASYNC			0

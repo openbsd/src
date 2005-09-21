@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.30 2005/09/21 02:07:25 brad Exp $
+ *	$OpenBSD: radius.c,v 1.31 2005/09/21 13:44:55 brad Exp $
  *
  */
 
@@ -93,6 +93,10 @@
 #include "ncp.h"
 #include "bundle.h"
 #include "proto.h"
+
+#if !defined(UINT32_MAX)
+#define	UINT32_MAX	0xffffffffU
+#endif
 
 #ifndef NODES
 struct mschap_response {
@@ -1147,9 +1151,11 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
 
   if (acct_type == RAD_STOP)
   /* Show some statistics */
-    if (rad_put_int(r->cx.rad, RAD_ACCT_INPUT_OCTETS, stats->OctetsIn) != 0 ||
+    if (rad_put_int(r->cx.rad, RAD_ACCT_INPUT_OCTETS, stats->OctetsIn % UINT32_MAX) != 0 ||
+        rad_put_int(r->cx.rad, RAD_ACCT_INPUT_GIGAWORDS, stats->OctetsIn / UINT32_MAX) != 0 ||
         rad_put_int(r->cx.rad, RAD_ACCT_INPUT_PACKETS, stats->PacketsIn) != 0 ||
-        rad_put_int(r->cx.rad, RAD_ACCT_OUTPUT_OCTETS, stats->OctetsOut) != 0 ||
+        rad_put_int(r->cx.rad, RAD_ACCT_OUTPUT_OCTETS, stats->OctetsOut % UINT32_MAX) != 0 ||
+        rad_put_int(r->cx.rad, RAD_ACCT_OUTPUT_GIGAWORDS, stats->OctetsOut / UINT32_MAX) != 0 ||
         rad_put_int(r->cx.rad, RAD_ACCT_OUTPUT_PACKETS, stats->PacketsOut)
         != 0 ||
         rad_put_int(r->cx.rad, RAD_ACCT_SESSION_TIME, throughput_uptime(stats))
