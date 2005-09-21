@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.24 2005/09/21 08:33:04 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.25 2005/09/21 08:52:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -38,12 +38,6 @@ struct ami_ccb {
 	struct ami_sgent	*ccb_sglist;
 	paddr_t			ccb_sglistpa;
 	struct scsi_xfer	*ccb_xs;
-	struct {
-		void *idata;
-		int dir;
-#define AMI_PT_IN	(0x00)
-#define AMI_PT_OUT	(0x01)
-	} ami_pt;
 	volatile int		ccb_wakeup;
 	TAILQ_ENTRY(ami_ccb)	ccb_link;
 	enum {

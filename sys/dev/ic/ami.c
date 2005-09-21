@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.80 2005/09/21 08:39:15 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.81 2005/09/21 08:52:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -172,7 +172,6 @@ ami_put_ccb(ccb)
 
 	ccb->ccb_state = AMI_CCB_FREE;
 	ccb->ccb_wakeup = 0;
-	ccb->ami_pt.idata = NULL;
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 }
 
@@ -1254,22 +1253,17 @@ ami_done(sc, idx)
 
 	if (xs) {
 		timeout_del(&xs->stimeout);
-		if (ccb->ami_pt.idata) {/* this is on the pt bus */
-			if (ccb->ami_pt.dir == AMI_PT_IN)
-				memcpy(xs->data, ccb->ami_pt.idata +
-				    sizeof(struct ami_passthrough),
-				    xs->datalen);
-		} else {
-			if (xs->cmd->opcode != PREVENT_ALLOW &&
-			    xs->cmd->opcode != SYNCHRONIZE_CACHE)
-				bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
-				    ccb->ccb_dmamap->dm_mapsize,
-				    (xs->flags & SCSI_DATA_IN) ?
-				    BUS_DMASYNC_POSTREAD :
-				    BUS_DMASYNC_POSTWRITE);
 
-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
-		}
+		if (xs->cmd->opcode != PREVENT_ALLOW &&
+		    xs->cmd->opcode != SYNCHRONIZE_CACHE)
+			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+			    ccb->ccb_dmamap->dm_mapsize,
+			    (xs->flags & SCSI_DATA_IN) ?
+			    BUS_DMASYNC_POSTREAD :
+			    BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
+
 		ccb->ccb_xs = NULL;
 	} else {
 		struct ami_iocmd *cmd = ccb->ccb_cmd;
