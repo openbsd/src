@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.34 2005/09/21 16:28:47 brad Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.35 2005/09/21 21:20:38 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -3111,7 +3111,7 @@ sends the
 attribute to the RADIUS server when RADIUS is in use
 .Pq see Dq set radius .
 .Pp
-Note, at least one of
+Note: at least one of
 .Dq NAS-IP-Address
 and
 .Dq NAS-Identifier
@@ -3121,12 +3121,12 @@ Versions of
 .Nm
 prior to version 3.4.1 did not send the
 .Dq NAS-IP-Address
-atribute as it was reported to break the Radiator RADIUS server.
-As the latest rfc (2865) no longer hints that only one of
+attribute as it was reported to break the Radiator RADIUS server.
+As the latest RFC (2865) no longer hints that only one of
 .Dq NAS-IP-Address
 and
 .Dq NAS-Identifier
-should be sent (as rfc 2138 did),
+should be sent (as RFC 2138 did),
 .Nm
 now sends both and leaves it up to the administrator that chooses to use
 bad RADIUS implementations to
@@ -3140,7 +3140,7 @@ sends the
 attribute to the RADIUS server when RADIUS is in use
 .Pq see Dq set radius .
 .Pp
-Note, at least one of
+Note: at least one of
 .Dq NAS-IP-Address
 and
 .Dq NAS-Identifier
@@ -5465,11 +5465,11 @@ and
 are understood as valid values for
 .Ar dest
 and
-.Ar gw ,
+.Ar gw ;
 .Dq default
 can be used for
 .Ar dest
-to sepcify the default route, and
+to specify the default route; and
 .Dq ::
 is understood to be the same as
 .Dq default
