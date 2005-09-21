@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.52 2005/09/19 03:16:47 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.53 2005/09/21 20:32:19 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -156,6 +156,7 @@ dlsym(void *handle, const char *name)
 {
 	elf_object_t	*object;
 	elf_object_t	*dynobj;
+	const elf_object_t	*pobj;
 	void		*retval;
 	const Elf_Sym	*sym = NULL;
 	int flags;
@@ -196,14 +197,14 @@ dlsym(void *handle, const char *name)
 	}
 
 	retval = (void *)_dl_find_symbol(name, &sym,
-	    flags|SYM_NOWARNNOTFOUND, 0, object, NULL);
+	    flags|SYM_NOWARNNOTFOUND, NULL, object, &pobj);
 
 	if (sym != NULL) {
 		retval += sym->st_value;
 #ifdef __hppa__
 		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
 			retval = (void *)_dl_md_plabel((Elf_Addr)retval,
-			    object->dyn.pltgot);
+			    pobj->dyn.pltgot);
 #endif
 		DL_DEB(("dlsym: %s in %s: %p\n",
 		    name, object->load_name, retval));
