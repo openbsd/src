@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.32 2005/09/21 13:58:30 brad Exp $
+ *	$OpenBSD: radius.c,v 1.33 2005/09/21 14:08:51 brad Exp $
  *
  */
 
@@ -515,7 +515,7 @@ radius_Process(struct radius *r, int got)
                      * Only point at the String field if we don't think the
                      * peer has misformatted the response.
                      */
-                    ((const char *)data)++;
+                    data = (const char *)data + 1;
                     len--;
                   } else
                     log_Printf(LogWARN, "Warning: The MS-CHAP-Error "
@@ -542,7 +542,7 @@ radius_Process(struct radius *r, int got)
                      * Only point at the String field if we don't think the
                      * peer has misformatted the response.
                      */
-                    ((const char *)data)++;
+                    data = (const char *)data + 1;
                     len--;
                   } else
                     log_Printf(LogWARN, "Warning: The MS-CHAP2-Success "
