@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.77 2005/09/19 08:17:13 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.78 2005/09/21 08:33:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -323,6 +323,7 @@ ami_attach(sc)
 	struct ami_rawsoftc *rsc;
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
+	struct ami_passthrough *pt;
 	struct ami_sgent *sg;
 	bus_dmamap_t idatamap;
 	bus_dma_segment_t idataseg[1];
@@ -340,10 +341,15 @@ ami_attach(sc)
 	if (!sc->sc_cmds)
 		goto free_idata;
 
+	sc->sc_pts = ami_allocmem(sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
+	    sizeof(struct ami_passthrough), AMI_MAXCMDS+1, "ptlist");
+	if (!sc->sc_pts)
+		goto free_cmds;
+
 	sc->sc_sgents = ami_allocmem(sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
 	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS+1, "sglist");
 	if (!sc->sc_sgents)
-		goto free_cmds;
+		goto free_pts;
 
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_ccbdone);
@@ -352,9 +358,10 @@ ami_attach(sc)
 	/* 0th command is a mailbox */
 	for (ccb = &sc->sc_ccbs[AMI_MAXCMDS-1],
 	     cmd = sc->sc_cmds  + sizeof(*cmd) * AMI_MAXCMDS,
+	     pt = sc->sc_pts  + sizeof(*pt) * AMI_MAXCMDS,
 	     sg = sc->sc_sgents + sizeof(*sg)  * AMI_MAXCMDS * AMI_SGEPERCMD;
 	     cmd >= (struct ami_iocmd *)sc->sc_cmds;
-	     cmd--, ccb--, sg -= AMI_SGEPERCMD) {
+	     cmd--, ccb--, pt--, sg -= AMI_SGEPERCMD) {
 
 		cmd->acc_id = cmd - (struct ami_iocmd *)sc->sc_cmds;
 		if (cmd->acc_id) {
@@ -372,6 +379,9 @@ ami_attach(sc)
 			ccb->ccb_state = AMI_CCB_FREE;
 			ccb->ccb_cmdpa = htole32(sc->sc_cmdseg[0].ds_addr +
 			    cmd->acc_id * sizeof(*cmd));
+			ccb->ccb_pt = pt;
+			ccb->ccb_ptpa = htole32(sc->sc_ptseg[0].ds_addr +
+			    cmd->acc_id * sizeof(*pt));
 			ccb->ccb_sglist = sg;
 			ccb->ccb_sglistpa = htole32(sc->sc_sgseg[0].ds_addr +
 			    cmd->acc_id * sizeof(*sg) * AMI_SGEPERCMD);
@@ -632,6 +642,9 @@ destroy:
 
 	ami_freemem(sc->sc_sgents, sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
 	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS+1, "sglist");
+free_pts:
+	ami_freemem(sc->sc_pts, sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
+	    sizeof(struct ami_passthrough), AMI_MAXCMDS+1, "ptlist");
 free_cmds:
 	ami_freemem(sc->sc_cmds, sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
 	    sizeof(struct ami_iocmd), AMI_MAXCMDS+1, "command");
