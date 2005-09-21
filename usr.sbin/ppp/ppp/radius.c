@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.31 2005/09/21 13:44:55 brad Exp $
+ *	$OpenBSD: radius.c,v 1.32 2005/09/21 13:58:30 brad Exp $
  *
  */
 
@@ -827,6 +827,7 @@ radius_Authenticate(struct radius *r, struct authinfo *authp, const char *name,
   struct timeval tv;
   int got;
   char hostname[MAXHOSTNAMELEN];
+  char *mac_addr;
 #if 0
   struct hostent *hp;
   struct in_addr hostaddr;
@@ -967,6 +968,13 @@ radius_Authenticate(struct radius *r, struct authinfo *authp, const char *name,
     }
   }
 
+  if ((mac_addr = getenv("HISMACADDR")) != NULL &&
+      rad_put_string(r->cx.rad, RAD_CALLING_STATION_ID, mac_addr) != 0) {
+    log_Printf(LogERROR, "rad_put: %s\n", rad_strerror(r->cx.rad));
+    rad_close(r->cx.rad);
+    return 0;
+  }
+
   radius_put_physical_details(r->cx.rad, authp->physical);
 
   r->cx.auth = authp;
@@ -1015,6 +1023,7 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
   struct timeval tv;
   int got;
   char hostname[MAXHOSTNAMELEN];
+  char *mac_addr;
 #if 0
   struct hostent *hp;
   struct in_addr hostaddr;
@@ -1079,7 +1088,7 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
   switch (ac->proto) {
   case PROTO_IPCP:
     if (rad_put_addr(r->cx.rad, RAD_FRAMED_IP_ADDRESS,
-		     ac->peer.ip.addr) != 0 || \
+		     ac->peer.ip.addr) != 0 ||
 	rad_put_addr(r->cx.rad, RAD_FRAMED_IP_NETMASK,
 		     ac->peer.ip.mask) != 0) {
       log_Printf(LogERROR, "rad_put: %s\n", rad_strerror(r->cx.rad));
@@ -1113,6 +1122,13 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
     /* We don't log any protocol specific information */
     break;
    }
+
+  if ((mac_addr = getenv("HISMACADDR")) != NULL &&
+      rad_put_string(r->cx.rad, RAD_CALLING_STATION_ID, mac_addr) != 0) {
+    log_Printf(LogERROR, "rad_put: %s\n", rad_strerror(r->cx.rad));
+    rad_close(r->cx.rad);
+    return;
+  }
 
   if (gethostname(hostname, sizeof hostname) != 0)
     log_Printf(LogERROR, "rad_put: gethostname(): %s\n", strerror(errno));
