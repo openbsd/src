@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.172 2005/09/20 14:40:32 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.173 2005/09/21 13:35:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -704,7 +704,8 @@ rde_update_dispatch(struct imsg *imsg)
 			log_peer_warnx(&peer->conf, "bad AFI, IPv4 disabled");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    NULL, 0);
-			path_put(asp);
+			if (attrpath_len != 0)
+				path_put(asp);
 			return (-1);
 		}
 
@@ -777,6 +778,11 @@ rde_update_dispatch(struct imsg *imsg)
 		default:
 			/* silently ignore unsupported multiprotocol AF */
 			break;
+		}
+
+		if ((asp->flags & ~F_ATTR_MP_UNREACH) == 0) {
+			path_put(asp);
+			return (0);
 		}
 	}
 
