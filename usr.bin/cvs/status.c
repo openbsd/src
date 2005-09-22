@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.47 2005/09/05 20:03:22 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.48 2005/09/22 16:13:44 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -109,7 +109,7 @@ static int
 cvs_status_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
+		if ((verbose == 1) && (cvs_sendarg(root, "-v", 0) < 0))
 			return (CVS_EX_PROTO);
 	}
 
@@ -279,7 +279,7 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	else if (verbosity > 0)
 		cvs_printf("   Sticky Options:\t(none)\n");
 
-	if (verbose) {
+	if (verbose == 1) {
 		cvs_printf("\n");
 		cvs_printf("   Existing Tags:\n");
 
