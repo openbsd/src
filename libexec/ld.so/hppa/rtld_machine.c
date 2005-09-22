@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.10 2005/09/22 01:33:08 drahn Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.11 2005/09/22 04:07:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -158,7 +158,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		pt = (Elf_Addr *)(rela->r_offset + loff);
 
 		ooff = 0;
-		this = 	NULL;
+		this = NULL;
 		if (ELF_R_SYM(rela->r_info) && sym->st_name) {
 			ooff = _dl_find_symbol_bysym(object,
 			    ELF_R_SYM(rela->r_info), &this,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.2 2004/09/09 17:47:44 pefo Exp $ */
+/*	$OpenBSD: syscall.h,v 1.3 2005/09/22 04:07:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -289,55 +289,53 @@ _dl_lseek(int fd, off_t offset, int whence)
 extern inline int
 _dl_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 {
-        sigset_t sig_store;
-        sigset_t sig_store1;
+	sigset_t sig_store;
+	sigset_t sig_store1;
 
-        if (set != NULL) {
-                sig_store1 = *set;
-        } else {
-                sig_store1 = 0;
-        }
+	if (set != NULL)
+		sig_store1 = *set;
+	else
+		sig_store1 = 0;
 
-        __asm__ volatile (
+	__asm__ volatile (
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "li    $2,%1\n\t"
-            "syscall\n\t"
-            "move    %0, $2"
-            : "=r" (sig_store)
-            : "I" (SYS_sigprocmask), "r" (how), "r" (sig_store1)
+	    "syscall\n\t"
+	    "move    %0, $2"
+	    : "=r" (sig_store)
+	    : "I" (SYS_sigprocmask), "r" (how), "r" (sig_store1)
 	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
-        if (oset != NULL)
-                *oset = sig_store;
+	if (oset != NULL)
+		*oset = sig_store;
 
-        return 0;
+	return 0;
 }
 static inline int
 _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
     size_t newlen)
 {
-        register int status __asm__ ("$2");
+	register int status __asm__ ("$2");
 
-        __asm__ volatile (
-            "move  $4,%2\n\t"
-            "move  $5,%3\n\t"
-            "move  $6,%4\n\t"
-            "move  $7,%5\n\t"
-            "move  $8,%6\n\t"
-            "move  $9,%7\n\t"
+	__asm__ volatile (
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+	    "move  $6,%4\n\t"
+	    "move  $7,%5\n\t"
+	    "move  $8,%6\n\t"
+	    "move  $9,%7\n\t"
 	    "li    $2,%1\n\t"
-            "syscall\n\t"
-            "beqz   $2,1f\n\t"
-            "li    $2,-1\n\t"
-            "1:"
-            : "=r" (status)
-            : "I" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
-            "r" (oldplen), "r" (newp), "r" (newlen)
+	    "syscall\n\t"
+	    "beqz   $2,1f\n\t"
+	    "li    $2,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "I" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
+	    "r" (oldplen), "r" (newp), "r" (newlen)
 	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
-        return status;
+	return status;
 }
-
 
 #endif /*__DL_SYSCALL_H__*/

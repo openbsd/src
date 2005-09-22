@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.33 2005/09/22 01:33:07 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.34 2005/09/22 04:07:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -219,11 +219,11 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 	const elf_object_t *sobj;
 
 	_dl_symcachestat_lookups ++;
-	if ((_dl_symcache != NULL) &&
-	     (symidx < req_obj->nchains) &&
-	     (_dl_symcache[symidx].obj != NULL) &&
-	     (_dl_symcache[symidx].sym != NULL) &&
-	     (_dl_symcache[symidx].flags == flags)) {
+	if (_dl_symcache != NULL &&
+	    symidx < req_obj->nchains &&
+	    _dl_symcache[symidx].obj != NULL &&
+	    _dl_symcache[symidx].sym != NULL &&
+	    _dl_symcache[symidx].flags == flags) {
 
 		_dl_symcachestat_hits++;
 		sobj = _dl_symcache[symidx].obj;
@@ -242,8 +242,7 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 	if (pobj)
 		*pobj = sobj;
 
-	if ((_dl_symcache != NULL) &&
-	     (symidx < req_obj->nchains)) {
+	if (_dl_symcache != NULL && symidx < req_obj->nchains) {
 		_dl_symcache[symidx].sym = *this;
 		_dl_symcache[symidx].obj = sobj;
 		_dl_symcache[symidx].flags = flags;
@@ -317,7 +316,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 
 		if ((flags & SYM_SEARCH_SELF) || (flags & SYM_SEARCH_NEXT))
 			skip = 1;
-		
+
 		/*
 		 * search dlopened objects: global or req_obj == dlopened_obj
 		 * and and it's children
