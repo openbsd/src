@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.7 2005/08/27 13:32:01 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.8 2005/09/22 12:45:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -177,7 +177,7 @@ art_softc_attach(struct device *parent, struct device *self, void *aux)
 	timeout_add(&sc->art_onesec, hz);
 }
 
-/* interface ioctl */ 
+/* interface ioctl */
 int
 art_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
@@ -279,6 +279,7 @@ art_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmreq)
 	    ((struct channel_softc *)ifp->if_softc)->cc_parent;
 	ifmreq->ifm_status = ac->art_status;
 	ifmreq->ifm_active = ac->art_media;
+
 	return;
 }
 
@@ -315,6 +316,7 @@ art_onesec(void *arg)
 {
 	struct art_softc	*ac = arg;
 	struct ifnet		*ifp = ac->art_channel->cc_ifp;
+	struct sppp		*ppp = &ac->art_channel->cc_ppp;
 	int			 s, rv, link_state, baudrate, announce = 0;
 
 	ac->art_status = IFM_AVALID;
@@ -341,6 +343,12 @@ art_onesec(void *arg)
 
 	if (link_state != ifp->if_link_state) {
 		ifp->if_link_state = link_state;
+		s = splsoftnet();
+		if (link_state == LINK_STATE_UP)
+			ppp->pp_up(ppp);
+		else
+			ppp->pp_down(ppp);
+		splx(s);
 		announce = 1;
 	}
 
@@ -361,7 +369,7 @@ art_onesec(void *arg)
 	 * run musycc onesec job
 	 */
 	musycc_tick(ac->art_channel);
-	
+
 	/*
 	 * Schedule another timeout one second from now.
 	 */
