@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.19 2004/09/22 21:54:17 jaredy Exp $
+.\"     $OpenBSD: vnode.9,v 1.20 2005/09/22 14:33:08 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -186,7 +186,7 @@ They can be called on both active and inactive vnodes.
 When transitioning a vnode to the reclaimed state, the VFS will call
 .Xr VOP_RECLAIM 9
 method.
-File systems use this method to free any file-system specific data
+File systems use this method to free any file-system-specific data
 they attached to the vnode.
 .Ss Vnode locks
 The vnode actually has three different types of lock: the vnode lock,
