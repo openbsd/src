@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.35 2005/09/21 21:20:38 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.36 2005/09/22 13:59:45 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -5451,8 +5451,9 @@ keywords.
 .It RAD_FRAMED_IPV6_PREFIX
 If this attribute is supplied, the value is substituted for IPV6PREFIX
 in a command.
-You may pass it to such as DHCPv6 for delegating an
-IPv6 prefix to a peer.
+You may pass it to an upper layer protocol,
+such as DHCPv6,
+for delegating an IPv6 prefix to a peer.
 .It RAD_FRAMED_IPV6_ROUTE
 The received string is expected to be in the format
 .Ar dest Ns Op / Ns Ar bits
