@@ -1,0 +1,4 @@
+ad()
+{
+}
+int libglobal;
