@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2005/09/21 23:12:10 drahn Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.10 2005/09/22 01:33:08 drahn Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -162,13 +162,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		if (ELF_R_SYM(rela->r_info) && sym->st_name) {
 			ooff = _dl_find_symbol_bysym(object,
 			    ELF_R_SYM(rela->r_info), &this,
-			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|
+			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
 			    ((type == RELOC_DIR32) ? SYM_NOTPLT : SYM_PLT),
 			    sym, &sobj);
-			if (!this) {
-				_dl_printf("%s: %s: can't resolve reference '%s'\n",
-				    _dl_progname, object->load_name, symn);
-				fails++;
+			if (this == NULL) {
+				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
+					fails++;
 				continue;
 			}
 		}

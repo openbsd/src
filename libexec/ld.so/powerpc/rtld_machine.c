@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.37 2005/09/21 23:12:11 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.38 2005/09/22 01:33:08 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -199,14 +199,8 @@ _dl_printf("object relocation size %x, numrela %x\n",
 			    sym, NULL);
 
 			if (this == NULL) {
-				if (ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
-					_dl_printf("%s: %s :can't resolve "
-					    "reference '%s'\n",
-					    _dl_progname, object->load_name,
-					    symn);
-
+				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
 					fails++;
-				}
 				continue;
 			}
 		}
@@ -384,11 +378,9 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 
 			src_loff = 0;
 			src_loff = _dl_find_symbol(symn, &cpysrc,
-			    SYM_SEARCH_OTHER|SYM_NOWARNNOTFOUND| SYM_NOTPLT,
+			    SYM_SEARCH_OTHER|SYM_WARNNOTFOUND| SYM_NOTPLT,
 			    sym, object, NULL);
-			if (cpysrc == NULL) {
-				_dl_printf("symbol not found [%s] \n", symn);
-			} else {
+			if(cpysrc != NULL) {
 				size = sym->st_size;
 				if (sym->st_size != cpysrc->st_size) {
 					_dl_printf("symbols size differ [%s] \n",
@@ -403,7 +395,8 @@ _dl_printf(" found other symbol at %x size %d\n",
 				_dl_bcopy((void *)(src_loff + cpysrc->st_value),
 				    (void *)(ooff + this->st_value+ relas->r_addend),
 					size);
-			}
+			} else
+				fails++;
 		}
 			break;
 		case RELOC_NONE:

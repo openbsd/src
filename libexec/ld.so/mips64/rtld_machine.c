@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2005/09/21 23:12:10 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.8 2005/09/22 01:33:08 drahn Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -104,18 +104,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		    !(ELF64_ST_BIND(sym->st_info) == STB_LOCAL &&
 		    ELF64_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
 			ooff = _dl_find_symbol(symn, &this,
-			SYM_SEARCH_ALL | SYM_NOWARNNOTFOUND | SYM_PLT,
+			SYM_SEARCH_ALL | SYM_WARNNOTFOUND | SYM_PLT,
 			sym, object, NULL);
 
 			if (this == NULL) {
-				if (ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
-					_dl_printf("%s: %s :can't resolve "
-					    "reference '%s'\n",
-					    _dl_progname, object->load_name,
-					    symn);
-
+				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
 					fails++;
-				}
 				continue;
 			}
 		}

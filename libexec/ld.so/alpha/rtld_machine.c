@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.33 2005/09/21 23:12:09 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.34 2005/09/22 01:33:07 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -148,9 +148,8 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 		}
 		continue;
 resolve_failed:
-		_dl_printf("%s: %s :can't resolve reference '%s'\n",
-		    _dl_progname, object->load_name, symn);
-		fails++;
+		if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
+			fails++;
 	}
 	__asm __volatile("imb" : : : "memory");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.32 2005/09/21 23:12:09 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.33 2005/09/22 01:33:07 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -358,7 +358,9 @@ found:
 
 
 	if (found == 0) {
-		if (flags & SYM_WARNNOTFOUND)
+		if ((ref_sym == NULL ||
+		    (ELF_ST_BIND(ref_sym->st_info) != STB_WEAK)) &&
+		    (flags & SYM_WARNNOTFOUND))
 			_dl_printf("%s:%s: undefined symbol '%s'\n",
 			    _dl_progname, req_obj->load_name, name);
 		return (0);
