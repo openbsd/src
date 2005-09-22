@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.14 2005/08/17 13:14:17 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.15 2005/09/22 10:17:04 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -168,29 +168,27 @@ struct ath_tx_radiotap_header {
  * driver-specific node 
  */
 struct ath_node {
-	struct ieee80211_node an_node;	/* base class */
-	u_int		an_tx_ok;	/* tx ok pkt */
-	u_int		an_tx_err;	/* tx !ok pkt */
-	u_int		an_tx_retr;	/* tx retry count */
-	int		an_tx_upper;	/* tx upper rate req cnt */
-	u_int		an_tx_antenna;	/* antenna for last good frame */
-	u_int		an_rx_antenna;	/* antenna for last rcvd frame */
-	struct ath_recv_hist an_rx_hist[ATH_RHIST_SIZE];
-	u_int		an_rx_hist_next;/* index of next ``free entry'' */
+	struct ieee80211_node		an_node;	/* base class */
+	struct ieee80211_rssadapt	an_rssadapt;	/* rate adaption */
+	u_int				an_tx_antenna;	/* antenna for last good frame */
+	u_int				an_rx_antenna;	/* antenna for last rcvd frame */
+	struct ath_recv_hist		an_rx_hist[ATH_RHIST_SIZE];
+	u_int				an_rx_hist_next;/* index of next ``free entry'' */
 };
 #define	ATH_NODE(_n)	((struct ath_node *)(_n))
 
 struct ath_buf {
-	TAILQ_ENTRY(ath_buf)	bf_list;
-	bus_dmamap_t		bf_dmamap;	/* DMA map of the buffer */
-#define bf_nseg			bf_dmamap->dm_nsegs
-#define bf_mapsize		bf_dmamap->dm_mapsize
-#define bf_segs			bf_dmamap->dm_segs
-	struct ath_desc		*bf_desc;	/* virtual addr of desc */
-	bus_addr_t		bf_daddr;	/* physical addr of desc */
-	struct mbuf		*bf_m;		/* mbuf for buf */
-	struct ieee80211_node	*bf_node;	/* pointer to the node */
-#define	ATH_MAX_SCATTER		64
+	TAILQ_ENTRY(ath_buf)		bf_list;
+	bus_dmamap_t			bf_dmamap;	/* DMA map of the buffer */
+#define bf_nseg				bf_dmamap->dm_nsegs
+#define bf_mapsize			bf_dmamap->dm_mapsize
+#define bf_segs				bf_dmamap->dm_segs
+	struct ath_desc			*bf_desc;	/* virtual addr of desc */
+	bus_addr_t			bf_daddr;	/* physical addr of desc */
+	struct mbuf			*bf_m;		/* mbuf for buf */
+	struct ieee80211_node		*bf_node;	/* pointer to the node */
+	struct ieee80211_rssdesc	bf_id;
+#define	ATH_MAX_SCATTER			64
 };
 
 typedef struct ath_task {
@@ -299,6 +297,7 @@ struct ath_softc {
 	struct timeout		sc_cal_to;
 	struct timeval		sc_last_beacon;
 	struct timeout		sc_scan_to;
+	struct timeout		sc_rssadapt_to;
 #else
 	struct callout		sc_cal_ch;	/* callout handle for cals */
 	struct callout		sc_scan_ch;	/* callout handle for scan */
