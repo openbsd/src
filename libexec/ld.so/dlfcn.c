@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.53 2005/09/21 20:32:19 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.54 2005/09/22 22:33:40 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -63,11 +63,11 @@ dlopen(const char *libname, int flags)
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, flags);
 	if (object == 0) {
 		DL_DEB(("dlopen: failed to open %s\n", libname));
-		_dl_thread_kern_go();
-		return((void *)0);
+		failed = 1;
+		goto loaded;
 	}
 	if (object->refcount > 1)
-		return((void *)object);	/* Already loaded */
+		goto loaded;
 
 	/* this add_object should not be here, XXX */
 	_dl_add_object(object);
@@ -130,12 +130,21 @@ dlopen(const char *libname, int flags)
 		object = NULL;
 		_dl_errno = DL_CANT_LOAD_OBJ;
 	} else {
+		int err;
 		DL_DEB(("tail %s\n", object->load_name ));
 		_dl_link_dlopen(object);
-		_dl_rtld(object);
-		_dl_call_init(object);
+		err = _dl_rtld(object);
+		if (err != 0) {
+			_dl_real_close(object);
+			_dl_errno = DL_CANT_LOAD_OBJ;
+			object = 0;
+			failed = 1;
+		} else {
+			_dl_call_init(object);
+		}
 	}
 
+loaded:
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
 		(*((void (*)(void))_dl_debug_map->r_brk))();

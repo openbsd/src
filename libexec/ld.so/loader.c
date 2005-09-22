@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.89 2005/09/21 23:12:09 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.90 2005/09/22 22:33:40 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -263,8 +263,8 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	elf_object_t *dynobj;
 	Elf_Phdr *phdp;
 	char *us = "";
-	unsigned int i;
-	int libcnt = 0;
+	unsigned int loop;
+	int libcnt_err = 0;
 	struct dep_node *n;
 
 	_dl_setup_env(envp);
@@ -311,7 +311,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * Examine the user application and set up object information.
 	 */
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
-	for (i = 0; i < dl_data[AUX_phnum]; i++) {
+	for (loop = 0; loop < dl_data[AUX_phnum]; loop++) {
 		if (phdp->p_type == PT_DYNAMIC) {
 			exe_obj = _dl_finalize_object(argv[0],
 			    (Elf_Dyn *)phdp->p_vaddr, dl_data, OBJTYPE_EXE,
@@ -350,55 +350,56 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	dynobj = _dl_objects;
 	for (dynobj = _dl_objects; dynobj != NULL; dynobj = dynobj->next) {
 		DL_DEB(("examining: '%s'\n", dynobj->load_name));
-		libcnt = 0;
+		libcnt_err = 0;
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			if (dynp->d_tag == DT_NEEDED) {
-				libcnt++;
+				libcnt_err++;
 			}
 		}
-		if ( libcnt != 0) {
+		if ( libcnt_err != 0) {
 			struct listent {
 				Elf_Dyn *dynp;
 				elf_object_t *dynobj;
 			} *liblist;
 			int *randomlist;
 
-			liblist = _dl_malloc(libcnt * sizeof(struct listent));
-			randomlist =  _dl_malloc(libcnt * sizeof(int));
+			liblist = _dl_malloc(libcnt_err *
+			    sizeof(struct listent));
+			randomlist =  _dl_malloc(libcnt_err * sizeof(int));
 			if (liblist == NULL)
 				_dl_exit(5);
 
-			for (dynp = dynobj->load_dyn, i = 0;
+			for (dynp = dynobj->load_dyn, loop = 0;
 			    dynp->d_tag;
 			    dynp++)
 				if (dynp->d_tag == DT_NEEDED)
-					liblist[i++].dynp = dynp;
+					liblist[loop++].dynp = dynp;
 
 			/* Randomize these */
-			for (i = 0; i < libcnt; i++)
-				randomlist[i] = i;
+			for (loop = 0; loop < libcnt_err; loop++)
+				randomlist[loop] = loop;
 
 			if (!_dl_norandom)
-				for (i = 1; i < libcnt; i++) {
+				for (loop = 1; loop < libcnt_err; loop++) {
 					unsigned int rnd;
 					int cur;
 
 					rnd = _dl_random();
 
-					rnd = rnd % (i+1);
+					rnd = rnd % (loop+1);
 
 					cur = randomlist[rnd];
-					randomlist[rnd] = randomlist[i];
-					randomlist[i] = cur;
+					randomlist[rnd] = randomlist[loop];
+					randomlist[loop] = cur;
 				}
 
-			for (i = 0; i < libcnt; i++) {
+			for (loop = 0; loop < libcnt_err; loop++) {
 				elf_object_t *depobj;
 				const char *libname;
 
 				libname = dynobj->dyn.strtab;
 				libname +=
-				    liblist[randomlist[i]].dynp->d_un.d_val;
+				    liblist[randomlist[loop]].dynp->d_un.d_val;
 				DL_DEB(("needs: '%s'\n", libname));
 				depobj = _dl_load_shlib(libname, dynobj,
 				    OBJTYPE_LIB, DL_LAZY|RTLD_GLOBAL);
@@ -408,11 +409,11 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 					    _dl_progname, libname);
 					_dl_exit(4);
 				}
-				liblist[randomlist[i]].dynobj = depobj;
+				liblist[randomlist[loop]].dynobj = depobj;
 			}
-			for (i = 0; i < libcnt; i++) {
-				_dl_add_object(liblist[i].dynobj);
-				_dl_link_sub(liblist[i].dynobj, dynobj);
+			for (loop = 0; loop < libcnt_err; loop++) {
+				_dl_add_object(liblist[loop].dynobj);
+				_dl_link_sub(liblist[loop].dynobj, dynobj);
 			}
 			_dl_free(liblist);
 		}
@@ -439,13 +440,18 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * Everything should be in place now for doing the relocation
 	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
+	libcnt_err = 0;
 	if (_dl_traceld == NULL)
-		_dl_rtld(_dl_objects);
+		libcnt_err = _dl_rtld(_dl_objects);
 
 	if (_dl_debug || _dl_traceld)
 		_dl_show_objects();
 
-	DL_DEB(("dynamic loading done.\n"));
+	DL_DEB(("dynamic loading done, %s.\n",
+	    (libcnt_err == 0) ? "success":"failed"));
+
+	if (libcnt_err != 0)
+		_dl_exit(1);
 
 	if (_dl_traceld)
 		_dl_exit(0);
@@ -714,15 +720,17 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 #define DL_SM_SYMBUF_CNT 512
 sym_cache _dl_sm_symcache_buffer[DL_SM_SYMBUF_CNT];
 
-void
+int
 _dl_rtld(elf_object_t *object)
 {
 	size_t sz;
+	int fails = 0;
+
 	if (object->next)
-		_dl_rtld(object->next);
+		fails += _dl_rtld(object->next);
 
 	if (object->status & STAT_RELOC_DONE)
-		return;
+		return 0;
 
 	sz = 0;
 	if (object->nchains < DL_SM_SYMBUF_CNT) {
@@ -746,8 +754,8 @@ _dl_rtld(elf_object_t *object)
 	/*
 	 * Do relocation information first, then GOT.
 	 */
-	_dl_md_reloc(object, DT_REL, DT_RELSZ);
-	_dl_md_reloc(object, DT_RELA, DT_RELASZ);
+	fails =_dl_md_reloc(object, DT_REL, DT_RELSZ);
+	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
 	_dl_md_reloc_got(object, !(_dl_bindnow || object->dyn.bind_now));
 
 	if (_dl_symcache != NULL) {
@@ -755,7 +763,10 @@ _dl_rtld(elf_object_t *object)
 			_dl_munmap( _dl_symcache, sz);
 		_dl_symcache = NULL;
 	}
-	object->status |= STAT_RELOC_DONE;
+	if (fails == 0)
+		object->status |= STAT_RELOC_DONE;
+
+	return (fails);
 }
 
 void
