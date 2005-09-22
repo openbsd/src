@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2005/07/26 01:32:24 brad Exp $
+#	$OpenBSD: Makefile,v 1.28 2005/09/22 00:08:24 brad Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
@@ -42,5 +42,14 @@ CFLAGS+=-DNOSUID
 .else
 SRCS+=	id.c
 .endif
+
+CDIAGFLAGS+=	-Wpointer-arith
+CDIAGFLAGS+=	-Wno-uninitialized
+CDIAGFLAGS+=	-Wstrict-prototypes
+CDIAGFLAGS+=	-Wmissing-prototypes
+CDIAGFLAGS+=	-Wunused
+#CDIAGFLAGS+=	-Wsign-compare
+CDIAGFLAGS+=	-Wbounded
+#CDIAGFLAGS+=	-Wshadow
 
 .include <bsd.prog.mk>
