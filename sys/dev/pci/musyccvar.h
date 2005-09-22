@@ -1,4 +1,4 @@
-/*	$OpenBSD: musyccvar.h,v 1.6 2005/08/27 13:32:01 claudio Exp $ */
+/*	$OpenBSD: musyccvar.h,v 1.7 2005/09/22 12:47:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -33,8 +33,7 @@
 /* dma ring sizes */
 #define MUSYCC_DMA_CNT		256
 #define MUSYCC_DMA_MAPSIZE	(MUSYCC_DMA_CNT * sizeof(struct dma_desc))
-#define MUSYCC_DMA_MIN		3
-#define MUSYCC_DMA_MAX		64
+#define MUSYCC_DMA_SIZE		32
 
 struct musycc_softc;
 struct ebus_softc;

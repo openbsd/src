@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.7 2005/08/27 13:32:01 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.8 2005/09/22 12:47:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -294,15 +294,15 @@ musycc_alloc_group(struct musycc_group *mg)
 
 	/*
 	 * Create spare maps for musycc_start and musycc_newbuf.
-	 * Limit the dma queue to MUSYCC_DMA_MAX entries even though there
+	 * Limit the dma queue to MUSYCC_DMA_SIZE entries even though there
 	 * is no actual hard limit from the chip.
 	 */
-	if (bus_dmamap_create(mg->mg_dmat, MCLBYTES, MUSYCC_DMA_MAX, MCLBYTES,
+	if (bus_dmamap_create(mg->mg_dmat, MCLBYTES, MUSYCC_DMA_SIZE, MCLBYTES,
 	    0, BUS_DMA_NOWAIT, &mg->mg_tx_sparemap) != 0) {
 		musycc_free_dmadesc(mg);
 		return (-1);
 	}
-	if (bus_dmamap_create(mg->mg_dmat, MCLBYTES, MUSYCC_DMA_MAX, MCLBYTES,
+	if (bus_dmamap_create(mg->mg_dmat, MCLBYTES, MUSYCC_DMA_SIZE, MCLBYTES,
 	    0, BUS_DMA_NOWAIT, &mg->mg_rx_sparemap) != 0) {
 		bus_dmamap_destroy(mg->mg_dmat, mg->mg_tx_sparemap);
 		musycc_free_dmadesc(mg);
@@ -317,7 +317,7 @@ musycc_alloc_group(struct musycc_group *mg)
 	for (j = 0; j < MUSYCC_DMA_CNT; j++) {
 		dd = &mg->mg_dma_pool[j];
 		/* initalize, same as for spare maps */
-		if (bus_dmamap_create(mg->mg_dmat, MCLBYTES, MUSYCC_DMA_MAX,
+		if (bus_dmamap_create(mg->mg_dmat, MCLBYTES, MUSYCC_DMA_SIZE,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dd->map)) {
 			musycc_free_group(mg);
 			return (-1);
@@ -556,10 +556,9 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 		goto fail;
 
 	/* setup tx DMA chain */
-	musycc_list_tx_init(mg, cc->cc_channel, nslots);
+	musycc_list_tx_init(mg, cc->cc_channel, MUSYCC_DMA_SIZE);
 	/* setup rx DMA chain */
-	if ((rv = musycc_list_rx_init(mg, cc->cc_channel,
-	    MUSYCC_DMA_MIN + nslots))) {
+	if ((rv = musycc_list_rx_init(mg, cc->cc_channel, MUSYCC_DMA_SIZE))) {
 		ACCOOM_PRINTF(0, ("%s: initialization failed: "
 		    "no memory for rx buffers\n", cc->cc_ifp->if_xname));
 		goto fail;
@@ -571,7 +570,7 @@ musycc_init_channel(struct channel_softc *cc, char slot)
 	cc->cc_state = CHAN_TRANSIENT;
 	splx(s);
 
-	musycc_dump_group(1, mg);
+	musycc_dump_group(3, mg);
 	musycc_activate_channel(mg, cc->cc_channel);
 	tsleep(cc, PZERO | PCATCH, "musycc", hz);
 
@@ -745,18 +744,19 @@ musycc_dma_free(struct musycc_group *mg, struct dma_desc *dd)
  * a packet comes in.
  */
 int
-musycc_list_tx_init(struct musycc_group *mg, int c, int nslots)
+musycc_list_tx_init(struct musycc_group *mg, int c, int size)
 {
 	struct musycc_dma_data	*md;
 	struct dma_desc		*dd;
 	bus_addr_t		 base;
 	int			 i;
 
+	splassert(IPL_NET);
 	ACCOOM_PRINTF(2, ("musycc_list_tx_init\n"));
 	md = &mg->mg_dma_d[c];
 	md->tx_pend = NULL;
 	md->tx_cur = NULL;
-	md->tx_cnt = 4 * nslots;
+	md->tx_cnt = size;
 	md->tx_pkts = 0;
 
 	base = mg->mg_listmap->dm_segs[0].ds_addr;
@@ -806,6 +806,7 @@ musycc_list_rx_init(struct musycc_group *mg, int c, int size)
 	bus_addr_t		 base;
 	int			 i;
 
+	splassert(IPL_NET);
 	ACCOOM_PRINTF(2, ("musycc_list_rx_init\n"));
 	md = &mg->mg_dma_d[c];
 	md->rx_cnt = size;
@@ -854,6 +855,7 @@ musycc_list_tx_free(struct musycc_group *mg, int c)
 
 	md = &mg->mg_dma_d[c];
 
+	splassert(IPL_NET);
 	ACCOOM_PRINTF(2, ("musycc_list_tx_free\n"));
 	dd = md->tx_pend;
 	do {
@@ -884,6 +886,7 @@ musycc_list_rx_free(struct musycc_group *mg, int c)
 
 	md = &mg->mg_dma_d[c];
 
+	splassert(IPL_NET);
 	ACCOOM_PRINTF(2, ("musycc_list_rx_free\n"));
 	dd = md->rx_prod;
 	do {
@@ -910,18 +913,16 @@ musycc_list_rx_free(struct musycc_group *mg, int c)
 void
 musycc_reinit_dma(struct musycc_group *mg, int c)
 {
-	int	s, ntx, nrx;
+	int	s;
 
 	s = splnet();
-	ntx = mg->mg_dma_d[c].tx_cnt / 4;
-	nrx = mg->mg_dma_d[c].rx_cnt;
 
 	musycc_list_tx_free(mg, c);
 	musycc_list_rx_free(mg, c);
 
 	/* setup tx & rx DMA chain */
-	if (musycc_list_tx_init(mg, c, ntx) ||
-	    musycc_list_rx_init(mg, c, nrx)) {
+	if (musycc_list_tx_init(mg, c, MUSYCC_DMA_SIZE) ||
+	    musycc_list_rx_init(mg, c, MUSYCC_DMA_SIZE)) {
 		log(LOG_ERR, "%s: Failed to malloc memory\n",
 		    mg->mg_channels[c]->cc_ifp->if_xname);
 		musycc_free_channel(mg, c);
@@ -995,7 +996,9 @@ musycc_encap(struct musycc_group *mg, struct mbuf *m_head, int c)
 	bus_dmamap_t	 map;
 	bus_addr_t	 base;
 	u_int32_t	 status;
-	int		 i, needed;
+	int		 i;
+
+	splassert(IPL_NET);
 
 	map = mg->mg_tx_sparemap;
 	if (bus_dmamap_load_mbuf(mg->mg_dmat, map, m_head,
@@ -1008,42 +1011,10 @@ musycc_encap(struct musycc_group *mg, struct mbuf *m_head, int c)
 	cur = mg->mg_dma_d[c].tx_cur;
 	base = mg->mg_listmap->dm_segs[0].ds_addr;
 
-	/*
- 	 * Start packing the mbufs in this chain into the
-	 * fragment pointers. The ring size is limited to
-	 * tx_cnt or if less than MUSYCC_DMA_MIN packets
-	 * are queued additional temporary space is used.
-	 */
 	if (map->dm_nsegs + mg->mg_dma_d[c].tx_use >= mg->mg_dma_d[c].tx_cnt) {
-		if (mg->mg_dma_d[c].tx_pkts >= MUSYCC_DMA_MIN) {
-			ACCOOM_PRINTF(2, ("%s: musycc_encap: "
-			    "too many packets\n",
-			    mg->mg_channels[c]->cc_ifp->if_xname));
-			return (ENOBUFS);
-		}
-		if (map->dm_nsegs > mg->mg_freecnt) {
-			ACCOOM_PRINTF(1, ("%s: musycc_encap: "
-			    "not enough descriptors left\n",
-			    mg->mg_channels[c]->cc_ifp->if_xname));
-			return (ENOBUFS);
-		}
-		/* resize ring */
-		needed = map->dm_nsegs + mg->mg_dma_d[c].tx_use -
-		    mg->mg_dma_d[c].tx_cnt;
-		for (i = 0; i < needed; i++) {
-			tmp = musycc_dma_get(mg);
-			if (tmp == NULL)
-				/* should be impossible */
-				return (ENOBUFS);
-			tmp->status = 0 /* MUSYCC_STATUS_NOPOLL */;
-			tmp->data = 0;
-			tmp->next = cur->next;
-			tmp->nextdesc = cur->nextdesc;
-			cur->next = htole32(base + ((caddr_t)tmp -
-			    mg->mg_listkva));
-			cur->nextdesc = tmp;
-			mg->mg_dma_d[c].tx_cnt++;
-		}
+		ACCOOM_PRINTF(1, ("%s: tx out of dma bufs\n",
+		    mg->mg_channels[c]->cc_ifp->if_xname));
+		return (ENOBUFS);
 	}
 
 	i = 0;
@@ -1116,35 +1087,35 @@ musycc_start(struct ifnet *ifp)
 	struct musycc_group	*mg;
 	struct channel_softc	*cc;
 	struct mbuf		*m = NULL;
+	int			s;
 
 	cc = ifp->if_softc;
 	mg = cc->cc_group;
 
+	ACCOOM_PRINTF(3, ("musycc_start\n"));
 	if (cc->cc_state != CHAN_RUNNING)
 		return;
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
+	if (sppp_isempty(ifp))
+		return;
 
-	while (!sppp_isempty(ifp)) {
-		if ((m = sppp_pick(ifp)) == NULL)
-			/* Should never happened that packet pointer is NULL */
-			break;
-
+	s = splnet();
+	while ((m = sppp_pick(ifp)) != NULL) {
 		if (musycc_encap(mg, m, cc->cc_channel)) {
 			ifp->if_flags |= IFF_OACTIVE;
-			ACCOOM_PRINTF(1, ("%s: tx out of dma bufs\n",
-			    cc->cc_ifp->if_xname));
 			break;
 		}
-
-		/* now we are committed to transmit the packet */
-		sppp_dequeue(ifp);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
+
+		/* now we are committed to transmit the packet */
+		sppp_dequeue(ifp);
 	}
+	splx(s);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -1191,6 +1162,8 @@ musycc_rxeom(struct musycc_group *mg, int channel, int forcekick)
 	int		 total_len = 0, consumed = 0;
 	u_int32_t	 rxstat;
 
+	ACCOOM_PRINTF(3, ("musycc_rxeom\n"));
+
 	ifp = mg->mg_channels[channel]->cc_ifp;
 
 	start_rx = cur_rx = mg->mg_dma_d[channel].rx_prod;
@@ -1218,8 +1191,7 @@ musycc_rxeom(struct musycc_group *mg, int channel, int forcekick)
 		if (rxstat & MUSYCC_STATUS_ERROR) {
 			ifp->if_ierrors++;
 			ACCOOM_PRINTF(0, ("%s: rx error %08x\n",
-			    mg->mg_channels[channel]->cc_ifp->if_xname,
-			    rxstat));
+			    ifp->if_xname, rxstat));
 			musycc_newbuf(mg, cur_rx, m);
 			cur_rx = cur_rx->nextdesc;
 			consumed++;
@@ -1273,18 +1245,19 @@ musycc_rxeom(struct musycc_group *mg, int channel, int forcekick)
 void
 musycc_txeom(struct musycc_group *mg, int channel, int forcekick)
 {
-	struct dma_desc		*dd;
+	struct dma_desc		*dd, *dd_pend;
 	struct ifnet		*ifp;
 
+	ACCOOM_PRINTF(3, ("musycc_txeom\n"));
+
 	ifp = mg->mg_channels[channel]->cc_ifp;
-	/* Clear the timeout timer. */
+	/* Clear the watchdog timer. */
 	ifp->if_timer = 0;
 
 	/*
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been transmitted.
 	 */
-	/* TODO if tx_cnt > limit we should drop some descriptors */
 	for (dd = mg->mg_dma_d[channel].tx_pend;
 	    dd != mg->mg_dma_d[channel].tx_cur;
 	    dd = dd->nextdesc) {
@@ -1314,10 +1287,13 @@ musycc_txeom(struct musycc_group *mg, int channel, int forcekick)
 		}
 	}
 
-	if (mg->mg_dma_d[channel].tx_pend != dd)
-		ifp->if_flags &= ~IFF_OACTIVE;
-
+	dd_pend = mg->mg_dma_d[channel].tx_pend;
 	mg->mg_dma_d[channel].tx_pend = dd;
+
+	if (ifp->if_flags & IFF_OACTIVE && dd_pend != dd) {
+		ifp->if_flags &= ~IFF_OACTIVE;
+		musycc_start(ifp);
+	}
 
 	if (forcekick) {
 		/* restart */
