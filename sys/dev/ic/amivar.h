@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.26 2005/09/21 10:36:14 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.27 2005/09/22 07:37:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -43,11 +43,8 @@ struct ami_ccb {
 	enum {
 		AMI_CCB_FREE, AMI_CCB_READY, AMI_CCB_QUEUED, AMI_CCB_PREQUEUED
 	} ccb_state;
-	void			*ccb_data;
 	int			ccb_len;
-	enum {
-		AMI_CCB_IN, AMI_CCB_OUT
-	}			ccb_dir;
+	void			*ccb_data;
 	bus_dmamap_t		ccb_dmamap;
 };
 
