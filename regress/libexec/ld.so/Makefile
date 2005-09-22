@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2005/09/18 19:58:49 drahn Exp $
+#	$OpenBSD: Makefile,v 1.7 2005/09/22 23:54:48 drahn Exp $
 
 SUBDIR+= elf weak dlsym dlopen
-#SUBDIR+= constructor link-order
+#SUBDIR+= constructor 
+SUBDIR+= link-order edgecases
 
 install:
 
