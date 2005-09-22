@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.5 2004/12/30 23:43:42 drahn Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.6 2005/09/22 04:14:44 drahn Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -311,13 +311,8 @@ ASENTRY_NP(idle)
 #endif
 
 	/* Drop to spl0 (returns the current spl level in r0). */
-#ifdef __NEWINTR
 	mov	r0, #(IPL_NONE)
 	bl	_C_LABEL(_spllower)
-#else /* ! __NEWINTR */
-	mov	r0, #(_SPL_0)
-	bl	_C_LABEL(splx)
-#endif /* __NEWINTR */
 
 	teq	r6, #0			/* cpu_do_powersave non zero? */
 	ldrne	r6, .Lcpufuncs
@@ -1102,13 +1097,8 @@ ENTRY(savectx)
 	ldmfd	sp!, {r4-r7, pc}
 
 ENTRY(proc_trampoline)
-#ifdef __NEWINTR
 	mov	r0, #(IPL_NONE)
 	bl	_C_LABEL(_spllower)
-#else /* ! __NEWINTR */
-	mov	r0, #(_SPL_0)
-	bl	_C_LABEL(splx)
-#endif /* __NEWINTR */
 
 #ifdef MULTIPROCESSOR
 	bl	_C_LABEL(proc_trampoline_mp)

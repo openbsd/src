@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_intr.h,v 1.4 2005/04/19 15:29:47 mickey Exp $	*/
+/*	$OpenBSD: footbridge_intr.h,v 1.5 2005/09/22 04:14:44 drahn Exp $	*/
 /* 	$NetBSD: footbridge_intr.h,v 1.4 2003/01/03 00:56:00 thorpej Exp $	*/
 
 /*
@@ -67,8 +67,6 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-
-#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
 
 #define	ARM_IRQ_HANDLER	_C_LABEL(footbridge_intr_dispatch)
 

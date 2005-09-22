@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.h,v 1.8 2005/08/08 16:30:47 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_intr.h,v 1.9 2005/09/22 04:14:44 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -44,8 +44,6 @@
 #define	ARM_IRQ_HANDLER	_C_LABEL(pxa2x0_irq_handler)
 
 #ifndef _LOCORE
-
-#define __NEWINTR       /* enables new hooks in cpu_fork()/cpu_switch() */
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -109,3 +107,4 @@ const char *pxa2x0_intr_string(void *cookie);
 #endif /* ! _LOCORE */
 
 #endif /* _PXA2X0_INTR_H_ */
+
