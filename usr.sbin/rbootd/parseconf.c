@@ -1,4 +1,4 @@
-/*	$OpenBSD: parseconf.c,v 1.8 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: parseconf.c,v 1.9 2005/09/22 14:24:51 jmc Exp $	*/
 /*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: parseconf.c,v 1.8 2003/06/02 23:36:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: parseconf.c,v 1.9 2005/09/22 14:24:51 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -154,7 +154,7 @@ ParseConfig(void)
 		/*
 		 *  If no boot files are spec'd, use the default list.
 		 *  Otherwise, validate each file (`bcp') against the
-		 *  list of boot-able files.
+		 *  list of bootable files.
 		 */
 		i = 0;
 		if (bcp == cp) {			/* no files spec'd */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.21 2005/05/03 01:01:14 djm Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.22 2005/09/22 14:24:51 jmc Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.21 2005/05/03 01:01:14 djm Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.22 2005/09/22 14:24:51 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -397,7 +397,7 @@ DoExit(void)
 **
 **	Side Effects:
 **		- All active connections are dropped.
-**		- List of boot-able files is changed.
+**		- List of bootable files is changed.
 **		- List of clients is changed.
 **
 **	Warnings:
