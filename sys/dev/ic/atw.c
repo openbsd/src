@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.36 2005/09/08 12:44:55 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.37 2005/09/22 00:27:18 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -188,6 +188,8 @@ void atw_si4126_print(struct atw_softc *);
 #ifdef ATW_STATS
 void	atw_print_stats(struct atw_softc *);
 #endif
+
+const char *atw_printmac(u_int8_t);
 
 /* ifnet methods */
 void	atw_start(struct ifnet *);
@@ -531,6 +533,22 @@ atw_print_regs(struct atw_softc *sc, const char *where)
 }
 #endif /* ATW_DEBUG */
 
+const char*
+atw_printmac(u_int8_t rev) {
+	switch (rev) {
+	case ATW_REVISION_AB:
+		return "ADM8211AB";
+	case ATW_REVISION_AF:
+		return "ADM8211AF";
+	case ATW_REVISION_BA:
+		return "ADM8211BA";
+	case ATW_REVISION_CA:
+		return "ADM8211CA";
+	default:
+		return "unknown";
+	}
+}
+
 /*
  * Finish attaching an ADMtek ADM8211 MAC.  Called by bus-specific front-end.
  */
@@ -653,8 +671,9 @@ atw_attach(struct atw_softc *sc)
 		return;
 	}
 
-	printf("%s: %s RF, %s BBP", sc->sc_dev.dv_xname,
-	    type_strings[sc->sc_rftype], type_strings[sc->sc_bbptype]);
+	printf("%s: MAC %s, BBP %s, RF %s", sc->sc_dev.dv_xname,
+	    atw_printmac(sc->sc_rev), type_strings[sc->sc_bbptype],
+	    type_strings[sc->sc_rftype]);
 
 	/* XXX There exists a Linux driver which seems to use RFType = 0 for
 	 * MARVEL. My bug, or theirs?
@@ -776,7 +795,7 @@ atw_attach(struct atw_softc *sc)
 		return;
 	}
 
-	printf(" 802.11 address %s\n", ether_sprintf(ic->ic_myaddr));
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
