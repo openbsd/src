@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.36 2005/09/22 13:59:45 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.37 2005/09/22 14:03:39 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -850,7 +850,7 @@ file:
 ppp ON awfulhak> load MyISP
 .Ed
 .Pp
-Note, no action is taken by
+Note: no action is taken by
 .Nm
 after a section is loaded, whether it's the result of passing a label on
 the command line or using the
@@ -2946,7 +2946,7 @@ will send
 .Em LCP ECHO
 requests to the peer at the frequency defined by
 .Dq echoperiod .
-Note,
+Note:
 .Em LQR
 requests will supersede
 .Em LCP ECHO
@@ -4401,7 +4401,7 @@ If
 .Nm
 is the caller, only a single number should be specified.
 .Pp
-Note, this option is very unsafe when used with a
+Note: this option is very unsafe when used with a
 .Sq \&*
 as a malicious caller can tell
 .Nm
@@ -5342,7 +5342,7 @@ word replacements done by the shell commands (see the
 .Ic bg
 command above) are done here too.
 .Pp
-Note, if USER is required in the process title, the
+Note: if USER is required in the process title, the
 .Ic set proctitle
 command must appear in
 .Pa ppp.linkup ,
@@ -5536,7 +5536,7 @@ If either or both are set, 40-bit and/or 128-bit (respectively) encryption
 options are set, overriding any given first argument to the
 .Ic set mppe
 command.
-Note, it is not currently possible for the RADIUS server to specify 56-bit
+Note: it is not currently possible for the RADIUS server to specify 56-bit
 encryption.
 .It RAD_MICROSOFT_MS_MPPE_RECV_KEY
 If this
@@ -5628,7 +5628,7 @@ times.
 .Ar max
 defaults to 10.
 .Pp
-Note, the
+Note: the
 .Ar secs
 delay will be effective, even after
 .Ar attempts
@@ -5983,7 +5983,7 @@ A file to check when
 closes a network level connection.
 .It Pa /var/log/ppp.log
 Logging and debugging information file.
-Note, this name is specified in
+Note: this name is specified in
 .Pa /etc/syslog.conf .
 See
 .Xr syslog.conf 5
