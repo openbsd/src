@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.104 2005/09/14 06:37:59 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.105 2005/09/23 10:24:50 grunk Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Sun Blade 100/150
 	Sun Fire V100
@@ -236,7 +236,7 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    NetComm NP1010
 		    Repotec RP-USB100-A
 		    SMC 2208USB/ETH
-		    TrendNet TU-ET100C
+		    TRENDnet TU-ET100C
 		    Zt USB10/100
 		    Z-TEK ZK-R02
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.15 2005/09/14 06:37:59 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.16 2005/09/23 10:24:50 grunk Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus C3000 and C3100 only, at
 the moment. Support for the C760 and C860 is under development.
@@ -96,7 +96,7 @@ Supported devices {:-include-:}:
 		    NetComm NP1010
 		    Repotec RP-USB100-A
 		    SMC 2208USB/ETH
-		    TrendNet TU-ET100C
+		    TRENDnet TU-ET100C
 		    Zt USB10/100
 		    Z-TEK ZK-R02
 	Wireless Ethernet Adapters

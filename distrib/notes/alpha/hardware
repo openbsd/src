@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.67 2005/08/23 02:25:53 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.68 2005/09/23 10:24:50 grunk Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -480,7 +480,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			NetComm NP1010
 			Repotec RP-USB100-A
 			SMC 2208USB/ETH
-			TrendNet TU-ET100C
+			TRENDnet TU-ET100C
 			Zt USB10/100
 			Z-TEK ZK-R02
 		SiS 900 and SiS 7016-based PCI adapters (sis), including: [*]
@@ -498,7 +498,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Racore 8165 and 8148
 			TI ThunderLAN adapters
 		Winbond W89C840F-based adapters (wb), including: [*]
-			Trendware TE100-PCIE
+			TRENDnet TE100-PCIE
 			Compex RL100-ATX 10/100
 		Please be aware that many NE2000 adapters fail or perform
 		very poorly. We do not recommend using them, but your

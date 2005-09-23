@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.221 2005/09/14 06:37:59 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.222 2005/09/23 10:24:50 grunk Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -480,7 +480,7 @@ Supported hardware {:-include-:}:
 		    OQO model 01 (10/100) Ethernet
 		    Repotec RP-USB100-A
 		    SMC 2208USB/ETH
-		    TrendNet TU-ET100C
+		    TRENDnet TU-ET100C
 		    Zt USB10/100
 		    Z-TEK ZK-R02
 		SiS 900 and SiS 7016-based PCI adapters, including: [B] [C]
@@ -509,14 +509,14 @@ Supported hardware {:-include-:}:
 		    Hawking PN102TX
 		    D-Link DFE530TX
 		Winbond W89C840F Ethernet adapters, including: [A] [B] [C]
-		    Trendware TE100-PCIE
+		    TRENDnet TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
 		ADMtek ADM8211 based IEEE 802.11b CardBus adapters [A] [B] [C]
 		    3Com OfficeConnect 3CRSHPW796
 		    Blitz NetWave Point
 		    D-Link DWL-650 Rev. L1
-		    TrendNet TEW-221PC CardBus
+		    TRENDnet TEW-221PC CardBus
 		ADMtek ADM8211 based IEEE 802.11b PCI adapters [A] [B] [C]
 		    Belkin F5D6001 v2
 		    D-Link DWL-520 Rev. C1
