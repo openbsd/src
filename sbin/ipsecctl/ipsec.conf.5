@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.20 2005/09/19 15:44:35 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.21 2005/09/23 14:56:06 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -30,10 +30,13 @@
 .Nd IPsec configuration file
 .Sh DESCRIPTION
 The
+.Nm
+file specifies rules and definitions for
 .Xr ipsec 4
-protocol suite provides security services for IP according to rules or
-definitions specified in
-.Nm .
+IP security services.
+The rulesets themselves can be loaded, viewed, and modified via the
+.Xr ipsecctl 8
+userland utility.
 .Sh FLOWS
 IPsec uses
 .Em flows
@@ -194,7 +197,10 @@ by default.
 .Xc
 .Ar keyspec
 defines the authentication key to be used.
-It is either a hexadecimal string or a file specified as follows:
+It is either a hexadecimal string or a path to a file containing the key.
+The filename may be given as either an absolute path to the file
+or a relative pathname,
+and is specified as follows:
 .Bd -literal -offset -indent
 authkey file "filename"
 .Ed
@@ -396,8 +402,11 @@ The parameter
 .Ar spi
 is a 32-bit value defining the Security Parameter Index (SPI) for this SA.
 .Pp
-The authentication key to be used is a hexadecimal string of arbitrary length.
-It is also possible to read the key from a file using this format:
+The authentication key to be used is a hexadecimal string of arbitrary length
+or a path to a file containing the key.
+The filename may be given as either an absolute path to the file
+or a relative pathname,
+and is specified as follows:
 .Bd -literal -offset -indent
 authkey file "filename"
 .Ed
@@ -467,7 +476,8 @@ ike esp from 192.168.3.1 to 192.168.3.2
 .Xr tcp 4 ,
 .Xr isakmpd.conf 5 ,
 .Xr ipsecctl 8 ,
-.Xr isakmpd 8
+.Xr isakmpd 8 ,
+.Xr vpn 8
 .Sh HISTORY
 The
 .Nm
