@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.27 2005/09/19 10:27:08 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.28 2005/09/23 19:11:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1277,7 +1277,7 @@ typedef HAL_BOOL (ar5k_rfgain_t)
 #define AR5K_TUNE_HWTXTRIES			4
 
 /* Default regulation domain if stored value EEPROM value is invalid */
-#define AR5K_TUNE_REGDOMAIN	DMN_FCC1_FCCA
+#define AR5K_TUNE_REGDOMAIN	DMN_FCC2_FCCA	/* Canada */
 #define AR5K_TUNE_CTRY		CTRY_DEFAULT
 
 /*
