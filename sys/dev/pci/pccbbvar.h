@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbvar.h,v 1.7 2004/07/14 21:54:19 mickey Exp $ */
+/*	$OpenBSD: pccbbvar.h,v 1.8 2005/09/23 22:55:12 fgsch Exp $	*/
 /*	$NetBSD: pccbbvar.h,v 1.13 2000/06/08 10:28:29 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -55,6 +55,12 @@
 #define	CB_CIRRUS	8	/* Cirrus Logic CL-PD683X */
 #define	CB_TI125X	9	/* TI PCI1250/1251(B)/1450 */
 #define	CB_CHIPS_LAST	10	/* Sentinel */
+
+#define PCCARD_VCC_UKN		0x00	/* Unknown */
+#define PCCARD_VCC_5V		0x01
+#define PCCARD_VCC_3V		0x02
+#define PCCARD_VCC_XV		0x04
+#define PCCARD_VCC_YV		0x08
 
 #if 0
 static char *cb_chipset_name[CB_CHIPS_LAST] = {
