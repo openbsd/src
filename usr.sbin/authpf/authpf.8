@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.39 2005/05/12 08:17:21 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.40 2005/09/23 14:36:46 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -440,7 +440,7 @@ ipsec_gw="10.2.3.4"
 
 # rdr ftp for proxying by ftp-proxy(8)
 rdr on $internal_if proto tcp from $user_ip to any port 21 \e
-      -> 127.0.0.1 port 8081
+      -> 127.0.0.1 port 8021
 
 # allow out ftp, ssh, www and https only, and allow user to negotiate
 # ipsec with the ipsec server.
