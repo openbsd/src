@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.37 2005/09/22 00:27:18 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.38 2005/09/23 23:01:21 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -275,12 +275,23 @@ int	atw_rf3000_write(struct atw_softc *, u_int, u_int);
 /* Silicon Laboratories Si4126 RF/IF Synthesizer */
 void	atw_si4126_tune(struct atw_softc *, u_int);
 void	atw_si4126_write(struct atw_softc *, u_int, u_int);
+void	atw_si4126_init(struct atw_softc *);
 
 const struct atw_txthresh_tab atw_txthresh_tab_lo[] = ATW_TXTHRESH_TAB_LO_RATE;
 const struct atw_txthresh_tab atw_txthresh_tab_hi[] = ATW_TXTHRESH_TAB_HI_RATE;
 
 struct cfdriver atw_cd = {
     NULL, "atw", DV_IFNET
+};
+
+static const u_int atw_rfmd2958_ifn[] = {
+	0x22bd, 0x22d2, 0x22e8, 0x22fe, 0x2314, 0x232a, 0x2340,
+	0x2355, 0x236b, 0x2381, 0x2397, 0x23ad, 0x23c2, 0x23f7
+};
+
+static const u_int atw_rfmd2958_rf1r[] = {
+	0x05d17, 0x3a2e8, 0x2e8ba, 0x22e8b, 0x1745d, 0x0ba2e, 0x00000,
+	0x345d1, 0x28ba2, 0x1d174, 0x11745, 0x05d17, 0x3a2e8, 0x11745
 };
 
 const char *atw_tx_state[] = {
@@ -1229,7 +1240,31 @@ atw_bbp_io_init(struct atw_softc *sc)
 		break;
 	}
 	ATW_WRITE(sc, ATW_MMIRADDR2, mmiraddr2);
+
+	atw_si4126_init(sc);
+
 	ATW_WRITE(sc, ATW_MACTEST, ATW_MACTEST_MMI_USETXCLK);
+}
+
+void
+atw_si4126_init(struct atw_softc *sc)
+{
+	switch (sc->sc_rftype) {
+	case ATW_RFTYPE_RFMD:
+		if (sc->sc_rev >= ATW_REVISION_BA) {
+			atw_si4126_write(sc, 0x1f, 0x00000);
+			atw_si4126_write(sc, 0x0c, 0x3001f);
+			atw_si4126_write(sc, SI4126_GAIN, 0x29c03);
+			atw_si4126_write(sc, SI4126_RF1N, 0x1ff6f);
+			atw_si4126_write(sc, SI4126_RF2N, 0x29403);
+			atw_si4126_write(sc, SI4126_RF2R, 0x1456f);
+			atw_si4126_write(sc, 0x09, 0x10050);
+			atw_si4126_write(sc, SI4126_IFR, 0x3fff8);
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 /*
@@ -1571,6 +1606,28 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 	atw_si4126_print(sc);
 #endif /* ATW_SYNDEBUG */
 
+	if (sc->sc_rev >= ATW_REVISION_BA) {
+		atw_si4126_write(sc, SI4126_MAIN, 0x04007);
+		atw_si4126_write(sc, SI4126_POWER, 0x00033);
+		atw_si4126_write(sc, SI4126_IFN,
+		    atw_rfmd2958_ifn[chan - 1]);
+		atw_si4126_write(sc, SI4126_RF1R,
+		    atw_rfmd2958_rf1r[chan - 1]);
+#ifdef NOTYET
+		/* set TX POWER? */
+		atw_si4126_write(sc, 0x0a,
+		    (sc->sc_srom[ATW_SR_CSR20] & mask) |
+		    power << 9);
+#endif
+		/* set TX GAIN */
+		atw_si4126_write(sc, 0x09, 0x00050 |
+		    sc->sc_srom[ATW_SR_TXPOWER(chan - 1)]);
+		/* wait 100us from power-up for RF, IF to settle */
+		DELAY(100);
+
+		return;
+	}
+
 	if (chan == 14)
 		mhz = 2484;
 	else
@@ -1706,7 +1763,8 @@ atw_rf3000_init(struct atw_softc *sc)
 	if (rc != 0)
 		goto out;
 
-	/* XXX Reference driver remarks that Abocom sets this to 50.
+	/*
+	 * XXX Reference driver remarks that Abocom sets this to 50.
 	 * Meaning 0x50, I think....  50 = 0x32, which would set a bit
 	 * in the "reserved" area of register RF3000_OPTIONS1.
 	 */
@@ -1909,13 +1967,23 @@ void
 atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
 {
 	uint32_t bits, mask, reg;
-	const int nbits = 22;
+	int nbits;
 
-	KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
-	KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
+	if (sc->sc_rev >= ATW_REVISION_BA) {
+		nbits = 24;
 
-	bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
-	       LSHIFT(addr, SI4126_TWI_ADDR_MASK);
+		val &= 0x3ffff;
+		addr &= 0x1f;
+		bits = val | (addr << 18);
+	} else {
+		nbits = 22;
+
+		KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
+		KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
+
+		bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
+		    LSHIFT(addr, SI4126_TWI_ADDR_MASK);
+	}
 
 	reg = ATW_SYNRF_SELSYN;
 	/* reference driver: reset Si4126 serial bus to initial
@@ -2385,6 +2453,8 @@ atw_write_sup_rates(struct atw_softc *sc)
 	buf[0] = ic->ic_bss->ni_rates.rs_nrates;
 	memcpy(&buf[1], ic->ic_bss->ni_rates.rs_rates,
 	    ic->ic_bss->ni_rates.rs_nrates);
+
+	/* XXX deal with rev BA bug linux driver talks of? */
 
 	atw_write_sram(sc, ATW_SRAM_ADDR_SUPRATES, buf, sizeof(buf));
 }
