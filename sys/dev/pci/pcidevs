@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.917 2005/09/17 13:52:17 jsg Exp $
+$OpenBSD: pcidevs,v 1.918 2005/09/23 21:07:46 fgsch Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -291,10 +291,12 @@ vendor	INVALID		0xffff	INVALID VENDOR ID
  */
 
 /* O2 Micro */
+product O2MICRO OZ6729		0x6729	OZ6729
+product O2MICRO OZ6730		0x673a	OZ6730
+product O2MICRO OZ6922		0x6825	OZ6922 CardBus
 product O2MICRO OZ6832		0x6832	OZ6832 CardBus
 product O2MICRO OZ6836		0x6836	OZ6836/OZ6860 CardBus
 product O2MICRO OZ6872		0x6872	OZ68[17]2 CardBus
-product O2MICRO OZ6922		0x6925	OZ6922 CardBus
 product O2MICRO OZ6933		0x6933	OZ6933 CardBus
 product O2MICRO OZ6972		0x6972	OZ69[17]2 CardBus
 product O2MICRO OZ7110		0x7110	OZ711Mx CardBus
