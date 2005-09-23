@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbreg.h,v 1.5 2005/09/19 19:04:19 fgsch Exp $ */
+/*	$OpenBSD: pccbbreg.h,v 1.6 2005/09/23 21:40:33 fgsch Exp $	*/
 /*	$NetBSD: pccbbreg.h,v 1.5 2000/06/07 09:02:47 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -193,6 +193,14 @@
 #define TOPIC100_PMCSR		0x84	/* Power mgmt ctrl/stat register */
 # define TOPIC100_PMCSR_MASK		0x00000003
 # define TOPIC100_PMCSR_D0		0x0
+
+/*
+ * Addition O2Micro registers
+ */
+#define O2MICRO_RESERVED1	0x94
+#define O2MICRO_RESERVED2	0xD4
+#define O2MICRO_RES_READ_PREFETCH	0x02
+#define O2MICRO_RES_WRITE_BURST		0x08
 
 /* socket event register (CB_SOCKET_EVENT) elements */
 #define CB_SOCKET_EVENT_CSTS 0x01 /* CARDSTS event occurs */
