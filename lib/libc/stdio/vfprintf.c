@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.32 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: vfprintf.c,v 1.33 2005/09/23 02:33:34 tedu Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -424,6 +424,9 @@ reswitch:	switch (ch) {
 #endif
 		case 'h':
 			flags |= SHORTINT;
+			goto rflag;
+		case 'j':
+			flags |= QUADINT;
 			goto rflag;
 		case 'l':
 			if (*fmt == 'l') {
