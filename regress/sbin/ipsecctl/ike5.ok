@@ -1,4 +1,4 @@
-C set [Phase 1]:131.188.33.29=peer-131.188.33.29
+C set [Phase 1]:131.188.33.29=peer-131.188.33.29 force
 C set [peer-131.188.33.29]:Phase=1 force
 C set [peer-131.188.33.29]:Address=131.188.33.29 force
 C set [peer-131.188.33.29]:Configuration=mm-131.188.33.29 force
@@ -26,7 +26,7 @@ C set [rid-10.1.2.0/24]:Netmask=255.255.255.0 force
 C add [Phase 2]:Connections=IPsec-10.1.1.0/24-10.1.2.0/24
 t IPsec-10.1.1.0/24-10.1.2.0/24
 c IPsec-10.1.1.0/24-10.1.2.0/24
-C set [Phase 1]:131.188.33.29=peer-131.188.33.29
+C set [Phase 1]:131.188.33.29=peer-131.188.33.29 force
 C set [peer-131.188.33.29]:Phase=1 force
 C set [peer-131.188.33.29]:Address=131.188.33.29 force
 C set [peer-131.188.33.29]:Configuration=mm-131.188.33.29 force

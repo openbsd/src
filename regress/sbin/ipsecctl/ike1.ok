@@ -1,4 +1,4 @@
-C set [Phase 1]:131.188.33.29=peer-131.188.33.29
+C set [Phase 1]:131.188.33.29=peer-131.188.33.29 force
 C set [peer-131.188.33.29]:Phase=1 force
 C set [peer-131.188.33.29]:Address=131.188.33.29 force
 C set [IPsec-131.188.33.51-131.188.33.29]:Phase=2 force
