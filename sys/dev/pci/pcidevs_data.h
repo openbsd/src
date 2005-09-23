@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.917 2005/09/17 13:52:17 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.918 2005/09/23 21:07:46 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -39,6 +39,18 @@
 
 static const struct pci_known_product pci_known_products[] = {
 	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
+	    "OZ6729",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6730,
+	    "OZ6730",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6922,
+	    "OZ6922 CardBus",
+	},
+	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
 	    "OZ6832 CardBus",
 	},
@@ -49,10 +61,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872,
 	    "OZ68[17]2 CardBus",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6922,
-	    "OZ6922 CardBus",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6933,
