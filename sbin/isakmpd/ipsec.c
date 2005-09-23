@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.121 2005/06/25 23:20:43 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.122 2005/09/23 14:44:03 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1603,7 +1603,7 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			 * disappear too.
 			 */
 			msg->transport->vtbl->get_dst(msg->transport, &dst);
-			while ((sa = sa_lookup_by_peer(dst, SA_LEN(dst))) != 0) {
+			while ((sa = sa_lookup_by_peer(dst, SA_LEN(dst), 0)) != 0) {
 				/*
 				 * Don't delete the current SA -- we received
 				 * the notification over it, so it's obviously

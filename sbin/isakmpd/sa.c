@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.101 2005/08/09 12:50:08 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.102 2005/09/23 14:44:03 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h>
 
 #include <regex.h>
 #include <keynote.h>
@@ -198,8 +199,7 @@ sa_check_peer(struct sa *sa, void *v_addr)
 		return 0;
 
 	sa->transport->vtbl->get_dst(sa->transport, &dst);
-	return SA_LEN(dst) == addr->len &&
-	    memcmp(dst, addr->addr, SA_LEN(dst)) == 0;
+	return (net_addrcmp(dst, addr->addr) == 0);
 }
 
 struct dst_isakmpspi_arg {
@@ -250,13 +250,13 @@ sa_lookup_isakmp_sa(struct sockaddr *dst, u_int8_t *spi)
 
 /* Lookup a ready SA by the peer's address.  */
 struct sa *
-sa_lookup_by_peer(struct sockaddr *dst, socklen_t dstlen)
+sa_lookup_by_peer(struct sockaddr *dst, socklen_t dstlen, int phase)
 {
 	struct addr_arg arg;
 
 	arg.addr = dst;
 	arg.len = dstlen;
-	arg.phase = 0;
+	arg.phase = phase;
 
 	return sa_find(sa_check_peer, &arg);
 }

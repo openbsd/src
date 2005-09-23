@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.46 2005/04/08 16:52:41 deraadt Exp $	 */
+/* $OpenBSD: sa.h,v 1.47 2005/09/23 14:44:03 hshoexer Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -254,7 +254,7 @@ extern void     sa_reinit(void);
 extern struct sa *sa_isakmp_lookup_by_peer(struct sockaddr *, socklen_t);
 extern void     sa_isakmp_upgrade(struct message *);
 extern struct sa *sa_lookup(u_int8_t *, u_int8_t *);
-extern struct sa *sa_lookup_by_peer(struct sockaddr *, socklen_t);
+extern struct sa *sa_lookup_by_peer(struct sockaddr *, socklen_t, int);
 extern struct sa *sa_lookup_by_header(u_int8_t *, int);
 extern struct sa *sa_lookup_by_name(char *, int);
 extern struct sa *sa_lookup_from_icookie(u_int8_t *);
