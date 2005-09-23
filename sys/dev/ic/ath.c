@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.41 2005/09/22 10:17:04 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.42 2005/09/23 20:06:50 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@ void	ath_ledstate(struct ath_softc *, enum ieee80211_state);
 int	ath_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	ath_newassoc(struct ieee80211com *,
 	    struct ieee80211_node *, int);
-int	ath_getchannels(struct ath_softc *, u_int cc, HAL_BOOL outdoor,
+int	ath_getchannels(struct ath_softc *, HAL_BOOL outdoor,
 	    HAL_BOOL xchanmode);
 int	ath_rate_setup(struct ath_softc *sc, u_int mode);
 void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
@@ -157,8 +157,6 @@ int ath_dwelltime = 200;		/* 5 channels/second */
 int ath_calinterval = 30;		/* calibrate every 30 secs */
 int ath_outdoor = AH_TRUE;		/* outdoor operation */
 int ath_xchanmode = AH_TRUE;		/* enable extended channels */
-int ath_countrycode = CTRY_DEFAULT;	/* country code */
-int ath_regdomain = DMN_DEFAULT;	/* regulatory domain */
 
 struct cfdriver ath_cd = {
 	NULL, "ath", DV_IFNET
@@ -222,6 +220,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	DPRINTF(ATH_DEBUG_ANY, ("%s: devid 0x%x\n", __func__, devid));
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	sc->sc_flags &= ~ATH_ATTACHED;	/* make sure that it's not attached */
 
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
@@ -263,21 +262,18 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	sc->sc_invalid = 0;	/* ready to go, enable interrupt handling */
 
 	/*
-	 * Collect the channel list using the default country
-	 * code and including outdoor channels.  The 802.11 layer
-	 * is resposible for filtering this list based on settings
-	 * like the phy mode.
+	 * Get regulation domain either stored in the EEPROM or defined
+	 * as the default value. Some devices are known to have broken
+	 * regulation domain values in their EEPROM.
 	 */
-	error = ath_getchannels(sc, ath_countrycode, ath_outdoor,
-	    ath_xchanmode);
+	ath_hal_get_regdomain(ah, &ah->ah_regdomain);
+
+	/*
+	 * Construct channel list based on the current regulation domain.
+	 */
+	error = ath_getchannels(sc, ath_outdoor, ath_xchanmode);
 	if (error != 0)
 		goto bad;
-	/*
-	 * Copy these back; they are set as a side effect
-	 * of constructing the channel list.
-	 */
-	ath_hal_get_regdomain(ah, &ath_regdomain);
-	ath_hal_getcountrycode(ah, &ath_countrycode);
 
 	/*
 	 * Setup rate tables for all potential media types.
@@ -414,7 +410,13 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	if (sc->sc_powerhook == NULL)
 		printf(": WARNING: unable to establish power hook\n");
 
-	printf(", %s, address %s\n", ieee80211_regdomain2name(ath_regdomain),
+	/*
+	 * Print regulation domain and the mac address. The regulation domain
+	 * will be marked with a * if the EEPROM value has been overwritten.
+	 */
+	printf(", %s%s, address %s\n",
+	    ieee80211_regdomain2name(ah->ah_regdomain),
+	    ah->ah_regdomain != ah->ah_regdomain_hw ? "*" : "",
 	    ether_sprintf(ic->ic_myaddr));
 
 	if (ath_gpio_attach(sc, devid) == 0)
@@ -3008,8 +3010,7 @@ ath_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 }
 
 int
-ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor,
-    HAL_BOOL xchanmode)
+ath_getchannels(struct ath_softc *sc, HAL_BOOL outdoor, HAL_BOOL xchanmode)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -3025,7 +3026,7 @@ ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor,
 		return ENOMEM;
 	}
 	if (!ath_hal_init_channels(ah, chans, IEEE80211_CHAN_MAX, &nchan,
-	    cc, HAL_MODE_ALL, outdoor, xchanmode)) {
+	    HAL_MODE_ALL, outdoor, xchanmode)) {
 		printf("%s: unable to collect channel list from hal\n",
 		    ifp->if_xname);
 		free(chans, M_TEMP);
@@ -3063,8 +3064,8 @@ ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor,
 
 	if (sc->sc_nchan < 1) {
 		printf("%s: no valid channels for regdomain %s(%u)\n",
-		    ifp->if_xname, ieee80211_regdomain2name(ath_regdomain),
-		    sc->sc_ah->ah_capabilities.cap_eeprom.ee_regdomain);
+		    ifp->if_xname, ieee80211_regdomain2name(ah->ah_regdomain),
+		    ah->ah_regdomain);
 		return ENOENT;
 	}
 

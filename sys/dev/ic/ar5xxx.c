@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.30 2005/09/19 10:27:08 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.31 2005/09/23 20:06:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -144,8 +144,6 @@ struct ath_hal *
 ath_hal_attach(u_int16_t device, void *sc, bus_space_tag_t st,
     bus_space_handle_t sh, int *status)
 {
-	ieee80211_regdomain_t ieee_regdomain;
-	u_int16_t regdomain;
 	struct ath_hal *hal = NULL;
 	ar5k_attach_t *attach = NULL;
 	u_int8_t mac[IEEE80211_ADDR_LEN];
@@ -187,8 +185,6 @@ ath_hal_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 	 * HAL information
 	 */
 	hal->ah_abi = HAL_ABI_VERSION;
-	hal->ah_country_code = CTRY_DEFAULT;
-	hal->ah_capabilities.cap_regdomain.reg_current = AR5K_TUNE_REGDOMAIN;
 	hal->ah_op_mode = HAL_M_STA;
 	hal->ah_radar.r_enabled = AR5K_TUNE_RADAR_ALERT;
 	hal->ah_turbo = AH_FALSE;
@@ -216,21 +212,6 @@ ath_hal_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 		AR5K_PRINT("unable to init EEPROM\n");
 		goto failed;
 	}
-
-	/* Set regulation domain */
-	if ((regdomain =
-		hal->ah_capabilities.cap_eeprom.ee_regdomain) != 0) {
-		hal->ah_capabilities.cap_regdomain.reg_current =
-		    ieee_regdomain = ar5k_regdomain_to_ieee(regdomain);
-	} else {
-		ieee_regdomain =
-		    hal->ah_capabilities.cap_regdomain.reg_current;
-
-		/* Try to write default regulation domain to EEPROM */
-		ar5k_eeprom_regulation_domain(hal, AH_TRUE, &ieee_regdomain);
-	}
-
-	hal->ah_capabilities.cap_regdomain.reg_hw = ieee_regdomain;
 
 	/* Get misc capabilities */
 	if (hal->ah_get_capabilities(hal) != AH_TRUE) {
@@ -379,8 +360,8 @@ ar5k_check_channel(struct ath_hal *hal, u_int16_t freq, u_int flags)
 
 HAL_BOOL
 ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
-    u_int max_channels, u_int *channels_size, HAL_CTRY_CODE country,
-    u_int16_t mode, HAL_BOOL outdoor, HAL_BOOL extended)
+    u_int max_channels, u_int *channels_size, u_int16_t mode,
+    HAL_BOOL outdoor, HAL_BOOL extended)
 {
 	u_int i, c;
 	u_int32_t domain_current;
@@ -392,7 +373,7 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 		return (AH_FALSE);
 
 	i = c = 0;
-	domain_current = hal->ah_get_regdomain(hal);
+	domain_current = hal->ah_regdomain;
 
 	/*
 	 * In debugging mode, enable all channels supported by the chipset
@@ -557,16 +538,22 @@ ar5k_regdomain_from_ieee(ieee80211_regdomain_t ieee)
 {
 	u_int32_t regdomain = (u_int32_t)ieee;
 
-	if (regdomain & 0xf0000000)
+	/*
+	 * Use the default regulation domain if the value is empty
+	 * or not supported by the net80211 regulation code.
+	 */
+	if (ieee80211_regdomain2flag(regdomain,
+	    IEEE80211_CHANNELS_5GHZ_MIN) == DMN_DEBUG)
 		return ((u_int16_t)AR5K_TUNE_REGDOMAIN);
 
-	return (regdomain & 0xff);
+	/* It is supported, just return the value */
+	return (regdomain);
 }
 
 ieee80211_regdomain_t
 ar5k_regdomain_to_ieee(u_int16_t regdomain)
 {
-	ieee80211_regdomain_t ieee = (ieee80211_regdomain_t)regdomain & 0xff;
+	ieee80211_regdomain_t ieee = (ieee80211_regdomain_t)regdomain;
 
 	return (ieee);
 }
@@ -574,31 +561,28 @@ ar5k_regdomain_to_ieee(u_int16_t regdomain)
 u_int16_t
 ar5k_get_regdomain(struct ath_hal *hal)
 {
-#ifndef COUNTRYCODE
-	/*
-	 * Use the regulation domain found in the EEPROM, if not
-	 * forced by a static country code.
-	 */
 	u_int16_t regdomain;
 	ieee80211_regdomain_t ieee_regdomain;
+#ifdef COUNTRYCODE
+	u_int16_t code;
+#endif
 
-	if (ar5k_eeprom_regulation_domain(hal,
-	    AH_FALSE, &ieee_regdomain) == AH_TRUE) {
-		if ((regdomain = ar5k_regdomain_from_ieee(ieee_regdomain)))
-			return (regdomain);
-	}
+	ar5k_eeprom_regulation_domain(hal, AH_FALSE, &ieee_regdomain);
+	hal->ah_capabilities.cap_regdomain.reg_hw = ieee_regdomain;
 
-	return (hal->ah_regdomain);
-#else
+#ifdef COUNTRYCODE
 	/*
 	 * Get the regulation domain by country code. This will ignore
 	 * the settings found in the EEPROM.
 	 */
-	u_int16_t code;
-
 	code = ieee80211_name2countrycode(COUNTRYCODE);
-	return (ieee80211_countrycode2regdomain(code));
+	ieee_regdomain = ieee80211_countrycode2regdomain(code);
 #endif
+
+	regdomain = ar5k_regdomain_from_ieee(ieee_regdomain);
+	hal->ah_capabilities.cap_regdomain.reg_current = regdomain;
+
+	return (regdomain);
 }
 
 u_int32_t
@@ -1037,25 +1021,26 @@ HAL_BOOL
 ar5k_eeprom_regulation_domain(struct ath_hal *hal, HAL_BOOL write,
     ieee80211_regdomain_t *regdomain)
 {
+	u_int16_t ee_regdomain;
+
 	/* Read current value */
 	if (write != AH_TRUE) {
-		*regdomain = hal->ah_capabilities.cap_regdomain.reg_current;
+		ee_regdomain = hal->ah_capabilities.cap_eeprom.ee_regdomain;
+		*regdomain = ar5k_regdomain_to_ieee(ee_regdomain);
 		return (AH_TRUE);
 	}
 
-	/* Try to write a new value */
-	hal->ah_capabilities.cap_regdomain.reg_current = *regdomain;
+	ee_regdomain = ar5k_regdomain_from_ieee(*regdomain);
 
+	/* Try to write a new value */
 	if (hal->ah_capabilities.cap_eeprom.ee_protect &
 	    AR5K_EEPROM_PROTECT_WR_128_191)
 		return (AH_FALSE);
-
 	if (hal->ah_eeprom_write(hal, AR5K_EEPROM_REG_DOMAIN,
-	    hal->ah_capabilities.cap_eeprom.ee_regdomain) != 0)
+	    ee_regdomain) != 0)
 		return (AH_FALSE);
 
-	hal->ah_capabilities.cap_eeprom.ee_regdomain =
-	    ar5k_regdomain_from_ieee(*regdomain);
+	hal->ah_capabilities.cap_eeprom.ee_regdomain = ee_regdomain;
 
 	return (AH_TRUE);
 }

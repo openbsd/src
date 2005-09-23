@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.15 2005/09/22 10:17:04 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.16 2005/09/23 20:06:50 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -491,8 +491,6 @@ int	ath_enable(struct ath_softc *);
 	((*(_ah)->ah_set_associd)((_ah), (_bss), (_associd), 0))
 #define	ath_hal_get_regdomain(_ah, _prd) \
 	(*(_prd) = (_ah)->ah_get_regdomain(_ah))
-#define	ath_hal_getcountrycode(_ah, _pcc) \
-	(*(_pcc) = (_ah)->ah_getcountrycode)
 #define	ath_hal_detach(_ah) \
 	((*(_ah)->ah_detach)(_ah))
 #define ath_hal_set_slot_time(_ah, _t) \

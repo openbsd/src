@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.28 2005/09/23 19:11:40 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.29 2005/09/23 20:06:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1090,7 +1090,6 @@ struct ath_hal {
 
 	HAL_INT			ah_imr;
 
-	HAL_CTRY_CODE		ah_country_code;
 	HAL_OPMODE		ah_op_mode;
 	HAL_POWER_MODE		ah_power_mode;
 	HAL_CHANNEL		ah_current_channel;
@@ -1098,8 +1097,6 @@ struct ath_hal {
 	HAL_BOOL		ah_calibration;
 	HAL_BOOL		ah_running;
 	HAL_RFGAIN		ah_rf_gain;
-
-#define ah_getcountrycode		ah_country_code
 
 	HAL_RATE_TABLE		ah_rt_11a;
 	HAL_RATE_TABLE		ah_rt_11b;
@@ -1122,6 +1119,7 @@ struct ath_hal {
 	HAL_BOOL		ah_2ghz;
 
 #define ah_regdomain		ah_capabilities.cap_regdomain.reg_current
+#define ah_regdomain_hw		ah_capabilities.cap_regdomain.reg_hw
 #define ah_modes		ah_capabilities.cap_mode
 #define ah_ee_version		ah_capabilities.cap_eeprom.ee_version
 
@@ -1278,7 +1276,6 @@ typedef HAL_BOOL (ar5k_rfgain_t)
 
 /* Default regulation domain if stored value EEPROM value is invalid */
 #define AR5K_TUNE_REGDOMAIN	DMN_FCC2_FCCA	/* Canada */
-#define AR5K_TUNE_CTRY		CTRY_DEFAULT
 
 /*
  * Common initial register values
@@ -1811,7 +1808,7 @@ u_int			 ath_hal_mhz2ieee(u_int, u_int);
 u_int			 ath_hal_ieee2mhz(u_int, u_int);
 
 HAL_BOOL		 ath_hal_init_channels(struct ath_hal *, HAL_CHANNEL *,
-    u_int, u_int *, HAL_CTRY_CODE, u_int16_t, HAL_BOOL, HAL_BOOL);
+    u_int, u_int *, u_int16_t, HAL_BOOL, HAL_BOOL);
 
 const char		*ar5k_printver(enum ar5k_srev_type, u_int);
 void			 ar5k_radar_alert(struct ath_hal *);
