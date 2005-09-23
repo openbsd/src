@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.324 2005/08/20 00:27:08 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.325 2005/09/23 02:03:44 brad Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1392,12 +1392,12 @@ amd_family6_setup(struct cpu_info *ci)
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
 	static struct amd_pn_flag amd_pn_flags[] = {
-	    {0, "TS"},
-	    {1, "FID"},
-	    {2, "VID"},
-	    {4, "TTP"},
-	    {8, "TM"},
-	    {16, "STC"}
+	    {0x01, "TS"},
+	    {0x02, "FID"},
+	    {0x04, "VID"},
+	    {0x08, "TTP"},
+	    {0x10, "TM"},
+	    {0x20, "STC"}
 	};
 	u_int regs[4];
 	int i;
@@ -1415,8 +1415,11 @@ amd_family6_setup(struct cpu_info *ci)
 				printf(" %s", amd_pn_flags[i].name);
 		}
 		printf("\n");
-		if (regs[3] & 6)
+
+#ifndef MULTIPROCESSOR
+		if (regs[3] & 0x06)
 			k7_powernow_init(curcpu()->ci_signature);
+#endif
 	}
 #endif
 }
