@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.82 2005/08/23 15:02:31 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.83 2005/09/23 14:45:25 hshoexer Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -440,10 +440,31 @@ Report information on all known SAs to the
 file.
 .Pp
 .It Ic T
-Tear down all active connections.
+Tear down all active quick mode connections.
 .Pp
-.It Ic t Aq Ic name
+.It Xo
+.Ic t
+.Op Aq Ic phase
+.Aq Ic name
+.Xc
 Tear down the named connection, if active.
+For
+.Ar name ,
+the tag specified in
+.Xr isakmpd.conf 5
+or the IP address of the remote host can be used.
+The optional parameter
+.Ar phase
+specifies whether to delete a phase 1 or phase 2 SA.
+The value
+.Sq main
+indicates a phase 1 connection;
+the value
+.Sq quick
+a phase 2 connection.
+If no phase is specified,
+.Sq quick
+will be assumed.
 .El
 .Sh SETTING UP AN IKE PUBLIC KEY INFRASTRUCTURE (PKI)
 In order to use public key based authentication, there has to be an
