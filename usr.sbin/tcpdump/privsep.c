@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.21 2005/05/23 06:56:42 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.22 2005/09/23 15:42:51 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -137,6 +137,9 @@ priv_init(int argc, char **argv)
 	char *RFileName = NULL;
 	char *WFileName = NULL;
 
+	if (geteuid() != 0)
+		errx(1, "need root privileges");
+
 	closefrom(STDERR_FILENO + 1);
 	for (i = 1; i < _NSIG; i++)
 		signal(i, SIG_DFL);
@@ -150,35 +153,26 @@ priv_init(int argc, char **argv)
 		err(1, "fork() failed");
 
 	if (child_pid) {
-		if (getuid() == 0) {
-			/* Parent, drop privileges to _tcpdump */
-			pw = getpwnam("_tcpdump");
-			if (pw == NULL)
-				errx(1, "unknown user _tcpdump");
+		/* Parent, drop privileges to _tcpdump */
+		pw = getpwnam("_tcpdump");
+		if (pw == NULL)
+			errx(1, "unknown user _tcpdump");
 
-			/* chroot, drop privs and return */
-			if (chroot(pw->pw_dir) != 0)
-				err(1, "unable to chroot");
-			if (chdir("/") != 0)
-				err(1, "unable to chdir");
+		/* chroot, drop privs and return */
+		if (chroot(pw->pw_dir) != 0)
+			err(1, "unable to chroot");
+		if (chdir("/") != 0)
+			err(1, "unable to chdir");
 
-			/* drop to _tcpdump */
-			if (setgroups(1, &pw->pw_gid) == -1)
-				err(1, "setgroups() failed");
-			if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
-				err(1, "setresgid() failed");
-			if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-				err(1, "setresuid() failed");
-			endpwent();
-		} else {
-			/* Parent - drop suid privileges */
-			gid = getgid();
-			uid = getuid();
-			if (setresgid(gid, gid, gid) == -1)
-				err(1, "setresgid() failed");
-			if (setresuid(uid, uid, uid) == -1)
-				err(1, "setresuid() failed");
-		}
+		/* drop to _tcpdump */
+		if (setgroups(1, &pw->pw_gid) == -1)
+			err(1, "setgroups() failed");
+		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+			err(1, "setresgid() failed");
+		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+			err(1, "setresuid() failed");
+		endpwent();
+
 		close(socks[0]);
 		priv_fd = socks[1];
 		return (0);
