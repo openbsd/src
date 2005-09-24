@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.36 2005/09/17 20:03:35 msf Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.37 2005/09/24 21:10:32 msf Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -408,6 +408,8 @@ struct ctl_iface {
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
 	u_int8_t		 passive;
+	enum auth_type		 auth_type;
+	u_int8_t		 auth_keyid;
 };
 
 struct ctl_nbr {

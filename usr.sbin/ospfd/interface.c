@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.33 2005/09/17 20:03:35 msf Exp $ */
+/*	$OpenBSD: interface.c,v 1.34 2005/09/24 21:10:32 msf Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -631,6 +631,8 @@ if_to_ctl(struct iface *iface)
 	ictl.linkstate = iface->linkstate;
 	ictl.priority = iface->priority;
 	ictl.passive = iface->passive;
+	ictl.auth_type = iface->auth_type;
+	ictl.auth_keyid = iface->auth_keyid;
 
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&iface->hello_timer, &tv)) {

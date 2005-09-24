@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.17 2005/05/27 00:51:52 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.18 2005/09/24 21:10:32 msf Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -344,6 +344,20 @@ show_interface_msg(struct imsg *imsg)
 			    fmt_timeframe_core(iface->hello_timer));
 		printf("  Neighbor count is %d, adjacent neighbor count is "
 		    "%d\n", iface->nbr_cnt, iface->adj_cnt);
+		if (iface->auth_type > 0) {
+			switch (iface->auth_type) {
+			case AUTH_SIMPLE:
+				printf("  Simple password authentication "
+				    "enabled\n");
+			case AUTH_CRYPT:
+				printf("  Message digest authentication "
+				    "enabled\n");
+				printf("    Primary key id is %d\n", 
+				    iface->auth_keyid);
+			default:
+				break;
+			}
+		}
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
