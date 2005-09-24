@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.48 2005/04/11 08:09:32 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.49 2005/09/24 07:28:58 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1048,8 +1048,10 @@ ehci_power(int why, void *v)
 			}
 		}
 
-
 		EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
+
+		/* Take over port ownership */
+		EOWRITE4(sc, EHCI_CONFIGFLAG, EHCI_CONF_CF);
 
 		for (i = 0; i < 100; i++) {
 			hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
