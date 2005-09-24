@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.39 2005/09/24 09:22:26 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.40 2005/09/24 11:19:14 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3365,6 +3365,7 @@ atw_watchdog(struct ifnet *ifp)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	uint32_t test1, rra, rwa;
 
 	ifp->if_timer = 0;
 	if (ATW_IS_ENABLED(sc) == 0)
@@ -3385,6 +3386,23 @@ atw_watchdog(struct ifnet *ifp)
 	}
 	if (sc->sc_tx_timer != 0 || sc->sc_rescan_timer != 0)
 		ifp->if_timer = 1;
+
+	/*
+	 * ADM8211B seems to stall every so often, check for this.
+	 * These bits are what the Linux driver checks, they don't
+	 * seem to be documented by ADMTek/Infineon?
+	 */
+	if (sc->sc_rev == ATW_REVISION_BA) {
+		test1 = ATW_READ(sc, ATW_TEST1);
+		rra = (test1 >> 12) & 0x1ff;
+		rwa = (test1 >> 2) & 0x1ff;
+
+		if ((rra != rwa) && !(test1 & 0x2)) {
+			atw_init(ifp);
+			atw_start(ifp);
+		}
+	}
+
 	ieee80211_watchdog(ifp);
 }
 
