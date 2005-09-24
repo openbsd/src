@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.37 2005/09/20 20:06:48 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.38 2005/09/24 12:07:38 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -200,6 +200,18 @@ sub mkheader
 		$major = 0;
 		$minor = 0;
 	}
+	my ($uname, $gname);
+	if (defined $entry->{uname}) {
+		$uname = $entry->{uname};
+	} else {
+		$uname = $entry->{uid};
+	}
+	if (defined $entry->{gname}) {
+		$gname = $entry->{gname};
+	} else {
+		$gname = $entry->{gid};
+	}
+
 	if (defined $entry->{cwd}) {
 		my $cwd = $entry->{cwd};
 		$cwd.='/' unless $cwd =~ m/\/$/;
@@ -217,17 +229,11 @@ sub mkheader
 	if (length $linkname > MAXLINKNAME) {
 		die "Linkname too long $linkname\n";
 	}
-	if (!defined $entry->{uname}) {
-		die "No user name for ", $entry->{name}, " (uid ", $entry->{uid}, ")\n";
+	if (length $uname > MAXUSERNAME) {
+		die "Username too long $uname\n";
 	}
-	if (length $entry->{uname} > MAXUSERNAME) {
-		die "Username too long ", $entry->{uname}, "\n";
-	}
-	if (!defined $entry->{gname}) {
-		die "No group name for ", $entry->{name}, " (gid ", $entry->{gid}. "\n";
-	}
-	if (length $entry->{gname} > MAXGROUPNAME) {
-		die "Groupname too long ", $entry->{gname}, "\n";
+	if (length $gname > MAXGROUPNAME) {
+		die "Groupname too long $gname\n";
 	}
 	my $header;
 	my $cksum = ' 'x8;
@@ -243,8 +249,8 @@ sub mkheader
 		    $type,
 		    $linkname,
 		    'ustar', '00',
-		    $entry->{uname},
-		    $entry->{gname},
+		    $uname,
+		    $gname,
 		    sprintf("%07o", $major),
 		    sprintf("%07o", $minor),
 		    $prefix, "\0");
