@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.21 2005/09/24 18:07:53 mickey Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.22 2005/09/24 18:10:02 mickey Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.21 2005/09/24 18:07:53 mickey Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.22 2005/09/24 18:10:02 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1078,7 +1078,7 @@ get_pos(FILEDESC *fp)
 	}
 	if (++(fp->pos) >= fp->tbl.str_numstr)
 		fp->pos -= fp->tbl.str_numstr;
-	DPRINTF(1, (stderr, "pos for %s is %qd\n", fp->name, fp->pos));
+	DPRINTF(1, (stderr, "pos for %s is %d\n", fp->name, fp->pos));
 }
 
 /*
