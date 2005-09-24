@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.41 2005/09/04 22:53:51 espie Exp $
+# $OpenBSD: Add.pm,v 1.42 2005/09/24 12:52:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -361,7 +361,7 @@ sub prepare_to_extract
 		Fatal "Error: truncated archive\n";
 	}
 	$file->{cwd} = $self->cwd();
-	if (!$file->check_name($self->{name})) {
+	if (!$file->check_name($self)) {
 		Fatal "Error: archive does not match ", $file->{name}, "!=",
 		$self->{name}, "\n";
 	}

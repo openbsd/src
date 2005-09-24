@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.40 2005/09/11 10:12:01 espie Exp $
+# $OpenBSD: pkg_create,v 1.41 2005/09/24 12:52:18 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -41,7 +41,7 @@ sub archive
 	my ($self, $arc, $base, $verbose) = @_;
 
 	if (defined $arc) {
-	    my $o = $arc->prepare_long($self->{name});
+	    my $o = $arc->prepare_long($self);
 	    $o->write();
 	}
 	if ($verbose) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.2 2005/09/24 12:07:38 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.3 2005/09/24 12:52:19 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -21,10 +21,10 @@ package OpenBSD::Ustar::Object;
 
 sub check_name
 {
-	my ($self, $name) = @_;
-	return 1 if $self->{name} eq $name;
+	my ($self, $item) = @_;
+	return 1 if $self->{name} eq $item->{name};
 	if ($self->{name} =~ m/^LongName\d+$/) {
-		$self->{name} = $name;
+		$self->{name} = $item->{name};
 		return 1;
 	}
 	return 0;
@@ -65,7 +65,8 @@ package OpenBSD::Ustar;
 
 sub prepare_long
 {
-	my ($self, $filename) = @_;
+	my ($self, $item) = @_;
+	my $filename = $item->{name};
 	my $entry = $self->prepare($filename);
 	if (!defined $entry->{uname}) {
 		die "No user name for ", $entry->{name}, " (uid ", $entry->{uid}, ")\n";
