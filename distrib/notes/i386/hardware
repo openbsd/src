@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.222 2005/09/23 10:24:50 grunk Exp $
+dnl	$OpenBSD: hardware,v 1.223 2005/09/24 00:20:59 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -516,6 +516,7 @@ Supported hardware {:-include-:}:
 		    3Com OfficeConnect 3CRSHPW796
 		    Blitz NetWave Point
 		    D-Link DWL-650 Rev. L1
+		    SMC 2635W v1
 		    TRENDnet TEW-221PC CardBus
 		ADMtek ADM8211 based IEEE 802.11b PCI adapters [A] [B] [C]
 		    Belkin F5D6001 v2

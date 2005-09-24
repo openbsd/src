@@ -1,4 +1,4 @@
-.\"     $OpenBSD: atw.4,v 1.19 2005/09/23 10:24:51 grunk Exp $
+.\"     $OpenBSD: atw.4,v 1.20 2005/09/24 00:20:59 jsg Exp $
 .\"	$NetBSD: atw.4,v 1.8 2004/06/06 04:05:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003
@@ -207,8 +207,8 @@ and enable WEP encryption using that key.
 .Sh HARDWARE
 The
 .Nm
-driver supports PCI and CardBus cards using revision 0x11 and 0x15
-of the ADM8211 (aka ADM8211A).
+driver supports PCI and CardBus cards using revisions 0x11 and 0x15
+of the ADM8211 (aka ADM8211A) and revision 0x20 (aka ADM8211B).
 This includes:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
@@ -218,19 +218,18 @@ This includes:
 .It D-Link DWL-650 Rev. \&L1 CardBus
 .It D-Link DWL-520 Rev. \&C1 PCI
 .It LanReady WP2000 PCI
+.It SMC 2635W CardBus (version 1 only)
 .It TRENDnet TEW-221PC CardBus
 .It Xterasys XN2511B PCI
 .El
 .Pp
 The
 .Nm
-driver does not yet support cards using revision 0x20 (ADM8211B) or
-0x30 (ADM8211C).
-This includes:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It SMC 2635W CardBus (version 1 only)
-.El
+driver does not yet support cards using revision 0x30 (ADM8211C).
+.\"This includes:
+.\".Pp
+.\".Bl -tag -width Ds -offset indent -compact
+.\".El
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5
