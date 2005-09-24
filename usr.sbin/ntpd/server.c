@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.25 2005/08/10 13:48:36 dtucker Exp $ */
+/*	$OpenBSD: server.c,v 1.26 2005/09/24 00:32:03 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,7 +125,7 @@ server_dispatch(int fd, struct ntpd_conf *conf)
 
 	rectime = gettime();
 
-	if (ntp_getmsg(buf, size, &query) == -1)
+	if (ntp_getmsg((struct sockaddr *)&fsa, buf, size, &query) == -1)
 		return (0);
 
 	version = (query.status & VERSIONMASK) >> 3;

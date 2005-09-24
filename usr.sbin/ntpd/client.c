@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.65 2005/08/10 13:48:36 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.66 2005/09/24 00:32:03 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -198,7 +198,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 
 	T4 = gettime();
 
-	ntp_getmsg(buf, size, &msg);
+	ntp_getmsg((struct sockaddr *)&p->addr->ss, buf, size, &msg);
 
 	if (msg.orgtime.int_partl != p->query->msg.xmttime.int_partl ||
 	    msg.orgtime.fractionl != p->query->msg.xmttime.fractionl)

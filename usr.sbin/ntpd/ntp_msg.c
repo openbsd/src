@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.14 2004/12/14 06:27:13 dtucker Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.15 2005/09/24 00:32:03 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,10 +27,11 @@
 #include "ntp.h"
 
 int
-ntp_getmsg(char *p, ssize_t len, struct ntp_msg *msg)
+ntp_getmsg(struct sockaddr *sa, char *p, ssize_t len, struct ntp_msg *msg)
 {
 	if (len != NTP_MSGSIZE_NOAUTH && len != NTP_MSGSIZE) {
-		log_warnx("malformed packet received");
+		log_warnx("malformed packet received from %s",
+		    log_sockaddr(sa));
 		return (-1);
 	}
 
