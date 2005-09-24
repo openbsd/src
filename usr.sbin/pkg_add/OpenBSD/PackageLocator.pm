@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.40 2005/09/19 10:15:01 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.41 2005/09/24 08:43:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -471,7 +471,8 @@ our %distant = ();
 sub grab_object
 {
 	my ($self, $object) = @_;
-	exec {"/usr/bin/ftp"} 
+	my $ftp = defined $ENV{'FETCH_CMD'} ? $ENV{'FETCH_CMD'} : "/usr/bin/ftp";
+	exec {$ftp} 
 	    "ftp", 
 	    "-o", 
 	    "-", $self->{baseurl}.$object->{name}
