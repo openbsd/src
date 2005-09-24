@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.20 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.21 2005/09/24 18:07:53 mickey Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.20 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.21 2005/09/24 18:07:53 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: fortune.c,v 1.20 2004/07/09 15:59:26 deraadt Ex
 # include	<ctype.h>
 # include	<stdlib.h>
 # include	<string.h>
+# include	<limits.h>
 # include	"strfile.h"
 # include	"pathnames.h"
 
@@ -161,6 +162,7 @@ char	*conv_pat(char *);
 int	 find_matches(void);
 void	 matches_in_list(FILEDESC *);
 int	 maxlen_in_list(FILEDESC *);
+int	 minlen_in_list(FILEDESC *);
 #endif
 
 #ifndef NO_REGEX
@@ -195,6 +197,10 @@ main(int ac, char *av[])
 #endif
 
 	init_prob();
+	if (Short_only && minlen_in_list(File_list) > SLEN ||
+	    Long_only && maxlen_in_list(File_list) <= SLEN)
+		exit(0);
+
 	do {
 		get_fort();
 	} while ((Short_only && fortlen() > SLEN) ||
@@ -1291,6 +1297,30 @@ maxlen_in_list(FILEDESC *list)
 		}
 	}
 	return maxlen;
+}
+
+/*
+ * minlen_in_list
+ *	Return the minimum fortune len in the file list.
+ */
+int
+minlen_in_list(FILEDESC *list)
+{
+	FILEDESC	*fp;
+	int		len, minlen;
+
+	minlen = INT_MAX;
+	for (fp = list; fp != NULL; fp = fp->next) {
+		if (fp->child != NULL) {
+			if ((len = minlen_in_list(fp->child)) < minlen)
+				minlen = len;
+		} else {
+			get_tbl(fp);
+			if (fp->tbl.str_shortlen < minlen)
+				minlen = fp->tbl.str_shortlen;
+		}
+	}
+	return minlen;
 }
 
 /*
