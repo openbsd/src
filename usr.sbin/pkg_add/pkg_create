@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.41 2005/09/24 12:52:18 espie Exp $
+# $OpenBSD: pkg_create,v 1.42 2005/09/24 19:44:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -35,6 +35,7 @@ package OpenBSD::PackingElement;
 sub archive {}
 sub anything { ${$_[1]}++; }
 
+sub print_file {}
 package OpenBSD::PackingElement::FileBase;
 sub archive
 {
@@ -47,6 +48,12 @@ sub archive
 	if ($verbose) {
 		print "Adding ", $self->{name}, "\n";
 	}
+}
+
+sub print_file
+{
+	my ($item) = @_;
+	print '@', $item->keyword(), " ", $item->fullname(), "\n";
 }
 
 package OpenBSD::PackingElement::Cwd;
@@ -235,6 +242,11 @@ sub copy_subst
 	}
 }
 
+our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
+	$opt_S, $opt_h, $opt_s, $opt_O, $opt_A, $opt_L,
+	$opt_m, $opt_M, $opt_U, $opt_P, $opt_W, $opt_n,
+	$opt_B, $opt_q, $opt_Q);
+
 sub deduce_name
 {
 	my ($o, $frag, $not) = @_;
@@ -251,10 +263,10 @@ sub deduce_name
 		die "Missing fragments for $frag: $o and $noto don't exist";
 	}
 	if ($not) {
-		print "Switching to $noto\n";
+		print "Switching to $noto\n" if !defined $opt_q;
 		return $noto if -e $noto;
     	} else {
-		print "Switching to $o\n";
+		print "Switching to $o\n" if !defined $opt_q;
 		return $o if -e $o;
 	}
 	return;
@@ -262,23 +274,18 @@ sub deduce_name
 
 our $errors = 0;
 
-our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
-	$opt_S, $opt_h, $opt_s, $opt_O, $opt_A, $opt_L,
-	$opt_m, $opt_M, $opt_U, $opt_P, $opt_W, $opt_n,
-	$opt_B);
-
 my @contents;
 my $regen_package = 0;
 
 set_usage(
-'pkg_create [-hnv] [-A arches] [-B pkg-destdir] [-D name=value]',
+'pkg_create [-hnvqQ] [-A arches] [-B pkg-destdir] [-D name=value]',
 '[-i iscript] [-k dscript] [-L localbase] [-M module] [-M displayfile]',
 '[-P pkg-dependency] [-p prefix] [-r rscript] [-S pkg-destdir]',
 '[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkg-name');
 
 my $plist = new OpenBSD::PackingList;
 try { 
-	getopts('hp:f:c:d:vi:k:r:m:M:U:S:hs:OA:L:B:D:P:W:n', 
+	getopts('hp:f:c:d:vi:k:r:m:M:U:S:hs:OA:L:B:D:P:W:nqQ', 
 	{'D' => 
 		sub { 
 			local $_ = shift;
@@ -311,7 +318,9 @@ if (@ARGV == 0) {
 }
 
 try {
-my $dir = OpenBSD::Temp::dir();
+my $dir;
+
+$dir = OpenBSD::Temp::dir() unless $opt_q;
 
 if (defined $opt_s) {
 	Usage "Option s is no longer supported";
@@ -321,67 +330,86 @@ if (defined $opt_O) {
 	Usage "Option O is no longer supported";
 }
 
+if (defined $opt_Q) {
+	$opt_q = 1;
+}
+
 if (!@contents) {
 	Usage "Packing list required";
 }
 
-if (defined $opt_c) {
-    if ($opt_c =~ /^\-/) {
-	open(my $fh, '>', $dir.DESC) or die "Can't write COMMENT to DESC file: $!";
-	print $fh $';
-	close($fh);
-    } else {
-	copy_subst($opt_c, '>', $dir.DESC);
-    }
-} else {
-	Usage "Comment required" unless $regen_package;
-}
-
-if (defined $opt_d) {
-    if ($opt_d =~ /^\-/) {
-	open(my $fh, '>>', $dir.DESC) or die "Can't write to DESC: $!";
-	print $fh $';
-	close($fh);
-    } else {
-	copy_subst($opt_d, '>>', $dir.DESC);
-    }
-} else {
-	Usage "Description required" unless $regen_package;
-}
-
-print "Creating package $ARGV[0]\n" if $opt_v && !$regen_package;
-
-if (defined $opt_i) {
-    copy_subst($opt_i, '>', $dir.INSTALL);
-}
-	
-if (defined $opt_k) {
-    copy_subst($opt_k, '>', $dir.DEINSTALL);
-}
-
-if (defined $opt_r) {
-    copy_subst($opt_r, '>', $dir.REQUIRE);
-}
-
-if (defined $opt_M) {
-    copy_subst($opt_M, '>', $dir.DISPLAY);
-}
-
-if (defined $opt_m) {
-    copy_subst($opt_m, '>', $dir.MODULE);
-}
-if (defined $opt_U) {
-    copy_subst($opt_U, '>', $dir.UNDISPLAY);
-}
-
 my @extra_files = ();
-for my $special (info_names()) {
-    next unless -f $dir.$special;
-    push(@extra_files, $special);
-    my $f = OpenBSD::PackingElement::File->add($plist, $special);
-    $f->{ignore} = 1;
-    $f->{md5} = OpenBSD::md5::fromfile($dir.$special);
-    $f->{size} = (stat $dir.$special)[7];
+
+if (defined $opt_q) {
+	for my $special (info_names()) {
+		if ($special eq DESC or
+		    $special eq INSTALL and (defined $opt_i) or
+		    $special eq DEINSTALL and (defined $opt_k) or
+		    $special eq REQUIRE and (defined $opt_r) or
+		    $special eq DISPLAY and (defined $opt_M) or
+		    $special eq MODULE and (defined $opt_m) or
+		    $special eq UNDISPLAY and (defined $opt_U)) {
+			OpenBSD::PackingElement::File->add($plist, $special);
+		}
+	}
+} else {
+	if (defined $opt_c) {
+	    if ($opt_c =~ /^\-/) {
+		open(my $fh, '>', $dir.DESC) or die "Can't write COMMENT to DESC file: $!";
+		print $fh $';
+		close($fh);
+	    } else {
+		copy_subst($opt_c, '>', $dir.DESC);
+	    }
+	} else {
+		Usage "Comment required" unless $regen_package;
+	}
+
+	if (defined $opt_d) {
+	    if ($opt_d =~ /^\-/) {
+		open(my $fh, '>>', $dir.DESC) or die "Can't write to DESC: $!";
+		print $fh $';
+		close($fh);
+	    } else {
+		copy_subst($opt_d, '>>', $dir.DESC);
+	    }
+	} else {
+		Usage "Description required" unless $regen_package;
+	}
+
+	print "Creating package $ARGV[0]\n" if $opt_v && !$regen_package;
+
+	if (defined $opt_i) {
+	    copy_subst($opt_i, '>', $dir.INSTALL);
+	}
+		
+	if (defined $opt_k) {
+	    copy_subst($opt_k, '>', $dir.DEINSTALL);
+	}
+
+	if (defined $opt_r) {
+	    copy_subst($opt_r, '>', $dir.REQUIRE);
+	}
+
+	if (defined $opt_M) {
+	    copy_subst($opt_M, '>', $dir.DISPLAY);
+	}
+
+	if (defined $opt_m) {
+	    copy_subst($opt_m, '>', $dir.MODULE);
+	}
+	if (defined $opt_U) {
+	    copy_subst($opt_U, '>', $dir.UNDISPLAY);
+	}
+
+	for my $special (info_names()) {
+	    next unless -f $dir.$special;
+	    push(@extra_files, $special);
+	    my $f = OpenBSD::PackingElement::File->add($plist, $special);
+	    $f->{ignore} = 1;
+	    $f->{md5} = OpenBSD::md5::fromfile($dir.$special);
+	    $f->{size} = (stat $dir.$special)[7];
+	}
 }
 
 if (defined $opt_p) {
@@ -486,10 +514,12 @@ if ($plist->{need_modules}) {
 }
 	
 
-if ($regen_package) {
-	$plist->checksum($base);
-} else {
-	$plist->makesum($base);
+if (!defined $opt_q) {
+	if ($regen_package) {
+		$plist->checksum($base);
+	} else {
+		$plist->makesum($base);
+	}
 }
 $plist->avert_duplicates();
 if (defined $plist->{pkgcfl}) {
@@ -509,6 +539,14 @@ if (!defined $plist->{name}) {
 	exit 1;
 }
 
+if (defined $opt_q) {
+	if (defined $opt_Q) {
+		$plist->visit('print_file');
+	} else {
+		$plist->write(\*STDOUT);
+	}
+	exit(0);
+}
 my $wname;
 if ($regen_package) {
 	$wname = $plist->pkgname().".tgz";
