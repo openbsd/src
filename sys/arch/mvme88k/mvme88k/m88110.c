@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.22 2005/09/06 19:43:00 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.23 2005/09/25 20:55:15 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -105,7 +105,7 @@ void m88110_cmmu_parity_enable(void);
 unsigned m88110_cmmu_cpu_number(void);
 void m88110_cmmu_set_sapr(unsigned, unsigned);
 void m88110_cmmu_set_uapr(unsigned);
-void m88110_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, vsize_t);
+void m88110_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, u_int);
 void m88110_cmmu_flush_cache(int, paddr_t, psize_t);
 void m88110_cmmu_flush_inst_cache(int, paddr_t, psize_t);
 void m88110_cmmu_flush_data_cache(int, paddr_t, psize_t);
@@ -369,8 +369,7 @@ m88110_cmmu_set_uapr(unsigned ap)
  *	flush any tlb
  */
 void
-m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
-    vsize_t size)
+m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
 

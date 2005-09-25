@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.14 2004/11/09 15:02:23 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.15 2005/09/25 20:55:15 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -174,8 +174,6 @@ mapiodev(pa, size)
 
 	if (error != 0)
 		return NULL;
-
-	cmmu_flush_tlb(cpu_number(), 1, iova, size);	/* necessary? */
 
 	tva = iova;
 	while (size != 0) {

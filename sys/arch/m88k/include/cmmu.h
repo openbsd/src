@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.8 2005/04/27 14:09:45 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.9 2005/09/25 20:55:13 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -57,7 +57,7 @@ struct cmmu_p {
 	unsigned (*cmmu_cpu_number_func)(void);
 	void (*cmmu_set_sapr_func)(unsigned, unsigned);
 	void (*cmmu_set_uapr_func)(unsigned);
-	void (*cmmu_flush_tlb_func)(unsigned, unsigned, vaddr_t, vsize_t);
+	void (*cmmu_flush_tlb_func)(unsigned, unsigned, vaddr_t, u_int);
 	void (*cmmu_flush_cache_func)(int, paddr_t, psize_t);
 	void (*cmmu_flush_inst_cache_func)(int, paddr_t, psize_t);
 	void (*cmmu_flush_data_cache_func)(int, paddr_t, psize_t);

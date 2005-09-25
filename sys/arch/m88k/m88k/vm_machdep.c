@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 2004/11/09 15:02:22 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 2005/09/25 20:55:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -277,7 +277,7 @@ vmapbuf(bp, len)
 	 * new pages get mapped in.
 	 */
 
-	cmmu_flush_tlb(cpu_number(), 1, kva, len);
+	cmmu_flush_tlb(cpu_number(), 1, kva, btoc(len));
 
 	bp->b_data = (caddr_t)(kva + off);
 	while (len > 0) {

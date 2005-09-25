@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.3 2005/04/30 16:44:08 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.4 2005/09/25 20:55:14 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -114,7 +114,7 @@ load_u_area(struct proc *p)
 		*t = p->p_md.md_upte[i];
 		va += PAGE_SIZE;
 	}
-	cmmu_flush_tlb(cpu_number(), 1, UADDR, USPACE);
+	cmmu_flush_tlb(cpu_number(), 1, UADDR, UPAGES);
 }
 
 /*

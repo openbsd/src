@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2005/09/15 21:07:05 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 2005/09/25 20:55:14 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -224,13 +224,13 @@ flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 
 	while ((cpu = ff1(users)) != 32) {
 		if (cpu_sets[cpu]) { /* just checking to make sure */
-			cmmu_flush_tlb(cpu, kernel, va, PAGE_SIZE);
+			cmmu_flush_tlb(cpu, kernel, va, 1);
 		}
 		users &= ~(1 << cpu);
 	}
 #else
 	if (users != 0)
-		cmmu_flush_tlb(cpu_number(), kernel, va, PAGE_SIZE);
+		cmmu_flush_tlb(cpu_number(), kernel, va, 1);
 #endif
 }
 
@@ -254,13 +254,6 @@ pt_entry_t *
 pmap_pte(pmap_t pmap, vaddr_t virt)
 {
 	sdt_entry_t *sdt;
-
-#ifdef DEBUG
-	/*XXX will this change if physical memory is not contiguous? */
-	/* take a look at PDTIDX XXXnivas */
-	if (pmap == PMAP_NULL)
-		panic("pmap_pte: pmap is NULL");
-#endif
 
 	sdt = SDTENT(pmap, virt);
 	/*
@@ -752,7 +745,7 @@ pmap_bootstrap(vaddr_t load_start)
 	for (i = 0; i < MAX_CPUS; i++)
 		if (cpu_sets[i]) {
 			cmmu_flush_tlb(i, TRUE, VM_MIN_KERNEL_ADDRESS,
-			    VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS);
+			    btoc(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS));
 			/* Load supervisor pointer to segment table. */
 			cmmu_set_sapr(i, kernel_pmap->pm_apr);
 #ifdef DEBUG
@@ -828,7 +821,7 @@ pmap_zero_page(struct vm_page *pg)
 	 * We don't need the flush_atc_entry() dance, as these pages are
 	 * bound to only one cpu.
 	 */
-	cmmu_flush_tlb(cpu, TRUE, va, PAGE_SIZE);
+	cmmu_flush_tlb(cpu, TRUE, va, 1);
 
 	/*
 	 * The page is likely to be a non-kernel mapping, and as
@@ -1997,7 +1990,7 @@ pmap_activate(struct proc *p)
 
 		cmmu_set_uapr(pmap->pm_apr);
 		cmmu_flush_tlb(cpu, FALSE, VM_MIN_ADDRESS,
-		    VM_MAX_ADDRESS - VM_MIN_ADDRESS);
+		    btoc(VM_MAX_ADDRESS - VM_MIN_ADDRESS));
 
 		/*
 		 * Mark that this cpu is using the pmap.
@@ -2078,7 +2071,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	 * We don't need the flush_atc_entry() dance, as these pages are
 	 * bound to only one cpu.
 	 */
-	cmmu_flush_tlb(cpu, TRUE, dstva, 2 * PAGE_SIZE);
+	cmmu_flush_tlb(cpu, TRUE, dstva, 2);
 
 	/*
 	 * The source page is likely to be a non-kernel mapping, and as

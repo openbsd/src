@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.6 2005/07/01 14:09:26 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.7 2005/09/25 20:55:14 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -111,7 +111,7 @@ void m8820x_cmmu_shutdown_now(void);
 void m8820x_cmmu_parity_enable(void);
 void m8820x_cmmu_set_sapr(unsigned, unsigned);
 void m8820x_cmmu_set_uapr(unsigned);
-void m8820x_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, vsize_t);
+void m8820x_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, u_int);
 void m8820x_cmmu_flush_cache(int, paddr_t, psize_t);
 void m8820x_cmmu_flush_inst_cache(int, paddr_t, psize_t);
 void m8820x_cmmu_flush_data_cache(int, paddr_t, psize_t);
@@ -161,7 +161,7 @@ struct cmmu_p cmmu8820x = {
  *   access to SRAM.
  *
  * MVME188 configuration 6, with 4 CMMUs par CPU, also forces a split on
- * A14 address bit.
+ * A14 address bit (A16 for 88204).
  *
  * Under OpenBSD, we will only split on A12 and A14 address bits, since we
  * do not want to waste CMMU resources on the SRAM, and user/supervisor
@@ -509,8 +509,7 @@ m8820x_cmmu_set_uapr(unsigned ap)
  *	flush any tlb
  */
 void
-m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
-    vsize_t size)
+m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr, u_int count)
 {
 	int s = splhigh();
 
@@ -521,29 +520,35 @@ m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 	 * do any here. Invalidations of up to three pages are performed
 	 * as page invalidations, otherwise the entire tlb is flushed.
 	 *
-	 * Note that this code relies upon size being a multiple of
-	 * a page and vaddr being page-aligned.
+	 * Note that this code relies upon vaddr being page-aligned.
 	 */
-	if (size == PAGE_SIZE) {	/* most frequent situation */
-		m8820x_cmmu_set(CMMU_SAR, vaddr,
-		    ADDR_VAL, cpu, 0, vaddr);
-		m8820x_cmmu_set(CMMU_SCR,
-		    kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE,
-		    ADDR_VAL, cpu, 0, vaddr);
-	} else if (size > 3 * PAGE_SIZE) {
+	switch (count) {
+	default:
 		m8820x_cmmu_set(CMMU_SCR,
 		    kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL,
 		    0, cpu, 0, 0);
-	} else
-	while (size != 0) {
-		m8820x_cmmu_set(CMMU_SAR, vaddr,
-		    ADDR_VAL, cpu, 0, vaddr);
+		break;
+	case 3:
+		m8820x_cmmu_set(CMMU_SAR, vaddr, ADDR_VAL, cpu, 0, vaddr);
 		m8820x_cmmu_set(CMMU_SCR,
 		    kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE,
 		    ADDR_VAL, cpu, 0, vaddr);
-
-		size -= PAGE_SIZE;
 		vaddr += PAGE_SIZE;
+		/* FALLTHROUGH */
+	case 2:
+		m8820x_cmmu_set(CMMU_SAR, vaddr, ADDR_VAL, cpu, 0, vaddr);
+		m8820x_cmmu_set(CMMU_SCR,
+		    kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE,
+		    ADDR_VAL, cpu, 0, vaddr);
+		vaddr += PAGE_SIZE;
+		/* FALLTHROUGH */
+	case 1:			/* most frequent situation */
+	case 0:
+		m8820x_cmmu_set(CMMU_SAR, vaddr, ADDR_VAL, cpu, 0, vaddr);
+		m8820x_cmmu_set(CMMU_SCR,
+		    kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE,
+		    ADDR_VAL, cpu, 0, vaddr);
+		break;
 	}
 
 	CMMU_UNLOCK;
