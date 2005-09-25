@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2005/07/26 08:38:29 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 2005/09/25 20:48:18 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -489,7 +489,7 @@ pmap_apte_flush(struct pmap *pmap)
 	 *
 	 * XXXthorpej -- find a way to defer the IPI.
 	 */
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self)
 			continue;
 		if (pmap_is_active(pmap, ci->ci_cpuid)) {
@@ -1024,7 +1024,7 @@ pmap_init(void)
  *   pmap_remove_pv: remove a mappiing from a pv_head list
  *
  * NOTE: pmap_enter_pv expects to lock the pvh itself
- *       pmap_remove_pv expects te caller to lock the pvh before calling
+ *       pmap_remove_pv expects the caller to lock the pvh before calling
  */
 
 /*
@@ -2901,7 +2901,7 @@ pmap_tlb_shootnow(int32_t cpumask)
 	/*
 	 * Send the TLB IPI to other CPUs pending shootdowns.
 	 */
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self)
 			continue;
 		if (cpumask & (1U << ci->ci_cpuid))
@@ -2953,7 +2953,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 	printf("doshootdown %lx\n", va);
 #endif
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	CPU_INFO_FOREACH(cii, ci) {
 		/* Note: we queue shootdown events for ourselves here! */
 		if (pmap_is_active(pmap, ci->ci_cpuid) == 0)
 			continue;
@@ -3055,7 +3055,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 	}
 
 #ifdef MULTIPROCESSOR
-	for (CPU_INFO_FOREACH(cii, ci))
+	CPU_INFO_FOREACH(cii, ci)
 		x86_atomic_clearbits_ul(&ci->ci_tlb_ipi_mask,
 		    (1U << cpu_id));
 #endif

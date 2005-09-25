@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.10 2005/07/26 08:07:39 art Exp $	*/
+/*	$OpenBSD: intr.c,v 1.11 2005/09/25 20:48:18 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -322,7 +322,7 @@ other:
 		/*
 		 * ..now try the others.
 		 */
-		for (CPU_INFO_FOREACH(cii, ci)) {
+		CPU_INFO_FOREACH(cii, ci) {
 			if (CPU_IS_PRIMARY(ci))
 				continue;
 			error = intr_allocate_slot_cpu(ci, pic, pin, &slot);
@@ -687,7 +687,7 @@ intr_printconfig(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	CPU_INFO_FOREACH(cii, ci) {
 		printf("cpu%d: interrupt masks:\n", ci->ci_apicid);
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,

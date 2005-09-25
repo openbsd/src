@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.1 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.2 2005/09/25 20:48:18 miod Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ x86_broadcast_ipi (int ipimask)
 
 	CPU_INFO_ITERATOR cii;
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self)
 			continue;
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
@@ -116,7 +116,7 @@ x86_multicast_ipi(int cpumask, int ipimask)
 	if (cpumask == 0)
 		return;
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	CPU_INFO_FOREACH(cii, ci) {
 		if ((cpumask & (1U << ci->ci_cpuid)) == 0)
 			continue;
 		x86_send_ipi(ci, ipimask);

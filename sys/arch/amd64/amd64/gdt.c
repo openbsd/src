@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.5 2004/07/08 04:23:04 david Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.6 2005/09/25 20:48:18 miod Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ set_mem_gdt(sd, base, limit, type, dpl, gran, def32, is64)
 
         set_mem_segment(sd, base, limit, type, dpl, gran, def32, is64);
 	off = (char *)sd - gdtstore;
-        for (CPU_INFO_FOREACH(cii, ci)) {
+        CPU_INFO_FOREACH(cii, ci) {
                 if (ci->ci_gdt != NULL)
 			*(struct mem_segment_descriptor *)(ci->ci_gdt + off) =
 			    *sd;
@@ -125,7 +125,7 @@ set_sys_gdt(sd, base, limit, type, dpl, gran)
 
         set_sys_segment(sd, base, limit, type, dpl, gran);
 	off = (char *)sd - gdtstore;
-        for (CPU_INFO_FOREACH(cii, ci)) {
+        CPU_INFO_FOREACH(cii, ci) {
                 if (ci->ci_gdt != NULL)
 			*(struct sys_segment_descriptor *)(ci->ci_gdt + off) =
 			    *sd;

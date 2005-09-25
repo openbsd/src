@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.22 2004/12/06 23:40:43 hshoexer Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.23 2005/09/25 20:48:21 miod Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ setgdt(int sel, void *base, size_t limit, int type, int dpl, int def32,
 	struct cpu_info *ci;
 
 	setsegment(sd, base, limit, type, dpl, def32, gran);
-	for (CPU_INFO_FOREACH(cii, ci))
+	CPU_INFO_FOREACH(cii, ci)
 		if (ci->ci_gdt != NULL && ci->ci_gdt != gdt)
 			ci->ci_gdt[sel].sd = *sd;
 }
@@ -210,7 +210,7 @@ gdt_grow()
 	gdt_size <<= 1;
 	new_len = old_len << 1;
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	CPU_INFO_FOREACH(cii, ci) {
 		for (va = (vaddr_t)(ci->ci_gdt) + old_len;
 		     va < (vaddr_t)(ci->ci_gdt) + new_len;
 		     va += PAGE_SIZE) {
