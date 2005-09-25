@@ -1,4 +1,4 @@
-/*	$OpenBSD: copypage.s,v 1.3 2004/01/15 17:22:27 miod Exp $	*/
+/*	$OpenBSD: copypage.s,v 1.4 2005/09/25 22:27:15 miod Exp $	*/
 /*	$NetBSD: copypage.s,v 1.4 1997/05/30 01:34:49 jtc Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@
 #if defined(M68040) || defined(M68060)
 ENTRY(copypage040)
 	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destiniation address
+	movl	sp@(8),a1		| destination address
 	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
 Lm16loop:
 	.long	0xf6209000		| move16 a0@+,a1@+
@@ -73,7 +73,7 @@ Lm16loop:
  */
 ENTRY(copypage)
 	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destiniation address
+	movl	sp@(8),a1		| destination address
 	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
 Lmlloop:
 	movl	a0@+,a1@+
