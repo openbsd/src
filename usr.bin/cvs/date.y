@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.8 2005/05/20 17:15:49 jfb Exp $	*/
+/*	$OpenBSD: date.y,v 1.9 2005/09/25 19:11:34 otto Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -79,7 +79,7 @@ static time_t	yyRelMonth;
 static time_t	yyRelSeconds;
 
 
-static int   yyerror   (const char *, ...);
+static int   yyerror   (const char *);
 static int   yylex     (void);
 static int   yyparse   (void);
 static int   lookup    (char *);
@@ -488,20 +488,27 @@ static TABLE const MilitaryTable[] = {
 };
 
 
-/* ARGSUSED */
 static int
-yyerror(const char *fmt, ...)
+yyerror(const char *s)
 {
-	va_list vap;
+	char *str;
+	int n;
 
-	va_start(vap, fmt);
+	if (isspace(yyInput[0]) || !isprint(yyInput[0]))
+		n = asprintf(&str, "%s: unexpected char 0x%02x in date string",
+		    s, yyInput[0]);
+	else
+		n = asprintf(&str, "%s: unexpected %s in date string",
+		    s, yyInput);
+	if (n == -1)
+		return (0);
+
 #if defined(TEST)
-	vprintf(fmt, vap);
+	printf("%s", str);
 #else
-	cvs_vlog(LP_ERR, fmt, vap);
+	cvs_log(LP_ERR, "%s", str);
 #endif
-	va_end(vap);
-
+	free(str);
 	return (0);
 }
 
