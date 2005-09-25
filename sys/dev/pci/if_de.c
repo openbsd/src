@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.83 2005/09/25 17:45:15 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.84 2005/09/25 18:13:16 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -101,6 +101,40 @@
 
 #define	TULIP_HZ	10
 
+#define TULIP_SIAGEN_WATCHDOG	0
+
+#define TULIP_GPR_CMDBITS	(TULIP_CMD_PORTSELECT|TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER|TULIP_CMD_TXTHRSHLDCTL)
+
+#define EMIT	do { TULIP_CSR_WRITE(sc, csr_srom_mii, csr); tulip_delay_300ns(sc); } while (0)
+#define MII_EMIT	do { TULIP_CSR_WRITE(sc, csr_srom_mii, csr); tulip_delay_300ns(sc); } while (0)
+
+#define tulip_mchash(mca)	(ether_crc32_le(mca, 6) & 0x1FF)
+#define tulip_srom_crcok(databuf)	( \
+    ((ether_crc32_le(databuf, 126) & 0xFFFFU) ^ 0xFFFFU) == \
+     ((databuf)[126] | ((databuf)[127] << 8)))
+
+/*
+ * This is the PCI configuration support.  Since the 21040 is available
+ * on both EISA and PCI boards, one must be careful in how defines the
+ * 21040 in the config file.
+ */
+
+#define PCI_CFID	0x00	/* Configuration ID */
+#define PCI_CFCS	0x04	/* Configurtion Command/Status */
+#define PCI_CFRV	0x08	/* Configuration Revision */
+#define PCI_CFLT	0x0c	/* Configuration Latency Timer */
+#define PCI_CBIO	0x10	/* Configuration Base IO Address */
+#define PCI_CBMA	0x14	/* Configuration Base Memory Address */
+#define PCI_CFIT	0x3c	/* Configuration Interrupt */
+#define PCI_CFDA	0x40	/* Configuration Driver Area */
+
+#define PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
+#define PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
+#define PCI_GETBUSDEVINFO(sc)	do { \
+	(sc)->tulip_pci_busno = parent; \
+	(sc)->tulip_pci_devno = pa->pa_device; \
+    } while (0)
+
 #include <dev/pci/if_devar.h>
 /*
  * This module supports
@@ -195,8 +229,6 @@ tulip_txprobe(
     return 1;
 }
 
-#define	TULIP_SIAGEN_WATCHDOG	0
-
 static void
 tulip_media_set(
     tulip_softc_t * const sc,
@@ -247,7 +279,6 @@ tulip_media_set(
 	}
 	TULIP_CSR_WRITE(sc, csr_sia_connectivity, mi->mi_sia_connectivity);
     } else if (mi->mi_type == TULIP_MEDIAINFO_GPR) {
-#define	TULIP_GPR_CMDBITS	(TULIP_CMD_PORTSELECT|TULIP_CMD_PCSFUNCTION|TULIP_CMD_SCRAMBLER|TULIP_CMD_TXTHRSHLDCTL)
 	/*
 	 * If the cmdmode bits don't match the currently operating mode,
 	 * set the cmdmode appropriately and reset the chip.
@@ -1729,8 +1760,6 @@ tulip_delay_300ns(
 	(void) TULIP_CSR_READ(sc, csr_busmode);
 }
 
-#define EMIT    do { TULIP_CSR_WRITE(sc, csr_srom_mii, csr); tulip_delay_300ns(sc); } while (0)
-
 static void
 tulip_srom_idle(
     tulip_softc_t * const sc)
@@ -1801,8 +1830,6 @@ tulip_srom_read(
     }
     tulip_srom_idle(sc);
 }
-
-#define MII_EMIT    do { TULIP_CSR_WRITE(sc, csr_srom_mii, csr); tulip_delay_300ns(sc); } while (0)
 
 static void
 tulip_mii_writebits(
@@ -1912,11 +1939,6 @@ tulip_mii_writereg(
     sc->tulip_dbg.dbg_phyregs[regno][3]++;
 #endif
 }
-
-#define	tulip_mchash(mca)	(ether_crc32_le(mca, 6) & 0x1FF)
-#define	tulip_srom_crcok(databuf)	( \
-    ((ether_crc32_le(databuf, 126) & 0xFFFFU) ^ 0xFFFFU) == \
-     ((databuf)[126] | ((databuf)[127] << 8)))
 
 static void
 tulip_identify_dec_nic(
@@ -2676,7 +2698,6 @@ tulip_read_macaddr(
 	    goto check_oui;
 	}
     }
-
 
     if (bcmp(&sc->tulip_rombuf[0], &sc->tulip_rombuf[16], 8) != 0) {
 	/*
@@ -4402,21 +4423,6 @@ tulip_initring(
     }
 }
 
-/*
- * This is the PCI configuration support.  Since the 21040 is available
- * on both EISA and PCI boards, one must be careful in how defines the
- * 21040 in the config file.
- */
-
-#define	PCI_CFID	0x00	/* Configuration ID */
-#define	PCI_CFCS	0x04	/* Configurtion Command/Status */
-#define	PCI_CFRV	0x08	/* Configuration Revision */
-#define	PCI_CFLT	0x0c	/* Configuration Latency Timer */
-#define	PCI_CBIO	0x10	/* Configuration Base IO Address */
-#define	PCI_CBMA	0x14	/* Configuration Base Memory Address */
-#define	PCI_CFIT	0x3c	/* Configuration Interrupt */
-#define	PCI_CFDA	0x40	/* Configuration Driver Area */
-
 static int
 tulip_pci_probe(
     struct device *parent,
@@ -4462,13 +4468,6 @@ tulip_pci_attach(struct device * const parent, struct device * const self, void 
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     const int unit = sc->tulip_dev.dv_unit;
-#define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
-#define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
-#define	PCI_GETBUSDEVINFO(sc)	do { \
-	(sc)->tulip_pci_busno = parent; \
-	(sc)->tulip_pci_devno = pa->pa_device; \
-    } while (0)
-
     int retval, idx;
     u_int32_t revinfo, cfdainfo, id;
     unsigned csroffset = TULIP_PCI_CSROFFSET;
