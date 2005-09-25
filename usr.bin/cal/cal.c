@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.15 2005/08/24 05:19:41 deraadt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.16 2005/09/25 21:05:04 jmc Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: cal.c,v 1.15 2005/08/24 05:19:41 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cal.c,v 1.16 2005/09/25 21:05:04 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -422,7 +422,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: cal [-jy] [[month] year]\n");
+	(void)fprintf(stderr, "usage: cal [-jy] [month year]\n");
 	exit(1);
 }
 

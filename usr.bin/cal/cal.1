@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cal.1,v 1.12 2003/07/13 18:35:00 jmc Exp $
+.\"	$OpenBSD: cal.1,v 1.13 2005/09/25 21:05:04 jmc Exp $
 .\"	$NetBSD: cal.1,v 1.6 1995/09/02 05:34:20 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -43,14 +43,13 @@
 .Nm cal
 .Op Fl jy
 .Oo
-.Op Ar month
+.Ar month
 .Ar year
 .Oc
 .Sh DESCRIPTION
 .Nm
 displays a simple calendar.
-If arguments are not specified,
-the current month is displayed.
+Calendars may be displayed by month or by year.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -60,13 +59,23 @@ Display Julian dates (days one-based, numbered from January 1).
 Display a calendar for the current year.
 .El
 .Pp
-A single parameter specifies the year (1 - 9999) to be displayed;
-note the year must be fully specified:
+A single numerical parameter specifies the
+.Ar year
+(1 \- 9999)
+to be displayed.
+The year must be fully specified:
 .Dq Li cal 89
 will
 .Em not
 display a calendar for 1989.
-Two parameters denote the month (1 - 12) and year.
+Two numerical parameters denote the
+.Ar month
+(1 \- 12)
+and
+.Ar year .
+Alternatively,
+a single parameter may be given specifying the abbreviated name of a month:
+in that case a calendar is displayed for that month of the current year.
 If no parameters are specified, the current month's calendar is
 displayed.
 .Pp
