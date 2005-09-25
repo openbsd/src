@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.7 2005/09/25 20:55:14 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.8 2005/09/25 22:41:14 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -272,8 +272,8 @@ m8820x_cpu_configuration_print(int master)
 {
 	struct m8820x_cmmu *cmmu;
 	int pid = read_processor_identification_register();
-	int proctype = (pid & 0xff00) >> 8;
-	int procvers = (pid & 0xe) >> 1;
+	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
+	int procvers = (pid & PID_VN) >> VN_SHIFT;
 	int mmu, cnt, cpu = cpu_number();
 	struct simplelock print_lock;
 #ifdef M88200_HAS_SPLIT_ADDRESS
@@ -286,7 +286,7 @@ m8820x_cpu_configuration_print(int master)
 	simple_lock(&print_lock);
 
 	printf("cpu%d: ", cpu);
-	if (proctype != 0) {
+	if (proctype != ARN_88100) {
 		printf("unknown model arch 0x%x rev 0x%x\n",
 		    proctype, procvers);
 		simple_unlock(&print_lock);
@@ -344,7 +344,7 @@ m8820x_cpu_configuration_print(int master)
 	{
 		static int errata_warn = 0;
 
-		if (proctype == 0 && procvers < 2) {
+		if (proctype == ARN_88100 && procvers < 2) {
 			if (!errata_warn++)
 				printf("WARNING: M88100 bug workaround code "
 				    "not enabled.\nPlease recompile the kernel "

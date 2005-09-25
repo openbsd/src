@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.3 2005/04/30 16:45:12 miod Exp $ */
+/*	$OpenBSD: psl.h,v 1.4 2005/09/25 22:41:12 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -46,6 +46,8 @@
 #ifndef __M88K_PSL_H__
 #define __M88K_PSL_H__
 
+#ifdef _KERNEL
+
 /*
  * 881x0 control registers
  */
@@ -54,7 +56,11 @@
  * processor identification register (PID)
  */
 #define PID_ARN		0x0000ff00	/* architectural revision number */
+#define	ARN_SHIFT		8
+#define	ARN_88100		0x00
+#define	ARN_88110		0x01
 #define PID_VN		0x000000fe	/* version number */
+#define	VN_SHIFT		1
 #define PID_MC		0x00000001	/* 88100 master/checker mode */
 
 /*
@@ -84,5 +90,7 @@
 #define XIP_V		0x00000002	/* valid */
 #define XIP_E		0x00000001	/* exception */
 #define XIP_ADDR	0xfffffffc	/* address mask */
+
+#endif	/* _KERNEL */
 
 #endif /* __M88K_PSL_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.23 2005/09/25 20:55:15 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.24 2005/09/25 22:41:14 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -202,8 +202,8 @@ void
 m88110_cpu_configuration_print(int master)
 {
 	int pid = read_processor_identification_register();
-	int proctype = (pid & 0xff00) >> 8;
-	int procvers = (pid & 0xe) >> 1;
+	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
+	int procvers = (pid & PID_VN) >> VN_SHIFT;
 	int cpu = cpu_number();
 	struct simplelock print_lock;
 
@@ -214,7 +214,7 @@ m88110_cpu_configuration_print(int master)
 	simple_lock(&print_lock);
 
 	printf("cpu%d: ", cpu);
-	if (proctype != 1) {
+	if (proctype != ARN_88110) {
 		printf("unknown model arch 0x%x version 0x%x\n",
 		    proctype, procvers);
 		simple_unlock(&print_lock);
