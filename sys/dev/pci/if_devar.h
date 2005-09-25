@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.21 2005/09/08 01:09:58 brad Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.22 2005/09/25 02:23:39 brad Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -26,8 +26,6 @@
  *
  * Id: if_devar.h,v 1.23 1997/06/03 18:51:16 thomas Exp
  */
-
-typedef bus_addr_t tulip_csrptr_t;
 
 #define TULIP_CSR_READ(sc, csr) \
     bus_space_read_4((sc)->tulip_bustag, (sc)->tulip_bushandle, (sc)->tulip_csrs.csr)
@@ -89,22 +87,22 @@ DESC_BO(x)
  * to all chips.  After that, it gets messy...
  */
 typedef struct {
-    tulip_csrptr_t csr_busmode;			/* CSR0 */
-    tulip_csrptr_t csr_txpoll;			/* CSR1 */
-    tulip_csrptr_t csr_rxpoll;			/* CSR2 */
-    tulip_csrptr_t csr_rxlist;			/* CSR3 */
-    tulip_csrptr_t csr_txlist;			/* CSR4 */
-    tulip_csrptr_t csr_status;			/* CSR5 */
-    tulip_csrptr_t csr_command;			/* CSR6 */
-    tulip_csrptr_t csr_intr;			/* CSR7 */
-    tulip_csrptr_t csr_missed_frames;		/* CSR8 */
-    tulip_csrptr_t csr_9;			/* CSR9 */
-    tulip_csrptr_t csr_10;			/* CSR10 */
-    tulip_csrptr_t csr_11;			/* CSR11 */
-    tulip_csrptr_t csr_12;			/* CSR12 */
-    tulip_csrptr_t csr_13;			/* CSR13 */
-    tulip_csrptr_t csr_14;			/* CSR14 */
-    tulip_csrptr_t csr_15;			/* CSR15 */
+    bus_addr_t csr_busmode;			/* CSR0 */
+    bus_addr_t csr_txpoll;			/* CSR1 */
+    bus_addr_t csr_rxpoll;			/* CSR2 */
+    bus_addr_t csr_rxlist;			/* CSR3 */
+    bus_addr_t csr_txlist;			/* CSR4 */
+    bus_addr_t csr_status;			/* CSR5 */
+    bus_addr_t csr_command;			/* CSR6 */
+    bus_addr_t csr_intr;			/* CSR7 */
+    bus_addr_t csr_missed_frames;		/* CSR8 */
+    bus_addr_t csr_9;			/* CSR9 */
+    bus_addr_t csr_10;			/* CSR10 */
+    bus_addr_t csr_11;			/* CSR11 */
+    bus_addr_t csr_12;			/* CSR12 */
+    bus_addr_t csr_13;			/* CSR13 */
+    bus_addr_t csr_14;			/* CSR14 */
+    bus_addr_t csr_15;			/* CSR15 */
 } tulip_regfile_t;
 
 #define	csr_enetrom		csr_9	/* 21040 */
@@ -360,7 +358,6 @@ typedef enum {
     TULIP_LINK_UP,			/* link is ok */
     TULIP_LINK_UNKNOWN			/* we can't tell either way */
 } tulip_link_status_t;
-
 
 /*
  * This data structure is used to abstract out the quirks.
@@ -789,25 +786,12 @@ static const struct {
  */
 #define	TULIP_MAX_DEVICES	32
 
-typedef void ifnet_ret_t;
-typedef u_long ioctl_cmd_t;
 extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
 #define TULIP_IFP_TO_SOFTC(ifp)         ((tulip_softc_t *)((ifp)->if_softc))
 #define	tulip_unit			tulip_dev.dv_unit
 #define tulip_xname                     tulip_dev.dv_cfdata->cf_driver->cd_name
-
-#if NBPFILTER > 0
-#define	TULIP_BPF_MTAP(sc, m)	bpf_mtap((sc)->tulip_if.if_bpf, m)
-#define	TULIP_BPF_TAP(sc, p, l)	bpf_tap((sc)->tulip_if.if_bpf, p, l)
-#define	TULIP_BPF_ATTACH(sc)
-#endif
-
-#define	TULIP_RAISESPL()		splnet()
-#define	TULIP_RAISESOFTSPL()		splsoftnet()
-#define	TULIP_RESTORESPL(s)		splx(s)
-#define	loudprintf			printf
 
 #define	TULIP_PRINTF_FMT		"%s%d"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname, sc->tulip_unit
@@ -873,10 +857,6 @@ TULIP_PERFREAD(
 #define	TULIP_PERFMERGE(s,n)	do { } while (0)
 #endif /* TULIP_PERFSTATS */
 
-#define	TULIP_EADDR_FMT		"%s"
-#define	TULIP_EADDR_ARGS(addr)	ether_sprintf(addr)
-
-#define	TULIP_CRC32_POLY	0xEDB88320UL	/* CRC-32 Poly -- Little Endian */
 #define	TULIP_MAX_TXSEG		30
 
 #define	TULIP_ADDREQUAL(a1, a2) \
@@ -887,5 +867,3 @@ TULIP_PERFREAD(
 	(((u_int16_t *)a1)[0] == 0xFFFFU \
 	 && ((u_int16_t *)a1)[1] == 0xFFFFU \
 	 && ((u_int16_t *)a1)[2] == 0xFFFFU)
-
-typedef int tulip_spl_t;
