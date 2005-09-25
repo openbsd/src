@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.31 2005/09/21 16:30:03 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.32 2005/09/25 17:38:44 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -47,9 +47,7 @@ static int	cvs_add_local(CVSFILE *, void *);
 static int	cvs_add_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_add_pre_exec(struct cvsroot *);
 static int	cvs_add_directory(CVSFILE *);
-#if 0
 static int	cvs_add_build_entry(CVSFILE *);
-#endif
 
 struct cvs_cmd cvs_cmd_add = {
 	CVS_OP_ADD, CVS_REQ_ADD, "add",
@@ -153,7 +151,7 @@ cvs_add_remote(CVSFILE *cf, void *arg)
 static int
 cvs_add_local(CVSFILE *cf, void *arg)
 {
-	int added;
+	int added, ret;
 	char numbuf[64];
 
 	added = 0;
@@ -197,10 +195,13 @@ cvs_add_local(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	if (verbosity > 1) {
-		cvs_log(LP_NOTICE, "scheduling file `%s' for addition",
-		    cf->cf_name);
+	if ((ret = cvs_add_build_entry(cf)) != 0)
+		return (ret);
+	else {
 		added++;
+		if (verbosity > 1)
+			cvs_log(LP_NOTICE, "scheduling file `%s' for addition",
+			    cf->cf_name);
 	}
 
 	if (added != 0) {
@@ -317,7 +318,6 @@ cvs_add_directory(CVSFILE *cf)
 	return (0);
 }
 
-#if 0
 static int
 cvs_add_build_entry(CVSFILE *cf)
 {
@@ -380,4 +380,3 @@ cvs_add_build_entry(CVSFILE *cf)
 
 	return (0);
 }
-#endif
