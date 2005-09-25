@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2004/10/21 19:57:42 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.16 2005/09/25 19:59:00 kettenis Exp $
 #	$NetBSD: Makefile,v 1.6 1996/10/18 05:27:38 thorpej Exp $
 
 CFLAGS+=	-DLIBC_SCCS -DELFSIZE=64
@@ -25,10 +25,9 @@ gcrt0.o: crt0.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-# XXX temporary hack until __register_frame_info issue is sorted out.
 crtbegin.o: crtbegin.c
-	@echo ${COMPILE.c} ${.CURDIR}/crtbegin.c -o ${.TARGET}
-	@${COMPILE.c} ${.CURDIR}/crtbegin.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} ${ELFDIR}/crtbegin.c -o ${.TARGET}
+	@${COMPILE.c} ${ELFDIR}/crtbegin.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
