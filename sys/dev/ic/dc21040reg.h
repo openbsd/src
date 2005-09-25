@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc21040reg.h,v 1.12 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: dc21040reg.h,v 1.13 2005/09/25 19:19:44 brad Exp $	*/
 /*	$NetBSD: dc21040reg.h,v 1.11 1997/06/08 18:44:02 thorpej Exp $	*/
 
 /*-
@@ -534,17 +534,6 @@ typedef struct {
 #define	PHYCTL_ISOLATE		0x0400
 #define	PHYCTL_AUTONEG_RESTART	0x0200
 #define	PHYCTL_FULL_DUPLEX	0x0100
-
-
-#define MII_RD          0x00040000
-#define MII_WR          0x00000000
-#define MII_DIN         0x00080000
-#define MII_DOUT        0x00020000
-#define MII_DOUTON      MII_DOUT
-#define MII_DOUTOFF     MII_DOUT
-#define MII_CLK		0x00010000
-#define MII_CLKON       MII_CLK
-#define MII_CLKOFF      MII_CLK
 
 /*
  * Definitions for the DE425.
