@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.84 2005/09/22 07:37:32 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.85 2005/09/25 04:48:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -172,6 +172,8 @@ ami_put_ccb(ccb)
 
 	ccb->ccb_state = AMI_CCB_FREE;
 	ccb->ccb_wakeup = 0;
+	ccb->ccb_data = NULL;
+	ccb->ccb_xs = NULL;
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 }
 
@@ -1251,35 +1253,13 @@ ami_done(sc, idx)
 	ccb->ccb_state = AMI_CCB_READY;
 	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 
-	if (xs) {
-		timeout_del(&xs->stimeout);
-
-		if (xs->cmd->opcode != PREVENT_ALLOW &&
-		    xs->cmd->opcode != SYNCHRONIZE_CACHE)
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
-			    ccb->ccb_dmamap->dm_mapsize,
-			    (xs->flags & SCSI_DATA_IN) ?
-			    BUS_DMASYNC_POSTREAD :
-			    BUS_DMASYNC_POSTWRITE);
+	if (ccb->ccb_data != NULL) {
+		bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize,
+		    (ccb->ccb_dir == AMI_CCB_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
-
-		ccb->ccb_xs = NULL;
-	} else {
-		struct ami_iocmd *cmd = ccb->ccb_cmd;
-
-		switch (cmd->acc_cmd) {
-		case AMI_INQUIRY:
-		case AMI_EINQUIRY:
-		case AMI_EINQUIRY3:
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
-			    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
-			break;
-		default:
-			/* no data */
-			break;
-		}
 	}
 
 	if (ccb->ccb_wakeup) {
@@ -1289,6 +1269,7 @@ ami_done(sc, idx)
 		ami_put_ccb(ccb);
 
 	if (xs) {
+		timeout_del(&xs->stimeout);
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
@@ -1376,6 +1357,7 @@ ami_scsi_raw_cmd(xs)
 	ccb->ccb_xs = xs;
 	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = xs->data;
+	ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ? AMI_CCB_IN : AMI_CCB_OUT;
 	
 	ccb->ccb_pt->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ccb->ccb_pt->apt_channel = channel;
@@ -1571,6 +1553,8 @@ ami_scsi_cmd(xs)
 
 		ccb->ccb_xs = xs;
 		ccb->ccb_len  = xs->datalen;
+		ccb->ccb_dir  = (xs->flags & SCSI_DATA_IN) ?
+		    AMI_CCB_IN : AMI_CCB_OUT;
 		ccb->ccb_data = xs->data;
 		cmd = ccb->ccb_cmd;
 		cmd->acc_mbox.amb_nsect = htole16(blockcnt);
