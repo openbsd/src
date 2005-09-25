@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.82 2005/09/25 02:23:39 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.83 2005/09/25 17:45:15 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -4417,8 +4417,6 @@ tulip_initring(
 #define	PCI_CFIT	0x3c	/* Configuration Interrupt */
 #define	PCI_CFDA	0x40	/* Configuration Driver Area */
 
-#define	TULIP_PCI_ATTACH_ARGS	struct device * const parent, struct device * const self, void * const aux
-#define	TULIP_SHUTDOWN_ARGS	void *arg
 static int
 tulip_pci_probe(
     struct device *parent,
@@ -4438,7 +4436,7 @@ tulip_pci_probe(
     return 0;
 }
 
-static void tulip_pci_attach(TULIP_PCI_ATTACH_ARGS);
+static void tulip_pci_attach(struct device * const parent, struct device * const self, void * const aux);
 
 struct cfattach de_ca = {
     sizeof(tulip_softc_t), tulip_pci_probe, tulip_pci_attach
@@ -4449,7 +4447,7 @@ struct cfdriver de_cd = {
 };
 
 static void
-tulip_shutdown(TULIP_SHUTDOWN_ARGS)
+tulip_shutdown(void *arg)
 {
     tulip_softc_t * const sc = arg;
     TULIP_CSR_WRITE(sc, csr_busmode, TULIP_BUSMODE_SWRESET);
@@ -4459,7 +4457,7 @@ tulip_shutdown(TULIP_SHUTDOWN_ARGS)
 }
 
 static void
-tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
+tulip_pci_attach(struct device * const parent, struct device * const self, void * const aux)
 {
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
