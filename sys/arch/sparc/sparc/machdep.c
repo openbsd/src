@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.106 2005/08/18 18:40:51 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.107 2005/09/25 20:04:03 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -265,10 +265,26 @@ cpu_startup()
 	 */
 	dvma_base = CPU_ISSUN4M ? DVMA4M_BASE : DVMA_BASE;
 	dvma_end = CPU_ISSUN4M ? DVMA4M_END : DVMA_END;
+#if defined(SUN4M)
+	if (CPU_ISSUN4M) {
+		/*
+		 * The DVMA space we want partially overrides kernel_map.
+		 * Allocate it in kernel_map as well to prevent it from being
+		 * used for other things.
+		 */
+		if (uvm_map(kernel_map, &dvma_base,
+		    vm_map_max(kernel_map) - dvma_base,
+                    NULL, UVM_UNKNOWN_OFFSET, 0,
+                    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+                                UVM_ADV_NORMAL, 0)))
+			panic("startup: can not steal dvma map");
+	}
+#endif
 	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end,
 	    VM_MAP_INTRSAFE);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
+
 	/*
 	 * Allocate DVMA space and dump into a privately managed
 	 * resource map for double mappings which is usable from
