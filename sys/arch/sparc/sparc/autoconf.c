@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.68 2005/09/12 23:05:05 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.69 2005/09/25 20:05:37 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -219,17 +219,6 @@ bootstrap()
 #ifdef DDB
 	db_machine_init();
 	ddb_init();
-#endif
-
-#if defined(SUN4M)
-	/*
-	 * Allow a larger kernel malloc space on sun4m.
-	 */
-	if (CPU_ISSUN4M) {
-		extern u_int nkmempages_max;
-
-		nkmempages_max = NKMEMPAGES_MAX_DEFAULT_SUN4M;
-	}
 #endif
 
 	/*
