@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.918 2005/09/23 21:07:46 fgsch Exp $
+$OpenBSD: pcidevs,v 1.919 2005/09/25 20:06:49 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -649,6 +649,15 @@ product APPLE UNINORTH6		0x0036	UniNorth PCI
 product APPLE INTREPID_ATA	0x003b	Intrepid ATA
 product APPLE INTREPID		0x003e	Intrepid
 product APPLE INTREPID_OHCI	0x003f	Intrepid USB
+product APPLE SHASTA		0x004f	Shasta
+product APPLE SHASTA_ATA	0x0050	Shasta ATA
+product APPLE SHASTA_GMAC	0x0051	Shasta GMAC
+product APPLE SHASTA_FW		0x0052	Shasta Firewire
+product APPLE SHASTA_PCI1	0x0053	Shasta PCI
+product APPLE SHASTA_PCI2	0x0054	Shasta PCI
+product APPLE SHASTA_PCI3	0x0055	Shasta PCI
+product APPLE SHASTA_HT		0x0056  Shasta HyperTransport
+product APPLE U3L_AGP		0x0058	U3L AGP
 
 /* Aralion products */
 product ARALION ARS106S		0x0301	ARS106S
@@ -2323,6 +2332,7 @@ product RCC CSB6_USB		0x0221	CSB6 USB
 product RCC CSB5BRIDGE		0x0225	CSB5 PCI
 product RCC CSB6_LPC		0x0227	CSB6 LPC
 product RCC ISA			0x0230	PCI/ISA
+product RCC SATA		0x0240	SATA
 
 /* Philips products */
 product PHILIPS SAA7130		0x7130	SAA7130
