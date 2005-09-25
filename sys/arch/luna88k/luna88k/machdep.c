@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 2005/08/01 15:42:46 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 2005/09/25 20:30:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -112,7 +112,6 @@ typedef struct {
 } m88k_exception_vector_area;
 
 caddr_t	allocsys(caddr_t);
-void	bugsyscall(void);
 void	consinit(void);
 void	dosoftint(void);
 void	dumpconf(void);
@@ -1077,11 +1076,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 void
-bugsyscall()
-{
-}
-
-void
 dosoftint()
 {
 	if (ssir & SIR_NET) {
@@ -1427,7 +1421,6 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 {
 	unsigned num;
 	unsigned vec;
-	extern void bugtrap(void);
 
 	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST;
 	    num++) {

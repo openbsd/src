@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.166 2005/09/11 23:05:37 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.167 2005/09/25 20:30:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -96,7 +96,6 @@ typedef struct {
 } m88k_exception_vector_area;
 
 caddr_t	allocsys(caddr_t);
-void	bugsyscall(void);
 void	consinit(void);
 void	dosoftint(void);
 void	dumpconf(void);
@@ -991,11 +990,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 void
-bugsyscall()
-{
-}
-
-void
 myetheraddr(cp)
 	u_char *cp;
 {
@@ -1268,8 +1262,6 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 {
 	unsigned num;
 	unsigned vec;
-	extern void bugtrap(void);
-	extern void m88110_bugtrap(void);
 
 	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST;
 	    num++) {
@@ -1291,7 +1283,6 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 
 		SET_VECTOR(450, m88110_syscall_handler);
 		SET_VECTOR(451, m88110_cache_flush_handler);
-		SET_VECTOR(MVMEPROM_VECTOR, m88110_bugtrap);
 		SET_VECTOR(504, m88110_stepbpt);
 		SET_VECTOR(511, m88110_userbpt);
 	}
@@ -1306,7 +1297,6 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 
 		SET_VECTOR(450, syscall_handler);
 		SET_VECTOR(451, cache_flush_handler);
-		SET_VECTOR(MVMEPROM_VECTOR, bugtrap);
 		SET_VECTOR(504, stepbpt);
 		SET_VECTOR(511, userbpt);
 	}

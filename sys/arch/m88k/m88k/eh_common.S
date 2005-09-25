@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.10 2005/04/30 16:46:51 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.11 2005/09/25 20:30:03 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -530,14 +530,6 @@ GLOBAL(cache_flush_handler)
 	PREP88100("cache_flush", 451,,)
 	bsr.n	_C_LABEL(cache_flush)
 	 or	r2, r0, r30
-	DONE88100
-
-/* trap 496: BUG system calls */
-GLOBAL(bugtrap)
-	PREP88100("bugsyscall", 496,,)
-	ld	r2, r30, GENREG_OFF(9)
-	bsr.n	_C_LABEL(bugsyscall)
-	 or	r3, r0, r30
 	DONE88100
 
 GLOBAL(sigsys)
@@ -1942,14 +1934,6 @@ GLOBAL(m88110_cache_flush_handler)
 	PREP88110("cache_flush", 451,)
 	bsr.n	_C_LABEL(cache_flush)
 	 or	r2, r0, r30
-	DONE88110
-
-/* trap 496: BUG system calls */
-GLOBAL(m88110_bugtrap)
-	PREP88110("bugsyscall", 496,)
-	ld	r2,  r30, GENREG_OFF(9)
-	bsr.n	_C_LABEL(bugsyscall)
-	 or	r3, r0, r30
 	DONE88110
 
 GLOBAL(m88110_sigsys)
