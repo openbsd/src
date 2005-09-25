@@ -1,4 +1,4 @@
-.\"     $OpenBSD: hme.4,v 1.7 2005/04/14 20:33:24 brad Exp $
+.\"     $OpenBSD: hme.4,v 1.8 2005/09/25 23:02:25 brad Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -52,17 +52,6 @@ The
 .Nm
 is found on the SunSwift and Sun QuadFastEthernet boards.
 .Pp
-Each of the host's network addresses
-is specified at boot time with an
-.Dv SIOCSIFADDR
-.Xr ioctl 2 .
-The
-.Nm
-interface employs the address resolution protocol described in
-.Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
-.Pp
 When a
 .Nm
 interface is brought up, by default, it will attempt to auto-negotiate the
@@ -82,11 +71,11 @@ The supported media types are:
 Attempt to autoselect the media type (default)
 .It media 100baseTX mediaopt full-duplex
 Use 100baseTX, full duplex
-.It media 100baseTX mediaopt half-duplex
+.It media 100baseTX
 Use 100baseTX, half duplex
 .It media 10baseT mediaopt full-duplex
 Use 10baseT, full duplex
-.It media 10baseT mediaopt half-duplex
+.It media 10baseT
 Use 10baseT, half duplex
 .El
 .Sh SEE ALSO
