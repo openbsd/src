@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.29 2005/04/02 18:05:04 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.30 2005/09/25 19:02:38 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.29 2005/04/02 18:05:04 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.30 2005/09/25 19:02:38 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -1448,7 +1448,7 @@ compare_numbers(enum bcode_compare type, struct number *a, struct number *b)
 
 	if (scale > a->scale)
 		normalize(a, scale);
-	else if (scale > scale)
+	else if (scale > b->scale)
 		normalize(b, scale);
 
 	cmp = BN_cmp(a->number, b->number);
