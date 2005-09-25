@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2004/01/11 23:51:26 miod Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.39 2005/09/25 22:26:16 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/ptrace.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>

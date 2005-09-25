@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.6 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: reg.h,v 1.7 2005/09/25 22:26:13 miod Exp $	*/
 /*	$NetBSD: reg.h,v 1.12 1996/12/17 19:24:31 gwr Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #define _M68K_REG_H_
 
 /*
- * Register set accessible via /proc/$pid/reg and ptrace()
+ * Register set accessible via ptrace()
  */
 struct reg {
 	int	r_regs[16];	/* D0-D7/A0-A7 */
@@ -58,12 +58,12 @@ struct fpreg {
 	int	r_fpiar;
 };
 
-/* XXXX this is historical (but it can't be deprecated quite yet) */
+#ifdef _KERNEL
+
+/* XXX this is historical (but it can't be deprecated quite yet) */
 
 /*
- * Location of the users' stored
- * registers relative to D0.
- * Usage is u.u_ar0[XX].
+ * Location of the users' stored registers relative to D0.
  */
 #define	D0	(0)
 #define	D1	(1)
@@ -85,12 +85,6 @@ struct fpreg {
 #define	SP	A7
 #define	PS	(16)
 #define	PC	(17)
-
-#ifdef _KERNEL
-
-struct proc;
-int process_read_regs(struct proc *, struct reg *);
-int process_read_fpregs(struct proc *, struct fpreg *);
 
 #endif
 
