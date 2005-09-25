@@ -1195,6 +1195,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_sfreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_sisreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_skreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_skvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_stereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_stgereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_tireg.ph
@@ -1256,7 +1257,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ubsecvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/vga_pcivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/wdt50x.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_skvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ydsreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ydsvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pckbc

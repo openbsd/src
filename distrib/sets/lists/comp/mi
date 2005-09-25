@@ -16,7 +16,6 @@
 ./usr/bin/gdb
 ./usr/bin/gdbtui
 ./usr/bin/gprof
-./usr/bin/gzsig
 ./usr/bin/ld
 ./usr/bin/lex
 ./usr/bin/lint
@@ -516,6 +515,7 @@
 ./usr/include/dev/pci/if_sfreg.h
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h
+./usr/include/dev/pci/if_skvar.h
 ./usr/include/dev/pci/if_stereg.h
 ./usr/include/dev/pci/if_stgereg.h
 ./usr/include/dev/pci/if_tireg.h
@@ -577,7 +577,6 @@
 ./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
 ./usr/include/dev/pci/wdt50x.h
-./usr/include/dev/pci/if_skvar.h
 ./usr/include/dev/pci/ydsreg.h
 ./usr/include/dev/pci/ydsvar.h
 ./usr/include/dev/pckbc

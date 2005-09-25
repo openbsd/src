@@ -259,6 +259,7 @@
 ./usr/bin/gzcat
 ./usr/bin/gzexe
 ./usr/bin/gzip
+./usr/bin/gzsig
 ./usr/bin/h2ph
 ./usr/bin/h2xs
 ./usr/bin/head
