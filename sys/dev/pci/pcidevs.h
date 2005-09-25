@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.918 2005/09/23 21:07:46 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.919 2005/09/25 20:06:49 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -654,6 +654,15 @@
 #define	PCI_PRODUCT_APPLE_INTREPID_ATA	0x003b		/* Intrepid ATA */
 #define	PCI_PRODUCT_APPLE_INTREPID	0x003e		/* Intrepid */
 #define	PCI_PRODUCT_APPLE_INTREPID_OHCI	0x003f		/* Intrepid USB */
+#define	PCI_PRODUCT_APPLE_SHASTA	0x004f		/* Shasta */
+#define	PCI_PRODUCT_APPLE_SHASTA_ATA	0x0050		/* Shasta ATA */
+#define	PCI_PRODUCT_APPLE_SHASTA_GMAC	0x0051		/* Shasta GMAC */
+#define	PCI_PRODUCT_APPLE_SHASTA_FW	0x0052		/* Shasta Firewire */
+#define	PCI_PRODUCT_APPLE_SHASTA_PCI1	0x0053		/* Shasta PCI */
+#define	PCI_PRODUCT_APPLE_SHASTA_PCI2	0x0054		/* Shasta PCI */
+#define	PCI_PRODUCT_APPLE_SHASTA_PCI3	0x0055		/* Shasta PCI */
+#define	PCI_PRODUCT_APPLE_SHASTA_HT	0x0056		/* Shasta HyperTransport */
+#define	PCI_PRODUCT_APPLE_U3L_AGP	0x0058		/* U3L AGP */
 
 /* Aralion products */
 #define	PCI_PRODUCT_ARALION_ARS106S	0x0301		/* ARS106S */
@@ -2328,6 +2337,7 @@
 #define	PCI_PRODUCT_RCC_CSB5BRIDGE	0x0225		/* CSB5 PCI */
 #define	PCI_PRODUCT_RCC_CSB6_LPC	0x0227		/* CSB6 LPC */
 #define	PCI_PRODUCT_RCC_ISA	0x0230		/* PCI/ISA */
+#define	PCI_PRODUCT_RCC_SATA	0x0240		/* SATA */
 
 /* Philips products */
 #define	PCI_PRODUCT_PHILIPS_SAA7130	0x7130		/* SAA7130 */
