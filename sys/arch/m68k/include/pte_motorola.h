@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte_motorola.h,v 1.4 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: pte_motorola.h,v 1.5 2005/09/25 22:19:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,37 +44,6 @@
 /*
  * m68k hardware with motorola MMU segment/page table entries
  */
-
-#if 0
-struct ste {
-	unsigned int	sg_pfnum:20;	/* page table frame number */
-	unsigned int	:8;		/* reserved at 0 */
-	unsigned int	:1;		/* reserved at 1 */
-	unsigned int	sg_prot:1;	/* write protect bit */
-	unsigned int	sg_v:2;		/* valid bits */
-};
-
-struct ste40 {
-	unsigned int	sg_ptaddr:24;	/* page table page addr */
-	unsigned int	:4;		/* reserved at 0 */
-	unsigned int	sg_u;		/* hardware modified (dirty) bit */
-	unsigned int	sg_prot:1;	/* write protect bit */
-	unsigned int	sg_v:2;		/* valid bits */
-};
-
-struct pte {
-	unsigned int	pg_pfnum:20;	/* page frame number or 0 */
-	unsigned int	:3;
-	unsigned int	pg_w:1;		/* is wired */
-	unsigned int	:1;		/* reserved at zero */
-	unsigned int	pg_ci:1;	/* cache inhibit bit */
-	unsigned int	:1;		/* reserved at zero */
-	unsigned int	pg_m:1;		/* hardware modified (dirty) bit */
-	unsigned int	pg_u:1;		/* hardware used (reference) bit */
-	unsigned int	pg_prot:1;	/* write protect bit */
-	unsigned int	pg_v:2;		/* valid bit */
-};
-#endif
 
 typedef int	st_entry_t;	/* segment table entry */
 typedef int	pt_entry_t;	/* Mach page table entry */
@@ -140,9 +109,5 @@ typedef int	pt_entry_t;	/* Mach page table entry */
  */
 #define	kvtopte(va) \
 	(&Sysmap[((unsigned)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT])
-#define	ptetokv(pt) \
-	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
-#define	kvtophys(va) \
-	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 
 #endif /* !_PTE_MOTOROLA_H_ */
