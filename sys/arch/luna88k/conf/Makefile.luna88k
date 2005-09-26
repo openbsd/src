@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.5 2004/07/13 09:47:05 miod Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.6 2005/09/26 13:56:15 aoyama Exp $
 #
 # Makefile for OpenBSD
 #
@@ -95,7 +95,6 @@ PROFILE_C=	${CC} -S -c ${CFLAGS} ${CPPFLAGS} $<; \
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-# Kernel is linked as a ZMAGIC executable, with start at 10020
 SYSTEM_OBJ=	locore.o \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
