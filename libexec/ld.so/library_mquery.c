@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.23 2005/09/16 23:19:41 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.24 2005/09/26 14:51:05 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -62,7 +62,12 @@ _dl_load_list_free(struct load_list *load_list)
 void
 _dl_unload_shlib(elf_object_t *object)
 {
+	struct dep_node *n;
+	DL_DEB(("unload_shlib called on %s\n", object->load_name));
 	if (object->refcount == 0) {
+		TAILQ_FOREACH(n, &object->child_list, next_sib)
+			_dl_unload_shlib(n->data);
+		DL_DEB(("unload_shlib unloading on %s\n", object->load_name));
 		_dl_load_list_free(object->load_list);
 		_dl_remove_object(object);
 	}
