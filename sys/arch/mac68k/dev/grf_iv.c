@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.28 2005/09/15 18:52:44 martin Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.29 2005/09/26 15:44:05 martin Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -239,21 +239,26 @@ grfiv_attach(parent, self, aux)
 
 		/* Compute the current frame buffer offset */
 		vbase1 = bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x0) & 0xfff;
-		vbase2 = bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x4) & 0xf;
-		sc->sc_fbofs = (vbase1 << 9) | (vbase2 << 5);
-#if 1
+
 		/*
-		 * XXX The following hack exists because the DAFB v7 in these
-		 * systems doesn't compute fbofs correctly. (sar 19980813)
+		 * XXX The following exists because the DAFB v7 in these
+		 * systems doesn't return reasonable values to use for fbofs.
+		 * Ken'ichi Ishizaka gets credit for this hack.  (sar 19990426)
+		 * (Does this get us the correct result for _all_ DAFB-
+		 * equipped systems and monitor combinations?  It seems
+		 * possible, if not likely...)
 		 */
 		switch (current_mac_model->machineid) {
 		case MACH_MACLC475:
 		case MACH_MACLC475_33:
 		case MACH_MACLC575:
-			sc->sc_fbofs = 0x1000;
+		case MACH_MACQ605:
+		case MACH_MACQ605_33:
+			vbase1 &= 0x3f;
 			break;
 		}
-#endif
+		vbase2 = bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x4) & 0xf;
+		sc->sc_fbofs = (vbase1 << 9) | (vbase2 << 5);
 
 #ifdef DEBUG
 		printf(" @ %lx", sc->sc_basepa + sc->sc_fbofs);
