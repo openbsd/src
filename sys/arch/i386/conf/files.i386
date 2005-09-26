@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.136 2005/07/14 02:09:46 uwe Exp $
+#	$OpenBSD: files.i386,v 1.137 2005/09/26 22:32:03 miod Exp $
 #
 # new style config file for i386 architecture
 #
@@ -174,7 +174,7 @@ include "../../../gnu/arch/i386/fpemul/files.fpemul"
 define pckbcport {[irq = -1], [port = -1]}
 
 # 8250/16[45]50-based "com" ports, optimized for the i386 interrupt system
-device	pccom: tty
+#device	pccom: tty
 attach	pccom at isa with pccom_isa
 attach	pccom at commulti with pccom_commulti
 file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_isapnp | pccom_commulti | pccom_pcmcia | pccom_cardbus | pccom_puc) needs-flag

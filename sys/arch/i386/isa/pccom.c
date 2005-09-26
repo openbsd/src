@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.46 2004/12/23 17:50:24 markus Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.47 2005/09/26 22:32:05 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -88,9 +88,6 @@
 #include <dev/isa/isavar.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/ns16550reg.h>
-#ifdef COM_HAYESP
-#include <dev/ic/hayespreg.h>
-#endif
 #define	com_lcr	com_cfcr
 #ifdef DDB
 #include <ddb/db_var.h>
@@ -101,7 +98,6 @@
 
 /* XXX: These belong elsewhere */
 cdev_decl(com);
-bdev_decl(com);
 
 static u_char tiocm_xxx2mcr(int);
 
@@ -242,71 +238,6 @@ comprobe1(iot, ioh)
 	return 1;
 }
 
-#ifdef COM_HAYESP
-int
-comprobeHAYESP(hayespioh, sc)
-	bus_space_handle_t hayespioh;
-	struct com_softc *sc;
-{
-	char	val, dips;
-	int	combaselist[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
-	bus_space_tag_t iot = sc->sc_iot;
-
-	/*
-	 * Hayes ESP cards have two iobases.  One is for compatibility with
-	 * 16550 serial chips, and at the same ISA PC base addresses.  The
-	 * other is for ESP-specific enhanced features, and lies at a
-	 * different addressing range entirely (0x140, 0x180, 0x280, or 0x300).
-	 */
-
-	/* Test for ESP signature */
-	if ((bus_space_read_1(iot, hayespioh, 0) & 0xf3) == 0)
-		return 0;
-
-	/*
-	 * ESP is present at ESP enhanced base address; unknown com port
-	 */
-
-	/* Get the dip-switch configurations */
-	bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_GETDIPS);
-	dips = bus_space_read_1(iot, hayespioh, HAYESP_STATUS1);
-
-	/* Determine which com port this ESP card services: bits 0,1 of  */
-	/*  dips is the port # (0-3); combaselist[val] is the com_iobase */
-	if (sc->sc_iobase != combaselist[dips & 0x03])
-		return 0;
-
-	printf(": ESP");
-
- 	/* Check ESP Self Test bits. */
-	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
-	bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_GETTEST);
-	val = bus_space_read_1(iot, hayespioh, HAYESP_STATUS1); /* Clear reg 1 */
-	val = bus_space_read_1(iot, hayespioh, HAYESP_STATUS2);
-	if ((val & 0x70) < 0x20) {
-		printf("-old (%o)", val & 0x70);
-		/* we do not support the necessary features */
-		return 0;
-	}
-
-	/* Check for ability to emulate 16550: bit 8 == 1 */
-	if ((dips & 0x80) == 0) {
-		printf(" slave");
-		/* XXX Does slave really mean no 16550 support?? */
-		return 0;
-	}
-
-	/*
-	 * If we made it this far, we are a full-featured ESP v2.0 (or
-	 * better), at the correct com port address.
-	 */
-
-	SET(sc->sc_hwflags, COM_HW_HAYESP);
-	printf(", 1024 byte fifo\n");
-	return 1;
-}
-#endif
-
 int
 comprobe(parent, match, aux)
 	struct device *parent;
@@ -391,19 +322,12 @@ comattach(parent, self, aux)
 	int iobase, irq;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-#ifdef COM_HAYESP
-	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
-	int	*hayespp;
-#endif
-	u_int8_t lcr;
 
 	/*
 	 * XXX should be broken out into functions for isa attach and
 	 * XXX for commulti attach, with a helper function that contains
 	 * XXX most of the interesting stuff.
 	 */
-	sc->sc_hwflags = 0;
-	sc->sc_swflags = 0;
 /* #if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP */
 #if NPCCOM_ISA || NPCCOM_ISAPNP
 	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
@@ -463,189 +387,13 @@ comattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_frequency = COM_FREQ;
 
-	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
-	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
-
-	if (iobase == comconsaddr) {
-		comconsattached = 1;
-
-		/* 
-		 * Need to reset baud rate, etc. of next print so reset
-		 * comconsinit.  Also make sure console is always "hardwired".
-		 */
-		delay(1000);			/* wait for output to finish */
-		comconsinit = 0;
-		SET(sc->sc_hwflags, COM_HW_CONSOLE);
-		SET(sc->sc_swflags, COM_SW_SOFTCAR);
-	}
-
-#ifdef COM_HAYESP
-	/* Look for a Hayes ESP board. */
-	for (hayespp = hayesp_ports; *hayespp != 0; hayespp++) {
-		bus_space_handle_t hayespioh;
-
-#define	HAYESP_NPORTS	8			/* XXX XXX XXX ??? ??? ??? */
-		if (bus_space_map(iot, *hayespp, HAYESP_NPORTS, 0, &hayespioh))
-			continue;
-		if (comprobeHAYESP(hayespioh, sc)) {
-			sc->sc_hayespbase = *hayespp;
-			sc->sc_hayespioh = hayespioh;
-			sc->sc_fifolen = 1024;
-			break;
-		}
-		bus_space_unmap(iot, hayespioh, HAYESP_NPORTS);
-	}
-	/* No ESP; look for other things. */
-	if (*hayespp == 0) {
-#endif
-
-	/*
-	 * Probe for all known forms of UART.
-	 */
-	lcr = bus_space_read_1(iot, ioh, com_lcr);
-
-	bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-	bus_space_write_1(iot, ioh, com_efr, 0);
-	bus_space_write_1(iot, ioh, com_lcr, 0);
-
-	bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
-	delay(100);
-
-	switch(bus_space_read_1(iot, ioh, com_iir) >> 6) {
-	case 0:
-		sc->sc_uarttype = COM_UART_16450;
-		break;
-	case 2:
-		sc->sc_uarttype = COM_UART_16550;
-		break;
-	case 3:
-		sc->sc_uarttype = COM_UART_16550A;
-		break;
-	default:
-		sc->sc_uarttype = COM_UART_UNKNOWN;
-		break;
-	}
-
-	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for ST16650s */
-		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-		if (bus_space_read_1(iot, ioh, com_efr) == 0) {
-			sc->sc_uarttype = COM_UART_ST16650;
-		} else {
-			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
-			if (bus_space_read_1(iot, ioh, com_efr) == 0)
-				sc->sc_uarttype = COM_UART_ST16650V2;
-		}
-	}
-
-	if (sc->sc_uarttype == COM_UART_ST16650V2) {	/* Probe for XR16850s */
-		u_int8_t dlbl, dlbh;
-
-		/* Enable latch access and get the current values. */
-		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-		dlbl = bus_space_read_1(iot, ioh, com_dlbl);
-		dlbh = bus_space_read_1(iot, ioh, com_dlbh);
-
-		/* Zero out the latch divisors */
-		bus_space_write_1(iot, ioh, com_dlbl, 0);
-		bus_space_write_1(iot, ioh, com_dlbh, 0);
-
-		if (bus_space_read_1(iot, ioh, com_dlbh) == 0x10) {
-			sc->sc_uarttype = COM_UART_XR16850;
-			sc->sc_uartrev = bus_space_read_1(iot, ioh, com_dlbl);
-		}
-
-		/* Reset to original. */
-		bus_space_write_1(iot, ioh, com_dlbl, dlbl);
-		bus_space_write_1(iot, ioh, com_dlbh, dlbh);
-	}
-
-	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for TI16750s */
-		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-		bus_space_write_1(iot, ioh, com_fifo,
-		    FIFO_ENABLE | FIFO_ENABLE_64BYTE);
-		if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 7) {
-#if 0
-			bus_space_write_1(iot, ioh, com_lcr, 0);
-			if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 6)
-#endif
-				sc->sc_uarttype = COM_UART_TI16750;
-		}
-		bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
-	}
-
-	/* Reset the LCR (latch access is probably enabled). */
-	bus_space_write_1(iot, ioh, com_lcr, lcr);
-	if (sc->sc_uarttype == COM_UART_16450) { /* Probe for 8250 */
-		u_int8_t scr0, scr1, scr2;
-
-		scr0 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, 0xa5);
-		scr1 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, 0x5a);
-		scr2 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, scr0);
-
-		if ((scr1 != 0xa5) || (scr2 != 0x5a))
-			sc->sc_uarttype = COM_UART_8250;
-	}
-
-	/*
-	 * Print UART type and initialize ourself.
-	 */
-	sc->sc_fifolen = 1;	/* default */
-	switch (sc->sc_uarttype) {
-	case COM_UART_UNKNOWN:
-		printf(": unknown uart\n");
-		break;
-	case COM_UART_8250:
-		printf(": ns8250, no fifo\n");
-		break;
-	case COM_UART_16450:
-		printf(": ns16450, no fifo\n");
-		break;
-	case COM_UART_16550:
-		printf(": ns16550, no working fifo\n");
-		break;
-	case COM_UART_16550A:
-		printf(": ns16550a, 16 byte fifo\n");
-		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 16;
-		break;
-	case COM_UART_ST16650:
-		printf(": st16650, no working fifo\n");
-		break;
-	case COM_UART_ST16650V2:
-		printf(": st16650, 32 byte fifo\n");
-		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 32;
-		break;
-	case COM_UART_TI16750:
-		printf(": ti16750, 64 byte fifo\n");
-		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 64;
-		break;
-	case COM_UART_XR16850:
-		printf(": xr16850 (rev %d), 128 byte fifo\n", sc->sc_uartrev);
-		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 128;
-		break;
-	default:
-		panic("comattach: bad fifo type");
-	}
-
-	/* clear and disable fifo */
-	bus_space_write_1(iot, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
-	(void)bus_space_read_1(iot, ioh, com_data);
-	bus_space_write_1(iot, ioh, com_fifo, 0);
-#ifdef COM_HAYESP
-	}
-#endif
-
-	/* disable interrupts */
-	bus_space_write_1(iot, ioh, com_ier, 0);
-	bus_space_write_1(iot, ioh, com_mcr, 0);
+	sc->sc_hwflags = 0;
+	sc->sc_swflags = 0;
 
 	if (irq != IRQUNK) {
+		/* disable interrupts */
+		bus_space_write_1(iot, ioh, com_ier, 0);
+
 /* #if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP */
 #if NPCCOM_ISA || NPCCOM_ISAPNP
 		if (IS_ISA(parent) || IS_ISAPNP(parent)) {
@@ -671,33 +419,7 @@ comattach(parent, self, aux)
 			panic("comattach: IRQ but can't have one");
 	}
 
-#ifdef KGDB
-	/*
-	 * Allow kgdb to "take over" this port.  If this is
-	 * the kgdb device, it has exclusive use.
-	 */
-
-	if (iot == com_kgdb_iot && iobase == com_kgdb_addr &&
-	    !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
-		SET(sc->sc_hwflags, COM_HW_KGDB);
-		com_enable_debugport(sc);
-		com_kgdb_attached = 1;
-	}
-#endif /* KGDB */
-
-	/* XXX maybe move up some? */
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-		printf("%s: console\n", sc->sc_dev.dv_xname);
-
-	/*
-	 * If there are no enable/disable functions, assume the device
-	 * is always enabled.
-	 */
-#ifdef notyet
-	if (!sc->enable)
-#endif
-		sc->enabled = 1;
+	com_attach_subr(sc);
 }
 
 #ifdef KGDB
@@ -871,38 +593,6 @@ comopen(dev, flag, mode, p)
 
 		sc->sc_rxput = sc->sc_rxget = sc->sc_tbc = 0;
 
-#ifdef COM_HAYESP
-		/* Setup the ESP board */
-		if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
-			bus_space_handle_t hayespioh = sc->sc_hayespioh;
-
-			bus_space_write_1(iot, ioh, com_fifo,
-			     FIFO_DMA_MODE|FIFO_ENABLE|
-			     FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_8);
-
-			/* Set 16550 compatibility mode */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETMODE);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, 
-			     HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
-			     HAYESP_MODE_SCALE);
-
-			/* Set RTS/CTS flow control */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETFLOWTYPE);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, HAYESP_FLOW_RTS);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, HAYESP_FLOW_CTS);
-
-			/* Set flow control levels */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETRXFLOW);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, 
-			     HAYESP_HIBYTE(HAYESP_RXHIWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_LOBYTE(HAYESP_RXHIWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_HIBYTE(HAYESP_RXLOWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_LOBYTE(HAYESP_RXLOWMARK));
-		} else
-#endif
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 			u_int8_t fifo = FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST;
 			u_int8_t lcr;
@@ -1368,8 +1058,7 @@ comparam(tp, t)
 		} else
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 
-		if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP) &&
-		    ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 			u_int8_t fifo = FIFO_ENABLE;
 			u_int8_t lcr2;
 

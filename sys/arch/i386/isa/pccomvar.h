@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.14 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.15 2005/09/26 22:32:05 miod Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -57,9 +57,6 @@ struct com_softc {
 
 	int sc_iobase;
 	int sc_frequency;
-#ifdef COM_HAYESP
-	int sc_hayespbase;
-#endif
 
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_hayespioh;
@@ -80,7 +77,6 @@ struct com_softc {
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
-#define	COM_HW_HAYESP	0x04
 #define	COM_HW_CONSOLE	0x40
 #define COM_HW_KGDB	0x80
 	u_char sc_swflags;
@@ -117,9 +113,6 @@ int	comintr(void *);
 int	com_detach(struct device *, int);
 int	com_activate(struct device *, enum devact);
 
-#ifdef COM_HAYESP
-int comprobeHAYESP(bus_space_handle_t hayespioh, struct com_softc *sc);
-#endif
 void	comdiag(void *);
 int	comspeed(long, long);
 int	comparam(struct tty *, struct termios *);
@@ -145,6 +138,8 @@ void	com_enable_debugport(struct com_softc *);
 int	com_kgdb_attach(bus_space_tag_t, int, int, int, tcflag_t);
 int	kgdbintr(void *);
 #endif /* KGDB */
+
+void	com_attach_subr(struct com_softc *);
 
 extern int comconsaddr;
 extern int comconsinit;

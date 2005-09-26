@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.105 2005/07/18 16:18:28 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.106 2005/09/26 22:32:06 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ cdev_decl(com);
 static u_char tiocm_xxx2mcr(int);
 
 void	compwroff(struct com_softc *);
-void	com_enable_debugport(struct com_softc *);
 void	cominit(bus_space_tag_t, bus_space_handle_t, int, int);
 int	com_is_console(bus_space_tag_t, bus_addr_t);
 
@@ -199,238 +198,6 @@ comprobe1(iot, ioh)
 	return 1;
 }
 #endif
-
-void
-com_attach_subr(sc)
-	struct com_softc *sc;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t lcr;
-
-	sc->sc_ier = 0;
-#ifdef COM_PXA2X0
-	if (sc->sc_uarttype == COM_UART_PXA2X0)
-		sc->sc_ier |= IER_EUART;
-#endif
-	/* disable interrupts */
-	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
-
-#ifdef COM_CONSOLE
-	if (sc->sc_iobase == comconsaddr) {
-		comconsattached = 1;
-
-		/*
-		 * Need to reset baud rate, etc. of next print so reset
-		 * comconsinit.  Also make sure console is always "hardwired".
-		 */
-		delay(10000);			/* wait for output to finish */
-		SET(sc->sc_hwflags, COM_HW_CONSOLE);
-		SET(sc->sc_swflags, COM_SW_SOFTCAR);
-	}
-#endif
-
-	/*
-	 * Probe for all known forms of UART.
-	 */
-	lcr = bus_space_read_1(iot, ioh, com_lcr);
-	bus_space_write_1(iot, ioh, com_lcr, 0xbf);
-	bus_space_write_1(iot, ioh, com_efr, 0);
-	bus_space_write_1(iot, ioh, com_lcr, 0);
-
-	bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
-	delay(100);
-
-#ifdef COM_PXA2X0
-	/* Attachment driver presets COM_UART_PXA2X0. */
-	if (sc->sc_uarttype != COM_UART_PXA2X0)
-#endif
-	switch(bus_space_read_1(iot, ioh, com_iir) >> 6) {
-	case 0:
-		sc->sc_uarttype = COM_UART_16450;
-		break;
-	case 2:
-		sc->sc_uarttype = COM_UART_16550;
-		break;
-	case 3:
-		sc->sc_uarttype = COM_UART_16550A;
-		break;
-	default:
-		sc->sc_uarttype = COM_UART_UNKNOWN;
-		break;
-	}
-
-	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for ST16650s */
-		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-		if (bus_space_read_1(iot, ioh, com_efr) == 0) {
-			sc->sc_uarttype = COM_UART_ST16650;
-		} else {
-			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
-			if (bus_space_read_1(iot, ioh, com_efr) == 0)
-				sc->sc_uarttype = COM_UART_ST16650V2;
-		}
-	}
-
-	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for TI16750s */
-		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
-		bus_space_write_1(iot, ioh, com_fifo,
-		    FIFO_ENABLE | FIFO_ENABLE_64BYTE);
-		if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 7) {
-#if 0
-			bus_space_write_1(iot, ioh, com_lcr, 0);
-			if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 6)
-#endif
-				sc->sc_uarttype = COM_UART_TI16750;
-		}
-		bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
-	}
-	bus_space_write_1(iot, ioh, com_lcr, lcr);
-	if (sc->sc_uarttype == COM_UART_16450) { /* Probe for 8250 */
-		u_int8_t scr0, scr1, scr2;
-
-		scr0 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, 0xa5);
-		scr1 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, 0x5a);
-		scr2 = bus_space_read_1(iot, ioh, com_scratch);
-		bus_space_write_1(iot, ioh, com_scratch, scr0);
-
-		if ((scr1 != 0xa5) || (scr2 != 0x5a))
-			sc->sc_uarttype = COM_UART_8250;
-	}
-
-	/*
-	 * Print UART type and initialize ourself.
-	 */
-	sc->sc_fifolen = 1;	/* default */
-	switch (sc->sc_uarttype) {
-	case COM_UART_UNKNOWN:
-		printf(": unknown uart\n");
-		break;
-	case COM_UART_8250:
-		printf(": ns8250, no fifo\n");
-		break;
-	case COM_UART_16450:
-		printf(": ns16450, no fifo\n");
-		break;
-	case COM_UART_16550:
-		printf(": ns16550, no working fifo\n");
-		break;
-	case COM_UART_16550A:
-		printf(": ns16550a, 16 byte fifo\n");
-		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 16;
-		break;
-#ifdef COM_PXA2X0
-	case COM_UART_PXA2X0:
-		printf(": pxa2x0, 32 byte fifo");
-		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 32;
-		if (sc->sc_iobase == comsiraddr) {
-			SET(sc->sc_hwflags, COM_HW_SIR);
-			printf(" (SIR)");
-		}
-		printf("\n");
-		break;
-#endif
-	case COM_UART_ST16650:
-		printf(": st16650, no working fifo\n");
-		break;
-	case COM_UART_ST16650V2:
-		printf(": st16650, 32 byte fifo\n");
-		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 32;
-		break;
-	case COM_UART_TI16750:
-		printf(": ti16750, 64 byte fifo\n");
-		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 64;
-		break;
-	default:
-		panic("comattach: bad fifo type");
-	}
-
-	/* clear and disable fifo */
-	bus_space_write_1(iot, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
-	(void)bus_space_read_1(iot, ioh, com_data);
-	bus_space_write_1(iot, ioh, com_fifo, 0);
-
-	sc->sc_mcr = 0;
-	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
-
-#ifdef KGDB
-	/*
-	 * Allow kgdb to "take over" this port.  If this is
-	 * the kgdb device, it has exclusive use.
-	 */
-
-	if (iot == com_kgdb_iot && sc->sc_iobase == com_kgdb_addr &&
-	    !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
-		SET(sc->sc_hwflags, COM_HW_KGDB);
-	}
-#endif /* KGDB */
-
-#ifdef COM_CONSOLE
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		int maj;
-
-		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == comopen)
-				break;
-
-		if (maj < nchrdev && cn_tab->cn_dev == NODEV)
-			cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
-
-		printf("%s: console\n", sc->sc_dev.dv_xname);
-	}
-#endif
-
-	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
-	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->sc_si = softintr_establish(IPL_TTY, comsoft, sc);
-	if (sc->sc_si == NULL)
-		panic("%s: can't establish soft interrupt.", sc->sc_dev.dv_xname);
-#else
-	timeout_set(&sc->sc_comsoft_tmo, comsoft, sc);
-#endif
-
-	/*
-	 * If there are no enable/disable functions, assume the device
-	 * is always enabled.
-	 */
-	if (!sc->enable)
-		sc->enabled = 1;
-
-#if defined(COM_CONSOLE) || defined(KGDB)
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
-		com_enable_debugport(sc);
-#endif
-}
-
-void
-com_enable_debugport(sc)
-	struct com_softc *sc;
-{
-	int s;
-
-	/* Turn on line break interrupt, set carrier. */
-	s = splhigh();
-#ifdef KGDB
-	SET(sc->sc_ier, IER_ERXRDY);
-#ifdef COM_PXA2X0
-	if (sc->sc_uarttype == COM_UART_PXA2X0)
-		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
-#endif
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
-#endif
-	SET(sc->sc_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
-
-	splx(s);
-}
 
 int
 com_detach(self, flags)
@@ -584,7 +351,7 @@ comopen(dev, flag, mode, p)
 		switch (sc->sc_uarttype) {
 		case COM_UART_ST16650:
 		case COM_UART_ST16650V2:
-			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+			bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
 			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
 			bus_space_write_1(iot, ioh, com_ier, 0);
 			bus_space_write_1(iot, ioh, com_efr, 0);
@@ -795,7 +562,7 @@ compwroff(sc)
 	switch (sc->sc_uarttype) {
 	case COM_UART_ST16650:
 	case COM_UART_ST16650V2:
-		bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+		bus_space_write_1(iot, ioh, com_lcr, LCR_EFR);
 		bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
 		bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
 		bus_space_write_1(iot, ioh, com_lcr, 0);
