@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.62 2005/09/06 17:02:09 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.63 2005/09/26 21:11:09 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -1921,6 +1921,7 @@ softdep_setup_freeblocks(ip, length)
 	freeblks = pool_get(&freeblks_pool, PR_WAITOK);
 	bzero(freeblks, sizeof(struct freeblks));
 	freeblks->fb_list.wk_type = D_FREEBLKS;
+	freeblks->fb_state = ATTACHED;
 	freeblks->fb_uid = ip->i_ffs_uid;
 	freeblks->fb_previousinum = ip->i_number;
 	freeblks->fb_devvp = ip->i_devvp;
@@ -2002,6 +2003,20 @@ softdep_setup_freeblocks(ip, length)
 	}
 	if (inodedep_lookup(fs, ip->i_number, 0, &inodedep) != 0)
 		(void) free_inodedep(inodedep);
+
+	if (delay) {
+		freeblks->fb_state |= DEPCOMPLETE;
+		/*
+		 * If the inode with zeroed block pointers is now on disk we
+		 * can start freeing blocks. Add freeblks to the worklist
+		 * instead of calling handle_workitem_freeblocks() directly as
+		 * it is more likely that additional IO is needed to complete
+		 * the request than in the !delay case.
+		 */
+		if ((freeblks->fb_state & ALLCOMPLETE) == ALLCOMPLETE)
+			add_to_worklist(&freeblks->fb_list);
+	}
+
 	FREE_LOCK(&lk);
 	/*
 	 * If the inode has never been written to disk (delay == 0),
@@ -3765,7 +3780,6 @@ handle_written_inodeblock(inodedep, bp)
 	if ((inodedep->id_state & IOSTARTED) == 0)
 		panic("handle_written_inodeblock: not started");
 	inodedep->id_state &= ~IOSTARTED;
-	inodedep->id_state |= COMPLETE;
 	dp = (struct ufs1_dinode *)bp->b_data +
 	    ino_to_fsbo(inodedep->id_fs, inodedep->id_ino);
 	/*
@@ -3784,6 +3798,7 @@ handle_written_inodeblock(inodedep, bp)
 		buf_dirty(bp);
 		return (1);
 	}
+	inodedep->id_state |= COMPLETE;
 	/*
 	 * Roll forward anything that had to be rolled back before 
 	 * the inode could be updated.
@@ -3869,6 +3884,10 @@ handle_written_inodeblock(inodedep, bp)
 			continue;
 
 		case D_FREEBLKS:
+			wk->wk_state |= COMPLETE;
+			if ((wk->wk_state & ALLCOMPLETE) != ALLCOMPLETE)
+				continue;
+			/* FALLTHROUGH */
 		case D_FREEFRAG:
 		case D_DIRREM:
 			add_to_worklist(wk);

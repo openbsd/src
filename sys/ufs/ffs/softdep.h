@@ -1,4 +1,4 @@
-/*	$OpenBSD: softdep.h,v 1.9 2005/07/20 16:30:35 pedro Exp $	*/
+/*	$OpenBSD: softdep.h,v 1.10 2005/09/26 21:11:09 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -416,6 +416,7 @@ struct freefrag {
  */
 struct freeblks {
 	struct	worklist fb_list;	/* id_inowait or delayed worklist */
+#	define	fb_state fb_list.wk_state /* inode and dirty block state */
 	ino_t	fb_previousinum;	/* inode of previous owner of blocks */
 	struct	vnode *fb_devvp;	/* filesystem device vnode */
 	struct	mount *fb_mnt;		/* associated mount point */
