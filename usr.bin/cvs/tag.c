@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.31 2005/09/26 17:43:48 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.32 2005/09/26 18:33:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -166,23 +166,24 @@ static int
 cvs_tag_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (tag_branch && (cvs_sendarg(root, "-b", 0) < 0))
+		if ((tag_branch == 1) && (cvs_sendarg(root, "-b", 0) < 0))
 			return (CVS_EX_PROTO);
 
-		if (tag_delete && (cvs_sendarg(root, "-d", 0) < 0))
+		if ((tag_delete ==1) && (cvs_sendarg(root, "-d", 0) < 0))
 			return (CVS_EX_PROTO);
 
-		if (tag_forcemove && (cvs_sendarg(root, "-F", 0) < 0))
+		if ((tag_forcemove == 1) && (cvs_sendarg(root, "-F", 0) < 0))
 			return (CVS_EX_PROTO);
 
-		if (tag_forcehead && (cvs_sendarg(root, "-f", 0) < 0))
+		if ((tag_forcehead == 1) && (cvs_sendarg(root, "-f", 0) < 0))
 			return (CVS_EX_PROTO);
 
-		if ((tag_oldname) && ((cvs_sendarg(root, "-r", 0) < 0) ||
+		if ((tag_oldname != NULL) &&
+		    ((cvs_sendarg(root, "-r", 0) < 0) ||
 		    (cvs_sendarg(root, tag_oldname, 0) < 0)))
 				return (CVS_EX_PROTO);
 
-		if ((tag_date) && ((cvs_sendarg(root, "-D", 0) < 0) ||
+		if ((tag_date != NULL) && ((cvs_sendarg(root, "-D", 0) < 0) ||
 		    (cvs_sendarg(root, tag_date, 0) < 0)))
 				return (CVS_EX_PROTO);
 
@@ -273,6 +274,14 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 		cvs_log(LP_ERR, "failed to open %s: %s", rcspath,
 		    rcs_errstr(rcs_errno));
 		return (CVS_EX_DATA);
+	}
+
+	if (tag_delete == 1) {
+		/* XXX */
+		if (verbosity > 0)
+			cvs_printf("D %s\n", fpath);
+
+		return (0);
 	}
 
 	if (cvs_noexec == 0) {
