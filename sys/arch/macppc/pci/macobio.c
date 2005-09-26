@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.10 2005/06/08 19:08:23 drahn Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.11 2005/09/26 19:54:50 kettenis Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -86,6 +86,7 @@ macobio_match(struct device *parent, void *cf, void *aux)
 		case PCI_PRODUCT_APPLE_KEYLARGO:
 		case PCI_PRODUCT_APPLE_INTREPID:
 		case PCI_PRODUCT_APPLE_PANGEA_MACIO:
+		case PCI_PRODUCT_APPLE_SHASTA:
 			return 1;
 		}
 
@@ -141,13 +142,13 @@ macobio_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_APPLE_KEYLARGO:
 	case PCI_PRODUCT_APPLE_INTREPID:
 	case PCI_PRODUCT_APPLE_PANGEA_MACIO:
+	case PCI_PRODUCT_APPLE_SHASTA:
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
 		if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg))
 		    == (sizeof (reg[0]) * 5))
 			 sc->obiomem = mapiodev(reg[2], 0x100);
-
 		break;
 	default:
 		printf(": unknown macobio controller\n");
