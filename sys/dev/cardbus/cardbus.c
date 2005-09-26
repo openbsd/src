@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.30 2005/09/13 18:53:01 fgsch Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.31 2005/09/26 22:43:18 deraadt Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -386,6 +386,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	struct device *csc;
 	int no_work_funcs = 0;
 	cardbus_devfunc_t ct;
+	int i;
 
 	cc = sc->sc_cc;
 	cf = sc->sc_cf;
@@ -399,35 +400,29 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		return (0);
 	}
 
-	enable_function(sc, cdstatus, 8); /* XXX use fake function 8 to
-					     keep power on during whole
-					     configuration */
+	/* XXX use fake function 8 to keep power on during whole configuration */
+	enable_function(sc, cdstatus, 8);
 
 	function = 0;
 
 	tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, function);
 
-	/*
-	 * Wait until power comes up.  Maxmum 500 ms.
-	 */
-	{
-		int i;
-		for (i = 0; i < 5; ++i) {
-			id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
-			if (id != 0xffffffff && id != 0)
+	/* Wait until power comes up.  Maximum 500 ms. */
+	for (i = 0; i < 5; ++i) {
+		id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
+		if (id != 0xffffffff && id != 0)
+			break;
+		if (cold) {	/* before kernel thread invoked */
+			delay(100*1000);
+		} else {	/* thread context */
+			if (tsleep((void *)sc, PCATCH, "cardbus",
+			    hz/10) != EWOULDBLOCK) {
 				break;
-			if (cold) {	/* before kernel thread invoked */
-				delay(100*1000);
-			} else {	/* thread context */
-				if (tsleep((void *)sc, PCATCH, "cardbus",
-				    hz/10) != EWOULDBLOCK) {
-					break;
-				}
 			}
 		}
-		if (i == 5)
-			return (0);
 	}
+	if (i == 5)
+		return (0);
 
 	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
 	DPRINTF(("%s bhlc 0x%08x -> ", sc->sc_dev.dv_xname, bhlc));
