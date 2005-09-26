@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.58 2005/06/17 23:50:33 deraadt Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.59 2005/09/26 22:19:01 miod Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -205,7 +205,11 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
  */
 #include <sys/timeout.h>
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#define USB_USE_SOFTINTR
+#else
 #undef USB_USE_SOFTINTR
+#endif
 
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
