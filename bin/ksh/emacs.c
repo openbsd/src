@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.38 2005/08/01 04:27:31 deraadt Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.39 2005/09/26 19:25:22 otto Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -820,10 +820,9 @@ x_load_hist(char **hp)
 	xbp = xbuf;
 	xep = xcp = xbuf + strlen(xbuf);
 	xlp_valid = false;
-	if (xep > x_lastcp())
-	  x_goto(xep);
-	else
-	  x_redraw(oldsize);
+	if (xep <= x_lastcp())
+		x_redraw(oldsize);
+	x_goto(xep);
 }
 
 static int
