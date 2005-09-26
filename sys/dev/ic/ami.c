@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.86 2005/09/25 04:59:14 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.87 2005/09/26 21:33:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -337,10 +337,18 @@ ami_attach(sc)
 	    NBPG, 1, "init data")))
 		return 1;
 
+	sc->sc_mbox = ami_allocmem(sc->dmat, &sc->sc_mbox_map, sc->sc_mbox_seg,
+	    sizeof(struct ami_iocmd), 1, "mbox");
+	if (!sc->sc_mbox)
+		goto free_idata;
+
+	sc->sc_mbox_pa = sc->sc_mbox_seg[0].ds_addr;
+	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ", sc->sc_mbox_pa));
+
 	sc->sc_cmds = ami_allocmem(sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
 	    sizeof(struct ami_iocmd), AMI_MAXCMDS+1, "command");
 	if (!sc->sc_cmds)
-		goto free_idata;
+		goto free_mbox;
 
 	sc->sc_pts = ami_allocmem(sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
 	    sizeof(struct ami_passthrough), AMI_MAXCMDS+1, "ptlist");
@@ -387,11 +395,6 @@ ami_attach(sc)
 			ccb->ccb_sglistpa = htole32(sc->sc_sgseg[0].ds_addr +
 			    cmd->acc_id * sizeof(*sg) * AMI_SGEPERCMD);
 			TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
-		} else {
-			sc->sc_mbox = cmd;
-			sc->sc_mbox_pa = sc->sc_cmdseg[0].ds_addr;
-			AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ",
-			    sc->sc_mbox_pa));
 		}
 	}
 
@@ -649,6 +652,9 @@ free_pts:
 free_cmds:
 	ami_freemem(sc->sc_cmds, sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
 	    sizeof(struct ami_iocmd), AMI_MAXCMDS+1, "command");
+free_mbox:
+	ami_freemem((caddr_t)sc->sc_mbox, sc->dmat, &sc->sc_mbox_map,
+	    sc->sc_mbox_seg, sizeof(struct ami_iocmd), 1, "mbox");
 free_idata:
 	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
 
@@ -682,7 +688,7 @@ ami_quartz_exec(sc, cmd)
 	}
 
 	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
+	bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0, sizeof(struct ami_iocmd),
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	sc->sc_mbox->acc_busy = 1;
@@ -718,22 +724,22 @@ ami_quartz_done(sc, mbox)
 	 */
 	i = 0;
 	while ((nstat = sc->sc_mbox->acc_nstat) == 0xff) {
-		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
-		    BUS_DMASYNC_POSTREAD);
+		bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0,
+		    sizeof(struct ami_iocmd), BUS_DMASYNC_POSTREAD);
 		delay(1);
 		if (i++ > 1000000)
 			return (0); /* nothing to do */
 	}
 	sc->sc_mbox->acc_nstat = 0xff;
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
-	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0,
+	    sizeof(struct ami_iocmd), BUS_DMASYNC_POSTWRITE);
 
 	/* wait until fw wrote out all completions */
 	i = 0;
 	AMI_DPRINTF(AMI_D_CMD, ("aqd %d ", nstat));
 	for (n = 0; n < nstat; n++) {
-		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
-		    BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0,
+		    sizeof(struct ami_iocmd), BUS_DMASYNC_PREREAD);
 		while ((completed[n] = sc->sc_mbox->acc_cmplidl[n]) ==
 		    0xff) {
 			delay(1);
@@ -741,8 +747,8 @@ ami_quartz_done(sc, mbox)
 				return (0); /* nothing to do */
 		}
 		sc->sc_mbox->acc_cmplidl[n] = 0xff;
-		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
-		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0,
+		    sizeof(struct ami_iocmd), BUS_DMASYNC_POSTWRITE);
 	}
 
 	/* this should never happen, someone screwed up the completion status */
@@ -752,7 +758,7 @@ ami_quartz_done(sc, mbox)
 	sc->sc_mbox->acc_status = 0xff;
 
 	/* copy mailbox to temporary one and fixup other changed values */
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
+	bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0, 16,
 	    BUS_DMASYNC_POSTWRITE);
 	memcpy(mbox, (struct ami_iocmd *)sc->sc_mbox, 16);
 	mbox->acc_nstat = nstat;
@@ -789,7 +795,7 @@ ami_quartz_poll(sc, cmd)
 	}
 
 	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
+	bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0, 16,
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	sc->sc_mbox->acc_id = 0xfe;
@@ -972,7 +978,7 @@ ami_schwartz_poll(sc, mbox)
 	}
 
 	memcpy((struct ami_iocmd *)sc->sc_mbox, mbox, 16);
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
+	bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0, 16,
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	sc->sc_mbox->acc_busy = 1;
@@ -1012,7 +1018,7 @@ ami_schwartz_poll(sc, mbox)
 	bus_space_write_1(sc->iot, sc->ioh, AMI_ISTAT, status);
 
 	/* copy mailbox and status back */
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 128,
+	bus_dmamap_sync(sc->dmat, sc->sc_mbox_map, 0, sizeof(struct ami_iocmd),
 	    BUS_DMASYNC_PREREAD);
 	*mbox = *sc->sc_mbox;
 	rv = sc->sc_mbox->acc_status;
