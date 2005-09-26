@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfs.c,v 1.3 2003/10/16 04:30:09 drahn Exp $	*/
+/*	$OpenBSD: hfs.c,v 1.4 2005/09/26 19:55:47 kettenis Exp $	*/
 /*	$NetBSD: hfs.c,v 1.1 2000/11/14 11:25:35 tsubai Exp $	*/
 
 /*-
@@ -82,6 +82,8 @@ hfs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	int len;
 
 	len = OF_read(OF_fd, start, size);
+	if (len == -1)
+		return EIO;
 	size -= len;
 	if (resid)
 		*resid = size;
