@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.30 2005/08/08 11:40:07 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.31 2005/09/26 17:43:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -143,18 +143,18 @@ cvs_tag_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		return (CVS_EX_BADTAG);
 	}
 
-	if (tag_branch && tag_delete) {
+	if ((tag_branch == 1) && (tag_delete == 1)) {
 		cvs_log(LP_WARN, "ignoring -b with -d options");
 		tag_branch = 0;
 	}
 
-	if (tag_delete && tag_oldname)
+	if ((tag_delete == 1) && (tag_oldname != NULL))
 		tag_oldname = NULL;
 
-	if (tag_delete && tag_date)
+	if ((tag_delete == 1) && (tag_date != NULL))
 		tag_date = NULL;
 
-	if (tag_oldname != NULL && tag_date != NULL) {
+	if ((tag_oldname != NULL) && (tag_date != NULL)) {
 		cvs_log(LP_ERR, "the -D and -r options are mutually exclusive");
 		return (CVS_EX_USAGE);
 	}
