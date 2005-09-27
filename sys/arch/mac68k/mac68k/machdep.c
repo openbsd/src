@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2005/08/06 19:51:44 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.119 2005/09/27 21:50:39 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -116,7 +116,6 @@
 
 void netintr(void);
 
-#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
@@ -192,7 +191,7 @@ int	bufpages = 0;
 int	bufcachepercent = BUFCACHEPERCENT;
 
 int	maxmem;			/* max memory per process */
-int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+int	physmem;		/* max supported memory, changes to actual */
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait

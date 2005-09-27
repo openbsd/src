@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2005/08/06 14:26:52 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.89 2005/09/27 21:50:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -110,8 +110,6 @@
 #include <ddb/db_extern.h>
 #endif
 
-#define	MAXMEM	64*1024	/* XXX - from cmap.h */
-
 #include <uvm/uvm_extern.h>
 
 /* the following is used externally (sysctl_hw) */
@@ -143,7 +141,7 @@ int	bufpages = 0;
 int	bufcachepercent = BUFCACHEPERCENT;
 
 int   maxmem;			/* max memory per process */
-int   physmem = MAXMEM;	/* max supported memory, changes to actual */
+int   physmem;			/* max supported memory, changes to actual */
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
