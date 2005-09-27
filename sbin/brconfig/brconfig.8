@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.52 2004/12/14 08:58:21 camield Exp $
+.\"	$OpenBSD: brconfig.8,v 1.53 2005/09/27 21:31:40 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -261,10 +261,14 @@ Create a bridge pseudo network device:
 .Pp
 .Dl # ifconfig bridge0 create
 .Pp
-Add the Ethernet interfaces rl0 and xl0 to the bridge bridge0, and
-have the bridge start forwarding packets:
-.Pp
-.Dl # brconfig bridge0 add rl0 add xl0 up
+Bring the Ethernet interfaces rl0 and xl0 up,
+add them to the bridge, bridge0,
+and have the bridge start forwarding packets:
+.Bd -literal -offset indent
+# ifconfig rl0 up
+# ifconfig xl0 up
+# brconfig bridge0 add rl0 add xl0 up
+.Ed
 .Pp
 Retrieve a list of interfaces that are members of bridge0, and the addresses
 learned by the bridge:
