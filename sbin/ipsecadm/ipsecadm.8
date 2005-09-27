@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.69 2005/06/14 15:35:02 hshoexer Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.70 2005/09/27 12:22:03 markus Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -71,7 +71,8 @@ provided by IPsec.
 The possible commands are:
 .Bl -tag -width new_esp
 .It Cm new esp
-Set up a Security Association (SA) which uses the new ESP transforms.
+Set up a Security Association (SA) which uses the new ESP transforms
+(RFC 2406).
 An SA consists of the destination address,
 a Security Parameter Index (SPI) and a security protocol.
 Encryption and authentication algorithms can be applied.
@@ -96,7 +97,7 @@ modifiers are:
 and
 .Fl keyfile .
 .It Cm old esp
-Set up an SA which uses the old ESP transforms.
+Set up an SA which uses the old ESP transforms (RFC 1827).
 Only encryption algorithms can be applied.
 Allowed modifiers are:
 .Fl dst ,
@@ -114,7 +115,7 @@ Allowed modifiers are:
 and
 .Fl keyfile .
 .It Cm new ah
-Set up an SA which uses the new AH transforms.
+Set up an SA which uses the new AH transforms (RFC 2402).
 Authentication will be done with Hashed Message Authentication Code
 (HMAC) using the specified hash algorithm.
 Allowed modifiers are:
@@ -132,7 +133,7 @@ Allowed modifiers are:
 and
 .Fl keyfile .
 .It Cm old ah
-Set up an SA which uses the old AH transforms.
+Set up an SA which uses the old AH transforms (RFC 1826).
 Simple keyed hashes will be used for authentication.
 Allowed modifiers are:
 .Fl dst ,
@@ -427,7 +428,9 @@ This is available for both old and new ESP.
 It is considered more secure than straight DES, since it uses larger
 keys.
 .It Cm aes
-Rijndael encryption is available only in new ESP.
+AES/Rijndael CBC encryption is available only in new ESP.
+.It Cm aesctr
+AES/Rijndael CTR (RFC 3686) encryption is available only in new ESP.
 .It Cm blf
 Blowfish encryption is available only in new ESP.
 See
@@ -439,6 +442,10 @@ SKIPJACK encryption is available only in new ESP.
 This algorithm was designed by the NSA and is faster than 3DES.
 However, since it was designed by the NSA,
 it is a poor choice.
+.It Cm null
+The NULL encryption algorithm is available for new ESP.
+It should be used in combination with an authentication algorithm
+to provide authentication and integrity without confidentiality.
 .El
 .Pp
 .It Fl auth Ar algorithm
