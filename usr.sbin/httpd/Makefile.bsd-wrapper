@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.56 2005/09/26 21:14:30 pedro Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.57 2005/09/27 16:27:22 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -709,7 +709,7 @@ clean: prereq cleanman
 	@cd ${.OBJDIR} && ${MAKE} clean  && rm -f ${MUNGEDFILES}
 .else 	
 clean: cleanman
-	@cd ${.OBJDIR} && find . \! -type d -print | xargs -r rm
+	@cd ${.OBJDIR} && find . \! -type d -print0 | xargs -0r rm
 .endif
 
 cleandir: clean
