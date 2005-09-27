@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.32 2005/09/26 18:33:54 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.33 2005/09/27 16:33:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -261,6 +261,18 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		if (verbosity > 1)
 			cvs_log(LP_WARN, "nothing known about %s", fpath);
+		return (0);
+	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
+		if (verbosity > 1)
+			cvs_log(LP_WARN,
+			    "couldn't tag added but un-commited file `%s'",
+			    fpath);
+		return (0);
+	} else if (cf->cf_cvstat == CVS_FST_REMOVED) {
+		if (verbosity > 1)
+			cvs_log(LP_WARN,
+			    "skipping removed but un-commited file `%s'",
+			    fpath);
 		return (0);
 	}
 
