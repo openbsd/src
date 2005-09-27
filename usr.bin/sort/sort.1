@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.21 2003/07/14 12:56:07 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.22 2005/09/27 23:40:07 dlg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nd sort or merge text files
 .Sh SYNOPSIS
 .Nm sort
-.Op Fl cmubdfinrH
+.Op Fl cmubdfinrzH
 .Op Fl t Ar char
 .Op Fl R Ar char
 .Oo
@@ -198,6 +198,8 @@ option replaces the obsolescent options
 .Cm \(pl Ns Ar pos1
 and
 .Fl Ns Ar pos2 .
+.It Fl z
+Uses the nul character as the record separator.
 .El
 .Pp
 The following operands are available:
