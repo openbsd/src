@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.61 2005/04/14 21:58:50 krw Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.62 2005/09/27 12:26:13 grunk Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ extern int uvm_doswapencrypt;
 #define TOCONS		0x01	/* to the console */
 #define TOTTY		0x02	/* to the process' tty */
 #define TOLOG		0x04	/* to the kernel message buffer */
-#define TOBUFONLY	0x08	/* to the buffer (only) [for sprintf] */
+#define TOBUFONLY	0x08	/* to the buffer (only) [for snprintf] */
 #define TODDB		0x10	/* to ddb console */
 #define TOCOUNT		0x20	/* act like [v]snprintf */
 
@@ -484,7 +484,7 @@ db_printf(const char *fmt, ...)
 
 
 /*
- * normal kernel printf functions: printf, vprintf, sprintf
+ * normal kernel printf functions: printf, vprintf, snprintf
  */
 
 /*
