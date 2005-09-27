@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apci.4,v 1.9 2005/04/22 11:59:10 miod Exp $
+.\"	$OpenBSD: apci.4,v 1.10 2005/09/27 22:05:33 miod Exp $
 .\
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd May 10, 2001
+.Dd September 27, 2005
 .Dt APCI 4 hp300
 .Os
 .Sh NAME
@@ -42,8 +42,11 @@
 .Sh SYNOPSIS
 .Cd "apci* at frodo?"
 .Sh DESCRIPTION
-The Apollo utility chip contains four 8250-like UARTs and is found on
-all series 400 machines.
+The
+.Nm
+driver supports the non-keyboard 8250-like UART connected to the
+.Xr frodo 4
+Apollo utility chip.
 The first UART is used to communicate with the Domain keyboard.
 The second is the serial console port when the firmware is in Domain/OS
 mode, and is mapped to select code 9 by the HP-UX firmware (except

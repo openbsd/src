@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.49 2005/08/05 03:36:28 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.50 2005/09/27 22:05:37 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ Lnot370:
 	movl	#0,a1@(MMUCMD)		| clear magic cookie2
 	movl	a1@(MMUCMD),d0		| read it back
 	btst	#16,d0			| still on?
-	jeq	Lstart1			| no, must be a 360
+	jeq	Lisa36x			| no, must be a 360 or a 362
 	RELOC(mmuid, a0)		| save MMU ID
 	lsrl	#MMUID_SHIFT,d0
 	andl	#MMUID_MASK,d0
@@ -273,8 +273,10 @@ Lnot68030:
 	jeq	Lisa433
 	cmpb	#MMUID_433_S,d0		| maybe a 433s?
 	jeq	Lisa433
-	cmpb	#MMUID_385,d0		| last chance...
+	cmpb	#MMUID_385,d0		| then a 385?
 	jeq	Lisa385
+	cmpb	#MMUID_382,d0		| last chance...
+	jeq	Lisa382
 	movl	#HP_380,a0@		| guess we're a 380
 	jra	Lstart1
 Lisa425:
@@ -285,6 +287,9 @@ Lisa433:
 	jra	Lstart1
 Lisa385:
 	movl	#HP_385,a0@
+	jra	Lstart1
+Lisa382:
+	movl	#HP_382,a0@
 	jra	Lstart1
 
 	/*
@@ -320,10 +325,27 @@ Lishpmmu:
 Lis320:
 	RELOC(machineid, a0)
 	movl	#HP_320,a0@
+	jra	Lstart1
 
 	/*
 	 * End of 68020 section
 	 */
+
+Lisa36x:
+#if defined(HP362)
+	/*
+	 * If we found a 360, we need to check for a 362 (neither the 360
+	 * nor the 362 have a nonzero mmuid). Since the 362 has a frodo
+	 * utility chip in the DIO hole, check for it.
+	 */
+	movl	#FRODO_BASE, a0
+	ASRELOC(phys_badaddr, a3)
+	jbsr	a3@
+	tstl	d0			| found a frodo?
+	jne	Lstart1			| no, really a 360 or a 380
+	RELOC(machineid,a0)
+	movl	#HP_362,a0@
+#endif
 
 Lstart1:
 	/*

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.20 2005/01/15 21:13:08 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.21 2005/09/27 22:05:37 miod Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -48,6 +48,7 @@ include <machine/psl.h>
 include <machine/reg.h>
 include <machine/pte.h>
 
+include <hp300/dev/frodoreg.h>
 include <hp300/hp300/clockreg.h>
 
 # values for machineid
@@ -57,9 +58,11 @@ export	HP_340
 export	HP_345
 export	HP_350
 export	HP_360
+export	HP_362
 export	HP_370
 export	HP_375
 export	HP_380
+export	HP_382
 export	HP_385
 export	HP_400
 export	HP_425
@@ -68,6 +71,7 @@ export	HP_433
 # values for mmuid
 export	MMUID_345
 export	MMUID_375
+export	MMUID_382
 export	MMUID_385
 export	MMUID_425_T
 export	MMUID_425_S
@@ -163,3 +167,6 @@ export	SYS_execve
 export	CLKSR
 export	CLKMSB1
 export	CLKMSB3
+
+# frodo physical address
+export	FRODO_BASE

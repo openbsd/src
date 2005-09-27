@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp300spu.h,v 1.6 2003/02/11 19:20:26 mickey Exp $	*/
+/*	$OpenBSD: hp300spu.h,v 1.7 2005/09/27 22:05:37 miod Exp $	*/
 /*	$NetBSD: hp300spu.h,v 1.2 1997/05/01 05:26:48 thorpej Exp $	*/
 
 /*-
@@ -59,10 +59,13 @@
 #define	HP_425		10	/* 25MHz 68040 */
 #define HP_433		11	/* 33MHz 68040 */
 #define	HP_385		12	/* 33MHz 68040 */
+#define	HP_362		13	/* 25MHz 68030 */
+#define	HP_382		14	/* 25MHz 68040 */
 
 /* values for mmuid - used to differentiate similar CPU/cache combos */
 #define	MMUID_345	1	/* 345 */
 #define	MMUID_375	3	/* 375 */
+#define	MMUID_382	11	/* 382 */
 #define	MMUID_385	2	/* 385 */
 #define	MMUID_425_T	5	/* 425t - 25MHz Trailways */
 #define	MMUID_425_S	7	/* 425s - 25MHz Strider */
@@ -70,7 +73,7 @@
 #define	MMUID_433_S	6	/* 433s - 33MHz Strider */
 #define MMUID_425_E	9	/* 425e - 25MHz Woody */
 
-#define	MMUID_SHIFT	8	/* left shift by this... */
+#define	MMUID_SHIFT	8	/* right shift by this... */
 #define	MMUID_MASK	0xff	/* ...and mask with this to get mmuid */
 
 #if defined (_KERNEL) && !defined(_LOCORE)

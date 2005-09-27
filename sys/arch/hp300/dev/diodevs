@@ -1,4 +1,4 @@
-$OpenBSD: diodevs,v 1.6 2005/01/15 21:45:23 miod Exp $
+$OpenBSD: diodevs,v 1.7 2005/09/27 22:05:36 miod Exp $
 /* $NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp $ */
 
 /*-
@@ -76,6 +76,7 @@ framebuffer HRMCATSEYE	0x07	1	high-res mono catseye display
 framebuffer DAVINCI	0x08	2	98730/98731 (\"davinci\") display
 framebuffer XXXCATSEYE	0x09	1	catseye display
 framebuffer HYPERION	0x0e	1	A1096A (\"hyperion\") display
+framebuffer FB3x2	0x11	4	362/382 internal display
 
 /* Unsupported framebuffers. */
 

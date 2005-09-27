@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.102 2005/09/27 21:50:36 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.103 2005/09/27 22:05:37 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -516,7 +516,9 @@ const char *hp300_models[] = {
 	"380",		/* HP_380 */
 	"425",		/* HP_425 */
 	"433",		/* HP_433 */
-	"385"		/* HP_385 */
+	"385",		/* HP_385 */
+	"362",		/* HP_362 */
+	"382",		/* HP_382 */
 };
 
 /* Map mmuid to single letter designation in 4xx models (e.g. 425s, 425t) */
@@ -668,6 +670,9 @@ identifycpu()
 #if !defined(HP360)
 	case HP_360:
 #endif
+#if !defined(HP362)
+	case HP_362:
+#endif
 #if !defined(HP370)
 	case HP_370:
 #endif
@@ -676,6 +681,9 @@ identifycpu()
 #endif
 #if !defined(HP380)
 	case HP_380:
+#endif
+#if !defined(HP382)
+	case HP_382:
 #endif
 #if !defined(HP385)
 	case HP_385:

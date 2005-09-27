@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 2005/08/03 02:10:43 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.43 2005/09/27 22:05:36 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -20,9 +20,11 @@ option		HP340
 option		HP345
 option		HP350
 option		HP360
+option		HP362
 option		HP370
 option		HP375
 option		HP380
+option		HP382
 option		HP385
 option		HP400
 option		HP425
@@ -60,7 +62,7 @@ hilms*		at hil?		# mice, buttons and tablets
 wsmouse*	at hilms? mux 0
 hilid*		at hil?		# ID module
 
-# Frodo utility chip found on 4xx's
+# Frodo utility chip found on 362, 382 and 4xx's
 frodo0		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
