@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.20 2005/04/07 19:04:00 ian Exp $
+#	$OpenBSD: Makefile.macppc,v 1.21 2005/09/27 23:15:25 kettenis Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -46,7 +46,7 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-D_LOCORE
+AFLAGS=		-D_LOCORE -Wa,-mppc64bridge
 LINKFLAGS=	-N -Ttext 100114 -e start --warn-common
 STRIPFLAGS=	-g -X -x
 
