@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.13 2005/06/17 19:25:39 marco Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.14 2005/09/27 17:37:30 marco Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -110,7 +110,7 @@ extern paddr_t avail_end;
 extern struct extent *iomem_ex;
 
 int amdgarts;
-int amdgart_enable = 0;
+int amdgart_enable = 1;
 
 struct amdgart_softc {
 	pci_chipset_tag_t g_pc;
@@ -218,7 +218,7 @@ amdgart_dumpregs(void)
 		    amdgart_softcs[n].g_tag, GART_APBASE));
 		printf(" tblbase %x\n", pci_conf_read(amdgart_softcs[n].g_pc,
 		    amdgart_softcs[n].g_tag, GART_TBLBASE));
-		printf("cachectl %x\n", pci_conf_read(amdgart_softcs[n].g_pc,
+		printf(" cachectl %x\n", pci_conf_read(amdgart_softcs[n].g_pc,
 		    amdgart_softcs[n].g_tag, GART_CACHECTRL));
 
 		p = amdgart_softcs[n].g_scrib;
@@ -226,7 +226,7 @@ amdgart_dumpregs(void)
 		for (i = 0; i < PAGE_SIZE; i++, p++)
 			if (*p != '\0')
 				dirty++;
-		printf("scribble: %s\n", dirty ? "dirty" : "clean");
+		printf(" scribble: %s\n", dirty ? "dirty" : "clean");
 	}
 }
 
