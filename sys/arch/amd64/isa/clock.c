@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 2004/06/28 01:52:26 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 2005/09/27 21:10:47 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -743,7 +743,9 @@ inittodr(base)
 		}
 	}
 
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
+	time.tv_sec = clock_ymdhms_to_secs(&dt) + tz.tz_minuteswest * 60;
+	if (tz.tz_dsttime)
+		time.tv_sec -= 3600;
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
@@ -779,8 +781,7 @@ resettodr()
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
-	int century;
-	int s;
+	int century, diff, s;
 
 	/*
 	 * We might have been called by boot() due to a crash early
@@ -794,7 +795,10 @@ resettodr()
 		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
+	diff = tz.tz_minuteswest * 60;
+	if (tz.tz_dsttime)
+		diff -= 3600;
+	clock_secs_to_ymdhms(time.tv_sec - diff, &dt);
 
 	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
 	rtclk[MC_MIN] = bintobcd(dt.dt_min);
