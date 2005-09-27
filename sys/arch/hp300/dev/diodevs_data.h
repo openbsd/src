@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: diodevs,v 1.6 2005/01/15 21:45:23 miod Exp 
+ *	OpenBSD: diodevs,v 1.7 2005/09/27 22:05:36 miod Exp 
  */
 /* $NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp $ */
 
@@ -42,7 +42,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define DIO_NDEVICES	47
+#define DIO_NDEVICES	48
 
 struct dio_devdata dio_devdatas[] = {
 	{ 0x02,	0,	1 },
@@ -70,6 +70,7 @@ struct dio_devdata dio_devdatas[] = {
 	{ 0x39,	0x08,	2 },
 	{ 0x39,	0x09,	1 },
 	{ 0x39,	0x0e,	1 },
+	{ 0x39,	0x11,	4 },
 	{ 0x39,	0x0b,	1 },
 	{ 0x39,	0x0c,	3 },
 	{ 0x39,	0x0d,	1 },
@@ -121,6 +122,7 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x39,	0x08,	DIO_DEVICE_DESC_DAVINCI },
 	{ 0x39,	0x09,	DIO_DEVICE_DESC_XXXCATSEYE },
 	{ 0x39,	0x0e,	DIO_DEVICE_DESC_HYPERION },
+	{ 0x39,	0x11,	DIO_DEVICE_DESC_FB3x2 },
 	{ 0x39,	0x0b,	DIO_DEVICE_DESC_XGENESIS },
 	{ 0x39,	0x0c,	DIO_DEVICE_DESC_TIGERSHARK },
 	{ 0x39,	0x0d,	DIO_DEVICE_DESC_YGENESIS },
