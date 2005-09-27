@@ -1,4 +1,4 @@
-.\"     $OpenBSD: txp.4,v 1.16 2005/08/23 18:15:59 jmc Exp $
+.\"     $OpenBSD: txp.4,v 1.17 2005/09/27 23:50:06 brad Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -77,17 +77,6 @@ Note that hardware checksumming is only used when the interface is not
 in
 .Xr bridge 4
 mode.
-.Pp
-Each of the host's network addresses
-is specified at boot time with an
-.Dv SIOCSIFADDR
-.Xr ioctl 2 .
-The
-.Nm
-interface employs the address resolution protocol described in
-.Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
 .Pp
 When a
 .Nm

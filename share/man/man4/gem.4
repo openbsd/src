@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gem.4,v 1.11 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: gem.4,v 1.12 2005/09/27 23:50:06 brad Exp $
 .\"
 .\" Copyright (c) 2001 Miodrag Vallat.
 .\" All rights reserved.
@@ -48,17 +48,6 @@ GEM and ERI 10/100 boards, as well as the
 .Tn Apple
 internal GMAC Ethernet.
 .Pp
-Each of the host's network addresses
-is specified at boot time with an
-.Dv SIOCSIFADDR
-.Xr ioctl 2 .
-The
-.Nm
-interface employs the address resolution protocol described in
-.Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
-.Pp
 When a
 .Nm
 interface is brought up, by default, it will attempt to auto-negotiate the
@@ -77,7 +66,7 @@ The supported media types are:
 Attempt to autoselect the media type (default)
 .\" Check and correct the gigabit modes. Are both copper and fiber supported?
 .\" And in both duplex modes as well?
-.It media 1000baseT  mediaopt full-duplex
+.It media 1000baseT mediaopt full-duplex
 Use 1000baseT on copper, full duplex
 .It media 1000baseT Op mediaopt half-duplex
 Use 1000baseT on copper, half duplex
