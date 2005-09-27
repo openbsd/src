@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autest.1,v 1.6 2003/06/02 19:15:38 jason Exp $
+.\"	$OpenBSD: autest.1,v 1.7 2005/09/27 02:53:43 drahn Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -33,6 +33,7 @@
 .Sh SYNOPSIS
 .Nm autest
 .Op Fl f Ar device
+.Op Fl r Ar rate
 .Sh DESCRIPTION
 The
 .Nm
@@ -47,17 +48,24 @@ if not specified,
 and iterates through all of the encodings supported by the device playing
 a 440Hz tone in the proper format.
 The tone should sound almost identical in each of the formats.
+The
+.Fl r
+rate
+can be used to specify the audio rate to test, It will request the
+audio subsystem to play that Hz, however the audio device may return
+a different speed. This can be useful to test different speeds, eg 8000,
+44100, 48000.
 .Pp
 .Nm
 can produce tones in any of the following formats and will skip other
 formats if supported by the device:
 .Bl -tag -width XXXXXXXXXX
 .It Cm mu-law
-8bit mu-law companded
+8 bit mu-law companded
 .It Cm A-law
-8bit A-law companded
-.It Cm adpcm
-4 bit adaptive differential pulse code modulation
+8 bit A-law companded
+.\" .It Cm adpcm
+.\" 4 bit adaptive differential pulse code modulation
 .It Cm ulinear
 8 bit unsigned linear
 .It Cm ulinear_le
@@ -71,7 +79,55 @@ formats if supported by the device:
 .It Cm slinear_be
 16 bit signed linear big endian (twos complement)
 .El
+.Sh OUTPUT
+Interpreting the output of
+.Nm
+is a little tricky.
+The output below is from an
+.Xr auich 4 .
+.Bd -literal
+ulinear:8...mono(s 44100 c 45167 e 2.4%)...stereo(s 44100 c 45162 e 2.4%)
+mulaw:8*...mono(s 44100 c 45166 e 2.4%)...stereo(s 44100 c 45157 e 2.3%)
+alaw:8*...mono[Invalid argument]...stereo[Invalid argument]
+slinear:8*...mono(s 44100 c 45171 e 2.4%)...stereo(s 44100 c 45170 e 2.4%)
+slinear_le:16...mono(s 44100 c 45171 e 2.4%)...stereo(s 44100 c 45170 e 2.4%)
+ulinear_le:16*...mono(s 44100 c 45167 e 2.4%)...stereo(s 44100 c 45168 e 2.4%)
+slinear_be:16*...mono(s 44100 c 45169 e 2.4%)...stereo(s 44100 c 45167 e 2.4%)
+ulinear_be:16*...mono(s 44100 c 45167 e 2.4%)...stereo(s 44100 c 45160 e 2.3%)
+.Ed
+.Pp
+.Nm
+loops through each mode claimed to be supported by the chip (emulated or not).
+For each emulated mode, an asterisk is appended to the mode name.
+If the tone sounds different from all the other tones for the device,
+it is likely that either the emulation is wrong, or the mode is not
+set on the device correctly.
+.Pp
+Also, for the mono and stereo versions of each mode,
+.Nm
+prints the claimed sample rate,
+.So s Bo rate Bc Sc ,
+computed sample rate,
+.So c Bo rate Bc Sc ,
+and the percent error between them,
+.So e Bo percent Bc Sc .
+If the percent error is high (greater than 10 percent or so),
+either the sample rate is not being correctly returned by
+the device, or it is not being set correctly on the device.
+.Pp
+Interestingly, when
+.Nm
+requests
+.Sq alaw
+encoding, the device driver returns
+.So Invalid argument Sc .
+This indicates that the device includes
+.Sq alaw
+in its mode enumeration, but does not support it for playback.
+This is very likely a bug in the driver.
 .Sh SEE ALSO
 .Xr audio 4
 .Sh BUGS
-The ADPCM encoding sounds very noisy on CS4231 (it's probably incorrect).
+There is partial support for ADPCM, adaptive differential pulse code
+modulation, but it is not enabled by default
+since it does not appear to be correct.

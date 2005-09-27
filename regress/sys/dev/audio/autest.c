@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.10 2003/08/06 16:15:44 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.11 2005/09/27 02:53:43 drahn Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -44,18 +44,31 @@
 #include "adpcm.h"
 #include "law.h"
 
+struct ausrate {
+	struct timeval	tv_begin;
+	struct timeval	tv_end;
+	u_int		r_rate;		/* requested rate */
+	u_int		s_rate;		/* rate from audio layer */
+	u_int		c_rate;		/* computed rate */
+	int		bps;		/* bytes per sample */
+	int		bytes;		/* number of bytes played */
+	float		err;
+};
+
 int main(int, char **);
-void check_encoding(int, audio_encoding_t *);
-void check_encoding_mono(int, audio_encoding_t *);
-void check_encoding_stereo(int, audio_encoding_t *);
-void enc_ulaw_8(int, audio_encoding_t *, int);
-void enc_alaw_8(int, audio_encoding_t *, int);
-void enc_ulinear_8(int, audio_encoding_t *, int);
-void enc_ulinear_16(int, audio_encoding_t *, int, int);
-void enc_slinear_8(int, audio_encoding_t *, int);
-void enc_slinear_16(int, audio_encoding_t *, int, int);
-void enc_adpcm_8(int, audio_encoding_t *, int);
+void check_encoding(int, audio_encoding_t *, int);
+void check_encoding_mono(int, audio_encoding_t *, int);
+void check_encoding_stereo(int, audio_encoding_t *, int);
+void enc_ulaw_8(int, audio_encoding_t *, int, int);
+void enc_alaw_8(int, audio_encoding_t *, int, int);
+void enc_ulinear_8(int, audio_encoding_t *, int, int);
+void enc_ulinear_16(int, audio_encoding_t *, int, int, int);
+void enc_slinear_8(int, audio_encoding_t *, int, int);
+void enc_slinear_16(int, audio_encoding_t *, int, int, int);
+void enc_adpcm_8(int, audio_encoding_t *, int, int);
 void audio_wait(int);
+void check_srate(struct ausrate *);
+void mark_time(struct timeval *);
 
 #define	PLAYFREQ	440.0
 #define	PLAYSECS	2
@@ -68,11 +81,15 @@ main(int argc, char **argv)
 	audio_info_t ainfo;
 	char *fname = NULL;
 	int fd, i, c;
+	int rate = 8000;
 
-	while ((c = getopt(argc, argv, "f:")) != -1) {
+	while ((c = getopt(argc, argv, "f:r:")) != -1) {
 		switch (c) {
 		case 'f':
 			fname = optarg;
+			break;
+		case 'r':
+			rate = atoi(optarg);
 			break;
 		case '?':
 		default:
@@ -98,7 +115,7 @@ main(int argc, char **argv)
 		enc.index = i;
 		if (ioctl(fd, AUDIO_GETENC, &enc) == -1)
 			break;
-		check_encoding(fd, &enc);
+		check_encoding(fd, &enc, rate);
 	}
 	close(fd);
 
@@ -106,20 +123,46 @@ main(int argc, char **argv)
 }
 
 void
-check_encoding(int fd, audio_encoding_t *enc)
+check_srate(struct ausrate *rt)
+{
+	struct timeval t;
+	float tm, b, r, err;
+
+	timersub(&rt->tv_end, &rt->tv_begin, &t);
+	tm = (float)t.tv_sec + ((float)t.tv_usec / 1000000.0);
+	b = (float)rt->bytes / (float)rt->bps;
+	r = b / tm;
+
+	err = fabs((float)rt->s_rate - r);
+	err /= r * 0.01;
+	rt->err = err;
+	rt->c_rate = rintf(r);
+	printf("(s %u c %u e %3.1f%%)",
+	    rt->s_rate, rt->c_rate, rt->err);
+}
+
+void
+check_encoding(int fd, audio_encoding_t *enc, int rate)
 {
 	printf("%s:%d%s",
 	    enc->name,
 	    enc->precision,
 	    (enc->flags & AUDIO_ENCODINGFLAG_EMULATED) ? "*" : "");
 	fflush(stdout);
-	check_encoding_mono(fd, enc);
-	check_encoding_stereo(fd, enc);
+	check_encoding_mono(fd, enc, rate);
+	check_encoding_stereo(fd, enc, rate);
 	printf("\n");
 }
 
 void
-check_encoding_mono(int fd, audio_encoding_t *enc)
+mark_time(struct timeval *tv)
+{
+	if (gettimeofday(tv, NULL) == -1)
+		err(1, "gettimeofday");
+}
+
+void
+check_encoding_mono(int fd, audio_encoding_t *enc, int rate)
 {
 	int skipped = 0;
 
@@ -129,23 +172,23 @@ check_encoding_mono(int fd, audio_encoding_t *enc)
 	if (enc->precision == 8) {
 		switch (enc->encoding) {
 		case AUDIO_ENCODING_ULAW:
-			enc_ulaw_8(fd, enc, 1);
+			enc_ulaw_8(fd, enc, 1, rate);
 			break;
 		case AUDIO_ENCODING_ALAW:
-			enc_alaw_8(fd, enc, 1);
+			enc_alaw_8(fd, enc, 1, rate);
 			break;
 		case AUDIO_ENCODING_ULINEAR:
 		case AUDIO_ENCODING_ULINEAR_LE:
 		case AUDIO_ENCODING_ULINEAR_BE:
-			enc_ulinear_8(fd, enc, 1);
+			enc_ulinear_8(fd, enc, 1, rate);
 			break;
 		case AUDIO_ENCODING_SLINEAR:
 		case AUDIO_ENCODING_SLINEAR_LE:
 		case AUDIO_ENCODING_SLINEAR_BE:
-			enc_slinear_8(fd, enc, 1);
+			enc_slinear_8(fd, enc, 1, rate);
 			break;
 		case AUDIO_ENCODING_ADPCM:
-			enc_adpcm_8(fd, enc, 1);
+			enc_adpcm_8(fd, enc, 1, rate);
 			break;
 		default:
 			skipped = 1;
@@ -155,16 +198,16 @@ check_encoding_mono(int fd, audio_encoding_t *enc)
 	if (enc->precision == 16) {
 		switch (enc->encoding) {
 		case AUDIO_ENCODING_ULINEAR_LE:
-			enc_ulinear_16(fd, enc, 1, LITTLE_ENDIAN);
+			enc_ulinear_16(fd, enc, 1, LITTLE_ENDIAN, rate);
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			enc_ulinear_16(fd, enc, 1, BIG_ENDIAN);
+			enc_ulinear_16(fd, enc, 1, BIG_ENDIAN, rate);
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			enc_slinear_16(fd, enc, 1, LITTLE_ENDIAN);
+			enc_slinear_16(fd, enc, 1, LITTLE_ENDIAN, rate);
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			enc_slinear_16(fd, enc, 1, BIG_ENDIAN);
+			enc_slinear_16(fd, enc, 1, BIG_ENDIAN, rate);
 			break;
 		default:
 			skipped = 1;
@@ -176,7 +219,7 @@ check_encoding_mono(int fd, audio_encoding_t *enc)
 }
 
 void
-check_encoding_stereo(int fd, audio_encoding_t *enc)
+check_encoding_stereo(int fd, audio_encoding_t *enc, int rate)
 {
 	int skipped = 0;
 
@@ -186,23 +229,23 @@ check_encoding_stereo(int fd, audio_encoding_t *enc)
 	if (enc->precision == 8) {
 		switch (enc->encoding) {
 		case AUDIO_ENCODING_ULAW:
-			enc_ulaw_8(fd, enc, 2);
+			enc_ulaw_8(fd, enc, 2, rate);
 			break;
 		case AUDIO_ENCODING_ALAW:
-			enc_alaw_8(fd, enc, 2);
+			enc_alaw_8(fd, enc, 2, rate);
 			break;
 		case AUDIO_ENCODING_ULINEAR:
 		case AUDIO_ENCODING_ULINEAR_LE:
 		case AUDIO_ENCODING_ULINEAR_BE:
-			enc_ulinear_8(fd, enc, 2);
+			enc_ulinear_8(fd, enc, 2, rate);
 			break;
 		case AUDIO_ENCODING_SLINEAR:
 		case AUDIO_ENCODING_SLINEAR_LE:
 		case AUDIO_ENCODING_SLINEAR_BE:
-			enc_slinear_8(fd, enc, 2);
+			enc_slinear_8(fd, enc, 2, rate);
 			break;
 		case AUDIO_ENCODING_ADPCM:
-			enc_adpcm_8(fd, enc, 2);
+			enc_adpcm_8(fd, enc, 2, rate);
 			break;
 		default:
 			skipped = 1;
@@ -212,16 +255,16 @@ check_encoding_stereo(int fd, audio_encoding_t *enc)
 	if (enc->precision == 16) {
 		switch (enc->encoding) {
 		case AUDIO_ENCODING_ULINEAR_LE:
-			enc_ulinear_16(fd, enc, 2, LITTLE_ENDIAN);
+			enc_ulinear_16(fd, enc, 2, LITTLE_ENDIAN, rate);
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			enc_ulinear_16(fd, enc, 2, BIG_ENDIAN);
+			enc_ulinear_16(fd, enc, 2, BIG_ENDIAN, rate);
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			enc_slinear_16(fd, enc, 2, LITTLE_ENDIAN);
+			enc_slinear_16(fd, enc, 2, LITTLE_ENDIAN, rate);
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			enc_slinear_16(fd, enc, 2, BIG_ENDIAN);
+			enc_slinear_16(fd, enc, 2, BIG_ENDIAN, rate);
 			break;
 		default:
 			skipped = 1;
@@ -233,9 +276,10 @@ check_encoding_stereo(int fd, audio_encoding_t *enc)
 }
 
 void
-enc_ulinear_8(int fd, audio_encoding_t *enc, int chans)
+enc_ulinear_8(int fd, audio_encoding_t *enc, int chans, int rate)
 {
 	audio_info_t inf;
+	struct ausrate rt;
 	u_int8_t *samples = NULL, *p;
 	int i, j;
 
@@ -243,6 +287,7 @@ enc_ulinear_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.precision = enc->precision;
 	inf.play.encoding = enc->encoding;
 	inf.play.channels = chans;
+	inf.play.sample_rate = rate;; 
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
 		printf("[%s]", strerror(errno));
@@ -253,6 +298,10 @@ enc_ulinear_8(int fd, audio_encoding_t *enc, int chans)
 		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
+	rt.r_rate = inf.play.sample_rate;
+	rt.s_rate = inf.play.sample_rate;
+	rt.bps = 1 * chans;
+	rt.bytes = inf.play.sample_rate * chans * PLAYSECS;
 
 	samples = (u_int8_t *)malloc(inf.play.sample_rate * chans);
 	if (samples == NULL) {
@@ -275,9 +324,12 @@ enc_ulinear_8(int fd, audio_encoding_t *enc, int chans)
 		}
 	}
 
+	mark_time(&rt.tv_begin);
 	for (i = 0; i < PLAYSECS; i++)
 		write(fd, samples, inf.play.sample_rate * chans);
 	audio_wait(fd);
+	mark_time(&rt.tv_end);
+	check_srate(&rt);
 
 out:
 	if (samples != NULL)
@@ -285,9 +337,10 @@ out:
 }
 
 void
-enc_slinear_8(int fd, audio_encoding_t *enc, int chans)
+enc_slinear_8(int fd, audio_encoding_t *enc, int chans, int rate)
 {
 	audio_info_t inf;
+	struct ausrate rt;
 	int8_t *samples = NULL, *p;
 	int i, j;
 
@@ -295,6 +348,7 @@ enc_slinear_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.precision = enc->precision;
 	inf.play.encoding = enc->encoding;
 	inf.play.channels = chans;
+	inf.play.sample_rate = rate;; 
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
 		printf("[%s]", strerror(errno));
@@ -305,6 +359,10 @@ enc_slinear_8(int fd, audio_encoding_t *enc, int chans)
 		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
+	rt.r_rate = inf.play.sample_rate;
+	rt.s_rate = inf.play.sample_rate;
+	rt.bps = 1 * chans;
+	rt.bytes = inf.play.sample_rate * chans * PLAYSECS;
 
 	samples = (int8_t *)malloc(inf.play.sample_rate * chans);
 	if (samples == NULL) {
@@ -327,9 +385,12 @@ enc_slinear_8(int fd, audio_encoding_t *enc, int chans)
 		}
 	}
 
+	mark_time(&rt.tv_begin);
 	for (i = 0; i < PLAYSECS; i++)
 		write(fd, samples, inf.play.sample_rate * chans);
 	audio_wait(fd);
+	mark_time(&rt.tv_end);
+	check_srate(&rt);
 
 out:
 	if (samples != NULL)
@@ -337,9 +398,10 @@ out:
 }
 
 void
-enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order)
+enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order, int rate)
 {
 	audio_info_t inf;
+	struct ausrate rt;
 	u_int8_t *samples = NULL, *p;
 	int i, j;
 
@@ -347,6 +409,7 @@ enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 	inf.play.precision = enc->precision;
 	inf.play.encoding = enc->encoding;
 	inf.play.channels = chans;
+	inf.play.sample_rate = rate;; 
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
 		printf("[%s]", strerror(errno));
@@ -357,6 +420,10 @@ enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
+	rt.r_rate = inf.play.sample_rate;
+	rt.s_rate = inf.play.sample_rate;
+	rt.bps = 2 * chans;
+	rt.bytes = 2 * inf.play.sample_rate * chans * PLAYSECS;
 
 	samples = (int8_t *)malloc(inf.play.sample_rate * chans * 2);
 	if (samples == NULL) {
@@ -388,9 +455,12 @@ enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 		}
 	}
 
+	mark_time(&rt.tv_begin);
 	for (i = 0; i < PLAYSECS; i++)
 		write(fd, samples, inf.play.sample_rate * chans * 2);
 	audio_wait(fd);
+	mark_time(&rt.tv_end);
+	check_srate(&rt);
 
 out:
 	if (samples != NULL)
@@ -398,9 +468,10 @@ out:
 }
 
 void
-enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order)
+enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order, int rate)
 {
 	audio_info_t inf;
+	struct ausrate rt;
 	u_int8_t *samples = NULL, *p;
 	int i, j;
 
@@ -408,6 +479,7 @@ enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 	inf.play.precision = enc->precision;
 	inf.play.encoding = enc->encoding;
 	inf.play.channels = chans;
+	inf.play.sample_rate = rate;; 
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
 		printf("[%s]", strerror(errno));
@@ -424,6 +496,10 @@ enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 		warn("malloc");
 		goto out;
 	}
+	rt.r_rate = inf.play.sample_rate;
+	rt.s_rate = inf.play.sample_rate;
+	rt.bps = 2 * chans;
+	rt.bytes = 2 * inf.play.sample_rate * chans * PLAYSECS;
 
 	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
 		float d;
@@ -449,9 +525,12 @@ enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 		}
 	}
 
+	mark_time(&rt.tv_begin);
 	for (i = 0; i < PLAYSECS; i++)
 		write(fd, samples, inf.play.sample_rate * chans * 2);
 	audio_wait(fd);
+	mark_time(&rt.tv_end);
+	check_srate(&rt);
 
 out:
 	if (samples != NULL)
@@ -459,7 +538,7 @@ out:
 }
 
 void
-enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
+enc_adpcm_8(int fd, audio_encoding_t *enc, int chans, int rate)
 {
 	audio_info_t inf;
 	struct adpcm_state adsts;
@@ -471,6 +550,7 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.precision = enc->precision;
 	inf.play.encoding = enc->encoding;
 	inf.play.channels = chans;
+	inf.play.sample_rate = rate;; 
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
 		printf("[%s]", strerror(errno));
@@ -533,17 +613,19 @@ out:
 }
 
 void
-enc_ulaw_8(int fd, audio_encoding_t *enc, int chans)
+enc_ulaw_8(int fd, audio_encoding_t *enc, int chans, int rate)
 {
 	audio_info_t inf;
 	int16_t *samples = NULL;
 	int i, j;
 	u_int8_t *outbuf = NULL, *p;
+	struct ausrate rt;
 
 	AUDIO_INITINFO(&inf);
 	inf.play.precision = enc->precision;
 	inf.play.encoding = enc->encoding;
 	inf.play.channels = chans;
+	inf.play.sample_rate = rate;; 
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
 		printf("[%s]", strerror(errno));
@@ -554,6 +636,10 @@ enc_ulaw_8(int fd, audio_encoding_t *enc, int chans)
 		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
+	rt.r_rate = inf.play.sample_rate;
+	rt.s_rate = inf.play.sample_rate;
+	rt.bps = 1 * chans;
+	rt.bytes = inf.play.sample_rate * chans * PLAYSECS;
 
 	samples = (int16_t *)calloc(inf.play.sample_rate, sizeof(*samples));
 	if (samples == NULL) {
@@ -582,10 +668,13 @@ enc_ulaw_8(int fd, audio_encoding_t *enc, int chans)
 		}
 	}
 
+	mark_time(&rt.tv_begin);
 	for (i = 0; i < PLAYSECS; i++) {
 		write(fd, outbuf, inf.play.sample_rate * chans);
 	}
 	audio_wait(fd);
+	mark_time(&rt.tv_end);
+	check_srate(&rt);
 
 out:
 	if (samples != NULL)
@@ -595,7 +684,7 @@ out:
 }
 
 void
-enc_alaw_8(int fd, audio_encoding_t *enc, int chans)
+enc_alaw_8(int fd, audio_encoding_t *enc, int chans, int rate)
 {
 	audio_info_t inf;
 	int16_t *samples = NULL;
@@ -606,6 +695,7 @@ enc_alaw_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.precision = enc->precision;
 	inf.play.encoding = enc->encoding;
 	inf.play.channels = chans;
+	inf.play.sample_rate = rate;; 
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
 		printf("[%s]", strerror(errno));
