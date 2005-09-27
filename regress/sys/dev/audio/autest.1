@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autest.1,v 1.7 2005/09/27 02:53:43 drahn Exp $
+.\"	$OpenBSD: autest.1,v 1.8 2005/09/27 18:11:02 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -37,54 +37,60 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility opens the
+utility opens an
 .Xr audio 4
-device specified with the
-.Fl f
-flag
-or
-.Pa /dev/sound
-if not specified,
-and iterates through all of the encodings supported by the device playing
-a 440Hz tone in the proper format.
+device and iterates through all of the encodings supported by the device,
+playing a 440Hz tone in the proper format.
 The tone should sound almost identical in each of the formats.
-The
-.Fl r
-rate
-can be used to specify the audio rate to test, It will request the
-audio subsystem to play that Hz, however the audio device may return
-a different speed. This can be useful to test different speeds, eg 8000,
-44100, 48000.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f Ar device
+Specify the audio
+.Ar device
+to open.
+If no device is specified,
+.Pa /dev/sound
+is used.
+.It Fl r Ar rate
+Specify the audio
+.Ar rate
+to test.
+It will request the audio subsystem to play that Hz;
+however the audio device may return a different speed.
+This can be useful to test different speeds, e.g. 8000, 44100, 48000.
+.El
 .Pp
 .Nm
 can produce tones in any of the following formats and will skip other
 formats if supported by the device:
-.Bl -tag -width XXXXXXXXXX
+.Pp
+.Bl -tag -width "ulinear_leXX" -offset indent -compact
 .It Cm mu-law
-8 bit mu-law companded
+8-bit mu-law companded
 .It Cm A-law
-8 bit A-law companded
+8-bit A-law companded
 .\" .It Cm adpcm
 .\" 4 bit adaptive differential pulse code modulation
 .It Cm ulinear
-8 bit unsigned linear
+8-bit unsigned linear
 .It Cm ulinear_le
-16 bit unsigned linear little endian
+16-bit unsigned linear little endian
 .It Cm ulinear_be
-16 bit unsigned linear big endian
+16-bit unsigned linear big endian
 .It Cm slinear
-8 bit signed linear (twos complement)
+8-bit signed linear (twos complement)
 .It Cm slinear_le
-16 bit signed linear little endian (twos complement)
+16-bit signed linear little endian (twos complement)
 .It Cm slinear_be
-16 bit signed linear big endian (twos complement)
+16-bit signed linear big endian (twos complement)
 .El
 .Sh OUTPUT
 Interpreting the output of
 .Nm
 is a little tricky.
 The output below is from an
-.Xr auich 4 .
+.Xr auich 4 :
 .Bd -literal
 ulinear:8...mono(s 44100 c 45167 e 2.4%)...stereo(s 44100 c 45162 e 2.4%)
 mulaw:8*...mono(s 44100 c 45166 e 2.4%)...stereo(s 44100 c 45157 e 2.3%)
@@ -128,6 +134,7 @@ This is very likely a bug in the driver.
 .Sh SEE ALSO
 .Xr audio 4
 .Sh BUGS
-There is partial support for ADPCM, adaptive differential pulse code
-modulation, but it is not enabled by default
+There is partial support for adaptive differential pulse code modulation
+(ADPCM)
+but it is not enabled by default
 since it does not appear to be correct.
