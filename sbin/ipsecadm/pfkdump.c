@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.16 2005/05/25 05:51:13 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.17 2005/09/27 11:53:42 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -652,8 +652,10 @@ ipsecadm_show(u_int8_t satype)
 	 * Dump the SADB using sysctl(3), but fall back to the pfkey
 	 * socket if sysctl fails.
 	 */
-	if (sysctl(mib, 5, NULL, &need, NULL, 0) == -1)
+	if (sysctl(mib, 5, NULL, &need, NULL, 0) == -1) {
 		do_pfkey(0, satype);
+		return;
+	}
 	if (need == 0)
 		return;
 	if ((buf = malloc(need)) == NULL)
