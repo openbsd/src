@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.15 2005/02/06 19:51:35 martin Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.16 2005/09/27 07:15:19 martin Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -179,7 +179,7 @@ extern int VIA2;
 #define RBVMonitorMask	0x38	/* Type numbers */
 #define RBVOff		0x40	/* Monitor turned off */
 #define RBVMonIDBWP	0x08	/* 15 inch BW portrait */
-#define RBVMonIDRGB	0x10	/* 12 inch colorr */
+#define RBVMonIDRGB12	0x10	/* 12 inch color */
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
 #define RBVMonIDStd	0x30	/* 12 inch BW or 13 inch color */
 #define RBVMonIDNone	0x38	/* No monitor connected */

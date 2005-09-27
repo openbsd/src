@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.29 2005/09/26 15:44:05 martin Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.30 2005/09/27 07:15:19 martin Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -182,6 +182,12 @@ grfiv_match(parent, vcf, aux)
 
 		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
 		break;
+	case MACH_CLASSIIci:
+	case MACH_CLASSIIsi:
+		if (mac68k_vidlen == 0 ||
+		    (via2_reg(rMonitor) & RBVMonitorMask) == RBVMonIDNone)
+			found = 0;
+		break;
 	default:
 		if (mac68k_vidlen == 0)
 			found = 0;
@@ -282,6 +288,39 @@ grfiv_attach(parent, self, aux)
 		printf(" @ %lx", sc->sc_basepa + sc->sc_fbofs);
 #endif
 		printf(": Civic\n");
+		break;
+	case MACH_CLASSIIci:
+	case MACH_CLASSIIsi:
+		sc->sc_basepa = trunc_page(mac68k_vidphys);
+		sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
+		length = mac68k_vidlen + sc->sc_fbofs;
+
+#ifdef DEBUG
+		printf(" @ %lx", sc->sc_basepa + sc->sc_fbofs);
+#endif
+		printf(": RBV");
+#ifdef DEBUG
+		switch (via2_reg(rMonitor) & RBVMonitorMask) {
+		case RBVMonIDBWP:
+			printf(": 15\" monochrome portrait");
+			break;
+		case RBVMonIDRGB12:
+			printf(": 12\" color");
+			break;
+		case RBVMonIDRGB15:
+			printf(": 15\" color");
+			break;
+		case RBVMonIDStd:
+			printf(": Macintosh II");
+			break;
+		default:
+			printf(": unrecognized");
+			break;
+		}
+		printf(" display");
+#endif
+		printf("\n");
+
 		break;
 	default:
 		sc->sc_basepa = trunc_page(mac68k_vidphys);
