@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.42 2005/02/07 06:45:17 david Exp $
+#	$OpenBSD: changelist,v 1.43 2005/09/27 02:29:33 david Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -36,6 +36,7 @@
 /etc/ftpwelcome
 /etc/gettytab
 /etc/group
+/etc/hostapd.conf
 /etc/hosts
 /etc/hosts.allow
 /etc/hosts.deny
