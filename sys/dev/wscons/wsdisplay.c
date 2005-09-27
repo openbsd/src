@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.63 2005/08/20 17:09:45 matthieu Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.64 2005/09/27 21:45:20 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -586,20 +586,6 @@ wsemuldisplaydevprint(void *aux, const char *pnp)
 #if 0 /* don't bother; it's ugly */
 	printf(" console %d", ap->console);
 #endif
-
-	return (UNCONF);
-}
-
-/* Print function (for parent devices). */
-int
-wsdisplaydevprint(void *aux, const char *pnp)
-{
-#if 0 /* -Wunused */
-	struct wsdisplaydev_attach_args *ap = aux;
-#endif
-
-	if (pnp)
-		printf("wsdisplay at %s", pnp);
 
 	return (UNCONF);
 }

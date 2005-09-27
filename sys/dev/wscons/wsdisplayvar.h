@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.15 2005/05/15 11:29:15 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.16 2005/09/27 21:45:20 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -134,15 +134,6 @@ struct wsdisplay_accessops {
 	void	(*pollc)(void *, int);
 };
 
-/*
- * Attachment information provided by wsdisplaydev devices when attaching
- * wsdisplay units.
- */
-struct wsdisplaydev_attach_args {
-	const struct wsdisplay_accessops *accessops;	/* access ops */
-	void	*accesscookie;				/* access cookie */
-};
-
 /* passed to wscons by the video driver to tell about its capabilities */
 struct wsscreen_list {
 	int nscreens;
@@ -180,7 +171,6 @@ struct wscons_syncops {
  */
 void	wsdisplay_cnattach(const struct wsscreen_descr *, void *,
 				int, int, long);
-int	wsdisplaydevprint(void *, const char *);
 int	wsemuldisplaydevprint(void *, const char *);
 
 /*
