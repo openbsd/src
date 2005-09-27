@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gscpcib.4,v 1.4 2005/01/20 22:08:01 jmc Exp $
+.\"	$OpenBSD: gscpcib.4,v 1.5 2005/09/27 18:07:13 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -31,9 +31,9 @@ driver provides support for the National Semiconductor Geode SC1100
 System-on-Chip
 .Tn PCI-ISA
 bridge.
-This device is mostly usual
+This device is a
 .Tn PCI-ISA
-bridge but with some additional sub-devices.
+bridge, but with some additional sub-devices.
 Besides the core
 .Xr pcib 4
 functionality, the
@@ -48,7 +48,7 @@ through the
 framework.
 The
 .Xr gpioctl 8
-program allows to easily manipulate pins from userland.
+program provides a convenient way to manipulate these pins from userland.
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr intro 4 ,
