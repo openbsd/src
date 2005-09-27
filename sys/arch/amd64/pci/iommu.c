@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.14 2005/09/27 17:37:30 marco Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.15 2005/09/27 17:41:12 marco Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -110,7 +110,7 @@ extern paddr_t avail_end;
 extern struct extent *iomem_ex;
 
 int amdgarts;
-int amdgart_enable = 1;
+int amdgart_enable = 0;
 
 struct amdgart_softc {
 	pci_chipset_tag_t g_pc;
