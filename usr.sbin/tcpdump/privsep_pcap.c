@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.10 2005/09/26 19:30:48 otto Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.11 2005/09/27 18:31:17 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -85,13 +85,14 @@ setfilter(int bpfd, int sock, char *filter)
 		pcap_freecode(&fcode);
 		goto err;
 	}
-	/* write the filter */
-	must_write(sock, &fcode.bf_len, sizeof(fcode.bf_len));
-	if (fcode.bf_len > 0)
+	if (fcode.bf_len > 0) {
+		/* write the filter */
+		must_write(sock, &fcode.bf_len, sizeof(fcode.bf_len));
 		must_write(sock, fcode.bf_insns,
 		    fcode.bf_len * sizeof(struct bpf_insn));
-	else {
+	} else {
 		snprintf(hpcap.errbuf, PCAP_ERRBUF_SIZE, "Invalid filter size");
+		pcap_freecode(&fcode);
 		goto err;
 	}
 
