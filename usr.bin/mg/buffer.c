@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.44 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.45 2005/09/28 06:37:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -216,10 +216,10 @@ static struct KEYMAPE (2 + IMAPEXT) listbufmap = {
 	rescan,
 	{
 		{
-			'1', '1', listbuf_one, NULL
+			CCHR('M'), CCHR('M'), listbuf_pf, NULL
 		},
 		{
-			CCHR('M'), CCHR('M'), listbuf_pf, NULL
+			'1', '1', listbuf_one, NULL
 		}
 	}
 };
