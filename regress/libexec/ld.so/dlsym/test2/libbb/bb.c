@@ -1,4 +1,4 @@
-/*	$OpenBSD: bb.c,v 1.2 2005/09/16 23:30:25 kurt Exp $	*/
+/*	$OpenBSD: bb.c,v 1.3 2005/09/28 14:57:10 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -36,6 +36,12 @@ bbTest1(void *libbb)
 	/* check RTLD_DEFAULT can see symbols in main object group */
 	if (dlsym(RTLD_DEFAULT, "mainSymbol") == NULL) {
 		printf("dlsym(RTLD_DEFAULT, \"mainSymbol\") == NULL\n");
+		ret = 1;
+	}
+
+	/* check RTLD_DEFAULT can see symbols in the libbb object group */
+	if (dlsym(RTLD_DEFAULT, "bbSymbol") == NULL) {
+		printf("dlsym(RTLD_DEFAULT, \"bbSymbol\") == NULL\n");
 		ret = 1;
 	}
 
