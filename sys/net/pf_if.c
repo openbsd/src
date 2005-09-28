@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.43 2005/08/18 10:28:14 pascoe Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.44 2005/09/28 01:46:32 pascoe Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -653,20 +653,25 @@ pfi_clr_istats(const char *name)
 int
 pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 {
-	struct pfi_kif	*p;
+	struct pfi_kif	*p, *nextp;
 	int		 s, n = 0;
 
 	s = splsoftnet();
-	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+	for (p = RB_MIN(pfi_ifhead, &pfi_ifs); p; p = nextp) {
+		nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
 		if (pfi_skip_if(name, p))
 			continue;
 		if (*size > n++) {
 			if (!p->pfik_tzero)
 				p->pfik_tzero = time_second;
+			pfi_kif_ref(p, PFI_KIF_REF_RULE);
 			if (copyout(p, buf++, sizeof(*buf))) {
+				pfi_kif_unref(p, PFI_KIF_REF_RULE);
 				splx(s);
 				return (EFAULT);
 			}
+			nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
+			pfi_kif_unref(p, PFI_KIF_REF_RULE);
 		}
 	}
 	splx(s);

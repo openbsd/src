@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.25 2005/08/16 11:26:48 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.26 2005/09/28 01:46:32 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -178,10 +178,14 @@ struct pfsync_softc {
 	union sc_tdb_statep	 sc_statep_tdb;
 	u_int32_t		 sc_ureq_received;
 	u_int32_t		 sc_ureq_sent;
+	struct pf_state		*sc_bulk_send_next;
+	struct pf_state		*sc_bulk_terminator;
 	int			 sc_bulk_tries;
 	int			 sc_maxcount;	/* number of states in mtu */
 	int			 sc_maxupdates;	/* number of updates/state */
 };
+
+extern struct pfsync_softc pfsyncif;
 #endif
 
 

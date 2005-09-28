@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.54 2005/08/18 10:28:13 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.55 2005/09/28 01:46:32 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -123,6 +123,8 @@ pfsyncattach(int npfsync)
 	pfsyncif.sc_sendaddr.s_addr = INADDR_PFSYNC_GROUP;
 	pfsyncif.sc_ureq_received = 0;
 	pfsyncif.sc_ureq_sent = 0;
+	pfsyncif.sc_bulk_send_next = NULL;
+	pfsyncif.sc_bulk_terminator = NULL;
 	ifp = &pfsyncif.sc_if;
 	strlcpy(ifp->if_xname, "pfsync0", sizeof ifp->if_xname);
 	ifp->if_softc = &pfsyncif;
@@ -361,8 +363,8 @@ pfsync_input(struct mbuf *m, ...)
 			    st; st = nexts) {
 				nexts = RB_NEXT(pf_state_tree_id, &tree_id, st);
 				if (st->creatorid == creatorid) {
-					st->timeout = PFTM_PURGE;
 					st->sync_flags |= PFSTATE_FROMSYNC;
+					pf_unlink_state(st);
 				}
 			}
 		} else {
@@ -375,8 +377,8 @@ pfsync_input(struct mbuf *m, ...)
 				nexts = RB_NEXT(pf_state_tree_lan_ext,
 				    &kif->pfik_lan_ext, st);
 				if (st->creatorid == creatorid) {
-					st->timeout = PFTM_PURGE;
 					st->sync_flags |= PFSTATE_FROMSYNC;
+					pf_unlink_state(st);
 				}
 			}
 		}
@@ -541,8 +543,8 @@ pfsync_input(struct mbuf *m, ...)
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
-			st->timeout = PFTM_PURGE;
 			st->sync_flags |= PFSTATE_FROMSYNC;
+			pf_unlink_state(st);
 		}
 		splx(s);
 		break;
@@ -663,8 +665,8 @@ pfsync_input(struct mbuf *m, ...)
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
-			st->timeout = PFTM_PURGE;
 			st->sync_flags |= PFSTATE_FROMSYNC;
+			pf_unlink_state(st);
 		}
 		splx(s);
 		break;
@@ -690,6 +692,10 @@ pfsync_input(struct mbuf *m, ...)
 
 			if (key.id == 0 && key.creatorid == 0) {
 				sc->sc_ureq_received = time_uptime;
+				if (sc->sc_bulk_send_next == NULL)
+					sc->sc_bulk_send_next = 
+					    TAILQ_FIRST(&state_list);
+				sc->sc_bulk_terminator = sc->sc_bulk_send_next;
 				if (pf_status.debug >= PF_DEBUG_MISC)
 					printf("pfsync: received "
 					    "bulk update request\n");
@@ -1093,8 +1099,6 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 	secs = time_second;
 
 	st->pfsync_time = time_uptime;
-	TAILQ_REMOVE(&state_updates, st, u.s.entry_updates);
-	TAILQ_INSERT_TAIL(&state_updates, st, u.s.entry_updates);
 
 	if (sp == NULL) {
 		/* not a "duplicate" update */
@@ -1342,28 +1346,39 @@ pfsync_bulk_update(void *v)
 	 * Grab at most PFSYNC_BULKPACKETS worth of states which have not
 	 * been sent since the latest request was made.
 	 */
-	while ((state = TAILQ_FIRST(&state_updates)) != NULL &&
-	    ++i < (sc->sc_maxcount * PFSYNC_BULKPACKETS)) {
-		if (state->pfsync_time > sc->sc_ureq_received) {
-			/* we're done */
-			pfsync_send_bus(sc, PFSYNC_BUS_END);
-			sc->sc_ureq_received = 0;
-			timeout_del(&sc->sc_bulk_tmo);
-			if (pf_status.debug >= PF_DEBUG_MISC)
-				printf("pfsync: bulk update complete\n");
-			break;
-		} else {
-			/* send an update and move to end of list */
-			if (!state->sync_flags)
+	state = sc->sc_bulk_send_next;
+	if (state)
+		do {
+			/* send state update if syncable and not already sent */
+			if (!state->sync_flags
+			    && state->timeout < PFTM_MAX
+			    && state->pfsync_time <= sc->sc_ureq_received) {
 				pfsync_pack_state(PFSYNC_ACT_UPD, state, 0);
-			state->pfsync_time = time_uptime;
-			TAILQ_REMOVE(&state_updates, state, u.s.entry_updates);
-			TAILQ_INSERT_TAIL(&state_updates, state,
-			    u.s.entry_updates);
+				i++;
+			}
 
-			/* look again for more in a bit */
-			timeout_add(&sc->sc_bulk_tmo, 1);
-		}
+			/* figure next state to send */
+			state = TAILQ_NEXT(state, u.s.entry_list);
+
+			/* wrap to start of list if we hit the end */
+			if (!state)
+				state = TAILQ_FIRST(&state_list);
+		} while (i < sc->sc_maxcount * PFSYNC_BULKPACKETS &&
+		    state != sc->sc_bulk_terminator);
+
+	if (!state || state == sc->sc_bulk_terminator) {
+		/* we're done */
+		pfsync_send_bus(sc, PFSYNC_BUS_END);
+		sc->sc_ureq_received = 0;
+		sc->sc_bulk_send_next = NULL;
+		sc->sc_bulk_terminator = NULL;
+		timeout_del(&sc->sc_bulk_tmo);
+		if (pf_status.debug >= PF_DEBUG_MISC)
+			printf("pfsync: bulk update complete\n");
+	} else {
+		/* look again for more in a bit */
+		timeout_add(&sc->sc_bulk_tmo, 1);
+		sc->sc_bulk_send_next = state;
 	}
 	if (sc->sc_mbuf != NULL)
 		pfsync_sendout(sc);

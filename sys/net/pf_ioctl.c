@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.158 2005/09/05 14:51:08 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.159 2005/09/28 01:46:32 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,6 +51,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
+#include <sys/rwlock.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -112,6 +113,7 @@ void			 pf_hash_rule_addr(MD5_CTX *, struct pf_rule_addr *);
 int			 pf_commit_rules(u_int32_t, int, char *);
 
 struct pf_rule		 pf_default_rule;
+struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER;
 #ifdef ALTQ
 static int		 pf_altq_running;
 #endif
@@ -162,7 +164,7 @@ pfattach(int num)
 	TAILQ_INIT(&pf_pabuf);
 	pf_altqs_active = &pf_altqs[0];
 	pf_altqs_inactive = &pf_altqs[1];
-	TAILQ_INIT(&state_updates);
+	TAILQ_INIT(&state_list);
 
 	/* default rule should never be garbage collected */
 	pf_default_rule.entries.tqe_prev = &pf_default_rule.entries.tqe_next;
@@ -1229,12 +1231,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCRSETADDRS:
 		case DIOCRSETTFLAGS:
 			if (((struct pfioc_table *)addr)->pfrio_flags &
-			    PFR_FLAG_DUMMY)
+			    PFR_FLAG_DUMMY) {
+				flags |= FWRITE; /* need write lock for dummy */
 				break; /* dummy operation ok */
+			}
 			return (EACCES);
 		default:
 			return (EACCES);
 		}
+
+	if (flags & FWRITE)
+		rw_enter_write(&pf_consistency_lock);
+	else
+		rw_enter_read(&pf_consistency_lock);
 
 	s = splsoftnet();
 	switch (cmd) {
@@ -1683,22 +1692,24 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_state		*state;
+		struct pf_state		*state, *nexts;
 		struct pfioc_state_kill *psk = (struct pfioc_state_kill *)addr;
 		int			 killed = 0;
 
-		RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+		for (state = RB_MIN(pf_state_tree_id, &tree_id); state;
+		    state = nexts) {
+			nexts = RB_NEXT(pf_state_tree_id, &tree_id, state);
+
 			if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
 			    state->u.s.kif->pfik_name)) {
-				state->timeout = PFTM_PURGE;
 #if NPFSYNC
 				/* don't send out individual delete messages */
 				state->sync_flags = PFSTATE_NOSYNC;
 #endif
+				pf_unlink_state(state);
 				killed++;
 			}
 		}
-		pf_purge_expired_states();
 		psk->psk_af = killed;
 #if NPFSYNC
 		pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
@@ -1707,12 +1718,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCKILLSTATES: {
-		struct pf_state		*state;
+		struct pf_state		*state, *nexts;
 		struct pf_state_host	*src, *dst;
 		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
 		int			 killed = 0;
 
-		RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+		for (state = RB_MIN(pf_state_tree_id, &tree_id); state;
+		    state = nexts) {
+			nexts = RB_NEXT(pf_state_tree_id, &tree_id, state);
+
 			if (state->direction == PF_OUT) {
 				src = &state->lan;
 				dst = &state->ext;
@@ -1741,11 +1755,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    dst->port)) &&
 			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
 			    state->u.s.kif->pfik_name))) {
-				state->timeout = PFTM_PURGE;
+#if NPFSYNC > 0
+				/* send immediate delete of state */
+				pfsync_delete_state(state);
+				state->sync_flags |= PFSTATE_NOSYNC;
+#endif
+				pf_unlink_state(state);
 				killed++;
 			}
 		}
-		pf_purge_expired_states();
 		psk->psk_af = killed;
 		break;
 	}
@@ -1828,13 +1846,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_states	*ps = (struct pfioc_states *)addr;
 		struct pf_state		*state;
 		struct pf_state		*p, *pstore;
-		struct pfi_kif		*kif;
 		u_int32_t		 nr = 0;
 		int			 space = ps->ps_len;
 
 		if (space == 0) {
-			TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states)
-				nr += kif->pfik_states;
+			nr = pf_status.states;
 			ps->ps_len = sizeof(struct pf_state) * nr;
 			break;
 		}
@@ -1842,16 +1858,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pstore = malloc(sizeof(*pstore), M_TEMP, M_WAITOK);
 
 		p = ps->ps_states;
-		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states)
-			RB_FOREACH(state, pf_state_tree_ext_gwy,
-			    &kif->pfik_ext_gwy) {
+
+		state = TAILQ_FIRST(&state_list);
+		while (state) {
+			if (state->timeout != PFTM_UNLINKED) {
 				int	secs = time_second;
 
 				if ((nr+1) * sizeof(*p) > (unsigned)ps->ps_len)
 					break;
 
 				bcopy(state, pstore, sizeof(*pstore));
-				strlcpy(pstore->u.ifname, kif->pfik_name,
+				strlcpy(pstore->u.ifname,
+				    state->u.s.kif->pfik_name,
 				    sizeof(pstore->u.ifname));
 				pstore->rule.nr = state->rule.ptr->nr;
 				pstore->nat_rule.nr = (state->nat_rule.ptr ==
@@ -1872,6 +1890,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				p++;
 				nr++;
 			}
+			state = TAILQ_NEXT(state, u.s.entry_list);
+		}
+
 		ps->ps_len = sizeof(struct pf_state) * nr;
 
 		free(pstore, M_TEMP);
@@ -2991,7 +3012,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			n->expire = 1;
 			n->states = 0;
 		}
-		pf_purge_expired_src_nodes();
+		pf_purge_expired_src_nodes(1);
 		pf_status.src_nodes = 0;
 		break;
 	}
@@ -3042,5 +3063,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 fail:
 	splx(s);
+	if (flags & FWRITE)
+		rw_exit_write(&pf_consistency_lock);
+	else
+		rw_exit_read(&pf_consistency_lock);
 	return (error);
 }

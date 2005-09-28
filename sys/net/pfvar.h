@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.229 2005/08/18 10:28:14 pascoe Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.230 2005/09/28 01:46:33 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <sys/rwlock.h>
 
 #include <net/radix.h>
 #include <net/route.h>
@@ -79,7 +80,8 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 	  PFTM_OTHER_FIRST_PACKET, PFTM_OTHER_SINGLE,
 	  PFTM_OTHER_MULTIPLE, PFTM_FRAG, PFTM_INTERVAL,
 	  PFTM_ADAPTIVE_START, PFTM_ADAPTIVE_END, PFTM_SRC_NODE,
-	  PFTM_TS_DIFF, PFTM_MAX, PFTM_PURGE, PFTM_UNTIL_PACKET };
+	  PFTM_TS_DIFF, PFTM_MAX, PFTM_PURGE, PFTM_UNLINKED,
+	  PFTM_UNTIL_PACKET };
 
 /* PFTM default values */
 #define PFTM_TCP_FIRST_PACKET_VAL	120	/* First TCP packet */
@@ -708,7 +710,7 @@ struct pf_state {
 			RB_ENTRY(pf_state)	 entry_lan_ext;
 			RB_ENTRY(pf_state)	 entry_ext_gwy;
 			RB_ENTRY(pf_state)	 entry_id;
-			TAILQ_ENTRY(pf_state)	 entry_updates;
+			TAILQ_ENTRY(pf_state)	 entry_list;
 			struct pfi_kif		*kif;
 		} s;
 		char	 ifname[IFNAMSIZ];
@@ -1398,7 +1400,7 @@ RB_HEAD(pf_state_tree_id, pf_state);
 RB_PROTOTYPE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 extern struct pf_state_tree_id tree_id;
-extern struct pf_state_queue state_updates;
+extern struct pf_state_queue state_list;
 
 extern struct pf_anchor_global		  pf_anchors;
 extern struct pf_ruleset		  pf_main_ruleset;
@@ -1425,9 +1427,10 @@ extern struct pool		 pf_src_tree_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_thread(void *);
-extern void			 pf_purge_expired_src_nodes(void);
-extern void			 pf_purge_expired_states(void);
-extern void			 pf_purge_expired_state(struct pf_state *);
+extern void			 pf_purge_expired_src_nodes(int);
+extern void			 pf_purge_expired_states(u_int32_t);
+extern void			 pf_unlink_state(struct pf_state *);
+extern void			 pf_free_state(struct pf_state *);
 extern int			 pf_insert_state(struct pfi_kif *,
 				    struct pf_state *);
 extern int			 pf_insert_src_node(struct pf_src_node **,
@@ -1569,6 +1572,7 @@ void		pf_qid_unref(u_int32_t);
 
 extern struct pf_status	pf_status;
 extern struct pool	pf_frent_pl, pf_frag_pl;
+extern struct rwlock	pf_consistency_lock;
 
 struct pf_pool_limit {
 	void		*pp;

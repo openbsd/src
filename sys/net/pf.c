@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.502 2005/08/22 11:54:25 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.503 2005/09/28 01:46:32 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -49,6 +49,7 @@
 #include <sys/time.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/rwlock.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -288,7 +289,7 @@ static __inline int pf_anchor_compare(struct pf_anchor *, struct pf_anchor *);
 struct pf_src_tree tree_src_tracking;
 
 struct pf_state_tree_id tree_id;
-struct pf_state_queue state_updates;
+struct pf_state_queue state_list;
 
 RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RB_GENERATE(pf_state_tree_lan_ext, pf_state,
@@ -848,8 +849,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *state)
 		RB_REMOVE(pf_state_tree_ext_gwy, &kif->pfik_ext_gwy, state);
 		return (-1);
 	}
-	TAILQ_INSERT_HEAD(&state_updates, state, u.s.entry_updates);
-
+	TAILQ_INSERT_TAIL(&state_list, state, u.s.entry_list);
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
 	pfi_kif_ref(kif, PFI_KIF_REF_STATE);
@@ -862,15 +862,24 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *state)
 void
 pf_purge_thread(void *v)
 {
-	int s;
+	int nloops = 0, s;
 
 	for (;;) {
-		tsleep(pf_purge_thread, PWAIT, "pftm",
-		    pf_default_rule.timeout[PFTM_INTERVAL] * hz);
+		tsleep(pf_purge_thread, PWAIT, "pftm", 1 * hz);
+
 		s = splsoftnet();
-		pf_purge_expired_states();
-		pf_purge_expired_fragments();
-		pf_purge_expired_src_nodes();
+
+		/* process a fraction of the state table every second */
+		pf_purge_expired_states(1 + (pf_status.states
+		    / pf_default_rule.timeout[PFTM_INTERVAL]));
+
+		/* purge other expired types every PFTM_INTERVAL seconds */
+		if (++nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
+			pf_purge_expired_fragments();
+			pf_purge_expired_src_nodes(0);
+			nloops = 0;
+		}
+
 		splx(s);
 	}
 }
@@ -888,6 +897,7 @@ pf_state_expires(const struct pf_state *state)
 		return (time_second);
 	if (state->timeout == PFTM_UNTIL_PACKET)
 		return (0);
+	KASSERT(state->timeout != PFTM_UNLINKED);
 	KASSERT(state->timeout < PFTM_MAX);
 	timeout = state->rule.ptr->timeout[state->timeout];
 	if (!timeout)
@@ -912,14 +922,21 @@ pf_state_expires(const struct pf_state *state)
 }
 
 void
-pf_purge_expired_src_nodes(void)
+pf_purge_expired_src_nodes(int waslocked)
 {
 	 struct pf_src_node		*cur, *next;
+	 int				 locked = waslocked;
 
 	 for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
 		 next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
 
 		 if (cur->states <= 0 && cur->expire <= time_second) {
+			 if (! locked) {
+				 rw_enter_write(&pf_consistency_lock);
+			 	 next = RB_NEXT(pf_src_tree,
+				     &tree_src_tracking, cur);
+				 locked = 1;
+			 }
 			 if (cur->rule.ptr != NULL) {
 				 cur->rule.ptr->src_nodes--;
 				 if (cur->rule.ptr->states <= 0 &&
@@ -932,6 +949,9 @@ pf_purge_expired_src_nodes(void)
 			 pool_put(&pf_src_tree_pl, cur);
 		 }
 	 }
+
+	 if (locked && !waslocked)
+		rw_exit_write(&pf_consistency_lock);
 }
 
 void
@@ -964,8 +984,9 @@ pf_src_tree_remove_state(struct pf_state *s)
 	s->src_node = s->nat_src_node = NULL;
 }
 
+/* callers should be at splsoftnet */
 void
-pf_purge_expired_state(struct pf_state *cur)
+pf_unlink_state(struct pf_state *cur)
 {
 	if (cur->src.state == PF_TCPS_PROXY_DST)
 		pf_send_tcp(cur->rule.ptr, cur->af,
@@ -979,9 +1000,24 @@ pf_purge_expired_state(struct pf_state *cur)
 	    &cur->u.s.kif->pfik_lan_ext, cur);
 	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
 #if NPFSYNC
-	pfsync_delete_state(cur);
+	if (cur->creatorid == pf_status.hostid)
+		pfsync_delete_state(cur);
 #endif
+	cur->timeout = PFTM_UNLINKED;
 	pf_src_tree_remove_state(cur);
+}
+
+/* callers should be at splsoftnet and hold the
+ * write_lock on pf_consistency_lock */
+void
+pf_free_state(struct pf_state *cur)
+{
+#if NPFSYNC
+	if (pfsyncif.sc_bulk_send_next == cur ||
+	    pfsyncif.sc_bulk_terminator == cur)
+		return;
+#endif
+	KASSERT(cur->timeout == PFTM_UNLINKED);
 	if (--cur->rule.ptr->states <= 0 &&
 	    cur->rule.ptr->src_nodes <= 0)
 		pf_rm_rule(NULL, cur->rule.ptr);
@@ -994,7 +1030,7 @@ pf_purge_expired_state(struct pf_state *cur)
 			pf_rm_rule(NULL, cur->anchor.ptr);
 	pf_normalize_tcp_cleanup(cur);
 	pfi_kif_unref(cur->u.s.kif, PFI_KIF_REF_STATE);
-	TAILQ_REMOVE(&state_updates, cur, u.s.entry_updates);
+	TAILQ_REMOVE(&state_list, cur, u.s.entry_list);
 	if (cur->tag)
 		pf_tag_unref(cur->tag);
 	pool_put(&pf_state_pl, cur);
@@ -1003,16 +1039,44 @@ pf_purge_expired_state(struct pf_state *cur)
 }
 
 void
-pf_purge_expired_states(void)
+pf_purge_expired_states(u_int32_t maxcheck)
 {
-	struct pf_state		*cur, *next;
+	static struct pf_state	*cur = NULL;
+	struct pf_state		*next;
+	int 			 locked = 0;
 
-	for (cur = RB_MIN(pf_state_tree_id, &tree_id);
-	    cur; cur = next) {
-		next = RB_NEXT(pf_state_tree_id, &tree_id, cur);
-		if (pf_state_expires(cur) <= time_second)
-			pf_purge_expired_state(cur);
+	while (maxcheck--) {
+		/* wrap to start of list when we hit the end */
+		if (cur == NULL) {
+			cur = TAILQ_FIRST(&state_list);
+			if (cur == NULL)
+				break;	/* list empty */
+		}
+
+		/* get next state, as cur may get deleted */
+		next = TAILQ_NEXT(cur, u.s.entry_list);
+
+		if (cur->timeout == PFTM_UNLINKED) {
+			/* free unlinked state */
+			if (! locked) {
+				rw_enter_write(&pf_consistency_lock);
+				locked = 1;
+			}
+			pf_free_state(cur);
+		} else if (pf_state_expires(cur) <= time_second) {
+			/* unlink and free expired state */
+			pf_unlink_state(cur);
+			if (! locked) {
+				rw_enter_write(&pf_consistency_lock);
+				locked = 1;
+			}
+			pf_free_state(cur);
+		}
+		cur = next;
 	}
+
+	if (locked)
+		rw_exit_write(&pf_consistency_lock);
 }
 
 int
