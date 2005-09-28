@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.h,v 1.13 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: iso.h,v 1.14 2005/09/28 20:53:54 miod Exp $	*/
 /*	$NetBSD: iso.h,v 1.20 1997/07/07 22:45:34 cgd Exp $	*/
 
 /*-
@@ -203,8 +203,8 @@ static __inline int
 isonum_721(p)
 	u_char *p;
 {
-#if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == LITTLE_ENDIAN)
-	return *(u_int16t *)p;
+#if !defined(__STRICT_ALIGNMENT) && (BYTE_ORDER == LITTLE_ENDIAN)
+	return *(u_int16_t *)p;
 #else
 	return *p|((char)p[1] << 8);
 #endif
@@ -215,8 +215,8 @@ static __inline int
 isonum_722(p)
 	unsigned char *p;
 {
-#if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == BIG_ENDIAN)
-	return *(u_int16t *)p;
+#if !defined(__STRICT_ALIGNMENT) && (BYTE_ORDER == BIG_ENDIAN)
+	return *(u_int16_t *)p;
 #else
 	return ((char)*p << 8)|p[1];
 #endif
@@ -226,14 +226,14 @@ isonum_722(p)
 static __inline int
 isonum_723(u_char *p)
 {
-#if defined(UNALIGNED_ACCESS) && \
+#if !defined(__STRICT_ALIGNMENT) && \
     ((BYTE_ORDER == LITTLE_ENDIAN) || (BYTE_ORDER == BIG_ENDIAN))
 #if BYTE_ORDER == LITTLE_ENDIAN
-	return *(u_int16t *)p;
+	return *(u_int16_t *)p;
 #else
-	return *(u_int16t *)(p + 2);
+	return *(u_int16_t *)(p + 2);
 #endif
-#else /* !UNALIGNED_ACCESS or weird byte order */
+#else /* __STRICT_ALIGNMENT or weird byte order */
 	return *p|(p[1] << 8);
 #endif
 }
@@ -243,8 +243,8 @@ static __inline int
 isonum_731(p)
 	u_char *p;
 {
-#if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == LITTLE_ENDIAN)
-	return *(u_int32t *)p;
+#if !defined(__STRICT_ALIGNMENT) && (BYTE_ORDER == LITTLE_ENDIAN)
+	return *(u_int32_t *)p;
 #else
 	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24);
 #endif
@@ -255,8 +255,8 @@ static __inline int
 isonum_732(p)
 	unsigned char *p;
 {
-#if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == BIG_ENDIAN)
-	return *(u_int32t *)p;
+#if !defined(__STRICT_ALIGNMENT) && (BYTE_ORDER == BIG_ENDIAN)
+	return *(u_int32_t *)p;
 #else
 	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
 #endif
@@ -266,14 +266,14 @@ isonum_732(p)
 static __inline int
 isonum_733(u_char *p)
 {
-#if defined(UNALIGNED_ACCESS) && \
+#if !defined(__STRICT_ALIGNMENT) && \
     ((BYTE_ORDER == LITTLE_ENDIAN) || (BYTE_ORDER == BIG_ENDIAN))
 #if BYTE_ORDER == LITTLE_ENDIAN
-	return *(u_int32t *)p;
+	return *(u_int32_t *)p;
 #else
-	return *(u_int32t *)(p + 4);
+	return *(u_int32_t *)(p + 4);
 #endif
-#else /* !UNALIGNED_ACCESS or weird byte order */
+#else /* __STRICT_ALIGNMENT or weird byte order */
 	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24);
 #endif
 }

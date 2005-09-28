@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.14 2004/04/26 08:10:10 otto Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.15 2005/09/28 20:53:56 miod Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -45,7 +45,8 @@
 #include "pcap.h"
 #endif
 
-#ifndef UNALIGNED_ACCESS
+#include <sys/endian.h>
+#ifdef __STRICT_ALIGNMENT
 #define BPF_ALIGN
 #endif
 

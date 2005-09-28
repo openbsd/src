@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpb.h,v 1.3 1998/01/11 20:39:03 provos Exp $	*/
+/*	$OpenBSD: bpb.h,v 1.4 2005/09/28 20:53:56 miod Exp $	*/
 /*	$NetBSD: bpb.h,v 1.6 1997/10/17 11:23:35 ws Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ struct bpb_a {
  * use the macros for the big-endian case.
  */
 #include <machine/endian.h>
-#if (BYTE_ORDER == LITTLE_ENDIAN) && defined(UNALIGNED_ACCESS)
+#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(__STRICT_ALIGNMENT)
 #define	getushort(x)	*((u_int16_t *)(x))
 #define	getulong(x)	*((u_int32_t *)(x))
 #define	putushort(p, v)	(*((u_int16_t *)(p)) = (v))
