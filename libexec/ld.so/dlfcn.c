@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.56 2005/09/28 15:41:06 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.57 2005/09/28 20:35:23 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -287,6 +287,7 @@ _dl_real_close(void *handle)
 	if(--object->opencount == 0)
 		_dl_unlink_dlopen(object);
 	_dl_unload_shlib(object);
+	_dl_cleanup_objects();
 	return (0);
 }
 

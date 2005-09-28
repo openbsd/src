@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.35 2005/09/28 15:41:06 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.36 2005/09/28 20:35:23 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -164,6 +164,22 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 	return(object);
 }
 
+elf_object_t *free_objects;
+
+void _dl_cleanup_objects(void);
+void
+_dl_cleanup_objects()
+{
+	elf_object_t *nobj, *head;
+	head = free_objects;
+	free_objects = NULL;
+	while (head != NULL) {
+		nobj = head->next;
+		_dl_free(head);
+		head = nobj;
+	}
+}
+
 void
 _dl_remove_object(elf_object_t *object)
 {
@@ -183,7 +199,8 @@ _dl_remove_object(elf_object_t *object)
 		object->dep_next = object->dep_next->dep_next;
 		_dl_free(depobj);
 	}
-	_dl_free(object);
+	object->next = free_objects;
+	free_objects = object->next;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.42 2005/09/28 18:17:42 kurt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.43 2005/09/28 20:35:23 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -106,6 +106,7 @@ struct elf_object {
 #define	STAT_INIT_DONE	0x04
 #define	STAT_FINI_DONE	0x08
 #define	STAT_FINI_READY	0x10
+#define	STAT_UNLOADED	0x20
 
 	Elf_Phdr	*phdrp;
 	int		phdrc;
@@ -148,6 +149,7 @@ void _dl_add_object(elf_object_t *object);
 elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
     const long *, const int objtype, const long laddr, const long loff);
 void	_dl_remove_object(elf_object_t *object);
+void	_dl_cleanup_objects(void);
 
 elf_object_t *_dl_lookup_object(const char *objname);
 elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int, int);
