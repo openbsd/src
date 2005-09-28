@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.54 2005/04/04 08:54:33 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.55 2005/09/28 00:24:04 pedro Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.54 2005/04/04 08:54:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.55 2005/09/28 00:24:04 pedro Exp $";
 #endif /* not lint */
 
 /*
@@ -144,7 +144,7 @@ closekre(WINDOW *w)
 #define PROCSCOL	 0
 #define GENSTATROW	 7	/* uses 2 rows and 35 cols */
 #define GENSTATCOL	16
-#define VMSTATROW	 7	/* uses 17 rows and 12 cols */
+#define VMSTATROW	 7	/* uses 18 rows and 12 cols */
 #define VMSTATCOL	48
 #define GRAPHROW	10	/* uses 3 rows and 51 cols */
 #define GRAPHCOL	 0
@@ -260,6 +260,8 @@ labelkre(void)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "pdscn");
 	if (LINES - 1 > VMSTATROW + 17)
 		mvprintw(VMSTATROW + 17, VMSTATCOL + 10, "pzidle");
+	if (LINES - 1 > VMSTATROW + 18)
+		mvprintw(VMSTATROW + 18, VMSTATCOL + 10, "kmapent");
 
 	mvprintw(GENSTATROW, GENSTATCOL, "   Csw   Trp   Sys   Int   Sof  Flt");
 
@@ -441,6 +443,8 @@ showkre(void)
 		PUTRATE(uvmexp.pdscans, VMSTATROW + 16, VMSTATCOL, 9);
 	if (LINES - 1 > VMSTATROW + 17)
 		PUTRATE(uvmexp.zeropages, VMSTATROW + 17, VMSTATCOL, 9);
+	if (LINES - 1 > VMSTATROW + 18)
+		putint(s.uvmexp.kmapent, VMSTATROW + 18, VMSTATCOL, 9);
 
 	PUTRATE(uvmexp.pageins, PAGEROW + 2, PAGECOL + 5, 5);
 	PUTRATE(uvmexp.pdpageouts, PAGEROW + 2, PAGECOL + 10, 5);

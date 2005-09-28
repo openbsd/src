@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.72 2005/06/29 06:07:32 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.73 2005/09/28 00:24:03 pedro Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -93,6 +93,9 @@
 #ifdef DDB
 #include <uvm/uvm_ddb.h>
 #endif
+
+static struct timeval uvm_kmapent_last_warn_time;
+static struct timeval uvm_kmapent_warn_rate = { 10, 0 };
 
 struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
 struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
@@ -378,22 +381,34 @@ _uvm_tree_sanity(vm_map_t map, const char *name)
 struct vm_map_entry *
 uvm_mapent_alloc(struct vm_map *map)
 {
-	struct vm_map_entry *me;
-	int s;
+	struct vm_map_entry *me, *ne;
+	int s, i;
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
 	if (map->flags & VM_MAP_INTRSAFE || cold) {
 		s = splvm();
 		simple_lock(&uvm.kentry_lock);
 		me = uvm.kentry_free;
-		if (me) uvm.kentry_free = me->next;
+		if (me == NULL) {
+			ne = uvm_km_getpage(0);
+			if (ne == NULL)
+				panic("uvm_mapent_alloc: cannot allocate map "
+				    "entry");
+			for (i = 0;
+			    i < PAGE_SIZE / sizeof(struct vm_map_entry) - 1;
+			    i++)
+				ne[i].next = &ne[i + 1];
+			ne[i].next = NULL;
+			me = ne;
+			if (ratecheck(&uvm_kmapent_last_warn_time,
+			    &uvm_kmapent_warn_rate))
+				printf("uvm_mapent_alloc: out of static "
+				    "map entries\n");
+		}
+		uvm.kentry_free = me->next;
+		uvmexp.kmapent++;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
-		if (me == NULL) {
-			panic("uvm_mapent_alloc: out of static map entries, "
-			      "check MAX_KMAPENT (currently %d)",
-			      MAX_KMAPENT);
-		}
 		me->flags = UVM_MAP_STATIC;
 	} else if (map == kernel_map) {
 		splassert(IPL_NONE);
@@ -429,6 +444,7 @@ uvm_mapent_free(struct vm_map_entry *me)
 		simple_lock(&uvm.kentry_lock);
 		me->next = uvm.kentry_free;
 		uvm.kentry_free = me;
+		uvmexp.kmapent--;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 	} else if (me->flags & UVM_MAP_KMEM) {

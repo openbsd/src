@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.57 2005/09/12 23:05:06 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.58 2005/09/28 00:24:03 pedro Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -360,6 +360,7 @@ struct uvmexp {
 	struct uvm_object *kmem_object;
 
 	int fpswtch;	/* FPU context switches */
+	int kmapent;	/* number of kernel map entries */
 };
 
 #ifdef _KERNEL
