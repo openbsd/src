@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.40 2005/09/22 22:33:40 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.41 2005/09/28 15:41:06 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -126,6 +126,8 @@ struct elf_object {
 
 	TAILQ_HEAD(,dep_node)	child_list;
 	TAILQ_HEAD(,dep_node)	dload_list;
+
+	int opencount;			/* # dlopen() */
 
 	/* object that caused this module to be loaded, used in symbol lookup */
 	elf_object_t	*load_object;

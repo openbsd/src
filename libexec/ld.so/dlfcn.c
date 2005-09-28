@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.55 2005/09/28 15:24:22 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.56 2005/09/28 15:41:06 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -145,6 +145,9 @@ dlopen(const char *libname, int flags)
 	}
 
 loaded:
+	if (failed == 0)
+		object->opencount++;
+
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
 		(*((void (*)(void))_dl_debug_map->r_brk))();
@@ -279,10 +282,10 @@ _dl_real_close(void *handle)
 		return (1);
 	}
 
-
 	_dl_notify_unload_shlib(object);
 	_dl_run_all_dtors();
-	_dl_unlink_dlopen(object);
+	if(--object->opencount == 0)
+		_dl_unlink_dlopen(object);
 	_dl_unload_shlib(object);
 	return (0);
 }
