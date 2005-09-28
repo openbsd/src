@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.54 2005/09/22 22:33:40 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.55 2005/09/28 15:24:22 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -171,7 +171,7 @@ dlsym(void *handle, const char *name)
 	int flags;
 
 	if (handle == NULL || handle == RTLD_NEXT ||
-	    handle == RTLD_SELF) {
+	    handle == RTLD_SELF || handle == RTLD_DEFAULT) {
 		void *retaddr;
 
 		retaddr = __builtin_return_address(0);	/* __GNUC__ only */
@@ -185,12 +185,11 @@ dlsym(void *handle, const char *name)
 			flags = SYM_SEARCH_NEXT|SYM_PLT;
 		else if (handle == RTLD_SELF)
 			flags = SYM_SEARCH_SELF|SYM_PLT;
+		else if (handle == RTLD_DEFAULT)
+			flags = SYM_SEARCH_ALL|SYM_PLT;
 		else
 			flags = SYM_DLSYM|SYM_PLT;
 
-	} else if (handle == RTLD_DEFAULT) {
-		object = _dl_objects;
-		flags = SYM_SEARCH_ALL|SYM_PLT;
 	} else {
 		object = (elf_object_t *)handle;
 		flags = SYM_DLSYM|SYM_PLT;
