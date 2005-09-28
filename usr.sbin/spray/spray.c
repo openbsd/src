@@ -1,4 +1,4 @@
-/*	$OpenBSD: spray.c,v 1.6 2004/10/01 04:08:46 jsg Exp $	*/
+/*	$OpenBSD: spray.c,v 1.7 2005/09/28 16:24:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
@@ -29,9 +29,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: spray.c,v 1.6 2004/10/01 04:08:46 jsg Exp $
+ *	$Id: spray.c,v 1.7 2005/09/28 16:24:43 deraadt Exp $
  */
 
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -70,15 +73,25 @@ main(int argc, char *argv[])
 
 	progname = *argv;
 	while ((c = getopt(argc, argv, "c:d:l:")) != -1) {
+		const char *errstr;
+
 		switch (c) {
 		case 'c':
-			count = atoi(optarg);
+			count = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "number of packets is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'd':
-			delay = atoi(optarg);
+			delay = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "delay is %s: %s", errstr, optarg);
 			break;
 		case 'l':
-			length = atoi(optarg);
+			length = strtonum(optarg, SPRAYOVERHEAD, SPRAYMAX,
+			    &errstr);
+			if (errstr)
+				errx(1, "length is %s: %s", errstr, optarg);
 			break;
 		default:
 			usage();
