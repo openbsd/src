@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.12 2005/09/28 18:17:41 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.13 2005/09/28 20:48:00 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -390,9 +390,6 @@ _dl_unload_dlopen(void)
 			_dl_notify_unload_shlib(node->data);
 			_dl_run_all_dtors();
 		}
-
-		TAILQ_REMOVE(&_dlopened_child_list, node, next_sib);
-		_dl_free(node);
 	}
 }
 
