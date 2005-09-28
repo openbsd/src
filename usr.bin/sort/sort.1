@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.22 2005/09/27 23:40:07 dlg Exp $
+.\"	$OpenBSD: sort.1,v 1.23 2005/09/28 10:10:16 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,17 +40,21 @@
 .Nd sort or merge text files
 .Sh SYNOPSIS
 .Nm sort
-.Op Fl cmubdfinrzH
-.Op Fl t Ar char
-.Op Fl R Ar char
+.Op Fl bcdfHimnruz
 .Oo
-.Fl k Ar field1[,field2]
+.Sm off
+.Fl k
+.Ar field1 Op , Ar field2
+.Ar ...
+.Sm on
 .Oc
-.Ar ...
-.Op Fl T Ar dir
 .Op Fl o Ar output
-.Op Ar file
-.Ar ...
+.Op Fl R Ar char
+.Bk -words
+.Op Fl T Ar dir
+.Ek
+.Op Fl t Ar char
+.Op Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -116,6 +120,9 @@ are used in making comparisons.
 .It Fl f
 Considers all lowercase characters that have uppercase
 equivalents to be the same for purposes of comparison.
+.It Fl H
+Use a merge sort instead of a radix sort.
+This option should be used for files larger than 60Mb.
 .It Fl i
 Ignore all non-printable characters.
 .It Fl n
@@ -133,9 +140,6 @@ option no longer implies the
 option.)
 .It Fl r
 Reverse the sense of comparisons.
-.It Fl H
-Use a merge sort instead of a radix sort.
-This option should be used for files larger than 60Mb.
 .El
 .Pp
 The treatment of field separators can be altered using these options:
@@ -160,6 +164,29 @@ option (see below).
 Note that the
 .Fl b
 option has no effect unless key fields are specified.
+.It Xo
+.Sm off
+.Fl k\ \& Ar field1 Op , Ar field2
+.Sm on
+.Xc
+Designates the starting position,
+.Ar field1 ,
+and optional ending position,
+.Ar field2 ,
+of a key field.
+The
+.Fl k
+option replaces the obsolescent options
+.Cm \(pl Ns Ar pos1
+and
+.Fl Ns Ar pos2 .
+.It Fl R Ar char
+.Ar char
+is used as the record separator character.
+This should be used with discretion;
+.Fl R Aq Ar alphanumeric
+usually produces undesirable results.
+The default record separator is newline.
 .It Fl t Ar char
 .Ar char
 is used as the field separator character.
@@ -179,25 +206,6 @@ blank-space characters, and consecutive blank spaces do
 delimit an empty field; further, the initial blank space
 .Em is
 considered part of a field when determining key offsets.
-.It Fl R Ar char
-.Ar char
-is used as the record separator character.
-This should be used with discretion;
-.Fl R Ar <alphanumeric>
-usually produces undesirable results.
-The default record separator is newline.
-.It Fl k Ar field1[,field2]
-Designates the starting position,
-.Ar field1 ,
-and optional ending position,
-.Ar field2 ,
-of a key field.
-The
-.Fl k
-option replaces the obsolescent options
-.Cm \(pl Ns Ar pos1
-and
-.Fl Ns Ar pos2 .
 .It Fl z
 Uses the nul character as the record separator.
 .El
@@ -229,7 +237,9 @@ For example, by default all blank spaces at the beginning of a line are
 considered to be part of the first field.
 .Pp
 Fields are specified by the
-.Fl k Ar field1[,field2]
+.Sm off
+.Fl k\ \& Ar field1 Op , Ar field2
+.Sm on
 argument.
 A missing
 .Ar field2
