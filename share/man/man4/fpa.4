@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fpa.4,v 1.21 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: fpa.4,v 1.22 2005/09/28 18:31:48 martin Exp $
 .\"	$NetBSD: fpa.4,v 1.2 1997/02/18 01:07:46 jonathan Exp $
 .\"
 .\" Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -40,18 +40,21 @@
 .Os
 .Sh NAME
 .Nm fpa ,
-.Nm fea
+.Nm fea ,
+.Nm fta
 .Nd DEC FDDI controller device driver
 .Sh SYNOPSIS
 .Cd "fpa* at pci?"
 .Cd "fea* at eisa?"
+.Cd "fta* at tc?"
 .Sh DESCRIPTION
 The
-.Nm
+.Nm ,
+.Nm fea ,
 and
-.Nm fea
-device drivers provide support for the DEC DEFPA PCI FDDI Controller and
-the DEC DEFEA EISA FDDI Controller, respectively.
+.Nm fta
+device drivers provide support for the DEC DEFPA PCI FDDI,
+DEC DEFEA EISA FDDI and DEC DEFTA TURBOchannel FDDI Controllers, respectively.
 All variants of either controller are supported including the DAS and
 SAS configurations.
 .Sh DIAGNOSTICS
@@ -76,9 +79,10 @@ the settings.
 .Xr ifconfig 8
 .Sh AUTHORS
 The
-.Nm
+.Nm ,
+.Nm fea ,
 and
-.Nm fea
+.Nm fta
 device driver and manual page were written by Matt Thomas.
 .Sh CAVEATS
 Normally, the device driver will not enable the reception of SMT frames.
