@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.91 2005/08/02 11:05:44 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.92 2005/09/28 15:20:12 brad Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -107,31 +107,12 @@
 int	tcp_mssdflt = TCP_MSS;
 int	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 
-/*
- * Configure kernel with options "TCP_DO_RFC1323=0" to disable RFC1323 stuff.
- * This is a good idea over slow SLIP/PPP links, because the timestamp
- * pretty well destroys the VJ compression (any packet with a timestamp
- * different from the previous one can't be compressed), as well as adding
- * more overhead.
- * XXX And it should be a settable per route characteristic (with this just
- * used as the default).
- */
-#ifndef TCP_DO_RFC1323
-#define TCP_DO_RFC1323	1
-#endif
-int	tcp_do_rfc1323 = TCP_DO_RFC1323;
-
-#ifndef TCP_DO_SACK
-#ifdef TCP_SACK
-#define TCP_DO_SACK	1
-#else
-#define TCP_DO_SACK	0
-#endif
-#endif
-int	tcp_do_sack = TCP_DO_SACK;		/* RFC 2018 selective ACKs */
+/* values controllable via sysctl */
+int	tcp_do_rfc1323 = 1;
+int	tcp_do_sack = 1;	/* RFC 2018 selective ACKs */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* RFC3168 ECN enabled/disabled? */
-int	tcp_do_rfc3390 = 0;	/* RFC3390 Increasing TCP's Initial Window */
+int	tcp_do_rfc3390 = 1;	/* RFC3390 Increasing TCP's Initial Window */
 
 u_int32_t	tcp_now = 1;
 
