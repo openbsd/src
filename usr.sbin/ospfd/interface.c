@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.34 2005/09/24 21:10:32 msf Exp $ */
+/*	$OpenBSD: interface.c,v 1.35 2005/09/28 20:38:31 msf Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -107,7 +107,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 
 	if (iface_fsm[i].state == -1) {
 		/* XXX event outside of the defined fsm, ignore it. */
-		log_debug("fsm_if: interface %s, "
+		log_debug("if_fsm: interface %s, "
 		    "event %s not expected in state %s", iface->name,
 		    if_event_name(event), if_state_name(old_state));
 		return (0);
@@ -129,7 +129,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 	}
 
 	if (ret) {
-		log_debug("fsm_if: error changing state for interface %s, "
+		log_debug("if_fsm: error changing state for interface %s, "
 		    "event %s, state %s", iface->name, if_event_name(event),
 		    if_state_name(old_state));
 		return (-1);
@@ -141,7 +141,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 	if (iface->state != old_state)
 		orig_rtr_lsa(iface->area);
 
-	log_debug("fsm_if: event %s resulted in action %s and changing "
+	log_debug("if_fsm: event %s resulted in action %s and changing "
 	    "state for interface %s from %s to %s",
 	    if_event_name(event), if_action_name(iface_fsm[i].action),
 	    iface->name, if_state_name(old_state), if_state_name(iface->state));
