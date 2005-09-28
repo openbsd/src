@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.44 2005/09/28 20:35:23 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.45 2005/09/28 21:56:24 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -59,8 +59,8 @@ _dl_unload_shlib(elf_object_t *object)
 {
 	struct dep_node *n;
 	DL_DEB(("unload_shlib called on %s\n", object->load_name));
-	if (object->refcount == 0 && (object->status & STATUS_UNLOADED) == 0) {
-		object->status |= STATUS_UNLOADED;
+	if (object->refcount == 0 && (object->status & STAT_UNLOADED) == 0) {
+		object->status |= STAT_UNLOADED;
 		TAILQ_FOREACH(n, &object->child_list, next_sib)
 			_dl_unload_shlib(n->data);
 		DL_DEB(("unload_shlib unloading on %s\n", object->load_name));
