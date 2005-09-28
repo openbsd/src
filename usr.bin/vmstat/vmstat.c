@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.96 2005/07/04 01:54:10 djm Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.97 2005/09/28 00:54:05 pedro Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.96 2005/07/04 01:54:10 djm Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.97 2005/09/28 00:54:05 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -576,6 +576,7 @@ dosum(void)
 	(void)printf("%11u forks\n", uvmexp.forks);
 	(void)printf("%11u forks where vmspace is shared\n",
 		     uvmexp.forks_sharevm);
+	(void)printf("%11u kernel map entries\n", uvmexp.kmapent);
 
 	/* daemon counters */
 	(void)printf("%11u number of times the pagedaemon woke up\n",
