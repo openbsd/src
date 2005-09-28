@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.41 2005/09/28 15:41:06 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.42 2005/09/28 18:17:42 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -221,7 +221,6 @@ extern struct r_debug *_dl_debug_map;
 
 extern int  _dl_pagesz;
 extern int  _dl_errno;
-extern int  _dl_exiting;
 
 extern char *_dl_libpath;
 extern char *_dl_preload;

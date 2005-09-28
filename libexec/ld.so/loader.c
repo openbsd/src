@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.90 2005/09/22 22:33:40 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.91 2005/09/28 18:17:42 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -70,8 +70,6 @@ char *_dl_norandom;
 struct r_debug *_dl_debug_map;
 
 void _dl_dopreload(char *paths);
-
-int _dl_exiting;
 
 void
 _dl_debug_state(void)
@@ -158,7 +156,6 @@ void
 _dl_dtors(void)
 {
 	_dl_thread_kern_stop();
-	_dl_exiting = 1;
 
 	/* ORDER? */
 	_dl_unload_dlopen();
