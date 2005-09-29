@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.168 2005/09/19 21:33:07 deraadt Exp $
+$OpenBSD: usbdevs,v 1.169 2005/09/29 01:18:05 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -380,6 +380,7 @@ vendor CONCEPTRONIC	0x0d8e	Conceptronic
 vendor MSI		0x0db0	Micro Star International
 vendor ELCON		0x0db7	ELCON Systemtechnik
 vendor HAWKING		0x0e66	Hawking
+vendor GMATE		0x0373	G.Mate
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf  Pilotech
 vendor AIRPRIME		0x0f3d	Airprime
@@ -930,6 +931,9 @@ product FUJIPHOTO MASS0100	0x0100	Mass Storage
 /* Fujitsu protducts */
 product FUJITSU	AH_F401U	0x105b	AH-F401U Air H device
 
+/* G.Mate */
+product	GMATE YP3X00		0x1001	YP3X00 PDA
+
 /* Garmin International products */
 product GARMIN IQUE3600		0x0004	Ique 3600
 
@@ -1396,6 +1400,7 @@ product NEODIO ND5010		0x5010	Multi-format Flash Controller
 /* NetChip Technology Products */
 product NETCHIP TURBOCONNECT	0x1080	Turbo-Connect
 product NETCHIP CLIK40		0xa140	Clik! 40
+product NETCHIP ETHERNETGADGET	0xa4a2	EthernetGadget
 
 /* Netgear products */
 product NETGEAR EA101		0x1001	Ethernet
