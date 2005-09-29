@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.8 2005/09/29 00:20:22 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.9 2005/09/29 15:13:19 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,16 +40,10 @@
 
 #include "log.h"
 #include "rcs.h"
+#include "rcsprog.h"
 #include "strtab.h"
 
-extern char *__progname;
-
-
 const char rcs_version[] = "OpenCVS RCS version 3.6";
-
-void  rcs_usage(void);
-int   rcs_main(int, char **);
-void (*usage)(void);
 
 struct rcs_prog {
 	char  *prog_name;
@@ -64,6 +58,44 @@ struct rcs_prog {
 	{ "ident",	NULL,		NULL		},
 };
 
+int
+rcs_statfile(char *fname, char *out, size_t len)
+{
+	int l;
+	char *s;
+	char filev[MAXPATHLEN], fpath[MAXPATHLEN];
+	struct stat st;
+
+	l = snprintf(filev, sizeof(filev), "%s%s", fname, RCS_FILE_EXT);
+	if (l == -1 || l >= (int)sizeof(filev))
+		return (-1);
+
+	if (stat(RCSDIR, &st) != -1) {
+		l = snprintf(fpath, sizeof(fpath), "%s/%s", RCSDIR, filev);
+		if (l == -1 || l >= (int)sizeof(fpath))
+			return (-1);
+	} else {
+		strlcpy(fpath, filev, sizeof(fpath));
+	}
+
+	if (stat(fpath, &st) == -1) {
+		cvs_log(LP_ERRNO, "%s", fpath);
+		return (-1);
+	}
+
+	strlcpy(out, fpath, len);
+	if (!strcmp(__progname, "co")) {
+		printf("%s --> ", filev);
+		if ((s = strrchr(filev, ',')) != NULL) {
+			*s = '\0';
+			printf("%s\n", fname);
+		}
+	} else {
+		printf("RCS file: %s\n", fpath);
+	}
+
+	return (0);
+}
 
 int
 main(int argc, char **argv)
@@ -73,6 +105,7 @@ main(int argc, char **argv)
 
 	ret = -1;
 	cvs_strtab_init();
+	cvs_log_init(LD_STD, 0);
 
 	for (i = 0; i < (sizeof(programs)/sizeof(programs[0])); i++)
 		if (strcmp(__progname, programs[i].prog_name) == 0) {
@@ -115,8 +148,6 @@ rcs_main(int argc, char **argv)
 	fmode = 0;
 	flags = RCS_RDWR;
 	oldfile = alist = comment = elist = NULL;
-
-	cvs_log_init(LD_STD, 0);
 
 	while ((ch = getopt(argc, argv, "A:a:b::c:e::hik:LMUV")) != -1) {
 		switch (ch) {
@@ -178,26 +209,9 @@ rcs_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		/*
-		 * Our RCS API does not append the RCS_FILE_EXT extension
-		 * automaticly in rcs_open(), so we add it here.
-		 */
-		snprintf(filev, sizeof(filev), "%s%s", argv[i], RCS_FILE_EXT);
-		if (stat(RCSDIR, &st) != -1) {
-			strlcpy(fpath, RCSDIR, sizeof(fpath));
-			strlcat(fpath, "/", sizeof(fpath));
-			strlcat(fpath, filev, sizeof(fpath));
-		} else {
-			strlcpy(fpath, filev, sizeof(filev));
-		}
-
-		if (stat(fpath, &st) != -1) {
-			errno = EEXIST;
-			cvs_log(LP_ERRNO, "%s", fpath);
+		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
-		}
 
-		printf("RCS file: %s\n", fpath);
 		file = rcs_open(fpath, flags, fmode);
 		if (file == NULL)
 			continue;
@@ -226,6 +240,7 @@ rcs_main(int argc, char **argv)
 			rcs_lock_setmode(file, lkmode);
 
 		rcs_close(file);
+
 		printf("done\n");
 	}
 
