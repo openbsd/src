@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.68 2005/09/29 20:44:58 moritz Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.69 2005/09/29 20:47:34 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -707,7 +707,7 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 
 	if (!rcs_sym_check(sym)) {
 		rcs_errno = RCS_ERR_BADSYM;
-		return (NULL);
+		return (-1);
 	}
 
 	/* first look for duplication */
@@ -760,7 +760,7 @@ rcs_sym_remove(RCSFILE *file, const char *sym)
 
 	if (!rcs_sym_check(sym)) {
 		rcs_errno = RCS_ERR_BADSYM;
-		return (NULL);
+		return (-1);
 	}
 
 	TAILQ_FOREACH(symp, &(file->rf_symbols), rs_list)
