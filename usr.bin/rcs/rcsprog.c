@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.10 2005/09/29 15:14:12 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.11 2005/09/29 15:19:51 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -52,7 +52,7 @@ struct rcs_prog {
 } programs[] = {
 	{ "rcs",	rcs_main,	rcs_usage	},
 	{ "ci",		NULL,		NULL		},
-	{ "co",		NULL,		NULL		},
+	{ "co",		checkout_main,	checkout_usage  },
 	{ "rcsclean",	NULL,		NULL		},
 	{ "rcsdiff",	NULL,		NULL		},
 	{ "ident",	NULL,		NULL		},
