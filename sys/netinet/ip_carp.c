@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.109 2005/08/31 04:49:21 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.110 2005/09/29 19:39:41 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -789,7 +789,7 @@ carpdetach(struct carp_softc *sc)
 	splx(s);
 }
 
-/* Detach an interface from the carp.  */
+/* Detach an interface from the carp. */
 void
 carp_ifdetach(struct ifnet *ifp)
 {
@@ -2091,6 +2091,16 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 	if ((error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi)) != 0)
 		return (error);
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, &sc->sc_ac, enm);
+	if (enm == NULL)
+		return (EINVAL);
+
+	LIST_FOREACH(mc, &sc->carp_mc_listhead, mc_entries)
+		if (mc->mc_enm == enm)
+			break;
+
+	/* We won't delete entries we didn't add */
+	if (mc == NULL)
+		return (EINVAL);
 
 	error = ether_delmulti(ifr, (struct arpcom *)&sc->sc_ac);
 	if (error != ENETRESET)
@@ -2100,19 +2110,8 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 	error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
 	if (error == 0) {
 		/* And forget about this address. */
-		for (mc = LIST_FIRST(&sc->carp_mc_listhead); mc != NULL;
-		    mc = LIST_NEXT(mc, mc_entries)) {
-			if (mc->mc_enm == enm) {
-				LIST_REMOVE(mc, mc_entries);
-				FREE(mc, M_DEVBUF);
-				break;
-			}
-		}
-		/*
-		 * XXX We don't actually want KASSERT(mc != NULL) here
-		 * because we mess with the multicast addresses elsewhere.
-		 * Clean up after release.
-		 */
+		LIST_REMOVE(mc, mc_entries);
+		FREE(mc, M_DEVBUF);
 	} else
 		(void)ether_addmulti(ifr, (struct arpcom *)&sc->sc_ac);
 	return (error);
