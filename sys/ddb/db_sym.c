@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.30 2005/04/19 15:24:22 miod Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.31 2005/09/29 05:57:14 deraadt Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
@@ -55,6 +55,8 @@ db_symtab_t	db_symtabs[MAXNOSYMTABS] = {{0,},};
 db_symtab_t	*db_last_symtab;
 
 static db_forall_func_t db_sift;
+
+extern char end[];
 
 /*
  * Put the most picky symbol table formats at the top!
@@ -129,8 +131,6 @@ ddb_init()
 	extern char *esym;
 #if defined(__sparc64__) || defined(__mips__)
 	extern char *ssym;
-#else
-	extern long end;
 #endif
 	char *xssym, *xesym;
 
@@ -534,7 +534,6 @@ db_symbol_values(sym, namep, valuep)
  * The variable db_lastsym is used instead of "end" in case we
  * add support for symbols in loadable driver modules.
  */
-extern char end[];
 unsigned long	db_lastsym = (unsigned long)end;
 unsigned int	db_maxoff = 0x10000000;
 
