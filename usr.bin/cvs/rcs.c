@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.65 2005/09/19 15:47:14 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.66 2005/09/29 15:29:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1214,12 +1214,12 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
  * cvs_buf_free() once the caller is done using it.
  */
 BUF*
-rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
+rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 {
 	int expmode, res;
 	size_t len;
 	void *bp;
-	RCSNUM *crev;
+	RCSNUM *crev, *rev;
 	BUF *rbuf, *dbuf = NULL;
 	struct rcs_delta *rdp = NULL;
 	struct rcs_foo *lines;
@@ -1228,6 +1228,11 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 
 	if (rfp->rf_head == NULL)
 		return (NULL);
+
+	if (frev == RCS_HEAD_REV)
+		rev = rfp->rf_head;
+	else
+		rev = frev;
 
 	res = rcsnum_cmp(rfp->rf_head, rev, 0);
 	if (res == 1) {
