@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.26 2005/08/23 23:44:28 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.27 2005/09/29 07:19:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -156,13 +156,15 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ses_softc		*sc = (struct ses_softc *)self;
 	struct scsibus_attach_args	*sa = aux;
+	char				vendor[33];
 
 	sc->sc_link = sa->sa_sc_link;
 	sc->sc_thread = NULL;
 	sa->sa_sc_link->device_softc = sc;
 
-	if (strncasecmp(sc->sc_link->inqdata.vendor, "dell",
-	    sizeof(sc->sc_link->inqdata.vendor)) == 0)
+	scsi_strvis(vendor, sc->sc_link->inqdata.vendor,
+	    sizeof(sc->sc_link->inqdata.vendor));
+	if (strncasecmp(vendor, "Dell", sizeof(vendor)) == 0)
 		sc->sc_enctype = SES_ENC_DELL;
 	else
 		sc->sc_enctype = SES_ENC_STD;
