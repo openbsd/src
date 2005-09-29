@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.51 2005/06/02 23:21:03 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.52 2005/09/29 21:21:45 kettenis Exp $
 #
 # PPC GENERIC config file
 #
@@ -34,6 +34,7 @@ cpu*		at mainbus0
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 memc*		at mainbus0
 pchb*		at pci?		# host bridge identifiers
+ht*		at mainbus0
 
 #### PCI Bus devices.
 
