@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.919 2005/09/25 20:06:49 kettenis Exp $
+$OpenBSD: pcidevs,v 1.920 2005/09/29 23:54:57 drahn Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -649,6 +649,17 @@ product APPLE UNINORTH6		0x0036	UniNorth PCI
 product APPLE INTREPID_ATA	0x003b	Intrepid ATA
 product APPLE INTREPID		0x003e	Intrepid
 product APPLE INTREPID_OHCI	0x003f	Intrepid USB
+product APPLE K2_USB		0x0040	K2 USB
+product APPLE K2		0x0041	K2 Macio
+product APPLE K2_FW		0x0042	K2 Firewire
+product APPLE K2_UATA		0x0043	K2 ATA
+product APPLE U3_PPB1		0x0045	U3 PPB
+product APPLE U3_PPB2		0x0045	U3 PPB
+product APPLE U3_PPB3		0x0045	U3 PPB
+product APPLE U3_PPB4		0x0045	U3 PPB
+product APPLE U3_PPB5		0x0045	U3 PPB
+product APPLE U3_AGP		0x004b	U3 AGP
+product APPLE K2_GMAC		0x004c	U3 GMAC
 product APPLE SHASTA		0x004f	Shasta
 product APPLE SHASTA_ATA	0x0050	Shasta ATA
 product APPLE SHASTA_GMAC	0x0051	Shasta GMAC
