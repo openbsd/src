@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.1 2005/09/29 20:52:26 kettenis Exp $	*/
+/*	$OpenBSD: ht.c,v 1.2 2005/09/29 21:44:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -299,20 +299,20 @@ ht_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 }
 
 int
-ht_intr_map(void *cpv, pcitag_t bustag, int buspin, int line,
+ht_intr_map(void *cpv, pcitag_t tag, int pin, int line,
     pci_intr_handle_t *ihp)
 {
 	int error = 0;
 
 #ifdef DEBUG
-	printf("ht_intr_map: buspin = %d, line = %d\n", buspin, line);
+	printf("ht_intr_map: tag=%x, pin=%d, line=%d\n", tag, pin, line);
 #endif
 
 	*ihp = -1;
-        if (buspin == 0)
+        if (pin == PCI_INTERRUPT_PIN_NONE)
                 error = 1; /* No IRQ used. */
-        else if (buspin > 4) {
-                printf("ht_intr_map: bad interrupt pin %d\n", buspin);
+        else if (pin > PCI_INTERRUPT_PIN_MAX) {
+                printf("ht_intr_map: bad interrupt pin %d\n", pin);
                 error = 1;
         }
 
