@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.70 2005/09/29 20:51:35 moritz Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.71 2005/09/29 20:54:29 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -384,6 +384,7 @@ void
 rcs_close(RCSFILE *rfp)
 {
 	struct rcs_delta *rdp;
+	struct rcs_access *rap;
 	struct rcs_lock *rlp;
 	struct rcs_sym *rsp;
 
@@ -399,6 +400,13 @@ rcs_close(RCSFILE *rfp)
 		rdp = TAILQ_FIRST(&(rfp->rf_delta));
 		TAILQ_REMOVE(&(rfp->rf_delta), rdp, rd_list);
 		rcs_freedelta(rdp);
+	}
+
+	while (!TAILQ_EMPTY(&(rfp->rf_access))) {
+		rap = TAILQ_FIRST(&(rfp->rf_access));
+		TAILQ_REMOVE(&(rfp->rf_access), rap, ra_list);
+		cvs_strfree(rap->ra_name);
+		free(rap);
 	}
 
 	while (!TAILQ_EMPTY(&(rfp->rf_symbols))) {
