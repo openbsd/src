@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.6 2003/10/15 23:00:57 drahn Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.7 2005/09/29 20:11:13 kettenis Exp $	*/
 /*	$NetBSD: pchb.c,v 1.4 2000/01/25 07:19:11 tsubai Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@ pchbmatch(struct device *parent, void *cf, void *aux)
 		case PCI_PRODUCT_APPLE_UNINORTH_AGP3:
 		case PCI_PRODUCT_APPLE_UNINORTH5:
 		case PCI_PRODUCT_APPLE_UNINORTH6:
+		case PCI_PRODUCT_APPLE_SHASTA_HT:
 			return (1);
 		}
 		break;
