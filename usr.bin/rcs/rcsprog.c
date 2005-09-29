@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.9 2005/09/29 15:13:19 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.10 2005/09/29 15:14:12 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -138,11 +138,10 @@ int
 rcs_main(int argc, char **argv)
 {
 	int i, ch, flags, kflag, lkmode;
-	char fpath[MAXPATHLEN], filev[MAXPATHLEN];
+	char fpath[MAXPATHLEN];
 	char *oldfile, *alist, *comment, *elist, *unp, *sp;
 	mode_t fmode;
 	RCSFILE *file;
-	struct stat st;
 
 	kflag = lkmode = -1;
 	fmode = 0;
