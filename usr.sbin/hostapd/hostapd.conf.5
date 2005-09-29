@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.10 2005/09/12 09:32:42 jmc Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.11 2005/09/29 23:57:00 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -513,6 +513,36 @@ A frame from the distribution system, the access point, to a station.
 A frame direction used by wireless distribution systems (WDS) for
 wireless access point to access point communication.
 .El
+.Sh EVENT RULE EXAMPLES
+.Bd -literal
+# Log probe requests locally
+hostap handle type management subtype probe request \\
+    with log
+
+# Log rogue accesspoints via IAPP, limited to every second,
+# and skip further IAPP processing.
+hostap handle skip type management subtype beacon bssid !<myess> \\
+    with iapp type radiotap limit 1 sec
+
+# Send deauthentication frames to stations accociated to rogue APs
+hostap handle type data bssid !<myess> with frame type management \\
+    subtype deauth reason auth expire \\
+    from &bssid to &from bssid &bssid
+
+# Send authentication requests from random station addresses to
+# rogue accesspoints. This is common way to test the quality of
+# various hostap implementations.
+hostap handle skip type management subtype beacon bssid <pentest> \\
+    with frame type management subtype auth \\
+    from random to &bssid bssid &bssid
+
+# Re-inject a received IEEE 802.11 frame
+hostap handle type management subtype auth with resend
+
+# Remove a blacklisted node from the kernel node tree
+hostap handle type management subtype auth from <blacklist> \\
+    with node delete &from
+.Ed
 .Sh GRAMMAR
 Syntax for
 .Nm
