@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.67 2005/09/29 15:39:41 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.68 2005/09/29 20:44:58 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -910,6 +910,13 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
 		free(lkp);
 		return (-1);
 	}
+
+	if ((lkp->rl_num = rcsnum_alloc()) == NULL) {
+		cvs_strfree(lkp->rl_name);
+		free(lkp);
+		return (-1);
+	}
+	rcsnum_cpy(rev, lkp->rl_num, 0);
 
 	TAILQ_INSERT_TAIL(&(file->rf_locks), lkp, rl_list);
 
