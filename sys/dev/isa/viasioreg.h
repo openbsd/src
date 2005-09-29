@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasioreg.h,v 1.1 2005/07/28 20:12:13 grange Exp $	*/
+/*	$OpenBSD: viasioreg.h,v 1.2 2005/09/29 19:53:24 grange Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -72,12 +72,30 @@
 #define VT1211_LDN_VFIR		0x0c	/* Very Fast IR */
 #define VT1211_LDN_ROM		0x0d	/* Flash ROM */
 
+/* Watchdog Timer Control Registers (LDN 9) */
+#define VT1211_WDG_ACT		0x30	/* Activate */
+#define VT1211_WDG_ACT_EN		(1 << 0)	/* enabled */
+#define VT1211_WDG_ADDR_MSB	0x60	/* Address [15:8] */
+#define VT1211_WDG_ADDR_LSB	0x61	/* Address [7:0] */
+#define VT1211_WDG_IRQSEL	0x70	/* IRQ Select */
+#define VT1211_WDG_CONF		0xf0	/* Configuration */
+
 /* Hardware Monitor Control Registers (LDN B) */
 #define VT1211_HM_ACT		0x30	/* Activate */
-#define VT1211_HM_ACT_EN		(1 << 0)
+#define VT1211_HM_ACT_EN		(1 << 0)	/* enabled */
 #define VT1211_HM_ADDR_MSB	0x60	/* Address [15:8] */
 #define VT1211_HM_ADDR_LSB	0x61	/* Address [7:0] */
 #define VT1211_HM_IRQSEL	0x70	/* IRQ Select */
+
+/* Watchdog Timer I/O Space Registers */
+#define VT1211_WDG_STAT		0x00	/* Status */
+#define VT1211_WDG_STAT_ACT		(1 << 0)	/* timer is active */
+#define VT1211_WDG_MASK		0x01	/* Mask */
+#define VT1211_WDG_MASK_COM1		(1 << 1)	/* COM1 trigger */
+#define VT1211_WDG_MASK_COM2		(1 << 2)	/* COM2 trigger */
+#define VT1211_WDG_TIMEOUT	0x02	/* Timeout */
+
+#define VT1211_WDG_IOSIZE	0x04	/* Watchdog timer I/O space size */
 
 /* Hardware Monitor I/O Space Registers */
 #define VT1211_HM_SELD0		0x10	/* SELD[7:0] */

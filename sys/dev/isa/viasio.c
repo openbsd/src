@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.2 2005/07/31 16:17:42 grange Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.3 2005/09/29 19:53:23 grange Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -41,6 +41,7 @@
 
 /* autoconf flags */
 #define VIASIO_CFFLAGS_HM_ENABLE	0x0001	/* enable HM if disabled */
+#define VIASIO_CFFLAGS_WDG_ENABLE	0x0002	/* enable WDG if disabled */
 
 struct viasio_softc {
 	struct device		sc_dev;
@@ -53,6 +54,9 @@ struct viasio_softc {
 	int			sc_hm_clock;
 	struct sensor		sc_hm_sensors[VT1211_HM_NSENSORS];
 	struct timeout		sc_hm_timo;
+
+	/* Watchdog timer */
+	bus_space_handle_t	sc_wdg_ioh;
 };
 
 int	viasio_probe(struct device *, void *, void *);
@@ -60,6 +64,9 @@ void	viasio_attach(struct device *, struct device *, void *);
 
 void	viasio_hm_init(struct viasio_softc *);
 void	viasio_hm_refresh(void *);
+
+void	viasio_wdg_init(struct viasio_softc *);
+int	viasio_wdg_cb(void *, int);
 
 struct cfattach viasio_ca = {
 	sizeof(struct viasio_softc),
@@ -181,6 +188,7 @@ viasio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize logical devices */
 	viasio_hm_init(sc);
+	viasio_wdg_init(sc);
 	printf("\n");
 
 	/* Escape from configuration mode */
@@ -429,4 +437,73 @@ viasio_hm_refresh(void *arg)
 	}
 
 	timeout_add(&sc->sc_hm_timo, hz);
+}
+
+void
+viasio_wdg_init(struct viasio_softc *sc)
+{
+	u_int8_t reg0, reg1;
+	u_int16_t iobase;
+
+	printf(": WDG");
+
+	/* Select WDG logical device */
+	viasio_conf_write(sc->sc_iot, sc->sc_ioh, VT1211_LDN, VT1211_LDN_WDG);
+
+	/*
+	 * Check if logical device is activated by firmware.  If not
+	 * try to activate it only if requested.
+	 */
+	reg0 = viasio_conf_read(sc->sc_iot, sc->sc_ioh, VT1211_WDG_ACT);
+	DPRINTF((": ACT 0x%02x", reg0));
+	if ((reg0 & VT1211_WDG_ACT_EN) == 0) {
+		if ((sc->sc_dev.dv_cfdata->cf_flags &
+		    VIASIO_CFFLAGS_WDG_ENABLE) != 0) {
+			reg0 |= VT1211_WDG_ACT_EN;
+			viasio_conf_write(sc->sc_iot, sc->sc_ioh,
+			    VT1211_WDG_ACT, reg0);
+			reg0 = viasio_conf_read(sc->sc_iot, sc->sc_ioh,
+			    VT1211_WDG_ACT);
+			DPRINTF((", new ACT 0x%02x", reg0));
+			if ((reg0 & VT1211_WDG_ACT_EN) == 0) {
+				printf(": failed to activate");
+				return;
+			}
+		} else {
+			printf(": not activated");
+			return;
+		}
+	}
+
+	/* Read WDG I/O space address */
+	reg0 = viasio_conf_read(sc->sc_iot, sc->sc_ioh, VT1211_WDG_ADDR_LSB);
+	reg1 = viasio_conf_read(sc->sc_iot, sc->sc_ioh, VT1211_WDG_ADDR_MSB);
+	iobase = (reg1 << 8) | reg0;
+	DPRINTF((", addr 0x%04x", iobase));
+
+	/* Map WDG I/O space */
+	if (bus_space_map(sc->sc_iot, iobase, VT1211_WDG_IOSIZE, 0,
+	    &sc->sc_wdg_ioh)) {
+		printf(": can't map I/O space");
+		return;
+	}
+
+	/* Register new watchdog */
+	wdog_register(sc, viasio_wdg_cb);
+}
+
+int
+viasio_wdg_cb(void *arg, int period)
+{
+	struct viasio_softc *sc = arg;
+	int mins;
+
+	mins = (period + 59) / 60;
+	if (mins > 255)
+		mins = 255;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_wdg_ioh, VT1211_WDG_TIMEOUT, mins);
+	DPRINTF(("viasio_wdg_cb: %d mins\n", mins));
+
+	return (mins * 60);
 }

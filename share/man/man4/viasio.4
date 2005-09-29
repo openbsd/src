@@ -1,4 +1,4 @@
-.\"	$OpenBSD: viasio.4,v 1.2 2005/07/28 21:08:35 jmc Exp $
+.\"	$OpenBSD: viasio.4,v 1.3 2005/09/29 19:53:24 grange Exp $
 .\"
 .\" Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -27,7 +27,8 @@
 The
 .Nm
 driver provides support for the VIA VT1211 LPC Super I/O IC.
-Only the hardware monitoring function is currently supported.
+The hardware monitoring and a watchdog timer functions are currently
+supported.
 .Pp
 The hardware monitor provides hardware monitoring capabilities
 to be used with the
@@ -51,9 +52,17 @@ If the hardware monitor is not enabled by firmware, the driver can try
 to enable it if value 0x0001 is presented in the
 .Ar flags .
 Note that enabling the hardware monitor can lead to unexpected results.
+.Pp
+The watchdog timer provides a standard
+.Xr watchdog 4
+interface.
+If the watchdog timer is not enabled by firmware, the driver can try
+to enable it if value 0x0002 is presented in the
+.Ar flags .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,
+.Xr watchdog 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
