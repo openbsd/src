@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.49 2005/08/01 03:03:14 david Exp $
+#	$OpenBSD: files.usb,v 1.50 2005/09/29 01:18:32 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -81,6 +81,10 @@ device	ums: hid, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
 
+# Cypress microcontroller based serial adpaters
+device	ucycom: hid
+attach	ucycom at uhidbus
+file	dev/usb/ucycom.c		ucycom			needs-flag
 
 # Printers
 device	ulpt
