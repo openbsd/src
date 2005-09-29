@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.11 2005/09/26 19:54:50 kettenis Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.12 2005/09/29 23:58:06 drahn Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@ macobio_match(struct device *parent, void *cf, void *aux)
 		case PCI_PRODUCT_APPLE_INTREPID:
 		case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 		case PCI_PRODUCT_APPLE_SHASTA:
+		case PCI_PRODUCT_APPLE_K2:
 			return 1;
 		}
 
@@ -143,6 +144,7 @@ macobio_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_APPLE_INTREPID:
 	case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 	case PCI_PRODUCT_APPLE_SHASTA:
+	case PCI_PRODUCT_APPLE_K2:
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
