@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2005/09/27 16:27:23 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2005/09/29 00:43:03 deraadt Exp $
 #	$NetBSD: Makefile,v 1.14 1995/04/22 12:10:17 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
@@ -83,6 +83,9 @@ realinstall: ${DATA} ${REDO} ${YEARISTYPECOPY}
 	    ${ZIC} -y ${YEARISTYPECOPY} -d ${TZDIR} -p ${POSIXRULES})
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
 	find ${TZDIR} -type f -print0 | xargs -0r chmod a=r
+	${INSTALL} -c -o root -g wheel -m 600 ${.CURDIR}/datfiles/iso3166.tab \
+	    ${DESTDIR}/usr/share/misc
+
 
 CLEANFILES+= yearistypecopy
 
