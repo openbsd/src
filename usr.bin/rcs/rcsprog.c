@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.11 2005/09/29 15:19:51 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.12 2005/09/29 21:30:10 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -44,6 +44,7 @@
 #include "strtab.h"
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
+int verbose = 1;
 
 struct rcs_prog {
 	char  *prog_name;
@@ -84,14 +85,16 @@ rcs_statfile(char *fname, char *out, size_t len)
 	}
 
 	strlcpy(out, fpath, len);
-	if (!strcmp(__progname, "co")) {
-		printf("%s --> ", filev);
-		if ((s = strrchr(filev, ',')) != NULL) {
-			*s = '\0';
-			printf("%s\n", fname);
+	if (verbose) {
+		if (!strcmp(__progname, "co")) {
+			printf("%s --> ", filev);
+			if ((s = strrchr(filev, ',')) != NULL) {
+				*s = '\0';
+				printf("%s\n", fname);
+			}
+		} else {
+			printf("RCS file: %s\n", fpath);
 		}
-	} else {
-		printf("RCS file: %s\n", fpath);
 	}
 
 	return (0);
@@ -148,7 +151,7 @@ rcs_main(int argc, char **argv)
 	flags = RCS_RDWR;
 	oldfile = alist = comment = elist = NULL;
 
-	while ((ch = getopt(argc, argv, "A:a:b::c:e::hik:LMUV")) != -1) {
+	while ((ch = getopt(argc, argv, "A:a:b::c:e::hik:LMqUV")) != -1) {
 		switch (ch) {
 		case 'A':
 			oldfile = optarg;
@@ -184,6 +187,9 @@ rcs_main(int argc, char **argv)
 			break;
 		case 'M':
 			/* ignore for the moment */
+			break;
+		case 'q':
+			verbose = 0;
 			break;
 		case 'U':
 			if (lkmode == RCS_LOCK_STRICT)
@@ -240,7 +246,8 @@ rcs_main(int argc, char **argv)
 
 		rcs_close(file);
 
-		printf("done\n");
+		if (verbose)
+			printf("done\n");
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.2 2005/09/29 15:21:57 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.3 2005/09/29 21:30:10 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -48,8 +48,11 @@ checkout_main(int argc, char **argv)
 	char *s, fpath[MAXPATHLEN];
 
 	rev = RCS_HEAD_REV;
-	while ((ch = getopt(argc, argv, "r:")) != -1) {
+	while ((ch = getopt(argc, argv, "qr:")) != -1) {
 		switch (ch) {
+		case 'q':
+			verbose = 0;
+			break;
 		case 'r':
 			if ((rev = rcsnum_parse(optarg)) == NULL) {
 				cvs_log(LP_ERR, "bad revision number");
