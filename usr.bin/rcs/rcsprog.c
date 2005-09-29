@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.7 2005/09/20 05:03:02 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.8 2005/09/29 00:20:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,6 +26,7 @@
 
 #include <sys/param.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -94,7 +95,6 @@ rcs_usage(void)
 	    "[-e users] [-k opt] file ...\n", __progname);
 }
 
-
 /*
  * rcs_main()
  *
@@ -105,10 +105,11 @@ int
 rcs_main(int argc, char **argv)
 {
 	int i, ch, flags, kflag, lkmode;
-	char fpath[MAXPATHLEN];
+	char fpath[MAXPATHLEN], filev[MAXPATHLEN];
 	char *oldfile, *alist, *comment, *elist, *unp, *sp;
 	mode_t fmode;
 	RCSFILE *file;
+	struct stat st;
 
 	kflag = lkmode = -1;
 	fmode = 0;
@@ -181,7 +182,20 @@ rcs_main(int argc, char **argv)
 		 * Our RCS API does not append the RCS_FILE_EXT extension
 		 * automaticly in rcs_open(), so we add it here.
 		 */
-		snprintf(fpath, sizeof(fpath), "%s%s", argv[i], RCS_FILE_EXT);
+		snprintf(filev, sizeof(filev), "%s%s", argv[i], RCS_FILE_EXT);
+		if (stat(RCSDIR, &st) != -1) {
+			strlcpy(fpath, RCSDIR, sizeof(fpath));
+			strlcat(fpath, "/", sizeof(fpath));
+			strlcat(fpath, filev, sizeof(fpath));
+		} else {
+			strlcpy(fpath, filev, sizeof(filev));
+		}
+
+		if (stat(fpath, &st) != -1) {
+			errno = EEXIST;
+			cvs_log(LP_ERRNO, "%s", fpath);
+			continue;
+		}
 
 		printf("RCS file: %s\n", fpath);
 		file = rcs_open(fpath, flags, fmode);
