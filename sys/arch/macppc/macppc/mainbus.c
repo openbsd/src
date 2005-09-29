@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.10 2003/10/30 03:17:32 itojun Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.11 2005/09/29 20:17:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -129,6 +129,12 @@ mbattach(struct device *parent, struct device *self, void *aux)
 			}
 			if (strcmp(name, "pci") == 0) {
 				nca.ca_name = "mpcpcibr";
+				nca.ca_node = node;
+				nca.ca_bus = &sc->sc_bus;
+				config_found(self, &nca, mbprint);
+			}
+			if (strcmp(name, "ht") == 0) {
+				nca.ca_name = "ht";
 				nca.ca_node = node;
 				nca.ca_bus = &sc->sc_bus;
 				config_found(self, &nca, mbprint);
