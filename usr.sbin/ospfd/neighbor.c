@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.23 2005/06/13 08:32:29 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.24 2005/09/29 15:14:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -677,7 +677,10 @@ nbr_to_ctl(struct nbr *nbr)
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&nbr->inactivity_timer, &tv)) {
 		timersub(&tv, &now, &res);
-		nctl.dead_timer = res.tv_sec;
+		if (nbr->state & NBR_STA_DOWN)
+			nctl.dead_timer = DEFAULT_NBR_TMOUT - res.tv_sec;
+		else
+			nctl.dead_timer = res.tv_sec;
 	} else
 		nctl.dead_timer = 0;
 
