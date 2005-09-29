@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrs.c,v 1.10 2002/09/07 01:25:34 marc Exp $*/
+/*	$OpenBSD: rrs.c,v 1.11 2005/09/29 20:40:35 deraadt Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -1037,7 +1037,7 @@ write_rrs_text(void)
 	nlp->nz_value = dynamic_symbol->value;
 	nlp->nz_value = dynamic_symbol->value;
 	nlp->nz_strx = offset;
-	strcpy(rrs_strtab + offset, dynamic_symbol->name);
+	strlcpy(rrs_strtab + offset, dynamic_symbol->name, rrs_strtab_size - offset);
 	offset += 1 + strlen(dynamic_symbol->name);
 	INCR_NLP(nlp);
 
@@ -1060,7 +1060,8 @@ write_rrs_text(void)
 			nlp->nz_other = 0;
 			nlp->nz_desc = 0;
 			nlp->nz_size = 0;
-			strcpy(rrs_strtab + offset, sp->warning);
+			strlcpy(rrs_strtab + offset, sp->warning,
+			    rrs_strtab_size - offset);
 			offset += 1 + strlen(sp->warning);
 			INCR_NLP(nlp);
 
@@ -1070,7 +1071,8 @@ write_rrs_text(void)
 			nlp->nz_other = 0;
 			nlp->nz_desc = 0;
 			nlp->nz_size = 0;
-			strcpy(rrs_strtab + offset, sp->name);
+			strlcpy(rrs_strtab + offset, sp->name,
+			    rrs_strtab_size - offset);
 			offset += 1 + strlen(sp->name);
 			INCR_NLP(nlp);
 		}
@@ -1149,7 +1151,8 @@ write_rrs_text(void)
 
 		/* Set symbol's name */
 		nlp->nz_strx = offset;
-		strcpy(rrs_strtab + offset, sp->name);
+		strlcpy(rrs_strtab + offset, sp->name,
+		    rrs_strtab_size - offset);
 		offset += 1 + strlen(sp->name);
 
 		if (sp->alias) {
@@ -1166,7 +1169,8 @@ write_rrs_text(void)
 			nlp->nz_other = 0;
 			nlp->nz_desc = 0;
 			nlp->nz_size = 0;
-			strcpy(rrs_strtab + offset, sp->alias->name);
+			strlcpy(rrs_strtab + offset, sp->alias->name,
+			    rrs_strtab_size - offset);
 			offset += 1 + strlen(sp->alias->name);
 		}
 
