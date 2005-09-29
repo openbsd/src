@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.69 2005/09/29 20:47:34 moritz Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.70 2005/09/29 20:51:35 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -584,6 +584,7 @@ rcs_head_set(RCSFILE *file, const RCSNUM *rev)
 	if (rcsnum_cpy(rev, file->rf_head, 0) < 0)
 		return (-1);
 
+	file->rf_flags &= ~RCS_SYNCED;
 	return (0);
 }
 
@@ -620,6 +621,7 @@ rcs_branch_set(RCSFILE *file, const RCSNUM *bnum)
 		return (-1);
 	}
 
+	file->rf_flags &= ~RCS_SYNCED;
 	return (0);
 }
 
@@ -876,6 +878,7 @@ rcs_lock_setmode(RCSFILE *file, int mode)
 		return (-1);
 	}
 
+	file->rf_flags &= ~RCS_SYNCED;
 	return (pmode);
 }
 
