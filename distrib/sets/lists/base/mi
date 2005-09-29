@@ -2412,6 +2412,7 @@
 ./usr/share/misc/countrycodes
 ./usr/share/misc/eqnchar
 ./usr/share/misc/inter.phone
+./usr/share/misc/iso3166.tab
 ./usr/share/misc/license.template
 ./usr/share/misc/mail.help
 ./usr/share/misc/mail.tildehelp
