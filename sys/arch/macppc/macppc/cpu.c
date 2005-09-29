@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.21 2005/03/10 19:24:30 otto Exp $ */
+/*	$OpenBSD: cpu.c,v 1.22 2005/09/29 20:40:24 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -199,6 +199,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		hid0 &= ~(HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
 		break;
+	case PPC_CPU_MPC7447A:
 	case PPC_CPU_MPC7450:
 	case PPC_CPU_MPC7455:
 		/* select NAP mode */
@@ -217,7 +218,8 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	/* if processor is G3 or G4, configure l2 cache */
 	if (cpu == PPC_CPU_MPC750 || cpu == PPC_CPU_MPC7400 ||
 	    cpu == PPC_CPU_IBM750FX || cpu == PPC_CPU_MPC7410 ||
-	    cpu == PPC_CPU_MPC7450 || cpu == PPC_CPU_MPC7455) {
+	    cpu == PPC_CPU_MPC7447A || cpu == PPC_CPU_MPC7450 ||
+	    cpu == PPC_CPU_MPC7455) {
 		config_l2cr(cpu);
 	}
 	printf("\n");
@@ -309,7 +311,7 @@ config_l2cr(int cpu)
 			if (l3cr & L3CR_L3E)
 				printf(", %cMB L3 cache",
 				    l3cr & L3CR_L3SIZ ? '2' : '1');
-		} else if (cpu == PPC_CPU_IBM750FX)
+		} else if (cpu == PPC_CPU_IBM750FX || cpu == PPC_CPU_MPC7447A)
 			printf(": 512KB L2 cache");
 		else {
 			switch (l2cr & L2CR_L2SIZ) {
