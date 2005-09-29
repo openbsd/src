@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.25 2005/05/04 02:24:17 drahn Exp $
+#	$OpenBSD: files.macppc,v 1.26 2005/09/29 20:52:26 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -72,6 +72,10 @@ device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
 file	arch/macppc/pci/mpcpcibus.c			mpcpcibr
 file	arch/macppc/pci/pci_addr_fixup.c		mpcpcibr
+
+device  ht {} : pcibus
+attach	ht at mainbus
+file	arch/macppc/pci/ht.c				ht
 
 #
 # "workstation console" routines
