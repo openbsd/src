@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.91 2005/09/26 22:52:49 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.92 2005/09/29 01:19:53 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ cdclose(dev, flag, fmt, p)
 
 		scsi_prevent(cd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
-		cd->sc_link->flags &= ~SDEV_OPEN;
+		cd->sc_link->flags &= ~(SDEV_OPEN | SDEV_MEDIA_LOADED);
 
 		if (cd->sc_link->flags & SDEV_EJECTING) {
 			scsi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0);
