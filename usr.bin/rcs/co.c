@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.1 2005/09/29 15:16:26 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.2 2005/09/29 15:21:57 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -104,5 +104,5 @@ checkout_main(int argc, char **argv)
 void
 checkout_usage(void)
 {
-	fprintf(stderr, "usage %s\n", __progname);
+	fprintf(stderr, "usage %s [-r rev] file ...\n", __progname);
 }
