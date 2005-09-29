@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.919 2005/09/25 20:06:49 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.920 2005/09/29 23:54:57 drahn Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1257,6 +1257,50 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID_OHCI,
 	    "Intrepid USB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_USB,
+	    "K2 USB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2,
+	    "K2 Macio",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_FW,
+	    "K2 Firewire",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_UATA,
+	    "K2 ATA",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB1,
+	    "U3 PPB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB2,
+	    "U3 PPB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB3,
+	    "U3 PPB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB4,
+	    "U3 PPB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB5,
+	    "U3 PPB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_AGP,
+	    "U3 AGP",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
+	    "U3 GMAC",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA,
