@@ -1,12 +1,13 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.50 2005/03/17 18:16:52 millert Exp $
+#	$OpenBSD: daily,v 1.51 2005/09/29 00:31:08 deraadt Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
 bak=/var/backups
 
 sysctl -n kern.version
+uptime
 
 if [ -f /etc/daily.local ]; then
 	echo ""
