@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_stat.c,v 1.15 2004/04/28 02:20:58 markus Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.16 2005/09/30 02:37:06 pedro Exp $	 */
 /*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
@@ -223,8 +223,9 @@ uvmexp_print(int (*pr)(const char *, ...))
 	    uvmexp.wiredmax);
 	(*pr)("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d\n",
 	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch);
-	(*pr)("  softint=%d, syscalls=%d, swapins=%d, swapouts=%d\n",
-	    uvmexp.softs, uvmexp.syscalls, uvmexp.swapins, uvmexp.swapouts);
+	(*pr)("  softint=%d, syscalls=%d, swapins=%d, swapouts=%d, "
+	    "kmapent=%d\n", uvmexp.softs, uvmexp.syscalls, uvmexp.swapins,
+	    uvmexp.swapouts, uvmexp.kmapent);
 
 	(*pr)("  fault counts:\n");
 	(*pr)("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",
