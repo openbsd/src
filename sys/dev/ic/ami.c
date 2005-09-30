@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.87 2005/09/26 21:33:02 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.88 2005/09/30 07:53:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -324,13 +324,11 @@ ami_attach(sc)
 	struct ami_rawsoftc *rsc;
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
-	struct ami_passthrough *pt;
-	struct ami_sgent *sg;
 	bus_dmamap_t idatamap;
 	bus_dma_segment_t idataseg[1];
 	const char *p;
 	void	*idata;
-	int	error;
+	int	i, error;
 	/* u_int32_t *pp; */
 
 	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
@@ -345,18 +343,13 @@ ami_attach(sc)
 	sc->sc_mbox_pa = sc->sc_mbox_seg[0].ds_addr;
 	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ", sc->sc_mbox_pa));
 
-	sc->sc_cmds = ami_allocmem(sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
-	    sizeof(struct ami_iocmd), AMI_MAXCMDS+1, "command");
-	if (!sc->sc_cmds)
+	sc->sc_pts = ami_allocmem(sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
+	    sizeof(struct ami_passthrough), AMI_MAXCMDS, "ptlist");
+	if (!sc->sc_pts)
 		goto free_mbox;
 
-	sc->sc_pts = ami_allocmem(sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
-	    sizeof(struct ami_passthrough), AMI_MAXCMDS+1, "ptlist");
-	if (!sc->sc_pts)
-		goto free_cmds;
-
 	sc->sc_sgents = ami_allocmem(sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
-	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS+1, "sglist");
+	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS, "sglist");
 	if (!sc->sc_sgents)
 		goto free_pts;
 
@@ -364,38 +357,28 @@ ami_attach(sc)
 	TAILQ_INIT(&sc->sc_ccbdone);
 	TAILQ_INIT(&sc->sc_free_ccb);
 
-	/* 0th command is a mailbox */
-	for (ccb = &sc->sc_ccbs[AMI_MAXCMDS-1],
-	     cmd = sc->sc_cmds  + sizeof(*cmd) * AMI_MAXCMDS,
-	     pt = sc->sc_pts  + sizeof(*pt) * AMI_MAXCMDS,
-	     sg = sc->sc_sgents + sizeof(*sg)  * AMI_MAXCMDS * AMI_SGEPERCMD;
-	     cmd >= (struct ami_iocmd *)sc->sc_cmds;
-	     cmd--, ccb--, pt--, sg -= AMI_SGEPERCMD) {
+	for (i = 0; i < AMI_MAXCMDS; i++) {
+		ccb = &sc->sc_ccbs[i];
 
-		cmd->acc_id = cmd - (struct ami_iocmd *)sc->sc_cmds;
-		if (cmd->acc_id) {
-			error = bus_dmamap_create(sc->dmat,
-			    AMI_MAXFER, AMI_MAXOFFSETS, AMI_MAXFER, 0,
-			    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
-			    &ccb->ccb_dmamap);
-			if (error) {
-				printf(": cannot create ccb dmamap (%d)\n",
-				    error);
-				goto destroy;
-			}
-			ccb->ccb_sc = sc;
-			ccb->ccb_cmd = cmd;
-			ccb->ccb_state = AMI_CCB_FREE;
-			ccb->ccb_cmdpa = htole32(sc->sc_cmdseg[0].ds_addr +
-			    cmd->acc_id * sizeof(*cmd));
-			ccb->ccb_pt = pt;
-			ccb->ccb_ptpa = htole32(sc->sc_ptseg[0].ds_addr +
-			    cmd->acc_id * sizeof(*pt));
-			ccb->ccb_sglist = sg;
-			ccb->ccb_sglistpa = htole32(sc->sc_sgseg[0].ds_addr +
-			    cmd->acc_id * sizeof(*sg) * AMI_SGEPERCMD);
-			TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
+		error = bus_dmamap_create(sc->dmat, AMI_MAXFER, AMI_MAXOFFSETS,
+		    AMI_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &ccb->ccb_dmamap);
+		if (error) {
+			printf(": cannot create ccb dmamap (%d)\n", error);
+			goto destroy;
 		}
+
+
+		ccb->ccb_sc = sc;
+		ccb->ccb_state = AMI_CCB_FREE;
+		ccb->ccb_cmd.acc_id = i + 1;
+		ccb->ccb_pt = &sc->sc_pts[i];
+		ccb->ccb_ptpa = htole32(sc->sc_ptseg[0].ds_addr +
+		    (sizeof(struct ami_passthrough) * i));
+		ccb->ccb_sglist = &sc->sc_sgents[i * AMI_SGEPERCMD];
+		ccb->ccb_sglistpa = htole32(sc->sc_sgseg[0].ds_addr +
+		    (sizeof(struct ami_sgent) * AMI_SGEPERCMD * i));
+		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 	}
 
 	timeout_set(&sc->sc_poll_tmo, (void (*)(void *))ami_intr, sc);
@@ -408,7 +391,7 @@ ami_attach(sc)
 		lock = AMI_LOCK_AMI(sc);
 
 		ccb = ami_get_ccb(sc);
-		cmd = ccb->ccb_cmd;
+		cmd = &ccb->ccb_cmd;
 
 		/* try FC inquiry first */
 		cmd->acc_cmd = AMI_FCOP;
@@ -424,7 +407,7 @@ ami_attach(sc)
 			    einq->ain_ldstat);
 
 			ccb = ami_get_ccb(sc);
-			cmd = ccb->ccb_cmd;
+			cmd = &ccb->ccb_cmd;
 
 			cmd->acc_cmd = AMI_FCOP;
 			cmd->acc_io.aio_channel = AMI_FC_PRODINF;
@@ -449,7 +432,7 @@ ami_attach(sc)
 			struct ami_inquiry *inq = idata;
 
 			ccb = ami_get_ccb(sc);
-			cmd = ccb->ccb_cmd;
+			cmd = &ccb->ccb_cmd;
 
 			cmd->acc_cmd = AMI_EINQUIRY;
 			cmd->acc_io.aio_channel = 0;
@@ -457,7 +440,7 @@ ami_attach(sc)
 			cmd->acc_io.aio_data = htole32(pa);
 			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 				ccb = ami_get_ccb(sc);
-				cmd = ccb->ccb_cmd;
+				cmd = &ccb->ccb_cmd;
 
 				cmd->acc_cmd = AMI_INQUIRY;
 				cmd->acc_io.aio_channel = 0;
@@ -504,7 +487,7 @@ ami_attach(sc)
 		 */
 		ccb = ami_get_ccb(sc);
 		ccb->ccb_data = NULL;
-		cmd = ccb->ccb_cmd;
+		cmd = &ccb->ccb_cmd;
 
 		cmd->acc_cmd = AMI_MISC;
 		cmd->acc_io.aio_channel = AMI_GET_IO_CMPL; /* sub opcode */
@@ -517,7 +500,7 @@ ami_attach(sc)
 		} else {
 			ccb = ami_get_ccb(sc);
 			ccb->ccb_data = NULL;
-			cmd = ccb->ccb_cmd;
+			cmd = &ccb->ccb_cmd;
 
 			cmd->acc_cmd = AMI_MISC;
 			cmd->acc_io.aio_channel = AMI_SET_IO_CMPL;
@@ -644,14 +627,12 @@ destroy:
 		if (ccb->ccb_dmamap)
 			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
 
-	ami_freemem(sc->sc_sgents, sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
-	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS+1, "sglist");
+	ami_freemem((caddr_t)sc->sc_sgents, sc->dmat, &sc->sc_sgmap,
+	    sc->sc_sgseg, sizeof(struct ami_sgent) * AMI_SGEPERCMD,
+	    AMI_MAXCMDS, "sglist");
 free_pts:
-	ami_freemem(sc->sc_pts, sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
-	    sizeof(struct ami_passthrough), AMI_MAXCMDS+1, "ptlist");
-free_cmds:
-	ami_freemem(sc->sc_cmds, sc->dmat, &sc->sc_cmdmap, sc->sc_cmdseg,
-	    sizeof(struct ami_iocmd), AMI_MAXCMDS+1, "command");
+	ami_freemem((caddr_t)sc->sc_pts, sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
+	    sizeof(struct ami_passthrough), AMI_MAXCMDS, "ptlist");
 free_mbox:
 	ami_freemem((caddr_t)sc->sc_mbox, sc->dmat, &sc->sc_mbox_map,
 	    sc->sc_mbox_seg, sizeof(struct ami_iocmd), 1, "mbox");
@@ -1039,7 +1020,7 @@ ami_cmd(ccb, flags, wait)
 	int error = 0, i;
 
 	if (ccb->ccb_data) {
-		struct ami_iocmd *cmd = ccb->ccb_cmd;
+		struct ami_iocmd *cmd = &ccb->ccb_cmd;
 		bus_dma_segment_t *sgd;
 
 		error = bus_dmamap_load(sc->dmat, dmap, ccb->ccb_data,
@@ -1094,14 +1075,12 @@ ami_cmd(ccb, flags, wait)
 		bus_dmamap_sync(sc->dmat, dmap, 0, dmap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 	} else
-		ccb->ccb_cmd->acc_mbox.amb_nsge = 0;
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, sc->sc_cmdmap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
+		ccb->ccb_cmd.acc_mbox.amb_nsge = 0;
 
 	if (wait) {
 		AMI_DPRINTF(AMI_D_DMA, ("waiting "));
 		/* FIXME remove all wait out ami_start */
-		if ((error = sc->sc_poll(sc, ccb->ccb_cmd))) {
+		if ((error = sc->sc_poll(sc, &ccb->ccb_cmd))) {
 			AMI_DPRINTF(AMI_D_MISC, ("pf "));
 		}
 		if (ccb->ccb_data)
@@ -1127,7 +1106,7 @@ ami_start(ccb, wait)
 	int wait;
 {
 	struct ami_softc *sc = ccb->ccb_sc;
-	struct ami_iocmd *cmd = ccb->ccb_cmd;
+	struct ami_iocmd *cmd = &ccb->ccb_cmd;
 	struct scsi_xfer *xs = ccb->ccb_xs;
 	volatile struct ami_iocmd *mbox = sc->sc_mbox;
 	int i;
@@ -1189,7 +1168,7 @@ ami_stimeout(v)
 	struct ami_ccb *ccb = v;
 	struct ami_softc *sc = ccb->ccb_sc;
 	struct scsi_xfer *xs = ccb->ccb_xs;
-	struct ami_iocmd *cmd = ccb->ccb_cmd;
+	struct ami_iocmd *cmd = &ccb->ccb_cmd;
 	volatile struct ami_iocmd *mbox = sc->sc_mbox;
 	ami_lock_t lock;
 
@@ -1247,7 +1226,7 @@ ami_done(sc, idx)
 	struct scsi_xfer *xs = ccb->ccb_xs;
 	ami_lock_t lock;
 
-	AMI_DPRINTF(AMI_D_CMD, ("done(%d) ", ccb->ccb_cmd->acc_id));
+	AMI_DPRINTF(AMI_D_CMD, ("done(%d) ", ccb->ccb_cmd.acc_id));
 
 	if (ccb->ccb_state != AMI_CCB_QUEUED) {
 		printf("%s: unqueued ccb %d ready, state = %d\n",
@@ -1373,7 +1352,7 @@ ami_scsi_raw_cmd(xs)
 	ccb->ccb_pt->apt_nsense = AMI_MAX_SENSE;
 	ccb->ccb_pt->apt_datalen = xs->datalen;
 
-	cmd = ccb->ccb_cmd;
+	cmd = &ccb->ccb_cmd;
 	cmd->acc_cmd = AMI_PASSTHRU;
 
 	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP) ?
@@ -1562,7 +1541,7 @@ ami_scsi_cmd(xs)
 		ccb->ccb_dir  = (xs->flags & SCSI_DATA_IN) ?
 		    AMI_CCB_IN : AMI_CCB_OUT;
 		ccb->ccb_data = xs->data;
-		cmd = ccb->ccb_cmd;
+		cmd = &ccb->ccb_cmd;
 		cmd->acc_mbox.amb_nsect = htole16(blockcnt);
 		cmd->acc_mbox.amb_lba = htole32(blockno);
 		cmd->acc_mbox.amb_ldn = target;
@@ -1752,7 +1731,7 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 	ccb->ccb_len = sizeof(struct scsi_inquiry_data);
 	ccb->ccb_dir = AMI_CCB_IN;
 
-	ccb->ccb_cmd->acc_cmd = AMI_PASSTHRU;
+	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
 
 	pt = ccb->ccb_pt;
 
@@ -1824,7 +1803,7 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 
 	ccb->ccb_data = NULL;
 	ccb->ccb_wakeup = 1;
-	cmd = ccb->ccb_cmd;
+	cmd = &ccb->ccb_cmd;
 
 	cmd->acc_cmd = opcode;
 

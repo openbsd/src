@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.29 2005/09/26 21:33:02 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.30 2005/09/30 07:53:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -31,8 +31,7 @@ struct ami_softc;
 
 struct ami_ccb {
 	struct ami_softc	*ccb_sc;
-	struct ami_iocmd	*ccb_cmd;
-	paddr_t			ccb_cmdpa;
+	struct ami_iocmd	ccb_cmd;
 	struct ami_passthrough	*ccb_pt;
 	paddr_t			ccb_ptpa;
 	struct ami_sgent	*ccb_sglist;
@@ -92,15 +91,11 @@ struct ami_softc {
 	struct ami_ccb	sc_ccbs[AMI_MAXCMDS];
 	ami_queue_head	sc_free_ccb, sc_ccbq, sc_ccbdone;
 
-	void		*sc_cmds;
-	bus_dmamap_t	sc_cmdmap;
-	bus_dma_segment_t sc_cmdseg[1];
-
-	void		*sc_pts;
+	struct ami_passthrough *sc_pts;
 	bus_dmamap_t	sc_ptmap;
 	bus_dma_segment_t sc_ptseg[1];
 
-	void		*sc_sgents;
+	struct ami_sgent *sc_sgents;
 	bus_dmamap_t	sc_sgmap;
 	bus_dma_segment_t sc_sgseg[1];
 
