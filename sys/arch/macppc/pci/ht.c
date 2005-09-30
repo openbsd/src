@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.4 2005/09/30 01:29:13 deraadt Exp $	*/
+/*	$OpenBSD: ht.c,v 1.5 2005/09/30 21:37:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -54,6 +54,7 @@ int	 ht_print(void *, const char *);
 
 struct ht_softc {
 	struct device	sc_dev;
+	int		sc_maxdevs;
 	struct ppc_bus_space sc_mem_bus_space;
 	struct ppc_bus_space sc_io_bus_space;
 	struct ppc_pci_chipset sc_pc;
@@ -135,7 +136,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_io_bus_space.bus_io = 1;
 	sc->sc_iot = &sc->sc_io_bus_space;
 
-	if (bus_space_map(sc->sc_memt, regs[1], 0x2000, 0,
+	if (bus_space_map(sc->sc_memt, regs[1], 0x4000, 0,
 		&sc->sc_config0_memh)) {
 		printf(": can't map PCI config0 memory\n");
 		return;
@@ -155,9 +156,9 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 
 	len = OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
 	if (len <= 0)
-		printf(": unknown\n");
+		printf(": unknown");
 	else
-		printf(": %s\n", compat);
+		printf(": %s", compat);
 
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = ht_attach_hook;
@@ -181,6 +182,11 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
+
+	sc->sc_maxdevs = 1;
+	for (node = OF_child(ca->ca_node); node; node = OF_peer(node))
+		sc->sc_maxdevs++;
+	printf(": %d devices\n", sc->sc_maxdevs);
 
 	extern void fix_node_irq(int, struct pcibus_attach_args *);
 
@@ -209,11 +215,13 @@ ht_attach_hook(struct device *parent, struct device *self,
 }
 
 int
-ht_bus_maxdevs(void *cpv, int busno)
+ht_bus_maxdevs(void *cpv, int bus)
 {
+	struct ht_softc *sc = cpv;
+
 	/* XXX Probing more busses doesn't work. */
-	if (busno == 0)
-		return 4;
+	if (bus == 0)
+		return sc->sc_maxdevs;
 	return 32;
 }
 
@@ -254,8 +262,8 @@ ht_conf_read(void *cpv, pcitag_t tag, int offset)
 		reg = bus_space_read_4(sc->sc_iot, sc->sc_config0_ioh, tag);
 		reg = letoh32(reg);
 	} else if (bus == 0) {
-		if (tag >= 0x2000)
-			panic("tag >= 0x2000");
+		if (tag >= 0x4000)
+			panic("tag >= 0x4000");
 		/* XXX Needed on some PowerMac G5's.  Why? */
 		if (fcn > 1)
 			return ~0;
@@ -298,6 +306,9 @@ ht_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	}
 }
 
+/* XXX */
+#define PCI_INTERRUPT_NO_CONNECTION	0xff
+
 int
 ht_intr_map(void *cpv, pcitag_t tag, int pin, int line,
     pci_intr_handle_t *ihp)
@@ -309,7 +320,8 @@ ht_intr_map(void *cpv, pcitag_t tag, int pin, int line,
 #endif
 
 	*ihp = -1;
-        if (pin == PCI_INTERRUPT_PIN_NONE)
+        if (pin == PCI_INTERRUPT_PIN_NONE ||
+	    line == PCI_INTERRUPT_NO_CONNECTION)
                 error = 1; /* No IRQ used. */
         else if (pin > PCI_INTERRUPT_PIN_MAX) {
                 printf("ht_intr_map: bad interrupt pin %d\n", pin);
