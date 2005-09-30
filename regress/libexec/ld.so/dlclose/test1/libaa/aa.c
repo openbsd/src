@@ -1,4 +1,4 @@
-/*	$OpenBSD: aa.c,v 1.1.1.1 2005/09/28 15:42:32 kurt Exp $	*/
+/*	$OpenBSD: aa.c,v 1.2 2005/09/30 14:57:35 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -18,3 +18,10 @@
  */
 
 int aaSymbol;
+
+int
+duplicateFun()
+{
+	return (0);
+}
+

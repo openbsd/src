@@ -1,4 +1,4 @@
-/*	$OpenBSD: bb.c,v 1.1.1.1 2005/09/28 15:42:32 kurt Exp $	*/
+/*	$OpenBSD: bb.c,v 1.2 2005/09/30 14:57:35 kurt Exp $	*/
 
 /*
  * Copyright (c) 2005 Kurt Miller <kurt@openbsd.org>
@@ -29,6 +29,12 @@ bbLazyFun()
 }
 
 int
+duplicateFun()
+{
+	return (1);
+}
+
+int
 bbTest1()
 {
 	int ret = 0;
@@ -42,4 +48,10 @@ bbTest1()
 	bbLazyFun();
 
 	return (ret);
+}
+
+int
+bbTest2()
+{
+	return(duplicateFun());
 }
