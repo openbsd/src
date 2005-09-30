@@ -5357,8 +5357,6 @@
 ./usr/share/man/cat9/m_pullup.0
 ./usr/share/man/cat9/m_pullup2.0
 ./usr/share/man/cat9/m_reclaim.0
-./usr/share/man/cat9/m_retry.0
-./usr/share/man/cat9/m_retryhdr.0
 ./usr/share/man/cat9/m_split.0
 ./usr/share/man/cat9/m_zero.0
 ./usr/share/man/cat9/malloc.0
@@ -5424,6 +5422,8 @@
 ./usr/share/man/cat9/pool_init.0
 ./usr/share/man/cat9/pool_prime.0
 ./usr/share/man/cat9/pool_put.0
+./usr/share/man/cat9/pool_set_drain_hook.0
+./usr/share/man/cat9/pool_sethardlimit.0
 ./usr/share/man/cat9/pool_sethiwat.0
 ./usr/share/man/cat9/pool_setlowat.0
 ./usr/share/man/cat9/powerhook_disestablish.0
@@ -5460,14 +5460,12 @@
 ./usr/share/man/cat9/splbio.0
 ./usr/share/man/cat9/splclock.0
 ./usr/share/man/cat9/splhigh.0
-./usr/share/man/cat9/splimp.0
 ./usr/share/man/cat9/spllowersoftclock.0
 ./usr/share/man/cat9/splnet.0
 ./usr/share/man/cat9/splsched.0
 ./usr/share/man/cat9/splserial.0
 ./usr/share/man/cat9/splsoftclock.0
 ./usr/share/man/cat9/splsoftnet.0
-./usr/share/man/cat9/splsoftserial.0
 ./usr/share/man/cat9/splsofttty.0
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
@@ -5551,7 +5549,6 @@
 ./usr/share/man/cat9/uvm_swap_init.0
 ./usr/share/man/cat9/uvm_swapin.0
 ./usr/share/man/cat9/uvm_sysctl.0
-./usr/share/man/cat9/uvm_useracc.0
 ./usr/share/man/cat9/uvm_vnp_setsize.0
 ./usr/share/man/cat9/uvm_vnp_sync.0
 ./usr/share/man/cat9/uvm_vnp_terminate.0
