@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.12 2005/09/30 16:50:03 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.13 2005/09/30 16:53:16 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -596,7 +596,7 @@ option		= "set" ( "hostap" "interface" name |
 		  [ "iapp" "mode" ( "multicast" | "broadcast" ] )
 
 event		= "hostap" "handle" [ eventopt ] [ frmmatch ] [ action ]
-		  [ limit ]
+		  [ limit ] [ rate ]
 
 eventopt	= "skip" | "quick"
 
@@ -622,6 +622,8 @@ frmactiontype	= "type" ( "data" | "management" "subtype" frmsubtype )
 frmactionaddr	= lladdr | refaddr | "random"
 
 limit		= "limit" number ( "sec" | "usec" )
+
+rate		= "rate" number "/" number "sec"
 
 frmsubtype	= ( "probe-request" | "probe-resp" |
 		  "beacon" ) [ frmelems ] | "atim" | "auth" | "deauth" |
