@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.11 2005/09/29 23:57:00 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.12 2005/09/30 16:50:03 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -162,13 +162,14 @@ event rules are single line statements beginning with
 the mandatory
 .Ic hostap handle
 keywords and optional rule options, frame matching,
-a specified action, and a limit:
+a specified action, a limit, and a minimal rate:
 .Bd -filled -offset indent
 .Ic hostap handle
 .Op Ar option
 .Op Ar frame
 .Op Ar action
 .Op Ar limit
+.Op Ar rate
 .Ed
 .Pp
 The optional parts are defined below.
@@ -387,6 +388,10 @@ is
 Write informational messages to the local system log (see
 .Xr syslogd 8 )
 or standard error.
+If the
+.Sx Rule Rate
+has been specified,
+log will print the actual rate.
 .It Ic node add | delete Ar lladdr
 Add or remove the specified node from the internal kernel
 node table.
@@ -408,6 +413,23 @@ to protect
 .Xr hostapd 8
 against excessive flooding with IEEE 802.11 frames.
 For example, beacon frames will be normally received every 100 ms.
+.Ss Rule Rate
+It is possible to tell
+.Xr hostapd 8
+to trigger the action only after a specific
+.Ic rate
+of matched frames.
+.Bd -filled -offset indent
+.Ic rate
+.Ar number
+.Ar /
+.Ar number
+.Ic sec
+.Ed
+.Pp
+This will help to detect excessive flooding of IEEE 802.11 frames.
+For example, de-auth flooding is a DoS (Denial of Service) attack
+against IEEE 802.11 wireless networks.
 .Ss Management Frame Subtypes
 The
 .Ar subtype
@@ -518,6 +540,13 @@ wireless access point to access point communication.
 # Log probe requests locally
 hostap handle type management subtype probe request \\
     with log
+
+# Detect flooding of management frames except beacons.
+# This will detect some possible Denial of Service attacks
+# against the IEEE 802.11 protocol.
+hostap handle skip type management subtype ! beacon \\
+    with log \\
+    rate 100 / 10 sec
 
 # Log rogue accesspoints via IAPP, limited to every second,
 # and skip further IAPP processing.

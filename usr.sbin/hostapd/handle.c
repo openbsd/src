@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle.c,v 1.2 2005/07/04 16:48:55 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.3 2005/09/30 16:50:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -107,7 +107,7 @@ hostapd_handle_frame(struct hostapd_config *cfg, struct hostapd_frame *frame,
 	u_int8_t *wfrom, *wto, *wbssid;
 	struct timeval t_now;
 	u_int32_t flags;
-	int offset;
+	int offset, min_rate = 0;
 
 	if ((offset = hostapd_apme_offset(cfg, buf, len)) < 0)
 		return (0);
@@ -116,9 +116,11 @@ hostapd_handle_frame(struct hostapd_config *cfg, struct hostapd_frame *frame,
 	mh = &frame->f_frame;
 	flags = frame->f_flags;
 
+	/* Get timestamp */
+	gettimeofday(&t_now, NULL);
+
 	/* Handle optional limit */
 	if (frame->f_limit.tv_sec || frame->f_limit.tv_usec) {
-		gettimeofday(&t_now, NULL);
 		if (timercmp(&t_now, &frame->f_then, <))
 			return (0);
 		timeradd(&t_now, &frame->f_limit, &frame->f_then);
@@ -193,9 +195,33 @@ hostapd_handle_frame(struct hostapd_config *cfg, struct hostapd_frame *frame,
 	if ((flags & HOSTAPD_FRAME_F_M) != 0)
 		return (0);
 
+	/* Handle optional minimal rate */
+	if (frame->f_rate && frame->f_rate_intval) {
+		frame->f_rate_delay = t_now.tv_sec - frame->f_last.tv_sec;
+		if (frame->f_rate_delay < frame->f_rate_intval) {
+			frame->f_rate_cnt++;
+			if (frame->f_rate_cnt < frame->f_rate)
+				min_rate = 1;
+		} else {
+			min_rate = 1;
+			frame->f_rate_cnt = 0;
+		}
+	}
+
+	/* Update timestamp for the last match of this event */
+	if (frame->f_rate_cnt == 0 || min_rate == 0)
+		bcopy(&t_now, &frame->f_last, sizeof(struct timeval));
+
+	/* Return if the minimal rate is not reached, yet */
+	if (min_rate)
+		return (0);
+
 	if (hostapd_handle_action(cfg, frame, wfrom, wto, wbssid, buf,
 	    len) != 0)
 		return (0);
+
+	/* Reset minimal rate counter after successfully handled the frame */
+	frame->f_rate_cnt = 0;
 
 	return ((frame->f_flags & HOSTAPD_FRAME_F_RET_M) >>
 	    HOSTAPD_FRAME_F_RET_S);
@@ -228,7 +254,12 @@ hostapd_handle_action(struct hostapd_config *cfg, struct hostapd_frame *frame,
 
 	case HOSTAPD_ACTION_LOG:
 		/* Log frame to syslog/stderr */
-		hostapd_printf("%s: ", cfg->c_apme_iface);
+		if (frame->f_rate && frame->f_rate_intval) {
+			hostapd_printf("%s: (rate: %ld/%ld sec) ",
+			    cfg->c_apme_iface, frame->f_rate_cnt,
+			    frame->f_rate_delay + 1);
+		} else
+			hostapd_printf("%s: ", cfg->c_apme_iface);
 
 		hostapd_print_ieee80211(cfg->c_apme_dlt, frame->f_action_flags &
 		    HOSTAPD_ACTION_VERBOSE, buf, len);

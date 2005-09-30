@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2005/09/30 14:57:30 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2005/09/30 16:50:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -119,7 +119,7 @@ u_int negative;
 %token	MODE INTERFACE IAPP HOSTAP MULTICAST BROADCAST SET SEC USEC
 %token	HANDLE TYPE SUBTYPE FROM TO BSSID WITH FRAME RADIOTAP NWID PASSIVE
 %token	MANAGEMENT DATA PROBE BEACON ATIM ANY DS NO DIR RESEND RANDOM
-%token	AUTH DEAUTH ASSOC DISASSOC REASSOC REQUEST RESPONSE PCAP
+%token	AUTH DEAUTH ASSOC DISASSOC REASSOC REQUEST RESPONSE PCAP RATE
 %token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
@@ -205,17 +205,15 @@ event		: HOSTAP HANDLE
 		} eventopt frmmatch {
 			/* IEEE 802.11 raw frame to send as an action */
 			frame_ieee80211 = &frame.f_action_data.a_frame;
-		} action limit {
-			struct timeval t_now;
-
+		} action limit rate {
 			if ((frame_ptr = (struct hostapd_frame *)calloc(1,
 				 sizeof(struct hostapd_frame))) == NULL) {
 				yyerror("calloc");
 				YYERROR;
 			}
 
-			gettimeofday(&t_now, NULL);
-			timeradd(&t_now, &frame.f_limit, &frame.f_then);
+			gettimeofday(&frame.f_last, NULL);
+			timeradd(&frame.f_last, &frame.f_limit, &frame.f_then);
 
 			bcopy(&frame, frame_ptr, sizeof(struct hostapd_frame));
 			TAILQ_INSERT_TAIL(&hostapd_cfg.c_frames,
@@ -307,6 +305,19 @@ limit		: /* empty */
 		| LIMIT number USEC
 		{
 			frame.f_limit.tv_usec = $2;
+		}
+		;
+
+rate		: /* empty */
+		| RATE number '/' number SEC
+		{
+			if (!($2 && $4)) {
+				yyerror("invalid rate");
+				YYERROR;
+			}
+
+			frame.f_rate = $2;
+			frame.f_rate_intval = $4;
 		}
 		;
 
@@ -916,6 +927,7 @@ lookup(char *token)
 		{ "quick",		QUICK },
 		{ "radiotap",		RADIOTAP },
 		{ "random",		RANDOM },
+		{ "rate",		RATE },
 		{ "reason",		REASON },
 		{ "reassoc",		REASSOC },
 		{ "request",		REQUEST },

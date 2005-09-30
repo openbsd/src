@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.6 2005/09/09 13:21:13 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.7 2005/09/30 16:50:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -243,7 +243,9 @@ struct hostapd_frame {
 	HOSTAPD_FRAME_F_BSSID_N)
 
 	struct hostapd_table		*f_from, *f_to, *f_bssid;
-	struct timeval			f_limit, f_then;
+	struct timeval			f_limit, f_then, f_last;
+	long				f_rate, f_rate_intval;
+	long				f_rate_cnt, f_rate_delay;
 
 	enum hostapd_action		f_action;
 	u_int32_t			f_action_flags;
