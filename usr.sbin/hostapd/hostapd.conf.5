@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.14 2005/09/30 17:31:58 jmc Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.15 2005/09/30 18:22:28 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -147,14 +147,12 @@ Event rules provide a powerful way to trigger a certain action when
 receiving specified IEEE 802.11 frames on the
 .Em hostap interface .
 The rules are handled in sequential order, from first to last.
-.Pp
-In difference to packet filter rules like in
-.Xr pf.conf 5 ,
-the
-.Xr hostapd 8
-event rules are handled without a state;
-each rule is processed indepedently from the others and from
+Rules are handled without a state:
+each rule is processed independently from the others and from
 any previous actions.
+This behaviour is somewhat different to that of packet filter rules
+specified in
+.Xr pf.conf 5 .
 .Pp
 All
 .Xr hostapd 8
