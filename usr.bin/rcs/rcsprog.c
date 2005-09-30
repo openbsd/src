@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.14 2005/09/29 21:38:48 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.15 2005/09/30 15:02:26 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -71,7 +71,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 	if (l == -1 || l >= (int)sizeof(filev))
 		return (-1);
 
-	if (stat(RCSDIR, &st) != -1) {
+	if (stat(RCSDIR, &st) != -1 && (st.st_mode & S_IFDIR)) {
 		l = snprintf(fpath, sizeof(fpath), "%s/%s", RCSDIR, filev);
 		if (l == -1 || l >= (int)sizeof(fpath))
 			return (-1);
