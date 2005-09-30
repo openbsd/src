@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.71 2005/09/29 20:54:29 moritz Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.72 2005/09/30 14:50:32 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,6 +29,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -451,19 +452,29 @@ static int
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[64];
+	char buf[1024], numbuf[64], fn[19] = "";
+	void *bp;
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
+	ssize_t nread;
+	int fd, from_fd, to_fd;
+	from_fd = to_fd = fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
 		return (0);
 
-	if ((fp = fopen(rfp->rf_path, "w")) == NULL) {
+	strlcpy(fn, "/tmp/rcs.XXXXXXXXXX", sizeof(fn));
+	if ((fd = mkstemp(fn)) == -1 ||
+	    (fp = fdopen(fd, "w+")) == NULL) {
+		if (fd != -1) {
+			unlink(fn);
+			close(fd);
+		}
 		rcs_errno = RCS_ERR_ERRNO;
-		cvs_log(LP_ERRNO, "failed to open RCS output file `%s'",
-		    rfp->rf_path);
+		cvs_log(LP_ERRNO, "failed to open temp RCS output file `%s'",
+		    fn);
 		return (-1);
 	}
 
@@ -554,7 +565,72 @@ rcs_write(RCSFILE *rfp)
 		fputs("@\n\n", fp);
 	}
 	fclose(fp);
-
+	/*
+	 * We try to use rename() to atomically put the new file in place.
+	 * If that fails, we try a copy.
+	 */
+	if (rename(fn, rfp->rf_path) == -1) {
+		if (errno == EXDEV) {
+			/* rename() not supported so we have to copy. */
+			if ((chmod(rfp->rf_path, S_IWUSR) == -1)
+			    && !(rfp->rf_flags & RCS_CREATE)) {
+				cvs_log(LP_ERRNO, "failed to chmod `%s'",
+				    rfp->rf_path);
+				return (-1);
+			}
+			if ((from_fd = open(fn, O_RDONLY)) == -1) {
+				cvs_log(LP_ERRNO, "failed to open `%s'",
+				    rfp->rf_path);
+				return (-1);
+			}
+			if ((to_fd = open(rfp->rf_path, O_WRONLY|O_CREAT))
+			    == -1) {
+				cvs_log(LP_ERRNO, "failed to open `%s'",
+				    fn);
+				close(from_fd);
+				return (-1);
+			}
+			if ((bp = malloc(MAXBSIZE)) == NULL) {
+				cvs_log(LP_ERRNO,
+				    "failed to allocate memory");
+				close(from_fd);
+				close(to_fd);
+				return (-1);
+			}
+			while ((nread = read(from_fd, bp, MAXBSIZE)) > 0) {
+				if (write(to_fd, bp, nread) != nread)
+					goto err;
+			}
+			if (nread < 0) {
+err:				if (unlink(rfp->rf_path) == -1)
+					cvs_log(LP_ERRNO,
+					    "failed to unlink `%s'",
+					    rfp->rf_path);
+				close(from_fd);
+				close(to_fd);
+				free(bp);
+				return (-1);
+			}
+			close(from_fd);
+			close(to_fd);
+			free(bp);
+			if (unlink(fn) == -1) {
+				cvs_log(LP_ERRNO,
+				    "failed to unlink `%s'",
+				    fn);
+				return (-1);
+			}
+		} else {
+			cvs_log(LP_ERRNO,
+			    "failed to access temp RCS output file");
+			return (-1);
+		}
+	}
+	if ((chmod(rfp->rf_path, S_IRUSR|S_IRGRP|S_IROTH) == -1)) {
+		cvs_log(LP_ERRNO, "failed to chmod `%s'",
+		    rfp->rf_path);
+		return (-1);
+	}
 	rfp->rf_flags |= RCS_SYNCED;
 
 	return (0);
