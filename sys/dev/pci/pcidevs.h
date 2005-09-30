@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.920 2005/09/29 23:54:57 drahn Exp 
+ *	OpenBSD: pcidevs,v 1.921 2005/09/30 00:02:54 drahn Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -659,10 +659,10 @@
 #define	PCI_PRODUCT_APPLE_K2_FW	0x0042		/* K2 Firewire */
 #define	PCI_PRODUCT_APPLE_K2_UATA	0x0043		/* K2 ATA */
 #define	PCI_PRODUCT_APPLE_U3_PPB1	0x0045		/* U3 PPB */
-#define	PCI_PRODUCT_APPLE_U3_PPB2	0x0045		/* U3 PPB */
-#define	PCI_PRODUCT_APPLE_U3_PPB3	0x0045		/* U3 PPB */
-#define	PCI_PRODUCT_APPLE_U3_PPB4	0x0045		/* U3 PPB */
-#define	PCI_PRODUCT_APPLE_U3_PPB5	0x0045		/* U3 PPB */
+#define	PCI_PRODUCT_APPLE_U3_PPB2	0x0046		/* U3 PPB */
+#define	PCI_PRODUCT_APPLE_U3_PPB3	0x0047		/* U3 PPB */
+#define	PCI_PRODUCT_APPLE_U3_PPB4	0x0048		/* U3 PPB */
+#define	PCI_PRODUCT_APPLE_U3_PPB5	0x0049		/* U3 PPB */
 #define	PCI_PRODUCT_APPLE_U3_AGP	0x004b		/* U3 AGP */
 #define	PCI_PRODUCT_APPLE_K2_GMAC	0x004c		/* U3 GMAC */
 #define	PCI_PRODUCT_APPLE_SHASTA	0x004f		/* Shasta */
