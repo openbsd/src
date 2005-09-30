@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.52 2005/09/29 21:21:45 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.53 2005/09/30 21:34:23 kettenis Exp $
 #
 # PPC GENERIC config file
 #
@@ -39,6 +39,7 @@ ht*		at mainbus0
 #### PCI Bus devices.
 
 pci*		at mpcpcibr?
+pci*		at ht?
 ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
