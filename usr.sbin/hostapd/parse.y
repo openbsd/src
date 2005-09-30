@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2005/09/29 23:55:40 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2005/09/30 14:57:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -811,7 +811,7 @@ randaddr	: RANDOM
 
 number		: STRING
 		{
-			$$ = strtonum($1, 0, 1 << sizeof(long), NULL);
+			$$ = strtonum($1, 0, LONG_MAX, NULL);
 			free($1);
 		}
 		;
