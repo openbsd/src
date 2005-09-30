@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.103 2005/09/30 18:35:26 jmc Exp $
+#	$OpenBSD: Makefile,v 1.104 2005/09/30 18:48:58 jmc Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -269,7 +269,7 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_pglistfree.9 uvm.9 uvm_page_physload.9 \
 	uvm.9 uvm_pageout.9 uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 \
 	uvm.9 uao_create.9 uvm.9 uao_detach.9 uvm.9 uao_reference.9 \
-	uvm.9 uvm_chgkprot.9 uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 \
+	uvm.9 uvm_chgkprot.9 uvm.9 uvm_kernacc.9 \
 	uvm.9 uvm_vslock.9 uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 \
 	uvm.9 uvm_sysctl.9 uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 \
 	uvm.9 uvm_coredump.9
