@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.922 2005/09/30 01:25:49 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.923 2005/09/30 18:57:19 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1271,7 +1271,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "K2 Firewire",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_UATA,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_ATA,
 	    "K2 ATA",
 	},
 	{

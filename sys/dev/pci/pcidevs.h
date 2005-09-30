@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.922 2005/09/30 01:25:49 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.923 2005/09/30 18:57:19 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -657,7 +657,7 @@
 #define	PCI_PRODUCT_APPLE_K2_USB	0x0040		/* K2 USB */
 #define	PCI_PRODUCT_APPLE_K2	0x0041		/* K2 Macio */
 #define	PCI_PRODUCT_APPLE_K2_FW	0x0042		/* K2 Firewire */
-#define	PCI_PRODUCT_APPLE_K2_UATA	0x0043		/* K2 ATA */
+#define	PCI_PRODUCT_APPLE_K2_ATA	0x0043		/* K2 ATA */
 #define	PCI_PRODUCT_APPLE_U3_PPB1	0x0045		/* U3 PCI-PCI */
 #define	PCI_PRODUCT_APPLE_U3_PPB2	0x0046		/* U3 PCI-PCI */
 #define	PCI_PRODUCT_APPLE_U3_PPB3	0x0047		/* U3 PCI-PCI */
