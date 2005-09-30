@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.10 2005/06/06 01:08:46 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.11 2005/09/30 01:28:05 deraadt Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -146,12 +146,12 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	printf(" irq %d", ca->ca_intr[0]);
 
 	switch (adbHardware) {
-		case ADB_HW_CUDA:
-			printf(": via-cuda ");
-			break;
-		case ADB_HW_PB:
-			printf(": via-pmu ");
-			break;
+	case ADB_HW_CUDA:
+		printf(": via-cuda");
+		break;
+	case ADB_HW_PB:
+		printf(": via-pmu");
+		break;
 	}
 
 	printf(", %d targets\n", totaladbs);
