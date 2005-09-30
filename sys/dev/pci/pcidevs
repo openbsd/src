@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.923 2005/09/30 18:57:19 kettenis Exp $
+$OpenBSD: pcidevs,v 1.924 2005/09/30 19:17:02 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -652,7 +652,7 @@ product APPLE INTREPID_OHCI	0x003f	Intrepid USB
 product APPLE K2_USB		0x0040	K2 USB
 product APPLE K2		0x0041	K2 Macio
 product APPLE K2_FW		0x0042	K2 Firewire
-product APPLE K2_UATA		0x0043	K2 ATA
+product APPLE K2_ATA		0x0043	K2 ATA
 product APPLE U3_PPB1		0x0045	U3 PCI-PCI
 product APPLE U3_PPB2		0x0046	U3 PCI-PCI
 product APPLE U3_PPB3		0x0047	U3 PCI-PCI
