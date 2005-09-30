@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.32 2005/09/25 17:38:44 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.33 2005/09/30 15:40:22 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -156,6 +156,16 @@ cvs_add_local(CVSFILE *cf, void *arg)
 
 	added = 0;
 
+	/* dont use `cvs add *' */
+	if ((strcmp(cf->cf_name, ".") == 0) ||
+	    (strcmp(cf->cf_name, "..") == 0) ||
+	    (strcmp(cf->cf_name, CVS_PATH_CVSDIR) == 0)) {
+		if (verbosity > 1)
+			cvs_log(LP_ERR,
+			    "cannot add special file `%s'.", cf->cf_name);
+		return (CVS_EX_FILE);
+	}
+
 	if (cf->cf_type == DT_DIR)
 		return cvs_add_directory(cf);
 
@@ -301,7 +311,7 @@ cvs_add_directory(CVSFILE *cf)
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", entry);
 		return (CVS_EX_DATA);
-        }
+	}
 
 	if ((ent = cvs_ent_parse(entry)) == NULL) {
 		cvs_log(LP_ERR, "failed to parse entry");
