@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.13 2005/09/30 16:53:16 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.14 2005/09/30 17:31:58 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -538,38 +538,38 @@ wireless access point to access point communication.
 .Sh EVENT RULE EXAMPLES
 .Bd -literal
 # Log probe requests locally
-hostap handle type management subtype probe request \\
+hostap handle type management subtype probe request \e
     with log
 
 # Detect flooding of management frames except beacons.
 # This will detect some possible Denial of Service attacks
 # against the IEEE 802.11 protocol.
-hostap handle skip type management subtype ! beacon \\
-    with log \\
+hostap handle skip type management subtype ! beacon \e
+    with log \e
     rate 100 / 10 sec
 
 # Log rogue accesspoints via IAPP, limited to every second,
 # and skip further IAPP processing.
-hostap handle skip type management subtype beacon bssid !<myess> \\
+hostap handle skip type management subtype beacon bssid !<myess> \e
     with iapp type radiotap limit 1 sec
 
-# Send deauthentication frames to stations accociated to rogue APs
-hostap handle type data bssid !<myess> with frame type management \\
-    subtype deauth reason auth expire \\
+# Send deauthentication frames to stations associated to rogue APs
+hostap handle type data bssid !<myess> with frame type management \e
+    subtype deauth reason auth expire \e
     from &bssid to &from bssid &bssid
 
 # Send authentication requests from random station addresses to
-# rogue accesspoints. This is common way to test the quality of
+# rogue accesspoints. This is a common way to test the quality of
 # various hostap implementations.
-hostap handle skip type management subtype beacon bssid <pentest> \\
-    with frame type management subtype auth \\
+hostap handle skip type management subtype beacon bssid <pentest> \e
+    with frame type management subtype auth \e
     from random to &bssid bssid &bssid
 
 # Re-inject a received IEEE 802.11 frame
 hostap handle type management subtype auth with resend
 
 # Remove a blacklisted node from the kernel node tree
-hostap handle type management subtype auth from <blacklist> \\
+hostap handle type management subtype auth from <blacklist> \e
     with node delete &from
 .Ed
 .Sh GRAMMAR
