@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzexe.1,v 1.2 2003/12/28 15:00:32 jmc Exp $
+.\"	$OpenBSD: gzexe.1,v 1.3 2005/09/30 06:50:44 otto Exp $
 .\"
 .\" Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
 .\"
@@ -51,9 +51,11 @@ The
 program refuses to compress non-regular or non-executable files,
 files with a setuid or setgid bit set, files that are already
 compressed using
-.Nm
+.Nm ,
+files in /bin or /sbin,
 or programs it needs to perform on-the-fly decompression:
 .Xr sh 1 ,
+.Xr basename 1 ,
 .Xr mktemp 1 ,
 .Xr rm 1 ,
 .Xr echo 1 ,

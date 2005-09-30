@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: gzexe,v 1.3 2003/08/05 18:22:17 deraadt Exp $
+# $OpenBSD: gzexe,v 1.4 2005/09/30 06:50:44 otto Exp $
 #
 #  Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
 #
@@ -88,7 +88,7 @@ check () {
 	fi
 
 	case `basename "$1"` in
-		sh | mktemp | rm | echo | tail | gzip | chmod)
+		sh | mktemp | rm | echo | tail | gzip | chmod | basename)
 			echo "$prog: cannot compress $1, I depend on it"
 			return 1
 	esac
@@ -102,6 +102,38 @@ check () {
 		echo "$prog: cannot compress $1, it has an s bit set"
 		return 1
 	fi
+
+	# Build a list of files we should not compress.
+	# * files we need to decompress
+	CHECK_LIST="
+	/bin/chmod
+	/bin/echo
+	/bin/sh
+	/bin/rm
+	/usr/bin/basename
+	/usr/bin/gzip
+	/usr/bin/mktemp
+	/usr/bin/tail
+	"
+	# * files in /bin and /sbin (decompression fails if /usr/bin is not mounted)
+	# (You could skip these if /usr/bin is always mounted on the same mount point.)
+	CHECK_LIST="$CHECK_LIST
+	/bin/*
+	/sbin/*
+	"
+	# See if the program we are trying to compress is in the list.
+	# To avoid compressing hardlinked files (eg compress & gzip)
+	# we compare the device & inode.
+	PROG_STAT_INFO=`stat -f '%d %i' "$1"`
+	for CHECK in $CHECK_LIST; do
+		if test -f "$CHECK"; then
+			CHECK_STAT_INFO=`stat -f '%d %i' "$CHECK"`
+			if test "X$PROG_STAT_INFO" == "X$CHECK_STAT_INFO"; then
+				echo "$prog: cannot compress $1, it is the same file as $CHECK"
+				return 1
+			fi
+		fi
+	done
 }
 
 # Compress a file
