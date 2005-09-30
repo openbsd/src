@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.2 2005/09/29 21:44:33 kettenis Exp $	*/
+/*	$OpenBSD: ht.c,v 1.3 2005/09/30 00:30:14 drahn Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -257,7 +257,7 @@ ht_conf_read(void *cpv, pcitag_t tag, int offset)
 		if (tag >= 0x2000)
 			panic("tag >= 0x2000");
 		/* XXX Needed on some PowerMac G5's.  Why? */
-		if (fcn > 0)
+		if (fcn > 1)
 			return ~0;
 		tag |= offset;
 		reg = bus_space_read_4(sc->sc_memt, sc->sc_config0_memh, tag);
