@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.2 2005/09/29 21:30:10 joris Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.3 2005/09/30 16:44:26 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -33,10 +33,12 @@ extern int verbose;
 
 void rcs_usage(void);
 void checkout_usage(void);
+void checkin_usage(void);
 void (*usage)(void);
 
 int rcs_statfile(char *, char *, size_t);
 int checkout_main(int, char **);
+int checkin_main(int, char **);
 int rcs_main(int, char **);
 
 #endif
