@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.22 2004/01/23 23:08:46 jmc Exp $
+.\"	$OpenBSD: timeout.9,v 1.23 2005/09/30 18:41:32 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -31,7 +31,8 @@
 .Nm timeout_add ,
 .Nm timeout_del ,
 .Nm timeout_pending ,
-.Nm timeout_initialized
+.Nm timeout_initialized ,
+.Nm timeout_triggered
 .Nd execute a function after a specified period of time
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
