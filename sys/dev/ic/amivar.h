@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.30 2005/09/30 07:53:03 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.31 2005/09/30 09:07:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -53,74 +53,77 @@ struct ami_ccb {
 typedef TAILQ_HEAD(ami_queue_head, ami_ccb)	ami_queue_head;
 
 struct ami_rawsoftc {
-	struct scsi_link sc_link;
-	struct ami_softc *sc_softc;
-	u_int8_t	sc_channel;
+	struct scsi_link	sc_link;
+	struct ami_softc	*sc_softc;
+	u_int8_t		sc_channel;
 
-	int		sc_proctarget;	/* ses/safte target id */
-	char		sc_procdev[16];	/* ses/safte device */
+	int			sc_proctarget;	/* ses/safte target id */
+	char			sc_procdev[16];	/* ses/safte device */
 };
 
 struct ami_softc {
-	struct device	sc_dev;
-	void		*sc_ih;
-	struct scsi_link sc_link;
+	struct device		sc_dev;
+	void			*sc_ih;
+	struct scsi_link	sc_link;
 
 /* don't use 0x0001 */
 #define AMI_BROKEN 	0x0002
 #define	AMI_CMDWAIT	0x0004
 #define AMI_QUARTZ	0x0008
-	u_int	sc_flags;
+	u_int			sc_flags;
 
 	/* low-level interface */
-	int (*sc_init)(struct ami_softc *sc);
-	int (*sc_exec)(struct ami_softc *sc, struct ami_iocmd *);
-	int (*sc_done)(struct ami_softc *sc, struct ami_iocmd *);
-	int (*sc_poll)(struct ami_softc *sc, struct ami_iocmd *);
-	int (*sc_ioctl)(struct device *, u_long, caddr_t);
+	int			(*sc_init)(struct ami_softc *sc);
+	int			(*sc_exec)(struct ami_softc *sc,
+				    struct ami_iocmd *);
+	int			(*sc_done)(struct ami_softc *sc,
+				    struct ami_iocmd *);
+	int			(*sc_poll)(struct ami_softc *sc,
+				    struct ami_iocmd *);
+	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
 
-	bus_space_tag_t	iot;
-	bus_space_handle_t ioh;
-	bus_dma_tag_t	dmat;
+	bus_space_tag_t		iot;
+	bus_space_handle_t	ioh;
+	bus_dma_tag_t		dmat;
 
 	volatile struct ami_iocmd *sc_mbox;
-	paddr_t		sc_mbox_pa;
-	bus_dmamap_t	sc_mbox_map;
-	bus_dma_segment_t sc_mbox_seg[1];
+	paddr_t			sc_mbox_pa;
+	bus_dmamap_t		sc_mbox_map;
+	bus_dma_segment_t	sc_mbox_seg[1];
 
-	struct ami_ccb	sc_ccbs[AMI_MAXCMDS];
-	ami_queue_head	sc_free_ccb, sc_ccbq, sc_ccbdone;
+	struct ami_ccb		sc_ccbs[AMI_MAXCMDS];
+	ami_queue_head		sc_free_ccb, sc_ccbq, sc_ccbdone;
 
-	struct ami_passthrough *sc_pts;
-	bus_dmamap_t	sc_ptmap;
-	bus_dma_segment_t sc_ptseg[1];
+	struct ami_passthrough	*sc_pts;
+	bus_dmamap_t		sc_ptmap;
+	bus_dma_segment_t	sc_ptseg[1];
 
-	struct ami_sgent *sc_sgents;
-	bus_dmamap_t	sc_sgmap;
-	bus_dma_segment_t sc_sgseg[1];
+	struct ami_sgent	*sc_sgents;
+	bus_dmamap_t		sc_sgmap;
+	bus_dma_segment_t	sc_sgseg[1];
 
-	int		sc_timeout;
-	struct timeout	sc_requeue_tmo;
-	struct timeout	sc_poll_tmo;
-	int		sc_dis_poll;
+	int			sc_timeout;
+	struct timeout		sc_requeue_tmo;
+	struct timeout		sc_poll_tmo;
+	int			sc_dis_poll;
 
-	char	sc_fwver[16];
-	char	sc_biosver[16];
-	int	sc_maxcmds;
-	int	sc_memory;
-	int	sc_targets;
-	int	sc_channels;
-	int	sc_maxunits;
-	int	sc_nunits;
+	char			sc_fwver[16];
+	char			sc_biosver[16];
+	int			sc_maxcmds;
+	int			sc_memory;
+	int			sc_targets;
+	int			sc_channels;
+	int			sc_maxunits;
+	int			sc_nunits;
 	struct {
-		u_int8_t	hd_present;
-		u_int8_t	hd_is_logdrv;
-		u_int8_t	hd_prop;
-		u_int8_t	hd_stat;
-		u_int32_t	hd_size;
-		char		dev[16];
-	} sc_hdr[AMI_BIG_MAX_LDRIVES];
-	struct ami_rawsoftc *sc_rawsoftcs;
+		u_int8_t		hd_present;
+		u_int8_t		hd_is_logdrv;
+		u_int8_t		hd_prop;
+		u_int8_t		hd_stat;
+		u_int32_t		hd_size;
+		char			dev[16];
+	}			sc_hdr[AMI_BIG_MAX_LDRIVES];
+	struct ami_rawsoftc	*sc_rawsoftcs;
 };
 
 /* XXX These have to become spinlocks in case of SMP */
