@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.2 2005/09/30 16:49:37 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.3 2005/09/30 17:39:48 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -90,7 +90,7 @@ checkin_main(int argc, char **argv)
 	rev = rcs_msg = NULL;
 	fmode = dflag = 0;
 
-	while ((ch = getopt(argc, argv, "j:l:M:N:qu:d:r::m:k:")) != -1) {
+	while ((ch = getopt(argc, argv, "j:l:M:N:qu:d:r::m:k:V")) != -1) {
 		switch (ch) {
 		case 'h':
 			(usage)();
@@ -100,6 +100,9 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'm':
 			rcs_msg = optarg;
+			break;
+		case 'q':
+			verbose = 0;
 			break;
 		case 'r':
 			rev = optarg;
