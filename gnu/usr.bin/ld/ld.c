@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.31 2004/03/31 19:05:38 mickey Exp $	*/
+/*	$OpenBSD: ld.c,v 1.32 2005/09/30 20:27:52 deraadt Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -451,6 +451,10 @@ classify_arg(char *arg)
 			return 1;
 		return 2;
 
+	case 'E':
+		/* ignore this option */
+		return 1;
+
 	case 'B':
 		if (!strcmp(&arg[2], "static"))
 			return 1;
@@ -741,6 +745,9 @@ decode_option(char *swt, char *arg)
 			undefined_global_sym_count++;
 		entry_symbol->flags |= GS_REFERENCED;
 		add_cmdline_ref(entry_symbol);
+		return;
+
+	case 'E':
 		return;
 
 	case 'l':
