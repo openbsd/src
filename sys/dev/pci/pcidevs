@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.922 2005/09/30 01:25:49 deraadt Exp $
+$OpenBSD: pcidevs,v 1.923 2005/09/30 18:57:19 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -659,7 +659,7 @@ product APPLE U3_PPB3		0x0047	U3 PCI-PCI
 product APPLE U3_PPB4		0x0048	U3 PCI-PCI
 product APPLE U3_PPB5		0x0049	U3 PCI-PCI
 product APPLE U3_AGP		0x004b	U3 AGP
-product APPLE K2_GMAC		0x004c	U3 GMAC
+product APPLE K2_GMAC		0x004c	K2 GMAC
 product APPLE SHASTA		0x004f	Shasta
 product APPLE SHASTA_ATA	0x0050	Shasta ATA
 product APPLE SHASTA_GMAC	0x0051	Shasta GMAC
