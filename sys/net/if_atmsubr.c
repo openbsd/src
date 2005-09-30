@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.24 2004/04/17 04:19:33 henning Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.25 2005/09/30 02:39:24 brad Exp $       */
 
 /*
  *
@@ -197,29 +197,6 @@ atm_output(ifp, m0, dst, rt0)
 			}
 			break;
 #endif
-#if 0	/*NRL INET6*/
-		case AF_INET6:
-			/*
-			 * The bottom line here is to either queue the
-			 * outgoing packet in the discovery engine, or fill
-			 * in edst with something that'll work.
-			 */
-			if (m->m_flags & M_MCAST) {
-				/*
-				 * If multicast dest., then use IPv6 -> Ethernet
-				 * mcast mapping.  Really simple.
-				 */
-				ETHER_MAP_IN6_MULTICAST(
-				    ((struct sockaddr_in6 *)dst)->sin6_addr,
-				    edst);
-			} else {
-				/* Do unicast neighbor discovery stuff. */
-				if (!ipv6_discov_resolve(ifp, rt, m, dst, edst))
-	 				return 0;
-			}
-			type = htons(ETHERTYPE_IPV6);
-			break;
-#endif /* INET6 */
 
 		default:
 #if defined(__NetBSD__) || defined(__OpenBSD__)
