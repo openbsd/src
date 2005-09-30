@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.88 2005/09/30 07:53:03 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.89 2005/09/30 09:55:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1073,7 +1073,8 @@ ami_cmd(ccb, flags, wait)
 		AMI_DPRINTF(AMI_D_DMA, ("> "));
 
 		bus_dmamap_sync(sc->dmat, dmap, 0, dmap->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
+		    (ccb->ccb_dir == AMI_CCB_IN) ?
+		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	} else
 		ccb->ccb_cmd.acc_mbox.amb_nsge = 0;
 
