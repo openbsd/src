@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.31 2005/09/09 08:51:54 jmc Exp $
+.\"	$OpenBSD: pool.9,v 1.32 2005/09/30 18:04:45 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,11 +41,13 @@
 .Sh NAME
 .Nm pool_init ,
 .Nm pool_destroy ,
+.Nm pool_set_drain_hook ,
 .Nm pool_get ,
 .Nm pool_put ,
 .Nm pool_prime ,
 .Nm pool_sethiwat ,
 .Nm pool_setlowat ,
+.Nm pool_sethardlimit ,
 .Nm pool_cache_init ,
 .Nm pool_cache_destroy ,
 .Nm pool_cache_get ,
