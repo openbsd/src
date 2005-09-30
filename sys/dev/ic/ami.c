@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.89 2005/09/30 09:55:20 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.90 2005/09/30 10:10:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1057,9 +1057,11 @@ ami_cmd(ccb, flags, wait)
 			for (i = 0; i < dmap->dm_nsegs; i++, sgd++) {
 				sgl[i].asg_addr = htole32(sgd->ds_addr);
 				sgl[i].asg_len  = htole32(sgd->ds_len);
+#ifdef AMI_DEBUG
 				if (i)
 					AMI_DPRINTF(AMI_D_DMA, (",0x%lx/%u",
 					    sgd->ds_addr, sgd->ds_len));
+#endif
 			}
 		} else {
 			if (cmd->acc_cmd == AMI_PASSTHRU) {
@@ -1081,9 +1083,11 @@ ami_cmd(ccb, flags, wait)
 	if (wait) {
 		AMI_DPRINTF(AMI_D_DMA, ("waiting "));
 		/* FIXME remove all wait out ami_start */
-		if ((error = sc->sc_poll(sc, &ccb->ccb_cmd))) {
+		error = sc->sc_poll(sc, &ccb->ccb_cmd);
+#ifdef AMI_DEBUG
+		if (error)
 			AMI_DPRINTF(AMI_D_MISC, ("pf "));
-		}
+#endif
 		if (ccb->ccb_data)
 			bus_dmamap_unload(sc->dmat, dmap);
 		if (ccb->ccb_wakeup)
