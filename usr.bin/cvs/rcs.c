@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.72 2005/09/30 14:50:32 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.73 2005/09/30 15:06:46 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -565,6 +565,7 @@ rcs_write(RCSFILE *rfp)
 		fputs("@\n\n", fp);
 	}
 	fclose(fp);
+
 	/*
 	 * We try to use rename() to atomically put the new file in place.
 	 * If that fails, we try a copy.
@@ -578,29 +579,32 @@ rcs_write(RCSFILE *rfp)
 				    rfp->rf_path);
 				return (-1);
 			}
+
 			if ((from_fd = open(fn, O_RDONLY)) == -1) {
 				cvs_log(LP_ERRNO, "failed to open `%s'",
 				    rfp->rf_path);
 				return (-1);
 			}
+
 			if ((to_fd = open(rfp->rf_path, O_WRONLY|O_CREAT))
 			    == -1) {
-				cvs_log(LP_ERRNO, "failed to open `%s'",
-				    fn);
+				cvs_log(LP_ERRNO, "failed to open `%s'", fn);
 				close(from_fd);
 				return (-1);
 			}
+
 			if ((bp = malloc(MAXBSIZE)) == NULL) {
-				cvs_log(LP_ERRNO,
-				    "failed to allocate memory");
+				cvs_log(LP_ERRNO, "failed to allocate memory");
 				close(from_fd);
 				close(to_fd);
 				return (-1);
 			}
+
 			while ((nread = read(from_fd, bp, MAXBSIZE)) > 0) {
 				if (write(to_fd, bp, nread) != nread)
 					goto err;
 			}
+
 			if (nread < 0) {
 err:				if (unlink(rfp->rf_path) == -1)
 					cvs_log(LP_ERRNO,
@@ -611,13 +615,14 @@ err:				if (unlink(rfp->rf_path) == -1)
 				free(bp);
 				return (-1);
 			}
+
 			close(from_fd);
 			close(to_fd);
 			free(bp);
+
 			if (unlink(fn) == -1) {
 				cvs_log(LP_ERRNO,
-				    "failed to unlink `%s'",
-				    fn);
+				    "failed to unlink `%s'", fn);
 				return (-1);
 			}
 		} else {
@@ -626,11 +631,13 @@ err:				if (unlink(rfp->rf_path) == -1)
 			return (-1);
 		}
 	}
+
 	if ((chmod(rfp->rf_path, S_IRUSR|S_IRGRP|S_IROTH) == -1)) {
 		cvs_log(LP_ERRNO, "failed to chmod `%s'",
 		    rfp->rf_path);
 		return (-1);
 	}
+
 	rfp->rf_flags |= RCS_SYNCED;
 
 	return (0);
