@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.39 2004/11/08 20:47:07 miod Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.40 2005/09/30 20:13:12 deraadt Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1663,7 +1663,7 @@ char	*fmt;
 	va_start(ap);
 #endif
 
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof buf, fmt, ap);
 	(void)write(1, buf, strlen(buf));
 	va_end(ap);
 }
