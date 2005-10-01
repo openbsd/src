@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.32 2005/10/01 02:47:30 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.33 2005/10/01 03:04:35 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -529,7 +529,7 @@ brgphy_load_dspcode(struct mii_softc *sc)
 		wait=40;
 		break;
 	case MII_MODEL_BROADCOM_BCM5401:
-		if (sc->mii_rev == 1 || sc->mii_rev == 3) {
+		if (sc->mii_rev == 0 || sc->mii_rev == 3) {
 			dsp = bcm5401_dspcode;
 			wait=40;
 		}
