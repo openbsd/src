@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.85 2005/10/01 13:49:50 martin Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.86 2005/10/01 13:58:10 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -78,7 +78,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#include <dev/pci/if_devar.h>
 #include <dev/ic/dc21040reg.h>
 
 /*
@@ -136,6 +135,7 @@
 	(sc)->tulip_pci_devno = pa->pa_device; \
     } while (0)
 
+#include <dev/pci/if_devar.h>
 /*
  * This module supports
  *	the DEC 21040 PCI Ethernet Controller.
