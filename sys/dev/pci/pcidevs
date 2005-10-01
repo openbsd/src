@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.924 2005/09/30 19:17:02 kettenis Exp $
+$OpenBSD: pcidevs,v 1.925 2005/10/01 18:35:16 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -669,6 +669,7 @@ product APPLE SHASTA_PCI2	0x0054	Shasta PCI
 product APPLE SHASTA_PCI3	0x0055	Shasta PCI
 product APPLE SHASTA_HT		0x0056  Shasta HyperTransport
 product APPLE U3L_AGP		0x0058	U3L AGP
+product APPLE BCM5701		0x1645	BCM5701
 
 /* Aralion products */
 product ARALION ARS106S		0x0301	ARS106S
