@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.13 2005/09/28 20:48:00 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.14 2005/10/01 19:32:22 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -349,31 +349,14 @@ _dl_link_dlopen(elf_object_t *dep)
 }
 
 void
-_dl_unlink_dlopen(elf_object_t *dep)
-{
-
-	struct dep_node *dnode;
-
-	TAILQ_FOREACH(dnode, &_dlopened_child_list, next_sib)
-		if (dnode->data == dep)
-			break;
-
-	if (dnode == NULL) /* XXX - not found? */
-		return;
-
-	TAILQ_REMOVE(&_dlopened_child_list, dnode, next_sib);
-
-	_dl_free(dnode);
-}
-
-void
 _dl_notify_unload_shlib(elf_object_t *object)
 {
 	struct dep_node *n;
 
-	if (--object->refcount == 0)
-		TAILQ_FOREACH(n, &object->child_list, next_sib)
-			_dl_notify_unload_shlib(n->data);
+	object->refcount--;
+
+	TAILQ_FOREACH(n, &object->child_list, next_sib)
+		n->data->refcount--;
 }
 
 void

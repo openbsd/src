@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.36 2005/09/28 20:35:23 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.37 2005/10/01 19:32:22 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -171,6 +171,17 @@ void
 _dl_cleanup_objects()
 {
 	elf_object_t *nobj, *head;
+	struct dep_node *n;
+
+retry:
+	TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
+		if (n->data->refcount == 0) {
+			TAILQ_REMOVE(&_dlopened_child_list, n, next_sib);
+			_dl_free(n);
+			goto retry;
+		}
+	}
+
 	head = free_objects;
 	free_objects = NULL;
 	while (head != NULL) {

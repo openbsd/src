@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.57 2005/09/28 20:35:23 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.58 2005/10/01 19:32:22 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -66,6 +66,12 @@ dlopen(const char *libname, int flags)
 		failed = 1;
 		goto loaded;
 	}
+
+	_dl_loading_object = object;
+
+	if (object->opencount == 0)
+		_dl_link_dlopen(object);
+
 	if (object->refcount > 1)
 		goto loaded;
 
@@ -74,7 +80,6 @@ dlopen(const char *libname, int flags)
 
 	DL_DEB(("head [%s]\n", object->load_name ));
 	object->load_object = object;
-	_dl_loading_object = object;
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -120,8 +125,6 @@ dlopen(const char *libname, int flags)
 		dynobj = dynobj->next;
 	}
 
-	_dl_loading_object = NULL;
-
 	if (failed == 1) {
 		if (deplibname != NULL) {
 			DL_DEB(("dlopen: failed to open %s\n", deplibname));
@@ -132,7 +135,6 @@ dlopen(const char *libname, int flags)
 	} else {
 		int err;
 		DL_DEB(("tail %s\n", object->load_name ));
-		_dl_link_dlopen(object);
 		err = _dl_rtld(object);
 		if (err != 0) {
 			_dl_real_close(object);
@@ -147,6 +149,8 @@ dlopen(const char *libname, int flags)
 loaded:
 	if (failed == 0)
 		object->opencount++;
+
+	_dl_loading_object = NULL;
 
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
@@ -284,8 +288,7 @@ _dl_real_close(void *handle)
 
 	_dl_notify_unload_shlib(object);
 	_dl_run_all_dtors();
-	if(--object->opencount == 0)
-		_dl_unlink_dlopen(object);
+	object->opencount--;
 	_dl_unload_shlib(object);
 	_dl_cleanup_objects();
 	return (0);

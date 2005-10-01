@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.26 2005/09/28 21:56:24 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.27 2005/10/01 19:32:22 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -97,6 +97,14 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	if (object) {
 		object->refcount++;
 		object->load_object->obj_flags |= flags & RTLD_GLOBAL;
+		if (object->load_object != object &&
+		    object->load_object != _dl_objects &&
+		    object->load_object != _dl_loading_object) {
+			object->load_object->refcount++;
+			if (_dl_loading_object == NULL)
+				_dl_loading_object = object;
+			_dl_link_sub(object->load_object, _dl_loading_object);
+		}
 		return(object);		/* Already loaded */
 	}
 
@@ -117,6 +125,15 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			object->refcount++;
 			object->load_object->obj_flags |= flags & RTLD_GLOBAL;
 			_dl_close(libfile);
+			if (object->load_object != object &&
+			    object->load_object != _dl_objects &&
+			    object->load_object != _dl_loading_object) {
+				object->load_object->refcount++;
+				if (_dl_loading_object == NULL)
+					_dl_loading_object = object;
+				_dl_link_sub(object->load_object,
+				    _dl_loading_object);
+			}
 			return(object);
 		}
 	}
