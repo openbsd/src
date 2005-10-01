@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.22 2005/08/09 09:15:53 martin Exp $	*/
+/*	$OpenBSD: esp.c,v 1.23 2005/10/01 13:39:23 martin Exp $	*/
 /*	$NetBSD: esp.c,v 1.17 1998/09/05 15:15:35 pk Exp $	*/
 
 /*
@@ -589,10 +589,7 @@ static __inline__ int
 esp_dafb_have_dreq(esc)
 	struct esp_softc *esc;
 {
-	u_int32_t r;
-
-	r = bus_space_read_4(esc->sc_tag, esc->sc_bsh, 0);
-	return (r & 0x200);
+	return (*(volatile u_int32_t *)(esc->sc_bsh.base) & 0x200);
 }
 
 static __inline__ int
