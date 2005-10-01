@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.68 2005/09/10 23:25:41 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.69 2005/10/01 21:26:06 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -441,7 +441,6 @@ em_start_locked(struct ifnet *ifp)
 		ifp->if_timer = EM_TX_TIMEOUT;
 
 	}	
-	return;
 }
 
 void
@@ -453,7 +452,6 @@ em_start(struct ifnet *ifp)
         EM_LOCK(sc);
         em_start_locked(ifp);
         EM_UNLOCK(sc);
-	return;
 }
 
 /*********************************************************************
@@ -590,7 +588,6 @@ em_watchdog(struct ifnet *ifp)
 	em_init(sc);
 
 	ifp->if_oerrors++;
-	return;
 }
 
 /*********************************************************************
@@ -700,8 +697,6 @@ em_init_locked(struct em_softc *sc)
 
         /* Don't reset the phy next time init gets called */
         sc->hw.phy_reset_disable = TRUE;
-
-	return;
 }
 
 void
@@ -713,7 +708,6 @@ em_init(void *arg)
         EM_LOCK(sc);
         em_init_locked(sc);
         EM_UNLOCK(sc);
-        return;
 }
 
 /*********************************************************************
@@ -822,7 +816,6 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 		else
 			ifmr->ifm_active |= IFM_HDX;
 	}
-	return;
 }
 
 /*********************************************************************
@@ -1100,7 +1093,6 @@ em_82547_move_tail_locked(struct em_softc *sc)
 			length = 0;
 		}
 	}
-	return;
 }
 
 void
@@ -1147,8 +1139,6 @@ em_82547_update_fifo_head(struct em_softc *sc, int len)
 	if (sc->tx_fifo_head >= sc->tx_fifo_size) {
 		sc->tx_fifo_head -= sc->tx_fifo_size;
 	}
-
-	return;
 }
 
 int
@@ -1207,8 +1197,6 @@ em_set_promisc(struct em_softc *sc)
 		reg_rctl &= ~E1000_RCTL_UPE;
 		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 	}
-
-	return;
 }
 
 void
@@ -1221,8 +1209,6 @@ em_disable_promisc(struct em_softc *sc)
 	reg_rctl &=  (~E1000_RCTL_UPE);
 	reg_rctl &=  (~E1000_RCTL_MPE);
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
-
-	return;
 }
 
 
@@ -1285,8 +1271,6 @@ em_set_multi(struct em_softc *sc)
 			em_pci_set_mwi(&sc->hw);
 		}
 	}
-
-	return;
 }
 
 /*********************************************************************
@@ -1318,7 +1302,6 @@ em_local_timer(void *arg)
 	timeout_add(&sc->timer_handle, hz);
 
         EM_UNLOCK(sc);
-	return;
 }
 
 void
@@ -1344,9 +1327,6 @@ em_update_link_status(struct em_softc *sc)
 			if_link_state_change(ifp);
                 }
         }
-
-        return;
-
 }
 
 /*********************************************************************
@@ -1376,8 +1356,6 @@ em_stop(void *arg)
 
 	em_free_transmit_structures(sc);
 	em_free_receive_structures(sc);
-
-	return;
 }
 
 /*********************************************************************
@@ -1416,8 +1394,6 @@ em_identify_hardware(struct em_softc *sc)
 	   sc->hw.mac_type == em_82547 ||
 	   sc->hw.mac_type == em_82547_rev_2)
 		sc->hw.phy_init_script = TRUE;
-
-	return;
 }
 
 int
@@ -1507,7 +1483,6 @@ em_free_pci_resources(struct em_softc *sc)
 		bus_space_unmap(sc->osdep.mem_bus_space_tag, sc->osdep.mem_bus_space_handle,
 				sc->osdep.em_memsize);
 	sc->osdep.em_membase = 0;
-
 }
 
 /*********************************************************************
@@ -1618,8 +1593,6 @@ em_setup_interface(struct em_softc *sc)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	return;
 }
 
 
@@ -1679,8 +1652,6 @@ em_smartspeed(struct em_softc *sc)
 	/* Restart process after EM_SMARTSPEED_MAX iterations */
 	if(sc->smartspeed++ == EM_SMARTSPEED_MAX)
 		sc->smartspeed = 0;
-
-	return;
 }
 
 /*
@@ -1878,8 +1849,6 @@ em_initialize_transmit_unit(struct em_softc *sc)
 
 	if (sc->tx_int_delay > 0)
 		sc->txd_cmd |= E1000_TXD_CMD_IDE;
-
-	return;
 }
 
 /*********************************************************************
@@ -1914,7 +1883,6 @@ em_free_transmit_structures(struct em_softc *sc)
 		bus_dma_tag_destroy(sc->txtag);
 		sc->txtag = NULL;
 	}
-	return;
 }
 
 /*********************************************************************
@@ -1999,8 +1967,6 @@ em_transmit_checksum_setup(struct em_softc *sc,
 
 	sc->num_tx_desc_avail--;
 	sc->next_avail_tx_desc = curr_txd;
-
-	return;
 }
 
 /**********************************************************************
@@ -2069,7 +2035,6 @@ em_clean_transmit_interrupts(struct em_softc *sc)
 			ifp->if_timer = EM_TX_TIMEOUT;
 	}
 	sc->num_tx_desc_avail = num_avail;
-	return;
 }
 
 /*********************************************************************
@@ -2293,8 +2258,6 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 	/* Enable Receives */
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
-
-	return;
 }
 
 /*********************************************************************
@@ -2330,7 +2293,6 @@ em_free_receive_structures(struct em_softc *sc)
 		bus_dma_tag_destroy(sc->rxtag);
 		sc->rxtag = NULL;
 	}
-	return;
 }
 
 /*********************************************************************
@@ -2540,7 +2502,6 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 			current_desc++;
 	}
 	sc->next_rx_desc_to_check = i;
-	return;
 }
 
 /*********************************************************************
@@ -2587,7 +2548,6 @@ void
 em_enable_intr(struct em_softc *sc)
 {
 	E1000_WRITE_REG(&sc->hw, IMS, (IMS_ENABLE_MASK));
-	return;
 }
 
 void
@@ -2608,7 +2568,6 @@ em_disable_intr(struct em_softc *sc)
 	else
 	    E1000_WRITE_REG(&sc->hw, IMC,
 	        0xffffffff);
-	return;
 }
 
 int
@@ -2641,7 +2600,6 @@ em_read_pci_cfg(struct em_hw *hw, uint32_t reg,
 	struct pci_attach_args *pa = &((struct em_osdep *)hw->back)->em_pa;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	*value = pci_conf_read(pc, pa->pa_tag, reg);
-	return;
 }
 
 void
@@ -2652,7 +2610,6 @@ em_pci_set_mwi(struct em_hw *hw)
 	/* Should we do read/mask/write...?  16 vs 32 bit!!! */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		(hw->pci_cmd_word | CMD_MEM_WRT_INVALIDATE));
-
 }
 
 void
@@ -2663,7 +2620,6 @@ em_pci_clear_mwi(struct em_hw *hw)
 	/* Should we do read/mask/write...?  16 vs 32 bit!!! */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		(hw->pci_cmd_word & ~CMD_MEM_WRT_INVALIDATE));
-
 }
 
 /*********************************************************************
@@ -2820,7 +2776,6 @@ em_update_stats_counters(struct em_softc *sc)
 
 	/* Tx Errors */
 	ifp->if_oerrors = sc->stats.ecol + sc->stats.latecol;
-
 }
 
 /**********************************************************************
@@ -2866,8 +2821,6 @@ em_print_debug_info(struct em_softc *sc)
 		sc->mbuf_cluster_failed);
 	printf("%s: Driver dropped packets = %ld\n", unit,
 	       sc->dropped_pkts);
-
-	return;
 }
 
 void
@@ -2912,6 +2865,4 @@ em_print_hw_stats(struct em_softc *sc)
 	       (long long)sc->stats.gprc);
 	printf("%s: Good Packets Xmtd = %lld\n", unit,
 	       (long long)sc->stats.gptc);
-
-	return;
 }
