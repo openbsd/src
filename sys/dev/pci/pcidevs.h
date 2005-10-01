@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.923 2005/09/30 18:57:19 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.925 2005/10/01 18:35:16 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -674,6 +674,7 @@
 #define	PCI_PRODUCT_APPLE_SHASTA_PCI3	0x0055		/* Shasta PCI */
 #define	PCI_PRODUCT_APPLE_SHASTA_HT	0x0056		/* Shasta HyperTransport */
 #define	PCI_PRODUCT_APPLE_U3L_AGP	0x0058		/* U3L AGP */
+#define	PCI_PRODUCT_APPLE_BCM5701	0x1645		/* BCM5701 */
 
 /* Aralion products */
 #define	PCI_PRODUCT_ARALION_ARS106S	0x0301		/* ARS106S */
