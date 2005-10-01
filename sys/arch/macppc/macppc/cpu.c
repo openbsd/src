@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2005/09/29 20:40:24 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.23 2005/10/01 19:55:25 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -97,6 +97,23 @@ ppc_cpuspeed(int *freq)
 	return (0);
 }
 
+int ppc_proc_is_64b;
+
+void
+ppc_check_procid()
+{
+	u_int32_t cpu, pvr;
+	pvr = ppc_mfpvr();
+	cpu = pvr >> 16;
+
+	switch (cpu) {
+	case PPC_CPU_IBM970:
+		ppc_proc_is_64b = 1;
+		break;
+	default:
+		ppc_proc_is_64b = 0;
+	}
+}
 
 void
 cpuattach(struct device *parent, struct device *dev, void *aux)
@@ -135,6 +152,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		break;
 	case PPC_CPU_MPC7447A:
 		snprintf(cpu_model, sizeof(cpu_model), "7447A");
+		break;
+	case PPC_CPU_IBM970:
+		snprintf(cpu_model, sizeof(cpu_model), "970");
 		break;
 	case PPC_CPU_IBM750FX:
 		snprintf(cpu_model, sizeof(cpu_model), "750FX");

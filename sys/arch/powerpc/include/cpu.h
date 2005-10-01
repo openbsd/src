@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2005/03/10 19:24:30 otto Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2005/10/01 19:55:25 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ FUNC_SPR(272, sprg0)
 FUNC_SPR(273, sprg1)
 FUNC_SPR(274, sprg2)
 FUNC_SPR(275, sprg3)
+FUNC_SPR(280, asr)
 FUNC_SPR(282, ear)
 FUNC_SPR(287, pvr)
 FUNC_SPR(528, ibat0u)
@@ -221,6 +222,8 @@ ppc_intr_disable(void)
 }
 
 int ppc_cpuspeed(int *);
+void ppc_check_procid(void);
+extern int ppc_proc_is_64b;
 
 /*
  * PowerPC CPU types
@@ -233,6 +236,7 @@ int ppc_cpuspeed(int *);
 #define	PPC_CPU_MPC750		8
 #define	PPC_CPU_MPC604ev	9
 #define	PPC_CPU_MPC7400		12
+#define	PPC_CPU_IBM970		0x003c
 #define	PPC_CPU_IBM750FX	0x7000
 #define	PPC_CPU_MPC7410		0x800c
 #define	PPC_CPU_MPC7447A	0x8003
