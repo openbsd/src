@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.925 2005/10/01 18:35:16 brad Exp $
+$OpenBSD: pcidevs,v 1.926 2005/10/01 18:50:31 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -628,9 +628,9 @@ product APPLE UNINORTH		0x001f	Uni-N
 product APPLE UNINORTHETH_FW	0x0018	Uni-N Eth Firewire
 product APPLE USB		0x0019	USB
 product APPLE UNINORTHAGP	0x0020	Uni-N AGP
-product APPLE GMAC		0x0021	GMAC
+product APPLE UNINORTHGMAC	0x0021	Uni-N GMAC
 product APPLE KEYLARGO		0x0022	Keylargo
-product APPLE GMAC2		0x0024	GMAC
+product APPLE PANGEA_GMAC	0x0024	Pangea GMAC
 product APPLE PANGEA_MACIO	0x0025	Pangea
 product APPLE PANGEA_OHCI	0x0026	Pangea USB
 product APPLE PANGEA_AGP	0x0027	Pangea AGP
@@ -641,7 +641,7 @@ product APPLE UNINORTH2		0x002e	Uni-N2 Host
 product APPLE UNINORTH2ETH	0x002f	Uni-N2 Host
 product APPLE PANGEA_FW		0x0030	Pangea FireWire
 product APPLE UNINORTH_FW	0x0031	UniNorth Firewire
-product APPLE GMAC3		0x0032	GMAC
+product APPLE UNINORTH2GMAC	0x0032	Uni-N2 GMAC
 product APPLE UNINORTH_ATA	0x0033	Uni-N ATA
 product APPLE UNINORTH_AGP3	0x0034	UniNorth AGP
 product APPLE UNINORTH5		0x0035	UniNorth PCI
