@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.84 2005/09/25 18:13:16 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.85 2005/10/01 13:49:50 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/if_devar.h>
 #include <dev/ic/dc21040reg.h>
 
 /*
@@ -88,7 +89,7 @@
 #endif
 
 /*
- * This turns on all sort of debugging stuff and make the
+ * This turns on all sort of debugging stuff and makes the
  * driver much larger.
  */
 #if 0
@@ -135,7 +136,6 @@
 	(sc)->tulip_pci_devno = pa->pa_device; \
     } while (0)
 
-#include <dev/pci/if_devar.h>
 /*
  * This module supports
  *	the DEC 21040 PCI Ethernet Controller.
@@ -695,7 +695,7 @@ tulip_media_poll(
     }
 
     /*
-     * switch to another media if we tried this one enough.
+     * Switch to another media if we tried this one enough.
      */
     if (/* event == TULIP_MEDIAPOLL_TXPROBE_FAILED || */ sc->tulip_probe_timeout <= 0) {
 #if defined(TULIP_DEBUG)
@@ -4196,9 +4196,9 @@ tulip_ifioctl(
 }
 
 /*
- * the original dequeueing policy is dequeue-and-prepend if something
- * goes wrong.  when altq is used, it is changed to peek-and-dequeue.
- * the modification becomes a bit complicated since tulip_txput() might
+ * The original dequeueing policy is dequeue-and-prepend if something
+ * goes wrong.  When altq is used, it is changed to peek-and-dequeue.
+ * The modification becomes a bit complicated since tulip_txput() might
  * copy and modify the mbuf passed.
  */
 /*
