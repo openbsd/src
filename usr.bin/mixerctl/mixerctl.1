@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.22 2004/11/22 09:26:24 jsg Exp $
+.\" $OpenBSD: mixerctl.1,v 1.23 2005/10/01 17:07:26 deraadt Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,6 +50,10 @@
 .Op Fl f Ar file
 .Ar name Op Ar ...
 .Nm mixerctl
+.Op Fl qt
+.Op Fl f Ar file
+.Ar name Op Ar ...
+.Nm mixerctl
 .Op Fl q
 .Pf \ \& Op Fl f Ar file
 .Xo
@@ -79,6 +83,8 @@ Specify an alternative audio mixing device.
 Suppress printing of the variable name.
 .It Fl q
 Suppress all printing when setting a variable.
+.It Fl t
+Attempt to select the next possible enumeration value.
 .It Fl v
 Show the possible values of enumeration and set valued variables.
 Enumerated values are shown in
@@ -152,6 +158,16 @@ inputs.dac.mute=off  [ off on ]
 record.record=220,220 volume
 record.record.source=mic  [ mic cd dac ]
 monitor.monitor=0 volume
+.Ed
+.Pp
+The command to toggle
+.Dq inputs.dac.mute
+.Pp
+.Dl "$ mixerctl -t inputs.dac.mute"
+.Pp
+produces
+.Bd -literal -offset indent
+inputs.dac.mute: off -> on
 .Ed
 .Sh SEE ALSO
 .Xr aucat 1 ,

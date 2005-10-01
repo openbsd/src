@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.21 2005/05/09 13:23:35 millert Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.22 2005/10/01 17:07:26 deraadt Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ prfield(struct field *p, char *sep, int prvalset)
 			printf("%d", m->un.value.level[0]);
 		else
 			printf("%d,%d", m->un.value.level[0],
-			       m->un.value.level[1]);
+			    m->un.value.level[1]);
 		if (prvalset)
 			printf(" %s", p->infp->un.v.units.name);
 		break;
@@ -181,13 +181,25 @@ rdfield(int fd, struct field *p, char *q, int quiet)
 
 	switch (m->type) {
 	case AUDIO_MIXER_ENUM:
+		if (strcmp(q, "toggle") == 0) {
+			for (i = 0; i < p->infp->un.e.num_mem; i++) {
+				if (m->un.ord == p->infp->un.e.member[i].ord)
+					break;
+			}
+			if (i < p->infp->un.e.num_mem)
+				i++;
+			else
+				i = 0;
+			m->un.ord = p->infp->un.e.member[i].ord;
+			break;
+		}
 		for (i = 0; i < p->infp->un.e.num_mem; i++)
 			if (strcmp(p->infp->e_member_name, q) == 0)
 				break;
 		if (i < p->infp->un.e.num_mem)
 			m->un.ord = p->infp->un.e.member[i].ord;
 		else
-		        errx(1, "Bad enum value %s", q);
+			errx(1, "Bad enum value %s", q);
 		break;
 	case AUDIO_MIXER_SET:
 		mask = 0;
@@ -200,7 +212,7 @@ rdfield(int fd, struct field *p, char *q, int quiet)
 			if (i < p->infp->un.s.num_mem)
 				mask |= p->infp->un.s.member[i].mask;
 			else
-			        errx(1, "Bad set value %s", q);
+				errx(1, "Bad set value %s", q);
 		}
 		m->un.mask = mask;
 		break;
@@ -238,16 +250,16 @@ int
 main(int argc, char **argv)
 {
 	int fd, i, j, ch, pos;
-	int aflag = 0, qflag = 0, vflag = 0;
+	int aflag = 0, qflag = 0, vflag = 0, tflag = 0;
 	char *file;
 	char *sep = "=";
 	mixer_devinfo_t dinfo;
 	int ndev;
 
 	if ((file = getenv("MIXERDEVICE")) == 0 || *file == '\0')
-	        file = "/dev/mixer";
+		file = "/dev/mixer";
 
-	while ((ch = getopt(argc, argv, "af:nqvw")) != -1) {
+	while ((ch = getopt(argc, argv, "af:nqtvw")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
@@ -266,6 +278,9 @@ main(int argc, char **argv)
 			break;
 		case 'q':
 			qflag = 1;
+			break;
+		case 't':
+			tflag = 1;
 			break;
 		case '?':
 		default:
@@ -363,7 +378,9 @@ main(int argc, char **argv)
 
 			if ((p = findfield(*argv)) == NULL) {
 				warnx("field %s does not exist", *argv);
-			} else if (ch) {
+			} else if (ch || tflag) {
+				if (tflag && q == NULL)
+					q = "toggle";
 				rdfield(fd, p, q, qflag);
 			} else {
 				prfield(p, sep, vflag);
@@ -385,6 +402,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-nv] [-f file] -a\n"
 	    "       %s [-nv] [-f file] name [...]\n"
+	    "       %s [-qt] [-f file] name [...]\n"
 	    "       %s [-q]  [-f file] name=value [...]\n",
 	    __progname, __progname, __progname);
 
