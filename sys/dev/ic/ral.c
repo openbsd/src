@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.60 2005/10/02 13:01:54 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.61 2005/10/02 13:50:29 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2642,8 +2642,13 @@ ral_init(struct ifnet *ifp)
 	int i;
 
 	/* for CardBus, power on the socket */
-	if (sc->sc_enable != NULL)
-		(*sc->sc_enable)(sc);
+	if (!(sc->sc_flags & RAL_ENABLED)) {
+		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
+			printf("%s: could not enable device\n");
+			return EIO;
+		}
+		sc->sc_flags |= RAL_ENABLED;
+	}
 
 	ral_stop(ifp, 0);
 
@@ -2687,7 +2692,7 @@ ral_init(struct ifnet *ifp)
 
 	if (ral_bbp_init(sc) != 0) {
 		ral_stop(ifp, 1);
-		return 1;
+		return EIO;
 	}
 
 	/* set default BSS channel */
@@ -2760,8 +2765,12 @@ ral_stop(struct ifnet *ifp, int disable)
 	ral_reset_rx_ring(sc, &sc->rxq);
 
 	/* for CardBus, power down the socket */
-	if (disable && sc->sc_disable != NULL)
-		(*sc->sc_disable)(sc);
+	if (disable && sc->sc_disable != NULL) {
+		if (sc->sc_flags & RAL_ENABLED) {
+			(*sc->sc_disable)(sc);
+			sc->sc_flags &= ~RAL_ENABLED;
+		}
+	}
 }
 
 struct cfdriver ral_cd = {

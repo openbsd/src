@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralvar.h,v 1.7 2005/03/11 19:39:35 damien Exp $  */
+/*	$OpenBSD: ralvar.h,v 1.8 2005/10/02 13:50:29 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -110,6 +110,9 @@ struct ral_softc {
 
 	struct timeout			scan_ch;
 	struct timeout			rssadapt_ch;
+
+	int				sc_flags;
+#define RAL_ENABLED	(1 << 0)
 
 	int				sc_tx_timer;
 
