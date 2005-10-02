@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.68 2005/09/23 10:24:50 grunk Exp $
+dnl	$OpenBSD: hardware,v 1.69 2005/10/02 19:41:12 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -589,6 +589,45 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		    Zaapa ZNWUSB-54
 		    Zinwell ZWX-G261
 		    Zonet ZEW2500P
+		Atheros AR521x based CardBus IEEE 802.11a/b/g adapters [-]
+		    3Com 3CRPAG175
+		    Aztech WL830PC
+		    D-Link DWL-A650
+		    D-Link DWL-AB650
+		    D-Link DWL-AG650
+		    D-Link DWL-G650B
+		    Elecom LD-WL54AG
+		    Elecom LD-WL54
+		    Fujitsu E5454
+		    Fujitsu FMV-JW481
+		    Fujitsu E5454
+		    I/O Data WN-AB
+		    I/O Data WN-AG
+		    I/O Data WN-A54
+		    Linksys WPC51AB
+		    Linksys WPC55AG
+		    NEC PA-WL/54AG
+		    Netgear WAB501
+		    Netgear WAG511
+		    Netgear WG511T
+		    Orinoco 8480
+		    Orinoco 8470WD
+		    Proxim Skyline 4030
+		    Samsung SWL-5200N
+		    SMC SMC2735W
+		    Sony PCWA-C700
+		    Sony PCWA-C300S
+		    Sony PCWA-C500
+		Atheros AR521x based PCI IEEE 802.11a/b/g adapters [-]
+		    D-Link DWL-A520
+		    D-Link DWL-AG520
+		    D-Link DWL-G520
+		    HP NC4000
+		    Linksys WMP55AG
+		    Netgear WAG311
+		    Netgear WG311
+		    Proxim Skyline 4032
+		    Senao NL-5354MP
 	ATM Adapters [*]
 		Efficient Networks EN-155 and Adaptec ANA-590x ATM interfaces
 		  (en)
