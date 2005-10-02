@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.44 2005/08/27 14:46:37 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.45 2005/10/02 13:01:59 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -925,6 +925,13 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* node is no longer needed */
 	ieee80211_release_node(ic, ni);
+
+	/*
+	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
+	 * without calling if_start().
+	 */
+	if (!IFQ_IS_EMPTY(&ifp->if_snd) && !(ifp->if_flags & IFF_OACTIVE))
+		ural_start(ifp);
 
 	splx(s);
 

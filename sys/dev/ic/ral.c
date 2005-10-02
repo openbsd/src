@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.59 2005/08/27 14:46:21 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.60 2005/10/02 13:01:54 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1342,6 +1342,13 @@ skip:		desc->flags = htole32(RAL_RX_BUSY);
 		sc->rxq.cur_decrypt =
 		    (sc->rxq.cur_decrypt + 1) % RAL_RX_RING_COUNT;
 	}
+
+	/*
+	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
+	 * without calling if_start().
+	 */
+	if (!IFQ_IS_EMPTY(&ifp->if_snd) && !(ifp->if_flags & IFF_OACTIVE))
+		ral_start(ifp);
 }
 
 /*
