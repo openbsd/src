@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.61 2005/10/02 13:50:29 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.62 2005/10/02 14:01:52 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1819,6 +1819,9 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		rate = rs->rs_rates[ni->ni_txrate];
 	}
 	rate &= IEEE80211_RATE_VAL;
+
+	/* assert tx rate is non-null so we don't end up dividing by zero */
+	KASSERT(rate != 0);
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
