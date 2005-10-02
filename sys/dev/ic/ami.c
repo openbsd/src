@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.90 2005/09/30 10:10:29 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.91 2005/10/02 06:30:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -324,6 +324,7 @@ ami_attach(sc)
 	struct ami_rawsoftc *rsc;
 	struct ami_ccb	*ccb;
 	struct ami_iocmd *cmd;
+	struct ami_ccbmem *mem;
 	bus_dmamap_t idatamap;
 	bus_dma_segment_t idataseg[1];
 	const char *p;
@@ -343,15 +344,10 @@ ami_attach(sc)
 	sc->sc_mbox_pa = sc->sc_mbox_seg[0].ds_addr;
 	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ", sc->sc_mbox_pa));
 
-	sc->sc_pts = ami_allocmem(sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
-	    sizeof(struct ami_passthrough), AMI_MAXCMDS, "ptlist");
-	if (!sc->sc_pts)
+	sc->sc_ccbmem = ami_allocmem(sc->dmat, &sc->sc_ccbmap, sc->sc_ccbseg,
+	    sizeof(struct ami_ccbmem), AMI_MAXCMDS, "ccb dmamem");
+	if (!sc->sc_ccbmem)
 		goto free_mbox;
-
-	sc->sc_sgents = ami_allocmem(sc->dmat, &sc->sc_sgmap, sc->sc_sgseg,
-	    sizeof(struct ami_sgent) * AMI_SGEPERCMD, AMI_MAXCMDS, "sglist");
-	if (!sc->sc_sgents)
-		goto free_pts;
 
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_ccbdone);
@@ -359,6 +355,7 @@ ami_attach(sc)
 
 	for (i = 0; i < AMI_MAXCMDS; i++) {
 		ccb = &sc->sc_ccbs[i];
+		mem = &sc->sc_ccbmem[i];
 
 		error = bus_dmamap_create(sc->dmat, AMI_MAXFER, AMI_MAXOFFSETS,
 		    AMI_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
@@ -368,16 +365,20 @@ ami_attach(sc)
 			goto destroy;
 		}
 
-
 		ccb->ccb_sc = sc;
 		ccb->ccb_state = AMI_CCB_FREE;
+
 		ccb->ccb_cmd.acc_id = i + 1;
-		ccb->ccb_pt = &sc->sc_pts[i];
-		ccb->ccb_ptpa = htole32(sc->sc_ptseg[0].ds_addr +
-		    (sizeof(struct ami_passthrough) * i));
-		ccb->ccb_sglist = &sc->sc_sgents[i * AMI_SGEPERCMD];
-		ccb->ccb_sglistpa = htole32(sc->sc_sgseg[0].ds_addr +
-		    (sizeof(struct ami_sgent) * AMI_SGEPERCMD * i));
+		ccb->ccb_offset = sizeof(struct ami_ccbmem) * i;
+
+		ccb->ccb_pt = &mem->cd_pt;
+		ccb->ccb_ptpa = htole32(sc->sc_ccbseg[0].ds_addr +
+		    ccb->ccb_offset);
+
+		ccb->ccb_sglist = mem->cd_sg;
+		ccb->ccb_sglistpa = htole32(sc->sc_ccbseg[0].ds_addr +
+		    ccb->ccb_offset + sizeof(struct ami_passthrough));
+
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 	}
 
@@ -627,12 +628,9 @@ destroy:
 		if (ccb->ccb_dmamap)
 			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
 
-	ami_freemem((caddr_t)sc->sc_sgents, sc->dmat, &sc->sc_sgmap,
-	    sc->sc_sgseg, sizeof(struct ami_sgent) * AMI_SGEPERCMD,
-	    AMI_MAXCMDS, "sglist");
-free_pts:
-	ami_freemem((caddr_t)sc->sc_pts, sc->dmat, &sc->sc_ptmap, sc->sc_ptseg,
-	    sizeof(struct ami_passthrough), AMI_MAXCMDS, "ptlist");
+	ami_freemem((caddr_t)sc->sc_ccbmem, sc->dmat, &sc->sc_ccbmap,
+	    sc->sc_ccbseg, sizeof(struct ami_ccbmem), AMI_MAXCMDS,
+	    "ccb dmamem");
 free_mbox:
 	ami_freemem((caddr_t)sc->sc_mbox, sc->dmat, &sc->sc_mbox_map,
 	    sc->sc_mbox_seg, sizeof(struct ami_iocmd), 1, "mbox");
@@ -1074,6 +1072,10 @@ ami_cmd(ccb, flags, wait)
 		}
 		AMI_DPRINTF(AMI_D_DMA, ("> "));
 
+		bus_dmamap_sync(sc->dmat, sc->sc_ccbmap,
+		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 		bus_dmamap_sync(sc->dmat, dmap, 0, dmap->dm_mapsize,
 		    (ccb->ccb_dir == AMI_CCB_IN) ?
 		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
@@ -1088,8 +1090,18 @@ ami_cmd(ccb, flags, wait)
 		if (error)
 			AMI_DPRINTF(AMI_D_MISC, ("pf "));
 #endif
-		if (ccb->ccb_data)
+		if (ccb->ccb_data) {
+			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+			    ccb->ccb_dmamap->dm_mapsize,
+			    (ccb->ccb_dir == AMI_CCB_IN) ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+			bus_dmamap_sync(sc->dmat, sc->sc_ccbmap,
+			    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 			bus_dmamap_unload(sc->dmat, dmap);
+		}
 		if (ccb->ccb_wakeup)
 			ccb->ccb_wakeup = 0;
 		else
@@ -1097,8 +1109,18 @@ ami_cmd(ccb, flags, wait)
 	} else if ((error = ami_start(ccb, wait))) {
 		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
 		__asm __volatile(".globl _bpamierr\n_bpamierr:");
-		if (ccb->ccb_data)
+		if (ccb->ccb_data) {
+			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+			    ccb->ccb_dmamap->dm_mapsize,
+			    (ccb->ccb_dir == AMI_CCB_IN) ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+			bus_dmamap_sync(sc->dmat, sc->sc_ccbmap,
+			    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 			bus_dmamap_unload(sc->dmat, dmap);
+		}
 		ami_put_ccb(ccb);
 	}
 
@@ -1248,6 +1270,10 @@ ami_done(sc, idx)
 		    ccb->ccb_dmamap->dm_mapsize,
 		    (ccb->ccb_dir == AMI_CCB_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_sync(sc->dmat, sc->sc_ccbmap,
+		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.31 2005/09/30 09:07:01 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.32 2005/10/02 06:30:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -27,27 +27,42 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct ami_ccbmem {
+	struct ami_passthrough	cd_pt;
+	struct ami_sgent	cd_sg[AMI_SGEPERCMD];
+};
+
 struct ami_softc;
 
 struct ami_ccb {
 	struct ami_softc	*ccb_sc;
+
 	struct ami_iocmd	ccb_cmd;
 	struct ami_passthrough	*ccb_pt;
 	paddr_t			ccb_ptpa;
 	struct ami_sgent	*ccb_sglist;
 	paddr_t			ccb_sglistpa;
+	int			ccb_offset;
+
 	struct scsi_xfer	*ccb_xs;
-	volatile int		ccb_wakeup;
-	TAILQ_ENTRY(ami_ccb)	ccb_link;
-	enum {
-		AMI_CCB_FREE, AMI_CCB_READY, AMI_CCB_QUEUED, AMI_CCB_PREQUEUED
-	} ccb_state;
+
+	void			*ccb_data;
 	int			ccb_len;
 	enum {
-		AMI_CCB_IN, AMI_CCB_OUT
+		AMI_CCB_IN,
+		AMI_CCB_OUT
 	}			ccb_dir;
-	void			*ccb_data;
 	bus_dmamap_t		ccb_dmamap;
+
+	volatile int		ccb_wakeup;
+
+	enum {
+		AMI_CCB_FREE,
+		AMI_CCB_READY,
+		AMI_CCB_QUEUED,
+		AMI_CCB_PREQUEUED
+	}			ccb_state;
+	TAILQ_ENTRY(ami_ccb)	ccb_link;
 };
 
 typedef TAILQ_HEAD(ami_queue_head, ami_ccb)	ami_queue_head;
@@ -94,13 +109,9 @@ struct ami_softc {
 	struct ami_ccb		sc_ccbs[AMI_MAXCMDS];
 	ami_queue_head		sc_free_ccb, sc_ccbq, sc_ccbdone;
 
-	struct ami_passthrough	*sc_pts;
-	bus_dmamap_t		sc_ptmap;
-	bus_dma_segment_t	sc_ptseg[1];
-
-	struct ami_sgent	*sc_sgents;
-	bus_dmamap_t		sc_sgmap;
-	bus_dma_segment_t	sc_sgseg[1];
+	struct ami_ccbmem	*sc_ccbmem;
+	bus_dmamap_t		sc_ccbmap;
+	bus_dma_segment_t	sc_ccbseg[1];
 
 	int			sc_timeout;
 	struct timeout		sc_requeue_tmo;
