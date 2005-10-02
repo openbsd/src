@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.3 2005/09/30 16:44:26 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.4 2005/10/02 09:39:01 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -24,21 +24,21 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(RCSPROG_H)
+#ifndef RCSPROG_H
 #define RCSPROG_H
 
 extern char *__progname;
 extern const char rcs_version[];
 extern int verbose;
 
-void rcs_usage(void);
-void checkout_usage(void);
-void checkin_usage(void);
-void (*usage)(void);
+void	rcs_usage(void);
+void	checkout_usage(void);
+void	checkin_usage(void);
+void	(*usage)(void);
 
-int rcs_statfile(char *, char *, size_t);
-int checkout_main(int, char **);
-int checkin_main(int, char **);
-int rcs_main(int, char **);
+int	rcs_statfile(char *, char *, size_t);
+int	checkout_main(int, char **);
+int	checkin_main(int, char **);
+int	rcs_main(int, char **);
 
-#endif
+#endif	/* RCSPROG_H */
