@@ -3154,7 +3154,6 @@
 ./usr/share/man/cat3/err.0
 ./usr/share/man/cat3/errx.0
 ./usr/share/man/cat3/etext.0
-./usr/share/man/cat3/ether_addr.0
 ./usr/share/man/cat3/ether_aton.0
 ./usr/share/man/cat3/ether_hostton.0
 ./usr/share/man/cat3/ether_line.0
