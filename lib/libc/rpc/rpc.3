@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.36 2005/04/01 07:44:04 otto Exp $
+.\"	$OpenBSD: rpc.3,v 1.37 2005/10/02 15:18:27 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -99,7 +99,6 @@
 .Nm clnttcp_create ,
 .Nm clntudp_bufcreate ,
 .Nm clntudp_create ,
-.Nm clntudp_create ,
 .Nm clnt_geterr ,
 .Nm get_myaddress ,
 .Nm pmap_getmaps ,
@@ -109,6 +108,8 @@
 .Nm pmap_unset ,
 .Nm registerrpc ,
 .Nm rpc_createerr ,
+.Nm svc_destroy ,
+.Nm svc_fds ,
 .Nm svc_fdset ,
 .Nm svc_freeargs ,
 .Nm svc_getargs ,
@@ -121,6 +122,7 @@
 .Nm svc_register ,
 .Nm svc_max_pollfd ,
 .Nm svc_pollfd ,
+.Nm svc_run ,
 .Nm svc_sendreply ,
 .Nm svc_unregister ,
 .Nm svcerr_auth ,
