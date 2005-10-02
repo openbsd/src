@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.41 2005/08/06 20:30:03 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.42 2005/10/02 14:48:48 jmc Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -42,7 +42,7 @@ MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 letoh64.3 byteorder.3 swap16.3 byteorder.3 swap32.3 \
 	byteorder.3 swap64.3
 MLINKS+=ethers.3 ether_aton.3 ethers.3 ether_hostton.3 ethers.3 ether_line.3 \
-	ethers.3 ether_ntoa.3 ethers.3 ether_ntohost.3 ethers.3 ether_addr.3
+	ethers.3 ether_ntoa.3 ethers.3 ether_ntohost.3
 MLINKS+=getaddrinfo.3 freeaddrinfo.3
 MLINKS+=gethostbyname.3 endhostent.3 gethostbyname.3 gethostbyaddr.3 \
 	gethostbyname.3 sethostent.3 gethostbyname.3 gethostent.3 \
