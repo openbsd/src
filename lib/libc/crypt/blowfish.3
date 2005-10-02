@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.13 2005/07/17 08:50:55 jaredy Exp $
+.\" $OpenBSD: blowfish.3,v 1.14 2005/10/02 08:12:16 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -36,7 +36,11 @@
 .Sh NAME
 .Nm blf_key ,
 .Nm blf_enc ,
-.Nm blf_dec
+.Nm blf_dec ,
+.Nm blf_ecb_encrypt ,
+.Nm blf_ecb_decrypt ,
+.Nm blf_cbc_encrypt ,
+.Nm blf_cbc_decrypt
 .Nd Blowfish encryption
 .Sh SYNOPSIS
 .Fd #include <blf.h>
