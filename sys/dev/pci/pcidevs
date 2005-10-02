@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.927 2005/10/02 17:49:16 brad Exp $
+$OpenBSD: pcidevs,v 1.928 2005/10/02 22:09:39 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -627,16 +627,16 @@ product APPLE UNINORTHETH	0x001e	Uni-N Eth
 product APPLE UNINORTH		0x001f	Uni-N
 product APPLE UNINORTHETH_FW	0x0018	Uni-N Eth Firewire
 product APPLE USB		0x0019	USB
-product APPLE UNINORTHAGP	0x0020	Uni-N AGP
+product APPLE UNINORTH_AGP	0x0020	Uni-N AGP
 product APPLE UNINORTHGMAC	0x0021	Uni-N GMAC
 product APPLE KEYLARGO		0x0022	Keylargo
 product APPLE PANGEA_GMAC	0x0024	Pangea GMAC
-product APPLE PANGEA_MACIO	0x0025	Pangea
+product APPLE PANGEA_MACIO	0x0025	Pangea Macio
 product APPLE PANGEA_OHCI	0x0026	Pangea USB
 product APPLE PANGEA_AGP	0x0027	Pangea AGP
-product APPLE PANGEA_PCI1	0x0028	Pangea PCI
-product APPLE PANGEA_PCI2	0x0029	Pangea PCI
-product APPLE UNINORTH2AGP	0x002d	Uni-N2 AGP
+product APPLE PANGEA		0x0028	Pangea
+product APPLE PANGEA_PCI	0x0029	Pangea PCI
+product APPLE UNINORTH2_AGP	0x002d	Uni-N2 AGP
 product APPLE UNINORTH2		0x002e	Uni-N2 Host
 product APPLE UNINORTH2ETH	0x002f	Uni-N2 Host
 product APPLE PANGEA_FW		0x0030	Pangea FireWire
@@ -650,7 +650,7 @@ product APPLE INTREPID_ATA	0x003b	Intrepid ATA
 product APPLE INTREPID		0x003e	Intrepid
 product APPLE INTREPID_OHCI	0x003f	Intrepid USB
 product APPLE K2_USB		0x0040	K2 USB
-product APPLE K2		0x0041	K2 Macio
+product APPLE K2_MACIO		0x0041	K2 Macio
 product APPLE K2_FW		0x0042	K2 Firewire
 product APPLE K2_ATA		0x0043	K2 ATA
 product APPLE U3_PPB1		0x0045	U3 PCI-PCI
@@ -668,7 +668,9 @@ product APPLE SHASTA_PCI1	0x0053	Shasta PCI
 product APPLE SHASTA_PCI2	0x0054	Shasta PCI
 product APPLE SHASTA_PCI3	0x0055	Shasta PCI
 product APPLE SHASTA_HT		0x0056  Shasta HyperTransport
+product APPLE K2		0x0057	K2
 product APPLE U3L_AGP		0x0058	U3L AGP
+product APPLE K2_AGP		0x0059	K2 AGP
 product APPLE BCM5701		0x1645	BCM5701
 
 /* Aralion products */
