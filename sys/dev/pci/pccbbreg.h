@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbreg.h,v 1.7 2005/09/23 22:55:12 fgsch Exp $	*/
+/*	$OpenBSD: pccbbreg.h,v 1.8 2005/10/02 18:14:26 fgsch Exp $	*/
 /*	$NetBSD: pccbbreg.h,v 1.5 2000/06/07 09:02:47 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -250,6 +250,12 @@
 
 /*
  * Additional O2Micro registers
+ *
+ * 'reserved' register at 0x94/D4. allows setting read prefetch and write
+ * bursting. read prefetching for example makes the RME Hammerfall DSP
+ * working. for some bridges it is at 0x94, for others at 0xD4. it's
+ * ok to write to both registers on all O2 bridges.
+ * from Eric Still, 02Micro.
  */
 #define O2MICRO_RESERVED1	0x94
 #define O2MICRO_RESERVED2	0xD4
