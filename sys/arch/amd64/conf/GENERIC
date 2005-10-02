@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.80 2005/09/19 01:28:04 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.81 2005/10/02 17:08:14 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -296,7 +296,7 @@ bge*	at pci?				# Broadcom BCM570x (aka Tigon3)
 re*	at pci?				# Realtek 8169/8169S/8110S
 stge*	at pci?				# Sundance TC9021 GigE
 #lge*	at pci?				# Level1 LXT1001 GigE
-#hme*	at pci?				# Sun Happy Meal
+hme*	at pci?				# Sun Happy Meal
 vge*	at pci?				# VIA VT612x
 
 # Wireless network cards
@@ -325,6 +325,7 @@ lxtphy*	at mii?				# Level1 LXT970 PHYs
 nsphy*	at mii?				# NS and compatible PHYs
 nsphyter*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
+luphy*	at mii?				# Lucent LU6612 PHY
 sqphy*	at mii?				# Seeq 8x220 PHYs
 rlphy* at mii?				# RealTek 8139 internal PHYs
 mtdphy* at mii?				# Myson MTD972 PHYs
