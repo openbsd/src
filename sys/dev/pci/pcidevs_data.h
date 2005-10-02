@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.927 2005/10/02 17:49:16 brad Exp 
+ *	OpenBSD: pcidevs,v 1.928 2005/10/02 22:09:39 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1171,7 +1171,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "USB",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHAGP,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP,
 	    "Uni-N AGP",
 	},
 	{
@@ -1188,7 +1188,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_MACIO,
-	    "Pangea",
+	    "Pangea Macio",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_OHCI,
@@ -1199,15 +1199,15 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Pangea AGP",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI1,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA,
+	    "Pangea",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI,
 	    "Pangea PCI",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI2,
-	    "Pangea PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH2AGP,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH2_AGP,
 	    "Uni-N2 AGP",
 	},
 	{
@@ -1263,7 +1263,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "K2 USB",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_MACIO,
 	    "K2 Macio",
 	},
 	{
@@ -1335,8 +1335,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Shasta HyperTransport",
 	},
 	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2,
+	    "K2",
+	},
+	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3L_AGP,
 	    "U3L AGP",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_AGP,
+	    "K2 AGP",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BCM5701,
