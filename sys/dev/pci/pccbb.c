@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.37 2005/09/16 02:20:23 fgsch Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.38 2005/10/02 18:20:00 fgsch Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -331,6 +331,18 @@ struct yenta_chipinfo {
 	    CB_CIRRUS, PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6833),
 	    CB_CIRRUS, PCCBB_PCMCIA_MEM_32},
+
+	/* older O2Micro bridges */
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729),
+	    CB_OLDO2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6730),
+	    CB_OLDO2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872), /* 68[71]2 */
+	    CB_OLDO2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832),
+	    CB_OLDO2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6836),
+	    CB_OLDO2MICRO, PCCBB_PCMCIA_MEM_32},
 
 	/* sentinel, or Generic chip */
 	{ 0 /* null id */ , CB_UNKNOWN, PCCBB_PCMCIA_MEM_32},
@@ -832,6 +844,24 @@ pccbb_chipinit(sc)
 		if ((reg & TOPIC100_PMCSR_MASK) != TOPIC100_PMCSR_D0)
 			pci_conf_write(pc, tag, TOPIC100_PMCSR,
 			    (reg & ~TOPIC100_PMCSR_MASK) | TOPIC100_PMCSR_D0);
+		break;
+
+	case CB_OLDO2MICRO:
+		/*
+		 * older bridges have problems with both read prefetch and
+		 * write bursting depending on the combination of the chipset,
+		 * bridge and the cardbus card. so disable them to be on the
+		 * safe side. One example is O2Micro 6812 with Atheros AR5012
+		 * chipsets
+		 */
+		DPRINTF(("%s: old O2Micro bridge found\n",
+		    sc->sc_dev.dv_xname, reg));
+		reg = pci_conf_read(pc, tag, O2MICRO_RESERVED1);
+		pci_conf_write(pc, tag, O2MICRO_RESERVED1, reg &
+		    ~(O2MICRO_RES_READ_PREFETCH | O2MICRO_RES_WRITE_BURST));
+		reg = pci_conf_read(pc, tag, O2MICRO_RESERVED2);
+		pci_conf_write(pc, tag, O2MICRO_RESERVED2, reg &
+		    ~(O2MICRO_RES_READ_PREFETCH | O2MICRO_RES_WRITE_BURST));
 		break;
 	}
 
@@ -1979,7 +2009,7 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 		 *  3. if size is larger, shift msb left once.
 		 *  4. obtain mask value to decrement msb.
 		 */
-		bus_size_t size_tmp = size;	
+		bus_size_t size_tmp = size;
 		int shifts = 0;
 
 		mask = 1;

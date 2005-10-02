@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbvar.h,v 1.8 2005/09/23 22:55:12 fgsch Exp $	*/
+/*	$OpenBSD: pccbbvar.h,v 1.9 2005/10/02 18:20:01 fgsch Exp $	*/
 /*	$NetBSD: pccbbvar.h,v 1.13 2000/06/08 10:28:29 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -54,7 +54,8 @@
 #define	CB_TOPIC97	7	/* Toshiba ToPIC97 */
 #define	CB_CIRRUS	8	/* Cirrus Logic CL-PD683X */
 #define	CB_TI125X	9	/* TI PCI1250/1251(B)/1450 */
-#define	CB_CHIPS_LAST	10	/* Sentinel */
+#define	CB_OLDO2MICRO	10	/* O2Micro */
+#define	CB_CHIPS_LAST	11	/* Sentinel */
 
 #define PCCARD_VCC_UKN		0x00	/* Unknown */
 #define PCCARD_VCC_5V		0x01
