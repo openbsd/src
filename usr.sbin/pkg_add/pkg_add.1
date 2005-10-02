@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.52 2005/09/17 21:49:40 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.53 2005/10/02 20:46:23 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -259,20 +259,17 @@ use
 to force the update
 .Pc .
 .It Fl u
-Display the name of packages to use for an update of the given
-.Ar pkgname(s) .
+Update the given
+.Ar pkgname(s) ,
+and anything it depends upon.
 With this option, if no
 .Ar pkgname
 is given,
 .Nm
-will display update names for all installed packages.
+will update all installed packages.
 This relies on
 .Ev PKG_PATH
 to figure out the new package names.
-After
-.Ox 3.8
-rolls out and enough tests are conducted, this will become a true update
-switch and will proceed with the update proper.
 .It Fl v
 Turn on verbose output.
 Several
