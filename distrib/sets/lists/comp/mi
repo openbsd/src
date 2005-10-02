@@ -4656,6 +4656,7 @@
 ./usr/share/man/cat3/strncat.0
 ./usr/share/man/cat3/strncmp.0
 ./usr/share/man/cat3/strncpy.0
+./usr/share/man/cat3/strnunvis.0
 ./usr/share/man/cat3/strnvis.0
 ./usr/share/man/cat3/strpbrk.0
 ./usr/share/man/cat3/strptime.0
