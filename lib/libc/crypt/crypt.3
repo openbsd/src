@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.24 2005/05/26 22:10:54 millert Exp $
+.\" $OpenBSD: crypt.3,v 1.25 2005/10/02 08:06:52 jmc Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -39,7 +39,10 @@
 .Nm setkey ,
 .Nm encrypt ,
 .Nm des_setkey ,
-.Nm des_cipher
+.Nm des_cipher ,
+.Nm bcrypt_gensalt ,
+.Nm bcrypt ,
+.Nm md5crypt
 .Nd DES encryption
 .Sh SYNOPSIS
 .Fd #include <pwd.h>
