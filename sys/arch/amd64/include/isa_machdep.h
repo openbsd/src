@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.2 2005/09/19 01:28:04 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.3 2005/10/02 18:41:42 brad Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.2 2003/05/09 23:51:28 fvdl Exp $	*/
 
 /*-
@@ -110,7 +110,6 @@ struct isabus_attach_args;	/* XXX */
 void	isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
 int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
-const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);
 void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg, char *);
 void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
