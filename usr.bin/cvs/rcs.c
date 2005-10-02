@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.73 2005/09/30 15:06:46 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.74 2005/10/02 21:44:18 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2209,12 +2209,12 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		return (-1);
 	}
 
-	rdp->rd_text = (u_char *)malloc(RCS_TOKLEN(rfp));
+	rdp->rd_text = (u_char *)malloc(RCS_TOKLEN(rfp) + 1);
 	if (rdp->rd_text == NULL) {
 		cvs_log(LP_ERRNO, "failed to copy RCS delta text");
 		return (-1);
 	}
-	memcpy(rdp->rd_text, RCS_TOKSTR(rfp), RCS_TOKLEN(rfp));
+	strlcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp) + 1));
 	rdp->rd_tlen = RCS_TOKLEN(rfp);
 
 	return (1);
