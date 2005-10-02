@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.69 2005/10/01 21:26:06 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.70 2005/10/02 16:44:32 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -449,9 +449,9 @@ em_start(struct ifnet *ifp)
 	struct em_softc *sc = ifp->if_softc;
 	EM_LOCK_STATE();
 
-        EM_LOCK(sc);
-        em_start_locked(ifp);
-        EM_UNLOCK(sc);
+	EM_LOCK(sc);
+	em_start_locked(ifp);
+	EM_UNLOCK(sc);
 }
 
 /*********************************************************************
@@ -509,7 +509,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFFLAGS (Set Interface Flags)");
-                EM_LOCK(sc);
+		EM_LOCK(sc);
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING)) {
 				em_init_locked(sc);
@@ -522,7 +522,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				em_stop(sc);
 			}
 		}
-                EM_UNLOCK(sc);
+		EM_UNLOCK(sc);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -702,12 +702,12 @@ em_init_locked(struct em_softc *sc)
 void
 em_init(void *arg)
 {
-        struct em_softc *sc = arg;
+	struct em_softc *sc = arg;
 	EM_LOCK_STATE();
 
-        EM_LOCK(sc);
-        em_init_locked(sc);
-        EM_UNLOCK(sc);
+	EM_LOCK(sc);
+	em_init_locked(sc);
+	EM_UNLOCK(sc);
 }
 
 /*********************************************************************
@@ -724,13 +724,13 @@ em_intr(void *arg)
 	struct em_softc  *sc = arg;
 	EM_LOCK_STATE();
 
-        EM_LOCK(sc);
+	EM_LOCK(sc);
 
 	ifp = &sc->interface_data.ac_if;
 
 	reg_icr = E1000_READ_REG(&sc->hw, ICR);
 	if (!reg_icr) {
-                EM_UNLOCK(sc);
+		EM_UNLOCK(sc);
 		return (0);
 	}
 
@@ -752,9 +752,9 @@ em_intr(void *arg)
 	}
 
 	if (ifp->if_flags & IFF_RUNNING && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-                em_start_locked(ifp);
+		em_start_locked(ifp);
 
-        EM_UNLOCK(sc);
+	EM_UNLOCK(sc);
 	return (1);
 }
 
@@ -1070,7 +1070,7 @@ em_82547_move_tail_locked(struct em_softc *sc)
 	uint16_t length = 0;
 	boolean_t eop = 0;
 
-        EM_LOCK_ASSERT(sc);
+	EM_LOCK_ASSERT(sc);
 
 	hw_tdt = E1000_READ_REG(&sc->hw, TDT);
 	sw_tdt = sc->next_avail_tx_desc;
@@ -1101,9 +1101,9 @@ em_82547_move_tail(void *arg)
         struct em_softc *sc = arg;
 	EM_LOCK_STATE();
 
-        EM_LOCK(sc);
-        em_82547_move_tail_locked(sc);
-        EM_UNLOCK(sc);
+	EM_LOCK(sc);
+	em_82547_move_tail_locked(sc);
+	EM_UNLOCK(sc);
 }
 
 int
@@ -1301,7 +1301,7 @@ em_local_timer(void *arg)
 
 	timeout_add(&sc->timer_handle, hz);
 
-        EM_UNLOCK(sc);
+	EM_UNLOCK(sc);
 }
 
 void
