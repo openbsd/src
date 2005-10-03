@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.23 2005/10/03 02:16:10 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.24 2005/10/03 04:40:09 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1284,32 +1284,30 @@ _C_LABEL(rfi_inst):
 	.globl  _C_LABEL(rfid_inst)
 _C_LABEL(rfid_inst):
 	rfid
-	.globl  _C_LABEL(rfi_whack)
-_C_LABEL(rfi_whack):
-#if 0
-	/* rfi1 and rfi2 are currently inside if 0ed code */
-	.long	rfi1
-	.long	rfi2
-#endif
-	.long	rfi3
-	.long	rfi4
-	.long	rfi5
-	.long	rfi6
-	.globl  _C_LABEL(rfi_whackend)
-_C_LABEL(rfi_whackend):
-
 	.globl  _C_LABEL(nop_inst)
  _C_LABEL(nop_inst):
 	nop
 
+	.globl  _C_LABEL(rfi_start)
+_C_LABEL(rfi_start):
+#if 0
+	/* rfi1 and rfi2 are currently inside if 0ed code */
+	.long	rfi1, rfi1 + 4
+	.long	rfi2, rfi2 + 4
+#endif
+	.long	rfi3, rfi3 + 4
+	.long	rfi4, rfi4 + 4
+	.long	rfi5, rfi5 + 4
+	.long	rfi6, rfi6 + 4
+	.long	0, 0
+
+
 	.globl  _C_LABEL(nop64_start)
-	.globl	_C_LABEL(nop64_end)
 _C_LABEL(nop64_start):
-	.long nop64_1s, nop64_1e
-_C_LABEL(nop64_end):
+	.long	nop64_1s, nop64_1e
+	.long	0, 0
 
 	.globl  _C_LABEL(nop32_start)
-	.globl	_C_LABEL(nop32_end)
 _C_LABEL(nop32_start):
 	.long	nop32_1s, nop32_1e
 	.long	nop32_2s, nop32_2e
@@ -1318,4 +1316,4 @@ _C_LABEL(nop32_start):
 	.long	nop32_5s, nop32_5e
 	.long	nop32_6s, nop32_6e
 	.long	nop32_7s, nop32_7e
-_C_LABEL(nop32_end):
+	.long	0, 0

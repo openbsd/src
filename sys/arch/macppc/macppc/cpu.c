@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.26 2005/10/03 02:57:07 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.27 2005/10/03 04:40:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -99,15 +99,13 @@ ppc_cpuspeed(int *freq)
 
 int ppc_proc_is_64b;
 extern u_int32_t rfi_inst, rfid_inst, nop_inst;
-extern u_int32_t *rfi_whack[], *rfi_whackend[];
-struct noppatch{
+struct patch {
 	u_int32_t *s;
 	u_int32_t *e;
 };
-extern struct noppatch nop32_start;
-extern struct noppatch nop32_end;
-extern struct noppatch nop64_start;
-extern struct noppatch nop64_end;
+extern struct patch rfi_start;
+extern struct patch nop32_start;
+extern struct patch nop64_start;
 
 
 void
@@ -115,8 +113,7 @@ ppc_check_procid()
 {
 	u_int32_t cpu, pvr;
 	u_int32_t *inst;
-	int i;
-	struct noppatch *pnop;
+	struct patch *p;
 
 	pvr = ppc_mfpvr();
 	cpu = pvr >> 16;
@@ -124,26 +121,24 @@ ppc_check_procid()
 	switch (cpu) {
 	case PPC_CPU_IBM970:
 		ppc_proc_is_64b = 1;
-		for (i = 0; &rfi_whack[i] < &rfi_whackend[0]; i++) {
-			inst = rfi_whack[i];
-			*inst = rfid_inst;
-			syncicache(inst, 4);
+		for (p = &rfi_start; p->s; p++) {
+			for (inst = p->s; inst < p->e; inst++)
+				*inst = rfid_inst;
+			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
 		}
-		for (pnop = &nop64_start; pnop <  &nop64_end; pnop++) {
-			for (inst = pnop->s; inst < pnop->e; inst++) {
+		for (p = &nop64_start; p->s; p++) {
+			for (inst = p->s; inst < p->e; inst++)
 				*inst = nop_inst;
-				syncicache(inst, 4);
-			}
+			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
 		}
 
 		break;
 	default:
 		ppc_proc_is_64b = 0;
-		for (pnop = &nop32_start; pnop <  &nop32_end; pnop++) {
-			for (inst = pnop->s; inst < pnop->e; inst++) {
+		for (p = &nop32_start; p->s; p++) {
+			for (inst = p->s; inst < p->e; inst++)
 				*inst = nop_inst;
-				syncicache(inst, 4);
-			}
+			syncicache(p->s, (p->e - p->s) * sizeof(p->e));
 		}
 	}
 }
