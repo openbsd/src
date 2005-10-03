@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.11 2005/05/26 20:10:24 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.12 2005/10/03 15:05:49 msf Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -291,7 +291,7 @@ ls_retrans_list_del(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 		return (0);
 	}
 
-	log_warnx("ls_retrans_list_del: invalid LS ack received, neigbor %s",
+	log_warnx("ls_retrans_list_del: invalid LS ack received, neighbor %s",
 	     inet_ntoa(nbr->id));
 
 	return (-1);
