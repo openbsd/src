@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.59 2005/10/03 19:48:24 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.60 2005/10/03 20:17:26 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -277,6 +277,12 @@ _dl_real_close(void *handle)
 	elf_object_t	*dynobj;
 
 	object = (elf_object_t *)handle;
+
+	if (object->opencount == 0) {
+		_dl_errno = DL_INVALID_HANDLE;
+		return (1);
+	}
+
 	dynobj = _dl_objects;
 	while (dynobj && dynobj != object)
 		dynobj = dynobj->next;
