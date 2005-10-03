@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.22 2005/09/19 04:16:24 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.23 2005/10/03 02:16:10 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -290,12 +290,14 @@ switch_exited:
 	addic.	%r5,%r5,64
 	li	%r6,0
 	mfsr	%r8,PPC_KERNEL_SR	/* save kernel SR */
+nop64_1s:
 1:
 	addis	%r6,%r6,-0x10000000@ha	/* set new procs segment registers */
 	or.	%r6,%r6,%r6		/* This is done from the real address pmap */
 	lwzu	%r7,-4(%r5)		/* so we don't have to worry */
 	mtsrin	%r7,%r6			/* about accessibility */
 	bne	1b
+nop64_1e:
 	mtsr	PPC_KERNEL_SR,%r8	/* restore kernel SR */
 	isync
 
@@ -352,6 +354,11 @@ _C_LABEL(intr_depth):
 	.type	_C_LABEL(trapsize),@object
 _C_LABEL(trapcode):
 	mtsprg	1,%r1			/* save SP */
+nop32_1s:
+	mfmsr	%r1
+	clrldi	%r1,%r1,1
+	mtmsrd	%r1
+nop32_1e:
 	stmw	%r28,tempsave(%r0)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
@@ -373,6 +380,12 @@ _C_LABEL(trapsize) =	.-_C_LABEL(trapcode)
 	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
 _C_LABEL(alitrap):
 	mtsprg	1,%r1			/* save SP */
+nop32_2s:
+	mfmsr	%r1
+	clrldi	%r1,%r1,1
+	mtmsrd	%r1
+	mfsprg	%r1,1                   /* restore SP */
+nop32_2e:
 	stmw	%r28,tempsave(0)	/* free r28-r31 */
 	mfdar	%r30
 	mfdsisr	%r31
@@ -401,6 +414,11 @@ _C_LABEL(alisize) =	.-_C_LABEL(alitrap)
 	.type	_C_LABEL(dsisize),@object
 _C_LABEL(dsitrap):
 	stmw	%r28,disisave(0)	/* free r28-r31 */
+nop32_3s:
+	mfmsr	%r28
+	clrldi	%r28,%r28,1
+	mtmsrd	%r28
+nop32_3e:
 	mfcr	%r29			/* save CR */
 	mfxer	%r30			/* save XER */
 	mtsprg	2,%r30			/* in SPRG2 */
@@ -430,7 +448,7 @@ _C_LABEL(dsitrap):
 	mtxer	%r30
 	mtcr	%r29			/* restore CR */
 	lmw	%r28,disisave(0)	/* restore r28-r31 */
-	rfi				/* return to trapped code */
+rfi1:	rfi				/* return to trapped code */
 1:
 #endif
 	mflr	%r28			/* save LR */
@@ -444,6 +462,13 @@ _C_LABEL(dsisize) =	.-_C_LABEL(dsitrap)
 	.type	_C_LABEL(isitrap),@function
 	.type	_C_LABEL(isisize),@object
 _C_LABEL(isitrap):
+nop32_4s:
+	mtsprg	1,%r1                   /* save SP */
+	mfmsr	%r1
+	clrldi	%r1,%r1,1
+	mtmsrd	%r1
+	mfsprg	%r1,1                   /* restore SP */
+nop32_4e:
 	stmw	%r28,disisave(0)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
@@ -462,7 +487,7 @@ _C_LABEL(isitrap):
 	mtibatl	3,%r30
 	mtcr	%r29			/* restore CR */
 	lmw	%r28,disisave(0)	/* restore r28-r31 */
-	rfi				/* return to trapped code */
+rfi2:	rfi				/* return to trapped code */
 1:
 #endif
 	bla	s_isitrap
@@ -476,6 +501,11 @@ _C_LABEL(isisize) =	.-_C_LABEL(isitrap)
 	.type	_C_LABEL(extsize),@object
 _C_LABEL(extint):
 	mtsprg	1,%r1			/* save SP */
+nop32_5s:
+	mfmsr	%r1
+	clrldi	%r1,%r1,1
+	mtmsrd	%r1
+nop32_5e:
 	stmw	%r28,tempsave(0)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
@@ -499,6 +529,11 @@ _C_LABEL(extsize) =	.-_C_LABEL(extint)
 	.type	_C_LABEL(decrsize),@object
 _C_LABEL(decrint):
 	mtsprg	1,%r1			/* save SP */
+nop32_6s:
+	mfmsr	%r1
+	clrldi	%r1,%r1,1
+	mtmsrd	%r1
+nop32_6e:
 	stmw	%r28,tempsave(0)	/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
@@ -727,7 +762,12 @@ _C_LABEL(tlbdsmsize) =	.-_C_LABEL(tlbdsmiss)
 
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
-	mtsprg	1,%r1			/* save SP */
+	mtspr	1,%r1			/* save SP */
+nop32_7s:
+	mfmsr	%r1
+	clrldi	%r1,%r1,1
+	mtmsrd	%r1
+nop32_7e:
 	stmw	%r28,ddbsave(0)		/* free r28-r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
@@ -884,7 +924,7 @@ trapexit:
 	b	trapagain
 1:
 	FRAME_LEAVE(tempsave)
-	rfi
+rfi3:	rfi
 
 /*
  * Child comes here at the end of a fork.
@@ -953,7 +993,7 @@ s_pte_spill:
 	mtcr	%r29			/* restore CR */
 	mtlr	%r28			/* restore LR */
 	lmw	%r28,disisave(0)	/* restore r28-r31 */
-	rfi				/* return to trapped code */
+rfi4:	rfi				/* return to trapped code */
 
 /*
  * ISI second stage fault handler
@@ -1100,7 +1140,7 @@ intr_exit:
 	lwz	%r3,80(%r1)
 	lwz	%r0,84(%r1)
 	lwz	%r1,0(%r1)
-	rfi
+rfi5:	rfi
 
 /*
  * Decrementer interrupt second level handler
@@ -1235,6 +1275,47 @@ ddbtrap:
 	b	realtrap
 ddbleave:
 	FRAME_LEAVE(ddbsave)
-	rfi
+rfi6:	rfi
 #endif /* DDB */
 
+	.globl  _C_LABEL(rfi_inst)
+_C_LABEL(rfi_inst):
+	rfi
+	.globl  _C_LABEL(rfid_inst)
+_C_LABEL(rfid_inst):
+	rfid
+	.globl  _C_LABEL(rfi_whack)
+_C_LABEL(rfi_whack):
+#if 0
+	/* rfi1 and rfi2 are currently inside if 0ed code */
+	.long	rfi1
+	.long	rfi2
+#endif
+	.long	rfi3
+	.long	rfi4
+	.long	rfi5
+	.long	rfi6
+	.globl  _C_LABEL(rfi_whackend)
+_C_LABEL(rfi_whackend):
+
+	.globl  _C_LABEL(nop_inst)
+ _C_LABEL(nop_inst):
+	nop
+
+	.globl  _C_LABEL(nop64_start)
+	.globl	_C_LABEL(nop64_end)
+_C_LABEL(nop64_start):
+	.long nop64_1s, nop64_1e
+_C_LABEL(nop64_end):
+
+	.globl  _C_LABEL(nop32_start)
+	.globl	_C_LABEL(nop32_end)
+_C_LABEL(nop32_start):
+	.long	nop32_1s, nop32_1e
+	.long	nop32_2s, nop32_2e
+	.long	nop32_3s, nop32_3e
+	.long	nop32_4s, nop32_4e
+	.long	nop32_5s, nop32_5e
+	.long	nop32_6s, nop32_6e
+	.long	nop32_7s, nop32_7e
+_C_LABEL(nop32_end):

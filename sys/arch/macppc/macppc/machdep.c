@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2005/07/04 01:02:10 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.73 2005/10/03 02:16:10 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -207,6 +207,8 @@ initppc(startkernel, endkernel, args)
 	curpcb = &proc0paddr->u_pcb;
 
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+
+	ppc_check_procid();
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
