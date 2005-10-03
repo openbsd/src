@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.90 2005/10/03 02:18:50 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.91 2005/10/03 04:47:30 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -155,6 +155,7 @@ struct pool pmap_pted_pool;
 
 int pmap_initialized = 0;
 int physmem;
+int physmaxaddr;
 
 #define ATTRSHIFT	4
 
@@ -538,17 +539,9 @@ pmap_enter(pm, va, pa, prot, flags)
 		u_int sn = VP_SR(va);
 
         	pm->pm_exec[sn]++;
-		if (pm->pm_sr[sn] & SR_NOEXEC) {
+		if (pm->pm_sr[sn] & SR_NOEXEC)
 			pm->pm_sr[sn] &= ~SR_NOEXEC;
 
-			/* set the current sr if not kernel used segments
-			 * and this pmap is the currently active pmap
-			 */
-			if (sn != PPC_USER_SR && sn != PPC_KERNEL_SR &&
-			    curpm == pm)
-				ppc_mtsrin(pm->pm_sr[sn],
-				     sn << ADDR_SR_SHIFT);
-		}
 		if (pattr != NULL)
 			*pattr |= (PTE_EXE_32 >> ATTRSHIFT);
 	} else {
@@ -667,17 +660,8 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 
 		pted->pted_va &= ~PTED_VA_EXEC_M;
 		pm->pm_exec[sn]--;
-		if (pm->pm_exec[sn] == 0) {
+		if (pm->pm_exec[sn] == 0)
 			pm->pm_sr[sn] |= SR_NOEXEC;
-			
-			/* set the current sr if not kernel used segments
-			 * and this pmap is the currently active pmap
-			 */
-			if (sn != PPC_USER_SR && sn != PPC_KERNEL_SR &&
-			    curpm == pm)
-				ppc_mtsrin(pm->pm_sr[sn],
-				     sn << ADDR_SR_SHIFT);
-		}
 	}
 
 	if (ppc_proc_is_64b)
@@ -759,17 +743,8 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 		u_int sn = VP_SR(va);
 
         	pm->pm_exec[sn]++;
-		if (pm->pm_sr[sn] & SR_NOEXEC) {
+		if (pm->pm_sr[sn] & SR_NOEXEC)
 			pm->pm_sr[sn] &= ~SR_NOEXEC;
-
-			/* set the current sr if not kernel used segments
-			 * and this pmap is the currently active pmap
-			 */
-			if (sn != PPC_USER_SR && sn != PPC_KERNEL_SR &&
-			    curpm == pm)
-				ppc_mtsrin(pm->pm_sr[sn],
-				     sn << ADDR_SR_SHIFT);
-		}
 	}
 
 	splx(s);
@@ -823,17 +798,8 @@ pmap_kremove_pg(vaddr_t va)
 
 		pted->pted_va &= ~PTED_VA_EXEC_M;
 		pm->pm_exec[sn]--;
-		if (pm->pm_exec[sn] == 0) {
+		if (pm->pm_exec[sn] == 0)
 			pm->pm_sr[sn] |= SR_NOEXEC;
-
-			/* set the current sr if not kernel used segments
-			 * and this pmap is the currently active pmap
-			 */
-			if (sn != PPC_USER_SR && sn != PPC_KERNEL_SR &&
-			    curpm == pm)
-				ppc_mtsrin(pm->pm_sr[sn],
-				     sn << ADDR_SR_SHIFT);
-		}
 	}
 
 	if (PTED_MANAGED(pted))
@@ -1338,30 +1304,38 @@ pmap_avail_setup(void)
 	for (mp = pmap_mem; mp->size !=0; mp++)
 		physmem += btoc(mp->size);
 
-	/* limit to 1GB available, for now -XXXGRR */
-#define MEMMAX 0x40000000
-	for (mp = pmap_avail; mp->size !=0 ; /* increment in loop */) {
-		if (mp->start + mp->size > MEMMAX) {
-			int rm_start;
-			int rm_end;
-			if (mp->start > MEMMAX) {
-				rm_start = mp->start;
-				rm_end = mp->start+mp->size;
-			} else {
-				rm_start = MEMMAX;
-				rm_end = mp->start+mp->size;
+	if (ppc_proc_is_64b) { 
+		/* limit to 256MB available, for now -XXXGRR */
+#define MEMMAX 0x10000000
+		for (mp = pmap_avail; mp->size !=0 ; /* increment in loop */) {
+			if (mp->start + mp->size > MEMMAX) {
+				int rm_start;
+				int rm_end;
+				if (mp->start > MEMMAX) {
+					rm_start = mp->start;
+					rm_end = mp->start+mp->size;
+				} else {
+					rm_start = MEMMAX;
+					rm_end = mp->start+mp->size;
+				}
+				pmap_remove_avail(rm_start, rm_end);
+
+				/* whack physmem, since we ignore more than
+				 * 256MB
+				 */
+				physmem = btoc(MEMMAX);
+
+				/*
+				 * start over at top, make sure not to
+				 * skip any
+				 */
+				mp = pmap_avail;
+				continue;
 			}
-			pmap_remove_avail(rm_start, rm_end);
-
-			/* whack physmem, since we ignore more than 256MB */
-			physmem = btoc(MEMMAX);
-
-			/* start over at top, make sure not to skip any */
-			mp = pmap_avail;
-			continue;
+			mp++;
 		}
-		mp++;
 	}
+
 	for (mp = pmap_avail; mp->size !=0; mp++)
 		pmap_cnt_avail += 1;
 }
