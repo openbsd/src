@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.149 2005/09/15 13:52:39 pedro Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.150 2005/10/03 01:35:12 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3308,9 +3308,8 @@ trunk_status(void)
 		putchar('\n');
 
 		for (i = 0; i < ra.ra_ports; i++) {
-			printf("\t\ttrunkport %s", rpbuf[i].rp_portname);
-			if (rpbuf[i].rp_flags & TRUNK_PORT_MASTER)
-				printf(" master");
+			printf("\t\ttrunkport %s ", rpbuf[i].rp_portname);
+			printb_status(rpbuf[i].rp_flags, TRUNK_PORT_BITS);
 			putchar('\n');
 		}
 
