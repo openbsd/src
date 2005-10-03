@@ -1730,6 +1730,7 @@
 ./usr/share/man/cat1/xstr.0
 ./usr/share/man/cat1/yacc.0
 ./usr/share/man/cat2/WCOREDUMP.0
+./usr/share/man/cat2/WEXITSTATUS.0
 ./usr/share/man/cat2/WIFCONTINUED.0
 ./usr/share/man/cat2/WIFEXITED.0
 ./usr/share/man/cat2/WIFSIGNALED.0
@@ -3352,7 +3353,6 @@
 ./usr/share/man/cat3/getfsent.0
 ./usr/share/man/cat3/getfsfile.0
 ./usr/share/man/cat3/getfsspec.0
-./usr/share/man/cat3/getfstype.0
 ./usr/share/man/cat3/getgrent.0
 ./usr/share/man/cat3/getgrgid.0
 ./usr/share/man/cat3/getgrgid_r.0
