@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.24 2005/09/21 08:39:15 dlg Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.25 2005/10/03 21:11:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -38,12 +38,15 @@
 #define	AMI_BIG_MAX_SPANDEPTH	8
 #define	AMI_BIG_MAX_DEVDEPTH	32
 
-#define	AMI_MAXCMDS	126	/* theoretical limit is 250 */
+#define	AMI_MAXCMDS	126		/* theoretical limit is 250 */
 #define	AMI_SECTOR_SIZE	512
 #define	AMI_MAXOFFSETS	26
 #define	AMI_SGEPERCMD	32		/* to prevent page boundary crossing */
 #define AMI_MAX_BUSYWAIT 10		/* wait up to 10 usecs */
 #define AMI_MAX_POLLWAIT 1000000	/* wait up to 1000 000 usecs */
+#define AMI_MAXIOCTLCMDS 1		/* number of parallel ioctl calls */
+#define AMI_MAXPROCS	 2		/* number of processors on a channel */
+#define AMI_MAXRAWCMDS	 2		/* number of parallel processor cmds */
  
 #define	AMI_MAXFER	(AMI_MAXOFFSETS * PAGE_SIZE)
 
