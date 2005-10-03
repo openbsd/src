@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.25 2005/10/03 02:54:30 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.26 2005/10/03 02:57:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -130,9 +130,10 @@ ppc_check_procid()
 			syncicache(inst, 4);
 		}
 		for (pnop = &nop64_start; pnop <  &nop64_end; pnop++) {
-			for (inst = pnop->s; inst < pnop->e; inst++)
+			for (inst = pnop->s; inst < pnop->e; inst++) {
 				*inst = nop_inst;
 				syncicache(inst, 4);
+			}
 		}
 
 		break;
