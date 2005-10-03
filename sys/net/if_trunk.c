@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.7 2005/09/14 08:07:24 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.8 2005/10/03 01:46:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -55,8 +55,9 @@ extern int ifqmaxlen;
 void	 trunkattach(int);
 int	 trunk_clone_create(struct if_clone *, int);
 int	 trunk_clone_destroy(struct ifnet *);
-void	 trunk_lladdr(struct trunk_softc *, u_int8_t *);
+void	 trunk_lladdr(struct arpcom *, u_int8_t *);
 int	 trunk_capabilities(struct trunk_softc *);
+void	 trunk_port_lladdr(struct trunk_port *, u_int8_t *);
 int	 trunk_port_create(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_destroy(struct trunk_port *);
 void	 trunk_port_watchdog(struct ifnet *);
@@ -85,8 +86,14 @@ int	 trunk_rr_attach(struct trunk_softc *);
 int	 trunk_rr_detach(struct trunk_softc *);
 void	 trunk_rr_port_destroy(struct trunk_port *);
 int	 trunk_rr_start(struct trunk_softc *, struct mbuf *);
-int	 trunk_rr_watchdog(struct trunk_softc *);
 int	 trunk_rr_input(struct trunk_softc *, struct trunk_port *,
+	    struct ether_header *, struct mbuf *);
+
+/* Active failover */
+int	 trunk_fail_attach(struct trunk_softc *);
+int	 trunk_fail_detach(struct trunk_softc *);
+int	 trunk_fail_start(struct trunk_softc *, struct mbuf *);
+int	 trunk_fail_input(struct trunk_softc *, struct trunk_port *,
 	    struct ether_header *, struct mbuf *);
 
 /* Trunk protocol table */
@@ -95,6 +102,7 @@ static const struct {
 	int			(*ti_attach)(struct trunk_softc *);
 } trunk_protos[] = {
 	{ TRUNK_PROTO_ROUNDROBIN, trunk_rr_attach },
+	{ TRUNK_PROTO_FAILOVER, trunk_fail_attach },
 	{ TRUNK_PROTO_NONE, }
 };
 
@@ -204,9 +212,9 @@ trunk_clone_destroy(struct ifnet *ifp)
 }
 
 void
-trunk_lladdr(struct trunk_softc *tr, u_int8_t *lladdr)
+trunk_lladdr(struct arpcom *ac, u_int8_t *lladdr)
 {
-	struct ifnet *ifp = &tr->tr_ac.ac_if;
+	struct ifnet *ifp = &ac->ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 
@@ -215,7 +223,7 @@ trunk_lladdr(struct trunk_softc *tr, u_int8_t *lladdr)
 	sdl->sdl_type = IFT_ETHER;
 	sdl->sdl_alen = ETHER_ADDR_LEN;
 	bcopy(lladdr, LLADDR(sdl), ETHER_ADDR_LEN);
-	bcopy(lladdr, tr->tr_ac.ac_enaddr, ETHER_ADDR_LEN);
+	bcopy(lladdr, ac->ac_enaddr, ETHER_ADDR_LEN);
 }
 
 int
@@ -233,6 +241,32 @@ trunk_capabilities(struct trunk_softc *tr)
 	}
 
 	return (cap == ~0 ? 0 : cap);
+}
+
+void
+trunk_port_lladdr(struct trunk_port *tp, u_int8_t *lladdr)
+{
+	struct ifnet *ifp = tp->tp_if;
+	struct ifaddr *ifa;
+	struct ifreq ifr;
+
+	/* Set the link layer address */
+	trunk_lladdr((struct arpcom *)ifp, lladdr);
+
+	/* Reset the port to update the lladdr */
+	if (ifp->if_flags & IFF_UP) {
+	        int s = splimp();
+		ifp->if_flags &= ~IFF_UP;
+		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
+		ifp->if_flags |= IFF_UP;
+		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
+		splx(s);
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		        if (ifa->ifa_addr != NULL &&
+			    ifa->ifa_addr->sa_family == AF_INET)
+			        arp_ifinit((struct arpcom *)ifp, ifa);
+		}
+	}
 }
 
 int
@@ -291,13 +325,19 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	tp->tp_if = ifp;
 	tp->tp_trunk = (caddr_t)tr;
 
+	/* Save port link layer address */
+	bcopy(((struct arpcom *)ifp)->ac_enaddr, tp->tp_lladdr, ETHER_ADDR_LEN);
+
 	if (SLIST_EMPTY(&tr->tr_ports)) {
 		tr->tr_primary = tp;
 		tp->tp_flags |= TRUNK_PORT_MASTER;
-		trunk_lladdr(tr, ((struct arpcom *)ifp)->ac_enaddr);
+		trunk_lladdr(&tr->tr_ac, tp->tp_lladdr);
 	}
 
-	/* Insert into the global list of trunks */
+	/* Update link layer address for this port */
+	trunk_port_lladdr(tp, tr->tr_primary->tp_lladdr);
+
+	/* Insert into the list of ports */
 	SLIST_INSERT_HEAD(&tr->tr_ports, tp, tp_entries);
 	tr->tr_count++;
 
@@ -361,17 +401,25 @@ trunk_port_destroy(struct trunk_port *tp)
 
 	/* Update the primary interface */
 	if (tp == tr->tr_primary) {
+		u_int8_t lladdr[ETHER_ADDR_LEN];
+
 		if ((tp_ptr = SLIST_FIRST(&tr->tr_ports)) == NULL) {
-			u_int8_t lladdr[ETHER_ADDR_LEN];
 			bzero(&lladdr, ETHER_ADDR_LEN);
-			trunk_lladdr(tr, lladdr);
 		} else {
-			trunk_lladdr(tr,
-			    ((struct arpcom *)tp_ptr->tp_if)->ac_enaddr);
+			bcopy(((struct arpcom *)tp_ptr->tp_if)->ac_enaddr,
+			    lladdr, ETHER_ADDR_LEN);
 			tp_ptr->tp_flags = TRUNK_PORT_MASTER;
 		}
+		trunk_lladdr(&tr->tr_ac, lladdr);
 		tr->tr_primary = tp_ptr;
+
+		/* Update link layer address for each port */
+		SLIST_FOREACH(tp_ptr, &tr->tr_ports, tp_entries)
+			trunk_port_lladdr(tp_ptr, lladdr);
 	}
+
+	/* Reset the port lladdr */
+	trunk_port_lladdr(tp, tp->tp_lladdr);
 
 	free(tp, M_DEVBUF);
 
@@ -393,9 +441,6 @@ trunk_port_watchdog(struct ifnet *ifp)
 	if ((tp = (struct trunk_port *)ifp->if_tp) == NULL ||
 	    (tr = (struct trunk_softc *)tp->tp_trunk) == NULL)
 		return;
-
-	if (tr->tr_ifflags & IFF_DEBUG)
-		printf("%s\n", __func__);
 
 	if (tp->tp_watchdog != NULL)
 		(*tp->tp_watchdog)(ifp);
@@ -489,7 +534,10 @@ trunk_port2req(struct trunk_port *tp, struct trunk_reqport *rp)
 	struct trunk_softc *tr = (struct trunk_softc *)tp->tp_trunk;
 	strlcpy(rp->rp_ifname, tr->tr_ifname, sizeof(rp->rp_ifname));
 	strlcpy(rp->rp_portname, tp->tp_if->if_xname, sizeof(rp->rp_portname));
+	rp->rp_prio = tp->tp_prio;
 	rp->rp_flags = tp->tp_flags;
+	if (tp->tp_link_state != LINK_STATE_DOWN)
+		rp->rp_flags |= TRUNK_PORT_ACTIVE;
 }
 
 int
@@ -635,6 +683,11 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &tr->tr_media, cmd);
+		break;
+	case SIOCSIFLLADDR:
+		/* Update the port lladdrs as well */
+		SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
+			trunk_port_lladdr(tp, ifr->ifr_addr.sa_data);
 		break;
 	default:
 		error = EINVAL;
@@ -1002,16 +1055,67 @@ trunk_rr_start(struct trunk_softc *tr, struct mbuf *m)
 }
 
 int
-trunk_rr_watchdog(struct trunk_softc *tr)
+trunk_rr_input(struct trunk_softc *tr, struct trunk_port *tp,
+    struct ether_header *eh, struct mbuf *m)
 {
-	if (tr->tr_ifflags & IFF_DEBUG)
-		printf("%s\n", __func__);
+	struct ifnet *ifp = &tr->tr_ac.ac_if;
+
+	/* Just pass in the packet to our trunk device */
+	m->m_pkthdr.rcvif = ifp;
+
+	return (0);
+}
+
+/*
+ * Active failover
+ */
+
+int
+trunk_fail_attach(struct trunk_softc *tr)
+{
+	tr->tr_detach = trunk_fail_detach;
+	tr->tr_start = trunk_fail_start;
+	tr->tr_input = trunk_fail_input;
+	tr->tr_port_create = NULL;
+	tr->tr_port_destroy = NULL;
 
 	return (0);
 }
 
 int
-trunk_rr_input(struct trunk_softc *tr, struct trunk_port *tp,
+trunk_fail_detach(struct trunk_softc *tr)
+{
+	return (0);
+}
+
+int
+trunk_fail_start(struct trunk_softc *tr, struct mbuf *m)
+{
+	struct trunk_port *tp;
+	struct ifnet *ifp;
+	int error = 0;
+
+	/* Use the master port if active or the next available port */
+	if ((tp = trunk_link_active(tr, tr->tr_primary)) == NULL)
+		return (ENOENT);
+
+	/* Send mbuf */
+	ifp = tp->tp_if;
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error)
+		return (error);
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+
+	ifp->if_obytes += m->m_pkthdr.len;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
+
+	return (error);
+}
+
+int
+trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
     struct ether_header *eh, struct mbuf *m)
 {
 	struct ifnet *ifp = &tr->tr_ac.ac_if;

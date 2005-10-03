@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.3 2005/09/10 22:40:36 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.4 2005/10/03 01:46:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -31,13 +31,15 @@
 #define TRUNK_PORT_SLAVE	0x00000000	/* normal enslaved port */
 #define TRUNK_PORT_MASTER	0x00000001	/* primary port */
 #define TRUNK_PORT_STACK	0x00000002	/* stacked trunk port */
+#define TRUNK_PORT_ACTIVE	0x00000004	/* port is active */
 #define TRUNK_PORT_GLOBAL	0x80000000	/* IOCTL: global flag */
-#define TRUNK_PORT_BITS		"\20\01MASTER\02STACK"
+#define TRUNK_PORT_BITS		"\20\01MASTER\02STACK\03ACTIVE"
 
 /* Supported trunk PROTOs */
 enum trunk_proto {
 	TRUNK_PROTO_NONE	= 0,		/* no trunk protocol defined */
 	TRUNK_PROTO_ROUNDROBIN	= 1,		/* simple round robin */
+	TRUNK_PROTO_FAILOVER	= 2,		/* active failover */
 	TRUNK_PROTO_MAX		= 3,
 };
 
@@ -49,6 +51,7 @@ struct trunk_protos {
 #define	TRUNK_PROTO_DEFAULT	TRUNK_PROTO_ROUNDROBIN
 #define TRUNK_PROTOS	{						\
 	{ "roundrobin",	TRUNK_PROTO_ROUNDROBIN },			\
+	{ "failover",	TRUNK_PROTO_FAILOVER },				\
 	{ "none",	TRUNK_PROTO_NONE },				\
 	{ "default",	TRUNK_PROTO_DEFAULT }				\
 }
@@ -61,6 +64,7 @@ struct trunk_protos {
 struct trunk_reqport {
 	char			rp_ifname[IFNAMSIZ];	/* name of the trunk */
 	char			rp_portname[IFNAMSIZ];	/* name of the port */
+	u_int32_t		rp_prio;		/* port priority */
 	u_int32_t		rp_flags;		/* port flags */
 };
 
@@ -89,8 +93,10 @@ struct trunk_reqall {
 struct trunk_port {
 	struct ifnet			*tp_if;		/* physical interface */
 	caddr_t				tp_trunk;	/* parent trunk */
+	u_int8_t			tp_lladdr[ETHER_ADDR_LEN];
 
 	u_char				tp_iftype;	/* interface type */
+	u_int32_t			tp_prio;	/* port priority */
 	u_int32_t			tp_flags;	/* port flags */
 
 	/* Redirected callbacks */
