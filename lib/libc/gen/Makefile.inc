@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.38 2005/10/02 09:07:24 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.39 2005/10/03 10:57:16 jmc Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -96,7 +96,7 @@ MLINKS+=getcap.3 cgetcap.3 getcap.3 cgetclose.3 getcap.3 cgetent.3 \
 MLINKS+=getcwd.3 getwd.3
 MLINKS+=getdomainname.3 setdomainname.3
 MLINKS+=getfsent.3 endfsent.3 getfsent.3 getfsfile.3 getfsent.3 getfsspec.3 \
-	getfsent.3 getfstype.3 getfsent.3 setfsent.3
+	getfsent.3 setfsent.3
 MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 	getgrent.3 getgrnam.3 getgrent.3 setgrent.3 getgrent.3 setgrfile.3 \
 	getgrent.3 getgrgid_r.3 getgrent.3 getgrnam_r.3

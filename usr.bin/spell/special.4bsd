@@ -421,7 +421,6 @@ geteuid
 getfsent
 getfsfile
 getfsspec
-getfstype
 getgid
 getgrent
 getgrgid
