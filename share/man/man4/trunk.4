@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.5 2005/10/03 08:43:03 reyk Exp $
+.\"	$OpenBSD: trunk.4,v 1.6 2005/10/03 20:17:38 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -59,7 +59,7 @@ The configuration can be done at runtime or by setting up a
 configuration file for
 .Xr netstart 8 .
 .Sh EXAMPLES
-Create a simple round robin trunk with two bge(4) gigabit ethernet
+Create a simple round robin trunk with two bge(4) Gigabit Ethernet
 interfaces:
 .Bd -literal -offset indent
 # ifconfig bge0 up
@@ -68,7 +68,7 @@ interfaces:
 	192.168.1.1 netmask 255.255.255.0
 .Ed
 .Pp
-The following example uses an active failover trunk to realise roaming
+The following example uses an active failover trunk to set up roaming
 between wired and wireless networks using two network devices.
 Whenever the wired master interface is unplugged, the wireless failover
 device will be used:
