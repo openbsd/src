@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2005/10/03 04:40:09 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.28 2005/10/03 19:34:46 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -259,6 +259,11 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
 		if (cpu == PPC_CPU_MPC7450 && (pvr & 0xffff) < 0x0200)
 			hid0 &= ~HID0_BTIC;
+		break;
+	case PPC_CPU_IBM970:
+		/* select NAP mode */
+		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
+		hid0 |= HID0_NAP | HID0_DPM;
 		break;
 	}
 	ppc_mthid0(hid0);
