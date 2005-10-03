@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2005/10/03 02:16:10 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.25 2005/10/03 02:54:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -127,18 +127,22 @@ ppc_check_procid()
 		for (i = 0; &rfi_whack[i] < &rfi_whackend[0]; i++) {
 			inst = rfi_whack[i];
 			*inst = rfid_inst;
+			syncicache(inst, 4);
 		}
 		for (pnop = &nop64_start; pnop <  &nop64_end; pnop++) {
 			for (inst = pnop->s; inst < pnop->e; inst++)
 				*inst = nop_inst;
+				syncicache(inst, 4);
 		}
 
 		break;
 	default:
 		ppc_proc_is_64b = 0;
 		for (pnop = &nop32_start; pnop <  &nop32_end; pnop++) {
-			for (inst = pnop->s; inst < pnop->e; inst++)
+			for (inst = pnop->s; inst < pnop->e; inst++) {
 				*inst = nop_inst;
+				syncicache(inst, 4);
+			}
 		}
 	}
 }
