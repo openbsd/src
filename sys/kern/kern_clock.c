@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.52 2004/11/10 11:00:00 grange Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.53 2005/10/03 01:19:44 aaron Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -228,7 +228,7 @@ hardclock(struct clockframe *frame)
 #endif
 
 	p = curproc;
-	if (p) {
+	if (p && ((p->p_flag & P_WEXIT) == 0)) {
 		register struct pstats *pstats;
 
 		/*
