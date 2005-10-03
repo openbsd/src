@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2005/10/02 20:32:19 joris Exp $
+#	$OpenBSD: Makefile,v 1.7 2005/10/03 01:45:33 joris Exp $
 
 .PATH:	${.CURDIR}/../cvs
 
-PROG=	rcsprog
+PROG=	rcs
 MAN=	rcs.1
 
 SRCS=	ci.c co.c rcsprog.c buf.c log.c rcs.c rcsnum.c strtab.c
