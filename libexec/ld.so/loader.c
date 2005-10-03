@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.91 2005/09/28 18:17:42 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.92 2005/10/03 19:48:24 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -334,7 +334,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_exit(9);
 	n->data = exe_obj;
 	TAILQ_INSERT_TAIL(&exe_obj->dload_list, n, next_sib);
-
+	exe_obj->refcount++;
 
 	if (_dl_preload != NULL)
 		_dl_dopreload(_dl_preload);
@@ -430,6 +430,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_exit(5);
 	n->data = dyn_obj;
 	TAILQ_INSERT_TAIL(&exe_obj->dload_list, n, next_sib);
+	dyn_obj->refcount++;
 
 	dyn_obj->status |= STAT_RELOC_DONE;
 

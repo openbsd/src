@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.14 2005/10/01 19:32:22 drahn Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.15 2005/10/03 19:48:24 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -353,10 +353,17 @@ _dl_notify_unload_shlib(elf_object_t *object)
 {
 	struct dep_node *n;
 
-	object->refcount--;
-
-	TAILQ_FOREACH(n, &object->child_list, next_sib)
-		n->data->refcount--;
+	/*
+	 * if this is the last ref, then decrement refcount
+	 * on self and all dloaded deps, otherwise just decrement
+	 * self.
+         */
+	if (object->refcount == 1) {
+		TAILQ_FOREACH(n, &object->dload_list, next_sib)
+			n->data->refcount--;
+	} else {
+		object->refcount--;
+	}
 }
 
 void
@@ -401,6 +408,7 @@ _dl_link_sub(elf_object_t *dep, elf_object_t *p)
 		_dl_exit(8);
 	n->data = dep;
 	TAILQ_INSERT_TAIL(&_dl_loading_object->dload_list, n, next_sib);
+	dep->refcount++;
 
 	DL_DEB(("linking dep %s as child of %s\n", dep->load_name,
 	    p->load_name));

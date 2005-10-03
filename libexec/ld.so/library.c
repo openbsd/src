@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.46 2005/10/01 19:32:22 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.47 2005/10/03 19:48:24 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -90,12 +90,10 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 
 	object = _dl_lookup_object(libname);
 	if (object) {
-		object->refcount++;
 		object->load_object->obj_flags |= flags & RTLD_GLOBAL;
 		if (object->load_object != object &&
 		    object->load_object != _dl_objects &&
 		    object->load_object != _dl_loading_object) {
-			object->load_object->refcount++;
 			if (_dl_loading_object == NULL)
 				_dl_loading_object = object;
 			_dl_link_sub(object->load_object, _dl_loading_object);
@@ -117,13 +115,11 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	for (object = _dl_objects; object != NULL; object = object->next) {
 		if (object->dev == sb.st_dev &&
 		    object->inode == sb.st_ino) {
-			object->refcount++;
 			object->load_object->obj_flags |= flags & RTLD_GLOBAL;
 			_dl_close(libfile);
 			if (object->load_object != object &&
 			    object->load_object != _dl_objects &&
 			    object->load_object != _dl_loading_object) {
-				object->load_object->refcount++;
 				if (_dl_loading_object == NULL)
 					_dl_loading_object = object;
 
