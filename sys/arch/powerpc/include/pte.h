@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.7 2003/01/30 15:38:09 drahn Exp $	*/
+/*	$OpenBSD: pte.h,v 1.8 2005/10/03 02:18:50 drahn Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*-
@@ -41,42 +41,76 @@
  * Page Table Entries
  */
 #ifndef	_LOCORE
-struct pte {
-	u_int pte_hi;
-	u_int pte_lo;
+struct pte_32 {
+	u_int32_t pte_hi;
+	u_int32_t pte_lo;
+};
+struct pte_64 {
+	u_int64_t pte_hi;
+	u_int64_t pte_lo;
 };
 #endif	/* _LOCORE */
+
+/* 32 bit */
 /* High word: */
-#define	PTE_VALID	0x80000000
-#define	PTE_VSID_SHIFT	7
-#define	PTE_HID		0x00000040
-#define	PTE_API		0x0000003f
+#define	PTE_VALID_32	0x80000000
+#define	PTE_VSID_SHIFT_32	7
+#define	PTE_HID_32	0x00000040
+#define	PTE_API_32	0x0000003f
+ /* Low word: */
+#define	PTE_RPGN_32	0xfffff000
+#define	PTE_REF_32	0x00000100
+#define	PTE_CHG_32	0x00000080
+#define	PTE_WIM_32	0x00000078
+#define	PTE_W_32	0x00000040
+#define	PTE_EXE_32	0x00000040 /* only used in pmap_attr, same as PTE_W */
+#define	PTE_I_32	0x00000020
+#define	PTE_M_32	0x00000010
+#define	PTE_G_32	0x00000008
+#define	PTE_PP_32	0x00000003
+#define	PTE_RO_32	0x00000003
+#define	PTE_RW_32	0x00000002
+
+
+/* 64 bit */
+/* High doubleword: */
+#define	PTE_VALID_64		0x0000000000000001ULL
+#define	PTE_AVPN_SHIFT_64	7
+#define PTE_AVPN_64		0xffffffffffffff80ULL
+#define PTE_API_SHIFT_64	7
+#define PTE_API_64		0x0000000000000f80ULL
+#define PTE_VSID_SHIFT_64  12
+#define PTE_VSID_64		0xfffffffffffff000ULL
+#define	PTE_HID_64		0x0000000000000002ULL
 /* Low word: */
-#define	PTE_RPGN	0xfffff000
-#define	PTE_REF		0x00000100
-#define	PTE_CHG		0x00000080
-#define	PTE_WIMG	0x00000078
-#define	PTE_W		0x00000040
-#define	PTE_EXE		0x00000040 /* only used in pmap_attr, same as PTE_W */
-#define	PTE_I		0x00000020
-#define	PTE_M		0x00000010
-#define	PTE_G		0x00000008
-#define	PTE_PP		0x00000003
-#define	PTE_RO		0x00000003
-#define	PTE_RW		0x00000002
+#define	PTE_RPGN_64		0x3ffffffffffff000ULL
+#define	PTE_REF_64		0x0000000000000100ULL
+#define	PTE_CHG_64		0x0000000000000080ULL
+#define	PTE_WIMG_64		0x0000000000000078ULL
+#define	PTE_W_64		0x0000000000000040ULL
+#define PTE_EXE_64		PTE_W
+#define	PTE_I_64		0x0000000000000020ULL
+#define	PTE_M_64		0x0000000000000010ULL
+#define	PTE_G_64		0x0000000000000008ULL
+#define PTE_N_64		0x0000000000000004ULL
+#define	PTE_PP_64		0x0000000000000003ULL
+#define	PTE_RO_64		0x0000000000000003ULL
+#define	PTE_RW_64		0x0000000000000002ULL
 
 #ifndef	_LOCORE
-typedef	struct pte pte_t;
+typedef	struct pte_32 pte32_t;
+typedef	struct pte_64 pte64_t;
 #endif	/* _LOCORE */
 
 /*
  * Extract bits from address
  */
-#define	ADDR_SR_SHIFT	28
-#define	ADDR_PIDX	0x0ffff000
-#define	ADDR_PIDX_SHIFT	12
-#define	ADDR_API_SHIFT	22
-#define	ADDR_POFF	0x00000fff
+#define	ADDR_SR_SHIFT		28
+#define	ADDR_PIDX		0x0ffff000
+#define	ADDR_PIDX_SHIFT		12
+#define	ADDR_API_SHIFT_32	22
+#define	ADDR_API_SHIFT_64	16
+#define	ADDR_POFF		0x00000fff
 
 #ifndef	_LOCORE
 #ifdef	_KERNEL
