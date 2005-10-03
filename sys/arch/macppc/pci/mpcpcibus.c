@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.24 2005/06/08 19:08:23 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.25 2005/10/03 02:22:38 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -43,11 +43,6 @@
 #include <machine/pcb.h>
 #include <machine/bat.h>
 #include <machine/powerpc.h>
-
-#if 0
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -104,15 +99,18 @@ struct pcibr_config mpc_config;
  *
  * 2 - 64 bit config bus, data for accesses &4 is at daddr+4;
  */
-struct {
+struct config_type{
 	char * compat;
 	u_int32_t addr;	/* offset */
 	u_int32_t data;	/* offset */
 	int config_type;
-} config_offsets[] = {
+};
+struct config_type config_offsets[] = {
 	{"grackle",		0x00c00cf8, 0x00e00cfc, 0 },
 	{"bandit",		0x00800000, 0x00c00000, 0 },
 	{"uni-north",		0x00800000, 0x00c00000, 3 },
+	{"u3-agp",		0x00800000, 0x00c00000, 3 },
+	{"u3-ht",		0x00000cf8, 0x00000cfc, 3 },
 	{"legacy",		0x00000cf8, 0x00000cfc, 0 },
 	{"IBM,27-82660",	0x00000cf8, 0x00000cfc, 0 },
 	{NULL,			0x00000000, 0x00000000, 0 },
@@ -165,6 +163,177 @@ mpcpcibrmatch(struct device *parent, void *match, void *aux)
 }
 
 int pci_map_a = 0;
+
+struct ranges_32 {
+	u_int32_t flags;
+	u_int32_t pad1;
+	u_int32_t pad2;
+	u_int32_t base;
+	u_int32_t pad3;
+	u_int32_t size;
+};
+void
+mpcpcibus_find_ranges_32 (struct pcibr_softc *sc, u_int32_t *range_store,
+    int rangesize);
+void
+mpcpcibus_find_ranges_64 (struct pcibr_softc *sc, u_int32_t *range_store,
+    int rangesize);
+void
+mpcpcibus_find_ranges_32 (struct pcibr_softc *sc, u_int32_t *range_store,
+    int rangesize)
+{
+	int found;
+	unsigned int base = 0;
+	unsigned int size = 0;
+	struct ranges_32 *prange = (void *)range_store;
+	int rangelen;
+	int i;
+
+	rangelen = rangesize / sizeof (struct ranges_32);
+
+	/* mac configs */
+	sc->sc_membus_space.bus_base = 0;
+	sc->sc_membus_space.bus_io = 0;
+	sc->sc_iobus_space.bus_base = 0;
+	sc->sc_iobus_space.bus_io = 1;
+
+	/* find io(config) base, flag == 0x01000000 */
+	found = 0;
+	for (i = 0; i < rangelen ; i++) {
+		if (prange[i].flags == 0x01000000) {
+			/* find last? */
+			found = i;
+		}
+	}
+	/* found the io space ranges */
+	if (prange[found].flags == 0x01000000) {
+		sc->sc_iobus_space.bus_base =
+		    prange[found].base;
+		sc->sc_iobus_space.bus_size =
+		    prange[found].size;
+	}
+
+	/* the mem space ranges 
+	 * apple openfirmware always puts full
+	 * addresses in config information,
+	 * it is not necessary to have correct bus
+	 * base address, but since 0 is reserved
+	 * and all IO and device memory will be in
+	 * upper 2G of address space, set to
+	 * 0x80000000
+	 * start with segment 1 not 0, 0 is config.
+	 */
+	for (i = 0; i < rangelen ; i++) {
+		if (prange[i].flags == 0x02000000) {
+#ifdef DEBUG_PCI
+			printf("\nfound mem %x %x",
+				prange[i].base,
+				prange[i].size);
+#endif
+			if (base != 0) {
+				if ((base + size) == prange[i].base) {
+					size += prange[i].size;
+				} else {
+					base = prange[i].base;
+					size = prange[i].size;
+				}
+			} else {
+				base = prange[i].base;
+				size = prange[i].size;
+			}
+		}
+	}
+	sc->sc_membus_space.bus_base = base;
+	sc->sc_membus_space.bus_size = size;
+}
+
+struct ranges_64 {
+	u_int32_t flags;
+	u_int32_t pad1;
+	u_int32_t pad2;
+	u_int32_t pad3;
+	u_int32_t base;
+	u_int32_t pad4;
+	u_int32_t size;
+};
+void
+mpcpcibus_find_ranges_64 (struct pcibr_softc *sc, u_int32_t *range_store,
+    int rangesize)
+{
+	int i, found;
+	unsigned int base = 0;
+	unsigned int size = 0;
+	int rangelen;
+	struct ranges_64 *prange = (void *)range_store;
+
+	rangelen = rangesize / sizeof (struct ranges_64);
+
+	/* mac configs */
+
+	sc->sc_membus_space.bus_base = 0;
+	sc->sc_membus_space.bus_io = 0;
+	sc->sc_iobus_space.bus_base = 0;
+	sc->sc_iobus_space.bus_io = 1;
+
+	if (prange[0].flags == 0xabb10113) { /* appl U3; */
+		prange[0].flags = 0x01000000;
+		prange[0].base = 0xf8070000;
+		prange[0].size = 0x00001000;
+		prange[1].flags = 0x02000000;
+		prange[1].base = 0xf2000000;
+		prange[1].size = 0x02800000;      
+		rangelen = 2;
+	}
+
+	/* find io(config) base, flag == 0x01000000 */
+	found = 0;
+	for (i = 0; i < rangelen ; i++) {
+		if (prange[i].flags == 0x01000000) {
+			/* find last? */
+			found = i;
+		}
+	}
+	/* found the io space ranges */
+	if (prange[found].flags == 0x01000000) {
+		sc->sc_iobus_space.bus_base = prange[found].base;
+		sc->sc_iobus_space.bus_size = prange[found].size;
+	}
+
+	/* the mem space ranges 
+	 * apple openfirmware always puts full
+	 * addresses in config information,
+	 * it is not necessary to have correct bus
+	 * base address, but since 0 is reserved
+	 * and all IO and device memory will be in
+	 * upper 2G of address space, set to
+	 * 0x80000000
+	 * start with segment 1 not 0, 0 is config.
+	 */
+	for (i = 0; i < rangelen ; i++) {
+		if (prange[i].flags == 0x02000000) {
+#ifdef DEBUG_PCI
+			printf("\nfound mem %x %x",
+				prange[i].base,
+				prange[i].size);
+#endif
+				
+			if (base != 0) {
+				if ((base + size) == prange[i].base) {
+					size += prange[i].size;
+				} else {
+					base = prange[i].base;
+					size = prange[i].size;
+				}
+			} else {
+				base = prange[i].base;
+				size = prange[i].size;
+			}
+		}
+	}
+	sc->sc_membus_space.bus_base = base;
+	sc->sc_membus_space.bus_size = size;
+}
+
 void
 mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 {
@@ -172,304 +341,116 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
-	int map, node;
-	char *bridge;
+	int node;
 	int of_node = 0;
+	char compat[32];
+	u_int32_t addr_offset;
+	u_int32_t data_offset;
+	int i;
+	int len;
+	int rangesize;
+	u_int32_t range_store[32];
 
-	switch(system_type) {
-	case OFWMACH:
-	case PWRSTK:
-		{
-			int handle; 
-			int err;
-			unsigned int val;
-			handle = ppc_open_pci_bridge();
-			/* if open fails something odd has happened,
-			 * we did this before during probe...
-			 */
-			err = OF_call_method("config-l@", handle, 1, 1,
-				0x80000000, &val);
-			if (err == 0) {
-				switch (val) {
-				/* supported ppc-pci bridges */
-				case (PCI_VENDOR_MOT |
-				    (PCI_PRODUCT_MOT_MPC105 <<16)):
-					bridge = "MPC105";
-					break;
-				case (PCI_VENDOR_MOT |
-				    (PCI_PRODUCT_MOT_MPC106 <<16)):
-					bridge = "MPC106";
-					break;
-				default:
-					;
-				}
-
-			}
-			
-			/* read the PICR1 register to find what 
-			 * address map is being used
-			 */
-			err = OF_call_method("config-l@", handle, 1, 1,
-				0x800000a8, &val);
-			if (val & 0x00010000) {
-				map = 1; /* map A */
-				pci_map_a = 1;
-			} else {
-				map = 0; /* map B */
-				pci_map_a = 0;
-			}
-
-			ppc_close_pci_bridge(handle);
-		}
-		if (map == 1) {
-			sc->sc_membus_space.bus_base = MPC106_P_PCI_MEM_SPACE;
-			sc->sc_iobus_space.bus_base = MPC106_P_PCI_IO_SPACE;
-			if ( bus_space_map(&(sc->sc_iobus_space), 0, NBPG, 0,
-			    &lcp->ioh_cf8) != 0 )
-				panic("mpcpcibus: unable to map self");
-
-			lcp->ioh_cfc = lcp->ioh_cf8;
-		} else {
-			sc->sc_membus_space.bus_base =
-			    MPC106_P_PCI_MEM_SPACE_MAP_B;
-			sc->sc_iobus_space.bus_base =
-			    MPC106_P_PCI_IO_SPACE_MAP_B;
-			if ( bus_space_map(&(sc->sc_iobus_space), 0xfec00000,
-			    NBPG, 0, &lcp->ioh_cf8) != 0 )
-				panic("mpcpcibus: unable to map self");
-
-			if ( bus_space_map(&(sc->sc_iobus_space), 0xfee00000,
-			    NBPG, 0, &lcp->ioh_cfc) != 0 )
-				panic("mpcpcibus: unable to map self");
-		}
-
-		lcp->lc_pc.pc_conf_v = lcp;
-		lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
-		lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
-		lcp->lc_pc.pc_make_tag = mpc_make_tag;
-		lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
-		lcp->lc_pc.pc_conf_read = mpc_conf_read;
-		lcp->lc_pc.pc_conf_write = mpc_conf_write;
-		lcp->lc_pc.pc_ether_hw_addr = mpc_ether_hw_addr;
-		lcp->lc_iot = &sc->sc_iobus_space;
-		lcp->lc_memt = &sc->sc_membus_space;
-
-	        lcp->lc_pc.pc_intr_v = lcp;
-		lcp->lc_pc.pc_intr_map = mpc_intr_map;
-		lcp->lc_pc.pc_intr_string = mpc_intr_string;
-		lcp->lc_pc.pc_intr_line = mpc_intr_line;
-		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
-		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
-
-
-		printf(": %s, Revision 0x%x, ", bridge, 
-			mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
-		if (map == 1)
-			printf("Using Map A\n");
-		else
-			printf("Using Map B\n");
-#if 0
-		/* Reset status */
-		mpc_cfg_write_2(lcp, MPC106_PCI_STAT, 0xff80);
-#endif
-		break;
-
-	case APPL:
-		/* scan the children of the root of the openfirmware
-		 * tree to locate all nodes with device_type of "pci"
-		 */
-
-		if (ca->ca_node == 0) {
-			printf("invalid node on mpcpcibr config\n");
-			return;
-		}
-		{
-			char compat[32];
-			u_int32_t addr_offset;
-			u_int32_t data_offset;
-#if 0
-			struct pci_reserve_mem null_reserve = {
-				0,
-				0,
-				0
-			};
-#endif
-			int i;
-			int len;
-			int rangelen;
-
-			struct ranges_new {
-				u_int32_t flags;
-				u_int32_t pad1;
-				u_int32_t pad2;
-				u_int32_t base;
-				u_int32_t pad3;
-				u_int32_t size;
-			};
-			u_int32_t range_store[32];
-			struct ranges_new *prange = (void *)&range_store;
-
-			len=OF_getprop(ca->ca_node, "compatible", compat,
-			    sizeof (compat));
-			if (len <= 0 ) {
-				len=OF_getprop(ca->ca_node, "name", compat,
-					sizeof (compat));
-				if (len <= 0) {
-					printf(" compatible and name not"
-					    " found\n");
-					return;
-				}
-				compat[len] = 0; 
-				if (strcmp (compat, "bandit") != 0) {
-					printf(" compatible not found and name"
-					    " %s found\n", compat);
-					return;
-				}
-			}
-			compat[len] = 0; 
-			if ((rangelen = OF_getprop(ca->ca_node, "ranges",
-			    range_store, sizeof (range_store))) <= 0) {
-				printf("range lookup failed, node %x\n",
-				ca->ca_node);
-			}
-			/* translate byte(s) into item count*/
-			rangelen /= sizeof(struct ranges_new);
-
-			lcp = sc->sc_pcibr = &sc->pcibr_config;
-
-			{
-				int found;
-				unsigned int base = 0;
-				unsigned int size = 0;
-
-				/* mac configs */
-
-				sc->sc_membus_space.bus_base = 0;
-				sc->sc_membus_space.bus_io = 0;
-				sc->sc_iobus_space.bus_base = 0;
-				sc->sc_iobus_space.bus_io = 1;
-
-				/* find io(config) base, flag == 0x01000000 */
-				found = 0;
-				for (i = 0; i < rangelen ; i++) {
-					if (prange[i].flags == 0x01000000) {
-						/* find last? */
-						found = i;
-					}
-				}
-				/* found the io space ranges */
-				if (prange[found].flags == 0x01000000) {
-					sc->sc_iobus_space.bus_base =
-					    prange[found].base;
-					sc->sc_iobus_space.bus_size =
-					    prange[found].size;
-				}
-
-				/* the mem space ranges 
-				 * apple openfirmware always puts full
-				 * addresses in config information,
-				 * it is not necessary to have correct bus
-				 * base address, but since 0 is reserved
-				 * and all IO and device memory will be in
-				 * upper 2G of address space, set to
-				 * 0x80000000
-				 * start with segment 1 not 0, 0 is config.
-				 */
-				for (i = 0; i < rangelen ; i++) {
-					if (prange[i].flags == 0x02000000) {
-#if 0
-						printf("\nfound mem %x %x",
-							prange[i].base,
-							prange[i].size);
-#endif
-							
-						if (base != 0) {
-							if ((base + size) ==
-							    prange[i].base) {
-								size +=
-								 prange[i].size;
-							} else {
-								base =
-								 prange[i].base;
-								size =
-								 prange[i].size;
-							}
-						} else {
-							base = prange[i].base;
-							size = prange[i].size;
-						}
-					}
-				}
-				sc->sc_membus_space.bus_base = base;
-				sc->sc_membus_space.bus_size = size;
-
-			}
-			addr_offset = 0;
-			for (i = 0; config_offsets[i].compat != NULL; i++) {
-				if (strcmp(config_offsets[i].compat, compat)
-				    == 0) {
-					addr_offset = config_offsets[i].addr; 
-					data_offset = config_offsets[i].data; 
-					lcp->config_type =
-					    config_offsets[i].config_type;
-					break;
-				}
-			}
-			if (addr_offset == 0) {
-				printf("unable to find match for"
-				    " compatible %s\n", compat);
-				return;
-			}
-#ifdef DEBUG_FIXUP
-			printf(" mem base %x sz %x io base %x sz %x\n"
-			    " config addr %x config data %x\n",
-			    sc->sc_membus_space.bus_base,
-			    sc->sc_membus_space.bus_size,
-			    sc->sc_iobus_space.bus_base,
-			    sc->sc_iobus_space.bus_size,
-			    addr_offset, data_offset);
-#endif
-
-			if ( bus_space_map(&(sc->sc_iobus_space), addr_offset,
-				NBPG, 0, &lcp->ioh_cf8) != 0 )
-				panic("mpcpcibus: unable to map self");
-
-			if ( bus_space_map(&(sc->sc_iobus_space), data_offset,
-				NBPG, 0, &lcp->ioh_cfc) != 0 )
-				panic("mpcpcibus: unable to map self");
-
-			of_node = ca->ca_node;
-
-			lcp->node = ca->ca_node;
-			lcp->lc_pc.pc_conf_v = lcp;
-			lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
-			lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
-			lcp->lc_pc.pc_make_tag = mpc_make_tag;
-			lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
-			lcp->lc_pc.pc_conf_read = mpc_conf_read;
-			lcp->lc_pc.pc_conf_write = mpc_conf_write;
-			lcp->lc_pc.pc_ether_hw_addr = of_ether_hw_addr;
-			lcp->lc_iot = &sc->sc_iobus_space;
-			lcp->lc_memt = &sc->sc_membus_space;
-
-			lcp->lc_pc.pc_intr_v = lcp;
-			lcp->lc_pc.pc_intr_map = mpc_intr_map;
-			lcp->lc_pc.pc_intr_string = mpc_intr_string;
-			lcp->lc_pc.pc_intr_line = mpc_intr_line;
-			lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
-			lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
-
-			printf(": %s, Revision 0x%x\n", compat, 
-			    mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
-
-			pci_addr_fixup(sc, &lcp->lc_pc, 32);
-		}
-		break;
-
-	default:
-		printf("unknown system_type %d\n",system_type);
+	if (ca->ca_node == 0) {
+		printf("invalid node on mpcpcibr config\n");
 		return;
 	}
+	len=OF_getprop(ca->ca_node, "name", compat, sizeof (compat));
+	compat[len] = '\0';
+	if (len > 0)
+		printf(" %s", compat);
+
+	len=OF_getprop(ca->ca_node, "compatible", compat,
+	    sizeof (compat));
+	if (len <= 0 ) {
+		len=OF_getprop(ca->ca_node, "name", compat,
+			sizeof (compat));
+		if (len <= 0) {
+			printf(" compatible and name not found\n");
+			return;
+		}
+		compat[len] = 0; 
+		if (strcmp (compat, "bandit") != 0) {
+			printf(" compatible not found and name %s found\n",
+			    compat);
+			return;
+		}
+	}
+	compat[len] = 0; 
+	if ((rangesize = OF_getprop(ca->ca_node, "ranges",
+	    range_store, sizeof (range_store))) <= 0) {
+		if (strcmp(compat, "u3-ht") == 0) {
+			range_store[0] = 0xabb10113; /* appl U3; */
+		} else 
+			printf("range lookup failed, node %x\n", ca->ca_node);
+	}
+	/* translate byte(s) into item count*/
+
+	lcp = sc->sc_pcibr = &sc->pcibr_config;
+
+	if (ppc_proc_is_64b)
+		mpcpcibus_find_ranges_64 (sc, range_store, rangesize);
+	else
+		mpcpcibus_find_ranges_32 (sc, range_store, rangesize);
+
+	addr_offset = 0;
+	for (i = 0; config_offsets[i].compat != NULL; i++) {
+		struct config_type *co = &config_offsets[i];
+		if (strcmp(co->compat, compat) == 0) {
+			addr_offset = co->addr; 
+			data_offset = co->data; 
+			lcp->config_type = co->config_type;
+			break;
+		}
+	}
+	if (addr_offset == 0) {
+		printf("unable to find match for"
+		    " compatible %s\n", compat);
+		return;
+	}
+#ifdef DEBUG_FIXUP
+	printf(" mem base %x sz %x io base %x sz %x\n"
+	    " config addr %x config data %x\n",
+	    sc->sc_membus_space.bus_base,
+	    sc->sc_membus_space.bus_size,
+	    sc->sc_iobus_space.bus_base,
+	    sc->sc_iobus_space.bus_size,
+	    addr_offset, data_offset);
+#endif
+
+	if ( bus_space_map(&(sc->sc_iobus_space), addr_offset,
+		NBPG, 0, &lcp->ioh_cf8) != 0 )
+		panic("mpcpcibus: unable to map self");
+
+	if ( bus_space_map(&(sc->sc_iobus_space), data_offset,
+		NBPG, 0, &lcp->ioh_cfc) != 0 )
+		panic("mpcpcibus: unable to map self");
+
+	of_node = ca->ca_node;
+
+	lcp->node = ca->ca_node;
+	lcp->lc_pc.pc_conf_v = lcp;
+	lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
+	lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
+	lcp->lc_pc.pc_make_tag = mpc_make_tag;
+	lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
+	lcp->lc_pc.pc_conf_read = mpc_conf_read;
+	lcp->lc_pc.pc_conf_write = mpc_conf_write;
+	lcp->lc_pc.pc_ether_hw_addr = of_ether_hw_addr;
+	lcp->lc_iot = &sc->sc_iobus_space;
+	lcp->lc_memt = &sc->sc_membus_space;
+
+	lcp->lc_pc.pc_intr_v = lcp;
+	lcp->lc_pc.pc_intr_map = mpc_intr_map;
+	lcp->lc_pc.pc_intr_string = mpc_intr_string;
+	lcp->lc_pc.pc_intr_line = mpc_intr_line;
+	lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
+	lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
+
+	printf(": %s, Revision 0x%x\n", compat, 
+	    mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
+
+	pci_addr_fixup(sc, &lcp->lc_pc, 32);
 
 	pba.pba_dmat = &pci_bus_dma_tag;
 		
