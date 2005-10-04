@@ -1,0 +1,113 @@
+.\"     $OpenBSD: co.1,v 1.1 2005/10/04 16:16:47 xsa Exp $
+.\"
+.\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd Octobre 03, 2005
+.Dt CO 1
+.Os
+.Sh NAME
+.Nm co
+.Nd check out RCS revisions
+.Sh SYNOPSIS
+.Nm
+.Bk -words
+.Op Fl fIlMpqruV
+.Op Ar rev
+.Op Fl d Ar date
+.Op Fl k Ar mode
+.Op Fl m Ar msg
+.Op Fl s Ar state
+.Op Fl w Ar user
+.Op Fl x Ar suffixes
+.Op Fl z Ar tz
+.Ar file ...
+.Ek
+.Sh DESCRIPTION
+.Nm
+always performs keyword substitution.
+.Pp
+The following options are supported:
+.Bl -tag -width Ds
+.It Fl d Ar date
+Retrieve revision as of the latest revision no later than
+.Ar date .
+.It Fl f
+Force the overwriting of the working file.
+.It Fl I
+Interactive mode.
+.It Fl k Ar mode
+Specify the keyword substitution mode.
+.It Fl l
+The same as
+.Fl r ,
+but, also locks the revision.
+.It Fl M
+Set the modifcation time of the file to the date of the
+retrieved revision.
+.It Fl m Ar msg
+Specify a log message.
+A line beginning with a hash character
+.Pq Sq #
+is considered a comment and ignored.
+.It Fl p
+Print the retrieved revision to standard output.
+.It Fl q
+Be quiet about reporting.
+.It Fl r
+Retrieve the latest revision no later than
+.Ar rev .
+.It Fl s Ar state
+Retrieve revision of the specified
+.Ar state
+only.
+.It Fl u
+The same as
+.Fl r ,
+but, also unlocks the retrieved revision if it was locked.
+.It Fl V
+Print RCS's version number.
+.It Fl w Ar user
+Retrieve the latest revision which was checked in by the specified
+.Ar user .
+If the
+.Ar user
+argument is ommitted, the login of the user issuing the command
+is assumed.
+.It Fl x Ar suffixes
+Specifies the suffixes for RCS files.
+Suffixes should be separated by the
+.Sq /
+character.
+.It Fl z Ar tz
+Specify the date output format in keyword substitution, and the
+default timezone for
+.Ar date
+used in the
+.Fl d
+option.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width RCSINIT
+.It Ev RCSINIT
+If set, this variable should contain a list of space-delimited options that
+are prepended to the argument list.
+.El
+.Sh SEE ALSO
+.Xr ci 1 ,
+.Xr rcs 1 ,
+.Xr rcsclean 1 ,
+.Xr rcsdiff 1 ,
+.Xr rcsfile 5
+
