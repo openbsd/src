@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.27 2005/03/28 21:33:04 deraadt Exp $	*/
+/*	$OpenBSD: sh.h,v 1.28 2005/10/04 20:35:11 otto Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -68,7 +68,7 @@ typedef INT32 Tflag;
 
 #define	LINE	2048		/* input line size */
 #define	PATH	1024		/* pathname size (todo: PATH_MAX/pathconf()) */
-#define ARRAYMAX 1023		/* max array index */
+#define ARRAYMAX 2047		/* max array index */
 
 EXTERN	const char *kshname;	/* $0 */
 EXTERN	pid_t	kshpid;		/* $$, shell pid */
