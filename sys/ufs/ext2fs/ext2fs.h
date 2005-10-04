@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.10 2005/04/30 13:58:55 niallo Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.11 2005/10/04 22:46:22 pedro Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ struct m_ext2fs {
 	int32_t	e2fs_ngdb;	/* number of group descriptor block */
 	int32_t	e2fs_ipb;	/* number of inodes per block */
 	int32_t	e2fs_itpg;	/* number of inode table per group */
-	struct	ext2_gd *e2fs_gd; /* group descripors */
+	struct	ext2_gd *e2fs_gd; /* group descriptors */
 };
 
 
