@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.75 2005/10/04 14:55:36 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.76 2005/10/04 23:02:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2367,8 +2367,16 @@ rcs_parse_locks(RCSFILE *rfp)
 			cvs_log(LP_ERRNO, "failed to allocate RCS lock");
 			return (-1);
 		}
+
+		if ((lkp->rl_name = cvs_strdup(RCS_TOKSTR(rfp))) == NULL) {
+			cvs_log(LP_ERR, "failed to save locking user");
+			free(lkp);
+			return (-1);
+		}
+
 		lkp->rl_num = rcsnum_alloc();
 		if (lkp->rl_num == NULL) {
+			cvs_strfree(lkp->rl_name);
 			free(lkp);
 			return (-1);
 		}
@@ -2379,6 +2387,7 @@ rcs_parse_locks(RCSFILE *rfp)
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(lkp->rl_num);
+			cvs_strfree(lkp->rl_name);
 			free(lkp);
 			return (-1);
 		}
@@ -2389,6 +2398,7 @@ rcs_parse_locks(RCSFILE *rfp)
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(lkp->rl_num);
+			cvs_strfree(lkp->rl_name);
 			free(lkp);
 			return (-1);
 		}
@@ -2397,6 +2407,7 @@ rcs_parse_locks(RCSFILE *rfp)
 			cvs_log(LP_ERR, "failed to parse RCS NUM `%s'",
 			    RCS_TOKSTR(rfp));
 			rcsnum_free(lkp->rl_num);
+			cvs_strfree(lkp->rl_name);
 			free(lkp);
 			return (-1);
 		}
