@@ -5,7 +5,7 @@
 #
 #	OpenBSD: etc.amd64/MAKEDEV.md,v 1.13 2005/08/01 22:22:12 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.20 2005/08/01 22:22:12 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.75 2005/10/04 18:11:10 otto Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.76 2005/10/04 18:33:52 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -168,7 +168,7 @@ dodisk()
 	[ 0$7 -ne 8 ] && l="i j k l m n o p"
 	for d in a b c d e f g h $l
 	do
-		M $1$2$d	b $3 $(($n+$count)) 640 operaror
+		M $1$2$d	b $3 $(($n+$count)) 640 operator
 		M r$1$2$d	c $4 $(($n+$count)) 640 operator
 		let count=count+1
 	done
