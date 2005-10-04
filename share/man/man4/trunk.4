@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.6 2005/10/03 20:17:38 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.7 2005/10/04 08:42:00 reyk Exp $
 .\"
 .\" Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -53,6 +53,24 @@ The driver currently supports the trunk protocols
 and
 .Ic none
 for link aggregation and link failover.
+.Pp
+The
+.Ic roundrobin
+protocol distributes outgoing traffic using a round-robin scheduler
+through all active ports; and
+.Ic failover
+protocol sends outgoing traffic only through the master or the next
+active port.
+Both protocols receive traffic from all attached ports.
+The interface link state is used to validate if the port is active or
+not.
+.Pp
+The
+.Ic none
+protocol is intended to do nothing: it disables any traffic without
+disabling the
+.Nm
+interface itself.
 .Pp
 The configuration can be done at runtime or by setting up a
 .Xr hostname.if 5
