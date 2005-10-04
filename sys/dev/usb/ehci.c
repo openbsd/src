@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.49 2005/09/24 07:28:58 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.50 2005/10/04 22:55:30 brad Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -477,9 +477,6 @@ ehci_init(ehci_softc_t *sc)
 
 	lockinit(&sc->sc_doorbell_lock, PZERO, "ehcidb", 0, 0);
 
-	/* Enable interrupts */
-	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
-
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
 	    EHCI_CMD_ITC_2 | /* 2 microframes */
@@ -501,6 +498,10 @@ ehci_init(ehci_softc_t *sc)
 		printf("%s: run timeout\n", USBDEVNAME(sc->sc_bus.bdev));
 		return (USBD_IOERROR);
 	}
+
+	/* Enable interrupts */
+	DPRINTFN(1,("ehci_init: enabling\n"));
+	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
 	return (USBD_NORMAL_COMPLETION);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.38 2005/04/19 08:33:26 damien Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.39 2005/10/04 22:55:30 brad Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -521,11 +521,11 @@ uhci_init(uhci_softc_t *sc)
 	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
 #endif
 
+	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
+
 	DPRINTFN(1,("uhci_init: enabling\n"));
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE |
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
-
-	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
 	return (uhci_run(sc, 1));		/* and here we go... */
 }
