@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.18 2003/06/03 21:09:02 deraadt Exp $
+.\" $OpenBSD: lndir.1,v 1.19 2005/10/04 18:39:57 matthieu Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -103,7 +103,8 @@ and is relative to
 (not the current directory).
 .Pp
 .\" CVS.adm is used by the Concurrent Versions System.
-Note that RCS, SCCS, CVS and CVS.adm directories are not shadowed, in
+Note that files whose names end in '~' or start with '.#' and
+RCS, SCCS, CVS and CVS.adm directories are not shadowed, in
 addition to any specified on the command line with
 .Fl e
 arguments.
