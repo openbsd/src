@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm.c,v 1.13 2004/09/18 19:51:53 mickey Exp $ */
+/* $OpenBSD: aicasm.c,v 1.14 2005/10/04 23:46:14 krw Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aicasm.c,v 1.13 2004/09/18 19:51:53 mickey Exp $
+ * $Id: aicasm.c,v 1.14 2005/10/04 23:46:14 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.37 2004/03/12 21:45:25 trhodes Exp $
  */
@@ -456,8 +456,7 @@ output_code()
 	fprintf(ofile, "\n};\n\n");
 
 	fprintf(ofile,
-"static const int num_critical_sections = sizeof(critical_sections)\n"
-"				       / sizeof(*critical_sections);\n");
+"#define NUM_CRITICAL_SECTIONS (sizeof(critical_sections) / sizeof(*critical_sections))\n");
 
 	fprintf(stderr, "%s: %d instructions used\n", appname, instrcount);
 }
