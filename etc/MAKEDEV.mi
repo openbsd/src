@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.74 2005/10/04 07:39:37 otto Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -197,7 +197,6 @@ dnl
 M() {
 	RMlist="$RMlist {-$-}1"
 	mkl ${5-666} {-$-}1 {-$-}2 {-$-}3 {-$-}4
-	mklist="$mklist {-$-}1"
 	G={-$-}{6:-wheel}
 	[ "{-$-}7" ] && {
 		MKlist="$MKlist;chown {-$-}7:{-$-}G {-$-}1"
