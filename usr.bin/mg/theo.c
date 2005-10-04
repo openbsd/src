@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.88 2005/09/24 14:17:44 reyk Exp $	*/
+/*	$OpenBSD: theo.c,v 1.89 2005/10/04 02:42:03 marco Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -177,7 +177,8 @@ static const char *talk[] = {
 	"for once, I have nothing to say.",
 	"You have no idea how fucked we are",
 	"You can call it fart if you want to.",
-	"wavelan is a battle field"
+	"wavelan is a battle field",
+	"If you don't know what you are talking about, why are you talking?"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
