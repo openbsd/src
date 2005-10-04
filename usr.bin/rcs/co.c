@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.3 2005/09/29 21:30:10 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.4 2005/10/04 23:04:33 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "rcs.h"
@@ -37,27 +38,68 @@
 
 extern char *__progname;
 
+#define LOCK_LOCK	1
+#define LOCK_UNLOCK	2
+
 int
 checkout_main(int argc, char **argv)
 {
 	int i, ch;
-	RCSNUM *rev;
+	int lock;
+	RCSNUM *frev, *rev;
 	RCSFILE *file;
 	BUF *bp;
 	char buf[16];
-	char *s, fpath[MAXPATHLEN];
+	char fpath[MAXPATHLEN];
+	char *username;
 
+	lock = 0;
 	rev = RCS_HEAD_REV;
-	while ((ch = getopt(argc, argv, "qr:")) != -1) {
+
+	if ((username = getlogin()) == NULL) {
+		cvs_log(LP_ERR, "failed to get username");
+		exit (1);
+	}
+
+	while ((ch = getopt(argc, argv, "l:qr:u:")) != -1) {
 		switch (ch) {
+		case 'l':
+			if (rev != RCS_HEAD_REV)
+				cvs_log(LP_WARN,
+				    "redefinition of revision number");
+
+			if ((rev = rcsnum_parse(optarg)) == NULL) {
+				cvs_log(LP_ERR, "bad revision number");
+				exit (1);
+			}
+
+			lock = LOCK_LOCK;
+			break;
 		case 'q':
 			verbose = 0;
 			break;
 		case 'r':
+			if (rev != RCS_HEAD_REV)
+				cvs_log(LP_WARN,
+				    "redefinition of revision number");
+
 			if ((rev = rcsnum_parse(optarg)) == NULL) {
 				cvs_log(LP_ERR, "bad revision number");
 				exit(1);
 			}
+
+			break;
+		case 'u':
+			lock = LOCK_UNLOCK;
+			if (rev != RCS_HEAD_REV)
+				cvs_log(LP_WARN,
+				    "redefinition of revision number");
+
+			if ((rev = rcsnum_parse(optarg)) == NULL) {
+				cvs_log(LP_ERR, "bad revision number");
+				exit (1);
+			}
+
 			break;
 		default:
 			(usage)();
@@ -78,24 +120,55 @@ checkout_main(int argc, char **argv)
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
-		if ((file = rcs_open(fpath, RCS_READ)) == NULL)
+		if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
 			continue;
 
-		if ((s = strrchr(fpath, ',')) != NULL)
-			*s = '\0';
+		if (rev == RCS_HEAD_REV)
+			frev = file->rf_head;
+		else
+			frev = rev;
 
-		if ((bp = rcs_getrev(file, rev)) == NULL) {
-			cvs_log(LP_ERR, "cannot find '%s' in %s",
-			    rcsnum_tostr(rev, buf, sizeof(buf)), fpath);
+		rcsnum_tostr(frev, buf, sizeof(buf));
+
+		if ((bp = rcs_getrev(file, frev)) == NULL) {
+			cvs_log(LP_ERR, "cannot find '%s' in %s", buf, fpath);
 			rcs_close(file);
 			continue;
 		}
 
-		if (cvs_buf_write(bp, fpath, 0644) < 0)
+		if (cvs_buf_write(bp, argv[i], 0644) < 0) {
 			cvs_log(LP_ERR, "failed to write revision to file");
+			cvs_buf_free(bp);
+			rcs_close(file);
+			continue;
+		}
 
 		cvs_buf_free(bp);
+
+		if (lock == LOCK_LOCK) {
+			if (rcs_lock_add(file, username, frev) < 0) {
+				if (rcs_errno != RCS_ERR_DUPENT)
+					cvs_log(LP_ERR, "failed to lock '%s'", buf);
+				else
+					cvs_log(LP_WARN, "you already have a lock");
+			} else {
+				if (verbose)
+					printf("(locked)");
+			}
+		} else 	if (lock == LOCK_UNLOCK) {
+			if (rcs_lock_remove(file, frev) < 0) {
+				if (rcs_errno != RCS_ERR_NOENT)
+					cvs_log(LP_ERR,
+					    "failed to remove lock '%s'", buf);
+			}
+		}
+
 		rcs_close(file);
+		if (verbose) {
+			printf("revision %s (%s)\n", buf, (lock == LOCK_LOCK) ?
+			    "locked" : "unlocked");
+			printf("done\n");
+		}
 	}
 
 	if (rev != RCS_HEAD_REV)
