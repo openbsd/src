@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.1 2005/10/04 16:16:47 xsa Exp $
+.\"     $OpenBSD: co.1,v 1.2 2005/10/04 20:29:10 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd Octobre 03, 2005
+.Dd October 03, 2005
 .Dt CO 1
 .Os
 .Sh NAME
@@ -52,9 +52,9 @@ Specify the keyword substitution mode.
 .It Fl l
 The same as
 .Fl r ,
-but, also locks the revision.
+but also locks the revision.
 .It Fl M
-Set the modifcation time of the file to the date of the
+Set the modification time of the file to the date of the
 retrieved revision.
 .It Fl m Ar msg
 Specify a log message.
@@ -75,7 +75,7 @@ only.
 .It Fl u
 The same as
 .Fl r ,
-but, also unlocks the retrieved revision if it was locked.
+but also unlocks the retrieved revision if it was locked.
 .It Fl V
 Print RCS's version number.
 .It Fl w Ar user
@@ -83,7 +83,7 @@ Retrieve the latest revision which was checked in by the specified
 .Ar user .
 If the
 .Ar user
-argument is ommitted, the login of the user issuing the command
+argument is omitted, the login of the user issuing the command
 is assumed.
 .It Fl x Ar suffixes
 Specifies the suffixes for RCS files.
@@ -110,4 +110,3 @@ are prepended to the argument list.
 .Xr rcsclean 1 ,
 .Xr rcsdiff 1 ,
 .Xr rcsfile 5
-
