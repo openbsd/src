@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.24 2004/09/16 06:24:41 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.25 2005/10/04 20:36:40 otto Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -309,9 +309,9 @@ login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 		if (!ep || ep == res ||
 		    ((r == QUAD_MIN || r == QUAD_MAX) && errno == ERANGE)) {
 invalid:
-			free(sres);
 			syslog(LOG_ERR, "%s:%s=%s: invalid time",
 			    lc->lc_class, cap, sres);
+			free(sres);
 			errno = ERANGE;
 			return (e);
 		}
@@ -393,9 +393,9 @@ login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
     	q = strtoll(res, &ep, 0);
 	if (!ep || ep == res || ep[0] ||
 	    ((q == QUAD_MIN || q == QUAD_MAX) && errno == ERANGE)) {
-		free(res);
 		syslog(LOG_ERR, "%s:%s=%s: invalid number",
 		    lc->lc_class, cap, res);
+		free(res);
 		errno = ERANGE;
 		return (e);
 	}
@@ -444,9 +444,9 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 	q = strtolimit(res, &ep, 0);
 	if (!ep || ep == res || (ep[0] && ep[1]) ||
 	    ((q == QUAD_MIN || q == QUAD_MAX) && errno == ERANGE)) {
-		free(res);
 		syslog(LOG_ERR, "%s:%s=%s: invalid size",
 		    lc->lc_class, cap, res);
+		free(res);
 		errno = ERANGE;
 		return (e);
 	}
