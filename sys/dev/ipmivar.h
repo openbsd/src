@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.1 2005/10/04 21:59:41 marco Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.2 2005/10/04 22:04:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -126,9 +126,9 @@ typedef struct {
 	u_int8_t	smipmi_if_rev;		/* BCD IPMI Revision */
 	u_int8_t	smipmi_i2c_address;	/* I2C address of BMC */
 	u_int8_t	smipmi_nvram_address;	/* I2C address of NVRAM
-					 	 * storage */
+						 * storage */
 	u_int64_t	smipmi_base_address;	/* Base address of BMC (BAR
-					 	 * format) */
+						 * format) */
 	u_int8_t	smipmi_base_flags;	/* Flags field:
 						 * spacing/lsb/irq bit 7:6 :
 						 * register spacing 00 = byte
