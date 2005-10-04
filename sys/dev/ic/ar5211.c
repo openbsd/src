@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.22 2005/09/19 10:27:08 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.23 2005/10/04 13:50:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1194,7 +1194,7 @@ ar5k_ar5211_proc_tx_desc(struct ath_hal *hal, struct ath_desc *desc)
 	    AR5K_AR5211_DESC_TX_STATUS1_ACK_SIG_STRENGTH);
 	desc->ds_us.tx.ts_antenna = 1;
 	desc->ds_us.tx.ts_status = 0;
-	desc->ds_us.tx.ts_tstamp =
+	desc->ds_us.tx.ts_rate =
 	    AR5K_REG_MS(tx_desc->tx_control_0,
 	    AR5K_AR5211_DESC_TX_CTL0_XMIT_RATE);
 
