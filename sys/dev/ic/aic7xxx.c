@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.67 2005/08/07 17:14:57 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.68 2005/10/04 23:52:04 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.67 2005/08/07 17:14:57 deraadt Exp $
+ * $Id: aic7xxx.c,v 1.68 2005/10/04 23:52:04 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -6259,9 +6259,9 @@ ahc_dumpseq(struct ahc_softc* ahc)
 static int
 ahc_loadseq(struct ahc_softc *ahc)
 {
-	struct	cs cs_table[num_critical_sections];
-	u_int	begin_set[num_critical_sections];
-	u_int	end_set[num_critical_sections];
+	struct	cs cs_table[NUM_CRITICAL_SECTIONS];
+	u_int	begin_set[NUM_CRITICAL_SECTIONS];
+	u_int	end_set[NUM_CRITICAL_SECTIONS];
 	const struct	patch *cur_patch;
 	u_int	cs_count;
 	u_int	cur_cs;
@@ -6326,7 +6326,7 @@ ahc_loadseq(struct ahc_softc *ahc)
 		 * Move through the CS table until we find a CS
 		 * that might apply to this instruction.
 		 */
-		for (; cur_cs < num_critical_sections; cur_cs++) {
+		for (; cur_cs < NUM_CRITICAL_SECTIONS; cur_cs++) {
 			if (critical_sections[cur_cs].end <= i) {
 				if (begin_set[cs_count] == TRUE
 				 && end_set[cs_count] == FALSE) {
