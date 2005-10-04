@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.74 2005/10/02 21:44:18 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.75 2005/10/04 14:55:36 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -458,8 +458,10 @@ rcs_write(RCSFILE *rfp)
 	struct rcs_sym *symp;
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
+	struct rcs_lock *lkp;
 	ssize_t nread;
 	int fd, from_fd, to_fd;
+
 	from_fd = to_fd = fd = -1;
 
 	if (rfp->rf_flags & RCS_SYNCED)
@@ -506,7 +508,15 @@ rcs_write(RCSFILE *rfp)
 	}
 	fprintf(fp, ";\n");
 
-	fprintf(fp, "locks;");
+	fprintf(fp, "locks");
+	TAILQ_FOREACH(lkp, &(rfp->rf_locks), rl_list) {
+		rcsnum_tostr(lkp->rl_num, numbuf, sizeof(numbuf));
+		fprintf(fp, "\n\t%s:%s", lkp->rl_name, numbuf);
+		if (lkp != TAILQ_LAST(&(rfp->rf_locks), rcs_llist))
+			fprintf(fp, ";");
+	}
+
+	fprintf(fp, ";");
 
 	if (rfp->rf_flags & RCS_SLOCK)
 		fprintf(fp, " strict;");
