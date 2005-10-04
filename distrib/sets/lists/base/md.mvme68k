@@ -899,6 +899,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/z8530reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/z8530sc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/z8536reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ipmivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/ad1848var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/ahareg.ph

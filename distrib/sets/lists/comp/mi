@@ -359,6 +359,7 @@
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
 ./usr/include/dev/ic/z8536reg.h
+./usr/include/dev/ipmivar.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
 ./usr/include/dev/isa/ahareg.h
