@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.27 2005/09/28 10:10:16 jmc Exp $	*/
+/*	$OpenBSD: sort.c,v 1.28 2005/10/04 15:10:27 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.27 2005/09/28 10:10:16 jmc Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.28 2005/10/04 15:10:27 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -336,7 +336,7 @@ usage(char *msg)
 	if (msg != NULL)
 		warnx("%s", msg);
 	(void)fprintf(stderr, "usage: %s [-bcdfHimnruz] "
-	    "[-k field1[,field2] ...] [-o output] [-R char]\n"
+	    "[-k field1[,field2]] [-o output] [-R char]\n"
 	    "\t[-T dir] [-t char] [file ...]\n", __progname);
 	exit(2);
 }
