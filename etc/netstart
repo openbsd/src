@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.106 2005/09/28 17:40:30 todd Exp $
+#	$OpenBSD: netstart,v 1.107 2005/10/04 12:50:15 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -290,7 +290,7 @@ fi
 # Configure all the non-loopback interfaces which we know about, but
 # do not start interfaces which must be delayed.
 # Refer to hostname.if(5) and bridgename.if(5)
-ifmstart "" "carp gif gre pfsync pppoe"
+ifmstart "" "trunk vlan carp gif gre pfsync pppoe"
 
 if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
@@ -307,10 +307,12 @@ if [ "$ip6kernel" = "YES" ]; then
 	sleep `sysctl -n net.inet6.ip6.dad_count`
 fi
 
-# The pfsync interface needs to come up before carp.
+# The trunk interfaces need to come up first in this list.
+# The vlan interfaces need to come up after trunk.
+# The pfsync interfaces need to come up before carp.
 # Configure all the carp interfaces which we know about.
 # They must come up after pfsync but before default route.
-ifmstart "pfsync carp"
+ifmstart "trunk vlan pfsync carp"
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
