@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.23 2005/09/28 10:10:16 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.24 2005/10/04 11:26:43 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,13 +41,9 @@
 .Sh SYNOPSIS
 .Nm sort
 .Op Fl bcdfHimnruz
-.Oo
 .Sm off
-.Fl k
-.Ar field1 Op , Ar field2
-.Ar ...
+.Op Fl k\ \& Ar field1 Op , Ar field2
 .Sm on
-.Oc
 .Op Fl o Ar output
 .Op Fl R Ar char
 .Bk -words
