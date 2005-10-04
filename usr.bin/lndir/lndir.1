@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.19 2005/10/04 18:39:57 matthieu Exp $
+.\" $OpenBSD: lndir.1,v 1.20 2005/10/04 19:30:00 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -59,9 +59,8 @@
 .Nd "create a shadow directory of symbolic links to another directory tree"
 .Sh SYNOPSIS
 .Nm lndir
+.Op Fl is
 .Op Fl e Ar exceptfile
-.Op Fl s
-.Op Fl i
 .Ar fromdir
 .Op Ar todir
 .Sh DESCRIPTION
@@ -138,10 +137,6 @@ Add the specified file to the list of excluded files/directories.
 This is effective in all directories searched by
 .Nm lndir .
 This option may be specified as many times as needed.
-.It Fl s
-Suppresses status messages normally output as
-.Nm
-descends into each subdirectory.
 .It Fl i
 Causes the program to not treat symbolic links in
 .Ar fromdir
@@ -156,6 +151,10 @@ This option exists mostly to emulate the behavior the C version of
 .Nm
 had in X11R6.
 Its use is not recommended.
+.It Fl s
+Suppresses status messages normally output as
+.Nm
+descends into each subdirectory.
 .El
 .Sh DIAGNOSTICS
 The program displays the name of each subdirectory it enters, followed
