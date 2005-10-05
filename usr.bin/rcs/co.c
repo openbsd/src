@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.4 2005/10/04 23:04:33 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.5 2005/10/05 00:44:19 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -151,9 +151,6 @@ checkout_main(int argc, char **argv)
 					cvs_log(LP_ERR, "failed to lock '%s'", buf);
 				else
 					cvs_log(LP_WARN, "you already have a lock");
-			} else {
-				if (verbose)
-					printf("(locked)");
 			}
 		} else 	if (lock == LOCK_UNLOCK) {
 			if (rcs_lock_remove(file, frev) < 0) {
@@ -172,7 +169,7 @@ checkout_main(int argc, char **argv)
 	}
 
 	if (rev != RCS_HEAD_REV)
-		rcsnum_free(rev);
+		rcsnum_free(frev);
 
 	return (0);
 }
