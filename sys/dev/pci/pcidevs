@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.930 2005/10/05 19:43:53 deraadt Exp $
+$OpenBSD: pcidevs,v 1.931 2005/10/05 21:23:24 tdeval Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2713,6 +2713,11 @@ product TI PCI4510_FW		0x8029	PCI4510 FireWire
 product TI PCI4520_FW		0x802A	PCI4520 FireWire
 product TI PCI7410_FW		0x802b	PCI7(4-6)10 FireWire
 product TI PCI7420_FW		0x802e	PCI7x20 FireWire
+product TI PCI7XX1		0x8031	PCI7XX1 CardBus
+product TI PCI7XX1_FW		0x8032	PCI7XX1 FireWire
+product TI PCI7XX1_FLASH	0x8033	PCI7XX1 Flash
+product TI PCI7XX1_SD		0x8034	PCI7XX1 Secure Data
+product TI PCI7XX1_SM		0x8035	PCI7XX1 Smart Card
 product TI PCI6515		0x8036	PCI6515 CardBus
 product TI PCI6515SC		0x8038	PCI6515 CardBus (Smart Card mode)
 product TI ACX100A		0x8400	ACX100A
