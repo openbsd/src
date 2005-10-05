@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigpause.3,v 1.10 2003/06/02 20:18:33 millert Exp $
+.\"	$OpenBSD: sigpause.3,v 1.11 2005/10/05 21:24:16 miod Exp $
 .\"
 .Dd March 10, 1991
 .Dt SIGPAUSE 3
@@ -54,7 +54,7 @@ signals are to be blocked.
 always terminates by being interrupted, returning \-1 with
 .Va errno
 set to
-.Er EINTR
+.Er EINTR .
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,
