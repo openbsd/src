@@ -2,9 +2,9 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.929 2005/10/05 19:40:57 brad Exp 
+ *	OpenBSD: pcidevs,v 1.930 2005/10/05 19:43:53 deraadt Exp 
  */
-/*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
+/*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
