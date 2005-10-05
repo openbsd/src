@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctermid.3,v 1.6 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: ctermid.3,v 1.7 2005/10/05 21:23:11 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Sh DESCRIPTION
 The
 .Fn ctermid
-function generates a string, that, when used as a pathname, refers to
+function generates a string that, when used as a pathname, refers to
 the current controlling terminal of the calling process.
 .Pp
 If
@@ -60,10 +60,12 @@ bytes long.
 The current implementation simply generates
 .Qq /dev/tty .
 .Sh RETURN VALUES
-Upon successful completion, a non-null pointer is returned.
-Otherwise, a null pointer is returned and the global variable
-.Va errno
-is set to indicate the error.
+The
+.Fn ctermid
+function returns a non-null pointer, which is equal to the
+.Ar buf
+argument if it is not
+.Dv NULL .
 .Sh ERRORS
 The current implementation detects no error conditions.
 .Sh SEE ALSO
@@ -73,10 +75,3 @@ The
 .Fn ctermid
 function conforms to
 .St -p1003.1-88 .
-.Sh BUGS
-By default the
-.Fn ctermid
-function writes all information to an internal static object.
-Subsequent calls to
-.Fn ctermid
-will modify the same object.
