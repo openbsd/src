@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.15 2005/09/30 18:22:28 jmc Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.16 2005/10/05 16:09:55 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -94,7 +94,7 @@ definition.
 .Pp
 For example:
 .Bd -literal -offset indent
-cisco="00:40:06:ff:ff:ff / ff:ff:ff:00:00:00"
+cisco="00:40:06:ff:ff:ff & ff:ff:ff:00:00:00"
 
 table <black> { $cisco, 00:0d:60:ff:f1:2a }
 table <myess> const {
