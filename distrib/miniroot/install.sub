@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.390 2005/08/29 17:47:55 krw Exp $
+#	$OpenBSD: install.sub,v 1.391 2005/10/05 02:07:27 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -806,13 +806,12 @@ enable_network() {
 			"dhcp")	[ "$name" = "NONE" ] && name=
 				[ "$mask" = "NONE" ] && mask=
 				[ "$bcaddr" = "NONE" ] && bcaddr=
-				ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
-				cmd="dhclient $if"
+				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
+				cmd="$cmd; dhclient $if"
 				;;
 			"rtsol")
-				ifconfig $if $name $mask $bcaddr $ext1 $ext2 up
 				rtsif="$rtsif $if"
-				cmd=
+				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
 				;;
 			"up")
 				# The only one of these guaranteed to be set is $if
