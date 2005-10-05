@@ -1,5 +1,5 @@
-$OpenBSD: pcidevs,v 1.929 2005/10/05 19:40:57 brad Exp $
-/*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
+$OpenBSD: pcidevs,v 1.930 2005/10/05 19:43:53 deraadt Exp $
+/*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -141,7 +141,7 @@ vendor	TRIONES		0x1103	HighPoint
 vendor	SIGMA		0x1105	Sigma Designs
 vendor	VIATECH		0x1106	VIA
 vendor	COGENT		0x1109	Cogent Data
-vendor	SIEMENS 	0x110a	Siemens
+vendor	SIEMENS		0x110a	Siemens
 vendor	ACCTON		0x1113	Accton
 vendor	VORTEX		0x1119	Vortex
 vendor	EFFICIENTNETS	0x111a	Efficent Networks
@@ -1337,12 +1337,12 @@ product HINT VXPRO_II_ISA	0x8012	ISA
 product HINT VXPRO_II_EIDE	0x8013	EIDE
 
 /* IBM products */
-product IBM 0x0002 		0x0002	MCA
-product IBM 0x0005 		0x0005	CPU - Alta Lite
-product IBM 0x0007 		0x0007	CPU - Alta MP
-product IBM 0x000a 		0x000a	ISA w/PnP
-product IBM 0x0017 		0x0017	CPU
-product IBM 0x0018 		0x0018	Auto LANStreamer
+product IBM 0x0002		0x0002	MCA
+product IBM 0x0005		0x0005	CPU - Alta Lite
+product IBM 0x0007		0x0007	CPU - Alta MP
+product IBM 0x000a		0x000a	ISA w/PnP
+product IBM 0x0017		0x0017	CPU
+product IBM 0x0018		0x0018	Auto LANStreamer
 product IBM GXT150P		0x001b	GXT-150P
 product IBM 82G2675		0x001d	82G2675
 product IBM 0x0020		0x0020	MCA
@@ -1423,7 +1423,7 @@ product INTEL 82540EP_LP	0x101e	PRO/1000MT (82540EP)
 product INTEL 82545GM_COPPER	0x1026	PRO/1000MT (82545GM)
 product INTEL 82545GM_FIBER	0x1027	PRO/1000MF (82545GM)
 product INTEL 82545GM_SERDES	0x1028	PRO/1000MB (82545GM)
-product INTEL PRO_100		0x1029	PRO/100 
+product INTEL PRO_100		0x1029	PRO/100
 product INTEL 82559		0x1030	82559
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE
@@ -1685,7 +1685,7 @@ product INTEL E7710_MCH_ERR	0x3591	E7710 MCH ERR
 product INTEL E7710_MCH_DMA	0x3594	E7710 MCH DMA
 product INTEL E7710_MCH_PCIEA0	0x3595	E7710 MCH PCIE
 product INTEL E7710_MCH_PCIEA1	0x3596	E7710 MCH PCIE
-product INTEL E7710_MCH_PCIEB0	0x3597	E7710 MCH PCIE 
+product INTEL E7710_MCH_PCIEB0	0x3597	E7710 MCH PCIE
 product INTEL E7710_MCH_PCIEB1	0x3598	E7710 MCH PCIE
 product INTEL E7710_MCH_PCIEC0	0x3599	E7710 MCH PCIE
 product INTEL E7710_MCH_PCIEC1	0x359a	E7710 MCH PCIE
@@ -1940,7 +1940,7 @@ product MOT SM56		0x5600	SM56
 product MOT RAVEN		0x4801	Raven PCI
 
 /* Moxa */
-product MOXA CP114 		0x1141	CP-114
+product MOXA CP114		0x1141	CP-114
 product MOXA C104H		0x1040	C104H
 product MOXA CP104		0x1041	CP-104UL
 product MOXA C168H		0x1680	C168H
@@ -1968,8 +1968,8 @@ product MYSON MTD891		0x0891	MTD891 10/100/1000
 product MUTECH MV1000		0x0001	MV1000
 
 /* National Datacomm Corp products */
-product NDC NCP130 		0x0130	NCP130
-product NDC NCP130A2 		0x0131	NCP130 Rev A2
+product NDC NCP130		0x0130	NCP130
+product NDC NCP130A2		0x0131	NCP130 Rev A2
 
 /* National Semiconductor products */
 product NS DP83810		0x0001	DP83810 10/100
@@ -2101,7 +2101,7 @@ product SYMBIOS 1010		0x0020	53c1010-33
 product SYMBIOS 1010_2		0x0021	53c1010-66
 product SYMBIOS 1030		0x0030	53c1030
 product SYMBIOS 875J		0x008f	53c875J
-product SYMBIOS FC909		0x0620	FC909 
+product SYMBIOS FC909		0x0620	FC909
 product SYMBIOS FC909A		0x0621	FC909A
 product SYMBIOS FC929		0x0622  FC929
 product SYMBIOS FC929_1		0x0623  FC929
@@ -2127,7 +2127,7 @@ product NKK NDR4600		0xa001	NDR4600 PCI
 
 /* Nortel Networks products */
 product NORTEL BS21		0x1211	BS21 10/100
-product NORTEL 211818A 		0x8030	E-mobility Wireless
+product NORTEL 211818A		0x8030	E-mobility Wireless
 
 /* Number Nine products */
 product NUMBER9 I128		0x2309	Imagine-128
@@ -2683,7 +2683,7 @@ product TAMARACK TC9021		0x1021	TC9021 GigE
 product TAMARACK TC9021_ALT	0x9021	TC9021 GigE (alt ID)
 
 /* Tekram Technology products (1st ID)*/
-product TEKRAM 	DC290		0xdc29	DC-290(M)
+product TEKRAM DC290		0xdc29	DC-290(M)
 
 /* Tekram Technology products(2) */
 product TEKRAM2	DC690C		0x690c	DC-690C
@@ -2719,7 +2719,7 @@ product TI ACX100A		0x8400	ACX100A
 product TI ACX100B		0x8401	ACX100B
 product TI ACX111		0x9066	ACX111
 product TI PCI1130		0xac12	PCI1130 CardBus
-product TI PCI1031		0xac13	PCI1031 PCMCIA 
+product TI PCI1031		0xac13	PCI1031 PCMCIA
 product TI PCI1131		0xac15	PCI1131 CardBus
 product TI PCI1250		0xac16	PCI1250 CardBus
 product TI PCI1220		0xac17	PCI1220 CardBus
@@ -2769,8 +2769,8 @@ product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
 product TOSHIBA	R4X00		0x102f	R4x00 PCI
 
 /* Toshiba(2) products */
-product TOSHIBA2 THB 		0x0601	PCI
-product TOSHIBA2 ISA 		0x0602	ISA
+product TOSHIBA2 THB		0x0601	PCI
+product TOSHIBA2 ISA		0x0602	ISA
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI
 product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B CardBus
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus
