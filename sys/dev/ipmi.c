@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.1 2005/10/04 21:59:41 marco Exp $ */
+/* $OpenBSD: ipmi.c,v 1.2 2005/10/05 02:02:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -52,8 +52,8 @@ struct ipmi_sensor {
 	SLIST_ENTRY(ipmi_sensor) list;
 };
 
-int     ipmi_nintr;
-int     ipmi_dbg = 0;
+int	ipmi_nintr;
+int	ipmi_dbg = 0;
 
 #define SENSOR_REFRESH_RATE (10 * hz)
 
@@ -121,9 +121,9 @@ int	getbits(u_int8_t *, int, int);
 int	valid_sensor(int, int);
 
 void    ipmi_refresh(void *arg);
-void    ipmi_refresh_sensors(struct ipmi_softc * sc);
-int     ipmi_map_regs(struct ipmi_softc * sc, struct ipmi_attach_args * ia);
-void    ipmi_unmap_regs(struct ipmi_softc * sc, struct ipmi_attach_args * ia);
+void    ipmi_refresh_sensors(struct ipmi_softc *sc);
+int	ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
+void    ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
 
 struct ipmi_if kcs_if = {
 	"kcs",
@@ -176,22 +176,22 @@ ipmi_get_if(int iftype)
 /*
  * BMC Helper Functions
  */
-uint8_t 
-bmc_read(struct ipmi_softc * sc, int offset)
+uint8_t
+bmc_read(struct ipmi_softc *sc, int offset)
 {
 	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 	    offset * sc->sc_if_iospacing));
 }
 
-void 
-bmc_write(struct ipmi_softc * sc, int offset, uint8_t val)
+void
+bmc_write(struct ipmi_softc *sc, int offset, uint8_t val)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 	    offset * sc->sc_if_iospacing, val);
 }
 
-int 
-bmc_io_wait(struct ipmi_softc * sc, int offset, u_int8_t mask,
+int
+bmc_io_wait(struct ipmi_softc *sc, int offset, u_int8_t mask,
     u_int8_t value, long count, const char *lbl)
 {
 	volatile u_int8_t v;
@@ -226,8 +226,8 @@ bmc_io_wait(struct ipmi_softc * sc, int offset, u_int8_t mask,
 #define _BT_DATAOUT_REG			1
 #define _BT_INTMASK_REG			2
 
-int 
-bt_sendmsg(struct ipmi_softc * sc, int len, const u_int8_t * data)
+int
+bt_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 {
 	int i;
 
@@ -239,8 +239,8 @@ bt_sendmsg(struct ipmi_softc * sc, int len, const u_int8_t * data)
 	return (0);
 }
 
-int 
-bt_recvmsg(struct ipmi_softc * sc, int maxlen, int *rxlen, u_int8_t * data)
+int
+bt_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t *data)
 {
 	uint8_t len, v, i;
 
@@ -262,14 +262,14 @@ bt_recvmsg(struct ipmi_softc * sc, int maxlen, int *rxlen, u_int8_t * data)
 	    return (0);
 }
 
-int 
-bt_reset(struct ipmi_softc * sc)
+int
+bt_reset(struct ipmi_softc *sc)
 {
 	return (-1);
 }
 
-int 
-bt_probe(struct ipmi_softc * sc)
+int
+bt_probe(struct ipmi_softc *sc)
 {
 	uint8_t v;
 
@@ -304,16 +304,16 @@ bt_probe(struct ipmi_softc * sc)
 #define  SMIC_RX_DATA_RDY		BIT(7)
 
 #if 0
-int 
-smic_wait(struct ipmi_softc * sc, u_int8_t mask, u_int8_t val, const char *lbl)
+int
+smic_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t val, const char *lbl)
 {
 	return (inb(SMIC_CNTL_REGISTER(sc)));
 }
 
-int 
-smic_write_cmd_data(struct ipmi_softc * sc, u_int8_t cmd, const u_int8_t * data)
+int
+smic_write_cmd_data(struct ipmi_softc *sc, u_int8_t cmd, const u_int8_t *data)
 {
-	int     sts;
+	int	sts;
 
 	sts = smic_wait(sc, SMIC_TX_DATA_RDY | SMIC_BUSY, SMIC_TX_DATA_RDY,
 	    "smic_write_cmd_data ready");
@@ -330,8 +330,8 @@ smic_write_cmd_data(struct ipmi_softc * sc, u_int8_t cmd, const u_int8_t * data)
 	return (smic_wait(sc, SMIC_BUSY, 0, "smic_write_cmd_data busy"));
 }
 
-int 
-smic_read_data(struct ipmi_softc * sc, u_int8_t * data)
+int
+smic_read_data(struct ipmi_softc *sc, u_int8_t *data)
 {
 	sts = smic_wait(sc, SMIC_RX_DATA_RDY | SMIC_BUSY, SMIC_RX_DATA_RDY,
 	    "smic_read_data");
@@ -344,8 +344,8 @@ smic_read_data(struct ipmi_softc * sc, u_int8_t * data)
 }
 #endif
 
-int 
-smic_sendmsg(struct ipmi_softc * sc, int len, const u_int8_t * data)
+int
+smic_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 {
 #if 0
 	int sts, idx;
@@ -359,8 +359,8 @@ smic_sendmsg(struct ipmi_softc * sc, int len, const u_int8_t * data)
 	return (-1);
 }
 
-int 
-smic_recvmsg(struct ipmi_softc * sc, int maxlen, int *len, u_int8_t * data)
+int
+smic_recvmsg(struct ipmi_softc *sc, int maxlen, int *len, u_int8_t *data)
 {
 #if 0
 	int sts, idx;
@@ -375,14 +375,14 @@ smic_recvmsg(struct ipmi_softc * sc, int maxlen, int *len, u_int8_t * data)
 	return (-1);
 }
 
-int 
-smic_reset(struct ipmi_softc * sc)
+int
+smic_reset(struct ipmi_softc *sc)
 {
 	return (-1);
 }
 
-int 
-smic_probe(struct ipmi_softc * sc)
+int
+smic_probe(struct ipmi_softc *sc)
 {
 	return (-1);
 }
@@ -418,7 +418,7 @@ int	kcs_write_cmd(struct ipmi_softc *, u_int8_t);
 int	kcs_write_data(struct ipmi_softc *, u_int8_t);
 int	kcs_read_data(struct ipmi_softc *, u_int8_t *);
 
-int 
+int
 kcs_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t value, const char *lbl)
 {
 	int v;
@@ -441,8 +441,8 @@ kcs_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t value, const char *lbl)
 	return (v & KCS_STATE_MASK);
 }
 
-int 
-kcs_write_cmd(struct ipmi_softc * sc, u_int8_t cmd)
+int
+kcs_write_cmd(struct ipmi_softc *sc, u_int8_t cmd)
 {
 	/* ASSERT: IBF and OBF are clear */
 	dbg_printf(99, "kcswritecmd: %.2x\n", cmd);
@@ -451,8 +451,8 @@ kcs_write_cmd(struct ipmi_softc * sc, u_int8_t cmd)
 	return (kcs_wait(sc, KCS_IBF, 0, "write_cmd"));
 }
 
-int 
-kcs_write_data(struct ipmi_softc * sc, u_int8_t data)
+int
+kcs_write_data(struct ipmi_softc *sc, u_int8_t data)
 {
 	/* ASSERT: IBF and OBF are clear */
 	dbg_printf(99, "kcswritedata: %.2x\n", data);
@@ -461,8 +461,8 @@ kcs_write_data(struct ipmi_softc * sc, u_int8_t data)
 	return (kcs_wait(sc, KCS_IBF, 0, "write_data"));
 }
 
-int 
-kcs_read_data(struct ipmi_softc * sc, u_int8_t * data)
+int
+kcs_read_data(struct ipmi_softc *sc, u_int8_t * data)
 {
 	int sts;
 
@@ -480,8 +480,8 @@ kcs_read_data(struct ipmi_softc * sc, u_int8_t * data)
 }
 
 /* Exported KCS functions */
-int 
-kcs_sendmsg(struct ipmi_softc * sc, int len, const u_int8_t * data)
+int
+kcs_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t * data)
 {
 	int idx, sts;
 
@@ -505,8 +505,8 @@ kcs_sendmsg(struct ipmi_softc * sc, int len, const u_int8_t * data)
 	return (sts != KCS_READ_STATE);
 }
 
-int 
-kcs_recvmsg(struct ipmi_softc * sc, int maxlen, int *rxlen, u_int8_t * data)
+int
+kcs_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t * data)
 {
 	int idx, sts;
 
@@ -525,14 +525,14 @@ kcs_recvmsg(struct ipmi_softc * sc, int maxlen, int *rxlen, u_int8_t * data)
 	return (sts != KCS_IDLE_STATE);
 }
 
-int 
-kcs_reset(struct ipmi_softc * sc)
+int
+kcs_reset(struct ipmi_softc *sc)
 {
 	return (-1);
 }
 
-int 
-kcs_probe(struct ipmi_softc * sc)
+int
+kcs_probe(struct ipmi_softc *sc)
 {
 	u_int8_t v;
 
@@ -683,8 +683,8 @@ scan_smbios(u_int8_t mtype, void (*smcb) (void *base, void *arg), void *arg) {
 	return (nmatch);
 }
 
-void 
-dumpb(const char *lbl, int len, const u_int8_t * data)
+void
+dumpb(const char *lbl, int len, const u_int8_t *data)
 {
 	int idx;
 
@@ -695,7 +695,7 @@ dumpb(const char *lbl, int len, const u_int8_t * data)
 	printf("\n");
 }
 
-void 
+void
 smbios_ipmi_probe(void *ptr, void *arg)
 {
 	struct ipmi_attach_args	*ia = arg;
@@ -747,7 +747,7 @@ smbios_ipmi_probe(void *ptr, void *arg)
  *   of allocated message
  */
 void *
-bt_buildmsg(struct ipmi_softc * sc, int netlun, int cmd, int len,
+bt_buildmsg(struct ipmi_softc *sc, int netlun, int cmd, int len,
     const void *data, int *txlen)
 {
 	u_int8_t *buf;
@@ -776,7 +776,7 @@ bt_buildmsg(struct ipmi_softc * sc, int netlun, int cmd, int len,
  *   of allocated message
  */
 void *
-cmn_buildmsg(struct ipmi_softc * sc, int nfLun, int cmd, int len,
+cmn_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
     const void *data, int *txlen)
 {
 	u_int8_t *buf;
@@ -796,8 +796,8 @@ cmn_buildmsg(struct ipmi_softc * sc, int nfLun, int cmd, int len,
 }
 
 /* Send an IPMI command */
-int 
-ipmi_sendcmd(struct ipmi_softc * sc, int rssa, int rslun, int netfn, int cmd,
+int
+ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
     int txlen, const void *data)
 {
 	u_int8_t	*buf;
@@ -841,8 +841,8 @@ ipmi_sendcmd(struct ipmi_softc * sc, int rssa, int rslun, int netfn, int cmd,
 	return (rc);
 }
 
-int 
-ipmi_recvcmd(struct ipmi_softc * sc, int maxlen, int *rxlen, void *data)
+int
+ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 {
 	u_int8_t	*buf, rc = 0;
 	int		rawlen;
@@ -875,9 +875,9 @@ ipmi_recvcmd(struct ipmi_softc * sc, int maxlen, int *rxlen, void *data)
 }
 
 /* Read a partial SDR entry */
-int 
-get_sdr_partial(struct ipmi_softc * sc, u_int16_t recordId, u_int16_t reserveId,
-    u_int8_t offset, u_int8_t length, void *buffer, u_int16_t * nxtRecordId)
+int
+get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
+    u_int8_t offset, u_int8_t length, void *buffer, u_int16_t *nxtRecordId)
 {
 	u_int8_t	cmd[8 + length];
 	int		len;
@@ -906,8 +906,8 @@ get_sdr_partial(struct ipmi_softc * sc, u_int16_t recordId, u_int16_t reserveId,
 int maxsdrlen = 0x10;
 
 /* Read an entire SDR; pass to add sensor */
-int 
-get_sdr(struct ipmi_softc * sc, u_int16_t recid, u_int16_t * nxtrec)
+int
+get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 {
 	u_int16_t	resid;
 	int		len, sdrlen, offset;
@@ -959,8 +959,8 @@ get_sdr(struct ipmi_softc * sc, u_int16_t recid, u_int16_t * nxtrec)
 	return (0);
 }
 
-int 
-getbits(u_int8_t * bytes, int bitpos, int bitlen)
+int
+getbits(u_int8_t *bytes, int bitpos, int bitlen)
 {
 	int	v;
 	int	mask;
@@ -979,8 +979,8 @@ getbits(u_int8_t * bytes, int bitpos, int bitlen)
 }
 
 /* Decode IPMI sensor name */
-void 
-ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t * bits)
+void
+ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 {
 	int	i, slen;
 	char	bcdplus[] = "0123456789 -.:,_";
@@ -989,12 +989,12 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t * bits)
 	switch (typelen & 0xC0) {
 	case 0x00:
 		//unicode
-		    break;
+		break;
 
 	case 0x40:
 		//bcdplus
 		/* Characters are encoded in 4-bit BCDPLUS */
-		    for (i = 0; i < slen; i++) {
+		for (i = 0; i < slen; i++) {
 			*(name++) = bcdplus[bits[i] >> 4];
 			*(name++) = bcdplus[bits[i] & 0xF];
 		}
@@ -1004,14 +1004,14 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t * bits)
 		//6 - bit ascii
 		/* Characters are encoded in 6-bit ASCII 0x00 - 0x3F maps to
 		 * 0x20 - 0x5F */
-		    for (i = 0; i < slen * 8; i += 6) {
+		for (i = 0; i < slen * 8; i += 6) {
 			*(name++) = getbits(bits, i, 6) + ' ';
 		}
 		break;
 
 	case 0xC0:
 		//8 - bit ascii
-		    while (slen--)
+		while (slen--)
 			*(name++) = *(bits++);
 		break;
 	}
@@ -1019,7 +1019,7 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t * bits)
 }
 
 /* Calculate val * 10^exp */
-long 
+long
 ipow(long val, int exp)
 {
 	while (exp > 0) {
@@ -1036,8 +1036,8 @@ ipow(long val, int exp)
 }
 
 /* Convert IPMI reading from sensor factors */
-long 
-ipmi_convert(u_int8_t v, sdrtype1 * s1, long adj)
+long
+ipmi_convert(u_int8_t v, sdrtype1 *s1, long adj)
 {
 	short	M, B;
 	char	K1, K2;
@@ -1064,7 +1064,7 @@ ipmi_convert(u_int8_t v, sdrtype1 * s1, long adj)
 
 	/* Calculate sensor reading: y = L((M * v + (B * 10^K1)) *
 	 * 10^(K2+adj));
-	 * 
+	 *
 	 * This commutes out to: y = L(M*v * 10^(K2+adj) + B * 10^(K1+K2+adj)); */
 	val = ipow(M * v, K2 + adj) + ipow(B, K1 + K2 + adj);
 
@@ -1075,8 +1075,8 @@ ipmi_convert(u_int8_t v, sdrtype1 * s1, long adj)
 	return (val);
 }
 
-int 
-read_sensor(struct ipmi_softc * sc, struct ipmi_sensor * psensor)
+int
+read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 {
 	sdrtype1	*s1 = (sdrtype1 *) psensor->i_sdr;
 	u_int8_t	data[8];
@@ -1121,7 +1121,7 @@ read_sensor(struct ipmi_softc * sc, struct ipmi_sensor * psensor)
 	case SENSOR_VOLTS_DC:
 		psensor->i_sensor.value = ipmi_convert(data[0], s1, 6);
 		break;
-		
+
 	default:
 		psensor->i_sensor.value = ipmi_convert(data[0], s1, 0);
 	}
@@ -1129,7 +1129,7 @@ read_sensor(struct ipmi_softc * sc, struct ipmi_sensor * psensor)
 	return (0);
 }
 
-int 
+int
 valid_sensor(int type, int btype)
 {
 	switch (type << 8L | btype) {
@@ -1150,8 +1150,8 @@ valid_sensor(int type, int btype)
 }
 
 /* Add Sensor to BSD Sysctl interface */
-int 
-add_sdr_sensor(struct ipmi_softc * sc, u_int8_t * psdr)
+int
+add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr)
 {
 	struct ipmi_sensor	*psensor;
 	int			typ, base, icnt, snum, idx;
@@ -1235,7 +1235,7 @@ add_sdr_sensor(struct ipmi_softc * sc, u_int8_t * psdr)
 }
 
 /* Interrupt handler */
-int 
+int
 ipmi_intr(void *arg)
 {
 	struct ipmi_softc	*sc = (struct ipmi_softc *)arg;
@@ -1249,8 +1249,8 @@ ipmi_intr(void *arg)
 }
 
 /* Handle IPMI Timer - reread sensor values */
-void 
-ipmi_refresh_sensors(struct ipmi_softc * sc)
+void
+ipmi_refresh_sensors(struct ipmi_softc *sc)
 {
 	struct	ipmi_sensor *psensor = NULL;
 
@@ -1261,7 +1261,7 @@ ipmi_refresh_sensors(struct ipmi_softc * sc)
 	}
 }
 
-void 
+void
 ipmi_refresh(void *arg)
 {
 	struct	ipmi_softc *sc = (struct ipmi_softc *)arg;
@@ -1270,8 +1270,8 @@ ipmi_refresh(void *arg)
 	timeout_add(&ipmi_timeout, SENSOR_REFRESH_RATE);
 }
 
-int 
-ipmi_map_regs(struct ipmi_softc * sc, struct ipmi_attach_args * ia)
+int
+ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 {
 	sc->sc_if = ipmi_get_if(ia->iaa_if_type);
 	if (sc->sc_if == NULL)
@@ -1298,15 +1298,15 @@ ipmi_map_regs(struct ipmi_softc * sc, struct ipmi_attach_args * ia)
 	return (0);
 }
 
-void 
-ipmi_unmap_regs(struct ipmi_softc * sc, struct ipmi_attach_args * ia)
+void
+ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 {
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_if->nregs * sc->sc_if_iospacing);
 }
 
-int 
-ipmi_probe(struct device * parent, void *match, void *aux)
+int
+ipmi_probe(struct device *parent, void *match, void *aux)
 {
 	struct ipmi_softc	sc;
 	struct ipmi_attach_args	*ia = aux;
@@ -1337,8 +1337,8 @@ ipmi_probe(struct device * parent, void *match, void *aux)
 	return (!rc);
 }
 
-void 
-ipmi_attach(struct device * parent, struct device * self, void *aux)
+void
+ipmi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipmi_softc	*sc = (void *) self;
 	struct ipmi_attach_args	*ia = aux;
@@ -1363,14 +1363,9 @@ ipmi_attach(struct device * parent, struct device * self, void *aux)
 	timeout_set(&ipmi_timeout, ipmi_refresh, sc);
 	timeout_add(&ipmi_timeout, SENSOR_REFRESH_RATE);
 
-	printf("\n%s: ver=%d.%d iface=%s %cbase=0x%x/%x spacing=%d irq=%d\n",
-	    sc->sc_dev.dv_xname,
-	    ia->iaa_if_rev >> 4,
-	    ia->iaa_if_rev & 0xF,
-	    sc->sc_if->name,
-	    ia->iaa_if_iotype,
-	    ia->iaa_if_iobase,
-	    ia->iaa_if_iospacing * sc->sc_if->nregs,
-	    ia->iaa_if_iospacing,
+	printf(": version %d.%d interface %s %cbase 0x%x/%x spacing %d irq %d\n",
+	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF,
+	    sc->sc_if->name, ia->iaa_if_iotype, ia->iaa_if_iobase,
+	    ia->iaa_if_iospacing * sc->sc_if->nregs, ia->iaa_if_iospacing,
 	    ia->iaa_if_irq);
 }
