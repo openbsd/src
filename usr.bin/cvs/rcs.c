@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.77 2005/10/05 11:38:02 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.78 2005/10/05 17:34:59 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -597,7 +597,7 @@ rcs_write(RCSFILE *rfp)
 				return (-1);
 			}
 
-			if ((to_fd = open(rfp->rf_path, O_WRONLY|O_CREAT))
+			if ((to_fd = open(rfp->rf_path, O_WRONLY|O_TRUNC|O_CREAT))
 			    == -1) {
 				cvs_log(LP_ERRNO, "failed to open `%s'", fn);
 				close(from_fd);
