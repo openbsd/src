@@ -1039,6 +1039,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/z8530reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/z8530sc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/z8536reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ipmivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/ad1848var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/isa/ahareg.ph
@@ -2263,7 +2264,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zlib.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/ipmivar.ph
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
