@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.6 2005/10/05 11:52:16 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.7 2005/10/05 12:06:23 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -62,7 +62,7 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = getopt(argc, argv, "l:qr:u:")) != -1) {
+	while ((ch = getopt(argc, argv, "l:qr:u:V")) != -1) {
 		switch (ch) {
 		case 'l':
 			if (rev != RCS_HEAD_REV)
@@ -102,6 +102,9 @@ checkout_main(int argc, char **argv)
 			}
 
 			break;
+		case 'V':
+			printf("%s\n", rcs_version);
+			exit(0);
 		default:
 			(usage)();
 			exit(1);
@@ -182,5 +185,6 @@ checkout_main(int argc, char **argv)
 void
 checkout_usage(void)
 {
-	fprintf(stderr, "usage %s [-r rev] file ...\n", __progname);
+	fprintf(stderr, "usage %s [-qV] [-l rev] [-r rev] [-u rev] file ...\n",
+	    __progname);
 }
