@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.932 2005/10/05 21:28:20 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.933 2005/10/05 22:26:54 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2726,7 +2726,6 @@
 #define	PCI_PRODUCT_TI_PCI7XX1_SM	0x8035		/* PCI7XX1 Smart Card */
 #define	PCI_PRODUCT_TI_PCI6515	0x8036		/* PCI6515 CardBus */
 #define	PCI_PRODUCT_TI_PCI6515SC	0x8038		/* PCI6515 CardBus (Smart Card mode) */
-#define	PCI_PRODUCT_TI_PCI1620	0x8201		/* PCI1620 Misc */
 #define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A */
 #define	PCI_PRODUCT_TI_ACX100B	0x8401		/* ACX100B */
 #define	PCI_PRODUCT_TI_ACX111	0x9066		/* ACX111 */
