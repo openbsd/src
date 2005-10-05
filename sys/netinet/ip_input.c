@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.133 2005/09/19 01:48:05 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.134 2005/10/05 17:32:22 norby Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ char ipsec_def_comp[20];
 
 /* values controllable via sysctl */
 int	ipforwarding = 0;
+int	ipmforwarding = 0;
 int	ipsendredirects = 1;
 int	ip_dosourceroute = 0;
 int	ip_defttl = IPDEFTTL;
@@ -410,8 +411,7 @@ ipv4_input(m)
 			}
 			ip = mtod(m, struct ip *);
 		}
-
-		if (ip_mrouter) {
+		if (ipmforwarding && ip_mrouter) {
 			/*
 			 * If we are acting as a multicast router, all
 			 * incoming multicast packets are passed to the

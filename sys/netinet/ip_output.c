@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.172 2005/06/10 15:53:07 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.173 2005/10/05 17:32:22 norby Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
 extern int ipsec_ipcomp_default_level;
 extern int ipforwarding;
+extern int ipmforwarding;
 #endif /* IPSEC */
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
@@ -501,7 +502,8 @@ ip_output(struct mbuf *m0, ...)
 			 */
 			extern struct socket *ip_mrouter;
 
-			if (ip_mrouter && (flags & IP_FORWARDING) == 0) {
+			if (ipmforwarding && ip_mrouter &&
+			    (flags & IP_FORWARDING) == 0) {
 				if (ip_mforward(m, ifp) != 0) {
 					m_freem(m);
 					goto done;
@@ -1509,7 +1511,7 @@ ip_ctloutput(op, so, level, optname, mp)
 						 error = ENOBUFS;
 						 break;
 					 }
-						 
+
 				}
 				m->m_len = len;
 				*mtod(m, u_int16_t *) = ipr->ref_type;
