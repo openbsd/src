@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.5 2005/10/05 00:44:19 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.6 2005/10/05 11:52:16 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -55,6 +55,7 @@ checkout_main(int argc, char **argv)
 
 	lock = 0;
 	rev = RCS_HEAD_REV;
+	frev = NULL;
 
 	if ((username = getlogin()) == NULL) {
 		cvs_log(LP_ERR, "failed to get username");
@@ -162,8 +163,12 @@ checkout_main(int argc, char **argv)
 
 		rcs_close(file);
 		if (verbose) {
-			printf("revision %s (%s)\n", buf, (lock == LOCK_LOCK) ?
-			    "locked" : "unlocked");
+			printf("revision %s ", buf);
+			if (lock == LOCK_LOCK)
+				printf("(locked)");
+			else if (lock == LOCK_UNLOCK)
+				printf("(unlocked)");
+			printf("\n");
 			printf("done\n");
 		}
 	}
