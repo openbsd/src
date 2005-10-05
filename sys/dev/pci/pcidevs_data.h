@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.931 2005/10/05 21:23:24 tdeval Exp 
+ *	OpenBSD: pcidevs,v 1.932 2005/10/05 21:28:20 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6379,6 +6379,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce3 USB",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MODEM,
+	    "nForce3 Modem",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_ACA,
 	    "nForce3 AC97",
 	},
@@ -8133,6 +8137,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515SC,
 	    "PCI6515 CardBus (Smart Card mode)",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1620,
+	    "PCI1620 Misc",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
