@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.930 2005/10/05 19:43:53 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.931 2005/10/05 21:23:24 tdeval Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2718,6 +2718,11 @@
 #define	PCI_PRODUCT_TI_PCI4520_FW	0x802A		/* PCI4520 FireWire */
 #define	PCI_PRODUCT_TI_PCI7410_FW	0x802b		/* PCI7(4-6)10 FireWire */
 #define	PCI_PRODUCT_TI_PCI7420_FW	0x802e		/* PCI7x20 FireWire */
+#define	PCI_PRODUCT_TI_PCI7XX1	0x8031		/* PCI7XX1 CardBus */
+#define	PCI_PRODUCT_TI_PCI7XX1_FW	0x8032		/* PCI7XX1 FireWire */
+#define	PCI_PRODUCT_TI_PCI7XX1_FLASH	0x8033		/* PCI7XX1 Flash */
+#define	PCI_PRODUCT_TI_PCI7XX1_SD	0x8034		/* PCI7XX1 Secure Data */
+#define	PCI_PRODUCT_TI_PCI7XX1_SM	0x8035		/* PCI7XX1 Smart Card */
 #define	PCI_PRODUCT_TI_PCI6515	0x8036		/* PCI6515 CardBus */
 #define	PCI_PRODUCT_TI_PCI6515SC	0x8038		/* PCI6515 CardBus (Smart Card mode) */
 #define	PCI_PRODUCT_TI_ACX100A	0x8400		/* ACX100A */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.930 2005/10/05 19:43:53 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.931 2005/10/05 21:23:24 tdeval Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8105,6 +8105,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420_FW,
 	    "PCI7x20 FireWire",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7XX1,
+	    "PCI7XX1 CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7XX1_FW,
+	    "PCI7XX1 FireWire",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7XX1_FLASH,
+	    "PCI7XX1 Flash",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7XX1_SD,
+	    "PCI7XX1 Secure Data",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7XX1_SM,
+	    "PCI7XX1 Smart Card",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515,
