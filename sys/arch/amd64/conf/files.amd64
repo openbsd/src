@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.13 2005/10/02 22:53:42 deraadt Exp $
+#	$OpenBSD: files.amd64,v 1.14 2005/10/05 21:48:34 tdeval Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -97,6 +97,22 @@ include	"dev/puc/files.puc"
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/amd64/pci/pchb.c			pchb
+
+#
+# CARDBUS
+#
+include	"dev/cardbus/files.cardbus"
+file	arch/amd64/amd64/rbus_machdep.c		cardbus
+
+# PCIC pcmcia controller
+device	pcic: pcmciabus
+file	dev/ic/i82365.c				pcic
+
+# PCIC pcmcia controller on PCI bus.
+attach	pcic at pci with pcic_pci
+file	dev/pci/i82365_pci.c			pcic_pci
+
+include	"dev/pcmcia/files.pcmcia"
 
 # PCI-ISA bridges
 device	pcib: isabus
