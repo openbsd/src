@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.61 2005/10/03 21:01:37 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.62 2005/10/05 21:50:53 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -69,8 +69,7 @@ dlopen(const char *libname, int flags)
 
 	_dl_loading_object = object;
 
-	if (object->opencount == 0)
-		_dl_link_dlopen(object);
+	_dl_link_dlopen(object);
 
 	if (++object->refcount > 1)
 		goto loaded;
@@ -147,9 +146,6 @@ dlopen(const char *libname, int flags)
 	}
 
 loaded:
-	if (failed == 0)
-		object->opencount++;
-
 	_dl_loading_object = NULL;
 
 	if (_dl_debug_map->r_brk) {
