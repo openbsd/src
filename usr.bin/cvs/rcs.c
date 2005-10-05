@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.78 2005/10/05 17:34:59 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.79 2005/10/05 23:11:07 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "diff.h"
 #include "log.h"
 #include "rcs.h"
 #include "strtab.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.55 2005/08/14 19:49:18 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.56 2005/10/05 23:11:06 niallo Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -143,36 +143,9 @@
 
 #include "buf.h"
 #include "cvs.h"
+#include "diff.h"
 #include "log.h"
 #include "proto.h"
-
-
-#define CVS_DIFF_DEFCTX	3	/* default context length */
-
-
-/*
- * Output format options
- */
-#define	D_NORMAL	0	/* Normal output */
-#define	D_CONTEXT	1	/* Diff with context */
-#define	D_UNIFIED	2	/* Unified context diff */
-#define	D_IFDEF		3	/* Diff with merged #ifdef's */
-#define	D_BRIEF		4	/* Say if the files differ */
-#define	D_RCSDIFF	5       /* Reverse editor output: RCS format */
-
-/*
- * Status values for print_status() and diffreg() return values
- */
-#define	D_SAME		0	/* Files are the same */
-#define	D_DIFFER	1	/* Files are different */
-#define	D_BINARY	2	/* Binary files are different */
-#define	D_COMMON	3	/* Subdirectory common to both dirs */
-#define	D_ONLY		4	/* Only exists in one directory */
-#define	D_MISMATCH1	5	/* path1 was a dir, path2 a file */
-#define	D_MISMATCH2	6	/* path1 was a file, path2 a dir */
-#define	D_ERROR		7	/* An error occurred */
-#define	D_SKIPPED1	8	/* path1 was a special file */
-#define	D_SKIPPED2	9	/* path2 was a special file */
 
 struct cand {
 	int	x;
@@ -204,13 +177,13 @@ struct diff_arg {
 	char	*date2;
 };
 
-
-static int	cvs_diff_init(struct cvs_cmd *, int, char **, int *);
+#if !defined(RCSPROG)
+static int     cvs_diff_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_diff_remote(CVSFILE *, void *);
 static int	cvs_diff_local(CVSFILE *, void *);
 static int	cvs_diff_pre_exec(struct cvsroot *);
 static int	cvs_diff_cleanup(void);
-int		cvs_diffreg(const char *, const char *);
+#endif
 
 static void	 output(const char *, FILE *, const char *, FILE *);
 static void	 check(FILE *, FILE *);
@@ -240,11 +213,15 @@ static char	*match_function(const long *, int, FILE *);
 static char	*preadline(int, size_t, off_t);
 
 
-static int aflag, bflag, dflag, iflag, Nflag, pflag, tflag, Tflag, wflag;
+#if !defined(RCSPROG)
+static int Nflag;
+static char diffargs[128];
+#endif
+static int aflag, bflag, dflag, iflag, pflag, tflag, Tflag, wflag;
 static int context;
 static int format = D_NORMAL;
 static struct stat stb1, stb2;
-static char *ifdefname, *ignore_pats, diffargs[128];
+static char *ifdefname, *ignore_pats;
 static const char *diff_file;
 regex_t ignore_re;
 
@@ -272,8 +249,6 @@ static struct context_vec *context_vec_ptr;
 static char lastbuf[FUNCTION_CONTEXT_SIZE];
 static int  lastline;
 static int  lastmatchline;
-
-
 /*
  * chrtran points to one of 2 translation tables: cup2low if folding upper to
  * lower case clow2low if not folding case
@@ -332,7 +307,7 @@ u_char cup2low[256] = {
 	0xfd, 0xfe, 0xff
 };
 
-
+#if !defined(RCSPROG)
 struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_REQ_DIFF, "diff",
 	{ "di", "dif" },
@@ -369,7 +344,9 @@ struct cvs_cmd cvs_cmd_rdiff = {
 	cvs_diff_cleanup,
 	CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR
 };
+#endif
 
+#if !defined(RCSPROG)
 static struct diff_arg *dap = NULL;
 static int recurse;
 
@@ -698,6 +675,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 
 	return (0);
 }
+#endif
 
 
 int
