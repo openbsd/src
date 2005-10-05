@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.76 2005/10/04 23:02:56 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.77 2005/10/05 11:38:02 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -422,6 +422,7 @@ rcs_close(RCSFILE *rfp)
 		rlp = TAILQ_FIRST(&(rfp->rf_locks));
 		TAILQ_REMOVE(&(rfp->rf_locks), rlp, rl_list);
 		rcsnum_free(rlp->rl_num);
+		cvs_strfree(rlp->rl_name);
 		free(rlp);
 	}
 
