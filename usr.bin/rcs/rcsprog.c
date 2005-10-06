@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.19 2005/10/06 01:26:12 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.20 2005/10/06 02:00:05 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -54,7 +54,7 @@ struct rcs_prog {
 	{ "rcs",	rcs_main,	rcs_usage	},
 	{ "ci",		checkin_main,	checkin_usage   },
 	{ "co",		checkout_main,	checkout_usage  },
-	{ "rcsclean",	NULL,		NULL		},
+	{ "rcsclean",	rcsclean_main,	rcsclean_usage	},
 	{ "rcsdiff",	rcsdiff_main,	rcsdiff_usage	},
 	{ "ident",	NULL,		NULL		},
 };
@@ -80,12 +80,13 @@ rcs_statfile(char *fname, char *out, size_t len)
 	}
 
 	if (stat(fpath, &st) == -1) {
-		cvs_log(LP_ERRNO, "%s", fpath);
+		if (strcmp(__progname, "rcsclean"))
+			cvs_log(LP_ERRNO, "%s", fpath);
 		return (-1);
 	}
 
 	strlcpy(out, fpath, len);
-	if (verbose == 1) {
+	if (verbose == 1 && strcmp(__progname, "rcsclean")) {
 		if (!strcmp(__progname, "co")) {
 			printf("%s --> ", fpath);
 			if ((s = strrchr(filev, ',')) != NULL) {
