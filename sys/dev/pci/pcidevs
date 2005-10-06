@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.934 2005/10/06 03:19:36 brad Exp $
+$OpenBSD: pcidevs,v 1.935 2005/10/06 15:39:34 fgsch Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2722,6 +2722,7 @@ product TI PCI7XX1_SD		0x8034	PCI7XX1 Secure Data
 product TI PCI7XX1_SM		0x8035	PCI7XX1 Smart Card
 product TI PCI6515		0x8036	PCI6515 CardBus
 product TI PCI6515SC		0x8038	PCI6515 CardBus (Smart Card mode)
+product TI PCI1620_MISC		0x8201	PCI1620 Misc
 product TI ACX100A		0x8400	ACX100A
 product TI ACX100B		0x8401	ACX100B
 product TI ACX111		0x9066	ACX111
