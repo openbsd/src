@@ -1,0 +1,53 @@
+.\"	$OpenBSD: ident.1,v 1.1 2005/10/06 16:16:45 xsa Exp $
+.\"
+.\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd October 06, 2005
+.Dt IDENT 1
+.Os
+.Sh NAME
+.Nm ident
+.Nd identify RCS keyword strings in files
+.Sh SYNOPSIS
+.Nm
+.Op Fl qV
+.Op Ar file ...
+.Sh DESCRIPTION
+The
+.Nm
+program searches for the pattern $keyword:...$ from the
+.Ar file
+specified as argument.
+See the
+.Sx KEYWORD SUBSTITUTION
+section of
+.Xr cvs 1
+for more information.
+.Pp
+The following options are supported:
+.Bl -tag -width "XXX"
+.It Fl q
+Quiet mode, suppress warnings if no pattern found.
+.It Fl V
+Display version information and exit.
+.El
+.Sh SEE ALSO
+.Xr ci 1 ,
+.Xr co 1 ,
+.Xr cvs 1 ,
+.Xr rcs 1 ,
+.Xr rcsclean 1 ,
+.Xr rcsdiff 1 ,
+.Xr rlog 1
