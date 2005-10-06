@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.20 2004/12/30 17:29:55 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.21 2005/10/06 23:04:28 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -211,8 +211,8 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 			LIST_FOREACH(list_scb, &ahd->pending_scbs,
 			    pending_links) {
 				if (!(list_scb->xs->flags & SCSI_POLL))
-					aic_scb_timer_reset(scb,
-					    aic_get_timeout(scb));
+					aic_scb_timer_reset(list_scb,
+					    aic_get_timeout(list_scb));
 			}
 
 			ahd_print_path(ahd, scb);
