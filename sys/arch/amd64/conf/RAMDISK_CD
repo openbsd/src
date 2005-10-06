@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.41 2005/10/02 17:08:14 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.42 2005/10/06 15:34:00 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -48,10 +48,10 @@ pci*	at pchb?
 #pcib*	at pci?			# PCI-ISA bridge
 
 # CardBus bus support
-#cardbus*	at cardslot?
-#pcmcia*		at cardslot?
-#cbb*		at pci?
-#cardslot*	at cbb?
+cbb*		at pci?
+cardslot*	at cbb?
+cardbus*	at cardslot?
+pcmcia*		at cardslot?
 
 # PCI PCMCIA controllers
 #pcic*	at pci?
@@ -61,10 +61,10 @@ pci*	at pchb?
 
 # USB Controllers
 ehci*	at pci?			# Enhanced Host Controller
-#ehci*	at cardbus?		# Enhanced Host Controller
+ehci*	at cardbus?		# Enhanced Host Controller
 uhci*	at pci?			# Universal Host Controller (Intel)
 ohci*	at pci?			# Open Host Controller
-#ohci*	at cardbus?		# Open Host Controller
+ohci*	at cardbus?		# Open Host Controller
 
 # USB bus support
 usb*	at ehci?
@@ -192,35 +192,37 @@ cd*	at scsibus?		# SCSI CD-ROM drives
 # IDE controllers
 pciide* at pci? flags 0x0000
 
-#wdc*	at pcmcia?
+wdc*	at pcmcia?
 
 # IDE hard drives
-#wd*	at wdc? flags 0x0000
+wd*	at wdc? flags 0x0000
 wd*	at pciide? flags 0x0000
 
 # ATAPI<->SCSI
-#atapiscsi* at wdc?
+atapiscsi* at wdc?
 atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
 #le*	at pci?			# PCnet-PCI based ethernet
 #de*	at pci?			# DC21X4X-based ethernet
 fxp*	at pci?			# EtherExpress 10/100B ethernet
-#fxp*	at cardbus?		# Intel PRO/100 ethernet
+fxp*	at cardbus?		# Intel PRO/100 ethernet
 ep*	at pci?			# 3C59x ethernet
-#ne*	at pci?			# NE2000-compat ethernet
-#ne*	at pcmcia?		# PCMCIA based NE2000 ethernet
-#ep*	at pcmcia?		# PCMCIA based 3C5xx ethernet
-#sm*	at pcmcia?		# PCMCIA based sm ethernet
-#xe*	at pcmcia?		# Xircom ethernet
+ne*	at pci?			# NE2000-compat ethernet
+ne*	at pcmcia?		# PCMCIA based NE2000 ethernet
+ep*	at pcmcia?		# PCMCIA based 3C5xx ethernet
+sm*	at pcmcia?		# PCMCIA based sm ethernet
+xe*	at pcmcia?		# Xircom ethernet
 #fpa*	at pci?			# DEC DEFPA FDDI
 xl*	at pci?			# 3C9xx ethernet
-#xl*	at cardbus?		# 3C575 ethernet
+xl*	at cardbus?		# 3C575 ethernet
 rl*	at pci?			# RealTek 81[23]9 ethernet
+rl*	at cardbus?		# RealTek 81[23]9 ethernet
 epic*	at pci?			# SMC EPIC/100 ethernet
 #tl*	at pci?			# Compaq Thunderlan ethernet
 vr*	at pci?			# VIA Rhine ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
+dc*	at cardbus?		# 21143, "tulip" clone ethernet
 sis*	at pci?			# SiS 900/7016 ethernet
 #wb*	at pci?			# Winbond W89C840F ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
@@ -232,6 +234,7 @@ em*	at pci?			# Intel Pro/1000 ethernet
 #sf*	at pci?			# Adaptec AIC-6915 ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 re*	at pci?			# Realtek 8169/8169S/8110S
+re*	at cardbus?		# Realtek 8169/8169S/8110S
 stge*	at pci?			# Sundance TC9021 GigE
 #lge*	at pci?			# Level1 LXT1001 GigE
 #mtd*	at pci?			# Myson MTD803
@@ -239,12 +242,19 @@ hme*	at pci?			# Sun Happy Meal
 vge*	at pci?			# VIA VT612x
 
 # Wireless network cards
-#wi*	at pci?			# WaveLAN IEEE 802.11DS
-#wi*	at pcmcia?		# WaveLAN IEEE 802.11DS
+ath*	at pci?			# Atheros AR5k (802.11a/b/g)
+ath*	at cardbus?		# Atheros AR5k (802.11a/b/g)
+atw*	at pci?			# ADMtek ADM8211 (802.11)
+atw*	at cardbus?		# ADMtek ADM8211 (802.11)
+wi*	at pci?			# WaveLAN IEEE 802.11DS
+wi*	at pcmcia?		# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia?		# Bay Networks IEEE 802.11FH
-#an*	at pcmcia?		# Aironet IEEE 802.11DS
+an*	at pcmcia?		# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?		# Xircom Netwave
 #ray*	at pcmcia?		# Raylink Aviator2.4/Pro 802.11FH
+ral*	at cardbus?		# Ralink RT2500
+rtw*	at pci?			# Realtek 8180
+rtw*	at cardbus?		# Realtek 8180
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?			# 3Com internal PHYs
