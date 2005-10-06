@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.1 2005/10/06 02:00:05 joris Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.2 2005/10/06 02:12:53 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -51,10 +51,16 @@ rcsclean_main(int argc, char **argv)
 
 	rev = RCS_HEAD_REV;
 
-	while ((ch = getopt(argc, argv, "qV")) != -1) {
+	while ((ch = getopt(argc, argv, "qr:V")) != -1) {
 		switch (ch) {
 		case 'q':
 			verbose = 0;
+			break;
+		case 'r':
+			if ((rev = rcsnum_parse(optarg)) == NULL) {
+				cvs_log(LP_ERR, "bad revision number");
+				exit(1);
+			}
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -92,7 +98,7 @@ rcsclean_main(int argc, char **argv)
 void
 rcsclean_usage(void)
 {
-	fprintf(stderr, "usage %s [file] ...\n", __progname);
+	fprintf(stderr, "usage %s [-qV] [-r rev] [file] ...\n", __progname);
 }
 
 static int
