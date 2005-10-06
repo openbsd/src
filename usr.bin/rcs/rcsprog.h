@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.6 2005/10/06 02:00:05 joris Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.7 2005/10/06 12:56:49 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,6 +36,7 @@ void	checkout_usage(void);
 void	checkin_usage(void);
 void	rcsdiff_usage(void);
 void	rcsclean_usage(void);
+void	rlog_usage(void);
 void	(*usage)(void);
 
 int	rcs_statfile(char *, char *, size_t);
@@ -44,5 +45,6 @@ int	checkin_main(int, char **);
 int	rcs_main(int, char **);
 int	rcsdiff_main(int, char **);
 int	rcsclean_main(int, char **);
+int	rlog_main(int, char **);
 
 #endif	/* RCSPROG_H */
