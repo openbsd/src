@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.63 2005/10/06 21:53:09 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.64 2005/10/06 22:01:58 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -86,18 +86,8 @@ dlopen(const char *libname, int flags)
 	n->data = object;
 	TAILQ_INSERT_TAIL(&object->dload_list, n, next_sib);
 
-
-	/*
-	 * Check for 'needed' objects. For each 'needed' object we
-	 * create a 'shadow' object and add it to a list attached to
-	 * the object so we know our dependencies. This list should
-	 * also be used to determine the library search order when
-	 * resolving undefined symbols. This is not yet done. XXX
-	 */
 	dynobj = object;
 	while (dynobj) {
-		elf_object_t *tmpobj = dynobj;
-
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			elf_object_t *depobj;
 
@@ -116,10 +106,6 @@ dlopen(const char *libname, int flags)
 			/* this add_object should not be here, XXX */
 			_dl_add_object(depobj);
 			_dl_link_sub(depobj, dynobj);
-
-			tmpobj->dep_next = _dl_malloc(sizeof(elf_object_t));
-			tmpobj->dep_next->next = depobj;
-			tmpobj = tmpobj->dep_next;
 		}
 		dynobj = dynobj->next;
 	}

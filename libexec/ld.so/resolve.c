@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.39 2005/10/06 21:53:10 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.40 2005/10/06 22:01:58 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -215,19 +215,12 @@ _dl_cleanup_objects()
 void
 _dl_remove_object(elf_object_t *object)
 {
-	elf_object_t *depobj;
-
 	object->prev->next = object->next;
 	if (object->next)
 		object->next->prev = object->prev;
 
 	if (_dl_last_object == object)
 		_dl_last_object = object->prev;
-
-	while ((depobj = object->dep_next)) {
-		object->dep_next = object->dep_next->dep_next;
-		_dl_free(depobj);
-	}
 
 	object->next = free_objects;
 	free_objects = object;
