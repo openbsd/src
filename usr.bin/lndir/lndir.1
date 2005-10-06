@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.20 2005/10/04 19:30:00 jmc Exp $
+.\" $OpenBSD: lndir.1,v 1.21 2005/10/06 15:28:32 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -87,7 +87,8 @@ files.
 .Pp
 This scheme has the advantage that if you update the source, you need not
 propagate the change to the other architectures by hand, since all
-source in all shadow directories are symlinks to the real thing: just cd
+source in all shadow directories are symlinks to the real thing: just
+.Xr cd 1
 to the shadow directory and recompile away.
 .Pp
 The
@@ -95,18 +96,11 @@ The
 argument is optional and defaults to the current directory.
 The
 .Ar fromdir
-argument may be relative (e.g.,
-.Pa \&.\&./src )
+argument may be relative (e.g.\&
+.Pa ../src )
 and is relative to
 .Ar todir
 (not the current directory).
-.Pp
-.\" CVS.adm is used by the Concurrent Versions System.
-Note that files whose names end in '~' or start with '.#' and
-RCS, SCCS, CVS and CVS.adm directories are not shadowed, in
-addition to any specified on the command line with
-.Fl e
-arguments.
 .Pp
 If you add files, simply run
 .Nm
@@ -118,6 +112,27 @@ checked that they have the correct link.
 Deleting files is a more painful problem; the symlinks will
 just point into never never land.
 .Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl e Ar exceptfile
+Add the specified file to the list of excluded files/directories.
+This is effective in all directories searched by
+.Nm .
+This option may be specified as many times as needed.
+.Pp
+The following types of files are excluded by default:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+files whose names end in
+.Sq ~
+.It
+files whose names start with
+.Sq .#
+.It
+RCS, SCCS, CVS, and CVS.adm directories
+.El
+.It Fl i
 If a file in
 .Ar fromdir
 is a symbolic link,
@@ -128,17 +143,8 @@ rather than making a link back to the (symbolic link) entry in
 .Ar fromdir .
 The
 .Fl i
-flag changes this behavior.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl e Ar exceptfile
-Add the specified file to the list of excluded files/directories.
-This is effective in all directories searched by
-.Nm lndir .
-This option may be specified as many times as needed.
-.It Fl i
-Causes the program to not treat symbolic links in
+flag changes that behavior,
+i.e. it causes the program to not treat symbolic links in
 .Ar fromdir
 specially.
 The link created in
@@ -187,15 +193,15 @@ You should never run
 .Xr patch 1
 from a shadow directory anyway.
 .Pp
-You need to use something like
-.Bd -unfilled -offset indent
-$ find todir \|\-type l \|\-print \||\| xargs rm
+To clear out all files before you can relink
+(if
+.Ar fromdir
+moved, for instance):
+.Bd -literal -offset indent
+$ find todir -type l -print0 | xargs -0 -r rm
 .Ed
 .Pp
-to clear out all files before you can relink (if fromdir moved, for instance).
-Something like
-.Bd -unfilled -offset indent
-$ find . \|\\! \|\-type d \|\-print
+Find all files that are not directories:
+.Bd -literal -offset indent
+$ find . ! -type d -print0
 .Ed
-.Pp
-will find all files that are not directories.
