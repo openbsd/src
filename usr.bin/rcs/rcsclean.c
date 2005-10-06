@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.2 2005/10/06 02:12:53 joris Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.3 2005/10/06 11:46:03 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -40,6 +40,8 @@
 
 extern char *__progname;
 static int rcsclean_file(char *, RCSNUM *);
+static int nflag = 0;
+static int kflag = RCS_KWEXP_ERR;
 
 int
 rcsclean_main(int argc, char **argv)
@@ -51,8 +53,20 @@ rcsclean_main(int argc, char **argv)
 
 	rev = RCS_HEAD_REV;
 
-	while ((ch = getopt(argc, argv, "qr:V")) != -1) {
+	while ((ch = getopt(argc, argv, "k:nqr:V")) != -1) {
 		switch (ch) {
+		case 'k':
+			kflag = rcs_kflag_get(optarg);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expansion mode");
+				(usage)();
+				exit(1);
+			}
+			break;
+		case 'n':
+			nflag = 1;
+			break;
 		case 'q':
 			verbose = 0;
 			break;
@@ -110,13 +124,21 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	RCSNUM *frev;
 	BUF *b1, *b2;
 	char *s1, *s2, *c1, *c2;
+	struct stat st;
 
 	match = 1;
+
+	if (stat(fname, &st) == -1)
+		return (-1);
+
 	if (rcs_statfile(fname, fpath, sizeof(fpath)) < 0)
 		return (-1);
 
 	if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
 		return (-1);
+
+	if (!RCS_KWEXP_INVAL(kflag))
+		rcs_kwexp_set(file, kflag);
 
 	if (rev == RCS_HEAD_REV)
 		frev = file->rf_head;
@@ -154,7 +176,8 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	if (match) {
 		if (verbose)
 			printf("rm -f %s\n", fname);
-		(void)unlink(fname);
+		if (nflag == 0)
+			(void)unlink(fname);
 	}
 
 	rcs_close(file);
