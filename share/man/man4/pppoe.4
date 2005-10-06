@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.6 2004/12/29 10:39:54 jmc Exp $
+.\"	$OpenBSD: pppoe.4,v 1.7 2005/10/06 15:30:50 jmc Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -258,3 +258,8 @@ to
 .Xr ifconfig 8 .
 If the netmask is unspecified, it will be set to 8 when 0.0.0.0 is
 configured to the interface, and it will persist after negotiation.
+.Pp
+The presence of a
+.Xr mygate 5
+file will interfere with the routing table.
+Make sure this file is either empty or does not exist.
