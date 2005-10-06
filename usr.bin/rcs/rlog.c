@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.1 2005/10/06 12:56:49 joris Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.2 2005/10/06 13:36:53 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -110,7 +110,7 @@ rlog_main(int argc, char **argv)
 void
 rlog_usage(void)
 {
-	fprintf(stderr, "usage %s [-qV] file ...\n", __progname);
+	fprintf(stderr, "usage %s [-hNqRtV] file ...\n", __progname);
 }
 
 static int
