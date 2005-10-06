@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.13 2005/08/08 14:59:41 xsa Exp $
+#	$OpenBSD: Makefile,v 1.14 2005/10/06 16:36:09 mickey Exp $
 
 PROG=	cvs
 MAN=	cvs.1 cvsignore.5 cvsrc.5 cvswrappers.5 cvsintro.7
+CPPFLAGS+=-I${.CURDIR}
 
 SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c date.y \
 	diff.c edit.c entries.c file.c getlog.c history.c hist.c \
@@ -9,11 +10,8 @@ SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c date.y \
 	remove.c req.c resp.c root.c server.c status.c strtab.c tag.c \
 	update.c util.c version.c watch.c
 
-BINDIR= /usr/bin
-BINOWN=	root
-
 CFLAGS= -g -ggdb
-CFLAGS+= -I${.CURDIR} -Wall
+CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
