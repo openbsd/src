@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.27 2005/04/03 01:35:06 uwe Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.28 2005/10/06 20:14:55 brad Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -1635,7 +1635,6 @@ done:
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
-	/* XXX doesn't appear to be included m->m_flags |= M_HASFCS; */
 	ifp->if_ipackets++;
 
 	ether_input_mbuf(ifp, m);
