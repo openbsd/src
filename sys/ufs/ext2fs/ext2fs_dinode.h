@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.9 2005/10/06 17:43:14 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_dinode.h,v 1.10 2005/10/06 17:51:27 pedro Exp $	*/
 /*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ struct ext2fs_dinode {
 	u_int16_t	e2di_mode;	/*   0: IFMT, permissions; see below. */
 	u_int16_t	e2di_uid_low;	/*   2: Owner UID, lowest bits */
 	u_int32_t	e2di_size;	/*	 4: Size (in bytes) */
-	u_int32_t	e2di_atime;	/*	 8: Acces time */
+	u_int32_t	e2di_atime;	/*	 8: Access time */
 	u_int32_t	e2di_ctime;	/*	12: Create time */
 	u_int32_t	e2di_mtime;	/*	16: Modification time */
 	u_int32_t	e2di_dtime;	/*	20: Deletion time */
