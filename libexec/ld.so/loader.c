@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.92 2005/10/03 19:48:24 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.93 2005/10/06 21:53:10 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -78,8 +78,7 @@ _dl_debug_state(void)
 }
 
 /*
- * Run dtors for the current object, then notify all of the DT_NEEDED
- * libraries that it can be unloaded (or ref count lowered).
+ * Run dtors for all objects that are eligible.
  */
 
 void
@@ -97,7 +96,8 @@ _dl_run_all_dtors()
 		    node != NULL;
 		    node = node->next) {
 			if ((node->dyn.fini) &&
-			    (node->refcount == 0) &&
+			    (node->refcount + node->opencount +
+			     node->grprefcount == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0)) {
 				node->status |= STAT_FINI_READY;
@@ -107,7 +107,8 @@ _dl_run_all_dtors()
 		    node != NULL;
 		    node = node->next ) {
 			if ((node->dyn.fini) &&
-			    (node->refcount == 0) &&
+			    (node->refcount + node->opencount +
+			     node->grprefcount == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0))
 				TAILQ_FOREACH(dnode, &node->child_list,
@@ -133,18 +134,6 @@ _dl_run_all_dtors()
 	}
 }
 
-void
-_dl_run_dtors(elf_object_t *object)
-{
-	struct dep_node *n;
-
-	TAILQ_FOREACH(n, &object->child_list, next_sib)
-		_dl_notify_unload_shlib(n->data);
-
-	_dl_run_all_dtors();
-
-}
-
 /*
  * Routine to walk through all of the objects except the first
  * (main executable).
@@ -166,7 +155,11 @@ _dl_dtors(void)
 	 * but we want to run dtors on all it's children);
 	 */
 	_dl_objects->status |= STAT_FINI_DONE;
-	_dl_run_dtors(_dl_objects);
+
+	_dl_objects->opencount--;
+	_dl_notify_unload_shlib(_dl_objects);
+
+	_dl_run_all_dtors();
 }
 
 void
@@ -322,6 +315,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	exe_obj->obj_flags = RTLD_GLOBAL;
 	exe_obj->load_object = exe_obj;
 	TAILQ_INIT(&exe_obj->dload_list);
+	TAILQ_INIT(&exe_obj->grpref_list);
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -334,7 +328,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_exit(9);
 	n->data = exe_obj;
 	TAILQ_INSERT_TAIL(&exe_obj->dload_list, n, next_sib);
-	exe_obj->refcount++;
+	exe_obj->opencount++;
 
 	if (_dl_preload != NULL)
 		_dl_dopreload(_dl_preload);

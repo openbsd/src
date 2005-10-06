@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.28 2005/10/03 19:48:24 kurt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.29 2005/10/06 21:53:10 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -64,9 +64,12 @@ _dl_unload_shlib(elf_object_t *object)
 {
 	struct dep_node *n;
 	DL_DEB(("unload_shlib called on %s\n", object->load_name));
-	if (object->refcount == 0 && (object->status & STAT_UNLOADED) == 0) {
+	if (object->refcount + object->opencount + object->grprefcount == 0 &&
+	    (object->status & STAT_UNLOADED) == 0) {
 		object->status |= STAT_UNLOADED;
 		TAILQ_FOREACH(n, &object->child_list, next_sib)
+			_dl_unload_shlib(n->data);
+		TAILQ_FOREACH(n, &object->grpref_list, next_sib)
 			_dl_unload_shlib(n->data);
 		DL_DEB(("unload_shlib unloading on %s\n", object->load_name));
 		_dl_load_list_free(object->load_list);
@@ -96,12 +99,11 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	object = _dl_lookup_object(libname);
 	if (object) {
 		object->load_object->obj_flags |= flags & RTLD_GLOBAL;
-		if (object->load_object != object &&
-		    object->load_object != _dl_objects &&
+		if (_dl_loading_object == NULL)
+			_dl_loading_object = object;
+		if (object->load_object != _dl_objects &&
 		    object->load_object != _dl_loading_object) {
-			if (_dl_loading_object == NULL)
-				_dl_loading_object = object;
-			_dl_link_sub(object->load_object, _dl_loading_object);
+			_dl_link_grpref(object->load_object, _dl_loading_object);
 		}
 		return(object);		/* Already loaded */
 	}
@@ -122,12 +124,11 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 		    object->inode == sb.st_ino) {
 			object->load_object->obj_flags |= flags & RTLD_GLOBAL;
 			_dl_close(libfile);
-			if (object->load_object != object &&
-			    object->load_object != _dl_objects &&
+			if (_dl_loading_object == NULL)
+				_dl_loading_object = object;
+			if (object->load_object != _dl_objects &&
 			    object->load_object != _dl_loading_object) {
-				if (_dl_loading_object == NULL)
-					_dl_loading_object = object;
-				_dl_link_sub(object->load_object,
+				_dl_link_grpref(object->load_object,
 				    _dl_loading_object);
 			}
 			return(object);

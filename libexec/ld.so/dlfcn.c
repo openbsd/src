@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.62 2005/10/05 21:50:53 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.63 2005/10/06 21:53:09 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -71,7 +71,7 @@ dlopen(const char *libname, int flags)
 
 	_dl_link_dlopen(object);
 
-	if (++object->refcount > 1)
+	if (object->refcount + object->opencount + object->grprefcount > 1)
 		goto loaded;
 
 	/* this add_object should not be here, XXX */
@@ -288,9 +288,9 @@ _dl_real_close(void *handle)
 		return (1);
 	}
 
+	object->opencount--;
 	_dl_notify_unload_shlib(object);
 	_dl_run_all_dtors();
-	object->opencount--;
 	_dl_unload_shlib(object);
 	_dl_cleanup_objects();
 	return (0);
@@ -368,7 +368,7 @@ _dl_show_objects(void)
 		pad = "        ";
 	else
 		pad = "";
-	_dl_fdprintf(outputfd, "\tStart   %s End     %s Type Ref Name\n",
+	_dl_fdprintf(outputfd, "\tStart   %s End     %s Type Open Ref GrpRef Name\n",
 	    pad, pad);
 
 	while (object) {
@@ -389,10 +389,11 @@ _dl_show_objects(void)
 			objtypename = "????";
 			break;
 		}
-		_dl_fdprintf(outputfd, "\t%lX %lX %s  %d  %s\n",
+		_dl_fdprintf(outputfd, "\t%lX %lX %s %d    %d   %d      %s\n",
 		    (void *)object->load_addr,
 		    (void *)(object->load_addr + object->load_size),
-		    objtypename, object->refcount, object->load_name);
+		    objtypename, object->opencount, object->refcount,
+		    object->grprefcount, object->load_name);
 		object = object->next;
 	}
 

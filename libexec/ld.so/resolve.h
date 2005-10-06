@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.43 2005/09/28 20:35:23 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.44 2005/10/06 21:53:10 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -111,7 +111,6 @@ struct elf_object {
 	Elf_Phdr	*phdrp;
 	int		phdrc;
 
-	int		refcount;
 	int		obj_type;
 #define	OBJTYPE_LDR	1
 #define	OBJTYPE_EXE	2
@@ -127,8 +126,11 @@ struct elf_object {
 
 	TAILQ_HEAD(,dep_node)	child_list;
 	TAILQ_HEAD(,dep_node)	dload_list;
+	TAILQ_HEAD(,dep_node)	grpref_list;	/* refs to other load groups */
 
-	int opencount;			/* # dlopen() */
+	int		refcount;	/* dep libs only */
+	int		opencount;	/* # dlopen() & exe */
+	int		grprefcount;	/* load group refs */
 
 	/* object that caused this module to be loaded, used in symbol lookup */
 	elf_object_t	*load_object;
@@ -195,13 +197,13 @@ Elf_Addr _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 int _dl_rtld(elf_object_t *object);
 void _dl_call_init(elf_object_t *object);
 void _dl_link_sub(elf_object_t *dep, elf_object_t *p);
+void _dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object);
 void _dl_link_dlopen(elf_object_t *dep);
 void _dl_unlink_dlopen(elf_object_t *dep);
 void _dl_notify_unload_shlib(elf_object_t *object);
 void _dl_unload_shlib(elf_object_t *object);
 void _dl_unload_dlopen(void);
 
-void _dl_run_dtors(elf_object_t *object);
 void _dl_run_all_dtors(void);
 
 Elf_Addr _dl_bind(elf_object_t *object, int index);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.38 2005/10/03 19:48:24 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.39 2005/10/06 21:53:10 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -153,16 +153,30 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 	}
 	DL_DEB(("obj %s has %s as head\n", object->load_name,
 	    _dl_loading_object->load_name ));
-	/* refcount handled in _dl_link_sub, _dl_boot & dlopen */
+	/* refcount handled in _dl_link_sub & _dl_boot */
 	object->refcount = 0;
 	TAILQ_INIT(&object->child_list);
-	object->opencount = 0;	/* # dlopen() */
+	object->opencount = 0;	/* # dlopen() & exe */
+	object->grprefcount = 0;
 	/* default dev, inode for dlopen-able objects. */
 	object->dev = 0;
 	object->inode = 0;
 	TAILQ_INIT(&object->dload_list);
+	TAILQ_INIT(&object->grpref_list);
 
 	return(object);
+}
+
+void
+_dl_tailq_free(struct dep_node *n)
+{
+	struct dep_node *next;
+
+	while (n != NULL) {
+		next = TAILQ_NEXT(n, next_sib);
+		_dl_free(n);
+		n = next;
+	}
 }
 
 elf_object_t *free_objects;
@@ -172,20 +186,26 @@ void
 _dl_cleanup_objects()
 {
 	elf_object_t *nobj, *head;
-	struct dep_node *n;
+	struct dep_node *n, *next;
 
-retry:
-	TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
-		if (n->data->refcount == 0) {
+	n = TAILQ_FIRST(&_dlopened_child_list);
+	while (n != NULL) {
+		next = TAILQ_NEXT(n, next_sib);
+		if (n->data->opencount + n->data->grprefcount == 0) {
 			TAILQ_REMOVE(&_dlopened_child_list, n, next_sib);
 			_dl_free(n);
-			goto retry;
 		}
+		n = next;
 	}
 
 	head = free_objects;
 	free_objects = NULL;
 	while (head != NULL) {
+		if (head->load_name)
+			_dl_free(head->load_name);
+		_dl_tailq_free(TAILQ_FIRST(&head->dload_list));
+		_dl_tailq_free(TAILQ_FIRST(&head->child_list));
+		_dl_tailq_free(TAILQ_FIRST(&head->grpref_list));
 		nobj = head->next;
 		_dl_free(head);
 		head = nobj;
@@ -204,15 +224,13 @@ _dl_remove_object(elf_object_t *object)
 	if (_dl_last_object == object)
 		_dl_last_object = object->prev;
 
-	if (object->load_name)
-		_dl_free(object->load_name);
-
 	while ((depobj = object->dep_next)) {
 		object->dep_next = object->dep_next->dep_next;
 		_dl_free(depobj);
 	}
+
 	object->next = free_objects;
-	free_objects = object->next;
+	free_objects = object;
 }
 
 

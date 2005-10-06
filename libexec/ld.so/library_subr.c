@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.16 2005/10/05 21:50:53 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.17 2005/10/06 21:53:10 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -356,16 +356,16 @@ _dl_notify_unload_shlib(elf_object_t *object)
 {
 	struct dep_node *n;
 
-	/*
-	 * if this is the last ref, then decrement refcount
-	 * on self and all dloaded deps, otherwise just decrement
-	 * self.
-         */
-	if (object->refcount == 1) {
-		TAILQ_FOREACH(n, &object->dload_list, next_sib)
+	if (object->opencount + object->grprefcount == 0) {
+		TAILQ_FOREACH(n, &object->dload_list, next_sib) {
+			if (n->data == object)
+				continue;
 			n->data->refcount--;
-	} else {
-		object->refcount--;
+		}
+		TAILQ_FOREACH(n, &object->grpref_list, next_sib) {
+			n->data->grprefcount--; 
+			_dl_notify_unload_shlib(n->data);
+		}
 	}
 }
 
@@ -384,6 +384,19 @@ _dl_unload_dlopen(void)
 			_dl_run_all_dtors();
 		}
 	}
+}
+
+void
+_dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object)
+{
+	struct dep_node *n;
+
+	n = _dl_malloc(sizeof *n);
+	if (n == NULL)
+		_dl_exit(7);
+	n->data = load_group;
+	TAILQ_INSERT_TAIL(&load_object->grpref_list, n, next_sib);
+	load_group->grprefcount++;
 }
 
 void
