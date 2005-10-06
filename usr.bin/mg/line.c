@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.23 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.24 2005/10/06 16:48:00 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -336,18 +336,17 @@ lnewline_at(LINE *lp1, int doto)
 	LINE	*lp2;
 	int	 nlen;
 	MGWIN	*wp;
+	int	 retval = TRUE;
 
 	lchange(WFHARD);
-
-	undo_add_boundary();
-	undo_add_insert(lp1, llength(lp1), 1);
-	undo_add_boundary();
 
 	/* avoid unnecessary copying */
 	if (doto == 0) {
 		/* new first part */
-		if ((lp2 = lalloc(0)) == NULL)
-			return (FALSE);
+		if ((lp2 = lalloc(0)) == NULL) {
+			retval = FALSE;
+			goto lnl_done;
+		}
 		lp2->l_bp = lp1->l_bp;
 		lp1->l_bp->l_fp = lp2;
 		lp2->l_fp = lp1;
@@ -355,15 +354,17 @@ lnewline_at(LINE *lp1, int doto)
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 			if (wp->w_linep == lp1)
 				wp->w_linep = lp2;
-		return (TRUE);
+		goto lnl_done;
 	}
 
 	/* length of new part */
 	nlen = llength(lp1) - doto;
 
 	/* new second half line */
-	if ((lp2 = lalloc(nlen)) == NULL)
-		return (FALSE);
+	if ((lp2 = lalloc(nlen)) == NULL) {
+		retval = FALSE;
+		goto lnl_done;
+	}
 	if (nlen != 0)
 		bcopy(&lp1->l_text[doto], &lp2->l_text[0], nlen);
 	lp1->l_used = doto;
@@ -382,7 +383,11 @@ lnewline_at(LINE *lp1, int doto)
 			wp->w_marko -= doto;
 		}
 	}
-	return (TRUE);
+lnl_done:
+	undo_add_boundary();
+	undo_add_insert(lp1, llength(lp1), 1);
+	undo_add_boundary();
+	return (retval);
 }
 
 /*
@@ -576,77 +581,23 @@ int
 lreplace(RSIZE plen, char *st, int f)
 {
 	RSIZE	rlen;	/* replacement length		 */
-	int	rtype;	/* capitalization		 */
-	int	c;	/* used for random characters	 */
-	int	doto;	/* offset into line		 */
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
-
-	undo_add_change(curwp->w_dotp, curwp->w_doto, plen);
-
-	/*
-	 * Find the capitalization of the word that was found.  f says use
-	 * exact case of replacement string (same thing that happens with
-	 * lowercase found), so bypass check.
-	 */
-	/* NOSTRICT */
+	undo_add_boundary();
+	undo_no_boundary(TRUE);
+	
 	(void)backchar(FFARG | FFRAND, (int)plen);
-	rtype = _MG_L;
-	c = lgetc(curwp->w_dotp, curwp->w_doto);
-	if (ISUPPER(c) != FALSE && f == FALSE) {
-		rtype = _MG_U | _MG_L;
-		if (curwp->w_doto + 1 < llength(curwp->w_dotp)) {
-			c = lgetc(curwp->w_dotp, curwp->w_doto + 1);
-			if (ISUPPER(c) != FALSE) {
-				rtype = _MG_U;
-			}
-		}
-	}
+	(void)ldelete(plen, KNONE);
 
-	/*
-	 * make the string lengths match (either pad the line
-	 * so that it will fit, or scrunch out the excess).
-	 * be careful with dot's offset.
-	 */
 	rlen = strlen(st);
-	doto = curwp->w_doto;
-	if (plen > rlen)
-		(void)ldelete((RSIZE) (plen - rlen), KNONE);
-	else if (plen < rlen) {
-		if (linsert((int)(rlen - plen), ' ') == FALSE)
-			return (FALSE);
-	}
-	curwp->w_doto = doto;
-
-	/*
-	 * do the replacement:	If was capital, then place first
-	 * char as if upper, and subsequent chars as if lower.
-	 * If inserting upper, check replacement for case.
-	 */
-	while ((c = CHARMASK(*st++)) != '\0') {
-		if ((rtype & _MG_U) != 0 && ISLOWER(c) != 0)
-			c = TOUPPER(c);
-		if (rtype == (_MG_U | _MG_L))
-			rtype = _MG_L;
-		if (c == CCHR('J')) {
-			if (curwp->w_doto == llength(curwp->w_dotp))
-				(void)forwchar(FFRAND, 1);
-			else {
-				if (ldelete((RSIZE) 1, KNONE) != FALSE)
-					(void)lnewline();
-			}
-		} else if (curwp->w_dotp == curbp->b_linep) {
-			(void)linsert(1, c);
-		} else if (curwp->w_doto == llength(curwp->w_dotp)) {
-			if (ldelete((RSIZE) 1, KNONE) != FALSE)
-				(void)linsert(1, c);
-		} else
-			lputc(curwp->w_dotp, curwp->w_doto++, c);
-	}
+	region_put_data(st, rlen);
 	lchange(WFHARD);
+
+	undo_no_boundary(FALSE);
+	undo_add_boundary();
 	return (TRUE);
 }
 

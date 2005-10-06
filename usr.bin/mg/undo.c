@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.27 2005/05/29 21:37:49 cloder Exp $ */
+/* $OpenBSD: undo.c,v 1.28 2005/10/06 16:48:00 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -184,6 +184,13 @@ undo_enable(int on)
 	return (pon ? FALSE : TRUE);
 }
 
+void
+undo_no_boundary(int flag)
+{
+	if (!undo_disable_flag)
+		nobound = flag;
+}
+
 int
 undo_add_boundary(void)
 {
@@ -192,6 +199,9 @@ undo_add_boundary(void)
 	if (nobound)
 		return (TRUE);
 
+	if (lastrectype() == BOUNDARY)
+		return (TRUE);
+	
 	rec = new_undo_record();
 	rec->type = BOUNDARY;
 
@@ -304,10 +314,10 @@ undo_add_change(LINE *lp, int offset, int size)
 	if (undo_disable_flag)
 		return (TRUE);
 	undo_add_boundary();
-	nobound = 1;
+	nobound = TRUE;
 	undo_add_delete(lp, offset, size);
 	undo_add_insert(lp, offset, size);
-	nobound = 0;
+	nobound = FALSE;
 	undo_add_boundary();
 
 	return (TRUE);
@@ -408,14 +418,17 @@ undo(int f, int n)
 	int 		 done, rval;
 	LINE		*lp;
 	int		 offset, save, dot;
+	static int	 nulled = FALSE;
 
 	dot = find_dot(curwp->w_dotp, curwp->w_doto);
 
 	ptr = curwp->w_undoptr;
 
 	/* if we moved, make ptr point back to the top of the list */
-	if (ptr == NULL || curwp->w_undopos != dot)
+	if ((ptr == NULL && nulled == TRUE) || curwp->w_undopos != dot) {
 		ptr = LIST_FIRST(&curwp->w_undo);
+		nulled = TRUE;
+	}
 
 	rval = TRUE;
 	while (n--) {
@@ -434,19 +447,20 @@ undo(int f, int n)
 		if (ptr == NULL) {
 			ewprintf("No further undo information");
 			rval = FALSE;
+			nulled = TRUE;
 			break;
 		}
+		nulled = FALSE;
 
 		/*
 		 * Loop while we don't get a boundary specifying we've
 		 * finished the current action...
 		 */
 
-		if (lastrectype() != BOUNDARY)
-			undo_add_boundary();
+		undo_add_boundary();
 
 		save = nobound;
-		nobound = 1;
+		nobound = TRUE;
 
 		done = 0;
 		do {

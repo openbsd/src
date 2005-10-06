@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.64 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.65 2005/10/06 16:48:00 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -596,6 +596,7 @@ int	 undo_enable(int);
 int	 undo_add_boundary(void);
 int	 undo_add_insert(LINE *, int, int);
 int	 undo_add_delete(LINE *, int, int);
+void	 undo_no_boundary(int);
 int	 undo_add_change(LINE *, int, int);
 int	 undo(int, int);
 
