@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.16 2005/09/19 20:01:12 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.17 2005/10/06 20:33:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -250,9 +250,9 @@ struct iwi_cmd_desc {
 #define IWI_CMD_SET_FRAG_THRESHOLD		16
 #define IWI_CMD_SET_POWER_MODE			17
 #define IWI_CMD_SET_WEP_KEY			18
-#define IWI_CMD_SCAN				20
 #define IWI_CMD_ASSOCIATE			21
 #define IWI_CMD_SET_RATES			22
+#define IWI_CMD_SCAN				26
 #define IWI_CMD_DISABLE				33
 #define IWI_CMD_SET_IV				34
 #define IWI_CMD_SET_TX_POWER			35
@@ -284,7 +284,7 @@ struct iwi_rateset {
 	u_int8_t	mode;
 	u_int8_t	nrates;
 	u_int8_t	type;
-#define IWI_RATESET_TYPE_NEGOCIATED	0
+#define IWI_RATESET_TYPE_NEGOTIATED	0
 #define IWI_RATESET_TYPE_SUPPORTED	1
 	u_int8_t	reserved;
 	u_int8_t	rates[12];
@@ -326,16 +326,23 @@ struct iwi_associate {
 
 /* structure for command IWI_CMD_SCAN */
 struct iwi_scan {
-	u_int8_t	type;
-#define IWI_SCAN_TYPE_PASSIVE	1
-#define IWI_SCAN_TYPE_DIRECTED	2
-#define IWI_SCAN_TYPE_BROADCAST	3
-#define IWI_SCAN_TYPE_BDIRECTED	4
-	u_int16_t	intval;
+	u_int32_t	index;
 	u_int8_t	channels[54];
 #define IWI_CHAN_5GHZ	(0 << 6)
 #define IWI_CHAN_2GHZ	(1 << 6)
-	u_int8_t	reserved[3];
+
+	u_int8_t	type[26];
+#define IWI_SCAN_TYPE_PASSIVE	0x11
+#define IWI_SCAN_TYPE_DIRECTED	0x22
+#define IWI_SCAN_TYPE_BROADCAST	0x33
+#define IWI_SCAN_TYPE_BDIRECTED	0x44
+
+	u_int8_t	reserved1[2];
+	u_int16_t	reserved2;
+	u_int16_t	passive;	/* dwell time */
+	u_int16_t	directed;	/* dwell time */
+	u_int16_t	broadcast;	/* dwell time */
+	u_int16_t	bdirected;	/* dwell time */
 } __packed;
 
 /* structure for command IWI_CMD_SET_CONFIGURATION */

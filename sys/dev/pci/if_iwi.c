@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.49 2005/09/19 20:01:11 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.50 2005/10/06 20:33:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -252,7 +252,6 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
-#if 0
 	if (PCI_PRODUCT(pa->pa_id) >= PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1) {
 		/* set supported .11a rates */
 		ic->ic_sup_rates[IEEE80211_MODE_11A] = iwi_rateset_11a;
@@ -269,7 +268,6 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 			ic->ic_channels[i].ic_flags = IEEE80211_CHAN_A;
 		}
 	}
-#endif
 
 	/* set supported .11b and .11g rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = iwi_rateset_11b;
@@ -1820,10 +1818,10 @@ iwi_set_chan(struct iwi_softc *sc, struct ieee80211_channel *chan)
 	struct iwi_scan scan;
 
 	bzero(&scan, sizeof scan);
-	scan.type = IWI_SCAN_TYPE_PASSIVE;
-	scan.intval = htole16(2000);
-	scan.channels[0] = 1 | (IEEE80211_IS_CHAN_5GHZ(chan) ? IWI_CHAN_5GHZ :
-	    IWI_CHAN_2GHZ);
+	memset(scan.type, 26, IWI_SCAN_TYPE_PASSIVE);
+	scan.passive = htole16(2000);
+	scan.channels[0] = 1 |
+	    (IEEE80211_IS_CHAN_5GHZ(chan) ? IWI_CHAN_5GHZ : IWI_CHAN_2GHZ);
 	scan.channels[1] = ieee80211_chan2ieee(ic, chan);
 
 	DPRINTF(("Setting channel to %u\n", ieee80211_chan2ieee(ic, chan)));
@@ -1839,9 +1837,14 @@ iwi_scan(struct iwi_softc *sc)
 	int i, count;
 
 	bzero(&scan, sizeof scan);
-	scan.type = (ic->ic_des_esslen != 0) ? IWI_SCAN_TYPE_BDIRECTED :
-	    IWI_SCAN_TYPE_BROADCAST;
-	scan.intval = htole16(40);
+
+	if (ic->ic_des_esslen != 0) {
+		scan.bdirected = htole16(40);
+		memset(scan.type, 26, IWI_SCAN_TYPE_BDIRECTED);
+	} else {
+		scan.broadcast = htole16(40);
+		memset(scan.type, 26, IWI_SCAN_TYPE_BROADCAST);
+	}
 
 	p = scan.channels;
 	count = 0;
@@ -1906,10 +1909,10 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (error != 0)
 		return error;
 
-	/* the rate set has already been "negociated" */
+	/* the rate set has already been "negotiated" */
 	rs.mode = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? IWI_MODE_11A :
 	    IWI_MODE_11G;
-	rs.type = IWI_RATESET_TYPE_NEGOCIATED;
+	rs.type = IWI_RATESET_TYPE_NEGOTIATED;
 	rs.nrates = ni->ni_rates.rs_nrates;
 	bcopy(ni->ni_rates.rs_rates, rs.rates, rs.nrates);
 	DPRINTF(("Setting negociated rates (%u)\n", rs.nrates));
