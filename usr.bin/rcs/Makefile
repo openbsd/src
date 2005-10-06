@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2005/10/06 15:39:11 joris Exp $
+#	$OpenBSD: Makefile,v 1.13 2005/10/06 16:26:43 mickey Exp $
 
 .PATH:	${.CURDIR}/../cvs
 
@@ -7,16 +7,16 @@ MAN=	rcs.1
 
 SRCS=	ci.c co.c ident.c rcsclean.c rcsdiff.c rcsprog.c rlog.c buf.c diff.c \
 	log.c rcs.c rcsnum.c strtab.c
-CFLAGS+=-I${.CURDIR}/../cvs
+CPPFLAGS+=-I${.CURDIR}/../cvs -DRCSPROG
 
 # Don't build the links until we actually support those commands
 #LINKS=	${BINDIR}/ci ${BINDIR}/co ${BINDIR}/rcsclean ${BINDIR}/rcsdiff
+#MLINKS=	rcs.1 ci.1 rcs.1 co.1 rcs.1 rcsclean.1 rcs.1 rcsdiff.1
 
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
-CFLAGS+= -DRCSPROG
 
 .include <bsd.prog.mk>
