@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.41 2005/05/14 19:27:38 brad Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.42 2005/10/06 19:53:40 brad Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1380,6 +1380,7 @@ static struct {
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "simba",	BUSCLASS_PCI },
 	{ "ppb",	BUSCLASS_PCI },
+	{ "isp",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "siop",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
@@ -1399,6 +1400,7 @@ static struct {
 	{ "QLGC,isp",	BUSCLASS_NONE,		"isp" },
 	{ "PTI,isp",	BUSCLASS_NONE,		"isp" },
 	{ "ptisp",	BUSCLASS_NONE,		"isp" },
+	{ "SUNW,isptwo", BUSCLASS_NONE,		"isp" },
 	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
 	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
 	{ "pci",	BUSCLASS_PCI,		"ppb" },
