@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.9 2005/08/09 04:10:11 mickey Exp $ */
+/* $OpenBSD: if_bce.c,v 1.10 2005/10/06 20:09:28 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -803,6 +803,12 @@ bce_rxintr(sc)
 		/* bump past pre header to packet */
 		sc->bce_cdata.bce_rx_chain[i]->m_data += 30;	/* MAGIC */
 
+ 		/*
+		 * The chip includes the CRC with every packet.  Trim
+		 * it off here.
+		 */
+		len -= ETHER_CRC_LEN;
+
 		/*
 		 * If the packet is small enough to fit in a
 		 * single header mbuf, allocate one and copy
@@ -837,7 +843,6 @@ bce_rxintr(sc)
 			}
 		}
 
-//		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 		ifp->if_ipackets++;
