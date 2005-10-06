@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.24 2005/08/01 22:22:13 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.25 2005/10/06 18:02:29 otto Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -33,9 +33,9 @@ _mkdev(ct, ct*|mt*,
 		M r$name$four	c $chr $four 660 operator
 		M r$name$eight	c $chr $eight 660 operator
 		M r$name$twelve	c $chr $twelve 660 operator
-		MKlist="$MKlist;ln r$name$four nr$name$U";: sanity w/pdp11 v7
-		MKlist="$MKlist;ln r$name$twelve nr$name$eight";: ditto
-		RMlist="$RMlist nr$name$U nr$name$eight"
+		MKlist[${#MKlist[*]}]=";ln r$name$four nr$name$U";: sanity w/pdp11 v7
+		MKlist[${#MKlist[*]}]=";ln r$name$twelve nr$name$eight";: ditto
+		RMlist[${#RMlist[*]}]="nr$name$U nr$name$eight"
 		;;
 	*)
 		echo bad unit for tape in: $1
