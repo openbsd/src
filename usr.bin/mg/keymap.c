@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.30 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.31 2005/10/06 20:02:10 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -82,7 +82,7 @@ static PF cXcL[] = {
 	deblank,		/* ^O */
 	rescan,			/* ^P */
 	rescan,			/* ^Q */
-	rescan,			/* ^R */
+	filevisitro,		/* ^R */
 	filesave,		/* ^S */
 	rescan,			/* ^T */
 	upperregion,		/* ^U */
