@@ -57,6 +57,7 @@
 ./usr/include/amd64/psl.h
 ./usr/include/amd64/pte.h
 ./usr/include/amd64/ptrace.h
+./usr/include/amd64/rbus_machdep.h
 ./usr/include/amd64/reg.h
 ./usr/include/amd64/reloc.h
 ./usr/include/amd64/segments.h

@@ -677,6 +677,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/psl.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pte.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ptrace.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/rbus_machdep.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/reloc.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/segments.ph
