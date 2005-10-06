@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.83 2005/10/06 03:39:16 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.84 2005/10/06 06:01:05 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2151,8 +2151,8 @@ bge_reset(sc)
 	}
 	if ((new_pcistate & ~BGE_PCISTATE_RESERVED) != 
 	    (pcistate & ~BGE_PCISTATE_RESERVED)) {
-		printf("%s: pcistate failed to revert\n",
-		    sc->bge_dev.dv_xname);
+		DPRINTFN(5, ("%s: pcistate failed to revert\n",
+		    sc->bge_dev.dv_xname));
 	}
 
 	/* Fix up byte swapping */
