@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.20 2005/08/01 22:22:12 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.21 2005/10/06 06:43:19 otto Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -226,8 +226,8 @@ __devitem(ss, ss*, SCSI scanners)dnl
 _mkdev(ss, ss*, {-M ss$U c major_ss_c Mult($U,16) 640 operator
 	M nss$U c major_ss_c Add(Mult($U,16),1) 640 operator
 	M enss$U c major_ss_c Add(Mult($U,16),3) 640 operator
-	RMlist="$RMlist scan$U"
-	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"-})dnl
+	RMlist[${#RMlist[*]}]="scan$U"
+	MKlist[${#MKlist[*]}]=";umask 77;ln -s ss$U scan$U"-})dnl
 dnl XXX see ramdisk above
 __devitem(ramd, ramdisk, Ramdisk kernel devices,nothing)dnl
 _mkdev(ramd, ramdisk, {-dnl
@@ -450,10 +450,10 @@ _mkdev(au, audio*, {-M sound$U	c major_au_c $U
 	M mixer$U	c major_au_c Add($U, 16)
 	M audio$U	c major_au_c Add($U, 128)
 	M audioctl$U	c major_au_c Add($U, 192)
-	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
-	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
-	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
-	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"-})dnl
+	MKlist[${#MKlist[*]}]=";[ -e audio ] || ln -s audio$U audio"
+	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
+	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
+	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"-})dnl
 __devitem(asc, asc*, ASC Audio device)dnl
 _mkdev(asc, asc*, {-M asc$U major_asc_c 0-})dnl
 __devitem(bio, bio, {-ioctl tunnel pseudo-device-})dnl
@@ -461,15 +461,15 @@ _mkdev(bio, bio, {-M bio c major_bio_c 0 600-})dnl
 __devitem(music, music*, MIDI devices,midi)dnl
 _mkdev(music, music*, {-M music$U     c major_music_c $U
 	M sequencer$U c major_music_c Add($U, 128)
-	MKlist="$MKlist;[ -e music ] || ln -s music$U music"
-	MKlist="$MKlist;[ -e sequencer ] || ln -s sequencer$U sequencer"-})dnl
+	MKlist[${#MKlist[*]}]=";[ -e music ] || ln -s music$U music"
+	MKlist[${#MKlist[*]}]=";[ -e sequencer ] || ln -s sequencer$U sequencer"-})dnl
 __devitem(radio, radio*, FM tuner devices)dnl
 _mkdev(radio, radio*, {-M radio$U     c major_radio_c $U
-	MKlist="$MKlist;[ -e radio ] || ln -s radio$U radio"-})dnl
+	MKlist[${#MKlist[*]}]=";[ -e radio ] || ln -s radio$U radio"-})dnl
 __devitem(fdesc, fd, fd/* nodes for fdescfs,mount_fdesc 8)dnl
-_mkdev(fdesc, fd, {-RMlist="mkdir -p fd;$RMlist" n=0
+_mkdev(fdesc, fd, {-RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c major_fdesc_c $n;n=Add($n, 1);done
-	MKlist="$MKlist;chmod 555 fd"-})dnl
+	MKlist[${#MKlist[*]}]=";chmod 555 fd"-})dnl
 __devitem(grf_mac, grf*, Raw interface to the mac68k graphics devices,grf)dnl
 __devitem(oppr, openprom,PROM settings,openprom)dnl
 _cdev(oppr, openprom, 70, 0)dnl
