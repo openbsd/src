@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.19 2005/08/08 12:22:48 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.20 2005/10/06 17:06:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -133,6 +133,8 @@ lsa_newer(struct lsa_hdr *a, struct lsa_hdr *b)
 	a16 = ntohs(a->age);
 	b16 = ntohs(b->age);
 
+	if (a16 >= MAX_AGE && b16 >= MAX_AGE)
+		return (0);
 	if (b16 >= MAX_AGE)
 		return (-1);
 	if (a16 >= MAX_AGE)
