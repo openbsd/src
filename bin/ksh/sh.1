@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.69 2005/09/07 07:38:51 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.70 2005/10/06 06:39:36 otto Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -2544,6 +2544,23 @@ Print the signal name corresponding to
 .Ar exit-status .
 If no arguments are specified, a list of all the signals, their numbers, and
 a short description of them are printed.
+.Pp
+.It Xo
+.Ic mknod
+.Op Fl m Ar mode
+.Ar name
+.Op Cm c | Cm b
+.Ar major minor
+.Xc
+.It Xo
+.Ic mknod
+.Op Fl m Ar mode
+.Ar name
+.Cm p
+.Xc
+Equivalent to the
+.Xr mknod 8
+command.
 .Pp
 .It Xo
 .Ic print

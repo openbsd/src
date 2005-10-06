@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.103 2005/09/07 07:38:51 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.104 2005/10/06 06:39:35 otto Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -3259,6 +3259,23 @@ Since expressions may need to be quoted,
 .No (( Ar expr No ))
 is syntactic sugar for
 .No let \&" Ns Ar expr Ns \&" .
+.Pp
+.It Xo
+.Ic mknod
+.Op Fl m Ar mode
+.Ar name
+.Op Cm c | Cm b
+.Ar major minor
+.Xc
+.It Xo
+.Ic mknod
+.Op Fl m Ar mode
+.Ar name
+.Cm p
+.Xc
+Equivalent to the
+.Xr mknod 8
+command.
 .Pp
 .It Xo
 .Ic print
