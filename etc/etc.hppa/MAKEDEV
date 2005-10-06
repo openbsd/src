@@ -4,8 +4,8 @@
 # generated from:
 #
 #	OpenBSD: etc.hppa/MAKEDEV.md,v 1.25 2005/08/01 22:22:13 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.20 2005/08/01 22:22:12 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.76 2005/10/04 18:33:52 otto Exp 
+#	OpenBSD: MAKEDEV.common,v 1.21 2005/10/06 06:43:19 otto Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -167,34 +167,31 @@ dodisk2()
 }
 
 # M name b/c major minor [mode] [group]
-RMlist="rm -f"
-MKlist=":"
+RMlist[0]="rm -f"
 
 mkl() {
-	[ "${mklist[$1]}" ] && {
-		mklist[$1]="${mklist[$1]};mknod -m $1 $2 $3 $4 $5"
-	} || {
-		mklist[$1]="mknod -m $1 $2 $3 $4 $5"
-		modes="$modes $1"
-	}
+	mklist[${#mklist[*]}]=";mknod -m $1 $2 $3 $4 $5"
 }
 
 M() {
-	RMlist="$RMlist $1"
+	RMlist[${#RMlist[*]}]=$1
 	mkl ${5-666} $1 $2 $3 $4
 	G=${6:-wheel}
 	[ "$7" ] && {
-		MKlist="$MKlist;chown $7:$G $1"
+		MKlist[${#MKlist[*]}]=";chown $7:$G $1"
 	} || {
 		case $G in
-		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;_lkm)g=61;;
+		wheel)
+			[ ${#whlist[*]} = 0 ] && whlist[0]=";chgrp wheel"
+			whlist[${#whlist[*]}]="$1"
+		;;
+		operator)
+			[ ${#oplist[*]} = 0 ] && oplist[0]=";chgrp operator"
+			oplist[${#oplist[*]}]="$1"
+		;;
+		*)
+			MKlist[${#MKlist[*]}]=";chgrp $G $1";
 		esac
-		[ "${grplist[$g]}" ] && {
-			grplist[$g]="${grplist[$g]} $1"
-		} || {
-			groups="$groups $g"
-			grplist[$g]="chgrp $G $1"
-		}
 	}
 	return 0
 }
@@ -248,8 +245,8 @@ ss*)
 	M ss$U c 14 $(($U*16)) 640 operator
 	M nss$U c 14 $(($(($U*16))+1)) 640 operator
 	M enss$U c 14 $(($(($U*16))+3)) 640 operator
-	RMlist="$RMlist scan$U"
-	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
+	RMlist[${#RMlist[*]}]="scan$U"
+	MKlist[${#MKlist[*]}]=";umask 77;ln -s ss$U scan$U"
 	;;
 
 *random)
@@ -274,9 +271,9 @@ lkm)
 	;;
 
 fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
+	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 16 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
+	MKlist[${#MKlist[*]}]=";chmod 555 fd"
 	;;
 
 crypto)
@@ -292,10 +289,10 @@ audio*)
 	M mixer$U	c 35 $(($U+16))
 	M audio$U	c 35 $(($U+128))
 	M audioctl$U	c 35 $(($U+192))
-	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
-	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
-	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
-	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
+	MKlist[${#MKlist[*]}]=";[ -e audio ] || ln -s audio$U audio"
+	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
+	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
+	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
 uscanner*)
@@ -498,16 +495,14 @@ esac
 done
 }
 R "$@"
-list="$RMlist"
-for mode in $modes; do
-	list="$list;${mklist[$mode]}"
-done
-for group in $groups; do
-	list="$list;${grplist[$group]}"
-done
-list="$list;$MKlist"
-if [ "$eo" = "echo" ]; then
-	$eo "$list"
+{
+echo -n ${RMlist[*]}
+echo -n ${mklist[*]}
+echo -n ${MKlist[*]}
+echo -n ${whlist[*]}
+echo ${oplist[*]}
+} | if [ "$eo" = "echo" ]; then
+        cat
 else
-	echo "$list" | sh
+	sh
 fi
