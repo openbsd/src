@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.107 2005/08/23 13:19:22 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.108 2005/10/06 18:29:18 hshoexer Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -700,6 +700,9 @@ description.
 The values are the same as those for GROUP_DESCRIPTION in
 .Aq Sy ISAKMP-transform
 sections shown above.
+.It Em KEY_LENGTH
+For encryption algorithms with variable key length, this is
+where the offered keylength is described.
 .It Em Life
 List of lifetimes, each element is a
 .Aq Sy Lifetime
@@ -999,6 +1002,16 @@ AUTHENTICATION_METHOD=	PRE_SHARED
 GROUP_DESCRIPTION=	MODP_1024
 Life=			Default-phase-1-lifetime
 
+# AES
+
+[AES-SHA]
+ENCRYPTION_ALGORITHM=	AES_CBC
+KEY_LENGTH=		128,128:256
+HASH_ALGORITHM=		SHA
+AUTHENTICATION_METHOD=	PRE_SHARED
+GROUP_DESCRIPTION=	MODP_1024
+Life=			Default-phase-1-lifetime
+
 # Blowfish
 
 [BLF-SHA]
@@ -1189,6 +1202,7 @@ Life=			Default-phase-2-lifetime
 TRANSFORM_ID=		AES
 ENCAPSULATION_MODE=	TUNNEL
 AUTHENTICATION_ALGORITHM=	HMAC_SHA
+KEY_LENGTH=		128
 Life=			Default-phase-2-lifetime
 
 [QM-ESP-AES-SHA-PFS-XF]
@@ -1196,12 +1210,14 @@ TRANSFORM_ID=		AES
 ENCAPSULATION_MODE=	TUNNEL
 AUTHENTICATION_ALGORITHM=	HMAC_SHA
 GROUP_DESCRIPTION=	MODP_1024
+KEY_LENGTH=		128
 Life=			Default-phase-2-lifetime
 
 [QM-ESP-AES-SHA-TRP-XF]
 TRANSFORM_ID=		AES
 ENCAPSULATION_MODE=	TRANSPORT
 AUTHENTICATION_ALGORITHM=	HMAC_SHA
+KEY_LENGTH=		128
 Life=			Default-phase-2-lifetime
 
 # AH
