@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.1 2005/10/06 15:39:11 joris Exp $	*/
+/*	$OpenBSD: ident.c,v 1.2 2005/10/06 16:02:42 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -67,9 +67,9 @@ ident_main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0) {
+	if (argc == 0)
 		ident_file(NULL, stdin);
-	} else {
+	else {
 		for (i = 0; i < argc; i++) {
 			if ((fp = fopen(argv[i], "r")) == NULL) {
 				cvs_log(LP_ERRNO, "%s", argv[i]);
@@ -121,7 +121,7 @@ ident_line(FILE *fp)
 			return (0);
 	}
 
-	*(p++) = ':';
+	*(p++) = VALDELIM;
 
 	while ((c = getc(fp)) != KEYDELIM) {
 		if ((c == EOF) && (feof(fp) | ferror(fp)))
@@ -140,7 +140,7 @@ ident_line(FILE *fp)
 	*(p++) = c;
 	*p = '\0';
 
-	printf("\t%c%s\n", KEYDELIM, linebuf);
+	printf("     %c%s\n", KEYDELIM, linebuf);
 
 	return (0);
 }
