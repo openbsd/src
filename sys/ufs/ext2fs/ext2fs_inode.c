@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.28 2005/08/14 12:45:24 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.29 2005/10/06 17:43:14 pedro Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -189,6 +189,17 @@ ext2fs_update(struct inode *ip, struct timespec *atime, struct timespec *mtime,
 	ip->i_flag &= ~(IN_MODIFIED);
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
+
+	/*
+	 * See note about 16-bit UID/GID limitation in ext2fs_vget(). Now
+	 * that we are about to write the inode, construct the split UID and
+	 * GID fields out of the two 32-bit fields we kept in memory.
+	 */
+	ip->i_e2fs_uid_low = (u_int16_t)ip->i_e2fs_uid;
+	ip->i_e2fs_gid_low = (u_int16_t)ip->i_e2fs_gid;
+	ip->i_e2fs_uid_high = ip->i_e2fs_uid >> 16;
+	ip->i_e2fs_gid_high = ip->i_e2fs_gid >> 16;
+
 	e2fs_isave(&ip->i_e2din, (struct ext2fs_dinode *)cp);
 	if (waitfor)
 		return (bwrite(bp));

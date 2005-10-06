@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bswap.c,v 1.2 2001/09/18 09:12:36 art Exp $	*/
+/*	$OpenBSD: ext2fs_bswap.c,v 1.3 2005/10/06 17:43:14 pedro Exp $	*/
 /*	$NetBSD: ext2fs_bswap.c,v 1.6 2000/07/24 00:23:10 mycroft Exp $	*/
 
 /*
@@ -107,8 +107,10 @@ e2fs_i_bswap(old, new)
 	struct ext2fs_dinode *old, *new;
 {
 	new->e2di_mode		=	swap16(old->e2di_mode);
-	new->e2di_uid		=	swap16(old->e2di_uid);
-	new->e2di_gid		=	swap16(old->e2di_gid);
+	new->e2di_uid_low	=	swap16(old->e2di_uid_low);
+	new->e2di_gid_low	=	swap16(old->e2di_gid_low);
+	new->e2di_uid_high	=	swap16(old->e2di_uid_high);
+	new->e2di_gid_high	=	swap16(old->e2di_gid_high);
 	new->e2di_nlink		=	swap16(old->e2di_nlink);
 	new->e2di_size		=	swap32(old->e2di_size);
 	new->e2di_atime		=	swap32(old->e2di_atime);

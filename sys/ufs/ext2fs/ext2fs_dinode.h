@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.8 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs_dinode.h,v 1.9 2005/10/06 17:43:14 pedro Exp $	*/
 /*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
@@ -64,13 +64,13 @@
 
 struct ext2fs_dinode {
 	u_int16_t	e2di_mode;	/*   0: IFMT, permissions; see below. */
-	u_int16_t	e2di_uid;	/*   2: Owner UID */
+	u_int16_t	e2di_uid_low;	/*   2: Owner UID, lowest bits */
 	u_int32_t	e2di_size;	/*	 4: Size (in bytes) */
 	u_int32_t	e2di_atime;	/*	 8: Acces time */
 	u_int32_t	e2di_ctime;	/*	12: Create time */
 	u_int32_t	e2di_mtime;	/*	16: Modification time */
 	u_int32_t	e2di_dtime;	/*	20: Deletion time */
-	u_int16_t	e2di_gid;	/*  24: Owner GID */
+	u_int16_t	e2di_gid_low;	/*  24: Owner GID, lowest bits */
 	u_int16_t	e2di_nlink;	/*  26: File link count */
 	u_int32_t	e2di_nblock;	/*  28: Blocks count */
 	u_int32_t	e2di_flags;	/*  32: Status flags (chflags) */
@@ -83,11 +83,11 @@ struct ext2fs_dinode {
 	u_int8_t	e2di_nfrag;	/* 116: fragment number */
 	u_int8_t	e2di_fsize;	/* 117: fragment size */
 	u_int16_t	e2di_linux_reserved2; /* 118 */
-	u_int32_t	e2di_linux_reserved3[2]; /* 120 */
+	u_int16_t	e2di_uid_high;	/* 120: 16 highest bits of uid */
+	u_int16_t	e2di_gid_high;	/* 122: 16 highest bits of gid */
+	u_int32_t	e2di_linux_reserved3; /* 124 */
 };
-	
 
-	
 #define	E2MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(u_int32_t))
 
 /* File permissions. */

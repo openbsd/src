@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.38 2005/07/28 23:11:25 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.39 2005/10/06 17:43:14 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -896,6 +896,18 @@ ext2fs_vget(mp, ino, vpp)
 	bcopy(((struct ext2fs_dinode*)bp->b_data + ino_to_fsbo(fs, ino)),
 				&ip->i_e2din, sizeof(struct ext2fs_dinode));
 	ip->i_effnlink = ip->i_e2fs_nlink;
+
+	/*
+	 * The fields for storing the UID and GID of an ext2fs inode are
+	 * limited to 16 bits. To overcome this limitation, Linux decided to
+	 * scatter the highest bits of these values into a previously reserved
+	 * area on the disk inode. We deal with this situation by having two
+	 * 32-bit fields *out* of the disk inode to hold the complete values.
+	 * Now that we are reading in the inode, compute these fields.
+	 */
+	ip->i_e2fs_uid = ip->i_e2fs_uid_low | (ip->i_e2fs_uid_high << 16);
+	ip->i_e2fs_gid = ip->i_e2fs_gid_low | (ip->i_e2fs_gid_high << 16);
+
 	brelse(bp);
 
 	/* If the inode was deleted, reset all fields */

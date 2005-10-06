@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.15 2005/04/30 13:56:16 niallo Exp $	*/
+/*	$OpenBSD: inode.c,v 1.16 2005/10/06 17:43:13 pedro Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -555,18 +555,20 @@ pinode(ino_t ino)
 	char *p;
 	struct passwd *pw;
 	time_t t;
+	u_int32_t uid;
 
 	printf(" I=%u ", ino);
 	if ((ino < EXT2_FIRSTINO && ino != EXT2_ROOTINO) || ino > maxino)
 		return;
 	dp = ginode(ino);
 	printf(" OWNER=");
+	uid = fs2h16(dp->e2di_uid_low) | (fs2h16(dp->e2di_uid_high) << 16);
 #ifndef SMALL
-	if ((pw = getpwuid((int)dp->e2di_uid)) != 0)
+	if ((pw = getpwuid((int)uid)) != 0)
 		printf("%s ", pw->pw_name);
 	else
 #endif
-		printf("%u ", (unsigned)fs2h16(dp->e2di_uid));
+		printf("%u ", (unsigned)uid);
 	printf("MODE=%o\n", fs2h16(dp->e2di_mode));
 	if (preen)
 		printf("%s: ", cdevname());

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.27 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: inode.h,v 1.28 2005/10/06 17:43:14 pedro Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -46,8 +46,10 @@
  * Per-filesystem inode extensions.
  */
 struct ext2fs_inode_ext {
-       ufs1_daddr_t ext2fs_last_lblk; /* last logical block allocated */
-       ufs1_daddr_t ext2fs_last_blk; /* last block allocated on disk */
+       ufs1_daddr_t	ext2fs_last_lblk; /* last logical block allocated */
+       ufs1_daddr_t	ext2fs_last_blk; /* last block allocated on disk */
+       u_int32_t	ext2fs_effective_uid; /* effective inode uid */
+       u_int32_t	ext2fs_effective_gid; /* effective inode gid */
 };
 
 /*
@@ -100,9 +102,11 @@ struct inode {
 		struct ext2fs_inode_ext   e2fs;
 		struct dirhash *dirhash;
 	} inode_ext;
-#define i_e2fs_last_lblk inode_ext.e2fs.ext2fs_last_lblk
-#define i_e2fs_last_blk inode_ext.e2fs.ext2fs_last_blk
-#define	i_dirhash	inode_ext.dirhash
+#define i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
+#define i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
+#define i_e2fs_uid		inode_ext.e2fs.ext2fs_effective_uid
+#define i_e2fs_gid		inode_ext.e2fs.ext2fs_effective_gid
+#define	i_dirhash		inode_ext.dirhash
 
 	/*
 	 * The on-disk dinode itself.
@@ -201,13 +205,11 @@ struct inode_vtbl {
 #endif	/* _KERNEL */
 
 #define i_e2fs_mode		i_e2din.e2di_mode
-#define i_e2fs_uid		i_e2din.e2di_uid
 #define i_e2fs_size		i_e2din.e2di_size
 #define i_e2fs_atime		i_e2din.e2di_atime
 #define i_e2fs_ctime		i_e2din.e2di_ctime
 #define i_e2fs_mtime		i_e2din.e2di_mtime
 #define i_e2fs_dtime		i_e2din.e2di_dtime
-#define i_e2fs_gid		i_e2din.e2di_gid
 #define i_e2fs_nlink		i_e2din.e2di_nlink
 #define i_e2fs_nblock		i_e2din.e2di_nblock
 #define i_e2fs_flags		i_e2din.e2di_flags
@@ -218,6 +220,10 @@ struct inode_vtbl {
 #define i_e2fs_faddr		i_e2din.e2di_faddr
 #define i_e2fs_nfrag		i_e2din.e2di_nfrag
 #define i_e2fs_fsize		i_e2din.e2di_fsize
+#define i_e2fs_uid_low		i_e2din.e2di_uid_low
+#define i_e2fs_gid_low		i_e2din.e2di_gid_low
+#define i_e2fs_uid_high		i_e2din.e2di_uid_high
+#define i_e2fs_gid_high		i_e2din.e2di_gid_high
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
