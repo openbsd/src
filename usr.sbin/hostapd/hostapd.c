@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.19 2005/09/13 09:22:42 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.20 2005/10/07 21:52:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -338,7 +338,7 @@ hostapd_cleanup(struct hostapd_config *cfg)
 
 	/* Cleanup tables */
 	while ((table = TAILQ_FIRST(&cfg->c_tables)) != NULL) {
-		while((entry = RB_MIN(hostapd_tree, &table->t_tree)) != NULL) {
+		while ((entry = RB_MIN(hostapd_tree, &table->t_tree)) != NULL) {
 			RB_REMOVE(hostapd_tree, &table->t_tree, entry);
 			free(entry);
 		}
