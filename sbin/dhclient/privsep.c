@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.11 2005/08/08 14:33:46 moritz Exp $ */
+/*	$OpenBSD: privsep.c,v 1.12 2005/10/07 13:19:40 pedro Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -55,10 +55,8 @@ buf_close(int sock, struct buf *buf)
 
 	do {
 		n = write(sock, buf->buf + buf->rpos, buf->size - buf->rpos);
-		if (n == 0) {			/* connection closed */
-			errno = 0;
-			error("buf_close (connection closed): %m");
-		}
+		if (n == 0)			/* connection closed */
+			error("buf_close (connection closed)");
 		if (n != -1 && n < buf->size - buf->rpos)
 			error("buf_close (short write): %m");
 
@@ -78,8 +76,8 @@ buf_read(int sock, void *buf, size_t nbytes)
 
 	do {
 		n = read(sock, buf, nbytes);
-		if (n == 0)
-			error("buf_read (connection closed): %m");
+		if (n == 0) 			/* connection closed */
+			error("buf_read (connection closed)");
 		if (n != -1 && n < nbytes)
 			error("buf_read (short read): %m");
 	} while (n == -1 && (errno == EINTR || errno == EAGAIN));
