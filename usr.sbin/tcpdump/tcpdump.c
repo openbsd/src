@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.46 2005/05/28 09:01:52 reyk Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.47 2005/10/07 19:45:26 mpf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.46 2005/05/28 09:01:52 reyk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.47 2005/10/07 19:45:26 mpf Exp $ (LBL)";
 #endif
 
 /*
@@ -355,7 +355,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'o':
-				oflag = 1;
+			oflag = 1;
 			break;
 
 		case 'p':
