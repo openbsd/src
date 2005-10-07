@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.35 2005/09/13 17:24:38 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.36 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -181,8 +181,10 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	 * checkout, export, import and release do not depend on these files.
 	 */
 	error = 0;
-	if ((cmd->cmd_op != CVS_OP_CHECKOUT) && (cmd->cmd_op != CVS_OP_EXPORT) &&
-	    (cmd->cmd_op != CVS_OP_IMPORT) && (cmd->cmd_op != CVS_OP_RELEASE) &&
+	if ((cmd->cmd_op != CVS_OP_CHECKOUT) &&
+	    (cmd->cmd_op != CVS_OP_EXPORT) &&
+	    (cmd->cmd_op != CVS_OP_IMPORT) &&
+	    (cmd->cmd_op != CVS_OP_RELEASE) &&
 	    (cmd->cmd_op != CVS_OP_VERSION)) {
 		/* check for the CVS directory */
 		ret = stat(CVS_PATH_CVSDIR, &st);
@@ -211,9 +213,11 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		}
 
 		if (error & MISSING_CVS_ENTRIES)
-			cvs_log(LP_ABORT, "missing '%s' file", CVS_PATH_ENTRIES);
+			cvs_log(LP_ABORT, "missing '%s' file",
+			    CVS_PATH_ENTRIES);
 		if (error & MISSING_CVS_REPO)
-			cvs_log(LP_ABORT, "missing '%s' file", CVS_PATH_REPOSITORY);
+			cvs_log(LP_ABORT, "missing '%s' file",
+			    CVS_PATH_REPOSITORY);
 		return (CVS_EX_FILE);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.123 2005/09/15 22:12:23 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.124 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,7 +53,7 @@
 struct cvs_ignpat {
 	char				ip_pat[MAXNAMLEN];
 	int				ip_flags;
-	TAILQ_ENTRY (cvs_ignpat)	ip_list;
+	TAILQ_ENTRY(cvs_ignpat)		ip_list;
 };
 
 
@@ -287,7 +287,7 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 
 		if (((mkdir(path, mode) == -1) && (errno != EEXIST)) ||
 		    (cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo,
-		        NULL, NULL, 0) < 0)) {
+		    NULL, NULL, 0) < 0)) {
 			cvs_file_free(cfp);
 			return (NULL);
 		}
@@ -1314,7 +1314,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 		 * but does not exist anymore, start complaining.
 		 */
 		if (!(cfp->cf_flags & CVS_FILE_ONDISK) &&
-	    	    (cfp->cf_cvstat == CVS_FST_ADDED) &&
+		    (cfp->cf_cvstat == CVS_FST_ADDED) &&
 		    (cfp->cf_type != DT_DIR))
 			cvs_log(LP_WARN, "new-born %s has disappeared", path);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.8 2005/08/11 11:45:06 xsa Exp $	*/
+/*	$OpenBSD: repo.c,v 1.9 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -222,7 +222,8 @@ cvs_repo_lockent(CVSRPENT *ent, int type, pid_t owner)
 			if (TAILQ_EMPTY(&(ent->cr_rlocks)))
 				ent->cr_wlock = lk;
 			else
-				TAILQ_INSERT_TAIL(&(ent->cr_lkreq), lk, lk_link);
+				TAILQ_INSERT_TAIL(&(ent->cr_lkreq),
+				    lk, lk_link);
 		}
 	}
 
@@ -594,7 +595,8 @@ cvs_repo_loadrec(CVSREPO *repo, const char *path)
 				}
 
 				cr_ent->cr_parent = cfp;
-				TAILQ_INSERT_TAIL(&(cfp->cr_files), cr_ent, cr_link);
+				TAILQ_INSERT_TAIL(&(cfp->cr_files),
+				    cr_ent, cr_link);
 			}
 		} while (ret > 0);
 

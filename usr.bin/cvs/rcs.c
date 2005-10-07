@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.79 2005/10/05 23:11:07 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.80 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -598,8 +598,8 @@ rcs_write(RCSFILE *rfp)
 				return (-1);
 			}
 
-			if ((to_fd = open(rfp->rf_path, O_WRONLY|O_TRUNC|O_CREAT))
-			    == -1) {
+			if ((to_fd = open(rfp->rf_path,
+			    O_WRONLY|O_TRUNC|O_CREAT)) == -1) {
 				cvs_log(LP_ERRNO, "failed to open `%s'", fn);
 				close(from_fd);
 				return (-1);
@@ -2905,12 +2905,14 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
 			}
 
 			/*
-			 * order matters because of RCS_KW_ID and RCS_KW_HEADER here
+			 * order matters because of RCS_KW_ID and
+			 * RCS_KW_HEADER here
 			 */
 			if (mode & RCS_KWEXP_VAL) {
 				if (kwtype & RCS_KW_RCSFILE) {
 					if (!(kwtype & RCS_KW_FULLPATH))
-						strlcat(expbuf, basename(rcsfile),
+						strlcat(expbuf,
+						    basename(rcsfile),
 						    sizeof(expbuf));
 					else
 						strlcat(expbuf, rcsfile,
@@ -2919,14 +2921,16 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
 				}
 
 				if (kwtype & RCS_KW_REVISION) {
-					rcsnum_tostr(rdp->rd_num, buf, sizeof(buf));
+					rcsnum_tostr(rdp->rd_num, buf,
+					    sizeof(buf));
 					strlcat(buf, " ", sizeof(buf));
 					strlcat(expbuf, buf, sizeof(expbuf));
 				}
 
 				if (kwtype & RCS_KW_DATE) {
 					strftime(buf, sizeof(buf),
-					    "%Y/%m/%d %H:%M:%S ", &rdp->rd_date);
+					    "%Y/%m/%d %H:%M:%S ",
+					    &rdp->rd_date);
 					strlcat(expbuf, buf, sizeof(expbuf));
 				}
 
@@ -2947,7 +2951,8 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
 					strlcat(expbuf, " ", sizeof(expbuf));
 
 				if (kwtype & RCS_KW_SOURCE) {
-					strlcat(expbuf, rcsfile, sizeof(expbuf));
+					strlcat(expbuf, rcsfile,
+					    sizeof(expbuf));
 					strlcat(expbuf, " ", sizeof(expbuf));
 				}
 

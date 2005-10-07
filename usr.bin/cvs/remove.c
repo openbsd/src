@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.36 2005/09/06 17:08:05 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.37 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -248,7 +248,7 @@ cvs_remove_file(const char *fpath)
 
 	/* if -f option is used, physically remove the file */
 	if (force_remove == 1) {
-		if(cvs_unlink(fpath) == -1)
+		if (cvs_unlink(fpath) == -1)
 			return (-1);
 		nuked++;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.33 2005/09/30 15:40:22 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.34 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -193,7 +193,7 @@ cvs_add_local(CVSFILE *cf, void *arg)
 
 		return (0);
 	} else if ((cf->cf_cvstat == CVS_FST_CONFLICT) ||
-	    (cf->cf_cvstat == CVS_FST_LOST) || 
+	    (cf->cf_cvstat == CVS_FST_LOST) ||
 	    (cf->cf_cvstat == CVS_FST_MODIFIED) ||
 	    (cf->cf_cvstat == CVS_FST_UPTODATE)) {
 		if (verbosity > 1) {
@@ -316,7 +316,7 @@ cvs_add_directory(CVSFILE *cf)
 	if ((ent = cvs_ent_parse(entry)) == NULL) {
 		cvs_log(LP_ERR, "failed to parse entry");
 		return (CVS_EX_DATA);
-	}        
+	}
 
 	if (cvs_ent_add(entf, ent) < 0) {
 		cvs_log(LP_ERR, "failed to add entry");
@@ -380,7 +380,7 @@ cvs_add_build_entry(CVSFILE *cf)
 		cvs_log(LP_ERR, "failed to parse entry");
 		(void)cvs_unlink(path);
 		return (CVS_EX_DATA);
-	}	
+	}
 
 	if (cvs_ent_add(entf, ent) < 0) {
 		cvs_log(LP_ERR, "failed to add entry");

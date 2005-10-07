@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.84 2005/08/10 14:49:20 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.85 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 			exit(CVS_EX_DATA);
 		}
 		cvs_homedir = pw->pw_dir;
-        }
+	}
 
 	if ((envstr = getenv("TMPDIR")) != NULL)
 		cvs_tmpdir = envstr;

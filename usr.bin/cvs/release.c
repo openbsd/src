@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.22 2005/09/21 16:55:28 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.23 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -115,8 +115,8 @@ cvs_release_yesno(void)
 
 	ret = 0;
 
-	fflush (stderr);
-	fflush (stdout);
+	fflush(stderr);
+	fflush(stdout);
 
 	if ((c = getchar()) != 'y' && c != 'Y')
 		ret = -1;

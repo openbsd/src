@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.59 2005/09/15 22:12:23 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.60 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -66,7 +66,7 @@ static int  cvs_resp_copyfile  (struct cvsroot *, int, char *);
 static int  cvs_resp_createdir (char *);
 
 struct cvs_resphdlr {
-	int (*hdlr)(struct cvsroot *, int, char *);
+	int	(*hdlr)(struct cvsroot *, int, char *);
 } cvs_resp_swtab[CVS_RESP_MAX + 1] = {
 	{ NULL              },
 	{ cvs_resp_ok       },

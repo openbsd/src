@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.31 2005/09/15 17:01:10 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.32 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -69,7 +69,7 @@ static int	cvs_req_command(int, char *);
 
 
 struct cvs_reqhdlr {
-	int (*hdlr)(int, char *);
+	int	(*hdlr)(int, char *);
 } cvs_req_swtab[CVS_REQ_MAX + 1] = {
 	{ NULL                  },
 	{ cvs_req_root          },
@@ -440,7 +440,8 @@ cvs_req_filestate(int reqid, char *line)
 		ent = cvs_ent_get(cvs_req_entf, line);
 		if (ent == NULL) {
 			cvs_log(LP_ERR,
-			    "received Unchanged request for a non-existing file");
+			    "received Unchanged request "
+			    "for a non-existing file");
 			ret = -1;
 		} else {
 			ent->ce_status = CVS_ENT_UPTODATE;

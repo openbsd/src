@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.56 2005/10/05 23:11:06 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.57 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1353,8 +1353,8 @@ proceed:
 			struct context_vec *tmp;
 			ptrdiff_t offset = context_vec_ptr - context_vec_start;
 			max_context <<= 1;
-			if ((tmp = realloc(context_vec_start,
-			    max_context * sizeof(struct context_vec))) == NULL) {
+			if ((tmp = realloc(context_vec_start, max_context *
+			    sizeof(struct context_vec))) == NULL) {
 				free(context_vec_start);
 				context_vec_start = NULL;
 				cvs_log(LP_ERRNO,
@@ -1592,7 +1592,8 @@ match_function(const long *f, int pos, FILE *fp)
 			if (p != NULL)
 				*p = '\0';
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
-				strlcpy(lastbuf, (const char *)buf, sizeof lastbuf);
+				strlcpy(lastbuf, (const char *)buf,
+				    sizeof lastbuf);
 				lastmatchline = pos;
 				return lastbuf;
 			}

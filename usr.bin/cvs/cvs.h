@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.85 2005/09/15 22:12:23 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.86 2005/10/07 21:47:32 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -151,26 +151,26 @@
 
 
 struct cvs_cmd {
-	int   cmd_op;
-	int   cmd_req;
-	char  cmd_name[CVS_CMD_MAXNAMELEN];
-	char  cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
-	char  cmd_descr[CVS_CMD_MAXDESCRLEN];
-	char *cmd_synopsis;
-	char *cmd_opts;
-	char *cmd_defargs;
-	int   file_flags;
+	int	 cmd_op;
+	int	 cmd_req;
+	char	 cmd_name[CVS_CMD_MAXNAMELEN];
+	char	 cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
+	char	 cmd_descr[CVS_CMD_MAXDESCRLEN];
+	char	*cmd_synopsis;
+	char	*cmd_opts;
+	char	*cmd_defargs;
+	int	 file_flags;
 
 	/* operations vector */
-	int (*cmd_init)        (struct cvs_cmd *, int, char **, int *);
-	int (*cmd_pre_exec)    (struct cvsroot *);
-	int (*cmd_exec_remote) (CVSFILE *, void *);
-	int (*cmd_exec_local)  (CVSFILE *, void *);
-	int (*cmd_post_exec)   (struct cvsroot *);
-	int (*cmd_cleanup)     (void);
+	int	 (*cmd_init)(struct cvs_cmd *, int, char **, int *);
+	int	 (*cmd_pre_exec)(struct cvsroot *);
+	int	 (*cmd_exec_remote)(CVSFILE *, void *);
+	int	 (*cmd_exec_local)(CVSFILE *, void *);
+	int	 (*cmd_post_exec)(struct cvsroot *);
+	int	 (*cmd_cleanup)(void);
 
 	/* flags for cvs_file_get() */
-	int   cmd_flags;
+	int	 cmd_flags;
 };
 
 struct cvs_file;
