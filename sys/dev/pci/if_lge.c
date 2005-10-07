@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.25 2005/10/07 21:05:15 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.26 2005/10/07 21:17:42 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -779,37 +779,45 @@ int lge_alloc_jumbo_mem(sc)
 	caddr_t			ptr, kva;
 	bus_dma_segment_t	seg;
 	bus_dmamap_t		dmamap;
-	int			i, rseg;
+	int			i, rseg, state, error;
 	struct lge_jpool_entry   *entry;
+
+	state = error = 0;
 
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, LGE_JMEM, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 1;
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, LGE_JMEM, &kva,
 			   BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc->sc_dv.dv_xname, LGE_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 2;
 	if (bus_dmamap_create(sc->sc_dmatag, LGE_JMEM, 1,
 			      LGE_JMEM, 0, BUS_DMA_NOWAIT, &dmamap)) {
 		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmatag, kva, LGE_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
 	}
+
+	state = 3;
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva, LGE_JMEM,
 			    NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->sc_dv.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-		bus_dmamem_unmap(sc->sc_dmatag, kva, LGE_JMEM);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto out;
         }
+
+	state = 4;
 	sc->lge_cdata.lge_jumbo_buf = (caddr_t)kva;
 	DPRINTFN(1,("lge_jumbo_buf = 0x%08X\n", sc->lge_cdata.lge_jumbo_buf));
 	DPRINTFN(1,("LGE_JLEN = 0x%08X\n", LGE_JLEN));
@@ -828,21 +836,34 @@ int lge_alloc_jumbo_mem(sc)
 		entry = malloc(sizeof(struct lge_jpool_entry), 
 		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
-			bus_dmamap_unload(sc->sc_dmatag, dmamap);
-			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-			bus_dmamem_unmap(sc->sc_dmatag, kva, LGE_JMEM);
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 			sc->lge_cdata.lge_jumbo_buf = NULL;
 			printf("%s: no memory for jumbo buffer queue!\n",
 			       sc->sc_dv.dv_xname);
-			return(ENOBUFS);
+			error = ENOBUFS;
+			goto out;
 		}
 		entry->slot = i;
 		LIST_INSERT_HEAD(&sc->lge_jfree_listhead,
 				 entry, jpool_entries);
 	}
+out:
+	if (error != 0) {
+		switch (state) {
+		case 4:
+			bus_dmamap_unload(sc->sc_dmatag, dmamap);
+		case 3:
+			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
+		case 2:
+			bus_dmamem_unmap(sc->sc_dmatag, kva, LGE_JMEM);
+		case 1:
+			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+			break;
+		default:
+			break;
+		}
+	}
 
-	return(0);
+	return (error);
 }
 
 /*
@@ -852,19 +873,15 @@ void *lge_jalloc(sc)
 	struct lge_softc	*sc;
 {
 	struct lge_jpool_entry   *entry;
-	
+
 	entry = LIST_FIRST(&sc->lge_jfree_listhead);
-	
-	if (entry == NULL) {
-#ifdef LGE_VERBOSE
-		printf("%s: no free jumbo buffers\n", sc->sc_dv.dv_xname);
-#endif
-		return(NULL);
-	}
+
+	if (entry == NULL)
+		return (NULL);
 
 	LIST_REMOVE(entry, jpool_entries);
 	LIST_INSERT_HEAD(&sc->lge_jinuse_listhead, entry, jpool_entries);
-	return(sc->lge_cdata.lge_jslots[entry->slot]);
+	return (sc->lge_cdata.lge_jslots[entry->slot]);
 }
 
 /*
