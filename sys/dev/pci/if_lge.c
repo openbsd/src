@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.24 2005/10/07 20:57:21 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.25 2005/10/07 21:05:15 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -550,28 +550,20 @@ void lge_attach(parent, self, aux)
 			   BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc->sc_dv.dv_xname, sizeof(struct lge_list_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_2;
+		goto fail_3;
 	}
 	DPRINTFN(5, ("bus_dmamem_create\n"));
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct lge_list_data), 1,
 			      sizeof(struct lge_list_data), 0,
 			      BUS_DMA_NOWAIT, &dmamap)) {
 		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmatag, kva,
-				 sizeof(struct lge_list_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_2;
+		goto fail_4;
 	}
 	DPRINTFN(5, ("bus_dmamem_load\n"));
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
 			    sizeof(struct lge_list_data), NULL,
 			    BUS_DMA_NOWAIT)) {
-		bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-		bus_dmamem_unmap(sc->sc_dmatag, kva,
-				 sizeof(struct lge_list_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_2;
+		goto fail_5;
 	}
 
 	DPRINTFN(5, ("bzero\n"));
@@ -583,7 +575,7 @@ void lge_attach(parent, self, aux)
 	if (lge_alloc_jumbo_mem(sc)) {
 		printf("%s: jumbo buffer allocation failed\n",
 		       sc->sc_dv.dv_xname);
-		goto fail_2;
+		goto fail_5;
 	}
 
 	ifp = &sc->arpcom.ac_if;
@@ -639,6 +631,16 @@ void lge_attach(parent, self, aux)
 	timeout_set(&sc->lge_timeout, lge_tick, sc);
 	timeout_add(&sc->lge_timeout, hz);
 	return;
+
+fail_5:
+	bus_dmamap_destroy(sc->sc_dmatag, dmamap);
+
+fail_4:
+	bus_dmamem_unmap(sc->sc_dmatag, kva,
+	    sizeof(struct lge_list_data));
+
+fail_3:
+	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 
 fail_2:
 	pci_intr_disestablish(pc, sc->lge_intrhand);
