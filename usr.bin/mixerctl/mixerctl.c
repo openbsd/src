@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.22 2005/10/01 17:07:26 deraadt Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.23 2005/10/07 17:08:36 deraadt Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ usage(void)
 	    "       %s [-nv] [-f file] name [...]\n"
 	    "       %s [-qt] [-f file] name [...]\n"
 	    "       %s [-q]  [-f file] name=value [...]\n",
-	    __progname, __progname, __progname);
+	    __progname, __progname, __progname, __progname);
 
 	exit(1);
 }
