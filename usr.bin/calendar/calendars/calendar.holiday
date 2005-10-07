@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.15 2005/09/12 21:07:28 sturm Exp $
+ * $OpenBSD: calendar.holiday,v 1.16 2005/10/07 18:59:15 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -360,12 +360,11 @@
 10/06	National Sports Day in Lesotho
 10/07	National Heroes Day in Jamaica
 10/08	Constitution Day in U.S.S.R
-10/08	Fiji Day in Fiji
 10/09	Independence Day in Uganda
 10/09	Korean Alphabet Day in South Korea
 10/09	Leif Erikson Day commemorates the discovery of North America in AD 1000
 10/09	Republic Day in Khmer Republic
-10/10	Fiji Day in Fiji
+10/MonSecond	Fiji Day in Fiji
 10/MonSecond	Health-Sports Day in Japan
 10/MonSecond	Thanksgiving Day in Canada
 10/10	National Day in Taiwan
