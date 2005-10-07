@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.11 2005/10/07 23:24:42 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.12 2005/10/07 23:38:09 brad Exp $ */
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
  */
@@ -765,8 +765,6 @@ em_init_hw(struct em_hw *hw)
         E1000_WRITE_REG(hw, TXDCTL1, ctrl);
         break;
     }
-
-
 
     if (hw->mac_type == em_82573) {
         uint32_t gcr = E1000_READ_REG(hw, GCR);
