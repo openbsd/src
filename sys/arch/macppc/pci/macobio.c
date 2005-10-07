@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.13 2005/10/02 22:09:40 brad Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.14 2005/10/07 03:47:31 drahn Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -259,6 +259,41 @@ void
 mac_intr_disestablish(void *lcp, void *arg)
 {
 	(*mac_intr_disestablish_func)(lcp, arg);
+}
+
+void keylargo_fcr_enable(int offset, u_int32_t bits);
+void keylargo_fcr_disable(int offset, u_int32_t bits);
+u_int32_t keylargo_fcr_read(int offset);
+
+void
+keylargo_fcr_enable(int offset, u_int32_t bits)
+{
+	struct macobio_softc *sc = macobio_cd.cd_devs[0];
+	if (sc->obiomem == 0)
+		return;
+
+	bits |=  in32rb(sc->obiomem + offset);
+	out32rb(sc->obiomem + offset, bits);
+}
+void
+keylargo_fcr_disable(int offset, u_int32_t bits)
+{
+	struct macobio_softc *sc = macobio_cd.cd_devs[0];
+	if (sc->obiomem == 0)
+		return;
+
+	bits =  in32rb(sc->obiomem + offset) & ~bits;
+	out32rb(sc->obiomem + offset, bits);
+}
+
+u_int32_t
+keylargo_fcr_read(int offset)
+{
+	struct macobio_softc *sc = macobio_cd.cd_devs[0];
+	if (sc->obiomem == 0)
+		return -1;
+
+	return in32rb(sc->obiomem + offset);
 }
 
 void
