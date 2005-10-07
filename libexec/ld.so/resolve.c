@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.40 2005/10/06 22:01:58 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.41 2005/10/07 01:26:34 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -161,7 +161,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 	/* default dev, inode for dlopen-able objects. */
 	object->dev = 0;
 	object->inode = 0;
-	TAILQ_INIT(&object->dload_list);
+	TAILQ_INIT(&object->grpsym_list);
 	TAILQ_INIT(&object->grpref_list);
 
 	return(object);
@@ -203,7 +203,7 @@ _dl_cleanup_objects()
 	while (head != NULL) {
 		if (head->load_name)
 			_dl_free(head->load_name);
-		_dl_tailq_free(TAILQ_FIRST(&head->dload_list));
+		_dl_tailq_free(TAILQ_FIRST(&head->grpsym_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->child_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->grpref_list));
 		nobj = head->next;
@@ -341,7 +341,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 		/* search dlopened obj and all children */
 
 		if (found == 0) {
-			TAILQ_FOREACH(n, &req_obj->load_object->dload_list,
+			TAILQ_FOREACH(n, &req_obj->load_object->grpsym_list,
 			    next_sib) {
 				if (_dl_find_symbol_obj(n->data, name, h,
 				    flags, this,
@@ -367,7 +367,7 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 			    (n->data != req_obj->load_object))
 				continue;
 
-			TAILQ_FOREACH(m, &n->data->dload_list, next_sib) {
+			TAILQ_FOREACH(m, &n->data->grpsym_list, next_sib) {
 				if (skip == 1) {
 					if (m->data == req_obj) {
 						skip = 0;

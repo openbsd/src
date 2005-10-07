@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.64 2005/10/06 22:01:58 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.65 2005/10/07 01:26:33 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -84,7 +84,7 @@ dlopen(const char *libname, int flags)
 	if (n == NULL)
 		_dl_exit(5);
 	n->data = object;
-	TAILQ_INSERT_TAIL(&object->dload_list, n, next_sib);
+	TAILQ_INSERT_TAIL(&object->grpsym_list, n, next_sib);
 
 	dynobj = object;
 	while (dynobj) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.17 2005/10/06 21:53:10 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.18 2005/10/07 01:26:34 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -357,7 +357,7 @@ _dl_notify_unload_shlib(elf_object_t *object)
 	struct dep_node *n;
 
 	if (object->opencount + object->grprefcount == 0) {
-		TAILQ_FOREACH(n, &object->dload_list, next_sib) {
+		TAILQ_FOREACH(n, &object->grpsym_list, next_sib) {
 			if (n->data == object)
 				continue;
 			n->data->refcount--;
@@ -415,7 +415,7 @@ _dl_link_sub(elf_object_t *dep, elf_object_t *p)
 	 * and we only want to deal with each one once, check for dups
 	 * before adding new, dup libs will have the same dep pointer.
 	 */
-	TAILQ_FOREACH(n, &_dl_loading_object->dload_list, next_sib)
+	TAILQ_FOREACH(n, &_dl_loading_object->grpsym_list, next_sib)
 		if (n->data == dep)
 			return; /* found, dont bother adding */
 
@@ -423,7 +423,7 @@ _dl_link_sub(elf_object_t *dep, elf_object_t *p)
 	if (n == NULL)
 		_dl_exit(8);
 	n->data = dep;
-	TAILQ_INSERT_TAIL(&_dl_loading_object->dload_list, n, next_sib);
+	TAILQ_INSERT_TAIL(&_dl_loading_object->grpsym_list, n, next_sib);
 	dep->refcount++;
 
 	DL_DEB(("linking dep %s as child of %s\n", dep->load_name,

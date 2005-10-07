@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.93 2005/10/06 21:53:10 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.94 2005/10/07 01:26:34 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -314,7 +314,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	}
 	exe_obj->obj_flags = RTLD_GLOBAL;
 	exe_obj->load_object = exe_obj;
-	TAILQ_INIT(&exe_obj->dload_list);
+	TAILQ_INIT(&exe_obj->grpsym_list);
 	TAILQ_INIT(&exe_obj->grpref_list);
 
 	n = _dl_malloc(sizeof *n);
@@ -327,7 +327,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	if (n == NULL)
 		_dl_exit(9);
 	n->data = exe_obj;
-	TAILQ_INSERT_TAIL(&exe_obj->dload_list, n, next_sib);
+	TAILQ_INSERT_TAIL(&exe_obj->grpsym_list, n, next_sib);
 	exe_obj->opencount++;
 
 	if (_dl_preload != NULL)
@@ -423,7 +423,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	if (n == NULL)
 		_dl_exit(5);
 	n->data = dyn_obj;
-	TAILQ_INSERT_TAIL(&exe_obj->dload_list, n, next_sib);
+	TAILQ_INSERT_TAIL(&exe_obj->grpsym_list, n, next_sib);
 	dyn_obj->refcount++;
 
 	dyn_obj->status |= STAT_RELOC_DONE;

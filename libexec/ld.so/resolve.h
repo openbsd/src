@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.45 2005/10/06 22:01:58 kurt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.46 2005/10/07 01:26:34 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -122,8 +122,8 @@ struct elf_object {
 	u_int32_t	nchains;
 	Elf_Dyn		*dynamic;
 
-	TAILQ_HEAD(,dep_node)	child_list;
-	TAILQ_HEAD(,dep_node)	dload_list;
+	TAILQ_HEAD(,dep_node)	child_list;	/* direct dep libs of object */
+	TAILQ_HEAD(,dep_node)	grpsym_list;	/* ordered complete dep list */
 	TAILQ_HEAD(,dep_node)	grpref_list;	/* refs to other load groups */
 
 	int		refcount;	/* dep libs only */
