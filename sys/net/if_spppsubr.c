@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.36 2005/08/12 21:29:10 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.37 2005/10/07 05:19:34 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -70,6 +70,7 @@
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/if_types.h>
+#include <net/route.h>
 
 #if defined (__FreeBSD__) || defined(__OpenBSD_) || defined(__NetBSD__)
 #include <machine/random.h>
@@ -394,6 +395,7 @@ HIDE void sppp_print_bytes(const u_char *p, u_short len);
 HIDE void sppp_print_string(const char *p, u_short len);
 HIDE void sppp_qflush(struct ifqueue *ifq);
 HIDE void sppp_set_ip_addr(struct sppp *sp, u_long src);
+HIDE void sppp_set_phase(struct sppp *sp);
 
 /* our control protocol descriptors */
 static const struct cp lcp = {
@@ -1907,8 +1909,13 @@ sppp_lcp_up(struct sppp *sp)
 	STDDCL;
 	struct timeval tv;
 
-	if (sp->pp_flags & PP_CISCO)
+	if (sp->pp_flags & PP_CISCO) {
+		int s = splsoftnet();
+		sp->pp_if.if_link_state = LINK_STATE_UP;
+		if_link_state_change(&sp->pp_if);
+		splx(s);
 		return;
+	}
 
  	sp->pp_alivecnt = 0;
  	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
@@ -1950,8 +1957,13 @@ sppp_lcp_down(struct sppp *sp)
 {
 	STDDCL;
 
-	if (sp->pp_flags & PP_CISCO)
+	if (sp->pp_flags & PP_CISCO) {
+		int s = splsoftnet();
+		sp->pp_if.if_link_state = LINK_STATE_DOWN;
+		if_link_state_change(&sp->pp_if);
+		splx(s);
 		return;
+	}
 
 	sppp_down_event(&lcp, sp);
 
@@ -2380,8 +2392,7 @@ sppp_lcp_tlu(struct sppp *sp)
 	else
 		sp->pp_phase = PHASE_NETWORK;
 
-	log(LOG_INFO, SPP_FMT "phase %s\n", SPP_ARGS(ifp),
-	    sppp_phase_name(sp->pp_phase));
+	sppp_set_phase(sp);
 
 	/*
 	 * Open all authentication protocols.  This is even required
@@ -2418,14 +2429,12 @@ sppp_lcp_tlu(struct sppp *sp)
 HIDE void
 sppp_lcp_tld(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
 	int i;
 	u_long mask;
 
 	sp->pp_phase = PHASE_TERMINATE;
 
-	log(LOG_INFO, SPP_FMT "phase %s\n", SPP_ARGS(ifp),
-	    sppp_phase_name(sp->pp_phase));
+	sppp_set_phase(sp);
 
 	/*
 	 * Take upper layers down.  We send the Down event first and
@@ -2443,12 +2452,9 @@ sppp_lcp_tld(struct sppp *sp)
 HIDE void
 sppp_lcp_tls(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
-
 	sp->pp_phase = PHASE_ESTABLISH;
 
-	log(LOG_INFO, SPP_FMT "phase %s\n", SPP_ARGS(ifp),
-	    sppp_phase_name(sp->pp_phase));
+	sppp_set_phase(sp);
 
 	/* Notify lower layer if desired. */
 	if (sp->pp_tls)
@@ -2458,11 +2464,8 @@ sppp_lcp_tls(struct sppp *sp)
 HIDE void
 sppp_lcp_tlf(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
-
 	sp->pp_phase = PHASE_DEAD;
-	log(LOG_INFO, SPP_FMT "phase %s\n", SPP_ARGS(ifp),
-	    sppp_phase_name(sp->pp_phase));
+	sppp_set_phase(sp);
 
 	/* Notify lower layer if desired. */
 	if (sp->pp_tlf)
@@ -4129,14 +4132,12 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 HIDE void
 sppp_phase_network(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
 	int i;
 	u_long mask;
 
 	sp->pp_phase = PHASE_NETWORK;
 
-	log(LOG_INFO, SPP_FMT "phase %s\n", SPP_ARGS(ifp),
-	    sppp_phase_name(sp->pp_phase));
+	sppp_set_phase(sp);
 
 	/* Notify NCPs now. */
 	for (i = 0; i < IDX_COUNT; i++)
@@ -4332,3 +4333,26 @@ sppp_null(struct sppp *unused)
  * hilit-auto-highlight-maxout: 120000
  * End:
  */
+
+HIDE void
+sppp_set_phase(struct sppp *sp)
+{
+	struct ifnet *ifp = &sp->pp_if;
+	int lstate, s;
+
+	log(LOG_INFO, SPP_FMT "phase %s\n", SPP_ARGS(ifp),
+	    sppp_phase_name(sp->pp_phase));
+
+	/* set link state */
+	if (sp->pp_phase == PHASE_NETWORK)
+		lstate = LINK_STATE_UP;
+	else
+		lstate = LINK_STATE_DOWN;
+
+	if (ifp->if_link_state != lstate) {
+		ifp->if_link_state = lstate;
+		s = splsoftnet();
+		if_link_state_change(ifp);
+		splx(s);
+	}
+}
