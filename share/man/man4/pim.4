@@ -24,7 +24,7 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/pim.4,v 1.2 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: pim.4,v 1.4 2005/10/04 08:45:23 jmc Exp $
+.\" $OpenBSD: pim.4,v 1.5 2005/10/07 16:29:10 norby Exp $
 .\" $NetBSD: pim.4,v 1.2 2004/09/12 13:06:14 wiz Exp $
 .\"
 .Dd September 4, 2003
@@ -74,11 +74,14 @@ to routers with no group membership information.
 Both PIM-SM and PIM-DM are fairly complex protocols,
 though PIM-SM is much more complex.
 To enable PIM-SM or PIM-DM multicast routing in a router,
-the user must enable multicast routing and PIM processing in the kernel
+the user must enable multicast forwarding via the
+.Va net.inet.ip.mforwarding
+.Xr sysctl 8
+and PIM processing in the kernel
 (see
 .Sx SYNOPSIS
-about the kernel configuration options),
-and must run a PIM-SM or PIM-DM capable user-level process.
+for the correct kernel configuration option).
+The user must also run a PIM-SM or PIM-DM capable user-level process.
 From a developer's point of view,
 the programming guide described in the
 .Sx "Programming Guide"
@@ -171,7 +174,8 @@ and
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr ip 4 ,
-.Xr multicast 4
+.Xr multicast 4 ,
+.Xr sysctl 8
 .\"
 .Sh STANDARDS
 The PIM-SM protocol is specified in RFC 2362 (to be replaced by

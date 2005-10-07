@@ -24,7 +24,7 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: multicast.4,v 1.3 2005/09/30 20:34:24 jaredy Exp $
+.\" $OpenBSD: multicast.4,v 1.4 2005/10/07 16:29:10 norby Exp $
 .\" $NetBSD: multicast.4,v 1.3 2004/09/12 13:12:26 wiz Exp $
 .\"
 .Dd September 4, 2003
@@ -72,11 +72,10 @@ and Protocol Independent Multicast \- Dense Mode (PIM-DM)
 were developed as well.
 .Pp
 To start multicast routing,
-the user must enable multicast forwarding in the kernel
-(see
-.Sx SYNOPSIS
-about the kernel configuration options),
-and must run a multicast routing capable user-level process,
+the user must enable multicast forwarding via the
+.Va net.inet.ip.mforwarding
+.Xr sysctl 8 .
+The user must also run a multicast routing capable user-level process,
 such as
 .Xr mrouted 8 .
 From a developer's point of view,
@@ -944,7 +943,8 @@ after the previous upcall.
 .Xr ip 4 ,
 .Xr ip6 4 ,
 .Xr pim 4 ,
-.Xr mrouted 8
+.Xr mrouted 8 ,
+.Xr sysctl 8
 .\"
 .Sh AUTHORS
 .An -nosplit
