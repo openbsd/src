@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.57 2005/09/30 20:34:26 jaredy Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.58 2005/10/07 19:43:45 mpf Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -347,6 +347,7 @@ Possible protocols are:
 .Cm pim ,
 .Cm rarp ,
 .Cm sca ,
+.Cm stp ,
 .Cm tcp ,
 and
 .Cm udp .
@@ -599,13 +600,28 @@ True if the packet is an IP multicast packet.
 True if the packet is of ether type
 .Ar proto .
 .Ar proto
-can be a number or name from
-.Xr protocols 5 ,
-such as
+can be a number or one of the names
 .Cm ip ,
+.Cm ip6 ,
 .Cm arp ,
+.Cm rarp ,
+.Cm atalk ,
+.Cm atalkarp ,
+.Cm decnet ,
+.Cm decdts ,
+.Cm decdns ,
+.Cm lanbridge ,
+.Cm lat ,
+.Cm mopdl ,
+.Cm moprc ,
+.Cm pup ,
+.Cm sca ,
+.Cm sprite ,
+.Cm stp ,
+.Cm vexp ,
+.Cm vprod ,
 or
-.Cm rarp .
+.Cm xns .
 These identifiers are also keywords and must be escaped
 using a backslash character
 .Pq Sq \e .
