@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.11 2005/03/28 06:19:58 tedu Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.12 2005/10/07 19:32:39 mpf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -227,6 +227,27 @@ int
 pcap_nametoeproto(const char *s)
 {
 	struct eproto *p = eproto_db;
+
+	while (p->s != 0) {
+		if (strcmp(p->s, s) == 0)
+			return p->p;
+		p += 1;
+	}
+	return PROTO_UNDEF;
+}
+
+#include "llc.h"
+
+/* Static data base of LLC values. */
+static struct eproto llc_db[] = {
+	{ "stp", LLCSAP_8021D },
+	{ (char *)0, 0 }
+};
+
+int
+pcap_nametollc(const char *s)
+{
+	struct eproto *p = llc_db;
 
 	while (p->s != 0) {
 		if (strcmp(p->s, s) == 0)

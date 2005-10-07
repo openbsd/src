@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.13 2005/05/26 17:58:25 camield Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.14 2005/10/07 19:32:39 mpf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.13 2005/05/26 17:58:25 camield Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.14 2005/10/07 19:32:39 mpf Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -106,7 +106,7 @@ pcap_parse()
 %token  DST SRC HOST GATEWAY
 %token  NET MASK PORT LESS GREATER PROTO PROTOCHAIN BYTE
 %token  ARP RARP IP TCP UDP ICMP IGMP IGRP PIM
-%token  ATALK DECNET LAT SCA MOPRC MOPDL
+%token  ATALK DECNET LAT SCA MOPRC MOPDL STP
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
 %token  PF_IFNAME PF_RSET PF_RNR PF_SRNR PF_REASON PF_ACTION
@@ -263,6 +263,7 @@ pname:	  LINK			{ $$ = Q_LINK; }
 	| ICMPV6		{ $$ = Q_ICMPV6; }
 	| AH			{ $$ = Q_AH; }
 	| ESP			{ $$ = Q_ESP; }
+	| STP			{ $$ = Q_STP; }
 	;
 other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| pqual TK_MULTICAST	{ $$ = gen_multicast($1); }

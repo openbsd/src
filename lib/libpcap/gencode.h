@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.11 2003/05/14 08:50:37 canacar Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.12 2005/10/07 19:32:39 mpf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.11 2003/05/14 08:50:37 canacar Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.12 2005/10/07 19:32:39 mpf Exp $ (LBL)
  */
 
 /* Address qualifiers. */
@@ -59,6 +59,7 @@
 #define Q_ESP		19
 
 #define Q_PIM		20
+#define Q_STP		21
 
 /* Directional qualifiers. */
 

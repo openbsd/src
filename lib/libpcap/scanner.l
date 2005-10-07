@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.15 2005/09/27 18:26:57 deraadt Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.16 2005/10/07 19:32:39 mpf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.15 2005/09/27 18:26:57 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.16 2005/10/07 19:32:39 mpf Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -196,6 +196,7 @@ lat		return LAT;
 sca		return SCA;
 moprc		return MOPRC;
 mopdl		return MOPDL;
+stp		return STP;
 
 host		return HOST;
 net		return NET;

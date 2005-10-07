@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.24 2005/06/04 18:00:45 joel Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.25 2005/10/07 19:32:39 mpf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -46,6 +46,7 @@ struct rtentry;
 #include "pcap-int.h"
 
 #include "ethertype.h"
+#include "llc.h"
 #include "gencode.h"
 #include "ppp.h"
 #include <pcap-namedb.h>
@@ -119,6 +120,7 @@ static __inline void syntax(void);
 static void backpatch(struct block *, struct block *);
 static void merge(struct block *, struct block *);
 static struct block *gen_cmp(u_int, u_int, bpf_int32);
+static struct block *gen_cmp_gt(u_int, u_int, bpf_int32);
 static struct block *gen_mcmp(u_int, u_int, bpf_int32, bpf_u_int32);
 static struct block *gen_bcmp(u_int, u_int, const u_char *);
 static struct block *gen_uncond(int);
@@ -464,6 +466,24 @@ gen_cmp(offset, size, v)
 }
 
 static struct block *
+gen_cmp_gt(offset, size, v)
+	u_int offset, size;
+	bpf_int32 v;
+{
+	struct slist *s;
+	struct block *b;
+
+	s = new_stmt(BPF_LD|BPF_ABS|size);
+	s->s.k = offset;
+
+	b = new_block(JMP(BPF_JGT));
+	b->stmts = s;
+	b->s.k = v;
+
+	return b;
+}
+
+static struct block *
 gen_mcmp(offset, size, v, mask)
 	u_int offset, size;
 	bpf_int32 v;
@@ -703,6 +723,20 @@ gen_linktype(proto)
 #endif
 
 	switch (linktype) {
+
+	case DLT_EN10MB:
+		if (proto <= ETHERMTU) {
+			/* This is an LLC SAP value */
+			b0 = gen_cmp_gt(off_linktype, BPF_H, ETHERMTU);
+			gen_not(b0);
+			b1 = gen_cmp(off_linktype + 2, BPF_B, (bpf_int32)proto);
+			gen_and(b0, b1);
+			return b1;
+		} else {
+			/* This is an Ethernet type */
+			return gen_cmp(off_linktype, BPF_H, (bpf_int32)proto);
+		}
+		break;
 
 	case DLT_SLIP:
 		return gen_false();
@@ -1128,6 +1162,9 @@ gen_host(addr, mask, proto, dir)
 	case Q_PIM:
 		bpf_error("'pim' modifier applied to host");
 
+	case Q_STP:
+		bpf_error("'stp' modifier applied to host");
+
 	case Q_ATALK:
 		bpf_error("ATALK host filtering not implemented");
 
@@ -1205,6 +1242,9 @@ gen_host6(addr, mask, proto, dir)
 
 	case Q_PIM:
 		bpf_error("'pim' modifier applied to host");
+
+	case Q_STP:
+		bpf_error("'stp' modifier applied to host");
 
 	case Q_ATALK:
 		bpf_error("ATALK host filtering not implemented");
@@ -1377,6 +1417,10 @@ gen_proto_abbrev(proto)
 
 	case Q_MOPRC:
 		b1 =  gen_linktype(ETHERTYPE_MOPRC);
+		break;
+
+	case Q_STP:
+		b1 = gen_linktype(LLCSAP_8021D);
 		break;
 
 #ifdef INET6
@@ -1629,8 +1673,11 @@ lookup_proto(name, proto)
 	case Q_LINK:
 		/* XXX should look up h/w protocol type based on linktype */
 		v = pcap_nametoeproto(name);
-		if (v == PROTO_UNDEF)
-			bpf_error("unknown ether proto '%s'", name);
+		if (v == PROTO_UNDEF) {
+			v = pcap_nametollc(name);
+			if (v == PROTO_UNDEF)
+				bpf_error("unknown ether proto '%s'", name);
+		}
 		break;
 
 	default:
@@ -2020,6 +2067,10 @@ gen_proto(v, proto, dir)
 
 	case Q_PIM:
 		bpf_error("'pim proto' is bogus");
+		/* NOTREACHED */
+
+	case Q_STP:
+		bpf_error("'stp proto' is bogus");
 		/* NOTREACHED */
 
 #ifdef INET6
