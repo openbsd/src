@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.18 2005/06/08 17:03:02 henning Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.19 2005/10/07 06:02:33 martin Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -587,8 +587,11 @@ bmac_rint(void *v)
 		/* XXX Sometimes bmac reads one extra byte. */
 		if (datalen == ETHER_MAX_LEN + 1)
 			datalen--;
-		m = bmac_get(sc, data, datalen);
 
+		/* Trim the CRC. */
+		datalen -= ETHER_CRC_LEN;
+
+		m = bmac_get(sc, data, datalen);
 		if (m == NULL) {
 			ifp->if_ierrors++;
 			goto next;
@@ -745,9 +748,6 @@ bmac_get(struct bmac_softc *sc, caddr_t pkt, int totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	/* - XXX
-	m->m_flags |= M_HASFCS;
-	*/
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
