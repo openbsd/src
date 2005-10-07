@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.50 2005/10/06 20:33:39 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.51 2005/10/07 06:33:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1818,7 +1818,7 @@ iwi_set_chan(struct iwi_softc *sc, struct ieee80211_channel *chan)
 	struct iwi_scan scan;
 
 	bzero(&scan, sizeof scan);
-	memset(scan.type, 26, IWI_SCAN_TYPE_PASSIVE);
+	memset(scan.type, IWI_SCAN_TYPE_PASSIVE, sizeof scan.type);
 	scan.passive = htole16(2000);
 	scan.channels[0] = 1 |
 	    (IEEE80211_IS_CHAN_5GHZ(chan) ? IWI_CHAN_5GHZ : IWI_CHAN_2GHZ);
@@ -1840,10 +1840,10 @@ iwi_scan(struct iwi_softc *sc)
 
 	if (ic->ic_des_esslen != 0) {
 		scan.bdirected = htole16(40);
-		memset(scan.type, 26, IWI_SCAN_TYPE_BDIRECTED);
+		memset(scan.type, IWI_SCAN_TYPE_BDIRECTED, sizeof scan.type);
 	} else {
 		scan.broadcast = htole16(40);
-		memset(scan.type, 26, IWI_SCAN_TYPE_BROADCAST);
+		memset(scan.type, IWI_SCAN_TYPE_BROADCAST, sizeof scan.type);
 	}
 
 	p = scan.channels;
