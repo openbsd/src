@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.26 2005/10/07 21:17:42 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.27 2005/10/07 21:23:51 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -607,7 +607,7 @@ void lge_attach(parent, self, aux)
 	ifmedia_init(&sc->lge_mii.mii_media, 0, lge_ifmedia_upd,
 		     lge_ifmedia_sts);
 	DPRINTFN(5, ("mii_attach\n"));
-	mii_attach(self, &sc->lge_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(&sc->sc_dv, &sc->lge_mii, 0xffffffff, MII_PHY_ANY,
 		   MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&sc->lge_mii.mii_phys) == NULL) {
