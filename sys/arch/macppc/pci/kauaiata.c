@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.4 2005/06/08 19:08:23 drahn Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.5 2005/10/07 17:21:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -79,6 +79,8 @@ kauaiatamatch(struct device *parent, void *match, void *aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_APPLE_UNINORTH_ATA:
 		case PCI_PRODUCT_APPLE_INTREPID_ATA:
+		case PCI_PRODUCT_APPLE_K2_ATA:
+		case PCI_PRODUCT_APPLE_SHASTA_ATA:
 			return (1);
 		}
 		break;
@@ -100,13 +102,10 @@ kauaiataattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 
-	/* XXX assumes that this is /pci@f400000/ata-6 */
-
-	/*
-vendor 0x106b product 0x003b (class undefined unknown subclass 0x00, rev 0x00) at pci2 dev 13 function 0 not configured
-	*/
-
-	node = OF_finddevice("/pci@f4000000/ata-6");
+	/* XXX not neccessarily the right device */
+	node = OF_finddevice("uata");
+	if (node == -1)
+		node = OF_finddevice("/pci@f4000000/ata-6");
 
 	/*
 	 * XXX - need to compare node and PCI id to verify this is the 
