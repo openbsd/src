@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.2 2005/10/06 13:36:53 niallo Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.3 2005/10/07 23:59:56 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -33,9 +33,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "diff.h"
 #include "log.h"
 #include "rcs.h"
+#include "diff.h"
 #include "rcsprog.h"
 
 extern char *__progname;

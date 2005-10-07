@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.80 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.81 2005/10/07 23:59:56 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,9 +38,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "diff.h"
 #include "log.h"
 #include "rcs.h"
+#include "diff.h"
 #include "strtab.h"
 
 #define RCS_BUFSIZE	16384
@@ -1452,23 +1452,9 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date)
 	time_t now;
 	struct passwd *pw;
 	struct rcs_delta *rdp;
-	RCSNUM *tmprev = NULL;
 
 	if (rev == RCS_HEAD_REV) {
-		const RCSNUM *head_rev;
-		char version_str[10];
-
-		head_rev = rcs_head_get(rf);
-		if ((tmprev = rcsnum_alloc()) == NULL) {
-			cvs_log(LP_ERR, "could not allocate rcsnum");
-			return (-1);
-		}
-		if (rcsnum_cpy(head_rev, tmprev, sizeof(version_str)) != 0) {
-			cvs_log(LP_ERR, "could not perform rcsnum_cpy");
-			rcsnum_free(tmprev);
-			return (-1);
-		}
-		rev = rcsnum_inc(tmprev);
+		rev = rcsnum_inc(rf->rf_head);
 	} else if ((rdp = rcs_findrev(rf, rev)) != NULL) {
 		rcs_errno = RCS_ERR_DUPENT;
 		return (-1);
@@ -1493,8 +1479,6 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date)
 		return (-1);
 	}
 	rcsnum_cpy(rev, rdp->rd_num, 0);
-	if (tmprev != NULL)
-		rcsnum_free(tmprev);
 
 	if ((rdp->rd_author = cvs_strdup(pw->pw_name)) == NULL) {
 		rcs_freedelta(rdp);
@@ -1520,6 +1504,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date)
 
 	TAILQ_INSERT_HEAD(&(rf->rf_delta), rdp, rd_list);
 	rf->rf_ndelta++;
+
 	/* not synced anymore */
 	rf->rf_flags &= ~RCS_SYNCED;
 
@@ -2969,6 +2954,34 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
 			i += strlen(expbuf);
 		}
 	}
+
+	return (0);
+}
+
+/*
+ * rcs_deltatext_set()
+ *
+ * Set deltatext for <rev> in RCS file <rfp> to <dtext>
+ * Returns -1 on error, 0 on success. 
+ */
+int
+rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
+{
+	size_t len;
+	struct rcs_delta *rdp;
+
+	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
+		return (-1);
+
+	if (rdp->rd_text != NULL)
+		free(rdp->rd_text);
+
+	len = strlen(dtext);
+	if ((rdp->rd_text = (u_char *)malloc(len)) == NULL)
+		return (-1);
+
+	rdp->rd_tlen = len - 1;
+	strlcpy(rdp->rd_text, dtext, len);
 
 	return (0);
 }
