@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.27 2005/10/07 21:23:51 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.28 2005/10/07 21:30:38 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -589,6 +589,8 @@ void lge_attach(parent, self, aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	if (CSR_READ_4(sc, LGE_GMIIMODE) & LGE_GMIIMODE_PCSENH)
 		sc->lge_pcs = 1;
