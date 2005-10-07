@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.23 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.24 2005/10/07 20:57:21 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -124,7 +124,6 @@ int lge_probe(struct device *, void *, void *);
 void lge_attach(struct device *, struct device *, void *);
 
 int lge_alloc_jumbo_mem(struct lge_softc *);
-void lge_free_jumbo_mem(struct lge_softc *);
 void *lge_jalloc(struct lge_softc *);
 void lge_jfree(caddr_t, u_int, void *);
 
@@ -428,17 +427,17 @@ void lge_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	bus_size_t		iosize;
+	bus_size_t		size;
 	bus_dma_segment_t	seg;
 	bus_dmamap_t		dmamap;
-	int			s, rseg;
+	int			rseg;
 	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int32_t		command;
+	pcireg_t		command;
+#ifndef LGE_USEIOSPACE
+	pcireg_t		memtype;
+#endif
 	struct ifnet		*ifp;
-	int			error = 0;
 	caddr_t			kva;
-
-	s = splimp();
 
 	bzero(sc, sizeof(struct lge_softc));
 
@@ -476,36 +475,26 @@ void lge_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 	DPRINTFN(5, ("Map control/status regs\n"));
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
-#ifdef LGE_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf("%s: failed to enable I/O ports!\n",
-		       sc->sc_dv.dv_xname);
-		error = ENXIO;
-		goto fail;
-	}
-	/*
-	 * Map control/status registers.
-	 */
 	DPRINTFN(5, ("pci_mapreg_map\n"));
+#ifdef LGE_USEIOSPACE
 	if (pci_mapreg_map(pa, LGE_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->lge_btag, &sc->lge_bhandle, NULL, &iosize, 0)) {
+	    &sc->lge_btag, &sc->lge_bhandle, NULL, &size, 0)) {
 		printf(": can't map i/o space\n");
-		goto fail;
+		return;
 	}
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf("%s: failed to enable memory mapping!\n",
-		       sc->sc_dv.dv_xname);
-		error = ENXIO;
-		goto fail;
-	}
-	DPRINTFN(5, ("pci_mapreg_map\n"));
-	if (pci_mapreg_map(pa, LGE_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->lge_btag, &sc->lge_bhandle, NULL, &iosize, 0)) {
+	memtype = pci_mapreg_type(pc, pa->pa_tag, LGE_PCI_LOMEM);
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		if (pci_mapreg_map(pa, LGE_PCI_LOMEM,
+				   memtype, 0, &sc->lge_btag, &sc->lge_bhandle,
+				   NULL, &size, 0) == 0)
+			break;
+	default:
 		printf(": can't map mem space\n");
-		goto fail;
+		return;
 	}
 #endif
 
@@ -544,7 +533,7 @@ void lge_attach(parent, self, aux)
 	/*
 	 * A Level 1 chip was detected. Inform the world.
 	 */
-	printf(": address: %s\n", ether_sprintf(eaddr));
+	printf(", address %s\n", ether_sprintf(eaddr));
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
@@ -553,7 +542,7 @@ void lge_attach(parent, self, aux)
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct lge_list_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		goto fail_1;
+		goto fail_2;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
@@ -562,7 +551,7 @@ void lge_attach(parent, self, aux)
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc->sc_dv.dv_xname, sizeof(struct lge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_1;
+		goto fail_2;
 	}
 	DPRINTFN(5, ("bus_dmamem_create\n"));
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct lge_list_data), 1,
@@ -572,7 +561,7 @@ void lge_attach(parent, self, aux)
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 				 sizeof(struct lge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_1;
+		goto fail_2;
 	}
 	DPRINTFN(5, ("bus_dmamem_load\n"));
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
@@ -582,7 +571,7 @@ void lge_attach(parent, self, aux)
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 				 sizeof(struct lge_list_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_1;
+		goto fail_2;
 	}
 
 	DPRINTFN(5, ("bzero\n"));
@@ -594,7 +583,7 @@ void lge_attach(parent, self, aux)
 	if (lge_alloc_jumbo_mem(sc)) {
 		printf("%s: jumbo buffer allocation failed\n",
 		       sc->sc_dv.dv_xname);
-		goto fail_1;
+		goto fail_2;
 	}
 
 	ifp = &sc->arpcom.ac_if;
@@ -622,9 +611,11 @@ void lge_attach(parent, self, aux)
 	sc->lge_mii.mii_readreg = lge_miibus_readreg;
 	sc->lge_mii.mii_writereg = lge_miibus_writereg;
 	sc->lge_mii.mii_statchg = lge_miibus_statchg;
+	DPRINTFN(5, ("ifmedia_init\n"));
 	ifmedia_init(&sc->lge_mii.mii_media, 0, lge_ifmedia_upd,
 		     lge_ifmedia_sts);
-	mii_attach(&sc->sc_dv, &sc->lge_mii, 0xffffffff, MII_PHY_ANY,
+	DPRINTFN(5, ("mii_attach\n"));
+	mii_attach(self, &sc->lge_mii, 0xffffffff, MII_PHY_ANY,
 		   MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&sc->lge_mii.mii_phys) == NULL) {
@@ -632,9 +623,10 @@ void lge_attach(parent, self, aux)
 		ifmedia_add(&sc->lge_mii.mii_media, IFM_ETHER|IFM_MANUAL,
 			    0, NULL);
 		ifmedia_set(&sc->lge_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-	}
-	else
+	} else {
+		DPRINTFN(5, ("ifmedia_set\n"));
 		ifmedia_set(&sc->lge_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
 
 	/*
 	 * Call MI attach routine.
@@ -646,11 +638,13 @@ void lge_attach(parent, self, aux)
 	DPRINTFN(5, ("timeout_set\n"));
 	timeout_set(&sc->lge_timeout, lge_tick, sc);
 	timeout_add(&sc->lge_timeout, hz);
+	return;
+
+fail_2:
+	pci_intr_disestablish(pc, sc->lge_intrhand);
 
 fail_1:
-	bus_space_unmap(sc->lge_btag, sc->lge_bhandle, iosize);
-fail:
-	splx(s);
+	bus_space_unmap(sc->lge_btag, sc->lge_bhandle, size);
 }
 
 /*
@@ -717,29 +711,30 @@ int lge_newbuf(sc, c, m)
 	struct mbuf		*m;
 {
 	struct mbuf		*m_new = NULL;
-	caddr_t			*buf = NULL;
 
 	if (m == NULL) {
+		caddr_t buf = NULL;
+
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			return(ENOBUFS);
-		}
+		if (m_new == NULL)
+			return (ENOBUFS);
 
 		/* Allocate the jumbo buffer */
 		buf = lge_jalloc(sc);
 		if (buf == NULL) {
 			m_freem(m_new);
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
+
 		/* Attach the buffer to the mbuf */
-		m_new->m_data = m_new->m_ext.ext_buf = (void *)buf;
-		m_new->m_flags |= M_EXT;
-		m_new->m_ext.ext_size = m_new->m_pkthdr.len =
-			m_new->m_len = LGE_JLEN;
-		m_new->m_ext.ext_free = lge_jfree;
-		m_new->m_ext.ext_arg = sc;
-		MCLINITREFERENCE(m_new);
+		m_new->m_len = m_new->m_pkthdr.len = LGE_JLEN;
+		MEXTADD(m_new, buf, LGE_JLEN, 0, lge_jfree, sc);
 	} else {
+		/*
+		 * We're re-using a previously allocated mbuf;
+		 * be sure to re-init pointers and lengths to
+		 * default values.
+		 */
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
 		m_new->m_data = m_new->m_ext.ext_buf;
@@ -773,7 +768,7 @@ int lge_newbuf(sc, c, m)
 	CSR_WRITE_4(sc, LGE_RXDESC_ADDR_LO, vtophys(c));
 	LGE_INC(sc->lge_cdata.lge_rx_prod, LGE_RX_LIST_CNT);
 
-	return(0);
+	return (0);
 }
 
 int lge_alloc_jumbo_mem(sc)
@@ -1082,7 +1077,7 @@ void lge_tick(xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	CSR_WRITE_4(sc, LGE_STATSIDX, LGE_STATS_SINGLE_COLL_PKTS);
 	ifp->if_collisions += CSR_READ_4(sc, LGE_STATSVAL);
@@ -1283,10 +1278,10 @@ void lge_init(xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	int			s;
 
+	s = splnet();
+
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
-
-	s = splimp();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1456,7 +1451,7 @@ int lge_ioctl(ifp, command, data)
 	struct mii_data		*mii;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch(command) {
 	case SIOCSIFADDR:
@@ -1474,9 +1469,9 @@ int lge_ioctl(ifp, command, data)
                 }
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		else
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCSIFFLAGS:
@@ -1493,7 +1488,6 @@ int lge_ioctl(ifp, command, data)
 				CSR_WRITE_4(sc, LGE_MODE1,
 				    LGE_MODE1_RX_PROMISC);
 			} else {
-				ifp->if_flags &= ~IFF_RUNNING;
 				lge_init(sc);
 			}
 		} else {
@@ -1501,7 +1495,6 @@ int lge_ioctl(ifp, command, data)
 				lge_stop(sc);
 		}
 		sc->lge_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
