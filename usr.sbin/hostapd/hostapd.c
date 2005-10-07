@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.20 2005/10/07 21:52:40 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.21 2005/10/07 22:32:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -47,6 +47,7 @@
 #include <err.h>
 
 #include "hostapd.h"
+#include "iapp.h"
 
 void	 hostapd_usage(void);
 void	 hostapd_udp_init(struct hostapd_config *);

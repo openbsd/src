@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.7 2005/08/17 13:18:33 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.8 2005/10/07 22:32:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -40,6 +40,7 @@
 #include <unistd.h>
 
 #include "hostapd.h"
+#include "iapp.h"
 
 void
 hostapd_iapp_init(struct hostapd_config *cfg)

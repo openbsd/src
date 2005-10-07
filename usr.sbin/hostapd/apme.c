@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.4 2005/06/17 19:13:35 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.5 2005/10/07 22:32:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -43,6 +43,7 @@
 #include <unistd.h>
 
 #include "hostapd.h"
+#include "iapp.h"
 
 void	 hostapd_apme_frame(struct hostapd_config *, u_int8_t *, u_int);
 

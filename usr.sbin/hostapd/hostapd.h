@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.7 2005/09/30 16:50:03 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.8 2005/10/07 22:32:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -35,8 +35,6 @@
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
 
-#define IEEE80211_IAPP_VERSION	0
-
 /*
  * hostapd (IAPP) <-> Host AP (APME)
  */
@@ -50,36 +48,6 @@ struct hostapd_node {
 	u_int16_t	ni_rxseq;
 	u_int16_t	ni_rssi;
 };
-
-/*
- * IAPP <-> IAPP
- */
-
-struct ieee80211_iapp_frame {
-	u_int8_t	i_version;
-	u_int8_t	i_command;
-	u_int16_t	i_identifier;
-	u_int16_t	i_length;
-} __packed;
-
-enum ieee80211_iapp_frame_type {
-	IEEE80211_IAPP_FRAME_ADD_NOTIFY			= 0,
-	IEEE80211_IAPP_FRAME_MOVE_NOTIFY		= 1,
-	IEEE80211_IAPP_FRAME_MOVE_RESPONSE		= 2,
-	IEEE80211_IAPP_FRAME_SEND_SECURITY_BLOCK	= 3,
-	IEEE80211_IAPP_FRAME_ACK_SECURITY_BLOCK		= 4,
-	IEEE80211_IAPP_FRAME_CACHE_NOTIFY		= 5,
-	IEEE80211_IAPP_FRAME_CACHE_RESPONSE		= 6,
-	IEEE80211_IAPP_FRAME_HOSTAPD_RADIOTAP		= 12,
-	IEEE80211_IAPP_FRAME_HOSTAPD_PCAP		= 13
-};
-
-struct ieee80211_iapp_add_notify {
-	u_int8_t	a_length;
-	u_int8_t	a_reserved;
-	u_int8_t	a_macaddr[IEEE80211_ADDR_LEN];
-	u_int16_t	a_seqnum;
-} __packed;
 
 /*
  * IAPP -> switches (LLC)
@@ -300,10 +268,6 @@ struct hostapd_config {
 	TAILQ_HEAD(, hostapd_table)	c_tables;
 	TAILQ_HEAD(, hostapd_frame)	c_frames;
 };
-
-#define IAPP_PORT	3517	/* XXX this should be added to /etc/services */
-#define IAPP_MCASTADDR	"224.0.1.178"
-#define IAPP_MAXSIZE	512
 
 #define	HOSTAPD_USER	"_hostapd"
 #define HOSTAPD_CONFIG	"/etc/hostapd.conf"

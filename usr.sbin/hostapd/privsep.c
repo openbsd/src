@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.13 2005/08/17 13:18:33 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.14 2005/10/07 22:32:52 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -50,6 +50,7 @@
 #include <unistd.h>
 
 #include "hostapd.h"
+#include "iapp.h"
 
 enum hostapd_cmd_types {
 	PRIV_APME_BSSID,	/* Get the Host AP's BSSID */
