@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.70 2005/10/02 16:44:32 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.71 2005/10/07 23:24:42 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -51,7 +51,7 @@ struct em_softc *em_adapter_list = NULL;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "2.1.7";
+char em_driver_version[] = "3.2.15";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -94,6 +94,13 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_IAMT },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_COPPER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_FIBER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_SERDES },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_COPPER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_FIBER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_SERDES },
 };
 
 /*********************************************************************
@@ -260,12 +267,18 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	 * Set the max frame size assuming standard ethernet
 	 * sized frames
 	 */
-	if (sc->hw.mac_type == em_82573) {
-		sc->hw.max_frame_size = 
-		    ETHER_MAX_LEN;
-	} else {
-		sc->hw.max_frame_size = 
-		    MAX_JUMBO_FRAME_SIZE + ETHER_CRC_LEN;
+	switch (sc->hw.mac_type) {
+		case em_82571:
+		case em_82572:
+			sc->hw.max_frame_size = 10500;
+			break;
+		case em_82573:
+			/* 82573 does not support Jumbo frames */
+			sc->hw.max_frame_size = ETHER_MAX_LEN;
+			break;
+		default:
+			sc->hw.max_frame_size =
+			    MAX_JUMBO_FRAME_SIZE + ETHER_CRC_LEN;
 	}
 
 	sc->hw.min_frame_size = 
@@ -466,7 +479,7 @@ em_start(struct ifnet *ifp)
 int
 em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
-	int		error = 0;
+	int		max_frame_size, error = 0;
 	struct ifreq   *ifr = (struct ifreq *) data;
 	struct em_softc *sc = ifp->if_softc;
 	EM_LOCK_STATE();
@@ -498,10 +511,20 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFMTU (Set Interface MTU)");
-		if (ifr->ifr_mtu < ETHERMIN ||
-		    ifr->ifr_mtu > MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN || \
-			/* 82573 does not support Jumbo frames */
-			(sc->hw.mac_type == em_82573 && ifr->ifr_mtu > ETHERMTU)) {
+		switch (sc->hw.mac_type) {
+			case em_82571:
+			case em_82572:
+				max_frame_size = 10500;
+				break;
+			case em_82573:
+				/* 82573 does not support Jumbo frames */
+				max_frame_size = ETHER_MAX_LEN;
+				break;
+			default:
+				max_frame_size = MAX_JUMBO_FRAME_SIZE;
+		}
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu >
+		    max_frame_size - ETHER_HDR_LEN - ETHER_CRC_LEN) {
 			error = EINVAL;
 		} else if (ifp->if_mtu != ifr->ifr_mtu) {
 			ifp->if_mtu = ifr->ifr_mtu;
@@ -626,29 +649,32 @@ em_init_locked(struct em_softc *sc)
 	/* Packet Buffer Allocation (PBA)
 	 * Writing PBA sets the receive portion of the buffer
 	 * the remainder is used for the transmit buffer.
-	 *
-	 * Devices before the 82547 had a Packet Buffer of 64K.
-	 *   Default allocation: PBA=48K for Rx, leaving 16K for Tx.
-	 * After the 82547 the buffer was reduced to 40K.
-	 *   Default allocation: PBA=30K for Rx, leaving 10K for Tx.
-	 *   Note: default does not leave enough room for Jumbo Frame >10k.
 	 */
-	if(sc->hw.mac_type < em_82547) {
-		/* Total FIFO is 64K */
-		if(sc->rx_buffer_len > EM_RXBUFFER_8192)
-			pba = E1000_PBA_40K; /* 40K for Rx, 24K for Tx */
-		else
-			pba = E1000_PBA_48K; /* 48K for Rx, 16K for Tx */
-	} else {
-		/* Total FIFO is 40K */
-		if(sc->hw.max_frame_size > EM_RXBUFFER_8192) {
-			pba = E1000_PBA_22K; /* 22K for Rx, 18K for Tx */
-		} else {
-		        pba = E1000_PBA_30K; /* 30K for Rx, 10K for Tx */
-		}
-		sc->tx_fifo_head = 0;
-		sc->tx_head_addr = pba << EM_TX_HEAD_ADDR_SHIFT;
-		sc->tx_fifo_size = (E1000_PBA_40K - pba) << EM_PBA_BYTES_SHIFT;
+	switch (sc->hw.mac_type) {
+	case em_82547:
+	case em_82547_rev_2: /* 82547: Total Packet Buffer is 40K */
+	    if (sc->hw.max_frame_size > EM_RXBUFFER_8192)
+		    pba = E1000_PBA_22K; /* 22K for Rx, 18K for Tx */
+	    else
+		    pba = E1000_PBA_30K; /* 30K for Rx, 10K for Tx */
+	    sc->tx_fifo_head = 0;
+	    sc->tx_head_addr = pba << EM_TX_HEAD_ADDR_SHIFT;
+	    sc->tx_fifo_size = (E1000_PBA_40K - pba) << EM_PBA_BYTES_SHIFT;
+	    break;
+	case em_82571: /* 82571: Total Packet Buffer is 48K */
+	case em_82572: /* 82572: Total Packet Buffer is 48K */
+	    pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
+	    break;
+	case em_82573: /* 82573: Total Packet Buffer is 32K */
+	    /* Jumbo frames not supported */
+	    pba = E1000_PBA_12K; /* 12K for Rx, 20K for Tx */
+	    break;
+	default:
+	    /* Devices before 82547 had a Packet Buffer of 64K.   */
+	    if (sc->hw.max_frame_size > EM_RXBUFFER_8192)
+		pba = E1000_PBA_40K; /* 40K for Rx, 24K for Tx */
+	    else
+		pba = E1000_PBA_48K; /* 48K for Rx, 16K for Tx */
 	}
 	INIT_DEBUGOUT1("em_init: pba=%dK",pba);
 	E1000_WRITE_REG(&sc->hw, PBA, pba);
@@ -1389,10 +1415,10 @@ em_identify_hardware(struct em_softc *sc)
 	if (em_set_mac_type(&sc->hw))
 		printf("%s: Unknown MAC Type\n", sc->sc_dv.dv_xname);
 
-	if(sc->hw.mac_type == em_82541 ||
-	   sc->hw.mac_type == em_82541_rev_2 ||
-	   sc->hw.mac_type == em_82547 ||
-	   sc->hw.mac_type == em_82547_rev_2)
+	if (sc->hw.mac_type == em_82541 ||
+	    sc->hw.mac_type == em_82541_rev_2 ||
+	    sc->hw.mac_type == em_82547 ||
+	    sc->hw.mac_type == em_82547_rev_2)
 		sc->hw.phy_init_script = TRUE;
 }
 
@@ -1744,13 +1770,13 @@ em_allocate_transmit_structures(struct em_softc *sc)
 					     M_NOWAIT))) {
 		printf("%s: Unable to allocate tx_buffer memory\n", 
 		       sc->sc_dv.dv_xname);
-		return ENOMEM;
+		return (ENOMEM);
 	}
 
 	bzero(sc->tx_buffer_area,
 	      sizeof(struct em_buffer) * sc->num_tx_desc);
 
-	return 0;
+	return (0);
 }
 
 /*********************************************************************
@@ -1835,7 +1861,7 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	/* Program the Transmit Control Register */
 	reg_tctl = E1000_TCTL_PSP | E1000_TCTL_EN |
 		   (E1000_COLLISION_THRESHOLD << E1000_CT_SHIFT);
-	if (sc->hw.mac_type >= em_82573)
+	if (sc->hw.mac_type >= em_82571)
 		reg_tctl |= E1000_TCTL_MULR;
 	if (sc->link_duplex == 1) {
 		reg_tctl |= E1000_FDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
@@ -2170,11 +2196,11 @@ em_setup_receive_structures(struct em_softc *sc)
 	    (sizeof(struct em_rx_desc)) * sc->num_rx_desc);
 
 	if (em_allocate_receive_structures(sc))
-		return ENOMEM;
+		return (ENOMEM);
 
 	/* Setup our descriptor pointers */
 	sc->next_rx_desc_to_check = 0;
-	return(0);
+	return (0);
 }
 
 /*********************************************************************
@@ -2771,7 +2797,7 @@ em_update_stats_counters(struct em_softc *sc)
 	sc->stats.rxerrc +
 	sc->stats.crcerrs +
 	sc->stats.algnerrc +
-	sc->stats.rlec +
+	sc->stats.rlec + sc->stats.rnbc +
 	sc->stats.mpc + sc->stats.cexterr;
 
 	/* Tx Errors */
@@ -2791,19 +2817,21 @@ em_print_debug_info(struct em_softc *sc)
 	const char * const unit = sc->sc_dv.dv_xname;
 	uint8_t *hw_addr = sc->hw.hw_addr;
 
-        printf("%s: Adapter hardware address = %p \n", unit, hw_addr);
-	printf("%s:CTRL  = 0x%x\n", unit, 
-		E1000_READ_REG(&sc->hw, CTRL)); 
-	printf("%s:RCTL  = 0x%x PS=(0x8402)\n", unit, 
-		E1000_READ_REG(&sc->hw, RCTL));
-        printf("%s:tx_int_delay = %d, tx_abs_int_delay = %d\n", unit,
-              E1000_READ_REG(&sc->hw, TIDV),
-              E1000_READ_REG(&sc->hw, TADV));
-        printf("%s:rx_int_delay = %d, rx_abs_int_delay = %d\n", unit,
-              E1000_READ_REG(&sc->hw, RDTR),
-              E1000_READ_REG(&sc->hw, RADV));
+	printf("%s: Adapter hardware address = %p \n", unit, hw_addr);
+	printf("%s: CTRL = 0x%x RCTL = 0x%x \n", unit,
+		E1000_READ_REG(&sc->hw, CTRL),
+		E1000_READ_REG(&sc->hw, CTRL));
+	printf("%s: Packet buffer = Tx=%dk Rx=%dk \n", unit,
+		((E1000_READ_REG(&sc->hw, PBA) & 0xffff0000) >> 16),\
+		(E1000_READ_REG(&sc->hw, PBA) & 0xffff) );
+	printf("%s: tx_int_delay = %d, tx_abs_int_delay = %d\n", unit,
+		E1000_READ_REG(&sc->hw, TIDV),
+		E1000_READ_REG(&sc->hw, TADV));
+	printf("%s: rx_int_delay = %d, rx_abs_int_delay = %d\n", unit,
+		E1000_READ_REG(&sc->hw, RDTR),
+		E1000_READ_REG(&sc->hw, RADV));
 
-	printf("%s: fifo workaround = %lld, fifo_reset = %lld\n", unit,
+	printf("%s: fifo workaround = %lld, fifo_reset_count = %lld\n", unit,
 		(long long)sc->tx_fifo_wrk_cnt,
 		(long long)sc->tx_fifo_reset_cnt);
 	printf("%s: hw tdh = %d, hw tdt = %d\n", unit,
