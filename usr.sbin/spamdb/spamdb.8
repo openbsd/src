@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.7 2005/05/16 17:31:17 jmc Exp $
+.\"	$OpenBSD: spamdb.8,v 1.8 2005/10/07 21:41:24 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -75,10 +75,13 @@ or
 option.
 .El
 .Pp
-If adding/deleting a SPAMTRAP address
+If adding or deleting a SPAMTRAP address
 .Pq Fl T ,
 .Ar key
-should be specified as an email address.
+should be specified as an email address:
+.Pp
+.Dl <spamtrap@mydomain.org>
+.Pp
 Otherwise
 .Ar key
 should be a numerical IP address.
