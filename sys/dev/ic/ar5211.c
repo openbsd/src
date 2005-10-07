@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.23 2005/10/04 13:50:00 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.24 2005/10/07 22:03:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -2011,7 +2011,7 @@ ar5k_ar5211_set_power(struct ath_hal *hal, HAL_POWER_MODE mode,
 		/* Fail if the AR5211 didn't wake up */
 		if (i <= 0)
 			return (AH_FALSE);
-		
+
 		staid &= ~AR5K_AR5211_STA_ID1_PWR_SV;
 		break;
 
@@ -2511,7 +2511,7 @@ ar5k_ar5211_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int freq,
 		AR5K_REG_WAIT(i);
 		AR5K_REG_WRITE((u_int32_t)rf[i].rf_register,
 		    rf[i].rf_value[freq]);
-	}	
+	}
 
 	hal->ah_rf_gain = HAL_RFGAIN_INACTIVE;
 }

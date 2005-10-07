@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212var.h,v 1.8 2005/07/30 17:13:17 reyk Exp $	*/
+/*	$OpenBSD: ar5212var.h,v 1.9 2005/10/07 22:03:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -745,7 +745,7 @@ struct ar5k_ar5212_ini_mode {
 		{ 0x00000000, 0x00000000, 0x00000000, 0x00000108, 0x00000000 }	\
 	} },									\
 	{ 0x801c, AR5K_INI_FLAG_BOTH, {						\
-		{ 0x128d8fa7, 0x09880fcf, 0x04e00f95, 0x128d8fab, 0x09880fcf },	\
+		{ 0x128d8fa7, 0x09880fcf, 0x04e00f95, 0x128d8fab, 0x09880fcf }, \
 		{ 0x128d93a7, 0x098813cf, 0x04e01395, 0x128d93ab, 0x098813cf }	\
 	} },									\
 	{ 0x9824, AR5K_INI_FLAG_BOTH, {						\
