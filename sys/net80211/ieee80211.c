@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.13 2005/09/08 13:24:52 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.14 2005/10/07 23:30:02 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 	bpfattach(&ic->ic_rawbpf, ifp, DLT_IEEE802_11,
-	    sizeof(struct ieee80211_frame_addr4)); 
+	    sizeof(struct ieee80211_frame_addr4));
 #endif
 	ieee80211_crypto_attach(ifp);
 

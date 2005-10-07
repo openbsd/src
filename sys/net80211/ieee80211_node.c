@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.11 2005/09/13 12:11:03 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.12 2005/10/07 23:30:02 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -861,7 +861,8 @@ ieee80211_clean_nodes(struct ieee80211com *ic)
 	u_int gen = ic->ic_scangen++;		/* NB: ok 'cuz single-threaded*/
 
 	IEEE80211_NODE_LOCK(ic);
-	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree); ni != NULL; ni = next_ni) {
+	for (ni = RB_MIN(ieee80211_tree, &ic->ic_tree);
+	    ni != NULL; ni = next_ni) {
 		next_ni = RB_NEXT(ieee80211_tree, &ic->ic_tree, ni);
 		if (ic->ic_nnodes <= ic->ic_max_nnodes)
 			break;
