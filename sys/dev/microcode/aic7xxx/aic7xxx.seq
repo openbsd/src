@@ -1,5 +1,5 @@
-/* $OpenBSD: aic7xxx.seq,v 1.17 2004/08/01 01:36:23 krw Exp $ */
-/*
+/* $OpenBSD: aic7xxx.seq,v 1.18 2005/10/07 00:05:01 krw Exp $ */
+/*-
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
@@ -38,10 +38,10 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.seq,v 1.126 2003/12/17 00:02:09 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.seq,v 1.128 2005/01/06 01:42:26 imp Exp $
  */
 
-VERSION = "$Id: aic7xxx.seq,v 1.17 2004/08/01 01:36:23 krw Exp $"
+VERSION = "$Id: aic7xxx.seq,v 1.18 2005/10/07 00:05:01 krw Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -84,7 +84,9 @@ poll_for_work:
 		xor	SBLKCTL,SELBUSB;	/* Toggle to the other bus */
 		test	SCSISEQ, ENSELO		jnz poll_for_selection;
 	}
+BEGIN_CRITICAL;
 	cmp	WAITING_SCBH,SCB_LIST_NULL jne start_waiting;
+END_CRITICAL;
 poll_for_work_loop:
 	if ((ahc->features & AHC_TWIN) != 0) {
 		xor	SBLKCTL,SELBUSB;	/* Toggle to the other bus */
@@ -142,13 +144,13 @@ BEGIN_CRITICAL;
 		inc	QINPOS;
 	}
 	and	SEQ_FLAGS2, ~SCB_DMA;
-END_CRITICAL;
 start_waiting:
 	/*
 	 * Start the first entry on the waiting SCB list.
 	 */
 	mov	SCBPTR, WAITING_SCBH;
 	call	start_selection;
+END_CRITICAL;
 
 poll_for_selection:
 	/*
@@ -356,6 +358,7 @@ abort_qinscb:
 	call	add_scb_to_free_list;
 	jmp	poll_for_work_loop;
 
+BEGIN_CRITICAL;
 start_selection:
 	/*
 	 * If bus reset interrupts have been disabled (from a previous
@@ -389,6 +392,7 @@ initialize_scsiid:
 	} else {
 		mov	SCSISEQ, SCSISEQ_TEMPLATE ret;
 	}
+END_CRITICAL;
 
 /*
  * Initialize transfer settings with SCB provided settings.
