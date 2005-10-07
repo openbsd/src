@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.104 2005/10/06 06:39:35 otto Exp $
+.\"	$OpenBSD: ksh.1,v 1.105 2005/10/07 09:14:28 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -2670,8 +2670,9 @@ Additional
 .Nm
 regular commands
 .Pp
-.Ic \&[ , echo , let , print ,
-.Ic pwd , test , ulimit , whence
+.Ic \&[ , echo , let , mknod ,
+.Ic print , pwd , test , ulimit ,
+.Ic whence
 .Pp
 In the future, the additional
 .Nm
@@ -3273,9 +3274,29 @@ is syntactic sugar for
 .Ar name
 .Cm p
 .Xc
-Equivalent to the
+Create a device special file.
+The file type may be
+.Cm b
+(block type device),
+.Cm c
+(character type device),
+or
+.Cm p
+(named pipe).
+The file created may be modified according to its
+.Ar mode
+(via the
+.Fl m
+option),
+.Ar major
+(major device number),
+and
+.Ar minor
+(minor device number).
+.Pp
+See
 .Xr mknod 8
-command.
+for further information.
 .Pp
 .It Xo
 .Ic print
