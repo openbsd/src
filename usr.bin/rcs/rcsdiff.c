@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.4 2005/10/08 19:58:04 niallo Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.5 2005/10/08 20:03:36 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -135,7 +135,7 @@ rcsdiff_main(int argc, char **argv)
 void
 rcsdiff_usage(void)
 {
-	fprintf(stderr, "usage %s [-qV] [-r rev1 [-r rev2]] file ...\n",
+	fprintf(stderr, "usage %s [-qV] [-r rev1 [-r rev2] file ...\n",
 	    __progname);
 }
 
