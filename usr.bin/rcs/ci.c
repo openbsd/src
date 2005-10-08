@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.7 2005/10/08 14:18:35 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.8 2005/10/08 14:25:55 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -309,6 +309,7 @@ checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev)
 		cvs_buf_append(logbuf, buf, strlen(buf));
 		cvs_printf(">> ");
 	}
+	cvs_buf_putc(logbuf, '\0');
 	rcs_msg = (char *)cvs_buf_release(logbuf);
 	return (rcs_msg);
 }
