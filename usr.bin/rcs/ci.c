@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.4 2005/10/07 23:59:56 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.5 2005/10/08 11:50:59 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -259,7 +259,7 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 	}
 	cvs_buf_free(b2);
 
-        diff_format = D_RCSDIFF;
+	diff_format = D_RCSDIFF;
 	cvs_diffreg(path1, path2, b3);
 	(void)unlink(path1);
 	(void)unlink(path2);
