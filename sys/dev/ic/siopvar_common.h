@@ -1,5 +1,5 @@
-/*	$OpenBSD: siopvar_common.h,v 1.19 2004/06/12 22:22:26 krw Exp $ */
-/*	$NetBSD: siopvar_common.h,v 1.22 2002/10/23 02:32:36 christos Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.20 2005/10/08 17:30:18 krw Exp $ */
+/*	$NetBSD: siopvar_common.h,v 1.32 2005/02/27 00:27:02 perry Exp $ */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -21,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,7 +45,7 @@ typedef struct scr_table {
 
 /* Number of scatter/gather entries */
 /* XXX Ensure alignment of siop_xfer's. */
-#define SIOP_NSG	17	/* XXX (MAXPHYS/NBPG + 1) */
+#define SIOP_NSG	17	/* XXX (MAXPHYS/PAGE_SIZE + 1) */
 #define SIOP_MAXFER	((SIOP_NSG - 1) * PAGE_SIZE)
 
 /*
@@ -172,6 +172,7 @@ struct siop_common_softc {
 #define SF_CHIP_DFBC	0x00020000 /* Use DFBC register */
 #define SF_CHIP_DT	0x00040000 /* DT clocking */
 #define SF_CHIP_GEBUG	0x00080000 /* SCSI gross error bug */
+#define SF_CHIP_AAIP	0x00100000 /* Always generate AIP regardless of SNCTL4*/
 
 #define SF_PCI_RL	0x01000000 /* PCI read line */
 #define SF_PCI_RM	0x02000000 /* PCI read multiple */
