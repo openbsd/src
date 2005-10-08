@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.53 2005/03/14 22:31:52 tom Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.54 2005/10/08 09:38:22 tom Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1187,7 +1187,7 @@ abortit:
 			goto bad;
 		}
 		dotdotp = (struct direntry *)bp->b_data;
-		putushort(dotdotp[0].deStartCluster, dp->de_StartCluster);
+		putushort(dotdotp[0].deStartCluster, cn);
 		pcl = dp->de_StartCluster;
 		if (FAT32(pmp) && pcl == pmp->pm_rootdirblk)
 			pcl = 0;
