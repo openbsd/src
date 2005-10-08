@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.26 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: var.c,v 1.27 2005/10/08 18:02:59 otto Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -143,7 +143,7 @@ array_index_calc(const char *n, bool *arrayp, int *valp)
 		n = str_nsave(n, p - n, ATEMP);
 		evaluate(sub, &rval, KSH_UNWIND_ERROR, true);
 		if (rval < 0 || rval > ARRAYMAX)
-			errorf("%s: subscript out of range", n);
+			errorf("%s: subscript %ld out of range", n, rval);
 		*valp = rval;
 		afree(sub, ATEMP);
 	}
