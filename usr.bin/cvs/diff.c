@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.58 2005/10/07 23:59:56 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.59 2005/10/08 00:49:18 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1469,8 +1469,9 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 		nc = f[i] - f[i - 1];
 		if (diff_format != D_IFDEF && ch != '\0') {
 			diff_output("%c", ch);
-			if (Tflag && (diff_format == D_NORMAL || diff_format == D_CONTEXT
-			    || diff_format == D_UNIFIED))
+			if (Tflag && (diff_format == D_NORMAL ||
+			    diff_format == D_CONTEXT ||
+			    diff_format == D_UNIFIED))
 				diff_output("\t");
 			else if (diff_format != D_UNIFIED)
 				diff_output(" ");
@@ -1481,7 +1482,8 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 				if (diff_format == D_RCSDIFF)
 					warnx("No newline at end of file");
 				else
-					diff_output("\n\\ No newline at end of file");
+					diff_output("\n\\ No newline at end of "
+					    "file");
 				return (0);
 			}
 			if (c == '\t' && tflag) {
