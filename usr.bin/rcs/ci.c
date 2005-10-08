@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.6 2005/10/08 14:09:18 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.7 2005/10/08 14:18:35 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -136,11 +136,9 @@ checkin_main(int argc, char **argv)
 			exit(1);
 		}
 
-
 		if (dflag) {
 			/* XXX */
 		}
-
 
 		/*
 		 * Load file contents
@@ -183,7 +181,8 @@ checkin_main(int argc, char **argv)
 		 * Current head revision gets the RCS patch as rd_text
 		 */
 		if (rcs_deltatext_set(file, file->rf_head, deltatext) == -1) {
-			cvs_log(LP_ERR, "failed to set new rd_text for head rev");
+			cvs_log(LP_ERR,
+			    "failed to set new rd_text for head rev");
 			exit (1);
 		}
 		/*
@@ -286,6 +285,7 @@ checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev)
 	BUF    *logbuf;
 	RCSNUM *tmprev;
 
+	rcs_msg = NULL;
 	tmprev = rcsnum_alloc();
 	rcsnum_cpy(rev, tmprev, 16);
 	rcsnum_tostr(rev, prev, sizeof(prev));
@@ -293,13 +293,11 @@ checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev)
 	rcsnum_free(tmprev);
 
 	if ((logbuf = cvs_buf_alloc(64, BUF_AUTOEXT)) == NULL) {
-		cvs_log(LP_ERR,
-		    "failed to allocate log buffer");
+		cvs_log(LP_ERR, "failed to allocate log buffer");
 		return (NULL);
 	}
 	cvs_printf("%s  <--  %s\n", rcsfile, workingfile);
-	cvs_printf("new revision: %s; previous revision: %s\n",
-	    nrev, prev);
+	cvs_printf("new revision: %s; previous revision: %s\n", nrev, prev);
 	cvs_printf("enter log message, terminated with single "
 	    "'.' or end of file:\n");
 	cvs_printf(">> ");
