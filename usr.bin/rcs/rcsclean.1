@@ -1,0 +1,61 @@
+.\"     $OpenBSD: rcsclean.1,v 1.1 2005/10/08 19:12:18 joris Exp $
+.\"
+.\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd October 08, 2005
+.Dt RCSCLEAN 1
+.Os
+.Sh NAME
+.Nm rcsclean
+.Nd clean up working files
+.Sh SYNOPSIS
+.Nm
+.Bk -words
+.Op Fl nqV
+.Op Fl k Ar mode
+.Op Fl r Ar rev
+.Ar file ...
+.Ek
+.Sh DESCRIPTION
+The
+.Nm
+program is used to remove files that are not being worked on.
+.Pp
+The following options are supported:
+.Bl -tag -width Ds
+.It Fl k
+Specify the keyword substitution mode.
+.It Fl n
+Dry-run mode. When this option is specified
+.Nm
+will show you what it would normally do without doing it.
+.It Fl q
+Be quiet about reporting.
+.It Fl r Ar rev
+Specify the revision for comparison.
+.It Fl V
+Print RCS's version number.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width RCSINIT
+.It Ev RCSINIT
+If set, this variable should contain a list of space-delimited options that
+are prepended to the argument list.
+.El
+.Sh SEE ALSO
+.Xr co 1 ,
+.Xr rcs 1 ,
+.Xr rcsdiff 1 ,
+.Xr rcsfile 5
