@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.2 2005/10/07 23:59:56 niallo Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.3 2005/10/08 19:20:49 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -50,10 +50,19 @@ rcsdiff_main(int argc, char **argv)
 
 	rev = RCS_HEAD_REV;
 
-	while ((ch = getopt(argc, argv, "qV")) != -1) {
+	while ((ch = getopt(argc, argv, "cnquV")) != -1) {
 		switch (ch) {
+		case 'c':
+			diff_format = D_CONTEXT;
+			break;
+		case 'n':
+			diff_format = D_RCSDIFF;
+			break;
 		case 'q':
 			verbose = 0;
+			break;
+		case 'u':
+			diff_format = D_UNIFIED;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsdiff.1,v 1.1 2005/10/08 19:12:18 joris Exp $
+.\"     $OpenBSD: rcsdiff.1,v 1.2 2005/10/08 19:20:49 joris Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl qV
+.Op Fl cnquV
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -33,8 +33,19 @@ program is used to compare two revisions of each RCS file given
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
+.It Fl c
+Produces a diff with three lines of context. See
+.Xr diff 1
+for more information.
+.It Fl n
+Produces a diff in the same format as that used by
+.Xr rcsdiff 1
 .It Fl q
 Be quiet about reporting.
+.It Fl u
+Produces a unified diff with tree lines of context. See
+.Xr diff 1
+for more information.
 .It Fl V
 Print RCS's version number.
 .El
