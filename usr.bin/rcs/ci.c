@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.10 2005/10/08 16:19:40 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.11 2005/10/08 16:27:41 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -66,22 +66,6 @@ checkin_usage(void)
  * Handler for the `ci' program.
  * Returns 0 on success, or >0 on error.
  */
-/*
-Options:
-
--r | -r[rev]: check in revision rev
--l[rev]:      ", but do co -l
--u[rev]:      ", but do co -u
--f[rev]:      force a deposit (check in?)
--k[rev]:      ?
--q[rev]:      quiet mode
--i[rev]:      initial check in, errors if RCS file already exists.
--j[rev]:      just checkin and do not initialize, errors if RCS file already exists.
--I[rev]:      user is prompted even if stdin is not a tty
--d[date]:     uses date for checkin date and time.
--M[rev]:      set modification time on any new working file to be that of the retrieved version.
--mmsg:        msg is the log message, don't start editor. log messages with #are comments.
-*/
 int
 checkin_main(int argc, char **argv)
 {
