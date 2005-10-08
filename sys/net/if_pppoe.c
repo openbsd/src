@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.4 2005/06/07 05:10:57 canacar Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.5 2005/10/08 20:31:25 canacar Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -144,6 +144,7 @@ struct pppoe_softc {
 	u_int8_t *sc_hunique;		/* content of host unique we must echo back */
 	size_t sc_hunique_len;		/* length of host unique */
 #endif
+	u_int32_t sc_unique;		/* our unique id */
 	struct timeout sc_timeout;	/* timeout while not in session state */
 	int sc_padi_retried;		/* number of PADI retries already done */
 	int sc_padr_retried;		/* number of PADR retries already done */
@@ -224,6 +225,8 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
         if (sc == NULL)
                 return (ENOMEM);
         bzero(sc, sizeof(struct pppoe_softc));
+
+	sc->sc_unique = arc4random();
 
 	snprintf(sc->sc_sppp.pp_if.if_xname, 
 		 sizeof(sc->sc_sppp.pp_if.if_xname), 
@@ -326,17 +329,19 @@ pppoe_find_softc_by_session(u_int session, struct ifnet *rcvif)
 static struct pppoe_softc *
 pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 {
-	struct pppoe_softc *sc, *t;
+	struct pppoe_softc *sc;
+	u_int32_t hunique;
 
 	if (LIST_EMPTY(&pppoe_softc_list))
 		return (NULL);
 
-	if (len != sizeof(sc))
+	if (len != sizeof(hunique))
 		return (NULL);
-	memcpy(&t, token, len);
+	memcpy(&hunique, token, len);
 
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list)
-		if (sc == t) break;
+		if (sc->sc_unique == hunique)
+			break;
 
 	if (sc == NULL) {
 		printf("pppoe: alien host unique tag, no session found\n");
@@ -1000,7 +1005,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 		panic("pppoe_send_padi in state %d", sc->sc_state);
 
 	/* calculate length of frame (excluding ethernet header + pppoe header) */
-	len = 2 + 2 + 2 + 2 + sizeof(sc);	/* service name tag is required, host unique is send too */
+	len = 2 + 2 + 2 + 2 + sizeof(sc->sc_unique); /* service name tag is required, host unique is send too */
 	if (sc->sc_service_name != NULL) {
 		l1 = strlen(sc->sc_service_name);
 		len += l1;
@@ -1033,11 +1038,11 @@ pppoe_send_padi(struct pppoe_softc *sc)
 		p += l2;
 	}
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
-	PPPOE_ADD_16(p, sizeof(sc));
-	memcpy(p, &sc, sizeof(sc));
+	PPPOE_ADD_16(p, sizeof(sc->sc_unique));
+	memcpy(p, &sc->sc_unique, sizeof(sc->sc_unique));
 
 #ifdef PPPOE_DEBUG
-	p += sizeof sc;
+	p += sizeof(sc->sc_unique);
 	if (p - mtod(m0, u_int8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padi: garbled output len, should be %ld, is %ld",
 		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, u_int8_t *)));
@@ -1225,7 +1230,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	if (sc->sc_state != PPPOE_STATE_PADR_SENT)
 		return (EIO);
 
-	len = 2 + 2 + 2 + 2 + sizeof(sc);		/* service name, host unique */
+	len = 2 + 2 + 2 + 2 + sizeof(sc->sc_unique);	/* service name, host unique */
 	if (sc->sc_service_name != NULL) {		/* service name tag maybe empty */
 		l1 = strlen(sc->sc_service_name);
 		len += l1;
@@ -1255,11 +1260,11 @@ pppoe_send_padr(struct pppoe_softc *sc)
 		p += sc->sc_ac_cookie_len;
 	}
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
-	PPPOE_ADD_16(p, sizeof(sc));
-	memcpy(p, &sc, sizeof(sc));
+	PPPOE_ADD_16(p, sizeof(sc->sc_unique));
+	memcpy(p, &sc->sc_unique, sizeof(sc->sc_unique));
 
 #ifdef PPPOE_DEBUG
-	p += sizeof(sc);
+	p += sizeof(sc->sc_unique);
 	if (p - mtod(m0, u_int8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padr: garbled output len, should be %ld, is %ld",
 			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, u_int8_t *)));
@@ -1309,7 +1314,7 @@ pppoe_send_pado(struct pppoe_softc *sc)
 	/* calc length */
 	len = 0;
 	/* include ac_cookie */
-	len += 2 + 2 + sizeof(sc);
+	len += 2 + 2 + sizeof(sc->sc_unique);
 	/* include hunique */
 	len += 2 + 2 + sc->sc_hunique_len;
 	
@@ -1320,9 +1325,9 @@ pppoe_send_pado(struct pppoe_softc *sc)
 	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADO, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
-	PPPOE_ADD_16(p, sizeof(sc));
-	memcpy(p, &sc, sizeof(sc));
-	p += sizeof(sc);
+	PPPOE_ADD_16(p, sizeof(sc->sc_unique));
+	memcpy(p, &sc, sizeof(sc->sc_unique));
+	p += sizeof(sc->sc_unique);
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
 	PPPOE_ADD_16(p, sc->sc_hunique_len);
 	memcpy(p, sc->sc_hunique, sc->sc_hunique_len);
