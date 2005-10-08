@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.5 2004/02/04 08:35:12 otto Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.6 2005/10/08 19:24:03 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -98,6 +98,10 @@ ip6_print(register const u_char *bp, register int length)
 	}
 	if (length < sizeof (struct ip6_hdr)) {
 		(void)printf("truncated-ip6 %d", length);
+		return;
+	}
+	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
+		(void)printf("bad-ip6-version %u", ip6->ip6_vfc >> 4);
 		return;
 	}
 	hlen = sizeof(struct ip6_hdr);

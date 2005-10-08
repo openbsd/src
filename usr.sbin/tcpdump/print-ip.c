@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.28 2004/10/15 11:10:29 markus Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.29 2005/10/08 19:24:03 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.28 2004/10/15 11:10:29 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.29 2005/10/08 19:24:03 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -391,6 +391,10 @@ ip_print(register const u_char *bp, register u_int length)
 	}
 	if (length < sizeof (struct ip)) {
 		(void)printf("truncated-ip %d", length);
+		return;
+	}
+	if (ip->ip_v != IPVERSION) {
+		(void)printf("bad-ip-version %u", ip->ip_v);
 		return;
 	}
 	hlen = ip->ip_hl * 4;
