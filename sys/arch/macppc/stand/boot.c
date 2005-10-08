@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.10 2003/10/16 04:30:09 drahn Exp $	*/
+/*	$OpenBSD: boot.c,v 1.11 2005/10/08 06:27:58 drahn Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -188,6 +188,7 @@ main()
 			gets(bootline);
 			parseargs(bootline, &boothowto);
 		}
+		OF_claim((void *)0x00100000, 0x00800000, 0); /* XXX */
 		marks[MARK_START] = 0;
 		if (loadfile(bootline, marks, LOAD_ALL) >= 0)
 			break;
