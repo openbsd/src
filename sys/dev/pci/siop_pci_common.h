@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop_pci_common.h,v 1.5 2002/09/16 00:53:12 krw Exp $ */
-/*	$NetBSD: siop_pci_common.h,v 1.4 2002/04/23 20:41:19 bouyer Exp $	*/
+/*	$OpenBSD: siop_pci_common.h,v 1.6 2005/10/08 17:48:21 krw Exp $ */
+/*	$NetBSD: siop_pci_common.h,v 1.6 2005/02/27 00:27:34 perry Exp $ */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -21,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -54,7 +54,7 @@ struct siop_pci_common_softc {
 	const struct siop_product_desc *sc_pp; /* Adapter description */
 };
 
-int siop_pci_attach_common (struct siop_pci_common_softc *,
+int siop_pci_attach_common(struct siop_pci_common_softc *,
 	struct siop_common_softc *, struct pci_attach_args *,
-	int (*) (void *));
+	int (*)(void *));
 void siop_pci_reset(struct siop_common_softc *);
