@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.5 2005/10/08 11:50:59 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.6 2005/10/08 14:09:18 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -47,6 +47,7 @@
 extern char *__progname;
 
 static char * checkin_diff_file(RCSFILE *, RCSNUM *, const char *);
+static char * checkin_getlogmsg(char *, char *, RCSNUM *);
 
 void
 checkin_usage(void)
@@ -67,21 +68,21 @@ Options:
 
 -r | -r[rev]: check in revision rev
 -l[rev]:      ", but do co -l
--u[rev]:      ", bt do co -u
+-u[rev]:      ", but do co -u
 -f[rev]:      force a deposit (check in?)
 -k[rev]:      ?
 -q[rev]:      quiet mode
 -i[rev]:      initial check in, errors if RCS file already exists.
 -j[rev]:      just checkin and do not initialize, errors if RCS file already exists.
 -I[rev]:      user is prompted even if stdin is not a tty
--d[date]:     uses date for checkin dat and time.
+-d[date]:     uses date for checkin date and time.
 -M[rev]:      set modification time on any new working file to be that of the retrieved version.
 -mmsg:        msg is the log message, don't start editor. log messages with #are comments.
 */
 int
 checkin_main(int argc, char **argv)
 {
-	int i, ch, dflag, flags, lkmode;
+	int i, ch, dflag, flags, lkmode, interactive;
 	mode_t fmode;
 	RCSFILE *file;
 	RCSNUM *frev;
@@ -93,7 +94,8 @@ checkin_main(int argc, char **argv)
 	flags = RCS_RDWR;
 	file = NULL;
 	rcs_msg = rev = NULL;
-	fmode = dflag = 0;
+	fmode = dflag = verbose = 0;
+	interactive = 1;
 
 	while ((ch = getopt(argc, argv, "j:l:M:N:qu:d:r::m:k:V")) != -1) {
 		switch (ch) {
@@ -102,6 +104,7 @@ checkin_main(int argc, char **argv)
 			exit(0);
 		case 'm':
 			rcs_msg = optarg;
+			interactive = 0;
 			break;
 		case 'q':
 			verbose = 0;
@@ -133,17 +136,11 @@ checkin_main(int argc, char **argv)
 			exit(1);
 		}
 
-		if (rcs_msg == NULL) {
-			cvs_log(LP_ERR, "no log message");
-			exit(1);
-		}
 
 		if (dflag) {
-				/* XXX */
+			/* XXX */
 		}
 
-		if (rev == NULL)
-			frev = file->rf_head;
 
 		/*
 		 * Load file contents
@@ -152,6 +149,14 @@ checkin_main(int argc, char **argv)
 			cvs_log(LP_ERR, "failed to load '%s'", argv[i]);
 			exit(1);
 		}
+
+		if (rev == NULL)
+			frev = file->rf_head;
+		/*
+		 * If no log message specified, get it interactively.
+		 */
+		if (rcs_msg == NULL)
+			rcs_msg = checkin_getlogmsg(fpath, argv[i], frev);
 
 		if (cvs_buf_putc(bp, '\0') < 0)
 			exit(1);
@@ -181,7 +186,6 @@ checkin_main(int argc, char **argv)
 			cvs_log(LP_ERR, "failed to set new rd_text for head rev");
 			exit (1);
 		}
-
 		/*
 		 * Now add our new revision
 		 */
@@ -208,6 +212,10 @@ checkin_main(int argc, char **argv)
 		 * Delete the working file - we do not support -u/-l just yet
 		*/
 		(void)unlink(argv[i]);
+		if (interactive) {
+			free(rcs_msg);
+			rcs_msg = NULL;
+		}
 	}
 
 	return (0);
@@ -221,8 +229,6 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 	char rbuf[64], *deltatext;
 
 	rcsnum_tostr(rev, rbuf, sizeof(rbuf));
-	if (verbose)
-		printf("retrieving revision %s\n", rbuf);
 
 	if ((b1 = cvs_buf_load(filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load file: '%s'", filename);
@@ -268,4 +274,43 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 	deltatext = (char *)cvs_buf_release(b3);
 
 	return (deltatext);
+}
+
+/*
+ * Get log message from user interactively.
+ */
+static char *
+checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev)
+{
+	char   *rcs_msg, buf[128], nrev[16], prev[16];
+	BUF    *logbuf;
+	RCSNUM *tmprev;
+
+	tmprev = rcsnum_alloc();
+	rcsnum_cpy(rev, tmprev, 16);
+	rcsnum_tostr(rev, prev, sizeof(prev));
+	rcsnum_tostr(rcsnum_inc(tmprev), nrev, sizeof(nrev));
+	rcsnum_free(tmprev);
+
+	if ((logbuf = cvs_buf_alloc(64, BUF_AUTOEXT)) == NULL) {
+		cvs_log(LP_ERR,
+		    "failed to allocate log buffer");
+		return (NULL);
+	}
+	cvs_printf("%s  <--  %s\n", rcsfile, workingfile);
+	cvs_printf("new revision: %s; previous revision: %s\n",
+	    nrev, prev);
+	cvs_printf("enter log message, terminated with single "
+	    "'.' or end of file:\n");
+	cvs_printf(">> ");
+	for (;;) {
+		fgets(buf, (int)sizeof(buf), stdin);
+		if (feof(stdin) || ferror(stdin)
+		    || buf[0] == '.')
+			break;
+		cvs_buf_append(logbuf, buf, strlen(buf));
+		cvs_printf(">> ");
+	}
+	rcs_msg = (char *)cvs_buf_release(logbuf);
+	return (rcs_msg);
 }
