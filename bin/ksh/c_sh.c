@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.30 2005/10/06 06:39:35 otto Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.31 2005/10/08 18:07:31 otto Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -841,7 +841,7 @@ c_mknod(char **wp)
 	int argc, optc, ismkfifo = 0, ret;
 	char **argv;
 	void *set = NULL;
-	mode_t mode = 0, oldmode;
+	mode_t mode = 0, oldmode = 0;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "m:")) != EOF) {
 		switch (optc) {
