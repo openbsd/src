@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.3 2005/09/29 19:53:23 grange Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.4 2005/10/08 14:57:27 grange Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -184,7 +184,7 @@ viasio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read device revision */
 	reg = viasio_conf_read(sc->sc_iot, sc->sc_ioh, VT1211_REV);
-	printf(": VT1211 rev 0x%02x", reg);
+	printf(": VT1211 rev 0x%02x:", reg);
 
 	/* Initialize logical devices */
 	viasio_hm_init(sc);
@@ -202,7 +202,7 @@ viasio_hm_init(struct viasio_softc *sc)
 	u_int16_t iobase;
 	int i;
 
-	printf(": HM");
+	printf(" HM");
 
 	/* Select HM logical device */
 	viasio_conf_write(sc->sc_iot, sc->sc_ioh, VT1211_LDN, VT1211_LDN_HM);
@@ -445,7 +445,7 @@ viasio_wdg_init(struct viasio_softc *sc)
 	u_int8_t reg0, reg1;
 	u_int16_t iobase;
 
-	printf(": WDG");
+	printf(" WDG");
 
 	/* Select WDG logical device */
 	viasio_conf_write(sc->sc_iot, sc->sc_ioh, VT1211_LDN, VT1211_LDN_WDG);
