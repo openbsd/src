@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.21 2004/07/21 19:55:30 mickey Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.22 2005/10/08 19:21:10 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
 
 /*
@@ -180,8 +180,11 @@ siop_common_reset(sc)
 	    1 << sc->sc_link.adapter_target);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_DCNTL,
 	    (sc->features & SF_CHIP_PF) ? DCNTL_COM | DCNTL_PFEN : DCNTL_COM);
+	if (sc->features & SF_CHIP_AAIP)
+		bus_space_write_1(sc->sc_rt, sc->sc_rh,
+		    SIOP_AIPCNTL1, AIPCNTL1_DIS);
 
-	/* enable clock doubler or quadruler if appropriate */
+	/* enable clock doubler or quadrupler if appropriate */
 	if (sc->features & (SF_CHIP_DBLR | SF_CHIP_QUAD)) {
 		stest3 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST3);
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST1,
