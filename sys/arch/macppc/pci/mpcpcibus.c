@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.25 2005/10/03 02:22:38 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.26 2005/10/08 23:38:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -538,6 +538,7 @@ find_node_intr(int parent, u_int32_t *addr, u_int32_t *intr)
 		}
 	if (step == 0) {
 		/* unable to determine step size */
+		printf("find_node_intr unable to find step size\n");
 		return -1;
 	}
 
@@ -570,6 +571,7 @@ fix_node_irq(int node, struct pcibus_attach_args *pba)
 		u_int32_t phys_hi, phys_mid, phys_lo;
 		u_int32_t size_hi, size_lo;
 	} addr [8];
+	u_int32_t map[144];
 	int len;
 	pcitag_t tag;
 	u_int32_t irq;
@@ -579,7 +581,7 @@ fix_node_irq(int node, struct pcibus_attach_args *pba)
 	pci_chipset_tag_t pc = pba->pba_pc;
 
 	len = OF_getprop(node, "assigned-addresses", addr, sizeof(addr));
-	if (len < sizeof(addr[0]))
+	if (len == -1 || len < sizeof(addr[0]))
 		return;
 
 	/* if this node has a AAPL,interrupts property, firmware
@@ -590,10 +592,18 @@ fix_node_irq(int node, struct pcibus_attach_args *pba)
 
 		parent = OF_parent(node);
 
+		irq = -1;
+
 		/* we want the first interrupt, set size_hi to 1 */
 		addr[0].size_hi = 1;
-		if (find_node_intr(parent, &addr[0].phys_hi, &irq) == -1)
-			return;
+		if (find_node_intr(parent, &addr[0].phys_hi, &irq) == -1) {
+			len = OF_getprop(node, "interrupts", map,
+			    sizeof(map));
+			if (len != -1 && len != 4) {
+				irq = map[0];
+			} else 
+				return;
+		}
 	}
 	/* program the interrupt line register with the value
 	 * found in openfirmware
