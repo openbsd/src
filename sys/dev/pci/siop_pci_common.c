@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.13 2004/07/21 19:55:30 mickey Exp $ */
-/*	$NetBSD: siop_pci_common.c,v 1.17 2002/05/04 18:11:06 bouyer Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.14 2005/10/08 18:21:33 krw Exp $ */
+/*	$NetBSD: siop_pci_common.c,v 1.25 2005/06/28 00:28:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -21,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -171,7 +171,8 @@ const struct siop_product_desc siop_products[] = {
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
 	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR | SF_CHIP_DT |
-	SF_BUS_ULTRA3 | SF_BUS_WIDE, 
+	SF_CHIP_AAIP |
+	SF_BUS_ULTRA3 | SF_BUS_WIDE,
 	7, 62, 0, 62, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1510D,
@@ -190,9 +191,7 @@ const struct siop_product_desc siop_products[] = {
 };
 
 const struct siop_product_desc *
-siop_lookup_product(id, rev)
-	u_int32_t id;
-	int rev;
+siop_lookup_product(u_int32_t id, int rev)
 {
 	const struct siop_product_desc *pp;
 	const struct siop_product_desc *rp = NULL;
@@ -209,14 +208,12 @@ siop_lookup_product(id, rev)
 }
 
 int
-siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
-	struct siop_pci_common_softc *pci_sc;
-	struct siop_common_softc *siop_sc;
-	struct pci_attach_args *pa;
-	int (*intr) (void*);
+siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
+    struct siop_common_softc *siop_sc, struct pci_attach_args *pa,
+    int (*intr)(void*))
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;    
+	pcitag_t tag = pa->pa_tag;
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	bus_space_tag_t iot, memt;
@@ -304,6 +301,9 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 			bar = 0x1c;
 			break;
+		default:
+			printf(": invalid memory type %d\n", memtype);
+			return 0;
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &siop_sc->sc_ramt, &siop_sc->sc_ramh,
@@ -321,8 +321,7 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 }
 
 void
-siop_pci_reset(sc)
-	struct siop_common_softc *sc;
+siop_pci_reset(struct siop_common_softc *sc)
 {
 	int dmode;
 
