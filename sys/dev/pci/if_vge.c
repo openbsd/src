@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.16 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.17 2005/10/08 01:58:17 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -484,28 +484,30 @@ vge_setmulti(struct vge_softc *sc)
 	vge_cam_clear(sc);
 	CSR_WRITE_4(sc, VGE_MAR0, 0);
 	CSR_WRITE_4(sc, VGE_MAR1, 0);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * If the user wants allmulti or promisc mode, enable reception
 	 * of all multicast frames.
 	 */
+	if (ifp->if_flags & IFF_PROMISC) {
 allmulti:
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		CSR_WRITE_4(sc, VGE_MAR0, 0xFFFFFFFF);
 		CSR_WRITE_4(sc, VGE_MAR1, 0xFFFFFFFF);
+		ifp->if_flags |= IFF_ALLMULTI;
 		return;
 	}
 
 	/* Now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
 			goto allmulti;
-		}
+
 		error = vge_cam_set(sc, enm->enm_addrlo);
 		if (error)
 			break;
+
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
@@ -515,12 +517,10 @@ allmulti:
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			h = (ether_crc32_be(enm->enm_addrlo,
-			    ETHER_ADDR_LEN) >> 26) & 0x0000003F;
-			if (h < 32)
-				hashes[0] |= (1 << h);
-			else
-				hashes[1] |= (1 << (h - 32));
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
+			hashes[h >> 5] |= 1 << (h & 0x1f);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 
