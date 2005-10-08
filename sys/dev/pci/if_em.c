@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.72 2005/10/08 00:59:13 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.73 2005/10/08 01:49:20 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -678,15 +678,17 @@ em_init(void *arg)
 	if (em_hardware_init(sc)) {
 		printf("%s: Unable to initialize the hardware\n", 
 		       sc->sc_dv.dv_xname);
-		goto fail;
+		EM_UNLOCK(sc);
+		return;
 	}
 
 	/* Prepare transmit descriptors and buffers */
 	if (em_setup_transmit_structures(sc)) {
 		printf("%s: Could not setup transmit structures\n", 
 		       sc->sc_dv.dv_xname);
-		em_stop(sc); 
-		goto fail;
+		em_stop(sc);
+		EM_UNLOCK(sc);
+		return;
 	}
 	em_initialize_transmit_unit(sc);
 
@@ -698,12 +700,13 @@ em_init(void *arg)
 		printf("%s: Could not setup receive structures\n", 
 		       sc->sc_dv.dv_xname);
 		em_stop(sc);
-		goto fail;
+		EM_UNLOCK(sc);
+		return;
 	}
 	em_initialize_receive_unit(sc);
 
-        /* Don't lose promiscuous settings */
-        em_set_promisc(sc);
+	/* Don't lose promiscuous settings */
+	em_set_promisc(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -712,11 +715,9 @@ em_init(void *arg)
 	em_clear_hw_cntrs(&sc->hw);
 	em_enable_intr(sc);
 
-        /* Don't reset the phy next time init gets called */
-        sc->hw.phy_reset_disable = TRUE;
-	return;
+	/* Don't reset the phy next time init gets called */
+	sc->hw.phy_reset_disable = TRUE;
 
-fail:
 	EM_UNLOCK(sc);
 }
 
