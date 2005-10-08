@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.30 2005/10/08 04:46:29 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.31 2005/10/08 20:45:01 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -268,7 +268,7 @@ lge_miibus_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-lge_miibus_writereg(struct devce *dev, int phy, int reg, int data)
+lge_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct lge_softc	*sc = (struct lge_softc *)dev;
 	int			i;
@@ -562,6 +562,7 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ifp = &sc->arpcom.ac_if;
+	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = lge_ioctl;
@@ -570,8 +571,6 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_baudrate = 1000000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, LGE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
-	DPRINTFN(5, ("bcopy\n"));
-	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -638,7 +637,7 @@ fail_1:
  * Initialize the transmit descriptors.
  */
 int
-lge_list_tx_init(struct lge_soft *sc)
+lge_list_tx_init(struct lge_softc *sc)
 {
 	struct lge_list_data	*ld;
 	struct lge_ring_data	*cd;
@@ -853,8 +852,7 @@ out:
  * Allocate a jumbo buffer.
  */
 void *
-lge_jalloc(sc)
-	struct lge_softc	*sc;
+lge_jalloc(struct lge_softc *sc)
 {
 	struct lge_jpool_entry   *entry;
 
@@ -1578,4 +1576,3 @@ lge_shutdown(void *xsc)
 	lge_reset(sc);
 	lge_stop(sc);
 }
-
