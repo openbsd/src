@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.71 2005/10/07 23:24:42 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.72 2005/10/08 00:59:13 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -111,11 +111,9 @@ void em_attach(struct device *, struct device *, void *);
 int  em_intr(void *);
 void em_power(int, void *);
 void em_start(struct ifnet *);
-void em_start_locked(struct ifnet *);
 int  em_ioctl(struct ifnet *, u_long, caddr_t);
 void em_watchdog(struct ifnet *);
 void em_init(void *);
-void em_init_locked(struct em_softc *);
 void em_stop(void *);
 void em_media_status(struct ifnet *, struct ifmediareq *);
 int  em_media_change(struct ifnet *);
@@ -415,12 +413,15 @@ em_power(int why, void *arg)
  **********************************************************************/
 
 void
-em_start_locked(struct ifnet *ifp)
+em_start(struct ifnet *ifp)
 {
 	struct mbuf    *m_head;
 	struct em_softc *sc = ifp->if_softc;
 
 	mtx_assert(&sc->mtx, MA_OWNED);
+
+	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+		return;
 
 	if (!sc->link_active)
 		return;
@@ -456,17 +457,6 @@ em_start_locked(struct ifnet *ifp)
 	}	
 }
 
-void
-em_start(struct ifnet *ifp)
-{
-	struct em_softc *sc = ifp->if_softc;
-	EM_LOCK_STATE();
-
-	EM_LOCK(sc);
-	em_start_locked(ifp);
-	EM_UNLOCK(sc);
-}
-
 /*********************************************************************
  *  Ioctl entry point
  *
@@ -481,17 +471,19 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	int		max_frame_size, error = 0;
 	struct ifreq   *ifr = (struct ifreq *) data;
+	struct ifaddr  *ifa = (struct ifaddr *)data;
 	struct em_softc *sc = ifp->if_softc;
 	EM_LOCK_STATE();
 
-	struct ifaddr  *ifa = (struct ifaddr *)data;
 	EM_LOCK(sc);
-	error = ether_ioctl(ifp, &sc->interface_data, command, data);
-	EM_UNLOCK(sc);
 
-	if (error > 0)
+	if (sc->in_detach)
 		return (error);
-        if (sc->in_detach) return(error);
+
+	if ((error = ether_ioctl(ifp, &sc->interface_data, command, data)) > 0) {
+		EM_UNLOCK(sc);
+		return (error);
+	}
 
 	switch (command) {
 	case SIOCSIFADDR:
@@ -532,10 +524,9 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFFLAGS (Set Interface Flags)");
-		EM_LOCK(sc);
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING)) {
-				em_init_locked(sc);
+				em_init(sc);
                         }
 
 			em_disable_promisc(sc);
@@ -545,7 +536,6 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				em_stop(sc);
 			}
 		}
-		EM_UNLOCK(sc);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -556,14 +546,12 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
-                                EM_LOCK(sc);
 				em_disable_intr(sc);
 				em_set_multi(sc);
 				if (sc->hw.mac_type == em_82542_rev2_0) {
 					em_initialize_receive_unit(sc);
 				}
 					em_enable_intr(sc);
-                                EM_UNLOCK(sc);
 			}
 			error = 0;
 		}
@@ -578,7 +566,8 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = EINVAL;
 	}
 
-	return(error);
+	EM_UNLOCK(sc);
+	return (error);
 }
 
 /*********************************************************************
@@ -621,15 +610,17 @@ em_watchdog(struct ifnet *ifp)
  *  by the driver as a hw/sw initialization routine to get to a 
  *  consistent state.
  *
- *  return 0 on success, positive on failure
  **********************************************************************/
 
 void
-em_init_locked(struct em_softc *sc)
+em_init(void *arg)
 {
+	struct em_softc *sc = arg;
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
-
 	uint32_t	pba;
+	EM_LOCK_STATE();
+
+	EM_LOCK(sc);
 
 	INIT_DEBUGOUT("em_init: begin");
 
@@ -687,7 +678,7 @@ em_init_locked(struct em_softc *sc)
 	if (em_hardware_init(sc)) {
 		printf("%s: Unable to initialize the hardware\n", 
 		       sc->sc_dv.dv_xname);
-		return;
+		goto fail;
 	}
 
 	/* Prepare transmit descriptors and buffers */
@@ -695,7 +686,7 @@ em_init_locked(struct em_softc *sc)
 		printf("%s: Could not setup transmit structures\n", 
 		       sc->sc_dv.dv_xname);
 		em_stop(sc); 
-		return;
+		goto fail;
 	}
 	em_initialize_transmit_unit(sc);
 
@@ -707,7 +698,7 @@ em_init_locked(struct em_softc *sc)
 		printf("%s: Could not setup receive structures\n", 
 		       sc->sc_dv.dv_xname);
 		em_stop(sc);
-		return;
+		goto fail;
 	}
 	em_initialize_receive_unit(sc);
 
@@ -723,16 +714,9 @@ em_init_locked(struct em_softc *sc)
 
         /* Don't reset the phy next time init gets called */
         sc->hw.phy_reset_disable = TRUE;
-}
+	return;
 
-void
-em_init(void *arg)
-{
-	struct em_softc *sc = arg;
-	EM_LOCK_STATE();
-
-	EM_LOCK(sc);
-	em_init_locked(sc);
+fail:
 	EM_UNLOCK(sc);
 }
 
@@ -778,7 +762,7 @@ em_intr(void *arg)
 	}
 
 	if (ifp->if_flags & IFF_RUNNING && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		em_start_locked(ifp);
+		em_start(ifp);
 
 	EM_UNLOCK(sc);
 	return (1);
