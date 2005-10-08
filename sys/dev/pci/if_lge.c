@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.28 2005/10/07 21:30:38 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.29 2005/10/08 04:20:11 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -95,11 +95,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#if NVLAN > 0
-#include <net/if_types.h>
-#include <net/if_vlan_var.h>
 #endif
 
 #if NBPFILTER > 0
