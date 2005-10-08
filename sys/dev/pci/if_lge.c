@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.31 2005/10/08 20:45:01 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.32 2005/10/08 23:38:52 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -422,8 +422,6 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet		*ifp;
 	caddr_t			kva;
 
-	bzero(sc, sizeof(struct lge_softc));
-
 	/*
 	 * Handle power management nonsense.
 	 */
@@ -562,7 +560,6 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ifp = &sc->arpcom.ac_if;
-	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = lge_ioctl;
@@ -571,6 +568,8 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_baudrate = 1000000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, LGE_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
+	DPRINTFN(5, ("bcopy\n"));
+	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -587,10 +586,8 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	sc->lge_mii.mii_readreg = lge_miibus_readreg;
 	sc->lge_mii.mii_writereg = lge_miibus_writereg;
 	sc->lge_mii.mii_statchg = lge_miibus_statchg;
-	DPRINTFN(5, ("ifmedia_init\n"));
 	ifmedia_init(&sc->lge_mii.mii_media, 0, lge_ifmedia_upd,
 		     lge_ifmedia_sts);
-	DPRINTFN(5, ("mii_attach\n"));
 	mii_attach(&sc->sc_dv, &sc->lge_mii, 0xffffffff, MII_PHY_ANY,
 		   MII_OFFSET_ANY, 0);
 
@@ -965,37 +962,16 @@ lge_rxeof(struct lge_softc *sc, int cnt)
 #endif
 
 		/* Do IP checksum checking. */
-#if 0
-		if (rxsts & LGE_RXSTS_ISIP)
-			m->m_pkthdr.csum_flags |= CSUM_IP_CHECKED;
-		if (!(rxsts & LGE_RXSTS_IPCSUMERR))
-			m->m_pkthdr.csum_flags |= CSUM_IP_VALID;
-		if ((rxsts & LGE_RXSTS_ISTCP &&
-		    !(rxsts & LGE_RXSTS_TCPCSUMERR)) ||
-		    (rxsts & LGE_RXSTS_ISUDP &&
-		    !(rxsts & LGE_RXSTS_UDPCSUMERR))) {
-			m->m_pkthdr.csum_flags |=
-			    CSUM_DATA_VALID|CSUM_PSEUDO_HDR;
-			m->m_pkthdr.csum_data = 0xffff;
-		}
-#endif
-
 		if (rxsts & LGE_RXSTS_ISIP) {
-			if (rxsts & LGE_RXSTS_IPCSUMERR)
-				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_BAD;
-			else
+			if (!(rxsts & LGE_RXSTS_IPCSUMERR))
 				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 		}
 		if (rxsts & LGE_RXSTS_ISTCP) {
-			if (rxsts & LGE_RXSTS_TCPCSUMERR)
-				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_BAD;
-			else
+			if (!(rxsts & LGE_RXSTS_TCPCSUMERR))
 				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
 		}
 		if (rxsts & LGE_RXSTS_ISUDP) {
-			if (rxsts & LGE_RXSTS_UDPCSUMERR)
-				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_BAD;
-			else
+			if (!(rxsts & LGE_RXSTS_UDPCSUMERR))
 				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 		}
 
