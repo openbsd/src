@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop_pci.c,v 1.5 2002/11/16 04:37:29 krw Exp $ */
-/*	$NetBSD: siop_pci.c,v 1.14 2002/10/02 16:51:54 thorpej Exp $	*/
+/*	$OpenBSD: siop_pci.c,v 1.6 2005/10/08 18:32:28 krw Exp $ */
+/*	$NetBSD: siop_pci.c,v 1.18 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -21,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -60,10 +60,7 @@ struct cfattach siop_pci_ca = {
 };
 
 int
-siop_pci_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+siop_pci_match( struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct siop_product_desc *pp;
@@ -76,9 +73,7 @@ siop_pci_match(parent, match, aux)
 }
 
 void
-siop_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+siop_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct siop_pci_softc *sc = (struct siop_pci_softc *)self;
