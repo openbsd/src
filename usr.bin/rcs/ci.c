@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.8 2005/10/08 14:25:55 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.9 2005/10/08 15:26:47 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -46,6 +46,9 @@
 
 extern char *__progname;
 
+#define LOCK_LOCK	1
+#define LOCK_UNLOCK	2
+
 static char * checkin_diff_file(RCSFILE *, RCSNUM *, const char *);
 static char * checkin_getlogmsg(char *, char *, RCSNUM *);
 
@@ -87,17 +90,21 @@ checkin_main(int argc, char **argv)
 	RCSFILE *file;
 	RCSNUM *frev;
 	char fpath[MAXPATHLEN];
-	char *rcs_msg, *rev, *filec, *deltatext;
+	char *rcs_msg, *rev, *filec, *deltatext, *username;
 	BUF *bp;
 
-	lkmode = -1;
 	flags = RCS_RDWR;
 	file = NULL;
 	rcs_msg = rev = NULL;
-	fmode = dflag = verbose = 0;
+	fmode = lkmode = dflag = verbose = 0;
 	interactive = 1;
 
-	while ((ch = getopt(argc, argv, "j:l:M:N:qu:d:r::m:k:V")) != -1) {
+	if ((username = getlogin()) == NULL) {
+		cvs_log(LP_ERR, "failed to get username");
+		exit(1);
+	}
+
+	while ((ch = getopt(argc, argv, "j:lM:N:qud:r::m:k:V")) != -1) {
 		switch (ch) {
 		case 'h':
 			(usage)();
@@ -112,6 +119,12 @@ checkin_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+		case 'l':
+			lkmode = LOCK_LOCK;
+			break;
+		case 'u':
+			lkmode = LOCK_UNLOCK;
+			break;
 		default:
 			(usage)();
 			exit(1);
@@ -203,14 +216,40 @@ checkin_main(int argc, char **argv)
 
 		free(deltatext);
 		free(filec);
+		(void)unlink(argv[i]);
 
+		/*
+		 * Do checkout if -u or -l are specified.
+		 */
+		if (lkmode != 0) {
+			mode_t mode = 0;
+			if ((bp = rcs_getrev(file, frev)) == NULL) {
+				cvs_log(LP_ERR, "cannot get revision");
+				goto err;
+			}
+			if (lkmode == LOCK_LOCK) {
+				mode = 0644;
+				if (rcs_lock_add(file, username, frev) < 0) {
+					if (rcs_errno != RCS_ERR_DUPENT)
+						cvs_log(LP_ERR,
+						    "failed to lock revision");
+					else
+						cvs_log(LP_ERR,
+						    "you already have a lock");
+				}
+			} else if (lkmode == LOCK_UNLOCK) {
+				mode = 0444;
+			}
+			if (cvs_buf_write(bp, argv[i], mode) < 0) {
+				cvs_log(LP_ERR,
+				    "failed to write revision to file");
+			}
+			cvs_buf_free(bp);
+		}
+err:
 		/* File will NOW be synced */
 		rcs_close(file);
 
-		/* XXX:
-		 * Delete the working file - we do not support -u/-l just yet
-		*/
-		(void)unlink(argv[i]);
 		if (interactive) {
 			free(rcs_msg);
 			rcs_msg = NULL;
@@ -288,7 +327,7 @@ checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev)
 	rcs_msg = NULL;
 	tmprev = rcsnum_alloc();
 	rcsnum_cpy(rev, tmprev, 16);
-	rcsnum_tostr(rev, prev, sizeof(prev));
+	rcsnum_tostr(tmprev, prev, sizeof(prev));
 	rcsnum_tostr(rcsnum_inc(tmprev), nrev, sizeof(nrev));
 	rcsnum_free(tmprev);
 
@@ -303,8 +342,7 @@ checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev)
 	cvs_printf(">> ");
 	for (;;) {
 		fgets(buf, (int)sizeof(buf), stdin);
-		if (feof(stdin) || ferror(stdin)
-		    || buf[0] == '.')
+		if (feof(stdin) || ferror(stdin) || buf[0] == '.')
 			break;
 		cvs_buf_append(logbuf, buf, strlen(buf));
 		cvs_printf(">> ");
