@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.22 2005/10/08 19:21:10 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.23 2005/10/08 23:46:11 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
 
 /*
@@ -21,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -68,7 +68,7 @@ siop_common_attach(sc)
 	 * Allocate DMA-safe memory for the script and map it.
 	 */
 	if ((sc->features & SF_CHIP_RAM) == 0) {
-		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, 
+		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE,
 		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: unable to allocate script DMA memory, "
@@ -441,7 +441,7 @@ siop_ppr_neg(siop_cmd)
 			siop_target->period = 0;
 			goto reject;
 		}
-			
+
 		if (offset > sc->maxoff || sync < sc->dt_minsync ||
 		    sync > sc->dt_maxsync) {
 			printf("%s: ppr negotiation for target %d: "

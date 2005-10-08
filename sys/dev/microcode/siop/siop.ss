@@ -1,9 +1,9 @@
-;	$OpenBSD: siop.ss,v 1.5 2003/07/01 17:15:06 krw Exp $
+;	$OpenBSD: siop.ss,v 1.6 2005/10/08 23:46:11 krw Exp $
 ;	$NetBSD: siop.ss,v 1.17 2002/07/26 14:11:34 wiz Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
-; 
+;
 ;  Redistribution and use in source and binary forms, with or without
 ;  modification, are permitted provided that the following conditions
 ;  are met:
@@ -17,11 +17,11 @@
 ; 	This product includes software developed by Manuel Bouyer.
 ;  4. The name of the author may not be used to endorse or promote products
 ;     derived from this software without specific prior written permission.
-; 
+;
 ;  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 ;  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 ;  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-;  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+;  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
 ;  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
 ;  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 ;  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -150,7 +150,7 @@ script_sched:
 	MOVE 0xff to DSA3;
 	MOVE 0 to SCRATCHA0	; flags
 	MOVE 0 to SCRATCHA1	; DSA offset (for S/G save data pointer)
-; the script scheduler: siop_start() we set the absolute jump addr, and then 
+; the script scheduler: siop_start() we set the absolute jump addr, and then
 ; changes the FALSE to TRUE. The select script will change it back to false
 ; once the target is selected.
 ; The RAM could hold 370 slot entry, we limit it to 40. Should be more than
@@ -265,7 +265,7 @@ handle_msgin:
 	MOVE SCRATCHA0 & flag_sdp TO SFBR;
 	JUMP REL(script_sched), if 0x00; 
 	MOVE SCRATCHA1 TO SFBR;
-	JUMP REL(script_sched), if 0x00; 
+	JUMP REL(script_sched), if 0x00;
 ; Ok, we need to save data pointers
 	INT int_disc;
 msgin_ack:
