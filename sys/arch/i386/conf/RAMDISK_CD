@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.104 2005/10/02 13:41:36 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.105 2005/10/08 23:41:21 brad Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -330,7 +330,7 @@ re*	at pci?				# Realtek 8169/8169S/8110S
 re*	at cardbus?			# Realtek 8169/8169S/8110S
 stge*	at pci?				# Sundance TC9021 GigE
 bge*	at pci?				# Broadcom BCM570x (aka Tigon3)
-#lge*	at pci?				# Level1 LXT1001 GigE
+lge*	at pci?				# Level1 LXT1001 GigE
 mtd*	at pci?				# Myson MTD803
 hme*	at pci?				# Sun Happy Meal
 bce*	at pci?				# Broadcom BCM4401
