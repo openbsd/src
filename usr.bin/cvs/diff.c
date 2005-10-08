@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.59 2005/10/08 00:49:18 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.60 2005/10/08 20:39:49 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1425,7 +1425,7 @@ proceed:
 	if (diff_format == D_NORMAL || diff_format == D_IFDEF) {
 		fetch(ixold, a, b, f1, '<', 1);
 		if (a <= b && c <= d && diff_format == D_NORMAL)
-			diff_output("---");
+			diff_output("---\n");
 	}
 	i = fetch(ixnew, c, d, f2, diff_format == D_NORMAL ? '>' : '\0', 0);
 	if (inifdef) {
