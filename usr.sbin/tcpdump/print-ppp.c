@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.15 2004/05/21 05:48:50 brad Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.16 2005/10/08 19:45:15 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.15 2004/05/21 05:48:50 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.16 2005/10/08 19:45:15 canacar Exp $ (LBL)";
 #endif
 
 #ifdef PPP
@@ -546,6 +546,13 @@ ppp_if_print(user, h, p)
 	case PPP_IPX:
 	case ETHERTYPE_IPX:
 		ipx_print((const u_char *)(p + PPP_HDRLEN), length);
+		break;
+
+#ifndef	PPP_MPLS
+#define	PPP_MPLS	0x0281
+#endif
+	case PPP_MPLS:
+		mpls_print((const u_char *)(p + PPP_HDRLEN), length);
 		break;
 
 	default:
