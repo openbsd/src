@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.8 2005/10/03 01:46:47 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.9 2005/10/09 18:45:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -554,10 +554,8 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	s = splimp();
 
-	if ((error = ether_ioctl(ifp, &tr->tr_ac, cmd, data)) > 0) {
-		splx(s);
-		return (error);
-	}
+	if ((error = ether_ioctl(ifp, &tr->tr_ac, cmd, data)) > 0)
+		goto out;
 
 	bzero(&rpbuf, sizeof(rpbuf));
 
@@ -709,7 +707,6 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
  out:
 	splx(s);
-
 	return (error);
 }
 
