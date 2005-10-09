@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.94 2005/10/07 01:26:34 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.95 2005/10/09 04:29:13 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -96,8 +96,7 @@ _dl_run_all_dtors()
 		    node != NULL;
 		    node = node->next) {
 			if ((node->dyn.fini) &&
-			    (node->refcount + node->opencount +
-			     node->grprefcount == 0) &&
+			    (OBJECT_REF_CNT(node) == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0)) {
 				node->status |= STAT_FINI_READY;
@@ -107,8 +106,7 @@ _dl_run_all_dtors()
 		    node != NULL;
 		    node = node->next ) {
 			if ((node->dyn.fini) &&
-			    (node->refcount + node->opencount +
-			     node->grprefcount == 0) &&
+			    (OBJECT_REF_CNT(node) == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
 			    ((node->status & STAT_FINI_DONE) == 0))
 				TAILQ_FOREACH(dnode, &node->child_list,

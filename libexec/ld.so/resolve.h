@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.46 2005/10/07 01:26:34 kurt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.47 2005/10/09 04:29:13 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -129,6 +129,10 @@ struct elf_object {
 	int		refcount;	/* dep libs only */
 	int		opencount;	/* # dlopen() & exe */
 	int		grprefcount;	/* load group refs */
+#define OBJECT_REF_CNT(object) \
+    ((object->refcount + object->opencount + object->grprefcount))
+#define OBJECT_DLREF_CNT(object) \
+    ((object->opencount + object->grprefcount))
 
 	/* object that caused this module to be loaded, used in symbol lookup */
 	elf_object_t	*load_object;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.41 2005/10/07 01:26:34 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.42 2005/10/09 04:29:13 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -191,7 +191,7 @@ _dl_cleanup_objects()
 	n = TAILQ_FIRST(&_dlopened_child_list);
 	while (n != NULL) {
 		next = TAILQ_NEXT(n, next_sib);
-		if (n->data->opencount + n->data->grprefcount == 0) {
+		if (OBJECT_DLREF_CNT(n->data) == 0) {
 			TAILQ_REMOVE(&_dlopened_child_list, n, next_sib);
 			_dl_free(n);
 		}

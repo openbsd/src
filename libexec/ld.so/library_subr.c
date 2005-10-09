@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.18 2005/10/07 01:26:34 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.19 2005/10/09 04:29:13 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -356,7 +356,7 @@ _dl_notify_unload_shlib(elf_object_t *object)
 {
 	struct dep_node *n;
 
-	if (object->opencount + object->grprefcount == 0) {
+	if (OBJECT_DLREF_CNT(object) == 0) {
 		TAILQ_FOREACH(n, &object->grpsym_list, next_sib) {
 			if (n->data == object)
 				continue;

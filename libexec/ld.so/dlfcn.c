@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.65 2005/10/07 01:26:33 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.66 2005/10/09 04:29:13 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -71,7 +71,7 @@ dlopen(const char *libname, int flags)
 
 	_dl_link_dlopen(object);
 
-	if (object->refcount + object->opencount + object->grprefcount > 1)
+	if (OBJECT_REF_CNT(object) > 1)
 		goto loaded;
 
 	/* this add_object should not be here, XXX */
