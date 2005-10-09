@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.19 2005/10/09 04:29:13 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.20 2005/10/09 04:37:13 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -338,7 +338,9 @@ _dl_link_dlopen(elf_object_t *dep)
 {
 	struct dep_node *n;
 
-	if (dep->opencount++ > 0)
+	dep->opencount++;
+
+	if (OBJECT_DLREF_CNT(dep) > 1)
 		return;
 
 	n = _dl_malloc(sizeof *n);
