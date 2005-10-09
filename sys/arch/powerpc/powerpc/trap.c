@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.70 2005/10/09 14:52:12 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.71 2005/10/09 22:33:18 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -673,7 +673,9 @@ for (i = 0; i < errnum; i++) {
 	/*
 	 * If someone stole the vector unit while we were away, disable it
 	 */
-	if (p != ppc_vecproc)
+	if (p == ppc_vecproc)
+		frame->srr1 |= PSL_VEC;
+	else 
 		frame->srr1 &= ~PSL_VEC;
 #endif /* ALTIVEC */
 }
