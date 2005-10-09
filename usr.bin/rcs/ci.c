@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.11 2005/10/08 16:27:41 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.12 2005/10/09 14:48:13 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -50,13 +50,13 @@ extern char *__progname;
 #define LOCK_UNLOCK	2
 
 static char * checkin_diff_file(RCSFILE *, RCSNUM *, const char *);
-static char * checkin_getlogmsg(char *, char *, RCSNUM *);
+static char * checkin_getlogmsg(char *, char *, RCSNUM *, RCSNUM *);
 
 void
 checkin_usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-jlMNqruV] [-d date | -r rev] [-m msg] [-k mode] "
+	    "usage: %s [-jlMNquV] [-d date] [-r [rev]] [-m msg] [-k mode] "
 	    "file ...\n", __progname);
 }
 
@@ -69,18 +69,19 @@ checkin_usage(void)
 int
 checkin_main(int argc, char **argv)
 {
-	int i, ch, dflag, flags, lkmode, interactive;
+	int i, ch, dflag, flags, lkmode, interactive, rflag;
 	mode_t fmode;
 	RCSFILE *file;
-	RCSNUM *frev;
+	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN];
-	char *rcs_msg, *rev, *filec, *deltatext, *username;
+	char *rcs_msg, *filec, *deltatext, *username;
 	BUF *bp;
 
 	flags = RCS_RDWR;
 	file = NULL;
-	rcs_msg = rev = NULL;
-	fmode = lkmode = dflag = verbose = 0;
+	rcs_msg = NULL;
+	newrev =  NULL;
+	fmode = lkmode = dflag = verbose = rflag = 0;
 	interactive = 1;
 
 	if ((username = getlogin()) == NULL) {
@@ -108,6 +109,15 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'u':
 			lkmode = LOCK_UNLOCK;
+			break;
+		case 'r':
+			rflag = 1;
+			if (optarg != NULL) {
+				if ((newrev = rcsnum_parse(optarg)) == NULL) {
+					cvs_log(LP_ERR, "bad revision number");
+					exit(1);
+				}
+			}
 			break;
 		default:
 			(usage)();
@@ -145,18 +155,24 @@ checkin_main(int argc, char **argv)
 			exit(1);
 		}
 
-		if (rev == NULL)
-			frev = file->rf_head;
-		/*
-		 * If no log message specified, get it interactively.
-		 */
-		if (rcs_msg == NULL)
-			rcs_msg = checkin_getlogmsg(fpath, argv[i], frev);
-
 		if (cvs_buf_putc(bp, '\0') < 0)
 			exit(1);
 
 		filec = cvs_buf_release(bp);
+
+		/*
+		 * If rev is not specified on the command line,
+		 * assume HEAD.
+		 */
+		frev = file->rf_head;
+		/*
+		 * If no log message specified, get it interactively.
+		 */
+		if (rcs_msg == NULL && newrev == NULL)
+			rcs_msg = checkin_getlogmsg(fpath, argv[i], frev, NULL);
+		else if (rcs_msg == NULL && newrev != NULL)
+			rcs_msg = checkin_getlogmsg(fpath, argv[i], frev, newrev);
+
 
 		/*
 		 * Remove the lock
@@ -177,7 +193,7 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Current head revision gets the RCS patch as rd_text
 		 */
-		if (rcs_deltatext_set(file, file->rf_head, deltatext) == -1) {
+		if (rcs_deltatext_set(file, frev, deltatext) == -1) {
 			cvs_log(LP_ERR,
 			    "failed to set new rd_text for head rev");
 			exit (1);
@@ -185,10 +201,18 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Now add our new revision
 		 */
-		if (rcs_rev_add(file, RCS_HEAD_REV, rcs_msg, -1) != 0) {
+		if (rcs_rev_add(file, (newrev == NULL ? RCS_HEAD_REV : newrev),
+		    rcs_msg, -1) != 0) {
 			cvs_log(LP_ERR, "failed to add new revision");
 			exit(1);
 		}
+
+		/*
+		 * If we are checking in to a non-default (ie user-specified)
+		 * revision, set head to this revision.
+		 */
+		if (newrev != NULL)
+			rcs_head_set(file, newrev);
 
 		/*
 		 * New head revision has to contain entire file;
@@ -205,15 +229,15 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Do checkout if -u or -l are specified.
 		 */
-		if (lkmode != 0) {
+		if (lkmode != 0 && !rflag) {
 			mode_t mode = 0;
-			if ((bp = rcs_getrev(file, frev)) == NULL) {
+			if ((bp = rcs_getrev(file, newrev)) == NULL) {
 				cvs_log(LP_ERR, "cannot get revision");
 				goto err;
 			}
 			if (lkmode == LOCK_LOCK) {
 				mode = 0644;
-				if (rcs_lock_add(file, username, frev) < 0) {
+				if (rcs_lock_add(file, username, newrev) < 0) {
 					if (rcs_errno != RCS_ERR_DUPENT)
 						cvs_log(LP_ERR,
 						    "failed to lock revision");
@@ -302,7 +326,7 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
  * Get log message from user interactively.
  */
 static char *
-checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev)
+checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev, RCSNUM *rev2)
 {
 	char   *rcs_msg, buf[128], nrev[16], prev[16];
 	BUF    *logbuf;
@@ -312,7 +336,10 @@ checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev)
 	tmprev = rcsnum_alloc();
 	rcsnum_cpy(rev, tmprev, 16);
 	rcsnum_tostr(tmprev, prev, sizeof(prev));
-	rcsnum_tostr(rcsnum_inc(tmprev), nrev, sizeof(nrev));
+	if (rev2 == NULL)
+		rcsnum_tostr(rcsnum_inc(tmprev), nrev, sizeof(nrev));
+	else
+		rcsnum_tostr(rev2, nrev, sizeof(nrev));
 	rcsnum_free(tmprev);
 
 	if ((logbuf = cvs_buf_alloc(64, BUF_AUTOEXT)) == NULL) {
