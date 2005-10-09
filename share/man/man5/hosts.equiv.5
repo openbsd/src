@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.equiv.5,v 1.8 2004/04/16 21:23:08 jmc Exp $
+.\"	$OpenBSD: hosts.equiv.5,v 1.9 2005/10/09 16:07:32 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Todd Vierling
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -82,17 +82,17 @@ wildcard (allow all remote users).
 .Pp
 If a
 .Ar username
-is specified, only that user from the specified host may login to the
+is specified, only that user from the specified host may log in to the
 local machine.
 If a
 .Ar username
-is not specified, any user may login with the same user name.
+is not specified, any user may log in with the same user name.
 .Sh EXAMPLES
 .Li somehost
 .Bd -filled -offset indent -compact
 A common usage; users on
 .Ar somehost
-may login to the local host as the same user name.
+may log in to the local host as the same user name.
 .Ed
 .Li somehost username
 .Bd -filled -offset indent -compact
@@ -100,16 +100,16 @@ The user
 .Ar username
 on
 .Ar somehost
-may login to the local host.
+may log in to the local host.
 If specified in
 .Pa /etc/hosts.equiv ,
-the user may login with only the same user name.
+the user may log in with only the same user name.
 .Ed
 .Li +@anetgroup username
 .Bd -filled -offset indent -compact
 The user
 .Ar username
-may login to the local host from any machine listed in the netgroup
+may log in to the local host from any machine listed in the netgroup
 .Ar anetgroup .
 .Ed
 .Bd -literal -compact
@@ -119,9 +119,9 @@ may login to the local host from any machine listed in the netgroup
 .Bd -filled -offset indent -compact
 Two severe security hazards.
 In the first case, allows a user on any
-machine to login to the local host as the same user name.
+machine to log in to the local host as the same user name.
 In the second
-case, allows any user on any machine to login to the local host (as any
+case, allows any user on any machine to log in to the local host (as any
 user, if in
 .Pa /etc/hosts.equiv ) .
 .Ed
@@ -141,7 +141,7 @@ When a user name (or netgroup, or
 .Sq + )
 is specified in
 .Pa /etc/hosts.equiv ,
-that user (or group of users, or all users, respectively) may login to
+that user (or group of users, or all users, respectively) may log in to
 the local host as
 .Em any local user .
 Usernames in
