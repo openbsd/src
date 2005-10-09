@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.28 2005/10/03 19:34:46 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.29 2005/10/09 14:17:32 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -87,6 +87,7 @@ cpumatch(parent, cfdata, aux)
 }
 
 static u_int32_t ppc_curfreq;
+int ppc_altivec;
 
 
 int
@@ -176,27 +177,33 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		snprintf(cpu_model, sizeof(cpu_model), "604ev");
 		break;
 	case PPC_CPU_MPC7400:
+		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "7400");
 		break;
 	case PPC_CPU_MPC7447A:
+		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "7447A");
 		break;
 	case PPC_CPU_IBM970:
+		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "970");
 		break;
 	case PPC_CPU_IBM750FX:
 		snprintf(cpu_model, sizeof(cpu_model), "750FX");
 		break;
 	case PPC_CPU_MPC7410:
+		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "7410");
 		break;
 	case PPC_CPU_MPC7450:
+		ppc_altivec = 1;
 		if ((pvr & 0xf) < 3)
 			snprintf(cpu_model, sizeof(cpu_model), "7450");
 		 else
 			snprintf(cpu_model, sizeof(cpu_model), "7451");
 		break;
 	case PPC_CPU_MPC7455:
+		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "7455");
 		break;
 	default:

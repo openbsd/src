@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2005/10/09 14:17:32 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -40,11 +40,15 @@
  * CTL_MACHDEP definitions.
  */
 #define CPU_ALLOWAPERTURE	1	/* allow mmap of /dev/xf86 */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define CPU_ALTIVEC		2	/* altivec is present */
+#define CPU_MAXID		3	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "allowaperture", CTLTYPE_INT }, \
+	{ "altivec", CTLTYPE_INT }, \
 }
+
+extern int ppc_altivec;
 
 #endif	/* _MACHINE_CPU_H_ */

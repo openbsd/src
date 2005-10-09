@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.75 2005/10/09 14:01:11 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.76 2005/10/09 14:17:32 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -774,6 +774,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
+	case CPU_ALTIVEC:
+		return (sysctl_rdint(oldp, oldlenp, newp, ppc_altivec));
 	default:
 		return EOPNOTSUPP;
 	}
