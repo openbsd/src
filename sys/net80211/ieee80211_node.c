@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.12 2005/10/07 23:30:02 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.13 2005/10/09 19:44:22 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #include <sys/cdefs.h>
 
 #include "bpfilter.h"
+#include "bridge.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +64,10 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#endif
+
+#if NBRIDGE > 0
+#include <net/if_bridge.h>
 #endif
 
 #include <net80211/ieee80211_var.h>
@@ -944,6 +949,16 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 		(*ic->ic_newassoc)(ic, ni, newassoc);
 	IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_SUCCESS);
 	ieee80211_node_newstate(ni, IEEE80211_STA_ASSOC);
+
+#if NBRIDGE > 0
+	/*
+	 * If the parent interface belongs to a bridge, learn
+	 * the node's address dynamically on this interface.
+	 */
+	if (ic->ic_if.if_bridge != NULL)
+		bridge_update(&ic->ic_if,
+		    (struct ether_addr *)ni->ni_macaddr, 0);
+#endif
 }
 
 /*
@@ -964,6 +979,16 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	ni->ni_associd = 0;
 	ieee80211_node_newstate(ni, IEEE80211_STA_COLLECT);
+
+#if NBRIDGE > 0
+	/*
+	 * If the parent interface belongs to a bridge, delete
+	 * any dynamically learned address for this node.
+	 */
+	if (ic->ic_if.if_bridge != NULL)
+		bridge_update(&ic->ic_if,
+		    (struct ether_addr *)ni->ni_macaddr, 1);
+#endif
 }
 
 /*

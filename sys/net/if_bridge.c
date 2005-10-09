@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.145 2005/07/31 03:30:55 pascoe Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.146 2005/10/09 19:44:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -712,6 +712,45 @@ bridge_ifdetach(struct ifnet *ifp)
 			free(bif, M_DEVBUF);
 			ifp->if_bridge = NULL;
 			break;
+		}
+}
+
+void
+bridge_update(struct ifnet *ifp, struct ether_addr *ea, int delete)
+{
+	struct bridge_softc *sc = (struct bridge_softc *)ifp->if_bridge;
+	struct bridge_iflist *bif;
+	u_int8_t *addr;
+
+	addr = (u_int8_t *)ea;
+
+	LIST_FOREACH(bif, &sc->sc_iflist, next)
+		if (bif->ifp == ifp) {
+			/*
+			 * Update the bridge interface if it is in
+			 * the learning state.
+			 */
+			if ((bif->bif_flags & IFBIF_LEARNING) &&
+			    (ETHER_IS_MULTICAST(addr) == 0) &&
+			    !(addr[0] == 0 && addr[1] == 0 && addr[2] == 0 &&
+			    addr[3] == 0 && addr[4] == 0 && addr[5] == 0)) {
+				/* Care must be taken with spanning tree */
+				if ((bif->bif_flags & IFBIF_STP) &&
+				    (bif->bif_state == BSTP_IFSTATE_BLOCKING ||
+				    bif->bif_state == BSTP_IFSTATE_LISTENING ||
+				    bif->bif_state == BSTP_IFSTATE_DISABLED))
+					return;
+
+				/* Delete the address from the bridge */
+				bridge_rtdaddr(sc, ea);
+
+				if (!delete) {
+					/* Update the bridge table */
+					bridge_rtupdate(sc, ea, ifp, 0,
+					    IFBAF_DYNAMIC);
+				}
+			}
+			return;
 		}
 }
 
