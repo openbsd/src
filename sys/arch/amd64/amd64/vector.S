@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.6 2004/12/24 22:50:29 miod Exp $	*/
+/*	$OpenBSD: vector.S,v 1.7 2005/10/09 17:09:34 fgsch Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ IDTVEC(resume_lapic_ltimer)
 
 
 /*
- * This macro defines the generic stub code. Its arguments modifiy it
+ * This macro defines the generic stub code. Its arguments modify it
  * for specific PICs.
  */
 
