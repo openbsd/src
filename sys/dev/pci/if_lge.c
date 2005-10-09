@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.32 2005/10/08 23:38:52 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.33 2005/10/09 02:00:57 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -175,6 +175,10 @@ int	lgedebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+const struct pci_matchid lge_devices[] = {
+	{ PCI_VENDOR_LEVEL1, PCI_PRODUCT_LEVEL1_LXT1001 },
+};
 
 #define LGE_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
@@ -389,13 +393,8 @@ lge_reset(struct lge_softc *sc)
 int
 lge_probe(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LEVEL1 &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LEVEL1_LXT1001)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, lge_devices,
+	    sizeof(lge_devices)/sizeof(lge_devices[0])));
 }
 
 /*
