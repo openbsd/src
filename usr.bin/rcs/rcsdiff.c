@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.6 2005/10/08 20:30:39 niallo Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.7 2005/10/09 20:55:27 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -45,13 +45,14 @@ static int rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev, RCSNUM *rev2);
 int
 rcsdiff_main(int argc, char **argv)
 {
-	int i, ch;
+	int i, ch, status;
 	RCSNUM *rev, *rev2, *frev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN];
 
 	rev = RCS_HEAD_REV;
 	rev2 = NULL;
+	status = 0;
 
 	while ((ch = getopt(argc, argv, "cnqr:uV")) != -1) {
 		switch (ch) {
@@ -116,12 +117,14 @@ rcsdiff_main(int argc, char **argv)
 			if (rcsdiff_file(file, frev, argv[i]) < 0) {
 				cvs_log(LP_ERR, "failed to rcsdiff");
 				rcs_close(file);
+				status = 2;
 				continue;
 			}
 		} else {
 			if (rcsdiff_rev(file, rev, rev2) < 0) {
 				cvs_log(LP_ERR, "failed to rcsdiff");
 				rcs_close(file);
+				status = 2;
 				continue;
 			}
 		}
@@ -129,7 +132,7 @@ rcsdiff_main(int argc, char **argv)
 		rcs_close(file);
 	}
 
-	return (0);
+	exit(status);
 }
 
 void
