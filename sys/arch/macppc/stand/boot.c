@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 2005/10/08 06:27:58 drahn Exp $	*/
+/*	$OpenBSD: boot.c,v 1.12 2005/10/09 15:14:48 drahn Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -227,6 +227,11 @@ main()
 	entry = marks[MARK_ENTRY];
 	ssym = (void *)marks[MARK_SYM];
 	esym = (void *)marks[MARK_END];
+	{
+		u_int32_t lastpage;
+		lastpage = roundup(marks[MARK_END], NBPG);
+		OF_release((void*)lastpage, 0x00800000 - lastpage);
+	}
 
 	chain((void *)entry, bootline, ssym, esym);
 
