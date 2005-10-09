@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.81 2005/10/07 23:59:56 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.82 2005/10/09 16:14:23 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1241,7 +1241,7 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 	    lp = TAILQ_NEXT(lp, rl_list)) {
 		op = *(lp->rl_line);
 		lineno = (int)strtol((lp->rl_line + 1), &ep, 10);
-		if ((lineno > dlines->rl_nblines) || (lineno <= 0) ||
+		if ((lineno > dlines->rl_nblines) || (lineno < 0) ||
 		    (*ep != ' ')) {
 			cvs_log(LP_ERR,
 			    "invalid line specification in RCS patch");
@@ -1249,7 +1249,7 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 		}
 		ep++;
 		nbln = (int)strtol(ep, &ep, 10);
-		if ((nbln <= 0) || (*ep != '\0')) {
+		if ((nbln < 0) || (*ep != '\0')) {
 			cvs_log(LP_ERR,
 			    "invalid line number specification in RCS patch");
 			return (-1);
