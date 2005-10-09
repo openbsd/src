@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.85 2005/10/09 20:55:41 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.86 2005/10/09 23:41:55 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -914,7 +914,7 @@ bge_init_tx_ring(sc)
 		CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
 	SLIST_INIT(&sc->txdma_list);
-	for (i = 0; i < BGE_RSLOTS; i++) {
+	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, BGE_JLEN,
 		    BGE_NTXSEG, BGE_JLEN, 0, BUS_DMA_NOWAIT,
 		    &dmamap))
