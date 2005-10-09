@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.436 2005/10/08 23:41:21 brad Exp $
+#	$OpenBSD: GENERIC,v 1.437 2005/10/09 09:19:52 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,7 +48,7 @@ cpu0	at mainbus?
 bios0	at mainbus0
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
-#ipmi0	at mainbus?		# IPMI
+ipmi0	at mainbus?		# IPMI
 
 isa0	at mainbus0
 isa0	at pcib?
