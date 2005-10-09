@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.18 2005/07/03 02:04:15 brad Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.19 2005/10/09 19:41:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1162,11 +1162,3 @@ struct ti_softc {
 	TI_SETBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_DOUT); /* Toggle DATA to 1 */	\
 	TI_CLRBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_TXEN); /* Disable xmit. */	\
 	TI_CLRBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_CLK); /* Pull clock low again */
-
-#ifndef ETHER_CRC_LEN
-#define ETHER_CRC_LEN	4
-#endif
-
-#ifndef ETHER_HDR_LEN
-#define	ETHER_HDR_LEN	14
-#endif
