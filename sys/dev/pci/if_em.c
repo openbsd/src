@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.73 2005/10/08 01:49:20 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.74 2005/10/09 19:36:35 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -364,7 +364,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
                                         &sc->link_duplex);
 	}
 
-	printf(", address: %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
 
         /* Identify 82544 on PCIX */
         em_get_bus_info(&sc->hw);
