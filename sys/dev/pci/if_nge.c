@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.45 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.46 2005/10/09 04:44:45 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1115,8 +1115,7 @@ nge_alloc_jumbo_mem(sc)
 	if (bus_dmamem_alloc(sc->sc_dmatag, NGE_JMEM, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		error = ENOBUFS;
-		goto out;
+		return (ENOBUFS);
 	}
 
 	state = 1;

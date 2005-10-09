@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.33 2005/10/09 02:00:57 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.34 2005/10/09 04:44:45 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -766,8 +766,7 @@ lge_alloc_jumbo_mem(struct lge_softc *sc)
 	if (bus_dmamem_alloc(sc->sc_dmatag, LGE_JMEM, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		error = ENOBUFS;
-		goto out;
+		return (ENOBUFS);
 	}
 
 	state = 1;
