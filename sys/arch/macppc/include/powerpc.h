@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.6 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.7 2005/10/09 14:01:11 drahn Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -82,4 +82,11 @@ void install_extint(void (*handler) (void));
 void ppc_intr_enable(int enable);
 int ppc_intr_disable(void);
 
+struct dumpmem {
+	vaddr_t         start;
+	vm_size_t       end;
+};
+extern struct dumpmem dumpmem[VM_PHYSSEG_MAX];
+extern u_int ndumpmem;
+extern vaddr_t dumpspace;
 #endif	/* _MACHINE_POWERPC_H_ */

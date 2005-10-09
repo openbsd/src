@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.92 2005/10/08 06:03:00 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.93 2005/10/09 14:01:11 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -1319,8 +1319,12 @@ pmap_avail_setup(void)
 	pmap_cnt_avail = 0;
 	physmem = 0;
 
-	for (mp = pmap_mem; mp->size !=0; mp++)
+	ndumpmem = 0;
+	for (mp = pmap_mem; mp->size !=0; mp++, ndumpmem++) {
 		physmem += btoc(mp->size);
+		dumpmem[ndumpmem].start = atop(mp->start);
+		dumpmem[ndumpmem].end = atop(mp->start + mp->size);
+	}
 
 	for (mp = pmap_avail; mp->size !=0 ; mp++) {
 		if (physmaxaddr <  mp->start + mp->size)
@@ -1565,6 +1569,8 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	ppc_kvm_stolen += PAGE_SIZE;
 	copy_dst_page = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
 	ppc_kvm_stolen += PAGE_SIZE;
+	ppc_kvm_stolen += reserve_dumppages( (caddr_t)(VM_MIN_KERNEL_ADDRESS +
+	    ppc_kvm_stolen));
 
 
 	/*

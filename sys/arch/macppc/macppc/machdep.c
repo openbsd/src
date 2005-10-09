@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2005/10/03 04:47:30 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.75 2005/10/09 14:01:11 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -48,6 +48,9 @@
 #include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -776,10 +779,164 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 }
 
+
+u_long dumpmag = 0x04959fca;			/* magic number */
+int dumpsize = 0;			/* size of dump in pages */
+long dumplo = -1;			/* blocks */
+
+/*
+ * This is called by configure to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+void dumpconf(void);
+void
+dumpconf()
+{
+	int nblks;	/* size of dump area */
+	int maj;
+	int i;
+
+
+	if (dumpdev == NODEV)
+		return;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
+
+	/* Always skip the first block, in case there is a label there. */
+
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
+
+        for (i = 0; i < ndumpmem; i++)
+		dumpsize = max(dumpsize, dumpmem[i].end);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo - 1))
+		dumpsize = dtoc(nblks - dumplo - 1);
+	if (dumplo < nblks - ctod(dumpsize) - 1)
+		dumplo = nblks - ctod(dumpsize) - 1;
+
+}
+
+#define BYTES_PER_DUMP  (PAGE_SIZE)  /* must be a multiple of pagesize */
+vaddr_t dumpspace;
+
+int
+reserve_dumppages(caddr_t p)
+{
+	dumpspace = (vaddr_t)p;
+	return BYTES_PER_DUMP;
+}
+
+/*
+ * cpu_dump: dump machine-dependent kernel core dump headers.
+ */
+int cpu_dump(void);
+int
+cpu_dump()
+{
+	int (*dump) (dev_t, daddr_t, caddr_t, size_t);
+	long buf[dbtob(1) / sizeof (long)];
+	kcore_seg_t	*segp;
+
+	dump = bdevsw[major(dumpdev)].d_dump;
+
+	segp = (kcore_seg_t *)buf;
+
+	/*
+	 * Generate a segment header.
+	 */
+	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+
+	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+}
+
 void
 dumpsys()
 {
-	printf("dumpsys: TBD\n");
+#if 0
+	u_int npg;
+	u_int i, j;
+	daddr_t blkno;
+	int (*dump) (dev_t, daddr_t, caddr_t, size_t);
+	char *str;
+	int maddr;
+	extern int msgbufmapped;
+	int error;
+
+	/* save registers */
+
+	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
+	if (dumpdev == NODEV)
+		return;
+	/*
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
+	 */
+	if (dumpsize == 0)
+		dumpconf();
+	if (dumplo < 0)
+		return;
+	printf("dumping to dev %x, offset %ld\n", dumpdev, dumplo);
+
+	error = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	if (error == -1) {
+		printf("area unavailable\n");
+		delay (10000000);
+		return;
+	}
+
+	dump = bdevsw[major(dumpdev)].d_dump;
+	error = cpu_dump();
+	for (i = 0; !error && i < ndumpmem; i++) {
+		npg = dumpmem[i].end - dumpmem[i].start;
+		maddr = ctob(dumpmem[i].start);
+		blkno = dumplo + btodb(maddr) + 1;
+
+		for (j = npg; j;
+			j--, maddr += PAGE_SIZE, blkno+= btodb(PAGE_SIZE))
+		{
+			/* Print out how many MBs we have to go. */
+                        if (dbtob(blkno - dumplo) % (1024 * 1024) < NBPG)
+                                printf("%d ",
+                                    (ctob(dumpsize) - maddr) / (1024 * 1024));
+
+			pmap_enter(pmap_kernel(), dumpspace, maddr,
+				VM_PROT_READ, PMAP_WIRED);
+			if ((error = (*dump)(dumpdev, blkno,
+			    (caddr_t)dumpspace, PAGE_SIZE)) != 0)
+				break;
+		}
+	}
+
+	switch (error) {
+
+	case 0:         str = "succeeded\n\n";                  break;
+	case ENXIO:     str = "device bad\n\n";                 break;
+	case EFAULT:    str = "device not ready\n\n";           break;
+	case EINVAL:    str = "area improper\n\n";              break;
+	case EIO:       str = "i/o error\n\n";                  break;
+	case EINTR:     str = "aborted from console\n\n";       break;
+	default:        str = "error %d\n\n";                   break;
+	}
+	printf(str, error);
+
+#else
+	printf("dumpsys() - no yet supported\n");
+	
+#endif
+	delay(5000000);         /* 5 seconds */
+
 }
 
 volatile int cpl, ipending, astpending;

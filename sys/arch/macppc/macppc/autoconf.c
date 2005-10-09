@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 2005/04/21 00:15:42 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 2005/10/09 14:01:11 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.16 2005/04/21 00:15:42 deraadt Exp $
+ *      $Id: autoconf.c,v 1.17 2005/10/09 14:01:11 drahn Exp $
  */
 
 /*
@@ -58,11 +58,12 @@
 #include <dev/cons.h>
 #include <uvm/uvm_extern.h>
 #include <machine/autoconf.h>
+#include <machine/powerpc.h>
 
 struct  device *parsedisk(char *, int, int, dev_t *);
 void    setroot(void);
 void	swapconf(void);
-extern void	dumpconf(void);
+void	dumpconf(void);
 int	findblkmajor(struct device *);
 char	*findblkname(int);
 static	struct device * getdisk(char *, int, int, dev_t *);
@@ -80,6 +81,9 @@ void	diskconf(void);
 int	cold = 1;	/* if 1, still working on cold-start */
 char	bootdev[16];	/* to hold boot dev name */
 struct device *bootdv = NULL;
+
+struct dumpmem dumpmem[VM_PHYSSEG_MAX];
+u_int ndumpmem;
 
 /*
  *  Configure all devices found that we know about.
@@ -125,9 +129,7 @@ diskconf()
 #endif
 	setroot();
 	swapconf();
-#if 0
 	dumpconf();
-#endif
 }
 
 /*
@@ -149,56 +151,11 @@ swapconf()
 			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
 	}
-#if 0
-	dumpconf();
-#endif
 }
 
 /*
  * Crash dump handling.
  */
-u_long dumpmag = 0x8fca0101;		/* magic number */
-int dumpsize = 0;			/* size of dump in pages */
-long dumplo = -1;			/* blocks */
-
-/*
- * This is called by configure to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
- * in case there might be a disk label stored there.
- * If there is extra space, put dump at the end to
- * reduce the chance that swapping trashes it.
- */
-#if 0
-void
-dumpconf()
-{
-	int nblks;	/* size of dump area */
-	int maj;
-
-	if (dumpdev == NODEV)
-		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1))
-		return;
-
-	dumpsize = btoc(IOM_END + ctob(dumpmem_high));
-
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
-
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
-}
-#endif
 
 static	struct nam2blk {
 	char *name;
