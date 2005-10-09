@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.19 2005/10/07 06:02:33 martin Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.20 2005/10/09 19:22:23 brad Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -27,10 +27,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef __NetBSD__
-#include "opt_inet.h"
-#include "opt_ns.h"
-#endif /* __NetBSD__ */
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -73,15 +69,7 @@
 
 struct bmac_softc {
 	struct device sc_dev;
-#ifdef __OpenBSD__
 	struct arpcom arpcom;	/* per-instance network data */
-#define sc_if arpcom.ac_if
-#define	sc_enaddr arpcom.ac_enaddr
-#else
-	struct ethercom sc_ethercom;
-#define sc_if sc_ethercom.ec_if
-	u_char sc_enaddr[6];
-#endif
 	struct timeout sc_tick_ch;
 	vaddr_t sc_regs;
 	bus_dma_tag_t sc_dmat;
@@ -116,9 +104,6 @@ static void bmac_reset_chip(struct bmac_softc *);
 static void bmac_init(struct bmac_softc *);
 static void bmac_init_dma(struct bmac_softc *);
 static int bmac_intr(void *);
-#ifdef WHY_IS_THIS_XXXX
-static int bmac_tx_intr(void *);
-#endif /* WHY_IS_THIS_XXXX */
 static int bmac_rint(void *);
 static void bmac_reset(struct bmac_softc *);
 static void bmac_stop(struct bmac_softc *);
@@ -183,14 +168,14 @@ bmac_match(struct device *parent, void *cf, void *aux)
 	struct confargs *ca = aux;
 
 	if (ca->ca_nreg < 24 || ca->ca_nintr < 12)
-		return 0;
+		return (0);
 
 	if (strcmp(ca->ca_name, "bmac") == 0)		/* bmac */
-		return 1;
+		return (1);
 	if (strcmp(ca->ca_name, "ethernet") == 0)	/* bmac+ */
-		return 1;
+		return (1);
 
-	return 0;
+	return (0);
 }
 
 void
@@ -198,7 +183,7 @@ bmac_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct bmac_softc *sc = (void *)self;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct mii_data *mii = &sc->sc_mii;
 	u_char laddr[6];
 	int nseg, error;
@@ -276,10 +261,6 @@ bmac_attach(struct device *parent, struct device *self, void *aux)
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_NET,
 	    bmac_intr, sc, "bmac intr");
-#ifdef WHY_IS_THIS_XXXX
-	mac_intr_establish(parent, ca->ca_intr[1], IST_LEVEL, IPL_NET,
-	    bmac_tx_intr, sc, "bmac_tx");
-#endif /* WHY_IS_THIS_XXXX */
 	mac_intr_establish(parent, ca->ca_intr[2], IST_LEVEL, IPL_NET,
 	    bmac_rint, sc, "bmac rint");
 
@@ -354,7 +335,7 @@ bmac_reset_chip(struct bmac_softc *sc)
 void
 bmac_init(struct bmac_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ether_header *eh;
 	caddr_t data;
 	int tb;
@@ -418,7 +399,7 @@ bmac_init(struct bmac_softc *sc)
 	bmac_write_reg(sc, HASH0, 0);
 
 	/* Set MAC address. */
-	p = (u_short *)sc->sc_enaddr;
+	p = (u_short *)sc->arpcom.ac_enaddr;
 	bmac_write_reg(sc, MADD0, *p++);
 	bmac_write_reg(sc, MADD1, *p++);
 	bmac_write_reg(sc, MADD2, *p);
@@ -448,8 +429,8 @@ bmac_init(struct bmac_softc *sc)
 	eh = (struct ether_header *)data;
 
 	bzero(data, sizeof(*eh) + ETHERMIN);
-	bcopy(sc->sc_enaddr, eh->ether_dhost, ETHER_ADDR_LEN);
-	bcopy(sc->sc_enaddr, eh->ether_shost, ETHER_ADDR_LEN);
+	bcopy(sc->arpcom.ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN);
+	bcopy(sc->arpcom.ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN);
 	bmac_transmit_packet(sc, sc->sc_txbuf_pa, sizeof(eh) + ETHERMIN);
 
 	bmac_start(ifp);
@@ -484,42 +465,11 @@ bmac_init_dma(struct bmac_softc *sc)
 	dbdma_start(sc->sc_rxdma, sc->sc_rxdbdma);
 }
 
-#ifdef WHY_IS_THIS_XXXX
-int
-bmac_tx_intr(void *v)
-{
-	struct bmac_softc *sc = v;
-
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
-	sc->sc_if.if_timer = 0;
-	sc->sc_if.if_opackets++;
-	bmac_start(&sc->sc_if);
-
-#ifndef BMAC_DEBUG
-	printf("bmac_tx_intr \n");
-#endif
-	#if 0
-	stat = bmac_read_reg(sc, STATUS);
-	if (stat == 0) {
-		printf("tx intr fired, but status 0\n");
-		return 0;
-	}
-
-
-	if (stat & IntFrameSent) {
-		sc->sc_if.if_flags &= ~IFF_OACTIVE;
-		sc->sc_if.if_timer = 0;
-		sc->sc_if.if_opackets++;
-		bmac_start(&sc->sc_if);
-	}
-	#endif
-	return 1;
-}
-#endif /* WHY_IS_THIS_XXXX */
 int
 bmac_intr(void *v)
 {
 	struct bmac_softc *sc = v;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int stat;
 
 #ifdef BMAC_DEBUG
@@ -527,29 +477,29 @@ bmac_intr(void *v)
 #endif
 	stat = bmac_read_reg(sc, STATUS);
 	if (stat == 0)
-		return 0;
+		return (0);
 
 #ifdef BMAC_DEBUG
 	printf("bmac_intr status = 0x%x\n", stat);
 #endif
 
 	if (stat & IntFrameSent) {
-		sc->sc_if.if_flags &= ~IFF_OACTIVE;
-		sc->sc_if.if_timer = 0;
-		sc->sc_if.if_opackets++;
-		bmac_start(&sc->sc_if);
+		ifp->if_flags &= ~IFF_OACTIVE;
+		ifp->if_timer = 0;
+		ifp->if_opackets++;
+		bmac_start(ifp);
 	}
 
 	/* XXX should do more! */
 
-	return 1;
+	return (1);
 }
 
 int
 bmac_rint(void *v)
 {
 	struct bmac_softc *sc = v;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct mbuf *m;
 	dbdma_command_t *cmd;
 	int status, resid, count, datalen;
@@ -605,12 +555,7 @@ bmac_rint(void *v)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-#ifdef __OpenBSD__
 		ether_input_mbuf(ifp, m);
-#else
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, data, m);
-#endif
 		ifp->if_ipackets++;
 
 next:
@@ -623,7 +568,7 @@ next:
 	}
 	dbdma_continue(sc->sc_rxdma);
 
-	return 1;
+	return (1);
 }
 
 void
@@ -639,7 +584,7 @@ bmac_reset(struct bmac_softc *sc)
 void
 bmac_stop(struct bmac_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int s;
 
 	s = splnet();
@@ -735,7 +680,7 @@ bmac_put(struct bmac_softc *sc, caddr_t buff, struct mbuf *m)
 	if (tlen > NBPG)
 		panic("%s: putpacket packet overflow", sc->sc_dev.dv_xname);
 
-	return tlen;
+	return (tlen);
 }
 
 struct mbuf *
@@ -747,8 +692,8 @@ bmac_get(struct bmac_softc *sc, caddr_t pkt, int totlen)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
-		return 0;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+		return (0);
+	m->m_pkthdr.rcvif = &sc->arpcom.ac_if;
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -759,7 +704,7 @@ bmac_get(struct bmac_softc *sc, caddr_t pkt, int totlen)
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
 				m_freem(top);
-				return 0;
+				return (0);
 			}
 			len = MLEN;
 		}
@@ -768,7 +713,7 @@ bmac_get(struct bmac_softc *sc, caddr_t pkt, int totlen)
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				m_freem(top);
-				return 0;
+				return (0);
 			}
 			len = MCLBYTES;
 		}
@@ -780,7 +725,7 @@ bmac_get(struct bmac_softc *sc, caddr_t pkt, int totlen)
 		mp = &m->m_next;
 	}
 
-	return top;
+	return (top);
 }
 
 void
@@ -816,11 +761,7 @@ bmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef INET
 		case AF_INET:
 			bmac_init(sc);
-#ifdef __OpenBSD__
 			arp_ifinit(&sc->arpcom, ifa);
-#else
-			arp_ifinit(ifp, ifa);
-#endif
 			break;
 #endif
 		default:
@@ -863,15 +804,9 @@ bmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#if defined(__OpenBSD__)
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->arpcom) :
 		    ether_delmulti(ifr, &sc->arpcom);
-#else
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-#endif
 
 		if (error == ENETRESET) {
 			/*
@@ -896,7 +831,7 @@ bmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	splx(s);
-	return error;
+	return (error);
 }
 
 int
@@ -924,7 +859,7 @@ bmac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 void
 bmac_setladrf(struct bmac_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int32_t crc;
@@ -950,11 +885,7 @@ bmac_setladrf(struct bmac_softc *sc)
 	}
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
-#ifdef __OpenBSD__
 	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
-#else
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
-#endif
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
