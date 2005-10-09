@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.14 2005/10/09 19:29:22 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.15 2005/10/09 21:17:59 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -211,7 +211,8 @@ checkin_main(int argc, char **argv)
 		 */
 		if (newrev != NULL)
 			rcs_head_set(file, newrev);
-
+		else
+			newrev = file->rf_head;
 		/*
 		 * New head revision has to contain entire file;
 		 */
