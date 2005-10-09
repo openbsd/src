@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.28 2005/09/04 20:28:29 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.29 2005/10/09 20:07:32 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2209,7 +2209,11 @@ struct vpd_key {
 
 #define BGE_SSLOTS	256
 #define BGE_MSLOTS	256
+#ifdef __sparc64__
+#define BGE_JSLOTS	54
+#else
 #define BGE_JSLOTS	384
+#endif
 #define BGE_RSLOTS	256
 
 #define BGE_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
