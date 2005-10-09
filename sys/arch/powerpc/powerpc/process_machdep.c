@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.9 2005/06/20 20:02:04 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.10 2005/10/09 14:52:12 drahn Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ process_read_regs(struct proc *p, struct reg *regs)
 		bzero(regs->fpr, sizeof(regs->fpr));
 	} else {
 		if (p == fpuproc)
-			save_fpu(fpuproc);
+			save_fpu();
 		bcopy(pcb->pcb_fpu.fpr, regs->fpr, sizeof(regs->fpr));
 	}
 
@@ -104,7 +104,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 	bcopy(regs->gpr, tf->fixreg, sizeof(regs->gpr));
 
 	if (p == fpuproc) {	/* release the fpu */
-		save_fpu(fpuproc);
+		save_fpu();
 		fpuproc = NULL;
 	}
 

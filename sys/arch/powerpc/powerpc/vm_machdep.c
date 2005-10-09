@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2004/06/24 22:35:56 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.39 2005/10/09 14:52:12 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 
 	if (p1 == fpuproc)
-		save_fpu(p1);
+		save_fpu();
 	*pcb = p1->p_addr->u_pcb;
 	
 #ifdef ALTIVEC
@@ -170,8 +170,8 @@ cpu_exit(struct proc *p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 #endif /* ALTIVEC */
 	
-	if (p == fpuproc)	/* release the fpu */
-		fpuproc = 0;
+	if (p == fpuproc) 	/* release the fpu */
+		fpuproc = NULL;
 
 #ifdef ALTIVEC
 	if (p == ppc_vecproc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.69 2005/09/15 21:09:29 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.70 2005/10/09 14:52:12 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ void trap(struct trapframe *frame);
 
 volatile int want_resched;
 struct proc *ppc_vecproc;
+struct proc *fpuproc;
 
 #ifdef DDB
 void ppc_dumpbt(struct trapframe *frame);
@@ -523,8 +524,7 @@ syscall_bad:
 
 	case EXC_FPU|EXC_USER:
 		if (fpuproc)
-			save_fpu(fpuproc);
-		fpuproc = p;
+			save_fpu();
 		uvmexp.fpswtch++;
 		enable_fpu(p);
 		break;
@@ -675,8 +675,6 @@ for (i = 0; i < errnum; i++) {
 	 */
 	if (p != ppc_vecproc)
 		frame->srr1 &= ~PSL_VEC;
-	else
-		frame->srr1 |= PSL_VEC;
 #endif /* ALTIVEC */
 }
 
@@ -755,21 +753,21 @@ fix_unaligned(struct proc *p, struct trapframe *frame)
 			 */
 			if (fpuproc != p) {
 				if (fpuproc)
-					save_fpu(fpuproc);
+					save_fpu();
 				enable_fpu(p);
 			}
-			save_fpu(p);
+			save_fpu();
 
 			if (indicator == EXC_ALI_LFD) {
 				if (copyin((void *)frame->dar, fpr,
 				    sizeof(double)) != 0)
 					return -1;
-				enable_fpu(p);
 			} else {
 				if (copyout(fpr, (void *)frame->dar,
 				    sizeof(double)) != 0)
 					return -1;
 			}
+			enable_fpu(p);
 			return 0;
 		}
 		break;
