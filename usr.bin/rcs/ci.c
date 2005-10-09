@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.13 2005/10/09 17:51:33 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.14 2005/10/09 19:29:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -169,7 +169,7 @@ checkin_main(int argc, char **argv)
 		/*
 		 * If no log message specified, get it interactively.
 		 */
-		if (rcs_msg != NULL)
+		if (rcs_msg == NULL)
 			rcs_msg = checkin_getlogmsg(fpath, argv[i], frev, newrev);
 
 		/*
