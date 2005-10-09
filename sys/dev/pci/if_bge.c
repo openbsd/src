@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.84 2005/10/06 06:01:05 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.85 2005/10/09 20:55:41 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -666,20 +666,23 @@ bge_newbuf_std(sc, i, m, dmamap)
 			return(ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+		if (!sc->bge_rx_alignment_bug)
+		    m_adj(m_new, ETHER_ALIGN);
+
+		if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
+		    BUS_DMA_READ|BUS_DMA_NOWAIT))
+			return(ENOBUFS);
 	} else {
+		/*
+		 * We're re-using a previously allocated mbuf;
+		 * be sure to re-init pointers and lengths to
+		 * default values.
+		 */
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-
-	if (!sc->bge_rx_alignment_bug)
-		m_adj(m_new, ETHER_ALIGN);
-
-	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
-	    BUS_DMA_READ|BUS_DMA_NOWAIT)) {
-		if (m == NULL)
-			m_freem(m_new);
-		return(ENOBUFS);
+		if (!sc->bge_rx_alignment_bug)
+		    m_adj(m_new, ETHER_ALIGN);
 	}
 
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
@@ -730,6 +733,11 @@ bge_newbuf_jumbo(sc, i, m)
 		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
 		MEXTADD(m_new, buf, ETHER_MAX_LEN_JUMBO, 0, bge_jfree, sc);
 	} else {
+		/*
+		 * We're re-using a previously allocated mbuf;
+		 * be sure to re-init pointers and lengths to
+		 * default values.
+		 */
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
 		m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
