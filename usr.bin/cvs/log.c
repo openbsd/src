@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.26 2005/09/19 15:45:16 niallo Exp $	*/
+/*	$OpenBSD: log.c,v 1.27 2005/10/09 23:59:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -208,6 +208,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	char prefix[64], buf[1024], ebuf[255];
 	FILE *out;
 #if !defined(RCSPROG)
+	char *cmdname;
 	struct cvs_cmd *cmdp;
 #endif
 
@@ -225,7 +226,12 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 
 	/* always use the command name in error messages, not aliases */
 #if !defined(RCSPROG)
-	cmdp = cvs_findcmd(cvs_command);
+	if (cvs_command == NULL)
+		cmdname = " ";
+	else {
+		cmdp = cvs_findcmd(cvs_command);
+		cmdname = cmdp->cmd_name;
+	}
 
 	/* The cvs program appends the command name to the program name */
 	if (level == LP_TRACE) {
@@ -235,10 +241,10 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	} else if (cvs_command != NULL) {
 		if (level == LP_ABORT)
 			snprintf(prefix, sizeof(prefix), "%s [%s aborted]",
-			    __progname, cmdp->cmd_name);
+			    __progname, cmdname);
 		else
 			snprintf(prefix, sizeof(prefix), "%s %s", __progname,
-			    cmdp->cmd_name);
+			    cmdname);
 	} else /* just use the standard strlcpy */
 #endif
 		strlcpy(prefix, __progname, sizeof(prefix));
