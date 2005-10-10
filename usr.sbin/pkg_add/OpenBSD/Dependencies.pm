@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.3 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.4 2005/10/10 11:24:34 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -117,15 +117,13 @@ sub solve
 
 sub check_lib_spec
 {
-	my ($verbose, $base, $spec, $dependencies) = @_;
+	my ($base, $spec, $dependencies) = @_;
 	my @r = OpenBSD::SharedLibs::lookup_libspec($base, $spec);
 	for my $candidate (@r) {
 		if ($dependencies->{$candidate}) {
-			print " found in $candidate\n" if $verbose;
-			return 1;
+			return $candidate;
 		}
 	}
-	print " not found." if $verbose;
 	return undef;
 }
 
@@ -136,40 +134,39 @@ sub find_old_lib
 	$pattern = ".libs-".$pattern;
 	for my $try (OpenBSD::PkgSpec::match($pattern, installed_packages())) {
 		OpenBSD::SharedLibs::add_package_libs($try);
-		if (check_lib_spec($state->{very_verbose},
-		    $base, $lib, {$try => 1})) {
-			Warn "Found library ", $lib, " in old package $try\n"
-			    if $state->{verbose};
+		if (check_lib_spec($base, $lib, {$try => 1})) {
 			$dependencies->{$try} = 1;
-			return 1;
+			return "$try($lib)";
 		}
 	}
-	return 0;
+	return undef;
 }
 
 sub lookup_library
 {
 	my ($state, $lib, $plist, $dependencies, $harder, $done) = @_;
 
-	print "checking libspec $lib..." if $state->{very_verbose};
-	if (check_lib_spec($state->{very_verbose},
-	    $plist->pkgbase(), $lib, $dependencies)) {
+	my $r = check_lib_spec($plist->pkgbase(), $lib, $dependencies);
+	if ($r) {
+	    print "found libspec $lib in $r\n" if $state->{very_verbose};
 	    return 1;
 	}
 	if ($harder && $lib !~ m|/|) {
 
 		OpenBSD::SharedLibs::add_system_libs($state->{destdir});
-		if (check_lib_spec($state->{very_verbose},
-		    "/usr", $lib, {system => 1})) {
+		if (check_lib_spec("/usr", $lib, {system => 1})) {
+			print "found libspec $lib in /usr\n" if $state->{very_verbose};
 			return 1;
 		}
-		if (check_lib_spec($state->{very_verbose},
-		    "/usr/X11R6", $lib, {system => 1})) {
+		if (check_lib_spec("/usr/X11R6", $lib, {system => 1})) {
+			print "found libspec $lib in /usr/X11R6\n" if $state->{very_verbose};
 			return 1;
 		}
 	}
 	for my $dep (@{$plist->{depends}}) {
-		if (find_old_lib($state, $plist->pkgbase(), $dep->{pattern}, $lib, $dependencies)) {
+		$r = find_old_lib($state, $plist->pkgbase(), $dep->{pattern}, $lib, $dependencies);
+		if ($r) {
+			print "found libspec $lib in old package $r\n" if $state->{verbose};
 			return 1;
 		}
     	}
@@ -186,9 +183,8 @@ sub lookup_library
 			}
 			next if $dependencies->{$dep};
 			OpenBSD::SharedLibs::add_package_libs($dep);
-			if (check_lib_spec($state->{very_verbose},
-			    $plist->pkgbase(), $lib, {$dep => 1})) {
-				Warn "Found library ", $lib, " in dependent package $dep\n" if $state->{verbose};
+			if (check_lib_spec($plist->pkgbase(), $lib, {$dep => 1})) {
+				print "found libspec $lib in dependent package $dep\n" if $state->{verbose};
 				$dependencies->{$dep} = 1;
 				return 1;
 			}
@@ -207,15 +203,14 @@ sub lookup_library
 				push(@todo, $dep2) unless $done->{$dep2};
 			}
 			OpenBSD::SharedLibs::add_bogus_package_libs($dep);
-			if (check_lib_spec($state->{very_verbose},
-			    $plist->pkgbase(), $lib, {$dep => 1})) {
-				Warn "Found unmarked library ", $lib, " in dependent package $dep\n" if $state->{verbose};
+			if (check_lib_spec($plist->pkgbase(), $lib, {$dep => 1})) {
+				print "found libspec $lib in dependent package $dep (unmarked library)\n" if $state->{verbose};
 				$dependencies->{$dep} = 1;
 				return 1;
 			}
 		}
 	}
-	print "\n" if $state->{very_verbose};
+	print "libspec $lib not found\n" if $state->{very_verbose};
 	return;
 }
 
