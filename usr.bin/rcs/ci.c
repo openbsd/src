@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.17 2005/10/10 14:49:32 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.18 2005/10/10 15:05:48 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -56,8 +56,8 @@ void
 checkin_usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-jlMNquV] [-d date] [-r [rev]] [-m msg] [-k mode] "
-	    "file ...\n", __progname);
+	    "usage: %s [-jMNqV] [-d date] [-k mode] [-l [rev]] [-m msg]\n"
+	    "          [-r [rev]] [-u [rev]] file ...\n", __progname);
 }
 
 /*
@@ -90,7 +90,7 @@ checkin_main(int argc, char **argv)
 		exit(1);
 	}
 
-	while ((ch = getopt(argc, argv, "j:lM:N:qud:r::m:k:V")) != -1) {
+	while ((ch = getopt(argc, argv, "j:l::M:N:qu::d:r::m:k:V")) != -1) {
 		switch (ch) {
 		case 'h':
 			(usage)();
@@ -106,9 +106,21 @@ checkin_main(int argc, char **argv)
 			printf("%s\n", rcs_version);
 			exit(0);
 		case 'l':
+			if (optarg != NULL) {
+				if ((newrev = rcsnum_parse(optarg)) == NULL) {
+					cvs_log(LP_ERR, "bad revision number");
+					exit(1);
+				}
+			}
 			lkmode = LOCK_LOCK;
 			break;
 		case 'u':
+			if (optarg != NULL) {
+				if ((newrev = rcsnum_parse(optarg)) == NULL) {
+					cvs_log(LP_ERR, "bad revision number");
+					exit(1);
+				}
+			}
 			lkmode = LOCK_UNLOCK;
 			break;
 		case 'r':
