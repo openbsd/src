@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop_common.c,v 1.23 2005/10/08 23:46:11 krw Exp $ */
-/*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
+/*	$OpenBSD: siop_common.c,v 1.24 2005/10/10 16:27:23 krw Exp $ */
+/*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -714,17 +714,21 @@ siop_minphys(bp)
 }
 
 void
-siop_sdp(siop_cmd)
+siop_ma(siop_cmd)
 	struct siop_common_cmd *siop_cmd;
 {
-	/* save data pointer. Handle async only for now */
 	int offset, dbc, sstat;
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
-	scr_table_t *table; /* table to patch */
+	scr_table_t *table; /* table with partial xfer */
 
+	/*
+	 * compute how much of the current table didn't get handled when
+	 * a phase mismatch occurs
+	 */
 	if ((siop_cmd->xs->flags & (SCSI_DATA_OUT | SCSI_DATA_IN))
 	    == 0)
-	    return; /* no data pointers to save */
+	    return; /* no valid data transfer */
+
 	offset = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCRATCHA + 1);
 	if (offset >= SIOP_NSG) {
 		printf("%s: bad offset in siop_sdp (%d)\n",
@@ -733,8 +737,8 @@ siop_sdp(siop_cmd)
 	}
 	table = &siop_cmd->siop_tables->data[offset];
 #ifdef DEBUG_DR
-	printf("sdp: offset %d count=%d addr=0x%x ", offset,
-	    letoh32(table->count), letoh32(table->addr));
+	printf("siop_ma: offset %d count=%d addr=0x%x ", offset,
+	    table->count, table->addr);
 #endif
 	dbc = bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DBC) & 0x00ffffff;
 	if (siop_cmd->xs->flags & SCSI_DATA_OUT) {
@@ -772,13 +776,152 @@ siop_sdp(siop_cmd)
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3) |
 		    CTEST3_CLF);
 	}
-	table->addr =
-	    htole32(letoh32(table->addr) + letoh32(table->count) - dbc);
-	table->count = htole32(dbc);
-#ifdef DEBUG_DR
-	printf("now count=%d addr=0x%x\n",
-	    letoh32(table->count), letoh32(table->addr));
+	siop_cmd->flags |= CMDFL_RESID;
+	siop_cmd->resid = dbc;
+}
+
+void
+siop_sdp(siop_cmd, offset)
+	struct siop_common_cmd *siop_cmd;
+	int offset;
+{
+	scr_table_t *table;
+	
+	if ((siop_cmd->xs->flags & (SCSI_DATA_OUT | SCSI_DATA_IN))
+	    == 0)
+	    return; /* no data pointers to save */
+
+	/*
+	 * offset == SIOP_NSG may be a valid condition if we get a Save data
+	 * pointer when the xfer is done. Just ignore the Save data pointer
+	 * in this case
+	 */
+	if (offset == SIOP_NSG)
+		return;
+#ifdef DIAGNOSTIC
+	if (offset > SIOP_NSG) {
+		sc_print_addr(siop_cmd->xs->sc_link);
+		printf(": offset %d > %d\n", offset, SIOP_NSG);
+		panic("siop_sdp: offset");
+	}
 #endif
+	/*
+	 * Save data pointer. We do this by adjusting the tables to point
+	 * at the begginning of the data not yet transfered. 
+	 * offset points to the first table with untransfered data.
+	 */
+
+	/*
+	 * before doing that we decrease resid from the ammount of data which
+	 * has been transfered.
+	 */
+	siop_update_resid(siop_cmd, offset);
+
+	/*
+	 * First let see if we have a resid from a phase mismatch. If so,
+	 * we have to adjst the table at offset to remove transfered data.
+	 */
+	if (siop_cmd->flags & CMDFL_RESID) {
+		siop_cmd->flags &= ~CMDFL_RESID;
+		table = &siop_cmd->siop_tables->data[offset];
+		/* "cut" already transfered data from this table */
+		table->addr =
+		    htole32(letoh32(table->addr) +
+		    letoh32(table->count) - siop_cmd->resid);
+		table->count = htole32(siop_cmd->resid);
+	}
+
+	/*
+	 * now we can remove entries which have been transfered.
+	 * We just move the entries with data left at the beggining of the
+	 * tables
+	 */
+	bcopy(&siop_cmd->siop_tables->data[offset],
+	    &siop_cmd->siop_tables->data[0],
+	    (SIOP_NSG - offset) * sizeof(scr_table_t));
+}
+
+void
+siop_update_resid(siop_cmd, offset)
+	struct siop_common_cmd *siop_cmd;
+	int offset;
+{
+	scr_table_t *table;
+	int i;
+
+	if ((siop_cmd->xs->flags & (SCSI_DATA_OUT | SCSI_DATA_IN))
+	    == 0)
+	    return; /* no data to transfer */
+
+	/*
+	 * update resid. First account for the table entries which have
+	 * been fully completed.
+	 */
+	for (i = 0; i < offset; i++)
+		siop_cmd->xs->resid -=
+		    letoh32(siop_cmd->siop_tables->data[i].count);
+	/*
+	 * if CMDFL_RESID is set, the last table (pointed by offset) is a
+	 * partial transfers. If not, offset points to the entry folloing
+	 * the last full transfer.
+	 */
+	if (siop_cmd->flags & CMDFL_RESID) {
+		table = &siop_cmd->siop_tables->data[offset];
+		siop_cmd->xs->resid -= letoh32(table->count) - siop_cmd->resid;
+	}
+}
+
+int
+siop_iwr(siop_cmd)
+	struct siop_common_cmd *siop_cmd;
+{
+	int offset;
+	scr_table_t *table; /* table with IWR */
+	struct siop_common_softc *sc = siop_cmd->siop_sc;
+	/* handle ignore wide residue messages */
+
+	/* if target isn't wide, reject */
+	if ((siop_cmd->siop_target->flags & TARF_ISWIDE) == 0) {
+		siop_cmd->siop_tables->t_msgout.count= htole32(1);
+		siop_cmd->siop_tables->msg_out[0] = MSG_MESSAGE_REJECT;
+		return SIOP_NEG_MSGOUT;
+	}
+	/* get index of current command in table */
+	offset = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCRATCHA + 1);
+	/*
+	 * if the current table did complete, we're now pointing at the
+	 * next one. Go back one if we didn't see a phase mismatch.
+	 */
+	if ((siop_cmd->flags & CMDFL_RESID) == 0)
+		offset--;
+	table = &siop_cmd->siop_tables->data[offset];
+
+	if ((siop_cmd->flags & CMDFL_RESID) == 0) {
+		if (letoh32(table->count) & 1) {
+			/* we really got the number of bytes we expected */
+			return SIOP_NEG_ACK;
+		} else {
+			/*
+			 * now we really had a short xfer, by one byte.
+			 * handle it just as if we had a phase mistmatch
+			 * (there is a resid of one for this table).
+			 * Update scratcha1 to reflect the fact that
+			 * this xfer isn't complete.
+			 */
+			 siop_cmd->flags |= CMDFL_RESID;
+			 siop_cmd->resid = 1;
+			 bus_space_write_1(sc->sc_rt, sc->sc_rh,
+			     SIOP_SCRATCHA + 1, offset);
+			 return SIOP_NEG_ACK;
+		}
+	} else {
+		/*
+		 * we already have a short xfer for this table; it's
+		 * just one byte less than we though it was
+		 */
+		siop_cmd->resid--;
+		return SIOP_NEG_ACK;
+	}
 }
 
 void
