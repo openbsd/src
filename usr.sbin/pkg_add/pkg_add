@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.204 2005/10/10 09:33:56 espie Exp $
+# $OpenBSD: pkg_add,v 1.205 2005/10/10 11:02:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -370,6 +370,7 @@ sub really_add($$)
 		};
 
 		if ($interrupted || $errors) {
+			# here we should remove links from the temp package
 			failed_install($handle, $state->{not}, $interrupted);
 		}
 	} else {
