@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.66 2005/10/09 04:29:13 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.67 2005/10/10 16:33:51 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -60,14 +60,14 @@ dlopen(const char *libname, int flags)
 
 	_dl_thread_kern_stop();
 
+	_dl_loading_object = NULL;
+
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, flags);
 	if (object == 0) {
 		DL_DEB(("dlopen: failed to open %s\n", libname));
 		failed = 1;
 		goto loaded;
 	}
-
-	_dl_loading_object = object;
 
 	_dl_link_dlopen(object);
 
@@ -78,7 +78,6 @@ dlopen(const char *libname, int flags)
 	_dl_add_object(object);
 
 	DL_DEB(("head [%s]\n", object->load_name ));
-	object->load_object = object;
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)

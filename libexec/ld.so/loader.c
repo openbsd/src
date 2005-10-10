@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.95 2005/10/09 04:29:13 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.96 2005/10/10 16:33:51 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -295,6 +295,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	TAILQ_INIT(&_dlopened_child_list);
 
 	exe_obj = NULL;
+	_dl_loading_object = NULL;
 	/*
 	 * Examine the user application and set up object information.
 	 */
@@ -311,9 +312,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		phdp++;
 	}
 	exe_obj->obj_flags = RTLD_GLOBAL;
-	exe_obj->load_object = exe_obj;
-	TAILQ_INIT(&exe_obj->grpsym_list);
-	TAILQ_INIT(&exe_obj->grpref_list);
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -445,6 +443,8 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 
 	if (_dl_traceld)
 		_dl_exit(0);
+
+	_dl_loading_object = NULL;
 
 	_dl_fixup_user_env();
 
