@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.14 2005/08/05 13:03:00 espie Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.15 2005/10/10 19:23:41 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -289,8 +289,8 @@ mpool_close(MPOOL *mp)
 	BKT *bp;
 
 	/* Free up any space allocated to the lru pages. */
-	while ((bp = mp->lqh.cqh_first) != (void *)&mp->lqh) {
-		CIRCLEQ_REMOVE(&mp->lqh, mp->lqh.cqh_first, q);
+	while ((bp = CIRCLEQ_FIRST(&mp->lqh)) != CIRCLEQ_END(&mp->lqh)) {
+		CIRCLEQ_REMOVE(&mp->lqh, bp, q);
 		free(bp);
 	}
 
