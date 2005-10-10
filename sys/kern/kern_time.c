@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.48 2005/05/31 11:32:47 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.49 2005/10/10 07:23:02 otto Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -419,8 +419,21 @@ sys_adjtime(p, v, retval)
 	 * hardclock(), tickdelta will become zero, lest the correction
 	 * overshoot and start taking us away from the desired final time.
 	 */
-	ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
-	if (ndelta > bigadj)
+	if (atv.tv_sec > LONG_MAX / 1000000L)
+		ndelta = LONG_MAX;
+	else if (atv.tv_sec < LONG_MIN / 1000000L)
+		ndelta = LONG_MIN;
+	else {
+		ndelta = atv.tv_sec * 1000000L;
+		odelta = ndelta;
+		ndelta += atv.tv_usec;
+		if (atv.tv_usec > 0 && ndelta <= odelta)
+			ndelta = LONG_MAX;	
+		else if (atv.tv_usec < 0 && ndelta >= odelta)
+			ndelta = LONG_MIN;
+	}
+
+	if (ndelta > bigadj || ndelta < -bigadj)
 		ntickdelta = 10 * tickadj;
 	else
 		ntickdelta = tickadj;
