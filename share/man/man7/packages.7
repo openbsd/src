@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.20 2005/09/17 21:39:09 jmc Exp $
+.\" $OpenBSD: packages.7,v 1.21 2005/10/10 09:50:22 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -42,10 +42,9 @@ Adding a new package is as simple as
 .Dl pkg_add foo-1.0-vanilla.tgz
 .Pp
 In appearance, packages seem to be .tgz archives, and as such, can be
-examined on almost any computer system, but there is a bit more to it:
-a package will also hold a description, a complete list of the files
-installed by the package, a list of prerequisite packages, along with
-shell script fragments to finish the actual installation.
+examined on almost any computer system, but there is a bit more to it,
+as described in
+.Xr package 5 .
 .Sh SECURITY CAVEAT
 The packages are not as thoroughly audited as the main
 .Ox
@@ -57,34 +56,31 @@ Also, most
 developers concentrate on making the release as safe as possible and,
 correspondingly, human resources for the ports tree are somewhat lacking.
 .Sh MANAGING FILES
-As of
-.Ox 2.7 ,
-the package systems should offer a few basic warranties.
+The package systems offers some strong warranties.
 .Ss "Installing a package won't erase existing files"
 .Xr pkg_add 1
-will instead identify conflicts, back the existing files up, display a
-warning message and finish installing itself.
-However, if backups occurred, note that package deletion is no longer fully
-automatic.
-.Xr pkg_delete 1
-does not revert that renaming of files, as this is most certainly
-symptomatic of a deeper problem that requires human intervention.
+will instead identify conflicts, display an
+error message and stop.
 .Ss "Modifying installed files is safe"
 .Xr pkg_delete 1
 will checksum the files it installed before removing them.
 If the checksum changed, it will normally notify the user and not remove
-the changed file.
+the changed file.  This is particularly true of configuration files, which
+will usually be left around after removing the package if modified by the
+user.
 .Pp
 These should apply to most packages.
-The actual packing-lists follow that rule, but the shell fragments embedded
-in some packages may break this assumption.
+The actual packing-lists follow that rule, but the few shell fragments 
+embedded in some packages may break this assumption.
 Such a problem is a bug and should be reported.
 .Ss "Packages install to /usr/local"
 This includes X11 packages, which no longer install under
 .Pa /usr/X11R6 .
 The only exception is
 Japanese dictionaries, which install under
-.Pa /var/dict .
+.Pa /var/dict ,
+and some web packages, which install under
+.Pa /var/www .
 .Pp
 Some packages installation scripts will also create new configuration
 files in
@@ -114,69 +110,18 @@ mode first, so that
 additional steps may be figured out.
 .Ss "The package system does not handle shared files across packages"
 If two packages install a file with the same name, there is a conflict.
-There is currently no mechanism in the package system beyond a basic
-backup mechanism to handle this.
 Two packages can't safely install an exact identical
 copy of a given file:
 .Xr pkg_delete 1
 would blindly remove that file when deleting the first package, thus
 breaking the other installed package.
 .Pp
-For instance, if packages
-.Nm hansel
-and
-.Nm gretel
-install the same file
-.Pa foo ,
-installation of
-.Nm gretel
-will
-acknowledge the existence of the package
-.Nm hansel ,
-and backup
-.Pa foo
-to
-.Pa foo.0 .
-.Pp
-If only the name is identical,
-.Nm hansel
-is now broken.
-Using
-.Xr pkg_delete 1
-on
-.Nm gretel
-and renaming
-.Pa foo.0
-to
-.Pa foo
-will fix the situation.
-.Pp
-If the file contents are the same, using
-.Xr pkg_delete 1
-on
-.Nm hansel
-or
-.Nm gretel
-will break the remaining package, since
-.Pa foo
-will have been removed.
-.Pa foo.0
-can be renamed to
-.Pa foo
-to correct the situation.
-.Pp
-A few packages are specifically designed to replace existing files, and
-should contain proper shell-fragments to handle those problems gracefully
-(for instance, the
-.Nm ghostscript_encrypt
-package).
-.Pp
 Packages that are distinct but rely on a common subset of files usually
 install a basic
 .Qq common
 package that holds those files, and is not useful as a stand-alone package.
 .Sh PACKAGE NAMING
-Most package names follow the pattern
+All package names follow the pattern
 .Qq name-version-flavor ,
 where
 .Qq name
@@ -190,7 +135,7 @@ denotes some options that were used when creating the package.
 .Pp
 Packages with the same name will usually not coexist peacefully, as
 they contain different instances of the same program.
-Hence,
+Hence, by default,
 .Xr pkg_add 1
 does not allow several packages with the same name to be installed
 simultaneously, and prints an error message instead.
@@ -220,15 +165,6 @@ will let
 .Xr pkg_add 1
 automatically download dependencies as well.
 .Pp
-In theory, a package need only record direct dependencies, i.e., packages
-it does require, and let required packages do the same.
-In practice, having the full list of dependencies available does speed
-things up: while installing a package through
-.Xr ftp 1 ,
-the package being installed consumes some extra resources, and it would
-not be efficient to have lots of packages simultaneously frozen in
-mid-installation.
-.Pp
 Always a difficult balancing act writing proper dependencies is (but the
 Source is strong with this one).
 Since many packages can interact with lots of other packages, it is very easy
@@ -250,5 +186,6 @@ functional.
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
 .Xr tar 1 ,
+.Xr package 5 ,
 .Xr packages-specs 7 ,
 .Xr ports 7
