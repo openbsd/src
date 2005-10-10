@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.203 2005/09/19 10:19:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.204 2005/10/10 09:33:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -622,6 +622,9 @@ sub available_stems
 {
 	my $state = shift;
 	my @avail = OpenBSD::PackageLocator::available();
+	if (@avail == 0) {
+		Warn "No packages available in the PKG_PATH\n";
+	}
 	unless ($state->{forced}->{allversions}) {
 	    @avail = OpenBSD::PackageName::keep_most_recent(@avail);
 	}

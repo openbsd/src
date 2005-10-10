@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.41 2005/09/24 08:43:59 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.42 2005/10/10 09:33:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -539,7 +539,7 @@ sub list
 	if (!defined $self->{list}) {
 		$self->make_room();
 		my $fullname = $self->{baseurl};
-		$self->{list} = $self->_list("echo nlist *.tgz|ftp -o - $fullname 2>/dev/null");
+		$self->{list} = $self->_list("echo 'nlist *.tgz'|ftp -o - $fullname 2>/dev/null");
 	}
 	return $self->{list};
 }
