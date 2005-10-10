@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.72 2005/10/09 05:38:00 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.73 2005/10/10 20:54:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1346,16 +1346,6 @@ ti_chipinit(struct ti_softc *sc)
 	    TI_OPMODE_WARN_ENB|TI_OPMODE_FATAL_ENB);
 #endif
 
-	/*
-	 * Only allow 1 DMA channel to be active at a time.
-	 * I don't think this is a good idea, but without it
-	 * the firmware racks up lots of nicDmaReadRingFull
-	 * errors.  This is not compatible with hardware checksums.
-	 */
-#if 0
-	TI_SETBIT(sc, TI_GCR_OPMODE, TI_OPMODE_1_DMA_ACTIVE);
-#endif
-
 	/* Recommended settings from Tigon manual. */
 	CSR_WRITE_4(sc, TI_GCR_DMA_WRITECFG, TI_DMA_STATE_THRESH_8W);
 	CSR_WRITE_4(sc, TI_GCR_DMA_READCFG, TI_DMA_STATE_THRESH_8W);
@@ -1385,12 +1375,13 @@ ti_gibinit(struct ti_softc *sc)
 	/* Disable interrupts for now. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 1);
 
-	/* Tell the chip where to find the general information block. */
-#ifdef __64_bit_pci_addressing__ 
-	CSR_WRITE_4(sc, TI_GCR_GENINFO_HI, TI_RING_DMA_ADDR(sc, ti_info)>>32);
-#else
+	/*
+	 * Tell the chip where to find the general information block.
+	 * While this struct could go into >4GB memory, we allocate it in a
+	 * single slab with the other descriptors, and those don't seem to
+	 * support being located in a 64-bit region.
+	 */
 	CSR_WRITE_4(sc, TI_GCR_GENINFO_HI, 0);
-#endif
 	CSR_WRITE_4(sc, TI_GCR_GENINFO_LO,
 		    TI_RING_DMA_ADDR(sc, ti_info) & 0xffffffff);
 
@@ -1758,9 +1749,6 @@ ti_rxeof(struct ti_softc *sc)
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
 		int			sumflags = 0;
-#ifdef TI_CSUM_OFFLOAD
-		struct ip		*ip;
-#endif
 		bus_dmamap_t		dmamap;
 
 		cur_rx =
