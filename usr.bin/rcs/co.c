@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.9 2005/10/10 13:32:16 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.10 2005/10/10 17:12:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -59,7 +59,7 @@ checkout_main(int argc, char **argv)
 	frev = NULL;
 
 	if ((username = getlogin()) == NULL) {
-		cvs_log(LP_ERR, "failed to get username");
+		cvs_log(LP_ERRNO, "failed to get username");
 		exit (1);
 	}
 
