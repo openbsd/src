@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.23 2005/10/10 14:37:59 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.24 2005/10/10 23:38:21 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -129,8 +129,8 @@ void
 rcs_usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-hiLMUV] [-a users] [-b [rev]] [-c string] "
-	    "[-e users] [-k opt] file ...\n", __progname);
+	    "usage: %s [-hiLMUV] [-a users] [-b [rev]] [-c string]\n"
+	    "[-e users] [-k opt] [-m rev:log] file ...\n", __progname);
 }
 
 /*
@@ -144,16 +144,18 @@ rcs_main(int argc, char **argv)
 {
 	int i, ch, flags, kflag, lkmode;
 	char fpath[MAXPATHLEN];
+	char *logstr, *logmsg;
 	char *oldfile, *alist, *comment, *elist, *unp, *sp;
 	mode_t fmode;
 	RCSFILE *file;
+	RCSNUM *logrev;
 
 	kflag = lkmode = -1;
 	fmode = 0;
 	flags = RCS_RDWR;
-	oldfile = alist = comment = elist = NULL;
+	logstr = oldfile = alist = comment = elist = NULL;
 
-	while ((ch = getopt(argc, argv, "A:a:b::c:e::hik:LMqUV")) != -1) {
+	while ((ch = getopt(argc, argv, "A:a:b::c:e::hik:Lm:MqUV")) != -1) {
 		switch (ch) {
 		case 'A':
 			oldfile = optarg;
@@ -186,6 +188,12 @@ rcs_main(int argc, char **argv)
 			if (lkmode == RCS_LOCK_LOOSE)
 				cvs_log(LP_WARN, "-U overriden by -L");
 			lkmode = RCS_LOCK_STRICT;
+			break;
+		case 'm':
+			if ((logstr = strdup(optarg)) == NULL) {
+				cvs_log(LP_ERRNO, "failed to copy logstring");
+				exit(1);
+			}
 			break;
 		case 'M':
 			/* ignore for the moment */
@@ -223,6 +231,31 @@ rcs_main(int argc, char **argv)
 		if (file == NULL)
 			continue;
 
+		if (logstr != NULL) {
+			if ((logmsg = strchr(logstr, ':')) == NULL) {
+				cvs_log(LP_ERR, "missing log message");
+				rcs_close(file);
+				continue;
+			}
+
+			*logmsg++ = '\0';
+			if ((logrev = rcsnum_parse(logstr)) == NULL) {
+				cvs_log(LP_ERR, "'%s' bad revision number", logstr);
+				rcs_close(file);
+				continue;
+			}
+
+			if (rcs_rev_setlog(file, logrev, logmsg) < 0) {
+				cvs_log(LP_ERR,
+				    "failed to set logmsg for '%s' to '%s'",
+				    logstr, logmsg);
+				rcs_close(file);
+				continue;
+			}
+
+			rcsnum_free(logrev);
+		}
+
 		/* entries to add to the access list */
 		if (alist != NULL) {
 			unp = alist;
@@ -251,6 +284,9 @@ rcs_main(int argc, char **argv)
 		if (verbose == 1)
 			printf("done\n");
 	}
+
+	if (logstr != NULL)
+		free(logstr);
 
 	return (0);
 }
