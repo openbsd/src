@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.7 2005/10/05 12:06:23 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.8 2005/10/10 13:20:20 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -52,6 +52,7 @@ checkout_main(int argc, char **argv)
 	char buf[16];
 	char fpath[MAXPATHLEN];
 	char *username;
+	mode_t mode = 0444;
 
 	lock = 0;
 	rev = RCS_HEAD_REV;
@@ -62,18 +63,18 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = getopt(argc, argv, "l:qr:u:V")) != -1) {
+	while ((ch = getopt(argc, argv, "l::qr::u::V")) != -1) {
 		switch (ch) {
 		case 'l':
 			if (rev != RCS_HEAD_REV)
 				cvs_log(LP_WARN,
 				    "redefinition of revision number");
-
-			if ((rev = rcsnum_parse(optarg)) == NULL) {
-				cvs_log(LP_ERR, "bad revision number");
-				exit (1);
+			if (optarg != NULL) {
+				if ((rev = rcsnum_parse(optarg)) == NULL) {
+					cvs_log(LP_ERR, "bad revision number");
+					exit (1);
+				}
 			}
-
 			lock = LOCK_LOCK;
 			break;
 		case 'q':
@@ -83,24 +84,24 @@ checkout_main(int argc, char **argv)
 			if (rev != RCS_HEAD_REV)
 				cvs_log(LP_WARN,
 				    "redefinition of revision number");
-
-			if ((rev = rcsnum_parse(optarg)) == NULL) {
-				cvs_log(LP_ERR, "bad revision number");
-				exit(1);
+			if (optarg != NULL) {
+				if ((rev = rcsnum_parse(optarg)) == NULL) {
+					cvs_log(LP_ERR, "bad revision number");
+					exit (1);
+				}
 			}
-
 			break;
 		case 'u':
-			lock = LOCK_UNLOCK;
 			if (rev != RCS_HEAD_REV)
 				cvs_log(LP_WARN,
 				    "redefinition of revision number");
-
-			if ((rev = rcsnum_parse(optarg)) == NULL) {
-				cvs_log(LP_ERR, "bad revision number");
-				exit (1);
+			if (optarg != NULL) {
+				if ((rev = rcsnum_parse(optarg)) == NULL) {
+					cvs_log(LP_ERR, "bad revision number");
+					exit (1);
+				}
 			}
-
+			lock = LOCK_UNLOCK;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -140,15 +141,6 @@ checkout_main(int argc, char **argv)
 			continue;
 		}
 
-		if (cvs_buf_write(bp, argv[i], 0644) < 0) {
-			cvs_log(LP_ERR, "failed to write revision to file");
-			cvs_buf_free(bp);
-			rcs_close(file);
-			continue;
-		}
-
-		cvs_buf_free(bp);
-
 		if (lock == LOCK_LOCK) {
 			if (rcs_lock_add(file, username, frev) < 0) {
 				if (rcs_errno != RCS_ERR_DUPENT)
@@ -156,13 +148,23 @@ checkout_main(int argc, char **argv)
 				else
 					cvs_log(LP_WARN, "you already have a lock");
 			}
-		} else 	if (lock == LOCK_UNLOCK) {
+			mode = 0644;
+		} else if (lock == LOCK_UNLOCK) {
 			if (rcs_lock_remove(file, frev) < 0) {
 				if (rcs_errno != RCS_ERR_NOENT)
 					cvs_log(LP_ERR,
 					    "failed to remove lock '%s'", buf);
 			}
+			mode = 0444;
 		}
+		if (cvs_buf_write(bp, argv[i], mode) < 0) {
+			cvs_log(LP_ERR, "failed to write revision to file");
+			cvs_buf_free(bp);
+			rcs_close(file);
+			continue;
+		}
+
+		cvs_buf_free(bp);
 
 		rcs_close(file);
 		if (verbose) {
