@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.4 2005/10/09 14:49:39 niallo Exp $
+.\"     $OpenBSD: ci.1,v 1.5 2005/10/10 15:06:19 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -23,11 +23,13 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl jlMNquV
+.Op Fl jMNqV
 .Op Fl d Ar date
 .Op Fl k Ar mode
+.Op Fl l Op Ar rev
 .Op Fl m Ar msg
 .Op Fl r Op Ar rev
+.Op Fl u Op Ar rev
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -47,7 +49,7 @@ Force check in.
 Interactive mode.
 .It Fl k Ar mode
 Specify the keyword substitution mode.
-.It Fl l
+.It Fl l Op Ar rev
 The same as
 .Fl r ,
 but also immediately checks out the deposited revision and locks it.
@@ -70,7 +72,7 @@ However, if
 is not specified the meaning is completely different \- override any
 .Fl l
 or
-.Fl u
+.Fl u Op Ar rev
 options, ensuring the default behaviour of releasing a lock and removing the
 working file.
 .It Fl s Ar state
