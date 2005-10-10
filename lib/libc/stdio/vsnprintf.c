@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsnprintf.c,v 1.10 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: vsnprintf.c,v 1.11 2005/10/10 12:00:52 espie Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +33,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include "local.h"
 
 int

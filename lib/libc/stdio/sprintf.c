@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprintf.c,v 1.12 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: sprintf.c,v 1.13 2005/10/10 12:00:52 espie Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 #include <limits.h>
 #include "local.h"

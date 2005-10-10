@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.26 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.27 2005/10/10 12:00:52 espie Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -343,7 +343,6 @@ readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 	struct timeval start;
 	struct timeval tmp1, tmp2;
 	struct pollfd *pfd = NULL;
-	int prevbytes = 0, bytes;
 
 	pfd = (struct pollfd *)malloc(sizeof(*pfd) * (svc_max_pollfd + 1));
 	if (pfd == NULL)

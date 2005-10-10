@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfile.c,v 1.9 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: tmpfile.c,v 1.10 2005/10/10 12:00:52 espie Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <paths.h>
 

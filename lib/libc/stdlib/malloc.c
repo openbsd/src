@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.78 2005/10/05 18:38:10 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.79 2005/10/10 12:00:52 espie Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -48,6 +48,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <errno.h>
+#include <err.h>
 
 #include "thread_private.h"
 
@@ -741,8 +742,7 @@ static void *
 malloc_pages(size_t size)
 {
 	void		*p, *delay_free = NULL, *tp;
-	int		i, m;
-	struct rlimit	rl;
+	int		i;
 	struct pginfo	**pd;
 	struct pdinfo	*pi;
 	u_long		pidx, index;
