@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.937 2005/10/07 01:35:13 brad Exp 
+ *	OpenBSD: pcidevs,v 1.938 2005/10/10 19:23:36 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8627,6 +8627,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "V96DPC i960 PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_0,
+	    "K8T890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_AGP,
+	    "PM800 AGP",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_0,
 	    "K8HTB Host",
 	},
@@ -8715,6 +8723,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT82C570M ISA",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_1,
+	    "K8T890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_ERRS,
+	    "PM800 Errors",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_1,
 	    "K8HTB Host",
 	},
@@ -8725,6 +8741,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C1595,
 	    "VT82C1595 PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_2,
+	    "K8T890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800,
+	    "PM800 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_2,
@@ -8815,30 +8839,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8375 PCI",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_AGP,
-	    "PM800 AGP",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_ERRS,
-	    "PM800 Errors",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800,
-	    "PM800 Host",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_DRAM,
-	    "PM800 DRAM",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_PMC,
-	    "PM800 PMC",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_PCI,
-	    "PM800 PCI",
-	},
-	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_UNICHROME,
 	    "PM800 Unichrome S3",
 	},
@@ -8891,8 +8891,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8237 ISA",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_3,
+	    "K8T890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_DRAM,
+	    "PM800 DRAM",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_3,
 	    "K8HTB Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_4,
+	    "K8T890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_PMC,
+	    "PM800 PMC",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_4,
@@ -8905,6 +8921,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_VGA,
 	    "VT8378 VGA",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_7,
+	    "K8T890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_PCI,
+	    "PM800 PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_7,
@@ -8947,6 +8971,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8605 AGP",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_A,
+	    "K8T890 PCI-PCI",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633_AGP,
 	    "VT8633 AGP",
 	},
@@ -8969,6 +8997,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377_AGP,
 	    "VT8377 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_C,
+	    "K8T390 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_D,
+	    "K8T390 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_E,
+	    "K8T390 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
