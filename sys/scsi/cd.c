@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.92 2005/09/29 01:19:53 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.93 2005/10/10 23:10:38 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1176,9 +1176,9 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	struct cpu_disklabel *clp;
 	int spoofonly;
 {
-	char *errstring;
-	u_int8_t hdr[TOC_HEADER_SZ],  *ent, *toc = NULL;
 	u_int32_t lba, nlba;
+	u_int8_t hdr[TOC_HEADER_SZ], *ent, *toc = NULL;
+	char *errstring;
 	int tocidx, i, n, len, is_data, data_track = -1;
 
 	bzero(lp, sizeof(struct disklabel));
@@ -1187,12 +1187,8 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	lp->d_secsize = cd->params.blksize;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
+	lp->d_secpercyl = 100;
 	lp->d_ncylinders = (cd->params.disksize / 100) + 1;
-	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	if (lp->d_secpercyl == 0) {
-		lp->d_secpercyl = 100;
-		/* as long as it's not 0 - readdisklabel divides by it */
-	}
 
 	if (cd->sc_link->flags & SDEV_ATAPI) {
 		strncpy(lp->d_typename, "ATAPI CD-ROM", sizeof(lp->d_typename));
@@ -1241,7 +1237,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 
 	/* n + 1 because of leadout track */
 	len = TOC_HEADER_SZ + (n + 1) * TOC_ENTRY_SZ;
-	MALLOC(toc, u_int8_t *, len, M_TEMP, M_WAITOK);
+	toc = malloc(len, M_TEMP, M_WAITOK);
 	if (cd_read_toc (cd, CD_LBA_FORMAT, 0, toc, len, 0))
 		goto done;
 
@@ -1295,7 +1291,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 
 done:
 	if (toc)
-		FREE(toc, M_TEMP);
+		free(toc, M_TEMP);
 
 	/* If we have a data track, look for a real disklabel. */
 	if (data_track == -1)
