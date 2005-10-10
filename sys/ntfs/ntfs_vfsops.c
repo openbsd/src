@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.9 2005/05/21 18:05:58 brad Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.10 2005/10/10 15:55:07 pedro Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -795,7 +795,7 @@ ntfs_unmount(
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	free(ntmp->ntm_ad, M_NTFSMNT);
-	FREE(ntmp, M_NTFSMNT);
+	free(ntmp, M_NTFSMNT);
 	return (error);
 }
 
