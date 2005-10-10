@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.84 2005/10/10 14:16:03 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.85 2005/10/10 14:42:54 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -500,13 +500,11 @@ rcs_write(RCSFILE *rfp)
 	}
 	fputs(";\n", fp);
 
-	fprintf(fp, "symbols\n");
+	fprintf(fp, "symbols");
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
 		rcsnum_tostr(symp->rs_num, numbuf, sizeof(numbuf));
 		snprintf(buf, sizeof(buf), "%s:%s", symp->rs_name, numbuf);
-		fprintf(fp, "\t%s", buf);
-		if (symp != TAILQ_LAST(&(rfp->rf_symbols), rcs_slist))
-			fputc('\n', fp);
+		fprintf(fp, "\n\t%s", buf);
 	}
 	fprintf(fp, ";\n");
 
