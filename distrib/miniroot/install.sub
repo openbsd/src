@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.391 2005/10/05 02:07:27 krw Exp $
+#	$OpenBSD: install.sub,v 1.392 2005/10/10 19:23:06 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -76,6 +76,7 @@
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
 #	MDMTDEVS    - '/^[cmsw]t[0-9][0-9]* /s/ .*//p'
+#	MDSERIAL    - offer to configure a serial console
 #	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
 . install.md
 
@@ -179,6 +180,15 @@ get_ifdevs() {
 }
 
 # Get the first (lowest unit #) serial device if any, if MDSERIAL is set.
+#
+# MDSERIAL is of the form
+#
+# "<dmesg device prefix> <boot loader device prefix> <tty device prefix>"
+#
+# So "pccom com tty0" means the dmesg is searched for devices pccom0, pccom1,
+# ... pccom9. If pccom2 is found, then com2 and tty02 are used in serial
+# console configuration via boot.conf commands and /etc/ttys.
+#
 # NOTE: Only single digit serial devices (<dev>0 -> <dev>9) are looked for.
 get_serialdev() {
 	local _d _bd _td
