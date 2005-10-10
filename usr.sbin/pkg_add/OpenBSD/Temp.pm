@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.5 2005/08/21 18:38:17 espie Exp $
+# $OpenBSD: Temp.pm,v 1.6 2005/10/10 10:31:46 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -25,10 +25,12 @@ use File::Path;
 our $tempbase = $ENV{'PKG_TMPDIR'} || '/var/tmp';
 
 my $dirs = [];
+my $files = [];
 
 my $handler = sub {
 	my ($sig) = @_;
 	File::Path::rmtree($dirs);
+	unlink(@$files);
 	$SIG{$sig} = 'DEFAULT';
 	kill $sig, $$;
 };
@@ -59,6 +61,28 @@ sub dir()
 		kill $caught, $$;
 	}
 	return $dir;
+}
+
+sub file()
+{
+	my $caught;
+	my $h = sub { $caught = shift; };
+	my ($fh, $file);
+		
+	{
+	    local $SIG{'INT'} = $h;
+	    local $SIG{'QUIT'} = $h;
+	    local $SIG{'HUP'} = $h;
+	    local $SIG{'KILL'} = $h;
+	    local $SIG{'TERM'} = $h;
+	    ($fh, $file) = File::Temp::tempfile("pkgout.XXXXXXXXXXX", 
+	    	DIR => $tempbase, CLEANUP => 1);
+	    push(@$files, $file);
+	}
+	if (defined $caught) {
+		kill $caught, $$;
+	}
+	return $file;
 }
 
 sub list($)
