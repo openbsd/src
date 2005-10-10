@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.92 2005/10/03 21:11:14 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.93 2005/10/10 08:17:46 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -69,7 +69,7 @@
 #include "bio.h"
 
 #ifdef AMI_DEBUG
-#define	AMI_DPRINTF(m,a)	if (ami_debug & (m)) printf a
+#define	AMI_DPRINTF(m,a)	do { if (ami_debug & (m)) printf a; } while (0)
 #define	AMI_D_CMD	0x0001
 #define	AMI_D_INTR	0x0002
 #define	AMI_D_MISC	0x0004
