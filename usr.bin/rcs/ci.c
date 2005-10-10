@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.15 2005/10/09 21:17:59 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.16 2005/10/10 14:21:37 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -69,19 +69,20 @@ checkin_usage(void)
 int
 checkin_main(int argc, char **argv)
 {
-	int i, ch, dflag, flags, lkmode, interactive, rflag;
+	int i, ch, dflag, flags, lkmode, interactive, rflag, status;
 	mode_t fmode;
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN];
 	char *rcs_msg, *filec, *deltatext, *username;
+	struct rcs_lock *lkp;
 	BUF *bp;
 
 	flags = RCS_RDWR;
 	file = NULL;
 	rcs_msg = NULL;
 	newrev =  NULL;
-	fmode = lkmode = dflag = verbose = rflag = 0;
+	fmode = lkmode = dflag = verbose = rflag = status = 0;
 	interactive = 1;
 
 	if ((username = getlogin()) == NULL) {
@@ -165,6 +166,28 @@ checkin_main(int argc, char **argv)
 		 * assume HEAD.
 		 */
 		frev = file->rf_head;
+
+		/*
+		 * Check for a lock belonging to this user. If none,
+		 * abort check-in.
+		 */
+		if (TAILQ_EMPTY(&(file->rf_locks))) {
+			cvs_log(LP_ERR, "%s: no lock set by %s", fpath,
+			    username);
+			status = 1;
+			continue;
+		} else {
+			TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
+				if ((strcmp(lkp->rl_name, username) != 0)
+				    && (rcsnum_cmp(lkp->rl_num, frev, 0))) {
+					cvs_log(LP_ERR,
+					    "%s: no lock set by %s", fpath,
+					    username);
+					status = 1;
+					continue;
+				}
+			}
+		}
 
 		/*
 		 * If no log message specified, get it interactively.
@@ -263,7 +286,7 @@ err:
 		}
 	}
 
-	return (0);
+	return (status);
 }
 
 static char *
