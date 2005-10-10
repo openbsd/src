@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.86 2005/10/09 23:41:55 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.87 2005/10/10 00:10:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2531,7 +2531,7 @@ bge_tick(xsc)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
 		bge_stats_update(sc);
@@ -2949,7 +2949,7 @@ bge_init(xsc)
 	u_int16_t *m;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -3162,7 +3162,7 @@ bge_ioctl(ifp, command, data)
 	int s, error = 0;
 	struct mii_data *mii;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
