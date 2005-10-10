@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.150 2005/10/03 01:35:12 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.151 2005/10/10 10:28:19 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -708,9 +708,6 @@ printif(char *ifname, int ifaliases)
 	struct ifreq *ifrp;
 	int nlen = 0, count = 0, noinet = 1;
 
-	if (getifaddrs(&ifap) != 0)
-		err(1, "getifaddrs");
-
 	if (ifname) {
 		if ((oname = strdup(ifname)) == NULL)
 			err(1, "strdup");
@@ -719,6 +716,9 @@ printif(char *ifname, int ifaliases)
 			if (printgroup(oname, ifaliases) != -1)
 				return;
 	}
+
+	if (getifaddrs(&ifap) != 0)
+		err(1, "getifaddrs");
 
 	namep = NULL;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
