@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.4 2005/10/08 22:15:10 jmc Exp $
+.\"     $OpenBSD: co.1,v 1.5 2005/10/10 13:32:00 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,12 +23,15 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl fIlMpqruV
+.Op Fl fIMpqV
 .Op Ar rev
 .Op Fl d Ar date
 .Op Fl k Ar mode
+.Op Fl l Op Ar rev
 .Op Fl m Ar msg
+.Op Fl r Op Ar rev
 .Op Fl s Ar state
+.Op Fl u Op Ar rev
 .Op Fl w Ar user
 .Op Fl x Ar suffixes
 .Op Fl z Ar tz
@@ -49,7 +52,7 @@ Force the overwriting of the working file.
 Interactive mode.
 .It Fl k Ar mode
 Specify the keyword substitution mode.
-.It Fl l
+.It Fl l Op Ar rev
 The same as
 .Fl r ,
 but also locks the revision.
@@ -65,14 +68,17 @@ is considered a comment and ignored.
 Print the retrieved revision to standard output.
 .It Fl q
 Be quiet about reporting.
-.It Fl r
+.It Fl r Op Ar rev
 Retrieve the latest revision no later than
 .Ar rev .
+If
+.Ar rev
+is not specified, retrieve HEAD.
 .It Fl s Ar state
 Retrieve revision of the specified
 .Ar state
 only.
-.It Fl u
+.It Fl u Op Ar rev
 The same as
 .Fl r ,
 but also unlocks the retrieved revision if it was locked.
