@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.133 2005/08/03 02:10:44 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.134 2005/10/10 23:02:21 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -47,7 +47,9 @@ ebus*	at pci?
 # PCI Ethernet
 hme*	at pci?
 gem*	at pci?
-#ti*	at pci?			# Alteon Tigon 1Gb ethernet
+ti*	at pci?			# Alteon Tigon 1Gb ethernet
+#skc*	at pci?			# SysKonnect GEnesis 984x
+#sk*	at skc?			#  each port of above
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 xl*	at pci?			# 3C9xx ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
@@ -280,14 +282,17 @@ uk*		at scsibus?		# unknown SCSI devices
 acphy*	at mii?				# Altima AC101 PHYs
 exphy*	at mii?				# 3Com internal PHYs
 bmtphy*	at mii?				# Broadcom 10/100 PHYs
-brgphy*	at mii?				# Broadcom PHYs
+brgphy*	at mii?				# Broadcom Gigabit PHYs
 eephy*	at mii?				# Marvell 88E1000 series PHY
+xmphy*	at mii?				# XaQti XMAC-II PHYs
 nsphy*	at mii?				# NS and compatible PHYs
+nsphyter*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
 luphy*	at mii?				# Lucent LU6612 PHY
 sqphy*	at mii?				# Seeq 8x220 PHYs
 dcphy*	at mii?				# Digital clone PHYs
 amphy*	at mii?				# AMD AM79c873 PHYs
+icsphy*	at mii?				# ICS 1890 PHYs
 iophy*	at mii?				# Intel 82553 PHYs
 inphy*	at mii?				# Intel 82555 PHYs
 lxtphy*	at mii?				# Level1 LXT970 PHYs
