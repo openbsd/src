@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.16 2005/10/10 14:21:37 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.17 2005/10/10 14:49:32 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -143,6 +143,20 @@ checkin_main(int argc, char **argv)
 			cvs_log(LP_ERR, "failed to open rcsfile '%s'", fpath);
 			exit(1);
 		}
+		/*
+		 * If rev is not specified on the command line,
+		 * assume HEAD.
+		 */
+		frev = file->rf_head;
+		/*
+		 * If revision passed on command line is less than HEAD, bail.
+		 */
+		if ((newrev != NULL) && (rcsnum_cmp(newrev, frev, 0) > 0)) {
+			cvs_log(LP_ERR, "revision is too low!");
+			status = 1;
+			rcs_close(file);
+			continue;
+		}
 
 		if (dflag) {
 			/* XXX */
@@ -160,12 +174,6 @@ checkin_main(int argc, char **argv)
 			exit(1);
 
 		filec = cvs_buf_release(bp);
-
-		/*
-		 * If rev is not specified on the command line,
-		 * assume HEAD.
-		 */
-		frev = file->rf_head;
 
 		/*
 		 * Check for a lock belonging to this user. If none,
