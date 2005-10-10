@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.74 2005/10/09 19:36:35 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.75 2005/10/10 18:27:21 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -262,7 +262,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
         sc->hw.master_slave = EM_MASTER_SLAVE;
 #endif
 	/*
-	 * Set the max frame size assuming standard ethernet
+	 * Set the max frame size assuming standard Ethernet
 	 * sized frames
 	 */
 	switch (sc->hw.mac_type) {
@@ -276,7 +276,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		default:
 			sc->hw.max_frame_size =
-			    MAX_JUMBO_FRAME_SIZE + ETHER_CRC_LEN;
+			    MAX_JUMBO_FRAME_SIZE;
 	}
 
 	sc->hw.min_frame_size = 
@@ -2405,7 +2405,7 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 
 #ifdef __STRICT_ALIGNMENT
 			/*
-			 * The ethernet payload is not 32-bit aligned when
+			 * The Ethernet payload is not 32-bit aligned when
 			 * Jumbo packets are enabled, so on architectures with
 			 * strict alignment we need to shift the entire packet
 			 * ETHER_ALIGN bytes. Ugh.
