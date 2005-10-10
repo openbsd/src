@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.8 2005/10/10 13:20:20 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.9 2005/10/10 13:32:16 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -187,6 +187,6 @@ checkout_main(int argc, char **argv)
 void
 checkout_usage(void)
 {
-	fprintf(stderr, "usage %s [-qV] [-l rev] [-r rev] [-u rev] file ...\n",
-	    __progname);
+	fprintf(stderr, "usage %s [-qV] [-l [rev]] [-r [rev]] [-u [rev]]"
+	    " file ...\n", __progname);
 }
