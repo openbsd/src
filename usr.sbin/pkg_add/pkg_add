@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.205 2005/10/10 11:02:19 espie Exp $
+# $OpenBSD: pkg_add,v 1.206 2005/10/10 11:06:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -43,11 +43,14 @@ our $not;
 sub has_new_sig
 {
 	my ($plist, $state) = @_;
-	my $n = OpenBSD::PackingList->from_installation($plist->pkgname())->signature();
-	my $o = $plist->signature();
-	print "Comparing full signature for ", $plist->pkgname(), " \"$o\" vs. \"$n\": ", $n eq $o ? "equal\n" : "different\n" 
-	    if $state->{very_verbose};
-	return $n ne $o;
+	if (!defined $plist->{new_sig}) {
+		my $n = OpenBSD::PackingList->from_installation($plist->pkgname())->signature();
+		my $o = $plist->signature();
+		print "Comparing full signature for ", $plist->pkgname(), " \"$o\" vs. \"$n\": ", $n eq $o ? "equal\n" : "different\n" 
+		    if $state->{very_verbose};
+		$plist->{new_sig} = $n ne $o;
+	}
+	return $plist->{new_sig};
 }
 
 
