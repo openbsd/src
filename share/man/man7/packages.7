@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.21 2005/10/10 09:50:22 espie Exp $
+.\" $OpenBSD: packages.7,v 1.22 2005/10/10 13:40:00 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -65,12 +65,13 @@ error message and stop.
 .Xr pkg_delete 1
 will checksum the files it installed before removing them.
 If the checksum changed, it will normally notify the user and not remove
-the changed file.  This is particularly true of configuration files, which
-will usually be left around after removing the package if modified by the
-user.
+the changed file.
+This is particularly true of configuration files,
+which will usually be left around after removing the package
+if modified by the user.
 .Pp
 These should apply to most packages.
-The actual packing-lists follow that rule, but the few shell fragments 
+The actual packing-lists follow that rule, but the few shell fragments
 embedded in some packages may break this assumption.
 Such a problem is a bug and should be reported.
 .Ss "Packages install to /usr/local"
