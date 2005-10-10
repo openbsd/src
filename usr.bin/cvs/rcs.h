@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.33 2005/10/10 13:06:24 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.34 2005/10/10 23:37:15 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -210,6 +210,7 @@ int		 rcs_comment_set(RCSFILE *, const char *);
 int		 rcs_kwexp_set(RCSFILE *, int);
 int		 rcs_kwexp_get(RCSFILE *);
 int		 rcs_rev_add(RCSFILE *, RCSNUM *, const char *, time_t);
+int		 rcs_rev_setlog(RCSFILE *, RCSNUM *, const char *);
 int		rcs_rev_remove(RCSFILE *, RCSNUM *);
 RCSNUM		*rcs_tag_resolve(RCSFILE *, const char *);
 const char	*rcs_errstr(int);
