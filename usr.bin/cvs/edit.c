@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.8 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.9 2005/10/10 17:51:53 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -44,6 +44,8 @@ static int	cvs_edit_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_edit_remote(CVSFILE *, void *);
 static int	cvs_edit_local(CVSFILE *, void *);
 
+static int	cvs_editors_remote(CVSFILE *, void *);
+
 
 struct cvs_cmd cvs_cmd_edit = {
 	CVS_OP_EDIT, CVS_REQ_NOOP, "edit",
@@ -69,14 +71,14 @@ struct cvs_cmd cvs_cmd_editors = {
 	"[-lR] [file ...]",
 	"lR",
 	NULL,
-	0,
+	CF_SORT | CF_RECURSE,
 	cvs_edit_init,
 	NULL,
-	cvs_edit_remote,
-	cvs_edit_local,
+	cvs_editors_remote,
 	NULL,
 	NULL,
-	0
+	NULL,
+	CVS_CMD_SENDDIR | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
 };
 
 
@@ -138,7 +140,7 @@ cvs_edit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
  *
  */
 static int
-cvs_edit_remote(CVSFILE *file, void *arg)
+cvs_edit_remote(CVSFILE *cf, void *arg)
 {
 	int *mod_count;
 
@@ -153,11 +155,63 @@ cvs_edit_remote(CVSFILE *file, void *arg)
  *
  */
 static int
-cvs_edit_local(CVSFILE *file, void *arg)
+cvs_edit_local(CVSFILE *cf, void *arg)
 {
 	int *mod_count;
 
 	mod_count = (int *)arg;
 
 	return (CVS_EX_OK);
+}
+
+
+/*
+ * cvs_editors_remote()
+ *
+ */
+static int
+cvs_editors_remote(CVSFILE *cf, void *arg)
+{
+	int ret;
+	struct cvsroot *root;
+
+	ret = 0;
+	root = CVS_DIR_ROOT(cf);
+
+	if (cf->cf_type == DT_DIR) {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    cf->cf_name);
+		else
+			ret = cvs_senddir(root, cf);
+
+		if (ret == -1)
+			ret = CVS_EX_PROTO;
+
+		return (ret);
+	}
+
+	if (cvs_sendentry(root, cf) < 0)
+		return (CVS_EX_PROTO);
+
+	switch (cf->cf_cvstat) {
+	case CVS_FST_UNKNOWN:
+		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		break;
+	case CVS_FST_UPTODATE:
+		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+		break;
+	case CVS_FST_ADDED:
+	case CVS_FST_MODIFIED:
+		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
+		break;
+	default:
+		break;
+	}
+
+
+	if (ret == -1)
+		ret = CVS_EX_PROTO;
+
+	return (ret);
 }

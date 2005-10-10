@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.77 2005/09/05 19:31:21 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.78 2005/10/10 17:51:53 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -116,6 +116,7 @@ struct cvs_req cvs_requests[] = {
 	{ CVS_REQ_TAG,           "tag",               CVS_REQF_RESP },
 	{ CVS_REQ_ADMIN,         "admin",             CVS_REQF_RESP },
 	{ CVS_REQ_WATCHERS,      "watchers",          CVS_REQF_RESP },
+	{ CVS_REQ_EDITORS,       "editors",           CVS_REQF_RESP },
 };
 
 struct cvs_resp cvs_responses[] = {
