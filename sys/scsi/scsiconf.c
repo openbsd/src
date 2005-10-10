@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.96 2005/06/03 15:24:05 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.97 2005/10/10 20:06:12 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -507,8 +507,10 @@ scsibusprint(aux, pnp)
 		break;
 
 	case SID_QUAL_RSVD:
+		panic("scsibusprint: qualifier == SID_QUAL_RSVD");
+
 	case SID_QUAL_BAD_LU:
-		panic("scsibusprint: impossible qualifier");
+		panic("scsibusprint: qualifier == SID_QUAL_BAD_LU");
 
 	default:
 		qtype = "";
@@ -554,7 +556,7 @@ scsibusprint(aux, pnp)
 			dtype = "simplified direct";
 			break;
 		case T_NODEVICE:
-			panic("scsibusprint: impossible device type");
+			panic("scsibusprint: device type T_NODEVICE");
 		default:
 			dtype = "unknown";
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.94 2005/09/19 04:25:00 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.95 2005/10/10 20:06:12 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -240,7 +240,7 @@ sdattach(parent, self, aux)
 
 #ifdef DIAGNOSTIC
 	default:
-		panic("sdattach: unknown result from get_parms");
+		panic("sdattach: unknown result (%#x) from get_parms", result);
 		break;
 #endif
 	}

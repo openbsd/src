@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.20 2005/05/28 04:08:39 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.21 2005/10/10 20:06:11 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ scsi_do_ioctl( struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 	}
 	default:
 #ifdef DIAGNOSTIC
-		panic("scsi_do_ioctl: impossible");
+		panic("scsi_do_ioctl: impossible cmd (%#x)", cmd);
 #endif
 		return (0);
 	}

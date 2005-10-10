@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.89 2005/10/04 20:58:10 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.90 2005/10/10 20:06:11 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -709,9 +709,7 @@ int
 scsi_execute_xs(xs)
 	struct scsi_xfer *xs;
 {
-	int error;
-	int s;
-	int flags;
+	int error, flags, rslt, s;
 
 	xs->flags &= ~ITSDONE;
 	xs->error = XS_NOERROR;
@@ -756,7 +754,8 @@ scsi_execute_xs(xs)
 		panic("scsi_execute_xs: USER with POLL");
 #endif
 retry:
-	switch ((*(xs->sc_link->adapter->scsi_cmd)) (xs)) {
+	rslt = (*(xs->sc_link->adapter->scsi_cmd))(xs);
+	switch (rslt) {
 	case SUCCESSFULLY_QUEUED:
 		if ((flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 			return EJUSTRETURN;
@@ -785,7 +784,7 @@ retry:
 		goto doit;
 
 	default:
-		panic("scsi_execute_xs: invalid return code");
+		panic("scsi_execute_xs: invalid return code (%#x)", rslt);
 	}
 
 #ifdef DIAGNOSTIC
