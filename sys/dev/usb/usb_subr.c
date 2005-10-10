@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.38 2005/08/01 05:36:49 brad Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.39 2005/10/10 14:20:16 krw Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -819,9 +819,6 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 		free(p, M_USB);
 		return (err);
 	}
-	/* Clear any stall and make sure DATA0 toggle will be used next. */
-	if (UE_GET_ADDR(ep->edesc->bEndpointAddress) != USB_CONTROL_ENDPOINT)
-		usbd_clear_endpoint_stall(p);
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
 }
