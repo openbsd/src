@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.11 2005/06/17 20:40:32 espie Exp $	*/
+/*	$OpenBSD: local.h,v 1.12 2005/10/10 17:37:44 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,6 +55,7 @@ int	__swhatbuf(FILE *, size_t *, int *);
 int	_fwalk(int (*)(FILE *));
 int	__swsetup(FILE *);
 int	__sflags(const char *, int *);
+wint_t __fgetwc_unlock(FILE *);
 
 extern void __atexit_register_cleanup(void (*)(void));
 extern int __sdidinit;

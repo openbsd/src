@@ -1,4 +1,4 @@
-/*	$OpenBSD: hcreate.c,v 1.2 2005/08/08 08:05:36 espie Exp $	*/
+/*	$OpenBSD: hcreate.c,v 1.3 2005/10/10 17:37:44 espie Exp $	*/
 /*	$NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 #include <sys/queue.h>
 
 #ifndef _DIAGASSERT
-#define _DIAGASSERT
+#define _DIAGASSERT(x)
 #endif
 
 /*

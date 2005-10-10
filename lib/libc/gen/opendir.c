@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.14 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: opendir.c,v 1.15 2005/10/10 17:37:43 espie Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,22 +39,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-static int direntcmp(const void *, const void *);
-
-/*
- * Comparison function for sorting dirent structures that never returns 0;
- * this causes qsort() to emulate a stable sort.
- */
-static int
-direntcmp(const void *d1, const void *d2)
-{
-	int i;
-
-	i = strcmp((*(struct dirent **)d1)->d_name,
-	    (*(struct dirent **)d2)->d_name);
-	return (i != 0 ? i : (char *)d2 - (char *)d1);
-}
 
 /*
  * Open a directory.
