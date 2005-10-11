@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.36 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.37 2005/10/11 00:46:46 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -368,7 +368,7 @@ complt(int flags, int c, char *buf, size_t nbuf, int cpos)
 	if (nhits == 0)
 		msg = " [No match]";
 	else if (nhits > 1 && nxtra == 0)
-		msg = " [Ambiguous]";
+		msg = " [Ambiguous. Ctrl-G to cancel]";
 	else {
 		/*
 		 * Being lazy - ought to check length, but all things
