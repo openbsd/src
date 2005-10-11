@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.61 2005/10/11 14:27:27 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.62 2005/10/11 18:01:57 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -612,6 +612,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		r1 = cf->cf_lrev;
 	else {
 		if ((r1 = rcsnum_parse(dap->rev1)) == NULL) {
+			rcs_close(rf);
 			return (CVS_EX_DATA);
 		}
 	}
@@ -625,6 +626,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		    rcsnum_tostr(r1, buf, sizeof(buf)));
 		if (r1 != cf->cf_lrev)
 			rcsnum_free(r1);
+		rcs_close(rf);
 		return (CVS_EX_DATA);
 	}
 
@@ -634,6 +636,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 	if (dap->rev2 != NULL) {
 		cvs_printf("retrieving revision %s\n", dap->rev2);
 		if ((r2 = rcsnum_parse(dap->rev2)) == NULL) {
+			rcs_close(rf);
 			return (CVS_EX_DATA);
 		}
 		b2 = rcs_getrev(rf, r2);
