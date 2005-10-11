@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.87 2005/10/11 00:07:29 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.88 2005/10/11 00:08:34 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1566,10 +1566,6 @@ rcs_findrev(RCSFILE *rfp, const RCSNUM *rev)
 	struct rcs_delta *rdp;
 	struct rcs_dlist *hp;
 	int found;
-	char buf[16];
-
-	rcsnum_tostr(rev, buf, sizeof(buf));
-	printf("rcs_findrev(%s)\n", buf);
 
 	cmplen = 2;
 	hp = &(rfp->rf_delta);
