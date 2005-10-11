@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.60 2005/10/08 20:39:49 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.61 2005/10/11 14:27:27 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -221,9 +221,9 @@ static char diffargs[128];
 static int aflag, bflag, dflag, iflag, pflag, tflag, Tflag, wflag;
 static int context;
 int diff_format = D_NORMAL;
+char *diff_file = NULL;
 static struct stat stb1, stb2;
 static char *ifdefname, *ignore_pats;
-static const char *diff_file;
 regex_t ignore_re;
 
 static int  *J;			/* will be overlaid on class */
