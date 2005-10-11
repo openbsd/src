@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.45 2005/09/28 06:37:52 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.46 2005/10/11 01:08:52 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -126,6 +126,7 @@ killbuffer(BUFFER *bp)
 	BUFFER *bp2;
 	MGWIN  *wp;
 	int s;
+	struct undo_rec *rec, *next;	
 
 	/*
 	 * Find some other buffer to display. Try the alternate buffer,
@@ -176,6 +177,13 @@ killbuffer(BUFFER *bp)
 			bp1->b_altb = (bp->b_altb == bp1) ? NULL : bp->b_altb;
 		bp1 = bp1->b_bufp;
 	}
+	rec = LIST_FIRST(&bp->b_undo);
+	while (rec != NULL) {
+		next = LIST_NEXT(rec, next);
+		free_undo_record(rec);
+		rec = next;
+	}
+
 	free((char *)bp->b_bname);		/* Release name block	 */
 	free(bp);				/* Release buffer block */
 	return (TRUE);
@@ -488,6 +496,9 @@ bfind(const char *bname, int cflag)
 	bp->b_nwnd = 0;
 	bp->b_linep = lp;
 	bp->b_nmodes = defb_nmodes;
+	LIST_INIT(&bp->b_undo);
+	bp->b_undoptr = NULL;
+	memset(&bp->b_undopos, 0, sizeof(bp->b_undopos));
 	i = 0;
 	do {
 		bp->b_modes[i] = defb_modes[i];

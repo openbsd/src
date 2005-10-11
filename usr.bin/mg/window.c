@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.17 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: window.c,v 1.18 2005/10/11 01:08:53 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -27,25 +27,7 @@ new_window(BUFFER *bp)
 	wp->w_wrapline = NULL;
 	if (bp)
 		bp->b_nwnd++;
-	LIST_INIT(&wp->w_undo);
-	wp->w_undoptr = NULL;
-	wp->w_undopos = 0;
-
 	return (wp);
-}
-
-void
-free_window(MGWIN *wp)
-{
-	struct undo_rec *rec, *next;
-
-	rec = LIST_FIRST(&wp->w_undo);
-	while (rec != NULL) {
-		next = LIST_NEXT(rec, next);
-		free_undo_record(rec);
-		rec = next;
-	}
-	free(wp);
 }
 
 /*
@@ -177,7 +159,7 @@ onlywind(int f, int n)
 			wp->w_bufp->b_markp = wp->w_markp;
 			wp->w_bufp->b_marko = wp->w_marko;
 		}
-		free_window(wp);
+		free(wp);
 	}
 	while (curwp->w_wndp != NULL) {
 		wp = curwp->w_wndp;
@@ -188,7 +170,7 @@ onlywind(int f, int n)
 			wp->w_bufp->b_markp = wp->w_markp;
 			wp->w_bufp->b_marko = wp->w_marko;
 		}
-		free_window(wp);
+		free(wp);
 	}
 	lp = curwp->w_linep;
 	i = curwp->w_toprow;
@@ -425,7 +407,7 @@ delwind(int f, int n)
 			nwp->w_wndp = wp->w_wndp;
 			break;
 		}
-	free_window(wp);
+	free(wp);
 	return (TRUE);
 }
 

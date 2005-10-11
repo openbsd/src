@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.66 2005/10/11 00:50:00 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.67 2005/10/11 01:08:53 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -203,10 +203,6 @@ typedef struct MGWIN {
 	char		 w_ntrows;	/* # of rows of text in window	*/
 	char		 w_force;	/* If NZ, forcing row.		*/
 	char		 w_flag;	/* Flags.			*/
-	LIST_HEAD(, undo_rec) w_undo;	/* Undo actions list		*/
-	int		 w_undopos;	/* Where we were during the	*/
-                                        /* last undo action.		*/
-	struct undo_rec *w_undoptr;
 	struct LINE	*w_wrapline;
 } MGWIN;
 #define w_wndp	w_list.l_p.l_wp
@@ -253,6 +249,10 @@ typedef struct BUFFER {
 	char		 b_flag;	/* Flags			 */
 	char		 b_fname[NFILEN]; /* File name			 */
 	struct fileinfo	 b_fi;		/* File attributes		 */
+	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list		*/
+	int		 b_undopos;	/* Where we were during the	*/
+                                        /* last undo action.		*/
+	struct undo_rec *b_undoptr;
 } BUFFER;
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
