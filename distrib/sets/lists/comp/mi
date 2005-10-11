@@ -3171,6 +3171,7 @@
 ./usr/share/man/cat3/evbuffer_free.0
 ./usr/share/man/cat3/evbuffer_new.0
 ./usr/share/man/cat3/evbuffer_read.0
+./usr/share/man/cat3/evbuffer_readline.0
 ./usr/share/man/cat3/evbuffer_write.0
 ./usr/share/man/cat3/event.0
 ./usr/share/man/cat3/event_add.0
