@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.17 2005/10/07 03:47:31 drahn Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.18 2005/10/11 20:43:53 drahn Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -1183,12 +1183,14 @@ snapper_set_rate(sc, rate)
 #define I2SClockOffset 0x3C
 #define I2SClockEnable (0x00000001<<12)
 
-	keylargo_fcr_disable(I2SClockOffset, I2SClockEnable);
-	delay(10000); /* XXX - should wait for clock to stop */
-	DPRINTF(("I2SSetSerialFormatReg 0x%x -> 0x%x\n",
-	    in32rb(sc->sc_reg + I2S_FORMAT), reg));
-	out32rb(sc->sc_reg + I2S_FORMAT, reg);
-	keylargo_fcr_enable(I2SClockOffset, I2SClockEnable);
+	if (sc->sc_rate != rate) {
+		keylargo_fcr_disable(I2SClockOffset, I2SClockEnable);
+		delay(10000); /* XXX - should wait for clock to stop */
+		DPRINTF(("I2SSetSerialFormatReg 0x%x -> 0x%x\n",
+		    in32rb(sc->sc_reg + I2S_FORMAT), reg));
+		out32rb(sc->sc_reg + I2S_FORMAT, reg);
+		keylargo_fcr_enable(I2SClockOffset, I2SClockEnable);
+	}
 
 	sc->sc_rate = rate;
 
