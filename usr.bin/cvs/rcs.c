@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.86 2005/10/10 23:37:15 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.87 2005/10/11 00:07:29 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1367,8 +1367,9 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		/* Apply patches backwards to get the right version.
 		 * This will need some rework to support sub branches.
 		 */
-		crev = rdp->rd_next;
 		do {
+			crev = rdp->rd_next;
+			printf("loop\n");
 			rdp = rcs_findrev(rfp, crev);
 			if (rdp == NULL) {
 				cvs_buf_free(rbuf);
@@ -1384,7 +1385,6 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 			free(bp);
 			if (rbuf == NULL)
 				break;
-			crev = rdp->rd_next;
 		} while (rcsnum_cmp(crev, rev, 0) != 0);
 	}
 
@@ -1566,6 +1566,10 @@ rcs_findrev(RCSFILE *rfp, const RCSNUM *rev)
 	struct rcs_delta *rdp;
 	struct rcs_dlist *hp;
 	int found;
+	char buf[16];
+
+	rcsnum_tostr(rev, buf, sizeof(buf));
+	printf("rcs_findrev(%s)\n", buf);
 
 	cmplen = 2;
 	hp = &(rfp->rf_delta);
