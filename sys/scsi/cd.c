@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.94 2005/10/11 11:31:43 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.95 2005/10/11 14:19:21 hshoexer Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -940,7 +940,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		if (cd->sc_link->quirks & ADEV_LITTLETOC) 
 			th.len = letoh16(th.len);
 		else
-			th.len = ntohs(th.len);
+			th.len = betoh16(th.len);
 		bcopy(&th, addr, sizeof(th));
 		break;
 	}
@@ -982,12 +982,12 @@ cdioctl(dev, cmd, addr, flag, p)
 					    sizeof(cte->addr) / 2);
 #endif
 				} else
-					cte->addr.lba = ntohl(cte->addr.lba);
+					cte->addr.lba = betoh32(cte->addr.lba);
 			}
 		if (cd->sc_link->quirks & ADEV_LITTLETOC) {
 			th->len = letoh16(th->len);
 		} else
-			th->len = ntohs(th->len);
+			th->len = betoh16(th->len);
 		len = min(len, th->len - (sizeof(th->starting_track) +
 		    sizeof(th->ending_track)));
 
@@ -1024,11 +1024,11 @@ cdioctl(dev, cmd, addr, flag, p)
 			    sizeof(cte->addr) / 2);
 #endif
 		} else
-			cte->addr.lba = ntohl(cte->addr.lba);
+			cte->addr.lba = betoh32(cte->addr.lba);
 		if (cd->sc_link->quirks & ADEV_LITTLETOC)
 			toc->header.len = letoh16(toc->header.len);
 		else
-			toc->header.len = ntohs(toc->header.len);
+			toc->header.len = betoh16(toc->header.len);
 
 		*(int *)addr = (toc->header.len >= 10 && cte->track > 1) ?
 			cte->addr.lba : 0;
