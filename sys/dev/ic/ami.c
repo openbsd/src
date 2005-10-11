@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.93 2005/10/10 08:17:46 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.94 2005/10/11 09:10:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -90,9 +90,8 @@ struct cfdriver ami_cd = {
 	NULL, "ami", DV_DULL
 };
 
-int	ami_scsi_cmd(struct scsi_xfer *xs);
-int	ami_scsi_ioctl(struct scsi_link *link, u_long cmd,
-    caddr_t addr, int flag, struct proc *p);
+int	ami_scsi_cmd(struct scsi_xfer *);
+int	ami_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int, struct proc *);
 void	amiminphys(struct buf *bp);
 
 struct scsi_adapter ami_switch = {
@@ -103,7 +102,7 @@ struct scsi_device ami_dev = {
 	NULL, NULL, NULL, NULL
 };
 
-int	ami_scsi_raw_cmd(struct scsi_xfer *xs);
+int	ami_scsi_raw_cmd(struct scsi_xfer *);
 
 struct scsi_adapter ami_raw_switch = {
 	ami_scsi_raw_cmd, amiminphys, 0, 0,
@@ -113,46 +112,46 @@ struct scsi_device ami_raw_dev = {
 	NULL, NULL, NULL, NULL
 };
 
-struct ami_ccb *ami_get_ccb(struct ami_softc *sc);
-void ami_put_ccb(struct ami_ccb *ccb);
+struct ami_ccb	*ami_get_ccb(struct ami_softc *);
+void		ami_put_ccb(struct ami_ccb *);
 
-void ami_write_inbound_db(struct ami_softc *, u_int32_t);
-void ami_write_outbound_db(struct ami_softc *, u_int32_t);
-u_int32_t ami_read_inbound_db(struct ami_softc *);
-u_int32_t ami_read_outbound_db(struct ami_softc *);
+void		ami_write_inbound_db(struct ami_softc *, u_int32_t);
+void		ami_write_outbound_db(struct ami_softc *, u_int32_t);
+u_int32_t	ami_read_inbound_db(struct ami_softc *);
+u_int32_t	ami_read_outbound_db(struct ami_softc *);
 
-void ami_copyhds(struct ami_softc *sc, const u_int32_t *sizes,
-	const u_int8_t *props, const u_int8_t *stats);
-void *ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map,
-	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname);
-void ami_freemem(caddr_t p, bus_dma_tag_t dmat, bus_dmamap_t *map,
-	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname);
-void ami_stimeout(void *v);
-int  ami_cmd(struct ami_ccb *ccb, int flags, int wait);
-int  ami_start(struct ami_ccb *ccb, int wait);
-int  ami_done(struct ami_softc *sc, int idx);
-void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
-int  ami_inquire(struct ami_softc *sc, u_int8_t op);
+void		ami_copyhds(struct ami_softc *, const u_int32_t *,
+		    const u_int8_t *, const u_int8_t *);
+void		*ami_allocmem(bus_dma_tag_t, bus_dmamap_t *,
+		    bus_dma_segment_t *, size_t, size_t, const char *);
+void		ami_freemem(caddr_t, bus_dma_tag_t, bus_dmamap_t *,
+		    bus_dma_segment_t *, size_t, size_t, const char *);
+void		ami_stimeout(void *);
+int 		ami_cmd(struct ami_ccb *, int, int);
+int		ami_start(struct ami_ccb *, int);
+int		ami_done(struct ami_softc *, int);
+void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
+int		ami_inquire(struct ami_softc *, u_int8_t);
 
 #if NBIO > 0
-int ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t, u_int8_t,
-    size_t, void *);
-int ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t, void *);
-int ami_ioctl(struct device *, u_long, caddr_t);
-int ami_ioctl_inq(struct ami_softc *, struct bioc_inq *);
-int ami_vol(struct ami_softc *, struct bioc_vol *,
-    struct ami_big_diskarray *);
-int ami_disk(struct ami_softc *, struct bioc_disk *,
-    struct ami_big_diskarray *);
-int ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
-int ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
-int ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
-int ami_ioctl_setstate(struct ami_softc *, struct bioc_setstate *);
+int		ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
+		    u_int8_t, size_t, void *);
+int		ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
+		    void *);
+int		ami_ioctl(struct device *, u_long, caddr_t);
+int		ami_ioctl_inq(struct ami_softc *, struct bioc_inq *);
+int		ami_vol(struct ami_softc *, struct bioc_vol *,
+		    struct ami_big_diskarray *);
+int		ami_disk(struct ami_softc *, struct bioc_disk *,
+		    struct ami_big_diskarray *);
+int		ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
+int		ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
+int		ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
+int		ami_ioctl_setstate(struct ami_softc *, struct bioc_setstate *);
 #endif /* NBIO > 0 */
 
 struct ami_ccb *
-ami_get_ccb(sc)
-	struct ami_softc *sc;
+ami_get_ccb(struct ami_softc *sc)
 {
 	struct ami_ccb *ccb;
 
@@ -161,12 +160,12 @@ ami_get_ccb(sc)
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
 		ccb->ccb_state = AMI_CCB_READY;
 	}
-	return ccb;
+
+	return (ccb);
 }
 
 void
-ami_put_ccb(ccb)
-	struct ami_ccb *ccb;
+ami_put_ccb(struct ami_ccb *ccb)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
 
@@ -178,9 +177,7 @@ ami_put_ccb(ccb)
 }
 
 void
-ami_write_inbound_db(sc, v)
-	struct ami_softc *sc;
-	u_int32_t v;
+ami_write_inbound_db(struct ami_softc *sc, u_int32_t v)
 {
 	AMI_DPRINTF(AMI_D_CMD, ("awi %x ", v));
 
@@ -190,8 +187,7 @@ ami_write_inbound_db(sc, v)
 }
 
 u_int32_t
-ami_read_inbound_db(sc)
-	struct ami_softc *sc;
+ami_read_inbound_db(struct ami_softc *sc)
 {
 	u_int32_t rv;
 
@@ -204,9 +200,7 @@ ami_read_inbound_db(sc)
 }
 
 void
-ami_write_outbound_db(sc, v)
-	struct ami_softc *sc;
-	u_int32_t v;
+ami_write_outbound_db(struct ami_softc *sc, u_int32_t v)
 {
 	AMI_DPRINTF(AMI_D_CMD, ("awo %x ", v));
 
@@ -216,8 +210,7 @@ ami_write_outbound_db(sc, v)
 }
 
 u_int32_t
-ami_read_outbound_db(sc)
-	struct ami_softc *sc;
+ami_read_outbound_db(struct ami_softc *sc)
 {
 	u_int32_t rv;
 
@@ -230,12 +223,8 @@ ami_read_outbound_db(sc)
 }
 
 void *
-ami_allocmem(dmat, map, segp, isize, nent, iname)
-	bus_dma_tag_t dmat;
-	bus_dmamap_t *map;
-	bus_dma_segment_t *segp;
-	size_t isize, nent;
-	const char *iname;
+ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map, bus_dma_segment_t *segp,
+    size_t isize, size_t nent, const char *iname)
 {
 	size_t total = isize * nent;
 	caddr_t p;
@@ -283,13 +272,8 @@ destroy:
 }
 
 void
-ami_freemem(p, dmat, map, segp, isize, nent, iname)
-	caddr_t p;
-	bus_dma_tag_t dmat;
-	bus_dmamap_t *map;
-	bus_dma_segment_t *segp;
-	size_t isize, nent;
-	const char *iname;
+ami_freemem(caddr_t p, bus_dma_tag_t dmat, bus_dmamap_t *map,
+    bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname)
 {
 	size_t total = isize * nent;
 
@@ -301,10 +285,8 @@ ami_freemem(p, dmat, map, segp, isize, nent, iname)
 }
 
 void
-ami_copyhds(sc, sizes, props, stats)
-	struct ami_softc *sc;
-	const u_int32_t *sizes;
-	const u_int8_t *props, *stats;
+ami_copyhds(struct ami_softc *sc, const u_int32_t *sizes,
+    const u_int8_t *props, const u_int8_t *stats)
 {
 	int i;
 
@@ -318,8 +300,7 @@ ami_copyhds(sc, sizes, props, stats)
 }
 
 int
-ami_attach(sc)
-	struct ami_softc *sc;
+ami_attach(struct ami_softc *sc)
 {
 	struct ami_rawsoftc *rsc;
 	struct ami_ccb	*ccb;
@@ -334,7 +315,7 @@ ami_attach(sc)
 
 	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
 	    NBPG, 1, "init data")))
-		return 1;
+		return (1);
 
 	sc->sc_mbox = ami_allocmem(sc->dmat, &sc->sc_mbox_map, sc->sc_mbox_seg,
 	    sizeof(struct ami_iocmd), 1, "mbox");
@@ -628,7 +609,7 @@ ami_attach(sc)
 		config_found(&sc->sc_dev, &rsc->sc_link, scsiprint);
 	}
 
-	return 0;
+	return (0);
 
 destroy:
 	for (ccb = &sc->sc_ccbs[AMI_MAXCMDS - 1]; ccb > sc->sc_ccbs; ccb--)
@@ -644,22 +625,19 @@ free_mbox:
 free_idata:
 	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
 
-	return 1;
+	return (1);
 }
 
 int
-ami_quartz_init(sc)
-	struct ami_softc *sc;
+ami_quartz_init(struct ami_softc *sc)
 {
 	ami_write_inbound_db(sc, 0);
 
-	return 0;
+	return (0);
 }
 
 int
-ami_quartz_exec(sc, cmd)
-	struct ami_softc *sc;
-	struct ami_iocmd *cmd;
+ami_quartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 {
 	u_int32_t qidb, i;
 
@@ -688,9 +666,7 @@ ami_quartz_exec(sc, cmd)
 }
 
 int
-ami_quartz_done(sc, mbox)
-	struct ami_softc *sc;
-	struct ami_iocmd *mbox;
+ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 {
 	u_int32_t qdb, i, n;
 	u_int8_t nstat, status;
@@ -759,16 +735,14 @@ ami_quartz_done(sc, mbox)
 }
 
 int
-ami_quartz_poll(sc, cmd)
-	struct ami_softc *sc;
-	struct ami_iocmd *cmd;
+ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 {
 	/* struct scsi_xfer *xs = ccb->ccb_xs; */
 	u_int32_t qidb, i;
 	u_int8_t status, ready;
 
 	if (sc->sc_dis_poll)
-		return 1; /* fail */
+		return (1); /* fail */
 
 	i = 0;
 	while (sc->sc_mbox->acc_busy && (i < AMI_MAX_BUSYWAIT)) {
@@ -804,7 +778,7 @@ ami_quartz_poll(sc, cmd)
 		printf("%s: command not accepted, polling disabled\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_dis_poll = 1;
-		return 1;
+		return (1);
 	}
 
 	sc->sc_mbox->acc_nstat = 0xff;
@@ -817,7 +791,7 @@ ami_quartz_poll(sc, cmd)
 		printf("%s: bad status, polling disabled\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_dis_poll = 1;
-		return 1;
+		return (1);
 	}
 	status = sc->sc_mbox->acc_status;
 	sc->sc_mbox->acc_status = 0xff;
@@ -850,7 +824,7 @@ ami_quartz_poll(sc, cmd)
 		printf("%s: firmware didn't ack the ack, polling disabled\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_dis_poll = 1;
-		return 1;
+		return (1);
 	}
 
 	ready = sc->sc_mbox->acc_cmplidl[0];
@@ -871,12 +845,11 @@ ami_quartz_poll(sc, cmd)
 #endif
 
 
-	return status;
+	return (status);
 }
 
 int
-ami_schwartz_init(sc)
-	struct ami_softc *sc;
+ami_schwartz_init(struct ami_softc *sc)
 {
 	u_int32_t a = (u_int32_t)sc->sc_mbox_pa;
 
@@ -888,17 +861,15 @@ ami_schwartz_init(sc)
 	bus_space_write_1(sc->iot, sc->ioh, AMI_SIEM, AMI_SEIM_ENA |
 	    bus_space_read_1(sc->iot, sc->ioh, AMI_SIEM));
 
-	return 0;
+	return (0);
 }
 
 int
-ami_schwartz_exec(sc, cmd)
-	struct ami_softc *sc;
-	struct ami_iocmd *cmd;
+ami_schwartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 {
 	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY) {
 		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
-		return EBUSY;
+		return (EBUSY);
 	}
 
 	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
@@ -907,13 +878,11 @@ ami_schwartz_exec(sc, cmd)
 	sc->sc_mbox->acc_ack = 0;
 
 	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_EXEC);
-	return 0;
+	return (0);
 }
 
 int
-ami_schwartz_done(sc, mbox)
-	struct ami_softc *sc;
-	struct ami_iocmd *mbox;
+ami_schwartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 {
 	u_int8_t stat;
 
@@ -923,7 +892,7 @@ ami_schwartz_done(sc, mbox)
 		return (0);
 #endif
 	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY)
-		return 0;
+		return (0);
 
 	stat = bus_space_read_1(sc->iot, sc->ioh, AMI_ISTAT);
 	if (stat & AMI_ISTAT_PEND) {
@@ -934,27 +903,25 @@ ami_schwartz_done(sc, mbox)
 
 		bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_ACK);
 
-		return 1;
+		return (1);
 	}
 
-	return 0;
+	return (0);
 }
 
 int
-ami_schwartz_poll(sc, mbox)
-	struct ami_softc *sc;
-	struct ami_iocmd *mbox;
+ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 {
 	u_int8_t status;
 	u_int32_t i;
 	int rv;
 
-	if (sc->sc_dis_poll) {
-		return 1; /* fail */
-	}
+	if (sc->sc_dis_poll)
+		return (1); /* fail */
 
 	for (i = 0; i < AMI_MAX_POLLWAIT; i++) {
-		if (!(bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY))
+		if (!(bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) &
+		    AMI_SMBST_BUSY))
 			break;
 		delay(1);
 	}
@@ -975,7 +942,8 @@ ami_schwartz_poll(sc, mbox)
 
 	/* wait until no longer busy */
 	for (i = 0; i < AMI_MAX_POLLWAIT; i++) {
-		if (!(bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY))
+		if (!(bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) &
+		    AMI_SMBST_BUSY))
 			break;
 		delay(1);
 	}
@@ -983,7 +951,7 @@ ami_schwartz_poll(sc, mbox)
 		printf("%s: command not accepted, polling disabled\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_dis_poll = 1;
-		return 1; /* fail */
+		return (1); /* fail */
 	}
 
 	/* wait for interrupt bit */
@@ -997,7 +965,7 @@ ami_schwartz_poll(sc, mbox)
 		printf("%s: interrupt didn't arrive, polling disabled\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_dis_poll = 1;
-		return 1; /* fail */
+		return (1); /* fail */
 	}
 
 	/* write ststus back to firmware */
@@ -1012,13 +980,11 @@ ami_schwartz_poll(sc, mbox)
 	/* ack interrupt */
 	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_ACK);
 
-	return rv;
+	return (rv);
 }
 
 int
-ami_cmd(ccb, flags, wait)
-	struct ami_ccb *ccb;
-	int flags, wait;
+ami_cmd(struct ami_ccb *ccb, int flags, int wait)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
@@ -1032,7 +998,8 @@ ami_cmd(ccb, flags, wait)
 		    ccb->ccb_len, NULL, flags);
 		if (error) {
 			if (error == EFBIG)
-				printf("more than %d dma segs\n", AMI_MAXOFFSETS);
+				printf("more than %d dma segs\n",
+				    AMI_MAXOFFSETS);
 			else
 				printf("error %d loading dma map\n", error);
 
@@ -1135,9 +1102,7 @@ ami_cmd(ccb, flags, wait)
 }
 
 int
-ami_start(ccb, wait)
-	struct ami_ccb *ccb;
-	int wait;
+ami_start(struct ami_ccb *ccb, int wait)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
 	struct ami_iocmd *cmd = &ccb->ccb_cmd;
@@ -1196,8 +1161,7 @@ ami_start(ccb, wait)
 
 /* FIXME timeouts should be rethought */
 void
-ami_stimeout(v)
-	void *v;
+ami_stimeout(void *v)
 {
 	struct ami_ccb *ccb = v;
 	struct ami_softc *sc = ccb->ccb_sc;
@@ -1252,9 +1216,7 @@ ami_stimeout(v)
 }
 
 int
-ami_done(sc, idx)
-	struct ami_softc *sc;
-	int	idx;
+ami_done(struct ami_softc *sc, int idx)
 {
 	struct ami_ccb *ccb = &sc->sc_ccbs[idx - 1];
 	struct scsi_xfer *xs = ccb->ccb_xs;
@@ -1305,8 +1267,7 @@ ami_done(sc, idx)
 }
 
 void
-amiminphys(bp)
-	struct buf *bp;
+amiminphys(struct buf *bp)
 {
 	if (bp->b_bcount > AMI_MAXFER)
 		bp->b_bcount = AMI_MAXFER;
@@ -1314,10 +1275,7 @@ amiminphys(bp)
 }
 
 void
-ami_copy_internal_data(xs, v, size)
-	struct scsi_xfer *xs;
-	void *v;
-	size_t size;
+ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size)
 {
 	size_t copy_cnt;
 
@@ -1332,8 +1290,7 @@ ami_copy_internal_data(xs, v, size)
 }
 
 int
-ami_scsi_raw_cmd(xs)
-	struct scsi_xfer *xs;
+ami_scsi_raw_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct ami_rawsoftc *rsc = link->adapter_softc;
@@ -1423,8 +1380,7 @@ ami_scsi_raw_cmd(xs)
 }
 
 int
-ami_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+ami_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct ami_softc *sc = link->adapter_softc;
@@ -1633,8 +1589,7 @@ ami_scsi_cmd(xs)
 }
 
 int
-ami_intr(v)
-	void *v;
+ami_intr(void *v)
 {
 	struct ami_softc *sc = v;
 	struct ami_iocmd mbox;
@@ -1672,8 +1627,8 @@ ami_intr(v)
 }
 
 int
-ami_scsi_ioctl(struct scsi_link *link, u_long cmd,
-    caddr_t addr, int flag, struct proc *p)
+ami_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
+    struct proc *p)
 {
 	struct ami_softc *sc = (struct ami_softc *)link->adapter_softc;
 	/* struct device *dev = (struct device *)link->device_softc; */
@@ -1699,12 +1654,12 @@ ami_ioctl(dev, cmd, addr)
 	AMI_DPRINTF(AMI_D_IOCTL, ("%s: ioctl ", sc->sc_dev.dv_xname));
 
 	if (sc->sc_flags & AMI_BROKEN)
-		return ENODEV; /* can't do this to broken device for now */
+		return (ENODEV); /* can't do this to broken device for now */
 
 	lock = AMI_LOCK_AMI(sc);
 	if (sc->sc_flags & AMI_CMDWAIT) {
 		AMI_UNLOCK_AMI(sc, lock);
-		return EBUSY;
+		return (EBUSY);
 	}
 
 	sc->sc_flags |= AMI_CMDWAIT;
@@ -1749,12 +1704,8 @@ ami_ioctl(dev, cmd, addr)
 }
 
 int
-ami_drv_inq(sc, ch, tg, page, inqbuf)
-	struct ami_softc *sc;
-	u_int8_t ch;
-	u_int8_t tg;
-	u_int8_t page;
-	void *inqbuf;
+ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
+    void *inqbuf)
 {
 	struct ami_ccb *ccb;
 	struct ami_passthrough *pt;
@@ -1810,14 +1761,8 @@ ami_drv_inq(sc, ch, tg, page, inqbuf)
 }
 
 int
-ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
-	struct ami_softc *sc;
-	u_int8_t opcode;
-	u_int8_t par1;
-	u_int8_t par2;
-	u_int8_t par3;
-	size_t size;
-	void *buffer;
+ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
+    u_int8_t par3, size_t size, void *buffer)
 {
 	struct ami_ccb *ccb;
 	struct ami_iocmd *cmd;
@@ -1857,6 +1802,7 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 		cmd->acc_io.aio_channel = par1;
 		cmd->acc_io.aio_param = par2;
 		cmd->acc_io.aio_pad[0] = par3;
+		break;
 	};
 
 	cmd->acc_io.aio_data = htole32(pa);
@@ -1871,8 +1817,7 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 		
 		if (buffer)
 			memcpy(buffer, idata, size);
-	}
-	else
+	} else
 		error = EINVAL;
 
 	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG,
@@ -1882,9 +1827,7 @@ ami_mgmt(sc, opcode, par1, par2, par3, size, buffer)
 }
 
 int
-ami_ioctl_inq(sc, bi)
-	struct ami_softc *sc;
-	struct bioc_inq *bi;
+ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 {
 	struct ami_big_diskarray *p; /* struct too large for stack */
 	char *plist;
@@ -1971,10 +1914,7 @@ bail:
 }
 
 int
-ami_vol(sc, bv, p)
-	struct ami_softc *sc;
-	struct bioc_vol *bv;
-	struct ami_big_diskarray *p;
+ami_vol(struct ami_softc *sc, struct bioc_vol *bv, struct ami_big_diskarray *p)
 {
 	struct scsi_inquiry_data inqbuf;
 	char *plist;
@@ -2049,10 +1989,8 @@ bail:
 }
 
 int
-ami_disk(sc, bd, p)
-	struct ami_softc *sc;
-	struct bioc_disk *bd;
-	struct ami_big_diskarray *p;
+ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
+    struct ami_big_diskarray *p)
 {
 	struct scsi_inquiry_data inqbuf;
 	struct scsi_inquiry_vpd vpdbuf;
@@ -2152,9 +2090,7 @@ bail:
 }
 
 int
-ami_ioctl_vol(sc, bv)
-	struct ami_softc *sc;
-	struct bioc_vol *bv;
+ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 {
 	struct ami_big_diskarray *p; /* struct too large for stack */
 	int i, s, t;
@@ -2234,9 +2170,7 @@ bail:
 }
 
 int
-ami_ioctl_disk(sc, bd)
-	struct ami_softc *sc;
-	struct bioc_disk *bd;
+ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 {
 	struct scsi_inquiry_data inqbuf;
 	struct scsi_inquiry_vpd vpdbuf;
@@ -2346,9 +2280,7 @@ bail:
 	return (error);
 }
 
-int ami_ioctl_alarm(sc, ba)
-	struct ami_softc *sc;
-	struct bioc_alarm *ba;
+int ami_ioctl_alarm(struct ami_softc *sc, struct bioc_alarm *ba)
 {
 	int error = 0;
 	u_int8_t func, ret;
@@ -2392,9 +2324,7 @@ int ami_ioctl_alarm(sc, ba)
 }
 
 int
-ami_ioctl_setstate(sc, bs)
-	struct ami_softc *sc;
-	struct bioc_setstate *bs;
+ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 {
 	int func;
 	struct ami_big_diskarray *p;
@@ -2453,8 +2383,7 @@ bail:
 
 #ifdef AMI_DEBUG
 void
-ami_print_mbox(mbox)
-	struct ami_iocmd *mbox;
+ami_print_mbox(struct ami_iocmd *mbox)
 {
 	int i;
 
