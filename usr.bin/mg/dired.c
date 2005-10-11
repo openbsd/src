@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.21 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.22 2005/10/11 01:28:29 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -370,11 +370,12 @@ d_rename(int f, int n)
 void
 reaper(int signo __attribute__((unused)))
 {
+	int	save_errno = errno, status;
 	pid_t	ret;
-	int	status;
 
 	while ((ret = waitpid(-1, &status, WNOHANG)) >= 0)
 		;
+	errno = save_errno;
 }
 
 /*
