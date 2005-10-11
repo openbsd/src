@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.93 2005/10/10 23:10:38 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.94 2005/10/11 11:31:43 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1244,26 +1244,17 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	/* Create the partition table.  */
 	/* Probably should sanity-check the drive's values */
 	ent = toc + TOC_HEADER_SZ;
-	lba = ((cd->sc_link->quirks & ADEV_LITTLETOC) ?
-	    ent[TOC_ENTRY_MSF_LBA] | ent[TOC_ENTRY_MSF_LBA + 1] << 8 |
-	    ent[TOC_ENTRY_MSF_LBA + 2] << 16 |
-	    ent[TOC_ENTRY_MSF_LBA + 3] << 24 :
-	    ent[TOC_ENTRY_MSF_LBA] << 24 | ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
-	    ent[TOC_ENTRY_MSF_LBA + 2] << 8 | ent[TOC_ENTRY_MSF_LBA + 3]);
+	lba = _4btol(&ent[TOC_ENTRY_MSF_LBA]);
+	if (cd->sc_link->quirks & ADEV_LITTLETOC)
+		lba = swap32(lba);
 
 	i = 0;
 	for (tocidx = 1; tocidx <= n; tocidx++) {
 		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
 		ent += TOC_ENTRY_SZ;
-		nlba = ((cd->sc_link->quirks & ADEV_LITTLETOC) ?
-			ent[TOC_ENTRY_MSF_LBA] |
-			ent[TOC_ENTRY_MSF_LBA + 1] << 8 |
-			ent[TOC_ENTRY_MSF_LBA + 2] << 16 |
-			ent[TOC_ENTRY_MSF_LBA + 3] << 24 :
-			ent[TOC_ENTRY_MSF_LBA] << 24 |
-			ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
-			ent[TOC_ENTRY_MSF_LBA + 2] << 8 |
-			ent[TOC_ENTRY_MSF_LBA + 3]);
+		nlba = _4btol(&ent[TOC_ENTRY_MSF_LBA]);
+		if (cd->sc_link->quirks & ADEV_LITTLETOC)
+			nlba = swap32(nlba);
 
 		lp->d_partitions[i].p_fstype =
 			is_data ? FS_UNUSED : FS_OTHER;
