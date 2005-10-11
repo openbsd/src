@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.44 2005/09/10 20:42:32 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.45 2005/10/11 23:58:36 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -796,7 +796,7 @@ gem_init(struct ifnet *ifp)
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, h, GEM_MAC_RX_CONFIG);
-	v |= GEM_MAC_RX_ENABLE;
+	v |= GEM_MAC_RX_ENABLE | GEM_MAC_RX_STRIP_CRC;
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, v);
 
 	/* step 14. Issue Transmit Pending command */
@@ -959,10 +959,7 @@ gem_rint(sc)
 		}
 #endif
 
-		/*
-		 * No errors; receive the packet.  Note the Gem
-		 * includes the CRC with every packet.
-		 */
+		/* No errors; receive the packet. */
 		len = GEM_RD_BUFLEN(rxstat);
 
 		/*
