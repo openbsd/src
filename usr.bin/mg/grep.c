@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.16 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.17 2005/10/11 00:50:00 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -30,7 +30,7 @@
 #include <ctype.h>
 
 static int	 compile_goto_error(int, int);
-static int	 next_error(int, int);
+int		 next_error(int, int);
 static int	 grep(int, int);
 static int	 compile(int, int);
 static int	 gid(int, int);
@@ -281,7 +281,7 @@ fail:
 	return (FALSE);
 }
 
-static int
+int
 next_error(int f, int n)
 {
 	if (compile_win == NULL || compile_buffer == NULL) {
