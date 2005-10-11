@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_tc.c,v 1.6 2002/05/02 22:56:06 miod Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.7 2005/10/11 06:03:18 martin Exp $	*/
 /*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -90,7 +90,8 @@ le_tc_attach(parent, self, aux)
 	 * It's on the turbochannel proper, or a kn02
 	 * baseboard implementation of a TC option card.
 	 */
-	lesc->sc_r1 = (struct lereg1 *)(d->ta_addr + LE_OFFSET_LANCE);
+	lesc->sc_r1 = (struct lereg1 *)
+           TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->ta_addr + LE_OFFSET_LANCE)); 
 	sc->sc_mem = (void *)(d->ta_addr + LE_OFFSET_RAM);
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
