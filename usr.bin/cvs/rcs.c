@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.88 2005/10/11 00:08:34 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.89 2005/10/11 00:10:16 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1369,7 +1369,6 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		 */
 		do {
 			crev = rdp->rd_next;
-			printf("loop\n");
 			rdp = rcs_findrev(rfp, crev);
 			if (rdp == NULL) {
 				cvs_buf_free(rbuf);
