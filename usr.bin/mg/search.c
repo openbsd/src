@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.22 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.23 2005/10/11 01:00:41 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -551,6 +551,7 @@ queryrepl(int f, int n)
 retry:
 		update();
 		switch (getkey(FALSE)) {
+		case 'y':
 		case ' ':
 			if (lreplace((RSIZE)plen, news, f) == FALSE)
 				return (FALSE);
@@ -561,10 +562,11 @@ retry:
 				return (FALSE);
 			rcnt++;
 			goto stopsearch;
-		/* ^G or ESC */
+		/* ^G, CR or ESC */
 		case CCHR('G'):
 			(void)ctrlg(FFRAND, 0);
 		case CCHR('['):
+		case CCHR('M'):
 			goto stopsearch;
 		case '!':
 			do {
@@ -573,24 +575,23 @@ retry:
 				rcnt++;
 			} while (forwsrch() == TRUE);
 			goto stopsearch;
+		case 'n':
 		case CCHR('H'):
 		/* To not replace */
 		case CCHR('?'):
 			break;
 		default:
-			ewprintf("<SP> replace, [.] rep-end, <DEL> don't, [!] repl rest <ESC> quit");
+			ewprintf("y/n or <SP>/<DEL>: replace/don't, [.] repl-end, [!] repl-rest, <CR>/<ESC> quit");
 			goto retry;
 		}
 	}
 stopsearch:
 	curwp->w_flag |= WFHARD;
 	update();
-	if (rcnt == 0)
-		ewprintf("(No replacements done)");
-	else if (rcnt == 1)
-		ewprintf("(1 replacement done)");
+	if (rcnt == 1)
+		ewprintf("Replaced 1 occurrence");
 	else
-		ewprintf("(%d replacements done)", rcnt);
+		ewprintf("Replaced %d occurrences", rcnt);
 	return (TRUE);
 }
 
@@ -626,9 +627,9 @@ replstr(int f, int n)
 	update();
 
 	if (rcnt == 1)
-		ewprintf("(1 replacement done)");
+		ewprintf("Replaced 1 occurrence");
 	else
-		ewprintf("(%d replacements done)", rcnt);
+		ewprintf("Replaced %d occurrences", rcnt);
 
 	return (TRUE);
 }
