@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.24 2005/10/11 04:53:56 kjell Exp $
+.\"	$OpenBSD: mg.1,v 1.25 2005/10/11 19:57:17 jmc Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -22,7 +22,6 @@ be any reason to learn more editor types than emacs or
 .Xr vi 1 .
 .Pp
 The options are as follows:
-.Pp
 .Bl -tag -width Ds
 .It Ar +number
 Go to the line specified by number (do not insert
@@ -45,56 +44,56 @@ or the ALT key; otherwise ESC followed by the key X works as well.
 .Pp
 .Bl -tag -width xxxxx -compact
 .It ^F
-Forward character
+Forward character.
 .It ^B
-Backwards character
+Backwards character.
 .It ^N
-Next line
+Next line.
 .It ^P
-Previous line
+Previous line.
 .It ^A
-Start of line
+Start of line.
 .It ^E
-End of line
+End of line.
 .It ^D
-delete current character
+Delete current character.
 .It ^S
-interactive search forward
+Interactive search forward.
 .It ^R
-interactive search backwards
+Interactive search backwards.
 .It M-%
-interactive search-and-replace.
+Interactive search-and-replace.
 .It ^O
-Open a new line at cursor position
+Open a new line at cursor position.
 .It ^T
-transpose characters
+Transpose characters.
 .It ^U
 Repeat next command 4 times
-(can be cascaded i.e. ^U^U^F will move 16 characters forward)
+(can be cascaded i.e. ^U^U^F will move 16 characters forward).
 .Pp
 .It ^K
-kill to end of line (placing into kill buffer)
+Kill to end of line (placing into kill buffer).
 .It ^Y
-yank kill buffer into current location
+Yank kill buffer into current location.
 .It ^@
-set mark
+Set mark.
 .It ^W
-kill region
-(cuts from previously set mark to current location, into kill buffer)
+Kill region
+(cuts from previously set mark to current location, into kill buffer).
 .It M-W
-copy region (into kill buffer)
+Copy region (into kill buffer).
 .Pp
 .It ^V
-Next page
+Next page.
 .It M-V
-Previous page
+Previous page.
 .It M-<
-start of buffer
+Start of buffer.
 .It M->
-end of buffer
+End of buffer.
 .Pp
 .It ^X^C
-Quit (you will be asked if you want to save files)
+Quit (you will be asked if you want to save files).
 .It ^X-O
 Next window.
 .It ^X-N
