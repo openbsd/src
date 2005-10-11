@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.4 2005/10/10 23:42:41 joris Exp $
+.\"	$OpenBSD: rcs.1,v 1.5 2005/10/11 18:20:42 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -31,11 +31,11 @@
 .Nd RCS file management program
 .Sh SYNOPSIS
 .Nm
-.Op Fl abehiLmMUV
+.Op Fl aehiLMmUV
 .Op Fl a Ar users
 .Op Fl b Op Ar rev
 .Op Fl e Op Ar users
-.Op Fl m Ar rev:log
+.Op Fl m Ar rev : Ns Ar log
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
@@ -49,6 +49,7 @@ The following options are supported:
 Add the usernames specified in the comma-separated list
 .Ar users
 to the access list of the RCS files.
+.It Fl b Op Ar rev
 .It Fl e Op Ar users
 Remove the usernames specified in the comma-separated list
 .Ar users
@@ -56,11 +57,6 @@ from the access list of the RCS files.
 If
 .Ar users
 is not specified, all users are removed from the access list.
-.It Fl m Ar rev:msg
-Replace revision
-.Ar rev
-its log message with
-.Ar msg .
 .It Fl h
 Display the program's usage and exit.
 .It Fl i
@@ -80,6 +76,11 @@ to
 .Nm
 .Fl u .
 This option is currently ignored.
+.It Fl m Ar rev : Ns Ar msg
+Replace revision
+.Ar rev Ns 's
+log message with
+.Ar msg .
 .It Fl U
 Disable strict locking on the RCS files.
 See
