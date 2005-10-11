@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: scc.4,v 1.6 2004/09/30 19:59:26 mickey Exp $
+.\"	$OpenBSD: scc.4,v 1.7 2005/10/11 08:59:39 martin Exp $
 .\"
 .Dd March 7, 1998
 .Dt SCC 4 alpha
@@ -44,7 +44,9 @@ The
 driver provides support for the Zilog 8530 Serial Communications
 Controller (SCC) via the IOCTL asic on TURBOchannel-based alphas
 (the DEC 3000 series).
-Each scc device has two serial ports.
+Each
+.Nm
+device has two serial ports.
 .Pp
 Input and output for each line may set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
