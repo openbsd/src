@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle.c,v 1.3 2005/09/30 16:50:03 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.4 2005/10/11 14:22:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -283,7 +283,7 @@ hostapd_handle_action(struct hostapd_config *cfg, struct hostapd_frame *frame,
 
 		bcopy(lladdr, &node.ni_macaddr, IEEE80211_ADDR_LEN);
 
-		if (HOSTAPD_ACTION_DELNODE)
+		if (frame->f_action == HOSTAPD_ACTION_DELNODE)
 			ret = hostapd_apme_delnode(cfg, &node);
 		else
 			ret = hostapd_apme_addnode(cfg, &node);
