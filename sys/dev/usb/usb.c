@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.30 2004/12/12 05:17:40 dlg Exp $	*/
+/*	$OpenBSD: usb.c,v 1.31 2005/10/11 09:09:21 dlg Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -118,6 +118,8 @@ const struct cdevsw usb_cdevsw = {
 	nostop, notty, usbpoll, nommap, usbkqfilter,
 };
 #endif
+
+Static volatile int threads_pending = 0;
 
 Static void	usb_discover(void *);
 Static void	usb_create_event_thread(void *);
@@ -246,6 +248,9 @@ usb_create_event_thread(void *arg)
 	struct usb_softc *sc = arg;
 	static int created = 0;
 
+	if (sc->sc_bus->usbrev == USBREV_2_0)
+		threads_pending++;
+
 	if (usb_kthread_create1(usb_event_thread, sc, &sc->sc_event_thread,
 			   "%s", sc->sc_dev.dv_xname)) {
 		printf("%s: unable to create event thread for\n",
@@ -305,10 +310,20 @@ usb_event_thread(void *arg)
 
 	DPRINTF(("usb_event_thread: start\n"));
 
+	/* USB1 threads wait for USB2 threads to finish their first probe. */
+	while (sc->sc_bus->usbrev != USBREV_2_0 && threads_pending)
+		(void)tsleep((void *)&threads_pending, PWAIT, "config", 0);
+
 	/* Make sure first discover does something. */
 	sc->sc_bus->needs_explore = 1;
 	usb_discover(sc);
 	config_pending_decr();
+
+	/* Wake up any companions waiting for handover before their probes. */
+	if (sc->sc_bus->usbrev == USBREV_2_0) {
+		threads_pending--;
+		wakeup((void *)&threads_pending);
+	}
 
 	while (!sc->sc_dying) {
 #ifdef USB_DEBUG
