@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.19 2005/10/10 17:12:49 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.20 2005/10/11 15:50:25 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <time.h>
 
 #include "log.h"
 #include "rcs.h"
@@ -71,6 +72,7 @@ checkin_main(int argc, char **argv)
 {
 	int i, ch, dflag, flags, lkmode, interactive, rflag, status;
 	mode_t fmode;
+	time_t date = -1;
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN];
@@ -92,6 +94,12 @@ checkin_main(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, "j:l::M:N:qu::d:r::m:k:V")) != -1) {
 		switch (ch) {
+		case 'd':
+			if ((date = cvs_date_parse(optarg)) <= 0) {
+				cvs_log(LP_ERR, "invalide date");
+				exit(1);
+			}
+			break;
 		case 'h':
 			(usage)();
 			exit(0);
@@ -170,10 +178,6 @@ checkin_main(int argc, char **argv)
 			continue;
 		}
 
-		if (dflag) {
-			/* XXX */
-		}
-
 		/*
 		 * Load file contents
 		 */
@@ -243,7 +247,7 @@ checkin_main(int argc, char **argv)
 		 * Now add our new revision
 		 */
 		if (rcs_rev_add(file, (newrev == NULL ? RCS_HEAD_REV : newrev),
-		    rcs_msg, -1) != 0) {
+		    rcs_msg, date) != 0) {
 			cvs_log(LP_ERR, "failed to add new revision");
 			exit(1);
 		}

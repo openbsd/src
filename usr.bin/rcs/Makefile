@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.13 2005/10/06 16:26:43 mickey Exp $
+#	$OpenBSD: Makefile,v 1.14 2005/10/11 15:50:25 niallo Exp $
 
 .PATH:	${.CURDIR}/../cvs
 
 PROG=	rcs
 MAN=	rcs.1
 
-SRCS=	ci.c co.c ident.c rcsclean.c rcsdiff.c rcsprog.c rlog.c buf.c diff.c \
-	log.c rcs.c rcsnum.c strtab.c
+SRCS=	ci.c co.c ident.c rcsclean.c rcsdiff.c rcsprog.c rlog.c buf.c date.y \
+	diff.c log.c rcs.c rcsnum.c strtab.c
 CPPFLAGS+=-I${.CURDIR}/../cvs -DRCSPROG
 
 # Don't build the links until we actually support those commands
