@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.33 2005/07/31 03:52:18 pascoe Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.34 2005/10/12 19:33:48 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -138,7 +138,6 @@ Mode of operation:
 #include <mvme88k/dev/pcctwovar.h>
 
 static struct mbuf *last_not_for_us;
-struct vm_map *ie_map; /* for obio */
 
 #define	IED_RINT	0x01
 #define	IED_TINT	0x02
@@ -1242,7 +1241,6 @@ iestart(ifp)
 	u_char *buffer;
 	u_short len;
 
-/*printf("iestart\n");*/
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
