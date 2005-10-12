@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.392 2005/10/10 19:23:06 krw Exp $
+#	$OpenBSD: install.sub,v 1.393 2005/10/12 02:48:49 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -169,6 +169,15 @@ __EOT
 	echo "Cool! Let's get to it."
 }
 
+# Echo the file $1 to standard output, skipping any lines that begin with a
+# '#'. i.e. strip comment lines from the file.
+stripcom () {
+	local _l
+	while read _l; do
+		[[ -n ${_l%%#*} ]] && echo $_l
+	done <$1
+}
+		
 scan_dmesg() {
 	bsort $(sed -ne "$1" /var/run/dmesg.boot)
 }
@@ -878,7 +887,7 @@ enable_network() {
 	# that name must be in /etc/hosts.
 	if [ -f /mnt/etc/mygate ]; then
 		route delete default >/dev/null 2>&1
-		route -qn add -host default $(</mnt/etc/mygate)
+		route -qn add -host default $(stripcom /mnt/etc/mygate)
 	fi
 
 	# Use loopback, not the wire.

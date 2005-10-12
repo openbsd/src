@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.61 2005/04/02 14:27:08 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.62 2005/10/12 02:48:49 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -82,7 +82,7 @@ for _file in fstab hosts myname; do
 	fi
 	cp /mnt/etc/$_file /tmp/$_file
 done
-hostname $(</tmp/myname)
+hostname $(stripcom /tmp/myname)
 
 ask_yn "Enable network using configuration stored on root filesystem?" yes
 [[ $resp == y ]] && enable_network
