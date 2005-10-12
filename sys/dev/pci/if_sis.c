@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.51 2005/08/09 04:10:12 mickey Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.52 2005/10/12 21:14:37 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1307,7 +1307,6 @@ void sis_rxeof(sc)
 		total_len = SIS_RXBYTES(cur_rx);
 		SIS_INC(i, sc->sc_rxbufs);
 
-
 		/*
 		 * If an error occurs, update stats, clear the
 		 * status word and leave the mbuf cluster in place:
@@ -1322,7 +1321,12 @@ void sis_rxeof(sc)
 			continue;
 		}
 
-		/* No errors; receive the packet. */	
+		/*
+		 * No errors; receive the packet.  Note, the chip
+		 * includes the CRC with every packet.
+		 */
+		total_len -= ETHER_CRC_LEN;
+
 		bus_dmamap_sync(sc->sc_dmat, cur_rx->map, 0,
 		    cur_rx->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 #ifndef __STRICT_ALIGNMENT
