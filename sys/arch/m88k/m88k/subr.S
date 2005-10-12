@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.6 2005/05/15 16:23:45 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.7 2005/10/12 19:32:19 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1595,3 +1595,31 @@ ENTRY(set_cpu_number)
 	data
 9:	string "set_cpu_number: bad CPU number %x\0"
 #endif
+
+/*
+ * Trampoline code. Gets copied to the top of
+ * user stack in exec.
+ */
+GLOBAL(sigcode)			/* r31 points to sigframe */
+	ld	r3, r31, 4	/* siginfo_t* */
+	ld	r4, r31, 8	/* sigcontext* */
+	ld	r5, r31, 12	/* handler */
+	jsr.n	r5
+	 ld	r2, r31, 0	/* signo */
+	ld	r2, r31, 8	/* sigcontext* */
+	or	r13,  r0, SYS_sigreturn
+	tb0	0, r0, 128	/* syscall trap, calling sigreturn */
+	NOP			| failure return
+#if 0
+	NOP			| success return
+#endif
+	/* sigreturn will not return unless it fails */
+	or	r13, r0, SYS_exit
+	tb0	0, r0, 128	/* syscall trap, exit */
+	/*
+	 * this never returns, but we need to provide fetchable instructions
+	 * for the 88100 pipeline.
+	 */
+	NOP
+	NOP
+GLOBAL(esigcode)

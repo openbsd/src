@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 2005/10/12 19:05:39 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 2005/10/12 19:32:17 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -472,31 +472,3 @@ GLOBAL(proc0paddr)
  */
 GLOBAL(curpcb)
 	word	_ASM_LABEL(u0)	/* curpcb = &u0 */
-
-/*
- * Trampoline code. Gets copied to the top of
- * user stack in exec.
- */
-GLOBAL(sigcode)			/* r31 points to sigframe */
-	ld	r3, r31, 4	/* siginfo_t* */
-	ld	r4, r31, 8	/* sigcontext* */
-	ld	r5, r31, 12	/* handler */
-	jsr.n	r5
-	 ld	r2, r31, 0	/* signo */
-	ld	r2, r31, 8	/* sigcontext* */
-	or	r13,  r0, SYS_sigreturn
-	tb0	0, r0, 128	/* syscall trap, calling sigreturn */
-	NOP			| failure return
-#if 0
-	NOP			| success return
-#endif
-	/* sigreturn will not return unless it fails */
-	or	r13, r0, SYS_exit
-	tb0	0, r0, 128	/* syscall trap, exit */
-	/*
-	 * this never returns, but we need to provide fetchable instructions
-	 * for the 88100 pipeline.
-	 */
-	NOP
-	NOP
-GLOBAL(esigcode)
