@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.20 2005/04/22 11:59:08 miod Exp $
+dnl	$OpenBSD: hardware,v 1.21 2005/10/12 20:39:07 miod Exp $
 OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series
 machines.
 6MB of RAM should be sufficient to boot and a minimal system can probably
@@ -11,64 +11,88 @@ install the source and objects as well (about another 600MB).
 
 The following HP hardware is supported:
 
-	CPUs:
-		68020-based: 318, 319, 320, 330, and 350.
-		68030-based: 340, 345, 360, 370, 375, and 400(*).
-		68040-based: 380, 385, 425(*), and 433(*).
+    HP 9000/300 series
 
-	Disks:
-		HP-IB/CS80: 7912, 7914, 7933, 7936, 7937, 7945, 7957,
-			    7958, 7959, 2200, and 2203.
-		SCSI-I(**), including magneto-optical and CD-ROM.
+	68020-based:  318, 319, 320, 330 and 350.
+	68030-based:  340, 345, 360, 362, 370 and 375.
+	68040-based:  380, 382 and 385.
 
-	Tape drives:
-		Low-density HP-IB/CS80 cartridge: 7914, 7946, and 9144.
-		High-density HP-IB/CS80 cartridge: 9145.
-		HP-IB/CS80 1/2": 7974A, 7978A/B, 7979A, 7980A, and 7980XC.
-		SCSI: HP DAT, Exabyte, and SCSI QIC drives such as
-		      the Archive Viper.
+    HP 9000/400 series
 
-	RS232 interfaces:
-		98644 built-in and add-on single port (dca).
-		98642 4-port (dcm).
-		98638 8-port (dcm).
-		400-series Apollo 3-port serial/keyboard mux (apci).
-		[Note:  Support is incomplete.  The first port is typically
-		configured as a dca device, except on the 425e.]
+	68030-based:  400(dl/s/t).
+	68040-based:  425(dl/e/s/t) and 433(dl/s/t).
 
-	Network interfaces:
-		98643 built-in and add-on LAN cards.
+	These machines are not supported when configured for Domain/OS;
+	their ROMs need to be configured in `HP-UX mode'.
 
-	Displays:
-		98543, 98544, 98545 and 98547 color and monochrome Topcat.
-		98548, 98549 and 98550 color and monochrome Catseye.
-		A1416A color Kathmandu.
-		98700 and 98710 Gatorbox.
-		98720 and 98721 Renaissance.
-		98730 and 98731 DaVinci.
-		A1096A monochrome Hyperion.
-		SGC-based frame buffers, including the 425e on-board EVRX
+    SCSI controllers and peripherals
 
-	Input devices:
-		General interface supporting all HIL devices: keyboard,
-		2 and 3 button mice(***), and ID module.
-		Apollo domain keyboards and mice (on models 4xx).
+	98658A built-in and add-on SCSI interface (spc).
 
-	Miscellaneous:
-		Battery-backed real-time clock.
-		98624 built-in HP-IB interface.
-		98625A and 98625B `fast' HP-IB interface.
-		98658A built-in and add-on SCSI interface.
-		Printers and plotters on RS232 and HP-IB.
-		SCSI autochanger.
+	SCSI-1 disk drives (sd), cdrom drives (cd), tape drives (st)
+	and tape changers (ch).
 
-(*) 400-series machines configured for Domain/OS need their ROMs to be
-    configured in `HP-UX mode'.
+	SCSI-2 devices are known to work, but may require changing a jumper
+	to restrict them to SCSI-1 behaviour.
 
-(**) SCSI-II drives are known to work, though this may require changing a
-     jumper on some drives.  See your hardware documentation for details.
+    HP-IB/CS80 controller and peripherals
 
-(***) Serial mice connected to a `HIL to quad' converter are also known
-      to work.
+	98624 built-in HP-IB interface (nhpib).
+	98625A and 98625B `fast' HP-IB interface (fhpib).
 
-If it's not on this list, there is no official support for it in this release.
+	Most HP disks, including: 7912, 7914, 7933, 7936, 7937,
+	7945, 7957, 7958, 7959, 2200, and 2203.
+
+	Low-density cartridge drives: 7914, 7946, and 9144.
+	High-density cartridge drives: 9145.
+	1/2" tape drives: 7974A, 7978A/B, 7979A, 7980A, and 7980XC.
+
+    Serial ports
+
+	98644 built-in and add-on single port (dca).
+	98642 4-port (dcm).
+	98638 8-port (dcm).
+	400-series Apollo 3-port serial/keyboard mux (apci).
+		[The first port being typically configured as a dca device,
+		 except on the 425e.]
+
+    Ethernet interfaces
+
+	98643 built-in and add-on LAN cards (le).
+
+    Frame buffers
+
+	98543, 98544, 98545 and 98547 color and monochrome Topcat (topcat).
+	98548, 98549 and 98550 color and monochrome Catseye (topcat).
+	A1416A color Kathmandu (topcat).
+	98700 and 98710 Gatorbox (gbox).
+	98720 and 98721 Renaissance (rbox).
+	98730 and 98731 DaVinci (dvbox).
+	A1096A monochrome Hyperion (hyper).
+	EVRX (425e on-board) and SGC frame buffers (sti).
+
+    Input devices
+
+	General interface supporting all HIL devices (hil):
+		keyboard (hilkbd)
+		2 and 3 button mice(hilms)
+		ID module (hilid)
+		[Serial mice connected to a `HIL to quad' converter are
+		 also known to work]
+
+	Apollo domain keyboards and mice (on 400 series) (dnkbd).
+
+    Miscellaneous
+
+	Battery-backed real-time clock (except on 425e).
+	Printers and plotters on RS232 and HP-IB (ppi).
+
+Unsupported hardware mainly consists of:
+
+    HP 9000/310 and all other 68010-based systems.
+    425e built-in audio.
+    parallel port on the 4xx models.
+    362 and 382 built-in frame buffer.
+    X-Genesis, Y-Genesis and TurboVRX TigerShark frame buffers.
+    ISA slot on 4xx ``t'' models.
+    EISA slots on 4xx ``s'' models.
