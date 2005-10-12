@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.20 2005/10/09 04:37:13 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.21 2005/10/12 20:36:16 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -402,7 +402,7 @@ _dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object)
 }
 
 void
-_dl_link_sub(elf_object_t *dep, elf_object_t *p)
+_dl_link_child(elf_object_t *dep, elf_object_t *p)
 {
 	struct dep_node *n;
 
@@ -412,22 +412,44 @@ _dl_link_sub(elf_object_t *dep, elf_object_t *p)
 	n->data = dep;
 	TAILQ_INSERT_TAIL(&p->child_list, n, next_sib);
 
-	/*
-	 * because two child libraries can refer to the same library
-	 * and we only want to deal with each one once, check for dups
-	 * before adding new, dup libs will have the same dep pointer.
-	 */
+	DL_DEB(("linking dep %s as child of %s\n", dep->load_name,
+	    p->load_name));
+}
+
+void
+_dl_link_grpsym(elf_object_t *object)
+{
+	struct dep_node *n;
+
 	TAILQ_FOREACH(n, &_dl_loading_object->grpsym_list, next_sib)
-		if (n->data == dep)
+		if (n->data == object)
 			return; /* found, dont bother adding */
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
 		_dl_exit(8);
-	n->data = dep;
+	n->data = object;
 	TAILQ_INSERT_TAIL(&_dl_loading_object->grpsym_list, n, next_sib);
-	dep->refcount++;
 
-	DL_DEB(("linking dep %s as child of %s\n", dep->load_name,
-	    p->load_name));
+	/* _dl_loading_object uses opencount & grprefcount */
+	if (object != _dl_loading_object)
+		object->refcount++;
+}
+
+void
+_dl_cache_grpsym_list(elf_object_t *object)
+{
+	struct dep_node *n;
+
+	/*
+	 * grpsym_list is an ordered list of all child libs of the
+	 * _dl_loading_object with no dups. The order is equalivant
+	 * to a breath-first traversal of the child list without dups.
+	 */
+
+	TAILQ_FOREACH(n, &object->child_list, next_sib)
+		_dl_link_grpsym(n->data);
+
+	TAILQ_FOREACH(n, &object->child_list, next_sib)
+		_dl_cache_grpsym_list(n->data);
 }

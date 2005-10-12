@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.67 2005/10/10 16:33:51 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.68 2005/10/12 20:36:16 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -49,7 +49,6 @@ dlopen(const char *libname, int flags)
 {
 	elf_object_t *object, *dynobj;
 	Elf_Dyn	*dynp;
-	struct dep_node *n;
 	int failed = 0;
 	const char *deplibname = NULL;
 
@@ -71,19 +70,20 @@ dlopen(const char *libname, int flags)
 
 	_dl_link_dlopen(object);
 
-	if (OBJECT_REF_CNT(object) > 1)
+	if (OBJECT_REF_CNT(object) > 1) {
+		/* if opened but grpsym_list has not been created */
+		if (OBJECT_DLREF_CNT(object) == 1) {
+			/* add first object manually */
+			_dl_link_grpsym(object);
+			_dl_cache_grpsym_list(object);
+		}
 		goto loaded;
+	}
 
 	/* this add_object should not be here, XXX */
 	_dl_add_object(object);
 
 	DL_DEB(("head [%s]\n", object->load_name ));
-
-	n = _dl_malloc(sizeof *n);
-	if (n == NULL)
-		_dl_exit(5);
-	n->data = object;
-	TAILQ_INSERT_TAIL(&object->grpsym_list, n, next_sib);
 
 	dynobj = object;
 	while (dynobj) {
@@ -104,7 +104,7 @@ dlopen(const char *libname, int flags)
 			}
 			/* this add_object should not be here, XXX */
 			_dl_add_object(depobj);
-			_dl_link_sub(depobj, dynobj);
+			_dl_link_child(depobj, dynobj);
 		}
 		dynobj = dynobj->next;
 	}
@@ -119,6 +119,8 @@ dlopen(const char *libname, int flags)
 	} else {
 		int err;
 		DL_DEB(("tail %s\n", object->load_name ));
+		_dl_link_grpsym(object);
+		_dl_cache_grpsym_list(object);
 		err = _dl_rtld(object);
 		if (err != 0) {
 			_dl_real_close(object);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.96 2005/10/10 16:33:51 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.97 2005/10/12 20:36:16 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -181,7 +181,7 @@ _dl_dopreload(char *paths)
 			_dl_exit(4);
 		}
 		_dl_add_object(shlib);
-		_dl_link_sub(shlib, _dl_objects);
+		_dl_link_child(shlib, _dl_objects);
 	}
 	_dl_free(paths);
 	return;
@@ -318,12 +318,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_exit(5);
 	n->data = exe_obj;
 	TAILQ_INSERT_TAIL(&_dlopened_child_list, n, next_sib);
-
-	n = _dl_malloc(sizeof *n);
-	if (n == NULL)
-		_dl_exit(9);
-	n->data = exe_obj;
-	TAILQ_INSERT_TAIL(&exe_obj->grpsym_list, n, next_sib);
 	exe_obj->opencount++;
 
 	if (_dl_preload != NULL)
@@ -400,27 +394,26 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			}
 			for (loop = 0; loop < libcnt_err; loop++) {
 				_dl_add_object(liblist[loop].dynobj);
-				_dl_link_sub(liblist[loop].dynobj, dynobj);
+				_dl_link_child(liblist[loop].dynobj, dynobj);
 			}
 			_dl_free(liblist);
 		}
 	}
 
+	_dl_link_grpsym(exe_obj);
+	_dl_cache_grpsym_list(exe_obj);
+
 	/*
 	 * Now add the dynamic loader itself last in the object list
 	 * so we can use the _dl_ code when serving dl.... calls.
+	 * Intentionally left off the exe child_list.
 	 */
 	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
 	dyn_obj = _dl_finalize_object(us, dynp, 0, OBJTYPE_LDR,
 	    dl_data[AUX_base], loff);
 	_dl_add_object(dyn_obj);
 
-	n = _dl_malloc(sizeof *n);
-	if (n == NULL)
-		_dl_exit(5);
-	n->data = dyn_obj;
-	TAILQ_INSERT_TAIL(&exe_obj->grpsym_list, n, next_sib);
-	dyn_obj->refcount++;
+	_dl_link_grpsym(dyn_obj);
 
 	dyn_obj->status |= STAT_RELOC_DONE;
 

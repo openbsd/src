@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.47 2005/10/09 04:29:13 kurt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.48 2005/10/12 20:36:16 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -198,7 +198,9 @@ Elf_Addr _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 
 int _dl_rtld(elf_object_t *object);
 void _dl_call_init(elf_object_t *object);
-void _dl_link_sub(elf_object_t *dep, elf_object_t *p);
+void _dl_link_child(elf_object_t *dep, elf_object_t *p);
+void _dl_link_grpsym(elf_object_t *object);
+void _dl_cache_grpsym_list(elf_object_t *object);
 void _dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object);
 void _dl_link_dlopen(elf_object_t *dep);
 void _dl_unlink_dlopen(elf_object_t *dep);
