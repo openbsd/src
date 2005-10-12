@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.18 2005/06/07 17:53:44 deraadt Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.19 2005/10/12 15:17:18 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -423,10 +423,7 @@ bstp_transmit_tcn(sc)
 	if (error == 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	m = NULL;
-
 	splx(s);
-	if (m != NULL)
-		m_freem(m);
 }
 
 void
