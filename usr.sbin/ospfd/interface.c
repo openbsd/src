@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.35 2005/09/28 20:38:31 msf Exp $ */
+/*	$OpenBSD: interface.c,v 1.36 2005/10/12 09:25:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -411,6 +411,7 @@ if_elect(struct nbr *a, struct nbr *b)
 int
 if_act_elect(struct iface *iface)
 {
+	struct in_addr	 addr;
 	struct nbr	*nbr, *bdr = NULL, *dr = NULL;
 	int		 round = 0;
 	int		 changed = 0;
@@ -512,10 +513,30 @@ start:
 	iface->bdr = bdr;
 
 	if (changed) {
+		inet_aton(AllDRouters, &addr);
+		if (old_state & IF_STA_DRORBDR &&
+		    (iface->state & IF_STA_DRORBDR) == 0) {
+			if (if_leave_group(iface, &addr)) {
+				log_warnx("if_act_elect: "
+				    "error leaving group %s, interface %s",
+				    inet_ntoa(addr), iface->name);
+				return (-1);
+			}
+		} else if ((old_state & IF_STA_DRORBDR) == 0 &&
+		    iface->state & IF_STA_DRORBDR) {
+			if (if_join_group(iface, &addr)) {
+				log_warnx("if_act_elect: "
+				    "error joining group %s, interface %s",
+				    inet_ntoa(addr), iface->name);
+				return (-1);
+			}
+		}
+
 		LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 			if (nbr->state & NBR_STA_BIDIR)
 				nbr_fsm(nbr, NBR_EVT_ADJ_OK);
 		}
+
 		orig_rtr_lsa(iface->area);
 		if (iface->state & IF_STA_DR || old_state & IF_STA_DR)
 			orig_net_lsa(iface);
