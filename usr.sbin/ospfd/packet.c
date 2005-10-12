@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.12 2005/09/17 20:03:35 msf Exp $ */
+/*	$OpenBSD: packet.c,v 1.13 2005/10/12 09:09:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -258,8 +258,8 @@ ospf_hdr_sanity_check(const struct ip *ip_hdr, struct ospf_hdr *ospf_hdr,
 	if (iface->type == IF_TYPE_BROADCAST || iface->type == IF_TYPE_NBMA) {
 		if (inet_aton(AllDRouters, &addr) == 0)
 			fatalx("recv_packet: inet_aton");
-		if ((ip_hdr->ip_dst.s_addr == addr.s_addr) &&
-		    (iface->state != (IF_STA_DR | IF_STA_BACKUP))) {
+		if (ip_hdr->ip_dst.s_addr == addr.s_addr &&
+		    (iface->state & IF_STA_DRORBDR) == 0) {
 			log_debug("recv_packet: invalid destination IP in "
 			    "state %s, interface %s",
 			    if_state_name(iface->state), iface->name);
