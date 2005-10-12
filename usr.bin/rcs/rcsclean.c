@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.4 2005/10/07 23:59:56 niallo Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.5 2005/10/12 17:13:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -38,7 +38,6 @@
 #include "diff.h"
 #include "rcsprog.h"
 
-extern char *__progname;
 static int rcsclean_file(char *, RCSNUM *);
 static int nflag = 0;
 static int kflag = RCS_KWEXP_ERR;
@@ -112,7 +111,8 @@ rcsclean_main(int argc, char **argv)
 void
 rcsclean_usage(void)
 {
-	fprintf(stderr, "usage %s [-qV] [-r rev] [file] ...\n", __progname);
+	fprintf(stderr,
+	    "usage: rcsclean [-qV] [-r rev] [file] ...\n");
 }
 
 static int

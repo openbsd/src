@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.10 2005/10/10 17:12:49 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.11 2005/10/12 17:13:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -35,8 +35,6 @@
 #include "log.h"
 #include "rcs.h"
 #include "rcsprog.h"
-
-extern char *__progname;
 
 #define LOCK_LOCK	1
 #define LOCK_UNLOCK	2
@@ -120,7 +118,7 @@ checkout_main(int argc, char **argv)
 		(usage)();
 		exit (1);
 	}
-	
+
 	for (i = 0; i < argc; i++) {
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
@@ -187,6 +185,6 @@ checkout_main(int argc, char **argv)
 void
 checkout_usage(void)
 {
-	fprintf(stderr, "usage %s [-qV] [-l [rev]] [-r [rev]] [-u [rev]]"
-	    " file ...\n", __progname);
+	fprintf(stderr,
+	    "usage: co [-qV] [-l [rev]] [-r [rev]] [-u [rev]] file ...\n");
 }

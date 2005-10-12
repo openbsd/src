@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.3 2005/10/06 19:13:43 joris Exp $	*/
+/*	$OpenBSD: ident.c,v 1.4 2005/10/12 17:13:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -39,7 +39,6 @@
 #define KEYDELIM	'$'	/* keywords delimitor */
 #define VALDELIM	':'	/* values delimitor */
 
-extern char *__progname;
 static int found = 0;
 
 static int	ident_file(const char *, FILE *);
@@ -154,5 +153,6 @@ ident_line(FILE *fp)
 void
 ident_usage(void)
 {
-	fprintf(stderr, "Usage: %s [-qV] file ...\n", __progname);
+	fprintf(stderr,
+	    "usage: ident [-qV] file ...\n");
 }

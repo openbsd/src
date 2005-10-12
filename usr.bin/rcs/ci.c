@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.21 2005/10/11 15:52:13 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.22 2005/10/12 17:13:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -36,7 +36,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
 #include <string.h>
 #include <time.h>
 
@@ -44,8 +43,6 @@
 #include "rcs.h"
 #include "diff.h"
 #include "rcsprog.h"
-
-extern char *__progname;
 
 #define LOCK_LOCK	1
 #define LOCK_UNLOCK	2
@@ -57,8 +54,8 @@ void
 checkin_usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-jMNqV] [-d date] [-k mode] [-l [rev]] [-m msg]\n"
-	    "          [-r [rev]] [-u [rev]] file ...\n", __progname);
+	    "usage: ci [-jMNqV] [-d date] [-k mode] [-l [rev]] [-m msg]\n"
+	    "          [-r [rev]] [-u [rev]] file ...\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.25 2005/10/11 00:25:18 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.26 2005/10/12 17:13:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -32,7 +32,6 @@
 #include <err.h>
 #include <errno.h>
 #include <pwd.h>
-#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,9 +46,9 @@ const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
 
 struct rcs_prog {
-	char  *prog_name;
-	int  (*prog_hdlr)(int, char **);
-	void (*prog_usage)(void);
+	char	*prog_name;
+	int	(*prog_hdlr)(int, char **);
+	void	(*prog_usage)(void);
 } programs[] = {
 	{ "rcs",	rcs_main,	rcs_usage	},
 	{ "ci",		checkin_main,	checkin_usage   },
@@ -129,8 +128,8 @@ void
 rcs_usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-hiLMUV] [-a users] [-b [rev]] [-c string]\n"
-	    "[-e users] [-k opt] [-m rev:log] file ...\n", __progname);
+	    "usage: rcs [-hiLMUV] [-a users] [-b [rev]] [-c string] [-e users]\n"
+	    "           [-k opt] [-m rev:log] file ...\n");
 }
 
 /*

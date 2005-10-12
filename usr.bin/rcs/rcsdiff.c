@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.8 2005/10/11 14:27:59 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.9 2005/10/12 17:13:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,8 +36,6 @@
 #include "rcs.h"
 #include "diff.h"
 #include "rcsprog.h"
-
-extern char *__progname;
 
 static int rcsdiff_file(RCSFILE *, RCSNUM *, const char *);
 static int rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev, RCSNUM *rev2);
@@ -140,8 +138,8 @@ rcsdiff_main(int argc, char **argv)
 void
 rcsdiff_usage(void)
 {
-	fprintf(stderr, "usage %s [-cnquV] [-r rev1 [-r rev2]] file ...\n",
-	    __progname);
+	fprintf(stderr,
+	    "usage: rcsdiff [-cnquV] [-r rev1 [-r rev2]] file ...\n");
 }
 
 static int
