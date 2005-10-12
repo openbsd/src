@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.26 2004/06/24 21:06:47 millert Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.27 2005/10/12 07:24:28 otto Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.26 2004/06/24 21:06:47 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.27 2005/10/12 07:24:28 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -273,7 +273,7 @@ kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
 	struct tty tty;
 	int cnt = 0;
 
-	for (; cnt < maxcnt && p != NULL; p = proc.p_list.le_next) {
+	for (; cnt < maxcnt && p != NULL; p = LIST_NEXT(&proc, p_list)) {
 		if (KREAD(kd, (u_long)p, &proc)) {
 			_kvm_err(kd, kd->program, "can't read proc at %x", p);
 			return (-1);

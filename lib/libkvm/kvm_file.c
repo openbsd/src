@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file.c,v 1.12 2004/09/15 19:31:31 miod Exp $ */
+/*	$OpenBSD: kvm_file.c,v 1.13 2005/10/12 07:24:28 otto Exp $ */
 /*	$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_file.c,v 1.12 2004/09/15 19:31:31 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm_file.c,v 1.13 2005/10/12 07:24:28 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,7 +98,7 @@ kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o, int nfiles)
 	/*
 	 * followed by an array of file structures
 	 */
-	for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next) {
+	LIST_FOREACH(fp, &filehead, f_list) {
 		if (buflen > sizeof (struct file)) {
 			if (KREAD(kd, (long)fp, ((struct file *)where))) {
 				_kvm_err(kd, kd->program, "can't read kfp");
@@ -149,9 +149,9 @@ kvm_getfiles(kvm_t *kd, int op, int arg, int *cnt)
 		filehead = *(struct filelist *)kd->argspc;
 		fp = (struct file *)(kd->argspc + sizeof (filehead));
 		fplim = (struct file *)(kd->argspc + size);
-		for (nfiles = 0; filehead.lh_first && (fp < fplim);
+		for (nfiles = 0; LIST_FIRST(&filehead) && (fp < fplim);
 		    nfiles++, fp++)
-			filehead.lh_first = fp->f_list.le_next;
+			LIST_FIRST(&filehead) = LIST_NEXT(fp, f_list);
 	} else {
 		struct nlist nl[3], *p;
 

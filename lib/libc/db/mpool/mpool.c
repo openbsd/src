@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.15 2005/10/10 19:23:41 otto Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.16 2005/10/12 07:25:13 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -309,8 +309,7 @@ mpool_sync(MPOOL *mp)
 	BKT *bp;
 
 	/* Walk the lru chain, flushing any dirty pages to disk. */
-	for (bp = mp->lqh.cqh_first;
-	    bp != (void *)&mp->lqh; bp = bp->q.cqe_next)
+	CIRCLEQ_FOREACH(bp, &mp->lqh, q)
 		if (bp->flags & MPOOL_DIRTY &&
 		    mpool_write(mp, bp) == RET_ERROR)
 			return (RET_ERROR);
@@ -339,8 +338,7 @@ mpool_bkt(MPOOL *mp)
 	 * off any lists.  If we don't find anything we grow the cache anyway.
 	 * The cache never shrinks.
 	 */
-	for (bp = mp->lqh.cqh_first;
-	    bp != (void *)&mp->lqh; bp = bp->q.cqe_next)
+	CIRCLEQ_FOREACH(bp, &mp->lqh, q)
 		if (!(bp->flags & MPOOL_PINNED)) {
 			/* Flush if dirty. */
 			if (bp->flags & MPOOL_DIRTY &&
@@ -421,7 +419,7 @@ mpool_look(MPOOL *mp, pgno_t pgno)
 	BKT *bp;
 
 	head = &mp->hqh[HASHKEY(pgno)];
-	for (bp = head->cqh_first; bp != (void *)head; bp = bp->hq.cqe_next)
+	CIRCLEQ_FOREACH(bp, head, hq)
 		if ((bp->pgno == pgno) &&
 			((bp->flags & MPOOL_INUSE) == MPOOL_INUSE)) {
 #ifdef STATISTICS
@@ -465,8 +463,7 @@ mpool_stat(MPOOL *mp)
 
 	sep = "";
 	cnt = 0;
-	for (bp = mp->lqh.cqh_first;
-	    bp != (void *)&mp->lqh; bp = bp->q.cqe_next) {
+	CIRCLEQ_FOREACH(bp, &mp->lqh, q) {
 		(void)fprintf(stderr, "%s%d", sep, bp->pgno);
 		if (bp->flags & MPOOL_DIRTY)
 			(void)fprintf(stderr, "d");
