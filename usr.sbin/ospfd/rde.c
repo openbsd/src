@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.29 2005/10/12 09:42:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.30 2005/10/12 09:51:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -402,20 +402,30 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				/* lsa not added so free it */
 				if (self)
 					free(lsa);
-			} else if (rde_req_list_exists(nbr, &lsa->hdr)) {
-				/* lsa no longer needed */
-				free(lsa);
-				imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
-				    imsg.hdr.peerid, 0, -1, NULL, 0);
 			} else if (r < 0) {
 				/* lsa no longer needed */
 				free(lsa);
+
+				/*
+				 * point 6 of "The Flooding Procedure"
+				 * We are violating the RFC here because
+				 * it does not make sense to reset a session
+				 * because a equal LSA is already in the table.
+				 * Only if the LSA sent is older than the one
+				 * in the table we should reset the session.
+				 */
+				if (rde_req_list_exists(nbr, &lsa->hdr)) {
+					imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
+					    imsg.hdr.peerid, 0, -1, NULL, 0);
+					break;
+				}
 
 				/* new LSA older than DB */
 				if (ntohl(db_hdr->seq_num) == MAX_SEQ_NUM &&
 				    ntohs(db_hdr->age) == MAX_AGE)
 					/* seq-num wrap */
 					break;
+
 				if (v->changed + MIN_LS_ARRIVAL >= now)
 					break;
 
