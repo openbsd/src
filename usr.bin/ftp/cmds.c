@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.48 2004/09/16 04:39:16 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.49 2005/10/12 06:50:42 otto Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.48 2004/09/16 04:39:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.49 2005/10/12 06:50:42 otto Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -565,7 +565,7 @@ mget(int argc, char *argv[])
 {
 	sig_t oldintr;
 	int ch, ointer;
-	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN];
+	char *cp, *tp, *tp2, tmpbuf[MAXPATHLEN], localcwd[MAXPATHLEN];
 
 	if (argc < 2 && !another(&argc, &argv, "remote-files")) {
 		fprintf(ttyout, "usage: %s remote-files\n", argv[0]);
@@ -574,6 +574,9 @@ mget(int argc, char *argv[])
 	}
 	mname = argv[0];
 	mflag = 1;
+	if (getcwd(localcwd, sizeof(localcwd)) == NULL)
+		err(1, "can't get cwd");
+
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	while ((cp = remglob(argv, proxy, NULL)) != NULL) {
@@ -581,7 +584,14 @@ mget(int argc, char *argv[])
 			mflag = 0;
 			continue;
 		}
-		if (mflag && confirm(argv[0], cp)) {
+		if (!mflag)
+			continue;
+		if (!fileindir(cp, localcwd)) {
+			fprintf(ttyout, "Skipping non-relative filename `%s'\n",
+			    cp);
+			continue;
+		}
+		if (confirm(argv[0], cp)) {
 			tp = cp;
 			if (mcase) {
 				for (tp2 = tmpbuf; (ch = *tp++) != 0; )

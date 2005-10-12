@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.40 2005/04/11 15:16:50 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.41 2005/10/12 06:50:42 otto Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: util.c,v 1.40 2005/04/11 15:16:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.41 2005/10/12 06:50:42 otto Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -85,6 +85,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.40 2005/04/11 15:16:50 deraadt Exp $
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <limits.h>
 #include <glob.h>
 #include <pwd.h>
@@ -629,6 +630,39 @@ remotemodtime(const char *file, int noisy)
 		code = ocode;
 	return (rtime);
 }
+
+/*
+ * Ensure file is in or under dir.
+ * Returns 1 if so, 0 if not (or an error occurred).
+ */
+int
+fileindir(const char *file, const char *dir)
+{
+	char	parentdirbuf[MAXPATHLEN], *parentdir;
+	char	realdir[MAXPATHLEN];
+	size_t	dirlen;
+
+		 			/* determine parent directory of file */
+	(void)strlcpy(parentdirbuf, file, sizeof(parentdirbuf));
+	parentdir = dirname(parentdirbuf);
+	if (strcmp(parentdir, ".") == 0)
+		return 1;		/* current directory is ok */
+
+					/* find the directory */
+	if (realpath(parentdir, realdir) == NULL) {
+		warn("Unable to determine real path of `%s'", parentdir);
+		return 0;
+	}
+	if (realdir[0] != '/')		/* relative result is ok */
+		return 1;
+
+	dirlen = strlen(dir);
+	if (strncmp(realdir, dir, dirlen) == 0 &&
+	    (realdir[dirlen] == '/' || realdir[dirlen] == '\0'))
+		return 1;
+	return 0;
+}
+
 
 /*
  * Returns true if this is the controlling/foreground process, else false.
