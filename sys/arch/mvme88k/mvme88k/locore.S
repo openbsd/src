@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.41 2004/12/24 22:50:30 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.42 2005/10/12 19:05:44 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -316,7 +316,6 @@ GLOBAL(start_text)
 ASLOCAL(master_start)
 	/*
 	 * Switch to interrupt stack
-	 * Use idle_u's stack instead?
 	 */
 	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
 	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
@@ -340,34 +339,33 @@ ASLOCAL(master_start)
 	bsr.n	_C_LABEL(vector_init)
 	 ldcr	r2, VBR
 
-	/* still on int stack */
+	/*
+	 * mvme_bootstrap(), among other things, clears proc0's u area.
+	 * We are still using the interrupt stack here, thus we are not
+	 * affected...
+	 */
 	bsr	_C_LABEL(mvme_bootstrap)
 
 	/*
-	 * we now know our cpu number, so we
-	 * can set interrupt_stack[cpu_number()] = intstack
+	 * ...and we can switch to the u area stack now.
 	 */
-	ldcr	r10, SR1
-	extu	r10, r10, FLAG_CPU_FIELD_WIDTH<0>	/* r10 <-- CPU# */
+	or.u	r10, r0, hi16(_C_LABEL(curpcb))
+	ld	r31, r10,lo16(_C_LABEL(curpcb))
+	addu	r31, r31, USIZE
 
-	/* figure interrupt_stack[cpu_number()] */
-	or.u	r11,  r0, hi16(_C_LABEL(interrupt_stack))
-	or	r11, r11, lo16(_C_LABEL(interrupt_stack))
-	or.u	r12, r0,  hi16(_C_LABEL(intstack))
-	or	r12, r12, lo16(_C_LABEL(intstack))
-	st	r12, r11 [r10]
+	/* call main() - no arguments although main() still defines one */
+	bsr	_C_LABEL(main)
 
-	/* switch to proc0 uarea */
-	or.u	r10, r0, hi16(UADDR)
-	or	r31, r10,lo16(UADDR)
-	addu	r31, r31, USIZE - 8
+	or.u	r2, r0, hi16(_ASM_LABEL(main_panic))
+	bsr.n	_C_LABEL(panic)
+	 or	r2, r2, lo16(_ASM_LABEL(main_panic))
 
-	/* make the call: main() */
-	or.u	r2, r0, hi16(UADDR)
-	or	r2, r2,lo16(UADDR)
-	bsr.n	_C_LABEL(main)
-	 addu	r2, r2, USIZE - 8
-	bsr	_C_LABEL(panic)
+	data
+	.align	4
+ASLOCAL(main_panic)
+	string	"main() returned\0"
+	text
+	.align	8
 
 /*
  *	slave CPUs starts here
@@ -477,9 +475,6 @@ GLOBAL(idle_u)
 ASLOCAL(u0)
 	space	UPAGES * NBPG
 
-/* UPAGES get mapped to kstack */
-ASGLOBAL(kstack)
-	word	UADDR
 GLOBAL(ret_addr)
 	word 0
 /* XMEM spin lock -- to count CPUs */

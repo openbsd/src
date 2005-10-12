@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.4 2005/09/25 20:55:14 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.5 2005/10/12 19:05:44 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -75,8 +75,6 @@
 /* prototypes */
 void regdump(struct trapframe *f);
 void dumpsys(void);
-void save_u_area(struct proc *, vaddr_t);
-void load_u_area(struct proc *);
 void dumpconf(void);
 
 int longformat = 1;  /* for regdump() */
@@ -86,36 +84,6 @@ int longformat = 1;  /* for regdump() */
  * during autoconfiguration or after a panic.
  */
 int   safepri = IPL_NONE;
-
-/*
- * Setup u area ptes for u area double mapping.
- */
-
-void
-save_u_area(struct proc *p, vaddr_t va)
-{
-	int i;
-
-	for (i = 0; i < UPAGES; i++) {
-		p->p_md.md_upte[i] = *((pt_entry_t *)kvtopte(va));
-		va += PAGE_SIZE;
-	}
-}
-
-void
-load_u_area(struct proc *p)
-{
-	int i;
-	vaddr_t va;
-	pt_entry_t *t;
-
-	for (i = 0, va = UADDR; i < UPAGES; i++) {
-		t = kvtopte(va);
-		*t = p->p_md.md_upte[i];
-		va += PAGE_SIZE;
-	}
-	cmmu_flush_tlb(cpu_number(), 1, UADDR, UPAGES);
-}
 
 /*
  * Set registers on exec.

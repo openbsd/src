@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.167 2005/09/25 20:30:03 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.168 2005/10/12 19:05:44 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -111,8 +111,6 @@ int	slave_main(void);
 void	vector_init(m88k_exception_vector_area *, unsigned *);
 void	_doboot(void);
 
-extern void load_u_area(struct proc *);
-extern void save_u_area(struct proc *, vaddr_t);
 extern void setlevel(unsigned int);
 
 extern void m187_bootstrap(void);
@@ -129,7 +127,6 @@ extern void m197_setupiackvectors(void);
 extern void m197_startup(void);
 
 intrhand_t intr_handlers[NVMEINTR];
-vaddr_t interrupt_stack[MAX_CPUS];
 
 /* board dependent pointers */
 void (*md_interrupt_func_ptr)(u_int, struct trapframe *);
@@ -363,7 +360,7 @@ cpu_startup()
 	int sz, i;
 	vsize_t size;
 	int base, residual;
-	vaddr_t minaddr, maxaddr, uarea_pages;
+	vaddr_t minaddr, maxaddr;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -392,17 +389,6 @@ cpu_startup()
 		panic("startup: no room for tables");
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
-
-	/*
-	 * Grab UADDR virtual address
-	 */
-	uarea_pages = UADDR;
-	uvm_map(kernel_map, (vaddr_t *)&uarea_pages, USPACE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	        UVM_ADV_NORMAL, 0));
-	if (uarea_pages != UADDR)
-		panic("uarea_pages %lx: UADDR not free", uarea_pages);
 
 	/*
 	 * Grab machine dependent memory spaces
@@ -840,7 +826,6 @@ get_slave_stack()
 		panic("Cannot allocate slave stack for cpu %d",
 		    cpu_number());
 
-	interrupt_stack[cpu_number()] = addr;
 	return addr;
 }
 
@@ -1184,16 +1169,8 @@ mvme_bootstrap()
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 
-	/* Initialize cached PTEs for u-area mapping. */
-	save_u_area(&proc0, (vaddr_t)proc0paddr);
-
-	/*
-	 * Map proc0's u-area at the standard address (UADDR).
-	 */
-	load_u_area(&proc0);
-
 	/* Initialize the "u-area" pages. */
-	bzero((caddr_t)UADDR, UPAGES * PAGE_SIZE);
+	bzero((caddr_t)curpcb, USPACE);
 #ifdef DEBUG
 	printf("leaving mvme_bootstrap()\n");
 #endif

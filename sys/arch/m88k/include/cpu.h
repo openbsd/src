@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 2004/11/08 16:39:31 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.6 2005/10/12 19:05:43 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -65,9 +65,10 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_exec(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
-#define	cpu_swapout(p)	/* nothing */
+#define	cpu_exec(p)		do { /* nothing */ } while (0)
+#define	cpu_wait(p)		do { /* nothing */ } while (0)
+#define	cpu_swapin(p)		do { /* nothing */ } while (0)
+#define	cpu_swapout(p)		do { /* nothing */ } while (0)
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -82,7 +83,7 @@ struct clockframe {
 
 #define	CLKF_USERMODE(framep)	((((struct trapframe *)(framep))->tf_epsr & PSR_MODE) == 0)
 #define	CLKF_PC(framep)		(((struct trapframe *)(framep))->tf_sxip & XIP_ADDR)
-#define	CLKF_INTR(framep)	(((struct trapframe *)(framep))->tf_r[31] >= UADDR)
+#define	CLKF_INTR(framep)	(0)	/* XXX temporary */
 
 /*
  * Get interrupt glue.

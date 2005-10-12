@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.11 2005/09/25 20:30:03 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.12 2005/10/12 19:05:44 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1010,9 +1010,9 @@ ASLOCAL(m88100_use_SR3_pcb)
 	 * Consequently, we never picked up a stack. Do so now.
 	 * R1 is currently free (saved in the exception frame pointed at by
 	 * r30) */
-	or.u	r1,   r0,   hi16(_ASM_LABEL(kstack))
-	ld	r1,   r1,   lo16(_ASM_LABEL(kstack))
-	addu	r1,   r1,   USIZE-SIZEOF_EF
+	or.u	r1,   r0,   hi16(_C_LABEL(curpcb))
+	ld	r1,   r1,   lo16(_C_LABEL(curpcb))
+	addu	r1,   r1,   USIZE - SIZEOF_EF
 	st	FLAGS,r1,   REG_OFF(EF_FLAGS)	/* store flags */
 	st	r31,  r1,   GENREG_OFF(31)	/* store r31 - now free */
 	st	r30,  r1,   REG_OFF(EF_SR3)	/* store old SR3 (pcb) */
@@ -1041,6 +1041,14 @@ ASLOCAL(m88100_pickup_stack)
 	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
 	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
 	addu	r31,  r31,  PCB_USER_STATE	/* point to user save area */
+
+	/*
+	 * WARNING! Using pcb->user_state as the exception frame
+	 * AND stack pointer, means we can not afford using the stack
+	 * until we have saved enough and can go back to the top of the u area,
+	 * after the FPU is enabled.
+	 */
+
 	st	FLAGS,r31,  REG_OFF(EF_FLAGS)	/* save flags */
 	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free) */
 	ldcr	r1,   SR3			/* save previous r31 */
@@ -1523,8 +1531,8 @@ ASLOCAL(m88100_fpu_enable)
 	ld	r2,   r31,  REG_OFF(EF_EPSR)
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
 
-	or.u	r31,  r0,   hi16(_ASM_LABEL(kstack))
-	ld	r31,  r31,  lo16(_ASM_LABEL(kstack))
+	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
+	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
 	addu	r31,  r31,  USIZE	/* point at proper end */
 1:
 
@@ -2262,9 +2270,9 @@ ASLOCAL(m88110_use_SR3_pcb)
 	 * R1 is currently free (saved in the exception frame pointed at by
 	 * r30)
 	 */
-	or.u	r1,   r0,   hi16(_ASM_LABEL(kstack))
-	ld	r1,   r1,   lo16(_ASM_LABEL(kstack))
-	addu	r1,   r1,   USIZE-SIZEOF_EF
+	or.u	r1,   r0,   hi16(_C_LABEL(curpcb))
+	ld	r1,   r1,   lo16(_C_LABEL(curpcb))
+	addu	r1,   r1,   USIZE - SIZEOF_EF
 	st	FLAGS,r1,   REG_OFF(EF_FLAGS)	/* store flags */
 	st	r31,  r1,   GENREG_OFF(31)	/* store r31 - now free */
 	st	r30,  r1,   REG_OFF(EF_SR3)	/* store old SR3 (pcb) */
@@ -2294,6 +2302,14 @@ ASLOCAL(m88110_pickup_stack)
 	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
 	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
 	addu	r31,  r31,  PCB_USER_STATE	/* point to user save area */
+
+	/*
+	 * WARNING! Using pcb->user_state as the exception frame
+	 * AND stack pointer, means we can not afford using the stack
+	 * until we have saved enough and can go back to the top of the u area,
+	 * after the FPU is enabled.
+	 */
+
 	st	FLAGS,r31,  REG_OFF(EF_FLAGS)	/* save flags */
 	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free)*/
 	ldcr	r1,   SR3			/* save previous r31 */
@@ -2518,8 +2534,8 @@ ASLOCAL(m88110_fpu_enable)
 	ld	r2,   r31,  REG_OFF(EF_EPSR)
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
 
-	or.u	r31,  r0,   hi16(_ASM_LABEL(kstack))
-	ld	r31,  r31,  lo16(_ASM_LABEL(kstack))
+	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
+	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
 	addu	r31,  r31,  USIZE		/* point at proper end */
 1:
 

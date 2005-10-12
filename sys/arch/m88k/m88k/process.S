@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.8 2005/10/12 19:00:21 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.9 2005/10/12 19:05:44 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -225,15 +225,6 @@ ASLOCAL(cpu_switch_found)
 	 or	r2, r0, r9
 	or	r9, r0, r14		/* restore p saved in r14 */
 
-	/*
-	 * Since we are about to replace the u area mapping, we need to
-	 * switch to a neutral stack now.
-	 */
-	or.u	r31, r0, hi16(_ASM_LABEL(intstack_end))
-	or	r31,r31, lo16(_ASM_LABEL(intstack_end))
-
-	bsr.n    _C_LABEL(load_u_area)
-	 or	r2, r0, r9
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bsr	_C_LABEL(sched_unlock_idle)

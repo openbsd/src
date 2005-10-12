@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 2005/09/25 20:55:14 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 2005/10/12 19:05:44 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -545,7 +545,6 @@ pmap_bootstrap(vaddr_t load_start)
 	sdt_entry_t *kmap;
 	vaddr_t vaddr, virt;
 	paddr_t s_text, e_text, kpdt_phys;
-	pt_entry_t *pte;
 	unsigned int kernel_pmap_size, pdt_size;
 	int i;
 	pmap_table_t ptable;
@@ -720,19 +719,6 @@ pmap_bootstrap(vaddr_t load_start)
 	SYSMAP(struct msgbuf *, msgbufmap, msgbufp, btoc(MSGBUFSIZE));
 
 	virtual_avail = virt;
-
-	/*
-	 * Set translation for UPAGES at UADDR. The idea is we want to
-	 * have translations set up for UADDR. Later on, the ptes for
-	 * for this address will be set so that kstack will refer
-	 * to the u area. Make sure pmap knows about this virtual
-	 * address by doing vm_findspace on kernel_map.
-	 */
-
-	for (i = 0, virt = UADDR; i < UPAGES; i++, virt += PAGE_SIZE) {
-		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
-			pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE, 0);
-	}
 
 	/*
 	 * Switch to using new page tables

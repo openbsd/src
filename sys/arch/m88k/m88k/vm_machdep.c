@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 2005/09/25 20:55:14 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 2005/10/12 19:05:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -91,7 +91,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	} *ksfp;
 	extern struct pcb *curpcb;
 	extern void proc_trampoline(void);
-        extern void save_u_area(struct proc *, vaddr_t);
 
 	/* Copy pcb from p1 to p2. */
 	if (p1 == curproc) {
@@ -106,9 +105,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	bcopy(&p1->p_addr->u_pcb, &p2->p_addr->u_pcb, sizeof(struct pcb));
 	p2->p_addr->u_pcb.kernel_state.pcb_ipl = IPL_NONE;	/* XXX */
 	p2->p_md.md_tf = (struct trapframe *)USER_REGS(p2);
-
-	/*XXX these may not be necessary nivas */
-	save_u_area(p2, (vaddr_t)p2->p_addr);
 
 	/*
 	 * Create a switch frame for proc 2
@@ -204,20 +200,6 @@ cpu_coredump(p, vp, cred, chdr)
 
 	chdr->c_nseg++;
 	return 0;
-}
-
-/*
- * Finish a swapin operation.
- * We neded to update the cached PTEs for the user area in the
- * machine dependent part of the proc structure.
- */
-
-void
-cpu_swapin(struct proc *p)
-{
-        extern void save_u_area(struct proc *, vaddr_t);
-
-	save_u_area(p, (vaddr_t)p->p_addr);
 }
 
 /*
