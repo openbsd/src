@@ -1,20 +1,14 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.107 2005/10/04 12:50:15 todd Exp $
+#	$OpenBSD: netstart,v 1.108 2005/10/12 13:11:55 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
 stripcom() {
-	local _file="$1"
-	local _line
-
-	{
-		while read _line ; do
-			_line=${_line%%#*}		# strip comments
-			test -z "$_line" && continue
-			echo $_line
-		done
-	} < $_file
+	local _l
+	while read _l; do
+		[[ -n ${_l%%#*} ]] && echo $_l
+	done<$1
 }
 
 # Returns true if $1 contains only alphanumerics
