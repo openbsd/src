@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.940 2005/10/11 11:05:07 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.941 2005/10/12 19:34:16 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -78,7 +78,7 @@
 #define	PCI_VENDOR_TOSHIBA	0x102f		/* Toshiba */
 #define	PCI_VENDOR_NEC	0x1033		/* NEC */
 #define	PCI_VENDOR_FUTUREDOMAIN	0x1036		/* Future Domain */
-#define	PCI_VENDOR_SIS	0x1039		/* SIS */
+#define	PCI_VENDOR_SIS	0x1039		/* SiS */
 #define	PCI_VENDOR_HP	0x103c		/* Hewlett-Packard */
 #define	PCI_VENDOR_PCTECH	0x1042		/* PC Technology */
 #define	PCI_VENDOR_ASUSTEK	0x1043		/* Asustek */
@@ -699,13 +699,17 @@
 
 /* ATI Technologies */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Radeon Mobility X600 */
+#define	PCI_PRODUCT_ATI_RADEON_X600_RV380	0x3e50		/* Radeon X600 (RV380) */
+#define	PCI_PRODUCT_ATI_RADEON_X600_RV380_S	0x3e70		/* Radeon X600 (RV380) Sec */
 #define	PCI_PRODUCT_ATI_RADEON_9600PRO	0x4150		/* Radeon 9600 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_9600LE	0x4151		/* Radeon 9600 LE */
 #define	PCI_PRODUCT_ATI_RADEON_9600XT	0x4152		/* Radeon 9600 XT */
+#define	PCI_PRODUCT_ATI_RADEON_9550	0x4153		/* Radeon 9550 */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_RADEON_9600PRO_S	0x4170		/* Radeon 9600 Pro Sec */
 #define	PCI_PRODUCT_ATI_RADEON_9600LE_S	0x4171		/* Radeon 9600 LE Sec */
 #define	PCI_PRODUCT_ATI_RADEON_9600XT_S	0x4172		/* Radeon 9600 XT Sec */
+#define	PCI_PRODUCT_ATI_RADEON_9550_S	0x4173		/* Radeon 9550 Sec */
 #define	PCI_PRODUCT_ATI_R200_BB	0x4242		/* Radeon 8500 BB */
 #define	PCI_PRODUCT_ATI_RADEON_IGP320M	0x4336		/* Radeon IGP 320M */
 #define	PCI_PRODUCT_ATI_MOBILITY_M6	0x4337		/* Mobility M6 */
@@ -805,8 +809,9 @@
 #define	PCI_PRODUCT_ATI_RAGE128_TF	0x5446		/* Rage 128 Pro TF */
 #define	PCI_PRODUCT_ATI_RAGE128_TL	0x544c		/* Rage 128 Pro TL */
 #define	PCI_PRODUCT_ATI_RAGE128_TR	0x5452		/* Rage 128 Pro TR */
-#define	PCI_PRODUCT_ATI_RADEON_X700_M26_1	0x5652		/* Radeon Mobility X700 */
-#define	PCI_PRODUCT_ATI_RADEON_X700_M26_2	0x5653		/* Radeon Mobility X700 */
+#define	PCI_PRODUCT_ATI_RADEON_M300_M22	0x5460		/* Radeon Mobility M300 M22 */
+#define	PCI_PRODUCT_ATI_RADEON_X700_M26_1	0x5652		/* Radeon Mobility X700 M26 */
+#define	PCI_PRODUCT_ATI_RADEON_X700_M26_2	0x5653		/* Radeon Mobility X700 M26 */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VU	0x5655		/* Mach64 VU */
 #define	PCI_PRODUCT_ATI_MACH64_VV	0x5656		/* Mach64 VV */
@@ -831,10 +836,10 @@
 #define	PCI_PRODUCT_ATI_RADEON_RC410	0x5a61		/* Radeon XPRESS 200 */
 #define	PCI_PRODUCT_ATI_RADEON_RC410_B	0x5a62		/* Radeon XPRESS 200M */
 #define	PCI_PRODUCT_ATI_RADEON_X300	0x5b60		/* Radeon X300 */
-#define	PCI_PRODUCT_ATI_RADEON_X600	0x5b62		/* Radeon X600 */
+#define	PCI_PRODUCT_ATI_RADEON_X600_RV370	0x5b62		/* Radeon X600 (RV370) */
 #define	PCI_PRODUCT_ATI_FIREGL_RV370	0x5b64		/* FireGL V3100 */
 #define	PCI_PRODUCT_ATI_RADEON_X300_S	0x5b70		/* Radeon X300 Sec */
-#define	PCI_PRODUCT_ATI_RADEON_X600_S	0x5b72		/* Radeon X600 Sec */
+#define	PCI_PRODUCT_ATI_RADEON_X600_RV370_S	0x5b72		/* Radeon X600 (RV370) Sec */
 #define	PCI_PRODUCT_ATI_FIREGL_RV370_S	0x5b74		/* FireGL V3100 Sec */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_M	0x5c61		/* Radeon Mobility 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_M9PLUS	0x5c63		/* Radeon Mobility 9200 (M9+) */

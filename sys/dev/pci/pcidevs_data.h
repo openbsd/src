@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.940 2005/10/11 11:05:07 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.941 2005/10/12 19:34:16 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1399,6 +1399,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon Mobility X600",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV380,
+	    "Radeon X600 (RV380)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV380_S,
+	    "Radeon X600 (RV380) Sec",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600PRO,
 	    "Radeon 9600 Pro",
 	},
@@ -1409,6 +1417,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600XT,
 	    "Radeon 9600 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9550,
+	    "Radeon 9550",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -1425,6 +1437,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600XT_S,
 	    "Radeon 9600 XT Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9550_S,
+	    "Radeon 9550 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_BB,
@@ -1823,12 +1839,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Rage 128 Pro TR",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M300_M22,
+	    "Radeon Mobility M300 M22",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_M26_1,
-	    "Radeon Mobility X700",
+	    "Radeon Mobility X700 M26",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_M26_2,
-	    "Radeon Mobility X700",
+	    "Radeon Mobility X700 M26",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
@@ -1927,8 +1947,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X300",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600,
-	    "Radeon X600",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV370,
+	    "Radeon X600 (RV370)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_RV370,
@@ -1939,8 +1959,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X300 Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_S,
-	    "Radeon X600 Sec",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV370_S,
+	    "Radeon X600 (RV370) Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_RV370_S,
@@ -9644,7 +9664,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SIS,
-	    "SIS",
+	    "SiS",
 	},
 	{
 	    PCI_VENDOR_HP,
