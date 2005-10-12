@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.20 2005/10/06 17:06:44 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.21 2005/10/12 09:08:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -578,6 +578,7 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 {
 	struct timeval	tv;
 	time_t		now;
+	u_int16_t	len;
 
 	if (v == NULL) {
 		lsa_add(nbr, lsa);
@@ -588,6 +589,10 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 
 	/* set the seq_num to the current one. lsa_refresh() will do the ++ */
 	lsa->hdr.seq_num = v->lsa->hdr.seq_num;
+	/* recalculate checksum */
+	len = ntohs(lsa->hdr.len);
+	lsa->hdr.ls_chksum = 0;
+	lsa->hdr.ls_chksum = htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
 
 	/* compare LSA most header fields are equal so don't check them */
 	if (lsa_equal(lsa, v->lsa)) {
