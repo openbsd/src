@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.9 2005/10/12 17:13:30 deraadt Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.10 2005/10/12 17:43:18 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -97,7 +97,7 @@ rcsdiff_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		if (verbose)
+		if (verbose == 1)
 			cvs_printf("%s\n", RCS_DIFF_DIV);
 
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
@@ -150,7 +150,7 @@ rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 	char rbuf[64];
 
 	rcsnum_tostr(rev, rbuf, sizeof(rbuf));
-	if (verbose)
+	if (verbose == 1)
 		printf("retrieving revision %s\n", rbuf);
 
 	if ((b1 = rcs_getrev(rfp, rev)) == NULL) {
@@ -196,7 +196,7 @@ rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2)
 	char rbuf[64];
 
 	rcsnum_tostr(rev1, rbuf, sizeof(rbuf));
-	if (verbose)
+	if (verbose == 1)
 		printf("retrieving revision %s\n", rbuf);
 
 	if ((b1 = rcs_getrev(rfp, rev1)) == NULL) {
@@ -205,7 +205,7 @@ rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2)
 	}
 
 	rcsnum_tostr(rev2, rbuf, sizeof(rbuf));
-	if (verbose)
+	if (verbose == 1)
 		printf("retrieving revision %s\n", rbuf);
 
 	if ((b2 = rcs_getrev(rfp, rev2)) == NULL) {

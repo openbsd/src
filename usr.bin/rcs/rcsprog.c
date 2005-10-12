@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.26 2005/10/12 17:13:30 deraadt Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.27 2005/10/12 17:43:18 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -86,7 +86,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 	}
 
 	strlcpy(out, fpath, len);
-	if (verbose == 1 && strcmp(__progname, "rcsclean")) {
+	if ((verbose == 1) && (strcmp(__progname, "rcsclean"))) {
 		if (!strcmp(__progname, "co")) {
 			printf("%s --> ", fpath);
 			if ((s = strrchr(filev, ',')) != NULL) {

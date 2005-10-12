@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.11 2005/10/12 17:13:30 deraadt Exp $	*/
+/*	$OpenBSD: co.c,v 1.12 2005/10/12 17:43:18 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -165,7 +165,7 @@ checkout_main(int argc, char **argv)
 		cvs_buf_free(bp);
 
 		rcs_close(file);
-		if (verbose) {
+		if (verbose == 1) {
 			printf("revision %s ", buf);
 			if (lock == LOCK_LOCK)
 				printf("(locked)");
