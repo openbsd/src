@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.39 2005/09/06 23:49:28 mickey Exp $
+$OpenBSD: cpudevs,v 1.40 2005/10/12 19:16:52 mickey Exp $
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -308,7 +308,11 @@ bus	ROPES	15	Ropes
 bus	MERCED	16	Merced
 
 cpu	SOFTEMU	0x01	Software Emulation
+#cpu	PCXS	0x02	PCXS (Cheetah)
+#cpu	PCXT	0x09	PCXT (Thunderbird)
+#cpu	HARP	0x0a	HARP-I
 cpu	PCXT2	0x0b	PCXT' (Thunderbird')
+#cpu	PA50	0x0c	PA-50 (Hitachi)
 cpu	PCXL	0x0d	PCXL (Hummingbird)
 cpu	PCXU	0x0e	PCXU (Onyx)
 cpu	PCXL2	0x0f	PCXL2 (Velociraptor)
