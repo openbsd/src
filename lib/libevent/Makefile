@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2005/10/11 18:50:59 jmc Exp $
+#	$OpenBSD: Makefile,v 1.16 2005/10/12 18:54:54 deraadt Exp $
 
 LIB=	event
 SRCS=	buffer.c evbuffer.c event.c kqueue.c log.c poll.c select.c signal.c
@@ -45,8 +45,6 @@ CDIAGFLAGS+=	-Wcast-qual
 CDIAGFLAGS+=	-Wsign-compare
 CDIAGFLAGS+=	-Wcast-align
 CDIAGFLAGS+=	-Wbad-function-cast
-
-NOPIC=
 
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \

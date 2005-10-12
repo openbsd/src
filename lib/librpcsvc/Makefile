@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2003/06/23 18:50:53 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 2005/10/12 18:54:55 deraadt Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x \
@@ -10,7 +10,6 @@ CLEANFILES+=	${SRCS} ${HDRS}
 
 LIB=		rpcsvc
 NOMAN=
-NOPIC=
 
 all:		${HDRS}
 beforedepend:	${HDRS}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2004/12/22 17:01:03 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 2005/10/12 18:54:56 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -23,9 +23,6 @@ SRCS=		main.c engine.c listener.c handler.c comm.c smfi.c signal.c \
 CPPFLAGS+=	-D_FFR_MILTER_ROOT_UNSAFE -ULDAPMAP -pthread \
 		-Dsm_snprintf=snprintf
 .PATH:		${.CURDIR}/../libsm
-
-# Only build the .a version for now.
-NOPIC=1
 
 includes:
 	@test -d ${DESTDIR}/usr/include/libmilter || \
