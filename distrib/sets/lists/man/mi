@@ -2622,3 +2622,4 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
+./usr/share/man/cat1/ld.so.0

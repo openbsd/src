@@ -325,3 +325,6 @@
 ./usr/libdata/ldscripts/armelfb_obsd.xu
 ./usr/libdata/ldscripts/armelfb_obsd.xz
 ./usr/share/man/cat1/objcopy.0
+./usr/lib/libevent_pic.a
+./usr/lib/libmilter_pic.a
+./usr/lib/librpcsvc_pic.a

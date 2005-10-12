@@ -245,3 +245,6 @@
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
 ./usr/lib/scrt0.o
+./usr/lib/libevent_pic.a
+./usr/lib/libmilter_pic.a
+./usr/lib/librpcsvc_pic.a

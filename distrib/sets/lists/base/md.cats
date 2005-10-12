@@ -71,6 +71,7 @@
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
+./usr/lib/libevent.so.1.0
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.4.0
@@ -80,6 +81,7 @@
 ./usr/lib/libkvm.so.8.0
 ./usr/lib/libm.so.2.0
 ./usr/lib/libmenu.so.3.0
+./usr/lib/libmilter.so.1.0
 ./usr/lib/libncurses.so.10.0
 ./usr/lib/libobjc.so.3.0
 ./usr/lib/libocurses.so.5.0
@@ -90,6 +92,7 @@
 ./usr/lib/libperl.so.10.0
 ./usr/lib/libpthread.so.6.1
 ./usr/lib/libreadline.so.3.0
+./usr/lib/librpcsvc.so.1.0
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libssl.so.10.0

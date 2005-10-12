@@ -6,4 +6,3 @@
 ./usr/share/info/binutils.info-1
 ./usr/share/info/ld.info
 ./usr/share/info/ld.info-1
-./usr/share/man/cat1/ld.so.0
