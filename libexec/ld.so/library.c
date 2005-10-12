@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.50 2005/10/12 20:36:16 kurt Exp $ */
+/*	$OpenBSD: library.c,v 1.51 2005/10/12 20:48:15 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -63,6 +63,8 @@ _dl_unload_shlib(elf_object_t *object)
 	    (object->status & STAT_UNLOADED) == 0) {
 		object->status |= STAT_UNLOADED;
 		TAILQ_FOREACH(n, &object->child_list, next_sib)
+			_dl_unload_shlib(n->data);
+		TAILQ_FOREACH(n, &object->grpref_list, next_sib)
 			_dl_unload_shlib(n->data);
 		DL_DEB(("unload_shlib unloading on %s\n", object->load_name));
 		_dl_load_list_free(object->load_list);
