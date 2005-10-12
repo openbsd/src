@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.28 2005/08/08 12:22:48 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.29 2005/10/12 09:42:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -359,8 +359,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			memcpy(lsa, imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			if (!lsa_check(nbr, lsa,
-			    imsg.hdr.len - IMSG_HEADER_SIZE))
+			    imsg.hdr.len - IMSG_HEADER_SIZE)) {
+				free(lsa);
 				break;
+			}
 
 			v = lsa_find(nbr->area, lsa->hdr.type, lsa->hdr.ls_id,
 				    lsa->hdr.adv_rtr);
@@ -371,6 +373,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			if (nbr->self) {
 				lsa_merge(nbr, lsa, v);
+				/* lsa_merge frees the right lsa */
 				break;
 			}
 
@@ -378,8 +381,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (r > 0) {
 				/* new LSA newer than DB */
 				if (v && v->flooded &&
-				    v->changed + MIN_LS_ARRIVAL >= now)
+				    v->changed + MIN_LS_ARRIVAL >= now) {
+					free(lsa);
 					break;
+				}
 				if (!(self = lsa_self(nbr, lsa, v)))
 					lsa_add(nbr, lsa);
 
@@ -394,10 +399,18 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					imsg_compose(ibuf_ospfe, IMSG_LS_FLOOD,
 					    v->nbr->peerid, 0, -1,
 					    v->lsa, ntohs(v->lsa->hdr.len));
+				/* lsa not added so free it */
+				if (self)
+					free(lsa);
 			} else if (rde_req_list_exists(nbr, &lsa->hdr)) {
+				/* lsa no longer needed */
+				free(lsa);
 				imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
 				    imsg.hdr.peerid, 0, -1, NULL, 0);
 			} else if (r < 0) {
+				/* lsa no longer needed */
+				free(lsa);
+
 				/* new LSA older than DB */
 				if (ntohl(db_hdr->seq_num) == MAX_SEQ_NUM &&
 				    ntohs(db_hdr->age) == MAX_AGE)
@@ -415,6 +428,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				imsg_compose(ibuf_ospfe, IMSG_LS_ACK,
 				    imsg.hdr.peerid, 0, -1, &lsa->hdr,
 				    sizeof(lsa->hdr));
+				free(lsa);
 			}
 			break;
 		case IMSG_LS_MAXAGE:
