@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.5 2005/10/12 19:05:44 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.6 2005/10/12 19:30:28 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -56,9 +56,6 @@
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
-/*
-#include <machine/locore.h>
-*/
 #include <machine/reg.h>
 #ifdef M88100
 #include <machine/m88100.h>
@@ -104,26 +101,6 @@ setregs(p, pack, stack, retval)
 	 * Point r2 to the stack. crt0 should extract envp from
 	 * argc & argv before calling user's main.
 	 */
-#if 0
-	/*
-	 * I don't think I need to mess with fpstate on 88k because
-	 * we make sure the floating point pipeline is drained in
-	 * the trap handlers. Should check on this later. XXX Nivas.
-	 */
-	if ((fs = p->p_md.md_fpstate) != NULL) {
-		/*
-		 * We hold an FPU state.  If we own *the* FPU chip state
-		 * we must get rid of it, and the only way to do that is
-		 * to save it.  In any case, get rid of our FPU state.
-		 */
-		if (p == fpproc) {
-			savefpstate(fs);
-			fpproc = NULL;
-		}
-		free((void *)fs, M_SUBPROC);
-		p->p_md.md_fpstate = NULL;
-	}
-#endif
 
 	bzero((caddr_t)tf, sizeof *tf);
 
