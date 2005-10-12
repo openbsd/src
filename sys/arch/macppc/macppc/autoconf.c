@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.17 2005/10/09 14:01:11 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.18 2005/10/12 06:52:43 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.17 2005/10/09 14:01:11 drahn Exp $
+ *      $Id: autoconf.c,v 1.18 2005/10/12 06:52:43 deraadt Exp $
  */
 
 /*
@@ -509,24 +509,32 @@ static struct devmap *
 findtype(char **s)
 {
 	static struct devmap devmap[] = {
-		{ "/pci@",	NULL, T_BUS },
-		{ "/pci",	NULL, T_BUS },
-		{ "/AppleKiwi@",NULL, T_BUS },
-		{ "/AppleKiwi",	NULL, T_BUS },
-		{ "/mac-io@",	NULL, T_BUS },
-		{ "/mac-io",	NULL, T_BUS },
-		{ "/@",		NULL, T_BUS },
-		{ "/scsi@",	"sd", T_SCSI },
-		{ "/ide",	"wd", T_IDE },
-		{ "/ata",	"wd", T_IDE },
-		{ "/disk@",	"sd", T_DISK },
-		{ "/disk",	"wd", T_DISK },
+		{ "/ht",		NULL, T_BUS },
+		{ "/ht@",		NULL, T_BUS },
+		{ "/pci@",		NULL, T_BUS },
+		{ "/pci",		NULL, T_BUS },
+		{ "/AppleKiwi@",	NULL, T_BUS },
+		{ "/AppleKiwi",		NULL, T_BUS },
+		{ "/mac-io@",		NULL, T_BUS },
+		{ "/mac-io",		NULL, T_BUS },
+		{ "/@",			NULL, T_BUS },
+		{ "/scsi@",		"sd", T_SCSI },
+		{ "/ide",		"wd", T_IDE },
+		{ "/ata",		"wd", T_IDE },
+		{ "/k2-sata-root",	"wd", T_IDE },
+		{ "/k2-sata",		"wd", T_IDE },
+		{ "/disk@",		"sd", T_DISK },
+		{ "/disk",		"wd", T_DISK },
+		{ "/bcom5704@4",	"bge0", T_IFACE },
+		{ "/bcom5704@4,1",	"bge1", T_IFACE },
+		{ "/bcom5421",		"bge0", T_IFACE },
+		{ "/ethernet",		"gem0", T_IFACE },
 		{ NULL, NULL }
 	};
 	struct devmap *dp = &devmap[0];
 
 	while (dp->att) {
-		if (strncmp (*s, dp->att, strlen(dp->att)) == 0) {
+		if (strncmp(*s, dp->att, strlen(dp->att)) == 0) {
 			*s += strlen(dp->att);
 			break;
 		}
@@ -543,6 +551,7 @@ findtype(char **s)
  * Boot names look like: '/pci/scsi@c/disk@0,0/bsd'
  *                       '/pci/mac-io/ide@20000/disk@0,0/bsd
  *                       '/pci/mac-io/ide/disk/bsd
+ *			 '/ht@0,f2000000/pci@2/bcom5704@4/bsd'
  */
 void
 makebootdev(char *bp)
@@ -558,21 +567,26 @@ makebootdev(char *bp)
 
 		dp = findtype(&cp);
 		if (!dp->att) {
-			printf("Warning: boot device unrecognized: %s\n", bp);
+			printf("Warning: bootpath unrecognized: %s\n", bp);
 			return;
 		}
 	} while((dp->type & T_IFACE) == 0);
 
+	if (dp->att && dp->type == T_IFACE) {
+		snprintf(bootdev, sizeof bootdev, "%s", dp->dev);
+		return;
+	}
 	dev = dp->dev;
 	while(*cp && *cp != '/')
 		cp++;
 	dp = findtype(&cp);
-	if (!dp->att || dp->type != T_DISK) {
-		printf("Warning: boot device unrecognized: %s\n", bp);
+	if (dp->att && dp->type == T_DISK) {
+		unit = getpno(&cp);
+		snprintf(bootdev, sizeof bootdev, "%s%d%c", dev, unit, 'a');
 		return;
 	}
-	unit = getpno(&cp);
-	snprintf(bootdev, sizeof bootdev, "%s%d%c", dev, unit, 'a');
+	printf("Warning: boot device unrecognized: %s\n", bp);
+	return;
 }
 
 int
