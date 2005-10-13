@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.25 2005/10/13 22:54:46 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.26 2005/10/13 23:00:49 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -57,7 +57,7 @@ void
 checkin_usage(void)
 {
 	fprintf(stderr,
-	    "usage: ci [-jMNqV] [-d date] [-k mode] [-l [rev]] [-m msg]\n"
+	    "usage: ci [-jMNqV] [-d [date]] [-k mode] [-l [rev]] [-m msg]\n"
 	    "          [-r [rev]] [-u [rev]] file ...\n");
 }
 
