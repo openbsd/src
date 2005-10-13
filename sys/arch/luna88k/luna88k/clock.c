@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.4 2004/12/28 12:06:49 miod Exp $ */
+/* $OpenBSD: clock.c,v 1.5 2005/10/13 19:48:31 miod Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/evcount.h>
 
 #include <machine/cpu.h>
-#include <machine/cpu_number.h>
 
 #include <dev/clock_subr.h>
 #include <luna88k/luna88k/clockvar.h>

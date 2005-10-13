@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.8 2005/09/25 22:41:14 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.9 2005/10/13 19:48:33 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -89,7 +89,6 @@
 
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
-#include <machine/cpu_number.h>
 #include <machine/locore.h>
 #include <machine/m8820x.h>
 

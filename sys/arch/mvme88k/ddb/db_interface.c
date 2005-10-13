@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.44 2005/04/30 16:44:11 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.45 2005/10/13 19:48:34 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -43,7 +43,6 @@
 #include <machine/db_machdep.h>		/* local ddb stuff	*/
 #include <machine/bugio.h>		/* bug routines		*/
 #include <machine/locore.h>
-#include <machine/cpu_number.h>
 #ifdef M88100
 #include <machine/m88100.h>
 #include <machine/m8820x.h>

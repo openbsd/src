@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.3 2005/04/27 14:07:38 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.4 2005/10/13 19:48:33 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -64,7 +64,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cmmu.h>
-#include <machine/cpu_number.h>
 
 /*
  * This lock protects the cmmu SAR and SCR's; other ports

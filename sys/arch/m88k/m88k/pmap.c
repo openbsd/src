@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2005/10/12 19:05:44 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2005/10/13 19:48:33 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -58,7 +58,6 @@
 
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
-#include <machine/cpu_number.h>
 #include <machine/pmap_table.h>
 
 /*

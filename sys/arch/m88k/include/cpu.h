@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 2005/10/12 19:05:43 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.7 2005/10/13 19:48:32 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -60,6 +60,20 @@
 
 #include <machine/pcb.h>
 #include <machine/psl.h>
+
+#ifndef _LOCORE
+
+static unsigned cpu_number(void);
+
+static __inline__ unsigned cpu_number(void)
+{
+	unsigned cpu;
+
+	__asm__ __volatile__ ("ldcr %0, cr18" : "=r" (cpu));
+	return (cpu & 3);
+}
+
+#endif /* _LOCORE */
 
 /*
  * definitions of cpu-dependent requirements

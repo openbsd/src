@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.24 2005/09/25 22:41:14 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.25 2005/10/13 19:48:36 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -64,7 +64,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu_number.h>
 #include <machine/cmmu.h>
 #include <machine/m88110.h>
 #include <machine/m88410.h>

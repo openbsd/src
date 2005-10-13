@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.43 2005/04/30 16:40:42 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.44 2005/10/13 19:48:34 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -41,7 +41,6 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
-#include <machine/cpu_number.h>
 #include <machine/locore.h>
 #include <machine/psl.h>
 

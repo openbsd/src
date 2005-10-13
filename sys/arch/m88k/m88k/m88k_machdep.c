@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.6 2005/10/12 19:30:28 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.7 2005/10/13 19:48:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -55,7 +55,6 @@
 
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/cpu_number.h>
 #include <machine/reg.h>
 #ifdef M88100
 #include <machine/m88100.h>

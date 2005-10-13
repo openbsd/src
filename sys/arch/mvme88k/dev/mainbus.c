@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.15 2005/09/25 20:55:15 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.16 2005/10/13 19:48:35 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -39,7 +39,6 @@
 #include <machine/autoconf.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/cpu_number.h>
 
 #ifdef MVME188
 #include <machine/mvme188.h>
