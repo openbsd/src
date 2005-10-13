@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.7 2005/10/12 19:05:43 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.8 2005/10/13 19:47:12 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -130,9 +130,11 @@
 #include <machine/intr.h>
 
 #ifdef   _KERNEL
-extern void delay(int);
+
 #define  DELAY(x)             delay(x)
 
+#if !defined(_LOCORE)
+extern void delay(int);
 extern int cputyp;
 #endif
 
@@ -155,4 +157,5 @@ extern int cputyp;
 #define	CPU_IS88110	1
 #endif
 
-#endif /* !_M88K_PARAM_H_ */
+#endif	/* _KERNEL */
+#endif	/* !_M88K_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.5 2005/04/30 16:46:49 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.6 2005/10/13 19:47:12 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -80,6 +80,7 @@
 
 #ifdef _KERNEL
 
+#ifdef _LOCORE
 /*
  * Control register symbolic names
  */
@@ -154,23 +155,15 @@
  * instruction always synchronizes, and this particular instruction
  * will never actually take the trap).
  */
-#if 0
-#define	FLUSH_PIPELINE		tcnd	ne0, r0, 0
-#define	FLUSH_PIPELINE_STRING	"tcnd	ne0, r0, 0"
-#else
 #define	FLUSH_PIPELINE		tb1	0, r0, 0
-#define	FLUSH_PIPELINE_STRING	"tb1	0, r0, 0"
-#endif
 #define	NOP			or	r0, r0, r0
-#define	NOP_STRING		"or	r0, r0, r0"
-
-#define RTE	NOP ; rte
+#define RTE			NOP ; rte
 
 /*
  * Fields in cr18. More bits are used privately in the exception handling
  * code.
  */
-#define FLAG_CPU_FIELD_WIDTH		2	/* must match cpu_number.h */
+#define FLAG_CPU_FIELD_WIDTH		2	/* must match cpu_number() */
 
 /*
  * Info about the PSR
@@ -187,6 +180,13 @@
 #define PSR_SERIAL_MODE_BIT		29
 #define PSR_CARRY_BIT			28
 #define PSR_SERIALIZE_BIT		25
+
+#define	VECTOR(x) \
+	word	_C_LABEL(x)
+
+#endif	/* _LOCORE */
+
+#define	FLUSH_PIPELINE_STRING	"tb1	0, r0, 0"
 
 /*
  * Status bits for an SXIP/SNIP/SFIP address.
@@ -208,9 +208,6 @@
 /* exception vector marker */
 #define	UNKNOWN_HANDLER		0xffffffff
 #define	END_OF_VECTOR_LIST	0xfffffffe
-
-#define	VECTOR(x) \
-	word	_C_LABEL(x)
 
 #endif	/* _KERNEL */
 
