@@ -1,4 +1,4 @@
-/*	$OpenBSD: cinfo.c,v 1.12 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: cinfo.c,v 1.13 2005/10/13 06:20:25 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -106,9 +106,6 @@ keyname(char *cp, size_t len, int k)
 	case CCHR('I'):
 		np = "TAB";
 		break;
-	case CCHR('J'):
-		np = "LFD";
-		break;		/* yuck, but that's what GNU calls it */
 	case CCHR('M'):
 		np = "RET";
 		break;
