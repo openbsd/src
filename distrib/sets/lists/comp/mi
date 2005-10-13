@@ -4282,12 +4282,10 @@
 ./usr/share/man/cat3/pthread_mutexattr_destroy.0
 ./usr/share/man/cat3/pthread_mutexattr_getprioceiling.0
 ./usr/share/man/cat3/pthread_mutexattr_getprotocol.0
-./usr/share/man/cat3/pthread_mutexattr_getpshared.0
 ./usr/share/man/cat3/pthread_mutexattr_gettype.0
 ./usr/share/man/cat3/pthread_mutexattr_init.0
 ./usr/share/man/cat3/pthread_mutexattr_setprioceiling.0
 ./usr/share/man/cat3/pthread_mutexattr_setprotocol.0
-./usr/share/man/cat3/pthread_mutexattr_setpshared.0
 ./usr/share/man/cat3/pthread_mutexattr_settype.0
 ./usr/share/man/cat3/pthread_once.0
 ./usr/share/man/cat3/pthread_resume_all_np.0
@@ -4599,7 +4597,6 @@
 ./usr/share/man/cat3/skeygetnext.0
 ./usr/share/man/cat3/skeylookup.0
 ./usr/share/man/cat3/skeyverify.0
-./usr/share/man/cat3/skeyzero.0
 ./usr/share/man/cat3/skipspace.0
 ./usr/share/man/cat3/sleep.0
 ./usr/share/man/cat3/slk_attr.0
