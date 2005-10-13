@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.25 2005/04/15 18:15:30 jaredy Exp $
+.\"	$OpenBSD: bpf.4,v 1.26 2005/10/13 11:59:49 reyk Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -405,14 +405,14 @@ automatically by the interface output routine.
 Set to one if the link level source address will be written,
 as provided, to the wire.
 This flag is initialized to zero by default.
-.Pp
-.It Dv BIOCGFILDROP Fa "u_int *"
-.It Dv BIOCSFILDROP Fa "u_int *"
-Get or set the status of the
-.Dq filter drop
-flag.
-If non-zero, packets matching any filters will be reported to the
-associated interface so that they can be dropped.
+.\" .Pp
+.\" .It Dv BIOCGFILDROP Fa "u_int *"
+.\" .It Dv BIOCSFILDROP Fa "u_int *"
+.\" Get or set the status of the
+.\" .Dq filter drop
+.\" flag.
+.\" If non-zero, packets matching any filters will be reported to the
+.\" associated interface so that they can be dropped.
 .El
 .Ss Standard ioctls
 .Nm
