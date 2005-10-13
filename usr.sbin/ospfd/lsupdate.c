@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.14 2005/10/13 09:36:37 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.15 2005/10/13 09:57:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -51,9 +51,9 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 		if (!(nbr->state & NBR_STA_FLOOD))
 			continue;
 
-		if (iface->state & IF_STA_DROTHER)
+		if (iface->state & IF_STA_DROTHER && !queued)
 			if ((le = ls_retrans_list_get(iface->self, lsa_hdr)))
-			    ls_retrans_list_free(nbr, le);
+			    ls_retrans_list_free(iface->self, le);
 
 		if ((le = ls_retrans_list_get(nbr, lsa_hdr)))
 			ls_retrans_list_free(nbr, le);
