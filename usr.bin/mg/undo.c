@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.29 2005/10/11 01:08:53 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.30 2005/10/13 20:07:26 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -175,22 +175,36 @@ lastrectype(void)
 	return (0);
 }
 
+/*
+ * undo_enable(TRUE/FALSE) will enable / disable the undo mechanism.
+ * Returns TRUE if previously enabled, FALSE otherwise.
+ */
 int
 undo_enable(int on)
 {
 	int pon = undo_disable_flag;
 
 	undo_disable_flag = (on == TRUE) ? 0 : 1;
-	return (pon ? FALSE : TRUE);
+	return ((pon == TRUE) ? FALSE : TRUE);
 }
 
+/*
+ * If undo is enabled, then:
+ *   undo_no_boundary(TRUE) stops recording undo boundaries between actions.
+ *   undo_no_boundary(FALSE) enables undo boundaries.
+ * If undo is disabled, this function has no effect.
+ */
 void
 undo_no_boundary(int flag)
 {
-	if (!undo_disable_flag)
+	if (undo_disable_flag == FALSE)
 		nobound = flag;
 }
 
+/*
+ * Record an undo boundary, unless 'nobound' is set via undo_no_boundary.
+ * Does nothing if previous undo entry is already a boundary.
+ */
 int
 undo_add_boundary(void)
 {

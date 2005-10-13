@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.12 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: random.c,v 1.13 2005/10/13 20:07:26 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -437,6 +437,8 @@ yank(int f, int n)
 	/* newline counting */
 	nline = 0;
 
+	undo_add_boundary();
+	undo_no_boundary(TRUE);
 	while (n--) {
 		/* mark around last yank */
 		isetmark();
@@ -464,6 +466,8 @@ yank(int f, int n)
 		curwp->w_linep = lp;
 		curwp->w_flag |= WFHARD;
 	}
+	undo_no_boundary(FALSE);
+	undo_add_boundary();
 	return (TRUE);
 }
 
