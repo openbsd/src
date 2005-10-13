@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.68 2005/10/13 05:24:52 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.69 2005/10/13 19:46:45 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -66,6 +66,9 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define FIOEOF	2		/* End of file.			 */
 #define FIOERR	3		/* Error.			 */
 #define FIOLONG 4		/* long line partially read	 */
+#ifndef NO_DIRED
+# define FIODIR 5		/* File is a directory		 */
+#endif /* !NO_DIRED */
 
 /*
  * Directory I/O.

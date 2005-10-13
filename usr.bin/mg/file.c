@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.39 2005/10/13 05:34:11 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.40 2005/10/13 19:46:45 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -305,6 +305,21 @@ insertfile(char *fname, char *newname, int replacebuf)
 		else
 			ewprintf("(File not found)");
 		goto out;
+#ifndef NO_DIRED
+	} else if (s == FIODIR) {
+		/* file was a directory */
+		if (replacebuf == FALSE) {
+			ewprintf("Cannot insert: file is a directory, %s",
+			    fname);
+			goto cleanup;
+		}
+		killbuffer(bp);
+		if ((bp = dired_(fname)) == NULL)
+			return (FALSE);
+		undo_enable(x);
+		curbp = bp;
+		return (showbuffer(bp, curwp, WFHARD | WFMODE));
+#endif /* !NO_DIRED */
 	}
 	opos = curwp->w_doto;
 
@@ -431,6 +446,7 @@ out:		lp2 = NULL;
 			}
 		}
 	}
+cleanup:
 	undo_enable(x);
 
 	/* return FALSE if error */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.52 2005/10/13 05:59:19 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.53 2005/10/13 19:46:45 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,6 +6,11 @@
  *	POSIX fileio.c
  */
 #include "def.h"
+
+#ifndef NO_DIRED
+#include <sys/wait.h>
+#include "kbd.h"
+#endif /* !NO_DIRED */
 
 #include <sys/types.h>
 #include <limits.h>
@@ -31,12 +36,22 @@ ffropen(const char *fn, BUFFER *bp)
 			return (FIOFNF);
 		return (FIOERR);
 	}
+
+	/* If 'fn' is a directory open it with dired. */
+	if ((stat(fn, &statbuf) == 0) && S_ISDIR(statbuf.st_mode))
+#ifdef NO_DIRED
+		return (FIOERR);
+#else
+		return (FIODIR);
+#endif /* NO_DIRED */
+
 	if (bp && fstat(fileno(ffp), &statbuf) == 0) {
 		/* set highorder bit to make sure this isn't all zero */
 		bp->b_fi.fi_mode = statbuf.st_mode | 0x8000;
 		bp->b_fi.fi_uid = statbuf.st_uid;
 		bp->b_fi.fi_gid = statbuf.st_gid;
 	}
+
 	return (FIOSUC);
 }
 
@@ -336,8 +351,6 @@ nohome:
 #endif
 
 #ifndef NO_DIRED
-#include <sys/wait.h>
-#include "kbd.h"
 
 int
 copy(char *frname, char *toname)
