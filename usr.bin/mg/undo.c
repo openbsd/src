@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.30 2005/10/13 20:07:26 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.31 2005/10/13 20:28:49 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -215,7 +215,7 @@ undo_add_boundary(void)
 
 	if (lastrectype() == BOUNDARY)
 		return (TRUE);
-	
+
 	rec = new_undo_record();
 	rec->type = BOUNDARY;
 
@@ -429,7 +429,7 @@ int
 undo(int f, int n)
 {
 	struct undo_rec	*ptr, *nptr;
-	int 		 done, rval;
+	int		 done, rval;
 	LINE		*lp;
 	int		 offset, save, dot;
 	static int	 nulled = FALSE;

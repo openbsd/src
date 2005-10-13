@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.8 2005/08/09 00:53:47 kjell Exp $ */
+/* $OpenBSD: autoexec.c,v 1.9 2005/10/13 20:28:49 deraadt Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -56,7 +56,7 @@ find_autoexec(const char *fname)
 int
 add_autoexec(const char *pattern, const char *func)
 {
-	PF 		 fp;
+	PF		 fp;
 	struct autoexec *ae;
 
 	if (!ready) {

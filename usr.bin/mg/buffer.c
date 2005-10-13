@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.47 2005/10/13 05:34:11 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.48 2005/10/13 20:28:49 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -125,7 +125,7 @@ killbuffer(BUFFER *bp)
 	BUFFER *bp2;
 	MGWIN  *wp;
 	int s;
-	struct undo_rec *rec, *next;	
+	struct undo_rec *rec, *next;
 
 	/*
 	 * Find some other buffer to display. Try the alternate buffer,

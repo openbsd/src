@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.41 2005/10/13 20:23:01 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.42 2005/10/13 20:28:49 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -188,7 +188,7 @@ findbuffer(char *fname)
 	}
 	i = strlcpy(bname, basename(fname), sizeof(bname));
 	if (i >= sizeof(bname))
-		return NULL;  
+		return NULL;
 	remain = sizeof(bname) - i;
 	for (count = 2; bfind(bname, FALSE) != NULL; count++)
 		snprintf(&bname[i], remain, "<%d>", count);

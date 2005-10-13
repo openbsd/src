@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.18 2005/10/13 05:24:52 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.19 2005/10/13 20:28:49 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -218,7 +218,7 @@ compile_mode(char *name, char *command, char *path)
 	char	*buf;
 	size_t	 len;
 	int	 ret;
-	char 	*wdir, cwd[NFILEN];
+	char	*wdir, cwd[NFILEN];
 	char	 timestr[NTIME];
 	time_t	 t;
 
@@ -235,7 +235,7 @@ compile_mode(char *name, char *command, char *path)
 	if (chdir(path) == -1) {
 		ewprintf("Can't change dir to %s", path);
 		return (NULL);
-	}	
+	}
 	if ((pipe = popen(command, "r")) == NULL) {
 		ewprintf("Problem opening pipe");
 		return (NULL);
@@ -269,7 +269,7 @@ compile_mode(char *name, char *command, char *path)
 	if (chdir(cwd) == -1) {
 		ewprintf("Can't change dir back to %s", cwd);
 		return (NULL);
-	}	
+	}
 	return (bp);
 }
 
