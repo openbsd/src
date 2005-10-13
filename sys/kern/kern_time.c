@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.49 2005/10/10 07:23:02 otto Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.50 2005/10/13 18:17:15 aaron Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -617,7 +617,8 @@ realitexpire(arg)
 			timo = tvtohz(&ntv) - 1;
 			if (timo <= 0)
 				timo = 1;
-			timeout_add(&p->p_realit_to, timo);
+			if ((p->p_flag & P_WEXIT) == 0)
+				timeout_add(&p->p_realit_to, timo);
 			return;
 		}
 	}
