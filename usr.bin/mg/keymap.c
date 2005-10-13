@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.32 2005/10/11 00:50:00 kjell Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.33 2005/10/13 05:47:45 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -26,7 +26,7 @@ static PF cHa[] = {
 	desckey			/* c */
 };
 
-static struct KEYMAPE (2 + IMAPEXT) helpmap = {
+struct KEYMAPE (2 + IMAPEXT) helpmap = {
 	2,
 	2 + IMAPEXT,
 	rescan,
@@ -146,7 +146,7 @@ static PF cXcar[] = {
 };
 
 #ifndef NO_MACRO
-static struct KEYMAPE (6 + IMAPEXT) cXmap = {
+struct KEYMAPE (6 + IMAPEXT) cXmap = {
 	6,
 	6 + IMAPEXT,
 #else /* !NO_MACRO */
@@ -252,7 +252,7 @@ static PF metatilde[] = {
 	delbword		/* DEL */
 };
 
-static struct KEYMAPE (8 + IMAPEXT) metamap = {
+struct KEYMAPE (8 + IMAPEXT) metamap = {
 	8,
 	8 + IMAPEXT,
 	rescan,
@@ -443,112 +443,10 @@ static struct KEYMAPE (1 + IMAPEXT) overwmap = {
 	}
 };
 
-#ifndef NO_DIRED
-static PF dirednul[] = {
-	setmark,		/* ^@ */
-	gotobol,		/* ^A */
-	backchar,		/* ^B */
-	rescan,			/* ^C */
-	d_del,			/* ^D */
-	gotoeol,		/* ^E */
-	forwchar,		/* ^F */
-	ctrlg,			/* ^G */
-#ifndef NO_HELP
-	NULL,			/* ^H */
-#endif /* !NO_HELP */
-};
 
-static PF diredcl[] = {
-	reposition,		/* ^L */
-	forwline,		/* ^M */
-	forwline,		/* ^N */
-	rescan,			/* ^O */
-	backline,		/* ^P */
-	rescan,			/* ^Q */
-	backisearch,		/* ^R */
-	forwisearch,		/* ^S */
-	rescan,			/* ^T */
-	universal_argument,	/* ^U */
-	forwpage,		/* ^V */
-	rescan,			/* ^W */
-	NULL			/* ^X */
-};
-
-static PF diredcz[] = {
-	spawncli,		/* ^Z */
-	NULL,			/* esc */
-	rescan,			/* ^\ */
-	rescan,			/* ^] */
-	rescan,			/* ^^ */
-	rescan,			/* ^_ */
-	forwline		/* SP */
-};
-
-static PF diredc[] = {
-	d_copy,			/* c */
-	d_del,			/* d */
-	d_findfile,		/* e */
-	d_findfile		/* f */
-};
-
-static PF diredn[] = {
-	forwline,		/* n */
-	d_ffotherwindow,	/* o */
-	backline,		/* p */
-	rescan,			/* q */
-	d_rename,		/* r */
-	rescan,			/* s */
-	rescan,			/* t */
-	d_undel,		/* u */
-	rescan,			/* v */
-	rescan,			/* w */
-	d_expunge		/* x */
-};
-
-static PF direddl[] = {
-	d_undelbak		/* del */
-};
-
-#ifndef	DIRED_XMAPS
-#define	NDIRED_XMAPS	0	/* number of extra map sections */
-#endif /* DIRED_XMAPS */
-
-static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
-	6 + NDIRED_XMAPS,
-	6 + NDIRED_XMAPS + IMAPEXT,
-	rescan,
-	{
-#ifndef NO_HELP
-		{
-			CCHR('@'), CCHR('H'), dirednul, (KEYMAP *) & helpmap
-		},
-#else /* !NO_HELP */
-		{
-			CCHR('@'), CCHR('G'), dirednul, NULL
-		},
-#endif /* !NO_HELP */
-		{
-			CCHR('L'), CCHR('X'), diredcl, (KEYMAP *) & cXmap
-		},
-		{
-			CCHR('Z'), ' ', diredcz, (KEYMAP *) & metamap
-		},
-		{
-			'c', 'f', diredc, NULL
-		},
-		{
-			'n', 'x', diredn, NULL
-		},
-		{
-			CCHR('?'), CCHR('?'), direddl, NULL
-		},
-#ifdef	DIRED_XMAPS
-		DIRED_XMAPS,	/* map sections for dired mode keys	 */
-#endif /* DIRED_XMAPS */
-	}
-};
-#endif /* !NO_DIRED */
-
+/*
+ * The basic (root) keyboard map
+ */  
 MAPS	fundamental_mode = { (KEYMAP *)&fundmap, "fundamental" };
 
 /*
@@ -574,9 +472,6 @@ static MAPS map_table[] = {
 #ifndef NO_HELP
 	{(KEYMAP *) &helpmap, "help",},
 #endif
-#ifndef NO_DIRED
-	{(KEYMAP *) &diredmap, "dired",},
-#endif
 	{NULL, NULL}
 };
 
@@ -596,6 +491,9 @@ maps_init(void)
 	}
 }
 
+/*
+ * Insert a new (named) keymap at the head of the keymap list.
+ */
 int
 maps_add(KEYMAP *map, const char *name)
 {

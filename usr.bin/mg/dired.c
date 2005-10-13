@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.22 2005/10/11 01:28:29 deraadt Exp $	*/
+/*	$OpenBSD: dired.c,v 1.23 2005/10/13 05:47:44 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -19,112 +19,126 @@
 
 #ifndef NO_DIRED
 
-int d_findfile(int, int);
+void dired_init(void);
 
-static PF dired_cmds_1[] = {
-	forwline,		/* space */
-	d_shell_command,	/* ! */
-	rescan,			/* " */
-	rescan,			/* # */
-	rescan,			/* $ */
-	rescan,			/* % */
-	rescan,			/* & */
-	rescan,			/* ' */
-	rescan,			/* ( */
-	rescan,			/* ) */
-	rescan,			/* * */
-	d_create_directory	/* + */
+extern struct keymap_s helpmap, cXmap, metamap;
+
+static PF dirednul[] = {
+	setmark,		/* ^@ */
+	gotobol,		/* ^A */
+	backchar,		/* ^B */
+	rescan,			/* ^C */
+	d_del,			/* ^D */
+	gotoeol,		/* ^E */
+	forwchar,		/* ^F */
+	ctrlg,			/* ^G */
+#ifndef NO_HELP
+	NULL,			/* ^H */
+#endif /* !NO_HELP */
 };
 
-static PF dired_cmds_2[] = {
-	rescan,			/* a */
-	rescan,			/* b */
-	rescan,			/* c */
-	rescan, 		/* d */
-	d_findfile, 		/* e */
-	d_findfile, 		/* f */
-	rescan, 		/* g */
-	rescan, 		/* h */
-	rescan, 		/* i */
-	rescan, 		/* j */
-	rescan, 		/* k */
-	rescan, 		/* l */
-	rescan, 		/* m */
-	forwline, 		/* n */
-	d_ffotherwindow, 	/* o */
-	rescan, 		/* p */
-	rescan, 		/* q */
-	rescan, 		/* r */
-	rescan, 		/* s */
-	rescan, 		/* t */
-	rescan, 		/* u */
-	d_findfile, 		/* v */
-	rescan, 		/* w */
-	d_expunge, 		/* x */
-	rescan, 		/* y */
-	rescan			/* z */
-};
-
-static PF dired_cmds_3[] = {
-	rescan,			/* A */
-	rescan,			/* B */
-	d_copy,			/* C */
-	d_del,			/* D */
-	rescan,			/* E */
-	rescan, 		/* F */
-	rescan, 		/* G */
-	rescan, 		/* H */
-	rescan, 		/* I */
-	rescan, 		/* J */
-	rescan, 		/* K */
-	rescan, 		/* L */
-	rescan, 		/* M */
-	rescan, 		/* N */
-	rescan, 		/* O */
-	rescan, 		/* P */
-	rescan, 		/* Q */
-	d_rename, 		/* R */
-	rescan, 		/* S */
-	rescan, 		/* T */
-	rescan, 		/* U */
-	d_findfile, 		/* V */
-	rescan, 		/* W */
-	d_expunge, 		/* X */
-	rescan, 		/* Y */
-	rescan			/* Z */
-};
-
-static PF dired_pf[] = {
+static PF diredcl[] = {
+	reposition,		/* ^L */
 	d_findfile,		/* ^M */
-	rescan,			/* ^N */
-	d_findfile		/* ^O */
+	forwline,		/* ^N */
+	rescan,			/* ^O */
+	backline,		/* ^P */
+	rescan,			/* ^Q */
+	backisearch,		/* ^R */
+	forwisearch,		/* ^S */
+	rescan,			/* ^T */
+	universal_argument,	/* ^U */
+	forwpage,		/* ^V */
+	rescan,			/* ^W */
+	NULL			/* ^X */
 };
 
-static struct KEYMAPE (4 + IMAPEXT) diredmap = {
-	4,
-	4 + IMAPEXT,
+static PF diredcz[] = {
+	spawncli,		/* ^Z */
+	NULL,			/* esc */
+	rescan,			/* ^\ */
+	rescan,			/* ^] */
+	rescan,			/* ^^ */
+	rescan,			/* ^_ */
+	forwline		/* SP */
+};
+
+static PF diredc[] = {
+	d_copy,			/* c */
+	d_del,			/* d */
+	d_findfile,		/* e */
+	d_findfile		/* f */
+};
+
+static PF diredn[] = {
+	forwline,		/* n */
+	d_ffotherwindow,	/* o */
+	backline,		/* p */
+	rescan,			/* q */
+	d_rename,		/* r */
+	rescan,			/* s */
+	rescan,			/* t */
+	d_undel,		/* u */
+	rescan,			/* v */
+	rescan,			/* w */
+	d_expunge		/* x */
+};
+
+static PF direddl[] = {
+	d_undelbak		/* del */
+};
+
+#ifndef	DIRED_XMAPS
+#define	NDIRED_XMAPS	0	/* number of extra map sections */
+#endif /* DIRED_XMAPS */
+
+static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
+	6 + NDIRED_XMAPS,
+	6 + NDIRED_XMAPS + IMAPEXT,
 	rescan,
 	{
-		{ CCHR('M'), CCHR('O'), dired_pf, NULL },
-		{ ' ', '+', dired_cmds_1, NULL },
-		{ 'A', 'Z', dired_cmds_3, NULL },
-		{ 'a', 'z', dired_cmds_2, NULL }
+#ifndef NO_HELP
+		{
+			CCHR('@'), CCHR('H'), dirednul, (KEYMAP *) & helpmap
+		},
+#else /* !NO_HELP */
+		{
+			CCHR('@'), CCHR('G'), dirednul, NULL
+		},
+#endif /* !NO_HELP */
+		{
+			CCHR('L'), CCHR('X'), diredcl, (KEYMAP *) & cXmap
+		},
+		{
+			CCHR('Z'), ' ', diredcz, (KEYMAP *) & metamap
+		},
+		{
+			'c', 'f', diredc, NULL
+		},
+		{
+			'n', 'x', diredn, NULL
+		},
+		{
+			CCHR('?'), CCHR('?'), direddl, NULL
+		},
+#ifdef	DIRED_XMAPS
+		DIRED_XMAPS,	/* map sections for dired mode keys	 */
+#endif /* DIRED_XMAPS */
 	}
 };
 
+void
+dired_init(void)
+{
+	maps_add((KEYMAP *)&diredmap, "dired");
+}
 
 /* ARGSUSED */
 int
 dired(int f, int n)
 {
-	static int   inited = 0;
 	char	     dirname[NFILEN], *bufp, *slash;
 	BUFFER	    *bp;
-
-	if (inited == 0) {
-		maps_add((KEYMAP *)&diredmap, "dired");
-		inited = 1;
-	}
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
 		(void)strlcpy(dirname, curbp->b_fname, sizeof(dirname));
@@ -143,9 +157,7 @@ dired(int f, int n)
 		return (FALSE);
 	if ((bp = dired_(bufp)) == NULL)
 		return (FALSE);
-	bp->b_modes[0] = name_mode("fundamental");
-	bp->b_modes[1] = name_mode("dired");
-	bp->b_nmodes = 1;
+
 	curbp = bp;
 	return (showbuffer(bp, curwp, WFHARD | WFMODE));
 }
@@ -154,11 +166,20 @@ dired(int f, int n)
 int
 d_otherwindow(int f, int n)
 {
-	char	 dirname[NFILEN], *bufp;
+	char	 dirname[NFILEN], *bufp, *slash;
 	BUFFER	*bp;
 	MGWIN	*wp;
 
-	dirname[0] = '\0';
+	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
+		(void)strlcpy(dirname, curbp->b_fname, sizeof(dirname));
+		if ((slash = strrchr(dirname, '/')) != NULL) {
+			*(slash + 1) = '\0';
+		}
+	} else {
+		if (getcwd(dirname, sizeof(dirname)) == NULL)
+			dirname[0] = '\0';
+	}
+
 	if ((bufp = eread("Dired other window: ", dirname, NFILEN,
 	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);

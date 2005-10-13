@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.50 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.51 2005/10/13 05:47:45 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -456,6 +456,7 @@ d_makename(LINE *lp, char *fn, int len)
 	strlcpy(fn, curbp->b_fname, len);
 	p = lp->l_text;
 	ep = lp->l_text + llength(lp);
+	p++; /* skip action letter, if any */
 	for (i = 0; i < NAME_FIELD; i++) {
 		while (p < ep && isspace(*p))
 			p++;
