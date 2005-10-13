@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2005/10/13 05:47:45 kjell Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2005/10/13 20:41:09 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 
 	for (nfiles = 0, i = 0; i < argc; i++) {
 		if (argv[i][0] == '+' && strlen(argv[i]) >= 2) {
-			int lval;
+			long long lval;
 			const char *errstr;
 
 			lval = strtonum(&argv[i][1], INT_MIN, INT_MAX, &errstr);
