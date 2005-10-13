@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.24 2005/10/13 12:35:30 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.25 2005/10/13 22:54:46 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -47,6 +47,9 @@
 #define LOCK_LOCK	1
 #define LOCK_UNLOCK	2
 
+#define DATE_NOW        -1
+#define DATE_MTIME      -2
+
 static char * checkin_diff_file(RCSFILE *, RCSNUM *, const char *);
 static char * checkin_getlogmsg(char *, char *, RCSNUM *, RCSNUM *);
 
@@ -69,7 +72,7 @@ checkin_main(int argc, char **argv)
 {
 	int i, ch, flags, lkmode, interactive, rflag, status;
 	mode_t fmode;
-	time_t date = -1;
+	time_t date = DATE_NOW;
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN];
@@ -89,10 +92,12 @@ checkin_main(int argc, char **argv)
 		exit(1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "j:l::M:N:qu::d:r::m:k:V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "j:l::M:N:qu::d::r::m:k:V")) != -1) {
 		switch (ch) {
 		case 'd':
-			if ((date = cvs_date_parse(rcs_optarg)) <= 0) {
+			if (rcs_optarg == NULL)
+				date = DATE_MTIME;
+			else if ((date = cvs_date_parse(rcs_optarg)) <= 0) {
 				cvs_log(LP_ERR, "invalide date");
 				exit(1);
 			}
@@ -240,6 +245,19 @@ checkin_main(int argc, char **argv)
 			cvs_log(LP_ERR,
 			    "failed to set new rd_text for head rev");
 			exit (1);
+		}
+		/*
+		 * Set the date of the revision to be the last modification time
+		 * of the working file if -d is specified without an argument.
+		 */
+		if (date == DATE_MTIME) {
+			struct stat sb;
+			if (stat(argv[i], &sb) != 0) {
+				cvs_log(LP_ERRNO, "failed to stat: `%s'", argv[i]);
+				rcs_close(file);
+				continue;
+			}
+			date = (time_t)sb.st_mtimespec.tv_sec;
 		}
 		/*
 		 * Now add our new revision
