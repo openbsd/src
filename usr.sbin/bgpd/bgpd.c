@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.123 2005/07/01 13:38:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.124 2005/10/13 09:09:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
 	int			 debug = 0;
-	int			 ch, nfds, timeout;
+	int			 ch, timeout;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 	int			 pipe_s2r[2];
@@ -267,38 +267,35 @@ main(int argc, char *argv[])
 		if (timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
 
-		if ((nfds = poll(pfd, POLL_MAX, timeout * 1000)) == -1)
+		if (poll(pfd, POLL_MAX, timeout * 1000) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;
 			}
 
-		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT))
+		if (pfd[PFD_PIPE_SESSION].revents & POLLOUT)
 			if (msgbuf_write(&ibuf_se->w) < 0) {
 				log_warn("pipe write error (to SE)");
 				quit = 1;
 			}
 
-		if (nfds > 0 && (pfd[PFD_PIPE_ROUTE].revents & POLLOUT))
+		if (pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
 			if (msgbuf_write(&ibuf_rde->w) < 0) {
 				log_warn("pipe write error (to RDE)");
 				quit = 1;
 			}
 
-		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
-			nfds--;
+		if (pfd[PFD_PIPE_SESSION].revents & POLLIN) {
 			if (dispatch_imsg(ibuf_se, PFD_PIPE_SESSION) == -1)
 				quit = 1;
 		}
 
-		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
-			nfds--;
+		if (pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			if (dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE) == -1)
 				quit = 1;
 		}
 
-		if (nfds > 0 && pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
-			nfds--;
+		if (pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
 			if (kr_dispatch_msg() == -1)
 				quit = 1;
 		}
