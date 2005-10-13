@@ -1,6 +1,8 @@
-/*	$OpenBSD: grep.c,v 1.17 2005/10/11 00:50:00 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.18 2005/10/13 05:24:52 kjell Exp $	*/
 /*
- * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
+ * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
+ * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,15 +29,18 @@
 #include "kbd.h"
 #include "funmap.h"
 
+#include <sys/types.h>
 #include <ctype.h>
+#include <libgen.h>
+#include <time.h>
 
 static int	 compile_goto_error(int, int);
 int		 next_error(int, int);
 static int	 grep(int, int);
 static int	 compile(int, int);
 static int	 gid(int, int);
-static BUFFER	*compile_mode(char *, char *);
-
+static BUFFER	*compile_mode(char *, char *, char *);
+static int	 getbufcwd(char *, size_t);
 
 void grep_init(void);
 
@@ -80,6 +85,14 @@ grep(int f, int n)
 	char	 prompt[NFILEN], *bufp;
 	BUFFER	*bp;
 	MGWIN	*wp;
+	char	 path[NFILEN];
+
+	/* get buffer cwd */
+	if (getbufcwd(path, sizeof(path)) == FALSE) {
+		ewprintf("Failed. "
+		    "Can't get working directory of current buffer.");
+		return (FALSE);
+	}
 
 	(void)strlcpy(prompt, "grep -n ", sizeof(prompt));
 	if ((bufp = eread("Run grep: ", prompt, NFILEN,
@@ -89,7 +102,7 @@ grep(int f, int n)
 		return (FALSE);
 	(void)snprintf(command, sizeof(command), "%s /dev/null", bufp);
 
-	if ((bp = compile_mode("*grep*", command)) == NULL)
+	if ((bp = compile_mode("*grep*", command, path)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -105,6 +118,14 @@ compile(int f, int n)
 	char	 prompt[NFILEN], *bufp;
 	BUFFER	*bp;
 	MGWIN	*wp;
+	char	 path[NFILEN];
+
+	/* get buffer cwd */
+	if (getbufcwd(path, sizeof(path)) == FALSE) {
+		ewprintf("Failed. "
+		    "Can't get working directory of current buffer.");
+		return (FALSE);
+	}
 
 	(void)strlcpy(prompt, compile_last_command, sizeof(prompt));
 	if ((bufp = eread("Compile command: ", prompt, NFILEN,
@@ -118,7 +139,7 @@ compile(int f, int n)
 
 	(void)snprintf(command, sizeof(command), "%s 2>&1", bufp);
 
-	if ((bp = compile_mode("*compile*", command)) == NULL)
+	if ((bp = compile_mode("*compile*", command, path)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -136,6 +157,14 @@ gid(int f, int n)
 	BUFFER	*bp;
 	MGWIN	*wp;
 	int	 i, j;
+	char	 path[NFILEN];
+
+	/* get buffer cwd */
+	if (getbufcwd(path, sizeof(path)) == FALSE) {
+		ewprintf("Failed. "
+		    "Can't get working directory of current buffer.");
+		return (FALSE);
+	}
 
 	/* catch ([^\s(){}]+)[\s(){}]* */
 
@@ -172,7 +201,7 @@ gid(int f, int n)
 		return (FALSE);
 	(void)snprintf(command, sizeof(command), "gid %s", prompt);
 
-	if ((bp = compile_mode("*gid*", command)) == NULL)
+	if ((bp = compile_mode("*gid*", command, path)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
@@ -182,21 +211,31 @@ gid(int f, int n)
 }
 
 BUFFER *
-compile_mode(char *name, char *command)
+compile_mode(char *name, char *command, char *path)
 {
 	BUFFER	*bp;
 	FILE	*pipe;
 	char	*buf;
 	size_t	 len;
 	int	 ret;
+	char 	*wdir, cwd[NFILEN];
+	char	 timestr[NTIME];
+	time_t	 t;
 
 	bp = bfind(name, TRUE);
 	if (bclear(bp) != TRUE)
 		return (NULL);
 
-	addlinef(bp, "Running (%s).", command);
+	addlinef(bp, "cd %s", path);
+	addline(bp, command);
 	addline(bp, "");
 
+	if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL)
+		panic("Can't get current directory!");
+	if (chdir(path) == -1) {
+		ewprintf("Can't change dir to %s", path);
+		return (NULL);
+	}	
 	if ((pipe = popen(command, "r")) == NULL) {
 		ewprintf("Problem opening pipe");
 		return (NULL);
@@ -211,9 +250,15 @@ compile_mode(char *name, char *command)
 		addline(bp, buf);
 	}
 	ret = pclose(pipe);
+	t = time(NULL);
+	strftime(timestr, sizeof(timestr), "%a %b %e %T %Y", localtime(&t));
 	addline(bp, "");
-	addlinef(bp, "Command (%s) completed %s.", command,
-		ret == 0 ? "successfully" : "with errors");
+	if (ret != 0)
+		addlinef(bp, "Command exited abnormally with code %d"
+		    " at %s", ret, timestr);
+	else
+		addlinef(bp, "Command finished at %s", timestr);
+
 	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
 	bp->b_modes[0] = name_mode("fundamental");
 	bp->b_modes[1] = name_mode("compile");
@@ -221,6 +266,10 @@ compile_mode(char *name, char *command)
 
 	compile_buffer = bp;
 
+	if (chdir(cwd) == -1) {
+		ewprintf("Can't change dir back to %s", cwd);
+		return (NULL);
+	}	
 	return (bp);
 }
 
@@ -298,4 +347,34 @@ next_error(int f, int n)
 	curwp->w_flag |= WFMOVE;
 
 	return (compile_goto_error(f, n));
+}
+
+/*
+ * Return the working directory for the current buffer, terminated
+ * with a '/'. First, try to extract it from the current buffer's
+ * filename. If that fails, use global cwd.
+ */
+static int
+getbufcwd(char *path, size_t plen)
+{
+	char *dname, cwd[NFILEN];
+	if (plen == 0)
+		goto error;
+
+	if (curbp->b_fname && curbp->b_fname[0] != '\0' &&
+	    (dname = dirname(curbp->b_fname)) != NULL) {
+		if (strlcpy(path, dname, plen) >= plen)
+			goto error;
+		if (strlcat(path, "/", plen) >= plen)
+			goto error;
+	} else {
+		if ((dname = getcwd(cwd, sizeof(cwd))) == NULL)
+			goto error;
+		if (strlcpy(path, dname, plen) >= plen)
+			goto error;
+	}
+	return (TRUE);
+error:
+	path = NULL;
+	return (FALSE);
 }
