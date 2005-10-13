@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_subr.c,v 1.2 2005/10/13 01:59:42 fgsch Exp $	*/
+/*	$OpenBSD: com_subr.c,v 1.3 2005/10/13 14:58:56 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -108,6 +108,7 @@ cdev_decl(com);
 #endif
 
 void	com_enable_debugport(struct com_softc *);
+void	com_fifo_probe(struct com_softc *);
 
 #if defined(COM_CONSOLE) || defined(KGDB)
 void
@@ -314,6 +315,10 @@ com_attach_subr(sc)
 	if (sc->sc_fifolen == 0)
 		sc->sc_fifolen = 1;	/* default */
 
+#ifdef notyet
+	com_fifo_probe(sc);
+#endif
+
 	/* clear and disable fifo */
 	bus_space_write_1(iot, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
 	(void)bus_space_read_1(iot, ioh, com_data);
@@ -375,4 +380,62 @@ com_attach_subr(sc)
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
 		com_enable_debugport(sc);
 #endif
+}
+
+void
+com_fifo_probe(struct com_softc *sc)
+{
+	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	u_int8_t fifo, ier;
+	int timo, len;
+
+	if (!ISSET(sc->sc_hwflags, COM_HW_FIFO))
+		return;
+
+	ier = 0;
+#ifdef COM_PXA2X0
+	if (sc->sc_uarttype == COM_UART_PXA2X0)
+		ier |= IER_EUART;
+#endif
+	bus_space_write_1(iot, ioh, com_ier, ier);
+	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
+	bus_space_write_1(iot, ioh, com_dlbl, 3);
+	bus_space_write_1(iot, ioh, com_dlbh, 0);
+	bus_space_write_1(iot, ioh, com_lcr, LCR_PNONE | LCR_8BITS);
+	bus_space_write_1(iot, ioh, com_mcr, MCR_LOOPBACK);
+
+	fifo = FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST;
+	if (sc->sc_uarttype == COM_UART_TI16750)
+		fifo |= FIFO_ENABLE_64BYTE;
+
+	bus_space_write_1(iot, ioh, com_fifo, fifo);
+
+	for (len = 0; len < 256; len++) {
+		bus_space_write_1(iot, ioh, com_data, (len + 1));
+		timo = 2000;
+		while (!ISSET(bus_space_read_1(iot, ioh, com_lsr),
+		    LSR_TXRDY) && --timo)
+			delay(1);
+		if (!timo)
+			break;
+	}
+
+	delay(100);
+
+	for (len = 0; len < 256; len++) {
+		timo = 2000;
+		while (!ISSET(bus_space_read_1(iot, ioh, com_lsr),
+		    LSR_RXRDY) && --timo)
+			delay(1);
+		if (!timo || bus_space_read_1(iot, ioh, com_data) != (len + 1))
+			break;
+	}
+
+	/* For safety, always use the smaller value. */
+	if (sc->sc_fifolen > len) {
+		printf("%s: probed fifo depth: %d bytes\n",
+		    sc->sc_dev.dv_xname, len);
+		sc->sc_fifolen = len;
+	}
 }
