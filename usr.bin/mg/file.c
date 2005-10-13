@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.38 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.39 2005/10/13 05:34:11 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -42,6 +42,7 @@ filevisit(int f, int n)
 {
 	BUFFER	*bp;
 	char	 fname[NFILEN], *bufp, *adjf, *slash;
+	int	 status;
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
 		strlcpy(fname, curbp->b_fname, sizeof(fname));
@@ -66,9 +67,7 @@ filevisit(int f, int n)
 	curbp = bp;
 	if (showbuffer(bp, curwp, WFHARD) != TRUE)
 		return (FALSE);
-	if (bp->b_fname[0] == 0) {
-		int status;
-
+	if (bp->b_fname[0] == '\0') {
 		if ((status = readin(adjf)) != TRUE)
 			killbuffer(bp);
 		return (status);
@@ -147,6 +146,7 @@ poptofile(int f, int n)
 	BUFFER	*bp;
 	MGWIN	*wp;
 	char	 fname[NFILEN], *adjf, *bufp;
+	int	 status;
 
 	if ((bufp = eread("Find file in other window: ", fname, NFILEN,
 	    EFNEW | EFCR | EFFILE)) == NULL)
@@ -162,9 +162,7 @@ poptofile(int f, int n)
 		return (FALSE);
 	curbp = bp;
 	curwp = wp;
-	if (bp->b_fname[0] == 0) {
-		int status;
-
+	if (bp->b_fname[0] == '\0') {
 		if ((status = readin(adjf)) != TRUE)
 			killbuffer(bp);
 		return (status);
@@ -258,8 +256,10 @@ readin(char *fname)
  */
 
 /*
- * Insert a file in the current buffer, after dot.  Set mark at the end of
- * the text inserted; point at the beginning.  Return a standard status.
+ * Insert a file in the current buffer, after dot. If file is a directory,
+ * and 'replacebuf' is TRUE, invoke dired mode, else die with an error.
+ * If file is a regular file, set mark at the end of the text inserted;
+ * point at the beginning.  Return a standard status.
  * Print a summary (lines read, error message) out as well.  Unless the
  * NO_BACKUP conditional is set, this routine also does the read end of
  * backup processing.  The BFBAK flag, if set in a buffer, says that a
@@ -270,7 +270,7 @@ static char	*line = NULL;
 static int	linesize = 0;
 
 int
-insertfile(char *fname, char *newname, int needinfo)
+insertfile(char *fname, char *newname, int replacebuf)
 {
 	BUFFER	*bp;
 	LINE	*lp1, *lp2;
@@ -279,7 +279,7 @@ insertfile(char *fname, char *newname, int needinfo)
 	int	 nbytes, s, nline, siz, x = -1, x2;
 	int	 opos;			/* offset we started at */
 
-	if (needinfo)
+	if (replacebuf == TRUE)
 		x = undo_enable(FALSE);
 
 	lp1 = NULL;
@@ -296,7 +296,7 @@ insertfile(char *fname, char *newname, int needinfo)
 		(void)strlcpy(bp->b_fname, newname, sizeof bp->b_fname);
 
 	/* hard file open */
-	if ((s = ffropen(fname, needinfo ? bp : NULL)) == FIOERR)
+	if ((s = ffropen(fname, (replacebuf == TRUE) ? bp : NULL)) == FIOERR)
 		goto out;
 	if (s == FIOFNF) {
 		/* file not found */
@@ -431,10 +431,9 @@ out:		lp2 = NULL;
 			}
 		}
 	}
-	if (x != -1)
-		undo_enable(x);
+	undo_enable(x);
 
-	/* return false if error */
+	/* return FALSE if error */
 	return (s != FIOERR);
 }
 
