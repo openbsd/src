@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.173 2005/09/21 13:35:03 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.174 2005/10/13 09:08:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -123,7 +123,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	struct peer		*p;
 	struct listen_addr	*la;
 	struct pollfd		 pfd[3];
-	int			 nfds, i;
+	int			 i;
 
 	switch (pid = fork()) {
 	case -1:
@@ -216,31 +216,27 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 			i++;
 		}
 
-		if ((nfds = poll(pfd, i, INFTIM)) == -1)
+		if (poll(pfd, i, INFTIM) == -1)
 			if (errno != EINTR)
 				fatal("poll error");
 
-		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT) &&
+		if ((pfd[PFD_PIPE_MAIN].revents & POLLOUT) &&
 		    ibuf_main->w.queued)
 			if (msgbuf_write(&ibuf_main->w) < 0)
 				fatal("pipe write error");
 
-		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
-			nfds--;
+		if (pfd[PFD_PIPE_MAIN].revents & POLLIN)
 			rde_dispatch_imsg_parent(ibuf_main);
-		}
 
-		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT) &&
+		if ((pfd[PFD_PIPE_SESSION].revents & POLLOUT) &&
 		    ibuf_se->w.queued)
 			if (msgbuf_write(&ibuf_se->w) < 0)
 				fatal("pipe write error");
 
-		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
-			nfds--;
+		if (pfd[PFD_PIPE_SESSION].revents & POLLIN)
 			rde_dispatch_imsg_session(ibuf_se);
-		}
 
-		if (nfds > 0 && pfd[PFD_MRT_FILE].revents & POLLOUT) {
+		if (pfd[PFD_MRT_FILE].revents & POLLOUT) {
 			if (mrt_write(mrt) == -1) {
 				free(mrt);
 				mrt = NULL;
@@ -1869,10 +1865,6 @@ rde_update6_queue_runner(void)
 			b = up_dump_mp_unreach(queue_buf, &len, peer);
 
 			if (b == NULL)
-				/*
-				 * No packet to send. The 4 bytes are the
-				 * needed withdraw and path attribute length.
-				 */
 				continue;
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
@@ -1892,10 +1884,6 @@ rde_update6_queue_runner(void)
 			b = up_dump_mp_reach(queue_buf, &len, peer);
 
 			if (b == NULL)
-				/*
-				 * No packet to send. The 4 bytes are the
-				 * needed withdraw and path attribute length.
-				 */
 				continue;
 			/* finally send message to SE */
 			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
