@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.6 2005/10/12 16:45:11 xsa Exp $
+.\"     $OpenBSD: ci.1,v 1.7 2005/10/13 22:59:38 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .Nm
 .Bk -words
 .Op Fl jMNqV
-.Op Fl d Ar date
+.Op Fl d Op Ar date
 .Op Fl k Ar mode
 .Op Fl l Op Ar rev
 .Op Fl m Ar msg
@@ -39,10 +39,13 @@ program is used to check new revisions into RCS files.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
-.It Fl d Ar date
+.It Fl d Op Ar date
 Uses
 .Ar date
 for check-in date and time.
+If
+.Ar date
+is not specified, use the working file's last modification time.
 .It Fl f
 Force check in.
 .It Fl I
