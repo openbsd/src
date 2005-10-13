@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.52 2005/10/12 21:14:37 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.53 2005/10/13 01:44:33 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -142,6 +142,7 @@ int sis_miibus_readreg(struct device *, int, int);
 void sis_miibus_writereg(struct device *, int, int, int);
 void sis_miibus_statchg(struct device *);
 
+u_int32_t sis_mchash(struct sis_softc *, const uint8_t *);
 void sis_setmulti_sis(struct sis_softc *);
 void sis_setmulti_ns(struct sis_softc *);
 void sis_reset(struct sis_softc *);
@@ -696,8 +697,31 @@ sis_miibus_statchg(self)
 	return;
 }
 
-void sis_setmulti_ns(sc)
-	struct sis_softc	*sc;
+u_int32_t
+sis_mchash(struct sis_softc *sc, const uint8_t *addr)
+{
+	uint32_t		crc;
+
+	/* Compute CRC for the address value. */
+	crc = ether_crc32_be(addr, ETHER_ADDR_LEN);
+
+	/*
+	 * return the filter bit position
+	 *
+	 * The NatSemi chip has a 512-bit filter, which is
+	 * different than the SiS, so we special-case it.
+	 */
+	if (sc->sis_type == SIS_TYPE_83815)
+		return (crc >> 23);
+	else if (sc->sis_rev >= SIS_REV_635 ||
+	    sc->sis_rev == SIS_REV_900B)
+		return (crc >> 24);
+	else
+		return (crc >> 25);
+}
+
+void
+sis_setmulti_ns(struct sis_softc *sc)
 {
 	struct ifnet		*ifp;
 	struct arpcom		*ac = &sc->arpcom;
@@ -737,7 +761,7 @@ allmulti:
 			goto allmulti;
 		}
 
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 23;
+		h = sis_mchash(sc, enm->enm_addrlo);
 		index = h >> 3;
 		bit = h & 0x1F;
 		CSR_WRITE_4(sc, SIS_RXFILT_CTL, NS_FILTADDR_FMEM_LO + index);
@@ -748,55 +772,68 @@ allmulti:
 	}
 
 	CSR_WRITE_4(sc, SIS_RXFILT_CTL, filtsave);
-
-	return;
 }
 
-void sis_setmulti_sis(sc)
-	struct sis_softc	*sc;
+void
+sis_setmulti_sis(struct sis_softc *sc)
 {
 	struct ifnet		*ifp;
 	struct arpcom		*ac = &sc->arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	u_int32_t		h = 0, i, filtsave;
+	u_int32_t		h, i, n, ctl;
+	u_int16_t		hashes[16];
 
 	ifp = &sc->arpcom.ac_if;
 
+	/* hash table size */
+	if (sc->sis_rev >= SIS_REV_635 ||
+	    sc->sis_rev == SIS_REV_900B)
+		n = 16;
+	else
+		n = 8;
+
+	ctl = CSR_READ_4(sc, SIS_RXFILT_CTL) & SIS_RXFILTCTL_ENABLE;
+
+	if (ifp->if_flags & IFF_BROADCAST)
+		ctl |= SIS_RXFILTCTL_BROAD;
+
 allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLMULTI);
-		return;
-	}
+		ctl |= SIS_RXFILTCTL_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			ctl |= SIS_RXFILTCTL_BROAD|SIS_RXFILTCTL_ALLPHYS;
+		for (i = 0; i < n; i++)
+			hashes[i] = ~0;
+	} else {
+		for (i = 0; i < n; i++)
+			hashes[i] = 0;
+		i = 0;
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+				ifp->if_flags |= IFF_ALLMULTI;
+				goto allmulti;
+			}
 
-	SIS_CLRBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLMULTI);
-
-	filtsave = CSR_READ_4(sc, SIS_RXFILT_CTL);
-
-	/* first, zot all the existing hash bits */
-	for (i = 0; i < 8; i++) {
-		CSR_WRITE_4(sc, SIS_RXFILT_CTL, (4 + ((i * 16) >> 4)) << 16);
-		CSR_WRITE_4(sc, SIS_RXFILT_DATA, 0);
-	}
-
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
+			h = sis_mchash(sc, enm->enm_addrlo);
+			hashes[h >> 4] |= 1 << (h & 0xf);
+			i++;
+			ETHER_NEXT_MULTI(step, enm);
 		}
-
-		h = (ether_crc32_be(enm->enm_addrlo,
-		    ETHER_ADDR_LEN) >> 25) & 0x0000007F;
-		CSR_WRITE_4(sc, SIS_RXFILT_CTL, (4 + (h >> 4)) << 16);
-		SIS_SETBIT(sc, SIS_RXFILT_DATA, (1 << (h & 0xF)));
-		ETHER_NEXT_MULTI(step, enm);
+		if (i > n) {
+			ctl |= SIS_RXFILTCTL_ALLMULTI;
+			for (i = 0; i < n; i++)
+				hashes[i] = ~0;
+		}
 	}
 
-	CSR_WRITE_4(sc, SIS_RXFILT_CTL, filtsave);
+	for (i = 0; i < n; i++) {
+		CSR_WRITE_4(sc, SIS_RXFILT_CTL, (4 + i) << 16);
+		CSR_WRITE_4(sc, SIS_RXFILT_DATA, hashes[i]);
+	}
 
-	return;
+	CSR_WRITE_4(sc, SIS_RXFILT_CTL, ctl);
 }
 
 void sis_reset(sc)
