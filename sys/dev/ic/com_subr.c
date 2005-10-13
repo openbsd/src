@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_subr.c,v 1.3 2005/10/13 14:58:56 fgsch Exp $	*/
+/*	$OpenBSD: com_subr.c,v 1.4 2005/10/13 18:37:58 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -312,12 +312,15 @@ com_attach_subr(sc)
 	default:
 		panic("comattach: bad fifo type");
 	}
-	if (sc->sc_fifolen == 0)
-		sc->sc_fifolen = 1;	/* default */
 
 #ifdef notyet
 	com_fifo_probe(sc);
 #endif
+
+	if (sc->sc_fifolen == 0) {
+		CLR(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 1;
+	}
 
 	/* clear and disable fifo */
 	bus_space_write_1(iot, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
