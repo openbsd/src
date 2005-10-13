@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.219 2005/06/30 20:52:20 sturm Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.220 2005/10/13 13:27:06 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1162,7 +1162,7 @@ ifa_load(void)
 }
 
 struct node_host *
-ifa_exists(const char *ifa_name, int group_ok)
+ifa_exists(const char *ifa_name)
 {
 	struct node_host	*n;
 
@@ -1361,7 +1361,7 @@ host_if(const char *s, int mask)
 		free(ps);
 		return (NULL);
 	}
-	if (ifa_exists(ps, 1) || !strncmp(ps, "self", IFNAMSIZ)) {
+	if (ifa_exists(ps) || !strncmp(ps, "self", IFNAMSIZ)) {
 		/* interface with this name exists */
 		h = ifa_lookup(ps, flags);
 		for (n = h; n != NULL && mask > -1; n = n->next)

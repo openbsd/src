@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.492 2005/06/14 18:15:49 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.493 2005/10/13 13:27:06 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2069,7 +2069,7 @@ if_item		: STRING			{
 				YYERROR;
 			}
 
-			if ((n = ifa_exists($1, 1)) != NULL)
+			if ((n = ifa_exists($1)) != NULL)
 				$$->ifa_flags = n->ifa_flags;
 
 			free($1);
