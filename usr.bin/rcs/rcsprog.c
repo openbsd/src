@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.27 2005/10/12 17:43:18 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.28 2005/10/13 12:35:30 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -45,6 +45,9 @@
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
 
+int	rcs_optind;
+char	*rcs_optarg;
+
 struct rcs_prog {
 	char	*prog_name;
 	int	(*prog_hdlr)(int, char **);
@@ -58,6 +61,62 @@ struct rcs_prog {
 	{ "rlog",	rlog_main,	rlog_usage	},
 	{ "ident",	ident_main,	ident_usage	},
 };
+
+int
+rcs_getopt(int argc, char **argv, const char *optstr)
+{
+	char *a;
+	const char *c;
+	static int i = 1;
+	int opt, hasargument, ret;
+
+	hasargument = 0;
+	rcs_optarg = NULL;
+
+	if (i >= argc)
+		return (-1);
+
+	a = argv[i++];
+	if (*a++ != '-')
+		return (-1);
+
+	ret = 0;
+	opt = *a;
+	for (c = optstr; *c != '\0'; c++) {
+		if (*c == opt) {
+			a++;
+			ret = opt;
+
+			if (*(c + 1) == ':') {
+				if (*(c + 2) == ':') {
+					if (*a != '\0')
+						hasargument = 1;
+				} else {
+					if (*a != '\0') {
+						hasargument = 1;
+					} else {
+						ret = 1;
+						break;
+					}
+				}
+			}
+
+			if (hasargument == 1)
+				rcs_optarg = a;
+
+			if (ret == opt)
+				rcs_optind++;
+			break;
+		}
+	}
+
+	if (ret == 0)
+		cvs_log(LP_ERR, "unknown option -%c", opt);
+	else if (ret == 1)
+		cvs_log(LP_ERR, "missing argument for option -%c", opt);
+
+	return (ret);
+}
 
 int
 rcs_statfile(char *fname, char *out, size_t len)
@@ -108,6 +167,7 @@ main(int argc, char **argv)
 	int ret;
 
 	ret = -1;
+	rcs_optind = 1;
 	cvs_strtab_init();
 	cvs_log_init(LD_STD, 0);
 
@@ -154,19 +214,19 @@ rcs_main(int argc, char **argv)
 	flags = RCS_RDWR;
 	logstr = oldfile = alist = comment = elist = NULL;
 
-	while ((ch = getopt(argc, argv, "A:a:b::c:e::hik:Lm:MqUV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "A:a:b::c:e::hik:Lm:MqUV")) != -1) {
 		switch (ch) {
 		case 'A':
-			oldfile = optarg;
+			oldfile = rcs_optarg;
 			break;
 		case 'a':
-			alist = optarg;
+			alist = rcs_optarg;
 			break;
 		case 'c':
-			comment = optarg;
+			comment = rcs_optarg;
 			break;
 		case 'e':
-			elist = optarg;
+			elist = rcs_optarg;
 			break;
 		case 'h':
 			(usage)();
@@ -175,11 +235,11 @@ rcs_main(int argc, char **argv)
 			flags |= RCS_CREATE;
 			break;
 		case 'k':
-			kflag = rcs_kflag_get(optarg);
+			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
 				    "invalid keyword substitution mode `%s'",
-				    optarg);
+				    rcs_optarg);
 				exit(1);
 			}
 			break;
@@ -189,7 +249,7 @@ rcs_main(int argc, char **argv)
 			lkmode = RCS_LOCK_STRICT;
 			break;
 		case 'm':
-			if ((logstr = strdup(optarg)) == NULL) {
+			if ((logstr = strdup(rcs_optarg)) == NULL) {
 				cvs_log(LP_ERRNO, "failed to copy logstring");
 				exit(1);
 			}
@@ -214,8 +274,8 @@ rcs_main(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= rcs_optind;
+	argv += rcs_optind;
 	if (argc == 0) {
 		cvs_log(LP_ERR, "no input file");
 		(usage)();

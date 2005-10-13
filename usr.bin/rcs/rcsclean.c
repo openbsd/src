@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.6 2005/10/12 17:43:18 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.7 2005/10/13 12:35:30 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -52,10 +52,10 @@ rcsclean_main(int argc, char **argv)
 
 	rev = RCS_HEAD_REV;
 
-	while ((ch = getopt(argc, argv, "k:nqr:V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "k:nqr:V")) != -1) {
 		switch (ch) {
 		case 'k':
-			kflag = rcs_kflag_get(optarg);
+			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expansion mode");
@@ -70,7 +70,7 @@ rcsclean_main(int argc, char **argv)
 			verbose = 0;
 			break;
 		case 'r':
-			if ((rev = rcsnum_parse(optarg)) == NULL) {
+			if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
 				cvs_log(LP_ERR, "bad revision number");
 				exit(1);
 			}
@@ -83,8 +83,8 @@ rcsclean_main(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= rcs_optind;
+	argv += rcs_optind;
 
 	if (argc == 0) {
 		if ((dirp = opendir(".")) == NULL) {

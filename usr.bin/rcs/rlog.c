@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.4 2005/10/12 17:13:30 deraadt Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.5 2005/10/13 12:35:30 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -57,7 +57,7 @@ rlog_main(int argc, char **argv)
 	RCSFILE *file;
 
 	hflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "hNqRtV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "hNqRtV")) != -1) {
 		switch (ch) {
 		case 'h':
 			hflag = 1;
@@ -82,8 +82,8 @@ rlog_main(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= rcs_optind;
+	argv += rcs_optind;
 
 	if (argc == 0) {
 		cvs_log(LP_ERR, "no input file");

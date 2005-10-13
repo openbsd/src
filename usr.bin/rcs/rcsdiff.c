@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.10 2005/10/12 17:43:18 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.11 2005/10/13 12:35:30 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -52,7 +52,7 @@ rcsdiff_main(int argc, char **argv)
 	rev2 = NULL;
 	status = 0;
 
-	while ((ch = getopt(argc, argv, "cnqr:uV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "cnqr:uV")) != -1) {
 		switch (ch) {
 		case 'c':
 			diff_format = D_CONTEXT;
@@ -71,24 +71,25 @@ rcsdiff_main(int argc, char **argv)
 			exit(0);
 		case 'r':
 			if (rev == RCS_HEAD_REV) {
-				if ((rev = rcsnum_parse(optarg)) == NULL) {
+				if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
 					cvs_log(LP_ERR, "bad revision number");
 					exit(1);
 				}
 			} else {
-				if ((rev2 = rcsnum_parse(optarg)) == NULL) {
+				if ((rev2 = rcsnum_parse(rcs_optarg)) == NULL) {
 					cvs_log(LP_ERR, "bad revision number");
 					exit(1);
 				}
 			}
 			break;
 		default:
-			break;
+			(usage)();
+			exit (1);
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= rcs_optind;
+	argv += rcs_optind;
 
 	if (argc == 0) {
 		cvs_log(LP_ERR, "no input file");

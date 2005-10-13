@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.4 2005/10/12 17:13:30 deraadt Exp $	*/
+/*	$OpenBSD: ident.c,v 1.5 2005/10/13 12:35:30 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -50,7 +50,7 @@ ident_main(int argc, char **argv)
 	int i, ch;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "qV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "qV")) != -1) {
 		switch(ch) {
 		case 'q':
 			verbose = 0;
@@ -64,8 +64,8 @@ ident_main(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= rcs_optind;
+	argv += rcs_optind;
 
 	if (argc == 0)
 		ident_file(NULL, stdin);

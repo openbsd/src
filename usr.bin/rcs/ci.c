@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.23 2005/10/12 22:57:26 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.24 2005/10/13 12:35:30 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -89,10 +89,10 @@ checkin_main(int argc, char **argv)
 		exit(1);
 	}
 
-	while ((ch = getopt(argc, argv, "j:l::M:N:qu::d:r::m:k:V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "j:l::M:N:qu::d:r::m:k:V")) != -1) {
 		switch (ch) {
 		case 'd':
-			if ((date = cvs_date_parse(optarg)) <= 0) {
+			if ((date = cvs_date_parse(rcs_optarg)) <= 0) {
 				cvs_log(LP_ERR, "invalide date");
 				exit(1);
 			}
@@ -101,7 +101,7 @@ checkin_main(int argc, char **argv)
 			(usage)();
 			exit(0);
 		case 'm':
-			rcs_msg = optarg;
+			rcs_msg = rcs_optarg;
 			interactive = 0;
 			break;
 		case 'q':
@@ -111,8 +111,8 @@ checkin_main(int argc, char **argv)
 			printf("%s\n", rcs_version);
 			exit(0);
 		case 'l':
-			if (optarg != NULL) {
-				if ((newrev = rcsnum_parse(optarg)) == NULL) {
+			if (rcs_optarg != NULL) {
+				if ((newrev = rcsnum_parse(rcs_optarg)) == NULL) {
 					cvs_log(LP_ERR, "bad revision number");
 					exit(1);
 				}
@@ -120,8 +120,8 @@ checkin_main(int argc, char **argv)
 			lkmode = LOCK_LOCK;
 			break;
 		case 'u':
-			if (optarg != NULL) {
-				if ((newrev = rcsnum_parse(optarg)) == NULL) {
+			if (rcs_optarg != NULL) {
+				if ((newrev = rcsnum_parse(rcs_optarg)) == NULL) {
 					cvs_log(LP_ERR, "bad revision number");
 					exit(1);
 				}
@@ -130,8 +130,8 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'r':
 			rflag = 1;
-			if (optarg != NULL) {
-				if ((newrev = rcsnum_parse(optarg)) == NULL) {
+			if (rcs_optarg != NULL) {
+				if ((newrev = rcsnum_parse(rcs_optarg)) == NULL) {
 					cvs_log(LP_ERR, "bad revision number");
 					exit(1);
 				}
@@ -143,8 +143,9 @@ checkin_main(int argc, char **argv)
 		}
 	}
 
-	argc -= optind;
-	argv += optind;
+	argc -= rcs_optind;
+	argv += rcs_optind;
+
 	if (argc == 0) {
 		cvs_log(LP_ERR, "no input file");
 		(usage)();
