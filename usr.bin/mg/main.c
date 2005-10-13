@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2005/10/13 20:41:09 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2005/10/13 20:43:17 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -33,7 +33,7 @@ main(int argc, char **argv)
 {
 	char	*cp, *init_fcn_name = NULL;
 	PF	 init_fcn = NULL;
-	int	 o, i, nfiles, status;
+	int	 o, i, nfiles;
 	int	 nobackups = 0;
 
 	while ((o = getopt(argc, argv, "nf:")) != -1)
@@ -122,7 +122,7 @@ notnum:
 					errx(1, "Can't find current buffer!");
 				}
 				(void)showbuffer(curbp, curwp, 0);
-				if ((status = readin(cp)) != TRUE)
+				if (readin(cp) != TRUE)
 					killbuffer(curbp);
 				else {
 					if (init_fcn_name)
