@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.89 2005/10/14 03:29:12 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.90 2005/10/14 03:34:09 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3215,8 +3215,8 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 		delay(100);
 	}
 
-	printf("%s: block failed to stop: reg 0x%lx, bit 0x%08x\n",
-	    sc->bge_dev.dv_xname, (u_long) reg, bit);
+	DPRINTFN(5, ("%s: block failed to stop: reg 0x%lx, bit 0x%08x\n",
+	    sc->bge_dev.dv_xname, (u_long) reg, bit));
 }
 
 /*
