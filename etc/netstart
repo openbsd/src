@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.108 2005/10/12 13:11:55 todd Exp $
+#	$OpenBSD: netstart,v 1.109 2005/10/14 15:46:41 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -312,7 +312,15 @@ ifmstart "trunk vlan pfsync carp"
 # that name must be in /etc/hosts.
 if [ "X${setgateway}" != X"N" -a -f /etc/mygate ]; then
 	route -qn delete default > /dev/null 2>&1
-	route -qn add -host default `stripcom /etc/mygate`
+	route -qn delete -inet6 default > /dev/null 2>&1
+	# Now parse the mygate file
+	stripcom /etc/mygate | while read gw; do
+		case "$gw" in
+		*:*)	af=-inet6;;
+		*)	af=;;
+		esac
+		route -qn add -host $af default $gw
+	done
 fi
 
 # Multicast routing.
