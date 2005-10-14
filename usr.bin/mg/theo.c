@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.89 2005/10/04 02:42:03 marco Exp $	*/
+/*	$OpenBSD: theo.c,v 1.90 2005/10/14 15:41:33 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -45,8 +45,6 @@ static struct KEYMAPE (1 + IMAPEXT) theomap = {
 	}
 };
 
-static BUFFER *tbuf;
-
 void
 theo_init(void)
 {
@@ -71,7 +69,7 @@ theo(int f, int n)
 	if ((wp = popbuf(bp)) == NULL)
 		return (FALSE);
 
-	tbuf = curbp = bp;
+	curbp = bp;
 	curwp = wp;
 	return (TRUE);
 }

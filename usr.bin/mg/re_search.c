@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.18 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.19 2005/10/14 15:41:33 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -132,7 +132,7 @@ re_queryrepl(int f, int n)
 {
 	int	rcnt = 0;		/* replacements made so far	*/
 	int	plen, s;		/* length of found string	*/
-	char	news[NPAT], *rep;	/* replacement string		*/
+	char	news[NPAT];		/* replacement string		*/
 
 	/* Casefold check */
 	if (!casefoldsearch)
@@ -140,8 +140,8 @@ re_queryrepl(int f, int n)
 
 	if ((s = re_readpattern("RE Query replace")) != TRUE)
 		return (s);
-	if ((rep = eread("Query replace %s with: ", news, NPAT,
-	    EFNUL | EFNEW | EFCR, re_pat)) == NULL)
+	if (eread("Query replace %s with: ", news, NPAT,
+	    EFNUL | EFNEW | EFCR, re_pat) == NULL)
 		return (ABORT);
 	ewprintf("Query replacing %s with %s:", re_pat, news);
 
