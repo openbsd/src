@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.95 2005/10/11 14:19:21 hshoexer Exp $	*/
+/*	$OpenBSD: cd.c,v 1.96 2005/10/14 23:53:29 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1179,7 +1179,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	u_int32_t lba, nlba;
 	u_int8_t hdr[TOC_HEADER_SZ], *ent, *toc = NULL;
 	char *errstring;
-	int tocidx, i, n, len, is_data, data_track = -1;
+	int tocidx, n, len, is_data, data_track;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
@@ -1248,7 +1248,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	if (cd->sc_link->quirks & ADEV_LITTLETOC)
 		lba = swap32(lba);
 
-	i = 0;
+	data_track = 0;
 	for (tocidx = 1; tocidx <= n; tocidx++) {
 		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
 		ent += TOC_ENTRY_SZ;
@@ -1256,36 +1256,34 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 		if (cd->sc_link->quirks & ADEV_LITTLETOC)
 			nlba = swap32(nlba);
 
-		lp->d_partitions[i].p_fstype =
+		lp->d_partitions[data_track].p_fstype =
 			is_data ? FS_UNUSED : FS_OTHER;
-		lp->d_partitions[i].p_offset = lba;
-		lp->d_partitions[i].p_size = nlba - lba;
+		lp->d_partitions[data_track].p_offset = lba;
+		lp->d_partitions[data_track].p_size = nlba - lba;
 		lba = nlba;
 
 		if (is_data) { 
-			if (data_track == -1)
-				data_track = i;
+			data_track++;
+			if (data_track == RAW_PART)
+				data_track++;
 
-			i++;
-			if (i == RAW_PART)
-				i++;
-
-			if (i >= MAXPARTITIONS)
+			if (data_track >= MAXPARTITIONS)
 				break;
 		}
 	}
 
-	if (i < MAXPARTITIONS)
-		bzero(&lp->d_partitions[i], sizeof(lp->d_partitions[i]));
+	if (data_track < MAXPARTITIONS)
+		bzero(&lp->d_partitions[data_track],
+		    sizeof(lp->d_partitions[data_track]));
 
-	lp->d_npartitions = max((RAW_PART + 1), i);
+	lp->d_npartitions = max((RAW_PART + 1), data_track);
 
 done:
 	if (toc)
 		free(toc, M_TEMP);
 
 	/* If we have a data track, look for a real disklabel. */
-	if (data_track == -1)
+	if (data_track == 0)
 		spoofonly = 1;
 	errstring = readdisklabel(CDLABELDEV(dev), cdstrategy, lp, clp,
 	    spoofonly);
