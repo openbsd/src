@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.35 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.36 2005/10/14 15:42:17 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -29,7 +29,9 @@ static void	 fixmap(KEYMAP *, KEYMAP *, KEYMAP *);
 static int	 dobind(KEYMAP *, const char *, int);
 static char	*skipwhite(char *);
 static char	*parsetoken(char *);
+#ifdef	BINDKEY
 static int	 bindkey(KEYMAP **, const char *, KCHAR *, int);
+#endif /* BINDKEY */
 
 /*
  * Insert a string, mainly for use from macros (created by selfinsert).
