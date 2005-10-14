@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.28 2005/10/14 15:09:25 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.29 2005/10/14 20:57:03 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -30,6 +30,7 @@ May 09	First commit to OpenBSD stable branch, OPENBSD_2_7, 2000
 May 10	c2k3 hackathon, Calgary, Canada, 51 developers, 2003
 May 19	OpenBSD 2.3 released, including ``ports'' system, 1998
 May 21	c2k5 hackathon, 60 developers and Sitting Idol, 2005
+May 24	OpenBSD gets a trunk(4), 2005
 May 29	IPF is removed for license incompatibility, 2001
 May 31	Initial cut at OpenNTP, 2004
 Jun 01	OpenBSD 2.1 released, first time on CD (double set), 1997
