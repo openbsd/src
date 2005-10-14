@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.46 2004/12/07 20:38:47 mcbride Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.47 2005/10/14 02:44:27 brad Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -249,19 +249,11 @@ struct domain inet6domain =
 /*
  * Internet configuration info
  */
-#ifndef	IPV6FORWARDING
-#ifdef GATEWAY6
-#define	IPV6FORWARDING	1	/* forward IP6 packets not for us */
-#else
-#define	IPV6FORWARDING	0	/* don't forward IP6 packets not for us */
-#endif /* GATEWAY6 */
-#endif /* !IPV6FORWARDING */
-
-int	ip6_forwarding = IPV6FORWARDING;	/* act as router? */
+int	ip6_forwarding = 0;	/* no forwarding unless sysctl'd to enable */
 int	ip6_sendredirects = 1;
 int	ip6_defhlim = IPV6_DEFHLIM;
 int	ip6_defmcasthlim = IPV6_DEFAULT_MULTICAST_HOPS;
-int	ip6_accept_rtadv = 0;	/* "IPV6FORWARDING ? 0 : 1" is dangerous */
+int	ip6_accept_rtadv = 0;	/* enabling forwarding and rtadv concurrently is dangerous */
 int	ip6_maxfragpackets = 200;
 int	ip6_maxfrags = 200;
 int	ip6_log_interval = 5;
