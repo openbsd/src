@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.23 2005/08/14 19:49:18 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.24 2005/10/14 13:46:36 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -99,15 +99,19 @@ cvs_server(int argc, char **argv)
 		return (CVS_EX_FILE);
 	}
 
-	if (cvs_chdir(cvs_server_tmpdir) == -1)
+	if (cvs_chdir(cvs_server_tmpdir) == -1) {
+		cvs_rmdir(cvs_server_tmpdir);
 		return (CVS_EX_FILE);
+	}
 
 	for (;;) {
 		if (fgets(reqbuf, (int)sizeof(reqbuf), stdin) == NULL) {
 			if (feof(stdin))
 				break;
-			else if (ferror(stdin))
+			else if (ferror(stdin)) {
+				cvs_rmdir(cvs_server_tmpdir);
 				return (CVS_EX_DATA);
+			}
 		}
 
 		len = strlen(reqbuf);
@@ -115,6 +119,7 @@ cvs_server(int argc, char **argv)
 			continue;
 		else if (reqbuf[len - 1] != '\n') {
 			cvs_log(LP_ERR, "truncated request");
+			cvs_rmdir(cvs_server_tmpdir);
 			return (CVS_EX_PROTO);
 		}
 		reqbuf[--len] = '\0';
