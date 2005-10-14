@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.53 2005/10/13 01:44:33 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.54 2005/10/14 22:59:38 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1358,12 +1358,7 @@ void sis_rxeof(sc)
 			continue;
 		}
 
-		/*
-		 * No errors; receive the packet.  Note, the chip
-		 * includes the CRC with every packet.
-		 */
-		total_len -= ETHER_CRC_LEN;
-
+		/* No errors; receive the packet. */
 		bus_dmamap_sync(sc->sc_dmat, cur_rx->map, 0,
 		    cur_rx->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 #ifndef __STRICT_ALIGNMENT
