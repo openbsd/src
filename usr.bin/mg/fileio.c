@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.55 2005/10/14 06:41:47 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.56 2005/10/14 15:41:50 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -7,12 +7,14 @@
  */
 #include "def.h"
 
+
+#include <sys/types.h>
 #ifndef NO_DIRED
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 #include "kbd.h"
 #endif /* !NO_DIRED */
-
-#include <sys/types.h>
 #include <limits.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
