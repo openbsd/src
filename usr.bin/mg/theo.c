@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.90 2005/10/14 15:41:33 deraadt Exp $	*/
+/*	$OpenBSD: theo.c,v 1.91 2005/10/14 19:46:46 kjell Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -52,6 +52,7 @@ theo_init(void)
 	maps_add((KEYMAP *)&theomap, "theo");
 }
 
+/* ARGSUSED */
 static int
 theo(int f, int n)
 {
@@ -181,6 +182,7 @@ static const char *talk[] = {
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
 
+/* ARGSUSED */
 static int
 theo_analyze(int f, int n)
 {

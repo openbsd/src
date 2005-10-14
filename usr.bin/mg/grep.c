@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.19 2005/10/13 20:28:49 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.20 2005/10/14 19:46:46 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -78,6 +78,7 @@ grep_init(void)
 	maps_add((KEYMAP *)&compilemap, "compile");
 }
 
+/* ARGSUSED */
 static int
 grep(int f, int n)
 {
@@ -111,6 +112,7 @@ grep(int f, int n)
 	return (TRUE);
 }
 
+/* ARGSUSED */
 static int
 compile(int f, int n)
 {
@@ -149,6 +151,7 @@ compile(int f, int n)
 }
 
 /* id-utils foo. */
+/* ARGSUSED */
 static int
 gid(int f, int n)
 {
@@ -273,6 +276,7 @@ compile_mode(char *name, char *command, char *path)
 	return (bp);
 }
 
+/* ARGSUSED */
 static int
 compile_goto_error(int f, int n)
 {
@@ -330,6 +334,7 @@ fail:
 	return (FALSE);
 }
 
+/* ARGSUSED */
 int
 next_error(int f, int n)
 {

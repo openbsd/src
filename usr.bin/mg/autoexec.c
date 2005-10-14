@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.9 2005/10/13 20:28:49 deraadt Exp $ */
+/* $OpenBSD: autoexec.c,v 1.10 2005/10/14 19:46:46 kjell Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -80,6 +80,7 @@ add_autoexec(const char *pattern, const char *func)
 	return (TRUE);
 }
 
+/* ARGSUSED */
 int
 auto_execute(int f, int n)
 {

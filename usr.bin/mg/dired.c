@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.25 2005/10/14 15:41:33 deraadt Exp $	*/
+/*	$OpenBSD: dired.c,v 1.26 2005/10/14 19:46:46 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -404,6 +404,7 @@ reaper(int signo __attribute__((unused)))
 /*
  * Pipe the currently selected file through a shell command.
  */
+/* ARGSUSED */
 int
 d_shell_command(int f, int n)
 {
@@ -491,6 +492,7 @@ d_shell_command(int f, int n)
 	return (TRUE);
 }
 
+/* ARGSUSED */
 int
 d_create_directory(int f, int n)
 {
