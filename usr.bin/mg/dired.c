@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.23 2005/10/13 05:47:44 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.24 2005/10/14 06:41:47 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -19,7 +20,8 @@
 
 #ifndef NO_DIRED
 
-void dired_init(void);
+void		 dired_init(void);
+static int	 d_makename(LINE  *, char *, int);
 
 extern struct keymap_s helpmap, cXmap, metamap;
 
@@ -386,7 +388,6 @@ d_rename(int f, int n)
 	bp = dired_(curbp->b_fname);
 	return (showbuffer(bp, curwp, WFHARD | WFMODE));
 }
-#endif
 
 void
 reaper(int signo __attribute__((unused)))
@@ -512,3 +513,90 @@ d_create_directory(int f, int n)
 	bp = dired_(curbp->b_fname);
 	return (showbuffer(bp, curwp, WFHARD | WFMODE));
 }
+
+#define NAME_FIELD	8
+
+static int
+d_makename(LINE *lp, char *fn, int len)
+{
+	int	 i;
+	char	*p, *ep;
+
+	strlcpy(fn, curbp->b_fname, len);
+	if ((p = lp->l_text) == NULL)
+		return (ABORT);
+	ep = lp->l_text + llength(lp);
+	p++; /* skip action letter, if any */
+	for (i = 0; i < NAME_FIELD; i++) {
+		while (p < ep && isspace(*p))
+			p++;
+		while (p < ep && !isspace(*p))
+			p++;
+		while (p < ep && isspace(*p))
+			p++;
+		if (p == ep)
+			return (ABORT);
+	}
+	strlcat(fn, p, len);
+	return ((lgetc(lp, 2) == 'd') ? TRUE : FALSE);
+}
+
+/*
+ * XXX dirname needs to have enough place to store an additional '/'.
+ */
+BUFFER *
+dired_(char *dirname)
+{
+	BUFFER	*bp;
+	FILE	*dirpipe;
+	char	 line[256];
+	int	 len;
+
+	if ((dirname = adjustname(dirname)) == NULL) {
+		ewprintf("Bad directory name");
+		return (NULL);
+	}
+	/* this should not be done, instead adjustname() should get a flag */
+	len = strlen(dirname);
+	if (dirname[len - 1] != '/') {
+		dirname[len++] = '/';
+		dirname[len] = '\0';
+	}
+	if ((bp = findbuffer(dirname)) == NULL) {
+		ewprintf("Could not create buffer");
+		return (NULL);
+	}
+	if (bclear(bp) != TRUE)
+		return (NULL);
+	bp->b_flag |= BFREADONLY;
+	if (snprintf(line, sizeof(line), "ls -al %s", dirname)
+	    >= sizeof(line)) {
+		ewprintf("Path too long");
+		return (NULL);
+	}
+	if ((dirpipe = popen(line, "r")) == NULL) {
+		ewprintf("Problem opening pipe to ls");
+		return (NULL);
+	}
+	line[0] = line[1] = ' ';
+	while (fgets(&line[2], sizeof(line) - 2, dirpipe) != NULL) {
+		line[strlen(line) - 1] = '\0';	/* remove ^J	 */
+		(void) addline(bp, line);
+	}
+	if (pclose(dirpipe) == -1) {
+		ewprintf("Problem closing pipe to ls : %s",
+		    strerror(errno));
+		return (NULL);
+	}
+	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
+	(void) strlcpy(bp->b_fname, dirname, sizeof(bp->b_fname));
+	if ((bp->b_modes[1] = name_mode("dired")) == NULL) {
+		bp->b_modes[0] = name_mode("fundamental");
+		ewprintf("Could not find mode dired");
+		return (NULL);
+	}
+	bp->b_nmodes = 1;
+	return (bp);
+}
+
+#endif /* !NO_DIRED */
