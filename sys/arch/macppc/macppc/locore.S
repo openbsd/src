@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.25 2005/10/03 04:47:30 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.26 2005/10/14 03:10:32 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1155,7 +1155,7 @@ intr_exit:
 	beq	1f
 /* Setup for entry to realtrap: */
 	lwz	%r3,0(%r1)		/* get saved SP */
-	mtsprg	%r1,3
+	mtsprg	1,%r3
 	li	%r6,EXC_AST
 	stmw	%r28,tempsave(0)	/* establish tempsave again */
 	mtlr	%r6
@@ -1285,7 +1285,7 @@ _C_LABEL(esigcode):
  */
 	.globl	_C_LABEL(ddb_trap)
 _C_LABEL(ddb_trap):
-	mtsprg	%r1,1
+	mtsprg	1,%r1
 	mfmsr	%r3
 	mtsrr1	%r3
 	andi.	%r3,%r3,~(PSL_EE|PSL_ME)@l
@@ -1312,7 +1312,7 @@ ddbtrap:
 	lwz	%r3,FRAME_EXC+8(%r1)	/* save exception */
 	stw	%r3,ddbsave+8(0)
 	FRAME_LEAVE(ddbsave)
-	mtsprg	%r1,1			/* prepare for entrance to realtrap */
+	mtsprg	1,%r1			/* prepare for entrance to realtrap */
 	stmw	%r28,tempsave(0)
 	mflr	%r28
 	mfcr	%r29
