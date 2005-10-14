@@ -592,8 +592,6 @@ ip6_mrouter_detach(ifp)
 	}
 }
 
-static struct sockaddr_in6 sin6 = { sizeof(sin6), AF_INET6 };
-
 /*
  * Add a mif to the mif table
  */
@@ -1014,6 +1012,7 @@ ip6_mforward(ip6, ifp, m)
 	struct mbuf *mm;
 	int s;
 	mifi_t mifi;
+	struct sockaddr_in6 sin6;
 
 #ifdef MRT6DEBUG
 	if (mrt6debug & DEBUG_FORWARD)
@@ -1155,6 +1154,9 @@ ip6_mforward(ip6, ifp, m)
 			/*
 			 * Send message to routing daemon
 			 */
+			(void)memset(&sin6, 0, sizeof(sin6));
+			sin6.sin6_len = sizeof(sin6);
+			sin6.sin6_family = AF_INET6;
 			sin6.sin6_addr = ip6->ip6_src;
 	
 			im = NULL;
@@ -1382,8 +1384,7 @@ ip6_mdq(m, ifp, rt)
 				 * unnecessary PIM assert.
 				 * XXX: M_LOOP is an ad-hoc hack...
 				 */
-				static struct sockaddr_in6 sin6 =
-				{ sizeof(sin6), AF_INET6 };
+				struct sockaddr_in6 sin6;
 
 				struct mbuf *mm;
 				struct mrt6msg *im;
@@ -1427,6 +1428,9 @@ ip6_mdq(m, ifp, rt)
 				     mifp++, iif++)
 					;
 
+				(void)memset(&sin6, 0, sizeof(sin6));
+				sin6.sin6_len = sizeof(sin6);
+				sin6.sin6_family = AF_INET6;
 				switch (ip6_mrouter_ver) {
 #ifdef MRT6_OINIT
 				case MRT6_OINIT:
@@ -1619,7 +1623,7 @@ register_send(ip6, mif, m)
 {
 	struct mbuf *mm;
 	int i, len = m->m_pkthdr.len;
-	static struct sockaddr_in6 sin6 = { sizeof(sin6), AF_INET6 };
+	struct sockaddr_in6 sin6;
 	struct mrt6msg *im6;
 
 #ifdef MRT6DEBUG
@@ -1652,6 +1656,9 @@ register_send(ip6, mif, m)
 	/*
 	 * Send message to routing daemon
 	 */
+	(void)memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_len = sizeof(sin6);
+	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = ip6->ip6_src;
 
 	im6 = mtod(mm, struct mrt6msg *);
