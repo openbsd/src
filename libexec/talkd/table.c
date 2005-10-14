@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.12 2004/11/09 14:50:53 otto Exp $	*/
+/*	$OpenBSD: table.c,v 1.13 2005/10/14 15:39:19 otto Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.12 2004/11/09 14:50:53 otto Exp $";
+static char rcsid[] = "$Id: table.c,v 1.13 2005/10/14 15:39:19 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -93,8 +93,8 @@ find_match(CTL_MSG *request)
 	current_time = tp.tv_sec;
 	if (debug)
 		print_request("find_match", request);
-	for (ptr = table.tqh_first; ptr != NULL; ptr = next) {
-		next = ptr->list.tqe_next;
+	for (ptr = TAILQ_FIRST(&table); ptr != NULL; ptr = next) {
+		next = TAILQ_NEXT(ptr, list);
 		if ((current_time - ptr->time) > MAX_LIFE) {
 			/* the entry is too old */
 			if (debug)
@@ -134,8 +134,8 @@ find_request(CTL_MSG *request)
 	 */
 	if (debug)
 		print_request("find_request", request);
-	for (ptr = table.tqh_first; ptr != NULL; ptr = next) {
-		next = ptr->list.tqe_next;
+	for (ptr = TAILQ_FIRST(&table); ptr != NULL; ptr = next) {
+		next = TAILQ_NEXT(ptr, list);
 		if ((current_time - ptr->time) > MAX_LIFE) {
 			/* the entry is too old */
 			if (debug)
@@ -206,7 +206,7 @@ delete_invite(int id_num)
 
 	if (debug)
 		syslog(LOG_DEBUG, "delete_invite(%d)", id_num);
-	for (ptr = table.tqh_first; ptr != NULL; ptr = ptr->list.tqe_next) {
+	TAILQ_FOREACH(ptr, &table, list) {
 		if (ptr->request.id_num == id_num)
 			break;
 		if (debug)
