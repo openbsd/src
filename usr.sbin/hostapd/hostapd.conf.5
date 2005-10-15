@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.16 2005/10/05 16:09:55 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.17 2005/10/15 08:18:32 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -442,8 +442,7 @@ in the frame body, but currently only the
 and
 .Ic disassoc
 reason codes are supported:
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -ohang -offset 3n
 .It Ic subtype beacon
 A beacon frame.
 Wireless access points and devices running in
@@ -485,8 +484,7 @@ defines a descriptive reason for the actual
 or
 .Em disassociation
 of a station:
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -ohang -offset 3n
 .It Ic reason assoc expire
 Disassociated due to inactivity.
 .It Ic reason assoc leave
@@ -521,8 +519,7 @@ Unspecified reason.
 The direction a frame is being transmitted
 .Pq Ar framedir
 can be specified in the following ways:
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -ohang -offset 3n
 .It Ic dir no ds
 No distribution system direction is used for management frames.
 .It Ic dir to ds
