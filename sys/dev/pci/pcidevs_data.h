@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.943 2005/10/15 15:46:41 brad Exp 
+ *	OpenBSD: pcidevs,v 1.944 2005/10/15 22:40:48 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -195,8 +195,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "3crwe777a AirConnect",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_GIG,
-	    "Gig",
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940B,
+	    "3c940B",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO,
@@ -581,6 +581,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
 	    "M5243 AGP/PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5281,
+	    "M5281 SATA",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5287,
+	    "M5287 SATA",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5289,
+	    "M5289 SATA",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
@@ -5451,12 +5463,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "i740 PCI",
 	},
 	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310_1,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_1,
+	    "Libertas 88W8300",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310,
 	    "Libertas 88W8310",
 	},
 	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310_2,
-	    "Libertas 88W8310",
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_1,
+	    "Libertas 88W8335",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_2,
+	    "Libertas 88W8335",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_2,
+	    "Libertas 88W8300",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SK_V2,
@@ -5525,6 +5549,30 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SK_V2_BELKIN,
 	    "Belkin F5D5005",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV88SX5040,
+	    "MV88SX5040 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV88SX5041,
+	    "MV88SX5041 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV88SX5080,
+	    "MV88SX5080 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV88SX5081,
+	    "MV88SX5081 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV88SX6041,
+	    "MV88SX6041 SATA",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV88SX6081,
+	    "MV88SX6041 SATA",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
@@ -6247,12 +6295,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Vanta",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SATA,
+	    "MCP04 SATA",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_LAN1,
 	    "MCP04 LAN",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_LAN2,
 	    "MCP04 LAN",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SATA2,
+	    "MCP04 SATA",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_ISA,
@@ -6489,6 +6545,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PPB,
 	    "nForce3 250 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2,
+	    "nForce3 250 SATA",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6600GTAGP,
@@ -6763,6 +6823,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Quadro4 700 XGL",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_SATA,
+	    "MCP51 SATA",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_SATA2,
+	    "MCP51 SATA",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4200GO,
 	    "GeForce4 Ti 4200 Go",
 	},
@@ -6937,6 +7005,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41098,
 	    "Exsys EX-41098",
+	},
+	{
+	    PCI_VENDOR_PDC, PCI_PRODUCT_PDC_QSTOR_SATA,
+	    "QStor SATA",
 	},
 	{
 	    PCI_VENDOR_PE, PCI_PRODUCT_PE_GNIC2,
@@ -8943,8 +9015,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8751 PCI",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_SATA,
-	    "VT8237 SATA",
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6420_SATA,
+	    "VT6420 SATA",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235_ISA,
@@ -8973,6 +9045,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_3,
 	    "K8T890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_SATA,
+	    "VT6421 SATA",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_DRAM,
@@ -9089,6 +9165,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_E,
 	    "K8T390 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_VITESSE, PCI_PRODUCT_VITESSE_VSC_7174,
+	    "VSC-7174 SATA",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
@@ -10371,12 +10451,16 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "VMware",
 	},
 	{
+	    PCI_VENDOR_ZOLTRIX,
+	    "Zoltrix",
+	},
+	{
 	    PCI_VENDOR_NDC,
 	    "National Datacomm",
 	},
 	{
-	    PCI_VENDOR_ZOLTRIX,
-	    "Zoltrix",
+	    PCI_VENDOR_PDC,
+	    "Pacific Data",
 	},
 	{
 	    PCI_VENDOR_EUMITCOM,
@@ -10409,6 +10493,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_USR2,
 	    "US Robotics",
+	},
+	{
+	    PCI_VENDOR_VITESSE,
+	    "Vitesse",
 	},
 	{
 	    PCI_VENDOR_LINKSYS,
