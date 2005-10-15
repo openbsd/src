@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.23 2005/09/20 01:02:22 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.24 2005/10/15 23:09:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -315,6 +315,7 @@
 #define SK_YUKON_LITE		0xB1
 #define SK_YUKON_LP		0xB2
 #define SK_YUKON_XL		0xB3
+#define SK_YUKON_EC_U		0xB4
 #define SK_YUKON_EC		0xB6
 #define SK_YUKON_FE		0xB7
 

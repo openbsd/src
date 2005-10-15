@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.84 2005/10/15 23:07:09 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.85 2005/10/15 23:09:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -228,6 +228,8 @@ const struct pci_matchid skc_devices[] = {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_6 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_7 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_9 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_10 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8035 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
@@ -1102,6 +1104,7 @@ sk_probe(struct device *parent, void *match, void *aux)
 	case SK_YUKON_LP:
 #ifdef not_quite_yet
 	case SK_YUKON_XL:
+	case SK_YUKON_EC_U:
 	case SK_YUKON_EC:
 	case SK_YUKON_FE:
 #endif
@@ -1275,6 +1278,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	case SK_YUKON_LITE:
 	case SK_YUKON_LP:
 	case SK_YUKON_XL:
+	case SK_YUKON_EC_U:
 	case SK_YUKON_EC:
 	case SK_YUKON_FE:
 		sk_init_yukon(sc_if);
@@ -1549,6 +1553,9 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case SK_YUKON_XL:
 		sc->sk_name = "Marvell Yukon-2 XL";
+		break;
+	case SK_YUKON_EC_U:
+		sc->sk_name = "Marvell Yukon-2 EC Ultra";
 		break;
 	case SK_YUKON_EC:
 		sc->sk_name = "Marvell Yukon-2 EC";
