@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.120 2005/09/18 09:24:03 jsg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.121 2005/10/15 00:20:49 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.120 2005/09/18 09:24:03 jsg Exp $";
+	"$OpenBSD: if_wi.c,v 1.121 2005/10/15 00:20:49 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -210,6 +210,7 @@ int
 wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 {
 	struct wi_ltv_macaddr	mac;
+	struct wi_ltv_rates	rates;
 	struct wi_ltv_gen	gen;
 	struct ifnet		*ifp;
 	int			error;
@@ -332,13 +333,21 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
 
 	/* Find supported rates. */
-	gen.wi_type = WI_RID_DATA_RATES;
-	gen.wi_len = 2;
-	if (wi_read_record(sc, &gen))
+	rates.wi_type = WI_RID_DATA_RATES;
+	rates.wi_len = sizeof(rates.wi_rates);
+	if (wi_read_record(sc, (struct wi_ltv_gen *)&rates) == 0) {
+		int i, nrates;
+
+		nrates = letoh16(*(u_int16_t *)rates.wi_rates);
+		if (nrates > sizeof(rates.wi_rates) - 2)
+			nrates = sizeof(rates.wi_rates) - 2;
+
+		sc->wi_supprates = 0;
+		for (i = 0; i < nrates; i++)
+			sc->wi_supprates |= rates.wi_rates[2 + i];
+	} else
 		sc->wi_supprates = WI_SUPPRATES_1M | WI_SUPPRATES_2M |
 		    WI_SUPPRATES_5M | WI_SUPPRATES_11M;
-	else
-		sc->wi_supprates = gen.wi_val;
 
 	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
 #define	ADD(m, c)	ifmedia_add(&sc->sc_media, (m), (c), NULL)

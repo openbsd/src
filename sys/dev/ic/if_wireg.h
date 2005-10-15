@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.35 2005/02/15 19:44:15 reyk Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.36 2005/10/15 00:20:49 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -514,6 +514,16 @@ struct wi_ltv_mcast {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
 	struct ether_addr	wi_mcast[16];
+};
+
+
+/*
+ * Get supported data rates (0xFDC6 == WI_RID_DATA_RATES).
+ */
+struct wi_ltv_rates {
+	u_int16_t		wi_len;
+	u_int16_t		wi_type;
+	u_int8_t		wi_rates[10];
 };
 
 /*
