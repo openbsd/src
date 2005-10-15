@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chown.8,v 1.8 2005/08/12 18:54:04 jmc Exp $
+.\"	$OpenBSD: chown.8,v 1.9 2005/10/15 08:52:39 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,34 +37,42 @@
 .Nd change file owner and group
 .Sh SYNOPSIS
 .Nm chown
+.Op Fl fh
 .Oo
 .Fl R
 .Op Fl H | L | P
 .Oc
-.Op Fl f
-.Op Fl h
-.Ar owner Ns Op Ar :group
-.Ar file Op Ar ...
+.Ar owner Ns Op : Ns Ar group
+.Ar
 .Nm chown
+.Op Fl fh
 .Oo
 .Fl R
 .Op Fl H | L | P
 .Oc
-.Op Fl f
-.Op Fl h
-.Ar :group
-.Ar file Op Ar ...
+.Pf : Ns Ar group
+.Ar
 .Sh DESCRIPTION
 .Nm
 sets the user ID and/or the group ID of the specified files.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl f
+Don't report any failure to change file owner or group, nor modify
+the exit status to reflect such failures.
 .It Fl H
 If the
 .Fl R
 option is specified, symbolic links on the command line are followed.
 (Symbolic links encountered in the tree traversal are not followed.)
+.It Fl h
+Change the user ID and/or the group ID on symbolic links.
+The
+.Fl R
+and
+.Fl h
+options are mutually exclusive.
 .It Fl L
 If the
 .Fl R
@@ -76,16 +84,6 @@ option is specified, no symbolic links are followed.
 .It Fl R
 Change the user ID and/or the group ID for the file hierarchies rooted
 in the files instead of just the files themselves.
-.It Fl f
-Don't report any failure to change file owner or group, nor modify
-the exit status to reflect such failures.
-.It Fl h
-Change the user ID and/or the group ID on symbolic links.
-The
-.Fl R
-and
-.Fl h
-options are mutually exclusive.
 .El
 .Pp
 The
