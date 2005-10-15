@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.4 2005/07/02 06:15:44 deraadt Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.5 2005/10/15 14:43:37 brad Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
@@ -145,8 +145,5 @@ struct em_osdep
 #else
 #define EM_KASSERT(exp,msg)
 #endif
-#define bus_dma_tag_destroy(tag)
-#define mtx_assert(a, b)        splassert(IPL_NET)
 
 #endif  /* _EM_OPENBSD_OS_H_ */
-

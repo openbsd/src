@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.14 2005/07/16 19:05:36 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.15 2005/10/15 14:43:37 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -400,14 +400,5 @@ struct em_softc {
 
 	struct em_hw_stats stats;
 };
-
-static inline int spl_use_arg(void *);
-static inline int spl_use_arg(void *v) { return splnet(); }
-#define EM_LOCK_INIT(_sc, _name)
-#define EM_LOCK_DESTROY(_sc)
-#define EM_LOCK_STATE()		int em_hidden_splnet_s
-#define EM_LOCK(_sc)		em_hidden_splnet_s = spl_use_arg(_sc)
-#define EM_UNLOCK(_sc)		splx(em_hidden_splnet_s)
-#define EM_LOCK_ASSERT(_sc)	splassert(IPL_NET)
 
 #endif                                                  /* _EM_H_DEFINED_ */

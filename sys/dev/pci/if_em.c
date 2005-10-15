@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.76 2005/10/15 07:33:25 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.77 2005/10/15 14:43:36 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -418,8 +418,6 @@ em_start(struct ifnet *ifp)
 	struct mbuf    *m_head;
 	struct em_softc *sc = ifp->if_softc;
 
-	mtx_assert(&sc->mtx, MA_OWNED);
-
 	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
 		return;
 
@@ -473,15 +471,15 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifreq   *ifr = (struct ifreq *) data;
 	struct ifaddr  *ifa = (struct ifaddr *)data;
 	struct em_softc *sc = ifp->if_softc;
-	EM_LOCK_STATE();
+	int s;
 
-	EM_LOCK(sc);
+	s = splnet();
 
 	if (sc->in_detach)
 		return (error);
 
 	if ((error = ether_ioctl(ifp, &sc->interface_data, command, data)) > 0) {
-		EM_UNLOCK(sc);
+		splx(s);
 		return (error);
 	}
 
@@ -566,7 +564,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = EINVAL;
 	}
 
-	EM_UNLOCK(sc);
+	splx(s);
 	return (error);
 }
 
@@ -618,13 +616,11 @@ em_init(void *arg)
 	struct em_softc *sc = arg;
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
 	uint32_t	pba;
-	EM_LOCK_STATE();
+	int s;
 
-	EM_LOCK(sc);
+	s = splnet();
 
 	INIT_DEBUGOUT("em_init: begin");
-
-        mtx_assert(&sc->mtx, MA_OWNED);
 
 	em_stop(sc);
 
@@ -678,7 +674,7 @@ em_init(void *arg)
 	if (em_hardware_init(sc)) {
 		printf("%s: Unable to initialize the hardware\n", 
 		       sc->sc_dv.dv_xname);
-		EM_UNLOCK(sc);
+		splx(s);
 		return;
 	}
 
@@ -687,7 +683,7 @@ em_init(void *arg)
 		printf("%s: Could not setup transmit structures\n", 
 		       sc->sc_dv.dv_xname);
 		em_stop(sc);
-		EM_UNLOCK(sc);
+		splx(s);
 		return;
 	}
 	em_initialize_transmit_unit(sc);
@@ -700,7 +696,7 @@ em_init(void *arg)
 		printf("%s: Could not setup receive structures\n", 
 		       sc->sc_dv.dv_xname);
 		em_stop(sc);
-		EM_UNLOCK(sc);
+		splx(s);
 		return;
 	}
 	em_initialize_receive_unit(sc);
@@ -718,7 +714,7 @@ em_init(void *arg)
 	/* Don't reset the phy next time init gets called */
 	sc->hw.phy_reset_disable = TRUE;
 
-	EM_UNLOCK(sc);
+	splx(s);
 }
 
 /*********************************************************************
@@ -733,15 +729,15 @@ em_intr(void *arg)
 	u_int32_t	reg_icr;
 	struct ifnet	*ifp;
 	struct em_softc  *sc = arg;
-	EM_LOCK_STATE();
+	int s;
 
-	EM_LOCK(sc);
+	s = splnet();
 
 	ifp = &sc->interface_data.ac_if;
 
 	reg_icr = E1000_READ_REG(&sc->hw, ICR);
 	if (!reg_icr) {
-		EM_UNLOCK(sc);
+		splx(s);
 		return (0);
 	}
 
@@ -765,7 +761,7 @@ em_intr(void *arg)
 	if (ifp->if_flags & IFF_RUNNING && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		em_start(ifp);
 
-	EM_UNLOCK(sc);
+	splx(s);
 	return (1);
 }
 
@@ -1081,8 +1077,6 @@ em_82547_move_tail_locked(struct em_softc *sc)
 	uint16_t length = 0;
 	boolean_t eop = 0;
 
-	EM_LOCK_ASSERT(sc);
-
 	hw_tdt = E1000_READ_REG(&sc->hw, TDT);
 	sw_tdt = sc->next_avail_tx_desc;
 
@@ -1110,11 +1104,11 @@ void
 em_82547_move_tail(void *arg)
 {
         struct em_softc *sc = arg;
-	EM_LOCK_STATE();
+	int s;
 
-	EM_LOCK(sc);
+	s = splnet();
 	em_82547_move_tail_locked(sc);
-	EM_UNLOCK(sc);
+	splx(s);
 }
 
 int
@@ -1296,11 +1290,11 @@ em_local_timer(void *arg)
 {
 	struct ifnet   *ifp;
 	struct em_softc *sc = arg;
-	EM_LOCK_STATE();
+	int s;
 
 	ifp = &sc->interface_data.ac_if;
 
-	EM_LOCK(sc);
+	s = splnet();
 
 	em_check_for_link(&sc->hw);
 	em_update_link_status(sc);
@@ -1312,7 +1306,7 @@ em_local_timer(void *arg)
 
 	timeout_add(&sc->timer_handle, hz);
 
-	EM_UNLOCK(sc);
+	splx(s);
 }
 
 void
@@ -1353,8 +1347,6 @@ em_stop(void *arg)
 	struct ifnet   *ifp;
 	struct em_softc *sc = arg;
 	ifp = &sc->interface_data.ac_if;
-
-	mtx_assert(&sc->mtx, MA_OWNED);
 
 	INIT_DEBUGOUT("em_stop: begin");
 	em_disable_intr(sc);
@@ -1723,7 +1715,6 @@ fail_2:
 	bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
 fail_1:
 	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
-	bus_dma_tag_destroy(dma->dma_tag);
 fail_0:
 	dma->dma_map = NULL;
 	/* dma->dma_tag = NULL; */
@@ -1737,7 +1728,6 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
 	bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
 	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
-	bus_dma_tag_destroy(dma->dma_tag);
 }
 
 /*********************************************************************
@@ -1890,10 +1880,8 @@ em_free_transmit_structures(struct em_softc *sc)
 		free(sc->tx_buffer_area, M_DEVBUF);
 		sc->tx_buffer_area = NULL;
 	}
-	if (sc->txtag != NULL) {
-		bus_dma_tag_destroy(sc->txtag);
+	if (sc->txtag != NULL)
 		sc->txtag = NULL;
-	}
 }
 
 /*********************************************************************
@@ -1994,8 +1982,6 @@ em_clean_transmit_interrupts(struct em_softc *sc)
 	struct em_buffer *tx_buffer;
 	struct em_tx_desc   *tx_desc;
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
-
-	mtx_assert(&sc->mtx, MA_OWNED);
 
 	if (sc->num_tx_desc_avail == sc->num_tx_desc)
 		return;
@@ -2128,7 +2114,7 @@ em_allocate_receive_structures(struct em_softc *sc)
 					     M_NOWAIT))) {
 		printf("%s: Unable to allocate rx_buffer memory\n", 
 		       sc->sc_dv.dv_xname);
-		return(ENOMEM);
+		return (ENOMEM);
 	}
 
 	bzero(sc->rx_buffer_area,
@@ -2145,7 +2131,7 @@ em_allocate_receive_structures(struct em_softc *sc)
 			printf("%s: em_allocate_receive_structures: "
 			    "bus_dmamap_create failed; error %u\n",
 			    sc->sc_dv.dv_xname, error);
-			goto fail_1;
+			goto fail;
 		}
 	}
 
@@ -2154,15 +2140,13 @@ em_allocate_receive_structures(struct em_softc *sc)
 		if (error != 0) {
 			sc->rx_buffer_area[i].m_head = NULL;
 			sc->rx_desc_base[i].buffer_addr = 0;
-			return(error);
+			return (error);
                 }
         }
 
-        return(0);
+        return (0);
 
-fail_1:
-	bus_dma_tag_destroy(sc->rxtag);
-/* fail_0: */
+fail:
 	sc->rxtag = NULL;
 	free(sc->rx_buffer_area, M_DEVBUF);
 	sc->rx_buffer_area = NULL;
@@ -2300,10 +2284,8 @@ em_free_receive_structures(struct em_softc *sc)
 		free(sc->rx_buffer_area, M_DEVBUF);
 		sc->rx_buffer_area = NULL;
 	}
-	if (sc->rxtag != NULL) {
-		bus_dma_tag_destroy(sc->rxtag);
+	if (sc->rxtag != NULL)
 		sc->rxtag = NULL;
-	}
 }
 
 /*********************************************************************
@@ -2328,8 +2310,6 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 
 	/* Pointer to the receive descriptor being examined. */
 	struct em_rx_desc   *current_desc;
-
-	mtx_assert(&sc->mtx, MA_OWNED);
 
 	ifp = &sc->interface_data.ac_if;
 	i = sc->next_rx_desc_to_check;
