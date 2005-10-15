@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.30 2005/10/15 21:33:21 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.31 2005/10/15 23:44:58 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -58,7 +58,7 @@ checkin_usage(void)
 {
 	fprintf(stderr,
 	    "usage: ci [-jMNqV] [-d[date]] [-f[rev]] [-kmode] [-l[rev]]\n"
-	    "          [-mmsg] [-r[rev]] [-u[rev]] file ...\n");
+	    "          [-mmsg] [-r[rev]] [-u[rev]] [-wusername] file ...\n");
 }
 
 /*
@@ -83,17 +83,13 @@ checkin_main(int argc, char **argv)
 	date = DATE_NOW;
 	flags = RCS_RDWR;
 	file = NULL;
-	rcs_msg = NULL;
+	rcs_msg = username = NULL;
 	newrev =  NULL;
 	fmode = force = lkmode = verbose = rflag = status = 0;
 	interactive = 1;
 
-	if ((username = getlogin()) == NULL) {
-		cvs_log(LP_ERRNO, "failed to get username");
-		exit(1);
-	}
 
-	while ((ch = rcs_getopt(argc, argv, "f::j:l::M:N:qu::d::r::m:k:V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::j:l::M:N:qu::d::r::m:k:Vw:")) != -1) {
 		switch (ch) {
 		case 'd':
 			if (rcs_optarg == NULL)
@@ -152,6 +148,9 @@ checkin_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+		case 'w':
+			username = rcs_optarg;
+			break;
 		default:
 			(usage)();
 			exit(1);
@@ -166,6 +165,12 @@ checkin_main(int argc, char **argv)
 		(usage)();
 		exit(1);
 	}
+
+	if ((username == NULL) && (username = getlogin()) == NULL) {
+		cvs_log(LP_ERRNO, "failed to get username");
+		exit(1);
+	}
+
 
 	for (i = 0; i < argc; i++) {
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
@@ -296,7 +301,7 @@ checkin_main(int argc, char **argv)
 		 * Now add our new revision
 		 */
 		if (rcs_rev_add(file, (newrev == NULL ? RCS_HEAD_REV : newrev),
-		    rcs_msg, date) != 0) {
+		    rcs_msg, date, username) != 0) {
 			cvs_log(LP_ERR, "failed to add new revision");
 			exit(1);
 		}
