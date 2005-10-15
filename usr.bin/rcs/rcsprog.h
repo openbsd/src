@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.11 2005/10/15 18:26:24 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.12 2005/10/15 23:39:36 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -46,6 +46,7 @@ void	rlog_usage(void);
 void	ident_usage(void);
 void	(*usage)(void);
 
+int	rcs_init(char *, char **, int);
 int	rcs_getopt(int, char **, const char *);
 int	rcs_statfile(char *, char *, size_t);
 int    checkout_rev(RCSFILE *, RCSNUM *, const char *, int, const char *);

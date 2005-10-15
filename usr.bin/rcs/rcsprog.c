@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.28 2005/10/13 12:35:30 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.29 2005/10/15 23:39:36 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,6 +42,8 @@
 #include "rcsprog.h"
 #include "strtab.h"
 
+#define RCS_CMD_MAXARG	128
+
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
 
@@ -61,6 +63,48 @@ struct rcs_prog {
 	{ "rlog",	rlog_main,	rlog_usage	},
 	{ "ident",	ident_main,	ident_usage	},
 };
+
+int
+rcs_init(char *envstr, char **argv, int argvlen)
+{
+	u_int i;
+	int argc, error;
+	char linebuf[256],  *lp, *cp;
+
+	strlcpy(linebuf, envstr, sizeof(linebuf));
+	memset(argv, 0, argvlen * sizeof(char *));
+
+	error = argc = 0;
+	for (lp = linebuf; lp != NULL;) {
+		cp = strsep(&lp, " \t\b\f\n\r\t\v");;
+		if (cp == NULL)
+			break;
+		else if (*cp == '\0')
+			continue;
+
+		if (argc == argvlen) {
+			error++;
+			break;
+		}
+
+		argv[argc] = strdup(cp);
+		if (argv[argc] == NULL) {
+			cvs_log(LP_ERRNO, "failed to copy argument");
+			error++;
+			break;
+		}
+
+		argc++;
+	}
+
+	if (error != 0) {
+		for (i = 0; i < (u_int)argc; i++)
+			free(argv[i]);
+		argc = -1;
+	}
+
+	return (argc);
+}
 
 int
 rcs_getopt(int argc, char **argv, const char *optstr)
@@ -164,17 +208,34 @@ int
 main(int argc, char **argv)
 {
 	u_int i;
-	int ret;
+	char *rcsinit, *cmd_argv[RCS_CMD_MAXARG];
+	int ret, cmd_argc;
 
 	ret = -1;
 	rcs_optind = 1;
 	cvs_strtab_init();
 	cvs_log_init(LD_STD, 0);
 
+	cmd_argc = 0;
+	if ((rcsinit = getenv("RCSINIT")) != NULL) {
+		cmd_argv[cmd_argc++] = argv[0];
+		ret = rcs_init(rcsinit, cmd_argv + 1,
+		    RCS_CMD_MAXARG - 1);
+		if (ret < 0) {
+			cvs_log(LP_ERRNO, "failed to prepend RCSINIT options");
+			exit (1);
+		}
+
+		cmd_argc += ret;
+	}
+
+	for (ret = 1; ret < argc; ret++)
+		cmd_argv[cmd_argc++] = argv[ret];
+
 	for (i = 0; i < (sizeof(programs)/sizeof(programs[0])); i++)
 		if (strcmp(__progname, programs[i].prog_name) == 0) {
 			usage = programs[i].prog_usage;
-			ret = programs[i].prog_hdlr(argc, argv);
+			ret = programs[i].prog_hdlr(cmd_argc, cmd_argv);
 			break;
 		}
 
