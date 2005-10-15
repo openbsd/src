@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.83 2005/09/20 01:02:22 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.84 2005/10/15 23:07:09 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -212,7 +212,7 @@ void sk_dump_bytes(const char *, int);
 /* supported device vendors */
 const struct pci_matchid skc_devices[] = {
 	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3C940 },
-	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_GIG },
+	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3C940B },
 	{ PCI_VENDOR_CNET,		PCI_PRODUCT_CNET_GIGACARD },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE530T },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560T },
