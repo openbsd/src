@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.13 2005/10/13 12:35:30 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.14 2005/10/15 18:26:24 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -46,11 +46,8 @@ checkout_main(int argc, char **argv)
 	int lock;
 	RCSNUM *frev, *rev;
 	RCSFILE *file;
-	BUF *bp;
-	char buf[16];
-	char fpath[MAXPATHLEN];
+	char fpath[MAXPATHLEN], buf[16];
 	char *username;
-	mode_t mode = 0444;
 
 	lock = 0;
 	rev = RCS_HEAD_REV;
@@ -130,40 +127,11 @@ checkout_main(int argc, char **argv)
 			frev = file->rf_head;
 		else
 			frev = rev;
-
 		rcsnum_tostr(frev, buf, sizeof(buf));
-
-		if ((bp = rcs_getrev(file, frev)) == NULL) {
-			cvs_log(LP_ERR, "cannot find '%s' in %s", buf, fpath);
+		if (checkout_rev(file, frev, argv[i], lock, username) < 0) { 
 			rcs_close(file);
 			continue;
 		}
-
-		if (lock == LOCK_LOCK) {
-			if (rcs_lock_add(file, username, frev) < 0) {
-				if (rcs_errno != RCS_ERR_DUPENT)
-					cvs_log(LP_ERR, "failed to lock '%s'", buf);
-				else
-					cvs_log(LP_WARN, "you already have a lock");
-			}
-			mode = 0644;
-		} else if (lock == LOCK_UNLOCK) {
-			if (rcs_lock_remove(file, frev) < 0) {
-				if (rcs_errno != RCS_ERR_NOENT)
-					cvs_log(LP_ERR,
-					    "failed to remove lock '%s'", buf);
-			}
-			mode = 0444;
-		}
-		if (cvs_buf_write(bp, argv[i], mode) < 0) {
-			cvs_log(LP_ERR, "failed to write revision to file");
-			cvs_buf_free(bp);
-			rcs_close(file);
-			continue;
-		}
-
-		cvs_buf_free(bp);
-
 		rcs_close(file);
 		if (verbose == 1) {
 			printf("revision %s ", buf);
@@ -188,3 +156,57 @@ checkout_usage(void)
 	fprintf(stderr,
 	    "usage: co [-qV] [-l [rev]] [-r [rev]] [-u [rev]] file ...\n");
 }
+
+/*
+ * Checkout revision <rev> from RCSFILE <file>, writing it to the path <dst>
+ * <lkmode> is either LOCK_LOCK or LOCK_UNLOCK or something else
+ * (which has no effect).
+ * In the case of LOCK_LOCK, a lock is set for <username> if it is not NULL.
+ * In the case of LOCK_UNLOCK, all locks are removed for that revision.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+int
+checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
+    const char *username)
+{
+	char buf[16];
+	mode_t mode = 0444;
+	BUF *bp;
+	rcsnum_tostr(frev, buf, sizeof(buf));
+
+	/*
+	 * XXX: GNU RCS will check out the latest revision if <frev> is
+	 * greater than HEAD
+	 */
+	if ((bp = rcs_getrev(file, frev)) == NULL) {
+		cvs_log(LP_ERR, "cannot find revision `%s'", buf);
+		return (-1);
+	}
+
+	if (lkmode == LOCK_LOCK) {
+		if ((username != NULL)
+		    && (rcs_lock_add(file, username, frev) < 0)) {
+			if (rcs_errno != RCS_ERR_DUPENT)
+				cvs_log(LP_ERR, "failed to lock '%s'", buf);
+			else
+				cvs_log(LP_WARN, "you already have a lock");
+		}
+		mode = 0644;
+	} else if (lkmode == LOCK_UNLOCK) {
+		if (rcs_lock_remove(file, frev) < 0) {
+			if (rcs_errno != RCS_ERR_NOENT)
+				cvs_log(LP_ERR,
+				    "failed to remove lock '%s'", buf);
+		}
+		mode = 0444;
+	}
+	if (cvs_buf_write(bp, dst, mode) < 0) {
+		cvs_log(LP_ERR, "failed to write revision to file");
+		cvs_buf_free(bp);
+		return (-1);
+	}
+	cvs_buf_free(bp);
+	return (0);
+}
+

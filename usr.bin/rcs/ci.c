@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.27 2005/10/15 14:23:06 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.28 2005/10/15 18:26:24 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -293,32 +293,9 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Do checkout if -u or -l are specified.
 		 */
-		if (lkmode != 0 && !rflag) {
-			mode_t mode = 0;
-			if ((bp = rcs_getrev(file, newrev)) == NULL) {
-				cvs_log(LP_ERR, "cannot get revision");
-				goto err;
-			}
-			if (lkmode == LOCK_LOCK) {
-				mode = 0644;
-				if (rcs_lock_add(file, username, newrev) < 0) {
-					if (rcs_errno != RCS_ERR_DUPENT)
-						cvs_log(LP_ERR,
-						    "failed to lock revision");
-					else
-						cvs_log(LP_ERR,
-						    "you already have a lock");
-				}
-			} else if (lkmode == LOCK_UNLOCK) {
-				mode = 0444;
-			}
-			if (cvs_buf_write(bp, argv[i], mode) < 0) {
-				cvs_log(LP_ERR,
-				    "failed to write revision to file");
-			}
-			cvs_buf_free(bp);
-		}
-err:
+		if (lkmode != 0 && !rflag)
+			checkout_rev(file, newrev, argv[i], lkmode, username);
+
 		/* File will NOW be synced */
 		rcs_close(file);
 
