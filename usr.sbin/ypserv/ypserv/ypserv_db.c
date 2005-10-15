@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.20 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.21 2005/10/15 18:33:51 otto Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.20 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.21 2005/10/15 18:33:51 otto Exp $";
 #endif
 
 /*
@@ -177,7 +177,7 @@ ypdb_close_all(void)
 #ifdef DEBUG
 	yplog("  ypdb_close_all(): start");
 #endif
-	while (maps.cqh_first != (void *)&maps)
+	while (!CIRCLEQ_EMPTY(&maps))
 		ypdb_close_last();
 #ifdef DEBUG
 	yplog("  ypdb_close_all(): done");
@@ -219,13 +219,13 @@ ypdb_open_db(domainname domain, mapname map, ypstat *status,
 	/*
 	 * check for preloaded domain, map
 	 */
-	for (d = doms.lh_first ; d != NULL ; d = d->domsl.le_next) {
+	LIST_FOREACH(d, &doms, domsl) {
 		if (strcmp(domain, d->domain) == 0)
 			break;
 	}
 
 	if (d) {
-		for (m = d->dmaps.lh_first ; m != NULL ; m = m->mapsl.le_next)
+		LIST_FOREACH(m, &d->dmaps, mapsl)
 			if (strcmp(map, m->map) == 0)
 				break;
 	}

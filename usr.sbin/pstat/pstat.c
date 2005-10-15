@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.52 2005/05/26 01:45:02 pedro Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.53 2005/10/15 18:33:51 otto Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.52 2005/05/26 01:45:02 pedro Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.53 2005/10/15 18:33:51 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -705,10 +705,11 @@ kinfo_vnodes(int *avnodes)
 	evbuf = vbuf + (numvnodes + 20) *
 	    (sizeof(struct vnode *) + sizeof(struct vnode));
 	KGET(V_MOUNTLIST, mountlist);
-	for (num = 0, mp = mountlist.cqh_first; ; mp = mount.mnt_list.cqe_next) {
+	for (num = 0, mp = CIRCLEQ_FIRST(&mountlist); ;
+	    mp = CIRCLEQ_NEXT(&mount, mnt_list)) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
-		for (vp = mount.mnt_vnodelist.lh_first;
-		    vp != NULL; vp = vnode.v_mntvnodes.le_next) {
+		for (vp = LIST_FIRST(&mount.mnt_vnodelist);
+		    vp != NULL; vp = LIST_NEXT(&vnode, v_mntvnodes)) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
 			if ((bp + sizeof(struct vnode *) +
 			    sizeof(struct vnode)) > evbuf)
@@ -720,7 +721,7 @@ kinfo_vnodes(int *avnodes)
 			bp += sizeof(struct vnode);
 			num++;
 		}
-		if (mp == mountlist.cqh_last)
+		if (mp == CIRCLEQ_LAST(&mountlist))
 			break;
 	}
 	*avnodes = num;
@@ -780,7 +781,8 @@ ttymode(void)
 		free(itp);
 	} else {
 		KGET(TTY_TTYLIST, tty_head);
-		for (tp = tty_head.tqh_first; tp; tp = tty.tty_link.tqe_next) {
+		for (tp = TAILQ_FIRST(&tty_head); tp;
+		    tp = TAILQ_NEXT(&tty, tty_link)) {
 			KGET2(tp, &tty, sizeof tty, "tty struct");
 			tty2itty(&tty, &itty);
 			ttyprt(&itty);
@@ -892,7 +894,7 @@ filemode(void)
 	 * structure, and then an array of file structs (whose addresses are
 	 * derivable from the previous entry).
 	 */
-	addr = ((struct filelist *)buf)->lh_first;
+	addr = LIST_FIRST((struct filelist *)buf);
 	ffp = (struct file *)(buf + sizeof(struct filelist));
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
 
@@ -900,7 +902,7 @@ filemode(void)
 
 	(void)printf("%*s TYPE       FLG  CNT  MSG  %*s  OFFSET\n",
 	    8, "LOC", 8, "DATA");
-	for (; (char *)ffp < buf + len; addr = ffp->f_list.le_next, ffp++) {
+	for (; (char *)ffp < buf + len; addr = LIST_NEXT(ffp, f_list), ffp++) {
 		memmove(&fp, ffp, sizeof fp);
 		if ((unsigned)fp.f_type > DTYPE_SOCKET)
 			continue;
