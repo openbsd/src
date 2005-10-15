@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.96 2005/10/14 23:53:29 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.97 2005/10/15 18:18:36 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1249,32 +1249,24 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 		lba = swap32(lba);
 
 	data_track = 0;
-	for (tocidx = 1; tocidx <= n; tocidx++) {
+	for (tocidx = 1; tocidx <= n && data_track < MAXPARTITIONS; tocidx++) {
 		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
 		ent += TOC_ENTRY_SZ;
 		nlba = _4btol(&ent[TOC_ENTRY_MSF_LBA]);
 		if (cd->sc_link->quirks & ADEV_LITTLETOC)
 			nlba = swap32(nlba);
 
-		lp->d_partitions[data_track].p_fstype =
-			is_data ? FS_UNUSED : FS_OTHER;
-		lp->d_partitions[data_track].p_offset = lba;
-		lp->d_partitions[data_track].p_size = nlba - lba;
-		lba = nlba;
-
 		if (is_data) { 
+			lp->d_partitions[data_track].p_fstype = FS_UNUSED;
+			lp->d_partitions[data_track].p_offset = lba;
+			lp->d_partitions[data_track].p_size = nlba - lba;
 			data_track++;
 			if (data_track == RAW_PART)
 				data_track++;
-
-			if (data_track >= MAXPARTITIONS)
-				break;
 		}
-	}
 
-	if (data_track < MAXPARTITIONS)
-		bzero(&lp->d_partitions[data_track],
-		    sizeof(lp->d_partitions[data_track]));
+		lba = nlba;
+	}
 
 	lp->d_npartitions = max((RAW_PART + 1), data_track);
 
