@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.79 2005/07/03 20:14:00 drahn Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.80 2005/10/15 00:08:51 deraadt Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -409,7 +409,7 @@ struct kmembuckets {
 #define	MALLOC(space, cast, size, type, flags) do { \
 	u_long kbp_size = (u_long)(size); \
 	register struct kmembuckets *kbp = &bucket[BUCKETINDX(kbp_size)]; \
-	long __s = splvm(); \
+	int __s = splvm(); \
 	if (kbp->kb_next == NULL) { \
 		(space) = (cast)malloc(kbp_size, type, flags); \
 	} else { \
@@ -422,7 +422,7 @@ struct kmembuckets {
 #define	FREE(addr, type) do { \
 	register struct kmembuckets *kbp; \
 	register struct kmemusage *kup = btokup(addr); \
-	long __s = splvm(); \
+	int __s = splvm(); \
 	if (1 << kup->ku_indx > MAXALLOCSAVE) { \
 		free((caddr_t)(addr), type); \
 	} else { \
