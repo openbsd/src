@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.28 2005/10/15 08:40:07 jmc Exp $
+.\"	$OpenBSD: chmod.1,v 1.29 2005/10/15 08:50:44 jmc Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -323,40 +323,39 @@ or
 .Sq t ,
 are ignored.
 .Sh EXAMPLES
-.Li $ chmod 644 file
+Set file readable by anyone and writable by the owner only:
 .Pp
-Set file readable by anyone and writable by the owner only.
+.Dl $ chmod 644 file
 .Pp
-.Li $ chmod go-w file
+Deny write permission to group and others:
 .Pp
-Deny write permission to group and others.
-.Pp
-.Li $ chmod =rw,+X file
+.Dl $ chmod go-w file
 .Pp
 Set the read and write permissions to the usual defaults, but
-retain any execute permissions that are currently set.
+retain any execute permissions that are currently set:
 .Pp
-.Li $ chmod +X file
+.Dl $ chmod =rw,+X file
 .Pp
 Make a directory or file searchable/executable by everyone if it is
-already searchable/executable by anyone.
+already searchable/executable by anyone:
 .Pp
-.Li $ chmod 755 file
-.br
-.Li $ chmod u=rwx,go=rx file
-.br
-.Li $ chmod u=rwx,go=u-w file
+.Dl $ chmod +X file
 .Pp
 Any of these commands will make a file readable/executable by everyone and
-writable by the owner only.
+writable by the owner only:
+.Bd -literal -offset indent
+$ chmod 755 file
+$ chmod u=rwx,go=rx file
+$ chmod u=rwx,go=u-w file
+.Ed
 .Pp
-.Li $ chmod go= file
+Clear all mode bits for group and others:
 .Pp
-Clear all mode bits for group and others.
+.Dl $ chmod go= file
 .Pp
-.Li $ chmod g=u-w file
+Set the group bits equal to the user bits, but clear the group write bit:
 .Pp
-Set the group bits equal to the user bits, but clear the group write bit.
+.Dl $ chmod g=u-w file
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chgrp 1 ,
