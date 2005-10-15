@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.942 2005/10/15 11:42:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.943 2005/10/15 15:46:41 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5503,6 +5503,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Yukon 8036",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_9,
+	    "Yukon",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
 	    "Yukon 8052",
 	},
@@ -5513,6 +5517,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8053,
 	    "Yukon 8053",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_10,
+	    "Yukon",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SK_V2_BELKIN,

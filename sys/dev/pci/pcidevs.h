@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.942 2005/10/15 11:42:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.943 2005/10/15 15:46:41 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1911,9 +1911,11 @@
 #define	PCI_PRODUCT_MARVELL_YUKON_8	0x4347		/* Yukon */
 #define	PCI_PRODUCT_MARVELL_YUKON_8035	0x4350		/* Yukon 8035 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8036	0x4351		/* Yukon 8036 */
+#define	PCI_PRODUCT_MARVELL_YUKON_9	0x4352		/* Yukon */
 #define	PCI_PRODUCT_MARVELL_YUKON_8052	0x4360		/* Yukon 8052 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8050	0x4361		/* Yukon 8050 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8053	0x4362		/* Yukon 8053 */
+#define	PCI_PRODUCT_MARVELL_YUKON_10	0x4363		/* Yukon */
 #define	PCI_PRODUCT_MARVELL_SK_V2_BELKIN	0x5005		/* Belkin F5D5005 */
 
 /* Matrox products */
