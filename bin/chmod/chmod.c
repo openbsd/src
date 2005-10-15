@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.18 2004/07/01 18:25:47 otto Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.19 2005/10/15 08:57:21 jmc Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.18 2004/07/01 18:25:47 otto Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.19 2005/10/15 08:57:21 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -339,7 +339,7 @@ usage(void)
 		    __progname, (ischmod? "mode" : "flags"));
 	else
 		fprintf(stderr,
-		    "usage: %s [-R [-H | -L | -P]] [-f] [-h] %s file ...\n",
+		    "usage: %s [-fh] [-R [-H | -L | -P]] %s file ...\n",
 		    __progname, ischown ? "[owner][:group]" : "group");
 	exit(1);
 }
