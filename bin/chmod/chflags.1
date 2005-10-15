@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.5 2004/09/28 22:11:40 jmc Exp $
+.\"	$OpenBSD: chflags.1,v 1.6 2005/10/15 08:32:06 jmc Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -46,7 +46,7 @@
 .Op Fl H | L | P
 .Oc
 .Ar flags
-.Ar file Op Ar ...
+.Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -61,10 +61,6 @@ mode/permissions.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl R
-Recursively descend through any specified directory arguments.
-Change the flags of the file hierarchies rooted
-in the files instead of just the files themselves.
 .It Fl H
 If the
 .Fl R
@@ -78,6 +74,10 @@ option is also specified, all symbolic links are followed.
 If the
 .Fl R
 option is also specified, no symbolic links are followed.
+.It Fl R
+Recursively descend through any specified directory arguments.
+Change the flags of the file hierarchies rooted
+in the files instead of just the files themselves.
 .El
 .Pp
 Flags are a comma separated list of keywords.
