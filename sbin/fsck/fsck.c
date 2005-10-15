@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.19 2005/02/03 05:03:50 jaredy Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.20 2005/10/15 06:26:28 otto Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-static const char rcsid[] = "$OpenBSD: fsck.c,v 1.19 2005/02/03 05:03:50 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: fsck.c,v 1.20 2005/10/15 06:26:28 otto Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 't':
-			if (selhead.tqh_first != NULL)
+			if (TAILQ_FIRST(&selhead) != NULL)
 				errx(1, "only one -t option may be specified.");
 
 			maketypelist(optarg);
@@ -327,7 +327,7 @@ selected(const char *type)
 	struct entry *e;
 
 	/* If no type specified, it's always selected. */
-	for (e = selhead.tqh_first; e != NULL; e = e->entries.tqe_next)
+	TAILQ_FOREACH(e, &selhead, entries)
 		if (!strncmp(e->type, type, MFSNAMELEN))
 			return which == IN_LIST ? 1 : 0;
 
@@ -340,7 +340,7 @@ getoptions(const char *type)
 {
 	struct entry *e;
 
-	for (e = opthead.tqh_first; e != NULL; e = e->entries.tqe_next)
+	TAILQ_FOREACH(e, &opthead, entries)
 		if (!strncmp(e->type, type, MFSNAMELEN))
 			return e->options;
 	return "";
@@ -358,7 +358,7 @@ addoption(char *optstr)
 
 	*newoptions++ = '\0';
 
-	for (e = opthead.tqh_first; e != NULL; e = e->entries.tqe_next)
+	TAILQ_FOREACH(e, &opthead, entries)
 		if (!strncmp(e->type, optstr, MFSNAMELEN)) {
 			e->options = catopt(e->options, newoptions, 1);
 			return;
