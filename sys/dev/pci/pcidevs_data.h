@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.941 2005/10/12 19:34:16 brad Exp 
+ *	OpenBSD: pcidevs,v 1.942 2005/10/15 11:42:52 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6943,19 +6943,23 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HSP MicroModem 56",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_XX5,
-	    "PCIHB5",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_LE,
+	    "CMIC-LE",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB20,
-	    "I/O Bridge",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20_LE,
+	    "CNB20-LE Host",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_XX7,
-	    "PCIHB7",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20HE_1,
+	    "CNB20HE Host",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20HE,
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20_LE_2,
+	    "CNB20-LE Host",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20HE_2,
 	    "CNB20HE Host",
 	},
 	{
@@ -6968,39 +6972,51 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_HE,
-	    "CMIC_HE Host",
+	    "CMIC-HE",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_LE,
-	    "CMIC_LE Host",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_WS_GC_LE,
+	    "CMIC-WS Host (GC-LE)",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CNB20_HE,
-	    "CNB20-HE",
+	    "CNB20-HE Host",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_SL,
-	    "CMIC_SL Host",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_LE_GC_LE,
+	    "CNB20-HE Host (GC-LE)",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOBX2,
-	    "CIOBX2",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_GC_1,
+	    "CMIC-GC Host",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_GC_2,
+	    "CMIC-GC Host",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_GCNB_LE,
+	    "GCNB-LE Host",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB_X2,
+	    "CIOB-X2 PCIX",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB_E,
 	    "CIOB-E",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ROSB4,
-	    "ROSB4 SouthBridge",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_OSB4,
+	    "OSB4",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5,
-	    "CSB5 SouthBridge",
+	    "CSB5",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_PCI,
-	    "CSB6 PCI",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6,
+	    "CSB6",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_OSB4_IDE,
@@ -7011,11 +7027,15 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CSB5 IDE",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_IDE,
-	    "CSB6 IDE",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_RAID_IDE,
+	    "CSB6 RAID/IDE",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_IDE2,
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_IDE,
+	    "HT-1000 IDE",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_IDE,
 	    "CSB6 IDE",
 	},
 	{
@@ -7027,20 +7047,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CSB6 USB",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5BRIDGE,
-	    "CSB5 PCI",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5_LPC_1,
+	    "CSB5 LPC",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_LPC,
-	    "CSB6 LPC",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_GCLE_2,
+	    "GCLE-2 Host",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ISA,
-	    "PCI/ISA",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5_LPC_2,
+	    "CSB5 LPC",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_SATA,
-	    "SATA",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_K2_SATA,
+	    "K2 SATA",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_FRODO4_SATA,
+	    "Frodo4 SATA",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_FRODO8_SATA,
+	    "Frodo8 SATA",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_SATA,
+	    "HT-1000 SATA",
 	},
 	{
 	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7130,
