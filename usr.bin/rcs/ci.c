@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.28 2005/10/15 18:26:24 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.29 2005/10/15 19:45:23 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -51,14 +51,14 @@
 #define DATE_MTIME      -2
 
 static char * checkin_diff_file(RCSFILE *, RCSNUM *, const char *);
-static char * checkin_getlogmsg(char *, char *, RCSNUM *, RCSNUM *);
+static char * checkin_getlogmsg(char *, RCSNUM *, RCSNUM *);
 
 void
 checkin_usage(void)
 {
 	fprintf(stderr,
-	    "usage: ci [-jMNqV] [-d [date]] [-k mode] [-l [rev]] [-m msg]\n"
-	    "          [-r [rev]] [-u [rev]] file ...\n");
+	    "usage: ci [-jMNqV] [-d[date]] [-f[rev]] [-kmode] [-l[rev]]\n"
+	    "          [-mmsg] [-r[rev]] [-u[rev]] file ...\n");
 }
 
 /*
@@ -70,7 +70,7 @@ checkin_usage(void)
 int
 checkin_main(int argc, char **argv)
 {
-	int i, ch, flags, lkmode, interactive, rflag, status;
+	int i, ch, flags, force, lkmode, interactive, rflag, status;
 	mode_t fmode;
 	time_t date;
 	RCSFILE *file;
@@ -85,7 +85,7 @@ checkin_main(int argc, char **argv)
 	file = NULL;
 	rcs_msg = NULL;
 	newrev =  NULL;
-	fmode = lkmode = verbose = rflag = status = 0;
+	fmode = force = lkmode = verbose = rflag = status = 0;
 	interactive = 1;
 
 	if ((username = getlogin()) == NULL) {
@@ -93,7 +93,7 @@ checkin_main(int argc, char **argv)
 		exit(1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "j:l::M:N:qu::d::r::m:k:V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::j:l::M:N:qu::d::r::m:k:V")) != -1) {
 		switch (ch) {
 		case 'd':
 			if (rcs_optarg == NULL)
@@ -102,6 +102,15 @@ checkin_main(int argc, char **argv)
 				cvs_log(LP_ERR, "invalide date");
 				exit(1);
 			}
+			break;
+		case 'f':
+			if (rcs_optarg != NULL) {
+				if ((newrev = rcsnum_parse(rcs_optarg)) == NULL) {
+					cvs_log(LP_ERR, "bad revision number");
+					exit(1);
+				}
+			}
+			force = 1;
 			break;
 		case 'h':
 			(usage)();
@@ -167,11 +176,14 @@ checkin_main(int argc, char **argv)
 			cvs_log(LP_ERR, "failed to open rcsfile '%s'", fpath);
 			exit(1);
 		}
+
 		/*
 		 * If rev is not specified on the command line,
 		 * assume HEAD.
 		 */
 		frev = file->rf_head;
+		cvs_printf("%s  <--  %s\n", fpath, argv[i]);
+
 		/*
 		 * If revision passed on command line is less than HEAD, bail.
 		 */
@@ -196,6 +208,32 @@ checkin_main(int argc, char **argv)
 		filec = (char *)cvs_buf_release(bp);
 
 		/*
+		 * Get RCS patch
+		 */
+		if ((deltatext = checkin_diff_file(file, frev, argv[i])) == NULL) {
+			cvs_log(LP_ERR, "failed to get diff");
+			exit(1);
+		}
+
+		/*
+		 * If -f is not specified and there are no differences, tell the
+		 * user and revert to latest version.
+		 */
+		if ((!force) && (strlen(deltatext) < 1)) {
+			char buf[16];
+			rcsnum_tostr(frev, buf, sizeof(buf));
+			cvs_log(LP_WARN, 
+			    "file is unchanged; reverting to previous revision %s",
+			    buf);
+			(void)unlink(argv[i]);
+			if (lkmode != 0)
+				checkout_rev(file, frev, argv[i], lkmode, username);
+			rcs_close(file);
+			cvs_printf("done\n");
+			continue;
+		}
+
+		/*
 		 * Check for a lock belonging to this user. If none,
 		 * abort check-in.
 		 */
@@ -203,6 +241,7 @@ checkin_main(int argc, char **argv)
 			cvs_log(LP_ERR, "%s: no lock set by %s", fpath,
 			    username);
 			status = 1;
+			rcs_close(file);
 			continue;
 		} else {
 			TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
@@ -212,6 +251,7 @@ checkin_main(int argc, char **argv)
 					    "%s: no lock set by %s", fpath,
 					    username);
 					status = 1;
+					rcs_close(file);
 					continue;
 				}
 			}
@@ -221,7 +261,7 @@ checkin_main(int argc, char **argv)
 		 * If no log message specified, get it interactively.
 		 */
 		if (rcs_msg == NULL)
-			rcs_msg = checkin_getlogmsg(fpath, argv[i], frev, newrev);
+			rcs_msg = checkin_getlogmsg(fpath, frev, newrev);
 
 		/*
 		 * Remove the lock
@@ -230,14 +270,6 @@ checkin_main(int argc, char **argv)
 			if (rcs_errno != RCS_ERR_NOENT)
 			    cvs_log(LP_WARN, "failed to remove lock");
                 }
-
-		/*
-		 * Get RCS patch
-		 */
-		if ((deltatext = checkin_diff_file(file, frev, argv[i])) == NULL) {
-			cvs_log(LP_ERR, "failed to get diff");
-			exit(1);
-		}
 
 		/*
 		 * Current head revision gets the RCS patch as rd_text
@@ -253,7 +285,6 @@ checkin_main(int argc, char **argv)
 		 */
 		if (date == DATE_MTIME) {
 			struct stat sb;
-			tzset();
 			if (stat(argv[i], &sb) != 0) {
 				cvs_log(LP_ERRNO, "failed to stat: `%s'", argv[i]);
 				rcs_close(file);
@@ -367,7 +398,7 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
  * Get log message from user interactively.
  */
 static char *
-checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev, RCSNUM *rev2)
+checkin_getlogmsg(char *rcsfile, RCSNUM *rev, RCSNUM *rev2)
 {
 	char   *rcs_msg, buf[128], nrev[16], prev[16];
 	BUF    *logbuf;
@@ -387,7 +418,6 @@ checkin_getlogmsg(char *rcsfile, char *workingfile, RCSNUM *rev, RCSNUM *rev2)
 		cvs_log(LP_ERR, "failed to allocate log buffer");
 		return (NULL);
 	}
-	cvs_printf("%s  <--  %s\n", rcsfile, workingfile);
 	cvs_printf("new revision: %s; previous revision: %s\n", nrev, prev);
 	cvs_printf("enter log message, terminated with single "
 	    "'.' or end of file:\n");
