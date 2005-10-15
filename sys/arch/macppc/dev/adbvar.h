@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.4 2002/06/07 07:14:48 miod Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.5 2005/10/15 15:01:23 martin Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.3 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*-
@@ -75,6 +75,11 @@ struct adb_softc {
 /* adb_direct.c */
 extern int adbHardware;
 
+/* types of adb hardware that we (will eventually) support */
+#define ADB_HW_UNKNOWN		0x01	/* don't know */
+#define ADB_HW_PMU		0x04	/* PowerBook series */
+#define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
+
 #define ADB_CMDADDR(cmd)	((u_int8_t)((cmd) & 0xf0) >> 4)
 #define ADBFLUSH(dev)		((((u_int8_t)(dev) & 0x0f) << 4) | 0x01)
 #define ADBLISTEN(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x08 | (reg))
@@ -90,3 +95,4 @@ int	adb_read_date_time(unsigned long *t);
 int	adb_set_date_time(unsigned long t);
 int	adb_intr(void *arg);
 void	adb_cuda_autopoll(void);
+int	adb_op_sync(Ptr, Ptr, Ptr, short);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.16 2003/10/16 03:54:48 deraadt Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.17 2005/10/15 15:01:23 martin Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <macppc/dev/akbdmap.h>
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/amsvar.h>
-#include <macppc/dev/adb_direct.h>
 
 #include "aed.h"
 

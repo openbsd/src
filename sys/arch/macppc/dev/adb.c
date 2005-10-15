@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.11 2005/09/30 01:28:05 deraadt Exp $	*/
+/*	$OpenBSD: adb.c,v 1.12 2005/10/15 15:01:23 martin Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -43,7 +43,6 @@
 #include <machine/autoconf.h>
 
 #include <macppc/dev/adbvar.h>
-#include <macppc/dev/adb_direct.h>
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/viareg.h>
 
@@ -124,7 +123,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	if (strcmp(ca->ca_name, "via-cuda") == 0)
 		adbHardware = ADB_HW_CUDA;
 	else if (strcmp(ca->ca_name, "via-pmu") == 0)
-		adbHardware = ADB_HW_PB;
+		adbHardware = ADB_HW_PMU;
 
 	adb_polling = 1;
 	ADBReInit();
@@ -149,7 +148,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	case ADB_HW_CUDA:
 		printf(": via-cuda");
 		break;
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		printf(": via-pmu");
 		break;
 	}

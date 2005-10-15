@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.11 2004/05/28 23:50:58 drahn Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.12 2005/10/15 15:01:23 martin Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/adbvar.h>
-#include <macppc/dev/adb_direct.h>
 #include <macppc/dev/pm_direct.h>
 
 #define printf_intr printf
@@ -616,7 +615,7 @@ int
 adb_intr(void *arg)
 {
 	switch (adbHardware) {
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_intr();
 		break;
 
@@ -690,7 +689,7 @@ adb_pass_up(struct adbCommand *in)
 			start = 4;
 			break;
 
-		case ADB_HW_PB:
+		case ADB_HW_PMU:
 			cmd = in->data[1];
 			if (in->data[0] < 2)
 				len = 0;
@@ -848,7 +847,7 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 	int result;
 
 	switch (adbHardware) {
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		result = pm_adb_op((u_char *)buffer, (void *)compRout,
 		    (void *)data, (int)command);
 
@@ -885,7 +884,7 @@ adb_hw_setup(void)
 
 	switch (adbHardware) {
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		/*
 		 * XXX - really PM_VIA_CLR_INTR - should we put it in
 		 * pm_direct.h?
@@ -948,7 +947,7 @@ adb_reinit(void)
 	int nonewtimes;		/* times thru loop w/o any new devices */
 
 	/* Make sure we are not interrupted while building the table. */
-	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
+	if (adbHardware != ADB_HW_PMU)	/* ints must be on for PB? */
 		s = splhigh();
 
 	ADBNumDevices = 0;	/* no devices yet */
@@ -1175,7 +1174,7 @@ adb_reinit(void)
 		timeout_add(&adb_cuda_timeout, ADB_TICKLE_TICKS);
 	}
 
-	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
+	if (adbHardware != ADB_HW_PMU)	/* ints must be on for PB? */
 		splx(s);
 }
 
@@ -1202,7 +1201,7 @@ adb_cmd_result(u_char *in)
 			return 0;
 		return 1;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		return 1;
 
 	default:
@@ -1285,7 +1284,7 @@ adb_setup_hw_type(void)
 		adbSoftPower = 1;
 		return;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		adbSoftPower = 1;
 		pm_setup_adb();
 		return;
@@ -1383,7 +1382,7 @@ adb_read_date_time(unsigned long *time)
 	volatile int flag = 0;
 
 	switch (adbHardware) {
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_read_date_time(time);
 		retcode = 0;
 		break;
@@ -1452,7 +1451,7 @@ adb_set_date_time(unsigned long time)
 
 		return 0;
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_set_date_time(time);
 		return 0;
 
@@ -1474,7 +1473,7 @@ adb_poweroff(void)
 	adb_polling = 1;
 
 	switch (adbHardware) {
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_adb_poweroff();
 
 		for (;;);		/* wait for power off */
@@ -1575,7 +1574,7 @@ adb_restart()
 			return;
 		while (1);		/* not return */
 
-	case ADB_HW_PB:
+	case ADB_HW_PMU:
 		pm_adb_restart();
 		while (1);		/* not return */
 	}
