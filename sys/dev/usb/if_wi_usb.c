@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.19 2005/08/01 05:36:48 brad Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.20 2005/10/15 00:23:36 fgsch Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1592,10 +1592,6 @@ wi_usb_rridresp(struct wi_usb_chain *c)
 		sc->ridresperr = EIO;
 		return;
 	}
-
-	/* XXX */
-	if (rid == WI_RID_DATA_RATES)
-		frmlen = 2;
 
 	if (frmlen > ltv->wi_len) {
 		sc->ridresperr = ENOSPC;
