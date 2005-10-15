@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 2005/10/15 15:01:23 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.79 2005/10/15 21:45:00 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -990,7 +990,6 @@ void
 boot(int howto)
 {
 	static int syncing;
-	static char str[256];
 
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
@@ -1019,8 +1018,9 @@ boot(int howto)
 #if NADB > 0
 			delay(1000000);
 			adb_poweroff();
-			printf("WARNING: powerdown failed!\n");
+			printf("WARNING: adb powerdown failed!\n");
 #endif
+			OF_interpret("shut-down", 0);
 		}
 
 		printf("halted\n\n");
@@ -1035,8 +1035,8 @@ boot(int howto)
 	adb_restart();  /* not return */
 #endif
 
+	OF_interpret("reset-all", 0);
 	OF_exit();
-	(fw->boot)(str);
 	printf("boot failed, spinning\n");
 	while(1) /* forever */;
 }
