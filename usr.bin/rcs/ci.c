@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.26 2005/10/13 23:00:49 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.27 2005/10/15 14:23:06 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -72,7 +72,7 @@ checkin_main(int argc, char **argv)
 {
 	int i, ch, flags, lkmode, interactive, rflag, status;
 	mode_t fmode;
-	time_t date = DATE_NOW;
+	time_t date;
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN];
@@ -80,6 +80,7 @@ checkin_main(int argc, char **argv)
 	struct rcs_lock *lkp;
 	BUF *bp;
 
+	date = DATE_NOW;
 	flags = RCS_RDWR;
 	file = NULL;
 	rcs_msg = NULL;
@@ -252,6 +253,7 @@ checkin_main(int argc, char **argv)
 		 */
 		if (date == DATE_MTIME) {
 			struct stat sb;
+			tzset();
 			if (stat(argv[i], &sb) != 0) {
 				cvs_log(LP_ERRNO, "failed to stat: `%s'", argv[i]);
 				rcs_close(file);
