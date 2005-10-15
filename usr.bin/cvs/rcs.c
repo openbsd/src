@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.89 2005/10/11 00:10:16 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.90 2005/10/15 22:56:03 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1433,10 +1433,13 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
  * one).  The <msg> argument specifies the log message for that revision, and
  * <date> specifies the revision's date (a value of -1 is
  * equivalent to using the current time).
+ * If <username> is NULL, set the author for this revision to the current user. 
+ * Otherwise, set it to <username>.
  * Returns 0 on success, or -1 on failure.
  */
 int
-rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date)
+rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
+    const char *username)
 {
 	time_t now;
 	struct passwd *pw;
@@ -1490,7 +1493,10 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date)
 	rcsnum_cpy(old, rdp->rd_next, 0);
 	rcsnum_free(old);
 
-	if ((rdp->rd_author = cvs_strdup(pw->pw_name)) == NULL) {
+	if (username == NULL)
+		username = pw->pw_name;
+
+	if ((rdp->rd_author = cvs_strdup(username)) == NULL) {
 		rcs_freedelta(rdp);
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.26 2005/08/04 12:20:42 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.27 2005/10/15 22:56:02 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -314,7 +314,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	}
 
 	rev = rcsnum_brtorev(imp_brnum);
-	if (rcs_rev_add(rf, rev, cvs_msg, stamp) < 0) {
+	if (rcs_rev_add(rf, rev, cvs_msg, stamp, NULL) < 0) {
 		cvs_log(LP_ERR, "failed to add revision: %s",
 		    rcs_errstr(rcs_errno));
 		rcs_close(rf);
@@ -331,7 +331,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	}
 
 	rcsnum_cpy(imp_brnum, rev, 2);
-	if (rcs_rev_add(rf, rev, cvs_msg, stamp) < 0) {
+	if (rcs_rev_add(rf, rev, cvs_msg, stamp, NULL) < 0) {
 		cvs_log(LP_ERR, "failed to add revision: %s",
 		    rcs_errstr(rcs_errno));
 		rcs_close(rf);
