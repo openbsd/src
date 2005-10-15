@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.14 2005/10/11 15:50:25 niallo Exp $
+#	$OpenBSD: Makefile,v 1.15 2005/10/15 20:06:07 niallo Exp $
 
 .PATH:	${.CURDIR}/../cvs
 
 PROG=	rcs
-MAN=	rcs.1
+MAN=	ci.1 co.1 ident.1 rcs.1 rcsclean.1 rcsdiff.1 rlog.1
 
 SRCS=	ci.c co.c ident.c rcsclean.c rcsdiff.c rcsprog.c rlog.c buf.c date.y \
 	diff.c log.c rcs.c rcsnum.c strtab.c
