@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.29 2004/12/30 10:01:47 jmc Exp $
+.\"	$OpenBSD: mtree.8,v 1.30 2005/10/15 08:20:40 jmc Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -175,6 +175,8 @@ The file group as a numeric value.
 The file group as a symbolic name.
 .It Cm ignore
 Ignore any file hierarchy below this file.
+.It Cm link
+The file the symbolic link is expected to reference.
 .It Cm md5digest
 The MD5 message digest of the file.
 .It Cm mode
@@ -191,14 +193,8 @@ not in the file hierarchy.
 The RIPEMD-160 message digest of the file.
 .It Cm sha1digest
 The SHA-1 message digest of the file.
-.It Cm uid
-The file owner as a numeric value.
-.It Cm uname
-The file owner as a symbolic name.
 .It Cm size
 The size, in bytes, of the file.
-.It Cm link
-The file the symbolic link is expected to reference.
 .It Cm time
 The last modification time of the file.
 .It Cm type
@@ -220,6 +216,10 @@ symbolic link
 .It Cm socket
 socket
 .El
+.It Cm uid
+The file owner as a numeric value.
+.It Cm uname
+The file owner as a symbolic name.
 .El
 .Pp
 The default set of keywords are
