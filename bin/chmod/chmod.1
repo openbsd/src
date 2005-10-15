@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.27 2004/02/14 18:14:14 jmc Exp $
+.\"	$OpenBSD: chmod.1,v 1.28 2005/10/15 08:40:07 jmc Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -46,7 +46,7 @@
 .Op Fl H | L | P
 .Oc
 .Ar mode
-.Op Ar
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -58,10 +58,6 @@ The mode of a file dictates its permissions, among other attributes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl R
-Recursively descend through any specified directory arguments.
-Change the modes of the file hierarchies rooted in the files
-instead of just the files themselves.
 .It Fl H
 If the
 .Fl R
@@ -75,6 +71,10 @@ option is also specified, all symbolic links are followed.
 If the
 .Fl R
 option is also specified, no symbolic links are followed.
+.It Fl R
+Recursively descend through any specified directory arguments.
+Change the modes of the file hierarchies rooted in the files
+instead of just the files themselves.
 .El
 .Pp
 Symbolic links do not have modes, so unless the
@@ -174,7 +174,6 @@ and, of course, the
 binary itself.
 .Ss Symbolic modes
 Symbolic modes are specified according to the following format:
-.Pp
 .Bd -filled -offset indent
 .Nm chmod
 .Sm off
