@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.14 2005/10/15 18:26:24 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.15 2005/10/15 21:23:54 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -133,15 +133,6 @@ checkout_main(int argc, char **argv)
 			continue;
 		}
 		rcs_close(file);
-		if (verbose == 1) {
-			printf("revision %s ", buf);
-			if (lock == LOCK_LOCK)
-				printf("(locked)");
-			else if (lock == LOCK_UNLOCK)
-				printf("(unlocked)");
-			printf("\n");
-			printf("done\n");
-		}
 	}
 
 	if (rev != RCS_HEAD_REV)
@@ -173,12 +164,15 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 	char buf[16];
 	mode_t mode = 0444;
 	BUF *bp;
-	rcsnum_tostr(frev, buf, sizeof(buf));
 
 	/*
-	 * XXX: GNU RCS will check out the latest revision if <frev> is
-	 * greater than HEAD
+	 * Check out the latest revision if <frev> is greater than HEAD
 	 */
+	if (rcsnum_cmp(frev, file->rf_head, 0) == -1)
+		frev = file->rf_head; 
+
+	rcsnum_tostr(frev, buf, sizeof(buf));
+
 	if ((bp = rcs_getrev(file, frev)) == NULL) {
 		cvs_log(LP_ERR, "cannot find revision `%s'", buf);
 		return (-1);
@@ -207,6 +201,15 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 		return (-1);
 	}
 	cvs_buf_free(bp);
+	if (verbose == 1) {
+		cvs_printf("revision %s ", buf);
+		if (lkmode == LOCK_LOCK)
+			cvs_printf("(locked)");
+		else if (lkmode == LOCK_UNLOCK)
+			cvs_printf("(unlocked)");
+		cvs_printf("\n");
+		cvs_printf("done\n");
+	}
 	return (0);
 }
 
