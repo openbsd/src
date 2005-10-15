@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.8 2005/10/15 20:02:32 niallo Exp $
+.\"     $OpenBSD: ci.1,v 1.9 2005/10/15 23:55:39 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -24,13 +24,14 @@
 .Nm
 .Bk -words
 .Op Fl jMNqV
-.Op Fl d Op Ar date
-.Op Fl f Op Ar rev
-.Op Fl k Ar mode
-.Op Fl l Op Ar rev
-.Op Fl m Ar msg
-.Op Fl r Op Ar rev
-.Op Fl u Op Ar rev
+.Op Fl d Ns Op Ar date
+.Op Fl f Ns Op Ar rev
+.Op Fl k Ns Ar mode
+.Op Fl l Ns Op Ar rev
+.Op Fl m Ns Ar msg
+.Op Fl r Ns Op Ar rev
+.Op Fl u Ns Op Ar rev
+.Op Fl w Ns Ar username
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -40,22 +41,22 @@ program is used to check new revisions into RCS files.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
-.It Fl d Op Ar date
+.It Fl d Ns Op Ar date
 Uses
 .Ar date
 for check-in date and time.
 If
 .Ar date
 is not specified, use the working file's last modification time.
-.It Fl f Op Ar rev
+.It Fl f Ns Op Ar rev
 Force check in - optionally to
 .Ar rev
 - even if no changes have been made to the working file.
 .It Fl I
 Interactive mode.
-.It Fl k Ar mode
+.It Fl k Ns Ar mode
 Specify the keyword substitution mode.
-.It Fl l Op Ar rev
+.It Fl l Ns Op Ar rev
 The same as
 .Fl r ,
 but also immediately checks out the deposited revision and locks it.
@@ -63,14 +64,14 @@ This is useful if you wish to continue to edit the working file after check-in.
 .It Fl M
 Set the modification time of the file to the date of the
 retrieved revision.
-.It Fl m Ar msg
+.It Fl m Ns Ar msg
 Specify a log message.
 A line beginning with a hash character
 .Pq Sq #
 is considered a comment and ignored.
 .It Fl q
 Be quiet about reporting.
-.It Fl r Op Ar rev
+.It Fl r Ns Op Ar rev
 Check in revision
 .Ar rev .
 However, if
@@ -81,7 +82,7 @@ or
 .Fl u Op Ar rev
 options, ensuring the default behaviour of releasing a lock and removing the
 working file.
-.It Fl s Ar state
+.It Fl s Ns Ar state
 Sets the state of the deposited revision to the identifier
 .Ar state .
 .It Fl u
@@ -91,14 +92,10 @@ but also immediately checks out the deposited revision read-only.
 Useful if you wish to read the working file after check-in.
 .It Fl V
 Print RCS's version number.
-.It Fl w Ar user
+.It Fl w Ns Ar user
 Uses
 .Ar user
 as the author field of the deposited revision.
-If the
-.Ar user
-argument is omitted, the login of the user issuing the command
-is assumed.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT
