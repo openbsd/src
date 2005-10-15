@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.7 2005/10/13 22:59:38 niallo Exp $
+.\"     $OpenBSD: ci.1,v 1.8 2005/10/15 20:02:32 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -25,6 +25,7 @@
 .Bk -words
 .Op Fl jMNqV
 .Op Fl d Op Ar date
+.Op Fl f Op Ar rev
 .Op Fl k Ar mode
 .Op Fl l Op Ar rev
 .Op Fl m Ar msg
@@ -46,8 +47,10 @@ for check-in date and time.
 If
 .Ar date
 is not specified, use the working file's last modification time.
-.It Fl f
-Force check in.
+.It Fl f Op Ar rev
+Force check in - optionally to
+.Ar rev
+- even if no changes have been made to the working file.
 .It Fl I
 Interactive mode.
 .It Fl k Ar mode
