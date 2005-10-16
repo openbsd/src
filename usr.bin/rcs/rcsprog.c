@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.29 2005/10/15 23:39:36 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.30 2005/10/16 00:25:14 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -217,8 +217,8 @@ main(int argc, char **argv)
 	cvs_log_init(LD_STD, 0);
 
 	cmd_argc = 0;
+	cmd_argv[cmd_argc++] = argv[0];
 	if ((rcsinit = getenv("RCSINIT")) != NULL) {
-		cmd_argv[cmd_argc++] = argv[0];
 		ret = rcs_init(rcsinit, cmd_argv + 1,
 		    RCS_CMD_MAXARG - 1);
 		if (ret < 0) {
@@ -337,6 +337,7 @@ rcs_main(int argc, char **argv)
 
 	argc -= rcs_optind;
 	argv += rcs_optind;
+
 	if (argc == 0) {
 		cvs_log(LP_ERR, "no input file");
 		(usage)();
