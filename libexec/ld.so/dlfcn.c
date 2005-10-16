@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.68 2005/10/12 20:36:16 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.69 2005/10/16 04:14:22 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -47,10 +47,8 @@ static elf_object_t *obj_from_addr(const void *addr);
 void *
 dlopen(const char *libname, int flags)
 {
-	elf_object_t *object, *dynobj;
-	Elf_Dyn	*dynp;
+	elf_object_t *object;
 	int failed = 0;
-	const char *deplibname = NULL;
 
 	if (libname == NULL)
 		return _dl_objects;
@@ -85,42 +83,13 @@ dlopen(const char *libname, int flags)
 
 	DL_DEB(("head [%s]\n", object->load_name ));
 
-	dynobj = object;
-	while (dynobj) {
-		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
-			elf_object_t *depobj;
-
-			if (dynp->d_tag != DT_NEEDED)
-				continue;
-
-			deplibname = dynobj->dyn.strtab + dynp->d_un.d_val;
-			DL_DEB(("dlopen: loading: %s required by %s\n",
-			    deplibname, libname));
-			depobj = _dl_load_shlib(deplibname, dynobj, OBJTYPE_LIB,
-				flags);
-			if (!depobj) {
-				failed = 1;
-				break;
-			}
-			/* this add_object should not be here, XXX */
-			_dl_add_object(depobj);
-			_dl_link_child(depobj, dynobj);
-		}
-		dynobj = dynobj->next;
-	}
-
-	if (failed == 1) {
-		if (deplibname != NULL) {
-			DL_DEB(("dlopen: failed to open %s\n", deplibname));
-		}
+	if ((failed = _dl_load_dep_libs(object, flags, 0)) == 1) {
 		_dl_real_close(object);
 		object = NULL;
 		_dl_errno = DL_CANT_LOAD_OBJ;
 	} else {
 		int err;
 		DL_DEB(("tail %s\n", object->load_name ));
-		_dl_link_grpsym(object);
-		_dl_cache_grpsym_list(object);
 		err = _dl_rtld(object);
 		if (err != 0) {
 			_dl_real_close(object);

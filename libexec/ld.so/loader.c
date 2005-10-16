@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.97 2005/10/12 20:36:16 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.98 2005/10/16 04:14:22 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -234,6 +234,99 @@ _dl_setup_env(char **envp)
 	_dl_so_envp = envp;
 }
 
+int
+_dl_load_dep_libs(elf_object_t *object, int flags, int booting)
+{
+	elf_object_t *dynobj;
+	Elf_Dyn *dynp;
+	unsigned int loop;
+	int libcount;
+
+	dynobj = object;
+	while(dynobj) {
+		DL_DEB(("examining: '%s'\n", dynobj->load_name));
+		libcount = 0;
+		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
+			if (dynp->d_tag == DT_NEEDED) {
+				libcount++;
+			}
+		}
+
+		if ( libcount != 0) {
+			struct listent {
+				Elf_Dyn *dynp;
+				elf_object_t *depobj;
+			} *liblist;
+			int *randomlist;
+
+			liblist = _dl_malloc(libcount * sizeof(struct listent));
+			randomlist =  _dl_malloc(libcount * sizeof(int));
+
+			if (liblist == NULL)
+				_dl_exit(5);
+
+			for (dynp = dynobj->load_dyn, loop = 0; dynp->d_tag;
+			    dynp++)
+				if (dynp->d_tag == DT_NEEDED)
+					liblist[loop++].dynp = dynp;
+
+			/* Randomize these */
+			for (loop = 0; loop < libcount; loop++)
+				randomlist[loop] = loop;
+
+			if (!_dl_norandom)
+				for (loop = 1; loop < libcount; loop++) {
+					unsigned int rnd;
+					int cur;
+					rnd = _dl_random();
+					rnd = rnd % (loop+1);
+					cur = randomlist[rnd];
+					randomlist[rnd] = randomlist[loop];
+					randomlist[loop] = cur;
+				}
+
+			for (loop = 0; loop < libcount; loop++) {
+				elf_object_t *depobj;
+				const char *libname;
+				libname = dynobj->dyn.strtab;
+				libname +=
+				    liblist[randomlist[loop]].dynp->d_un.d_val;
+				DL_DEB(("loading: %s required by %s\n", libname,
+				    dynobj->load_name));
+				depobj = _dl_load_shlib(libname, dynobj,
+				    OBJTYPE_LIB, flags);
+				if (depobj == 0) {
+					if (booting) {
+						_dl_printf(
+						    "%s: can't load library '%s'\n",
+						    _dl_progname, libname);
+						_dl_exit(4);
+					} else  {
+						DL_DEB(("dlopen: failed to open %s\n",
+						    libname));
+						_dl_free(liblist);
+						return (1);
+					}
+				}
+				liblist[randomlist[loop]].depobj = depobj;
+			}
+
+			for (loop = 0; loop < libcount; loop++) {
+				_dl_add_object(liblist[loop].depobj);
+				_dl_link_child(liblist[loop].depobj, dynobj);
+			}
+			_dl_free(liblist);
+		}
+		dynobj = dynobj->next;
+	}
+
+	/* add first object manually */
+	_dl_link_grpsym(object);
+	_dl_cache_grpsym_list(object);
+
+	return(0);
+}
+
 /*
  * This is the dynamic loader entrypoint. When entering here, depending
  * on architecture type, the stack and registers are set up according
@@ -248,11 +341,10 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	struct r_debug **map_link;	/* Where to put pointer for gdb */
 	struct r_debug *debug_map;
 	Elf_Dyn *dynp;
-	elf_object_t *dynobj;
 	Elf_Phdr *phdp;
 	char *us = "";
 	unsigned int loop;
-	int libcnt_err = 0;
+	int failed;
 	struct dep_node *n;
 
 	_dl_setup_env(envp);
@@ -323,85 +415,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	if (_dl_preload != NULL)
 		_dl_dopreload(_dl_preload);
 
-	/*
-	 * Now, pick up and 'load' all libraries required. Start
-	 * with the first on the list and then do whatever gets
-	 * added along the tour.
-	 */
-	dynobj = _dl_objects;
-	for (dynobj = _dl_objects; dynobj != NULL; dynobj = dynobj->next) {
-		DL_DEB(("examining: '%s'\n", dynobj->load_name));
-		libcnt_err = 0;
-		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
-			if (dynp->d_tag == DT_NEEDED) {
-				libcnt_err++;
-			}
-		}
-		if ( libcnt_err != 0) {
-			struct listent {
-				Elf_Dyn *dynp;
-				elf_object_t *dynobj;
-			} *liblist;
-			int *randomlist;
-
-			liblist = _dl_malloc(libcnt_err *
-			    sizeof(struct listent));
-			randomlist =  _dl_malloc(libcnt_err * sizeof(int));
-			if (liblist == NULL)
-				_dl_exit(5);
-
-			for (dynp = dynobj->load_dyn, loop = 0;
-			    dynp->d_tag;
-			    dynp++)
-				if (dynp->d_tag == DT_NEEDED)
-					liblist[loop++].dynp = dynp;
-
-			/* Randomize these */
-			for (loop = 0; loop < libcnt_err; loop++)
-				randomlist[loop] = loop;
-
-			if (!_dl_norandom)
-				for (loop = 1; loop < libcnt_err; loop++) {
-					unsigned int rnd;
-					int cur;
-
-					rnd = _dl_random();
-
-					rnd = rnd % (loop+1);
-
-					cur = randomlist[rnd];
-					randomlist[rnd] = randomlist[loop];
-					randomlist[loop] = cur;
-				}
-
-			for (loop = 0; loop < libcnt_err; loop++) {
-				elf_object_t *depobj;
-				const char *libname;
-
-				libname = dynobj->dyn.strtab;
-				libname +=
-				    liblist[randomlist[loop]].dynp->d_un.d_val;
-				DL_DEB(("needs: '%s'\n", libname));
-				depobj = _dl_load_shlib(libname, dynobj,
-				    OBJTYPE_LIB, DL_LAZY|RTLD_GLOBAL);
-				if (depobj == 0) {
-					_dl_printf(
-					    "%s: can't load library '%s'\n",
-					    _dl_progname, libname);
-					_dl_exit(4);
-				}
-				liblist[randomlist[loop]].dynobj = depobj;
-			}
-			for (loop = 0; loop < libcnt_err; loop++) {
-				_dl_add_object(liblist[loop].dynobj);
-				_dl_link_child(liblist[loop].dynobj, dynobj);
-			}
-			_dl_free(liblist);
-		}
-	}
-
-	_dl_link_grpsym(exe_obj);
-	_dl_cache_grpsym_list(exe_obj);
+	_dl_load_dep_libs(exe_obj, DL_LAZY|RTLD_GLOBAL, 1);
 
 	/*
 	 * Now add the dynamic loader itself last in the object list
@@ -421,17 +435,17 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * Everything should be in place now for doing the relocation
 	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
-	libcnt_err = 0;
+	failed = 0;
 	if (_dl_traceld == NULL)
-		libcnt_err = _dl_rtld(_dl_objects);
+		failed = _dl_rtld(_dl_objects);
 
 	if (_dl_debug || _dl_traceld)
 		_dl_show_objects();
 
 	DL_DEB(("dynamic loading done, %s.\n",
-	    (libcnt_err == 0) ? "success":"failed"));
+	    (failed == 0) ? "success":"failed"));
 
-	if (libcnt_err != 0)
+	if (failed != 0)
 		_dl_exit(1);
 
 	if (_dl_traceld)
