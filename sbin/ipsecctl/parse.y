@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2005/10/16 21:24:45 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2005/10/16 21:29:22 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,7 +48,7 @@ static struct ipsecctl	*ipsec = NULL;
 static FILE		*fin = NULL;
 static int		 lineno = 1;
 static int		 errors = 0;
-static int		 debug = 5;
+static int		 debug = 0;
 
 const struct ipsec_xf authxfs[] = {
 	{"unknown",		AUTHXF_UNKNOWN,		0,	0},
