@@ -1,0 +1,18 @@
+C set [Phase 1]:192.168.3.1=peer-192.168.3.1 force
+C set [peer-192.168.3.1]:Phase=1 force
+C set [peer-192.168.3.1]:Address=192.168.3.1 force
+C set [IPsec-1.1.1.1-0.0.0.0/0]:Phase=2 force
+C set [IPsec-1.1.1.1-0.0.0.0/0]:ISAKMP-peer=peer-192.168.3.1 force
+C set [IPsec-1.1.1.1-0.0.0.0/0]:Configuration=qm-1.1.1.1-0.0.0.0/0 force
+C set [IPsec-1.1.1.1-0.0.0.0/0]:Local-ID=lid-1.1.1.1 force
+C set [IPsec-1.1.1.1-0.0.0.0/0]:Remote-ID=rid-0.0.0.0/0 force
+C set [qm-1.1.1.1-0.0.0.0/0]:EXCHANGE_TYPE=QUICK_MODE force
+C set [qm-1.1.1.1-0.0.0.0/0]:Suites=QM-ESP-AES-SHA2-256-PFS-SUITE force
+C set [lid-1.1.1.1]:ID-type=IPV4_ADDR force
+C set [lid-1.1.1.1]:Address=1.1.1.1 force
+C set [rid-0.0.0.0/0]:ID-type=IPV4_ADDR_SUBNET force
+C set [rid-0.0.0.0/0]:Network=0.0.0.0 force
+C set [rid-0.0.0.0/0]:Netmask=0.0.0.0 force
+C add [Phase 2]:Connections=IPsec-1.1.1.1-0.0.0.0/0
+t IPsec-1.1.1.1-0.0.0.0/0
+c IPsec-1.1.1.1-0.0.0.0/0
