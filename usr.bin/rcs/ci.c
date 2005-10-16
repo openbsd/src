@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.39 2005/10/16 22:56:22 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.40 2005/10/16 23:30:45 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -243,6 +243,7 @@ checkin_main(int argc, char **argv)
 			if (lkmode != 0)
 				checkout_rev(file, frev, argv[i], lkmode,
 				    username);
+			rcs_lock_remove(file, frev);
 			rcs_close(file);
 			cvs_printf("done\n");
 			continue;
