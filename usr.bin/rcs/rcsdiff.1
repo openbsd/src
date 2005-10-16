@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsdiff.1,v 1.6 2005/10/14 12:14:29 joris Exp $
+.\"     $OpenBSD: rcsdiff.1,v 1.7 2005/10/16 11:58:20 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -25,8 +25,8 @@
 .Bk -words
 .Op Fl cnquV
 .Oo
-.Fl r Ar rev
-.Op Fl r Ar rev2
+.Fl r Ns Ar rev
+.Op Fl r Ns Ar rev2
 .Oc
 .Ar file ...
 .Ek
@@ -44,10 +44,10 @@ See
 for more information.
 .It Fl n
 Produces a diff in the same format that is used in the RCS files.
-.It Fl r Ar rev
+.It Fl r Ns Ar rev
 If one -r option is given, the diff is generated between the
 working file and
-.Ar rev .
+.Ns Ar rev .
 If two -r options are given, the diff is generated between the
 two revisions specified.
 .It Fl q

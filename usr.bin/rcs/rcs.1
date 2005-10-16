@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.6 2005/10/12 16:45:11 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.7 2005/10/16 11:58:20 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -32,10 +32,10 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl aehiLMmUV
-.Op Fl a Ar users
-.Op Fl b Op Ar rev
-.Op Fl e Op Ar users
-.Op Fl m Ar rev : Ns Ar log
+.Op Fl a Ns Ar users
+.Op Fl b Ns Op Ar rev
+.Op Fl e Ns Op Ar users
+.Op Fl m Ns Ar rev : Ns Ar log
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
@@ -45,12 +45,12 @@ files.
 .Pp
 The following options are supported:
 .Bl -tag -width "-e usersXX"
-.It Fl a Ar users
+.It Fl a Ns Ar users
 Add the usernames specified in the comma-separated list
 .Ar users
 to the access list of the RCS files.
-.It Fl b Op Ar rev
-.It Fl e Op Ar users
+.It Fl b Ns Op Ar rev
+.It Fl e Ns Op Ar users
 Remove the usernames specified in the comma-separated list
 .Ar users
 from the access list of the RCS files.
@@ -76,7 +76,7 @@ to
 .Nm
 .Fl u .
 This option is currently ignored.
-.It Fl m Ar rev : Ns Ar msg
+.It Fl m Ns Ar rev : Ns Ar msg
 Replace revision
 .Ar rev Ns 's
 log message with
