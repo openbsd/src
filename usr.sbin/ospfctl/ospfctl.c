@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.19 2005/10/16 17:12:30 stevesk Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.20 2005/10/16 19:31:44 stevesk Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -41,7 +41,6 @@
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_interface_msg(struct imsg *);
-void		 print_baudrate(u_long);
 const char	*print_if_type(enum iface_type type);
 const char	*print_if_state(int);
 const char	*print_nbr_state(int);
