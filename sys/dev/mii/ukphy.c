@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.15 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.16 2005/10/16 22:50:34 brad Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -119,10 +119,10 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": Generic IEEE 802.3u media interface\n");
-	printf("%s: OUI 0x%06x, model 0x%04x, rev. %d\n",
-	    sc->mii_dev.dv_xname, MII_OUI(ma->mii_id1, ma->mii_id2),
-	    MII_MODEL(ma->mii_id2), MII_REV(ma->mii_id2));
+	printf(": Generic IEEE 802.3u media interface, rev. %d:",
+	    MII_REV(ma->mii_id2));
+	printf(" OUI 0x%06x, model 0x%04x\n", MII_REV(ma->mii_id2),
+	    MII_OUI(ma->mii_id1, ma->mii_id2), MII_MODEL(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
