@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.90 2005/10/15 22:56:03 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.91 2005/10/16 17:44:15 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -512,8 +512,6 @@ rcs_write(RCSFILE *rfp)
 	TAILQ_FOREACH(lkp, &(rfp->rf_locks), rl_list) {
 		rcsnum_tostr(lkp->rl_num, numbuf, sizeof(numbuf));
 		fprintf(fp, "\n\t%s:%s", lkp->rl_name, numbuf);
-		if (lkp != TAILQ_LAST(&(rfp->rf_locks), rcs_llist))
-			fprintf(fp, ";");
 	}
 
 	fprintf(fp, ";");
