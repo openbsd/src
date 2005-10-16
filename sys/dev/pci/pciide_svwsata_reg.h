@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_svwsata_reg.h,v 1.1 2005/10/16 20:07:21 kettenis Exp $	*/
+/*	$OpenBSD: pciide_svwsata_reg.h,v 1.2 2005/10/16 20:16:02 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _DEV_PCI_PCIIDE_SVWSATA_REG_H
-#define _DEV_PCI_PCIIDE_SVWSATA_REG_H
+#ifndef _DEV_PCI_PCIIDE_SVWSATA_REG_H_
+#define _DEV_PCI_PCIIDE_SVWSATA_REG_H_
 
 struct pciide_svwsata {
 	bus_space_tag_t		ba5_st;
@@ -30,6 +30,7 @@ struct pciide_svwsata {
 #define SVWSATA_DMA		0x30
 
 #define SVWSATA_SSTATUS		0x40
+#define SVWSATA_SERROR		0x44
 #define SVWSATA_SCONTROL	0x48
 
 u_int8_t svwsata_read_reg(struct channel_softc *, enum wdc_regs);
