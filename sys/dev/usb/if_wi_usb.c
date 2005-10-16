@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.20 2005/10/15 00:23:36 fgsch Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.21 2005/10/16 08:47:50 fgsch Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -538,8 +538,9 @@ wi_send_packet(struct wi_usb_softc *sc, int id)
 
 		err = usbd_transfer(c->wi_usb_xfer);
 		if (err != USBD_IN_PROGRESS && err != USBD_NORMAL_COMPLETION) {
-			printf("%s: wi_usb_send error=%s\n",
-			    USBDEVNAME(sc->wi_usb_dev), usbd_errstr(err));
+			printf("%s: %s: error=%s\n",
+			    USBDEVNAME(sc->wi_usb_dev), __func__,
+			    usbd_errstr(err));
 			/* Stop the interface from process context. */
 			wi_usb_stop(sc);
 			err = EIO;
@@ -1061,8 +1062,9 @@ wi_usb_do_transmit_sync(struct wi_usb_softc *sc, struct wi_usb_chain *c,
 	sc->wi_usb_refcnt++;
 	err = usbd_transfer(c->wi_usb_xfer);
 	if (err != USBD_IN_PROGRESS && err != USBD_NORMAL_COMPLETION) {
-		printf("%s: wi_usb_send error=%s\n",
-		    USBDEVNAME(sc->wi_usb_dev), usbd_errstr(err));
+		printf("%s: %s error=%s\n",
+		    USBDEVNAME(sc->wi_usb_dev), __func__,
+		    usbd_errstr(err));
 		/* Stop the interface from process context. */
 		wi_usb_stop(sc);
 		err = EIO;
