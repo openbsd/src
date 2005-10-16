@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.16 2005/10/16 11:59:06 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.17 2005/10/16 15:46:07 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -127,11 +127,14 @@ checkout_main(int argc, char **argv)
 			frev = file->rf_head;
 		else
 			frev = rev;
+
 		rcsnum_tostr(frev, buf, sizeof(buf));
+
 		if (checkout_rev(file, frev, argv[i], lock, username) < 0) { 
 			rcs_close(file);
 			continue;
 		}
+
 		rcs_close(file);
 	}
 
@@ -195,12 +198,15 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 		}
 		mode = 0444;
 	}
+
 	if (cvs_buf_write(bp, dst, mode) < 0) {
 		cvs_log(LP_ERR, "failed to write revision to file");
 		cvs_buf_free(bp);
 		return (-1);
 	}
+
 	cvs_buf_free(bp);
+
 	if (verbose == 1) {
 		cvs_printf("revision %s ", buf);
 		if (lkmode == LOCK_LOCK)
@@ -210,6 +216,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 		cvs_printf("\n");
 		cvs_printf("done\n");
 	}
+
 	return (0);
 }
 
