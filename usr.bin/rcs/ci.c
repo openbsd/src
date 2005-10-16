@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.33 2005/10/16 11:29:28 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.34 2005/10/16 11:35:11 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -51,7 +51,7 @@
 #define DATE_MTIME      -2
 
 static char * checkin_diff_file(RCSFILE *, RCSNUM *, const char *);
-static char * checkin_getlogmsg(char *, RCSNUM *, RCSNUM *);
+static char * checkin_getlogmsg(RCSNUM *, RCSNUM *);
 
 void
 checkin_usage(void)
@@ -268,7 +268,7 @@ checkin_main(int argc, char **argv)
 		 * If no log message specified, get it interactively.
 		 */
 		if (rcs_msg == NULL)
-			rcs_msg = checkin_getlogmsg(fpath, frev, newrev);
+			rcs_msg = checkin_getlogmsg(frev, newrev);
 
 		/*
 		 * Remove the lock
@@ -409,7 +409,7 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
  * Get log message from user interactively.
  */
 static char *
-checkin_getlogmsg(char *rcsfile, RCSNUM *rev, RCSNUM *rev2)
+checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 {
 	char   *rcs_msg, buf[128], nrev[16], prev[16];
 	BUF    *logbuf;
