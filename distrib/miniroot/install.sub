@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.394 2005/10/16 03:06:12 krw Exp $
+#	$OpenBSD: install.sub,v 1.395 2005/10/16 05:01:59 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -825,6 +825,7 @@ enable_network() {
 			"dhcp")	[ "$name" = "NONE" ] && name=
 				[ "$mask" = "NONE" ] && mask=
 				[ "$bcaddr" = "NONE" ] && bcaddr=
+				dhcpif="$dhcpif $if"
 				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
 				cmd="$cmd; dhclient $if"
 				;;
@@ -883,9 +884,9 @@ enable_network() {
 
 	[[ -n $rtsolif ]] && /mnt/sbin/rtsol -F $rtsolif
 
-	# /mnt/etc/mygate, if it exists, contains the name of my gateway host
-	# that name must be in /etc/hosts.
-	if [ -f /mnt/etc/mygate ]; then
+	# /mnt/etc/mygate contains the address of my gateway host. Ignore
+	# it if any interfaces attempted dhcp.
+	if [[ -z $dhcpif && -f /mnt/etc/mygate ]]; then
 		route delete default >/dev/null 2>&1
 		route -qn add -host default $(stripcom /mnt/etc/mygate)
 	fi
