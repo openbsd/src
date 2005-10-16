@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.90 2005/10/10 20:06:11 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.91 2005/10/16 19:16:36 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1015,14 +1015,18 @@ scsi_interpret_sense(xs)
 		error = EINVAL;
 		break;
 	case SKEY_UNIT_ATTENTION:
-		if (sense->add_sense_code == 0x29)
+		if (sense->add_sense_code == 0x29) {
+			xs->error = XS_BUSY; /* wait & retry */
 			return (ERESTART); /* device or bus reset */
+		}
 		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 			sc_link->flags &= ~SDEV_MEDIA_LOADED;
 		if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
 		    /* XXX Should reupload any transient state. */
-		    (sc_link->flags & SDEV_REMOVABLE) == 0)
-			return ERESTART;
+		    (sc_link->flags & SDEV_REMOVABLE) == 0) {
+			xs->error = XS_BUSY; /* wait & retry */
+			return (ERESTART);
+		}
 		error = EIO;
 		break;
 	case SKEY_WRITE_PROTECT:
