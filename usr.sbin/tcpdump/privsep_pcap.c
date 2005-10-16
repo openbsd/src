@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.12 2005/09/29 18:45:32 canacar Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.13 2005/10/16 18:23:45 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -165,11 +165,7 @@ priv_pcap_setfilter(pcap_t *hpcap, int oflag, u_int32_t netmask)
 	return (fcode);
 
  err:
-	if (fcode) {
-		if (fcode->bf_insns)
-			free(fcode->bf_insns);
-		free(fcode);
-	}
+	free(fcode);
 	return (NULL);
 }
 
@@ -179,12 +175,12 @@ int
 pcap_live(const char *device, int snaplen, int promisc, u_int dlt)
 {
 	char		bpf[sizeof "/dev/bpf0000000000"];
-	int		fd = -1, n = 0;
+	int		fd, n = 0;
 	struct ifreq	ifr;
 	unsigned	v;
 
 	if (device == NULL || snaplen <= 0)
-		goto error;
+		return (-1);
 
 	do {
 		snprintf(bpf, sizeof(bpf), "/dev/bpf%d", n++);
@@ -192,7 +188,7 @@ pcap_live(const char *device, int snaplen, int promisc, u_int dlt)
 	} while (fd < 0 && errno == EBUSY);
 
 	if (fd < 0)
-		goto error;
+		return (-1);
 
 	v = 32768;	/* XXX this should be a user-accessible hook */
 	ioctl(fd, BIOCSBLEN, &v);
@@ -214,8 +210,7 @@ pcap_live(const char *device, int snaplen, int promisc, u_int dlt)
 	return (fd);
 
  error:
-	if (fd >= 0)
-		close(fd);
+	close(fd);
 	return (-1);
 }
 
