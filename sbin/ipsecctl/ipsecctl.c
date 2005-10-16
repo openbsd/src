@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.26 2005/08/22 17:26:46 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.27 2005/10/16 19:52:19 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -331,13 +331,13 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 	mib[3] = NET_KEY_SPD_DUMP;
 
 	if (sysctl(mib, 4, NULL, &need, NULL, 0) == -1)
-		err(1, "sysctl");
+		err(1, "ipsecctl_get_rules: sysctl");
 	if (need == 0)
 		return;
 	if ((buf = malloc(need)) == NULL)
-		err(1, "malloc");
+		err(1, "ipsecctl_get_rules: malloc");
 	if (sysctl(mib, 4, buf, &need, NULL, 0) == -1)
-		err(1, "sysctl");
+		err(1, "ipsecctl_get_rules: sysctl");
 	lim = buf + need;
 
 	for (next = buf; next < lim; next += msg->sadb_msg_len *
@@ -348,7 +348,7 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 
 		rule = calloc(1, sizeof(struct ipsec_rule));
 		if (rule == NULL)
-			err(1, "malloc");
+			err(1, "ipsecctl_get_rules: malloc");
 		rule->nr = ipsec->rule_nr++;
 		rule->type |= RULE_FLOW;
 
@@ -432,16 +432,16 @@ ipsecctl_show_sas(int opts)
 
 	/* When the SADB is empty we get ENOENT, no need to err(). */
 	if (sysctl(mib, 5, NULL, &need, NULL, 0) == -1 && errno != ENOENT)
-		err(1, "sysctl");
+		err(1, "ipsecctl_show_sas: sysctl");
 	if (need == 0) {
 		if (opts & IPSECCTL_OPT_SHOWALL)
 			printf("No entries\n");
 		return;
 	}
 	if ((buf = malloc(need)) == NULL)
-		err(1, "malloc");
+		err(1, "ipsecctl_show_sas: malloc");
 	if (sysctl(mib, 5, buf, &need, NULL, 0) == -1)
-		err(1, "sysctl");
+		err(1, "ipsecctl_show_sas: sysctl");
 	lim = buf + need;
 	for (next = buf; next < lim;
 	    next += msg->sadb_msg_len * PFKEYV2_CHUNK) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2005/08/22 17:26:46 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2005/10/16 19:52:19 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -415,7 +415,7 @@ transforms	: /* empty */			{
 			/* We create just an empty transform */
 			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
 			    == NULL)
-				err(1, "calloc");
+				err(1, "transforms: calloc");
 			$$ = xfs;
 		}
 		| AUTHXF STRING ENCXF STRING	{
@@ -452,7 +452,7 @@ mmxfs		: /* empty */			{
 			/* We create just an empty transform */
 			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
 			    == NULL)
-				err(1, "calloc");
+				err(1, "mmxfs: calloc");
 			$$ = xfs;
 		}
 		| MAIN transforms		{ $$ = $2; }
@@ -464,7 +464,7 @@ qmxfs		: /* empty */			{
 			/* We create just an empty transform */
 			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
 			    == NULL)
-				err(1, "calloc");
+				err(1, "qmxfs: calloc");
 			$$ = xfs;
 		}
 		| QUICK transforms		{ $$ = $2; }
@@ -938,12 +938,12 @@ parsekey(unsigned char *hexkey, size_t len)
 
 	key = calloc(1, sizeof(struct ipsec_key));
 	if (key == NULL)
-		err(1, "calloc");
+		err(1, "parsekey: calloc");
 
 	key->len = len / 2;
 	key->data = calloc(key->len, sizeof(u_int8_t));
 	if (key->data == NULL)
-		err(1, "calloc");
+		err(1, "parsekey: calloc");
 
 	for (i = 0; i < (int)key->len; i++)
 		key->data[i] = x2i(hexkey + 2 * i);
@@ -959,17 +959,17 @@ parsekeyfile(char *filename)
 	unsigned char	*hex;
 
 	if (stat(filename, &sb) < 0)
-		err(1, "stat %s", filename);
+		err(1, "parsekeyfile: stat %s", filename);
 	if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
 		errx(1, "key too %s", sb.st_size ? "large" :
 		    "small");
 	if ((hex = calloc(sb.st_size, sizeof(unsigned char)))
 	    == NULL)
-		err(1, "calloc");
+		err(1, "parsekeyfile: calloc");
 	if ((fd = open(filename, O_RDONLY)) < 0)
-		err(1, "open");
+		err(1, "parsekeyfile: open");
 	if (read(fd, hex, sb.st_size) < sb.st_size)
-		err(1, "read");
+		err(1, "parsekeyfile: read");
 	close(fd);
 	return (parsekey(hex, sb.st_size));
 }
@@ -984,10 +984,10 @@ host(const char *s)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr));
 	if (ipa == NULL)
-		err(1, "calloc");
+		err(1, "host: calloc");
 
 	if ((ipa->name = strdup(s)) == NULL)
-		err(1, "strdup");
+		err(1, "host: strdup");
 	
 	if (strrchr(s, '/') != NULL) {
 		bits = inet_net_pton(AF_INET, s, &ipa->v4, sizeof(ipa->v4));
@@ -1027,12 +1027,12 @@ copyhost(const struct ipsec_addr *src)
 
 	dst = calloc(1, sizeof(struct ipsec_addr));
 	if (dst == NULL)
-		err(1, "calloc");
+		err(1, "copyhost: calloc");
 
 	memcpy(dst, src, sizeof(struct ipsec_addr));
 
 	if ((dst->name = strdup(src->name)) == NULL)
-		err(1, "strdup");
+		err(1, "copyhost: strdup");
 	
 	return dst;
 }
@@ -1057,7 +1057,7 @@ transforms(const char *authname, const char *encname)
 
 	xfs = calloc(1, sizeof(struct ipsec_transforms));
 	if (xfs == NULL)
-		err(1, "calloc");
+		err(1, "transforms: calloc");
 
 	if (authname) {
 		xfs->authxf = parse_xf(authname, authxfs);
@@ -1083,7 +1083,7 @@ copytransforms(const struct ipsec_transforms *xfs)
 
 	newxfs = calloc(1, sizeof(struct ipsec_transforms));
 	if (newxfs == NULL)
-		err(1, "calloc");
+		err(1, "copytransforms: calloc");
 
 	memcpy(newxfs, xfs, sizeof(struct ipsec_transforms));
 	return (newxfs);
@@ -1169,7 +1169,7 @@ create_sa(u_int8_t protocol, struct ipsec_addr *src, struct ipsec_addr *dst,
 
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
-		err(1, "calloc");
+		err(1, "create_sa: calloc");
 
 	r->type |= RULE_SA;
 	r->proto = protocol;
@@ -1194,7 +1194,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
 	if (reverse == NULL)
-		err(1, "calloc");
+		err(1, "reverse_sa: calloc");
 
 	reverse->type |= RULE_SA;
 	reverse->proto = rule->proto;
@@ -1217,7 +1217,7 @@ create_flow(u_int8_t dir, struct ipsec_addr *src, struct ipsec_addr *dst,
 
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
-		err(1, "calloc");
+		err(1, "create_flow: calloc");
 	
 	r->type |= RULE_FLOW;
 
@@ -1255,7 +1255,7 @@ create_flow(u_int8_t dir, struct ipsec_addr *src, struct ipsec_addr *dst,
 	r->proto = proto;
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
-		err(1, "calloc");
+		err(1, "create_flow: calloc");
 	r->auth->srcid = srcid;
 	r->auth->dstid = dstid;
 	r->auth->idtype = ID_FQDN;	/* XXX For now only FQDN. */
@@ -1284,7 +1284,7 @@ reverse_rule(struct ipsec_rule *rule)
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
 	if (reverse == NULL)
-		err(1, "calloc");
+		err(1, "reverse_rule: calloc");
 
 	reverse->type |= RULE_FLOW;
 	
@@ -1303,13 +1303,13 @@ reverse_rule(struct ipsec_rule *rule)
 
 	reverse->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (reverse->auth == NULL)
-		err(1, "calloc");
+		err(1, "reverse_rule: calloc");
 	if (rule->auth->dstid && (reverse->auth->dstid =
 	    strdup(rule->auth->dstid)) == NULL)
-		err(1, "strdup");
+		err(1, "reverse_rule: strdup");
 	if (rule->auth->srcid && (reverse->auth->srcid =
 	    strdup(rule->auth->srcid)) == NULL)
-		err(1, "strdup");
+		err(1, "reverse_rule: strdup");
 	reverse->auth->idtype = rule->auth->idtype;
 	reverse->auth->type = rule->auth->type;
 
@@ -1325,7 +1325,7 @@ create_ike(struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_addr *
 
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
-		err(1, "calloc");
+		err(1, "create_ike: calloc");
 
 	r->type = RULE_IKE;
 
@@ -1356,7 +1356,7 @@ create_ike(struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_addr *
 	r->qmxfs = qmxfs;
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
-		err(1, "calloc");
+		err(1, "create_ike: calloc");
 	r->auth->srcid = srcid;
 	r->auth->dstid = dstid;
 	r->auth->idtype = ID_FQDN;	/* XXX For now only FQDN. */

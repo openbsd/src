@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.23 2005/08/22 17:26:46 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.24 2005/10/16 19:52:19 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -178,7 +178,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 
 		sa_srcid = calloc(len, sizeof(u_int8_t));
 		if (sa_srcid == NULL)
-			err(1, "calloc");
+			err(1, "pfkey_flow: calloc");
 
 		sa_srcid->sadb_ident_type = auth->idtype;
 		sa_srcid->sadb_ident_len = len / 8;
@@ -192,7 +192,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 
 		sa_dstid = calloc(len, sizeof(u_int8_t));
 		if (sa_dstid == NULL)
-			err(1, "calloc");
+			err(1, "pfkey_flow: calloc");
 
 		sa_dstid->sadb_ident_type = auth->idtype;
 		sa_dstid->sadb_ident_len = len / 8;
@@ -532,7 +532,7 @@ pfkey_reply(int sd)
 	}
 	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
 	if ((data = malloc(len)) == NULL)
-		err(1, NULL);
+		err(1, "pfkey_reply: malloc");
 	if (read(sd, data, len) != len) {
 		warn("PF_KEY short read");
 		bzero(data, len);
@@ -580,7 +580,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 
 			rule->local = calloc(1, sizeof(struct ipsec_addr));
 			if (rule->local == NULL)
-				err(1, "malloc");
+				err(1, "pfkey_parse: malloc");
 
 			switch (sa->sa_family) {
 			case AF_INET:
@@ -603,7 +603,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 
 			rule->peer = calloc(1, sizeof(struct ipsec_addr));
 			if (rule->peer == NULL)
-				err(1, "malloc");
+				err(1, "pfkey_parse: malloc");
 
 			switch (sa->sa_family) {
 			case AF_INET:
@@ -627,12 +627,12 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				rule->auth = calloc(1, sizeof(struct
 				    ipsec_auth));
 				if (rule->auth == NULL)
-					err(1, "calloc");
+					err(1, "pfkey_parse: calloc");
 			}
 
 			rule->auth->srcid = calloc(1, len);
 			if (rule->auth->srcid == NULL)
-				err(1, "calloc");
+				err(1, "pfkey_parse: calloc");
 
 			strlcpy(rule->auth->srcid, (char *)(sident + 1), len);
 			break;
@@ -646,12 +646,12 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				rule->auth = calloc(1, sizeof(struct
 				    ipsec_auth));
 				if (rule->auth == NULL)
-					err(1, "calloc");
+					err(1, "pfkey_parse: calloc");
 			}
 
 			rule->auth->dstid = calloc(1, len);
 			if (rule->auth->dstid == NULL)
-				err(1, "calloc");
+				err(1, "pfkey_parse: calloc");
 
 			strlcpy(rule->auth->dstid, (char *)(sident + 1), len);
 			break;
@@ -706,7 +706,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				rule->src = calloc(1,
 				    sizeof(struct ipsec_addr));
 				if (rule->src == NULL)
-					err(1, "calloc");
+					err(1, "pfkey_parse: calloc");
 			}
 
 			switch (sa->sa_family) {
@@ -728,7 +728,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				rule->dst = calloc(1,
 				    sizeof(struct ipsec_addr));
 				if (rule->dst == NULL)
-					err(1, "calloc");
+					err(1, "pfkey_parse: calloc");
 			}
 
 			switch (sa->sa_family) {
@@ -752,7 +752,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				rule->src = calloc(1,
 				    sizeof(struct ipsec_addr));
 				if (rule->src == NULL)
-					err(1, "calloc");
+					err(1, "pfkey_parse: calloc");
 			}
 
 			switch (sa->sa_family) {
@@ -776,7 +776,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				rule->dst = calloc(1,
 				    sizeof(struct ipsec_addr));
 				if (rule->dst == NULL)
-					err(1, "calloc");
+					err(1, "pfkey_parse: calloc");
 			}
 
 			switch (sa->sa_family) {
@@ -921,7 +921,7 @@ int
 pfkey_init(void)
 {
 	if ((fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1)
-		err(1, "failed to open PF_KEY socket");
+		err(1, "pfkey_init: failed to open PF_KEY socket");
 
 	return 0;
 }
