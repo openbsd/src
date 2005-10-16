@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.31 2005/10/15 23:44:58 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.32 2005/10/16 01:55:36 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -284,6 +284,7 @@ checkin_main(int argc, char **argv)
 			    "failed to set new rd_text for head rev");
 			exit (1);
 		}
+
 		/*
 		 * Set the date of the revision to be the last modification time
 		 * of the working file if -d is specified without an argument.
@@ -297,6 +298,7 @@ checkin_main(int argc, char **argv)
 			}
 			date = (time_t)sb.st_mtimespec.tv_sec;
 		}
+
 		/*
 		 * Now add our new revision
 		 */
@@ -314,6 +316,7 @@ checkin_main(int argc, char **argv)
 			rcs_head_set(file, newrev);
 		else
 			newrev = file->rf_head;
+
 		/*
 		 * New head revision has to contain entire file;
 		 */
@@ -423,10 +426,12 @@ checkin_getlogmsg(char *rcsfile, RCSNUM *rev, RCSNUM *rev2)
 		cvs_log(LP_ERR, "failed to allocate log buffer");
 		return (NULL);
 	}
+
 	cvs_printf("new revision: %s; previous revision: %s\n", nrev, prev);
 	cvs_printf("enter log message, terminated with single "
 	    "'.' or end of file:\n");
 	cvs_printf(">> ");
+
 	for (;;) {
 		fgets(buf, (int)sizeof(buf), stdin);
 		if (feof(stdin) || ferror(stdin) || buf[0] == '.')
@@ -434,7 +439,9 @@ checkin_getlogmsg(char *rcsfile, RCSNUM *rev, RCSNUM *rev2)
 		cvs_buf_append(logbuf, buf, strlen(buf));
 		cvs_printf(">> ");
 	}
+
 	cvs_buf_putc(logbuf, '\0');
 	rcs_msg = (char *)cvs_buf_release(logbuf);
+
 	return (rcs_msg);
 }
