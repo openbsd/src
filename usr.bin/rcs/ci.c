@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.36 2005/10/16 11:40:56 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.37 2005/10/16 14:10:57 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -88,7 +88,7 @@ checkin_main(int argc, char **argv)
 	interactive = 1;
 
 
-	while ((ch = rcs_getopt(argc, argv, "f::j:l::M:N:qu::d::r::m:k:Vw:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "d::f::j:k:l::m:M:N:qr::u::Vw:")) != -1) {
 		switch (ch) {
 		case 'd':
 			if (rcs_optarg == NULL)
