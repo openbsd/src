@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.393 2005/10/12 02:48:49 krw Exp $
+#	$OpenBSD: install.sub,v 1.394 2005/10/16 03:06:12 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -829,7 +829,7 @@ enable_network() {
 				cmd="$cmd; dhclient $if"
 				;;
 			"rtsol")
-				rtsif="$rtsif $if"
+				rtsolif="$rtsolif $if"
 				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
 				;;
 			"up")
@@ -881,7 +881,7 @@ enable_network() {
 		done </mnt/etc/hostname.$if
 	done
 
-	[[ -n $rtsif ]] && /mnt/sbin/rtsol -F $rtsif
+	[[ -n $rtsolif ]] && /mnt/sbin/rtsol -F $rtsolif
 
 	# /mnt/etc/mygate, if it exists, contains the name of my gateway host
 	# that name must be in /etc/hosts.
