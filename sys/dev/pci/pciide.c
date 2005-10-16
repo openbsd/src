@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.206 2005/10/15 23:07:09 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.207 2005/10/16 20:07:21 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pciide_i31244_reg.h>
 #include <dev/pci/pciide_ite_reg.h>
 #include <dev/pci/pciide_ixp_reg.h>
+#include <dev/pci/pciide_svwsata_reg.h>
 #include <dev/pci/cy82c693var.h>
 
 /* inlines for reading/writing 8-bit PCI registers */
@@ -252,6 +253,16 @@ int  acard_pci_intr(void *);
 void serverworks_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void serverworks_setup_channel(struct channel_softc *);
 int  serverworks_pci_intr(void *);
+
+void svwsata_chip_map(struct pciide_softc *, struct pci_attach_args *);
+void svwsata_mapreg_dma(struct pciide_softc *, struct pci_attach_args *);
+void svwsata_mapchan(struct pciide_channel *);
+u_int8_t svwsata_dmacmd_read(struct pciide_softc *, int);
+void svwsata_dmacmd_write(struct pciide_softc *, int, u_int8_t);
+u_int8_t svwsata_dmactl_read(struct pciide_softc *, int);
+void svwsata_dmactl_write(struct pciide_softc *, int, u_int8_t);
+void svwsata_dmatbl_write(struct pciide_softc *, int, u_int32_t);
+void svwsata_drv_probe(struct channel_softc *);
 
 void nforce_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void nforce_setup_channel(struct channel_softc *);
@@ -687,6 +698,10 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	{ PCI_PRODUCT_RCC_CSB6_RAID_IDE,
 	  0,
 	  serverworks_chip_map,
+	},
+	{ PCI_PRODUCT_RCC_K2_SATA,
+	  0,
+	  svwsata_chip_map
 	}
 };
 
@@ -934,7 +949,8 @@ pciide_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pp->chip_map(sc, pa);
 
 	WDCDEBUG_PRINT(("pciide: command/status register=0x%x\n",
-	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG)),
+	    DEBUG_PROBE);
 }
 
 /* tell whether the chip is enabled or not */
@@ -6714,7 +6730,324 @@ serverworks_pci_intr(void *arg)
 	return (rv);
 }
 
+void
+svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	pci_intr_handle_t intrhandle;
+	const char *intrstr;
+	int channel;
+	struct pciide_svwsata *ss;
 
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	/* Allocate memory for private data */
+	sc->sc_cookie = malloc(sizeof(struct pciide_svwsata), M_DEVBUF,
+	    M_NOWAIT);
+	ss = sc->sc_cookie;
+	bzero(ss, sizeof(*ss));
+
+	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
+			   PCI_MAPREG_TYPE_MEM |
+			   PCI_MAPREG_MEM_TYPE_32BIT, 0,
+			   &ss->ba5_st, &ss->ba5_sh,
+			   NULL, NULL, 0) != 0) {
+		printf(": unable to map BA5 register space\n");
+		return;
+	}
+
+	printf(": DMA");
+	svwsata_mapreg_dma(sc, pa);
+	printf("\n");
+
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA |
+		    WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 6;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = 4;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_SATA;
+	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	/* We can use SControl and SStatus to probe for drives. */
+	sc->sc_wdcdev.drv_probe = svwsata_drv_probe;
+
+	/* Map and establish the interrupt handler. */
+	if(pci_intr_map(pa, &intrhandle) != 0) {
+		printf("%s: couldn't map native-PCI interrupt\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
+	    pciide_pci_intr, sc, sc->sc_wdcdev.sc_dev.dv_xname);
+	if (sc->sc_pci_ih != NULL) {
+		printf("%s: using %s for native-PCI interrupt\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname,
+		    intrstr ? intrstr : "unknown interrupt");
+	} else {
+		printf("%s: couldn't establish native-PCI interrupt",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, 0) == 0)
+			continue;
+		svwsata_mapchan(cp);
+		sata_setup_channel(&cp->wdc_channel);
+	}
+}
+
+void
+svwsata_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_svwsata *ss = sc->sc_cookie;
+
+	sc->sc_wdcdev.dma_arg = sc;
+	sc->sc_wdcdev.dma_init = pciide_dma_init;
+	sc->sc_wdcdev.dma_start = pciide_dma_start;
+	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+
+	/* XXX */
+	sc->sc_dma_iot = ss->ba5_st;
+	sc->sc_dma_ioh = ss->ba5_sh;
+
+	sc->sc_dmacmd_read = svwsata_dmacmd_read;
+	sc->sc_dmacmd_write = svwsata_dmacmd_write;
+	sc->sc_dmactl_read = svwsata_dmactl_read;
+	sc->sc_dmactl_write = svwsata_dmactl_write;
+	sc->sc_dmatbl_write = svwsata_dmatbl_write;
+
+	/* DMA registers all set up! */
+	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_dma_ok = 1;
+}
+
+u_int8_t
+svwsata_dmacmd_read(struct pciide_softc *sc, int chan)
+{
+	return (bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    (chan << 8) + SVWSATA_DMA + IDEDMA_CMD(0)));
+}
+
+void
+svwsata_dmacmd_write(struct pciide_softc *sc, int chan, u_int8_t val)
+{
+	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    (chan << 8) + SVWSATA_DMA + IDEDMA_CMD(0), val);
+}
+
+u_int8_t
+svwsata_dmactl_read(struct pciide_softc *sc, int chan)
+{
+	return (bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    (chan << 8) + SVWSATA_DMA + IDEDMA_CTL(0)));
+}
+
+void
+svwsata_dmactl_write(struct pciide_softc *sc, int chan, u_int8_t val)
+{
+	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    (chan << 8) + SVWSATA_DMA + IDEDMA_CTL(0), val);
+}
+
+void
+svwsata_dmatbl_write(struct pciide_softc *sc, int chan, u_int32_t val)
+{
+	bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    (chan << 8) + SVWSATA_DMA + IDEDMA_TBL(0), val);
+}
+
+void
+svwsata_mapchan(struct pciide_channel *cp)
+{
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct channel_softc *wdc_cp = &cp->wdc_channel;
+	struct pciide_svwsata *ss = sc->sc_cookie;
+
+	cp->compat = 0;
+	cp->ih = sc->sc_pci_ih;
+
+	if (bus_space_subregion(ss->ba5_st, ss->ba5_sh,
+		(wdc_cp->channel << 8) + SVWSATA_TF0,
+		SVWSATA_TF8 - SVWSATA_TF0, &wdc_cp->cmd_ioh) != 0) {
+		printf("%s: couldn't map %s cmd regs\n",
+		       sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		return;
+	}
+	if (bus_space_subregion(ss->ba5_st, ss->ba5_sh,
+		(wdc_cp->channel << 8) + SVWSATA_TF8, 4,
+		&wdc_cp->ctl_ioh) != 0) {
+		printf("%s: couldn't map %s ctl regs\n",
+		       sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		return;
+	}
+	wdc_cp->cmd_iot = wdc_cp->ctl_iot = ss->ba5_st;
+	wdc_cp->_vtbl = &wdc_svwsata_vtbl;
+	wdcattach(wdc_cp);
+}
+
+void
+svwsata_drv_probe(struct channel_softc *chp)
+{
+	struct pciide_channel *cp = (struct pciide_channel *)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_svwsata *ss = sc->sc_cookie;
+	int channel = chp->channel;
+	uint32_t scontrol, sstatus;
+	uint8_t scnt, sn, cl, ch;
+	int i, s;
+
+	/* XXX This should be done by other code. */
+	for (i = 0; i < 2; i++) {
+		chp->ch_drive[i].chnl_softc = chp;
+		chp->ch_drive[i].drive = i;
+	}
+
+	/*
+	 * Request communication initialization sequence, any speed.
+	 * Performing this is the equivalent of an ATA Reset.
+	 */
+	scontrol = SControl_DET_INIT | SControl_SPD_ANY;
+
+	/*
+	 * XXX We don't yet support SATA power management; disable all
+	 * power management state transitions.
+	 */
+	scontrol |= SControl_IPM_NONE;
+
+	bus_space_write_4(ss->ba5_st, ss->ba5_sh,
+	    (channel << 8) + SVWSATA_SCONTROL, scontrol);
+	delay(50 * 1000);
+	scontrol &= ~SControl_DET_INIT;
+	bus_space_write_4(ss->ba5_st, ss->ba5_sh,
+	    (channel << 8) + SVWSATA_SCONTROL, scontrol);
+	delay(50 * 1000);
+
+	sstatus = bus_space_read_4(ss->ba5_st, ss->ba5_sh,
+	    (channel << 8) + SVWSATA_SSTATUS);
+#if 1
+	printf("%s: port %d: SStatus=0x%08x, SControl=0x%08x\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel, sstatus,
+	    bus_space_read_4(ss->ba5_st, ss->ba5_sh,
+	        (channel << 8) + SVWSATA_SSTATUS));
+#endif
+	switch (sstatus & SStatus_DET_mask) {
+	case SStatus_DET_NODEV:
+		/* No device; be silent. */
+		break;
+
+	case SStatus_DET_DEV_NE:
+		printf("%s: port %d: device connected, but "
+		    "communication not established\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
+		break;
+
+	case SStatus_DET_OFFLINE:
+		printf("%s: port %d: PHY offline\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
+		break;
+
+	case SStatus_DET_DEV:
+		/*
+		 * XXX ATAPI detection doesn't currently work.  Don't
+		 * XXX know why.  But, it's not like the standard method
+		 * XXX can detect an ATAPI device connected via a SATA/PATA
+		 * XXX bridge, so at least this is no worse.  --thorpej
+		 */
+		if (chp->_vtbl != NULL)
+			CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (0 << 4));
+		else
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
+			    wdr_sdh & _WDC_REGMASK, WDSD_IBM | (0 << 4));
+		delay(10);	/* 400ns delay */
+		/* Save register contents. */
+		if (chp->_vtbl != NULL) {
+			scnt = CHP_READ_REG(chp, wdr_seccnt);
+			sn = CHP_READ_REG(chp, wdr_sector);
+			cl = CHP_READ_REG(chp, wdr_cyl_lo);
+			ch = CHP_READ_REG(chp, wdr_cyl_hi);
+		} else {
+			scnt = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_ioh, wdr_seccnt & _WDC_REGMASK);
+			sn = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_ioh, wdr_sector & _WDC_REGMASK);
+			cl = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_ioh, wdr_cyl_lo & _WDC_REGMASK);
+			ch = bus_space_read_1(chp->cmd_iot,
+			    chp->cmd_ioh, wdr_cyl_hi & _WDC_REGMASK);
+		}
+#if 1
+		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel,
+		    scnt, sn, cl, ch);
+#endif
+		/*
+		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
+		 * cases we get wrong values here, so ignore it.
+		 */
+		s = splbio();
+		if (cl == 0x14 && ch == 0xeb)
+			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
+		else
+			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
+		splx(s);
+
+		printf("%s: port %d: device present",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
+		switch ((sstatus & SStatus_SPD_mask) >> SStatus_SPD_shift) {
+		case 1:
+			printf(", speed: 1.5Gb/s");
+			break;
+		case 2:
+			printf(", speed: 3.0Gb/s");
+			break;
+		}
+		printf("\n");
+		break;
+
+	default:
+		printf("%s: port %d: unknown SStatus: 0x%08x\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel, sstatus);
+	}
+}
+
+u_int8_t
+svwsata_read_reg(struct channel_softc *chp, enum wdc_regs reg)
+{
+	if (reg & _WDC_AUX) {
+		return (bus_space_read_4(chp->ctl_iot, chp->ctl_ioh,
+		    (reg & _WDC_REGMASK) << 2));
+	} else {
+		return (bus_space_read_4(chp->cmd_iot, chp->cmd_ioh,
+		    (reg & _WDC_REGMASK) << 2));
+	}
+}
+
+void
+svwsata_write_reg(struct channel_softc *chp, enum wdc_regs reg, u_int8_t val)
+{
+	if (reg & _WDC_AUX) {
+		bus_space_write_4(chp->ctl_iot, chp->ctl_ioh,
+		    (reg & _WDC_REGMASK) << 2, val);
+	} else {
+		bus_space_write_4(chp->cmd_iot, chp->cmd_ioh,
+		    (reg & _WDC_REGMASK) << 2, val);
+	}
+}
+ 
 #define	ACARD_IS_850(sc) \
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_ACARD_ATP850U)
 
