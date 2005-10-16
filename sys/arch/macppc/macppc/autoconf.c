@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.18 2005/10/12 06:52:43 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.19 2005/10/16 22:31:53 kettenis Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.18 2005/10/12 06:52:43 deraadt Exp $
+ *      $Id: autoconf.c,v 1.19 2005/10/16 22:31:53 kettenis Exp $
  */
 
 /*
@@ -521,7 +521,7 @@ findtype(char **s)
 		{ "/scsi@",		"sd", T_SCSI },
 		{ "/ide",		"wd", T_IDE },
 		{ "/ata",		"wd", T_IDE },
-		{ "/k2-sata-root",	"wd", T_IDE },
+		{ "/k2-sata-root",	NULL, T_BUS },
 		{ "/k2-sata",		"wd", T_IDE },
 		{ "/disk@",		"sd", T_DISK },
 		{ "/disk",		"wd", T_DISK },
