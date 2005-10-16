@@ -35,7 +35,7 @@
 #include <getarg.h>
 
 /*
-RCSID("$KTH: main.c,v 1.11 2001/02/20 01:44:52 assar Exp $");
+RCSID("$KTH: main.c,v 1.12 2005/03/31 00:37:42 lha Exp $");
 */
 
 extern FILE *yyin;
@@ -59,8 +59,8 @@ int
 main(int argc, char **argv)
 {
     int ret;
-    char *file;
-    char *name = NULL;
+    const char *file;
+    const char *name = NULL;
     int optind = 0;
 
     if(getarg(args, num_args, argc, argv, &optind))
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 #if 0
 	print_version(NULL);
 #else
-	printf("asn1_compile from heimdal-0.6\n");
+	printf("asn1_compile from heimdal-0.7\n");
 #endif
 	exit(0);
     }

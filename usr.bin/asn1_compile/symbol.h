@@ -31,14 +31,29 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: symbol.h,v 1.6 2001/09/25 13:39:27 assar Exp $ */
+/* $KTH: symbol.h,v 1.11 2003/10/03 00:28:29 lha Exp $ */
 
 #ifndef _SYMBOL_H
 #define _SYMBOL_H
 
-enum typetype { TInteger, TOctetString, TBitString, TSequence, TSequenceOf,
-		TGeneralizedTime, TGeneralString, TApplication, TType, 
-		TUInteger, TEnumerated, TOID };
+enum typetype { 
+    TApplication,
+    TBitString,
+    TBoolean,
+    TChoice,
+    TEnumerated,
+    TGeneralString,
+    TGeneralizedTime,
+    TInteger, 
+    TNull,
+    TOID,
+    TOctetString,
+    TSequence,
+    TSequenceOf,
+    TType, 
+    TUInteger,
+    TUTF8String
+};
 
 typedef enum typetype Typetype;
 
@@ -51,6 +66,7 @@ struct member {
   int optional;
   struct type *type;
   struct member *next, *prev;
+  char *defval;
 };
 
 typedef struct member Member;

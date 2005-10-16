@@ -34,7 +34,7 @@
 #include "gen_locl.h"
 
 /*
-RCSID("$KTH: gen_copy.c,v 1.12 2001/09/25 13:39:26 assar Exp $");
+RCSID("$KTH: gen_copy.c,v 1.14 2003/10/03 00:27:36 lha Exp $");
 */
 
 static void
@@ -57,6 +57,7 @@ copy_type (const char *from, const char *to, const Type *t)
       break;
   case TInteger:
   case TUInteger:
+  case TBoolean:
   case TEnumerated :
       fprintf(codefile, "*(%s) = *(%s);\n", to, from);
       break;
@@ -126,6 +127,11 @@ copy_type (const char *from, const char *to, const Type *t)
       break;
   case TGeneralString:
       copy_primitive ("general_string", from, to);
+      break;
+  case TUTF8String:
+      copy_primitive ("utf8string", from, to);
+      break;
+  case TNull:
       break;
   case TApplication:
       copy_type (from, to, t->subtype);

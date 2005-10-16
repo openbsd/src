@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: lex.l,v 1.19 2001/09/25 23:28:03 assar Exp $ */
+/* $KTH: lex.l,v 1.24 2004/10/13 17:40:21 lha Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -56,35 +56,43 @@ static unsigned lineno = 1;
 
 #undef ECHO
 
+static void handle_comment(int type);
+
 %}
 
 
 %%
 INTEGER			{ return INTEGER; }
+BOOLEAN			{ return BOOLEAN; }
 IMPORTS			{ return IMPORTS; }
 FROM			{ return FROM; }
 SEQUENCE		{ return SEQUENCE; }
+CHOICE			{ return CHOICE; }
 OF			{ return OF; }
 OCTET			{ return OCTET; }
 STRING			{ return STRING; }
 GeneralizedTime		{ return GeneralizedTime; }
 GeneralString		{ return GeneralString; }
+UTF8String		{ return UTF8String; }
+NULL			{ return NULLTYPE; }
 BIT			{ return BIT; }
 APPLICATION		{ return APPLICATION; }
 OPTIONAL		{ return OPTIONAL; }
 BEGIN			{ return TBEGIN; }
 END			{ return END; }
+DEFAULT			{ return DEFAULT; }
 DEFINITIONS		{ return DEFINITIONS; }
 ENUMERATED		{ return ENUMERATED; }
 EXTERNAL		{ return EXTERNAL; }
 OBJECT			{ return OBJECT; }
 IDENTIFIER		{ return IDENTIFIER; }
-[,;{}()|]		{ return *yytext; }
+[-,;{}()|\"]		{ return *yytext; }
 "["			{ return *yytext; }
 "]"			{ return *yytext; }
 ::=			{ return EEQUAL; }
---[^\n]*\n		{ ++lineno; }
--?(0x)?[0-9]+		{ char *e, *y = yytext;
+--			{ handle_comment(0); }
+\/\*			{ handle_comment(1); }
+0x[0-9A-Fa-f]+|[0-9]+	{ char *e, *y = yytext;
 			  yylval.constant = strtol((const char *)yytext,
 						   &e, 0);
 			  if(e == y) 
@@ -98,6 +106,7 @@ IDENTIFIER		{ return IDENTIFIER; }
 			}
 [ \t]			;
 \n			{ ++lineno; }
+\.\.\.			{ return DOTDOTDOT; }
 \.\.			{ return DOTDOT; }
 .			{ error_message("Ignoring char(%c)\n", *yytext); }
 %%
@@ -119,4 +128,59 @@ error_message (const char *format, ...)
      fprintf (stderr, "%s:%d: ", filename(), lineno);
      vfprintf (stderr, format, args);
      va_end (args);
+}
+
+static void
+handle_comment(int type)
+{
+    int c;
+    int start_lineno = lineno;
+    if(type == 0) {
+	int f = 0;
+	while((c = input()) != EOF) {
+	    if(f && c == '-')
+		return;
+	    if(c == '-') {
+		f = 1;
+		continue;
+	    }
+	    if(c == '\n') {
+		lineno++;
+		return;
+	    }
+	    f = 0;
+	}
+    } else {
+	int level = 1;
+	int seen_star = 0;
+	int seen_slash = 0;
+	while((c = input()) != EOF) {
+	    if(c == '/') {
+		if(seen_star) {
+		    if(--level == 0)
+			return;
+		    seen_star = 0;
+		    continue;
+		}
+		seen_slash = 1;
+		continue;
+	    }
+	    if(c == '*') {
+		if(seen_slash) {
+		    level++;
+		    seen_star = seen_slash = 0;
+		    continue;
+		} 
+		seen_star = 1;
+		continue;
+	    }
+	    seen_star = seen_slash = 0;
+	    if(c == '\n') {
+		lineno++;
+		continue;
+	    }
+	}
+    }
+    if(c == EOF)
+	error_message("unterminated comment, possibly started on line %d\n", start_lineno);
 }
