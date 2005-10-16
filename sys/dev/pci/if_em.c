@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.77 2005/10/15 14:43:36 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.78 2005/10/16 17:32:37 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2320,6 +2320,7 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 	}
 
 	while ((current_desc->status & E1000_RXD_STAT_DD) && (count != 0)) {
+		struct mbuf *m = NULL;
 
 		mp = sc->rx_buffer_area[i].m_head;
 		bus_dmamap_sync(sc->rxtag, sc->rx_buffer_area[i].map,
@@ -2455,18 +2456,9 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 			if (eop) {
 				sc->fmp->m_pkthdr.rcvif = ifp;
 				ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-				/*
-				 * Handle BPF listeners. Let the BPF
-				 * user see the packet.
-				 */
-				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, sc->fmp);
-#endif
 				em_receive_checksum(sc, current_desc,
 					    sc->fmp);
-				ether_input_mbuf(ifp, sc->fmp);
+				m = sc->fmp;
 				sc->fmp = NULL;
 				sc->lmp = NULL;
 			}
@@ -2486,11 +2478,25 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 		E1000_WRITE_REG(&sc->hw, RDT, i);
 
 		/* Advance our pointers to the next descriptor */
-		if (++i == sc->num_rx_desc) {
+		if (++i == sc->num_rx_desc)
 			i = 0;
-			current_desc = sc->rx_desc_base;
-		} else
-			current_desc++;
+		if (m != NULL) {
+			sc->next_rx_desc_to_check = i;
+
+#if NBPFILTER > 0
+			/*
+			 * Handle BPF listeners. Let the BPF
+			 * user see the packet.
+			 */
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
+
+			ether_input_mbuf(ifp, m);
+
+			i = sc->next_rx_desc_to_check;
+		}
+		current_desc = &sc->rx_desc_base[i];
 	}
 	sc->next_rx_desc_to_check = i;
 }
