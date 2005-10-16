@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.37 2005/10/16 14:10:57 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.38 2005/10/16 22:23:54 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -77,6 +77,7 @@ checkin_main(int argc, char **argv)
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN];
 	char *rcs_msg, *filec, *deltatext, *username;
+	const char *symbol = NULL;
 	struct rcs_lock *lkp;
 	BUF *bp;
 
@@ -88,7 +89,7 @@ checkin_main(int argc, char **argv)
 	interactive = 1;
 
 
-	while ((ch = rcs_getopt(argc, argv, "d::f::j:k:l::m:M:N:qr::u::Vw:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "d::f::j:k:l::m:M:N:n:qr::u::Vw:")) != -1) {
 		switch (ch) {
 		case 'd':
 			if (rcs_optarg == NULL)
@@ -123,6 +124,16 @@ checkin_main(int argc, char **argv)
 			rcs_msg = rcs_optarg;
 			interactive = 0;
 			cvs_printf("rcs_msg: %s\n", rcs_msg);
+			break;
+		case 'n':
+			if ((symbol = strdup(rcs_optarg)) == NULL) {
+				cvs_log(LP_ERRNO, "out of memory");
+				exit(1);
+			}
+			if (rcs_sym_check(symbol) != 1) {
+				cvs_log(LP_ERR, "invalid symbol `%s'", symbol);
+				exit(1);
+			}
 			break;
 		case 'q':
 			verbose = 0;
@@ -322,6 +333,29 @@ checkin_main(int argc, char **argv)
                 if (rcs_deltatext_set(file, frev, filec) == -1) {
 			cvs_log(LP_ERR, "failed to set new head revision");
 			exit(1);
+		}
+
+		/*
+		 * Attach a symbolic name to this revision if specified.
+		 */
+		if (symbol != NULL) {
+			cvs_printf("symbol: %s\n", symbol);
+			int ret = 0;
+			if ((ret = rcs_sym_add(file, symbol, newrev) == -1)
+			    && (rcs_errno == RCS_ERR_DUPENT)) {
+				char tmp[16];
+				rcsnum_tostr(rcs_sym_getrev(file, symbol), tmp, sizeof(tmp));
+				cvs_log(LP_ERR, "symbolic name %s already bound to %s",
+				    symbol, tmp);
+				status = 1;
+				rcs_close(file);
+				continue;
+			} else if (ret == -1) {
+				cvs_printf("problem adding symbol: %s\n", symbol);
+				status = 1;
+				rcs_close(file);
+				continue;
+			}
 		}
 
 		free(deltatext);
