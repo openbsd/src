@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.5 2005/09/30 21:37:21 kettenis Exp $	*/
+/*	$OpenBSD: ht.c,v 1.6 2005/10/16 20:22:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -320,8 +320,7 @@ ht_intr_map(void *cpv, pcitag_t tag, int pin, int line,
 #endif
 
 	*ihp = -1;
-        if (pin == PCI_INTERRUPT_PIN_NONE ||
-	    line == PCI_INTERRUPT_NO_CONNECTION)
+        if (line == PCI_INTERRUPT_NO_CONNECTION)
                 error = 1; /* No IRQ used. */
         else if (pin > PCI_INTERRUPT_PIN_MAX) {
                 printf("ht_intr_map: bad interrupt pin %d\n", pin);
