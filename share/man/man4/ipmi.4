@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipmi.4,v 1.2 2005/10/07 09:12:38 jmc Exp $
+.\"	$OpenBSD: ipmi.4,v 1.3 2005/10/16 18:57:44 marco Exp $
 .\"
 .\" Copyright (c) Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -66,7 +66,7 @@ Access to monitored information such as temperatures, voltages, fan status
 etc., is provided via the IPMI Sensor Model.
 Instead of providing direct access to the monitoring hardware,
 IPMI provides access by abstracted sensor commands
-such as the "Get Seonsor Reading" command,
+such as the "Get Sensor Reading" command,
 implemented via a management controller.
 This approach isolates the software from changes in the
 platform management hardware implementation.
@@ -81,7 +81,7 @@ Having the SEL and logging functions managed by the BMC
 helps ensure that post-mortem logging information is available
 should a failure occur that disables the systems processor(s).
 .Pp
-A set of IPMI commands alows the SEL to be read and cleared
+A set of IPMI commands allows the SEL to be read and cleared
 and for events to be added to the SEL.
 The common request message (command)
 used for adding events to the SEL is referred to as an Event Message.
