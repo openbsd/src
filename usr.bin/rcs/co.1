@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.6 2005/10/12 16:45:11 xsa Exp $
+.\"     $OpenBSD: co.1,v 1.7 2005/10/16 11:53:37 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -25,16 +25,16 @@
 .Bk -words
 .Op Fl fIMpqV
 .Op Ar rev
-.Op Fl d Ar date
-.Op Fl k Ar mode
-.Op Fl l Op Ar rev
-.Op Fl m Ar msg
-.Op Fl r Op Ar rev
-.Op Fl s Ar state
-.Op Fl u Op Ar rev
-.Op Fl w Ar user
-.Op Fl x Ar suffixes
-.Op Fl z Ar tz
+.Op Fl d Ns Ar date
+.Op Fl k Ns Ar mode
+.Op Fl l Ns Op Ar rev
+.Op Fl m Ns Ar msg
+.Op Fl r Ns Op Ar rev
+.Op Fl s Ns Ar state
+.Op Fl u Ns Op Ar rev
+.Op Fl w Ns Ar user
+.Op Fl x Ns Ar suffixes
+.Op Fl z Ns Ar tz
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -43,23 +43,23 @@ always performs keyword substitution.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
-.It Fl d Ar date
+.It Fl d Ns Ar date
 Retrieve revision as of the latest revision no later than
 .Ar date .
 .It Fl f
 Force the overwriting of the working file.
 .It Fl I
 Interactive mode.
-.It Fl k Ar mode
+.It Fl k Ns Ar mode
 Specify the keyword substitution mode.
-.It Fl l Op Ar rev
+.It Fl l Ns Op Ar rev
 The same as
 .Fl r ,
 but also locks the revision.
 .It Fl M
 Set the modification time of the file to the date of the
 retrieved revision.
-.It Fl m Ar msg
+.It Fl m Ns Ar msg
 Specify a log message.
 A line beginning with a hash character
 .Pq Sq #
@@ -68,35 +68,35 @@ is considered a comment and ignored.
 Print the retrieved revision to standard output.
 .It Fl q
 Be quiet about reporting.
-.It Fl r Op Ar rev
+.It Fl r Ns Op Ar rev
 Retrieve the latest revision no later than
 .Ar rev .
 If
 .Ar rev
 is not specified, retrieve HEAD.
-.It Fl s Ar state
+.It Fl s Ns Ar state
 Retrieve revision of the specified
 .Ar state
 only.
-.It Fl u Op Ar rev
+.It Fl u Ns Op Ar rev
 The same as
 .Fl r ,
 but also unlocks the retrieved revision if it was locked.
 .It Fl V
 Print RCS's version number.
-.It Fl w Ar user
+.It Fl w Ns Ar user
 Retrieve the latest revision which was checked in by the specified
 .Ar user .
 If the
 .Ar user
 argument is omitted, the login of the user issuing the command
 is assumed.
-.It Fl x Ar suffixes
+.It Fl x Ns Ar suffixes
 Specifies the suffixes for RCS files.
 Suffixes should be separated by the
 .Sq /
 character.
-.It Fl z Ar tz
+.It Fl z Ns Ar tz
 Specify the date output format in keyword substitution, and the
 default timezone for
 .Ar date
