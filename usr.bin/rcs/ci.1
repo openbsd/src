@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.9 2005/10/15 23:55:39 niallo Exp $
+.\"     $OpenBSD: ci.1,v 1.10 2005/10/16 22:54:24 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -29,6 +29,7 @@
 .Op Fl k Ns Ar mode
 .Op Fl l Ns Op Ar rev
 .Op Fl m Ns Ar msg
+.Op Fl n Ns Ar symbol
 .Op Fl r Ns Op Ar rev
 .Op Fl u Ns Op Ar rev
 .Op Fl w Ns Ar username
@@ -69,6 +70,10 @@ Specify a log message.
 A line beginning with a hash character
 .Pq Sq #
 is considered a comment and ignored.
+.It Fl n Ns Ar symbol
+Assign the symbolic name
+.Ar symbol
+to the checked in revision.
 .It Fl q
 Be quiet about reporting.
 .It Fl r Ns Op Ar rev
