@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.124 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: file.c,v 1.125 2005/10/16 00:29:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -396,7 +396,7 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 	 */
 	cf = cvs_file_lget(".", 0, NULL, NULL, NULL);
 	if (cf == NULL) {
-		cvs_log(LP_ERR, "arrrr i failed captain!");
+		cvs_log(LP_ERR, "failed to obtain '.' information");
 		return (-1);
 	}
 
