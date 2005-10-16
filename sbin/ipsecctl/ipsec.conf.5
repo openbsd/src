@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.21 2005/09/23 14:56:06 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.22 2005/10/16 21:24:45 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -95,6 +95,9 @@ This rule applies for packets with source address
 and destination address
 .Aq Ar dst .
 All addresses are specified in CIDR notation.
+The keyword
+.Ar any
+will match any address (i.e. 0.0.0.0/0).
 The
 .Ar peer
 parameter specifies the address of the remote endpoint of this particular
@@ -274,6 +277,9 @@ This rule applies for packets with source address
 and destination address
 .Aq Ar dst .
 All addresses are specified in CIDR notation.
+The keyword
+.Ar any
+will match any address (i.e. 0.0.0.0/0).
 The
 .Ar peer
 parameter specifies the address of the remote endpoint of this particular

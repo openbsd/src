@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2005/10/16 19:52:19 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2005/10/16 21:24:45 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,7 +48,7 @@ static struct ipsecctl	*ipsec = NULL;
 static FILE		*fin = NULL;
 static int		 lineno = 1;
 static int		 errors = 0;
-static int		 debug = 0;
+static int		 debug = 5;
 
 const struct ipsec_xf authxfs[] = {
 	{"unknown",		AUTHXF_UNKNOWN,		0,	0},
@@ -173,7 +173,7 @@ typedef struct {
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
-%token	ACTIVE
+%token	ACTIVE ANY
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -219,6 +219,7 @@ number		: STRING			{
 			$$ = (u_int32_t)ulval;
 			free($1);
 		}
+		;
 
 tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			struct ipsec_rule	*r;
@@ -354,6 +355,19 @@ host		: STRING			{
 				YYERROR;
 			}
 			free(buf);
+		}
+		| ANY				{
+			struct ipsec_addr	*ipa;
+
+			ipa = calloc(1, sizeof(struct ipsec_addr));
+			if (ipa == NULL)
+				err(1, "calloc");
+
+			ipa->af = AF_INET;
+			ipa->netaddress = 1;
+			if ((ipa->name = strdup("0.0.0.0/0")) == NULL)
+				err(1, "strdup");
+			$$ = ipa;
 		}
 		;
 
@@ -559,6 +573,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "active",		ACTIVE},
 		{ "ah",			AH},
+		{ "any",		ANY},
 		{ "auth",		AUTHXF},
 		{ "authkey",		AUTHKEY},
 		{ "dstid",		DSTID},
