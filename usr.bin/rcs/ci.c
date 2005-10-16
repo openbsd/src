@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.35 2005/10/16 11:36:56 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.36 2005/10/16 11:40:56 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -182,11 +182,8 @@ checkin_main(int argc, char **argv)
 			exit(1);
 		}
 
-		/*
-		 * If rev is not specified on the command line,
-		 * assume HEAD.
-		 */
 		frev = file->rf_head;
+
 		cvs_printf("%s  <--  %s\n", fpath, argv[i]);
 
 		/*
