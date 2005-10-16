@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.32 2005/10/16 01:55:36 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.33 2005/10/16 11:29:28 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -123,6 +123,7 @@ checkin_main(int argc, char **argv)
 		case 'm':
 			rcs_msg = rcs_optarg;
 			interactive = 0;
+			cvs_printf("rcs_msg: %s\n", rcs_msg);
 			break;
 		case 'q':
 			verbose = 0;
@@ -232,7 +233,8 @@ checkin_main(int argc, char **argv)
 			    buf);
 			(void)unlink(argv[i]);
 			if (lkmode != 0)
-				checkout_rev(file, frev, argv[i], lkmode, username);
+				checkout_rev(file, frev, argv[i], lkmode,
+				    username);
 			rcs_close(file);
 			cvs_printf("done\n");
 			continue;
@@ -292,7 +294,8 @@ checkin_main(int argc, char **argv)
 		if (date == DATE_MTIME) {
 			struct stat sb;
 			if (stat(argv[i], &sb) != 0) {
-				cvs_log(LP_ERRNO, "failed to stat: `%s'", argv[i]);
+				cvs_log(LP_ERRNO, "failed to stat: `%s'",
+				    argv[i]);
 				rcs_close(file);
 				continue;
 			}
