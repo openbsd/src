@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2005/10/16 21:29:22 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.28 2005/10/16 21:41:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -105,6 +105,7 @@ u_int8_t		 x2i(unsigned char *);
 struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr	*host(const char *);
+struct ipsec_addr	*host_v4(const char *, int);
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
 struct ipsec_transforms *transforms(const char *, const char *);
@@ -992,34 +993,64 @@ parsekeyfile(char *filename)
 struct ipsec_addr *
 host(const char *s)
 {
-	struct ipsec_addr	*ipa;
-	int			 i, bits = 32;
+	struct ipsec_addr	*ipa = NULL;
+	int			 mask, v4mask, cont = 1;
+	char			*p, *q, *ps;
 
 	/* XXX for now only AF_INET. */
+	if ((p = strrchr(s, '/')) != NULL) {
+		mask = strtol(p + 1, &q, 0);
+		if (!q || *q || mask > 32 || q == (p + 1))
+			errx(1, "invalid netmask '%s'", p);
+		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
+			err(1, "host: calloc");
+		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
+		v4mask = mask;
+	} else {
+		if ((ps = strdup(s)) == NULL)
+			err(1, "host: strdup");
+		v4mask = 32;
+		mask = -1;
+	}
+
+	/* IPv4 address? */
+	if (cont && (ipa = host_v4(s, mask)) != NULL)
+		cont = 0;
+	free(ps);
+
+	if (ipa == NULL || cont == 1) {
+		fprintf(stderr, "no IP address found for %s\n", s);
+		return (NULL);
+	}
+	return (ipa);
+}
+
+struct ipsec_addr *
+host_v4(const char *s, int mask)
+{
+	struct ipsec_addr	*ipa = NULL;
+	struct in_addr		 ina;
+	int			 i, bits = 32;
+
+	bzero(&ina, sizeof(struct in_addr));
+	if (strrchr(s, '/') != NULL) {
+		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
+			return (NULL);
+	} else {
+		if (inet_pton(AF_INET, s, &ina) != 1)
+			return (NULL);
+	}
 
 	ipa = calloc(1, sizeof(struct ipsec_addr));
 	if (ipa == NULL)
-		err(1, "host: calloc");
+		err(1, "host_v4: calloc");
 
-	if ((ipa->name = strdup(s)) == NULL)
-		err(1, "host: strdup");
-	
-	if (strrchr(s, '/') != NULL) {
-		bits = inet_net_pton(AF_INET, s, &ipa->v4, sizeof(ipa->v4));
-		if (bits == -1 || bits > 32) {
-			free(ipa->name);
-			free(ipa);
-			return(NULL);
-		}
-	} else {
-		if (inet_pton(AF_INET, s, &ipa->v4) != 1) {
-			free(ipa->name);
-			free(ipa);
-			return (NULL);
-		}
-	}
+	ipa->v4 = ina;
+	ipa->name = strdup(s);
+	if (ipa->name == NULL)
+		err(1, "host_v4: strdup");
+	ipa->af = AF_INET;
 
-	bzero(&ipa->v4mask, sizeof(ipa->v4mask));
 	if (bits == 32) {
 		ipa->v4mask.mask32 = 0xffffffff;
 		ipa->netaddress = 0;
@@ -1029,8 +1060,6 @@ host(const char *s)
 		ipa->v4mask.mask32 = htonl(ipa->v4mask.mask32);
 		ipa->netaddress = 1;
 	}
-
-	ipa->af = AF_INET;
 
 	return (ipa);
 }
