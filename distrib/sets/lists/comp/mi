@@ -560,6 +560,7 @@
 ./usr/include/dev/pci/pciide_piix_reg.h
 ./usr/include/dev/pci/pciide_sii3112_reg.h
 ./usr/include/dev/pci/pciide_sis_reg.h
+./usr/include/dev/pci/pciide_svwsata_reg.h
 ./usr/include/dev/pci/pciidereg.h
 ./usr/include/dev/pci/pciidevar.h
 ./usr/include/dev/pci/pcireg.h

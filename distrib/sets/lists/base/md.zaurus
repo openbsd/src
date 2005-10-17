@@ -1184,6 +1184,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_piix_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_sii3112_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_sis_reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciide_svwsata_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciidereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pciidevar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/pcireg.ph

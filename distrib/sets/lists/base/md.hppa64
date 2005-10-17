@@ -1,3 +1,4 @@
+
 ./etc/firmware/3c990
 ./etc/firmware/3c990-license
 ./etc/firmware/atu-at76c503-i3863-ext
@@ -1142,6 +1143,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pciide_piix_reg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pciide_sii3112_reg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pciide_sis_reg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pciide_svwsata_reg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pciidereg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pciidevar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pcireg.ph

@@ -188,6 +188,7 @@
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit_pic.a
+./usr/lib/libevent_pic.a
 ./usr/lib/libform_pic.a
 ./usr/lib/libfrtbegin_pic.a
 ./usr/lib/libg2c_pic.a
@@ -195,6 +196,7 @@
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libmenu_pic.a
+./usr/lib/libmilter_pic.a
 ./usr/lib/libncurses_pic.a
 ./usr/lib/libobjc_pic.a
 ./usr/lib/libocurses_pic.a
@@ -207,6 +209,7 @@
 ./usr/lib/libperl_pic.a
 ./usr/lib/libpthread_pic.a
 ./usr/lib/libreadline_pic.a
+./usr/lib/librpcsvc_pic.a
 ./usr/lib/libsectok_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
@@ -242,6 +245,3 @@
 ./usr/libdata/ldscripts/elf32ppcsim.xu
 ./usr/libdata/ldscripts/elf32ppcsim.xz
 ./usr/share/man/cat1/objcopy.0
-./usr/lib/libevent_pic.a
-./usr/lib/libmilter_pic.a
-./usr/lib/librpcsvc_pic.a
