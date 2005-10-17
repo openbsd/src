@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.3 2005/10/17 22:56:53 jordan Exp $ */
+/* $OpenBSD: ipmi.c,v 1.4 2005/10/17 23:54:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -162,10 +162,10 @@ void	*scan_sig(long, long, int, int, const void *);
 int	scan_smbios(u_int8_t, void (*)(void *, void *), void *);
 
 int	ipmi_test_threshold(u_int8_t, u_int8_t, u_int8_t, u_int8_t);
-int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,  
+int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
     u_int8_t *);
 
-int	 add_child_sensors(struct ipmi_softc *, u_int8_t *, int, int, int, 
+int	 add_child_sensors(struct ipmi_softc *, u_int8_t *, int, int, int,
     int, int, int, const char *);
 
 struct ipmi_if kcs_if = {
@@ -199,6 +199,7 @@ struct ipmi_if bt_if = {
 };
 
 struct ipmi_if *ipmi_get_if(int);
+
 struct ipmi_if *
 ipmi_get_if(int iftype)
 {
@@ -259,7 +260,7 @@ bmc_io_wait(struct ipmi_softc *sc, int offset, u_int8_t mask,
 #define _BT_CTRL_REG			0
 #define	  BT_CLR_WR_PTR			(1L << 0)
 #define	  BT_CLR_RD_PTR			(1L << 1)
-#define	  BT_HOST2BMC_ATN		(1L << 2)	
+#define	  BT_HOST2BMC_ATN		(1L << 2)
 #define	  BT_BMC2HOST_ATN		(1L << 3)
 #define	  BT_EVT_ATN			(1L << 4)
 #define	  BT_HOST_BUSY			(1L << 6)
@@ -754,7 +755,7 @@ scan_smbios(u_int8_t mtype, void (*smcb) (void *base, void *arg), void *arg) {
 
 	/* Map SMBIOS Table start address */
 	nmatch = 0;
-	offset = smbios_map(romhdr->smr_table_address, 
+	offset = smbios_map(romhdr->smr_table_address,
 	    romhdr->smr_count * romhdr->smr_maxsize, &smm);
 	if (offset == NULL)
 		return (-1);
@@ -1119,12 +1120,12 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 long
 ipow(long val, int exp)
 {
-	while (exp > 0) { 
+	while (exp > 0) {
 		val *= 10;
 		exp--;
 	}
 
-	while (exp < 0) { 
+	while (exp < 0) {
 		val /= 10;
 		exp++;
 	}
@@ -1159,10 +1160,10 @@ ipmi_convert(u_int8_t v, sdrtype1 *s1, long adj)
 	if (K2 & 0x8)
 		K2 |= 0xF0;
 
-	/* Calculate sensor reading: 
+	/* Calculate sensor reading:
 	 *  y = L((M * v + (B * 10^K1)) * 10^(K2+adj)
 	 *
-	 * This commutes out to: 
+	 * This commutes out to:
 	 *  y = L(M*v * 10^(K2+adj) + B * 10^(K1+K2+adj)); */
 	val = ipow(M * v, K2 + adj) + ipow(B, K1 + K2 + adj);
 
@@ -1177,10 +1178,9 @@ int
 ipmi_test_threshold(u_int8_t v, u_int8_t valid, u_int8_t hi, u_int8_t lo)
 {
 	dbg_printf(10,"thresh: %.2x %.2x %.2x %d\n", v, lo, hi,valid);
-	return ((valid & 1 && lo != 0x00 && v <= lo) || 
+	return ((valid & 1 && lo != 0x00 && v <= lo) ||
 	    (valid & 8 && hi != 0xFF && v >= hi));
 }
-
 
 int
 ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
@@ -1199,16 +1199,16 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	switch(etype) {
 	case 0x01:  /* threshold */
 		data[0] = psensor->i_num;
-		ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun,  
+		ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun,
 		    SE_NETFN, SE_GET_SENSOR_THRESHOLD, 1, data);
 		ipmi_recvcmd(sc, sizeof(data), &rxlen, data);
 
 		dbg_printf(10,"recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
 		    data[0], data[1], data[2], data[3], data[4], data[5],
-		    data[6]); 
+		    data[6]);
 
 		if (ipmi_test_threshold(*reading, data[0] >> 2 ,
-		    data[6], data[3])) 
+		    data[6], data[3]))
 			return (SENSOR_S_CRIT);
 
 		if (ipmi_test_threshold(*reading, data[0] >> 1,
@@ -1304,7 +1304,6 @@ ipmi_sensor_type(int type, int ext_type, int entity)
 	return (-1);
 }
 
-
 /* Add Sensor to BSD Sysctl interface */
 int
 add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr)
@@ -1323,10 +1322,10 @@ add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr)
 
 	case 2:
 		ipmi_sensor_name(name, sizeof(name), s2->typelen, s2->name);
-		rc=add_child_sensors(sc, psdr, 
-		    s2->share1 & 0xF, 
+		rc=add_child_sensors(sc, psdr,
+		    s2->share1 & 0xF,
 		    s2->sensor_num,
-		    s2->sensor_type, 
+		    s2->sensor_type,
 		    s2->event_code,
 		    s2->share2 & 0x7F,
 		    s2->entity_id, name);
@@ -1351,7 +1350,7 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
 		dbg_printf(1, "Unknown sensor type:%.2x et:%.2x sn:%.2x "
-			   "name:%s\n", 
+			   "name:%s\n",
 			   sensor_type, ext_type, sensor_num, name);
 		return 0;
 	}
