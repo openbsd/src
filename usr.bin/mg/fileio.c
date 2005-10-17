@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.56 2005/10/14 15:41:50 deraadt Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.57 2005/10/17 14:54:03 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -261,8 +261,8 @@ adjustname(const char *fn)
 {
 	static char	 fnb[MAXPATHLEN];
 	const char	*cp;
-	char		 user[LOGIN_NAME_MAX + 1], path[MAXPATHLEN];
-	int		 len;
+	char		 user[LOGIN_NAME_MAX], path[MAXPATHLEN];
+	size_t		 ulen, plen;
 
 	path[0] = '\0';
 	/* first handle tilde expansion */
@@ -272,34 +272,40 @@ adjustname(const char *fn)
 		cp = strchr(fn, '/');
 		if (cp == NULL)
 			cp = fn + strlen(fn); /* point to the NUL byte */
-
-		if ((cp - &fn[1]) > LOGIN_NAME_MAX) {
-			ewprintf("login name too long");
+		ulen = cp - &fn[1];
+		if (ulen >= sizeof(user)) {
+			ewprintf("Login name too long");
 			return (NULL);
 		}
-		if (cp == &fn[1]) /* ~/ */
-			strlcpy(user, getlogin(), sizeof(user));
-		else
-			strlcpy(user, &fn[1], cp - &fn[1] + 1);
+		if (ulen == 0) /* ~/ or ~ */
+			(void)strlcpy(user, getlogin(), sizeof(user));
+		else { /* ~user/ or ~user */ 
+			memcpy(user, &fn[1], ulen);
+			user[ulen] = '\0';
+		}
 		pw = getpwnam(user);
 		if (pw == NULL) {
-			ewprintf("unknown user %s", user);
+			ewprintf("Unknown user %s", user);
 			return (NULL);
 		}
-		strlcpy(path, pw->pw_dir, sizeof(path) - 1);
-		len = strlen(path);
-		if (path[len] != '/') {
-			path[len] = '/';
-			path[len + 1] = '\0';
+		plen = strlcpy(path, pw->pw_dir, sizeof(path));
+		if (plen == 0 || path[plen - 1] != '/') {
+			if (strlcat(path, "/", sizeof(path)) >= sizeof(path)) {
+				ewprintf("Path too long");
+				return (NULL);
+			}
 		}
 		fn = cp;
 		if (*fn == '/')
 			fn++;
 	}
-	strlcat(path, fn, sizeof(path));
+	if (strlcat(path, fn, sizeof(path)) >= sizeof(path)) {
+		ewprintf("Path too long");
+		return (NULL);
+	}
 
 	if (realpath(path, fnb) == NULL)
-		strlcpy(fnb, path, sizeof(fnb));
+		(void)strlcpy(fnb, path, sizeof(fnb));
 
 	return (fnb);
 }
