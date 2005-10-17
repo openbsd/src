@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.36 2005/10/15 00:20:49 fgsch Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.37 2005/10/17 10:55:07 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -198,6 +198,7 @@
 #define WI_CMD_WRITE_MIF	0x0031 /* prism2 */
 
 #define WI_CMD_CODE_MASK	0x003F
+#define WI_CMD_RESULT_MASK	0x7F00
 
 /*
  * Reclaim qualifier bit, applicable to the
