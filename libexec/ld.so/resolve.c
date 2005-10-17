@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.43 2005/10/12 20:36:16 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.44 2005/10/17 22:14:18 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -85,7 +85,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 		if (dynp->d_tag < DT_NUM)
 			object->Dyn.info[dynp->d_tag] = dynp->d_un.d_val;
 		else if (dynp->d_tag >= DT_LOPROC &&
-		    dynp->d_tag < DT_LOPROC + DT_NUM)
+		    dynp->d_tag < DT_LOPROC + DT_PROCNUM)
 			object->Dyn.info[dynp->d_tag + DT_NUM - DT_LOPROC] =
 			    dynp->d_un.d_val;
 		if (dynp->d_tag == DT_TEXTREL)
