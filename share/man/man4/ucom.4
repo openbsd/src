@@ -1,4 +1,4 @@
-.\" $OpenBSD: ucom.4,v 1.12 2005/06/18 00:26:43 jmc Exp $
+.\" $OpenBSD: ucom.4,v 1.13 2005/10/17 21:10:18 deraadt Exp $
 .\" $NetBSD: ucom.4,v 1.3 2000/04/14 14:55:18 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,9 +70,12 @@ The
 locator can be used to decide which port to use for devices that have
 multiple external ports.
 .Sh FILES
-.Bl -tag -width Pa
+.Bl -tag -width Pa -compact
 .It Pa /dev/ttyU?
+tty devices
 .It Pa /dev/cuaU?
+call out devices (see
+.Xr tty 4 ) .
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
