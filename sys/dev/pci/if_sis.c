@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.54 2005/10/14 22:59:38 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.55 2005/10/17 05:02:50 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -127,7 +127,7 @@ void sis_delay(struct sis_softc *);
 void sis_eeprom_idle(struct sis_softc *);
 void sis_eeprom_putbyte(struct sis_softc *, int);
 void sis_eeprom_getword(struct sis_softc *, int, u_int16_t *);
-#ifdef __i386__
+#if defined(__amd64__) || defined(__i386__)
 void sis_read_cmos(struct sis_softc *, struct pci_attach_args *, caddr_t, int, int);
 #endif
 void sis_read_mac(struct sis_softc *, struct pci_attach_args *);
@@ -317,7 +317,7 @@ void sis_read_eeprom(sc, dest, off, cnt, swap)
 	return;
 }
 
-#ifdef __i386__
+#if defined(__amd64__) || defined(__i386__)
 void sis_read_cmos(sc, pa, dest, off, cnt)
 	struct sis_softc *sc;
 	struct pci_attach_args *pa;
@@ -331,7 +331,11 @@ void sis_read_cmos(sc, pa, dest, off, cnt)
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x48);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x48, reg | 0x40);
 
+#if defined(__amd64__)
+	btag = X86_BUS_SPACE_IO;
+#elif defined(__i386__)
 	btag = I386_BUS_SPACE_IO;
+#endif
 
 	for (i = 0; i < cnt; i++) {
 		bus_space_write_1(btag, 0x0, 0x70, i + off);
@@ -1048,7 +1052,7 @@ void sis_attach(parent, self, aux)
 		break;
 	case PCI_VENDOR_SIS:
 	default:
-#ifdef __i386__
+#if defined(__amd64__) || defined(__i386__)
 		/*
 		 * If this is a SiS 630E chipset with an embedded
 		 * SiS 900 controller, we have to read the MAC address
