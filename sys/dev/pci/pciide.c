@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.208 2005/10/17 06:35:17 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.209 2005/10/17 06:43:48 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1464,14 +1464,14 @@ pciide_dma_finish(void *v, int channel, int drive, int force)
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
 
-	sc->pciide_channels[channel].dma_in_progress = 0;
-
 	status = PCIIDE_DMACTL_READ(sc, channel);
 	WDCDEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
 	    DEBUG_XFERS);
 
-	if (force == 0 && (status & IDEDMA_CTL_INTR) == 0)
-		return (WDC_DMAST_NOIRQ);
+	if (force == 0 && (status & IDEDMA_CTL_INTR) == 0) {
+		error = WDC_DMAST_NOIRQ;
+		goto done;
+	}
 
 	/* stop DMA channel */
 	PCIIDE_DMACMD_WRITE(sc, channel,
@@ -1505,6 +1505,9 @@ pciide_dma_finish(void *v, int channel, int drive, int force)
 		/* data underrun, may be a valid condition for ATAPI */
 		error |= WDC_DMAST_UNDER;
 	}
+
+done:
+	sc->pciide_channels[channel].dma_in_progress = 0;
 	return (error);
 }
 
