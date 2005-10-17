@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.40 2005/10/15 11:42:56 brad Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.41 2005/10/17 19:17:24 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -812,9 +812,8 @@ pci_intr_fixup(sc, pc, iot)
 				return (-1);	/* non-fatal */
 			if (pciintr_guess_irq())
 				return (-1);	/* non-fatal */
-			return (0);		/* success! */
-		} else
-			return (-1);		/* non-fatal */
+		}
+		return (0);
 	} else {
 		char devinfo[256];
 
