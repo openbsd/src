@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.7 2005/07/25 11:07:00 xsa Exp $	*/
+/*	$OpenBSD: proto.h,v 1.8 2005/10/17 16:16:00 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -108,8 +108,13 @@
 #define CVS_REQ_RLOG		67
 #define CVS_REQ_RDIFF		68
 #define CVS_REQ_VERSION		69
+#define CVS_REQ_WATCH_ON	70
+#define CVS_REQ_WATCH_OFF	71
+#define CVS_REQ_WATCH_ADD	72
+#define CVS_REQ_WATCH_REMOVE	73
 
-#define CVS_REQ_MAX		69
+
+#define CVS_REQ_MAX		73
 
 
 /* responses */
