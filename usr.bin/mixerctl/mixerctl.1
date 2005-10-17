@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.24 2005/10/10 20:19:02 deraadt Exp $
+.\" $OpenBSD: mixerctl.1,v 1.25 2005/10/17 13:27:41 jmc Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,13 +84,17 @@ Suppress printing of the variable name.
 .It Fl q
 Suppress all printing when setting a variable.
 .It Fl t
-Attempt to select the next possible enumeration value.
+Toggle.
+Attempt to select the next possible value
+of an enum
+(see below).
 .It Fl v
-Show the possible values of enumeration and set valued variables.
-Enumerated values are shown in
-.Dq []
-and set values are shown in
-.Dq {} .
+Show all possible values of variables.
+Enum values are shown in
+.Sq []
+and values belonging to a set are shown in
+.Sq {}
+(see below).
 .It Ar name Ns = Ns Ar value
 Attempt to set the specified variable
 .Ar name
@@ -98,42 +102,57 @@ to
 .Ar value .
 .El
 .Pp
-Values may be specified in either absolute or relative forms.
-The relative form is indicated by a prefix of
-.Ql +
-or
-.Ql -
-to denote an increase or decrease, respectively.
-.Pp
 The exact set of controls that can be manipulated depends on
 the mixer.
-The general format (in both getting and setting a value) is
+The general format (in both getting and setting a value) is:
 .Pp
 .D1 class.name=value
 .Pp
 The
 .Ar class
 can have values like
-.Li inputs
+.Dq inputs
 or
-.Li outputs
+.Dq outputs ,
 indicating that the control affects the input or output, respectively,
 to the mixer.
 The
 .Ar name
 indicates what part of the mixer the control affects.
-Continuous mixer values, e.g., volume, have numeric values
-in the range 0-255.
+Continuous mixer values, e.g. volume,
+have numeric values in the range 0\-255.
 If
 .Ar value
 can be set for each channel independently,
 the values are printed separated by commas.
-Discrete mixer values, e.g.,
-the recording source, have symbolic names.
-Depending on the mixer it
-may either be an enumeration, a set or
-.Ql toggle
-to loop through the enumeration list.
+Discrete mixer values, e.g. the recording source,
+have symbolic names.
+.Pp
+Variables may take one of three types,
+again dependent on the mixer:
+.Bl -enum
+.It
+Enums.
+These may take only one out of a possible list of symbolic values,
+e.g. inputs.mic.source=mic0.
+.It
+Sets.
+These can take one or more of a possible list of symbolic values;
+multiple values are specified as a comma-separated list,
+e.g. record.source=mic,cd.
+Additionally,
+.Ar value
+may be omitted to specify the empty set,
+e.g. record.source=.
+.It
+Numbers.
+Numerical values may be specified in either absolute or relative forms.
+The relative form is indicated by a prefix of
+.Ql +
+or
+.Ql -
+to denote an increase or decrease, respectively.
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width MIXERDEVICE
 .It Ev MIXERDEVICE
@@ -145,12 +164,10 @@ The audio mixer device to use.
 default mixer audio device
 .El
 .Sh EXAMPLES
-The command
-.Pp
-.Dl "$ mixerctl -a -v"
-.Pp
-can produce
+Show possible values for all mixer variables,
+and their current settings:
 .Bd -literal -offset indent
+$ mixerctl -av
 inputs.mic=0,0 volume
 inputs.mic.mute=off  [ off on ]
 inputs.cd=220,220 volume
@@ -162,14 +179,10 @@ record.record.source=mic  [ mic cd dac ]
 monitor.monitor=0 volume
 .Ed
 .Pp
-The command to toggle
-.Dq inputs.dac.mute
-.Pp
-.Dl "$ mixerctl -t inputs.dac.mute"
-.Pp
-produces
+Toggle inputs.dac.mute:
 .Bd -literal -offset indent
-inputs.dac.mute: off -> on
+$ mixerctl -t inputs.dac.mute
+inputs.dac.mute: off -\*(Gt on
 .Ed
 .Sh SEE ALSO
 .Xr aucat 1 ,
@@ -182,4 +195,4 @@ inputs.dac.mute: off -> on
 The
 .Nm
 command first appeared in
-.Nx 1.3 .
+.Ox 2.4 .
