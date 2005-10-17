@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.8 2005/05/12 22:18:44 jmc Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.9 2005/10/17 18:44:33 stevesk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -54,12 +54,29 @@ Show only self-originated LSAs.
 .It Cm summary
 Show only Summary LSAs.
 .El
+.It Cm show fib Op Ar filter | destination
+Show the Forwarding Information Base.
+.Ar destination
+can be used to show the route matching a destination IP address.
+.Ar filter
+can be any one of the following:
+.Pp
+.Bl -tag -width "interfaceXX" -compact
+.It Cm connected
+Show only connected routes.
+.It Cm interface
+Show only interfaces.
+.It Cm ospf
+Show only OSPF routes.
+.It Cm static
+Show only static routes.
+.El
 .It Cm show interfaces
 Show interface summary.
 .It Cm show neighbor
 Show neighbor summary.
 .It Cm show rib Ar detail
-Show Routing Information Base.
+Show the Routing Information Base.
 .It Cm show summary
 Show summary status.
 .El
