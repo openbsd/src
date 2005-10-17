@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.64 2005/09/23 10:24:50 grunk Exp $
+dnl	$OpenBSD: hardware,v 1.65 2005/10/17 11:25:29 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -54,7 +54,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    652, 655, 658, 730, 733, 735, 740, 745, 746, 748, 750,
 		    751, 752, 755, 962, 963
 		VIA Technologies VT82C586/A/B, VT82C596A/B, VT82C686A/B,
-		    VT8231, VT8366, VT8233, VT8235, VT8237
+		    VT8231, VT8366, VT8233, VT8235, VT8237, VT8251
 	SCSI Host Adapters
 		Adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
 		AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897

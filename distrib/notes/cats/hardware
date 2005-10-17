@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.25 2005/09/07 08:21:11 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.26 2005/10/17 11:25:30 jsg Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -25,7 +25,7 @@ Supported devices {:-include-:}:
 		    651, 652, 661, 655, 658, 730, 733, 735, 740, 745, 746, 748,
 		    750, 751, 752, 755, 760, 962, 963
 		VIA Technologies VT82C586A/B, VT82C596A/B, VT82C686A/B,
-		    VT8231, VT8366, VT8233, VT8235
+		    VT8231, VT8366, VT8233, VT8235, VT8237, VT8251
 		(Other PCI IDE-compliant controllers should work, but
 		 those not listed above may not be capable of DMA modes)
 	SCSI Host Adapters
