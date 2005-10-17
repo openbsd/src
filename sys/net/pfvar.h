@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.230 2005/09/28 01:46:33 pascoe Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.231 2005/10/17 08:43:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -936,6 +936,7 @@ struct pf_pdesc {
 	struct pf_addr	*dst;
 	struct ether_header
 			*eh;
+	struct pf_mtag	*pf_mtag;
 	u_int16_t	*ip_sum;
 	u_int32_t	 p_len;		/* total length of payload */
 	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
@@ -1137,6 +1138,19 @@ struct pf_altq {
 	} pq_u;
 
 	u_int32_t		 qid;		/* return value */
+};
+
+#define	PF_TAG_GENERATED		0x01
+#define	PF_TAG_FRAGCACHE		0x02
+#define	PF_TAG_TRANSLATE_LOCALHOST	0x04
+
+struct pf_mtag {
+	void		*hdr;		/* saved hdr pos in mbuf, for ECN */
+	u_int32_t	 qid;		/* queue id */
+	u_int16_t	 tag;		/* tag id */
+	u_int8_t	 flags;
+	u_int8_t	 routed;
+	sa_family_t	 af;		/* for ECN */
 };
 
 struct pf_tag {
@@ -1561,14 +1575,16 @@ int		 pfi_get_ifaces(const char *, struct pfi_kif *, int *);
 int		 pfi_set_flags(const char *, int);
 int		 pfi_clear_flags(const char *, int);
 
-u_int16_t	pf_tagname2tag(char *);
-void		pf_tag2tagname(u_int16_t, char *);
-void		pf_tag_ref(u_int16_t);
-void		pf_tag_unref(u_int16_t);
-int		pf_tag_packet(struct mbuf *, struct pf_tag *, int);
-u_int32_t	pf_qname2qid(char *);
-void		pf_qid2qname(u_int32_t, char *);
-void		pf_qid_unref(u_int32_t);
+u_int16_t	 pf_tagname2tag(char *);
+void		 pf_tag2tagname(u_int16_t, char *);
+void		 pf_tag_ref(u_int16_t);
+void		 pf_tag_unref(u_int16_t);
+int		 pf_tag_packet(struct mbuf *, struct pf_mtag *, int);
+u_int32_t	 pf_qname2qid(char *);
+void		 pf_qid2qname(u_int32_t, char *);
+void		 pf_qid_unref(u_int32_t);
+struct pf_mtag	*pf_find_mtag(struct mbuf *);
+struct pf_mtag	*pf_get_mtag(struct mbuf *);
 
 extern struct pf_status	pf_status;
 extern struct pool	pf_frent_pl, pf_frag_pl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.102 2005/08/06 12:11:09 pascoe Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.103 2005/10/17 08:43:35 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -931,15 +931,13 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 		/* non-buffering fragment cache (drops or masks overlaps) */
 		int	nomem = 0;
 
-		if (dir == PF_OUT) {
-			if (m_tag_find(m, PACKET_TAG_PF_FRAGCACHE, NULL) !=
-			    NULL) {
-				/* Already passed the fragment cache in the
-				 * input direction.  If we continued, it would
-				 * appear to be a dup and would be dropped.
-				 */
-				goto fragment_pass;
-			}
+		if (dir == PF_OUT && pd->pf_mtag->flags & PF_TAG_FRAGCACHE) {
+			/*
+			 * Already passed the fragment cache in the
+			 * input direction.  If we continued, it would
+			 * appear to be a dup and would be dropped.
+			 */
+			goto fragment_pass;
 		}
 
 		frag = pf_find_fragment(h, &pf_cache_tree);
@@ -960,14 +958,9 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 			goto drop;
 		}
 
-		if (dir == PF_IN) {
-			struct m_tag	*mtag;
+		if (dir == PF_IN)
+			pd->pf_mtag->flags |= PF_TAG_FRAGCACHE;
 
-			mtag = m_tag_get(PACKET_TAG_PF_FRAGCACHE, 0, M_NOWAIT);
-			if (mtag == NULL)
-				goto no_mem;
-			m_tag_prepend(m, mtag);
-		}
 		if (frag != NULL && (frag->fr_flags & PFFRAG_DROP))
 			goto drop;
 		goto fragment_pass;

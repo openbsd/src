@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.190 2005/08/11 11:39:36 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.191 2005/10/17 08:43:34 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -604,19 +604,25 @@ findpcb:
 		break;
 	}
 	if (inp == 0) {
+		int	inpl_flags = 0;
+#if NPF > 0
+		struct pf_mtag *t;
+
+		if ((t = pf_find_mtag(m)) != NULL &&
+		    t->flags & PF_TAG_TRANSLATE_LOCALHOST)
+			inpl_flags = INPLOOKUP_WILDCARD;
+#endif
 		++tcpstat.tcps_pcbhashmiss;
 		switch (af) {
 #ifdef INET6
 		case AF_INET6:
 			inp = in6_pcblookup_listen(&tcbtable,
-			    &ip6->ip6_dst, th->th_dport, m_tag_find(m,
-			    PACKET_TAG_PF_TRANSLATE_LOCALHOST, NULL) != NULL);
+			    &ip6->ip6_dst, th->th_dport, inpl_flags);
 			break;
 #endif /* INET6 */
 		case AF_INET:
 			inp = in_pcblookup_listen(&tcbtable,
-			    ip->ip_dst, th->th_dport, m_tag_find(m,
-			    PACKET_TAG_PF_TRANSLATE_LOCALHOST, NULL) != NULL);
+			    ip->ip_dst, th->th_dport, inpl_flags);
 			break;
 		}
 		/*

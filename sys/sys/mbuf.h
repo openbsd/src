@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.82 2005/05/26 01:49:15 markus Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.83 2005/10/17 08:43:34 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -585,12 +585,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_GIF				8  /* GIF processing done */
 #define PACKET_TAG_GRE				9  /* GRE processing done */
 #define PACKET_TAG_IN_PACKET_CHECKSUM		10 /* NIC checksumming done */
-#define PACKET_TAG_PF_GENERATED			11 /* PF generated, pass always */
-#define PACKET_TAG_PF_ROUTED			12 /* PF routed, no route loops */
-#define PACKET_TAG_PF_FRAGCACHE			13 /* PF fragment cached */
-#define	PACKET_TAG_PF_QID			14 /* PF queue id */
-#define PACKET_TAG_PF_TAG			15 /* PF tags */
-#define PACKET_TAG_PF_TRANSLATE_LOCALHOST	16 /* translated to localhost */
+#define PACKET_TAG_PF				11 /* PF */
 #define PACKET_TAG_DLT				17 /* data link layer type */
 
 #ifdef MBTYPES

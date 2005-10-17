@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.68 2005/07/31 03:30:55 pascoe Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.69 2005/10/17 08:43:34 henning Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -134,8 +134,10 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	unsigned oiplen = oip->ip_hl << 2;
 	struct icmp *icp;
 	struct mbuf *m;
-	struct m_tag *mtag;
 	unsigned icmplen, mblen;
+#if NPF > 0
+	struct pf_mtag	*mtag;
+#endif
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
@@ -251,13 +253,14 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
-	/* move PF_GENERATED m_tag to new packet, if it exists */
-	mtag = m_tag_find(n, PACKET_TAG_PF_GENERATED, NULL);
-	if (mtag != NULL) {
-		m_tag_unlink(n, mtag);
-		m_tag_prepend(m, mtag);
+#if NPF > 0
+	/* move PF_GENERATED to new packet, if existant XXX preserve more? */
+	if ((mtag = pf_find_mtag(n)) != NULL &&
+	    mtag->flags & PF_TAG_GENERATED) {
+		mtag = pf_get_tag(m);
+		mtag->flags |= PF_TAG_GENERATED;
 	}
-
+#endif
 	m_freem(n);
 	return (m);
 

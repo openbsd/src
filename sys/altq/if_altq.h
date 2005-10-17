@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_altq.h,v 1.9 2004/04/17 00:09:00 henning Exp $	*/
+/*	$OpenBSD: if_altq.h,v 1.10 2005/10/17 08:43:35 henning Exp $	*/
 /*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -89,16 +89,6 @@ struct altq_pktattr {
 	void	*pattr_class;		/* sched class set by classifier */
 	int	pattr_af;		/* address family */
 	caddr_t	pattr_hdr;		/* saved header position in mbuf */
-};
-
-/*
- * mbuf tag to carry a queue id (and hints for ECN).
- */
-struct altq_tag {
-	u_int32_t	qid;		/* queue id */
-	/* hints for ecn */
-	int		af;		/* address family */
-	void		*hdr;		/* saved header position in mbuf */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.21 2004/01/14 08:42:23 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.22 2005/10/17 08:43:35 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -618,7 +618,7 @@ hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 {
 	struct hfsc_if	*hif = (struct hfsc_if *)ifq->altq_disc;
 	struct hfsc_class *cl;
-	struct m_tag *t;
+	struct pf_mtag *t;
 	int len;
 
 	/* grab class set by classifier */
@@ -629,9 +629,9 @@ hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 		m_freem(m);
 		return (ENOBUFS);
 	}
-	t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
+	t = pf_find_mtag(m);
 	if (t == NULL ||
-	    (cl = clh_to_clp(hif, ((struct altq_tag *)(t+1))->qid)) == NULL ||
+	    (cl = clh_to_clp(hif, t->qid)) == NULL ||
 		is_a_parent_class(cl)) {
 		cl = hif->hif_defaultclass;
 		if (cl == NULL) {

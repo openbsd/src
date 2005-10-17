@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.503 2005/09/28 01:46:32 pascoe Exp $ */
+/*	$OpenBSD: pf.c,v 1.504 2005/10/17 08:43:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -182,9 +182,8 @@ int			 pf_test_state_icmp(struct pf_state **, int,
 			    void *, struct pf_pdesc *, u_short *);
 int			 pf_test_state_other(struct pf_state **, int,
 			    struct pfi_kif *, struct pf_pdesc *);
-struct pf_tag		*pf_get_tag(struct mbuf *);
 int			 pf_match_tag(struct mbuf *, struct pf_rule *,
-			     struct pf_tag **, int *);
+			     struct pf_mtag *, int *);
 void			 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);
 int			 pf_map_addr(u_int8_t, struct pf_rule *,
@@ -195,9 +194,11 @@ int			 pf_get_sport(sa_family_t, u_int8_t, struct pf_rule *,
 			    struct pf_addr *, u_int16_t*, u_int16_t, u_int16_t,
 			    struct pf_src_node **);
 void			 pf_route(struct mbuf **, struct pf_rule *, int,
-			    struct ifnet *, struct pf_state *);
+			    struct ifnet *, struct pf_state *,
+			    struct pf_pdesc *);
 void			 pf_route6(struct mbuf **, struct pf_rule *, int,
-			    struct ifnet *, struct pf_state *);
+			    struct ifnet *, struct pf_state *,
+			    struct pf_pdesc *);
 int			 pf_socket_lookup(int, struct pf_pdesc *);
 u_int8_t		 pf_get_wscale(struct mbuf *, int, u_int16_t,
 			    sa_family_t);
@@ -211,7 +212,6 @@ int			 pf_check_proto_cksum(struct mbuf *, int, int,
 			    u_int8_t, sa_family_t);
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
-static int		 pf_add_mbuf_tag(struct mbuf *, u_int);
 struct pf_state		*pf_find_state_recurse(struct pfi_kif *,
 			    struct pf_state_cmp *, u_int8_t);
 int			 pf_src_connlimit(struct pf_state **);
@@ -988,12 +988,13 @@ pf_src_tree_remove_state(struct pf_state *s)
 void
 pf_unlink_state(struct pf_state *cur)
 {
-	if (cur->src.state == PF_TCPS_PROXY_DST)
+	if (cur->src.state == PF_TCPS_PROXY_DST) {
 		pf_send_tcp(cur->rule.ptr, cur->af,
 		    &cur->ext.addr, &cur->lan.addr,
 		    cur->ext.port, cur->lan.port,
 		    cur->src.seqhi, cur->src.seqlo + 1,
 		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag, NULL, NULL);
+	}
 	RB_REMOVE(pf_state_tree_ext_gwy,
 	    &cur->u.s.kif->pfik_ext_gwy, cur);
 	RB_REMOVE(pf_state_tree_lan_ext,
@@ -1507,7 +1508,8 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	struct ip6_hdr	*h6;
 #endif /* INET6 */
 	struct tcphdr	*th;
-	char *opt;
+	char		*opt;
+	struct pf_mtag	*pf_mtag;
 
 	/* maximum segment size tcp option */
 	tlen = sizeof(struct tcphdr);
@@ -1531,35 +1533,20 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		return;
-	if (tag) {
-		struct m_tag	*mtag;
-
-		mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
-		if (mtag == NULL) {
-			m_freem(m);
-			return;
-		}
-		m_tag_prepend(m, mtag);
+	if ((pf_mtag = pf_get_mtag(m)) == NULL) {
+		m_freem(m);
+		return;
 	}
-	if (rtag)
-		if (pf_tag_packet(m, NULL, rtag)) {
-			m_freem(m);
-			return;
-		}
+	if (tag)
+		pf_mtag->flags |= PF_TAG_GENERATED;
+	pf_mtag->tag = rtag;
+
 #ifdef ALTQ
 	if (r != NULL && r->qid) {
-		struct m_tag	*mtag;
-		struct altq_tag *atag;
-
-		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
-		if (mtag != NULL) {
-			atag = (struct altq_tag *)(mtag + 1);
-			atag->qid = r->qid;
-			/* add hints for ecn */
-			atag->af = af;
-			atag->hdr = mtod(m, struct ip *);
-			m_tag_prepend(m, mtag);
-		}
+		pf_mtag->qid = r->qid;
+		/* add hints for ecn */
+		pf_mtag->af = af;
+		pf_mtag->hdr = mtod(m, struct ip *);
 	}
 #endif /* ALTQ */
 	m->m_data += max_linkhdr;
@@ -1669,32 +1656,21 @@ void
 pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
     struct pf_rule *r)
 {
-	struct m_tag	*mtag;
+	struct pf_mtag	*pf_mtag;
 	struct mbuf	*m0;
 
-	mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
-	if (mtag == NULL)
-		return;
 	m0 = m_copy(m, 0, M_COPYALL);
-	if (m0 == NULL) {
-		m_tag_free(mtag);
+
+	if ((pf_mtag = pf_get_mtag(m0)) == NULL)
 		return;
-	}
-	m_tag_prepend(m0, mtag);
+	pf_mtag->flags |= PF_TAG_GENERATED;
 
 #ifdef ALTQ
 	if (r->qid) {
-		struct altq_tag *atag;
-
-		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
-		if (mtag != NULL) {
-			atag = (struct altq_tag *)(mtag + 1);
-			atag->qid = r->qid;
-			/* add hints for ecn */
-			atag->af = af;
-			atag->hdr = mtod(m0, struct ip *);
-			m_tag_prepend(m0, mtag);
-		}
+		pf_mtag->qid = r->qid;
+		/* add hints for ecn */
+		pf_mtag->af = af;
+		pf_mtag->hdr = mtod(m0, struct ip *);
 	}
 #endif /* ALTQ */
 
@@ -1809,48 +1785,55 @@ pf_match_gid(u_int8_t op, gid_t a1, gid_t a2, gid_t g)
 	return (pf_match(op, a1, a2, g));
 }
 
-struct pf_tag *
-pf_get_tag(struct mbuf *m)
+struct pf_mtag *
+pf_find_mtag(struct mbuf *m)
 {
 	struct m_tag	*mtag;
 
-	if ((mtag = m_tag_find(m, PACKET_TAG_PF_TAG, NULL)) != NULL)
-		return ((struct pf_tag *)(mtag + 1));
-	else
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF, NULL)) == NULL)
 		return (NULL);
+
+	return ((struct pf_mtag *)(mtag + 1));
+}
+
+struct pf_mtag *
+pf_get_mtag(struct mbuf *m)
+{
+	struct m_tag	*mtag;
+
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF, NULL)) == NULL) {
+		mtag = m_tag_get(PACKET_TAG_PF, sizeof(struct pf_mtag),
+		    M_NOWAIT);
+		if (mtag == NULL)
+			return (NULL);
+		bzero(mtag + 1, sizeof(struct pf_mtag));
+		m_tag_prepend(m, mtag);
+	}
+
+	return ((struct pf_mtag *)(mtag + 1));
 }
 
 int
-pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_tag **pftag, int *tag)
+pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_mtag *pf_mtag,
+    int *tag)
 {
-	if (*tag == -1) {	/* find mbuf tag */
-		*pftag = pf_get_tag(m);
-		if (*pftag != NULL)
-			*tag = (*pftag)->tag;
-		else
-			*tag = 0;
-	}
+	if (*tag == -1)
+		*tag = pf_mtag->tag;
 
 	return ((!r->match_tag_not && r->match_tag == *tag) ||
 	    (r->match_tag_not && r->match_tag != *tag));
 }
 
 int
-pf_tag_packet(struct mbuf *m, struct pf_tag *pftag, int tag)
+pf_tag_packet(struct mbuf *m, struct pf_mtag *pf_mtag, int tag)
 {
-	struct m_tag	*mtag;
-
 	if (tag <= 0)
 		return (0);
 
-	if (pftag == NULL) {
-		mtag = m_tag_get(PACKET_TAG_PF_TAG, sizeof(*pftag), M_NOWAIT);
-		if (mtag == NULL)
+	if (pf_mtag == NULL)
+		if ((pf_mtag = pf_get_mtag(m)) == NULL)
 			return (1);
-		((struct pf_tag *)(mtag + 1))->tag = tag;
-		m_tag_prepend(m, mtag);
-	} else
-		pftag->tag = tag;
+	pf_mtag->tag = tag;
 
 	return (0);
 }
@@ -2309,7 +2292,6 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 {
 	struct pf_rule		*r, *rm = NULL;
 	struct pf_ruleset	*ruleset = NULL;
-	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 	int			 asd = 0;
 
@@ -2352,7 +2334,7 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 		    !pf_match_port(dst->port_op, dst->port[0],
 		    dst->port[1], dport))
 			r = r->skip[PF_SKIP_DST_PORT].ptr;
-		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, pd->pf_mtag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY && (pd->proto !=
 		    IPPROTO_TCP || !pf_osfp_match(pf_osfp_fingerprint(pd, m,
@@ -2369,7 +2351,7 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 		if (r == NULL)
 			pf_step_out_of_anchor(&asd, &ruleset, rs_num, &r, NULL);
 	}
-	if (pf_tag_packet(m, pftag, tag))
+	if (pf_tag_packet(m, pd->pf_mtag, tag))
 		return (NULL);
 	if (rm != NULL && (rm->action == PF_NONAT ||
 	    rm->action == PF_NORDR || rm->action == PF_NOBINAT))
@@ -2775,7 +2757,6 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_src_node	*nsn = NULL;
 	u_short			 reason;
 	int			 rewrite = 0;
-	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 	u_int16_t		 mss = tcp_mssdflt;
 	int			 asd = 0;
@@ -2855,7 +2836,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, pd->pf_mtag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY && !pf_osfp_match(
 		    pf_osfp_fingerprint(pd, m, off, th), r->os_fingerprint))
@@ -2931,7 +2912,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->action == PF_DROP)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pftag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -3150,7 +3131,6 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_src_node	*nsn = NULL;
 	u_short			 reason;
 	int			 rewrite = 0;
-	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 	int			 asd = 0;
 
@@ -3227,7 +3207,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, pd->pf_mtag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY)
 			r = TAILQ_NEXT(r, entries);
@@ -3288,7 +3268,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->action == PF_DROP)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pftag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -3427,7 +3407,6 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	sa_family_t		 af = pd->af;
 	u_int8_t		 icmptype, icmpcode;
 	int			 state_icmp = 0;
-	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 #ifdef INET6
 	int			 rewrite = 0;
@@ -3553,7 +3532,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, pd->pf_mtag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY)
 			r = TAILQ_NEXT(r, entries);
@@ -3594,7 +3573,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->action != PF_PASS)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pftag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -3730,7 +3709,6 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
 	sa_family_t		 af = pd->af;
 	u_short			 reason;
-	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 	int			 asd = 0;
 
@@ -3807,7 +3785,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, pd->pf_mtag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY)
 			r = TAILQ_NEXT(r, entries);
@@ -3876,7 +3854,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (r->action != PF_PASS)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pftag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -3994,7 +3972,6 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 	struct pf_ruleset	*ruleset = NULL;
 	sa_family_t		 af = pd->af;
 	u_short			 reason;
-	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 	int			 asd = 0;
 
@@ -4021,7 +3998,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, pd->pf_mtag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			if (r->anchor == NULL) {
@@ -4052,7 +4029,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 	if (r->action != PF_PASS)
 		return (PF_DROP);
 
-	if (pf_tag_packet(m, pftag, tag)) {
+	if (pf_tag_packet(m, pd->pf_mtag, tag)) {
 		REASON_SET(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
@@ -5355,7 +5332,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw)
 #ifdef INET
 void
 pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
-    struct pf_state *s)
+    struct pf_state *s, struct pf_pdesc *pd)
 {
 	struct mbuf		*m0, *m1;
 	struct m_tag		*mtag;
@@ -5372,22 +5349,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
 		panic("pf_route: invalid parameters");
 
-	if ((mtag = m_tag_find(*m, PACKET_TAG_PF_ROUTED, NULL)) == NULL) {
-		if ((mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 1, M_NOWAIT)) ==
-		    NULL) {
-			m0 = *m;
-			*m = NULL;
-			goto bad;
-		}
-		*(char *)(mtag + 1) = 1;
-		m_tag_prepend(*m, mtag);
-	} else {
-		if (*(char *)(mtag + 1) > 3) {
-			m0 = *m;
-			*m = NULL;
-			goto bad;
-		}
-		(*(char *)(mtag + 1))++;
+	if (pd->pf_mtag->routed++ > 3) {
+		m0 = *m;
+		*m = NULL;
+		goto bad;
 	}
 
 	if (r->rt == PF_DUPTO) {
@@ -5559,10 +5524,9 @@ bad:
 #ifdef INET6
 void
 pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
-    struct pf_state *s)
+    struct pf_state *s, struct pf_pdesc *pd)
 {
 	struct mbuf		*m0;
-	struct m_tag		*mtag;
 	struct route_in6	 ip6route;
 	struct route_in6	*ro;
 	struct sockaddr_in6	*dst;
@@ -5576,22 +5540,10 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
 		panic("pf_route6: invalid parameters");
 
-	if ((mtag = m_tag_find(*m, PACKET_TAG_PF_ROUTED, NULL)) == NULL) {
-		if ((mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 1, M_NOWAIT)) ==
-		    NULL) {
-			m0 = *m;
-			*m = NULL;
-			goto bad;
-		}
-		*(char *)(mtag + 1) = 1;
-		m_tag_prepend(*m, mtag);
-	} else {
-		if (*(char *)(mtag + 1) > 3) {
-			m0 = *m;
-			*m = NULL;
-			goto bad;
-		}
-		(*(char *)(mtag + 1))++;
+	if (pd->pf_mtag->routed++ > 3) {
+		m0 = *m;
+		*m = NULL;
+		goto bad;
 	}
 
 	if (r->rt == PF_DUPTO) {
@@ -5617,12 +5569,9 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	dst->sin6_len = sizeof(*dst);
 	dst->sin6_addr = ip6->ip6_dst;
 
-	/* Cheat. */
+	/* Cheat. XXX why only in the v6 case??? */
 	if (r->rt == PF_FASTROUTE) {
-		mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
-		if (mtag == NULL)
-			goto bad;
-		m_tag_prepend(m0, mtag);
+		pd->pf_mtag->flags |= PF_TAG_GENERATED;
 		ip6_output(m0, NULL, NULL, 0, NULL, NULL);
 		return;
 	}
@@ -5780,20 +5729,6 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 	return (0);
 }
 
-static int
-pf_add_mbuf_tag(struct mbuf *m, u_int tag)
-{
-	struct m_tag *mtag;
-
-	if (m_tag_find(m, tag, NULL) != NULL)
-		return (0);
-	mtag = m_tag_get(tag, 0, M_NOWAIT);
-	if (mtag == NULL)
-		return (1);
-	m_tag_prepend(m, mtag);
-	return (0);
-}
-
 #ifdef INET
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
@@ -5809,8 +5744,16 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_pdesc		 pd;
 	int			 off, dirndx, pqid = 0;
 
-	if (!pf_status.running ||
-	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
+	if (!pf_status.running)
+		return (PF_PASS);
+
+	memset(&pd, 0, sizeof(pd));
+	if ((pd.pf_mtag = pf_get_mtag(m)) == NULL) {
+		DPFPRINTF(PF_DEBUG_URGENT,
+		    ("pf_test: pf_get_mtag returned NULL\n"));
+		return (PF_DROP);
+	}
+	if (pd.pf_mtag->flags & PF_TAG_GENERATED)
 		return (PF_PASS);
 
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
@@ -5830,7 +5773,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif /* DIAGNOSTIC */
 
-	memset(&pd, 0, sizeof(pd));
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
@@ -6001,25 +5943,17 @@ done:
 	}
 
 	if (s && s->tag)
-		pf_tag_packet(m, pf_get_tag(m), s->tag);
+		pf_tag_packet(m, pd.pf_mtag, s->tag);
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
-		struct m_tag	*mtag;
-		struct altq_tag	*atag;
-
-		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
-		if (mtag != NULL) {
-			atag = (struct altq_tag *)(mtag + 1);
-			if (pqid || pd.tos == IPTOS_LOWDELAY)
-				atag->qid = r->pqid;
-			else
-				atag->qid = r->qid;
-			/* add hints for ecn */
-			atag->af = AF_INET;
-			atag->hdr = h;
-			m_tag_prepend(m, mtag);
-		}
+		if (pqid || pd.tos == IPTOS_LOWDELAY)
+			pd.pf_mtag->qid = r->pqid;
+		else
+			pd.pf_mtag->qid = r->qid;
+		/* add hints for ecn */
+		pd.pf_mtag->af = AF_INET;
+		pd.pf_mtag->hdr = h;
 	}
 #endif /* ALTQ */
 
@@ -6032,11 +5966,8 @@ done:
 	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&
 	    (s->nat_rule.ptr->action == PF_RDR ||
 	    s->nat_rule.ptr->action == PF_BINAT) &&
-	    (ntohl(pd.dst->v4.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET &&
-	    pf_add_mbuf_tag(m, PACKET_TAG_PF_TRANSLATE_LOCALHOST)) {
-		action = PF_DROP;
-		REASON_SET(&reason, PFRES_MEMORY);
-	}
+	    (ntohl(pd.dst->v4.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
+		pd.pf_mtag->flags |= PF_TAG_TRANSLATE_LOCALHOST;
 
 	if (log) {
 		struct pf_rule *lr;
@@ -6121,7 +6052,7 @@ done:
 		action = PF_PASS;
 	} else if (r->rt)
 		/* pf_route can free the mbuf causing *m0 to become NULL */
-		pf_route(m0, r, dir, ifp, s);
+		pf_route(m0, r, dir, ifp, s, &pd);
 
 	return (action);
 }
@@ -6142,8 +6073,16 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_pdesc		 pd;
 	int			 off, terminal = 0, dirndx;
 
-	if (!pf_status.running ||
-	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
+	if (!pf_status.running)
+		return (PF_PASS);
+
+	memset(&pd, 0, sizeof(pd));
+	if ((pd.pf_mtag = pf_get_mtag(m)) == NULL) {
+		DPFPRINTF(PF_DEBUG_URGENT,
+		    ("pf_test6: pf_get_mtag returned NULL\n"));
+		return (PF_DROP);
+	}
+	if (pd.pf_mtag->flags & PF_TAG_GENERATED)
 		return (PF_PASS);
 
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
@@ -6163,7 +6102,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		panic("non-M_PKTHDR is passed to pf_test6");
 #endif /* DIAGNOSTIC */
 
-	memset(&pd, 0, sizeof(pd));
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
@@ -6351,25 +6289,17 @@ done:
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
 
 	if (s && s->tag)
-		pf_tag_packet(m, pf_get_tag(m), s->tag);
+		pf_tag_packet(m, pd.pf_mtag, s->tag);
 
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
-		struct m_tag	*mtag;
-		struct altq_tag	*atag;
-
-		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
-		if (mtag != NULL) {
-			atag = (struct altq_tag *)(mtag + 1);
-			if (pd.tos == IPTOS_LOWDELAY)
-				atag->qid = r->pqid;
-			else
-				atag->qid = r->qid;
-			/* add hints for ecn */
-			atag->af = AF_INET6;
-			atag->hdr = h;
-			m_tag_prepend(m, mtag);
-		}
+		if (pd.tos == IPTOS_LOWDELAY)
+			pd.pf_mtag->qid = r->pqid;
+		else
+			pd.pf_mtag->qid = r->qid;
+		/* add hints for ecn */
+		pd.pf_mtag->af = AF_INET6;
+		pd.pf_mtag->hdr = h;
 	}
 #endif /* ALTQ */
 
@@ -6377,11 +6307,8 @@ done:
 	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&
 	    (s->nat_rule.ptr->action == PF_RDR ||
 	    s->nat_rule.ptr->action == PF_BINAT) &&
-	    IN6_IS_ADDR_LOOPBACK(&pd.dst->v6) &&
-	    pf_add_mbuf_tag(m, PACKET_TAG_PF_TRANSLATE_LOCALHOST)) {
-		action = PF_DROP;
-		REASON_SET(&reason, PFRES_MEMORY);
-	}
+	    IN6_IS_ADDR_LOOPBACK(&pd.dst->v6))
+		pd.pf_mtag->flags |= PF_TAG_TRANSLATE_LOCALHOST;
 
 	if (log) {
 		struct pf_rule *lr;
@@ -6466,7 +6393,7 @@ done:
 		action = PF_PASS;
 	} else if (r->rt)
 		/* pf_route6 can free the mbuf causing *m0 to become NULL */
-		pf_route6(m0, r, dir, ifp, s);
+		pf_route6(m0, r, dir, ifp, s, &pd);
 
 	return (action);
 }

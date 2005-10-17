@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.104 2005/05/27 04:55:28 mcbride Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.105 2005/10/17 08:43:34 henning Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -525,17 +525,23 @@ udp_input(struct mbuf *m, ...)
 	inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
 	    ip->ip_dst, uh->uh_dport);
 	if (inp == 0) {
+		int	inpl_reverse = 0;
+#if NPF > 0
+		struct pf_mtag *t;
+
+		if ((t = pf_find_mtag(m)) != NULL &&
+		    t->flags & PF_TAG_TRANSLATE_LOCALHOST)
+			inpl_reverse = 1;
+#endif
 		++udpstat.udps_pcbhashmiss;
 #ifdef INET6
 		if (ip6) {
 			inp = in6_pcblookup_listen(&udbtable,
-			    &ip6->ip6_dst, uh->uh_dport, m_tag_find(m,
-			    PACKET_TAG_PF_TRANSLATE_LOCALHOST, NULL) != NULL);
+			    &ip6->ip6_dst, uh->uh_dport, inpl_reverse);
 		} else
 #endif /* INET6 */
 		inp = in_pcblookup_listen(&udbtable,
-		    ip->ip_dst, uh->uh_dport, m_tag_find(m,
-		    PACKET_TAG_PF_TRANSLATE_LOCALHOST, NULL) != NULL);
+		    ip->ip_dst, uh->uh_dport, inpl_reverse);
 		if (inp == 0) {
 			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {

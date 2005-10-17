@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.97 2005/09/30 02:39:24 brad Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.98 2005/10/17 08:43:35 henning Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -281,9 +281,14 @@ ether_output(ifp0, m0, dst, rt0)
 		if (!arpresolve(ac, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
-		    m_tag_find(m, PACKET_TAG_PF_ROUTED, NULL) == NULL)
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX)) {
+#if NPF > 0
+			struct pf_mtag	*t;
+
+			if ((t = pf_find_mtag(m)) == NULL || !t->routed)
+#endif
+				mcopy = m_copy(m, 0, (int)M_COPYALL);
+		}
 		etype = htons(ETHERTYPE_IP);
 		break;
 #endif
