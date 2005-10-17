@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.42 2005/10/17 22:04:54 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.43 2005/10/17 22:24:18 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -58,8 +58,8 @@ checkin_usage(void)
 {
 	fprintf(stderr,
 	    "usage: ci [-jMNqV] [-d[date]] [-f[rev]] [-kmode] [-l[rev]]\n"
-	    "          [-mmsg] [-nsymbol] [-r[rev]] [-u[rev]] [-wusername]\n"
-            "          file ...\n");
+	    "          [-mmsg] [-Nsymbol] [-nsymbol] [-r[rev]] [-u[rev]]\n"
+            "          [-wusername] file ...\n");
 }
 
 /*
@@ -71,7 +71,7 @@ checkin_usage(void)
 int
 checkin_main(int argc, char **argv)
 {
-	int i, ch, force, lkmode, interactive, rflag, status;
+	int i, ch, force, lkmode, interactive, rflag, status, symforce;
 	mode_t fmode;
 	time_t date;
 	RCSFILE *file;
@@ -86,7 +86,7 @@ checkin_main(int argc, char **argv)
 	file = NULL;
 	rcs_msg = username = NULL;
 	newrev =  NULL;
-	fmode = force = lkmode = verbose = rflag = status = 0;
+	fmode = force = lkmode = verbose = rflag = status = symforce = 0;
 	interactive = 1;
 
 
@@ -124,7 +124,6 @@ checkin_main(int argc, char **argv)
 		case 'm':
 			rcs_msg = rcs_optarg;
 			interactive = 0;
-			cvs_printf("rcs_msg: %s\n", rcs_msg);
 			break;
 		case 'N':
 			if ((symbol = strdup(rcs_optarg)) == NULL) {
@@ -135,6 +134,7 @@ checkin_main(int argc, char **argv)
 				cvs_log(LP_ERR, "invalid symbol `%s'", symbol);
 				exit(1);
 			}
+			symforce = 1;
 			break;
 		case 'n':
 			if ((symbol = strdup(rcs_optarg)) == NULL) {
@@ -353,6 +353,8 @@ checkin_main(int argc, char **argv)
 		if (symbol != NULL) {
 			cvs_printf("symbol: %s\n", symbol);
 			int ret = 0;
+			if (symforce)
+				rcs_sym_remove(file, symbol);
 			if ((ret = rcs_sym_add(file, symbol, newrev) == -1)
 			    && (rcs_errno == RCS_ERR_DUPENT)) {
 				char tmp[16];
