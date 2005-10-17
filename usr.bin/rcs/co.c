@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.17 2005/10/16 15:46:07 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.18 2005/10/17 15:33:12 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -43,13 +43,13 @@ int
 checkout_main(int argc, char **argv)
 {
 	int i, ch;
-	int lock;
+	int fflag, lock;
 	RCSNUM *frev, *rev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN], buf[16];
 	char *username;
 
-	lock = 0;
+	fflag = lock = 0;
 	rev = RCS_HEAD_REV;
 	frev = NULL;
 
@@ -58,8 +58,20 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "l::qr::u::V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::l::qr::u::V")) != -1) {
 		switch (ch) {
+		case 'f':
+			if (rev != RCS_HEAD_REV)
+				cvs_log(LP_WARN,
+				    "redefinition of revision number");
+			if (rcs_optarg != NULL) {
+				if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
+					cvs_log(LP_ERR, "bad revision number");
+					exit (1);
+				}
+			}
+			fflag = 1;
+			break;
 		case 'l':
 			if (rev != RCS_HEAD_REV)
 				cvs_log(LP_WARN,
@@ -130,7 +142,7 @@ checkout_main(int argc, char **argv)
 
 		rcsnum_tostr(frev, buf, sizeof(buf));
 
-		if (checkout_rev(file, frev, argv[i], lock, username) < 0) { 
+		if (checkout_rev(file, frev, argv[i], lock, username, fflag) < 0) { 
 			rcs_close(file);
 			continue;
 		}
@@ -162,11 +174,12 @@ checkout_usage(void)
  */
 int
 checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
-    const char *username)
+    const char *username, int force)
 {
-	char buf[16];
+	char buf[16], yn;
 	mode_t mode = 0444;
 	BUF *bp;
+	struct stat st;
 
 	/*
 	 * Check out the latest revision if <frev> is greater than HEAD
@@ -175,6 +188,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 		frev = file->rf_head; 
 
 	rcsnum_tostr(frev, buf, sizeof(buf));
+
+	if (verbose == 1)
+		printf("revision %s", buf);
 
 	if ((bp = rcs_getrev(file, frev)) == NULL) {
 		cvs_log(LP_ERR, "cannot find revision `%s'", buf);
@@ -189,14 +205,41 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 			else
 				cvs_log(LP_WARN, "you already have a lock");
 		}
+
 		mode = 0644;
+		if (verbose == 1)
+			printf(" (locked)");
 	} else if (lkmode == LOCK_UNLOCK) {
 		if (rcs_lock_remove(file, frev) < 0) {
 			if (rcs_errno != RCS_ERR_NOENT)
 				cvs_log(LP_ERR,
 				    "failed to remove lock '%s'", buf);
 		}
+
 		mode = 0444;
+		if (verbose == 1)
+			printf(" (unlocked)");
+	}
+
+	if (verbose == 1)
+		printf("\n");
+
+	if ((stat(dst, &st) != -1) && force == 0) {
+		if (st.st_mode & S_IWUSR) {
+			yn = 0;
+			while (yn != 'y' && yn != 'n') {
+				printf("writeable '%s' exists; ", dst);
+				printf("remove it? [ny] (n):");
+				fflush(stdout);
+				yn = getchar();
+			}
+
+			if (yn == 'n') {
+				if (verbose == 1)
+					cvs_log(LP_ERR, "checkout aborted");
+				return (-1);
+			}
+		}
 	}
 
 	if (cvs_buf_write(bp, dst, mode) < 0) {
@@ -207,15 +250,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 
 	cvs_buf_free(bp);
 
-	if (verbose == 1) {
-		cvs_printf("revision %s ", buf);
-		if (lkmode == LOCK_LOCK)
-			cvs_printf("(locked)");
-		else if (lkmode == LOCK_UNLOCK)
-			cvs_printf("(unlocked)");
-		cvs_printf("\n");
-		cvs_printf("done\n");
-	}
+	if (verbose == 1)
+		printf("done\n");
 
 	return (0);
 }

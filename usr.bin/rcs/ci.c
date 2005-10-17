@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.40 2005/10/16 23:30:45 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.41 2005/10/17 15:33:12 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -242,7 +242,7 @@ checkin_main(int argc, char **argv)
 			(void)unlink(argv[i]);
 			if (lkmode != 0)
 				checkout_rev(file, frev, argv[i], lkmode,
-				    username);
+				    username, 0);
 			rcs_lock_remove(file, frev);
 			rcs_close(file);
 			cvs_printf("done\n");
@@ -368,7 +368,7 @@ checkin_main(int argc, char **argv)
 		 * Do checkout if -u or -l are specified.
 		 */
 		if (lkmode != 0 && !rflag)
-			checkout_rev(file, newrev, argv[i], lkmode, username);
+			checkout_rev(file, newrev, argv[i], lkmode, username, 0);
 
 		/* File will NOW be synced */
 		rcs_close(file);
