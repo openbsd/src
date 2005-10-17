@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.41 2005/10/17 15:33:12 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.42 2005/10/17 22:04:54 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -125,6 +125,16 @@ checkin_main(int argc, char **argv)
 			rcs_msg = rcs_optarg;
 			interactive = 0;
 			cvs_printf("rcs_msg: %s\n", rcs_msg);
+			break;
+		case 'N':
+			if ((symbol = strdup(rcs_optarg)) == NULL) {
+				cvs_log(LP_ERRNO, "out of memory");
+				exit(1);
+			}
+			if (rcs_sym_check(symbol) != 1) {
+				cvs_log(LP_ERR, "invalid symbol `%s'", symbol);
+				exit(1);
+			}
 			break;
 		case 'n':
 			if ((symbol = strdup(rcs_optarg)) == NULL) {
@@ -346,14 +356,17 @@ checkin_main(int argc, char **argv)
 			if ((ret = rcs_sym_add(file, symbol, newrev) == -1)
 			    && (rcs_errno == RCS_ERR_DUPENT)) {
 				char tmp[16];
-				rcsnum_tostr(rcs_sym_getrev(file, symbol), tmp, sizeof(tmp));
-				cvs_log(LP_ERR, "symbolic name %s already bound to %s",
+				rcsnum_tostr(rcs_sym_getrev(file, symbol),
+				    tmp, sizeof(tmp));
+				cvs_log(LP_ERR,
+				    "symbolic name %s already bound to %s",
 				    symbol, tmp);
 				status = 1;
 				rcs_close(file);
 				continue;
 			} else if (ret == -1) {
-				cvs_printf("problem adding symbol: %s\n", symbol);
+				cvs_printf("problem adding symbol: %s\n",
+				    symbol);
 				status = 1;
 				rcs_close(file);
 				continue;
