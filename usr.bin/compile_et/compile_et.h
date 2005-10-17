@@ -1,6 +1,6 @@
-/* $OpenBSD: compile_et.h,v 1.3 2005/05/13 05:05:22 jaredy Exp $ */
+/* $OpenBSD: compile_et.h,v 1.4 2005/10/17 07:35:29 biorn Exp $ */
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -15,12 +15,7 @@
  *    notice, this list of conditions and the following disclaimer in the 
  *    documentation and/or other materials provided with the distribution. 
  *
- * 3. All advertising materials mentioning features or use of this software 
- *    must display the following acknowledgement: 
- *      This product includes software developed by Kungliga Tekniska 
- *      Högskolan and its contributors. 
- *
- * 4. Neither the name of the Institute nor the names of its contributors 
+ * 3. Neither the name of the Institute nor the names of its contributors 
  *    may be used to endorse or promote products derived from this software 
  *    without specific prior written permission. 
  *
@@ -37,7 +32,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: compile_et.h,v 1.3 1998/11/22 09:39:46 assar Exp $ */
+/* $KTH: compile_et.h,v 1.7 2005/05/16 08:51:47 lha Exp $ */
 
 #ifndef __COMPILE_ET_H__
 #define __COMPILE_ET_H__

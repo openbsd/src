@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -15,12 +15,7 @@
  *    notice, this list of conditions and the following disclaimer in the 
  *    documentation and/or other materials provided with the distribution. 
  *
- * 3. All advertising materials mentioning features or use of this software 
- *    must display the following acknowledgement: 
- *      This product includes software developed by Kungliga Tekniska 
- *      Högskolan and its contributors. 
- *
- * 4. Neither the name of the Institute nor the names of its contributors 
+ * 3. Neither the name of the Institute nor the names of its contributors 
  *    may be used to endorse or promote products derived from this software 
  *    without specific prior written permission. 
  *
@@ -38,10 +33,11 @@
  */
 
 #include "compile_et.h"
-/* RCSID("$KTH: parse.y,v 1.9 1999/07/04 14:54:58 assar Exp $"); */
+
+/* RCSID("$KTH: parse.y,v 1.13 2005/05/16 08:53:34 lha Exp $"); */
 
 void yyerror (char *s);
-long name2number(const char *str);
+static long name2number(const char *str);
 void error_message(char *, ...);
 
 extern char *yytext;
@@ -105,39 +101,32 @@ statement	: INDEX NUMBER
 		}
 		| PREFIX STRING
 		{
-		    size_t len = strlen($2) + 2;
-		    
-		    if ((prefix = realloc(prefix, len)) == NULL) {
-		    	yyerror(strerror(errno));
-			exit(1);
-		    }
-		    strlcpy(prefix, $2, len);
-		    strlcat(prefix, "_", len);
+		    free(prefix);
+		    asprintf (&prefix, "%s_", $2);
+		    if (prefix == NULL)
+			errx(1, "malloc");
 		    free($2);
 		}
 		| PREFIX
 		{
-		    if ((prefix = realloc(prefix, 1)) == NULL) {
-			yyerror(strerror(errno));
-			exit(1);
-		    }
+		    prefix = realloc(prefix, 1);
+		    if (prefix == NULL)
+			errx(1, "malloc");
 		    *prefix = '\0';
 		}
 		| EC STRING ',' STRING
 		{
 		    struct error_code *ec = malloc(sizeof(*ec));
-		
-		    if (ec == NULL) {
-			yyerror(strerror(errno));
-			exit(1);
-		    }
+		    
+		    if (ec == NULL)
+			errx(1, "malloc");
+
 		    ec->next = NULL;
 		    ec->number = number;
 		    if(prefix && *prefix != '\0') {
-			if (asprintf (&ec->name, "%s%s", prefix, $2) == -1) {
-			    yyerror(strerror(errno));
-			    exit(1);
-			}
+			asprintf (&ec->name, "%s%s", prefix, $2);
+			if (ec->name == NULL)
+			    errx(1, "malloc");
 			free($2);
 		    } else
 			ec->name = $2;
@@ -153,7 +142,7 @@ statement	: INDEX NUMBER
 
 %%
 
-long
+static long
 name2number(const char *str)
 {
     const char *p;

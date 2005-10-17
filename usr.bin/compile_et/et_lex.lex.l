@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -15,12 +15,7 @@
  *    notice, this list of conditions and the following disclaimer in the 
  *    documentation and/or other materials provided with the distribution. 
  *
- * 3. All advertising materials mentioning features or use of this software 
- *    must display the following acknowledgement: 
- *      This product includes software developed by Kungliga Tekniska 
- *      Högskolan and its contributors. 
- *
- * 4. Neither the name of the Institute nor the names of its contributors 
+ * 3. Neither the name of the Institute nor the names of its contributors 
  *    may be used to endorse or promote products derived from this software 
  *    without specific prior written permission. 
  *
@@ -48,11 +43,15 @@
 #include "compile_et.h"
 #include "error_table.h"
 
-/* RCSID("$KTH: lex.l,v 1.4 1998/11/20 05:58:52 assar Exp $"); */
+/* RCSID("$KTH: lex.l,v 1.8 2005/05/16 08:52:54 lha Exp $"); */
 
 static unsigned lineno = 1;
-void error_message(char *, ...);
-int getstring(void);
+void error_message(const char *, ...);
+static int getstring(void);
+
+#define YY_NO_UNPUT
+
+#undef ECHO
 
 %}
 
@@ -83,7 +82,7 @@ yywrap ()
 }
 #endif
 
-int
+static int
 getstring(void)
 {
     char x[128];
@@ -110,13 +109,14 @@ getstring(void)
 	x[i++] = c;
     }
     x[i] = '\0';
-    if ((yylval.string = strdup(x)) == NULL)
-    	err(1, NULL);
+    yylval.string = strdup(x);
+    if (yylval.string == NULL)
+        err(1, "malloc");
     return STRING;
 }
 
 void
-error_message (char *format, ...)
+error_message (const char *format, ...)
 {
      va_list args;
 
