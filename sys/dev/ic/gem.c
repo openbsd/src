@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.45 2005/10/11 23:58:36 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.46 2005/10/17 03:03:24 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -240,8 +240,12 @@ gem_config(sc)
 
 	gem_mifinit(sc);
 
-	mii_attach(&sc->sc_dev, mii, 0xffffffff,
-			MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	if (sc->sc_tcvr == -1)
+		mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+				MII_OFFSET_ANY, 0);
+	else
+		mii_attach(&sc->sc_dev, mii, 0xffffffff, sc->sc_tcvr,
+				MII_OFFSET_ANY, 0);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
@@ -1151,6 +1155,15 @@ gem_mifinit(sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mif = sc->sc_h;
+
+	if (GEM_IS_APPLE(sc)) {
+		if (sc->sc_variant == GEM_APPLE_K2_GMAC)
+			sc->sc_tcvr = 1;
+		else
+			sc->sc_tcvr = 0;
+	} else {
+		sc->sc_tcvr = -1;
+	}
 
 	/* Configure the MIF in frame mode */
 	sc->sc_mif_config = bus_space_read_4(t, mif, GEM_MIF_CONFIG);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.10 2005/08/01 05:45:03 brad Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.11 2005/10/17 03:03:24 brad Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -142,12 +142,18 @@ struct gem_softc {
 	int		sc_phys[2];	/* MII instance -> PHY map */
 
 	int		sc_mif_config;	/* Selected MII reg setting */
+	u_int		sc_tcvr;
 
 	int		sc_pci;		/* XXXXX -- PCI buses are LE. */
 	u_int		sc_variant;	/* which GEM are we dealing with? */
-#define	GEM_UNKNOWN		0	/* don't know */
-#define	GEM_SUN_GEM		1	/* Sun GEM variant */
-#define	GEM_APPLE_GMAC		2	/* Apple GMAC variant */
+#define GEM_UNKNOWN		0	/* don't know */
+#define GEM_SUN_GEM		1	/* Sun GEM variant */
+#define GEM_SUN_ERI		2	/* Sun ERI variant */
+#define GEM_APPLE_K2_GMAC	3	/* Apple K2 GMAC variant */
+#define GEM_APPLE_PANGEA_GMAC	4	/* Apple Pangea GMAC variant */
+#define GEM_APPLE_SHASTA_GMAC	5	/* Apple Shasta GMAC variant */
+#define GEM_APPLE_UNINORTHGMAC	6	/* Apple UniNorth GMAC variant */
+#define GEM_APPLE_UNINORTH2GMAC	7	/* Apple UniNorth 2 GMAC variant */
 
 	u_int		sc_flags;	/* */
 #define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */
@@ -270,6 +276,9 @@ do {									\
 	    & GEM_RD_BUFSIZE) | GEM_RD_OWN);				\
 	GEM_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
+
+#define GEM_IS_APPLE(sc)	\
+    ((sc)->sc_variant >= GEM_APPLE_K2_GMAC && (sc)->sc_variant <= GEM_APPLE_UNINORTH2GMAC)
 
 #ifdef _KERNEL
 void	gem_attach(struct gem_softc *, const u_int8_t *);
