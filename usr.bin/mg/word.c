@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.10 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: word.c,v 1.11 2005/10/17 20:08:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,6 +9,8 @@
  */
 
 #include "def.h"
+
+RSIZE	countfword(void);
 
 /*
  * Move the cursor backward by "n" words. All of the details of motion are
@@ -67,6 +69,7 @@ int
 upperword(int f, int n)
 {
 	int	c;
+	RSIZE	size;
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read-only");
@@ -80,6 +83,9 @@ upperword(int f, int n)
 			if (forwchar(FFRAND, 1) == FALSE)
 				return (TRUE);
 		}
+		size = countfword();
+		undo_add_change(curwp->w_dotp, curwp->w_doto, size);
+		
 		while (inword() != FALSE) {
 			c = lgetc(curwp->w_dotp, curwp->w_doto);
 			if (ISLOWER(c) != FALSE) {
@@ -103,6 +109,7 @@ int
 lowerword(int f, int n)
 {
 	int	c;
+	RSIZE	size;
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read-only");
@@ -115,6 +122,9 @@ lowerword(int f, int n)
 			if (forwchar(FFRAND, 1) == FALSE)
 				return (TRUE);
 		}
+		size = countfword();
+		undo_add_change(curwp->w_dotp, curwp->w_doto, size);
+
 		while (inword() != FALSE) {
 			c = lgetc(curwp->w_dotp, curwp->w_doto);
 			if (ISUPPER(c) != FALSE) {
@@ -140,6 +150,7 @@ int
 capword(int f, int n)
 {
 	int	c;
+	RSIZE	size;
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read-only");
@@ -153,6 +164,9 @@ capword(int f, int n)
 			if (forwchar(FFRAND, 1) == FALSE)
 				return (TRUE);
 		}
+		size = countfword();
+		undo_add_change(curwp->w_dotp, curwp->w_doto, size);
+
 		if (inword() != FALSE) {
 			c = lgetc(curwp->w_dotp, curwp->w_doto);
 			if (ISLOWER(c) != FALSE) {
@@ -176,6 +190,33 @@ capword(int f, int n)
 	}
 	return (TRUE);
 }
+
+/*
+ * Count characters in word, from current position
+ */
+RSIZE
+countfword()
+{
+	RSIZE	 size;
+	LINE	*dotp;
+	int	 doto;
+
+	dotp = curwp->w_dotp;
+	doto = curwp->w_doto;
+	size = 0;
+
+	while (inword() != FALSE) {
+		if (forwchar(FFRAND, 1) == FALSE)
+			/* hit the end of the buffer */
+			goto out;
+		++size;
+	}
+out:
+	curwp->w_dotp = dotp;
+	curwp->w_doto = doto;
+	return (size);
+}
+
 
 /*
  * Kill forward by "n" words.
