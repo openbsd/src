@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.h,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vi.h,v 1.5 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -355,8 +355,8 @@ typedef struct _vi_private {
 
 /* If more than one screen being shown. */
 #define	IS_SPLIT(sp)							\
-	((sp)->q.cqe_next != (void *)&(sp)->gp->dq ||			\
-	(sp)->q.cqe_prev != (void *)&(sp)->gp->dq)
+	(CIRCLEQ_NEXT((sp), q) != (void *)&(sp)->gp->dq ||		\
+	CIRCLEQ_PREV((sp), q) != (void *)&(sp)->gp->dq)
 
 /* Screen adjustment operations. */
 typedef enum { A_DECREASE, A_INCREASE, A_SET } adj_t;

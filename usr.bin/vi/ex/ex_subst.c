@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.12 2002/02/17 19:42:34 millert Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.13 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -662,7 +662,7 @@ nextmatch:	match[0].rm_so = 0;
 					goto lquit;
 				if (ex_txt(sp, &tiq, 0, TXT_CR))
 					goto err;
-				ev.e_c = tiq.cqh_first->lb[0];
+				ev.e_c = CIRCLEQ_FIRST(&tiq)->lb[0];
 			}
 
 			switch (ev.e_c) {

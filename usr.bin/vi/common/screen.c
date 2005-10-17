@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: screen.c,v 1.7 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -146,7 +146,7 @@ screen_end(sp)
 	 * If a created screen failed during initialization, it may not
 	 * be linked into the chain.
 	 */
-	if (sp->q.cqe_next != NULL)
+	if (CIRCLEQ_NEXT(sp, q) != NULL)
 		CIRCLEQ_REMOVE(&sp->gp->dq, sp, q);
 
 	/* The screen is no longer real. */
@@ -172,7 +172,7 @@ screen_end(sp)
 	}
 
 	/* Free any text input. */
-	if (sp->tiq.cqh_first != NULL)
+	if (CIRCLEQ_FIRST(&sp->tiq) != NULL)
 		text_lfree(&sp->tiq);
 
 	/* Free alternate file name. */
@@ -217,16 +217,15 @@ screen_next(sp)
 
 	/* Try the display queue, without returning the current screen. */
 	gp = sp->gp;
-	for (next = gp->dq.cqh_first;
-	    next != (void *)&gp->dq; next = next->q.cqe_next)
+	CIRCLEQ_FOREACH(next, &gp->dq, q)
 		if (next != sp)
 			break;
 	if (next != (void *)&gp->dq)
 		return (next);
 
 	/* Try the hidden queue; if found, move screen to the display queue. */
-	if (gp->hq.cqh_first != (void *)&gp->hq) {
-		next = gp->hq.cqh_first;
+	if (CIRCLEQ_FIRST(&gp->hq) != CIRCLEQ_END(&gp->hq)) {
+		next = CIRCLEQ_FIRST(&gp->hq);
 		CIRCLEQ_REMOVE(&gp->hq, next, q);
 		CIRCLEQ_INSERT_HEAD(&gp->dq, next, q);
 		return (next);

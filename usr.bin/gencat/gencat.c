@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.9 2004/07/01 19:23:34 mickey Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.10 2005/10/17 19:04:20 otto Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: gencat.c,v 1.9 2004/07/01 19:23:34 mickey Exp $";
+    "$OpenBSD: gencat.c,v 1.10 2005/10/17 19:04:20 otto Exp $";
 #endif /* not lint */
 
 /***********************************************************
@@ -522,12 +522,10 @@ MCWriteCat(int fd)
 	nmsgs = 0;
 	string_size = 0;
 
-	for (set = sethead.lh_first; set != NULL;
-	    set = set->entries.le_next) {
+	LIST_FOREACH(set, &sethead, entries) {
 		nsets++;
 
-		for (msg = set->msghead.lh_first; msg != NULL;
-		    msg = msg->entries.le_next) {
+		LIST_FOREACH(msg, &set->msghead, entries) {
 			nmsgs++;
 			string_size += strlen(msg->str) + 1;
 		}
@@ -573,12 +571,10 @@ MCWriteCat(int fd)
 
 	msg_index = 0;
 	msg_offset = 0;
-	for (set = sethead.lh_first; set != NULL;
-	    set = set->entries.le_next) {
+	LIST_FOREACH(set, &sethead, entries) {
 
 		nmsgs = 0;
-		for (msg = set->msghead.lh_first; msg != NULL;
-		    msg = msg->entries.le_next) {
+		LIST_FOREACH(msg, &set->msghead, entries) {
 			int     msg_len = strlen(msg->str) + 1;
 
 			msg_hdr->__msgno = htonl(msg->msgId);
@@ -621,9 +617,9 @@ MCAddSet(int setId)
 	}
 #endif
 
-	p = sethead.lh_first;
+	p = LIST_FIRST(&sethead);
 	q = NULL;
-	for (; p != NULL && p->setId < setId; q = p, p = p->entries.le_next);
+	for (; p != NULL && p->setId < setId; q = p, p = LIST_NEXT(p, entries));
 
 	if (p && p->setId == setId) {
 		;
@@ -664,9 +660,9 @@ MCAddMsg(int msgId, const char *str)
 	}
 #endif
 
-	p = curSet->msghead.lh_first;
+	p = LIST_FIRST(&curSet->msghead);
 	q = NULL;
-	for (; p != NULL && p->msgId < msgId; q = p, p = p->entries.le_next);
+	for (; p != NULL && p->msgId < msgId; q = p, p = LIST_NEXT(p, entries));
 
 	if (p && p->msgId == msgId) {
 		free(p->str);
@@ -691,12 +687,13 @@ MCDelSet(int setId)
 	struct _setT *set;
 	struct _msgT *msg;
 
-	set = sethead.lh_first;
-	for (; set != NULL && set->setId < setId; set = set->entries.le_next);
+	set = LIST_FIRST(&sethead);
+	for (; set != NULL && set->setId < setId;
+	    set = LIST_NEXT(set, entries));
 
 	if (set && set->setId == setId) {
 
-		msg = set->msghead.lh_first;
+		msg = LIST_FIRST(&set->msghead);
 		while (msg) {
 			free(msg->str);
 			LIST_REMOVE(msg, entries);
@@ -716,8 +713,9 @@ MCDelMsg(int msgId)
 	if (!curSet)
 		error(NULL, "you can't delete a message before defining the set");
 
-	msg = curSet->msghead.lh_first;
-	for (; msg != NULL && msg->msgId < msgId; msg = msg->entries.le_next);
+	msg = LIST_FIRST(&curSet->msghead);
+	for (; msg != NULL && msg->msgId < msgId;
+	    msg = LIST_NEXT(msg, entries));
 
 	if (msg && msg->msgId == msgId) {
 		free(msg->str);

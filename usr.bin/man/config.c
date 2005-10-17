@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2004/09/15 22:20:03 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.7 2005/10/17 19:08:46 otto Exp $	*/
 /*	$NetBSD: config.c,v 1.7 1995/09/28 06:05:21 tls Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: config.c,v 1.6 2004/09/15 22:20:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: config.c,v 1.7 2005/10/17 19:08:46 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,8 +100,8 @@ config(char *fname)
 			continue;
 		*t = '\0';
 
-		for (tp = head.tqh_first;	/* Find any matching tag. */
-		    tp != NULL && strcmp(p, tp->s); tp = tp->q.tqe_next);
+		for (tp = TAILQ_FIRST(&head);	/* Find any matching tag. */
+		    tp != NULL && strcmp(p, tp->s); tp = TAILQ_NEXT(tp, q));
 
 		if (tp == NULL)		/* Create a new tag. */
 			tp = addlist(p);
@@ -156,7 +156,7 @@ getlist(char *name)
 {
 	TAG *tp;
 
-	for (tp = head.tqh_first; tp != NULL; tp = tp->q.tqe_next)
+	TAILQ_FOREACH(tp, &head, q)
 		if (!strcmp(name, tp->s))
 			return (tp);
 	return (NULL);

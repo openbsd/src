@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_split.c,v 1.7 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vs_split.c,v 1.8 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -223,11 +223,11 @@ vs_discard(sp, spp)
 	 * they're the closest to the current screen.  If that doesn't work,
 	 * there was no screen to join.
 	 */
-	if ((nsp = sp->q.cqe_prev) != (void *)&sp->gp->dq) {
+	if ((nsp = CIRCLEQ_PREV(sp, q)) != CIRCLEQ_END(&sp->gp->dq)) {
 		nsp->rows += sp->rows;
 		sp = nsp;
 		dir = FORWARD;
-	} else if ((nsp = sp->q.cqe_next) != (void *)&sp->gp->dq) {
+	} else if ((nsp = CIRCLEQ_NEXT(sp, q)) != CIRCLEQ_END(&sp->gp->dq)) {
 		nsp->woff = sp->woff;
 		nsp->rows += sp->rows;
 		sp = nsp;
@@ -503,15 +503,15 @@ vs_resize(sp, count, adj)
 		s = sp;
 		if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count)
 			goto toosmall;
-		if ((g = sp->q.cqe_prev) == (void *)&gp->dq) {
-			if ((g = sp->q.cqe_next) == (void *)&gp->dq)
+		if ((g = CIRCLEQ_PREV(sp, q)) == CIRCLEQ_END(&gp->dq)) {
+			if ((g = CIRCLEQ_NEXT(sp, q)) == CIRCLEQ_END(&gp->dq))
 				goto toobig;
 			g_off = -count;
 		} else
 			s_off = count;
 	} else {
 		g = sp;
-		if ((s = sp->q.cqe_next) != (void *)&gp->dq)
+		if ((s = CIRCLEQ_NEXT(sp, q)) != CIRCLEQ_END(&gp->dq))
 			if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count)
 				s = NULL;
 			else
@@ -519,7 +519,7 @@ vs_resize(sp, count, adj)
 		else
 			s = NULL;
 		if (s == NULL) {
-			if ((s = sp->q.cqe_prev) == (void *)&gp->dq) {
+			if ((s = CIRCLEQ_PREV(sp, q)) == CIRCLEQ_END(&gp->dq)) {
 toobig:				msgq(sp, M_BERR, adj == A_DECREASE ?
 				    "227|The screen cannot shrink" :
 				    "228|The screen cannot grow");
@@ -580,21 +580,19 @@ vs_getbg(sp, name)
 
 	/* If name is NULL, return the first background screen on the list. */
 	if (name == NULL) {
-		nsp = gp->hq.cqh_first;
+		nsp = CIRCLEQ_FIRST(&gp->hq);
 		return (nsp == (void *)&gp->hq ? NULL : nsp);
 	}
 
 	/* Search for a full match. */
-	for (nsp = gp->hq.cqh_first;
-	    nsp != (void *)&gp->hq; nsp = nsp->q.cqe_next)
+	CIRCLEQ_FOREACH(nsp, &gp->hq, q)
 		if (!strcmp(nsp->frp->name, name))
 			break;
 	if (nsp != (void *)&gp->hq)
 		return (nsp);
 
 	/* Search for a last-component match. */
-	for (nsp = gp->hq.cqh_first;
-	    nsp != (void *)&gp->hq; nsp = nsp->q.cqe_next) {
+	CIRCLEQ_FOREACH(nsp, &gp->hq, q) {
 		if ((p = strrchr(nsp->frp->name, '/')) == NULL)
 			p = nsp->frp->name;
 		else

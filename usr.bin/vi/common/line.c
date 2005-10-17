@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: line.c,v 1.6 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -115,14 +115,14 @@ db_get(sp, lno, flags, pp, lenp)
 	 * is there.
 	 */
 	if (F_ISSET(sp, SC_TINPUT)) {
-		l1 = ((TEXT *)sp->tiq.cqh_first)->lno;
-		l2 = ((TEXT *)sp->tiq.cqh_last)->lno;
+		l1 = ((TEXT *)CIRCLEQ_FIRST(&sp->tiq))->lno;
+		l2 = ((TEXT *)CIRCLEQ_LAST(&sp->tiq))->lno;
 		if (l1 <= lno && l2 >= lno) {
 #if defined(DEBUG) && 0
 	TRACE(sp, "retrieve TEXT buffer line %lu\n", (u_long)lno);
 #endif
-			for (tp = sp->tiq.cqh_first;
-			    tp->lno != lno; tp = tp->q.cqe_next);
+			for (tp = CIRCLEQ_FIRST(&sp->tiq);
+			    tp->lno != lno; tp = CIRCLEQ_NEXT(tp, q));
 			if (lenp != NULL)
 				*lenp = tp->len;
 			if (pp != NULL)
@@ -467,7 +467,7 @@ db_exist(sp, lno)
 	if (ep->c_nlines != OOBLNO)
 		return (lno <= (F_ISSET(sp, SC_TINPUT) ?
 		    ep->c_nlines + (((TEXT *)sp->tiq.cqh_last)->lno -
-		    ((TEXT *)sp->tiq.cqh_first)->lno) : ep->c_nlines));
+		    ((TEXT *)CIRCLEQ_FIRST(&sp->tiq))->lno) : ep->c_nlines));
 
 	/* Go get the line. */
 	return (!db_get(sp, lno, 0, NULL, NULL));
@@ -502,7 +502,7 @@ db_last(sp, lnop)
 		*lnop = ep->c_nlines;
 		if (F_ISSET(sp, SC_TINPUT))
 			*lnop += ((TEXT *)sp->tiq.cqh_last)->lno -
-			    ((TEXT *)sp->tiq.cqh_first)->lno;
+			    ((TEXT *)CIRCLEQ_FIRST(&sp->tiq))->lno;
 		return (0);
 	}
 
@@ -569,8 +569,7 @@ scr_update(sp, lno, op, current)
 
 	ep = sp->ep;
 	if (ep->refcnt != 1)
-		for (tsp = sp->gp->dq.cqh_first;
-		    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
+		CIRCLEQ_FOREACH(tsp, &sp->gp->dq, q)
 			if (sp != tsp && tsp->ep == ep)
 				if (vs_change(tsp, lno, op))
 					return (1);

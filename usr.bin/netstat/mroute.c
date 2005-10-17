@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.14 2005/03/30 07:50:11 deraadt Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.15 2005/10/17 19:09:36 otto Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 		for (i = 0; i <= mfchash; ++i) {
 			kread((u_long)&mfchashtbl[i], &mfcp, sizeof(mfcp));
 
-			for (; mfcp != 0; mfcp = mfc.mfc_hash.le_next) {
+			for (; mfcp != 0; mfcp = LIST_NEXT(&mfc, mfc_hash)) {
 				if (!banner_printed) {
 					printf("\nMulticast Forwarding Cache\n %s%s",
 					    "Hash  Origin           Mcastgroup       ",

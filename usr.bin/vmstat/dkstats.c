@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.26 2005/07/04 01:54:10 djm Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.27 2005/10/17 19:04:20 otto Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ dkreadstats(void)
 			cur.dk_rbytes[i] = cur_disk.dk_rbytes;
 			cur.dk_wbytes[i] = cur_disk.dk_wbytes;
 			timerset(&(cur_disk.dk_time), &(cur.dk_time[i]));
-			p = cur_disk.dk_link.tqe_next;
+			p = TAILQ_NEXT(&cur_disk, dk_link);
 		}
 		deref_nl(X_CP_TIME, cur.cp_time, sizeof(cur.cp_time));
 		deref_nl(X_TK_NIN, &cur.tk_nin, sizeof(cur.tk_nin));
@@ -443,7 +443,7 @@ dkinit(int select)
 
 		/* Get a pointer to the first disk. */
 		deref_nl(X_DISKLIST, &disk_head, sizeof(disk_head));
-		dk_drivehead = disk_head.tqh_first;
+		dk_drivehead = TAILQ_FIRST(&disk_head);
 
 		/* Get ticks per second. */
 		deref_nl(X_STATHZ, &hz, sizeof(hz));
@@ -528,7 +528,7 @@ dkinit(int select)
 				errx(1, "Memory allocation failure.");
 			cur.dk_select[i] = select;
 
-			p = cur_disk.dk_link.tqe_next;
+			p = TAILQ_NEXT(&cur_disk, dk_link);
 		}
 #endif /* !defined(NOKVM) */
 	}

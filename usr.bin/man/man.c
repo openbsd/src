@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.28 2004/02/23 14:14:14 jmc Exp $	*/
+/*	$OpenBSD: man.c,v 1.29 2005/10/17 19:08:46 otto Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.28 2004/02/23 14:14:14 jmc Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.29 2005/10/17 19:08:46 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
 	if (p_path == NULL)
 		p_path = getenv("MANPATH");
 	if (p_path != NULL) {
-		while ((e_defp = defp->list.tqh_first) != NULL) {
+		while ((e_defp = TAILQ_FIRST(&defp->list)) != NULL) {
 			free(e_defp->s);
 			TAILQ_REMOVE(&defp->list, e_defp, q);
 		}
@@ -195,8 +195,8 @@ main(int argc, char *argv[])
 		    p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
 			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
+			    NULL : TAILQ_FIRST(&subp->list);
+			for (; e_subp != NULL; e_subp = TAILQ_NEXT(e_subp, q)) {
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				    p, slashp, e_subp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
@@ -221,14 +221,13 @@ main(int argc, char *argv[])
 	}
 	if (p_path == NULL && section == NULL) {
 		defnewp = addlist("_default_new");
-		e_defp =
-		    defp->list.tqh_first == NULL ? NULL : defp->list.tqh_first;
-		for (; e_defp != NULL; e_defp = e_defp->q.tqe_next) {
+		e_defp = TAILQ_FIRST(&defp->list);
+		for (; e_defp != NULL; e_defp = TAILQ_NEXT(e_defp, q)) {
 			slashp =
 			    e_defp->s[strlen(e_defp->s) - 1] == '/' ? "" : "/";
 			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
+			    NULL : TAILQ_FIRST(&subp->list);
+			for (; e_subp != NULL; e_subp = TAILQ_NEXT(e_subp, q)) {
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				e_defp->s, slashp, e_subp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
@@ -238,7 +237,7 @@ main(int argc, char *argv[])
 			}
 		}
 		defp = getlist("_default");
-		while ((e_defp = defp->list.tqh_first) != NULL) {
+		while ((e_defp = TAILQ_FIRST(&defp->list)) != NULL) {
 			free(e_defp->s);
 			TAILQ_REMOVE(&defp->list, e_defp, q);
 		}
@@ -260,8 +259,8 @@ main(int argc, char *argv[])
 		for (p = strtok(p_add, ":"); p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
 			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
+			    NULL : TAILQ_FIRST(&subp->list);
+			for (; e_subp != NULL; e_subp = TAILQ_NEXT(e_subp, q)) {
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				    p, slashp, e_subp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
@@ -280,9 +279,9 @@ main(int argc, char *argv[])
 		}
 		if (e_sectp != NULL) { /* entries added, fix order */
 			/* save original head */
-			ep->q.tqe_next = defp->list.tqh_first;
+			TAILQ_NEXT(ep, q) = TAILQ_FIRST(&defp->list);
 			/* first added entry, new top */
-			defp->list.tqh_first = e_sectp;
+			TAILQ_FIRST(&defp->list) = e_sectp;
 			/* terminate list */
 			*e_sectp->q.tqe_prev = NULL;
 		}
@@ -294,8 +293,7 @@ main(int argc, char *argv[])
 	 */
 	if (p_add == NULL && section != NULL) {
 		sectnewp = addlist("_section_new");
-		for (e_sectp = section->list.tqh_first;
-		    e_sectp != NULL; e_sectp = e_sectp->q.tqe_next) {
+		TAILQ_FOREACH(e_sectp, &section->list, q) {
 			if (e_sectp->s[strlen(e_sectp->s) - 1] != '/') {
 				(void)snprintf(buf, sizeof(buf),
 				    "%s{/%s,}", e_sectp->s, machine);
@@ -306,8 +304,8 @@ main(int argc, char *argv[])
 				continue;
 			}
 			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
-			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
+			    NULL : TAILQ_FIRST(&subp->list);
+			for (; e_subp != NULL; e_subp = TAILQ_NEXT(e_subp, q)) {
 				(void)snprintf(buf, sizeof(buf), "%s%s{/%s,}",
 				    e_sectp->s, e_subp->s, machine);
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
@@ -420,8 +418,8 @@ manual(char *page, TAG *tag, glob_t *pg)
 	buf[0] = '*';
 
 	/* For each element in the list... */
-	e_tag = tag == NULL ? NULL : tag->list.tqh_first;
-	for (; e_tag != NULL; e_tag = e_tag->q.tqe_next) {
+	e_tag = tag == NULL ? NULL : TAILQ_FIRST(&tag->list);
+	for (; e_tag != NULL; e_tag = TAILQ_NEXT(e_tag, q)) {
 		(void)snprintf(buf, sizeof(buf), "%s/%s.*", e_tag->s, page);
 		if (glob(buf,
 		    GLOB_APPEND | GLOB_BRACE | GLOB_NOSORT | GLOB_QUOTE,
@@ -451,9 +449,9 @@ manual(char *page, TAG *tag, glob_t *pg)
 				goto next;
 
 			e_sufp = (sufp = getlist("_suffix")) == NULL ?
-			    NULL : sufp->list.tqh_first;
+			    NULL : TAILQ_FIRST(&sufp->list);
 			for (found = 0;
-			    e_sufp != NULL; e_sufp = e_sufp->q.tqe_next) {
+			    e_sufp != NULL; e_sufp = TAILQ_NEXT(e_sufp, q)) {
 				(void)snprintf(buf,
 				     sizeof(buf), "*/%s%s", page, e_sufp->s);
 				if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
@@ -466,9 +464,9 @@ manual(char *page, TAG *tag, glob_t *pg)
 
 			/* Try the _build key words next. */
 			e_sufp = (sufp = getlist("_build")) == NULL ?
-			    NULL : sufp->list.tqh_first;
+			    NULL : TAILQ_FIRST(&sufp->list);
 			for (found = 0;
-			    e_sufp != NULL; e_sufp = e_sufp->q.tqe_next) {
+			    e_sufp != NULL; e_sufp = TAILQ_NEXT(e_sufp, q)) {
 				for (p = e_sufp->s;
 				    *p != '\0' && !isspace(*p); ++p);
 				if (*p == '\0')
@@ -766,9 +764,9 @@ cleanup(void)
 
 	rval = 0;
 	ep = (missp = getlist("_missing")) == NULL ?
-	    NULL : missp->list.tqh_first;
+	    NULL : TAILQ_FIRST(&missp->list);
 	if (ep != NULL)
-		for (; ep != NULL; ep = ep->q.tqe_next) {
+		for (; ep != NULL; ep = TAILQ_NEXT(ep, q)) {
 			if (section)
 				warnx("no entry for %s in section %s of the manual.",
 					ep->s, section->s);
@@ -778,8 +776,8 @@ cleanup(void)
 		}
 
 	ep = (intmpp = getlist("_intmp")) == NULL ?
-	    NULL : intmpp->list.tqh_first;
-	for (; ep != NULL; ep = ep->q.tqe_next)
+	    NULL : TAILQ_FIRST(&intmpp->list);
+	for (; ep != NULL; ep = TAILQ_NEXT(ep, q))
 		(void)unlink(ep->s);
 	return (rval);
 }

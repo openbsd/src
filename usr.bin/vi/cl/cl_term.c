@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.12 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.13 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -144,7 +144,7 @@ cl_term_init(sp)
 	 * Rework any function key mappings that were set before the
 	 * screen was initialized.
 	 */
-	for (qp = sp->gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next)
+	LIST_FOREACH(qp, & sp->gp->seqq, q)
 		if (F_ISSET(qp, SEQ_FUNCMAP))
 			(void)cl_pfmap(sp, qp->stype,
 			    qp->input, qp->ilen, qp->output, qp->olen);
@@ -164,8 +164,8 @@ cl_term_end(gp)
 	SEQ *qp, *nqp;
 
 	/* Delete screen specific mappings. */
-	for (qp = gp->seqq.lh_first; qp != NULL; qp = nqp) {
-		nqp = qp->q.le_next;
+	for (qp = LIST_FIRST(&gp->seqq); qp != NULL; qp = nqp) {
+		nqp = LIST_NEXT(qp, q);
 		if (F_ISSET(qp, SEQ_SCREEN))
 			(void)seq_mdel(qp);
 	}

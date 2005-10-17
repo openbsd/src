@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.9 2003/06/10 22:20:54 deraadt Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.10 2005/10/17 19:04:20 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -108,8 +108,8 @@ main(int argc, char *argv[])
 	else {
 		config(conffile);
 		ep = (tp = getlist("_whatdb")) == NULL ?
-		   NULL : tp->list.tqh_first;
-		for (; ep != NULL; ep = ep->q.tqe_next)
+		   NULL : TAILQ_FIRST(&tp->list);
+		for (; ep != NULL; ep = TAILQ_NEXT(ep, q))
 			whatis(argv, ep->s, 0);
 	}
 

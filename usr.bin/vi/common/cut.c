@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.7 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: cut.c,v 1.8 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -198,7 +198,7 @@ cb_rotate(sp)
 	CB *cbp, *del_cbp;
 
 	del_cbp = NULL;
-	for (cbp = sp->gp->cutq.lh_first; cbp != NULL; cbp = cbp->q.le_next)
+	LIST_FOREACH(cbp, &sp->gp->cutq, q)
 		switch(cbp->name) {
 		case '1':
 			cbp->name = '2';
@@ -291,8 +291,8 @@ cut_close(gp)
 	CB *cbp;
 
 	/* Free cut buffer list. */
-	while ((cbp = gp->cutq.lh_first) != NULL) {
-		if (cbp->textq.cqh_first != (void *)&cbp->textq)
+	while ((cbp = LIST_FIRST(&gp->cutq)) != NULL) {
+		if (CIRCLEQ_FIRST(&cbp->textq) != CIRCLEQ_END(&cbp->textq))
 			text_lfree(&cbp->textq);
 		LIST_REMOVE(cbp, q);
 		free(cbp);
@@ -300,7 +300,7 @@ cut_close(gp)
 
 	/* Free default cut storage. */
 	cbp = &gp->dcb_store;
-	if (cbp->textq.cqh_first != (void *)&cbp->textq)
+	if (CIRCLEQ_FIRST(&cbp->textq) != CIRCLEQ_END(&cbp->textq))
 		text_lfree(&cbp->textq);
 }
 
@@ -347,7 +347,7 @@ text_lfree(headp)
 {
 	TEXT *tp;
 
-	while ((tp = headp->cqh_first) != (void *)headp) {
+	while ((tp = CIRCLEQ_FIRST(headp)) != CIRCLEQ_END(headp)) {
 		CIRCLEQ_REMOVE(headp, tp, q);
 		text_free(tp);
 	}

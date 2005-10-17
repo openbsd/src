@@ -1,4 +1,4 @@
-/*      $OpenBSD: apropos.c,v 1.10 2003/06/10 22:20:44 deraadt Exp $      */
+/*      $OpenBSD: apropos.c,v 1.11 2005/10/17 19:04:19 otto Exp $      */
 /*      $NetBSD: apropos.c,v 1.5 1995/09/04 20:46:20 tls Exp $      */
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: apropos.c,v 1.10 2003/06/10 22:20:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apropos.c,v 1.11 2005/10/17 19:04:19 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,8 +113,8 @@ main(int argc, char *argv[])
 	else {
 		config(conffile);
 		ep = (tp = getlist("_whatdb")) == NULL ?
-		    NULL : tp->list.tqh_first;
-		for (; ep != NULL; ep = ep->q.tqe_next)
+		    NULL : TAILQ_FIRST(&tp->list);
+		for (; ep != NULL; ep = TAILQ_NEXT(ep, q))
 			apropos(argv, ep->s, 0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2003/04/17 02:22:56 itojun Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -450,9 +450,9 @@ v_end(gp)
 		(void)file_end(gp->ccl_sp, NULL, 1);
 		(void)screen_end(gp->ccl_sp);
 	}
-	while ((sp = gp->dq.cqh_first) != (void *)&gp->dq)
+	while ((sp = CIRCLEQ_FIRST(&gp->dq)) != CIRCLEQ_END(&gp->dq))
 		(void)screen_end(sp);
-	while ((sp = gp->hq.cqh_first) != (void *)&gp->hq)
+	while ((sp = CIRCLEQ_FIRST(&gp->hq)) != CIRCLEQ_END(&gp->hq))
 		(void)screen_end(sp);
 
 #ifdef HAVE_PERL_INTERP
@@ -499,7 +499,7 @@ v_end(gp)
 	 * it's possible that the user is sourcing a file that exits from the
 	 * editor).
 	 */
-	while ((mp = gp->msgq.lh_first) != NULL) {
+	while ((mp = LIST_FIRST(&gp->msgq)) != NULL) {
 		(void)fprintf(stderr, "%s%.*s",
 		    mp->mtype == M_ERR ? "ex/vi: " : "", (int)mp->len, mp->buf);
 		LIST_REMOVE(mp, q);

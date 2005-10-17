@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_move.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_move.c,v 1.7 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -128,7 +128,7 @@ ex_move(sp, cmdp)
 
 	/* Log the old positions of the marks. */
 	mark_reset = 0;
-	for (lmp = sp->ep->marks.lh_first; lmp != NULL; lmp = lmp->q.le_next)
+	LIST_FOREACH(lmp, &sp->ep->marks, q)
 		if (lmp->name != ABSMARK1 &&
 		    lmp->lno >= fl && lmp->lno <= tl) {
 			mark_reset = 1;
@@ -152,8 +152,7 @@ ex_move(sp, cmdp)
 			if (db_append(sp, 1, tl, bp, len))
 				return (1);
 			if (mark_reset)
-				for (lmp = sp->ep->marks.lh_first;
-				    lmp != NULL; lmp = lmp->q.le_next)
+				LIST_FOREACH(lmp, &sp->ep->marks, q)
 					if (lmp->name != ABSMARK1 &&
 					    lmp->lno == fl)
 						lmp->lno = tl + 1;
@@ -171,8 +170,7 @@ ex_move(sp, cmdp)
 			if (db_append(sp, 1, tl++, bp, len))
 				return (1);
 			if (mark_reset)
-				for (lmp = sp->ep->marks.lh_first;
-				    lmp != NULL; lmp = lmp->q.le_next)
+				LIST_FOREACH(lmp, &sp->ep->marks, q)
 					if (lmp->name != ABSMARK1 &&
 					    lmp->lno == fl)
 						lmp->lno = tl;
@@ -188,8 +186,7 @@ ex_move(sp, cmdp)
 
 	/* Log the new positions of the marks. */
 	if (mark_reset)
-		for (lmp = sp->ep->marks.lh_first;
-		    lmp != NULL; lmp = lmp->q.le_next)
+		LIST_FOREACH(lmp, &sp->ep->marks, q)
 			if (lmp->name != ABSMARK1 &&
 			    lmp->lno >= mfl && lmp->lno <= mtl)
 				(void)log_mark(sp, lmp);

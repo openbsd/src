@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.98 2005/08/11 15:52:14 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.99 2005/10/17 19:09:36 otto Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.98 2005/08/11 15:52:14 markus Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.99 2005/10/17 19:09:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,17 +140,17 @@ protopr0(u_long off, char *name, int af)
 	israw = strncmp(name, "ip", 2) == 0;
 	kread(off, &table, sizeof table);
 	prev = head =
-	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
-	next = table.inpt_queue.cqh_first;
+	    (struct inpcb *)&CIRCLEQ_FIRST(&((struct inpcbtable *)off)->inpt_queue);
+	next = CIRCLEQ_FIRST(&table.inpt_queue);
 
 	while (next != head) {
 		kread((u_long)next, &inpcb, sizeof inpcb);
-		if (inpcb.inp_queue.cqe_prev != prev) {
+		if (CIRCLEQ_PREV(&inpcb, inp_queue) != prev) {
 			printf("???\n");
 			break;
 		}
 		prev = next;
-		next = inpcb.inp_queue.cqe_next;
+		next = CIRCLEQ_NEXT(&inpcb, inp_queue);
 
 		switch (af) {
 		case AF_INET:

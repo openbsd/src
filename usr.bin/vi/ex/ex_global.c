@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_global.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_global.c,v 1.7 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -274,11 +274,12 @@ ex_g_insdel(sp, op, lno)
 	if (op == LINE_RESET)
 		return (0);
 
-	for (ecp = sp->gp->ecq.lh_first; ecp != NULL; ecp = ecp->q.le_next) {
+	LIST_FOREACH(ecp, &sp->gp->ecq, q) {
 		if (!FL_ISSET(ecp->agv_flags, AGV_AT | AGV_GLOBAL | AGV_V))
 			continue;
-		for (rp = ecp->rq.cqh_first; rp != (void *)&ecp->rq; rp = nrp) {
-			nrp = rp->q.cqe_next;
+		for (rp = CIRCLEQ_FIRST(&ecp->rq); rp != CIRCLEQ_END(&ecp->rq);
+		    rp = nrp) {
+			nrp = CIRCLEQ_NEXT(rp, q);
 
 			/* If range less than the line, ignore it. */
 			if (rp->stop < lno)

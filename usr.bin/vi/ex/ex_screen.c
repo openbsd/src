@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_screen.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_screen.c,v 1.6 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -114,14 +114,14 @@ ex_sdisplay(sp)
 	int cnt, col, len, sep;
 
 	gp = sp->gp;
-	if ((tsp = gp->hq.cqh_first) == (void *)&gp->hq) {
+	if ((tsp = CIRCLEQ_FIRST(&gp->hq)) == CIRCLEQ_END(&gp->hq)) {
 		msgq(sp, M_INFO, "149|No background screens to display");
 		return (0);
 	}
 
 	col = len = sep = 0;
 	for (cnt = 1; tsp != (void *)&gp->hq && !INTERRUPTED(sp);
-	    tsp = tsp->q.cqe_next) {
+	    tsp = CIRCLEQ_NEXT(tsp, q)) {
 		col += len = strlen(tsp->frp->name) + sep;
 		if (col >= sp->cols - 1) {
 			col = len;

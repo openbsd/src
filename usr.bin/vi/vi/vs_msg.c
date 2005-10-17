@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_msg.c,v 1.7 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vs_msg.c,v 1.8 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -600,7 +600,7 @@ vs_ex_resolve(sp, continuep)
 	 * If we're not the bottom of the split screen stack, the screen
 	 * image itself is wrong, so redraw everything.
 	 */
-	if (sp->q.cqe_next != (void *)&sp->gp->dq)
+	if (CIRCLEQ_NEXT(sp, q) != CIRCLEQ_END(&sp->gp->dq))
 		F_SET(sp, SC_SCR_REDRAW);
 
 	/* If ex changed the underlying file, the map itself is wrong. */
@@ -698,10 +698,10 @@ vs_resolve(sp, csp, forcewait)
 	 * messages.)  Once this is done, don't trust the cursor.  That
 	 * extra refresh screwed the pooch.
 	 */
-	if (gp->msgq.lh_first != NULL) {
+	if (LIST_FIRST(&gp->msgq) != NULL) {
 		if (!F_ISSET(sp, SC_SCR_VI) && vs_refresh(sp, 1))
 			return (1);
-		while ((mp = gp->msgq.lh_first) != NULL) {
+		while ((mp = LIST_FIRST(&gp->msgq)) != NULL) {
 			gp->scr_msg(sp, mp->mtype, mp->buf, mp->len);
 			LIST_REMOVE(mp, q);
 			free(mp->buf);
@@ -781,7 +781,7 @@ vs_scroll(sp, continuep, wtype)
 		(void)gp->scr_deleteln(sp);
 
 		/* If there are screens below us, push them back into place. */
-		if (sp->q.cqe_next != (void *)&sp->gp->dq) {
+		if (CIRCLEQ_NEXT(sp, q) != CIRCLEQ_END(&sp->gp->dq)) {
 			(void)gp->scr_move(sp, LASTLINE(sp), 0);
 			(void)gp->scr_insertln(sp);
 		}
@@ -914,10 +914,10 @@ vs_msgsave(sp, mt, p, len)
 	mp_n->mtype = mt;
 
 	gp = sp->gp;
-	if ((mp_c = gp->msgq.lh_first) == NULL) {
+	if ((mp_c = LIST_FIRST(&gp->msgq)) == NULL) {
 		LIST_INSERT_HEAD(&gp->msgq, mp_n, q);
 	} else {
-		for (; mp_c->q.le_next != NULL; mp_c = mp_c->q.le_next);
+		for (; LIST_NEXT(mp_c, q) != NULL; mp_c = LIST_NEXT(mp_c, q));
 		LIST_INSERT_AFTER(mp_c, mp_n, q);
 	}
 	return;

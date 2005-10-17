@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.27 2005/05/10 17:12:00 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.28 2005/10/17 19:04:20 otto Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.27 2005/05/10 17:12:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.28 2005/10/17 19:04:20 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -195,12 +195,12 @@ fetchnetstat(void)
 again:
 	KREAD(off, &pcbtable, sizeof (struct inpcbtable));
 	prev = head = (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue;
-	next = pcbtable.inpt_queue.cqh_first;
+	next = CIRCLEQ_FIRST(&pcbtable.inpt_queue);
 	while (next != head) {
 		KREAD(next, &inpcb, sizeof (inpcb));
-		if (inpcb.inp_queue.cqe_prev != prev) {
+		if (CIRCLEQ_PREV(&inpcb, inp_queue) != prev) {
 			printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n",
-			    prev, head, next, inpcb.inp_queue.cqe_prev);
+			    prev, head, next, CIRCLEQ_PREV(&inpcb, inp_queue));
 			p = netcb.nif_forw;
 			for (; p != (struct netinfo *)&netcb; p = p->nif_forw)
 				p->nif_seen = 1;
@@ -208,7 +208,7 @@ again:
 			return;
 		}
 		prev = next;
-		next = inpcb.inp_queue.cqe_next;
+		next = CIRCLEQ_NEXT(&inpcb, inp_queue);
 
 		if (!aflag) {
 			if (!(inpcb.inp_flags & INP_IPV6) &&

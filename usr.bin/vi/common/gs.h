@@ -1,4 +1,4 @@
-/*	$OpenBSD: gs.h,v 1.7 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: gs.h,v 1.8 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -91,7 +91,7 @@ struct _gs {
 	 * Ex command structures (EXCMD).  Defined here because ex commands
 	 * exist outside of any particular screen or file.
 	 */
-#define	EXCMD_RUNNING(gp)	((gp)->ecq.lh_first->clen != 0)
+#define	EXCMD_RUNNING(gp)	(LIST_FIRST(&(gp)->ecq)->clen != 0)
 	LIST_HEAD(_excmdh, _excmd) ecq;	/* Ex command linked list. */
 	EXCMD	 excmd;			/* Default ex command structure. */
 	char	 *if_name;		/* Current associated file. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.17 2005/03/30 06:45:34 deraadt Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.18 2005/10/17 19:09:36 otto Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.17 2005/03/30 06:45:34 deraadt Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.18 2005/10/17 19:09:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,17 +98,17 @@ ipxprotopr(u_long off, char *name)
 	isspx = strcmp(name, "spx") == 0;
 	kread(off, &table, sizeof (table));
 	prev = head = (struct ipxpcb *)
-		&((struct ipxpcbtable *)off)->ipxpt_queue.cqh_first;
-	next = table.ipxpt_queue.cqh_first;
+		&CIRCLEQ_FIRST(&((struct ipxpcbtable *)off)->ipxpt_queue);
+	next = CIRCLEQ_FIRST(&table.ipxpt_queue);
 
 	while (next != head) {
 		kread((u_long)next, &ipxpcb, sizeof (ipxpcb));
-		if (ipxpcb.ipxp_queue.cqe_prev != prev) {
+		if (CIRCLEQ_PREV(&ipxpcb, ipxp_queue) != prev) {
 			printf("???\n");
 			break;
 		}
 		prev = next;
-		next = ipxpcb.ipxp_queue.cqe_next;
+		next = CIRCLEQ_NEXT(&ipxpcb, ipxp_queue);
 
 		if (!aflag && ipx_nullhost(ipxpcb.ipxp_faddr) )
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.44 2005/06/08 04:47:04 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.45 2005/10/17 19:09:36 otto Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.44 2005/06/08 04:47:04 henning Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.45 2005/10/17 19:09:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ intpr(int interval, u_long ifnetaddr)
 	 */
 	if (kread(ifnetaddr, &ifhead, sizeof ifhead))
 		return;
-	ifnetaddr = (u_long)ifhead.tqh_first;
+	ifnetaddr = (u_long)TAILQ_FIRST(&ifhead);
 
 	printf("%-7.7s %-5.5s %-11.11s %-17.17s ",
 	    "Name", "Mtu", "Network", "Address");
@@ -133,14 +133,14 @@ intpr(int interval, u_long ifnetaddr)
 				return;
 			bcopy(ifnet.if_xname, name, IFNAMSIZ);
 			name[IFNAMSIZ - 1] = '\0';	/* sanity */
-			ifnetaddr = (u_long)ifnet.if_list.tqe_next;
+			ifnetaddr = (u_long)TAILQ_NEXT(&ifnet, if_list);
 			if (interface != 0 && strcmp(name, interface) != 0)
 				continue;
 			cp = strchr(name, '\0');
 			if ((ifnet.if_flags & IFF_UP) == 0)
 				*cp++ = '*';
 			*cp = '\0';
-			ifaddraddr = (u_long)ifnet.if_addrlist.tqh_first;
+			ifaddraddr = (u_long)TAILQ_FIRST(&ifnet.if_addrlist);
 		}
 
 		if (qflag) {
@@ -205,12 +205,12 @@ intpr(int interval, u_long ifnetaddr)
 					u_long multiaddr;
 					struct in_multi inm;
 
-					multiaddr = (u_long)ifaddr.in.ia_multiaddrs.lh_first;
+					multiaddr = (u_long)LIST_FIRST(&ifaddr.in.ia_multiaddrs);
 					while (multiaddr != 0) {
 						kread(multiaddr, &inm, sizeof inm);
 						printf("\n%25s %-17.17s ", "",
 						    routename(inm.inm_addr.s_addr));
-						multiaddr = (u_long)inm.inm_list.le_next;
+						multiaddr = (u_long)LIST_NEXT(&inm, inm_list);
 					}
 				}
 				break;
@@ -244,7 +244,7 @@ intpr(int interval, u_long ifnetaddr)
 					struct in6_multi inm;
 					struct sockaddr_in6 m6;
 
-					multiaddr = (u_long)ifaddr.in6.ia6_multiaddrs.lh_first;
+					multiaddr = (u_long)LIST_FIRST(&ifaddr.in6.ia6_multiaddrs);
 					while (multiaddr != 0) {
 						kread(multiaddr, &inm, sizeof inm);
 						memset(&m6, 0, sizeof(m6));
@@ -267,7 +267,7 @@ intpr(int interval, u_long ifnetaddr)
 							n = 17;
 						printf("\n%25s %-*.*s ", "",
 						    n, n, cp);
-						multiaddr = (u_long)inm.in6m_entry.le_next;
+						multiaddr = (u_long)LIST_NEXT(&inm, in6m_entry);
 					}
 				}
 				break;
@@ -325,7 +325,7 @@ intpr(int interval, u_long ifnetaddr)
 					putchar(' ');
 				break;
 			}
-			ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
+			ifaddraddr = (u_long)TAILQ_NEXT(&ifaddr.ifa, ifa_list);
 		}
 		if (bflag)
 			printf("%10lu %10lu",
@@ -382,7 +382,7 @@ sidewaysintpr(unsigned int interval, u_long off)
 	 */
 	if (kread(off, &ifhead, sizeof ifhead))
 		return;
-	firstifnet = (u_long)ifhead.tqh_first;
+	firstifnet = (u_long)TAILQ_FIRST(&ifhead);
 
 	lastif = iftot;
 	sum = iftot + MAXIF - 1;
@@ -398,7 +398,7 @@ sidewaysintpr(unsigned int interval, u_long off)
 		ip++;
 		if (ip >= iftot + MAXIF - 2)
 			break;
-		off = (u_long)ifnet.if_list.tqe_next;
+		off = (u_long)TAILQ_NEXT(&ifnet, if_list);
 	}
 	if (interesting == NULL) {
 		fprintf(stderr, "%s: %s: unknown interface\n",
@@ -509,7 +509,7 @@ loop:
 		sum->ift_oe += ip->ift_oe;
 		sum->ift_co += ip->ift_co;
 		sum->ift_dr += ip->ift_dr;
-		off = (u_long)ifnet.if_list.tqe_next;
+		off = (u_long)TAILQ_NEXT(&ifnet, if_list);
 	}
 	if (lastif - iftot > 0) {
 		if (bflag)

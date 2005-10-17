@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: key.c,v 1.7 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -753,9 +753,9 @@ v_sync(sp, flags)
 	GS *gp;
 
 	gp = sp->gp;
-	for (sp = gp->dq.cqh_first; sp != (void *)&gp->dq; sp = sp->q.cqe_next)
+	CIRCLEQ_FOREACH(sp, &gp->dq, q)
 		rcv_sync(sp, flags);
-	for (sp = gp->hq.cqh_first; sp != (void *)&gp->hq; sp = sp->q.cqe_next)
+	CIRCLEQ_FOREACH(sp, &gp->hq, q)
 		rcv_sync(sp, flags);
 }
 

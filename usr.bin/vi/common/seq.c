@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.6 2002/02/17 19:42:34 millert Exp $	*/
+/*	$OpenBSD: seq.c,v 1.7 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -202,8 +202,8 @@ seq_find(sp, lastqp, e_input, c_input, ilen, stype, ispartialp)
 	 */
 	if (ispartialp != NULL)
 		*ispartialp = 0;
-	for (lqp = NULL, qp = sp->gp->seqq.lh_first;
-	    qp != NULL; lqp = qp, qp = qp->q.le_next) {
+	for (lqp = NULL, qp = LIST_FIRST(&sp->gp->seqq);
+	    qp != NULL; lqp = qp, qp = LIST_NEXT(qp, q)) {
 		/*
 		 * Fast checks on the first character and type, and then
 		 * a real comparison.
@@ -268,7 +268,7 @@ seq_close(gp)
 {
 	SEQ *qp;
 
-	while ((qp = gp->seqq.lh_first) != NULL) {
+	while ((qp = LIST_FIRST(&gp->seqq)) != NULL) {
 		if (qp->name != NULL)
 			free(qp->name);
 		if (qp->input != NULL)
@@ -299,7 +299,7 @@ seq_dump(sp, stype, isname)
 
 	cnt = 0;
 	gp = sp->gp;
-	for (qp = gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next) {
+	LIST_FOREACH(qp, &gp->seqq, q) {
 		if (stype != qp->stype || F_ISSET(qp, SEQ_FUNCMAP))
 			continue;
 		++cnt;
@@ -347,7 +347,7 @@ seq_save(sp, fp, prefix, stype)
 	int ch;
 
 	/* Write a sequence command for all keys the user defined. */
-	for (qp = sp->gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next) {
+	LIST_FOREACH(qp, &sp->gp->seqq, q) {
 		if (stype != qp->stype || !F_ISSET(qp, SEQ_USERDEF))
 			continue;
 		if (prefix)

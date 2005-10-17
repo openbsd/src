@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.15 2005/01/08 05:20:34 pvalchev Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.16 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -301,9 +301,9 @@ v_txt(sp, vp, tm, lp, len, prompt, ai_line, rcount, flags)
 	 * copy it into the TEXT buffer.
 	 */
 	tiqh = &sp->tiq;
-	if (tiqh->cqh_first != (void *)tiqh) {
-		tp = tiqh->cqh_first;
-		if (tp->q.cqe_next != (void *)tiqh || tp->lb_len < len + 32) {
+	if (CIRCLEQ_FIRST(tiqh) != CIRCLEQ_END(tiqh)) {
+		tp = CIRCLEQ_FIRST(tiqh);
+		if (CIRCLEQ_NEXT(tp, q) != CIRCLEQ_END(tiqh) || tp->lb_len < len + 32) {
 			text_lfree(tiqh);
 			goto newtp;
 		}
@@ -1835,7 +1835,7 @@ txt_backup(sp, tiqh, tp, flagsp)
 	TEXT *ntp;
 
 	/* Get a handle on the previous TEXT structure. */
-	if ((ntp = tp->q.cqe_prev) == (void *)tiqh) {
+	if ((ntp = CIRCLEQ_PREV(tp, q)) == CIRCLEQ_END(tiqh)) {
 		if (!FL_ISSET(*flagsp, TXT_REPLAY))
 			msgq(sp, M_BERR,
 			    "193|Already at the beginning of the insert");
@@ -2342,7 +2342,7 @@ txt_err(sp, tiqh)
 	 * We depend on at least one line number being set in the text
 	 * chain.
 	 */
-	for (lno = tiqh->cqh_first->lno;
+	for (lno = CIRCLEQ_FIRST(tiqh)->lno;
 	    !db_exist(sp, lno) && lno > 0; --lno);
 
 	sp->lno = lno == 0 ? 1 : lno;
@@ -2700,7 +2700,7 @@ txt_resolve(sp, tiqh, flags)
 	 * about the line will be wrong.
 	 */
 	vip = VIP(sp);
-	tp = tiqh->cqh_first;
+	tp = CIRCLEQ_FIRST(tiqh);
 
 	if (LF_ISSET(TXT_AUTOINDENT))
 		txt_ai_resolve(sp, tp, &changed);
@@ -2710,7 +2710,7 @@ txt_resolve(sp, tiqh, flags)
 	    changed && vs_change(sp, tp->lno, LINE_RESET))
 		return (1);
 
-	for (lno = tp->lno; (tp = tp->q.cqe_next) != (void *)&sp->tiq; ++lno) {
+	for (lno = tp->lno; (tp = CIRCLEQ_NEXT(tp, q)) != (void *)&sp->tiq; ++lno) {
 		if (LF_ISSET(TXT_AUTOINDENT))
 			txt_ai_resolve(sp, tp, &changed);
 		else
@@ -2909,9 +2909,9 @@ txt_Rresolve(sp, tiqh, tp, orig_len)
 	 * Calculate how many characters the user has entered,
 	 * plus the blanks erased by <carriage-return>/<newline>s.
 	 */
-	for (ttp = tiqh->cqh_first, input_len = 0;;) {
+	for (ttp = CIRCLEQ_FIRST(tiqh), input_len = 0;;) {
 		input_len += ttp == tp ? tp->cno : ttp->len + ttp->R_erase;
-		if ((ttp = ttp->q.cqe_next) == (void *)&sp->tiq)
+		if ((ttp = CIRCLEQ_NEXT(ttp, q)) == CIRCLEQ_END(&sp->tiq))
 			break;
 	}
 
@@ -2932,7 +2932,7 @@ txt_Rresolve(sp, tiqh, tp, orig_len)
 	if (input_len < orig_len) {
 		retain = MIN(tp->owrite, orig_len - input_len);
 		if (db_get(sp,
-		    tiqh->cqh_first->lno, DBG_FATAL | DBG_NOCACHE, &p, NULL))
+		    CIRCLEQ_FIRST(tiqh)->lno, DBG_FATAL | DBG_NOCACHE, &p, NULL))
 			return;
 		memcpy(tp->lb + tp->cno, p + input_len, retain);
 		tp->len -= tp->owrite - retain;

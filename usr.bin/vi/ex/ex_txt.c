@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_txt.c,v 1.7 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_txt.c,v 1.8 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -74,9 +74,9 @@ ex_txt(sp, tiqh, prompt, flags)
 	 * last one if it's big enough.  (All TEXT bookkeeping fields default
 	 * to 0 -- text_init() handles this.)
 	 */
-	if (tiqh->cqh_first != (void *)tiqh) {
-		tp = tiqh->cqh_first;
-		if (tp->q.cqe_next != (void *)tiqh || tp->lb_len < 32) {
+	if (CIRCLEQ_FIRST(tiqh) != CIRCLEQ_END(tiqh)) {
+		tp = CIRCLEQ_FIRST(tiqh);
+		if (CIRCLEQ_NEXT(tp, q) != CIRCLEQ_END(tiqh) || tp->lb_len < 32) {
 			text_lfree(tiqh);
 			goto newtp;
 		}

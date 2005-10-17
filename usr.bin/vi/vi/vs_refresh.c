@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.9 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.10 2005/10/17 19:12:16 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -82,8 +82,7 @@ vs_refresh(sp, forcepaint)
 	 * that we can find, including status lines.
 	 */
 	if (F_ISSET(sp, SC_SCR_REDRAW))
-		for (tsp = gp->dq.cqh_first;
-		    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
+		CIRCLEQ_FOREACH(tsp, &gp->dq, q)
 			if (tsp != sp)
 				F_SET(tsp, SC_SCR_REDRAW | SC_STATUS);
 
@@ -100,8 +99,7 @@ vs_refresh(sp, forcepaint)
 	priv_paint = VIP_CUR_INVALID | VIP_N_REFRESH;
 	if (O_ISSET(sp, O_NUMBER))
 		priv_paint |= VIP_N_RENUMBER;
-	for (tsp = gp->dq.cqh_first;
-	    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
+	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
 		if (tsp != sp && !F_ISSET(tsp, SC_EXIT | SC_EXIT_FORCE) &&
 		    (F_ISSET(tsp, pub_paint) ||
 		    F_ISSET(VIP(tsp), priv_paint))) {
@@ -136,8 +134,8 @@ vs_refresh(sp, forcepaint)
 	 * And, finally, if we updated any status lines, make sure the cursor
 	 * gets back to where it belongs.
 	 */
-	for (need_refresh = 0, tsp = gp->dq.cqh_first;
-	    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
+	need_refresh = 0;
+	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
 		if (F_ISSET(tsp, SC_STATUS)) {
 			need_refresh = 1;
 			vs_resolve(tsp, sp, 0);
