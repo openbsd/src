@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.209 2005/10/17 06:43:48 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.210 2005/10/17 11:24:25 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -509,6 +509,10 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	  apollo_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT6420_SATA, /* VIA VT6420 SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_VIATECH_VT8251_SATA, /* VIA VT8251 SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	}
@@ -2688,6 +2692,10 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_wdcdev.UDMA_cap = 6;
 		break;
 	case PCI_PRODUCT_VIATECH_VT6420_SATA:
+		printf(": ATA133");
+		sc->sc_wdcdev.UDMA_cap = 6;
+		break;
+	case PCI_PRODUCT_VIATECH_VT8251_SATA:
 		printf(": ATA133");
 		sc->sc_wdcdev.UDMA_cap = 6;
 		break;
