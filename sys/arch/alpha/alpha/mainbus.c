@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.12 2004/06/08 18:09:31 marc Exp $ */
+/* $OpenBSD: mainbus.c,v 1.13 2005/10/17 18:34:22 miod Exp $ */
 /* $NetBSD: mainbus.c,v 1.27 1998/06/24 01:10:35 ross Exp $ */
 
 /*
@@ -76,6 +76,7 @@ mbattach(parent, self, aux)
 	struct mainbus_attach_args ma;
 	struct pcs *pcsp;
 	int i, cpuattachcnt;
+	extern int alpha_cpus;
 
 	mainbus_found = 1;
 
@@ -95,9 +96,9 @@ mbattach(parent, self, aux)
 		if (config_found(self, &ma, mbprint) != NULL)
 			cpuattachcnt++;
 	}
-	if (ncpus != cpuattachcnt)
+	if (alpha_cpus != cpuattachcnt)
 		printf("WARNING: %d cpus in machine, %d attached\n",
-			ncpus, cpuattachcnt);
+			alpha_cpus, cpuattachcnt);
 
 	if (platform.iobus != NULL) {
 		ma.ma_name = platform.iobus;

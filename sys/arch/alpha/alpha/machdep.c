@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.92 2005/06/17 21:54:14 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.93 2005/10/17 18:34:22 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -172,6 +172,7 @@ int	unusedmem;		/* amount of memory for OS that we don't use */
 int	unknownmem;		/* amount of memory with an unknown use */
 
 int	cputype;		/* system type, from the RPB */
+int	alpha_cpus;
 
 int	bootdev_debug = 0;	/* patchable, or from DDB */
 
@@ -784,12 +785,12 @@ nobootinfo:
 	 * Figure out the number of cpus in the box, from RPB fields.
 	 * Really.  We mean it.
 	 */
-	for (ncpus = 0, i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
+	for (alpha_cpus = 0, i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
 		struct pcs *pcsp;
 
 		pcsp = LOCATE_PCS(hwrpb, i);
 		if ((pcsp->pcs_flags & PCS_PP) != 0)
-			ncpus++;
+			alpha_cpus++;
 	}
 
 	/*
@@ -1064,7 +1065,7 @@ identifycpu()
 skipMHz:
 	printf("\n");
 	printf("%ld byte page size, %d processor%s.\n",
-	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
+	    hwrpb->rpb_page_size, alpha_cpus, alpha_cpus == 1 ? "" : "s");
 #if 0
 	/* this isn't defined for any systems that we run on? */
 	printf("serial number 0x%lx 0x%lx\n",
