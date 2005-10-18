@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.69 2005/10/16 04:14:22 kurt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.70 2005/10/18 02:49:17 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -191,6 +191,32 @@ dlctl(void *handle, int command, void *data)
 		_dl_thread_fnc = data;
 		retval = 0;
 		break;
+	case 0x20:  
+		_dl_show_objects();
+		retval = 0;
+		break;
+	case 0x21:
+	{
+		struct dep_node *n, *m;
+		elf_object_t *obj;
+		_dl_printf("Load Groups:\n");
+
+		TAILQ_FOREACH(n, &_dlopened_child_list, next_sib) {
+			obj = n->data;
+			_dl_printf("%s\n", obj->load_name);
+
+			_dl_printf("  children\n");
+			TAILQ_FOREACH(m, &obj->child_list, next_sib)
+				_dl_printf("\t[%s]\n", m->data->load_name);
+
+			_dl_printf("  grpref\n");
+			TAILQ_FOREACH(m, &obj->grpref_list, next_sib)
+				_dl_printf("\t[%s]\n", m->data->load_name);
+			_dl_printf("\n");
+		}
+		retval = 0;
+		break;
+	}
 	default:
 		_dl_errno = DL_INVALID_CTL;
 		retval = -1;
