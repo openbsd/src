@@ -1,4 +1,4 @@
-.\"	$OpenBSD: myname.5,v 1.2 2004/12/20 15:40:00 jaredy Exp $
+.\"	$OpenBSD: myname.5,v 1.3 2005/10/18 15:37:11 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -61,12 +61,24 @@ utility.
 If
 .Pa /etc/mygate
 does not exist, no default gateway is added to the routing tables.
-The file should contain a single line specifying the gateway address,
-in dotted quad notation
-.Pq e.g. 192.0.2.0 .
+The file may contain gateway addresses for both IPv4 and IPv6 networks:
+in dotted quad notation for v4
+.Pq e.g. 192.0.2.0
+or in colon notation for v6
+.Pq e.g. 2001:1234:5678::1 .
+Each address must be specified on a separate line.
+If more than one address of a specific family is found,
+only the first is used \- all other addresses of that family are ignored.
+.Pp
 .Pa /etc/mygate
 is processed after all interfaces have been configured.
-It will therefore override any DHCP-supplied default route information.
+If any
+.Xr hostname.if 5
+files contain
+.Dq dhcp
+directives,
+.Pa /etc/mygate
+will be ignored.
 .Pp
 Empty lines and lines beginning with
 .Sq #
@@ -76,10 +88,11 @@ in either file are ignored.
 .It Pa /etc/myname
 Default hostname.
 .It Pa /etc/mygate
-Default gateway address.
+Default gateway address(es).
 .El
 .Sh SEE ALSO
 .Xr hostname 1 ,
+.Xr hostname.if 5 ,
 .Xr hosts 5 ,
 .Xr resolv.conf 5 ,
 .Xr hostname 7 ,
