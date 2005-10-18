@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.9 2005/10/17 18:44:33 stevesk Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.10 2005/10/18 22:30:00 stevesk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -33,14 +33,15 @@ daemon.
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
-.It Cm show database Ar filter
+.It Cm show database Op Ar filter
 Show the link state database.
 .Ar filter
 can be any one of the following:
 .Pp
 .Bl -tag -width "self-originatedXX" -compact
 .It Cm area Ar ID
-Show only LSAs from the specified area.
+Show only LSAs from the specified area
+.Ar ID .
 .It Cm asbr
 Show only ASBR LSAs.
 .It Cm external
@@ -54,31 +55,43 @@ Show only self-originated LSAs.
 .It Cm summary
 Show only Summary LSAs.
 .El
-.It Cm show fib Op Ar filter | destination
+.It Cm show fib Op Ar destination | filter
 Show the Forwarding Information Base.
 .Ar destination
-can be used to show the route matching a destination IP address.
+can be specified to show the route matching a destination IP address.
 .Ar filter
-can be any one of the following:
+can be any of the following:
 .Pp
-.Bl -tag -width "interfaceXX" -compact
+.Bl -tag -width "interfaceXXinterfaceXX" -compact
 .It Cm connected
 Show only connected routes.
-.It Cm interface
-Show only interfaces.
+.It Cm interface Op Ar interface
+Show only interfaces or the specified
+.Ar interface .
 .It Cm ospf
 Show only OSPF routes.
 .It Cm static
 Show only static routes.
 .El
-.It Cm show interfaces
-Show interface summary.
-.It Cm show neighbor
-Show neighbor summary.
-.It Cm show rib Ar detail
+.Pp
+.Cm connected ,
+.Cm ospf
+and
+.Cm static
+may be specified together.
+.It Cm show interfaces Op Ar interface
+Show details for all interfaces or the specified
+.Ar interface.
+.It Cm show neighbor Op Cm detail
+Show neighbors.
+.Cm detail
+can be specified for additional detail.
+.It Cm show rib Op Cm detail
 Show the Routing Information Base.
+.Cm detail
+can be specified for additional detail.
 .It Cm show summary
-Show summary status.
+Show summary information.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ospfd.confXXXX" -compact
