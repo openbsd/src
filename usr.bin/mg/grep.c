@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.20 2005/10/14 19:46:46 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.21 2005/10/18 21:22:52 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -39,7 +39,7 @@ int		 next_error(int, int);
 static int	 grep(int, int);
 static int	 compile(int, int);
 static int	 gid(int, int);
-static BUFFER	*compile_mode(char *, char *, char *);
+static BUFFER	*compile_mode(const char *, const char *, const char *);
 static int	 getbufcwd(char *, size_t);
 
 void grep_init(void);
@@ -214,7 +214,7 @@ gid(int f, int n)
 }
 
 BUFFER *
-compile_mode(char *name, char *command, char *path)
+compile_mode(const char *name, const char *command, const char *path)
 {
 	BUFFER	*bp;
 	FILE	*pipe;
@@ -282,14 +282,21 @@ compile_goto_error(int f, int n)
 {
 	BUFFER	*bp;
 	MGWIN	*wp;
-	char	*fname, *line, *lp, *ln, *lp1;
+	char	*fname, *line, *lp, *ln;
 	int	 lineno, len;
 	char	*adjf;
+	const char *errstr;
+	LINE	*last;
 
 	compile_win = curwp;
 	compile_buffer = curbp;
+	last = lback(compile_buffer->b_linep);
+ 
+ retry:
+	/* last line is compilation result */
+	if (curwp->w_dotp == last)
+		return (FALSE);
 
-retry:
 	len = llength(curwp->w_dotp);
 
 	if ((line = malloc(len + 1)) == NULL)
@@ -299,12 +306,12 @@ retry:
 	line[len] = '\0';
 
 	lp = line;
-	if ((fname = strsep(&lp, ":")) == NULL)
+	if ((fname = strsep(&lp, ":")) == NULL || *fname == '\0')
 		goto fail;
-	if ((ln = strsep(&lp, ":")) == NULL)
+	if ((ln = strsep(&lp, ":")) == NULL || *ln == '\0')
 		goto fail;
-	lineno = strtol(ln, &lp1, 10);
-	if (lp != lp1 + 1)
+	lineno = strtonum(ln, INT_MIN, INT_MAX, &errstr);
+	if (errstr)
 		goto fail;
 
 	adjf = adjustname(fname);
