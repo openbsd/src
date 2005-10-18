@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.220 2005/10/13 13:27:06 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.221 2005/10/18 08:59:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,6 +54,7 @@
 #include <errno.h>
 #include <err.h>
 #include <ifaddrs.h>
+#include <unistd.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
@@ -66,6 +67,7 @@ void		 print_fromto(struct pf_rule_addr *, pf_osfp_t,
 		    struct pf_rule_addr *, u_int8_t, u_int8_t, int);
 int		 ifa_skip_if(const char *filter, struct node_host *p);
 
+struct node_host	*ifa_grouplookup(const char *, int);
 struct node_host	*host_if(const char *, int);
 struct node_host	*host_v4(const char *, int);
 struct node_host	*host_v6(const char *, int);
@@ -1165,9 +1167,27 @@ struct node_host *
 ifa_exists(const char *ifa_name)
 {
 	struct node_host	*n;
+	struct ifgroupreq	ifgr;
+	int			s;
 
 	if (iftab == NULL)
 		ifa_load();
+
+	/* check wether this is a group */
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		err(1, "socket");
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, ifa_name, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == 0) {
+		/* fake a node_host */
+		if ((n = calloc(1, sizeof(*n))) == NULL)
+			err(1, "calloc");
+		if ((n->ifname = strdup(ifa_name)) == NULL)
+			err(1, "strdup");
+		close(s);
+		return (n);
+	}
+	close(s);
 
 	for (n = iftab; n; n = n->next) {
 		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
@@ -1178,11 +1198,56 @@ ifa_exists(const char *ifa_name)
 }
 
 struct node_host *
+ifa_grouplookup(const char *ifa_name, int flags)
+{
+	struct ifg_req		*ifg;
+	struct ifgroupreq	 ifgr;
+	int			 s, len;
+	struct node_host	*n, *h = NULL, *hn;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		err(1, "socket");
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, ifa_name, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
+		close(s);
+		return (NULL);
+	}
+
+	len = ifgr.ifgr_len;
+	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
+		err(1, "calloc");
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+		err(1, "SIOCGIFGMEMB");
+
+	for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(struct ifg_req);
+	    ifg++) {
+		len -= sizeof(struct ifg_req);
+		n = ifa_lookup(ifg->ifgrq_member, flags);
+		if (h == NULL)
+			h = n;
+		else {
+			for (hn = h; hn->next != NULL; hn = hn->next)
+				;	/* nothing */
+			hn->next = n;
+			n->tail = hn;
+		}
+	}
+	free(ifgr.ifgr_groups);	
+	close(s);
+
+	return (h);
+}
+
+struct node_host *
 ifa_lookup(const char *ifa_name, int flags)
 {
 	struct node_host	*p = NULL, *h = NULL, *n = NULL;
 	int			 got4 = 0, got6 = 0;
 	const char		 *last_if = NULL;
+
+	if ((h = ifa_grouplookup(ifa_name, flags)) != NULL)
+		return (h);
 
 	if (!strncmp(ifa_name, "self", IFNAMSIZ))
 		ifa_name = NULL;
