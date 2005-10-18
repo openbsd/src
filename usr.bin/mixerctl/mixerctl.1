@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.25 2005/10/17 13:27:41 jmc Exp $
+.\" $OpenBSD: mixerctl.1,v 1.26 2005/10/18 14:49:35 jmc Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -133,7 +133,10 @@ again dependent on the mixer:
 .Bl -enum
 .It
 Enums.
-These may take only one out of a possible list of symbolic values,
+These may take only one out of a possible list of symbolic values
+or the literal string
+.Dq toggle ,
+which toggles the value,
 e.g. inputs.mic.source=mic0.
 .It
 Sets.
@@ -183,6 +186,8 @@ Toggle inputs.dac.mute:
 .Bd -literal -offset indent
 $ mixerctl -t inputs.dac.mute
 inputs.dac.mute: off -\*(Gt on
+$ mixerctl inputs.dac.mute=toggle
+inputs.dac.mute: on -\*(Gt off
 .Ed
 .Sh SEE ALSO
 .Xr aucat 1 ,
