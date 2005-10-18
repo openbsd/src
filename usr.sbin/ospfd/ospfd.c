@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.23 2005/08/15 18:58:47 norby Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.24 2005/10/18 15:40:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -260,7 +260,6 @@ ospfd_shutdown(void)
 
 	control_cleanup();
 	kr_shutdown();
-	if_shutdown(conf);
 
 	do {
 		if ((pid = wait(NULL)) == -1 &&

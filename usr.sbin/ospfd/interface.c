@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.36 2005/10/12 09:25:57 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.37 2005/10/18 15:40:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -264,16 +264,6 @@ if_init(struct ospfd_conf *xconf, struct iface *iface)
 	evtimer_set(&iface->wait_timer, if_wait_timer, iface);
 
 	iface->fd = xconf->ospf_socket;
-}
-
-int
-if_shutdown(struct ospfd_conf *xconf)
-{
-	int	ret = 0;
-
-	ret = close(xconf->ospf_socket);
-
-	return (ret);
 }
 
 /* timers */

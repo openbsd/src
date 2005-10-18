@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.15 2005/05/26 20:42:10 norby Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.16 2005/10/18 15:40:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -186,7 +186,6 @@ int		 if_fsm(struct iface *, enum iface_event);
 struct iface	*if_new(struct kif *);
 int		 if_del(struct iface *);
 void		 if_init(struct ospfd_conf *, struct iface *);
-int		 if_shutdown(struct ospfd_conf *);
 
 int		 if_act_start(struct iface *);
 int		 if_act_elect(struct iface *);

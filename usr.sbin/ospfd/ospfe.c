@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.31 2005/06/13 08:27:29 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.32 2005/10/18 15:40:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -205,6 +205,8 @@ ospfe_shutdown(void)
 		}
 		area_del(area);
 	}
+
+	close(oeconf->ospf_socket);
 
 	/* clean up */
 	msgbuf_write(&ibuf_rde->w);
