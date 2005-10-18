@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.211 2005/10/17 11:35:05 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.212 2005/10/18 13:07:34 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -512,6 +512,10 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
 	},
+	{ PCI_PRODUCT_VIATECH_VT6420_SATA, /* VIA VT6421 SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  sata_chip_map
+	},
 	{ PCI_PRODUCT_VIATECH_VT8251_SATA, /* VIA VT8251 SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  sata_chip_map
@@ -704,9 +708,25 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	  0,
 	  serverworks_chip_map,
 	},
+	{ PCI_PRODUCT_RCC_HT_1000_IDE,
+	  0,
+	  serverworks_chip_map,
+	},
 	{ PCI_PRODUCT_RCC_K2_SATA,
 	  0,
-	  svwsata_chip_map
+	  svwsata_chip_map,
+	},
+	{ PCI_PRODUCT_RCC_FRODO4_SATA,
+	  0,
+	  svwsata_chip_map,
+	},
+	{ PCI_PRODUCT_RCC_FRODO8_SATA,
+	  0,
+	  svwsata_chip_map,
+	},
+	{ PCI_PRODUCT_RCC_HT_1000_SATA,
+	  0,
+	  svwsata_chip_map,
 	}
 };
 
@@ -723,10 +743,6 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  0,
 	  nforce_chip_map
 	},
-	{ PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
-	  0,
-	  sata_chip_map
-	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_IDE,
 	  0,
 	  nforce_chip_map
@@ -735,19 +751,43 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  0,
 	  nforce_chip_map
 	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
+	  0,
+	  nforce_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
+	  0,
+	  sata_chip_map
+	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA,
 	  0,
 	  sata_chip_map
 	},
-	{ PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
+	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2,
 	  0,
-	  nforce_chip_map
+	  sata_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE4_SATA1,
 	  0,
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE4_SATA2,
+	  0,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_SATA,
+	  0,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_SATA2,
+	  0,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP51_SATA,
+	  0,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP51_SATA2,
 	  0,
 	  sata_chip_map
 	}
@@ -2683,6 +2723,7 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_VIATECH_VT8233_ISA:
 	case PCI_PRODUCT_VIATECH_VT8235_ISA:
 	case PCI_PRODUCT_VIATECH_VT6420_SATA:
+	case PCI_PRODUCT_VIATECH_VT6421_SATA:
 	case PCI_PRODUCT_VIATECH_VT8251_SATA:
 		printf(": ATA133");
 		sc->sc_wdcdev.UDMA_cap = 6;
