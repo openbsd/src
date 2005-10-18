@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.11 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.12 2005/10/18 18:54:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -126,8 +126,12 @@ fillpara(int f, int n)
 	int	 firstflag;	/* first word? (needs no space)		*/
 	int	 newlength;	/* tentative new line length		*/
 	int	 eolflag;	/* was at end of line			*/
+	int	 retval;	/* return value				*/
 	LINE	*eopline;	/* pointer to line just past EOP	*/
 	char	 wbuf[MAXWORD];	/* buffer for current word		*/
+
+	undo_add_boundary();
+	undo_no_boundary(TRUE);
 
 	/* record the pointer to the line just past the EOP */
 	(void)gotoeop(FFRAND, 1);
@@ -161,8 +165,10 @@ fillpara(int f, int n)
 			c = lgetc(curwp->w_dotp, curwp->w_doto);
 
 		/* and then delete it */
-		if (ldelete((RSIZE) 1, KNONE) == FALSE && !eopflag)
-			return (FALSE);
+		if (ldelete((RSIZE) 1, KNONE) == FALSE && !eopflag) {
+			retval = FALSE;
+			goto cleanup;
+		}
 
 		/* if not a separator, just add it in */
 		if (c != ' ' && c != '\t') {
@@ -229,7 +235,11 @@ fillpara(int f, int n)
 	 * beginning of the blank line.
 	 */
 	(void)backchar(FFRAND, 1);
-	return (TRUE);
+	retval = TRUE;
+cleanup:
+	undo_no_boundary(FALSE);
+	undo_add_boundary();
+	return (retval);
 }
 
 /*
