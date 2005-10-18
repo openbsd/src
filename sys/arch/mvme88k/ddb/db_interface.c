@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.45 2005/10/13 19:48:34 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.46 2005/10/18 05:53:47 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -388,7 +388,7 @@ m88k_db_trap(type, frame)
 	struct trapframe *frame;
 {
 
-	if (get_psr() & (1 << PSR_INTERRUPT_DISABLE_BIT))
+	if (get_psr() & PSR_IND)
 		db_printf("WARNING: entered debugger with interrupts disabled\n");
 
 	switch(type) {
