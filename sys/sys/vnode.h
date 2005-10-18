@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.61 2005/05/26 00:33:45 pedro Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.62 2005/10/18 21:18:48 jaredy Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -422,7 +422,6 @@ int	cdevvp(dev_t dev, struct vnode **vpp);
 int	getnewvnode(enum vtagtype tag, struct mount *mp,
 	    int (**vops)(void *), struct vnode **vpp);
 int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
-void	getnewfsid(struct mount *, int);
 void	vattr_null(struct vattr *vap);
 int	vcount(struct vnode *vp);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
