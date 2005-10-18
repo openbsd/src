@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.13 2005/10/12 09:09:36 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.14 2005/10/18 09:32:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -249,8 +249,9 @@ ospf_hdr_sanity_check(const struct ip *ip_hdr, struct ospf_hdr *ospf_hdr,
 		}
 	 } else {
 		if (ospf_hdr->area_id != 0) {
+			addr.s_addr = ospf_hdr->area_id;
 			log_debug("recv_packet: invalid area ID %s, "
-			    "interface %s",iface->name);
+			    "interface %s", inet_ntoa(addr), iface->name);
 			return (-1);
 		}
 	}
