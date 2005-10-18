@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.11 2005/10/18 11:10:56 niallo Exp $
+.\"     $OpenBSD: ci.1,v 1.12 2005/10/18 15:03:31 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -71,15 +71,15 @@ Specify a log message.
 A line beginning with a hash character
 .Pq Sq #
 is considered a comment and ignored.
+.It Fl N Ns Ar symbol
+The same as
+.Fl n
+except it overwrites any previous assignment of
+.Ar symbol .
 .It Fl n Ns Ar symbol
 Assign the symbolic name
 .Ar symbol
 to the checked in revision.
-.It Fl N Ns Ar symbol
-Same as
-.Ar -n
-except it overwrites any previous assignment of
-.Ar symbol .
 .It Fl q
 Be quiet about reporting.
 .It Fl r Ns Op Ar rev
