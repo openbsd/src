@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.44 2005/10/18 01:10:28 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.45 2005/10/18 01:22:14 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -102,24 +102,14 @@ checkin_main(int argc, char **argv)
 			}
 			break;
 		case 'f':
-			if (rcs_optarg != NULL) {
-				if ((newrev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit(1);
-				}
-			}
+			rcs_set_rev(rcs_optarg, &newrev);
 			force = 1;
 			break;
 		case 'h':
 			(usage)();
 			exit(0);
 		case 'l':
-			if (rcs_optarg != NULL) {
-				if ((newrev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit(1);
-				}
-			}
+			rcs_set_rev(rcs_optarg, &newrev);
 			lkmode = LOCK_LOCK;
 			break;
 		case 'm':
@@ -151,21 +141,11 @@ checkin_main(int argc, char **argv)
 			verbose = 0;
 			break;
 		case 'r':
+			rcs_set_rev(rcs_optarg, &newrev);
 			rflag = 1;
-			if (rcs_optarg != NULL) {
-				if ((newrev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit(1);
-				}
-			}
 			break;
 		case 'u':
-			if (rcs_optarg != NULL) {
-				if ((newrev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit(1);
-				}
-			}
+			rcs_set_rev(rcs_optarg, &newrev);
 			lkmode = LOCK_UNLOCK;
 			break;
 		case 'V':

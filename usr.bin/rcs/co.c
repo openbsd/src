@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.18 2005/10/17 15:33:12 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.19 2005/10/18 01:22:14 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -61,53 +61,21 @@ checkout_main(int argc, char **argv)
 	while ((ch = rcs_getopt(argc, argv, "f::l::qr::u::V")) != -1) {
 		switch (ch) {
 		case 'f':
-			if (rev != RCS_HEAD_REV)
-				cvs_log(LP_WARN,
-				    "redefinition of revision number");
-			if (rcs_optarg != NULL) {
-				if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit (1);
-				}
-			}
+			rcs_set_rev(rcs_optarg, &rev);
 			fflag = 1;
 			break;
 		case 'l':
-			if (rev != RCS_HEAD_REV)
-				cvs_log(LP_WARN,
-				    "redefinition of revision number");
-			if (rcs_optarg != NULL) {
-				if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit (1);
-				}
-			}
+			rcs_set_rev(rcs_optarg, &rev);
 			lock = LOCK_LOCK;
 			break;
 		case 'q':
 			verbose = 0;
 			break;
 		case 'r':
-			if (rev != RCS_HEAD_REV)
-				cvs_log(LP_WARN,
-				    "redefinition of revision number");
-			if (rcs_optarg != NULL) {
-				if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit (1);
-				}
-			}
+			rcs_set_rev(rcs_optarg, &rev);
 			break;
 		case 'u':
-			if (rev != RCS_HEAD_REV)
-				cvs_log(LP_WARN,
-				    "redefinition of revision number");
-			if (rcs_optarg != NULL) {
-				if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit (1);
-				}
-			}
+			rcs_set_rev(rcs_optarg, &rev);
 			lock = LOCK_UNLOCK;
 			break;
 		case 'V':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.30 2005/10/16 00:25:14 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.31 2005/10/18 01:22:14 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -63,6 +63,18 @@ struct rcs_prog {
 	{ "rlog",	rlog_main,	rlog_usage	},
 	{ "ident",	ident_main,	ident_usage	},
 };
+
+void
+rcs_set_rev(const char *str, RCSNUM **rev)
+{
+	if (*rev != RCS_HEAD_REV)
+		cvs_log(LP_WARN, "redefinition of revision number");
+
+	if ((*rev = rcsnum_parse(str)) == NULL) {
+		cvs_log(LP_ERR, "bad revision number '%s'", str);
+		exit (1);
+	}
+}
 
 int
 rcs_init(char *envstr, char **argv, int argvlen)

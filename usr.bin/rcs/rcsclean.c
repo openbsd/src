@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.7 2005/10/13 12:35:30 joris Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.8 2005/10/18 01:22:14 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -70,10 +70,7 @@ rcsclean_main(int argc, char **argv)
 			verbose = 0;
 			break;
 		case 'r':
-			if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
-				cvs_log(LP_ERR, "bad revision number");
-				exit(1);
-			}
+			rcs_set_rev(rcs_optarg, &rev);
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
