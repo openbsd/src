@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.45 2005/10/18 01:22:14 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.46 2005/10/18 01:39:47 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -71,14 +71,14 @@ checkin_usage(void)
 int
 checkin_main(int argc, char **argv)
 {
-	int found, notlocked;
+	int found, notlocked, ret;
 	int i, ch, force, lkmode, interactive, rflag, status, symforce;
 	mode_t fmode;
 	time_t date;
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN];
-	char *rcs_msg, *filec, *deltatext, *username;
+	char *rcs_msg, *filec, *deltatext, *username, rbuf[16];
 	const char *symbol = NULL;
 	struct rcs_lock *lkp;
 	BUF *bp;
@@ -187,7 +187,8 @@ checkin_main(int argc, char **argv)
 
 		frev = file->rf_head;
 
-		cvs_printf("%s  <--  %s\n", fpath, argv[i]);
+		if (verbose == 1)
+			printf("%s  <--  %s\n", fpath, argv[i]);
 
 		/*
 		 * If revision passed on command line is less than HEAD, bail.
@@ -225,18 +226,18 @@ checkin_main(int argc, char **argv)
 		 * user and revert to latest version.
 		 */
 		if ((!force) && (strlen(deltatext) < 1)) {
-			char buf[16];
-			rcsnum_tostr(frev, buf, sizeof(buf));
+			rcsnum_tostr(frev, rbuf, sizeof(rbuf));
 			cvs_log(LP_WARN, 
 			    "file is unchanged; reverting to previous revision %s",
-			    buf);
+			    rbuf);
 			(void)unlink(argv[i]);
 			if (lkmode != 0)
 				checkout_rev(file, frev, argv[i], lkmode,
 				    username, 0);
 			rcs_lock_remove(file, frev);
 			rcs_close(file);
-			cvs_printf("done\n");
+			if (verbose == 1)
+				printf("done\n");
 			continue;
 		}
 
@@ -334,23 +335,22 @@ checkin_main(int argc, char **argv)
 		 * Attach a symbolic name to this revision if specified.
 		 */
 		if (symbol != NULL) {
-			cvs_printf("symbol: %s\n", symbol);
-			int ret = 0;
+			if (verbose == 1)
+				printf("symbol: %s\n", symbol);
 			if (symforce)
 				rcs_sym_remove(file, symbol);
 			if ((ret = rcs_sym_add(file, symbol, newrev) == -1)
 			    && (rcs_errno == RCS_ERR_DUPENT)) {
-				char tmp[16];
 				rcsnum_tostr(rcs_sym_getrev(file, symbol),
-				    tmp, sizeof(tmp));
+				    rbuf, sizeof(rbuf));
 				cvs_log(LP_ERR,
 				    "symbolic name %s already bound to %s",
-				    symbol, tmp);
+				    symbol, rbuf);
 				status = 1;
 				rcs_close(file);
 				continue;
 			} else if (ret == -1) {
-				cvs_printf("problem adding symbol: %s\n",
+				cvs_log(LP_ERR, "problem adding symbol: %s",
 				    symbol);
 				status = 1;
 				rcs_close(file);
@@ -460,17 +460,17 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 		return (NULL);
 	}
 
-	cvs_printf("new revision: %s; previous revision: %s\n", nrev, prev);
-	cvs_printf("enter log message, terminated with single "
+	printf("new revision: %s; previous revision: %s\n", nrev, prev);
+	printf("enter log message, terminated with single "
 	    "'.' or end of file:\n");
-	cvs_printf(">> ");
+	printf(">> ");
 
 	for (;;) {
 		fgets(buf, (int)sizeof(buf), stdin);
 		if (feof(stdin) || ferror(stdin) || buf[0] == '.')
 			break;
 		cvs_buf_append(logbuf, buf, strlen(buf));
-		cvs_printf(">> ");
+		printf(">> ");
 	}
 
 	cvs_buf_putc(logbuf, '\0');
