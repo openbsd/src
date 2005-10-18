@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.6 2005/10/18 23:11:00 marco Exp $ */
+/* $OpenBSD: ipmi.c,v 1.7 2005/10/18 23:26:33 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -705,8 +705,8 @@ scan_sig(long start, long end, int skip, int len, const void *data)
 void *
 smbios_map(paddr_t pa, size_t len, struct smbios_mem_map *handle)
 {
-	paddr_t pgstart = i386_trunc_page(pa);
-	paddr_t pgend	= i386_trunc_page(pa + len);
+	paddr_t pgstart = trunc_page(pa);
+	paddr_t pgend	= round_page(pa + len);
 	vaddr_t va = uvm_km_valloc(kernel_map, pgend-pgstart);
 
 	if (va == 0)
