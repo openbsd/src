@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.32 2005/10/18 01:24:42 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.33 2005/10/18 16:20:31 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -60,6 +60,7 @@ struct rcs_prog {
 	{ "co",		checkout_main,	checkout_usage  },
 	{ "rcsclean",	rcsclean_main,	rcsclean_usage	},
 	{ "rcsdiff",	rcsdiff_main,	rcsdiff_usage	},
+	{ "rcsmerge",	rcsmerge_main,	rcsmerge_usage	},
 	{ "rlog",	rlog_main,	rlog_usage	},
 	{ "ident",	ident_main,	ident_usage	},
 };
