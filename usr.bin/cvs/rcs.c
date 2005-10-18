@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.91 2005/10/16 17:44:15 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.92 2005/10/18 01:08:13 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1453,6 +1453,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 	} else {
 		if ((rdp = rcs_findrev(rf, rev)) != NULL) {
 			rcs_errno = RCS_ERR_DUPENT;
+			rcsnum_free(old);
 			return (-1);
 		}
 
@@ -1466,11 +1467,13 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 
 	if ((pw = getpwuid(getuid())) == NULL) {
 		rcs_errno = RCS_ERR_ERRNO;
+		rcsnum_free(old);
 		return (-1);
 	}
 
 	if ((rdp = (struct rcs_delta *)malloc(sizeof(*rdp))) == NULL) {
 		rcs_errno = RCS_ERR_ERRNO;
+		rcsnum_free(old);
 		return (-1);
 	}
 	memset(rdp, 0, sizeof(*rdp));
@@ -1480,14 +1483,17 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 
 	if ((rdp->rd_num = rcsnum_alloc()) == NULL) {
 		rcs_freedelta(rdp);
+		rcsnum_free(old);
 		return (-1);
 	}
 	rcsnum_cpy(rev, rdp->rd_num, 0);
 
 	if ((rdp->rd_next = rcsnum_alloc()) == NULL) {
 		rcs_freedelta(rdp);
+		rcsnum_free(old);
 		return (-1);
 	}
+
 	rcsnum_cpy(old, rdp->rd_next, 0);
 	rcsnum_free(old);
 
@@ -1496,17 +1502,20 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 
 	if ((rdp->rd_author = cvs_strdup(username)) == NULL) {
 		rcs_freedelta(rdp);
+		rcsnum_free(old);
 		return (-1);
 	}
 
 	if ((rdp->rd_state = cvs_strdup(RCS_STATE_EXP)) == NULL) {
 		rcs_freedelta(rdp);
+		rcsnum_free(old);
 		return (-1);
 	}
 
 	if ((rdp->rd_log = cvs_strdup(msg)) == NULL) {
 		rcs_errno = RCS_ERR_ERRNO;
 		rcs_freedelta(rdp);
+		rcsnum_free(old);
 		return (-1);
 	}
 
