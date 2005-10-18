@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.4 2005/10/17 23:54:21 deraadt Exp $ */
+/* $OpenBSD: ipmi.c,v 1.5 2005/10/18 23:08:23 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -124,7 +124,7 @@ int	ipmi_sendcmd(struct ipmi_softc *, int, int, int, int, int, const void*);
 int	ipmi_recvcmd(struct ipmi_softc *, int, int *, void *);
 
 int	ipmi_intr(void *);
-int	ipmi_probe(struct device *, void *, void *);
+int	ipmi_match(struct device *, void *, void *);
 void	ipmi_attach(struct device *, struct device *, void *);
 
 long	ipow(long, int);
@@ -678,7 +678,7 @@ typedef struct {
 } ipmi_bmc_response_t;
 
 struct cfattach ipmi_ca = {
-	sizeof(struct ipmi_softc), ipmi_probe, ipmi_attach
+	sizeof(struct ipmi_softc), ipmi_match, ipmi_attach
 };
 
 struct cfdriver ipmi_cd = {
@@ -1473,7 +1473,32 @@ ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 }
 
 int
-ipmi_probe(struct device *parent, void *match, void *aux)
+ipmi_probe(void *aux)
+{
+	struct ipmi_attach_args	*ia = aux;
+
+	if (scan_smbios(SMBIOS_TYPE_IPMI, smbios_ipmi_probe, ia) == 0) {
+		dmd_ipmi_t *pipmi;
+
+		pipmi = (dmd_ipmi_t *)scan_sig(0xC0000L, 0xFFFFFL, 16, 4,
+		    "IPMI");
+		if (pipmi == NULL) {
+			/* no IPMI found */
+			return (0);
+		}
+
+		/* we have an IPMI signature, fill in attach arg structure */
+		ia->iaa_if_type = pipmi->dmd_if_type;
+		ia->iaa_if_rev = pipmi->dmd_if_rev;
+
+		return (1);
+	}
+
+	return (1);
+}
+
+int
+ipmi_match(struct device *parent, void *match, void *aux)
 {
 	struct ipmi_softc	sc;
 	struct ipmi_attach_args	*ia = aux;
@@ -1482,17 +1507,6 @@ ipmi_probe(struct device *parent, void *match, void *aux)
 	if (strcmp(ia->iaa_name, cf->cf_driver->cd_name))
 		return (0);
 
-	if (scan_smbios(SMBIOS_TYPE_IPMI, smbios_ipmi_probe, ia) == 0) {
-		dmd_ipmi_t *pipmi;
-
-		pipmi = (dmd_ipmi_t *)scan_sig(0xC0000L, 0xFFFFFL, 16, 4,
-		    "IPMI");
-		if (pipmi == NULL)
-			return (0);
-
-		ia->iaa_if_type = pipmi->dmd_if_type;
-		ia->iaa_if_rev = pipmi->dmd_if_rev;
-	}
 	/* Map registers */
 	if (ipmi_map_regs(&sc, ia) == 0) {
 		sc.sc_if->probe(&sc);

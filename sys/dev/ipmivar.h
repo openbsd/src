@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.2 2005/10/04 22:04:25 deraadt Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.3 2005/10/18 23:08:23 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -313,5 +313,7 @@ typedef struct {
 	u_int8_t	typelen;
 	u_int8_t	name[1];
 } __attribute__((packed)) sdrtype2;
+
+int ipmi_probe(void *);
 
 #endif				/* _IPMIVAR_H_ */
