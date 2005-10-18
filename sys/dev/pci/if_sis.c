@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.56 2005/10/18 00:12:09 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.57 2005/10/18 00:44:23 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1425,18 +1425,22 @@ void sis_rxeoc(sc)
 void sis_txeof(sc)
 	struct sis_softc	*sc;
 {
+	struct sis_desc		*cur_tx = NULL;
 	struct ifnet		*ifp;
 	u_int32_t		idx;
 
 	ifp = &sc->arpcom.ac_if;
 
+	/* Clear the timeout timer. */
+	ifp->if_timer = 0;
+
 	/*
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been transmitted.
 	 */
-	for (idx = sc->sis_cdata.sis_tx_cons; sc->sis_cdata.sis_tx_cnt > 0;
-	    sc->sis_cdata.sis_tx_cnt--, SIS_INC(idx, SIS_TX_LIST_CNT)) {
-		struct sis_desc *cur_tx = &sc->sis_ldata->sis_tx_list[idx];
+	idx = sc->sis_cdata.sis_tx_cons;
+	while (idx != sc->sis_cdata.sis_tx_prod) {
+		cur_tx = &sc->sis_ldata->sis_tx_list[idx];
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 		    ((caddr_t)cur_tx - sc->sc_listkva),
@@ -1446,8 +1450,11 @@ void sis_txeof(sc)
 		if (SIS_OWNDESC(cur_tx))
 			break;
 
-		if (cur_tx->sis_ctl & SIS_CMDSTS_MORE)
+		if (cur_tx->sis_ctl & SIS_CMDSTS_MORE) {
+			sc->sis_cdata.sis_tx_cnt--;
+			SIS_INC(idx, SIS_TX_LIST_CNT);
 			continue;
+		}
 
 		if (!(cur_tx->sis_ctl & SIS_CMDSTS_PKT_OK)) {
 			ifp->if_oerrors++;
@@ -1472,15 +1479,18 @@ void sis_txeof(sc)
 			m_freem(cur_tx->sis_mbuf);
 			cur_tx->sis_mbuf = NULL;
 		}
+
+		sc->sis_cdata.sis_tx_cnt--;
+		SIS_INC(idx, SIS_TX_LIST_CNT);
+		ifp->if_timer = 0;
 	}
 
-	if (idx != sc->sis_cdata.sis_tx_cons) {
-		/* we freed up some buffers */
-		sc->sis_cdata.sis_tx_cons = idx;
+	sc->sis_cdata.sis_tx_cons = idx;
+
+	if (cur_tx != NULL)
 		ifp->if_flags &= ~IFF_OACTIVE;
-	}
 
-	ifp->if_timer = (sc->sis_cdata.sis_tx_cnt == 0) ? 0 : 5;
+	return;
 }
 
 void sis_tick(xsc)
