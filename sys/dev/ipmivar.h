@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.4 2005/10/19 23:35:53 jordan Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.5 2005/10/19 23:45:04 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -74,7 +74,7 @@ struct ipmi_softc {
 	int		    sc_if_rev;		/* IPMI Revision */
 
 	void		    *sc_ih;		/* Interrupt/IO handles */
-	bus_space_tag_t     sc_iot;
+	bus_space_tag_t	    sc_iot;
 	bus_space_handle_t  sc_ioh;
 
 	int		    sc_btseq;
@@ -84,11 +84,11 @@ struct ipmi_softc {
 
 struct ipmi_thread {
 	struct ipmi_softc   *sc;
-	volatile int        running;
+	volatile int	    running;
 };
 
-void    ipmi_create_thread(void *);
-void    ipmi_poll_thread(void *);
+void	ipmi_create_thread(void *);
+void	ipmi_poll_thread(void *);
 
 int	kcs_probe(struct ipmi_softc *);
 int	kcs_reset(struct ipmi_softc *);
