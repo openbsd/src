@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.57 2005/09/09 09:11:38 espie Exp $
+# $OpenBSD: Update.pm,v 1.58 2005/10/19 10:41:19 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -62,6 +62,7 @@ sub extract
 	my $file = $self->prepare_to_extract($state);
 
 	if (defined $self->{link} || defined $self->{symlink}) {
+		$self->{zap} = 1;
 		return;
 	}
 	

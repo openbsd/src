@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.42 2005/09/24 12:52:19 espie Exp $
+# $OpenBSD: Add.pm,v 1.43 2005/10/19 10:41:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -332,8 +332,10 @@ sub install
 		File::Path::mkpath(dirname($destdir.$fullname));
 		if (defined $self->{link}) {
 			link($destdir.$self->{link}, $destdir.$fullname);
+			delete $self->{zap};
 		} elsif (defined $self->{symlink}) {
 			symlink($self->{symlink}, $destdir.$fullname);
+			delete $self->{zap};
 		} else {
 			rename($self->{tempname}, $destdir.$fullname) or 
 			    Fatal "Can't move ", $self->{tempname}, " to $fullname: $!";

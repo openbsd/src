@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.78 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.79 2005/10/19 10:41:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -261,6 +261,7 @@ use File::Basename;
 sub write
 {
 	my ($self, $fh) = @_;
+	return if defined $self->{zap};
 	print $fh "\@ignore\n" if defined $self->{ignore};
 	print $fh "\@comment no checksum\n" if defined $self->{nochecksum};
 	$self->SUPER::write($fh);
