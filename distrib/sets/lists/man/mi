@@ -1365,6 +1365,7 @@
 ./usr/share/man/cat4/macppc/macobio.0
 ./usr/share/man/cat4/macppc/mediabay.0
 ./usr/share/man/cat4/macppc/mem.0
+./usr/share/man/cat4/macppc/smu.0
 ./usr/share/man/cat4/macppc/snapper.0
 ./usr/share/man/cat4/macppc/zs.0
 ./usr/share/man/cat4/macppc/zsc.0
