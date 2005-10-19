@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.13 2005/10/19 23:00:22 jordan Exp $ */
+/* $OpenBSD: ipmi.c,v 1.14 2005/10/19 23:28:28 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -97,9 +97,15 @@ int	ipmi_poll = 1;
 #define IPMI_MSG_DATASND		2
 #define IPMI_MSG_DATARCV		3
 
-#define IPMI_INVALID_SENSOR		(1L << 5)
+#define IPMI_SENSOR_TYPE_TEMP           0x0101
+#define IPMI_SENSOR_TYPE_VOLT           0x0102
+#define IPMI_SENSOR_TYPE_FAN            0x0104
+#define IPMI_SENSOR_TYPE_INTRUSION      0x6F05
+#define IPMI_SENSOR_TYPE_PWRSUPPLY      0x6F08
 
 #define IPMI_ENTITY_PWRSUPPLY		0x0A
+
+#define IPMI_INVALID_SENSOR		(1L << 5)
 
 #define byteof(x) ((x) >> 3)
 #define bitof(x)  (1L << ((x) & 0x7))
@@ -1259,10 +1265,6 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 
 	psensor->i_sensor.status = SENSOR_S_OK;
 
-	etype = psensor->etype;
-	if (etype == 0x6F)
-		etype = (etype << 8) + psensor->stype;
-
 	/* Get reading of sensor */
 	switch (psensor->i_sensor.type) {
 	case SENSOR_TEMP:
@@ -1282,8 +1284,11 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	}
 
 	/* Return Sensor Status */
+	etype = (psensor->etype << 8) + psensor->stype;
 	switch(etype) {
-	case 0x01:  /* threshold */
+	case IPMI_SENSOR_TYPE_TEMP:
+	case IPMI_SENSOR_TYPE_VOLT:
+	case IPMI_SENSOR_TYPE_FAN:
 		data[0] = psensor->i_num;
 		ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun,
 		    SE_NETFN, SE_GET_SENSOR_THRESHOLD, 1, data);
@@ -1307,13 +1312,13 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 
 		break;
 
-	case 0x6F05: /* chassis intrusion */
+	case IPMI_SENSOR_TYPE_INTRUSION:
 		psensor->i_sensor.value = (reading[2] & 1) ? 1 : 0;
 		if (reading[2] & 0x1)
 			return (SENSOR_S_CRIT);
 		break;
 
-	case 0x6F08: /* power supply */
+	case IPMI_SENSOR_TYPE_PWRSUPPLY:
 		/* Reading: 1 = present+powered, 0 = otherwise */
 		psensor->i_sensor.value = (reading[2] & 1) ? 1 : 0;
 		if (reading[2] & 0x10) {
@@ -1366,21 +1371,21 @@ int
 ipmi_sensor_type(int type, int ext_type, int entity)
 {
 	switch (ext_type << 8L | type) {
-	case 0x0101: /* temperature probes */
+	case IPMI_SENSOR_TYPE_TEMP:
 		return (SENSOR_TEMP);
 
-	case 0x0102: /* voltage probes	*/
+	case IPMI_SENSOR_TYPE_VOLT:
 		return (SENSOR_VOLTS_DC);
 
-	case 0x0104: /* fans */
+	case IPMI_SENSOR_TYPE_FAN:
 		return (SENSOR_FANRPM);
 
-	case 0x6F08: /* power supply */
+	case IPMI_SENSOR_TYPE_PWRSUPPLY:
 		if (entity == IPMI_ENTITY_PWRSUPPLY)
 			return (SENSOR_INDICATOR);
 		break;
 
-	case 0x6F05: /* chassis intrusion */
+	case IPMI_SENSOR_TYPE_INTRUSION:
 		return (SENSOR_INDICATOR);
 	}
 
