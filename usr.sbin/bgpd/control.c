@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.44 2005/10/19 10:26:21 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.45 2005/10/19 12:32:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,7 @@ struct {
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
 int		 control_close(int);
+void		 control_result(struct ctl_conn *, u_int);
 
 int
 control_init(void)
@@ -253,8 +254,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				if (p == NULL)
 					p = getpeerbydesc(neighbor->descr);
 				if (p == NULL) {
-					log_warnx("IMSG_CTL_NEIGHBOR_ "
-					    "with unknown neighbor");
+					control_result(c, CTL_RES_NOSUCHPEER);
 					break;
 				}
 				switch (imsg.hdr.type) {
@@ -272,6 +272,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				default:
 					fatal("king bula wants more humppa");
 				}
+				control_result(c, CTL_RES_OK);
 			} else
 				log_warnx("got IMSG_CTL_NEIGHBOR_ with "
 				    "wrong length");
@@ -319,4 +320,11 @@ control_imsg_relay(struct imsg *imsg)
 
 	return (imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid, -1,
 	    imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
+}
+
+void
+control_result(struct ctl_conn *c, u_int code)
+{
+	imsg_compose(&c->ibuf, IMSG_CTL_RESULT, 0, c->ibuf.pid, -1,
+	    &code, sizeof(code));
 }

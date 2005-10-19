@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.178 2005/10/19 10:42:06 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.179 2005/10/19 12:32:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -297,7 +297,6 @@ enum imsg_type {
 	IMSG_NETWORK_FLUSH,
 	IMSG_NETWORK_DONE,
 	IMSG_FILTER_SET,
-	IMSG_CTL_SHOW_NEIGHBOR,
 	IMSG_CTL_END,
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_FIB_COUPLE,
@@ -308,6 +307,8 @@ enum imsg_type {
 	IMSG_CTL_KROUTE,
 	IMSG_CTL_KROUTE6,
 	IMSG_CTL_KROUTE_ADDR,
+	IMSG_CTL_RESULT,
+	IMSG_CTL_SHOW_NEIGHBOR,
 	IMSG_CTL_SHOW_NEXTHOP,
 	IMSG_CTL_SHOW_INTERFACE,
 	IMSG_CTL_SHOW_RIB,
@@ -329,6 +330,11 @@ struct imsg_hdr {
 struct imsg {
 	struct imsg_hdr	 hdr;
 	void		*data;
+};
+
+enum ctl_results {
+	CTL_RES_OK,
+	CTL_RES_NOSUCHPEER
 };
 
 /* needed for session.h parse prototype */

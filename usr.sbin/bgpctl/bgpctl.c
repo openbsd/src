@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.91 2005/09/20 14:40:32 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.92 2005/10/19 12:32:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -71,6 +71,7 @@ const char *	 print_origin(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 static const char	*get_errstr(u_int8_t, u_int8_t);
+int		 show_result(struct imsg *);
 
 struct imsgbuf	*ibuf;
 
@@ -221,20 +222,14 @@ main(int argc, char *argv[])
 	case NEIGHBOR_UP:
 		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_UP, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
-		printf("request sent.\n");
-		done = 1;
 		break;
 	case NEIGHBOR_DOWN:
 		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_DOWN, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
-		printf("request sent.\n");
-		done = 1;
 		break;
 	case NEIGHBOR_CLEAR:
 		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_CLEAR, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
-		printf("request sent.\n");
-		done = 1;
 		break;
 	case NETWORK_ADD:
 	case NETWORK_REMOVE:
@@ -307,15 +302,17 @@ main(int argc, char *argv[])
 			case NETWORK_SHOW:
 				done = show_fib_msg(&imsg);
 				break;
+			case NEIGHBOR:
+			case NEIGHBOR_UP:
+			case NEIGHBOR_DOWN:
+			case NEIGHBOR_CLEAR:
+				done = show_result(&imsg);
+				break;
 			case NONE:
 			case RELOAD:
 			case FIB:
 			case FIB_COUPLE:
 			case FIB_DECOUPLE:
-			case NEIGHBOR:
-			case NEIGHBOR_UP:
-			case NEIGHBOR_DOWN:
-			case NEIGHBOR_CLEAR:
 			case NETWORK_ADD:
 			case NETWORK_REMOVE:
 			case NETWORK_FLUSH:
@@ -1029,4 +1026,25 @@ get_errstr(u_int8_t errcode, u_int8_t subcode)
 	}
 
 	return (errstr);
+}
+
+int
+show_result(struct imsg *imsg)
+{
+	u_int	rescode;
+
+	if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(rescode))
+		errx(1, "got IMSG_CTL_RESULT with wrong len");
+	memcpy(&rescode, imsg->data, sizeof(rescode));
+
+	if (rescode == 0)
+		printf("request processed\n");
+	else {
+		if (rescode >
+		    sizeof(ctl_res_strerror)/sizeof(ctl_res_strerror[0]))
+			errx(1, "illegal error code %u", rescode);
+		printf("%s\n", ctl_res_strerror[rescode]);
+	}
+
+	return (1);
 }
