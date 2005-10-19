@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2005/05/26 18:46:16 norby Exp $ */
+/*	$OpenBSD: printconf.c,v 1.2 2005/10/19 22:00:37 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -27,7 +27,6 @@
 #include "ospf.h"
 #include "ospfd.h"
 #include "ospfe.h"
-#include "log.h"
 
 void	 print_mainconf(struct ospfd_conf *);
 void	 print_iface(struct iface *);

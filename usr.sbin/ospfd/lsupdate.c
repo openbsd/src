@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.17 2005/10/19 21:43:20 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.18 2005/10/19 22:00:37 stevesk Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -195,7 +195,7 @@ send_ls_update(struct iface *iface, struct in_addr addr, void *data, int len)
 	buf_free(buf);
 	return (ret);
 fail:
-	log_warn("send_hello");
+	log_warn("send_ls_update");
 	buf_free(buf);
 	return (-1);
 }

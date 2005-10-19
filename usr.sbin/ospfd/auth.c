@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.5 2005/04/05 13:01:21 claudio Exp $ */
+/*	$OpenBSD: auth.c,v 1.6 2005/10/19 22:00:37 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -59,7 +59,7 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 		     sizeof(ospf_hdr->auth_key.simple));
 
 		if (in_cksum(ospf_hdr, ntohs(ospf_hdr->len))) {
-			log_debug("recv_packet: invalid checksum, interface %s",
+			log_debug("auth_validate: invalid checksum, interface %s",
 			    iface->name);
 			return (-1);
 		}
@@ -147,7 +147,7 @@ auth_gen(struct buf *buf, struct iface *iface)
 
 	/* update length */
 	if (buf->wpos > USHRT_MAX)
-		fatalx("auth_gen: resulting ospf packet to big");
+		fatalx("auth_gen: resulting ospf packet too big");
 	ospf_hdr->len = htons((u_int16_t)buf->wpos);
 	/* clear auth_key field */
 	bzero(ospf_hdr->auth_key.simple,
