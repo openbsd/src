@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.46 2005/10/18 01:39:47 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.47 2005/10/19 11:37:11 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -87,7 +87,7 @@ checkin_main(int argc, char **argv)
 	file = NULL;
 	rcs_msg = username = NULL;
 	newrev =  NULL;
-	fmode = force = lkmode = verbose = rflag = status = symforce = 0;
+	fmode = force = lkmode = rflag = status = symforce = 0;
 	interactive = 1;
 
 
@@ -460,7 +460,9 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 		return (NULL);
 	}
 
-	printf("new revision: %s; previous revision: %s\n", nrev, prev);
+	if (verbose == 1)
+		printf("new revision: %s; previous revision: %s\n", nrev,
+		    prev);
 	printf("enter log message, terminated with single "
 	    "'.' or end of file:\n");
 	printf(">> ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.34 2005/10/19 00:30:22 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.35 2005/10/19 11:37:11 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -183,7 +183,6 @@ int
 rcs_statfile(char *fname, char *out, size_t len)
 {
 	int l;
-	char *s;
 	char filev[MAXPATHLEN], fpath[MAXPATHLEN];
 	struct stat st;
 
@@ -206,21 +205,6 @@ rcs_statfile(char *fname, char *out, size_t len)
 	}
 
 	strlcpy(out, fpath, len);
-	if ((verbose == 1) && (strcmp(__progname, "rcsclean"))) {
-		if (!strcmp(__progname, "co")) {
-			printf("%s --> ", fpath);
-			if (pipeout == 1) {
-				printf("standard output\n");
-			} else {
-				if ((s = strrchr(filev, ',')) != NULL) {
-					*s = '\0';
-					printf("%s\n", fname);
-				}
-			}
-		} else {
-			printf("RCS file: %s\n", fpath);
-		}
-	}
 
 	return (0);
 }
@@ -369,6 +353,8 @@ rcs_main(int argc, char **argv)
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
+		if (verbose == 1)
+			printf("RCS file: %s\n", fpath);
 		file = rcs_open(fpath, flags, fmode);
 		if (file == NULL)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.20 2005/10/19 00:30:22 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.21 2005/10/19 11:37:11 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -104,6 +104,9 @@ checkout_main(int argc, char **argv)
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
+		if (verbose == 1)
+			printf("%s  <--  %s\n", fpath, argv[i]);
+
 		if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
 			continue;
 
@@ -173,10 +176,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 	if (lkmode == LOCK_LOCK) {
 		if ((username != NULL)
 		    && (rcs_lock_add(file, username, frev) < 0)) {
-			if (rcs_errno != RCS_ERR_DUPENT)
+			if ((rcs_errno != RCS_ERR_DUPENT) && (verbose == 1))
 				cvs_log(LP_ERR, "failed to lock '%s'", buf);
-			else
-				cvs_log(LP_WARN, "you already have a lock");
 		}
 
 		mode = 0644;
@@ -200,16 +201,21 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 	if ((stat(dst, &st) != -1) && force == 0) {
 		if (st.st_mode & S_IWUSR) {
 			yn = 0;
+			if (verbose == 0) {
+				cvs_log(LP_ERR,
+				    "writeable %s exists; checkout aborted",
+				    dst);
+				return (-1);
+			}
 			while (yn != 'y' && yn != 'n') {
-				printf("writeable '%s' exists; ", dst);
-				printf("remove it? [ny] (n):");
+				printf("writeable %s exists; ", dst);
+				printf("remove it? [ny](n): ");
 				fflush(stdout);
 				yn = getchar();
 			}
 
 			if (yn == 'n') {
-				if (verbose == 1)
-					cvs_log(LP_ERR, "checkout aborted");
+				cvs_log(LP_ERR, "checkout aborted");
 				return (-1);
 			}
 		}
