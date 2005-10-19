@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.7 2005/10/18 23:26:33 marco Exp $ */
+/* $OpenBSD: ipmi.c,v 1.8 2005/10/19 21:43:09 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -361,6 +361,22 @@ bt_probe(struct ipmi_softc *sc)
 #define _SMIC_DATAOUT_REG		0
 
 #define _SMIC_CTRL_REG			1
+#define	  SMS_CC_GET_STATUS		 0x40
+#define	  SMS_CC_START_TRANSFER		 0x41
+#define	  SMS_CC_NEXT_TRANSFER		 0x42
+#define	  SMS_CC_END_TRANSFER		 0x43
+#define	  SMS_CC_START_RECEIVE		 0x44
+#define	  SMS_CC_NEXT_RECEIVE		 0x45
+#define	  SMS_CC_END_RECEIVE		 0x46
+#define	  SMS_CC_TRANSFER_ABORT		 0x47
+
+#define	  SMS_SC_READY			 0xc0
+#define	  SMS_SC_WRITE_START		 0xc1
+#define	  SMS_SC_WRITE_NEXT		 0xc2
+#define	  SMS_SC_WRITE_END		 0xc3
+#define	  SMS_SC_READ_START		 0xc4
+#define	  SMS_SC_READ_NEXT		 0xc5
+#define	  SMS_SC_READ_END		 0xc6
 
 #define _SMIC_FLAG_REG			2
 #define	  SMIC_BUSY			(1L << 0)
@@ -370,27 +386,42 @@ bt_probe(struct ipmi_softc *sc)
 #define	  SMIC_TX_DATA_RDY		(1L << 6)
 #define	  SMIC_RX_DATA_RDY		(1L << 7)
 
-#if 0
+int	smic_wait(struct ipmi_softc *, u_int8_t, u_int8_t, const char *);
+int	smic_write_cmd_data(struct ipmi_softc *, u_int8_t, const u_int8_t *);
+int	smic_read_data(struct ipmi_softc *, u_int8_t *);
+
 int
 smic_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t val, const char *lbl)
 {
-	return (inb(SMIC_CNTL_REGISTER(sc)));
+	int v;
+
+	/* Wait for expected flag bits */
+	v = bmc_io_wait(sc, _SMIC_FLAG_REG, mask, val, 0xFFFFF, "smicwait");
+	if (v < 0) 
+		return (-1);
+
+	/* Return current status */
+	v = bmc_read(sc, _SMIC_CTRL_REG);
+	dbg_printf(99, "smic_wait = %.2x\n", v);
+	return (v);
 }
 
 int
 smic_write_cmd_data(struct ipmi_softc *sc, u_int8_t cmd, const u_int8_t *data)
 {
-	int	sts;
+	int	sts, v;
 
+	dbg_printf(50, "smic_wcd: %.2x %.2x\n", cmd, data ? *data : -1);
 	sts = smic_wait(sc, SMIC_TX_DATA_RDY | SMIC_BUSY, SMIC_TX_DATA_RDY,
 	    "smic_write_cmd_data ready");
-	if (sts != 0)
+	if (sts < 0)
 		return (sts);
 
 	bmc_write(sc, _SMIC_CTRL_REG, cmd);
 	if (data)
 		bmc_write(sc, _SMIC_DATAOUT_REG, *data);
 
+	/* Toggle BUSY bit, then wait for busy bit to clear */
 	v = bmc_read(sc, _SMIC_FLAG_REG);
 	bmc_write(sc, _SMIC_FLAG_REG, v | SMIC_BUSY);
 
@@ -400,48 +431,71 @@ smic_write_cmd_data(struct ipmi_softc *sc, u_int8_t cmd, const u_int8_t *data)
 int
 smic_read_data(struct ipmi_softc *sc, u_int8_t *data)
 {
+	int sts;
+
 	sts = smic_wait(sc, SMIC_RX_DATA_RDY | SMIC_BUSY, SMIC_RX_DATA_RDY,
 	    "smic_read_data");
-	if (sts != SMIC_STATE_READ)
-		return (sts);
-
-	sts = bmc_read(sc, _SMIC_CNTL_REG);
-	*data = bmc_read(sc, _SMIC_DATAIN_REG);
-
+	if (sts >= 0) {
+		*data = bmc_read(sc, _SMIC_DATAIN_REG);
+		dbg_printf(50, "smic_readdata: %.2x\n", *data);
+	}
 	return (sts);
 }
-#endif
+
+#define ErrStat(a,b) if (a) { printf(b); }
 
 int
 smic_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 {
-#if 0
 	int sts, idx;
 
 	sts = smic_write_cmd_data(sc, SMS_CC_START_TRANSFER, &data[0]);
-	for (idx = 0; idx < len - 1; idx++) {
-		if (sts != SMIC_STATE_READ) break;
-		sts = smic_write_cmd_data(sc, SMS_CC_NEXT_TRANSFER, &data[idx]);
+	ErrStat(sts != SMS_SC_WRITE_START, "wstart");
+	for (idx = 1; idx < len - 1; idx++) {
+		sts = smic_write_cmd_data(sc, SMS_CC_NEXT_TRANSFER, 
+		    &data[idx]);
+		ErrStat(sts != SMS_SC_WRITE_NEXT,"write");
 	}
 	sts = smic_write_cmd_data(sc, SMS_CC_END_TRANSFER, &data[idx]);
-#endif
-	return (-1);
+	if (sts != SMS_SC_WRITE_END) {
+		dbg_printf(50,"smic_sendmsg %d/%d = %.2x\n", idx, len, sts);
+		return (-1);
+	}
+	
+	return (0);
 }
 
 int
 smic_recvmsg(struct ipmi_softc *sc, int maxlen, int *len, u_int8_t *data)
 {
-#if 0
 	int sts, idx;
 
+	*len = 0;
+	sts = smic_wait(sc, SMIC_RX_DATA_RDY, SMIC_RX_DATA_RDY, "smic_recvmsg");
+	if (sts < 0) {
+		return (-1);
+	}
+
 	sts = smic_write_cmd_data(sc, SMS_CC_START_RECEIVE, NULL);
-	for (idx = 0;; idx++) {
-		sts=smic_read_data(sc, &data[idx]);
+	ErrStat(sts != SMS_SC_READ_START, "rstart");
+	for (idx = 0;; ) {
+		sts=smic_read_data(sc, &data[idx++]);
+		if (sts != SMS_SC_READ_START && sts != SMS_SC_READ_NEXT) {
+			break;
+		}
 		smic_write_cmd_data(sc, SMS_CC_NEXT_RECEIVE, NULL);
 	}
-	smic_write_cmd_data(sc, SMS_CC_END_RECEIVE, NULL);
-#endif
-	return (-1);
+	ErrStat(sts != SMS_SC_READ_END, "rend");
+
+	*len = idx;
+	
+	sts=smic_write_cmd_data(sc, SMS_CC_END_RECEIVE, NULL);
+	if (sts != SMS_SC_READY) {
+		dbg_printf(50,"smic_recvmsg %d/%d = %.2x\n", idx, maxlen, sts);
+		return (-1);
+	}
+
+	return (0);
 }
 
 int
@@ -453,7 +507,11 @@ smic_reset(struct ipmi_softc *sc)
 int
 smic_probe(struct ipmi_softc *sc)
 {
-	return (-1);
+	/* Flag register should not be 0xFF on a good system */
+	if (bmc_read(sc, _SMIC_FLAG_REG) == 0xFF) 
+		return (-1);
+
+	return (0);
 }
 
 /*
