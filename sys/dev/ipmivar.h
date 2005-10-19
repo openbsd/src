@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.3 2005/10/18 23:08:23 marco Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.4 2005/10/19 23:35:53 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -38,6 +38,7 @@
 #define IPMI_IF_SMIC_NREGS	3
 #define IPMI_IF_BT_NREGS	3
 
+struct ipmi_thread;
 struct ipmi_softc;
 
 struct ipmi_attach_args {
@@ -66,18 +67,28 @@ struct ipmi_if {
 };
 
 struct ipmi_softc {
-	struct device	sc_dev;
+	struct device	    sc_dev;
 
-	struct ipmi_if	*sc_if;			/* Interface layer */
-	int		sc_if_iospacing;	/* Spacing of I/O ports */
-	int		sc_if_rev;		/* IPMI Revision */
+	struct ipmi_if	    *sc_if;		/* Interface layer */
+	int		    sc_if_iospacing;	/* Spacing of I/O ports */
+	int		    sc_if_rev;		/* IPMI Revision */
 
-	void		*sc_ih;			/* Interrupt/IO handles */
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
+	void		    *sc_ih;		/* Interrupt/IO handles */
+	bus_space_tag_t     sc_iot;
+	bus_space_handle_t  sc_ioh;
 
-	int		sc_btseq;
+	int		    sc_btseq;
+
+	struct ipmi_thread  *sc_thread;
 };
+
+struct ipmi_thread {
+	struct ipmi_softc   *sc;
+	volatile int        running;
+};
+
+void    ipmi_create_thread(void *);
+void    ipmi_poll_thread(void *);
 
 int	kcs_probe(struct ipmi_softc *);
 int	kcs_reset(struct ipmi_softc *);
