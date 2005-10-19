@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeername.2,v 1.20 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getpeername.2,v 1.21 2005/10/19 18:27:05 jaredy Exp $
 .\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -121,6 +121,8 @@ to perform the operation.
 .It Bq Er EFAULT
 The
 .Fa name
+or
+.Fa namelen
 parameter points to memory not in a valid part of the
 process address space.
 .El

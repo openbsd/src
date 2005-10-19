@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.22 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getsockname.2,v 1.23 2005/10/19 18:27:05 jaredy Exp $
 .\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -140,6 +140,8 @@ to perform the operation.
 .It Bq Er EFAULT
 The
 .Fa name
+or
+.Fa namelen
 parameter points to memory not in a valid part of the
 process address space.
 .El
