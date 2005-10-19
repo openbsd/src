@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.169 2005/09/29 01:18:05 deraadt Exp $
+$OpenBSD: usbdevs,v 1.170 2005/10/19 17:52:02 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -395,6 +395,7 @@ vendor ASANTE		0x10bd	Asante
 vendor ANALOG		0x1110	Analog Devices
 vendor JRC		0x1145	Japan Radio Company
 vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
+vendor DELORME		0x1163	DeLorme
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor TSUNAMI		0x1241	Tsunami
@@ -802,6 +803,9 @@ product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
 
 /* Dell products */
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
+
+/* DeLorme products */
+product DELORME EARTHMATE	0x0100	Earthmate GPS
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500
