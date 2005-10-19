@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.7 2005/08/02 21:46:23 espie Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.8 2005/10/19 18:48:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -75,11 +75,6 @@ scan_scaled(char *scaled, long long *result)
 	int sign = 0;
 	unsigned int i, ndigits = 0, fract_digits = 0;
 	long long scale_fact = 1, whole = 0, fpart = 0;
-
-	if (p == NULL || result == NULL) {
-		errno = EFAULT;
-		return -1;
-	}
 
 	/* Skip leading whitespace */
 	while (*p && isascii(*p) && isspace(*p))
@@ -196,11 +191,6 @@ fmt_scaled(long long number, char *result)
 	long long abval, fract = 0;
 	unsigned int i;
 	unit_type unit = NONE;
-
-	if (result == NULL) {
-		errno = EFAULT;
-		return -1;
-	}
 
 	abval = (number < 0LL) ? -number : number;	/* no long long_abs yet */
 

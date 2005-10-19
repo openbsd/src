@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendisk.c,v 1.3 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: opendisk.c,v 1.4 2005/10/19 18:48:11 deraadt Exp $	*/
 /*	$NetBSD: opendisk.c,v 1.4 1997/09/30 17:13:50 phil Exp $	*/
 
 /*-
@@ -53,10 +53,6 @@ opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
 {
 	int f, rawpart;
 
-	if (buf == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
 	snprintf(buf, buflen, "%s", path);
 
 	if ((flags & O_CREAT) != 0) {
