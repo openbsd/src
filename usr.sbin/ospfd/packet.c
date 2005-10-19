@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.14 2005/10/18 09:32:16 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.15 2005/10/19 13:07:58 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -29,7 +29,7 @@
 #include <event.h>
 #include <md5.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include "ospfd.h"
 #include "ospf.h"

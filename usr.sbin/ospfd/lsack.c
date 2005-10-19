@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.13 2005/05/27 02:24:42 norby Exp $ */
+/*	$OpenBSD: lsack.c,v 1.14 2005/10/19 13:07:58 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -24,7 +24,7 @@
 #include <arpa/inet.h>
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include "ospfd.h"
 #include "ospf.h"

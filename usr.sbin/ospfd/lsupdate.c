@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.15 2005/10/13 09:57:37 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.16 2005/10/19 13:07:58 stevesk Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -23,7 +23,7 @@
 #include <arpa/inet.h>
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include "ospf.h"
 #include "ospfd.h"
