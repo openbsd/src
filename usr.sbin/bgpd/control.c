@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.43 2005/03/11 15:48:58 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.44 2005/10/19 10:26:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -266,7 +266,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					break;
 				case IMSG_CTL_NEIGHBOR_CLEAR:
 					bgp_fsm(p, EVNT_STOP);
-					bgp_fsm(p, EVNT_START);
+					p->IdleHoldTimer = time(NULL) +
+					    SESSION_CLEAR_DELAY;
 					break;
 				default:
 					fatal("king bula wants more humppa");
