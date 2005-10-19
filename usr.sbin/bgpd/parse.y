@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.171 2005/08/09 20:27:25 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.172 2005/10/19 10:42:06 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -145,7 +145,7 @@ typedef struct {
 %token	RDE EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
-%token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND
+%token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT
 %token	LOG ROUTECOLL TRANSPARENT
 %token	TCP MD5SIG PASSWORD KEY
@@ -607,6 +607,9 @@ peeropts	: REMOTEAS asnumber	{
 		}
 		| PASSIVE		{
 			curpeer->conf.passive = 1;
+		}
+		| DOWN		{
+			curpeer->conf.down = 1;
 		}
 		| HOLDTIME number	{
 			if ($2 < MIN_HOLDTIME) {
@@ -1482,6 +1485,7 @@ lookup(char *s)
 		{ "deny",		DENY},
 		{ "depend",		DEPEND},
 		{ "descr",		DESCR},
+		{ "down",		DOWN},
 		{ "dump",		DUMP},
 		{ "enforce",		ENFORCE},
 		{ "esp",		ESP},

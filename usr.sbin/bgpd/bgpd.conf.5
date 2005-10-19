@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.60 2005/08/10 09:00:16 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.61 2005/10/19 10:42:06 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -433,6 +433,10 @@ Add a description.
 The description is used when logging neighbor events, in status
 reports, for specifying neighbors, etc., but has no further meaning to
 .Xr bgpd 8 .
+.Pp
+.It Ic down
+Do not start the session when bgpd comes up but stay in
+.Em IDLE .
 .Pp
 .It Xo
 .Ic dump
