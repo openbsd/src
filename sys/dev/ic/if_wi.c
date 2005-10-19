@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.121 2005/10/15 00:20:49 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.122 2005/10/19 20:04:43 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.121 2005/10/15 00:20:49 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.122 2005/10/19 20:04:43 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1832,6 +1832,24 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCG80211TXPOWER:
 		error = wi_get_txpower(sc, (struct ieee80211_txpower *)data);
+		break;
+	case SIOCS80211CHANNEL:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
+		if (((struct ieee80211chanreq *)data)->i_channel > 14) {
+			error = EINVAL;
+			break;
+		}
+		wreq.wi_type = WI_RID_OWN_CHNL;
+		wreq.wi_val[0] =
+		    htole16(((struct ieee80211chanreq *)data)->i_channel);
+		error = wi_setdef(sc, &wreq);
+		if (!error && (ifp->if_flags & IFF_UP))
+			wi_init(sc);
+		break;
+	case SIOCG80211CHANNEL:
+		((struct ieee80211chanreq *)data)->i_channel =
+		    sc->wi_channel;
 		break;
 	case SIOCHOSTAP_ADD:
 	case SIOCHOSTAP_DEL:
