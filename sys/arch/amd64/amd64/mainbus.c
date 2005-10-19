@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.2 2005/06/02 20:09:38 tholo Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.3 2005/10/19 01:41:44 marco Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include "pci.h"
 #include "isa.h"
 #include "acpi.h"
+#include "ipmi.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -53,6 +54,10 @@
 #if NACPI > 0
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#endif
+
+#if NIPMI > 0
+#include <dev/ipmivar.h>
 #endif
 
 int	mainbus_match(struct device *, void *, void *);
@@ -77,6 +82,9 @@ union mainbus_attach_args {
 #if NACPI > 0
 	struct acpi_attach_args mba_aaa;
 #endif	
+#if NIPMI > 0
+	struct ipmi_attach_args mba_iaa;
+#endif
 };
 
 /*
@@ -144,6 +152,17 @@ mainbus_attach(parent, self, aux)
 		mba.mba_aaa.aaa_memt = X86_BUS_SPACE_MEM;
 
 		config_found(self, &mba.mba_aaa, mainbus_print);
+	}
+#endif
+
+#if NIPMI > 0
+	{
+		memset(&mba.mba_iaa, 0, sizeof(mba.mba_iaa));
+		mba.mba_iaa.iaa_name = "ipmi";
+		mba.mba_iaa.iaa_iot  = X86_BUS_SPACE_IO;
+		mba.mba_iaa.iaa_memt = X86_BUS_SPACE_MEM;
+		if (ipmi_probe(&mba.mba_iaa))
+			config_found(self, &mba.mba_iaa, mainbus_print);
 	}
 #endif
 
