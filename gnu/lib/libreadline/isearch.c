@@ -330,7 +330,7 @@ rl_search_history (direction, invoking_key)
 		{
 		  search_string_size = 64 + last_isearch_string_len;
 		  search_string = (char *)xrealloc (search_string, search_string_size);
-		  strcpy (search_string, last_isearch_string);
+		  strlcpy (search_string, last_isearch_string, search_string_size);
 		  search_string_index = last_isearch_string_len;
 		  rl_display_search (search_string, reverse, -1);
 		  break;
