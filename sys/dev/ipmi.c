@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.9 2005/10/19 21:52:30 jordan Exp $ */
+/* $OpenBSD: ipmi.c,v 1.10 2005/10/19 22:01:08 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1254,6 +1254,25 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	if (etype == 0x6F)
 		etype = (etype << 8) + psensor->stype;
 
+	/* Get reading of sensor */
+	switch (psensor->i_sensor.type) {
+	case SENSOR_TEMP:
+		psensor->i_sensor.value = ipmi_convert(reading[0], s1, 6);
+		psensor->i_sensor.value += 273150000;
+		break;
+
+	case SENSOR_VOLTS_DC:
+		psensor->i_sensor.value = ipmi_convert(reading[0], s1, 6);
+		break;
+
+	case SENSOR_FANRPM:
+		psensor->i_sensor.value = ipmi_convert(reading[0], s1, 0);
+		break;
+	default:
+		break;
+	}
+
+	/* Return Sensor Status */
 	switch(etype) {
 	case 0x01:  /* threshold */
 		data[0] = psensor->i_num;
@@ -1298,24 +1317,6 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 			/* Power supply AC lost */
 			return (SENSOR_S_WARN);
 		}
-		break;
-	}
-
-	/* Get reading of sensor */
-	switch (psensor->i_sensor.type) {
-	case SENSOR_TEMP:
-		psensor->i_sensor.value = ipmi_convert(reading[0], s1, 6);
-		psensor->i_sensor.value += 273150000;
-		break;
-
-	case SENSOR_VOLTS_DC:
-		psensor->i_sensor.value = ipmi_convert(reading[0], s1, 6);
-		break;
-
-	case SENSOR_FANRPM:
-		psensor->i_sensor.value = ipmi_convert(reading[0], s1, 0);
-		break;
-	default:
 		break;
 	}
 
