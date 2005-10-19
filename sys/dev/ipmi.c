@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.14 2005/10/19 23:28:28 jordan Exp $ */
+/* $OpenBSD: ipmi.c,v 1.15 2005/10/19 23:47:44 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -82,6 +82,9 @@ int	ipmi_poll = 1;
 #define SMIPMI_FLAG_IRQEN		(1L << 3)
 #define SMIPMI_FLAG_ODDOFFSET		(1L << 4)
 #define SMIPMI_FLAG_IFSPACING(x)	(((x)>>6)&0x3)
+#define	 IPMI_IOSPACING_BYTE		 0
+#define	 IPMI_IOSPACING_WORD		 2
+#define	 IPMI_IOSPACING_DWORD		 1
 
 #define IPMI_BTMSG_LEN			0
 #define IPMI_BTMSG_NFLN			1
@@ -97,15 +100,23 @@ int	ipmi_poll = 1;
 #define IPMI_MSG_DATASND		2
 #define IPMI_MSG_DATARCV		3
 
-#define IPMI_SENSOR_TYPE_TEMP           0x0101
-#define IPMI_SENSOR_TYPE_VOLT           0x0102
-#define IPMI_SENSOR_TYPE_FAN            0x0104
-#define IPMI_SENSOR_TYPE_INTRUSION      0x6F05
-#define IPMI_SENSOR_TYPE_PWRSUPPLY      0x6F08
+#define IPMI_SENSOR_TYPE_TEMP		0x0101
+#define IPMI_SENSOR_TYPE_VOLT		0x0102
+#define IPMI_SENSOR_TYPE_FAN		0x0104
+#define IPMI_SENSOR_TYPE_INTRUSION	0x6F05
+#define IPMI_SENSOR_TYPE_PWRSUPPLY	0x6F08
+
+#define IPMI_NAME_UNICODE		0x00
+#define IPMI_NAME_BCDPLUS		0x01
+#define IPMI_NAME_ASCII6BIT		0x02
+#define IPMI_NAME_ASCII8BIT		0x03
 
 #define IPMI_ENTITY_PWRSUPPLY		0x0A
 
 #define IPMI_INVALID_SENSOR		(1L << 5)
+
+#define IPMI_SDR_TYPEFULL		1
+#define IPMI_SDR_TYPECOMPACT		2
 
 #define byteof(x) ((x) >> 3)
 #define bitof(x)  (1L << ((x) & 0x7))
@@ -875,15 +886,15 @@ smbios_ipmi_probe(void *ptr, void *arg)
 	    IST_LEVEL : IST_EDGE;
 
 	switch (SMIPMI_FLAG_IFSPACING(pipmi->smipmi_base_flags)) {
-	case 0:
+	case IPMI_IOSPACING_BYTE:
 		ia->iaa_if_iospacing = 1;
 		break;
 
-	case 1:
+	case IPMI_IOSPACING_DWORD:
 		ia->iaa_if_iospacing = 4;
 		break;
 
-	case 2:
+	case IPMI_IOSPACING_WORD:
 		ia->iaa_if_iospacing = 2;
 		break;
 
@@ -1152,12 +1163,12 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 	char	bcdplus[] = "0123456789 -.:,_";
 
 	slen = typelen & 0x1F;
-	switch (typelen & 0xC0) {
-	case 0x00:
+	switch (typelen >> 6) {
+	case IPMI_NAME_UNICODE:
 		//unicode
 		break;
 
-	case 0x40:
+	case IPMI_NAME_BCDPLUS:
 		/* Characters are encoded in 4-bit BCDPLUS */
 		if (len < slen * 2 + 1) 
 			slen = (len >> 1) - 1;
@@ -1167,7 +1178,7 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 		}
 		break;
 
-	case 0x80:
+	case IPMI_NAME_ASCII6BIT:
 		/* Characters are encoded in 6-bit ASCII
 		 *   0x00 - 0x3F maps to 0x20 - 0x5F */
 		/* XXX: need to calculate max len: slen = 3/4 * len */
@@ -1178,7 +1189,7 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 		}
 		break;
 
-	case 0xC0:
+	case IPMI_NAME_ASCII8BIT:
 		/* Characters are 8-bit ascii */
 		if (len < slen + 1)
 			slen = len - 1;
@@ -1402,13 +1413,13 @@ add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr)
 	char			name[64];
 
 	switch (s1->sdrhdr.record_type) {
-	case 1:
+	case IPMI_SDR_TYPEFULL:
 		ipmi_sensor_name(name, sizeof(name), s1->typelen, s1->name);
 		rc=add_child_sensors(sc, psdr, 1, s1->sensor_num,
 		    s1->sensor_type, s1->event_code, 0, s1->entity_id, name);
 		break;
 
-	case 2:
+	case IPMI_SDR_TYPECOMPACT:
 		ipmi_sensor_name(name, sizeof(name), s2->typelen, s2->name);
 		rc=add_child_sensors(sc, psdr,
 		    s2->share1 & 0xF,
