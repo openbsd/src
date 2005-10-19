@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.11 2005/10/19 22:06:59 jordan Exp $ */
+/* $OpenBSD: ipmi.c,v 1.12 2005/10/19 22:35:39 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -36,6 +36,7 @@
 #include <sys/timeout.h>
 #include <sys/sensors.h>
 #include <sys/malloc.h>
+#include <sys/kthread.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -63,6 +64,8 @@ int	ipmi_poll = 1;
 #define SENSOR_REFRESH_RATE (10 * hz)
 
 #define SMBIOS_TYPE_IPMI	0x26
+
+#define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
 /*
  * Format of SMBIOS IPMI Flags
@@ -143,7 +146,6 @@ void	*cmn_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 int	getbits(u_int8_t *, int, int);
 int	ipmi_sensor_type(int, int, int);
 
-void	ipmi_refresh(void *arg);
 void	ipmi_refresh_sensors(struct ipmi_softc *sc);
 int	ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
 void	ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
@@ -1446,7 +1448,7 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 		psensor->etype = ext_type;
 		psensor->i_sensor.status = SENSOR_S_OK;
 		psensor->i_sensor.type = typ;
-		strlcpy(psensor->i_sensor.device, sc->sc_dev.dv_xname,
+		strlcpy(psensor->i_sensor.device, DEVNAME(sc),
 		    sizeof(psensor->i_sensor.device));
 		if (count > 1)
 			snprintf(psensor->i_sensor.desc,
@@ -1502,15 +1504,6 @@ ipmi_refresh_sensors(struct ipmi_softc *sc)
 	}
 }
 
-void
-ipmi_refresh(void *arg)
-{
-	struct	ipmi_softc *sc = (struct ipmi_softc *)arg;
-
-	ipmi_refresh_sensors(sc);
-	timeout_add(&ipmi_timeout, SENSOR_REFRESH_RATE);
-}
-
 int
 ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 {
@@ -1532,8 +1525,8 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	if (iaa->if_if_irq != -1) {
 		sc->ih = isa_intr_establish(-1, iaa->if_if_irq,
 		    iaa->if_irqlvl, IPL_BIO,
-		    ipmi_intr, sc
-		    sc->sc_dev.dv_xname);
+		    ipmi_intr, sc,
+		    DEVNAME(sc));
 	}
 #endif
 	return (0);
@@ -1544,6 +1537,31 @@ ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 {
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_if->nregs * sc->sc_if_iospacing);
+}
+
+void
+ipmi_poll_thread(void *arg)
+{
+	struct ipmi_thread *thread = arg;
+	struct ipmi_softc  *sc = thread->sc;
+
+	while (thread->running) {
+		ipmi_refresh_sensors(sc);
+		tsleep(thread, PWAIT, "timeout", SENSOR_REFRESH_RATE);
+	}
+	free(thread, M_DEVBUF);
+
+	kthread_exit(0);
+}
+
+void
+ipmi_create_thread(void *arg)
+{
+	struct ipmi_softc *sc = arg;
+
+	if (kthread_create(ipmi_poll_thread, sc->sc_thread, NULL,
+	    DEVNAME(sc)) != 0)
+		panic("ipmi thread");
 }
 
 int
@@ -1602,6 +1620,15 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	int			len;
 	u_int16_t		rec;
 
+	sc->sc_thread = malloc(sizeof(struct ipmi_thread), M_DEVBUF, M_NOWAIT);
+	if (sc->sc_thread == NULL) {
+		printf("%s: unable to allocate thread\n",
+		    DEVNAME(sc));
+		return;
+	}
+	sc->sc_thread->sc = sc;
+	sc->sc_thread->running = 1;
+
 	/* Map registers */
 	ipmi_map_regs(sc, ia);
 
@@ -1615,9 +1642,8 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 		if (get_sdr(sc, rec, &rec))
 			break;
 
-	/* Setup timeout */
-	timeout_set(&ipmi_timeout, ipmi_refresh, sc);
-	timeout_add(&ipmi_timeout, SENSOR_REFRESH_RATE);
+	/* Setup threads */
+	kthread_create_deferred(ipmi_create_thread, sc);
 
 	printf(": version %d.%d interface %s %cbase 0x%x/%x spacing %d irq %d\n",
 	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF,
