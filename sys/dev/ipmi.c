@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.10 2005/10/19 22:01:08 jordan Exp $ */
+/* $OpenBSD: ipmi.c,v 1.11 2005/10/19 22:06:59 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1300,6 +1300,8 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 
 	case 0x6F05: /* chassis intrusion */
 		psensor->i_sensor.value = (reading[2] & 1) ? 1 : 0;
+		if (reading[2] & 0x1)
+			return (SENSOR_S_CRIT);
 		break;
 
 	case 0x6F08: /* power supply */
