@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.8 2005/10/19 21:43:09 jordan Exp $ */
+/* $OpenBSD: ipmi.c,v 1.9 2005/10/19 21:52:30 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1284,7 +1284,20 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		break;
 
 	case 0x6F08: /* power supply */
-		psensor->i_sensor.value = (reading[2] & 0xE) ? 0 : 1;
+		/* Reading: 1 = present+powered, 0 = otherwise */
+		psensor->i_sensor.value = (reading[2] & 1) ? 1 : 0;
+		if (reading[2] & 0x10) {
+			/* XXX: Need sysctl type for Power Supply types
+			 *   ok: power supply installed && powered
+			 * warn: power supply installed && !powered
+			 * crit: power supply !installed
+			 */
+			return (SENSOR_S_CRIT);
+		}
+		if (reading[2] & 0x08) {
+			/* Power supply AC lost */
+			return (SENSOR_S_WARN);
+		}
 		break;
 	}
 
