@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.14 2005/10/18 15:39:05 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.15 2005/10/19 21:43:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -308,7 +308,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 			nbr->dd_seq_num = ntohl(dd_hdr.dd_seq_num);
 		}
 
-		/* forward to RDE and let it decide which LSA's to request */
+		/* forward to RDE and let it decide which LSAs to request */
 		if (len > 0) {
 			nbr->dd_pending++;
 			ospfe_imsg_compose_rde(IMSG_DD, nbr->peerid, 0,

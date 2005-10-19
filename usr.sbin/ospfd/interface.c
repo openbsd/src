@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.37 2005/10/18 15:40:36 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.38 2005/10/19 21:43:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -417,7 +417,7 @@ start:
 			continue;
 		if (bdr != NULL) {
 			/*
-			 * routers announcing themselfs as BDR have higher
+			 * routers announcing themselves as BDR have higher
 			 * precedence over those routers announcing a
 			 * different BDR.
 			 */
@@ -460,7 +460,7 @@ start:
 	    (iface->self == bdr && iface->self != iface->bdr) ||
 	    (iface->self != bdr && iface->self == iface->bdr))) {
 		/*
-		 * Reset announced DR/DBR to calculated one, so
+		 * Reset announced DR/BDR to calculated one, so
 		 * that we may get elected in the second round.
 		 * This is needed to drop from a DR to a BDR.
 		 */

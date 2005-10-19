@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.32 2005/10/18 15:40:36 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.33 2005/10/19 21:43:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -495,7 +495,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			/*
 			 * IMSG_LS_ACK is used in two cases:
 			 * 1. LSA was a duplicate
-			 * 2. LSA's age is MaxAge and there is no current
+			 * 2. LS age is MaxAge and there is no current
 			 *    instance in the DB plus no neighbor is state
 			 *    Exchange or Loading
 			 */

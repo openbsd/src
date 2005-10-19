@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.30 2005/10/12 09:51:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.31 2005/10/19 21:43:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -302,7 +302,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 				if (lsa_newer(&lsa_hdr, db_hdr) > 0) {
 					/*
-					 * only request LSA's that are
+					 * only request LSAs that are
 					 * newer or missing
 					 */
 					rde_req_list_add(nbr, &lsa_hdr);
