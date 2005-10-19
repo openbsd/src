@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.27 2004/06/13 21:49:24 niklas Exp $	*/
+/*	$OpenBSD: gus.c,v 1.28 2005/10/19 22:52:02 fgsch Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -498,8 +498,8 @@ stereo_dmaintr(arg)
       dmarecords[dmarecord_index].bsdaddr = sa->buffer;
       dmarecords[dmarecord_index].count = sa->size;
       dmarecords[dmarecord_index].channel = 1;
-      dmarecords[dmarecord_index].direction = 1;
-      dmarecord_index = ++dmarecord_index % NDMARECS;
+      dmarecords[dmarecord_index++].direction = 1;
+      dmarecord_index = dmarecord_index % NDMARECS;
     }
 #endif
 
@@ -592,8 +592,8 @@ gus_dma_output(addr, buf, size, intr, arg)
 	  dmarecords[dmarecord_index].bsdaddr = buffer;
 	  dmarecords[dmarecord_index].count = size;
 	  dmarecords[dmarecord_index].channel = 0;
-	  dmarecords[dmarecord_index].direction = 1;
-	  dmarecord_index = ++dmarecord_index % NDMARECS;
+	  dmarecords[dmarecord_index++].direction = 1;
+	  dmarecord_index = dmarecord_index % NDMARECS;
 	}
 #endif
 
@@ -893,8 +893,8 @@ gus_dmaout_dointr(sc)
 		  playstats[playcntr].playbuf = sc->sc_playbuf;
 		  playstats[playcntr].dmabuf = sc->sc_dmabuf;
 		  playstats[playcntr].bufcnt = sc->sc_bufcnt;
-		  playstats[playcntr].curaddr = gus_get_curaddr(sc, GUS_VOICE_LEFT);
-		  playcntr = ++playcntr % NDMARECS;
+		  playstats[playcntr++].curaddr = gus_get_curaddr(sc, GUS_VOICE_LEFT);
+		  playcntr = playcntr % NDMARECS;
 		}
 #endif
 		bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT, GUS_VOICE_LEFT);
@@ -1141,8 +1141,8 @@ gus_start_playing(sc, bufno)
 		playstats[playcntr].playbuf = bufno;
 		playstats[playcntr].dmabuf = sc->sc_dmabuf;
 		playstats[playcntr].bufcnt = sc->sc_bufcnt;
-		playstats[playcntr].vaction = 5;
-		playcntr = ++playcntr % NDMARECS;
+		playstats[playcntr++].vaction = 5;
+		playcntr = playcntr % NDMARECS;
 	}
 #endif
 
@@ -1239,8 +1239,8 @@ gus_continue_playing(sc, voice)
 		playstats[playcntr].endaddr = sc->sc_voc[voice].end_addr;
 		playstats[playcntr].playbuf = sc->sc_playbuf;
 		playstats[playcntr].dmabuf = sc->sc_dmabuf;
-		playstats[playcntr].bufcnt = sc->sc_bufcnt;
-		playcntr = ++playcntr % NDMARECS;
+		playstats[playcntr++].bufcnt = sc->sc_bufcnt;
+		playcntr = playcntr % NDMARECS;
 	}
 #endif
 
