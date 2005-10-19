@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wc.1,v 1.15 2004/12/19 11:51:30 jmc Exp $
+.\"	$OpenBSD: wc.1,v 1.16 2005/10/19 21:49:02 espie Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Nm wc
 .Op Fl c | m
-.Op Fl lw
+.Op Fl hlw
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -64,6 +64,10 @@ The options are as follows:
 .It Fl c
 The number of bytes in each input file
 is written to the standard output.
+.It Fl h
+Use unit suffixes: Byte, Kilobyte, Megabyte, Gigabyte, Terabyte,
+Petabyte, and Exabyte in order to reduce the number of digits to four or fewer
+using powers of 2 for sizes (K=1024, M=1048576, etc.).
 .It Fl l
 The number of lines in each input file
 is written to the standard output.
@@ -139,6 +143,12 @@ The
 .Nm
 utility conforms to
 .St -p1003.2-92 .
+.Pp
+The
+.Fl h
+option is an
+.Ox
+extension.
 .Sh HISTORY
 A
 .Nm

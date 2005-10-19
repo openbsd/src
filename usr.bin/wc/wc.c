@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $	*/
+/*	$OpenBSD: wc.c,v 1.11 2005/10/19 21:49:02 espie Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-static char rcsid[] = "$OpenBSD: wc.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wc.c,v 1.11 2005/10/19 21:49:02 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,10 @@ static char rcsid[] = "$OpenBSD: wc.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $";
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <unistd.h>
+#include <util.h>
 
 int64_t	tlinect, twordct, tcharct;
-int	doline, doword, dochar;
+int	doline, doword, dochar, humanchar;
 int 	rval;
 extern char *__progname;
 
@@ -69,7 +70,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "lwcm")) != -1)
+	while ((ch = getopt(argc, argv, "lwchm")) != -1)
 		switch((char)ch) {
 		case 'l':
 			doline = 1;
@@ -81,10 +82,13 @@ main(int argc, char *argv[])
 		case 'm':
 			dochar = 1;
 			break;
+		case 'h':
+			humanchar = 1;
+			break;
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: %s [-c | -m] [-lw] [file ...]\n",
+			    "usage: %s [-c | -m] [-hlw] [file ...]\n",
 			    __progname);
 			exit(1);
 		}
@@ -236,16 +240,28 @@ cnt(char *file)
 	}
 }
 
+void 
+format_and_print(long long v)
+{
+	if (humanchar) {
+		char result[FMT_SCALED_STRSIZE];
+
+		(void)fmt_scaled(v, result);
+		(void)printf("%7s", result);
+	} else {
+		(void)printf(" %7lld", v);
+	}
+}
+
 void
 print_counts(int64_t lines, int64_t words, int64_t chars, char *name)
 {
-
 	if (doline)
-		(void)printf(" %7lld", (long long)lines);
+		format_and_print((long long)lines);
 	if (doword)
-		(void)printf(" %7lld", (long long)words);
+		format_and_print((long long)words);
 	if (dochar)
-		(void)printf(" %7lld", (long long)chars);
+		format_and_print((long long)chars);
 
 	(void)printf(" %s\n", name);
 }
