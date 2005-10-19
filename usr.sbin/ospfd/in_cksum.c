@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.1 2005/01/28 14:05:40 claudio Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.2 2005/10/19 15:44:25 stevesk Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.3 1995/04/22 13:53:48 cgd Exp $	*/
 
 /*
@@ -41,12 +41,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-
-#include <netinet/if_ether.h>
-#include <netinet/in_systm.h>
 
 #include "ospfd.h"
 

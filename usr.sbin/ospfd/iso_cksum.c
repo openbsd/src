@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_cksum.c,v 1.3 2005/10/12 10:13:30 claudio Exp $ */
+/*	$OpenBSD: iso_cksum.c,v 1.4 2005/10/19 15:44:25 stevesk Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include "ospfd.h"
-#include "log.h"
 
 /* pos needs to be 0 for verify and 2 <= pos < len for calculation */
 u_int16_t
