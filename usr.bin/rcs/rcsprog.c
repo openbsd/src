@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.33 2005/10/18 16:20:31 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.34 2005/10/19 00:30:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -46,6 +46,7 @@
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
+int pipeout = 0;
 
 int	rcs_optind;
 char	*rcs_optarg;
@@ -208,9 +209,13 @@ rcs_statfile(char *fname, char *out, size_t len)
 	if ((verbose == 1) && (strcmp(__progname, "rcsclean"))) {
 		if (!strcmp(__progname, "co")) {
 			printf("%s --> ", fpath);
-			if ((s = strrchr(filev, ',')) != NULL) {
-				*s = '\0';
-				printf("%s\n", fname);
+			if (pipeout == 1) {
+				printf("standard output\n");
+			} else {
+				if ((s = strrchr(filev, ',')) != NULL) {
+					*s = '\0';
+					printf("%s\n", fname);
+				}
 			}
 		} else {
 			printf("RCS file: %s\n", fpath);

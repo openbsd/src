@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.19 2005/10/18 01:22:14 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.20 2005/10/19 00:30:22 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -58,7 +58,7 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "f::l::qr::u::V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::l::p::qr::u::V")) != -1) {
 		switch (ch) {
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
@@ -67,6 +67,10 @@ checkout_main(int argc, char **argv)
 		case 'l':
 			rcs_set_rev(rcs_optarg, &rev);
 			lock = LOCK_LOCK;
+			break;
+		case 'p':
+			rcs_set_rev(rcs_optarg, &rev);
+			pipeout = 1;
 			break;
 		case 'q':
 			verbose = 0;
@@ -148,6 +152,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 	mode_t mode = 0444;
 	BUF *bp;
 	struct stat st;
+	char *content;
 
 	/*
 	 * Check out the latest revision if <frev> is greater than HEAD
@@ -210,16 +215,22 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 		}
 	}
 
-	if (cvs_buf_write(bp, dst, mode) < 0) {
-		cvs_log(LP_ERR, "failed to write revision to file");
+	if (pipeout == 1) {
+		cvs_buf_putc(bp, '\0');
+		content = cvs_buf_release(bp);
+		printf("%s", content);
+		free(content);
+	} else {
+		if (cvs_buf_write(bp, dst, mode) < 0) {
+			cvs_log(LP_ERR, "failed to write revision to file");
+			cvs_buf_free(bp);
+			return (-1);
+		}
 		cvs_buf_free(bp);
-		return (-1);
+
+		if (verbose == 1)
+			printf("done\n");
 	}
-
-	cvs_buf_free(bp);
-
-	if (verbose == 1)
-		printf("done\n");
 
 	return (0);
 }
