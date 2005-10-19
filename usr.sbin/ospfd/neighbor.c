@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.24 2005/09/29 15:14:57 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.25 2005/10/19 21:46:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -413,7 +413,8 @@ nbr_adj_timer(int fd, short event, void *arg)
 	struct nbr *nbr = arg;
 
 	if (nbr->state & NBR_STA_ACTIVE && nbr->state != NBR_STA_FULL) {
-		log_debug("nbr_adj_timer: failed to form adjacency");
+		log_warnx("nbr_adj_timer: failed to form adjacency with %s",
+		    inet_ntoa(nbr->id));
 		nbr_fsm(nbr, NBR_EVT_ADJTMOUT);
 	}
 }
@@ -600,13 +601,13 @@ int
 nbr_act_clear_lists(struct nbr *nbr)
 {
 	if (stop_db_tx_timer(nbr)) {
-		log_warnx("nbr_act_delete: error removing db_tx_timer, "
+		log_warnx("nbr_act_clear_lists: error removing db_tx_timer, "
 		    "neighbor ID %s", inet_ntoa(nbr->id));
 		return (-1);
 	}
 
 	if (stop_ls_req_tx_timer(nbr)) {
-		log_warnx("nbr_act_delete: error removing lsreq_tx_timer, "
+		log_warnx("nbr_act_clear_lists: error removing lsreq_tx_timer, "
 		    "neighbor ID %s", inet_ntoa(nbr->id));
 		return (-1);
 	}
