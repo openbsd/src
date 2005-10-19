@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.62 2005/10/18 21:18:48 jaredy Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.63 2005/10/19 16:50:47 pedro Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ struct vnode {
 	} v_un;
 
 	struct  simplelock v_interlock;		/* lock on usecount and flag */
-	struct  lock *v_vnlock;			/* used for non-locking fs's */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void	*v_data;			/* private data for fs */
 	struct {

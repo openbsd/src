@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.114 2005/05/26 00:33:45 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.115 2005/10/19 16:50:46 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -456,7 +456,6 @@ getnewvnode(tag, mp, vops, vpp)
 	}
 	vp->v_type = VNON;
 	cache_purge(vp);
-	vp->v_vnlock = NULL;
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
@@ -634,7 +633,6 @@ loop:
 	VOP_UNLOCK(vp, 0, p);
 	simple_lock(&vp->v_interlock);
 	vclean(vp, 0, p);
-	vp->v_vnlock = NULL;
 	vp->v_op = nvp->v_op;
 	vp->v_tag = nvp->v_tag;
 	nvp->v_type = VNON;

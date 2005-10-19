@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.8 2005/05/21 19:43:20 brad Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.9 2005/10/19 16:50:47 pedro Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -332,11 +332,7 @@ ntfs_print(ap)
 
 	printf("tag VT_NTFS, ino %u, flag %#x, usecount %d, nlink %ld\n",
 	    ip->i_number, ip->i_flag, ip->i_usecount, ip->i_nlink);
-#if 0
-	printf("       ");
-	lockmgr_printinfo(ap->a_vp->v_vnlock);
-	printf("\n");
-#endif
+
 	return (0);
 }
 

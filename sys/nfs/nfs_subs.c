@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.54 2005/04/02 01:00:38 mickey Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.55 2005/10/19 16:50:46 pedro Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1190,8 +1190,6 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 				 * vnode lock has to be carried over.
 				 */
 
-				nvp->v_vnlock = vp->v_vnlock;
-				vp->v_vnlock = NULL;
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
 				vp->v_op = spec_vnodeop_p;

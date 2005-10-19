@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.33 2005/10/04 22:31:44 pedro Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.34 2005/10/19 16:50:46 pedro Exp $  */
 
 /*
  *  Portions of this code are:
@@ -416,15 +416,7 @@ sync_print(v)
 	void *v;
 
 {
-	struct vop_print_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	printf("syncer vnode\n");
 
-	printf("syncer vnode");
-	if (vp->v_vnlock != NULL)
-		lockmgr_printinfo(vp->v_vnlock);
-	printf("\n");
 	return (0);
 }
