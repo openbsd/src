@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi.c,v 1.12 2005/10/19 22:35:39 jordan Exp $ */
+/* $OpenBSD: ipmi.c,v 1.13 2005/10/19 23:00:22 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1153,6 +1153,8 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 
 	case 0x40:
 		/* Characters are encoded in 4-bit BCDPLUS */
+		if (len < slen * 2 + 1) 
+			slen = (len >> 1) - 1;
 		for (i = 0; i < slen; i++) {
 			*(name++) = bcdplus[bits[i] >> 4];
 			*(name++) = bcdplus[bits[i] & 0xF];
@@ -1162,6 +1164,9 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 	case 0x80:
 		/* Characters are encoded in 6-bit ASCII
 		 *   0x00 - 0x3F maps to 0x20 - 0x5F */
+		/* XXX: need to calculate max len: slen = 3/4 * len */
+		if (len < slen + 1)
+			slen = len - 1;
 		for (i = 0; i < slen * 8; i += 6) {
 			*(name++) = getbits(bits, i, 6) + ' ';
 		}
@@ -1169,6 +1174,8 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 
 	case 0xC0:
 		/* Characters are 8-bit ascii */
+		if (len < slen + 1)
+			slen = len - 1;
 		while (slen--)
 			*(name++) = *(bits++);
 		break;
