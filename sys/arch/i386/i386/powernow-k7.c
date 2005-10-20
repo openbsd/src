@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.3 2004/08/05 04:56:05 tedu Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.4 2005/10/20 16:38:51 mickey Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -110,7 +110,7 @@ k7_powernow_getstates(uint32_t signature)
 	bus_space_handle_t bh;
 
 	/*
-	 * Look in the 0xe0000 - 0x20000 physical address
+	 * Look in the 0xe0000 - 0x100000 physical address
 	 * range for the pst tables; 16 byte blocks
 	 */
 	if (bus_space_map(I386_BUS_SPACE_MEM, BIOS_START, BIOS_LEN, 0, &bh)) {
