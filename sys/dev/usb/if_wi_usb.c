@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.21 2005/10/16 08:47:50 fgsch Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.22 2005/10/20 21:46:07 fgsch Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1530,36 +1530,21 @@ wi_usb_cmdresp(struct wi_usb_chain *c)
 
 	type = htole16(presp->type);
 	cmdresperr = letoh16(presp->resp0);
-	DPRINTFN(10,("%s: %s: enter rid=%x status %x %x %x\n",
+	DPRINTFN(10,("%s: %s: enter type=%x, status=%x, cmdresp=%x, "
+	    "resp=%x,%x,%x\n",
 	    USBDEVNAME(sc->wi_usb_dev), __func__, type, status, sc->cmdresp,
-	    cmdresperr));
+	    cmdresperr, letoh16(presp->resp1),
+	    letoh16(presp->resp2)));
 
-	if (sc->cmdresp != status) {
-		DPRINTFN(1,("%s:cmd ty %x st %x cmd %x failed %x\n",
+	/* XXX */
+	if (sc->cmdresp != (status & WI_STAT_CMD_CODE)) {
+		DPRINTFN(1,("%s: cmd ty %x st %x cmd %x failed %x\n",
 		    USBDEVNAME(sc->wi_usb_dev),
 			type, status, sc->cmdresp, cmdresperr));
 		return;
 	}
 
-	if ((cmdresperr != 0) && ((sc->cmdresp == WI_CMD_INQUIRE) ||
-	    (sc->cmdresp == WI_CMD_DISABLE)) ) {
-		/*
-		 * For some reason MA111 does not like info frame requests,
-		 * or some DISABLES
-		 * It responds to the request with the info
-		 * but it claims the request failed
-		 * reset the error code.
-		 */
-		cmdresperr = 0;
-	}
-			
-	if (cmdresperr != 0) {
-		DPRINTFN(1,("%s:cmd ty %x st %x cmd %x failed %x\n",
-		    USBDEVNAME(sc->wi_usb_dev),
-			type, status, sc->cmdresp, cmdresperr));
-	}
-
-	sc->cmdresperr = cmdresperr;
+	sc->cmdresperr = (status & WI_STAT_CMD_RESULT) >> 8;
 
 	sc->cmdresp = 0; /* good value for idle == INI ?? XXX  */
 
@@ -1604,7 +1589,7 @@ wi_usb_rridresp(struct wi_usb_chain *c)
 
 	ltv->wi_len = frmlen;
 
-	DPRINTFN(10,("%s: %s: copying %x  frmlen %d s %x d %x\n",
+	DPRINTFN(10,("%s: %s: copying %d frmlen %d\n",
 	    USBDEVNAME(sc->wi_usb_dev), __func__, (ltv->wi_len-1)*2,
 	    frmlen));
 
@@ -1630,7 +1615,7 @@ wi_usb_wridresp(struct wi_usb_chain *c)
 	DPRINTFN(10,("%s: %s: enter status=%x\n",
 	    USBDEVNAME(sc->wi_usb_dev), __func__, status));
 
-	sc->ridresperr = status;
+	sc->ridresperr = (status & WI_STAT_CMD_RESULT) >> 8;
 	sc->ridltv = 0;
 	wakeup(&sc->ridresperr);
 }
