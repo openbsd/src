@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.19 2005/08/01 22:22:13 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.20 2005/10/20 21:44:42 jmc Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -17,7 +17,7 @@ dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl
-dnl *** mac68k specific defintions
+dnl *** mac68k specific definitions
 dnl
 __devitem(ttye, ttye*, ITE bitmapped consoles,ite)dnl
 dnl

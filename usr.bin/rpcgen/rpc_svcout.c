@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.21 2003/08/16 23:09:40 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.22 2005/10/20 21:44:42 jmc Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -282,7 +282,7 @@ write_programs(storage)
 }
 
 /* write out definition of internal function (e.g. _printmsg_1(...))
-   which calls server's defintion of actual function (e.g. printmsg_1(...)).
+   which calls server's definition of actual function (e.g. printmsg_1(...)).
    Unpacks single user argument of printmsg_1 to call-by-value format
    expected by printmsg_1. */
 static void

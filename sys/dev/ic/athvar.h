@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.16 2005/09/23 20:06:50 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.17 2005/10/20 21:44:42 jmc Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
  */
 
 /*
- * Defintions for the Atheros Wireless LAN controller driver.
+ * Definitions for the Atheros Wireless LAN controller driver.
  */
 #ifndef _DEV_ATH_ATHVAR_H
 #define _DEV_ATH_ATHVAR_H
@@ -68,7 +68,7 @@ struct ath_recv_hist {
 #define	ATH_RHIST_NOTIME	(~0)
 
 /*
- * Ioctl-related defintions for the Atheros Wireless LAN controller driver.
+ * Ioctl-related definitions for the Atheros Wireless LAN controller driver.
  */
 struct ath_stats {
 	u_int32_t	ast_watchdog;	/* device reset by watchdog */
