@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.26 2005/10/14 03:10:32 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.27 2005/10/20 12:52:13 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -751,7 +751,7 @@ _C_LABEL(tlbdsmsize) =	.-_C_LABEL(tlbdsmiss)
 
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
-	mtspr	1,%r1			/* save SP */
+	mtsprg	1,%r1			/* save SP */
 nop32_7s:
 	mfmsr	%r1
 	clrldi	%r1,%r1,1
