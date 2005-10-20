@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.58 2005/10/07 19:43:45 mpf Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.59 2005/10/20 03:33:20 deraadt Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -262,6 +262,13 @@ bytes will be printed.
 .It Fl y Ar datalinktype
 Set the data link type to use while capturing to
 .Ar datalinktype .
+Commonly used types include
+.Cm EN10MB ,
+.Cm IEEE802_11 ,
+and
+.Cm IEEE802_11_RADIO .
+The choices applicable to a particular device can be listed using
+.Fl L .
 .El
 .Pp
 .Ar expression
