@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.21 2005/10/19 11:37:11 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.22 2005/10/20 17:10:01 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -105,7 +105,8 @@ checkout_main(int argc, char **argv)
 			continue;
 
 		if (verbose == 1)
-			printf("%s  <--  %s\n", fpath, argv[i]);
+			printf("%s  -->  %s\n", fpath,
+			    (pipeout == 1) ? "standard output" : argv[i]);
 
 		if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
 			continue;
