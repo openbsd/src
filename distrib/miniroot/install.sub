@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.395 2005/10/16 05:01:59 krw Exp $
+#	$OpenBSD: install.sub,v 1.396 2005/10/20 02:31:52 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -83,10 +83,9 @@
 set_term() {
 	local _tables
 
-	[[ -n $TERM ]] && return
-	ask "Terminal type?" ${MDTERM:-vt220}
-	TERM=$resp
-	export TERM
+	TERM=${TERM:-${MDTERM:-vt220}}
+	ask "Terminal type?" $TERM
+	export TERM=$resp
 
 	[[ -x /sbin/kbd ]] || return
 	_tables=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
