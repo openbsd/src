@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.29 2005/10/09 14:17:32 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.30 2005/10/20 20:33:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -241,8 +241,10 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ppc_curfreq = clock_freq;
 		cpu_cpuspeed = ppc_cpuspeed;
 	}
+
 	/* power savings mode */
-	hid0 = ppc_mfhid0();
+	if (ppc_proc_is_64b == 0)
+		hid0 = ppc_mfhid0();
 	switch (cpu) {
 	case PPC_CPU_MPC603:
 	case PPC_CPU_MPC603e:
@@ -273,7 +275,8 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		hid0 |= HID0_NAP | HID0_DPM;
 		break;
 	}
-	ppc_mthid0(hid0);
+	if (ppc_proc_is_64b == 0)
+		ppc_mthid0(hid0);
 
 	/* if processor is G3 or G4, configure l2 cache */
 	if (cpu == PPC_CPU_MPC750 || cpu == PPC_CPU_MPC7400 ||
