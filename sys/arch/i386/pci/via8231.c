@@ -1,4 +1,4 @@
-/*	$OpenBSD: via8231.c,v 1.1 2003/07/30 05:26:33 mickey Exp $	*/
+/*	$OpenBSD: via8231.c,v 1.2 2005/10/20 15:09:31 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
+ * Copyright (c) 2005, by Michael Shalayeff
  * Copyright (c) 2003, by Matthew Gream
  * Copyright (c) 1999, by UCHIYAMA Yasushi
  * All rights reserved.
@@ -65,7 +65,9 @@
 
 /*
  * Support for the VIA Technologies Inc. VIA8231 PCI to ISA Bridge
- * Based upon documentation: VIA VT8231 South Bridge, Revision 1.85 (March 11, 2002), pg 73
+ * Based upon documentation:
+ * 1. VIA VT8231 South Bridge, Revision 1.85 (March 11, 2002), pg 73
+ * 2. VIA VT8237R South Bridge, Revision 2.06 (December 15, 2004), pg 100
  * Derived from amd756.c
  */
 
@@ -89,6 +91,8 @@ struct via8231_handle {
 	bus_space_handle_t ph_regs_ioh;
 	pci_chipset_tag_t ph_pc;
 	pcitag_t ph_tag;
+	int flags;
+#define	VT8237	0x0001
 };
 
 int via8231_getclink(pciintr_icu_handle_t, int, int *);
@@ -112,12 +116,7 @@ struct mask_shft_pair {
 	int mask;
 	int shft;
 };
-static const struct mask_shft_pair via8231_trigger_cnfg[VIA8231_LINK_MAX+1] = {
-	{ (1<<3), 3 }, /*PINTA#*/
-	{ (1<<2), 2 }, /*PINTB#*/
-	{ (1<<1), 1 }, /*PINTC#*/
-	{ (1<<0), 0 }  /*PINTD#*/
-};
+
 static const struct mask_shft_pair via8231_routing_cnfg[VIA8231_LINK_MAX+1] = {
 	{ 0x0f,  0+4 }, /*PINTA#*/
 	{ 0x0f,  8+0 }, /*PINTB#*/
@@ -126,23 +125,19 @@ static const struct mask_shft_pair via8231_routing_cnfg[VIA8231_LINK_MAX+1] = {
 };
 
 #define VIA8231_GET_TRIGGER_CNFG(reg, pirq) \
-	((reg & via8231_trigger_cnfg[pirq].mask) >> \
-		via8231_trigger_cnfg[pirq].shft)
-
-#define VIA8231_SET_TRIGGER_CNFG(reg, pirq, cfg) \
-	reg = (reg & ~via8231_trigger_cnfg[pirq].mask) | \
-		((cfg << via8231_trigger_cnfg[pirq].shft) & \
-			via8231_trigger_cnfg[pirq].mask)
+	((reg) & (1 << (3 - (clink & 3))))
+#define VIA8231_SET_TRIGGER_CNFG(reg, clink, cfg) \
+	(((reg) & ~(1 << (3 - (clink & 3)))) | ((cfg) << (3 - (clink & 3))))
 
 #define VIA8231_GET_ROUTING_CNFG(reg, pirq) \
-	(((reg) & via8231_routing_cnfg[pirq].mask) >> \
-		via8231_routing_cnfg[pirq].shft)
+	(((reg) >> via8231_routing_cnfg[(pirq)].shft) & \
+	    via8231_routing_cnfg[(pirq)].mask)
 
 #define VIA8231_SET_ROUTING_CNFG(reg, pirq, cfg) \
-	reg = (reg & ~via8231_routing_cnfg[pirq].mask) | \
-		((cfg << via8231_routing_cnfg[pirq].shft) & \
-			via8231_routing_cnfg[pirq].mask)
-
+	(((reg) & ~(via8231_routing_cnfg[(pirq)].mask << \
+	    via8231_routing_cnfg[(pirq)].shft)) | \
+	    (((cfg) & via8231_routing_cnfg[(pirq)].mask) << \
+	    via8231_routing_cnfg[(pirq)].shft))
 
 int
 via8231_init(pc, iot, tag, ptagp, phandp)
@@ -153,6 +148,7 @@ via8231_init(pc, iot, tag, ptagp, phandp)
 	pciintr_icu_handle_t *phandp;
 {
 	struct via8231_handle *ph;
+	pcireg_t id;
 
 	ph = malloc(sizeof(*ph), M_DEVBUF, M_NOWAIT);
 	if (ph == NULL)
@@ -161,6 +157,9 @@ via8231_init(pc, iot, tag, ptagp, phandp)
 	ph->ph_iot = iot;
 	ph->ph_pc = pc;
 	ph->ph_tag = tag;
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	ph->flags = PCI_VENDOR(id) == PCI_VENDOR_VIATECH &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_VIATECH_VT8231_ISA? 0 : VT8237;
 
 	*ptagp = &via8231_pci_icu;
 	*phandp = ph;
@@ -177,7 +176,12 @@ via8231_getclink(v, link, clinkp)
 	pciintr_icu_handle_t v;
 	int link, *clinkp;
 {
-	if (VIA8231_LINK_LEGAL(link - 1) == 0)
+	struct via8231_handle *ph = v;
+
+	if ((ph->flags & VT8237) && !VIA8237_LINK_LEGAL(link - 1))
+		return (1);
+
+	if (!(ph->flags & VT8237) && !VIA8231_LINK_LEGAL(link - 1))
 		return (1);
 
 	*clinkp = link - 1;
@@ -192,11 +196,17 @@ via8231_get_intr(v, clink, irqp)
 	struct via8231_handle *ph = v;
 	int reg, val;
 
-	if (VIA8231_LINK_LEGAL(clink) == 0)
+	if (VIA8237_LINK_LEGAL(clink) == 0)
 		return (1);
 
-	reg = VIA8231_GET_ROUTING(ph);
-	val = VIA8231_GET_ROUTING_CNFG(reg, clink);
+	if (VIA8231_LINK_LEGAL(clink)) {
+		reg = VIA8231_GET_ROUTING(ph);
+		val = VIA8231_GET_ROUTING_CNFG(reg, clink);
+	} else {
+		reg = VIA8237_GET_ROUTING(ph);
+		val = (reg >> ((clink & 3) * 4)) & 0xf;
+	}
+
 	*irqp = (val == VIA8231_ROUTING_CNFG_DISABLED) ?
 	    I386_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
 
@@ -211,7 +221,7 @@ via8231_set_intr(v, clink, irq)
 	struct via8231_handle *ph = v;
 	int reg;
 
-	if (VIA8231_LINK_LEGAL(clink) == 0 || VIA8231_PIRQ_LEGAL(irq) == 0)
+	if (VIA8237_LINK_LEGAL(clink) == 0 || VIA8231_PIRQ_LEGAL(irq) == 0)
 		return (1);
 
 #ifdef VIA8231_DEBUG
@@ -219,9 +229,15 @@ via8231_set_intr(v, clink, irq)
 	via8231_pir_dump("via8231_set_intr: ", ph);
 #endif
 
-	reg = VIA8231_GET_ROUTING(ph);
-	VIA8231_SET_ROUTING_CNFG(reg, clink, irq);
-	VIA8231_SET_ROUTING(ph, reg);
+	if (VIA8231_LINK_LEGAL(clink)) {
+		reg = VIA8231_GET_ROUTING(ph);
+		VIA8231_SET_ROUTING(ph,
+		    VIA8231_SET_ROUTING_CNFG(reg, clink, irq));
+	} else {
+		reg = VIA8237_GET_ROUTING(ph);
+		VIA8237_SET_ROUTING(ph, (reg & ~(0xf << (clink & 3))) |
+		    ((irq & 0xf) << (clink & 3)));
+	}
 
 	return (0);
 }
@@ -232,25 +248,20 @@ via8231_get_trigger(v, irq, triggerp)
 	int irq, *triggerp;
 {
 	struct via8231_handle *ph = v;
-	int reg, clink, pciirq;
+	int reg, clink, max, pciirq;
 
 	if (VIA8231_PIRQ_LEGAL(irq) == 0)
 		return (1);
 
-	for (clink = 0; clink <= VIA8231_LINK_MAX; clink++) {
+	max = ph->flags & VT8237? VIA8237_LINK_MAX : VIA8231_LINK_MAX;
+	for (clink = 0; clink <= max; clink++) {
 		via8231_get_intr(v, clink, &pciirq);
 		if (pciirq == irq) {
-			reg = VIA8231_GET_TRIGGER(ph);
-			switch (VIA8231_GET_TRIGGER_CNFG(reg, clink)) {
-			case VIA8231_TRIGGER_CNFG_LEVEL:
-				*triggerp = IST_LEVEL;
-				break;
-			case VIA8231_TRIGGER_CNFG_EDGE:
-				*triggerp = IST_EDGE;
-				break;
-			default:
-				return (1);
-			}
+			reg = VIA8231_LINK_LEGAL(clink)?
+			    VIA8231_GET_TRIGGER(ph):
+			    VIA8237_GET_TRIGGER(ph);
+			*triggerp = VIA8231_GET_TRIGGER_CNFG(reg, clink)?
+			    IST_EDGE : IST_LEVEL;
 			return (0);
 		}
 	}
@@ -264,7 +275,7 @@ via8231_set_trigger(v, irq, trigger)
 	int irq, trigger;
 {
 	struct via8231_handle *ph = v;
-	int reg, clink, pciirq;
+	int reg, clink, max, pciirq;
 
 	if (VIA8231_PIRQ_LEGAL(irq) == 0 || VIA8231_TRIG_LEGAL(trigger) == 0)
 		return (1);
@@ -274,23 +285,29 @@ via8231_set_trigger(v, irq, trigger)
 	via8231_pir_dump("via8231_set_trig: ", ph);
 #endif
 
+	max = ph->flags & VT8237? VIA8237_LINK_MAX : VIA8231_LINK_MAX;
 	for (clink = 0; clink <= VIA8231_LINK_MAX; clink++) {
 		via8231_get_intr(v, clink, &pciirq);
 		if (pciirq == irq) {
-			reg = VIA8231_GET_ROUTING(ph);
+			reg = VIA8231_LINK_LEGAL(clink)?
+			    VIA8231_GET_TRIGGER(ph):
+			    VIA8237_GET_TRIGGER(ph);
 			switch (trigger) {
 			case IST_LEVEL:
-				VIA8231_SET_TRIGGER_CNFG(reg, clink,
+				reg = VIA8231_SET_TRIGGER_CNFG(reg, clink,
 					VIA8231_TRIGGER_CNFG_LEVEL);
 				break;
 			case IST_EDGE:
-				VIA8231_SET_TRIGGER_CNFG(reg, clink,
+				reg = VIA8231_SET_TRIGGER_CNFG(reg, clink,
 					VIA8231_TRIGGER_CNFG_EDGE);
 				break;
 			default:
 				return (1);
 			}
-			VIA8231_SET_ROUTING(ph, reg);
+			if (VIA8231_LINK_LEGAL(clink))
+				VIA8231_SET_ROUTING(ph, reg);
+			else
+				VIA8237_SET_ROUTING(ph, reg);
 			return (0);
 		}
 	}
