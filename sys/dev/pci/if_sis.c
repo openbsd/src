@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.58 2005/10/18 01:01:27 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.59 2005/10/20 21:47:56 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1259,7 +1259,7 @@ int sis_list_rx_init(sc)
 		ld->sis_rx_list[i].sis_next = next;
 	}
 
-	cd->sis_rx_prod = 0;
+	cd->sis_rx_pdsc = &ld->sis_rx_list[0];
 
 	return(0);
 }
@@ -1328,15 +1328,14 @@ void sis_rxeof(sc)
 	struct mbuf		*m;
 	struct ifnet		*ifp;
 	struct sis_desc		*cur_rx;
-	int			i, total_len = 0;
+	int			total_len = 0;
 	u_int32_t		rxstat;
 
 	ifp = &sc->arpcom.ac_if;
-	i = sc->sis_cdata.sis_rx_prod;
 
-	while(SIS_OWNDESC(&sc->sis_ldata->sis_rx_list[i])) {
+	for(cur_rx = sc->sis_cdata.sis_rx_pdsc; SIS_OWNDESC(cur_rx);
+	    cur_rx = cur_rx->sis_nextdesc) {
 
-		cur_rx = &sc->sis_ldata->sis_rx_list[i];
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 		    ((caddr_t)cur_rx - sc->sc_listkva),
 		    sizeof(struct sis_desc),
@@ -1346,7 +1345,6 @@ void sis_rxeof(sc)
 		m = cur_rx->sis_mbuf;
 		cur_rx->sis_mbuf = NULL;
 		total_len = SIS_RXBYTES(cur_rx);
-		SIS_INC(i, sc->sc_rxbufs);
 
 		/*
 		 * If an error occurs, update stats, clear the
@@ -1404,9 +1402,7 @@ void sis_rxeof(sc)
 		ether_input_mbuf(ifp, m);
 	}
 
-	sc->sis_cdata.sis_rx_prod = i;
-
-	return;
+	sc->sis_cdata.sis_rx_pdsc = cur_rx;
 }
 
 void sis_rxeoc(sc)
