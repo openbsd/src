@@ -1,4 +1,4 @@
-#	$OpenBSD: psion,v 1.1 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: psion,v 1.2 2005/10/20 22:31:16 jmc Exp $
 
 #------------------------------------------------------------------------------
 # psion:  file(1) magic for Psion handhelds data
@@ -9,7 +9,7 @@
 >4	lelong		0x1000003A	printer driver
 >4	lelong		0x1000003B	clipboard
 >4	lelong		0x10000042	multi-bitmap image
->4	lelong		0x1000006A	application infomation file
+>4	lelong		0x1000006A	application information file
 >4	lelong		0x1000006D
 >>8	lelong		0x1000007D	sketch image
 >>8	lelong		0x1000007E	voice note
@@ -38,7 +38,7 @@
 >4	lelong		0x100000AD	physical device driver
 >4	lelong		0x100000E5	file transfer protocol
 >4	lelong		0x100000E5	file transfer protocol
->4	lelong		0x10000140	printer defintion
->4	lelong		0x10000141	printer defintion
+>4	lelong		0x10000140	printer definition
+>4	lelong		0x10000141	printer definition
 
 0	lelong		0x1000007A	Psion Series 5 executable
