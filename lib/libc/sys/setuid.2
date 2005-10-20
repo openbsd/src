@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setuid.2,v 1.17 2005/10/19 18:29:50 jaredy Exp $
+.\"	$OpenBSD: setuid.2,v 1.18 2005/10/20 09:54:03 jmc Exp $
 .\"	$NetBSD: setuid.2,v 1.3 1995/02/27 12:37:06 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -107,11 +107,6 @@ these functions return \-1.
 .Xr setgroups 2 ,
 .Xr setregid 2 ,
 .Xr setreuid 2
-.Sh HISTORY
-A
-.Fn setuid
-function appeared in
-.At v2 .
 .Sh STANDARDS
 The
 .Fn setuid
@@ -131,3 +126,8 @@ functions are extensions based on the
 concept of
 .Li _POSIX_SAVED_IDS ,
 and have been proposed for a future revision of the standard.
+.Sh HISTORY
+A
+.Fn setuid
+function appeared in
+.At v2 .
