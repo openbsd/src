@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.18 2005/10/19 22:00:37 stevesk Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.19 2005/10/21 08:29:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -85,13 +85,7 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 			if (!queued)
 				ls_retrans_list_add(iface->self, data);
 			queued = 1;
-		} else if (iface->dr != nbr) {
-			/*
-			 * DR and BDR queue a packet to all other routers
-			 * exept to the DR. The BDR does not need to
-			 * retransmit LSA to the DR -- this will be done
-			 * by the originatior.
-			 */
+		} else {
 			ls_retrans_list_add(nbr, data);
 			queued = 1;
 		}
