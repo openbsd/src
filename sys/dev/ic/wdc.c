@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.86 2004/10/17 17:50:48 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.87 2005/10/21 08:50:50 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -353,7 +353,6 @@ wdc_default_read_raw_multi_2(chp, data, nbytes)
 
 	bus_space_read_raw_multi_2(chp->cmd_iot, chp->cmd_ioh, 0,
 	    data, nbytes);
-	return;
 }
 
 
@@ -375,7 +374,6 @@ wdc_default_write_raw_multi_2(chp, data, nbytes)
 
 	bus_space_write_raw_multi_2(chp->cmd_iot, chp->cmd_ioh, 0,
 	    data, nbytes);
-	return;
 }
 
 
@@ -397,7 +395,6 @@ wdc_default_write_raw_multi_4(chp, data, nbytes)
 
 	bus_space_write_raw_multi_4(chp->cmd_iot, chp->cmd_ioh, 0,
 	    data, nbytes);
-	return;
 }
 
 
@@ -419,7 +416,6 @@ wdc_default_read_raw_multi_4(chp, data, nbytes)
 
 	bus_space_read_raw_multi_4(chp->cmd_iot, chp->cmd_ioh, 0,
 	    data, nbytes);
-	return;
 }
 
 
@@ -910,7 +906,7 @@ exit:
 #ifdef WDCDEBUG
 	wdcdebug_mask = savedmask;
 #endif
-	return;
+	return;	/* for the ``exit'' label above */
 }
 
 /*
@@ -1546,8 +1542,6 @@ wdc_output_bytes(drvp, bytes, buflen)
 		CHP_WRITE_RAW_MULTI_2(chp,
 		    (void *)((u_int8_t *)bytes + off), roundlen);
 	}
-
-	return;
 }
 
 void
@@ -1576,8 +1570,6 @@ wdc_input_bytes(drvp, bytes, buflen)
 		CHP_READ_RAW_MULTI_2(chp,
 		    (void *)((u_int8_t *)bytes + off), roundlen);
 	}
-
-	return;
 }
 
 void
@@ -1939,7 +1931,6 @@ wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
 
 	/* Send command. */
 	CHP_WRITE_REG(chp, wdr_command, command);
-	return;
 }
 
 /*
@@ -1976,7 +1967,6 @@ wdccommandext(chp, drive, command, blkno, count)
 
 	/* Send command. */
 	CHP_WRITE_REG(chp, wdr_command, command);
-	return;
 }
 
 /*
