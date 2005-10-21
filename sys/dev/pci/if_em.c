@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.79 2005/10/21 02:03:16 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.80 2005/10/21 02:10:34 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -40,12 +40,6 @@ POSSIBILITY OF SUCH DAMAGE.
  *  Set this to one to display debug statistics
  *********************************************************************/
 int             em_display_debug_stats = 0;
-
-/*********************************************************************
- *  Linked list of board private structures for all NICs found
- *********************************************************************/
-
-struct em_softc *em_adapter_list = NULL;
 
 /*********************************************************************
  *  Driver version
@@ -218,11 +212,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	sc = (struct em_softc *)self;
 	sc->osdep.em_pa = *pa;
-
-	if (em_adapter_list != NULL)
-		em_adapter_list->prev = sc;
-	sc->next = em_adapter_list;
-	em_adapter_list = sc;
 
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
 	timeout_set(&sc->tx_fifo_timer_handle, em_82547_move_tail, sc);
