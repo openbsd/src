@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.7 2005/09/12 23:05:03 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.8 2005/10/21 15:43:01 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -102,8 +102,7 @@
 
 #define arm_btop(x)			((x) >> PAGE_SHIFT)
 #define arm_ptob(x)			((x) << PAGE_SHIFT)
-#define arm_trunc_page(x)		((unsigned)(x) & ~PAGE_MASK)
-    
+
 #ifdef _KERNEL
 #ifndef _LOCORE
 void	delay (unsigned);
