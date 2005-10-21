@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.1 2004/01/28 01:39:38 mickey Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.2 2005/10/21 18:55:00 martin Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -265,8 +265,8 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	pt_entry_t *pte;
 	int32_t cpumask = 0;
 
-	pa = x86_trunc_page(bpa);
-	endpa = x86_round_page(bpa + size);
+	pa = trunc_page(bpa);
+	endpa = round_page(bpa + size);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
@@ -343,8 +343,8 @@ _x86_memio_unmap(t, bsh, size, adrp)
 			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
 		} else {
 
-			va = x86_trunc_page(bsh);
-			endva = x86_round_page(bsh + size);
+			va = trunc_page(bsh);
+			endva = round_page(bsh + size);
 
 #ifdef DIAGNOSTIC
 			if (endva <= va) {
@@ -398,8 +398,8 @@ x86_memio_unmap(t, bsh, size)
 			goto ok;
 		}
 
-		va = x86_trunc_page(bsh);
-		endva = x86_round_page(bsh + size);
+		va = trunc_page(bsh);
+		endva = round_page(bsh + size);
 
 #ifdef DIAGNOSTIC
 		if (endva <= va)

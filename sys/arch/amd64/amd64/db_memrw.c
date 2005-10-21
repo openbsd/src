@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.2 2005/05/27 19:32:39 art Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.3 2005/10/21 18:55:00 martin Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		if (oldpte & PG_PS)
 			pgva = (vaddr_t)dst & PG_LGFRAME;
 		else
-			pgva = x86_trunc_page(dst);
+			pgva = trunc_page((vaddr_t)dst);
 
 		/*
 		 * Compute number of bytes that can be written
