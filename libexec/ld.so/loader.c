@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.98 2005/10/16 04:14:22 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.99 2005/10/21 15:24:10 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -427,6 +427,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	    dl_data[AUX_base], loff);
 	_dl_add_object(dyn_obj);
 
+	dyn_obj->refcount++;
 	_dl_link_grpsym(dyn_obj);
 
 	dyn_obj->status |= STAT_RELOC_DONE;

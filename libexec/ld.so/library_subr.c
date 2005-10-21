@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.21 2005/10/12 20:36:16 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.22 2005/10/21 15:24:10 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -354,16 +354,26 @@ _dl_link_dlopen(elf_object_t *dep)
 }
 
 void
+_dl_child_refcnt_decrement(elf_object_t *object)
+{
+	struct dep_node *n;
+
+	object->refcount--;
+	if (OBJECT_REF_CNT(object) == 0)
+		TAILQ_FOREACH(n, &object->child_list, next_sib)
+			_dl_child_refcnt_decrement(n->data);
+}
+
+void
 _dl_notify_unload_shlib(elf_object_t *object)
 {
 	struct dep_node *n;
 
+	if (OBJECT_REF_CNT(object) == 0)
+		TAILQ_FOREACH(n, &object->child_list, next_sib)
+			_dl_child_refcnt_decrement(n->data);
+
 	if (OBJECT_DLREF_CNT(object) == 0) {
-		TAILQ_FOREACH(n, &object->grpsym_list, next_sib) {
-			if (n->data == object)
-				continue;
-			n->data->refcount--;
-		}
 		TAILQ_FOREACH(n, &object->grpref_list, next_sib) {
 			n->data->grprefcount--; 
 			_dl_notify_unload_shlib(n->data);
@@ -412,6 +422,8 @@ _dl_link_child(elf_object_t *dep, elf_object_t *p)
 	n->data = dep;
 	TAILQ_INSERT_TAIL(&p->child_list, n, next_sib);
 
+	dep->refcount++;
+
 	DL_DEB(("linking dep %s as child of %s\n", dep->load_name,
 	    p->load_name));
 }
@@ -430,10 +442,6 @@ _dl_link_grpsym(elf_object_t *object)
 		_dl_exit(8);
 	n->data = object;
 	TAILQ_INSERT_TAIL(&_dl_loading_object->grpsym_list, n, next_sib);
-
-	/* _dl_loading_object uses opencount & grprefcount */
-	if (object != _dl_loading_object)
-		object->refcount++;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.44 2005/10/17 22:14:18 kettenis Exp $ */
+/*	$OpenBSD: resolve.c,v 1.45 2005/10/21 15:24:10 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -153,7 +153,6 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 	}
 	DL_DEB(("obj %s has %s as head\n", object->load_name,
 	    _dl_loading_object->load_name ));
-	/* refcount handled in _dl_link_grpsym_list */
 	object->refcount = 0;
 	TAILQ_INIT(&object->child_list);
 	object->opencount = 0;	/* # dlopen() & exe */
