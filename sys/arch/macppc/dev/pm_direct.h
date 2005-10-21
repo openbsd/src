@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.5 2003/10/16 03:54:48 deraadt Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.6 2005/10/21 22:07:45 kettenis Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.5 1999/07/12 15:54:55 tsubai Exp $	*/
 
 /*
@@ -53,8 +53,8 @@ void	pm_adb_restart(void);
 void	pm_adb_poweroff(void);
 void	pm_check_adb_devices(int);
 void	pm_intr(void);
-void	pm_read_date_time(u_long *);
-void	pm_set_date_time(u_long);
+void	pm_read_date_time(time_t *);
+void	pm_set_date_time(time_t);
 void	pm_setup_adb(void);
 
 struct pmu_battery_info

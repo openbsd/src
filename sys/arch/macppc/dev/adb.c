@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.12 2005/10/15 15:01:23 martin Exp $	*/
+/*	$OpenBSD: adb.c,v 1.13 2005/10/21 22:07:45 kettenis Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -94,16 +94,6 @@ adbmatch(struct device *parent, void *cf, void *aux)
 	return 0;
 }
 
-/* HACK ALERT */
-typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
-	    int *mon, int *yr);
-typedef int (time_read_t)(u_long *sec);
-typedef int (time_write_t)(u_long sec);
-extern time_read_t  *time_read;
-extern time_write_t  *time_write;
-extern clock_read_t  *clock_read;
-
-
 void
 adbattach(struct device *parent, struct device *self, void *aux)
 {
@@ -132,7 +122,6 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	    adb_intr, sc, "adb");
 
 	/* init powerpc globals which control RTC functionality */
-	clock_read = NULL;
 	time_read = adb_read_date_time;
 	time_write = adb_set_date_time;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.12 2005/10/15 15:01:23 martin Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.13 2005/10/21 22:07:45 kettenis Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /*
@@ -1374,7 +1374,7 @@ set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 /* caller should really use machine-independent version: getPramTime */
 /* this version does pseudo-adb access only */
 int
-adb_read_date_time(unsigned long *time)
+adb_read_date_time(time_t *time)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
 	int result;
@@ -1424,7 +1424,7 @@ adb_read_date_time(unsigned long *time)
 /* caller should really use machine-independent version: setPramTime */
 /* this version does pseudo-adb access only */
 int
-adb_set_date_time(unsigned long time)
+adb_set_date_time(time_t time)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
 	int result;

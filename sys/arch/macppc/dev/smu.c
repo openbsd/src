@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.1 2005/10/19 14:46:00 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.2 2005/10/21 22:07:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -90,15 +90,6 @@ smu_match(struct device *parent, void *cf, void *aux)
 /* XXX */
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
-/* XXX */
-typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
-            int *mon, int *yr);
-typedef int (time_read_t)(time_t *sec);
-typedef int (time_write_t)(time_t sec);
-extern time_read_t  *time_read;
-extern time_write_t  *time_write;
-extern clock_read_t  *clock_read;
-
 void
 smu_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -155,7 +146,6 @@ smu_attach(struct device *parent, struct device *self, void *aux)
         }
 
 	/* Initialize global variables that control RTC functionality. */
-	clock_read = NULL;
 	time_read = smu_time_read;
 	time_write = smu_time_write;
 

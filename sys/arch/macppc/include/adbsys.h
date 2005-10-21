@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.4 2005/10/21 22:07:45 kettenis Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
@@ -178,7 +178,7 @@ int	adb_poweroff(void);
 void	adb_restart(void);
 int	CountADBs(void);
 void	ADBReInit(void);
-int	adb_read_date_time(unsigned long *);
+int	adb_read_date_time(time_t *);
 #endif
 
 #endif /* _ADBSYS_MACHINE_ */
