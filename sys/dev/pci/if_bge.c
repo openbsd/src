@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.90 2005/10/14 03:34:09 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.91 2005/10/21 22:27:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1695,7 +1695,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
 	struct ifnet		*ifp;
-	int			unit, error = 0;
+	int			error = 0;
 	caddr_t			kva;
 
 	sc->bge_pa = *pa;
@@ -1795,8 +1795,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	bge_reset(sc);
 
 	if (bge_chipinit(sc)) {
-		printf("%s: chip initialization failed\n",
-		    sc->bge_dev.dv_xname);
+		printf(": chip initialization failed\n");
 		error = ENXIO;
 		goto fail_2;
 	}
@@ -1815,7 +1814,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		sc->arpcom.ac_enaddr[5] = (u_char)mac_addr;
 	} else if (bge_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
-		printf("bge%d: failed to read station address\n", unit);
+		printf(": failed to read station address\n");
 		error = ENXIO;
 		goto fail_2;
 	}
@@ -1823,7 +1822,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * A Broadcom chip was detected. Inform the world.
 	 */
-	printf(" address %s\n",
+	printf(", address %s\n",
 	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	/* Allocate the general information block and ring buffers. */
@@ -1831,22 +1830,22 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->bge_dev.dv_xname);
+		printf(": can't alloc rx buffers\n");
 		goto fail_2;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg,
 			   sizeof(struct bge_ring_data), &kva,
 			   BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
-		    sc->bge_dev.dv_xname, sizeof(struct bge_ring_data));
+		printf(": can't map dma buffers (%d bytes)\n",
+		    sizeof(struct bge_ring_data));
 		goto fail_3;
 	}
 	DPRINTFN(5, ("bus_dmamem_create\n"));
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
 	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
-		printf("%s: can't create dma map\n", sc->bge_dev.dv_xname);
+		printf(": can't create dma map\n");
 		goto fail_4;
 	}
 	DPRINTFN(5, ("bus_dmamem_load\n"));
@@ -1867,8 +1866,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
 		if (bge_alloc_jumbo_mem(sc)) {
-			printf("%s: jumbo buffer allocation failed\n",
-			    sc->bge_dev.dv_xname);
+			printf(": jumbo buffer allocation failed\n");
 			error = ENXIO;
 			goto fail_5;
 		}
