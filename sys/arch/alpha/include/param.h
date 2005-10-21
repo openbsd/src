@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.26 2005/07/31 15:31:08 miod Exp $ */
+/* $OpenBSD: param.h,v 1.27 2005/10/21 11:10:06 martin Exp $ */
 /* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
@@ -139,8 +139,6 @@
 /*
  * Mach derived conversion macros
  */
-#define	alpha_round_page(x)	((((unsigned long)(x)) + NBPG - 1) & ~(NBPG-1))
-#define	alpha_trunc_page(x)	((unsigned long)(x) & ~(NBPG-1))
 #define	alpha_btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define	alpha_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
