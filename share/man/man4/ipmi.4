@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipmi.4,v 1.4 2005/10/21 17:13:38 jmc Exp $
+.\"	$OpenBSD: ipmi.4,v 1.5 2005/10/21 17:15:37 jmc Exp $
 .\"
 .\" Copyright (c) Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -57,7 +57,7 @@ The use of request/response protocol facilitates the transfer of
 IPMI messages over different transports.
 IPMI commands are grouped into functional command sets
 using a field called network function code.
-There are command sets for sensor and even related commands,
+There are command sets for sensor and event related commands,
 chassis commands etc.
 This functional grouping makes it easier to organize and manage
 the assignment and allocation of command values.
