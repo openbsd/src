@@ -187,7 +187,6 @@ struct {					/* the test cases */
 	{ "",		0, 0 },			/* boundary */
 	{ "--1", -1, EINVAL },
 	{ "++42", -1, EINVAL },
-	{ NULL,		0, EFAULT }		/* bad input */
 	/* { "9223372036854775808", -9223372036854775808LL, 0 }, */	/* XXX  */
 };
 #	define SDATA_LENGTH (sizeof sdata/sizeof *sdata)
@@ -197,7 +196,6 @@ print_errno(int e)
 {
 	switch(e) {
 		case EINVAL: printf("EINVAL"); break;
-		case EFAULT: printf("EFAULT"); break;
 		case EDOM:   printf("EDOM"); break;
 		case ERANGE: printf("ERANGE"); break;
 		default: printf("errno %d", errno);
