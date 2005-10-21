@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.8 2003/02/14 21:05:12 henric Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.9 2005/10/21 22:10:56 brad Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -280,29 +280,25 @@ hmeattach_pci(parent, self, aux)
 
 	sc->sc_burst = 16;	/* XXX */
 
-	/*
-	 * call the main configure
-	 */
-	hme_config(sc);
-
 	if (pci_intr_map(pa, &intrhandle) != 0) {
-		printf("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;	/* bus_unmap ? */
 	}	
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	hsc->hsc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    hme_intr, sc, self->dv_xname);
 	if (hsc->hsc_ih != NULL) {
-		printf("%s: using %s for interrupt\n",
-		    sc->sc_dev.dv_xname,
-		    intrstr ? intrstr : "unknown interrupt");
+		printf(": %s", intrstr ? intrstr : "unknown interrupt");
 	} else {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;	/* bus_unmap ? */
 	}
+
+	/*
+	 * call the main configure
+	 */
+	hme_config(sc);
 }

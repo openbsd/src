@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.38 2005/06/26 04:27:19 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.39 2005/10/21 22:10:56 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -160,7 +160,6 @@ hme_config(sc)
 	/* Make sure the chip is stopped. */
 	hme_stop(sc);
 
-
 	for (i = 0; i < HME_TX_RING_SIZE; i++) {
 		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
@@ -196,7 +195,7 @@ hme_config(sc)
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(dmatag, size, 2048, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer alloc error %d\n",
+		printf("\n%s: DMA buffer alloc error %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
@@ -204,7 +203,7 @@ hme_config(sc)
 	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
 	    &sc->sc_rb.rb_membase, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: DMA buffer map error %d\n",
+		printf("\n%s: DMA buffer map error %d\n",
 		    sc->sc_dev.dv_xname, error);
 		bus_dmamap_unload(dmatag, sc->sc_dmamap);
 		bus_dmamem_free(dmatag, &seg, rseg);
@@ -213,7 +212,7 @@ hme_config(sc)
 
 	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		printf("%s: DMA map create error %d\n",
+		printf("\n%s: DMA map create error %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
@@ -222,14 +221,14 @@ hme_config(sc)
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
 	    sc->sc_rb.rb_membase, size, NULL,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: DMA buffer map load error %d\n",
+		printf("\n%s: DMA buffer map load error %d\n",
 		    sc->sc_dev.dv_xname, error);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
 	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
-	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/* Initialize ifnet structure. */
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
@@ -885,10 +884,8 @@ hme_rint(sc)
 #endif
 
 #if NBPFILTER > 0
-		if (ifp->if_bpf) {
-			m->m_pkthdr.len = m->m_len = len;
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-		}
 #endif
 
 		ether_input_mbuf(ifp, m);

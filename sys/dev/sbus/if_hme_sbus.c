@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.8 2005/04/01 18:09:52 brad Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.9 2005/10/21 22:10:56 brad Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -193,10 +193,11 @@ hmeattach_sbus(struct device *parent, struct device *self, void *aux)
 		sc->sc_burst = 0;
 
 	sc->sc_pci = 0; /* XXXXX should all be done in bus_dma. */
-	hme_config(sc);
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
 					 hme_intr, sc, self->dv_xname);
+
+	hme_config(sc);
 }
