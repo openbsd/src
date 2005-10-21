@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.78 2005/10/16 17:32:37 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.79 2005/10/21 02:03:16 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2319,7 +2319,9 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 		return;
 	}
 
-	while ((current_desc->status & E1000_RXD_STAT_DD) && (count != 0)) {
+	while ((current_desc->status & E1000_RXD_STAT_DD) &&
+		    (count != 0) &&
+		    (ifp->if_flags & IFF_RUNNING)) {
 		struct mbuf *m = NULL;
 
 		mp = sc->rx_buffer_area[i].m_head;
