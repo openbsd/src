@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.16 2005/10/20 02:02:20 deraadt Exp $	*/
+/*	$OpenBSD: ipmi.c,v 1.17 2005/10/21 16:44:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -190,7 +190,7 @@ int	 add_child_sensors(struct ipmi_softc *, u_int8_t *, int, int, int,
     int, int, int, const char *);
 
 struct ipmi_if kcs_if = {
-	"kcs",
+	"KCS",
 	IPMI_IF_KCS_NREGS,
 	cmn_buildmsg,
 	kcs_sendmsg,
@@ -200,7 +200,7 @@ struct ipmi_if kcs_if = {
 };
 
 struct ipmi_if smic_if = {
-	"smic",
+	"SMIC",
 	IPMI_IF_SMIC_NREGS,
 	cmn_buildmsg,
 	smic_sendmsg,
@@ -210,7 +210,7 @@ struct ipmi_if smic_if = {
 };
 
 struct ipmi_if bt_if = {
-	"bt",
+	"BT",
 	IPMI_IF_BT_NREGS,
 	bt_buildmsg,
 	bt_sendmsg,
@@ -1160,7 +1160,7 @@ ipmi_sensor_name(char *name, int len, u_int8_t typelen, u_int8_t *bits)
 
 	case IPMI_NAME_BCDPLUS:
 		/* Characters are encoded in 4-bit BCDPLUS */
-		if (len < slen * 2 + 1) 
+		if (len < slen * 2 + 1)
 			slen = (len >> 1) - 1;
 		for (i = 0; i < slen; i++) {
 			*(name++) = bcdplus[bits[i] >> 4];
@@ -1526,12 +1526,9 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	    sc->sc_if->nregs * sc->sc_if_iospacing,
 	    0, &sc->sc_ioh);
 #if 0
-	if (iaa->if_if_irq != -1) {
+	if (iaa->if_if_irq != -1)
 		sc->ih = isa_intr_establish(-1, iaa->if_if_irq,
-		    iaa->if_irqlvl, IPL_BIO,
-		    ipmi_intr, sc,
-		    DEVNAME(sc));
-	}
+		    iaa->if_irqlvl, IPL_BIO, ipmi_intr, sc, DEVNAME(sc));
 #endif
 	return (0);
 }
@@ -1649,9 +1646,11 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* Setup threads */
 	kthread_create_deferred(ipmi_create_thread, sc);
 
-	printf(": version %d.%d interface %s %cbase 0x%x/%x spacing %d irq %d\n",
-	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF,
-	    sc->sc_if->name, ia->iaa_if_iotype, ia->iaa_if_iobase,
-	    ia->iaa_if_iospacing * sc->sc_if->nregs, ia->iaa_if_iospacing,
-	    ia->iaa_if_irq);
+	printf(": version %d.%d interface %s %sbase 0x%x/%x spacing %d",
+	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name,
+	    ia->iaa_if_iotype == 'i' ? "io" : "mem", ia->iaa_if_iobase,
+	    ia->iaa_if_iospacing * sc->sc_if->nregs, ia->iaa_if_iospacing);
+	if (ia->iaa_if_irq != -1)
+		printf(" irq %d", ia->iaa_if_irq);
+	printf("\n");
 }
