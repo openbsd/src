@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_svwsata_reg.h,v 1.2 2005/10/16 20:16:02 grange Exp $	*/
+/*	$OpenBSD: pciide_svwsata_reg.h,v 1.3 2005/10/21 10:52:32 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -32,6 +32,10 @@ struct pciide_svwsata {
 #define SVWSATA_SSTATUS		0x40
 #define SVWSATA_SERROR		0x44
 #define SVWSATA_SCONTROL	0x48
+
+#define SVWSATA_SICR1		0x80
+#define SVWSATA_SICR2		0x84
+#define SVWSATA_SIM		0x88
 
 u_int8_t svwsata_read_reg(struct channel_softc *, enum wdc_regs);
 void     svwsata_write_reg(struct channel_softc *, enum wdc_regs, u_int8_t);
