@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2005/10/03 12:02:47 djm Exp $
+# $OpenBSD: Makefile,v 1.9 2005/10/22 10:33:53 jmc Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -704,7 +704,7 @@ MLINKS+=\
 	d2i_RSAPublicKey.3 i2d_RSAPrivateKey.3 \
 	d2i_RSAPublicKey.3 i2d_RSAPublicKey.3 \
 	d2i_SSL_SESSION.3 i2d_SSL_SESSION.3 \
-	des_crypt.3 des_string_to_2keys.3 \
+	des_random_key.3 des_string_to_2keys.3 \
 	des_random_key.3 des_cbc_cksum.3 \
 	des_random_key.3 des_cfb64_encrypt.3 \
 	des_random_key.3 des_cfb_encrypt.3 \
