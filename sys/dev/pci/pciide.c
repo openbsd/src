@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.214 2005/10/20 18:30:06 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.215 2005/10/22 23:03:30 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
-	{ PCI_PRODUCT_INTEL_82801FBM_IDE,  /* Intel 82801FBM (ICH6M) IDE */
+	{ PCI_PRODUCT_INTEL_82801FBM_SATA,  /* Intel 82801FBM (ICH6M) SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
@@ -1955,7 +1955,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_6300ESB_SATA:
 		case PCI_PRODUCT_INTEL_6300ESB_SATA2:
 		case PCI_PRODUCT_INTEL_82801FB_IDE:
-		case PCI_PRODUCT_INTEL_82801FBM_IDE:
+		case PCI_PRODUCT_INTEL_82801FBM_SATA:
 		case PCI_PRODUCT_INTEL_82801FB_SATA:
 		case PCI_PRODUCT_INTEL_82801FR_SATA:
 		case PCI_PRODUCT_INTEL_82801GB_IDE:
@@ -1983,7 +1983,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_6300ESB_SATA:
 	case PCI_PRODUCT_INTEL_6300ESB_SATA2:
 	case PCI_PRODUCT_INTEL_82801FB_IDE:
-	case PCI_PRODUCT_INTEL_82801FBM_IDE:
+	case PCI_PRODUCT_INTEL_82801FBM_SATA:
 	case PCI_PRODUCT_INTEL_82801FB_SATA:
 	case PCI_PRODUCT_INTEL_82801FR_SATA:
 	case PCI_PRODUCT_INTEL_82801GB_IDE:
@@ -1998,6 +1998,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA2 ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_SATA_1) {
@@ -2017,6 +2018,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA2 ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_SATA_1)
@@ -2045,7 +2047,6 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -2062,6 +2063,7 @@ chansetup:
 		/* SATA setup */
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA ||
 		    sc->sc_pp->ide_product ==
@@ -2139,7 +2141,6 @@ next:
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -2307,7 +2308,6 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
@@ -2320,7 +2320,6 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
 			/* setup Ultra/100 */
 			if (drvp->UDMA_mode > 2 &&
