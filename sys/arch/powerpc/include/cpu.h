@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2005/10/01 19:55:25 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2005/10/22 09:19:18 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ extern int ppc_proc_is_64b;
 #define	PPC_CPU_MPC750		8
 #define	PPC_CPU_MPC604ev	9
 #define	PPC_CPU_MPC7400		12
-#define	PPC_CPU_IBM970		0x003c
+#define	PPC_CPU_IBM970FX	0x003c
 #define	PPC_CPU_IBM750FX	0x7000
 #define	PPC_CPU_MPC7410		0x800c
 #define	PPC_CPU_MPC7447A	0x8003

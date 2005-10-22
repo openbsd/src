@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.30 2005/10/20 20:33:02 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.31 2005/10/22 09:19:18 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -120,7 +120,7 @@ ppc_check_procid()
 	cpu = pvr >> 16;
 
 	switch (cpu) {
-	case PPC_CPU_IBM970:
+	case PPC_CPU_IBM970FX:
 		ppc_proc_is_64b = 1;
 		for (p = &rfi_start; p->s; p++) {
 			for (inst = p->s; inst < p->e; inst++)
@@ -184,9 +184,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "7447A");
 		break;
-	case PPC_CPU_IBM970:
+	case PPC_CPU_IBM970FX:
 		ppc_altivec = 1;
-		snprintf(cpu_model, sizeof(cpu_model), "970");
+		snprintf(cpu_model, sizeof(cpu_model), "970FX");
 		break;
 	case PPC_CPU_IBM750FX:
 		snprintf(cpu_model, sizeof(cpu_model), "750FX");
@@ -269,7 +269,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		if (cpu == PPC_CPU_MPC7450 && (pvr & 0xffff) < 0x0200)
 			hid0 &= ~HID0_BTIC;
 		break;
-	case PPC_CPU_IBM970:
+	case PPC_CPU_IBM970FX:
 		/* select NAP mode */
 		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
