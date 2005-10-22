@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.215 2005/10/22 23:03:30 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.216 2005/10/22 23:13:26 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2113,6 +2113,7 @@ next:
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA2 ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_SATA_1)
