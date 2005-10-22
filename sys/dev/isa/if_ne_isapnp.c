@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isapnp.c,v 1.7 2005/06/08 17:03:00 henning Exp $	*/
+/*	$OpenBSD: if_ne_isapnp.c,v 1.8 2005/10/22 23:26:05 brad Exp $	*/
 /*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
@@ -132,8 +132,6 @@ ne_isapnp_attach(
 	const char *typestr;
 	int netype;
 
-	printf("\n");
-
 	nict = ipa->ia_iot;
 	nich = ipa->ipa_io[0].h;
 
@@ -181,11 +179,11 @@ ne_isapnp_attach(
 		break;
 
 	default:
-		printf("%s: where did the card go?!\n", dsc->sc_dev.dv_xname);
+		printf(": where did the card go?!\n");
 		return;
 	}
 
-	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, typestr);
+	printf(": %s", typestr);
 
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
@@ -201,6 +199,5 @@ ne_isapnp_attach(
 	    IST_EDGE, IPL_NET, dp8390_intr, dsc,
 	    dsc->sc_dev.dv_xname);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    dsc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt handler\n");
 }

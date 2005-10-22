@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.14 2004/01/07 00:34:25 fgsch Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.15 2005/10/22 23:26:02 brad Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -122,8 +122,7 @@ ne2000_attach(nsc, myea)
 	if (nsc->sc_type == 0) {
 		nsc->sc_type = ne2000_detect(nsc);
 		if (nsc->sc_type == 0) {
-			printf("%s: where did the card go?\n",
-			    dsc->sc_dev.dv_xname);
+			printf(": where did the card go?\n");
 			return (1);
 		}
 	}
@@ -211,8 +210,7 @@ ne2000_attach(nsc, myea)
 		}
 
 		if (mstart == 0) {
-			printf("%s: cannot find start of RAM\n",
-			    dsc->sc_dev.dv_xname);
+			printf(": cannot find start of RAM\n");
 			return;
 		}
 
@@ -239,8 +237,8 @@ ne2000_attach(nsc, myea)
 				break;
 		}
 
-		printf("%s: RAM start 0x%x, size %d\n",
-		    dsc->sc_dev.dv_xname, mstart, memsize);
+		printf(": RAM start 0x%x, size %d\n",
+		    mstart, memsize);
 
 		dsc->mem_start = mstart;
 	}
@@ -281,7 +279,7 @@ ne2000_attach(nsc, myea)
 		dsc->sc_media_init = dp8390_media_init;
 
 	if (dp8390_config(dsc)) {
-		printf("%s: setup failed\n", dsc->sc_dev.dv_xname);
+		printf(": setup failed\n");
 		return (1);
 	}
 

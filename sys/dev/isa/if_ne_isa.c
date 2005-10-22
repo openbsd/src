@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isa.c,v 1.8 2005/06/08 17:03:00 henning Exp $	*/
+/*	$OpenBSD: if_ne_isa.c,v 1.9 2005/10/22 23:26:05 brad Exp $	*/
 /*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
@@ -166,8 +166,6 @@ ne_isa_attach(parent, self, aux)
 	bus_space_handle_t asich;
 	const char *typestr;
 
-	printf("\n");
-
 	/* Map i/o space. */
 	if (bus_space_map(nict, ia->ia_iobase, NE2000_NPORTS, 0, &nich)) {
 		printf("%s: can't map i/o space\n", dsc->sc_dev.dv_xname);
@@ -211,11 +209,11 @@ ne_isa_attach(parent, self, aux)
 		break;
 
 	default:
-		printf("%s: where did the card go?!\n", dsc->sc_dev.dv_xname);
+		printf(": where did the card go?!\n");
 		return;
 	}
 
-	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, typestr);
+	printf(", %s", typestr);
 
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
@@ -230,6 +228,5 @@ ne_isa_attach(parent, self, aux)
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, dp8390_intr, dsc, dsc->sc_dev.dv_xname);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    dsc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt handler\n");
 }

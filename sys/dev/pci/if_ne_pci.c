@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.13 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.14 2005/10/22 23:26:08 brad Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -252,7 +252,7 @@ ne_pci_attach(parent, self, aux)
 		bus_space_unmap(nict, nich, iosize);
 		return;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	/*
 	 * Do generic NE2000 attach.  This will read the station address

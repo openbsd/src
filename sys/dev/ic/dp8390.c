@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.28 2005/06/08 17:02:59 henning Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.29 2005/10/22 23:26:02 brad Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -127,8 +127,7 @@ dp8390_config(sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Print additional info when attached. */
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Initialize media goo. */
 	(*sc->sc_media_init)(sc);
