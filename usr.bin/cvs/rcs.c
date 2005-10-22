@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.92 2005/10/18 01:08:13 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.93 2005/10/22 17:23:21 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1457,11 +1457,13 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 			return (-1);
 		}
 
-		ordp = NULL;
-		rcsnum_cpy(rev, old, 0);
-		while (ordp == NULL) {
-			old = rcsnum_dec(old);
-			ordp = rcs_findrev(rf, old);
+		if (!(rf->rf_flags & RCS_CREATE)) {
+			ordp = NULL;
+			rcsnum_cpy(rev, old, 0);
+			while (ordp == NULL) {
+				old = rcsnum_dec(old);
+				ordp = rcs_findrev(rf, old);
+			}
 		}
 	}
 

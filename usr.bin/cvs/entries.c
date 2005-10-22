@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.49 2005/09/06 17:08:05 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.50 2005/10/22 17:23:21 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -392,7 +392,8 @@ cvs_ent_parse(const char *entry)
 			if (!strcmp(fields[3], "up to date"))
 				ent->ce_status = CVS_ENT_UPTODATE;
 		} else {
-			if (strcmp(fields[3], CVS_DATE_DUMMY) == 0)
+			if ((strcmp(fields[3], CVS_DATE_DUMMY) == 0) ||
+			    (strncmp(fields[3], "Initial ", 8) == 0))
 				ent->ce_mtime = CVS_DATE_DMSEC;
 			else
 				ent->ce_mtime = cvs_date_parse(fields[3]);
