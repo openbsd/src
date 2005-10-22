@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.3 2005/10/11 14:27:27 joris Exp $	*/
+/*	$OpenBSD: diff.h,v 1.4 2005/10/22 17:32:57 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -93,8 +93,13 @@
 #define	D_SKIPPED2	9	/* path2 was a special file */
 
 
-
+BUF		*cvs_diff3(RCSFILE *, char *, RCSNUM *, RCSNUM *);
+void		diff_output(const char *, ...);
 int		cvs_diffreg(const char *, const char *, BUF *out);
+int		ed_patch_lines(struct cvs_lines *, struct cvs_lines *);
+
 extern int      diff_format;
 extern char	*diff_file;
+extern BUF	*diffbuf;
+
 #endif

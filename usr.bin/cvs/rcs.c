@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.93 2005/10/22 17:23:21 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.94 2005/10/22 17:32:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "cvs.h"
 #include "log.h"
 #include "rcs.h"
 #include "diff.h"
@@ -98,22 +99,8 @@ struct rcs_pdata {
 };
 
 
-struct rcs_line {
-	char			*rl_line;
-	int			 rl_lineno;
-	TAILQ_ENTRY(rcs_line)	 rl_list;
-};
-TAILQ_HEAD(rcs_tqh, rcs_line);
-
-struct rcs_foo {
-	int		 rl_nblines;
-	char		*rl_data;
-	struct rcs_tqh	 rl_lines;
-};
-
 #define RCS_TOKSTR(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
 #define RCS_TOKLEN(rfp)	((struct rcs_pdata *)rfp->rf_pdata)->rp_tlen
-
 
 
 /* invalid characters in RCS symbol names */
@@ -297,14 +284,11 @@ static void	rcs_freepdata(struct rcs_pdata *);
 static int	rcs_gettok(RCSFILE *);
 static int	rcs_pushtok(RCSFILE *, const char *, int);
 static int	rcs_growbuf(RCSFILE *);
-static int	rcs_patch_lines(struct rcs_foo *, struct rcs_foo *);
 static int	rcs_strprint(const u_char *, size_t, FILE *);
 
 static int	rcs_expand_keywords(char *, struct rcs_delta *, char *, char *,
 		    size_t, int);
 static struct rcs_delta	*rcs_findrev(RCSFILE *, const RCSNUM *);
-static struct rcs_foo	*rcs_splitlines(const char *);
-static void		 rcs_freefoo(struct rcs_foo *);
 
 /*
  * rcs_open()
@@ -1168,76 +1152,22 @@ rcs_tag_resolve(RCSFILE *file, const char *tag)
 	return (num);
 }
 
-
-/*
- * rcs_patch()
- *
- * Apply an RCS-format patch pointed to by <patch> to the file contents
- * found in <data>.
- * Returns 0 on success, or -1 on failure.
- */
-BUF*
-rcs_patch(const char *data, const char *patch)
-{
-	struct rcs_foo *dlines, *plines;
-	struct rcs_line *lp;
-	size_t len;
-	int lineno;
-	BUF *res;
-
-	len = strlen(data);
-	res = cvs_buf_alloc(len, BUF_AUTOEXT);
-	if (res == NULL)
-		return (NULL);
-
-	dlines = rcs_splitlines(data);
-	if (dlines == NULL) {
-		cvs_buf_free(res);
-		return (NULL);
-	}
-
-	plines = rcs_splitlines(patch);
-	if (plines == NULL) {
-		cvs_buf_free(res);
-		rcs_freefoo(dlines);
-		return (NULL);
-	}
-
-	if (rcs_patch_lines(dlines, plines) < 0) {
-		cvs_buf_free(res);
-		rcs_freefoo(plines);
-		rcs_freefoo(dlines);
-		return (NULL);
-	}
-
-	lineno = 0;
-	TAILQ_FOREACH(lp, &dlines->rl_lines, rl_list) {
-		if (lineno != 0)
-			cvs_buf_fappend(res, "%s\n", lp->rl_line);
-		lineno++;
-	}
-
-	rcs_freefoo(dlines);
-	rcs_freefoo(plines);
-	return (res);
-}
-
-static int
-rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
+int
+rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 {
 	char op, *ep;
-	struct rcs_line *lp, *dlp, *ndlp;
+	struct cvs_line *lp, *dlp, *ndlp;
 	int i, lineno, nbln;
 
-	dlp = TAILQ_FIRST(&(dlines->rl_lines));
-	lp = TAILQ_FIRST(&(plines->rl_lines));
+	dlp = TAILQ_FIRST(&(dlines->l_lines));
+	lp = TAILQ_FIRST(&(plines->l_lines));
 
 	/* skip first bogus line */
-	for (lp = TAILQ_NEXT(lp, rl_list); lp != NULL;
-	    lp = TAILQ_NEXT(lp, rl_list)) {
-		op = *(lp->rl_line);
-		lineno = (int)strtol((lp->rl_line + 1), &ep, 10);
-		if ((lineno > dlines->rl_nblines) || (lineno < 0) ||
+	for (lp = TAILQ_NEXT(lp, l_list); lp != NULL;
+	    lp = TAILQ_NEXT(lp, l_list)) {
+		op = *(lp->l_line);
+		lineno = (int)strtol((lp->l_line + 1), &ep, 10);
+		if ((lineno > dlines->l_nblines) || (lineno < 0) ||
 		    (*ep != ' ')) {
 			cvs_log(LP_ERR,
 			    "invalid line specification in RCS patch");
@@ -1255,13 +1185,13 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 		for (;;) {
 			if (dlp == NULL)
 				break;
-			if (dlp->rl_lineno == lineno)
+			if (dlp->l_lineno == lineno)
 				break;
-			if (dlp->rl_lineno > lineno) {
-				dlp = TAILQ_PREV(dlp, rcs_tqh, rl_list);
-			} else if (dlp->rl_lineno < lineno) {
-				ndlp = TAILQ_NEXT(dlp, rl_list);
-				if (ndlp->rl_lineno > lineno)
+			if (dlp->l_lineno > lineno) {
+				dlp = TAILQ_PREV(dlp, cvs_tqh, l_list);
+			} else if (dlp->l_lineno < lineno) {
+				ndlp = TAILQ_NEXT(dlp, l_list);
+				if (ndlp->l_lineno > lineno)
 					break;
 				dlp = ndlp;
 			}
@@ -1274,25 +1204,25 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 
 		if (op == 'd') {
 			for (i = 0; (i < nbln) && (dlp != NULL); i++) {
-				ndlp = TAILQ_NEXT(dlp, rl_list);
-				TAILQ_REMOVE(&(dlines->rl_lines), dlp, rl_list);
+				ndlp = TAILQ_NEXT(dlp, l_list);
+				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);
 				dlp = ndlp;
 			}
 		} else if (op == 'a') {
 			for (i = 0; i < nbln; i++) {
 				ndlp = lp;
-				lp = TAILQ_NEXT(lp, rl_list);
+				lp = TAILQ_NEXT(lp, l_list);
 				if (lp == NULL) {
 					cvs_log(LP_ERR, "truncated RCS patch");
 					return (-1);
 				}
-				TAILQ_REMOVE(&(plines->rl_lines), lp, rl_list);
-				TAILQ_INSERT_AFTER(&(dlines->rl_lines), dlp,
-				    lp, rl_list);
+				TAILQ_REMOVE(&(plines->l_lines), lp, l_list);
+				TAILQ_INSERT_AFTER(&(dlines->l_lines), dlp,
+				    lp, l_list);
 				dlp = lp;
 
 				/* we don't want lookup to block on those */
-				lp->rl_lineno = lineno;
+				lp->l_lineno = lineno;
 
 				lp = ndlp;
 			}
@@ -1302,15 +1232,15 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 		}
 
 		/* last line of the patch, done */
-		if (lp->rl_lineno == plines->rl_nblines)
+		if (lp->l_lineno == plines->l_nblines)
 			break;
 	}
 
 	/* once we're done patching, rebuild the line numbers */
 	lineno = 0;
-	TAILQ_FOREACH(lp, &(dlines->rl_lines), rl_list)
-		lp->rl_lineno = lineno++;
-	dlines->rl_nblines = lineno - 1;
+	TAILQ_FOREACH(lp, &(dlines->l_lines), l_list)
+		lp->l_lineno = lineno++;
+	dlines->l_nblines = lineno - 1;
 
 	return (0);
 }
@@ -1331,8 +1261,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	RCSNUM *crev, *rev;
 	BUF *rbuf, *dbuf = NULL;
 	struct rcs_delta *rdp = NULL;
-	struct rcs_foo *lines;
-	struct rcs_line *lp;
+	struct cvs_lines *lines;
+	struct cvs_line *lp;
 	char out[1024];				/* XXX */
 
 	if (rfp->rf_head == NULL)
@@ -1378,7 +1308,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 				return (NULL);
 			}
 			bp = cvs_buf_release(rbuf);
-			rbuf = rcs_patch((char *)bp, (char *)rdp->rd_text);
+			rbuf = cvs_patchfile((char *)bp, (char *)rdp->rd_text,
+			    rcs_patch_lines);
 			free(bp);
 			if (rbuf == NULL)
 				break;
@@ -1405,16 +1336,16 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		}
 
 		bp = cvs_buf_release(rbuf);
-		if ((lines = rcs_splitlines((char *)bp)) != NULL) {
+		if ((lines = cvs_splitlines((char *)bp)) != NULL) {
 			res = 0;
-			TAILQ_FOREACH(lp, &lines->rl_lines, rl_list) {
+			TAILQ_FOREACH(lp, &lines->l_lines, l_list) {
 				if (res++ == 0)
 					continue;
 				rcs_expand_keywords(rfp->rf_path, rdp,
-				    lp->rl_line, out, sizeof(out), expmode);
+				    lp->l_line, out, sizeof(out), expmode);
 				cvs_buf_fappend(dbuf, "%s\n", out);
 			}
-			rcs_freefoo(lines);
+			cvs_freelines(lines);
 		}
 		free(bp);
 	}
@@ -2687,83 +2618,6 @@ rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
 	return (0);
 }
 
-
-/*
- * rcs_splitlines()
- *
- * Split the contents of a file into a list of lines.
- */
-static struct rcs_foo*
-rcs_splitlines(const char *fcont)
-{
-	char *dcp;
-	struct rcs_foo *foo;
-	struct rcs_line *lp;
-
-	foo = (struct rcs_foo *)malloc(sizeof(*foo));
-	if (foo == NULL) {
-		cvs_log(LP_ERR, "failed to allocate line structure");
-		return (NULL);
-	}
-	TAILQ_INIT(&(foo->rl_lines));
-	foo->rl_nblines = 0;
-	foo->rl_data = strdup(fcont);
-	if (foo->rl_data == NULL) {
-		cvs_log(LP_ERRNO, "failed to copy file contents");
-		free(foo);
-		return (NULL);
-	}
-
-	/*
-	 * Add a first bogus line with line number 0.  This is used so we
-	 * can position the line pointer before 1 when changing the first line
-	 * in rcs_patch().
-	 */
-	lp = (struct rcs_line *)malloc(sizeof(*lp));
-	if (lp == NULL) {
-		rcs_freefoo(foo);
-		return (NULL);
-	}
-
-	lp->rl_line = NULL;
-	lp->rl_lineno = 0;
-	TAILQ_INSERT_TAIL(&(foo->rl_lines), lp, rl_list);
-
-
-	for (dcp = foo->rl_data; *dcp != '\0';) {
-		lp = (struct rcs_line *)malloc(sizeof(*lp));
-		if (lp == NULL) {
-			rcs_freefoo(foo);
-			cvs_log(LP_ERR, "failed to allocate line entry");
-			return (NULL);
-		}
-
-		lp->rl_line = dcp;
-		lp->rl_lineno = ++(foo->rl_nblines);
-		TAILQ_INSERT_TAIL(&(foo->rl_lines), lp, rl_list);
-
-		dcp = strchr(dcp, '\n');
-		if (dcp == NULL) {
-			break;
-		}
-		*(dcp++) = '\0';
-	}
-
-	return (foo);
-}
-
-static void
-rcs_freefoo(struct rcs_foo *fp)
-{
-	struct rcs_line *lp;
-
-	while ((lp = TAILQ_FIRST(&fp->rl_lines)) != NULL) {
-		TAILQ_REMOVE(&fp->rl_lines, lp, rl_list);
-		free(lp);
-	}
-	free(fp->rl_data);
-	free(fp);
-}
 
 /*
  * rcs_growbuf()

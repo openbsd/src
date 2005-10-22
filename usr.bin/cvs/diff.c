@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.62 2005/10/11 18:01:57 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.63 2005/10/22 17:32:57 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -185,7 +185,6 @@ static int	cvs_diff_pre_exec(struct cvsroot *);
 static int	cvs_diff_cleanup(void);
 #endif
 
-static void	 diff_output(const char *, ...);
 static void	 output(const char *, FILE *, const char *, FILE *);
 static void	 check(FILE *, FILE *);
 static void	 range(int, int, char *);
@@ -250,7 +249,7 @@ static struct context_vec *context_vec_ptr;
 static char lastbuf[FUNCTION_CONTEXT_SIZE];
 static int  lastline;
 static int  lastmatchline;
-static BUF  *diffbuf = NULL;
+BUF  *diffbuf = NULL;
 
 /*
  * chrtran points to one of 2 translation tables: cup2low if folding upper to
@@ -1794,7 +1793,7 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	context_vec_ptr = context_vec_start - 1;
 }
 
-static void
+void
 diff_output(const char *fmt, ...)
 {
 	va_list vap;

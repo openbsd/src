@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.86 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.87 2005/10/22 17:32:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -410,6 +410,21 @@ int	 cvs_logmsg_send(struct cvsroot *, const char *);
 time_t	cvs_date_parse(const char *);
 
 /* util.c */
+
+struct cvs_line {
+	char			*l_line;
+	int			 l_lineno;
+	TAILQ_ENTRY(cvs_line)	 l_list;
+};
+
+TAILQ_HEAD(cvs_tqh, cvs_line);
+
+struct cvs_lines {
+	int		l_nblines;
+	char		*l_data;
+	struct cvs_tqh	l_lines;
+};
+
 int	  cvs_readrepo(const char *, char *, size_t);
 int	  cvs_modetostr(mode_t, char *, size_t);
 int	  cvs_strtomode(const char *, mode_t *);
@@ -431,5 +446,12 @@ void	  cvs_write_tagfile(char *, char *, int);
 void	  cvs_parse_tagfile(char **, char **, int *);
 size_t	  cvs_path_cat(const char *, const char *, char *, size_t);
 
+BUF			*cvs_patchfile(const char *, const char *,
+			    int (*p)(struct cvs_lines *, struct cvs_lines *));
+struct cvs_lines	*cvs_splitlines(const char *);
+void			cvs_freelines(struct cvs_lines *);
+
+/* XXX */
+int			rcs_patch_lines(struct cvs_lines *, struct cvs_lines *);
 
 #endif	/* CVS_H */

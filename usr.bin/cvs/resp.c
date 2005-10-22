@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.60 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: resp.c,v 1.61 2005/10/22 17:32:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -838,7 +838,7 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 	orig = cvs_buf_release(fcont);
 	patch = cvs_buf_release(patchbuf);
 
-	res = rcs_patch(orig, patch);
+	res = cvs_patchfile(orig, patch, rcs_patch_lines);
 	if (res == NULL)
 		return (-1);
 

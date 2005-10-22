@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.53 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.54 2005/10/22 17:32:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,6 +38,8 @@
 
 #include "cvs.h"
 #include "log.h"
+
+#if !defined(RCSPROG)
 
 /* letter -> mode type map */
 static const int cvs_modetypes[26] = {
@@ -913,4 +915,114 @@ cvs_parse_tagfile(char **tagp, char **datep, int *nbp)
 		cvs_log(LP_NOTICE, "failed to read line from `%s'", tagpath);
 
 	(void)fclose(fp);
+}
+
+#endif	/* !RCSPROG */
+
+/*
+ * Split the contents of a file into a list of lines.
+ */
+struct cvs_lines *
+cvs_splitlines(const char *fcont)
+{
+	char *dcp;
+	struct cvs_lines *lines;
+	struct cvs_line *lp;
+
+	lines = (struct cvs_lines *)malloc(sizeof(*lines));
+	if (lines == NULL)
+		return (NULL);
+
+	TAILQ_INIT(&(lines->l_lines));
+	lines->l_nblines = 0;
+	lines->l_data = strdup(fcont);
+	if (lines->l_data == NULL) {
+		free(lines);
+		return (NULL);
+	}
+
+	lp = (struct cvs_line *)malloc(sizeof(*lp));
+	if (lp == NULL) {
+		cvs_freelines(lines);
+		return (NULL);
+	}
+
+	lp->l_line = NULL;
+	lp->l_lineno = 0;
+	TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
+
+	for (dcp = lines->l_data; *dcp != '\0';) {
+		lp = (struct cvs_line *)malloc(sizeof(*lp));
+		if (lp == NULL) {
+			cvs_freelines(lines);
+			return (NULL);
+		}
+
+		lp->l_line = dcp;
+		lp->l_lineno = ++(lines->l_nblines);
+		TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
+
+		dcp = strchr(dcp, '\n');
+		if (dcp == NULL)
+			break;
+		*(dcp++) = '\0';
+	}
+
+	return (lines);
+}
+
+void
+cvs_freelines(struct cvs_lines *lines)
+{
+	struct cvs_line *lp;
+
+	while ((lp = TAILQ_FIRST(&(lines->l_lines))) != NULL) {
+		TAILQ_REMOVE(&(lines->l_lines), lp, l_list);
+		free(lp);
+	}
+
+	free(lines->l_data);
+	free(lines);
+}
+
+BUF *
+cvs_patchfile(const char *data, const char *patch,
+    int (*p)(struct cvs_lines *, struct cvs_lines *))
+{
+	struct cvs_lines *dlines, *plines;
+	struct cvs_line *lp;
+	size_t len;
+	int lineno;
+	BUF *res;
+
+	len = strlen(data);
+
+	if ((dlines = cvs_splitlines(data)) == NULL)
+		return (NULL);
+
+	if ((plines = cvs_splitlines(patch)) == NULL)
+		return (NULL);
+
+	if (p(dlines, plines) < 0) {
+		cvs_freelines(dlines);
+		cvs_freelines(plines);
+		return (NULL);
+	}
+
+	if ((res = cvs_buf_alloc(len, BUF_AUTOEXT)) == NULL) {
+		cvs_freelines(dlines);
+		cvs_freelines(plines);
+		return (NULL);
+	}
+
+	lineno = 0;
+	TAILQ_FOREACH(lp, &dlines->l_lines, l_list) {
+		if (lineno != 0)
+			cvs_buf_fappend(res, "%s\n", lp->l_line);
+		lineno++;
+	}
+
+	cvs_freelines(dlines);
+	cvs_freelines(plines);
+	return (res);
 }
