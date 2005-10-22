@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.91 2005/10/16 19:16:36 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.92 2005/10/22 16:51:28 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -113,7 +113,11 @@ scsi_get_xs(sc_link, flags)
 			return (NULL);
 		}
 		sc_link->flags |= SDEV_WAITING;
-		(void) tsleep(sc_link, PRIBIO, "getxs", 0);
+		if (tsleep(sc_link, PRIBIO, "getxs", 0)) {
+			/* Bail out on getting a signal. */
+			sc_link->flags &= ~SDEV_WAITING;
+			return (NULL);
+		}	
 	}
 	SC_DEBUG(sc_link, SDEV_DB3, ("calling pool_get\n"));
 	xs = pool_get(&scsi_xfer_pool,
@@ -764,6 +768,7 @@ retry:
 			panic("scsi_execute_xs: NOSLEEP and POLL");
 #endif
 		s = splbio();
+		/* Since the xs is active we can't bail out on a signal. */
 		while ((xs->flags & ITSDONE) == 0)
 			tsleep(xs, PRIBIO + 1, "scsicmd", 0);
 		splx(s);
@@ -879,7 +884,9 @@ sc_err1(xs)
 			if ((xs->flags & SCSI_POLL) != 0)
 				delay(1000000);
 			else if ((xs->flags & SCSI_NOSLEEP) == 0) {
-				tsleep(&lbolt, PRIBIO, "scbusy", 0);
+				if (tsleep(&lbolt, PRIBIO, "scbusy", 0))
+					/* Bail out on getting a signal. */
+					goto lose;
 			} else
 				goto lose;
 		}
