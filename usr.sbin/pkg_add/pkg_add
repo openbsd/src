@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.206 2005/10/10 11:06:04 espie Exp $
+# $OpenBSD: pkg_add,v 1.207 2005/10/22 15:01:54 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -865,8 +865,9 @@ if ($opt_u) {
 	}
 	my @cantupdate = find_updates(\@ARGV, \@todo, $state);
 	if (@cantupdate > 0) {
+			print "Cannot find updates for ", join(' ', @cantupdate), "\n";
 		unless ($state->{forced}->{alwaysupdate} ||
-			OpenBSD::Interactive::confirm("Cannot find updates for ".join(' ', @cantupdate).". Proceed", $state->{interactive}, 0)) {
+			OpenBSD::Interactive::confirm("Proceed", $state->{interactive}, 0)) {
 				exit(1);
 	    	}
 	}
