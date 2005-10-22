@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.43 2005/10/22 13:11:55 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.44 2005/10/22 15:00:47 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -148,7 +148,7 @@ sub parse_problems
 	my $baseurl = $self->{baseurl};
 	local $_;
 	while(<$fh>) {
-		next if m/^(?:200|220|230|227|250|331|500|150)[\s\-]/;
+		next if m/^(?:200|220|221|226|230|227|250|331|500|150)[\s\-]/;
 		next if m/^EPSV command not understood/;
 		next if m/^Trying [\d\.\:]+\.\.\./;
 		next if m/^Requesting \Q$baseurl\E/;
@@ -157,6 +157,7 @@ sub parse_problems
 		next if m/^remote\:\s+/;
 		next if m/^Using binary mode to transfer files/;
 		next if m/^Retrieving\s+/;
+		next if m/^\d+\s+bytes received in/;
 		print STDERR "Error from $baseurl:\n", $_;
 	}
 	CORE::close($fh);
