@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.42 2005/10/10 09:33:56 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.43 2005/10/22 13:11:55 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -80,6 +80,7 @@ sub close
 {
 	my ($self, $object) = @_;
 	close($object->{fh}) if defined $object->{fh};
+	$self->parse_problems($object->{errors}) if defined $object->{errors};
 	$object->deref();
 }
 
@@ -138,6 +139,28 @@ sub grabPlist
 	my $self = OpenBSD::PackageLocation->new($repository, $name);
 
 	return $self->grabPlist($name, $arch, $code);
+}
+
+sub parse_problems
+{
+	my ($self, $filename) = @_;
+	CORE::open(my $fh, '<', $filename);
+	my $baseurl = $self->{baseurl};
+	local $_;
+	while(<$fh>) {
+		next if m/^(?:200|220|230|227|250|331|500|150)[\s\-]/;
+		next if m/^EPSV command not understood/;
+		next if m/^Trying [\d\.\:]+\.\.\./;
+		next if m/^Requesting \Q$baseurl\E/;
+		next if m/^Remote system type is\s+/;
+		next if m/^Connected to\s+/;
+		next if m/^remote\:\s+/;
+		next if m/^Using binary mode to transfer files/;
+		next if m/^Retrieving\s+/;
+		print STDERR "Error from $baseurl:\n", $_;
+	}
+	CORE::close($fh);
+	unlink $filename;
 }
 
 package OpenBSD::PackageRepository::Installed;
@@ -351,7 +374,10 @@ sub pkg_copy
 
 sub open_pipe
 {
+	require OpenBSD::Temp;
+
 	my ($self, $object) = @_;
+	$object->{errors} = OpenBSD::Temp::file();
 	my $pid = open(my $fh, "-|");
 	if (!defined $pid) {
 		die "Cannot fork: $!";
@@ -359,7 +385,7 @@ sub open_pipe
 	if ($pid) {
 		return $fh;
 	} else {
-		open STDERR, ">/dev/null";
+		open STDERR, '>', $object->{errors};
 
 		my $pid2 = open(STDIN, "-|");
 
@@ -512,11 +538,12 @@ sub list
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
+		my $error = OpenBSD::Temp::file();
 		$self->make_room();
 		my $fullname = $self->{baseurl};
 		my $l = $self->{list} = [];
 		local $_;
-		open(my $fh, '-|', "ftp -o - $fullname 2>/dev/null") or return undef;
+		open(my $fh, '-|', "ftp -o - $fullname 2>$error") or return undef;
 		# XXX assumes a pkg HREF won't cross a line. Is this the case ?
 		while(<$fh>) {
 			chomp;
@@ -526,6 +553,7 @@ sub list
 			}
 		}
 		close($fh);
+		$self->parse_problems($error);
 	}
 	return $self->{list};
 }
@@ -533,13 +561,18 @@ sub list
 package OpenBSD::PackageRepository::FTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
 
+
 sub list
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
+		require OpenBSD::Temp;
+
+		my $error = OpenBSD::Temp::file();
 		$self->make_room();
 		my $fullname = $self->{baseurl};
-		$self->{list} = $self->_list("echo 'nlist *.tgz'|ftp -o - $fullname 2>/dev/null");
+		$self->{list} = $self->_list("echo 'nlist *.tgz'|ftp -o - $fullname 2>$error");
+		$self->parse_problems($error);
 	}
 	return $self->{list};
 }
@@ -562,6 +595,8 @@ sub openArchive
 
 	my $fh = $self->{repository}->open($self);
 	if (!defined $fh) {
+		$self->{repository}->parse_problems($self->{errors}) 
+		    if defined $self->{errors};
 		return undef;
 	}
 	require OpenBSD::Ustar;
