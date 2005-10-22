@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.84 2005/01/17 10:18:03 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.85 2005/10/22 06:38:54 brad Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2607,6 +2607,7 @@ noredhdropt:
 		m0 = NULL;
 	}
 
+	sip6 = mtod(m, struct ip6_hdr *);
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_src))
 		sip6->ip6_src.s6_addr16[1] = 0;
 	if (IN6_IS_ADDR_LINKLOCAL(&sip6->ip6_dst))
