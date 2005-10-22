@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.27 2005/08/22 11:34:52 espie Exp $
+# $OpenBSD: Delete.pm,v 1.28 2005/10/22 13:11:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ sub keep_old_files
 				my ($fh, $j) = File::Temp::mkstemp("$n.XXXXXXXX");
 				close $fh;
 				if (rename($n, $j)) {
-					print "Renaming $n to $j\n";
+					print "Renaming old file $n to $j\n";
 					if ($i->{name} !~ m|^/| && $i->cwd() ne '.') {
 						my $c = $i->cwd();
 						$j =~ s|^\Q$c\E/||;
