@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.5 2005/10/07 17:21:12 deraadt Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.6 2005/10/22 21:25:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -114,11 +114,19 @@ kauaiataattach(struct device *parent, struct device *self, void *aux)
 
 	ca.ca_nreg  = OF_getprop(node, "reg", reg, sizeof(reg));
 
-	intr[0] = PCI_INTERRUPT_LINE(pci_conf_read(pc, pa->pa_tag,
-	    PCI_INTERRUPT_REG));
-	ca.ca_nintr = 4; /* claim to have 4 bytes of interrupt info */
-	/* This needs to come from INTERRUPT REG above, but is not filled out */
-	intr[0] = 0x27;
+	/*
+	 * The PCI Interrupt Configuration Registers seems to be
+	 * hardwired to 0.  Get the interrupt line from OpenFirmware.
+	 */
+	/* XXX */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_ATA) {
+		ca.ca_nintr = OF_getprop(node, "interrupts",
+		    intr, sizeof intr);
+	} else {
+		ca.ca_nintr = 4;
+		intr[0] = 0x27;
+	}
 
 	namelen = OF_getprop(node, "name", name, sizeof(name));
 	if ((namelen < 0) || (namelen >= sizeof(name))) {
