@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.20 2005/10/16 19:31:44 stevesk Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.21 2005/10/23 20:21:44 stevesk Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -36,7 +36,6 @@
 #include "ospfd.h"
 #include "ospfe.h"
 #include "parser.h"
-#include "log.h"
 
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
@@ -113,7 +112,7 @@ main(int argc, char *argv[])
 		err(1, "connect: %s", OSPFD_SOCKET);
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
-		fatal(NULL);
+		err(1, NULL);
 	imsg_init(ibuf, ctl_sock, NULL);
 	done = 0;
 
