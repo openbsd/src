@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.1 2005/10/18 16:16:39 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.2 2005/10/23 04:07:06 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -44,13 +44,14 @@ int
 rcsmerge_main(int argc, char **argv)
 {
 	int i, ch;
-	char fpath[MAXPATHLEN];
+	char *fcont, fpath[MAXPATHLEN];
 	RCSFILE *file;
-	RCSNUM *rev;
+	RCSNUM *baserev, *rev2, *frev;
+	BUF *bp;
 
-	rev = RCS_HEAD_REV;
+	baserev = rev2 = RCS_HEAD_REV;
 
-	while ((ch = rcs_getopt(argc, argv, "k:qr:TV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "k:p::qr:TV")) != -1) {
 		switch (ch) {
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -61,11 +62,20 @@ rcsmerge_main(int argc, char **argv)
 				exit(1);
 			}
 			break;
+		case 'p':
+			rcs_set_rev(rcs_optarg, &baserev);
+			pipeout = 1;
+			break;
 		case 'q':
 			verbose = 0;
 			break;
 		case 'r':
-			rcs_set_rev(rcs_optarg, &rev);
+			if (baserev == RCS_HEAD_REV)
+				rcs_set_rev(rcs_optarg, &baserev);
+			else if (rev2 == RCS_HEAD_REV)
+				rcs_set_rev(rcs_optarg, &rev2);
+			else
+				cvs_log(LP_WARN, "ignored excessive -r option");
 			break;
 		case 'T':
 			/*
@@ -89,12 +99,46 @@ rcsmerge_main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (baserev == RCS_HEAD_REV) {
+		cvs_log(LP_ERR, "missing base revision");
+		(usage)();
+		exit(1);
+	}
+
 	for (i = 0; i < argc; i++) {
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
 		if ((file = rcs_open(fpath, RCS_READ)) == NULL)
 			continue;
+
+		if (rev2 == RCS_HEAD_REV)
+			frev = file->rf_head;
+		else
+			frev = rev2;
+
+		if ((bp = cvs_diff3(file, argv[i], baserev, frev)) == NULL) {
+			cvs_log(LP_ERR, "failed to merge");
+			rcs_close(file);
+			continue;
+		}
+
+		if (pipeout == 1) {
+			if (cvs_buf_putc(bp, '\0') < 0) {
+				rcs_close(file);
+				continue;
+			}
+
+			fcont = cvs_buf_release(bp);
+			printf("%s", fcont);
+			free(fcont);
+		} else {
+			/* XXX mode */
+			if (cvs_buf_write(bp, argv[i], 0644) < 0)
+				cvs_log(LP_ERR, "failed to write new file");
+
+			cvs_buf_free(bp);
+		}
 
 		rcs_close(file);
 	}
