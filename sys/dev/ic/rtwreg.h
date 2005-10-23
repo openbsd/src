@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwreg.h,v 1.7 2005/05/29 03:49:52 reyk Exp $	*/
+/*	$OpenBSD: rtwreg.h,v 1.8 2005/10/23 08:14:37 jsg Exp $	*/
 /*	$NetBSD: rtwreg.h,v 1.12 2005/01/16 11:50:43 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -471,7 +471,9 @@
 #define RTW_CONFIG2_PAPESIGN		BIT(2)		/* TBD, from EEPROM */
 #define RTW_CONFIG2_PAPETIME_MASK	BITS(1,0)	/* TBD, from EEPROM */
 
-#define	RTW_ANAPARM	0x54	/* Analog parameter, 32b */
+#define	RTW_ANAPARM		0x54	/* Analog parameter, 32b */
+#define RTW8185_ANAPARM2	0x60
+
 #define RTW_ANAPARM_RFPOW0_MASK	BITS(30,28)		/* undocumented bits
 							 * which appear to
 							 * control the power
@@ -714,6 +716,9 @@
 
 #define RTW8185_RFPINSENABLE		0x82
 #define RTW8185_RFPINSENABLE_ENABLE	0x0007
+
+#define RTW8185_INSSELECT		0x84
+#define RTW8185_SW_GPIO			0x400
 
 #define	RTW_MAXIM_HIDATA_MASK			BITS(11,4)
 #define	RTW_MAXIM_LODATA_MASK			BITS(3,0)
