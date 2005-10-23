@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.40 2005/09/15 00:59:11 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.41 2005/10/23 08:23:00 reyk Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3873,7 +3873,7 @@ rtw_rf_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
 	case RTW_RFCHIPID_RTL8255:
 		return rtw_rtl8255_init(sc, freq, opaque_txpower, power);
 	default:
-		return (1);	
+		return (1);
 	}
 }
 
@@ -3890,7 +3890,7 @@ rtw_rf_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 	case RTW_RFCHIPID_RTL8255:
 		return rtw_rtl8255_pwrstate(sc, power);
 	default:
-		return (1);	
+		return (1);
 	}
 }
 
@@ -3907,7 +3907,7 @@ rtw_rf_tune(struct rtw_softc *sc, u_int freq)
 	case RTW_RFCHIPID_RTL8255:
 		return rtw_rtl8255_tune(sc, freq);
 	default:
-		return (1);	
+		return (1);
 	}
 }
 
@@ -3924,7 +3924,7 @@ rtw_rf_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
 	case RTW_RFCHIPID_RTL8255:
 		return rtw_rtl8255_txpower(sc, opaque_txpower);
 	default:
-		return (1);	
+		return (1);
 	}
 }
 
@@ -4372,7 +4372,8 @@ rtw_phy_init(struct rtw_softc *sc)
 	int antdiv = sc->sc_flags & RTW_F_ANTDIV;
 	int dflantb = sc->sc_flags & RTW_F_DFLANTB;
 	u_int freq = ic->ic_bss->ni_chan->ic_freq;	/* freq is in MHz */
-	u_int8_t opaque_txpower = rtw_chan2txpower(&sc->sc_srom, ic, ic->ic_bss->ni_chan);
+	u_int8_t opaque_txpower = rtw_chan2txpower(&sc->sc_srom, ic,
+	    ic->ic_bss->ni_chan);
 	u_int8_t cs_threshold = sc->sc_csthr;
 	enum rtw_pwrstate power = RTW_ON;
 
