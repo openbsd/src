@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.29 2005/09/15 18:52:44 martin Exp $	*/
+/*	$OpenBSD: grf.c,v 1.30 2005/10/23 19:00:26 martin Exp $	*/
 /*	$NetBSD: grf.c,v 1.53 1998/06/02 02:14:20 scottr Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ grfmmap(dev, off, prot)
 	    off >= round_page(gm->fbsize + gm->fboff))
 		addr = (-1);	/* XXX bogus */
 	else
-		addr = m68k_btop(gp->sc_phys + off);
+		addr = atop(gp->sc_phys + off);
 
 #ifdef GRF_DEBUG
 	if (grfdebug & GDB_MMAP)

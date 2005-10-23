@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.12 2004/08/07 18:57:44 miod Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.13 2005/10/23 19:00:25 martin Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -81,7 +81,7 @@ typedef struct pmap	*pmap_t;
 #define PMAP_ACTIVATE(pmap, loadhw)					\
 {									\
         if ((loadhw))							\
-                loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));		\
+                loadustp(atop((paddr_t)(pmap)->pm_stpa));		\
 }
 
 /* XXX - struct pv_entry moved to vmparam.h because of include ordering issues */
@@ -124,7 +124,7 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define	pmap_phys_address(frame)	((paddr_t)m68k_ptob(frame))
+#define	pmap_phys_address(frame)	((paddr_t)ptoa(frame))
 
 #define	pmap_copy(dp,sp,d,l,s)		do { /* nothing */ } while (0)
 #define	pmap_update(pmap)		do { /* nothing (yet) */ } while (0)

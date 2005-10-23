@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.33 2005/09/15 18:52:44 martin Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.34 2005/10/23 19:00:26 martin Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -91,7 +91,7 @@ void	bootstrap_mac68k(int);
 #define PA2VA(v, t)	*((t*)((u_int)&(v) - firstpa))
 
 extern caddr_t kernel_start;
-#define	PMAP_MD_RWLOW	m68k_btop(round_page((vaddr_t)&kernel_start))
+#define	PMAP_MD_RWLOW	atop(round_page((vaddr_t)&kernel_start))
 
 /*
  * Present a totally tricky view of the world here...
@@ -161,9 +161,9 @@ do { \
 #define	PMAP_MD_RELOC2() \
 do { \
 	IOBase = iiobase; \
-	ROMBase = (char *)(iiobase + m68k_ptob(IIOMAPSIZE)); \
+	ROMBase = (char *)(iiobase + ptoa(IIOMAPSIZE)); \
 	if (vidlen != 0) { \
-		newvideoaddr = iiobase + m68k_ptob(IIOMAPSIZE + ROMMAPSIZE) \
+		newvideoaddr = iiobase + ptoa(IIOMAPSIZE + ROMMAPSIZE) \
 				+ m68k_page_offset(mac68k_vidphys); \
 	} \
 } while (0)
@@ -185,11 +185,11 @@ do { \
 			avail_remaining += (high[i] - low[i]); \
 		} \
 	} \
-	physmem = m68k_btop(avail_remaining + nextpa - firstpa); \
+	physmem = atop(avail_remaining + nextpa - firstpa); \
  \
-	maxaddr = high[numranges - 1] - m68k_ptob(1); \
+	maxaddr = high[numranges - 1] - ptoa(1); \
 	high[numranges - 1] -= \
-	    (round_page(MSGBUFSIZE) + m68k_ptob(1)); \
+	    (round_page(MSGBUFSIZE) + ptoa(1)); \
 	avail_end = high[numranges - 1]; \
 } while (0)
 
@@ -278,7 +278,7 @@ pmap_init_md()
 	 */
 	addr = (vaddr_t)MACHINE_INTIOBASE;
 	if (uvm_map(kernel_map, &addr,
-		    m68k_ptob(MACHINE_IIOMAPSIZE),
+		    ptoa(MACHINE_IIOMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
