@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.948 2005/10/23 20:12:41 brad Exp 
+ *	OpenBSD: pcidevs,v 1.949 2005/10/23 23:59:00 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2939,6 +2939,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Cx5530 Video",
 	},
 	{
+	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9009,
+	    "DM9009",
+	},
+	{
 	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100,
 	    "DM9100",
 	},
@@ -2947,8 +2951,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DM9102",
 	},
 	{
-	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9009,
-	    "DM9009",
+	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9132,
+	    "DM9132",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,

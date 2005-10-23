@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.947 2005/10/23 20:09:10 brad Exp 
+ *	OpenBSD: pcidevs,v 1.949 2005/10/23 23:59:00 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -147,7 +147,7 @@
 #define	PCI_VENDOR_VIATECH	0x1106		/* VIA */
 #define	PCI_VENDOR_COGENT	0x1109		/* Cogent Data */
 #define	PCI_VENDOR_SIEMENS	0x110a		/* Siemens */
-vendir	ZNYX		0x110d	Znyx Networks
+#define	PCI_VENDOR_ZNYX	0x110d		/* Znyx Networks */
 #define	PCI_VENDOR_ACCTON	0x1113		/* Accton */
 #define	PCI_VENDOR_VORTEX	0x1119		/* Vortex */
 #define	PCI_VENDOR_EFFICIENTNETS	0x111a		/* Efficent Networks */
@@ -1156,9 +1156,10 @@ vendir	ZNYX		0x110d	Znyx Networks
 #define	PCI_PRODUCT_CYRIX_CX5530_VIDEO	0x0104		/* Cx5530 Video */
 
 /* Davicom Technologies */
+#define	PCI_PRODUCT_DAVICOM_DM9009	0x9009		/* DM9009 */
 #define	PCI_PRODUCT_DAVICOM_DM9100	0x9100		/* DM9100 */
 #define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* DM9102 */
-#define	PCI_PRODUCT_DAVICOM_DM9009	0x9009		/* DM9009 */
+#define	PCI_PRODUCT_DAVICOM_DM9132	0x9132		/* DM9132 */
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* 21050 PCI-PCI */
