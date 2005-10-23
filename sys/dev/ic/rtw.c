@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.41 2005/10/23 08:23:00 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.42 2005/10/23 08:47:14 reyk Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -242,6 +242,14 @@ void	 rtw_rf_hostbangbits(struct rtw_regs *, u_int32_t, int, u_int);
 void	 rtw_rf_rtl8225_hostbangbits(struct rtw_regs *, u_int32_t, int, u_int);
 int	 rtw_rf_macbangbits(struct rtw_regs *, u_int32_t);
 const char *rtw_rfchipid_string(int);
+
+u_int8_t rtw_read8(struct rtw_regs *, u_int32_t);
+u_int16_t rtw_read16(struct rtw_regs *, u_int32_t);
+u_int32_t rtw_read32(struct rtw_regs *, u_int32_t);
+void	 rtw_write8(struct rtw_regs *, u_int32_t, u_int8_t);
+void	 rtw_write16(struct rtw_regs *, u_int32_t, u_int16_t);
+void	 rtw_write32(struct rtw_regs *, u_int32_t, u_int32_t);
+void	 rtw_barrier(struct rtw_regs *, u_int32_t, u_int32_t, int);
 
 #ifdef RTW_DEBUG
 void	 rtw_print_txdesc(struct rtw_softc *, const char *,
@@ -3557,6 +3565,17 @@ rtw_attach(struct rtw_softc *sc)
 
 	NEXT_ATTACH_STATE(sc, DETACHED);
 
+	/* Use default DMA memory access */
+	if (sc->sc_regs.r_read8 == NULL) {
+		sc->sc_regs.r_read8 = rtw_read8;
+		sc->sc_regs.r_read16 = rtw_read16;
+		sc->sc_regs.r_read32 = rtw_read32;
+		sc->sc_regs.r_write8 = rtw_write8;
+		sc->sc_regs.r_write16 = rtw_write16;
+		sc->sc_regs.r_write32 = rtw_write32;
+		sc->sc_regs.r_barrier = rtw_barrier;
+	}
+
 	sc->sc_hwverid = RTW_READ(&sc->sc_regs, RTW_TCR) & RTW_TCR_HWVERID_MASK;
 	switch (sc->sc_hwverid) {
 	case RTW_TCR_HWVERID_RTL8185:
@@ -4781,4 +4800,48 @@ rtw_rf_macwrite(struct rtw_softc *sc, u_int addr, u_int32_t val)
 	}
 
 	return rtw_rf_macbangbits(&sc->sc_regs, reg);
+}
+
+
+u_int8_t
+rtw_read8(struct rtw_regs *regs, u_int32_t off)
+{
+	return (bus_space_read_1(regs->r_bt, regs->r_bh, off));
+}
+
+u_int16_t
+rtw_read16(struct rtw_regs *regs, u_int32_t off)
+{
+	return (bus_space_read_2(regs->r_bt, regs->r_bh, off));
+}
+
+u_int32_t
+rtw_read32(struct rtw_regs *regs, u_int32_t off)
+{
+	return (bus_space_read_4(regs->r_bt, regs->r_bh, off));
+}
+
+void
+rtw_write8(struct rtw_regs *regs, u_int32_t off, u_int8_t val)
+{
+	bus_space_write_1(regs->r_bt, regs->r_bh, off, val);
+}
+
+void
+rtw_write16(struct rtw_regs *regs, u_int32_t off, u_int16_t val)
+{
+	bus_space_write_2(regs->r_bt, regs->r_bh, off, val);
+}
+
+void
+rtw_write32(struct rtw_regs *regs, u_int32_t off, u_int32_t val)
+{
+	bus_space_write_4(regs->r_bt, regs->r_bh, off, val);
+}
+
+void
+rtw_barrier(struct rtw_regs *regs, u_int32_t reg0, u_int32_t reg1, int flags)
+{
+	bus_space_barrier(regs->r_bh, regs->r_bt, MIN(reg0, reg1),
+	    MAX(reg0, reg1) - MIN(reg0, reg1) + 4, flags);
 }

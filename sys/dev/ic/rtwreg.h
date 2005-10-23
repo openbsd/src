@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwreg.h,v 1.8 2005/10/23 08:14:37 jsg Exp $	*/
+/*	$OpenBSD: rtwreg.h,v 1.9 2005/10/23 08:47:14 reyk Exp $	*/
 /*	$NetBSD: rtwreg.h,v 1.12 2005/01/16 11:50:43 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -1118,22 +1118,22 @@ struct rtw_rxdesc {
 #define RTW_RXRSSI_SQ		BITS(7,0)	/* Barker code-lock quality */
 
 #define RTW_READ8(regs, ofs)						\
-	bus_space_read_1((regs)->r_bt, (regs)->r_bh, (ofs))
+	((*(regs)->r_read8)(regs, ofs))
 
 #define RTW_READ16(regs, ofs)						\
-	bus_space_read_2((regs)->r_bt, (regs)->r_bh, (ofs))
+	((*(regs)->r_read16)(regs, ofs))
 
 #define RTW_READ(regs, ofs)						\
-	bus_space_read_4((regs)->r_bt, (regs)->r_bh, (ofs))
+	((*(regs)->r_read32)(regs, ofs))
 
 #define RTW_WRITE8(regs, ofs, val)					\
-	bus_space_write_1((regs)->r_bt, (regs)->r_bh, (ofs), (val))
+	((*(regs)->r_write8)(regs, ofs, val))
 
 #define RTW_WRITE16(regs, ofs, val)					\
-	bus_space_write_2((regs)->r_bt, (regs)->r_bh, (ofs), (val))
+	((*(regs)->r_write16)(regs, ofs, val))
 
 #define RTW_WRITE(regs, ofs, val)					\
-	bus_space_write_4((regs)->r_bt, (regs)->r_bh, (ofs), (val))
+	((*(regs)->r_write32)(regs, ofs, val))
 
 #define	RTW_ISSET(regs, reg, mask)					\
 	(RTW_READ((regs), (reg)) & (mask))
@@ -1170,8 +1170,7 @@ struct rtw_rxdesc {
  * acceptable bus_space_barrier(9) for the flag definitions.
  */
 #define RTW_BARRIER(regs, reg0, reg1, flags)			\
-	bus_space_barrier((regs)->r_bh, (regs)->r_bt,		\
-	    MIN(reg0, reg1), MAX(reg0, reg1) - MIN(reg0, reg1) + 4, flags)
+	((*(regs)->r_barrier)(regs, reg0, reg1, flags))
 
 /*
  * Barrier convenience macros.
