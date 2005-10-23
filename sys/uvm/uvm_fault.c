@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.34 2005/05/03 11:52:35 mickey Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.35 2005/10/23 01:42:22 pedro Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ uvmfault_anonget(ufi, amap, anon)
  * => called from MD code to resolve a page fault
  * => VM data structures usually should be unlocked.   however, it is 
  *	possible to call here with the main map locked if the caller
- *	gets a write lock, sets it recusive, and then calls us (c.f.
+ *	gets a write lock, sets it recursive, and then calls us (c.f.
  *	uvm_map_pageable).   this should be avoided because it keeps
  *	the map locked off during I/O.
  */
