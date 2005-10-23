@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.42 2005/10/23 08:47:14 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.43 2005/10/23 12:57:42 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3558,12 +3558,12 @@ rtw_attach(struct rtw_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rtw_txsoft_blk *tsb;
 	struct rtw_mtbl *mtbl;
+	struct rtw_srom *sr;
 	const char *vername;
 	struct ifnet *ifp;
 	char scratch[sizeof("unknown 0xXXXXXXXX")];
 	int pri, rc, nrate;
 
-	NEXT_ATTACH_STATE(sc, DETACHED);
 
 	/* Use default DMA memory access */
 	if (sc->sc_regs.r_read8 == NULL) {
@@ -3604,10 +3604,8 @@ rtw_attach(struct rtw_softc *sc)
 	if (rc != 0) {
 		printf("\n%s: could not allocate hw descriptors, error %d\n",
 		     sc->sc_dev.dv_xname, rc);
-		goto err;
+		goto fail0;
 	}
-
-	NEXT_ATTACH_STATE(sc, FINISH_DESC_ALLOC);
 
 	rc = bus_dmamem_map(sc->sc_dmat, &sc->sc_desc_segs,
 	    sc->sc_desc_nsegs, sizeof(struct rtw_descs),
@@ -3616,9 +3614,8 @@ rtw_attach(struct rtw_softc *sc)
 	if (rc != 0) {
 		printf("\n%s: could not map hw descriptors, error %d\n",
 		    sc->sc_dev.dv_xname, rc);
-		goto err;
+		goto fail1;
 	}
-	NEXT_ATTACH_STATE(sc, FINISH_DESC_MAP);
 
 	rc = bus_dmamap_create(sc->sc_dmat, sizeof(struct rtw_descs), 1,
 	    sizeof(struct rtw_descs), 0, 0, &sc->sc_desc_dmamap);
@@ -3626,9 +3623,8 @@ rtw_attach(struct rtw_softc *sc)
 	if (rc != 0) {
 		printf("\n%s: could not create DMA map for hw descriptors, "
 		    "error %d\n", sc->sc_dev.dv_xname, rc);
-		goto err;
+		goto fail2;
 	}
-	NEXT_ATTACH_STATE(sc, FINISH_DESCMAP_CREATE);
 
 	sc->sc_rxdesc_blk.rdb_dmat = sc->sc_dmat;
 	sc->sc_rxdesc_blk.rdb_dmamap = sc->sc_desc_dmamap;
@@ -3644,17 +3640,13 @@ rtw_attach(struct rtw_softc *sc)
 	if (rc != 0) {
 		printf("\n%s: could not load DMA map for hw descriptors, "
 		    "error %d\n", sc->sc_dev.dv_xname, rc);
-		goto err;
+		goto fail3;
 	}
-	NEXT_ATTACH_STATE(sc, FINISH_DESCMAP_LOAD);
 
 	if (rtw_txsoft_blk_setup_all(sc) != 0)
-		goto err;
-	NEXT_ATTACH_STATE(sc, FINISH_TXCTLBLK_SETUP);
+		goto fail4;
 
 	rtw_txdesc_blk_setup_all(sc);
-
-	NEXT_ATTACH_STATE(sc, FINISH_TXDESCBLK_SETUP);
 
 	sc->sc_rxdesc_blk.rdb_desc = &sc->sc_descs->hd_rx[0];
 
@@ -3666,23 +3658,20 @@ rtw_attach(struct rtw_softc *sc)
 			printf("\n%s: could not load DMA map for "
 			    "hw tx descriptors, error %d\n",
 			    sc->sc_dev.dv_xname, rc);
-			goto err;
+			goto fail5;
 		}
 	}
 
-	NEXT_ATTACH_STATE(sc, FINISH_TXMAPS_CREATE);
 	if ((rc = rtw_rxdesc_dmamaps_create(sc->sc_dmat, &sc->sc_rxsoft[0],
 	    RTW_RXQLEN)) != 0) {
 		printf("\n%s: could not load DMA map for hw rx descriptors, "
 		    "error %d\n", sc->sc_dev.dv_xname, rc);
-		goto err;
+		goto fail6;
 	}
-	NEXT_ATTACH_STATE(sc, FINISH_RXMAPS_CREATE);
 
 	/* Reset the chip to a known state. */
 	if (rtw_reset(sc) != 0)
-		goto err;
-	NEXT_ATTACH_STATE(sc, FINISH_RESET);
+		goto fail7;
 
 	sc->sc_rcr = RTW_READ(&sc->sc_regs, RTW_RCR);
 
@@ -3691,14 +3680,12 @@ rtw_attach(struct rtw_softc *sc)
 
 	if (rtw_srom_read(&sc->sc_regs, sc->sc_flags, &sc->sc_srom,
 	    sc->sc_dev.dv_xname) != 0)
-		goto err;
-
-	NEXT_ATTACH_STATE(sc, FINISH_READ_SROM);
+		goto fail7;
 
 	if (rtw_srom_parse(sc) != 0) {
 		printf("\n%s: attach failed, malformed serial ROM\n",
 		    sc->sc_dev.dv_xname);
-		goto err;
+		goto fail8;
 	}
 
 	RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: %s PHY\n", sc->sc_dev.dv_xname,
@@ -3707,15 +3694,11 @@ rtw_attach(struct rtw_softc *sc)
 	RTW_DPRINTF(RTW_DEBUG_ATTACH, ("%s: CS threshold %u\n",
 	    sc->sc_dev.dv_xname, sc->sc_csthr));
 
-	NEXT_ATTACH_STATE(sc, FINISH_PARSE_SROM);
-
 	if ((rtw_rf_attach(sc, sc->sc_rfchipid)) != 0) {
 		printf("\n%s: attach failed, could not attach RF\n",
 		    sc->sc_dev.dv_xname);
-		goto err;
+		goto fail8;
 	}
-
-	NEXT_ATTACH_STATE(sc, FINISH_RF_ATTACH);
 
 	sc->sc_phydelay = rtw_check_phydelay(&sc->sc_regs, sc->sc_rcr);
 
@@ -3731,8 +3714,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	if (rtw_identify_sta(&sc->sc_regs, &sc->sc_ic.ic_myaddr,
 	    sc->sc_dev.dv_xname) != 0)
-		goto err;
-	NEXT_ATTACH_STATE(sc, FINISH_ID_STA);
+		goto fail8;
 
 	ifp = &sc->sc_if;
 	(void)memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
@@ -3804,77 +3786,57 @@ rtw_attach(struct rtw_softc *sc)
 
 	rtw_establish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname, (void*)sc);
 
-	NEXT_ATTACH_STATE(sc, FINISHED);
-
 	return;
-err:
-	rtw_detach(sc);
+
+fail8:
+	sr = &sc->sc_srom;
+	sr->sr_size = 0;
+	if (sr->sr_content != NULL) {
+		free(sr->sr_content, M_DEVBUF);
+		sr->sr_content = NULL;
+	}
+
+fail7:
+	rtw_rxdesc_dmamaps_destroy(sc->sc_dmat, &sc->sc_rxsoft[0],
+	    RTW_RXQLEN);
+
+fail6:
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		rtw_txdesc_dmamaps_destroy(sc->sc_dmat,
+		    sc->sc_txsoft_blk[pri].tsb_desc,
+		    sc->sc_txsoft_blk[pri].tsb_ndesc);
+	}
+
+fail5:
+	rtw_txsoft_blk_cleanup_all(sc);
+
+fail4:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_desc_dmamap);
+fail3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_desc_dmamap);
+fail2:
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_descs,
+	    sizeof(struct rtw_descs));
+fail1:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_desc_segs,
+	    sc->sc_desc_nsegs);
+fail0:
 	return;
 }
 
 int
 rtw_detach(struct rtw_softc *sc)
 {
-	int pri;
-	struct rtw_srom *sr;
-
 	sc->sc_flags |= RTW_F_INVALID;
 
-	switch (sc->sc_attach_state) {
-	case FINISHED:
-		rtw_stop(&sc->sc_if, 1);
+	rtw_stop(&sc->sc_if, 1);
 
-		rtw_disestablish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname,
-		    (void*)sc);
-		timeout_del(&sc->sc_scan_to);
-		ieee80211_ifdetach(&sc->sc_if);
-		if_detach(&sc->sc_if);
-		break;
-	case FINISH_ID_STA:
-	case FINISH_RF_ATTACH:
-	case FINISH_PARSE_SROM:
-	case FINISH_READ_SROM:
-		sr = &sc->sc_srom;
-		sr->sr_size = 0;
-		if (sr->sr_content != NULL) {
-			free(sr->sr_content, M_DEVBUF);
-			sr->sr_content = NULL;
-		}
-		/*FALLTHROUGH*/
-	case FINISH_RESET:
-	case FINISH_RXMAPS_CREATE:
-		rtw_rxdesc_dmamaps_destroy(sc->sc_dmat, &sc->sc_rxsoft[0],
-		    RTW_RXQLEN);
-		/*FALLTHROUGH*/
-	case FINISH_TXMAPS_CREATE:
-		for (pri = 0; pri < RTW_NTXPRI; pri++) {
-			rtw_txdesc_dmamaps_destroy(sc->sc_dmat,
-			    sc->sc_txsoft_blk[pri].tsb_desc,
-			    sc->sc_txsoft_blk[pri].tsb_ndesc);
-		}
-		/*FALLTHROUGH*/
-	case FINISH_TXDESCBLK_SETUP:
-	case FINISH_TXCTLBLK_SETUP:
-		rtw_txsoft_blk_cleanup_all(sc);
-		/*FALLTHROUGH*/
-	case FINISH_DESCMAP_LOAD:
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_desc_dmamap);
-		/*FALLTHROUGH*/
-	case FINISH_DESCMAP_CREATE:
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_desc_dmamap);
-		/*FALLTHROUGH*/
-	case FINISH_DESC_MAP:
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_descs,
-		    sizeof(struct rtw_descs));
-		/*FALLTHROUGH*/
-	case FINISH_DESC_ALLOC:
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_desc_segs,
-		    sc->sc_desc_nsegs);
-		/*FALLTHROUGH*/
-	case DETACHED:
-		NEXT_ATTACH_STATE(sc, DETACHED);
-		break;
-	}
+	rtw_disestablish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname,
+	    (void*)sc);
+	timeout_del(&sc->sc_scan_to);
+	ieee80211_ifdetach(&sc->sc_if);
+	if_detach(&sc->sc_if);
+
 	return 0;
 }
 

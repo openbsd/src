@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.16 2005/10/23 08:47:14 reyk Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.17 2005/10/23 12:57:43 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -81,12 +81,6 @@ extern int rtw_debug;
 		if (!(__cond))		\
 			panic __msg ;	\
 	} while (0)
-
-#define NEXT_ATTACH_STATE(sc, state) do {			\
-	DPRINTF(sc, RTW_DEBUG_ATTACH,				\
-	    ("%s: attach state %s\n", __func__, #state));	\
-	sc->sc_attach_state = state;				\
-} while (0)
 
 enum rtw_locale {
 	RTW_LOCALE_USA = 0,
@@ -283,12 +277,6 @@ struct rtw_tx_radiotap_header {
 	u_int16_t				rt_chan_flags;
 } __attribute__((__packed__));
 
-enum rtw_attach_state {FINISHED, FINISH_DESCMAP_LOAD, FINISH_DESCMAP_CREATE,
-	FINISH_DESC_MAP, FINISH_DESC_ALLOC, FINISH_RXMAPS_CREATE,
-	FINISH_TXMAPS_CREATE, FINISH_RESET, FINISH_READ_SROM, FINISH_PARSE_SROM,
-	FINISH_RF_ATTACH, FINISH_ID_STA, FINISH_TXDESCBLK_SETUP,
-	FINISH_TXCTLBLK_SETUP, DETACHED};
-
 struct rtw_hooks {
 	void			*rh_shutdown;	/* shutdown hook */
 	void			*rh_power;	/* power management hook */
@@ -362,7 +350,6 @@ struct rtw_softc {
 	bus_dma_tag_t		sc_dmat;
 	u_int32_t		sc_flags;
 
-	enum rtw_attach_state	sc_attach_state;
 	int			sc_rfchipid;
 	enum rtw_locale		sc_locale;
 	u_int8_t		sc_phydelay;
