@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.2 2005/10/23 04:07:06 joris Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.3 2005/10/23 04:25:34 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -138,6 +138,11 @@ rcsmerge_main(int argc, char **argv)
 				cvs_log(LP_ERR, "failed to write new file");
 
 			cvs_buf_free(bp);
+		}
+
+		if (diff3_conflicts > 0) {
+			cvs_log(LP_WARN, "%d conflict%s found during merge",
+			    diff3_conflicts, (diff3_conflicts > 1) ? "s": "");
 		}
 
 		rcs_close(file);
