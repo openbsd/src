@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.7 2005/08/05 03:07:41 dlg Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.8 2005/10/23 13:52:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -30,13 +30,13 @@
 
 /* Sensor types */
 enum sensor_type {
-	SENSOR_TEMP,			/* temperature */
+	SENSOR_TEMP,			/* temperature (muK) */
 	SENSOR_FANRPM,			/* fan revolution speed */
-	SENSOR_VOLTS_DC,		/* voltage */
-	SENSOR_VOLTS_AC,		/* voltage (alternating-current) */
+	SENSOR_VOLTS_DC,		/* voltage (muV DC) */
+	SENSOR_VOLTS_AC,		/* voltage (muV AC) */
 	SENSOR_OHMS,			/* resistance */
 	SENSOR_WATTS,			/* power */
-	SENSOR_AMPS,			/* current */
+	SENSOR_AMPS,			/* current (muA) */
 	SENSOR_WATTHOUR,		/* power capacity */
 	SENSOR_AMPHOUR,			/* power capacity */
 	SENSOR_INDICATOR,		/* boolean indicator */
