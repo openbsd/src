@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.59 2005/07/31 03:52:18 pascoe Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.60 2005/10/23 14:07:11 mpf Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -677,6 +677,16 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	if ((error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi)) != 0)
 		return (error);
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ac, enm);
+	if (enm == NULL)
+		return (EINVAL);
+
+	LIST_FOREACH(mc, &ifv->vlan_mc_listhead, mc_entries)
+		if (mc->mc_enm == enm)
+			break;
+
+	/* We won't delete entries we didn't add */
+	if (mc == NULL)
+		return (EINVAL);
 
 	error = ether_delmulti(ifr, (struct arpcom *)&ifv->ifv_ac);
 	if (error != ENETRESET)
@@ -686,15 +696,8 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
 	if (error == 0) {
 		/* And forget about this address. */
-		for (mc = LIST_FIRST(&ifv->vlan_mc_listhead); mc != NULL;
-		    mc = LIST_NEXT(mc, mc_entries)) {
-			if (mc->mc_enm == enm) {
-				LIST_REMOVE(mc, mc_entries);
-				FREE(mc, M_DEVBUF);
-				break;
-			}
-		}
-		KASSERT(mc != NULL);
+		LIST_REMOVE(mc, mc_entries);
+		FREE(mc, M_DEVBUF);
 	} else
 		(void)ether_addmulti(ifr, (struct arpcom *)&ifv->ifv_ac);
 	return (error);

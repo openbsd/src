@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.9 2005/10/09 18:45:27 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.10 2005/10/23 14:07:11 mpf Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -757,6 +757,16 @@ trunk_ether_delmulti(struct trunk_softc *tr, struct ifreq *ifr)
 	if ((error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi)) != 0)
 		return (error);
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, &tr->tr_ac, enm);
+	if (enm == NULL)
+		return (EINVAL);
+
+	SLIST_FOREACH(mc, &tr->tr_mc_head, mc_entries)
+		if (mc->mc_enm == enm)
+			break;
+
+	/* We won't delete entries we didn't add */
+	if (mc == NULL)
+		return (EINVAL);
 
 	if ((error = ether_delmulti(ifr, &tr->tr_ac)) != ENETRESET)
 		return (error);
@@ -770,13 +780,8 @@ trunk_ether_delmulti(struct trunk_softc *tr, struct ifreq *ifr)
 		}
 	}
 
-	SLIST_FOREACH(mc, &tr->tr_mc_head, mc_entries) {
-		if (mc->mc_enm == enm) {
-			SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
-			free(mc, M_DEVBUF);
-			break;
-		}
-	}
+	SLIST_REMOVE(&tr->tr_mc_head, mc, trunk_mc, mc_entries);
+	free(mc, M_DEVBUF);
 
 	return (0);
 }
