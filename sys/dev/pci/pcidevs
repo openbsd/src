@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.948 2005/10/23 20:12:41 brad Exp $
+$OpenBSD: pcidevs,v 1.949 2005/10/23 23:59:00 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1151,9 +1151,10 @@ product CYRIX CX5530_AUDIO	0x0103	Cx5530 XpressAUDIO
 product CYRIX CX5530_VIDEO	0x0104	Cx5530 Video
 
 /* Davicom Technologies */
+product DAVICOM DM9009		0x9009	DM9009
 product DAVICOM DM9100		0x9100	DM9100
 product DAVICOM DM9102		0x9102	DM9102
-product DAVICOM DM9009		0x9009	DM9009
+product DAVICOM DM9132		0x9132	DM9132
 
 /* DEC products */
 product DEC 21050		0x0001	21050 PCI-PCI
