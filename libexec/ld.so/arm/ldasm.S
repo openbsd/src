@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2004/05/25 15:56:18 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.5 2005/10/23 06:04:03 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -29,7 +29,7 @@
 #define DL_DATA_SIZE	(16 * 4)	/* XXX */
 #include <machine/asm.h>
 #include <sys/syscall.h>
-#include <arm/swi.h>
+#include <SYS.h>
 
 ENTRY(_dl_start)
 	mov	fp, sp
@@ -86,7 +86,7 @@ ENTRY(_dl_bind_start)
 	.global		__CONCAT(_dl_,n)		;\
 	.type		__CONCAT(_dl_,n)%function	;\
 __CONCAT(_dl_,n):					;\
-	swi	SWI_OS_NETBSD|__CONCAT(SYS_,c)		;\
+	SYSTRAP(c)					;\
 	bcs	.L_cerr					;\
 	mov	pc, lr
 
@@ -98,7 +98,7 @@ DL_SYSCALL(close)
 	.global		_dl_exit
 	.type		_dl_exit%function
 _dl_exit:
-	swi	SWI_OS_NETBSD|SYS_exit
+	SYSTRAP(exit)
 	1:
 		b 1b
 
@@ -123,7 +123,7 @@ _dl_sigprocmask:
 	moveq	r0, #1
 	moveq	r1, #0
 	ldrne	r1, [r1]
-	swi	SWI_OS_NETBSD|SYS_sigprocmask
+	SYSTRAP(sigprocmask)
 	bcs	.L_cerr
 	teq	r2, #0
 	strne	r0, [r2]
