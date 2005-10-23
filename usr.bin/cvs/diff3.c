@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.3 2005/10/23 04:03:58 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.4 2005/10/23 04:24:59 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.3 2005/10/23 04:03:58 joris Exp $";
+static const char rcsid[] = "$OpenBSD: diff3.c,v 1.4 2005/10/23 04:24:59 joris Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -158,6 +158,8 @@ static void separate(const char *);
 static void increase(void);
 static int diff3_internal(int, char **, const char *, const char *);
 
+int	diff3_conflicts = 0;
+
 BUF *
 cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 {
@@ -174,15 +176,14 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	rcsnum_tostr(rev1, r1, sizeof(r1));
 	rcsnum_tostr(rev2, r2, sizeof(r2));
 
-	cvs_printf("merging changes between '%s' and '%s'", r1, r2);
-	cvs_printf(" into '%s'\n", workfile);
-
 	if ((b1 = cvs_buf_load(workfile, BUF_AUTOEXT)) == NULL)
 		goto out;
 
+	cvs_printf("Retrieving revision %s\n", r1);
 	if ((b2 = rcs_getrev(rf, rev1)) == NULL)
 		goto out;
 
+	cvs_printf("Retrieving revision %s\n", r2);
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
 
@@ -234,7 +235,7 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	argv[argc++] = path1;
 	argv[argc++] = path2;
 	argv[argc++] = path3;
-	if ((ret = diff3_internal(argc, argv, workfile, r2)) < 0)
+	if ((diff3_conflicts = diff3_internal(argc, argv, workfile, r2)) < 0)
 		goto out;
 
 	if (cvs_buf_putc(diffb, '\0') < 0) {
@@ -250,6 +251,9 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	patch = cvs_buf_release(diffb);
 	data = cvs_buf_release(b1);
 	diffb = b1 = NULL;
+
+	cvs_printf("Merging changes between '%s' and '%s' ", r1, r2);
+	cvs_printf("into '%s'\n", workfile);
 
 	if ((diffb = cvs_patchfile(data, patch, ed_patch_lines)) == NULL)
 		goto out;
