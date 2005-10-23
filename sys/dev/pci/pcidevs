@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.947 2005/10/23 20:09:10 brad Exp $
+$OpenBSD: pcidevs,v 1.948 2005/10/23 20:12:41 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ vendor	SIGMA		0x1105	Sigma Designs
 vendor	VIATECH		0x1106	VIA
 vendor	COGENT		0x1109	Cogent Data
 vendor	SIEMENS		0x110a	Siemens
-vendir	ZNYX		0x110d	Znyx Networks
+vendor	ZNYX		0x110d	Znyx Networks
 vendor	ACCTON		0x1113	Accton
 vendor	VORTEX		0x1119	Vortex
 vendor	EFFICIENTNETS	0x111a	Efficent Networks
