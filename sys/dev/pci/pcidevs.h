@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.946 2005/10/22 22:59:05 brad Exp 
+ *	OpenBSD: pcidevs,v 1.947 2005/10/23 20:09:10 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -147,6 +147,7 @@
 #define	PCI_VENDOR_VIATECH	0x1106		/* VIA */
 #define	PCI_VENDOR_COGENT	0x1109		/* Cogent Data */
 #define	PCI_VENDOR_SIEMENS	0x110a		/* Siemens */
+vendir	ZNYX		0x110d	Znyx Networks
 #define	PCI_VENDOR_ACCTON	0x1113		/* Accton */
 #define	PCI_VENDOR_VORTEX	0x1119		/* Vortex */
 #define	PCI_VENDOR_EFFICIENTNETS	0x111a		/* Efficent Networks */
