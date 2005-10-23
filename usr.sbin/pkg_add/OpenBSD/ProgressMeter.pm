@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.6 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.7 2005/10/23 10:03:23 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -24,6 +24,7 @@ my $header;
 my $lastdisplay = '';
 my $isatty;
 my $enabled = 0;
+my $continued = 0;
 
 # unless we know better
 my $width;
@@ -80,6 +81,9 @@ sub set_header
 			find_window_size();
 			compute_playfield();
 		};
+		$SIG{'CONT'} = sub {
+			$continued = 1;
+		};
 	}
 	return $isatty;
 }
@@ -94,8 +98,9 @@ sub message
 	} else {
 		$d = $header;
 	}
-	return if $d eq $lastdisplay;
+	return if $d eq $lastdisplay && !$continued;
 	$lastdisplay=$d;
+	$continued = 0;
 	print STDERR $d, "\r";
 }
 
