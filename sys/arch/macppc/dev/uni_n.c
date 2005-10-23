@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.10 2005/09/26 19:53:41 kettenis Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.11 2005/10/23 16:50:30 drahn Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn.
@@ -34,13 +34,18 @@
 
 #include <dev/ofw/openfirm.h>
 
-static int	memcmatch(struct device *, void *, void *);
-static void	memcattach(struct device *, struct device *, void *);
-
 struct memc_softc {
 	struct device sc_dev;
 	char *baseaddr;
+	struct ppc_bus_space sc_membus_space;
+
 };
+
+int	memcmatch(struct device *, void *, void *);
+void	memcattach(struct device *, struct device *, void *);
+void	memc_attach_children(struct memc_softc *sc, int memc_node);
+int	memc_print(void *aux, const char *name);
+
 /* Driver definition */
 struct cfdriver memc_cd = {
 	NULL, "memc", DV_DULL
@@ -66,7 +71,7 @@ memcmatch(struct device *parent, void *cf, void *aux)
 	return 0;
 }
 
-static void
+void
 memcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
@@ -82,6 +87,56 @@ memcattach(struct device *parent, struct device *self, void *aux)
 		sc->baseaddr = uni_n_config(ca->ca_node);
 
 	printf (": %s\n", name);
+
+	if (strcmp(name, "u3") == 0)
+		memc_attach_children(sc, ca->ca_node);
+}
+
+void
+memc_attach_children(struct memc_softc *sc, int memc_node)
+{
+	struct confargs ca;
+	int node, namelen;
+	u_int32_t reg[20];
+	int32_t	intr[8];
+	char	name[32];
+
+        sc->sc_membus_space.bus_base = ca.ca_baseaddr;
+
+	ca.ca_iot = &sc->sc_membus_space;
+	ca.ca_dmat = 0; /* XXX */
+	ca.ca_baseaddr = 0; /* XXX */
+	sc->sc_membus_space.bus_base = ca.ca_baseaddr;
+
+        for (node = OF_child(memc_node); node; node = OF_peer(node)) {
+		namelen = OF_getprop(node, "name", name, sizeof(name));
+		if (namelen < 0)
+			continue;
+		if (namelen >= sizeof(name))
+			continue;
+		name[namelen] = 0;
+
+		ca.ca_name = name;
+		ca.ca_node = node;
+		ca.ca_nreg  = OF_getprop(node, "reg", reg, sizeof(reg));
+		ca.ca_reg = reg;
+		ca.ca_nintr = 0; /* XXX */
+		ca.ca_intr = intr; /* XXX */
+
+		config_found((struct device *)sc, &ca, memc_print);
+	}
+}
+
+int
+memc_print(void *aux, const char *name)
+{
+	struct confargs *ca = aux;
+	/* we dont want extra stuff printing */
+	if (name)
+		printf("%s at %s", ca->ca_name, name);
+	if (ca->ca_nreg > 0)
+		printf(" offset 0x%x", ca->ca_reg[0]);
+	return UNCONF;
 }
 
 void *
