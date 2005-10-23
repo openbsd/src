@@ -1,4 +1,4 @@
-/*	$OpenBSD: macgpio.c,v 1.1 2005/05/04 02:24:17 drahn Exp $	*/
+/*	$OpenBSD: macgpio.c,v 1.2 2005/10/23 16:43:42 drahn Exp $	*/
 /*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
 
 /*-
@@ -129,8 +129,8 @@ macgpio_attach(struct device *parent, struct device *self, void *aux)
 int
 macgpio_print(void *aux, const char *gpio)
 {
+#ifdef MACGPIOVERBOSE
 	struct confargs *ca = aux;
-
 	if (gpio)
 		printf("%s at %s", ca->ca_name, gpio);
 
@@ -138,6 +138,9 @@ macgpio_print(void *aux, const char *gpio)
 		printf(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
+#else
+	return QUIET;
+#endif
 }
 
 int
