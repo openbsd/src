@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.1 2005/10/22 17:32:57 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.2 2005/10/23 03:47:12 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.1 2005/10/22 17:32:57 joris Exp $";
+static const char rcsid[] = "$OpenBSD: diff3.c,v 1.2 2005/10/23 03:47:12 joris Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -127,7 +127,7 @@ static struct diff *d23;
  */
 static struct diff *de;
 static char *overlap;
-static int overlapcnt;
+static int overlapcnt = 0;
 static FILE *fp[3];
 static int cline[3];		/* # of the last-read line in each file (0-2) */
 
@@ -328,14 +328,19 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 				return (-1);
 		} else if (op == 'c') {
 			if ((start > dlines->l_nblines) ||
-			    (start < 0) || (*ep != ','))
+			    (start < 0) || ((*ep != ',') && (*ep != 'c')))
 				return (-1);
 
-			ep++;
-			end = (int)strtol(ep, &ep, 10);
-			if ((end < 0) || (*ep != 'c'))
-				return (-1);
+			if (*ep == ',') {
+				ep++;
+				end = (int)strtol(ep, &ep, 10);
+				if ((end < 0) || (*ep != 'c'))
+					return (-1);
+			} else {
+				end = start;
+			}
 		}
+
 
 		for (;;) {
 			if (dlp == NULL)
@@ -355,12 +360,14 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 		if (dlp == NULL)
 			return (-1);
 
+
 		if (op == 'c') {
-			for (i = start; i <= end; i++) {
+			for (i = 0; i <= (end - start); i++) {
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);
 				dlp = ndlp;
 			}
+			dlp = TAILQ_PREV(dlp, cvs_tqh, l_list);
 		}
 
 		if (op == 'a' || op == 'c') {
@@ -747,7 +754,7 @@ static int
 edscript(int n)
 {
 	int j, k;
-	char block[BUFSIZ];
+	char block[BUFSIZ+1];
 
 	for (n = n; n > 0; n--) {
 		if (!oflag || !overlap[n])
@@ -762,6 +769,7 @@ edscript(int n)
 			block[j] = '\0';
 			diff_output("%s", block);
 		}
+
 		if (!oflag || !overlap[n])
 			diff_output(".\n");
 		else {
