@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.3 2005/10/23 04:25:34 joris Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.4 2005/10/23 11:04:26 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -100,7 +100,7 @@ rcsmerge_main(int argc, char **argv)
 	}
 
 	if (baserev == RCS_HEAD_REV) {
-		cvs_log(LP_ERR, "missing base revision");
+		cvs_log(LP_ERR, "no base revision number given");
 		(usage)();
 		exit(1);
 	}
