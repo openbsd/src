@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.37 2005/09/21 21:08:34 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.38 2005/10/24 19:28:29 miod Exp $
 #
 maxpartitions 16
 
@@ -73,18 +73,18 @@ file	dev/cninit.c
 file	arch/mvme88k/mvme88k/autoconf.c
 file	arch/mvme88k/mvme88k/bus_dma.c
 file	arch/mvme88k/mvme88k/conf.c
-file	arch/mvme88k/mvme88k/m8820x.c			m88100
-file	arch/mvme88k/mvme88k/m88110.c			m88110
+file	arch/mvme88k/mvme88k/db_machdep.c		ddb
 file	arch/mvme88k/mvme88k/disksubr.c
 file	arch/mvme88k/mvme88k/eh.S
 file	arch/mvme88k/mvme88k/machdep.c
 file	arch/mvme88k/mvme88k/m187_machdep.c		mvme187
 file	arch/mvme88k/mvme88k/m188_machdep.c		mvme188
 file	arch/mvme88k/mvme88k/m197_machdep.c		mvme197
+file	arch/mvme88k/mvme88k/m88110.c			m88110
+file	arch/mvme88k/mvme88k/m8820x.c			m88100
 file	arch/mvme88k/mvme88k/mem.c
 file	arch/mvme88k/mvme88k/pmap_bootstrap.c
 file	arch/mvme88k/mvme88k/pmap_table.c
-file	arch/mvme88k/ddb/db_interface.c			ddb
 file	arch/mvme88k/dev/bugio.c
 file	arch/mvme88k/dev/mainbus.c
 file	arch/mvme88k/dev/memdevs.c			nvram | sram
