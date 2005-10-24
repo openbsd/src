@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.30 2005/10/24 10:10:26 espie Exp $
+# $OpenBSD: Delete.pm,v 1.31 2005/10/24 10:19:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -261,6 +261,28 @@ sub realname
 	return $state->{destdir}.$name;
 }
 
+sub do_not_delete
+{
+	my ($self, $state) = @_;
+
+	my $realname = $self->realname($state);
+	$state->{baddelete} = 1;
+	$self->{stillaround} = 1;
+
+	delete $self->{symlink};
+	delete $self->{link};
+	delete $self->{md5};
+
+	if (-l $realname) {
+		$self->{symlink} = readlink $realname;
+	} elsif (-f _) {
+		$self->{md5} = OpenBSD::md5::fromfile($realname);
+	} elsif (-d _) {
+		# what should we do ?
+	}
+}
+
+
 package OpenBSD::PackingElement::DirlikeObject;
 sub mark_dir
 {
@@ -369,26 +391,18 @@ sub delete
 			my $contents = readlink $realname;
 			if ($contents ne $self->{symlink}) {
 				print "Symlink does not match: $realname ($contents vs. ", $self->{symlink},")\n";
-				$self->{stillaround} = 1;
-				$self->{symlink} = $contents;
-				$state->{baddelete} = 1;
+				$self->do_not_delete($state);
 				return;
 			}
 		} else  {
 			print "Bogus symlink: $realname\n";
-			if (-f $realname) {
-				delete $self->{symlink};
-				$self->{md5} = OpenBSD::md5::fromfile($realname);
-				$self->{stillaround} = 1;
-			}
-			$state->{baddelete} = 1;
+			$self->do_not_delete($state);
 			return;
 		}
 	} else {
 		if (-l $realname) {
 				print "Unexpected symlink: $realname\n";
-				$self->{stillaround} = 1;
-				$state->{baddelete} = 1;
+				$self->do_not_delete($state);
 		} else {
 			if (! -f $realname) {
 				print "File $realname does not exist\n";
@@ -408,9 +422,7 @@ sub delete
 						$self->fullname(), "\n";
 					print "NOT deleting: $realname\n";
 					$state->print("Couldn't delete $realname (bad md5)\n");
-					$self->{stillaround} = 1;
-					$self->{md5} = $md5;
-					$state->{baddelete} = 1;
+					$self->do_not_delete($state);
 					return;
 				}
 			}
