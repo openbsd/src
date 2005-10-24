@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.209 2005/10/24 07:16:35 espie Exp $
+# $OpenBSD: pkg_add,v 1.210 2005/10/24 08:55:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -650,6 +650,7 @@ sub find_updates
 	my $hash = available_stems($state);
 
 	for my $pkgname (@list) {
+		next if $pkgname =~ m/^\.libs-/;
 		my $stem = OpenBSD::PackageName::splitstem($pkgname);
 		my @l = $hash->findstem($stem);
 		if (@l == 0) {
@@ -860,7 +861,7 @@ my @todo = ();
 
 if ($opt_u) {
 	if (@ARGV == 0) {
-		@ARGV = sort(installed_packages(1));
+		@ARGV = sort(installed_packages());
 		$state->{full_update} = 1;
 	}
 	my @cantupdate = find_updates(\@ARGV, \@todo, $state);
