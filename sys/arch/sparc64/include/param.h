@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.18 2005/09/12 23:05:06 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.19 2005/10/24 19:07:40 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -213,11 +213,6 @@ extern int nbpg, pgofset, pgshift;
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define sparc64_btop(x)	((unsigned long)(x) >> PGSHIFT)
 
 /*
  * dvmamap manages a range of DVMA addresses intended to create double

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.76 2005/07/09 22:51:13 robert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.77 2005/10/24 19:07:40 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1638,7 +1638,7 @@ _bus_dmamem_mmap(t, t0, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (sparc64_btop((caddr_t)segs[i].ds_addr + off));
+		return (atop((caddr_t)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */
