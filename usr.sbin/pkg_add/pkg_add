@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.208 2005/10/22 17:44:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.209 2005/10/24 07:16:35 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -860,7 +860,7 @@ my @todo = ();
 
 if ($opt_u) {
 	if (@ARGV == 0) {
-		@ARGV = sort(installed_packages());
+		@ARGV = sort(installed_packages(1));
 		$state->{full_update} = 1;
 	}
 	my @cantupdate = find_updates(\@ARGV, \@todo, $state);
