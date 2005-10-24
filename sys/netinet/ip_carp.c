@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.110 2005/09/29 19:39:41 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.111 2005/10/24 14:31:26 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -435,31 +435,11 @@ carp_proto_input(struct mbuf *m, ...)
 		return;
 	}
 
-	iplen = ip->ip_hl << 2;
-
-	if (m->m_pkthdr.len < iplen + sizeof(*ch)) {
-		carpstats.carps_badlen++;
-		CARP_LOG(sc, ("received len %d < %d on %s",
-		    m->m_len - sizeof(struct ip), sizeof(*ch),
-		    m->m_pkthdr.rcvif->if_xname));
-		m_freem(m);
-		return;
-	}
-
-	if (iplen + sizeof(*ch) < m->m_len) {
-		if ((m = m_pullup2(m, iplen + sizeof(*ch))) == NULL) {
-			carpstats.carps_hdrops++;
-			/* CARP_LOG ? */
-			return;
-		}
-		ip = mtod(m, struct ip *);
-	}
-	ch = (void *)ip + iplen;
-
 	/*
 	 * verify that the received packet length is
 	 * equal to the CARP header
 	 */
+	iplen = ip->ip_hl << 2;
 	len = iplen + sizeof(*ch);
 	if (len > m->m_pkthdr.len) {
 		carpstats.carps_badlen++;
