@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.16 2005/10/21 02:10:34 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.17 2005/10/24 21:42:34 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -166,13 +166,6 @@ POSSIBILITY OF SUCH DAMAGE.
  *   conditions.
  */
 #define EM_RADV                         64
-
-/*
- * This parameter controls the maximum no of times the driver will loop
- * in the isr.
- *           Minimum Value = 1
- */
-#define EM_MAX_INTR                     3
 
 /*
  * This parameter controls the duration of transmit watchdog timer.

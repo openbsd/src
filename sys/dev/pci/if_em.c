@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.80 2005/10/21 02:10:34 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.81 2005/10/24 21:42:34 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -714,44 +714,52 @@ em_init(void *arg)
 int 
 em_intr(void *arg)
 {
-	u_int32_t	loop_cnt = EM_MAX_INTR;
-	u_int32_t	reg_icr;
-	struct ifnet	*ifp;
 	struct em_softc  *sc = arg;
-	int s;
+	struct ifnet	*ifp;
+	u_int32_t	reg_icr;
+	int s, claimed = 0, wantinit = 0;
 
 	s = splnet();
 
 	ifp = &sc->interface_data.ac_if;
 
-	reg_icr = E1000_READ_REG(&sc->hw, ICR);
-	if (!reg_icr) {
-		splx(s);
-		return (0);
-	}
+	for (;;) {
+		reg_icr = E1000_READ_REG(&sc->hw, ICR);
+		if (reg_icr == 0)
+			break;
 
-	/* Link status change */
-	if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
-		timeout_del(&sc->timer_handle);
-		sc->hw.get_link_status = 1;
-		em_check_for_link(&sc->hw);
-		em_update_link_status(sc);
-		timeout_add(&sc->timer_handle, hz); 
-	}
+		claimed = 1;
 
-	while (loop_cnt > 0) {
 		if (ifp->if_flags & IFF_RUNNING) {
 			em_process_receive_interrupts(sc, -1);
 			em_clean_transmit_interrupts(sc);
 		}
-		loop_cnt--;
-	}
 
-	if (ifp->if_flags & IFF_RUNNING && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		/* Link status change */
+		if (reg_icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC)) {
+			timeout_del(&sc->timer_handle);
+			sc->hw.get_link_status = 1;
+			em_check_for_link(&sc->hw);
+			em_update_link_status(sc);
+			timeout_add(&sc->timer_handle, hz); 
+		}
+
+		if (reg_icr & E1000_ICR_RXO) {
+			ifp->if_ierrors++;
+			wantinit = 1;
+		}
+	}
+#if 0
+	if (wantinit)
+		em_init(sc);
+#endif
+
+	if (ifp->if_flags & IFF_RUNNING &&
+	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		em_start(ifp);
 
 	splx(s);
-	return (1);
+	return (claimed);
 }
 
 /*********************************************************************

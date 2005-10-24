@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.9 2005/10/07 23:24:42 brad Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.10 2005/10/24 21:42:34 brad Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 /* if_em_hw.h
  * Structures, enums, and macros for the MAC
@@ -564,6 +564,7 @@ uint8_t em_arc_subsystem_valid(struct em_hw *hw);
     E1000_IMS_TXDW   |    \
     E1000_IMS_RXDMT0 |    \
     E1000_IMS_RXSEQ  |    \
+    E1000_IMS_RXO    |    \
     E1000_IMS_LSC)
 
 /* Number of high/low register pairs in the RAR. The RAR (Receive Address
