@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.10 2005/09/11 18:17:08 mickey Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.11 2005/10/24 00:40:06 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -119,32 +119,21 @@ rl_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_size_t iosize;
-	u_int32_t command;
-
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-#ifdef RL_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable i/o ports\n");
-		return;
-	}
+	bus_size_t size;
 
 	/*
 	 * Map control/status registers.
 	 */
+
+#ifdef RL_USEIOSPACE
 	if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)) {
+	    &sc->rl_btag, &sc->rl_bhandle, NULL, &size, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
 	if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)){
+	    &sc->rl_btag, &sc->rl_bhandle, NULL, &size, 0)){
 		printf(": can't map mem space\n");
 		return;
 	}
@@ -155,7 +144,7 @@ rl_pci_attach(parent, self, aux)
 	 */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, iosize);
+		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, size);
 		return;
 	}
 
@@ -167,7 +156,7 @@ rl_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, iosize);
+		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, size);
 		return;
 	}
 	printf(": %s", intrstr);
