@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.29 2005/10/24 09:50:51 espie Exp $
+# $OpenBSD: Delete.pm,v 1.30 2005/10/24 10:10:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -100,25 +100,9 @@ sub validate_plist($$)
 	my ($plist, $state) = @_;
 
 	my $destdir = $state->{destdir};
-	my $problems = 0;
-	my $totsize = 0;
-	for my $item (@{$plist->{items}}) {
-		next unless $item->IsFile();
-		my $fname = $destdir.$item->fullname();
-		$totsize += $item->{size} if defined $item->{size};
-		my $s = OpenBSD::Vstat::remove($fname, $item->{size});
-		next unless defined $s;
-		if ($s->{ro}) {
-			if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-				Warn "Error: ", $s->{dev}, 
-				    " is read-only ($fname)\n";
-			} elsif ($s->{problems} == 4) {
-				Warn "Error: ... more files can't be removed from ",
-					$s->{dev}, "\n";
-			}
-			$problems++;
-		}
-	}
+	$state->{problems} = 0;
+	$state->{totsize} = 0;
+	$plist->visit('prepare_for_deletion', $state);
 	my $dir = installed_info($plist->pkgname());
 	for my $i (info_names()) {
 		my $fname = $dir.$i;
@@ -128,13 +112,13 @@ sub validate_plist($$)
 			next unless defined $s;
 			if ($s->{ro}) {
 				Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
-				$problems++;
+				$state->{problems}++;
 			}
 		}
 	}
-	Fatal "fatal issues" if $problems;
-	$totsize = 1 if $totsize == 0;
-	$plist->{totsize} = $totsize;
+	Fatal "fatal issues" if $state->{problems};
+	$state->{totsize} = 1 if $state->{totsize} == 0;
+	$plist->{totsize} = $state->{totsize};
 }
 
 sub remove_packing_info
@@ -236,6 +220,10 @@ sub delete_plist
 }
 
 package OpenBSD::PackingElement;
+
+sub prepare_for_deletion
+{
+}
 
 sub delete
 {
@@ -348,6 +336,29 @@ sub delete
 
 package OpenBSD::PackingElement::FileBase;
 use OpenBSD::md5;
+use OpenBSD::Error;
+use OpenBSD::Vstat;
+
+sub prepare_for_deletion
+{
+	my ($self, $state) = @_;
+
+	my $fname = $state->{destdir}.$self->fullname();
+	$state->{totsize} += $self->{size} if defined $self->{size};
+	my $s = OpenBSD::Vstat::remove($fname, $self->{size});
+	next unless defined $s;
+	if ($s->{ro}) {
+		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+			Warn "Error: ", $s->{dev}, 
+			    " is read-only ($fname)\n";
+		} elsif ($s->{problems} == 4) {
+			Warn "Error: ... more files can't be removed from ",
+				$s->{dev}, "\n";
+		}
+		$state->{problems}++;
+	}
+}
+
 sub delete
 {
 	my ($self, $state) = @_;
