@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2005/09/15 21:14:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2005/10/24 20:20:03 kettenis Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -148,7 +148,9 @@ extern void MipsSwitchFPState16(struct proc *, struct trap_frame *);
 extern void MipsFPTrap(u_int, u_int, u_int, union sigval);
 
 register_t trap(struct trap_frame *);
+#ifdef PTRACE
 int cpu_singlestep(struct proc *);
+#endif
 u_long MipsEmulateBranch(struct trap_frame *, long, int, u_int);
 
 /*
@@ -570,10 +572,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 	    {
 		caddr_t va;
 		u_int32_t instr;
-		struct uio uio;
-		struct iovec iov;
 		struct trap_frame *locr0 = p->p_md.md_regs;
-		int error;
 
 		/* compute address of break instruction */
 		va = (caddr_t)trapframe->pc;
@@ -610,8 +609,13 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			else
 				locr0->pc += 4;
 			break;
+#ifdef PTRACE
 		case BREAK_SSTEP_VAL:
 			if (p->p_md.md_ss_addr == (long)va) {
+				struct uio uio;
+				struct iovec iov;
+				int error;
+
 				/*
 				 * Restore original instruction and clear BP
 				 */
@@ -639,6 +643,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			}
 			i = SIGTRAP;
 			break;
+#endif
 		default:
 			typ = TRAP_TRACE;
 			i = SIGTRAP;
@@ -1029,6 +1034,8 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, curinst)
 	return (retAddr);
 }
 
+#ifdef PTRACE
+
 /*
  * This routine is called by procxmt() to single step one instruction.
  * We do this by storing a break instruction after the current instruction,
@@ -1112,6 +1119,8 @@ cpu_singlestep(p)
 #endif
 	return (0);
 }
+
+#endif /* PTRACE */
 
 #if defined(DDB) || defined(DEBUG)
 #define MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
