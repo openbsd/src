@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.44 2005/10/24 02:41:58 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.45 2005/10/24 02:43:56 reyk Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -4653,7 +4653,7 @@ rtw_rf_hostwrite(struct rtw_softc *sc, u_int addr, u_int32_t val)
 	    rtw_rf_hostbangbits;
 
 	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
-	    rtw_rfchipid_string(rfchipid), addr, val));
+	    rtw_rfchipid_string(sc->sc_rfchipid), addr, val));
 
 	switch (sc->sc_rfchipid) {
 	case RTW_RFCHIPID_MAXIM2820:
