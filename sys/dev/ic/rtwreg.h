@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwreg.h,v 1.9 2005/10/23 08:47:14 reyk Exp $	*/
+/*	$OpenBSD: rtwreg.h,v 1.10 2005/10/24 02:41:58 reyk Exp $	*/
 /*	$NetBSD: rtwreg.h,v 1.12 2005/01/16 11:50:43 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -471,8 +471,8 @@
 #define RTW_CONFIG2_PAPESIGN		BIT(2)		/* TBD, from EEPROM */
 #define RTW_CONFIG2_PAPETIME_MASK	BITS(1,0)	/* TBD, from EEPROM */
 
-#define	RTW_ANAPARM		0x54	/* Analog parameter, 32b */
-#define RTW8185_ANAPARM2	0x60
+#define	RTW_ANAPARM_0		0x54	/* Analog parameter, 32b */
+#define RTW8185_ANAPARM_1	0x60
 
 #define RTW_ANAPARM_RFPOW0_MASK	BITS(30,28)		/* undocumented bits
 							 * which appear to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.43 2005/10/23 12:57:42 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.44 2005/10/24 02:41:58 reyk Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -404,13 +404,13 @@ rtw_txdac_enable(struct rtw_softc *sc, int enable)
 	u_int32_t anaparm;
 	struct rtw_regs *regs = &sc->sc_regs;
 
-	anaparm = RTW_READ(regs, RTW_ANAPARM);
+	anaparm = RTW_READ(regs, RTW_ANAPARM_0);
 	if (enable)
 		anaparm &= ~RTW_ANAPARM_TXDACOFF;
 	else
 		anaparm |= RTW_ANAPARM_TXDACOFF;
-	RTW_WRITE(regs, RTW_ANAPARM, anaparm);
-	RTW_SYNC(regs, RTW_ANAPARM, RTW_ANAPARM);
+	RTW_WRITE(regs, RTW_ANAPARM_0, anaparm);
+	RTW_SYNC(regs, RTW_ANAPARM_0, RTW_ANAPARM_0);
 }
 
 int
@@ -1874,7 +1874,7 @@ rtw_maxim_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 {
 	u_int32_t anaparm;
 
-	anaparm = RTW_READ(regs, RTW_ANAPARM);
+	anaparm = RTW_READ(regs, RTW_ANAPARM_0);
 	anaparm &= ~(RTW_ANAPARM_RFPOW_MASK | RTW_ANAPARM_TXDACOFF);
 
 	switch (power) {
@@ -1901,8 +1901,8 @@ rtw_maxim_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 	    __func__, rtw_pwrstate_string(power),
 	    (before_rf) ? "before" : "after", anaparm));
 
-	RTW_WRITE(regs, RTW_ANAPARM, anaparm);
-	RTW_SYNC(regs, RTW_ANAPARM, RTW_ANAPARM);
+	RTW_WRITE(regs, RTW_ANAPARM_0, anaparm);
+	RTW_SYNC(regs, RTW_ANAPARM_0, RTW_ANAPARM_0);
 }
 
 /* XXX I am using the RFMD settings gleaned from the reference
@@ -1914,7 +1914,7 @@ rtw_rfmd_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 {
 	u_int32_t anaparm;
 
-	anaparm = RTW_READ(regs, RTW_ANAPARM);
+	anaparm = RTW_READ(regs, RTW_ANAPARM_0);
 	anaparm &= ~(RTW_ANAPARM_RFPOW_MASK | RTW_ANAPARM_TXDACOFF);
 
 	switch (power) {
@@ -1941,8 +1941,8 @@ rtw_rfmd_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 	    __func__, rtw_pwrstate_string(power),
 	    (before_rf) ? "before" : "after", anaparm));
 
-	RTW_WRITE(regs, RTW_ANAPARM, anaparm);
-	RTW_SYNC(regs, RTW_ANAPARM, RTW_ANAPARM);
+	RTW_WRITE(regs, RTW_ANAPARM_0, anaparm);
+	RTW_SYNC(regs, RTW_ANAPARM_0, RTW_ANAPARM_0);
 }
 
 void
@@ -1951,7 +1951,7 @@ rtw_philips_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 {
 	u_int32_t anaparm;
 
-	anaparm = RTW_READ(regs, RTW_ANAPARM);
+	anaparm = RTW_READ(regs, RTW_ANAPARM_0);
 	anaparm &= ~(RTW_ANAPARM_RFPOW_MASK | RTW_ANAPARM_TXDACOFF);
 
 	switch (power) {
@@ -1983,8 +1983,8 @@ rtw_philips_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
 	    __func__, rtw_pwrstate_string(power),
 	    (before_rf) ? "before" : "after", anaparm));
 
-	RTW_WRITE(regs, RTW_ANAPARM, anaparm);
-	RTW_SYNC(regs, RTW_ANAPARM, RTW_ANAPARM);
+	RTW_WRITE(regs, RTW_ANAPARM_0, anaparm);
+	RTW_SYNC(regs, RTW_ANAPARM_0, RTW_ANAPARM_0);
 }
 
 void
