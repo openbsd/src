@@ -1,0 +1,91 @@
+.\"     $OpenBSD: rcsintro.7,v 1.1 2005/10/24 15:53:29 xsa Exp $
+.\"
+.\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd October 19, 2005
+.Dt RCSINTRO 7
+.Os
+.Sh NAME
+.Nm rcsintro
+.Nd introdution to Revision Control System
+.Sh DESCRIPTION
+Revision Control System (RCS) is a software tool which lets people
+manage multiple revisions of text that is revised frequently, such as
+source code or documentation.
+.Sh USING RCS TO TRACK FILE CHANGES
+One of the most common uses of
+.Xr rcs 1
+is to track changes to a document containing source code.
+.Pp
+As an example,
+we'll look at a user wishing to track source changes to a file
+.Ar foo.c .
+.Pp
+If the
+.Ar RCS
+directory does not exist yet, create it as follows and invoke the
+check-in command:
+.Bd -literal -offset indent
+$ mkdir RCS
+$ ci foo.c
+.Ed
+.Pp
+This command creates an RCS file
+.Ar foo.c,v
+in the
+.Ar RCS
+directory, stores
+.Ar foo.c
+into it as revision 1.1, and deletes
+.Ar foo.c .
+.Xr ci 1
+will prompt for a comment to be entered.
+Whenever a newly created (or updated) file is checked-in,
+.Xr ci 1
+will prompt for a comment.
+That comment will be added to the RCS file along with the new revision.
+.Pp
+The
+.Xr co 1
+command can now be used to obtain a copy of the checked-in
+.Ar foo.c,v
+file:
+.Pp
+.Dl $ co foo.c
+.Pp
+This command check the file out in shared, or unlocked mode.
+If a user wants to have exclusive access to the file to make changes to it,
+it needs to be checked out in locked mode using the
+.Fl l
+option of the
+.Xr co 1
+command.
+Only one concurrent locked checkout of a revision is permitted.
+.Sh HISTORY
+The OpenRCS project is a BSD-licensed rewrite of the original
+Revision Control System written by Jean-Francois Brousseau, Joris Vink,
+Niall O'Higgins, and Xavier Santolaria.
+The original RCS code was written in large parts by Walter F. Tichy,
+and Paul Eggert.
+.Sh SEE ALSO
+.Xr ci 1 ,
+.Xr co 1 ,
+.Xr cvs 1 ,
+.Xr ident 1 ,
+.Xr rcs 1 ,
+.Xr rcsclean 1 ,
+.Xr rcsdiff 1 ,
+.Xr rcsmerge 1 ,
+.Xr rlog 1
