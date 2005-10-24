@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.47 2005/09/26 22:32:05 miod Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.48 2005/10/24 14:22:34 fgsch Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ int	comdefaultrate = CONSPEED;		/* XXX why set default? */
 #else
 int	comdefaultrate = TTYDEF_SPEED;
 #endif
-int	comconsaddr;
+bus_addr_t comconsaddr;
 int	comconsinit;
 int	comconsattached;
 bus_space_tag_t comconsiot;
@@ -158,10 +158,9 @@ int	comevents = 0;
 #ifdef KGDB
 #include <sys/kgdb.h>
 
-static	int com_kgdb_addr;
-static	bus_space_tag_t com_kgdb_iot;
-static	bus_space_handle_t com_kgdb_ioh;
-static	int com_kgdb_attached;
+bus_addr_t com_kgdb_addr;
+bus_space_tag_t com_kgdb_iot;
+bus_space_handle_t com_kgdb_ioh;
 
 int	com_kgdb_getc(void *);
 void	com_kgdb_putc(void *, int);
@@ -319,9 +318,10 @@ comattach(parent, self, aux)
 	void *aux;
 {
 	struct com_softc *sc = (void *)self;
-	int iobase, irq;
+	bus_addr_t iobase;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	int irq;
 
 	/*
 	 * XXX should be broken out into functions for isa attach and
@@ -421,24 +421,6 @@ comattach(parent, self, aux)
 
 	com_attach_subr(sc);
 }
-
-#ifdef KGDB
-void
-com_enable_debugport(sc)
-	struct com_softc *sc;
-{
-	int s;
-
-	/* Turn on line break interrupt, set carrier. */
-	s = splhigh();
-	SET(sc->sc_ier, IER_ERXRDY);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
-	SET(sc->sc_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
-
-	splx(s);
-}
-#endif /* KGDB */
 
 int
 com_detach(self, flags)
@@ -1718,7 +1700,7 @@ comcnpollc(dev, on)
 int
 com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
-	int iobase;
+	bus_addr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 {

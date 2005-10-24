@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.36 2005/05/27 18:42:15 uwe Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.37 2005/10/24 14:22:34 fgsch Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -159,7 +159,11 @@ void	com_common_putc(bus_space_tag_t, bus_space_handle_t, int);
 void	com_raisedtr(void *);
 
 #ifdef KGDB
-int	com_kgdb_attach(bus_space_tag_t, int, int, int, tcflag_t);
+extern bus_addr_t com_kgdb_addr;
+extern bus_space_tag_t com_kgdb_iot;
+extern bus_space_handle_t com_kgdb_ioh;
+
+int	com_kgdb_attach(bus_space_tag_t, bus_addr_t, int, int, tcflag_t);
 int	kgdbintr(void *);
 #endif
 

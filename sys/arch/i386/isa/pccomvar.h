@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.15 2005/09/26 22:32:05 miod Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.16 2005/10/24 14:22:34 fgsch Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -135,13 +135,16 @@ void	com_enable_debugport(struct com_softc *);
 #endif /* DDB || KGDB */
 
 #ifdef KGDB
-int	com_kgdb_attach(bus_space_tag_t, int, int, int, tcflag_t);
+extern bus_space_tag_t com_kgdb_iot;
+extern bus_addr_t com_kgdb_addr;
+
+int	com_kgdb_attach(bus_space_tag_t, bus_addr_t, int, int, tcflag_t);
 int	kgdbintr(void *);
 #endif /* KGDB */
 
 void	com_attach_subr(struct com_softc *);
 
-extern int comconsaddr;
+extern bus_addr_t comconsaddr;
 extern int comconsinit;
 extern int comconsattached;
 extern bus_space_tag_t comconsiot;
