@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.45 2005/10/24 02:43:56 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.46 2005/10/24 02:53:31 reyk Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -243,13 +243,13 @@ void	 rtw_rf_rtl8225_hostbangbits(struct rtw_regs *, u_int32_t, int, u_int);
 int	 rtw_rf_macbangbits(struct rtw_regs *, u_int32_t);
 const char *rtw_rfchipid_string(int);
 
-u_int8_t rtw_read8(struct rtw_regs *, u_int32_t);
-u_int16_t rtw_read16(struct rtw_regs *, u_int32_t);
-u_int32_t rtw_read32(struct rtw_regs *, u_int32_t);
-void	 rtw_write8(struct rtw_regs *, u_int32_t, u_int8_t);
-void	 rtw_write16(struct rtw_regs *, u_int32_t, u_int16_t);
-void	 rtw_write32(struct rtw_regs *, u_int32_t, u_int32_t);
-void	 rtw_barrier(struct rtw_regs *, u_int32_t, u_int32_t, int);
+u_int8_t rtw_read8(void *, u_int32_t);
+u_int16_t rtw_read16(void *, u_int32_t);
+u_int32_t rtw_read32(void *, u_int32_t);
+void	 rtw_write8(void *, u_int32_t, u_int8_t);
+void	 rtw_write16(void *, u_int32_t, u_int16_t);
+void	 rtw_write32(void *, u_int32_t, u_int32_t);
+void	 rtw_barrier(void *, u_int32_t, u_int32_t, int);
 
 #ifdef RTW_DEBUG
 void	 rtw_print_txdesc(struct rtw_softc *, const char *,
@@ -4766,44 +4766,51 @@ rtw_rf_macwrite(struct rtw_softc *sc, u_int addr, u_int32_t val)
 
 
 u_int8_t
-rtw_read8(struct rtw_regs *regs, u_int32_t off)
+rtw_read8(void *arg, u_int32_t off)
 {
+	struct rtw_regs *regs = (struct rtw_regs *)arg;
 	return (bus_space_read_1(regs->r_bt, regs->r_bh, off));
 }
 
 u_int16_t
-rtw_read16(struct rtw_regs *regs, u_int32_t off)
+rtw_read16(void *arg, u_int32_t off)
 {
+	struct rtw_regs *regs = (struct rtw_regs *)arg;
 	return (bus_space_read_2(regs->r_bt, regs->r_bh, off));
 }
 
 u_int32_t
-rtw_read32(struct rtw_regs *regs, u_int32_t off)
+rtw_read32(void *arg, u_int32_t off)
 {
+	struct rtw_regs *regs = (struct rtw_regs *)arg;
 	return (bus_space_read_4(regs->r_bt, regs->r_bh, off));
 }
 
 void
-rtw_write8(struct rtw_regs *regs, u_int32_t off, u_int8_t val)
+rtw_write8(void *arg, u_int32_t off, u_int8_t val)
 {
+	struct rtw_regs *regs = (struct rtw_regs *)arg;
 	bus_space_write_1(regs->r_bt, regs->r_bh, off, val);
 }
 
 void
-rtw_write16(struct rtw_regs *regs, u_int32_t off, u_int16_t val)
+rtw_write16(void *arg, u_int32_t off, u_int16_t val)
 {
+	struct rtw_regs *regs = (struct rtw_regs *)arg;
 	bus_space_write_2(regs->r_bt, regs->r_bh, off, val);
 }
 
 void
-rtw_write32(struct rtw_regs *regs, u_int32_t off, u_int32_t val)
+rtw_write32(void *arg, u_int32_t off, u_int32_t val)
 {
+	struct rtw_regs *regs = (struct rtw_regs *)arg;
 	bus_space_write_4(regs->r_bt, regs->r_bh, off, val);
 }
 
 void
-rtw_barrier(struct rtw_regs *regs, u_int32_t reg0, u_int32_t reg1, int flags)
+rtw_barrier(void *arg, u_int32_t reg0, u_int32_t reg1, int flags)
 {
+	struct rtw_regs *regs = (struct rtw_regs *)arg;
 	bus_space_barrier(regs->r_bh, regs->r_bt, MIN(reg0, reg1),
 	    MAX(reg0, reg1) - MIN(reg0, reg1) + 4, flags);
 }

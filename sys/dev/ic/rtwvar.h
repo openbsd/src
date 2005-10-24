@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.18 2005/10/24 02:46:08 reyk Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.19 2005/10/24 02:53:32 reyk Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -126,13 +126,13 @@ struct rtw_regs {
 	void			*r_priv;
 
 	/* bus independent I/O callbacks */
-	u_int8_t	(*r_read8)(struct rtw_regs *, u_int32_t);
-	u_int16_t	(*r_read16)(struct rtw_regs *, u_int32_t);
-	u_int32_t	(*r_read32)(struct rtw_regs *, u_int32_t);
-	void		(*r_write8)(struct rtw_regs *, u_int32_t, u_int8_t);
-	void		(*r_write16)(struct rtw_regs *, u_int32_t, u_int16_t);
-	void		(*r_write32)(struct rtw_regs *, u_int32_t, u_int32_t);
-	void		(*r_barrier)(struct rtw_regs *, u_int32_t, u_int32_t, int);
+	u_int8_t	(*r_read8)(void *, u_int32_t);
+	u_int16_t	(*r_read16)(void *, u_int32_t);
+	u_int32_t	(*r_read32)(void *, u_int32_t);
+	void		(*r_write8)(void *, u_int32_t, u_int8_t);
+	void		(*r_write16)(void *, u_int32_t, u_int16_t);
+	void		(*r_write32)(void *, u_int32_t, u_int32_t);
+	void		(*r_barrier)(void *, u_int32_t, u_int32_t, int);
 };
 
 #define RTW_SR_GET(sr, ofs) \
