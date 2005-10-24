@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.5 2005/10/13 12:35:30 joris Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.6 2005/10/24 16:14:15 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -42,7 +42,7 @@ static int rlog_file(const char *, const char *, RCSFILE *);
 
 #define REVSEP		"----------------------------"
 #define REVEND \
- "============================================================================"
+ "============================================================================="
 
 static int hflag;
 static int tflag;
@@ -91,6 +91,9 @@ rlog_main(int argc, char **argv)
 		exit(1);
 	}
 
+	if ((hflag == 1) && (tflag == 1))
+		cvs_log(LP_WARN, "warning: -t overrides -h.");
+
 	for (i = 0; i < argc; i++) {
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
@@ -121,7 +124,7 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	struct rcs_delta *rdp;
 	struct rcs_access *acp;
 
-	printf("Working file: %s", fname);
+	printf("\nWorking file: %s", fname);
 	printf("\nhead:");
 	if (file->rf_head != NULL)
 		printf(" %s", rcsnum_tostr(file->rf_head, numb, sizeof(numb)));
@@ -151,7 +154,7 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	printf("total revisions: %u\n", file->rf_ndelta);
 
 	if ((hflag == 0) || (tflag == 1))
-	printf("description: %s\n", file->rf_desc);
+	printf("description:\n%s", file->rf_desc);
 
 	if ((hflag == 0) && (tflag == 0)) {
 		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
