@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.7 2005/10/25 16:08:20 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.8 2005/10/25 17:19:31 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -57,7 +57,7 @@ rlog_main(int argc, char **argv)
 	RCSFILE *file;
 
 	hflag = Rflag = 0;
-	while ((ch = rcs_getopt(argc, argv, "hNqRtV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "hNqRTtV")) != -1) {
 		switch (ch) {
 		case 'h':
 			hflag = 1;
@@ -70,6 +70,11 @@ rlog_main(int argc, char **argv)
 			break;
 		case 'R':
 			Rflag = 1;
+			break;
+		case 'T':
+			/*
+			 * kept for compatibility
+			 */
 			break;
 		case 't':
 			tflag = 1;
@@ -115,7 +120,7 @@ void
 rlog_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rlog [-hNqRtV] file ...\n");
+	    "usage: rlog [-hNqRTtV] file ...\n");
 }
 
 static int
