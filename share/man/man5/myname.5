@@ -1,4 +1,4 @@
-.\"	$OpenBSD: myname.5,v 1.3 2005/10/18 15:37:11 jmc Exp $
+.\"	$OpenBSD: myname.5,v 1.4 2005/10/25 18:24:56 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -77,8 +77,13 @@ If any
 files contain
 .Dq dhcp
 directives,
+IPv4 entries in
 .Pa /etc/mygate
 will be ignored.
+If they contain
+.Dq rtsol
+directives,
+IPv6 entries will be ignored.
 .Pp
 Empty lines and lines beginning with
 .Sq #
