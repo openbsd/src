@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.504 2005/10/17 08:43:35 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.505 2005/10/25 11:19:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5335,7 +5335,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
     struct pf_state *s, struct pf_pdesc *pd)
 {
 	struct mbuf		*m0, *m1;
-	struct m_tag		*mtag;
 	struct route		 iproute;
 	struct route		*ro;
 	struct sockaddr_in	*dst;
@@ -5344,6 +5343,9 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sn = NULL;
 	int			 error = 0;
+#ifdef IPSEC
+	struct m_tag		*mtag;
+#endif /* IPSEC */
 
 	if (m == NULL || *m == NULL || r == NULL ||
 	    (dir != PF_IN && dir != PF_OUT) || oifp == NULL)
