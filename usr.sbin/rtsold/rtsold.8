@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.19 2005/10/25 18:40:34 jmc Exp $
+.\"	$OpenBSD: rtsold.8,v 1.20 2005/10/25 18:54:01 jmc Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,18 +74,13 @@ without becoming a daemon.
 In other words,
 .Nm rtsol
 behaves as
-.Do
-.Nm
-.Fl f1
-.Ar interfaces
-.Dc .
+.Dq rtsold -f1 interface ... .
 .Pp
 Specifically,
 .Nm
 sends at most 3 Router Solicitations on an interface
 after one of the following events:
-.Pp
-.Bl -bullet -compact
+.Bl -bullet
 .It
 Just after invocation of
 .Nm
@@ -163,15 +158,13 @@ Configure
 variable related to
 .Nm
 by itself.
-Without
-.Fl F ,
+Without this option,
 .Nm
 will not alter and obey the current
 .Xr sysctl 8
 settings.
 .It Fl f
-.Fl f
-prevents
+This option prevents
 .Nm
 from becoming a daemon (foreground mode).
 Warning messages are generated to standard error
@@ -190,10 +183,8 @@ periodically sends Router Solicitation on an interface that does not support
 .Dv SIOCGIFMEDIA
 ioctl.
 .El
-.Sh RETURN VALUES
-The
-.Nm
-program exits 0 on success, and >0 on failures.
+.Pp
+.Ex -std rtsold
 .\"
 .Sh FILES
 .Bl -tag -width /var/run/rtsold.dump -compact
