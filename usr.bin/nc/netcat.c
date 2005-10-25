@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.83 2005/10/25 03:51:06 dtucker Exp $ */
+/* $OpenBSD: netcat.c,v 1.84 2005/10/25 06:51:37 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -96,7 +96,7 @@ int	socks_connect(const char *, const char *, struct addrinfo, const char *, con
 int	udptest(int);
 int	unix_connect(char *);
 int	unix_listen(char *);
-int     set_common_sockopts(int);
+void	set_common_sockopts(int);
 int	parse_iptos(char *);
 void	usage(int);
 
@@ -759,7 +759,7 @@ udptest(int s)
 	return (ret);
 }
 
-int
+void
 set_common_sockopts(int s)
 {
 	int x = 1;
