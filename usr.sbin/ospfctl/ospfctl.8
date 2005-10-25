@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.11 2005/10/19 09:25:51 jmc Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.12 2005/10/25 20:38:14 stevesk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -94,12 +94,13 @@ can be specified for additional detail.
 Show summary information.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ospfd.confXXXX" -compact
-.It /etc/ospfd.conf
-.Xr ospfd 8
-configuration file.
+.Bl -tag -width "/var/run/ospfd.sockXX" -compact
+.It /var/run/ospfd.sock
+Unix-domain socket used for communication with
+.Xr ospfd 8 .
 .El
 .Sh SEE ALSO
+.Xr ospfd.conf 5 ,
 .Xr ospfd 8
 .Sh HISTORY
 The

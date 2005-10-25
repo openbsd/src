@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.8 2005/05/31 21:53:23 jmc Exp $
+.\"	$OpenBSD: ospfd.8,v 1.9 2005/10/25 20:38:14 stevesk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -54,10 +54,14 @@ Only check the configuration file for validity.
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ospfd.confXXXX" -compact
+.Bl -tag -width "/var/run/ospfd.sockXX" -compact
 .It /etc/ospfd.conf
+Default
 .Nm
 configuration file.
+.It /var/run/ospfd.sock
+Unix-domain socket used for communication with
+.Xr ospfctl 8 .
 .El
 .Sh SEE ALSO
 .Xr ospfd.conf 5 ,
