@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.56 2005/09/06 16:42:21 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.57 2005/10/25 21:55:49 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -53,6 +53,11 @@
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
+#define ffs_fserr(fs, uid, cp) do {				\
+	log(LOG_ERR, "uid %u on %s: %s\n", (uid),		\
+	    (fs)->fs_fsmnt, (cp));				\
+} while (0)
+
 extern u_long nextgennumber;
 
 static daddr_t	ffs_alloccg(struct inode *, int, daddr_t, int);
@@ -60,7 +65,6 @@ static daddr_t	ffs_alloccgblk(struct inode *, struct buf *, daddr_t);
 static daddr_t	ffs_clusteralloc(struct inode *, int, daddr_t, int);
 static ino_t	ffs_dirpref(struct inode *);
 static daddr_t	ffs_fragextend(struct inode *, int, long, int, int);
-static void	ffs_fserr(struct fs *, u_int, char *);
 static u_long	ffs_hashalloc(struct inode *, int, long, int,
 		    daddr_t (*)(struct inode *, int, daddr_t, int));
 static daddr_t	ffs_nodealloccg(struct inode *, int, daddr_t, int);
@@ -1808,20 +1812,4 @@ ffs_clusteracct(fs, cgp, blkno, cnt)
 		if (*lp-- > 0)
 			break;
 	fs->fs_maxcluster[cgp->cg_cgx] = i;
-}
-
-/*
- * Fserr prints the name of a file system with an error diagnostic.
- *
- * The form of the error message is:
- *	fs: error message
- */
-static void
-ffs_fserr(fs, uid, cp)
-	struct fs *fs;
-	u_int uid;
-	char *cp;
-{
-
-	log(LOG_ERR, "uid %u on %s: %s\n", uid, fs->fs_fsmnt, cp);
 }
