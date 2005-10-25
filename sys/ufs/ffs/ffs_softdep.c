@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.63 2005/09/26 21:11:09 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.64 2005/10/25 20:12:52 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -2102,7 +2102,7 @@ deallocate_dependencies(bp, inodedep)
 			 * If the inode has already been written, then they 
 			 * can be dumped directly onto the work list.
 			 */
-			LIST_FOREACH(dirrem, &pagedep->pd_dirremhd, dm_next) {
+			while ((dirrem = LIST_FIRST(&pagedep->pd_dirremhd))) {
 				LIST_REMOVE(dirrem, dm_next);
 				dirrem->dm_dirinum = pagedep->pd_ino;
 				if (inodedep == NULL ||
