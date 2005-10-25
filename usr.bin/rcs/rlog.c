@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.6 2005/10/24 16:14:15 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.7 2005/10/25 16:08:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -91,8 +91,10 @@ rlog_main(int argc, char **argv)
 		exit(1);
 	}
 
-	if ((hflag == 1) && (tflag == 1))
+	if ((hflag == 1) && (tflag == 1)) {
 		cvs_log(LP_WARN, "warning: -t overrides -h.");
+		hflag = 0;
+	}
 
 	for (i = 0; i < argc; i++) {
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
