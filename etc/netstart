@@ -1,11 +1,12 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.109 2005/10/14 15:46:41 todd Exp $
+#	$OpenBSD: netstart,v 1.110 2005/10/25 14:18:38 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
 stripcom() {
 	local _l
+	[[ -f $1 ]] || return
 	while read _l; do
 		[[ -n ${_l%%#*} ]] && echo $_l
 	done<$1
@@ -77,7 +78,7 @@ ifstart() {
 			[ "$bcaddr" = "NONE" ] && bcaddr=
 			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
 			cmd="$cmd;dhclient $if"
-			setgateway=N
+			dhcpif="$dhcpif $if"
 			;;
 		"rtsol")
 			rtsolif="$rtsolif $if"
@@ -310,18 +311,16 @@ ifmstart "trunk vlan pfsync carp"
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
-if [ "X${setgateway}" != X"N" -a -f /etc/mygate ]; then
-	route -qn delete default > /dev/null 2>&1
-	route -qn delete -inet6 default > /dev/null 2>&1
-	# Now parse the mygate file
-	stripcom /etc/mygate | while read gw; do
-		case "$gw" in
-		*:*)	af=-inet6;;
-		*)	af=;;
-		esac
-		route -qn add -host $af default $gw
-	done
-fi
+[[ -z $dhcpif ]] && stripcom /etc/mygate | while read gw; do
+		[[ $gw == @(*:*) ]] && continue
+		route -qn delete default > /dev/null 2>&1
+		route -qn add -host default $gw && break
+done
+[[ -z $rtsolif ]] && stripcom /etc/mygate | while read gw; do
+		[[ $gw == !(*:*) ]] && continue
+		route -qn delete -inet6 default > /dev/null 2>&1
+		route -qn add -host -inet6 default $gw && break
+done
 
 # Multicast routing.
 #
