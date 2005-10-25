@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.18 2004/01/05 20:32:50 itojun Exp $
+.\"	$OpenBSD: rtsold.8,v 1.19 2005/10/25 18:40:34 jmc Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,16 +38,17 @@
 .\"
 .Sh SYNOPSIS
 .Nm rtsold
-.Op Fl dDfFm1
+.Op Fl 1DdFfm
 .Ar interface ...
 .Nm rtsold
-.Op Fl dDfFm1
+.Op Fl 1DdFfm
 .Fl a
+.Pp
 .Nm rtsol
-.Op Fl dDF
+.Op Fl DdF
 .Ar interface ...
 .Nm rtsol
-.Op Fl dD
+.Op Fl Dd
 .Fl a
 .\"
 .Sh DESCRIPTION
@@ -134,6 +135,12 @@ will dump the current internal state into
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 1
+Perform only one probe.
+Transmit Router Solicitation packets until at least one valid Router
+Advertisement packet has arrived on each
+.Ar interface ,
+then exit.
 .It Fl a
 Autoprobe outgoing interface.
 .Nm
@@ -144,18 +151,12 @@ finds multiple interfaces,
 .Nm
 will exit with error.
 .\"
+.It Fl D
+Enable more debugging (than that offered by the
+.Fl d
+option) including the printing of internal timer information.
 .It Fl d
 Enable debugging.
-.It Fl D
-Enable more debugging including the printing of internal timer information.
-.It Fl f
-.Fl f
-prevents
-.Nm
-from becoming a daemon (foreground mode).
-Warning messages are generated to standard error
-instead of
-.Xr syslog 3 .
 .It Fl F
 Configure
 .Xr sysctl 8
@@ -168,6 +169,14 @@ Without
 will not alter and obey the current
 .Xr sysctl 8
 settings.
+.It Fl f
+.Fl f
+prevents
+.Nm
+from becoming a daemon (foreground mode).
+Warning messages are generated to standard error
+instead of
+.Xr syslog 3 .
 .It Fl m
 Enable mobility support.
 If this option is specified,
@@ -180,12 +189,6 @@ Moreover, if the option is specified,
 periodically sends Router Solicitation on an interface that does not support
 .Dv SIOCGIFMEDIA
 ioctl.
-.It Fl 1
-Perform only one probe.
-Transmit Router Solicitation packets until at least one valid Router
-Advertisement packet has arrived on each
-.Ar interface ,
-then exit.
 .El
 .Sh RETURN VALUES
 The
