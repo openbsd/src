@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.45 2005/10/22 17:44:07 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.46 2005/10/25 23:38:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -154,7 +154,7 @@ sub parse_problems
 	local $_;
 	my $notyet = 1;
 	while(<$fh>) {
-		next if m/^(?:200|220|221|226|230|227|250|331|500|150)[\s\-]/;
+		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/;
 		next if m/^EPSV command not understood/;
 		next if m/^Trying [\da-f\.\:]+\.\.\./;
 		next if m/^Requesting \Q$baseurl\E/;
