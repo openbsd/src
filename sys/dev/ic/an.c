@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.42 2005/06/20 22:42:29 jsg Exp $	*/
+/*	$OpenBSD: an.c,v 1.43 2005/10/25 15:49:37 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -907,7 +907,7 @@ an_setdef(sc, areq)
 		/* Disable the MAC */
 		an_cmd(sc, AN_CMD_DISABLE, 0);
 
-		/* Just write the key, we dont' want to save it */
+		/* Just write the key, we don't want to save it */
 		an_write_record(sc, (struct an_ltv_gen *)areq);
 
 		/* Turn the MAC back on */

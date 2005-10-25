@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.43 2005/06/23 14:39:35 jmc Exp $	*/
+/*	$OpenBSD: at.c,v 1.44 2005/10/25 15:49:38 jmc Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.43 2005/06/23 14:39:35 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.44 2005/10/25 15:49:38 jmc Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -303,7 +303,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	/*
 	 * Write out the environment. Anything that may look like a special
 	 * character to the shell is quoted, except for \n, which is done
-	 * with a pair of "'s.  Dont't export the no_export list (such as
+	 * with a pair of "'s.  Don't export the no_export list (such as
 	 * TERM or DISPLAY) because we don't want these.
 	 */
 	for (atenv = environ; *atenv != NULL; atenv++) {
