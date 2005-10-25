@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.22 2005/08/25 09:57:58 markus Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.23 2005/10/25 13:35:47 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -58,16 +58,16 @@ static struct transport	*virtual_clone(struct transport *, struct sockaddr *);
 static struct transport	*virtual_create(char *);
 static char		*virtual_decode_ids (struct transport *);
 static void		 virtual_get_dst(struct transport *,
-    struct sockaddr **);
+			     struct sockaddr **);
 static struct msg_head	*virtual_get_queue(struct message *);
 static void		 virtual_get_src(struct transport *,
-    struct sockaddr **);
+			     struct sockaddr **);
 static void		 virtual_handle_message(struct transport *);
 static void		 virtual_reinit(void);
 static void		 virtual_remove(struct transport *);
 static void		 virtual_report(struct transport *);
 static int		 virtual_send_message(struct message *,
-    struct transport *);
+			     struct transport *);
 
 static struct transport_vtbl virtual_transport_vtbl = {
 	{ 0 }, "udp",
