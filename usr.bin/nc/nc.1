@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.40 2005/07/17 19:18:47 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.41 2005/10/25 03:51:06 dtucker Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Op Fl i Ar interval
 .Op Fl p Ar source_port
 .Op Fl s Ar source_ip_address
+.Op Fl T Ar ToS
 .Op Fl w Ar timeout
 .Op Fl X Ar proxy_protocol
 .Oo Xo
@@ -145,6 +146,14 @@ Specifies the IP of the interface which is used to send the packets.
 It is an error to use this option in conjunction with the
 .Fl l
 option.
+.It Fl T Ar ToS
+Specifies IP Type of Service (ToS) for the connection.
+Valid values are the tokens
+.Dq lowdelay ,
+.Dq throughput ,
+.Dq reliability ,
+or an 8-bit hexadecimal value preceded by
+.Dq 0x .
 .It Fl t
 Causes
 .Nm

@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.82 2005/07/24 09:33:56 marius Exp $ */
+/* $OpenBSD: netcat.c,v 1.83 2005/10/25 03:51:06 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -37,7 +37,9 @@
 #include <sys/un.h>
 
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
 #include <netinet/tcp.h>
+#include <netinet/ip.h>
 #include <arpa/telnet.h>
 
 #include <err.h>
@@ -77,6 +79,7 @@ int	xflag;					/* Socks proxy */
 int	zflag;					/* Port Scan Flag */
 int	Dflag;					/* sodebug */
 int	Sflag;					/* TCP MD5 signature option */
+int	Tflag = -1;				/* IP Type of Service */
 
 int timeout = -1;
 int family = AF_UNSPEC;
@@ -94,6 +97,7 @@ int	udptest(int);
 int	unix_connect(char *);
 int	unix_listen(char *);
 int     set_common_sockopts(int);
+int	parse_iptos(char *);
 void	usage(int);
 
 int
@@ -118,7 +122,7 @@ main(int argc, char *argv[])
 	sv = NULL;
 
 	while ((ch = getopt(argc, argv,
-	    "46Ddhi:jklnp:rSs:tUuvw:X:x:z")) != -1) {
+	    "46Ddhi:jklnp:rSs:tT:Uuvw:X:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -201,6 +205,9 @@ main(int argc, char *argv[])
 			break;
 		case 'S':
 			Sflag = 1;
+			break;
+		case 'T':
+			Tflag = parse_iptos(optarg);
 			break;
 		default:
 			usage(1);
@@ -772,6 +779,28 @@ set_common_sockopts(int s)
 			&x, sizeof(x)) == -1)
 			err(1, NULL);
 	}
+	if (Tflag != -1) {
+		if (setsockopt(s, IPPROTO_IP, IP_TOS,
+		    &Tflag, sizeof(Tflag)) == -1)
+			err(1, "set IP ToS");
+	}
+}
+
+int
+parse_iptos(char *s)
+{
+	int tos = -1;
+
+	if (strcmp(s, "lowdelay") == 0)
+		return (IPTOS_LOWDELAY);
+	if (strcmp(s, "throughput") == 0)
+		return (IPTOS_THROUGHPUT);
+	if (strcmp(s, "reliability") == 0)
+		return (IPTOS_RELIABILITY);
+
+	if (sscanf(s, "0x%x", &tos) != 1 || tos < 0 || tos > 0xff)
+		errx(1, "invalid IP Type of Service");
+	return (tos);
 }
 
 void
@@ -792,6 +821,7 @@ help(void)
 	\t-r		Randomize remote ports\n\
 	\t-S		Enable the TCP MD5 signature option\n\
 	\t-s addr\t	Local source address\n\
+	\t-T ToS\t	Set IP Type of Service\n\
 	\t-t		Answer TELNET negotiation\n\
 	\t-U		Use UNIX domain socket\n\
 	\t-u		UDP mode\n\
@@ -808,7 +838,7 @@ void
 usage(int ret)
 {
 	fprintf(stderr, "usage: nc [-46DdhklnrStUuvz] [-i interval] [-p source_port]\n");
-	fprintf(stderr, "\t  [-s source_ip_address] [-w timeout] [-X proxy_version]\n");
+	fprintf(stderr, "\t  [-s source_ip_address] [-T ToS] [-w timeout] [-X proxy_version]\n");
 	fprintf(stderr, "\t  [-x proxy_address[:port]] [hostname] [port[s]]\n");
 	if (ret)
 		exit(1);
