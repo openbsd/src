@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.22 2005/10/20 17:10:01 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.23 2005/10/25 17:27:54 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -118,7 +118,8 @@ checkout_main(int argc, char **argv)
 
 		rcsnum_tostr(frev, buf, sizeof(buf));
 
-		if (checkout_rev(file, frev, argv[i], lock, username, fflag) < 0) { 
+		if (checkout_rev(file, frev, argv[i], lock,
+		    username, fflag) < 0) {
 			rcs_close(file);
 			continue;
 		}
@@ -162,7 +163,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 	 * Check out the latest revision if <frev> is greater than HEAD
 	 */
 	if (rcsnum_cmp(frev, file->rf_head, 0) == -1)
-		frev = file->rf_head; 
+		frev = file->rf_head;
 
 	rcsnum_tostr(frev, buf, sizeof(buf));
 
