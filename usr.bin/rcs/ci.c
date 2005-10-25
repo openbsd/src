@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.48 2005/10/25 17:27:54 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.49 2005/10/25 17:48:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -225,7 +225,7 @@ checkin_main(int argc, char **argv)
 		 * If -f is not specified and there are no differences, tell the
 		 * user and revert to latest version.
 		 */
-		if ((!force) && (strlen(deltatext) < 1)) {
+		if ((force == 0) && (strlen(deltatext) < 1)) {
 			rcsnum_tostr(frev, rbuf, sizeof(rbuf));
 			cvs_log(LP_WARN,
 			    "file is unchanged; reverting to previous revision %s",
@@ -260,7 +260,7 @@ checkin_main(int argc, char **argv)
 			}
 		}
 
-		if (found == 0 && notlocked == 0) {
+		if ((found == 0) && (notlocked == 0)) {
 			cvs_log(LP_ERR, "no locks set for '%s'", username);
 			status = 1;
 			rcs_close(file);
@@ -337,7 +337,7 @@ checkin_main(int argc, char **argv)
 		if (symbol != NULL) {
 			if (verbose == 1)
 				printf("symbol: %s\n", symbol);
-			if (symforce)
+			if (symforce == 1)
 				rcs_sym_remove(file, symbol);
 			if ((ret = rcs_sym_add(file, symbol, newrev) == -1)
 			    && (rcs_errno == RCS_ERR_DUPENT)) {
@@ -365,13 +365,13 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Do checkout if -u or -l are specified.
 		 */
-		if (lkmode != 0 && !rflag)
+		if ((lkmode != 0) && (rflag == 0))
 			checkout_rev(file, newrev, argv[i], lkmode, username, 0);
 
 		/* File will NOW be synced */
 		rcs_close(file);
 
-		if (interactive) {
+		if (interactive == 1) {
 			free(rcs_msg);
 			rcs_msg = NULL;
 		}
