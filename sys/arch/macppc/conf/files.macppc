@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.27 2005/10/19 14:46:00 kettenis Exp $
+#	$OpenBSD: files.macppc,v 1.28 2005/10/26 17:57:20 joris Exp $
 
 #
 # macppc-specific configuration info
@@ -193,8 +193,12 @@ device	ki2c {}
 attach	ki2c at macobio
 file	arch/macppc/dev/ki2c.c				ki2c
 
+# I2S
+define	i2s
+file	arch/macppc/dev/i2s.c				i2s
+
 # snapper audio
-device	snapper: audio, auconv, mulaw
+device	snapper: audio, auconv, mulaw, i2s
 attach	snapper at macobio
 file	arch/macppc/dev/snapper.c			snapper
 
