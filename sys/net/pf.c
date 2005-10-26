@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.505 2005/10/25 11:19:35 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.506 2005/10/26 03:47:33 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3009,7 +3009,8 @@ cleanup:
 		if ((th->th_flags & (TH_SYN|TH_ACK)) == TH_SYN &&
 		    r->keep_state == PF_STATE_MODULATE) {
 			/* Generate sequence number modulator */
-			while ((s->src.seqdiff = htonl(arc4random())) == 0)
+			while ((s->src.seqdiff =
+			    tcp_rndiss_next() - s->src.seqlo) == 0)
 				;
 			pf_change_a(&th->th_seq, &th->th_sum,
 			    htonl(s->src.seqlo + s->src.seqdiff), 0);
@@ -4190,7 +4191,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 		/* Deferred generation of sequence number modulator */
 		if (dst->seqdiff && !src->seqdiff) {
-			while ((src->seqdiff = htonl(arc4random())) == 0)
+			while ((src->seqdiff = tcp_rndiss_next() - seq) == 0)
 				;
 			ack = ntohl(th->th_ack) - dst->seqdiff;
 			pf_change_a(&th->th_seq, &th->th_sum, htonl(seq +
