@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.20 2005/10/25 18:54:01 jmc Exp $
+.\"	$OpenBSD: rtsold.8,v 1.21 2005/10/26 11:14:52 jmc Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,7 +76,14 @@ In other words,
 behaves as
 .Dq rtsold -f1 interface ... .
 .Pp
-Specifically,
+An interface may be configured at boot
+to be brought up using
+.Nm rtsol
+via a
+.Xr hostname.if 5
+file.
+See that man page for more information.
+.Pp
 .Nm
 sends at most 3 Router Solicitations on an interface
 after one of the following events:
@@ -193,6 +200,8 @@ dumps internal state on.
 .El
 .\"
 .Sh SEE ALSO
+.Xr hostname.if 5 ,
+.Xr netstart 8 ,
 .Xr rtadvd 8 ,
 .Xr sysctl 8
 .\"
