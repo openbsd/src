@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.17 2004/12/25 23:02:25 miod Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.18 2005/10/26 18:57:51 martin Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -584,7 +584,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
                         continue;
                 }
 
-                return (powerpc_btop(PCI_MEM_TO_PHYS(segs[i].ds_addr) + off));
+                return (atop(PCI_MEM_TO_PHYS(segs[i].ds_addr) + off));
         }
 
         /* Page not found. */

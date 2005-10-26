@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.25 2005/10/08 05:47:25 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.26 2005/10/26 18:57:51 martin Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -366,21 +366,7 @@ vgafb_mmap(void *v, off_t offset, int prot)
 		h = -1;
 	}
 
-#ifdef alpha
-	port = (u_int32_t *)(h << 5);
-	return alpha_btop(port);		/* XXX */
-#elif defined(i386)
-	port = (u_int32_t *)(h << 5);
-	return i386_btop(port);
-#elif defined(__powerpc__)
-	{
-	/* huh ??? */
 	return h;
-	/*
-	return powerpc_btop(port);
-	*/
-	}
-#endif
 }
 
 

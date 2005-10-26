@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.22 2004/11/09 19:17:01 claudio Exp $	*/
+/*	$OpenBSD: dma.c,v 1.23 2005/10/26 18:57:51 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -509,7 +509,7 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return (powerpc_btop((caddr_t)segs[i].ds_addr + off));
+		return (atop(segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */
