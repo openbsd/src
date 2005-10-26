@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.396 2005/10/20 02:31:52 krw Exp $
+#	$OpenBSD: install.sub,v 1.397 2005/10/26 00:06:51 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -172,6 +172,9 @@ __EOT
 # '#'. i.e. strip comment lines from the file.
 stripcom () {
 	local _l
+
+	[[ -f $1 ]] || return
+
 	while read _l; do
 		[[ -n ${_l%%#*} ]] && echo $_l
 	done <$1
@@ -725,7 +728,7 @@ v6_config() {
 	v6_defroute $_ifs
 	[[ $resp == none ]] && return
 	route -n add -inet6 -host default "$resp" || return
-	echo "!route -qn add -host -inet6 default $resp" >>$_hn
+	echo "$resp" >>/tmp/mygate
 }
 
 v4_defroute() {
@@ -778,7 +781,7 @@ v6_defroute() {
 
 # Much of this is gratuitously stolen from /etc/netstart.
 enable_network() {
-	local _netfile
+	local _netfile _gw
 
 	# Copy any required or optional files found
 	for _netfile in hosts dhclient.conf resolv.conf resolv.conf.tail protocols services; do
@@ -883,12 +886,19 @@ enable_network() {
 
 	[[ -n $rtsolif ]] && /mnt/sbin/rtsol -F $rtsolif
 
-	# /mnt/etc/mygate contains the address of my gateway host. Ignore
-	# it if any interfaces attempted dhcp.
-	if [[ -z $dhcpif && -f /mnt/etc/mygate ]]; then
-		route delete default >/dev/null 2>&1
-		route -qn add -host default $(stripcom /mnt/etc/mygate)
-	fi
+	# /mnt/etc/mygate, if it exists, contains the address(es) of my
+	# default gateway(s). Use for ipv4 if no interfaces configured via
+	# dhcp. Use for ipv6 if no interfaces configured via rtsol.
+	[[ -z $dhcpif ]] && stripcom /mnt/etc/mygate | while read _gw; do
+		[[ $_gw == @(*:*) ]] && continue
+		route -qn delete default >/dev/null 2>&1
+		route -qn add -host default $_gw && break
+	done
+	[[ -z $rtsolif ]] && stripcom /mnt/etc/mygate | while read _gw; do
+		[[ $_gw == !(*:*) ]] && continue
+		route -qn delete -inet6 default >/dev/null 2>&1
+		route -qn add -host -inet6 default $_gw && break
+	done
 
 	# Use loopback, not the wire.
 	route -qn add -host `hostname` 127.0.0.1 >/dev/null
