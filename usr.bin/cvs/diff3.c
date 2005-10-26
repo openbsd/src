@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.4 2005/10/23 04:24:59 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.5 2005/10/26 18:13:58 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.4 2005/10/23 04:24:59 joris Exp $";
+static const char rcsid[] = "$OpenBSD: diff3.c,v 1.5 2005/10/26 18:13:58 xsa Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -158,7 +158,7 @@ static void separate(const char *);
 static void increase(void);
 static int diff3_internal(int, char **, const char *, const char *);
 
-int	diff3_conflicts = 0;
+int diff3_conflicts = 0;
 
 BUF *
 cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.5 2005/10/23 11:42:43 niallo Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.6 2005/10/26 18:13:58 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -36,8 +36,6 @@
 #include "rcs.h"
 #include "diff.h"
 #include "rcsprog.h"
-
-extern diff3_conflicts;
 
 static int kflag = RCS_KWEXP_ERR;
 
