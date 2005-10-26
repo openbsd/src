@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.38 2005/09/24 12:07:38 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.39 2005/10/26 09:35:32 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -75,6 +75,17 @@ sub skip
     $self->{swallow} = 0;
 }
 
+my $types = {
+    DIR , 'OpenBSD::Ustar::Dir',
+    HARDLINK , 'OpenBSD::Ustar::HardLink',
+    SOFTLINK , 'OpenBSD::Ustar::SoftLink',
+    FILE , 'OpenBSD::Ustar::File',
+    FILE1 , 'OpenBSD::Ustar::File',
+    FIFO , 'OpenBSD::Ustar::Fifo',
+    CHARDEVICE , 'OpenBSD::Ustar::CharDevice',
+    BLOCKDEVICE , 'OpenBSD::Ustar::BlockDevice',
+};
+
 sub next
 {
     my $self = shift;
@@ -134,23 +145,11 @@ sub next
 	minor => $minor,
 	archive => $self,
 	destdir => $self->{destdir}
-	};
-    if ($type eq DIR) {
-    	bless $result, 'OpenBSD::Ustar::Dir';
-    } elsif ($type eq HARDLINK) {
-	bless $result, 'OpenBSD::Ustar::HardLink';
-    } elsif ($type eq SOFTLINK) {
-    	bless $result, 'OpenBSD::Ustar::SoftLink';
-    } elsif ($type eq FILE || $type eq FILE1) {
-    	bless $result, 'OpenBSD::Ustar::File';
-    } elsif ($type eq FIFO) {
-    	bless $result, 'OpenBSD::Ustar::Fifo';
-    } elsif ($type eq CHARDEVICE) {
-    	bless $result, 'OpenBSD::Ustar::CharDevice';
-    } elsif ($type eq BLOCKDEVICE) {
-    	bless $result, 'OpenBSD::Ustar::BlockDevice';
+    };
+    if (defined $types->{$type}) {
+    	bless $result, $types->{$type};
     } else {
-    	die "Unsupported type";
+    	die "Unsupported type $type";
     }
     if (!$result->isFile()) {
     	if ($size != 0) {
