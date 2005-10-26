@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 2005/09/15 21:14:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 2005/10/26 18:35:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -379,7 +379,7 @@ trap(type, frame)
 			if ((type & T_USER && space == HPPA_SID_KERNEL) ||
 			    (type & T_USER && !pl) ||
 			    (type & T_USER && va >= VM_MAXUSER_ADDRESS) ||
-			    uvm_fault(map, hppa_trunc_page(va), fault,
+			    uvm_fault(map, trunc_page(va), fault,
 			     opcode & 0x40? UVM_PROT_WRITE : UVM_PROT_READ)) {
 				frame_regmap(frame, opcode & 0x1f) = 0;
 				frame->tf_ipsw |= PSL_N;
@@ -428,7 +428,7 @@ trap(type, frame)
 		}
 
 printf("here\n");
-		ret = uvm_fault(map, hppa_trunc_page(va), fault, vftype);
+		ret = uvm_fault(map, trunc_page(va), fault, vftype);
 
 		/*
 		 * If this was a stack access we keep track of the maximum

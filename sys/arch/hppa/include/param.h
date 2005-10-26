@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.26 2005/07/31 15:31:12 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.27 2005/10/26 18:35:44 martin Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -112,9 +112,6 @@
 /*
  * Mach derived conversion macros
  */
-#define hppa_round_page(x)	((((unsigned long)(x)) + NBPG - 1) & ~(NBPG-1))
-#define hppa_trunc_page(x)	((unsigned long)(x) & ~(NBPG-1))
-
 #define btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define ptob(x)		((unsigned long)(x) << PGSHIFT)
 

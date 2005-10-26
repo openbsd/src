@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.62 2005/04/07 00:21:51 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.63 2005/10/26 18:35:44 martin Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -132,8 +132,8 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 				}
 				spa = pa;
 			} else {
-				spa = hppa_trunc_page(bpa);
-				epa = hppa_round_page(bpa + size);
+				spa = trunc_page(bpa);
+				epa = round_page(bpa + size);
 
 				if (epa - 1 > ~0U)
 					epa = (u_int64_t)~0U + 1;
@@ -186,8 +186,8 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
 	u_long sva, eva;
 
-	sva = hppa_trunc_page(bsh);
-	eva = hppa_round_page(bsh + size);
+	sva = trunc_page(bsh);
+	eva = round_page(bsh + size);
 
 #ifdef DIAGNOSTIC
 	if (eva <= sva)
