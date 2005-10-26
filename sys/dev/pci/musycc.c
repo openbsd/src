@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.8 2005/09/22 12:47:14 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.9 2005/10/26 09:26:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -1596,21 +1596,22 @@ ebus_read_buf(struct ebus_dev *rom, bus_size_t offset, void *buf, size_t size)
 }
 
 void
-ebus_set_led(struct channel_softc *cc, u_int8_t value)
+ebus_set_led(struct channel_softc *cc, int on, u_int8_t value)
 {
 	struct musycc_softc	*sc = cc->cc_group->mg_hdlc->mc_other;
-	u_int8_t		 mask;
 
+	value &= MUSYCC_LED_MASK; /* don't write to other ports led */
 	value <<= cc->cc_group->mg_gnum * 2;
-	mask = MUSYCC_LED_MASK << (cc->cc_group->mg_gnum * 2);
 	
-	value = (value & mask) | (sc->mc_ledstate & ~mask);
+	if (on)
+		sc->mc_ledstate |= value;
+	else
+		sc->mc_ledstate &= ~value;
 
-	bus_space_write_1(sc->mc_st, sc->mc_sh, sc->mc_ledbase, value);
+	bus_space_write_1(sc->mc_st, sc->mc_sh, sc->mc_ledbase,
+	    sc->mc_ledstate);
 	bus_space_barrier(sc->mc_st, sc->mc_sh, sc->mc_ledbase, 1,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
-
-	sc->mc_ledstate = value;
 }
 
 /*

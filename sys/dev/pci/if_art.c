@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.8 2005/09/22 12:45:07 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.9 2005/10/26 09:26:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -46,6 +46,7 @@ int	art_ifm_change(struct ifnet *);
 void	art_ifm_status(struct ifnet *, struct ifmediareq *);
 int	art_ifm_options(struct ifnet *, struct channel_softc *, u_int);
 void	art_onesec(void *);
+void	art_linkstate(void *);
 
 struct cfattach art_ca = {
 	sizeof(struct art_softc), art_match, art_softc_attach
@@ -160,9 +161,7 @@ art_softc_attach(struct device *parent, struct device *self, void *aux)
 	if (bt8370_reset(sc) != 0)
 		return;
 
-	/*
-	 * Initialize timeout for statistics update.
-	 */
+	/* Initialize timeout for statistics update. */
 	timeout_set(&sc->art_onesec, art_onesec, sc);
 
 	ifmedia_set(&sc->art_ifm, IFM_TDM|IFM_TDM_E1_G704_CRC4);
@@ -171,9 +170,11 @@ art_softc_attach(struct device *parent, struct device *self, void *aux)
 	bt8370_set_frame_mode(sc, sc->art_type, IFM_TDM_E1_G704_CRC4, 0);
 	musycc_attach_sppp(sc->art_channel, art_ioctl);
 
-	/*
-	 * Schedule the timeout one second from now.
-	 */
+	/* Set linkstate hook to track link state changes done by sppp. */
+	sc->art_linkstatehook = hook_establish(
+	    sc->art_channel->cc_ifp->if_linkstatehooks, 0, art_linkstate, sc);
+
+	/* Schedule the timeout one second from now. */
 	timeout_add(&sc->art_onesec, hz);
 }
 
@@ -242,7 +243,7 @@ art_ifm_change(struct ifnet *ifp)
 	struct channel_softc	*cc = ifp->if_softc;
 	struct art_softc	*ac = (struct art_softc *)cc->cc_parent;
 	struct ifmedia		*ifm = &ac->art_ifm;
-	int			 rv;
+	int			 rv, s, baudrate;
 
 	ACCOOM_PRINTF(2, ("%s: art_ifm_change %08x\n", ifp->if_xname,
 	    ifm->ifm_media));
@@ -265,6 +266,15 @@ art_ifm_change(struct ifnet *ifp)
 		    IFM_SUBTYPE(ifm->ifm_media), IFM_MODE(ifm->ifm_media));
 		/* adjust timeslot map on media change */
 	}
+
+	baudrate = ifmedia_baudrate(ac->art_media);
+	if (baudrate != ifp->if_baudrate) {
+		ifp->if_baudrate = baudrate;
+		s = splsoftnet();
+		if_link_state_change(ifp), baudrate;
+		splx(s);
+	}
+
 	ac->art_media = ifm->ifm_media;
 
 	return (0);
@@ -277,7 +287,9 @@ art_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmreq)
 
 	ac = (struct art_softc *)
 	    ((struct channel_softc *)ifp->if_softc)->cc_parent;
-	ifmreq->ifm_status = ac->art_status;
+	ifmreq->ifm_status = IFM_AVALID;
+	if (ifp->if_link_state == LINK_STATE_UP)
+		ifmreq->ifm_status |= IFM_ACTIVE;
 	ifmreq->ifm_active = ac->art_media;
 
 	return;
@@ -317,51 +329,34 @@ art_onesec(void *arg)
 	struct art_softc	*ac = arg;
 	struct ifnet		*ifp = ac->art_channel->cc_ifp;
 	struct sppp		*ppp = &ac->art_channel->cc_ppp;
-	int			 s, rv, link_state, baudrate, announce = 0;
+	int			 s, rv, link_state;
 
-	ac->art_status = IFM_AVALID;
 	rv = bt8370_link_status(ac);
 	switch (rv) {
 	case 1:
 		link_state = LINK_STATE_UP;
-		/* set led green but ask sppp if red is needed */
-		ebus_set_led(ac->art_channel, MUSYCC_LED_GREEN);
-		ac->art_status |= IFM_ACTIVE;
+		/* set green led */
+		ebus_set_led(ac->art_channel, 1, MUSYCC_LED_GREEN);
 		break;
 	case 0:
 		link_state = LINK_STATE_DOWN;
-		/* set led green & red */
-		ebus_set_led(ac->art_channel,
+		/* set green led and red let as well */
+		ebus_set_led(ac->art_channel, 1,
 		    MUSYCC_LED_GREEN | MUSYCC_LED_RED);
 		break;
 	default:
 		link_state = LINK_STATE_DOWN;
-		/* set led red */
-		ebus_set_led(ac->art_channel, MUSYCC_LED_RED);
+		/* turn green led off */
+		ebus_set_led(ac->art_channel, 0, MUSYCC_LED_GREEN);
 		break;
 	}
 
 	if (link_state != ifp->if_link_state) {
-		ifp->if_link_state = link_state;
 		s = splsoftnet();
 		if (link_state == LINK_STATE_UP)
 			ppp->pp_up(ppp);
 		else
 			ppp->pp_down(ppp);
-		splx(s);
-		announce = 1;
-	}
-
-	baudrate = ifmedia_baudrate(ac->art_media);
-
-	if (baudrate != ifp->if_baudrate) {
-		ifp->if_baudrate = baudrate;
-		announce = 1;
-	}
-
-	if (announce) {
-		s = splnet();
-		if_link_state_change(ifp);
 		splx(s);
 	}
 
@@ -374,5 +369,19 @@ art_onesec(void *arg)
 	 * Schedule another timeout one second from now.
 	 */
 	timeout_add(&ac->art_onesec, hz);
+}
+
+void
+art_linkstate(void *arg)
+{
+	struct art_softc	*ac = arg;
+	struct ifnet		*ifp = ac->art_channel->cc_ifp;
+
+	if (ifp->if_link_state == LINK_STATE_UP)
+		/* turn red led off */
+		ebus_set_led(ac->art_channel, 0, MUSYCC_LED_RED);
+	else
+		/* turn red led on */
+		ebus_set_led(ac->art_channel, 1, MUSYCC_LED_RED);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: musyccvar.h,v 1.7 2005/09/22 12:47:14 claudio Exp $ */
+/*	$OpenBSD: musyccvar.h,v 1.8 2005/10/26 09:26:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -201,7 +201,7 @@ int		ebus_attach_device(struct ebus_dev *, struct musycc_softc *,
 u_int8_t	ebus_read(struct ebus_dev *, bus_size_t);
 void		ebus_write(struct ebus_dev *, bus_size_t, u_int8_t);
 void		ebus_read_buf(struct ebus_dev *, bus_size_t, void *, size_t);
-void		ebus_set_led(struct channel_softc *, u_int8_t);
+void		ebus_set_led(struct channel_softc *, int, u_int8_t);
 
 #define MUSYCC_LED_GREEN	0x1
 #define MUSYCC_LED_RED		0x2

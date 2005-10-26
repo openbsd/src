@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.h,v 1.4 2005/08/27 13:32:01 claudio Exp $ */
+/*	$OpenBSD: if_art.h,v 1.5 2005/10/26 09:26:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -35,8 +35,8 @@ struct art_softc {
 	struct timeout		 art_onesec;	/* onesec timeout */
 	struct musycc_softc	*art_parent;	/* parent hdlc controller */
 	struct channel_softc	*art_channel;	/* channel config */
+	void			*art_linkstatehook;
 
-	int			 art_status;	/* if_media status */
 	u_int			 art_media;	/* if_media media */
 	enum art_sbi_type	 art_type;	/* System Bus Type */
 	u_int8_t		 art_gnum;	/* group number */
