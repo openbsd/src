@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.92 2005/09/14 05:38:48 marco Exp $	*/
+/*	$OpenBSD: locore.s,v 1.93 2005/10/26 20:32:59 marco Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -2043,6 +2043,10 @@ IDTVEC(page)
 	TRAP(T_PAGEFLT)
 IDTVEC(rsvd)
 	ZTRAP(T_RESERVED)
+IDTVEC(mchk)
+	ZTRAP(T_MACHK)
+IDTVEC(simd)
+	ZTRAP(T_XFTRAP)
 IDTVEC(intrspurious)
 	/*
 	 * The Pentium Pro local APIC may erroneously call this vector for a

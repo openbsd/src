@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.4 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: trap.h,v 1.5 2005/10/26 20:32:59 marco Exp $	*/
 /*	$NetBSD: trap.h,v 1.4 1994/10/27 04:16:30 cgd Exp $	*/
 
 /*-
@@ -59,7 +59,8 @@
 #define	T_SEGNPFLT	16	/* segment not present fault */
 #define	T_STKFLT	17	/* stack fault */
 #define	T_MACHK		18	/* machine check ([P]Pro) */
-#define	T_RESERVED	19	/* reserved fault base */
+#define	T_XFTRAP	19	/* SIMD FP exception */
+#define	T_RESERVED	20	/* reserved fault base */
 
 /* Trap's coming from user mode */
 #define	T_USER	0x100

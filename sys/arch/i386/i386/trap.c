@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.71 2005/09/15 21:14:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.72 2005/10/26 20:32:59 marco Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -155,7 +155,8 @@ char	*trap_type[] = {
 	"segment not present fault",		/* 16 T_SEGNPFLT */
 	"stack fault",				/* 17 T_STKFLT */
 	"machine check",			/* 18 T_MACHK ([P]Pro) */
-	"reserved trap",			/* 19 T_RESERVED */
+	"SIMD FP fault",			/* 19 T_XFTRAP */
+	"reserved trap",			/* 20 T_RESERVED */
 };
 int	trap_types = sizeof trap_type / sizeof trap_type[0];
 

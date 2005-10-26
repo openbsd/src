@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.325 2005/09/23 02:03:44 brad Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.326 2005/10/26 20:32:59 marco Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2658,8 +2658,8 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 extern int IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
     IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
     IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot), IDTVEC(page),
-    IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(align), IDTVEC(syscall),
-    IDTVEC(osyscall);
+    IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(align), IDTVEC(syscall), IDTVEC(mchk),
+    IDTVEC(osyscall), IDTVEC(simd);
 
 #if defined(I586_CPU)
 extern int IDTVEC(f00f_redirect);
@@ -2779,8 +2779,9 @@ init386(paddr_t first_avail)
 	setgate(&idt[ 15], &IDTVEC(rsvd),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[ 16], &IDTVEC(fpu),     0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[ 17], &IDTVEC(align),   0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[ 18], &IDTVEC(rsvd),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
-	for (i = 19; i < NRSVIDT; i++)
+	setgate(&idt[ 18], &IDTVEC(mchk),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[ 19], &IDTVEC(simd),    0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
+	for (i = 20; i < NRSVIDT; i++)
 		setgate(&idt[i], &IDTVEC(rsvd), 0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	for (i = NRSVIDT; i < NIDT; i++)
 		unsetgate(&idt[i]);
