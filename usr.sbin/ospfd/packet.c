@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.16 2005/10/19 22:00:37 stevesk Exp $ */
+/*	$OpenBSD: packet.c,v 1.17 2005/10/26 01:28:41 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -27,7 +26,6 @@
 
 #include <errno.h>
 #include <event.h>
-#include <md5.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -301,7 +299,6 @@ find_iface(struct ospfd_conf *xconf, struct in_addr src)
 			    (src.s_addr == iface->dst.s_addr)) {
 				return (iface);
 			}
-
 
 	return (NULL);
 }
