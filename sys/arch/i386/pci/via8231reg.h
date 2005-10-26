@@ -1,4 +1,4 @@
-/*	$OpenBSD: via8231reg.h,v 1.3 2005/10/26 01:41:36 mickey Exp $	*/
+/*	$OpenBSD: via8231reg.h,v 1.4 2005/10/26 21:38:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005, by Michael Shalayeff
@@ -75,11 +75,11 @@
 
 #define VIA8231_TRIGGER_CNFG_MASK		0x000000ff
 #define VIA8231_TRIGGER_CNFG_SHFT		0
-#define VIA8237_TRIGGER_CNFG_MASK		0x00ff0000
+#define VIA8237_TRIGGER_CNFG_MASK		0x000f0000
 #define VIA8237_TRIGGER_CNFG_SHFT		16
 #define VIA8231_TRIGGER_CNFG_LEVEL		0
 #define VIA8231_TRIGGER_CNFG_EDGE		1
-#define VIA8237_TRIGGER_CNFG_ENA		0x100000
+#define VIA8237_TRIGGER_CNFG_ENA		0x00100000
 
 #define VIA8231_GET_TRIGGER(ph)						\
 	((pci_conf_read((ph)->ph_pc, (ph)->ph_tag, VIA8231_CFG_PIR)	\
