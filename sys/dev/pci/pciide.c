@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.216 2005/10/22 23:13:26 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.217 2005/10/26 21:07:38 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1998,7 +1998,6 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA2 ||
-	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_SATA_1) {
@@ -2018,7 +2017,6 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA2 ||
-	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_SATA_1)
@@ -2047,6 +2045,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -2063,7 +2062,6 @@ chansetup:
 		/* SATA setup */
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA ||
 		    sc->sc_pp->ide_product ==
@@ -2113,7 +2111,6 @@ next:
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_SATA2 ||
-	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FR_SATA ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_SATA_1)
@@ -2142,6 +2139,7 @@ next:
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
@@ -2309,6 +2307,7 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
@@ -2321,6 +2320,7 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
 			/* setup Ultra/100 */
 			if (drvp->UDMA_mode > 2 &&
