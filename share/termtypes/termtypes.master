@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.34 2003/01/27 19:14:44 miod Exp $
+# $OpenBSD: termtypes.master,v 1.35 2005/10/26 20:44:29 otto Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -17217,13 +17217,15 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 # This entry is for the BSD window program.  It pessimistically
 # assumes a rather dumb terminal.  In practice this is fine since
 # window will place a better entry in the TERMCAP environment variable.
-window-v2|window program version 2, 
-	OTbs, am, da, db, msgr, OTpt, 
-	it#8, 
-	bel=^G, clear=\\EE, cr=^M, cub1=^H, cud1=^J, cuf1=\\EC, 
-	cup=\\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\\EA, ed=\\EJ, 
-	el=\\EK, home=\\EH, ht=^I, kbs=^H, kcub1=^H, kcud1=\\EB, 
-	nel=^M^J, sgr0=\\Er\177, 
+# To make the curses actually use the TERMCAP env var, this entry is now
+# disabled. It's faulty anyway.
+#window-v2|window program version 2, 
+#	OTbs, am, da, db, msgr, OTpt, 
+#	it#8, 
+#	bel=^G, clear=\\EE, cr=^M, cub1=^H, cud1=^J, cuf1=\\EC, 
+#	cup=\\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\\EA, ed=\\EJ, 
+#	el=\\EK, home=\\EH, ht=^I, kbs=^H, kcub1=^H, kcud1=\\EB, 
+#	nel=^M^J, sgr0=\\Er\177, 
 ######## ICH/ICH1 VERSUS RMIR/SMIR
 #
 # Some non-curses applications get confused if both ich/ich1 and rmir/smir
