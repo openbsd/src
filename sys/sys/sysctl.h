@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.83 2005/06/08 22:33:27 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.84 2005/10/26 17:22:00 mickey Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -258,6 +258,7 @@ struct ctlname {
 	{ "evcount", CTLTYPE_NODE }, \
  	{ "timecounter", CTLTYPE_NODE }, \
  	{ "maxlocksperuid", CTLTYPE_INT }, \
+ 	{ "cp_time2", CTLTYPE_STRUCT }, \
 }
 
 /*
