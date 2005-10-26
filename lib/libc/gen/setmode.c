@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.17 2005/08/08 08:05:34 espie Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.18 2005/10/26 20:37:13 otto Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -161,16 +161,17 @@ common:			if (set->cmd2 & CMD2_CLR) {
 void *
 setmode(const char *p)
 {
-	int perm, who;
 	char op, *ep;
-	BITCMD *set, *saveset, *endset;
+	BITCMD *set, *saveset = NULL, *endset;
 	sigset_t sigset, sigoset;
-	mode_t mask;
-	int equalopdone, permXbits, setlen;
+	mode_t mask, perm, permXbits, who;
+	int equalopdone, setlen, serrno;
 	u_long perml;
 
-	if (!*p)
-		return (NULL);
+	if (!*p) {
+		errno = EINVAL;
+		goto out;
+	}
 
 	/*
 	 * Get a copy of the mask for the permissions that are mask relative.
@@ -187,7 +188,7 @@ setmode(const char *p)
 	setlen = SET_LEN + 2;
 	
 	if ((set = malloc((u_int)(sizeof(BITCMD) * setlen))) == NULL)
-		return (NULL);
+		goto out;
 	saveset = set;
 	endset = set + (setlen - 2);
 
@@ -199,9 +200,8 @@ setmode(const char *p)
 		perml = strtoul(p, &ep, 8);
 		/* The test on perml will also catch overflow. */
 		if (*ep != '\0' || (perml & ~(STANDARD_BITS|S_ISTXT))) {
-			free(saveset);
 			errno = ERANGE;
-			return (NULL);
+			goto out;
 		}
 		perm = (mode_t)perml;
 		ADDCMD('=', (STANDARD_BITS|S_ISTXT), perm, mask);
@@ -235,8 +235,8 @@ setmode(const char *p)
 		}
 
 getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
-			free(saveset);
-			return (NULL);
+			errno = EINVAL;
+			goto out;
 		}
 		if (op == '=')
 			equalopdone = 0;
@@ -331,6 +331,11 @@ apply:		if (!*p)
 	dumpmode(saveset);
 #endif
 	return (saveset);
+out:
+	serrno = errno;
+	free(saveset);
+	errno = serrno;
+	return (NULL);
 }
 
 static BITCMD *
