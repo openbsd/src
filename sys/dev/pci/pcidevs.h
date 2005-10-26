@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.951 2005/10/26 17:09:23 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.952 2005/10/26 17:21:31 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2561,7 +2561,7 @@
 #define	PCI_PRODUCT_SAMSUNG_SWL2210P	0xa000		/* MagicLAN SWL-2210P */
 
 /* Digi International */
-#define	PCI_PRODUCT_DIGI_NEO	0x00b0		/* Neo-4 */
+#define	PCI_PRODUCT_DIGI_NEO4	0x00b0		/* Neo-4 */
 
 /* Schneider & Koch (SysKonnect) */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_FDDI	0x4000		/* FDDI */

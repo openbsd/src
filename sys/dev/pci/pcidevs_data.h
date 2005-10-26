@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.951 2005/10/26 17:09:23 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.952 2005/10/26 17:21:31 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7623,7 +7623,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MagicLAN SWL-2210P",
 	},
 	{
-	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO,
+	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4,
 	    "Neo-4",
 	},
 	{
