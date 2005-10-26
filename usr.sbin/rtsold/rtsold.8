@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.21 2005/10/26 11:14:52 jmc Exp $
+.\"	$OpenBSD: rtsold.8,v 1.22 2005/10/26 11:20:57 jmc Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -160,14 +160,13 @@ option) including the printing of internal timer information.
 .It Fl d
 Enable debugging.
 .It Fl F
-Configure
+Automatically set the
 .Xr sysctl 8
 variable related to
-.Nm
-by itself.
+.Nm .
 Without this option,
 .Nm
-will not alter and obey the current
+will obey the current
 .Xr sysctl 8
 settings.
 .It Fl f
@@ -194,9 +193,9 @@ ioctl.
 .Ex -std rtsold
 .\"
 .Sh FILES
-.Bl -tag -width /var/run/rtsold.dump -compact
+.Bl -tag -width "/var/run/rtsold.dumpXX" -compact
 .It Pa /var/run/rtsold.dump
-dumps internal state on.
+Internal state dump file.
 .El
 .\"
 .Sh SEE ALSO
