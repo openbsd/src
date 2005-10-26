@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.24 2005/01/05 23:04:25 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.25 2005/10/26 19:15:43 martin Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -55,6 +55,10 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
+
+#if defined(__alpha__) || defined(__mips__)
+#include <uvm/uvm_extern.h>
+#endif
 
 #ifdef __alpha__
 #include <machine/pte.h>
@@ -715,10 +719,8 @@ tga_mmap(v, offset, prot)
 		 */
 		offset += dc->dc_tgaconf->tgac_cspace_size / 2;
 	}
-#if defined(__alpha__)
-	return alpha_btop(sc->sc_dc->dc_paddr + offset);
-#elif defined(__mips__)
-	return mips_btop(sc->sc_dc->dc_paddr + offset);
+#if defined(__alpha__) || defined(__mips__)
+	return atop(sc->sc_dc->dc_paddr + offset);
 #else
 	return (-1);
 #endif
