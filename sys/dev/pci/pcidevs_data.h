@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.950 2005/10/26 17:03:08 brad Exp 
+ *	OpenBSD: pcidevs,v 1.951 2005/10/26 17:09:23 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7623,6 +7623,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MagicLAN SWL-2210P",
 	},
 	{
+	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO,
+	    "Neo-4",
+	},
+	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_FDDI,
 	    "FDDI",
 	},
@@ -10161,6 +10165,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH,
 	    "Schneider & Koch",
+	},
+	{
+	    PCI_VENDOR_DIGI,
+	    "Digi",
 	},
 	{
 	    PCI_VENDOR_MUTECH,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.950 2005/10/26 17:03:08 brad Exp 
+ *	OpenBSD: pcidevs,v 1.951 2005/10/26 17:09:23 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -158,6 +158,7 @@
 #define	PCI_VENDOR_CYCLONE	0x113c		/* Cyclone */
 #define	PCI_VENDOR_ALLIANCE	0x1142		/* Alliance Semiconductor */
 #define	PCI_VENDOR_SCHNEIDERKOCH	0x1148		/* Schneider & Koch */
+#define	PCI_VENDOR_DIGI	0x114f		/* Digi */
 #define	PCI_VENDOR_MUTECH	0x1159		/* Mutech */
 #define	PCI_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	PCI_VENDOR_RCC	0x1166		/* ServerWorks */
@@ -2558,6 +2559,9 @@
 
 /* Samsung products */
 #define	PCI_PRODUCT_SAMSUNG_SWL2210P	0xa000		/* MagicLAN SWL-2210P */
+
+/* Digi International */
+#define	PCI_PRODUCT_DIGI_NEO	0x00b0		/* Neo-4 */
 
 /* Schneider & Koch (SysKonnect) */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_FDDI	0x4000		/* FDDI */
