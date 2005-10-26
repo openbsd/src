@@ -1,4 +1,4 @@
-/*	$OpenBSD: via8231.c,v 1.3 2005/10/26 21:47:48 mickey Exp $	*/
+/*	$OpenBSD: via8231.c,v 1.4 2005/10/26 22:01:33 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ via8231_init(pc, iot, tag, ptagp, phandp)
 	ph->ph_tag = tag;
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	ph->flags = PCI_VENDOR(id) == PCI_VENDOR_VIATECH &&
-	    PCI_PRODUCT(id) == PCI_PRODUCT_VIATECH_VT8231_ISA? 0 : VT8237;
+	    PCI_PRODUCT(id) == PCI_PRODUCT_VIATECH_VT8237_ISA? VT8237 : 0;
 
 	*ptagp = &via8231_pci_icu;
 	*phandp = ph;
