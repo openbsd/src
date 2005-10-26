@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.9 2005/10/26 09:53:35 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.10 2005/10/26 19:07:30 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -135,6 +135,7 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	struct rcs_sym *sym;
 	struct rcs_delta *rdp;
 	struct rcs_access *acp;
+	struct rcs_lock *lkp;
 
 	printf("\nWorking file: %s", fname);
 	printf("\nhead:");
@@ -148,6 +149,9 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	}
 
 	printf("\nlocks: %s", (file->rf_flags & RCS_SLOCK) ? "strict" : "");
+	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list)
+		printf("\n\t%s: %s", lkp->rl_name,
+		    rcsnum_tostr(lkp->rl_num, numb, sizeof(numb)));
 	printf("\naccess list:\n");
 	TAILQ_FOREACH(acp, &(file->rf_access), ra_list)
 		printf("\t%s\n", acp->ra_name);
