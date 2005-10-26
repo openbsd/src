@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2005/10/23 04:07:06 joris Exp $
+#	$OpenBSD: Makefile,v 1.22 2005/10/26 07:02:59 xsa Exp $
 
 .PATH:	${.CURDIR}/../cvs
 
@@ -11,7 +11,8 @@ CPPFLAGS+=-I${.CURDIR}/../cvs -DRCSPROG
 
 LINKS=	${BINDIR}/rcs ${BINDIR}/ci ${BINDIR}/rcs ${BINDIR}/co \
 	${BINDIR}/rcs ${BINDIR}/rcsclean ${BINDIR}/rcs ${BINDIR}/rcsdiff \
-	${BINDIR}/rcs ${BINDIR}/rcsmerge
+	${BINDIR}/rcs ${BINDIR}/rcsmerge ${BINDIR}/rcs ${BINDIR}/rlog \
+	${BINDIR}/rcs ${BINDIR}/ident
 #MLINKS=	rcs.1 ci.1 rcs.1 co.1 rcs.1 rcsclean.1 rcs.1 rcsdiff.1
 
 CFLAGS+= -Wall
