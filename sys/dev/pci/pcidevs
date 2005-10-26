@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.950 2005/10/26 17:03:08 brad Exp $
+$OpenBSD: pcidevs,v 1.951 2005/10/26 17:09:23 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ vendor	ZIATECH		0x1138	Ziatech
 vendor	CYCLONE		0x113c	Cyclone
 vendor	ALLIANCE	0x1142	Alliance Semiconductor
 vendor	SCHNEIDERKOCH	0x1148	Schneider & Koch
+vendor	DIGI		0x114f	Digi
 vendor	MUTECH		0x1159	Mutech
 vendor	XIRCOM		0x115d	Xircom
 vendor	RCC		0x1166	ServerWorks
@@ -2553,6 +2554,9 @@ product SAFENET SAFEXCEL	0x1141	SafeXcel
 
 /* Samsung products */
 product SAMSUNG SWL2210P	0xa000	MagicLAN SWL-2210P
+
+/* Digi International */
+product	DIGI NEO		0x00b0	Neo-4
 
 /* Schneider & Koch (SysKonnect) */
 product SCHNEIDERKOCH FDDI	0x4000	FDDI
