@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.81 2005/10/24 21:42:34 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.82 2005/10/26 21:58:19 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1044,6 +1044,8 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
 	 * Advance the Transmit Descriptor Tail (Tdt), this tells the E1000
 	 * that this frame is available to transmit.
 	 */
+	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	if (sc->hw.mac_type == em_82547 &&
 	    sc->link_duplex == HALF_DUPLEX) {
 		em_82547_move_tail_locked(sc);
@@ -1989,6 +1991,8 @@ em_clean_transmit_interrupts(struct em_softc *sc)
 	tx_buffer = &sc->tx_buffer_area[i];
 	tx_desc = &sc->tx_desc_base[i];
 
+	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+	    sc->txdma.dma_size, BUS_DMASYNC_POSTREAD);
 	while(tx_desc->upper.fields.status & E1000_TXD_STAT_DD) {
 
 		tx_desc->upper.data = 0;
@@ -1996,9 +2000,6 @@ em_clean_transmit_interrupts(struct em_softc *sc)
 
 		if (tx_buffer->m_head) {
 			ifp->if_opackets++;
-			bus_dmamap_sync(sc->txtag, tx_buffer->map,
-			    0, tx_buffer->map->dm_mapsize,
-			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->txtag, tx_buffer->map);
 			bus_dmamap_destroy(sc->txtag, tx_buffer->map);
 
@@ -2012,6 +2013,8 @@ em_clean_transmit_interrupts(struct em_softc *sc)
 		tx_buffer = &sc->tx_buffer_area[i];
 		tx_desc = &sc->tx_desc_base[i];
 	}
+	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map, 0,
+	    sc->txdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->oldest_used_tx_desc = i;
 
@@ -2077,8 +2080,7 @@ em_get_buf(int i, struct em_softc *sc,
 	 * bus_dma machinery to arrange the memory mapping.
 	 */
 	error = bus_dmamap_load(sc->rxtag, rx_buffer->map,
-	    mtod(mp, void *), mp->m_len, NULL,
-	    0);
+	    mtod(mp, void *), mp->m_len, NULL, 0);
 	if (error) {
 		m_free(mp);
 		return(error);
@@ -2086,7 +2088,8 @@ em_get_buf(int i, struct em_softc *sc,
 	rx_buffer->m_head = mp;
 	sc->rx_desc_base[i].buffer_addr = htole64(rx_buffer->map->dm_segs[0].ds_addr);
 	bus_dmamap_sync(sc->rxtag, rx_buffer->map, 0,
-	    rx_buffer->map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	    rx_buffer->map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return(0);
 }
@@ -2140,6 +2143,8 @@ em_allocate_receive_structures(struct em_softc *sc)
 			return (error);
                 }
         }
+	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
+	    sc->rxdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
         return (0);
 
@@ -2311,6 +2316,8 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 	ifp = &sc->interface_data.ac_if;
 	i = sc->next_rx_desc_to_check;
 	current_desc = &sc->rx_desc_base[i];
+	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
+	    sc->rxdma.dma_size, BUS_DMASYNC_POSTREAD);
 
 	if (!((current_desc->status) & E1000_RXD_STAT_DD)) {
 		return;
@@ -2472,6 +2479,8 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 
 		/* Zero out the receive descriptors status  */
 		current_desc->status = 0;
+		bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
+		    sc->rxdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Advance the E1000's Receive Queue #0	 "Tail Pointer". */
 		E1000_WRITE_REG(&sc->hw, RDT, i);
