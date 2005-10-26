@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.h,v 1.2 2004/08/10 15:59:10 ho Exp $	*/
+/*	$OpenBSD: dpd.h,v 1.3 2005/10/26 20:10:49 markus Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -34,5 +34,6 @@ struct sa;
 int	dpd_add_vendor_payload(struct message *);
 void	dpd_check_vendor_payload(struct message *, struct payload *);
 void	dpd_handle_notify(struct message *, struct payload *);
+void	dpd_start(struct sa *);
 
 #endif /* _DPD_H_ */

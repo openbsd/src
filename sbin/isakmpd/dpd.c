@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.13 2005/05/04 10:05:01 hshoexer Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.14 2005/10/26 20:10:48 markus Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -122,15 +122,21 @@ dpd_check_vendor_payload(struct message *msg, struct payload *p)
 			msg->exchange->flags |= EXCHANGE_FLAG_DPD_CAP_PEER;
 			LOG_DBG((LOG_EXCHANGE, 10, "dpd_check_vendor_payload: "
 			    "DPD capable peer detected"));
-			if (dpd_timer_interval(0) != 0) {
-				LOG_DBG((LOG_EXCHANGE, 10,
-				    "dpd_check_vendor_payload: enabling"));
-				msg->isakmp_sa->flags |= SA_FLAG_DPD;
-				dpd_timer_reset(msg->isakmp_sa, 0,
-				    DPD_TIMER_NORMAL);
-			}
 		}
 		p->flags |= PL_MARK;
+	}
+}
+
+/*
+ * Arm the DPD timer
+ */
+void
+dpd_start(struct sa *isakmp_sa)
+{
+	if (dpd_timer_interval(0) != 0) {
+		LOG_DBG((LOG_EXCHANGE, 10, "dpd_enable: enabling"));
+		isakmp_sa->flags |= SA_FLAG_DPD;
+		dpd_timer_reset(isakmp_sa, 0, DPD_TIMER_NORMAL);
 	}
 }
 
