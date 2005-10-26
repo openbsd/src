@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.fetes,v 1.2 2004/01/16 18:43:28 mickey Exp $	*/
+/*	$OpenBSD: calendar.fetes,v 1.3 2005/10/26 15:02:08 mickey Exp $	*/
 
 /*
  * Fêtes à souhaiter
@@ -442,7 +442,6 @@ LANG=fr_FR.ISO8859-1
 10/06	Bonne fête aux Foy !
 10/07	Aujourd'hui, c'est la St(e) Serge.
 10/08	N'oubliez pas les Pélagie !
-10/26	Bonne fête aux Démétrius !
 10/09	Aujourd'hui, c'est la St(e) Denis.
 10/09	N'oubliez pas les Denys !
 10/10	Bonne fête aux Ghislain !
