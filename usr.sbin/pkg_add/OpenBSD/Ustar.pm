@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.39 2005/10/26 09:35:32 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.40 2005/10/26 09:47:48 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -64,15 +64,19 @@ sub new
 sub skip
 {
     my $self = shift;
-    return if $self->{swallow} == 0;
-
     my $temp;
-    while ($self->{swallow} > $buffsize) {
-    	read($self->{fh}, $temp, $buffsize);
-	$self->{swallow} -= $buffsize;
+
+    while ($self->{swallow} > 0) {
+    	my $toread = $self->{swallow};
+	if ($toread >$buffsize) {
+		$toread = $buffsize;
+	}
+    	my $actual = read($self->{fh}, $temp, $toread);
+	if (!defined $actual) {
+		die "Error while skipping archive: $!\n";
+	}
+	$self->{swallow} -= $actual;
     }
-    read($self->{fh},  $temp, $self->{swallow});
-    $self->{swallow} = 0;
 }
 
 my $types = {
@@ -147,14 +151,9 @@ sub next
 	destdir => $self->{destdir}
     };
     if (defined $types->{$type}) {
-    	bless $result, $types->{$type};
+    	$types->{$type}->new($result);
     } else {
     	die "Unsupported type $type";
-    }
-    if (!$result->isFile()) {
-    	if ($size != 0) {
-		die "Bad archive: non null size for non file entry\n";
-	}
     }
     # adjust swallow
     $self->{swallow} = $size;
@@ -336,6 +335,16 @@ sub fh
 }
 
 package OpenBSD::Ustar::Object;
+sub new
+{
+	my ($class, $object) = @_;
+
+	if ($object->{size} != 0) {
+		die "Bad archive: non null size for arbitrary entry\n";
+	}
+	bless $object, $class;
+}
+
 sub set_modes
 {
 	my $self = shift;
@@ -582,6 +591,12 @@ sub close
 
 package OpenBSD::Ustar::File;
 our @ISA=qw(OpenBSD::Ustar::Object);
+sub new
+{
+	my ($class, $object) = @_;
+
+	bless $object, $class;
+}
 
 sub create
 {
