@@ -535,7 +535,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (x86_btop((caddr_t)segs[i].ds_addr + off));
+		return (atop(segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */

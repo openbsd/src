@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.7 2005/10/21 18:55:00 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.8 2005/10/26 18:46:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -153,9 +153,5 @@
 #define	x86_trunc_pdr(x)	((unsigned long)(x) & ~(NBPD_L2 - 1))
 #define	x86_btod(x)		((unsigned long)(x) >> L2_SHIFT)
 #define	x86_dtob(x)		((unsigned long)(x) << L2_SHIFT)
-#define	x86_btop(x)		((unsigned long)(x) >> PGSHIFT)
-#define	x86_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
-#define btop(x)				x86_btop(x)
-#define ptob(x)				x86_ptob(x)
 #define round_pdr(x)			x86_round_pdr(x)

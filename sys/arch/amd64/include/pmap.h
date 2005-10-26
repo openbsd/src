@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.8 2005/07/12 21:18:11 hshoexer Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.9 2005/10/26 18:46:07 martin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ extern pd_entry_t *pdes[];
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)		
-#define pmap_phys_address(ppn)		ptob(ppn)
+#define pmap_phys_address(ppn)		ptoa(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */

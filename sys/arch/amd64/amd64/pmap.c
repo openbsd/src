@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 2005/09/25 20:48:18 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 2005/10/26 18:46:06 martin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -747,7 +747,7 @@ pmap_bootstrap(vaddr_t kva_start, paddr_t max_pa)
 	kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
 	kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
-		btop(kva_start - VM_MIN_KERNEL_ADDRESS);
+		atop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
 	/*
 	 * the above is just a rough estimate and not critical to the proper
@@ -1790,7 +1790,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 
 		if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
-			if (vm_physseg_find(btop(opte & PG_FRAME), &off)
+			if (vm_physseg_find(atop(opte & PG_FRAME), &off)
 			    != -1)
 				panic("pmap_remove_ptes: managed page without "
 				      "PG_PVLIST for 0x%lx", startva);
@@ -1798,7 +1798,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 			continue;
 		}
 
-		bank = vm_physseg_find(btop(opte & PG_FRAME), &off);
+		bank = vm_physseg_find(atop(opte & PG_FRAME), &off);
 #ifdef DIAGNOSTIC
 		if (bank == -1)
 			panic("pmap_remove_ptes: unmanaged page marked "
@@ -1869,7 +1869,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 
 	if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
-		if (vm_physseg_find(btop(opte & PG_FRAME), &off) != -1) {
+		if (vm_physseg_find(atop(opte & PG_FRAME), &off) != -1) {
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
 		}
@@ -1877,7 +1877,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 		return(TRUE);
 	}
 
-	bank = vm_physseg_find(btop(opte & PG_FRAME), &off);
+	bank = vm_physseg_find(atop(opte & PG_FRAME), &off);
 #ifdef DIAGNOSTIC
 	if (bank == -1)
 		panic("pmap_remove_pte: unmanaged page marked "
@@ -2348,7 +2348,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 			pmap_pte_clearbits(spte, PG_RW);
 			pmap_pte_setbits(spte, nx);
 			if (opte != *spte)
-				pmap_tlb_shootdown(pmap, ptob(spte - ptes),
+				pmap_tlb_shootdown(pmap, ptoa(spte - ptes),
 				    *spte, &cpumask);
 		}
 	}
