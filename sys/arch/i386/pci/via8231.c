@@ -1,4 +1,4 @@
-/*	$OpenBSD: via8231.c,v 1.2 2005/10/20 15:09:31 mickey Exp $	*/
+/*	$OpenBSD: via8231.c,v 1.3 2005/10/26 21:47:48 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -305,9 +305,9 @@ via8231_set_trigger(v, irq, trigger)
 				return (1);
 			}
 			if (VIA8231_LINK_LEGAL(clink))
-				VIA8231_SET_ROUTING(ph, reg);
+				VIA8231_SET_TRIGGER(ph, reg);
 			else
-				VIA8237_SET_ROUTING(ph, reg);
+				VIA8237_SET_TRIGGER(ph, reg);
 			return (0);
 		}
 	}
