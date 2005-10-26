@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.949 2005/10/23 23:59:00 brad Exp $
+$OpenBSD: pcidevs,v 1.950 2005/10/26 17:03:08 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1085,6 +1085,8 @@ product COMPAQ N10T2		0xb012	Netelligent 10 T/2 PCI
 product COMPAQ N10_TX_UTP	0xb030	Netelligent 10/100TX
 product COMPAQ CSA5300_2	0xb060	Smart Array 5300 rev.2
 product COMPAQ CSA5i_2		0xb178	Smart Array 5i/532 rev.2
+product COMPAQ ILO_1		0xb203	iLO
+product COMPAQ ILO_2		0xb204	iLO
 product COMPAQ NF3P		0xf130	NetFlex 3/P
 product COMPAQ NF3P_BNC		0xf150	NetFlex 3/PB
 
