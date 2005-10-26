@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.21 2005/07/06 21:50:24 jmc Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.22 2005/10/26 17:06:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -79,7 +79,7 @@ main(int argc, char **argv)
 	 * If we are in interactive mode, STDOUT_FILENO *must* be open.
 	 */
 	for (ch = STDIN_FILENO; ch <= STDERR_FILENO; ch++) {
-		if (fcntl(ch, F_GETFL, &left) == -1 && errno == EBADF) {
+		if (fcntl(ch, F_GETFL, 0) == -1 && errno == EBADF) {
 			if (ch == STDOUT_FILENO && iflag)
 				exit(1);	/* need stdout for -i */
 			if (open(_PATH_DEVNULL, O_RDWR, 0644) == -1)
