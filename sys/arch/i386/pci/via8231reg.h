@@ -1,4 +1,4 @@
-/*	$OpenBSD: via8231reg.h,v 1.2 2005/10/20 15:09:31 mickey Exp $	*/
+/*	$OpenBSD: via8231reg.h,v 1.3 2005/10/26 01:41:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005, by Michael Shalayeff
@@ -106,10 +106,10 @@
 
 #define VIA8231_GET_ROUTING(ph)						\
 	((pci_conf_read((ph)->ph_pc, (ph)->ph_tag, VIA8231_CFG_PIR)	\
-	    & VIA8237_ROUTING_CNFG_MASK) >> VIA8231_ROUTING_CNFG_SHFT)
+	    & VIA8231_ROUTING_CNFG_MASK) >> VIA8231_ROUTING_CNFG_SHFT)
 #define VIA8237_GET_ROUTING(ph)						\
 	((pci_conf_read((ph)->ph_pc, (ph)->ph_tag, VIA8237_CFG_PIR)	\
-	    & VIA8231_ROUTING_CNFG_MASK) >> VIA8237_ROUTING_CNFG_SHFT)
+	    & VIA8237_ROUTING_CNFG_MASK) >> VIA8237_ROUTING_CNFG_SHFT)
 
 #define VIA8231_SET_ROUTING(ph, n)					\
 	pci_conf_write((ph)->ph_pc, (ph)->ph_tag, VIA8231_CFG_PIR,	\
