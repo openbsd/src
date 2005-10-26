@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.10 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: atexit.c,v 1.11 2005/10/26 18:55:26 otto Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -46,10 +46,6 @@ struct atexit *__atexit;
  *
  * Outside the following two functions, all pages are mprotect()'ed
  * to prevent unintentional/malicious corruption.
- *
- * The free(malloc(1)) is a workaround causing malloc_init() to
- * ensure that malloc.c gets the first mmap() call for its sbrk()
- * games.
  */
 
 /*
