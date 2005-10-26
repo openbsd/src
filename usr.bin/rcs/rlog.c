@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.8 2005/10/25 17:19:31 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.9 2005/10/26 09:53:35 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -105,11 +105,16 @@ rlog_main(int argc, char **argv)
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
+		if (Rflag == 1) {
+			printf("%s\n", fpath);
+			continue;
+		}
+
 		if ((file = rcs_open(fpath, RCS_READ)) == NULL)
 			continue;
 
-		if (Rflag == 0)
-			rlog_file(argv[i], fpath, file);
+		rlog_file(argv[i], fpath, file);
+
 		rcs_close(file);
 	}
 
