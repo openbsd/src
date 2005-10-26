@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.949 2005/10/23 23:59:00 brad Exp 
+ *	OpenBSD: pcidevs,v 1.950 2005/10/26 17:03:08 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2753,6 +2753,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5i_2,
 	    "Smart Array 5i/532 rev.2",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_ILO_1,
+	    "iLO",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_ILO_2,
+	    "iLO",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P,
