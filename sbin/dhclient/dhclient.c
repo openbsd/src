@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.80 2005/08/27 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.81 2005/10/26 15:42:04 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2113,7 +2113,8 @@ check_option(struct client_lease *l, int option)
 		if (!res_hnok(sbuf)) {
 			warning("Bogus Host Name option %d: %s (%s)", option,
 			    sbuf, opbuf);
-			return (0);
+			l->options[option].len = 0;
+			free(l->options[option].data);
 		}
 		return (1);
 	case DHO_PAD:
