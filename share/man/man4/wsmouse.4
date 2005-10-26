@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsmouse.4,v 1.10 2005/04/22 11:59:10 miod Exp $
+.\" $OpenBSD: wsmouse.4,v 1.11 2005/10/26 11:27:13 jmc Exp $
 .\" $NetBSD: wsmouse.4,v 1.3 1999/12/06 14:52:08 augustss Exp $
 .\"
 .\" Copyright (c) 1999
@@ -58,8 +58,11 @@ The
 driver is an abstraction layer for mice within the
 .Xr wscons 4
 framework.
-It is attached to the hardware specific keyboard drivers and
-provides a character device interface.
+It is attached to the hardware specific mouse drivers and
+provides a character device interface which returns
+.Fa struct wscons_event
+via
+.Xr read 2 .
 For use with X servers,
 .Dq mouse events
 can be generated.
