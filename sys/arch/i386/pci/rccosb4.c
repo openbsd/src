@@ -1,7 +1,7 @@
-/*	$OpenBSD: rccosb4.c,v 1.1 2004/06/22 09:47:01 mickey Exp $	*/
+/*	$OpenBSD: rccosb4.c,v 1.2 2005/10/27 20:01:13 mickey Exp $	*/
 
 /*
- * Copyright (c) 2004 Michael Shalayeff
+ * Copyright (c) 2004,2005 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@ int
 osb4_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	if (OSB4_LEGAL_LINK(link - 1)) {
-		*clinkp = link - 1;
+		*clinkp = link;
 		return (0);
 	}
 
@@ -112,9 +112,8 @@ osb4_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 	if (!OSB4_LEGAL_LINK(clink))
 		return (1);
 
-	bus_space_write_1(ph->osb4_iot, ph->osb4_ioh, 0,
-	    clink | OSB4_PIAIR_PMASK);
-	*irqp = bus_space_read_1(ph->osb4_iot, ph->osb4_ioh, 1);
+	bus_space_write_1(ph->osb4_iot, ph->osb4_ioh, 0, clink);
+	*irqp = bus_space_read_1(ph->osb4_iot, ph->osb4_ioh, 1) & 0xf;
 	if (*irqp == 0)
 		*irqp = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
 
@@ -129,8 +128,7 @@ osb4_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 	if (!OSB4_LEGAL_LINK(clink) || !OSB4_LEGAL_IRQ(irq))
 		return (1);
 
-	bus_space_write_1(ph->osb4_iot, ph->osb4_ioh, 0,
-	    clink | OSB4_PIAIR_PMASK);
+	bus_space_write_1(ph->osb4_iot, ph->osb4_ioh, 0, clink);
 	bus_space_write_1(ph->osb4_iot, ph->osb4_ioh, 1, irq);
 
 	return (0);
