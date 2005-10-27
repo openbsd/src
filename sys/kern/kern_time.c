@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.50 2005/10/13 18:17:15 aaron Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.51 2005/10/27 14:57:12 markus Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -751,7 +751,9 @@ ppsratecheck(lasttime, curpps, maxpps)
 	 * we do increment *curpps even in *curpps < maxpps case, as some may
 	 * try to use *curpps for stat purposes as well.
 	 */
-	if ((lasttime->tv_sec == 0 && lasttime->tv_usec == 0) ||
+	if (maxpps == 0)
+		rv = 0;
+	else if ((lasttime->tv_sec == 0 && lasttime->tv_usec == 0) ||
 	    delta.tv_sec >= 1) {
 		*lasttime = tv;
 		*curpps = 0;
