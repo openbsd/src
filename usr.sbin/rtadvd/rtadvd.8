@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.8,v 1.20 2003/08/08 10:13:33 jmc Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.21 2005/10/27 18:26:13 jmc Exp $
 .\"	$KAME: rtadvd.8,v 1.18 2002/04/28 10:43:02 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,7 +36,7 @@
 .Nd router advertisement daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl dDfMRs
+.Op Fl DdfMRs
 .Op Fl c Ar configfile
 .Ar interface ...
 .Sh DESCRIPTION
@@ -89,17 +89,17 @@ advertising interface.
 The command line options are:
 .Bl -tag -width indent
 .\"
-.It Fl c
+.It Fl c Ar configfile
 Specify an alternate location,
 .Ar configfile ,
 for the configuration file.
 By default,
 .Pa /etc/rtadvd.conf
 is used.
-.It Fl d
-Print debugging information.
 .It Fl D
 Even more debugging information is printed.
+.It Fl d
+Print debugging information.
 .It Fl f
 Foreground mode (useful when debugging).
 Log messages will be dumped to stderr when this option is specified.
