@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.12 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: vmes.c,v 1.13 2005/10/27 16:04:08 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -167,5 +167,5 @@ vmesmmap(dev, off, prot)
 	pa = vmepmap(sc->sc_vme, (void *)(int)off, NBPG, BUS_VMES);
 	if (pa == NULL)
 		return (-1);
-	return (m68k_btop(pa));
+	return (atop(pa));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.19 2004/12/30 21:22:20 miod Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.20 2005/10/27 16:04:08 martin Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -95,7 +95,7 @@ do { \
 
 #define	PMAP_MD_MAPIOSPACE() \
 do { \
-	pte = &((u_int *)kptpa)[m68k_btop(etherbuf)]; \
+	pte = &((u_int *)kptpa)[atop(etherbuf)]; \
 	epte = pte + ETHERPAGES; \
 	while (pte < epte) { \
 		*pte = (*pte & ~PG_CMASK) | PG_CIS | PG_U; \
@@ -120,8 +120,8 @@ do { \
 
 #define	PMAP_MD_MEMSIZE() \
 do { \
-	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) - \
-	    (round_page(MSGBUFSIZE) + m68k_ptob(1)); \
+	RELOC(avail_end, paddr_t) = ptoa(RELOC(maxmem, int)) - \
+	    (round_page(MSGBUFSIZE) + ptoa(1)); \
 } while (0)
 
 #define	PMAP_MD_RELOC3()	/* nothing */
@@ -138,7 +138,7 @@ pmap_init_md()
 	 * pmap_bootstrap().
 	 */
 	addr = (vaddr_t) intiobase;
-	if (uvm_map(kernel_map, &addr, m68k_ptob(iiomapsize+EIOMAPSIZE),
+	if (uvm_map(kernel_map, &addr, ptoa(iiomapsize+EIOMAPSIZE),
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 	      UVM_INH_NONE, UVM_ADV_RANDOM, UVM_FLAG_FIXED)))

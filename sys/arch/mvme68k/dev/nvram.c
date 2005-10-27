@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.14 2004/07/02 18:00:50 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.15 2005/10/27 16:04:08 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -41,6 +41,8 @@
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
 #include <machine/psl.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <mvme68k/dev/memdevs.h>
 #include <mvme68k/dev/nvramreg.h>
@@ -417,5 +419,5 @@ nvrammmap(dev, off, prot)
 	/* allow access only in RAM */
 	if (off < 0 || off > sc->sc_len)
 		return (-1);
-	return (m68k_btop(sc->sc_paddr + off));
+	return (atop(sc->sc_paddr + off));
 }
