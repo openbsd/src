@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.31 2005/10/24 10:19:16 espie Exp $
+# $OpenBSD: Delete.pm,v 1.32 2005/10/27 07:02:02 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -368,7 +368,7 @@ sub prepare_for_deletion
 	my $fname = $state->{destdir}.$self->fullname();
 	$state->{totsize} += $self->{size} if defined $self->{size};
 	my $s = OpenBSD::Vstat::remove($fname, $self->{size});
-	next unless defined $s;
+	return unless defined $s;
 	if ($s->{ro}) {
 		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
 			Warn "Error: ", $s->{dev}, 
