@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.21 2005/10/23 20:21:44 stevesk Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.22 2005/10/27 22:37:30 stevesk Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -335,7 +335,9 @@ show_interface_msg(struct imsg *imsg)
 		    "hello %d, dead %d, wait %d, retransmit %d\n",
 		     iface->hello_interval, iface->dead_interval,
 		     iface->dead_interval, iface->rxmt_interval);
-		if (iface->hello_timer < 0)
+		if (iface->passive)
+			printf("    Passive interface (No Hellos)\n");
+		else if (iface->hello_timer < 0)
 			printf("    Hello timer not running\n");
 		else
 			printf("    Hello timer due in %s\n",
