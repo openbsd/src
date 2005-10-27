@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.11 2005/09/15 20:24:46 claudio Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.12 2005/10/27 22:52:46 stevesk Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -183,6 +183,7 @@ Set the interface metric a.k.a. cost.
 The default value is 10; valid range is 1\-65535.
 .It Ic passive
 Prevent transmission and reception of OSPF packets on this interface.
+The specified interface will be announced as a stub network.
 .It Ic retransmit-interval Ar seconds
 Set retransmit interval.
 The default value is 5 seconds; valid range is 5\-3600 seconds.
