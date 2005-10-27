@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.49 2005/10/25 17:48:56 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.50 2005/10/27 07:43:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -407,7 +407,8 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 		return (NULL);
 	}
 
-	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
+	strlcpy(path1, rcs_tmpdir, sizeof(path1));
+	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
 	if (cvs_buf_write_stmp(b1, path1, 0600) == -1) {
 		cvs_log(LP_ERRNO, "could not write temporary file");
 		cvs_buf_free(b1);
@@ -416,7 +417,8 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 	}
 	cvs_buf_free(b1);
 
-	strlcpy(path2, "/tmp/diff2.XXXXXXXXXX", sizeof(path2));
+	strlcpy(path2, rcs_tmpdir, sizeof(path2));
+	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
 	if (cvs_buf_write_stmp(b2, path2, 0600) == -1) {
 		cvs_buf_free(b2);
 		(void)unlink(path1);

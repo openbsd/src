@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.35 2005/10/19 11:37:11 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.36 2005/10/27 07:43:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -48,8 +48,9 @@ const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
 int pipeout = 0;
 
-int	rcs_optind;
+int	 rcs_optind;
 char	*rcs_optarg;
+char	*rcs_tmpdir = RCS_TMPDIR_DEFAULT;
 
 struct rcs_prog {
 	char	*prog_name;
@@ -233,6 +234,9 @@ main(int argc, char **argv)
 
 		cmd_argc += ret;
 	}
+
+	if ((rcs_tmpdir = getenv("TMPDIR")) == NULL)
+		rcs_tmpdir = RCS_TMPDIR_DEFAULT;
 
 	for (ret = 1; ret < argc; ret++)
 		cmd_argv[cmd_argc++] = argv[ret];

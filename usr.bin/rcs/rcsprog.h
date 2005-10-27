@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.16 2005/10/19 00:30:22 joris Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.17 2005/10/27 07:43:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -27,6 +27,8 @@
 #ifndef RCSPROG_H
 #define RCSPROG_H
 
+#define RCS_TMPDIR_DEFAULT	"/tmp"
+
 extern char *__progname;
 extern const char rcs_version[];
 extern int verbose;
@@ -34,6 +36,7 @@ extern int pipeout;
 
 extern int rcs_optind;
 extern char *rcs_optarg;
+extern char *rcs_tmpdir;
 
 /* date.y */
 time_t  cvs_date_parse(const char *);

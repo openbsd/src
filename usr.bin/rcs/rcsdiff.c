@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.12 2005/10/16 12:03:09 niallo Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.13 2005/10/27 07:43:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -165,7 +165,8 @@ rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 		return (-1);
 	}
 
-	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
+	strlcpy(path1, rcs_tmpdir, sizeof(path1));
+	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
 	if (cvs_buf_write_stmp(b1, path1, 0600) == -1) {
 		cvs_log(LP_ERRNO, "could not write temporary file");
 		cvs_buf_free(b1);
@@ -174,7 +175,8 @@ rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 	}
 	cvs_buf_free(b1);
 
-	strlcpy(path2, "/tmp/diff2.XXXXXXXXXX", sizeof(path2));
+	strlcpy(path2, rcs_tmpdir, sizeof(path2));
+	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
 	if (cvs_buf_write_stmp(b2, path2, 0600) == -1) {
 		cvs_buf_free(b2);
 		(void)unlink(path1);
@@ -214,7 +216,8 @@ rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2)
 		return (-1);
 	}
 
-	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
+	strlcpy(path1, rcs_tmpdir, sizeof(path1));
+	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
 	if (cvs_buf_write_stmp(b1, path1, 0600) == -1) {
 		cvs_log(LP_ERRNO, "could not write temporary file");
 		cvs_buf_free(b1);
@@ -223,7 +226,8 @@ rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2)
 	}
 	cvs_buf_free(b1);
 
-	strlcpy(path2, "/tmp/diff2.XXXXXXXXXX", sizeof(path2));
+	strlcpy(path2, rcs_tmpdir, sizeof(path2));
+	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
 	if (cvs_buf_write_stmp(b2, path2, 0600) == -1) {
 		cvs_buf_free(b2);
 		(void)unlink(path1);
