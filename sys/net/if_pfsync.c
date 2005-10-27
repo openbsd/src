@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.55 2005/09/28 01:46:32 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.56 2005/10/27 12:34:40 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -26,8 +26,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bpfilter.h"
-#include "pfsync.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,6 +65,9 @@ extern int carp_suppress_preempt;
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
 
+#include "bpfilter.h"
+#include "pfsync.h"
+
 #define PFSYNC_MINMTU	\
     (sizeof(struct pfsync_header) + sizeof(struct pf_state))
 
@@ -84,7 +85,7 @@ void	pfsyncattach(int);
 void	pfsync_setmtu(struct pfsync_softc *, int);
 int	pfsync_alloc_scrub_memory(struct pfsync_state_peer *,
 	    struct pf_state_peer *);
-int	pfsync_insert_net_state(struct pfsync_state *);
+int	pfsync_insert_net_state(struct pfsync_state *, u_int8_t);
 void	pfsync_update_net_tdb(struct pfsync_tdb *);
 int	pfsyncoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
@@ -184,7 +185,7 @@ pfsync_alloc_scrub_memory(struct pfsync_state_peer *s,
 }
 
 int
-pfsync_insert_net_state(struct pfsync_state *sp)
+pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t rmatch)
 {
 	struct pf_state	*st = NULL;
 	struct pf_rule *r = NULL;
@@ -206,10 +207,14 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	}
 
 	/*
-	 * Just use the default rule until we have infrastructure to find the
-	 * best matching rule.
+	 * If the ruleset checksums match, it's safe to associate the state
+	 * with the rule of that number.
 	 */
-	r = &pf_default_rule;
+	if (sp->rule != htonl(-1) && sp->anchor == htonl(-1) && rmatch)
+		r = pf_main_ruleset.rules[
+		    PF_RULESET_FILTER].active.ptr_array[ntohl(sp->rule)];
+	else
+		r = &pf_default_rule;
 
 	if (!r->max_states || r->states < r->max_states)
 		st = pool_get(&pf_state_pl, PR_NOWAIT);
@@ -291,6 +296,7 @@ pfsync_input(struct mbuf *m, ...)
 	struct in_addr src;
 	struct mbuf *mp;
 	int iplen, action, error, i, s, count, offp, sfail, stale = 0;
+	u_int8_t rmatch = 0;
 
 	pfsyncstats.pfsyncs_ipackets++;
 
@@ -343,6 +349,9 @@ pfsync_input(struct mbuf *m, ...)
 
 	/* Cheaper to grab this now than having to mess with mbufs later */
 	src = ip->ip_src;
+
+	if (!bcmp(&ph->pf_chksum, &pf_status.pf_chksum, PF_MD5_DIGEST_LENGTH))
+		rmatch++;
 
 	switch (action) {
 	case PFSYNC_ACT_CLR: {
@@ -409,7 +418,7 @@ pfsync_input(struct mbuf *m, ...)
 				continue;
 			}
 
-			if ((error = pfsync_insert_net_state(sp))) {
+			if ((error = pfsync_insert_net_state(sp, rmatch))) {
 				if (error == ENOMEM) {
 					splx(s);
 					goto done;
@@ -448,7 +457,7 @@ pfsync_input(struct mbuf *m, ...)
 			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				/* insert the update */
-				if (pfsync_insert_net_state(sp))
+				if (pfsync_insert_net_state(sp, rmatch))
 					pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
@@ -1014,6 +1023,9 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 	h->af = 0;
 	h->count = 0;
 	h->action = action;
+	if (action != PFSYNC_ACT_TDB_UPD)
+		bcopy(&pf_status.pf_chksum, &h->pf_chksum,
+		    PF_MD5_DIGEST_LENGTH);
 
 	*sp = (void *)((char *)h + PFSYNC_HDRLEN);
 	if (action == PFSYNC_ACT_TDB_UPD)
@@ -1476,7 +1488,7 @@ pfsync_sendout_mbuf(struct pfsync_softc *sc, struct mbuf *m)
 {
 	struct sockaddr sa;
 	struct ip *ip;
-	
+
 	if (sc->sc_sync_ifp ||
 	    sc->sc_sync_peer.s_addr != INADDR_PFSYNC_GROUP) {
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
@@ -1567,12 +1579,12 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 	splx(s);
 	return;
 
-  bad:
+ bad:
 	if (pf_status.debug >= PF_DEBUG_MISC)
 		printf("pfsync_insert: PFSYNC_ACT_TDB_UPD: "
 		    "invalid value\n");
 	pfsyncstats.pfsyncs_badstate++;
-	return;	
+	return;
 }
 
 /* One of our local tdbs have been updated, need to sync rpl with others */

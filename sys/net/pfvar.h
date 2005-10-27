@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.231 2005/10/17 08:43:35 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.232 2005/10/27 12:34:40 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -741,6 +741,8 @@ struct pf_ruleset {
 		struct pf_rulequeue	 queues[2];
 		struct {
 			struct pf_rulequeue	*ptr;
+			struct pf_rule		**ptr_array;
+			u_int32_t		 rcount;
 			u_int32_t		 ticket;
 			int			 open;
 		}			 active, inactive;

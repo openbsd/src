@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.26 2005/09/28 01:46:32 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.27 2005/10/27 12:34:40 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -191,7 +191,7 @@ extern struct pfsync_softc pfsyncif;
 
 struct pfsync_header {
 	u_int8_t version;
-#define	PFSYNC_VERSION	2
+#define	PFSYNC_VERSION	3
 	u_int8_t af;
 	u_int8_t action;
 #define	PFSYNC_ACT_CLR		0	/* clear all states */
@@ -207,6 +207,7 @@ struct pfsync_header {
 #define PFSYNC_ACT_TDB_UPD	10	/* TDB replay counter update */
 #define	PFSYNC_ACT_MAX		11
 	u_int8_t count;
+	u_int8_t pf_chksum[PF_MD5_DIGEST_LENGTH];
 } __packed;
 
 #define PFSYNC_BULKPACKETS	1	/* # of packets per timeout */
