@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsdiff.1,v 1.9 2005/10/19 16:15:36 xsa Exp $
+.\"     $OpenBSD: rcsdiff.1,v 1.10 2005/10/27 07:47:52 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -65,6 +65,11 @@ Print RCS's version number.
 .It Ev RCSINIT
 If set, this variable should contain a list of space-delimited options that
 are prepended to the argument list.
+.It Ev TMPDIR
+When set, this variable specifies the directory where temporary files
+are to be created.
+The default is set to
+.Pa /tmp .
 .El
 .Sh SEE ALSO
 .Xr ci 1 ,
