@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.23 2005/10/25 13:35:47 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.24 2005/10/27 08:19:59 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -496,8 +496,7 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 
 	memcpy(v2, v, sizeof *v);
 	/* Remove the copy's links into virtual_listen_list.  */
-	v2->link.le_next = 0;
-	v2->link.le_prev = 0;
+	memset(&v2->link, 0, sizeof v2->link);
 
 	if (v->encap_is_active)
 		v2->main = 0; /* No need to clone this.  */
@@ -571,13 +570,17 @@ virtual_create(char *name)
 static void
 virtual_remove(struct transport *t)
 {
-	struct virtual_transport *v = (struct virtual_transport *)t;
+	struct virtual_transport *p, *next, *v = (struct virtual_transport *)t;
 
 	if (v->encap)
 		v->encap->vtbl->remove(v->encap);
 	if (v->main)
 		v->main->vtbl->remove(v->main);
-	if (v->link.le_prev)
+
+	for (p = LIST_FIRST(&virtual_listen_list); p && p != v; p =
+	    LIST_NEXT(p, link))
+		;
+	if (p == v)
 		LIST_REMOVE(v, link);
 
 	LOG_DBG((LOG_TRANSPORT, 90, "virtual_remove: removed %p", v));
