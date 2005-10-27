@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.37 2005/01/04 20:45:01 jaredy Exp $
+.\"	$OpenBSD: queue.3,v 1.38 2005/10/27 19:27:10 otto Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -615,11 +615,11 @@ LIST_INSERT_AFTER(n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 LIST_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
-for (np = head.lh_first; np != NULL; np = np->entries.le_next)
+LIST_FOREACH(np, &head, entries)
 	np-> ...
 
-while (head.lh_first != NULL)		/* Delete. */
-	LIST_REMOVE(head.lh_first, entries);
+while (!LIST_EMPTY(&head))		/* Delete. */
+	LIST_REMOVE(LIST_FIRST(&head), entries);
 .Ed
 .Sh SIMPLE QUEUES
 A simple queue is headed by a structure defined by the
@@ -727,10 +727,10 @@ SIMPLEQ_INSERT_AFTER(&head, n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert at the tail. */
 SIMPLEQ_INSERT_TAIL(&head, n2, entries);
 					/* Forward traversal. */
-for (np = SIMPLEQ_FIRST(&head); np != NULL; np = SIMPLEQ_NEXT(np, entries))
+SIMPLEQ_FOREACH(np, &head, entries)
 	np-> ...
 					/* Delete. */
-while ((n1 = SIMPLEQ_FIRST(&head)) != NULL)
+while (!SIMPLEQ_EMPTY(&head))
 	SIMPLEQ_REMOVE_HEAD(&head, entries);
 .Ed
 .Sh TAIL QUEUES
@@ -1000,18 +1000,22 @@ CIRCLEQ_INSERT_AFTER(&head, n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 CIRCLEQ_INSERT_BEFORE(&head, n1, n2, entries);
 					/* Forward traversal. */
-for (np = CIRCLEQ_FIRST(&head); np != CIRCLEQ_END(&head);
-    np = CIRCLEQ_NEXT(np, entries))
+CIRCLEQ_FOREACH(np, &head, entries)
 	np-> ...
 					/* Reverse traversal. */
-for (np = CIRCLEQ_LAST(&head); np != CIRCLEQ_END(&head);
-    np = CIRCLEQ_PREV(np, entries))
+CIRCLEQ_FOREACH_REVERSE(np, &head, entries)
 	np-> ...
 					/* Delete. */
-while (CIRCLEQ_FIRST(&head) != CIRCLEQ_END(&head))
+while (!CIRCLEQ_EMPTY(&head))
 	CIRCLEQ_REMOVE(&head, CIRCLEQ_FIRST(&head), entries);
 .Ed
 .Sh NOTES
+It is an error to assume the next and previous fields are preserved
+after an element has been removed from a list or queue.
+Using any macro (except the various forms of insertion) on an element
+removed from a list or queue is incorrect.
+An example of erroneous usage is removing the same element twice.
+.Pp
 The
 .Fn SLIST_END ,
 .Fn LIST_END ,
@@ -1043,6 +1047,20 @@ for (var = LIST_FIRST(head); var != LIST_END(head); var = nxt) {
 	free(var);
 }
 LIST_INIT(head);	/* to put the list back in order */
+.Ed
+.Pp
+A similar situation occurs when the current element is deleted
+from the list.
+Correct code saves a pointer to the next element in the list before
+removing the element:
+.Bd -literal -offset indent
+for (var = LIST_FIRST(head); var != LIST_END(head); var = nxt) {
+	nxt = LIST_NEXT(var, entry);
+	if (some_condition) {
+		LIST_REMOVE(var, entry);
+		some_function(var);
+	}
+}
 .Ed
 .Sh HISTORY
 The
