@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.125 2005/10/16 00:29:17 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.126 2005/10/27 00:24:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -451,7 +451,7 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 		cf = cvs_file_loadinfo(pcopy, flags, cb, arg, freecf);
 		if (cf == NULL) {
 			if (cvs_error != CVS_EX_OK)
-				break;
+				return (-1);
 			continue;
 		}
 
