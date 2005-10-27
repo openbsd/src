@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.78 2005/08/28 05:30:43 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.79 2005/10/27 02:45:01 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -224,7 +224,7 @@ scsibus* at siop?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
 #scsibus* at ahd?
 
-#em*	at pci?			# Intel Pro/1000 ethernet
+em*	at pci?			# Intel Pro/1000 ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
 #txp*	at pci?			# 3com 3CR990
 #epic*	at pci?			# SMC EPIC/100 ethernet
