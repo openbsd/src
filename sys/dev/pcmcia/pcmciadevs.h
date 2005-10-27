@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.126 2005/04/27 15:40:18 jakob Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.127 2005/10/27 16:42:19 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.123 2005/04/27 15:39:39 jakob Exp 
+ *		OpenBSD: pcmciadevs,v 1.124 2005/10/27 16:42:01 deraadt Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -498,6 +498,8 @@
 #define	PCMCIA_PRODUCT_SIEMENS_SS1021	0x0002
 
 /* Sierra */
+#define	PCMCIA_CIS_SIERRA_AC710	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIERRA_AC710	0x0710
 #define	PCMCIA_CIS_SIERRA_A550	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SIERRA_A550	0xa550
 #define	PCMCIA_CIS_SIERRA_A555	{ NULL, NULL, NULL, NULL }
