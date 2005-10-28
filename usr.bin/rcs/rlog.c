@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.10 2005/10/26 19:07:30 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.11 2005/10/28 09:52:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -45,6 +45,7 @@ static int rlog_file(const char *, const char *, RCSFILE *);
  "============================================================================="
 
 static int hflag;
+static int Lflag;
 static int tflag;
 static int Nflag;
 
@@ -57,10 +58,13 @@ rlog_main(int argc, char **argv)
 	RCSFILE *file;
 
 	hflag = Rflag = 0;
-	while ((ch = rcs_getopt(argc, argv, "hNqRTtV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "hLNqRTtV")) != -1) {
 		switch (ch) {
 		case 'h':
 			hflag = 1;
+			break;
+		case 'L':
+			Lflag = 1;
 			break;
 		case 'N':
 			Nflag = 1;
@@ -105,13 +109,19 @@ rlog_main(int argc, char **argv)
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
-		if (Rflag == 1) {
-			printf("%s\n", fpath);
+		if ((file = rcs_open(fpath, RCS_READ)) == NULL)
+			continue;
+
+		if ((Lflag == 1) && (TAILQ_EMPTY(&(file->rf_locks)))) {
+			rcs_close(file);
 			continue;
 		}
 
-		if ((file = rcs_open(fpath, RCS_READ)) == NULL)
+		if (Rflag == 1) {
+			printf("%s\n", fpath);
+			rcs_close(file);
 			continue;
+		}
 
 		rlog_file(argv[i], fpath, file);
 
@@ -125,7 +135,7 @@ void
 rlog_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rlog [-hNqRTtV] file ...\n");
+	    "usage: rlog [-hLNqRTtV] file ...\n");
 }
 
 static int
