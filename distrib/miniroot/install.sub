@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.397 2005/10/26 00:06:51 krw Exp $
+#	$OpenBSD: install.sub,v 1.398 2005/10/28 13:30:50 jmc Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -504,7 +504,7 @@ select_sets() {
 
 Select sets by entering a set name, a file name pattern or 'all'. De-select
 sets by prepending a '-' to the set name, file name pattern or 'all'. Selected
-sets are labelled '[x]'.
+sets are labelled '[X]'.
 __EOT
 	while :; do
 		_action=
