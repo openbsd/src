@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2005/10/26 18:46:06 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2005/10/28 16:59:19 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1661,7 +1661,7 @@ init_x86_64(first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
-		ist = (x == 8 || x == 3) ? 1 : 0;
+		ist = (x == 8) ? 1 : 0;
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
