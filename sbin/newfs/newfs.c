@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.50 2004/08/12 07:53:50 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.51 2005/10/28 19:10:57 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.50 2004/08/12 07:53:50 otto Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.51 2005/10/28 19:10:57 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,10 +189,12 @@ char	device[MAXPATHLEN];
 extern	char *__progname;
 struct disklabel *getdisklabel(char *, int);
 
+#ifdef MFS
 static int do_exec(const char *, const char *, char *const[]);
 static int isdir(const char *);
-static void copy(char *, char *);
+static void copy(char *, char *, struct mfs_args *);
 static int gettmpmnt(char *, size_t);
+#endif
 
 int
 main(int argc, char *argv[])
@@ -635,6 +637,12 @@ havelabel:
 #ifdef MFS
 	if (mfs) {
 		struct mfs_args args;
+		memset(&args, 0, sizeof(args));
+		args.base = membase;
+		args.size = fssize * sectorsize;
+		args.export_info.ex_root = -2;
+		if (mntflags & MNT_RDONLY)
+			args.export_info.ex_flags = MNT_EXRDONLY;
 
 		switch (pid = fork()) {
 		case -1:
@@ -665,7 +673,7 @@ havelabel:
 					     MNAMELEN) &&
 				    !strcmp(sf.f_fstypename, "mfs")) {
 					if (pop != NULL)
-						copy(pop, argv[1]);
+						copy(pop, argv[1], &args);
 					exit(0);
 				}
 				res = waitpid(pid, &status, WNOHANG);
@@ -691,13 +699,8 @@ havelabel:
 		(void) chdir("/");
 
 		args.fspec = mountfromname;
-		args.export_info.ex_root = -2;
-		if (mntflags & MNT_RDONLY)
-			args.export_info.ex_flags = MNT_EXRDONLY;
-		else
-			args.export_info.ex_flags = 0;
-		args.base = membase;
-		args.size = fssize * sectorsize;
+		if (mntflags & MNT_RDONLY && pop != NULL)
+			mntflags &= ~MNT_RDONLY;
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
 			exit(errno); /* parent prints message */
 	}
@@ -921,7 +924,7 @@ isdir(const char *path)
 }
 
 static void
-copy(char *src, char *dst)
+copy(char *src, char *dst, struct mfs_args *args)
 {
 	int ret, dir, created = 0;
 	struct ufs_args mount_args;
@@ -953,6 +956,16 @@ copy(char *src, char *dst)
 		if (unmount(dst, 0) != 0)
 			warn("unmount %s", dst);
 		errx(1, "copy %s to %s failed", mountpoint, dst);
+	}
+
+	if (mntflags & MNT_RDONLY) {
+		mntflags |= MNT_UPDATE;
+		if (mount(MOUNT_MFS, dst, mntflags, args) < 0) {
+			warn("%s: mount (update, rdonly)", dst);
+			if (unmount(dst, 0) != 0)
+				warn("unmount %s", dst);
+			exit(1);
+		}
 	}
 }
 
