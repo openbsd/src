@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.35 2005/09/19 10:16:32 espie Exp $
+# $OpenBSD: pkg_info,v 1.36 2005/10/28 20:16:13 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -210,6 +210,7 @@ our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, $opt_L,
     $opt_a, $opt_M, $opt_U, $opt_A, $opt_S);
 my $terse = 0;
 my $exit_code = 0;
+my $error_e = 0;
 my @sought_files;
 
 sub print_info
@@ -325,6 +326,7 @@ try {
 			    }
 			    if (@list == 0) {
 				    $exit_code = 1;
+				    $error_e = 1;
 			    }
 			    push(@ARGV, @list);
 			    $terse = 1;
@@ -372,14 +374,14 @@ if ($opt_K && !$opt_L) {
 }
 
 if (@ARGV == 0 && !$opt_a && !$opt_A) {
-	Usage "Missing package name(s)" unless $terse && $opt_q;
+	Usage "Missing package name(s)" unless $terse || $opt_q;
 }
 
 if (@ARGV > 0 && ($opt_a || $opt_A)) {
 	Usage "Can't specify package name(s) with -a";
 }
 
-if (@ARGV == 0) {
+if (@ARGV == 0 && !$error_e) {
 	@ARGV = sort(installed_packages(defined $opt_A ? 0 : 1));
 }
 
