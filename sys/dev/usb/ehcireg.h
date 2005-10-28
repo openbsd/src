@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.12 2004/12/29 01:52:27 dlg Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.13 2005/10/28 04:36:42 fgsch Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #define EHCI_EECP_NEXT(x)	(((x) >> 8) & 0xff)
 #define EHCI_EECP_ID(x)		((x) & 0xff)
 
-#define EHCI_LEGSUP_LEGSUP	0x01
+#define EHCI_LEGSUP_LEGSUP	0x00
 #define  EHCI_LEGSUP_OSOWNED	0x01000000 /* OS owned semaphore */
 #define  EHCI_LEGSUP_BIOSOWNED	0x00010000 /* BIOS owned semaphore */
 #define PCI_LEGSUP_USBLEGCTLSTS	0x04
