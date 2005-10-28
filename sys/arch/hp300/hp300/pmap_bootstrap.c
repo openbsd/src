@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.22 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.23 2005/10/28 09:07:48 martin Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /*
@@ -89,8 +89,8 @@ do { \
 
 #define	PMAP_MD_MEMSIZE() \
 do { \
-	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) - \
-	    (round_page(MSGBUFSIZE) + m68k_ptob(1)); \
+	RELOC(avail_end, paddr_t) = ptoa(RELOC(maxmem, int)) - \
+	    (round_page(MSGBUFSIZE) + ptoa(1)); \
 } while (0)
 
 	/*
@@ -115,7 +115,7 @@ pmap_init_md()
 	 */
 	addr = (vaddr_t) intiobase;
 	if (uvm_map(kernel_map, &addr,
-		    m68k_ptob(IIOMAPSIZE + eiomapsize),
+		    ptoa(IIOMAPSIZE + eiomapsize),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
