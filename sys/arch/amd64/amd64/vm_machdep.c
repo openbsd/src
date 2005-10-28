@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 2004/09/20 17:51:05 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 2005/10/28 21:57:31 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -146,10 +146,11 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_r12 = (u_int64_t)func;
 	sf->sf_r13 = (u_int64_t)arg;
-	if (func == child_return)
-		sf->sf_rip = (u_int64_t)child_trampoline;
-	else
+	/* XXX fork of init(8) returns via proc_trampoline() */
+	if (p2->p_pid == 1)
 		sf->sf_rip = (u_int64_t)proc_trampoline;
+	else
+		sf->sf_rip = (u_int64_t)child_trampoline;
 	pcb->pcb_rsp = (u_int64_t)sf;
 	pcb->pcb_rbp = 0;
 }
