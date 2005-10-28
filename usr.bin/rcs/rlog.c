@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.11 2005/10/28 09:52:56 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.12 2005/10/28 10:15:07 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -147,6 +147,7 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	struct rcs_access *acp;
 	struct rcs_lock *lkp;
 
+	printf("\nRCS file: %s", fpath);
 	printf("\nWorking file: %s", fname);
 	printf("\nhead:");
 	if (file->rf_head != NULL)
