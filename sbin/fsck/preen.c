@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.15 2005/10/15 06:26:28 otto Exp $	*/
+/*	$OpenBSD: preen.c,v 1.16 2005/10/28 07:30:35 otto Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-static const char rcsid[] = "$OpenBSD: preen.c,v 1.15 2005/10/15 06:26:28 otto Exp $";
+static const char rcsid[] = "$OpenBSD: preen.c,v 1.16 2005/10/28 07:30:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,11 +197,11 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			d->d_pid = 0;
 			nrun--;
 
-			if (TAILQ_FIRST(&d->d_part) == NULL)
+			if (TAILQ_EMPTY(&d->d_part))
 				ndisks--;
 
 			if (nextdisk == NULL) {
-				if (TAILQ_FIRST(&d->d_part)) {
+				if (!TAILQ_EMPTY(&d->d_part)) {
 					if ((ret = startdisk(d, checkit)) != 0)
 						return ret;
 				}
@@ -211,8 +211,8 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 					    d_entries);
 					if (nextdisk == NULL)
 						nextdisk = TAILQ_FIRST(&diskh);
-					if (TAILQ_FIRST(&nextdisk->d_part) !=
-					    NULL && nextdisk->d_pid == 0)
+					if (!TAILQ_EMPTY(&nextdisk->d_part) &&
+					    nextdisk->d_pid == 0)
 						break;
 				}
 				if ((ret = startdisk(nextdisk, checkit)) != 0)

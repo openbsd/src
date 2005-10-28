@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.20 2005/10/15 06:26:28 otto Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.21 2005/10/28 07:30:35 otto Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-static const char rcsid[] = "$OpenBSD: fsck.c,v 1.20 2005/10/15 06:26:28 otto Exp $";
+static const char rcsid[] = "$OpenBSD: fsck.c,v 1.21 2005/10/28 07:30:35 otto Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 't':
-			if (TAILQ_FIRST(&selhead) != NULL)
+			if (!TAILQ_EMPTY(&selhead))
 				errx(1, "only one -t option may be specified.");
 
 			maketypelist(optarg);
