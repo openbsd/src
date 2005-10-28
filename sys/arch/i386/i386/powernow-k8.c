@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.1 2005/10/28 07:03:41 tedu Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.2 2005/10/28 07:11:13 tedu Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -189,7 +189,7 @@ int k8pnow_read_pending_wait(uint64_t * status) {
 	unsigned int i = 0;
 	while(PN8_STA_PENDING(*status)) {
 		i++;
-		if (i > 0x1000000) {
+		if (i > 1000) {
 			printf("k8pnow_read_pending_wait: change pending stuck"
 			    ".\n");
 			return 1;
@@ -400,7 +400,9 @@ k8_powernow_init(void)
 	char * techname = NULL;
 	ci = curcpu();
 
-	cstate = malloc(sizeof(struct k8pnow_cpu_state), M_TEMP, M_WAITOK);
+	cstate = malloc(sizeof(struct k8pnow_cpu_state), M_DEVBUF, M_NOWAIT);
+	if (!cstate)
+		return;
 
 	rate = pentium_mhz;
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
