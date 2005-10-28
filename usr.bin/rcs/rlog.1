@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rlog.1,v 1.3 2005/10/25 17:24:35 xsa Exp $
+.\"     $OpenBSD: rlog.1,v 1.4 2005/10/28 09:55:12 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl hNqRTtV
+.Op Fl hLNqRTtV
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -35,6 +35,8 @@ The following options are supported:
 .Bl -tag -width Ds
 .It Fl h
 Print header.
+.It Fl L
+Ignore RCS files with no locks set.
 .It Fl N
 Do not print symbolic names.
 .It Fl q
