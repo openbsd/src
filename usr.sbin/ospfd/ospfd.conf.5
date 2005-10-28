@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.12 2005/10/27 22:52:46 stevesk Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.13 2005/10/28 16:50:12 stevesk Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -156,14 +156,33 @@ interface em0 {
 Interface specific parameters are listed below.
 .Bl -tag -width Ds
 .It Ic auth-key Ar key
-Set the authentication key.
-If the auth-type is set to simple, up to 8 characters can be specified.
-.It Ic auth-md Ar key-id Ar key
-Set the crypt authentication key.
-If the auth-type is set to crypt, up to 16 characters can be specified.
+Set the authentication key for
+.Ic simple
+authentication.
+Up to 8 characters can be specified.
+.It Ic auth-md Ar key-id key
+Set the authentication
+.Ar key-id
+and
+.Ar key
+for
+.Ic crypt
+authentication.
+The valid range for
+.Ar key-id
+is 0\-255.
+Up to 16 characters can be specified for
+.Ar key .
 Multiple keys may be specified.
 .It Ic auth-md-keyid Ar key-id
-Configure which key-id to use when using crypt authentication.
+Configure the
+.Ar key-id
+to use for
+.Ic crypt
+authentication.
+The valid range for
+.Ar key-id
+is 0\-255.
 The default key-id is 1.
 While key-id 0 is valid, it is unavailable on Cisco devices.
 .It Xo
@@ -172,7 +191,8 @@ While key-id 0 is valid, it is unavailable on Cisco devices.
 .Ic simple Ns \&| Ns Ic crypt Pc
 .Xc
 Set the authentication type.
-The default is none.
+The default is
+.Ic none .
 Simple authentication uses a plaintext password, up to 8 characters.
 Crypt authentication uses an MD5 hash.
 .It Ic hello-interval Ar seconds
