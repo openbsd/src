@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.27 2005/10/21 11:10:06 martin Exp $ */
+/* $OpenBSD: param.h,v 1.28 2005/10/28 19:10:26 martin Exp $ */
 /* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
@@ -135,12 +135,6 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define	alpha_btop(x)		((unsigned long)(x) >> PGSHIFT)
-#define	alpha_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
