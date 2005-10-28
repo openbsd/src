@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.56 2005/10/27 12:34:40 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.57 2005/10/28 03:20:41 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -185,7 +185,7 @@ pfsync_alloc_scrub_memory(struct pfsync_state_peer *s,
 }
 
 int
-pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t rmatch)
+pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 {
 	struct pf_state	*st = NULL;
 	struct pf_rule *r = NULL;
@@ -210,7 +210,7 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t rmatch)
 	 * If the ruleset checksums match, it's safe to associate the state
 	 * with the rule of that number.
 	 */
-	if (sp->rule != htonl(-1) && sp->anchor == htonl(-1) && rmatch)
+	if (sp->rule != htonl(-1) && sp->anchor == htonl(-1) && chksum_flag)
 		r = pf_main_ruleset.rules[
 		    PF_RULESET_FILTER].active.ptr_array[ntohl(sp->rule)];
 	else
@@ -296,7 +296,7 @@ pfsync_input(struct mbuf *m, ...)
 	struct in_addr src;
 	struct mbuf *mp;
 	int iplen, action, error, i, s, count, offp, sfail, stale = 0;
-	u_int8_t rmatch = 0;
+	u_int8_t chksum_flag = 0;
 
 	pfsyncstats.pfsyncs_ipackets++;
 
@@ -351,7 +351,7 @@ pfsync_input(struct mbuf *m, ...)
 	src = ip->ip_src;
 
 	if (!bcmp(&ph->pf_chksum, &pf_status.pf_chksum, PF_MD5_DIGEST_LENGTH))
-		rmatch++;
+		chksum_flag++;
 
 	switch (action) {
 	case PFSYNC_ACT_CLR: {
@@ -418,7 +418,8 @@ pfsync_input(struct mbuf *m, ...)
 				continue;
 			}
 
-			if ((error = pfsync_insert_net_state(sp, rmatch))) {
+			if ((error = pfsync_insert_net_state(sp,
+			    chksum_flag))) {
 				if (error == ENOMEM) {
 					splx(s);
 					goto done;
@@ -457,7 +458,7 @@ pfsync_input(struct mbuf *m, ...)
 			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				/* insert the update */
-				if (pfsync_insert_net_state(sp, rmatch))
+				if (pfsync_insert_net_state(sp, chksum_flag))
 					pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
@@ -702,7 +703,7 @@ pfsync_input(struct mbuf *m, ...)
 			if (key.id == 0 && key.creatorid == 0) {
 				sc->sc_ureq_received = time_uptime;
 				if (sc->sc_bulk_send_next == NULL)
-					sc->sc_bulk_send_next = 
+					sc->sc_bulk_send_next =
 					    TAILQ_FIRST(&state_list);
 				sc->sc_bulk_terminator = sc->sc_bulk_send_next;
 				if (pf_status.debug >= PF_DEBUG_MISC)
