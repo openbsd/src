@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.20 2005/10/26 17:57:20 joris Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.21 2005/10/28 15:27:49 joris Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
 int ki2c_write(struct device *, int, int, const void *, int);
 int ki2c_writereg(struct device *, int, u_int);
 
-void snapper_init(struct snapper_softc *, int);
+void snapper_init(struct snapper_softc *);
 int snapper_getdev(void *, struct audio_device *);
 int snapper_match(struct device *, void *, void *);
 void snapper_attach(struct device *, struct device *, void *);
@@ -263,7 +263,7 @@ snapper_defer(struct device *dev)
 	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
 
 	/* ki2c_setmode(sc->sc_i2c, I2C_STDSUBMODE); */
-	snapper_init(sc, sc->sc_node);
+	snapper_init(sc);
 }
 
 void
@@ -426,9 +426,7 @@ err:
 }
 
 void
-snapper_init(sc, node)
-	struct snapper_softc *sc;
-	int node;
+snapper_init(struct snapper_softc *sc)
 {
 
 	/* "sample-rates" (44100, 48000) */
