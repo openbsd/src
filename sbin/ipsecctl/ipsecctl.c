@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.27 2005/10/16 19:52:19 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.28 2005/10/28 07:18:47 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -136,7 +136,7 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 	struct ipsec_rule *rp;
 
 	if (pfkey_init() == -1)
-		errx(1, "failed to open PF_KEY socket");
+		errx(1, "ipsecctl_commit: failed to open PF_KEY socket");
 
 	while ((rp = TAILQ_FIRST(&ipsec->rule_queue))) {
 		TAILQ_REMOVE(&ipsec->rule_queue, rp, entries);
@@ -309,7 +309,7 @@ ipsecctl_flush(int opts)
 		return (0);
 
 	if (pfkey_init() == -1)
-		errx(1, "failed to open PF_KEY socket");
+		errx(1, "ipsecctl_flush: failed to open PF_KEY socket");
 
 	pfkey_ipsec_flush();
 
@@ -353,7 +353,7 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 		rule->type |= RULE_FLOW;
 
 		if (pfkey_parse(msg, rule))
-			errx(1, "failed to parse pfkey message");
+			errx(1, "ipsecctl_get_rules: failed to parse PF_KEY message");
 
 		ipsecctl_add_rule(ipsec, rule);
 	}

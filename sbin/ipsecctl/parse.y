@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2005/10/16 21:41:36 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.29 2005/10/28 07:18:47 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -362,12 +362,12 @@ host		: STRING			{
 
 			ipa = calloc(1, sizeof(struct ipsec_addr));
 			if (ipa == NULL)
-				err(1, "calloc");
+				err(1, "host: calloc");
 
 			ipa->af = AF_INET;
 			ipa->netaddress = 1;
 			if ((ipa->name = strdup("0.0.0.0/0")) == NULL)
-				err(1, "strdup");
+				err(1, "host: strdup");
 			$$ = ipa;
 		}
 		;
@@ -977,7 +977,7 @@ parsekeyfile(char *filename)
 	if (stat(filename, &sb) < 0)
 		err(1, "parsekeyfile: stat %s", filename);
 	if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
-		errx(1, "key too %s", sb.st_size ? "large" :
+		errx(1, "parsekeyfile: key too %s", sb.st_size ? "large" :
 		    "small");
 	if ((hex = calloc(sb.st_size, sizeof(unsigned char)))
 	    == NULL)
@@ -1001,7 +1001,7 @@ host(const char *s)
 	if ((p = strrchr(s, '/')) != NULL) {
 		mask = strtol(p + 1, &q, 0);
 		if (!q || *q || mask > 32 || q == (p + 1))
-			errx(1, "invalid netmask '%s'", p);
+			errx(1, "host: invalid netmask '%s'", p);
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			err(1, "host: calloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
