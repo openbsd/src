@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.6 2005/10/28 07:11:13 tedu Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.7 2005/10/28 07:14:31 tedu Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -382,7 +382,9 @@ k7_powernow_init(void)
 	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
 		printf("%s: AMD %s: %d available states\n", ci->ci_dev.dv_xname,
 		    techname, cstate->n_states);
-		k7pnow_current_state[cpu_number()] = cstate;
-		cpu_setperf = k7_powernow_setperf;
+		if (cstate->n_states) {
+			k7pnow_current_state[cpu_number()] = cstate;
+			cpu_setperf = k7_powernow_setperf;
+		}
 	}
 }
