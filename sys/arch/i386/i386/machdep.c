@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.326 2005/10/26 20:32:59 marco Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.327 2005/10/28 07:03:41 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1416,10 +1416,16 @@ amd_family6_setup(struct cpu_info *ci)
 		}
 		printf("\n");
 
-#ifndef MULTIPROCESSOR
-		if (regs[3] & 0x06)
-			k7_powernow_init(curcpu()->ci_signature);
-#endif
+		if (regs[3] & 0x06) {
+			switch(ci->ci_signature & 0xF00) {
+			case 0x600:
+				k7_powernow_init();
+			break;
+			case 0xf00:
+				k8_powernow_init();
+			break;
+			}
+		}
 	}
 #endif
 }
