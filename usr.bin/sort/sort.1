@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.26 2005/10/04 18:13:22 jmc Exp $
+.\"	$OpenBSD: sort.1,v 1.27 2005/10/28 23:18:17 dlg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -372,6 +372,16 @@ already exists
 .Xr join 1 ,
 .Xr uniq 1 ,
 .Xr radixsort 3
+.Sh STANDARDS
+The
+.Nm
+utility is expected to be compliant with the
+.St -p1003.1-2001
+specification.
+.Pp
+The flags
+.Op Fl HRTz
+are extensions to the specification.
 .Sh HISTORY
 A
 .Nm
