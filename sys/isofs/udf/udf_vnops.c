@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.7 2005/05/11 18:06:31 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.8 2005/10/29 00:17:19 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -345,6 +345,7 @@ udf_getattr(void *v)
 	vap->va_ctime = vap->va_mtime; /* XXX Stored as an Extended Attribute */
 	vap->va_rdev = 0; /* XXX */
 	if (vp->v_type & VDIR) {
+		vap->va_nlink++; /* Count a reference to ourselves */
 		/*
 		 * Directories that are recorded within their ICB will show
 		 * as having 0 blocks recorded.  Since tradition dictates
