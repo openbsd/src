@@ -59,7 +59,7 @@
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd3.8
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd3.8/3.3.5/cc1
 ./usr/lib/libasn1.so.15.0
-./usr/lib/libc.so.38.2
+./usr/lib/libc.so.38.3
 ./usr/lib/libcom_err.so.15.0
 ./usr/lib/libcrypto.so.12.0
 ./usr/lib/libcurses.so.10.0
