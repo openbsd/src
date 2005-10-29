@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.10 2005/10/19 18:28:13 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.11 2005/10/29 09:27:02 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -41,6 +41,7 @@
 static int rcsclean_file(char *, RCSNUM *);
 static int nflag = 0;
 static int kflag = RCS_KWEXP_ERR;
+static int uflag = 0;
 
 int
 rcsclean_main(int argc, char **argv)
@@ -52,7 +53,7 @@ rcsclean_main(int argc, char **argv)
 
 	rev = RCS_HEAD_REV;
 
-	while ((ch = rcs_getopt(argc, argv, "k:nqr:V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "k:nqr:uV")) != -1) {
 		switch (ch) {
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -71,6 +72,9 @@ rcsclean_main(int argc, char **argv)
 			break;
 		case 'r':
 			rcs_set_rev(rcs_optarg, &rev);
+			break;
+		case 'u':
+			uflag = 1;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -109,7 +113,7 @@ void
 rcsclean_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rcsclean [-nqV] [-kmode] [-rrev] [file] ...\n");
+	    "usage: rcsclean [-nquV] [-kmode] [-rrev] [file] ...\n");
 }
 
 static int
@@ -117,7 +121,7 @@ rcsclean_file(char *fname, RCSNUM *rev)
 {
 	int match;
 	RCSFILE *file;
-	char fpath[MAXPATHLEN];
+	char fpath[MAXPATHLEN], numb[64];
 	RCSNUM *frev;
 	BUF *b1, *b2;
 	char *s1, *s2, *c1, *c2;
@@ -171,9 +175,20 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	free(c2);
 
 	if (match == 1) {
+		if (uflag == 1) {
+			if ((verbose == 1) && (nflag == 0)) {
+				printf("rcs -u%s %s\n",
+				    rcsnum_tostr(frev, numb, sizeof(numb)),
+				    fpath);
+			}
+
+			(void)rcs_lock_remove(file, frev);
+		}
+
 		if (verbose == 1)
 			printf("rm -f %s\n", fname);
-		if (nflag == 0)
+
+		if ((nflag == 0) && (TAILQ_EMPTY(&(file->rf_locks))))
 			(void)unlink(fname);
 	}
 
