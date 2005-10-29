@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.11 2005/08/01 05:36:48 brad Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.12 2005/10/29 23:35:20 deraadt Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -228,7 +228,7 @@ Static const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U103 },
 	/* BELKIN F5U120 */
 	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U120 },
-	/* GoHubs GO-COM232 */
+	/* GoHubs GO-COM232 , Belkin F5U003 */
 	{ USB_VENDOR_ETEK, USB_PRODUCT_ETEK_1COM },
 	/* GoHubs GO-COM232 */
 	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
