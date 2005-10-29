@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_gc.c,v 1.14 2004/04/06 03:56:39 marc Exp $	*/
+/*	$OpenBSD: uthread_gc.c,v 1.15 2005/10/29 18:07:55 krw Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -53,7 +53,7 @@ _thread_gc(pthread_addr_t arg)
 	int		f_done = 0;
 	int		ret;
 	sigset_t	mask;
-	pthread_t	pthread;
+	pthread_t	pthread, next;
 	pthread_t	pthread_cln;
 	struct timespec	abstime;
 	void		*p_stack;
@@ -115,7 +115,8 @@ _thread_gc(pthread_addr_t arg)
 		 */
 		for (pthread = TAILQ_FIRST(&_dead_list);
 		     p_stack == NULL && pthread_cln == NULL && pthread != NULL;
-		     pthread = TAILQ_NEXT(pthread, dle)) {
+		     pthread = next) {
+		     	next = TAILQ_NEXT(pthread, dle);
 			/* Check if the initial thread: */
 			if (pthread == _thread_initial) {
 				/* Don't destroy the initial thread. */
