@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.14 2005/10/27 07:47:52 xsa Exp $
+.\"     $OpenBSD: ci.1,v 1.15 2005/10/29 19:09:48 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -32,6 +32,7 @@
 .Op Fl N Ns Ar symbol
 .Op Fl n Ns Ar symbol
 .Op Fl r Ns Op Ar rev
+.Op Fl s Ns Ar state
 .Op Fl u Ns Op Ar rev
 .Op Fl w Ns Ar username
 .Ar file ...
@@ -96,6 +97,7 @@ working file.
 .It Fl s Ns Ar state
 Sets the state of the deposited revision to the identifier
 .Ar state .
+The specified value may not contain a space character.
 .It Fl u
 The same as
 .Fl r ,
