@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.50 2005/10/27 07:43:56 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.51 2005/10/29 19:05:51 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -79,19 +79,20 @@ checkin_main(int argc, char **argv)
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN];
 	char *rcs_msg, *filec, *deltatext, *username, rbuf[16];
-	const char *symbol = NULL;
+	const char *symbol, *state;
 	struct rcs_lock *lkp;
 	BUF *bp;
 
 	date = DATE_NOW;
 	file = NULL;
 	rcs_msg = username = NULL;
+	state = symbol = NULL;
 	newrev =  NULL;
 	fmode = force = lkmode = rflag = status = symforce = 0;
 	interactive = 1;
 
 
-	while ((ch = rcs_getopt(argc, argv, "d::f::j:k:l::m:M:N:n:qr::u::Vw:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "d::f::j:k:l::m:M:N:n:qr::s:u::Vw:")) != -1) {
 		switch (ch) {
 		case 'd':
 			if (rcs_optarg == NULL)
@@ -143,6 +144,13 @@ checkin_main(int argc, char **argv)
 		case 'r':
 			rcs_set_rev(rcs_optarg, &newrev);
 			rflag = 1;
+			break;
+		case 's':
+			state = rcs_optarg;
+			if (rcs_state_check(state) < 0) {
+				cvs_log(LP_ERR, "invalid state `%'", state);
+				exit(1);
+			}
 			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &newrev);
@@ -357,6 +365,12 @@ checkin_main(int argc, char **argv)
 				continue;
 			}
 		}
+
+		/*
+		 * Set the state of this revision if specified.
+		 */
+		if (state != NULL)
+			(void)rcs_state_set(file, newrev, state);
 
 		free(deltatext);
 		free(filec);

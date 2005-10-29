@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.94 2005/10/22 17:32:57 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.95 2005/10/29 19:05:50 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2889,5 +2889,48 @@ rcs_rev_setlog(RCSFILE *rfp, RCSNUM *rev, const char *logtext)
 		return (-1);
 
 	rfp->rf_flags &= ~RCS_SYNCED;
+	return (0);
+}
+
+/*
+ * rcs_state_set()
+ *
+ * Sets the state of revision <rev> to <state>
+ * NOTE: default state is 'Exp'. States may not contain spaces.
+ *
+ * Returns -1 on failure, 0 on success.
+ */
+int
+rcs_state_set(RCSFILE *rfp, RCSNUM *rev, const char *state)
+{
+	struct rcs_delta *rdp;
+
+	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
+		return (-1);
+
+	if (rdp->rd_state != NULL)
+		cvs_strfree(rdp->rd_state);
+
+	if ((rdp->rd_state = cvs_strdup(state)) == NULL)
+		return (-1);
+
+	rfp->rf_flags &= ~RCS_SYNCED;
+
+	return (0);
+}
+
+/*
+ * rcs_state_check()
+ *
+ * Check if string <state> is valid.
+ *
+ * Returns 0 if the string is valid, -1 otherwise. 
+ */
+int
+rcs_state_check(const char *state)
+{
+	if (strchr(state, ' ') != NULL)
+		return (-1);
+
 	return (0);
 }
