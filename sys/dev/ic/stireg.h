@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.10 2005/01/24 19:20:04 miod Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.11 2005/10/29 11:54:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -71,12 +71,12 @@
 #define	STI_BADREENTLVL		1	/* bad reentry level */
 #define	STI_NOREGIONSDEF	2	/* region table is not setup */
 #define	STI_ILLNPLANES		3	/* invalid num of text planes */
-#define	STI_ILLINDEX		4	/* invalid fond index */
+#define	STI_ILLINDEX		4	/* invalid font index */
 #define	STI_ILLLOC		5	/* invalid font location */
 #define	STI_ILLCOLOUR		6	/* invalid colour */
 #define	STI_ILLBLKMVFROM	7	/* invalid from in blkmv */
 #define	STI_ILLBLKMVTO		8	/* invalid to in blkmv */
-#define	STI_ILLBLKMVSIZE	9	/* invalid siz in blkmv */
+#define	STI_ILLBLKMVSIZE	9	/* invalid size in blkmv */
 #define	STI_BEIUNSUPP		10	/* bus error ints unsupported */
 #define	STI_UNXPBE		11	/* unexpected bus error */
 #define	STI_UNXHWF		12	/* unexpected hardware failure */
@@ -122,7 +122,7 @@ struct	sti_dd {
 	u_int8_t	dd_nmon;	/* 0x05 number monitor rates */
 	u_int8_t	dd_grrev;	/* 0x06 global rom revision */
 	u_int8_t	dd_lrrev;	/* 0x07 local rom revision */
-	u_int8_t	dd_grid[8];	/* 0x08 graphics id */
+	u_int32_t	dd_grid[2];	/* 0x08 graphics id */
 	u_int32_t	dd_fntaddr;	/* 0x10 font start address */
 	u_int32_t	dd_maxst;	/* 0x14 max state storage */
 	u_int32_t	dd_romend;	/* 0x18 rom last address */
@@ -440,7 +440,7 @@ typedef struct sti_inqconfout {
 	u_int32_t	planes;
 	u_int8_t	name[STI_DEVNAME_LEN];
 	u_int32_t	attributes;
-#define	STI_INQCONF_Y2X		0x0001	/* pixel is higher tan wider */
+#define	STI_INQCONF_Y2X		0x0001	/* pixel is higher than wider */
 #define	STI_INQCONF_HWBLKMV	0x0002	/* hw blkmv is present */
 #define	STI_INQCONF_AHW		0x0004	/* adv hw accel */
 #define	STI_INQCONF_INT		0x0008	/* can interrupt */
