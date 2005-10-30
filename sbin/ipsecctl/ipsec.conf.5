@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.22 2005/10/16 21:24:45 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.23 2005/10/30 19:50:59 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -122,6 +122,8 @@ The following rules enter SAs in the SADB:
 Enter an ESP SA.
 .It Ic ah
 Enter an AH SA.
+.It Ic ipcomp
+Enter an IPCOMP SA.
 .El
 .Pp
 Parameters specify the peers, Security Parameter Index (SPI),
@@ -171,6 +173,19 @@ If no algorithm is specified,
 will choose
 .Ar hmac-sha2-256
 by default.
+.It Xo
+.Ar comp
+.Aq Ar algorithm
+.Xc
+The compression algorithm to be used.  Possible algorithms are
+.Ar deflate
+and
+.Ar lzs .
+Note that
+.Ar lzs
+is only available with
+.Xr hifn 4
+because of the patent held by Hifn, Inc.
 .It Xo
 .Ar enc
 .Aq Ar algorithm
