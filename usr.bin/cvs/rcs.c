@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.95 2005/10/29 19:05:50 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.96 2005/10/30 11:10:12 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1362,7 +1362,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
  * one).  The <msg> argument specifies the log message for that revision, and
  * <date> specifies the revision's date (a value of -1 is
  * equivalent to using the current time).
- * If <username> is NULL, set the author for this revision to the current user. 
+ * If <username> is NULL, set the author for this revision to the current user.
  * Otherwise, set it to <username>.
  * Returns 0 on success, or -1 on failure.
  */
@@ -2841,7 +2841,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
  * rcs_deltatext_set()
  *
  * Set deltatext for <rev> in RCS file <rfp> to <dtext>
- * Returns -1 on error, 0 on success. 
+ * Returns -1 on error, 0 on success.
  */
 int
 rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
@@ -2924,7 +2924,7 @@ rcs_state_set(RCSFILE *rfp, RCSNUM *rev, const char *state)
  *
  * Check if string <state> is valid.
  *
- * Returns 0 if the string is valid, -1 otherwise. 
+ * Returns 0 if the string is valid, -1 otherwise.
  */
 int
 rcs_state_check(const char *state)

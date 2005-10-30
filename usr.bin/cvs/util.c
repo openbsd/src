@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.54 2005/10/22 17:32:57 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.55 2005/10/30 11:10:12 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -802,7 +802,7 @@ cvs_rcs_getpath(CVSFILE *file, char *buf, size_t len)
  * cvs_write_tagfile()
  *
  * Write the CVS/Tag file for current directory.
- */ 
+ */
 void
 cvs_write_tagfile(char *tag, char *date, int nb)
 {
@@ -847,7 +847,7 @@ cvs_write_tagfile(char *tag, char *date, int nb)
  * If it contains a branch tag, sets <tagp>.
  * If it contains a date, sets <datep>.
  * If it contains a non-branch tag, sets <nbp>.
- * 
+ *
  * Returns nothing but an error message, and sets <tagp>, <datep> to NULL
  * and <nbp> to 0.
  */
