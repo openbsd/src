@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.28 2005/10/26 17:57:20 joris Exp $
+#	$OpenBSD: files.macppc,v 1.29 2005/10/30 23:55:02 joris Exp $
 
 #
 # macppc-specific configuration info
@@ -201,6 +201,11 @@ file	arch/macppc/dev/i2s.c				i2s
 device	snapper: audio, auconv, mulaw, i2s
 attach	snapper at macobio
 file	arch/macppc/dev/snapper.c			snapper
+
+# daca audio
+device	daca: audio, auconv, mulaw, i2s
+attach	daca at macobio
+file	arch/macppc/dev/daca.c				daca
 
 #device	nvram
 #attach	nvram at macobio
