@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2005/10/28 14:51:57 stevesk Exp $ */
+/*	$OpenBSD: parse.y,v 1.20 2005/10/30 23:01:38 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -23,11 +23,9 @@
 
 %{
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <net/if.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -35,7 +33,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
 
 #include "ospf.h"
 #include "ospfd.h"
@@ -348,7 +345,7 @@ nl		: '\n' optnl		/* one newline or more */
 area		: AREA string {
 			struct in_addr	id;
 			if (inet_aton($2, &id) == 0) {
-				yyerror("error parsing area-id");
+				yyerror("error parsing area");
 				free($2);
 				YYERROR;
 			}
