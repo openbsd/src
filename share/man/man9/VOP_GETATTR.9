@@ -1,4 +1,4 @@
-.\"	$OpenBSD: VOP_GETATTR.9,v 1.1 2005/10/30 20:02:24 pedro Exp $
+.\"	$OpenBSD: VOP_GETATTR.9,v 1.2 2005/10/30 21:28:42 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@openbsd.org>
 .\" All rights reserved.
@@ -54,8 +54,8 @@ struct vattr {
         enum vtype      va_type;        /* vnode type */
         mode_t          va_mode;        /* files access mode and type */
         nlink_t         va_nlink;       /* number of references */
-        uid_t           va_uid;         /* owner user id */      
-        gid_t           va_gid;         /* owner group id */ 
+        uid_t           va_uid;         /* owner user id */
+        gid_t           va_gid;         /* owner group id */
         long            va_fsid;        /* file system id */
         long            va_fileid;      /* file id */
         u_quad_t        va_size;        /* file size in bytes */
