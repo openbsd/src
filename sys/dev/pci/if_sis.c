@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.59 2005/10/20 21:47:56 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.60 2005/10/30 00:38:28 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -146,8 +146,7 @@ u_int32_t sis_mchash(struct sis_softc *, const uint8_t *);
 void sis_setmulti_sis(struct sis_softc *);
 void sis_setmulti_ns(struct sis_softc *);
 void sis_reset(struct sis_softc *);
-int sis_list_rx_init(struct sis_softc *);
-int sis_list_tx_init(struct sis_softc *);
+int sis_ring_init(struct sis_softc *);
 
 #define SIS_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
@@ -1184,14 +1183,16 @@ fail:
 }
 
 /*
- * Initialize the transmit descriptors.
+ * Initialize the TX and RX descriptors and allocate mbufs for them. Note that
+ * we arrange the descriptors in a closed ring, so that the last descriptor
+ * points back to the first.
  */
-int sis_list_tx_init(sc)
+int sis_ring_init(sc)
 	struct sis_softc	*sc;
 {
 	struct sis_list_data	*ld;
 	struct sis_ring_data	*cd;
-	int			i;
+	int			i, error;
 	bus_addr_t		next;
 
 	cd = &sc->sis_cdata;
@@ -1218,34 +1219,15 @@ int sis_list_tx_init(sc)
 
 	cd->sis_tx_prod = cd->sis_tx_cons = cd->sis_tx_cnt = 0;
 
-	return(0);
-}
-
-
-/*
- * Initialize the RX descriptors and allocate mbufs for them. Note that
- * we arrange the descriptors in a closed ring, so that the last descriptor
- * points back to the first.
- */
-int sis_list_rx_init(sc)
-	struct sis_softc	*sc;
-{
-	struct sis_list_data	*ld;
-	struct sis_ring_data	*cd;
-	bus_addr_t		next;
-	int			i;
-
-	ld = sc->sis_ldata;
-	cd = &sc->sis_cdata;
-
 	if (sc->arpcom.ac_if.if_flags & IFF_UP)
 		sc->sc_rxbufs = SIS_RX_LIST_CNT_MAX;
 	else
 		sc->sc_rxbufs = SIS_RX_LIST_CNT_MIN;
 
 	for (i = 0; i < sc->sc_rxbufs; i++) {
-		if (sis_newbuf(sc, &ld->sis_rx_list[i], NULL) == ENOBUFS)
-			return(ENOBUFS);
+		error = sis_newbuf(sc, &ld->sis_rx_list[i], NULL);
+		if (error)
+			return (error);
 		next = sc->sc_listmap->dm_segs[0].ds_addr;
 		if (i == (sc->sc_rxbufs - 1)) {
 			ld->sis_rx_list[i].sis_nextdesc = &ld->sis_rx_list[0];
@@ -1261,7 +1243,7 @@ int sis_list_rx_init(sc)
 
 	cd->sis_rx_pdsc = &ld->sis_rx_list[0];
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1275,15 +1257,18 @@ int sis_newbuf(sc, c, m)
 	struct mbuf		*m_new = NULL;
 	bus_dmamap_t		map;
 
+	if (c == NULL)
+		return (EINVAL);
+
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
-			return(ENOBUFS);
+			return (ENOBUFS);
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			m_freem(m_new);
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 	} else {
@@ -1315,7 +1300,7 @@ int sis_newbuf(sc, c, m)
 	    ((caddr_t)c - sc->sc_listkva), sizeof(struct sis_desc),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1722,19 +1707,14 @@ void sis_init(xsc)
 		    ((u_int16_t *)sc->arpcom.ac_enaddr)[2]);
 	}
 
-	/* Init circular RX list. */
-	if (sis_list_rx_init(sc) == ENOBUFS) {
+	/* Init circular TX/RX lists. */
+	if (sis_ring_init(sc) != 0) {
 		printf("%s: initialization failed: no memory for rx buffers\n",
 		    sc->sc_dev.dv_xname);
 		sis_stop(sc);
 		splx(s);
 		return;
 	}
-
-	/*
-	 * Init tx descriptors.
-	 */
-	sis_list_tx_init(sc);
 
         /*
 	 * Short Cable Receive Errors (MP21.E)
