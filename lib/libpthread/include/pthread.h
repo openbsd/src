@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.23 2004/02/24 00:49:43 brad Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.24 2005/10/30 04:00:38 brad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -202,6 +202,7 @@ enum pthread_mutextype {
  * Thread function prototype definitions:
  */
 __BEGIN_DECLS
+int		pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
 int		pthread_attr_destroy(pthread_attr_t *);
 int		pthread_attr_getstack(const pthread_attr_t *,
 			void **, size_t *);
