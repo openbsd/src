@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.80 2005/10/22 21:14:28 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.81 2005/10/30 22:29:02 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -995,10 +995,7 @@ boot(int howto)
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
 		vfs_shutdown();		/* sync */
-#if 0
-		/* resettodr does not currently do anything, address
-		 * this later
-		 */
+
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now unless
@@ -1009,7 +1006,6 @@ boot(int howto)
 		} else {
 			printf("WARNING: not updating battery clock\n");
 		}
-#endif
 	}
 	splhigh();
 	if (howto & RB_HALT) {
