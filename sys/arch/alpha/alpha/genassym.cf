@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2004/06/13 21:49:11 niklas Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2005/10/30 20:55:49 miod Exp $
 
 # Copyright (c) 1994, 1995 Gordon W. Ross
 # Copyright (c) 1993 Adam Glass
@@ -133,7 +133,6 @@ member	U_PCB_HWPCB		u_pcb.pcb_hw
 member	U_PCB_HWPCB_KSP		u_pcb.pcb_hw.apcb_ksp
 member	U_PCB_CONTEXT		u_pcb.pcb_context[0]
 member	U_PCB_ONFAULT		u_pcb.pcb_onfault
-member	U_PCB_ACCESSADDR	u_pcb.pcb_accessaddr
 
 # Offsets into struct fpstate, for save, restore
 struct	fpreg		FPREG_
