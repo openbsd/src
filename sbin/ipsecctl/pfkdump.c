@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.5 2005/07/09 21:54:12 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.6 2005/10/30 19:50:24 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -219,18 +219,17 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 		printf(" to ");
 		print_addr(extensions[SADB_EXT_ADDRESS_DST], msg);
 	}
+	printf(" spi 0x%08x", ntohl(sa->sadb_sa_spi));
 	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
-		printf("cpi 0x%8.8x %s",
-		    ntohl(sa->sadb_sa_spi),
-		    lookup_name(comp_types, sa->sadb_sa_encrypt));
+		printf(" comp %s", lookup_name(comp_types,
+		    sa->sadb_sa_encrypt));
 	else {
-		printf(" spi 0x%8.8x", ntohl(sa->sadb_sa_spi));
 		if (sa->sadb_sa_encrypt)
-			printf(" %s",
-			    lookup_name(enc_types, sa->sadb_sa_encrypt));
+			printf(" enc %s", lookup_name(enc_types,
+			    sa->sadb_sa_encrypt));
 		if (sa->sadb_sa_auth)
-			printf(" %s",
-			    lookup_name(auth_types, sa->sadb_sa_auth));
+			printf(" auth %s", lookup_name(auth_types,
+			    sa->sadb_sa_auth));
 	}
 	if (sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
 		printf(" tunnel");

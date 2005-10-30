@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.25 2005/10/17 07:31:44 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.26 2005/10/30 19:50:24 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -422,6 +422,19 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi, struct
 			    xfs->encxf->id);
 		}
 	}
+	if (xfs && xfs->compxf) {
+		switch (xfs->compxf->id) {
+		case COMPXF_DEFLATE:
+			sa.sadb_sa_encrypt = SADB_X_CALG_DEFLATE;
+			break;
+		case COMPXF_LZS:
+			sa.sadb_sa_encrypt = SADB_X_CALG_LZS;
+			break;
+		default:
+			warnx("unsupported compression algorithm %d",
+			    xfs->compxf->id);
+		}
+	}
 
 	bzero(&sa_src, sizeof(sa_src));
 	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;
@@ -431,7 +444,8 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi, struct
 	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
 	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 
-	if (action == SADB_ADD && !authkey && !enckey) { /* XXX ENCNULL */
+	if (action == SADB_ADD && !authkey && !enckey && satype !=
+	    SADB_X_SATYPE_IPCOMP) { /* XXX ENCNULL */
 		warnx("no key specified");
 		return -1;
 	}
@@ -563,7 +577,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 		rule->proto = IPSEC_AH;
 		break;
 	case SADB_X_SATYPE_IPCOMP:
-		rule->proto = IPSEC_COMP;
+		rule->proto = IPSEC_IPCOMP;
 		break;
 	default:
 		return (1);
@@ -816,7 +830,9 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		case IPSEC_AH:
 			satype = SADB_SATYPE_AH;
 			break;
-		case IPSEC_COMP:
+		case IPSEC_IPCOMP:
+			satype = SADB_X_SATYPE_IPCOMP;
+			break;
 		default:
 			return -1;
 		}
@@ -852,6 +868,9 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 			break;
 		case IPSEC_ESP:
 			satype = SADB_SATYPE_ESP;
+			break;
+		case IPSEC_IPCOMP:
+			satype = SADB_X_SATYPE_IPCOMP;
 			break;
 		case IPSEC_TCPMD5:
 			satype = SADB_X_SATYPE_TCPSIGNATURE;

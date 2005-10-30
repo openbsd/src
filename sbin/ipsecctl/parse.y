@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2005/10/28 07:18:47 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2005/10/30 19:50:23 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -78,6 +78,13 @@ const struct ipsec_xf encxfs[] = {
 	{NULL,			0,			0,	0},
 };
 
+const struct ipsec_xf compxfs[] = {
+	{"unknown",		COMPXF_UNKNOWN,		0,	0},
+	{"deflate",		COMPXF_DEFLATE,		0,	0},
+	{"lzs",			COMPXF_LZS,		0,	0},
+	{NULL,			0,			0,	0},
+};
+
 int			 yyerror(const char *, ...);
 int			 yyparse(void);
 int			 kw_cmp(const void *, const void *);
@@ -106,9 +113,12 @@ struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*host_v4(const char *, int);
+#if 0
+struct ipsec_addr	*host_if(const char *, int);
+#endif
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
-struct ipsec_transforms *transforms(const char *, const char *);
+struct ipsec_transforms *transforms(const char *, const char *, const char *);
 struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
@@ -174,7 +184,7 @@ typedef struct {
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
-%token	ACTIVE ANY
+%token	ACTIVE ANY IPCOMP COMPXF
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -220,7 +230,6 @@ number		: STRING			{
 			$$ = (u_int32_t)ulval;
 			free($1);
 		}
-		;
 
 tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			struct ipsec_rule	*r;
@@ -312,6 +321,7 @@ ikerule		: IKE ikemode protocol hosts peer mmxfs qmxfs ids {
 protocol	: /* empty */			{ $$ = IPSEC_ESP; }
 		| ESP				{ $$ = IPSEC_ESP; }
 		| AH				{ $$ = IPSEC_AH; }
+		| IPCOMP			{ $$ = IPSEC_IPCOMP; }
 		;
 
 dir		: /* empty */			{ $$ = IPSEC_INOUT; }
@@ -434,7 +444,7 @@ transforms	: /* empty */			{
 			$$ = xfs;
 		}
 		| AUTHXF STRING ENCXF STRING	{
-			if (($$ = transforms($2, $4)) == NULL) {
+			if (($$ = transforms($2, $4, NULL)) == NULL) {
 				free($2);
 				free($4);
 				yyerror("could not parse transforms");
@@ -444,7 +454,7 @@ transforms	: /* empty */			{
 			free($4);
 		}
 		| AUTHXF STRING			{
-			if (($$ = transforms($2, NULL)) == NULL) {
+			if (($$ = transforms($2, NULL, NULL)) == NULL) {
 				free($2);
 				yyerror("could not parse transforms");
 				YYERROR;
@@ -452,7 +462,15 @@ transforms	: /* empty */			{
 			free($2);
 		}
 		| ENCXF STRING			{
-			if (($$ = transforms(NULL, $2)) == NULL) {
+			if (($$ = transforms(NULL, $2, NULL)) == NULL) {
+				free($2);
+				yyerror("could not parse transforms");
+				YYERROR;
+			}
+			free($2);
+		}
+		| COMPXF STRING			{
+			if (($$ = transforms(NULL, NULL, $2)) == NULL) {
 				free($2);
 				yyerror("could not parse transforms");
 				YYERROR;
@@ -577,6 +595,7 @@ lookup(char *s)
 		{ "any",		ANY},
 		{ "auth",		AUTHXF},
 		{ "authkey",		AUTHKEY},
+		{ "comp",		COMPXF},
 		{ "dstid",		DSTID},
 		{ "enc",		ENCXF},
 		{ "enckey",		ENCKEY},
@@ -586,6 +605,7 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "ike",		IKE},
 		{ "in",			IN},
+		{ "ipcomp",		IPCOMP},
 		{ "main",		MAIN},
 		{ "out",		OUT},
 		{ "passive",		PASSIVE},
@@ -1095,7 +1115,7 @@ parse_xf(const char *name, const struct ipsec_xf xfs[])
 }
 
 struct ipsec_transforms *
-transforms(const char *authname, const char *encname)
+transforms(const char *authname, const char *encname, const char *compname)
 {
 	struct ipsec_transforms *xfs;
 
@@ -1112,6 +1132,11 @@ transforms(const char *authname, const char *encname)
 		xfs->encxf = parse_xf(encname, encxfs);
 		if (xfs->encxf == NULL)
 			yyerror("%s not a valid transform", encname);
+	}
+	if (compname) {
+		xfs->compxf = parse_xf(compname, compxfs);
+		if (xfs->compxf == NULL)
+			yyerror("%s not a valid transform", compname);
 	}
 
 	return (xfs);
@@ -1163,6 +1188,14 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 			xfs->authxf = &authxfs[AUTHXF_HMAC_SHA2_256];
 		if (!xfs->encxf)
 			xfs->encxf = &encxfs[ENCXF_AESCTR];
+	}
+	if (protocol == IPSEC_IPCOMP) {
+		if (!xfs) {
+			yyerror("no transform specified");
+			return (0);
+		}
+		if (!xfs->compxf)
+			xfs->compxf = &compxfs[COMPXF_DEFLATE];
 	}
 	if (protocol == IPSEC_TCPMD5 && authkey == NULL) {
 		yyerror("authentication key needed for tcpmd5");

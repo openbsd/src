@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.28 2005/10/28 07:18:47 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.29 2005/10/30 19:50:23 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -268,6 +268,8 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 			printf(" auth %s", r->xfs->authxf->name);
 		if (r->xfs && r->xfs->encxf)
 			printf(" enc %s", r->xfs->encxf->name);
+		if (r->xfs && r->xfs->compxf)
+			printf(" comp %s", r->xfs->compxf->name);
 	}
 	if (r->authkey) {
 		if (r->proto == IPSEC_TCPMD5)

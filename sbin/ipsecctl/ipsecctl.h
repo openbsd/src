@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.17 2005/08/22 17:26:46 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.18 2005/10/30 19:50:23 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -40,7 +40,7 @@ enum {
 	DIRECTION_UNKNOWN, IPSEC_IN, IPSEC_OUT, IPSEC_INOUT
 };
 enum {
-	PROTO_UNKNOWN, IPSEC_ESP, IPSEC_AH, IPSEC_COMP, IPSEC_TCPMD5
+	PROTO_UNKNOWN, IPSEC_ESP, IPSEC_AH, IPSEC_IPCOMP, IPSEC_TCPMD5
 };
 enum {
 	AUTH_UNKNOWN, AUTH_PSK, AUTH_RSA
@@ -58,8 +58,11 @@ enum {
 	AUTHXF_HMAC_SHA2_512, AUTHXF_MD5, AUTHXF_SHA1
 };
 enum {
-	ENCXF_UNKNOWN,ENCXF_NONE, ENCXF_3DES_CBC, ENCXF_DES_CBC, ENCXF_AES,
+	ENCXF_UNKNOWN, ENCXF_NONE, ENCXF_3DES_CBC, ENCXF_DES_CBC, ENCXF_AES,
 	ENCXF_AESCTR, ENCXF_BLOWFISH, ENCXF_CAST128, ENCXF_NULL, ENCXF_SKIPJACK
+};
+enum {
+	COMPXF_UNKNOWN, COMPXF_DEFLATE, COMPXF_LZS
 };
 enum {
 	IKE_ACTIVE, IKE_PASSIVE
@@ -98,6 +101,7 @@ struct ipsec_xf {
 struct ipsec_transforms {
 	const struct ipsec_xf *authxf;
 	const struct ipsec_xf *encxf;
+	const struct ipsec_xf *compxf;
 };
 
 extern const struct ipsec_xf authxfs[];
