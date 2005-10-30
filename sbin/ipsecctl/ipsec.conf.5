@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.23 2005/10/30 19:50:59 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.24 2005/10/30 19:54:07 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -493,11 +493,12 @@ ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
 ike esp from 192.168.3.1 to 192.168.3.2
 .Ed
 .Sh SEE ALSO
+.Xr ipcomp 4 ,
 .Xr ipsec 4 ,
-.Xr tcp 4 ,
-.Xr isakmpd.conf 5 ,
 .Xr ipsecctl 8 ,
 .Xr isakmpd 8 ,
+.Xr isakmpd.conf 5 ,
+.Xr tcp 4 ,
 .Xr vpn 8
 .Sh HISTORY
 The
