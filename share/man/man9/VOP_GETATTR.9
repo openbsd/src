@@ -1,0 +1,108 @@
+.\"	$OpenBSD: VOP_GETATTR.9,v 1.1 2005/10/30 20:02:24 pedro Exp $
+.\"
+.\" Copyright (c) 2005 Pedro Martelletto <pedro@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd October 29, 2005
+.Dt VOP_GETATTR 9
+.Os
+.Sh NAME
+.Nm VOP_GETATTR ,
+.Nm VOP_SETATTR
+.Nd get or set vnode attributes
+.Sh SYNOPSIS
+.Fd #include <sys/vnode.h>
+.Ft int
+.Fo VOP_GETATTR
+.Fa "struct vnode *vp"
+.Fa "struct vattr *vap"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_SETATTR
+.Fa "struct vnode *vp"
+.Fa "struct vattr *vap"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Sh DESCRIPTION
+The
+.Nm VOP_GETATTR
+and
+.Nm VOP_SETATTR
+routines implement a generic way of representing, retrieving, and setting many
+vnode attributes such as size, number of references, access mode, and last
+modified time.
+All attributes are held in the
+.Fa vattr
+structure described below.
+.Bd -literal
+struct vattr {
+        enum vtype      va_type;        /* vnode type */
+        mode_t          va_mode;        /* files access mode and type */
+        nlink_t         va_nlink;       /* number of references */
+        uid_t           va_uid;         /* owner user id */      
+        gid_t           va_gid;         /* owner group id */ 
+        long            va_fsid;        /* file system id */
+        long            va_fileid;      /* file id */
+        u_quad_t        va_size;        /* file size in bytes */
+        long            va_blocksize;   /* blocksize preferred for i/o */
+        struct timespec va_atime;       /* time of last access */
+        struct timespec va_mtime;       /* time of last modification */
+        struct timespec va_ctime;       /* time file changed */
+        u_long          va_gen;         /* generation number of file */
+        u_long          va_flags;       /* flags defined for file */
+        dev_t           va_rdev;        /* device the vnode represents */
+        u_quad_t        va_bytes;       /* bytes of held disk space */
+        u_quad_t        va_filerev;     /* file modification number */
+        u_int           va_vaflags;     /* operations flags */
+        long            va_spare;       /* remain quad aligned */
+};
+.Ed
+.Sh IMPLEMENTATION NOTES
+Depending on the specific filesystem implementation, some values may not be
+available for modification and/or retrieval.
+In these cases, the corresponding fields in the
+.Fa vattr
+structure should be set to
+.Dv VNOVAL .
+.Pp
+Upon return from a
+.Fn VOP_GETATTR
+call made on a directory, the
+.Fa va_nlink
+field should contain the number of entries in the directory, if possible,
+or 1 otherwise.
+.Sh RETURN VALUES
+The
+.Fn VOP_GETATTR
+and
+.Fn VOP_SETATTR
+functions return 0 to indicate success and a non-zero error code
+to indicate failure.
+See
+.Xr errno 2
+for more information.
+.Sh SEE ALSO
+.Xr errno 2 ,
+.Xr vfs 9 ,
+.Xr vn_stat 9 ,
+.Xr vnode 9
+.Sh AUTHORS
+This man page was written by
+.An Pedro Martelletto
+for
+.Ox .

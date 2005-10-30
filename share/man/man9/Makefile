@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.104 2005/09/30 18:48:58 jmc Exp $
+#	$OpenBSD: Makefile,v 1.105 2005/10/30 20:02:24 pedro Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -25,8 +25,8 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 vfs_cache.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
-	VOP_LOOKUP.9 vput.9 vrecycle.9 vref.9 vrele.9 vwaitforio.9 vwakeup.9 \
-	wdog_register.9
+	VOP_GETATTR.9 VOP_LOOKUP.9 vput.9 vrecycle.9 vref.9 vrele.9 \
+	vwaitforio.9 vwakeup.9 wdog_register.9
 
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
@@ -297,7 +297,6 @@ MLINKS+=VOP_LOOKUP.9 VOP_ABORTOP.9 VOP_LOOKUP.9 VOP_ACCESS.9 \
 	VOP_LOOKUP.9 VOP_ADVLOCK.9 VOP_LOOKUP.9 VOP_BMAP.9 \
 	VOP_LOOKUP.9 VOP_BWRITE.9 VOP_LOOKUP.9 VOP_CLOSE.9 \
 	VOP_LOOKUP.9 VOP_CREATE.9 VOP_LOOKUP.9 VOP_FSYNC.9 \
-	VOP_LOOKUP.9 VOP_GETATTR.9 \
 	VOP_LOOKUP.9 VOP_INACTIVE.9 VOP_LOOKUP.9 VOP_IOCTL.9 \
 	VOP_LOOKUP.9 VOP_ISLOCKED.9 VOP_LOOKUP.9 VOP_KQFILTER.9 \
 	VOP_LOOKUP.9 VOP_LINK.9 \
@@ -309,8 +308,9 @@ MLINKS+=VOP_LOOKUP.9 VOP_ABORTOP.9 VOP_LOOKUP.9 VOP_ACCESS.9 \
 	VOP_LOOKUP.9 VOP_REALLOCBLKS.9 VOP_LOOKUP.9 VOP_RECLAIM.9 \
 	VOP_LOOKUP.9 VOP_REMOVE.9 VOP_LOOKUP.9 VOP_RENAME.9 \
 	VOP_LOOKUP.9 VOP_REVOKE.9 VOP_LOOKUP.9 VOP_RMDIR.9 \
-	VOP_LOOKUP.9 VOP_SETATTR.9 \
 	VOP_LOOKUP.9 VOP_STRATEGY.9 VOP_LOOKUP.9 VOP_SYMLINK.9 \
 	VOP_LOOKUP.9 VOP_UNLOCK.9 VOP_LOOKUP.9 VOP_WRITE.9
+
+MLINKS+= VOP_GETATTR.9 VOP_SETATTR.9
 
 .include <bsd.prog.mk>
