@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.25 2005/10/30 03:37:34 brad Exp $
+.\" $OpenBSD: pthreads.3,v 1.26 2005/10/30 04:53:44 brad Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -46,17 +46,15 @@ For further information, see the individual man page for each function.
 .It
 Attribute Object Routines
 .It
-Cancellation Routines
-.It
 Cleanup Routines
 .It
 Condition Variable Routines
 .It
-Data Management Routines
-.It
 Mutex Routines
 .It
 Non Portable Extensions
+.It
+Per-Thread Context Routines
 .It
 Read/Write Lock Routines
 .It
@@ -86,26 +84,13 @@ Set stacksize attribute.
 .Ss Cleanup Routines
 The functions available are as follows:
 .Pp
-.Bl -tag -width "pthread_atfork()" -compact
+.Bl -tag -width "pthread_cleanup_push()" -compact
 .It Fn pthread_atfork
 Register fork handlers.
-.El
-.Ss Cancellation Routines
-The functions available are as follows:
-.Pp
-.Bl -tag -width "pthread_setcancelstate()" -compact
-.It Fn pthread_cancel
-Cancel execution of a thread.
 .It Fn pthread_cleanup_pop
 Call the first cleanup routine.
 .It Fn pthread_cleanup_push
 Add a cleanup function for thread exit.
-.It Fn pthread_setcancelstate
-Set cancelability state.
-.It Fn pthread_setcanceltype
-Set cancelability state.
-.It Fn pthread_testcancel
-Set cancelability state.
 .El
 .Ss Condition Variable Routines
 The functions available are as follows:
@@ -123,19 +108,6 @@ Unblock a thread waiting for a condition variable.
 Wait on a condition variable for a specific amount of time.
 .It Fn pthread_cond_wait
 Wait on a condition variable.
-.El
-.Ss Data Management Routines
-The functions available are as follows:
-.Pp
-.Bl -tag -width "pthread_getspecific()" -compact
-.It Fn pthread_getspecific
-Get a thread-specific data value.
-.It Fn pthread_setspecific
-Set a thread-specific data value.
-.It Fn pthread_key_create
-Thread-specific data key creation.
-.It Fn pthread_key_delete
-Delete a thread-specific data key.
 .El
 .Ss Mutex Routines
 The functions available are as follows:
@@ -193,6 +165,19 @@ Resumes all suspended threads.
 .It Fn pthread_yield
 Yield control of the current thread.
 .El
+.Ss Per-Thread Context Routines
+The functions available are as follows:
+.Pp
+.Bl -tag -width "pthread_getspecific()" -compact
+.It Fn pthread_key_create
+Thread-specific data key creation.
+.It Fn pthread_key_delete
+Delete a thread-specific data key.
+.It Fn pthread_getspecific
+Get a thread-specific data value.
+.It Fn pthread_setspecific
+Set a thread-specific data value.
+.El
 .Ss Read/Write Lock Routines
 The functions available are as follows:
 .Pp
@@ -222,6 +207,8 @@ The functions available are as follows:
 .Bl -tag -width "pthread_getconcurrency()" -compact
 .It Fn pthread_create
 Create a new thread.
+.It Fn pthread_cancel
+Cancel execution of a thread.
 .It Fn pthread_detach
 Detach a thread.
 .It Fn pthread_equal
@@ -240,6 +227,12 @@ Send a signal to a specific thread.
 Dynamic package initialisation.
 .It Fn pthread_self
 Get the calling thread's ID.
+.It Fn pthread_setcancelstate
+Set cancelability state.
+.It Fn pthread_setcanceltype
+Set cancelability state.
+.It Fn pthread_testcancel
+Set cancelability state.
 .It Fn pthread_sigmask
 Examine/change a thread's signal mask.
 .El
