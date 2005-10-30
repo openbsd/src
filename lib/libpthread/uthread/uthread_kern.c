@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.30 2005/01/28 20:35:49 marc Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.31 2005/10/30 02:45:09 krw Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -589,7 +589,7 @@ _thread_kern_poll(int wait_reqd)
 	int		kern_pipe_added = 0;
 	int             nfds = 0;
 	int		timeout_ms = 0;
-	struct pthread	*pthread;
+	struct pthread	*pthread, *next;
 	struct timespec ts;
 	struct timeval  tv;
 
@@ -670,7 +670,8 @@ _thread_kern_poll(int wait_reqd)
 	}
 
 	PTHREAD_WAITQ_SETACTIVE();
-	TAILQ_FOREACH(pthread, &_workq, qe) {
+	for (pthread = TAILQ_FIRST(&_workq); pthread != NULL; pthread = next) {
+		next = TAILQ_NEXT(pthread, qe);
 		switch (pthread->state) {
 		case PS_SPINBLOCK:
 			/*
@@ -782,7 +783,9 @@ _thread_kern_poll(int wait_reqd)
 		 * _poll syscall:
 		 */
 		PTHREAD_WAITQ_SETACTIVE();
-		TAILQ_FOREACH(pthread, &_workq, qe) {
+		for (pthread = TAILQ_FIRST(&_workq); pthread != NULL;
+		    pthread = next) {
+			next = TAILQ_NEXT(pthread, qe);
 			switch (pthread->state) {
 			case PS_SPINBLOCK:
 				/*
@@ -876,7 +879,9 @@ _thread_kern_poll(int wait_reqd)
 		 * that is now available.
 		 */
 		PTHREAD_WAITQ_SETACTIVE();
-		TAILQ_FOREACH(pthread, &_workq, qe) {
+		for (pthread = TAILQ_FIRST(&_workq); pthread != NULL;
+		    pthread = next) {
+			next = TAILQ_NEXT(pthread, qe);
 			if (pthread->state == PS_SPINBLOCK) {
 				/*
 				 * If the lock is available, let the thread run.
