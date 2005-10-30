@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.57 2004/09/16 04:39:16 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.58 2005/10/30 15:17:41 sturm Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.57 2004/09/16 04:39:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.58 2005/10/30 15:17:41 sturm Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -576,7 +576,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		rc = -1;
 		switch (curtype) {
 		case TYPE_A:
-			rc = fseek(fin, (long) restart_point, SEEK_SET);
+			rc = fseeko(fin, restart_point, SEEK_SET);
 			break;
 		case TYPE_I:
 		case TYPE_L:
@@ -591,7 +591,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 				(*closefunc)(fin);
 			return;
 		}
-		if (command("REST %ld", (long) restart_point)
+		if (command("REST %lld", (long long) restart_point)
 			!= CONTINUE) {
 			restart_point = 0;
 			progress = oprogress;
@@ -877,7 +877,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 	if (setjmp(recvabort))
 		goto abort;
 	if (is_retr && restart_point &&
-	    command("REST %ld", (long) restart_point) != CONTINUE)
+	    command("REST %lld", (long long) restart_point) != CONTINUE)
 		return;
 	if (remote) {
 		if (command("%s %s", cmd, remote) != PRELIM) {
