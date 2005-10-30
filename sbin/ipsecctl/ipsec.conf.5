@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.24 2005/10/30 19:54:07 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.25 2005/10/30 21:26:16 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -177,7 +177,8 @@ by default.
 .Ar comp
 .Aq Ar algorithm
 .Xc
-The compression algorithm to be used.  Possible algorithms are
+The compression algorithm to be used.
+Possible algorithms are
 .Ar deflate
 and
 .Ar lzs .
@@ -495,10 +496,10 @@ ike esp from 192.168.3.1 to 192.168.3.2
 .Sh SEE ALSO
 .Xr ipcomp 4 ,
 .Xr ipsec 4 ,
+.Xr tcp 4 ,
+.Xr isakmpd.conf 5 ,
 .Xr ipsecctl 8 ,
 .Xr isakmpd 8 ,
-.Xr isakmpd.conf 5 ,
-.Xr tcp 4 ,
 .Xr vpn 8
 .Sh HISTORY
 The
