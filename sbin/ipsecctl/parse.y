@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2005/10/30 19:50:23 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2005/10/30 20:42:11 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,9 +113,6 @@ struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr	*host(const char *);
 struct ipsec_addr	*host_v4(const char *, int);
-#if 0
-struct ipsec_addr	*host_if(const char *, int);
-#endif
 struct ipsec_addr	*copyhost(const struct ipsec_addr *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
 struct ipsec_transforms *transforms(const char *, const char *, const char *);
@@ -1017,7 +1014,6 @@ host(const char *s)
 	int			 mask, v4mask, cont = 1;
 	char			*p, *q, *ps;
 
-	/* XXX for now only AF_INET. */
 	if ((p = strrchr(s, '/')) != NULL) {
 		mask = strtol(p + 1, &q, 0);
 		if (!q || *q || mask > 32 || q == (p + 1))
@@ -1033,9 +1029,21 @@ host(const char *s)
 		mask = -1;
 	}
 
+#if notyet
+	/* Does interface with this name exist? */
+	if (cont && (ipa = host_if(ps, mask)) != NULL)
+		cont = 0;
+#endif
+
 	/* IPv4 address? */
 	if (cont && (ipa = host_v4(s, mask)) != NULL)
 		cont = 0;
+
+#if notyet
+	/* IPv6 address? */
+	if (cont && (ipa = host_dsn(ps, v4mask, 0)) != NULL)
+		cont = 0;
+#endif
 	free(ps);
 
 	if (ipa == NULL || cont == 1) {
