@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket2.c,v 1.5 2004/02/28 08:06:47 deraadt Exp $	*/
+/*	$OpenBSD: socket2.c,v 1.6 2005/10/30 23:59:43 fgsch Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -72,7 +72,7 @@ sock_write(void *arg)
 static pthread_mutex_t waiter_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void *
-waiter(int sig)
+waiter(void *arg)
 {
 	int status;
 	pid_t pid;

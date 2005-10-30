@@ -1,4 +1,4 @@
-/*	$OpenBSD: group.c,v 1.5 2003/07/31 21:48:04 deraadt Exp $	*/
+/*	$OpenBSD: group.c,v 1.6 2005/10/30 23:59:43 fgsch Exp $	*/
 
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
@@ -40,6 +40,7 @@ test(void *arg)
 	char *s;
 	char *oname;
 	char *opasswd;
+	size_t len;
 
 	/* Acquire lock for running first part. */
 	CHECKr(pthread_mutex_lock(&display));
@@ -58,13 +59,16 @@ test(void *arg)
 	ASSERT(grp->gr_gid == gid);
 
 	s = buf;	/* Keep our private buffer on the stack */
+	len = sizeof(buf);
 
 	/* copy gr_name */
-	strcpy(oname = s, grp->gr_name);
+	strlcpy(oname = s, grp->gr_name, len);
+	len -= 1 + strlen(s);
 	s += 1 + strlen(s);
 
 	/* copy gr_passwd */
-	strcpy(opasswd = s, grp->gr_passwd);
+	strlcpy(opasswd = s, grp->gr_passwd, len);
+	len -= 1 + strlen(s);
 	s += 1 + strlen(s);
 
 	/* copy gr_gid */
@@ -72,7 +76,9 @@ test(void *arg)
 
 	/* copy gr_mem */
 	for (i = 0, p = grp->gr_mem; *p; p++) {
-		strcpy(cpy[i] = s, *p); i++;
+		strlcpy(cpy[i] = s, *p, len);
+		i++;
+		len -= 1 + strlen(s);
 		s += 1 + strlen(s);
 	}
 	cpy[i] = NULL;

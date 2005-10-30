@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.5 2005/10/30 23:59:43 fgsch Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -122,6 +122,7 @@ test_mutex_static(void)
 
 	printf("test_mutex_static()\n");
 	test_nocontention_lock(&mutex_static);
+	test_nocontention_trylock(&mutex_static);
 	test_contention_lock(&mutex_static);
 }
 
@@ -133,6 +134,7 @@ test_mutex_fast(void)
 	printf("test_mutex_fast()\n");
 	CHECKr(pthread_mutex_init(&mutex_fast, NULL));
 	test_nocontention_lock(&mutex_fast);
+	test_nocontention_trylock(&mutex_fast);
 	test_contention_lock(&mutex_fast);
 	CHECKr(pthread_mutex_destroy(&mutex_fast));
 }
@@ -149,6 +151,7 @@ test_mutex_debug(void)
 	    PTHREAD_MUTEX_ERRORCHECK));
 	CHECKr(pthread_mutex_init(&mutex_debug, &mutex_debug_attr));
 	test_nocontention_lock(&mutex_debug);
+	test_nocontention_trylock(&mutex_debug);
 	test_contention_lock(&mutex_debug);
 	test_debug_double_lock(&mutex_debug);
 	test_debug_double_unlock(&mutex_debug);

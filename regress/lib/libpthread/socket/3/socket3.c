@@ -1,4 +1,4 @@
-/* $OpenBSD: socket3.c,v 1.3 2003/07/31 21:48:06 deraadt Exp $ */
+/* $OpenBSD: socket3.c,v 1.4 2005/10/30 23:59:43 fgsch Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /* Test blocking/non-blocking mode inheritance on accept */
@@ -28,7 +28,7 @@ sock_connect(void *arg)
 	int sock;
 
 	SET_NAME("connect");
-	port = (int)arg;
+	port = *(int *)arg;
 	CHECKe(sock = socket(AF_INET, SOCK_STREAM, 0));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
@@ -80,7 +80,7 @@ sock_accept(void *arg)
 
 	/* Create another thread to connect to the listening socket. */
 	CHECKr(pthread_create(&connect_thread, NULL, sock_connect,
-			      (void*)port));
+	    (void *)&port));
 
 	/*
 	 * Use poll to check for a pending connection as the socket
