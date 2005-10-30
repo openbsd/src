@@ -1,5 +1,5 @@
 .\"
-.\" $OpenBSD: pthread_atfork.3,v 1.4 2005/10/30 03:37:34 brad Exp $
+.\" $OpenBSD: pthread_atfork.3,v 1.5 2005/10/30 08:46:52 jmc Exp $
 .\" $FreeBSD: src/share/man/man3/pthread_atfork.3,v 1.0 2004/06/21 15:59:00 xx Exp $
 .\"
 .Dd June 21, 2004
@@ -38,14 +38,14 @@ processing completes in the child process.
 If no handling is desired at one or more of these three points, the
 corresponding fork handler address(es) may be set to NULL.
 .Pp
-The order of calls to 
+The order of calls to
 .Fn pthread_atfork
 is significant.
 The
 .Fa parent
 and
 .Fa child
-fork handlers will be called in the order in which they were 
+fork handlers will be called in the order in which they were
 established by calls to
 .Fn pthread_atfork .
 The
