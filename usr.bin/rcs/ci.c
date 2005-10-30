@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.52 2005/10/29 19:10:16 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.53 2005/10/30 09:46:07 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -148,7 +148,7 @@ checkin_main(int argc, char **argv)
 		case 's':
 			state = rcs_optarg;
 			if (rcs_state_check(state) < 0) {
-				cvs_log(LP_ERR, "invalid state `%'", state);
+				cvs_log(LP_ERR, "invalid state `%s'", state);
 				exit(1);
 			}
 			break;
