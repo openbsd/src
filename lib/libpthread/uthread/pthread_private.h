@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.53 2004/06/07 21:11:23 marc Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.54 2005/10/30 03:37:34 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -343,6 +343,13 @@ struct pthread_cleanup {
 	struct pthread_cleanup	*next;
 	void			(*routine)(void*);
 	void			*routine_arg;
+};
+
+struct pthread_atfork {
+	TAILQ_ENTRY(pthread_atfork) qe;
+	void (*prepare)(void);
+	void (*parent)(void);
+	void (*child)(void);
 };
 
 struct pthread_attr {
@@ -900,6 +907,9 @@ SCLASS struct pthread *_thread_initial
 #else
 ;
 #endif
+
+SCLASS TAILQ_HEAD(atfork_head, pthread_atfork)	_atfork_list;
+SCLASS pthread_mutex_t		_atfork_mutex;
 
 /* Default thread attributes: */
 SCLASS struct pthread_attr pthread_attr_default

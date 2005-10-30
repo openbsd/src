@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.24 2004/05/01 22:15:10 marc Exp $
+.\" $OpenBSD: pthreads.3,v 1.25 2005/10/30 03:37:34 brad Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -48,6 +48,8 @@ Attribute Object Routines
 .It
 Cancellation Routines
 .It
+Cleanup Routines
+.It
 Condition Variable Routines
 .It
 Data Management Routines
@@ -80,6 +82,13 @@ Set stackaddr attribute.
 Get stacksize attribute.
 .It Fn pthread_attr_setstacksize
 Set stacksize attribute.
+.El
+.Ss Cleanup Routines
+The functions available are as follows:
+.Pp
+.Bl -tag -width "pthread_atfork()" -compact
+.It Fn pthread_atfork
+Register fork handlers.
 .El
 .Ss Cancellation Routines
 The functions available are as follows:
@@ -482,6 +491,7 @@ The status display verbosity is controlled by the
 environment variable.
 .El
 .Sh SEE ALSO
+.Xr pthread_atfork 3 ,
 .Xr pthread_attr_init 3 ,
 .Xr pthread_attr_setdetachstate 3 ,
 .Xr pthread_attr_setstackaddr 3 ,

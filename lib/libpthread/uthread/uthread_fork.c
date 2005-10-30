@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.11 2003/08/06 21:08:05 millert Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.12 2005/10/30 03:37:34 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -45,6 +45,7 @@ pid_t
 fork(void)
 {
 	struct pthread	*curthread = _get_curthread();
+	struct pthread_atfork *af;
 	int             i, flags;
 	pid_t           ret;
 	pthread_t	pthread;
@@ -55,9 +56,22 @@ fork(void)
 	 */
 	_thread_kern_sig_defer();
 
+	pthread_mutex_lock(&_atfork_mutex);
+
+	/* Run down atfork prepare handlers. */
+	TAILQ_FOREACH_REVERSE(af, &_atfork_list, atfork_head, qe) {
+		if (af->prepare != NULL)
+			af->prepare();
+	}
+
 	/* Fork a new process: */
 	if ((ret = _thread_sys_fork()) != 0) {
-		/* Parent process or error. Nothing to do here. */
+		/* Run down atfork parent handlers. */
+		TAILQ_FOREACH(af, &_atfork_list, qe) {
+			if (af->parent != NULL)
+				af->parent();
+		}
+		pthread_mutex_unlock(&_atfork_mutex);
 	} else {
 		/* Close the pthread kernel pipe: */
 		_thread_sys_close(_thread_kern_pipe[0]);
@@ -178,6 +192,12 @@ fork(void)
 				}
 			}
 		}
+		/* Run down atfork child handlers. */
+		TAILQ_FOREACH(af, &_atfork_list, qe) {
+			if (af->child != NULL)
+				af->child();
+		}
+		_mutex_reinit(&_atfork_mutex);
 	}
 
 	/*

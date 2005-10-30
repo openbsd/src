@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.32 2004/06/07 21:11:23 marc Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.33 2005/10/30 03:37:34 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -289,6 +289,8 @@ _thread_init(void)
 	TAILQ_INIT(&_thread_list);
 	TAILQ_INSERT_HEAD(&_thread_list, _thread_initial, tle);
 	_set_curthread(_thread_initial);
+	TAILQ_INIT(&_atfork_list);
+	pthread_mutex_init(&_atfork_mutex, NULL);
 
 	/* Initialise the global signal action structure: */
 	sigfillset(&act.sa_mask);
