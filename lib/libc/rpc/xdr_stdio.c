@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_stdio.c,v 1.8 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: xdr_stdio.c,v 1.9 2005/10/30 19:44:52 kettenis Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -95,21 +95,20 @@ xdrstdio_destroy(XDR *xdrs)
 static bool_t
 xdrstdio_getlong(XDR *xdrs, long int *lp)
 {
+	u_int32_t temp;
 
-	if (fread((caddr_t)lp, sizeof(int32_t), 1,
-	    (FILE *)xdrs->x_private) != 1)
+	if (fread(&temp, sizeof(int32_t), 1, (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
-	*lp = (long)ntohl((u_int32_t)*lp);
+	*lp = (long)ntohl(temp);
 	return (TRUE);
 }
 
 static bool_t
 xdrstdio_putlong(XDR *xdrs, long int *lp)
 {
-	long mycopy = (long)htonl((u_int32_t)*lp);
+	int32_t mycopy = htonl((u_int32_t)*lp);
 
-	if (fwrite((caddr_t)&mycopy, sizeof(int32_t), 1,
-	    (FILE *)xdrs->x_private) != 1)
+	if (fwrite(&mycopy, sizeof(int32_t), 1, (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
 	return (TRUE);
 }
