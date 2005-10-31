@@ -4244,6 +4244,7 @@
 ./usr/share/man/cat3/printf.0
 ./usr/share/man/cat3/printw.0
 ./usr/share/man/cat3/psignal.0
+./usr/share/man/cat3/pthread_atfork.0
 ./usr/share/man/cat3/pthread_attr_destroy.0
 ./usr/share/man/cat3/pthread_attr_getdetachstate.0
 ./usr/share/man/cat3/pthread_attr_getstackaddr.0
