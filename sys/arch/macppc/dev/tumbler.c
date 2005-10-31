@@ -1,5 +1,4 @@
-/*	$OpenBSD: tumbler.c,v 1.1 2005/10/31 00:24:57 brad Exp $	*/
-/*	$Id: tumbler.c,v 1.1 2005/10/31 00:24:57 brad Exp $	*/
+/*	$OpenBSD: tumbler.c,v 1.2 2005/10/31 01:20:46 brad Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -29,7 +28,7 @@
 
 /*
  * Datasheet is available from
- * http://www.ti.com/sc/docs/products/analog/tas3001.html
+ * http://focus.ti.com/docs/prod/folders/print/tas3001.html
  */
 
 #include <sys/param.h>
@@ -70,6 +69,8 @@ int tumbler_match(struct device *, void *, void *);
 void tumbler_attach(struct device *, struct device *, void *);
 void tumbler_defer(struct device *);
 void tumbler_set_volume(struct tumbler_softc *, int, int);
+void tumbler_set_bass(struct tumbler_softc *, int);
+void tumbler_set_treble(struct tumbler_softc *, int);
 
 int tas3001_write(struct tumbler_softc *, u_int, const void *);
 int tas3001_init(struct tumbler_softc *);
@@ -114,6 +115,86 @@ struct audio_device tumbler_device = {
 	"TUMBLER",
 	"",
 	"tumbler"
+};
+
+const uint8_t tumbler_trebletab[] = {
+	0x96,	/* -18dB */
+	0x94,	/* -17dB */
+	0x92,	/* -16dB */
+	0x90,	/* -15dB */
+	0x8e,	/* -14dB */
+	0x8c,	/* -13dB */
+	0x8a,	/* -12dB */
+	0x88,	/* -11dB */
+	0x86,	/* -10dB */
+	0x84,	/* -9dB */
+	0x82,	/* -8dB */
+	0x80,	/* -7dB */
+	0x7e,	/* -6dB */
+	0x7c,	/* -5dB */
+	0x7a,	/* -4dB */
+	0x78,	/* -3dB */
+	0x76,	/* -2dB */
+	0x74,	/* -1dB */
+	0x72,	/* 0dB */
+	0x70,	/* 1dB */
+	0x6d,	/* 2dB */
+	0x6b,	/* 3dB */
+	0x68,	/* 4dB */
+	0x65,	/* 5dB */
+	0x62,	/* 6dB */
+	0x5e,	/* 7dB */
+	0x59,	/* 8dB */
+	0x5a,	/* 9dB */
+	0x4f,	/* 10dB */
+	0x49,	/* 11dB */
+	0x42,	/* 12dB */
+	0x3a,	/* 13dB */
+	0x32,	/* 14dB */
+	0x28,	/* 15dB */
+	0x1c,	/* 16dB */
+	0x10,	/* 17dB */
+	0x01,	/* 18dB */
+};
+
+const uint8_t tumbler_basstab[] = {
+	0x86,	/* -18dB */
+	0x7f,	/* -17dB */
+	0x7a,	/* -16dB */
+	0x76,	/* -15dB */
+	0x72,	/* -14dB */
+	0x6e,	/* -13dB */
+	0x6b,	/* -12dB */
+	0x66,	/* -11dB */
+	0x61,	/* -10dB */
+	0x5d,	/* -9dB */
+	0x5a,	/* -8dB */
+	0x58,	/* -7dB */
+	0x55,	/* -6dB */
+	0x53,	/* -5dB */
+	0x4f,	/* -4dB */
+	0x4b,	/* -3dB */
+	0x46,	/* -2dB */
+	0x42,	/* -1dB */
+	0x3e,	/* 0dB */
+	0x3b,	/* 1dB */
+	0x38,	/* 2dB */
+	0x35,	/* 3dB */
+	0x31,	/* 4dB */
+	0x2e,	/* 5dB */
+	0x2b,	/* 6dB */
+	0x28,	/* 7dB */
+	0x25,	/* 8dB */
+	0x21,	/* 9dB */
+	0x1c,	/* 10dB */
+	0x18,	/* 11dB */
+	0x16,	/* 12dB */
+	0x13,	/* 13dB */
+	0x10,	/* 14dB */
+	0x0d,	/* 15dB */
+	0x0a,	/* 16dB */
+	0x06,	/* 17dB */
+	0x01,	/* 18dB */
 };
 
 /* TAS3001 registers */
@@ -211,6 +292,8 @@ tumbler_attach(struct device *parent, struct device *self, void *aux)
 	struct tumbler_softc *sc = (struct tumbler_softc *)self;
 
 	sc->sc_setvolume = tumbler_set_volume;
+	sc->sc_setbass = tumbler_set_bass;
+	sc->sc_settreble = tumbler_set_treble;
 
 	i2s_attach(parent, sc, aux);
 	config_defer(self, tumbler_defer);
@@ -257,6 +340,32 @@ tumbler_set_volume(struct tumbler_softc *sc, int left, int right)
 	vol[5] = right;
 
 	tas3001_write(sc, DEQ_VOLUME, vol);
+}
+
+void
+tumbler_set_treble(struct tumbler_softc *sc, int value)
+{
+	uint8_t reg;
+
+	if ((value >= 0) && (value <= 255) && (value != sc->sc_treble)) {
+		reg = tumbler_trebletab[(value >> 3) + 2];
+		if (tas3001_write(sc, DEQ_TREBLE, &reg) < 0)
+			return;
+		sc->sc_treble = value;
+	}
+}
+
+void
+tumbler_set_bass(struct tumbler_softc *sc, int value)
+{
+	uint8_t reg;
+
+	if ((value >= 0) && (value <= 255) && (value != sc->sc_bass)) {
+		reg = tumbler_basstab[(value >> 3) + 2];
+		if (tas3001_write(sc, DEQ_BASS, &reg) < 0)
+			return;
+		sc->sc_bass = value;
+	}
 }
 
 const struct tas3001_reg tas3001_initdata = {
