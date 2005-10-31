@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.23 2005/10/31 00:26:07 joris Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.24 2005/10/31 01:16:29 brad Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -29,7 +29,7 @@
 
 /*
  * Datasheet is available from
- * http://www.ti.com/sc/docs/products/analog/tas3004.html
+ * http://focus.ti.com/docs/prod/folders/print/tas3004.html
  */
 
 #include <sys/param.h>
@@ -340,7 +340,7 @@ snapper_defer(struct device *dev)
 		printf("%s: unable to find i2c\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	
+
 	/* XXX If i2c has failed to attach, what should we do? */
 
 	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
@@ -488,8 +488,6 @@ tas3004_write(sc, reg, data)
 
 	return 0;
 }
-
-#define reset_active 0	/* XXX OF */
 
 #define DEQ_WRITE(sc, reg, addr) \
 	if (tas3004_write(sc, reg, addr)) goto err
