@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.111 2005/10/24 14:31:26 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.112 2005/10/31 01:40:54 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -773,10 +773,13 @@ carpdetach(struct carp_softc *sc)
 void
 carp_ifdetach(struct ifnet *ifp)
 {
-	struct carp_softc *sc;
+	struct carp_softc *sc, *nextsc;
+	struct carp_if *cif = (struct carp_if *)ifp->if_carp;
 
-	TAILQ_FOREACH(sc, &((struct carp_if *)ifp->if_carp)->vhif_vrs, sc_list)
+	for (sc = TAILQ_FIRST(&cif->vhif_vrs); sc; sc = nextsc) {
+		nextsc = TAILQ_NEXT(sc, sc_list);
 		carpdetach(sc);
+	}
 }
 
 int
