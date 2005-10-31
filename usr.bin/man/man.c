@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.29 2005/10/17 19:08:46 otto Exp $	*/
+/*	$OpenBSD: man.c,v 1.30 2005/10/31 10:38:04 otto Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.29 2005/10/17 19:08:46 otto Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.30 2005/10/31 10:38:04 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -266,24 +266,14 @@ main(int argc, char *argv[])
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 				    (ep->s = strdup(buf)) == NULL)
 					err(1, NULL);
-				/*
-				 * puts it at the end, should be at the top,
-				 * but then the added entries would be in
-				 * reverse order, fix later when all are added
-				 */
-				TAILQ_INSERT_TAIL(&defp->list, ep, q);
+
 				if (e_sectp == NULL)
-				 	/* save first added, to-be the new top */
-					e_sectp = ep;
+					TAILQ_INSERT_HEAD(&defp->list, ep, q);
+				else
+					TAILQ_INSERT_AFTER(&defp->list, e_sectp,
+					    ep, q);
+				e_sectp = ep;
 			}
-		}
-		if (e_sectp != NULL) { /* entries added, fix order */
-			/* save original head */
-			TAILQ_NEXT(ep, q) = TAILQ_FIRST(&defp->list);
-			/* first added entry, new top */
-			TAILQ_FIRST(&defp->list) = e_sectp;
-			/* terminate list */
-			*e_sectp->q.tqe_prev = NULL;
 		}
 	}
 	/*
