@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.24 2005/10/10 16:27:23 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.25 2005/10/31 19:02:06 miod Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -812,7 +812,7 @@ siop_sdp(siop_cmd, offset)
 	 */
 
 	/*
-	 * before doing that we decrease resid from the ammount of data which
+	 * before doing that we decrease resid from the amount of data which
 	 * has been transfered.
 	 */
 	siop_update_resid(siop_cmd, offset);
