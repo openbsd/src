@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.351 2005/09/26 22:32:05 miod Exp $
+#	$OpenBSD: files,v 1.352 2005/10/31 19:35:14 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -218,7 +218,7 @@ device	lc: ether, ifnet, ifmedia
 file	dev/ic/lemac.c			lc
 
 # WaveLan
-device	wi: ether, ifnet, ifmedia
+device	wi: ether, ifnet, ifmedia, wlan
 file	dev/ic/if_wi.c			wi
 file	dev/ic/if_wi_hostap.c		wi
 
