@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.110 2005/07/14 21:12:17 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.111 2005/10/31 19:37:52 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -796,6 +796,7 @@ To compile a kernel inside a writable source tree, do the following:
 # vi SOMEFILE  (to make any changes)
 # config SOMEFILE
 # cd ../compile/SOMEFILE
+# make depend
 # make
 .Ed
 .Pp
@@ -805,9 +806,6 @@ is the architecture (e.g. i386), and
 .Ar SOMEFILE
 should be a name indicative of a particular configuration
 (often that of the hostname).
-You can also do a
-.Ic make depend
-so that you will have dependencies there the next time you do a compile.
 .Pp
 If you are building your kernel again, before you do a
 .Ic make
@@ -818,14 +816,14 @@ or a
 .Ic make clean
 after making changes to your kernel options.
 .Pp
-After either of these two methods, you can place the new kernel (called
+The new kernel (called
 .Pa bsd )
-in
+can be placed in
 .Pa /
 (i.e.\&
 .Pa /bsd )
 and the system will boot it next time.
-Most people save their backup kernels as
+Many people save their backup kernels as
 .Pa /bsd.1 ,
 .Pa /bsd.2 ,
 etc.
