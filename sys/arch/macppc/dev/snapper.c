@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.21 2005/10/28 15:27:49 joris Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.22 2005/10/31 00:04:54 joris Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -222,8 +222,7 @@ snapper_match(parent, match, aux)
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
-	if (strcmp(compat, "snapper") != 0 &&
-	    strcmp(compat, "AOAKeylargo") != 0)
+	if (strcmp(compat, "snapper") != 0)
 		return 0;
 
 	return 1;
