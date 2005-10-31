@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.47 2005/08/09 20:27:25 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.48 2005/10/31 16:31:39 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -390,7 +390,7 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 		if (p == NULL)
 			printf("group ? ");
 		else
-			printf("group %s ", p->conf.group);
+			printf("group \"%s\" ", p->conf.group);
 	} else
 		printf("any ");
 
