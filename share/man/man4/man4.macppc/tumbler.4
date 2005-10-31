@@ -1,5 +1,6 @@
-.\"	$OpenBSD: snapper.4,v 1.6 2005/10/31 02:53:51 joris Exp $
+.\"	$OpenBSD: tumbler.4,v 1.1 2005/10/31 02:53:51 joris Exp $
 .\"
+.\" Copyright (c) 2005 Joris Vink.
 .\" Copyright (c) 2004 Dale Rahn.
 .\" All rights reserved.
 .\"
@@ -24,19 +25,19 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 11, 2004
-.Dt SNAPPER 4 macppc
+.Dd October 30, 2005
+.Dt TUMBLER 4 macppc
 .Os
 .Sh NAME
-.Nm snapper
-.Nd Apple "snapper" audio device driver
+.Nm tumbler
+.Nd Apple "tumbler" audio device driver
 .Sh SYNOPSIS
-.Cd "snapper* at macobio?"
-.Cd "audio* at snapper?"
+.Cd "tumbler* at macobio?"
+.Cd "audio* at tumbler?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for audio hardware using the TAS3004 chip
+driver provides support for audio hardware using the TAS3001 chip
 found in some macppc machines.
 .Sh SEE ALSO
 .Xr audio 4 ,
@@ -45,15 +46,13 @@ found in some macppc machines.
 The
 .Nm
 driver first appeared in
-.Nx
-and was imported in
-.Ox 3.5 .
+.Ox 3.9 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by Tsubai Masanari and ported to
 .Ox
-by Dale Rahn.
+by Brad Smith.
 .Sh BUGS
 This driver needs more testing.
 .Pp
