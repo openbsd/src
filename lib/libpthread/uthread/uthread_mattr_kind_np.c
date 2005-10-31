@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mattr_kind_np.c,v 1.7 2001/08/10 14:37:20 fgsch Exp $	*/
+/*	$OpenBSD: uthread_mattr_kind_np.c,v 1.8 2005/10/31 20:48:31 brad Exp $	*/
 /*
  * Copyright (c) 1996 Jeffrey Hsu <hsu@freebsd.org>.
  * All rights reserved.
@@ -66,7 +66,7 @@ int
 pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 {
 	int	ret;
-	if (attr == NULL || *attr == NULL || type >= MUTEX_TYPE_MAX) {
+	if (attr == NULL || *attr == NULL || type >= PTHREAD_MUTEX_TYPE_MAX) {
 		ret = EINVAL;
 	} else {
 		(*attr)->m_type = type;
@@ -81,7 +81,7 @@ pthread_mutexattr_gettype(pthread_mutexattr_t *attr, int *type)
 	int	ret;
 
 	if (attr == NULL || *attr == NULL || (*attr)->m_type >=
-	    MUTEX_TYPE_MAX) {
+	    PTHREAD_MUTEX_TYPE_MAX) {
 		ret = EINVAL;
 	} else {
 		*type = (*attr)->m_type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.17 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.18 2005/10/31 20:48:31 brad Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -131,7 +131,7 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 
 	/* Check mutex type: */
 	else if (((*mutex_attr)->m_type < PTHREAD_MUTEX_ERRORCHECK) ||
-	    ((*mutex_attr)->m_type >= MUTEX_TYPE_MAX))
+	    ((*mutex_attr)->m_type >= PTHREAD_MUTEX_TYPE_MAX))
 		/* Return an invalid argument error: */
 		ret = EINVAL;
 
