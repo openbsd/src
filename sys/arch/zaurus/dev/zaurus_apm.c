@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.9 2005/10/31 04:56:14 drahn Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.10 2005/10/31 05:23:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -148,6 +148,7 @@ void	zapm_power_info(struct pxa2x0_apm_softc *, struct apm_power_info *);
 void	zapm_suspend(struct pxa2x0_apm_softc *);
 int	zapm_resume(struct pxa2x0_apm_softc *);
 int	pxa2x0_setperf(int);
+int	pxa2x0_cpuspeed(int *);
 
 
 int
@@ -195,6 +196,7 @@ apm_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	cpu_setperf = pxa2x0_setperf;
+	cpu_cpuspeed = pxa2x0_cpuspeed;
 }
 
 #if 0
