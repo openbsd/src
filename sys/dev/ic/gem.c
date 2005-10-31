@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.46 2005/10/17 03:03:24 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.47 2005/10/31 18:38:35 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1497,7 +1497,7 @@ gem_setladrf(sc)
 	 * Set up multicast address filter by passing all multicast addresses
 	 * through a crc generator, and then using the high order 8 bits as an
 	 * index into the 256 bit logical address filter.  The high order 4
-	 * bits select the word, while the other 4 bits select the bit within
+	 * bits selects the word, while the other 4 bits select the bit within
 	 * the word (where bit 0 is the MSB).
 	 */
 
