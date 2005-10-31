@@ -1354,10 +1354,12 @@
 ./usr/share/man/cat4/macppc/aed.0
 ./usr/share/man/cat4/macppc/akbd.0
 ./usr/share/man/cat4/macppc/ams.0
+./usr/share/man/cat4/macppc/aoa.0
 ./usr/share/man/cat4/macppc/apm.0
 ./usr/share/man/cat4/macppc/autoconf.0
 ./usr/share/man/cat4/macppc/awacs.0
 ./usr/share/man/cat4/macppc/bm.0
+./usr/share/man/cat4/macppc/daca.0
 ./usr/share/man/cat4/macppc/intro.0
 ./usr/share/man/cat4/macppc/kauaiata.0
 ./usr/share/man/cat4/macppc/ki2c.0
@@ -1367,6 +1369,7 @@
 ./usr/share/man/cat4/macppc/mem.0
 ./usr/share/man/cat4/macppc/smu.0
 ./usr/share/man/cat4/macppc/snapper.0
+./usr/share/man/cat4/macppc/tumbler.0
 ./usr/share/man/cat4/macppc/zs.0
 ./usr/share/man/cat4/macppc/zsc.0
 ./usr/share/man/cat4/macppc/zstty.0
