@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.63 2005/09/18 09:24:04 jsg Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.64 2005/10/31 05:37:13 jsg Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/timeout.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -60,6 +61,7 @@
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
+#include <net80211/ieee80211_var.h>
 
 #include <machine/bus.h>
 
@@ -446,7 +448,7 @@ wi_pcmcia_detach(struct device *dev, int flags)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	if (!(sc->wi_flags & WI_FLAGS_ATTACHED))
 		return (0);
@@ -469,7 +471,7 @@ wi_pcmcia_activate(struct device *dev, enum devact act)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
 	s = splnet();

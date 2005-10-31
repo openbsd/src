@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.h,v 1.1 2003/10/26 15:34:16 drahn Exp $ */
+/*	$OpenBSD: if_wi_usb.h,v 1.2 2005/10/31 05:37:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -141,7 +141,7 @@ typedef union {
 #define WI_USB_BUFAVAIL		0x8006
 #define WI_USB_ERROR		0x8007
 
-#define WI_GET_IFP(sc)		&(sc)->sc_wi.sc_arpcom.ac_if
+#define WI_GET_IFP(sc)		&(sc)->sc_wi.sc_ic.ic_if
 
 /* USB */
 int wi_cmd_usb(struct wi_softc *sc, int cmd, int val0, int val1, int val2);

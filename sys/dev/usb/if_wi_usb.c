@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.22 2005/10/20 21:46:07 fgsch Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.23 2005/10/31 05:37:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -39,6 +39,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -62,6 +63,7 @@
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
+#include <net80211/ieee80211_var.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1138,7 +1140,7 @@ wi_usb_txeof_frm(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct wi_usb_chain	*c = priv;
 	struct wi_usb_softc	*sc = c->wi_usb_sc;
 	struct wi_softc		*wsc = &sc->sc_wi;
-	struct ifnet		*ifp = &wsc->sc_arpcom.ac_if;
+	struct ifnet		*ifp = &wsc->sc_ic.ic_if;
 
 	int			s;
 	int			err = 0;
@@ -1639,7 +1641,7 @@ wi_usb_txfrm(struct wi_usb_softc *sc, wi_usb_usbin *uin, int total_len)
 	u_int16_t		status;
 	int 			s;
 	struct wi_softc		*wsc = &sc->sc_wi;
-	struct ifnet		*ifp = &wsc->sc_arpcom.ac_if;
+	struct ifnet		*ifp = &wsc->sc_ic.ic_if;
 
 	s = splnet();
 	status = letoh16(uin->type); /* XXX -- type == status */
@@ -1850,7 +1852,7 @@ wi_usb_thread(void *arg)
 		if (wi_thread_info->status & WI_START) {
 			wi_thread_info->status &= ~WI_START;
 			wi_usb_tx_lock(sc);
-			wi_func_io.f_start(&sc->sc_wi.sc_arpcom.ac_if);
+			wi_func_io.f_start(&sc->sc_wi.sc_ic.ic_if);
 			/*
 			 * tx_unlock is explictly missing here
 			 * is is done in txeof_frm
@@ -1860,7 +1862,7 @@ wi_usb_thread(void *arg)
 			wi_func_io.f_inquire(&sc->sc_wi);
 		} else if (wi_thread_info->status & WI_WATCHDOG) {
 			wi_thread_info->status &= ~WI_WATCHDOG;
-			wi_func_io.f_watchdog( &sc->sc_wi.sc_arpcom.ac_if);
+			wi_func_io.f_watchdog( &sc->sc_wi.sc_ic.ic_if);
 		}
 		splx(s);
 

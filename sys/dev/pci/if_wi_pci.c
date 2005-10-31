@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.41 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.42 2005/10/31 05:37:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -45,6 +45,7 @@
 #include <sys/device.h>
 #include <sys/timeout.h>
 #include <sys/socket.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -57,6 +58,7 @@
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
+#include <net80211/ieee80211_var.h>
 
 #include <machine/bus.h>
 
@@ -159,11 +161,9 @@ void
 wi_pci_power(int why, void *arg)
 {
 	struct wi_softc *sc = (struct wi_softc *)arg;
-	struct ifnet *ifp;
 
 	if (why == PWR_RESUME) {
-		ifp = &sc->sc_arpcom.ac_if;
-		if (ifp->if_flags & IFF_UP)
+		if (sc->sc_ic.ic_if.if_flags & IFF_UP)
 			wi_init(sc);
 	}
 }

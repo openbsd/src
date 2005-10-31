@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.13 2004/11/24 07:47:22 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.14 2005/10/31 05:37:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -50,6 +50,7 @@
 #include <sys/timeout.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -62,6 +63,7 @@
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
+#include <net80211/ieee80211_var.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -141,7 +143,7 @@ wi_obio_detach(dev, flags)
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	/*
 	obio_io_unmap(psc->sc_pf, psc->sc_io_window);
@@ -162,7 +164,7 @@ wi_obio_activate(dev, act)
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
 	s = splnet();

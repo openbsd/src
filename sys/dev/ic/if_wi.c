@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.122 2005/10/19 20:04:43 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.123 2005/10/31 05:37:12 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -89,6 +89,7 @@
 
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
+#include <net80211/ieee80211_var.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -127,7 +128,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.122 2005/10/19 20:04:43 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.123 2005/10/31 05:37:12 jsg Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -209,11 +210,15 @@ struct wi_funcs wi_func_io = {
 int
 wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 {
+	struct ieee80211com	*ic;
+	struct ifnet		*ifp;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_rates	rates;
 	struct wi_ltv_gen	gen;
-	struct ifnet		*ifp;
 	int			error;
+
+	ic = &sc->sc_ic;
+	ifp = &ic->ic_if;
 
 	sc->sc_funcs = funcs;
 	sc->wi_cmd_count = 500;
@@ -228,13 +233,12 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 		printf(": unable to read station address\n");
 		return (error);
 	}
-	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->sc_arpcom.ac_enaddr,
-	    ETHER_ADDR_LEN);
+	bcopy((char *)&mac.wi_mac_addr, (char *)&ic->ic_myaddr,
+	    IEEE80211_ADDR_LEN);
 
 	wi_get_id(sc);
-	printf("address %s", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("address %s", ether_sprintf(ic->ic_myaddr));
 
-	ifp = &sc->sc_arpcom.ac_if;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -427,14 +431,13 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ieee80211_ifattach(ifp);
 	printf("\n");
 
 	sc->wi_flags |= WI_FLAGS_ATTACHED;
 
 #if NBPFILTER > 0
-	BPFATTACH(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
+	BPFATTACH(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
@@ -468,7 +471,7 @@ wi_intr(void *vsc)
 
 	DPRINTF(WID_INTR, ("wi_intr: sc %p\n", sc));
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	if (!(sc->wi_flags & WI_FLAGS_ATTACHED) || !(ifp->if_flags & IFF_UP)) {
 		CSR_WRITE_2(sc, WI_INT_EN, 0);
@@ -541,7 +544,7 @@ wi_rxeof(struct wi_softc *sc)
 	int			maxlen;
 	int			id;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	id = wi_get_fid(sc, WI_RX_FID);
 
@@ -692,7 +695,7 @@ wi_rxeof(struct wi_softc *sc)
 			    mtod(m, caddr_t) + WI_802_11_OFFSET_RAW,
 			    rxlen + 2)) {
 				m_freem(m);
-				if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+				if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
 					printf("wihap: failed to copy header\n");
 				ifp->if_ierrors++;
 				return;
@@ -782,7 +785,7 @@ wi_rxeof(struct wi_softc *sc)
 				    sizeof(struct ether_header);
 				if (wi_do_hostdecrypt(sc, sc->wi_rxbuf +
 				    sizeof(struct ether_header), len)) {
-					if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+					if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
 						printf(WI_PRT_FMT ": Error decrypting incoming packet.\n", WI_PRT_ARG(sc));
 					m_freem(m);
 					ifp->if_ierrors++;  
@@ -841,7 +844,7 @@ wi_txeof(struct wi_softc *sc, int status)
 {
 	struct ifnet		*ifp;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -862,7 +865,7 @@ wi_inquire(void *xsc)
 	int s, rv;
 
 	sc = xsc;
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	timeout_add(&sc->sc_timo, hz * 60);
 
@@ -890,7 +893,7 @@ wi_update_stats(struct wi_softc *sc)
 	int			len, i;
 	u_int16_t		t;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	id = wi_get_fid(sc, WI_INFO_FID);
 
@@ -941,7 +944,7 @@ wi_cmd_io(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 			break;
 	}
 	if (i < 0) {
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
 			printf(WI_PRT_FMT ": wi_cmd_io: busy bit won't clear\n",
 			    WI_PRT_ARG(sc));
 		return(ETIMEDOUT);
@@ -969,7 +972,7 @@ wi_cmd_io(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 	}
 
 	if (i < 0) {
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
 			printf(WI_PRT_FMT
 			    ": timeout in wi_cmd 0x%04x; event status 0x%04x\n",
 			    WI_PRT_ARG(sc), cmd, s);
@@ -1394,7 +1397,7 @@ wi_setmulti(struct wi_softc *sc)
 	struct ether_multistep	step;
 	struct ether_multi	*enm;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	bzero((char *)&mcast, sizeof(mcast));
 
@@ -1407,7 +1410,7 @@ allmulti:
 		return;
 	}
 
-	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
+	ETHER_FIRST_MULTI(step, &sc->sc_ic.ic_ac, enm);
 	while (enm != NULL) {
 		if (i >= 16) {
 			bzero((char *)&mcast, sizeof(mcast));
@@ -1436,13 +1439,13 @@ wi_setdef(struct wi_softc *sc, struct wi_req *wreq)
 	struct ifnet		*ifp;
 	int error = 0;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	switch(wreq->wi_type) {
 	case WI_RID_MAC_NODE:
 		bcopy((char *)&wreq->wi_val, LLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN);
-		bcopy((char *)&wreq->wi_val, (char *)&sc->sc_arpcom.ac_enaddr,
+		bcopy((char *)&wreq->wi_val, (char *)&sc->sc_ic.ic_myaddr,
 		    ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
@@ -1558,7 +1561,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	DPRINTF (WID_IOCTL, ("wi_ioctl: command %lu data %p\n",
 	    command, data));
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_ic.ic_ac, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
@@ -1570,7 +1573,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #ifdef INET
 		case AF_INET:
 			wi_init(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
 			break;
 #endif	/* INET */
 		default:
@@ -1610,8 +1613,8 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ic.ic_ac) :
+		    ether_delmulti(ifr, &sc->sc_ic.ic_ac);
 
 		if (error == ENETRESET) {
 			/*
@@ -1872,7 +1875,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 STATIC void
 wi_init_io(struct wi_softc *sc)
 {
-	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet		*ifp = &sc->sc_ic.ic_ac.ac_if;
 	int			s;
 	struct wi_ltv_macaddr	mac;
 	int			id = 0;
@@ -1944,7 +1947,7 @@ wi_init_io(struct wi_softc *sc)
 	/* Set our MAC address. */
 	mac.wi_len = 4;
 	mac.wi_type = WI_RID_MAC_NODE;
-	bcopy((char *)&sc->sc_arpcom.ac_enaddr,
+	bcopy((char *)&sc->sc_ic.ic_myaddr,
 	   (char *)&mac.wi_mac_addr, ETHER_ADDR_LEN);
 	wi_write_record(sc, (struct wi_ltv_gen *)&mac);
 
@@ -2191,7 +2194,7 @@ wi_do_hostdecrypt(struct wi_softc *sc, caddr_t buf, int len)
 
 	if ((dat[0] != crc) && (dat[1] != crc >> 8) &&
 	    (dat[2] != crc >> 16) && (dat[3] != crc >> 24)) {
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
 			printf(WI_PRT_FMT ": wi_do_hostdecrypt: iv mismatch: "
 			    "0x%02x%02x%02x%02x vs. 0x%x\n", WI_PRT_ARG(sc),
 			    dat[3], dat[2], dat[1], dat[0], crc);
@@ -2256,7 +2259,7 @@ nextpkt:
 		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 			tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT); /* XXX */
 			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_FROMDS);
-			bcopy((char *)&sc->sc_arpcom.ac_enaddr,
+			bcopy((char *)&sc->sc_ic.ic_myaddr,
 			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
 			bcopy((char *)&eh->ether_shost,
 			    (char *)&tx_frame.wi_addr3, ETHER_ADDR_LEN);
@@ -2266,7 +2269,7 @@ nextpkt:
 		    sc->wi_crypto_algorithm != WI_CRYPTO_FIRMWARE_WEP) {
 			tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT); /* XXX */
 			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_TODS);
-			bcopy((char *)&sc->sc_arpcom.ac_enaddr,
+			bcopy((char *)&sc->sc_ic.ic_myaddr,
 			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
 			bcopy((char *)&eh->ether_dhost,
 			    (char *)&tx_frame.wi_addr3, ETHER_ADDR_LEN);
@@ -2417,7 +2420,7 @@ wi_stop(struct wi_softc *sc)
 
 	timeout_del(&sc->sc_timo);
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	wi_intr_enable(sc, 0);
 	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0, 0, 0);
@@ -2450,7 +2453,7 @@ void
 wi_detach(struct wi_softc *sc)
 {
 	struct ifnet *ifp;
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ic.ic_if;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		wi_stop(sc);
@@ -2671,7 +2674,7 @@ wi_media_change(struct ifnet *ifp)
 		break;
 	}
 
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_ic.ic_if.if_flags & IFF_UP) {
 		if (otype != sc->wi_ptype || orate != sc->wi_tx_rate ||
 		    ocreate_ibss != sc->wi_create_ibss)
 			wi_init(sc);
@@ -2688,7 +2691,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	struct wi_softc *sc = ifp->if_softc;
 	struct wi_req wreq;
 
-	if (!(sc->sc_arpcom.ac_if.if_flags & IFF_UP)) {
+	if (!(sc->sc_ic.ic_if.if_flags & IFF_UP)) {
 		imr->ifm_active = IFM_IEEE80211|IFM_NONE;
 		imr->ifm_status = 0;
 		return;
@@ -2768,7 +2771,7 @@ wi_set_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 
 	wk->wi_len = (sizeof(*wk) / 2) + 1;
 	wk->wi_type = WI_RID_DEFLT_CRYPT_KEYS;
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_ic.ic_if.if_flags & IFF_UP) {
 		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 		if (error)
 			return error;
@@ -2779,7 +2782,7 @@ wi_set_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 	wreq.wi_len = 2;
 	wreq.wi_type = WI_RID_TX_CRYPT_KEY;
 	wreq.wi_val[0] = htole16(nwkey->i_defkid - 1);
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_ic.ic_if.if_flags & IFF_UP) {
 		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 		if (error)
 			return error;
@@ -2789,7 +2792,7 @@ wi_set_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 
 	wreq.wi_type = WI_RID_ENCRYPTION;
 	wreq.wi_val[0] = htole16(nwkey->i_wepon);
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
+	if (sc->sc_ic.ic_if.if_flags & IFF_UP) {
 		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 		if (error)
 			return error;
@@ -2797,7 +2800,7 @@ wi_set_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 	if ((error = wi_setdef(sc, &wreq)))
 		return (error);
 
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP)
+	if (sc->sc_ic.ic_if.if_flags & IFF_UP)
 		wi_init(sc);
 	return 0;
 }
@@ -2840,7 +2843,7 @@ wi_set_pm(struct wi_softc *sc, struct ieee80211_power *power)
 	sc->wi_pm_enabled = power->i_enabled;
 	sc->wi_max_sleep = power->i_maxsleep;
 
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP)
+	if (sc->sc_ic.ic_if.if_flags & IFF_UP)
 		wi_init(sc);
 
 	return (0);
@@ -2908,7 +2911,7 @@ wi_set_txpower(struct wi_softc *sc, struct ieee80211_txpower *txpower)
 		 WI_HFA384X_CR_MANUAL_TX_POWER, power, 0)) != 0)
 		return (error);
 
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+	if (sc->sc_ic.ic_if.if_flags & IFF_DEBUG)
 		printf("%s: %u (%d dBm)\n", sc->sc_dev.dv_xname, power,
 		    sc->wi_txpower);
 
