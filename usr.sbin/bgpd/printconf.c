@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.48 2005/10/31 16:31:39 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.49 2005/10/31 17:00:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -380,7 +380,7 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 		    p = p->next)
 			;	/* nothing */
 		if (p == NULL)
-			printf("?");
+			printf("? ");
 		else
 			printf("%s ", log_addr(&p->conf.remote_addr));
 	} else if (r->peer.groupid) {
