@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.22 2005/10/31 00:04:54 joris Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.23 2005/10/31 00:26:07 joris Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -70,6 +70,8 @@ int snapper_match(struct device *, void *, void *);
 void snapper_attach(struct device *, struct device *, void *);
 void snapper_defer(struct device *);
 void snapper_set_volume(struct snapper_softc *, int, int);
+void snapper_set_bass(struct snapper_softc *, int);
+void snapper_set_treble(struct snapper_softc *, int);
 
 int tas3004_write(struct snapper_softc *, u_int, const void *);
 int tas3004_init(struct snapper_softc *);
@@ -114,6 +116,86 @@ struct audio_device snapper_device = {
 	"SNAPPER",
 	"",
 	"snapper"
+};
+
+const uint8_t snapper_trebletab[] = {
+	0x96,	/* -18dB */
+	0x94,	/* -17dB */
+	0x92,	/* -16dB */
+	0x90,	/* -15dB */
+	0x8e,	/* -14dB */
+	0x8c,	/* -13dB */
+	0x8a,	/* -12dB */
+	0x88,	/* -11dB */
+	0x86,	/* -10dB */
+	0x84,	/* -9dB */
+	0x82,	/* -8dB */
+	0x80,	/* -7dB */
+	0x7e,	/* -6dB */
+	0x7c,	/* -5dB */
+	0x7a,	/* -4dB */
+	0x78,	/* -3dB */
+	0x76,	/* -2dB */
+	0x74,	/* -1dB */
+	0x72,	/* 0dB */
+	0x70,	/* 1dB */
+	0x6d,	/* 2dB */
+	0x6b,	/* 3dB */
+	0x68,	/* 4dB */
+	0x65,	/* 5dB */
+	0x62,	/* 6dB */
+	0x5d,	/* 7dB */
+	0x59,	/* 8dB */
+	0x53,	/* 9dB */
+	0x4d,	/* 10dB */
+	0x47,	/* 11dB */
+	0x3f,	/* 12dB */
+	0x36,	/* 13dB */
+	0x2c,	/* 14dB */
+	0x20,	/* 15dB */
+	0x13,	/* 16dB */
+	0x04,	/* 17dB */
+	0x01,	/* 18dB */
+};
+
+const uint8_t snapper_basstab[] = {
+	0x96,	/* -18dB */
+	0x94,	/* -17dB */
+	0x92,	/* -16dB */
+	0x90,	/* -15dB */
+	0x8e,	/* -14dB */
+	0x8c,	/* -13dB */
+	0x8a,	/* -12dB */
+	0x88,	/* -11dB */
+	0x86,	/* -10dB */
+	0x84,	/* -9dB */
+	0x82,	/* -8dB */
+	0x80,	/* -7dB */
+	0x7e,	/* -6dB */
+	0x7c,	/* -5dB */
+	0x7a,	/* -4dB */
+	0x78,	/* -3dB */
+	0x76,	/* -2dB */
+	0x74,	/* -1dB */
+	0x72,	/* 0dB */
+	0x6f,	/* 1dB */
+	0x6d,	/* 2dB */
+	0x6a,	/* 3dB */
+	0x67,	/* 4dB */
+	0x65,	/* 5dB */
+	0x62,	/* 6dB */
+	0x5f,	/* 7dB */
+	0x5b,	/* 8dB */
+	0x55,	/* 9dB */
+	0x4f,	/* 10dB */
+	0x49,	/* 11dB */
+	0x43,	/* 12dB */
+	0x3b,	/* 13dB */
+	0x33,	/* 14dB */
+	0x29,	/* 15dB */
+	0x1e,	/* 16dB */
+	0x11,	/* 17dB */
+	0x01,	/* 18dB */
 };
 
 /* TAS3004 registers */
@@ -237,6 +319,8 @@ snapper_attach(parent, self, aux)
 	struct snapper_softc *sc = (struct snapper_softc *)self;
 
 	sc->sc_setvolume = snapper_set_volume;
+	sc->sc_setbass = snapper_set_bass;
+	sc->sc_settreble = snapper_set_treble;
 
 	i2s_attach(parent, sc, aux);
 	config_defer(self, snapper_defer);
@@ -286,6 +370,32 @@ snapper_set_volume(sc, left, right)
 	vol[5] = right;
 
 	tas3004_write(sc, DEQ_VOLUME, vol);
+}
+
+void
+snapper_set_treble(struct snapper_softc *sc, int value)
+{
+	uint8_t reg;
+
+	if ((value >= 0) && (value <= 255) && (value != sc->sc_treble)) {
+		reg = snapper_trebletab[(value >> 3) + 2];
+		if (tas3004_write(sc, DEQ_TREBLE, &reg) < 0)
+			return;
+		sc->sc_treble = value;
+	}
+}
+
+void
+snapper_set_bass(struct snapper_softc *sc, int value)
+{
+	uint8_t reg;
+
+	if ((value >= 0) && (value <= 255) && (value != sc->sc_bass)) {
+		reg = snapper_basstab[(value >> 3) + 2];
+		if (tas3004_write(sc, DEQ_BASS, &reg) < 0)
+			return;
+		sc->sc_bass = value;
+	}
 }
 
 const struct tas3004_reg tas3004_initdata = {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: i2svar.h,v 1.1 2005/10/26 17:57:20 joris Exp $	*/
-/*	$Id: i2svar.h,v 1.1 2005/10/26 17:57:20 joris Exp $	*/
+/*	$OpenBSD: i2svar.h,v 1.2 2005/10/31 00:26:07 joris Exp $	*/
+/*	$Id: i2svar.h,v 1.2 2005/10/31 00:26:07 joris Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -58,6 +58,8 @@ struct i2s_softc {
 	u_int sc_output_mask;		/* output source mask */
 
 	void (*sc_setvolume)(struct i2s_softc *, int, int);
+	void (*sc_setbass)(struct i2s_softc *, int);
+	void (*sc_settreble)(struct i2s_softc *, int);
 
 	u_char *sc_reg;
 	void *sc_i2c;
@@ -65,6 +67,8 @@ struct i2s_softc {
 	u_int sc_rate;
 	u_int sc_vol_l;
 	u_int sc_vol_r;
+	u_int sc_bass;
+	u_int sc_treble;
 
 	bus_dma_tag_t sc_dmat;
 	dbdma_regmap_t *sc_odma;

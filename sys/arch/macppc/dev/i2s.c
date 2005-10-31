@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.1 2005/10/26 17:57:20 joris Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.2 2005/10/31 00:26:07 joris Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -502,6 +502,8 @@ enum {
 	I2S_VOL_OUTPUT,
 	I2S_INPUT_SELECT,
 	I2S_VOL_INPUT,
+	I2S_BASS,
+	I2S_TREBLE,
 	I2S_ENUM_LAST
 };
 
@@ -537,6 +539,16 @@ i2s_set_port(h, mc)
 	case I2S_VOL_OUTPUT:
 		(*sc->sc_setvolume)(sc, l, r);
 		return 0;
+
+	case I2S_BASS:
+		if (sc->sc_setbass != NULL)
+			(*sc->sc_setbass)(sc, l);
+		return (0);
+
+	case I2S_TREBLE:
+		if (sc->sc_settreble != NULL)
+			(*sc->sc_settreble)(sc, l);
+		return (0);
 
 	case I2S_INPUT_SELECT:
 		/* no change necessary? */
@@ -584,6 +596,14 @@ i2s_get_port(h, mc)
 	case I2S_INPUT_SELECT:
 		mc->un.mask = sc->sc_record_source;
 		return 0;
+
+	case I2S_BASS:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_bass;
+		return (0);
+
+	case I2S_TREBLE:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_treble;
+		return (0);
 
 	case I2S_VOL_INPUT:
 		/* XXX TO BE DONE */
@@ -677,6 +697,23 @@ i2s_query_devinfo(h, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		return 0;
+
+	case I2S_BASS:
+		dip->mixer_class = I2S_MONITOR_CLASS;
+		strlcpy(dip->label.name, AudioNbass, sizeof(dip->label.name));
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 1;
+		return (0);
+
+	case I2S_TREBLE:
+		dip->mixer_class = I2S_MONITOR_CLASS;
+		strlcpy(dip->label.name, AudioNtreble, sizeof(dip->label.name));
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 1;
+		return (0);
+
 	}
 
 	return ENXIO;
