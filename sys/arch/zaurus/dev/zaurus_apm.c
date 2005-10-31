@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.8 2005/05/27 05:14:41 uwe Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.9 2005/10/31 04:56:14 drahn Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -21,6 +21,7 @@
 #include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/conf.h>
+#include <sys/sysctl.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
@@ -146,6 +147,7 @@ int	zapm_get_event(struct pxa2x0_apm_softc *, u_int *);
 void	zapm_power_info(struct pxa2x0_apm_softc *, struct apm_power_info *);
 void	zapm_suspend(struct pxa2x0_apm_softc *);
 int	zapm_resume(struct pxa2x0_apm_softc *);
+int	pxa2x0_setperf(int);
 
 
 int
@@ -191,6 +193,8 @@ apm_attach(struct device *parent, struct device *self, void *aux)
 #if 0
 	(void)shutdownhook_establish(zapm_shutdown, NULL);
 #endif
+
+	cpu_setperf = pxa2x0_setperf;
 }
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.15 2005/08/12 03:23:02 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.16 2005/10/31 04:56:14 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -91,6 +91,8 @@ int	apm_get_event(struct pxa2x0_apm_softc *, u_int *);
 int	apm_handle_event(struct pxa2x0_apm_softc *, u_int);
 void	apm_thread_create(void *);
 void	apm_thread(void *);
+
+int pxa2x0_setperf(int speed);
 
 int	apm_record_event(struct pxa2x0_apm_softc *, u_int);
 void	filt_apmrdetach(struct knote *kn);
@@ -303,6 +305,8 @@ void
 apm_suspend(struct pxa2x0_apm_softc *sc)
 {
 
+	resettodr();
+
 	dopowerhooks(PWR_SUSPEND);
 
 	if (cold)
@@ -321,6 +325,8 @@ apm_resume(struct pxa2x0_apm_softc *sc)
 {
 
 	dopowerhooks(PWR_RESUME);
+
+	inittodr(0);
 
 	/*
 	 * Clear the OTG Peripheral hold after running the pxaudc and pxaohci
@@ -892,8 +898,6 @@ suspend_again:
 
 	/* XXX control battery charging in sleep mode. */
 
-	resettodr();
-
 	/* XXX schedule RTC alarm to check the battery, or schedule
 	   XXX wake-up shortly before an already programmed alarm? */
 
@@ -1141,8 +1145,6 @@ suspend_again:
 	 */
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PMCR, 0);
 
-	inittodr(0);
-
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR0, sd.sd_osmr0);
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR1, sd.sd_osmr1);
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR2, sd.sd_osmr2);
@@ -1378,3 +1380,61 @@ pxa2x0_pi2c_print(struct pxa2x0_apm_softc *sc)
 }
 #endif
 
+extern int perflevel;
+int
+pxa2x0_setperf(int speed)
+{
+	struct pxa2x0_apm_softc *sc;
+	int s;
+
+        sc = apm_cd.cd_devs[0];
+
+	s = disable_interrupts(I32_bit|F32_bit);
+
+	if (speed <= 30) {
+		pxa27x_run_mode();
+		pxa27x_fastbus_run_mode(0, MDREFR_LOW);
+		delay(1);
+		pxa27x_cpu_speed_91();
+		if (perflevel > 50)
+			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
+			    PI2C_VOLTAGE_LOW);
+		perflevel = 25;
+	} else if (speed < 60) {
+		if (perflevel < 50)
+			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
+			    PI2C_VOLTAGE_HIGH);
+
+		pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
+		CLKCFG_F, &pxa2x0_memcfg);
+
+		/* XXX is the delay long enough, and necessary at all? */
+		delay(1);
+
+		pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
+		perflevel = 50;
+	} else {
+		if (perflevel < 50)
+			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
+			    PI2C_VOLTAGE_HIGH);
+
+		/* Change to 208Mhz run mode with fast-bus still disabled. */
+		pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
+		    CLKCFG_F, &pxa2x0_memcfg);
+
+		/* XXX is the delay long enough, and necessary at all? */
+		delay(1);
+
+		pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
+
+		/* Change to 416Mhz turbo mode with fast-bus enabled. */
+		pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
+		    CLKCFG_B | CLKCFG_F | CLKCFG_T, &pxa2x0_memcfg);
+
+		perflevel = 100;
+	}
+
+	restore_interrupts(s);
+
+	return 0;
+}
