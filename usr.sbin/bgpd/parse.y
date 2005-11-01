@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.173 2005/11/01 10:58:29 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.174 2005/11/01 17:34:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2363,6 +2363,10 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 	struct filter_set	*t;
 
 	TAILQ_FOREACH(t, sh, entry) {
+		/*
+		 * need to cycle across the full list because even
+		 * if types are not equal filterset_cmp() may return 0.
+		 */
 		if (filterset_cmp(s, t) == 0) {
 			if (s->type == ACTION_SET_COMMUNITY)
 				yyerror("community is already set");
@@ -2372,6 +2376,13 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 			return (-1);
 		}
 	}
+
+	TAILQ_FOREACH(t, sh, entry)
+		if (s->type < t->type) {
+			TAILQ_INSERT_BEFORE(t, s, entry);
+			return (0);
+		}
+
 	TAILQ_INSERT_TAIL(sh, s, entry);
 	return (0);
 }
@@ -2399,7 +2410,7 @@ move_filterset(struct filter_set_head *source, struct filter_set_head *dest)
 
 	TAILQ_INIT(dest);
 
-	if (source == NULL || TAILQ_EMPTY(source))
+	if (source == NULL)
 		return;
 
 	while ((s = TAILQ_FIRST(source)) != NULL) {
