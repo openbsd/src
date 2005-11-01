@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.123 2005/10/31 05:37:12 jsg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.124 2005/11/01 03:10:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -128,7 +128,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.123 2005/10/31 05:37:12 jsg Exp $";
+	"$OpenBSD: if_wi.c,v 1.124 2005/11/01 03:10:21 jsg Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -431,7 +431,9 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
-	ieee80211_ifattach(ifp);
+	memcpy(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr,
+	    ETHER_ADDR_LEN);
+	ether_ifattach(ifp);
 	printf("\n");
 
 	sc->wi_flags |= WI_FLAGS_ATTACHED;
