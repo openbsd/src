@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.57 2005/10/28 03:20:41 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.58 2005/11/01 06:26:52 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -522,6 +522,7 @@ pfsync_input(struct mbuf *m, ...)
 				}
 				continue;
 			}
+	    		pfsync_alloc_scrub_memory(&sp->dst, &st->dst);
 			pf_state_peer_ntoh(&sp->src, &st->src);
 			pf_state_peer_ntoh(&sp->dst, &st->dst);
 			st->expire = ntohl(sp->expire) + time_second;
@@ -647,6 +648,7 @@ pfsync_input(struct mbuf *m, ...)
 					    PFSYNC_FLAG_STALE);
 				continue;
 			}
+	    		pfsync_alloc_scrub_memory(&up->dst, &st->dst);
 			pf_state_peer_ntoh(&up->src, &st->src);
 			pf_state_peer_ntoh(&up->dst, &st->dst);
 			st->expire = ntohl(up->expire) + time_second;
