@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.175 2005/11/01 18:11:24 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.176 2005/11/01 21:42:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2377,11 +2377,35 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 		}
 	}
 
-	TAILQ_FOREACH(t, sh, entry)
+	TAILQ_FOREACH(t, sh, entry) {
 		if (s->type < t->type) {
 			TAILQ_INSERT_BEFORE(t, s, entry);
 			return (0);
 		}
+		if (s->type == t->type)
+			switch (s->type) {
+			case ACTION_SET_COMMUNITY:
+				if (s->action.community.as <
+				    t->action.community.as ||
+				    (s->action.community.as ==
+				    t->action.community.as &&
+				    s->action.community.type <
+				    t->action.community.type)) {
+					TAILQ_INSERT_BEFORE(t, s, entry);
+					return (0);
+				}
+				break;
+			case ACTION_SET_NEXTHOP:
+				if (s->action.nexthop.af <
+				    t->action.nexthop.af) {
+					TAILQ_INSERT_BEFORE(t, s, entry);
+					return (0);
+				}
+				break;
+			default:
+				break;
+			}
+	}
 
 	TAILQ_INSERT_TAIL(sh, s, entry);
 	return (0);
