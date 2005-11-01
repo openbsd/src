@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.8 2005/10/19 16:15:36 xsa Exp $
+.\"     $OpenBSD: co.1,v 1.9 2005/11/01 18:58:34 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,12 +23,13 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl fIMpqV
+.Op Fl fIMqV
 .Op Ar rev
 .Op Fl d Ns Ar date
 .Op Fl k Ns Ar mode
 .Op Fl l Ns Op Ar rev
 .Op Fl m Ns Ar msg
+.Op Fl p Ns Op Ar rev
 .Op Fl r Ns Op Ar rev
 .Op Fl s Ns Ar state
 .Op Fl u Ns Op Ar rev
@@ -64,8 +65,13 @@ Specify a log message.
 A line beginning with a hash character
 .Pq Sq #
 is considered a comment and ignored.
-.It Fl p
-Print the retrieved revision to standard output.
+.It Fl p Ns Op Ar rev
+Print the latest revision no later than
+.Ar rev
+to standard output.
+If
+.Ar rev
+is not specified, print HEAD.
 .It Fl q
 Be quiet about reporting.
 .It Fl r Ns Op Ar rev
