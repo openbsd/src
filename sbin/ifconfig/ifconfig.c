@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.151 2005/10/10 10:28:19 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.152 2005/11/01 07:54:26 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3034,6 +3034,8 @@ setpfsync_syncpeer(const char *val, int d)
 
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
+
+	freeaddrinfo(peerres);
 }
 
 /* ARGSUSED */
