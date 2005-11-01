@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.36 2005/10/28 20:16:13 espie Exp $
+# $OpenBSD: pkg_info,v 1.37 2005/11/01 17:02:29 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -207,7 +207,7 @@ sub find_by_path
 
 our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, $opt_L, 
     $opt_m, $opt_p, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h, $opt_l, 
-    $opt_a, $opt_M, $opt_U, $opt_A, $opt_S);
+    $opt_a, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P);
 my $terse = 0;
 my $exit_code = 0;
 my $error_e = 0;
@@ -298,6 +298,14 @@ sub print_info
 			print "Signature: " unless $opt_q;
 			print $plist->signature(), "\n";
 		}
+		if ($opt_P) {
+			require OpenBSD::PackingList;
+
+			my $plist = OpenBSD::PackingList->from_installation(
+			    $pkg, \&OpenBSD::PackingList::ExtraInfoOnly);
+			print "Pkgpath:\n" unless $opt_q;
+			print $plist->{extrainfo}->{subdir}, "\n";
+		}
 
 		if ($opt_f) {
 			print $opt_l, "Packing list:\n" unless $opt_q;
@@ -308,11 +316,11 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-cDdfIiKkLMpqRrSsUv] [-E filename] [-e pkg-name] [-l str] pkg-name [...]', 'pkg_info [-Aa flags]');
+set_usage('pkg_info [-cDdfIiKkLMPpqRrSsUv] [-E filename] [-e pkg-name] [-l str] pkg-name [...]', 'pkg_info [-Aa flags]');
 
 my $locked;
 try { 
-	getopts('cDdfhIikKLmpqRrsSUve:E:Ml:aA',
+	getopts('cDdfhIikKLmpPqRrsSUve:E:Ml:aA',
 	    {'e' =>
 		    sub {
 			    my $pat = shift;
@@ -352,7 +360,7 @@ if ($opt_D) {
 
 unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
 	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r || $opt_s || 
-	$opt_S || $terse) {
+	$opt_S || $opt_P || $terse) {
 	if (@ARGV == 0) {
 		$opt_I = $opt_a = 1;
 	} else {

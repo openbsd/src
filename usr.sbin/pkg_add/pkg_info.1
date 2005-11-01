@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.19 2005/10/10 09:38:29 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.20 2005/11/01 17:02:29 bernd Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,7 +26,7 @@
 .Sh SYNOPSIS
 .Nm pkg_info
 .Bk -words
-.Op Fl cDdfIiKkLMpqRrSsUv
+.Op Fl cDdfIiKkLMPpqRrSsUv
 .Op Fl E Ar filename
 .Op Fl e Ar pkg-name
 .Op Fl l Ar str
@@ -139,6 +139,9 @@ organize it.
 This lets you add a special token to the start of each field.
 .It Fl M
 Show the install-message file (if any) for each package.
+.It Fl P
+Show the pkgpath for each package.
+You can easily build a subdirlist with this.
 .It Fl p
 Show the installation prefix for each package.
 .It Fl q
