@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.42 2005/11/01 14:37:16 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.43 2005/11/01 15:21:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -394,7 +394,7 @@ up_generate(struct rde_peer *peer, struct rde_aspath *asp,
 }
 
 void
-up_generate_updates(struct rde_peer *peer,
+up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *new, struct prefix *old)
 {
 	struct rde_aspath		*fasp;
@@ -412,7 +412,7 @@ up_generate_updates(struct rde_peer *peer,
 		fasp = path_copy(old->aspath);
 
 		pt_getaddr(old->prefix, &addr);
-		if (rde_filter(peer, fasp, &addr, old->prefix->prefixlen,
+		if (rde_filter(rules, peer, fasp, &addr, old->prefix->prefixlen,
 		    old->peer, DIR_OUT) == ACTION_DENY) {
 			path_put(fasp);
 			return;
@@ -426,7 +426,7 @@ up_generate_updates(struct rde_peer *peer,
 		case 1:
 			break;
 		case 0:
-			up_generate_updates(peer, NULL, old);
+			up_generate_updates(rules, peer, NULL, old);
 			return;
 		case -1:
 			return;
@@ -436,10 +436,10 @@ up_generate_updates(struct rde_peer *peer,
 		fasp = path_copy(new->aspath);
 
 		pt_getaddr(new->prefix, &addr);
-		if (rde_filter(peer, fasp, &addr, new->prefix->prefixlen,
+		if (rde_filter(rules, peer, fasp, &addr, new->prefix->prefixlen,
 		    new->peer, DIR_OUT) == ACTION_DENY) {
 			path_put(fasp);
-			up_generate_updates(peer, NULL, old);
+			up_generate_updates(rules, peer, NULL, old);
 			return;
 		}
 
@@ -453,7 +453,8 @@ up_generate_updates(struct rde_peer *peer,
 
 /* send a default route to the specified peer */
 void
-up_generate_default(struct rde_peer *peer, sa_family_t af)
+up_generate_default(struct filter_head *rules, struct rde_peer *peer,
+    sa_family_t af)
 {
 	struct rde_aspath	*asp;
 	struct bgpd_addr	 addr;
@@ -482,7 +483,7 @@ up_generate_default(struct rde_peer *peer, sa_family_t af)
 	bzero(&addr, sizeof(addr));
 	addr.af = af;
 
-	if (rde_filter(peer, asp, &addr, 0, NULL, DIR_OUT) ==
+	if (rde_filter(rules, peer, asp, &addr, 0, NULL, DIR_OUT) ==
 	    ACTION_DENY) {
 		path_put(asp);
 		return;

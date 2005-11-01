@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.35 2005/11/01 10:58:29 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.36 2005/11/01 15:21:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -24,20 +24,18 @@
 #include "bgpd.h"
 #include "rde.h"
 
-extern struct filter_head	*rules_l;	/* XXX ugly */
-
 int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
 	    struct bgpd_addr *, u_int8_t);
 
 enum filter_actions
-rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
-    struct bgpd_addr *prefix, u_int8_t prefixlen, struct rde_peer *from,
-    enum directions dir)
+rde_filter(struct filter_head *rules, struct rde_peer *peer,
+    struct rde_aspath *asp, struct bgpd_addr *prefix, u_int8_t prefixlen,
+    struct rde_peer *from, enum directions dir)
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_ALLOW; /* default allow */
 
-	TAILQ_FOREACH(f, rules_l, entry) {
+	TAILQ_FOREACH(f, rules, entry) {
 		if (dir != f->dir)
 			continue;
 		if (f->peer.groupid != 0 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.176 2005/11/01 14:37:16 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.177 2005/11/01 15:21:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,6 +65,7 @@ void		 rde_dump_upcall(struct pt_entry *, void *);
 void		 rde_dump_as(struct filter_as *, pid_t);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_prefix *, pid_t);
+void		 rde_softreconfig_out(struct pt_entry *, void *);
 void		 rde_up_dump_upcall(struct pt_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(void);
@@ -520,7 +521,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			nconf = NULL;
 			parent_set = NULL;
 			prefix_network_clean(&peerself, reloadtime);
-			/* soft reconfig out */
+			
+			pt_dump(rde_softreconfig_out, NULL, AF_UNSPEC);
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 				TAILQ_REMOVE(rules_l, r, entry);
 				filterset_free(&r->set);
@@ -706,7 +708,7 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 
 		/* input filter */
-		if (rde_filter(peer, NULL, &prefix, prefixlen, peer,
+		if (rde_filter(rules_l, peer, NULL, &prefix, prefixlen, peer,
 		    DIR_IN) == ACTION_DENY)
 			continue;
 
@@ -762,8 +764,8 @@ rde_update_dispatch(struct imsg *imsg)
 				mplen -= pos;
 
 				/* input filter */
-				if (rde_filter(peer, NULL, &prefix, prefixlen,
-				    peer, DIR_IN) == ACTION_DENY)
+				if (rde_filter(rules_l, peer, NULL, &prefix,
+				    prefixlen, peer, DIR_IN) == ACTION_DENY)
 					continue;
 
 				rde_update_log("withdraw", peer, NULL,
@@ -827,7 +829,7 @@ rde_update_dispatch(struct imsg *imsg)
 		 */
 		fasp = path_copy(asp);
 		/* input filter */
-		if (rde_filter(peer, fasp, &prefix, prefixlen, peer,
+		if (rde_filter(rules_l, peer, fasp, &prefix, prefixlen, peer,
 		    DIR_IN) == ACTION_DENY) {
 			path_put(fasp);
 			continue;
@@ -908,8 +910,8 @@ rde_update_dispatch(struct imsg *imsg)
 
 				fasp = path_copy(asp);
 				/* input filter */
-				if (rde_filter(peer, fasp, &prefix, prefixlen,
-				    peer, DIR_IN) == ACTION_DENY) {
+				if (rde_filter(rules_l, peer, fasp, &prefix,
+				    prefixlen, peer, DIR_IN) == ACTION_DENY) {
 					path_put(fasp);
 					continue;
 				}
@@ -1777,13 +1779,65 @@ rde_send_nexthop(struct bgpd_addr *next, int valid)
 u_char	queue_buf[4096];
 
 void
+rde_softreconfig_out(struct pt_entry *pt, void *ptr)
+{
+	struct prefix		*p = pt->active;
+	struct rde_peer		*peer;
+	struct rde_aspath	*oasp, *nasp;
+	enum filter_actions	 oa, na;
+	struct bgpd_addr	 addr;
+	
+	if (p == NULL)
+		return;
+
+	pt_getaddr(pt, &addr);
+	LIST_FOREACH(peer, &peerlist, peer_l) {
+		if (up_test_update(peer, p) != 1)
+			continue;
+
+		/* copy attributes for output filter */
+		oasp = path_copy(p->aspath);
+		nasp = path_copy(p->aspath);
+
+		oa = rde_filter(rules_l, peer, oasp, &addr, pt->prefixlen,
+		    p->peer, DIR_OUT);
+		na = rde_filter(newrules, peer, nasp, &addr, pt->prefixlen,
+		    p->peer, DIR_OUT);
+
+		if (oa == ACTION_DENY && na == ACTION_DENY)
+			/* nothing todo */
+			goto done;
+		if (oa == ACTION_DENY && na == ACTION_ALLOW) {
+			/* send update */
+			up_generate(peer, nasp, &addr, pt->prefixlen);
+			goto done;
+		}
+		if (oa == ACTION_ALLOW && na == ACTION_DENY) {
+			/* send withdraw */
+			up_generate(peer, NULL, &addr, pt->prefixlen);
+			goto done;
+		}
+		if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
+			if (path_compare(nasp, oasp) == 0) 
+				goto done;
+			/* send update */
+			up_generate(peer, nasp, &addr, pt->prefixlen);
+		}
+
+done:
+		path_put(oasp);
+		path_put(nasp);
+	}
+}
+
+void
 rde_up_dump_upcall(struct pt_entry *pt, void *ptr)
 {
 	struct rde_peer		*peer = ptr;
 
 	if (pt->active == NULL)
 		return;
-	up_generate_updates(peer, pt->active, NULL);
+	up_generate_updates(rules_l, peer, pt->active, NULL);
 }
 
 void
@@ -1803,7 +1857,7 @@ rde_generate_updates(struct prefix *new, struct prefix *old)
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->state != PEER_UP)
 			continue;
-		up_generate_updates(peer, new, old);
+		up_generate_updates(rules_l, peer, new, old);
 	}
 }
 
@@ -2150,7 +2204,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 		    safi == SAFI_BOTH) {
 			if (peer->conf.announce_type ==
 			    ANNOUNCE_DEFAULT_ROUTE)
-				up_generate_default(peer, AF_INET);
+				up_generate_default(rules_l, peer, AF_INET);
 			else
 				pt_dump(rde_up_dump_upcall, peer, AF_INET);
 		}
@@ -2159,7 +2213,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 		    safi == SAFI_BOTH) {
 			if (peer->conf.announce_type ==
 			    ANNOUNCE_DEFAULT_ROUTE)
-				up_generate_default(peer, AF_INET6);
+				up_generate_default(rules_l, peer, AF_INET6);
 			else
 				pt_dump(rde_up_dump_upcall, peer, AF_INET6);
 		}

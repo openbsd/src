@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.71 2005/11/01 14:37:16 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.72 2005/11/01 15:21:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -331,9 +331,10 @@ void		 up_down(struct rde_peer *);
 int		 up_test_update(struct rde_peer *, struct prefix *);
 int		 up_generate(struct rde_peer *, struct rde_aspath *,
 		     struct bgpd_addr *, u_int8_t);
-void		 up_generate_updates(struct rde_peer *,
+void		 up_generate_updates(struct filter_head *, struct rde_peer *,
 		     struct prefix *, struct prefix *);
-void		 up_generate_default(struct rde_peer *, sa_family_t);
+void		 up_generate_default(struct filter_head *, struct rde_peer *,
+		     sa_family_t);
 int		 up_dump_prefix(u_char *, int, struct uplist_prefix *,
 		     struct rde_peer *);
 int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);
@@ -353,8 +354,9 @@ void		 pt_dump(void (*)(struct pt_entry *, void *), void *,
 		     sa_family_t);
 
 /* rde_filter.c */
-enum filter_actions rde_filter(struct rde_peer *, struct rde_aspath *,
-    struct bgpd_addr *, u_int8_t, struct rde_peer *, enum directions);
+enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
+		     struct rde_aspath *, struct bgpd_addr *, u_int8_t,
+		     struct rde_peer *, enum directions);
 void		 rde_apply_set(struct rde_aspath *, struct filter_set_head *,
 		     sa_family_t, struct rde_peer *, enum directions);
 int		 rde_filter_community(struct rde_aspath *, int, int);
