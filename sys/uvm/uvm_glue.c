@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.42 2005/05/31 11:35:33 art Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.43 2005/11/01 14:18:14 aaron Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -586,8 +586,8 @@ uvm_swapout(p)
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
 		remrunqueue(p);
-	SCHED_UNLOCK(s);
 	p->p_swtime = 0;
+	SCHED_UNLOCK(s);
 	++uvmexp.swapouts;
 
 	/*
