@@ -1590,7 +1590,6 @@
 ./usr/share/man/cat4/sparc64/tvtwo.0
 ./usr/share/man/cat4/sparc64/upa.0
 ./usr/share/man/cat4/sparc64/uperf.0
-./usr/share/man/cat4/sparc64/vgafb.0
 ./usr/share/man/cat4/sparc64/vigra.0
 ./usr/share/man/cat4/sparc64/xbox.0
 ./usr/share/man/cat4/sparc64/zs.0
@@ -1697,6 +1696,7 @@
 ./usr/share/man/cat4/vax/vsbus.0
 ./usr/share/man/cat4/vax/ze.0
 ./usr/share/man/cat4/vga.0
+./usr/share/man/cat4/vgafb.0
 ./usr/share/man/cat4/vge.0
 ./usr/share/man/cat4/viaenv.0
 ./usr/share/man/cat4/viasio.0
