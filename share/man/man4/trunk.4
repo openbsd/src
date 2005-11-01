@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.8 2005/10/04 20:31:44 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.9 2005/11/01 09:01:33 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -46,14 +46,10 @@ option.
 .Pp
 The driver currently supports the trunk protocols
 .Ic roundrobin
-.Oo
-.Ic default
-.Oc ,
+(the default),
 .Ic failover ,
 and
-.Ic none
-for link aggregation and link failover.
-.Pp
+.Ic none .
 The
 .Ic roundrobin
 protocol distributes outgoing traffic using a round-robin scheduler
@@ -64,7 +60,6 @@ active port.
 Both protocols receive traffic from all attached ports.
 The interface link state is used to validate if the port is active or
 not.
-.Pp
 The
 .Ic none
 protocol is intended to do nothing: it disables any traffic without
