@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.23 2005/09/26 20:32:04 fgsch Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.24 2005/11/01 04:52:59 deraadt Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: xargs.c,v 1.23 2005/09/26 20:32:04 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: xargs.c,v 1.24 2005/11/01 04:52:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -539,7 +539,7 @@ exec:
 			close(fd);
 		}
 		execvp(argv[0], argv);
-                warn("%s", argv[0]);
+		warn("%s", argv[0]);
 		_exit(errno == ENOENT ? 127 : 126);
 	}
 	curprocs++;
@@ -566,7 +566,7 @@ waitchildren(const char *name, int waitall)
 			if (WEXITSTATUS(status) == 255) {
 				warnx("%s exited with status 255", name);
 				exit(124);
-                        } else if (WEXITSTATUS(status) == 127 || 
+			} else if (WEXITSTATUS(status) == 127 ||
 			    WEXITSTATUS(status) == 126) {
 				exit(WEXITSTATUS(status));
 			} else if (WEXITSTATUS(status) != 0) {
@@ -609,7 +609,7 @@ prompt(void)
 		(void)fclose(ttyfp);
 		return (0);
 	}
-	response[rsize - 1] = '\0'; 
+	response[rsize - 1] = '\0';
 	match = regexec(&cre, response, 0, NULL, 0);
 	(void)fclose(ttyfp);
 	regfree(&cre);
