@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.165 2005/09/12 22:14:22 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.166 2005/11/01 14:09:33 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -420,6 +420,10 @@ show the contents of ${name1} ${name2} ...,
 one variable value per line.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrongly.
+.It Ar show-required-by
+Prints the list of pkgpaths for all ports that will be affected by the
+current port changing.
+Works by walking the list of dependencies, in reverse.
 .It Ar unlink-categories
 Remove symbolic links in other directories that correspond to the port's
 .Ev CATEGORIES .
