@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.70 2005/08/10 08:34:06 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.71 2005/11/01 14:37:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -324,9 +324,13 @@ int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
 /* rde_decide.c */
 void		 prefix_evaluate(struct prefix *, struct pt_entry *);
+
+/* rde_update.c */
 void		 up_init(struct rde_peer *);
 void		 up_down(struct rde_peer *);
-void		 up_dump_upcall(struct pt_entry *, void *);
+int		 up_test_update(struct rde_peer *, struct prefix *);
+int		 up_generate(struct rde_peer *, struct rde_aspath *,
+		     struct bgpd_addr *, u_int8_t);
 void		 up_generate_updates(struct rde_peer *,
 		     struct prefix *, struct prefix *);
 void		 up_generate_default(struct rde_peer *, sa_family_t);

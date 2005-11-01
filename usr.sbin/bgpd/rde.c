@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.175 2005/11/01 10:58:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.176 2005/11/01 14:37:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,6 +65,7 @@ void		 rde_dump_upcall(struct pt_entry *, void *);
 void		 rde_dump_as(struct filter_as *, pid_t);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_prefix *, pid_t);
+void		 rde_up_dump_upcall(struct pt_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(void);
 
@@ -1776,6 +1777,16 @@ rde_send_nexthop(struct bgpd_addr *next, int valid)
 u_char	queue_buf[4096];
 
 void
+rde_up_dump_upcall(struct pt_entry *pt, void *ptr)
+{
+	struct rde_peer		*peer = ptr;
+
+	if (pt->active == NULL)
+		return;
+	up_generate_updates(peer, pt->active, NULL);
+}
+
+void
 rde_generate_updates(struct prefix *new, struct prefix *old)
 {
 	struct rde_peer			*peer;
@@ -2141,7 +2152,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 			    ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(peer, AF_INET);
 			else
-				pt_dump(up_dump_upcall, peer, AF_INET);
+				pt_dump(rde_up_dump_upcall, peer, AF_INET);
 		}
 	if (afi == AFI_ALL || afi == AFI_IPv6)
 		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
@@ -2150,7 +2161,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 			    ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(peer, AF_INET6);
 			else
-				pt_dump(up_dump_upcall, peer, AF_INET6);
+				pt_dump(rde_up_dump_upcall, peer, AF_INET6);
 		}
 }
 
