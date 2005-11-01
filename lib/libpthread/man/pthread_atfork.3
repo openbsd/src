@@ -32,7 +32,7 @@
 .\" the referee document.  The original Standard can be obtained online at
 .\"	http://www.opengroup.org/unix/online.html.
 .\"
-.\" $OpenBSD: pthread_atfork.3,v 1.6 2005/10/31 20:04:05 brad Exp $
+.\" $OpenBSD: pthread_atfork.3,v 1.7 2005/11/01 19:27:58 fgsch Exp $
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man3/pthread_atfork.3,v 1.3 2005/06/16 18:46:16 ru Exp $
 .\"
 .Dd June 21, 2004
@@ -68,20 +68,21 @@ The
 fork handler will be called after
 .Xr fork 2
 processing completes in the child process.
+.Pp
 If no handling is desired at one or more of these three points, the
 corresponding fork handler address(es) may be set to NULL.
 .Pp
-The order of calls to
+Multiple sets of handlers can be installed by calling
 .Fn pthread_atfork
-is significant.
+several times.
 The
 .Fa parent
 and
 .Fa child
 fork handlers will be called in the order in which they were
 established by calls to
-.Fn pthread_atfork .
-The
+.Fn pthread_atfork
+while the
 .Fa prepare
 fork handlers will be called in the opposite order.
 .Sh RETURN VALUES
