@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.124 2005/10/13 09:09:20 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.125 2005/11/01 10:58:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -432,9 +432,6 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	for (p = *peer_l; p != NULL; p = p->next) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(struct peer_config)) == -1)
-			return (-1);
-		if (send_filterset(ibuf_se, &p->conf.attrset,
-		    p->conf.id) == -1)
 			return (-1);
 	}
 	while ((n = TAILQ_FIRST(&net_l)) != NULL) {

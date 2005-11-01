@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.172 2005/10/19 10:42:06 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.173 2005/11/01 10:58:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,6 +45,10 @@ static struct peer		*peer_l, *peer_l_old;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
 static struct filter_head	*filter_l;
+static struct filter_head	*peerfilter_l;
+static struct filter_head	*groupfilter_l;
+static struct filter_rule	*curpeer_filter[2];
+static struct filter_rule	*curgroup_filter[2];
 static struct listen_addrs	*listen_addrs;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
@@ -97,6 +101,7 @@ void		 copy_filterset(struct filter_set_head *,
 		    struct filter_set_head *);
 void		 move_filterset(struct filter_set_head *,
 		    struct filter_set_head *);
+struct filter_rule	*get_rule(enum action_types);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -529,6 +534,15 @@ neighbor	: {	curpeer = new_peer(); }
 			}
 		}
 		    peeropts_h {
+			if (curpeer_filter[0] != NULL)
+				TAILQ_INSERT_TAIL(peerfilter_l,
+				    curpeer_filter[0], entry);
+			if (curpeer_filter[1] != NULL)
+				TAILQ_INSERT_TAIL(peerfilter_l,
+				    curpeer_filter[1], entry);
+			curpeer_filter[0] = NULL;
+			curpeer_filter[1] = NULL;
+
 			if (neighbor_consistent(curpeer) == -1)
 				YYERROR;
 			curpeer->next = peer_l;
@@ -554,6 +568,15 @@ group		: GROUP string optnl '{' optnl {
 			}
 		}
 		    groupopts_l '}' {
+			if (curgroup_filter[0] != NULL)
+				TAILQ_INSERT_TAIL(groupfilter_l,
+				    curgroup_filter[0], entry);
+			if (curgroup_filter[1] != NULL)
+				TAILQ_INSERT_TAIL(groupfilter_l,
+				    curgroup_filter[1], entry);
+			curgroup_filter[0] = NULL;
+			curgroup_filter[1] = NULL;
+
 			free(curgroup);
 			curgroup = NULL;
 		}
@@ -814,17 +837,21 @@ peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.announce_capa = $3;
 		}
 		| SET filter_set_opt	{
-			if (merge_filterset(&curpeer->conf.attrset, $2) == -1)
+			struct filter_rule	*r;
+
+			r = get_rule($2->type);
+			if (merge_filterset(&r->set, $2) == -1)
 				YYERROR;
 		}
 		| SET optnl "{" optnl filter_set_l optnl "}"	{
+			struct filter_rule	*r;
 			struct filter_set	*s;
 
 			while ((s = TAILQ_FIRST($5)) != NULL) {
 				TAILQ_REMOVE($5, s, entry);
-				if (merge_filterset(&curpeer->conf.attrset, s)
-				    == -1)
-				YYERROR;
+				r = get_rule(s->type);
+				if (merge_filterset(&r->set, s) == -1)
+					YYERROR;
 			}
 			free($5);
 		}
@@ -1773,8 +1800,17 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		fatal(NULL);
 	if ((listen_addrs = calloc(1, sizeof(struct listen_addrs))) == NULL)
 		fatal(NULL);
+	if ((filter_l = calloc(1, sizeof(struct filter_head))) == NULL)
+		fatal(NULL);
+	if ((peerfilter_l = calloc(1, sizeof(struct filter_head))) == NULL)
+		fatal(NULL);
+	if ((groupfilter_l = calloc(1, sizeof(struct filter_head))) == NULL)
+		fatal(NULL);
 	LIST_INIT(mrtconf);
 	TAILQ_INIT(listen_addrs);
+	TAILQ_INIT(filter_l);
+	TAILQ_INIT(peerfilter_l);
+	TAILQ_INIT(groupfilter_l);
 
 	peer_l = NULL;
 	peer_l_old = *xpeers;
@@ -1785,11 +1821,11 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	id = 1;
 	conf->opts = xconf->opts;
 
-	/* filter and network list are always empty in the parent */
-	filter_l = xfilter_l;
-	TAILQ_INIT(filter_l);
+	/* network list is always empty in the parent */
 	netconf = nc;
 	TAILQ_INIT(netconf);
+	/* init the empty filter list for later */
+	TAILQ_INIT(xfilter_l);
 
 	yyparse();
 
@@ -1831,6 +1867,16 @@ parse_config(char *filename, struct bgpd_config *xconf,
 			TAILQ_REMOVE(filter_l, r, entry);
 			free(r);
 		}
+
+		while ((r = TAILQ_FIRST(peerfilter_l)) != NULL) {
+			TAILQ_REMOVE(peerfilter_l, r, entry);
+			free(r);
+		}
+
+		while ((r = TAILQ_FIRST(groupfilter_l)) != NULL) {
+			TAILQ_REMOVE(groupfilter_l, r, entry);
+			free(r);
+		}
 	} else {
 		errors += merge_config(xconf, conf, peer_l, listen_addrs);
 		errors += mrt_mergeconfig(xmconf, mrtconf);
@@ -1840,10 +1886,31 @@ parse_config(char *filename, struct bgpd_config *xconf,
 			pnext = p->next;
 			free(p);
 		}
+
+		/*
+		 * Move filter list and static group and peer filtersets
+		 * together. Static group sets come first then peer sets
+		 * last normal filter rules.
+		 */
+		while ((r = TAILQ_FIRST(groupfilter_l)) != NULL) {
+			TAILQ_REMOVE(groupfilter_l, r, entry);
+			TAILQ_INSERT_TAIL(xfilter_l, r, entry);
+		}
+		while ((r = TAILQ_FIRST(peerfilter_l)) != NULL) {
+			TAILQ_REMOVE(peerfilter_l, r, entry);
+			TAILQ_INSERT_TAIL(xfilter_l, r, entry);
+		}
+		while ((r = TAILQ_FIRST(filter_l)) != NULL) {
+			TAILQ_REMOVE(filter_l, r, entry);
+			TAILQ_INSERT_TAIL(xfilter_l, r, entry);
+		}
 	}
 
 	free(conf);
 	free(mrtconf);
+	free(filter_l);
+	free(peerfilter_l);
+	free(groupfilter_l);
 
 	return (errors ? -1 : 0);
 }
@@ -2019,7 +2086,6 @@ alloc_peer(void)
 	p->conf.capabilities.mp_v4 = SAFI_UNICAST;
 	p->conf.capabilities.mp_v6 = SAFI_NONE;
 	p->conf.capabilities.refresh = 1;
-	TAILQ_INIT(&p->conf.attrset);
 
 	return (p);
 }
@@ -2040,8 +2106,6 @@ new_peer(void)
 		    sizeof(p->conf.descr)) >= sizeof(p->conf.descr))
 			fatalx("new_peer descr strlcpy");
 		p->conf.groupid = curgroup->conf.id;
-		TAILQ_INIT(&p->conf.attrset);
-		copy_filterset(&curgroup->conf.attrset, &p->conf.attrset);
 	}
 	p->next = NULL;
 
@@ -2344,3 +2408,38 @@ move_filterset(struct filter_set_head *source, struct filter_set_head *dest)
 	}
 }
 
+struct filter_rule *
+get_rule(enum action_types type)
+{
+	struct filter_rule	*r;
+	int			 out;
+
+	switch (type) {
+	case ACTION_SET_PREPEND_SELF:
+	case ACTION_SET_NEXTHOP_NOMODIFY:
+		out = 1;
+		break;
+	default:
+		out = 0;
+		break;
+	}
+	r = (curpeer == curgroup) ? curgroup_filter[out] : curpeer_filter[out];
+	if (r == NULL) {
+		if ((r = calloc(1, sizeof(struct filter_rule))) == NULL)
+			fatal(NULL);
+		r->quick = 0;
+		r->dir = out ? DIR_OUT : DIR_IN;
+		r->action = ACTION_NONE;
+		TAILQ_INIT(&r->set);
+		if (curpeer == curgroup) {
+			/* group */
+			r->peer.groupid = curgroup->conf.id;
+			curgroup_filter[out] = r;
+		} else {
+			/* peer */
+			r->peer.peerid = curpeer->conf.id;
+			curpeer_filter[out] = r;
+		}
+	}
+	return (r);
+}

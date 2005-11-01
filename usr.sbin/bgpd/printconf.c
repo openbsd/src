@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.49 2005/10/31 17:00:05 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.50 2005/11/01 10:58:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -302,12 +302,6 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 
 	printf("%s\tannounce IPv4 %s\n", c, print_safi(p->capabilities.mp_v4));
 	printf("%s\tannounce IPv6 %s\n", c, print_safi(p->capabilities.mp_v6));
-
-	if (!TAILQ_EMPTY(&p->attrset))
-		printf("%s\t", c);
-	print_set(&p->attrset);
-	if (!TAILQ_EMPTY(&p->attrset))
-		printf("\n");
 
 	print_mrt(p->id, p->groupid, c, "\t");
 

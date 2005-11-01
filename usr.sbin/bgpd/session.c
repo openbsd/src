@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.237 2005/10/19 10:42:06 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.238 2005/11/01 10:58:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2074,8 +2074,6 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 	return (0);
 }
 
-struct filter_set_head	*session_set;
-
 void
 session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 {
@@ -2086,7 +2084,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	struct peer		*p, *next;
 	struct listen_addr	*la, *nla;
 	struct kif		*kif;
-	struct filter_set	*s;
 	u_char			*data;
 	enum reconf_action	 reconf;
 	int			 n, depend_ok;
@@ -2138,8 +2135,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				reconf = RECONF_KEEP;
 
 			memcpy(&p->conf, pconf, sizeof(struct peer_config));
-			TAILQ_INIT(&p->conf.attrset);
-			session_set = &p->conf.attrset;
 			p->conf.reconf_action = reconf;
 			break;
 		case IMSG_RECONF_LISTENER:
@@ -2228,21 +2223,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			free(nconf->listen_addrs);
 			free(nconf);
 			nconf = NULL;
-			session_set = NULL;
 			pending_reconf = 0;
 			log_info("SE reconfigured");
-			break;
-		case IMSG_FILTER_SET:
-			if (idx != PFD_PIPE_MAIN)
-				fatalx("reconf request not from parent");
-			if (session_set == NULL) {
-				log_warnx("IMSG_FILTER_SET unexpected");
-				break;
-			}
-			if ((s = malloc(sizeof(struct filter_set))) == NULL)
-				fatal(NULL);
-			memcpy(s, imsg.data, sizeof(struct filter_set));
-			TAILQ_INSERT_TAIL(session_set, s, entry);
 			break;
 		case IMSG_IFINFO:
 			if (idx != PFD_PIPE_MAIN)
@@ -2591,17 +2573,10 @@ void
 session_up(struct peer *p)
 {
 	struct session_up	 sup;
-	struct filter_set	*s;
 
 	if (imsg_compose(ibuf_rde, IMSG_SESSION_ADD, p->conf.id, 0, -1,
 	    &p->conf, sizeof(p->conf)) == -1)
 		fatalx("imsg_compose error");
-
-	TAILQ_FOREACH(s, &p->conf.attrset, entry) {
-		if (imsg_compose(ibuf_rde, IMSG_FILTER_SET, p->conf.id, 0, -1,
-		    s, sizeof(struct filter_set)) == -1)
-			fatalx("imsg_compose error");
-	}
 
 	switch (p->sa_local.ss_family) {
 	case AF_INET:

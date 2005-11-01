@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.34 2005/08/10 08:34:06 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.35 2005/11/01 10:58:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -73,15 +73,6 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		return;
 
 	TAILQ_FOREACH(set, sh, entry) {
-		/*
-		 * default outgoing overrides are only allowed to
-		 * set prepend-self and set nexthop no-modify
-		 */
-		if (dir == DIR_DEFAULT_OUT &&
-		    set->type != ACTION_SET_PREPEND_SELF &&
-		    set->type != ACTION_SET_NEXTHOP_NOMODIFY)
-			continue;
-
 		switch (set->type) {
 		case ACTION_SET_LOCALPREF:
 			asp->lpref = set->action.metric;
@@ -140,9 +131,6 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			}
 			break;
 		case ACTION_SET_PREPEND_SELF:
-			/* don't apply if this is a incoming default override */
-			if (dir == DIR_DEFAULT_IN)
-				break;
 			as = rde_local_as();
 			prepend = set->action.prepend;
 			new = aspath_prepend(asp->aspath, as, prepend);
@@ -162,9 +150,6 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		case ACTION_SET_NEXTHOP_REJECT:
 		case ACTION_SET_NEXTHOP_BLACKHOLE:
 		case ACTION_SET_NEXTHOP_NOMODIFY:
-			if (set->type == ACTION_SET_NEXTHOP_NOMODIFY &&
-			    dir == DIR_DEFAULT_IN)
-				break;
 			nexthop_modify(asp, &set->action.nexthop, set->type,
 			    af);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.174 2005/10/13 09:08:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.175 2005/11/01 10:58:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -303,14 +303,12 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				    imsg.hdr.peerid);
 				break;
 			}
-			session_set = &peer->conf.attrset;
 			break;
 		case IMSG_SESSION_UP:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
 				fatalx("incorrect size of session request");
 			memcpy(&sup, imsg.data, sizeof(sup));
 			peer_up(imsg.hdr.peerid, &sup);
-			session_set = NULL;
 			break;
 		case IMSG_SESSION_DOWN:
 			peer_down(imsg.hdr.peerid);
@@ -521,6 +519,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			nconf = NULL;
 			parent_set = NULL;
 			prefix_network_clean(&peerself, reloadtime);
+			/* soft reconfig out */
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 				TAILQ_REMOVE(rules_l, r, entry);
 				filterset_free(&r->set);
@@ -791,9 +790,6 @@ rde_update_dispatch(struct imsg *imsg)
 		return (0);
 	}
 
-	/* apply default overrides */
-	rde_apply_set(asp, &peer->conf.attrset, AF_INET, peer, DIR_DEFAULT_IN);
-
 	/* parse nlri prefix */
 	while (nlri_len > 0) {
 		if ((pos = rde_update_get_prefix(p, nlri_len, &prefix,
@@ -886,9 +882,6 @@ rde_update_dispatch(struct imsg *imsg)
 				path_put(asp);
 				return (-1);
 			}
-			/* apply default overrides */
-			rde_apply_set(asp, &peer->conf.attrset, AF_INET6, peer,
-			    DIR_DEFAULT_IN);
 
 			while (mplen > 0) {
 				if ((pos = rde_update_get_prefix6(mpp, mplen,
@@ -1986,7 +1979,6 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 
 	LIST_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
-	TAILQ_INIT(&peer->conf.attrset);
 	peer->remote_bgpid = 0;
 	peer->state = PEER_NONE;
 	up_init(peer);
@@ -2004,8 +1996,6 @@ peer_remove(struct rde_peer *peer)
 {
 	LIST_REMOVE(peer, hash_l);
 	LIST_REMOVE(peer, peer_l);
-
-	filterset_free(&peer->conf.attrset);
 	free(peer);
 }
 
@@ -2207,11 +2197,11 @@ network_add(struct network_config *nc, int flagstatic)
 
 	if (flagstatic) {
 		rde_apply_set(asp, &nc->attrset, nc->prefix.af, &peerself,
-		    DIR_DEFAULT_IN);
+		    DIR_IN);
 		path_update(&peerself, asp, &nc->prefix, nc->prefixlen);
 	} else {
 		rde_apply_set(asp, &nc->attrset, nc->prefix.af, &peerdynamic,
-		    DIR_DEFAULT_IN);
+		    DIR_IN);
 		path_update(&peerdynamic, asp, &nc->prefix, nc->prefixlen);
 	}
 	filterset_free(&nc->attrset);
