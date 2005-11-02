@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.125 2005/11/01 10:58:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.126 2005/11/02 15:03:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -423,17 +423,28 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 
 	prepare_listeners(conf);
 
+	/* start reconfiguration */
 	if (imsg_compose(ibuf_se, IMSG_RECONF_CONF, 0, 0, -1,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_RECONF_CONF, 0, 0, -1,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
-	for (p = *peer_l; p != NULL; p = p->next) {
+
+	/* send peer list and listeners to the SE */
+	for (p = *peer_l; p != NULL; p = p->next)
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
+
+	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+		if (imsg_compose(ibuf_se, IMSG_RECONF_LISTENER, 0, 0, la->fd,
+		    la, sizeof(struct listen_addr)) == -1)
+			return (-1);
+		la->fd = -1;
 	}
+
+	/* networks for the RDE */
 	while ((n = TAILQ_FIRST(&net_l)) != NULL) {
 		if (imsg_compose(ibuf_rde, IMSG_NETWORK_ADD, 0, 0, -1,
 		    &n->net, sizeof(struct network_config)) == -1)
@@ -447,10 +458,12 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		filterset_free(&n->net.attrset);
 		free(n);
 	}
+
 	/* redistribute list needs to be reloaded too */
 	if (kr_redist_reload() == -1)
 		return (-1);
 
+	/* filters for the RDE */
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
@@ -461,13 +474,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		filterset_free(&r->set);
 		free(r);
 	}
-	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
-		if (imsg_compose(ibuf_se, IMSG_RECONF_LISTENER, 0, 0, la->fd,
-		    la, sizeof(struct listen_addr)) == -1)
-			return (-1);
-		la->fd = -1;
-	}
 
+	/* singal both childs to replace their config */
 	if (imsg_compose(ibuf_se, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0) == -1 ||
 	    imsg_compose(ibuf_rde, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0) == -1)
 		return (-1);
