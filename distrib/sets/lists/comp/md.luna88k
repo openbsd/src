@@ -120,7 +120,6 @@
 ./usr/include/luna88k/cmmu.h
 ./usr/include/luna88k/conf.h
 ./usr/include/luna88k/cpu.h
-./usr/include/luna88k/cpu_number.h
 ./usr/include/luna88k/db_machdep.h
 ./usr/include/luna88k/disklabel.h
 ./usr/include/luna88k/endian.h
@@ -162,7 +161,6 @@
 ./usr/include/m88k/cdefs.h
 ./usr/include/m88k/cmmu.h
 ./usr/include/m88k/cpu.h
-./usr/include/m88k/cpu_number.h
 ./usr/include/m88k/db_machdep.h
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h

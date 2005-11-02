@@ -116,7 +116,6 @@
 ./usr/include/m88k/cdefs.h
 ./usr/include/m88k/cmmu.h
 ./usr/include/m88k/cpu.h
-./usr/include/m88k/cpu_number.h
 ./usr/include/m88k/db_machdep.h
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
@@ -161,7 +160,6 @@
 ./usr/include/mvme88k/cmmu.h
 ./usr/include/mvme88k/conf.h
 ./usr/include/mvme88k/cpu.h
-./usr/include/mvme88k/cpu_number.h
 ./usr/include/mvme88k/db_machdep.h
 ./usr/include/mvme88k/disklabel.h
 ./usr/include/mvme88k/endian.h

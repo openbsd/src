@@ -1468,7 +1468,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/cmmu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/conf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/cpu.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/cpu_number.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/db_machdep.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/disklabel.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/endian.ph
@@ -1510,7 +1509,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/cmmu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/cpu.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/cpu_number.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/db_machdep.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/endian.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/exec.ph
