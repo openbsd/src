@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.24 2005/11/02 20:32:45 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.25 2005/11/02 20:44:50 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -275,8 +275,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
  * Search from supplied revision backwards until we find one
  * with state <state> and check that out.
  *
- * Returns 0 on success, -1 on checkout_rev failure and -2 if there is no 
- * such state.
+ * Returns 0 on success, -1 on checkout_rev failure.
  */
 static int
 checkout_state(RCSFILE *rfp, RCSNUM *rev, const char *dst, int flags,
