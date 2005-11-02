@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.110 2005/10/25 14:18:38 todd Exp $
+#	$OpenBSD: netstart,v 1.111 2005/11/02 18:45:26 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -172,7 +172,7 @@ bridgestart() {
 	brconfig $1 > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
 		# Try to create interface if it does not exist
-		ifconfig $if create > /dev/null 2>&1
+		ifconfig $1 create > /dev/null 2>&1
 		if [ "$?" != "0" ]; then
 			return
 		fi
