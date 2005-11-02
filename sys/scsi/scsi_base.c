@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.92 2005/10/22 16:51:28 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.93 2005/11/02 01:36:05 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -58,6 +58,7 @@ static __inline void asc2ascii(u_int8_t, u_int8_t ascq, char *result,
     size_t len);
 int	sc_err1(struct scsi_xfer *);
 int	scsi_interpret_sense(struct scsi_xfer *);
+int	scsi_delay(struct scsi_xfer *, int);
 char   *scsi_decode_sense(struct scsi_sense_data *, int);
 
 /* Values for flag parameter to scsi_decode_sense. */
@@ -867,27 +868,15 @@ sc_err1(xs)
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
-		if ((error = scsi_interpret_sense(xs)) == ERESTART) {
-			if (xs->error == XS_BUSY) {
-				xs->error = XS_SENSE;
-				goto sense_retry;
-			}
+		if ((error = scsi_interpret_sense(xs)) == ERESTART)
 			goto retry;
-		}
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
 		    ("scsi_interpret_sense returned %d\n", error));
 		break;
 
 	case XS_BUSY:
-	sense_retry:
 		if (xs->retries) {
-			if ((xs->flags & SCSI_POLL) != 0)
-				delay(1000000);
-			else if ((xs->flags & SCSI_NOSLEEP) == 0) {
-				if (tsleep(&lbolt, PRIBIO, "scbusy", 0))
-					/* Bail out on getting a signal. */
-					goto lose;
-			} else
+			if ((error = scsi_delay(xs, 1)) == EIO) ;
 				goto lose;
 		}
 		/* FALLTHROUGH */
@@ -927,6 +916,31 @@ sc_err1(xs)
 	}
 
 	return error;
+}
+
+int
+scsi_delay(xs, seconds)
+	struct scsi_xfer *xs;
+	int seconds;
+{
+	switch (xs->flags & (SCSI_POLL | SCSI_NOSLEEP)) {
+	case SCSI_POLL:
+		delay(1000000 * seconds);
+		return (ERESTART);
+	case SCSI_NOSLEEP:	
+		/* Retry the command immediately since we can't delay. */
+		return (ERESTART);
+	case (SCSI_POLL | SCSI_NOSLEEP):
+		/* Invalid combination! */
+		return (EIO);
+	}
+	
+	while (seconds-- > 0)	
+		if (tsleep(&lbolt, PRIBIO, "scbusy", 0))
+			/* Signal == abort xs. */
+			return (EIO);
+
+	return (ERESTART);		
 }
 
 /*
@@ -1005,9 +1019,11 @@ scsi_interpret_sense(xs)
 				case 0x07: /* Operation In Progress */
 				case 0x08: /* Long Write In Progress */
 				case 0x09: /* Self-Test In Progress */
-					xs->error = XS_BUSY; /* wait & retry */
-					return (ERESTART);
-				}
+					SC_DEBUG(sc_link, SDEV_DB1,
+		    			    ("not ready: busy (%#x)\n",
+					    sense->add_sense_code_qual));
+					return (scsi_delay(xs, 1));
+				}	
 				break;
 			case 0x3a:	/* Medium not present */
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
@@ -1022,17 +1038,14 @@ scsi_interpret_sense(xs)
 		error = EINVAL;
 		break;
 	case SKEY_UNIT_ATTENTION:
-		if (sense->add_sense_code == 0x29) {
-			xs->error = XS_BUSY; /* wait & retry */
-			return (ERESTART); /* device or bus reset */
-		}
+		if (sense->add_sense_code == 0x29 /* device or bus reset */)
+			return (scsi_delay(xs, 1));
 		if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 			sc_link->flags &= ~SDEV_MEDIA_LOADED;
 		if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
 		    /* XXX Should reupload any transient state. */
 		    (sc_link->flags & SDEV_REMOVABLE) == 0) {
-			xs->error = XS_BUSY; /* wait & retry */
-			return (ERESTART);
+			return (scsi_delay(xs, 1));
 		}
 		error = EIO;
 		break;
