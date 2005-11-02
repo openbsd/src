@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsmerge.1,v 1.1 2005/10/18 16:16:39 xsa Exp $
+.\"     $OpenBSD: rcsmerge.1,v 1.2 2005/11/02 11:26:19 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,8 +23,10 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl AEepqTV
+.Op Fl AEeTV
 .Op Fl k Ns Ar mode
+.Op Fl p Ns Op Ar rev
+.Op Fl q Ns Op Ar rev
 .Op Fl r Ns Ar rev
 .Op Fl x Ns Ar suffixes
 .Op Fl z Ns Ar tz
@@ -53,9 +55,9 @@ Same as
 but does not warn about conflicts.
 .It Fl k Ns Ar mode
 Specify the keyword substitution mode.
-.It Fl p
+.It Fl p Ns Op Ar rev
 Print result to standard output.
-.It Fl q
+.It Fl q Ns Op Ar rev
 Be quiet about reporting.
 .It Fl r Ns Ar rev
 Merge with respect to revision
