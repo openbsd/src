@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_subr.c,v 1.4 2005/10/13 18:37:58 fgsch Exp $	*/
+/*	$OpenBSD: com_subr.c,v 1.5 2005/11/02 22:35:06 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -278,9 +278,9 @@ com_attach_subr(sc)
 		break;
 #ifdef COM_PXA2X0
 	case COM_UART_PXA2X0:
-		printf(": pxa2x0, 64 byte fifo");
+		printf(": pxa2x0, 32 byte fifo");
 		SET(sc->sc_hwflags, COM_HW_FIFO);
-		sc->sc_fifolen = 64;
+		sc->sc_fifolen = 32;
 		if (sc->sc_iobase == comsiraddr) {
 			SET(sc->sc_hwflags, COM_HW_SIR);
 			printf(" (SIR)");
