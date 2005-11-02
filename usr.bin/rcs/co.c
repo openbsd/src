@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.23 2005/10/25 17:27:54 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.24 2005/11/02 20:32:45 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,20 +36,21 @@
 #include "rcs.h"
 #include "rcsprog.h"
 
-#define LOCK_LOCK	1
-#define LOCK_UNLOCK	2
+static int checkout_state(RCSFILE *, RCSNUM *, const char *, int,
+    const char *, const char *);
 
 int
 checkout_main(int argc, char **argv)
 {
 	int i, ch;
-	int fflag, lock;
+	int flags;
 	RCSNUM *frev, *rev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN], buf[16];
 	char *username;
+	const char *state = NULL;
 
-	fflag = lock = 0;
+	flags = 0;
 	rev = RCS_HEAD_REV;
 	frev = NULL;
 
@@ -58,15 +59,15 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "f::l::p::qr::u::V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::l::p::qr::s:u::V")) != -1) {
 		switch (ch) {
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
-			fflag = 1;
+			flags |= FORCE;
 			break;
 		case 'l':
 			rcs_set_rev(rcs_optarg, &rev);
-			lock = LOCK_LOCK;
+			flags |= CO_LOCK;
 			break;
 		case 'p':
 			rcs_set_rev(rcs_optarg, &rev);
@@ -78,9 +79,16 @@ checkout_main(int argc, char **argv)
 		case 'r':
 			rcs_set_rev(rcs_optarg, &rev);
 			break;
+		case 's':
+			if ((state = strdup(rcs_optarg)) == NULL) {
+				cvs_log(LP_ERRNO, "out of memory");
+				exit(1);
+			}
+			flags |= CO_STATE;
+			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &rev);
-			lock = LOCK_UNLOCK;
+			flags |= CO_UNLOCK;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -118,10 +126,19 @@ checkout_main(int argc, char **argv)
 
 		rcsnum_tostr(frev, buf, sizeof(buf));
 
-		if (checkout_rev(file, frev, argv[i], lock,
-		    username, fflag) < 0) {
-			rcs_close(file);
-			continue;
+		if (flags & CO_STATE) {
+			if (checkout_state(file, frev, argv[i], flags,
+			    username, state) < 0) {
+				rcs_close(file);
+				continue;
+			}
+		}
+		else {
+			if (checkout_rev(file, frev, argv[i], flags,
+				username) < 0) {
+				rcs_close(file);
+				continue;
+			}
 		}
 
 		rcs_close(file);
@@ -137,7 +154,8 @@ void
 checkout_usage(void)
 {
 	fprintf(stderr,
-	    "usage: co [-qV] [-l[rev]] [-r[rev]] [-u[rev]] file ...\n");
+	    "usage: co [-qV] [-l[rev]] [-p[rev]] [-r[rev]] [-sstate]\n"
+            "          [-u[rev]] file ...\n");
 }
 
 /*
@@ -150,8 +168,8 @@ checkout_usage(void)
  * Returns 0 on success, -1 on failure.
  */
 int
-checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
-    const char *username, int force)
+checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
+    const char *username)
 {
 	char buf[16], yn;
 	mode_t mode = 0444;
@@ -175,7 +193,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 		return (-1);
 	}
 
-	if (lkmode == LOCK_LOCK) {
+	if (flags & CO_LOCK) {
 		if ((username != NULL)
 		    && (rcs_lock_add(file, username, frev) < 0)) {
 			if ((rcs_errno != RCS_ERR_DUPENT) && (verbose == 1))
@@ -185,7 +203,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 		mode = 0644;
 		if (verbose == 1)
 			printf(" (locked)");
-	} else if (lkmode == LOCK_UNLOCK) {
+	} else if (flags & CO_UNLOCK) {
 		if (rcs_lock_remove(file, frev) < 0) {
 			if (rcs_errno != RCS_ERR_NOENT)
 				cvs_log(LP_ERR,
@@ -200,7 +218,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 	if (verbose == 1)
 		printf("\n");
 
-	if ((stat(dst, &st) != -1) && force == 0) {
+	if ((stat(dst, &st) != -1) && !(flags & FORCE)) {
 		if (st.st_mode & S_IWUSR) {
 			yn = 0;
 			if (verbose == 0) {
@@ -235,6 +253,14 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 			return (-1);
 		}
 		cvs_buf_free(bp);
+		if (flags & CO_REVDATE) {
+			struct timeval tv[2];
+			bzero(&tv, sizeof(tv));
+			tv[0].tv_sec = (long)rcs_rev_getdate(file, frev);
+			tv[1].tv_sec = tv[0].tv_sec;
+			if (utimes(dst, (const struct timeval *)&tv) < 0)
+				cvs_log(LP_ERRNO, "error setting utimes");
+		}
 
 		if (verbose == 1)
 			printf("done\n");
@@ -243,3 +269,32 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int lkmode,
 	return (0);
 }
 
+/*
+ * checkout_state()
+ *
+ * Search from supplied revision backwards until we find one
+ * with state <state> and check that out.
+ *
+ * Returns 0 on success, -1 on checkout_rev failure and -2 if there is no 
+ * such state.
+ */
+static int
+checkout_state(RCSFILE *rfp, RCSNUM *rev, const char *dst, int flags,
+    const char *username, const char *state)
+{
+	const char *tstate;
+	
+	if (rev == NULL) {
+		cvs_log(LP_ERR, "%s: No revision on branch has state %s",
+		    rfp->rf_path, state);
+		return (-1);
+	}
+	else {
+		if (((tstate = rcs_state_get(rfp, rev)) != NULL)
+		    && (strcmp(state, tstate) == 0))
+			return (checkout_rev(rfp, rev, dst, flags, username));
+		else
+			rev = rcsnum_dec(rev);
+		return (checkout_state(rfp, rev, dst, flags, username, state));
+	}
+}

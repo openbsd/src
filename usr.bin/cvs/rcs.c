@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.96 2005/10/30 11:10:12 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.97 2005/11/02 20:32:44 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2891,6 +2891,22 @@ rcs_rev_setlog(RCSFILE *rfp, RCSNUM *rev, const char *logtext)
 	rfp->rf_flags &= ~RCS_SYNCED;
 	return (0);
 }
+/*
+ * rcs_rev_getdate()
+ *
+ * Get the date corresponding to a given revision.
+ * Returns the date on success, -1 on failure.
+ */
+time_t
+rcs_rev_getdate(RCSFILE *rfp, RCSNUM *rev)
+{
+	struct rcs_delta *rdp;
+
+	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
+		return (-1);
+
+	return (mktime(&rdp->rd_date));
+}
 
 /*
  * rcs_state_set()
@@ -2934,3 +2950,22 @@ rcs_state_check(const char *state)
 
 	return (0);
 }
+
+/*
+ * rcs_state_get()
+ *
+ * Get the state for a given revision of a specified RCSFILE.
+ *
+ * Returns NULL on failure.
+ */
+const char *
+rcs_state_get(RCSFILE *rfp, RCSNUM *rev)
+{
+	struct rcs_delta *rdp;
+
+	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
+		return (NULL);
+
+	return (rdp->rd_state);
+}
+

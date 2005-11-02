@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.17 2005/10/27 07:43:56 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.18 2005/11/02 20:32:45 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -29,6 +29,20 @@
 
 #define RCS_TMPDIR_DEFAULT	"/tmp"
 
+/* flags specific to ci.c */
+#define CI_SYMFORCE (1<<0)
+#define CI_DEFAULT  (1<<1)
+
+/* flags specific to co.c */
+#define CO_LOCK	    (1<<2)
+#define CO_REVDATE  (1<<2)
+#define CO_STATE    (1<<3)
+#define CO_UNLOCK   (1<<4)
+
+/* shared flags  */
+#define FORCE       (1<<5)
+#define INTERACTIVE (1<<6)  
+
 extern char *__progname;
 extern const char rcs_version[];
 extern int verbose;
@@ -55,7 +69,7 @@ void	rcs_set_rev(const char *, RCSNUM **);
 int	rcs_init(char *, char **, int);
 int	rcs_getopt(int, char **, const char *);
 int	rcs_statfile(char *, char *, size_t);
-int	checkout_rev(RCSFILE *, RCSNUM *, const char *, int, const char *, int);
+int	checkout_rev(RCSFILE *, RCSNUM *, const char *, int, const char *);
 int	checkout_main(int, char **);
 int	checkin_main(int, char **);
 int	rcs_main(int, char **);

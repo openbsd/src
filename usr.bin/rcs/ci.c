@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.53 2005/10/30 09:46:07 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.54 2005/11/02 20:32:45 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -71,8 +71,8 @@ checkin_usage(void)
 int
 checkin_main(int argc, char **argv)
 {
-	int found, notlocked, ret;
-	int i, ch, force, lkmode, interactive, rflag, status, symforce;
+	int found, notlocked, ret, status;
+	int i, ch, flags;
 	mode_t fmode;
 	time_t date;
 	RCSFILE *file;
@@ -88,11 +88,11 @@ checkin_main(int argc, char **argv)
 	rcs_msg = username = NULL;
 	state = symbol = NULL;
 	newrev =  NULL;
-	fmode = force = lkmode = rflag = status = symforce = 0;
-	interactive = 1;
+	fmode = flags = status = 0;
 
+	flags |= INTERACTIVE;
 
-	while ((ch = rcs_getopt(argc, argv, "d::f::j:k:l::m:M:N:n:qr::s:u::Vw:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "d::f::j:k:l::m:M::N:n:qr::s:u::Vw:")) != -1) {
 		switch (ch) {
 		case 'd':
 			if (rcs_optarg == NULL)
@@ -104,18 +104,22 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'f':
 			rcs_set_rev(rcs_optarg, &newrev);
-			force = 1;
+			flags |= FORCE;
 			break;
 		case 'h':
 			(usage)();
 			exit(0);
 		case 'l':
 			rcs_set_rev(rcs_optarg, &newrev);
-			lkmode = LOCK_LOCK;
+			flags |= CO_LOCK;
+			break;
+		case 'M':
+			rcs_set_rev(rcs_optarg, &newrev);
+			flags |= CO_REVDATE;
 			break;
 		case 'm':
 			rcs_msg = rcs_optarg;
-			interactive = 0;
+			flags &= ~INTERACTIVE;
 			break;
 		case 'N':
 			if ((symbol = strdup(rcs_optarg)) == NULL) {
@@ -126,7 +130,7 @@ checkin_main(int argc, char **argv)
 				cvs_log(LP_ERR, "invalid symbol `%s'", symbol);
 				exit(1);
 			}
-			symforce = 1;
+			flags |= CI_SYMFORCE;
 			break;
 		case 'n':
 			if ((symbol = strdup(rcs_optarg)) == NULL) {
@@ -143,7 +147,7 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'r':
 			rcs_set_rev(rcs_optarg, &newrev);
-			rflag = 1;
+			flags |= CI_DEFAULT;
 			break;
 		case 's':
 			state = rcs_optarg;
@@ -154,7 +158,7 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &newrev);
-			lkmode = LOCK_UNLOCK;
+			flags |= CO_UNLOCK;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -233,15 +237,15 @@ checkin_main(int argc, char **argv)
 		 * If -f is not specified and there are no differences, tell the
 		 * user and revert to latest version.
 		 */
-		if ((force == 0) && (strlen(deltatext) < 1)) {
+		if ((flags & FORCE) && (strlen(deltatext) < 1)) {
 			rcsnum_tostr(frev, rbuf, sizeof(rbuf));
 			cvs_log(LP_WARN,
 			    "file is unchanged; reverting to previous revision %s",
 			    rbuf);
 			(void)unlink(argv[i]);
-			if (lkmode != 0)
-				checkout_rev(file, frev, argv[i], lkmode,
-				    username, 0);
+			if ((flags & CO_LOCK) || (flags & CO_UNLOCK))
+				checkout_rev(file, frev, argv[i], flags,
+				    username);
 			rcs_lock_remove(file, frev);
 			rcs_close(file);
 			if (verbose == 1)
@@ -345,7 +349,7 @@ checkin_main(int argc, char **argv)
 		if (symbol != NULL) {
 			if (verbose == 1)
 				printf("symbol: %s\n", symbol);
-			if (symforce == 1)
+			if (flags & CI_SYMFORCE)
 				rcs_sym_remove(file, symbol);
 			if ((ret = rcs_sym_add(file, symbol, newrev) == -1)
 			    && (rcs_errno == RCS_ERR_DUPENT)) {
@@ -379,13 +383,14 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Do checkout if -u or -l are specified.
 		 */
-		if ((lkmode != 0) && (rflag == 0))
-			checkout_rev(file, newrev, argv[i], lkmode, username, 0);
+		if (((flags & CO_LOCK) || (flags & CO_UNLOCK))
+		    && !(flags & CI_DEFAULT))
+			checkout_rev(file, newrev, argv[i], flags, username);
 
 		/* File will NOW be synced */
 		rcs_close(file);
 
-		if (interactive == 1) {
+		if (flags & INTERACTIVE) {
 			free(rcs_msg);
 			rcs_msg = NULL;
 		}
