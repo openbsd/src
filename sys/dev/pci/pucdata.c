@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.41 2005/10/26 17:09:23 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.42 2005/11/02 17:08:22 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -764,6 +764,56 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/*
+	 * Boards with an Oxford Semiconductor chip.
+	 *
+	 * Oxford Semiconductor provides documentation for their chip at:
+	 * <URL:http://www.oxsemi.com/products/uarts/index.html>
+	 *
+	 * As sold by Kouwell <URL:http://www.kouwell.com/>.
+	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
+	 */
+
+	/* Oxford Semiconductor OX16PCI952 PCI `950 UARTs - 128 byte FIFOs */
+	{   /* "Oxford Semiconductor OX16PCI952 UARTs", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952,	0, 0 },
+	    {   0xffff, 0xffff,						0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI952 PCI Parallel port */
+	{   /* "Oxford Semiconductor OX16PCI952 Parallel port", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952P,	0, 0 },
+	    {   0xffff, 0xffff,						0, 0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI954 PCI UARTs */
+	{   /* "Oxford Semiconductor OX16PCI954 UARTs", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954,	0, 0 },
+	    {   0xffff, 0xffff,						0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI954 PCI Parallel port */
+	{   /* "Oxford Semiconductor OX16PCI954 Parallel port", */
+	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954P,	0, 0 },
+	    {   0xffff, 0xffff,						0, 0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/*
 	 * NEC PK-UG-X001 K56flex PCI Modem card.
 	 * NEC MARTH bridge chip and Rockwell RCVDL56ACF/SP using.
 	 */
@@ -804,9 +854,9 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/*
-         * Lava Computers Quattro-PCI serial ports.
-         * A second version of the Quattro-PCI with different PCI ids.
-         */
+	 * Lava Computers Quattro-PCI serial ports.
+	 * A second version of the Quattro-PCI with different PCI ids.
+	 */
 	{   /* "Lava Computers Quattro-PCI 4-port serial", */
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_QUATTRO_AB2,	0, 0	},
 	    {	0xffff,	0xfffe,					0, 0	},
@@ -1020,8 +1070,8 @@ const struct puc_device_description puc_devices[] = {
 	    {   PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4018A,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-                { PUC_PORT_TYPE_LPT, 0x10, 0x00 },
-                { PUC_PORT_TYPE_LPT, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
 	    },
 	},
 
