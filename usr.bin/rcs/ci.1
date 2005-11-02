@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.15 2005/10/29 19:09:48 niallo Exp $
+.\"     $OpenBSD: ci.1,v 1.16 2005/11/02 20:39:28 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -28,6 +28,7 @@
 .Op Fl f Ns Op Ar rev
 .Op Fl k Ns Ar mode
 .Op Fl l Ns Op Ar rev
+.Op Fl M Ns Op Ar rev
 .Op Fl m Ns Ar msg
 .Op Fl N Ns Ar symbol
 .Op Fl n Ns Ar symbol
@@ -64,7 +65,7 @@ The same as
 .Fl r ,
 but also immediately checks out the deposited revision and locks it.
 This is useful if you wish to continue to edit the working file after check-in.
-.It Fl M
+.It Fl M Ns Op Ar rev
 Set the modification time of the file to the date of the
 retrieved revision.
 .It Fl m Ns Ar msg
