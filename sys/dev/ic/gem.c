@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.48 2005/10/31 23:53:13 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.49 2005/11/02 00:45:15 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1063,6 +1063,7 @@ gem_intr(v)
 	void *v;
 {
 	struct gem_softc *sc = (struct gem_softc *)v;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_h;
 	u_int32_t status;
@@ -1084,27 +1085,34 @@ gem_intr(v)
 	/* We should eventually do more than just print out error stats. */
 	if (status & GEM_INTR_TX_MAC) {
 		int txstat = bus_space_read_4(t, seb, GEM_MAC_TX_STATUS);
+#ifdef GEM_DEBUG
 		if (txstat & ~GEM_MAC_TX_XMIT_DONE)
 			printf("%s: MAC tx fault, status %x\n",
 			    sc->sc_dev.dv_xname, txstat);
+#endif
+		if (txstat & (GEM_MAC_TX_UNDERRUN | GEM_MAC_TX_PKT_TOO_LONG))
+			gem_init(ifp);
 	}
 	if (status & GEM_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, seb, GEM_MAC_RX_STATUS);
-
-		rxstat &= ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT);
+#ifdef GEM_DEBUG
+ 		if (rxstat & ~GEM_MAC_RX_DONE)
+ 			printf("%s: MAC rx fault, status %x\n",
+ 			    sc->sc_dev.dv_xname, rxstat);
+#endif
+		/*
+		 * On some chip revisions GEM_MAC_RX_OVERFLOW happen often
+		 * due to a silicon bug so handle them silently.
+		 */
 		if (rxstat & GEM_MAC_RX_OVERFLOW) {
-			struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-			gem_init(ifp);
 			ifp->if_ierrors++;
-		} else {
-			/*
-			 * Leave this in here until I figure out what to do
-			 * about other errors.
-			 */
+			gem_init(ifp);
+		}
+#ifdef GEM_DEBUG
+		else if (rxstat & ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT))
 			printf("%s: MAC rx fault, status %x\n",
 			    sc->sc_dev.dv_xname, rxstat);
-		}
+#endif
 	}
 	return (r);
 }
