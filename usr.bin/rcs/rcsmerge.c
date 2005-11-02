@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.7 2005/11/02 11:26:19 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.8 2005/11/02 13:21:37 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -116,6 +116,8 @@ rcsmerge_main(int argc, char **argv)
 			frev = file->rf_head;
 		else
 			frev = rev2;
+
+		printf("RCS file: %s\n", fpath);
 
 		if ((bp = cvs_diff3(file, argv[i], baserev, frev)) == NULL) {
 			cvs_log(LP_ERR, "failed to merge");
