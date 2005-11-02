@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.22 2005/10/21 15:24:10 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.23 2005/11/02 15:25:00 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -255,7 +255,13 @@ _dl_load_shlib_hint(struct sod *sod, struct sod *req_sod, int type,
 
 /*
  *  Load a shared object. Search order is:
- *	If the name contains a '/' use the name exactly as is. (only)
+ *	If the name contains a '/' use only the path preceeding the
+ *	library name and do not continue on to other methods if not
+ *	found.
+ *	   search hints for match in path preceeding library name
+ *	     this will only match specific library version.
+ *	   search path preceeding library name
+ *	     this will find largest minor version in path provided
  *	try the LD_LIBRARY_PATH specification (if present)
  *	   search hints for match in LD_LIBRARY_PATH dirs
  *           this will only match specific libary version.
@@ -282,8 +288,42 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
 	ignore_hints = 0;
 
 	if (_dl_strchr(libname, '/')) {
-		object = _dl_tryload_shlib(libname, type, flags);
-		return(object);
+		char *lpath, *lname;
+		lpath = _dl_strdup(libname);
+		lname = _dl_strrchr(lpath, '/');
+		if (lname == NULL) {
+			_dl_free(lpath);
+			_dl_errno = DL_NOT_FOUND;
+			return (object);
+		}
+		*lname = '\0';
+		lname++;
+		if (*lname  == '\0') {
+			_dl_free(lpath);
+			_dl_errno = DL_NOT_FOUND;
+			return (object);
+		}
+
+		_dl_build_sod(lname, &sod);
+		req_sod = sod;
+
+fullpathagain:
+		object = _dl_load_shlib_hint(&sod, &req_sod, type, flags,
+		    ignore_hints,  lpath);
+		if (object != NULL)
+			goto fullpathdone;
+
+		if (try_any_minor == 0) {
+			try_any_minor = 1;
+			ignore_hints = 1;
+			req_sod.sod_minor = -1;
+			goto fullpathagain;
+		}
+		_dl_errno = DL_NOT_FOUND;
+fullpathdone:
+		_dl_free(lpath);
+		_dl_free((char *)sod.sod_name);
+		return (object);
 	}
 
 	_dl_build_sod(libname, &sod);
