@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.180 2005/11/01 10:58:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.181 2005/11/02 15:34:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -649,7 +649,7 @@ int		 bgpd_redistribute(int, struct kroute *, struct kroute6 *);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);
-int		 buf_add(struct buf *, void *, size_t);
+int		 buf_add(struct buf *, const void *, size_t);
 void		*buf_reserve(struct buf *, size_t);
 int		 buf_close(struct msgbuf *, struct buf *);
 int		 buf_write(int, struct buf *);
@@ -687,10 +687,10 @@ void	 imsg_init(struct imsgbuf *, int);
 int	 imsg_read(struct imsgbuf *);
 int	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t, int,
-	    void *, u_int16_t);
+	    const void *, u_int16_t);
 struct buf	*imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 		    u_int16_t);
-int	 imsg_add(struct buf *, void *, u_int16_t);
+int	 imsg_add(struct buf *, const void *, u_int16_t);
 int	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
 int	 imsg_get_fd(struct imsgbuf *);
@@ -729,11 +729,11 @@ int	pftable_addr_remove(struct pftable_msg *);
 int	pftable_commit(void);
 
 /* name2id.c */
-u_int16_t	 rtlabel_name2id(char *);
+u_int16_t	 rtlabel_name2id(const char *);
 const char	*rtlabel_id2name(u_int16_t);
 void		 rtlabel_unref(u_int16_t);
 void		 rtlabel_ref(u_int16_t);
-u_int16_t	 pftable_name2id(char *);
+u_int16_t	 pftable_name2id(const char *);
 const char	*pftable_id2name(u_int16_t);
 void		 pftable_unref(u_int16_t);
 void		 pftable_ref(u_int16_t);

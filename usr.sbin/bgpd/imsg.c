@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.36 2005/04/26 15:18:22 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.37 2005/11/02 15:34:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -122,7 +122,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 
 int
 imsg_compose(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
-    pid_t pid, int fd, void *data, u_int16_t datalen)
+    pid_t pid, int fd, const void *data, u_int16_t datalen)
 {
 	struct buf	*wbuf;
 	int		 n;
@@ -170,7 +170,7 @@ imsg_create(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
 }
 
 int
-imsg_add(struct buf *msg, void *data, u_int16_t datalen)
+imsg_add(struct buf *msg, const void *data, u_int16_t datalen)
 {
 	if (datalen)
 		if (buf_add(msg, data, datalen) == -1) {

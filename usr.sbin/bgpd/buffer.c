@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.32 2005/08/11 16:24:11 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.33 2005/11/02 15:34:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,7 +49,7 @@ buf_open(size_t len)
 }
 
 int
-buf_add(struct buf *buf, void *data, size_t len)
+buf_add(struct buf *buf, const void *data, size_t len)
 {
 	if (buf->wpos + len > buf->size)
 		return (-1);

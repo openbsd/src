@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.4 2005/07/01 09:19:24 claudio Exp $ */
+/*	$OpenBSD: name2id.c,v 1.5 2005/11/02 15:34:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -48,7 +48,7 @@ struct n2id_labels	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 struct n2id_labels	pftable_labels = TAILQ_HEAD_INITIALIZER(pftable_labels);
 
 u_int16_t
-rtlabel_name2id(char *name)
+rtlabel_name2id(const char *name)
 {
 	return (_name2id(&rt_labels, name));
 }
@@ -72,7 +72,7 @@ rtlabel_ref(u_int16_t id)
 }
 
 u_int16_t
-pftable_name2id(char *name)
+pftable_name2id(const char *name)
 {
 	return (_name2id(&rt_labels, name));
 }
