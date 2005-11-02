@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.36 2005/11/01 15:21:54 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.37 2005/11/02 13:19:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -26,6 +26,7 @@
 
 int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
 	    struct bgpd_addr *, u_int8_t);
+int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
 enum filter_actions
 rde_filter(struct filter_head *rules, struct rde_peer *peer,
@@ -281,6 +282,46 @@ rde_filter_community(struct rde_aspath *asp, int as, int type)
 	return (community_match(a->data, a->len, as, type));
 }
 
+int
+rde_filter_equal(struct filter_head *a, struct filter_head *b,
+    enum directions dir)
+{
+	struct filter_rule	*fa, *fb;
+
+	fa = TAILQ_FIRST(a);
+	fb = TAILQ_FIRST(b);
+
+	while (fa != NULL || fb != NULL) {
+		/* skip all rules with wrong direction */
+		if (fa != NULL && dir != fa->dir) {
+			fa = TAILQ_NEXT(fa, entry);
+			continue;
+		}
+		if (fb != NULL && dir != fb->dir) {
+			fb = TAILQ_NEXT(fb, entry);
+			continue;
+		}
+
+		/* compare the two rules */
+		if ((fa == NULL && fb != NULL) || (fa != NULL && fb == NULL))
+			/* new rule added or removed */
+			return (0);
+		
+		if (fa->action != fb->action || fa->quick != fb->quick)
+			return (0);
+		if (memcmp(&fa->peer, &fb->peer, sizeof(fa->peer)))
+			return (0);
+		if (memcmp(&fa->match, &fb->match, sizeof(fa->match)))
+			return (0);
+		if (!filterset_equal(&fa->set, &fb->set))
+			return (0);
+
+		fa = TAILQ_NEXT(fa, entry);
+		fb = TAILQ_NEXT(fb, entry);
+	}
+	return (1);
+}
+
 /* free a filterset and take care of possible name2id references */
 void
 filterset_free(struct filter_set_head *sh)
@@ -301,7 +342,8 @@ filterset_free(struct filter_set_head *sh)
  * this function is a bit more complicated than a memcmp() because there are
  * types that need to be considered equal e.g. ACTION_SET_MED and
  * ACTION_SET_RELATIVE_MED. Also ACTION_SET_COMMUNITY and ACTION_SET_NEXTHOP
- * need some special care.
+ * need some special care. It only checks the types and not the values so
+ * it does not do a real compare.
  */
 int
 filterset_cmp(struct filter_set *a, struct filter_set *b)
@@ -331,4 +373,94 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 	return (0);
 }
 
+int
+filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
+{
+	struct filter_set	*a, *b;
+	const char		*as, *bs;
+
+	for (a = TAILQ_FIRST(ah), b = TAILQ_FIRST(bh);
+	    a != NULL && b != NULL;
+	    a = TAILQ_NEXT(a, entry), b = TAILQ_NEXT(b, entry)) {
+		switch (a->type) {
+		case ACTION_SET_PREPEND_SELF:
+		case ACTION_SET_PREPEND_PEER:
+			if (a->type == b->type &&
+			    a->action.prepend == b->action.prepend)
+				continue;
+			break;
+		case ACTION_SET_LOCALPREF:
+		case ACTION_SET_MED:
+		case ACTION_SET_WEIGHT:
+			if (a->type == b->type &&
+			    a->action.metric == b->action.metric)
+				continue;
+			break;
+		case ACTION_SET_RELATIVE_LOCALPREF:
+		case ACTION_SET_RELATIVE_MED:
+		case ACTION_SET_RELATIVE_WEIGHT:
+			if (a->type == b->type &&
+			    a->action.relative == b->action.relative)
+				continue;
+			break;
+		case ACTION_SET_NEXTHOP:
+			if (a->type == b->type &&
+			    memcmp(&a->action.nexthop, &b->action.nexthop,
+			    sizeof(a->action.nexthop)) == 0)
+				continue;
+			break;
+		case ACTION_SET_NEXTHOP_BLACKHOLE:
+		case ACTION_SET_NEXTHOP_REJECT:
+		case ACTION_SET_NEXTHOP_NOMODIFY:
+			if (a->type == b->type)
+				continue;
+			break;
+		case ACTION_SET_COMMUNITY:
+			if (a->type == b->type &&
+			    memcmp(&a->action.community, &b->action.community,
+			    sizeof(a->action.community)) == 0)
+				continue;
+			break;
+		case ACTION_PFTABLE:
+		case ACTION_PFTABLE_ID:
+			if (b->type == ACTION_PFTABLE)
+				bs = b->action.pftable;
+			else if (b->type == ACTION_PFTABLE_ID)
+				bs = pftable_id2name(b->action.id);
+			else
+				break;
+			
+			if (a->type == ACTION_PFTABLE)
+				as = a->action.pftable;
+			else
+				as = pftable_id2name(a->action.id);
+
+			if (strcmp(as, bs) == 0)
+				continue;
+			break;
+		case ACTION_RTLABEL:
+		case ACTION_RTLABEL_ID:
+			if (b->type == ACTION_RTLABEL)
+				bs = b->action.rtlabel;
+			else if (b->type == ACTION_RTLABEL_ID)
+				bs = rtlabel_id2name(b->action.id);
+			else
+				break;
+			
+			if (a->type == ACTION_RTLABEL)
+				as = a->action.rtlabel;
+			else
+				as = rtlabel_id2name(a->action.id);
+
+			if (strcmp(as, bs) == 0)
+				continue;
+			break;
+		}
+		/* compare failed */
+		return (0);
+	}
+	if (a != NULL || b != NULL)
+		return (0);
+	return (1);
+}
 
