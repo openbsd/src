@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.49 2005/11/02 00:45:15 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.50 2005/11/02 02:15:12 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -450,6 +450,8 @@ gem_rxdrain(struct gem_softc *sc)
 	for (i = 0; i < GEM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf != NULL) {
+			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
+			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmatag, rxs->rxs_dmamap);
 			m_freem(rxs->rxs_mbuf);
 			rxs->rxs_mbuf = NULL;
@@ -497,9 +499,8 @@ gem_stop(struct ifnet *ifp, int disable)
 	}
 	sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 
-	if (disable) {
+	if (disable)
 		gem_rxdrain(sc);
-	}
 }
 
 
