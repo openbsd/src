@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.955 2005/10/31 05:41:27 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.956 2005/11/02 17:08:21 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7109,6 +7109,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41098,
 	    "Exsys EX-41098",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952,
+	    "OX16PCI952",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952P,
+	    "OX16PCI952 Parallel",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954,
+	    "OX16PCI954",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954P,
+	    "OX16PCI954 Parallel",
 	},
 	{
 	    PCI_VENDOR_PDC, PCI_PRODUCT_PDC_QSTOR_SATA,
