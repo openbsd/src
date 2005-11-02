@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.77 2005/09/14 20:55:59 kettenis Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.78 2005/11/02 20:03:16 aaron Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -375,6 +375,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		systrace_fork(p1, p2);
 #endif
 
+	timeout_set(&p2->p_stats->p_virt_to, virttimer_trampoline, p2);
+	timeout_set(&p2->p_stats->p_prof_to, proftimer_trampoline, p2);
+
 	/*
 	 * Make child runnable, set start time, and add to run queue.
 	 */
@@ -384,9 +387,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	p2->p_stat = SRUN;
 	setrunqueue(p2);
 	SCHED_UNLOCK(s);
-
-	timeout_set(&p2->p_stats->p_virt_to, virttimer_trampoline, p2);
-	timeout_set(&p2->p_stats->p_prof_to, proftimer_trampoline, p2);
 
 	/*
 	 * Now can be swapped.
