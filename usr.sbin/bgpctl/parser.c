@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.21 2005/09/20 14:40:32 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.22 2005/11/02 14:11:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,9 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -493,6 +497,7 @@ int
 parse_addr(const char *word, struct bgpd_addr *addr)
 {
 	struct in_addr	ina;
+	struct addrinfo	hints, *r;
 
 	if (word == NULL)
 		return (0);
@@ -506,6 +511,22 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 		return (1);
 	}
 
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(word, "0", &hints, &r) == 0) {
+		addr->af = AF_INET6;
+		memcpy(&addr->v6,
+		    &((struct sockaddr_in6 *)r->ai_addr)->sin6_addr,
+		    sizeof(addr->v6));
+		addr->scope_id =
+		    ((struct sockaddr_in6 *)r->ai_addr)->sin6_scope_id;
+
+		freeaddrinfo(r);
+		return (1);
+	}
+
 	return (0);
 }
 
@@ -513,7 +534,9 @@ int
 parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 {
 	struct in_addr	 ina;
-	int		 bits = 32;
+	char		*p, *ps;
+	const char	*errstr;
+	int		 mask = -1;
 
 	if (word == NULL)
 		return (0);
@@ -521,20 +544,42 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 	bzero(addr, sizeof(struct bgpd_addr));
 	bzero(&ina, sizeof(ina));
 
-	if (strrchr(word, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, word,
-		    &ina, sizeof(ina))) == -1)
+	if ((p = strrchr(word, '/')) != NULL) {
+		mask = strtonum(p + 1, 0, 128, &errstr);
+		if (errstr)
+			errx(1, "invalid netmask: %s", errstr);
+		
+		if ((ps = malloc(strlen(word) - strlen(p) + 1)) == NULL)
+			fatal("host: malloc");
+		strlcpy(ps, word, strlen(word) - strlen(p) + 1);
+
+		if (parse_addr(ps, addr) == 0)
 			return (0);
-		addr->af = AF_INET;
-		addr->v4.s_addr = ina.s_addr & htonl(prefixlen2mask(bits));
-		*prefixlen = bits;
-		return (1);
-	} else {
-		*prefixlen = 32;
-		return (parse_addr(word, addr));
+		
+		free(ps);
+	} else
+		if (parse_addr(word, addr) == 0)
+			return (0);
+
+	switch (addr->af) {
+	case AF_INET:
+		if (mask == -1)
+			mask = 32;
+		if (mask > 32)
+			errx(1, "invalid netmask: too large");
+		addr->v4.s_addr = ina.s_addr & htonl(prefixlen2mask(mask));
+		break;
+	case AF_INET6:
+		if (mask == -1)
+			mask = 128;
+		inet6applymask(&addr->v6, &addr->v6, mask);
+		break;
+	default:
+		return (0);
 	}
 
-	return (0);
+	*prefixlen = mask;
+	return (1);
 }
 
 int
@@ -736,7 +781,7 @@ parse_nexthop(const char *word, struct parse_result *r)
 	return (1);
 }
 
-/* XXX local copy from kroute.c, should go to a shared file */
+/* XXX local copies from kroute.c, should go to a shared file */
 in_addr_t
 prefixlen2mask(u_int8_t prefixlen)
 {
@@ -745,3 +790,21 @@ prefixlen2mask(u_int8_t prefixlen)
 
 	return (0xffffffff << (32 - prefixlen));
 }
+
+void
+inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
+{
+	struct in6_addr	mask;
+	int		i;
+
+	bzero(&mask, sizeof(mask));
+	for (i = 0; i < prefixlen / 8; i++)
+		mask.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	for (i = 0; i < 16; i++)
+		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
+}
+
