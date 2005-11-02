@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.191 2005/10/17 08:43:34 henning Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.192 2005/11/02 22:17:20 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3976,7 +3976,7 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 #endif
 		tb.pf = tp->pf;
 #ifdef TCP_SACK
-		tb.sack_enable = tcp_do_sack;
+		tb.sack_enable = tp->sack_enable;
 #endif
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 #ifdef TCP_SIGNATURE
