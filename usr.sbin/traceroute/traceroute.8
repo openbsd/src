@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.36 2003/08/27 08:17:33 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.37 2005/11/02 11:35:54 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -42,12 +42,12 @@
 .Sh SYNOPSIS
 .Nm traceroute
 .Bk -words
-.Op Fl cdDIlnrSv
+.Op Fl cDdIlnrSv
 .Op Fl f Ar first_ttl
 .Op Fl g Ar gateway_addr
 .Op Fl m Ar max_ttl
-.Op Fl p Ar port
 .Op Fl P Ar proto
+.Op Fl p Ar port
 .Op Fl q Ar nqueries
 .Op Fl s Ar src_addr
 .Op Fl t Ar tos
@@ -79,13 +79,14 @@ Do not increment the destination port number in successive UDP packets.
 Rather, all UDP packets will have the same destination port, as set via the
 .Fl p
 flag (or 33434 if none is specified).
-.It Fl d
-Turn on socket-level debugging.
 .It Fl D
 Dump the packet data to standard error before transmitting it.
+.It Fl d
+Turn on socket-level debugging.
 .It Fl f Ar first_ttl
-Set the first time-to-live used in outgoing probe packets. The effect is that
-the first first_ttl - 1 hosts will be skipped in the output of
+Set the first time-to-live used in outgoing probe packets.
+The effect is that the first first_ttl \- 1 hosts will be skipped
+in the output of
 .Nm traceroute .
 The default value is 1 (skip no hosts).
 .It Fl g Ar gateway_addr
@@ -112,6 +113,15 @@ MIB variable, which defaults to 64.
 Print hop addresses numerically rather than symbolically and numerically
 (saves a nameserver address-to-name lookup for each gateway found on the
 path).
+.It Fl P Ar proto
+Change the protocol being used from
+.Tn UDP
+to a numeric protocol or a name as specified in
+.Pa /etc/protocols .
+This will not work reliably for most protocols.
+If set to 1 (ICMP), then
+ICMP Echo Request messages will be used (same as
+.Xr ping 8 ) .
 .It Fl p Ar port
 Set the base
 .Tn UDP
@@ -132,15 +142,6 @@ be returned to terminate the route tracing).
 If something is
 listening on a port in the default range, this option can be used
 to pick an unused port range.
-.It Fl P Ar proto
-Change the protocol being used from
-.Tn UDP
-to a numeric protocol or a name as specified in
-.Pa /etc/protocols .
-This will not work reliably for most protocols.
-If set to 1 (ICMP), then
-ICMP Echo Request messages will be used (same as
-.Xr ping 8 ) .
 .It Fl q Ar nqueries
 Set the number of probes per ``ttl'' to
 .Ar nqueries
@@ -153,6 +154,8 @@ an error is returned.
 This option can be used to ping a local host through an interface
 that has no route through it (e.g., after the interface was dropped by
 .Xr routed 8 ) .
+.It Fl S
+Print how many probes were not answered for each hop.
 .It Fl s Ar src_addr
 Use the following IP address
 (which must be given as an IP number, not
@@ -163,8 +166,6 @@ of the interface the probe packet is sent on.
 If the IP address
 is not one of this machine's interface addresses and the user is
 not the superuser, an error is returned and nothing is sent.
-.It Fl S
-Print how many probes were not answered for each hop.
 .It Fl t Ar tos
 Set the
 .Em type-of-service
@@ -221,7 +222,7 @@ round trip time of each probe.
 If the probe answers come from
 different gateways, the address of each responding system will
 be printed.
-If there is no response within a 5 sec. timeout
+If there is no response within a 5 second timeout
 interval (changed with the
 .Fl w
 flag), a "*" is printed for that
@@ -400,7 +401,8 @@ during normal operations or from automated scripts.
 The very first
 .Nm
 (never released) used ICMP ECHO_REQUEST
-datagrams as probe packets.  During the first night of testing it was
+datagrams as probe packets.
+During the first night of testing it was
 discovered that more than half the router vendors of the time would
 not return an ICMP TIME_EXCEEDED for an ECHO_REQUEST.
 .Nm
