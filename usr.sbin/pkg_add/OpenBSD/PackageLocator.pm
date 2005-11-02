@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.46 2005/10/25 23:38:51 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.47 2005/11/02 22:26:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -836,6 +836,12 @@ sub getNext
 	my $self = shift;
 
 	return $self->{_archive}->next();
+}
+
+sub skip
+{
+	my $self = shift;
+	return $self->{_archive}->skip();
 }
 
 package OpenBSD::FatPackageLocation;

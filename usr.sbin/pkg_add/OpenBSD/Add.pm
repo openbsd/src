@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.44 2005/11/02 17:01:26 bernd Exp $
+# $OpenBSD: Add.pm,v 1.45 2005/11/02 22:26:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -345,10 +345,13 @@ sub install
 		my $file = $self->prepare_to_extract($state);
 
 		print "extracting $destdir$fullname\n" if $state->{very_verbose};
-		return if $state->{not};
-		$file->create();
+		if ($state->{not}) {
+			$state->{archive}->skip();
+		} else {
+			$file->create();
+			$self->set_modes($destdir.$fullname);
+		}
 	}
-	$self->set_modes($destdir.$fullname);
 }
 
 sub prepare_to_extract
