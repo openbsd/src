@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.55 2005/11/02 20:40:56 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.56 2005/11/02 21:42:16 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -43,9 +43,6 @@
 #include "rcs.h"
 #include "diff.h"
 #include "rcsprog.h"
-
-#define LOCK_LOCK	1
-#define LOCK_UNLOCK	2
 
 #define DATE_NOW        -1
 #define DATE_MTIME      -2
