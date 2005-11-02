@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsclean.1,v 1.7 2005/10/29 09:32:13 xsa Exp $
+.\"     $OpenBSD: rcsclean.1,v 1.8 2005/11/02 11:01:40 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -23,9 +23,12 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl nquV
+.Op Fl V
 .Op Fl k Ns Ar mode
+.Op Fl n Ns Op Ar rev
+.Op Fl q Ns Op Ar rev
 .Op Fl r Ns Ar rev
+.Op Fl u Ns Op Ar rev
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -37,16 +40,16 @@ The following options are supported:
 .Bl -tag -width Ds
 .It Fl k Ns Ar mode
 Specify the keyword substitution mode.
-.It Fl n
+.It Fl n Ns Op Ar rev
 Dry-run mode.
 When this option is specified,
 .Nm
 will show you what it would normally do without doing it.
-.It Fl q
+.It Fl q Ns Op Ar rev
 Be quiet about reporting.
 .It Fl r Ns Ar rev
 Specify the revision for comparison.
-.It Fl u
+.It Fl u Ns Op Ar rev
 Unlock the revision if it's not locked and has not been changed.
 .It Fl V
 Print RCS's version number.
