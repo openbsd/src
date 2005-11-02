@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.29 2005/02/12 15:32:12 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.30 2005/11/02 03:27:39 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -346,7 +346,6 @@ ahc_action(struct scsi_xfer *xs)
 	ahc_lock(ahc, &s);
 	if ((scb = ahc_get_scb(ahc)) == NULL) {
 		ahc_unlock(ahc, &s);
-		xs->error = XS_DRIVER_STUFFUP;
 		return (TRY_AGAIN_LATER);
 	}
 	ahc_unlock(ahc, &s);
@@ -591,15 +590,14 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 	       struct scb *scb)
 {
 	struct hardware_scb *hscb;
-	
+	int s;
+
 	hscb = scb->hscb;
 	xs->resid = xs->status = 0;
 	xs->error = CAM_REQ_INPROG;
 
 	hscb->cdb_len = xs->cmdlen;
 	if (hscb->cdb_len > sizeof(hscb->cdb32)) {
-		int s;
-
 		ahc_set_transaction_status(scb, CAM_REQ_INVALID);
 		ahc_lock(ahc, &s);
 		ahc_free_scb(ahc, scb);
@@ -631,9 +629,9 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 			       "= %d\n",
 			       ahc_name(ahc), error);
 #endif
-			xs->error = XS_BUSY;
-			xs->flags |= ITSDONE;
-			scsi_done(xs);
+			ahc_lock(ahc, &s);
+			ahc_free_scb(ahc, scb);
+			ahc_unlock(ahc, &s);
 			return (TRY_AGAIN_LATER);	/* XXX fvdl */
 }
 		error = ahc_execute_scb(scb,

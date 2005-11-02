@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.24 2005/07/20 03:20:06 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.25 2005/11/02 03:27:39 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -1077,13 +1077,10 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 			xs->error = XS_DRIVER_STUFFUP;
 			goto out_bad;
 		default:
-			xs->error = XS_DRIVER_STUFFUP;
 			mpt_prt(mpt, "error %d loading DMA map", error);
  out_bad:
 			s = splbio();
 			mpt_free_request(mpt, req);
-			xs->flags |= ITSDONE;
-			scsi_done(xs);
 			splx(s);
 			return (TRY_AGAIN_LATER);
 		}

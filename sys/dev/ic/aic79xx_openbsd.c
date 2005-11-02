@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.21 2005/10/06 23:04:28 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.22 2005/11/02 03:27:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -376,7 +376,6 @@ ahd_action(struct scsi_xfer *xs)
 	if ((scb = ahd_get_scb(ahd, col_idx)) == NULL) {
 		ahd->flags |= AHD_RESOURCE_SHORTAGE;
 		ahd_unlock(ahd, &s);
-		xs->error = XS_DRIVER_STUFFUP;
 		return (TRY_AGAIN_LATER);
 	}
 	ahd_unlock(ahd, &s);
@@ -569,15 +568,14 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 	       struct scb *scb)
 {
 	struct hardware_scb *hscb;
-	
+	int s;
+
 	hscb = scb->hscb;
 	xs->resid = xs->status = 0;
 	xs->error = CAM_REQ_INPROG;
 	
 	hscb->cdb_len = xs->cmdlen;
 	if (hscb->cdb_len > MAX_CDB_LEN) {
-		int s;
-		
 		aic_set_transaction_status(scb, CAM_REQ_INVALID);
 		ahd_lock(ahd, &s);
 		ahd_free_scb(ahd, scb);
@@ -606,9 +604,9 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 			printf("%s: in ahd_setup_data(): bus_dmamap_load() "
 			    "= %d\n", ahd_name(ahd), error);
 #endif
-			xs->error = XS_BUSY;
-			xs->flags |= ITSDONE;
-			scsi_done(xs);
+			ahd_lock(ahd, &s);
+			ahd_free_scb(ahd, scb);
+			ahd_unlock(ahd, &s);
 			return (TRY_AGAIN_LATER);       /* XXX fvdl */
 		}
 		error = ahd_execute_scb(scb, scb->dmamap->dm_segs,
