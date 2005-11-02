@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.20 2005/10/17 03:03:24 brad Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.21 2005/11/02 02:07:11 brad Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -121,12 +121,13 @@ gem_attach_pci(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = (void *)self;
 	struct gem_softc *sc = &gsc->gsc_gem;
-	pci_intr_handle_t intrhandle;
+	pci_intr_handle_t ih;
 #ifdef __sparc64__
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
 #endif
-	const char *intrstr;
+	const char *intrstr = NULL;
+	bus_size_t size;
 	int type;
 
 	if (pa->pa_memt) {
@@ -158,8 +159,7 @@ gem_attach_pci(parent, self, aux)
 
 #define PCI_GEM_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR, type, 0,
-	    &gsc->gsc_memt, &gsc->gsc_memh, NULL, NULL, 0) != 0)
-	{
+	    &gsc->gsc_memt, &gsc->gsc_memh, NULL, &size, 0) != 0) {
 		printf(": could not map gem registers\n");
 		return;
 	}
@@ -178,22 +178,24 @@ gem_attach_pci(parent, self, aux)
 
 	sc->sc_burst = 16;	/* XXX */
 
-	if (pci_intr_map(pa, &intrhandle) != 0) {
+	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
-		return;	/* bus_unmap ? */
+		bus_space_unmap(gsc->gsc_memt, gsc->gsc_memh, size);
+		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, ih);
 	gsc->gsc_ih = pci_intr_establish(pa->pa_pc,
-	    intrhandle, IPL_NET, gem_intr, sc, self->dv_xname);
-	if (gsc->gsc_ih != NULL) {
-		printf(": %s", intrstr ? intrstr : "unknown interrupt");
-	} else {
+	    ih, IPL_NET, gem_intr, sc, self->dv_xname);
+	if (gsc->gsc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;	/* bus_unmap ? */
+		bus_space_unmap(gsc->gsc_memt, gsc->gsc_memh, size);
+		return;
 	}
+
+	printf(": %s", intrstr);
 
 	/*
 	 * call the main configure
