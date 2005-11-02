@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.43 2005/10/19 10:41:19 espie Exp $
+# $OpenBSD: Add.pm,v 1.44 2005/11/02 17:01:26 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -295,10 +295,9 @@ sub install
 	my ($self, $state) = @_;
 
 	my $name = $self->{name};
-	open(my $pipe, '-|', '/sbin/sysctl', $name);
+	open(my $pipe, '-|', '/sbin/sysctl', '-n', $name);
 	my $actual = <$pipe>;
 	chomp $actual;
-	$actual =~ s/^\Q$name\E\s*\=\s*//;
 	if ($self->{mode} eq '=' && $actual eq $self->{value}) {
 		return;
 	}
