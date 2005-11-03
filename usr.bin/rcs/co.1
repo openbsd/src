@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.9 2005/11/01 18:58:34 niallo Exp $
+.\"     $OpenBSD: co.1,v 1.10 2005/11/03 15:43:11 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,11 +23,12 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl fIMqV
+.Op Fl fIqV
 .Op Ar rev
 .Op Fl d Ns Ar date
 .Op Fl k Ns Ar mode
 .Op Fl l Ns Op Ar rev
+.Op Fl M Ns Op Ar rev
 .Op Fl m Ns Ar msg
 .Op Fl p Ns Op Ar rev
 .Op Fl r Ns Op Ar rev
@@ -57,7 +58,7 @@ Specify the keyword substitution mode.
 The same as
 .Fl r ,
 but also locks the revision.
-.It Fl M
+.It Fl M Ns Op Ar rev
 Set the modification time of the file to the date of the
 retrieved revision.
 .It Fl m Ns Ar msg
