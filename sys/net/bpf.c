@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.59 2005/07/31 03:52:18 pascoe Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.60 2005/11/03 20:00:18 reyk Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1157,17 +1157,16 @@ bpf_mcopy(const void *src_arg, void *dst_arg, size_t len)
 /*
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
-int
+void
 bpf_mtap(caddr_t arg, struct mbuf *m)
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
 	struct bpf_d *d;
 	size_t pktlen, slen;
 	struct mbuf *m0;
-	int drop = 0;
 
 	if (m == NULL)
-		return (0);
+		return;
 
 	pktlen = 0;
 	for (m0 = m; m0 != 0; m0 = m0->m_next)
@@ -1182,10 +1181,8 @@ bpf_mtap(caddr_t arg, struct mbuf *m)
 
 		bpf_catchpacket(d, (u_char *)m, pktlen, slen, bpf_mcopy);
 		if (d->bd_fildrop)
-			drop++;
+			m->m_flags |= M_FILDROP;
 	}
-
-	return (drop);
 }
 
 /*
@@ -1197,7 +1194,7 @@ bpf_mtap(caddr_t arg, struct mbuf *m)
  * fields in this header that we initialize, and will not try to free
  * it or keep a pointer to it.
  */
-int
+void
 bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m)
 {
 	struct m_hdr mh;
@@ -1207,7 +1204,8 @@ bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m)
 	mh.mh_len = dlen;
 	mh.mh_data = data;
 
-	return bpf_mtap(arg, (struct mbuf *) &mh);
+	bpf_mtap(arg, (struct mbuf *) &mh);
+	m->m_flags |= mh.mh_flags & M_FILDROP;
 }
 
 /*
@@ -1219,7 +1217,7 @@ bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m)
  * fields in this header that we initialize, and will not try to free
  * it or keep a pointer to it.
  */
-int
+void
 bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m)
 {
 	struct m_hdr mh;
@@ -1229,7 +1227,8 @@ bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m)
 	mh.mh_len = 4;
 	mh.mh_data = (caddr_t)&af;
 
-	return bpf_mtap(arg, (struct mbuf *) &mh);
+	bpf_mtap(arg, (struct mbuf *) &mh);
+	m->m_flags |= mh.mh_flags & M_FILDROP;
 }
 
 /*

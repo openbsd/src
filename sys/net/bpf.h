@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.31 2005/07/31 03:52:18 pascoe Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.32 2005/11/03 20:00:18 reyk Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -261,9 +261,9 @@ struct bpf_dltlist {
 #ifdef _KERNEL
 int	 bpf_validate(struct bpf_insn *, int);
 int	 bpf_tap(caddr_t, u_char *, u_int);
-int	 bpf_mtap(caddr_t, struct mbuf *);
-int	 bpf_mtap_hdr(caddr_t, caddr_t, u_int, struct mbuf *);
-int	 bpf_mtap_af(caddr_t, u_int32_t, struct mbuf *);
+void	 bpf_mtap(caddr_t, struct mbuf *);
+void	 bpf_mtap_hdr(caddr_t, caddr_t, u_int, struct mbuf *);
+void	 bpf_mtap_af(caddr_t, u_int32_t, struct mbuf *);
 void	 bpfattach(caddr_t *, struct ifnet *, u_int, u_int);
 void	 bpfdetach(struct ifnet *);
 void	 bpfilterattach(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.83 2005/10/17 08:43:34 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.84 2005/11/03 20:00:18 reyk Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -143,10 +143,11 @@ struct mbuf {
 #define M_ANYCAST6	0x4000	/* received as IPv6 anycast */
 #define M_LINK0		0x8000	/* link layer specific flag */
 #define M_LOOP		0x0040	/* for Mbuf statistics */
+#define M_FILDROP	0x0080	/* dropped by bpf filter */
 
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|\
-			 M_AUTH|M_ANYCAST6|M_LOOP|M_TUNNEL|M_LINK0)
+			 M_AUTH|M_ANYCAST6|M_LOOP|M_TUNNEL|M_LINK0|M_FILDROP)
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
