@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.9 2005/11/02 14:59:41 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.10 2005/11/03 17:38:12 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -61,7 +61,10 @@ is not specified, all users are removed from the access list.
 .It Fl h
 Display the program's usage and exit.
 .It Fl i
-Create the RCS files specified as arguments.
+Create and initialize a new RCS file.
+If the RCS file has no path prefix, try to first create it into the
+.Pa ./RCS
+subdirectory and then in the current directory.
 Files created this way contain no revision.
 .It Fl k Ns Ar mode
 Specify the keyword substitution mode.
