@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.46 2005/08/08 14:48:27 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.47 2005/11/03 15:57:40 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -268,10 +268,10 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 	cvs_printf("keyword substitution: %s\n",
 	    rf->rf_expand == NULL ? "kv" : rf->rf_expand);
 
-	cvs_printf("total revisions: %u;", rf->rf_ndelta);
+	cvs_printf("total revisions: %u", rf->rf_ndelta);
 
 	if ((log_honly == 0) && (log_lhonly == 0))
-		cvs_printf("\tselected revisions: %u", nrev);
+		cvs_printf(";\tselected revisions: %u", nrev);
 
 	cvs_printf("\n");
 
