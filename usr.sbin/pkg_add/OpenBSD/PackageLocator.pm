@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.47 2005/11/02 22:26:51 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.48 2005/11/03 13:28:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -364,6 +364,7 @@ sub pkg_copy
 		kill $sig, $$;
 	};
 
+	my $nonempty = 0;
 	{
 
 	local $SIG{'PIPE'} =  $handler;
@@ -380,13 +381,20 @@ sub pkg_copy
 		if (!defined $n) {
 			die "Error reading\n";
 		}
+		if ($n > 0) {
+			$nonempty = 1;
+		}
 		syswrite $copy, $buffer;
 		syswrite STDOUT, $buffer;
 	} while ($n != 0);
 	close($copy);
 	}
 
-	rename $filename, "$dir/$name";
+	if ($nonempty) {
+		rename $filename, "$dir/$name";
+	} else {
+		unlink $filename;
+	}
 }
 
 sub open_pipe
