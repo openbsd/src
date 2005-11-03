@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.27 2005/11/03 15:41:52 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.28 2005/11/03 16:08:03 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -164,10 +164,7 @@ checkout_usage(void)
 
 /*
  * Checkout revision <rev> from RCSFILE <file>, writing it to the path <dst>
- * <lkmode> is either LOCK_LOCK or LOCK_UNLOCK or something else
- * (which has no effect).
- * In the case of LOCK_LOCK, a lock is set for <username> if it is not NULL.
- * In the case of LOCK_UNLOCK, all locks are removed for that revision.
+ * Currenly recognised <flags> are CO_LOCK, CO_UNLOCK and CO_REVDATE. 
  *
  * Returns 0 on success, -1 on failure.
  */
