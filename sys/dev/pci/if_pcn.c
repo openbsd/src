@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.2 2005/08/01 22:30:47 kettenis Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.3 2005/11/03 20:47:01 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -557,8 +557,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to map device registers\n");
 		return;
 	}
 
@@ -1050,7 +1049,7 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct pcn_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int s, error;
+	int s, error = 0;
 
 	s = splnet();
 
