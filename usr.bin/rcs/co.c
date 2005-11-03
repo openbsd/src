@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.25 2005/11/02 20:44:50 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.26 2005/11/03 15:40:40 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -59,7 +59,7 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "f::l::p::qr::s:u::V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::l::M::p::qr::s:u::V")) != -1) {
 		switch (ch) {
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
@@ -68,6 +68,10 @@ checkout_main(int argc, char **argv)
 		case 'l':
 			rcs_set_rev(rcs_optarg, &rev);
 			flags |= CO_LOCK;
+			break;
+		case 'M':
+			rcs_set_rev(rcs_optarg, &rev);
+			flags |= CO_REVDATE;
 			break;
 		case 'p':
 			rcs_set_rev(rcs_optarg, &rev);
