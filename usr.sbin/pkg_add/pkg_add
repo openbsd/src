@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.210 2005/10/24 08:55:59 espie Exp $
+# $OpenBSD: pkg_add,v 1.211 2005/11/03 11:50:32 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -36,6 +36,7 @@ use OpenBSD::Add;
 use OpenBSD::SharedLibs;
 
 my $errors = 0;
+my $bad = 0;
 
 our %forced = ();
 our $not;
@@ -557,6 +558,7 @@ sub install_package
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
 		$handle->close();
+		$bad++;
 		return ();
 	}
 
@@ -587,7 +589,10 @@ sub install_package
 	}
 	if (!$okay) {
 		$handle->close();
-		return () unless $forced{libdepends};
+		if (!$forced{libdepends}) {
+			$bad++;
+			return ();
+		}
 	}
 	really_add($handle, $state);
 	$handle->wipe_info();
@@ -596,7 +601,6 @@ sub install_package
 	return ();
 }
 
-my $bad = 0;
 
 sub choose1
 {
@@ -927,3 +931,7 @@ rethrow $dielater;
 	}
 	exit(1);
 };
+
+if ($bad) {
+	exit(1);
+}
