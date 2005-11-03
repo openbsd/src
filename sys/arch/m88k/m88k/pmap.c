@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2005/10/13 19:48:33 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2005/11/03 21:27:33 martin Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1194,7 +1194,7 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 #endif
 
 	/*
-	 * Loop through the range in vm_page_size increments.
+	 * Loop through the range in PAGE_SIZE increments.
 	 */
 	for (va = s; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
@@ -1404,7 +1404,7 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 	kflush = pmap == kernel_pmap;
 
 	/*
-	 * Loop through the range in vm_page_size increments.
+	 * Loop through the range in PAGE_SIZE increments.
 	 */
 	for (va = s; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
