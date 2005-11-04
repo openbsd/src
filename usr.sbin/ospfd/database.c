@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.15 2005/10/19 21:43:20 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.16 2005/11/04 10:30:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -200,9 +200,9 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 		    inet_ntoa(nbr->id));
 		return;
 	case NBR_STA_INIT:
-		/* evaluate dr and bdr before issuing a 2-Way event */
-		if_fsm(nbr->iface, IF_EVT_NBR_CHNG);
+		/* evaluate dr and bdr after issuing a 2-Way event */
 		nbr_fsm(nbr, NBR_EVT_2_WAY_RCVD);
+		if_fsm(nbr->iface, IF_EVT_NBR_CHNG);
 		if (nbr->state != NBR_STA_XSTRT)
 			return;
 		/* FALLTHROUGH */
@@ -211,7 +211,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 			return;
 		/*
 		 * check bits: either I,M,MS or only M
-		 * I,M,MS is checked here the M only case is a fall-through
 		 */
 		if (dd_hdr.bits == (OSPF_DBD_I | OSPF_DBD_M | OSPF_DBD_MS)) {
 			/* if nbr Router ID is larger than own -> slave */
@@ -225,7 +224,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 				nbr_fsm(nbr, NBR_EVT_NEG_DONE);
 			}
 		} else if (!(dd_hdr.bits & (OSPF_DBD_I | OSPF_DBD_MS))) {
-			/* master */
+			/* M only case: we are master */
 			if (ntohl(dd_hdr.dd_seq_num) != nbr->dd_seq_num) {
 				log_warnx("recv_db_description: invalid "
 				    "seq num, mine %x his %x",
