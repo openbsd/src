@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.4 2004/05/05 23:52:09 tedu Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.5 2005/11/04 21:48:07 miod Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_procp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	error = uvm_io(&p->p_vmspace->vm_map, &auio, 0);
 	if (error)
 		goto bad;
 
@@ -137,7 +137,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ; 
 	auio.uio_procp = NULL;
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	error = uvm_io(&p->p_vmspace->vm_map, &auio, 0);
 	if (error)
 		goto bad;
 
@@ -160,7 +160,7 @@ procfs_docmdline(curp, p, pfs, uio)
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
 		auio.uio_procp = NULL;
-		error = uvm_io(&p->p_vmspace->vm_map, &auio);
+		error = uvm_io(&p->p_vmspace->vm_map, &auio, 0);
 		if (error)
 			goto bad;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.22 2004/05/20 09:20:41 kettenis Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.23 2005/11/04 21:48:07 miod Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -81,7 +81,8 @@ procfs_domem(curp, p, pfs, uio)
 		return(EFAULT);
 	addr = uio->uio_offset;
 	p->p_vmspace->vm_refcnt++;  /* XXX */
-	error = uvm_io(&p->p_vmspace->vm_map, uio);
+	error = uvm_io(&p->p_vmspace->vm_map, uio,
+	    uio->uio_rw == UIO_WRITE ? UVM_IO_FIXPROT : 0);
 	uvmspace_free(p->p_vmspace);
 
 	if (error == 0 && uio->uio_rw == UIO_WRITE)

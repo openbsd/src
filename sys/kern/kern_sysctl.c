@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.131 2005/09/25 20:48:23 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.132 2005/11/04 21:47:57 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1468,7 +1468,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = cp;
 
-	if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio)) != 0)
+	if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio, 0)) != 0)
 		goto out;
 
 	if (op == KERN_PROC_NARGV) {
@@ -1525,7 +1525,7 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = cp;
-		if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio)) != 0)
+		if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio, 0)) != 0)
 			goto out;
 
 		if (varg == NULL)
@@ -1547,7 +1547,7 @@ more:
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = cp;
-		if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio)) != 0)
+		if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio, 0)) != 0)
 			goto out;
 
 		for (vstrlen = 0; vstrlen < len; vstrlen++) {

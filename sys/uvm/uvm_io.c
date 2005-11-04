@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_io.c,v 1.15 2005/05/24 21:11:47 tedu Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.16 2005/11/04 21:48:07 miod Exp $	*/
 /*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -60,14 +60,12 @@
  */
 
 int
-uvm_io(map, uio)
-	vm_map_t map;
-	struct uio *uio;
+uvm_io(vm_map_t map, struct uio *uio, int flags)
 {
 	vaddr_t baseva, endva, pageoffset, kva;
 	vsize_t chunksz, togo, sz;
 	vm_map_entry_t dead_entries;
-	int error;
+	int error, extractflags;
 
 	/*
 	 * step 0: sanity checks and set up for copy loop.  start with a
@@ -95,6 +93,10 @@ uvm_io(map, uio)
 	chunksz = min(round_page(togo + pageoffset), MAXBSIZE);
 	error = 0;
 
+	extractflags = UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG;
+	if (flags & UVM_IO_FIXPROT)
+		extractflags |= UVM_EXTRACT_FIXPROT;
+
 	/*
 	 * step 1: main loop...  while we've got data to move
 	 */
@@ -106,8 +108,7 @@ uvm_io(map, uio)
 		 */
 
 		error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
-			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG | 
-			    UVM_EXTRACT_FIXPROT);
+		    extractflags);
 		if (error) {
 
 			/* retry with a smaller chunk... */
