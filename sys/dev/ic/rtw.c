@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.46 2005/10/24 02:53:31 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.47 2005/11/04 14:04:33 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -197,10 +197,6 @@ void	 rtw_led_fastblink(void *);
 void	 rtw_led_set(struct rtw_led_state *, struct rtw_regs *, u_int);
 void	 rtw_led_newstate(struct rtw_softc *, enum ieee80211_state);
 
-int	 rtw_rf_init(struct rtw_softc *, u_int, u_int8_t, enum rtw_pwrstate);
-int	 rtw_rf_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
-int	 rtw_rf_tune(struct rtw_softc *, u_int);
-int	 rtw_rf_txpower(struct rtw_softc *, u_int8_t);
 int	 rtw_phy_init(struct rtw_softc *);
 int	 rtw_bbp_preinit(struct rtw_regs *, u_int, int, u_int);
 int	 rtw_bbp_init(struct rtw_regs *, struct rtw_bbpset *, int,
@@ -2022,7 +2018,7 @@ rtw_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 		return 0;
 
 	rtw_pwrstate0(sc, power, 1, sc->sc_flags & RTW_F_DIGPHY);
-	rc = rtw_rf_pwrstate(sc, power);
+	rc = (*sc->sc_rf_pwrstate)(sc, power);
 	rtw_pwrstate0(sc, power, 0, sc->sc_flags & RTW_F_DIGPHY);
 
 	switch (power) {
@@ -3480,9 +3476,17 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
+		sc->sc_rf_init = rtw_rtl8255_init;
+		sc->sc_rf_pwrstate = rtw_rtl8225_pwrstate;
+		sc->sc_rf_tune = rtw_rtl8225_tune;
+		sc->sc_rf_txpower = rtw_rtl8225_txpower;
 		break;
 	case RTW_RFCHIPID_RTL8255:
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
+		sc->sc_rf_init = rtw_rtl8255_init;
+		sc->sc_rf_pwrstate = rtw_rtl8255_pwrstate;
+		sc->sc_rf_tune = rtw_rtl8255_tune;
+		sc->sc_rf_txpower = rtw_rtl8255_txpower;
 		break;
 	case RTW_RFCHIPID_MAXIM2820:
 		/* XXX magic */
@@ -3499,6 +3503,10 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 		bb->bb_trl =		0x88;
 		bb->bb_txagc =		0x08;
 		sc->sc_pwrstate_cb = rtw_maxim_pwrstate;
+		sc->sc_rf_init = rtw_max2820_init;
+		sc->sc_rf_pwrstate = rtw_max2820_pwrstate;
+		sc->sc_rf_tune = rtw_max2820_tune;
+		sc->sc_rf_txpower = rtw_max2820_txpower;
 		break;
 	case RTW_RFCHIPID_PHILIPS:
 		/* XXX magic */
@@ -3515,6 +3523,10 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 		bb->bb_trl =		0x88;
 		bb->bb_txagc =		0x38;
 		sc->sc_pwrstate_cb = rtw_philips_pwrstate;
+		sc->sc_rf_init = rtw_sa2400_init;
+		sc->sc_rf_pwrstate = rtw_sa2400_pwrstate;
+		sc->sc_rf_tune = rtw_sa2400_tune;
+		sc->sc_rf_txpower = rtw_sa2400_txpower;
 		break;
 	case RTW_RFCHIPID_RFMD2948:
 		/* XXX RFMD has no RF constructor */
@@ -3838,75 +3850,6 @@ rtw_detach(struct rtw_softc *sc)
 	if_detach(&sc->sc_if);
 
 	return 0;
-}
-
-int
-rtw_rf_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
-    enum rtw_pwrstate power)
-{
-	switch (sc->sc_rfchipid) {
-	case RTW_RFCHIPID_PHILIPS:
-		return rtw_sa2400_init(sc, freq, opaque_txpower, power);
-	case RTW_RFCHIPID_MAXIM2820:
-		return rtw_max2820_init(sc, freq, opaque_txpower, power);
-	case RTW_RFCHIPID_RTL8225:
-		return rtw_rtl8225_init(sc, freq, opaque_txpower, power);
-	case RTW_RFCHIPID_RTL8255:
-		return rtw_rtl8255_init(sc, freq, opaque_txpower, power);
-	default:
-		return (1);
-	}
-}
-
-int
-rtw_rf_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
-{
-	switch (sc->sc_rfchipid) {
-	case RTW_RFCHIPID_PHILIPS:
-		return rtw_sa2400_pwrstate(sc, power);
-	case RTW_RFCHIPID_MAXIM2820:
-		return rtw_max2820_pwrstate(sc, power);
-	case RTW_RFCHIPID_RTL8225:
-		return rtw_rtl8225_pwrstate(sc, power);
-	case RTW_RFCHIPID_RTL8255:
-		return rtw_rtl8255_pwrstate(sc, power);
-	default:
-		return (1);
-	}
-}
-
-int
-rtw_rf_tune(struct rtw_softc *sc, u_int freq)
-{
-	switch (sc->sc_rfchipid) {
-	case RTW_RFCHIPID_PHILIPS:
-		return rtw_sa2400_tune(sc, freq);
-	case RTW_RFCHIPID_MAXIM2820:
-		return rtw_max2820_tune(sc, freq);
-	case RTW_RFCHIPID_RTL8225:
-		return rtw_rtl8225_tune(sc, freq);
-	case RTW_RFCHIPID_RTL8255:
-		return rtw_rtl8255_tune(sc, freq);
-	default:
-		return (1);
-	}
-}
-
-int
-rtw_rf_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
-{
-	switch (sc->sc_rfchipid) {
-	case RTW_RFCHIPID_PHILIPS:
-		return rtw_sa2400_txpower(sc, opaque_txpower);
-	case RTW_RFCHIPID_MAXIM2820:
-		return rtw_max2820_txpower(sc, opaque_txpower);
-	case RTW_RFCHIPID_RTL8225:
-		return rtw_rtl8225_txpower(sc, opaque_txpower);
-	case RTW_RFCHIPID_RTL8255:
-		return rtw_rtl8255_txpower(sc, opaque_txpower);
-	default:
-		return (1);
-	}
 }
 
 /*
@@ -4364,18 +4307,18 @@ rtw_phy_init(struct rtw_softc *sc)
 	     antdiv, dflantb, rtw_pwrstate_string(power)));
 
 	/* XXX is this really necessary? */
-	if ((rc = rtw_rf_txpower(sc, opaque_txpower)) != 0)
+	if ((rc = (*sc->sc_rf_txpower)(sc, opaque_txpower)) != 0)
 		return rc;
 	if ((rc = rtw_bbp_preinit(regs, sc->sc_bbpset.bb_antatten, dflantb,
 	    freq)) != 0)
 		return rc;
-	if ((rc = rtw_rf_tune(sc, freq)) != 0)
+	if ((rc = (*sc->sc_rf_tune)(sc, freq)) != 0)
 		return rc;
 	/* initialize RF  */
-	if ((rc = rtw_rf_init(sc, freq, opaque_txpower, power)) != 0)
+	if ((rc = (*sc->sc_rf_init)(sc, freq, opaque_txpower, power)) != 0)
 		return rc;
 #if 0	/* what is this redundant tx power setting here for? */
-	if ((rc = rtw_rf_txpower(sc, opaque_txpower)) != 0)
+	if ((rc = (*sc->sc_rf_txpower)(sc, opaque_txpower)) != 0)
 		return rc;
 #endif
 	return rtw_bbp_init(regs, &sc->sc_bbpset, antdiv, dflantb,

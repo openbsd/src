@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.19 2005/10/24 02:53:32 reyk Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.20 2005/11/04 14:04:33 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -376,6 +376,12 @@ struct rtw_softc {
 	rtw_pwrstate_t		sc_pwrstate_cb;
 
 	u_int16_t		sc_inten;
+	int			(*sc_rf_init)(struct rtw_softc *, u_int,
+				    u_int8_t, enum rtw_pwrstate);
+	int			(*sc_rf_pwrstate)(struct rtw_softc *,
+				    enum rtw_pwrstate);
+	int			(*sc_rf_tune)(struct rtw_softc *, u_int);
+	int			(*sc_rf_txpower)(struct rtw_softc *, u_int8_t);
 
 	/* interrupt acknowledge hook */
 	void			(*sc_intr_ack)(struct rtw_regs *);
