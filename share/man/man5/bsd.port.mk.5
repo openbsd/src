@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.166 2005/11/01 14:09:33 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.167 2005/11/04 10:49:53 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -926,6 +926,15 @@ FETCH_MANUALLY+="after reading and agreeing to the license."
 Automatically sets
 .Ev IS_INTERACTIVE
 if some distribution files are missing.
+.It Ev FETCH_PACKAGES
+User settings.
+If set to
+.Sq Yes ,
+the
+.Ar package
+target will download packages missing from the repository from locations in
+${PKG_PATH}.
+It will only build them if no suitable packages are found.
 .It Ev FETCH_SYMLINK_DISTFILES
 User settings.
 Set to
