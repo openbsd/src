@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.11 2005/11/04 14:53:11 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.12 2005/11/04 15:06:22 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -34,6 +34,7 @@
 .Op Fl ehiLMUV
 .Op Fl a Ns Ar users
 .Op Fl b Ns Op Ar rev
+.Op Fl c Ns Ar string
 .Op Fl e Ns Op Ar users
 .Op Fl k Ns Ar mode
 .Op Fl m Ns Ar rev : Ns Ar log
@@ -51,6 +52,9 @@ Add the usernames specified in the comma-separated list
 .Ar users
 to the access list of the RCS files.
 .It Fl b Ns Op Ar rev
+.It Fl c Ns Ar string
+Set comment leader to
+.Ar string .
 .It Fl e Ns Op Ar users
 Remove the usernames specified in the comma-separated list
 .Ar users
