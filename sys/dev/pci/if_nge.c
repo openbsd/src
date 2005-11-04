@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.46 2005/10/09 04:44:45 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.47 2005/11/04 17:22:05 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -399,7 +399,7 @@ nge_mii_readreg(sc, frame)
 {
 	int			i, ack, s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Set up frame for RX.
@@ -491,7 +491,7 @@ nge_mii_writereg(sc, frame)
 {
 	int			s;
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Set up frame for TX.
 	 */
@@ -724,17 +724,17 @@ nge_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	bus_size_t		iosize;
+	bus_size_t		size;
 	bus_dma_segment_t	seg;
 	bus_dmamap_t		dmamap;
-	int			s, rseg;
+	int			rseg;
 	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int32_t		command;
+	pcireg_t		command;
+#ifndef NGE_USEIOSPACE
+	pcireg_t		memtype;
+#endif
 	struct ifnet		*ifp;
-	int			error = 0;
 	caddr_t			kva;
-
-	s = splimp();
 
 	/*
 	 * Handle power management nonsense.
@@ -770,36 +770,27 @@ nge_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 	DPRINTFN(5, ("%s: map control/status regs\n", sc->sc_dv.dv_xname));
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef NGE_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf("%s: failed to enable I/O ports!\n",
-		       sc->sc_dv.dv_xname);
-		error = ENXIO;
-		goto fail;
-	}
-	/*
-	 * Map control/status registers.
-	 */
 	DPRINTFN(5, ("%s: pci_mapreg_map\n", sc->sc_dv.dv_xname));
 	if (pci_mapreg_map(pa, NGE_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->nge_btag, &sc->nge_bhandle, NULL, &iosize, 0)) {
+	    &sc->nge_btag, &sc->nge_bhandle, NULL, &size, 0)) {
 		printf(": can't map i/o space\n");
-		goto fail;
+		return;
 	}
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf("%s: failed to enable memory mapping!\n",
-		       sc->sc_dv.dv_xname);
-		error = ENXIO;
-		goto fail;
-	}
 	DPRINTFN(5, ("%s: pci_mapreg_map\n", sc->sc_dv.dv_xname));
-	if (pci_mapreg_map(pa, NGE_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->nge_btag, &sc->nge_bhandle, NULL, &iosize, 0)) {
+	memtype = pci_mapreg_type(pc, pa->pa_tag, NGE_PCI_LOMEM);
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		if (pci_mapreg_map(pa, NGE_PCI_LOMEM,
+				   memtype, 0, &sc->nge_btag, &sc->nge_bhandle,
+				   NULL, &size, 0) == 0)
+			break;
+	default:
 		printf(": can't map mem space\n");
-		goto fail;
+		return;
 	}
 #endif
 
@@ -841,7 +832,7 @@ nge_attach(parent, self, aux)
 	/*
 	 * A NatSemi chip was detected. Inform the world.
 	 */
-	printf(": address: %s\n", ether_sprintf(eaddr));
+	printf(", address: %s\n", ether_sprintf(eaddr));
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
@@ -850,7 +841,7 @@ nge_attach(parent, self, aux)
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct nge_list_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		goto fail_1;
+		goto fail_2;
 	}
 	DPRINTFN(5, ("%s: bus_dmamem_map\n", sc->sc_dv.dv_xname));
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
@@ -858,28 +849,20 @@ nge_attach(parent, self, aux)
 			   BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc->sc_dv.dv_xname, sizeof(struct nge_list_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_1;
+		goto fail_3;
 	}
 	DPRINTFN(5, ("%s: bus_dmamem_create\n", sc->sc_dv.dv_xname));
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct nge_list_data), 1,
 			      sizeof(struct nge_list_data), 0,
 			      BUS_DMA_NOWAIT, &dmamap)) {
 		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmatag, kva,
-				 sizeof(struct nge_list_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_1;
+		goto fail_4;
 	}
 	DPRINTFN(5, ("%s: bus_dmamem_load\n", sc->sc_dv.dv_xname));
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
 			    sizeof(struct nge_list_data), NULL,
 			    BUS_DMA_NOWAIT)) {
-		bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-		bus_dmamem_unmap(sc->sc_dmatag, kva,
-				 sizeof(struct nge_list_data));
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-		goto fail_1;
+		goto fail_5;
 	}
 
 	DPRINTFN(5, ("%s: bzero\n", sc->sc_dv.dv_xname));
@@ -891,7 +874,7 @@ nge_attach(parent, self, aux)
 	if (nge_alloc_jumbo_mem(sc)) {
 		printf("%s: jumbo buffer allocation failed\n",
 		       sc->sc_dv.dv_xname);
-		goto fail_1;
+		goto fail_5;
 	}
 
 	ifp = &sc->arpcom.ac_if;
@@ -968,11 +951,23 @@ nge_attach(parent, self, aux)
 	DPRINTFN(5, ("%s: timeout_set\n", sc->sc_dv.dv_xname));
 	timeout_set(&sc->nge_timeout, nge_tick, sc);
 	timeout_add(&sc->nge_timeout, hz);
+	return;
+
+fail_5:
+	bus_dmamap_destroy(sc->sc_dmatag, dmamap);
+
+fail_4:
+	bus_dmamem_unmap(sc->sc_dmatag, kva,
+	    sizeof(struct nge_list_data));
+
+fail_3:
+	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+
+fail_2:
+	pci_intr_disestablish(pc, sc->nge_intrhand);
 
 fail_1:
-	bus_space_unmap(sc->nge_btag, sc->nge_bhandle, iosize);
-fail:
-	splx(s);
+	bus_space_unmap(sc->nge_btag, sc->nge_bhandle, size);
 }
 
 /*
@@ -1430,7 +1425,7 @@ nge_tick(xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTFN(10, ("%s: nge_tick: link=%d\n", sc->sc_dv.dv_xname,
 		      sc->nge_link));
@@ -1728,7 +1723,7 @@ nge_init(xsc)
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -2057,7 +2052,7 @@ nge_ioctl(ifp, command, data)
 	struct mii_data		*mii;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
@@ -2102,6 +2097,7 @@ nge_ioctl(ifp, command, data)
 					NGE_CLRBIT(sc, NGE_RXFILT_CTL,
 					    NGE_RXFILTCTL_ALLMULTI);
 			} else {
+				ifp->if_flags &= ~IFF_RUNNING;
 				nge_init(sc);
 			}
 		} else {
