@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.21 2005/10/12 09:08:25 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.22 2005/11/04 10:50:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -393,6 +393,9 @@ lsa_age(struct vertex *v)
 
 	now = time(NULL);
 	d = now - v->stamp;
+	/* set stamp so that at least new calls work */
+	v->stamp = now;
+
 	if (d < 0) {
 		log_warnx("lsa_age: time went backwards");
 		return;
@@ -405,7 +408,6 @@ lsa_age(struct vertex *v)
 		age += d;
 
 	v->lsa->hdr.age = htons(age);
-	v->stamp = now;
 }
 
 struct vertex *
