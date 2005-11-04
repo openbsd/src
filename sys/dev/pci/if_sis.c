@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.60 2005/10/30 00:38:28 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.61 2005/11/04 16:59:45 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -440,7 +440,7 @@ int sis_mii_readreg(sc, frame)
 {
 	int			i, ack, s;
  
-	s = splimp();
+	s = splnet();
  
 	/*
 	 * Set up frame for RX.
@@ -531,7 +531,7 @@ int sis_mii_writereg(sc, frame)
 {
 	int			s;
  
-	s = splimp();
+	s = splnet();
  	/*
  	 * Set up frame for TX.
  	 */
@@ -896,7 +896,7 @@ void sis_attach(parent, self, aux)
 	struct device		*parent, *self;
 	void			*aux;
 {
-	int			i, s;
+	int			i;
 	const char		*intrstr = NULL;
 	pcireg_t		command;
 	struct sis_softc	*sc = (struct sis_softc *)self;
@@ -904,23 +904,7 @@ void sis_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	struct ifnet		*ifp;
-	bus_size_t		iosize;
-
-	s = splnet();
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_SIS_900:
-		sc->sis_type = SIS_TYPE_900;
-		break;
-	case PCI_PRODUCT_SIS_7016:
-		sc->sis_type = SIS_TYPE_7016;
-		break;
-	case PCI_PRODUCT_NS_DP83815:
-		sc->sis_type = SIS_TYPE_83815;
-		break;
-	default:
-		break;
-	}
+	bus_size_t		size;
 
 	/*
 	 * Handle power management nonsense.
@@ -953,17 +937,16 @@ void sis_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef SIS_USEIOSPACE
 	if (pci_mapreg_map(pa, SIS_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sis_btag, &sc->sis_bhandle, NULL, &iosize, 0)) {
+	    &sc->sis_btag, &sc->sis_bhandle, NULL, &size, 0)) {
 		printf(": can't map i/o space\n");
 		return;
  	}
 #else
 	if (pci_mapreg_map(pa, SIS_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sis_btag, &sc->sis_bhandle, NULL, &iosize, 0)) {
+	    &sc->sis_btag, &sc->sis_bhandle, NULL, &size, 0)) {
  		printf(": can't map mem space\n");
 		return;
  	}
@@ -972,7 +955,7 @@ void sis_attach(parent, self, aux)
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, sis_intr, sc,
@@ -982,9 +965,22 @@ void sis_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_SIS_900:
+		sc->sis_type = SIS_TYPE_900;
+		break;
+	case PCI_PRODUCT_SIS_7016:
+		sc->sis_type = SIS_TYPE_7016;
+		break;
+	case PCI_PRODUCT_NS_DP83815:
+		sc->sis_type = SIS_TYPE_83815;
+		break;
+	default:
+		break;
+	}
 	sc->sis_rev = PCI_REVISION(pa->pa_class);
 
 	/* Reset the adapter. */
@@ -997,8 +993,6 @@ void sis_attach(parent, self, aux)
 		SIO_SET(SIS_CFG_PERR_DETECT);
 	}
 
-	printf(":");
-
 	/*
 	 * Get station address from the EEPROM.
 	 */
@@ -1007,13 +1001,13 @@ void sis_attach(parent, self, aux)
 		sc->sis_srr = CSR_READ_4(sc, NS_SRR);
 
 		if (sc->sis_srr == NS_SRR_15C)
-			printf(" DP83815C,");
+			printf(", DP83815C");
 		else if (sc->sis_srr == NS_SRR_15D)
-			printf(" DP83815D,");
+			printf(", DP83815D");
 		else if (sc->sis_srr == NS_SRR_16A)
-			printf(" DP83816A,");
+			printf(", DP83816A");
 		else
-			printf(" srr %x,", sc->sis_srr);
+			printf(", srr %x", sc->sis_srr);
 
 		/*
 		 * Reading the MAC address out of the EEPROM on
@@ -1085,7 +1079,7 @@ void sis_attach(parent, self, aux)
 		break;
 	}
 
-	printf(" %s, address %s\n", intrstr,
+	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -1094,24 +1088,24 @@ void sis_attach(parent, self, aux)
 	    PAGE_SIZE, 0, sc->sc_listseg, 1, &sc->sc_listnseg,
 	    BUS_DMA_NOWAIT) != 0) {
 		printf(": can't alloc list mem\n");
-		return;
+		goto fail_2;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, sc->sc_listseg, sc->sc_listnseg,
 	    sizeof(struct sis_list_data), &sc->sc_listkva,
 	    BUS_DMA_NOWAIT) != 0) {
 		printf(": can't map list mem\n");
-		return;
+		goto fail_2;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct sis_list_data), 1,
 	    sizeof(struct sis_list_data), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_listmap) != 0) {
 		printf(": can't alloc list map\n");
-		return;
+		goto fail_2;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_listmap, sc->sc_listkva,
 	    sizeof(struct sis_list_data), NULL, BUS_DMA_NOWAIT) != 0) {
 		printf(": can't load list map\n");
-		return;
+		goto fail_2;
 	}
 	sc->sis_ldata = (struct sis_list_data *)sc->sc_listkva;
 	bzero(sc->sis_ldata, sizeof(struct sis_list_data));
@@ -1120,13 +1114,13 @@ void sis_attach(parent, self, aux)
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 		    BUS_DMA_NOWAIT, &sc->sis_ldata->sis_rx_list[i].map) != 0) {
 			printf(": can't create rx map\n");
-			return;
+			goto fail_2;
 		}
 	}
 	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 	    BUS_DMA_NOWAIT, &sc->sc_rx_sparemap) != 0) {
 		printf(": can't create rx spare map\n");
-		return;
+		goto fail_2;
 	}
 
 	for (i = 0; i < SIS_TX_LIST_CNT; i++) {
@@ -1134,13 +1128,13 @@ void sis_attach(parent, self, aux)
 		    SIS_TX_LIST_CNT - 3, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sis_ldata->sis_tx_list[i].map) != 0) {
 			printf(": can't create tx map\n");
-			return;
+			goto fail_2;
 		}
 	}
 	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, SIS_TX_LIST_CNT - 3,
 	    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->sc_tx_sparemap) != 0) {
 		printf(": can't create tx spare map\n");
-		return;
+		goto fail_2;
 	}
 
 	ifp = &sc->arpcom.ac_if;
@@ -1176,10 +1170,13 @@ void sis_attach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	shutdownhook_establish(sis_shutdown, sc);
-
-fail:
-	splx(s);
 	return;
+
+fail_2:
+	pci_intr_disestablish(pc, sc->sc_ih);
+
+fail_1:
+	bus_space_unmap(sc->sis_btag, sc->sis_bhandle, size);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.47 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.48 2005/11/04 16:59:45 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -233,7 +233,7 @@ vr_mii_readreg(sc, frame)
 {
 	int			i, ack, s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Set up frame for RX.
@@ -320,7 +320,7 @@ fail:
 {
 	int			s, i;
 
-	s = splimp();
+	s = splnet();
 
 	/* Set the PHY-address */
 	CSR_WRITE_1(sc, VR_PHYADDR, (CSR_READ_1(sc, VR_PHYADDR)& 0xe0)|
@@ -357,7 +357,7 @@ vr_mii_writereg(sc, frame)
 {
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	CSR_WRITE_1(sc, VR_MIICMD, 0);
 	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
@@ -403,7 +403,7 @@ vr_mii_writereg(sc, frame)
 {      
 	int			s, i;
 
-	s = splimp();
+	s = splnet();
 
 	/* Set the PHY-address */
 	CSR_WRITE_1(sc, VR_PHYADDR, (CSR_READ_1(sc, VR_PHYADDR)& 0xe0)|
@@ -638,19 +638,17 @@ vr_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int			s, i;
-	u_int32_t		command;
+	int			i;
+	pcireg_t		command;
 	struct vr_softc		*sc = (struct vr_softc *)self;
 	struct pci_attach_args 	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
-	bus_size_t		iosize;
+	bus_size_t		size;
 	int rseg;
 	caddr_t kva;
-
-	s = splimp();
 
 	/*
 	 * Handle power management nonsense.
@@ -689,28 +687,18 @@ vr_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	sc->vr_revid = PCI_REVISION(pa->pa_class);
 
 #ifdef VR_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports\n");
-		goto fail;
-	}
 	if (pci_mapreg_map(pa, VR_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->vr_btag, &sc->vr_bhandle, NULL, &iosize, 0)) {
+	    &sc->vr_btag, &sc->vr_bhandle, NULL, &size, 0)) {
 		printf(": failed to map i/o space\n");
-		goto fail;
+		return;
 	}
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		goto fail;
-	}
 	if (pci_mapreg_map(pa, VR_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->vr_btag, &sc->vr_bhandle, NULL, &iosize, 0)) {
+	    &sc->vr_btag, &sc->vr_bhandle, NULL, &size, 0)) {
 		printf(": failed to map memory space\n");
-		goto fail;
+		return;
 	}
 #endif
 
@@ -730,6 +718,8 @@ vr_attach(parent, self, aux)
 		goto fail_1;
 	}
 	printf(": %s", intrstr);
+
+	sc->vr_revid = PCI_REVISION(pa->pa_class);
 
 	/*
 	 * Windows may put the chip in suspend mode when it
@@ -765,35 +755,29 @@ vr_attach(parent, self, aux)
 	/*
 	 * A Rhine chip was detected. Inform the world.
 	 */
-	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vr_list_data),
 	    PAGE_SIZE, 0, &sc->sc_listseg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc list\n", sc->sc_dev.dv_xname);
-		goto fail_1;
+		goto fail_2;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_listseg, rseg,
 	    sizeof(struct vr_list_data), &kva, BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		    sc->sc_dev.dv_xname, sizeof(struct vr_list_data));
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
-		goto fail_1;
+		goto fail_3;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct vr_list_data), 1,
 	    sizeof(struct vr_list_data), 0, BUS_DMA_NOWAIT, &sc->sc_listmap)) {
 		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
-		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
-		goto fail_1;
+		goto fail_4;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_listmap, kva,
 	    sizeof(struct vr_list_data), NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_listmap);
-		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
-		goto fail_1;
+		goto fail_5;
 	}
 	sc->vr_ldata = (struct vr_list_data *)kva;
 	bzero(sc->vr_ldata, sizeof(struct vr_list_data));
@@ -832,12 +816,22 @@ vr_attach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	shutdownhook_establish(vr_shutdown, sc);
+	return;
+
+fail_5:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_listmap);
+
+fail_4:
+	bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
+
+fail_3:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_listseg, rseg);
+
+fail_2:
+	pci_intr_disestablish(pc, sc->sc_ih);
 
 fail_1:
-	bus_space_unmap(sc->vr_btag, sc->vr_bhandle, iosize);
-fail:
-	splx(s);
-	return;
+	bus_space_unmap(sc->vr_btag, sc->vr_bhandle, size);
 }
 
 /*
@@ -1183,7 +1177,7 @@ vr_tick(xsc)
 	struct vr_softc *sc = xsc;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (sc->vr_flags & VR_F_RESTART) {
 		printf("%s: restarting\n", sc->sc_dev.dv_xname);
 		vr_stop(sc);
@@ -1422,7 +1416,7 @@ vr_init(xsc)
 	struct mii_data		*mii = &sc->sc_mii;
 	int			s, i;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1566,7 +1560,7 @@ vr_ioctl(ifp, command, data)
 	int			s, error = 0;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
