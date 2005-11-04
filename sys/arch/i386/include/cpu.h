@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.72 2005/10/28 07:03:41 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.73 2005/11/04 06:55:36 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -369,10 +369,12 @@ void	p4tcc_init(int, int);
 int     p4tcc_setperf(int);
 #endif
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#if !defined(SMALL_KERNEL) && defined(I586_CPU)
 /* powernow.c */
 void	k6_powernow_init(void);
 int	k6_powernow_setperf(int);
+#endif
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
 /* powernow-k7.c */
 void	k7_powernow_init(void);
 int	k7_powernow_setperf(int);
