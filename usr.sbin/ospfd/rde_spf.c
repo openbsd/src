@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.33 2005/09/01 19:09:34 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.34 2005/11/04 10:46:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -581,7 +581,7 @@ start_spf_timer(void)
 		timerclear(&tv);
 		tv.tv_sec = rdeconf->spf_delay;
 		rdeconf->spf_state = SPF_DELAY;
-		return (evtimer_add(&rdeconf->spf_timer, &tv));
+		return (evtimer_add(&rdeconf->ev, &tv));
 	case SPF_DELAY:
 		/* ignore */
 		break;
@@ -602,7 +602,7 @@ start_spf_timer(void)
 int
 stop_spf_timer(struct ospfd_conf *conf)
 {
-	return (evtimer_del(&conf->spf_timer));
+	return (evtimer_del(&conf->ev));
 }
 
 int
@@ -616,7 +616,7 @@ start_spf_holdtimer(struct ospfd_conf *conf)
 		tv.tv_sec = conf->spf_hold_time;
 		conf->spf_state = SPF_HOLD;
 		log_debug("spf_start_holdtimer: DELAY -> HOLD");
-		return (evtimer_add(&conf->spf_timer, &tv));
+		return (evtimer_add(&conf->ev, &tv));
 	case SPF_IDLE:
 	case SPF_HOLD:
 	case SPF_HOLDQUEUE:

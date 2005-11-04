@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.32 2005/11/04 10:38:03 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.33 2005/11/04 10:46:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -156,7 +156,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
 
-	evtimer_set(&rdeconf->spf_timer, spf_timer, rdeconf);
+	evtimer_set(&rdeconf->ev, spf_timer, rdeconf);
 	cand_list_init();
 	rt_init();
 
