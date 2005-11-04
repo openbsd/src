@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.70 2005/09/14 06:37:59 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.71 2005/11/04 00:18:08 uwe Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original SPARC with VME. Many hardware bugs.
@@ -182,6 +182,7 @@ Supported devices {:-include-:}:
 	      ELSA XI800
 	      Linksys WCF12
 	      Netgear MA701
+	      Pretec Compact WLAN OC-WLBXX-A
 	      Senao NL-2511CF
 	  + Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
 	    based PCMCIA IEEE 802.11b adapters

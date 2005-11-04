@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.224 2005/10/17 11:25:30 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.225 2005/11/04 00:18:08 uwe Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -623,6 +623,7 @@ Supported hardware {:-include-:}:
 		    ELSA XI800
 		    Linksys WCF12
 		    Netgear MA701
+		    Pretec Compact WLAN OC-WLBXX-A
 		    Senao NL-2511CF
 		Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
 		  based PCMCIA IEEE 802.11b adapters [A] [B]

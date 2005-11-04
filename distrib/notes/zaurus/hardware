@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.16 2005/09/23 10:24:50 grunk Exp $
+dnl	$OpenBSD: hardware,v 1.17 2005/11/04 00:18:08 uwe Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus C3000 and C3100 only, at
 the moment. Support for the C760 and C860 is under development.
@@ -185,6 +185,7 @@ Supported devices {:-include-:}:
 		    ELSA XI800
 		    Linksys WCF12
 		    Netgear MA701
+		    Pretec Compact WLAN OC-WLBXX-A
 		    Senao NL-2511CF
 		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
 		    AMIT WL532U
