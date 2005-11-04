@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.112 2005/10/31 01:40:54 pascoe Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -136,6 +136,7 @@ struct carp_softc {
 	unsigned char sc_key[CARP_KEY_LEN];
 	unsigned char sc_pad[CARP_HMAC_PAD];
 	SHA1_CTX sc_sha1;
+	u_int32_t sc_hashkey[2];
 
 	struct timeout sc_ad_tmo;	/* advertisement timeout */
 	struct timeout sc_md_tmo;	/* master down timeout */
@@ -192,6 +193,7 @@ void	carp_multicast_cleanup(struct carp_softc *);
 int	carp_set_ifp(struct carp_softc *, struct ifnet *);
 void	carp_set_enaddr(struct carp_softc *);
 void	carp_addr_updated(void *);
+u_int32_t	carp_hash(struct carp_softc *, u_char *);
 int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
 int	carp_join_multicast(struct carp_softc *);
 #ifdef INET6
@@ -219,6 +221,8 @@ carp_hmac_prepare(struct carp_softc *sc)
 {
 	u_int8_t version = CARP_VERSION, type = CARP_ADVERTISEMENT;
 	u_int8_t vhid = sc->sc_vhid & 0xff;
+	SHA1_CTX sha1ctx;
+	u_int32_t kmd[5];
 	struct ifaddr *ifa;
 	int i;
 #ifdef INET6
@@ -236,6 +240,14 @@ carp_hmac_prepare(struct carp_softc *sc)
 	SHA1Update(&sc->sc_sha1, sc->sc_pad, sizeof(sc->sc_pad));
 	SHA1Update(&sc->sc_sha1, (void *)&version, sizeof(version));
 	SHA1Update(&sc->sc_sha1, (void *)&type, sizeof(type));
+
+	/* generate a key for the arpbalance hash, before the vhid is hashed */
+	bcopy(&sc->sc_sha1, &sha1ctx, sizeof(sha1ctx));
+	SHA1Final((unsigned char *)kmd, &sha1ctx);
+	sc->sc_hashkey[0] = kmd[0] ^ kmd[1];
+	sc->sc_hashkey[1] = kmd[2] ^ kmd[3];
+
+	/* the rest of the precomputation */
 	SHA1Update(&sc->sc_sha1, (void *)&vhid, sizeof(vhid));
 #ifdef INET
 	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
@@ -1079,6 +1091,42 @@ carp_send_na(struct carp_softc *sc)
 }
 #endif /* INET6 */
 
+/*
+ * Based on bridge_hash() in if_bridge.c
+ */
+#define	mix(a,b,c) \
+	do {						\
+		a -= b; a -= c; a ^= (c >> 13);		\
+		b -= c; b -= a; b ^= (a << 8);		\
+		c -= a; c -= b; c ^= (b >> 13);		\
+		a -= b; a -= c; a ^= (c >> 12);		\
+		b -= c; b -= a; b ^= (a << 16);		\
+		c -= a; c -= b; c ^= (b >> 5);		\
+		a -= b; a -= c; a ^= (c >> 3);		\
+		b -= c; b -= a; b ^= (a << 10);		\
+		c -= a; c -= b; c ^= (b >> 15);		\
+	} while (0)
+
+u_int32_t
+carp_hash(struct carp_softc *sc, u_char *src)
+{
+	u_int32_t a = 0x9e3779b9, b = sc->sc_hashkey[0], c = sc->sc_hashkey[1];
+
+	c += sc->sc_key[3] << 24;
+	c += sc->sc_key[2] << 16;
+	c += sc->sc_key[1] << 8;
+	c += sc->sc_key[0];
+	b += src[5] << 8;
+	b += src[4];
+	a += src[3] << 24;
+	a += src[2] << 16;
+	a += src[1] << 8;
+	a += src[0];
+
+	mix(a, b, c);
+	return (c);
+}
+
 int
 carp_addrcount(struct carp_if *cif, struct in_ifaddr *ia, int type)
 {
@@ -1126,9 +1174,8 @@ carp_iamatch(struct in_ifaddr *ia, u_char *src,
 		if (*count == 0)
 			return (0);
 
-		/* this should be a hash, like pf_hash() */
-		if (ia->ia_addr.sin_addr.s_addr % *count == index - 1 &&
-                    sc->sc_state == MASTER) {
+		if (carp_hash(sc, src) % *count == index - 1 &&
+		    sc->sc_state == MASTER) {
 			return (1);
 		}
 	} else {
