@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 2005/11/04 01:02:31 uwe Exp $
+
 OBJS= zbsdmod.o
 SRCS= zbsdmod.c
 NOMAN=
