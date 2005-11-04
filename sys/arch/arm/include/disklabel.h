@@ -1,5 +1,5 @@
-/*	$OpenBSD: disklabel.h,v 1.4 2004/11/10 10:36:12 grange Exp $	*/
-/*	$OpenBSD: disklabel.h,v 1.4 2004/11/10 10:36:12 grange Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.5 2005/11/04 13:33:59 uwe Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.5 2005/11/04 13:33:59 uwe Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 2001/11/25 19:02:03 thorpej Exp $	*/
 
 /*
@@ -128,17 +128,5 @@ struct cpu_disklabel {
 	struct dos_partition dosparts[NMBRPART];
 	struct dkbad bad;
 };
-
-#ifdef _KERNEL
-struct buf;
-struct disklabel;
-/* for readdisklabel.  rv != 0 -> matches, msg == NULL -> success */
-int	mbr_label_read (dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *, char **, int *, int *);
-
-/* for writedisklabel.  rv == 0 -> dosen't match, rv > 0 -> success */
-int	mbr_label_locate (dev_t, void (*)(struct buf *),
-	    struct disklabel *, struct cpu_disklabel *, int *, int *);
-#endif /* _KERNEL */
 
 #endif /* _ARM_DISKLABEL_H_ */
