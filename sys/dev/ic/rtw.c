@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.47 2005/11/04 14:04:33 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.48 2005/11/04 15:05:30 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -237,7 +237,6 @@ u_int32_t rtw_grf5101_mac_crypt(u_int, u_int32_t);
 void	 rtw_rf_hostbangbits(struct rtw_regs *, u_int32_t, int, u_int);
 void	 rtw_rf_rtl8225_hostbangbits(struct rtw_regs *, u_int32_t, int, u_int);
 int	 rtw_rf_macbangbits(struct rtw_regs *, u_int32_t);
-const char *rtw_rfchipid_string(int);
 
 u_int8_t rtw_read8(void *, u_int32_t);
 u_int16_t rtw_read16(void *, u_int32_t);
@@ -4562,29 +4561,6 @@ rtw_grf5101_mac_crypt(u_int addr, u_int32_t val)
 #undef EXTRACT_NIBBLE
 }
 
-const char *
-rtw_rfchipid_string(int rfchipid)
-{
-	switch (rfchipid) {
-	case RTW_RFCHIPID_MAXIM2820:
-		return "Maxim 2820";
-	case RTW_RFCHIPID_PHILIPS:
-		return "Philips SA2400";
-	case RTW_RFCHIPID_GCT:
-		return "GCT";
-	case RTW_RFCHIPID_RFMD2948:
-		return "RFMD 2948";
-	case RTW_RFCHIPID_INTERSIL:
-		return "Intersil";
-	case RTW_RFCHIPID_RTL8225:
-		return "Realtek RTL8225";
-	case RTW_RFCHIPID_RTL8255:
-		return "Realtek RTL8255";
-	default:
-		return "unknown";
-	}
-}
-
 /* Bang bits over the 3-wire interface. */
 int
 rtw_rf_hostwrite(struct rtw_softc *sc, u_int addr, u_int32_t val)
@@ -4595,8 +4571,8 @@ rtw_rf_hostwrite(struct rtw_softc *sc, u_int addr, u_int32_t val)
 	void(*rf_bangbits)(struct rtw_regs *, u_int32_t, int, u_int) =
 	    rtw_rf_hostbangbits;
 
-	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
-	    rtw_rfchipid_string(sc->sc_rfchipid), addr, val));
+	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: [%u] <- %#08x\n", __func__,
+	    addr, val));
 
 	switch (sc->sc_rfchipid) {
 	case RTW_RFCHIPID_MAXIM2820:
