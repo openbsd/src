@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.25 2005/04/11 07:32:44 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.26 2005/11/04 15:17:03 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -190,7 +190,7 @@ where option is one of the following:
 .It Sy debug
 Sets RES_DEBUG in _res.options.
 .It Sy edns0
-attach OPT pseudo-RR for ENDS0 extension specified in RFC 2671,
+Attach OPT pseudo-RR for ENDS0 extension specified in RFC 2671,
 to inform DNS server of our receive buffer size.
 The option will allow DNS servers to take advantage of non-default receive
 buffer size, and to send larger replies.
