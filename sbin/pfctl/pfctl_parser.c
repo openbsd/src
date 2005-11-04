@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.221 2005/10/18 08:59:30 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.222 2005/11/04 08:24:15 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -638,7 +638,8 @@ print_src_node(struct pf_src_node *sn, int opts)
 			printf(", expires in %.2u:%.2u:%.2u",
 			    sn->expire, min, sec);
 		}
-		printf(", %u pkts, %u bytes", sn->packets[0] + sn->packets[1],
+		printf(", %llu pkts, %llu bytes",
+		    sn->packets[0] + sn->packets[1],
 		    sn->bytes[0] + sn->bytes[1]);
 		switch (sn->ruletype) {
 		case PF_NAT:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.232 2005/10/27 12:34:40 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.233 2005/11/04 08:24:15 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -625,8 +625,8 @@ struct pf_src_node {
 	struct pf_addr	 raddr;
 	union pf_rule_ptr rule;
 	struct pfi_kif	*kif;
-	u_int32_t	 bytes[2];
-	u_int32_t	 packets[2];
+	u_int64_t	 bytes[2];
+	u_int64_t	 packets[2];
 	u_int32_t	 states;
 	u_int32_t	 conn;
 	struct pf_threshold	conn_rate;
@@ -724,11 +724,11 @@ struct pf_state {
 	struct pfi_kif	*rt_kif;
 	struct pf_src_node	*src_node;
 	struct pf_src_node	*nat_src_node;
+	u_int64_t	 packets[2];
+	u_int64_t	 bytes[2];
 	u_int32_t	 creation;
 	u_int32_t	 expire;
 	u_int32_t	 pfsync_time;
-	u_int32_t	 packets[2];
-	u_int32_t	 bytes[2];
 	u_int16_t	 tag;
 };
 

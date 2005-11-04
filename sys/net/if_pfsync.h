@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.27 2005/10/27 12:34:40 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.28 2005/11/04 08:24:14 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -72,8 +72,8 @@ struct pfsync_state {
 	u_int32_t	 nat_rule;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
-	u_int32_t	 packets[2];
-	u_int32_t	 bytes[2];
+	u_int32_t	 packets[2][2];
+	u_int32_t	 bytes[2][2];
 	u_int32_t	 creatorid;
 	sa_family_t	 af;
 	u_int8_t	 proto;
@@ -293,6 +293,17 @@ struct pfsyncreq {
 #define pf_state_host_ntoh(s,d) do {				\
 	bcopy(&(s)->addr, &(d)->addr, sizeof((d)->addr));	\
 	(d)->port = (s)->port;					\
+} while (0)
+
+#define pf_state_counter_hton(s,d) do {				\
+	d[0] = htonl((s>>32)&0xffffffff);			\
+	d[1] = htonl(s&0xffffffff);				\
+} while (0)
+
+#define pf_state_counter_ntoh(s,d) do {				\
+	d = ntohl(s[0]);					\
+	d = d<<32;						\
+	d += ntohl(s[1]);					\
 } while (0)
 
 #ifdef _KERNEL

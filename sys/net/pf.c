@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.506 2005/10/26 03:47:33 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.507 2005/11/04 08:24:15 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4384,8 +4384,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			printf("pf: loose state match: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
-			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d:%d\n",
-			    seq, ack, pd->p_len, ackskew,
+			printf(" seq=%u ack=%u len=%u ackskew=%d "
+			    "pkts=%llu:%llu\n", seq, ack, pd->p_len, ackskew,
 			    (*state)->packets[0], (*state)->packets[1]);
 		}
 
@@ -4436,8 +4436,9 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			printf("pf: BAD state: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
-			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d:%d "
-			    "dir=%s,%s\n", seq, ack, pd->p_len, ackskew,
+			printf(" seq=%u ack=%u len=%u ackskew=%d "
+			    "pkts=%llu:%llu dir=%s,%s\n",
+			    seq, ack, pd->p_len, ackskew,
 			    (*state)->packets[0], (*state)->packets[1],
 			    direction == PF_IN ? "in" : "out",
 			    direction == (*state)->direction ? "fwd" : "rev");

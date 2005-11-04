@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.28 2005/05/28 15:10:07 ho Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.29 2005/11/04 08:24:15 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.28 2005/05/28 15:10:07 ho Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.29 2005/11/04 08:24:15 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -165,10 +165,10 @@ pfsync_print(struct pfsync_header *hdr, int len)
 			bcopy(&s->rt_addr, &st.rt_addr, sizeof(st.rt_addr));
 			st.creation = ntohl(s->creation);
 			st.expire = ntohl(s->expire);
-			st.packets[0] = ntohl(s->packets[0]);
-			st.packets[1] = ntohl(s->packets[1]);
-			st.bytes[0] = ntohl(s->bytes[0]);
-			st.bytes[1] = ntohl(s->bytes[1]);
+			pf_state_counter_ntoh(s->packets[0], st.packets[0]);
+			pf_state_counter_ntoh(s->packets[1], st.packets[1]);
+			pf_state_counter_ntoh(s->bytes[0], st.bytes[0]);
+			pf_state_counter_ntoh(s->bytes[1], st.bytes[1]);
 			st.creatorid = s->creatorid;
 			st.af = s->af;
 			st.proto = s->proto;

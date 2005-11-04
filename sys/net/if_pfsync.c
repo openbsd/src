@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.58 2005/11/01 06:26:52 pascoe Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.59 2005/11/04 08:24:14 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1135,10 +1135,10 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 		bcopy(&st->rt_addr, &sp->rt_addr, sizeof(sp->rt_addr));
 
 		sp->creation = htonl(secs - st->creation);
-		sp->packets[0] = htonl(st->packets[0]);
-		sp->packets[1] = htonl(st->packets[1]);
-		sp->bytes[0] = htonl(st->bytes[0]);
-		sp->bytes[1] = htonl(st->bytes[1]);
+		pf_state_counter_hton(st->packets[0], sp->packets[0]);
+		pf_state_counter_hton(st->packets[1], sp->packets[1]);
+		pf_state_counter_hton(st->bytes[0], sp->bytes[0]);
+		pf_state_counter_hton(st->bytes[1], sp->bytes[1]);
 		if ((r = st->rule.ptr) == NULL)
 			sp->rule = htonl(-1);
 		else
