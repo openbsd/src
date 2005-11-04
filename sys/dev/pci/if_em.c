@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.82 2005/10/26 21:58:19 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.83 2005/11/04 17:45:03 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -206,7 +206,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct em_softc *sc;
 	int		tsize, rsize;
-	int		error = 0;
 
 	INIT_DEBUGOUT("em_attach: begin");
 
@@ -280,7 +279,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (em_allocate_pci_resources(sc)) {
 		printf("%s: Allocation of PCI resources failed\n", 
 		       sc->sc_dv.dv_xname);
-		error = ENXIO;
 		goto err_pci;
 	}
 
@@ -295,7 +293,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (em_dma_malloc(sc, tsize, &sc->txdma, BUS_DMA_NOWAIT)) {
 		printf("%s: Unable to allocate tx_desc memory\n", 
 		       sc->sc_dv.dv_xname);
-		error = ENOMEM;
 		goto err_tx_desc;
 	}
 	sc->tx_desc_base = (struct em_tx_desc *)sc->txdma.dma_vaddr;
@@ -308,7 +305,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (em_dma_malloc(sc, rsize, &sc->rxdma, BUS_DMA_NOWAIT)) {
 		printf("%s: Unable to allocate rx_desc memory\n", 
 		       sc->sc_dv.dv_xname);
-		error = ENOMEM;
 		goto err_rx_desc;
 	}
 	sc->rx_desc_base = (struct em_rx_desc *) sc->rxdma.dma_vaddr;
@@ -317,7 +313,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (em_hardware_init(sc)) {
 		printf("%s: Unable to initialize the hardware\n",
 		       sc->sc_dv.dv_xname);
-		error = EIO;
 		goto err_hw_init;
 	}
 
@@ -325,13 +320,11 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (em_read_mac_addr(&sc->hw) < 0) {
 		printf("%s: EEPROM read error while reading mac address\n",
 		       sc->sc_dv.dv_xname);
-		error = EIO;
 		goto err_mac_addr;
 	}
 
 	if (!em_is_valid_ether_addr(sc->hw.mac_addr)) {
 		printf("%s: Invalid mac address\n", sc->sc_dv.dv_xname);
-		error = EIO;
 		goto err_mac_addr;
 	}
 
