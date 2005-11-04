@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.34 2005/11/04 10:46:23 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.35 2005/11/04 14:37:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -174,15 +174,18 @@ spf_calc(struct area *area)
 					w->cost = d;
 					w->prev = v;
 					calc_next_hop(w, v);
+					/*
+					 * need to readd to candidate list
+					 * because the list is sorted
+					 */
+					TAILQ_REMOVE(&cand_list, w, cand);
 				}
 			} else if (w->cost == LS_INFINITY && d < LS_INFINITY) {
 				w->cost = d;
-
-				cand_list_add(w);
 				w->prev = v;
-
 				calc_next_hop(w, v);
 			}
+			cand_list_add(w);
 		}
 
 		/* cand_list_dump(); */
