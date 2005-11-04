@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.22 2005/11/04 10:50:54 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.23 2005/11/04 11:36:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -610,8 +610,8 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	/* set correct timeout for reflooding the LSA */
 	now = time(NULL);
 	timerclear(&tv);
-	if (v->changed + MIN_LS_ARRIVAL >= now)
-		tv.tv_sec = MIN_LS_ARRIVAL;
+	if (v->changed + MIN_LS_INTERVAL >= now)
+		tv.tv_sec = MIN_LS_INTERVAL;
 	evtimer_add(&v->ev, &tv);
 }
 
