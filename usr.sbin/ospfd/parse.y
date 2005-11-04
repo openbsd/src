@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2005/10/30 23:01:38 stevesk Exp $ */
+/*	$OpenBSD: parse.y,v 1.21 2005/11/04 10:15:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -436,6 +436,7 @@ interface	: INTERFACE STRING	{
 		;
 
 interface_block	: '{' optnl interfaceopts_l '}'
+		| '{' optnl '}'
 		|
 		;
 
