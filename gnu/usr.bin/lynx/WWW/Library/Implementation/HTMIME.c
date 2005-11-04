@@ -2062,27 +2062,23 @@ PUBLIC HTStream* HTMIMERedirect ARGS3(
 **
 **	Written by S. Ichikawa,
 **	partially inspired by encdec.c of <jh@efd.lth.se>.
-**	Assume caller's buffer is LINE_LENGTH bytes, these decode to
-**	no longer than the input strings.
 */
-#define LINE_LENGTH 512		/* Maximum length of line of ARTICLE etc */
-#ifdef ESC
-#undef ESC
-#endif /* ESC */
 #include <LYCharVals.h>  /* S/390 -- gil -- 0163 */
-#define ESC	CH_ESC
 
 PRIVATE char HTmm64[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=" ;
 PRIVATE char HTmmquote[] = "0123456789ABCDEF";
 PRIVATE int HTmmcont = 0;
 
-PUBLIC void HTmmdec_base64 ARGS2(
-	char *,		t,
+PRIVATE void HTmmdec_base64 ARGS2(
+	char **,	t,
 	char *,		s)
 {
     int   d, count, j, val;
-    char  buf[LINE_LENGTH], *bp, nw[4], *p;
+    char *buf, *bp, nw[4], *p;
+
+    if ((buf = malloc(strlen(s) * 3 + 1)) == 0)
+	outofmem(__FILE__, "HTmmdec_base64");
 
     for (bp = buf; *s; s += 4) {
 	val = 0;
@@ -2113,14 +2109,18 @@ PUBLIC void HTmmdec_base64 ARGS2(
 	    *bp++ = nw[2];
     }
     *bp = '\0';
-    strcpy(t, buf);
+    StrAllocCopy(*t, buf);
+    FREE(buf);
 }
 
-PUBLIC void HTmmdec_quote ARGS2(
-	char *,		t,
+PRIVATE void HTmmdec_quote ARGS2(
+	char **,	t,
 	char *,		s)
 {
-    char  buf[LINE_LENGTH], cval, *bp, *p;
+    char *buf, cval, *bp, *p;
+
+    if ((buf = malloc(strlen(s) + 1)) == 0)
+	outofmem(__FILE__, "HTmmdec_quote");
 
     for (bp = buf; *s; ) {
 	if (*s == '=') {
@@ -2147,23 +2147,27 @@ PUBLIC void HTmmdec_quote ARGS2(
 	}
     }
     *bp = '\0';
-    strcpy(t, buf);
+    StrAllocCopy(*t, buf);
+    FREE(buf);
 }
 
 /*
 **	HTmmdecode for ISO-2022-JP - FM
 */
 PUBLIC void HTmmdecode ARGS2(
-	char *,		trg,
-	char *,		str)
+	char **,	target,
+	char *,		source)
 {
-    char buf[LINE_LENGTH], mmbuf[LINE_LENGTH];
+    char *buf;
+    char *mmbuf = NULL;
+    char *m2buf = NULL;
     char *s, *t, *u;
     int  base64, quote;
 
-    buf[0] = '\0';
-
-    for (s = str, u = buf; *s; ) {
+    if ((buf = malloc(strlen(source) + 1)) == 0)
+	outofmem(__FILE__, "HTmmdecode");
+  
+    for (s = source, u = buf; *s;) {
 	if (!strncasecomp(s, "=?ISO-2022-JP?B?", 16)) {
 	    base64 = 1;
 	} else {
@@ -2177,15 +2181,18 @@ PUBLIC void HTmmdecode ARGS2(
 	if (base64 || quote) {
 	    if (HTmmcont) {
 		for (t = s - 1;
-		    t >= str && (*t == ' ' || *t == '\t'); t--) {
+		    t >= source && (*t == ' ' || *t == '\t'); t--) {
 			u--;
 		}
 	    }
+	    if (mmbuf == 0)	/* allocate buffer big enough for source */
+		StrAllocCopy(mmbuf, source);
 	    for (s += 16, t = mmbuf; *s; ) {
 		if (s[0] == '?' && s[1] == '=') {
 		    break;
 		} else {
 		    *t++ = *s++;
+		    *t = '\0';
 		}
 	    }
 	    if (s[0] != '?' || s[1] != '=') {
@@ -2195,14 +2202,12 @@ PUBLIC void HTmmdecode ARGS2(
 		*t = '\0';
 	    }
 	    if (base64)
-		HTmmdec_base64(mmbuf, mmbuf);
+		HTmmdec_base64(&m2buf, mmbuf);
 	    if (quote)
-		HTmmdec_quote(mmbuf, mmbuf);
-	    for (t = mmbuf; *t; )
+		HTmmdec_quote(&m2buf, mmbuf);
+	    for (t = m2buf; *t; )
 		*u++ = *t++;
 	    HTmmcont = 1;
-	    /* if (*s == ' ' || *s == '\t') *u++ = *s; */
-	    /* for ( ; *s == ' ' || *s == '\t'; s++) ; */
 	} else {
 	    if (*s != ' ' && *s != '\t')
 		HTmmcont = 0;
@@ -2211,7 +2216,10 @@ PUBLIC void HTmmdecode ARGS2(
     }
     *u = '\0';
 end:
-    strcpy(trg, buf);
+    StrAllocCopy(*target, buf);
+    FREE(m2buf);
+    FREE(mmbuf);
+    FREE(buf);
 }
 
 /*
@@ -2219,22 +2227,27 @@ end:
 **  (The author of this function "rjis" is S. Ichikawa.)
 */
 PUBLIC int HTrjis ARGS2(
-	char *,		t,
+	char **,	t,
 	char *,		s)
 {
-    char *p, buf[LINE_LENGTH];
+    char *p;
+    char *buf = NULL;
     int kanji = 0;
 
-    if (strchr(s, ESC) || !strchr(s, '$')) {
-	if (s != t)
-	    strcpy(t, s);
+    if (strchr(s, CH_ESC) || !strchr(s, '$')) {
+	if (s != *t)
+	    StrAllocCopy(*t, s);
 	return 1;
     }
+
+    if ((buf = malloc(strlen(s) * 2 + 1)) == 0)
+	outofmem(__FILE__, "HTrjis");
+
     for (p = buf; *s; ) {
 	if (!kanji && s[0] == '$' && (s[1] == '@' || s[1] == 'B')) {
 	    if (HTmaybekanji((int)s[2], (int)s[3])) {
 		kanji = 1;
-		*p++ = ESC;
+		*p++ = CH_ESC;
 		*p++ = *s++;
 		*p++ = *s++;
 		*p++ = *s++;
@@ -2246,7 +2259,7 @@ PUBLIC int HTrjis ARGS2(
 	}
 	if (kanji && s[0] == '(' && (s[1] == 'J' || s[1] == 'B')) {
 	    kanji = 0;
-	    *p++ = ESC;
+	    *p++ = CH_ESC;
 	    *p++ = *s++;
 	    *p++ = *s++;
 	    continue;
@@ -2255,7 +2268,8 @@ PUBLIC int HTrjis ARGS2(
     }
     *p = *s;	/* terminate string */
 
-    strcpy(t, buf);
+    StrAllocCopy(*t, buf);
+    FREE(buf);
     return 0;
 }
 
@@ -2267,7 +2281,7 @@ PUBLIC int HTrjis ARGS2(
 */
 /*
  * RJIS ( Recover JIS code from broken file )
- * $Header: /home/cvs/src/gnu/usr.bin/lynx/WWW/Library/Implementation/Attic/HTMIME.c,v 1.4 2004/06/22 04:01:42 avsm Exp $
+ * $Header: /home/cvs/src/gnu/usr.bin/lynx/WWW/Library/Implementation/Attic/HTMIME.c,v 1.5 2005/11/04 04:24:03 fgsch Exp $
  * Copyright (C) 1992 1994
  * Hironobu Takahashi (takahasi@tiny.or.jp)
  *

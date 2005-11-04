@@ -1,6 +1,14 @@
 Changes since Lynx 2.8 release
 ===============================================================================
 
+2005-10-25 (2.8.5rel.4 fixes from 2.8.6dev.14)
+* fix error in rel.3 patch (report by Klaus Singvogel)
+
+2005-10-17 (2.8.5rel.3 fixes from 2.8.6dev.14)
+* eliminate fixed-size buffers in HTrjis() and related functions to avoid
+  potential buffer overflow in nntp pages (report by Ulf Harnhammar,
+  CAN-2005-3120) -TD
+
 2004-04-22 (2.8.5rel.2 fixes from 2.8.6dev.1)
 * correct ifdef in LYgetattrs() to ensure that getattrs() is used only if the
   configure script actually found it (report/patch by Paul Gilmartin).

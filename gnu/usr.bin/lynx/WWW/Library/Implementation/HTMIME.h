@@ -67,20 +67,12 @@ extern HTStream * HTMIMERedirect PARAMS((HTPresentation * pres,
   For handling Japanese headers.
 
 */
-extern void HTmmdec_base64 PARAMS((
-	char *	t,
-	char *	s));
-
-extern void HTmmdec_quote PARAMS((
-	char *	t,
-	char *	s));
-
 extern void HTmmdecode PARAMS((
-	char *	trg,
+	char **	trg,
 	char *	str));
 
 extern int HTrjis PARAMS((
-	char *	t,
+	char **	t,
 	char *	s));
 
 extern int HTmaybekanji PARAMS((

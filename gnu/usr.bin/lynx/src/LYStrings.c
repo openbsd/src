@@ -1046,7 +1046,7 @@ PRIVATE BOOLEAN unescape_string ARGS3(char*, src, char *, dst, char *, final)
     BOOLEAN ok = FALSE;
 
     if (*src == SQUOTE) {
-	int keysym;
+	int keysym = 0;
 	unescaped_char(src, &keysym);
 	if (keysym >= 0) {
 	    dst[0] = keysym;

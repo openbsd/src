@@ -1117,6 +1117,7 @@ PRIVATE int generate_cso_form ARGS4(
     };
 
     out = 0;
+    memset(&ctx, 0, sizeof(ctx));
     ctx.host = host;
     ctx.seek = (char *) 0;
     ctx.port = port;

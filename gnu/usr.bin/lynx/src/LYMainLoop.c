@@ -5207,8 +5207,8 @@ int mainloop NOARGS
     char cfile[128];
     FILE *cfp;
     char *cp;
-    int ch, recall;
-    int URLTotal;
+    int ch = 0, recall = 0;
+    int URLTotal = 0;
     int URLNum;
     BOOLEAN FirstURLRecall = TRUE;
     char *temp = NULL;
