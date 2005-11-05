@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.5 2005/11/03 04:05:57 krw Exp $
+/*	$OpenBSD: trm.c,v 1.6 2005/11/05 02:27:40 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -691,8 +691,13 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	printf("%s: trm_StartSRB. sc = %p, pDCB = %p, pSRB = %p\n",
 	    sc->sc_device.dv_xname, sc, pDCB, pSRB);
 #endif
-	if ((pDCB->DCBFlag & TRM_QUEUE_FULL) != 0)
-		return 1;
+	/* 
+	 * If the queue is full or the SCSI processor has a pending interrupt
+	 * then try again later.
+	 */
+	if ((pDCB->DCBFlag & TRM_QUEUE_FULL) || (bus_space_read_2(iot, ioh,
+	    TRM_S1040_SCSI_STATUS) & SCSIINTERRUPT)) 
+		return (1);
 
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_HOSTID, sc->sc_AdaptSCSIID);
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_TARGETID, pDCB->target);
@@ -706,17 +711,11 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	}
 
 	/*
-	 * initial phase
-	 */
-	
-	pSRB->ScsiPhase = PH_BUS_FREE;
-
-	/*
 	 * Flush FIFO
 	 */
 	bus_space_write_2(iot, ioh, TRM_S1040_SCSI_CONTROL, DO_CLRFIFO);
 
-	sc->MsgCnt    = 1;
+	sc->MsgCnt = 1;
 	sc->MsgBuf[0] = pDCB->IdentifyMsg;
 	if (((pSRB->xs->flags & SCSI_POLL) != 0) ||
 	    (pSRB->CmdBlock[0] == INQUIRY) ||
@@ -724,15 +723,15 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		sc->MsgBuf[0] &= ~MSG_IDENTIFY_DISCFLAG;
 
 	scsicommand = SCMD_SEL_ATN;
-	pSRB->SRBState = TRM_START;
 
 	if ((pDCB->DCBFlag & (TRM_WIDE_NEGO_ENABLE | TRM_SYNC_NEGO_ENABLE)) != 0) {
 		scsicommand = SCMD_SEL_ATNSTOP;
 		pSRB->SRBState = TRM_MSGOUT;
 
-	} else if (((sc->MsgBuf[0] & MSG_IDENTIFY_DISCFLAG) != 0) && 
-                   ((pDCB->DCBFlag & TRM_USE_TAG_QUEUING) != 0)) {
+	} else if ((pDCB->DCBFlag & TRM_USE_TAG_QUEUING) == 0) {
+		pDCB->DCBFlag |= TRM_QUEUE_FULL;			
 
+	} else if ((sc->MsgBuf[0] & MSG_IDENTIFY_DISCFLAG) != 0) {
 		if (pSRB->TagNumber == TRM_NO_TAG) {
 			for (tag_id=1, tag_mask=2; tag_id < 32; tag_id++, tag_mask <<= 1)
 				if ((tag_mask & pDCB->TagMask) == 0) {
@@ -742,7 +741,7 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 				}
 
 			if (tag_id >= 32) {
-				pDCB->DCBFlag |= TRM_QUEUE_FULL;			
+				pDCB->DCBFlag |= TRM_QUEUE_FULL;
 				sc->MsgCnt = 0;
 				return 1;
 			}
@@ -755,22 +754,7 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		scsicommand = SCMD_SEL_ATN3;
 	}
 
-	if ((bus_space_read_2(iot, ioh, TRM_S1040_SCSI_STATUS) & SCSIINTERRUPT) != 0) { 
-		/* 
-		 * return 1 :
-		 * current interrupt status is interrupt disreenable 
-		 * It's said that SCSI processor has more than one SRB it needs
-		 * to do, SCSI processor has been occupied by one SRB.
-		 */
-		pSRB->SRBState = TRM_READY;
-		return 1;
-	}
-
-	/* 
-	 * return 0 :
-	 * current interrupt status is interrupt enable 
-	 * It's said that SCSI processor is unoccupied 
-	 */
+	pSRB->SRBState = TRM_START;
 	pSRB->ScsiPhase = PH_BUS_FREE; /* SCSI bus free Phase */
 	sc->pActiveDCB = pDCB;
 	pDCB->pActiveSRB = pSRB;
