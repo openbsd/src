@@ -1,4 +1,4 @@
-/*	$OpenBSD: number.c,v 1.11 2004/07/10 07:26:23 deraadt Exp $	*/
+/*	$OpenBSD: number.c,v 1.12 2005/11/05 22:53:05 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: number.c,v 1.11 2004/07/10 07:26:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: number.c,v 1.12 2005/11/05 22:53:05 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -170,8 +170,8 @@ badnum:			errx(1, "illegal number: %s", line);
 	*p = '\0';
 
 	if ((len = strlen(line)) > MAXNUM ||
-	    ((fraction != NULL) && (flen = strlen(fraction))) > MAXNUM)
-		errx(1, "number too large (max %d digits).", MAXNUM);
+	    ((fraction != NULL) && (flen = strlen(fraction)) > MAXNUM))
+		errx(1, "number too long (max %d digits).", MAXNUM);
 
 	if (*line == '-') {
 		(void)printf("minus%s", lflag ? " " : "\n");
