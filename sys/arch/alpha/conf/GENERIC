@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.154 2005/10/02 18:39:22 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.155 2005/11/05 11:56:34 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -194,6 +194,7 @@ scsibus* at twe?
 #scsibus*	at ami?
 
 # PCI Network devices
+lmc*	at pci?				# Lan Media Corp SSI/T3/HSSI
 de*	at pci?				# 21x4[012]-based Ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet
 ne*	at pci?				# NE2000-compat ethernet cards

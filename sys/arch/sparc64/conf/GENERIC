@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.134 2005/10/10 23:02:21 brad Exp $
+#	$OpenBSD: GENERIC,v 1.135 2005/11/05 11:56:40 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -45,6 +45,7 @@ ppb*	at pci?
 ebus*	at pci?
 
 # PCI Ethernet
+lmc*	at pci?			# Lan Media Corp SSI/T3/HSSI
 hme*	at pci?
 gem*	at pci?
 ti*	at pci?			# Alteon Tigon 1Gb ethernet
