@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.24 2005/10/31 01:16:29 brad Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.25 2005/11/05 04:26:22 brad Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -35,26 +35,20 @@
 #include <sys/param.h>
 #include <sys/audioio.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <dev/auconv.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 #include <dev/ofw/openfirm.h>
 #include <macppc/dev/dbdma.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/autoconf.h>
-#include <machine/pio.h>
 
 #include <macppc/dev/i2svar.h>
 
 #ifdef SNAPPER_DEBUG
-# define DPRINTF(x) printf x 
+# define DPRINTF printf
 #else
-# define DPRINTF(x)
+# define DPRINTF while (0) printf
 #endif
 
 /* XXX */
@@ -285,36 +279,30 @@ struct tas3004_reg {
 };
 
 int
-snapper_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+snapper_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 	int soundbus, soundchip;
 	char compat[32];
 
 	if (strcmp(ca->ca_name, "i2s") != 0)
-		return 0;
+		return (0);
 
 	if ((soundbus = OF_child(ca->ca_node)) == 0 ||
 	    (soundchip = OF_child(soundbus)) == 0)
-		return 0;
+		return (0);
 
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
 	if (strcmp(compat, "snapper") != 0)
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 void
-snapper_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+snapper_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct snapper_softc *sc = (struct snapper_softc *)self;
 
@@ -350,9 +338,7 @@ snapper_defer(struct device *dev)
 }
 
 void
-snapper_set_volume(sc, left, right)
-	struct snapper_softc *sc;
-	int left, right;
+snapper_set_volume(struct snapper_softc *sc, int left, int right)
 {
 	u_char vol[6];
 
@@ -472,10 +458,7 @@ const char tas3004_regsize[] = {
 #define DEQaddr 0x6a
 
 int
-tas3004_write(sc, reg, data)
-	struct snapper_softc *sc;
-	u_int reg;
-	const void *data;
+tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 {
 	int size;
 
@@ -484,17 +467,16 @@ tas3004_write(sc, reg, data)
 	KASSERT(size > 0);
 
 	if (ki2c_write(sc->sc_i2c, DEQaddr, reg, data, size))
-		return -1;
+		return (-1);
 
-	return 0;
+	return (0);
 }
 
 #define DEQ_WRITE(sc, reg, addr) \
 	if (tas3004_write(sc, reg, addr)) goto err
 
 int
-tas3004_init(sc)
-	struct snapper_softc *sc;
+tas3004_init(struct snapper_softc *sc)
 {
 	deq_reset(sc);
 
@@ -526,10 +508,10 @@ tas3004_init(sc)
 	DEQ_WRITE(sc, DEQ_RLB_GAIN, tas3004_initdata.RLB_GAIN);
 	DEQ_WRITE(sc, DEQ_ACR, tas3004_initdata.ACR);
 
-	return 0;
+	return (0);
 err:
 	printf("%s: tas3004_init failed\n", sc->sc_dev.dv_xname);
-	return -1;
+	return (-1);
 }
 
 void

@@ -1,5 +1,5 @@
-/*	$OpenBSD: daca.c,v 1.1 2005/10/30 23:55:03 joris Exp $	*/
-/*	$Id: daca.c,v 1.1 2005/10/30 23:55:03 joris Exp $	*/
+/*	$OpenBSD: daca.c,v 1.2 2005/11/05 04:26:22 brad Exp $	*/
+/*	$Id: daca.c,v 1.2 2005/11/05 04:26:22 brad Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -30,12 +30,9 @@
 #include <sys/param.h>
 #include <sys/audioio.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <dev/auconv.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 #include <dev/ofw/openfirm.h>
 #include <macppc/dev/dbdma.h>
 
@@ -49,7 +46,12 @@
 # define DPRINTF while (0) printf
 #endif
 
-#define daca_softc i2s_softc		/* XXX */
+/* XXX */
+#define daca_softc i2s_softc
+
+/* XXX */
+int ki2c_write(struct device *, int, int, const void *, int);
+int ki2c_writereg(struct device *, int, u_int);
 
 int daca_getdev(void *, struct audio_device *);
 int daca_match(struct device *, void *, void *);
@@ -57,10 +59,6 @@ void daca_attach(struct device *, struct device *, void *);
 void daca_defer(struct device *);
 void daca_init(struct daca_softc *);
 void daca_set_volume(struct daca_softc *, int, int);
-
-/* XXX */
-int ki2c_write(struct device *, int, int, const void *, int);
-int ki2c_writereg(struct device *, int, u_int);
 
 struct cfattach daca_ca = {
 	sizeof(struct daca_softc), daca_match, daca_attach
@@ -90,7 +88,7 @@ struct audio_hw_if daca_hw_if = {
 	i2s_set_port,
 	i2s_get_port,
 	i2s_query_devinfo,
-	i2s_allocm,
+	i2s_allocm,		/* allocm */
 	NULL,
 	i2s_round_buffersize,
 	i2s_mappage,
@@ -111,41 +109,35 @@ struct audio_device daca_device = {
 #define DEQ_GCFG	0x03	/* Global configuration (8) */
 
 int
-daca_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+daca_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 	int soundbus, soundchip;
 	char compat[32];
 
 	if (strcmp(ca->ca_name, "i2s") != 0)
-		return 0;
+		return (0);
 
 	if ((soundbus = OF_child(ca->ca_node)) == 0 ||
 	    (soundchip = OF_child(soundbus)) == 0)
-		return 0;
+		return (0);
 
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
 	if (strcmp(compat, "daca") != 0)
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 #define DEQaddr 0x9a
 
 void
-daca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+daca_attach(struct device *parent,struct device *self, void *aux)
 {
 	struct daca_softc *sc = (struct daca_softc *)self;
 
-	/* "set volume" callback */
 	sc->sc_setvolume = daca_set_volume;
 
 	i2s_attach(parent, sc, aux);
@@ -158,18 +150,19 @@ daca_defer(struct device *dev)
 	struct daca_softc *sc = (struct daca_softc *)dev;
 	struct device *dv;
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list)
 		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
 		    strncmp(dv->dv_parent->dv_xname, "macobio", 7) == 0)
 			sc->sc_i2c = dv;
-	}
-
 	if (sc->sc_i2c == NULL) {
 		printf("%s: unable to find i2c\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
+	/* XXX If i2c has failed to attach, what should we do? */
+
 	audio_attach_mi(&daca_hw_if, sc, &sc->sc_dev);
+
 	daca_init(sc);
 }
 
@@ -181,18 +174,14 @@ daca_init(struct daca_softc *sc)
 }
 
 int
-daca_getdev(h, retp)
-	void *h;
-	struct audio_device *retp;
+daca_getdev(void *h, struct audio_device *retp)
 {
 	*retp = daca_device;
-	return 0;
+	return (0);
 }
 
 void
-daca_set_volume(sc, left, right)
-	struct daca_softc *sc;
-	int left, right;
+daca_set_volume(struct daca_softc *sc, int left, int right)
 {
 	u_int16_t data;
 

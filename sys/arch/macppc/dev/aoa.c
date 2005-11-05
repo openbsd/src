@@ -1,5 +1,5 @@
-/*	$OpenBSD: aoa.c,v 1.1 2005/10/31 00:04:54 joris Exp $	*/
-/*	$Id: aoa.c,v 1.1 2005/10/31 00:04:54 joris Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.2 2005/11/05 04:26:22 brad Exp $	*/
+/*	$Id: aoa.c,v 1.2 2005/11/05 04:26:22 brad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -38,9 +38,9 @@
 
 #include <dev/audio_if.h>
 #include <dev/ofw/openfirm.h>
+#include <macppc/dev/dbdma.h>
 
 #include <machine/autoconf.h>
-#include <macppc/dev/dbdma.h>
 
 #include <macppc/dev/i2svar.h>
 
@@ -50,14 +50,12 @@
 # define DPRINTF while (0) printf
 #endif
 
-#define aoa_softc i2s_softc		/* XXX */
+/* XXX */
+#define aoa_softc i2s_softc
 
+int aoa_getdev(void *, struct audio_device *);
 int aoa_match(struct device *, void *, void *);
 void aoa_attach(struct device *, struct device *, void *);
-
-/* XXX */
-int aoa_getdev(void *, struct audio_device *);
-
 void aoa_set_volume(struct aoa_softc *, int, int);
 
 struct cfattach aoa_ca = {
@@ -104,43 +102,37 @@ struct audio_device aoa_device = {
 };
 
 int
-aoa_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+aoa_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 	int soundbus, soundchip;
 	char compat[32];
 
 	if (strcmp(ca->ca_name, "i2s") != 0)
-		return 0;
+		return (0);
 
 	if ((soundbus = OF_child(ca->ca_node)) == 0 ||
 	    (soundchip = OF_child(soundbus)) == 0)
-		return 0;
+		return (0);
 
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
 	if (strcmp(compat, "AOAKeylargo") == 0)
-		return 1;
+		return (1);
 	if (strcmp(compat, "AOAK2") == 0)
-		return 1;
+		return (1);
 	if (strcmp(compat, "AOAbase") == 0)
-		return 1;
+		return (1);
 
-	return 0;
+	return (0);
 }
 
 void
-aoa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+aoa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aoa_softc *sc = (struct aoa_softc *)self;
 
-	/* "set volume" callback */
 	sc->sc_setvolume = aoa_set_volume;
 
 	i2s_attach(parent, sc, aux);
@@ -148,18 +140,14 @@ aoa_attach(parent, self, aux)
 }
 
 int
-aoa_getdev(h, retp)
-	void *h;
-	struct audio_device *retp;
+aoa_getdev(void *h, struct audio_device *retp)
 {
 	*retp = aoa_device;
-	return 0;
+	return (0);
 }
 
 void
-aoa_set_volume(sc, left, right)
-	struct aoa_softc *sc;
-	int left, right;
+aoa_set_volume(struct aoa_softc *sc, int left, int right)
 {
 	printf("aoa_set_volume() not supported yet\n");
 }

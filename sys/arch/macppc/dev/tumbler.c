@@ -1,4 +1,4 @@
-/*	$OpenBSD: tumbler.c,v 1.2 2005/10/31 01:20:46 brad Exp $	*/
+/*	$OpenBSD: tumbler.c,v 1.3 2005/11/05 04:26:22 brad Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -34,19 +34,13 @@
 #include <sys/param.h>
 #include <sys/audioio.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <dev/auconv.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 #include <dev/ofw/openfirm.h>
 #include <macppc/dev/dbdma.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/autoconf.h>
-#include <machine/pio.h>
 
 #include <macppc/dev/i2svar.h>
 
@@ -271,19 +265,19 @@ tumbler_match(struct device *parent, void *match, void *aux)
 	char compat[32];
 
 	if (strcmp(ca->ca_name, "i2s") != 0)
-		return 0;
+		return (0);
 
 	if ((soundbus = OF_child(ca->ca_node)) == 0 ||
 	    (soundchip = OF_child(soundbus)) == 0)
-		return 0;
+		return (0);
 
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
 	if (strcmp(compat, "tumbler") != 0)
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 void
@@ -430,9 +424,9 @@ tas3001_write(struct tumbler_softc *sc, u_int reg, const void *data)
 	KASSERT(size > 0);
 
 	if (ki2c_write(sc->sc_i2c, DEQaddr, reg, data, size))
-		return -1;
+		return (-1);
 
-	return 0;
+	return (0);
 }
 
 #define DEQ_WRITE(sc, reg, addr) \
@@ -464,10 +458,10 @@ tas3001_init(struct tumbler_softc *sc)
 	DEQ_WRITE(sc, DEQ_MIXER1, tas3001_initdata.MIXER1);
 	DEQ_WRITE(sc, DEQ_MIXER2, tas3001_initdata.MIXER2);
 
-	return 0;
+	return (0);
 err:
 	printf("%s: tas3001_init: error\n", sc->sc_dev.dv_xname);
-	return -1;
+	return (-1);
 }
 
 void
@@ -496,5 +490,5 @@ int
 tumbler_getdev(void *h, struct audio_device *retp)
 {
 	*retp = tumbler_device;
-	return 0;
+	return (0);
 }
