@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 2005/05/25 18:29:58 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 2005/11/05 18:29:24 marco Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -104,6 +104,16 @@ int	x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
 int	_x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
     bus_size_t size, int flags, bus_space_handle_t *bshp);
 
+#define	bus_space_alloc(t,beg,end,sz,align,bound,flag,addrp,h) \
+    x86_memio_alloc((t),(beg),(end),(sz),(align),(bound),(flag),(addrp),(h))
+int	x86_memio_alloc(bus_space_tag_t t, bus_addr_t rstart,
+	    bus_addr_t rend, bus_size_t size, bus_size_t align,
+	    bus_size_t boundary, int flags, bus_addr_t *addrp,
+	    bus_space_handle_t *bshp);
+#define	bus_space_free(t,h,z)	x86_memio_free((t),(h),(z))
+void	x86_memio_free(bus_space_tag_t t, bus_space_handle_t bsh,  
+	    bus_size_t size);
+
 /* 
  *      int bus_space_unmap(bus_space_tag_t t,
  *          bus_space_handle_t bsh, bus_size_t size);
@@ -119,13 +129,6 @@ void	_x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 /* like bus_space_map(), but without extent map checking/allocation */
 int	_bus_space_map(bus_space_tag_t t, bus_addr_t addr,
 	    bus_size_t size, int cacheable, bus_space_handle_t *bshp);
-
-int	bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
-	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
-	    bus_space_handle_t *bshp);
-void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size);
 
 /*
  *      int bus_space_subregion(bus_space_tag_t t,
@@ -1121,30 +1124,6 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high);
-
-/* 
- *      int bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
- *          bus_addr_t rend, bus_size_t size, bus_size_t align,
- *          bus_size_t boundary, int flags, bus_addr_t *addrp,
- *          bus_space_handle_t *bshp);
- *
- * Allocate a region of bus space.      
- */
- 
-int	x86_memio_alloc(bus_space_tag_t t, bus_addr_t rstart,
-	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_size_t boundary, int flags, bus_addr_t *addrp,
-	    bus_space_handle_t *bshp);
-
-/*          
- *      int bus_space_free(bus_space_tag_t t,
- *          bus_space_handle_t bsh, bus_size_t size);
- * 
- * Free a region of bus space.
- */
- 
-void	x86_memio_free(bus_space_tag_t t, bus_space_handle_t bsh,  
-	    bus_size_t size);
 
 /*      
  *      paddr_t bus_space_mmap(bus_space_tag_t t, bus_addr_t base,
