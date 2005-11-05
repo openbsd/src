@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.16 2005/08/09 04:10:12 mickey Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.17 2005/11/05 11:49:01 brad Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -100,8 +100,6 @@
 #include <net/bpf.h>
 #endif
 
-#include <uvm/uvm_extern.h>
-
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <net/if_sppp.h>
 #endif
@@ -176,6 +174,9 @@
  */
 
 static void lmc_shutdown(void *arg);
+static int lmc_busdma_init(lmc_softc_t * const sc);
+static int lmc_busdma_allocmem(lmc_softc_t * const sc, size_t size,
+	bus_dmamap_t *map_p, lmc_desc_t **desc_p);
 
 static int
 lmc_pci_probe(struct device *parent,
@@ -210,7 +211,7 @@ lmc_pci_probe(struct device *parent,
 	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_DS1))
 		return 0;
 
-	return 10; /* must be > than any other tulip driver */
+	return 20; /* must be > than any other tulip driver */
 }
 
 static void  lmc_pci_attach(struct device * const parent,
@@ -231,9 +232,6 @@ lmc_pci_attach(struct device * const parent,
 	u_int32_t revinfo, cfdainfo, id, ssid;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
-#if 0
-	vm_offset_t pa_csrs;
-#endif
 	unsigned csroffset = LMC_PCI_CSROFFSET;
 	unsigned csrsize = LMC_PCI_CSRSIZE;
 	lmc_csrptr_t csr_base;
@@ -320,6 +318,12 @@ lmc_pci_attach(struct device * const parent,
 		}
 	}
 
+	sc->lmc_dmatag = pa->pa_dmat;
+	if ((lmc_busdma_init(sc)) != 0) {
+		printf("error initing bus_dma\n");
+		return;
+	}
+
 	lmc_initcsrs(sc, csr_base + csroffset, csrsize);
 	lmc_initring(sc, &sc->lmc_rxinfo, sc->lmc_rxdescs,
 		       LMC_RXDESCS);
@@ -397,4 +401,102 @@ lmc_shutdown(void *arg)
 
 	sc->lmc_miireg16 = 0;  /* deassert ready, and all others too */
 	lmc_led_on(sc, LMC_MII16_LED_ALL);
+}
+
+static int
+lmc_busdma_allocmem(
+    lmc_softc_t * const sc,
+    size_t size,
+    bus_dmamap_t *map_p,
+    lmc_desc_t **desc_p)
+{
+    bus_dma_segment_t segs[1];
+    int nsegs, error;
+    error = bus_dmamem_alloc(sc->lmc_dmatag, size, 1, NBPG,
+			     segs, sizeof(segs)/sizeof(segs[0]),
+			     &nsegs, BUS_DMA_NOWAIT);
+    if (error == 0) {
+	void *desc;
+	error = bus_dmamem_map(sc->lmc_dmatag, segs, nsegs, size,
+			       (void *) &desc, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	if (error == 0) {
+	    bus_dmamap_t map;
+	    error = bus_dmamap_create(sc->lmc_dmatag, size, 1, size, 0,
+				      BUS_DMA_NOWAIT, &map);
+	    if (error == 0) {
+		error = bus_dmamap_load(sc->lmc_dmatag, map, desc,
+					size, NULL, BUS_DMA_NOWAIT);
+		if (error)
+		    bus_dmamap_destroy(sc->lmc_dmatag, map);
+		else
+		    *map_p = map;
+	    }
+	    if (error)
+		bus_dmamem_unmap(sc->lmc_dmatag, desc, size);
+	}
+	if (error)
+	    bus_dmamem_free(sc->lmc_dmatag, segs, nsegs);
+	else
+	    *desc_p = desc;
+    }
+    return error;
+}
+
+static int
+lmc_busdma_init(
+    lmc_softc_t * const sc)
+{
+    int error = 0;
+
+    /*
+     * Allocate space and dmamap for transmit ring
+     */
+    if (error == 0) {
+	error = lmc_busdma_allocmem(sc, sizeof(lmc_desc_t) * LMC_TXDESCS,
+				      &sc->lmc_txdescmap,
+				      &sc->lmc_txdescs);
+    }
+
+    /*
+     * Allocate dmamaps for each transmit descriptors
+     */
+    if (error == 0) {
+	while (error == 0 && sc->lmc_txmaps_free < LMC_TXDESCS) {
+	    bus_dmamap_t map;
+	    if ((error = LMC_TXMAP_CREATE(sc, &map)) == 0)
+		sc->lmc_txmaps[sc->lmc_txmaps_free++] = map;
+	}
+	if (error) {
+	    while (sc->lmc_txmaps_free > 0) 
+		bus_dmamap_destroy(sc->lmc_dmatag,
+				   sc->lmc_txmaps[--sc->lmc_txmaps_free]);
+	}
+    }
+
+    /*
+     * Allocate space and dmamap for receive ring
+     */
+    if (error == 0) {
+	error = lmc_busdma_allocmem(sc, sizeof(lmc_desc_t) * LMC_RXDESCS,
+				      &sc->lmc_rxdescmap,
+				      &sc->lmc_rxdescs);
+    }
+
+    /*
+     * Allocate dmamaps for each receive descriptors
+     */
+    if (error == 0) {
+	while (error == 0 && sc->lmc_rxmaps_free < LMC_RXDESCS) {
+	    bus_dmamap_t map;
+	    if ((error = LMC_RXMAP_CREATE(sc, &map)) == 0)
+		sc->lmc_rxmaps[sc->lmc_rxmaps_free++] = map;
+	}
+	if (error) {
+	    while (sc->lmc_rxmaps_free > 0) 
+		bus_dmamap_destroy(sc->lmc_dmatag,
+				   sc->lmc_rxmaps[--sc->lmc_rxmaps_free]);
+	}
+    }
+
+    return error;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_lmcioctl.h,v 1.4 2000/11/10 15:33:09 provos Exp $ */
-/*	$Id: if_lmcioctl.h,v 1.4 2000/11/10 15:33:09 provos Exp $	*/
+/*	$OpenBSD: if_lmcioctl.h,v 1.5 2005/11/05 11:49:01 brad Exp $ */
+/*	$Id: if_lmcioctl.h,v 1.5 2005/11/05 11:49:01 brad Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -328,5 +328,5 @@ lmc_intrfunc_t lmc_intr_normal(void *);
 int lmc_read_macaddr(lmc_softc_t * const sc);
 void lmc_attach(lmc_softc_t * const sc);
 void lmc_initring(lmc_softc_t * const sc, lmc_ringinfo_t * const ri,
-		  tulip_desc_t *descs, int ndescs);
+		  lmc_desc_t *descs, int ndescs);
 #endif /* LMC_IS_KERNEL */
