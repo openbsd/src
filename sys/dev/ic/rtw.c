@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.48 2005/11/04 15:05:30 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.49 2005/11/05 02:31:29 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -556,8 +556,6 @@ rtw_srom_parse(struct rtw_softc *sc)
 	int *rfchipid = &sc->sc_rfchipid;
 	u_int32_t *rcr = &sc->sc_rcr;
 	enum rtw_locale *locale = &sc->sc_locale;
-	const char *rfname, *paname = NULL;
-	char scratch[sizeof("unknown 0xXX")];
 	u_int16_t version;
 	u_int8_t mac[IEEE80211_ADDR_LEN];
 
@@ -601,48 +599,6 @@ rtw_srom_parse(struct rtw_softc *sc)
 	    RTW_SR_RFPARM_CS_MASK), RTW_RCR_ENCS1);
 
 	*rfchipid = RTW_SR_GET(sr, RTW_SR_RFCHIPID);
-	switch (*rfchipid) {
-	case RTW_RFCHIPID_RTL8225:
-		rfname = "RTL8225";
-		break;
-	case RTW_RFCHIPID_RTL8255:
-		rfname = "RTL8255";
-		break;
-	case RTW_RFCHIPID_GCT:		/* this combo seen in the wild */
-		rfname = "GRF5101";
-		paname = "WS9901";
-		break;
-	case RTW_RFCHIPID_MAXIM2820:
-		rfname = "MAX2820";	/* guess */
-		paname = "MAX2422";	/* guess */
-		break;
-	case RTW_RFCHIPID_INTERSIL:
-		rfname = "HFA3873";	/* guess */
-		paname = "Intersil <unknown>";
-		break;
-	case RTW_RFCHIPID_PHILIPS:	/* this combo seen in the wild */
-		rfname = "SA2400A";
-		paname = "SA2411";
-		break;
-	case RTW_RFCHIPID_RFMD2948:
-		/* this is the same front-end as an atw(4)! */
-		rfname = "RFMD RF2948B, "	/* mentioned in Realtek docs */
-			 "LNA: RFMD RF2494, "	/* mentioned in Realtek docs */
-			 "SYN: Silicon Labs Si4126";	/* inferred from
-			 				 * reference driver
-							 */
-		paname = "RF2189";		/* mentioned in Realtek docs */
-		break;
-	case RTW_RFCHIPID_RESERVED:
-		rfname = paname = "reserved";
-		break;
-	default:
-		snprintf(scratch, sizeof(scratch), "unknown 0x%02x", *rfchipid);
-		rfname = scratch;
-	}
-	printf("radio %s, ", rfname);
-	if (paname != NULL)
-		printf("amp %s, ", paname);
 
 	if (sc->sc_flags & RTW_F_RTL8185) {
 		*locale = RTW_LOCALE_UNKNOWN;
@@ -3471,9 +3427,13 @@ int
 rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 {
 	struct rtw_bbpset *bb = &sc->sc_bbpset;
+	int notsup = 0;
+	const char *rfname, *paname = NULL;
+	char scratch[sizeof("unknown 0xXX")];
 
 	switch (rfchipid) {
 	case RTW_RFCHIPID_RTL8225:
+		rfname = "RTL8225";
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
 		sc->sc_rf_init = rtw_rtl8255_init;
 		sc->sc_rf_pwrstate = rtw_rtl8225_pwrstate;
@@ -3481,6 +3441,7 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 		sc->sc_rf_txpower = rtw_rtl8225_txpower;
 		break;
 	case RTW_RFCHIPID_RTL8255:
+		rfname = "RTL8255";
 		sc->sc_pwrstate_cb = rtw_rtl_pwrstate;
 		sc->sc_rf_init = rtw_rtl8255_init;
 		sc->sc_rf_pwrstate = rtw_rtl8255_pwrstate;
@@ -3488,6 +3449,8 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 		sc->sc_rf_txpower = rtw_rtl8255_txpower;
 		break;
 	case RTW_RFCHIPID_MAXIM2820:
+		rfname = "MAX2820";	/* guess */
+		paname = "MAX2422";	/* guess */
 		/* XXX magic */
 		bb->bb_antatten = RTW_BBP_ANTATTEN_MAXIM_MAGIC;
 		bb->bb_chestlim =	0x00;
@@ -3508,6 +3471,8 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 		sc->sc_rf_txpower = rtw_max2820_txpower;
 		break;
 	case RTW_RFCHIPID_PHILIPS:
+		rfname = "SA2400A";
+		paname = "SA2411";
 		/* XXX magic */
 		bb->bb_antatten = RTW_BBP_ANTATTEN_PHILIPS_MAGIC;
 		bb->bb_chestlim =	0x00;
@@ -3528,13 +3493,38 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 		sc->sc_rf_txpower = rtw_sa2400_txpower;
 		break;
 	case RTW_RFCHIPID_RFMD2948:
+		/* this is the same front-end as an atw(4)! */
+		rfname = "RFMD RF2948B, "	/* mentioned in Realtek docs */
+			 "LNA: RFMD RF2494, "	/* mentioned in Realtek docs */
+			 "SYN: Silicon Labs Si4126";	 /* inferred from
+							  * reference driver
+							  */
+		paname = "RF2189";		/* mentioned in Realtek docs */
 		/* XXX RFMD has no RF constructor */
 		sc->sc_pwrstate_cb = rtw_rfmd_pwrstate;
-		/*FALLTHROUGH*/
+		notsup =  1;
+		break;
+	case RTW_RFCHIPID_GCT:		/* this combo seen in the wild */
+		rfname = "GRF5101";
+		paname = "WS9901";
+		notsup = 1;
+		break;
+	case RTW_RFCHIPID_INTERSIL:
+		rfname = "HFA3873";	/* guess */
+		paname = "Intersil <unknown>";
+		notsup = 1;
+		break;
 	default:
-		return (1);
+		snprintf(scratch, sizeof(scratch), "unknown 0x%02x", rfchipid);
+		rfname = scratch;
+		notsup = 1;
 	}
-	return (0);
+
+	printf("radio %s, ", rfname);
+	if (paname != NULL)
+		printf("amp %s, ", paname);
+
+	return (notsup);
 }
 
 /* Revision C and later use a different PHY delay setting than
