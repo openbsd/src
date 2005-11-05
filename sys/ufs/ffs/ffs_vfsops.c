@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.71 2005/09/29 22:31:30 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.72 2005/11/05 23:24:43 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1010,8 +1010,7 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
 	int error;
 
 	ip = VTOI(vp);
-	if (fsa->waitfor == MNT_LAZY ||
-	    vp->v_type == VNON || 
+	if (vp->v_type == VNON || 
 	    ((ip->i_flag &
 		(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0	&&
 		LIST_EMPTY(&vp->v_dirtyblkhd)) ) {
@@ -1069,10 +1068,14 @@ ffs_sync(mp, waitfor, cred, p)
 	fsa.cred = cred;
 	fsa.waitfor = waitfor;
 
-	vfs_mount_foreach_vnode(mp, ffs_sync_vnode, &fsa);
-
-	if (fsa.allerror != 0)
+	/*
+	 * Don't traverse the vnode list if we want to skip all of them.
+	 */
+	if (waitfor != MNT_LAZY) {
+		vfs_mount_foreach_vnode(mp, ffs_sync_vnode, &fsa);
 		allerror = fsa.allerror;
+	}
+
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
