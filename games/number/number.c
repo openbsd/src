@@ -1,4 +1,4 @@
-/*	$OpenBSD: number.c,v 1.12 2005/11/05 22:53:05 jmc Exp $	*/
+/*	$OpenBSD: number.c,v 1.13 2005/11/05 22:55:37 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: number.c,v 1.12 2005/11/05 22:53:05 jmc Exp $";
+static char rcsid[] = "$OpenBSD: number.c,v 1.13 2005/11/05 22:55:37 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -327,13 +327,14 @@ pfract(int len)
 
 	switch(len) {
 	case 1:
-		(void)printf("tenths.\n");
+		(void)printf("tenths%s", lflag ? "" : ".\n");
 		break;
 	case 2:
-		(void)printf("hundredths.\n");
+		(void)printf("hundredths%s", lflag ? "" : ".\n");
 		break;
 	default:
-		(void)printf("%s%sths.\n", pref[len % 3], name3[len / 3]);
+		(void)printf("%s%sths%s", pref[len % 3], name3[len / 3],
+		    lflag ? "" : ".\n");
 		break;
 	}
 }
