@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_atfork.c,v 1.2 2005/10/31 04:55:39 fgsch Exp $	*/
+/*	$OpenBSD: pthread_atfork.c,v 1.3 2005/11/05 04:28:46 fgsch Exp $	*/
 
 /*
  * Federico Schwindt <fgsch@openbsd.org>, 2005. Public Domain.
@@ -10,7 +10,6 @@
 
 #include "test.h"
 
-pthread_mutex_t	atfork_mutex;
 int cnt;
 
 void
