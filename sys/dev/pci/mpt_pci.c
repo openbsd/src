@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.8 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.9 2005/11/05 08:17:08 dlg Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Hard resets are known to screw up the BAR for diagnostic
 	 * memory accesses (Mem1).
 	 *
-	 * Using Mem1 is know to make the chip stop responding to
+	 * Using Mem1 is known to make the chip stop responding to
 	 * configuration cycles, so we need to save it now.
 	 */
 	mpt_pci_read_config_regs(mpt);
