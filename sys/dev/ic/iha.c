@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.23 2004/01/19 00:44:32 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.24 2005/11/05 03:13:29 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -113,7 +113,6 @@ void iha_append_done_scb(struct iha_softc *, struct iha_scb *,
 struct iha_scb *iha_pop_done_scb(struct iha_softc *);
 void iha_append_pend_scb(struct iha_softc *, struct iha_scb *);
 void iha_push_pend_scb(struct iha_softc *, struct iha_scb *);
-void iha_del_pend_scb(struct iha_softc *, struct iha_scb *);
 struct iha_scb *iha_find_pend_scb(struct iha_softc *);
 void iha_sync_done(struct iha_softc *,
 			   bus_space_tag_t, bus_space_handle_t);
@@ -676,23 +675,6 @@ iha_find_pend_scb(sc)
 	return (pScb);
 }
 
-/*
- * iha_del_pend_scb - remove pScb from HCS_PendScb
- */
-void
-iha_del_pend_scb(sc, pScb)
-	struct iha_softc *sc;
-	struct iha_scb *pScb;
-{
-	int s;
-
-	s = splbio();
-
-	TAILQ_REMOVE(&sc->HCS_PendScb, pScb, SCB_ScbList);
-
-	splx(s);
-}
-
 void
 iha_mark_busy_scb(pScb)
 	struct iha_scb *pScb;
@@ -776,20 +758,22 @@ iha_abort_xs(sc, xs, hastat)
 	struct scsi_xfer *xs;
 	u_int8_t hastat;
 {
-	struct iha_scb *pScb;
+	struct iha_scb *pScb, *next;
 	int i, s;
 
 	s = splbio();
 
 	/* Check the pending queue for the SCB pointing to xs */
 
-	TAILQ_FOREACH(pScb, &sc->HCS_PendScb, SCB_ScbList)
+	for (pScb = TAILQ_FIRST(&sc->HCS_PendScb); pScb != NULL; pScb = next) {
+		next = TAILQ_NEXT(pScb, SCB_ScbList);
 		if (pScb->SCB_Xs == xs) {
-			iha_del_pend_scb(sc, pScb);
+			TAILQ_REMOVE(&sc->HCS_PendScb, pScb, SCB_ScbList);
 			iha_append_done_scb(sc, pScb, hastat);
 			splx(s);
 			return;
 		}
+	}
 
 	/*
 	 * If that didn't work, check all BUSY/SELECTING SCB's for one
@@ -2371,6 +2355,8 @@ iha_select(sc, iot, ioh, pScb, select_type)
 	struct iha_scb *pScb;
 	u_int8_t	select_type;
 {
+	int s;
+
 	switch (select_type) {
 	case SEL_ATN:
 		bus_space_write_1(iot, ioh, TUL_SFIFO, pScb->SCB_Ident);
@@ -2404,7 +2390,10 @@ iha_select(sc, iot, ioh, pScb, select_type)
 		return;
 	}
 
-	iha_del_pend_scb(sc, pScb);
+	s = splbio();
+	TAILQ_REMOVE(&sc->HCS_PendScb, pScb, SCB_ScbList);
+	splx(s);
+
 	pScb->SCB_Status = STATUS_SELECT;
 
 	sc->HCS_ActScb = pScb;
