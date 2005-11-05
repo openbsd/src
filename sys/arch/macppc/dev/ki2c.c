@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.2 2004/01/11 21:01:04 drahn Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.3 2005/11/05 04:33:20 brad Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -35,62 +35,7 @@
 #include <uvm/uvm_extern.h>
 #include <machine/autoconf.h>
 
-/* Keywest I2C Register offsets */
-#define MODE	0
-#define CONTROL	1
-#define STATUS	2
-#define ISR	3
-#define IER	4
-#define ADDR	5
-#define SUBADDR	6
-#define DATA	7
-
-/* MODE */
-#define I2C_SPEED	0x03	/* Speed mask */
-#define  I2C_100kHz	0x00
-#define  I2C_50kHz	0x01
-#define  I2C_25kHz	0x02
-#define I2C_MODE	0x0c	/* Mode mask */
-#define  I2C_DUMBMODE	0x00	/*  Dumb mode */
-#define  I2C_STDMODE	0x04	/*  Standard mode */
-#define  I2C_STDSUBMODE	0x08	/*  Standard mode + sub address */
-#define  I2C_COMBMODE	0x0c	/*  Combined mode */
-#define I2C_PORT	0xf0	/* Port mask */
-
-/* CONTROL */
-#define I2C_CT_AAK	0x01	/* Send AAK */
-#define I2C_CT_ADDR	0x02	/* Send address(es) */
-#define I2C_CT_STOP	0x04	/* Send STOP */
-#define I2C_CT_START	0x08	/* Send START */
-
-/* STATUS */
-#define I2C_ST_BUSY	0x01	/* Busy */
-#define I2C_ST_LASTAAK	0x02	/* Last AAK */
-#define I2C_ST_LASTRW	0x04	/* Last R/W */
-#define I2C_ST_SDA	0x08	/* SDA */
-#define I2C_ST_SCL	0x10	/* SCL */
-
-/* ISR/IER */
-#define I2C_INT_DATA	0x01	/* Data byte sent/received */
-#define I2C_INT_ADDR	0x02	/* Address sent */
-#define I2C_INT_STOP	0x04	/* STOP condition sent */
-#define I2C_INT_START	0x08	/* START condition sent */
-
-/* I2C flags */
-#define I2C_BUSY	0x01
-#define I2C_READING	0x02
-#define I2C_ERROR	0x04
-
-struct ki2c_softc {
-	struct device sc_dev;
-	paddr_t sc_paddr;
-	u_char *sc_reg;
-	int sc_regstep;
-
-	int sc_flags;
-	u_char *sc_data;
-	int sc_resid;
-};
+#include <macppc/dev/ki2cvar.h>
 
 int ki2c_match(struct device *, void *, void *);
 void ki2c_attach(struct device *, struct device *, void *);
