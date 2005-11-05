@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.35 2005/11/05 09:19:00 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.36 2005/11/05 09:42:44 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -84,6 +84,7 @@ int	brgphy_mii_phy_auto(struct mii_softc *);
 void	brgphy_loop(struct mii_softc *);
 void	brgphy_reset(struct mii_softc *);
 void	brgphy_load_dspcode(struct mii_softc *);
+void	brgphy_bcm5421_init(struct mii_softc *);
 
 const struct mii_phy_funcs brgphy_funcs = {            
 	brgphy_service, brgphy_status, brgphy_reset,          
@@ -442,6 +443,9 @@ brgphy_reset(struct mii_softc *sc)
 
 	brgphy_load_dspcode(sc);
 
+	if (sc->mii_model == MII_MODEL_xxBROADCOM_BCM5421)
+		brgphy_bcm5421_init(sc);
+
 	/*
 	 * Don't enable Ethernet@WireSpeed for the 5700 or the
 	 * 5705 A1 and A2 chips. Make sure we only do this test
@@ -487,6 +491,7 @@ static const struct bcm_dspcode bcm5401_dspcode[] = {
 	{ 0,                            0 },
 };
 
+/* setting some undocumented voltage */
 static const struct bcm_dspcode bcm5411_dspcode[] = {
 	{ 0x1c,                         0x8c23 },
 	{ 0x1c,                         0x8ca3 },
@@ -531,7 +536,7 @@ brgphy_load_dspcode(struct mii_softc *sc)
 		wait=40;
 		break;
 	case MII_MODEL_BROADCOM_BCM5401:
-		if (sc->mii_rev == 0 || sc->mii_rev == 3) {
+		if (sc->mii_rev == 1 || sc->mii_rev == 3) {
 			dsp = bcm5401_dspcode;
 			wait=40;
 		}
@@ -560,4 +565,25 @@ brgphy_load_dspcode(struct mii_softc *sc)
 
 	if (wait > 0)
 		DELAY(wait);
+}
+
+void
+brgphy_bcm5421_init(struct mii_softc *sc)
+{
+	u_int16_t data;
+
+	if (sc->mii_rev == 1) {
+	    /* Set Class A mode */
+	    PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x1007);
+	    data = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+	    PHY_WRITE(sc, BRGPHY_MII_AUXCTL, data | 0x0400);
+
+	    /* Set FFE gamma override to -0.125 */
+	    PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0007);
+	    data = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+	    PHY_WRITE(sc, BRGPHY_MII_AUXCTL, data | 0x0800);
+	    PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
+	    data = PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT);
+	    PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, data | 0x0200);
+	}
 }
