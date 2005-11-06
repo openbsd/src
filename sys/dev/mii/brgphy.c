@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.40 2005/11/06 07:25:05 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.41 2005/11/06 21:51:55 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -555,22 +555,20 @@ brgphy_bcm5411_dspcode(struct mii_softc *sc)
 void
 brgphy_bcm5421_dspcode(struct mii_softc *sc)
 {
-	u_int16_t data;
+	uint16_t data;
 
-        if (sc->mii_rev == 1) {
-            /* Set Class A mode */
-            PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x1007);
-            data = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-            PHY_WRITE(sc, BRGPHY_MII_AUXCTL, data | 0x0400);
+	/* Set Class A mode */
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x1007);
+	data = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, data | 0x0400);
 
-            /* Set FFE gamma override to -0.125 */
-            PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0007);
-            data = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-            PHY_WRITE(sc, BRGPHY_MII_AUXCTL, data | 0x0800);
-            PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
-            data = PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT);
-            PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, data | 0x0200);
-	}
+	/* Set FFE gamma override to -0.125 */
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0007);
+	data = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, data | 0x0800);
+	PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
+	data = PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT);
+	PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, data | 0x0200);
 }
 
 void
