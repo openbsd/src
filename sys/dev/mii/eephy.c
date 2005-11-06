@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.21 2005/08/14 01:35:09 jsg Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.22 2005/11/06 07:16:47 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -133,6 +133,8 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
+	sc->mii_flags |= MIIF_NOISOLATE;
+
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1011 && 
 	    (PHY_READ(sc, E1000_ESSR) & E1000_ESSR_FIBER_LINK))
@@ -140,18 +142,17 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_flags |= MIIF_NOISOLATE;
-
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
 	if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX, sc->mii_inst),
 		    E1000_CR_SPEED_1000 | E1000_CR_FULL_DUPLEX);
 		/*
-		  TODO - apparently 1000BT-simplex not supported?
-		  ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0, sc->mii_inst),
+		 * 1000BT-simplex not supported; driver must ignore this entry,
+		 * but it must be present in order to manually set full-duplex.
+		 */
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0, sc->mii_inst),
 		      E1000_CR_SPEED_1000);
-		*/
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
 		    E1000_CR_SPEED_100 | E1000_CR_FULL_DUPLEX);
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
@@ -444,8 +445,8 @@ eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 	}
 
 	if (waitfor) {
-		/* Wait 5 seconds for it to complete. */
-		for (i = 0; i < 5000; i++) {
+		/* Wait 500ms for it to complete. */
+		for (i = 0; i < 500; i++) {
 			bmsr = PHY_READ(sc, E1000_SR) | PHY_READ(sc, E1000_SR);
 
 			if (bmsr & E1000_SR_AUTO_NEG_COMPLETE) {
@@ -471,7 +472,8 @@ eephy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 		sc->mii_flags |= MIIF_DOINGAUTO;
 		sc->mii_ticks = 0;
 		timeout_set(&sc->mii_phy_timo, mii_phy_auto_timeout, sc);
-		timeout_add(&sc->mii_phy_timo, 5 * hz);
+		timeout_add(&sc->mii_phy_timo, hz / 2);
 	}
+
 	return (EJUSTRETURN);
 }
