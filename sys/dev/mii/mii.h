@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.h,v 1.9 2005/07/23 01:42:16 brad Exp $	*/
+/*	$OpenBSD: mii.h,v 1.10 2005/11/06 09:27:19 brad Exp $	*/
 /*	$NetBSD: mii.h,v 1.8 2001/05/31 03:06:46 thorpej Exp $	*/
 
 /*
@@ -107,10 +107,6 @@
 #define	IDR2_OUILSB	0xfc00	/* OUI LSB */
 #define	IDR2_MODEL	0x03f0	/* vendor model */
 #define	IDR2_REV	0x000f	/* vendor revision */
-
-#define	MII_OUI(id1, id2)	(((id1) << 6) | ((id2) >> 10))
-#define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
-#define	MII_REV(id2)		((id2) & IDR2_REV)
 
 #define	MII_ANAR	0x04	/* Autonegotiation advertisement (rw) */
 		/* section 28.2.4.1 and 37.2.6.1 */

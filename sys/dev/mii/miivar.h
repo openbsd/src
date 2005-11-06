@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.25 2005/07/23 01:42:16 brad Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.26 2005/11/06 09:27:19 brad Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -233,6 +233,10 @@ struct mii_media {
 
 #define mii_phy_probe(x, y, z) \
 	mii_attach((x), (y), (z), MII_PHY_ANY, MII_OFFSET_ANY, 0)
+
+#define MII_OUI(id1, id2)	(((id1) << 6) | ((id2) >> 10))
+#define MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
+#define MII_REV(id2)		((id2) & IDR2_REV)
 
 void	mii_attach(struct device *, struct mii_data *, int, int,
 	    int, int);
