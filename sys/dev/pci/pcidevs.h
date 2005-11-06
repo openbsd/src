@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.956 2005/11/02 17:08:21 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.957 2005/11/06 23:11:57 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1805,6 +1805,7 @@
 #define	PCI_PRODUCT_LMC_DS3	0x0004		/* DS3 */
 #define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
 #define	PCI_PRODUCT_LMC_DS1	0x0006		/* DS1 */
+#define	PCI_PRODUCT_LMC_HSSIC	0x0007		/* HSSIc */
 
 /* Lanergy */
 #define	PCI_PRODUCT_LANERGY_APPIAN_PCI_LITE	0x0001		/* Appian Lite */
