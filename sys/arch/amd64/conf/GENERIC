@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.85 2005/11/05 11:56:37 brad Exp $
+#	$OpenBSD: GENERIC,v 1.86 2005/11/06 08:40:33 jolan Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -367,7 +367,7 @@ emu*	at pci?				# SB Live!
 opl*	at yds?
 
 # MIDI support
-#midi*	at pcppi?		# MIDI interface to the PC speaker
+midi*	at pcppi?		# MIDI interface to the PC speaker
 #midi*	at opl?			# OPL FM synth
 #midi*	at autri?
 midi*	at eap?
@@ -417,7 +417,7 @@ safe*	at pci?			# SafeNet SafeXcel 1141/1741
 #ioprbs*	at iop?		# Random block storage
 #scsibus* at ioprbs?
 
-#pseudo-device	sequencer	1
+pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	bio		1	# ioctl multiplexing device
 pseudo-device	hotplug		1	# devices hot plugging
