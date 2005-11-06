@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.78 2005/10/08 16:36:23 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.79 2005/11/06 13:07:47 pedro Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -967,7 +967,7 @@ biodone(struct buf *bp)
  * in vfs_syscalls.c using sysctl.
  */
 void
-vfs_bufstats()
+vfs_bufstats(void)
 {
 	int s, i, j, count;
 	register struct buf *bp;

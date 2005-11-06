@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.34 2005/10/19 16:50:46 pedro Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.35 2005/11/06 13:07:48 pedro Exp $  */
 
 /*
  *  Portions of this code are:
@@ -101,8 +101,7 @@ struct proc *syncerproc;
  */
 
 void
-vn_initialize_syncerd()
-
+vn_initialize_syncerd(void)
 {
 	syncer_workitem_pending = hashinit(syncer_maxdelay, M_VNODE, M_WAITOK,
 	    &syncer_mask);
@@ -113,9 +112,7 @@ vn_initialize_syncerd()
  * Add an item to the syncer work queue.
  */
 void
-vn_syncer_add_to_worklist(vp, delay)
-	struct vnode *vp;
-	int delay;
+vn_syncer_add_to_worklist(struct vnode *vp, int delay)
 {
 	int s, slot;
 
@@ -135,10 +132,8 @@ vn_syncer_add_to_worklist(vp, delay)
 /*
  * System filesystem synchronizer daemon.
  */
-
 void
-sched_sync(p)
-	struct proc *p;
+sched_sync(struct proc *p)
 {
 	struct synclist *slp;
 	struct vnode *vp;
@@ -241,7 +236,7 @@ sched_sync(p)
  * normal turn time, otherwise it could take over the cpu.
  */
 int
-speedup_syncer()
+speedup_syncer(void)
 {
 	int s;
 
@@ -290,8 +285,7 @@ struct vnodeopv_desc sync_vnodeop_opv_desc = {
  * Create a new filesystem syncer vnode for the specified mount point.
  */
 int
-vfs_allocate_syncvnode(mp)
-	struct mount *mp;
+vfs_allocate_syncvnode(struct mount *mp)
 {
 	struct vnode *vp;
 	static long start, incr, next;
@@ -329,8 +323,7 @@ vfs_allocate_syncvnode(mp)
  * Do a lazy sync of the filesystem.
  */
 int
-sync_fsync(v)
-	void *v;
+sync_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnodeop_desc *a_desc;
@@ -376,8 +369,7 @@ sync_fsync(v)
  * The syncer vnode is no longer needed and is being decommissioned.
  */
 int
-sync_inactive(v)
-	void *v;
+sync_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnodeop_desc *a_desc;
@@ -412,9 +404,7 @@ sync_inactive(v)
  * Print out a syncer vnode.
  */
 int
-sync_print(v)
-	void *v;
-
+sync_print(void *v)
 {
 	printf("syncer vnode\n");
 

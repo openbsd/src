@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.27 2005/10/19 16:50:46 pedro Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.28 2005/11/06 13:07:47 pedro Exp $  */
 
 /*
  *    Portions of this code are:
@@ -36,7 +36,6 @@
  * SUCH DAMAGE.
  */
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -48,19 +47,17 @@
 #include <sys/event.h>
 #include <miscfs/specfs/specdev.h>
 
-
 extern struct simplelock spechash_slock;
 
-int filt_generic_readwrite(struct knote *kn, long hint);
-void filt_generic_detach(struct knote *kn);
+int filt_generic_readwrite(struct knote *, long);
+void filt_generic_detach(struct knote *);
 
 /*
  * Eliminate all activity associated with  the requested vnode
  * and with all vnodes aliased to the requested vnode.
  */
 int
-vop_generic_revoke(v)
-	void *v;
+vop_generic_revoke(void *v)
 {
 	struct vop_revoke_args /* {
 		struct vnodeop_desc *a_desc;
@@ -119,20 +116,16 @@ vop_generic_revoke(v)
 	return (0);
 }
 
-
 int
-vop_generic_bwrite(v)
-	void *v;
+vop_generic_bwrite(void *v)
 {
 	struct vop_bwrite_args *ap = v;
 
 	return (bwrite(ap->a_bp));
 }
 
-
 int
-vop_generic_abortop(v)
-	void *v;
+vop_generic_abortop(void *v)
 {
 	struct vop_abortop_args /* {
 		struct vnodeop_desc *a_desc;
@@ -152,8 +145,7 @@ vop_generic_abortop(v)
  * count is maintained in an auxiliary vnode lock structure.
  */
 int
-vop_generic_lock(v)
-	void *v;
+vop_generic_lock(void *v)
 {
 	struct vop_lock_args /* {
 		struct vnodeop_desc *a_desc;
@@ -174,10 +166,8 @@ vop_generic_lock(v)
 /*
  * Decrement the active use count.
  */
-
 int
-vop_generic_unlock(v)
-	void *v;
+vop_generic_unlock(void *v)
 {
 	return (0);
 }
@@ -186,8 +176,7 @@ vop_generic_unlock(v)
  * Return whether or not the node is in use.
  */
 int
-vop_generic_islocked(v)
-	void *v;
+vop_generic_islocked(void *v)
 {
 	return (0);
 }
@@ -196,8 +185,7 @@ struct filterops generic_filtops =
 	{ 1, NULL, filt_generic_detach, filt_generic_readwrite };
 
 int
-vop_generic_kqfilter(v)
-	void *v;
+vop_generic_kqfilter(void *v)
 {
 	struct vop_kqfilter_args /* {
 		struct vnodeop_desc *a_desc;

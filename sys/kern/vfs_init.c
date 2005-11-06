@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.17 2004/05/14 04:00:33 tedu Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.18 2005/11/06 13:07:48 pedro Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
  *
  *	@(#)vfs_init.c	8.3 (Berkeley) 1/4/94
  */
-
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -80,8 +79,7 @@ typedef int (*PFI)(void *);
  */
 /*ARGSUSED*/
 int
-vn_default_error(v)
-	void *v;
+vn_default_error(void *v)
 {
 
 	return (EOPNOTSUPP);
@@ -109,8 +107,7 @@ vn_default_error(v)
  * Also handle backwards compatibility.
  */
 void
-vfs_opv_init_explicit(vfs_opv_desc)
-	struct vnodeopv_desc *vfs_opv_desc;
+vfs_opv_init_explicit(struct vnodeopv_desc *vfs_opv_desc)
 {
 	int (**opv_desc_vector)(void *);
 	struct vnodeopv_entry_desc *opve_descp;
@@ -162,8 +159,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 }
 
 void
-vfs_opv_init_default(vfs_opv_desc)
-	struct vnodeopv_desc *vfs_opv_desc;
+vfs_opv_init_default(struct vnodeopv_desc *vfs_opv_desc)
 {
 	int j;
 	int (**opv_desc_vector)(void *);
@@ -183,7 +179,7 @@ vfs_opv_init_default(vfs_opv_desc)
 }
 
 void
-vfs_opv_init()
+vfs_opv_init(void)
 {
 	int i;
 
@@ -205,7 +201,7 @@ vfs_opv_init()
  * Initialize known vnode operations vectors.
  */
 void
-vfs_op_init()
+vfs_op_init(void)
 {
 	int i;
 
@@ -237,7 +233,7 @@ struct pool namei_pool;
  * Initialize the vnode structures and initialize each file system type.
  */
 void
-vfsinit()
+vfsinit(void)
 {
 	int i;
 	struct vfsconf *vfsconflist;
