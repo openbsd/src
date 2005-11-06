@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.168 2005/10/31 08:15:31 fgsch Exp $
+.\"	$OpenBSD: options.4,v 1.169 2005/11/06 17:50:06 kettenis Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -261,16 +261,14 @@ to be built in addition to
 .Pa bsd .
 .Pa bsd.gdb
 is useful for debugging kernels and their crash dumps with gdb.
-Note that
-.Xr gdb 1 Ns 's
-.Fl k
-flag is obsolete and should not be used.
-Instead, a crash dump can be debugged by starting
+A crash dump can be debugged by starting
 .Xr gdb 1
-with the kernel name as an argument (no core file) and then use the
+with the kernel name
+.Pf ( Pa bsd.gdb )
+as an argument (no core file) and then use the
 .Xr gdb 1
 command
-.Dq target kcore COREFILE .
+.Dq target kvm COREFILE .
 .It Cd option DEBUG
 Turns on miscellaneous kernel debugging.
 Since options are turned into preprocessor defines (see above),
