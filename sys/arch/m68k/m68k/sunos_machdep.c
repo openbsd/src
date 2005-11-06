@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_machdep.c,v 1.17 2005/08/06 12:10:28 miod Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.18 2005/11/06 17:23:41 miod Exp $	*/
 /*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
 
 /*
@@ -226,7 +226,8 @@ sunos_sys_sigreturn(p, v, retval)
 	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)))
 		return (EINVAL);
 	scp = &tsigc;
-	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+	if ((scp->sc_ps & PSL_USERCLR) != 0 ||
+	    (scp->sc_ps & PSL_USERSET) != PSL_USERSET)
 		return (EINVAL);
 	/*
 	 * Restore the user supplied information

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.19 2005/08/06 12:10:28 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.20 2005/11/06 17:23:39 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -575,7 +575,8 @@ hpux_sys_sigreturn(p, v, retval)
 	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
 		return (EINVAL);
 	scp = &tsigc;
-	if ((scp->hsc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+	if ((scp->hsc_ps & PSL_USERCLR) != 0 ||
+	    (scp->hsc_ps & PSL_USERSET) != PSL_USERSET)
 		return (EINVAL);
 
 	/*
