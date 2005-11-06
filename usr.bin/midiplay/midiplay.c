@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.7 2005/07/28 10:59:11 jsg Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.8 2005/11/06 00:56:51 jsg Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -485,13 +485,14 @@ main(int argc, char **argv)
 	int ch;
 	int listdevs = 0;
 	int example = 0;
+	int gmreset = 0;
 	int nmidi;
 	char *file = DEVMUSIC;
 	struct synth_info info;
 	FILE *f;
 	const char *errstr;
 
-	while ((ch = getopt(argc, argv, "?d:f:lmqt:vx")) != -1) {
+	while ((ch = getopt(argc, argv, "?d:f:glmqt:vx")) != -1) {
 		switch (ch) {
 		case 'd':
 			unit = strtonum(optarg, 0, INT_MAX, &errstr);
@@ -500,6 +501,9 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			file = optarg;
+			break;
+		case 'g':
+			gmreset++;
 			break;
 		case 'l':
 			listdevs++;
@@ -544,7 +548,8 @@ main(int argc, char **argv)
 		}
 		exit(0);
 	}
-	midireset();
+	if (gmreset)
+		midireset();
 	if (example)
 		playdata(sample, sizeof sample, "<Gubben Noa>");
 	else if (argc == 0)
