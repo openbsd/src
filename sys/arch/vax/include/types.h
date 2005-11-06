@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.14 2004/11/26 21:23:06 miod Exp $	*/
+/*	$OpenBSD: types.h,v 1.15 2005/11/06 22:21:30 miod Exp $	*/
 /*	$NetBSD: types.h,v 1.14 1998/08/13 02:10:49 eeh Exp $	*/
 
 /*-
@@ -43,13 +43,10 @@ typedef struct label_t {
 } label_t;
 #endif
 
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
-
-typedef vm_offset_t	paddr_t;
-typedef vm_size_t	psize_t;
-typedef vm_offset_t	vaddr_t;
-typedef vm_size_t	vsize_t;
+typedef unsigned long	paddr_t;
+typedef	unsigned long	psize_t;
+typedef unsigned long	vaddr_t;
+typedef	unsigned long	vsize_t;
 
 /*
  * Basic integral types.  Omit the typedef if

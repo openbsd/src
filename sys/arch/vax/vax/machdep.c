@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.73 2005/08/06 14:26:52 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.74 2005/11/06 22:21:33 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -168,8 +168,8 @@ cpu_startup()
 {
 	caddr_t		v;
 	int		base, residual, i, sz;
-	vm_offset_t	minaddr, maxaddr;
-	vm_size_t	size;
+	vaddr_t		minaddr, maxaddr;
+	vsize_t		size;
 	extern unsigned int avail_end;
 	extern char	cpu_model[];
 
@@ -211,13 +211,13 @@ cpu_startup()
 	size = MAXBSIZE * nbuf;		/* # bytes for buffers */
 
 	/* allocate VM for buffers... area is not managed by VM system */
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 			UVM_ADV_NORMAL, 0)))
 		panic("cpu_startup: cannot allocate VM for buffers");
 
-	minaddr = (vm_offset_t) buffers;
+	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -226,8 +226,8 @@ cpu_startup()
 	residual = bufpages % nbuf;
 	/* now allocate RAM for buffers */
 	for (i = 0; i < nbuf; i++) {
-		vm_offset_t curbuf;
-		vm_size_t curbufsize;
+		vaddr_t curbuf;
+		vsize_t curbufsize;
 		struct vm_page *pg;
 
 		/*
@@ -237,7 +237,7 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space, but has no
 		 * physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t) buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);

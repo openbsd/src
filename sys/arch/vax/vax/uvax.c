@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvax.c,v 1.9 2003/06/12 01:07:31 deraadt Exp $ */
+/*	$OpenBSD: uvax.c,v 1.10 2005/11/06 22:21:33 miod Exp $ */
 /*	$NetBSD: uvax.c,v 1.4 1997/02/19 10:04:27 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -58,7 +58,7 @@
 void 
 uvax_fillmap()
 {
-	extern  vm_offset_t avail_start, virtual_avail, avail_end;
+	extern  vaddr_t avail_start, virtual_avail, avail_end;
 	register struct uc_map *p;
 	register u_int base, end, off, size;
 
@@ -72,7 +72,7 @@ uvax_fillmap()
 		}
 		end = base + size - 1;
 		MAPVIRT(p->um_virt, size/NBPG);
-		pmap_map((vm_offset_t)p->um_virt, base, end, 
+		pmap_map((vaddr_t)p->um_virt, base, end, 
 		    VM_PROT_READ|VM_PROT_WRITE);
 
 	}

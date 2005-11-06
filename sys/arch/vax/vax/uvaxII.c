@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvaxII.c,v 1.12 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: uvaxII.c,v 1.13 2005/11/06 22:21:33 miod Exp $	*/
 /*	$NetBSD: uvaxII.c,v 1.10 1996/10/13 03:36:04 christos Exp $	*/
 
 /*-
@@ -262,7 +262,7 @@ ka630_clkwrite(year_secs)
 void
 uvaxII_steal_pages()
 {
-	extern  vm_offset_t avail_start, virtual_avail, avail_end;
+	extern  vaddr_t avail_start, virtual_avail, avail_end;
 	int	junk;
 
 	/*
@@ -273,16 +273,16 @@ uvaxII_steal_pages()
 
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
 	MAPVIRT(nexus, btoc(0x400000));
-	pmap_map((vm_offset_t)nexus, 0x20088000, 0x20090000,
+	pmap_map((vaddr_t)nexus, 0x20088000, 0x20090000,
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(uvaxIIcpu_ptr, 1);
-	pmap_map((vm_offset_t)uvaxIIcpu_ptr, (vm_offset_t)UVAXIICPU,
-	    (vm_offset_t)UVAXIICPU + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_map((vaddr_t)uvaxIIcpu_ptr, (paddr_t)UVAXIICPU,
+	    (paddr_t)UVAXIICPU + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(ka630clk_ptr, 1);
-	pmap_map((vm_offset_t)ka630clk_ptr, (vm_offset_t)KA630CLK,
-	    (vm_offset_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_map((vaddr_t)ka630clk_ptr, (paddr_t)KA630CLK,
+	    (paddr_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * Clear restart and boot in progress flags

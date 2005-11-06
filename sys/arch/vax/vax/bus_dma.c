@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.14 2004/12/25 23:02:26 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.15 2005/11/06 22:21:33 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 extern	vaddr_t avail_start, avail_end, virtual_avail;
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int);
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 int	_bus_dma_inrange(bus_dma_segment_t *, int, bus_addr_t);
 int	_bus_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t*, int, int *, int, vaddr_t, vaddr_t);
@@ -161,7 +161,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error;
 
 #ifdef DEBUG_DMA
@@ -201,7 +201,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -254,7 +254,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -432,7 +432,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
 
@@ -501,7 +501,7 @@ _bus_dmamem_unmap(t, kva, size)
 
 	/* Avoid free'ing if not mapped */
 	if (kva >= (caddr_t)virtual_avail)
-		uvm_km_free(kernel_map, (vm_offset_t)kva, round_page(size));
+		uvm_km_free(kernel_map, (vaddr_t)kva, round_page(size));
 }
 
 /*
@@ -547,7 +547,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 /*
  * Utility function to load a linear buffer.  lastaddrp holds state
  * between invocations (for multiple-buffer loads).  segp contains
- * the starting segment on entrace, and the ending segment on exit.
+ * the starting segment on entrance, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
 int
@@ -558,13 +558,13 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	vm_offset_t *lastaddrp;
+	paddr_t *lastaddrp;
 	int *segp;
 	int first;
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 	pmap_t pmap;
 
@@ -685,10 +685,10 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	int nsegs;
 	int *rsegs;
 	int flags;
-	vm_offset_t low;
-	vm_offset_t high;
+	vaddr_t low;
+	vaddr_t high;
 {
-	vm_offset_t curaddr, lastaddr;
+	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
