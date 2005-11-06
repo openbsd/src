@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.17 2005/11/05 11:49:01 brad Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.18 2005/11/06 23:27:33 brad Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -206,6 +206,7 @@ lmc_pci_probe(struct device *parent,
 	if (PCI_VENDORID(id) != PCI_VENDOR_LMC)
 		return 0;
 	if ((PCI_CHIPID(id) != PCI_PRODUCT_LMC_HSSI)
+	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_HSSIC)
 	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_DS3)
 	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_SSI)
 	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_DS1))
@@ -252,6 +253,10 @@ lmc_pci_attach(struct device * const parent,
 	switch (PCI_CHIPID(ssid)) {
 	case PCI_PRODUCT_LMC_HSSI:
 		printf(": HSSI\n");
+		sc->lmc_media = &lmc_hssi_media;
+		break;
+	case PCI_PRODUCT_LMC_HSSIC:
+		printf(": HSSIc\n");
 		sc->lmc_media = &lmc_hssi_media;
 		break;
 	case PCI_PRODUCT_LMC_DS3:
