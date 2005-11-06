@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.25 2005/11/02 03:27:39 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.26 2005/11/06 01:42:23 dlg Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -119,9 +119,6 @@ void	mpt_event_notify_reply(mpt_softc_t *, MSG_EVENT_NOTIFY_REPLY *);
 int	mpt_action(struct scsi_xfer *);
 void	mpt_minphys(struct buf *);
 
-#if NBIO > 0
-int    mpt_ioctl(struct device *, u_long, caddr_t);
-#endif
 struct cfdriver mpt_cd = {
 	NULL, "mpt", DV_DULL
 };
@@ -442,12 +439,6 @@ mpt_attach(mpt_softc_t *mpt)
 
 #ifdef MPT_DEBUG
 	mpt->verbose = 2;
-#endif
-
-#if NBIO > 0
-	if (bio_register(&mpt->mpt_dev, mpt_ioctl) != 0)
-		panic("%s: controller registration failed",
-		    mpt->mpt_dev.dv_xname);
 #endif
 
 	mpt_prt(mpt, "IM support: %x", mpt->im_support);
@@ -1577,70 +1568,3 @@ mpt_free_fw_mem(mpt_softc_t *mpt)
 	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, mpt->fw_image_size);
 	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
 }
-
-#if NBIO > 0
-int
-mpt_ioctl(dev, cmd, addr)
-	struct device *dev;
-	u_long cmd;
-	caddr_t addr;
-{
-	int error = 0;
-	int rv;
-	struct mpt_dummy *dummy;
-	struct mpt_mfg0 *pmfg0;
-	fCONFIG_PAGE_MANUFACTURING_0 mfgp0;
-	mpt_softc_t *mpt = (mpt_softc_t *)dev;
-
-	switch (cmd) {
-	case MPT_IOCTL_DUMMY:
-		dummy = (struct mpt_dummy *)addr;
-		if (mpt->verbose > 2) {
-			printf("%s: MPT_IOCTL_DUMMY %d\n",
-			    dev->dv_xname, dummy->x++);
-		}
-		break;
-	case MPT_IOCTL_MFG0:
-		/* Retrieve Manufacturing Page 0 */
-		mfgp0.Header.PageNumber = 0;
-		mfgp0.Header.PageType = MPI_CONFIG_PAGETYPE_MANUFACTURING;
-		rv = mpt_read_cfg_page(mpt, 0, &mfgp0.Header);
-		if (rv) {
-			mpt_prt(mpt, "Could not retrieve MFG PAGE 0.");
-			error = EINVAL;
-		} else {
-			if (mpt->verbose > 2) {
-				printf("Chip name: %s\n",
-				    mfgp0.ChipName);
-				printf("Chip Revision: %s\n",
-				    mfgp0.ChipRevision);
-				printf("Board name: %s\n",
-				    mfgp0.BoardName);
-				printf("Board assembly: %s\n",
-				    mfgp0.BoardAssembly);
-				printf("Board tracer number: %s\n",
-				    mfgp0.BoardTracerNumber);
-			}
-			pmfg0 = (struct mpt_mfg0 *)addr;
-			memcpy(&pmfg0->cpm0, &mfgp0,
-			    sizeof(fCONFIG_PAGE_MANUFACTURING_0));
-		}
-		break;
-	case MPT_IOCTL_MFG1:
-		/* Retrieve Manufacturing Page 1 */
-		break;
-	case MPT_IOCTL_MFG2:
-		/* Retrieve Manufacturing Page 2 */
-		break;
-	case MPT_IOCTL_MFG3:
-		/* Retrieve Manufacturing Page 3 */
-		break;
-	case MPT_IOCTL_MFG4:
-		/* Retrieve Manufacturing Page 4 */
-		break;
-	default:
-		error = EINVAL;
-	}
-	return (error);
-}
-#endif
