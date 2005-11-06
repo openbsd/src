@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.8 2005/05/09 17:18:01 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.9 2005/11/06 16:45:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -95,6 +95,14 @@
 #define	DNCMD_IDENT_2	0x21
 
 /*
+ * Bell commands
+ */
+
+#define	DNCMD_BELL	0x21
+#define	DNCMD_BELL_ON	0x81
+#define	DNCMD_BELL_OFF	0x82
+
+/*
  * Mouse status
  */
 
@@ -114,15 +122,21 @@ struct dnkbd_softc {
 #define	SF_PLUGGED	0x08		/* keyboard has been seen plugged */
 #define	SF_ATTACHED	0x10		/* subdevices have been attached */
 #define	SF_MOUSE	0x20		/* mouse enabled */
+#define	SF_BELL		0x40		/* bell is active */
+#define	SF_BELL_TMO	0x80		/* bell stop timeout is scheduled */
 
 	u_int		sc_identlen;
 #define	MAX_IDENTLEN	32
 	char		sc_ident[MAX_IDENTLEN];
 
-	enum { STATE_KEYBOARD, STATE_MOUSE, STATE_CHANNEL } sc_state;
+	enum { STATE_KEYBOARD, STATE_MOUSE, STATE_CHANNEL, STATE_ECHO }
+			sc_state, sc_prevstate;
+	u_int		sc_echolen;
 
 	u_int8_t	sc_mousepkt[3];	/* mouse packet being constructed */
 	u_int		sc_mousepos;	/* index in above */
+
+	struct timeout	sc_bellstop_tmo;
 
 	struct device	*sc_wskbddev;
 #if NWSMOUSE > 0
@@ -172,13 +186,14 @@ const struct wsmouse_accessops dnmouse_accessops = {
 };
 #endif
 
+void	dnkbd_bell(void *, u_int, u_int, u_int);
 void	dnkbd_cngetc(void *, u_int *, int *);
 void	dnkbd_cnpollc(void *, int);
 
 const struct wskbd_consops dnkbd_consops = {
 	dnkbd_cngetc,
 	dnkbd_cnpollc,
-	NULL		/* bell */
+	dnkbd_bell
 };
 
 struct wskbd_mapdata dnkbd_keymapdata = {
@@ -191,6 +206,7 @@ typedef enum { EVENT_NONE, EVENT_KEYBOARD, EVENT_MOUSE } dnevent;
 void	dnevent_kbd(struct dnkbd_softc *, int);
 void	dnevent_mouse(struct dnkbd_softc *, u_int8_t *);
 void	dnkbd_attach_subdevices(struct dnkbd_softc *);
+void	dnkbd_bellstop(void *);
 void	dnkbd_decode(int, u_int *, int *);
 int	dnkbd_init(struct apciregs *);
 dnevent	dnkbd_input(struct dnkbd_softc *, int);
@@ -199,7 +215,7 @@ int	dnkbd_pollin(struct apciregs *, u_int);
 int	dnkbd_pollout(struct apciregs *, int);
 int	dnkbd_probe(struct dnkbd_softc *);
 void	dnkbd_rawrepeat(void *);
-int	dnkbd_send(struct apciregs *, u_int8_t *, size_t);
+int	dnkbd_send(struct apciregs *, const u_int8_t *, size_t);
 int	dnsubmatch_kbd(struct device *, void *, void *);
 int	dnsubmatch_mouse(struct device *, void *, void *);
 
@@ -225,6 +241,7 @@ dnkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_regs = (struct apciregs *)IIOV(FRODO_BASE + fa->fa_offset);
 
+	timeout_set(&sc->sc_bellstop_tmo, dnkbd_bellstop, sc);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	timeout_set(&sc->sc_rawrepeat_ch, dnkbd_rawrepeat, sc);
 #endif
@@ -428,6 +445,9 @@ out:
  * - at any time:
  *   + a 2 byte channel sequence (0xff followed by the channel number) telling
  *     us which device the following input will come from.
+ *   + if we get 0xff but an invalid channel number, this is a command echo.
+ *     Currently we only handle this for bell commands, which size are known.
+ *     Other commands are issued through dnkbd_send() which ``eats'' the echo.
  *
  * Older keyboards reset the channel to the keyboard (by sending ff 01) after
  * every mouse packet.
@@ -448,6 +468,7 @@ dnkbd_input(struct dnkbd_softc *sc, int dat)
 			 */
 			break;
 		case DNKEY_CHANNEL:
+			sc->sc_prevstate = sc->sc_state;
 			sc->sc_state = STATE_CHANNEL;
 			break;
 		default:
@@ -458,6 +479,7 @@ dnkbd_input(struct dnkbd_softc *sc, int dat)
 
 	case STATE_MOUSE:
 		if (dat == DNKEY_CHANNEL && sc->sc_mousepos == 0) {
+			sc->sc_prevstate = sc->sc_state;
 			sc->sc_state = STATE_CHANNEL;
 		} else {
 			sc->sc_mousepkt[sc->sc_mousepos++] = dat;
@@ -504,10 +526,25 @@ dnkbd_input(struct dnkbd_softc *sc, int dat)
 			sc->sc_state = STATE_MOUSE;
 			sc->sc_mousepos = 0;	/* just in case */
 			break;
+		case DNCMD_BELL:
+			/*
+			 * We are getting a bell command echoed to us.
+			 * Ignore it.
+			 */
+			sc->sc_state = STATE_ECHO;
+			sc->sc_echolen = 1;	/* one byte to follow */
+			break;
 		default:
 			printf("%s: unexpected channel byte %02x\n",
 			    sc->sc_dev.dv_xname, dat);
 			break;
+		}
+		break;
+
+	case STATE_ECHO:
+		if (--sc->sc_echolen == 0) {
+			/* get back to the state we were in before the echo */
+			sc->sc_state = sc->sc_prevstate;
 		}
 		break;
 	}
@@ -669,7 +706,7 @@ dnkbd_pollout(struct apciregs *apci, int dat)
 }
 
 int
-dnkbd_send(struct apciregs *apci, u_int8_t *cmdbuf, size_t cmdlen)
+dnkbd_send(struct apciregs *apci, const u_int8_t *cmdbuf, size_t cmdlen)
 {
 	int cnt, rc, dat;
 	u_int cmdpos;
@@ -834,6 +871,11 @@ dnkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_GETLEDS:
 		*(int *)data = 0;
 		return (0);
+	case WSKBDIO_COMPLEXBELL:
+#define	d	((struct wskbd_bell_data *)data)
+		dnkbd_bell(v, d->period, d->pitch, d->volume);
+#undef d
+		return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
@@ -922,4 +964,58 @@ dnkbd_cnpollc(void *v, int on)
 		SET(sc->sc_flags, SF_POLLING);
 	else
 		CLR(sc->sc_flags, SF_POLLING);
+}
+
+/*
+ * Bell routines.
+ */
+void
+dnkbd_bell(void *v, u_int period, u_int pitch, u_int volume)
+{
+	struct dnkbd_softc *sc = v;
+	int ticks, s;
+
+	s = spltty();
+
+	if (pitch == 0 || period == 0 || volume == 0) {
+		if (ISSET(sc->sc_flags, SF_BELL_TMO)) {
+			timeout_del(&sc->sc_bellstop_tmo);
+			dnkbd_bellstop(v);
+		}
+	} else {
+		ticks = (period * hz) / 1000;
+		if (ticks <= 0)
+			ticks = 1;
+
+		if (!ISSET(sc->sc_flags, SF_BELL)) {
+			dnkbd_pollout(sc->sc_regs, DNCMD_PREFIX);
+			dnkbd_pollout(sc->sc_regs, DNCMD_BELL);
+			dnkbd_pollout(sc->sc_regs, DNCMD_BELL_ON);
+			SET(sc->sc_flags, SF_BELL);
+		}
+
+		if (ISSET(sc->sc_flags, SF_BELL_TMO))
+			timeout_del(&sc->sc_bellstop_tmo);
+		timeout_add(&sc->sc_bellstop_tmo, ticks);
+		SET(sc->sc_flags, SF_BELL_TMO);
+	}
+
+	splx(s);
+}
+
+void
+dnkbd_bellstop(void *v)
+{
+	struct dnkbd_softc *sc = v;
+	int s;
+
+	s = spltty();
+
+	dnkbd_pollout(sc->sc_regs, DNCMD_PREFIX);
+	dnkbd_pollout(sc->sc_regs, DNCMD_BELL);
+	dnkbd_pollout(sc->sc_regs, DNCMD_BELL_OFF);
+	CLR(sc->sc_flags, SF_BELL);
+	CLR(sc->sc_flags, SF_BELL_TMO);
+
+	splx(s);
 }
