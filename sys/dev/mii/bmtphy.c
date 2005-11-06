@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.14 2005/05/25 20:05:44 brad Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.15 2005/11/06 22:50:15 brad Exp $	*/
 /*	$NetBSD: bmtphy.c,v 1.17 2005/01/17 13:17:45 scw Exp $	*/
 
 /*-
@@ -62,9 +62,10 @@ struct cfdriver bmtphy_cd = {
 
 int	bmtphy_service(struct mii_softc *, struct mii_data *, int);
 void	bmtphy_status(struct mii_softc *);
+void	bmtphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs bmtphy_funcs = {
-	bmtphy_service, bmtphy_status, mii_phy_reset,
+	bmtphy_service, bmtphy_status, bmtphy_reset,
 };
 
 static const struct mii_phydesc bmtphys[] = {
@@ -111,6 +112,7 @@ bmtphyattach(struct device *parent, struct device *self, void *aux)
 	mpd = mii_phy_match(ma, bmtphys);
 	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &bmtphy_funcs;
@@ -237,4 +239,31 @@ bmtphy_status(struct mii_softc *sc)
 
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+bmtphy_reset(struct mii_softc *sc)
+{
+	u_int16_t data;
+
+	mii_phy_reset(sc);
+
+	if (sc->mii_model == MII_MODEL_BROADCOM_BCM5221) {
+		/* Enable shadow register mode */
+		data = PHY_READ(sc, 0x1f);
+		PHY_WRITE(sc, 0x1f, data | 0x0080);
+
+		/* Enable APD (Auto PowerDetect) */
+		data = PHY_READ(sc, MII_BMTPHY_AUX2);
+		PHY_WRITE(sc, MII_BMTPHY_AUX2, data | 0x0020);
+
+		/* Enable clocks across APD for
+		 * Auto-MDIX functionality */
+		data = PHY_READ(sc, MII_BMTPHY_INTR);
+		PHY_WRITE(sc, MII_BMTPHY_INTR, data | 0x0004);
+
+		/* Disable shadow register mode */
+		data = PHY_READ(sc, 0x1f);
+		PHY_WRITE(sc, 0x1f, data & ~0x0080);
+	}
 }
