@@ -1,7 +1,7 @@
-/*	$OpenBSD: vfs_default.c,v 1.28 2005/11/06 13:07:47 pedro Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.29 2005/11/06 14:15:08 pedro Exp $  */
 
 /*
- *    Portions of this code are:
+ * Portions of this code are:
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -84,8 +84,10 @@ vop_generic_revoke(void *v)
 			vp->v_flag |= VXWANT;
 			simple_unlock(&vp->v_interlock);
 			tsleep(vp, PINOD, "vop_generic_revokeall", 0);
+
 			return(0);
 		}
+
 		/*
 		 * Ensure that vp will not be vgone'd while we
 		 * are eliminating its aliases.
@@ -104,6 +106,7 @@ vop_generic_revoke(void *v)
 			}
 			simple_unlock(&spechash_slock);
 		}
+
 		/*
 		 * Remove the lock so that vgone below will
 		 * really eliminate the vnode after which time
@@ -112,7 +115,9 @@ vop_generic_revoke(void *v)
 		simple_lock(&vp->v_interlock);
 		vp->v_flag &= ~VXLOCK;
 	}
+
 	vgonel(vp, p);
+
 	return (0);
 }
 
@@ -135,6 +140,7 @@ vop_generic_abortop(void *v)
  
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
 		pool_put(&namei_pool, ap->a_cnp->cn_pnbuf);
+
 	return (0);
 }
 
@@ -142,7 +148,8 @@ vop_generic_abortop(void *v)
  * Stubs to use when there is no locking to be done on the underlying object.
  * A minimal shared lock is necessary to ensure that the underlying object
  * is not revoked while an operation is in progress. So, an active shared
- * count is maintained in an auxiliary vnode lock structure.
+ * count should be maintained in an auxiliary vnode lock structure. However,
+ * that's not done now.
  */
 int
 vop_generic_lock(void *v)
@@ -160,11 +167,12 @@ vop_generic_lock(void *v)
 	 */
 	if (ap->a_flags & LK_INTERLOCK)
 		simple_unlock(&ap->a_vp->v_interlock);
+
 	return (0);
 }
  
 /*
- * Decrement the active use count.
+ * Decrement the active use count. (Not done currently)
  */
 int
 vop_generic_unlock(void *v)
@@ -173,7 +181,7 @@ vop_generic_unlock(void *v)
 }
 
 /*
- * Return whether or not the node is in use.
+ * Return whether or not the node is in use. (Not done currently)
  */
 int
 vop_generic_islocked(void *v)
@@ -224,6 +232,7 @@ filt_generic_readwrite(struct knote *kn, long hint)
 	}
 
         kn->kn_data = 0;
+
         return (1);
 }
 
