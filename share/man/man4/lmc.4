@@ -1,4 +1,4 @@
-.\" $OpenBSD: lmc.4,v 1.21 2004/10/27 09:12:54 henning Exp $
+.\" $OpenBSD: lmc.4,v 1.22 2005/11/06 12:08:50 deraadt Exp $
 .\"
 .\" Copyright (c) 1999 Chris Cappuccio
 .\"
@@ -29,13 +29,13 @@
 .Os
 .Sh NAME
 .Nm lmc
-.Nd Lan Media Corporation SSI/DS1/HSSI/DS3 card device driver
+.Nd Lan Media Corporation SSI/T1/DS1/HSSI/DS3 card device driver
 .Sh SYNOPSIS
 .Cd "lmc* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Lan Media Corporation SSI, DS1, HSSI, and DS3
+driver provides support for the Lan Media Corporation SSI, T1/DS1, HSSI, and DS3
 PCI WAN adapters based on the DEC 21140 Ethernet chip.
 The adapters use a DEC 21140 Ethernet chip for the PCI bus interface.
 Leaving the bus interface chip, the data path goes through a field programmable
@@ -46,7 +46,7 @@ circuitry.
 The intent is to provide a synchronous serial link with HDLC framing at speeds
 of up to 10Mbps (for the SSI card), 52Mbps (for the HSSI card), BNC connectors
 for 45Mbps operation without a CSU/DSU (DS3 card), and an RJ45 jack for
-T1/E1 operation without a CSU/DSU (DS1 card).
+T1/E1 operation without a CSU/DSU (T1/DS1 card).
 .Pp
 The card will automatically use HDLC framing and defaults to external clock
 source.
