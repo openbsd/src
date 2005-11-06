@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.51 2005/08/09 04:10:11 mickey Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.52 2005/11/06 19:25:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -209,18 +209,16 @@ void dc_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int			s;
 	const char		*intrstr = NULL;
 	pcireg_t		command;
 	struct dc_softc		*sc = (struct dc_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
-	bus_size_t		iosize;
+	bus_size_t		size;
 	u_int32_t		revision;
 	int			found = 0;
 
-	s = splimp();
 	sc->sc_dmat = pa->pa_dmat;
 
 	/*
@@ -234,14 +232,16 @@ void dc_pci_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 #ifdef DC_USEIOSPACE
-	if (pci_mapreg_map(pa, DC_PCI_CFBIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->dc_btag, &sc->dc_bhandle, NULL, &iosize, 0)) {
+	if (pci_mapreg_map(pa, DC_PCI_CFBIO,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &sc->dc_btag, &sc->dc_bhandle, NULL, &size, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 #else
-	if (pci_mapreg_map(pa, DC_PCI_CFBMA, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->dc_btag, &sc->dc_bhandle, NULL, &iosize, 0)) {
+	if (pci_mapreg_map(pa, DC_PCI_CFBMA,
+	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &sc->dc_btag, &sc->dc_bhandle, NULL, &size, 0)) {
 		printf(": can't map mem space\n");
 		return;
 	}
@@ -250,7 +250,7 @@ void dc_pci_attach(parent, self, aux)
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail;
+		goto fail_1;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, dc_intr, sc,
@@ -260,7 +260,7 @@ void dc_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail;
+		goto fail_1;
 	}
 	printf(": %s,", intrstr);
 
@@ -429,7 +429,7 @@ void dc_pci_attach(parent, self, aux)
 		/* This shouldn't happen if probe has done it's job... */
 		printf(": unknown device: %x:%x\n",
 		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
-		goto fail;
+		goto fail_2;
 	}
 
 	/* Save the cache line size. */
@@ -525,8 +525,13 @@ void dc_pci_attach(parent, self, aux)
 #endif
 	dc_attach(sc);
 
-fail:
-	splx(s);
+	return;
+
+fail_2:
+	pci_intr_disestablish(pc, sc->sc_ih);
+
+fail_1:
+	bus_space_unmap(sc->dc_btag, sc->dc_bhandle, size);
 }
 
 struct cfattach dc_pci_ca = {
