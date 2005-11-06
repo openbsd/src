@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.6 2005/10/28 07:18:47 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.7 2005/11/06 10:52:27 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -239,7 +239,7 @@ ike_section_qmids(struct ipsec_addr *src, struct ipsec_addr *dst, FILE *fd)
 	char *mask, *network, *p;
 
 	if (src->netaddress) {
-		mask = inet_ntoa(src->v4mask.mask);
+		mask = inet_ntoa(src->mask.v4);
 		if ((network = strdup(src->name)) == NULL)
 			err(1, "ike_section_qmids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)
@@ -259,7 +259,7 @@ ike_section_qmids(struct ipsec_addr *src, struct ipsec_addr *dst, FILE *fd)
 		    src->name);
 	}
 	if (dst->netaddress) {
-		mask = inet_ntoa(dst->v4mask.mask);
+		mask = inet_ntoa(dst->mask.v4);
 		if ((network = strdup(dst->name)) == NULL)
 			err(1, "ike_section_qmids: strdup");
 		if ((p = strrchr(network, '/')) != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2005/10/30 20:42:11 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2005/11/06 10:52:27 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1073,21 +1073,22 @@ host_v4(const char *s, int mask)
 	if (ipa == NULL)
 		err(1, "host_v4: calloc");
 
-	ipa->v4 = ina;
+	ipa->address.v4 = ina;
 	ipa->name = strdup(s);
 	if (ipa->name == NULL)
 		err(1, "host_v4: strdup");
 	ipa->af = AF_INET;
 
 	if (bits == 32) {
-		ipa->v4mask.mask32 = 0xffffffff;
+		ipa->mask.mask32 = 0xffffffff;
 		ipa->netaddress = 0;
 	} else {
 		for (i = 31; i > 31 - bits; i--)
-			ipa->v4mask.mask32 |= (1 << i);
-		ipa->v4mask.mask32 = htonl(ipa->v4mask.mask32);
+			ipa->mask.mask32 |= (1 << i);
+		ipa->mask.mask32 = htonl(ipa->mask.mask32);
 		ipa->netaddress = 1;
 	}
+	ipa->prefixlen = bits;
 
 	return (ipa);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.18 2005/10/30 19:50:23 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.19 2005/11/06 10:52:27 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -69,11 +69,15 @@ enum {
 };
 
 struct ipsec_addr {
-	struct in_addr   v4;
 	union {
-		struct in_addr  mask;
-		u_int32_t	mask32;
-	}		 v4mask;
+		struct in_addr   v4;
+		u_int32_t	 addr32;
+	}		 address;
+	union {
+		struct in_addr	 v4;
+		u_int32_t	 mask32;
+	}		 mask;
+	u_int8_t	 prefixlen;
 	int		 netaddress;
 	sa_family_t	 af;
 	char		*name;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.26 2005/10/30 19:50:24 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.27 2005/11/06 10:52:27 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -49,6 +49,7 @@ static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_transforms *, struct ipsec_key *,
 		    struct ipsec_key *);
 static int	pfkey_reply(int);
+static u_int8_t mask2prefixlen(const in_addr_t);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
 int		pfkey_ipsec_flush(void);
 int		pfkey_ipsec_establish(int, struct ipsec_rule *);
@@ -74,10 +75,10 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	bzero(&smask, sizeof(smask));
 	switch (src->af) {
 	case AF_INET:
-		((struct sockaddr_in *)&ssrc)->sin_addr = src->v4;
+		((struct sockaddr_in *)&ssrc)->sin_addr = src->address.v4;
 		ssrc.ss_len = sizeof(struct sockaddr_in);
 		ssrc.ss_family = AF_INET;
-		((struct sockaddr_in *)&smask)->sin_addr = src->v4mask.mask;
+		((struct sockaddr_in *)&smask)->sin_addr = src->mask.v4;
 		break;
 	case AF_INET6:
 	default:
@@ -91,10 +92,10 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	bzero(&dmask, sizeof(dmask));
 	switch (dst->af) {
 	case AF_INET:
-		((struct sockaddr_in *)&sdst)->sin_addr = dst->v4;
+		((struct sockaddr_in *)&sdst)->sin_addr = dst->address.v4;
 		sdst.ss_len = sizeof(struct sockaddr_in);
 		sdst.ss_family = AF_INET;
-		((struct sockaddr_in *)&dmask)->sin_addr = dst->v4mask.mask;
+		((struct sockaddr_in *)&dmask)->sin_addr = dst->mask.v4;
 		break;
 	case AF_INET6:
 	default:
@@ -108,7 +109,8 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	if (peer) {
 		switch (peer->af) {
 		case AF_INET:
-			((struct sockaddr_in *)&speer)->sin_addr = peer->v4;
+			((struct sockaddr_in *)&speer)->sin_addr =
+			    peer->address.v4;
 			speer.ss_len = sizeof(struct sockaddr_in);
 			speer.ss_family = AF_INET;
 			break;
@@ -319,7 +321,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi, struct
 	bzero(&ssrc, sizeof(ssrc));
 	switch (src->af) {
 	case AF_INET:
-		((struct sockaddr_in *)&ssrc)->sin_addr = src->v4;
+		((struct sockaddr_in *)&ssrc)->sin_addr = src->address.v4;
 		ssrc.ss_len = sizeof(struct sockaddr_in);
 		ssrc.ss_family = AF_INET;
 		break;
@@ -332,7 +334,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi, struct
 	bzero(&sdst, sizeof(sdst));
 	switch (dst->af) {
 	case AF_INET:
-		((struct sockaddr_in *)&sdst)->sin_addr = dst->v4;
+		((struct sockaddr_in *)&sdst)->sin_addr = dst->address.v4;
 		sdst.ss_len = sizeof(struct sockaddr_in);
 		sdst.ss_family = AF_INET;
 		break;
@@ -559,6 +561,15 @@ pfkey_reply(int sd)
 	return 0;
 }
 
+static u_int8_t
+mask2prefixlen(const in_addr_t ina)
+{
+	if (ina == 0)
+		return 0;
+	else
+		return (33 - ffs(ntohl(ina)));
+}
+
 int
 pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 {
@@ -567,6 +578,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 	struct sadb_protocol	*sproto;
 	struct sadb_ident	*sident;
 	struct sockaddr		*sa;
+	struct sockaddr_in	*sa_in;
 	int			 len;
 
 	switch (msg->sadb_msg_satype) {
@@ -601,10 +613,12 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
-				    &rule->local->v4, sizeof(struct in_addr));
-				memset(&rule->local->v4mask, 0xff,
+				    &rule->local->addressv4,
+				    sizeof(struct in_addr));
+				memset(&rule->local->mask.mask32, 0xff,
 				    sizeof(u_int32_t));
 				rule->local->af = AF_INET;
+				rule->local->prefixlen = 32;
 				break;
 			default:
 				return (1);
@@ -624,10 +638,12 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
-				    &rule->peer->v4, sizeof(struct in_addr));
-				memset(&rule->peer->v4mask, 0xff,
+				    &rule->peer->address.v4,
+				    sizeof(struct in_addr));
+				memset(&rule->peer->mask.mask32, 0xff,
 				    sizeof(u_int32_t));
 				rule->peer->af = AF_INET;
+				rule->peer->prefixlen = 32;
 				break;
 			default:
 				return (1);
@@ -728,7 +744,8 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
-				    &rule->src->v4, sizeof(struct in_addr));
+				    &rule->src->address.v4,
+				    sizeof(struct in_addr));
 				rule->src->af = AF_INET;
 				break;
 			default:
@@ -750,7 +767,8 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			switch (sa->sa_family) {
 			case AF_INET:
 				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
-				    &rule->dst->v4, sizeof(struct in_addr));
+				    &rule->dst->address.v4,
+				    sizeof(struct in_addr));
 				rule->dst->af = AF_INET;
 				break;
 
@@ -773,10 +791,12 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 
 			switch (sa->sa_family) {
 			case AF_INET:
-				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
-				    &rule->src->v4mask.mask,
+				sa_in = (struct sockaddr_in *)sa;
+				bcopy(&sa_in->sin_addr, &rule->src->mask.v4,
 				    sizeof(struct in_addr));
 				rule->src->af = AF_INET;
+				rule->src->prefixlen =
+				    mask2prefixlen(sa_in->sin_addr.s_addr);
 				break;
 
 			default:
@@ -797,10 +817,12 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 
 			switch (sa->sa_family) {
 			case AF_INET:
-				bcopy(&((struct sockaddr_in *)sa)->sin_addr,
-				    &rule->dst->v4mask.mask,
+				sa_in = (struct sockaddr_in *)sa;
+				bcopy(&sa_in->sin_addr, &rule->dst->mask.v4,
 				    sizeof(struct in_addr));
 				rule->dst->af = AF_INET;
+				rule->dst->prefixlen =
+				    mask2prefixlen(sa_in->sin_addr.s_addr);
 				break;
 
 			default:

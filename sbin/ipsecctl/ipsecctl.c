@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.29 2005/10/30 19:50:23 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.30 2005/11/06 10:52:27 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -30,6 +30,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -197,24 +198,22 @@ ipsecctl_add_rule(struct ipsecctl *ipsec, struct ipsec_rule *r)
 void
 ipsecctl_print_addr(struct ipsec_addr *ipa)
 {
-	u_int32_t	mask;
-	char		buf[48];
+	char		buf[NI_MAXHOST];
 
 	if (ipa == NULL) {
 		printf("?");
 		return;
 	}
-	if (inet_ntop(ipa->af, &ipa->v4, buf, sizeof(buf)) == NULL)
+	if (inet_ntop(ipa->af, &ipa->address, buf, sizeof(buf)) == NULL)
 		printf("?");
 	else
 		printf("%s", buf);
 
-	if (ipa->v4mask.mask32 != 0xffffffff) {
-		mask = ntohl(ipa->v4mask.mask32);
-		if (mask == 0)
-			printf("/0");
-		else
-			printf("/%d", 32 - ffs((int) mask) + 1);
+	switch (ipa->af) {
+	case AF_INET:
+		if (ipa->prefixlen != 32)
+			printf("/%d", ipa->prefixlen);
+		break;
 	}
 }
 
