@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.39 2005/10/06 17:43:14 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.40 2005/11/06 00:24:17 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -764,7 +764,7 @@ ext2fs_sync_vnode(struct vnode *vp, void *args)
  * go through the inodes to write those that have been modified;
  * initiate the writing of the super block if it has been modified.
  *
- * Note: we are always called with the filesystem marked `MPBUSY'.
+ * Should always be called with the mount point locked.
  */
 int
 ext2fs_sync(mp, waitfor, cred, p)

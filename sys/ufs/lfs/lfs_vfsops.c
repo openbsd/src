@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.20 2005/07/03 20:14:02 drahn Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.21 2005/11/06 00:24:17 pedro Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -442,7 +442,7 @@ lfs_statfs(mp, sbp, p)
  * go through the inodes to write those that have been modified;
  * initiate the writing of the super block if it has been modified.
  *
- * Note: we are always called with the filesystem marked `MPBUSY'.
+ * Should always be called with the mount point locked.
  */
 int
 lfs_sync(mp, waitfor, cred, p)

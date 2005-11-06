@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.72 2005/11/05 23:24:43 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.73 2005/11/06 00:24:17 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1034,7 +1034,7 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
  * go through the inodes to write those that have been modified;
  * initiate the writing of the super block if it has been modified.
  *
- * Note: we are always called with the filesystem marked `MPBUSY'.
+ * Should always be called with the mount point locked.
  */
 int
 ffs_sync(mp, waitfor, cred, p)
