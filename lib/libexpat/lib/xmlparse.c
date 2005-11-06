@@ -624,6 +624,8 @@ struct XML_ParserStruct {
     : \
     (processor != prologInitProcessor))
 
+#define MAXLEN 0x7fffffff
+
 XML_Parser
 XML_ParserCreate(const XML_Char *encodingName)
 {
@@ -1364,6 +1366,9 @@ XML_SetParamEntityParsing(XML_Parser parser,
 enum XML_Status
 XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
 {
+  /* Prevent integer overflow */
+  if (((len * 2) < len) && (((long long)len * 2) > MAXLEN))
+      return XML_STATUS_ERROR; 
   if (len == 0) {
     if (!isFinal)
       return XML_STATUS_OK;
@@ -1462,6 +1467,9 @@ XML_ParseBuffer(XML_Parser parser, int len, int isFinal)
 void *
 XML_GetBuffer(XML_Parser parser, int len)
 {
+  if (((len + (bufferEnd - bufferPtr)) < len)
+      && ((long long)len + (bufferEnd - bufferPtr) > MAXLEN))
+      return NULL; 
   if (len > bufferLim - bufferEnd) {
     /* FIXME avoid integer overflow */
     int neededSize = len + (bufferEnd - bufferPtr);
