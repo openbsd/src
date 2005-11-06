@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.3 2005/11/05 04:33:20 brad Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.4 2005/11/06 03:10:09 drahn Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -54,6 +54,10 @@ int ki2c_write(struct ki2c_softc *, int, int, const void *, int);
 struct cfattach ki2c_ca = {
 	sizeof(struct ki2c_softc), ki2c_match, ki2c_attach
 };
+struct cfattach ki2c_memc_ca = {
+	sizeof(struct ki2c_softc), ki2c_match, ki2c_attach
+};
+
 struct cfdriver ki2c_cd = {
 	NULL, "ki2c", DV_DULL
 };

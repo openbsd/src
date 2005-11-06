@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.96 2005/11/05 11:56:39 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.97 2005/11/06 03:10:08 drahn Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -33,6 +33,7 @@ cpu*		at mainbus0
 
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 memc*		at mainbus0
+ki2c*           at memc?        # Keywest I2C
 pchb*		at pci?
 ht*		at mainbus0
 smu*		at mainbus0

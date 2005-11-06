@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.31 2005/10/31 00:24:57 brad Exp $
+#	$OpenBSD: files.macppc,v 1.32 2005/11/06 03:10:09 drahn Exp $
 
 #
 # macppc-specific configuration info
@@ -191,6 +191,7 @@ file	arch/macppc/dev/mediabay.c			mediabay
 # Keywest I2C
 device	ki2c {}
 attach	ki2c at macobio
+attach	ki2c at memc	with ki2c_memc
 file	arch/macppc/dev/ki2c.c				ki2c
 
 # I2S
