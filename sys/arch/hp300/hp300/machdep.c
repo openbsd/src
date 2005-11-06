@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.103 2005/09/27 22:05:37 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.104 2005/11/06 17:59:52 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -444,55 +444,6 @@ allocsys(v)
 
 	valloc(buf, struct buf, nbuf);
 	return (v);
-}
-
-/*
- * Set registers on exec.
- */
-void
-setregs(p, pack, stack, retval)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
-{
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
-
-	frame->f_sr = PSL_USERSET;
-	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[D0] = 0;
-	frame->f_regs[D1] = 0;
-	frame->f_regs[D2] = 0;
-	frame->f_regs[D3] = 0;
-	frame->f_regs[D4] = 0;
-	frame->f_regs[D5] = 0;
-	frame->f_regs[D6] = 0;
-	frame->f_regs[D7] = 0;
-	frame->f_regs[A0] = 0;
-	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
-	frame->f_regs[A3] = 0;
-	frame->f_regs[A4] = 0;
-	frame->f_regs[A5] = 0;
-	frame->f_regs[A6] = 0;
-	frame->f_regs[SP] = stack;
-
-	/* restore a null state frame */
-	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fputype)
-		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-
-#ifdef COMPAT_SUNOS
-	/*
-	 * SunOS' ld.so does self-modifying code without knowing
-	 * about the 040's cache purging needs.  So we need to uncache
-	 * writeable executable pages.
-	 */
-	if (p->p_emul == &emul_sunos)
-		p->p_md.md_flags |= MDP_UNCACHE_WX;
-	else
-		p->p_md.md_flags &= ~MDP_UNCACHE_WX;
-#endif
 }
 
 /*

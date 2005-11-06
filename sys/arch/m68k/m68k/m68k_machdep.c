@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.6 2005/08/06 14:26:52 miod Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.7 2005/11/06 17:59:57 miod Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -38,13 +38,56 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/syscall.h>
 #include <sys/ktrace.h>
+#include <sys/user.h>
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
+
+/*
+ * Set registers on exec.
+ */
+void
+setregs(p, pack, stack, retval)
+	struct proc *p;
+	struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
+{
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
+#endif
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
+
+	frame->f_sr = PSL_USERSET;
+	frame->f_pc = pack->ep_entry & ~1;
+	bzero(frame->f_regs, 15 * sizeof(register_t));
+	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[SP] = stack;
+
+	/* restore a null state frame */
+	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	if (fputype != FPU_NONE) {
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+	}
+
+#ifdef COMPAT_SUNOS
+	/*
+	 * SunOS' ld.so does self-modifying code without knowing
+	 * about the 040's cache purging needs.  So we need to uncache
+	 * writeable executable pages.
+	 */
+	if (p->p_emul == &emul_sunos)
+		p->p_md.md_flags |= MDP_UNCACHE_WX;
+	else
+		p->p_md.md_flags &= ~MDP_UNCACHE_WX;
+#endif
+}
 
 /*
  * Process the tail end of a fork() for the child
