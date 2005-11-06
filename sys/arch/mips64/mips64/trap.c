@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2005/10/24 20:20:03 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2005/11/06 10:26:56 martin Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -62,6 +62,8 @@
 #endif
 #include <net/netisr.h>
 #include <miscfs/procfs/procfs.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/trap.h>
 #include <machine/psl.h>
@@ -210,7 +212,7 @@ trap(trapframe)
 				panic("trap: ktlbmod: invalid pte");
 #endif
 			if (pmap_is_page_ro(pmap_kernel(),
-			    mips_trunc_page(trapframe->badvaddr), entry)) {
+			    trunc_page(trapframe->badvaddr), entry)) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
 				goto kernel_fault;
@@ -244,7 +246,7 @@ trap(trapframe)
 			panic("trap: utlbmod: invalid pte");
 #endif
 		if (pmap_is_page_ro(pmap,
-		    mips_trunc_page(trapframe->badvaddr), entry)) {
+		    trunc_page(trapframe->badvaddr), entry)) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto dofault;

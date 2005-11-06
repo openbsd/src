@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.9 2005/09/12 23:05:05 miod Exp $ */
+/*      $OpenBSD: param.h,v 1.10 2005/11/06 10:26:56 martin Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,14 +133,6 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Conversion macros
- */
-#define mips_round_page(x)	((((u_long)(x)) + NBPG - 1) & ~(NBPG-1))
-#define mips_trunc_page(x)	((u_long)(x) & ~(NBPG-1))
-#define mips_btop(x)		((u_long)(x) >> PGSHIFT)
-#define mips_ptob(x)		((u_long)(x) << PGSHIFT)
 
 #ifdef _KERNEL
 #ifndef _LOCORE

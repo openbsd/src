@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2004/09/09 22:11:38 pefo Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2005/11/06 10:26:56 martin Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -193,10 +193,10 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) == 4) {
 		if (off >= 0x0000 && off < 0x10000) {
 			off += sys_config.pci_io[0].bus_base;
-			return mips_btop(off);
+			return atop(off);
 		} else if (off >= 0xa0000 && off < 0x10000000) {
 			off += sys_config.pci_mem[0].bus_base;
-			return mips_btop(off);
+			return atop(off);
 		} else {
 			return -1;
 		}
