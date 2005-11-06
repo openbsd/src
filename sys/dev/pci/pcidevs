@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.956 2005/11/02 17:08:21 deraadt Exp $
+$OpenBSD: pcidevs,v 1.957 2005/11/06 23:11:57 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1800,6 +1800,7 @@ product LMC HSSI		0x0003	HSSI
 product LMC DS3			0x0004	DS3
 product LMC SSI			0x0005	SSI
 product LMC DS1			0x0006	DS1
+product LMC HSSIC		0x0007	HSSIc
 
 /* Lanergy */
 product LANERGY APPIAN_PCI_LITE	0x0001	Appian Lite
