@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.36 2005/11/05 09:42:44 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.37 2005/11/06 01:41:02 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -476,6 +476,7 @@ struct bcm_dspcode {
 	u_int16_t	val;
 };
 
+/* Disable tap power management */
 static const struct bcm_dspcode bcm5401_dspcode[] = {
 	{ BRGPHY_MII_AUXCTL,            0x0c20 },
 	{ BRGPHY_MII_DSP_ADDR_REG,      0x0012 },
@@ -491,7 +492,7 @@ static const struct bcm_dspcode bcm5401_dspcode[] = {
 	{ 0,                            0 },
 };
 
-/* setting some undocumented voltage */
+/* Setting some undocumented voltage */
 static const struct bcm_dspcode bcm5411_dspcode[] = {
 	{ 0x1c,                         0x8c23 },
 	{ 0x1c,                         0x8ca3 },
