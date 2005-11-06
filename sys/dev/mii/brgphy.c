@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.38 2005/11/06 03:22:28 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.39 2005/11/06 03:49:28 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -87,6 +87,7 @@ void	brgphy_load_dspcode(struct mii_softc *);
 void	brgphy_bcm5401_dspcode(struct mii_softc *);
 void	brgphy_bcm5411_dspcode(struct mii_softc *);
 void	brgphy_bcm5421_dspcode(struct mii_softc *);
+void	brgphy_bcm54k2_dspcode(struct mii_softc *);
 void	brgphy_bcm5703_dspcode(struct mii_softc *);
 void	brgphy_bcm5704_dspcode(struct mii_softc *);
 void	brgphy_bcm5750_dspcode(struct mii_softc *);
@@ -542,6 +543,23 @@ brgphy_bcm5421_dspcode(struct mii_softc *sc)
 }
 
 void
+brgphy_bcm54k2_dspcode(struct mii_softc *sc)
+{
+	static const struct {
+		int		reg;
+		uint16_t	val;
+	} dspcode[] = {
+		{ 4,				0x01e1 },
+		{ 9,				0x0300 },
+		{ 0,				0 },
+	};
+	int i;
+
+	for (i = 0; dspcode[i].reg != 0; i++)
+		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+void
 brgphy_bcm5703_dspcode(struct mii_softc *sc)
 {
 	static const struct {
@@ -615,6 +633,9 @@ brgphy_load_dspcode(struct mii_softc *sc)
 		break;
 	case MII_MODEL_xxBROADCOM_BCM5421:
 		brgphy_bcm5421_dspcode(sc);
+		break;
+	case MII_MODEL_xxBROADCOM_BCM54K2:
+		brgphy_bcm54k2_dspcode(sc);
 		break;
 	case MII_MODEL_xxBROADCOM_BCM5703:
 		brgphy_bcm5703_dspcode(sc);
