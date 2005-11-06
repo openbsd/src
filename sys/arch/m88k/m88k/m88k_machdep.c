@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.7 2005/10/13 19:48:33 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.8 2005/11/06 17:58:20 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -62,7 +62,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#if DDB
+#ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
@@ -183,8 +183,10 @@ setrunqueue(p)
 	struct proc *oldlast;
 	int which = p->p_priority >> 2;
 
+#ifdef DIAGNOSTIC
 	if (p->p_back != NULL)
 		panic("setrunqueue %p", p);
+#endif
 	q = &qs[which];
 	whichqs |= 1 << which;
 	p->p_forw = (struct proc *)q;
@@ -205,8 +207,10 @@ remrunqueue(vp)
 	int which = p->p_priority >> 2;
 	struct prochd *q;
 
+#ifdef DIAGNOSTIC
 	if ((whichqs & (1 << which)) == 0)
 		panic("remrq %p", p);
+#endif
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;
 	p->p_back = NULL;
@@ -218,15 +222,14 @@ remrunqueue(vp)
 void
 nmihand(void *framep)
 {
-#if 0
-	struct trapframe *frame = framep;
-#endif
-
-#if DDB
+#ifdef DDB
 	printf("Abort Pressed\n");
 	Debugger();
 #else
+	struct trapframe *frame = framep;
+
 	printf("Spurious NMI?\n");
+	regdump(frame);
 #endif /* DDB */
 }
 
