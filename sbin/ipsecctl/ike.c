@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.7 2005/11/06 10:52:27 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.8 2005/11/06 22:51:51 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -30,19 +30,20 @@
 
 #include "ipsecctl.h"
 
-static void	ike_section_peer(struct ipsec_addr *, FILE *);
-static void	ike_section_ids(struct ipsec_addr *, struct ipsec_auth *,
+static void	ike_section_peer(struct ipsec_addr_wrap *, FILE *);
+static void	ike_section_ids(struct ipsec_addr_wrap *, struct ipsec_auth *,
 		    FILE *);
-static void	ike_section_ipsec(struct ipsec_addr *, struct ipsec_addr *,
-		    struct ipsec_addr *, FILE *);
-static int	ike_section_qm(struct ipsec_addr *, struct ipsec_addr *,
-		    u_int8_t, struct ipsec_transforms *, FILE *);
-static int	ike_section_mm(struct ipsec_addr *, struct ipsec_transforms *,
+static void	ike_section_ipsec(struct ipsec_addr_wrap *, struct
+		    ipsec_addr_wrap *, struct ipsec_addr_wrap *, FILE *);
+static int	ike_section_qm(struct ipsec_addr_wrap *, struct
+		    ipsec_addr_wrap *, u_int8_t, struct ipsec_transforms *,
 		    FILE *);
-static void	ike_section_qmids(struct ipsec_addr *, struct ipsec_addr *,
-		    FILE *);
-static int	ike_connect(u_int8_t, struct ipsec_addr *, struct ipsec_addr *,
-		    FILE *);
+static int	ike_section_mm(struct ipsec_addr_wrap *, struct
+		    ipsec_transforms *, FILE *);
+static void	ike_section_qmids(struct ipsec_addr_wrap *, struct
+		    ipsec_addr_wrap *, FILE *);
+static int	ike_connect(u_int8_t, struct ipsec_addr_wrap *, struct
+		    ipsec_addr_wrap *, FILE *);
 static int	ike_gen_config(struct ipsec_rule *, FILE *);
 static int	ike_delete_config(struct ipsec_rule *, FILE *);
 
@@ -54,7 +55,7 @@ int		ike_ipsec_establish(int, struct ipsec_rule *);
 #define	DELETE	"C rms "
 
 static void
-ike_section_peer(struct ipsec_addr *peer, FILE *fd)
+ike_section_peer(struct ipsec_addr_wrap *peer, FILE *fd)
 {
 	fprintf(fd, SET "[Phase 1]:%s=peer-%s force\n", peer->name, peer->name);
 	fprintf(fd, SET "[peer-%s]:Phase=1 force\n", peer->name);
@@ -62,7 +63,7 @@ ike_section_peer(struct ipsec_addr *peer, FILE *fd)
 }
 
 static void
-ike_section_ids(struct ipsec_addr *peer, struct ipsec_auth *auth, FILE *fd)
+ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd)
 {
 	if (auth == NULL)
 		return;
@@ -84,8 +85,8 @@ ike_section_ids(struct ipsec_addr *peer, struct ipsec_auth *auth, FILE *fd)
 }
 
 static void
-ike_section_ipsec(struct ipsec_addr *src, struct ipsec_addr *dst, struct
-    ipsec_addr *peer, FILE *fd)
+ike_section_ipsec(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
+    struct ipsec_addr_wrap *peer, FILE *fd)
 {
 	fprintf(fd, SET "[IPsec-%s-%s]:Phase=2 force\n", src->name, dst->name);
 	fprintf(fd, SET "[IPsec-%s-%s]:ISAKMP-peer=peer-%s force\n", src->name,
@@ -99,8 +100,8 @@ ike_section_ipsec(struct ipsec_addr *src, struct ipsec_addr *dst, struct
 }
 
 static int
-ike_section_qm(struct ipsec_addr *src, struct ipsec_addr *dst, u_int8_t proto,
-    struct ipsec_transforms *qmxfs, FILE *fd)
+ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
+    u_int8_t proto, struct ipsec_transforms *qmxfs, FILE *fd)
 {
 	fprintf(fd, SET "[qm-%s-%s]:EXCHANGE_TYPE=QUICK_MODE force\n",
 	    src->name, dst->name);
@@ -175,7 +176,7 @@ ike_section_qm(struct ipsec_addr *src, struct ipsec_addr *dst, u_int8_t proto,
 }
 
 static int
-ike_section_mm(struct ipsec_addr *peer, struct ipsec_transforms *mmxfs,
+ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
     FILE *fd)
 {
 	if (!(mmxfs->authxf || mmxfs->encxf))
@@ -234,7 +235,8 @@ ike_section_mm(struct ipsec_addr *peer, struct ipsec_transforms *mmxfs,
 }
 
 static void
-ike_section_qmids(struct ipsec_addr *src, struct ipsec_addr *dst, FILE *fd)
+ike_section_qmids(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
+    FILE *fd)
 {
 	char *mask, *network, *p;
 
@@ -281,8 +283,8 @@ ike_section_qmids(struct ipsec_addr *src, struct ipsec_addr *dst, FILE *fd)
 }
 
 static int
-ike_connect(u_int8_t mode, struct ipsec_addr *src, struct ipsec_addr *dst,
-    FILE *fd)
+ike_connect(u_int8_t mode, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
+    *dst, FILE *fd)
 {
 	switch (mode) {
 	case IKE_ACTIVE:

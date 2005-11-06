@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.19 2005/11/06 10:52:27 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.20 2005/11/06 22:51:51 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -70,17 +70,25 @@ enum {
 
 struct ipsec_addr {
 	union {
-		struct in_addr   v4;
-		u_int32_t	 addr32;
-	}		 address;
-	union {
-		struct in_addr	 v4;
-		u_int32_t	 mask32;
-	}		 mask;
-	u_int8_t	 prefixlen;
-	int		 netaddress;
-	sa_family_t	 af;
-	char		*name;
+		struct in_addr		v4;
+		struct in6_addr		v6;
+		u_int8_t		addr8[16];
+		u_int16_t		addr16[8];
+		u_int32_t		addr32[4];
+	} ipa;
+#define v4	ipa.v4
+#define v6	ipa.v6
+#define addr8	ipa.addr8
+#define addr16	ipa.addr16
+#define addr32	ipa.addr32
+};
+
+struct ipsec_addr_wrap {
+	struct ipsec_addr	 address;
+	struct ipsec_addr	 mask;
+	int			 netaddress;
+	sa_family_t		 af;
+	char			*name;
 };
 
 struct ipsec_auth {
@@ -115,9 +123,9 @@ extern const struct ipsec_xf encxfs[];
 struct ipsec_rule {
 	u_int8_t	 type;
 
-	struct ipsec_addr *src;
-	struct ipsec_addr *dst;
-	struct ipsec_addr *peer;
+	struct ipsec_addr_wrap *src;
+	struct ipsec_addr_wrap *dst;
+	struct ipsec_addr_wrap *peer;
 	struct ipsec_auth *auth;
 	struct ipsec_transforms *xfs;
 	struct ipsec_transforms *mmxfs;

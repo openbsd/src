@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2005/11/06 10:52:27 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.33 2005/11/06 22:51:51 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -111,29 +111,31 @@ int			 atospi(char *, u_int32_t *);
 u_int8_t		 x2i(unsigned char *);
 struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
-struct ipsec_addr	*host(const char *);
-struct ipsec_addr	*host_v4(const char *, int);
-struct ipsec_addr	*copyhost(const struct ipsec_addr *);
+struct ipsec_addr_wrap	*host(const char *);
+struct ipsec_addr_wrap	*host_v4(const char *, int);
+void			 set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
+struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
 struct ipsec_transforms *transforms(const char *, const char *, const char *);
 struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *);
-struct ipsec_rule	*create_sa(u_int8_t, struct ipsec_addr *,
-			     struct ipsec_addr *, u_int32_t,
+struct ipsec_rule	*create_sa(u_int8_t, struct ipsec_addr_wrap *,
+			     struct ipsec_addr_wrap *, u_int32_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
-struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr *, struct
-			     ipsec_addr *, struct ipsec_addr *, u_int8_t,
-			     char *, char *, u_int16_t);
+struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr_wrap *, struct
+			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
+			     u_int8_t, char *, char *, u_int16_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
-struct ipsec_rule	*create_ike(struct ipsec_addr *, struct ipsec_addr *,
-			     struct ipsec_addr *, struct ipsec_transforms *,
-			     struct ipsec_transforms *, u_int8_t, u_int8_t,
-			     char *, char *);
+struct ipsec_rule	*create_ike(struct ipsec_addr_wrap *, struct
+			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
+			     struct ipsec_transforms *, struct
+			     ipsec_transforms *, u_int8_t, u_int8_t, char *,
+			     char *);
 
 typedef struct {
 	union {
@@ -143,11 +145,11 @@ typedef struct {
 		char		*string;
 		u_int8_t	 protocol;
 		struct {
-			struct ipsec_addr *src;
-			struct ipsec_addr *dst;
+			struct ipsec_addr_wrap *src;
+			struct ipsec_addr_wrap *dst;
 		} hosts;
-		struct ipsec_addr *peer;
-		struct ipsec_addr *host;
+		struct ipsec_addr_wrap *peer;
+		struct ipsec_addr_wrap *host;
 		struct {
 			char *srcid;
 			char *dstid;
@@ -365,9 +367,9 @@ host		: STRING			{
 			free(buf);
 		}
 		| ANY				{
-			struct ipsec_addr	*ipa;
+			struct ipsec_addr_wrap	*ipa;
 
-			ipa = calloc(1, sizeof(struct ipsec_addr));
+			ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 			if (ipa == NULL)
 				err(1, "host: calloc");
 
@@ -1007,10 +1009,10 @@ parsekeyfile(char *filename)
 	return (parsekey(hex, sb.st_size));
 }
 
-struct ipsec_addr *
+struct ipsec_addr_wrap *
 host(const char *s)
 {
-	struct ipsec_addr	*ipa = NULL;
+	struct ipsec_addr_wrap	*ipa = NULL;
 	int			 mask, v4mask, cont = 1;
 	char			*p, *q, *ps;
 
@@ -1053,12 +1055,12 @@ host(const char *s)
 	return (ipa);
 }
 
-struct ipsec_addr *
+struct ipsec_addr_wrap *
 host_v4(const char *s, int mask)
 {
-	struct ipsec_addr	*ipa = NULL;
+	struct ipsec_addr_wrap	*ipa = NULL;
 	struct in_addr		 ina;
-	int			 i, bits = 32;
+	int			 bits = 32;
 
 	bzero(&ina, sizeof(struct in_addr));
 	if (strrchr(s, '/') != NULL) {
@@ -1069,7 +1071,7 @@ host_v4(const char *s, int mask)
 			return (NULL);
 	}
 
-	ipa = calloc(1, sizeof(struct ipsec_addr));
+	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
 		err(1, "host_v4: calloc");
 
@@ -1079,30 +1081,42 @@ host_v4(const char *s, int mask)
 		err(1, "host_v4: strdup");
 	ipa->af = AF_INET;
 
-	if (bits == 32) {
-		ipa->mask.mask32 = 0xffffffff;
-		ipa->netaddress = 0;
-	} else {
-		for (i = 31; i > 31 - bits; i--)
-			ipa->mask.mask32 |= (1 << i);
-		ipa->mask.mask32 = htonl(ipa->mask.mask32);
+	set_ipmask(ipa, bits);
+	if (bits != (ipa->af == AF_INET ? 32 : 128))
 		ipa->netaddress = 1;
-	}
-	ipa->prefixlen = bits;
 
 	return (ipa);
 }
 
-struct ipsec_addr *
-copyhost(const struct ipsec_addr *src)
+void
+set_ipmask(struct ipsec_addr_wrap *address, u_int8_t b)
 {
-	struct ipsec_addr *dst;
+	struct ipsec_addr 	*ipa;
+	int			 i, j = 0;
 
-	dst = calloc(1, sizeof(struct ipsec_addr));
+	ipa = &address->mask;
+	bzero(ipa, sizeof(struct ipsec_addr));
+
+	while (b >= 32) {
+		ipa->addr32[j++] = 0xffffffff;
+		b -= 32;
+	}
+	for (i = 31; i > 31 - b; --i)
+		ipa->addr32[j] |= (1 << i);
+	if (b)
+		ipa->addr32[j] = htonl(ipa->addr32[j]);
+}
+
+struct ipsec_addr_wrap *
+copyhost(const struct ipsec_addr_wrap *src)
+{
+	struct ipsec_addr_wrap *dst;
+
+	dst = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (dst == NULL)
 		err(1, "copyhost: calloc");
 
-	memcpy(dst, src, sizeof(struct ipsec_addr));
+	memcpy(dst, src, sizeof(struct ipsec_addr_wrap));
 
 	if ((dst->name = strdup(src->name)) == NULL)
 		err(1, "copyhost: strdup");
@@ -1244,9 +1258,9 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 }
 
 struct ipsec_rule *
-create_sa(u_int8_t protocol, struct ipsec_addr *src, struct ipsec_addr *dst,
-    u_int32_t spi, struct ipsec_transforms *xfs, struct ipsec_key *authkey,
-    struct ipsec_key *enckey)
+create_sa(u_int8_t protocol, struct ipsec_addr_wrap *src, struct
+    ipsec_addr_wrap *dst, u_int32_t spi, struct ipsec_transforms *xfs,
+    struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
 	struct ipsec_rule *r;
 
@@ -1295,9 +1309,9 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 }
 
 struct ipsec_rule *
-create_flow(u_int8_t dir, struct ipsec_addr *src, struct ipsec_addr *dst,
-    struct ipsec_addr *peer, u_int8_t proto, char *srcid, char *dstid,
-    u_int16_t authtype)
+create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
+    *dst, struct ipsec_addr_wrap *peer, u_int8_t proto, char *srcid, char
+    *dstid, u_int16_t authtype)
 {
 	struct ipsec_rule *r;
 
@@ -1403,9 +1417,10 @@ reverse_rule(struct ipsec_rule *rule)
 }
 
 struct ipsec_rule *
-create_ike(struct ipsec_addr *src, struct ipsec_addr *dst, struct ipsec_addr *
-    peer, struct ipsec_transforms *mmxfs, struct ipsec_transforms *qmxfs,
-    u_int8_t proto, u_int8_t mode, char *srcid, char *dstid)
+create_ike(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst, struct
+    ipsec_addr_wrap * peer, struct ipsec_transforms *mmxfs, struct
+    ipsec_transforms *qmxfs, u_int8_t proto, u_int8_t mode, char *srcid, char
+    *dstid)
 {
 	struct ipsec_rule *r;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.30 2005/11/06 10:52:27 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.31 2005/11/06 22:51:51 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -43,7 +43,7 @@ int		 ipsecctl_rules(char *, int);
 FILE		*ipsecctl_fopen(const char *, const char *);
 int		 ipsecctl_commit(int, struct ipsecctl *);
 int		 ipsecctl_add_rule(struct ipsecctl *, struct ipsec_rule *);
-void		 ipsecctl_print_addr(struct ipsec_addr *);
+void		 ipsecctl_print_addr(struct ipsec_addr_wrap *);
 void		 ipsecctl_print_key(struct ipsec_key *);
 void		 ipsecctl_print_flow(struct ipsec_rule *, int);
 void		 ipsecctl_print_sa(struct ipsec_rule *, int);
@@ -55,6 +55,7 @@ void		 ipsecctl_show_flows(int);
 void		 ipsecctl_show_sas(int);
 void		 usage(void);
 const char	*ipsecctl_lookup_option(char *, const char **);
+static int	 unmask(struct ipsec_addr *, sa_family_t);
 
 const char	*infile;	/* Used by parse.y */
 const char	*showopt;
@@ -196,8 +197,9 @@ ipsecctl_add_rule(struct ipsecctl *ipsec, struct ipsec_rule *r)
 }
 
 void
-ipsecctl_print_addr(struct ipsec_addr *ipa)
+ipsecctl_print_addr(struct ipsec_addr_wrap *ipa)
 {
+	int		bits;
 	char		buf[NI_MAXHOST];
 
 	if (ipa == NULL) {
@@ -209,12 +211,9 @@ ipsecctl_print_addr(struct ipsec_addr *ipa)
 	else
 		printf("%s", buf);
 
-	switch (ipa->af) {
-	case AF_INET:
-		if (ipa->prefixlen != 32)
-			printf("/%d", ipa->prefixlen);
-		break;
-	}
+	bits = unmask(&ipa->mask, ipa->af);
+	if (bits != (ipa->af == AF_INET ? 32 : 128))
+		printf("/%d", bits);
 }
 
 void
@@ -552,4 +551,22 @@ main(int argc, char *argv[])
 	}
 
 	exit(error);
+}
+
+static int
+unmask(struct ipsec_addr *ipa, sa_family_t af)
+{
+	int		i = 31, j = 0, b = 0;
+	u_int32_t	tmp;
+
+	while (j < 4 && ipa->addr32[j] == 0xffffffff) {
+		b += 32;
+		j++;
+	}
+	if (j < 4) {
+		tmp = ntohl(ipa->addr32[j]);
+		for (i = 31; tmp & (1 << i); --i)
+			b++;
+	}
+	return (b);
 }
