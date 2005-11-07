@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcd.6,v 1.13 2003/06/03 03:01:39 millert Exp $
+.\"	$OpenBSD: bcd.6,v 1.14 2005/11/07 19:09:32 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,10 +41,12 @@
 .Nm bcd
 .Op Ar string ...
 .Nm ppt
-.Op Fl d Op Fl b
-.Op Ar string ...
+.Oo
+.Fl d Oo Fl b Oc \*(Ba
+.Ar string ...
+.Oc
 .Nm morse
-.Op Fl s | Fl d
+.Op Fl d | s
 .Op Ar string ...
 .Sh DESCRIPTION
 The
@@ -58,8 +60,8 @@ Acceptable input are command line arguments or the standard input.
 .Pp
 Available options for
 .Nm ppt :
-.Bl -tag -width flag
-.It Fl d
+.Bl -tag -width Ds
+.It Fl d Op Fl b
 The
 .Fl d
 option for
@@ -77,13 +79,7 @@ is printed for undecipherable input lines.
 .Pp
 Available options for
 .Nm morse :
-.Bl -tag -width flag
-.It Fl s
-The
-.Fl s
-option for
-.Nm morse
-produces dots and dashes rather than words.
+.Bl -tag -width Ds
 .It Fl d
 The
 .Fl d
@@ -103,6 +99,12 @@ If the morse to be translated is given on the command line, it should be
 preceded by
 .Sq --
 to keep it from being mistaken for options.
+.It Fl s
+The
+.Fl s
+option for
+.Nm morse
+produces dots and dashes rather than words.
 .El
 .Sh SEE ALSO
 ISO 1681:1973

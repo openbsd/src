@@ -1,4 +1,4 @@
-/*	$OpenBSD: morse.c,v 1.12 2004/07/10 07:26:23 deraadt Exp $	*/
+/*	$OpenBSD: morse.c,v 1.13 2005/11/07 19:09:33 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: morse.c,v 1.12 2004/07/10 07:26:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: morse.c,v 1.13 2005/11/07 19:09:33 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 			break;
 		case '?': case 'h':
 		default:
-			fprintf(stderr, "usage: morse [-ds] [string ...]\n");
+			fprintf(stderr, "usage: morse [-d | -s] [string ...]\n");
 			exit(1);
 		}
 	argc -= optind;
