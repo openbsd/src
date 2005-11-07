@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.15 2005/10/19 01:41:45 marco Exp $
+#	$OpenBSD: files.amd64,v 1.16 2005/11/07 04:53:15 fgsch Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -44,11 +44,13 @@ file	lib/libz/adler32.c			!ppp_deflate & !ipsec & !crypto
 
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
-file	arch/amd64/amd64/db_memrw.c		ddb
+file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/db_trace.c		ddb
 
 file	netinet/in_cksum.c			inet
 file	netinet/in4_cksum.c			inet
+
+file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 
 # Basic clock - required
 file	arch/amd64/isa/clock.c
