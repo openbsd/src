@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.37 2005/10/14 19:46:46 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.38 2005/11/07 22:52:44 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -22,6 +22,8 @@
 #endif /* !BINDKEY */
 #endif /* !NO_STARTUP */
 #endif /* FKEYS */
+
+#include <ctype.h>
 
 static int	 remap(KEYMAP *, int, PF, KEYMAP *);
 static KEYMAP	*reallocmap(KEYMAP *);
@@ -431,10 +433,13 @@ dobindkey(KEYMAP *map, const char *func, const char *str)
 
 	for (i = 0; *str && i < MAXKEY; i++) {
 		/* XXX - convert numbers w/ strol()? */
-		if (*str != '\\')
-			key.k_chars[i] = *str;
-		else {
+		if (*str == '^' && *(str + 1) !=  '\0') {
+			key.k_chars[i] = CCHR(toupper(*++str));
+		} else if (*str == '\\' && *(str + 1) != '\0') {
 			switch (*++str) {
+			case '^':
+				key.k_chars[i] = '^';
+				break;
 			case 't':
 			case 'T':
 				key.k_chars[i] = '\t';
@@ -451,8 +456,12 @@ dobindkey(KEYMAP *map, const char *func, const char *str)
 			case 'E':
 				key.k_chars[i] = CCHR('[');
 				break;
+			case '\\':
+				key.k_chars[i] = '\\';
+				break;
 			}
-		}
+		} else
+			key.k_chars[i] = *str;
 		str++;
 	}
 	key.k_count = i;
