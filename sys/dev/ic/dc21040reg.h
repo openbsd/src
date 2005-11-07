@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc21040reg.h,v 1.14 2005/09/25 19:24:13 brad Exp $	*/
+/*	$OpenBSD: dc21040reg.h,v 1.15 2005/11/07 00:03:09 brad Exp $	*/
 /*	$NetBSD: dc21040reg.h,v 1.11 1997/06/08 18:44:02 thorpej Exp $	*/
 
 /*-
@@ -44,25 +44,13 @@
 #define	TULIP_BITFIELD4(a, b, c, d)	a, b, c, d
 #endif
 
-typedef union {
-	struct {
-	u_int32_t TULIP_BITFIELD3(bd_length1 : 11,
-			          bd_length2 : 11,
-			          bd_flag : 10);
-	}s;
-	u_int32_t f;
-} tulip_desc_bitfield_t;
-#define bd_length1 s.bd_length1
-#define bd_length2 s.bd_length2
-#define bd_flag    s.bd_flag
 typedef struct {
     u_int32_t d_status;
-    tulip_desc_bitfield_t u;
+    u_int32_t TULIP_BITFIELD3(d_length1 : 11,
+			      d_length2 : 11,
+			      d_flag : 10);
     u_int32_t d_addr1;
     u_int32_t d_addr2;
-#ifdef PPC_MPC106_BUG
-    u_int32_t fill[4];		/* Make descr. 32 bytes avoiding MPC106 bug! */
-#endif
 } tulip_desc_t;
 
 #define	TULIP_DSTS_OWNER	0x80000000	/* Owner (1 = 21040) */

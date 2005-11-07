@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.22 2005/09/25 02:23:39 brad Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.23 2005/11/07 00:03:16 brad Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -46,40 +46,6 @@
 #define	TULIP_PCI_CSRSIZE	8
 #define	TULIP_PCI_CSROFFSET	0
 #endif /* TULIP_IOMAPPED */
-
-/*
- *  Swap macro to access certain data types.
- */
-#if defined(BYTE_ORDER) && BYTE_ORDER == BIG_ENDIAN
-__inline__ static u_int32_t FILT_BO(u_int32_t);
-__inline__ static u_int32_t DESC_BO(u_int32_t);
-
-__inline__ static u_int32_t
-FILT_BO(x)
-    u_int32_t x;
-{
-	u_int32_t s;
-
-	s = (x & 0xffff) << 16 | ((x & 0xff) << 8) | ((x & 0xff00) >> 8);
-	return s;
-}
-
-__inline__ static u_int32_t
-DESC_BO(x)
-    u_int32_t x;
-{
-	u_int32_t s;
-
-	s = x;
-	x = (((s) >> 24) | (((s) >> 8) & 0xff00) | 
-             ((s) << 24) | (((s) & 0xff00) << 8));
-	return x;
-}
-
-#else
-#define FILT_BO(x)	(x)
-#define DESC_BO(x)	(x)
-#endif
 
 /*
  * This structure contains "pointers" for the registers on
@@ -157,13 +123,14 @@ typedef struct {
  * architecture which can't handle unaligned accesses) because with
  * 100Mb/s cards the copying is just too much of a hit.
  */
-#if defined(__alpha__) || defined(__mips__)
+#if !defined(__i386__)
 #define	TULIP_COPY_RXDATA	1
 #endif
 
+#define	TULIP_DATA_PER_DESC	2032
 #define	TULIP_TXTIMER		4
 #define	TULIP_RXDESCS		48
-#define	TULIP_TXDESCS		128
+#define	TULIP_TXDESCS		32
 #define	TULIP_RXQ_TARGET	32
 #if TULIP_RXQ_TARGET >= TULIP_RXDESCS
 #error TULIP_RXQ_TARGET must be less than TULIP_RXDESCS
@@ -467,6 +434,14 @@ struct _tulip_softc_t {
     pci_chipset_tag_t tulip_pc;
     u_int8_t tulip_enaddr[ETHER_ADDR_LEN];
     struct ifmedia tulip_ifmedia;
+    bus_dma_tag_t tulip_dmatag;		/* bus DMA tag */
+    bus_dmamap_t tulip_setupmap;
+    bus_dmamap_t tulip_txdescmap;
+    bus_dmamap_t tulip_txmaps[TULIP_TXDESCS];
+    unsigned tulip_txmaps_free;
+    bus_dmamap_t tulip_rxdescmap;
+    bus_dmamap_t tulip_rxmaps[TULIP_RXDESCS];
+    unsigned tulip_rxmaps_free;
     struct arpcom tulip_ac;
     struct timeout tulip_ftmo, tulip_stmo;
     tulip_regfile_t tulip_csrs;
@@ -581,6 +556,8 @@ struct _tulip_softc_t {
 	u_int32_t dbg_rxintrs;
 	u_int32_t dbg_last_rxintrs;
 	u_int32_t dbg_high_rxintrs_hz;
+	u_int32_t dbg_no_txmaps;
+	u_int32_t dbg_txput_finishes[8];
 	u_int32_t dbg_txprobes_ok[TULIP_MEDIA_MAX];
 	u_int32_t dbg_txprobes_failed[TULIP_MEDIA_MAX];
 	u_int32_t dbg_events[TULIP_MEDIAPOLL_MAX];
@@ -635,8 +612,8 @@ struct _tulip_softc_t {
     u_int8_t tulip_pci_devno;		/* needed for multiport boards */
     u_int8_t tulip_connidx;
     tulip_srom_connection_t tulip_conntype;
-    tulip_desc_t tulip_rxdescs[TULIP_RXDESCS];
-    tulip_desc_t tulip_txdescs[TULIP_TXDESCS];
+    tulip_desc_t *tulip_rxdescs;
+    tulip_desc_t *tulip_txdescs;
 };
 
 #define	TULIP_DO_AUTOSENSE(sc)	(IFM_SUBTYPE((sc)->tulip_ifmedia.ifm_media) == IFM_AUTO)
@@ -786,6 +763,44 @@ static const struct {
  */
 #define	TULIP_MAX_DEVICES	32
 
+#define TULIP_RXDESC_PRESYNC(sc, di, s)	\
+	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_rxdescmap, \
+		   (caddr_t) di - (caddr_t) (sc)->tulip_rxdescs, \
+		   (s), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define TULIP_RXDESC_POSTSYNC(sc, di, s)	\
+	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_rxdescmap, \
+		   (caddr_t) di - (caddr_t) (sc)->tulip_rxdescs, \
+		   (s), BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	TULIP_RXMAP_PRESYNC(sc, map) \
+	bus_dmamap_sync((sc)->tulip_dmatag, (map), 0, (map)->dm_mapsize, \
+			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define	TULIP_RXMAP_POSTSYNC(sc, map) \
+	bus_dmamap_sync((sc)->tulip_dmatag, (map), 0, (map)->dm_mapsize, \
+			BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	TULIP_RXMAP_CREATE(sc, mapp) \
+	bus_dmamap_create((sc)->tulip_dmatag, TULIP_RX_BUFLEN, 2, \
+			  TULIP_DATA_PER_DESC, 0, \
+			  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, (mapp))
+
+#define TULIP_TXDESC_PRESYNC(sc, di, s)	\
+	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_txdescmap, \
+			(caddr_t) di - (caddr_t) (sc)->tulip_txdescs, \
+			(s), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define TULIP_TXDESC_POSTSYNC(sc, di, s)	\
+	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_txdescmap, \
+			(caddr_t) di - (caddr_t) (sc)->tulip_txdescs, \
+			(s), BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	TULIP_TXMAP_PRESYNC(sc, map) \
+	bus_dmamap_sync((sc)->tulip_dmatag, (map), 0, (map)->dm_mapsize, \
+			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define	TULIP_TXMAP_POSTSYNC(sc, map) \
+	bus_dmamap_sync((sc)->tulip_dmatag, (map), 0, (map)->dm_mapsize, \
+			BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	TULIP_TXMAP_CREATE(sc, mapp) \
+	bus_dmamap_create((sc)->tulip_dmatag, TULIP_DATA_PER_DESC, \
+			  TULIP_MAX_TXSEG, TULIP_DATA_PER_DESC, \
+			  0, BUS_DMA_NOWAIT, (mapp))
+
 extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
@@ -795,11 +810,6 @@ extern struct cfdriver de_cd;
 
 #define	TULIP_PRINTF_FMT		"%s%d"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname, sc->tulip_unit
-
-#if defined(__alpha__)
-/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
-#endif
 
 #define	TULIP_BURSTSIZE(unit)		3
 
@@ -811,10 +821,6 @@ extern struct cfdriver de_cd;
 #define	tulip_bpf	tulip_if.if_bpf
 
 #define	tulip_intrfunc_t	int
-
-#if !defined(TULIP_KVATOPHYS)
-#define	TULIP_KVATOPHYS(sc, va)	vtophys((vaddr_t)va)
-#endif
 
 #if defined(TULIP_PERFSTATS)
 #define	TULIP_PERFMERGE(sc, member) \
@@ -867,3 +873,6 @@ TULIP_PERFREAD(
 	(((u_int16_t *)a1)[0] == 0xFFFFU \
 	 && ((u_int16_t *)a1)[1] == 0xFFFFU \
 	 && ((u_int16_t *)a1)[2] == 0xFFFFU)
+
+#define TULIP_GETCTX(m, t)	((t) (m)->m_pkthdr.rcvif + 0)
+#define TULIP_SETCTX(m, c)	((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
