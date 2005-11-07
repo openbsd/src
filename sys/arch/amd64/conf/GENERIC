@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.86 2005/11/06 08:40:33 jolan Exp $
+#	$OpenBSD: GENERIC,v 1.87 2005/11/07 04:51:14 fgsch Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,7 +21,7 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 #option		MTRR		# CPU memory range attributes control
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
-#option		"KGDB_DEVNAME=\"pccom\"",KGDBADDR=0x2f8,KGDBRATE=9600
+#option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
 #option		COMPAT_SVR4	# binary compatibility with SVR4
 #option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
