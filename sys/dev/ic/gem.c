@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.50 2005/11/02 02:15:12 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.51 2005/11/07 03:20:00 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -389,7 +389,7 @@ gem_tick(arg)
 	bus_space_write_4(t, mac, GEM_MAC_EXCESS_COLL_CNT, 0);
 	bus_space_write_4(t, mac, GEM_MAC_LATE_COLL_CNT, 0);
 
-	s = splimp();
+	s = splnet();
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
@@ -423,7 +423,7 @@ gem_reset(sc)
 	bus_space_handle_t h = sc->sc_h;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	DPRINTF(sc, ("%s: gem_reset\n", sc->sc_dev.dv_xname));
 	gem_reset_rx(sc);
 	gem_reset_tx(sc);
@@ -694,7 +694,7 @@ gem_init(struct ifnet *ifp)
 	u_int max_frame_size;
 	u_int32_t v;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTF(sc, ("%s: gem_init: calling stop\n", sc->sc_dev.dv_xname));
 	/*
@@ -1354,7 +1354,7 @@ gem_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 		splx(s);

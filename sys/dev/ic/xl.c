@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.65 2005/07/02 23:10:16 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.66 2005/11/07 03:20:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -209,7 +209,7 @@ xl_power(why, arg)
 	struct ifnet *ifp;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (why != PWR_RESUME)
 		xl_stop(sc);
 	else {
@@ -324,7 +324,7 @@ xl_mii_readreg(sc, frame)
 {
 	int			i, ack, s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Set up frame for RX.
@@ -412,7 +412,7 @@ xl_mii_writereg(sc, frame)
 {
 	int			s;
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Set up frame for TX.
 	 */
@@ -2051,7 +2051,7 @@ xl_init(xsc)
 	u_int16_t		rxfilt = 0;
 	struct mii_data		*mii = NULL;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -2395,7 +2395,7 @@ xl_ioctl(ifp, command, data)
 	struct mii_data *mii = NULL;
 	u_int8_t rxfilt;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
@@ -2623,7 +2623,7 @@ xl_attach(sc)
 	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	struct ifmedia *ifm;
 
-	i = splimp();
+	i = splnet();
 	xl_reset(sc);
 	splx(i);
 
@@ -2793,7 +2793,7 @@ xl_attach(sc)
 	 */
 	if (sc->xl_xcvr == XL_XCVR_AUTO) {
 		xl_choose_xcvr(sc, 0);
-		i = splimp();
+		i = splnet();
 		xl_reset(sc);
 		splx(i);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.14 2005/08/01 17:00:23 pvalchev Exp $	*/
+/*	$OpenBSD: re.c,v 1.15 2005/11/07 03:20:00 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -359,7 +359,7 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 	u_int16_t		re8139_reg = 0;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	if (sc->rl_type == RL_8169) {
 		rval = re_gmii_readreg(dev, phy, reg);
@@ -419,7 +419,7 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	u_int16_t		re8139_reg = 0;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	if (sc->rl_type == RL_8169) {
 		re_gmii_writereg(dev, phy, reg, data);
@@ -1577,7 +1577,7 @@ re_init(struct ifnet *ifp)
 	u_int32_t		reg;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1765,7 +1765,7 @@ re_ioctl(ifp, command, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command,
 	    data)) > 0) {

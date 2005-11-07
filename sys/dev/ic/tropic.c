@@ -1,4 +1,4 @@
-/*	$OpenBSD: tropic.c,v 1.9 2005/06/08 17:03:00 henning Exp $	*/
+/*	$OpenBSD: tropic.c,v 1.10 2005/11/07 03:20:00 brad Exp $	*/
 /*	$NetBSD: tropic.c,v 1.6 1999/12/17 08:26:31 fvdl Exp $	*/
 
 /* 
@@ -622,7 +622,7 @@ tr_init(arg)
 	if ((ifp->if_flags & IFF_RUNNING) != 0)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_xmit_head = sc->sc_xmit_tail = 0; /* XXX tr_reset() */

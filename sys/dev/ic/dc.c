@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.88 2005/06/25 23:27:43 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.89 2005/11/07 03:20:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -547,7 +547,7 @@ dc_mii_readreg(sc, frame)
 {
 	int i, ack, s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Set up frame for RX.
@@ -619,7 +619,7 @@ dc_mii_writereg(sc, frame)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Set up frame for TX.
 	 */
@@ -2410,7 +2410,7 @@ dc_tick(xsc)
 	int s;
 	u_int32_t r;
 
-	s = splimp();
+	s = splnet();
 
 	ifp = &sc->sc_arpcom.ac_if;
 	mii = &sc->sc_mii;
@@ -2815,7 +2815,7 @@ dc_init(xsc)
 	struct mii_data *mii;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	mii = &sc->sc_mii;
 
@@ -3058,7 +3058,7 @@ dc_ioctl(ifp, command, data)
 	struct mii_data		*mii;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
@@ -3254,7 +3254,7 @@ dc_power(why, arg)
 	struct ifnet *ifp;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (why != PWR_RESUME)
 		dc_stop(sc);
 	else {

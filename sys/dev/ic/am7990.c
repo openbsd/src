@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.38 2005/01/15 05:24:10 brad Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.39 2005/11/07 03:20:00 brad Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ am7990_reset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	am7990_init(sc);
 	splx(s);
 }
@@ -742,7 +742,7 @@ am7990_watchdog(ifp)
  * Setup output on interface.
  * Get another datagram to send off of the interface queue, and map it to the
  * interface before starting the output.
- * Called only at splimp or interrupt level.
+ * Called only at splnet or interrupt level.
  */
 void
 am7990_start(ifp)
@@ -841,7 +841,7 @@ am7990_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 		splx(s);

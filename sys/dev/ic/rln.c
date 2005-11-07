@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.16 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: rln.c,v 1.17 2005/11/07 03:20:00 brad Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -237,7 +237,7 @@ rlnstart(ifp)
 	rln_enable(sc, 1);
 
     startagain:
-	s = splimp();
+	s = splnet();
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	splx(s);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.9 2005/07/02 22:04:54 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.10 2005/11/07 03:20:00 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -582,7 +582,7 @@ mtd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error;
 
-	s = splimp();
+	s = splnet();
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
 		splx(s);
 		return (error);
@@ -652,7 +652,7 @@ mtd_init(struct ifnet *ifp)
 	struct mtd_softc *sc = ifp->if_softc;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
