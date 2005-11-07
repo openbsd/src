@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.12 2005/11/04 15:06:22 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.13 2005/11/07 10:07:09 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd RCS file management program
 .Sh SYNOPSIS
 .Nm
-.Op Fl ehiLMUV
+.Op Fl ehiLMqUV
 .Op Fl a Ns Ar users
 .Op Fl b Ns Op Ar rev
 .Op Fl c Ns Ar string
@@ -91,6 +91,8 @@ Replace revision
 .Ar rev Ns 's
 log message with
 .Ar msg .
+.It Fl q
+Be quiet about reporting.
 .It Fl U
 Disable strict locking on the RCS files.
 See
