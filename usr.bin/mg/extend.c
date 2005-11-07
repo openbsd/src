@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.38 2005/11/07 22:52:44 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.39 2005/11/07 23:49:09 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,6 +9,8 @@
 #include "def.h"
 #include "kbd.h"
 #include "funmap.h"
+
+#include <ctype.h>
 
 #ifndef NO_MACRO
 #include "macro.h"
