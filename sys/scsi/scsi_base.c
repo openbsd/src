@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.93 2005/11/02 01:36:05 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.94 2005/11/07 23:49:32 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -232,6 +232,7 @@ scsi_size(sc_link, flags, blksize)
 	struct scsi_read_capacity scsi_cmd;
 	struct scsi_read_cap_data rdcap;
 	u_long max_addr;
+	int error;
 
 	if (blksize)
 		*blksize = 0;
@@ -247,13 +248,14 @@ scsi_size(sc_link, flags, blksize)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-			  sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap),
-			  2, 20000, NULL, flags | SCSI_DATA_IN) != 0) {
-		sc_print_addr(sc_link);
-		printf("could not get size\n");
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), 2, 20000, NULL,
+	    flags | SCSI_DATA_IN);
+	if (error) {
+		SC_DEBUG(sc_link, SDEV_DB1, ("READ CAPACITY error (%#x)\n",
+		    error));
 		return (0);
-	}
+	}	
 
 	max_addr = _4btol(rdcap.addr);
 	if (blksize)

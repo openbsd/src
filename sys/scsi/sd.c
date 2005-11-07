@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.95 2005/10/10 20:06:12 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.96 2005/11/07 23:49:32 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -408,7 +408,8 @@ sdopen(dev, flag, fmt, p)
 		}
 		/* Load the physical device parameters. */
 		sc_link->flags |= SDEV_MEDIA_LOADED;
-		if (sd_get_parms(sd, &sd->params, 0) == SDGP_RESULT_OFFLINE) {
+		if (sd_get_parms(sd, &sd->params, (rawopen ? SCSI_SILENT : 0))
+		    == SDGP_RESULT_OFFLINE) {
 			sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			error = ENXIO;
 			goto bad;
