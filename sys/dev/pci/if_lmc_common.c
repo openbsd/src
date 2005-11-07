@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_common.c,v 1.10 2005/11/05 11:49:01 brad Exp $ */
+/*	$OpenBSD: if_lmc_common.c,v 1.11 2005/11/07 00:29:21 brad Exp $ */
 /*	$NetBSD: if_lmc_common.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -63,6 +63,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -72,108 +74,34 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>	/* only for declaration of wakeup() used by vm.h */
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#endif
 
-#if defined(__NetBSD__)
 #include <dev/pci/pcidevs.h>
-#include "rnd.h"
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
-#endif
-
-#if defined(__OpenBSD__)
-#include <dev/pci/pcidevs.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/netisr.h>
 
-#include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <net/if_sppp.h>
-#endif
 
-#if defined(__bsdi__)
-#if INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#endif
-
-#include <net/netisr.h>
-#include <net/if.h>
-#include <net/netisr.h>
-#include <net/if_types.h>
-#include <net/if_p2p.h>
-#include <net/if_c_hdlc.h>
-#endif
-
-#if defined(__FreeBSD__)
-#include <vm/pmap.h>
-#include <pci.h>
-#if NPCI > 0
-#include <pci/pcivar.h>
-#include <pci/dc21040reg.h>
-#define INCLUDE_PATH_PREFIX "pci/"
-#endif
-#endif /* __FreeBSD__ */
-
-#if defined(__bsdi__)
-#include <i386/pci/ic/dc21040.h>
-#include <i386/isa/isa.h>
-#include <i386/isa/icu.h>
-#include <i386/isa/dma.h>
-#include <i386/isa/isavar.h>
-#include <i386/pci/pci.h>
-
-#define	INCLUDE_PATH_PREFIX	"i386/pci/"
-#endif /* __bsdi__ */
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <machine/bus.h>
-#if defined(__alpha__) && defined(__NetBSD__)
-#include <machine/intr.h>
-#endif
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
-#define	INCLUDE_PATH_PREFIX	"dev/pci/"
-#endif /* __NetBSD__ */
 
-#if defined(__OpenBSD__)
 #define d_length1 u.bd_length1
 #define d_length2 u.bd_length2
 #define d_flag u.bd_flag
-#endif
 
-/*
- * Sigh.  Every OS puts these in different places.  NetBSD and FreeBSD use
- * a C preprocessor that allows this hack, but BSDI does not.
- */
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-#include INCLUDE_PATH_PREFIX "if_lmc_types.h"
-#include INCLUDE_PATH_PREFIX "if_lmcioctl.h"
-#include INCLUDE_PATH_PREFIX "if_lmcvar.h"
-#elif defined(__OpenBSD__)
 #include <dev/pci/if_lmc_types.h>
 #include <dev/pci/if_lmcioctl.h>
 #include <dev/pci/if_lmcvar.h>
-#else /* BSDI */
-#include "i386/pci/if_lmc_types.h"
-#include "i386/pci/if_lmcioctl.h"
-#include "i386/pci/if_lmcvar.h"
-#endif
 
 void
 lmc_gpio_mkinput(lmc_softc_t * const sc, u_int32_t bits)

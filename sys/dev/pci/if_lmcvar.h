@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmcvar.h,v 1.7 2005/11/05 11:49:01 brad Exp $ */
+/*	$OpenBSD: if_lmcvar.h,v 1.8 2005/11/07 00:29:21 brad Exp $ */
 /*	$NetBSD: if_lmcvar.h,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -137,16 +137,6 @@ typedef enum {
 #define TULIP_BUSMODE_READMULTIPLE	0x00200000L
 #endif
 
-#if defined(__NetBSD__)
-
-#include "rnd.h"
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
-
-#endif /* NetBSD */
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define LMC_CSR_READ(sc, csr) \
     bus_space_read_4((sc)->lmc_bustag, (sc)->lmc_bushandle, (sc)->lmc_csrs.csr)
 #define LMC_CSR_WRITE(sc, csr, val) \
@@ -156,28 +146,9 @@ typedef enum {
     bus_space_read_1((sc)->lmc_bustag, (sc)->lmc_bushandle, (sc)->lmc_csrs.csr)
 #define LMC_CSR_WRITEBYTE(sc, csr, val) \
     bus_space_write_1((sc)->lmc_bustag, (sc)->lmc_bushandle, (sc)->lmc_csrs.csr, (val))
-#endif /* __NetBSD__ */
-
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-#define	LMC_CSR_READ(sc, csr)			(inl((sc)->lmc_csrs.csr))
-#define	LMC_CSR_WRITE(sc, csr, val)   	outl((sc)->lmc_csrs.csr, val)
-
-#define	LMC_CSR_READBYTE(sc, csr)		(inb((sc)->lmc_csrs.csr))
-#define	LMC_CSR_WRITEBYTE(sc, csr, val)	outb((sc)->lmc_csrs.csr, val)
-#endif /* __NetBSD__ */
 
 #define	LMC_PCI_CSRSIZE	8
 #define	LMC_PCI_CSROFFSET	0
-
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-/*
- * macros to read and write CSRs.  Note that the "0 +" in
- * READ_CSR is to prevent the macro from being an lvalue
- * and WRITE_CSR shouldn't be assigned from.
- */
-#define	LMC_CSR_READ(sc, csr)		(0 + *(sc)->lmc_csrs.csr)
-#define	LMC_CSR_WRITE(sc, csr, val)	((void)(*(sc)->lmc_csrs.csr = (val)))
-#endif /* __NetBSD__ */
 
 /*
  * This structure contains "pointers" for the registers on
@@ -304,29 +275,15 @@ typedef struct {
  *
  */
 struct lmc___softc {
-#if defined(__bsdi__)
-    struct device lmc_dev;		/* base device */
-    struct isadev lmc_id;		/* ISA device */
-    struct intrhand lmc_ih;		/* intrrupt vectoring */
-    struct atshutdown lmc_ats;		/* shutdown hook */
-    struct p2pcom lmc_p2pcom;		/* point-to-point common stuff */
-    
-#define lmc_if	lmc_p2pcom.p2p_if	/* network-visible interface */
-#endif /* __bsdi__ */
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
     struct device lmc_dev;		/* base device */
     void *lmc_ih;			/* intrrupt vectoring */
     void *lmc_ats;			/* shutdown hook */
     bus_space_tag_t lmc_bustag;
     bus_space_handle_t lmc_bushandle;	/* CSR region handle */
     pci_chipset_tag_t lmc_pc;
-#endif
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     struct sppp lmc_sppp;
 #define lmc_if lmc_sppp.pp_if
-#endif
 
     u_int8_t lmc_enaddr[6];		/* yes, a small hack... */
     lmc_regfile_t lmc_csrs;
@@ -367,17 +324,10 @@ struct lmc___softc {
     bus_dmamap_t lmc_rxmaps[LMC_RXDESCS];
     unsigned lmc_rxmaps_free;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
     struct device *lmc_pci_busno;	/* needed for multiport boards */
-#else
-    u_int8_t lmc_pci_busno;		/* needed for multiport boards */
-#endif
     u_int8_t lmc_pci_devno;		/* needed for multiport boards */
     lmc_desc_t *lmc_rxdescs;
     lmc_desc_t *lmc_txdescs;
-#if defined(__NetBSD__) && NRND > 0
-    rndsource_element_t    lmc_rndsource;
-#endif
 
     u_int32_t	lmc_crcSize;
     u_int32_t	tx_clockState;
@@ -551,48 +501,6 @@ static const char * const lmc_status_bits[] = {
 			  LMC_MAX_TXSEG, LMC_DATA_PER_DESC, \
 			  0, BUS_DMA_NOWAIT, (mapp))
 
-#if defined(__FreeBSD__)
-typedef void ifnet_ret_t;
-typedef int ioctl_cmd_t;
-static lmc_softc_t *tulips[LMC_MAX_DEVICES];
-#if BSD >= 199506
-#define LMC_IFP_TO_SOFTC(ifp) ((lmc_softc_t *)((ifp)->if_softc))
-#if NBPFILTER > 0
-#define	LMC_BPF_MTAP(sc, m)	bpf_mtap(&(sc)->lmc_sppp.pp_if, m)
-#define	LMC_BPF_TAP(sc, p, l)	bpf_tap(&(sc)->lmc_sppp.pp_if, p, l)
-#define	LMC_BPF_ATTACH(sc)	bpfattach(&(sc)->lmc_sppp.pp_if, DLT_PPP, PPP_HEADER_LEN)
-#endif
-#define	LMC_VOID_INTRFUNC
-#define	IFF_NOTRAILERS		0
-#define	LMC_EADDR_FMT		"%6D"
-#define	LMC_EADDR_ARGS(addr)	addr, ":"
-#else
-extern int bootverbose;
-#define LMC_IFP_TO_SOFTC(ifp)         (LMC_UNIT_TO_SOFTC((ifp)->if_unit))
-#include <sys/devconf.h>
-#define	LMC_DEVCONF
-#endif
-#define	LMC_UNIT_TO_SOFTC(unit)	(tulips[unit])
-#define	LMC_BURSTSIZE(unit)		pci_max_burst_len
-#define	loudprintf			if (bootverbose) printf
-#endif
-
-#if defined(__bsdi__)
-typedef int ifnet_ret_t;
-typedef u_long ioctl_cmd_t;
-extern struct cfdriver lmccd;
-#define	LMC_UNIT_TO_SOFTC(unit)	((lmc_softc_t *)lmccd.cd_devs[unit])
-#define LMC_IFP_TO_SOFTC(ifp)		(LMC_UNIT_TO_SOFTC((ifp)->if_unit))
-#define	loudprintf			aprint_verbose
-#define	MCNT(x) (sizeof(x) / sizeof(struct ifmedia_entry))
-#define	lmc_unit	lmc_dev.dv_unit
-#define	lmc_name	lmc_p2pcom.p2p_if.if_name
-#define LMC_BPF_MTAP(sc, m)
-#define LMC_BPF_TAP(sc, p, l)
-#define	LMC_BPF_ATTACH(sc)
-#endif	/* __bsdi__ */
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
 extern struct cfattach lmc_ca;
@@ -608,7 +516,6 @@ extern struct cfdriver lmc_cd;
 #define	loudprintf			printf
 #define	LMC_PRINTF_FMT		"%s"
 #define	LMC_PRINTF_ARGS		sc->lmc_xname
-#endif	/* __NetBSD__ */
 
 #ifndef LMC_PRINTF_FMT
 #define	LMC_PRINTF_FMT		"%s%d"
@@ -630,12 +537,7 @@ extern struct cfdriver lmc_cd;
 #endif
 
 #if !defined(lmc_bpf)
-#if defined(__NetBSD__) || defined(__FreeBSD__) | defined(__OpenBSD__)
 #define	lmc_bpf	lmc_sppp.pp_if.if_bpf
-#endif
-#if defined(__bsdi__)
-#define lmc_bpf	lmc_if.if_bpf
-#endif
 #endif
 
 #ifndef LMC_RAISESPL

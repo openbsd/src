@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.19 2005/11/05 11:49:01 brad Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.20 2005/11/07 00:29:21 brad Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -79,6 +79,8 @@
  *               frequency generator. (ST not available for LMC5200)
  */
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -88,102 +90,30 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#endif
 
-#if defined(__OpenBSD__)
 #include <dev/pci/pcidevs.h>
-#endif
-
-#if defined(__NetBSD__)
-#include <dev/pci/pcidevs.h>
-#include "rnd.h"
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/netisr.h>
 
-#include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <net/if_sppp.h>
-#endif
 
-#if defined(__bsdi__)
-#if INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#endif
-
-#include <net/netisr.h>
-#include <net/if.h>
-#include <net/netisr.h>
-#include <net/if_types.h>
-#include <net/if_p2p.h>
-#include <net/if_c_hdlc.h>
-#endif
-
-#if defined(__FreeBSD__)
-#include <vm/pmap.h>
-#include <pci.h>
-#if NPCI > 0
-#include <pci/pcivar.h>
-#include <pci/dc21040reg.h>
-#define INCLUDE_PATH_PREFIX "pci/"
-#endif
-#endif /* __FreeBSD__ */
-
-#if defined(__bsdi__)
-#include <i386/pci/ic/dc21040.h>
-#include <i386/isa/isa.h>
-#include <i386/isa/icu.h>
-#include <i386/isa/dma.h>
-#include <i386/isa/isavar.h>
-#include <i386/pci/pci.h>
-
-#define	INCLUDE_PATH_PREFIX	"i386/pci/"
-#endif /* __bsdi__ */
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <machine/bus.h>
-#if defined(__alpha__) && defined(__NetBSD__)
-#include <machine/intr.h>
-#endif
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
-#define	INCLUDE_PATH_PREFIX	"dev/pci/"
-#endif /* __NetBSD__ */
 
-/*
- * Sigh.  Every OS puts these in different places.  NetBSD and FreeBSD use
- * a C preprocessor that allows this hack, but BSDI does not.  Grr.
- */
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-#include INCLUDE_PATH_PREFIX "if_lmc_types.h"
-#include INCLUDE_PATH_PREFIX "if_lmcioctl.h"
-#include INCLUDE_PATH_PREFIX "if_lmcvar.h"
-#elif defined(__OpenBSD__)
 #include <dev/pci/if_lmc_types.h>
 #include <dev/pci/if_lmcioctl.h>
 #include <dev/pci/if_lmcvar.h>
-#else /* BSDI */
-#include "i386/pci/if_lmctypes.h"
-#include "i386/pci/if_lmcioctl.h"
-#include "i386/pci/if_lmcvar.h"
-#endif
 
 /*
  * This module supports
@@ -194,16 +124,10 @@ static ifnet_ret_t lmc_ifstart(struct ifnet *ifp);
 static struct mbuf *lmc_txput(lmc_softc_t * const sc, struct mbuf *m);
 static void lmc_rx_intr(lmc_softc_t * const sc);
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 static void lmc_watchdog(struct ifnet *ifp);
-#endif
-#if defined(__bsdi__)
-static int lmc_watchdog(int);
-#endif
 static void lmc_ifup(lmc_softc_t * const sc);
 static void lmc_ifdown(lmc_softc_t * const sc);
 
-
 /*
  * Code the read the SROM and MII bit streams (I2C)
  */
@@ -214,7 +138,6 @@ lmc_delay_300ns(lmc_softc_t * const sc)
 	for (idx = (300 / 33) + 1; idx > 0; idx--)
 		(void)LMC_CSR_READ(sc, csr_busmode);
 }
-
 
 #define EMIT    \
 do { \
@@ -399,22 +322,10 @@ lmc_read_macaddr(lmc_softc_t * const sc)
  * Check to make certain there is a signal from the modem, and flicker
  * lights as needed.
  */
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 static void
 lmc_watchdog(struct ifnet *ifp)
-#endif
-#if defined(__bsdi__)
-static int
-lmc_watchdog(int unit)
-#endif
 {
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	lmc_softc_t * const sc = LMC_IFP_TO_SOFTC(ifp);
-#endif
-#if defined(__bsdi__)
-	lmc_softc_t * const sc = LMC_UNIT_TO_SOFTC(unit);
-	struct ifnet *ifp = &sc->lmc_if;
-#endif
 	int state;
 	u_int32_t ostatus;
 	u_int32_t link_status;
@@ -757,12 +668,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			if (accept) {
 				ms->m_pkthdr.len = total_len;
 				ms->m_pkthdr.rcvif = ifp;
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 				sppp_input(ifp, ms);
-#endif
-#if defined(__bsdi__)
-				sc->lmc_p2pcom.p2p_input(&sc->lmc_p2pcom, ms);
-#endif
 			}
 			ms = m0;
 		}
@@ -915,12 +821,6 @@ lmc_intr_handler(lmc_softc_t * const sc, int *progress_p)
     u_int32_t csr;
 
     while ((csr = LMC_CSR_READ(sc, csr_status)) & sc->lmc_intrmask) {
-
-#if defined(__NetBSD__)
-#if NRND > 0
-	    rnd_add_uint32(&sc->lmc_rndsource, csr);
-#endif
-#endif
 
 	*progress_p = 1;
 	LMC_CSR_WRITE(sc, csr_status, csr);
@@ -1294,15 +1194,13 @@ lmc_txput(lmc_softc_t * const sc, struct mbuf *m)
 
 
 /*
- * This routine is entered at splnet() (splsoftnet() on NetBSD)
+ * This routine is entered at splnet()
  */
 static int
 lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 {
 	lmc_softc_t * const sc = LMC_IFP_TO_SOFTC(ifp);
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-	lmc_spl_t s;
-#endif
+	int s;
 	struct proc *p = curproc;
 	int error = 0;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1310,9 +1208,7 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 	u_int32_t old_state;
 	lmc_ctl_t ctl;
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	s = LMC_RAISESPL();
-#endif
 
 	switch (cmd) {
 	case LMCIOCGINFO:
@@ -1335,7 +1231,6 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 		goto out;
 		break;
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	case SIOCSIFMTU:
 		/*
 		 * Don't allow the MTU to get larger than we can handle
@@ -1347,23 +1242,15 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
                         ifp->if_mtu = ifr->ifr_mtu;
 		}
 		break;
-#endif
 	}
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	/*
 	 * call the sppp ioctl layer
 	 */
 	error = sppp_ioctl(ifp, cmd, data);
 	if (error != 0)
 		goto out;
-#endif
 
-#if defined(__bsdi__)
-	error = p2p_ioctl(ifp, cmd, data);
-#endif
-
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	/*
 	 * If we are transitioning from up to down or down to up, call
 	 * our init routine.
@@ -1375,21 +1262,17 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 		lmc_ifup(sc);
 	else if (!new_state && old_state)
 		lmc_ifdown(sc);
-#endif
 
  out:
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	LMC_RESTORESPL(s);
-#endif
 
 	return error;
 }
-
+
 /*
  * These routines gets called at device spl (from sppp_output).
  */
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 static ifnet_ret_t
 lmc_ifstart(struct ifnet * const ifp)
 {
@@ -1431,104 +1314,6 @@ lmc_ifstart_one(struct ifnet * const ifp)
 		LMC_CSR_WRITE(sc, csr_txpoll, 1);
 	}
 }
-#endif
-
-#if defined(__bsdi__)
-static ifnet_ret_t
-lmc_ifstart(struct ifnet * const ifp)
-{
-	lmc_softc_t * const sc = LMC_IFP_TO_SOFTC(ifp);
-	struct mbuf *m;
-	struct ifqueue *ifq;
-
-	if ((sc->lmc_flags & LMC_IFUP) == 0)
-		return;
-
-	for (;;) {
-		ifq = &sc->lmc_p2pcom.p2p_isnd;
-
-		m = ifq->ifq_head;
-		if (m == NULL) {
-			ifq = &sc->lmc_if.if_snd;
-			m = ifq->ifq_head;
-		}
-		if (m == NULL)
-			break;
-		IF_DEQUEUE(ifq, m);
-
-		m = lmc_txput(sc, m);
-		if (m != NULL) {
-			IF_PREPEND(ifq, m);
-			break;
-		}
-	}
-
-	LMC_CSR_WRITE(sc, csr_txpoll, 1);
-}
-
-static ifnet_ret_t
-lmc_ifstart_one(struct ifnet * const ifp)
-{
-	lmc_softc_t * const sc = LMC_IFP_TO_SOFTC(ifp);
-	struct mbuf *m;
-	struct ifqueue *ifq;
-
-	if ((sc->lmc_flags & LMC_IFUP) == 0)
-		return;
-
-	ifq = &sc->lmc_p2pcom.p2p_isnd;
-
-        m = ifq->ifq_head;
-    {
-	if (m == NULL) {
-		ifq = &sc->lmc_if.if_snd;
-		m = ifq->ifq_head;
-	}
-	if (m == NULL)
-		return 0;
-	IF_DEQUEUE(ifq, m);
-
-	m = lmc_txput(sc, m);
-    }
-	if (m != NULL)
-		IF_PREPEND(ifq, m);
-
-	LMC_CSR_WRITE(sc, csr_txpoll, 1);
-}
-#endif
-
-#if defined(__bsdi__)
-int
-lmc_getmdm(struct p2pcom *pp, caddr_t b)
-{
-	lmc_softc_t *sc = LMC_UNIT_TO_SOFTC(pp->p2p_if.if_unit);
-
-	if (sc->lmc_media->get_link_status(sc)) {
-		*(int *)b = TIOCM_CAR;
-	} else {
-		*(int *)b = 0;
-	}
-
-	return (0);
-}
-
-int
-lmc_mdmctl(struct p2pcom *pp, int flag)
-{
-	lmc_softc_t *sc = LMC_UNIT_TO_SOFTC(pp->p2p_if.if_unit);
-
-	sc->lmc_media->set_link_status(sc, flag);
-
-	if (flag)
-		if ((sc->lmc_flags & LMC_IFUP) == 0)
-			lmc_ifup(sc);
-	else
-		if ((sc->lmc_flags & LMC_IFUP) == LMC_IFUP)
-			lmc_ifdown(sc);
-
-	return (0);
-}
-#endif
 
 /*
  * Set up the OS interface magic and attach to the operating system
@@ -1546,33 +1331,16 @@ lmc_attach(lmc_softc_t * const sc)
 	ifp->if_timer = 1;
 	ifp->if_mtu = LMC_MTU;
 	IFQ_SET_READY(&ifp->if_snd);
-
-#if defined(__bsdi__)
-	ifp->if_type = IFT_NONE;
-	ifp->if_unit = (sc->lmc_dev.dv_unit);
-#endif
   
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	sppp_attach((struct ifnet *)&sc->lmc_sppp);
 	sc->lmc_sppp.pp_flags = PP_CISCO | PP_KEEPALIVE;
 	sc->lmc_sppp.pp_framebytes = 3;
-#endif
-#if defined(__bsdi__)
-	sc->lmc_p2pcom.p2p_mdmctl = lmc_mdmctl;
-	sc->lmc_p2pcom.p2p_getmdm = lmc_getmdm;
-	p2p_attach(&sc->lmc_p2pcom);
-#endif
 
 #if NBPFILTER > 0
 	LMC_BPF_ATTACH(sc);
-#endif
-
-#if defined(__NetBSD__) && NRND > 0
-	rnd_attach_source(&sc->lmc_rndsource, sc->lmc_dev.dv_xname,
-			  RND_TYPE_NET, 0);
 #endif
 
 	/*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_lmcioctl.h,v 1.5 2005/11/05 11:49:01 brad Exp $ */
-/*	$Id: if_lmcioctl.h,v 1.5 2005/11/05 11:49:01 brad Exp $	*/
+/*	$OpenBSD: if_lmcioctl.h,v 1.6 2005/11/07 00:29:21 brad Exp $ */
+/*	$Id: if_lmcioctl.h,v 1.6 2005/11/07 00:29:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -39,39 +39,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(linux)
-#include <linux/types.h>
-/*
- * IOCTLs that we use for linux.  The structures passed in really should
- * go into an OS inspecific file, since BSD will use these as well.
- *
- * Under linux, the 16 reserved-for-device IOCTLs are numbered 0x89f0
- * through 0x89ff.
- */
-#define LMCIOCGINFO         SIOCDEVPRIVATE+3 /* get current state */
-#define LMCIOCSINFO         SIOCDEVPRIVATE+4 /* set state to user values */
-#define LMCIOCSKEEPALIVE    SIOCDEVPRIVATE+5 /* Turn keepalives on/off */
-#ifdef  LMC_DEBUG_FILE
-#define LMCIOCLEARSTATS LMCIOCSINFO + 1 /* Clear debug stats */
-#endif
-#ifdef  LMC_BAZ
-#define LMCIOCGETLMCSTATS       LMCIOCSINFO + 3
-#define LMCIOCCLEARLMCSTATS     LMCIOCSINFO + 4
-#define LMCIOCDUMPEVENTLOG      LMCIOCSINFO + 5
-#define LMCIOCGETXINFO          LMCIOCSINFO + 6
-#define LMCIOCREADLEDS          LMCIOCSINFO + 7
-#define LMCIOCSETLEDS           LMCIOCSINFO + 8
-#define LMCIOCRESET             LMCIOCSINFO + 9
-#endif
-
-#else
 /*
  * IOCTLs for the sane world.
  */
 #define LMCIOCGINFO	_IOW('i', 240, struct ifreq)
 #define LMCIOCSINFO	_IOWR('i', 241, struct ifreq)
-
-#endif
 
 typedef struct {
 	u_int32_t	n;
@@ -108,7 +80,6 @@ struct lmc___ctl {
 #define LMC_CARDTYPE_SSI		3	/* probed card is a SSI card */
 #define LMC_CARDTYPE_T1			4	/* probed card is a T1 card */
 
-
 #define LMC_CTL_CARDTYPE_LMC5200	0	/* HSSI */
 #define LMC_CTL_CARDTYPE_LMC5245	1	/* DS3 */
 #define LMC_CTL_CARDTYPE_LMC1000	2	/* SSI, V.35 */
@@ -124,7 +95,6 @@ struct lmc___ctl {
 #define LMC_CTL_CRC_LENGTH_32		32
 #define LMC_CTL_CRC_BYTESIZE_2		2
 #define LMC_CTL_CRC_BYTESIZE_4		4
-
 
 #define LMC_CTL_CABLE_LENGTH_LT_100FT	0	/* DS3 cable < 100 feet */
 #define LMC_CTL_CABLE_LENGTH_GT_100FT	1	/* DS3 cable >= 100 feet */
@@ -207,7 +177,6 @@ struct lmc___ctl {
 #define LMC_FRAMER_REG0_CIS	0x10	/* channel idle */
 #define LMC_FRAMER_REG0_LOC	0x08	/* loss of clock */
 
-
 /*
  * And SSI, LMC1000
  */
@@ -255,7 +224,6 @@ struct lmc___ctl {
 #define LMC_MII16_T1_CRC                0x1000  /* CRC select - RW */
 #define LMC_MII16_T1_UNUSED2    0xe000
 
-
 /* 8370 framer registers  */
 
 #define T1FRAMER_ALARM1_STATUS  0x47
@@ -289,10 +257,7 @@ struct lmc___ctl {
 #define LMC_MII_LedMask                 0x0780
 #define LMC_MII_LedBitPos               7
 
-/*
- * OpenBSD, NetBSD uses _KERNEL, FreeBSD uses KERNEL.
- */
-#if defined(_KERNEL) || defined(KERNEL) || defined(__KERNEL__)
+#if defined(_KERNEL)
 /*
  * media independent methods to check on media status, link, light LEDs,
  * etc.
@@ -329,4 +294,4 @@ int lmc_read_macaddr(lmc_softc_t * const sc);
 void lmc_attach(lmc_softc_t * const sc);
 void lmc_initring(lmc_softc_t * const sc, lmc_ringinfo_t * const ri,
 		  lmc_desc_t *descs, int ndescs);
-#endif /* LMC_IS_KERNEL */
+#endif /* _KERNEL */
