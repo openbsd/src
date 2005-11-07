@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.71 2005/10/14 06:41:47 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.72 2005/11/07 23:32:20 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -323,18 +323,6 @@ int	 showcwdir(int, int);
 
 #ifndef NO_DIRED
 /* dired.c */
-int	 dired(int, int);
-int	 d_otherwindow(int, int);
-int	 d_undel(int, int);
-int	 d_undelbak(int, int);
-int	 d_findfile(int, int);
-int	 d_ffotherwindow(int, int);
-int	 d_expunge(int, int);
-int	 d_copy(int, int);
-int	 d_del(int, int);
-int	 d_rename(int, int);
-int	 d_shell_command(int, int);
-int	 d_create_directory(int, int);
 BUFFER	*dired_(char *);
 #endif /* !NO_DIRED */
 

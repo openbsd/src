@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.35 2005/10/13 20:28:49 deraadt Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.36 2005/11/07 23:32:20 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -117,11 +117,7 @@ static PF cXcar[] = {
 	rescan,			/* a */
 	usebuffer,		/* b */
 	rescan,			/* c */
-#ifndef NO_DIRED
-	dired,			/* d */
-#else /* !NO_DIRED */
 	rescan,			/* d */
-#endif /* !NO_DIRED */
 #ifndef NO_MACRO
 	executemacro,		/* e */
 #else /* !NO_MACRO */

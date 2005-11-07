@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.15 2005/10/14 15:45:38 deraadt Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.16 2005/11/07 23:32:20 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -87,18 +87,6 @@ static struct funmap functnames[] = {
 	{desckey, "describe-key-briefly",},
 #endif /* !NO_HELP */
 	{digit_argument, "digit-argument",},
-#ifndef NO_DIRED
-	{dired, "dired",},
-	{d_undelbak, "dired-backup-unflag",},
-	{d_copy, "dired-copy-file",},
-	{d_expunge, "dired-do-deletions",},
-	{d_findfile, "dired-find-file",},
-	{d_ffotherwindow, "dired-find-file-other-window",},
-	{d_del, "dired-flag-file-deleted",},
-	{d_otherwindow, "dired-other-window",},
-	{d_rename, "dired-rename-file",},
-	{d_undel, "dired-unflag",},
-#endif /* !NO_DIRED */
 	{lowerregion, "downcase-region",},
 	{lowerword, "downcase-word",},
 	{showversion, "emacs-version",},

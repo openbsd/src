@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.26 2005/10/14 19:46:46 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.27 2005/11/07 23:32:20 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,6 +8,8 @@
 
 #include "def.h"
 #include "kbd.h"
+#include "funmap.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -23,6 +25,18 @@
 #ifndef NO_DIRED
 
 void		 dired_init(void);
+static int	 dired(int, int);
+static int	 d_otherwindow(int, int);
+static int	 d_undel(int, int);
+static int	 d_undelbak(int, int);
+static int	 d_findfile(int, int);
+static int	 d_ffotherwindow(int, int);
+static int	 d_expunge(int, int);
+static int	 d_copy(int, int);
+static int	 d_del(int, int);
+static int	 d_rename(int, int);
+static int	 d_shell_command(int, int);
+static int	 d_create_directory(int, int);
 static int	 d_makename(LINE  *, char *, int);
 
 extern struct keymap_s helpmap, cXmap, metamap;
@@ -64,7 +78,18 @@ static PF diredcz[] = {
 	rescan,			/* ^] */
 	rescan,			/* ^^ */
 	rescan,			/* ^_ */
-	forwline		/* SP */
+	forwline,		/* SP */
+	d_shell_command,	/* ! */
+	rescan,			/* " */
+	rescan,			/* # */
+	rescan,			/* $ */
+	rescan,			/* % */
+	rescan,			/* & */
+	rescan,			/* ' */
+	rescan,			/* ( */
+	rescan,			/* ) */
+	rescan,			/* * */
+	d_create_directory	/* + */
 };
 
 static PF diredc[] = {
@@ -114,7 +139,7 @@ static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 			CCHR('L'), CCHR('X'), diredcl, (KEYMAP *) & cXmap
 		},
 		{
-			CCHR('Z'), ' ', diredcz, (KEYMAP *) & metamap
+			CCHR('Z'), '+', diredcz, (KEYMAP *) & metamap
 		},
 		{
 			'c', 'f', diredc, NULL
@@ -134,7 +159,18 @@ static struct KEYMAPE (6 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 void
 dired_init(void)
 {
+	funmap_add(dired, "dired");
+	funmap_add(d_undelbak, "dired-backup-unflag");
+	funmap_add(d_copy, "dired-copy-file");
+	funmap_add(d_expunge, "dired-do-deletions");
+	funmap_add(d_findfile, "dired-find-file");
+	funmap_add(d_ffotherwindow, "dired-find-file-other-window");
+	funmap_add(d_del, "dired-flag-file-deleted");
+	funmap_add(d_otherwindow, "dired-other-window");
+	funmap_add(d_rename, "dired-rename-file");
+	funmap_add(d_undel, "dired-unflag");
 	maps_add((KEYMAP *)&diredmap, "dired");
+	dobindkey(fundamental_map, "dired", "^Xd");
 }
 
 /* ARGSUSED */
