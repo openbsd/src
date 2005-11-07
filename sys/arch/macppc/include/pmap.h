@@ -1,7 +1,3 @@
-/*	$OpenBSD: pmap.h,v 1.4 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.5 2005/11/07 02:19:46 brad Exp $	*/
 
 #include <powerpc/pmap.h>
-
-#ifndef	_LOCORE
-paddr_t vtophys(vaddr_t);
-#endif	/* _LOCORE */

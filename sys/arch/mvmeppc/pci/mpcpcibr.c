@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.16 2004/11/19 22:11:07 miod Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.17 2005/11/07 02:19:46 brad Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -275,21 +275,6 @@ mpcpcibrprint(aux, pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
-}
-
-/*
- *  Get PCI physical address from given virtual address.
- *  XXX Note that cross page boundaries are *not* guaranteed to work!
- */
-paddr_t
-vtophys(vaddr_t va)
-{
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
-		return NULL;
-
-	return PHYS_TO_PCI_MEM(pa);
 }
 
 void
