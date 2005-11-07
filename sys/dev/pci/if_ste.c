@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.33 2005/09/10 23:21:05 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.34 2005/11/07 02:57:45 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -197,7 +197,7 @@ int ste_mii_readreg(sc, frame)
 {
 	int			i, ack, s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Set up frame for RX.
@@ -289,7 +289,7 @@ int ste_mii_writereg(sc, frame)
 {
 	int			s;
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Set up frame for TX.
 	 */
@@ -795,7 +795,7 @@ void ste_stats_update(xsc)
 	struct mii_data		*mii;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
@@ -945,8 +945,7 @@ void ste_attach(parent, self, aux)
 	 */
 	if (ste_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
 	    STE_EEADDR_NODE0, 3, 0)) {
-		printf("%s: failed to read station address\n",
-		    sc->sc_dev.dv_xname);
+		printf(": failed to read station address\n");
 		goto fail_2;
 	}
 
@@ -955,8 +954,7 @@ void ste_attach(parent, self, aux)
 	sc->ste_ldata_ptr = malloc(sizeof(struct ste_list_data) + 8,
 	    M_DEVBUF, M_DONTWAIT);
 	if (sc->ste_ldata_ptr == NULL) {
-		printf("%s: no memory for list buffers!\n",
-		    sc->sc_dev.dv_xname);
+		printf(": no memory for list buffers!\n");
 		goto fail_2;
 	}
 
@@ -997,7 +995,6 @@ void ste_attach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	shutdownhook_establish(ste_shutdown, sc);
-
 	return;
 
 fail_2:
@@ -1110,7 +1107,7 @@ void ste_init(xsc)
 	struct mii_data		*mii;
 	int			i, s;
 
-	s = splimp();
+	s = splnet();
 
 	ste_stop(sc);
 
@@ -1295,7 +1292,7 @@ int ste_ioctl(ifp, command, data)
 	struct mii_data		*mii;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);

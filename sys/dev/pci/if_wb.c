@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.30 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.31 2005/11/07 02:57:46 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -341,7 +341,7 @@ int wb_mii_readreg(sc, frame)
 {
 	int			i, ack, s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Set up frame for RX.
@@ -437,7 +437,7 @@ int wb_mii_writereg(sc, frame)
 {
 	int			s;
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Set up frame for TX.
 	 */
@@ -715,14 +715,12 @@ wb_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	bus_size_t iosize;
-	int s, rseg;
+	bus_size_t size;
+	int rseg;
 	pcireg_t command;
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
 	caddr_t kva;
-
-	s = splimp();
 
 	/*
 	 * Handle power management nonsense.
@@ -758,27 +756,18 @@ wb_attach(parent, self, aux)
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef WB_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports!\n");
-		goto fail;
-	}
 	if (pci_mapreg_map(pa, WB_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->wb_btag, &sc->wb_bhandle, NULL, &iosize, 0)) {
+	    &sc->wb_btag, &sc->wb_bhandle, NULL, &size, 0)) {
 		printf(": can't map i/o space\n");
-		goto fail;
+		return;
 	}
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping!\n");
-		goto fail;
-	}
 	if (pci_mapreg_map(pa, WB_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->wb_btag, &sc->wb_bhandle, NULL, &iosize, 0)){
+	    &sc->wb_btag, &sc->wb_bhandle, NULL, &size, 0)){
 		printf(": can't map mem space\n");
-		goto fail;
+		return;
 	}
 #endif
 
@@ -808,36 +797,28 @@ wb_attach(parent, self, aux)
 	 * Get station address from the EEPROM.
 	 */
 	wb_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr, 0, 3, 0);
-	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	if (bus_dmamem_alloc(pa->pa_dmat, sizeof(struct wb_list_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc list data\n", sc->sc_dev.dv_xname);
-		goto fail_1;
+		printf(": can't alloc list data\n");
+		goto fail_2;
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg,
 	    sizeof(struct wb_list_data), &kva, BUS_DMA_NOWAIT)) {
-		printf("%s: can't map list data, size %d\n",
-		    sc->sc_dev.dv_xname, sizeof(struct wb_list_data));
-		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		goto fail_1;
+		printf(": can't map list data, size %d\n",
+		    sizeof(struct wb_list_data));
+		goto fail_3;
 	}
 	if (bus_dmamap_create(pa->pa_dmat, sizeof(struct wb_list_data), 1,
 	    sizeof(struct wb_list_data), 0, BUS_DMA_NOWAIT, &dmamap)) {
-		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
-		bus_dmamem_unmap(pa->pa_dmat, kva,
-		    sizeof(struct wb_list_data));
-		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		goto fail_1;
+		printf(": can't create dma map\n");
+		goto fail_4;
 	}
 	if (bus_dmamap_load(pa->pa_dmat, dmamap, kva,
 	    sizeof(struct wb_list_data), NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(pa->pa_dmat, dmamap);
-		bus_dmamem_unmap(pa->pa_dmat, kva,
-		    sizeof(struct wb_list_data));
-		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		goto fail_1;
+		printf(": can't load dma map\n");
+		goto fail_5;
 	}
 	sc->wb_ldata = (struct wb_list_data *)kva;
 	bzero(sc->wb_ldata, sizeof(struct wb_list_data));
@@ -878,12 +859,23 @@ wb_attach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	shutdownhook_establish(wb_shutdown, sc);
+	return;
+
+fail_5:
+	bus_dmamap_destroy(pa->pa_dmat, dmamap);
+
+fail_4:
+	bus_dmamem_unmap(pa->pa_dmat, kva,
+	    sizeof(struct wb_list_data));
+
+fail_3:
+	bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+
+fail_2:
+	pci_intr_disestablish(pc, sc->sc_ih);
 
 fail_1:
-	bus_space_unmap(sc->wb_btag, sc->wb_bhandle, iosize);
-fail:
-	splx(s);
-	return;
+	bus_space_unmap(sc->wb_btag, sc->wb_bhandle, size);
 }
 
 /*
@@ -1273,7 +1265,7 @@ wb_tick(xsc)
 	struct wb_softc *sc = xsc;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	mii_tick(&sc->sc_mii);
 	splx(s);
 	timeout_add(&sc->wb_tick_tmo, hz);
@@ -1474,7 +1466,7 @@ void wb_init(xsc)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int s, i;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1624,7 +1616,7 @@ int wb_ioctl(ifp, command, data)
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);

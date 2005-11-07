@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.85 2005/10/15 23:09:17 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.86 2005/11/07 02:57:45 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -915,7 +915,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct mii_data *mii;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc_if->arpcom, command, data)) > 0) {
 		splx(s);
@@ -2586,7 +2586,7 @@ sk_init(void *xsc_if)
 
 	DPRINTFN(2, ("sk_init\n"));
 
-	s = splimp();
+	s = splnet();
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		splx(s);

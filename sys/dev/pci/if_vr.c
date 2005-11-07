@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.48 2005/11/04 16:59:45 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.49 2005/11/07 02:57:45 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -596,9 +596,11 @@ vr_reset(sc)
 			printf("%s: reset never completed!\n",
 			    sc->sc_dev.dv_xname);
 		else {
+#ifdef DEBUG
 			/* Use newer force reset command */
 			printf("%s: Using force reset command.\n",
 			    sc->sc_dev.dv_xname);
+#endif
 			VR_SETBIT(sc, VR_MISC_CR1, VR_MISCCR1_FORSRST);
 		}
 	}       
@@ -760,23 +762,23 @@ vr_attach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vr_list_data),
 	    PAGE_SIZE, 0, &sc->sc_listseg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc list\n", sc->sc_dev.dv_xname);
+		printf(": can't alloc list\n");
 		goto fail_2;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_listseg, rseg,
 	    sizeof(struct vr_list_data), &kva, BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
-		    sc->sc_dev.dv_xname, sizeof(struct vr_list_data));
+		printf(": can't map dma buffers (%d bytes)\n",
+		    sizeof(struct vr_list_data));
 		goto fail_3;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct vr_list_data), 1,
 	    sizeof(struct vr_list_data), 0, BUS_DMA_NOWAIT, &sc->sc_listmap)) {
-		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
+		printf(": can't create dma map\n");
 		goto fail_4;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_listmap, kva,
 	    sizeof(struct vr_list_data), NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc->sc_dev.dv_xname);
+		printf(": can't load dma map\n");
 		goto fail_5;
 	}
 	sc->vr_ldata = (struct vr_list_data *)kva;

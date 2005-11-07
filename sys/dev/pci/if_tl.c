@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.35 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.36 2005/11/07 02:57:45 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -589,7 +589,7 @@ int tl_mii_readreg(sc, frame)
 	int			i, ack, s;
 	int			minten = 0;
 
-	s = splimp();
+	s = splnet();
 
 	tl_mii_sync(sc);
 
@@ -686,7 +686,7 @@ int tl_mii_writereg(sc, frame)
 
 	tl_mii_sync(sc);
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Set up frame for TX.
 	 */
@@ -1407,7 +1407,7 @@ void tl_stats_update(xsc)
 	u_int32_t		*p;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	bzero((char *)&tl_stats, sizeof(struct tl_stats));
 
@@ -1643,7 +1643,7 @@ void tl_init(xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
         int			s;
 
-	s = splimp();
+	s = splnet();
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -1782,7 +1782,7 @@ int tl_ioctl(ifp, command, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);

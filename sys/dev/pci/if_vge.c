@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.17 2005/10/08 01:58:17 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.18 2005/11/07 02:57:45 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -317,7 +317,7 @@ vge_miibus_readreg(struct device *dev, int phy, int reg)
 	if (phy != (CSR_READ_1(sc, VGE_MIICFG) & 0x1F))
 		return(0);
 
-	s = splimp();
+	s = splnet();
 
 	vge_miipoll_stop(sc);
 
@@ -354,7 +354,7 @@ vge_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	if (phy != (CSR_READ_1(sc, VGE_MIICFG) & 0x1F))
 		return;
 
-	s = splimp();
+	s = splnet();
 	vge_miipoll_stop(sc);
 
 	/* Specify the register we want to write. */
@@ -1108,12 +1108,6 @@ vge_rxeof(struct vge_softc *sc)
 		    (rxctl & VGE_RDCTL_PROTOCSUMOK))
 			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 
-#ifdef VGE_VLAN
-		if (rxstat & VGE_RDSTS_VTAG)
-			VLAN_INPUT_TAG(ifp, m,
-			    ntohs((rxctl & VGE_RDCTL_VLANID)), continue);
-#endif
-
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -1199,7 +1193,7 @@ vge_tick(void *xsc)
 	struct mii_data		*mii = &sc->sc_mii;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	mii_tick(mii);
 
@@ -1735,7 +1729,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifaddr		*ifa = (struct ifaddr *) data;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
