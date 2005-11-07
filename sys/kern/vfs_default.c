@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.29 2005/11/06 14:15:08 pedro Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.30 2005/11/07 01:02:32 pedro Exp $  */
 
 /*
  * Portions of this code are:
@@ -53,7 +53,7 @@ int filt_generic_readwrite(struct knote *, long);
 void filt_generic_detach(struct knote *);
 
 /*
- * Eliminate all activity associated with  the requested vnode
+ * Eliminate all activity associated with the requested vnode
  * and with all vnodes aliased to the requested vnode.
  */
 int
