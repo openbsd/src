@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.41 2004/07/21 08:59:30 jmc Exp $
+.\"	$OpenBSD: date.1,v 1.42 2005/11/07 19:20:05 jmc Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -130,21 +130,20 @@ a value for setting the system's notion of the current date and time.
 The canonical representation for setting the date and time is:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
-.It Ar yy
-Year in abbreviated form (for years 1969-2068).
-The format
-.Ar ccyymmddHHMM
-is also permitted, for non-ambiguous years.
+.It Ar ccyy
+Year:
+the first two digits (representing the century) may be omitted
+for non-ambiguous years (1969\-2068).
 .It Ar mm
-Numeric month, a number from 1 to 12.
+Numeric month: a number from 1 to 12.
 .It Ar dd
-Day, a number from 1 to 31.
+Day: a number from 1 to 31.
 .It Ar HH
-Hour, a number from 0 to 23.
+Hour: a number from 0 to 23.
 .It Ar MM
-Minute, a number from 0 to 59.
+Minute: a number from 0 to 59.
 .It Ar SS
-Second, a number from 0 to 61 (59 plus a maximum of two leap seconds).
+Second: a number from 0 to 61 (59 plus a maximum of two leap seconds).
 .El
 .Pp
 Everything but the minute is optional.
