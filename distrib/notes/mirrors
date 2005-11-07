@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.63 2005/11/02 21:38:24 grunk Exp $
+dnl	$OpenBSD: mirrors,v 1.64 2005/11/07 09:37:51 grunk Exp $
 This is a list of currently known FTP servers at the time of the OSREV release.
 For a more recent list, please refer to
 
@@ -68,7 +68,6 @@ Ireland:
     ftp://ftp.esat.net/pub/OpenBSD (Dublin)
 
 Italy:
-    ftp://na.mirror.garr.it/mirrors/OpenBSD (Napoli)
     ftp://ftp.unina.it/pub/OpenBSD (Napoli)
 
 Japan:
