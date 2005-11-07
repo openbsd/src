@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.115 2005/10/19 16:50:46 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.116 2005/11/07 23:15:00 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
 	VREG, VNON, VLNK, VNON, VSOCK, VNON, VNON, VBAD,
 };
+
 int	vttoif_tab[9] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK,
 	S_IFSOCK, S_IFIFO, S_IFMT,
@@ -123,7 +124,7 @@ struct pool vnode_pool;
  * Initialize the vnode management data structures.
  */
 void
-vntblinit()
+vntblinit(void)
 {
 
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
@@ -205,12 +206,9 @@ vfs_isbusy(struct mount *mp)
  * Devname is usually updated by mount(8) after booting.
  */
 int
-vfs_rootmountalloc(fstypename, devname, mpp)
-	char *fstypename;
-	char *devname;
-	struct mount **mpp;
+vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;
 	struct vfsconf *vfsp;
 	struct mount *mp;
 
@@ -244,7 +242,7 @@ vfs_rootmountalloc(fstypename, devname, mpp)
  * works or we have tried them all.
  */
 int
-vfs_mountroot()
+vfs_mountroot(void)
 {
 	struct vfsconf *vfsp;
 	int error;
@@ -265,10 +263,9 @@ vfs_mountroot()
  * Lookup a mount point by filesystem identifier.
  */
 struct mount *
-vfs_getvfs(fsid)
-	fsid_t *fsid;
+vfs_getvfs(fsid_t *fsid)
 {
-	register struct mount *mp;
+	struct mount *mp;
 
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
@@ -287,8 +284,7 @@ vfs_getvfs(fsid)
  * Get a new unique fsid
  */
 void
-vfs_getnewfsid(mp)
-	struct mount *mp;
+vfs_getnewfsid(struct mount *mp)
 {
 	static u_short xxxfs_mntid;
 
@@ -319,8 +315,7 @@ vfs_getnewfsid(mp)
  * now has an on-disk filesystem id.
  */
 long
-makefstype(type)
-	char *type;
+makefstype(char *type)
 {
 	long rv;
 
@@ -335,8 +330,7 @@ makefstype(type)
  * Set vnode attributes to VNOVAL
  */
 void
-vattr_null(vap)
-	register struct vattr *vap;
+vattr_null(struct vattr *vap)
 {
 
 	vap->va_type = VNON;
@@ -363,13 +357,10 @@ long numvnodes;
  * Return the next vnode from the free list.
  */
 int
-getnewvnode(tag, mp, vops, vpp)
-	enum vtagtype tag;
-	struct mount *mp;
-	int (**vops)(void *);
-	struct vnode **vpp;
+getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
+    struct vnode **vpp)
 {
-	struct proc *p = curproc;			/* XXX */
+	struct proc *p = curproc;
 	struct freelst *listhd;
 	static int toggle;
 	struct vnode *vp;
@@ -470,9 +461,7 @@ getnewvnode(tag, mp, vops, vpp)
  * Move a vnode from one mount queue to another.
  */
 void
-insmntque(vp, mp)
-	register struct vnode *vp;
-	register struct mount *mp;
+insmntque(struct vnode *vp, struct mount *mp)
 {
 	simple_lock(&mntvnode_slock);
 
@@ -490,18 +479,14 @@ insmntque(vp, mp)
 	simple_unlock(&mntvnode_slock);
 }
 
-
 /*
  * Create a vnode for a block device.
  * Used for root filesystem, argdev, and swap areas.
  * Also used for memory file system special devices.
  */
 int
-bdevvp(dev, vpp)
-	dev_t dev;
-	struct vnode **vpp;
+bdevvp(dev_t dev, struct vnode **vpp)
 {
-
 	return (getdevvp(dev, vpp, VBLK));
 }
 
@@ -510,11 +495,8 @@ bdevvp(dev, vpp)
  * Used for kernfs and some console handling.
  */
 int
-cdevvp(dev, vpp)
-	dev_t dev;
-	struct vnode **vpp;
+cdevvp(dev_t dev, struct vnode **vpp)
 {
-
 	return (getdevvp(dev, vpp, VCHR));
 }
 
@@ -524,12 +506,9 @@ cdevvp(dev, vpp)
  * and by cdevvp (character device) for console and kernfs.
  */
 int
-getdevvp(dev, vpp, type)
-	dev_t dev;
-	struct vnode **vpp;
-	enum vtype type;
+getdevvp(dev_t dev, struct vnode **vpp, enum vtype type)
 {
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct vnode *nvp;
 	int error;
 
@@ -561,13 +540,10 @@ getdevvp(dev, vpp, type)
  * caller is responsible for filling it with its new contents.
  */
 struct vnode *
-checkalias(nvp, nvp_rdev, mp)
-	register struct vnode *nvp;
-	dev_t nvp_rdev;
-	struct mount *mp;
+checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 {
 	struct proc *p = curproc;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct vnode **vpp;
 
 	if (nvp->v_type != VBLK && nvp->v_type != VCHR)
@@ -650,10 +626,7 @@ loop:
  * having been changed to a new file system type.
  */
 int
-vget(vp, flags, p)
-	struct vnode *vp;
-	int flags;
-	struct proc *p;
+vget(struct vnode *vp, int flags, struct proc *p)
 {
 	int error, s, onfreelist;
 
@@ -715,8 +688,7 @@ vget(vp, flags, p)
  * Vnode reference.
  */
 void
-vref(vp)
-	struct vnode *vp;
+vref(struct vnode *vp)
 {
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount == 0)
@@ -762,10 +734,9 @@ vputonfreelist(struct vnode *vp)
  * vput(), just unlock and vrele()
  */
 void
-vput(vp)
-	register struct vnode *vp;
+vput(struct vnode *vp)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -809,10 +780,9 @@ vput(vp)
  * If count drops to zero, call inactive routine and return to freelist.
  */
 void
-vrele(vp)
-	register struct vnode *vp;
+vrele(struct vnode *vp)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -858,10 +828,8 @@ void vhold(struct vnode *vp);
  * Page or buffer structure gets a reference.
  */
 void
-vhold(vp)
-	register struct vnode *vp;
+vhold(struct vnode *vp)
 {
-
 	/*
 	 * If it is on the freelist and the hold count is currently
 	 * zero, move it to the hold list.
@@ -984,10 +952,7 @@ vflush_vnode(struct vnode *vp, void *arg) {
 }
 
 int
-vflush(mp, skipvp, flags)
-	struct mount *mp;
-	struct vnode *skipvp;
-	int flags;
+vflush(struct mount *mp, struct vnode *skipvp, int flags)
 {
 	struct vflush_args va;
 	va.skipvp = skipvp;
@@ -1006,10 +971,7 @@ vflush(mp, skipvp, flags)
  * The vnode interlock is held on entry.
  */
 void
-vclean(vp, flags, p)
-	register struct vnode *vp;
-	int flags;
-	struct proc *p;
+vclean(struct vnode *vp, int flags, struct proc *p)
 {
 	int active;
 
@@ -1106,12 +1068,8 @@ vclean(vp, flags, p)
  * Release the passed interlock if the vnode will be recycled.
  */
 int
-vrecycle(vp, inter_lkp, p)
-	struct vnode *vp;
-	struct simplelock *inter_lkp;
-	struct proc *p;
+vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct proc *p)
 {
-
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount == 0) {
 		if (inter_lkp)
@@ -1123,14 +1081,12 @@ vrecycle(vp, inter_lkp, p)
 	return (0);
 }
 
-
 /*
  * Eliminate all activity associated with a vnode
  * in preparation for reuse.
  */
 void
-vgone(vp)
-	register struct vnode *vp;
+vgone(struct vnode *vp)
 {
 	struct proc *p = curproc;
 
@@ -1142,11 +1098,9 @@ vgone(vp)
  * vgone, with the vp interlock held.
  */
 void
-vgonel(vp, p)
-	struct vnode *vp;
-	struct proc *p;
+vgonel(struct vnode *vp, struct proc *p)
 {
-	register struct vnode *vq;
+	struct vnode *vq;
 	struct vnode *vx;
 	struct mount *mp;
 	int flags;
@@ -1255,12 +1209,9 @@ vgonel(vp, p)
  * Lookup a vnode by device number.
  */
 int
-vfinddev(dev, type, vpp)
-	dev_t dev;
-	enum vtype type;
-	struct vnode **vpp;
+vfinddev(dev_t dev, enum vtype type, struct vnode **vpp)
 {
-	register struct vnode *vp;
+	struct vnode *vp;
 	int rc =0;
 
 	simple_lock(&spechash_slock);
@@ -1280,9 +1231,7 @@ vfinddev(dev, type, vpp)
  * range (endpoints inclusive) of the specified major.
  */
 void
-vdevgone(maj, minl, minh, type)
-	int maj, minl, minh;
-	enum vtype type;
+vdevgone(int maj, int minl, int minh, enum vtype type)
 {
 	struct vnode *vp;
 	int mn;
@@ -1296,8 +1245,7 @@ vdevgone(maj, minl, minh, type)
  * Calculate the total number of references to a special device.
  */
 int
-vcount(vp)
-	struct vnode *vp;
+vcount(struct vnode *vp)
 {
 	struct vnode *vq, *vnext;
 	int count;
@@ -1331,9 +1279,7 @@ static char *typename[] =
    { "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD" };
 
 void
-vprint(label, vp)
-	char *label;
-	register struct vnode *vp;
+vprint(char *label, struct vnode *vp)
 {
 	char buf[64];
 
@@ -1377,11 +1323,11 @@ vprint(label, vp)
  * Called when debugging the kernel.
  */
 void
-printlockedvnodes()
+printlockedvnodes(void)
 {
 	struct proc *p = curproc;
-	register struct mount *mp, *nmp;
-	register struct vnode *vp;
+	struct mount *mp, *nmp;
+	struct vnode *vp;
 
 	printf("Locked vnodes\n");
 	simple_lock(&mountlist_slock);
@@ -1408,14 +1354,8 @@ printlockedvnodes()
  * Top level filesystem related information gathering.
  */
 int
-vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	struct vfsconf *vfsp;
 
@@ -1457,14 +1397,11 @@ int kinfo_vgetfailed;
  */
 /* ARGSUSED */
 int
-sysctl_vnode(where, sizep, p)
-	char *where;
-	size_t *sizep;
-	struct proc *p;
+sysctl_vnode(char *where, size_t *sizep, struct proc *p)
 {
-	register struct mount *mp, *nmp;
+	struct mount *mp, *nmp;
 	struct vnode *vp, *nvp;
-	register char *bp = where, *savebp;
+	char *bp = where, *savebp;
 	char *ewhere;
 	int error;
 
@@ -1533,10 +1470,9 @@ again:
  * Check to see if a filesystem is mounted on a block device.
  */
 int
-vfs_mountedon(vp)
-	register struct vnode *vp;
+vfs_mountedon(struct vnode *vp)
 {
-	register struct vnode *vq;
+	struct vnode *vq;
 	int error = 0;
 
  	if (vp->v_specmountpoint != NULL)
@@ -1562,14 +1498,12 @@ vfs_mountedon(vp)
  * Called by ufs_mount() to set up the lists of export addresses.
  */
 int
-vfs_hang_addrlist(mp, nep, argp)
-	struct mount *mp;
-	struct netexport *nep;
-	struct export_args *argp;
+vfs_hang_addrlist(struct mount *mp, struct netexport *nep,
+    struct export_args *argp)
 {
-	register struct netcred *np;
-	register struct radix_node_head *rnh;
-	register int i;
+	struct netcred *np;
+	struct radix_node_head *rnh;
+	int i;
 	struct radix_node *rn;
 	struct sockaddr *saddr, *smask = 0;
 	struct domain *dom;
@@ -1643,9 +1577,7 @@ out:
 
 /* ARGSUSED */
 int
-vfs_free_netcred(rn, w)
-	struct radix_node *rn;
-	void *w;
+vfs_free_netcred(struct radix_node *rn, void *w)
 {
 	register struct radix_node_head *rnh = (struct radix_node_head *)w;
 
@@ -1658,11 +1590,10 @@ vfs_free_netcred(rn, w)
  * Free the net address hash lists that are hanging off the mount points.
  */
 void
-vfs_free_addrlist(nep)
-	struct netexport *nep;
+vfs_free_addrlist(struct netexport *nep)
 {
-	register int i;
-	register struct radix_node_head *rnh;
+	int i;
+	struct radix_node_head *rnh;
 
 	for (i = 0; i <= AF_MAX; i++)
 		if ((rnh = nep->ne_rtable[i]) != NULL) {
@@ -1673,10 +1604,7 @@ vfs_free_addrlist(nep)
 }
 
 int
-vfs_export(mp, nep, argp)
-	struct mount *mp;
-	struct netexport *nep;
-	struct export_args *argp;
+vfs_export(struct mount *mp, struct netexport *nep, struct export_args *argp)
 {
 	int error;
 
@@ -1693,13 +1621,10 @@ vfs_export(mp, nep, argp)
 }
 
 struct netcred *
-vfs_export_lookup(mp, nep, nam)
-	register struct mount *mp;
-	struct netexport *nep;
-	struct mbuf *nam;
+vfs_export_lookup(struct mount *mp, struct netexport *nep, struct mbuf *nam)
 {
-	register struct netcred *np;
-	register struct radix_node_head *rnh;
+	struct netcred *np;
+	struct radix_node_head *rnh;
 	struct sockaddr *saddr;
 
 	np = NULL;
@@ -1733,12 +1658,8 @@ vfs_export_lookup(mp, nep, nam)
  * while acc_mode and cred are from the VOP_ACCESS parameter list
  */
 int
-vaccess(file_mode, uid, gid, acc_mode, cred)
-	mode_t file_mode;
-	uid_t uid;
-	gid_t gid;
-	mode_t acc_mode;
-	struct ucred *cred;
+vaccess(mode_t file_mode, uid_t uid, gid_t gid, mode_t acc_mode,
+    struct ucred *cred)
 {
 	mode_t mask;
 
@@ -1820,7 +1741,7 @@ vfs_unmountall(void)
  * Sync and unmount file systems before shutting down.
  */
 void
-vfs_shutdown()
+vfs_shutdown(void)
 {
 #ifdef ACCOUNTING
 	extern void acct_shutdown(void);
@@ -1853,10 +1774,9 @@ vfs_shutdown()
  * for now called at spl0() XXX
  */
 int
-vfs_syncwait(verbose)
-	int verbose;
+vfs_syncwait(int verbose)
 {
-	register struct buf *bp;
+	struct buf *bp;
 	int iter, nbusy, dcount, s;
 	struct proc *p;
 
@@ -1903,14 +1823,8 @@ vfs_syncwait(verbose)
  * posix file system related system variables.
  */
 int
-fs_posix_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+fs_posix_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -1931,14 +1845,8 @@ fs_posix_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * file system related system variables.
  */
 int
-fs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+fs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	sysctlfn *fn;
 
@@ -1963,10 +1871,7 @@ fs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Manipulates v_numoutput. Must be called at splbio()
  */
 int
-vwaitforio(vp, slpflag, wmesg, timeo)
-	struct vnode *vp;
-	int slpflag, timeo;
-	char *wmesg;
+vwaitforio(struct vnode *vp, int slpflag, char *wmesg, int timeo)
 {
 	int error = 0;
 
@@ -1989,8 +1894,7 @@ vwaitforio(vp, slpflag, wmesg, timeo)
  * Manipulates v_numoutput. Must be called at splbio()
  */
 void
-vwakeup(vp)
-	struct vnode *vp;
+vwakeup(struct vnode *vp)
 {
 	splassert(IPL_BIO);
 
@@ -2009,14 +1913,10 @@ vwakeup(vp)
  * Called with the underlying object locked.
  */
 int
-vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
-	register struct vnode *vp;
-	int flags;
-	struct ucred *cred;
-	struct proc *p;
-	int slpflag, slptimeo;
+vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
+    int slpflag, int slptimeo)
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct buf *nbp, *blist;
 	int s, error;
 
@@ -2087,11 +1987,9 @@ loop:
 }
 
 void
-vflushbuf(vp, sync)
-	register struct vnode *vp;
-	int sync;
+vflushbuf(struct vnode *vp, int sync)
 {
-	register struct buf *bp, *nbp;
+	struct buf *bp, *nbp;
 	int s;
 
 loop:
@@ -2135,9 +2033,7 @@ loop:
  * Manipulates buffer vnode queues. Must be called at splbio().
  */
 void
-bgetvp(vp, bp)
-	register struct vnode *vp;
-	register struct buf *bp;
+bgetvp(struct vnode *vp, struct buf *bp)
 {
 	splassert(IPL_BIO);
 
@@ -2162,8 +2058,7 @@ bgetvp(vp, bp)
  * Manipulates vnode buffer queues. Must be called at splbio().
  */
 void
-brelvp(bp)
-	register struct buf *bp;
+brelvp(struct buf *bp)
 {
 	struct vnode *vp;
 
@@ -2214,9 +2109,7 @@ brelvp(bp)
  * Ignores vnode buffer queues. Must be called at splbio().
  */
 void
-buf_replacevnode(bp, newvp)
-	struct buf *bp;
-	struct vnode *newvp;
+buf_replacevnode(struct buf *bp, struct vnode *newvp)
 {
 	struct vnode *oldvp = bp->b_vp;
 
@@ -2242,8 +2135,7 @@ buf_replacevnode(bp, newvp)
  * Manipulates vnode buffer queues. Must be called at splbio().
  */
 void
-reassignbuf(bp)
-	struct buf *bp;
+reassignbuf(struct buf *bp)
 {
 	struct buflists *listheadp;
 	int delay;
@@ -2291,8 +2183,7 @@ reassignbuf(bp)
 }
 
 int
-vfs_register(vfs)
-	struct vfsconf *vfs;
+vfs_register(struct vfsconf *vfs)
 {
 	struct vfsconf *vfsp;
 	struct vfsconf **vfspp;
@@ -2325,8 +2216,7 @@ vfs_register(vfs)
 }
 
 int
-vfs_unregister(vfs)
-	struct vfsconf *vfs;
+vfs_unregister(struct vfsconf *vfs)
 {
 	struct vfsconf *vfsp;
 	struct vfsconf **vfspp;
@@ -2362,9 +2252,7 @@ vfs_unregister(vfs)
  * Check if vnode represents a disk device
  */
 int
-vn_isdisk(vp, errp)
-	struct vnode *vp;
-	int *errp;
+vn_isdisk(struct vnode *vp, int *errp)
 {
 	if (vp->v_type != VBLK && vp->v_type != VCHR)
 		return (0);
