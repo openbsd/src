@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.21 2005/09/27 23:15:25 kettenis Exp $
+#	$OpenBSD: Makefile.macppc,v 1.22 2005/11/08 20:29:13 kettenis Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -40,13 +40,13 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
 		-D__macppc__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
-CMACHFLAGS=	-msoft-float -Wa,-m7400 -fno-builtin-printf -fno-builtin-log
+CMACHFLAGS=	-msoft-float -Wa,-many -fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-D_LOCORE -Wa,-mppc64bridge
+AFLAGS=		-D_LOCORE -Wa,-many
 LINKFLAGS=	-N -Ttext 100114 -e start --warn-common
 STRIPFLAGS=	-g -X -x
 
