@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.56 2005/11/02 21:42:16 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.57 2005/11/08 15:58:38 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -417,7 +417,7 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 		return (NULL);
 	}
 
-	if ((b3 = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL) {
+	if ((b3 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to allocated buffer for diff");
 		cvs_buf_free(b1);
 		cvs_buf_free(b2);
@@ -474,7 +474,7 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 		rcsnum_tostr(rev2, nrev, sizeof(nrev));
 	rcsnum_free(tmprev);
 
-	if ((logbuf = cvs_buf_alloc(64, BUF_AUTOEXT)) == NULL) {
+	if ((logbuf = cvs_buf_alloc((size_t)64, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to allocate log buffer");
 		return (NULL);
 	}
