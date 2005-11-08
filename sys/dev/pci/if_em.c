@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.83 2005/11/04 17:45:03 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.84 2005/11/08 01:33:19 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -45,7 +45,7 @@ int             em_display_debug_stats = 0;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "3.2.15";
+char em_driver_version[] = "3.2.18";
 
 /*********************************************************************
  *  PCI Device ID Table

@@ -1,38 +1,39 @@
 /*******************************************************************************
 
-  Copyright (c) 2001-2005, Intel Corporation
-  All rights reserved.
+Copyright (c) 2001-2005, Intel Corporation 
+All rights reserved.
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are met:
 
-   1. Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
+ 1. Redistributions of source code must retain the above copyright notice, 
+    this list of conditions and the following disclaimer.
 
-   2. Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
+ 2. Redistributions in binary form must reproduce the above copyright 
+    notice, this list of conditions and the following disclaimer in the 
+    documentation and/or other materials provided with the distribution.
 
-   3. Neither the name of the Intel Corporation nor the names of its
-      contributors may be used to endorse or promote products derived from
-      this software without specific prior written permission.
+ 3. Neither the name of the Intel Corporation nor the names of its 
+    contributors may be used to endorse or promote products derived from 
+    this software without specific prior written permission.
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.10 2005/10/24 21:42:34 brad Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.11 2005/11/08 01:33:19 brad Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
+
 /* if_em_hw.h
  * Structures, enums, and macros for the MAC
  */
@@ -129,6 +130,7 @@ typedef enum {
     em_bus_width_32,
     em_bus_width_64,
     em_bus_width_pciex_1,
+    em_bus_width_pciex_2,
     em_bus_width_pciex_4,
     em_bus_width_reserved
 } em_bus_width;
@@ -155,6 +157,7 @@ typedef enum {
     em_igp_cable_length_90  = 90,
     em_igp_cable_length_100 = 100,
     em_igp_cable_length_110 = 110,
+    em_igp_cable_length_115 = 115,
     em_igp_cable_length_120 = 120,
     em_igp_cable_length_130 = 130,
     em_igp_cable_length_140 = 140,
@@ -315,7 +318,6 @@ int32_t em_get_cable_length(struct em_hw *hw, uint16_t *min_length, uint16_t *ma
 int32_t em_check_polarity(struct em_hw *hw, uint16_t *polarity);
 int32_t em_check_downshift(struct em_hw *hw);
 int32_t em_validate_mdi_setting(struct em_hw *hw);
-int32_t em_phy_misctst_get_info(struct em_hw *hw, uint16_t *enabled);
 
 /* EEPROM Functions */
 int32_t em_init_eeprom_params(struct em_hw *hw);
@@ -354,7 +356,6 @@ struct em_host_mng_command_info {
     struct em_host_mng_command_header command_header;  /* Command Head/Command Result Head has 4 bytes */
     uint8_t command_data[E1000_HI_MAX_MNG_DATA_LENGTH];   /* Command data can length 0..0x658*/
 };
-#if BYTE_ORDER == BIG_ENDIAN
 struct em_host_mng_dhcp_cookie{
     uint32_t signature;
     uint16_t vlan_id;
@@ -365,18 +366,6 @@ struct em_host_mng_dhcp_cookie{
     uint8_t reserved3;
     uint16_t reserved2;
 };
-#else
-struct em_host_mng_dhcp_cookie{
-    uint32_t signature;
-    uint8_t status;
-    uint8_t reserved0;
-    uint16_t vlan_id;
-    uint32_t reserved1;
-    uint16_t reserved2;
-    uint8_t reserved3;
-    uint8_t checksum;
-};
-#endif
 
 int32_t em_mng_write_dhcp_info(struct em_hw *hw, uint8_t *buffer, 
 							uint16_t length);
@@ -942,14 +931,14 @@ struct em_ffvt_entry {
 #define E1000_TXDCTL   0x03828  /* TX Descriptor Control - RW */
 #define E1000_TADV     0x0382C  /* TX Interrupt Absolute Delay Val - RW */
 #define E1000_TSPMT    0x03830  /* TCP Segmentation PAD & Min Threshold - RW */
-#define E1000_TARC0    0x03840 /* TX Arbitration Count (0) */
-#define E1000_TDBAL1   0x03900 /* TX Desc Base Address Low (1) - RW */
-#define E1000_TDBAH1   0x03904 /* TX Desc Base Address High (1) - RW */
-#define E1000_TDLEN1   0x03908 /* TX Desc Length (1) - RW */
-#define E1000_TDH1     0x03910 /* TX Desc Head (1) - RW */
-#define E1000_TDT1     0x03918 /* TX Desc Tail (1) - RW */
-#define E1000_TXDCTL1  0x03928 /* TX Descriptor Control (1) - RW */
-#define E1000_TARC1    0x03940 /* TX Arbitration Count (1) */
+#define E1000_TARC0    0x03840  /* TX Arbitration Count (0) */
+#define E1000_TDBAL1   0x03900  /* TX Desc Base Address Low (1) - RW */
+#define E1000_TDBAH1   0x03904  /* TX Desc Base Address High (1) - RW */
+#define E1000_TDLEN1   0x03908  /* TX Desc Length (1) - RW */
+#define E1000_TDH1     0x03910  /* TX Desc Head (1) - RW */
+#define E1000_TDT1     0x03918  /* TX Desc Tail (1) - RW */
+#define E1000_TXDCTL1  0x03928  /* TX Descriptor Control (1) - RW */
+#define E1000_TARC1    0x03940  /* TX Arbitration Count (1) */
 #define E1000_CRCERRS  0x04000  /* CRC Error Count - R/clr */
 #define E1000_ALGNERRC 0x04004  /* Alignment Error Count - R/clr */
 #define E1000_SYMERRS  0x04008  /* Symbol Error Count - R/clr */
@@ -1503,6 +1492,7 @@ struct em_hw {
 #define E1000_EECD_AUPDEN    0x00100000 /* Enable Autonomous FLASH update */
 #define E1000_EECD_SHADV     0x00200000 /* Shadow RAM Data Valid */
 #define E1000_EECD_SEC1VAL   0x00400000 /* Sector One Valid */
+#define E1000_EECD_SECVAL_SHIFT      22
 #define E1000_STM_OPCODE     0xDB00
 #define E1000_HICR_FW_RESET  0xC0
 

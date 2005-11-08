@@ -1,37 +1,37 @@
 /*******************************************************************************
 
-  Copyright (c) 2001-2005, Intel Corporation 
-  All rights reserved.
+Copyright (c) 2001-2005, Intel Corporation 
+All rights reserved.
 
-  Redistribution and use in source and binary forms, with or without 
-  modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are met:
 
-   1. Redistributions of source code must retain the above copyright notice, 
-      this list of conditions and the following disclaimer.
+ 1. Redistributions of source code must retain the above copyright notice, 
+    this list of conditions and the following disclaimer.
 
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
-      documentation and/or other materials provided with the distribution.
+ 2. Redistributions in binary form must reproduce the above copyright 
+    notice, this list of conditions and the following disclaimer in the 
+    documentation and/or other materials provided with the distribution.
 
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
-      this software without specific prior written permission.
+ 3. Neither the name of the Intel Corporation nor the names of its 
+    contributors may be used to endorse or promote products derived from 
+    this software without specific prior written permission.
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.12 2005/10/07 23:38:09 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.13 2005/11/08 01:33:19 brad Exp $ */
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
  */
@@ -571,11 +571,13 @@ em_reset_hw(struct em_hw *hw)
             msec_delay(20);
             break;
         case em_82573:
-            usec_delay(10);
-            ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
-            ctrl_ext |= E1000_CTRL_EXT_EE_RST;
-            E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
-            E1000_WRITE_FLUSH(hw);
+            if (em_is_onboard_nvm_eeprom(hw) == FALSE) {
+                usec_delay(10);
+                ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
+                ctrl_ext |= E1000_CTRL_EXT_EE_RST;
+                E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
+                E1000_WRITE_FLUSH(hw);
+            }
             /* fall through */
         case em_82571:
         case em_82572:
@@ -842,6 +844,11 @@ em_setup_link(struct em_hw *hw)
 
     DEBUGFUNC("em_setup_link");
 
+    /* In the case of the phy reset being blocked, we already have a link.
+     * We do not have to set it up again. */
+    if (em_check_phy_reset_block(hw))
+        return E1000_SUCCESS;
+
     /* Read and store word 0x0F of the EEPROM. This word contains bits
      * that determine the hardware's default PAUSE (flow control) mode,
      * a bit that determines whether the HW defaults to enabling or
@@ -850,19 +857,27 @@ em_setup_link(struct em_hw *hw)
      * control setting, then the variable hw->fc will
      * be initialized based on a value in the EEPROM.
      */
-    if(em_read_eeprom(hw, EEPROM_INIT_CONTROL2_REG, 1, &eeprom_data)) {
-        DEBUGOUT("EEPROM Read Error\n");
-        return -E1000_ERR_EEPROM;
-    }
-
-    if(hw->fc == em_fc_default) {
-        if((eeprom_data & EEPROM_WORD0F_PAUSE_MASK) == 0)
-            hw->fc = em_fc_none;
-        else if((eeprom_data & EEPROM_WORD0F_PAUSE_MASK) ==
-                EEPROM_WORD0F_ASM_DIR)
-            hw->fc = em_fc_tx_pause;
-        else
+    if (hw->fc == em_fc_default) {
+        switch (hw->mac_type) {
+        case em_82573:
             hw->fc = em_fc_full;
+            break;
+        default:
+            ret_val = em_read_eeprom(hw, EEPROM_INIT_CONTROL2_REG,
+                                        1, &eeprom_data);
+            if (ret_val) {
+                DEBUGOUT("EEPROM Read Error\n");
+                return -E1000_ERR_EEPROM;
+            }
+            if ((eeprom_data & EEPROM_WORD0F_PAUSE_MASK) == 0)
+                hw->fc = em_fc_none;
+            else if ((eeprom_data & EEPROM_WORD0F_PAUSE_MASK) ==
+                    EEPROM_WORD0F_ASM_DIR)
+                hw->fc = em_fc_tx_pause;
+            else
+                hw->fc = em_fc_full;
+            break;
+        }
     }
 
     /* We want to save off the original Flow Control configuration just
@@ -2968,13 +2983,22 @@ em_phy_hw_reset(struct em_hw *hw)
     if(hw->mac_type > em_82543) {
         /* Read the device control register and assert the E1000_CTRL_PHY_RST
          * bit. Then, take it out of reset.
+         * For pre-em_82571 hardware, we delay for 10ms between the assert 
+         * and deassert.  For em_82571 hardware and later, we instead delay
+         * for 10ms after the deassertion.
          */
         ctrl = E1000_READ_REG(hw, CTRL);
         E1000_WRITE_REG(hw, CTRL, ctrl | E1000_CTRL_PHY_RST);
         E1000_WRITE_FLUSH(hw);
-        msec_delay(10);
+        
+        if (hw->mac_type < em_82571) 
+            msec_delay(10);
+        
         E1000_WRITE_REG(hw, CTRL, ctrl);
         E1000_WRITE_FLUSH(hw);
+        
+        if (hw->mac_type >= em_82571)
+            msec_delay(10);
     } else {
         /* Read the Extended Device Control Register, assert the PHY_RESET_DIR
          * bit to put the PHY into reset. Then, take it out of reset.
@@ -4466,6 +4490,7 @@ em_read_mac_addr(struct em_hw * hw)
         hw->perm_mac_addr[i] = (uint8_t) (eeprom_data & 0x00FF);
         hw->perm_mac_addr[i+1] = (uint8_t) (eeprom_data >> 8);
     }
+
     switch (hw->mac_type) {
     default:
         break;
@@ -5282,9 +5307,13 @@ em_get_bus_info(struct em_hw *hw)
         hw->bus_speed = em_bus_speed_unknown;
         hw->bus_width = em_bus_width_unknown;
         break;
-    case em_82571:
     case em_82572:
     case em_82573:
+        hw->bus_type = em_bus_type_pci_express;
+        hw->bus_speed = em_bus_speed_2500;
+        hw->bus_width = em_bus_width_pciex_1;
+        break;
+    case em_82571:
         hw->bus_type = em_bus_type_pci_express;
         hw->bus_speed = em_bus_speed_2500;
         hw->bus_width = em_bus_width_pciex_4;
@@ -6649,6 +6678,12 @@ em_get_auto_rd_done(struct em_hw *hw)
         break;
     }
 
+    /* PHY configuration from NVM just starts after EECD_AUTO_RD sets to high.
+     * Need to wait for PHY configuration completion before accessing NVM
+     * and PHY. */
+    if (hw->mac_type == em_82573)
+        msec_delay(25);
+
     return E1000_SUCCESS;
 }
 
@@ -6808,27 +6843,4 @@ em_arc_subsystem_valid(struct em_hw *hw)
         break;
     }
     return FALSE;
-}
-
-int32_t
-em_phy_misctst_get_info(struct em_hw *hw, uint16_t *enabled)
-{
-    int32_t ret_val;
-    uint16_t misctst_reg;
-
-    DEBUGFUNC("em_phy_misctst_get_info");
-
-    ret_val = em_read_phy_reg(hw, 0x0FF0, &misctst_reg);
-    if (ret_val)
-        return ret_val;
-
-    if (misctst_reg & 0x0002) {
-        DEBUGOUT("L1 ASPM disabled");
-        *enabled = FALSE;
-    } else {
-        DEBUGOUT("L1 ASPM enabled");
-        *enabled = TRUE;
-    }
-
-    return E1000_SUCCESS;
 }
