@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.31 2005/10/22 09:19:18 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.32 2005/11/08 20:32:41 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -54,6 +54,19 @@
 #define HID0_FOLD	(1 << (31-28))
 #define HID0_BHT	(1 << (31-29))
 
+/* SCOM addresses (24-bit) */
+#define SCOM_PCR	0x400801 /* Power Management Control Register */
+#define SCOM_PSR	0x408001 /* Power Tuning Status Register */
+
+/* SCOMC format */
+#define SCOMC_ADDR_SHIFT	8
+#define SCOMC_ADDR_MASK		0xffff0000
+#define SCOMC_READ		0x00008000
+
+/* Power (Tuning) Status Register */
+#define PSR_FREQ_MASK	0x0300000000000000LL
+#define PSR_FREQ_HALF	0x0100000000000000LL
+
 char cpu_model[80];
 char machine[] = MACHINE;	/* cpu architecture */
 
@@ -87,6 +100,7 @@ cpumatch(parent, cfdata, aux)
 }
 
 static u_int32_t ppc_curfreq;
+static u_int32_t ppc_maxfreq;
 int ppc_altivec;
 
 
@@ -147,7 +161,7 @@ ppc_check_procid()
 void
 cpuattach(struct device *parent, struct device *dev, void *aux)
 {
-	unsigned int cpu, pvr, hid0;
+	u_int32_t cpu, pvr, hid0;
 	char name[32];
 	int qhandle, phandle;
 	unsigned int clock_freq = 0;
@@ -238,8 +252,22 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		/* Openfirmware stores clock in Hz, not MHz */
 		clock_freq /= 1000000;
 		printf(": %d MHz", clock_freq);
-		ppc_curfreq = clock_freq;
+		ppc_curfreq = ppc_maxfreq = clock_freq;
 		cpu_cpuspeed = ppc_cpuspeed;
+	}
+
+	if (cpu == PPC_CPU_IBM970FX) {
+		u_int64_t psr;
+		int s;
+
+		s = ppc_intr_disable();
+		ppc64_mtscomc((SCOM_PSR << SCOMC_ADDR_SHIFT) | SCOMC_READ);
+		psr = ppc64_mfscomd();
+		ppc64_mfscomc();
+		ppc_intr_enable(s);
+
+		if ((psr & PSR_FREQ_MASK) == PSR_FREQ_HALF)
+			ppc_curfreq = ppc_maxfreq / 2;
 	}
 
 	/* power savings mode */
@@ -286,8 +314,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		config_l2cr(cpu);
 	}
 	printf("\n");
-
-
 }
 
 /* L2CR bit definitions */
