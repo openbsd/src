@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.15 2005/11/08 20:23:42 canacar Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.16 2005/11/08 20:51:00 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -2408,11 +2408,8 @@ aft_release_rx_buffers(xilinx_softc_t *sc)
 {
 	struct xilinx_rx_buffer *buf;
 
-	if (sc->wp_rx_buffers == NULL) {
-		printf("%s: release_rx_buffers called with no buffers!\n",
-		       sc->if_name, MAX_RX_BUF, sizeof(*buf), (void *)buf);
+	if (sc->wp_rx_buffers == NULL)
 		return;
-	}
 
 	while ((buf = SIMPLEQ_FIRST(&sc->wp_rx_free_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&sc->wp_rx_free_list, entry);
@@ -2501,11 +2498,6 @@ aft_reload_rx_dma_buff(xilinx_softc_t *sc, struct xilinx_rx_buffer *buf)
 static void
 aft_release_rx_dma_buff(xilinx_softc_t *sc, struct xilinx_rx_buffer *buf)
 {
-	if (buf->mbuf == NULL) {
-		printf("%s: Error, buffer already free!\n");
-		return;
-	}
-
 	bus_dmamap_destroy(sc->dmatag, buf->dma_map);
 	m_freem(buf->mbuf);
 	buf->mbuf = NULL;
