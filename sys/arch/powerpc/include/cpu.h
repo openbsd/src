@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 2005/10/22 09:19:18 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.24 2005/11/08 20:30:47 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ void	delay(unsigned);
 extern volatile int want_resched;
 extern volatile int astpending;
 
-#define	need_resched(ci)		(want_resched = 1, astpending = 1)
+#define	need_resched(ci)	(want_resched = 1, astpending = 1)
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
 
@@ -103,7 +103,7 @@ invdcache(void *from, int len)
 #define FUNC_SPR(n, name) \
 static __inline u_int32_t ppc_mf ## name (void)			\
 {								\
-	int ret;						\
+	u_int32_t ret;						\
 	__asm __volatile ("mfspr %0," # n : "=r" (ret));	\
 	return ret;						\
 }								\
@@ -170,8 +170,8 @@ ppc_mftb(void)
 	u_long scratch;
 	u_int64_t tb;
 
-	__asm __volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
-	     : "=r"(tb), "=r"(scratch));
+	__asm __volatile ("1: mftbu %0; mftb %0+1; mftbu %1;"
+	    " cmpw 0,%0,%1; bne 1b" : "=r"(tb), "=r"(scratch));
 	return tb;
 }
 
@@ -192,9 +192,12 @@ ppc_mtmsr (u_int32_t val)
 static __inline void
 ppc_mtsrin(u_int32_t val, u_int32_t sn_shifted)
 {
-	__asm __volatile ("mtsrin %0,%1" :: "r"(val), "r"(sn_shifted) );
-
+	__asm __volatile ("mtsrin %0,%1" :: "r"(val), "r"(sn_shifted));
 }
+
+u_int64_t ppc64_mfscomc(void);
+void ppc64_mtscomc(u_int64_t);
+u_int64_t ppc64_mfscomd(void);
 
 /*
  * General functions to enable and disable interrupts
@@ -204,7 +207,7 @@ static __inline void
 ppc_intr_enable(int enable)
 {
 	u_int32_t msr;
-	if (enable != 0)  {
+	if (enable != 0) {
 		msr = ppc_mfmsr();
 		msr |= PSL_EE;
 		ppc_mtmsr(msr);

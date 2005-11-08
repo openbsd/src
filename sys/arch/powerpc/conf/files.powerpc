@@ -1,10 +1,11 @@
-#	$OpenBSD: files.powerpc,v 1.40 2005/05/02 02:39:45 brad Exp $
+#	$OpenBSD: files.powerpc,v 1.41 2005/11/08 20:30:47 kettenis Exp $
 #
 
 file	arch/powerpc/powerpc/setjmp.S			ddb
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/bcopy.c
 file	arch/powerpc/powerpc/copystr.c
+file	arch/powerpc/powerpc/cpu_subr.c
 file	arch/powerpc/powerpc/fpu.c
 file	arch/powerpc/powerpc/in_cksum.c			inet
 file	arch/powerpc/powerpc/pmap.c
