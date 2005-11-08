@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.h,v 1.7 2005/04/01 21:42:36 canacar Exp $	*/
+/*	$OpenBSD: if_san_common.h,v 1.8 2005/11/08 20:23:42 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -37,6 +37,8 @@
 
 # include <dev/pci/if_san_te1.h>
 # include <dev/pci/if_sandrv.h>
+
+#define ADDR_MASK(x,y) (((caddr_t)(x) - (caddr_t)0) & (y))
 
 #define WANPIPE_LITE_VERSION	"1.1.1"
 #define WAN_OPENBSD_PLATFORM	0x06

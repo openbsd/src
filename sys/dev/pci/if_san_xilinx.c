@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.14 2005/09/17 15:10:31 canacar Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.15 2005/11/08 20:23:42 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -97,6 +97,15 @@ enum {
 static int aft_rx_copyback = MHLEN;
 
 
+struct xilinx_rx_buffer {
+	SIMPLEQ_ENTRY(xilinx_rx_buffer) entry;
+	struct mbuf *mbuf;
+	bus_dmamap_t dma_map;
+	wp_rx_element_t rx_el;
+};
+
+SIMPLEQ_HEAD(xilinx_rx_head, xilinx_rx_buffer);
+
 /*
  * This structure is placed in the private data area of the device structure.
  * The card structure used to occupy the private area but now the following
@@ -106,16 +115,18 @@ static int aft_rx_copyback = MHLEN;
 typedef struct {
 	wanpipe_common_t	common;
 
-	struct ifqueue	wp_tx_free_list;
 	struct ifqueue	wp_tx_pending_list;
 	struct ifqueue	wp_tx_complete_list;
-	struct ifqueue	wp_rx_free_list;
-	struct ifqueue	wp_rx_complete_list;
+	struct xilinx_rx_head	wp_rx_free_list;
+	struct xilinx_rx_head	wp_rx_complete_list;
+	struct xilinx_rx_buffer *wp_rx_buffers;
+	struct xilinx_rx_buffer *wp_rx_buffer_last;
+	struct xilinx_rx_buffer	*rx_dma_buf;
 
+	bus_dma_tag_t	dmatag;
+	bus_dmamap_t	tx_dmamap;
 	struct mbuf	*tx_dma_mbuf;
 	u_int8_t	tx_dma_cnt;
-
-	struct mbuf	*rx_dma_mbuf;
 
 	unsigned long	time_slot_map;
 	unsigned char	num_of_time_slots;
@@ -150,7 +161,6 @@ typedef struct {
 
 	int		first_time_slot;
 
-	struct mbuf	*tx_idle_mbuf;
 	unsigned long	tx_dma_addr;
 	unsigned int	tx_dma_len;
 	unsigned char	rx_dma;
@@ -231,7 +241,7 @@ static int	xilinx_init_tx_dev_fifo(sdla_t *, xilinx_softc_t *,
 static void	xilinx_tx_post_complete(sdla_t *, xilinx_softc_t *,
 		    struct mbuf *);
 static void	xilinx_rx_post_complete(sdla_t *, xilinx_softc_t *,
-		    struct mbuf *, struct mbuf **, unsigned char *);
+		    struct xilinx_rx_buffer *, struct mbuf **, u_char *);
 
 
 static char	request_xilinx_logical_channel_num(sdla_t *, xilinx_softc_t *,
@@ -262,9 +272,15 @@ static int	free_fifo_baddr_and_size(sdla_t *, xilinx_softc_t *);
 static void	aft_red_led_ctrl(sdla_t *, int);
 static void	aft_led_timer(void *);
 
-static int	aft_alloc_rx_dma_buff(sdla_t *, xilinx_softc_t *, int);
-static int	aft_init_requeue_free_m(xilinx_softc_t *, struct mbuf *);
 static int	aft_core_ready(sdla_t *);
+static int	aft_alloc_rx_buffers(xilinx_softc_t *);
+static void	aft_release_rx_buffers(xilinx_softc_t *);
+static int	aft_alloc_rx_dma_buff(xilinx_softc_t *, int);
+static void	aft_reload_rx_dma_buff(xilinx_softc_t *,
+		    struct xilinx_rx_buffer *);
+static void	aft_release_rx_dma_buff(xilinx_softc_t *,
+		    struct xilinx_rx_buffer *);
+
 
 /* TE1 Control registers  */
 static WRITE_FRONT_END_REG_T write_front_end_reg;
@@ -343,17 +359,14 @@ wan_xilinx_init(sdla_t *card)
 	strlcpy(sc->if_name, ifp->if_xname, IFNAMSIZ);
 	sc->first_time_slot = -1;
 	sc->time_slot_map = 0;
+	sdla_getcfg(card->hw, SDLA_DMATAG, &sc->dmatag);
 
-	IFQ_SET_MAXLEN(&sc->wp_tx_free_list, MAX_TX_BUF);
-	sc->wp_tx_free_list.ifq_len = 0;
 	IFQ_SET_MAXLEN(&sc->wp_tx_pending_list, MAX_TX_BUF);
 	sc->wp_tx_pending_list.ifq_len = 0;
 	IFQ_SET_MAXLEN(&sc->wp_tx_complete_list, MAX_TX_BUF);
 	sc->wp_tx_complete_list.ifq_len = 0;
-	IFQ_SET_MAXLEN(&sc->wp_rx_free_list, MAX_RX_BUF);
-	sc->wp_rx_free_list.ifq_len = 0;
-	IFQ_SET_MAXLEN(&sc->wp_rx_complete_list, MAX_RX_BUF);
-	sc->wp_rx_complete_list.ifq_len = 0;
+
+	aft_alloc_rx_buffers(sc);
 
 	xilinx_delay(1);
 
@@ -389,9 +402,6 @@ wan_xilinx_release(sdla_t* card, struct ifnet* ifp)
 {
 	xilinx_softc_t *sc = ifp->if_softc;
 
-	IF_PURGE(&sc->wp_rx_free_list);
-	IF_PURGE(&sc->wp_rx_complete_list);
-	IF_PURGE(&sc->wp_tx_free_list);
 	IF_PURGE(&sc->wp_tx_pending_list);
 
 	if (sc->tx_dma_addr && sc->tx_dma_len) {
@@ -401,20 +411,21 @@ wan_xilinx_release(sdla_t* card, struct ifnet* ifp)
 
 	if (sc->tx_dma_mbuf) {
 		log(LOG_INFO, "freeing tx dma mbuf\n");
+		bus_dmamap_unload(sc->dmatag, sc->tx_dmamap);
 		m_freem(sc->tx_dma_mbuf);
 		sc->tx_dma_mbuf = NULL;
 	}
 
-	if (sc->tx_idle_mbuf) {
-		log(LOG_INFO, "freeing idle tx dma mbuf\n");
-		m_freem(sc->tx_idle_mbuf);
-		sc->tx_idle_mbuf = NULL;
+#if 0
+	bus_dmamap_destroy(sc->dmatag, sc->tx_dmamap);
+#endif
+	if (sc->rx_dma_buf) {
+		SIMPLEQ_INSERT_TAIL(&sc->wp_rx_free_list,
+		    sc->rx_dma_buf, entry);
+		sc->rx_dma_buf = NULL;
 	}
 
-	if (sc->rx_dma_mbuf) {
-		m_freem(sc->rx_dma_mbuf);
-		sc->rx_dma_mbuf = NULL;
-	}
+	aft_release_rx_buffers(sc);
 
 	wanpipe_generic_unregister(ifp);
 	ifp->if_softc = NULL;
@@ -483,9 +494,15 @@ wan_xilinx_up(struct ifnet *ifp)
 	log(LOG_INFO, "%s: Allocating %d dma mbuf len=%d\n",
 	    card->devname, card->u.xilinx.dma_per_ch, sc->dma_mtu);
 #endif
-	err = aft_alloc_rx_dma_buff(card, sc, card->u.xilinx.dma_per_ch);
-	if (err)
-		return (EINVAL);
+	if (aft_alloc_rx_dma_buff(sc, card->u.xilinx.dma_per_ch) == 0)
+		return (ENOMEM);
+
+	if (bus_dmamap_create(sc->dmatag, sc->dma_mtu, 1, sc->dma_mtu,
+	      0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->tx_dmamap)) {
+		log(LOG_INFO, "%s: Failed to allocate tx dmamap\n",
+		    sc->if_name);
+		return (ENOMEM);
+	}
 
 	err = xilinx_chip_configure(card);
 	if (err)
@@ -521,7 +538,7 @@ wan_xilinx_down(struct ifnet *ifp)
 {
 	xilinx_softc_t	*sc = ifp->if_softc;
 	sdla_t		*card = (sdla_t *)sc->common.card;
-	struct mbuf	*m;
+	struct xilinx_rx_buffer *buf;
 	int		s;
 
 	if (card->state == WAN_DISCONNECTED)
@@ -552,30 +569,29 @@ wan_xilinx_down(struct ifnet *ifp)
 	}
 
 	if (sc->tx_dma_mbuf) {
+		bus_dmamap_unload(sc->dmatag, sc->tx_dmamap);
 		m_freem(sc->tx_dma_mbuf);
 		sc->tx_dma_mbuf = NULL;
 	}
 
-	if (sc->tx_idle_mbuf) {
-		m_freem(sc->tx_idle_mbuf);
-		sc->tx_idle_mbuf = NULL;
+	bus_dmamap_destroy(sc->dmatag, sc->tx_dmamap);
+
+	/* If there is something left in rx_dma_buf, then move it to
+	 * rx_free_list.
+	 */
+	if (sc->rx_dma_buf) {
+		aft_reload_rx_dma_buff(sc, sc->rx_dma_buf);
+		sc->rx_dma_buf = NULL;
 	}
 
-	/* If there is something left in rx_dma_buf, then
-	** move it to rx_free_list. */
-	if (sc->rx_dma_mbuf) {
-		m = sc->rx_dma_mbuf;
-		aft_init_requeue_free_m(sc, m);
-		sc->rx_dma_mbuf = NULL;
+	while ((buf = SIMPLEQ_FIRST(&sc->wp_rx_free_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->wp_rx_free_list, entry);
+		aft_release_rx_dma_buff(sc, buf);
 	}
 
-	/* If there is something in rx_complete_list, then
-	** move evething to rx_free_list. */
-	for (;;) {
-		IF_DEQUEUE(&sc->wp_rx_complete_list, m);
-		if (m == NULL)
-			break;
-		IF_ENQUEUE(&sc->wp_rx_free_list, m);
+	while ((buf = SIMPLEQ_FIRST(&sc->wp_rx_complete_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->wp_rx_complete_list, entry);
+		aft_release_rx_dma_buff(sc, buf);		
 	}
 
 	splx(s);
@@ -1653,30 +1669,32 @@ xilinx_dma_rx(sdla_t *card, xilinx_softc_t *sc)
 	}
 #endif
 
-	if (sc->rx_dma_mbuf) {
+	if (sc->rx_dma_buf) {
 		log(LOG_INFO, "%s: Critial Error: Rx Dma Buf busy!\n",
 		    sc->if_name);
 		return (EINVAL);
 	}
 
-	IF_DEQUEUE(&sc->wp_rx_free_list, sc->rx_dma_mbuf);
+	sc->rx_dma_buf = SIMPLEQ_FIRST(&sc->wp_rx_free_list);
 
-	if (!sc->rx_dma_mbuf) {
-		log(LOG_INFO, "%s: Critical Error no rx dma buf "
-		    "Free=%d Comp=%d!\n", sc->if_name,
-		    sc->wp_rx_free_list.ifq_len,
-		    sc->wp_rx_complete_list.ifq_len);
-		return (ENOMEM);
+	if (sc->rx_dma_buf == NULL) {
+		if (aft_alloc_rx_dma_buff(sc, 1) == 0) {
+			log(LOG_INFO, "%s: Critical Error no rx dma buf!",
+			    sc->if_name);
+			return (ENOMEM);
+		}
+		sc->rx_dma_buf = SIMPLEQ_FIRST(&sc->wp_rx_free_list);
 	}
 
-	rx_el = mtod(sc->rx_dma_mbuf, wp_rx_element_t *);
-	sc->rx_dma_mbuf->m_len = sizeof(wp_rx_element_t);
-	sc->rx_dma_mbuf->m_pkthdr.len = sc->rx_dma_mbuf->m_len;
-	memset(rx_el, 0, sizeof(wp_rx_element_t));
+	SIMPLEQ_REMOVE_HEAD(&sc->wp_rx_free_list, entry);
 
-	bus_addr = kvtop(mtod(sc->rx_dma_mbuf, caddr_t) +
-	    sc->rx_dma_mbuf->m_len);
+	bus_dmamap_sync(sc->dmatag, sc->rx_dma_buf->dma_map, 0, sc->dma_mtu,
+             BUS_DMASYNC_PREREAD);
 
+	rx_el = &sc->rx_dma_buf->rx_el;
+	memset(rx_el, 0, sizeof(*rx_el));
+
+	bus_addr = sc->rx_dma_buf->dma_map->dm_segs[0].ds_addr;
 	rx_el->dma_addr = bus_addr;
 
 	/* Write the pointer of the data packet to the
@@ -1768,8 +1786,7 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 	 * minimize tx isr, the previously transmitted
 	 * packet is deallocated here */
 	if (sc->tx_dma_mbuf) {
-		log(LOG_INFO, "%s: Deallocating tx_dma_mbuf in %s\n",
-		    sc->if_name, __FUNCTION__);
+		bus_dmamap_unload(sc->dmatag, sc->tx_dmamap);
 		m_freem(sc->tx_dma_mbuf);
 		sc->tx_dma_mbuf = NULL;
 	}
@@ -1798,39 +1815,45 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 	if (!m) {
 		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
 		return (ENOBUFS);
-	} else {
-		len = m->m_len;
-		if (len > MAX_XILINX_TX_DMA_SIZE) {
-			/* FIXME: We need to split this frame into
-			 *        multiple parts.  For now though
-			 *        just drop it :) */
-			log(LOG_INFO, "%s: Tx len %d > %d (MAX TX DMA LEN)\n",
-			    sc->if_name, len, MAX_XILINX_TX_DMA_SIZE);
-			m_freem(m);
-			bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
-			return (EINVAL);
-		}
-
-		if (mtod(m, u_int32_t)  & 0x03) {
-			/* The mbuf should already be aligned */
-			log(LOG_INFO, "%s: TX packet not aligned!\n",
-			    sc->if_name, MAX_XILINX_TX_DMA_SIZE);
-			m_freem(m);
-			bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
-			return (EINVAL);
-		}
-			
-		sc->tx_dma_addr = kvtop(mtod(m, caddr_t));
-		sc->tx_dma_len = len;
 	}
+
+	len = m->m_len;
+	if (len > MAX_XILINX_TX_DMA_SIZE) {
+		/* FIXME: We need to split this frame into
+		 *        multiple parts.  For now though
+		 *        just drop it :) */
+		log(LOG_INFO, "%s: Tx len %d > %d (MAX TX DMA LEN)\n",
+		    sc->if_name, len, MAX_XILINX_TX_DMA_SIZE);
+		m_freem(m);
+		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
+		return (EINVAL);
+	}
+
+	if (ADDR_MASK(mtod(m, caddr_t), 0x03)) {
+		/* The mbuf should already be aligned */
+		log(LOG_INFO, "%s: TX packet not aligned!\n",
+		    sc->if_name, MAX_XILINX_TX_DMA_SIZE);
+		m_freem(m);
+		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
+		return (EINVAL);
+	}
+
+	if (bus_dmamap_load(sc->dmatag, sc->tx_dmamap,
+	    mtod(m, void *), len, NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
+		log(LOG_INFO, "%s: Failed to load TX mbuf for DMA!\n",
+		    sc->if_name);
+		m_freem(m);
+		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
+		return (EINVAL);		
+	}
+
+	sc->tx_dma_addr = sc->tx_dmamap->dm_segs[0].ds_addr;
+	sc->tx_dma_len = len;
 
 	if (sc->tx_dma_addr & 0x03) {
 		log(LOG_INFO, "%s: Error: Tx Ptr not aligned "
 		    "to 32bit boundary!\n", card->devname);
-
-		if (m)
-			m_freem(m);
-
+		m_freem(m);
 		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
 		return (EINVAL);
 	}
@@ -1846,6 +1869,9 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 	/* Write the pointer of the data packet to the
 	 * DMA address register */
 	reg = sc->tx_dma_addr;
+
+	bus_dmamap_sync(sc->dmatag, sc->tx_dmamap, 0, len,
+	    BUS_DMASYNC_PREWRITE);
 
 	/* Set the 32bit alignment of the data length.
 	 * Used to pad the tx packet to the 32 bit
@@ -1913,50 +1939,52 @@ xilinx_dma_tx_complete(sdla_t *card, xilinx_softc_t *sc)
 	dma_descr = (sc->logic_ch_num << 4) + XILINX_TxDMA_DESCRIPTOR_HI;
 	sdla_bus_read_4(card->hw, dma_descr, &reg);
 
-	if (!sc->tx_dma_mbuf) {
+	if (sc->tx_dma_mbuf == NULL) {
 		log(LOG_INFO,
 		    "%s: Critical Error: Tx DMA intr: no tx mbuf !\n",
 		    card->devname);
 		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
 		return;
-	} else {
-		sc->tx_dma_addr = 0;
-		sc->tx_dma_len = 0;
-
-
-		/* Do not free the packet here,
-		 * copy the packet dma info into csum
-		 * field and let the bh handler analyze
-		 * the transmitted packet.
-		 */
-
-		if (reg & TxDMA_HI_DMA_PCI_ERROR_RETRY_TOUT) {
-			log(LOG_INFO, "%s:%s: PCI Error: 'Retry' "
-			    "exceeds maximum (64k): Reg=0x%X!\n",
-			    card->devname, sc->if_name, reg);
-
-			if (++sc->pci_retry < 3) {
-				bit_set((u_int8_t *)&reg,
-				    TxDMA_HI_DMA_GO_READY_BIT);
-
-				log(LOG_INFO, "%s: Retry: TXDMA_HI=0x%X "
-				    "DmaDescr=0x%lX (%s)\n",
-				    sc->if_name, reg, dma_descr, __FUNCTION__);
-
-				sdla_bus_write_4(card->hw, dma_descr, reg);
-				return;
-			}
-		}
-
-		sc->pci_retry = 0;
-		sc->tx_dma_mbuf->m_pkthdr.csum_flags = reg;
-		IF_ENQUEUE(&sc->wp_tx_complete_list, sc->tx_dma_mbuf);
-		sc->tx_dma_mbuf = NULL;
-
-		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
-
-		xilinx_process_packet(sc);
 	}
+
+	bus_dmamap_sync(sc->dmatag, sc->tx_dmamap, 0, sc->tx_dma_len,
+             BUS_DMASYNC_POSTWRITE);
+
+	sc->tx_dma_addr = 0;
+	sc->tx_dma_len = 0;
+
+	/* Do not free the packet here,
+	 * copy the packet dma info into csum
+	 * field and let the bh handler analyze
+	 * the transmitted packet.
+	 */
+
+	if (reg & TxDMA_HI_DMA_PCI_ERROR_RETRY_TOUT) {
+		log(LOG_INFO, "%s:%s: PCI Error: 'Retry' "
+		    "exceeds maximum (64k): Reg=0x%X!\n",
+		    card->devname, sc->if_name, reg);
+
+		if (++sc->pci_retry < 3) {
+			bit_set((u_int8_t *)&reg,
+				TxDMA_HI_DMA_GO_READY_BIT);
+
+			log(LOG_INFO, "%s: Retry: TXDMA_HI=0x%X "
+			    "DmaDescr=0x%lX (%s)\n",
+			    sc->if_name, reg, dma_descr, __FUNCTION__);
+
+			sdla_bus_write_4(card->hw, dma_descr, reg);
+			return;
+		}
+	}
+
+	sc->pci_retry = 0;
+	sc->tx_dma_mbuf->m_pkthdr.csum_flags = reg;
+	IF_ENQUEUE(&sc->wp_tx_complete_list, sc->tx_dma_mbuf);
+	sc->tx_dma_mbuf = NULL;
+
+	bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
+
+	xilinx_process_packet(sc);
 }
 
 static void
@@ -2040,19 +2068,19 @@ tx_post_exit:
 static void
 xilinx_dma_rx_complete(sdla_t *card, xilinx_softc_t *sc)
 {
+	struct xilinx_rx_buffer *buf;
 	unsigned long dma_descr;
-	struct mbuf *m;
 	wp_rx_element_t *rx_el;
 
 	bit_clear((u_int8_t *)&sc->rx_dma, 0);
 
-	if (!sc->rx_dma_mbuf) {
+	if (sc->rx_dma_buf == NULL) {
 		log(LOG_INFO,
 		    "%s: Critical Error: rx_dma_mbuf\n", sc->if_name);
 		return;
 	}
 
-	rx_el = mtod(sc->rx_dma_mbuf, wp_rx_element_t *);
+	rx_el = &sc->rx_dma_buf->rx_el;
 
 	/* Reading Rx DMA descriptor information */
 	dma_descr=(sc->logic_ch_num << 4) + XILINX_RxDMA_DESCRIPTOR_LO;
@@ -2071,12 +2099,12 @@ xilinx_dma_rx_complete(sdla_t *card, xilinx_softc_t *sc)
 	    __FUNCTION__, __LINE__);
 #endif
 
-	m = sc->rx_dma_mbuf;
-	sc->rx_dma_mbuf = NULL;
+	buf = sc->rx_dma_buf;
+	sc->rx_dma_buf = NULL;
 
 	xilinx_dma_rx(card, sc);
 
-	IF_ENQUEUE(&sc->wp_rx_complete_list, m);
+	SIMPLEQ_INSERT_TAIL(&sc->wp_rx_complete_list, buf, entry);
 
 	xilinx_process_packet(sc);
 
@@ -2086,11 +2114,12 @@ xilinx_dma_rx_complete(sdla_t *card, xilinx_softc_t *sc)
 
 static void
 xilinx_rx_post_complete(sdla_t *card, xilinx_softc_t *sc,
-    struct mbuf *m, struct mbuf **new_m, unsigned char *pkt_error)
+    struct xilinx_rx_buffer *buf, struct mbuf **new_m, u_char *pkt_error)
 {
 	struct ifnet	*ifp;
 	unsigned int len, data_error = 0;
-	wp_rx_element_t *rx_el = mtod(m, wp_rx_element_t *);
+	wp_rx_element_t *rx_el = &buf->rx_el;
+	struct mbuf *m = buf->mbuf;
 
 	WAN_ASSERT1(sc == NULL);
 	ifp = (struct ifnet *)&sc->common.ifp;	/*m->m_pkthdr.rcvif;*/
@@ -2114,7 +2143,7 @@ xilinx_rx_post_complete(sdla_t *card, xilinx_softc_t *sc,
 	}
 
 	/* Checking Rx DMA PCI error status. Has to be '0's */
-	if (rx_el->reg&RxDMA_HI_DMA_PCI_ERROR_MASK) {
+	if (rx_el->reg & RxDMA_HI_DMA_PCI_ERROR_MASK) {
 #ifdef DEBUG_ERR
 		if (rx_el->reg & RxDMA_HI_DMA_PCI_ERROR_M_ABRT)
 			log(LOG_INFO, "%s: Rx Error: Abort from Master: "
@@ -2225,42 +2254,34 @@ xilinx_rx_post_complete(sdla_t *card, xilinx_softc_t *sc,
 		}
 	}
 
+	bus_dmamap_sync(sc->dmatag, sc->rx_dma_buf->dma_map, 0, len,
+             BUS_DMASYNC_POSTREAD);
+
+	m->m_len = m->m_pkthdr.len = len;
+
 	if (len > aft_rx_copyback) {
 		/* The rx size is big enough, thus
 		 * send this buffer up the stack
 		 * and allocate another one */
-		memset(mtod(m, caddr_t), 0, sizeof(wp_rx_element_t));
-		m->m_len += len;
-		m->m_pkthdr.len = m->m_len;
-		m_adj(m, sizeof(wp_rx_element_t));
 		*new_m = m;
-
-		aft_alloc_rx_dma_buff(card, sc, 1);
+		buf->mbuf = NULL;
 	} else {
-		struct mbuf	*m0;
+		struct mbuf *m0;
 		/* The rx packet is very
 		 * small thus, allocate a new
 		 * buffer and pass it up */
-		m0 = wan_mbuf_alloc(len);
-		if (m0 == NULL) {
+		if ((m0 = m_copym2(m, 0, len, M_NOWAIT)) == NULL) {
 			log(LOG_INFO, "%s: Failed to allocate mbuf!\n",
 			    sc->if_name);
 			if (ifp)
 			    ifp->if_ierrors++;
-			goto rx_comp_error;
-		}
-
-		m0->m_len = m0->m_pkthdr.len = len;
-		memcpy(mtod(m0, caddr_t), mtod(m, caddr_t) + m->m_len, len);
-		*new_m = m0;
-		aft_init_requeue_free_m(sc, m);
+		} else
+			*new_m = m0;
 	}
 
-	return;
+ rx_comp_error:
+	aft_reload_rx_dma_buff(sc, buf);
 
-rx_comp_error:
-
-	aft_init_requeue_free_m(sc, m);
 	return;
 }
 
@@ -2363,36 +2384,131 @@ xilinx_dma_max_logic_ch(sdla_t *card)
 }
 
 static int
-aft_init_requeue_free_m(xilinx_softc_t *sc, struct mbuf *m)
+aft_alloc_rx_buffers(xilinx_softc_t *sc)
 {
-	int err;
+	struct xilinx_rx_buffer *buf;
 
-	m->m_data = (m->m_flags & M_EXT) ? m->m_ext.ext_buf : m->m_pktdat;
-	m->m_pkthdr.len	= m->m_len = 0;
+	SIMPLEQ_INIT(&sc->wp_rx_free_list);
+	SIMPLEQ_INIT(&sc->wp_rx_complete_list);
 
-	memset(mtod(m, caddr_t), 0, sizeof(wp_rx_element_t));
-	IF_ENQUEUE(&sc->wp_rx_free_list, m);
+	/* allocate receive buffers in one cluster */
+	buf = malloc(sizeof(*buf) * MAX_RX_BUF, M_DEVBUF, M_NOWAIT);
+	if (buf == NULL)
+		return (1);
 
-	return (err);
-}
-
-static int
-aft_alloc_rx_dma_buff(sdla_t *card, xilinx_softc_t *sc, int num)
-{
-	int i;
-	struct mbuf *m;
-
-	for (i = 0; i < num; i++) {
-		m = wan_mbuf_alloc(sc->dma_mtu);
-		if (m == NULL) {
-			log(LOG_INFO, "%s: %s  no memory\n",
-					sc->if_name, __FUNCTION__);
-			return (ENOMEM);
-		}
-		IF_ENQUEUE(&sc->wp_rx_free_list, m);
-	}
+	bzero(buf, sizeof(*buf) * MAX_RX_BUF);
+	sc->wp_rx_buffers = buf;
+	sc->wp_rx_buffer_last = buf;
 
 	return (0);
+}
+
+static void
+aft_release_rx_buffers(xilinx_softc_t *sc)
+{
+	struct xilinx_rx_buffer *buf;
+
+	if (sc->wp_rx_buffers == NULL) {
+		printf("%s: release_rx_buffers called with no buffers!\n",
+		       sc->if_name, MAX_RX_BUF, sizeof(*buf), (void *)buf);
+		return;
+	}
+
+	while ((buf = SIMPLEQ_FIRST(&sc->wp_rx_free_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->wp_rx_free_list, entry);
+		aft_release_rx_dma_buff(sc, buf);
+	}
+
+	while ((buf = SIMPLEQ_FIRST(&sc->wp_rx_complete_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->wp_rx_complete_list, entry);
+		aft_release_rx_dma_buff(sc, buf);		
+	}
+
+	free(sc->wp_rx_buffers, M_DEVBUF);
+
+	sc->wp_rx_buffers = NULL;
+	sc->wp_rx_buffer_last = NULL;
+}
+
+/* Allocate an mbuf and setup dma_map. */
+static int
+aft_alloc_rx_dma_buff(xilinx_softc_t *sc, int num)
+{
+	struct xilinx_rx_buffer *buf, *ebuf;
+	int n;
+
+	ebuf = sc->wp_rx_buffers + MAX_RX_BUF;
+	buf = sc->wp_rx_buffer_last;
+
+	for (n = 0; n < num; n++) {
+		int i;
+		for (i = 0; i < MAX_RX_BUF; i++) {
+			if (buf->mbuf == NULL)
+				break;
+			if (++buf == ebuf)
+				buf = sc->wp_rx_buffers;
+		}
+
+		if (buf->mbuf != NULL)
+			break;
+
+		sc->wp_rx_buffer_last = buf;
+
+		buf->mbuf = wan_mbuf_alloc(sc->dma_mtu);
+		if (buf->mbuf == NULL)
+			break;
+
+		if (bus_dmamap_create(sc->dmatag, sc->dma_mtu, 1, sc->dma_mtu,
+		    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &buf->dma_map)) {
+			m_freem(buf->mbuf);
+			buf->mbuf = NULL;
+			break;
+		}
+
+		if (bus_dmamap_load(sc->dmatag, buf->dma_map,
+		    mtod(buf->mbuf, void *), sc->dma_mtu, NULL,
+		    BUS_DMA_NOWAIT | BUS_DMA_READ)) {
+			aft_release_rx_dma_buff(sc, buf);
+			break;
+		}
+
+		SIMPLEQ_INSERT_TAIL(&sc->wp_rx_free_list, buf, entry);
+	}
+
+	return (n);
+}
+
+static void
+aft_reload_rx_dma_buff(xilinx_softc_t *sc, struct xilinx_rx_buffer *buf)
+{
+	bus_dmamap_unload(sc->dmatag, buf->dma_map);
+	if (buf->mbuf == NULL) {
+		buf->mbuf = wan_mbuf_alloc(sc->dma_mtu);
+		if (buf->mbuf == NULL) {
+			bus_dmamap_destroy(sc->dmatag, buf->dma_map);
+			return;
+		}
+	}
+	if (bus_dmamap_load(sc->dmatag, buf->dma_map, mtod(buf->mbuf, void *),
+	    sc->dma_mtu, NULL, BUS_DMA_NOWAIT | BUS_DMA_READ)) {
+		aft_release_rx_dma_buff(sc, buf);
+		return;
+	}
+
+	SIMPLEQ_INSERT_TAIL(&sc->wp_rx_free_list, buf, entry);
+}
+
+static void
+aft_release_rx_dma_buff(xilinx_softc_t *sc, struct xilinx_rx_buffer *buf)
+{
+	if (buf->mbuf == NULL) {
+		printf("%s: Error, buffer already free!\n");
+		return;
+	}
+
+	bus_dmamap_destroy(sc->dmatag, buf->dma_map);
+	m_freem(buf->mbuf);
+	buf->mbuf = NULL;
 }
 
 static void
@@ -2417,19 +2533,17 @@ xilinx_process_packet(xilinx_softc_t *sc)
 
 	WAN_ASSERT1(sc == NULL);
 	for (;;) {
-		IF_DEQUEUE(&sc->wp_rx_complete_list, m);
-		if (m == NULL)
+		struct xilinx_rx_buffer *buf;
+		buf = SIMPLEQ_FIRST(&sc->wp_rx_complete_list);
+		if (buf == NULL)
 			break;
+
+		SIMPLEQ_REMOVE_HEAD(&sc->wp_rx_complete_list, entry);
 
 		new_m = NULL;
 		pkt_error = 0;
 
-		/*
-		 * The post function will take care of the skb and new_skb
-		 * buffer.  If new_skb buffer exists, driver must pass it up
-		 * the stack, or free it
-		 */
-		xilinx_rx_post_complete(sc->common.card, sc, m, &new_m,
+		xilinx_rx_post_complete(sc->common.card, sc, buf, &new_m,
 		    &pkt_error);
 		if (new_m) {
 			ifp = (struct ifnet *)&sc->common.ifp;
@@ -2556,11 +2670,9 @@ fifo_error_interrupt(sdla_t *card, unsigned long reg)
 
 #ifdef DEBUG_ERR
 				log(LOG_INFO, "%s:%s: Warning RX Fifo Error "
-				    "on LCh=%ld Slot=%d RxCL=%d RxFL=%d "
-				    "RxDMA=%d\n", card->devname, sc->if_name,
+				    "on LCh=%ld Slot=%d RxDMA=%d\n",
+				    card->devname, sc->if_name,
 				     sc->logic_ch_num, i,
-				     sc->wp_rx_complete_list.ifq_len,
-				     sc->wp_rx_free_list.ifq_len,
 				     sc->rx_dma);
 #endif
 
@@ -2791,7 +2903,8 @@ port_set_state(sdla_t *card, int state)
  * handle_front_end_state
  */
 
-static void handle_front_end_state(void *card_id)
+static void
+handle_front_end_state(void *card_id)
 {
 	sdla_t *card = (sdla_t *)card_id;
 
@@ -3008,13 +3121,9 @@ enable_data_error_intr(sdla_t *card)
 		    sc->if_name, __FUNCTION__);
 #endif
 
-		if (sc->rx_dma_mbuf) {
-			wp_rx_element_t *rx_el;
-			struct mbuf *m = sc->rx_dma_mbuf;
-
-			sc->rx_dma_mbuf = NULL;
-			rx_el = mtod(m, wp_rx_element_t *);
-			aft_init_requeue_free_m(sc, m);
+		if (sc->rx_dma_buf) {
+			aft_reload_rx_dma_buff(sc, sc->rx_dma_buf);
+			sc->rx_dma_buf = NULL;
 		}
 
 		xilinx_dma_rx(card, sc);
@@ -3025,6 +3134,7 @@ enable_data_error_intr(sdla_t *card)
 		}
 
 		if (sc->tx_dma_mbuf) {
+			bus_dmamap_unload(sc->dmatag, sc->tx_dmamap);
 			m_freem(sc->tx_dma_mbuf);
 			sc->tx_dma_mbuf = NULL;
 		}
