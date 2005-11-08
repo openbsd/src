@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.28 2005/11/03 16:08:03 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.29 2005/11/08 09:22:47 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -164,7 +164,7 @@ checkout_usage(void)
 
 /*
  * Checkout revision <rev> from RCSFILE <file>, writing it to the path <dst>
- * Currenly recognised <flags> are CO_LOCK, CO_UNLOCK and CO_REVDATE. 
+ * Currenly recognised <flags> are CO_LOCK, CO_UNLOCK and CO_REVDATE.
  *
  * Returns 0 on success, -1 on failure.
  */

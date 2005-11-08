@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.18 2005/11/02 20:32:45 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.19 2005/11/08 09:22:48 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 /* shared flags  */
 #define FORCE       (1<<5)
-#define INTERACTIVE (1<<6)  
+#define INTERACTIVE (1<<6)
 
 extern char *__progname;
 extern const char rcs_version[];
