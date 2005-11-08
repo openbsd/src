@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.73 2005/11/06 00:24:17 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.74 2005/11/08 02:29:51 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ extern u_long nextgennumber;
 struct pool ffs_ino_pool;
 
 int
-ffs_mountroot()
+ffs_mountroot(void)
 {
 	struct fs *fs;
 	struct mount *mp;
@@ -154,17 +154,13 @@ ffs_mountroot()
  * mount system call
  */
 int
-ffs_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+ffs_mount(struct mount *mp, const char *path, void *data,
+    struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
-	register struct fs *fs;
+	struct fs *fs;
 	int error = 0, flags;
 	int ronly;
 	mode_t accessmode;
@@ -450,7 +446,6 @@ error_1:	/* no state to back out */
 	return (error);
 }
 
-
 struct ffs_reload_args {
 	struct fs *fs;
 	struct proc *p;
@@ -515,10 +510,7 @@ ffs_reload_vnode(struct vnode *vp, void *args)
  *	6) re-read inode data for all active vnodes.
  */
 int
-ffs_reload(mountp, cred, p)
-	register struct mount *mountp;
-	struct ucred *cred;
-	struct proc *p;
+ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 {
 	struct vnode *devvp;
 	caddr_t space;
@@ -616,14 +608,11 @@ ffs_reload(mountp, cred, p)
  * Common code for mount and mountroot
  */
 int
-ffs_mountfs(devvp, mp, p)
-	register struct vnode *devvp;
-	struct mount *mp;
-	struct proc *p;
+ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 {
-	register struct ufsmount *ump;
+	struct ufsmount *ump;
 	struct buf *bp;
-	register struct fs *fs;
+	struct fs *fs;
 	dev_t dev;
 	struct partinfo dpart;
 	caddr_t space;
@@ -839,12 +828,9 @@ out:
 
 /*
  * Sanity checks for old file systems.
- *
- * XXX - goes away some day.
  */
 int
-ffs_oldfscompat(fs)
-	struct fs *fs;
+ffs_oldfscompat(struct fs *fs)
 {
 	int i;
 
@@ -874,13 +860,10 @@ ffs_oldfscompat(fs)
  * unmount system call
  */
 int
-ffs_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
-	register struct ufsmount *ump;
-	register struct fs *fs;
+	struct ufsmount *ump;
+	struct fs *fs;
 	int error, flags;
 
 	flags = 0;
@@ -923,12 +906,9 @@ ffs_unmount(mp, mntflags, p)
  * Flush out all the files in a filesystem.
  */
 int
-ffs_flushfiles(mp, flags, p)
-	register struct mount *mp;
-	int flags;
-	struct proc *p;
+ffs_flushfiles(struct mount *mp, int flags, struct proc *p)
 {
-	register struct ufsmount *ump;
+	struct ufsmount *ump;
 	int error;
 
 	ump = VFSTOUFS(mp);
@@ -965,13 +945,10 @@ ffs_flushfiles(mp, flags, p)
  * Get file system statistics.
  */
 int
-ffs_statfs(mp, sbp, p)
-	struct mount *mp;
-	register struct statfs *sbp;
-	struct proc *p;
+ffs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
-	register struct ufsmount *ump;
-	register struct fs *fs;
+	struct ufsmount *ump;
+	struct fs *fs;
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
@@ -994,7 +971,6 @@ ffs_statfs(mp, sbp, p)
 	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
 }
-
 
 struct ffs_sync_args {
 	int allerror;
@@ -1037,11 +1013,7 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
  * Should always be called with the mount point locked.
  */
 int
-ffs_sync(mp, waitfor, cred, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *cred;
-	struct proc *p;
+ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
@@ -1058,7 +1030,6 @@ ffs_sync(mp, waitfor, cred, p)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
-
  loop:
 	/*
 	 * Write back each (modified) inode.
@@ -1112,10 +1083,7 @@ ffs_sync(mp, waitfor, cred, p)
  * done by the calling routine.
  */
 int
-ffs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	register struct fs *fs;
 	register struct inode *ip;
@@ -1127,7 +1095,6 @@ ffs_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-
 retry:
 	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
 		return (0);
@@ -1240,12 +1207,9 @@ retry:
  * - check for an unallocated inode (i_mode == 0)
  */
 int
-ffs_fhtovp(mp, fhp, vpp)
-	register struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	register struct ufid *ufhp;
+	struct ufid *ufhp;
 	struct fs *fs;
 
 	ufhp = (struct ufid *)fhp;
@@ -1261,18 +1225,17 @@ ffs_fhtovp(mp, fhp, vpp)
  */
 /* ARGSUSED */
 int
-ffs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
+ffs_vptofh(struct vnode *vp, struct fid *fhp)
 {
-	register struct inode *ip;
-	register struct ufid *ufhp;
+	struct inode *ip;
+	struct ufid *ufhp;
 
 	ip = VTOI(vp);
 	ufhp = (struct ufid *)fhp;
 	ufhp->ufid_len = sizeof(struct ufid);
 	ufhp->ufid_ino = ip->i_number;
 	ufhp->ufid_gen = ip->i_ffs_gen;
+
 	return (0);
 }
 
@@ -1280,12 +1243,10 @@ ffs_vptofh(vp, fhp)
  * Write a superblock and associated information back to disk.
  */
 int
-ffs_sbupdate(mp, waitfor)
-	struct ufsmount *mp;
-	int waitfor;
+ffs_sbupdate(struct ufsmount *mp, int waitfor)
 {
-	register struct fs *dfs, *fs = mp->um_fs;
-	register struct buf *bp;
+	struct fs *dfs, *fs = mp->um_fs;
+	struct buf *bp;
 	int blks;
 	caddr_t space;
 	int i, size, error, allerror = 0;
@@ -1343,17 +1304,18 @@ ffs_sbupdate(mp, waitfor)
 }
 
 int
-ffs_init(vfsp)
-	struct vfsconf *vfsp;
+ffs_init(struct vfsconf *vfsp)
 {
 	static int done;
 
 	if (done)
 		return (0);
+
 	done = 1;
 	pool_init(&ffs_ino_pool, sizeof(struct inode), 0, 0, 0, "ffsino",
 	    &pool_allocator_nointr);
 	softdep_initialize();
+
 	return (ufs_init(vfsp));
 }
 
@@ -1361,14 +1323,8 @@ ffs_init(vfsp)
  * fast filesystem related variables.
  */
 int
-ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+ffs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	extern int doclusterread, doclusterwrite, doreallocblks, doasyncfree;
 #ifdef FFS_SOFTUPDATES

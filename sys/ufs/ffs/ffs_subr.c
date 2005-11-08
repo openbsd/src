@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.16 2005/07/03 20:14:02 drahn Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.17 2005/11/08 02:29:51 pedro Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -92,15 +92,11 @@ __dead void panic(const char *, ...);
  * of some frags.
  */
 void
-ffs_fragacct(fs, fragmap, fraglist, cnt)
-	struct fs *fs;
-	int fragmap;
-	int32_t fraglist[];
-	int cnt;
+ffs_fragacct(struct fs *fs, int fragmap, int32_t fraglist[], int cnt)
 {
 	int inblk;
-	register int field, subfield;
-	register int siz, pos;
+	int field, subfield;
+	int siz, pos;
 
 	inblk = (int)(fragtbl[fs->fs_frag][fragmap]) << 1;
 	fragmap <<= 1;
@@ -124,12 +120,10 @@ ffs_fragacct(fs, fragmap, fraglist, cnt)
 
 #if defined(_KERNEL) && defined(DIAGNOSTIC)
 void
-ffs_checkoverlap(bp, ip)
-	struct buf *bp;
-	struct inode *ip;
+ffs_checkoverlap(struct buf *bp, struct inode *ip)
 {
-	register struct buf *ebp, *ep;
-	register daddr_t start, last;
+	struct buf *ebp, *ep;
+	daddr_t start, last;
 	struct vnode *vp;
 
 	ebp = &buf[nbuf];
@@ -162,10 +156,7 @@ ffs_checkoverlap(bp, ip)
  * check if a block is available
  */
 int
-ffs_isblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	daddr_t h;
+ffs_isblock(struct fs *fs, unsigned char *cp, daddr_t h)
 {
 	unsigned char mask;
 
@@ -190,10 +181,7 @@ ffs_isblock(fs, cp, h)
  * take a block out of the map
  */
 void
-ffs_clrblock(fs, cp, h)
-	struct fs *fs;
-	u_char *cp;
-	daddr_t h;
+ffs_clrblock(struct fs *fs, u_char *cp, daddr_t h)
 {
 
 	switch ((int)fs->fs_frag) {
@@ -218,10 +206,7 @@ ffs_clrblock(fs, cp, h)
  * put a block into the map
  */
 void
-ffs_setblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	daddr_t h;
+ffs_setblock(struct fs *fs, unsigned char *cp, daddr_t h)
 {
 
 	switch ((int)fs->fs_frag) {
@@ -243,15 +228,11 @@ ffs_setblock(fs, cp, h)
 	}
 }
 
-
 /*
  * check if a block is free
  */
 int
-ffs_isfreeblock(fs, cp, h)
-	struct fs *fs;
-	unsigned char *cp;
-	daddr_t h;
+ffs_isfreeblock(struct fs *fs, unsigned char *cp, daddr_t h)
 {
 
 	switch ((int)fs->fs_frag) {

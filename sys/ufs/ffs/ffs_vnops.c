@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.34 2005/07/03 20:14:02 drahn Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.35 2005/11/08 02:29:51 pedro Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ NULL, NULL }
 };
+
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
 
@@ -125,6 +126,7 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ NULL, NULL }
 };
+
 struct vnodeopv_desc ffs_specop_opv_desc =
 	{ &ffs_specop_p, ffs_specop_entries };
 
@@ -148,6 +150,7 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ NULL, NULL }
 };
+
 struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
 #endif /* FIFO */
@@ -165,8 +168,7 @@ int doclusterwrite = 1;
  */
 /* ARGSUSED */
 int
-ffs_fsync(v)
-	void *v;
+ffs_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -280,8 +282,7 @@ loop:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ffs_reclaim(v)
-	void *v;
+ffs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
