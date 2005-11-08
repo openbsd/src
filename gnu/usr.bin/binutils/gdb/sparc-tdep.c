@@ -1026,10 +1026,10 @@ sparc_software_single_step (enum target_signal sig, int insert_breakpoints_p)
 
   if (insert_breakpoints_p)
     {
-      CORE_ADDR pc;
+      CORE_ADDR pc, orig_npc;
 
       pc = sparc_address_from_register (tdep->pc_regnum);
-      npc = sparc_address_from_register (tdep->npc_regnum);
+      orig_npc = npc = sparc_address_from_register (tdep->npc_regnum);
 
       /* Analyze the instruction at PC.  */
       nnpc = sparc_analyze_control_transfer (pc, &npc);
@@ -1039,9 +1039,10 @@ sparc_software_single_step (enum target_signal sig, int insert_breakpoints_p)
 	target_insert_breakpoint (nnpc, nnpc_save);
 
       /* Assert that we have set at least one breakpoint, and that
-         they're not set at the same spot.  */
-      gdb_assert (npc != 0 || nnpc != 0);
-      gdb_assert (nnpc != npc);
+	 they're not set at the same spot - unless we're going
+	 from here straight to NULL, i.e. a call or jump to 0.  */
+      gdb_assert (npc != 0 || nnpc != 0 || orig_npc == 0);
+      gdb_assert (nnpc != npc || orig_npc == 0);
     }
   else
     {
