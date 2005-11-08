@@ -1,7 +1,7 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.33 2004/10/26 17:16:27 pedro Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.34 2005/11/08 15:43:44 pedro Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -99,14 +99,8 @@ int	doclusterraz = 0;
  *	If either is NULL, then you don't have to do the I/O.
  */
 int
-cluster_read(vp, ci, filesize, lblkno, size, cred, bpp)
-	struct vnode *vp;
-	struct cluster_info *ci;
-	u_quad_t filesize;
-	daddr_t lblkno;
-	long size;
-	struct ucred *cred;
-	struct buf **bpp;
+cluster_read(struct vnode *vp, struct cluster_info *ci, u_quad_t filesize,
+    daddr_t lblkno, long size, struct ucred *cred, struct buf **bpp)
 {
 	struct buf *bp, *rbp;
 	daddr_t blkno, ioblkno;
@@ -268,15 +262,8 @@ skip_readahead:
  * and then parcel them up into logical blocks in the buffer hash table.
  */
 struct buf *
-cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
-	struct vnode *vp;
-	u_quad_t filesize;
-	struct buf *bp;
-	daddr_t lbn;
-	daddr_t blkno;
-	long size;
-	int run;
-	long flags;
+cluster_rbuild(struct vnode *vp, u_quad_t filesize, struct buf *bp,
+    daddr_t lbn, daddr_t blkno, long size, int run, long flags)
 {
 	struct cluster_save *b_save;
 	struct buf *tbp;
@@ -374,14 +361,8 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
  * Either get a new buffer or grow the existing one.
  */
 struct buf *
-cluster_newbuf(vp, bp, flags, blkno, lblkno, size, run)
-	struct vnode *vp;
-	struct buf *bp;
-	long flags;
-	daddr_t blkno;
-	daddr_t lblkno;
-	long size;
-	int run;
+cluster_newbuf(struct vnode *vp, struct buf *bp, long flags, daddr_t blkno,
+    daddr_t lblkno, long size, int run)
 {
 	if (!bp) {
 		bp = getblk(vp, lblkno, size, 0, 0);
@@ -404,8 +385,7 @@ cluster_newbuf(vp, bp, flags, blkno, lblkno, size, run)
  * that we will need to shift around.
  */
 void
-cluster_callback(bp)
-	struct buf *bp;
+cluster_callback(struct buf *bp)
 {
 	struct cluster_save *b_save;
 	struct buf **bpp, *tbp;
@@ -480,10 +460,7 @@ cluster_callback(bp)
  *	4.	end of a cluster - asynchronously write cluster
  */
 void
-cluster_write(bp, ci, filesize)
-	struct buf *bp;
-	struct cluster_info *ci;
-	u_quad_t filesize;
+cluster_write(struct buf *bp, struct cluster_info *ci, u_quad_t filesize)
 {
 	struct vnode *vp;
 	daddr_t lbn;
@@ -586,7 +563,6 @@ cluster_write(bp, ci, filesize)
 	ci->ci_lasta = bp->b_blkno;
 }
 
-
 /*
  * This is an awful lot like cluster_rbuild...wish they could be combined.
  * The last lbn argument is the current block on which I/O is being
@@ -594,13 +570,8 @@ cluster_write(bp, ci, filesize)
  * the current block (if last_bp == NULL).
  */
 void
-cluster_wbuild(vp, last_bp, size, start_lbn, len, lbn)
-	struct vnode *vp;
-	struct buf *last_bp;
-	long size;
-	daddr_t start_lbn;
-	int len;
-	daddr_t	lbn;
+cluster_wbuild(struct vnode *vp, struct buf *last_bp, long size,
+    daddr_t start_lbn, int len, daddr_t lbn)
 {
 	struct cluster_save *b_save;
 	struct buf *bp, *tbp;
@@ -751,10 +722,8 @@ redo:
  * Plus add one additional buffer.
  */
 struct cluster_save *
-cluster_collectbufs(vp, ci, last_bp)
-	struct vnode *vp;
-	struct cluster_info *ci;
-	struct buf *last_bp;
+cluster_collectbufs(struct vnode *vp, struct cluster_info *ci,
+    struct buf *last_bp)
 {
 	struct cluster_save *buflist;
 	daddr_t	lbn;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.29 2005/05/26 00:33:45 pedro Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.30 2005/11/08 15:43:44 pedro Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -79,12 +79,11 @@
  *	}
  */
 int
-namei(ndp)
-	register struct nameidata *ndp;
+namei(struct nameidata *ndp)
 {
-	register struct filedesc *fdp;	/* pointer to file descriptor state */
-	register char *cp;		/* pointer into pathname argument */
-	register struct vnode *dp;	/* the directory we are searching */
+	struct filedesc *fdp;		/* pointer to file descriptor state */
+	char *cp;			/* pointer into pathname argument */
+	struct vnode *dp;		/* the directory we are searching */
 	struct iovec aiov;		/* uio for reading symbolic links */
 	struct uio auio;
 	int error, linklen;
@@ -287,8 +286,7 @@ badlink:
  *	    if WANTPARENT set, return unlocked parent in ni_dvp
  */
 int
-lookup(ndp)
-	register struct nameidata *ndp;
+lookup(struct nameidata *ndp)
 {
 	char *cp;			/* pointer into pathname argument */
 	struct vnode *dp = 0;		/* the directory we are searching */
@@ -605,12 +603,10 @@ bad:
  * Reacquire a path name component.
  */
 int
-relookup(dvp, vpp, cnp)
-	struct vnode *dvp, **vpp;
-	struct componentname *cnp;
+relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
 	struct proc *p = cnp->cn_proc;
-	register struct vnode *dp = 0;	/* the directory we are searching */
+	struct vnode *dp = 0;		/* the directory we are searching */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
@@ -732,5 +728,3 @@ bad:
 	*vpp = NULL;
 	return (error);
 }
-
-
