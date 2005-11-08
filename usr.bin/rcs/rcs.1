@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.13 2005/11/07 10:07:09 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.14 2005/11/08 14:23:16 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -32,13 +32,16 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl ehiLMqUV
+.Op Fl A Ns Ar oldfile
 .Op Fl a Ns Ar users
 .Op Fl b Ns Op Ar rev
 .Op Fl c Ns Ar string
 .Op Fl e Ns Op Ar users
 .Op Fl k Ns Ar mode
 .Op Fl m Ns Ar rev : Ns Ar log
-.Ar file Op Ar ...
+.Oo Fl t Ns Ar file Ns \*(Ba
+.Ar str Oc
+.Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -47,11 +50,17 @@ files.
 .Pp
 The following options are supported:
 .Bl -tag -width "-e usersXX"
+.It Fl A Ns Ar oldfile
+Append the access list of
+.Ar oldfile
+to the access list of the RCS files.
 .It Fl a Ns Ar users
 Add the usernames specified in the comma-separated list
 .Ar users
 to the access list of the RCS files.
 .It Fl b Ns Op Ar rev
+Set the default branch to
+.Ar rev .
 .It Fl c Ns Ar string
 Set comment leader to
 .Ar string .
@@ -93,6 +102,21 @@ log message with
 .Ar msg .
 .It Fl q
 Be quiet about reporting.
+.Sm off
+.It Fl t Ar file \*(Ba Ar str
+.Sm on
+Change the descriptive text.
+The descriptive text is taken from the
+.Ar file
+specified as argument or from the string
+.Ar str
+given as argument if it is preceded by the
+.Sq -
+character.
+If no argument is used, the descriptive text is taken from standard input
+terminated by end-of-file or by a line containing the
+.Sq \&.
+character by itself.
 .It Fl U
 Disable strict locking on the RCS files.
 See
