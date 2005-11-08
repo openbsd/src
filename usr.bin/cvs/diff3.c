@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.5 2005/10/26 18:13:58 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.6 2005/11/08 16:06:03 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.5 2005/10/26 18:13:58 xsa Exp $";
+static const char rcsid[] = "$OpenBSD: diff3.c,v 1.6 2005/11/08 16:06:03 xsa Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -187,13 +187,13 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
 
-	if ((d1 = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL)
+	if ((d1 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL)
 		goto out;
 
-	if ((d2 = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL)
+	if ((d2 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL)
 		goto out;
 
-	if ((diffb = cvs_buf_alloc(128, BUF_AUTOEXT)) == NULL)
+	if ((diffb = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL)
 		goto out;
 
 	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
@@ -768,7 +768,7 @@ edscript(int n)
 		(void)fseek(fp[2], (long)de[n].new.from, 0);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
 			j = k > BUFSIZ ? BUFSIZ : k;
-			if (fread(block, 1, j, fp[2]) != (size_t)j)
+			if (fread(block, (size_t)1, (size_t)j, fp[2]) != (size_t)j)
 				return (-1);
 			block[j] = '\0';
 			diff_output("%s", block);
