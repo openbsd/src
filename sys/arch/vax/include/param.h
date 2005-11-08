@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.28 2005/04/19 15:29:48 mickey Exp $ */
+/*	$OpenBSD: param.h,v 1.29 2005/11/08 15:05:56 martin Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -131,7 +131,6 @@
 /* clicks to bytes */
 #define	ctob(x)		((x) << PGSHIFT)
 #define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
-#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
