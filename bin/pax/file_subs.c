@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.29 2005/04/25 19:39:52 otto Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.30 2005/11/09 19:59:06 otto Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.29 2005/04/25 19:39:52 otto Exp $";
+static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.30 2005/11/09 19:59:06 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -1037,7 +1037,7 @@ set_crc(ARCHD *arcn, int fd)
 	int res;
 	off_t cpcnt = 0L;
 	u_long size;
-	unsigned long crc = 0L;
+	u_int32_t crc = 0;
 	char tbuf[FILEBLK];
 	struct stat sb;
 

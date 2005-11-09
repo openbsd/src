@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.20 2004/04/16 22:50:23 deraadt Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.21 2005/11/09 19:59:06 otto Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: buf_subs.c,v 1.20 2004/04/16 22:50:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: buf_subs.c,v 1.21 2005/11/09 19:59:06 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -677,7 +677,7 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	int rem;
 	int sz = MINFBSZ;
 	struct stat sb;
-	u_long crc = 0L;
+	u_int32_t crc = 0;
 
 	/*
 	 * pass the blocksize of the file being written to the write routine,
