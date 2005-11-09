@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.44 2005/09/01 02:16:56 uwe Exp $ */
+/*	$OpenBSD: wd.c,v 1.45 2005/11/09 19:05:48 uwe Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -1258,29 +1258,23 @@ bad144intern(struct wd_softc *wd)
 int
 wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 {
-#ifdef __zaurus__
-	/* XXX fix after 3.8 release */
-	/* We already have the drive parameters; just return them. */
-	if (params == &wd->sc_params && wd->sc_params.atap_cylinders != 0)
-		return 0;
-#endif /* __zaurus__ */
 	switch (ata_get_params(wd->drvp, flags, params)) {
 	case CMD_AGAIN:
 		return 1;
 	case CMD_ERR:
-#ifdef __zaurus__
-		/* XXX fix after 3.8 release */
-		/* We already have the drive parameters; reuse them. */
+		/* If we already have drive parameters, reuse them. */
 		if (wd->sc_params.atap_cylinders != 0) {
-			*params = wd->sc_params;
+			if (params != &wd->sc_params)
+				bcopy(&wd->sc_params, params,
+				    sizeof(struct ataparams));
 			return 0;
 		}
-#endif /* __zaurus__ */
 		/*
 		 * We `know' there's a drive here; just assume it's old.
 		 * This geometry is only used to read the MBR and print a
 		 * (false) attach message.
 		 */
+		bzero(params, sizeof(struct ataparams));
 		strncpy(params->atap_model, "ST506",
 		    sizeof params->atap_model);
 		params->atap_config = ATA_CFG_FIXED;

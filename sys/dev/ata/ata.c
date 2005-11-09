@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.24 2004/01/15 21:37:57 grange Exp $      */
+/*      $OpenBSD: ata.c,v 1.25 2005/11/09 19:05:48 uwe Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -73,7 +73,6 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	WDCDEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
 	bzero(tb, sizeof(tb));
-	bzero(prms, sizeof(struct ataparams));
 	bzero(&wdc_c, sizeof(struct wdc_command));
 
 	if (drvp->drive_flags & DRIVE_ATA) {

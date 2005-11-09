@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.87 2005/10/21 08:50:50 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.88 2005/11/09 19:05:48 uwe Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -851,6 +851,7 @@ wdcattach(chp)
 			/* If IDENTIFY succeeded, this is not an OLD ctrl */
 			drvp->drive_flags &= ~DRIVE_OLD;
 		} else {
+			bzero(&drvp->id, sizeof(struct ataparams));
 			drvp->drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
 			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed\n",
