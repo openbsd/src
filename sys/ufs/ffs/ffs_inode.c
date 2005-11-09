@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.39 2005/11/09 02:29:11 pedro Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.40 2005/11/09 15:35:53 pedro Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -147,6 +147,7 @@ ffs_update(struct inode *ip, struct timespec *atime,
 #define	SINGLE	0	/* index of single indirect block */
 #define	DOUBLE	1	/* index of double indirect block */
 #define	TRIPLE	2	/* index of triple indirect block */
+
 /*
  * Truncate the inode oip to at most length size, freeing the
  * disk blocks.
@@ -162,8 +163,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
-	register int i;
-	int aflags, error, allerror;
+	int i, aflags, error, allerror;
 	off_t osize;
 
 	if (length < 0)
@@ -363,7 +363,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * All whole direct blocks or frags.
 	 */
 	for (i = NDADDR - 1; i > lastblock; i--) {
-		register long bsize;
+		long bsize;
 
 		bn = oip->i_ffs_db[i];
 		if (bn == 0)
@@ -435,17 +435,13 @@ done:
  * NB: triple indirect blocks are untested.
  */
 static int
-ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
-	register struct inode *ip;
-	daddr_t lbn, lastbn;
-	daddr_t dbn;
-	int level;
-	long *countp;
+ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
+    int level, long *countp)
 {
-	register int i;
+	int i;
 	struct buf *bp;
-	register struct fs *fs = ip->i_fs;
-	register daddr_t *bap;
+	struct fs *fs = ip->i_fs;
+	daddr_t *bap;
 	struct vnode *vp;
 	daddr_t *copy = NULL, nb, nlbn, last;
 	long blkcount, factor;

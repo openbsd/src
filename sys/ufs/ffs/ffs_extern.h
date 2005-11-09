@@ -1,7 +1,7 @@
-/*	$OpenBSD: ffs_extern.h,v 1.24 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.25 2005/11/09 15:35:53 pedro Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -75,7 +75,6 @@
 	{ "dirhash_maxmem", CTLTYPE_INT }, \
 	{ "dirhash_mem", CTLTYPE_INT }, \
 }
-
 
 struct buf;
 struct fid;
@@ -156,7 +155,6 @@ int ffs_fsync(void *);
 int ffs_reclaim(void *);
 int ffsfifo_reclaim(void *);
 
-
 /*
  * Soft dependency function prototypes.
  */
@@ -184,7 +182,7 @@ void  softdep_setup_allocindir_page(struct inode *, ufs_lbn_t,
             struct buf *, int, daddr_t, daddr_t, struct buf *);
 void  softdep_fsync_mountdev(struct vnode *);
 int   softdep_sync_metadata(struct vop_fsync_args *);
-int   softdep_fsync(struct vnode *vp);
+int   softdep_fsync(struct vnode *);
 __END_DECLS
 
 extern int (**ffs_vnodeop_p)(void *);
