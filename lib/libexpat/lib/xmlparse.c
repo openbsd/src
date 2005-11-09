@@ -1367,7 +1367,7 @@ enum XML_Status
 XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
 {
   /* Avoid integer overflow */
-  if (((len * 2) < len) && (((long long)len * 2) > MAXLEN))
+  if (len > MAXLEN / 2)
       return XML_STATUS_ERROR; 
   if (len == 0) {
     if (!isFinal)
@@ -1467,8 +1467,7 @@ void *
 XML_GetBuffer(XML_Parser parser, int len)
 {
   /* Avoid integer overflow */
-  if (((len + (bufferEnd - bufferPtr)) < len)
-      && ((long long)len + (bufferEnd - bufferPtr) > MAXLEN))
+  if (len > MAXLEN - (bufferEnd - bufferPtr))
       return NULL; 
   if (len > bufferLim - bufferEnd) {
     int neededSize = len + (bufferEnd - bufferPtr);
