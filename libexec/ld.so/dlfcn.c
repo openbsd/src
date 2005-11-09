@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.70 2005/10/18 02:49:17 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.71 2005/11/09 16:32:12 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,7 +51,7 @@ dlopen(const char *libname, int flags)
 	int failed = 0;
 
 	if (libname == NULL)
-		return _dl_objects;
+		return RTLD_DEFAULT;
 
 	DL_DEB(("dlopen: loading: %s\n", libname));
 
@@ -230,7 +230,7 @@ dlclose(void *handle)
 {
 	int retval;
 
-	if (handle == _dl_objects)
+	if (handle == RTLD_DEFAULT)
 		return 0;
 
 	_dl_thread_kern_stop();
