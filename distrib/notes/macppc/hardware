@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.63 2005/09/23 10:24:50 grunk Exp $
+dnl	$OpenBSD: hardware,v 1.64 2005/11/09 15:36:07 martin Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -7,7 +7,7 @@ not supported.  PowerMac G3 Beige status is unknown.
 
 OpenBSD/MACHINE has been tested on iMac Revs A-C as well as on iMac DV(+)
 machines, Power Macintosh G4 systems (single and dual processor), as well as
-the G4 Cube, B&W G3, LCD iMac and Mac mini.
+the G4 Cube, B&W G3, LCD iMac, Mac mini, iMac G5, PowerMac G5 and Xserve G5.
 
 For portables, PowerBook G3, PowerBook G4 (12", 15", 17"), iBook, iBook2
 and iBook G4 have been tested.  Note that power saving features on portables
