@@ -65,7 +65,7 @@ typedef void (*ihfunc_t)(int, fd_set *);
 #define PROTOCOL_VERSION 3  /* increment when packet format/content changes */
 
 #define MROUTED_VERSION  8  /* increment on local changes or bug fixes, */
-			    /* reset to 0 whever PROTOCOL_VERSION increments */
+			    /* reset to 0 whenever PROTOCOL_VERSION increments */
 
 #define MROUTED_LEVEL  ((MROUTED_VERSION << 8) | PROTOCOL_VERSION | \
 			((NF_PRUNE | NF_GENID | NF_MTRACE) << 16) | \

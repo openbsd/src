@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.h,v 1.5 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: netbsd_stat.h,v 1.6 2005/11/09 14:14:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,7 +42,7 @@
  * stat structure used to contain timespecs, which had different
  * alignment constraints than a time_t and a long alone.  The padding
  * should be removed the next time the stat structure ABI is changed.
- * (This will happen whever we change to 8 byte time_t.)
+ * (This will happen whenever we change to 8 byte time_t.)
  */
 #if defined(__alpha__)			/* XXX XXX XXX */
 #define	__STATPAD(x)	int x;
