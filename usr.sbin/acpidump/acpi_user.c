@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_user.c,v 1.2 2005/07/21 16:38:55 fgsch Exp $	*/
+/*	$OpenBSD: acpi_user.c,v 1.3 2005/11/09 20:30:03 martin Exp $	*/
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,21 +25,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpi_user.c,v 1.2 2005/07/21 16:38:55 fgsch Exp $
+ *	$Id: acpi_user.c,v 1.3 2005/11/09 20:30:03 martin Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi_user.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
-#ifdef  __FreeBSD__
-#include <sys/param.h>
-#else
 #include <sys/types.h>
-#define PAGE_MASK (0x1000-1) /*For I386*/
-#define trunc_page(x)		((x) & ~PAGE_MASK)
-#define round_page(x)		(((x) + PAGE_MASK) & ~PAGE_MASK)
-#endif
-
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <err.h>
 #include <fcntl.h>
@@ -48,6 +42,8 @@
 #include <unistd.h>
 
 #include "acpidump.h"
+
+#define vm_page_size sysconf(_SC_PAGESIZE)
 
 static int      acpi_mem_fd = -1;
 
