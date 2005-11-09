@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.3 2004/08/06 22:39:12 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.4 2005/11/09 18:08:37 martin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
-#define pmap_phys_address(ppn)		(arm_ptob((ppn)))
+#define pmap_phys_address(ppn)		(ptoa(ppn))
 
 #define pmap_proc_iflush(p, va, len)	/* nothing */
 #define pmap_unuse_final(p)		/* nothing */

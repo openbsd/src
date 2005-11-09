@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus_io.c,v 1.1 2004/02/01 05:09:49 drahn Exp $ */
+/*	$OpenBSD: mainbus_io.c,v 1.2 2005/11/09 18:08:37 martin Exp $ */
 /*	$NetBSD: mainbus_io.c,v 1.14 2003/12/06 22:05:33 bjh21 Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ mainbus_bs_mmap(t, paddr, offset, prot, flags)
 	/*
 	 * mmap from address `paddr+offset' for one page
 	 */
-	 return (arm_btop((paddr + offset)));
+	 return (atop(paddr + offset));
 }
 
 void

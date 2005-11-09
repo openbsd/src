@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 2004/02/26 04:58:38 drahn Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 2005/11/09 18:08:37 martin Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ mmmmap(dev, off, prot)
 	if (off >= ctob(physmem) &&
 	    suser(p, 0) != 0)
 		return -1;
-	return arm_btop(off);
+	return atop(off);
 }
 /*ARGSUSED*/
 int

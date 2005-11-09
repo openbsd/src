@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 2005/10/21 15:43:01 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 2005/11/09 18:08:37 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -99,9 +99,6 @@
 #define USPACE_SVC_STACK_BOTTOM		(USPACE_SVC_STACK_TOP - 0x1000)
 #define	USPACE_UNDEF_STACK_TOP		(USPACE_SVC_STACK_BOTTOM - 0x10)
 #define USPACE_UNDEF_STACK_BOTTOM	(sizeof(struct user) + FPCONTEXTSIZE + 10)
-
-#define arm_btop(x)			((x) >> PAGE_SHIFT)
-#define arm_ptob(x)			((x) << PAGE_SHIFT)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
