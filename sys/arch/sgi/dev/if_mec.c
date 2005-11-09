@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.8 2005/02/17 19:05:35 miod Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.9 2005/11/09 06:11:42 brad Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1047,7 +1047,7 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_ac, cmd, data)) > 0) {
 		splx(s);

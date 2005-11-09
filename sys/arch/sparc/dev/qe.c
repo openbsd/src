@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.27 2005/06/08 17:03:02 henning Exp $	*/
+/*	$OpenBSD: qe.c,v 1.28 2005/11/09 06:14:50 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -674,7 +674,7 @@ qeinit(sc)
 	struct qe_cregs *cr = sc->sc_cr;
 	struct qec_softc *qec = sc->sc_qec;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int s = splimp();
+	int s = splnet();
 	int i;
 
 	qestop(sc);

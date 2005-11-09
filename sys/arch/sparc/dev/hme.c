@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.49 2005/06/08 17:03:02 henning Exp $	*/
+/*	$OpenBSD: hme.c,v 1.50 2005/11/09 06:14:50 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -385,7 +385,7 @@ hmeioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 		splx(s);
