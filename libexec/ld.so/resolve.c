@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.45 2005/10/21 15:24:10 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.46 2005/11/09 16:41:29 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -93,7 +93,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const long *dl_data,
 		if (dynp->d_tag == DT_SYMBOLIC)
 			object->dyn.symbolic = 1;
 		if (dynp->d_tag == DT_BIND_NOW)
-			object->dyn.bind_now = 1;
+			object->obj_flags = RTLD_NOW;
 		dynp++;
 	}
 

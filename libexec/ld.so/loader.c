@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.99 2005/10/21 15:24:10 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.100 2005/11/09 16:41:29 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -174,7 +174,7 @@ _dl_dopreload(char *paths)
 
 	while ((cp = _dl_strsep(&dp, ":")) != NULL) {
 		shlib = _dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB,
-		DL_LAZY|RTLD_GLOBAL);
+		_dl_objects->obj_flags);
 		if (shlib == NULL) {
 			_dl_printf("%s: can't load library '%s'\n",
 			    _dl_progname, cp);
@@ -241,11 +241,16 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 	Elf_Dyn *dynp;
 	unsigned int loop;
 	int libcount;
+	int depflags;
 
 	dynobj = object;
 	while(dynobj) {
 		DL_DEB(("examining: '%s'\n", dynobj->load_name));
 		libcount = 0;
+
+		/* propagate RTLD_NOW to deplibs (can be set by dynamic tags) */
+		depflags = flags | (dynobj->obj_flags & RTLD_NOW);
+
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			if (dynp->d_tag == DT_NEEDED) {
 				libcount++;
@@ -294,7 +299,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 				DL_DEB(("loading: %s required by %s\n", libname,
 				    dynobj->load_name));
 				depobj = _dl_load_shlib(libname, dynobj,
-				    OBJTYPE_LIB, flags);
+				    OBJTYPE_LIB, depflags);
 				if (depobj == 0) {
 					if (booting) {
 						_dl_printf(
@@ -403,7 +408,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		}
 		phdp++;
 	}
-	exe_obj->obj_flags = RTLD_GLOBAL;
+	exe_obj->obj_flags |= RTLD_GLOBAL;
 
 	n = _dl_malloc(sizeof *n);
 	if (n == NULL)
@@ -415,7 +420,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	if (_dl_preload != NULL)
 		_dl_dopreload(_dl_preload);
 
-	_dl_load_dep_libs(exe_obj, DL_LAZY|RTLD_GLOBAL, 1);
+	_dl_load_dep_libs(exe_obj, exe_obj->obj_flags, 1);
 
 	/*
 	 * Now add the dynamic loader itself last in the object list
@@ -754,7 +759,8 @@ _dl_rtld(elf_object_t *object)
 	 */
 	fails =_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
-	_dl_md_reloc_got(object, !(_dl_bindnow || object->dyn.bind_now));
+	_dl_md_reloc_got(object, !(_dl_bindnow ||
+	    object->obj_flags & RTLD_NOW));
 
 	if (_dl_symcache != NULL) {
 		if (sz != 0)

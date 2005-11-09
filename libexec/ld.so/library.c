@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.51 2005/10/12 20:48:15 kurt Exp $ */
+/*	$OpenBSD: library.c,v 1.52 2005/11/09 16:41:29 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -246,7 +246,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 		/* set inode, dev from stat info */
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
-		object->obj_flags = flags;
+		object->obj_flags |= flags;
 	} else {
 		/* XXX not possible. object cannot come back NULL */
 		_dl_munmap((void *)libaddr, maxva - minva);

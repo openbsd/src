@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.31 2005/10/12 20:36:16 kurt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.32 2005/11/09 16:41:29 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -284,7 +284,7 @@ retry:
 		/* set inode, dev from stat info */
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
-		object->obj_flags = flags;
+		object->obj_flags |= flags;
 
 	} else {
 		/* XXX no point. object is never returned NULL */

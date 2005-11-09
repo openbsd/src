@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.49 2005/10/16 04:14:22 kurt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.50 2005/11/09 16:41:29 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -93,7 +93,6 @@ struct elf_object {
 			Elf_Addr	debug;
 			Elf_Addr	textrel;
 			Elf_Addr	jmprel;
-			Elf_Addr	bind_now;
 		} u;
 	} Dyn;
 #define dyn Dyn.u
