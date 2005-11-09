@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsclean.1,v 1.8 2005/11/02 11:01:40 xsa Exp $
+.\"     $OpenBSD: rcsclean.1,v 1.9 2005/11/09 09:52:25 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -29,6 +29,8 @@
 .Op Fl q Ns Op Ar rev
 .Op Fl r Ns Ar rev
 .Op Fl u Ns Op Ar rev
+.Op Fl x Ns Ar suffixes
+.Op Fl z Ns Ar tz
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -53,6 +55,13 @@ Specify the revision for comparison.
 Unlock the revision if it's not locked and has not been changed.
 .It Fl V
 Print RCS's version number.
+.It Fl x Ns Ar suffixes
+Specify the suffixes for RCS files.
+Suffixes should be separated by the
+.Sq /
+character.
+.It Fl z Ns Ar tz
+Specify the time zone for keyword substitution.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT
