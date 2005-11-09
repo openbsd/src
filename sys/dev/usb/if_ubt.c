@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.4 2005/08/02 12:32:07 reyk Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.5 2005/11/09 05:57:23 brad Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.4 2005/08/02 12:32:07 reyk Exp $
+ * $Id: if_ubt.c,v 1.5 2005/11/09 05:57:23 brad Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -1713,7 +1713,7 @@ ubt_if_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	int s;
 	int error = 0;
 
-	s = splimp();
+	s = splnet();
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;

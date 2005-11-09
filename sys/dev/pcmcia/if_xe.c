@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.29 2005/06/08 17:03:01 henning Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.30 2005/11/09 05:56:05 brad Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -1073,7 +1073,7 @@ xe_init(sc)
 
 	DPRINTF(XED_CONFIG, ("xe_init\n"));
 
-	s = splimp();
+	s = splnet();
 
 	xe_set_address(sc);
 
@@ -1213,7 +1213,7 @@ xe_ioctl(ifp, command, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 	case SIOCSIFADDR:
