@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.38 2005/07/03 20:14:01 drahn Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.39 2005/11/09 02:29:11 pedro Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -75,46 +75,53 @@ ffs_update(struct inode *ip, struct timespec *atime,
 	int error;
 	struct timespec ts;
 
-	getnanotime(&ts);
 	vp = ITOV(ip);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		ip->i_flag &=
 		    ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 		return (0);
-	} else if ((vp->v_mount->mnt_flag & MNT_NOATIME) &&
+	}
+
+	if ((vp->v_mount->mnt_flag & MNT_NOATIME) &&
 	    !(ip->i_flag & (IN_CHANGE | IN_UPDATE))) {
 		ip->i_flag &= ~IN_ACCESS;
 	}
+
 	if ((ip->i_flag &
 	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
 	    waitfor != MNT_WAIT)
 		return (0);
+
+	getnanotime(&ts);
+
 	if (ip->i_flag & IN_ACCESS) {
 		ip->i_ffs_atime = atime ? atime->tv_sec : ts.tv_sec;
 		ip->i_ffs_atimensec = atime ? atime->tv_nsec : ts.tv_nsec;
 	}
+
 	if (ip->i_flag & IN_UPDATE) {
 		ip->i_ffs_mtime = mtime ? mtime->tv_sec : ts.tv_sec;
 		ip->i_ffs_mtimensec = mtime ? mtime->tv_nsec : ts.tv_nsec;
 		ip->i_modrev++;
 	}
-	if (ip->i_flag & IN_CHANGE) {
-		struct timespec ts;
 
-		getnanotime(&ts);
+	if (ip->i_flag & IN_CHANGE) {
 		ip->i_ffs_ctime = ts.tv_sec;
 		ip->i_ffs_ctimensec = ts.tv_nsec;
 	}
+
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	fs = ip->i_fs;
+
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {		/* XXX */
+	if (fs->fs_inodefmt < FS_44INODEFMT) {
 		ip->i_din1.di_ouid = ip->i_ffs_uid;		/* XXX */
 		ip->i_din1.di_ogid = ip->i_ffs_gid;		/* XXX */
-	}						/* XXX */
+	}
+
 	error = bread(ip->i_devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 		(int)fs->fs_bsize, NOCRED, &bp);
 	if (error) {
