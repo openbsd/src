@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.29 2004/12/13 20:25:34 otto Exp $	*/
+/*	$OpenBSD: cp.c,v 1.30 2005/11/09 20:03:29 otto Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.29 2004/12/13 20:25:34 otto Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.30 2005/11/09 20:03:29 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -279,6 +279,7 @@ copy(char *argv[], enum op type, int fts_options)
 	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
 		switch (curr->fts_info) {
 		case FTS_NS:
+		case FTS_DNR:
 		case FTS_ERR:
 			warnx("%s: %s",
 			    curr->fts_path, strerror(curr->fts_errno));
