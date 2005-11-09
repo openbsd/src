@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.15 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: safe.c,v 1.16 2005/11/09 05:59:50 brad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1488,7 +1488,7 @@ safe_dmamap_aligned(const struct safe_operand *op)
 
 /*
  * Clean up after a chip crash.
- * It is assumed that the caller in splimp()
+ * It is assumed that the caller in splnet()
  */
 void
 safe_cleanchip(struct safe_softc *sc)
@@ -1510,7 +1510,7 @@ safe_cleanchip(struct safe_softc *sc)
 
 /*
  * free a safe_q
- * It is assumed that the caller is within splimp().
+ * It is assumed that the caller is within splnet().
  */
 int
 safe_free_entry(struct safe_softc *sc, struct safe_ringentry *re)
