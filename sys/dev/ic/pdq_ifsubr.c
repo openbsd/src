@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.16 2005/06/08 17:03:00 henning Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.17 2005/11/09 05:50:25 brad Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -259,7 +259,7 @@ pdq_ifioctl(
     pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_arpcom.ac_if));
     int s, error = 0;
 
-    s = splimp();
+    s = splnet();
 
     switch (cmd) {
 	case SIOCSIFADDR: {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.18 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.19 2005/11/09 05:46:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -344,7 +344,7 @@ efioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 		splx(s);
@@ -413,7 +413,7 @@ efinit(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, s;
 
-	s = splimp();
+	s = splnet();
 
 	efstop(sc);
 
@@ -854,7 +854,7 @@ ef_miibus_readreg(dev, phy, reg)
 	struct ef_softc *sc = (struct ef_softc *)dev;
 	int i, ack, s, val = 0;
 
-	s = splimp();
+	s = splnet();
 
 	GO_WINDOW(4);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EP_W4_CTRLR_STATUS, 0);
@@ -927,7 +927,7 @@ ef_miibus_writereg(dev, phy, reg, val)
 	struct ef_softc *sc = (struct ef_softc *)dev;
 	int s, i;
 
-	s = splimp();
+	s = splnet();
 
 	GO_WINDOW(4);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EP_W4_CTRLR_STATUS, 0);
@@ -986,7 +986,7 @@ ef_miibus_statchg(self)
 	struct ef_softc *sc = (struct ef_softc *)self;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	GO_WINDOW(3);
 	/* Set duplex bit appropriately */
 	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
@@ -1006,7 +1006,7 @@ ef_tick(v)
 	struct ef_softc *sc = v;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	mii_tick(&sc->sc_mii);
 	splx(s);
 	timeout_add(&sc->sc_tick_tmo, hz);

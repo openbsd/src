@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.13 2005/06/08 17:03:00 henning Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.14 2005/11/09 05:46:21 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -323,7 +323,7 @@ ex_init(sc)
 
 	if (TAILQ_EMPTY(&ifp->if_addrlist))
 		return;
-	s = splimp();
+	s = splnet();
 	sc->arpcom.ac_if.if_timer = 0;
 
 	/*
@@ -413,7 +413,7 @@ ex_start(ifp)
 
 	DODEBUG(Start_End, printf("ex_start: start\n"););
 
-	s = splimp();
+	s = splnet();
 
 	/*
  	 * Main loop: send outgoing packets to network card until there are no
@@ -451,7 +451,7 @@ ex_start(ifp)
 			/*
  			 * Disable rx and tx interrupts, to avoid corruption of
 			 * the host address register by interrupt service 
-			 * routines. XXX Is this necessary with splimp() 
+			 * routines. XXX Is this necessary with splnet() 
 			 * enabled?
 			 */
 			ISA_WRITE(MASK_REG, All_Int);
@@ -784,7 +784,7 @@ ex_ioctl(ifp, cmd, data)
 
 	DODEBUG(Start_End, printf("ex_ioctl: start "););
 
-	s = splimp();
+	s = splnet();
 
 	switch(cmd) {
 		case SIOCSIFADDR:
@@ -885,7 +885,7 @@ ex_reset(sc)
 
 	DODEBUG(Start_End, printf("ex_reset: start\n"););
   
-	s = splimp();
+	s = splnet();
 	ex_stop(sc);
 	ex_init(sc);
 	splx(s);
