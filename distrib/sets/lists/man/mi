@@ -2130,6 +2130,7 @@
 ./usr/share/man/cat8/luna88k
 ./usr/share/man/cat8/luna88k/MAKEDEV.0
 ./usr/share/man/cat8/luna88k/boot_luna88k.0
+./usr/share/man/cat8/luna88k/kbd.0
 ./usr/share/man/cat8/luna88k/wsconscfg.0
 ./usr/share/man/cat8/luna88k/wsconsctl.0
 ./usr/share/man/cat8/mac68k
