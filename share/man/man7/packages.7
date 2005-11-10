@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.22 2005/10/10 13:40:00 jmc Exp $
+.\" $OpenBSD: packages.7,v 1.23 2005/11/10 11:27:42 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -121,6 +121,28 @@ Packages that are distinct but rely on a common subset of files usually
 install a basic
 .Qq common
 package that holds those files, and is not useful as a stand-alone package.
+.Sh PACKAGE VERSIONS
+All packages have an obvious version number in their name,
+and a not so obvious version inside the actual package: 
+the dependencies used for building.
+Tools like pkg_add -u and out-of-date will look at those dependencies to
+decide when to perform an update.
+.Pp
+The full version (package name and dependency names) is known as the
+package signature, and can be queried with pkg_info -S, for packages, or
+make print-package-signature for ports.
+.Pp
+Additionally, some packages with similar names and different versions may
+exist at the same moment, because they have been built from different places
+in the ports tree: snapshot versus stable version of some software, or
+different flavors (note that this is different from the usual -current versus
+-stable versions of the
+.Ox
+ports tree).
+.Pp
+Every package includes at least one pkgpath marker to record the ports tree
+location used to build it, so that users do not have their packages randomly
+switch from a stable to a snapshot package, or from a gtk to a gtk2 flavor.
 .Sh PACKAGE NAMING
 All package names follow the pattern
 .Qq name-version-flavor ,
