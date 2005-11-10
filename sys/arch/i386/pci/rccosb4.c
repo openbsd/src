@@ -1,4 +1,4 @@
-/*	$OpenBSD: rccosb4.c,v 1.2 2005/10/27 20:01:13 mickey Exp $	*/
+/*	$OpenBSD: rccosb4.c,v 1.3 2005/11/10 15:14:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004,2005 Michael Shalayeff
@@ -125,11 +125,11 @@ osb4_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct osb4_handle *ph = v;
 
-	if (!OSB4_LEGAL_LINK(clink) || !OSB4_LEGAL_IRQ(irq))
+	if (!OSB4_LEGAL_LINK(clink) || !OSB4_LEGAL_IRQ(irq & 0xf))
 		return (1);
 
 	bus_space_write_1(ph->osb4_iot, ph->osb4_ioh, 0, clink);
-	bus_space_write_1(ph->osb4_iot, ph->osb4_ioh, 1, irq);
+	bus_space_write_1(ph->osb4_iot, ph->osb4_ioh, 1, irq & 0xf);
 
 	return (0);
 }
