@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.18 2005/06/11 00:48:06 miod Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.19 2005/11/10 22:57:37 martin Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*-
@@ -280,9 +280,7 @@ vga_pci_mmap(void *v, off_t off, int prot)
 		if (off > AGP_GET_APERTURE(sc))
 			return (-1);
 
-#ifdef __i386__
-		return i386_btop(sc->sc_apaddr + off);
-#endif
+		return atop(sc->sc_apaddr + off);
 	}
 #endif
 	return -1;
