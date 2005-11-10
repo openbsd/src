@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.17 2005/07/03 20:14:02 drahn Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.18 2005/11/10 22:01:14 pedro Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -58,8 +58,7 @@
  * number to index into the array of block pointers described by the dinode.
  */
 int
-ufs_bmap(v)
-	void *v;
+ufs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -94,15 +93,9 @@ ufs_bmap(v)
  * Each entry contains the offset into that block that gets you to the
  * next block and the disk address of the block (if it is assigned).
  */
-
 int
-ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
-	struct vnode *vp;
-	daddr_t bn;
-	daddr_t *bnp;
-	struct indir *ap;
-	int *nump;
-	int *runp;
+ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
+    int *nump, int *runp)
 {
 	struct inode *ip;
 	struct buf *bp;
@@ -220,11 +213,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
  * once with the offset into the page itself.
  */
 int
-ufs_getlbns(vp, bn, ap, nump)
-	struct vnode *vp;
-	daddr_t bn;
-	struct indir *ap;
-	int *nump;
+ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 {
 	long metalbn, realbn;
 	struct ufsmount *ump;

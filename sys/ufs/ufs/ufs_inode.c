@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.30 2005/07/03 20:14:03 drahn Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.31 2005/11/10 22:01:14 pedro Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -61,8 +61,7 @@ u_long	nextgennumber;		/* Next generation number to assign. */
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
-ufs_inactive(v)
-	void *v;
+ufs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -133,11 +132,9 @@ out:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ufs_reclaim(vp, p)
-	register struct vnode *vp;
-	struct proc *p;
+ufs_reclaim(struct vnode *vp, struct proc *p)
 {
-	register struct inode *ip;
+	struct inode *ip;
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.10 2004/12/26 21:22:14 miod Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.11 2005/11/10 22:01:14 pedro Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -54,9 +54,8 @@ struct simplelock ufs_ihash_slock;
  * Initialize inode hash table.
  */
 void
-ufs_ihashinit()
+ufs_ihashinit(void)
 {
-
 	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, M_WAITOK, &ihash);
 	simple_lock_init(&ufs_ihash_slock);
 }
@@ -66,9 +65,7 @@ ufs_ihashinit()
  * to it. If it is in core, return it, even if it is locked.
  */
 struct vnode *
-ufs_ihashlookup(dev, inum)
-	dev_t dev;
-	ino_t inum;
+ufs_ihashlookup(dev_t dev, ino_t inum)
 {
         struct inode *ip;
 
@@ -80,6 +77,7 @@ ufs_ihashlookup(dev, inum)
 
 	if (ip)
 		return (ITOV(ip));
+
 	return (NULLVP);
 }
 
@@ -88,9 +86,7 @@ ufs_ihashlookup(dev, inum)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-ufs_ihashget(dev, inum)
-	dev_t dev;
-	ino_t inum;
+ufs_ihashget(dev_t dev, ino_t inum)
 {
 	struct proc *p = curproc;
 	struct inode *ip;
@@ -115,11 +111,10 @@ loop:
  * Insert the inode into the hash table, and return it locked.
  */
 int
-ufs_ihashins(ip)
-	struct inode *ip;
+ufs_ihashins(struct inode *ip)
 {
 	struct inode *curip;
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc;
 	struct ihashhead *ipp;
 	dev_t  dev = ip->i_dev;
 	ino_t  inum = ip->i_number;
@@ -148,8 +143,7 @@ ufs_ihashins(ip)
  * Remove the inode from the hash table.
  */
 void
-ufs_ihashrem(ip)
-	struct inode *ip;
+ufs_ihashrem(struct inode *ip)
 {
 	simple_lock(&ufs_ihash_slock);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.33 2005/07/20 16:30:35 pedro Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.34 2005/11/10 22:01:14 pedro Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -102,18 +102,17 @@ int	dirchk = 0;
  *	  nor deleting, add name to cache
  */
 int
-ufs_lookup(v)
-	void *v;
+ufs_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	register struct vnode *vdp;	/* vnode for directory being searched */
-	register struct inode *dp;	/* inode for directory being searched */
+	struct vnode *vdp;		/* vnode for directory being searched */
+	struct inode *dp;		/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
-	register struct direct *ep;	/* the current directory entry */
+	struct direct *ep;		/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
 	enum {NONE, COMPACT, FOUND} slotstatus;
 	doff_t slotoffset;		/* offset of area with free space */
@@ -607,10 +606,7 @@ found:
 }
 
 void
-ufs_dirbad(ip, offset, how)
-	struct inode *ip;
-	doff_t offset;
-	char *how;
+ufs_dirbad(struct inode *ip, doff_t offset, char *how)
 {
 	struct mount *mp;
 
@@ -630,12 +626,9 @@ ufs_dirbad(ip, offset, how)
  *	name must be as long as advertised, and null terminated
  */
 int
-ufs_dirbadentry(dp, ep, entryoffsetinblock)
-	struct vnode *dp;
-	register struct direct *ep;
-	int entryoffsetinblock;
+ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 {
-	register int i;
+	int i;
 	int namlen;
 
 #	if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -674,12 +667,9 @@ bad:
  * argument ip is the inode to which the new directory entry will refer.
  */
 void
-ufs_makedirentry(ip, cnp, newdirp)
-  	struct inode *ip;
-	struct componentname *cnp;
-	struct direct *newdirp;
+ufs_makedirentry(struct inode *ip, struct componentname *cnp,
+    struct direct *newdirp)
 {
-  
 #ifdef DIAGNOSTIC
   	if ((cnp->cn_flags & SAVENAME) == 0)
 		panic("ufs_makedirentry: missing name");
@@ -709,12 +699,8 @@ ufs_makedirentry(ip, cnp, newdirp)
  * soft dependency code).
  */
 int
-ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
-  	struct vnode *dvp;
-	struct vnode *tvp;
-  	struct direct *dirp;
- 	struct componentname *cnp;
- 	struct buf *newdirbp;
+ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
+    struct componentname *cnp, struct buf *newdirbp)
 {
   	struct ucred *cr;
   	struct proc *p;
@@ -966,11 +952,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
  * to the size of the previous entry.
  */
 int
-ufs_dirremove(dvp, ip, flags, isrmdir)
-	struct vnode *dvp;
-	struct inode *ip;
-	int flags;
-	int isrmdir;
+ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 {
 	struct inode *dp;
 	struct direct *ep;
@@ -1043,11 +1025,8 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
  * set up by a call to namei.
  */
 int
-ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
-	struct inode *dp, *oip;
-	ino_t newinum;
-	int newtype;
-	int isrmdir;
+ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
+    int isrmdir)
 {
 	struct buf *bp;
 	struct direct *ep;
@@ -1089,10 +1068,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
  * NB: does not handle corrupted directories.
  */
 int
-ufs_dirempty(ip, parentino, cred)
-	struct inode *ip;
-	ino_t parentino;
-	struct ucred *cred;
+ufs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
 {
 	off_t off, m;
 	struct dirtemplate dbuf;
@@ -1150,9 +1126,7 @@ ufs_dirempty(ip, parentino, cred)
  * The target is always vput before returning.
  */
 int
-ufs_checkpath(source, target, cred)
-	struct inode *source, *target;
-	struct ucred *cred;
+ufs_checkpath(struct inode *source, struct inode *target, struct ucred *cred)
 {
 	struct vnode *vp;
 	int error, rootino, namlen;
