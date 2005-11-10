@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.28 2005/09/18 14:18:18 pedro Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.29 2005/11/10 01:00:51 pedro Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -2601,7 +2601,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 	if (vp != NULL) {
 		if (auto_configured == 1) {
 			/* component was opened by rf_find_raid_components() */
-			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, NULL);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, p);
 			vrele(vp);
 		} else {
 			/* component was opened by raidlookup() */
