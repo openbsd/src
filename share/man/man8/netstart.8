@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.10 2005/10/15 11:49:11 jmc Exp $
+.\"	$OpenBSD: netstart.8,v 1.11 2005/11/10 10:36:59 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -54,9 +54,9 @@ During the system boot,
 .Nm
 is executed.
 .Nm
-will perform the following operations:
+performs the following operations, in the sequence given:
 .Pp
-.Bl -bullet -compact
+.Bl -bullet -compact -offset indent
 .It
 Set the machine's name.
 .It
@@ -64,27 +64,35 @@ Configure the loopback interface.
 .It
 Configure all the physical interfaces.
 .It
+Configure the following non-physical interfaces:
+.Xr trunk 4 ,
+.Xr vlan 4 ,
+.Xr pfsync 4 ,
+and
+.Xr carp 4 .
+.It
 Initialize the routing table and set up the default routes.
 .It
-Configure all the
-.Xr gif 4
+Configure the remaining non-physical interfaces:
+.Xr pppoe 4 ,
+.Xr gif 4 ,
 and
-.Xr gre 4
-interfaces.
+.Xr gre 4 .
 .It
-Configure all the bridges.
+Configure all
+.Xr bridge 4
+interfaces.
 .El
 .Pp
 After the system is completely initialized, it is possible to start a
 newly-created interface or
 .Xr bridge 4 ,
 or reset an existing interface to its default state, by invoking
-.Pp
-.D1 sh /etc/netstart foo0
-.Pp
-where
+the following, where
 .Ar foo0
-is the interface or bridge name.
+is the interface or bridge name:
+.Pp
+.D1 # sh /etc/netstart foo0
 .Sh MULTICAST ROUTING
 Routing to the 224.0.0.0/4 net is set up using values from
 .Pa /etc/rc.conf
@@ -130,8 +138,13 @@ enabled.
 .El
 .Sh SEE ALSO
 .Xr bridge 4 ,
+.Xr carp 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
+.Xr pfsync 4 ,
+.Xr pppoe 4 ,
+.Xr trunk 4 ,
+.Xr vlan 4 ,
 .Xr bridgename.if 5 ,
 .Xr defaultdomain 5 ,
 .Xr hostname.if 5 ,
@@ -143,5 +156,5 @@ enabled.
 .Sh HISTORY
 The
 .Nm
-command appeared in
+command first appeared in
 .Bx 4.0 .
