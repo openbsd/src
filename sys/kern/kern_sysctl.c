@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.132 2005/11/04 21:47:57 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.133 2005/11/10 08:10:16 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1827,8 +1827,6 @@ sysctl_intrcnt(int *name, u_int namelen, void *oldp, size_t *oldlenp)
 	return (evcount_sysctl(name, namelen, oldp, oldlenp, NULL, 0));
 }
 
-int nsensors = 0;
-struct sensors_head sensors = SLIST_HEAD_INITIALIZER(&sensors);
 
 int
 sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,

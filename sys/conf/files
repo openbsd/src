@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.353 2005/11/01 03:10:21 jsg Exp $
+#	$OpenBSD: files,v 1.354 2005/11/10 08:10:16 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -600,6 +600,7 @@ file kern/kern_physio.c
 file kern/kern_proc.c
 file kern/kern_prot.c
 file kern/kern_resource.c
+file kern/kern_sensors.c		!small_kernel
 file kern/kern_sig.c
 file kern/kern_subr.c
 file kern/kern_sysctl.c
