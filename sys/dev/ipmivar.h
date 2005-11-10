@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.5 2005/10/19 23:45:04 jordan Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.6 2005/11/10 11:20:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -124,7 +124,7 @@ typedef struct {
 	u_int32_t	smr_table_address;	/* Phys addr of SMBIOS Table */
 	u_int16_t	smr_count;		/* # of entries in SMBIOS Tbl */
 	u_int8_t	smr_bcdrev;		/* BCD SMBIOS Revision */
-} __attribute__((packed)) smbiosanchor_t;
+} __packed smbiosanchor_t;
 
 typedef struct {
 	u_int8_t	smh_type;		/* SMBIOS Header Type */
@@ -151,7 +151,7 @@ typedef struct {
 						 * polarity bit 0 : Interrupt
 						 * trigger mode */
 	u_int8_t	smipmi_irq;		/* IRQ if applicable */
-}__attribute__((packed)) smbios_ipmi_t;
+} __packed smbios_ipmi_t;
 
 typedef struct {
 	u_int8_t	dmd_sig[4];		/* Signature 'IPMI' */
@@ -159,7 +159,7 @@ typedef struct {
 	u_int8_t	dmd_nvram_address;	/* Address of NVRAM */
 	u_int8_t	dmd_if_type;		/* IPMI Interface Type */
 	u_int8_t	dmd_if_rev;		/* IPMI Interface Revision */
-}__attribute__((packed)) dmd_ipmi_t;
+} __packed dmd_ipmi_t;
 
 
 #define APP_NETFN			0x06
@@ -246,7 +246,7 @@ typedef struct {
 	u_int8_t	sdr_version;		/* SDR Version */
 	u_int8_t	record_type;		/* SDR Record Type */
 	u_int8_t	record_length;		/* SDR Record Length */
-}__attribute__((packed)) sdrhdr_t;
+} __packed sdrhdr_t;
 
 /* SDR: Record Type 1 */
 typedef struct {
@@ -293,7 +293,7 @@ typedef struct {
 	u_int8_t	oem;
 	u_int8_t	typelen;
 	u_int8_t	name[1];
-} __attribute__((packed)) sdrtype1;
+} __packed sdrtype1;
 
 /* SDR: Record Type 2 */
 typedef struct {
@@ -323,7 +323,7 @@ typedef struct {
 	u_int8_t	oem;
 	u_int8_t	typelen;
 	u_int8_t	name[1];
-} __attribute__((packed)) sdrtype2;
+} __packed sdrtype2;
 
 int ipmi_probe(void *);
 
