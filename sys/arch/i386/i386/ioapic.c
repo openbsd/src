@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.5 2004/08/12 06:11:57 niklas Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.6 2005/11/10 14:35:13 mickey Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -611,7 +611,6 @@ apic_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
 	if ((irq & APIC_INT_VIA_APIC) == 0)
 		panic("apic_intr_establish of non-apic interrupt 0x%x", irq);
 
-	pin = &sc->sc_pins[intr];
 	if (intr >= sc->sc_apic_sz || type == IST_NONE)
 		panic("apic_intr_establish: bogus intr or type");
 
@@ -620,7 +619,7 @@ apic_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
 	if (ih == NULL)
 		panic("apic_intr_establish: can't malloc handler info");
 
-
+	pin = &sc->sc_pins[intr];
 	switch (pin->ip_type) {
 	case IST_NONE:
 		pin->ip_type = type;
