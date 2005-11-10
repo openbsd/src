@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.328 2005/11/04 06:55:35 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.329 2005/11/10 14:32:38 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2864,15 +2864,30 @@ init386(paddr_t first_avail)
 	for(i = 0, im = bios_memmap; im->type != BIOS_MAP_END; im++)
 		if (im->type == BIOS_MAP_FREE) {
 			register paddr_t a, e;
+#ifdef DEBUG
+			printf(" %llx-%llx", im->addr, im->addr + im->size);
+#endif
+
+			if (im->addr >= 0x100000000ULL) {
+#ifdef DEBUG
+				printf("-H");
+#endif
+				continue;
+			}
 
 			a = i386_round_page(im->addr);
-			e = i386_trunc_page(im->addr + im->size);
+			if (im->addr + im->size <= 0xfffff000ULL)
+				e = i386_trunc_page(im->addr + im->size);
+			else {
+#ifdef DEBUG
+				printf("-T");
+#endif
+				e = 0xfffff000;
+			}
+
 			/* skip first four pages */
 			if (a < 5 * NBPG)
 				a = 5 * NBPG;
-#ifdef DEBUG
-			printf(" %u-%u", a, e);
-#endif
 
 			/* skip shorter than page regions */
 			if (a >= e || (e - a) < NBPG) {
