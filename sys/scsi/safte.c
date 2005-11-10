@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.18 2005/11/10 13:24:51 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.19 2005/11/10 22:27:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -18,18 +18,11 @@
 
 #include "bio.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/stat.h>
 #include <sys/scsiio.h>
-#include <sys/uio.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/queue.h>
-#include <sys/kthread.h>
 #include <sys/sensors.h>
 
 #if NBIO > 0
@@ -37,7 +30,6 @@
 #endif
 
 #include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
 #include <scsi/safte.h>
