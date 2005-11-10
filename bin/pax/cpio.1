@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpio.1,v 1.20 2003/11/21 20:54:02 jmc Exp $
+.\"	$OpenBSD: cpio.1,v 1.21 2005/11/10 10:42:19 jmc Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.20 2003/11/21 20:54:02 jmc Exp $
+.\"	$OpenBSD: cpio.1,v 1.21 2005/11/10 10:42:19 jmc Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -288,3 +288,7 @@ The
 and
 .Fl S
 options are currently not implemented.
+.Pp
+Files in the sv4cpio format are limited to a maximum size of 4 Gigabytes.
+It is recommended that a format such as cpio or ustar
+be used for larger files.
