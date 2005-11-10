@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc931.c,v 1.9 2003/04/19 18:31:48 avsm Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.10 2005/11/10 18:44:54 otto Exp $	*/
 
 /* rfc1413 does an attempt at an ident query to a client. Originally written
  * by Wietse Venema, rewritten by Bob Beck <beck@openbsd.org> to avoid 
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rfc931.c,v 1.9 2003/04/19 18:31:48 avsm Exp $";
+static char rcsid[] = "$OpenBSD: rfc931.c,v 1.10 2005/11/10 18:44:54 otto Exp $";
 #endif
 
 #include <stdio.h>
@@ -85,6 +85,7 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 	struct sigaction new_sa, old_sa;
 	char user[256];	 
 	char tbuf[1024];	 
+	size_t rsize, wsize;
 	
 	gotit = 0;
 	s = -1;
@@ -180,10 +181,13 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 
 	/* We are connected,  build an ident query and send it. */ 
 	
-	readfds = calloc(howmany(s+1, NFDBITS), sizeof(fd_mask));
+	rsize = howmany(s+1, NFDBITS);
+	readfds = calloc(rsize, sizeof(fd_mask));
 	if (readfds == NULL) 
 		goto out;
-	writefds = calloc(howmany(s+1, NFDBITS), sizeof(fd_mask));
+
+	wsize = howmany(s+1, NFDBITS);
+	writefds = calloc(wsize, sizeof(fd_mask));
 	if (writefds == NULL) 
 		goto out;
 	snprintf(tbuf, sizeof(tbuf), "%u,%u\r\n", ntohs(*rmt_portp),
@@ -192,7 +196,7 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 	while (i < strlen(tbuf)) { 
 		int j;
 
-		FD_ZERO(writefds);
+		memset(writefds, 0, wsize * sizeof(fd_mask));
 		FD_SET(s, writefds);
 		do { 
 			j = select(s + 1, NULL, writefds, NULL, NULL);
@@ -219,7 +223,7 @@ rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
 	while ((cp = strchr(tbuf, '\n')) == NULL && i < sizeof(tbuf) - 1) {
 		int j;
 
-		FD_ZERO(readfds);
+		memset(readfds, 0, rsize * sizeof(fd_mask));
 		FD_SET(s, readfds);
 		do { 
 			j = select(s + 1, readfds, NULL, NULL, NULL);
