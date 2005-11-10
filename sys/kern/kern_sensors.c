@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_sensors.c,v 1.2 2005/11/10 08:20:20 dlg Exp $ */
+/* $OpenBSD: kern_sensors.c,v 1.3 2005/11/10 08:32:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -65,6 +65,7 @@ sensor_task_register(void *arg, void (*func)(void *), int period)
 		kthread_create_deferred(sensor_task_create, NULL);
 
 	sensor_task_schedule(st);
+	wakeup(&tasklist);
 
 	return (0);
 }
@@ -78,10 +79,8 @@ sensor_task_unregister(void *arg)
 	while ((st = nst) != NULL) {
 		nst = TAILQ_NEXT(st, entry);
 
-		if (st->arg == arg) {
+		if (st->arg == arg)
 			st->running = 0;
-			return;
-		}
 	}
 }
 
@@ -101,7 +100,8 @@ sensor_task_thread(void *arg)
 	while (!TAILQ_EMPTY(&tasklist)) {
 		nst = TAILQ_FIRST(&tasklist);
 
-		while (nst->nextrun > (now = time_uptime))
+		while ((nst = TAILQ_FIRST(&tasklist))->nextrun >
+		    (now = time_uptime))
 			tsleep(&tasklist, PWAIT, "timeout",
 			    (nst->nextrun - now) * hz);
 
