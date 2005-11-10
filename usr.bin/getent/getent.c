@@ -1,4 +1,4 @@
-/*	$openBSD$	*/
+/*	$OpenBSD: getent.c,v 1.2 2005/11/10 20:07:14 deraadt Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
@@ -60,11 +59,9 @@
 #include <netinet/in.h>		/* for INET6_ADDRSTRLEN */
 #include <netinet/if_ether.h>
 
-
 #include <rpc/rpc.h>
 
 static int	usage(void);
-static int	parsenum(const char *, unsigned long *);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
@@ -74,17 +71,18 @@ static int	protocols(int, char *[]);
 static int	rpc(int, char *[]);
 static int	services(int, char *[]);
 static int	shells(int, char *[]);
+extern char *__progname;
 
 enum {
 	RV_OK		= 0,
 	RV_USAGE	= 1,
 	RV_NOTFOUND	= 2,
-	RV_NOENUM	= 3,
+	RV_NOENUM	= 3
 };
 
 static struct getentdb {
 	const char	*name;
-	int		(*callback)(int, char *[]);
+	int		(*fn)(int, char *[]);
 } databases[] = {
 	{	"ethers",	ethers,		},
 	{	"group",	group,		},
@@ -99,7 +97,6 @@ static struct getentdb {
 	{	NULL,		NULL,		},
 };
 
-
 int
 main(int argc, char *argv[])
 {
@@ -109,52 +106,20 @@ main(int argc, char *argv[])
 		usage();
 	for (curdb = databases; curdb->name != NULL; curdb++) {
 		if (strcmp(curdb->name, argv[1]) == 0) {
-			exit(curdb->callback(argc, argv));
+			exit(curdb->fn(argc, argv));
 			break;
 		}
 	}
-	fprintf(stderr, "Unknown database: %s\n", argv[1]);
-	usage();
-	/* NOTREACHED */
+	fprintf(stderr, "%s: unknown database: %s\n", __progname, argv[1]);
 	return RV_USAGE;
 }
-
-extern char *__progname;
 
 static int
 usage(void)
 {
-	struct getentdb	*curdb;
-
-	fprintf(stderr, "Usage: %s database [key ...]\n", __progname);
-	fprintf(stderr, "       database may be one of:\n\t");
-	for (curdb = databases; curdb->name != NULL; curdb++) {
-		fprintf(stderr, " %s", curdb->name);
-	}
-	fprintf(stderr, "\n");
+	fprintf(stderr, "usage: %s database [key ...]\n", __progname);
 	exit(RV_USAGE);
 	/* NOTREACHED */
-}
-
-static int
-parsenum(const char *word, unsigned long *result)
-{
-	unsigned long	num;
-	char		*ep;
-
-	assert(word != NULL);
-	assert(result != NULL);
-
-	if (!isdigit((unsigned char)word[0]))
-		return 0;
-	errno = 0;
-	num = strtoul(word, &ep, 10);
-	if (num == ULONG_MAX && errno == ERANGE)
-		return 0;
-	if (*ep != '\0')
-		return 0;
-	*result = num;
-	return 1;
 }
 
 /*
@@ -173,6 +138,7 @@ printfmtstrings(char *strings[], const char *prefix, const char *sep,
 
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
+	va_end(ap);
 
 	curpref = prefix;
 	for (i = 0; strings[i] != NULL; i++) {
@@ -182,26 +148,18 @@ printfmtstrings(char *strings[], const char *prefix, const char *sep,
 	printf("\n");
 }
 
-
-		/*
-		 * ethers
-		 */
+#define ETHERSPRINT	printf("%-17s  %s\n", ether_ntoa(eap), hp)
 
 static int
 ethers(int argc, char *argv[])
 {
-	char		hostname[MAXHOSTNAMELEN + 1], *hp;
+	char		hostname[MAXHOSTNAMELEN], *hp;
+	int		i, rv = RV_OK;
 	struct ether_addr ea, *eap;
-	int		i, rv;
 
-	assert(argc > 1);
-	assert(argv != NULL);
-
-#define ETHERSPRINT	printf("%-17s  %s\n", ether_ntoa(eap), hp)
-
-	rv = RV_OK;
 	if (argc == 2) {
-		fprintf(stderr, "Enumeration not supported on ethers\n");
+		fprintf(stderr, "%s: Enumeration not supported on ethers\n",
+		    __progname);
 		rv = RV_NOENUM;
 	} else {
 		for (i = 2; i < argc; i++) {
@@ -225,31 +183,26 @@ ethers(int argc, char *argv[])
 	return rv;
 }
 
-		/*
-		 * group
-		 */
+#define GROUPPRINT	\
+	printfmtstrings(gr->gr_mem, ":", ",", "%s:%s:%u", \
+	    gr->gr_name, gr->gr_passwd, gr->gr_gid)
 
 static int
 group(int argc, char *argv[])
 {
+	int		i, rv = RV_OK;
 	struct group	*gr;
-	unsigned long	id;
-	int		i, rv;
-
-	assert(argc > 1);
-	assert(argv != NULL);
-
-#define GROUPPRINT	printfmtstrings(gr->gr_mem, ":", ",", "%s:%s:%u", \
-			    gr->gr_name, gr->gr_passwd, gr->gr_gid)
 
 	setgroupent(1);
-	rv = RV_OK;
 	if (argc == 2) {
 		while ((gr = getgrent()) != NULL)
 			GROUPPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			if (parsenum(argv[i], &id))
+			const char	*err;
+			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
+
+			if (!err)
 				gr = getgrgid((gid_t)id);
 			else
 				gr = getgrnam(argv[i]);
@@ -265,17 +218,11 @@ group(int argc, char *argv[])
 	return rv;
 }
 
-
-		/*
-		 * hosts
-		 */
-
 static void
 hostsprint(const struct hostent *he)
 {
 	char	buf[INET6_ADDRSTRLEN];
 
-	assert(he != NULL);
 	if (inet_ntop(he->h_addrtype, he->h_addr, buf, sizeof(buf)) == NULL)
 		strlcpy(buf, "# unknown", sizeof(buf));
 	printfmtstrings(he->h_aliases, "  ", " ", "%-16s  %s", buf, he->h_name);
@@ -284,15 +231,11 @@ hostsprint(const struct hostent *he)
 static int
 hosts(int argc, char *argv[])
 {
-	struct hostent	*he;
 	char		addr[IN6ADDRSZ];
-	int		i, rv;
-
-	assert(argc > 1);
-	assert(argv != NULL);
+	int		i, rv = RV_OK;
+	struct hostent	*he;
 
 	sethostent(1);
-	rv = RV_OK;
 	if (argc == 2) {
 		while ((he = gethostent()) != NULL)
 			hostsprint(he);
@@ -316,18 +259,12 @@ hosts(int argc, char *argv[])
 	return rv;
 }
 
-
-		/*
-		 * networks
-		 */
-
 static void
 networksprint(const struct netent *ne)
 {
 	char		buf[INET6_ADDRSTRLEN];
-	struct	in_addr	ianet;
+	struct in_addr	ianet;
 
-	assert(ne != NULL);
 	ianet = inet_makeaddr(ne->n_net, 0);
 	if (inet_ntop(ne->n_addrtype, &ianet, buf, sizeof(buf)) == NULL)
 		strlcpy(buf, "# unknown", sizeof(buf));
@@ -337,15 +274,11 @@ networksprint(const struct netent *ne)
 static int
 networks(int argc, char *argv[])
 {
+	int		i, rv = RV_OK;
 	struct netent	*ne;
 	in_addr_t	net;
-	int		i, rv;
-
-	assert(argc > 1);
-	assert(argv != NULL);
 
 	setnetent(1);
-	rv = RV_OK;
 	if (argc == 2) {
 		while ((ne = getnetent()) != NULL)
 			networksprint(ne);
@@ -368,33 +301,27 @@ networks(int argc, char *argv[])
 	return rv;
 }
 
-
-		/*
-		 * passwd
-		 */
+#define PASSWDPRINT	\
+	printf("%s:%s:%u:%u:%s:%s:%s\n", \
+	    pw->pw_name, pw->pw_passwd, pw->pw_uid, \
+	    pw->pw_gid, pw->pw_gecos, pw->pw_dir, pw->pw_shell)
 
 static int
 passwd(int argc, char *argv[])
 {
+	int		i, rv = RV_OK;
 	struct passwd	*pw;
-	unsigned long	id;
-	int		i, rv;
-
-	assert(argc > 1);
-	assert(argv != NULL);
-
-#define PASSWDPRINT	printf("%s:%s:%u:%u:%s:%s:%s\n", \
-			    pw->pw_name, pw->pw_passwd, pw->pw_uid, \
-			    pw->pw_gid, pw->pw_gecos, pw->pw_dir, pw->pw_shell)
 
 	setpassent(1);
-	rv = RV_OK;
 	if (argc == 2) {
 		while ((pw = getpwent()) != NULL)
 			PASSWDPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			if (parsenum(argv[i], &id))
+			const char	*err;
+			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
+
+			if (!err)
 				pw = getpwuid((uid_t)id);
 			else
 				pw = getpwnam(argv[i]);
@@ -410,32 +337,26 @@ passwd(int argc, char *argv[])
 	return rv;
 }
 
-
-		/*
-		 * protocols
-		 */
+#define PROTOCOLSPRINT	\
+	printfmtstrings(pe->p_aliases, "  ", " ", \
+	    "%-16s  %5d", pe->p_name, pe->p_proto)
 
 static int
 protocols(int argc, char *argv[])
 {
 	struct protoent	*pe;
-	unsigned long	id;
-	int		i, rv;
-
-	assert(argc > 1);
-	assert(argv != NULL);
-
-#define PROTOCOLSPRINT	printfmtstrings(pe->p_aliases, "  ", " ", \
-			    "%-16s  %5d", pe->p_name, pe->p_proto)
+	int		i, rv = RV_OK;
 
 	setprotoent(1);
-	rv = RV_OK;
 	if (argc == 2) {
 		while ((pe = getprotoent()) != NULL)
 			PROTOCOLSPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			if (parsenum(argv[i], &id))
+			const char	*err;
+			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
+
+			if (!err)
 				pe = getprotobynumber((int)id);
 			else
 				pe = getprotobyname(argv[i]);
@@ -451,32 +372,26 @@ protocols(int argc, char *argv[])
 	return rv;
 }
 
-		/*
-		 * rpc
-		 */
+#define RPCPRINT	\
+	printfmtstrings(re->r_aliases, "  ", " ", \
+	    "%-16s  %6d", re->r_name, re->r_number)
 
 static int
 rpc(int argc, char *argv[])
 {
 	struct rpcent	*re;
-	unsigned long	id;
-	int		i, rv;
-	
-	assert(argc > 1);
-	assert(argv != NULL);
-
-#define RPCPRINT	printfmtstrings(re->r_aliases, "  ", " ", \
-				"%-16s  %6d", \
-				re->r_name, re->r_number)
+	int		i, rv = RV_OK;
 
 	setrpcent(1);
-	rv = RV_OK;
 	if (argc == 2) {
 		while ((re = getrpcent()) != NULL)
 			RPCPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			if (parsenum(argv[i], &id))
+			const char	*err;
+			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
+
+			if (!err)
 				re = getrpcbynumber((int)id);
 			else
 				re = getrpcbyname(argv[i]);
@@ -492,36 +407,30 @@ rpc(int argc, char *argv[])
 	return rv;
 }
 
-		/*
-		 * services
-		 */
+#define SERVICESPRINT	\
+	printfmtstrings(se->s_aliases, "  ", " ", \
+	    "%-16s  %5d/%s", se->s_name, ntohs(se->s_port), se->s_proto)
 
 static int
 services(int argc, char *argv[])
 {
 	struct servent	*se;
-	unsigned long	id;
-	char		*proto;
-	int		i, rv;
-
-	assert(argc > 1);
-	assert(argv != NULL);
-
-#define SERVICESPRINT	printfmtstrings(se->s_aliases, "  ", " ", \
-			    "%-16s  %5d/%s", \
-			    se->s_name, ntohs(se->s_port), se->s_proto)
+	int		i, rv = RV_OK;
 
 	setservent(1);
-	rv = RV_OK;
 	if (argc == 2) {
 		while ((se = getservent()) != NULL)
 			SERVICESPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			proto = strchr(argv[i], '/');
+			const char	*err;
+			long long	id;
+			char *proto = strchr(argv[i], '/');
+
 			if (proto != NULL)
 				*proto++ = '\0';
-			if (parsenum(argv[i], &id))
+			id = strtonum(argv[i], 0, UINT_MAX, &err);
+			if (!err)
 				se = getservbyport((int)id, proto);
 			else
 				se = getservbyname(argv[i], proto);
@@ -537,24 +446,15 @@ services(int argc, char *argv[])
 	return rv;
 }
 
-
-		/*
-		 * shells
-		 */
+#define SHELLSPRINT	printf("%s\n", sh)
 
 static int
 shells(int argc, char *argv[])
 {
 	const char	*sh;
-	int		i, rv;
-
-	assert(argc > 1);
-	assert(argv != NULL);
-
-#define SHELLSPRINT	printf("%s\n", sh)
+	int		i, rv = RV_OK;
 
 	setusershell();
-	rv = RV_OK;
 	if (argc == 2) {
 		while ((sh = getusershell()) != NULL)
 			SHELLSPRINT;
