@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.4 2005/11/11 00:33:50 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.5 2005/11/11 16:44:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -27,7 +27,10 @@
 #include <machine/autoconf.h>
 
 #include <dev/clock_subr.h>
+#include <dev/i2c/i2cvar.h>
 #include <dev/ofw/openfirm.h>
+
+#include <arch/macppc/dev/maci2cvar.h>
 
 int     smu_match(struct device *, void *, void *);
 void    smu_attach(struct device *, struct device *, void *);
@@ -77,6 +80,8 @@ struct smu_softc {
 	int16_t		sc_cpu_volt_offset;
 	u_int16_t	sc_cpu_curr_scale;
 	int16_t		sc_cpu_curr_offset;
+
+	struct i2c_controller sc_i2c_tag;
 };
 
 struct cfattach smu_ca = {
@@ -112,6 +117,12 @@ struct smu_cmd {
 #define SMU_PARTITION_BASE	0x02
 #define SMU_PARTITION_UPDATE	0x03
 
+/* I2C */
+#define SMU_I2C			0x9a
+#define SMU_I2C_SIMPLE		0x00
+#define SMU_I2C_NORMAL		0x01
+#define SMU_I2C_COMBINED	0x02
+
 /* Miscellaneous */
 #define SMU_MISC		0xee
 #define SMU_MISC_GET_DATA	0x02
@@ -126,6 +137,11 @@ int	smu_fan_set_rpm(struct smu_softc *, struct smu_fan *, u_int16_t);
 int	smu_fan_refresh(struct smu_softc *, struct smu_fan *);
 int	smu_sensor_refresh(struct smu_softc *, struct smu_sensor *);
 void	smu_refresh_sensors(void *);
+
+int	smu_i2c_acquire_bus(void *, int);
+void	smu_i2c_release_bus(void *, int);
+int	smu_i2c_exec(void *, i2c_op_t, i2c_addr_t,
+	    const void *, size_t, void *buf, size_t, int);
 
 #define GPIO_DDR        0x04    /* Data direction */
 #define GPIO_DDR_OUTPUT 0x04    /* Output */
@@ -153,6 +169,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 {
         struct smu_softc *sc = (struct smu_softc *)self;
 	struct confargs *ca = aux;
+	struct maci2cbus_attach_args iba;
 	struct smu_fan *fan;
 	struct smu_sensor *sensor;
 	int nseg, node;
@@ -315,6 +332,18 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 
 	sensor_task_register(sc, smu_refresh_sensors, 5);
 	printf("\n");
+
+	sc->sc_i2c_tag.ic_cookie = sc;
+	sc->sc_i2c_tag.ic_acquire_bus = smu_i2c_acquire_bus;
+	sc->sc_i2c_tag.ic_release_bus = smu_i2c_release_bus;
+	sc->sc_i2c_tag.ic_exec = smu_i2c_exec;
+
+	node = OF_getnodebyname(ca->ca_node, "smu-i2c-control");
+
+	/* XXX */
+	iba.iba_node = OF_child(node);
+	iba.iba_tag = &sc->sc_i2c_tag;
+	config_found(&sc->sc_dev, &iba, NULL);
 }
 
 int
@@ -549,4 +578,84 @@ smu_refresh_sensors(void *arg)
 	for (i = 0; i < sc->sc_num_fans; i++)
 		smu_fan_refresh(sc, &sc->sc_fans[i]);
 	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+}
+
+int
+smu_i2c_acquire_bus(void *cookie, int flags)
+{
+	struct smu_softc *sc = cookie;
+
+	if (flags & I2C_F_POLL)
+		return (0);
+
+	return (lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc));
+}
+
+void
+smu_i2c_release_bus(void *cookie, int flags)
+{
+	struct smu_softc *sc = cookie;
+
+        if (flags & I2C_F_POLL)
+                return;
+
+        lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+}
+
+int
+smu_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
+    const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
+{
+	struct smu_softc *sc = cookie;
+	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
+	u_int8_t smu_op = SMU_I2C_NORMAL;
+	int error, retries = 10;
+
+	if (!I2C_OP_STOP_P(op) || cmdlen > 3 || len > 5)
+		return (EINVAL);
+
+	if(cmdlen == 0)
+		smu_op = SMU_I2C_SIMPLE;
+	else if (I2C_OP_READ_P(op))
+		smu_op = SMU_I2C_COMBINED;
+
+	cmd->cmd = SMU_I2C;
+	cmd->len = 9 + len;
+	cmd->data[0] = 0xb;
+	cmd->data[1] = smu_op;
+	cmd->data[2] = addr << 1;
+	cmd->data[3] = cmdlen;
+	memcpy (&cmd->data[4], cmdbuf, cmdlen);
+	cmd->data[7] = addr << 1 | I2C_OP_READ_P(op);
+	cmd->data[8] = len;
+	memcpy(&cmd->data[9], buf, len);
+
+	error = smu_do_cmd(sc, 250);
+	if (error)
+		return error;
+
+	while (retries--) {
+		cmd->cmd = SMU_I2C;
+		cmd->len = 1;
+		cmd->data[0] = 0;
+		memset(&cmd->data[1], 0xff, len);
+
+		error = smu_do_cmd(sc, 250);
+		if (error)
+			return error;
+
+		if ((cmd->data[0] & 0x80) == 0)
+			break;
+		if (cmd->data[0] == 0xfd)
+			break;
+
+		DELAY(15 * 1000);
+	}
+
+	if (cmd->data[0] & 0x80)
+		return (EIO);
+
+	if (I2C_OP_READ_P(op))
+		memcpy(buf, &cmd->data[1], len);
+	return (0);
 }
