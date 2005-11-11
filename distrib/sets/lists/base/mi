@@ -245,6 +245,7 @@
 ./usr/bin/gencat
 ./usr/bin/getcap
 ./usr/bin/getconf
+./usr/bin/getent
 ./usr/bin/getopt
 ./usr/bin/grep
 ./usr/bin/grodvi
