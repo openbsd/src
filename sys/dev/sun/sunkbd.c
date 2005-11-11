@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.20 2005/05/14 15:25:20 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.21 2005/11/11 16:44:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -211,6 +211,20 @@ sunkbd_raw(struct sunkbd_softc *sc, u_int8_t c)
 	case SKBD_STATE_GETKEY:
 		break;
 	}
+}
+
+int
+sunkbd_setclick(struct sunkbd_softc *sc, int click)
+{
+	u_int8_t c;
+
+	/* Type 2 keyboards do not support keyclick */
+	if (sc->sc_id == KB_SUN2)
+		return (ENXIO);
+
+	c = click ? SKBD_CMD_CLICKON : SKBD_CMD_CLICKOFF;
+	(*sc->sc_sendcmd)(sc, &c, 1);
+	return (0);
 }
 
 void

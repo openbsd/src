@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.17 2005/05/14 15:25:20 miod Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.18 2005/11/11 16:44:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -218,6 +218,10 @@ comkbd_attach(parent, self, aux)
 	if (comkbd_init(sc) == 0) {
 		return;
 	}
+
+	ss->sc_click =
+	    strcmp(getpropstring(optionsnode, "keyboard-click?"), "true") == 0;
+	sunkbd_setclick(ss, ss->sc_click);
 
 	a.console = console;
 	if (ISTYPE5(ss->sc_layout)) {

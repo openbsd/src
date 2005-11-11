@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.17 2005/05/14 15:25:20 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.18 2005/11/11 16:44:51 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -107,6 +107,8 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+
+#include <machine/autoconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -382,6 +384,10 @@ zskbd_attach(parent, self, aux)
 
 		return;
 	}
+
+	ss->sc_click =
+	    strcmp(getpropstring(optionsnode, "keyboard-click?"), "true") == 0;
+	sunkbd_setclick(ss, ss->sc_click);
 
 	a.console = console;
 	if (ISTYPE5(ss->sc_layout)) {

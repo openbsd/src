@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.7 2005/05/14 15:25:17 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.8 2005/11/11 16:44:48 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -386,9 +386,6 @@ zskbd_attach(parent, self, aux)
 		return;
 	}
 
-	/*
-	 * XXX should provide a method to change keyclick setting
-	 */
 	ss->sc_click = 0;
 #if defined(SUN4C) || defined(SUN4M)
 	if (!CPU_ISSUN4) {
@@ -398,6 +395,7 @@ zskbd_attach(parent, self, aux)
 			ss->sc_click = 1;
 	}
 #endif
+	sunkbd_setclick(ss, ss->sc_click);
 
 	a.console = console;
 	if (ISTYPE5(ss->sc_layout)) {

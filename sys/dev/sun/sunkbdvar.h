@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdvar.h,v 1.9 2005/05/14 15:25:20 miod Exp $	*/
+/*	$OpenBSD: sunkbdvar.h,v 1.10 2005/11/11 16:44:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -53,6 +53,7 @@ extern struct wskbd_accessops sunkbd_accessops;
 void	sunkbd_bellstop(void *);
 void	sunkbd_decode(u_int8_t, u_int *, int *);
 void	sunkbd_raw(struct sunkbd_softc *, u_int8_t);
+int	sunkbd_setclick(struct sunkbd_softc *, int);
 
 extern const struct wscons_keydesc sunkbd_keydesctab[];
 extern struct wskbd_mapdata sunkbd_keymapdata;
