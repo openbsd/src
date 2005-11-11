@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75reg.h,v 1.1 2004/05/23 18:12:37 grange Exp $	*/
+/*	$OpenBSD: lm75reg.h,v 1.2 2005/11/11 16:14:14 kettenis Exp $	*/
 /*	$NetBSD: lm75reg.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -57,7 +57,7 @@
 #define	LM_MODEL_LM75	1
 #define	LM_MODEL_LM77	2
 
-#define LM_POLLTIME	(hz * 2)	/* 2s */
+#define LM_POLLTIME	2	/* 2s */
 
 /*
  * LM75 temperature sensor I2C address:

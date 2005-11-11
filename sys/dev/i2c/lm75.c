@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.1 2004/05/23 18:12:37 grange Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.2 2005/11/11 16:14:14 kettenis Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -60,7 +60,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/sensors.h>
-#include <sys/timeout.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/lm75reg.h>
@@ -72,7 +71,6 @@ struct lmtemp_softc {
 	int sc_model;
 
 	struct sensor sc_sensor;
-	struct timeout sc_timeout;
 };
 
 int  lmtemp_match(struct device *, void *, void *);
@@ -149,9 +147,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	/* Hook into the hw.sensors sysctl */
 	SENSOR_ADD(&sc->sc_sensor);
 
-	/* Set poll timer */
-	timeout_set(&sc->sc_timeout, lmtemp_refresh_sensor_data, sc);
-	timeout_add(&sc->sc_timeout, LM_POLLTIME);
+	sensor_task_register(sc, lmtemp_refresh_sensor_data, LM_POLLTIME);
 }
 
 int
@@ -215,6 +211,4 @@ lmtemp_refresh_sensor_data(void *aux)
 
 	sc->sc_sensor.value = val * 500000 + 273150000;
 	sc->sc_sensor.flags &= ~SENSOR_FINVALID;
-
-	timeout_add(&sc->sc_timeout, LM_POLLTIME);
 }
