@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.49 2003/11/03 19:58:22 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.50 2005/11/11 16:41:24 drahn Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -708,6 +708,13 @@ native:
 			break;
 		}
 	}
+
+	/*
+	 * Strangely some linux programs may have all load sections marked
+	 * writeable, in this case, textsize is not -1, but rather 0;
+	 */
+	if (epp->ep_tsize == ELFDEFNNAME(NO_ADDR))
+		epp->ep_tsize = 0;
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
