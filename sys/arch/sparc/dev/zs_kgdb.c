@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs_kgdb.c,v 1.1 2002/08/12 10:44:04 miod Exp $	*/
+/*	$OpenBSD: zs_kgdb.c,v 1.2 2005/11/11 15:21:59 fgsch Exp $	*/
 /*	$NetBSD: zs_kgdb.c,v 1.1 1997/10/18 00:00:51 gwr Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ zskgdb(cs)
 
 void zs_kgdb_rxint(struct zs_chanstate *);
 void zs_kgdb_txint(struct zs_chanstate *);
-void zs_kgdb_stint(struct zs_chanstate *);
+void zs_kgdb_stint(struct zs_chanstate *, int);
 void zs_kgdb_softint(struct zs_chanstate *);
 
 int kgdb_input_lost;
@@ -260,8 +260,9 @@ zs_kgdb_txint(cs)
 }
 
 void
-zs_kgdb_stint(cs)
+zs_kgdb_stint(cs, force)
 	register struct zs_chanstate *cs;
+	int force;
 {
 	register int rr0;
 
