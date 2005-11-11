@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.42 2005/09/23 20:06:50 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.43 2005/11/11 14:11:40 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2281,8 +2281,9 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		rix = sc->sc_rixmap[ni->ni_rates.rs_rates[ni->ni_txrate] &
 		    IEEE80211_RATE_VAL];
 		if (rix == 0xff) {
-			printf("%s: bogus xmit rate 0x%x\n", ifp->if_xname,
-				ni->ni_rates.rs_rates[ni->ni_txrate]);
+			printf("%s: bogus xmit rate 0x%x (idx 0x%x)\n",
+			    ifp->if_xname, ni->ni_rates.rs_rates[ni->ni_txrate],
+			    ni->ni_txrate);
 			sc->sc_stats.ast_tx_badrate++;
 			m_freem(m0);
 			return EIO;
