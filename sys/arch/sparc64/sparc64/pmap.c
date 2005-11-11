@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2003/11/03 07:01:33 david Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 2005/11/11 16:38:30 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -3191,8 +3191,7 @@ pmap_page_protect(pg, prot)
 #ifdef DIAGNOSTIC
 				printf("pmap_page_protect: wired page pm %p va %p not removed\n",
 				       npv->pv_pmap, (void *)(u_long)npv->pv_va);
-				printf("vm wire count %d\n", 
-					PHYS_TO_VM_PAGE(pa)->wire_count);
+				printf("vm wire count %d\n", pg->wire_count);
 				pv = npv;
 				continue;
 #endif			
