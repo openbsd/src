@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.24 2005/11/11 16:58:46 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.25 2005/11/11 18:17:40 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -434,7 +434,7 @@ zkbd_poll(void *v)
 	}
 #endif
 	if (keysdown)
-		timeout_add(&(sc->sc_roll_to), hz / 8); /* how long?*/
+		timeout_add(&(sc->sc_roll_to), hz * REP_DELAYN / 1000 / 2);
 	else 
 		timeout_del(&(sc->sc_roll_to)); /* always cancel? */
 
