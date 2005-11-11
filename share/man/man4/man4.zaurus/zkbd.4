@@ -1,4 +1,4 @@
-.\" $OpenBSD: zkbd.4,v 1.12 2005/06/04 17:56:24 dlg Exp $
+.\" $OpenBSD: zkbd.4,v 1.13 2005/11/11 17:02:08 uwe Exp $
 .\"
 .\" Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -74,10 +74,9 @@ Home
 End
 .El
 .Pp
-On/Off is special: pressing the key for 2 seconds will suspend
-the system.
+On/Off is special: pressing the key will immediately suspend the system.
 Pressing the key while the Zaurus is suspended will cause it to resume.
-Pressing the key longer than 6 seconds will do a nice halt if
+Pressing the key longer than 3 seconds will do a nice halt if
 the machdep.kbdreset
 .Xr sysctl 8
 variable is 1.
