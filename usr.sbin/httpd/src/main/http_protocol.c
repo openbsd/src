@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.28 2005/02/09 12:13:09 henning Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.29 2005/11/11 15:09:54 cloder Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -823,10 +823,6 @@ API_EXPORT(int) ap_method_number_of(const char *method)
         case 'O':
            if (strcmp(method, "OPTIONS") == 0)
                return M_OPTIONS;
-           break;
-        case 'T':
-           if (strcmp(method, "TRACE") == 0)
-               return M_TRACE;
            break;
         case 'L':
            if (strcmp(method, "LOCK") == 0)
