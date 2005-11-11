@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getent.1,v 1.3 2005/11/10 20:17:30 otto Exp $
+.\"	$OpenBSD: getent.1,v 1.4 2005/11/11 10:59:22 jmc Exp $
 .\"	$NetBSD: getent.1,v 1.13 2005/09/11 23:16:15 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -50,9 +50,13 @@ The
 .Nm
 program retrieves and displays entries from the administrative
 database specified by
-.Ar database ,
-using the lookup order specified in
-.Xr nsswitch.conf 5 .
+.Ar database .
+The order in which entries are looked up
+is defined by the specific database
+(for example, the lookup order for the
+.Dq hosts
+database is determined by
+.Xr resolv.conf 5 ) .
 The display format for a given
 .Ar database
 is as per the
@@ -61,6 +65,7 @@ file format for that database.
 .Pp
 .Ar database
 may be one of:
+.Pp
 .Bl -column "netgroup" -offset indent -compact
 .Sy Database Ta Sy Display format
 .It ethers Ta address name
@@ -109,7 +114,6 @@ or 3 if there is no support for enumeration on
 .Xr group 5 ,
 .Xr hosts 5 ,
 .Xr networks 5 ,
-.Xr nsswitch.conf 5 ,
 .Xr passwd 5 ,
 .Xr protocols 5 ,
 .Xr rpc 5 ,
@@ -118,7 +122,7 @@ or 3 if there is no support for enumeration on
 .Sh HISTORY
 A
 .Nm
-command appeared in
+command first appeared in
 .Ox 3.9 .
 It was based on the command of the same name in
 .Tn Solaris
