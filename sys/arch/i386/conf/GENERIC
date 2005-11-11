@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.437 2005/10/09 09:19:52 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.438 2005/11/11 00:05:11 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -278,7 +278,7 @@ aha*	at isapnp?
 scsibus* at aha?
 ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
-ahc0	at isa?			# Adaptec 284x SCSI controllers
+#ahc0	at isa?			# Adaptec 284x SCSI controllers
 ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci?			# Adaptec 2940/3940/78?? SCSI controllers
 scsibus* at ahc?
