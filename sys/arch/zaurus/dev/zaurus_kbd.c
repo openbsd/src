@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.23 2005/05/25 07:29:17 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.24 2005/11/11 16:58:46 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -446,8 +446,8 @@ extern	int kbd_reset;
 extern	int apm_suspends;
 static	int zkbdondown;				/* on key is pressed */
 static	struct timeval zkbdontv = { 0, 0 };	/* last on key event */
-const	struct timeval zkbdhalttv = { 6, 0 };	/*  6s for shutdown */
-const	struct timeval zkbdsleeptv = { 2, 0 };	/*  2s for deep sleep */
+const	struct timeval zkbdhalttv = { 3, 0 };	/*  3s for safe shutdown */
+const	struct timeval zkbdsleeptv = { 0, 250000 };	/* .25s for suspend */
 #endif
 
 int
