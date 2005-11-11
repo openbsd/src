@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.11 2005/10/17 20:08:48 kjell Exp $	*/
+/*	$OpenBSD: word.c,v 1.12 2005/11/11 18:40:51 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -85,7 +85,7 @@ upperword(int f, int n)
 		}
 		size = countfword();
 		undo_add_change(curwp->w_dotp, curwp->w_doto, size);
-		
+
 		while (inword() != FALSE) {
 			c = lgetc(curwp->w_dotp, curwp->w_doto);
 			if (ISLOWER(c) != FALSE) {

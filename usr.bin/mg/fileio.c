@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.58 2005/10/18 04:07:06 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.59 2005/11/11 18:40:51 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -292,7 +292,7 @@ adjustname(const char *fn)
 		}
 		if (ulen == 0) /* ~/ or ~ */
 			(void)strlcpy(user, getlogin(), sizeof(user));
-		else { /* ~user/ or ~user */ 
+		else { /* ~user/ or ~user */
 			memcpy(user, &fn[1], ulen);
 			user[ulen] = '\0';
 		}

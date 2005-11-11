@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.21 2005/10/18 21:22:52 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.22 2005/11/11 18:40:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -291,7 +291,7 @@ compile_goto_error(int f, int n)
 	compile_win = curwp;
 	compile_buffer = curbp;
 	last = lback(compile_buffer->b_linep);
- 
+
  retry:
 	/* last line is compilation result */
 	if (curwp->w_dotp == last)
