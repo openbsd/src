@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bio.4,v 1.12 2005/08/03 00:23:49 mickey Exp $
+.\"	$OpenBSD: bio.4,v 1.13 2005/11/11 09:35:19 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
 .\" All rights reserved.
@@ -37,14 +37,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides userland applications ioctl access to devices otherwise not
-found as
+driver provides userland applications
+.Xr ioctl 2
+access to devices otherwise not found as
 .Pa /dev
 nodes.
 The
 .Pa /dev/bio
-device node operates by delegating
-.Xr ioctl 2
+device node operates by delegating ioctl
 calls to a requested device driver.
 Only drivers which have registered with the
 .Nm
@@ -56,9 +56,7 @@ is given in the specification, and is greater than 0, a maximum of one
 .Nm bio
 device is created.
 .Pp
-The following
-.Xr ioctl 2
-calls apply to the
+The following ioctl calls apply to the
 .Nm bio
 device:
 .Bl -tag -width BIOCCAPABILITIES
@@ -71,7 +69,7 @@ Control the alarm beeper on the device.
 .It Dv BIOCBLINK
 Blink an LED on one of the drives (to be replaced).
 .It Dv BIOCCAPABILITIES
-Return information about ioctl commands, raid levels, and other
+Return information about ioctl commands, RAID levels, and other
 features supported.
 .It Dv BIOCPING
 Check on the device to see if it's alive.
