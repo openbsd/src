@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.3 2005/10/23 13:47:49 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.4 2005/11/11 00:33:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -20,11 +20,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 #include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/sensors.h>
-#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 
@@ -79,8 +77,6 @@ struct smu_softc {
 	int16_t		sc_cpu_volt_offset;
 	u_int16_t	sc_cpu_curr_scale;
 	int16_t		sc_cpu_curr_offset;
-
-	struct timeout	sc_timo;
 };
 
 struct cfattach smu_ca = {
@@ -120,7 +116,6 @@ struct smu_cmd {
 #define SMU_MISC		0xee
 #define SMU_MISC_GET_DATA	0x02
 
-void	smu_create_thread(void *);
 int	smu_intr(void *);
 
 int	smu_do_cmd(struct smu_softc *, int);
@@ -318,18 +313,8 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cpu_curr_scale = (data[8] << 8) + data[9];
 	sc->sc_cpu_curr_offset = (data[10] << 8) + data[11];
 
-	kthread_create_deferred(smu_create_thread, sc);
+	sensor_task_register(sc, smu_refresh_sensors, 5);
 	printf("\n");
-}
-
-void
-smu_create_thread(void *arg)
-{
-	struct smu_softc *sc = arg;
-
-	if (kthread_create(smu_refresh_sensors, sc, NULL,
-	    sc->sc_dev.dv_xname))
-		panic("smu thread");
 }
 
 int
@@ -558,14 +543,10 @@ smu_refresh_sensors(void *arg)
 	struct smu_softc *sc = arg;
 	int i;
 
-	while (1) {
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
-		for (i = 0; i < sc->sc_num_sensors; i++)
-			smu_sensor_refresh(sc, &sc->sc_sensors[i]);
-		for (i = 0; i < sc->sc_num_fans; i++)
-			smu_fan_refresh(sc, &sc->sc_fans[i]);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
-
-		tsleep(smu_refresh_sensors, PWAIT, "timeout", 5 * hz);
-	};
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	for (i = 0; i < sc->sc_num_sensors; i++)
+		smu_sensor_refresh(sc, &sc->sc_sensors[i]);
+	for (i = 0; i < sc->sc_num_fans; i++)
+		smu_fan_refresh(sc, &sc->sc_fans[i]);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 }
