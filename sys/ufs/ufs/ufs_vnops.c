@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.67 2005/07/24 05:43:36 millert Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.68 2005/11/11 16:27:52 pedro Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -73,15 +73,16 @@
 
 static int ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
 static int ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *, struct proc *);
-int filt_ufsread(struct knote *kn, long hint);
-int filt_ufswrite(struct knote *kn, long hint);
-int filt_ufsvnode(struct knote *kn, long hint);
-void filt_ufsdetach(struct knote *kn);
+int filt_ufsread(struct knote *, long);
+int filt_ufswrite(struct knote *, long);
+int filt_ufsvnode(struct knote *, long);
+void filt_ufsdetach(struct knote *);
 
 union _qcvt {
 	int64_t	qcvt;
 	int32_t val[2];
 };
+
 #define SETHIGH(q, h) { \
 	union _qcvt tmp; \
 	tmp.qcvt = (q); \
@@ -114,8 +115,7 @@ static struct odirtemplate omastertemplate = {
  * Create a regular file
  */
 int
-ufs_create(v)
-	void *v;
+ufs_create(void *v)
 {
 	struct vop_create_args /* {
 		struct vnode *a_dvp;
@@ -139,8 +139,7 @@ ufs_create(v)
  */
 /* ARGSUSED */
 int
-ufs_mknod(v)
-	void *v;
+ufs_mknod(void *v)
 {
 	struct vop_mknod_args /* {
 				 struct vnode *a_dvp;
@@ -186,8 +185,7 @@ ufs_mknod(v)
  */
 /* ARGSUSED */
 int
-ufs_open(v)
-	void *v;
+ufs_open(void *v)
 {
 	struct vop_open_args /* {
 				struct vnode *a_vp;
@@ -217,8 +215,7 @@ ufs_open(v)
  */
 /* ARGSUSED */
 int
-ufs_close(v)
-	void *v;
+ufs_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -241,8 +238,7 @@ ufs_close(v)
 }
 
 int
-ufs_access(v)
-	void *v;
+ufs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -292,8 +288,7 @@ ufs_access(v)
 
 /* ARGSUSED */
 int
-ufs_getattr(v)
-	void *v;
+ufs_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -344,8 +339,7 @@ ufs_getattr(v)
  * Set attribute vnode op. called from several syscalls
  */
 int
-ufs_setattr(v)
-	void *v;
+ufs_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
@@ -459,11 +453,7 @@ ufs_setattr(v)
  * Inode must be locked before calling.
  */
 static int
-ufs_chmod(vp, mode, cred, p)
-	struct vnode *vp;
-	int mode;
-	struct ucred *cred;
-	struct proc *p;
+ufs_chmod(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 {
 	struct inode *ip = VTOI(vp);
 	int error;
@@ -490,12 +480,8 @@ ufs_chmod(vp, mode, cred, p)
  * inode must be locked prior to call.
  */
 static int
-ufs_chown(vp, uid, gid, cred, p)
-	struct vnode *vp;
-	uid_t uid;
-	gid_t gid;
-	struct ucred *cred;
-	struct proc *p;
+ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
+    struct proc *p)
 {
 	struct inode *ip = VTOI(vp);
 	uid_t ouid;
@@ -579,8 +565,7 @@ error:
 
 /* ARGSUSED */
 int
-ufs_ioctl(v)
-	void *v;
+ufs_ioctl(void *v)
 {
 #if 0
 	struct vop_ioctl_args /* {
@@ -597,8 +582,7 @@ ufs_ioctl(v)
 
 /* ARGSUSED */
 int
-ufs_poll(v)
-	void *v;
+ufs_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
@@ -619,8 +603,7 @@ ufs_poll(v)
  */
 /* ARGSUSED */
 int
-ufs_seek(v)
-	void *v;
+ufs_seek(void *v)
 {
 #if 0
 	struct vop_seek_args /* {
@@ -635,8 +618,7 @@ ufs_seek(v)
 }
 
 int
-ufs_remove(v)
-	void *v;
+ufs_remove(void *v)
 {
 	struct vop_remove_args /* {
 		struct vnode *a_dvp;
@@ -670,8 +652,7 @@ ufs_remove(v)
  * link vnode call
  */
 int
-ufs_link(v)
-	void *v;
+ufs_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -767,8 +748,7 @@ out2:
  *    directory.
  */
 int
-ufs_rename(v)
-	void *v;
+ufs_rename(void *v)
 {
 	struct vop_rename_args  /* {
 		struct vnode *a_fdvp;
@@ -1187,8 +1167,7 @@ out:
  * Mkdir system call
  */
 int
-ufs_mkdir(v)
-	void *v;
+ufs_mkdir(void *v)
 {
 	struct vop_mkdir_args /* {
 		struct vnode *a_dvp;
@@ -1343,8 +1322,7 @@ out:
  * Rmdir system call.
  */
 int
-ufs_rmdir(v)
-	void *v;
+ufs_rmdir(void *v)
 {
 	struct vop_rmdir_args /* {
 		struct vnode *a_dvp;
@@ -1449,8 +1427,7 @@ out:
  * symlink -- make a symbolic link
  */
 int
-ufs_symlink(v)
-	void *v;
+ufs_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -1493,8 +1470,7 @@ ufs_symlink(v)
  * by <sys/dirent.h>.
  */
 int
-ufs_readdir(v)
-	void *v;
+ufs_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -1605,8 +1581,7 @@ ufs_readdir(v)
  * Return target name of a symbolic link
  */
 int
-ufs_readlink(v)
-	void *v;
+ufs_readlink(void *v)
 {
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
@@ -1630,8 +1605,7 @@ ufs_readlink(v)
  * Lock an inode. If its already locked, set the WANT bit and sleep.
  */
 int
-ufs_lock(v)
-	void *v;
+ufs_lock(void *v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
@@ -1648,8 +1622,7 @@ ufs_lock(v)
  * Unlock an inode.  If WANT bit is on, wakeup.
  */
 int
-ufs_unlock(v)
-	void *v;
+ufs_unlock(void *v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
@@ -1666,8 +1639,7 @@ ufs_unlock(v)
  * Check for a locked inode.
  */
 int
-ufs_islocked(v)
-	void *v;
+ufs_islocked(void *v)
 {
 	struct vop_islocked_args /* {
 		struct vnode *a_vp;
@@ -1681,8 +1653,7 @@ ufs_islocked(v)
  * then call the device strategy routine.
  */
 int
-ufs_strategy(v)
-	void *v;
+ufs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
@@ -1726,8 +1697,7 @@ ufs_strategy(v)
  * Print out the contents of an inode.
  */
 int
-ufs_print(v)
-	void *v;
+ufs_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
@@ -1755,8 +1725,7 @@ ufs_print(v)
  * Read wrapper for special devices.
  */
 int
-ufsspec_read(v)
-	void *v;
+ufsspec_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -1776,8 +1745,7 @@ ufsspec_read(v)
  * Write wrapper for special devices.
  */
 int
-ufsspec_write(v)
-	void *v;
+ufsspec_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -1799,8 +1767,7 @@ ufsspec_write(v)
  * Update the times on the inode then do device close.
  */
 int
-ufsspec_close(v)
-	void *v;
+ufsspec_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -1827,8 +1794,7 @@ ufsspec_close(v)
  * Read wrapper for fifo's
  */
 int
-ufsfifo_read(v)
-	void *v;
+ufsfifo_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -1849,8 +1815,7 @@ ufsfifo_read(v)
  * Write wrapper for fifo's.
  */
 int
-ufsfifo_write(v)
-	void *v;
+ufsfifo_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -1873,8 +1838,7 @@ ufsfifo_write(v)
  * Update the times on the inode then do device close.
  */
 int
-ufsfifo_close(v)
-	void *v;
+ufsfifo_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -1902,8 +1866,7 @@ ufsfifo_close(v)
  * Return POSIX pathconf information applicable to ufs filesystems.
  */
 int
-ufs_pathconf(v)
-	void *v;
+ufs_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -1940,8 +1903,7 @@ ufs_pathconf(v)
  * Advisory record locking support
  */
 int
-ufs_advlock(v)
-	void *v;
+ufs_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
@@ -1961,11 +1923,8 @@ ufs_advlock(v)
  * vnodes.
  */
 int
-ufs_vinit(mntp, specops, fifoops, vpp)
-	struct mount *mntp;
-	int (**specops)(void *);
-	int (**fifoops)(void *);
-	struct vnode **vpp;
+ufs_vinit(struct mount *mntp, int (**specops)(void *),
+    int (**fifoops)(void *), struct vnode **vpp)
 {
 	struct inode *ip;
 	struct vnode *vp, *nvp;
@@ -2029,11 +1988,8 @@ ufs_vinit(mntp, specops, fifoops, vpp)
  * Allocate a new inode.
  */
 int
-ufs_makeinode(mode, dvp, vpp, cnp)
-	int mode;
-	struct vnode *dvp;
-	struct vnode **vpp;
-	struct componentname *cnp;
+ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
+    struct componentname *cnp)
 {
 	struct inode *ip, *pdir;
 	struct direct newdir;
@@ -2121,8 +2077,7 @@ struct filterops ufsvnode_filtops =
 	{ 1, NULL, filt_ufsdetach, filt_ufsvnode };
 
 int
-ufs_kqfilter(v)
-	void *v;
+ufs_kqfilter(void *v)
 {
 	struct vop_kqfilter_args /* {
 		struct vnode *a_vp;

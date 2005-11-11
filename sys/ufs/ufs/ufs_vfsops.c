@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vfsops.c,v 1.12 2005/07/03 20:14:03 drahn Exp $	*/
+/*	$OpenBSD: ufs_vfsops.c,v 1.13 2005/11/11 16:27:52 pedro Exp $	*/
 /*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
@@ -62,12 +62,8 @@
  */
 /* ARGSUSED */
 int
-ufs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+ufs_start(struct mount *mp, int flags, struct proc *p)
 {
-
 	return (0);
 }
 
@@ -75,9 +71,7 @@ ufs_start(mp, flags, p)
  * Return the root of a filesystem.
  */
 int
-ufs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+ufs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
@@ -93,14 +87,11 @@ ufs_root(mp, vpp)
  * exflagsp and credanonp.
  */
 int
-ufs_check_export(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
+ufs_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
+    struct ucred **credanonp) 
 {
-	register struct netcred *np;
-	register struct ufsmount *ump = VFSTOUFS(mp);
+	struct netcred *np;
+	struct ufsmount *ump = VFSTOUFS(mp);
 
 	/*
 	 * Get the export permission structure for this <mp, client> tuple.
@@ -118,8 +109,7 @@ ufs_check_export(mp, nam, exflagsp, credanonp)
  * Initial UFS filesystems, done only once.
  */
 int
-ufs_init(vfsp)
-	struct vfsconf *vfsp;
+ufs_init(struct vfsconf *vfsp)
 {
 	static int done;
 
@@ -140,12 +130,9 @@ ufs_init(vfsp)
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(mp, ufhp, vpp)
-	register struct mount *mp;
-	struct ufid *ufhp;
-	struct vnode **vpp;
+ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 {
-	register struct inode *ip;
+	struct inode *ip;
 	struct vnode *nvp;
 	int error;
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.26 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.27 2005/11/11 16:27:52 pedro Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -63,8 +63,7 @@
  */
 /* ARGSUSED */
 int
-READ(v)
-	void *v;
+READ(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -72,10 +71,10 @@ READ(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct inode *ip;
-	register struct uio *uio;
-	register FS *fs;
+	struct vnode *vp;
+	struct inode *ip;
+	struct uio *uio;
+	FS *fs;
 	struct buf *bp;
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
@@ -170,8 +169,7 @@ READ(v)
  * Vnode op for writing.
  */
 int
-WRITE(v)
-	void *v;
+WRITE(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -179,10 +177,10 @@ WRITE(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct uio *uio;
-	register struct inode *ip;
-	register FS *fs;
+	struct vnode *vp;
+	struct uio *uio;
+	struct inode *ip;
+	FS *fs;
 	struct buf *bp;
 	struct proc *p;
 	daddr_t lbn;
