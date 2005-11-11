@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.19 2005/11/10 22:27:03 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.20 2005/11/11 01:19:47 fgsch Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/scsiio.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
