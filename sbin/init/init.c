@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.36 2005/03/13 13:53:23 markus Exp $	*/
+/*	$OpenBSD: init.c,v 1.37 2005/11/12 13:30:46 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.36 2005/03/13 13:53:23 markus Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.37 2005/11/12 13:30:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -857,7 +857,6 @@ session_t *
 new_session(session_t *sprev, int session_index, struct ttyent *typ)
 {
 	session_t *sp;
-	size_t len;
 
 	if ((typ->ty_status & TTY_ON) == 0 ||
 	    typ->ty_name == 0 ||
@@ -870,9 +869,8 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 	sp->se_flags = SE_PRESENT;
 	sp->se_index = session_index;
 
-	len = sizeof(_PATH_DEV) + strlen(typ->ty_name);
-	sp->se_device = malloc(len);
-	(void) snprintf(sp->se_device, len, "%s%s", _PATH_DEV, typ->ty_name);
+	if (asprintf(&sp->se_device, "%s%s", _PATH_DEV, typ->ty_name) == -1)
+		err(1, "asprintf");
 
 	if (setupargv(sp, typ) == 0) {
 		free_session(sp);
@@ -897,15 +895,12 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 int
 setupargv(session_t *sp, struct ttyent *typ)
 {
-	size_t len;
-
 	if (sp->se_getty) {
 		free(sp->se_getty);
 		free(sp->se_getty_argv);
 	}
-	len = strlen(typ->ty_getty) + strlen(typ->ty_name) + 2;
-	sp->se_getty = malloc(len);
-	(void) snprintf(sp->se_getty, len, "%s %s", typ->ty_getty, typ->ty_name);
+	if (asprintf(&sp->se_getty, "%s %s", typ->ty_getty, typ->ty_name) == -1)
+		err(1, "asprintf");
 	sp->se_getty_argv = construct_argv(sp->se_getty);
 	if (sp->se_getty_argv == 0) {
 		warning("can't parse getty for port %s", sp->se_device);
