@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2005/11/12 16:41:39 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.37 2005/11/12 17:04:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -835,7 +835,7 @@ top:
 int
 parse_rules(FILE *input, struct ipsecctl *ipsecx)
 {
-	struct sym	*sym, *next;
+	struct sym	*sym;
 
 	ipsec = ipsecx;
 	fin = input;
@@ -845,11 +845,10 @@ parse_rules(FILE *input, struct ipsecctl *ipsecx)
 	yyparse();
 
 	/* Free macros and check which have not been used. */
-	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
-		next = TAILQ_NEXT(sym, entries);
+	while ((sym = TAILQ_FIRST(&symhead))) {
+		TAILQ_REMOVE(&symhead, sym, entries);
 		free(sym->nam);
 		free(sym->val);
-		TAILQ_REMOVE(&symhead, sym, entries);
 		free(sym);
 	}
 
@@ -869,9 +868,9 @@ symset(const char *nam, const char *val, int persist)
 		if (sym->persist == 1)
 			return (0);
 		else {
+			TAILQ_REMOVE(&symhead, sym, entries);
 			free(sym->nam);
 			free(sym->val);
-			TAILQ_REMOVE(&symhead, sym, entries);
 			free(sym);
 		}
 	}
