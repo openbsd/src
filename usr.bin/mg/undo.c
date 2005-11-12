@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.32 2005/10/14 19:46:46 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.33 2005/11/12 18:48:08 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -385,7 +385,10 @@ undo_dump(int f, int n)
 			strlcat(buf, "\"", sizeof(buf));
 		}
 		snprintf(tmp, sizeof(tmp), " [%d]", rec->region.r_size);
-		strlcat(buf, tmp, sizeof(buf));
+		if (strlcat(buf, tmp, sizeof(buf)) >= sizeof(buf)) {
+			ewprintf("Undo record too large. Aborted.");
+			return (FALSE);
+		}
 		addlinef(bp, "%s", buf);
 	}
 	return (TRUE);
