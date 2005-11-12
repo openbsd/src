@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.15 2005/10/23 19:00:25 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.16 2005/11/12 23:14:03 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -148,8 +148,8 @@
  * Pages in the first 256Mb are mapped in at every 256Mb segment.
  */
 #define HPMMMASK	0xF0000000
-#define ISHPMMADDR(v) \
-	((curproc->p_md.md_flags & MDP_HPUXMMAP) && \
+#define ISHPMMADDR(p, v) \
+	(((p)->p_md.md_flags & MDP_HPUXMMAP) && \
 	 ((unsigned)(v) & HPMMMASK) && \
 	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
 #define HPMMBASEADDR(v) \

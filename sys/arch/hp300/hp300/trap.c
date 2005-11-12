@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.47 2005/05/01 09:55:47 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.48 2005/11/12 23:14:00 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -624,7 +624,7 @@ dopanic:
 		}
 
 #ifdef COMPAT_HPUX
-		if (ISHPMMADDR(va)) {
+		if (ISHPMMADDR(p, va)) {
 			int pmap_mapmulti(pmap_t, vaddr_t);
 			vaddr_t bva;
 
@@ -633,7 +633,7 @@ dopanic:
 				bva = HPMMBASEADDR(va);
 				rv = uvm_fault(map, bva, 0, ftype);
 				if (rv == 0)
-					(void) pmap_mapmulti(map->pmap, va);
+					(void)pmap_mapmulti(map->pmap, va);
 			}
 		} else
 #endif
