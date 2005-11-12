@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.26 2005/09/06 19:01:00 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.27 2005/11/12 23:08:41 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -421,10 +421,11 @@ hdident(parent, sc, ha)
 	 * XXX blocks.  ICK!
 	 */
 	printf(": %s\n", hdidentinfo[id].ri_desc);
-	printf("%s: %d cylinders, %d heads, %d blocks, %d bytes/block\n",
-	    sc->sc_dev.dv_xname, hdidentinfo[id].ri_ncyl,
-	    hdidentinfo[id].ri_ntpc, hdidentinfo[id].ri_nblocks,
-	    DEV_BSIZE);
+	printf("%s: %luMB, %lu cyl, %lu head, %lu sec, %lu bytes/sec, %lu sec total\n",
+	    sc->sc_dev.dv_xname,
+	    hdidentinfo[id].ri_nblocks / (1048576 / DEV_BSIZE),
+	    hdidentinfo[id].ri_ncyl, hdidentinfo[id].ri_ntpc,
+	    hdidentinfo[id].ri_nbpt, DEV_BSIZE, hdidentinfo[id].ri_nblocks);
 
 	return (1);
 }
