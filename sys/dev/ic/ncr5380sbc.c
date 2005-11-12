@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.17 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.18 2005/11/12 20:29:45 brad Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -1341,7 +1341,7 @@ ncr5380_select(sc, sr)
 	 * after we enter arbitration up until we assert SEL.
 	 * Avoid long interrupts during this period.
 	 */
-	s = splimp();	/* XXX: Begin time-critical section */
+	s = splvm();	/* XXX: Begin time-critical section */
 
 	*(sc->sci_odata) = 0x80;	/* OUR_ID */
 	*(sc->sci_mode) = SCI_MODE_ARB;
