@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdvar.h,v 1.5 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: hdvar.h,v 1.6 2005/11/12 23:10:04 miod Exp $	*/
 /*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
 
 /*
@@ -98,5 +98,5 @@ struct	hd_softc {
 #define HDWAITC		1	/* min time for timeout in seconds */
 
 #ifdef _KERNEL
-extern	struct hdidentinfo hdidentinfo[];
+extern	const struct hdidentinfo hdidentinfo[];
 #endif

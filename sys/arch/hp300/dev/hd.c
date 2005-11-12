@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.27 2005/11/12 23:08:41 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.28 2005/11/12 23:10:04 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ int	hddebug = 0x80;
  * Misc. HW description, indexed by sc_type.
  * Nothing really critical here, could do without it.
  */
-struct hdidentinfo hdidentinfo[] = {
+const struct hdidentinfo hdidentinfo[] = {
 	{ HD7946AID,	0,	"7945A",	NHD7945ABPT,
 	  NHD7945ATRK,	968,	 108416 },
 
@@ -208,7 +208,7 @@ struct hdidentinfo hdidentinfo[] = {
 	{ HD2203AID,	0,	"2203A",	NHD2203ABPT,
 	  NHD2203ATRK,	1449,	1309896 }
 };
-int numhdidentinfo = sizeof(hdidentinfo) / sizeof(hdidentinfo[0]);
+const int numhdidentinfo = sizeof(hdidentinfo) / sizeof(hdidentinfo[0]);
 
 bdev_decl(hd);
 cdev_decl(hd);
@@ -491,16 +491,10 @@ hdgetinfo(dev, rs, lp, spoofonly)
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 
-	if (rs->sc_type > -1) {
-		lp->d_nsectors = hdidentinfo[rs->sc_type].ri_nbpt;
-		lp->d_ntracks = hdidentinfo[rs->sc_type].ri_ntpc;
-		lp->d_ncylinders = hdidentinfo[rs->sc_type].ri_ncyl;
-		lp->d_secperunit = hdidentinfo[rs->sc_type].ri_nblocks;
-	} else {
-		lp->d_nsectors = 32;
-		lp->d_ntracks = 20;
-		lp->d_ncylinders = 1;
-	}
+	lp->d_nsectors = hdidentinfo[rs->sc_type].ri_nbpt;
+	lp->d_ntracks = hdidentinfo[rs->sc_type].ri_ntpc;
+	lp->d_ncylinders = hdidentinfo[rs->sc_type].ri_ncyl;
+	lp->d_secperunit = hdidentinfo[rs->sc_type].ri_nblocks;
 	lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 
 	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
