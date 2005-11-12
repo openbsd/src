@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.20 2005/11/11 01:19:47 fgsch Exp $ */
+/*	$OpenBSD: safte.c,v 1.21 2005/11/12 15:12:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -155,7 +155,7 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct safte_softc		*sc = (struct safte_softc *)self;
 	struct scsibus_attach_args	*sa = aux;
-	int				i;
+	int				i = 0;
 
 	sc->sc_link = sa->sa_sc_link;
 	sa->sa_sc_link->device_softc = sc;
@@ -177,7 +177,8 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_nsensors > 0 &&
 	    sensor_task_register(sc, safte_read_encstat, 10) != 0) {
 		printf("%s: unable to register update task\n", DEVNAME(sc));
-		sc->sc_nsensors = 0;
+		sc->sc_nsensors = sc->sc_ntemps = 0;
+		free(sc->sc_sensors, M_DEVBUF);
 	} else {
 		for (i = 0; i < sc->sc_nsensors; i++)
 			SENSOR_ADD(&sc->sc_sensors[i].se_sensor);
@@ -188,8 +189,16 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 	    bio_register(self, safte_ioctl) != 0) {
 		printf("%s: unable to register ioctl with bio\n", DEVNAME(sc));
 		sc->sc_nslots = 0;
-	}
+	} else
+		i++;
 #endif
+
+	if (i) /* if we're doing something, then preinit encbuf and sensors */
+		safte_read_encstat(sc);
+	else {
+		free(sc->sc_encbuf, M_DEVBUF);
+		sc->sc_encbuf = NULL;
+	}
 }
 
 int
@@ -197,7 +206,6 @@ safte_detach(struct device *self, int flags)
 {
 	struct safte_softc		*sc = (struct safte_softc *)self;
 	int				i;
-
 
 #if NBIO > 0
 	if (sc->sc_nslots > 0)
