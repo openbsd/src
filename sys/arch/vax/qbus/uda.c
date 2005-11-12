@@ -1,4 +1,4 @@
-/*	$OpenBSD: uda.c,v 1.5 2004/07/07 23:10:46 deraadt Exp $	*/
+/*	$OpenBSD: uda.c,v 1.6 2005/11/12 03:44:24 pedro Exp $	*/
 /*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -293,9 +293,9 @@ udago(usc, mxi)
 	 * the map again.
 	 */
 	if (sc->sc_inq == 0) {
-		err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam,
-		    bp->b_data,
-		    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
+		err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
+		    bp->b_bcount, (bp->b_flags & B_PHYS ? bp->b_proc : NULL),
+		    BUS_DMA_NOWAIT);
 		if (err == 0) {
 			mscp_dgo(sc->sc_softc, mxi);
 			return;
@@ -327,7 +327,8 @@ udaready(uu)
 	int err;
 
 	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
-	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
+	    bp->b_bcount, (bp->b_flags & B_PHYS ? bp->b_proc : NULL),
+	    BUS_DMA_NOWAIT);
 	if (err)
 		return 0;
 	mscp_dgo(sc->sc_softc, mxi);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.15 2005/08/24 21:01:35 deraadt Exp $ */
+/* $OpenBSD: ncr.c,v 1.16 2005/11/12 03:44:24 pedro Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -292,6 +292,7 @@ si_dma_alloc(ncr_sc)
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct scsi_xfer *xs = sr->sr_xs;
 	struct si_dma_handle *dh;
+	struct buf *bp;
 	int xlen, i;
 
 #ifdef DIAGNOSTIC
@@ -324,8 +325,9 @@ found:
 	dh->dh_flags = SIDH_BUSY;
 	dh->dh_addr = ncr_sc->sc_dataptr;
 	dh->dh_len = xlen;
-	if (xs->bp)
-		dh->dh_proc = xs->bp->b_proc;
+	bp = xs->bp;
+	if (bp != NULL)
+		dh->dh_proc = (bp->b_flags & B_PHYS ? bp->b_proc : NULL);
 	else
 		dh->dh_proc = NULL;
 
