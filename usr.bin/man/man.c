@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.30 2005/10/31 10:38:04 otto Exp $	*/
+/*	$OpenBSD: man.c,v 1.31 2005/11/12 00:51:13 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.30 2005/10/31 10:38:04 otto Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.31 2005/11/12 00:51:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -680,7 +680,6 @@ static char *
 check_pager(char *name)
 {
 	char *p, *save;
-	int len;
 
 	/*
 	 * if the user uses "more", we make it "more -s"; watch out for
@@ -697,10 +696,8 @@ check_pager(char *name)
 	if (!strncmp(p, "more", 4) && (p[4] == '\0' || isspace(p[4]))){
 		save = name;
 		/* allocate space to add the "-s" */
-		len = strlen(save) + 1 + sizeof("-s");
-		if ((name = malloc(len)) == NULL)
-			err(1, NULL);
-		(void)snprintf(name, len, "%s %s", save, "-s");
+		if (asprintf(&name, "%s -s", save) == -1)
+			err(1, "asprintf");
 	}
 	return(name);
 }

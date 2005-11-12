@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.37 2005/03/25 16:54:17 jaredy Exp $ */
+/*	$OpenBSD: lpr.c,v 1.38 2005/11/12 00:54:15 deraadt Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.37 2005/03/25 16:54:17 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.38 2005/11/12 00:54:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ static void	 cleanup(int);
 static void	 copy(int, char *);
 static char	*itoa(int);
 static char	*linked(char *);
-static char	*lmktemp(char *, int, int);
+static char	*lmktemp(char *, int);
 static void	 mktemps(void);
 static int	 nfile(char *);
 static int	 test(char *);
@@ -693,11 +693,10 @@ mktemps(void)
 			n = n * 10 + (*cp++ - '0');
 		}
 	}
-	len = strlen(SD) + strlen(host) + 8;
 	do {
-		tfname = lmktemp("tf", n, len);
-		cfname = lmktemp("cf", n, len);
-		dfname = lmktemp("df", n, len);
+		tfname = lmktemp("tf", n);
+		cfname = lmktemp("cf", n);
+		dfname = lmktemp("df", n);
 		n = (n + 1) % 1000;
 	} while (stat(tfname, &stb) == 0 || stat(cfname, &stb) == 0 ||
 	    stat(dfname, &stb) == 0);
@@ -712,13 +711,13 @@ mktemps(void)
  * Make a temp file name.
  */
 static char *
-lmktemp(char *id, int num, int len)
+lmktemp(char *id, int num)
 {
 	char *s;
 
-	if ((s = malloc(len)) == NULL)
+	if (asprintf(&s, "%s/%sA%03d%s", SD, id, num, host) == -1)
 		err(1, NULL);
-	(void)snprintf(s, len, "%s/%sA%03d%s", SD, id, num, host);
+
 	return(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.15 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.16 2005/11/12 00:49:55 deraadt Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -157,17 +157,13 @@ void
 to_string(struct val *vp)
 {
 	char	       *tmp;
-	size_t		len;
 
 	if (vp->type == string)
 		return;
 
-	len = 25;
-	tmp = malloc(len);
-	if (tmp == NULL) {
+	if (asprintf(&tmp, "%d", vp->u.i) == -1)
 		err(3, NULL);
-	}
-	snprintf(tmp, len, "%d", vp->u.i);
+
 	vp->type = string;
 	vp->u.s = tmp;
 }
