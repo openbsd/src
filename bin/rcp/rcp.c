@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.41 2005/03/31 18:39:21 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.42 2005/11/12 18:34:25 deraadt Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.41 2005/03/31 18:39:21 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.42 2005/11/12 18:34:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ main(int argc, char *argv[])
 void
 toremote(char *targ, int argc, char *argv[])
 {
-	int i, len, tos;
+	int i, tos;
 	char *bp, *host, *src, *suser, *thost, *tuser, *user, *arg;
 
 	if ((user = strdup(pwd->pw_name)) == NULL)
@@ -263,11 +263,6 @@ toremote(char *targ, int argc, char *argv[])
 			if (*src == 0)
 				src = ".";
 			host = strchr(argv[i], '@');
-			len = strlen(_PATH_RSH) + strlen(argv[i]) +
-			    strlen(src) + (tuser ? strlen(tuser) : 0) +
-			    strlen(thost) + strlen(targ) + CMDNEEDS + 20;
-			if (!(bp = malloc(len)))
-				err(1, NULL);
 			if (host) {
 				*host++ = 0;
 				suser = argv[i];
@@ -275,25 +270,26 @@ toremote(char *targ, int argc, char *argv[])
 					suser = user;
 				else if (!okname(suser))
 					continue;
-				(void)snprintf(bp, len,
+				if (asprintf(&bp,
 				    "%s %s -l %s -n %s %s '%s%s%s:%s'",
 				    _PATH_RSH, host, suser, cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
-				    thost, targ);
-			} else
-				(void)snprintf(bp, len,
+				    thost, targ) == -1)
+					err(1, NULL);
+			} else {
+				if (asprintf(&bp,
 				    "exec %s %s -n %s %s '%s%s%s:%s'",
 				    _PATH_RSH, argv[i], cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
-				    thost, targ);
+				    thost, targ) == -1)
+					err(1, NULL);
+			}
 			(void)susystem(bp, userid);
 			(void)free(bp);
 		} else {			/* local to remote */
 			if (rem == -1) {
-				len = strlen(targ) + CMDNEEDS + 20;
-				if (!(bp = malloc(len)))
+				if (asprintf(&bp, "%s -t %s", cmd, targ) == -1)
 					err(1, NULL);
-				(void)snprintf(bp, len, "%s -t %s", cmd, targ);
 				host = thost;
 #ifdef KERBEROS
 				if (use_kerberos)
@@ -325,7 +321,7 @@ toremote(char *targ, int argc, char *argv[])
 void
 tolocal(int argc, char *argv[])
 {
-	int i, len, tos;
+	int i, tos;
 	char *bp, *host, *src, *suser, *user;
 
 	if ((user = strdup(pwd->pw_name)) == NULL)
@@ -333,13 +329,10 @@ tolocal(int argc, char *argv[])
 
 	for (i = 0; i < argc - 1; i++) {
 		if (!(src = colon(argv[i]))) {		/* Local to local. */
-			len = strlen(_PATH_CP) + strlen(argv[i]) +
-			    strlen(argv[argc - 1]) + 20;
-			if (!(bp = malloc(len)))
-				err(1, NULL);
-			(void)snprintf(bp, len, "exec %s%s%s %s %s", _PATH_CP,
+			if (asprintf(&bp, "exec %s%s%s %s %s", _PATH_CP,
 			    iamrecursive ? " -R" : "", pflag ? " -p" : "",
-			    argv[i], argv[argc - 1]);
+			    argv[i], argv[argc - 1]) == -1)
+				err(1, NULL);
 			if (susystem(bp, userid))
 				++errs;
 			(void)free(bp);
@@ -359,10 +352,8 @@ tolocal(int argc, char *argv[])
 			else if (!okname(suser))
 				continue;
 		}
-		len = strlen(src) + CMDNEEDS + 20;
-		if ((bp = malloc(len)) == NULL)
+		if (asprintf(&bp, "%s -f %s", cmd, src) == -1)
 			err(1, NULL);
-		(void)snprintf(bp, len, "%s -f %s", cmd, src);
 		rem =
 #ifdef KERBEROS
 		    use_kerberos ?
@@ -394,7 +385,7 @@ source(int argc, char *argv[])
 	static BUF buffer;
 	BUF *bp;
 	off_t i;
-	int amt, fd, haderr, indx, result;
+	int amt, fd = -1, haderr, indx, result;
 	char *last, *name, buf[BUFSIZ];
 	int len;
 
@@ -411,7 +402,8 @@ source(int argc, char *argv[])
 		if ((fd = open(name, O_RDONLY, 0)) < 0)
 			goto syserr;
 		if (fstat(fd, &stb)) {
-syserr:			run_err("%s: %s", name, strerror(errno));
+syserr:
+			run_err("%s: %s", name, strerror(errno));
 			goto next;
 		}
 		switch (stb.st_mode & S_IFMT) {
@@ -450,7 +442,10 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 		if (response() < 0)
 			goto next;
 		if ((bp = allocbuf(&buffer, fd, BUFSIZ)) == NULL) {
-next:			(void)close(fd);
+next:			if (fd != -1) {
+				(void)close(fd);
+				fd = -1;
+			}
 			continue;
 		}
 
@@ -472,8 +467,11 @@ next:			(void)close(fd);
 					haderr = result >= 0 ? EIO : errno;
 			}
 		}
-		if (close(fd) && !haderr)
-			haderr = errno;
+		if (fd != -1) {
+			if (close(fd) && !haderr)
+				haderr = errno;
+			fd = -1;
+		}
 		if (!haderr)
 			(void)write(rem, "", 1);
 		else
