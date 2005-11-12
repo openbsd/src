@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.5 2005/09/27 22:05:36 miod Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.6 2005/11/12 23:09:14 miod Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -345,7 +345,7 @@ frodointr(arg)
 			}
 		}
 		if (taken++ > 100)
-			panic("frodointr: looping!");
+			panic("frodointr: looping, line %d fisr %p", line, fisr);
 	} while (FRODO_GETPEND(sc) != 0);
 
 	return (1);
