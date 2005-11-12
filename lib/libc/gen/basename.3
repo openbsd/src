@@ -1,4 +1,4 @@
-.\" $OpenBSD: basename.3,v 1.18 2003/07/30 22:29:32 millert Exp $
+.\" $OpenBSD: basename.3,v 1.19 2005/11/12 15:57:30 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -63,10 +63,6 @@ The following error codes may be set in
 The path component to be returned was larger than
 .Dv MAXPATHLEN .
 .El
-.Sh WARNINGS
-.Fn basename
-returns a pointer to internal static storage space that will be overwritten
-by subsequent calls.
 .Sh SEE ALSO
 .Xr basename 1 ,
 .Xr dirname 1 ,
@@ -83,3 +79,14 @@ function first appeared in
 .Ox 2.2 .
 .Sh AUTHORS
 .An Todd C. Miller
+.Sh CAVEATS
+.Fn basename
+returns a pointer to internal static storage space that will be overwritten
+by subsequent calls.
+.Pp
+Other vendor implementations of
+.Fn basename
+may modify the contents of the string passed to
+.Fn basename ;
+this should be taken into account when writing code which calls this function
+if portability is desired.
