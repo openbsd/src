@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2005/11/12 16:40:58 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.36 2005/11/12 16:41:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,38 +51,38 @@ static int		 errors = 0;
 static int		 debug = 0;
 
 const struct ipsec_xf authxfs[] = {
-	{"unknown",		AUTHXF_UNKNOWN,		0,	0},
-	{"none",		AUTHXF_NONE,		0,	0},
-	{"hmac-md5",		AUTHXF_HMAC_MD5,	16,	0},
-	{"hmac-ripemd160",	AUTHXF_HMAC_RIPEMD160,	20,	0},
-	{"hmac-sha1",		AUTHXF_HMAC_SHA1,	20,	0},
-	{"hmac-sha2-256",	AUTHXF_HMAC_SHA2_256,	32,	0},
-	{"hmac-sha2-384",	AUTHXF_HMAC_SHA2_384,	48,	0},
-	{"hmac-sha2-512",	AUTHXF_HMAC_SHA2_512,	64,	0},
-	{"md5",			AUTHXF_MD5,		16,	0},
-	{"sha1",		AUTHXF_SHA1,		20,	0},
-	{NULL,			0,			0,	0},
+	{ "unknown",		AUTHXF_UNKNOWN,		0,	0 },
+	{ "none",		AUTHXF_NONE,		0,	0 },
+	{ "hmac-md5",		AUTHXF_HMAC_MD5,	16,	0 },
+	{ "hmac-ripemd160",	AUTHXF_HMAC_RIPEMD160,	20,	0 },
+	{ "hmac-sha1",		AUTHXF_HMAC_SHA1,	20,	0 },
+	{ "hmac-sha2-256",	AUTHXF_HMAC_SHA2_256,	32,	0 },
+	{ "hmac-sha2-384",	AUTHXF_HMAC_SHA2_384,	48,	0 },
+	{ "hmac-sha2-512",	AUTHXF_HMAC_SHA2_512,	64,	0 },
+	{ "md5",		AUTHXF_MD5,		16,	0 },
+	{ "sha1",		AUTHXF_SHA1,		20,	0 },
+	{ NULL,			0,			0,	0 },
 };
 
 const struct ipsec_xf encxfs[] = {
-	{"unknown",		ENCXF_UNKNOWN,		0,	0},
-	{"none",		ENCXF_NONE,		0,	0},
-	{"3des-cbc",		ENCXF_3DES_CBC,		24,	24},
-	{"des-cbc",		ENCXF_DES_CBC,		8,	8},
-	{"aes",			ENCXF_AES,		16,	32},
-	{"aesctr",		ENCXF_AESCTR,		16+4,	32+4},
-	{"blowfish",		ENCXF_BLOWFISH,		5,	56},
-	{"cast128",		ENCXF_CAST128,		5,	16},
-	{"null",		ENCXF_NULL,		0,	0},
-	{"skipjack",		ENCXF_SKIPJACK,		10,	10},
-	{NULL,			0,			0,	0},
+	{ "unknown",		ENCXF_UNKNOWN,		0,	0 },
+	{ "none",		ENCXF_NONE,		0,	0 },
+	{ "3des-cbc",		ENCXF_3DES_CBC,		24,	24 },
+	{ "des-cbc",		ENCXF_DES_CBC,		8,	8 },
+	{ "aes",		ENCXF_AES,		16,	32 },
+	{ "aesctr",		ENCXF_AESCTR,		16+4,	32+4 },
+	{ "blowfish",		ENCXF_BLOWFISH,		5,	56 },
+	{ "cast128",		ENCXF_CAST128,		5,	16 },
+	{ "null",		ENCXF_NULL,		0,	0 },
+	{ "skipjack",		ENCXF_SKIPJACK,		10,	10 },
+	{ NULL,			0,			0,	0 },
 };
 
 const struct ipsec_xf compxfs[] = {
-	{"unknown",		COMPXF_UNKNOWN,		0,	0},
-	{"deflate",		COMPXF_DEFLATE,		0,	0},
-	{"lzs",			COMPXF_LZS,		0,	0},
-	{NULL,			0,			0,	0},
+	{ "unknown",		COMPXF_UNKNOWN,		0,	0 },
+	{ "deflate",		COMPXF_DEFLATE,		0,	0 },
+	{ "lzs",		COMPXF_LZS,		0,	0 },
+	{ NULL,			0,			0,	0 },
 };
 
 int			 yyerror(const char *, ...);
@@ -231,6 +231,7 @@ number		: STRING			{
 			$$ = (u_int32_t)ulval;
 			free($1);
 		}
+		;
 
 tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			struct ipsec_rule	*r;
@@ -298,7 +299,7 @@ flowrule	: FLOW protocol dir hosts peer ids authtype	{
 
 			/* Create and add reverse flow rule. */
 			if ($3 == IPSEC_INOUT) {
-				r = reverse_rule(r);	
+				r = reverse_rule(r);
 				r->nr = ipsec->rule_nr++;
 
 				if (ipsecctl_add_rule(ipsec, r))
@@ -318,7 +319,8 @@ ikerule		: IKE ikemode protocol hosts peer mmxfs qmxfs ids {
 
 			if (ipsecctl_add_rule(ipsec, r))
 				errx(1, "ikerule: ipsecctl_add_rule");
-		};
+		}
+		;
 
 protocol	: /* empty */			{ $$ = IPSEC_ESP; }
 		| ESP				{ $$ = IPSEC_ESP; }
@@ -496,7 +498,7 @@ mmxfs		: /* empty */			{
 			$$ = xfs;
 		}
 		| MAIN transforms		{ $$ = $2; }
-		; 
+		;
 
 qmxfs		: /* empty */			{
 			struct ipsec_transforms *xfs;
@@ -533,7 +535,7 @@ enckeyspec	: /* empty */			{
 keyspec		: STRING			{
 			unsigned char	*hex;
 			unsigned char	*p = strchr($1, ':');
-			
+
 			if (p != NULL ) {
 				*p++ = 0;
 
@@ -575,7 +577,7 @@ int
 yyerror(const char *fmt, ...)
 {
 	va_list		 ap;
-	extern char 	*infile;
+	extern char	*infile;
 
 	errors = 1;
 	va_start(ap, fmt);
@@ -597,35 +599,35 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "active",		ACTIVE},
-		{ "ah",			AH},
-		{ "any",		ANY},
-		{ "auth",		AUTHXF},
-		{ "authkey",		AUTHKEY},
-		{ "comp",		COMPXF},
-		{ "dstid",		DSTID},
-		{ "enc",		ENCXF},
-		{ "enckey",		ENCKEY},
-		{ "esp",		ESP},
-		{ "file",		FILENAME},
-		{ "flow",		FLOW},
-		{ "from",		FROM},
-		{ "ike",		IKE},
-		{ "in",			IN},
-		{ "ipcomp",		IPCOMP},
-		{ "main",		MAIN},
-		{ "out",		OUT},
-		{ "passive",		PASSIVE},
-		{ "peer",		PEER},
-		{ "psk",		PSK},
-		{ "quick",		QUICK},
-		{ "rsa",		RSA},
-		{ "spi",		SPI},
-		{ "srcid",		SRCID},
-		{ "tcpmd5",		TCPMD5},
-		{ "to",			TO},
-		{ "transport",		TRANSPORT},
-		{ "tunnel",		TUNNEL},
+		{ "active",		ACTIVE },
+		{ "ah",			AH },
+		{ "any",		ANY },
+		{ "auth",		AUTHXF },
+		{ "authkey",		AUTHKEY },
+		{ "comp",		COMPXF },
+		{ "dstid",		DSTID },
+		{ "enc",		ENCXF },
+		{ "enckey",		ENCKEY },
+		{ "esp",		ESP },
+		{ "file",		FILENAME },
+		{ "flow",		FLOW },
+		{ "from",		FROM },
+		{ "ike",		IKE },
+		{ "in",			IN },
+		{ "ipcomp",		IPCOMP },
+		{ "main",		MAIN },
+		{ "out",		OUT },
+		{ "passive",		PASSIVE },
+		{ "peer",		PEER },
+		{ "psk",		PSK },
+		{ "quick",		QUICK },
+		{ "rsa",		RSA },
+		{ "spi",		SPI },
+		{ "srcid",		SRCID },
+		{ "tcpmd5",		TCPMD5 },
+		{ "to",			TO },
+		{ "transport",		TRANSPORT },
+		{ "tunnel",		TUNNEL },
 	};
 	const struct keywords	*p;
 
@@ -1100,7 +1102,7 @@ host_v4(const char *s, int mask)
 void
 set_ipmask(struct ipsec_addr_wrap *address, u_int8_t b)
 {
-	struct ipsec_addr 	*ipa;
+	struct ipsec_addr	*ipa;
 	int			 i, j = 0;
 
 	ipa = &address->mask;
@@ -1129,7 +1131,7 @@ copyhost(const struct ipsec_addr_wrap *src)
 
 	if ((dst->name = strdup(src->name)) == NULL)
 		err(1, "copyhost: strdup");
-	
+
 	return dst;
 }
 
@@ -1251,16 +1253,16 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 			return (0);
 		}
 		if (enckey) {
-		if (enckey->len < xfs->encxf->keymin) {
-			yyerror("encryption key too short, minimum %d bits",
-			    xfs->encxf->keymin * 8);
-			return (0);
-		}
-		if (xfs->encxf->keymax < enckey->len) {
-			yyerror("encryption key too long, maximum %d bits",
-			    xfs->encxf->keymax * 8);
-			return (0);
-		}
+			if (enckey->len < xfs->encxf->keymin) {
+				yyerror("encryption key too short, minimum %d bits",
+				    xfs->encxf->keymin * 8);
+				return (0);
+			}
+			if (xfs->encxf->keymax < enckey->len) {
+				yyerror("encryption key too long, maximum %d bits",
+				    xfs->encxf->keymax * 8);
+				return (0);
+			}
 		}
 	}
 
@@ -1331,7 +1333,7 @@ create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
 		err(1, "create_flow: calloc");
-	
+
 	r->type |= RULE_FLOW;
 
 	if (dir == IPSEC_INOUT)
@@ -1400,7 +1402,7 @@ reverse_rule(struct ipsec_rule *rule)
 		err(1, "reverse_rule: calloc");
 
 	reverse->type |= RULE_FLOW;
-	
+
 	if (rule->direction == (u_int8_t)IPSEC_OUT) {
 		reverse->direction = (u_int8_t)IPSEC_IN;
 		reverse->flowtype = TYPE_USE;
@@ -1408,7 +1410,7 @@ reverse_rule(struct ipsec_rule *rule)
 		reverse->direction = (u_int8_t)IPSEC_OUT;
 		reverse->flowtype = TYPE_REQUIRE;
 	}
-	
+
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
 	reverse->peer = copyhost(rule->peer);

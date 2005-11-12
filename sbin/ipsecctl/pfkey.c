@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.29 2005/11/12 12:00:53 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.30 2005/11/12 16:41:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -64,8 +64,8 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	struct sadb_protocol	 sa_flowtype, sa_protocol;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
 	struct sockaddr_storage	 ssrc, sdst, speer, smask, dmask;
-	struct iovec	 	 iov[IOV_CNT];
-	ssize_t		 	 n;
+	struct iovec		 iov[IOV_CNT];
+	ssize_t			 n;
 	int			 iov_cnt, len, ret = 0;
 
 	sa_srcid = sa_dstid = NULL;
@@ -314,9 +314,9 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	struct sadb_address	sa_src, sa_dst;
 	struct sadb_key		sa_authkey, sa_enckey;
 	struct sockaddr_storage	ssrc, sdst;
-	struct iovec	 	iov[IOV_CNT];
-	ssize_t		 	n;
-	int		 	iov_cnt, len, ret = 0;
+	struct iovec		iov[IOV_CNT];
+	ssize_t			n;
+	int			iov_cnt, len, ret = 0;
 
 	bzero(&ssrc, sizeof(ssrc));
 	switch (src->af) {
@@ -815,7 +815,7 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 				return (1);
 			}
 			break;
-		
+
 		default:
 			return (1);
 		}

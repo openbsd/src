@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.8 2005/11/06 22:51:51 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.9 2005/11/12 16:41:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -106,7 +106,7 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 	fprintf(fd, SET "[qm-%s-%s]:EXCHANGE_TYPE=QUICK_MODE force\n",
 	    src->name, dst->name);
 	fprintf(fd, SET "[qm-%s-%s]:Suites=QM-", src->name, dst->name);
-	
+
 	switch (proto) {
 	case IPSEC_ESP:
 		fprintf(fd, "ESP");
@@ -272,7 +272,7 @@ ike_section_qmids(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		fprintf(fd, SET "[rid-%s]:Network=%s force\n", dst->name,
 		    network);
 		fprintf(fd, SET "[rid-%s]:Netmask=%s force\n", dst->name, mask);
-		
+
 		free(network);
 	} else {
 		fprintf(fd, SET "[rid-%s]:ID-type=IPV4_ADDR force\n",

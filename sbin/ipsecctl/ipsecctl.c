@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.32 2005/11/12 12:00:53 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.33 2005/11/12 16:41:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -392,7 +392,7 @@ ipsecctl_show_flows(int opts)
 			printf("No flows\n");
 		return;
 	}
-		
+
 	while ((rp = TAILQ_FIRST(&ipsec.rule_queue))) {
 		TAILQ_REMOVE(&ipsec.rule_queue, rp, entries);
 
@@ -413,8 +413,6 @@ ipsecctl_show_flows(int opts)
 		}
 		free(rp);
 	}
-
-	return;
 }
 
 void
