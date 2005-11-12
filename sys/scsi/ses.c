@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.28 2005/11/12 08:06:45 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.29 2005/11/12 08:09:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -18,16 +18,12 @@
 
 #include "bio.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/device.h>
 #include <sys/scsiio.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/queue.h>
-#include <sys/kthread.h>
 #include <sys/sensors.h>
 
 #if NBIO > 0
@@ -35,7 +31,6 @@
 #endif
 
 #include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
 #include <scsi/ses.h>
