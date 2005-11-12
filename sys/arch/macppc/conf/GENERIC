@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.99 2005/11/12 11:18:03 martin Exp $g
+#	$OpenBSD: GENERIC,v 1.100 2005/11/12 18:40:26 kettenis Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -246,6 +246,9 @@ ugen*	at uhub?		# USB Generic driver
 
 # I2C bus support
 maciic*		at smu?
+
+# I2C devices
+lmtemp*		at maciic?
 
 # CardBus bus support
 cardbus*	at cardslot?
