@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.22 2005/11/12 16:43:11 deraadt Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.23 2005/11/12 21:49:38 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -153,6 +153,13 @@ struct ipsecctl {
 	u_int32_t	rule_nr;
 	int		opts;
 	struct ipsec_rule_queue rule_queue;
+};
+
+struct addr_node {
+	struct ipsec_addr_wrap	 addr;
+	sa_family_t		 af;
+	struct addr_node	*next;
+	struct addr_node	*tail;
 };
 
 int	parse_rules(FILE *, struct ipsecctl *);

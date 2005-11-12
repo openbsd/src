@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.38 2005/11/12 17:22:23 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.39 2005/11/12 21:49:38 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,9 +22,11 @@
 
 %{
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
@@ -33,6 +35,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -113,6 +116,10 @@ struct ipsec_key	*parsekey(unsigned char *, size_t);
 struct ipsec_key	*parsekeyfile(char *);
 struct ipsec_addr_wrap	*host(const char *);
 struct ipsec_addr_wrap	*host_v4(const char *, int);
+struct ipsec_addr_wrap	*host_if(const char *, int);
+void			 ifa_load(void);
+int			 ifa_exists(const char *);
+struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
 void			 set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
 struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
@@ -1045,11 +1052,9 @@ host(const char *s)
 		mask = -1;
 	}
 
-#if notyet
 	/* Does interface with this name exist? */
 	if (cont && (ipa = host_if(ps, mask)) != NULL)
 		cont = 0;
-#endif
 
 	/* IPv4 address? */
 	if (cont && (ipa = host_v4(s, mask)) != NULL)
@@ -1057,7 +1062,7 @@ host(const char *s)
 
 #if notyet
 	/* IPv6 address? */
-	if (cont && (ipa = host_dsn(ps, v4mask, 0)) != NULL)
+	if (cont && (ipa = host_dns(ps, v4mask, 0)) != NULL)
 		cont = 0;
 #endif
 	free(ps);
@@ -1098,6 +1103,120 @@ host_v4(const char *s, int mask)
 	set_ipmask(ipa, bits);
 	if (bits != (ipa->af == AF_INET ? 32 : 128))
 		ipa->netaddress = 1;
+
+	return (ipa);
+}
+
+struct ipsec_addr_wrap *
+host_if(const char *s, int mask)
+{
+	struct ipsec_addr_wrap *ipa = NULL;
+	char			*ps;
+
+	if ((ps = strdup(s)) == NULL)
+		err(1, "host_if: strdup");
+
+	if (ifa_exists(ps))
+		ipa = ifa_lookup(ps);
+
+	free(ps);
+	return (ipa);
+}
+
+/* interface lookup routintes */
+
+struct addr_node	*iftab;
+
+void
+ifa_load(void)
+{
+	struct ifaddrs		*ifap, *ifa;
+	struct addr_node	*n = NULL, *h = NULL;
+
+	if (getifaddrs(&ifap) < 0)
+		err(1, "ifa_load: getiffaddrs");
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (!(ifa->ifa_addr->sa_family == AF_INET ||
+		    ifa->ifa_addr->sa_family == AF_INET6 ||
+		    ifa->ifa_addr->sa_family == AF_LINK))
+			continue;
+		n = calloc(1, sizeof(struct addr_node));
+		if (n == NULL)
+			err(1, "ifa_load: calloc");
+		n->af = ifa->ifa_addr->sa_family;
+		if ((n->addr.name = strdup(ifa->ifa_name)) == NULL)
+			err(1, "ifa_load: strdup");
+		if (n->af == AF_INET) {
+			n->addr.af = AF_INET;
+			memcpy(&n->addr.address.v4, &((struct sockaddr_in *)
+			    ifa->ifa_addr)->sin_addr.s_addr,
+			    sizeof(struct in_addr));
+			memcpy(&n->addr.mask.v4, &((struct sockaddr_in *)
+			    ifa->ifa_netmask)->sin_addr.s_addr,
+			    sizeof(struct in_addr));
+		} else if (n->af == AF_INET6) {
+			n->addr.af = AF_INET6;
+			memcpy(&n->addr.address.v6, &((struct sockaddr_in6 *)
+			    ifa->ifa_addr)->sin6_addr.s6_addr,
+			    sizeof(struct in6_addr));
+			memcpy(&n->addr.mask.v6, &((struct sockaddr_in6 *)
+			    ifa->ifa_netmask)->sin6_addr.s6_addr,
+			    sizeof(struct in6_addr));
+		}
+		if ((n->addr.name = strdup(ifa->ifa_name)) == NULL)
+			err(1, "ifa_load: strdup");
+		n->next = NULL;
+		n->tail = n;
+		if (h == NULL)
+			h = n;
+		else {
+			h->tail->next = n;
+			h->tail = n;
+		}
+	}
+
+	iftab = h;
+	freeifaddrs(ifap);
+}
+
+int
+ifa_exists(const char *ifa_name)
+{
+	struct addr_node	*n;
+
+	if (iftab == NULL)
+		ifa_load();
+
+	for (n = iftab; n; n = n->next) {
+		if (n->af == AF_LINK && !strncmp(n->addr.name, ifa_name,
+		    IFNAMSIZ))
+			return (1);
+	}
+
+	return (0);
+}
+
+struct ipsec_addr_wrap *
+ifa_lookup(const char *ifa_name)
+{
+	struct addr_node	*p = NULL;
+	struct ipsec_addr_wrap	*ipa = NULL;
+
+	if (iftab == NULL)
+		ifa_load();
+
+	for (p = iftab; p; p = p->next) {
+		if (p->af != AF_INET)
+			continue;
+		if (strncmp(p->addr.name, ifa_name, IFNAMSIZ))
+			continue;
+		ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
+		if (ipa == NULL)
+			err(1, "ifa_lookup: calloc");
+		memcpy(ipa, &p->addr, sizeof(struct ipsec_addr_wrap));
+		break;
+	}
 
 	return (ipa);
 }
