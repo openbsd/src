@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.13 2005/10/23 19:00:25 martin Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.14 2005/11/12 23:11:37 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -170,12 +170,46 @@ pmap_bootstrap(nextpa, firstpa)
 	eiobase = iiobase + ptoa(MACHINE_IIOMAPSIZE);
 
 	/*
-	 * We need to be able to map a whole UPT here as well. Adjust
-	 * nptpages if necessary.
+	 * Compute how many PT pages we will need to have initialized.
+	 * We need to have enough of them for the vm system to initialize
+	 * up to the point we can use it to allocate more PT pages - i.e.
+	 * when we can afford using pmap_enter_ptpage().
+	 *
+	 * Aside from the IO maps, we need to be able to successfully
+	 * allocate:
+	 * - nkmempages_max pages in kmeminit().
+	 * - PAGER_MAP_SIZE bytes in uvm_pager_init().
+	 * - 93.75 % of physmem anons in amap_init().
+	 * - 4 * uvm_km_pages_lowat pages in uvm_km_page_init().
+	 *
+	 * We'll compute this size in bytes, then round it to pages,
+	 * then to a multiple of NPTEPG.
 	 */
-	nptpages = (MACHINE_IIOMAPSIZE + MACHINE_EIOMAPSIZE +
-	    atop(MACHINE_MAX_PTSIZE) * sizeof(pt_entry_t) + NPTEPG - 1) /
-	    NPTEPG;
+
+	nptpages = ptoa(MACHINE_IIOMAPSIZE + MACHINE_EIOMAPSIZE);
+
+	num = RELOC(physmem, int) / 4;
+	if (num > NKMEMPAGES_MAX_DEFAULT)
+		num = NKMEMPAGES_MAX_DEFAULT;
+	nptpages += ptoa(num);
+
+	nptpages += PAGER_MAP_SIZE;
+
+	nptpages += (RELOC(physmem, int) * 15 * sizeof(struct vm_anon)) / 16;
+
+	{
+		extern int uvm_km_pages_lowat;
+
+		if ((num = RELOC(uvm_km_pages_lowat, int)) == 0) {
+			num = RELOC(physmem, int) / 256;
+			if (num < 128)
+				num = 128;
+		}
+	}
+	nptpages += ptoa(num);
+
+	nptpages = (atop(round_page(nptpages)) + NPTEPG - 1) / NPTEPG;
+
 	nextpa += nptpages * NBPG;
 
 	kptmpa = nextpa;
