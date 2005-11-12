@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.40 2005/11/12 21:34:48 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.41 2005/11/12 22:49:59 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -286,6 +286,7 @@ rcs_main(int argc, char **argv)
 		case 'A':
 			if (rcs_statfile(rcs_optarg, ofpath, sizeof(ofpath)) < 0)
 				exit(1);
+			flags |= CO_ACLAPPEND;
 			break;
 		case 'a':
 			alist = rcs_optarg;
@@ -388,7 +389,7 @@ rcs_main(int argc, char **argv)
 		}
 
 		/* entries to add from <oldfile> */
-		if (ofpath != NULL) {
+		if (flags & CO_ACLAPPEND) {
 			/* XXX */
 			if ((oldfile = rcs_open(ofpath, RCS_READ)) == NULL)
 				exit(1);

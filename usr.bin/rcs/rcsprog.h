@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.19 2005/11/08 09:22:48 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.20 2005/11/12 22:49:59 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -30,18 +30,21 @@
 #define RCS_TMPDIR_DEFAULT	"/tmp"
 
 /* flags specific to ci.c */
-#define CI_SYMFORCE (1<<0)
-#define CI_DEFAULT  (1<<1)
+#define CI_SYMFORCE     (1<<0)
+#define CI_DEFAULT      (1<<1)
+#define CI_INIT         (1<<2)
 
 /* flags specific to co.c */
-#define CO_LOCK	    (1<<2)
-#define CO_REVDATE  (1<<2)
-#define CO_STATE    (1<<3)
-#define CO_UNLOCK   (1<<4)
+#define CO_ACLAPPEND    (1<<3)
+#define CO_LOCK	        (1<<4)
+#define CO_REVDATE      (1<<5)
+#define CO_STATE        (1<<6)
+#define CO_UNLOCK       (1<<7)
 
 /* shared flags  */
-#define FORCE       (1<<5)
-#define INTERACTIVE (1<<6)
+#define FORCE           (1<<8)
+#define INTERACTIVE     (1<<9)  
+#define NEWFILE         (1<<10)
 
 extern char *__progname;
 extern const char rcs_version[];
