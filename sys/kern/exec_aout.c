@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.9 2003/06/24 22:45:33 espie Exp $	*/
+/*	$OpenBSD: exec_aout.c,v 1.10 2005/11/12 04:31:24 jsg Exp $	*/
 /*	$NetBSD: exec_aout.c,v 1.14 1996/02/04 02:15:01 christos Exp $	*/
 
 /*
@@ -58,9 +58,7 @@ void aout_compat_setup(struct exec_package *epp);
  */
 
 int
-exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	u_long midmag, magic;
 	u_short mid;
@@ -110,9 +108,7 @@ exec_aout_makecmds(p, epp)
  */
 
 int
-exec_aout_prep_zmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 
@@ -159,9 +155,7 @@ exec_aout_prep_zmagic(p, epp)
  */
 
 int
-exec_aout_prep_nmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -197,9 +191,7 @@ exec_aout_prep_nmagic(p, epp)
  */
 
 int
-exec_aout_prep_omagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;

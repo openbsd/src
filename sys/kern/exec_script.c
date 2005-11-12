@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.22 2005/08/01 07:02:39 art Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.23 2005/11/12 04:31:24 jsg Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -69,9 +69,7 @@
  * into the exec package.
  */
 int
-exec_script_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_script_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error, hdrlinelen, shellnamelen, shellarglen;
 	char *hdrstr = epp->ep_hdr;

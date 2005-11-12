@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.124 2005/07/18 11:43:14 tom Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.125 2005/11/12 04:31:24 jsg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -178,8 +178,7 @@ struct emul emul_native = {
  */
 /* XXX return int, so gcc -Werror won't complain */
 int
-main(framep)
-	void *framep;				/* XXX should go away */
+main(void *framep)
 {
 	struct proc *p;
 	struct pdevinit *pdev;
@@ -538,8 +537,7 @@ static char *initpaths[] = {
 };
 
 void
-check_console(p)
-	struct proc *p;
+check_console(struct proc *p)
 {
 	struct nameidata nd;
 	int error;
@@ -560,8 +558,7 @@ check_console(p)
  * The program is invoked with one argument containing the boot flags.
  */
 void
-start_init(arg)
-	void *arg;
+start_init(void *arg)
 {
 	struct proc *p = arg;
 	vaddr_t addr;
@@ -697,24 +694,21 @@ start_init(arg)
 }
 
 void
-start_update(arg)
-	void *arg;
+start_update(void *arg)
 {
 	sched_sync(curproc);
 	/* NOTREACHED */
 }
 
 void
-start_cleaner(arg)
-	void *arg;
+start_cleaner(void *arg)
 {
 	buf_daemon(curproc);
 	/* NOTREACHED */
 }
 
 void
-start_reaper(arg)
-	void *arg;
+start_reaper(void *arg)
 {
 	reaper();
 	/* NOTREACHED */
@@ -722,8 +716,7 @@ start_reaper(arg)
 
 #ifdef CRYPTO
 void
-start_crypto(arg)
-	void *arg;
+start_crypto(void *arg)
 {
 	crypto_thread();
 	/* NOTREACHED */

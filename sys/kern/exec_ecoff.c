@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.9 2001/11/15 06:22:30 art Exp $	*/
+/*	$OpenBSD: exec_ecoff.c,v 1.10 2005/11/12 04:31:24 jsg Exp $	*/
 /*	$NetBSD: exec_ecoff.c,v 1.8 1996/05/19 20:36:06 jonathan Exp $	*/
 
 /*
@@ -57,9 +57,7 @@
  * package.
  */
 int
-exec_ecoff_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error;
 	struct ecoff_exechdr *execp = epp->ep_hdr;
@@ -97,9 +95,7 @@ exec_ecoff_makecmds(p, epp)
  * exec_ecoff_prep_omagic(): Prepare a ECOFF OMAGIC binary's exec package
  */
 int
-exec_ecoff_prep_omagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_ecoff_prep_omagic(struct proc *p, struct exec_package *epp)
 {
 	struct ecoff_exechdr *execp = epp->ep_hdr;
 	struct ecoff_aouthdr *eap = &execp->a;
@@ -130,9 +126,7 @@ exec_ecoff_prep_omagic(p, epp)
  *                           package.
  */
 int
-exec_ecoff_prep_nmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_ecoff_prep_nmagic(struct proc *p, struct exec_package *epp)
 {
 	struct ecoff_exechdr *execp = epp->ep_hdr;
 	struct ecoff_aouthdr *eap = &execp->a;
@@ -172,9 +166,7 @@ exec_ecoff_prep_nmagic(p, epp)
  * text, data, bss, and stack segments.
  */
 int
-exec_ecoff_prep_zmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_ecoff_prep_zmagic(struct proc *p, struct exec_package *epp)
 {
 	struct ecoff_exechdr *execp = epp->ep_hdr;
 	struct ecoff_aouthdr *eap = &execp->a;
