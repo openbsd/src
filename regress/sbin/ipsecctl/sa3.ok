@@ -1,6 +1,6 @@
-esp from 1.1.1.1 to 2.2.2.2 spi 0xdeadbeef auth hmac-sha2-256 enc aesctr
+esp tunnel from 1.1.1.1 to 2.2.2.2 spi 0xdeadbeef auth hmac-sha2-256 enc aesctr
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-esp from 2.2.2.2 to 1.1.1.1 spi 0xbeefdead auth hmac-sha2-256 enc aesctr
+esp tunnel from 2.2.2.2 to 1.1.1.1 spi 0xbeefdead auth hmac-sha2-256 enc aesctr
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
