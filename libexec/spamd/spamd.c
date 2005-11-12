@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.79 2005/08/04 09:48:27 otto Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.80 2005/11/12 02:20:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -579,7 +579,8 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 	cp->af = sa->sa_family;
 	cp->ia = &((struct sockaddr_in *)sa)->sin_addr;
 	cp->blacklists = sdl_lookup(blacklists, cp->af, cp->ia);
-	cp->stutter = (greylist && !grey_stutter && cp->blacklists == NULL) ? 0 : stutter;
+	cp->stutter = (greylist && !grey_stutter && cp->blacklists == NULL) ?
+	    0 : stutter;
 	error = getnameinfo(sa, sa->sa_len, cp->addr, sizeof(cp->addr), NULL, 0,
 	    NI_NUMERICHOST);
 	if (error)
@@ -588,9 +589,8 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 	if (tmp == NULL)
 		err(1, "malloc");
 	tmp[strlen(tmp) - 1] = '\0'; /* nuke newline */
-	snprintf(cp->obuf, cp->osize,
-		 "220 %s ESMTP %s; %s\r\n",
-		 hostname, spamd, tmp);
+	snprintf(cp->obuf, cp->osize, "220 %s ESMTP %s; %s\r\n",
+	    hostname, spamd, tmp);
 	free(tmp);
 	cp->op = cp->obuf;
 	cp->ol = strlen(cp->op);
