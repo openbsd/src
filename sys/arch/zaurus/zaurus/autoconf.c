@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 2005/04/21 00:15:43 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.3 2005/11/12 00:00:14 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -307,9 +307,7 @@ rootconf()
 	extern char *nfsbootdevname;
 #endif
 
-	printf("boot_file: '%s'\n", boot_file);
-
-	if(boothowto & RB_DFLTROOT)
+	if (boothowto & RB_DFLTROOT)
 		return;		/* Boot compiled in */
 
 	/*
@@ -330,10 +328,10 @@ rootconf()
 	}
 
 	/* Lookup boot device from boot if not set by configuration */
-	if(bootdv == NULL) {
+	if (bootdv == NULL) {
 		bootdv = parsedisk(boot_file, strlen(boot_file), 0, &temp);
 	}
-	if(bootdv == NULL) {
+	if (bootdv == NULL) {
 		printf("boot device: lookup '%s' failed.\n", boot_file);
 		boothowto |= RB_ASKNAME; /* Don't Panic :-) */
 		/* boothowto |= RB_SINGLE; */
@@ -423,8 +421,7 @@ gotswap:
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-	}
-	else if(mountroot == NULL) {
+	} else if (mountroot == NULL) {
 		/*
 		 * `swap generic': Use the device the ROM told us to use.
 		 */
