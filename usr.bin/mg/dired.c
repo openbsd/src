@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.28 2005/11/07 23:46:18 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.29 2005/11/12 20:13:47 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -496,6 +496,7 @@ d_shell_command(int f, int n)
 		dup2(fds[1], STDERR_FILENO);
 		execl("/bin/sh", "sh", "-c", bufp, (char *)NULL);
 		exit(1);
+		break;
 	default:
 		close(infd);
 		close(fds[1]);
