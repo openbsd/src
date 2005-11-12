@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.28 2005/11/06 22:51:51 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.29 2005/11/12 12:00:53 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -47,7 +47,7 @@ static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t,
 static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_transforms *, struct ipsec_key *,
-		    struct ipsec_key *);
+		    struct ipsec_key *, u_int8_t);
 static int	pfkey_reply(int);
 int		pfkey_parse(struct sadb_msg *, struct ipsec_rule *);
 int		pfkey_ipsec_flush(void);
@@ -307,7 +307,7 @@ static int
 pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
     struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
     struct ipsec_transforms *xfs, struct ipsec_key *authkey,
-    struct ipsec_key *enckey)
+    struct ipsec_key *enckey, u_int8_t tmode)
 {
 	struct sadb_msg		smsg;
 	struct sadb_sa		sa;
@@ -357,6 +357,9 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	sa.sadb_sa_exttype = SADB_EXT_SA;
 	sa.sadb_sa_spi = htonl(spi);
 	sa.sadb_sa_state = SADB_SASTATE_MATURE;
+
+	if (tmode == IPSEC_TUNNEL)
+		sa.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
 
 	if (xfs && xfs->authxf) {
 		switch (xfs->authxf->id) {
@@ -886,11 +889,12 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		switch (action) {
 		case ACTION_ADD:
 			ret = pfkey_sa(fd, satype, SADB_ADD, r->spi,
-			    r->src, r->dst, r->xfs, r->authkey, r->enckey);
+			    r->src, r->dst, r->xfs, r->authkey, r->enckey,
+			    r->tmode);
 			break;
 		case ACTION_DELETE:
 			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi,
-			    r->src, r->dst, r->xfs, NULL, NULL);
+			    r->src, r->dst, r->xfs, NULL, NULL, r->tmode);
 			break;
 		default:
 			return -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2005/11/06 22:51:51 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.34 2005/11/12 12:00:53 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -120,8 +120,8 @@ struct ipsec_transforms *transforms(const char *, const char *, const char *);
 struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
-			     struct ipsec_key *);
-struct ipsec_rule	*create_sa(u_int8_t, struct ipsec_addr_wrap *,
+			     struct ipsec_key *, u_int8_t);
+struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 			     struct ipsec_addr_wrap *, u_int32_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
 			     struct ipsec_key *);
@@ -142,8 +142,9 @@ typedef struct {
 		u_int32_t	 number;
 		u_int8_t	 ikemode;
 		u_int8_t	 dir;
-		char		*string;
 		u_int8_t	 protocol;
+		u_int8_t	 tmode;
+		char		*string;
 		struct {
 			struct ipsec_addr_wrap *src;
 			struct ipsec_addr_wrap *dst;
@@ -183,10 +184,11 @@ typedef struct {
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
-%token	ACTIVE ANY IPCOMP COMPXF
+%token	ACTIVE ANY IPCOMP COMPXF TUNNEL TRANSPORT
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
+%type	<v.tmode>		tmode
 %type	<v.number>		number
 %type	<v.hosts>		hosts
 %type	<v.peer>		peer
@@ -233,8 +235,8 @@ number		: STRING			{
 tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 			struct ipsec_rule	*r;
 
-			r = create_sa(IPSEC_TCPMD5, $2.src, $2.dst, $3.spiout,
-			    NULL, $4.keyout, NULL);
+			r = create_sa(IPSEC_TCPMD5, IPSEC_TRANSPORT, $2.src,
+			    $2.dst, $3.spiout, NULL, $4.keyout, NULL);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -255,11 +257,12 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 		}
 		;
 
-sarule		: protocol hosts spispec transforms authkeyspec enckeyspec {
+sarule		: protocol tmode hosts spispec transforms authkeyspec
+		    enckeyspec {
 			struct ipsec_rule	*r;
 
-			r = create_sa($1, $2.src, $2.dst, $3.spiout, $4,
-			    $5.keyout, $6.keyout);
+			r = create_sa($1, $2, $3.src, $3.dst, $4.spiout, $5,
+			    $6.keyout, $7.keyout);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -268,9 +271,9 @@ sarule		: protocol hosts spispec transforms authkeyspec enckeyspec {
 				errx(1, "sarule: ipsecctl_add_rule");
 
 			/* Create and add reverse SA rule. */
-			if ($3.spiin != 0 || $5.keyin || $6.keyin) {
-				r = reverse_sa(r, $3.spiin, $5.keyin,
-				    $6.keyin);
+			if ($4.spiin != 0 || $6.keyin || $7.keyin) {
+				r = reverse_sa(r, $4.spiin, $6.keyin,
+				    $7.keyin);
 				if (r == NULL)
 					YYERROR;
 				r->nr = ipsec->rule_nr++;
@@ -321,6 +324,11 @@ protocol	: /* empty */			{ $$ = IPSEC_ESP; }
 		| ESP				{ $$ = IPSEC_ESP; }
 		| AH				{ $$ = IPSEC_AH; }
 		| IPCOMP			{ $$ = IPSEC_IPCOMP; }
+		;
+
+tmode		: /* empty */			{ $$ = IPSEC_TUNNEL; }
+		| TUNNEL			{ $$ = IPSEC_TUNNEL; }
+		| TRANSPORT			{ $$ = IPSEC_TRANSPORT; }
 		;
 
 dir		: /* empty */			{ $$ = IPSEC_INOUT; }
@@ -616,6 +624,8 @@ lookup(char *s)
 		{ "srcid",		SRCID},
 		{ "tcpmd5",		TCPMD5},
 		{ "to",			TO},
+		{ "transport",		TRANSPORT},
+		{ "tunnel",		TUNNEL},
 	};
 	const struct keywords	*p;
 
@@ -1183,7 +1193,7 @@ copytransforms(const struct ipsec_transforms *xfs)
 
 int
 validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
-    struct ipsec_key *authkey, struct ipsec_key *enckey)
+    struct ipsec_key *authkey, struct ipsec_key *enckey, u_int8_t tmode)
 {
 	/* Sanity checks */
 	if (spi == 0) {
@@ -1220,7 +1230,8 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 		if (!xfs->compxf)
 			xfs->compxf = &compxfs[COMPXF_DEFLATE];
 	}
-	if (protocol == IPSEC_TCPMD5 && authkey == NULL) {
+	if (protocol == IPSEC_TCPMD5 && authkey == NULL && tmode !=
+	    IPSEC_TRANSPORT) {
 		yyerror("authentication key needed for tcpmd5");
 		return (0);
 	}
@@ -1258,13 +1269,13 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 }
 
 struct ipsec_rule *
-create_sa(u_int8_t protocol, struct ipsec_addr_wrap *src, struct
+create_sa(u_int8_t protocol, u_int8_t tmode, struct ipsec_addr_wrap *src, struct
     ipsec_addr_wrap *dst, u_int32_t spi, struct ipsec_transforms *xfs,
     struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
 	struct ipsec_rule *r;
 
-	if (validate_sa(spi, protocol, xfs, authkey, enckey) == 0)
+	if (validate_sa(spi, protocol, xfs, authkey, enckey, tmode) == 0)
 		return (NULL);
 
 	r = calloc(1, sizeof(struct ipsec_rule));
@@ -1273,6 +1284,7 @@ create_sa(u_int8_t protocol, struct ipsec_addr_wrap *src, struct
 
 	r->type |= RULE_SA;
 	r->proto = protocol;
+	r->tmode = tmode;
 	r->src = src;
 	r->dst = dst;
 	r->spi = spi;
@@ -1289,7 +1301,8 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 {
 	struct ipsec_rule *reverse;
 
-	if (validate_sa(spi, rule->proto, rule->xfs, authkey, enckey) == 0)
+	if (validate_sa(spi, rule->proto, rule->xfs, authkey, enckey,
+	    rule->tmode) == 0)
 		return (NULL);
 
 	reverse = calloc(1, sizeof(struct ipsec_rule));
@@ -1298,6 +1311,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 
 	reverse->type |= RULE_SA;
 	reverse->proto = rule->proto;
+	reverse->tmode = rule->tmode;
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
 	reverse->spi = spi;

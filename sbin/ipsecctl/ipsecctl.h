@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.20 2005/11/06 22:51:51 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.21 2005/11/12 12:00:53 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -41,6 +41,9 @@ enum {
 };
 enum {
 	PROTO_UNKNOWN, IPSEC_ESP, IPSEC_AH, IPSEC_IPCOMP, IPSEC_TCPMD5
+};
+enum {
+	MODE_UNKNOWN, IPSEC_TRANSPORT, IPSEC_TUNNEL
 };
 enum {
 	AUTH_UNKNOWN, AUTH_PSK, AUTH_RSA
@@ -134,6 +137,7 @@ struct ipsec_rule {
 	struct ipsec_key  *enckey;
 
 	u_int8_t	 proto;
+	u_int8_t	 tmode;
 	u_int8_t	 direction;
 	u_int8_t	 flowtype;
 	u_int8_t	 ikemode;

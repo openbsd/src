@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.6 2005/10/30 19:50:24 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.7 2005/11/12 12:00:53 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -211,6 +211,14 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_sa *sa = (struct sadb_sa *)ext;
 
+	/* tunnel/transport is only meaningful for esp/ah/ipcomp */
+	if (msg->sadb_msg_satype != SADB_X_SATYPE_TCPSIGNATURE) {
+		if (sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
+			printf("tunnel ");
+		else
+			printf("transport ");
+	}
+
 	if (extensions[SADB_EXT_ADDRESS_SRC]) {
 		printf("from ");
 		print_addr(extensions[SADB_EXT_ADDRESS_SRC], msg);
@@ -231,8 +239,6 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 			printf(" auth %s", lookup_name(auth_types,
 			    sa->sadb_sa_auth));
 	}
-	if (sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
-		printf(" tunnel");
 	printf("\n");
 }
 
