@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.55 2005/11/06 03:10:09 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.56 2005/11/12 11:18:03 martin Exp $
 #
 # PPC GENERIC config file
 #
@@ -75,6 +75,7 @@ rl*		at pci?		# Realtek 81[23]9 ethernet
 stge*		at pci?		# Sundance TC9021 GigE
 an*		at pci?		# Cisco/Aironet 802.11DS
 wi*		at pci?		# WaveLAN IEEE 802.11DS
+vr*		at pci?		# VIA Rhine ethernet
 
 # how many of these are needed?
 amphy*		at mii?		# AMD 79C873 PHYs

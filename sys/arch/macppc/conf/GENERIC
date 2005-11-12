@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.98 2005/11/11 16:44:35 kettenis Exp $g
+#	$OpenBSD: GENERIC,v 1.99 2005/11/12 11:18:03 martin Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -81,6 +81,7 @@ atw*		at pci?		# ADMtek ADM8211 (802.11)
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 ral*		at pci?		# Ralink RT2500
 #rtw*		at pci?		# Realtek 8180
+vr*		at pci?		# VIA Rhine ethernet
 iop*		at pci?		# I2O processor
 ioprbs*		at iop?		# I2O arrays
 iopsp*		at iop?		# I2O SCSI pass-through

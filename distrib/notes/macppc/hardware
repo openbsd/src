@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.64 2005/11/09 15:36:07 martin Exp $
+dnl	$OpenBSD: hardware,v 1.65 2005/11/12 11:18:02 martin Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -277,6 +277,10 @@ Supported devices {:-include-:}:
 		VIA Networking VT6122 based PCI adapters, including:
 			ZyXEL GN650-T 64-bit PCI Gigabit Ethernet NIC (ZX1701)
 			ZyXEL GN670-T 32-bit PCI Gigabit Ethernet NIC (ZX1702)
+		VIA Rhine/RhineII/RhineIII Ethernet adapters, including:
+			Addtron AEF-360TX
+			Hawking PN102TX
+			D-Link DFE530TX
 
 	Wireless Ethernet Adapters
 		PCMCIA Adapters
