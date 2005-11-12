@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.11 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: library.c,v 1.12 2005/11/12 15:49:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";*/
-static char rcsid[] = "$OpenBSD: library.c,v 1.11 2003/06/11 14:24:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: library.c,v 1.12 2005/11/12 15:49:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -159,17 +159,13 @@ void
 get_ifile(FS_INFO *fsp, int use_mmap)
 {
 	struct stat file_stat;
-	caddr_t ifp;
+	caddr_t ifp = NULL;
 	char *ifile_name;
 	int count, fid;
-	int len;
-
-	ifp = NULL;
-	len = strlen(fsp->fi_statfsp->f_mntonname) + strlen(IFILE_NAME) + 2;
-	ifile_name = malloc(len);
 	
-	snprintf(ifile_name, len, "%s/%s", fsp->fi_statfsp->f_mntonname,
-	    IFILE_NAME);
+	if (asprintf(&ifile_name, "%s/%s", fsp->fi_statfsp->f_mntonname,
+	    IFILE_NAME) == -1)
+		err(1, "get_ifile: asprintf");
 
 	if ((fid = open(ifile_name, O_RDWR, (mode_t)0)) < 0)
 		err(1, "get_ifile: bad open");
@@ -412,7 +408,7 @@ void
 add_inodes(FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
     caddr_t seg_buf, daddr_t seg_addr)
 {
-	struct dinode *di;
+	struct ufs1_dinode *di;
 	struct lfs *lfsp;
 	IFILE *ifp;
 	BLOCK_INFO *bp;
@@ -432,7 +428,7 @@ add_inodes(FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 	for (i = 0; i < sp->ss_ninos; ++i) {
 		if (i % INOPB(lfsp) == 0) {
 			--daddrp;
-			di = (struct dinode *)(seg_buf +
+			di = (struct ufs1_dinode *)(seg_buf +
 			    ((*daddrp - seg_addr) << fsp->fi_daddr_shift));
 		} else 
 			++di;
