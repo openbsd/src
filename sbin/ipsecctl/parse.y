@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2005/11/12 21:49:38 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.40 2005/11/12 21:57:34 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -353,7 +353,7 @@ hosts		: FROM host TO host		{
 			$$.src = $4;
 			$$.dst = $2;
 		}
- 		;
+		;
 
 peer		: /* empty */			{ $$ = NULL; }
 		| PEER STRING			{
