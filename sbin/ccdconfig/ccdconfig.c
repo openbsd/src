@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.23 2005/03/29 22:23:42 mickey Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.24 2005/11/12 15:26:23 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -422,7 +422,7 @@ static char *
 resolve_ccdname(char *name)
 {
 	char c, *path;
-	size_t len, newlen;
+	size_t len;
 	int rawpart;
 
 	if (name[0] == '/' || name[0] == '.') {
@@ -433,19 +433,17 @@ resolve_ccdname(char *name)
 	len = strlen(name);
 	c = name[len - 1];
 
-	newlen = len + 8;
-	if ((path = malloc(newlen)) == NULL)
-		return (NULL);
-	memset(path, 0, newlen);
-
 	if (isdigit(c)) {
 		if ((rawpart = getrawpartition()) < 0) {
 			free(path);
 			return (NULL);
 		}
-		(void)snprintf(path, newlen, "/dev/%s%c", name, 'a' + rawpart);
-	} else
-		(void)snprintf(path, newlen, "/dev/%s", name);
+		if (asprintf(&path, "/dev/%s%c", name, 'a' + rawpart) == -1)
+			return (NULL);
+	} else {
+		if (asprintf(&path, "/dev/%s", name) == -1)
+			return (NULL);
+	}
 
 	return (path);
 }
