@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.93 2005/10/17 18:34:22 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.94 2005/11/12 18:39:19 martin Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -712,7 +712,6 @@ nobootinfo:
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 
-	boothowto = RB_SINGLE;
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
@@ -723,9 +722,8 @@ nobootinfo:
 		 * says that we shouldn't.
 		 */
 		switch (*p) {
-		case 'a': /* autoboot */
+		case 'a': /* Ignore */
 		case 'A':
-			boothowto &= ~RB_SINGLE;
 			break;
 
 		case 'b': /* Enter DDB as soon as the console is initialised */
@@ -762,7 +760,7 @@ nobootinfo:
 			boothowto |= RB_ASKNAME;
 			break;
 
-		case 's': /* single-user (default, supported for sanity) */
+		case 's': /* single-user */
 		case 'S':
 			boothowto |= RB_SINGLE;
 			break;
