@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.84 2005/11/03 20:00:18 reyk Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.85 2005/11/12 20:27:46 brad Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ struct mbuf {
  * drivers.
  */
 #define	MBUFLOCK(code) do {\
-	int ms = splimp(); \
+	int ms = splvm(); \
 	  { code } \
 	  splx(ms); \
 } while(/* CONSTCOND */ 0)
