@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.19 2003/09/26 15:55:22 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.20 2005/11/12 13:27:59 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.19 2003/09/26 15:55:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.20 2005/11/12 13:27:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -283,11 +283,8 @@ main(int argc, char *argv[])
 		if (strchr(*argv, ',') == NULL || strchr(*argv, '<') != NULL)
 			args[i++] = *argv;
 		else {
-			int len = strlen(*argv) + 3;
-
-			if ((args[i] = malloc(len)) == NULL)
+			if (asprintf(&args[i++], "<%s>", *argv) == -1)
 				err(EX_TEMPFAIL, "Cannot malloc");
-			snprintf(args[i++], len, "<%s>", *argv);
 		}
 		argv++;
 	}

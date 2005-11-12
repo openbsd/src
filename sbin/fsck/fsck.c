@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.21 2005/10/28 07:30:35 otto Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.22 2005/11/12 13:28:34 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-static const char rcsid[] = "$OpenBSD: fsck.c,v 1.21 2005/10/28 07:30:35 otto Exp $";
+static const char rcsid[] = "$OpenBSD: fsck.c,v 1.22 2005/11/12 13:28:34 deraadt Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -403,15 +403,12 @@ maketypelist(char *fslist)
 static char *
 catopt(char *s0, const char *s1, int fr)
 {
-	size_t i;
 	char *cp;
 
 	if (s0 && *s0) {
-		i = strlen(s0) + strlen(s1) + 1 + 1;
-		cp = emalloc(i);
-		(void)snprintf(cp, i, "%s,%s", s0, s1);
-	}
-	else
+		if (asprintf(&cp, "%s,%s", s0, s1) == -1)
+			err(1, "malloc failed");
+	} else
 		cp = estrdup(s1);
 
 	if (s0 && fr)

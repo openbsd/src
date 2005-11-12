@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.95 2005/04/30 07:09:37 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.96 2005/11/12 13:27:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.95 2005/04/30 07:09:37 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.96 2005/11/12 13:27:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1188,19 +1188,16 @@ int
 editit(void)
 {
 	pid_t pid;
-	int stat = 0, len;
+	int stat = 0;
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	char *ed, *p;
 
 	if ((ed = getenv("EDITOR")) == NULL)
 		ed = _PATH_VI;
-	len = strlen(ed) + 1 + strlen(tmpfil) + 1;
-	p = (char *)malloc(len);
-	if (!p) {
+	if (asprintf(&p, "%s %s", ed, tmpfil) == -1) {
 		warn("failed to start editor");
 		return (0);
 	}
-	snprintf(p, len, "%s %s", ed, tmpfil);
 	argp[2] = p;
 
 	/* Turn off signals. */
