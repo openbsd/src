@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: monthly,v 1.5 1998/02/02 23:08:57 millert Exp $
+#	$OpenBSD: monthly,v 1.6 2005/11/12 16:14:37 jmc Exp $
 
 if [ -f /etc/monthly.local ];then
 	echo ""
@@ -8,9 +8,3 @@ if [ -f /etc/monthly.local ];then
 else
 	echo "Nothing to do!"
 fi
-
-# echo ""
-# echo "Doing login accounting:"
-# ac -p | sort -nr +1
-
-#echo "."
