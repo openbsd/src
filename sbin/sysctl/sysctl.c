@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.130 2005/11/12 02:23:11 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.131 2005/11/12 15:20:33 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.130 2005/11/12 02:23:11 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.131 2005/11/12 15:20:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1169,6 +1169,8 @@ vfsinit(void)
 				continue;
 			warn("vfsinit");
 			free(vfsname);
+			free(vfsvars);
+			free(vfs_typenums);
 			return;
 		}
 		if (!strcmp(vfc.vfc_name, MOUNT_FFS)) {
@@ -1795,8 +1797,10 @@ sysctl_chipset(char *string, char **bufpp, int mib[], int flags, int *typep)
 		p = malloc(len + 1);
 		if (p == NULL)
 			return (-1);
-		if (sysctl(mib, 3, p, &len, NULL, 0) < 0)
+		if (sysctl(mib, 3, p, &len, NULL, 0) < 0) {
+			free(p);
 			return (-1);
+		}
 		p[len] = '\0';
 		printf("%s\n", p);
 		free(p);
@@ -2332,10 +2336,8 @@ emul_init(void)
 	qsort(emul_names, nemuls, sizeof(*emul_names), emulcmp);
 	for (i = 0; i < emul_num; i++) {
 		if (!emul_names[i].name || (i > 0 &&
-		    strcmp(emul_names[i].name, emul_names[i - 1].name) == 0)) {
-
+		    strcmp(emul_names[i].name, emul_names[i - 1].name) == 0))
 			nemuls--;
-		}
 	}
 	return (0);
 }
