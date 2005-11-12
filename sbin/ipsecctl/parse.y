@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2005/11/12 12:00:53 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.35 2005/11/12 16:40:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1003,16 +1003,15 @@ parsekeyfile(char *filename)
 	int		 fd;
 	unsigned char	*hex;
 
-	if (stat(filename, &sb) < 0)
+	if ((fd = open(filename, O_RDONLY)) < 0)
+		err(1, "parsekeyfile: open");
+	if (fstat(fd, &sb) < 0)
 		err(1, "parsekeyfile: stat %s", filename);
 	if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
 		errx(1, "parsekeyfile: key too %s", sb.st_size ? "large" :
 		    "small");
-	if ((hex = calloc(sb.st_size, sizeof(unsigned char)))
-	    == NULL)
+	if ((hex = calloc(sb.st_size, sizeof(unsigned char))) == NULL)
 		err(1, "parsekeyfile: calloc");
-	if ((fd = open(filename, O_RDONLY)) < 0)
-		err(1, "parsekeyfile: open");
 	if (read(fd, hex, sb.st_size) < sb.st_size)
 		err(1, "parsekeyfile: read");
 	close(fd);
