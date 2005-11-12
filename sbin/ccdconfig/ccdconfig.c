@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.25 2005/11/12 18:47:42 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.26 2005/11/12 20:15:13 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -351,6 +351,7 @@ do_all(int action)
 				break;
 			if ((nargv = realloc(argv,
 			    sizeof(char *) * ++argc)) == NULL) {
+				fclose(f);
 				warnx("no memory to configure ccds");
 				return (1);
 			}
