@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2005/04/28 22:28:00 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2005/11/12 15:40:09 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 	last_component = (last_component) ? last_component + 1 : conffile;
 	if (pflag) {
 		int len = strlen(last_component) + 17;
-		p  = emalloc(len);
+		p = emalloc(len);
 		(void)snprintf(p, len, "../compile/%s.PROF", last_component);
 		(void)addmkoption(intern("PROF"), "-pg");
 		(void)addoption(intern("GPROF"), NULL);
