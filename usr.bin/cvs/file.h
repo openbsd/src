@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.28 2005/08/17 16:23:19 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.29 2005/11/12 21:34:48 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -81,8 +81,8 @@ typedef struct cvs_file {
 	 * cf_dir contains the parent directory the file or dir is in.
 	 * if cf_dir is NULL the file is in the parent directory.
 	 */
-	const char	*cf_name;
-	const char	*cf_dir;
+	char		*cf_name;
+	char		*cf_dir;
 
 	/* pointer to the parent directory's entry file */
 	void		*cf_entry;

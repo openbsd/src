@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.85 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.86 2005/11/12 21:34:48 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,7 +41,6 @@
 #include "cvs.h"
 #include "log.h"
 #include "file.h"
-#include "strtab.h"
 
 
 extern char *__progname;
@@ -114,8 +113,6 @@ main(int argc, char **argv)
 #ifdef DEBUG
 	(void)cvs_log_filter(LP_FILTER_UNSET, LP_DEBUG);
 #endif
-
-	cvs_strtab_init();
 
 	/* check environment so command-line options override it */
 	if ((envstr = getenv("CVS_RSH")) != NULL)
@@ -258,8 +255,6 @@ main(int argc, char **argv)
 		cvs_file_free(cvs_files);
 	if (cvs_msg != NULL)
 		free(cvs_msg);
-
-	cvs_strtab_cleanup();
 
 	return (ret);
 }

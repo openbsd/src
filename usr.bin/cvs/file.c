@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.126 2005/10/27 00:24:24 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.127 2005/11/12 21:34:48 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include "cvs.h"
 #include "file.h"
 #include "log.h"
-#include "strtab.h"
 
 #define CVS_IGN_STATIC	0x01	/* pattern is static, no need to glob */
 
@@ -1031,10 +1030,10 @@ cvs_file_free(CVSFILE *cf)
 	CVSFILE *child;
 
 	if (cf->cf_name != NULL)
-		cvs_strfree(cf->cf_name);
+		free(cf->cf_name);
 
 	if (cf->cf_dir != NULL)
-		cvs_strfree(cf->cf_dir);
+		free(cf->cf_dir);
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_root != NULL)
@@ -1048,9 +1047,9 @@ cvs_file_free(CVSFILE *cf)
 		}
 	} else {
 		if (cf->cf_tag != NULL)
-			cvs_strfree(cf->cf_tag);
+			free(cf->cf_tag);
 		if (cf->cf_opts != NULL)
-			cvs_strfree(cf->cf_opts);
+			free(cf->cf_opts);
 	}
 
 	free(cf);
@@ -1162,7 +1161,7 @@ cvs_file_alloc(const char *path, u_int type)
 		SIMPLEQ_INIT(&(cfp->cf_files));
 	}
 
-	cfp->cf_name = cvs_strdup(basename(path));
+	cfp->cf_name = strdup(basename(path));
 	if (cfp->cf_name == NULL) {
 		cvs_log(LP_ERR, "failed to copy file name");
 		cvs_file_free(cfp);
@@ -1172,7 +1171,7 @@ cvs_file_alloc(const char *path, u_int type)
 	if ((p = strrchr(path, '/')) != NULL) {
 		*p = '\0';
 		if (strcmp(path, ".")) {
-			cfp->cf_dir = cvs_strdup(path);
+			cfp->cf_dir = strdup(path);
 			if (cfp->cf_dir == NULL) {
 				cvs_log(LP_ERR,
 				    "failed to copy directory");
@@ -1277,7 +1276,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 
 		if (ent->ce_type == CVS_ENT_FILE) {
 			if (ent->ce_tag[0] != '\0') {
-				cfp->cf_tag = cvs_strdup(ent->ce_tag);
+				cfp->cf_tag = strdup(ent->ce_tag);
 				if (cfp->cf_tag == NULL) {
 					cvs_file_free(cfp);
 					return (NULL);
@@ -1285,7 +1284,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 			}
 
 			if (ent->ce_opts[0] != '\0') {
-				cfp->cf_opts = cvs_strdup(ent->ce_opts);
+				cfp->cf_opts = strdup(ent->ce_opts);
 				if (cfp->cf_opts == NULL) {
 					cvs_file_free(cfp);
 					return (NULL);

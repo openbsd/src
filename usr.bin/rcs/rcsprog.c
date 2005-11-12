@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.39 2005/11/12 09:42:29 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.40 2005/11/12 21:34:48 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,7 +40,6 @@
 #include "log.h"
 #include "rcs.h"
 #include "rcsprog.h"
-#include "strtab.h"
 
 #define RCS_CMD_MAXARG	128
 
@@ -219,7 +218,6 @@ main(int argc, char **argv)
 
 	ret = -1;
 	rcs_optind = 1;
-	cvs_strtab_init();
 	cvs_log_init(LD_STD, 0);
 
 	cmd_argc = 0;
@@ -247,8 +245,6 @@ main(int argc, char **argv)
 			ret = programs[i].prog_hdlr(cmd_argc, cmd_argv);
 			break;
 		}
-
-	cvs_strtab_cleanup();
 
 	exit(ret);
 }
