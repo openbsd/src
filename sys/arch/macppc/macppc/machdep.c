@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 2005/10/30 22:29:02 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.82 2005/11/12 00:23:43 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -567,8 +567,8 @@ cpu_startup()
 
 	printf("avail mem = %ld (%ldK)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free) / 1024);
-	printf("using %d buffers containing %d bytes of memory\n", nbuf,
-	    bufpages * PAGE_SIZE);
+	printf("using %u buffers containing %u bytes (%uK) of memory\n",
+	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
 	/*
 	 * Set up the buffers.
