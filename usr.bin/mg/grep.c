@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.22 2005/11/11 18:40:51 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.23 2005/11/12 19:13:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -221,7 +221,7 @@ compile_mode(const char *name, const char *command, const char *path)
 	char	*buf;
 	size_t	 len;
 	int	 ret;
-	char	*wdir, cwd[NFILEN];
+	char	 cwd[NFILEN];
 	char	 timestr[NTIME];
 	time_t	 t;
 
@@ -233,7 +233,7 @@ compile_mode(const char *name, const char *command, const char *path)
 	addline(bp, command);
 	addline(bp, "");
 
-	if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL)
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		panic("Can't get current directory!");
 	if (chdir(path) == -1) {
 		ewprintf("Can't change dir to %s", path);
