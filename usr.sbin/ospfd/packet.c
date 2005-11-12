@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.17 2005/10/26 01:28:41 stevesk Exp $ */
+/*	$OpenBSD: packet.c,v 1.18 2005/11/12 18:18:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -200,7 +200,6 @@ recv_packet(int fd, short event, void *bula)
 	}
 done:
 	free(ptr);
-	return;
 }
 
 int

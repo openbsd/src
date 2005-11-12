@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.10 2005/09/17 20:03:35 msf Exp $ */
+/*	$OpenBSD: hello.c,v 1.11 2005/11/12 18:18:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -268,5 +268,4 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 		if_fsm(iface, IF_EVT_NBR_CHNG);
 
 	/* TODO NBMA needs some special handling */
-	return;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.20 2005/10/21 11:53:27 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.21 2005/11/12 18:18:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -250,8 +250,6 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 	default:
 		fatalx("recv_ls_update: unknown neighbor state");
 	}
-
-	return;
 }
 
 /* link state retransmit list */

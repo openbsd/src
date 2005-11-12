@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.35 2005/11/04 14:37:26 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.36 2005/11/12 18:18:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -72,8 +72,6 @@ spf_dump(struct area *area)
 	log_debug("");
 #endif
 	}
-
-	return;
 }
 
 void
@@ -358,8 +356,6 @@ spf_calc(struct area *area)
 
 	area->num_spf_calc++;
 	start_spf_timer();
-
-	return;
 }
 
 void
@@ -438,8 +434,6 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 	}
 	/* case 3 */
 	dst->nexthop = parent->nexthop;
-
-	return;
 }
 
 /* candidate list */
@@ -465,8 +459,6 @@ cand_list_add(struct vertex *v)
 		}
 	}
 	TAILQ_INSERT_TAIL(&cand_list, v, cand);
-
-	return;
 }
 
 void

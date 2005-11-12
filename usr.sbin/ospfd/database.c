@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.16 2005/11/04 10:30:23 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.17 2005/11/12 18:18:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -329,7 +329,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 
 	nbr->last_rx_options = dd_hdr.opts;
 	nbr->last_rx_bits = dd_hdr.bits;
-	return;
 }
 
 void
