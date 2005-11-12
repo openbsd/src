@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.12 2005/02/17 13:18:00 aaron Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.13 2005/11/12 19:44:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -762,7 +762,6 @@ sort_name_list(int opts, struct name_list *nml)
 			LIST_INSERT_AFTER(nmlast, nm, nm_entry);
 		nmlast = nm;
 	}
-	return;
 }
 
 /* parse the next integer in a formatted config file line */
