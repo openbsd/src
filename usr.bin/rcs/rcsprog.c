@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.38 2005/11/04 08:19:42 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.39 2005/11/12 09:42:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -258,7 +258,7 @@ void
 rcs_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rcs [-hiLMUV] [-ausers] [-b[rev]] [-cstring]\n"
+	    "usage: rcs [-hiLMUV] [-Aoldfile] [-ausers] [-b[rev]] [-cstring]\n"
 	    "           [-eusers] [-kmode] [-mrev:log] file ...\n");
 }
 
@@ -272,22 +272,24 @@ int
 rcs_main(int argc, char **argv)
 {
 	int i, ch, flags, kflag, lkmode;
-	char fpath[MAXPATHLEN];
+	char fpath[MAXPATHLEN], ofpath[MAXPATHLEN];
 	char *logstr, *logmsg;
-	char *oldfile, *alist, *comment, *elist, *unp, *sp;
+	char *alist, *comment, *elist, *unp, *sp;
 	mode_t fmode;
-	RCSFILE *file;
+	RCSFILE *file, *oldfile;
 	RCSNUM *logrev;
+	struct rcs_access *acp;
 
 	kflag = lkmode = -1;
 	fmode = 0;
 	flags = RCS_RDWR;
-	logstr = oldfile = alist = comment = elist = NULL;
+	logstr = alist = comment = elist = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, "A:a:b::c:e::hik:Lm:MqUV")) != -1) {
 		switch (ch) {
 		case 'A':
-			oldfile = rcs_optarg;
+			if (rcs_statfile(rcs_optarg, ofpath, sizeof(ofpath)) < 0)
+				exit(1);
 			break;
 		case 'a':
 			alist = rcs_optarg;
@@ -387,6 +389,18 @@ rcs_main(int argc, char **argv)
 			}
 
 			rcsnum_free(logrev);
+		}
+
+		/* entries to add from <oldfile> */
+		if (ofpath != NULL) {
+			/* XXX */
+			if ((oldfile = rcs_open(ofpath, RCS_READ)) == NULL)
+				exit(1);
+
+			TAILQ_FOREACH(acp, &(oldfile->rf_access), ra_list)
+				rcs_access_add(file, acp->ra_name);
+
+			rcs_close(oldfile);
 		}
 
 		/* entries to add to the access list */
