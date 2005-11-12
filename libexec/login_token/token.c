@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.10 2005/05/26 23:04:09 avsm Exp $	*/
+/*	$OpenBSD: token.c,v 1.11 2005/11/12 14:13:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -141,7 +141,7 @@ tokenchallenge(char *user, char *challenge, int size, char *card_type)
 	if (r != 0 || tr.rim[0] == '\0') {
 		memset(tokennumber.ct, 0, sizeof(tokennumber.ct));
 		snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%8.8u",
-				arc4random());
+		    arc4random());
 		if (r == 0) {
 			memcpy(tr.rim, tokennumber.ct, 8);
 			tokendb_putrec(user, &tr);
@@ -149,7 +149,7 @@ tokenchallenge(char *user, char *challenge, int size, char *card_type)
 	}
 
 	snprintf(challenge, size, "%s Challenge \"%s\"\r\n%s Response: ",
-			card_type, tokennumber.ct, card_type);
+	    card_type, tokennumber.ct, card_type);
 }
 
 /*
