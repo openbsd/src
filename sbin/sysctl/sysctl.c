@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.129 2005/10/23 13:53:09 kettenis Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.130 2005/11/12 02:23:11 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.129 2005/10/23 13:53:09 kettenis Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.130 2005/11/12 02:23:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1799,6 +1799,7 @@ sysctl_chipset(char *string, char **bufpp, int mib[], int flags, int *typep)
 			return (-1);
 		p[len] = '\0';
 		printf("%s\n", p);
+		free(p);
 		break;
 	}
 	return (-1);
