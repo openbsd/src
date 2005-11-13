@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.28 2005/11/12 23:10:04 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.29 2005/11/13 19:25:09 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -517,8 +517,6 @@ hdgetinfo(dev, rs, lp, spoofonly)
 	errstring = readdisklabel(HDLABELDEV(dev), hdstrategy, lp, NULL,
 	    spoofonly);
 	if (errstring) {
-		printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
-		    rs->sc_dev.dv_xname, errstring);
 		/* XXX reset partition info as readdisklabel screws with it */
 		lp->d_partitions[0].p_size = 0;
 		lp->d_partitions[RAW_PART].p_offset = 0;
@@ -1042,12 +1040,12 @@ hderror(unit)
 	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
-	    'a'+HDPART(bp->b_dev), pbn);
+	    'a' + HDPART(bp->b_dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
 	 * attempt at interpretation (unless debugging).
 	 */
-	printf("%s %s error:", rs->sc_dev.dv_xname,
+	printf("%s: %s error:", rs->sc_dev.dv_xname,
 	    (bp->b_flags & B_READ) ? "read" : "write");
 #ifdef DEBUG
 	if (hddebug & HDB_ERROR) {
@@ -1059,9 +1057,9 @@ hderror(unit)
 		hdprinterr("access", sp->c_aef, err_access);
 		hdprinterr("info", sp->c_ief, err_info);
 		printf("    block: %d, P1-P10: ", hwbn);
-		printf("0x%x", *(u_int *)&sp->c_raw[0]);
-		printf("0x%x", *(u_int *)&sp->c_raw[4]);
-		printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
+		printf("0x%04x", *(u_int *)&sp->c_raw[0]);
+		printf("%04x", *(u_int *)&sp->c_raw[4]);
+		printf("%02x\n", *(u_short *)&sp->c_raw[8]);
 		/* command */
 		printf("    ioc: ");
 		printf("0x%x", *(u_int *)&rs->sc_ioc.c_pad);
@@ -1073,13 +1071,12 @@ hderror(unit)
 		return (1);
 	}
 #endif
-	printf(" v%d u%d, R0x%x F0x%x A0x%x I0x%x\n",
+	printf(" v%d u%d, R0x%x F0x%x A0x%x I0x%x",
 	       (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
 	       sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
-	printf("P1-P10: ");
-	printf("0x%x", *(u_int *)&sp->c_raw[0]);
-	printf("0x%x", *(u_int *)&sp->c_raw[4]);
-	printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
+	printf(" P1-P10: 0x%04x%04x%02x\n",
+	    *(u_int *)&sp->c_raw[0], *(u_int *)&sp->c_raw[4],
+	    *(u_short *)&sp->c_raw[8]);
 	return (1);
 }
 
