@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.50 2005/10/14 19:46:46 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.51 2005/11/13 07:49:02 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -417,22 +417,26 @@ addlinef(BUFFER *bp, char *fmt, ...)
 
 /*
  * Look through the list of buffers, giving the user a chance to save them.
- * Return TRUE if there are any changed buffers afterwards.  Buffers that
- * don't have an associated file don't count.  Return FALSE if there are
- * no changed buffers.
+ * Return TRUE if there are any changed buffers afterwards.  Buffers that don't
+ * have an associated file don't count.  Return FALSE if there are no changed
+ * buffers.  Return ABORT if an error occurs or if the user presses c-g.
  */
 int
 anycb(int f)
 {
 	BUFFER *bp;
-	int	s = FALSE, save = FALSE;
+	int	s = FALSE, save = FALSE, ret;
 	char	prompt[NFILEN + 11];
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (bp->b_fname != NULL && *(bp->b_fname) != '\0' &&
 		    (bp->b_flag & BFCHG) != 0) {
-			snprintf(prompt, sizeof(prompt), "Save file %s",
+			ret = snprintf(prompt, sizeof(prompt), "Save file %s",
 			    bp->b_fname);
+			if (ret < 0 || ret >= sizeof(prompt)) {
+				ewprintf("Error: filename too long!");
+				return (ABORT);
+			}
 			if ((f == TRUE || (save = eyorn(prompt)) == TRUE) &&
 			    buffsave(bp) == TRUE) {
 				bp->b_flag &= ~BFCHG;

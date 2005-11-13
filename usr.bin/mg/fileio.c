@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.60 2005/11/11 18:51:49 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.61 2005/11/13 07:49:02 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -322,17 +322,18 @@ startupfile(char *suffix)
 {
 	static char	 file[NFILEN];
 	char		*home;
+	int		 ret;
 
 	if ((home = getenv("HOME")) == NULL || *home == '\0')
 		goto nohome;
 
 	if (suffix == NULL) {
-		if (snprintf(file, sizeof(file), "%s/.mg", home)
-		    >= sizeof(file))
+		ret = snprintf(file, sizeof(file), "%s/.mg", home);
+		if (ret < 0 || ret >= sizeof(file))
 			return (NULL);
 	} else {
-		if (snprintf(file, sizeof(file), "%s/.mg-%s", home, suffix)
-		    >= sizeof(file))
+		ret = snprintf(file, sizeof(file), "%s/.mg-%s", home, suffix);
+		if (ret < 0 || ret >= sizeof(file))
 			return (NULL);
 	}
 
@@ -341,21 +342,22 @@ startupfile(char *suffix)
 nohome:
 #ifdef STARTUPFILE
 	if (suffix == NULL) {
-		if (snprintf(file, sizeof(file), "%s", STARTUPFILE)
-		    >= sizeof(file))
+		ret = snprintf(file, sizeof(file), "%s", STARTUPFILE);
+		if (ret < 0 || ret >= sizeof(file))
 			return (NULL);
 	} else {
-		if (snprintf(file, sizeof(file), "%s%s", STARTUPFILE, suffix)
-		    >= sizeof(file))
+		ret = snprintf(file, sizeof(file), "%s%s", STARTUPFILE,
+		    suffix);
+		if (ret < 0 || ret >= sizeof(file))
 			return (NULL);
 	}
 
 	if (access(file, R_OK) == 0)
 		return (file);
-#endif
+#endif /* STARTUPFILE */
 	return (NULL);
 }
-#endif
+#endif /* !NO_STARTUP */
 
 #ifndef NO_DIRED
 
@@ -421,7 +423,7 @@ LIST *
 make_file_list(char *buf)
 {
 	char		*dir, *file, *cp;
-	int		 len, preflen;
+	int		 len, preflen, ret;
 	DIR		*dirp;
 	struct dirent	*dent;
 	LIST		*last;
@@ -516,10 +518,10 @@ make_file_list(char *buf)
 			char		statname[NFILEN + 2];
 
 			statbuf.st_mode = 0;
-			if (snprintf(statname, sizeof(statname), "%s/%s",
-			    dir, dent->d_name) > sizeof(statname) - 1) {
+			ret = snprintf(statname, sizeof(statname), "%s/%s",
+			    dir, dent->d_name);
+			if (ret < 0 || ret > sizeof(statname) - 1)
 				continue;
-			}
 			if (stat(statname, &statbuf) < 0)
 				continue;
 			if (statbuf.st_mode & S_IFDIR)
@@ -530,9 +532,9 @@ make_file_list(char *buf)
 		if (current == NULL)
 			break;
 
-		if (snprintf(current->fl_name, sizeof(current->fl_name),
-		    "%s%s%s", prefixx, dent->d_name, isdir ? "/" : "")
-		    >= sizeof(current->fl_name)) {
+		ret = snprintf(current->fl_name, sizeof(current->fl_name),
+		    "%s%s%s", prefixx, dent->d_name, isdir ? "/" : "");
+		if (ret < 0 || ret >= sizeof(current->fl_name)) {
 			free(current);
 			continue;
 		}
