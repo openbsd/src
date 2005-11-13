@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.21 2005/11/12 15:12:10 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.22 2005/11/13 02:26:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,8 @@
 #include <sys/device.h>
 #include <sys/scsiio.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/sensors.h>
 
@@ -62,6 +64,7 @@ struct safte_sensor {
 struct safte_softc {
 	struct device		sc_dev;
 	struct scsi_link	 *sc_link;
+	struct lock		sc_lock;
 
 	u_int			sc_encbuflen;
 	u_char			*sc_encbuf;
@@ -159,6 +162,7 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link = sa->sa_sc_link;
 	sa->sa_sc_link->device_softc = sc;
+	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
 
 	printf("\n");
 
@@ -207,6 +211,8 @@ safte_detach(struct device *self, int flags)
 	struct safte_softc		*sc = (struct safte_softc *)self;
 	int				i;
 
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+
 #if NBIO > 0
 	if (sc->sc_nslots > 0)
 		bio_unregister(self);
@@ -225,6 +231,9 @@ safte_detach(struct device *self, int flags)
 
 	if (sc->sc_encbuf != NULL)
 		free(sc->sc_encbuf, M_DEVBUF);
+
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_DRAIN, NULL, curproc);
 
 	return (0);
 }
@@ -374,6 +383,8 @@ safte_read_encstat(void *arg)
 	struct safte_sensor		*s;
 	u_int16_t			oot;
 
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ_BUFFER;
 	cmd.flags |= SAFTE_RD_MODE;
@@ -390,6 +401,7 @@ safte_read_encstat(void *arg)
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), sc->sc_encbuf, sc->sc_encbuflen, 2, 30000, NULL,
 	    flags) != 0) {
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 		printf("%s: unable to read enclosure status\n", DEVNAME(sc));
 		return;
 	}
@@ -491,6 +503,8 @@ safte_read_encstat(void *arg)
 	for (i = 0; i < sc->sc_ntemps; i++)
 		sc->sc_temps[i].se_sensor.status = 
 		    (oot & (1 << i)) ? SENSOR_S_CRIT : SENSOR_S_OK;
+
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 }
 
 #if NBIO > 0
@@ -533,10 +547,12 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 		return (EINVAL);
 	}
 
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
 	for (slot = 0; slot < sc->sc_nslots; slot++) {
 		if (sc->sc_slots[slot] == blink->bb_target)
 			break;
 	}
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 
 	if (slot >= sc->sc_nslots)
 		return (ENODEV);
