@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.93 2005/10/09 14:01:11 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.94 2005/11/13 03:56:26 brad Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -255,7 +255,7 @@ pmap_vp_remove(pmap_t pm, vaddr_t va)
  * This code should track allocations of vp table allocations
  * so they can be freed efficiently.
  * 
- * Should this be called under splimp?
+ * Should this be called under splvm?
  */
 void
 pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
@@ -268,7 +268,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
 
 	vp1 = pm->pm_vp[VP_SR(va)];
 	if (vp1 == NULL) {
-		s = splimp();
+		s = splvm();
 		vp1 = pool_get(&pmap_vp_pool, PR_NOWAIT);
 		splx(s);
 		bzero(vp1, sizeof (struct pmapvp));
@@ -277,7 +277,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
 
 	vp2 = vp1->vp[VP_IDX1(va)];
 	if (vp2 == NULL) {
-		s = splimp();
+		s = splvm();
 		vp2 = pool_get(&pmap_vp_pool, PR_NOWAIT);
 		splx(s);
 		bzero(vp2, sizeof (struct pmapvp));
@@ -474,7 +474,7 @@ pmap_enter(pm, va, pa, prot, flags)
 
 	/* MP - Acquire lock for this pmap */
 
-	s = splimp();
+	s = splvm();
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted)) {
 		pmap_remove_pg(pm, va);
@@ -638,7 +638,7 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 	 * so that we know the mapping information is either valid,
 	 * or that the mapping is not present in the hash table.
 	 */
-	s = splimp();
+	s = splvm();
 	if (pm == pmap_kernel()) {
 		pted = pmap_vp_lookup(pm, va);
 		if (pted == NULL || !PTED_VALID(pted)) {
@@ -699,7 +699,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	pm = pmap_kernel();
 
 	/* MP - lock pmap. */
-	s = splimp();
+	s = splvm();
 
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted))
@@ -786,7 +786,7 @@ pmap_kremove_pg(vaddr_t va)
 	if (!PTED_VALID(pted))
 		return; /* not mapped */
 
-	s = splimp();
+	s = splvm();
 
 	pm->pm_stats.resident_count--;
 
@@ -1019,7 +1019,7 @@ pteclrbits(paddr_t pa, u_int bit, u_int clear)
 	 * then reread the attribute cache.
 	 */
 	/* need lock for this pv */
-	s = splimp();
+	s = splvm();
 
 	LIST_FOREACH(pted, pvh, pted_pv_list) {
 		vaddr_t va = pted->pted_va & PAGE_MASK;
@@ -1189,7 +1189,7 @@ again:
 		tbloff = try % (8 * sizeof usedsr[0]);
 		if ((usedsr[tblidx] & (1 << tbloff)) == 0) {
 			/* pmap create lock? */
-			s = splimp();
+			s = splvm();
 			if ((usedsr[tblidx] & (1 << tbloff)) == 1) {
 				/* entry was stolen out from under us, retry */
 				splx(s); /* pmap create unlock */
@@ -1217,7 +1217,7 @@ pmap_create()
 	pmap_t pmap;
 	int s;
 
-	s = splimp();
+	s = splvm();
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	splx(s);
 	pmap_pinit(pmap);
@@ -1255,7 +1255,7 @@ pmap_destroy(pmap_t pm)
 	 * reference count is zero, free pmap resources and free pmap.
 	 */
 	pmap_release(pm);
-	s = splimp();
+	s = splvm();
 	pool_put(&pmap_pmap_pool, pm);
 	splx(s);
 }
@@ -1276,7 +1276,7 @@ pmap_release(pmap_t pm)
 	tbloff = i % (8  * sizeof usedsr[0]);
 
 	/* LOCK? */
-	s = splimp();
+	s = splvm();
 	usedsr[tblidx] &= ~(1 << tbloff);
 	splx(s);
 }
@@ -1299,12 +1299,12 @@ pmap_vp_destroy(pmap_t pm)
 			if (vp2 == NULL)
 				continue;
 			
-			s = splimp();
+			s = splvm();
 			pool_put(&pmap_vp_pool, vp2);
 			splx(s);
 		}
 		pm->pm_vp[i] = NULL;
-		s = splimp();
+		s = splvm();
 		pool_put(&pmap_vp_pool, vp1);
 		splx(s);
 	}
@@ -2013,7 +2013,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pted_pv_head *pvh;
 
 	/* need to lock for this pv */
-	s = splimp();
+	s = splvm();
 	pvh = pmap_find_pvh(pa);
 
 	/* nothing to do if not a managed page */
@@ -2045,7 +2045,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	int s;
 	if (prot & VM_PROT_READ) {
-		s = splimp();
+		s = splvm();
 		if (ppc_proc_is_64b) {
 			while (sva < eva) {
 				pmap_page_ro64(pm, sva);
