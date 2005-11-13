@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.58 2005/10/30 15:17:41 sturm Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.59 2005/11/13 20:26:09 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.58 2005/10/30 15:17:41 sturm Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.59 2005/11/13 20:26:09 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -571,19 +571,19 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 
 	if (restart_point &&
 	    (strcmp(cmd, "STOR") == 0 || strcmp(cmd, "APPE") == 0)) {
-		int rc;
+		int rc = -1;
 
-		rc = -1;
 		switch (curtype) {
 		case TYPE_A:
 			rc = fseeko(fin, restart_point, SEEK_SET);
 			break;
 		case TYPE_I:
 		case TYPE_L:
-			rc = lseek(fileno(fin), restart_point, SEEK_SET);
+			if (lseek(fileno(fin), restart_point, SEEK_SET) != -1)
+				rc = 0;
 			break;
 		}
-		if (rc < 0) {
+		if (rc == -1) {
 			warn("local: %s", local);
 			restart_point = 0;
 			progress = oprogress;
