@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.34 2005/11/12 18:38:22 kettenis Exp $
+#	$OpenBSD: files.macppc,v 1.35 2005/11/13 19:43:56 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -267,7 +267,7 @@ include "dev/usb/files.usb"
 include "dev/i2c/files.i2c"
 
 device	maciic {} : i2c
-attach	maciic at smu
+attach	maciic at ki2c, smu
 file	arch/macppc/dev/maci2c.c			maciic
 
 # Sun HME Ethernet controllers
