@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.96 2005/11/13 03:27:42 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.97 2005/11/13 14:29:57 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -503,13 +503,16 @@ scsi_do_mode_sense(sc_link, page, buf, page_data, density, block_count,
 	if (big)
 		*big = 0;
 
-	if ((sc_link->flags & SDEV_ATAPI) == 0) {
+	if ((sc_link->flags & SDEV_ATAPI) == 0 || 
+	    (sc_link->inqdata.device & SID_TYPE) == T_SEQUENTIAL) {
 		/*
 		 * Try 6 byte mode sense request first. Some devices don't
 		 * distinguish between 6 and 10 byte MODE SENSE commands,
-		 * returning 6 byte data for 10 byte requests. Don't bother
-		 * with SMS_DBD. Check returned data length to ensure that
-		 * at least a header (3 additional bytes) is returned.
+		 * returning 6 byte data for 10 byte requests. ATAPI tape
+		 * drives use MODE SENSE (6) even though ATAPI uses 10 byte
+		 * everything else. Don't bother with SMS_DBD. Check returned
+		 * data length to ensure that at least a header (3 additional
+		 * bytes) is returned.
 		 */
 		error = scsi_mode_sense(sc_link, 0, page, &buf->hdr,
 		    sizeof(*buf), flags, 20000);
