@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.33 2005/11/12 16:41:39 deraadt Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.34 2005/11/13 18:28:03 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -107,6 +107,11 @@ ipsecctl_rules(char *filename, int opts)
 		if ((opts & IPSECCTL_OPT_NOACTION) == 0)
 			if (ipsecctl_commit(action, &ipsec))
 				err(1, NULL);
+	}
+
+	if (fin != stdin) {
+		fclose(fin);
+		fin = NULL;
 	}
 	return (error);
 }
