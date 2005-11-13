@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.41 2005/07/05 22:21:16 dlg Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.42 2005/11/13 13:22:57 otto Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -304,6 +304,7 @@ returns addresses that are not IPv4/v6.
 .Bd -literal -offset indent
 struct addrinfo hints, *res, *res0;
 int error;
+int save_errno = errno;
 int s;
 const char *cause = NULL;
 
@@ -327,6 +328,7 @@ for (res = res0; res; res = res->ai_next) {
 	if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
 		cause = "connect";
 		close(s);
+		errno = save_errno;
 		s = -1;
 		continue;
 	}
