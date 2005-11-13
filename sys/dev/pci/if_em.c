@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.84 2005/11/08 01:33:19 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.85 2005/11/13 03:48:07 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -579,7 +579,7 @@ em_watchdog(struct ifnet *ifp)
 
 	em_init(sc);
 
-	ifp->if_oerrors++;
+	sc->watchdog_events++;
 }
 
 /*********************************************************************
@@ -738,7 +738,7 @@ em_intr(void *arg)
 		}
 
 		if (reg_icr & E1000_ICR_RXO) {
-			ifp->if_ierrors++;
+			sc->rx_overruns++;
 			wantinit = 1;
 		}
 	}
@@ -2770,10 +2770,12 @@ em_update_stats_counters(struct em_softc *sc)
 	sc->stats.crcerrs +
 	sc->stats.algnerrc +
 	sc->stats.rlec + sc->stats.rnbc +
-	sc->stats.mpc + sc->stats.cexterr;
+	sc->stats.mpc + sc->stats.cexterr +
+	sc->rx_overruns;
 
 	/* Tx Errors */
-	ifp->if_oerrors = sc->stats.ecol + sc->stats.latecol;
+	ifp->if_oerrors = sc->stats.ecol + sc->stats.latecol +
+	    sc->watchdog_events;
 }
 
 /**********************************************************************
@@ -2831,38 +2833,42 @@ em_print_hw_stats(struct em_softc *sc)
 	printf("%s: Excessive collisions = %lld\n", unit,
 		(long long)sc->stats.ecol);
 	printf("%s: Symbol errors = %lld\n", unit,
-	       (long long)sc->stats.symerrs);
+		(long long)sc->stats.symerrs);
 	printf("%s: Sequence errors = %lld\n", unit,
-	       (long long)sc->stats.sec);
+		(long long)sc->stats.sec);
 	printf("%s: Defer count = %lld\n", unit,
-	       (long long)sc->stats.dc);
+		(long long)sc->stats.dc);
 
 	printf("%s: Missed Packets = %lld\n", unit,
-	       (long long)sc->stats.mpc);
+		(long long)sc->stats.mpc);
 	printf("%s: Receive No Buffers = %lld\n", unit,
-	       (long long)sc->stats.rnbc);
+		(long long)sc->stats.rnbc);
 	printf("%s: Receive length errors = %lld\n", unit,
-	       (long long)sc->stats.rlec);
+		(long long)sc->stats.rlec);
 	printf("%s: Receive errors = %lld\n", unit,
-	       (long long)sc->stats.rxerrc);
+		(long long)sc->stats.rxerrc);
 	printf("%s: Crc errors = %lld\n", unit,
-	       (long long)sc->stats.crcerrs);
+		(long long)sc->stats.crcerrs);
 	printf("%s: Alignment errors = %lld\n", unit,
-	       (long long)sc->stats.algnerrc);
+		(long long)sc->stats.algnerrc);
 	printf("%s: Carrier extension errors = %lld\n", unit,
-	       (long long)sc->stats.cexterr);
+		(long long)sc->stats.cexterr);
+	printf("%s: RX overruns = %ld\n", unit,
+		sc->rx_overruns);
+	printf("%s: watchdog timeouts = %ld\n", unit,
+		sc->watchdog_events);
 
 	printf("%s: XON Rcvd = %lld\n", unit,
-	       (long long)sc->stats.xonrxc);
+		(long long)sc->stats.xonrxc);
 	printf("%s: XON Xmtd = %lld\n", unit,
-	       (long long)sc->stats.xontxc);
+		(long long)sc->stats.xontxc);
 	printf("%s: XOFF Rcvd = %lld\n", unit,
-	       (long long)sc->stats.xoffrxc);
+		(long long)sc->stats.xoffrxc);
 	printf("%s: XOFF Xmtd = %lld\n", unit,
-	       (long long)sc->stats.xofftxc);
+		(long long)sc->stats.xofftxc);
 
 	printf("%s: Good Packets Rcvd = %lld\n", unit,
-	       (long long)sc->stats.gprc);
+		(long long)sc->stats.gprc);
 	printf("%s: Good Packets Xmtd = %lld\n", unit,
-	       (long long)sc->stats.gptc);
+		(long long)sc->stats.gptc);
 }

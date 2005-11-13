@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.17 2005/10/24 21:42:34 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.18 2005/11/13 03:48:08 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -368,7 +368,9 @@ struct em_softc {
 	unsigned long   no_tx_desc_avail1;
 	unsigned long   no_tx_desc_avail2;
 	unsigned long   no_tx_map_avail;
-        unsigned long   no_tx_dma_setup;
+	unsigned long   no_tx_dma_setup;
+	unsigned long   watchdog_events;
+	unsigned long	rx_overruns;
 
 	/* Used in for 82547 10Mb Half workaround */
 	#define EM_PBA_BYTES_SHIFT	0xA
