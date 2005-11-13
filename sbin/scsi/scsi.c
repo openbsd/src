@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.19 2005/04/13 02:33:08 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.20 2005/11/13 19:16:09 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ static char *mode_lookup(int page)
 		mode_db = new_db;
 
 	modes = fopen(mode_db, "r");
-	if (modes == 0)
+	if (modes == NULL)
 		return 0;
 
 	next = 0;
@@ -587,7 +587,8 @@ static char *mode_lookup(int page)
 			}
 			if (found && c != '\n') {
 				if (next >= sizeof(fmt)) {
-					fprintf(stderr, "Stupid program: Buffer overflow.\n");
+					fprintf(stderr,
+					    "Stupid program: Buffer overflow.\n");
 					exit(ENOMEM);
 				}
 
@@ -595,6 +596,7 @@ static char *mode_lookup(int page)
 			}
 		}
 	}
+	fclose(modes);
 	fmt[next] = 0;
 
 	return (found) ? fmt : 0;
