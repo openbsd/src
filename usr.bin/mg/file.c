@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.43 2005/10/14 19:46:46 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.44 2005/11/13 07:24:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -177,11 +177,16 @@ poptofile(int f, int n)
  * empty buffer to put it in.
  */
 BUFFER *
-findbuffer(char *fname)
+findbuffer(char *fn)
 {
 	BUFFER		*bp;
-	char		 bname[NBUFN];
+	char		 bname[NBUFN], fname[NBUFN];
 	unsigned int	 count, remain, i;
+
+	if (strlcpy(fname, fn, sizeof(fname)) >= sizeof(fname)) {
+		ewprintf("filename too long");
+		return (NULL);
+	}
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (strcmp(bp->b_fname, fname) == 0)
@@ -189,7 +194,7 @@ findbuffer(char *fname)
 	}
 	i = strlcpy(bname, basename(fname), sizeof(bname));
 	if (i >= sizeof(bname))
-		return NULL;
+		return (NULL);
 	remain = sizeof(bname) - i;
 	for (count = 2; bfind(bname, FALSE) != NULL; count++)
 		snprintf(&bname[i], remain, "<%d>", count);
