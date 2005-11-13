@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.9 2005/04/18 16:39:25 moritz Exp $ */
+/*	$OpenBSD: print.c,v 1.10 2005/11/13 20:25:59 deraadt Exp $ */
 
 /* Turn data structures into printable text. */
 
@@ -46,29 +46,24 @@ char *
 print_hw_addr(int htype, int hlen, unsigned char *data)
 {
 	static char	habuf[49];
-	char	*s;
-	int	i;
+	int		i, j, slen = sizeof(habuf);
+	char		*s = habuf;
 
 	if (htype == 0 || hlen == 0) {
-		goto bad;
-	} else {
-		int	slen = sizeof(habuf);
-		s = habuf;
-		for (i = 0; i < hlen; i++) {
-			int	j;
-			j = snprintf(s, slen, "%02x", data[i]);
-			if (j <= 0 || j >= slen)
-				goto bad;
-
-			s += strlen(s);
-			slen -= (strlen(s) + 1);
-			*s++ = ':';
-		}
-		*--s = 0;
-	}
-	return habuf;
 bad:
-	strlcpy(habuf, "<null>", sizeof habuf);
-	return habuf;
+		strlcpy(habuf, "<null>", sizeof habuf);
+		return habuf;
+	}
 
+	for (i = 0; i < hlen; i++) {
+		j = snprintf(s, slen, "%02x", data[i]);
+		if (j <= 0 || j >= slen)
+			goto bad;
+		j = strlen(s);
+		s += j;
+		slen -= (j + 1);
+		*s++ = ':';
+	}
+	*--s = '\0';
+	return habuf;
 }

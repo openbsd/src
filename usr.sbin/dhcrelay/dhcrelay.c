@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.25 2005/05/23 22:54:34 henning Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.26 2005/11/13 20:26:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -274,31 +274,26 @@ char *
 print_hw_addr(int htype, int hlen, unsigned char *data)
 {
 	static char	 habuf[49];
-	char		*s;
-	int		 i;
+	char		*s = habuf;
+	int		 i, j, slen = sizeof(habuf);
 
-	if (htype == 0 || hlen == 0)
-		goto bad;
-	else {
-		int	slen = sizeof(habuf);
-		s = habuf;
-		for (i = 0; i < hlen; i++) {
-			int	j;
-			j = snprintf(s, slen, "%02x", data[i]);
-			if (j <= 0)
-				goto bad;
-
-			s += strlen (s);
-			slen -= (strlen(s) + 1);
-			*s++ = ':';
-		}
-		*--s = 0;
-	}
-	return habuf;
+	if (htype == 0 || hlen == 0) {
 bad:
-	strlcpy(habuf, "<null>", sizeof habuf);
-	return habuf;
+		strlcpy(habuf, "<null>", sizeof habuf);
+		return habuf;
+	}
 
+	for (i = 0; i < hlen; i++) {
+		j = snprintf(s, slen, "%02x", data[i]);
+		if (j <= 0 || j >= slen)
+			goto bad;
+		j = strlen (s);
+		s += j;
+		slen -= (j + 1);
+		*s++ = ':';
+	}
+	*--s = '\0';
+	return habuf;
 }
 
 void
