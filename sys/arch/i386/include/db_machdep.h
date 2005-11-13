@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.14 2005/01/04 21:14:35 espie Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.15 2005/11/13 17:50:44 fgsch Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -109,6 +109,8 @@ boolean_t	db_phys_eq(task_t, vaddr_t, task_t, vaddr_t);
 typedef	long		kgdb_reg_t;
 #define	KGDB_NUMREGS	16
 #define	KGDB_BUFLEN	512
+
+#define KGDB_ENTER	breakpoint()
 
 #if 0
 void		db_task_name(/* task_t */);

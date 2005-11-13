@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.7 2003/06/02 23:27:55 millert Exp $ */
+/*	$OpenBSD: kgdb_machdep.c,v 1.8 2005/11/13 17:50:45 fgsch Exp $ */
 /*	$NetBSD: kgdb_machdep.c,v 1.1 1997/08/31 21:22:45 pk Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -134,36 +134,6 @@ kgdb_zero(ptr, len)
 {
 	while (--len >= 0)
 		*ptr++ = (char) 0;
-}
-
-/*
- * Trap into kgdb to wait for debugger to connect,
- * noting on the console why nothing else is going on.
- */
-void
-kgdb_connect(verbose)
-	int verbose;
-{
-
-	if (kgdb_dev < 0)
-		return;
-	fb_unblank();
-	if (verbose)
-		printf("kgdb waiting...");
-	__asm("ta %0" :: "n" (T_KGDB_EXEC));	/* trap into kgdb */
-
-	kgdb_debug_panic = 1;
-}
-
-/*
- * Decide what to do on panic.
- */
-void
-kgdb_panic()
-{
-
-	if (kgdb_dev >= 0 && kgdb_debug_panic)
-		kgdb_connect(kgdb_active == 0);
 }
 
 /*

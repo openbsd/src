@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.12 2005/04/19 15:23:08 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.13 2005/11/13 17:50:44 fgsch Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.10 1997/08/31 21:23:40 pk Exp $ */
 
 /*
@@ -96,5 +96,8 @@ int kdb_trap(int, struct trapframe *);
 typedef u_long		kgdb_reg_t;
 #define KGDB_NUMREGS	72
 #define KGDB_BUFLEN	1024
+
+#define KGDB_PREPARE	fb_unblank()
+#define KGDB_ENTER	__asm("ta %0" :: "n" (T_KGDB_EXEC))
 
 #endif	/* _SPARC_DB_MACHDEP_H_ */

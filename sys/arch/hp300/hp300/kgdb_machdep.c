@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.3 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: kgdb_machdep.c,v 1.4 2005/11/13 17:50:44 fgsch Exp $	*/
 /*	$NetBSD: kgdb_machdep.c,v 1.1 1997/05/05 20:51:05 thorpej Exp $	*/
 
 /*
@@ -52,8 +52,6 @@
 #include <machine/db_machdep.h>
 #include <machine/pte.h>
 
-#define	INVOKE_KGDB()	__asm __volatile("trap	#15")
-
 /*
  * Determine if the memory at va..(va+len) is valid.
  */
@@ -79,39 +77,4 @@ kgdb_acc(va, ulen)
 	}
 
 	return (1);
-}
-
-/*
- * Trap into kgdb to wait for debugger to connect,
- * noting on the console why nothing else is going on.
- */
-void
-kgdb_connect(verbose)
-	int verbose;
-{
-
-	if (kgdb_dev < 0)
-		return;
-
-	if (verbose)
-		printf("kgdb waiting...");
-
-	INVOKE_KGDB();
-
-	if (verbose)
-		printf("connected.\n");
-
-	kgdb_debug_panic = 1;
-}
-
-/*
- * Decide what to do on panic.
- */
-void
-kgdb_panic()
-{
-	if (kgdb_dev >= 0 && kgdb_debug_panic) {
-		printf("entering kgdb\n");
-		INVOKE_KGDB();
-	}
 }

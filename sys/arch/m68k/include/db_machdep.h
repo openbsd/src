@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.9 2005/01/04 21:14:35 espie Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.10 2005/11/13 17:50:44 fgsch Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.20 1997/06/26 01:26:58 thorpej Exp $	*/
 
 /* 
@@ -94,8 +94,9 @@ typedef long kgdb_reg_t;
 #define KGDB_NUMREGS	(16+2)
 #define KGDB_BUFLEN	512
 
-
 #ifdef _KERNEL
+
+#define KGDB_ENTER	__asm __volatile("trap  #15")
 
 void	Debugger(void);	/* XXX */
 void	kdb_kintr(db_regs_t *);

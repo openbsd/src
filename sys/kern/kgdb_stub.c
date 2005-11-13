@@ -1,4 +1,4 @@
-/* $OpenBSD: kgdb_stub.c,v 1.6 2003/06/02 23:28:06 millert Exp $ */
+/* $OpenBSD: kgdb_stub.c,v 1.7 2005/11/13 17:50:45 fgsch Exp $ */
 /*	$NetBSD: kgdb_stub.c,v 1.6 1998/08/30 20:30:57 scottr Exp $	*/
 
 /*
@@ -403,7 +403,8 @@ kgdb_trap(type, regs)
 			 * knowing if we're in or out of this loop
 			 * when he issues a "remote-signal".
 			 */
-			snprintf(buffer, sizeof buffer, "S%02x", kgdb_signal(type));
+			snprintf(buffer, sizeof buffer, "S%02x",
+			    kgdb_signal(type));
 			kgdb_send(buffer);
 			continue;
 
@@ -520,4 +521,40 @@ kgdb_trap(type, regs)
  out:
 	kgdb_recover = 0;
 	return (1);
+}
+
+/*
+ * Trap into kgdb to wait for debugger to connect,
+ * noting on the console why nothing else is going on.
+ */
+void
+kgdb_connect(int verbose)
+{
+	if (kgdb_dev < 0)
+		return;
+
+	KGDB_PREPARE;
+
+	if (verbose)
+		printf("kgdb waiting...");
+
+	KGDB_ENTER;
+
+	if (verbose)
+		printf("connected.\n");
+
+	kgdb_debug_panic = 1;
+}
+
+/*
+ * Decide what to do on panic.
+ * (This is called by panic, like Debugger())
+ */
+void
+kgdb_panic()
+{
+	if (kgdb_dev >= 0 && kgdb_debug_panic) {
+		printf("entering kgdb\n");
+		kgdb_connect(kgdb_active == 0);
+	}
 }

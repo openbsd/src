@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.3 2004/07/02 16:29:55 niklas Exp $	*/
+/*	$OpenBSD: kgdb_machdep.c,v 1.4 2005/11/13 17:50:44 fgsch Exp $	*/
 /*	$NetBSD: kgdb_machdep.c,v 1.6 1998/08/13 21:36:03 thorpej Exp $	*/
 
 /*-
@@ -224,39 +224,3 @@ kgdb_setregs(regs, gdb_regs)
 		regs->tf_ss  = gdb_regs[11];
 	}
 }	
-
-/*
- * Trap into kgdb to wait for debugger to connect,
- * noting on the console why nothing else is going on.
- */
-void
-kgdb_connect(verbose)
-	int verbose;
-{
-
-	if (kgdb_dev < 0)
-		return;
-
-	if (verbose)
-		printf("kgdb waiting...");
-
-	breakpoint();
-
-	if (verbose)
-		printf("connected.\n");
-
-	kgdb_debug_panic = 1;
-}
-
-/*
- * Decide what to do on panic.
- * (This is called by panic, like Debugger())
- */
-void
-kgdb_panic()
-{
-	if (kgdb_dev >= 0 && kgdb_debug_panic) {
-		printf("entering kgdb\n");
-		kgdb_connect(kgdb_active == 0);
-	}
-}
