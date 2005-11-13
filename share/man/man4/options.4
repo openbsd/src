@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.169 2005/11/06 17:50:06 kettenis Exp $
+.\"	$OpenBSD: options.4,v 1.170 2005/11/13 03:27:41 krw Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -871,6 +871,11 @@ which affects processor cycle counter.
 .El
 .Ss SCSI Subsystem Options
 .Bl -ohang
+.It Cd option SCSI_DELAY=value
+Delay for
+.Ar value
+seconds before starting to probe the first SCSI bus.
+This can be used if a SCSI device needs extra time to get ready.
 .It Cd option SCSITERSE
 Terser SCSI error messages.
 This omits the table for decoding ASC/ASCQ info, saving about 30KB.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.97 2005/10/10 20:06:12 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.98 2005/11/13 03:27:42 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -178,15 +178,6 @@ scsibusattach(parent, self, aux)
 			panic("scsibusattach: can't allocate lun links");
 		bzero(sb->sc_link[i], nbytes);
 	}
-
-#if defined(SCSI_DELAY) && SCSI_DELAY > 2
-	printf("%s: waiting for scsi devices to settle\n",
-		sb->sc_dev.dv_xname);
-#else	/* SCSI_DELAY > 2 */
-#undef	SCSI_DELAY
-#define SCSI_DELAY 2
-#endif	/* SCSI_DELAY */
-	delay(1000000 * SCSI_DELAY);
 
 	scsi_probe_bus(sb->sc_dev.dv_unit, -1, -1);
 }

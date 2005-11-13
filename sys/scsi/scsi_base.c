@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.95 2005/11/13 02:39:45 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.96 2005/11/13 03:27:42 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -78,6 +78,11 @@ scsi_init()
 	if (scsi_init_done)
 		return;
 	scsi_init_done = 1;
+
+#if defined(SCSI_DELAY) && SCSI_DELAY > 0
+	/* Historical. Older buses may need a moment to stabilize. */
+	delay(1000000 * SCSI_DELAY);
+#endif
 
 	/* Initialize the scsi_xfer pool. */
 	pool_init(&scsi_xfer_pool, sizeof(struct scsi_xfer), 0,
