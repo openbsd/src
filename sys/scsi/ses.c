@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.30 2005/11/13 02:21:42 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.31 2005/11/13 02:38:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,8 @@
 #include <sys/device.h>
 #include <sys/scsiio.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/sensors.h>
 
@@ -67,6 +69,7 @@ struct ses_slot {
 struct ses_softc {
 	struct device		sc_dev;
 	struct scsi_link	*sc_link;
+	struct lock		sc_lock;
 
 	enum {
 		SES_ENC_STD,
@@ -148,6 +151,7 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link = sa->sa_sc_link;
 	sa->sa_sc_link->device_softc = sc;
+	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
 
 	scsi_strvis(vendor, sc->sc_link->inqdata.vendor,
 	    sizeof(sc->sc_link->inqdata.vendor));
@@ -208,6 +212,8 @@ ses_detach(struct device *self, int flags)
 	struct ses_slot			*slot;
 #endif
 
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+
 #if NBIO > 0
 	if (!TAILQ_EMPTY(&sc->sc_slots)) {
 		bio_unregister(self);
@@ -232,6 +238,9 @@ ses_detach(struct device *self, int flags)
 
 	if (sc->sc_buf != NULL)
 		free(sc->sc_buf, M_DEVBUF);
+
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_DRAIN, NULL, curproc);
 
 	return (0);
 }
@@ -487,8 +496,11 @@ ses_refresh_sensors(void *arg)
 	struct ses_sensor		*sensor;
 	int				ret = 0;
 
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+
 	if (ses_read_status(sc) != 0) {
 		printf("%s: unable to read enclosure status\n", DEVNAME(sc));
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 		return;
 	}
 
@@ -537,6 +549,8 @@ ses_refresh_sensors(void *arg)
 			break;
 		}
 	}
+
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 
 	if (ret)
 		printf("%s: error in sensor data\n");
@@ -592,16 +606,22 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 {
 	struct ses_slot			*slot;
 
-	if (ses_read_status(sc) != 0)
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+
+	if (ses_read_status(sc) != 0) {
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 		return (EIO);
+	}
 
 	TAILQ_FOREACH(slot, &sc->sc_slots, sl_entry) {
 		if (slot->sl_stat->f1 == blink->bb_target)
 			break;
 	}
 
-	if (slot == TAILQ_END(&sc->sc_slots))
+	if (slot == TAILQ_END(&sc->sc_slots)) {
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 		return (EINVAL);
+	}
 
 	DPRINTFN(3, "%s: 0x%02x 0x%02x 0x%02x 0x%02x\n", DEVNAME(sc),
 	    slot->sl_stat->com, slot->sl_stat->f1, slot->sl_stat->f2,
@@ -621,6 +641,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 		break;
 
 	default:
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 		return (EINVAL);
 	}
 
@@ -628,8 +649,12 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 	    slot->sl_stat->com, slot->sl_stat->f1, slot->sl_stat->f2,
 	    slot->sl_stat->f3);
 
-	if (ses_write_config(sc) != 0)
+	if (ses_write_config(sc) != 0) {
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 		return (EIO);
+	}
+
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
 
 	return (0);
 }
