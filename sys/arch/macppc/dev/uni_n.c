@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.12 2005/11/13 19:17:26 kettenis Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.13 2005/11/13 21:49:15 drahn Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn.
@@ -83,7 +83,8 @@ memcattach(struct device *parent, struct device *self, void *aux)
 	if (len > 0)
 		name[len] = 0;
 
-	if (strcmp(name, "uni-n") == 0 || strcmp(name, "u3") == 0)
+	if (strcmp(name, "uni-n") == 0 || strcmp(name, "u3") == 0
+	    || strcmp(name, "u4") == 0)
 		sc->baseaddr = uni_n_config(ca->ca_node);
 
 	printf (": %s\n", name);
@@ -148,7 +149,8 @@ uni_n_config(int handle)
 
 	if (OF_getprop(handle, "name", name, sizeof name) > 0) {
 		/* sanity test */
-		if (strcmp (name, "uni-n") == 0 || strcmp (name, "u3") == 0) {
+		if (strcmp (name, "uni-n") == 0 || strcmp (name, "u3") == 0
+		    || strcmp (name, "u4") == 0) {
 			if (OF_getprop(handle, "reg", &address,
 			    sizeof address) > 0) {
 				baseaddr = mapiodev(address, NBPG);
