@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhpib.c,v 1.14 2004/12/25 23:02:23 miod Exp $	*/
+/*	$OpenBSD: fhpib.c,v 1.15 2005/11/13 18:52:15 miod Exp $	*/
 /*	$NetBSD: fhpib.c,v 1.18 1997/05/05 21:04:16 thorpej Exp $	*/
 
 /*
@@ -161,9 +161,6 @@ fhpibattach(parent, self, aux)
 
 	/* Initialize timeout structures */
 	timeout_set(&sc->sc_dma_to, fhpibdmadone, sc);
-#ifdef DEBUG
-	timeout_set(&sc->sc_watch_to, fhpibppwatch, sc);
-#endif
 
 	/* Establish the interrupt handler. */
 	sc->sc_isr.isr_func = fhpibintr;
@@ -448,10 +445,11 @@ void
 fhpibdmadone(arg)
 	void *arg;
 {
-	struct hpibbus_softc *hs = arg;
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
-	int s = splbio();
+	struct fhpib_softc *sc = arg;
+	struct hpibbus_softc *hs = sc->sc_hpibbus;
+	int s;
 
+	s  = splbio();
 	if (hs->sc_flags & HPIBF_IO) {
 		struct fhpibdevice *hd = sc->sc_regs;
 		struct hpibqueue *hq;
@@ -657,8 +655,10 @@ fhpibppwatch(arg)
 		if (fhpibppoll(hs) & slave) {
 			hd->hpib_stat = ST_IENAB;
 			hd->hpib_imask = IM_IDLE | IM_ROOM;
-		} else
+		} else {
+			timeout_set(&sc->sc_watch_to, fhpibppwatch, hs);
 			timeout_add(&sc->sc_watch_to, 1);
+		}
 		return;
 	}
 	if ((fhpibdebug & FDB_PPOLL) && sc->sc_dev.dv_unit == fhpibdebugunit)

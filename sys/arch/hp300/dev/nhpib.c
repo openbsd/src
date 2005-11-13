@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhpib.c,v 1.15 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.16 2005/11/13 18:52:15 miod Exp $	*/
 /*	$NetBSD: nhpib.c,v 1.17 1997/05/05 21:06:41 thorpej Exp $	*/
 
 /*
@@ -60,19 +60,19 @@
  * ODD parity table for listen and talk addresses and secondary commands.
  * The TI9914A doesn't produce the parity bit.
  */
-static u_char listnr_par[] = {
+static const u_char listnr_par[] = {
 	0040,0241,0242,0043,0244,0045,0046,0247,
 	0250,0051,0052,0253,0054,0255,0256,0057,
 	0260,0061,0062,0263,0064,0265,0266,0067,
 	0070,0271,0272,0073,0274,0075,0076,0277,
 };
-static u_char talker_par[] = {
+static const u_char talker_par[] = {
 	0100,0301,0302,0103,0304,0105,0106,0307,
 	0310,0111,0112,0313,0114,0315,0316,0117,
 	0320,0121,0122,0323,0124,0325,0326,0127,
 	0130,0331,0332,0133,0334,0135,0136,0337,
 };
-static u_char sec_par[] = {
+static const u_char sec_par[] = {
 	0340,0141,0142,0343,0144,0345,0346,0147,
 	0150,0351,0352,0153,0354,0155,0156,0357,
 	0160,0361,0362,0163,0364,0165,0166,0367,
@@ -184,8 +184,7 @@ nhpibattach(parent, self, aux)
 	dio_intr_establish(&sc->sc_isr, self->dv_xname);
 
 	/* Initialize timeout structures */
-	timeout_set(&sc->sc_read_to, nhpibreadtimo, &sc->sc_hpibbus);
-	timeout_set(&sc->sc_watch_to, nhpibppwatch, &sc->sc_hpibbus);
+	timeout_set(&sc->sc_read_to, nhpibreadtimo, sc);
 
 	ha.ha_ops = &nhpib_controller;
 	ha.ha_type = type;			/* XXX */
@@ -398,10 +397,11 @@ void
 nhpibreadtimo(arg)
 	void *arg;
 {
-	struct hpibbus_softc *hs = arg;
-	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
-	int s = splbio();
+	struct nhpib_softc *sc = arg;
+	struct hpibbus_softc *hs = sc->sc_hpibbus;
+	int s;
 
+	s = splbio();
 	if (hs->sc_flags & HPIBF_IO) {
 		struct nhpibdevice *hd = sc->sc_regs;
 		struct hpibqueue *hq;
@@ -544,12 +544,15 @@ nhpibppwatch(arg)
 
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
+
 again:
 	if (nhpibppoll(hs) & (0x80 >> TAILQ_FIRST(&hs->sc_queue)->hq_slave))
        		sc->sc_regs->hpib_mim = MIS_BO;
 	else if (cold)
 		/* timeouts not working yet */
 		goto again;
-	else
+	else {
+		timeout_set(&sc->sc_watch_to, nhpibppwatch, hs);
 		timeout_add(&sc->sc_watch_to, 1);
+	}
 }
