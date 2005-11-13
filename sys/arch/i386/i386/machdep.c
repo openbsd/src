@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.330 2005/11/13 14:23:26 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.331 2005/11/13 17:24:31 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2847,8 +2847,9 @@ init386(paddr_t first_avail)
 #if defined(MULTIPROCESSOR)
 	/* install the page after boot args as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0),
-	   round_page(bootargv + bootargc), VM_PROT_READ|VM_PROT_WRITE,
-	   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	   round_page((vaddr_t)(bootargv + bootargc)),
+		VM_PROT_READ|VM_PROT_WRITE,
+		VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
 #endif
 
