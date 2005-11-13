@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.50 2005/09/27 22:05:37 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.51 2005/11/13 23:14:33 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1966,7 +1966,7 @@ ENTRY_NOPROFILE(_delay)
 	 * operations and that the loop will run from a single cache
 	 * half-line.
 	 */
-	.align	8
+	.balign	8
 L_delay:
 	subl	d1,d0
 	jgt	L_delay

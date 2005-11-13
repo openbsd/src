@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.45 2005/09/13 14:05:49 martin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.46 2005/11/13 23:14:34 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1545,7 +1545,7 @@ Lm68881rdone:
  * will be no prefetch stalls due to cache line burst operations and that
  * the loops will run from a single cache half-line.
  */
-	.align	8			| align to half-line boundary
+	.balign	8			| align to half-line boundary
 
 ALTENTRY(_delay, _delay)
 ENTRY(delay)
