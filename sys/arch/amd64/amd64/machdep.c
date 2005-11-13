@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2005/11/13 17:51:52 fgsch Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 2005/11/13 21:44:06 fgsch Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -164,8 +164,6 @@ int	cpu_class;
 
 char	*ssym = NULL;
 vaddr_t kern_end;
-
-#define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
