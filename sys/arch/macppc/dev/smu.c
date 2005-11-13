@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.5 2005/11/11 16:44:36 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.6 2005/11/13 19:51:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -234,7 +234,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
                 return;
         }
 
-	lockinit(&sc->sc_lock, PZERO, "smulk", 0, 0);
+	lockinit(&sc->sc_lock, PZERO, sc->sc_dev.dv_xname, 0, 0);
 
 	/* Establish smu-doorbell interrupt. */
 	mac_intr_establish(parent, intr, IST_EDGE, IPL_BIO,
