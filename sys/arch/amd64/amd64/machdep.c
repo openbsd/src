@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2005/10/28 16:59:19 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2005/11/13 17:51:52 fgsch Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -254,6 +254,28 @@ int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
 void	init_x86_64(paddr_t);
+
+#ifdef KGDB
+#ifndef KGDB_DEVNAME
+#define KGDB_DEVNAME	"com"
+#endif /* KGDB_DEVNAME */
+char kgdb_devname[] = KGDB_DEVNAME;
+#if NCOM > 0
+#ifndef KGDBADDR
+#define KGDBADDR	0x3f8
+#endif /* KGDBADDR */
+int comkgdbaddr = KGDBADDR;
+#ifndef KGDBRATE
+#define KGDBRATE	TTYDEF_SPEED
+#endif /* KGDBRATE */
+int comkgdbrate = KGDBRATE;
+#ifndef KGDBMODE
+#define KGDBMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
+#endif /* KGDBMODE */
+int comkgdbmode = KGDBMODE;
+#endif /* NCOM */
+void	kgdb_port_init(void);
+#endif /* KGDB */
 
 #ifdef APERTURE
 #ifdef INSECURE
@@ -1702,6 +1724,20 @@ init_x86_64(first_avail)
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
 }
+
+#ifdef KGDB
+void
+kgdb_port_init()
+{
+#if NCOM > 0
+	if (!strcmp(kgdb_devname, "com")) {
+		bus_space_tag_t tag = X86_BUS_SPACE_IO;
+		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ,
+		    comkgdbmode);
+	}
+#endif
+} 
+#endif /* KGDB */
 
 void
 cpu_reset()
