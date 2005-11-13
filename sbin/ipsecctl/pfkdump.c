@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.7 2005/11/12 12:00:53 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.8 2005/11/13 18:39:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -65,7 +65,7 @@ struct idname {
 
 struct idname ext_types[] = {
 	{ SADB_EXT_RESERVED,		"reserved",		NULL },
-	{ SADB_EXT_SA,			"sa",			print_sa},
+	{ SADB_EXT_SA,			"sa",			print_sa },
 	{ SADB_EXT_LIFETIME_CURRENT,	"lifetime_cur",		print_life },
 	{ SADB_EXT_LIFETIME_HARD,	"lifetime_hard",	print_life },
 	{ SADB_EXT_LIFETIME_SOFT,	"lifetime_soft",	print_life },
@@ -76,7 +76,7 @@ struct idname ext_types[] = {
 	{ SADB_EXT_IDENTITY_SRC,	"identity_src",		print_ident },
 	{ SADB_EXT_IDENTITY_DST,	"identity_dst",		print_ident },
 	{ SADB_X_EXT_REMOTE_AUTH,	"remote_auth",		print_auth },
-	{ SADB_X_EXT_LOCAL_CREDENTIALS, "local_cred",		print_cred },
+	{ SADB_X_EXT_LOCAL_CREDENTIALS,	"local_cred",		print_cred },
 	{ SADB_X_EXT_REMOTE_CREDENTIALS,"remote_cred",		print_cred },
 	{ SADB_X_EXT_UDPENCAP,		"udpencap",		print_udpenc },
 	{ SADB_X_EXT_LIFETIME_LASTUSE,	"lifetime_lastuse",	print_life },
