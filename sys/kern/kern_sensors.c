@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_sensors.c,v 1.3 2005/11/10 08:32:56 dlg Exp $ */
+/* $OpenBSD: kern_sensors.c,v 1.4 2005/11/13 22:41:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -73,12 +73,9 @@ sensor_task_register(void *arg, void (*func)(void *), int period)
 void
 sensor_task_unregister(void *arg)
 {
-	struct sensor_task	*st, *nst;
+	struct sensor_task	*st;
 
-	nst = TAILQ_FIRST(&tasklist);
-	while ((st = nst) != NULL) {
-		nst = TAILQ_NEXT(st, entry);
-
+	TAILQ_FOREACH(st, &tasklist, entry) {
 		if (st->arg == arg)
 			st->running = 0;
 	}
@@ -98,8 +95,6 @@ sensor_task_thread(void *arg)
 	time_t			now;
 
 	while (!TAILQ_EMPTY(&tasklist)) {
-		nst = TAILQ_FIRST(&tasklist);
-
 		while ((nst = TAILQ_FIRST(&tasklist))->nextrun >
 		    (now = time_uptime))
 			tsleep(&tasklist, PWAIT, "timeout",
@@ -132,14 +127,11 @@ sensor_task_thread(void *arg)
 void
 sensor_task_schedule(struct sensor_task *st)
 {
-	struct sensor_task 	*cst, *nst;
+	struct sensor_task 	*cst;
 
 	st->nextrun = time_uptime + st->period;
 
-	nst = TAILQ_FIRST(&tasklist);
-	while ((cst = nst) != NULL) {
-		nst = TAILQ_NEXT(cst, entry);
-
+	TAILQ_FOREACH(cst, &tasklist, entry) {
 		if (cst->nextrun > st->nextrun) {
 			TAILQ_INSERT_BEFORE(cst, st, entry);
 			return;
