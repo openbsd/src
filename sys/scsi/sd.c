@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.96 2005/11/07 23:49:32 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.97 2005/11/13 02:39:45 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1104,15 +1104,11 @@ sd_interpret_sense(xs)
 		return (EJUSTRETURN);
 
 	switch (sense->add_sense_code_qual) {
-	case 0x01:
-		printf("%s: ..is spinning up...waiting\n", sd->sc_dev.dv_xname);
-		/*
-		 * I really need a sdrestart function I can call here.
-		 */
-		delay(1000000 * 5);	/* 5 seconds */
-		retval = ERESTART;
+	case 0x01: /* In process of becoming ready. */
+		SC_DEBUG(sc_link, SDEV_DB1, ("becoming ready.\n"));
+		retval = scsi_delay(xs, 5);
 		break;
-	case 0x02:
+	case 0x02: /* Initialization command required. */
 		if (sd->sc_link->flags & SDEV_REMOVABLE) {
 			printf("%s: removable disk stopped - not restarting\n",
 			    sd->sc_dev.dv_xname);

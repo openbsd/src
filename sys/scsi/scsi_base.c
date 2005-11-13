@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.94 2005/11/07 23:49:32 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.95 2005/11/13 02:39:45 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -58,7 +58,6 @@ static __inline void asc2ascii(u_int8_t, u_int8_t ascq, char *result,
     size_t len);
 int	sc_err1(struct scsi_xfer *);
 int	scsi_interpret_sense(struct scsi_xfer *);
-int	scsi_delay(struct scsi_xfer *, int);
 char   *scsi_decode_sense(struct scsi_sense_data *, int);
 
 /* Values for flag parameter to scsi_decode_sense. */

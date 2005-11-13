@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.61 2005/09/11 17:34:27 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.62 2005/11/13 02:39:45 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -359,6 +359,7 @@ void	show_scsi_cmd(struct scsi_xfer *);
 void	show_mem(u_char *, int);
 int	scsi_probe_busses(int, int, int);
 void	scsi_strvis(u_char *, u_char *, int);
+int	scsi_delay(struct scsi_xfer *, int);
 
 static __inline void _lto2b(u_int32_t val, u_int8_t *bytes);
 static __inline void _lto3b(u_int32_t val, u_int8_t *bytes);
