@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.6 2003/01/16 04:15:17 art Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.7 2005/11/13 14:23:26 martin Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.6 1999/04/12 20:38:19 pk Exp $	*/
 
 /* 
@@ -74,14 +74,14 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr < (vaddr_t)&etext) {
-		ptep0 = PTE_BASE + i386_btop(addr);
+		ptep0 = PTE_BASE + atop(addr);
 		oldmap0 = *ptep0;
 		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
 
-		addr1 = i386_trunc_page(addr + size - 1);
-		if (i386_trunc_page(addr) != addr1) {
+		addr1 = trunc_page(addr + size - 1);
+		if (trunc_page(addr) != addr1) {
 			/* data crosses a page boundary */
-			ptep1 = PTE_BASE + i386_btop(addr1);
+			ptep1 = PTE_BASE + atop(addr1);
 			oldmap1 = *ptep1;
 			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.2 2005/11/13 14:23:26 martin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -49,8 +49,8 @@ u_int8_t	*acpi_scan(struct acpi_mem_map *, paddr_t, size_t);
 int
 acpi_map(paddr_t pa, size_t len, struct acpi_mem_map *handle)
 {
-	paddr_t pgpa = i386_trunc_page(pa);
-	paddr_t endpa = i386_round_page(pa + len);
+	paddr_t pgpa = trunc_page(pa);
+	paddr_t endpa = round_page(pa + len);
 	vaddr_t va = uvm_km_valloc(kernel_map, endpa - pgpa);
 
 	if (va == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.56 2005/08/19 01:10:42 marco Exp $	*/
+/*	$OpenBSD: bios.c,v 1.57 2005/11/13 14:23:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -387,7 +387,7 @@ bios32_service(service, e, ei)
 		return 0;
 
 
-	endpa = i386_round_page(BIOS32_END);
+	endpa = round_page(BIOS32_END);
 
 	sva = va = uvm_km_valloc(kernel_map, endpa);
 	if (va == 0)
@@ -396,15 +396,15 @@ bios32_service(service, e, ei)
 	slot = gdt_get_slot();
 	setgdt(slot, (caddr_t)va, BIOS32_END, SDT_MEMERA, SEL_KPL, 1, 0);
 
-	for (pa = i386_trunc_page(BIOS32_START),
-	     va += i386_trunc_page(BIOS32_START);
+	for (pa = trunc_page(BIOS32_START),
+	     va += trunc_page(BIOS32_START);
 	     pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 
 		/* for all you, broken hearted */
-		if (pa >= i386_trunc_page(base)) {
+		if (pa >= trunc_page(base)) {
 			pmap_enter(pmap_kernel(), sva, pa,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);

@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.27 2003/08/15 20:32:13 tedu Exp $ */
+/*	$OpenBSD: mem.c,v 1.28 2005/11/13 14:23:26 martin Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -227,7 +227,7 @@ mmmmap(dev, off, prot)
 		if ((u_int)off > ctob(physmem) &&
 		    suser(p, 0) != 0)
 			return -1;
-		return i386_btop((u_int)off);
+		return atop(off);
 
 #ifdef APERTURE
 /* minor device 4 is aperture driver */
@@ -237,7 +237,7 @@ mmmmap(dev, off, prot)
 			/* Allow mapping of the VGA framebuffer & BIOS only */
 			if ((off >= VGA_START && off <= BIOS_END) ||
 			    (unsigned)off > (unsigned)ctob(physmem))
-				return i386_btop(off);
+				return atop(off);
 			else
 				return -1;
 		case 2:
@@ -245,7 +245,7 @@ mmmmap(dev, off, prot)
 			   for x86emu */
 			if (off <= BIOS_END || 
 			    (unsigned)off > (unsigned)ctob(physmem))
-				return i386_btop(off);
+				return atop(off);
 			else 
 				return -1;
 		default:

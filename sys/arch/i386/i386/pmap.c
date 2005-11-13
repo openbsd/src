@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.83 2005/09/25 20:48:21 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.84 2005/11/13 14:23:26 martin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -876,11 +876,11 @@ pmap_bootstrap(kva_start)
 	 * use the very last page of physical memory for the message buffer
 	 */
 
-	avail_end -= i386_round_page(MSGBUFSIZE);
+	avail_end -= round_page(MSGBUFSIZE);
 	/*
 	 * The arguments passed in from /boot needs space too.
 	 */
-	avail_end -= i386_round_page(bootargc);
+	avail_end -= round_page(bootargc);
 
 	/*
 	 * set up our local static global vars that keep track of the
@@ -926,7 +926,7 @@ pmap_bootstrap(kva_start)
 	kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
 	kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
-		i386_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
+		atop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
 	/*
 	 * the above is just a rough estimate and not critical to the proper
@@ -944,8 +944,8 @@ pmap_bootstrap(kva_start)
 		/* add PG_G attribute to already mapped kernel pages */
 		for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
 		     kva += PAGE_SIZE)
-			if (pmap_valid_entry(PTE_BASE[i386_btop(kva)]))
-				PTE_BASE[i386_btop(kva)] |= PG_G;
+			if (pmap_valid_entry(PTE_BASE[atop(kva)]))
+				PTE_BASE[atop(kva)] |= PG_G;
 	}
 
 	/*
@@ -956,7 +956,7 @@ pmap_bootstrap(kva_start)
 	 * mapping.
 	 */
 
-	pte = PTE_BASE + i386_btop(virtual_avail);
+	pte = PTE_BASE + atop(virtual_avail);
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -1511,7 +1511,7 @@ pmap_free_pv_doit(pv)
 {
 	struct pv_page *pvp;
 
-	pvp = (struct pv_page *) i386_trunc_page(pv);
+	pvp = (struct pv_page*)trunc_page((vaddr_t)pv);
 	pv_nfpvents++;
 	pvp->pvinfo.pvpi_nfree++;
 
@@ -2225,7 +2225,7 @@ pmap_extract(pmap, va, pap)
 
 	if (pmap->pm_pdir[pdei(va)]) {
 		ptes = pmap_map_ptes(pmap);
-		retval = (paddr_t)(ptes[i386_btop(va)] & PG_FRAME);
+		retval = (paddr_t)(ptes[atop(va)] & PG_FRAME);
 		pmap_unmap_ptes(pmap);
 		if (pap != NULL)
 			*pap = retval | (va & ~PG_FRAME);
@@ -2411,7 +2411,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp)
 
 		if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
-			if (vm_physseg_find(i386_btop(opte & PG_FRAME), &off)
+			if (vm_physseg_find(atop(opte & PG_FRAME), &off)
 			    != -1)
 				panic("pmap_remove_ptes: managed page without "
 				      "PG_PVLIST for 0x%lx", startva);
@@ -2419,7 +2419,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp)
 			continue;
 		}
 
-		bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
+		bank = vm_physseg_find(atop(opte & PG_FRAME), &off);
 #ifdef DIAGNOSTIC
 		if (bank == -1)
 			panic("pmap_remove_ptes: unmanaged page marked "
@@ -2497,14 +2497,14 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp)
 
 	if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
-		if (vm_physseg_find(i386_btop(opte & PG_FRAME), &off) != -1)
+		if (vm_physseg_find(atop(opte & PG_FRAME), &off) != -1)
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
 #endif
 		return(TRUE);
 	}
 
-	bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
+	bank = vm_physseg_find(atop(opte & PG_FRAME), &off);
 #ifdef DIAGNOSTIC
 	if (bank == -1)
 		panic("pmap_remove_pte: unmanaged page marked "
@@ -2581,7 +2581,7 @@ pmap_remove(pmap, sva, eva)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-			    &ptes[i386_btop(sva)], sva, &cpumask);
+			    &ptes[atop(sva)], sva, &cpumask);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2676,7 +2676,7 @@ pmap_remove(pmap, sva, eva)
 #endif
 			}
 		}
-		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[i386_btop(sva)],
+		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[atop(sva)],
 		    sva, blkendva, &cpumask);
 
 		/* if PTP is no longer being used, free it! */
@@ -2772,8 +2772,8 @@ pmap_page_remove(pg)
 		}
 #endif
 
-		opte = ptes[i386_btop(pve->pv_va)];
-		ptes[i386_btop(pve->pv_va)] = 0;		/* zap! */
+		opte = ptes[atop(pve->pv_va)];
+		ptes[atop(pve->pv_va)] = 0;			/* zap! */
 
 		if (opte & PG_W)
 			pve->pv_pmap->pm_stats.wired_count--;
@@ -2887,7 +2887,7 @@ pmap_test_attrs(pg, testbits)
 	for (pve = pvh->pvh_list; pve != NULL && (*myattrs & testbits) == 0;
 	     pve = pve->pv_next) {
 		ptes = pmap_map_ptes(pve->pv_pmap);
-		pte = ptes[i386_btop(pve->pv_va)];
+		pte = ptes[atop(pve->pv_va)];
 		pmap_unmap_ptes(pve->pv_pmap);
 		*myattrs |= pte;
 	}
@@ -2946,14 +2946,14 @@ pmap_change_attrs(pg, setbits, clearbits)
 #endif
 
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
-		npte = ptes[i386_btop(pve->pv_va)];
+		npte = ptes[atop(pve->pv_va)];
 		result |= (npte & clearbits);
 		npte = (npte | setbits) & ~clearbits;
-		if (ptes[i386_btop(pve->pv_va)] != npte) {
+		if (ptes[atop(pve->pv_va)] != npte) {
 			opte = i386_atomic_testset_ul(
-			    &ptes[i386_btop(pve->pv_va)], npte);
+			    &ptes[atop(pve->pv_va)], npte);
 			pmap_tlb_shootdown(pve->pv_pmap,
-			    i386_btop(pve->pv_va), opte, &cpumask);
+			    atop(pve->pv_va), opte, &cpumask);
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
 	}
@@ -3037,8 +3037,8 @@ pmap_write_protect(pmap, sva, eva, prot)
 			/* XXX: write-prot our PTES? never! */
 			md_prot |= (PG_u | PG_RW);
 
-		spte = &ptes[i386_btop(sva)];
-		epte = &ptes[i386_btop(blockend)];
+		spte = &ptes[atop(sva)];
+		epte = &ptes[atop(blockend)];
 
 		for (/*null */; spte < epte ; spte++, sva += PAGE_SIZE) {
 
@@ -3080,11 +3080,11 @@ pmap_unwire(pmap, va)
 		ptes = pmap_map_ptes(pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
-		if (!pmap_valid_entry(ptes[i386_btop(va)]))
+		if (!pmap_valid_entry(ptes[atop(va)]))
 			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
 #endif
-		if ((ptes[i386_btop(va)] & PG_W) != 0) {
-			ptes[i386_btop(va)] &= ~PG_W;
+		if ((ptes[atop(va)] & PG_W) != 0) {
+			ptes[atop(va)] &= ~PG_W;
 			pmap->pm_stats.wired_count--;
 		}
 #ifdef DIAGNOSTIC
@@ -3188,7 +3188,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			panic("pmap_enter: get ptp failed");
 		}
 	}
-	opte = ptes[i386_btop(va)];		/* old PTE */
+	opte = ptes[atop(va)];			/* old PTE */
 
 	/*
 	 * is there currently a valid mapping at our VA?
@@ -3317,7 +3317,7 @@ enter_now:
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
 
-	ptes[i386_btop(va)] = npte;		/* zap! */
+	ptes[atop(va)] = npte;			/* zap! */
 
 	if ((opte & ~(PG_M|PG_U)) != npte) {
 #ifdef MULTIPROCESSOR
@@ -3467,7 +3467,7 @@ pmap_dump(pmap, sva, eva)
 		if (!pmap_valid_entry(pmap->pm_pdir[pdei(sva)]))
 			continue;
 
-		pte = &ptes[i386_btop(sva)];
+		pte = &ptes[atop(sva)];
 		for (/* null */; sva < blkendva ; sva += NBPG, pte++) {
 			if (!pmap_valid_entry(*pte))
 				continue;

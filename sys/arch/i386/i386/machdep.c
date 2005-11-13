@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.329 2005/11/10 14:32:38 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.330 2005/11/13 14:23:26 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2693,7 +2693,7 @@ fix_f00f(void)
 	    GCODE_SEL);
 
 	/* Map first page RO */
-	pte = PTE_BASE + i386_btop(va);
+	pte = PTE_BASE + atop(va);
 	*pte &= ~PG_RW;
 
 	/* Reload idtr */
@@ -2749,11 +2749,11 @@ init386(paddr_t first_avail)
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT,
 	    SEL_KPL, 0, 0);
-	setsegment(&gdt[GUCODE1_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	setsegment(&gdt[GUCODE1_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(I386_MAX_EXE_ADDR) - 1,
+	setsegment(&gdt[GUCODE_SEL].sd, 0, atop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	setsegment(&gdt[GUDATA_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
 	    sizeof(struct cpu_info)-1, SDT_MEMRWA, SEL_KPL, 0, 0);
@@ -2847,7 +2847,7 @@ init386(paddr_t first_avail)
 #if defined(MULTIPROCESSOR)
 	/* install the page after boot args as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0),
-	   i386_round_page(bootargv + bootargc), VM_PROT_READ|VM_PROT_WRITE,
+	   round_page(bootargv + bootargc), VM_PROT_READ|VM_PROT_WRITE,
 	   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
 #endif
@@ -2875,9 +2875,9 @@ init386(paddr_t first_avail)
 				continue;
 			}
 
-			a = i386_round_page(im->addr);
+			a = round_page(im->addr);
 			if (im->addr + im->size <= 0xfffff000ULL)
-				e = i386_trunc_page(im->addr + im->size);
+				e = trunc_page(im->addr + im->size);
 			else {
 #ifdef DEBUG
 				printf("-T");
@@ -2917,7 +2917,7 @@ init386(paddr_t first_avail)
 		}
 
 	ndumpmem = i;
-	avail_end -= i386_round_page(MSGBUFSIZE);
+	avail_end -= round_page(MSGBUFSIZE);
 
 #ifdef DEBUG
 	printf(": %lx\n", avail_end);
@@ -3442,8 +3442,8 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_int32_t cpumask = 0;
 #endif
 
-	pa = i386_trunc_page(bpa);
-	endpa = i386_round_page(bpa + size);
+	pa = trunc_page(bpa);
+	endpa = round_page(bpa + size);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa && endpa != 0)
@@ -3511,8 +3511,8 @@ bus_space_unmap(t, bsh, size)
 		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
 			goto ok;
 
-		va = i386_trunc_page(bsh);
-		endva = i386_round_page(bsh + size);
+		va = trunc_page(bsh);
+		endva = round_page(bsh + size);
 
 #ifdef DIAGNOSTIC
 		if (endva <= va)
@@ -3555,8 +3555,8 @@ _bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
 		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
 			goto ok;
 
-		va = i386_trunc_page(bsh);
-		endva = i386_round_page(bsh + size);
+		va = trunc_page(bsh);
+		endva = round_page(bsh + size);
 
 #ifdef DIAGNOSTIC
 		if (endva <= va)
@@ -4014,7 +4014,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (i386_btop((caddr_t)segs[i].ds_addr + off));
+		return (atop(segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.14 2002/06/14 21:34:58 todd Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.15 2005/11/13 14:23:26 martin Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -33,6 +33,8 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/extent.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
@@ -126,7 +128,7 @@ pci_addr_fixup(sc, pc, maxbus)
 	/* 
 	 * 3. determine allocation space 
 	 */
-	start = i386_round_page(avail_end + 1);
+	start = round_page(avail_end + 1);
 	if (start < PCIADDR_ISAMEM_RESERVE)
 		start = PCIADDR_ISAMEM_RESERVE;
 	sc->mem_alloc_start = (start + 0x100000 + 1) & ~(0x100000 - 1);
