@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.4 2005/11/06 03:10:09 drahn Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.5 2005/11/13 19:26:30 kettenis Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #include <machine/autoconf.h>
 
 #include <macppc/dev/ki2cvar.h>
+#include <macppc/dev/maci2cvar.h>
 
 int ki2c_match(struct device *, void *, void *);
 void ki2c_attach(struct device *, struct device *, void *);
@@ -50,6 +51,12 @@ int ki2c_poll(struct ki2c_softc *, int);
 int ki2c_start(struct ki2c_softc *, int, int, void *, int);
 int ki2c_read(struct ki2c_softc *, int, int, void *, int);
 int ki2c_write(struct ki2c_softc *, int, int, const void *, int);
+
+/* I2C glue */
+int ki2c_i2c_acquire_bus(void *, int);
+void ki2c_i2c_release_bus(void *, int);
+int ki2c_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
+    void *, size_t, int);
 
 struct cfattach ki2c_ca = {
 	sizeof(struct ki2c_softc), ki2c_match, ki2c_attach
@@ -84,6 +91,7 @@ ki2c_attach(parent, self, aux)
 {
 	struct ki2c_softc *sc = (struct ki2c_softc *)self;
 	struct confargs *ca = aux;
+	struct maci2cbus_attach_args iba;
 	int node = ca->ca_node;
 	int rate;
 
@@ -111,6 +119,18 @@ ki2c_attach(parent, self, aux)
 
 	ki2c_setmode(sc, I2C_STDSUBMODE);
 	ki2c_setspeed(sc, I2C_100kHz);		/* XXX rate */
+
+	lockinit(&sc->sc_buslock, PZERO, sc->sc_dev.dv_xname, 0, 0);
+	ki2c_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
+
+	sc->sc_i2c_tag.ic_cookie = sc;
+	sc->sc_i2c_tag.ic_acquire_bus = ki2c_i2c_acquire_bus;
+	sc->sc_i2c_tag.ic_release_bus = ki2c_i2c_release_bus;
+	sc->sc_i2c_tag.ic_exec = ki2c_i2c_exec;
+
+	iba.iba_node = node;
+	iba.iba_tag = &sc->sc_i2c_tag;
+	config_found(&sc->sc_dev, &iba, NULL);
 }
 
 u_int
@@ -185,7 +205,6 @@ ki2c_intr(sc)
 	u_int isr, x;
 
 	isr = ki2c_readreg(sc, ISR);
-
 	if (isr & I2C_INT_ADDR) {
 #if 0
 		if ((ki2c_readreg(sc, STATUS) & I2C_ST_LASTAAK) == 0) {
@@ -318,4 +337,44 @@ ki2c_write(sc, addr, subaddr, data, len)
 {
 	sc->sc_flags = 0;
 	return ki2c_start(sc, addr, subaddr, (void *)data, len);
+}
+
+int
+ki2c_i2c_acquire_bus(void *cookie, int flags)
+{
+	struct ki2c_softc *sc = cookie;
+
+	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL, curproc));
+}
+
+void
+ki2c_i2c_release_bus(void *cookie, int flags)
+{
+	struct ki2c_softc *sc = cookie;
+
+	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL, curproc);
+}
+
+int
+ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
+    const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
+{
+	struct ki2c_softc *sc = cookie;
+
+	if (!I2C_OP_STOP_P(op))
+		return (EINVAL);
+
+	/* We handle the subaddress stuff ourselves. */
+	ki2c_setmode(sc, I2C_STDMODE);
+
+	if (ki2c_write(sc, (addr << 1), 0, cmdbuf, cmdlen) != 0)
+		return (EIO);
+	if (I2C_OP_READ_P(op)) {
+		if (ki2c_read(sc, (addr << 1), 0, buf, len) != 0)
+			return (EIO);
+	} else {
+		if (ki2c_write(sc, (addr << 1), 0, buf, len) != 0)
+			return (EIO);
+	}
+	return (0);
 }

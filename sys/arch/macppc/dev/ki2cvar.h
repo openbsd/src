@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2cvar.h,v 1.1 2005/11/05 04:33:20 brad Exp $	*/
+/*	$OpenBSD: ki2cvar.h,v 1.2 2005/11/13 19:26:30 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -86,6 +86,9 @@ struct ki2c_softc {
 	paddr_t sc_paddr;
 	u_char *sc_reg;
 	int sc_regstep;
+
+	struct i2c_controller sc_i2c_tag;
+	struct lock sc_buslock;
 
 	int sc_flags;
 	u_char *sc_data;
