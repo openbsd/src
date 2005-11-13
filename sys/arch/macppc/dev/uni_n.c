@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.11 2005/10/23 16:50:30 drahn Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.12 2005/11/13 19:17:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn.
@@ -88,8 +88,7 @@ memcattach(struct device *parent, struct device *self, void *aux)
 
 	printf (": %s\n", name);
 
-	if (strcmp(name, "u3") == 0)
-		memc_attach_children(sc, ca->ca_node);
+	memc_attach_children(sc, ca->ca_node);
 }
 
 void
