@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.96 2005/11/12 13:27:59 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.97 2005/11/13 20:27:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.96 2005/11/12 13:27:59 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.97 2005/11/13 20:27:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -297,6 +297,7 @@ main(int argc, char *argv[])
 			error = writelabel(f, bootarea, lp);
 		else
 			error = 1;
+		fclose(t);
 		break;
 	case SETWRITEABLE:
 		if (!donothing) {
