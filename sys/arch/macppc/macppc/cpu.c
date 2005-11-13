@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.32 2005/11/08 20:32:41 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.33 2005/11/13 21:46:03 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -135,6 +135,7 @@ ppc_check_procid()
 
 	switch (cpu) {
 	case PPC_CPU_IBM970FX:
+	case PPC_CPU_IBM970MP:
 		ppc_proc_is_64b = 1;
 		for (p = &rfi_start; p->s; p++) {
 			for (inst = p->s; inst < p->e; inst++)
