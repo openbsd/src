@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.97 2005/11/13 02:39:45 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.98 2005/11/13 16:10:05 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1108,25 +1108,18 @@ sd_interpret_sense(xs)
 		SC_DEBUG(sc_link, SDEV_DB1, ("becoming ready.\n"));
 		retval = scsi_delay(xs, 5);
 		break;
+
 	case 0x02: /* Initialization command required. */
-		if (sd->sc_link->flags & SDEV_REMOVABLE) {
-			printf("%s: removable disk stopped - not restarting\n",
-			    sd->sc_dev.dv_xname);
-			retval = EIO;
-		} else {
-			printf("%s: respinning up disk\n", sd->sc_dev.dv_xname);
-			retval = scsi_start(sd->sc_link, SSS_START,
-		    	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_URGENT |
-			    SCSI_NOSLEEP);
-			if (retval != 0) {
-				printf("%s: respin of disk failed - %d\n",
-				    sd->sc_dev.dv_xname, retval);
-				retval = EIO;
-			} else {
-				retval = ERESTART;
-			}
-		}
+		SC_DEBUG(sc_link, SDEV_DB1, ("spinning up\n"));
+		retval = scsi_start(sd->sc_link, SSS_START,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_URGENT | SCSI_NOSLEEP);
+		if (retval == 0)
+			retval = ERESTART;
+		else
+			SC_DEBUG(sc_link, SDEV_DB1, ("spin up failed (%#x)\n",
+			    retval));
 		break;
+
 	default:
 		retval = EJUSTRETURN;
 		break;
