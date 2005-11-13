@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.6 2005/10/16 20:22:49 kettenis Exp $	*/
+/*	$OpenBSD: ht.c,v 1.7 2005/11/13 21:48:16 drahn Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -51,6 +51,10 @@ void	 ht_intr_disestablish(void *, void *);
 int	 ht_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
 
 int	 ht_print(void *, const char *);
+
+#define BUS_SHIFT 16
+#define DEVICE_SHIFT 11
+#define FNC_SHIFT 8
 
 struct ht_softc {
 	struct device	sc_dev;
@@ -136,20 +140,24 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_io_bus_space.bus_io = 1;
 	sc->sc_iot = &sc->sc_io_bus_space;
 
-	if (bus_space_map(sc->sc_memt, regs[1], 0x4000, 0,
-		&sc->sc_config0_memh)) {
+	sc->sc_maxdevs = 1;
+	for (node = OF_child(ca->ca_node); node; node = OF_peer(node))
+		sc->sc_maxdevs++;
+
+	if (bus_space_map(sc->sc_memt, regs[1],
+	    (1 << DEVICE_SHIFT)*sc->sc_maxdevs, 0, &sc->sc_config0_memh)) {
 		printf(": can't map PCI config0 memory\n");
 		return;
 	}
 
 	if (bus_space_map(sc->sc_memt, regs[1] + 0x01000000, 0x80000, 0,
-		&sc->sc_config1_memh)) {
+	    &sc->sc_config1_memh)) {
 		printf(": can't map PCI config1 memory\n");
 		return;
 	}
 
 	if (bus_space_map(sc->sc_iot, regs[4], 0x1000, 0,
-		&sc->sc_config0_ioh)) {
+	    &sc->sc_config0_ioh)) {
 		printf(": can't map PCI config0 io\n");
 		return;
 	}
@@ -183,9 +191,6 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
 
-	sc->sc_maxdevs = 1;
-	for (node = OF_child(ca->ca_node); node; node = OF_peer(node))
-		sc->sc_maxdevs++;
 	printf(": %d devices\n", sc->sc_maxdevs);
 
 	extern void fix_node_irq(int, struct pcibus_attach_args *);
@@ -225,10 +230,6 @@ ht_bus_maxdevs(void *cpv, int bus)
 	return 32;
 }
 
-#define BUS_SHIFT 16
-#define DEVICE_SHIFT 11
-#define FNC_SHIFT 8
-
 pcitag_t
 ht_make_tag(void *cpv, int bus, int dev, int fnc)
 {
@@ -262,8 +263,6 @@ ht_conf_read(void *cpv, pcitag_t tag, int offset)
 		reg = bus_space_read_4(sc->sc_iot, sc->sc_config0_ioh, tag);
 		reg = letoh32(reg);
 	} else if (bus == 0) {
-		if (tag >= 0x4000)
-			panic("tag >= 0x4000");
 		/* XXX Needed on some PowerMac G5's.  Why? */
 		if (fcn > 1)
 			return ~0;
