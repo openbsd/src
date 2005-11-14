@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hd.4,v 1.13 2004/09/30 19:59:26 mickey Exp $
+.\"	$OpenBSD: hd.4,v 1.14 2005/11/14 20:58:37 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)rd.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd November 14, 2005
 .Dt HD 4 hp300
 .Os
 .Sh NAME
@@ -51,8 +51,6 @@ Only a small number of possible
 .Tn CS/80
 drives are supported,
 but others can easily be added by adding tables to the driver.
-It is a typical block-device driver; see
-.Xr physio 9 .
 .Sh DISK SUPPORT
 The driver interrogates the controller
 to determine the type of drive attached.
@@ -64,243 +62,6 @@ The driver recognizes the following drives:
 7962, 7963, 9122, 9134, 7912, 7936,
 and 9122,
 not all of which have been tested.
-Special file names begin with
-.Ql hd
-and
-.Ql rhd
-for the block and character files respectively.
-The second component of the name, a drive unit number in the range of zero to
-seven, is represented by a
-.Ql \&?
-in the disk layouts below.
-The last component of the name is the file system partition and is designated
-by a letter from
-.Ql a
-to
-.Ql h
-which also corresponds to a minor device number set: zero to seven,
-eight to 15, 16 to 23 and so forth for drive zero, drive two and drive
-three respectively
-(see
-.Xr physio 9 ) .
-The location and size (in sectors) of the
-partitions for these drives:
-.Pp
-7945/7946 partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 112 Ta 15904 Ta 1-142
-.It hd?b Ta 16016 Ta 20160 Ta 143-322
-.It hd?c Ta 0 Ta 108416 Ta 0-967
-.It hd?d Ta 16016 Ta 40320 Ta 143-502
-.It hd?e Ta undefined
-.It hd?f Ta undefined
-.It hd?g Ta 36176 Ta 72240 Ta 323-967
-.It hd?h Ta 56336 Ta 52080 Ta 503-967
-.El
-.Pp
-9134D partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 96 Ta 15936 Ta 1-166
-.It hd?b Ta 16032 Ta 13056 Ta 167-302
-.It hd?c Ta 0 Ta 29088 Ta 0-302
-.It hd?d Ta undefined
-.It hd?e Ta undefined
-.It hd?f Ta undefined
-.It hd?g Ta undefined
-.It hd?h Ta undefined
-.El
-.Pp
-9122S partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta undefined
-.It hd?b Ta undefined
-.It hd?c Ta 0 Ta 1232 Ta 0-76
-.It hd?d Ta undefined
-.It hd?e Ta undefined
-.It hd?f Ta undefined
-.It hd?g Ta undefined
-.It hd?h Ta undefined
-.El
-.Pp
-7912P partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 0 Ta 15904 Ta 0-70
-.It hd?b Ta 16128 Ta 22400 Ta 72-171
-.It hd?c Ta 0 Ta 128128 Ta 0-571
-.It hd?d Ta 16128 Ta 42560 Ta 72-261
-.It hd?e Ta undefined
-.It hd?f Ta undefined
-.It hd?g Ta 38528 Ta 89600 Ta 172-571
-.It hd?h Ta 58688 Ta 69440 Ta 262-571
-.El
-.Pp
-7914CT/P partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 224 Ta 15904 Ta 1-71
-.It hd?b Ta 16128 Ta 40320 Ta 72-251
-.It hd?c Ta 0 Ta 258048 Ta 0-1151
-.It hd?d Ta 16128 Ta 64960 Ta 72-361
-.It hd?e Ta 81088 Ta 98560 Ta 362-801
-.It hd?f Ta 179648 Ta 78400 Ta 802-1151
-.It hd?g Ta 56448 Ta 201600 Ta 252-1151
-.It hd?h Ta 81088 Ta 176960 Ta 362-1151
-.El
-.Pp
-7958A partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 252 Ta 16128 Ta 1-64
-.It hd?b Ta 16380 Ta 32256 Ta 65-192
-.It hd?c Ta 0 Ta 255276 Ta 0-1012
-.It hd?d Ta 16380 Ta 48384 Ta 65-256
-.It hd?e Ta 64764 Ta 100800 Ta 257-656
-.It hd?f Ta 165564 Ta 89712 Ta 657-1012
-.It hd?g Ta 48636 Ta 206640 Ta 193-1012
-.It hd?h Ta 64764 Ta 190512 Ta 257-1012
-.El
-.Pp
-7957A partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 154 Ta 16016 Ta 1-104
-.It hd?b Ta 16170 Ta 24640 Ta 105-264
-.It hd?c Ta 0 Ta 159544 Ta 0-1035
-.It hd?d Ta 16170 Ta 42350 Ta 105-379
-.It hd?e Ta 58520 Ta 54824 Ta 380-735
-.It hd?f Ta 113344 Ta 46200 Ta 736-1035
-.It hd?g Ta 40810 Ta 118734 Ta 265-1035
-.It hd?h Ta 58520 Ta 101024 Ta 380-1035
-.El
-.Pp
-7933H partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 598 Ta 16146 Ta 1-27
-.It hd?b Ta 16744 Ta 66976 Ta 28-139
-.It hd?c Ta 0 Ta 789958 Ta 0-1320
-.It hd?d Ta 83720 Ta 16146 Ta 140-166
-.It hd?e Ta 99866 Ta 165646 Ta 167-443
-.It hd?f Ta 265512 Ta 165646 Ta 444-720
-.It hd?g Ta 83720 Ta 706238 Ta 140-1320
-.It hd?h Ta 431158 Ta 358800 Ta 721-1320
-.El
-.Pp
-9134L partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 80 Ta 15920 Ta 1-199
-.It hd?b Ta 16000 Ta 20000 Ta 200-449
-.It hd?c Ta 0 Ta 77840 Ta 0-972
-.It hd?d Ta 16000 Ta 32000 Ta 200-599
-.It hd?e Ta undefined
-.It hd?f Ta undefined
-.It hd?g Ta 36000 Ta 41840 Ta 450-972
-.It hd?h Ta 48000 Ta 29840 Ta 600-972
-.El
-.Pp
-7936H partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 861 Ta 16359 Ta 1-19
-.It hd?b Ta 17220 Ta 67158 Ta 20-97
-.It hd?c Ta 0 Ta 600978 Ta 0-697
-.It hd?d Ta 84378 Ta 16359 Ta 98-116
-.It hd?e Ta 100737 Ta 120540 Ta 117-256
-.It hd?f Ta 220416 Ta 120540 Ta 256-395
-.It hd?g Ta 84378 Ta 516600 Ta 98-697
-.It hd?h Ta 341817 Ta 259161 Ta 397-697
-.El
-.Pp
-7937H partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 1599 Ta 15990 Ta 1-10
-.It hd?b Ta 17589 Ta 67158 Ta 11-52
-.It hd?c Ta 0 Ta 1116102 Ta 0-697
-.It hd?d Ta 84747 Ta 15990 Ta 53-62
-.It hd?e Ta 100737 Ta 246246 Ta 63-216
-.It hd?f Ta 346983 Ta 246246 Ta 217-370
-.It hd?g Ta 84747 Ta 1031355 Ta 53-697
-.It hd?h Ta 593229 Ta 522873 Ta 371-697
-.El
-.Pp
-7957B/7961B partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 126 Ta 16002 Ta 1-127
-.It hd?b Ta 16128 Ta 32760 Ta 128-387
-.It hd?c Ta 0 Ta 159894 Ta 0-1268
-.It hd?d Ta 16128 Ta 49140 Ta 128-517
-.It hd?e Ta 65268 Ta 50400 Ta 518-917
-.It hd?f Ta 115668 Ta 44226 Ta 918-1268
-.It hd?g Ta 48888 Ta 111006 Ta 388-1268
-.It hd?h Ta 65268 Ta 94626 Ta 518-1268
-.El
-.Pp
-7958B/7962B partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 378 Ta 16254 Ta 1-43
-.It hd?b Ta 16632 Ta 32886 Ta 44-130
-.It hd?c Ta 0 Ta 297108 Ta 0-785
-.It hd?d Ta 16632 Ta 49140 Ta 44-173
-.It hd?e Ta 65772 Ta 121716 Ta 174-495
-.It hd?f Ta 187488 Ta 109620 Ta 496-785
-.It hd?g Ta 49518 Ta 247590 Ta 131-785
-.It hd?h Ta 65772 Ta 231336 Ta 174-785
-.El
-.Pp
-7959B/7963B partitions:
-.Bl -column "disk" "start" "length" "cyls" -offset indent -compact
-.It Sy "disk" Sy "	start" Sy "	length" Sy "	cyls"
-.It hd?a Ta 378 Ta 16254 Ta 1-43
-.It hd?b Ta 16632 Ta 49140 Ta 44-173
-.It hd?c Ta 0 Ta 594216 Ta 0-1571
-.It hd?d Ta 16632 Ta 65772 Ta 44-217
-.It hd?e Ta 82404 Ta 303912 Ta 218-1021
-.It hd?f Ta 386316 Ta 207900 Ta 1022-1571
-.It hd?g Ta 65772 Ta 528444 Ta 174-1571
-.It hd?h Ta 82404 Ta 511812 Ta 218-1571
-.El
-.Pp
-The eight partitions as given support four basic, non-overlapping layouts,
-though not all partitions exist on all drive types.
-.Pp
-In the first layout there are three partitions and a ``bootblock'' area.
-The bootblock area is at the beginning of the disk and holds
-the stand-alone disk boot program.
-The
-.Pa hd?a
-partition is for the root file system,
-.Pa hd?b
-is a paging/swapping area, and
-.Pa hd?g
-is for everything else.
-.Pp
-The second layout is the same idea,
-but has a larger paging/swapping partition
-.Pq Pa hd?d
-and
-a smaller ``everything else'' partition
-.Pq Pa hd?h .
-This layout is better for environments which run many large processes.
-.Pp
-The third layout is a variation of the second,
-but breaks the
-.Pa hd?h
-partition into two partitions,
-.Pa hd?e
-and
-.Pa hd?f .
-.Pp
-The final layout is intended for a large, single file system second disk.
-It is also used when writing out the boot program since it is the only
-partition mapping the bootblock area.
 .Sh FILES
 .Bl -tag -width /dev/rhd[0-7][a-p] -compact
 .It Pa /dev/hd[0-7][a-p]
@@ -325,7 +86,6 @@ specified block on the specified disk.
 .Xr st 4 ,
 .Xr uk 4
 .Sh BUGS
-The current disk partitioning is totally bogus.
 .Tn CS/80
 drives have 256 byte sectors which are mapped to 512 byte
 ``sectors'' by the driver.
@@ -333,10 +93,6 @@ Since some
 .Tn CS/80
 drives have an odd number of sectors per cylinder,
 the disk geometry used is not always accurate.
-.Pp
-The partition tables for the file systems should be read off each pack,
-as they are never quite what any single installation would prefer,
-and this would make packs more portable.
 .Pp
 A program to analyze the logged error information (even in its
 present reduced form) is needed.
