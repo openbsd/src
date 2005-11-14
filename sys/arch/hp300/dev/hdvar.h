@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdvar.h,v 1.6 2005/11/12 23:10:04 miod Exp $	*/
+/*	$OpenBSD: hdvar.h,v 1.7 2005/11/14 20:20:30 miod Exp $	*/
 /*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
 
 /*
@@ -87,15 +87,6 @@ struct	hd_softc {
 #define HDF_CLOSING	0x10
 #define HDF_WANTED	0x20
 #define HDF_WLABEL	0x40
-
-#define	HDUNIT(x)	DISKUNIT(x)
-#define HDPART(x)	DISKPART(x)
-#define HDLABELDEV(d)	MAKEDISKDEV(major(d), HDUNIT(d), RAW_PART)
-
-#define	b_cylin		b_resid
-
-#define	HDRETRY		5
-#define HDWAITC		1	/* min time for timeout in seconds */
 
 #ifdef _KERNEL
 extern	const struct hdidentinfo hdidentinfo[];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.31 2005/11/14 19:54:08 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.32 2005/11/14 20:20:30 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -68,74 +68,98 @@
 #include <hp300/hp300/leds.h>
 #endif
 
-int	hderrthresh = HDRETRY-1;	/* when to start reporting errors */
+#define	HDUNIT(x)	DISKUNIT(x)
+#define HDPART(x)	DISKPART(x)
+#define HDLABELDEV(d)	MAKEDISKDEV(major(d), HDUNIT(d), RAW_PART)
+
+#define	b_cylin		b_resid
+
+#ifndef	HDRETRY
+#define	HDRETRY		5
+#endif
+
+#ifndef	HDWAITC
+#define HDWAITC		1	/* min time for timeout in seconds */
+#endif
+
+int	hderrthresh = HDRETRY - 1;	/* when to start reporting errors */
 
 #ifdef DEBUG
 /* error message tables */
-char *err_reject[] = {
-	0, 0,
+const char *err_reject[16] = {
+	NULL,
+	NULL,
 	"channel parity error",		/* 0x2000 */
-	0, 0,
+	NULL,
+	NULL,
 	"illegal opcode",		/* 0x0400 */
 	"module addressing",		/* 0x0200 */
 	"address bounds",		/* 0x0100 */
 	"parameter bounds",		/* 0x0080 */
 	"illegal parameter",		/* 0x0040 */
 	"message sequence",		/* 0x0020 */
-	0,
+	NULL,
 	"message length",		/* 0x0008 */
-	0, 0, 0
+	NULL,
+	NULL,
+	NULL
 };
 
-char *err_fault[] = {
-	0,
+const char *err_fault[16] = {
+	NULL,
 	"cross unit",			/* 0x4000 */
-	0,
+	NULL,
 	"controller fault",		/* 0x1000 */
-	0, 0,
+	NULL,
+	NULL,
 	"unit fault",			/* 0x0200 */
-	0,
+	NULL,
 	"diagnostic result",		/* 0x0080 */
-	0,
+	NULL,
 	"operator release request",	/* 0x0020 */
 	"diagnostic release request",	/* 0x0010 */
 	"internal maintenance release request",	/* 0x0008 */
-	0,
+	NULL,
 	"power fail",			/* 0x0002 */
 	"retransmit"			/* 0x0001 */
 };
 
-char *err_access[] = {
+const char *err_access[16] = {
 	"illegal parallel operation",	/* 0x8000 */
 	"uninitialized media",		/* 0x4000 */
 	"no spares available",		/* 0x2000 */
 	"not ready",			/* 0x1000 */
 	"write protect",		/* 0x0800 */
 	"no data found",		/* 0x0400 */
-	0, 0,
+	NULL,
+	NULL,
 	"unrecoverable data overflow",	/* 0x0080 */
 	"unrecoverable data",		/* 0x0040 */
-	0,
+	NULL,
 	"end of file",			/* 0x0010 */
 	"end of volume",		/* 0x0008 */
-	0, 0, 0
+	NULL,
+	NULL,
+	NULL
 };
 
-char *err_info[] = {
+const char *err_info[16] = {
 	"operator release request",	/* 0x8000 */
 	"diagnostic release request",	/* 0x4000 */
 	"internal maintenance release request",	/* 0x2000 */
 	"media wear",			/* 0x1000 */
 	"latency induced",		/* 0x0800 */
-	0, 0,
+	NULL,
+	NULL,
 	"auto sparing invoked",		/* 0x0100 */
-	0,
+	NULL,
 	"recoverable data overflow",	/* 0x0040 */
 	"marginal data",		/* 0x0020 */
 	"recoverable data",		/* 0x0010 */
-	0,
+	NULL,
 	"maintenance track overflow",	/* 0x0004 */
-	0, 0
+	NULL,
+	NULL
 };
 
 int	hddebug = 0x80;
@@ -228,7 +252,7 @@ void	hdgo(void *);
 int	hdstatus(struct hd_softc *);
 int	hderror(int);
 #ifdef DEBUG
-void	hdprinterr(char *, short, char **);
+void	hdprinterr(const char *, short, const char **);
 #endif
 
 int	hdmatch(struct device *, void *, void *);
@@ -1197,9 +1221,9 @@ hdsize(dev)
 #ifdef DEBUG
 void
 hdprinterr(str, err, tab)
-	char *str;
+	const char *str;
 	short err;
-	char **tab;
+	const char **tab;
 {
 	int i;
 	int printed;
