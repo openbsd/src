@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.46 2005/09/23 14:44:03 hshoexer Exp $	 */
+/* $OpenBSD: ui.c,v 1.47 2005/11/14 23:25:11 deraadt Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -221,7 +221,7 @@ ui_config(char *cmd)
 {
 	char	 subcmd[81], section[81], tag[81], value[81], tmp[81];
 	char	*v, *nv;
-	int	 trans = 0, items, nvlen;
+	int	 trans = 0, items;
 	FILE	*fd;
 
 	if (sscanf(cmd, "C %80s", subcmd) != 1)
@@ -262,18 +262,14 @@ ui_config(char *cmd)
 			conf_set(trans, section, tag, value, 1, 0);
 		else {
 			/* Add the new value to the end of the 'v' list.  */
-			nvlen = strlen(v) + strlen(value) + 2;
-			nv = (char *)malloc(nvlen);
-			if (!nv) {
-				log_error("ui_config: malloc(%d) failed",
-				    nvlen);
+			if (asprintf(&nv,
+			    v[strlen(v) - 1] == ',' ? "%s%s" : "%s,%s", v,
+			    value) == -1) {
+				log_error("ui_config: malloc() failed");
 				if (trans)
 					conf_end(trans, 0);
 				return;
 			}
-			snprintf(nv, nvlen,
-			    v[strlen(v) - 1] == ',' ? "%s%s" : "%s,%s", v,
-			    value);
 			conf_set(trans, section, tag, nv, 1, 0);
 			free(nv);
 		}

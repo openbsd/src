@@ -1,4 +1,4 @@
-/* $OpenBSD: field.c,v 1.17 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: field.c,v 1.18 2005/11/14 23:25:11 deraadt Exp $	 */
 /* $EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	 */
 
 /*
@@ -114,8 +114,7 @@ field_debug_num(u_int8_t *buf, size_t len, struct constant_map **maps)
 	if (extract_val(buf, len, &val))
 		return 0;
 	/* 3 decimal digits are enough to represent each byte.  */
-	retval = malloc(3 * len);
-	snprintf(retval, 3 * len, "%u", val);
+	asprintf(&retval, "%u", val);
 	return retval;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.104 2005/07/14 12:50:08 moritz Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.105 2005/11/14 23:25:11 deraadt Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -186,19 +186,13 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 			struct stat     sb;
 			struct keynote_deckey dc;
 			char           *privkeyfile, *buf2;
-			int             pkflen;
 			size_t          size;
 
-			pkflen = strlen(keyfile) + strlen(local_id) +
-			    sizeof PRIVATE_KEY_FILE + sizeof "//" - 1;
-			privkeyfile = calloc(pkflen, sizeof(char));
-			if (!privkeyfile) {
-				log_print("ike_auth_get_key: failed to "
-				    "allocate %d bytes", pkflen);
+			if (asprintf(&privkeyfile, "%s/%s/%s", keyfile,
+			    local_id, PRIVATE_KEY_FILE) == -1) {
+				log_print("ike_auth_get_key: failed to asprintf()");
 				return 0;
 			}
-			snprintf(privkeyfile, pkflen, "%s/%s/%s", keyfile,
-			    local_id, PRIVATE_KEY_FILE);
 			keyfile = privkeyfile;
 
 			fd = monitor_open(keyfile, O_RDONLY, 0);
@@ -684,7 +678,6 @@ rsa_sig_decode_hash(struct message *msg)
 		if (exchange->recv_certtype == ISAKMP_CERTENC_KEYNOTE) {
 			struct keynote_deckey dc;
 			char           *pp;
-			int             dclen;
 
 			dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
 			dc.dec_key = key;
@@ -697,17 +690,12 @@ rsa_sig_decode_hash(struct message *msg)
 				    "ASCII-encode key");
 				return -1;
 			}
-			dclen = strlen(pp) + sizeof "rsa-hex:";
-			exchange->keynote_key = calloc(dclen, sizeof(char));
-			if (!exchange->keynote_key) {
-				free(pp);
+			if (asprintf(&exchange->keynote_key, "rsa-hex:%s",
+			    pp) == -1) {
 				kn_free_key(&dc);
-				log_print("rsa_sig_decode_hash: failed to "
-				    "allocate %d bytes", dclen);
+				log_print("rsa_sig_decode_hash: failed to asprintf()");
 				return -1;
 			}
-			snprintf(exchange->keynote_key, dclen, "rsa-hex:%s",
-			    pp);
 			free(pp);
 		}
 		found++;

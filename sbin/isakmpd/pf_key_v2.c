@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.167 2005/06/14 10:50:47 hshoexer Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.168 2005/11/14 23:25:11 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2448,7 +2448,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	char		dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0;
 	char		confname[120], *conn = 0;
 	char           *srcid = 0, *dstid = 0, *prefstring = 0;
-	int		slen, af, afamily, masklen, buflen;
+	int		slen, af, afamily, masklen;
 	struct sockaddr *smask, *sflow, *dmask, *dflow;
 	struct sadb_protocol *sproto;
 	char		ssflow[ADDRESS_MAX], sdflow[ADDRESS_MAX];
@@ -2775,16 +2775,11 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			 * then dup.
 			 */
 			*srcid = '\0';
-			slen = strlen((char *) (srcident + 1)) +
-			    sizeof "ID:Address/";
-			srcid = malloc(slen);
-			if (!srcid) {
-				log_error("pf_key_v2_acquire: "
-				    "malloc (%d) failed", slen);
+			if (asprintf(&srcid, "ID:Address/%s",
+			    (char *) (srcident + 1)) == -1) {
+				log_error("pf_key_v2_acquire: asprintf() failed");
 				goto fail;
 			}
-			snprintf(srcid, slen, "ID:Address/%s",
-			    (char *) (srcident + 1));
 
 			/* Set the section if it doesn't already exist. */
 			af = conf_begin();
@@ -2853,20 +2848,11 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 						}
 				}
 			}
-			buflen = (slen ? slen : strlen(pwd->pw_name)) +
-			    strlen(prefstring) + sizeof "ID:/";
-			srcid = malloc(buflen);
-			if (!srcid) {
-				log_error("pf_key_v2_acquire: "
-				    "malloc (%d) failed", buflen);
+			if (asprintf(&srcid, "ID:%s/%s", prefstring,
+			    slen ? (char *) (srcident + 1) : pwd->pw_name) == -1) {
+				log_error("pf_key_v2_acquire: asprintf() failed");
 				goto fail;
 			}
-			snprintf(srcid, buflen, "ID:%s/", prefstring);
-			if (slen != 0)
-				strlcat(srcid,
-				    (char *) (srcident + 1), buflen);
-			else
-				strlcat(srcid, pwd->pw_name, buflen);
 			pwd = 0;
 
 			/* Set the section if it doesn't already exist. */
@@ -2938,16 +2924,11 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 			 * then dup.
 			 */
 			*dstid = '\0';
-			slen = strlen((char *) (dstident + 1)) +
-			    sizeof "ID:Address/";
-			dstid = malloc(slen);
-			if (!dstid) {
-				log_error("pf_key_v2_acquire: "
-				    "malloc (%d) failed", slen);
+			if (asprintf(&dstid, "ID:Address/%s",
+			    (char *) (dstident + 1)) == -1) {
+				log_error("pf_key_v2_acquire: asprintf() failed");
 				goto fail;
 			}
-			snprintf(dstid, slen, "ID:Address/%s",
-			    (char *) (dstident + 1));
 
 			/* Set the section if it doesn't already exist. */
 			af = conf_begin();
@@ -3016,20 +2997,11 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 						}
 				}
 			}
-			buflen = (slen ? slen : strlen(pwd->pw_name)) +
-			    strlen(prefstring) + sizeof "ID:/";
-			dstid = malloc(buflen);
-			if (!dstid) {
-				log_error("pf_key_v2_acquire: "
-				    "malloc (%d) failed", buflen);
+			if (asprintf(&dstid, "ID:%s/%s", prefstring,
+			    slen ? (char *) (dstident + 1) : pwd->pw_name) == -1) {
+				log_error("pf_key_v2_acquire: asprintf() failed");
 				goto fail;
 			}
-			snprintf(dstid, buflen, "ID:%s/", prefstring);
-			if (slen != 0)
-				strlcat(dstid, (char *) (dstident + 1),
-				    buflen);
-			else
-				strlcat(dstid, pwd->pw_name, buflen);
 			pwd = 0;
 
 			/* Set the section if it doesn't already exist. */
@@ -3094,12 +3066,6 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 *                  exists -- otherwise use the defaults)
 	 */
 
-	slen = strlen(dstbuf) + strlen(srcbuf) + (srcid ? strlen(srcid) : 0)
-		+ (dstid ? strlen(dstid) : 0) + sizeof "Peer-/-/";
-	peer = malloc(slen);
-	if (!peer)
-		goto fail;
-
 	/*
 	 * The various cases:
 	 * - Peer-dstaddr
@@ -3111,9 +3077,10 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	 * - Peer-dstaddr-/dstid
 	 * - Peer-dstaddr-srcid
 	 */
-	snprintf(peer, slen, "Peer-%s%s%s%s%s%s%s", dstbuf, srcaddr ? "/" : "",
-		 srcaddr ? srcbuf : "", srcid ? "-" : "", srcid ? srcid : "",
-		 dstid ? (srcid ? "/" : "-/") : "", dstid ? dstid : "");
+	if (asprintf(&peer, "Peer-%s%s%s%s%s%s%s", dstbuf, srcaddr ? "/" : "",
+	    srcaddr ? srcbuf : "", srcid ? "-" : "", srcid ? srcid : "",
+	    dstid ? (srcid ? "/" : "-/") : "", dstid ? dstid : "") == -1)
+		goto fail;
 
 	/*
 	 * Set the IPsec connection section. Refcount is set to 2, because
@@ -3135,7 +3102,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	}
 	/* Set Phase 2 IDs -- this is the Local-ID section. */
 	snprintf(lname, sizeof lname, "Phase2-ID:%s/%s/%u/%u", ssflow, ssmask,
-		 tproto, sport);
+	    tproto, sport);
 	if (conf_set(af, conn, "Local-ID", lname, 0, 0)) {
 		conf_end(af, 0);
 		goto fail;

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.103 2005/05/28 17:42:50 moritz Exp $	 */
+/* $OpenBSD: x509.c,v 1.104 2005/11/14 23:25:11 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -115,7 +115,7 @@ x509_generate_kn(int id, X509 *cert)
 	time_t	tt;
 	char	before[15], after[15], *timecomp, *timecomp2;
 	ASN1_TIME *tm;
-	int	i, buf_len;
+	int	i;
 
 	LOG_DBG((LOG_POLICY, 90,
 	    "x509_generate_kn: generating KeyNote policy for certificate %p",
@@ -203,14 +203,6 @@ x509_generate_kn(int id, X509 *cert)
 	RSA_free(key);
 	key = NULL;
 
-	buf_len = strlen(fmt) + strlen(ikey) + strlen(skey) + 56;
-	buf = calloc(buf_len, sizeof(char));
-	buf_len *= sizeof(char);
-	if (!buf) {
-		log_error("x509_generate_kn: "
-		    "failed to allocate memory for KeyNote credential");
-		goto fail;
-	}
 	if (((tm = X509_get_notBefore(cert)) == NULL) ||
 	    (tm->type != V_ASN1_UTCTIME &&
 		tm->type != V_ASN1_GENERALIZEDTIME)) {
@@ -389,8 +381,12 @@ x509_generate_kn(int id, X509 *cert)
 		after[14] = '\0';	/* This will overwrite trailing 'Z' */
 	}
 
-	snprintf(buf, buf_len, fmt, skey, ikey, timecomp, before, timecomp2,
-	    after);
+	if (asprintf(&buf, fmt, skey, ikey, timecomp, before, timecomp2,
+	    after) == -1) {
+		log_error("x509_generate_kn: "
+		    "failed to allocate memory for KeyNote credential");
+		goto fail;
+	}
 	
 	free(ikey);
 	ikey = NULL;
@@ -420,14 +416,11 @@ x509_generate_kn(int id, X509 *cert)
 		    "X509_NAME_oneline (subject, ...) failed"));
 		goto fail;
 	}
-	buf_len = strlen(fmt2) + strlen(isname) + strlen(subname) + 56;
-	buf = malloc(buf_len);
-	if (!buf) {
-		log_error("x509_generate_kn: malloc (%d) failed", buf_len);
+	if (asprintf(&buf, fmt2, isname, subname, timecomp, before,
+	    timecomp2, after) == -1) {
+		log_error("x509_generate_kn: malloc failed");
 		return 0;
 	}
-	snprintf(buf, buf_len, fmt2, isname, subname, timecomp, before,
-	    timecomp2, after);
 
 	if (kn_add_assertion(id, buf, strlen(buf), ASSERT_FLAG_LOCAL) == -1) {
 		LOG_DBG((LOG_POLICY, 30,

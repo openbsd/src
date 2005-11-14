@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.86 2005/06/14 10:50:47 hshoexer Exp $	 */
+/* $OpenBSD: policy.c,v 1.87 2005/11/14 23:25:11 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2148,34 +2148,31 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 		if (addr_str == 0)
 			return 0;
 
-		file = calloc(len + strlen(addr_str), sizeof(char));
-		if (file == NULL) {
+		if (asprintf(&file, "%s/%s/%s", dirname,
+		    addr_str, CREDENTIAL_FILE) == -1) {
 			log_error("keynote_cert_obtain: failed to allocate "
 			    "%lu bytes", (unsigned long)len +
 			    strlen(addr_str));
 			free(addr_str);
 			return 0;
 		}
-		snprintf(file, len + strlen(addr_str), "%s/%s/%s", dirname,
-		    addr_str, CREDENTIAL_FILE);
 		free(addr_str);
 		break;
 
 	case IPSEC_ID_FQDN:
-	case IPSEC_ID_USER_FQDN: {
-			file = calloc(len + id_len, sizeof(char));
-			if (file == NULL) {
-				log_error("keynote_cert_obtain: "
-				    "failed to allocate %lu bytes",
-				    (unsigned long)len + id_len);
-				return 0;
-			}
-			snprintf(file, len + id_len, "%s/", dirname);
-			memcpy(file + strlen(dirname) + 1, id, id_len);
-			snprintf(file + strlen(dirname) + 1 + id_len,
-			    len - strlen(dirname) - 1, "/%s", CREDENTIAL_FILE);
-			break;
+	case IPSEC_ID_USER_FQDN:
+		file = calloc(len + id_len, sizeof(char));
+		if (file == NULL) {
+			log_error("keynote_cert_obtain: "
+			    "failed to allocate %lu bytes",
+			    (unsigned long)len + id_len);
+			return 0;
 		}
+		snprintf(file, len + id_len, "%s/", dirname);
+		memcpy(file + strlen(dirname) + 1, id, id_len);
+		snprintf(file + strlen(dirname) + 1 + id_len,
+		    len - strlen(dirname) - 1, "/%s", CREDENTIAL_FILE);
+		break;
 
 	default:
 		return 0;

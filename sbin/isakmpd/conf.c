@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.84 2005/08/02 09:08:40 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.85 2005/11/14 23:25:11 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -1062,7 +1062,7 @@ void
 conf_report(void)
 {
 	struct conf_binding *cb, *last = 0;
-	unsigned int	i, len;
+	unsigned int	i;
 	char           *current_section = (char *)0;
 	struct dumper  *dumper, *dnode;
 
@@ -1080,14 +1080,9 @@ conf_report(void)
 				if (!current_section || strcmp(cb->section,
 				    current_section)) {
 					if (current_section) {
-						len = strlen(current_section)
-						    + 3;
-						dnode->s = malloc(len);
-						if (!dnode->s)
+						if (asprintf(&dnode->s, "[%s]",
+						    current_section) == -1)
 							goto mem_fail;
-
-						snprintf(dnode->s, len, "[%s]",
-						    current_section);
 						dnode->next = (struct dumper *)
 						    calloc(1,
 							sizeof(struct dumper));
@@ -1116,13 +1111,9 @@ conf_report(void)
 			}
 		}
 
-	if (last) {
-		len = strlen(last->section) + 3;
-		dnode->s = malloc(len);
-		if (!dnode->s)
+	if (last)
+		if (asprintf(&dnode->s, "[%s]", last->section) == -1)
 			goto mem_fail;
-		snprintf(dnode->s, len, "[%s]", last->section);
-	}
 	conf_report_dump(dumper);
 
 	return;

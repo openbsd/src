@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.96 2005/05/26 06:11:09 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.97 2005/11/14 23:25:11 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -256,14 +256,10 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			    "failed to allocate memory for principal");
 			goto policydone;
 		}
-		len = strlen(principal[0]) + sizeof "rsa-hex:";
-		principal[1] = calloc(len, sizeof(char));
-		if (!principal[1]) {
-			log_error("check_policy: calloc (%d, %lu) failed", len,
-			    (unsigned long)sizeof(char));
+		if (asprintf(&principal[1], "rsa-hex:%s", principal[0]) == -1) {
+			log_error("check_policy: asprintf() failed");
 			goto policydone;
 		}
-		snprintf(principal[1], len, "rsa-hex:%s", principal[0]);
 		free(principal[0]);
 		principal[0] = principal[1];
 		principal[1] = 0;
