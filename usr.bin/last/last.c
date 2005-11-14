@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.32 2005/07/01 02:10:24 millert Exp $	*/
+/*	$OpenBSD: last.c,v 1.33 2005/11/14 15:38:05 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.32 2005/07/01 02:10:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.33 2005/11/14 15:38:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,36 +64,31 @@ static char rcsid[] = "$OpenBSD: last.c,v 1.32 2005/07/01 02:10:24 millert Exp $
 
 static struct utmp	buf[1024];		/* utmp read buffer */
 
-typedef struct arg {
+struct arg {
 	char	*name;				/* argument */
 #define	HOST_TYPE	-2
 #define	TTY_TYPE	-3
 #define	USER_TYPE	-4
 	int	type;				/* type of arg */
-	struct arg	*next;			/* linked list pointer */
-} ARG;
-ARG	*arglist;				/* head of linked list */
+	struct	arg *next;			/* linked list pointer */
+} *arglist;
 
-typedef struct ttytab {
+struct ttytab {
 	time_t	logout;				/* log out time */
 	char	tty[UT_LINESIZE + 1];		/* terminal name */
-	struct ttytab	*next;			/* linked list pointer */
-} TTY;
-TTY	*ttylist;				/* head of linked list */
+	struct	ttytab*next;			/* linked list pointer */
+} *ttylist;
 
 static time_t	currentout;			/* current logout value */
-static long	maxrec;				/* records to display */
+static long	maxrec = -1;			/* records to display */
 static char	*file = _PATH_WTMP;		/* wtmp file */
 static int	fulltime = 0;			/* Display seconds? */
-static time_t	snaptime;			/* if != 0, we will only
-						 * report users logged in
-						 * at this snapshot time
-						 */
-static int calculate = 0;
-static int seconds = 0;
+static time_t	snaptime = 0;			/* report only at this time */
+static int	calculate = 0;
+static int	seconds = 0;
 
 void	 addarg(int, char *);
-TTY	*addtty(char *);
+struct ttytab	*addtty(char *);
 void	 hostconv(char *);
 void	 onintr(int);
 char	*ttyconv(char *);
@@ -110,14 +105,8 @@ int
 main(int argc, char *argv[])
 {
 	const char *errstr;
-	char *p;
-	int ch, lastch, newarg, prevoptind;
+	int ch, lastch = '\0', newarg = 1, prevoptind = 1;
 
-	maxrec = -1;
-	snaptime = 0;
-	lastch = '\0';
-	newarg = 1;
-	prevoptind = 1;
 	while ((ch = getopt(argc, argv, "0123456789cf:h:n:st:d:T")) != -1) {
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
@@ -190,21 +179,16 @@ main(int argc, char *argv[])
 }
 
 /*
- * checkargs --
- *	if snaptime is set, print warning if usernames, or -t or -h
- *	flags are also provided
+ * if snaptime is set, print warning if usernames, or -t or -h
+ * flags are also provided
  */
-
 void
 checkargs(void)
 {
-	ARG	*step;
 	int	ttyflag = 0;
+	struct arg *step;
 
-	if (!snaptime)
-		return;
-
-	if (!arglist)
+	if (!snaptime || !arglist)
 		return;
 
 	for (step = arglist; step; step = step->next)
@@ -232,22 +216,20 @@ checkargs(void)
 
 
 /*
- * wtmp --
- *	read through the wtmp file
+ * read through the wtmp file
  */
 void
 wtmp(void)
 {
-	struct utmp	*bp;		/* current structure */
-	TTY	*T;			/* tty list entry */
-	struct stat	stb;		/* stat of file for size */
-	time_t	delta;			/* time difference */
-	time_t	total = 0;
+	time_t	delta, total = 0;
+	int	timesize, wfd, snapfound = 0;
+	char	*ct, *crmsg, tim[40];
+	struct utmp	*bp;
+	struct stat	stb;
+	ssize_t	bytes;
 	off_t	bl;
-	int	timesize;		/* how long time string gonna be */
-	int	bytes, wfd;
-	char	*ct, *crmsg;
-	int	snapfound = 0;		/* found snapshot entry? */
+	struct ttytab	*T;
+
 	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
 		err(1, "%s", file);
 	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
@@ -277,67 +259,76 @@ wtmp(void)
 				currentout = -bp->ut_time;
 				crmsg = strncmp(bp->ut_name, "shutdown",
 				    UT_NAMESIZE) ? "crash" : "shutdown";
+
 				/*
 				 * if we're in snapshot mode, we want to
 				 * exit if this shutdown/reboot appears
 				 * while we we are tracking the active
 				 * range
 				 */
-				if (snaptime && snapfound)
+				if (snaptime && snapfound) {
+					close(wfd);
 					return;
+				}
+
 				/*
 				 * don't print shutdown/reboot entries
 				 * unless flagged for
 				 */
 				if (want(bp, NO)) {
 					if (seconds) {
-						printf("%-*.*s %-*.*s %-*.*s %ld \n",
-						    NAME_WIDTH, UT_NAMESIZE,
-						    bp->ut_name, UT_LINESIZE,
-						    UT_LINESIZE, bp->ut_line,
-						    HOST_WIDTH, UT_HOSTSIZE,
-						    bp->ut_host, (long)bp->ut_time);
+						snprintf(tim, sizeof tim, "%ld",
+						    (long)bp->ut_time);
 					} else {
 						ct = ctime(&bp->ut_time);
-						printf("%-*.*s %-*.*s %-*.*s %10.10s %*.*s \n",
-						    NAME_WIDTH, UT_NAMESIZE,
-						    bp->ut_name, UT_LINESIZE,
-						    UT_LINESIZE, bp->ut_line,
-						    HOST_WIDTH, UT_HOSTSIZE,
-						    bp->ut_host, ct, timesize,
-						    timesize, ct + 11);
+						snprintf(tim, sizeof tim,
+						    "%10.10s %*.*s", ct,
+						    timesize, timesize, ct + 11);
 					}
-					if (maxrec != -1 && !--maxrec)
+					printf("%-*.*s %-*.*s %-*.*s %s \n",
+					    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
+					    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+					    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+					    tim);
+
+					if (maxrec != -1 && !--maxrec) {
+						close(wfd);
 						return;
+					}
 				}
 				continue;
 			}
+
 			/*
 			 * if the line is '{' or '|', date got set; see
 			 * utmp(5) for more info.
 			 */
-			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|')
-			    && !bp->ut_line[1]) {
+			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|') &&
+			    !bp->ut_line[1]) {
 				if (want(bp, NO)) {
 					if (seconds) {
-						printf("%-*.*s %-*.*s %-*.*s %ld \n",
-						    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-						    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-						    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+						snprintf(tim, sizeof tim, "%ld",
 						    (long)bp->ut_time);
 					} else {
 						ct = ctime(&bp->ut_time);
-						printf("%-*.*s %-*.*s %-*.*s %10.10s %*.*s \n",
-						    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-						    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-						    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-						    ct, timesize, timesize, ct + 11);
+						snprintf(tim, sizeof tim,
+						    "%10.10s %*.*s", ct,
+						    timesize, timesize, ct + 11);
 					}
-					if (maxrec && !--maxrec)
+					printf("%-*.*s %-*.*s %-*.*s %s \n",
+					    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
+					    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+					    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+					    tim);
+
+					if (maxrec && !--maxrec) {
+						close(wfd);
 						return;
+					}
 				}
 				continue;
 			}
+
 			/* find associated tty */
 			for (T = ttylist;; T = T->next) {
 				if (!T) {
@@ -348,6 +339,7 @@ wtmp(void)
 				if (!strncmp(T->tty, bp->ut_line, UT_LINESIZE))
 					break;
 			}
+
 			/*
 			 * print record if not in snapshot mode and wanted
 			 * or in snapshot mode and in snapshot range
@@ -358,19 +350,20 @@ wtmp(void)
 			    T->logout < 0)))) {
 				snapfound = 1;
 				if (seconds) {
-					printf("%-*.*s %-*.*s %-*.*s %ld ",
-					    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-					    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-					    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+					snprintf(tim, sizeof tim, "%ld",
 					    (long)bp->ut_time);
 				} else {
 					ct = ctime(&bp->ut_time);
-					printf("%-*.*s %-*.*s %-*.*s %10.10s %*.*s ",
-					    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
-					    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-					    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					    ct, timesize, timesize, ct + 11);
+					snprintf(tim, sizeof tim,
+					    "%10.10s %*.*s", ct,
+					    timesize, timesize, ct + 11);
 				}
+				printf("%-*.*s %-*.*s %-*.*s %s ",
+				    NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
+				    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
+				    HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
+				    tim);
+
 				if (!T->logout)
 					puts("  still logged in");
 				else {
@@ -403,12 +396,15 @@ wtmp(void)
 					if (calculate)
 						total += delta;
 				}
-				if (maxrec != -1 && !--maxrec)
+				if (maxrec != -1 && !--maxrec) {
+					close(wfd);
 					return;
+				}
 			}
 			T->logout = bp->ut_time;
 		}
 	}
+	close(wfd);
 	if (calculate) {
 		if ((total / SECSPERDAY) > 0) {
 			int days = (total / SECSPERDAY);
@@ -428,13 +424,12 @@ wtmp(void)
 }
 
 /*
- * want --
- *	see if want this entry
+ * see if want this entry
  */
 int
 want(struct utmp *bp, int check)
 {
-	ARG *step;
+	struct arg *step;
 
 	if (check) {
 		/*
@@ -455,7 +450,7 @@ want(struct utmp *bp, int check)
 		return (YES);
 
 	for (step = arglist; step; step = step->next)
-		switch(step->type) {
+		switch (step->type) {
 		case HOST_TYPE:
 			if (!strncasecmp(step->name, bp->ut_host, UT_HOSTSIZE))
 				return (YES);
@@ -474,15 +469,14 @@ want(struct utmp *bp, int check)
 }
 
 /*
- * addarg --
- *	add an entry to a linked list of arguments
+ * add an entry to a linked list of arguments
  */
 void
 addarg(int type, char *arg)
 {
-	ARG *cur;
+	struct arg *cur;
 
-	if (!(cur = (ARG *)malloc((u_int)sizeof(ARG))))
+	if (!(cur = (struct arg *)malloc((u_int)sizeof(struct arg))))
 		err(1, "malloc failure");
 	cur->next = arglist;
 	cur->type = type;
@@ -491,15 +485,14 @@ addarg(int type, char *arg)
 }
 
 /*
- * addtty --
- *	add an entry to a linked list of ttys
+ * add an entry to a linked list of ttys
  */
-TTY *
+struct ttytab *
 addtty(char *ttyname)
 {
-	TTY *cur;
+	struct ttytab *cur;
 
-	if (!(cur = (TTY *)malloc((u_int)sizeof(TTY))))
+	if (!(cur = (struct ttytab *)malloc((u_int)sizeof(struct ttytab))))
 		err(1, "malloc failure");
 	cur->next = ttylist;
 	cur->logout = currentout;
@@ -508,16 +501,15 @@ addtty(char *ttyname)
 }
 
 /*
- * hostconv --
- *	convert the hostname to search pattern; if the supplied host name
- *	has a domain attached that is the same as the current domain, rip
- *	off the domain suffix since that's what login(1) does.
+ * convert the hostname to search pattern; if the supplied host name
+ * has a domain attached that is the same as the current domain, rip
+ * off the domain suffix since that's what login(1) does.
  */
 void
 hostconv(char *arg)
 {
-	static int first = 1;
 	static char *hostdot, name[MAXHOSTNAMELEN];
+	static int first = 1;
 	char *argdot;
 
 	if (!(argdot = strchr(arg, '.')))
@@ -533,14 +525,13 @@ hostconv(char *arg)
 }
 
 /*
- * ttyconv --
- *	convert tty to correct name.
+ * convert tty to correct name.
  */
 char *
 ttyconv(char *arg)
 {
-	char *mval;
 	size_t len = 8;
+	char *mval;
 
 	/*
 	 * kludge -- we assume that all tty's end with
@@ -562,7 +553,6 @@ ttyconv(char *arg)
 }
 
 /*
- * dateconv --
  * Convert the snapshot time in command line given in the format
  *	[[[CC]YY]MMDD]hhmm[.SS]] to a time_t.
  *	Derived from atime_arg1() in usr.bin/touch/touch.c
@@ -635,8 +625,7 @@ terr:		errx(1, "out of range or illegal time specification: "
 
 
 /*
- * onintr --
- *	on interrupt, we inform the user how far we've gotten
+ * on interrupt, we inform the user how far we've gotten
  */
 void
 onintr(int signo)
