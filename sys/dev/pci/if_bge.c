@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.91 2005/10/21 22:27:07 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.92 2005/11/14 13:11:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -141,7 +141,7 @@ int bge_intr(void *);
 void bge_start(struct ifnet *);
 int bge_ioctl(struct ifnet *, u_long, caddr_t);
 void bge_init(void *);
-void bge_stop_block(struct bge_softc *, bus_addr_t, uint32_t);
+void bge_stop_block(struct bge_softc *, bus_size_t, uint32_t);
 void bge_stop(struct bge_softc *);
 void bge_watchdog(struct ifnet *);
 void bge_shutdown(void *);
@@ -3201,7 +3201,7 @@ bge_watchdog(struct ifnet *ifp)
 }
 
 void
-bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
+bge_stop_block(struct bge_softc *sc, bus_size_t reg, uint32_t bit)
 {
 	int i;
 
