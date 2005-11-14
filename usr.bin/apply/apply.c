@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.21 2005/05/15 16:22:12 jaredy Exp $	*/
+/*	$OpenBSD: apply.c,v 1.22 2005/11/14 15:30:54 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static const char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: apply.c,v 1.21 2005/05/15 16:22:12 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: apply.c,v 1.22 2005/11/14 15:30:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,13 +110,13 @@ main(int argc, char *argv[])
 	 * the end to consume (nargs) arguments each time round the loop.
 	 * Allocate enough space to hold the maximum command.
 	 */
-	len = sizeof("exec ") - 1 +
-	    strlen(argv[0]) + 9 * (sizeof(" %1") - 1) + 1;
-	if ((cmd = malloc(len)) == NULL)
-		err(1, NULL);
-		
 	if (n == 0) {
 		int l;
+
+		len = sizeof("exec ") - 1 +
+		    strlen(argv[0]) + 9 * (sizeof(" %1") - 1) + 1;
+		if ((cmd = malloc(len)) == NULL)
+			err(1, NULL);
 
 		/* If nargs not set, default to a single argument. */
 		if (nargs == -1)
@@ -143,7 +143,8 @@ main(int argc, char *argv[])
 		if (nargs == 0)
 			nargs = 1;
 	} else {
-		(void)snprintf(cmd, len, "exec %s", argv[0]);
+		if (asprintf(&cmd, "exec %s", argv[0]) == -1)
+			err(1, NULL);		
 		nargs = n;
 	}
 
