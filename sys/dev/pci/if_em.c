@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.87 2005/11/14 16:00:08 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.88 2005/11/14 16:04:15 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2758,6 +2758,13 @@ em_update_stats_counters(struct em_softc *sc)
 	    sc->watchdog_events;
 }
 
+/**********************************************************************
+ *
+ *  This routine is called only when em_display_debug_stats is enabled.
+ *  This routine provides a way to take a look at important statistics
+ *  maintained by the driver and hardware.
+ *
+ **********************************************************************/
 void
 em_print_hw_stats(struct em_softc *sc)
 {
