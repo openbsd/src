@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_types.h,v 1.4 2005/11/07 00:29:21 brad Exp $ */
+/*	$OpenBSD: if_lmc_types.h,v 1.5 2005/11/14 14:56:02 mickey Exp $ */
 /*	$NetBSD: if_lmc_types.h,v 1.2 1999/03/25 04:09:33 explorer Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ typedef struct {
 #define	LMC_CTL_LEN1(x)		((x)&0x7ff)
 #define	LMC_CTL(f,l1,l2)	((((f)&0x3ff)<<22)|(((l2)&0x7ff)<<11)|((l1)&0x7ff))
 
-typedef bus_addr_t lmc_csrptr_t;
+typedef bus_size_t lmc_csrptr_t;
 
 #define	lmc_intrfunc_t	int
 
