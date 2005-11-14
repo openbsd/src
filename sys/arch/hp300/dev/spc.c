@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.11 2004/12/22 21:11:12 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.12 2005/11/14 21:51:55 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -51,6 +51,10 @@
 #include <hp300/dev/hp98265reg.h>
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
+
+#ifdef USELEDS
+#include <hp300/hp300/leds.h>
+#endif
 
 int  spc_dio_match(struct device *, void *, void *);
 void spc_dio_attach(struct device *, struct device *, void *);
@@ -307,9 +311,13 @@ spc_dio_intr(void *arg)
 
 	/* if we are sharing the ipl level, this interrupt may not be for us. */
 	if ((hpspc_read(HPSCSI_CSR) & (CSR_IE | CSR_IR)) != (CSR_IE | CSR_IR))
-		return 0;
+		return (0);
 
-	return spc_intr(arg);
+#ifdef USELEDS
+	ledcontrol(0, 0, LED_DISK);
+#endif
+
+	return (spc_intr(arg));
 }
 
 void
