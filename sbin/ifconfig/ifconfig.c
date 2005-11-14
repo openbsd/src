@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.152 2005/11/01 07:54:26 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.153 2005/11/14 15:06:09 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
 void	setifbroadaddr(const char *, int);
 void	setifdesc(const char *, int);
+void	unsetifdesc(const char *, int);
 void	setifipdst(const char *, int);
 void	setifmetric(const char *, int);
 void	setifmtu(const char *, int);
@@ -346,6 +347,8 @@ const struct	cmd {
 	{ "lladdr",	NEXTARG,	0,		setiflladdr },
 	{ "description", NEXTARG,	0,		setifdesc },
 	{ "descr",	NEXTARG,	0,		setifdesc },
+	{ "-description", 1,		0,		unsetifdesc },
+	{ "-descr",	1,		0,		unsetifdesc },
 	{ NULL, /*src*/	0,		0,		setifaddr },
 	{ NULL, /*dst*/	0,		0,		setifdstaddr },
 	{ NULL, /*illegal*/0,		0,		NULL },
@@ -898,6 +901,15 @@ void
 setifdesc(const char *val, int ignored)
 {
 	ifr.ifr_data = (caddr_t)val;
+	if (ioctl(s, SIOCSIFDESCR, &ifr) < 0)
+		warn("SIOCSIFDESCR");
+}
+
+/* ARGSUSED */
+void
+unsetifdesc(const char *noval, int ignored)
+{
+	ifr.ifr_data = (caddr_t)(const char *)"";
 	if (ioctl(s, SIOCSIFDESCR, &ifr) < 0)
 		warn("SIOCSIFDESCR");
 }
