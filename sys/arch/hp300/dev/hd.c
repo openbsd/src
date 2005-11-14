@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.30 2005/11/14 19:23:40 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.31 2005/11/14 19:54:08 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -468,7 +468,7 @@ hdreset(rs)
 }
 
 /*
- * Read or constuct a disklabel
+ * Read or construct a disklabel
  */
 int
 hdgetinfo(dev, rs, lp, spoofonly)
