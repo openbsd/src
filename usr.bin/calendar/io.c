@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.29 2005/04/15 14:28:56 otto Exp $	*/
+/*	$OpenBSD: io.c,v 1.30 2005/11/14 15:56:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: io.c,v 1.29 2005/04/15 14:28:56 otto Exp $";
+static const char rcsid[] = "$OpenBSD: io.c,v 1.30 2005/11/14 15:56:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,14 +191,9 @@ cal(void)
 					cur_evt->ldesc = NULL;
 				} else {
 					if (m->bodun && prefix) {
-						int l1 = strlen(prefix);
-						int l2 = strlen(p);
-						int len = l1 + l2 + 2;
-						if ((cur_evt->ldesc =
-						    malloc(len)) == NULL)
+						if (asprintf(&cur_evt->ldesc,
+						    "\t%s %s", prefix, p + 1) == -1)
 							err(1, NULL);
-						snprintf(cur_evt->ldesc, len,
-						    "\t%s %s", prefix, p + 1);
 					} else if ((cur_evt->ldesc =
 					    strdup(p)) == NULL)
 						err(1, NULL);
@@ -211,12 +206,12 @@ cal(void)
 				free(foo);
 				}
 			}
-		}
-		else if (printing) {
-			nlen = strlen(ev1->ldesc) + strlen(buf) + 2;
-			if ((ev1->ldesc = realloc(ev1->ldesc, nlen)) == NULL)
+		} else if (printing) {
+			free(ev1->ldesc);
+			if (asprintf(&ev1->ldesc, "%s\n%s", ev1->ldesc,
+			    buf) == -1)
 				err(1, NULL);
-			snprintf(ev1->ldesc, nlen, "%s\n%s", ev1->ldesc, buf);
+		
 		}
 	}
 	tmp = events;
