@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpib.c,v 1.11 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.12 2005/11/14 20:21:42 miod Exp $	*/
 /*	$NetBSD: hpib.c,v 1.16 1997/04/27 20:58:57 thorpej Exp $	*/
 
 /*
@@ -173,7 +173,8 @@ hpibbus_attach_children(sc)
 		/*
 		 * Search though all configured children for this bus.
 		 */
-		(void)config_search(hpibbussearch, &sc->sc_dev, &ha);
+		(void)config_found_sm(&sc->sc_dev, &ha, hpibbusprint,
+		    hpibbussearch);
 	}
 }
 
@@ -185,11 +186,13 @@ hpibbussearch(parent, match, aux)
 	struct cfdata *cf = match;
 	struct hpibbus_softc *sc = (struct hpibbus_softc *)parent;
 	struct hpibbus_attach_args *ha = aux;
+	int pri;
 
 	/* Make sure this is in a consistent state. */
 	ha->ha_punit = 0;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ha) > 0) {
+	pri = (*cf->cf_attach->ca_match)(parent, cf, ha);
+	if (pri > 0) {
 		/*
 		 * The device probe has succeeded, and filled in
 		 * the punit information.  Make sure the configuration
@@ -197,25 +200,20 @@ hpibbussearch(parent, match, aux)
 		 */
 		if (cf->hpibbuscf_slave != HPIBBUS_SLAVE_UNK &&
 		    cf->hpibbuscf_slave != ha->ha_slave)
-			goto out;
+			return (0);
 		if (cf->hpibbuscf_punit != HPIBBUS_PUNIT_UNK &&
 		    cf->hpibbuscf_punit != ha->ha_punit)
-			goto out;
+			return (0);
 
 		/*
 		 * Allocate the device's address from the bus's
 		 * resource map.
 		 */
 		if (hpibbus_alloc(sc, ha->ha_slave, ha->ha_punit))
-			goto out;
-
-		/*
-		 * This device is allowed; attach it.
-		 */
-		config_attach(parent, cf, ha, hpibbusprint);
+			return (0);
 	}
- out:
-	return (0);
+
+	return (pri);
 }
 
 int
@@ -225,6 +223,11 @@ hpibbusprint(aux, pnp)
 {
 	struct hpibbus_attach_args *ha = aux;
 
+	if (pnp != NULL) {
+		if (ha->ha_id == 0)
+			return (QUIET);
+		printf("HP-IB device (id %04X) at %s", ha->ha_id, pnp);
+	}
 	printf(" slave %d punit %d", ha->ha_slave, ha->ha_punit);
 	return (UNCONF);
 }
