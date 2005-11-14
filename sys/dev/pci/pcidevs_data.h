@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.958 2005/11/08 01:48:15 brad Exp 
+ *	OpenBSD: pcidevs,v 1.959 2005/11/14 15:08:49 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4451,6 +4451,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7505 MCH Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_RAS,
+	    "E7505 MCH RAS",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_AGP,
 	    "E7505 MCH AGP",
 	},
@@ -4687,12 +4691,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82945GP PCIE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945G_IGD_1,
+	    "82945G Video",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_HB,
 	    "82955X MCH",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_PCIE,
 	    "82955X PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945G_IGD_2,
+	    "82945G Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7230_MCH,
@@ -5141,6 +5153,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_ITT3204,
 	    "ITT3204 MPEG Decoder",
+	},
+	{
+	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8211F,
+	    "IT8211F",
 	},
 	{
 	    PCI_VENDOR_ITEXPRESS, PCI_PRODUCT_ITEXPRESS_IT8212F,
@@ -6537,6 +6553,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ITNT2,
 	    "Aladdin TNT2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6800GO_U,
+	    "GeForce Go 6800 Ultra",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_ISA,
@@ -9759,6 +9779,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Linksys EtherPCI",
 	},
 	{
+	    PCI_VENDOR_XGI, PCI_PRODUCT_XGI_VOLARI_Z7,
+	    "Volari Z7",
+	},
+	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
 	    "X3201-3",
 	},
@@ -10729,6 +10753,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_RALINK,
 	    "Ralink",
+	},
+	{
+	    PCI_VENDOR_XGI,
+	    "XGI Technology",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,
