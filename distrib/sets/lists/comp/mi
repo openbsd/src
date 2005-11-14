@@ -5382,6 +5382,9 @@
 ./usr/share/man/cat9/nanotime.0
 ./usr/share/man/cat9/nanouptime.0
 ./usr/share/man/cat9/panic.0
+./usr/share/man/cat9/pci_conf_read.0
+./usr/share/man/cat9/pci_conf_write.0
+./usr/share/man/cat9/pci_make_tag.0
 ./usr/share/man/cat9/pfind.0
 ./usr/share/man/cat9/pgfind.0
 ./usr/share/man/cat9/pgsignal.0
