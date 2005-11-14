@@ -378,9 +378,10 @@ main(argc, argv)
 				break;
 
 			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
-					     "%.*s\t%.*s\n",
+					     "%.*s%c%.*s\n",
 					     (int) db_key.size,
 					     (char *) db_key.data,
+					     sep ? sep : '\t',
 					     (int) db_val.size,
 					     (char *)db_val.data);
 
