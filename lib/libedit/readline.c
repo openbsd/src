@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.2 2003/11/25 20:12:38 otto Exp $ */
+/*	$OpenBSD: readline.c,v 1.3 2005/11/14 13:36:37 deraadt Exp $ */
 /*	$NetBSD: readline.c,v 1.43 2003/11/03 03:22:55 christos Exp $	*/
 
 /*-
@@ -1403,11 +1403,8 @@ tilde_expand(char *txt)
 	/* first slash */
 	txt += len;
 
-	len = strlen(pass->pw_dir) + 1 + strlen(txt) + 1;
-	temp = malloc(len);
-	if (temp == NULL)
+	if (asprintf(&temp, "%s/%s", pass->pw_dir, txt) == -1)
 		return NULL;
-	(void)snprintf(temp, len, "%s/%s", pass->pw_dir, txt);
 
 	return (temp);
 }
