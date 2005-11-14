@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.5 2005/11/13 19:26:30 kettenis Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.6 2005/11/14 22:29:35 deraadt Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ void ki2c_attach(struct device *, struct device *, void *);
 inline u_int ki2c_readreg(struct ki2c_softc *, int);
 inline void ki2c_writereg(struct ki2c_softc *, int, u_int);
 u_int ki2c_getmode(struct ki2c_softc *);
-void ki2c_setmode(struct ki2c_softc *, u_int);
+void ki2c_setmode(struct ki2c_softc *, u_int, u_int);
 u_int ki2c_getspeed(struct ki2c_softc *);
 void ki2c_setspeed(struct ki2c_softc *, u_int);
 int ki2c_intr(struct ki2c_softc *);
@@ -117,7 +117,7 @@ ki2c_attach(parent, self, aux)
 	ki2c_writereg(sc, ISR, 0);
 	ki2c_writereg(sc, IER, 0);
 
-	ki2c_setmode(sc, I2C_STDSUBMODE);
+	ki2c_setmode(sc, I2C_STDSUBMODE, 0);
 	ki2c_setspeed(sc, I2C_100kHz);		/* XXX rate */
 
 	lockinit(&sc->sc_buslock, PZERO, sc->sc_dev.dv_xname, 0, 0);
@@ -164,15 +164,18 @@ ki2c_getmode(sc)
 }
 
 void
-ki2c_setmode(sc, mode)
+ki2c_setmode(sc, mode, bus)
 	struct ki2c_softc *sc;
 	u_int mode;
+	u_int bus;
 {
 	u_int x;
 
 	KASSERT((mode & ~I2C_MODE) == 0);
 	x = ki2c_readreg(sc, MODE);
 	x &= ~I2C_MODE;
+	if (bus)
+		x |= I2C_BUS1;
 	x |= mode;
 	ki2c_writereg(sc, MODE, x);
 }
@@ -365,7 +368,8 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		return (EINVAL);
 
 	/* We handle the subaddress stuff ourselves. */
-	ki2c_setmode(sc, I2C_STDMODE);
+	ki2c_setmode(sc, I2C_STDMODE, addr >> 7);
+	addr &= 0x7f;
 
 	if (ki2c_write(sc, (addr << 1), 0, cmdbuf, cmdlen) != 0)
 		return (EIO);

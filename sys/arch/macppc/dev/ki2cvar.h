@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2cvar.h,v 1.2 2005/11/13 19:26:30 kettenis Exp $	*/
+/*	$OpenBSD: ki2cvar.h,v 1.3 2005/11/14 22:29:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -56,6 +56,7 @@
 #define  I2C_STDSUBMODE	0x08	/*  Standard mode + sub address */
 #define  I2C_COMBMODE	0x0c	/*  Combined mode */
 #define I2C_PORT	0xf0	/* Port mask */
+#define  I2C_BUS1	0x10	/* choose Bus 1 */
 
 /* CONTROL */
 #define I2C_CT_AAK	0x01	/* Send AAK */
