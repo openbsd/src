@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.13 2004/03/11 17:41:23 tom Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.14 2005/11/14 23:50:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -54,10 +54,14 @@
 #include "libsa.h"
 #include <stand/boot/bootarg.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <dev/isa/isareg.h>
 
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
+
+#define vm_page_size 4096
 
 #include "debug.h"
 
@@ -194,6 +198,6 @@ apmfixmem(void)
 	printf("apmremove (%d)", ai.apm_detail);
 #endif
 	if (ai.apm_detail)
-		mem_delete(i386_trunc_page(ai.apm_data_base),
-		    i386_round_page(ai.apm_data_base + ai.apm_data_len));
+		mem_delete(trunc_page(ai.apm_data_base),
+		    round_page(ai.apm_data_base + ai.apm_data_len));
 }

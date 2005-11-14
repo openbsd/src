@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.30 2005/07/31 15:31:13 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.31 2005/11/14 23:50:26 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -148,7 +148,3 @@
 #define	i386_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
 #define	i386_btod(x)		((unsigned)(x) >> PDSHIFT)
 #define	i386_dtob(x)		((unsigned)(x) << PDSHIFT)
-#define	i386_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define	i386_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define	i386_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define	i386_ptob(x)		((unsigned)(x) << PGSHIFT)

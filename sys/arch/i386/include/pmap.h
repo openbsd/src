@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.37 2004/12/14 16:57:22 hshoexer Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.38 2005/11/14 23:50:26 martin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -197,13 +197,13 @@
  * plus alternative versions of the above
  */
 
-#define vtopte(VA)	(PTE_BASE + i386_btop(VA))
+#define vtopte(VA)	(PTE_BASE + atop(VA))
 #define kvtopte(VA)	vtopte(VA)
-#define ptetov(PT)	(i386_ptob(PT - PTE_BASE))
+#define ptetov(PT)	(ptoa(PT - PTE_BASE))
 #define	vtophys(VA)	((*vtopte(VA) & PG_FRAME) | \
 			 ((unsigned)(VA) & ~PG_FRAME))
-#define	avtopte(VA)	(APTE_BASE + i386_btop(VA))
-#define	ptetoav(PT)	(i386_ptob(PT - APTE_BASE))
+#define	avtopte(VA)	(APTE_BASE + atop(VA))
+#define	ptetoav(PT)	(ptoa(PT - APTE_BASE))
 #define	avtophys(VA)	((*avtopte(VA) & PG_FRAME) | \
 			 ((unsigned)(VA) & ~PG_FRAME))
 
@@ -362,7 +362,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_phys_address(ppn)		i386_ptob(ppn)
+#define pmap_phys_address(ppn)		ptoa(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
