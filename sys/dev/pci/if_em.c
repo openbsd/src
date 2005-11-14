@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.86 2005/11/14 14:07:32 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.87 2005/11/14 16:00:08 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -154,7 +154,6 @@ void em_82547_move_tail_locked(struct em_softc *);
 int  em_dma_malloc(struct em_softc *, bus_size_t,
     struct em_dma_alloc *, int);
 void em_dma_free(struct em_softc *, struct em_dma_alloc *);
-void em_print_debug_info(struct em_softc *);
 int  em_is_valid_ether_addr(u_int8_t *);
 u_int32_t em_fill_descriptors (u_int64_t address,
                                       u_int32_t length,
@@ -2757,53 +2756,6 @@ em_update_stats_counters(struct em_softc *sc)
 	/* Tx Errors */
 	ifp->if_oerrors = sc->stats.ecol + sc->stats.latecol +
 	    sc->watchdog_events;
-}
-
-/**********************************************************************
- *
- *  This routine is called only when em_display_debug_stats is enabled.
- *  This routine provides a way to take a look at important statistics
- *  maintained by the driver and hardware.
- *
- **********************************************************************/
-void
-em_print_debug_info(struct em_softc *sc)
-{
-	const char * const unit = sc->sc_dv.dv_xname;
-	uint8_t *hw_addr = sc->hw.hw_addr;
-
-	printf("%s: Adapter hardware address = %p \n", unit, hw_addr);
-	printf("%s: CTRL = 0x%x RCTL = 0x%x \n", unit,
-		E1000_READ_REG(&sc->hw, CTRL),
-		E1000_READ_REG(&sc->hw, CTRL));
-	printf("%s: Packet buffer = Tx=%dk Rx=%dk \n", unit,
-		((E1000_READ_REG(&sc->hw, PBA) & 0xffff0000) >> 16),\
-		(E1000_READ_REG(&sc->hw, PBA) & 0xffff) );
-	printf("%s: tx_int_delay = %d, tx_abs_int_delay = %d\n", unit,
-		E1000_READ_REG(&sc->hw, TIDV),
-		E1000_READ_REG(&sc->hw, TADV));
-	printf("%s: rx_int_delay = %d, rx_abs_int_delay = %d\n", unit,
-		E1000_READ_REG(&sc->hw, RDTR),
-		E1000_READ_REG(&sc->hw, RADV));
-
-	printf("%s: fifo workaround = %lld, fifo_reset_count = %lld\n", unit,
-		(long long)sc->tx_fifo_wrk_cnt,
-		(long long)sc->tx_fifo_reset_cnt);
-	printf("%s: hw tdh = %d, hw tdt = %d\n", unit,
-		E1000_READ_REG(&sc->hw, TDH),
-		E1000_READ_REG(&sc->hw, TDT));
-	printf("%s: Num Tx descriptors avail = %d\n", unit,
-	       sc->num_tx_desc_avail);
-	printf("%s: Tx Descriptors not avail1 = %ld\n", unit,
-	       sc->no_tx_desc_avail1);
-	printf("%s: Tx Descriptors not avail2 = %ld\n", unit,
-	       sc->no_tx_desc_avail2);
-	printf("%s: Std mbuf failed = %ld\n", unit,
-		sc->mbuf_alloc_failed);
-	printf("%s: Std mbuf cluster failed = %ld\n", unit,
-		sc->mbuf_cluster_failed);
-	printf("%s: Driver dropped packets = %ld\n", unit,
-	       sc->dropped_pkts);
 }
 
 void
