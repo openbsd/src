@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.507 2005/11/04 08:24:15 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.508 2005/11/14 09:18:55 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2932,7 +2932,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			REASON_SET(&reason, PFRES_MAXSTATES);
 			goto cleanup;
 		}
-		/* src node for flter rule */
+		/* src node for filter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0) {
@@ -3285,7 +3285,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			REASON_SET(&reason, PFRES_MAXSTATES);
 			goto cleanup;
 		}
-		/* src node for flter rule */
+		/* src node for filter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0) {
@@ -3590,7 +3590,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			REASON_SET(&reason, PFRES_MAXSTATES);
 			goto cleanup;
 		}
-		/* src node for flter rule */
+		/* src node for filter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0) {
@@ -3871,7 +3871,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			REASON_SET(&reason, PFRES_MAXSTATES);
 			goto cleanup;
 		}
-		/* src node for flter rule */
+		/* src node for filter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0) {
