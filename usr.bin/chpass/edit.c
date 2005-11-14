@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.27 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.28 2005/11/14 15:31:11 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.27 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.28 2005/11/14 15:31:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,7 @@ static char rcsid[] = "$OpenBSD: edit.c,v 1.27 2003/06/03 02:56:06 millert Exp $
 #include "chpass.h"
 
 int
-edit(tempname, pw)
-	char *tempname;
-	struct passwd *pw;
+edit(char *tempname, struct passwd *pw)
 {
 	struct stat begin, end;
 
@@ -86,10 +84,7 @@ edit(tempname, pw)
  *	set conditional flag if the user gets to edit the shell.
  */
 void
-display(tempname, fd, pw)
-	char *tempname;
-	int fd;
-	struct passwd *pw;
+display(char *tempname, int fd, struct passwd *pw)
 {
 	FILE *fp;
 	char *bp, *p;
@@ -139,11 +134,9 @@ display(tempname, fd, pw)
 }
 
 int
-verify(tempname, pw)
-	char *tempname;
-	struct passwd *pw;
+verify(char *tempname, struct passwd *pw)
 {
-	unsigned int len, alen, line;
+	unsigned int alen, line;
 	static char buf[LINE_MAX];
 	struct stat sb;
 	char *p, *q;
@@ -218,15 +211,12 @@ bad:					(void)fclose(fp);
 		list[E_LOCATE].save = "";
 
 	/* Build the gecos field. */
-	len = strlen(list[E_NAME].save) + strlen(list[E_BPHONE].save) +
-	    strlen(list[E_HPHONE].save) + strlen(list[E_LOCATE].save) + 4;
 	for (alen = 0, p = list[E_NAME].save; *p; p++)
 		if (*p == '&')
 			alen = alen + strlen(pw->pw_name) - 1;
-	if (!(p = malloc(len)))
+	if (asprintf(&p, "%s,%s,%s,%s", list[E_NAME].save,
+	    list[E_LOCATE].save, list[E_BPHONE].save, list[E_HPHONE].save) == -1)
 		err(1, NULL);
-	(void)snprintf(p, len, "%s,%s,%s,%s", list[E_NAME].save,
-	    list[E_LOCATE].save, list[E_BPHONE].save, list[E_HPHONE].save);
 	pw->pw_gecos = p;
 
 	if (snprintf(buf, sizeof(buf),
