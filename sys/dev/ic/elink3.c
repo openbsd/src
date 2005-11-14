@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.64 2005/04/25 17:55:50 brad Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.65 2005/11/14 12:24:34 mickey Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -973,8 +973,7 @@ epstart(ifp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
-	int sh, len, pad;
-	bus_addr_t txreg;
+	int sh, len, pad, txreg;
 
 	/* Don't transmit if interface is busy or not running */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1374,9 +1373,7 @@ epget(sc, totlen)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
-	int len, pad;
-	int sh;
-	bus_addr_t rxreg;
+	int len, pad, sh, rxreg;
 
 	m = sc->mb[sc->next_mb];
 	sc->mb[sc->next_mb] = 0;
