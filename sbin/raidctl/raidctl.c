@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.23 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.24 2005/11/14 17:17:11 deraadt Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -1137,8 +1137,10 @@ open_device(fdidpair **devfd, char *name)
 		nfd = get_all_devices(&devname, "raid");
 	} else {
 		nfd = 1;
-		devname = malloc(sizeof(void*));
-		devname[0] = malloc(PATH_MAX);
+		if ((devname = malloc(sizeof(void*))) == NULL)
+			err(1, "malloc");
+		if ((devname[0] = malloc(PATH_MAX)) == NULL)
+			err(1, "malloc");
 
 		if ((name[0] == '/') || (name[0] == '.')) {
 			/* they've (apparently) given a full path... */
@@ -1159,13 +1161,13 @@ open_device(fdidpair **devfd, char *name)
 
 	i = nfd;
 	while (i--) {
-		if (stat(devname[i], &st) != 0)
-			errx(errno, "stat failure on: %s", devname[i]);
+		if (((*devfd)[i].fd = open(devname[i], O_RDWR, 0640)) < 0)
+			errx(1, "unable to open device file: %s", devname[i]);
+		if (fstat((*devfd)[i].fd, &st) != 0)
+			errx(errno, "fstat failure on: %s", devname[i]);
 		if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
 			errx(EINVAL, "invalid device: %s", devname[i]);
 
-		if (((*devfd)[i].fd = open(devname[i], O_RDWR, 0640)) < 0)
-			errx(1, "unable to open device file: %s", devname[i]);
 		(*devfd)[i].id = RF_DEV2RAIDID(st.st_rdev);
 
 		free(devname[i]);
@@ -1205,11 +1207,9 @@ get_all_devices(char ***diskarray, const char *genericname)
 	fp = disks;
 	while ((p = strsep(&fp, ",")) != NULL) {
 		if (strstr((const char*)p, genericname) != NULL) {
-			int len = strlen(p) + 7;
-
-			(*diskarray)[i] = (char*) malloc(len);
-			snprintf((*diskarray)[i++], len, "/dev/%s%c", p,
-				'a' + getrawpartition());
+			if (asprintf(&(*diskarray)[i++], "/dev/%s%c", p,
+			    'a' + getrawpartition()) == -1)
+				err(1, "asprintf");	
 		}
 	}
 
