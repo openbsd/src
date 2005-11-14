@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.87 2005/11/07 04:51:14 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.88 2005/11/14 23:03:00 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -264,7 +264,7 @@ scsibus* at atapiscsi?
 # Networking devices
 lmc*	at pci?				# Lan Media Corp SSI/T3/HSSI
 #le*	at pci?				# PCnet-PCI based ethernet
-#de*	at pci?				# DC21X4X-based ethernet
+de*	at pci?				# DC21X4X-based ethernet
 fxp*	at pci?				# EtherExpress 10/100B ethernet
 fxp*	at cardbus?			# Intel PRO/100 ethernet
 #ne*	at pci?				# NE2000-compat ethernet
@@ -286,6 +286,7 @@ vr*	at pci?				# VIA Rhine ethernet
 #sf*	at pci?				# Adaptec AIC-6915 ethernet BORKED
 sis*	at pci?				# SiS 900/7016 ethernet
 #ste*	at pci?				# Sundance ST201 ethernet BORKED
+pcn*	at pci?				# AMD PCnet-PCI Ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet
 dc*	at cardbus?			# 21143, "tulip" clone ethernet
 ti*	at pci?				# Alteon Tigon 1Gb ethernet

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.43 2005/10/26 23:32:23 niallo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.44 2005/11/14 23:03:00 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -204,7 +204,7 @@ atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
 #le*	at pci?			# PCnet-PCI based ethernet
-#de*	at pci?			# DC21X4X-based ethernet
+de*	at pci?			# DC21X4X-based ethernet
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 fxp*	at cardbus?		# Intel PRO/100 ethernet
 ep*	at pci?			# 3C59x ethernet
@@ -221,6 +221,7 @@ rl*	at cardbus?		# RealTek 81[23]9 ethernet
 epic*	at pci?			# SMC EPIC/100 ethernet
 #tl*	at pci?			# Compaq Thunderlan ethernet
 vr*	at pci?			# VIA Rhine ethernet
+pcn*	at pci?			# AMD PCnet-PCI Ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 dc*	at cardbus?		# 21143, "tulip" clone ethernet
 sis*	at pci?			# SiS 900/7016 ethernet

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.48 2005/10/10 23:02:21 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.49 2005/11/14 23:03:06 brad Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -57,6 +57,8 @@ ti*	at pci?			# Alteon Tigon 1Gb ethernet
 #sk*	at skc?			#  each port of above
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 xl*	at pci?			# 3C9xx ethernet
+pcn*	at pci?			# AMD PCnet-PCI Ethernet
+de*	at pci?			# DC21X4X-based ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 epic*	at pci?			# SMC EPIC/100 ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
