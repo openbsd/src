@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.85 2005/11/13 03:48:07 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.86 2005/11/14 14:07:32 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -894,9 +894,7 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
         DESC_ARRAY              desc_array;
         u_int32_t               array_elements;
         u_int32_t               counter;
-#if NVLAN > 0
-	struct ifvlan *ifv = NULL;
-#endif
+
 	struct em_q	q;
 
 	struct em_buffer   *tx_buffer = NULL;
@@ -943,13 +941,6 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
 	em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
 #endif
 	txd_upper = txd_lower = 0;
-
-#if NVLAN > 0
-	/* Find out if we are in vlan mode */
-	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL)
-		ifv = m_head->m_pkthdr.rcvif->if_softc;
-#endif
 
 	i = sc->next_avail_tx_desc;
         if (sc->pcix_82544) {
@@ -1012,16 +1003,6 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
         else {
                 sc->num_tx_desc_avail -= q.map->dm_nsegs;
         }
-
-#if NVLAN > 0
-	if (ifv != NULL) {
-		/* Set the vlan id */
-		current_tx_desc->upper.fields.special = htole16(ifv->ifv_tag);
-
-		/* Tell hardware to add tag */
-		current_tx_desc->lower.data |= htole32(E1000_TXD_CMD_VLE);
-	}
-#endif
 
 	tx_buffer->m_head = m_head;
 	tx_buffer->map = q.map;
