@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.106 2005/11/14 14:30:21 mickey Exp $
+#	$OpenBSD: Makefile,v 1.107 2005/11/14 16:42:42 mickey Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -214,6 +214,7 @@ MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 	rssadapt.9 ieee80211_rssadapt_raise_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_updatestats.9
 MLINKS+=pci_conf_read.9 pci_conf_write.9 pci_conf_read.9 pci_make_tag.9
+MLINKS+=pci_conf_read.9 pci_decompose_tag.9
 MLINKS+=pfind.9 pgfind.9
 MLINKS+=pmap.9 pmap_init.9 pmap.9 pmap_enter.9 pmap.9 pmap_remove.9 \
 	pmap.9 pmap_unwire.9 pmap.9 pmap_protect.9 pmap.9 pmap_page_protect.9 \
