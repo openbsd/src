@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.1 2005/11/14 21:54:38 kettenis Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.2 2005/11/14 22:22:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -77,27 +77,17 @@ int
 lmenv_match(struct device *parent, void *match, void *aux)
 {
 	struct maci2c_attach_args *ia = aux;
-	char compat[32];
-#ifdef notyet
-	char name[32];
-#endif
+	char compat[32], name[32];
 
 	memset(compat, 0, sizeof compat);
 	OF_getprop(ia->ia_node, "compatible", &compat, sizeof compat);
 	if (strcmp(compat, "lm87cimt") == 0)
 		return (1);
 
-#ifdef notyet
-	/*
-	 * XXX Doesn't work on Xserve G4 yet, possibly because of i2c
-	 * bus adressing issues.
-	 */
-
 	memset(name, 0, sizeof name);
 	OF_getprop(ia->ia_node, "name", &name, sizeof name);
 	if (strcmp(name, "lm87") == 0)
 		return (1);
-#endif
 
 	return (0);
 }
