@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.63 2005/10/22 17:32:57 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.64 2005/11/14 12:53:43 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -178,7 +178,7 @@ struct diff_arg {
 };
 
 #if !defined(RCSPROG)
-static int     cvs_diff_init(struct cvs_cmd *, int, char **, int *);
+static int	cvs_diff_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_diff_remote(CVSFILE *, void *);
 static int	cvs_diff_local(CVSFILE *, void *);
 static int	cvs_diff_pre_exec(struct cvsroot *);
@@ -449,9 +449,9 @@ cvs_diff_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		/* send the flags */
-		if (Nflag && (cvs_sendarg(root, "-N", 0) < 0))
+		if ((Nflag == 1) && (cvs_sendarg(root, "-N", 0) < 0))
 			return (CVS_EX_PROTO);
-		if (pflag && (cvs_sendarg(root, "-p", 0) < 0))
+		if ((pflag ==1) && (cvs_sendarg(root, "-p", 0) < 0))
 			return (CVS_EX_PROTO);
 
 		if (diff_format == D_CONTEXT) {
@@ -1086,7 +1086,7 @@ check(FILE *f1, FILE *f2)
 			ixnew[j] = ctnew += skipline(f2);
 			j++;
 		}
-		if (bflag || wflag || iflag) {
+		if ((bflag == 1)|| (wflag == 1) || (iflag == 1)) {
 			for (;;) {
 				c = getc(f1);
 				d = getc(f2);
@@ -1094,14 +1094,14 @@ check(FILE *f1, FILE *f2)
 				 * GNU diff ignores a missing newline
 				 * in one file if bflag || wflag.
 				 */
-				if ((bflag || wflag) &&
+				if (((bflag == 1) || (wflag == 1)) &&
 				    ((c == EOF && d == '\n') ||
 				    (c == '\n' && d == EOF))) {
 					break;
 				}
 				ctold++;
 				ctnew++;
-				if (bflag && isspace(c) && isspace(d)) {
+				if ((bflag == 1) && isspace(c) && isspace(d)) {
 					do {
 						if (c == '\n')
 							break;
@@ -1112,7 +1112,7 @@ check(FILE *f1, FILE *f2)
 							break;
 						ctnew++;
 					} while (isspace(d = getc(f2)));
-				} else if (wflag) {
+				} else if (wflag == 1) {
 					while (isspace(c) && c != '\n') {
 						c = getc(f1);
 						ctold++;
@@ -1471,7 +1471,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 		nc = f[i] - f[i - 1];
 		if (diff_format != D_IFDEF && ch != '\0') {
 			diff_output("%c", ch);
-			if (Tflag && (diff_format == D_NORMAL ||
+			if ((Tflag == 1 ) && (diff_format == D_NORMAL ||
 			    diff_format == D_CONTEXT ||
 			    diff_format == D_UNIFIED))
 				diff_output("\t");
@@ -1488,7 +1488,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 					    "file");
 				return (0);
 			}
-			if (c == '\t' && tflag) {
+			if ((c == '\t') && (tflag == 1)) {
 				do {
 					diff_output(" ");
 				} while (++col & 7);
@@ -1512,8 +1512,8 @@ readhash(FILE *f)
 
 	sum = 1;
 	space = 0;
-	if (!bflag && !wflag) {
-		if (iflag)
+	if ((bflag != 1) && (wflag != 1)) {
+		if (iflag == 1)
 			for (i = 0; (t = getc(f)) != '\n'; i++) {
 				if (t == EOF) {
 					if (i == 0)
@@ -1539,7 +1539,7 @@ readhash(FILE *f)
 				space++;
 				continue;
 			default:
-				if (space && !wflag) {
+				if ((space != 0) && (wflag != 1)) {
 					i++;
 					space = 0;
 				}
@@ -1569,7 +1569,7 @@ asciifile(FILE *f)
 	char buf[BUFSIZ];
 	int i, cnt;
 
-	if (aflag || f == NULL)
+	if ((aflag == 1) || (f == NULL))
 		return (1);
 
 	rewind(f);
@@ -1632,7 +1632,7 @@ dump_context_vec(FILE *f1, FILE *f2)
 	upd = MIN(diff_len[1], context_vec_ptr->d + context);
 
 	diff_output("***************");
-	if (pflag) {
+	if (pflag == 1) {
 		f = match_function(ixold, lowa - 1, f1);
 		if (f != NULL) {
 			diff_output(" ");
@@ -1741,7 +1741,7 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	diff_output(" +");
 	uni_range(lowc, upd);
 	diff_output(" @@");
-	if (pflag) {
+	if (pflag == 1) {
 		f = match_function(ixold, lowa - 1, f1);
 		if (f != NULL) {
 			diff_output(" ");
