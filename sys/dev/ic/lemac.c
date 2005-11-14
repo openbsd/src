@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.7 2005/06/08 17:03:00 henning Exp $ */
+/* $OpenBSD: lemac.c,v 1.8 2005/11/14 14:46:41 mickey Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -78,12 +78,12 @@ void	lemac_ifmedia_status(struct ifnet *const, struct ifmediareq *);
 void	lemac_ifstart(struct ifnet *);
 void	lemac_init(struct lemac_softc *);
 void	lemac_init_adapmem(struct lemac_softc *);
-void	lemac_input(struct lemac_softc *, bus_addr_t, size_t);
+void	lemac_input(struct lemac_softc *, bus_size_t, size_t);
 void	lemac_multicast_filter(struct lemac_softc *);
 void	lemac_multicast_op(u_int16_t *, const u_char *, int);
 int	lemac_read_eeprom(struct lemac_softc *);
 int	lemac_read_macaddr(unsigned char *, const bus_space_tag_t,
-    const bus_space_handle_t, const bus_addr_t, int);
+    const bus_space_handle_t, const bus_size_t, int);
 void	lemac_reset(struct lemac_softc *);
 void	lemac_rne_intr(struct lemac_softc *);
 void	lemac_rxd_intr(struct lemac_softc *, unsigned);
@@ -265,7 +265,7 @@ lemac_init_adapmem(struct lemac_softc *sc)
 }
 
 void
-lemac_input(struct lemac_softc *sc, bus_addr_t offset, size_t length)
+lemac_input(struct lemac_softc *sc, bus_size_t offset, size_t length)
 {
 	struct ether_header eh;
 	struct mbuf *m;
@@ -373,7 +373,7 @@ lemac_rne_intr(struct lemac_softc *sc)
  */
 int
 lemac_read_macaddr(unsigned char *hwaddr, const bus_space_tag_t iot,
-    const bus_space_handle_t ioh, const bus_addr_t ioreg, int skippat)
+    const bus_space_handle_t ioh, const bus_size_t ioreg, int skippat)
 {
 	int cksum, rom_cksum;
 	unsigned char addrbuf[6];
