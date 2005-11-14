@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppi.c,v 1.13 2005/02/13 23:13:25 mickey Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.14 2005/11/14 19:23:40 miod Exp $	*/
 /*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/timeout.h>
@@ -466,7 +467,6 @@ int
 ppihztoms(h)
 	int h;
 {
-	extern int hz;
 	int m = h;
 
 	if (m > 0)
@@ -478,7 +478,6 @@ int
 ppimstohz(m)
 	int m;
 {
-	extern int hz;
 	int h = m;
 
 	if (h > 0) {

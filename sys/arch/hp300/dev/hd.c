@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.29 2005/11/13 19:25:09 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.30 2005/11/14 19:23:40 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 
@@ -999,7 +1000,6 @@ hderror(unit)
 	 * HDRETRY as defined, the range is 1 to 32 seconds.
 	 */
 	if (sp->c_fef & FEF_IMR) {
-		extern int hz;
 		int hdtimo = HDWAITC << rs->sc_tab.b_errcnt;
 #ifdef DEBUG
 		printf("%s: internal maintenance, %d second timeout\n",
