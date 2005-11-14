@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.105 2005/10/30 20:02:24 pedro Exp $
+#	$OpenBSD: Makefile,v 1.106 2005/11/14 14:30:21 mickey Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -17,7 +17,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	kern.9 knote.9 kthread.9 ktrace.9 loadfirmware.9 lock.9 log.9 \
 	malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
 	mountroothook_establish.9 mutex.9 namei.9 \
-	panic.9 pfind.9 physio.9 pmap.9 \
+	panic.9 pci_conf_read.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
@@ -213,6 +213,7 @@ MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 	rssadapt.9 ieee80211_rssadapt_lower_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_raise_rate.9 \
 	rssadapt.9 ieee80211_rssadapt_updatestats.9
+MLINKS+=pci_conf_read.9 pci_conf_write.9 pci_conf_read.9 pci_make_tag.9
 MLINKS+=pfind.9 pgfind.9
 MLINKS+=pmap.9 pmap_init.9 pmap.9 pmap_enter.9 pmap.9 pmap_remove.9 \
 	pmap.9 pmap_unwire.9 pmap.9 pmap_protect.9 pmap.9 pmap_page_protect.9 \
