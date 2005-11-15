@@ -2128,3 +2128,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ixgb.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ixgb_osdep.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ixgb_ee.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ixgb_hw.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ixgb_ids.ph

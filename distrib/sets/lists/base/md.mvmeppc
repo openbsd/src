@@ -2198,3 +2198,8 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ixgb.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ixgb_osdep.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_ee.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_hw.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_ids.ph

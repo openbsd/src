@@ -2196,3 +2196,8 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_ixgb.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_ixgb_osdep.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ixgb_ee.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ixgb_hw.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ixgb_ids.ph

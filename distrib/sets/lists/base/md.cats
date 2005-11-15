@@ -2294,3 +2294,8 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_ixgb.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_ixgb_osdep.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ixgb_ee.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ixgb_hw.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ixgb_ids.ph

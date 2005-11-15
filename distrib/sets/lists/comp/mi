@@ -499,6 +499,8 @@
 ./usr/include/dev/pci/if_ipwvar.h
 ./usr/include/dev/pci/if_iwireg.h
 ./usr/include/dev/pci/if_iwivar.h
+./usr/include/dev/pci/if_ixgb.h
+./usr/include/dev/pci/if_ixgb_osdep.h
 ./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/if_lgereg.h
 ./usr/include/dev/pci/if_lmc_types.h
@@ -528,6 +530,9 @@
 ./usr/include/dev/pci/if_wbreg.h
 ./usr/include/dev/pci/isesreg.h
 ./usr/include/dev/pci/isesvar.h
+./usr/include/dev/pci/ixgb_ee.h
+./usr/include/dev/pci/ixgb_hw.h
+./usr/include/dev/pci/ixgb_ids.h
 ./usr/include/dev/pci/lofnreg.h
 ./usr/include/dev/pci/lofnvar.h
 ./usr/include/dev/pci/maestro_reg.h
@@ -5384,6 +5389,7 @@
 ./usr/share/man/cat9/panic.0
 ./usr/share/man/cat9/pci_conf_read.0
 ./usr/share/man/cat9/pci_conf_write.0
+./usr/share/man/cat9/pci_decompose_tag.0
 ./usr/share/man/cat9/pci_make_tag.0
 ./usr/share/man/cat9/pfind.0
 ./usr/share/man/cat9/pgfind.0

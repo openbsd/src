@@ -1311,6 +1311,7 @@
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/it.0
 ./usr/share/man/cat4/iwi.0
+./usr/share/man/cat4/ixgb.0
 ./usr/share/man/cat4/keynote.0
 ./usr/share/man/cat4/ksyms.0
 ./usr/share/man/cat4/kue.0
@@ -1319,6 +1320,7 @@
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lm.0
 ./usr/share/man/cat4/lmc.0
+./usr/share/man/cat4/lmenv.0
 ./usr/share/man/cat4/lmtemp.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
