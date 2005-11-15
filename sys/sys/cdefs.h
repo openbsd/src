@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.18 2005/05/27 21:28:12 millert Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.19 2005/11/15 15:46:41 millert Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -296,20 +296,6 @@
  */
 #if !defined(_OPENBSD_SOURCE) && \
    (defined(_ANSI_SOURCE) || defined(__XPG_VISIBLE) || defined(__POSIX_VISIBLE))
-# define __OPENBSD_VISIBLE	0
-#endif
-
-/*
- * __STRICT_ANSI__ (gcc -ansi) overrides everything else.
- */
-#ifdef __STRICT_ANSI__
-# undef __POSIX_VISIBLE
-# define __POSIX_VISIBLE	0
-# undef __XPG_VISIBLE
-# define __XPG_VISIBLE		0
-# undef __ISO_C_VISIBLE
-# define __ISO_C_VISIBLE	1990
-# undef __OPENBSD_VISIBLE
 # define __OPENBSD_VISIBLE	0
 #endif
 
