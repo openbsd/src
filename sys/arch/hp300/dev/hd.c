@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.32 2005/11/14 20:20:30 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.33 2005/11/15 07:02:36 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1018,8 +1018,8 @@ hderror(unit)
 	}
 	/*
 	 * Unit requests release for internal maintenance.
-	 * We just delay awhile and try again later.  Use expontially
-	 * increasing backoff ala ethernet drivers since we don't really
+	 * We just delay a while and try again later.  Use exponentially
+	 * increasing backoff a la ethernet drivers since we don't really
 	 * know how long the maintenance will take.  With HDWAITC and
 	 * HDRETRY as defined, the range is 1 to 32 seconds.
 	 */
@@ -1061,13 +1061,13 @@ hderror(unit)
 	 * Now output a generic message suitable for badsect.
 	 * Note that we don't use harderr because it just prints
 	 * out b_blkno which is just the beginning block number
-	 * of the transfer, not necessary where the error occurred.
+	 * of the transfer, not necessarily where the error occurred.
 	 */
 	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
 	    'a' + HDPART(bp->b_dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
-	 * attempt at interpretation (unless debugging).
+	 * no attempt at interpretation (unless debugging).
 	 */
 	printf("%s: %s error:", rs->sc_dev.dv_xname,
 	    (bp->b_flags & B_READ) ? "read" : "write");

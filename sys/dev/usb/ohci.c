@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.62 2005/10/04 22:55:30 brad Exp $ */
+/*	$OpenBSD: ohci.c,v 1.63 2005/11/15 07:02:37 miod Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2309,7 +2309,7 @@ Static usb_device_descriptor_t ohci_devd = {
 	UDPROTO_FSHUB,
 	64,			/* max packet */
 	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indicies */
+	1,2,0,			/* string indices */
 	1			/* # of configurations */
 };
 

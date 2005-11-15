@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.80 2005/10/15 00:08:51 deraadt Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.81 2005/11/15 07:02:37 miod Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ struct kmembuckets {
 					: (MINBUCKET + 15))
 
 /*
- * Turn virtual addresses into kmem map indicies
+ * Turn virtual addresses into kmem map indices
  */
 #define	kmemxtob(alloc)	(kmembase + (alloc) * NBPG)
 #define	btokmemx(addr)	(((caddr_t)(addr) - kmembase) / NBPG)

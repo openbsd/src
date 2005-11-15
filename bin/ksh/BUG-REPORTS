@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.15 2003/10/22 07:40:38 jmc Exp $
+$OpenBSD: BUG-REPORTS,v 1.16 2005/11/15 07:02:33 miod Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -1370,7 +1370,7 @@ x pdksh 5.2.13: vi: failed redo (.) commands caused line to be returned to the
 
 x pdksh 5.2.13, (reported by Arthor Pool): man page: (a) the time reserved
   word is not described; (b) description of command line wrapping is in vi
-  section only (not in emacs); (c) limit on array indicies not mentioned;
+  section only (not in emacs); (c) limit on array indices not mentioned;
   (d) ignoreeof ignored if eof read 13 times.
   [fixed in 5.2.14: man page updated]
 

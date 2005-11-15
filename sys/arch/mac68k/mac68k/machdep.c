@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.120 2005/11/06 17:59:57 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.121 2005/11/15 07:02:36 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ cpu_startup(void)
 
 	vers = mac68k_machine.booter_version;
 	if (vers < CURRENTBOOTERVER) {
-		/* fix older booters with indicies, not versions */
+		/* fix older booters with indices, not versions */
 		if (vers < 100)
 			vers += 99;
 

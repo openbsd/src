@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.39 2005/10/04 22:55:30 brad Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.40 2005/11/15 07:02:37 miod Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2921,7 +2921,7 @@ usb_device_descriptor_t uhci_devd = {
 	UDPROTO_FSHUB,		/* protocol */
 	64,			/* max packet */
 	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indicies */
+	1,2,0,			/* string indices */
 	1			/* # of configurations */
 };
 

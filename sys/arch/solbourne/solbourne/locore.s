@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.2 2005/07/02 09:15:41 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.3 2005/11/15 07:02:36 miod Exp $	*/
 /*	OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp 	*/
 
 /*
@@ -771,7 +771,7 @@ Lpanic_red:
  * wmask[CWP] tells whether a `rett' would return into the invalid window.
  */
 	.data
-	.skip	32			! alignment byte & negative indicies
+	.skip	32			! alignment byte & negative indices
 uwtab:	.skip	32			! u_char uwtab[-31..31];
 wmask:	.skip	32			! u_char wmask[0..31];
 

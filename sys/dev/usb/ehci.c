@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.50 2005/10/04 22:55:30 brad Exp $ */
+/*	$OpenBSD: ehci.c,v 1.51 2005/11/15 07:02:37 miod Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1562,7 +1562,7 @@ Static usb_device_descriptor_t ehci_devd = {
 	UDPROTO_HSHUBSTT,	/* protocol */
 	64,			/* max packet */
 	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indicies */
+	1,2,0,			/* string indices */
 	1			/* # of configurations */
 };
 

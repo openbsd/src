@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.37 2005/11/15 03:15:29 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.38 2005/11/15 07:02:37 miod Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.37 2005/11/15 03:15:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.38 2005/11/15 07:02:37 miod Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -310,7 +310,7 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 	user *u;
 	entry *e;
 
-	/* make 0-based values out of these so we can use them as indicies
+	/* make 0-based values out of these so we can use them as indices
 	 */
 	minute = tm->tm_min -FIRST_MINUTE;
 	hour = tm->tm_hour -FIRST_HOUR;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdreg.h,v 1.3 2004/04/12 22:12:32 jmc Exp $	*/
+/*	$OpenBSD: hdreg.h,v 1.4 2005/11/15 07:02:36 miod Exp $	*/
 /*	$NetBSD: rdreg.h,v 1.7 1996/02/09 18:00:37 scottr Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ struct hd_describe {
 #define HD2200AID	0x22F
 #define HD2203AID	0x230	/* yet another guess */
 
-/* SW ids -- indicies into hdidentinfo, order is arbitrary */
+/* SW ids -- indices into hdidentinfo, order is arbitrary */
 #define	HD7945A		0
 #define	HD9134D		1
 #define	HD9122S		2

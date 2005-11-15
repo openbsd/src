@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.25 2005/10/13 19:48:36 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.26 2005/11/15 07:02:36 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -563,7 +563,7 @@ m88110_cmmu_show_translation(unsigned address,
 {
 	/*
 	 * A virtual address is split into three fields. Two are used as
-	 * indicies into tables (segment and page), and one is an offset into
+	 * indices into tables (segment and page), and one is an offset into
 	 * a page of memory.
 	 */
 	union {
