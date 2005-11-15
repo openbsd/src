@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.6 2005/11/13 19:51:11 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.7 2005/11/15 23:28:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -534,7 +534,8 @@ smu_sensor_refresh(struct smu_softc *sc, struct smu_sensor *sensor)
 		return (error);
 	}
 	value = (cmd->data[0] << 8) + cmd->data[1];
-	if (sensor->sensor.type == SENSOR_TEMP) {
+	switch (sensor->sensor.type) {
+	case SENSOR_TEMP:
 		value *= sc->sc_cpu_diode_scale;
 		value >>= 3;
 		value += ((int64_t)sc->sc_cpu_diode_offset) << 9;
@@ -544,7 +545,9 @@ smu_sensor_refresh(struct smu_softc *sc, struct smu_sensor *sensor)
 		value *= 15625;
 		value /= 1024;
 		value += 273150000;
-	} else if (sensor->sensor.type == SENSOR_VOLTS_DC) {
+		break;
+
+	case SENSOR_VOLTS_DC:
 		value *= sc->sc_cpu_volt_scale;
 		value += sc->sc_cpu_volt_offset;
 		value <<= 4;
@@ -552,7 +555,9 @@ smu_sensor_refresh(struct smu_softc *sc, struct smu_sensor *sensor)
 		/* Convert from 16.16 fixed point V into muV. */
 		value *= 15625;
 		value /= 1024;
-	} else if (sensor->sensor.type == SENSOR_AMPS) {
+		break;
+
+	case SENSOR_AMPS:
 		value *= sc->sc_cpu_curr_scale;
 		value += sc->sc_cpu_curr_offset;
 		value <<= 4;
@@ -560,6 +565,10 @@ smu_sensor_refresh(struct smu_softc *sc, struct smu_sensor *sensor)
 		/* Convert from 16.16 fixed point A into muA. */
 		value *= 15625;
 		value /= 1024;
+		break;
+
+	default:
+		break;
 	}
 	sensor->sensor.value = value;
 	sensor->sensor.flags = 0;
