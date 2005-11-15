@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.4 2005/11/15 20:28:04 kettenis Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.5 2005/11/15 20:40:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -232,8 +232,11 @@ lmenv_refresh(void *arg)
 			break;
 		case LMENV_EXT_TEMP:
 		case LMENV_INT_TEMP:
-			sc->sc_sensor[sensor].value =
-			    (int8_t)data * 1000000 + 273150000;
+			if (data == 0x80)
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
+			else
+				sc->sc_sensor[sensor].value =
+				    (int8_t)data * 1000000 + 273150000;
 			break;
 		case LMENV_FAN1:
 			tmp = data * sc->sc_fan1_div;
