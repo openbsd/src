@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.3 2005/11/15 22:26:25 deraadt Exp $
+.\"	$OpenBSD: iic.4,v 1.4 2005/11/15 23:25:32 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -62,18 +62,24 @@ commands.
 .Bl -tag -width 10n -offset ind -compact
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 Super I/O ACCESS.bus
+.It Xr maciic 4
+Apple Inter IC (I2C) bus
 .El
 .Pp
 .Sh SUPPORTED SLAVES
 .Bl -tag -width 10n -offset ind -compact
-.It Xr lmtemp 4
-National Semiconductor LM75/LM77 temperature sensor
-.It Xr lmenv 4
-National Semiconductor LM87 temperature sensor
 .It Xr adc 4
 Analog Devices AD7416/AD7417/7418 temperature sensor
+.It Xr admtmp 4
+Analog Devices ADM1030 temperature sensor
+.It Xr lmenv 4
+National Semiconductor LM87 temperature sensor
+.It Xr lmtemp 4
+National Semiconductor LM75/LM77 temperature sensor
 .It Xr maxtmp 4
 Maxim MAX6690 temperature sensor
+.It Xr tsl 4
+TAOS TSL2560/61 light-to-digital converter
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
