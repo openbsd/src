@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_intr_map.9,v 1.1 2005/11/15 11:41:26 mickey Exp $
+.\"	$OpenBSD: pci_intr_map.9,v 1.2 2005/11/15 15:21:51 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -16,10 +16,11 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd November 20, 2005
-.Dt pci_intr_map 9
+.Dt PCI_INTR_MAP 9
 .Os
 .Sh NAME
 .Nm pci_intr_map ,
+.Nm pci_intr_line ,
 .Nm pci_intr_string ,
 .Nm pci_intr_establish ,
 .Nm pci_intr_disestablish
@@ -43,37 +44,37 @@
 .Ft void
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *v"
 .Sh DESCRIPTION
-These functions are provided by the machine-dependant implementaion
-for attaching handler function to PCI devices' interrupts.
+These functions are provided by the machine-dependent implementation
+for attaching handler functions to the interrupts of PCI devices.
 .Pp
-An architected type is provided by the machine-dependant
+An architect type is provided by the machine-dependent
 code
-.Nm pci_intr_handle_t
-to be initialied by the
-.Nm pci_intr_map .
+.Va pci_intr_handle_t ,
+to be initialised by
+.Fn pci_intr_map .
 .Pp
 The
-.Nm pci_intr_map
-function shall be called first to establish a mapping between a PCI
+.Fn pci_intr_map
+function should be called first to establish a mapping between a PCI
 pin and the interrupt controller's interrupt vector.
-This process may include resolving the mapping through the means
-of firmware-provided information.
-Having the
-.Nm pci_intr_handle_t
-initialised in the previous step an interrupt handler can be established using
-.Nm pci_intr_establish
-or converted into printable form using
-.Nm pci_intr_string .
-The
-.Nm pci_intr_line
-provides the interrupt line extracted form the MD interrupt handle.
-Upon device detachment one shall use
-.Nm pci_intr_disestablish
-to disassociate the handler from the interrupt.
+This process may include resolving the mapping through
+firmware-provided information.
 .Pp
+Having initialised the
+.Va pci_intr_handle_t
+in the previous step, an interrupt handler can be established using
+.Fn pci_intr_establish
+or converted into printable form using
+.Fn pci_intr_string .
+.Fn pci_intr_line
+provides the interrupt line extracted from the MD interrupt handle.
+Upon device detachment,
+.Fn pci_intr_disestablish
+should be used to disassociate the handler from the interrupt.
+.Sh EXAMPLES
 A typical code sequence for establishing a handler
 for a device interrupt in the driver might be:
-.Bd -literal
+.Bd -literal -offset 3n
 int
 xxxattach(struct device *parent, struct device *self, void *aux)
 {
@@ -81,7 +82,7 @@ xxxattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	bus_size_t size;  
+	bus_size_t size;
 
 	\&...
 
@@ -111,7 +112,7 @@ xxxattach(struct device *parent, struct device *self, void *aux)
 .Xr cardbus 4 ,
 .Xr pci 4 ,
 .Xr pcibios 4 ,
-.Xr pci_conf_read 9 .
+.Xr pci_conf_read 9
 .Sh HISTORY
 These functions first appeared in
 .Ox 1.2 .
