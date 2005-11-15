@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.1 2005/11/15 18:28:05 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.2 2005/11/15 22:15:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -39,14 +39,15 @@
 #define ADC_ADC1		2
 #define ADC_ADC2		3	
 #define ADC_ADC3		4
-#define ADC_NUM_SENSORS		5
+#define ADC_MAX_SENSORS		5
 
 struct adc_softc {
-	struct device sc_dev;
-	i2c_tag_t sc_tag;
-	i2c_addr_t sc_addr;
+	struct device	sc_dev;
+	i2c_tag_t	sc_tag;
+	i2c_addr_t	sc_addr;
+	int		sc_newchip;
 
-	struct sensor sc_sensor[ADC_NUM_SENSORS];
+	struct sensor sc_sensor[ADC_MAX_SENSORS];
 };
 
 int	adc_match(struct device *, void *, void *);
@@ -86,6 +87,13 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
+	if (ia->ia_compat) {
+		sc->sc_newchip = 0;
+		if (strcmp(ia->ia_compat, "ad7417") == 0 ||
+		    strcmp(ia->ia_compat, "ad7418") == 0)
+			sc->sc_newchip = 1;
+	}
+
 	cmd = AD741X_CONFIG;
 	data = 0;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
@@ -94,16 +102,18 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	cmd = AD741X_CONFIG2;
-	data = 0;
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-		printf(", config2 reset failed\n");
-		return;
+	if (sc->sc_newchip) {
+		cmd = AD741X_CONFIG2;
+		data = 0;
+		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+			printf(", config2 reset failed\n");
+			return;
+		}
 	}
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADC_NUM_SENSORS; i++)
+	for (i = 0; i < ADC_MAX_SENSORS; i++)
 		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sc_sensor[i].device));
 
@@ -111,26 +121,31 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[ADC_TEMP].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADC_TEMP].desc));
 
-	sc->sc_sensor[ADC_ADC0].type = SENSOR_INTEGER;
-	strlcpy(sc->sc_sensor[ADC_ADC0].desc, "adc0",
-	    sizeof(sc->sc_sensor[ADC_ADC0].desc));
-	sc->sc_sensor[ADC_ADC1].type = SENSOR_INTEGER;
-	strlcpy(sc->sc_sensor[ADC_ADC1].desc, "adc1",
-	    sizeof(sc->sc_sensor[ADC_ADC1].desc));
-	sc->sc_sensor[ADC_ADC2].type = SENSOR_INTEGER;
-	strlcpy(sc->sc_sensor[ADC_ADC2].desc, "adc2",
-	    sizeof(sc->sc_sensor[ADC_ADC2].desc));
-	sc->sc_sensor[ADC_ADC3].type = SENSOR_INTEGER;
-	strlcpy(sc->sc_sensor[ADC_ADC3].desc, "adc3",
-	    sizeof(sc->sc_sensor[ADC_ADC3].desc));
+	if (sc->sc_newchip) {
+		sc->sc_sensor[ADC_ADC0].type = SENSOR_INTEGER;
+		strlcpy(sc->sc_sensor[ADC_ADC0].desc, "adc0",
+		    sizeof(sc->sc_sensor[ADC_ADC0].desc));
+		sc->sc_sensor[ADC_ADC1].type = SENSOR_INTEGER;
+		strlcpy(sc->sc_sensor[ADC_ADC1].desc, "adc1",
+		    sizeof(sc->sc_sensor[ADC_ADC1].desc));
+		sc->sc_sensor[ADC_ADC2].type = SENSOR_INTEGER;
+		strlcpy(sc->sc_sensor[ADC_ADC2].desc, "adc2",
+		    sizeof(sc->sc_sensor[ADC_ADC2].desc));
+		sc->sc_sensor[ADC_ADC3].type = SENSOR_INTEGER;
+		strlcpy(sc->sc_sensor[ADC_ADC3].desc, "adc3",
+		    sizeof(sc->sc_sensor[ADC_ADC3].desc));
+	}
 
 	if (sensor_task_register(sc, adc_refresh, 5)) {
 		printf(", unable to register update task\n");
 		return;
 	}
 
-	for (i = 0; i < ADC_NUM_SENSORS; i++)
-		SENSOR_ADD(&sc->sc_sensor[i]);
+	SENSOR_ADD(&sc->sc_sensor[0]);
+	if (sc->sc_newchip) {
+		for (i = 1; i < ADC_MAX_SENSORS; i++)
+			SENSOR_ADD(&sc->sc_sensor[i]);
+	}
 
 	printf("\n");
 }
@@ -149,31 +164,34 @@ adc_refresh(void *arg)
 	cmd = AD741X_CONFIG;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &reg, sizeof reg, 0))
-		goto fail;
+		goto done;
 	reg = (reg & AD741X_CONFMASK) | (0 << 5);
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &reg, sizeof reg, 0))
-		goto fail;
+		goto done;
 	cmd = AD741X_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0))
-		goto fail;
+		goto done;
 	sc->sc_sensor[ADC_TEMP].value = 273150000 +
 	    ((data[0] << 8 | data[1]) >> 6) * 250000;
+
+	if (sc->sc_newchip == 0)
+		goto done;
 
 	for (i = 0; i < 4; i++) {
 		reg = (reg & AD741X_CONFMASK) | (i << 5);
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_addr, &cmd, sizeof cmd, &reg, sizeof reg, 0))
-			goto fail;
+			goto done;
 		cmd = AD741X_ADC;
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0))
-			goto fail;
+			goto done;
 		sc->sc_sensor[ADC_ADC0 + i].value =
 		    (data[0] << 8 | data[1]) >> 6;
 	}
 
-fail:
+done:
 	iic_release_bus(sc->sc_tag, 0);
 }
