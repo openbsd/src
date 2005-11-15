@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.2 2004/05/23 22:17:48 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.3 2005/11/15 22:26:25 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -58,24 +58,25 @@ System Management Bus (SMBus) protocol is also supported by emulating
 it with the
 .Tn I2C
 commands.
-.Sh SUPPORTED DEVICES
-.Bl -tag -width XXXX -compact
-.It Master controllers
-.Bl -tag -width XXXX -compact
+.Sh SUPPORTED MASTERS
+.Bl -tag -width 10n -offset ind -compact
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 Super I/O ACCESS.bus
 .El
 .Pp
-.It Slave devices
-.Bl -tag -width XXXX -compact
+.Sh SUPPORTED SLAVES
+.Bl -tag -width 10n -offset ind -compact
 .It Xr lmtemp 4
 National Semiconductor LM75/LM77 temperature sensor
-.El
+.It Xr lmenv 4
+National Semiconductor LM87 temperature sensor
+.It Xr adc 4
+Analog Devices AD7416/AD7417/7418 temperature sensor
+.It Xr maxtmp 4
+Maxim MAX6690 temperature sensor
 .El
 .Sh SEE ALSO
-.Xr gscsio 4 ,
 .Xr intro 4 ,
-.Xr lmtemp 4 ,
 .Xr iic 9
 .Sh HISTORY
 The
