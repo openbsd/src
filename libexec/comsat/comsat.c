@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.33 2004/09/16 10:53:02 otto Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.34 2005/11/15 14:43:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.33 2004/09/16 10:53:02 otto Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.34 2005/11/15 14:43:07 millert Exp $";
 #endif /* not lint */
 
 #include <sys/limits.h>
@@ -201,7 +201,7 @@ doreadutmp(void)
 			utmpsize = nutmpsize;
 		}
 		(void)lseek(uf, (off_t)0, SEEK_SET);
-		nutmp = read(uf, utmp, (int)statbf.st_size)/sizeof(struct utmp);
+		nutmp = read(uf, utmp, (size_t)statbf.st_size)/sizeof(struct utmp);
 	}
 	(void)alarm((u_int)15);
 }
@@ -220,7 +220,7 @@ mailfor(char *name)
 	offset = atoi(cp + 1);
 	while (--utp >= utmp) {
 		memcpy(utname, utp->ut_name, UT_NAMESIZE);
-		utname[sizeof(utname)-1] = '\0';
+		utname[UT_NAMESIZE] = '\0';
 		if (!strncmp(utname, name, UT_NAMESIZE))
 			notify(utp, offset);
 	}
@@ -262,7 +262,7 @@ notify(struct utmp *utp, off_t offset)
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
 	memcpy(name, utp->ut_name, UT_NAMESIZE);
-	name[sizeof(name)-1] = '\0';
+	name[UT_NAMESIZE] = '\0';
 	(void)fprintf(tp, "%s\007New mail for %s@%.*s\007 has arrived:%s----%s",
 	    cr, name, (int)sizeof(hostname), hostname, cr, cr);
 	jkfprintf(tp, name, offset);
