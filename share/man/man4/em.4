@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.21 2005/10/07 23:33:55 brad Exp $
+.\" $OpenBSD: em.4,v 1.22 2005/11/15 00:58:30 brad Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -39,9 +39,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for PCI Gigabit Ethernet adapters based on the
-Intel 82540EM, 82540EP, 82541EI, 82541ER, 82541GI, 82542, 82543GC, 82544EI,
-82544GC, 82545EM, 82545GC, 82546EB, 82546GB, 82457EI, 82547GI, 82571EB,
+driver provides support for PCI, PCI-X and PCI Express Gigabit Ethernet adapters
+based on the Intel 82540EM, 82540EP, 82541EI, 82541ER, 82541GI, 82542, 82543GC,
+82544EI, 82544GC, 82545EM, 82545GC, 82546EB, 82546GB, 82457EI, 82547GI, 82571EB,
 82572EI, 82573E and 82573L Ethernet controller chips.
 The driver supports IPv4 receive IP/TCP/UDP checksum offload on all but
 82542-based adapters and Jumbo frames on all but 82573-based adapters.
@@ -76,6 +76,16 @@ Intel PRO/1000MF Dual Port Server Adapter (SX Fiber) (PWLA8492MF)
 Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
 .It
 Intel PRO/1000MT Quad PCI-X Adapter (PWLA8494MT)
+.It
+Intel PRO/1000PT Desktop Adapter
+.It
+Intel PRO/1000PT Server Adapter
+.It
+Intel PRO/1000PT Dual Port Server Adapter
+.It
+Intel PRO/1000PF Server Adapter (SX Fiber)
+.It
+Intel PRO/1000PF Dual Port Server Adapter (SX Fiber)
 .El
 .Pp
 The
@@ -108,9 +118,6 @@ A fatal initialization error has occurred.
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
 .El
-.Sh SUPPORT
-For general information and support, go to the Intel support website at:
-.Pa http://support.intel.com .
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -119,6 +126,9 @@ For general information and support, go to the Intel support website at:
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Pp
+For general information and support, go to the Intel support website at
+.Pa http://support.intel.com .
 .Sh HISTORY
 The
 .Nm
