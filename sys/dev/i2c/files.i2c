@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.8 2005/11/15 16:24:49 deraadt Exp $
+# $OpenBSD: files.i2c,v 1.9 2005/11/15 18:28:05 deraadt Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -24,7 +24,12 @@ device	lmenv
 attach	lmenv at i2c
 file	dev/i2c/lm87.c				lmenv
 
-# Maxim Remote/Local Temperature sensor
+# Maxim MAX6690 Remote/Local Temperature sensor
 device	maxtmp
 attach	maxtmp at i2c
 file	dev/i2c/maxim6690.c			maxtmp
+
+# Analog Devices AD741x Temperature sensor + 4-channel ADC
+device	adc
+attach	adc at i2c
+file	dev/i2c/ad741x.c			adc
