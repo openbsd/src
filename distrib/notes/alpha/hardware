@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.69 2005/10/02 19:41:12 martin Exp $
+dnl	$OpenBSD: hardware,v 1.70 2005/11/15 14:43:22 robert Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -332,6 +332,14 @@ Supported Peripherals:
 	Sound Devices [*]
 		Ensoniq AudioPCI (eap)
 		SoundBlaster PCI128 (eap)
+
+	Radio Receiver Devices [*]
+		Brooktree 848/849/878/879-based TV tuner
+
+	Miscellaneous Devices [*]
+		Brooktree 8[47][89] based frame grabber and TV tuner cards,
+		including: [G]
+			Leadtek Winfast TV 2000
 
 Untested Peripherals:
 
