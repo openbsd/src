@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.3 2005/11/15 18:25:24 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.4 2005/11/15 20:28:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -35,6 +35,8 @@
 #define LM87_FAN1	0x28
 #define LM87_FAN2	0x28
 #define LM87_REVISION	0x3f
+#define LM87_CONFIG1	0x40
+#define  LM87_CONFIG1_START	0x01
 #define LM87_FANDIV	0x47
 
 /* Sensors */
@@ -108,6 +110,21 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_fan1_div = 1 << ((data >> 4) & 0x03);
 	sc->sc_fan2_div = 1 << ((data >> 6) & 0x03);
+
+	cmd = LM87_CONFIG1;
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
+		printf(": cannot read Configuration Register 1\n");
+		return;
+	}
+	data |= LM87_CONFIG1_START;
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
+		printf(": cannot write Configuration Register 1\n");
+		return;
+	}
 
 	cmd = LM87_REVISION;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
