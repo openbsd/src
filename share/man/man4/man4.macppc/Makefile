@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.11 2005/10/31 02:53:51 joris Exp $
+#	$OpenBSD: Makefile,v 1.12 2005/11/15 22:42:49 kettenis Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 #	Id: Makefile,v 1.4 1995/12/14 05:41:38 deraadt Exp $
 
 MAN=	abtn.4 adb.4 aed.4 akbd.4 ams.4 aoa.4 apm.4 autoconf.4 awacs.4 bm.4 \
-	daca.4 intro.4 kauaiata.4 ki2c.4 mediabay.4 mem.4 macobio.4 smu.4 \
-	snapper.4 tumbler.4 zs.4
+	daca.4 intro.4 kauaiata.4 ki2c.4 maciic.4 macobio.4 mediabay.4 mem.4 \
+	smu.4 snapper.4 tumbler.4 zs.4
 MLINKS= mem.4 kmem.4
 MLINKS+= zs.4 zsc.4 zs.4 zstty.4
 
