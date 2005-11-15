@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.36 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.37 2005/11/15 03:15:29 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.36 2004/06/17 22:11:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.37 2005/11/15 03:15:29 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -416,8 +416,10 @@ cron_sleep(int target) {
 			if (fd >= 0 && fcntl(fd, F_SETFL, O_NONBLOCK) == 0) {
 				(void) read(fd, &poke, 1);
 				close(fd);
-				if (poke & RELOAD_CRON)
+				if (poke & RELOAD_CRON) {
+					database.mtime = (time_t)0;
 					load_database(&database);
+				}
 				if (poke & RELOAD_AT) {
 					/*
 					 * We run any pending at jobs right
@@ -425,6 +427,7 @@ cron_sleep(int target) {
 					 * jobs immediately.
 					 */
 					gettimeofday(&t2, NULL);
+					at_database.mtime = (time_t)0;
 					if (scan_atjobs(&at_database, &t2))
 						atrun(&at_database,
 						    batch_maxload, t2.tv_sec);
