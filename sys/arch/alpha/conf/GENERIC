@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.157 2005/11/15 03:08:24 brad Exp $
+#	$OpenBSD: GENERIC,v 1.158 2005/11/15 14:36:49 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -355,6 +355,11 @@ audio*	at cmpci?
 audio*	at fms?
 audio*	at auvia?
 audio*	at uaudio?
+
+bktr0	at pci?
+
+# FM-Radio support
+radio*	at bktr?
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?

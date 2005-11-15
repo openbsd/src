@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.27 2005/08/01 22:22:12 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.28 2005/11/15 14:36:48 robert Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -61,6 +61,7 @@ _DEV(ulpt, 47)
 _DEV(usb, 45)
 _TITLE(spec)
 _DEV(au, 24)
+_DEV(bktr, 58)
 _DEV(bpf, 11)
 _DEV(cry, 57)
 _DEV(fdesc, 10)
@@ -70,12 +71,14 @@ _DEV(lkm, 16)
 _DEV(music, 42)
 _DEV(pci, 52)
 _DEV(pf, 35)
+_DEV(radio, 59)
 _DEV(rmidi, 41)
 _DEV(rnd, 34)
 _DEV(speak, 40)
 _DEV(ss, 32)
 _DEV(systrace, 50)
 _DEV(tun, 7)
+_DEV(tuner, 58)
 _DEV(uk, 33)
 _DEV(xfs, 51)
 dnl

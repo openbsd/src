@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.50 2004/06/18 20:35:50 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.51 2005/11/15 14:36:48 robert Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -55,6 +55,8 @@ bdev_decl(fd);
 #include "raid.h"
 #include "ccd.h"
 #include "rd.h"
+#include "bktr.h"
+#include "radio.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -198,6 +200,8 @@ struct cdevsw	cdevsw[] =
 	cdev_ptm_init(NPTY,ptm),	/* 55: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 56: devices hot plugging */
 	cdev_crypto_init(NCRYPTO,crypto), /* 57: /dev/crypto */
+	cdev_bktr_init(NBKTR,bktr),	/* 58: Bt848 video capture device */
+	cdev_radio_init(NRADIO,radio), /* 59: generic radio I/O */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
