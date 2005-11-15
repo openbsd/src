@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.2 2005/11/14 22:22:32 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.1 2005/11/15 16:19:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis

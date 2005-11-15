@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.6 2005/11/12 22:59:06 kettenis Exp $
+# $OpenBSD: files.i2c,v 1.7 2005/11/15 16:19:15 deraadt Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -18,3 +18,8 @@ file	dev/i2c/i2c_bitbang.c			i2c_bitbang
 device	lmtemp
 attach	lmtemp at i2c
 file	dev/i2c/lm75.c				lmtemp
+
+# National Semiconductor LM87 sensor
+device	lmenv
+attach	lmenv at i2c
+file	dev/i2c/lm87.c				lmenv
