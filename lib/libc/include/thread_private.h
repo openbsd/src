@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.16 2004/06/07 21:11:23 marc Exp $ */
+/* $OpenBSD: thread_private.h,v 1.17 2005/11/15 11:56:40 millert Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -91,6 +91,7 @@ extern void *__THREAD_NAME(serv_mutex);
 #define FD_WRITE	0x2
 #define FD_RDWR		(FD_READ | FD_WRITE)
 
+struct timespec;
 int	_thread_fd_lock(int, int, struct timespec *);
 void	_thread_fd_unlock(int, int);
 
