@@ -1,4 +1,4 @@
-/* $OpenBSD: key.c,v 1.23 2005/11/15 21:49:04 cloder Exp $	 */
+/* $OpenBSD: key.c,v 1.24 2005/11/15 22:10:49 cloder Exp $	 */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -93,7 +93,7 @@ key_serialize(int type, int private, void *key, u_int8_t **data,
 
 /* Convert from serialized to printable */
 char *
-key_printable(int type, int private, u_int8_t *data, int datalen)
+key_printable(int type, int private, u_int8_t *data, size_t datalen)
 {
 	switch (type) {
 	case ISAKMP_KEY_PASSPHRASE:
@@ -111,7 +111,7 @@ key_printable(int type, int private, u_int8_t *data, int datalen)
 
 /* Convert from serialized to internal.  */
 void *
-key_internalize(int type, int private, u_int8_t *data, int datalen)
+key_internalize(int type, int private, u_int8_t *data, size_t datalen)
 {
 	switch (type) {
 	case ISAKMP_KEY_PASSPHRASE:
