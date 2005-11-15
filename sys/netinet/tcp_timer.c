@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.37 2005/06/30 08:51:31 markus Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.38 2005/11/15 21:09:46 miod Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -354,12 +354,12 @@ tcp_timer_rexmt(void *arg)
 	 * almost immediately.  To get more time between
 	 * drops but still "push" the network to take advantage
 	 * of improving conditions, we switch from exponential
-	 * to linear window opening at some threshhold size.
-	 * For a threshhold, we use half the current window
+	 * to linear window opening at some threshold size.
+	 * For a threshold, we use half the current window
 	 * size, truncated to a multiple of the mss.
 	 *
 	 * (the minimum cwnd that will give us exponential
-	 * growth is 2 mss.  We don't allow the threshhold
+	 * growth is 2 mss.  We don't allow the threshold
 	 * to go below this.)
 	 */
 	{

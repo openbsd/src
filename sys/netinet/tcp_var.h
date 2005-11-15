@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.77 2005/08/02 11:05:44 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.78 2005/11/15 21:09:46 miod Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ struct tcpcb {
 					 */
 /* congestion control (for slow start, source quench, retransmit after loss) */
 	u_long	snd_cwnd;		/* congestion-controlled window */
-	u_long	snd_ssthresh;		/* snd_cwnd size threshhold for
+	u_long	snd_ssthresh;		/* snd_cwnd size threshold for
 					 * for slow start exponential to
 					 * linear switch
 					 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.33 2005/11/15 07:02:36 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.34 2005/11/15 21:09:44 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1036,7 +1036,7 @@ hderror(unit)
 	}
 	/*
 	 * Only report error if we have reached the error reporting
-	 * threshhold.  By default, this will only report after the
+	 * threshold.  By default, this will only report after the
 	 * retry limit has been exceeded.
 	 */
 	if (rs->sc_tab.b_errcnt < hderrthresh)

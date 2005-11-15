@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_bio.c,v 1.11 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: lfs_bio.c,v 1.12 2005/11/15 21:09:46 miod Exp $	*/
 /*	$NetBSD: lfs_bio.c,v 1.5 1996/02/09 22:28:49 christos Exp $	*/
 
 /*
@@ -62,11 +62,11 @@ int	locked_queue_count;		/* XXX Count of locked-down buffers. */
 int	lfs_writing;			/* Set if already kicked off a writer
 					   because of buffer space */
 /*
-#define WRITE_THRESHHOLD	((nbuf >> 2) - 10)
-#define WAIT_THRESHHOLD		((nbuf >> 1) - 10)
+#define WRITE_THRESHOLD		((nbuf >> 2) - 10)
+#define WAIT_THRESHOLD		((nbuf >> 1) - 10)
 */
-#define WAIT_THRESHHOLD         (nbuf - (nbuf >> 2) - 10)
-#define WRITE_THRESHHOLD        ((nbuf >> 1) - 10)
+#define WAIT_THRESHOLD          (nbuf - (nbuf >> 2) - 10)
+#define WRITE_THRESHOLD         ((nbuf >> 1) - 10)
 #define LFS_BUFWAIT	2
 
 struct timeout wakeup_timeout;
@@ -122,7 +122,7 @@ lfs_bwrite(v)
 		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
 		bp->b_synctime = time_second + 30;
 		s = splbio();
-		if (bdirties.tqh_first == bp) {
+		if (TAILQ_FIRST(&bdirties) == bp) {
 			if (timeout_triggered(&wakeup_timeout))
 				timeout_del(&wakeup_timeout);
 			if (!timeout_initialized(&wakeup_timeout))
@@ -156,8 +156,7 @@ lfs_flush()
 	if (lfs_writing)
 		return;
 	lfs_writing = 1;
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = mp->mnt_list.cqe_next) {
+	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		/* The lock check below is to avoid races with unmount. */
 		if (!strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN) &&
 		    (mp->mnt_flag & (MNT_RDONLY)) == 0 &&
@@ -188,11 +187,11 @@ lfs_check(vp, blkno)
 	error = 0;
 	if (incore(vp, blkno))
 		return (0);
-	if (locked_queue_count > WRITE_THRESHHOLD)
+	if (locked_queue_count > WRITE_THRESHOLD)
 		lfs_flush();
 
 	/* If out of buffers, wait on writer */
-	while (locked_queue_count > WAIT_THRESHHOLD) {
+	while (locked_queue_count > WAIT_THRESHOLD) {
 #ifdef DOSTATS
 	    ++lfs_stats.wait_exceeded;
 #endif
