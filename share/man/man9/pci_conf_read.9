@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_conf_read.9,v 1.4 2005/11/14 17:11:53 mickey Exp $
+.\"	$OpenBSD: pci_conf_read.9,v 1.5 2005/11/15 00:26:43 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -16,10 +16,11 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd November 20, 2005
-.Dt pci_conf_read 9
+.Dt PCI_CONF_READ 9
 .Os
 .Sh NAME
 .Nm pci_make_tag ,
+.Nm pci_decompose_tag ,
 .Nm pci_conf_read ,
 .Nm pci_conf_write
 .Nd PCI config space manipulation functions
@@ -41,12 +42,12 @@
 .Fn pci_conf_write "pci_chipset_tag_t pc" "pcitag_t tag" "int reg" \
 "pcireg_t val"
 .Sh DESCRIPTION
-These functions provide a way for accessing PCI configuration space.
+These functions provide a way to access PCI configuration space.
 .Pp
-The following types are defined in the MD include
-.Pa Aq pci_machdep.h
-file:
-.Bl -tag -width pci_chipset_tag_t -offset indent
+The following types are defined in the machine dependent include file
+.Aq Pa pci_machdep.h .
+.Pp
+.Bl -tag -width pci_chipset_tag_t -offset indent -compact
 .It pci_chipset_tag_t
 a PCI chipset descriptor;
 .It pcitag_t
@@ -55,7 +56,7 @@ a PCI device tag;
 a PCI register datum.
 .El
 .Pp
-In order to access PCI configuration space a device tag shall be made using
+In order to access PCI configuration space, a device tag shall be made using
 .Nm pci_make_tag
 given the PCI chipset tag
 .Ar pc
@@ -63,21 +64,22 @@ and the device specification in a tuple of
 .Ar bus ,
 .Ar device ,
 .Ar function .
-The PCI tag composition is a PCI chipset dependant operation
-although often as simple as shift and logical OR combination.
+The PCI tag composition is a PCI chipset dependent operation
+although often as simple as a shift and logical OR combination.
+.Pp
 The
 .Nm pci_decompose_tag
-provides a reverse opration.
-Having a tag composed now it is possible to perform configuration
+provides a reverse operation.
+Once a tag is composed, it is possible to perform configuration
 space read and write with
 .Nm pci_conf_read
 and
-.Nm pci_conf_write
+.Nm pci_conf_write ,
 respectively.
 Access to PCI configuration space is only provided for whole
 .Nm pcireg_t
-items that is usually a 32-bit integer.
-Accesses to non-existant PCI devices do not (or should not) generate
+items, which is usually a 32-bit integer.
+Access to non-existent PCI devices do not (or should not) generate
 any kinds of faults or interruptions and thus allow for an easy device
 scanning by cycling through all possible device and function numbers
 for a given bus.
@@ -86,19 +88,19 @@ Below is an overview of defined PCI configuration space registers for
 devices:
 .Bl -tag -width 0xff -offset indent
 .It 0x00
-Vendor (lower word) and Product (higher word) identification.
+Vendor (lower word) and Product (higher word) identification
 (see
 .Pa /sys/dev/pci/pcidevs
-for a comprehensive list)
+for a comprehensive list).
 .It 0x04
 Commands and Status register.
 .It 0x08
-PCI device's class and subclass ids.
+PCI device's class and subclass IDs.
 See
 .Pa /sys/dev/pci/pcireg.h
 for PCI_CLASS_* and PCI_SUBCLASS_* definitions.
 .It 0x0c
-Specify (low byte to high): cache line size, PCI lattency timer, header type
+Specify (low byte to high): cache line size, PCI latency timer, header type,
 and BIST.
 .It 0x10 - 0x28
 Base address registers for IO and memory space mapped registers.
@@ -112,10 +114,9 @@ Each item is an offset in the configuration space itself.
 .It 0x3c
 Interrupt line and pin numbers.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr cardbus 4 ,
-.Xr pci 4 .
+.Xr pci 4
 .Sh HISTORY
 These functions first appeared in
 .Ox 1.2 .
