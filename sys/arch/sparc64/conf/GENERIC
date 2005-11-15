@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.136 2005/11/14 23:03:06 brad Exp $
+#	$OpenBSD: GENERIC,v 1.137 2005/11/15 01:12:49 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -58,6 +58,7 @@ de*	at pci?			# DC21X4X-based ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 epic*	at pci?			# SMC EPIC/100 ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
+#ixgb*	at pci?			# Intel Pro/10Gb ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 stge*	at pci?			# Sundance TC9021 GigE
 rl*	at pci?			# RealTek 81[23]9 ethernet

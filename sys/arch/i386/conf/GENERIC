@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.438 2005/11/11 00:05:11 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.439 2005/11/15 01:12:48 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -428,6 +428,7 @@ ti*	at pci?				# Alteon Tigon 1Gb ethernet
 skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
 em*	at pci?				# Intel Pro/1000 ethernet
+#ixgb*	at pci?				# Intel Pro/10Gb ethernet
 txp*	at pci?				# 3com 3CR990
 nge*	at pci?				# NS DP83820/DP83821 GigE
 bge*	at pci?				# Broadcom BCM570x (aka Tigon3)
