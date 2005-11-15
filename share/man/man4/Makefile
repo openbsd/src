@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.319 2005/11/15 23:20:33 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.320 2005/11/15 23:25:24 deraadt Exp $
 
-MAN=	aac.4 ac97.4 acphy.4 adc.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 ahd.4 \
-	aic.4 amdpm.4 ami.4 amphy.4 an.4 aps.4 aria.4 art.4 ast.4 atalk.4 \
-	atapiscsi.4 ath.4 atu.4 atw.4 audio.4 aue.4 auich.4 autri.4 \
+MAN=	aac.4 ac97.4 acphy.4 adc.4 addcom.4 admtmp.4 adv.4 aha.4 ahb.4 ahc.4 \
+	ahd.4 aic.4 amdpm.4 ami.4 amphy.4 an.4 aps.4 aria.4 art.4 ast.4 \
+	atalk.4 atapiscsi.4 ath.4 atu.4 atw.4 audio.4 aue.4 auich.4 autri.4 \
 	auixp.4 auvia.4 awi.4 axe.4 az.4 bce.4 bge.4 bha.4 bio.4 bktr.4 \
 	bmtphy.4 boca.4 bpf.4 brgphy.4 bridge.4 cac.4 cardbus.4 \
 	carp.4 ccd.4 cd.4 cdce.4 ch.4 ciphy.4 ciss.4 \
