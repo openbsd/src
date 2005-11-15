@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.1 2005/11/14 23:25:43 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.2 2005/11/15 18:17:06 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -254,7 +254,6 @@ err_rx_desc:
 err_tx_desc:
 err_pci:
 	ixgb_free_pci_resources(sc);
-
 }
 
 void
@@ -313,7 +312,6 @@ ixgb_start(struct ifnet *ifp)
 
 		/* Set timeout in case hardware has problems transmitting */
 		ifp->if_timer = IXGB_TX_TIMEOUT;
-
 	}
 }
 
@@ -372,16 +370,14 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFFLAGS (Set Interface Flags)");
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING)) {
+			if (!(ifp->if_flags & IFF_RUNNING))
 				ixgb_init(sc);
-			}
 
 			ixgb_disable_promisc(sc);
 			ixgb_set_promisc(sc);
 		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
+			if (ifp->if_flags & IFF_RUNNING)
 				ixgb_stop(sc);
-			}
 		}
 		break;
 	case SIOCADDMULTI:
@@ -655,9 +651,8 @@ ixgb_encap(struct ixgb_softc *sc, struct mbuf *m_head)
 	 * Force a cleanup if number of TX descriptors available hits the
 	 * threshold
 	 */
-	if (sc->num_tx_desc_avail <= IXGB_TX_CLEANUP_THRESHOLD) {
+	if (sc->num_tx_desc_avail <= IXGB_TX_CLEANUP_THRESHOLD)
 		ixgb_clean_transmit_interrupts(sc);
-	}
 	if (sc->num_tx_desc_avail <= IXGB_TX_CLEANUP_THRESHOLD) {
 		sc->no_tx_desc_avail1++;
 		return (ENOBUFS);
@@ -824,9 +819,8 @@ ixgb_local_timer(void *arg)
 	ixgb_check_for_link(&sc->hw);
 	ixgb_update_link_status(sc);
 	ixgb_update_stats_counters(sc);
-	if (ixgb_display_debug_stats && ifp->if_flags & IFF_RUNNING) {
+	if (ixgb_display_debug_stats && ifp->if_flags & IFF_RUNNING)
 		ixgb_print_hw_stats(sc);
-	}
 
 	timeout_add(&sc->timer_handle, hz);
 
@@ -1145,7 +1139,7 @@ ixgb_allocate_transmit_structures(struct ixgb_softc *sc)
 					    M_NOWAIT))) {
 		printf("%s: Unable to allocate tx_buffer memory\n",
 		       sc->sc_dv.dv_xname);
-		return ENOMEM;
+		return (ENOMEM);
 	}
 	bzero(sc->tx_buffer_area,
 	      sizeof(struct ixgb_buffer) * sc->num_tx_desc);
@@ -1657,9 +1651,8 @@ ixgb_free_receive_structures(struct ixgb_softc *sc)
 		free(sc->rx_buffer_area, M_DEVBUF);
 		sc->rx_buffer_area = NULL;
 	}
-	if (sc->rxtag != NULL) {
+	if (sc->rxtag != NULL)
 		sc->rxtag = NULL;
-	}
 }
 
 /*********************************************************************
@@ -1695,9 +1688,8 @@ ixgb_process_receive_interrupts(struct ixgb_softc *sc, int count)
 	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
 	    sc->rxdma.dma_size, BUS_DMASYNC_POSTREAD);
 
-	if (!((current_desc->status) & IXGB_RX_DESC_STATUS_DD)) {
+	if (!((current_desc->status) & IXGB_RX_DESC_STATUS_DD))
 		return;
-	}
 
 	while ((current_desc->status & IXGB_RX_DESC_STATUS_DD) &&
 		    (count != 0) &&
@@ -1720,9 +1712,8 @@ ixgb_process_receive_interrupts(struct ixgb_softc *sc, int count)
 
 		if (current_desc->errors & (IXGB_RX_DESC_ERRORS_CE |
 			    IXGB_RX_DESC_ERRORS_SE | IXGB_RX_DESC_ERRORS_P |
-					    IXGB_RX_DESC_ERRORS_RXE)) {
+					    IXGB_RX_DESC_ERRORS_RXE))
 			accept_frame = 0;
-		}
 		if (accept_frame) {
 
 			/* Assign correct length to the current fragment */
@@ -2000,53 +1991,53 @@ ixgb_print_hw_stats(struct ixgb_softc *sc)
 		bus_speed == ixgb_bus_speed_133 ? "133MHz" :
 		"UNKNOWN");
 	printf("ixgb%d: PCI_Bus_Speed = %s\n", unit,
-	       buf_speed);
+		buf_speed);
 
 	snprintf(buf_type, sizeof(buf_type),
 		bus_type == ixgb_bus_type_pci ? "PCI" :
 		bus_type == ixgb_bus_type_pcix ? "PCI-X" :
 		"UNKNOWN");
 	printf("%s: PCI_Bus_Type = %s\n", unit,
-	       buf_type);
+		buf_type);
 
 	printf("%s: Tx Descriptors not Avail1 = %ld\n", unit,
-	       sc->no_tx_desc_avail1);
+		sc->no_tx_desc_avail1);
 	printf("%s: Tx Descriptors not Avail2 = %ld\n", unit,
-	       sc->no_tx_desc_avail2);
+		sc->no_tx_desc_avail2);
 	printf("%s: Std Mbuf Failed = %ld\n", unit,
-	       sc->mbuf_alloc_failed);
+		sc->mbuf_alloc_failed);
 	printf("%s: Std Cluster Failed = %ld\n", unit,
-	       sc->mbuf_cluster_failed);
+		sc->mbuf_cluster_failed);
 
 	printf("%s: Defer count = %lld\n", unit,
-	       (long long)sc->stats.dc);
+		(long long)sc->stats.dc);
 	printf("%s: Missed Packets = %lld\n", unit,
-	       (long long)sc->stats.mpc);
+		(long long)sc->stats.mpc);
 	printf("%s: Receive No Buffers = %lld\n", unit,
-	       (long long)sc->stats.rnbc);
+		(long long)sc->stats.rnbc);
 	printf("%s: Receive length errors = %lld\n", unit,
-	       (long long)sc->stats.rlec);
+		(long long)sc->stats.rlec);
 	printf("%s: Crc errors = %lld\n", unit,
-	       (long long)sc->stats.crcerrs);
+		(long long)sc->stats.crcerrs);
 	printf("%s: Driver dropped packets = %ld\n", unit,
-	       sc->dropped_pkts);
+		sc->dropped_pkts);
 
 	printf("%s: XON Rcvd = %lld\n", unit,
-	       (long long)sc->stats.xonrxc);
+		(long long)sc->stats.xonrxc);
 	printf("%s: XON Xmtd = %lld\n", unit,
-	       (long long)sc->stats.xontxc);
+		(long long)sc->stats.xontxc);
 	printf("%s: XOFF Rcvd = %lld\n", unit,
-	       (long long)sc->stats.xoffrxc);
+		(long long)sc->stats.xoffrxc);
 	printf("%s: XOFF Xmtd = %lld\n", unit,
-	       (long long)sc->stats.xofftxc);
+		(long long)sc->stats.xofftxc);
 
 	printf("%s: Good Packets Rcvd = %lld\n", unit,
-	       (long long)sc->stats.gprcl);
+		(long long)sc->stats.gprcl);
 	printf("%s: Good Packets Xmtd = %lld\n", unit,
-	       (long long)sc->stats.gptcl);
+		(long long)sc->stats.gptcl);
 
 	printf("%s: Jumbo frames recvd = %lld\n", unit,
-	       (long long)sc->stats.jprcl);
+		(long long)sc->stats.jprcl);
 	printf("%s: Jumbo frames Xmtd = %lld\n", unit,
-	       (long long)sc->stats.jptcl);
+		(long long)sc->stats.jptcl);
 }
