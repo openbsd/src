@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.23 2005/11/07 00:03:16 brad Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.24 2005/11/15 10:43:35 mickey Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -53,22 +53,22 @@
  * to all chips.  After that, it gets messy...
  */
 typedef struct {
-    bus_addr_t csr_busmode;			/* CSR0 */
-    bus_addr_t csr_txpoll;			/* CSR1 */
-    bus_addr_t csr_rxpoll;			/* CSR2 */
-    bus_addr_t csr_rxlist;			/* CSR3 */
-    bus_addr_t csr_txlist;			/* CSR4 */
-    bus_addr_t csr_status;			/* CSR5 */
-    bus_addr_t csr_command;			/* CSR6 */
-    bus_addr_t csr_intr;			/* CSR7 */
-    bus_addr_t csr_missed_frames;		/* CSR8 */
-    bus_addr_t csr_9;			/* CSR9 */
-    bus_addr_t csr_10;			/* CSR10 */
-    bus_addr_t csr_11;			/* CSR11 */
-    bus_addr_t csr_12;			/* CSR12 */
-    bus_addr_t csr_13;			/* CSR13 */
-    bus_addr_t csr_14;			/* CSR14 */
-    bus_addr_t csr_15;			/* CSR15 */
+    bus_size_t csr_busmode;			/* CSR0 */
+    bus_size_t csr_txpoll;			/* CSR1 */
+    bus_size_t csr_rxpoll;			/* CSR2 */
+    bus_size_t csr_rxlist;			/* CSR3 */
+    bus_size_t csr_txlist;			/* CSR4 */
+    bus_size_t csr_status;			/* CSR5 */
+    bus_size_t csr_command;			/* CSR6 */
+    bus_size_t csr_intr;			/* CSR7 */
+    bus_size_t csr_missed_frames;		/* CSR8 */
+    bus_size_t csr_9;			/* CSR9 */
+    bus_size_t csr_10;			/* CSR10 */
+    bus_size_t csr_11;			/* CSR11 */
+    bus_size_t csr_12;			/* CSR12 */
+    bus_size_t csr_13;			/* CSR13 */
+    bus_size_t csr_14;			/* CSR14 */
+    bus_size_t csr_15;			/* CSR15 */
 } tulip_regfile_t;
 
 #define	csr_enetrom		csr_9	/* 21040 */
