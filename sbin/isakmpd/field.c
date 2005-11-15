@@ -1,4 +1,4 @@
-/* $OpenBSD: field.c,v 1.18 2005/11/14 23:25:11 deraadt Exp $	 */
+/* $OpenBSD: field.c,v 1.19 2005/11/15 21:49:04 cloder Exp $	 */
 /* $EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	 */
 
 /*
@@ -61,20 +61,7 @@ static char    *(*decode_field[]) (u_int8_t *, size_t,
 static char *
 field_debug_raw(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-	char	*retval, *p;
-
-	if (len == 0)
-		return 0;
-	retval = malloc(3 + len * 2);
-	if (!retval)
-		return 0;
-	strlcpy(retval, "0x", 3 + len * 2);
-	p = retval + 2;
-	for (; len > 0; len--) {
-		snprintf(p, 1 + len * 2, "%02x", *buf++);
-		p += 2;
-	}
-	return retval;
+	return raw2hex(buf, len);
 }
 
 /*

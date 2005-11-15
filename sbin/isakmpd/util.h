@@ -1,4 +1,4 @@
-/* $OpenBSD: util.h,v 1.26 2005/07/25 14:56:42 hshoexer Exp $	 */
+/* $OpenBSD: util.h,v 1.27 2005/11/15 21:49:04 cloder Exp $	 */
 /* $EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	 */
 
 /*
@@ -53,6 +53,7 @@ extern void     encode_64(u_int8_t *, u_int64_t);
 extern u_int32_t rand_32(void);
 extern u_int8_t *getrandom(u_int8_t *, size_t);
 extern int      hex2raw(char *, u_int8_t *, size_t);
+extern char 	*raw2hex(u_int8_t *, size_t);
 extern int      ones_test(const u_int8_t *, size_t);
 extern int      sockaddr2text(struct sockaddr *, char **, int);
 extern u_int8_t *sockaddr_addrdata(struct sockaddr *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.104 2005/11/14 23:25:11 deraadt Exp $	 */
+/* $OpenBSD: x509.c,v 1.105 2005/11/15 21:49:04 cloder Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -1283,21 +1283,13 @@ x509_printable(void *cert)
 {
 	char		*s;
 	u_int8_t	*data;
-	u_int32_t	datalen, i;
+	u_int32_t	datalen;
 
 	x509_serialize(cert, &data, &datalen);
 	if (!data)
 		return 0;
 
-	s = malloc(datalen * 2 + 1);
-	if (!s) {
-		free(data);
-		log_error("x509_printable: malloc (%d) failed",
-		    datalen * 2 + 1);
-		return 0;
-	}
-	for (i = 0; i < datalen; i++)
-		snprintf(s + (2 * i), 2 * (datalen - i) + 1, "%02x", data[i]);
+	s = raw2hex(data, datalen);
 	free(data);
 	return s;
 }
