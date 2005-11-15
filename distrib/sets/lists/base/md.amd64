@@ -1152,6 +1152,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_ipwvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_iwireg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_iwivar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_ixgb.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_ixgb_osdep.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_levar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_lgereg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_lmc_types.ph
@@ -1181,6 +1183,9 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/isesreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/isesvar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/ixgb_ee.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/ixgb_hw.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/ixgb_ids.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/lofnvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/maestro_reg.ph
@@ -2276,8 +2281,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_ixgb.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/if_ixgb_osdep.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/ixgb_ee.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/ixgb_hw.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/ixgb_ids.ph

@@ -1077,6 +1077,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ipwvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_iwireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_iwivar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ixgb.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ixgb_osdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_levar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lgereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmc_types.ph
@@ -1106,6 +1108,9 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/isesreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/isesvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_ee.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_hw.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_ids.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/lofnvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/maestro_reg.ph
@@ -2198,8 +2203,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ixgb.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ixgb_osdep.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_ee.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_hw.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ixgb_ids.ph
