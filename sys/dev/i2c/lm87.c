@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.5 2005/11/15 20:40:45 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.6 2005/11/15 22:01:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -37,6 +37,9 @@
 #define LM87_REVISION	0x3f
 #define LM87_CONFIG1	0x40
 #define  LM87_CONFIG1_START	0x01
+#define LM87_CHANNEL	0x16
+#define  LM87_CHANNEL_AIN1	0x01
+#define  LM87_CHANNEL_AIN2	0x02
 #define LM87_FANDIV	0x47
 
 /* Sensors */
@@ -93,7 +96,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lmenv_softc *sc = (struct lmenv_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	u_int8_t cmd, data;
+	u_int8_t cmd, data, channel;
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
@@ -103,7 +106,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 
 	cmd = LM87_FANDIV;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot read Fan Divisor register\n");
 		return;
@@ -111,16 +114,25 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_fan1_div = 1 << ((data >> 4) & 0x03);
 	sc->sc_fan2_div = 1 << ((data >> 6) & 0x03);
 
+	cmd = LM87_CHANNEL;
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &channel, sizeof channel, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
+		printf(": cannot read Channel register\n");
+		return;
+	}
+
 	cmd = LM87_CONFIG1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot read Configuration Register 1\n");
 		return;
 	}
+
 	data |= LM87_CONFIG1_START;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot write Configuration Register 1\n");
 		return;
@@ -128,7 +140,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 
 	cmd = LM87_REVISION;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		     sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot read ID register\n");
 		return;
@@ -175,13 +187,25 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[LMENV_INT_TEMP].desc, "Int. Temp.",
 	    sizeof(sc->sc_sensor[LMENV_INT_TEMP].desc));
 
-	sc->sc_sensor[LMENV_FAN1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[LMENV_FAN1].desc, "FAN1",
-	    sizeof(sc->sc_sensor[LMENV_FAN1].desc));
+	if (channel & LM87_CHANNEL_AIN1) {
+		sc->sc_sensor[LMENV_FAN1].type = SENSOR_VOLTS_DC;
+		strlcpy(sc->sc_sensor[LMENV_FAN1].desc, "AIN1",
+		    sizeof(sc->sc_sensor[LMENV_FAN1].desc));
+	} else {
+		sc->sc_sensor[LMENV_FAN1].type = SENSOR_FANRPM;
+		strlcpy(sc->sc_sensor[LMENV_FAN1].desc, "FAN1",
+		    sizeof(sc->sc_sensor[LMENV_FAN1].desc));
+	}
 
-	sc->sc_sensor[LMENV_FAN2].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[LMENV_FAN2].desc, "FAN2",
-	    sizeof(sc->sc_sensor[LMENV_FAN2].desc));
+	if (channel & LM87_CHANNEL_AIN2) {
+		sc->sc_sensor[LMENV_FAN2].type = SENSOR_VOLTS_DC;
+		strlcpy(sc->sc_sensor[LMENV_FAN2].desc, "AIN2",
+		    sizeof(sc->sc_sensor[LMENV_FAN2].desc));
+	} else {
+		sc->sc_sensor[LMENV_FAN2].type = SENSOR_FANRPM;
+		strlcpy(sc->sc_sensor[LMENV_FAN2].desc, "FAN2",
+		    sizeof(sc->sc_sensor[LMENV_FAN2].desc));
+	}
 
 	if (sensor_task_register(sc, lmenv_refresh, 5)) {
 		printf(", unable to register update task\n");
@@ -239,6 +263,11 @@ lmenv_refresh(void *arg)
 				    (int8_t)data * 1000000 + 273150000;
 			break;
 		case LMENV_FAN1:
+			if (sc->sc_sensor[sensor].type == SENSOR_VOLTS_DC) {
+				sc->sc_sensor[sensor].value =
+				    1870000 * data / 192;
+				break;
+			}
 			tmp = data * sc->sc_fan1_div;
 			if (tmp == 0)
 				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
@@ -246,6 +275,11 @@ lmenv_refresh(void *arg)
 				sc->sc_sensor[sensor].value = 1350000 / tmp;
 			break;
 		case LMENV_FAN2:
+			if (sc->sc_sensor[sensor].type == SENSOR_VOLTS_DC) {
+				sc->sc_sensor[sensor].value =
+				    1870000 * data / 192;
+				break;
+			}
 			tmp = data * sc->sc_fan2_div;
 			if (tmp == 0)
 				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
