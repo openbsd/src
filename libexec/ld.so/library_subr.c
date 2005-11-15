@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.23 2005/11/02 15:25:00 kurt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.24 2005/11/15 02:14:47 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -431,7 +431,8 @@ _dl_unload_dlopen(void)
 		if (node->data == _dl_objects)
 			continue;
 
-		while(node->data->opencount-- != 0) {
+		while(node->data->opencount > 0) {
+			node->data->opencount--;
 			_dl_notify_unload_shlib(node->data);
 			_dl_run_all_dtors();
 		}
