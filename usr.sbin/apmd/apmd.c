@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.34 2005/06/14 15:18:53 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.35 2005/11/15 01:21:41 jmc Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -82,7 +82,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-adempqs] [-f devfile] [-S sockfile] [-t timo]\n",
+	    "usage: %s [-ademps] [-f devname] [-S sockname] [-t seconds]\n",
 	    __progname);
 	exit(1);
 }

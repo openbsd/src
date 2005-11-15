@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.11 2005/03/30 20:00:55 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.12 2005/11/15 01:25:48 jmc Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -58,7 +58,7 @@ int send_command(int fd, struct apm_command *cmd, struct apm_reply *reply);
 void
 usage(void)
 {
-	fprintf(stderr,"usage: %s [-v] [-z | -S] [-slbam] [-f socket]\n",
+	fprintf(stderr,"usage: %s [-ablmSsvz] [-f sockname]\n",
 	    __progname);
 	exit(1);
 }
@@ -66,7 +66,7 @@ usage(void)
 void
 zzusage(void)
 {
-	fprintf(stderr,"usage: %s [-z | -S] [-f socket]\n",
+	fprintf(stderr,"usage: %s [-Sz] [-f sockname]\n",
 	    __progname);
 	exit(1);
 }
