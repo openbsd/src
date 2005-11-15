@@ -1,0 +1,118 @@
+.\"	$OpenBSD: pci_intr_map.9,v 1.1 2005/11/15 11:41:26 mickey Exp $
+.\"
+.\" Copyright (c) 2005 Michael Shalayeff
+.\" All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd November 20, 2005
+.Dt pci_intr_map 9
+.Os
+.Sh NAME
+.Nm pci_intr_map ,
+.Nm pci_intr_string ,
+.Nm pci_intr_establish ,
+.Nm pci_intr_disestablish
+.Nd PCI interrupts
+.Sh SYNOPSIS
+.Fd #include <alpha/pci/pci_machdep.h>
+.Fd #include <i386/pci/pci_machdep.h>
+.Fd #include <cats/pci/pci_machdep.h>
+.Fd #include <powerpc/pci/pci_machdep.h>
+.Fd #include <sgi/pci/pci_machdep.h>
+.Fd #include <machine/pci_machdep.h>
+.Ft int
+.Fn pci_intr_map "struct pci_attach_args *paa" "pci_intr_handle_t *ih"
+.Ft int
+.Fn pci_intr_line "pci_intr_handle_t *ih"
+.Ft const char *
+.Fn pci_intr_string "pci_chipset_tag_t pc" "pci_intr_handle_t ih"
+.Ft void *
+.Fn pci_intr_establish "pci_chipset_tag_t pc" "pci_intr_handle_t ih" \
+"int type" "int (*func)(void *)" "void *arg" "char *name"
+.Ft void
+.Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *v"
+.Sh DESCRIPTION
+These functions are provided by the machine-dependant implementaion
+for attaching handler function to PCI devices' interrupts.
+.Pp
+An architected type is provided by the machine-dependant
+code
+.Nm pci_intr_handle_t
+to be initialied by the
+.Nm pci_intr_map .
+.Pp
+The
+.Nm pci_intr_map
+function shall be called first to establish a mapping between a PCI
+pin and the interrupt controller's interrupt vector.
+This process may include resolving the mapping through the means
+of firmware-provided information.
+Having the
+.Nm pci_intr_handle_t
+initialised in the previous step an interrupt handler can be established using
+.Nm pci_intr_establish
+or converted into printable form using
+.Nm pci_intr_string .
+The
+.Nm pci_intr_line
+provides the interrupt line extracted form the MD interrupt handle.
+Upon device detachment one shall use
+.Nm pci_intr_disestablish
+to disassociate the handler from the interrupt.
+.Pp
+A typical code sequence for establishing a handler
+for a device interrupt in the driver might be:
+.Bd -literal
+int
+xxxattach(struct device *parent, struct device *self, void *aux)
+{
+	struct xxx_softc *sc = (struct xxx_softc *)self;
+	struct pci_attach_args *pa = aux;
+	pci_intr_handle_t ih;
+	const char *intrstr;
+	bus_size_t size;  
+
+	\&...
+
+	if (pci_intr_map(pa, &ih)) {
+		printf(": can't map interrupt\\n");
+		bus_space_unmap(sc->iot, sc->ioh, size);
+		return;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET,
+	    xxx_intr, sc, sc->sc_dev.dv_xname);
+	if (!sc->sc_ih) {
+		printf(": can't establish interrupt");
+		if (intrstr)
+			printf(" at %s", intrstr);
+		printf("\\n");
+		bus_space_unmap(sc->iot, sc->ioh, size);
+		return;
+	}
+
+	printf(": %s\\n", intrstr);
+
+	\&...
+}
+.Ed
+.Sh SEE ALSO
+.Xr cardbus 4 ,
+.Xr pci 4 ,
+.Xr pcibios 4 ,
+.Xr pci_conf_read 9 .
+.Sh HISTORY
+These functions first appeared in
+.Ox 1.2 .
+.\" .Sh AUTHORS
