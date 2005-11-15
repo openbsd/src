@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.153 2005/11/14 15:06:09 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.154 2005/11/15 00:38:34 jmc Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3551,7 +3551,7 @@ usage(int value)
 	    "\t[[-]alias] [[-]arp] [broadcast addr]\n"
 	    "\t[[-]debug] [delete] [up] [down] [ipdst addr]\n"
 	    "\t[tunnel src_address dest_address] [deletetunnel]\n"
-	    "\t[description value] [[-]group group-name]\n"
+	    "\t[description value] [-description] [[-]group group-name]\n"
 	    "\t[[-]link0] [[-]link1] [[-]link2] [lladdr etheraddr]\n"
 	    "\t[media type] [[-]mediaopt opts] [mode mode] [instance minst]\n"
 	    "\t[mtu value] [metric nhops] [netmask mask] [prefixlen n]\n"
