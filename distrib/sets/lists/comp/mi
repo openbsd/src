@@ -5390,6 +5390,11 @@
 ./usr/share/man/cat9/pci_conf_read.0
 ./usr/share/man/cat9/pci_conf_write.0
 ./usr/share/man/cat9/pci_decompose_tag.0
+./usr/share/man/cat9/pci_intr_disestablish.0
+./usr/share/man/cat9/pci_intr_establish.0
+./usr/share/man/cat9/pci_intr_line.0
+./usr/share/man/cat9/pci_intr_map.0
+./usr/share/man/cat9/pci_intr_string.0
 ./usr/share/man/cat9/pci_make_tag.0
 ./usr/share/man/cat9/pfind.0
 ./usr/share/man/cat9/pgfind.0
