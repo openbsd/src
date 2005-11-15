@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.1 2005/11/15 16:19:15 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.2 2005/11/15 16:23:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -21,8 +21,7 @@
 #include <sys/device.h>
 #include <sys/sensors.h>
 
-#include <dev/ofw/openfirm.h>
-#include <arch/macppc/dev/maci2cvar.h>
+#include <dev/i2c/i2cvar.h>
 
 /* LM87 registers */
 #define LM87_2_5V	0x20
@@ -76,27 +75,22 @@ struct cfdriver lmenv_cd = {
 int
 lmenv_match(struct device *parent, void *match, void *aux)
 {
-	struct maci2c_attach_args *ia = aux;
-	char compat[32], name[32];
+	struct i2c_attach_args *ia = aux;
 
-	memset(compat, 0, sizeof compat);
-	OF_getprop(ia->ia_node, "compatible", &compat, sizeof compat);
-	if (strcmp(compat, "lm87cimt") == 0)
-		return (1);
-
-	memset(name, 0, sizeof name);
-	OF_getprop(ia->ia_node, "name", &name, sizeof name);
-	if (strcmp(name, "lm87") == 0)
-		return (1);
-
-	return (0);
+	if (ia->ia_name) {
+		if (strcmp(ia->ia_name, "lm87") == 0 ||
+		    strcmp(ia->ia_name, "lm87cimt") == 0)
+			return (1);
+		return (0);
+	}
+	return (1);	/* accept the address given */
 }
 
 void
 lmenv_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lmenv_softc *sc = (struct lmenv_softc *)self;
-	struct maci2c_attach_args *ia = aux;
+	struct i2c_attach_args *ia = aux;
 	u_int8_t cmd, data;
 	int i;
 
@@ -173,7 +167,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[LMENV_FAN2].desc));
 
 	if (sensor_task_register(sc, lmenv_refresh, 5)) {
-		printf(": unable to register update task\n");
+		printf(", unable to register update task\n");
 		return;
 	}
 

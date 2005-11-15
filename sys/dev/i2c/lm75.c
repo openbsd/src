@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.3 2005/11/13 00:19:17 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.4 2005/11/15 16:23:31 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -94,6 +94,13 @@ int
 lmtemp_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+
+	if (ia->ia_compat) {
+		if (strcmp(ia->ia_compat, "lm75") == 0 ||
+		    strcmp(ia->ia_compat, "ds1775") == 0)
+			return (1);
+		return (0);
+	}
 
 	/* XXX: we allow wider mask for LM77 */
 	if ((ia->ia_addr & LM75_ADDRMASK) == LM75_ADDR)

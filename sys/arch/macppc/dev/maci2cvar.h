@@ -1,4 +1,4 @@
-/*	$OpenBSD: maci2cvar.h,v 1.1 2005/11/11 16:22:50 kettenis Exp $	*/
+/*	$OpenBSD: maci2cvar.h,v 1.2 2005/11/15 16:23:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -22,11 +22,3 @@ struct maci2cbus_attach_args {
 	i2c_tag_t       iba_tag;
 	int		iba_node;
 };
-
-struct maci2c_attach_args {
-	struct i2c_attach_args ia_ia;
-	int		ia_node;
-};
-
-#define ia_tag	ia_ia.ia_tag
-#define ia_addr	ia_ia.ia_addr
