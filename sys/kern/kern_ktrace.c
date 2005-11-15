@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.36 2005/09/10 21:05:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.37 2005/11/15 23:05:37 pedro Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -495,7 +495,7 @@ ktrwrite(p, kth)
 	aiov[0].iov_len = sizeof(struct ktr_header);
 	auio.uio_resid = sizeof(struct ktr_header);
 	auio.uio_iovcnt = 1;
-	auio.uio_procp = (struct proc *)0;
+	auio.uio_procp = p;
 	if (kth->ktr_len > 0) {
 		auio.uio_iovcnt++;
 		aiov[1].iov_base = kth->ktr_buf;
