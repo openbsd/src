@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.28 2005/06/14 15:18:53 deraadt Exp $
+.\"	$OpenBSD: apmd.8,v 1.29 2005/11/15 01:19:56 jmc Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -59,63 +59,35 @@ fetches the current status and reports it via
 with logging facility
 .Dv LOG_DAEMON .
 .Pp
-.Nm
-periodically polls the APM driver for the current power state.
-If the battery charge level changes substantially or the external power
-status changes, the new status is logged.
-The polling rate defaults to
-once per 10 minutes, but may be specified using the
-.Fl t
-command-line flag.
-.Pp
-If the
-.Fl s
-flag is specified, the current battery statistics are reported via
-.Xr syslog 3
-and
-.Nm
-exits without monitoring the APM status.
-.Pp
-If the
-.Fl a
-flag is specified, any BIOS-initiated suspend or standby requests are
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a
+BIOS-initiated suspend or standby requests are
 ignored if the system is connected to line current and not running from
 batteries (user requests are still honored).
-.Pp
-If the
-.Fl d
-flag is specified,
+.It Fl d
 .Nm
 enters debug mode, logging to facility
-.Dv LOG_LOCAL1
-and staying in the foreground on the controlling terminal.
-.Pp
-If the
-.Fl m
-flag is specified,
+.Dv LOG_LOCAL1 ,
+and stays in the foreground on the controlling terminal.
+.It Fl e
+Re-enable APM driver power status messages.
 .Nm
-does not disable power status messages issued by the
-.Tn APM
-driver.
+exits immediately after setting this option.
+Use of this flag unconditionally enables power status messages.
+.It Fl f Ar devname
+Specify an alternate device file name,
+.Ar devname .
+.It Fl m
+Do not disable power status messages issued by the APM driver.
 In normal operation these status messages are disabled as they are
-the same as the information collected by this daemon and reported via syslog.
-.Pp
-The
-.Fl e
-and
-.Fl p
-flags are used to re-enable
-.Tn APM
-driver power status messages.
-In both cases
+the same as the information collected by this daemon and reported via
+.Xr syslog 3 .
+.It Fl p
+Re-enable APM driver power status messages.
 .Nm
-exits immediately after setting the desired option.
-The
-.Fl e
-flag unconditionally enables power status messages.
-The
-.Fl p
-flag causes power status messages to be displayed only when the
+exits immediately after setting this option.
+Use of this flag causes power status messages to be displayed only when the
 battery life expectancy changes.
 This minimizes message output
 for those devices that are constantly updating the estimated time
@@ -125,10 +97,31 @@ will power status messages be displayed until the battery life
 goes below the percentage in the
 .Xr sysctl 8
 state variable
-.Dv machdep.apmwarn .
+.Va machdep.apmwarn .
 Setting
-.Dv machdep.apmwarn
+.Va machdep.apmwarn
 to zero disables all warnings.
+.It Fl S Ar sockname
+Specify an alternate socket name,
+.Ar sockname .
+The socket is protected to mode 0660, UID 0, GID 0; this protects access
+to suspend requests to authorized users only.
+.It Fl s
+Current battery statistics are reported via
+.Xr syslog 3
+and
+.Nm
+exits without monitoring the APM status.
+.It Fl t Ar seconds
+.Nm
+periodically polls the APM driver for the current power state.
+If the battery charge level changes substantially or the external power
+status changes, the new status is logged.
+The polling rate defaults to
+once per 10 minutes, but may be specified using the
+.Fl t
+command-line flag.
+.El
 .Pp
 When a client requests a suspend or stand-by mode,
 .Nm
@@ -158,42 +151,35 @@ The powerup and powerdown programs are run after the power status (AC
 connected or not) changes, as well as after a resume (if the power
 status changed in the mean time).
 .Sh FILES
-.Pa /etc/apm/suspend ,
-.Pa /etc/apm/standby ,
-.Pa /etc/apm/resume ,
-.Pa /etc/apm/powerup
-and
-.Pa /etc/apm/powerdown
-are the files that contain the host's customized actions.
+.Bl -tag -width "/etc/apm/powerdownXX" -compact
+.It /dev/apmctl
+Default device used to control the APM kernel driver.
+.Pp
+.It /etc/apm/suspend
+.It /etc/apm/standby
+.It /etc/apm/resume
+.It /etc/apm/powerup
+.It /etc/apm/powerdown
+These files contain the host's customized actions.
 Each file must be an executable binary or shell script suitable
 for execution by the
 .Xr execve 2
 function.
-If you wish to have the same program or script control all transitions, it
-may determine which transition is in progress by examining its
-.Va argv[0]
+If you wish to have the same program or script control all transitions,
+it may determine which transition is in progress by examining its
+.Va argv[0] ,
 which is set to one of
 .Ar suspend ,
 .Ar standby ,
 .Ar resume ,
-.Ar powerup
-and
+.Ar powerup ,
+or
 .Ar powerdown .
 .Pp
-.Pa /var/run/apmdev
-is the default UNIX-domain socket used for communication with
+.It /var/run/apmdev
+Default UNIX-domain socket used for communication with
 .Xr apm 8 .
-The
-.Fl S
-flag may be used to specify an alternate socket name.
-The socket is protected to mode 0660, UID 0, GID 0; this protects access
-to suspend requests to authorized users only.
-.Pp
-.Pa /dev/apmctl
-is the default device used to control the APM kernel driver.
-The
-.Fl f
-flag may be used to specify an alternate device file name.
+.El
 .Sh SEE ALSO
 .Xr execve 2 ,
 .Xr syslog 3 ,
@@ -201,13 +187,14 @@ flag may be used to specify an alternate device file name.
 .Xr apm 8 ,
 .Xr sysctl 8 ,
 .Xr syslogd 8
-.Sh REFERENCES
-Advanced Power Management (APM) BIOS Interface Specification (revision
-1.2), Intel Corporation and Microsoft Corporation.
+.Pp
+Advanced Power Management (APM) BIOS Interface Specification
+(revision 1.2),
+Intel Corporation and Microsoft Corporation.
 .Sh HISTORY
 The
 .Nm
-command appeared in
+command first appeared in
 .Nx 1.3 .
 .Ox
 support was added in
