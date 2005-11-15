@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.2 2005/11/15 16:23:31 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.3 2005/11/15 18:25:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -106,8 +106,8 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot read Fan Divisor register\n");
 		return;
 	}
-	sc->sc_fan1_div = (data >> 4) & 0x03;
-	sc->sc_fan2_div = (data >> 6) & 0x03;
+	sc->sc_fan1_div = 1 << ((data >> 4) & 0x03);
+	sc->sc_fan2_div = 1 << ((data >> 6) & 0x03);
 
 	cmd = LM87_REVISION;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -182,6 +182,7 @@ lmenv_refresh(void *arg)
 {
 	struct lmenv_softc *sc = arg;
 	u_int8_t cmd, data;
+	u_int tmp;
 	int sensor;
 
 	iic_acquire_bus(sc->sc_tag, 0);
@@ -194,6 +195,7 @@ lmenv_refresh(void *arg)
 			continue;
 		}
 
+		sc->sc_sensor[sensor].flags &= ~SENSOR_FINVALID;
 		switch (sensor) {
 		case LMENV_2_5V:
 			sc->sc_sensor[sensor].value = 2500000 * data / 192;
@@ -217,18 +219,23 @@ lmenv_refresh(void *arg)
 			    (int8_t)data * 1000000 + 273150000;
 			break;
 		case LMENV_FAN1:
-			sc->sc_sensor[sensor].value =
-			    (1350000 * data) / sc->sc_fan1_div;
+			tmp = data * sc->sc_fan1_div;
+			if (tmp == 0)
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
+			else
+				sc->sc_sensor[sensor].value = 1350000 / tmp;
 			break;
 		case LMENV_FAN2:
-			sc->sc_sensor[sensor].value =
-			    (1350000 * data) / sc->sc_fan2_div;
+			tmp = data * sc->sc_fan2_div;
+			if (tmp == 0)
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
+			else
+				sc->sc_sensor[sensor].value = 1350000 / tmp;
 			break;
 		default:
 			sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
-			continue;
+			break;
 		}
-		sc->sc_sensor[sensor].flags &= ~SENSOR_FINVALID;
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
