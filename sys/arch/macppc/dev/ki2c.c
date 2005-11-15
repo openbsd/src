@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.6 2005/11/14 22:29:35 deraadt Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.7 2005/11/15 15:35:34 deraadt Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -173,9 +173,11 @@ ki2c_setmode(sc, mode, bus)
 
 	KASSERT((mode & ~I2C_MODE) == 0);
 	x = ki2c_readreg(sc, MODE);
-	x &= ~I2C_MODE;
+	x &= ~(I2C_MODE);
 	if (bus)
 		x |= I2C_BUS1;
+	else
+		x &= ~I2C_BUS1;
 	x |= mode;
 	ki2c_writereg(sc, MODE, x);
 }
@@ -368,7 +370,7 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		return (EINVAL);
 
 	/* We handle the subaddress stuff ourselves. */
-	ki2c_setmode(sc, I2C_STDMODE, addr >> 7);
+	ki2c_setmode(sc, I2C_STDMODE, addr & 0x80);
 	addr &= 0x7f;
 
 	if (ki2c_write(sc, (addr << 1), 0, cmdbuf, cmdlen) != 0)
