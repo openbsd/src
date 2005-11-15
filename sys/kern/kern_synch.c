@@ -1,7 +1,7 @@
-/*	$OpenBSD: kern_synch.c,v 1.64 2005/06/17 22:33:34 niklas Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.65 2005/11/15 22:15:18 pedro Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -54,7 +54,6 @@
 
 void updatepri(struct proc *);
 void endtsleep(void *);
-
 
 /*
  * We're only looking at 7 bits of the address; everything is
@@ -292,7 +291,7 @@ unsleep(p)
 }
 
 /*
- * Make all processes sleeping on the specified identifier runnable.
+ * Make a number of processes sleeping on the specified identifier runnable.
  */
 void
 wakeup_n(ident, n)
@@ -357,6 +356,9 @@ restart:
 	SCHED_UNLOCK(s);
 }
 
+/*
+ * Make all processes sleeping on the specified identifier runnable.
+ */
 void
 wakeup(chan)
 	void *chan;
