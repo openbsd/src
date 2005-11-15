@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmenv.4,v 1.1 2005/11/14 23:41:28 deraadt Exp $
+.\"	$OpenBSD: lmenv.4,v 1.2 2005/11/15 00:37:20 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -31,7 +31,6 @@ The sensor possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
 interface:
-.Pp
 .Bd -literal -offset indent
 hw.sensors.0=lmenv0, +2.5Vin, volts_dc, 2.62 V
 hw.sensors.1=lmenv0, Vccp1, volts_dc, 1.49 V
@@ -43,7 +42,6 @@ hw.sensors.6=lmenv0, Ext. Temp., temp, -128.00 degC / -198.40 degF
 hw.sensors.7=lmenv0, Int. Temp., temp, 29.00 degC / 84.20 degF
 hw.sensors.8=lmenv0, FAN1, fanrpm, 3220 RPM
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4 ,
@@ -54,5 +52,4 @@ hw.sensors.8=lmenv0, FAN1, fanrpm, 3220 RPM
 The
 .Nm
 driver was written by
-.An Mark Kettenis Aq kettenis@openbsd.org
-
+.An Mark Kettenis Aq kettenis@openbsd.org .
