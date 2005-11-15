@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.41 2005/11/06 21:51:55 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.42 2005/11/15 21:46:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -481,15 +481,16 @@ brgphy_reset(struct mii_softc *sc)
 	brgphy_load_dspcode(sc);
 
 	/*
-	 * Don't enable Ethernet@WireSpeed for the 5700 or the
-	 * 5705 A1 and A2 chips. Make sure we only do this test
-	 * on "bge" NICs, since other drivers may use this same
-	 * PHY subdriver.
+	 * Don't enable Ethernet@WireSpeed for the 5700 or 5705
+	 * other than A0 and A1 chips. Make sure we only do this
+	 * test on "bge" NICs, since other drivers may use this
+	 * same PHY subdriver.
 	 */
 	if (strncmp(ifp->if_xname, "bge", 3) == 0 &&
 	    (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
-	    bge_sc->bge_chipid == BGE_CHIPID_BCM5705_A1 ||
-	    bge_sc->bge_chipid == BGE_CHIPID_BCM5705_A2))
+	    (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5750 &&
+	     (bge_sc->bge_chipid != BGE_CHIPID_BCM5705_A0 &&
+	      bge_sc->bge_chipid != BGE_CHIPID_BCM5705_A1))))
 		return;
  
 	/* Enable Ethernet@WireSpeed. */
@@ -598,6 +599,9 @@ brgphy_bcm5703_dspcode(struct mii_softc *sc)
 		{ BRGPHY_MII_AUXCTL,		0x0c00 },
 		{ BRGPHY_MII_DSP_ADDR_REG,	0x201f },
 		{ BRGPHY_MII_DSP_RW_PORT,	0x2aaa },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x000a },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x0323 },
+		{ BRGPHY_MII_AUXCTL,		0x0400 },
 		{ 0,				0 },
 	};
 	int i;
@@ -613,6 +617,12 @@ brgphy_bcm5704_dspcode(struct mii_softc *sc)
 		int		reg;
 		uint16_t	val;
 	} dspcode[] = {
+		{ BRGPHY_MII_AUXCTL,		0x0c00 },
+		{ BRGPHY_MII_DSP_ADDR_REG, 	0x201f },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x2aaa },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x000a },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x0323 },
+		{ BRGPHY_MII_AUXCTL,		0x0400 },
 		{ 0x1c,				0x8d68 },
 		{ 0x1c,				0x8d68 },
 		{ 0,				0 },
