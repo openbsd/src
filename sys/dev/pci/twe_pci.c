@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.8 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.9 2005/11/15 11:08:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -101,6 +101,7 @@ twe_pci_attach(parent, self, aux)
 			printf(" at %s", intrstr);
 		printf("\n");
 		bus_space_unmap(sc->iot, sc->ioh, size);
+		return;
 	}
 
 	printf(": %s\n%s", intrstr, sc->sc_dev.dv_xname);

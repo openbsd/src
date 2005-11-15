@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.30 2005/08/24 19:21:40 marco Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.31 2005/11/15 11:08:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -231,6 +231,7 @@ ami_pci_attach(parent, self, aux)
 			printf(" at %s", intrstr);
 		printf("\n");
 		bus_space_unmap(sc->iot, sc->ioh, size);
+		return;
 	}
 
 	printf(": %s", intrstr);
