@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.9 2005/11/10 08:20:20 dlg Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.10 2005/11/15 22:12:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -41,7 +41,8 @@ enum sensor_type {
 	SENSOR_AMPHOUR,			/* power capacity */
 	SENSOR_INDICATOR,		/* boolean indicator */
 	SENSOR_INTEGER,			/* generic integer value */
-	SENSOR_PERCENT			/* percent */
+	SENSOR_PERCENT,			/* percent */
+	SENSOR_LUX			/* illuminance (mulx) */
 };
 
 /* Sensor states */

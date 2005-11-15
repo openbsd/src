@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.131 2005/11/12 15:20:33 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.132 2005/11/15 22:12:07 kettenis Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.131 2005/11/12 15:20:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.132 2005/11/15 22:12:07 kettenis Exp $";
 #endif
 #endif /* not lint */
 
@@ -2165,6 +2165,9 @@ print_sensor(struct sensor *s)
 			break;
 		case SENSOR_PERCENT:
 			printf("percent, %.2f%%", (float)s->value / 1000.0);
+			break;
+		case SENSOR_LUX:
+			printf("lux, %.2f lx", s->value / 1000000.0);
 			break;
 		default:
 			printf("unknown");
