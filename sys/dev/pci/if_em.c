@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.88 2005/11/14 16:04:15 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.89 2005/11/15 01:40:43 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -527,10 +527,9 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING) {
 				em_disable_intr(sc);
 				em_set_multi(sc);
-				if (sc->hw.mac_type == em_82542_rev2_0) {
+				if (sc->hw.mac_type == em_82542_rev2_0)
 					em_initialize_receive_unit(sc);
-				}
-					em_enable_intr(sc);
+				em_enable_intr(sc);
 			}
 			error = 0;
 		}
