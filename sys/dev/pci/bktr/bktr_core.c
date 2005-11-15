@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.17 2005/06/23 14:57:48 robert Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.18 2005/11/15 14:33:29 robert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -387,8 +387,10 @@ static const struct {
 
 
 /* debug utility for holding previous INT_STAT contents */
-#define STATUS_SUM
+#undef STATUS_SUM
+#if defined( STATUS_SUM )
 static u_int	status_sum = 0;
+#endif
 
 /*
  * defines to make certain bit-fiddles understandable
@@ -2294,9 +2296,12 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 int
 bktr_common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg )
 {
-        int                           pixfmt;
-	unsigned int	              temp;
+	int                           pixfmt;
 	struct meteor_pixfmt          *pf_pub;
+
+#if defined( STATUS_SUM )
+	unsigned int                  temp;
+#endif
 
 	switch (cmd) {
 
