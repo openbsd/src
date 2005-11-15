@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.58 2005/11/15 01:12:47 brad Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.59 2005/11/15 03:08:24 brad Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -173,6 +173,7 @@ scsibus* at gdt?
 #scsibus* at twe?
 
 # PCI Network devices
+pcn*	at pci?				# AMD PCnet-PCI Ethernet
 de*	at pci?				# 21x4[012]-based Ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet
 ne*	at pci?				# NE2000-compat ethernet cards
