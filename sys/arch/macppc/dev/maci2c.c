@@ -1,4 +1,4 @@
-/*	$OpenBSD: maci2c.c,v 1.2 2005/11/15 16:23:34 deraadt Exp $	*/
+/*	$OpenBSD: maci2c.c,v 1.3 2005/11/16 00:09:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -55,7 +55,8 @@ maciic_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	for (node = OF_child(iba->iba_node); node; node = OF_peer(node)) {
-		if (OF_getprop(node, "reg", &reg, sizeof reg) != sizeof reg)
+		if (OF_getprop(node, "reg", &reg, sizeof reg) != sizeof reg &&
+		    OF_getprop(node, "i2c-address", &reg, sizeof reg) != sizeof reg)
 			continue;
 		ia.ia_tag = iba->iba_tag;
 		ia.ia_addr = (reg >> 1);
