@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.99 2005/01/07 21:58:14 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.100 2005/11/16 03:12:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.99 2005/01/07 21:58:14 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.100 2005/11/16 03:12:12 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1039,7 +1039,10 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 					buf[--n] = '\0';
 					break;
 				case 'k':
-					mult = 1024 / lp->d_secsize;
+					if (lp->d_secsize > 1024)
+						mult = -lp->d_secsize / 1024;
+					else
+						mult = 1024 / lp->d_secsize;
 					buf[--n] = '\0';
 					break;
 				case 'm':
