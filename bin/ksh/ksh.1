@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.106 2005/10/12 19:52:56 bernd Exp $
+.\"	$OpenBSD: ksh.1,v 1.107 2005/11/16 12:49:21 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -169,6 +169,34 @@ command, arithmetic, and tilde
 .Pq Sq ~
 substitution and the resulting file
 (if any) is read and executed.
+In order to have an interactive (as opposed to login) shell
+process a startup file,
+.Ev ENV
+may be set and exported (see below) in
+.Pa $HOME/.profile
+\- future interactive shell invocations will process any file pointed to by
+.Ev $ENV :
+.Pp
+.Dl export ENV=$HOME/.kshrc
+.Pp
+.Pa $HOME/.kshrc
+is then free to specify instructions for interactive shells.
+For example, the global configuration file may be sourced:
+.Bd -literal -offset indent
+if [ -o interactive ]; then
+\&. /etc/ksh.kshrc
+fi
+.Ed
+.Pp
+The above strategy may be employed to keep
+setup procedures for login shells in
+.Pa $HOME/.profile
+and setup procedures for interactive shells in
+.Pa $HOME/.kshrc .
+Of course, since login shells are also interactive,
+any commands placed in
+.Pa $HOME/.kshrc
+will be executed by login shells too.
 .Pp
 The exit status of the shell is 127 if the command file specified on the
 command line could not be opened, or non-zero if a fatal syntax error
@@ -5479,12 +5507,15 @@ deleted and a new prompt to be printed.
 .Bl -tag -width "/etc/suid_profileXX" -compact
 .It Pa ~/.profile
 User's login profile.
+.It Pa /etc/ksh.kshrc
+Global configuration file.
+Not sourced by default.
 .It Pa /etc/profile
 System login profile.
-.It Pa /etc/suid_profile
-Privileged shell profile.
 .It Pa /etc/shells
 Shell database.
+.It Pa /etc/suid_profile
+Privileged shell profile.
 .El
 .Sh SEE ALSO
 .Xr csh 1 ,
