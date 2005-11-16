@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.6 2005/11/12 23:09:14 miod Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.7 2005/11/16 21:37:02 miod Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -116,6 +116,8 @@ struct frodo_attach_args frodo_subdevs[] = {
 	{ NULL,		0,			0 },
 };
 
+#define	FRODO_IPL	5
+
 int
 frodomatch(parent, match, aux)
 	struct device *parent;
@@ -163,6 +165,7 @@ frodoattach(parent, self, aux)
 
 	sc->sc_regs = (volatile u_int8_t *)IIOV(ia->ia_addr);
 
+	printf(" ipl %d", FRODO_IPL);
 	if ((FRODO_READ(sc, FRODO_IISR) & FRODO_IISR_SERVICE) == 0)
 		printf(": service mode enabled");
 	printf("\n");
@@ -261,7 +264,7 @@ frodo_intr_establish(struct device *frdev, int line, struct isr *isr,
 			intr_disestablish(&sc->sc_isr);
 		sc->sc_isr.isr_func = frodointr;
 		sc->sc_isr.isr_arg = sc;
-		sc->sc_isr.isr_ipl = 5;
+		sc->sc_isr.isr_ipl = FRODO_IPL;
 		sc->sc_isr.isr_priority = priority;
 		intr_establish(&sc->sc_isr, sc->sc_dev.dv_xname);
 	}
@@ -309,7 +312,7 @@ frodo_intr_disestablish(frdev, line)
 		intr_disestablish(&sc->sc_isr);
 		sc->sc_isr.isr_func = frodointr;
 		sc->sc_isr.isr_arg = sc;
-		sc->sc_isr.isr_ipl = 5;
+		sc->sc_isr.isr_ipl = FRODO_IPL;
 		sc->sc_isr.isr_priority = newpri;
 		intr_establish(&sc->sc_isr, sc->sc_dev.dv_xname);
 	}

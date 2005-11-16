@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil_intio.c,v 1.4 2005/04/22 11:56:19 miod Exp $	*/
+/*	$OpenBSD: hil_intio.c,v 1.5 2005/11/16 21:37:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -97,12 +97,14 @@ hil_intio_attach(struct device *parent, struct device *self, void *aux)
 		hil_is_console = 0;
 	}
 
-	hil_attach(sc, hil_is_console);
-
 	hil_isr.isr_func = hil_intr;
 	hil_isr.isr_arg = sc;
 	hil_isr.isr_ipl = 1;
 	hil_isr.isr_priority = IPL_TTY;
+
+	printf(" ipl %d", hil_isr.isr_ipl);
+
+	hil_attach(sc, hil_is_console);
 	intr_establish(&hil_isr, self->dv_xname);
 
 	startuphook_establish(hil_attach_deferred, sc);
