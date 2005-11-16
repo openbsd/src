@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.124 2005/10/26 20:10:49 markus Exp $	 */
+/* $OpenBSD: exchange.c,v 1.125 2005/11/16 18:35:32 cloder Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1015,8 +1015,10 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 
 		/* Figure out the DOI.  */
 		str = conf_get_str(policy, "DOI");
-		if (!str || strcasecmp(str, "IPSEC") == 0)
+		if (!str || strcasecmp(str, "IPSEC") == 0) {
 			want_doi = IPSEC_DOI_IPSEC;
+			str = "IPSEC";
+		}
 		else if (strcasecmp(str, "ISAKMP") == 0)
 			want_doi = ISAKMP_DOI_ISAKMP;
 		else {
