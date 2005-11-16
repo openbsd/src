@@ -1,4 +1,4 @@
-.\"	$OpenBSD: maxtmp.4,v 1.2 2005/11/15 16:57:14 deraadt Exp $
+.\"	$OpenBSD: maxtmp.4,v 1.3 2005/11/16 17:04:15 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -19,13 +19,13 @@
 .Os
 .Sh NAME
 .Nm maxtmp
-.Nd Maxim MAX6690 temperature sensor
+.Nd Maxim MAX6642/MAX6690 temperature sensor
 .Sh SYNOPSIS
 .Cd "maxtmp* at maciic?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Maxim MAX6690
+driver provides support for the Maxim MAX6642/MAX6690
 temperature sensor.
 The sensor possesses an internal temperature sensor and a link
 to an external temperature sensor.
