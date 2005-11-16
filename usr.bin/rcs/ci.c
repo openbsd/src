@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.57 2005/11/08 15:58:38 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.58 2005/11/16 19:06:41 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -44,21 +44,46 @@
 #include "diff.h"
 #include "rcsprog.h"
 
+#define CI_OPTSTRING    "d::f::i::j::k:l::m:M::N:n:qr::s:u::Vw:"
 #define DATE_NOW        -1
 #define DATE_MTIME      -2
 
-static char * checkin_diff_file(RCSFILE *, RCSNUM *, const char *);
+#define LOG_INIT        "Initial revision"
+#define LOG_PROMPT      "enter log message, terminated with a single '.' " \
+                        "or end of file:\n>> "
+#define DESC_PROMPT     "enter description, terminated with single '.' "   \
+	                "or end of file:\nNOTE: This is NOT the log message!\n"
+
+struct checkin_params {
+	int flags, openflags;
+	mode_t fmode;
+	time_t date;
+	RCSFILE *file;
+	RCSNUM *frev, *newrev;
+	char fpath[MAXPATHLEN], *rcs_msg, *username, *deltatext, *filename;
+	const char *symbol, *state;
+};
+
+static int    checkin_attach_symbol(struct checkin_params *pb);
+static int    checkin_checklock(struct checkin_params *pb);
+static char * checkin_diff_file(struct checkin_params *);
+static char * checkin_getdesc(void);
+static char * checkin_getinput(const char *);
 static char * checkin_getlogmsg(RCSNUM *, RCSNUM *);
+static void   checkin_init(struct checkin_params *);
+static void   checkin_revert(struct checkin_params *pb);
 
 void
 checkin_usage(void)
 {
 	fprintf(stderr,
-	    "usage: ci [-jMNqV] [-d[date]] [-f[rev]] [-kmode] [-l[rev]]\n"
-	    "          [-M[rev]] [-mmsg] [-Nsymbol] [-nsymbol] [-r[rev]]\n"
-	    "          [-sstate] [-u[rev]] [-wusername] file ...\n");
-
+	    "usage: ci [-MNqV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
+            "          [-kmode] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
+            "          [-nsymbol] [-r[rev]] [-sstate] [-u[rev]] [-wusername]\n"
+            "          file ...\n");
 }
+
+
 
 /*
  * checkin_main()
@@ -69,74 +94,84 @@ checkin_usage(void)
 int
 checkin_main(int argc, char **argv)
 {
-	int found, notlocked, ret, status;
-	int i, ch, flags;
-	mode_t fmode;
-	time_t date;
-	RCSFILE *file;
-	RCSNUM *frev, *newrev;
-	char fpath[MAXPATHLEN];
-	char *rcs_msg, *filec, *deltatext, *username, rbuf[16];
-	const char *symbol, *state;
-	struct rcs_lock *lkp;
+	int i, ch, status;
+	char  *filec;
+	struct stat sb;
+	struct checkin_params pb;
 	BUF *bp;
 
-	date = DATE_NOW;
-	file = NULL;
-	rcs_msg = username = NULL;
-	state = symbol = NULL;
-	newrev =  NULL;
-	fmode = flags = status = 0;
+	pb.date = DATE_NOW;
+	pb.file = NULL;
+	pb.rcs_msg = pb.username = NULL;
+	pb.state = pb.symbol = NULL;
+	pb.newrev =  NULL;
+	pb.fmode = pb.flags = status = 0;
 
-	flags |= INTERACTIVE;
+	pb.flags = INTERACTIVE;
+	pb.openflags = RCS_RDWR|RCS_CREATE;
 
-	while ((ch = rcs_getopt(argc, argv, "d::f::j:k:l::m:M::N:n:qr::s:u::Vw:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, CI_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'd':
 			if (rcs_optarg == NULL)
-				date = DATE_MTIME;
-			else if ((date = cvs_date_parse(rcs_optarg)) <= 0) {
+				pb.date = DATE_MTIME;
+			else if ((pb.date = cvs_date_parse(rcs_optarg)) <= 0) {
 				cvs_log(LP_ERR, "invalide date");
 				exit(1);
 			}
 			break;
 		case 'f':
-			rcs_set_rev(rcs_optarg, &newrev);
-			flags |= FORCE;
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.flags |= FORCE;
 			break;
 		case 'h':
 			(usage)();
 			exit(0);
+		case 'i':
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.openflags |= RCS_CREATE;
+			break;
+		case 'j':
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.openflags &= ~RCS_CREATE;
+			break;
 		case 'l':
-			rcs_set_rev(rcs_optarg, &newrev);
-			flags |= CO_LOCK;
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.flags |= CO_LOCK;
 			break;
 		case 'M':
-			rcs_set_rev(rcs_optarg, &newrev);
-			flags |= CO_REVDATE;
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.flags |= CO_REVDATE;
 			break;
 		case 'm':
-			rcs_msg = rcs_optarg;
-			flags &= ~INTERACTIVE;
+			pb.rcs_msg = rcs_optarg;
+			if (pb.rcs_msg == NULL) {
+				cvs_log(LP_ERR,
+				    "missing message for -m option");
+				exit(1);
+			}
+			pb.flags &= ~INTERACTIVE;
 			break;
 		case 'N':
-			if ((symbol = strdup(rcs_optarg)) == NULL) {
+			if ((pb.symbol = strdup(rcs_optarg)) == NULL) {
 				cvs_log(LP_ERRNO, "out of memory");
 				exit(1);
 			}
-			if (rcs_sym_check(symbol) != 1) {
-				cvs_log(LP_ERR, "invalid symbol `%s'", symbol);
+			if (rcs_sym_check(pb.symbol) != 1) {
+				cvs_log(LP_ERR, "invalid symbol `%s'",
+				    pb.symbol);
 				exit(1);
 			}
-			flags |= CI_SYMFORCE;
+			pb.flags |= CI_SYMFORCE;
 			break;
 		case 'n':
-			if ((symbol = strdup(rcs_optarg)) == NULL) {
+			if ((pb.symbol = strdup(rcs_optarg)) == NULL) {
 				cvs_log(LP_ERRNO, "out of memory");
 				exit(1);
 			}
-			if (rcs_sym_check(symbol) != 1) {
-				cvs_log(LP_ERR, "invalid symbol `%s'", symbol);
+			if (rcs_sym_check(pb.symbol) != 1) {
+				cvs_log(LP_ERR, "invalid symbol `%s'",
+				    pb.symbol);
 				exit(1);
 			}
 			break;
@@ -144,25 +179,26 @@ checkin_main(int argc, char **argv)
 			verbose = 0;
 			break;
 		case 'r':
-			rcs_set_rev(rcs_optarg, &newrev);
-			flags |= CI_DEFAULT;
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.flags |= CI_DEFAULT;
 			break;
 		case 's':
-			state = rcs_optarg;
-			if (rcs_state_check(state) < 0) {
-				cvs_log(LP_ERR, "invalid state `%s'", state);
+			pb.state = rcs_optarg;
+			if (rcs_state_check(pb.state) < 0) {
+				cvs_log(LP_ERR, "invalid state `%s'",
+				    pb.state);
 				exit(1);
 			}
 			break;
 		case 'u':
-			rcs_set_rev(rcs_optarg, &newrev);
-			flags |= CO_UNLOCK;
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.flags |= CO_UNLOCK;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
 		case 'w':
-			username = rcs_optarg;
+			pb.username = rcs_optarg;
 			break;
 		default:
 			(usage)();
@@ -179,34 +215,46 @@ checkin_main(int argc, char **argv)
 		exit(1);
 	}
 
-	if ((username == NULL) && (username = getlogin()) == NULL) {
+	if ((pb.username == NULL) && (pb.username = getlogin()) == NULL) {
 		cvs_log(LP_ERRNO, "failed to get username");
 		exit(1);
 	}
 
 
 	for (i = 0; i < argc; i++) {
-		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
+		pb.filename = argv[i];
+		if (rcs_statfile(pb.filename, pb.fpath, sizeof(pb.fpath)) < 0)
 			continue;
 
-		file = rcs_open(fpath, RCS_RDWR, fmode);
-		if (file == NULL) {
-			cvs_log(LP_ERR, "failed to open rcsfile '%s'", fpath);
+		/*
+		 * Test for existence of ,v file. If we are expected to
+		 * create one, set NEWFILE flag.
+		 */
+		if ((pb.openflags & RCS_CREATE) && (stat(pb.fpath, &sb) < 0))
+			pb.flags |= NEWFILE;
+		else
+			pb.openflags &= ~RCS_CREATE;
+
+		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
+
+		if (pb.file == NULL) {
+			cvs_log(LP_ERR, "failed to open rcsfile '%s'", pb.fpath);
 			exit(1);
 		}
 
-		frev = file->rf_head;
-
 		if (verbose == 1)
-			printf("%s  <--  %s\n", fpath, argv[i]);
+			printf("%s  <--  %s\n", pb.fpath, pb.filename);
+
+		pb.frev = pb.file->rf_head;
 
 		/*
 		 * If revision passed on command line is less than HEAD, bail.
 		 */
-		if ((newrev != NULL) && (rcsnum_cmp(newrev, frev, 0) > 0)) {
+		if ((pb.newrev != NULL)
+		    && (rcsnum_cmp(pb.newrev, pb.frev, 0) > 0)) {
 			cvs_log(LP_ERR, "revision is too low!");
 			status = 1;
-			rcs_close(file);
+			rcs_close(pb.file);
 			continue;
 		}
 
@@ -214,7 +262,7 @@ checkin_main(int argc, char **argv)
 		 * Load file contents
 		 */
 		if ((bp = cvs_buf_load(argv[i], BUF_AUTOEXT)) == NULL) {
-			cvs_log(LP_ERR, "failed to load '%s'", argv[i]);
+			cvs_log(LP_ERR, "failed to load '%s'", pb.filename);
 			exit(1);
 		}
 
@@ -226,28 +274,17 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Get RCS patch
 		 */
-		if ((deltatext = checkin_diff_file(file, frev, argv[i])) == NULL) {
+		if ((pb.deltatext = checkin_diff_file(&pb)) == NULL) {
 			cvs_log(LP_ERR, "failed to get diff");
 			exit(1);
 		}
 
 		/*
-		 * If -f is not specified and there are no differences, tell the
-		 * user and revert to latest version.
+		 * If -f is not specified and there are no differences, tell
+		 * the user and revert to latest version.
 		 */
-		if ((flags & FORCE) && (strlen(deltatext) < 1)) {
-			rcsnum_tostr(frev, rbuf, sizeof(rbuf));
-			cvs_log(LP_WARN,
-			    "file is unchanged; reverting to previous revision %s",
-			    rbuf);
-			(void)unlink(argv[i]);
-			if ((flags & CO_LOCK) || (flags & CO_UNLOCK))
-				checkout_rev(file, frev, argv[i], flags,
-				    username);
-			rcs_lock_remove(file, frev);
-			rcs_close(file);
-			if (verbose == 1)
-				printf("done\n");
+		if (!(pb.flags & FORCE) && (strlen(pb.deltatext) < 1)) {
+			checkin_revert(&pb);
 			continue;
 		}
 
@@ -255,38 +292,21 @@ checkin_main(int argc, char **argv)
 		 * Check for a lock belonging to this user. If none,
 		 * abort check-in.
 		 */
-		found = 0;
-		notlocked = 1;
-		if (!TAILQ_EMPTY(&(file->rf_locks))) {
-			TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
-				if (!strcmp(lkp->rl_name, username))
-					notlocked = 0;
-
-				if (!strcmp(lkp->rl_name, username) &&
-				    !rcsnum_cmp(lkp->rl_num, frev, 0)) {
-					found = 1;
-					break;
-				}
-			}
-		}
-
-		if ((found == 0) && (notlocked == 0)) {
-			cvs_log(LP_ERR, "no locks set for '%s'", username);
+		if (checkin_checklock(&pb) < 0) {
 			status = 1;
-			rcs_close(file);
 			continue;
 		}
 
 		/*
 		 * If no log message specified, get it interactively.
 		 */
-		if (rcs_msg == NULL)
-			rcs_msg = checkin_getlogmsg(frev, newrev);
+		if (pb.flags & INTERACTIVE)
+			pb.rcs_msg = checkin_getlogmsg(pb.frev, pb.newrev);
 
 		/*
 		 * Remove the lock
 		 */
-		if (rcs_lock_remove(file, frev) < 0) {
+		if (rcs_lock_remove(pb.file, pb.frev) < 0) {
 			if (rcs_errno != RCS_ERR_NOENT)
 			    cvs_log(LP_WARN, "failed to remove lock");
                 }
@@ -294,32 +314,32 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Current head revision gets the RCS patch as rd_text
 		 */
-		if (rcs_deltatext_set(file, frev, deltatext) == -1) {
+		if (rcs_deltatext_set(pb.file, pb.frev, pb.deltatext) == -1) {
 			cvs_log(LP_ERR,
 			    "failed to set new rd_text for head rev");
 			exit (1);
 		}
 
 		/*
-		 * Set the date of the revision to be the last modification time
-		 * of the working file if -d is specified without an argument.
+		 * Set the date of the revision to be the last modification
+		 * time of the working file if -d has no argument.
 		 */
-		if (date == DATE_MTIME) {
-			struct stat sb;
-			if (stat(argv[i], &sb) != 0) {
+		if (pb.date == DATE_MTIME) {
+			if (stat(pb.filename, &sb) != 0) {
 				cvs_log(LP_ERRNO, "failed to stat: `%s'",
-				    argv[i]);
-				rcs_close(file);
+				    pb.filename);
+				rcs_close(pb.file);
 				continue;
 			}
-			date = (time_t)sb.st_mtimespec.tv_sec;
+			pb.date = (time_t)sb.st_mtimespec.tv_sec;
 		}
 
 		/*
 		 * Now add our new revision
 		 */
-		if (rcs_rev_add(file, (newrev == NULL ? RCS_HEAD_REV : newrev),
-		    rcs_msg, date, username) != 0) {
+		if (rcs_rev_add(pb.file,
+			(pb.newrev == NULL ? RCS_HEAD_REV : pb.newrev),
+		    pb.rcs_msg, pb.date, pb.username) != 0) {
 			cvs_log(LP_ERR, "failed to add new revision");
 			exit(1);
 		}
@@ -328,15 +348,15 @@ checkin_main(int argc, char **argv)
 		 * If we are checking in to a non-default (ie user-specified)
 		 * revision, set head to this revision.
 		 */
-		if (newrev != NULL)
-			rcs_head_set(file, newrev);
+		if (pb.newrev != NULL)
+			rcs_head_set(pb.file, pb.newrev);
 		else
-			newrev = file->rf_head;
+			pb.newrev = pb.file->rf_head;
 
 		/*
 		 * New head revision has to contain entire file;
 		 */
-                if (rcs_deltatext_set(file, frev, filec) == -1) {
+                if (rcs_deltatext_set(pb.file, pb.frev, filec) == -1) {
 			cvs_log(LP_ERR, "failed to set new head revision");
 			exit(1);
 		}
@@ -344,53 +364,36 @@ checkin_main(int argc, char **argv)
 		/*
 		 * Attach a symbolic name to this revision if specified.
 		 */
-		if (symbol != NULL) {
-			if (verbose == 1)
-				printf("symbol: %s\n", symbol);
-			if (flags & CI_SYMFORCE)
-				rcs_sym_remove(file, symbol);
-			if ((ret = rcs_sym_add(file, symbol, newrev) == -1)
-			    && (rcs_errno == RCS_ERR_DUPENT)) {
-				rcsnum_tostr(rcs_sym_getrev(file, symbol),
-				    rbuf, sizeof(rbuf));
-				cvs_log(LP_ERR,
-				    "symbolic name %s already bound to %s",
-				    symbol, rbuf);
-				status = 1;
-				rcs_close(file);
-				continue;
-			} else if (ret == -1) {
-				cvs_log(LP_ERR, "problem adding symbol: %s",
-				    symbol);
-				status = 1;
-				rcs_close(file);
-				continue;
-			}
+		if (pb.symbol != NULL
+		    && (checkin_attach_symbol(&pb) < 0)) {
+			status = 1;
+			continue;
 		}
 
 		/*
 		 * Set the state of this revision if specified.
 		 */
-		if (state != NULL)
-			(void)rcs_state_set(file, newrev, state);
+		if (pb.state != NULL)
+			(void)rcs_state_set(pb.file, pb.newrev, pb.state);
 
-		free(deltatext);
+		free(pb.deltatext);
 		free(filec);
-		(void)unlink(argv[i]);
+		(void)unlink(pb.filename);
 
 		/*
 		 * Do checkout if -u or -l are specified.
 		 */
-		if (((flags & CO_LOCK) || (flags & CO_UNLOCK))
-		    && !(flags & CI_DEFAULT))
-			checkout_rev(file, newrev, argv[i], flags, username);
+		if (((pb.flags & CO_LOCK) || (pb.flags & CO_UNLOCK))
+		    && !(pb.flags & CI_DEFAULT))
+			checkout_rev(pb.file, pb.newrev, pb.filename, pb.flags,
+			    pb.username);
 
 		/* File will NOW be synced */
-		rcs_close(file);
+		rcs_close(pb.file);
 
-		if (flags & INTERACTIVE) {
-			free(rcs_msg);
-			rcs_msg = NULL;
+		if (pb.flags & INTERACTIVE) {
+			free(pb.rcs_msg);
+			pb.rcs_msg = NULL;
 		}
 	}
 
@@ -398,20 +401,20 @@ checkin_main(int argc, char **argv)
 }
 
 static char *
-checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
+checkin_diff_file(struct checkin_params *pb)
 {
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2, *b3;
 	char rbuf[64], *deltatext;
 
-	rcsnum_tostr(rev, rbuf, sizeof(rbuf));
+	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
 
-	if ((b1 = cvs_buf_load(filename, BUF_AUTOEXT)) == NULL) {
-		cvs_log(LP_ERR, "failed to load file: '%s'", filename);
+	if ((b1 = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
+		cvs_log(LP_ERR, "failed to load file: '%s'", pb->filename);
 		return (NULL);
 	}
 
-	if ((b2 = rcs_getrev(rfp, rev)) == NULL) {
+	if ((b2 = rcs_getrev(pb->file, pb->frev)) == NULL) {
 		cvs_log(LP_ERR, "failed to load revision");
 		cvs_buf_free(b1);
 		return (NULL);
@@ -460,8 +463,7 @@ checkin_diff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 static char *
 checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 {
-	char   *rcs_msg, buf[128], nrev[16], prev[16];
-	BUF    *logbuf;
+	char   *rcs_msg, nrev[16], prev[16];
 	RCSNUM *tmprev;
 
 	rcs_msg = NULL;
@@ -474,28 +476,170 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 		rcsnum_tostr(rev2, nrev, sizeof(nrev));
 	rcsnum_free(tmprev);
 
-	if ((logbuf = cvs_buf_alloc((size_t)64, BUF_AUTOEXT)) == NULL) {
-		cvs_log(LP_ERR, "failed to allocate log buffer");
-		return (NULL);
-	}
-
 	if (verbose == 1)
 		printf("new revision: %s; previous revision: %s\n", nrev,
 		    prev);
-	printf("enter log message, terminated with single "
-	    "'.' or end of file:\n");
-	printf(">> ");
 
+	rcs_msg = checkin_getinput(LOG_PROMPT);
+	return (rcs_msg);
+}
+
+
+/*
+ * checkin_getdesc()
+ *
+ * Get file description interactively.
+ * Returns NULL on failure.
+ */
+static char *
+checkin_getdesc()
+{
+	char *description;
+
+	description = checkin_getinput(DESC_PROMPT);
+	return (description);
+}
+
+/*
+ * checkin_getinput()
+ *
+ * Get some input from the user.
+ */
+static char *
+checkin_getinput(const char *prompt)
+{
+	BUF *inputbuf;
+	char *input, buf[128];
+
+	if ((inputbuf = cvs_buf_alloc((size_t)64, BUF_AUTOEXT)) == NULL) {
+		cvs_log(LP_ERR, "failed to allocate input buffer");
+		return (NULL);
+	}
+
+	printf(prompt);
 	for (;;) {
 		fgets(buf, (int)sizeof(buf), stdin);
 		if (feof(stdin) || ferror(stdin) || buf[0] == '.')
 			break;
-		cvs_buf_append(logbuf, buf, strlen(buf));
+		cvs_buf_append(inputbuf, buf, strlen(buf));
 		printf(">> ");
 	}
 
-	cvs_buf_putc(logbuf, '\0');
-	rcs_msg = (char *)cvs_buf_release(logbuf);
+	cvs_buf_putc(inputbuf, '\0');
+	input = (char *)cvs_buf_release(inputbuf);
 
-	return (rcs_msg);
+	return (input);
+}
+
+/*
+ * checkin_init()
+ * 
+ * Does an initial check in, just enough to create the new ,v file
+ */
+static void
+checkin_init(struct checkin_params *pb)
+{
+	BUF *bp;
+	char *rcs_desc, *filec;
+
+	/*
+	 * Load file contents
+	 */
+	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
+		cvs_log(LP_ERR, "failed to load '%s'", pb->filename);
+		exit(1);
+	}
+
+	if (cvs_buf_putc(bp, '\0') < 0)
+		exit(1);
+
+	filec = (char *)cvs_buf_release(bp);
+
+	/*
+	 * Get description from user
+	 */
+	rcs_desc = checkin_getdesc();
+	rcs_desc_set(pb->file, rcs_desc);
+
+	/*
+	 * Now add our new revision
+	 */
+	if (rcs_rev_add(pb->file, RCS_HEAD_REV, LOG_INIT,
+		-1, pb->username) != 0) {
+		cvs_log(LP_ERR, "failed to add new revision");
+		exit(1);
+	}
+}
+
+static int
+checkin_attach_symbol(struct checkin_params *pb)
+{
+	char rbuf[16];
+	int ret;
+	if (verbose == 1)
+		printf("symbol: %s\n", pb->symbol);
+	if (pb->flags & CI_SYMFORCE)
+		rcs_sym_remove(pb->file, pb->symbol);
+	if ((ret = rcs_sym_add(pb->file, pb->symbol, pb->newrev) == -1)
+	    && (rcs_errno == RCS_ERR_DUPENT)) {
+		rcsnum_tostr(rcs_sym_getrev(pb->file, pb->symbol),
+		    rbuf, sizeof(rbuf));
+		cvs_log(LP_ERR,
+		    "symbolic name %s already bound to %s",
+		    pb->symbol, rbuf);
+		rcs_close(pb->file);
+		return (-1);
+	} else if (ret == -1) {
+		cvs_log(LP_ERR, "problem adding symbol: %s",
+		    pb->symbol);
+		rcs_close(pb->file);
+		return (-1);
+	}
+	return (0);
+}
+
+static void
+checkin_revert(struct checkin_params *pb)
+{
+	char rbuf[16];
+
+	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
+	cvs_log(LP_WARN,
+	    "file is unchanged; reverting to previous revision %s",
+	    rbuf);
+	(void)unlink(pb->filename);
+	if ((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
+		checkout_rev(pb->file, pb->frev, pb->filename,
+		    pb->flags, pb->username);
+	rcs_lock_remove(pb->file, pb->frev);
+	rcs_close(pb->file);
+	if (verbose == 1)
+		printf("done\n");
+}
+
+static int
+checkin_checklock(struct checkin_params *pb)
+{
+	int found = 0, notlocked = 1;
+	struct rcs_lock *lkp;
+
+	if (!TAILQ_EMPTY(&(pb->file->rf_locks))) {
+		TAILQ_FOREACH(lkp, &(pb->file->rf_locks), rl_list) {
+			if (!strcmp(lkp->rl_name, pb->username))
+				notlocked = 0;
+
+			if (!strcmp(lkp->rl_name, pb->username) &&
+			    !rcsnum_cmp(lkp->rl_num, pb->frev, 0)) {
+				found = 1;
+				return (0);
+			}
+		}
+	}
+
+	if ((found == 0) && (notlocked == 0)) {
+		cvs_log(LP_ERR, "no locks set for '%s'", pb->username);
+		rcs_close(pb->file);
+		return (-1);
+	}
+	return (0);
 }
