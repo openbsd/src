@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.30 2005/11/14 15:56:35 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.31 2005/11/16 16:45:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: io.c,v 1.30 2005/11/14 15:56:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: io.c,v 1.31 2005/11/16 16:45:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,28 +67,25 @@ static const char rcsid[] = "$OpenBSD: io.c,v 1.30 2005/11/14 15:56:35 deraadt E
 
 
 struct iovec header[] = {
-	{"From: ", 6},
-	{NULL, 0},
-	{" (Reminder Service)\nTo: ", 24},
-	{NULL, 0},
-	{"\nSubject: ", 10},
-	{NULL, 0},
-	{"'s Calendar\nPrecedence: bulk\n\n",  30},
+	{ "From: ", 6 },
+	{ NULL, 0 },
+	{ " (Reminder Service)\nTo: ", 24 },
+	{ NULL, 0 },
+	{ "\nSubject: ", 10 },
+	{ NULL, 0 },
+	{ "'s Calendar\nPrecedence: bulk\n\n",  30 },
 };
 
 
 void
 cal(void)
 {
-	int printing;
-	char *p;
-	FILE *fp;
-	int ch, l, i, bodun = 0, bodun_maybe = 0;
-	int var;
-	char buf[2048 + 1], *prefix = NULL;
+	int ch, l, i, bodun = 0, bodun_maybe = 0, var, printing;
 	struct event *events, *cur_evt, *ev1, *tmp;
+	char buf[2048 + 1], *prefix = NULL, *p;
 	struct match *m;
 	size_t nlen;
+	FILE *fp;
 
 	events = NULL;
 	cur_evt = NULL;
@@ -147,19 +144,21 @@ cal(void)
 		/* User defined names for special events */
 		if ((p = strchr(buf, '='))) {
 			for (i = 0; i < NUMEV; i++) {
-			if (strncasecmp(buf, spev[i].name, spev[i].nlen) == 0 &&
-			    (p - buf == spev[i].nlen) && buf[spev[i].nlen + 1]) {
-				p++;
-				if (spev[i].uname != NULL)
-					free(spev[i].uname);
-				if ((spev[i].uname = strdup(p)) == NULL)
-					err(1, NULL);
-				spev[i].ulen = strlen(p);
-				i = NUMEV + 1;
+				if (strncasecmp(buf, spev[i].name,
+				    spev[i].nlen) == 0 &&
+				    (p - buf == spev[i].nlen) &&
+				    buf[spev[i].nlen + 1]) {
+					p++;
+					if (spev[i].uname != NULL)
+						free(spev[i].uname);
+					if ((spev[i].uname = strdup(p)) == NULL)
+						err(1, NULL);
+					spev[i].ulen = strlen(p);
+					i = NUMEV + 1;
+				}
 			}
-			}
-		if (i > NUMEV)
-			continue;
+			if (i > NUMEV)
+				continue;
 		}
 		if (buf[0] != '\t') {
 			printing = (m = isnow(buf, bodun)) ? 1 : 0;
@@ -178,32 +177,33 @@ cal(void)
 				
 				ev1 = NULL;
 				while (m) {
-				cur_evt = (struct event *) malloc(sizeof(struct event));
-				if (cur_evt == NULL)
-					err(1, NULL);
-
-				cur_evt->when = m->when;
-				snprintf(cur_evt->print_date,
-				    sizeof(cur_evt->print_date), "%s%c",
-				    m->print_date, (var + m->var) ? '*' : ' ');
-				if (ev1) {
-					cur_evt->desc = ev1->desc;
-					cur_evt->ldesc = NULL;
-				} else {
-					if (m->bodun && prefix) {
-						if (asprintf(&cur_evt->ldesc,
-						    "\t%s %s", prefix, p + 1) == -1)
-							err(1, NULL);
-					} else if ((cur_evt->ldesc =
-					    strdup(p)) == NULL)
+					cur_evt = malloc(sizeof(struct event));
+					if (cur_evt == NULL)
 						err(1, NULL);
-					cur_evt->desc = &(cur_evt->ldesc);
-					ev1 = cur_evt;
-				}
-				insert(&events, cur_evt);
-				foo = m;
-				m = m->next;
-				free(foo);
+	
+					cur_evt->when = m->when;
+					snprintf(cur_evt->print_date,
+					    sizeof(cur_evt->print_date), "%s%c",
+					    m->print_date, (var + m->var) ? '*' : ' ');
+					if (ev1) {
+						cur_evt->desc = ev1->desc;
+						cur_evt->ldesc = NULL;
+					} else {
+						if (m->bodun && prefix) {
+							if (asprintf(&cur_evt->ldesc,
+							    "\t%s %s", prefix,
+							    p + 1) == -1)
+								err(1, NULL);
+						} else if ((cur_evt->ldesc =
+						    strdup(p)) == NULL)
+							err(1, NULL);
+						cur_evt->desc = &(cur_evt->ldesc);
+						ev1 = cur_evt;
+					}
+					insert(&events, cur_evt);
+					foo = m;
+					m = m->next;
+					free(foo);
 				}
 			}
 		} else if (printing) {
@@ -231,9 +231,7 @@ cal(void)
 }
 
 int
-getfield(p, endp, flags)
-	char *p, **endp;
-	int *flags;
+getfield(char *p, char **endp, int *flags)
 {
 	int val, var, i;
 	char *start, savech;
@@ -257,8 +255,8 @@ getfield(p, endp, flags)
 
 	/* Sunday-1 */
 	if (*p == '+' || *p == '-')
-	    for(; isdigit(*++p);)
-		;
+		for(; isdigit(*++p); )
+			;
 
 	savech = *p;
 	*p = '\0';
@@ -269,16 +267,16 @@ getfield(p, endp, flags)
 
 	/* Day */
 	else if ((val = getday(start)) != 0) {
-	    *flags |= F_ISDAY;
+		*flags |= F_ISDAY;
 
-	    /* variable weekday */
-	    if ((var = getdayvar(start)) != 0) {
-		if (var <= 5 && var >= -4)
-		    val += var * 10;
+		/* variable weekday */
+		if ((var = getdayvar(start)) != 0) {
+			if (var <= 5 && var >= -4)
+				val += var * 10;
 #ifdef DEBUG
-		printf("var: %d\n", var);
+			printf("var: %d\n", var);
 #endif
-	    }
+		}
 	}
 
 	/* Try specials (Easter, Paskha, ...) */
@@ -299,20 +297,20 @@ getfield(p, endp, flags)
 			switch(*start) {
 			case '-':
 			case '+':
-			   var = atoi(start);
-			   if (var > 365 || var < -365)
-				   return (0); /* Someone is just being silly */
-			   val += (NUMEV + 1) * var;
-			   /* We add one to the matching event and multiply by
-			    * (NUMEV + 1) so as not to return 0 if there's a match.
-			    * val will overflow if there is an obscenely large
-			    * number of special events. */
-			   break;
+				var = atoi(start);
+				if (var > 365 || var < -365)
+					return (0); /* Someone is just being silly */
+				val += (NUMEV + 1) * var;
+				/* We add one to the matching event and multiply by
+				 * (NUMEV + 1) so as not to return 0 if there's a match.
+				 * val will overflow if there is an obscenely large
+				 * number of special events. */
+				break;
 			}
-		*flags |= F_SPECIAL;	
+			*flags |= F_SPECIAL;	
 		}
 		if (!(*flags & F_SPECIAL)) {
-		/* undefined rest */
+			/* undefined rest */
 			*p = savech;
 			return (0);
 		}
@@ -391,8 +389,7 @@ opencal(void)
 }
 
 void
-closecal(fp)
-	FILE *fp;
+closecal(FILE *fp)
 {
 	struct stat sbuf;
 	int nread, pdes[2], status;
@@ -439,9 +436,7 @@ done:	(void)fclose(fp);
 
 
 void
-insert(head, cur_evt)
-	struct event **head;
-	struct event *cur_evt;
+insert(struct event **head, struct event *cur_evt)
 {
 	struct event *tmp, *tmp2;
 

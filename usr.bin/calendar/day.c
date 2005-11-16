@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.19 2005/08/09 12:32:58 mickey Exp $	*/
+/*	$OpenBSD: day.c,v 1.20 2005/11/16 16:45:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: day.c,v 1.19 2005/08/09 12:32:58 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: day.c,v 1.20 2005/11/16 16:45:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,8 @@ static struct fixs fnmonths[13];      /* full national months names */
 static struct fixs nmonths[13];       /* short national month names */
 
 
-void setnnames(void)
+void
+setnnames(void)
 {
 	char buf[80];
 	int i, l;
@@ -160,8 +161,7 @@ void setnnames(void)
 }
 
 void
-settime(now)
-	time_t *now;
+settime(time_t *now)
 {
 	tp = localtime(now);
 	tp->tm_sec = 0;
@@ -190,57 +190,57 @@ settime(now)
 /* convert [Year][Month]Day into unix time (since 1970)
  * Year: two or four digits, Month: two digits, Day: two digits
  */
-time_t Mktime (date)
-    char *date;
+time_t
+Mktime(char *date)
 {
-    time_t t;
-    int len;
-    struct tm tm;
+	time_t t;
+	int len;
+	struct tm tm;
 
-    (void)time(&t);
-    tp = localtime(&t);
+	(void)time(&t);
+	tp = localtime(&t);
 
-    len = strlen(date);
-    if (len < 2)
-	return((time_t)-1);
-    tm.tm_sec = 0;
-    tm.tm_min = 0;
-    /* Avoid getting caught by a timezone shift; set time to noon */
-    tm.tm_isdst = 0;
-    tm.tm_hour = 12;
-    tm.tm_wday = 0;
-    tm.tm_mday = tp->tm_mday;
-    tm.tm_mon = tp->tm_mon;
-    tm.tm_year = tp->tm_year;
+	len = strlen(date);
+	if (len < 2)
+		return((time_t)-1);
+	tm.tm_sec = 0;
+	tm.tm_min = 0;
+	/* Avoid getting caught by a timezone shift; set time to noon */
+	tm.tm_isdst = 0;
+	tm.tm_hour = 12;
+	tm.tm_wday = 0;
+	tm.tm_mday = tp->tm_mday;
+	tm.tm_mon = tp->tm_mon;
+	tm.tm_year = tp->tm_year;
 
-    /* Day */
-    tm.tm_mday = atoi(date + len - 2);
+	/* Day */
+	tm.tm_mday = atoi(date + len - 2);
 
-    /* Month */
-    if (len >= 4) {
-	*(date + len - 2) = '\0';
-	tm.tm_mon = atoi(date + len - 4) - 1;
-    }
+	/* Month */
+	if (len >= 4) {
+		*(date + len - 2) = '\0';
+		tm.tm_mon = atoi(date + len - 4) - 1;
+	}
 
-    /* Year */
-    if (len >= 6) {
+	/* Year */
+	if (len >= 6) {
 		*(date + len - 4) = '\0';
 		tm.tm_year = atoi(date);
 
-	/* tm_year up TM_YEAR_BASE ... */
-	if (tm.tm_year < 69)		/* Y2K */
-		tm.tm_year += 2000 - TM_YEAR_BASE;
-	else if (tm.tm_year < 100)
-		tm.tm_year += 1900 - TM_YEAR_BASE;
-	else if (tm.tm_year > TM_YEAR_BASE)
-		tm.tm_year -= TM_YEAR_BASE;
-    }
+		/* tm_year up TM_YEAR_BASE ... */
+		if (tm.tm_year < 69)		/* Y2K */
+			tm.tm_year += 2000 - TM_YEAR_BASE;
+		else if (tm.tm_year < 100)
+			tm.tm_year += 1900 - TM_YEAR_BASE;
+		else if (tm.tm_year > TM_YEAR_BASE)
+			tm.tm_year -= TM_YEAR_BASE;
+	}
 
 #if DEBUG
-    printf("Mktime: %d %d %d %s\n", (int)mktime(&tm), (int)t, len,
-	   asctime(&tm));
+	printf("Mktime: %d %d %d %s\n", (int)mktime(&tm), (int)t, len,
+	    asctime(&tm));
 #endif
-    return(mktime(&tm));
+	return(mktime(&tm));
 }
 
 void
@@ -274,9 +274,7 @@ adjust_calendar(int *day, int *month)
  * with \t, is shown along with the matched line.
  */
 struct match *
-isnow(endp, bodun)
-	char	*endp;
-	int	bodun;
+isnow(char *endp, int bodun)
 {
 	int day = 0, flags = 0, month = 0, v1, v2, i;
 	int monthp, dayp, varp = 0;
@@ -592,8 +590,7 @@ isnow(endp, bodun)
 
 
 int
-getmonth(s)
-	char *s;
+getmonth(char *s)
 {
 	char **p;
 	struct fixs *n;
@@ -612,8 +609,7 @@ getmonth(s)
 
 
 int
-getday(s)
-	char *s;
+getday(char *s)
 {
 	char **p;
 	struct fixs *n;
@@ -636,8 +632,7 @@ getday(s)
  * ... etc ...
  */
 int
-getdayvar(s)
-	char *s;
+getdayvar(char *s)
 {
 	int offset;
 
@@ -677,8 +672,7 @@ getdayvar(s)
 
 
 int
-foy(year)
-	int year;
+foy(int year)
 {
 	/* 0-6; what weekday Jan 1 is */
 	year--;
@@ -688,8 +682,7 @@ foy(year)
 
 
 void
-variable_weekday(day, month, year)
-	int *day, month, year;
+variable_weekday(int *day, int month, int year)
 {
 	int v1, v2;
 	int *cumdays;

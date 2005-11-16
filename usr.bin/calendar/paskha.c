@@ -1,4 +1,4 @@
-/*	$OpenBSD: paskha.c,v 1.4 2004/12/10 15:31:01 mickey Exp $	*/
+/*	$OpenBSD: paskha.c,v 1.5 2005/11/16 16:45:11 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1993-1996 by Andrey A. Chernov, Moscow, Russia.
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: paskha.c,v 1.4 2004/12/10 15:31:01 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: paskha.c,v 1.5 2005/11/16 16:45:11 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -39,8 +39,7 @@ static const char rcsid[] = "$OpenBSD: paskha.c,v 1.4 2004/12/10 15:31:01 mickey
 /* (new style result); subtract 13 for old style */
 
 int
-paskha (R)
-	int R;  /*year*/
+paskha(int R)  /*year*/
 {
 	int a, b, c, d, e;
 	static int x = 15;

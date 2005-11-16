@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.24 2005/08/09 12:32:58 mickey Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.25 2005/11/16 16:45:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: calendar.c,v 1.24 2005/08/09 12:32:58 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: calendar.c,v 1.25 2005/11/16 16:45:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,8 @@ main(int argc, char *argv[])
 				warnx("uid %u did not finish in time", pw->pw_uid);
 			}
 			if (time(NULL) - t >= SECSPERDAY)
-				errx(2, "'calendar -a' took more than a day; stopped at uid %u",
+				errx(2, "'calendar -a' took more than a day; "
+				    "stopped at uid %u",
 				    pw->pw_uid);
 		}
 		for (;;) {
@@ -242,10 +243,9 @@ main(int argc, char *argv[])
 			runningkids--;
 		}
 		if (runningkids)
-			warnx(
-"%d child processes still running when 'calendar -a' finished", runningkids);
-	}
-	else if ((caldir = getenv("CALENDAR_DIR")) != NULL) {
+			warnx("%d child processes still running when "
+			    "'calendar -a' finished", runningkids);
+	} else if ((caldir = getenv("CALENDAR_DIR")) != NULL) {
 		if(!chdir(caldir))
 			cal();
 	} else
