@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.274 2005/10/31 10:32:47 henning Exp $
+#	$OpenBSD: rc,v 1.275 2005/11/16 09:19:36 camield Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -633,6 +633,10 @@ fi
 
 if [ X"${ftpd_flags}" != X"NO" ]; then
 	echo -n ' ftpd';		/usr/libexec/ftpd ${ftpd_flags}
+fi
+
+if [ X"${ftpproxy_flags}" != X"NO" ]; then
+	echo -n ' ftp-proxy';		/usr/sbin/ftp-proxy ${ftpproxy_flags}
 fi
 
 if [ X"${identd_flags}" != X"NO" ]; then
