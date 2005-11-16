@@ -1065,7 +1065,9 @@
 ./usr/share/man/cat4/aac.0
 ./usr/share/man/cat4/ac97.0
 ./usr/share/man/cat4/acphy.0
+./usr/share/man/cat4/adc.0
 ./usr/share/man/cat4/addcom.0
+./usr/share/man/cat4/admtmp.0
 ./usr/share/man/cat4/adv.0
 ./usr/share/man/cat4/advansys.0
 ./usr/share/man/cat4/adw.0
@@ -1368,6 +1370,7 @@
 ./usr/share/man/cat4/macppc/kauaiata.0
 ./usr/share/man/cat4/macppc/ki2c.0
 ./usr/share/man/cat4/macppc/kmem.0
+./usr/share/man/cat4/macppc/maciic.0
 ./usr/share/man/cat4/macppc/macobio.0
 ./usr/share/man/cat4/macppc/mediabay.0
 ./usr/share/man/cat4/macppc/mem.0
@@ -1628,6 +1631,7 @@
 ./usr/share/man/cat4/tqphy.0
 ./usr/share/man/cat4/trm.0
 ./usr/share/man/cat4/trunk.0
+./usr/share/man/cat4/tsl.0
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/twe.0
