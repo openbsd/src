@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.6 2005/11/15 22:01:36 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.7 2005/11/16 23:30:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -33,7 +33,7 @@
 #define LM87_EXT_TEMP	0x26
 #define LM87_INT_TEMP	0x27
 #define LM87_FAN1	0x28
-#define LM87_FAN2	0x28
+#define LM87_FAN2	0x29
 #define LM87_REVISION	0x3f
 #define LM87_CONFIG1	0x40
 #define  LM87_CONFIG1_START	0x01
