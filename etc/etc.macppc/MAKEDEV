@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.21 2005/08/01 22:22:13 deraadt Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.22 2005/11/16 03:44:12 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.21 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -70,6 +70,7 @@
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes for fdescfs
 #	hotplug	devices hot plugging
+#	gpio*	General Purpose Input/Output
 #	iop*	I2O controller devices
 #	lkm	Loadable kernel modules interface
 #	pci	PCI bus device
@@ -283,6 +284,10 @@ iop*)
 	M iop$U c 73 $U 660
 	;;
 
+gpio*)
+	M gpio$U c 79 $U 600
+	;;
+
 hotplug)
 	M hotplug c 78 $U 400
 	;;
@@ -466,12 +471,13 @@ ramdisk)
 	;;
 
 all)
-	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
-	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 hotplug ptm
-	R local wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0
-	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
-	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R gpio0 gpio1 gpio2 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3
+	R sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0
+	R ss1 ch0 hotplug ptm local wscons pci iop0 iop1 uall tuner0
+	R radio0 audio0 uk0 random lkm tty00 tty01 tty02 tty03 apm
+	R crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)
