@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.92 2005/11/16 03:44:14 cloder Exp $	*/
+/*	$OpenBSD: theo.c,v 1.93 2005/11/16 03:53:17 cloder Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -106,13 +106,11 @@ static const char *talk[] = {
 	"Make them want to start over, and play nice the next time.",
 	"It is clear that this has not been thought through.",
 	"avoid using abort().  it is not nice.",
-	"if you do not test that, you are banned from editing theo.c",
 	"That's the most ridiculous thing I've heard in the last two or three minutes!",
 	"I'm not just doing this for crowd response. I need to be right.",
 	"i admit you are better than i am...",
 	"I'd put a fan on my bomb.. And blinking lights...",
 	"I love to fight",
-	"I am not concerned with commit count",
 	"No sane people allowed here.  Go home.",
 	"you have to stop peeing on your breakfast",
 	"feature requests come from idiots",
@@ -129,13 +127,9 @@ static const char *talk[] = {
 	"We are not hackers. We are turd polishing craftsmen.",
 	"if ya break cvs, we hunt ya and break yer legs",
 	"who cares.  style(9) can bite my ass",
-	"The argument is totally Linux.",
 	"It'd be one fucking happy planet if it wasn't for what's under this fucking sticker.",
-	"noone is gonna add that thing to theo.c?  wow, i'm stunned.  no henning?",
 	"I would explain, but I am too drunk.",
-	"Take a picture of my butt, it's what everyone wants.",
 	"you slackers don't deserve pictures yet",
-	"You guys are about four days behind on theo.c",
 	"I'm just talking.",
 	"Vegetarian my ass",
 	"Wait a minute, that's a McNally's!",
@@ -151,15 +145,8 @@ static const char *talk[] = {
 	"Quite frankly, SSE's alignment requirement is the most utterly retarded idea since eating your own shit.",
 	"Holy verbose prom startup Batman.",
 	"Do you think you are exempt from COMPILING BEFORE YOU COMMIT",
-	"I want to be REALLY COOL just like all the other developers!",
 	"I don't know what you are talking about.  Please tell me what you are talking about.",
-	"I avoid helping people who refuse to learn how to help themselves.",
 	"Any day now, when we sell out.",
-	"And there you have it.. the distinction between those people who are OpenBSD develepers and those who will never be able to be...",
-	"I don't mean this applies to everyone, but is there a high quantity of attention deficit disorder in our user community?  Or retards?",
-	"Have you been living in a cave, or are you just being a jerk?",
-	"If you want it, go do the stinking work yourself.",
-	"A burp means less gas later",
 	"optimism in man kind does not belong here",
 	"First user who tries to push this button, he pounds into the ground with a rant of death.",
 	"we did farts.  now we do sperm.  we are cutting edge.",
@@ -170,14 +157,12 @@ static const char *talk[] = {
 	"openbsd development is slow because lots of developers have shrunken balls",
 	"penguins are not much more than chickens that swim.",
 	"i am a packet sniffing fool, let me wipe my face with my own poo",
-	"they are manual pages, not tea time chit-chats",
 	"Whiners.  They scale really well.",
 	"in your world, you would have a checklist of 50 fucking workarounds just to make a coffee.",
 	"for once, I have nothing to say.",
 	"You have no idea how fucked we are",
 	"You can call it fart if you want to.",
 	"wavelan is a battle field",
-	"If you don't know what you are talking about, why are you talking?",
 	"You are in a maze of gpio pins, all alike, all undocumented, and a few are wired to bombs."
 };
 
