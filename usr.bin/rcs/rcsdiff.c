@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.14 2005/11/14 11:01:04 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.15 2005/11/16 09:57:04 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -118,14 +118,12 @@ rcsdiff_main(int argc, char **argv)
 
 		if (rev2 == NULL) {
 			if (rcsdiff_file(file, frev, argv[i]) < 0) {
-				cvs_log(LP_ERR, "failed to rcsdiff");
 				rcs_close(file);
 				status = 2;
 				continue;
 			}
 		} else {
 			if (rcsdiff_rev(file, rev, rev2) < 0) {
-				cvs_log(LP_ERR, "failed to rcsdiff");
 				rcs_close(file);
 				status = 2;
 				continue;
@@ -151,6 +149,12 @@ rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
 	char rbuf[64];
+	struct stat st;
+
+	if (stat(filename, &st) == -1) {
+		cvs_log(LP_ERRNO, "%s", filename);
+		return (-1);
+	}
 
 	rcsnum_tostr(rev, rbuf, sizeof(rbuf));
 	if (verbose == 1)
