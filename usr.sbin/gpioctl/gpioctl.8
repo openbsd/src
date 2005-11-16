@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.7 2005/11/16 12:44:49 jmc Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.8 2005/11/16 16:40:28 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -22,12 +22,12 @@
 .Nd control GPIO devices
 .Sh SYNOPSIS
 .Nm gpioctl
-.Op Fl hq
+.Op Fl q
 .Op Fl d Ar device
 .Op Ar pin
 .Op Ar 0 | 1 | 2
 .Nm gpioctl
-.Op Fl hq
+.Op Fl q
 .Op Fl d Ar device
 .Fl c
 .Ar pin
@@ -135,8 +135,6 @@ file can be specified with the
 option in order to access a particular
 .Tn GPIO
 device.
-.It Fl h
-Display a usage summary.
 .It Fl q
 Operate quietly i.e. nothing is printed to stdout.
 .El

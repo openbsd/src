@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.2 2004/08/08 00:05:09 deraadt Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.3 2005/11/16 16:40:28 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 	int do_ctl = 0;
 	int pin = 0, value = 0;
 
-	while ((ch = getopt(argc, argv, "cd:hq")) != -1)
+	while ((ch = getopt(argc, argv, "cd:h")) != -1)
 		switch (ch) {
 		case 'c':
 			do_ctl = 1;
@@ -76,8 +76,6 @@ main(int argc, char *argv[])
 		case 'q':
 			quiet = 1;
 			break;
-		case 'h':
-		case '?':
 		default:
 			usage();
 			/* NOTREACHED */
@@ -222,9 +220,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-hq] [-d device] [pin] [0 | 1 | 2]\n",
+	fprintf(stderr, "usage: %s [-q] [-d device] [pin] [0 | 1 | 2]\n",
 	    __progname);
-	fprintf(stderr, "       %s [-hq] [-d device] -c pin [flags]\n",
+	fprintf(stderr, "       %s [-q] [-d device] -c pin [flags]\n",
 	    __progname);
 
 	exit(1);
