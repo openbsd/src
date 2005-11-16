@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.26 2005/11/06 01:42:23 dlg Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.27 2005/11/16 04:31:32 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -141,8 +141,8 @@ enum mpt_scsi_speed { U320, U160, U80 };
 int
 mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 {
-	fCONFIG_PAGE_SCSI_DEVICE_0 page0;
-	fCONFIG_PAGE_SCSI_DEVICE_1 page1;
+	CONFIG_PAGE_SCSI_DEVICE_0 page0;
+	CONFIG_PAGE_SCSI_DEVICE_1 page1;
 	uint8_t tp;
 	int error;
 	struct scsi_inquiry_data inqbuf;

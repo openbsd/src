@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.16 2005/11/06 01:42:23 dlg Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.17 2005/11/16 04:31:32 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -219,11 +219,11 @@ typedef struct mpt_softc {
 	/* Device configuration information */
 	struct {
 		struct mpt_spi_cfg {
-			fCONFIG_PAGE_SCSI_PORT_0	_port_page0;
-			fCONFIG_PAGE_SCSI_PORT_1	_port_page1;
-			fCONFIG_PAGE_SCSI_PORT_2	_port_page2;
-			fCONFIG_PAGE_SCSI_DEVICE_0	_dev_page0[16];
-			fCONFIG_PAGE_SCSI_DEVICE_1	_dev_page1[16];
+			CONFIG_PAGE_SCSI_PORT_0	_port_page0;
+			CONFIG_PAGE_SCSI_PORT_1	_port_page1;
+			CONFIG_PAGE_SCSI_PORT_2	_port_page2;
+			CONFIG_PAGE_SCSI_DEVICE_0	_dev_page0[16];
+			CONFIG_PAGE_SCSI_DEVICE_1	_dev_page1[16];
 			uint16_t			_negotiated_speed[16];
 			uint16_t			_tag_enable;
 			uint16_t			_disc_enable;
@@ -248,11 +248,11 @@ typedef struct mpt_softc {
 		} fc;
 
 		struct mpt_mfg_cfg {
-			fCONFIG_PAGE_MANUFACTURING_0 _mfg_page0;
-			fCONFIG_PAGE_MANUFACTURING_1 _mfg_page1;
-			fCONFIG_PAGE_MANUFACTURING_2 _mfg_page2;
-			fCONFIG_PAGE_MANUFACTURING_3 _mfg_page3;
-			fCONFIG_PAGE_MANUFACTURING_4 _mfg_page4;
+			CONFIG_PAGE_MANUFACTURING_0 _mfg_page0;
+			CONFIG_PAGE_MANUFACTURING_1 _mfg_page1;
+			CONFIG_PAGE_MANUFACTURING_2 _mfg_page2;
+			CONFIG_PAGE_MANUFACTURING_3 _mfg_page3;
+			CONFIG_PAGE_MANUFACTURING_4 _mfg_page4;
 		} mfg;
 #define mpt_mfg_page0		cfg.mfg._mfg_page0
 #define mpt_mfg_page1		cfg.mfg._mfg_page1
@@ -261,10 +261,10 @@ typedef struct mpt_softc {
 #define mpt_mfg_page4		cfg.mfg._mfg_page4
 
 		struct mpt_iou_cfg {
-			fCONFIG_PAGE_IO_UNIT_0 _iou_page0;
-			fCONFIG_PAGE_IO_UNIT_1 _iou_page1;
-			fCONFIG_PAGE_IO_UNIT_2 _iou_page2;
-			fCONFIG_PAGE_IO_UNIT_3 _iou_page3;
+			CONFIG_PAGE_IO_UNIT_0 _iou_page0;
+			CONFIG_PAGE_IO_UNIT_1 _iou_page1;
+			CONFIG_PAGE_IO_UNIT_2 _iou_page2;
+			CONFIG_PAGE_IO_UNIT_3 _iou_page3;
 		} iou;
 #define mpt_iou_page0		cfg.iou._iou_page0
 #define mpt_iou_page1		cfg.iou._iou_page1
@@ -272,11 +272,11 @@ typedef struct mpt_softc {
 #define mpt_iou_page3		cfg.iou._iou_page3
 
 		struct mpt_ioc_cfg {
-			fCONFIG_PAGE_IOC_0 _ioc_page0;
-			fCONFIG_PAGE_IOC_1 _ioc_page1;
-			fCONFIG_PAGE_IOC_2 _ioc_page2;
-			fCONFIG_PAGE_IOC_3 _ioc_page3;
-			fCONFIG_PAGE_IOC_4 _ioc_page4;
+			CONFIG_PAGE_IOC_0 _ioc_page0;
+			CONFIG_PAGE_IOC_1 _ioc_page1;
+			CONFIG_PAGE_IOC_2 _ioc_page2;
+			CONFIG_PAGE_IOC_3 _ioc_page3;
+			CONFIG_PAGE_IOC_4 _ioc_page4;
 		} ioc;
 #define mpt_ioc_page0		cfg.ioc._ioc_page0
 #define mpt_ioc_page1		cfg.ioc._ioc_page1
@@ -285,8 +285,8 @@ typedef struct mpt_softc {
 #define mpt_ioc_page4		cfg.ioc._ioc_page4
 
 		struct mpt_raid_cfg {
-			fCONFIG_PAGE_RAID_VOL_0 _raidvol_page0;
-			fCONFIG_PAGE_RAID_PHYS_DISK_0 _raidphys_page0;
+			CONFIG_PAGE_RAID_VOL_0 _raidvol_page0;
+			CONFIG_PAGE_RAID_PHYS_DISK_0 _raidphys_page0;
 		} raid;
 #define mpt_raidvol_page0		cfg.raid._raidvol_page0
 #define mpt_raidphys_page0		cfg.raid._raidphys_page0

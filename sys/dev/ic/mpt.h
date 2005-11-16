@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.h,v 1.4 2004/07/12 23:57:14 marco Exp $	*/
+/*	$OpenBSD: mpt.h,v 1.5 2005/11/16 04:31:32 marco Exp $	*/
 /*	$NetBSD: mpt.h,v 1.2 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
@@ -176,9 +176,9 @@ void mpt_init_request(mpt_softc_t *, request_t *);
 int mpt_intr(void *);
 void mpt_check_doorbell(mpt_softc_t *);
 
-int mpt_read_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
-int mpt_write_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
-int mpt_read_cfg_header(mpt_softc_t *, int, int, int, fCONFIG_PAGE_HEADER *);
+int mpt_read_cfg_page(mpt_softc_t *, int, CONFIG_PAGE_HEADER *);
+int mpt_write_cfg_page(mpt_softc_t *, int, CONFIG_PAGE_HEADER *);
+int mpt_read_cfg_header(mpt_softc_t *, int, int, int, CONFIG_PAGE_HEADER *);
 
 /* FW Download Boot */
 int mpt_downloadboot(mpt_softc_t *);
