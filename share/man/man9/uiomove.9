@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uiomove.9,v 1.9 2005/02/14 18:44:21 jmc Exp $
+.\"	$OpenBSD: uiomove.9,v 1.10 2005/11/16 15:15:49 uwe Exp $
 .\"	$NetBSD: uiomove.9,v 1.6 2001/12/26 00:16:30 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct uio {
 	size_t	uio_resid;	/* residual i/o count */
 	enum	uio_seg uio_segflg;
 	enum	uio_rw uio_rw;
-	struct	proc *uio_procp;/* process if UIO_USERSPACE */
+	struct	proc *uio_procp;/* associated process or NULL */
 };
 .Ed
 .Pp
@@ -99,8 +99,14 @@ A flag indicating whether the space described is in user-space
 A flag indicating whether data should be read into the space
 (UIO_READ) or written from the space (UIO_WRITE).
 .It uio_procp
-A pointer to the process whose data area is described by the
-structure, or NULL if the area is in kernel-space.
+A pointer to a process whose data area is described by the
+structure, or which is having the I/O done on its behalf if
+the area is in kernel-space.
+.Nm uiomove
+itself does not use this field if the area is in kernel-space,
+but other functions that take a
+.Fa struct uio
+may depend on this information.
 .El
 .Pp
 The value of
