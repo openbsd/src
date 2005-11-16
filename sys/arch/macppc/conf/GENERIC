@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.108 2005/11/16 12:29:54 kettenis Exp $g
+#	$OpenBSD: GENERIC,v 1.109 2005/11/16 16:38:48 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -257,8 +257,10 @@ lmenv*		at maciic?
 maxtmp*		at maciic?
 adc*		at maciic?
 tsl*		at maciic?
+admtmp*		at maciic?
 pcagpio*	at maciic?
 gpio*		at pcagpio?
+maxds*		at maciic?
 
 # CardBus bus support
 cardbus*	at cardslot?
