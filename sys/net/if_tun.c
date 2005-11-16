@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.68 2005/06/08 06:53:32 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.69 2005/11/16 10:45:33 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -159,16 +159,16 @@ tunattach(int n)
 int
 tun_clone_create(struct if_clone *ifc, int unit)
 {
-	return tun_create(ifc, unit, 0);
+	return (tun_create(ifc, unit, 0));
 }
 
 int
 tun_create(struct if_clone *ifc, int unit, int flags)
 {
-	struct tun_softc *tp;
-	struct ifnet *ifp;
-	u_int32_t macaddr_rnd;
-	int s;
+	struct tun_softc	*tp;
+	struct ifnet		*ifp;
+	u_int32_t		 macaddr_rnd;
+	int			 s;
 
 	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT);
 	if (!tp)
@@ -229,8 +229,8 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 int
 tun_clone_destroy(struct ifnet *ifp)
 {
-	struct tun_softc *tp = ifp->if_softc;
-	int s;
+	struct tun_softc	*tp = ifp->if_softc;
+	int			 s;
 
 	tun_wakeup(tp);
 
@@ -266,8 +266,8 @@ tun_lookup(int unit)
 int
 tun_switch(struct tun_softc *tp, int flags)
 {
-	struct ifnet *ifp = &tp->tun_if;
-	int unit, open, r;
+	struct ifnet	*ifp = &tp->tun_if;
+	int		 unit, open, r;
 
 	if ((tp->tun_flags & TUN_LAYER2) == (flags & TUN_LAYER2))
 		return (0);
@@ -320,7 +320,7 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 	}
 
 	if (tp->tun_flags & TUN_OPEN)
-		return EBUSY;
+		return (EBUSY);
 
 	ifp = &tp->tun_if;
 	tp->tun_flags |= TUN_OPEN;
@@ -456,7 +456,7 @@ tuninit(struct tun_softc *tp)
 #endif /* INET6 */
 	}
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -465,9 +465,9 @@ tuninit(struct tun_softc *tp)
 int
 tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct tun_softc *tp = (struct tun_softc *)(ifp->if_softc);
-	struct ifreq *ifr = (struct ifreq *)data;
-	int	error = 0, s;
+	struct tun_softc	*tp = (struct tun_softc *)(ifp->if_softc);
+	struct ifreq		*ifr = (struct ifreq *)data;
+	int			 error = 0, s;
 
 	s = splimp();
 	if (tp->tun_flags & TUN_LAYER2)
@@ -789,7 +789,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 	if (error)
 		ifp->if_ierrors++;
 
-	return error;
+	return (error);
 }
 
 /*
@@ -974,10 +974,10 @@ tunpoll(dev_t dev, int events, struct proc *p)
 int
 tunkqfilter(dev_t dev, struct knote *kn)
 {
-	int s;
-	struct klist *klist;
-	struct tun_softc *tp;
-	struct ifnet *ifp;
+	int			 s;
+	struct klist		*klist;
+	struct tun_softc	*tp;
+	struct ifnet		*ifp;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
@@ -1013,9 +1013,10 @@ tunkqfilter(dev_t dev, struct knote *kn)
 void
 filt_tunrdetach(struct knote *kn)
 {
-	int s;
-	struct tun_softc *tp = (struct tun_softc *)kn->kn_hook;
+	int			 s;
+	struct tun_softc	*tp;
 
+	tp = (struct tun_softc *)kn->kn_hook;
 	s = splhigh();
 	if (!(kn->kn_status & KN_DETACHED))
 		SLIST_REMOVE(&tp->tun_rsel.si_note, kn, knote, kn_selnext);
@@ -1025,14 +1026,14 @@ filt_tunrdetach(struct knote *kn)
 int
 filt_tunread(struct knote *kn, long hint)
 {
-	int s;
-	struct tun_softc *tp;
-	struct ifnet *ifp;
-	struct mbuf *m;
+	int			 s;
+	struct tun_softc	*tp;
+	struct ifnet		*ifp;
+	struct mbuf		*m;
 
 	if (kn->kn_status & KN_DETACHED) {
 		kn->kn_data = 0;
-		return 1;
+		return (1);
 	}
 
 	tp = (struct tun_softc *)kn->kn_hook;
@@ -1056,9 +1057,10 @@ filt_tunread(struct knote *kn, long hint)
 void
 filt_tunwdetach(struct knote *kn)
 {
-	int s;
-	struct tun_softc *tp = (struct tun_softc *)kn->kn_hook;
+	int			 s;
+	struct tun_softc	*tp;
 
+	tp = (struct tun_softc *)kn->kn_hook;
 	s = splhigh();
 	if (!(kn->kn_status & KN_DETACHED))
 		SLIST_REMOVE(&tp->tun_wsel.si_note, kn, knote, kn_selnext);
@@ -1068,8 +1070,8 @@ filt_tunwdetach(struct knote *kn)
 int
 filt_tunwrite(struct knote *kn, long hint)
 {
-	struct tun_softc *tp;
-	struct ifnet *ifp;
+	struct tun_softc	*tp;
+	struct ifnet		*ifp;
 
 	if (kn->kn_status & KN_DETACHED) {
 		kn->kn_data = 0;
@@ -1094,8 +1096,8 @@ filt_tunwrite(struct knote *kn, long hint)
 static void
 tunstart(struct ifnet *ifp)
 {
-	struct tun_softc *tp = ifp->if_softc;
-	struct mbuf *m;
+	struct tun_softc	*tp = ifp->if_softc;
+	struct mbuf		*m;
 
 	if (!(tp->tun_flags & TUN_LAYER2) &&
 	    !ALTQ_IS_ENABLED(&ifp->if_snd) &&
