@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.107 2005/11/16 04:21:56 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.108 2005/11/16 12:29:54 kettenis Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -128,6 +128,7 @@ bm*		at macobio?	# BMAC ethernet
 #nvram*		at macobio?	# nvram
 adb*		at macobio?	# Apple Desktop Bus
 apm0		at adb?		# APM emulation
+pi2c0		at adb?		# PMU I2C
 wi*		at macobio?	# airport
 macgpio*	at macobio?	# GPIO, PMU interrupt router.
 macgpio*	at macgpio?	# GPIO, PMU interrupt router.
@@ -246,8 +247,9 @@ radio*	at udsbr?		# USB radio
 ugen*	at uhub?		# USB Generic driver
 
 # I2C bus support
-maciic*		at smu?
 maciic*		at ki2c?
+maciic*		at pi2c?
+maciic*		at smu?
 
 # I2C devices
 lmtemp*		at maciic?
