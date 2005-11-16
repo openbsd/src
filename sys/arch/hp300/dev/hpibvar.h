@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpibvar.h,v 1.8 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: hpibvar.h,v 1.9 2005/11/16 21:23:55 miod Exp $	*/
 /*	$NetBSD: hpibvar.h,v 1.10 1997/03/31 07:34:25 scottr Exp $	*/
 
 /*
@@ -148,12 +148,6 @@ struct hpibbus_softc {
 	char	*sc_addr;
 	int	sc_count;
 	int	sc_curcnt;
-
-	/*
-	 * HP-IB is an indirect bus; this cheezy resource map
-	 * keeps track of slave/punit allocations.
-	 */
-	char	sc_rmap[HPIB_NSLAVES][HPIB_NPUNITS];
 };
 
 /* sc_flags */
@@ -184,8 +178,6 @@ int	hpibid(int, int);
 
 int	hpibreq(struct device *, struct hpibqueue *);
 void	hpibfree(struct device *, struct hpibqueue *);
-int	hpibbus_alloc(struct hpibbus_softc *, int, int);
-void	hpibbus_free(struct hpibbus_softc *, int, int);
 
 int	hpibintr(void *);
 int	hpibdevprint(void *, const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.11 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: ct.c,v 1.12 2005/11/16 21:23:55 miod Exp $	*/
 /*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ void	ctcommand(dev_t, int, int);
 cdev_decl(ct);
 bdev_decl(ct);
 
-struct	ctinfo {
+const struct	ctinfo {
 	short	hwid;
 	short	punit;
 	char	*desc;
@@ -217,12 +217,11 @@ ctident(parent, sc, ha)
 
 	/* Is it one of the tapes we support? */
 	for (id = 0; id < nctinfo; id++)
-		if (ha->ha_id == ctinfo[id].hwid)
+		if (ha->ha_id == ctinfo[id].hwid &&
+		    ha->ha_punit == ctinfo[id].punit)
 			break;
 	if (id == nctinfo)
 		return (0);
-
-	ha->ha_punit = ctinfo[id].punit;
 
 	/*
 	 * So far, so good.  Get drive parameters.  Note command

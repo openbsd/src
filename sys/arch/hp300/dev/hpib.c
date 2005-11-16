@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpib.c,v 1.12 2005/11/14 20:21:42 miod Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.13 2005/11/16 21:23:55 miod Exp $	*/
 /*	$NetBSD: hpib.c,v 1.16 1997/04/27 20:58:57 thorpej Exp $	*/
 
 /*
@@ -62,11 +62,8 @@ struct cfdriver hpibbus_cd = {
 };
 
 void	hpibbus_attach_children(struct hpibbus_softc *);
-int	hpibbussearch(struct device *, void *, void *);
+int	hpibbussubmatch(struct device *, void *, void *);
 int	hpibbusprint(void *, const char *);
-
-int	hpibbus_alloc(struct hpibbus_softc *, int, int);
-void	hpibbus_free(struct hpibbus_softc *, int, int);
 
 void	hpibstart(void *);
 void	hpibdone(void *);
@@ -82,7 +79,7 @@ int	hpibdmathresh = 3;	/* byte count beyond which to attempt dma */
  * probably Amigo, too) are tagged with a 16-bit ID.
  *
  * HP-IB has a 2-level addressing scheme; slave, the analog
- * of a SCSI ID, and punit, the analog of a SCSI LUN.  Unforunately,
+ * of a SCSI ID, and punit, the analog of a SCSI LUN.  Unfortunately,
  * IDs are on a per-slave basis; punits are often used for disk
  * drives that have an accompanying tape drive on the second punit.
  *
@@ -92,17 +89,9 @@ int	hpibdmathresh = 3;	/* byte count beyond which to attempt dma */
  * have ID tags, and often the host cannot even tell if such
  * a device is attached to the system!
  *
- * These two nasty bits mean that we have to treat HP-IB as
- * an indirect bus.  However, since we are given some ID
- * information, it is unreasonable to disallow cloning of
- * CS/80 devices.
- *
- * To deal with all of this, we use the semi-twisted scheme
- * in hpibbus_attach_children().  For each HP-IB slave, we loop
- * through all of the possibly-configured children, allowing
- * them to modify the punit parameter (but NOT the slave!).
- *
- * This is evil, but what can you do?
+ * We nevertheless probe the whole (slave, punit) tuple space, since
+ * drivers for devices with a unique ID know exactly where to attach; 
+ * and we disallow ``star'' locators for other drivers.
  */
 
 int
@@ -157,63 +146,52 @@ hpibbus_attach_children(sc)
 	struct hpibbus_softc *sc;
 {
 	struct hpibbus_attach_args ha;
-	int slave;
+	int id, slave, punit;
+	int i;
 
-	for (slave = 0; slave < 8; slave++) {
+	for (slave = 0; slave < HPIB_NSLAVES; slave++) {
 		/*
 		 * Get the ID tag for the device, if any.
 		 * Plotters won't identify themselves, and
 		 * get the same value as non-existent devices.
+		 * However, aging HP-IB drives are slow to respond; try up
+		 * to three times to get a valid ID.
 		 */
-		ha.ha_id = hpibid(sc->sc_dev.dv_unit, slave);
+		for (i = 0; i < 3; i++) {
+			id = hpibid(sc->sc_dev.dv_unit, slave);
+			if ((id & 0x200) != 0)
+				break;
+			delay(10000);
+		}
 
-		ha.ha_slave = slave;	/* not to be modified by children */
-		ha.ha_punit = 0;	/* children modify this */
-
-		/*
-		 * Search though all configured children for this bus.
-		 */
-		(void)config_found_sm(&sc->sc_dev, &ha, hpibbusprint,
-		    hpibbussearch);
+		for (punit = 0; punit < HPIB_NPUNITS; punit++) {
+			/*
+			 * Search through all configured children for this bus.
+			 */
+			ha.ha_id = id;
+			ha.ha_slave = slave;
+			ha.ha_punit = punit;
+			(void)config_found_sm(&sc->sc_dev, &ha, hpibbusprint,
+			    hpibbussubmatch);
+		}
 	}
 }
 
 int
-hpibbussearch(parent, match, aux)
+hpibbussubmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct hpibbus_softc *sc = (struct hpibbus_softc *)parent;
 	struct hpibbus_attach_args *ha = aux;
-	int pri;
 
-	/* Make sure this is in a consistent state. */
-	ha->ha_punit = 0;
-
-	pri = (*cf->cf_attach->ca_match)(parent, cf, ha);
-	if (pri > 0) {
-		/*
-		 * The device probe has succeeded, and filled in
-		 * the punit information.  Make sure the configuration
-		 * allows for this slave/punit combination.
-		 */
-		if (cf->hpibbuscf_slave != HPIBBUS_SLAVE_UNK &&
-		    cf->hpibbuscf_slave != ha->ha_slave)
-			return (0);
-		if (cf->hpibbuscf_punit != HPIBBUS_PUNIT_UNK &&
-		    cf->hpibbuscf_punit != ha->ha_punit)
-			return (0);
-
-		/*
-		 * Allocate the device's address from the bus's
-		 * resource map.
-		 */
-		if (hpibbus_alloc(sc, ha->ha_slave, ha->ha_punit))
-			return (0);
-	}
-
-	return (pri);
+	if (cf->hpibbuscf_slave != HPIBBUS_SLAVE_UNK &&
+	    cf->hpibbuscf_slave != ha->ha_slave)
+		return (0);
+	if (cf->hpibbuscf_punit != HPIBBUS_PUNIT_UNK &&
+	    cf->hpibbuscf_punit != ha->ha_punit)
+		return (0);
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
 int
@@ -224,7 +202,7 @@ hpibbusprint(aux, pnp)
 	struct hpibbus_attach_args *ha = aux;
 
 	if (pnp != NULL) {
-		if (ha->ha_id == 0)
+		if (ha->ha_id == 0 || ha->ha_punit != 0 /* XXX */)
 			return (QUIET);
 		printf("HP-IB device (id %04X) at %s", ha->ha_id, pnp);
 	}
@@ -428,39 +406,4 @@ hpibintr(arg)
 	struct hpibbus_softc *sc = arg;
 
 	return ((sc->sc_ops->hpib_intr)(arg));
-}
-
-int
-hpibbus_alloc(sc, slave, punit)
-	struct hpibbus_softc *sc;
-	int slave, punit;
-{
-
-	if (slave >= HPIB_NSLAVES ||
-	    punit >= HPIB_NPUNITS)
-		panic("hpibbus_alloc: device address out of range");
-
-	if (sc->sc_rmap[slave][punit] == 0) {
-		sc->sc_rmap[slave][punit] = 1;
-		return (0);
-	}
-	return (1);
-}
-
-void
-hpibbus_free(sc, slave, punit)
-	struct hpibbus_softc *sc;
-	int slave, punit;
-{
-
-	if (slave >= HPIB_NSLAVES ||
-	    punit >= HPIB_NPUNITS)
-		panic("hpibbus_free: device address out of range");
-
-#ifdef DIAGNOSTIC
-	if (sc->sc_rmap[slave][punit] == 0)
-		panic("hpibbus_free: not allocated");
-#endif
-
-	sc->sc_rmap[slave][punit] = 0;
 }

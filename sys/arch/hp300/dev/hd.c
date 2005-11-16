@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.34 2005/11/15 21:09:44 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.35 2005/11/16 21:23:55 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -162,13 +162,13 @@ const char *err_info[16] = {
 	NULL
 };
 
-int	hddebug = 0x80;
 #define HDB_FOLLOW	0x01
 #define HDB_STATUS	0x02
 #define HDB_IDENT	0x04
 #define HDB_IO		0x08
 #define HDB_ASYNC	0x10
 #define HDB_ERROR	0x80
+int	hddebug = HDB_ERROR | HDB_IDENT;
 #endif
 
 /*
@@ -271,28 +271,9 @@ hdmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct hpibbus_attach_args *ha = aux;
 
-	/*
-	 * Set punit if operator specified one in the kernel
-	 * configuration file.
-	 */
-	if (cf->hpibbuscf_punit != HPIBBUS_PUNIT_UNK &&
-	    cf->hpibbuscf_punit < HPIB_NPUNITS)
-		ha->ha_punit = cf->hpibbuscf_punit;
-
-	if (hdident(parent, NULL, ha) == 0) {
-		/*
-		 * XXX Some aging HP-IB drives are slow to
-		 * XXX respond; give them a chance to catch
-		 * XXX up and probe them again.
-		 */
-		delay(10000);
-		ha->ha_id = hpibid(parent->dv_unit, ha->ha_slave);
-		return (hdident(parent, NULL, ha));
-	}
-	return (1);
+	return (hdident(parent, NULL, ha));
 }
 
 void
@@ -359,9 +340,10 @@ hdident(parent, sc, ha)
 
 	/* Is it one of the disks we support? */
 	for (id = 0; id < numhdidentinfo; id++)
-		if (ha->ha_id == hdidentinfo[id].ri_hwid)
+		if (ha->ha_id == hdidentinfo[id].ri_hwid &&
+		    ha->ha_punit <= hdidentinfo[id].ri_maxunum)
 			break;
-	if (id == numhdidentinfo || ha->ha_punit > hdidentinfo[id].ri_maxunum)
+	if (id == numhdidentinfo)
 		return (0);
 
 	/*

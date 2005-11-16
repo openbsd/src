@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.13 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: mt.c,v 1.14 2005/11/16 21:23:55 miod Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /*
@@ -173,7 +173,8 @@ mtident(sc, ha)
 	int i;
 
 	for (i = 0; i < nmtinfo; i++) {
-		if (ha->ha_id == mtinfo[i].hwid) {
+		if (ha->ha_id == mtinfo[i].hwid &&
+		    ha->ha_punit == 0) {
 			if (sc != NULL) {
 				sc->sc_type = mtinfo[i].hwid;
 				printf(": %s tape\n", mtinfo[i].desc);
