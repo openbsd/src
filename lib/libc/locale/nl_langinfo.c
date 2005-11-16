@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl_langinfo.c,v 1.5 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: nl_langinfo.c,v 1.6 2005/11/16 16:48:15 espie Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -8,6 +8,8 @@
 #include <locale.h>
 #include <nl_types.h>
 #include <langinfo.h>
+#include "rune.h"
+#include "runetype.h"
 
 char *
 nl_langinfo(nl_item item)
@@ -97,6 +99,11 @@ nl_langinfo(nl_item item)
 		break;
 	case CRNCYSTR:				/* XXX */
 		s = "";
+		break;
+	case CODESET:
+		s = _CurrentRuneLocale->rl_codeset;
+		if (!s)
+			s = "";
 		break;
 	default:
 		s = "";
