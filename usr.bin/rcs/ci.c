@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.58 2005/11/16 19:06:41 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.59 2005/11/16 19:23:46 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -400,6 +400,12 @@ checkin_main(int argc, char **argv)
 	return (status);
 }
 
+/*
+ * checkin_diff_file()
+ *
+ * Generate the diff between the working file and a revision. 
+ * Returns pointer to a char array on success, NULL on failure.
+ */
 static char *
 checkin_diff_file(struct checkin_params *pb)
 {
@@ -458,7 +464,10 @@ checkin_diff_file(struct checkin_params *pb)
 }
 
 /*
+ * checkin_getlogmsg() 
+ *
  * Get log message from user interactively.
+ * Returns pointer to a char array on success, NULL on failure.
  */
 static char *
 checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
@@ -489,7 +498,7 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
  * checkin_getdesc()
  *
  * Get file description interactively.
- * Returns NULL on failure.
+ * Returns pointer to a char array on success, NULL on failure.
  */
 static char *
 checkin_getdesc()
@@ -503,7 +512,8 @@ checkin_getdesc()
 /*
  * checkin_getinput()
  *
- * Get some input from the user.
+ * Get some input from the user, in RCS style, prompting with message <prompt>.
+ * Returns pointer to a char array on success, NULL on failure.
  */
 static char *
 checkin_getinput(const char *prompt)
@@ -535,6 +545,7 @@ checkin_getinput(const char *prompt)
  * checkin_init()
  * 
  * Does an initial check in, just enough to create the new ,v file
+ * XXX not full implemented yet.
  */
 static void
 checkin_init(struct checkin_params *pb)
@@ -571,6 +582,12 @@ checkin_init(struct checkin_params *pb)
 	}
 }
 
+/*
+ * checkin_attach_symbol()
+ *
+ * Attempt to attach the specified symbol to the revision.
+ * On success, return 0. On error return -1.
+ */
 static int
 checkin_attach_symbol(struct checkin_params *pb)
 {
@@ -598,6 +615,14 @@ checkin_attach_symbol(struct checkin_params *pb)
 	return (0);
 }
 
+/*
+ * checkin_revert()
+ *
+ * If there are no differences between the working file and the latest revision
+ * and the -f flag is not specified, simply revert to the latest version and
+ * warn the user.
+ *
+ */
 static void
 checkin_revert(struct checkin_params *pb)
 {
@@ -617,6 +642,12 @@ checkin_revert(struct checkin_params *pb)
 		printf("done\n");
 }
 
+/*
+ * checkin_checklock()
+ *
+ * Check for the existence of a lock on the file.  If there are no locks, or it
+ * is not locked by the correct user, return -1.  Otherwise, return 0.
+ */
 static int
 checkin_checklock(struct checkin_params *pb)
 {
