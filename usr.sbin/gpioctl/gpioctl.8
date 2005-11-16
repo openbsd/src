@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.6 2005/09/27 10:28:56 jmc Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.7 2005/11/16 12:44:49 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -58,19 +58,6 @@ uses
 which corresponds to the first found
 .Tn GPIO
 device in the system.
-If more than one
-.Tn GPIO
-device is present, an alternative device file can be specified with the
-.Fl d
-option in order to access a particular
-.Tn GPIO
-device.
-.Pp
-When executed without any arguments,
-.Nm
-reads information about the
-.Tn GPIO
-device and displays it.
 .Pp
 .Tn GPIO
 pins can be either
@@ -92,14 +79,13 @@ A value of 2 has a special meaning: it
 .Dq toggles
 the pin, i.e. changes its state to the opposite.
 .Pp
-Each pin can be configured with different flags with the
-.Fl c
-option.
-The following configuration flags are supported by the
+The following configuration
+.Ar flags
+are supported by the
 .Tn GPIO
 framework:
 .Pp
-.Bl -tag -width XXXXXXX -offset indent -compact
+.Bl -tag -width Ds -offset indent -compact
 .It in
 input direction
 .It out
@@ -119,28 +105,41 @@ internal pull-up enabled
 Note that not all the flags can be supported by the particular
 .Tn GPIO
 controller.
+.Pp
+When executed without any arguments,
+.Nm
+reads information about the
+.Tn GPIO
+device and displays it.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c Ar pin
+Configure
+.Ar pin
+with any of the various flags,
+as documented above.
 The list of supported flags is always displayed when executing
 .Nm
-with the
-.Fl c
-option.
-If only a
-.Ar pin
-number is specified on the command line, the current pin flags will be
-displayed.
-To change pin flags, a new flags set separated by spaces must be
-specified after the
-.Ar pin
-number.
-.Pp
-The
-.Fl q
-option causes
-.Nm
-to operate quietly i.e. nothing is printed to stdout.
-The
-.Fl h
-option displays a usage summary.
+with this option.
+To change pin flags,
+a new flags set separated by spaces must be specified
+after the pin number.
+.It Fl d Ar device
+If more than one
+.Tn GPIO
+device is present, an alternative
+.Ar device
+file can be specified with the
+.Fl d
+option in order to access a particular
+.Tn GPIO
+device.
+.It Fl h
+Display a usage summary.
+.It Fl q
+Operate quietly i.e. nothing is printed to stdout.
+.El
 .Sh FILES
 .Bl -tag -width "/dev/gpiou" -compact
 .It /dev/gpio Ns Ar u
