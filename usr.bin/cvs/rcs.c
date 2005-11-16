@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.99 2005/11/12 21:34:48 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.100 2005/11/16 08:15:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -445,6 +445,7 @@ rcs_write(RCSFILE *rfp)
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
 	ssize_t nread;
+	size_t len;
 	int fd, from_fd, to_fd;
 
 	from_fd = to_fd = fd = -1;
@@ -539,21 +540,32 @@ rcs_write(RCSFILE *rfp)
 	}
 
 	fputs("\ndesc\n@", fp);
-	if (rfp->rf_desc != NULL)
-		rcs_strprint((const u_char *)rfp->rf_desc,
-		    strlen(rfp->rf_desc), fp);
-	fputs("@\n\n", fp);
+	if (rfp->rf_desc != NULL) {
+		len = strlen(rfp->rf_desc);
+		rcs_strprint((const u_char *)rfp->rf_desc, len, fp);
+		if (rfp->rf_desc[len-1] != '\n')
+			fputc('\n', fp);
+	}
+	fputs("@\n", fp);
 
 	/* deltatexts */
 	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
-		fprintf(fp, "\n%s\n", rcsnum_tostr(rdp->rd_num, numbuf,
+		fprintf(fp, "\n\n%s\n", rcsnum_tostr(rdp->rd_num, numbuf,
 		    sizeof(numbuf)));
 		fputs("log\n@", fp);
-		rcs_strprint((const u_char *)rdp->rd_log,
-		    strlen(rdp->rd_log), fp);
+		if (rdp->rd_log != NULL) {
+			len = strlen(rdp->rd_log);
+			rcs_strprint((const u_char *)rdp->rd_log, len, fp);
+			if (rdp->rd_log[len-1] != '\n')
+				fputc('\n', fp);
+		}
 		fputs("@\ntext\n@", fp);
-		rcs_strprint(rdp->rd_text, rdp->rd_tlen, fp);
-		fputs("\n@\n\n", fp);
+		if (rdp->rd_text != NULL) {
+			rcs_strprint(rdp->rd_text, rdp->rd_tlen, fp);
+			if (rdp->rd_text[rdp->rd_tlen-1] != '\n')
+				fputc('\n', fp);
+		}
+		fputs("@\n", fp);
 	}
 	fclose(fp);
 
