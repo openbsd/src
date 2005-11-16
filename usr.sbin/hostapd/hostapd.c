@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.21 2005/10/07 22:32:52 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.22 2005/11/16 00:01:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -223,7 +223,8 @@ hostapd_udp_init(struct hostapd_config *cfg)
 	addr = (struct sockaddr_in *)&ifr.ifr_addr;
 	cfg->c_iapp_addr.sin_family = AF_INET;
 	cfg->c_iapp_addr.sin_addr.s_addr = addr->sin_addr.s_addr;
-	cfg->c_iapp_addr.sin_port = htons(IAPP_PORT);
+	if (cfg->c_iapp_addr.sin_port == 0)
+		cfg->c_iapp_addr.sin_port = htons(IAPP_PORT);
 
 	if (ioctl(cfg->c_iapp_udp, SIOCGIFBRDADDR, &ifr) == -1)
 		hostapd_fatal("UDP ioctl %s on \"%s\" failed: %s\n",
@@ -232,11 +233,11 @@ hostapd_udp_init(struct hostapd_config *cfg)
 	addr = (struct sockaddr_in *)&ifr.ifr_addr;
 	cfg->c_iapp_broadcast.sin_family = AF_INET;
 	cfg->c_iapp_broadcast.sin_addr.s_addr = addr->sin_addr.s_addr;
-	cfg->c_iapp_broadcast.sin_port = htons(IAPP_PORT);
+	cfg->c_iapp_broadcast.sin_port = cfg->c_iapp_addr.sin_port;
 
 	baddr.sin_family = AF_INET;
 	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	baddr.sin_port = htons(IAPP_PORT);
+	baddr.sin_port = cfg->c_iapp_addr.sin_port;
 
 	if (bind(cfg->c_iapp_udp, (struct sockaddr *)&baddr,
 	    sizeof(baddr)) == -1)
@@ -245,9 +246,9 @@ hostapd_udp_init(struct hostapd_config *cfg)
 
 	/*
 	 * The revised 802.11F standard requires IAPP messages to be
-	 * sent via multicast to the group 224.0.1.178. Nevertheless,
-	 * some implementations still use broadcasts for IAPP
-	 * messages.
+	 * sent via multicast to the default group 224.0.1.178.
+	 * Nevertheless, some implementations still use broadcasts
+	 * for IAPP messages.
 	 */
 	if (cfg->c_flags & HOSTAPD_CFG_F_BRDCAST) {
 		/*
@@ -269,9 +270,10 @@ hostapd_udp_init(struct hostapd_config *cfg)
 		bzero(&mreq, sizeof(mreq));
 
 		cfg->c_iapp_multicast.sin_family = AF_INET;
-		cfg->c_iapp_multicast.sin_addr.s_addr =
-		    inet_addr(IAPP_MCASTADDR);
-		cfg->c_iapp_multicast.sin_port = htons(IAPP_PORT);
+		if (cfg->c_iapp_multicast.sin_addr.s_addr == INADDR_ANY)
+			cfg->c_iapp_multicast.sin_addr.s_addr =
+			    inet_addr(IAPP_MCASTADDR);
+		cfg->c_iapp_multicast.sin_port = cfg->c_iapp_addr.sin_port;
 
 		mreq.imr_multiaddr.s_addr =
 		    cfg->c_iapp_multicast.sin_addr.s_addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2005/09/30 16:50:03 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2005/11/16 00:01:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -123,6 +123,7 @@ u_int negative;
 %token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
+%token	ADDRESS PORT
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
 %type	<v.val>		number
@@ -177,13 +178,28 @@ option		: SET HOSTAP INTERFACE STRING
 		| SET IAPP MODE iappmode
 		;
 
-iappmode	: MULTICAST
+iappmode	: MULTICAST iappmodeaddr iappmodeport
 		{
 			hostapd_cfg.c_flags &= ~HOSTAPD_CFG_F_BRDCAST;
 		}
-		| BROADCAST
+		| BROADCAST iappmodeport
 		{
 			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_BRDCAST;
+		}
+		;
+
+iappmodeaddr	: /* empty */
+		| ADDRESS ipv4addr
+		{
+			bcopy(&$2, &hostapd_cfg.c_iapp_multicast.sin_addr,
+			    sizeof(struct in_addr));
+		}
+		;
+
+iappmodeport	: /* empty */
+		| PORT number
+		{
+			hostapd_cfg.c_iapp_addr.sin_port = htons($2);
 		}
 		;
 
@@ -882,6 +898,7 @@ lookup(char *token)
 	/* Keep this list sorted */
 	static const struct keywords keywords[] = {
 		{ "add",		ADD },
+		{ "address",		ADDRESS },
 		{ "any",		ANY },
 		{ "assoc",		ASSOC },
 		{ "assoced",		ASSOCED },
@@ -923,6 +940,7 @@ lookup(char *token)
 		{ "open",		OPEN },
 		{ "passive",		PASSIVE },
 		{ "pcap",		PCAP },
+		{ "port",		PORT },
 		{ "probe",		PROBE },
 		{ "quick",		QUICK },
 		{ "radiotap",		RADIOTAP },
@@ -1241,6 +1259,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	/* Init tables and data structures */
 	TAILQ_INIT(&cfg->c_tables);
 	TAILQ_INIT(&cfg->c_frames);
+	cfg->c_iapp_multicast.sin_addr.s_addr = INADDR_ANY;
 
 	lineno = 1;
 	errors = 0;
