@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$OpenBSD: Makefile,v 1.40 2005/05/24 03:23:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.41 2005/11/16 09:17:42 camield Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	comsat fingerd ftpd ftp-proxy getNAME getty identd lockspool \
+SUBDIR=	comsat fingerd ftpd getNAME getty identd lockspool \
 	mail.local makewhatis \
 	rpc.rquotad rpc.rstatd rpc.rusersd rpc.rwalld rpc.sprayd spamd \
 	spamlogd spamd-setup rshd talkd tcpd tftpd uucpd
