@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 2004/05/30 08:11:26 grange Exp $ */
+/*	$OpenBSD: conf.c,v 1.27 2005/11/16 03:43:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -145,6 +145,7 @@ cdev_decl(pci);
 #include "radio.h"
 #include "bktr.h"
 #include "hotplug.h"
+#include "gpio.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -238,6 +239,7 @@ struct cdevsw cdevsw[] = {
 	cdev_radio_init(NRADIO, radio),	/* 76: generic radio I/O */
 	cdev_ptm_init(NPTY,ptm),	/* 77: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 78: devices hot plugging */
+	cdev_gpio_init(NGPIO,gpio),	/* 79: GPIO interface */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 

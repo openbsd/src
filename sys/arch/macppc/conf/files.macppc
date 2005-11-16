@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.37 2005/11/15 16:19:15 deraadt Exp $
+#	$OpenBSD: files.macppc,v 1.38 2005/11/16 03:43:40 deraadt Exp $
 
 #
 # macppc-specific configuration info
@@ -269,6 +269,11 @@ include "dev/i2c/files.i2c"
 device	maciic {} : i2c
 attach	maciic at ki2c, smu
 file	arch/macppc/dev/maci2c.c			maciic
+
+#
+# Machine-independent GPIO drivers
+#
+include "dev/gpio/files.gpio"
 
 # Sun HME Ethernet controllers
 device	hme: ether, ifnet, mii, ifmedia
