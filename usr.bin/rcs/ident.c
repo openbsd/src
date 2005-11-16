@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.5 2005/10/13 12:35:30 joris Exp $	*/
+/*	$OpenBSD: ident.c,v 1.6 2005/11/16 15:25:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -79,8 +79,10 @@ ident_main(int argc, char **argv)
 			ident_file(argv[i], fp);
 			fclose(fp);
 
-			if (found == 0)
-				cvs_log(LP_WARN, "no id keywords in %s", argv[i]);
+			if ((found == 0) && (verbose == 1))
+				fprintf(stderr,
+				    "ident warning: no id keywords in %s\n",
+				    argv[i]);
 			found = 0;
 		}
 	}
