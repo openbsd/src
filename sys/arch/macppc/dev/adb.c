@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.13 2005/10/21 22:07:45 kettenis Exp $	*/
+/*	$OpenBSD: adb.c,v 1.14 2005/11/16 12:28:54 kettenis Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
+#include <dev/ofw/openfirm.h>
 
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/akbdvar.h>
@@ -99,6 +100,9 @@ adbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct adb_softc *sc = (struct adb_softc *)self;
 	struct confargs *ca = aux;
+	struct confargs nca;
+	char name[32];
+	int node;
 
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
@@ -176,6 +180,17 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_autopoll();
 	adb_polling = 0;
+
+	/* Attach I2C controller. */
+	for (node = OF_child(ca->ca_node); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof name) <= 0)
+			continue;
+		if (strcmp(name, "pmu-i2c") == 0) {
+			nca.ca_name = "pi2c";
+			nca.ca_node = node;
+			config_found(self, &nca, NULL);
+		}
+	}
 }
 
 int

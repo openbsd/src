@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.38 2005/11/16 03:43:40 deraadt Exp $
+#	$OpenBSD: files.macppc,v 1.39 2005/11/16 12:28:54 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -194,6 +194,11 @@ attach	ki2c at macobio
 attach	ki2c at memc	with ki2c_memc
 file	arch/macppc/dev/ki2c.c				ki2c
 
+# PMU I2C
+device	pi2c {}
+attach	pi2c at adb
+file	arch/macppc/dev/pi2c.c				pi2c
+
 # I2S
 define	i2s
 file	arch/macppc/dev/i2s.c				i2s
@@ -267,7 +272,7 @@ include "dev/usb/files.usb"
 include "dev/i2c/files.i2c"
 
 device	maciic {} : i2c
-attach	maciic at ki2c, smu
+attach	maciic at ki2c, pi2c, smu
 file	arch/macppc/dev/maci2c.c			maciic
 
 #

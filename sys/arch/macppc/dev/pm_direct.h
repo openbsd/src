@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.6 2005/10/21 22:07:45 kettenis Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.7 2005/11/16 12:28:54 kettenis Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.5 1999/07/12 15:54:55 tsubai Exp $	*/
 
 /*
@@ -98,6 +98,8 @@ void pm_eject_pcmcia(int);
 
 #define PMU_SMART_BATTERY_STATE	0x6f	/* Read battery state */
 
+#define PMU_I2C			0x9a	/* I2C */
+
 /* Bits in PMU interrupt and interrupt mask bytes */
 #define PMU_INT_ADB_AUTO	0x04	/* ADB autopoll, when PMU_INT_ADB */
 #define PMU_INT_PCEJECT		0x04	/* PC-card eject buttons */
@@ -133,5 +135,10 @@ enum {
 
 #define PMU_PWR_AC_PRESENT	(1 << 0)
 #define PMU_PWR_BATT_PRESENT	(1 << 2)
+
+/* PMU I2C */
+#define PMU_I2C_SIMPLE		0x00
+#define PMU_I2C_NORMAL		0x01
+#define PMU_I2C_COMBINED	0x02
 
 #endif
