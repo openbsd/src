@@ -1684,7 +1684,6 @@
 ./usr/libexec/cvs/contrib/sccs2rcs
 ./usr/libexec/diff3prog
 ./usr/libexec/fingerd
-./usr/libexec/ftp-proxy
 ./usr/libexec/ftpd
 ./usr/libexec/getNAME
 ./usr/libexec/getty
@@ -1793,6 +1792,7 @@
 ./usr/sbin/edquota
 ./usr/sbin/faithd
 ./usr/sbin/fs
+./usr/sbin/ftp-proxy
 ./usr/sbin/group
 ./usr/sbin/groupadd
 ./usr/sbin/groupdel
