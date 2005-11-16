@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsclean.1,v 1.9 2005/11/09 09:52:25 xsa Exp $
+.\"     $OpenBSD: rcsclean.1,v 1.10 2005/11/16 16:25:22 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -69,6 +69,11 @@ Specify the time zone for keyword substitution.
 If set, this variable should contain a list of space-delimited options that
 are prepended to the argument list.
 .El
+.Sh EXAMPLES
+Remove all working files (locked or not) in the current directory that were
+not changed since last checkout:
+.Pp
+.Dl $ rcsclean -u
 .Sh SEE ALSO
 .Xr ci 1 ,
 .Xr co 1 ,
