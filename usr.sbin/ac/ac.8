@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ac.8,v 1.12 2005/11/12 16:21:18 jmc Exp $
+.\"	$OpenBSD: ac.8,v 1.13 2005/11/16 12:35:44 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Simon J. Gerraty
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -96,47 +96,69 @@ If no arguments are given,
 .Nm
 displays the total connect time for all
 accounts with login sessions recorded in
-.Pa wtmp .
+.Xr wtmp 5 .
 .Pp
 The default
 .Pa wtmp
 file will increase without bound unless it is truncated.
 It is normally truncated by
 .Xr newsyslog 8 ,
-run by
-.Xr cron 8 ,
 which renames and rotates the
 .Pa wtmp
-files, keeping a week's worth of data on
-hand.
+files, keeping a week's worth of data on hand.
+In order for
+.Nm
+to run in sync with the rotation of
+.Pa wtmp ,
+.Xr newsyslog 8
+will have to be altered to run
+just after
+.Xr weekly 8
+completes.
+A suggested amendment to
+.Pa /etc/newsyslog
+is as follows:
+.Bd -literal -offset 3n
+/var/log/wtmp	644  7     *    $W6D4	ZB
+.Ed
+.Pp
+This will truncate the log file just after
+.Xr weekly 8
+is run from root's
+.Xr crontab 5 .
+For weekly mail reports on user accounting information,
+uncomment the
+.Nm
+entry provided in
+.Xr weekly 8
+as well as making the change suggested above.
+.Pp
 No login or connect time accounting is performed if
 .Pa /var/log/wtmp
 does not exist.
 .Pp
-For example,
-.Bd -literal -offset
-$ ac -p -t "ttyd*" > modems
-$ ac -p -t "!ttyd*" > other
-.Ed
-.Pp
-allows times recorded in
-.Pa modems
-to be charged out at a different rate than
-.Pa other .
-.Pp
 The
 .Nm
-utility exits 0 on success or >0 if a fatal error occurred.
+utility exits 0 on success or \*(Gt0 if a fatal error occurred.
 .Sh FILES
-.Bl -tag -width /var/log/wtmp.[0-7] -compact
+.Bl -tag -width "/var/log/wtmp.[0-7]XX" -compact
 .It Pa /var/log/wtmp
 connect time accounting file
 .It Pa /var/log/wtmp.[0-7]
 rotated files
 .El
+.Sh EXAMPLES
+Allow times recorded in
+.Pa modems
+to be charged out at a different rate than
+.Pa other :
+.Bd -literal -offset indent
+$ ac -p -t "ttyd*" \*(Gt modems
+$ ac -p -t "!ttyd*" \*(Gt other
+.Ed
 .Sh SEE ALSO
 .Xr login 1 ,
-.Xr utmp 5 ,
+.Xr wtmp 5 ,
 .Xr cron 8 ,
 .Xr init 8 ,
 .Xr newsyslog 8 ,
