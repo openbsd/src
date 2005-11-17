@@ -1,4 +1,4 @@
-/*	$OpenBSD: lrintf.c,v 1.1 2005/11/17 20:07:40 otto Exp $	*/
+/*	$OpenBSD: lrintf.c,v 1.2 2005/11/17 20:51:56 otto Exp $	*/
 /* $NetBSD: lrintf.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -70,9 +70,11 @@ LRINTNAME(float x)
 
 	/* >= 2^23 is already an exact integer */
 	if (e < SNG_FRACBITS) {
+		volatile float t = x; /* work around gcc problem */
 		/* round, using current direction */
-		x += TWO23[s];
-		x -= TWO23[s];
+		t += TWO23[s];
+		t -= TWO23[s];
+		x = t;
 	}
 
 	GET_FLOAT_WORD(i0, x);
