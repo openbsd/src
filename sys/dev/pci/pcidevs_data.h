@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.963 2005/11/16 18:28:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.964 2005/11/17 21:46:14 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1515,7 +1515,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP400 PCI",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SMBUS_400,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SMB_400,
 	    "IXP400 SMBus",
 	},
 	{
@@ -4575,7 +4575,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6300ESB SATA",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SMBUS,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SMB,
 	    "6300ESB SMBus",
 	},
 	{
@@ -4675,7 +4675,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801FB HD Audio",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SMBUS,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SMB,
 	    "82801FB SMBus",
 	},
 	{
@@ -4787,7 +4787,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801GB HD Audio",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_SMBUS,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_SMB,
 	    "82801GB SMBus",
 	},
 	{
@@ -6427,7 +6427,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "nForce4 ISA",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SMB,
 	    "nForce4 SMBus",
 	},
 	{
