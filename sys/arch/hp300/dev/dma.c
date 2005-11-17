@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.16 2004/12/25 23:02:23 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.17 2005/11/17 23:56:02 miod Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,8 @@
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
 
+#include <uvm/uvm_extern.h>
+
 /*
  * The largest single request will be MAXPHYS bytes which will require
  * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
@@ -62,8 +64,8 @@
 #define	DMAMAXIO	(MAXPHYS/NBPG+1)
 
 struct dma_chain {
-	int	dc_count;
-	char	*dc_addr;
+	u_int	dc_count;
+	paddr_t	dc_addr;
 };
 
 struct dma_channel {
@@ -72,8 +74,8 @@ struct dma_channel {
 	struct	dmaBdevice *dm_Bhwaddr;		/* registers if not DMA_C */
 	char	dm_flags;			/* misc. flags */
 	u_short	dm_cmd;				/* DMA controller command */
-	int	dm_cur;				/* current segment */
-	int	dm_last;			/* last segment */
+	u_int	dm_cur;				/* current segment */
+	u_int	dm_last;			/* last segment */
 	struct	dma_chain dm_chain[DMAMAXIO];	/* all segments */
 };
 
@@ -97,6 +99,7 @@ struct dma_softc {
 #define DMAF_VCFLUSH	0x02
 #define DMAF_NOINTR	0x04
 
+void	dmacflush(struct dma_channel *);
 int	dmaintr(void *);
 
 #ifdef DEBUG
@@ -213,8 +216,7 @@ dmacomputeipl()
 }
 
 int
-dmareq(dq)
-	struct dmaqueue *dq;
+dmareq(struct dmaqueue *dq)
 {
 	struct dma_softc *sc = &dma_softc;
 	int i, chan, s;
@@ -257,31 +259,9 @@ dmareq(dq)
 }
 
 void
-dmafree(dq)
-	struct dmaqueue *dq;
+dmacflush(struct dma_channel *dc)
 {
-	int unit = dq->dq_chan;
-	struct dma_softc *sc = &dma_softc;
-	struct dma_channel *dc = &sc->sc_chan[unit];
-	struct dmaqueue *dn;
-	int chan, s;
-
-#if 1
-	s = splhigh();	/* XXXthorpej */
-#else
-	s = splbio();
-#endif
-
-#ifdef DEBUG
-	dmatimo[unit] = 0;
-#endif
-
-	DMA_CLEAR(dc);
-
 #if defined(CACHE_HAVE_PAC) || defined(M68040)
-	/*
-	 * XXX we may not always go thru the flush code in dmastop()
-	 */
 	if (dc->dm_flags & DMAF_PCFLUSH) {
 		PCIA();
 		dc->dm_flags &= ~DMAF_PCFLUSH;
@@ -303,6 +283,33 @@ dmafree(dq)
 		dc->dm_flags &= ~DMAF_VCFLUSH;
 	}
 #endif
+}
+
+void
+dmafree(struct dmaqueue *dq)
+{
+	int unit = dq->dq_chan;
+	struct dma_softc *sc = &dma_softc;
+	struct dma_channel *dc = &sc->sc_chan[unit];
+	struct dmaqueue *dn;
+	int chan, s;
+
+#if 1
+	s = splhigh();	/* XXXthorpej */
+#else
+	s = splbio();
+#endif
+
+#ifdef DEBUG
+	dmatimo[unit] = 0;
+#endif
+
+	DMA_CLEAR(dc);
+
+	/*
+	 * XXX we may not always go through the flush code in dmastop()
+	 */
+	dmacflush(dc);
 
 	/*
 	 * Channel is now free.  Look for another job to run on this
@@ -327,16 +334,12 @@ dmafree(dq)
 }
 
 void
-dmago(unit, addr, count, flags)
-	int unit;
-	char *addr;
-	int count;
-	int flags;
+dmago(int unit, char *addr, u_int count, int flags)
 {
 	struct dma_softc *sc = &dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
-	char *dmaend = NULL;
-	int seg, tcount;
+	paddr_t dmaend = 0;
+	u_int seg, tcount;
 
 #ifdef DIAGNOSTIC
 	if (count > MAXPHYS)
@@ -363,15 +366,17 @@ dmago(unit, addr, count, flags)
 	 * Build the DMA chain
 	 */
 	for (seg = 0; count > 0; seg++) {
-		dc->dm_chain[seg].dc_addr = (char *) kvtop(addr);
+		if (pmap_extract(pmap_kernel(), (vaddr_t)addr,
+		    &dc->dm_chain[seg].dc_addr) == FALSE)
+			panic("dmago: pmap_extract(%x) failed", addr);
 #if defined(M68040)
 		/*
 		 * Push back dirty cache lines
 		 */
 		if (mmutype == MMU_68040)
-			DCFP((paddr_t)dc->dm_chain[seg].dc_addr);
+			DCFP(dc->dm_chain[seg].dc_addr);
 #endif
-		if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
+		if (count < (tcount = PAGE_SIZE - ((int)addr & PAGE_MASK)))
 			tcount = count;
 		dc->dm_chain[seg].dc_count = tcount;
 		addr += tcount;
@@ -422,31 +427,34 @@ dmago(unit, addr, count, flags)
 	if (flags & DMAGO_PRI)
 		dc->dm_cmd |= DMA_PRI;
 
+	if (flags & DMAGO_READ) {
 #if defined(M68040)
-	/*
-	 * On the 68040 we need to flush (push) the data cache before a
-	 * DMA (already done above) and flush again after DMA completes.
-	 * In theory we should only need to flush prior to a write DMA
-	 * and purge after a read DMA but if the entire page is not
-	 * involved in the DMA we might purge some valid data.
-	 */
-	if (mmutype == MMU_68040 && (flags & DMAGO_READ))
-		dc->dm_flags |= DMAF_PCFLUSH;
+		/*
+		 * On the 68040 we need to flush (push) the data cache before a
+		 * DMA (already done above) and flush again after DMA completes.
+		 * In theory we should only need to flush prior to a write DMA
+		 * and purge after a read DMA but if the entire page is not
+		 * involved in the DMA we might purge some valid data.
+		 */
+		if (mmutype == MMU_68040)
+			dc->dm_flags |= DMAF_PCFLUSH;
 #endif
 
 #if defined(CACHE_HAVE_PAC)
-	/*
-	 * Remember if we need to flush external physical cache when
-	 * DMA is done.  We only do this if we are reading (writing memory).
-	 */
-	if (ectype == EC_PHYS && (flags & DMAGO_READ))
-		dc->dm_flags |= DMAF_PCFLUSH;
+		/*
+		 * Remember if we need to flush external physical cache when
+		 * DMA is done.  We only do this if we are reading
+		 * (writing memory).
+		 */
+		if (ectype == EC_PHYS)
+			dc->dm_flags |= DMAF_PCFLUSH;
 #endif
 
 #if defined(CACHE_HAVE_VAC)
-	if (ectype == EC_VIRT && (flags & DMAGO_READ))
-		dc->dm_flags |= DMAF_VCFLUSH;
+		if (ectype == EC_VIRT)
+			dc->dm_flags |= DMAF_VCFLUSH;
 #endif
+	}
 
 	/*
 	 * Remember if we can skip the dma completion interrupt on
@@ -476,8 +484,7 @@ dmago(unit, addr, count, flags)
 }
 
 void
-dmastop(unit)
-	int unit;
+dmastop(int unit)
 {
 	struct dma_softc *sc = &dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
@@ -489,28 +496,7 @@ dmastop(unit)
 #endif
 	DMA_CLEAR(dc);
 
-#if defined(CACHE_HAVE_PAC) || defined(M68040)
-	if (dc->dm_flags & DMAF_PCFLUSH) {
-		PCIA();
-		dc->dm_flags &= ~DMAF_PCFLUSH;
-	}
-#endif
-
-#if defined(CACHE_HAVE_VAC)
-	if (dc->dm_flags & DMAF_VCFLUSH) {
-		/*
-		 * 320/350s have VACs that may also need flushing.
-		 * In our case we only flush the supervisor side
-		 * because we know that if we are DMAing to user
-		 * space, the physical pages will also be mapped
-		 * in kernel space (via vmapbuf) and hence cache-
-		 * inhibited by the pmap module due to the multiple
-		 * mapping.
-		 */
-		DCIS();
-		dc->dm_flags &= ~DMAF_VCFLUSH;
-	}
-#endif
+	dmacflush(dc);
 
 	/*
 	 * We may get this interrupt after a device service routine
@@ -522,8 +508,7 @@ dmastop(unit)
 }
 
 int
-dmaintr(arg)
-	void *arg;
+dmaintr(void *arg)
 {
 	struct dma_softc *sc = arg;
 	struct dma_channel *dc;
@@ -575,8 +560,7 @@ dmaintr(arg)
 
 #ifdef DEBUG
 void
-dmatimeout(arg)
-	void *arg;
+dmatimeout(void *arg)
 {
 	int i, s;
 	struct dma_softc *sc = arg;

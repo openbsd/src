@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmareg.h,v 1.8 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: dmareg.h,v 1.9 2005/11/17 23:56:02 miod Exp $	*/
 /*	$NetBSD: dmareg.h,v 1.12 1997/05/05 21:02:40 thorpej Exp $	*/
 
 /*
@@ -115,12 +115,12 @@ struct	dmareg {
 #define	DMA_ARM(sc, dc)	\
 	if (sc->sc_type == DMA_B) { \
 		struct dmaBdevice *dma = dc->dm_Bhwaddr; \
-		dma->dmaB_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
+		dma->dmaB_addr = (v_char *)dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dmaB_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dmaB_cmd = dc->dm_cmd; \
 	} else { \
 		struct dmadevice *dma = dc->dm_hwaddr; \
-		dma->dma_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
+		dma->dma_addr = (v_char *)dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dma_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dma_cmd = dc->dm_cmd; \
 	}
@@ -128,7 +128,7 @@ struct	dmareg {
 #define	DMA_ARM(sc, dc)	\
 	{ \
 		struct dmadevice *dma = dc->dm_hwaddr; \
-		dma->dma_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
+		dma->dma_addr = (v_char *)dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dma_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dma_cmd = dc->dm_cmd; \
 	}
