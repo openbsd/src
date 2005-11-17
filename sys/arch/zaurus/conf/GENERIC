@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.44 2005/08/28 05:30:43 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.45 2005/11/17 05:26:31 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -184,8 +184,10 @@ wsdisplay*	at lcd? console ?
 zssp0		at pxaip?		# ADC, touch screen, backlight
 apm0		at pxaip?		# APM emulation
 
-zaudio0	at pxaip?			# Zaurus I2S/I2C sound
-audio*	at zaudio?
+zaudio0		at pxaip?		# Zaurus I2S/I2C sound
+audio*		at zaudio?
+zrc0		at pxaip?		# Zaurus remote control
+wskbd*		at zrc? mux 1
 
 # Pseudo-Devices
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_reg.h,v 1.5 2005/07/01 23:56:47 uwe Exp $	*/
+/*	$OpenBSD: zaurus_reg.h,v 1.6 2005/11/17 05:26:31 uwe Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -75,6 +75,7 @@
 
 /* processor GPIO pins */
 #define C860_CF0_IRQ_PIN	14
+#define C3000_RC_IRQ_PIN	13	/* remote control */
 #define C3000_CF0_IRQ_PIN	94
 #define C3000_CF1_IRQ_PIN	93
 

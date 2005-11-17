@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.11 2005/07/01 23:51:55 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -90,6 +90,14 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh) != 0) {
 		printf(": failed to map %s\n", sc->sc_dev.dv_xname);
 		return;
+	}
+
+	if (ZAURUS_ISC3000 && sc->sc_dev.dv_unit == 1) {
+		scoop_gpio_pin_ctl(sc, SCOOP1_AKIN_PULLUP, GPIO_PIN_OUTPUT);
+		scoop_gpio_pin_write(sc, SCOOP1_AKIN_PULLUP, GPIO_PIN_LOW);
+	} else if (!ZAURUS_ISC3000) {
+		scoop_gpio_pin_ctl(sc, SCOOP0_AKIN_PULLUP, GPIO_PIN_OUTPUT);
+		scoop_gpio_pin_write(sc, SCOOP0_AKIN_PULLUP, GPIO_PIN_LOW);
 	}
 
 	printf(": PCMCIA/GPIO controller\n");
@@ -212,6 +220,20 @@ scoop_set_headphone(int on)
 		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
 		    GPIO_PIN_LOW);
 	}
+}
+
+/*
+ * Turn on pullup resistor while not reading the remote control.
+ */
+void
+scoop_akin_pullup(int enable)
+{
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL)
+		scoop_gpio_pin_write(scoop_cd.cd_devs[1],
+		    SCOOP1_AKIN_PULLUP, enable);
+	else
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0],
+		    SCOOP0_AKIN_PULLUP, enable);
 }
 
 void

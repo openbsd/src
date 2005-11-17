@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.20 2005/07/01 23:51:55 uwe Exp $
+#	$OpenBSD: files.zaurus,v 1.21 2005/11/17 05:26:31 uwe Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -60,6 +60,11 @@ file arch/zaurus/dev/zts.c			zts needs-flag
 device	zaudio: audio, auconv, mulaw, i2s, i2c
 attach	zaudio at pxaip
 file	arch/zaurus/dev/zaurus_audio.c		zaudio
+
+# Zaurus remote control
+device	zrc: wskbddev
+attach	zrc at pxaip
+file	arch/zaurus/dev/zaurus_remote.c		zrc
 
 #
 # Machine-independent ATA drivers
