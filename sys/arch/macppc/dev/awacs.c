@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.17 2004/01/18 13:51:35 miod Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.18 2005/11/17 02:58:03 brad Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -884,8 +884,8 @@ awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 	switch (dip->index) {
 
 	case AWACS_OUTPUT_SELECT:
-		dip->mixer_class = AWACS_MONITOR_CLASS;
-		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
+		dip->mixer_class = AWACS_OUTPUT_CLASS;
+		strlcpy(dip->label.name, AudioNselect, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.s.num_mem = 2;

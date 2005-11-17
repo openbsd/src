@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.2 2005/10/31 00:26:07 joris Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.3 2005/11/17 02:58:03 brad Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -626,8 +626,8 @@ i2s_query_devinfo(h, dip)
 	switch (dip->index) {
 
 	case I2S_OUTPUT_SELECT:
-		dip->mixer_class = I2S_MONITOR_CLASS;
-		strlcpy(dip->label.name, AudioNoutput, sizeof(dip->label.name));
+		dip->mixer_class = I2S_OUTPUT_CLASS;
+		strlcpy(dip->label.name, AudioNselect, sizeof(dip->label.name));
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.s.num_mem = 2;
@@ -640,7 +640,7 @@ i2s_query_devinfo(h, dip)
 		return 0;
 
 	case I2S_VOL_OUTPUT:
-		dip->mixer_class = I2S_MONITOR_CLASS;
+		dip->mixer_class = I2S_OUTPUT_CLASS;
 		strlcpy(dip->label.name, AudioNmaster, sizeof(dip->label.name));
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
