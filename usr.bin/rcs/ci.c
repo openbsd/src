@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.61 2005/11/17 00:16:35 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.62 2005/11/17 00:22:30 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -72,7 +72,7 @@ static char * checkin_getinput(const char *);
 static char * checkin_getlogmsg(RCSNUM *, RCSNUM *);
 static void   checkin_init(struct checkin_params *);
 static void   checkin_revert(struct checkin_params *pb);
-static int    checkin_setrevdate(struct checkin_params *pb);
+static int    checkin_mtimedate(struct checkin_params *pb);
 
 void
 checkin_usage(void)
@@ -327,7 +327,7 @@ checkin_main(int argc, char **argv)
 		 * time of the working file if -d has no argument.
 		 */
 		if (pb.date == DATE_MTIME
-		    && (checkin_setrevdate(&pb) < 0))
+		    && (checkin_mtimedate(&pb) < 0))
 			    continue;
 		
 
@@ -673,15 +673,15 @@ checkin_checklock(struct checkin_params *pb)
 }
 
 /*
- * checkin_setrevdate()
+ * checkin_mtimedate()
  *
  * Set the date of the revision to be the last modification
- * time of the working file if -d has no argument.
+ * time of the working file.
  *
  * On success, return 0. On error return -1.
  */
 static int
-checkin_setrevdate(struct checkin_params *pb)
+checkin_mtimedate(struct checkin_params *pb)
 {
 	struct stat sb;
 	if (stat(pb->filename, &sb) != 0) {
