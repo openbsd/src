@@ -1,4 +1,4 @@
-$OpenBSD: DESIGN-NOTES,v 1.23 2005/04/08 17:26:27 cloder Exp $
+$OpenBSD: DESIGN-NOTES,v 1.24 2005/11/17 21:18:25 grunk Exp $
 $EOM: DESIGN-NOTES,v 1.48 1999/08/12 22:34:25 niklas Exp $
 
 General coding conventions
@@ -380,7 +380,7 @@ To use RSA Signature mode you are required to generate certificates.
 This can be done with ssleay, see man ssl. But the X509 certificates
 require a subjectAltname extension that can either be an IPV4 address,
 a User-FQDN or just FQDN.  ssleay can not create those extension,
-insead use the x509test program in src/regress/sbin/isakmpd/x509 to
+instead use the x509test program in src/regress/sbin/isakmpd/x509 to
 modify an existing certificate.  It will insert the subjectAltname
 extension and sign it with the provided private Key.  The resulting
 certificate then needs to be stored in the directory pointed to by
