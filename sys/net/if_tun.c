@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.69 2005/11/16 10:45:33 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.70 2005/11/17 11:08:52 henning Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -313,7 +313,11 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 		return (error);
 
 	if ((tp = tun_lookup(minor(dev))) == NULL) {	/* create on demand */
-		tun_clone_create(&tun_cloner, minor(dev));
+		char	xname[IFNAMSIZ];
+
+		snprintf(xname, sizeof(xname), "%s%d", "tun", minor(dev));
+		if ((error = if_clone_create(xname)) != 0)
+			return (error);
 
 		if ((tp = tun_lookup(minor(dev))) == NULL)
 			return (ENXIO);
