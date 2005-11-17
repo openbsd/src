@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.105 2005/11/14 23:25:11 deraadt Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.106 2005/11/17 13:44:11 moritz Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -692,6 +692,7 @@ rsa_sig_decode_hash(struct message *msg)
 			}
 			if (asprintf(&exchange->keynote_key, "rsa-hex:%s",
 			    pp) == -1) {
+				free(pp);
 				kn_free_key(&dc);
 				log_print("rsa_sig_decode_hash: failed to asprintf()");
 				return -1;
