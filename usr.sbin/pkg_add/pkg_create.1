@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.26 2005/10/10 09:38:29 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.27 2005/11/17 11:20:24 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -54,6 +54,8 @@
 .Fl f Ar packinglist
 .Ar pkg-name
 .Ek
+.Nm pkg_create
+.Fl f Ar packinglist
 .Sh DESCRIPTION
 The
 .Nm
@@ -197,6 +199,17 @@ Specify a
 .Cm @wantlib
 requirement on the command line.
 .El
+.Pp
+.Nm
+can also be invoked with only the packing-list from an installed package.
+It will recreate the corresponding binary package in the current directory
+from the installation, or error out if any problem is found, e.g.,
+.Bd -literal
+	pkg_create -f /var/db/pkg/kdelibs-3.4.3/+CONTENTS
+.Ed
+will recreate a
+.Pa kdelibs-3.4.3.tgz
+package.
 .Sh PACKING LIST DETAILS
 The
 .Dq packing list
