@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.12 2005/10/28 10:15:07 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.13 2005/11/17 18:03:51 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -181,7 +181,7 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	printf("total revisions: %u\n", file->rf_ndelta);
 
 	if ((hflag == 0) || (tflag == 1))
-	printf("description:\n%s", file->rf_desc);
+		printf("description:\n%s", file->rf_desc);
 
 	if ((hflag == 0) && (tflag == 0)) {
 		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
