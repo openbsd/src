@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.227 2005/08/15 00:40:17 millert Exp $
+#	$OpenBSD: Makefile,v 1.228 2005/11/17 21:28:05 jakob Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -33,7 +33,6 @@ BIN1+=	wsconsctl.conf
 # -rw-rw-r--
 BIN2=	motd
 
-NAMEDB=	localhost.rev localhost.v6.rev localhost.zone root.cache
 PCS=	pcs750.bin
 WCS1=	wcs fppwcs poc poc1 poc2 fppoc
 WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
@@ -380,7 +379,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.227 2005/08/15 00:40:17 millert Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.228 2005/11/17 21:28:05 jakob Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
