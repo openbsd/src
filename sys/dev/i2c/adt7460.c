@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.1 2005/11/17 00:37:14 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.2 2005/11/17 01:09:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -38,6 +38,7 @@
 #define ADT7460_TACH4L		0x2e
 #define ADT7460_TACH4H		0x2f
 #define ADT7460_REVISION	0x3f
+#define ADT7460_CONFIG		0x40
 
 /* Sensors */
 #define ADT_2_5V		0
@@ -55,6 +56,7 @@ struct adt_softc {
 	struct device sc_dev;
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr;
+	int	sc_chip;
 
 	struct sensor sc_sensor[ADT_NUM_SENSORS];
 };
@@ -78,7 +80,8 @@ adt_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "adt7460") == 0)
+		if (strcmp(ia->ia_compat, "adt7460") == 0 ||
+		    strcmp(ia->ia_compat, "adt7467") == 0)
 			return (1);
 		return (0);
 	}
@@ -90,13 +93,17 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct adt_softc *sc = (struct adt_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	u_int8_t cmd, rev;
+	u_int8_t cmd, rev, data;
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
 	iic_acquire_bus(sc->sc_tag, 0);
+
+	sc->sc_chip = 7460;
+	if (ia->ia_compat && strcmp(ia->ia_compat, "adt7467") == 0)
+		sc->sc_chip = 7467;
 
 	cmd = ADT7460_REVISION;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -106,9 +113,20 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (sc->sc_chip == 7460) {
+		data = 1;
+		cmd = ADT7460_CONFIG;
+		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
+			printf(": cannot set control register\n");
+			return;
+		}
+	}
+
 	iic_release_bus(sc->sc_tag, 0);
 
-	printf(": ADT7460 rev %x", rev);
+	printf(": ADT%d rev %x", sc->sc_chip, rev);
 
 	/* Initialize sensor data. */
 	for (i = 0; i < ADT_NUM_SENSORS; i++)
@@ -224,7 +242,7 @@ adt_refresh(void *arg)
 			}
 
 			fan = data + (data2 << 8);
-			if (fan == 0)
+			if (fan == 0 || fan == 0xffff)
 				sc->sc_sensor[i].flags |= SENSOR_FINVALID;
 			else
 				sc->sc_sensor[i].value = (90000 * 60) / fan;
