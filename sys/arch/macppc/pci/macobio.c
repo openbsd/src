@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.14 2005/10/07 03:47:31 drahn Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.15 2005/11/17 00:24:55 deraadt Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -216,7 +216,6 @@ macobio_attach(struct device *parent, struct device *self, void *aux)
 int
 macobio_print(void *aux, const char *macobio)
 {
-#ifdef MACOBIOVERBOSE
 	struct confargs *ca = aux;
 
 	if (macobio)
@@ -226,9 +225,6 @@ macobio_print(void *aux, const char *macobio)
 		printf(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
-#else
-	return QUIET;
-#endif
 }
 
 void *
