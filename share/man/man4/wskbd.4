@@ -1,4 +1,4 @@
-.\" $OpenBSD: wskbd.4,v 1.16 2005/04/22 11:59:10 miod Exp $
+.\" $OpenBSD: wskbd.4,v 1.17 2005/11/17 05:41:42 uwe Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
 .\" Copyright (c) 1999
@@ -46,6 +46,8 @@
 (HIL keyboard)
 .Cd "wskbd* at zkbd? mux 1"
 (Zaurus keyboard)
+.Cd "wskbd* at zrc? mux 1"
+(Zaurus remote control)
 .Cd "wskbd* at dnkbd? mux 1"
 (Apollo Domain keyboard)
 .Sh DESCRIPTION
@@ -156,5 +158,6 @@ driver supports it.
 .Xr wscons 4 ,
 .Xr wsmux 4 ,
 .Xr zkbd 4 ,
+.Xr zrc 4 ,
 .Xr zskbd 4 ,
 .Xr wsconsctl 8
