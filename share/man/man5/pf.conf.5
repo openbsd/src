@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.338 2005/09/16 10:18:29 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.339 2005/11/17 22:18:20 joel Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1230,6 +1230,13 @@ As with
 .Ar log ,
 packets are logged to
 .Xr pflog 4 .
+.It Ar log (user)
+Logs the
+.Ux
+user ID of the user that owns the socket and the PID of the process that
+has the socket open where the packet is sourced from or destined to
+(depending on which socket is local).
+This is in addition to the normal information logged.
 .It Ar quick
 If a packet matches a rule which has the
 .Ar quick
