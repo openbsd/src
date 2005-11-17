@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.94 2005/11/16 04:00:28 cloder Exp $	*/
+/*	$OpenBSD: theo.c,v 1.95 2005/11/17 05:24:06 cloder Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -133,6 +133,7 @@ static const char *talk[] = {
 	"germans are not allowed to get involved there",
 	"gprs sucks camel dick dryer than the gobi desert",
 	"don't they recognize their moral responsibility to entertain me?",
+	"#ifdef is for emacs developers.",
 	"Many well known people become net-kooks in their later life, because they lose touch with reality.",
 	"You're not allowed to have an opinion.",
 	"tweep tweep tweep",
