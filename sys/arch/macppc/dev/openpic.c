@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.32 2005/10/16 04:30:43 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.33 2005/11/17 15:03:51 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -108,9 +108,14 @@ int
 openpic_match(struct device *parent, void *cf, void *aux)
 {
 	char type[40];
+	int pirq;
 	struct confargs *ca = aux;
 
 	bzero (type, sizeof(type));
+
+	if (OF_getprop(ca->ca_node, "interrupt-parent", &pirq, sizeof(pirq))
+	    == sizeof(pirq))
+		return 0; /* XXX */
 
 	if (strcmp(ca->ca_name, "interrupt-controller") == 0 ||
 	    strcmp(ca->ca_name, "mpic") == 0) {
@@ -140,7 +145,7 @@ openpic_attach(struct device *parent, struct device  *self, void *aux)
 	extern intr_disestablish_t *mac_intr_disestablish_func;
 
 	openpic_base = (vaddr_t) mapiodev (ca->ca_baseaddr +
-			ca->ca_reg[0], 0x22000);
+			ca->ca_reg[0], 0x40000);
 
 	printf(": version 0x%x", openpic_read(OPENPIC_VENDOR_ID));
 

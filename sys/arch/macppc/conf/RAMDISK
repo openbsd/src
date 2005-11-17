@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.57 2005/11/15 01:12:49 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.58 2005/11/17 15:03:52 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -33,6 +33,7 @@ cpu*		at mainbus0
 
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 memc*		at mainbus0
+openpic*	at memc?	# openpic interrupt controller
 ki2c*           at memc?        # Keywest I2C
 pchb*		at pci?		# host bridge identifiers
 ht*		at mainbus0
@@ -106,7 +107,7 @@ ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 ukphy*		at mii?		# generic unknown PHYs
 
 macintr0	at macobio?	# old interrupt controller
-openpic0	at macobio?	# openpic interrupt controller
+openpic*	at macobio?	# openpic interrupt controller
 bm*		at macobio?	# bmac ethernet
 #mc*		at macobio?	# MACE ethernet
 #esp*		at macobio? flags 0x00ff# 53c9x SCSI

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.39 2005/11/16 12:28:54 kettenis Exp $
+#	$OpenBSD: files.macppc,v 1.40 2005/11/17 15:03:52 drahn Exp $
 
 #
 # macppc-specific configuration info
@@ -141,7 +141,7 @@ attach	macintr at macobio
 file	arch/macppc/dev/macintr.c			macintr
 
 device	openpic {}
-attach	openpic at macobio
+attach	openpic at macobio, memc
 file	arch/macppc/dev/openpic.c			openpic
 
 device	zsc {[channel = -1]}

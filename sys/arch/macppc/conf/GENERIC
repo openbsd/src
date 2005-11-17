@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.111 2005/11/17 00:44:46 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.112 2005/11/17 15:03:52 drahn Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -33,6 +33,7 @@ cpu*		at mainbus0
 
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 memc*		at mainbus0
+openpic*	at memc?	# openpic interrupt controller
 ki2c*           at memc?        # Keywest I2C
 pchb*		at pci?
 ht*		at mainbus0
@@ -120,7 +121,7 @@ ubsec*		at pci?		# Broadcom 58xx
 safe*		at pci?		# SafeNet SafeXcel 1141/1741
 
 macintr0	at macobio?	# old interrupt controller
-openpic0	at macobio?	# openpic interrupt controller
+openpic*	at macobio?	# openpic interrupt controller
 bm*		at macobio?	# BMAC ethernet
 #mc*		at macobio?	# MACE ethernet
 #esp*		at macobio? flags 0x00ff # 53c9x SCSI
