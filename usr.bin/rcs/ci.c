@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.59 2005/11/16 19:23:46 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.60 2005/11/17 00:03:04 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -238,7 +238,8 @@ checkin_main(int argc, char **argv)
 		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
 
 		if (pb.file == NULL) {
-			cvs_log(LP_ERR, "failed to open rcsfile '%s'", pb.fpath);
+			cvs_log(LP_ERR, "failed to open rcsfile '%s'",
+			    pb.fpath);
 			exit(1);
 		}
 
@@ -545,7 +546,7 @@ checkin_getinput(const char *prompt)
  * checkin_init()
  * 
  * Does an initial check in, just enough to create the new ,v file
- * XXX not full implemented yet.
+ * XXX not fully implemented yet.
  */
 static void
 checkin_init(struct checkin_params *pb)
