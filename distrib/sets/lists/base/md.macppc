@@ -2279,6 +2279,7 @@
 ./usr/mdec/ofwboot
 ./usr/sbin/apm
 ./usr/sbin/apmd
+./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
