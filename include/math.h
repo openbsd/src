@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.9 2005/01/06 20:36:23 espie Exp $	*/
+/*	$OpenBSD: math.h,v 1.10 2005/11/17 20:07:40 otto Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -182,6 +182,10 @@ extern double significand(double);
 extern double copysign(double, double);
 extern int ilogb(double);
 extern double rint(double);
+extern long int lrint(double);
+extern long int lround(double);
+extern long long int llrint(double);
+extern long long int llround(double);
 extern double scalbn(double, int);
 
 /*
@@ -266,6 +270,10 @@ extern float significandf(float);
 extern float copysignf(float, float);
 extern int ilogbf(float);
 extern float rintf(float);
+extern long int lrintf(float);
+extern long int lroundf(float);
+extern long long int llrintf(float);
+extern long long int llroundf(float);
 extern float scalbnf(float, int);
 
 /*
