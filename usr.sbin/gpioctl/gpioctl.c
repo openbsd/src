@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioctl.c,v 1.3 2005/11/16 16:40:28 deraadt Exp $	*/
+/*	$OpenBSD: gpioctl.c,v 1.4 2005/11/17 10:18:18 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 	int do_ctl = 0;
 	int pin = 0, value = 0;
 
-	while ((ch = getopt(argc, argv, "cd:h")) != -1)
+	while ((ch = getopt(argc, argv, "cd:q")) != -1)
 		switch (ch) {
 		case 'c':
 			do_ctl = 1;
