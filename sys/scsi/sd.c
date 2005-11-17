@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.99 2005/11/17 21:25:58 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.100 2005/11/17 23:58:41 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -475,8 +475,10 @@ sdclose(dev, flag, fmt, p)
 	if (sd == NULL)
 		return ENXIO;
 
-	if ((error = sdlock(sd)) != 0)
-		return error;
+	if ((error = sdlock(sd)) != 0) {
+		device_unref(&sd->sc_dev);
+		return (error);
+	}
 
 	switch (fmt) {
 	case S_IFCHR:
