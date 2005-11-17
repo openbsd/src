@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.1 2005/11/16 04:05:55 deraadt Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.2 2005/11/17 08:42:56 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -33,7 +33,7 @@
 #define PCA9554_CONFIG		0x03
 
 /* Sensors */
-#define GSCGPIO_NPINS	8
+#define PCAGPIO_NPINS	8
 
 struct pcagpio_softc {
 	struct device	sc_dev;
@@ -43,9 +43,9 @@ struct pcagpio_softc {
 	u_int8_t	sc_polarity;
 
 	struct gpio_chipset_tag sc_gpio_gc;
-        gpio_pin_t sc_gpio_pins[GSCGPIO_NPINS];
+        gpio_pin_t sc_gpio_pins[PCAGPIO_NPINS];
 
-	struct sensor sc_sensor[GSCGPIO_NPINS];
+	struct sensor sc_sensor[PCAGPIO_NPINS];
 };
 
 int	pcagpio_match(struct device *, void *, void *);
@@ -113,11 +113,11 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Initialize sensor data. */
-	for (i = 0; i < GSCGPIO_NPINS; i++)
+	for (i = 0; i < PCAGPIO_NPINS; i++)
 		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sc_sensor[i].device));
 
-	for (i = 0; i < GSCGPIO_NPINS; i++) {
+	for (i = 0; i < PCAGPIO_NPINS; i++) {
 		sc->sc_sensor[i].type = SENSOR_INTEGER;
 		if ((sc->sc_control & (1 << i)) == 0) {
 			snprintf(sc->sc_sensor[i].desc,
@@ -135,13 +135,13 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #if 0
-	for (i = 0; i < GSCGPIO_NPINS; i++)
+	for (i = 0; i < PCAGPIO_NPINS; i++)
 		SENSOR_ADD(&sc->sc_sensor[i]);
 #endif
 
 	printf(": %d inputs %d outputs\n", 8 - outputs, outputs);
 
-	for (i = 0; i < GSCGPIO_NPINS; i++) {
+	for (i = 0; i < PCAGPIO_NPINS; i++) {
 		sc->sc_gpio_pins[i].pin_num = i;
 		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
 
@@ -161,7 +161,7 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 	gba.gba_name = "gpio";
 	gba.gba_gc = &sc->sc_gpio_gc;
 	gba.gba_pins = sc->sc_gpio_pins;
-	gba.gba_npins = GSCGPIO_NPINS;
+	gba.gba_npins = PCAGPIO_NPINS;
 
 	config_found(&sc->sc_dev, &gba, gpiobus_print);
 
@@ -186,7 +186,7 @@ pcagpio_refresh(void *arg)
 	    sc->sc_addr, &cmd, sizeof cmd, &out, sizeof out, 0))
 		goto invalid;
 
-	for (i = 0; i < GSCGPIO_NPINS; i++) {
+	for (i = 0; i < PCAGPIO_NPINS; i++) {
 		bit = 1 << i;
 		if ((sc->sc_control & bit))
 			sc->sc_sensor[i].value = (in & bit) ? 1 : 0;
