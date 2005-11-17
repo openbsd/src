@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.20 2003/12/12 05:25:06 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.21 2005/11/17 19:31:54 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.20 2003/12/12 05:25:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.21 2005/11/17 19:31:54 moritz Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -259,7 +259,11 @@ onehost(char *host)
 		return;
 	}
 
-	print_rup_data(host, &host_stat);
+	if (sort_type != SORT_NONE)
+		remember_rup_data(host, &host_stat);
+	else
+		print_rup_data(host, &host_stat);
+
 	clnt_destroy(rstat_clnt);
 }
 
@@ -269,10 +273,9 @@ allhosts(void)
 	statstime host_stat;
 	enum clnt_stat clnt_stat;
 	extern char *__progname;
-	size_t i;
 
 	if (sort_type != SORT_NONE) {
-		printf("collecting responses...");
+		printf("collecting responses...\n");
 		fflush(stdout);
 	}
 
@@ -282,23 +285,13 @@ allhosts(void)
 		fprintf(stderr, "%s: %s\n", __progname, clnt_sperrno(clnt_stat));
 		exit(1);
 	}
-
-	if (sort_type != SORT_NONE) {
-		putchar('\n');
-		qsort(rup_data, rup_data_idx, sizeof(struct rup_data),
-		    compare);
-
-		for (i = 0; i < rup_data_idx; i++) {
-			print_rup_data(rup_data[i].host,
-			    &rup_data[i].statstime);
-		}
-	}
 }
 
 int
 main(int argc, char *argv[])
 {
 	int ch;
+	size_t i;
 	extern int optind;
 
 	sort_type = SORT_NONE;
@@ -328,6 +321,16 @@ main(int argc, char *argv[])
 	else {
 		for (; optind < argc; optind++)
 			onehost(argv[optind]);
+	}
+
+	if (sort_type != SORT_NONE) {
+		qsort(rup_data, rup_data_idx, sizeof(struct rup_data),
+		    compare);
+
+		for (i = 0; i < rup_data_idx; i++) {
+			print_rup_data(rup_data[i].host,
+			    &rup_data[i].statstime);
+		}
 	}
 
 	exit(0);
