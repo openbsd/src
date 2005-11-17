@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.243 2005/07/11 14:16:09 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.244 2005/11/17 20:52:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1055,13 +1055,12 @@ pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 }
 
 int
-pfctl_rules(int dev, char *filename, int opts, char *anchorname,
+pfctl_rules(int dev, char *filename, FILE *fin, int opts, char *anchorname,
     struct pfr_buffer *trans)
 {
 #define ERR(x) do { warn(x); goto _error; } while(0)
 #define ERRX(x) do { warnx(x); goto _error; } while(0)
 
-	FILE			*fin;
 	struct pfr_buffer	*t, buf;
 	struct pfioc_altq	 pa;
 	struct pfctl		 pf;
@@ -1084,16 +1083,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	if (strlcpy(trs.pfrt_anchor, anchorname,
 	    sizeof(trs.pfrt_anchor)) >= sizeof(trs.pfrt_anchor))
 		ERRX("pfctl_rules: strlcpy");
-	if (strcmp(filename, "-") == 0) {
-		fin = stdin;
-		infile = "stdin";
-	} else {
-		if ((fin = pfctl_fopen(filename, "r")) == NULL) {
-			warn("%s", filename);
-			return (1);
-		}
-		infile = filename;
-	}
+	infile = filename;
 	pf.dev = dev;
 	pf.opts = opts;
 	pf.loadopt = loadopt;
@@ -1640,11 +1630,12 @@ pfctl_lookup_option(char *cmd, const char **list)
 int
 main(int argc, char *argv[])
 {
-	int	error = 0;
-	int	ch;
-	int	mode = O_RDONLY;
-	int	opts = 0;
-	char	anchorname[MAXPATHLEN];
+	int	 error = 0;
+	int	 ch;
+	int	 mode = O_RDONLY;
+	int	 opts = 0;
+	char	 anchorname[MAXPATHLEN];
+	FILE	*fin = NULL;
 
 	if (argc < 2)
 		usage();
@@ -1929,7 +1920,15 @@ main(int argc, char *argv[])
 		    tblcmdopt, rulesopt, anchorname, opts);
 		rulesopt = NULL;
 	}
-
+	if (rulesopt != NULL) {
+		if (strcmp(rulesopt, "-") == 0) {
+			fin = stdin;
+			rulesopt = "stdin";
+		} else {
+			if ((fin = pfctl_fopen(rulesopt, "r")) == NULL)
+				err(1, "%s", rulesopt);
+		}
+	}
 	if ((rulesopt != NULL) && (!*anchorname))
 		if (pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET))
 			error = 1;
@@ -1940,7 +1939,7 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (rulesopt != NULL) {
-		if (pfctl_rules(dev, rulesopt, opts, anchorname, NULL))
+		if (pfctl_rules(dev, rulesopt, fin, opts, anchorname, NULL))
 			error = 1;
 		else if (!(opts & PF_OPT_NOACTION) &&
 		    (loadopt & PFCTL_FLAG_TABLE))
