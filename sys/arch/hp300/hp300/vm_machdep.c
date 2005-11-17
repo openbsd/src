@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2005/09/25 22:26:10 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.39 2005/11/17 23:56:44 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.60 2001/07/06 05:53:35 chs Exp $	*/
 
 /*
@@ -264,20 +264,6 @@ physunaccess(vaddr, size)
 	for (size = btoc(size); size; size--)
 		*pte++ = PG_NV;
 	TBIAS();
-}
-
-/*
- * Convert kernel VA to physical address
- */
-int
-kvtop(addr)
-	caddr_t addr;
-{
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
-		panic("kvtop: zero page frame");
-	return((int)pa);
 }
 
 /*
