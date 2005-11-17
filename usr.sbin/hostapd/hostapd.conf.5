@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.18 2005/11/16 00:01:19 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.19 2005/11/17 00:10:46 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -568,70 +568,6 @@ hostap handle type management subtype auth with resend
 # Remove a blacklisted node from the kernel node tree
 hostap handle type management subtype auth from <blacklist> \e
     with node delete &from
-.Ed
-.Sh GRAMMAR
-Syntax for
-.Nm
-in BNF:
-.Bd -literal
-grammar		= [ varset ] | [ tabledef ] | option | [ event ]
-
-varset		= varname "=" varvalue
-
-tabledef	= "table" table tableopts
-
-table		= "<" tablename ">"
-
-tableopts	= "const" | "{" [ "\en" ] "}" |
-		  "{" [ "\en" ] tableaddrlist [ "\en" ] "}"
-
-tableaddrlist	= lladdr [ "->" ipv4-dotted-quad | "&" lladdr-mask |
-		  "/" number ] [ "," ] [ tableaddrlist ]
-
-option		= "set" ( "hostap" "interface" name |
-		  "iapp" "interface" name [ "passive" ] |
-		  [ "iapp" "mode" ( "multicast" | "broadcast" ] )
-
-event		= "hostap" "handle" [ eventopt ] [ frmmatch ] [ action ]
-		  [ limit ] [ rate ]
-
-eventopt	= "skip" | "quick"
-
-action		= "with" ( "log" [ "verbose" ] | "frame" frmaction |
-		  "iapp" "type" "radiotap" |
-		  "node" ( "add" | "delete" ) frmactionaddr )
-
-frmmatch	= [ frmmatchtype ] [ "dir" ( "any" | [ "!" ] frmdir ) ]
-		  [ ( "from" | "to" | "bssid" ) frmmatchaddr ]
-
-frmmatchtype	= "type" ( "any" | [ "!" ] ( "data" | "management"
-		  [ frmmatchmgmt ] ) )
-
-frmmatchmgmt	= "subtype" ( "any" | [ "!" ] frmsubtype )
-
-frmmatchaddr	= "any" | [ "!" ] table | [ "!" ] lladdr
-
-frmaction	= frmactiontype [ "dir" frmdir ]
-		  ( "from" , "to" , "bssid" ) frmactionaddr
-
-frmactiontype	= "type" ( "data" | "management" "subtype" frmsubtype )
-
-frmactionaddr	= lladdr | refaddr | "random"
-
-limit		= "limit" number ( "sec" | "usec" )
-
-rate		= "rate" number "/" number "sec"
-
-frmsubtype	= ( "probe-request" | "probe-resp" |
-		  "beacon" ) [ frmelems ] | "atim" | "auth" | "deauth" |
-		  "assoc-request" | "assoc-resp" | "reassoc-request" |
-		  "reassoc-response"
-
-frmelems	= "nwid" [ "!" ] name [ frmelems ]
-
-frmdir		= ( "no" | "to" | "from" | "ds" "to" ) "ds"
-
-refaddr		= "&" ( "from" | "to" | "bssid" )
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/hostapd.conf" -compact
