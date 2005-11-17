@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.60 2005/11/17 00:03:04 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.61 2005/11/17 00:16:35 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -72,6 +72,7 @@ static char * checkin_getinput(const char *);
 static char * checkin_getlogmsg(RCSNUM *, RCSNUM *);
 static void   checkin_init(struct checkin_params *);
 static void   checkin_revert(struct checkin_params *pb);
+static int    checkin_setrevdate(struct checkin_params *pb);
 
 void
 checkin_usage(void)
@@ -325,15 +326,10 @@ checkin_main(int argc, char **argv)
 		 * Set the date of the revision to be the last modification
 		 * time of the working file if -d has no argument.
 		 */
-		if (pb.date == DATE_MTIME) {
-			if (stat(pb.filename, &sb) != 0) {
-				cvs_log(LP_ERRNO, "failed to stat: `%s'",
-				    pb.filename);
-				rcs_close(pb.file);
-				continue;
-			}
-			pb.date = (time_t)sb.st_mtimespec.tv_sec;
-		}
+		if (pb.date == DATE_MTIME
+		    && (checkin_setrevdate(&pb) < 0))
+			    continue;
+		
 
 		/*
 		 * Now add our new revision
@@ -673,5 +669,27 @@ checkin_checklock(struct checkin_params *pb)
 		rcs_close(pb->file);
 		return (-1);
 	}
+	return (0);
+}
+
+/*
+ * checkin_setrevdate()
+ *
+ * Set the date of the revision to be the last modification
+ * time of the working file if -d has no argument.
+ *
+ * On success, return 0. On error return -1.
+ */
+static int
+checkin_setrevdate(struct checkin_params *pb)
+{
+	struct stat sb;
+	if (stat(pb->filename, &sb) != 0) {
+		cvs_log(LP_ERRNO, "failed to stat: `%s'",
+		    pb->filename);
+		rcs_close(pb->file);
+		return (-1);
+	}
+	pb->date = (time_t)sb.st_mtimespec.tv_sec;
 	return (0);
 }
