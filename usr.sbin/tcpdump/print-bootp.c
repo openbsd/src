@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bootp.c,v 1.12 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.13 2005/11/17 23:33:50 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-bootp.c,v 1.12 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-bootp.c,v 1.13 2005/11/17 23:33:50 stevesk Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -367,7 +367,7 @@ rfc1048_print(register const u_char *bp, register u_int length)
 				if (c == 'i')
 					printf("%s", ipaddr_string(&ul));
 				else
-					printf("%u", ul);
+					printf("%u", ntohl(ul));
 				bp += sizeof(ul);
 				size -= sizeof(ul);
 				first = 0;
@@ -396,7 +396,7 @@ rfc1048_print(register const u_char *bp, register u_int length)
 				if (!first)
 					putchar(',');
 				memcpy((char *)&us, (char *)bp, sizeof(us));
-				printf("%d", us);
+				printf("%u", ntohs(us));
 				bp += sizeof(us);
 				size -= sizeof(us);
 				first = 0;
