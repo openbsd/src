@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.15 2005/08/09 04:10:10 mickey Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.16 2005/11/18 05:39:10 nate Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -44,6 +44,8 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/select.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -162,12 +164,10 @@ struct aac_ident {
 	/* HP NetRAID-4M */
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_CPQ42XX, PCI_VENDOR_HP,
 	    PCI_PRODUCT_HP_NETRAID_4M, AAC_HWIF_STRONGARM },
-	/* Adaptec ASR-2120S */
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S, PCI_VENDOR_ADP2,
-	    PCI_PRODUCT_ADP2_AACASR2120S, AAC_HWIF_I960RX },
-	/* Adaptec ASR-2200S */
+	    PCI_PRODUCT_ADP2_ASR2120S, AAC_HWIF_I960RX },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S, PCI_VENDOR_ADP2,
-	    PCI_PRODUCT_ADP2_AACASR2200S, AAC_HWIF_I960RX },
+	    PCI_PRODUCT_ADP2_ASR2200S, AAC_HWIF_I960RX },
 	{ 0, 0, 0, 0 }
 };
 
@@ -250,8 +250,8 @@ aac_pci_attach(parent, self, aux)
 	 * Map control/status registers.
 	 */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_memt,
-	    &sc->sc_memh, &membase, &memsize, AAC_REGSIZE)) {
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->aac_memt,
+	    &sc->aac_memh, &membase, &memsize, AAC_REGSIZE)) {
 		printf("can't find mem space\n");
 		goto bail_out;
 	}
@@ -262,9 +262,9 @@ aac_pci_attach(parent, self, aux)
 		goto bail_out;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, aac_intr, sc,
-	    sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
+	sc->aac_ih = pci_intr_establish(pc, ih, IPL_BIO, aac_intr, sc,
+	    sc->aac_dev.dv_xname);
+	if (sc->aac_ih == NULL) {
 		printf("couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -275,25 +275,30 @@ aac_pci_attach(parent, self, aux)
 	if (intrstr != NULL)
 		printf("%s\n", intrstr);
 
-	sc->sc_dmat = pa->pa_dmat;
+	sc->aac_dmat = pa->pa_dmat;
  
 	for (m = aac_identifiers; m->vendor != 0; m++)
 		if (m->vendor == PCI_VENDOR(pa->pa_id) &&
 		    m->device == PCI_PRODUCT(pa->pa_id)) {
 			if (m->subvendor == PCI_VENDOR(subsysid) &&
 			    m->subdevice == PCI_PRODUCT(subsysid)) {
-				sc->sc_hwif = m->hwif;
-				switch(sc->sc_hwif) {
+				sc->aac_hwif = m->hwif;
+				switch(sc->aac_hwif) {
 				case AAC_HWIF_I960RX:
 					AAC_DPRINTF(AAC_D_MISC,
 					    ("set hardware up for i960Rx"));
-					sc->sc_if = aac_rx_interface;
+					sc->aac_if = aac_rx_interface;
 					break;
 
 				case AAC_HWIF_STRONGARM:
 					AAC_DPRINTF(AAC_D_MISC,
 					    ("set hardware up for StrongARM"));
-					sc->sc_if = aac_sa_interface;
+					sc->aac_if = aac_sa_interface;
+					break;
+				case AAC_HWIF_FALCON:
+					AAC_DPRINTF(AAC_D_MISC,
+					   ("set hardware up for Falcon/PPC"));
+					sc->aac_if = aac_fa_interface;
 					break;
 				}
 				break;
@@ -307,8 +312,8 @@ aac_pci_attach(parent, self, aux)
 
  bail_out:
 	if (state > 1)
-		pci_intr_disestablish(pc, sc->sc_ih);
+		pci_intr_disestablish(pc, sc->aac_ih);
 	if (state > 0)
-		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
+		bus_space_unmap(sc->aac_memt, sc->aac_memh, memsize);
 	return;
 }

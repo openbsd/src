@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_tables.h,v 1.2 2004/05/21 20:34:52 marco Exp $	*/
+/*	$OpenBSD: aac_tables.h,v 1.3 2005/11/18 05:39:10 nate Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -83,7 +83,7 @@ static struct aac_code_lookup aac_cpu_variant[] = {
 	{ "i960HX",			CPUI960_HX },
 	{ "i960RX",			CPUI960_RX },
 	{ "StrongARM SA110",		CPUARM_SA110 },
-	{ "PowerPC 603e",		CPUPPC_603e },
+	{ "MPC824x",			CPUMPC_824x },
 	{ "Unknown StrongARM",		CPUARM_xxx },
 	{ "Unknown PowerPC",		CPUPPC_xxx },
 	{ "Intel GC80302 IOP",		CPUI960_302},
