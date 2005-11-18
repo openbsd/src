@@ -4372,7 +4372,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_5,
-	    "82801EB/ER USB",
+	    "82801EB/ER USB2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_4,
