@@ -1,6 +1,6 @@
-/*	$OpenBSD: ichreg.h,v 1.4 2005/05/02 13:48:44 grange Exp $	*/
+/*	$OpenBSD: ichreg.h,v 1.5 2005/11/18 11:44:00 grange Exp $	*/
 /*
- * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
+ * Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
