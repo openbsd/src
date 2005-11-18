@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdvar.h,v 1.7 2005/11/14 20:20:30 miod Exp $	*/
+/*	$OpenBSD: hdvar.h,v 1.8 2005/11/18 00:09:15 miod Exp $	*/
 /*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ struct	hd_softc {
 	short	sc_type;
 	char	*sc_addr;
 	int	sc_resid;
-	struct	hd_describe sc_hddesc;
 	struct	hpibqueue sc_hq;	/* hpib job queue entry */
 	struct	hd_iocmd sc_ioc;
 	struct	hd_rscmd sc_rsc;

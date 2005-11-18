@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.12 2005/11/16 21:23:55 miod Exp $	*/
+/*	$OpenBSD: ct.c,v 1.13 2005/11/18 00:09:15 miod Exp $	*/
 /*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ ctident(parent, sc, ha)
 	struct ct_softc *sc;
 	struct hpibbus_attach_args *ha;
 {
-	struct ct_describe desc;
+	struct cs80_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
 	int i, id, n, type, canstream;
@@ -231,7 +231,7 @@ ctident(parent, sc, ha)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(parent->dv_unit, ha->ha_slave, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(parent->dv_unit, ha->ha_slave, C_EXEC, &desc, 37);
+	hpibrecv(parent->dv_unit, ha->ha_slave, C_EXEC, &desc, sizeof(desc));
 	hpibrecv(parent->dv_unit, ha->ha_slave, C_QSTAT, &stat, sizeof(stat));
 
 	bzero(name, sizeof(name));

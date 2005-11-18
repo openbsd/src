@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctreg.h,v 1.6 2004/04/12 22:12:32 jmc Exp $	*/
+/*	$OpenBSD: ctreg.h,v 1.7 2005/11/18 00:09:15 miod Exp $	*/
 /*	$NetBSD: ctreg.h,v 1.6 1996/02/09 18:00:35 scottr Exp $	*/
 
 /*
@@ -98,30 +98,6 @@ struct	ct_clearcmd {
 	char	unit;
 	char	cmd;
 };
-
-struct ct_describe {
-	u_int	d_iuw:16,	/* controller: installed unit word */
-		d_cmaxxfr:16,	/* controller: max transfer rate (Kb) */
-		d_ctype:8,	/* controller: controller type */
-		d_utype:8,	/* unit: unit type */
-		d_name:24,	/* unit: name (6 BCD digits) */
-		d_sectsize:16,	/* unit: # of bytes per block (sector) */
-		d_blkbuf:8,	/* unit: # of blocks which can be buffered */
-		d_burstsize:8,	/* unit: recommended burst size */
-		d_blocktime:16,	/* unit: block time (u-sec) */
-		d_uavexfr:16,	/* unit: average transfer rate (Kb) */
-		d_retry:16,	/* unit: optimal retry time (1/100-sec) */
-		d_access:16,	/* unit: access time param (1/100-sec) */
-		d_maxint:8,	/* unit: maximum interleave */
-		d_fvbyte:8,	/* unit: fixed volume byte */
-		d_rvbyte:8,	/* unit: removable volume byte */
-		d_maxcyl:24,	/* volume: maximum cylinder */
-		d_maxhead:8,	/* volume: maximum head */
-		d_maxsect:16,	/* volume: maximum sector on track */
-		d_maxvsecth:16,	/* volume: maximum sector on volume (MSW) */
-		d_maxvsectl:32,	/* volume: maximum sector on volume (LSWs) */
-		d_interleave:8;	/* volume: current interleave */
- };
 
 #define	CT7946ID	0x220
 #define CT9145ID	0x268

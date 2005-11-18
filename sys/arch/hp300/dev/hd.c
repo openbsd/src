@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.35 2005/11/16 21:23:55 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.36 2005/11/18 00:09:15 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -326,7 +326,7 @@ hdident(parent, sc, ha)
 	struct hd_softc *sc;
 	struct hpibbus_attach_args *ha;
 {
-	struct hd_describe *desc = sc != NULL ? &sc->sc_hddesc : NULL;
+	struct cs80_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
 	int i, id, n, ctlr, slave;
@@ -361,11 +361,12 @@ hdident(parent, sc, ha)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, slave, C_EXEC, desc, 37);
+	hpibrecv(ctlr, slave, C_EXEC, &desc, sizeof(desc));
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+
 	bzero(name, sizeof(name));
 	if (stat == 0) {
-		n = desc->d_name;
+		n = desc.d_name;
 		for (i = 5; i >= 0; i--) {
 			name[i] = (n & 0xf) + '0';
 			n >>= 4;
@@ -375,18 +376,18 @@ hdident(parent, sc, ha)
 #ifdef DEBUG
 	if (hddebug & HDB_IDENT) {
 		printf("\n%s: name: %x ('%s')\n",
-		    sc->sc_dev.dv_xname, desc->d_name, name);
+		    sc->sc_dev.dv_xname, desc.d_name, name);
 		printf("  iuw %x, maxxfr %d, ctype %d\n",
-		    desc->d_iuw, desc->d_cmaxxfr, desc->d_ctype);
+		    desc.d_iuw, desc.d_cmaxxfr, desc.d_ctype);
 		printf("  utype %d, bps %d, blkbuf %d, burst %d, blktime %d\n",
-		    desc->d_utype, desc->d_sectsize,
-		    desc->d_blkbuf, desc->d_burstsize, desc->d_blocktime);
+		    desc.d_utype, desc.d_sectsize,
+		    desc.d_blkbuf, desc.d_burstsize, desc.d_blocktime);
 		printf("  avxfr %d, ort %d, atp %d, maxint %d, fv %x, rv %x\n",
-		    desc->d_uavexfr, desc->d_retry, desc->d_access,
-		    desc->d_maxint, desc->d_fvbyte, desc->d_rvbyte);
+		    desc.d_uavexfr, desc.d_retry, desc.d_access,
+		    desc.d_maxint, desc.d_fvbyte, desc.d_rvbyte);
 		printf("  maxcyl/head/sect %d/%d/%d, maxvsect %d, inter %d\n",
-		    desc->d_maxcyl, desc->d_maxhead, desc->d_maxsect,
-		    desc->d_maxvsectl, desc->d_interleave);
+		    desc.d_maxcyl, desc.d_maxhead, desc.d_maxsect,
+		    desc.d_maxvsectl, desc.d_interleave);
 		printf("%s", sc->sc_dev.dv_xname);
 	}
 #endif
