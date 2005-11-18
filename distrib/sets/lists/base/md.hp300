@@ -42,7 +42,7 @@
 ./usr/lib/libkafs.so.15.0
 ./usr/lib/libkrb5.so.15.0
 ./usr/lib/libkvm.so.8.0
-./usr/lib/libm.so.2.0
+./usr/lib/libm.so.2.1
 ./usr/lib/libmenu.so.3.0
 ./usr/lib/libmilter.so.1.0
 ./usr/lib/libncurses.so.10.0

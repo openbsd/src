@@ -3971,6 +3971,10 @@
 ./usr/share/man/cat3/link_fieldtype.0
 ./usr/share/man/cat3/link_ntoa.0
 ./usr/share/man/cat3/llabs.0
+./usr/share/man/cat3/llrint.0
+./usr/share/man/cat3/llrintf.0
+./usr/share/man/cat3/llround.0
+./usr/share/man/cat3/llroundf.0
 ./usr/share/man/cat3/localeconv.0
 ./usr/share/man/cat3/localtime.0
 ./usr/share/man/cat3/localtime_r.0
@@ -4002,6 +4006,10 @@
 ./usr/share/man/cat3/longjmperror.0
 ./usr/share/man/cat3/longname.0
 ./usr/share/man/cat3/lrand48.0
+./usr/share/man/cat3/lrint.0
+./usr/share/man/cat3/lrintf.0
+./usr/share/man/cat3/lround.0
+./usr/share/man/cat3/lroundf.0
 ./usr/share/man/cat3/lsearch.0
 ./usr/share/man/cat3/malloc.0
 ./usr/share/man/cat3/math.0
