@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.7 2005/09/07 04:00:16 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.8 2005/11/18 14:08:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -360,7 +360,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->sc_link.device = &ciss_dev;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.openings = sc->maxcmd / sc->maxunits;	/* XXX */
+	sc->sc_link.openings = sc->maxcmd / (sc->maxunits? sc->maxunits : 1);
 	sc->sc_link.adapter = &ciss_switch;
 	sc->sc_link.adapter_target = sc->maxunits;
 	sc->sc_link.adapter_buswidth = sc->maxunits;
@@ -369,6 +369,7 @@ ciss_attach(struct ciss_softc *sc)
 #if 0
 	sc->sc_link_raw.device = &ciss_raw_dev;
 	sc->sc_link_raw.adapter_softc = sc;
+	sc->sc_link.openings = sc->maxcmd / (sc->maxunits? sc->maxunits : 1);
 	sc->sc_link_raw.adapter = &ciss_raw_switch;
 	sc->sc_link_raw.adapter_target = sc->ndrives;
 	sc->sc_link_raw.adapter_buswidth = sc->ndrives;
