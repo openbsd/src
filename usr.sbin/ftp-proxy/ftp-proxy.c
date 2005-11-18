@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.6 2005/11/17 13:32:05 deraadt Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.7 2005/11/18 08:49:32 camield Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -293,11 +293,9 @@ end_session(struct session *s)
 		bufferevent_free(s->server_bufev);
 
 	if (s->client_fd != -1)
-		while (close(s->client_fd) != 0 && errno == EINTR)
-			;
+		close(s->client_fd);
 	if (s->server_fd != -1)
-		while (close(s->server_fd) != 0 && errno == EINTR)
-			;
+		close(s->server_fd);
 
 	/* Remove rulesets by commiting empty ones. */
 	err = 0;
