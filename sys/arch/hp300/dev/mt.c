@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.14 2005/11/16 21:23:55 miod Exp $	*/
+/*	$OpenBSD: mt.c,v 1.15 2005/11/18 00:16:48 miod Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /*
@@ -533,6 +533,7 @@ mtstart(arg)
 	struct buf *bp, *dp;
 	short	cmdcount = 1;
 	u_char	cmdbuf[2];
+	int s;
 
 	dlog(LOG_DEBUG, "%s start", sc->sc_dev.dv_xname);
 	sc->sc_flags &= ~MTF_WRT;
@@ -715,7 +716,9 @@ errdone:
 	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
+	s = splbio();
 	biodone(bp);
+	splx(s);
 	if ((dp = bp->b_actf))
 		dp->b_actb = bp->b_actb;
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.13 2005/11/18 00:09:15 miod Exp $	*/
+/*	$OpenBSD: ct.c,v 1.14 2005/11/18 00:16:48 miod Exp $	*/
 /*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
@@ -843,13 +843,16 @@ ctdone(sc, bp)
 	struct buf *bp;
 {
 	struct buf *dp;
+	int s;
 
 	if ((dp = bp->b_actf) != NULL)
 		dp->b_actb = bp->b_actb;
 	else
 		sc->sc_tab.b_actb = bp->b_actb;
 	*bp->b_actb = dp;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
 	if (sc->sc_tab.b_actf == NULL) {
 		sc->sc_tab.b_active = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.36 2005/11/18 00:09:15 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.37 2005/11/18 00:16:48 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -738,11 +738,14 @@ hdfinish(rs, bp)
 	struct buf *bp;
 {
 	struct buf *dp = &rs->sc_tab;
+	int s;
 
 	dp->b_errcnt = 0;
 	dp->b_actf = bp->b_actf;
 	bp->b_resid = 0;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 	hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
 	if (dp->b_actf)
 		return (dp->b_actf);
