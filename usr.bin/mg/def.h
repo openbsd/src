@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.75 2005/11/18 23:15:00 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.76 2005/11/18 23:37:30 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -356,6 +356,7 @@ int		 lreplace(RSIZE, char *);
 void		 kdelete(void);
 int		 kinsert(int, int);
 int		 kremove(int);
+int		 kchunk(char *, RSIZE, int);
 
 /* window.c X */
 struct mgwin	*new_window(struct buffer *);

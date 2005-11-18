@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.28 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: line.c,v 1.29 2005/11/18 23:37:31 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -427,13 +427,6 @@ ldelete(RSIZE n, int kflag)
 
 	undo_add_delete(curwp->w_dotp, curwp->w_doto, n);
 
-	/*
-	 * HACK - doesn't matter, and fixes back-over-nl bug for empty
-	 *	kill buffers.
-	 */
-	if (kused == kstart)
-		kflag = KFORW;
-
 	while (n != 0) {
 		dotp = curwp->w_dotp;
 		doto = curwp->w_doto;
@@ -460,20 +453,8 @@ ldelete(RSIZE n, int kflag)
 		lchange(WFEDIT);
 		/* Scrunch text */
 		cp1 = &dotp->l_text[doto];
-		if (kflag == KFORW) {
-			while (ksize - kused < chunk)
-				if (kgrow(kflag) == FALSE)
-					return (FALSE);
-			bcopy(cp1, &(kbufp[kused]), (int)chunk);
-			kused += chunk;
-		} else if (kflag == KBACK) {
-			while (kstart < chunk)
-				if (kgrow(kflag) == FALSE)
-					return (FALSE);
-			bcopy(cp1, &(kbufp[kstart - chunk]), (int)chunk);
-			kstart -= chunk;
-		} else if (kflag != KNONE)
-			panic("broken ldelete call");
+		if (kchunk(cp1, chunk, kflag) == FALSE)
+			return(FALSE); 
 		for (cp2 = cp1 + chunk; cp2 < &dotp->l_text[dotp->l_used];
 		    cp2++)
 			*cp1++ = *cp2;
@@ -680,4 +661,36 @@ kremove(int n)
 	if (n < 0 || n + kstart >= kused)
 		return (-1);
 	return (CHARMASK(kbufp[n + kstart]));
+}
+
+/*
+ * Copy a string into the kill buffer. kflag gives direction.
+ * if KNONE, do nothing.
+ */
+int
+kchunk(char *cp1, RSIZE chunk, int kflag)
+{
+	/*
+	 * HACK - doesn't matter, and fixes back-over-nl bug for empty
+	 *	kill buffers.
+	 */
+	if (kused == kstart)
+		kflag = KFORW;
+
+	if (kflag == KFORW) {
+		while (ksize - kused < chunk)
+			if (kgrow(kflag) == FALSE)
+				return (FALSE);
+		bcopy(cp1, &(kbufp[kused]), (int)chunk);
+		kused += chunk;
+	} else if (kflag == KBACK) {
+		while (kstart < chunk)
+			if (kgrow(kflag) == FALSE)
+				return (FALSE);
+		bcopy(cp1, &(kbufp[kstart - chunk]), (int)chunk);
+		kstart -= chunk;
+	} else if (kflag != KNONE)
+		panic("broken ldelete call");
+
+	return (TRUE);
 }
