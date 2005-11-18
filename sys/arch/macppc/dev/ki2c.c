@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.7 2005/11/15 15:35:34 deraadt Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.8 2005/11/18 23:19:28 kettenis Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -365,21 +365,28 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
 	struct ki2c_softc *sc = cookie;
+	u_int mode = I2C_STDSUBMODE;
+	u_int8_t cmd = 0;
 
-	if (!I2C_OP_STOP_P(op))
+	if (!I2C_OP_STOP_P(op) || cmdlen > 1)
 		return (EINVAL);
 
-	/* We handle the subaddress stuff ourselves. */
-	ki2c_setmode(sc, I2C_STDMODE, addr & 0x80);
+	if (cmdlen == 0)
+		mode = I2C_STDMODE;
+	else if (I2C_OP_READ_P(op))
+		mode = I2C_COMBMODE;
+
+	if (cmdlen > 0)
+		cmd = *(u_int8_t *)cmdbuf;
+
+	ki2c_setmode(sc, mode, addr & 0x80);
 	addr &= 0x7f;
 
-	if (ki2c_write(sc, (addr << 1), 0, cmdbuf, cmdlen) != 0)
-		return (EIO);
 	if (I2C_OP_READ_P(op)) {
-		if (ki2c_read(sc, (addr << 1), 0, buf, len) != 0)
+		if (ki2c_read(sc, (addr << 1), cmd, buf, len) != 0)
 			return (EIO);
 	} else {
-		if (ki2c_write(sc, (addr << 1), 0, buf, len) != 0)
+		if (ki2c_write(sc, (addr << 1), cmd, buf, len) != 0)
 			return (EIO);
 	}
 	return (0);
