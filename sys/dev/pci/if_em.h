@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.18 2005/11/13 03:48:08 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.19 2005/11/18 18:13:29 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -273,7 +273,7 @@ typedef enum _XSUM_CONTEXT_T {
 	OFFLOAD_UDP_IP
 } XSUM_CONTEXT_T;
 
-/* For 82544 PCIX  Workaround */
+/* For 82544 PCI-X Workaround */
 typedef struct _ADDRESS_LENGTH_PAIR
 {
     u_int64_t   address;
@@ -387,7 +387,7 @@ struct em_softc {
 	u_int64_t       tx_fifo_wrk_cnt;
 	u_int32_t       tx_head_addr;
 
-        /* For 82544 PCIX Workaround */
+        /* For 82544 PCI-X Workaround */
         boolean_t       pcix_82544;
         boolean_t       in_detach;
 

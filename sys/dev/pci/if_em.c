@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.92 2005/11/18 05:32:06 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.93 2005/11/18 18:13:29 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -347,7 +347,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
 
-        /* Identify 82544 on PCIX */
+        /* Identify 82544 on PCI-X */
         em_get_bus_info(&sc->hw);
         if(sc->hw.bus_type == em_bus_type_pcix &&
            sc->hw.mac_type == em_82544) {
@@ -935,7 +935,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
                 txd_used = 0;
         }
 	for (j = 0; j < q.map->dm_nsegs; j++) {
-                /* If sc is 82544 and on PCIX bus */
+                /* If sc is 82544 and on PCI-X bus */
                 if (sc->pcix_82544) {
                         /*
                          * Check the Address and Length combination and
