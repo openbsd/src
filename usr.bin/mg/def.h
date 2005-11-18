@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.74 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: def.h,v 1.75 2005/11/18 23:15:00 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -106,12 +106,11 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define EFNUL	0x0040		/* Null Minibuffer OK		 */
 
 /*
- * Flags for "ldelete"/"kinsert"
+ * Direction of insert into kill ring
  */
 #define KNONE	0
 #define KFORW	1
 #define KBACK	2
-
 
 /*
  * This structure holds the starting position
@@ -128,10 +127,10 @@ struct region {
 
 /*
  * All text is kept in circularly linked
- * lists of "LINE" structures. These begin at the
+ * lists of "line" structures. These begin at the
  * header line (which is the blank line beyond the
  * end of the buffer). This line is pointed to by
- * the "BUFFER". Each line contains the number of
+ * the "buffer" structure. Each line contains the number of
  * bytes in the line (the "used" size), the size
  * of the text array, and the text. The end of line
  * is not stored as a byte; it's implied. Future
@@ -149,7 +148,7 @@ struct line {
 /*
  * The rationale behind these macros is that you
  * could (with some editing, like changing the type of a line
- * link from a "LINE *" to a "REFLINE", and fixing the commands
+ * link from a "struct line *" to a "REFLINE", and fixing the commands
  * like file reading that break the rules) change the actual
  * storage representation of lines to use something fancy on
  * machines with small address spaces.
@@ -173,7 +172,7 @@ struct line {
 struct list {
 	union {
 		struct mgwin	*l_wp;
-		struct buffer	*x_bp;	/* l_bp is used by LINE */
+		struct buffer	*x_bp;	/* l_bp is used by struct line */
 		struct list	*l_nxt;
 	} l_p;
 	const char *l_name;
@@ -242,11 +241,11 @@ struct undo_rec;
 struct buffer {
 	struct list	 b_list;	/* buffer list pointer		 */
 	struct buffer	*b_altb;	/* Link to alternate buffer	 */
-	struct line	*b_dotp;	/* Link to "." LINE structure	 */
+	struct line	*b_dotp;	/* Link to "." line structure	 */
 	struct line	*b_markp;	/* ditto for mark		 */
-	struct line	*b_linep;	/* Link to the header LINE	 */
+	struct line	*b_linep;	/* Link to the header line	 */
 	struct maps_s	*b_modes[PBMODES]; /* buffer modes		 */
-	int		 b_doto;	/* Offset of "." in above LINE	 */
+	int		 b_doto;	/* Offset of "." in above line	 */
 	int		 b_marko;	/* ditto for the "mark"		 */
 	short		 b_nmodes;	/* number of non-fundamental modes */
 	char		 b_nwnd;	/* Count of windows on buffer	 */
