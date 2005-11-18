@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.95 2005/11/17 05:24:06 cloder Exp $	*/
+/*	$OpenBSD: theo.c,v 1.96 2005/11/18 01:41:08 kjell Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -91,15 +91,10 @@ static const char *talk[] = {
 	"Lazy bums slacking on your asses.",
 	"35 commits an hour? That's pathetic!",
 	"Fine software takes time to prepare.  Give a little slack.",
-	"emacs on the vax",
 	"Just a minute ago we were hugging and now you, guys, do not love me anymore",
-	"I'll let you know when I need to floss my teeth",
-	"If you can't figure out yourself, you're lacking some mental faculties",
 	"I am just stating a fact",
 	"i'd love to hack, but i can't",
 	"Wait, yes, I am on drugs",
-	"during release it is a constant.  almost noone helps.",
-	"i let you guys do whatever you wanted",
 	"you bring new meaning to the terms slackass. I will have to invent a new term.",
 	"if they cut you out, muddy their back yards",
 	"Make them want to start over, and play nice the next time.",
@@ -118,7 +113,6 @@ static const char *talk[] = {
 	"shame on you for following my rules.",
 	"altq's parser sucks dead whale farts through the finest chemistry pipette's",
 	"screw this operating system shit, i just want to drive!",
-	"That is the most stupid thing I have heard all week.",
 	"Search for fuck.  Anytime you see that word, you have a paragraph to write.",
 	"Yes, but the ports people are into S&M.",
 	"Buttons are for idiots.",
@@ -129,9 +123,6 @@ static const char *talk[] = {
 	"you slackers don't deserve pictures yet",
 	"Vegetarian my ass",
 	"Wait a minute, that's a McNally's!",
-	"Your connection is breaking up.",
-	"germans are not allowed to get involved there",
-	"gprs sucks camel dick dryer than the gobi desert",
 	"don't they recognize their moral responsibility to entertain me?",
 	"#ifdef is for emacs developers.",
 	"Many well known people become net-kooks in their later life, because they lose touch with reality.",
@@ -139,7 +130,6 @@ static const char *talk[] = {
 	"tweep tweep tweep",
 	"Quite frankly, SSE's alignment requirement is the most utterly retarded idea since eating your own shit.",
 	"Holy verbose prom startup Batman.",
-	"I don't know what you are talking about.  Please tell me what you are talking about.",
 	"Any day now, when we sell out.",
 	"optimism in man kind does not belong here",
 	"First user who tries to push this button, he pounds into the ground with a rant of death.",
@@ -148,7 +138,6 @@ static const char *talk[] = {
 	"Stop wasting your time reading people's licenses.",
 	"doing it with environment variables is OH SO SYSTEM FIVE LIKE OH MY GOD PASS ME THE SPOON",
 	"Linux is fucking POO, not just bad, bad REALLY REALLY BAD",
-	"openbsd development is slow because lots of developers have shrunken balls",
 	"penguins are not much more than chickens that swim.",
 	"i am a packet sniffing fool, let me wipe my face with my own poo",
 	"Whiners.  They scale really well.",
