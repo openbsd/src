@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.26 2005/11/18 11:05:39 djm Exp $
+.\"	$OpenBSD: pcap.3,v 1.27 2005/11/18 15:27:09 jmc Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,7 +165,8 @@ fails and returns
 .Fn pcap_dump_open
 is called to open a
 .Dq savefile
-for writing. The name
+for writing.
+The name
 .Ql -
 is a synonym for
 .Dv stdin .
@@ -421,12 +422,11 @@ other functions in libpcap.
 It is typically used when just using libpcap for compiling BPF code.
 .Pp
 .Fn pcap_lib_version
-returns a string describing the version of
-.Xr pcap 3 .
+returns a string describing the version of libpcap.
 .Fn pcap_datalink_val_to_name
 and
 .Fn pcap_datalink_val_to_description
-lookup the name or description of a datalink type by number.
+look up the name or description of a datalink type by number.
 These functions return
 .Dv NULL
 if the specified datalink type is not known.
