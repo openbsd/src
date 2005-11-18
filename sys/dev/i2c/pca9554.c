@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.2 2005/11/17 08:42:56 grange Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.3 2005/11/18 20:47:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -71,8 +71,10 @@ pcagpio_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "PCA9554") == 0 ||
-		    strcmp(ia->ia_compat, "PCA9554M") == 0)
+		if (strcasecmp(ia->ia_compat, "PCA9554") == 0 ||
+		    strcasecmp(ia->ia_compat, "PCA9554M") == 0 ||
+		    strcasecmp(ia->ia_compat, "pca9556") == 0 ||
+		    strcasecmp(ia->ia_compat, "pca9557") == 0)
 			return (1);
 		return (0);
 	}
@@ -139,7 +141,12 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 		SENSOR_ADD(&sc->sc_sensor[i]);
 #endif
 
-	printf(": %d inputs %d outputs\n", 8 - outputs, outputs);
+	printf(":"):
+	if (8 - outputs)
+		printf(" %d inputs", 8 - outputs);
+	if (outputs)
+		printf(" %d outputs", outputs);
+	printf("\n");
 
 	for (i = 0; i < PCAGPIO_NPINS; i++) {
 		sc->sc_gpio_pins[i].pin_num = i;
@@ -209,7 +216,7 @@ pcagpio_gpio_pin_read(void *arg, int pin)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &in, sizeof in, 0))
 		return 0;
-	return (in & (1 << pin)) ? 1 : 0;
+	return ((in ^ sc->sc_polarity) & (1 << pin)) ? 1 : 0;
 }
 
 void
