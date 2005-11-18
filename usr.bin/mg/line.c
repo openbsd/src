@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.25 2005/10/13 20:28:49 deraadt Exp $	*/
+/*	$OpenBSD: line.c,v 1.26 2005/11/18 17:19:51 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -462,13 +462,13 @@ ldelete(RSIZE n, int kflag)
 		cp1 = &dotp->l_text[doto];
 		if (kflag == KFORW) {
 			while (ksize - kused < chunk)
-				if (kgrow(FALSE) == FALSE)
+				if (kgrow(kflag) == FALSE)
 					return (FALSE);
 			bcopy(cp1, &(kbufp[kused]), (int)chunk);
 			kused += chunk;
 		} else if (kflag == KBACK) {
 			while (kstart < chunk)
-				if (kgrow(TRUE) == FALSE)
+				if (kgrow(kflag) == FALSE)
 					return (FALSE);
 			bcopy(cp1, &(kbufp[kstart - chunk]), (int)chunk);
 			kstart -= chunk;
@@ -626,9 +626,9 @@ kdelete(void)
 int
 kinsert(int c, int dir)
 {
-	if (kused == ksize && dir == KFORW && kgrow(FALSE) == FALSE)
+	if (kused == ksize && dir == KFORW && kgrow(dir) == FALSE)
 		return (FALSE);
-	if (kstart == 0 && dir == KBACK && kgrow(TRUE) == FALSE)
+	if (kstart == 0 && dir == KBACK && kgrow(dir) == FALSE)
 		return (FALSE);
 	if (dir == KFORW)
 		kbufp[kused++] = c;
@@ -640,11 +640,11 @@ kinsert(int c, int dir)
 }
 
 /*
- * kgrow - just get more kill buffer for the callee. back is true if
+ * kgrow - just get more kill buffer for the callee. If dir = KBACK
  * we are trying to get space at the beginning of the kill buffer.
  */
 static int
-kgrow(int back)
+kgrow(int dir)
 {
 	int	 nstart;
 	char	*nbufp;
@@ -658,7 +658,7 @@ kgrow(int back)
 		ewprintf("Can't get %ld bytes", (long)(ksize + KBLOCK));
 		return (FALSE);
 	}
-	nstart = (back == TRUE) ? (kstart + KBLOCK) : (KBLOCK / 4);
+	nstart = (dir == KBACK) ? (kstart + KBLOCK) : (KBLOCK / 4);
 	bcopy(&(kbufp[kstart]), &(nbufp[nstart]), (int)(kused - kstart));
 	if (kbufp != NULL)
 		free((char *)kbufp);
