@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.331 2005/11/13 17:24:31 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.332 2005/11/18 17:11:57 brad Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1312,9 +1312,22 @@ void	natsem6x86_cpureset(void);
 void
 natsem6x86_cpureset(void)
 {
-	/* reset control SC1100 (datasheet page 170) */
+	/*
+	 * Reset AMD Geode SC1100.
+	 *
+	 * 1) Write PCI Configuration Address Register (0xcf8) to
+	 *    select Function 0, Register 0x44: Bridge Configuration,
+	 *    GPIO and LPC Configuration Register Space, Reset
+	 *    Control Register.
+	 *
+	 * 2) Write 0xf to PCI Configuration Data Register (0xcfc)
+	 *    to reset IDE controller, IDE bus, and PCI bus, and
+	 *    to trigger a system-wide reset.
+	 * 
+	 * See AMD Geode SC1100 Processor Data Book, Revision 2.0,
+	 * sections 6.3.1, 6.3.2, and 6.4.1.
+	 */
 	outl(0xCF8, 0x80009044UL);
-	/* system wide reset */
 	outb(0xCFC, 0x0F);
 }
 #endif
@@ -3103,7 +3116,11 @@ cpu_reset()
 	if (cpuresetfn)
 		(*cpuresetfn)();
 
-	/* Toggle the hardware reset line on the keyboard controller. */
+	/*
+	 * The keyboard controller has 4 random output pins, one of which is
+	 * connected to the RESET pin on the CPU in many PCs.  We tell the
+	 * keyboard controller to pulse this line a couple of times.
+	 */
 	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
 	outb(IO_KBD + KBCMDP, KBC_PULSE0);
