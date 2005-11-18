@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.23 2005/10/11 01:00:41 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.24 2005/11/18 17:35:17 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -553,12 +553,12 @@ retry:
 		switch (getkey(FALSE)) {
 		case 'y':
 		case ' ':
-			if (lreplace((RSIZE)plen, news, f) == FALSE)
+			if (lreplace((RSIZE)plen, news) == FALSE)
 				return (FALSE);
 			rcnt++;
 			break;
 		case '.':
-			if (lreplace((RSIZE)plen, news, f) == FALSE)
+			if (lreplace((RSIZE)plen, news) == FALSE)
 				return (FALSE);
 			rcnt++;
 			goto stopsearch;
@@ -570,7 +570,7 @@ retry:
 			goto stopsearch;
 		case '!':
 			do {
-				if (lreplace((RSIZE)plen, news, f) == FALSE)
+				if (lreplace((RSIZE)plen, news) == FALSE)
 					return (FALSE);
 				rcnt++;
 			} while (forwsrch() == TRUE);
@@ -617,7 +617,7 @@ replstr(int f, int n)
 	plen = strlen(pat);
 	while (forwsrch() == TRUE) {
 		update();
-		if (lreplace((RSIZE)plen, news, f) == FALSE)
+		if (lreplace((RSIZE)plen, news) == FALSE)
 			return (FALSE);
 
 		rcnt++;

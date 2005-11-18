@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.19 2005/10/14 15:41:33 deraadt Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.20 2005/11/18 17:35:17 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -34,7 +34,7 @@ char	re_pat[NPAT];			/* regex pattern		    */
 int	re_srch_lastdir = SRCH_NOPR;	/* last search flags		    */
 int	casefoldsearch = TRUE;		/* does search ignore case?	    */
 
-static int	 re_doreplace(RSIZE, char *, int);
+static int	 re_doreplace(RSIZE, char *);
 static int	 re_forwsrch(void);
 static int	 re_backsrch(void);
 static int	 re_readpattern(char *);
@@ -134,10 +134,6 @@ re_queryrepl(int f, int n)
 	int	plen, s;		/* length of found string	*/
 	char	news[NPAT];		/* replacement string		*/
 
-	/* Casefold check */
-	if (!casefoldsearch)
-		f = TRUE;
-
 	if ((s = re_readpattern("RE Query replace")) != TRUE)
 		return (s);
 	if (eread("Query replace %s with: ", news, NPAT,
@@ -156,14 +152,14 @@ retry:
 		switch (getkey(FALSE)) {
 		case ' ':
 			plen = re_match[0].rm_eo - re_match[0].rm_so;
-			if (re_doreplace((RSIZE)plen, news, f) == FALSE)
+			if (re_doreplace((RSIZE)plen, news) == FALSE)
 				return (FALSE);
 			rcnt++;
 			break;
 
 		case '.':
 			plen = re_match[0].rm_eo - re_match[0].rm_so;
-			if (re_doreplace((RSIZE)plen, news, f) == FALSE)
+			if (re_doreplace((RSIZE)plen, news) == FALSE)
 				return (FALSE);
 			rcnt++;
 			goto stopsearch;
@@ -176,7 +172,7 @@ retry:
 		case '!':
 			do {
 				plen = re_match[0].rm_eo - re_match[0].rm_so;
-				if (re_doreplace((RSIZE)plen, news, f) == FALSE)
+				if (re_doreplace((RSIZE)plen, news) == FALSE)
 					return (FALSE);
 				rcnt++;
 			} while (re_forwsrch() == TRUE);
@@ -210,10 +206,9 @@ stopsearch:
  * re_query replace.  Its reason for existence is to deal with \1, \2. etc.
  *  plen: length to remove
  *  st:   replacement string
- *  f:    case hack disable
  */
 static int
-re_doreplace(RSIZE plen, char *st, int f)
+re_doreplace(RSIZE plen, char *st)
 {
 	int	 j, k, s, more, num, state;
 	LINE	*clp;
@@ -290,7 +285,7 @@ re_doreplace(RSIZE plen, char *st, int f)
 	}			/* while (more)   */
 
 	repstr[j] = '\0';
-	s = lreplace(plen, repstr, f);
+	s = lreplace(plen, repstr);
 	return (s);
 }
 

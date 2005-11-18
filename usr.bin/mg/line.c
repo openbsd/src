@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.26 2005/11/18 17:19:51 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.27 2005/11/18 17:35:17 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -578,7 +578,7 @@ ldelnewline(void)
  * was there).
  */
 int
-lreplace(RSIZE plen, char *st, int f)
+lreplace(RSIZE plen, char *st)
 {
 	RSIZE	rlen;	/* replacement length		 */
 
