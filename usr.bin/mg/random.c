@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.13 2005/10/13 20:07:26 kjell Exp $	*/
+/*	$OpenBSD: random.c,v 1.14 2005/11/18 19:04:09 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -164,12 +164,7 @@ openline(int f, int n)
 }
 
 /*
- * Insert a newline.  [following "feature" not present in current version of
- * Gnu, and now disabled here too] If you are at the end of the line and the
- * next line is a blank line, just move into the blank line.  This makes
- * "C-O" and "C-X C-O" work nicely, and reduces the amount of screen update
- * that has to be done.  This would not be as critical if screen update were a
- * lot more efficient.
+ * Insert a newline.
  */
 /* ARGSUSED */
 int
@@ -183,14 +178,6 @@ newline(int f, int n)
 
 	while (n--) {
 		lp = curwp->w_dotp;
-#ifdef undef
-		if (llength(lp) == curwp->w_doto &&
-		    lforw(lp) != curbp->b_linep &&
-		    llength(lforw(lp)) == 0) {
-			if ((s = forwchar(FFRAND, 1)) != TRUE)
-				return (s);
-		} else
-#endif /* undef */
 		if ((s = lnewline()) != TRUE)
 			return (s);
 	}
