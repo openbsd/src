@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.89 2005/11/15 01:40:43 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.90 2005/11/18 03:58:14 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -144,7 +144,7 @@ void em_print_hw_stats(struct em_softc *);
 void em_update_link_status(struct em_softc *);
 int  em_get_buf(int, struct em_softc *,
 			    struct mbuf *);
-int  em_encap(struct em_softc *, struct mbuf **);
+int  em_encap(struct em_softc *, struct mbuf *);
 void em_smartspeed(struct em_softc *);
 int  em_82547_fifo_workaround(struct em_softc *, int);
 void em_82547_update_fifo_head(struct em_softc *, int);
@@ -411,13 +411,7 @@ em_start(struct ifnet *ifp)
 		if (m_head == NULL)
 			break;
 
-		/*
-		 * em_encap() can modify our pointer, and or make it NULL on
-		 * failure.  In that event, we can't requeue.
-		 */
-		if (em_encap(sc, &m_head)) {
-			if (m_head == NULL)
-				break;
+		if (em_encap(sc, m_head)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -879,14 +873,12 @@ em_media_change(struct ifnet *ifp)
  *  return 0 on success, positive on failure
  **********************************************************************/
 int
-em_encap(struct em_softc *sc, struct mbuf **m_headp)
+em_encap(struct em_softc *sc, struct mbuf *m_head)
 {
 	u_int32_t	txd_upper;
 	u_int32_t	txd_lower, txd_used = 0, txd_saved = 0;
 	int		i, j, error;
 	u_int64_t       address;
-
-	struct mbuf	*m_head;
 
         /* For 82544 Workaround */
         DESC_ARRAY              desc_array;
@@ -897,8 +889,6 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
 
 	struct em_buffer   *tx_buffer = NULL;
 	struct em_tx_desc *current_tx_desc = NULL;
-
-	m_head = *m_headp;
 
 	/*
 	 * Force a cleanup if number of TX descriptors
