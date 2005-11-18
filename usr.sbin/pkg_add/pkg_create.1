@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.27 2005/11/17 11:20:24 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.28 2005/11/18 10:56:15 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -203,13 +203,14 @@ requirement on the command line.
 .Nm
 can also be invoked with only the packing-list from an installed package.
 It will recreate the corresponding binary package in the current directory
-from the installation, or error out if any problem is found, e.g.,
-.Bd -literal
-	pkg_create -f /var/db/pkg/kdelibs-3.4.3/+CONTENTS
-.Ed
-will recreate a
+from the installation, or error out if any problem is found.
+For example,
+the following will recreate a
 .Pa kdelibs-3.4.3.tgz
-package.
+package:
+.Bd -literal -offset indent
+pkg_create -f /var/db/pkg/kdelibs-3.4.3/+CONTENTS
+.Ed
 .Sh PACKING LIST DETAILS
 The
 .Dq packing list
