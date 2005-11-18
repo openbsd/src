@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.47 2005/10/07 19:45:26 mpf Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.48 2005/11/18 11:06:51 djm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.47 2005/10/07 19:45:26 mpf Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.48 2005/11/18 11:06:51 djm Exp $ (LBL)";
 #endif
 
 /*
@@ -165,64 +165,6 @@ static pcap_t *pd;
 /* Multiple DLT support */
 void		 pcap_list_linktypes(pcap_t *);
 void		 pcap_print_linktype(u_int);
-int		 pcap_datalink_name_to_val(const char *);
-const char	*pcap_datalink_val_to_name(u_int);
-
-const struct pcap_linktype {
-	u_int dlt_id;
-	const char *dlt_name;
-} pcap_linktypes[] = {
-	{ DLT_NULL,		"NULL" },
-	{ DLT_EN10MB,		"EN10MB" },
-	{ DLT_EN3MB,		"EN3MB" },
-	{ DLT_AX25,		"AX25" },
-	{ DLT_PRONET,		"PRONET" },
-	{ DLT_CHAOS,		"CHAOS" },
-	{ DLT_IEEE802,		"IEEE802" },
-	{ DLT_ARCNET,		"ARCNET" },
-	{ DLT_SLIP,		"SLIP" },
-	{ DLT_PPP,		"PPP" },
-	{ DLT_FDDI,		"FDDI" },
-	{ DLT_ATM_RFC1483,	"ATM_RFC1483" },
-	{ DLT_LOOP,		"LOOP" },
-	{ DLT_ENC,		"ENC" },
-	{ DLT_RAW,		"RAW" },
-	{ DLT_SLIP_BSDOS,	"SLIP_BSDOS" },
-	{ DLT_PPP_BSDOS,	"PPP_BSDOS" },
-	{ DLT_OLD_PFLOG,	"OLD_PFLOG" },
-	{ DLT_PFSYNC,		"PFSYNC" },
-	{ DLT_PPP_ETHER,	"PPP_ETHER" },
-	{ DLT_IEEE802_11,	"IEEE802_11" },
-	{ DLT_PFLOG,		"PFLOG" },
-	{ DLT_IEEE802_11_RADIO,	"IEEE802_11_RADIO" },
-	{ 0,			NULL }
-};
-
-int
-pcap_datalink_name_to_val(const char *name)
-{
-	int i;
-
-	for (i = 0; pcap_linktypes[i].dlt_name != NULL; i++) {
-		if (strcasecmp(pcap_linktypes[i].dlt_name, name) == 0)
-			return (pcap_linktypes[i].dlt_id);
-	}
-
-	return (-1);
-}
-
-const char *
-pcap_datalink_val_to_name(u_int dlt)
-{
-	int i;
-
-	for (i = 0; pcap_linktypes[i].dlt_name != NULL; i++) {
-		if (pcap_linktypes[i].dlt_id == dlt)
-			return (pcap_linktypes[i].dlt_name);
-	}
-
-	return (NULL);
-}
 
 void
 pcap_print_linktype(u_int dlt)
@@ -255,7 +197,8 @@ pcap_list_linktypes(pcap_t *p)
 	if (dl.bfl_len > MAXDLT)
 		error("Invalid number of linktypes: %u\n", dl.bfl_len);
 
-	fprintf(stderr, "%d link types supported:\n", dl.bfl_len);
+	fprintf(stderr, "%d link type%s supported:\n", dl.bfl_len,
+	    dl.bfl_len == 1 ? "" : "s");
 
 	for (n = 0; n < dl.bfl_len; n++) {
 		fprintf(stderr, "\t");
