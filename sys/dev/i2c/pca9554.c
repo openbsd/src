@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.3 2005/11/18 20:47:45 deraadt Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.4 2005/11/18 20:51:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -71,10 +71,10 @@ pcagpio_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_compat) {
-		if (strcasecmp(ia->ia_compat, "PCA9554") == 0 ||
-		    strcasecmp(ia->ia_compat, "PCA9554M") == 0 ||
-		    strcasecmp(ia->ia_compat, "pca9556") == 0 ||
-		    strcasecmp(ia->ia_compat, "pca9557") == 0)
+		if (strcmp(ia->ia_compat, "PCA9554") == 0 ||
+		    strcmp(ia->ia_compat, "PCA9554M") == 0 ||
+		    strcmp(ia->ia_compat, "pca9556") == 0 ||
+		    strcmp(ia->ia_compat, "pca9557") == 0)
 			return (1);
 		return (0);
 	}
@@ -141,7 +141,7 @@ pcagpio_attach(struct device *parent, struct device *self, void *aux)
 		SENSOR_ADD(&sc->sc_sensor[i]);
 #endif
 
-	printf(":"):
+	printf(":");
 	if (8 - outputs)
 		printf(" %d inputs", 8 - outputs);
 	if (outputs)
