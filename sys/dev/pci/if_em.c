@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.91 2005/11/18 05:22:06 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.92 2005/11/18 05:32:06 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -155,7 +155,7 @@ int  em_dma_malloc(struct em_softc *, bus_size_t,
     struct em_dma_alloc *, int);
 void em_dma_free(struct em_softc *, struct em_dma_alloc *);
 int  em_is_valid_ether_addr(u_int8_t *);
-u_int32_t em_fill_descriptors (u_int64_t address,
+u_int32_t em_fill_descriptors (bus_addr_t address,
                                       u_int32_t length,
                                       PDESC_ARRAY desc_array);
 
@@ -2605,7 +2605,7 @@ em_pci_clear_mwi(struct em_hw *hw)
 *
 *** *********************************************************************/
 u_int32_t
-em_fill_descriptors (u_int64_t address,
+em_fill_descriptors (bus_addr_t address,
                               u_int32_t length,
                               PDESC_ARRAY desc_array)
 {
