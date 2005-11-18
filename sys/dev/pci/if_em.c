@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.90 2005/11/18 03:58:14 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.91 2005/11/18 05:22:06 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -878,7 +878,6 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	u_int32_t	txd_upper;
 	u_int32_t	txd_lower, txd_used = 0, txd_saved = 0;
 	int		i, j, error;
-	u_int64_t       address;
 
         /* For 82544 Workaround */
         DESC_ARRAY              desc_array;
@@ -937,15 +936,13 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
         }
 	for (j = 0; j < q.map->dm_nsegs; j++) {
                 /* If sc is 82544 and on PCIX bus */
-                if(sc->pcix_82544) {
-                        array_elements = 0;
-                        address = htole64(q.map->dm_segs[j].ds_addr);
+                if (sc->pcix_82544) {
                         /*
                          * Check the Address and Length combination and
                          * split the data accordingly
                          */
-                        array_elements = em_fill_descriptors(address,
-                                                             htole32(q.map->dm_segs[j].ds_len),
+                        array_elements = em_fill_descriptors(q.map->dm_segs[j].ds_addr,
+                                                             q.map->dm_segs[j].ds_len,
                                                              &desc_array);
                         for (counter = 0; counter < array_elements; counter++) {
                                 if (txd_used == sc->num_tx_desc_avail) {
