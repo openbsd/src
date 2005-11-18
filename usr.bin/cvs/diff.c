@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.64 2005/11/14 12:53:43 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.65 2005/11/18 10:30:34 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -800,7 +800,7 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 	output(file1, f1, file2, f2);
 
 closem:
-	if (anychange) {
+	if (anychange == 1) {
 		if (rval == D_SAME)
 			rval = D_DIFFER;
 	}
@@ -830,7 +830,7 @@ files_differ(FILE *f1, FILE *f2)
 		j = fread(buf2, (size_t)1, sizeof(buf2), f2);
 		if (i != j)
 			return (1);
-		if (i == 0 && j == 0) {
+		if ((i == 0) && (j == 0)) {
 			if (ferror(f1) || ferror(f2))
 				return (1);
 			return (0);
@@ -1125,13 +1125,13 @@ check(FILE *f1, FILE *f2)
 				if (chrtran[c] != chrtran[d]) {
 					jackpot++;
 					J[i] = 0;
-					if (c != '\n' && c != EOF)
+					if ((c != '\n') && (c != EOF))
 						ctold += skipline(f1);
-					if (d != '\n' && c != EOF)
+					if ((d != '\n') && (c != EOF))
 						ctnew += skipline(f2);
 					break;
 				}
-				if (c == '\n' || c == EOF)
+				if ((c == '\n') || (c == EOF))
 					break;
 			}
 		} else {
@@ -1141,13 +1141,13 @@ check(FILE *f1, FILE *f2)
 				if ((c = getc(f1)) != (d = getc(f2))) {
 					/* jackpot++; */
 					J[i] = 0;
-					if (c != '\n' && c != EOF)
+					if ((c != '\n') && (c != EOF))
 						ctold += skipline(f1);
-					if (d != '\n' && c != EOF)
+					if ((d != '\n') && (c != EOF))
 						ctnew += skipline(f2);
 					break;
 				}
-				if (c == '\n' || c == EOF)
+				if ((c == '\n') || (c == EOF))
 					break;
 			}
 		}
@@ -1158,7 +1158,7 @@ check(FILE *f1, FILE *f2)
 	for (; j <= diff_len[1]; j++)
 		ixnew[j] = ctnew += skipline(f2);
 	/*
-	 * if (jackpot)
+	 * if (jackpot != 0)
 	 *	cvs_printf("jackpot\n");
 	 */
 }
@@ -1341,7 +1341,7 @@ change(const char *file1, FILE *f1, const char *file2, FILE *f2,
 					goto proceed;
 			}
 		}
-		if (a > b || c <= d) {	/* Changes and inserts. */
+		if ((a > b) || (c <= d)) {	/* Changes and inserts. */
 			for (i = c; i <= d; i++) {
 				line = preadline(fileno(f2),
 				    ixnew[i] - ixnew[i - 1], ixnew[i - 1]);
@@ -1655,7 +1655,7 @@ dump_context_vec(FILE *f1, FILE *f2)
 			do_output++;
 			break;
 		}
-	if (do_output) {
+	if (do_output != 0) {
 		while (cvp <= context_vec_ptr) {
 			a = cvp->a;
 			b = cvp->b;
@@ -1691,7 +1691,7 @@ dump_context_vec(FILE *f1, FILE *f2)
 			do_output++;
 			break;
 		}
-	if (do_output) {
+	if (do_output != 0) {
 		while (cvp <= context_vec_ptr) {
 			a = cvp->a;
 			b = cvp->b;
