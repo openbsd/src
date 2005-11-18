@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcagpio.4,v 1.1 2005/11/16 04:05:54 deraadt Exp $
+.\"	$OpenBSD: pcagpio.4,v 1.2 2005/11/18 20:48:07 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -19,14 +19,14 @@
 .Os
 .Sh NAME
 .Nm pcagpio
-.Nd Philips PCA9554 gpio
+.Nd Philips PCA955[457] gpio
 .Sh SYNOPSIS
 .Cd "pcagpio* at maciic?"
 .Cd "gpio* at pcagpio?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Philips PCA9554
+driver provides support for the Philips PCA955[457]
 .Xr gpio 4
 controller.
 The device has 8 pins which can be configured as either
