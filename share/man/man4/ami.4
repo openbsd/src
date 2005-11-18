@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.25 2005/09/30 20:34:24 jaredy Exp $
+.\"	$OpenBSD: ami.4,v 1.26 2005/11/18 03:34:15 marco Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -18,11 +18,13 @@ driver provides support for the MegaRAID family of RAID controllers,
 including:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Dell PERC2/DC, PERC3/DC, PERC3/DCL, PERC3/QC, PERC3/SC,
-.It Dell PERC4/DC, PERC4/SC, PERC4/Di, PERC4e/Di, PERC4/Si, and CERC
+.It Dell CERC-PATA, PERC 2/DC, PERC 3/DC, PERC 3/DCL,
+.It PERC 3/QC, PERC 3/SC, PERC 4/DC, PERC 4/SC,
+.It PERC 4/Di, PERC 4e/Di, PERC 4/Si
 .It Hewlett-Packard 438, 466, and T[567]
-.It LSI/AMI MegaRAID, MEGARAID 320, MEGARAID 320-2E
-.It LSI/Symbios 523 SATA
+.It LSI/AMI/Symbios MegaRAID, MegaRAID 320,
+.It MegaRAID 320-1, MegaRAID 320-2E, MegaRAID i4,
+.It 523 SATA, MegaRAID 150-4, MegaRAID 150-6, MegaRAID 300-8x
 .El
 .Pp
 These controllers support RAID 0, RAID 1, RAID 5, JBOD,
