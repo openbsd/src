@@ -1,4 +1,4 @@
-.\" $OpenBSD: sv.4,v 1.12 2004/09/30 19:59:25 mickey Exp $
+.\" $OpenBSD: sv.4,v 1.13 2005/11/18 23:38:58 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Constantine Paul Sapuntzakis
 .\" All rights reserved
@@ -45,12 +45,10 @@ driver provides support for S3 SonicVibes (S3-617) chipset-based
 cards.
 Disabling the SRS 3-D spatial feature of the chip is recommended for higher
 quality audio.
-This can be done in software by issuing the
+This can be done in software by issuing the following command:
 .Bd -literal -offset indent
-mixerctl -w outputs.spatial=off
+$ mixerctl outputs.spatial=off
 .Ed
-.Pp
-command.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr intro 4 ,
@@ -61,7 +59,7 @@ This driver is based on the
 driver by Lennart Augustsson.
 The
 .Nm
-device driver appeared in
+device driver first appeared in
 .Ox 2.6 .
 .Sh BUGS
 The "FM" DAC, wavetable synth, and MIDI port are not
