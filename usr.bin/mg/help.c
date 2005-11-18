@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.26 2005/10/14 15:41:33 deraadt Exp $	*/
+/*	$OpenBSD: help.c,v 1.27 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -16,7 +16,7 @@
 #include "macro.h"
 #endif /* !NO_MACRO */
 
-static int	showall(BUFFER *, KEYMAP *, char *);
+static int	showall(struct buffer *, KEYMAP *, char *);
 static int	findbind(KEYMAP *, PF, char *, size_t);
 
 /*
@@ -104,7 +104,7 @@ int
 wallchart(int f, int n)
 {
 	int		 m;
-	BUFFER		*bp;
+	struct buffer		*bp;
 
 	bp = bfind("*help*", TRUE);
 	if (bclear(bp) != TRUE)
@@ -125,7 +125,7 @@ wallchart(int f, int n)
 }
 
 static int
-showall(BUFFER *bp, KEYMAP *map, char *prefix)
+showall(struct buffer *bp, KEYMAP *map, char *prefix)
 {
 	KEYMAP	*newmap;
 	char	 buf[80], key[16];
@@ -177,8 +177,8 @@ help_help(int f, int n)
 int
 apropos_command(int f, int n)
 {
-	BUFFER		*bp;
-	LIST		*fnames, *el;
+	struct buffer		*bp;
+	struct list		*fnames, *el;
 	char		 string[32];
 
 	if (eread("apropos: ", string, sizeof(string), EFNUL | EFNEW) == NULL)

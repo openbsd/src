@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.18 2005/10/11 01:08:53 kjell Exp $	*/
+/*	$OpenBSD: window.c,v 1.19 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,12 +8,12 @@
 
 #include "def.h"
 
-MGWIN *
-new_window(BUFFER *bp)
+struct mgwin *
+new_window(struct buffer *bp)
 {
-	MGWIN *wp;
+	struct mgwin *wp;
 
-	wp = calloc(1, sizeof(MGWIN));
+	wp = calloc(1, sizeof(struct mgwin));
 	if (wp == NULL)
 		return (NULL);
 
@@ -67,9 +67,8 @@ reposition(int f, int n)
 int
 refresh(int f, int n)
 {
-	MGWIN	*wp;
-	int	 oldnrow;
-	int	 oldncol;
+	struct mgwin	*wp;
+	int		 oldnrow, oldncol;
 
 	oldnrow = nrow;
 	oldncol = ncol;
@@ -103,7 +102,7 @@ refresh(int f, int n)
 int
 nextwind(int f, int n)
 {
-	MGWIN	*wp;
+	struct mgwin	*wp;
 
 	if ((wp = curwp->w_wndp) == NULL)
 		wp = wheadp;
@@ -122,7 +121,7 @@ nextwind(int f, int n)
 int
 prevwind(int f, int n)
 {
-	MGWIN	*wp1, *wp2;
+	struct mgwin	*wp1, *wp2;
 
 	wp1 = wheadp;
 	wp2 = curwp;
@@ -146,9 +145,9 @@ prevwind(int f, int n)
 int
 onlywind(int f, int n)
 {
-	MGWIN	*wp;
-	LINE	*lp;
-	int	 i;
+	struct mgwin	*wp;
+	struct line	*lp;
+	int		 i;
 
 	while (wheadp != curwp) {
 		wp = wheadp;
@@ -196,9 +195,9 @@ onlywind(int f, int n)
 int
 splitwind(int f, int n)
 {
-	MGWIN	*wp, *wp1, *wp2;
-	LINE	*lp;
-	int	 ntru, ntrd, ntrl;
+	struct mgwin	*wp, *wp1, *wp2;
+	struct line	*lp;
+	int		 ntru, ntrd, ntrl;
 
 	if (curwp->w_ntrows < 3) {
 		ewprintf("Cannot split a %d line window", curwp->w_ntrows);
@@ -279,9 +278,9 @@ splitwind(int f, int n)
 int
 enlargewind(int f, int n)
 {
-	MGWIN	*adjwp;
-	LINE	*lp;
-	int	 i;
+	struct mgwin	*adjwp;
+	struct line	*lp;
+	int		 i;
 
 	if (n < 0)
 		return (shrinkwind(f, -n));
@@ -328,9 +327,9 @@ enlargewind(int f, int n)
 int
 shrinkwind(int f, int n)
 {
-	MGWIN	*adjwp;
-	LINE	*lp;
-	int	 i;
+	struct mgwin	*adjwp;
+	struct line	*lp;
+	int		 i;
 
 	if (n < 0)
 		return (enlargewind(f, -n));
@@ -382,7 +381,7 @@ shrinkwind(int f, int n)
 int
 delwind(int f, int n)
 {
-	MGWIN	*wp, *nwp;
+	struct mgwin	*wp, *nwp;
 
 	wp = curwp;		/* Cheap...		 */
 
@@ -416,10 +415,10 @@ delwind(int f, int n)
  * Pick the uppermost window that isn't the current window. An LRU algorithm
  * might be better. Return a pointer, or NULL on error.
  */
-MGWIN *
+struct mgwin *
 wpopup(void)
 {
-	MGWIN	*wp;
+	struct mgwin	*wp;
 
 	if (wheadp->w_wndp == NULL &&
 	    splitwind(FFRAND, 0) == FALSE)

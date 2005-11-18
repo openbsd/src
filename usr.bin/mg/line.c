@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.27 2005/11/18 17:35:17 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.28 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -48,10 +48,10 @@ static int	 kgrow(int);
  * Allocate a new line of size `used'.  lrealloc() can be called if the line
  * ever needs to grow beyond that.
  */
-LINE *
+struct line *
 lalloc(int used)
 {
-	LINE *lp;
+	struct line *lp;
 
 	if ((lp = malloc(sizeof(*lp))) == NULL)
 		return (NULL);
@@ -66,7 +66,7 @@ lalloc(int used)
 }
 
 int
-lrealloc(LINE *lp, int newsize)
+lrealloc(struct line *lp, int newsize)
 {
 	char *tmp;
 
@@ -86,10 +86,10 @@ lrealloc(LINE *lp, int newsize)
  * magic conditions described in the above comments don't hold here.
  */
 void
-lfree(LINE *lp)
+lfree(struct line *lp)
 {
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_linep == lp)
@@ -132,7 +132,7 @@ lfree(LINE *lp)
 void
 lchange(int flag)
 {
-	MGWIN	*wp;
+	struct mgwin	*wp;
 
 	/* update mode lines if this is the first change. */
 	if ((curbp->b_flag & BFCHG) == 0) {
@@ -160,8 +160,8 @@ lchange(int flag)
 int
 linsert_str(const char *s, int n)
 {
-	LINE	*lp1;
-	MGWIN	*wp;
+	struct line	*lp1;
+	struct mgwin	*wp;
 	RSIZE	 i;
 	int	 doto;
 
@@ -180,7 +180,7 @@ linsert_str(const char *s, int n)
 
 	/* special case for the end */
 	if (lp1 == curbp->b_linep) {
-		LINE *lp2, *lp3;
+		struct line *lp2, *lp3;
 
 		/* now should only happen in empty buffer */
 		if (curwp->w_doto != 0)
@@ -250,8 +250,8 @@ linsert_str(const char *s, int n)
 int
 linsert(int n, int c)
 {
-	LINE	*lp1;
-	MGWIN	*wp;
+	struct line	*lp1;
+	struct mgwin	*wp;
 	RSIZE	 i;
 	int	 doto;
 
@@ -270,7 +270,7 @@ linsert(int n, int c)
 
 	/* special case for the end */
 	if (lp1 == curbp->b_linep) {
-		LINE *lp2, *lp3;
+		struct line *lp2, *lp3;
 
 		/* now should only happen in empty buffer */
 		if (curwp->w_doto != 0) {
@@ -331,11 +331,11 @@ linsert(int n, int c)
 }
 
 int
-lnewline_at(LINE *lp1, int doto)
+lnewline_at(struct line *lp1, int doto)
 {
-	LINE	*lp2;
+	struct line	*lp2;
 	int	 nlen;
-	MGWIN	*wp;
+	struct mgwin	*wp;
 	int	 retval = TRUE;
 
 	lchange(WFHARD);
@@ -414,9 +414,9 @@ lnewline(void)
 int
 ldelete(RSIZE n, int kflag)
 {
-	LINE	*dotp;
+	struct line	*dotp;
 	RSIZE	 chunk;
-	MGWIN	*wp;
+	struct mgwin	*wp;
 	int	 doto;
 	char	*cp1, *cp2;
 
@@ -509,8 +509,8 @@ ldelete(RSIZE n, int kflag)
 int
 ldelnewline(void)
 {
-	LINE	*lp1, *lp2, *lp3;
-	MGWIN	*wp;
+	struct line	*lp1, *lp2, *lp3;
+	struct mgwin	*wp;
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.61 2005/11/13 07:49:02 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.62 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -28,7 +28,7 @@ static FILE	*ffp;
  * Open a file for reading.
  */
 int
-ffropen(const char *fn, BUFFER *bp)
+ffropen(const char *fn, struct buffer *bp)
 {
 	struct stat	statbuf;
 
@@ -60,7 +60,7 @@ ffropen(const char *fn, BUFFER *bp)
  * Open a file for writing.
  */
 int
-ffwopen(const char *fn, BUFFER *bp)
+ffwopen(const char *fn, struct buffer *bp)
 {
 	int	fd;
 	mode_t	mode = DEFFILEMODE;
@@ -101,7 +101,7 @@ ffwopen(const char *fn, BUFFER *bp)
  */
 /* ARGSUSED */
 int
-ffclose(BUFFER *bp)
+ffclose(struct buffer *bp)
 {
 	(void) fclose(ffp);
 	return (FIOSUC);
@@ -112,9 +112,9 @@ ffclose(BUFFER *bp)
  * buffer. Return the status.
  */
 int
-ffputbuf(BUFFER *bp)
+ffputbuf(struct buffer *bp)
 {
-	LINE   *lp, *lpend;
+	struct line   *lp, *lpend;
 
 	lpend = bp->b_linep;
 	for (lp = lforw(lpend); lp != lpend; lp = lforw(lp)) {
@@ -412,21 +412,21 @@ copy(char *frname, char *toname)
 #endif				/* NO_DIRED */
 
 struct filelist {
-	LIST	fl_l;
+	struct list	fl_l;
 	char	fl_name[NFILEN + 2];
 };
 
 /*
  * return list of file names that match the name in buf.
  */
-LIST *
+struct list *
 make_file_list(char *buf)
 {
 	char		*dir, *file, *cp;
 	int		 len, preflen, ret;
 	DIR		*dirp;
 	struct dirent	*dent;
-	LIST		*last;
+	struct list		*last;
 	struct filelist *current;
 	char		 prefixx[NFILEN + 1];
 
@@ -540,7 +540,7 @@ make_file_list(char *buf)
 		}
 		current->fl_l.l_next = last;
 		current->fl_l.l_name = current->fl_name;
-		last = (LIST *) current;
+		last = (struct list *) current;
 	}
 	closedir(dirp);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.16 2005/11/07 23:32:20 kjell Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.17 2005/11/18 20:56:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -278,11 +278,11 @@ function_name(PF fun)
 /*
  * List possible function name completions.
  */
-LIST *
+struct list *
 complete_function_list(const char *fname)
 {
 	struct funmap	*fn;
-	LIST		*head, *el;
+	struct list		*head, *el;
 	int		 len;
 
 	len = strlen(fname);

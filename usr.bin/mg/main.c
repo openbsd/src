@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2005/10/13 20:43:17 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -20,10 +20,10 @@ int		 thisflag;			/* flags, this command	*/
 int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
 int		 startrow;			/* row to start		*/
-BUFFER		*curbp;				/* current buffer	*/
-BUFFER		*bheadp;			/* BUFFER list head	*/
-MGWIN		*curwp;				/* current window	*/
-MGWIN		*wheadp;			/* MGWIN listhead	*/
+struct buffer		*curbp;				/* current buffer	*/
+struct buffer		*bheadp;			/* BUFFER list head	*/
+struct mgwin		*curwp;				/* current window	*/
+struct mgwin		*wheadp;			/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
 
 static void	 edinit(PF);
@@ -173,8 +173,8 @@ notnum:
 static void
 edinit(PF init_fcn)
 {
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 
 	bheadp = NULL;
 	bp = bfind("*scratch*", TRUE);		/* Text buffer.		 */

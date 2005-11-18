@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.23 2005/11/12 19:13:09 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.24 2005/11/18 20:56:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -39,7 +39,7 @@ int		 next_error(int, int);
 static int	 grep(int, int);
 static int	 compile(int, int);
 static int	 gid(int, int);
-static BUFFER	*compile_mode(const char *, const char *, const char *);
+static struct buffer	*compile_mode(const char *, const char *, const char *);
 static int	 getbufcwd(char *, size_t);
 
 void grep_init(void);
@@ -51,8 +51,8 @@ static char compile_last_command[NFILEN] = "make ";
  *
  * XXX - need some kind of callback to find out when those get killed.
  */
-MGWIN	*compile_win;
-BUFFER	*compile_buffer;
+struct mgwin	*compile_win;
+struct buffer	*compile_buffer;
 
 static PF compile_pf[] = {
 	compile_goto_error
@@ -84,8 +84,8 @@ grep(int f, int n)
 {
 	char	 command[NFILEN + 20];
 	char	 prompt[NFILEN], *bufp;
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 	char	 path[NFILEN];
 
 	/* get buffer cwd */
@@ -118,8 +118,8 @@ compile(int f, int n)
 {
 	char	 command[NFILEN + 20];
 	char	 prompt[NFILEN], *bufp;
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 	char	 path[NFILEN];
 
 	/* get buffer cwd */
@@ -157,8 +157,8 @@ gid(int f, int n)
 {
 	char	 command[NFILEN + 20];
 	char	 prompt[NFILEN], c, *bufp;
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 	int	 i, j;
 	char	 path[NFILEN];
 
@@ -213,10 +213,10 @@ gid(int f, int n)
 	return (TRUE);
 }
 
-BUFFER *
+struct buffer *
 compile_mode(const char *name, const char *command, const char *path)
 {
-	BUFFER	*bp;
+	struct buffer	*bp;
 	FILE	*pipe;
 	char	*buf;
 	size_t	 len;
@@ -280,13 +280,13 @@ compile_mode(const char *name, const char *command, const char *path)
 static int
 compile_goto_error(int f, int n)
 {
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 	char	*fname, *line, *lp, *ln;
 	int	 lineno, len;
 	char	*adjf;
 	const char *errstr;
-	LINE	*last;
+	struct line	*last;
 
 	compile_win = curwp;
 	compile_buffer = curbp;
@@ -310,7 +310,7 @@ compile_goto_error(int f, int n)
 		goto fail;
 	if ((ln = strsep(&lp, ":")) == NULL || *ln == '\0')
 		goto fail;
-	lineno = strtonum(ln, INT_MIN, INT_MAX, &errstr);
+	lineno = (int)strtonum(ln, INT_MIN, INT_MAX, &errstr);
 	if (errstr)
 		goto fail;
 

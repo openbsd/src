@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.36 2005/11/07 23:32:20 kjell Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.37 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -443,7 +443,7 @@ static struct KEYMAPE (1 + IMAPEXT) overwmap = {
 /*
  * The basic (root) keyboard map
  */
-MAPS	fundamental_mode = { (KEYMAP *)&fundmap, "fundamental" };
+struct maps_s	fundamental_mode = { (KEYMAP *)&fundmap, "fundamental" };
 
 /*
  * give names to the maps, for use by help etc. If the map is to be bindable,
@@ -454,7 +454,7 @@ MAPS	fundamental_mode = { (KEYMAP *)&fundmap, "fundamental" };
  * modes.c also.
  */
 
-static MAPS map_table[] = {
+static struct maps_s map_table[] = {
 	{(KEYMAP *) &fillmap, "fill",},
 	{(KEYMAP *) &indntmap, "indent",},
 	{(KEYMAP *) &blinkmap, "blink",},
@@ -471,13 +471,13 @@ static MAPS map_table[] = {
 	{NULL, NULL}
 };
 
-MAPS *maps;
+struct maps_s *maps;
 
 void
 maps_init(void)
 {
 	int	 i;
-	MAPS	*mp;
+	struct maps_s	*mp;
 
 	maps = &fundamental_mode;
 	for (i = 0; map_table[i].p_name != NULL; i++) {
@@ -493,7 +493,7 @@ maps_init(void)
 int
 maps_add(KEYMAP *map, const char *name)
 {
-	MAPS	*mp;
+	struct maps_s	*mp;
 
 	if ((mp = malloc(sizeof(*mp))) == NULL)
 		return (FALSE);
@@ -509,7 +509,7 @@ maps_add(KEYMAP *map, const char *name)
 const char *
 map_name(KEYMAP *map)
 {
-	MAPS	*mp;
+	struct maps_s	*mp;
 
 	for (mp = maps; mp != NULL; mp = mp->p_next)
 		if (mp->p_map == map)
@@ -517,10 +517,10 @@ map_name(KEYMAP *map)
 	return (NULL);
 }
 
-MAPS *
+struct maps_s *
 name_mode(const char *name)
 {
-	MAPS	*mp;
+	struct maps_s	*mp;
 
 	for (mp = maps; mp != NULL; mp = mp->p_next)
 		if (strcmp(mp->p_name, name) == 0)
@@ -531,6 +531,7 @@ name_mode(const char *name)
 KEYMAP *
 name_map(const char *name)
 {
-	MAPS	*mp;
+	struct maps_s	*mp;
+
 	return ((mp = name_mode(name)) == NULL ? NULL : mp->p_map);
 }

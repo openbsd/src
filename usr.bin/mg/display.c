@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.22 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.23 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -43,13 +43,13 @@
  * the longest line possible. v_text is allocated
  * dynamically to fit the screen width.
  */
-typedef struct {
+struct video {
 	short	v_hash;		/* Hash code, for compares.	 */
 	short	v_flag;		/* Flag word.			 */
 	short	v_color;	/* Color of the line.		 */
 	XSHORT	v_cost;		/* Cost of display.		 */
 	char	*v_text;	/* The actual characters.	 */
-} VIDEO;
+};
 
 #define VFCHG	0x0001			/* Changed.			 */
 #define VFHBAD	0x0002			/* Hash and cost are bad.	 */
@@ -63,11 +63,11 @@ typedef struct {
  * fields can be "char", and the cost a "short", but
  * this makes the code worse on the VAX.
  */
-typedef struct {
+struct score {
 	XCHAR	s_itrace;	/* "i" index for track back.	 */
 	XCHAR	s_jtrace;	/* "j" index for trace back.	 */
 	XSHORT	s_cost;		/* Display cost.		 */
-} SCORE;
+};
 
 void	vtmove(int, int);
 void	vtputc(int);
@@ -75,12 +75,12 @@ void	vtpute(int);
 int	vtputs(const char *);
 void	vteeol(void);
 void	updext(int, int);
-void	modeline(MGWIN *);
+void	modeline(struct mgwin *);
 void	setscores(int, int);
 void	traceback(int, int, int, int);
-void	ucopy(VIDEO *, VIDEO *);
-void	uline(int, VIDEO *, VIDEO *);
-void	hash(VIDEO *);
+void	ucopy(struct video *, struct video *);
+void	uline(int, struct video *, struct video *);
+void	hash(struct video *);
 
 
 int	sgarbf = TRUE;		/* TRUE if screen is garbage.	 */
@@ -94,10 +94,10 @@ int	ttbot = HUGE;		/* Bottom of scroll region.	 */
 int	lbound = 0;		/* leftmost bound of the current */
 				/* line being displayed		 */
 
-VIDEO	**vscreen;		/* Edge vector, virtual.	 */
-VIDEO	**pscreen;		/* Edge vector, physical.	 */
-VIDEO	 *video;		/* Actual screen data.		 */
-VIDEO	  blanks;		/* Blank line image.		 */
+struct video	**vscreen;		/* Edge vector, virtual.	 */
+struct video	**pscreen;		/* Edge vector, physical.	 */
+struct video	 *video;		/* Actual screen data.		 */
+struct video	  blanks;		/* Blank line image.		 */
 
 #ifdef	GOSLING
 /*
@@ -107,7 +107,7 @@ VIDEO	  blanks;		/* Blank line image.		 */
  * It would be "SCORE	score[NROW][NROW]" in old speak.
  * Look at "setscores" to understand what is up.
  */
-SCORE *score;			/* [NROW * NROW] */
+struct score *score;			/* [NROW * NROW] */
 #endif
 
 /*
@@ -120,7 +120,7 @@ vtresize(int force, int newrow, int newcol)
 	int	 i;
 	int	 rowchanged, colchanged;
 	static	 int first_run = 1;
-	VIDEO	*vp;
+	struct video	*vp;
 
 	if (newrow < 1 || newcol < 1)
 		return (FALSE);
@@ -165,17 +165,17 @@ vtresize(int force, int newrow, int newcol)
 		}
 
 #ifdef GOSLING
-		TRYREALLOC(score, newrow * newrow * sizeof(SCORE));
+		TRYREALLOC(score, newrow * newrow * sizeof(struct score));
 #endif
-		TRYREALLOC(vscreen, (newrow - 1) * sizeof(VIDEO *));
-		TRYREALLOC(pscreen, (newrow - 1) * sizeof(VIDEO *));
-		TRYREALLOC(video, (2 * (newrow - 1)) * sizeof(VIDEO));
+		TRYREALLOC(vscreen, (newrow - 1) * sizeof(struct video *));
+		TRYREALLOC(pscreen, (newrow - 1) * sizeof(struct video *));
+		TRYREALLOC(video, (2 * (newrow - 1)) * sizeof(struct video));
 
 		/*
 		 * Zero-out the entries we just allocated.
 		 */
 		for (i = vidstart; i < 2 * (newrow - 1); i++)
-			memset(&video[i], 0, sizeof(VIDEO));
+			memset(&video[i], 0, sizeof(struct video));
 
 		/*
 		 * Reinitialize vscreen and pscreen arrays completely.
@@ -285,7 +285,7 @@ vtmove(int row, int col)
 void
 vtputc(int c)
 {
-	VIDEO	*vp;
+	struct video	*vp;
 
 	c &= 0xff;
 
@@ -321,7 +321,7 @@ vtputc(int c)
 void
 vtpute(int c)
 {
-	VIDEO *vp;
+	struct video *vp;
 
 	c &= 0xff;
 
@@ -354,7 +354,7 @@ vtpute(int c)
 void
 vteeol(void)
 {
-	VIDEO *vp;
+	struct video *vp;
 
 	vp = vscreen[vtrow];
 	while (vtcol < ncol)
@@ -373,10 +373,10 @@ vteeol(void)
 void
 update(void)
 {
-	LINE	*lp;
-	MGWIN	*wp;
-	VIDEO	*vp1;
-	VIDEO	*vp2;
+	struct line	*lp;
+	struct mgwin	*wp;
+	struct video	*vp1;
+	struct video	*vp2;
 	int	 c, i, j;
 	int	 hflag;
 	int	 currow, curcol;
@@ -609,14 +609,14 @@ update(void)
 
 /*
  * Update a saved copy of a line,
- * kept in a VIDEO structure. The "vvp" is
+ * kept in a video structure. The "vvp" is
  * the one in the "vscreen". The "pvp" is the one
  * in the "pscreen". This is called to make the
  * virtual and physical screens the same when
  * display has done an update.
  */
 void
-ucopy(VIDEO *vvp, VIDEO *pvp)
+ucopy(struct video *vvp, struct video *pvp)
 {
 	vvp->v_flag &= ~VFCHG;		/* Changes done.	 */
 	pvp->v_flag = vvp->v_flag;	/* Update model.	 */
@@ -634,7 +634,7 @@ ucopy(VIDEO *vvp, VIDEO *pvp)
 void
 updext(int currow, int curcol)
 {
-	LINE	*lp;			/* pointer to current line */
+	struct line	*lp;			/* pointer to current line */
 	int	 j;			/* index into line */
 
 	if (ncol < 2)
@@ -661,14 +661,14 @@ updext(int currow, int curcol)
 /*
  * Update a single line. This routine only
  * uses basic functionality (no insert and delete character,
- * but erase to end of line). The "vvp" points at the VIDEO
+ * but erase to end of line). The "vvp" points at the video
  * structure for the line on the virtual screen, and the "pvp"
  * is the same for the physical screen. Avoid erase to end of
  * line when updating CMODE color lines, because of the way that
  * reverse video works on most terminals.
  */
 void
-uline(int row, VIDEO *vvp, VIDEO *pvp)
+uline(int row, struct video *vvp, struct video *pvp)
 {
 	char  *cp1;
 	char  *cp2;
@@ -763,10 +763,10 @@ uline(int row, VIDEO *vvp, VIDEO *pvp)
  * characters may never be seen.
  */
 void
-modeline(MGWIN *wp)
+modeline(struct mgwin *wp)
 {
 	int	n;
-	BUFFER *bp;
+	struct buffer *bp;
 	int	mode;
 
 	n = wp->w_toprow + wp->w_ntrows;	/* Location.		 */
@@ -840,7 +840,7 @@ vtputs(const char *s)
  * just about any machine.
  */
 void
-hash(VIDEO *vp)
+hash(struct video *vp)
 {
 	int	i, n;
 	char   *s;
@@ -890,10 +890,10 @@ hash(VIDEO *vp)
 void
 setscores(int offs, int size)
 {
-	SCORE	 *sp;
-	SCORE	 *sp1;
-	VIDEO	**vp, **pp;
-	VIDEO	**vbase, **pbase;
+	struct score	 *sp;
+	struct score	 *sp1;
+	struct video	**vp, **pp;
+	struct video	**vbase, **pbase;
 	int	  tempcost;
 	int	  bestcost;
 	int	  j, i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.30 2005/11/13 07:49:02 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.31 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -37,7 +37,7 @@ static int	 d_del(int, int);
 static int	 d_rename(int, int);
 static int	 d_shell_command(int, int);
 static int	 d_create_directory(int, int);
-static int	 d_makename(LINE  *, char *, int);
+static int	 d_makename(struct line *, char *, int);
 
 extern struct keymap_s helpmap, cXmap, metamap;
 
@@ -177,8 +177,8 @@ dired_init(void)
 int
 dired(int f, int n)
 {
-	char	     dirname[NFILEN], *bufp, *slash;
-	BUFFER	    *bp;
+	char		 dirname[NFILEN], *bufp, *slash;
+	struct buffer	*bp;
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
 		(void)strlcpy(dirname, curbp->b_fname, sizeof(dirname));
@@ -206,9 +206,9 @@ dired(int f, int n)
 int
 d_otherwindow(int f, int n)
 {
-	char	 dirname[NFILEN], *bufp, *slash;
-	BUFFER	*bp;
-	MGWIN	*wp;
+	char		 dirname[NFILEN], *bufp, *slash;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
 		(void)strlcpy(dirname, curbp->b_fname, sizeof(dirname));
@@ -289,9 +289,9 @@ d_undelbak(int f, int n)
 int
 d_findfile(int f, int n)
 {
-	BUFFER	*bp;
-	int	 s;
-	char	 fname[NFILEN];
+	struct buffer	*bp;
+	int		 s;
+	char		 fname[NFILEN];
 
 	if ((s = d_makename(curwp->w_dotp, fname, sizeof(fname))) == ABORT)
 		return (FALSE);
@@ -313,10 +313,10 @@ d_findfile(int f, int n)
 int
 d_ffotherwindow(int f, int n)
 {
-	char	fname[NFILEN];
-	int	s;
-	BUFFER *bp;
-	MGWIN  *wp;
+	char		 fname[NFILEN];
+	int		 s;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 
 	if ((s = d_makename(curwp->w_dotp, fname, sizeof(fname))) == ABORT)
 		return (FALSE);
@@ -335,8 +335,8 @@ d_ffotherwindow(int f, int n)
 int
 d_expunge(int f, int n)
 {
-	LINE	*lp, *nlp;
-	char	 fname[NFILEN];
+	struct line	*lp, *nlp;
+	char		 fname[NFILEN];
 
 	for (lp = lforw(curbp->b_linep); lp != curbp->b_linep; lp = nlp) {
 		nlp = lforw(lp);
@@ -374,7 +374,7 @@ d_copy(int f, int n)
 	char	frname[NFILEN], toname[NFILEN], *bufp;
 	int	stat;
 	size_t	off;
-	BUFFER *bp;
+	struct buffer *bp;
 
 	if (d_makename(curwp->w_dotp, frname, sizeof(frname)) != FALSE) {
 		ewprintf("Not a file");
@@ -401,10 +401,10 @@ d_copy(int f, int n)
 int
 d_rename(int f, int n)
 {
-	char	frname[NFILEN], toname[NFILEN], *bufp;
-	int	stat;
-	size_t	off;
-	BUFFER *bp;
+	char		 frname[NFILEN], toname[NFILEN], *bufp;
+	int		 stat;
+	size_t		 off;
+	struct buffer	*bp;
 
 	if (d_makename(curwp->w_dotp, frname, sizeof(frname)) != FALSE) {
 		ewprintf("Not a file");
@@ -427,6 +427,7 @@ d_rename(int f, int n)
 	return (showbuffer(bp, curwp, WFHARD | WFMODE));
 }
 
+/* ARGSUSED */
 void
 reaper(int signo __attribute__((unused)))
 {
@@ -448,8 +449,8 @@ d_shell_command(int f, int n)
 	int	 infd, fds[2];
 	pid_t	 pid;
 	struct	 sigaction olda, newa;
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 	FILE	*fin;
 
 	bp = bfind("*Shell Command Output*", TRUE);
@@ -535,7 +536,7 @@ d_create_directory(int f, int n)
 {
 	char	 tocreate[MAXPATHLEN], *bufp;
 	size_t  off;
-	BUFFER	*bp;
+	struct buffer	*bp;
 
 	off = strlcpy(tocreate, curbp->b_fname, sizeof(tocreate));
 	if (off >= sizeof(tocreate) - 1)
@@ -557,7 +558,7 @@ d_create_directory(int f, int n)
 #define NAME_FIELD	8
 
 static int
-d_makename(LINE *lp, char *fn, int len)
+d_makename(struct line *lp, char *fn, int len)
 {
 	int	 i;
 	char	*p, *ep;
@@ -584,10 +585,10 @@ d_makename(LINE *lp, char *fn, int len)
 /*
  * XXX dirname needs to have enough place to store an additional '/'.
  */
-BUFFER *
+struct buffer *
 dired_(char *dirname)
 {
-	BUFFER	*bp;
+	struct buffer	*bp;
 	FILE	*dirpipe;
 	char	 line[256];
 	int	 len, ret;

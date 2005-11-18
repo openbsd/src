@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.39 2005/11/07 23:49:09 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.40 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -100,7 +100,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 	int		 i, n1, n2, nold;
 	KEYMAP		*mp, *newmap;
 	PF		*pfp;
-	MAP_ELEMENT	*mep;
+	struct map_element	*mep;
 
 	if (ele >= &curmap->map_element[curmap->map_num] || c < ele->k_base) {
 		if (ele > &curmap->map_element[0] && (funct != NULL ||
@@ -171,7 +171,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 				ele->k_prefmap = pref_map;
 			else {
 				if ((mp = (KEYMAP *)malloc(sizeof(KEYMAP) +
-				    (MAPINIT - 1) * sizeof(MAP_ELEMENT))) == NULL) {
+				    (MAPINIT - 1) * sizeof(struct map_element))) == NULL) {
 					ewprintf("Out of memory");
 					ele->k_funcp[c - ele->k_base] =
 					    curmap->map_default;
@@ -200,7 +200,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 				else {
 					if ((mp = malloc(sizeof(KEYMAP) +
 					    (MAPINIT - 1) *
-					    sizeof(MAP_ELEMENT))) == NULL) {
+					    sizeof(struct map_element))) == NULL) {
 						ewprintf("Out of memory");
 						ele->k_funcp[c - ele->k_base] =
 						    curmap->map_default;
@@ -247,7 +247,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 			curmap->map_num++;
 			if (pref_map == NULL) {
 				if ((mp = malloc(sizeof(KEYMAP) + (MAPINIT - 1)
-				    * sizeof(MAP_ELEMENT))) == NULL) {
+				    * sizeof(struct map_element))) == NULL) {
 					ewprintf("Out of memory");
 					ele->k_funcp[c - ele->k_base] =
 					    curmap->map_default;
@@ -270,13 +270,13 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 static KEYMAP *
 reallocmap(KEYMAP *curmap)
 {
-	MAPS	*mps;
+	struct maps_s	*mps;
 	KEYMAP	*mp;
 	int	 i;
 
 	if ((mp = (KEYMAP *)malloc((unsigned)(sizeof(KEYMAP) +
 	    (curmap->map_max + (MAPGROW - 1)) *
-	    sizeof(MAP_ELEMENT)))) == NULL) {
+	    sizeof(struct map_element)))) == NULL) {
 		ewprintf("Out of memory");
 		return (NULL);
 	}
@@ -557,7 +557,7 @@ extend(int f, int n)
 	if ((funct = name_function(bufp)) != NULL) {
 #ifndef NO_MACRO
 		if (macrodef) {
-			LINE	*lp = maclcur;
+			struct line	*lp = maclcur;
 			macro[macrocount - 1].m_funct = funct;
 			maclcur = lp->l_bp;
 			maclcur->l_fp = lp->l_fp;
@@ -611,8 +611,8 @@ evalexpr(int f, int n)
 int
 evalbuffer(int f, int n)
 {
-	LINE		*lp;
-	BUFFER		*bp = curbp;
+	struct line		*lp;
+	struct buffer		*bp = curbp;
 	int		 s;
 	static char	 excbuf[128];
 
@@ -690,7 +690,7 @@ int
 excline(char *line)
 {
 	PF	 fp;
-	LINE	*lp, *np;
+	struct line	*lp, *np;
 	int	 status, c, f, n;
 	char	*funcp, *tmp;
 	char	*argp = NULL;

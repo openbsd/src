@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.20 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.21 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain */
 
@@ -36,7 +36,7 @@ gotobol(int f, int n)
 int
 backchar(int f, int n)
 {
-	LINE   *lp;
+	struct line   *lp;
 
 	if (n < 0)
 		return (forwchar(f, -n));
@@ -137,7 +137,7 @@ gotoeob(int f, int n)
 int
 forwline(int f, int n)
 {
-	LINE  *dlp;
+	struct line  *dlp;
 
 	if (n < 0)
 		return (backline(f | FFRAND, -n));
@@ -183,7 +183,7 @@ forwline(int f, int n)
 int
 backline(int f, int n)
 {
-	LINE   *dlp;
+	struct line   *dlp;
 
 	if (n < 0)
 		return (forwline(f | FFRAND, -n));
@@ -219,7 +219,7 @@ setgoal(void)
  * when a vertical motion is made into the line.
  */
 int
-getgoal(LINE *dlp)
+getgoal(struct line *dlp)
 {
 	int c, i, col = 0;
 
@@ -260,7 +260,7 @@ getgoal(LINE *dlp)
 int
 forwpage(int f, int n)
 {
-	LINE  *lp;
+	struct line  *lp;
 
 	if (!(f & FFARG)) {
 		n = curwp->w_ntrows - 2;	/* Default scroll.	 */
@@ -298,7 +298,7 @@ forwpage(int f, int n)
 int
 backpage(int f, int n)
 {
-	LINE  *lp;
+	struct line  *lp;
 
 	if (!(f & FFARG)) {
 		n = curwp->w_ntrows - 2;	/* Default scroll.	 */
@@ -357,7 +357,7 @@ back1page(int f, int n)
 int
 pagenext(int f, int n)
 {
-	MGWIN *wp;
+	struct mgwin *wp;
 
 	if (wheadp->w_wndp == NULL) {
 		ewprintf("No other window");
@@ -406,7 +406,7 @@ setmark(int f, int n)
 int
 swapmark(int f, int n)
 {
-	LINE  *odotp;
+	struct line  *odotp;
 	int    odoto;
 
 	if (curwp->w_markp == NULL) {
@@ -434,7 +434,7 @@ swapmark(int f, int n)
 int
 gotoline(int f, int n)
 {
-	LINE  *clp;
+	struct line  *clp;
 	char   buf[32], *bufp, *tmp;
 	long   nl;
 

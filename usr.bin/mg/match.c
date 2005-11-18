@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.11 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: match.c,v 1.12 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -17,7 +17,7 @@
 #include "key.h"
 
 static int	balance(void);
-static void	displaymatch(LINE *, int);
+static void	displaymatch(struct line *, int);
 
 /*
  * Balance table. When balance() encounters a character that is to be
@@ -76,7 +76,7 @@ showmatch(int f, int n)
 static int
 balance(void)
 {
-	LINE	*clp;
+	struct line	*clp;
 	int	 cbo;
 	int	 c, i, depth;
 	int	 rbal, lbal;
@@ -140,9 +140,9 @@ balance(void)
  * move dot to the matching character, sit there a while, then move back.
  */
 static void
-displaymatch(LINE *clp, int cbo)
+displaymatch(struct line *clp, int cbo)
 {
-	LINE	*tlp;
+	struct line	*tlp;
 	int	 tbo;
 	int	 cp;
 	int	 bufo;

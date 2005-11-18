@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.34 2005/11/18 17:11:21 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.35 2005/11/18 20:56:53 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -49,8 +49,8 @@ int undo_disable_flag;
 /*
  * Local functions
  */
-static int find_dot(LINE *, int);
-static int find_lo(int, LINE **, int *);
+static int find_dot(struct line *, int);
+static int find_lo(int, struct line **, int *);
 static struct undo_rec *new_undo_record(void);
 static int drop_oldest_undo_record(void);
 
@@ -63,10 +63,10 @@ static int drop_oldest_undo_record(void);
  * need to have an absolute dot to have something reliable.
  */
 static int
-find_dot(LINE *lp, int off)
+find_dot(struct line *lp, int off)
 {
 	int	 count = 0;
-	LINE	*p;
+	struct line	*p;
 
 	for (p = curbp->b_linep; p != lp; p = lforw(p)) {
 		if (count != 0) {
@@ -84,9 +84,9 @@ find_dot(LINE *lp, int off)
 }
 
 static int
-find_lo(int pos, LINE **olp, int *offset)
+find_lo(int pos, struct line **olp, int *offset)
 {
-	LINE *p;
+	struct line *p;
 
 	p = curbp->b_linep;
 	while (pos > llength(p)) {
@@ -225,9 +225,9 @@ undo_add_boundary(void)
 }
 
 int
-undo_add_insert(LINE *lp, int offset, int size)
+undo_add_insert(struct line *lp, int offset, int size)
 {
-	REGION	reg;
+	struct region	reg;
 	struct	undo_rec *rec;
 	int	pos;
 
@@ -256,7 +256,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 	rec = new_undo_record();
 	rec->pos = pos;
 	rec->type = INSERT;
-	memmove(&rec->region, &reg, sizeof(REGION));
+	memmove(&rec->region, &reg, sizeof(struct region));
 	rec->content = NULL;
 
 	undo_add_boundary();
@@ -270,9 +270,9 @@ undo_add_insert(LINE *lp, int offset, int size)
  * This of course must be done _before_ the actual deletion is done.
  */
 int
-undo_add_delete(LINE *lp, int offset, int size)
+undo_add_delete(struct line *lp, int offset, int size)
 {
-	REGION	reg;
+	struct region	reg;
 	struct	undo_rec *rec;
 	int	pos;
 
@@ -301,7 +301,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 	rec->pos = pos;
 
 	rec->type = DELETE;
-	memmove(&rec->region, &reg, sizeof(REGION));
+	memmove(&rec->region, &reg, sizeof(struct region));
 	do {
 		rec->content = malloc(reg.r_size + 1);
 	} while ((rec->content == NULL) && drop_oldest_undo_record());
@@ -323,7 +323,7 @@ undo_add_delete(LINE *lp, int offset, int size)
  * This of course must be called before the change takes place.
  */
 int
-undo_add_change(LINE *lp, int offset, int size)
+undo_add_change(struct line *lp, int offset, int size)
 {
 	if (undo_disable_flag)
 		return (TRUE);
@@ -345,8 +345,8 @@ int
 undo_dump(int f, int n)
 {
 	struct	 undo_rec *rec;
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 	char	 buf[4096], tmp[1024];
 	int	 num;
 
@@ -435,7 +435,7 @@ undo(int f, int n)
 {
 	struct undo_rec	*ptr, *nptr;
 	int		 done, rval;
-	LINE		*lp;
+	struct line		*lp;
 	int		 offset, save, dot;
 	static int	 nulled = FALSE;
 

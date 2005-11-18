@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.73 2005/11/18 17:35:17 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.74 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -119,11 +119,11 @@ typedef int	(*PF)(int, int);	/* generally useful type */
  * region of a buffer. This makes passing the specification
  * of a region around a little bit easier.
  */
-typedef struct {
-	struct LINE	*r_linep;	/* Origin LINE address.		 */
-	int		 r_offset;	/* Origin LINE offset.		 */
+struct region {
+	struct line	*r_linep;	/* Origin line address.		 */
+	int		 r_offset;	/* Origin line offset.		 */
 	RSIZE		 r_size;	/* Length in characters.	 */
-} REGION;
+};
 
 
 /*
@@ -138,13 +138,13 @@ typedef struct {
  * additions will include update hints, and a
  * list of marks into the line.
  */
-typedef struct LINE {
-	struct LINE	*l_fp;		/* Link to the next line	 */
-	struct LINE	*l_bp;		/* Link to the previous line	 */
+struct line {
+	struct line	*l_fp;		/* Link to the next line	 */
+	struct line	*l_bp;		/* Link to the previous line	 */
 	int		 l_size;	/* Allocated size		 */
 	int		 l_used;	/* Used size			 */
 	char		*l_text;	/* Content of the line		 */
-} LINE;
+};
 
 /*
  * The rationale behind these macros is that you
@@ -170,14 +170,14 @@ typedef struct LINE {
  * bytes per window. I feel that this is an acceptable price,
  * considering that there are usually only one or two windows.
  */
-typedef struct LIST {
+struct list {
 	union {
-		struct MGWIN	*l_wp;
-		struct BUFFER	*x_bp;	/* l_bp is used by LINE */
-		struct LIST	*l_nxt;
+		struct mgwin	*l_wp;
+		struct buffer	*x_bp;	/* l_bp is used by LINE */
+		struct list	*l_nxt;
 	} l_p;
 	const char *l_name;
-} LIST;
+};
 
 /*
  * Usual hack - to keep from uglifying the code with lotsa
@@ -195,20 +195,20 @@ typedef struct LIST {
  * terms of decoupling, the full blown redisplay is just too
  * expensive to run for every input character.
  */
-typedef struct MGWIN {
-	LIST		 w_list;	/* List header			*/
-	struct BUFFER	*w_bufp;	/* Buffer displayed in window	*/
-	struct LINE	*w_linep;	/* Top line in the window	*/
-	struct LINE	*w_dotp;	/* Line containing "."		*/
-	struct LINE	*w_markp;	/* Line containing "mark"	*/
+struct mgwin {
+	struct list	 w_list;	/* List header			*/
+	struct buffer	*w_bufp;	/* Buffer displayed in window	*/
+	struct line	*w_linep;	/* Top line in the window	*/
+	struct line	*w_dotp;	/* Line containing "."		*/
+	struct line	*w_markp;	/* Line containing "mark"	*/
 	int		 w_doto;	/* Byte offset for "."		*/
 	int		 w_marko;	/* Byte offset for "mark"	*/
 	char		 w_toprow;	/* Origin 0 top row of window	*/
 	char		 w_ntrows;	/* # of rows of text in window	*/
 	char		 w_force;	/* If NZ, forcing row.		*/
 	char		 w_flag;	/* Flags.			*/
-	struct LINE	*w_wrapline;
-} MGWIN;
+	struct line	*w_wrapline;
+};
 #define w_wndp	w_list.l_p.l_wp
 #define w_name	w_list.l_name
 
@@ -239,13 +239,13 @@ struct undo_rec;
  * the buffer is kept in a circularly linked list of lines, with
  * a pointer to the header line in "b_linep".
  */
-typedef struct BUFFER {
-	LIST		 b_list;	/* buffer list pointer		 */
-	struct BUFFER	*b_altb;	/* Link to alternate buffer	 */
-	struct LINE	*b_dotp;	/* Link to "." LINE structure	 */
-	struct LINE	*b_markp;	/* ditto for mark		 */
-	struct LINE	*b_linep;	/* Link to the header LINE	 */
-	struct MAPS_S	*b_modes[PBMODES]; /* buffer modes		 */
+struct buffer {
+	struct list	 b_list;	/* buffer list pointer		 */
+	struct buffer	*b_altb;	/* Link to alternate buffer	 */
+	struct line	*b_dotp;	/* Link to "." LINE structure	 */
+	struct line	*b_markp;	/* ditto for mark		 */
+	struct line	*b_linep;	/* Link to the header LINE	 */
+	struct maps_s	*b_modes[PBMODES]; /* buffer modes		 */
 	int		 b_doto;	/* Offset of "." in above LINE	 */
 	int		 b_marko;	/* ditto for the "mark"		 */
 	short		 b_nmodes;	/* number of non-fundamental modes */
@@ -257,7 +257,7 @@ typedef struct BUFFER {
 	int		 b_undopos;	/* Where we were during the	*/
                                         /* last undo action.		*/
 	struct undo_rec *b_undoptr;
-} BUFFER;
+};
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
 
@@ -279,7 +279,7 @@ struct undo_rec {
 		DELETE,
 		BOUNDARY
 	} type;
-	REGION		 region;
+	struct region	 region;
 	int		 pos;
 	char		*content;
 };
@@ -289,355 +289,355 @@ struct undo_rec {
  */
 
 /* tty.c X */
-void	 ttinit(void);
-void	 ttreinit(void);
-void	 tttidy(void);
-void	 ttmove(int, int);
-void	 tteeol(void);
-void	 tteeop(void);
-void	 ttbeep(void);
-void	 ttinsl(int, int, int);
-void	 ttdell(int, int, int);
-void	 ttwindow(int, int);
-void	 ttnowindow(void);
-void	 ttcolor(int);
-void	 ttresize(void);
+void		 ttinit(void);
+void		 ttreinit(void);
+void		 tttidy(void);
+void		 ttmove(int, int);
+void		 tteeol(void);
+void		 tteeop(void);
+void		 ttbeep(void);
+void		 ttinsl(int, int, int);
+void		 ttdell(int, int, int);
+void		 ttwindow(int, int);
+void		 ttnowindow(void);
+void		 ttcolor(int);
+void		 ttresize(void);
 
 volatile sig_atomic_t winch_flag;
 
 /* ttyio.c */
-void	 ttopen(void);
-int	 ttraw(void);
-void	 ttclose(void);
-int	 ttcooked(void);
-int	 ttputc(int);
-void	 ttflush(void);
-int	 ttgetc(void);
-int	 ttwait(int);
-int	 typeahead(void);
+void		 ttopen(void);
+int		 ttraw(void);
+void		 ttclose(void);
+int		 ttcooked(void);
+int		 ttputc(int);
+void		 ttflush(void);
+int		 ttgetc(void);
+int		 ttwait(int);
+int		 typeahead(void);
 
 /* dir.c */
-void	 dirinit(void);
-int	 changedir(int, int);
-int	 showcwdir(int, int);
+void		 dirinit(void);
+int		 changedir(int, int);
+int		 showcwdir(int, int);
 
 #ifndef NO_DIRED
 /* dired.c */
-BUFFER	*dired_(char *);
+struct buffer	*dired_(char *);
 #endif /* !NO_DIRED */
 
 /* file.c X */
-int	 fileinsert(int, int);
-int	 filevisit(int, int);
-int	 filevisitalt(int, int);
-int	 filevisitro(int, int);
-int	 poptofile(int, int);
-BUFFER  *findbuffer(char *);
-int	 readin(char *);
-int	 insertfile(char *, char *, int);
-int	 filewrite(int, int);
-int	 filesave(int, int);
-int	 buffsave(BUFFER *);
-int	 makebkfile(int, int);
-int	 writeout(BUFFER *, char *);
-void	 upmodes(BUFFER *);
+int		 fileinsert(int, int);
+int		 filevisit(int, int);
+int		 filevisitalt(int, int);
+int		 filevisitro(int, int);
+int		 poptofile(int, int);
+struct buffer  *findbuffer(char *);
+int		 readin(char *);
+int		 insertfile(char *, char *, int);
+int		 filewrite(int, int);
+int		 filesave(int, int);
+int		 buffsave(struct buffer *);
+int		 makebkfile(int, int);
+int		 writeout(struct buffer *, char *);
+void		 upmodes(struct buffer *);
 
 /* line.c X */
-LINE	*lalloc(int);
-int	 lrealloc(LINE *, int);
-void	 lfree(LINE *);
-void	 lchange(int);
-int	 linsert_str(const char *, int);
-int	 linsert(int, int);
-int	 lnewline_at(LINE *, int);
-int	 lnewline(void);
-int	 ldelete(RSIZE, int);
-int	 ldelnewline(void);
-int	 lreplace(RSIZE, char *);
-void	 kdelete(void);
-int	 kinsert(int, int);
-int	 kremove(int);
+struct line	*lalloc(int);
+int		 lrealloc(struct line *, int);
+void		 lfree(struct line *);
+void		 lchange(int);
+int		 linsert_str(const char *, int);
+int		 linsert(int, int);
+int		 lnewline_at(struct line *, int);
+int		 lnewline(void);
+int		 ldelete(RSIZE, int);
+int		 ldelnewline(void);
+int		 lreplace(RSIZE, char *);
+void		 kdelete(void);
+int		 kinsert(int, int);
+int		 kremove(int);
 
 /* window.c X */
-MGWIN	*new_window(BUFFER *);
-void	 free_window(MGWIN *);
-int	 reposition(int, int);
-int	 refresh(int, int);
-int	 nextwind(int, int);
-int	 prevwind(int, int);
-int	 onlywind(int, int);
-int	 splitwind(int, int);
-int	 enlargewind(int, int);
-int	 shrinkwind(int, int);
-int	 delwind(int, int);
-MGWIN   *wpopup(void);
+struct mgwin	*new_window(struct buffer *);
+void		 free_window(struct mgwin *);
+int		 reposition(int, int);
+int		 refresh(int, int);
+int		 nextwind(int, int);
+int		 prevwind(int, int);
+int		 onlywind(int, int);
+int		 splitwind(int, int);
+int		 enlargewind(int, int);
+int		 shrinkwind(int, int);
+int		 delwind(int, int);
+struct mgwin   *wpopup(void);
 
 /* buffer.c */
-int	 togglereadonly(int, int);
-BUFFER  *bfind(const char *, int);
-int	 poptobuffer(int, int);
-int	 killbuffer(BUFFER *);
-int	 killbuffer_cmd(int, int);
-int	 savebuffers(int, int);
-int	 listbuffers(int, int);
-int	 addlinef(BUFFER *, char *, ...);
+int		 togglereadonly(int, int);
+struct buffer  *bfind(const char *, int);
+int		 poptobuffer(int, int);
+int		 killbuffer(struct buffer *);
+int		 killbuffer_cmd(int, int);
+int		 savebuffers(int, int);
+int		 listbuffers(int, int);
+int		 addlinef(struct buffer *, char *, ...);
 #define	 addline(bp, text)	addlinef(bp, "%s", text)
-int	 anycb(int);
-int	 bclear(BUFFER *);
-int	 showbuffer(BUFFER *, MGWIN *, int);
-MGWIN   *popbuf(BUFFER *);
-int	 bufferinsert(int, int);
-int	 usebuffer(int, int);
-int	 notmodified(int, int);
-int	 popbuftop(BUFFER *);
+int		 anycb(int);
+int		 bclear(struct buffer *);
+int		 showbuffer(struct buffer *, struct mgwin *, int);
+struct mgwin   *popbuf(struct buffer *);
+int		 bufferinsert(int, int);
+int		 usebuffer(int, int);
+int		 notmodified(int, int);
+int		 popbuftop(struct buffer *);
 
 /* display.c */
-int	vtresize(int, int, int);
-void	vtinit(void);
-void	vttidy(void);
-void	update(void);
+int		vtresize(int, int, int);
+void		vtinit(void);
+void		vttidy(void);
+void		update(void);
 
 /* echo.c X */
-void	 eerase(void);
-int	 eyorn(const char *);
-int	 eyesno(const char *);
-void	 ewprintf(const char *fmt, ...);
-char	*ereply(const char *, char *, size_t, ...);
-char	*eread(const char *, char *, size_t, int, ...);
-int	 getxtra(LIST *, LIST *, int, int);
-void	 free_file_list(LIST *);
+void		 eerase(void);
+int		 eyorn(const char *);
+int		 eyesno(const char *);
+void		 ewprintf(const char *fmt, ...);
+char		*ereply(const char *, char *, size_t, ...);
+char		*eread(const char *, char *, size_t, int, ...);
+int		 getxtra(struct list *, struct list *, int, int);
+void		 free_file_list(struct list *);
 
 /* fileio.c */
-int	 ffropen(const char *, BUFFER *);
-int	 ffwopen(const char *, BUFFER *);
-int	 ffclose(BUFFER *);
-int	 ffputbuf(BUFFER *);
-int	 ffgetline(char *, int, int *);
-int	 fbackupfile(const char *);
-char	*adjustname(const char *);
-char	*startupfile(char *);
-int	 copy(char *, char *);
-LIST	*make_file_list(char *);
-int	 fisdir(const char *);
+int		 ffropen(const char *, struct buffer *);
+int		 ffwopen(const char *, struct buffer *);
+int		 ffclose(struct buffer *);
+int		 ffputbuf(struct buffer *);
+int		 ffgetline(char *, int, int *);
+int		 fbackupfile(const char *);
+char		*adjustname(const char *);
+char		*startupfile(char *);
+int		 copy(char *, char *);
+struct list	*make_file_list(char *);
+int		 fisdir(const char *);
 
 /* kbd.c X */
-int	 do_meta(int, int);
-int	 bsmap(int, int);
-void	 ungetkey(int);
-int	 getkey(int);
-int	 doin(void);
-int	 rescan(int, int);
-int	 universal_argument(int, int);
-int	 digit_argument(int, int);
-int	 negative_argument(int, int);
-int	 selfinsert(int, int);
-int	 quote(int, int);
+int		 do_meta(int, int);
+int		 bsmap(int, int);
+void		 ungetkey(int);
+int		 getkey(int);
+int		 doin(void);
+int		 rescan(int, int);
+int		 universal_argument(int, int);
+int		 digit_argument(int, int);
+int		 negative_argument(int, int);
+int		 selfinsert(int, int);
+int		 quote(int, int);
 
 /* main.c */
-int	 ctrlg(int, int);
-int	 quit(int, int);
+int		 ctrlg(int, int);
+int		 quit(int, int);
 
 /* ttyio.c */
-void	 panic(char *);
+void		 panic(char *);
 
 /* cinfo.c */
-char	*keyname(char  *, size_t, int);
+char		*keyname(char  *, size_t, int);
 
 /* basic.c */
-int	 gotobol(int, int);
-int	 backchar(int, int);
-int	 gotoeol(int, int);
-int	 forwchar(int, int);
-int	 gotobob(int, int);
-int	 gotoeob(int, int);
-int	 forwline(int, int);
-int	 backline(int, int);
-void	 setgoal(void);
-int	 getgoal(LINE *);
-int	 forwpage(int, int);
-int	 backpage(int, int);
-int	 forw1page(int, int);
-int	 back1page(int, int);
-int	 pagenext(int, int);
-void	 isetmark(void);
-int	 setmark(int, int);
-int	 swapmark(int, int);
-int	 gotoline(int, int);
+int		 gotobol(int, int);
+int		 backchar(int, int);
+int		 gotoeol(int, int);
+int		 forwchar(int, int);
+int		 gotobob(int, int);
+int		 gotoeob(int, int);
+int		 forwline(int, int);
+int		 backline(int, int);
+void		 setgoal(void);
+int		 getgoal(struct line *);
+int		 forwpage(int, int);
+int		 backpage(int, int);
+int		 forw1page(int, int);
+int		 back1page(int, int);
+int		 pagenext(int, int);
+void		 isetmark(void);
+int		 setmark(int, int);
+int		 swapmark(int, int);
+int		 gotoline(int, int);
 
 /* random.c X */
-int	 showcpos(int, int);
-int	 getcolpos(void);
-int	 twiddle(int, int);
-int	 openline(int, int);
-int	 newline(int, int);
-int	 deblank(int, int);
-int	 justone(int, int);
-int	 delwhite(int, int);
-int	 indent(int, int);
-int	 forwdel(int, int);
-int	 backdel(int, int);
-int	 killline(int, int);
-int	 yank(int, int);
-int	 space_to_tabstop(int, int);
+int		 showcpos(int, int);
+int		 getcolpos(void);
+int		 twiddle(int, int);
+int		 openline(int, int);
+int		 newline(int, int);
+int		 deblank(int, int);
+int		 justone(int, int);
+int		 delwhite(int, int);
+int		 indent(int, int);
+int		 forwdel(int, int);
+int		 backdel(int, int);
+int		 killline(int, int);
+int		 yank(int, int);
+int		 space_to_tabstop(int, int);
 
 /* extend.c X */
-int	 insert(int, int);
-int	 bindtokey(int, int);
-int	 localbind(int, int);
-int	 define_key(int, int);
-int	 unbindtokey(int, int);
-int	 localunbind(int, int);
-int	 extend(int, int);
-int	 evalexpr(int, int);
-int	 evalbuffer(int, int);
-int	 evalfile(int, int);
-int	 load(const char *);
-int	 excline(char *);
+int		 insert(int, int);
+int		 bindtokey(int, int);
+int		 localbind(int, int);
+int		 define_key(int, int);
+int		 unbindtokey(int, int);
+int		 localunbind(int, int);
+int		 extend(int, int);
+int		 evalexpr(int, int);
+int		 evalbuffer(int, int);
+int		 evalfile(int, int);
+int		 load(const char *);
+int		 excline(char *);
 
 /* help.c X */
-int	 desckey(int, int);
-int	 wallchart(int, int);
-int	 help_help(int, int);
-int	 apropos_command(int, int);
+int		 desckey(int, int);
+int		 wallchart(int, int);
+int		 help_help(int, int);
+int		 apropos_command(int, int);
 
 /* paragraph.c X */
-int	 gotobop(int, int);
-int	 gotoeop(int, int);
-int	 fillpara(int, int);
-int	 killpara(int, int);
-int	 fillword(int, int);
-int	 setfillcol(int, int);
+int		 gotobop(int, int);
+int		 gotoeop(int, int);
+int		 fillpara(int, int);
+int		 killpara(int, int);
+int		 fillword(int, int);
+int		 setfillcol(int, int);
 
 /* word.c X */
-int	 backword(int, int);
-int	 forwword(int, int);
-int	 upperword(int, int);
-int	 lowerword(int, int);
-int	 capword(int, int);
-int	 delfword(int, int);
-int	 delbword(int, int);
-int	 inword(void);
+int		 backword(int, int);
+int		 forwword(int, int);
+int		 upperword(int, int);
+int		 lowerword(int, int);
+int		 capword(int, int);
+int		 delfword(int, int);
+int		 delbword(int, int);
+int		 inword(void);
 
 /* region.c X */
-int	 killregion(int, int);
-int	 copyregion(int, int);
-int	 lowerregion(int, int);
-int	 upperregion(int, int);
-int	 prefixregion(int, int);
-int	 setprefix(int, int);
-int	 region_get_data(REGION *, char *, int);
-int	 region_put_data(const char *, int);
+int		 killregion(int, int);
+int		 copyregion(int, int);
+int		 lowerregion(int, int);
+int		 upperregion(int, int);
+int		 prefixregion(int, int);
+int		 setprefix(int, int);
+int		 region_get_data(struct region *, char *, int);
+int		 region_put_data(const char *, int);
 
 /* search.c X */
-int	 forwsearch(int, int);
-int	 backsearch(int, int);
-int	 searchagain(int, int);
-int	 forwisearch(int, int);
-int	 backisearch(int, int);
-int	 queryrepl(int, int);
-int	 forwsrch(void);
-int	 backsrch(void);
-int	 readpattern(char *);
+int		 forwsearch(int, int);
+int		 backsearch(int, int);
+int		 searchagain(int, int);
+int		 forwisearch(int, int);
+int		 backisearch(int, int);
+int		 queryrepl(int, int);
+int		 forwsrch(void);
+int		 backsrch(void);
+int		 readpattern(char *);
 
 /* spawn.c X */
-int	 spawncli(int, int);
+int		 spawncli(int, int);
 
 /* ttykbd.c X */
-void	 ttykeymapinit(void);
-void	 ttykeymaptidy(void);
+void		 ttykeymapinit(void);
+void		 ttykeymaptidy(void);
 
 /* match.c X */
-int	 showmatch(int, int);
+int		 showmatch(int, int);
 
 /* version.c X */
-int	 showversion(int, int);
+int		 showversion(int, int);
 
 #ifndef NO_MACRO
 /* macro.c X */
-int	 definemacro(int, int);
-int	 finishmacro(int, int);
-int	 executemacro(int, int);
+int		 definemacro(int, int);
+int		 finishmacro(int, int);
+int		 executemacro(int, int);
 #endif	/* !NO_MACRO */
 
 /* modes.c X */
-int	 indentmode(int, int);
-int	 fillmode(int, int);
-int	 blinkparen(int, int);
+int		 indentmode(int, int);
+int		 fillmode(int, int);
+int		 blinkparen(int, int);
 #ifdef NOTAB
-int	 notabmode(int, int);
+int		 notabmode(int, int);
 #endif	/* NOTAB */
-int	 overwrite(int, int);
-int	 set_default_mode(int,int);
+int		 overwrite(int, int);
+int		 set_default_mode(int,int);
 
 #ifdef REGEX
 /* re_search.c X */
-int	 re_forwsearch(int, int);
-int	 re_backsearch(int, int);
-int	 re_searchagain(int, int);
-int	 re_queryrepl(int, int);
-int	 replstr(int, int);
-int	 setcasefold(int, int);
-int	 delmatchlines(int, int);
-int	 delnonmatchlines(int, int);
-int	 cntmatchlines(int, int);
-int	 cntnonmatchlines(int, int);
+int		 re_forwsearch(int, int);
+int		 re_backsearch(int, int);
+int		 re_searchagain(int, int);
+int		 re_queryrepl(int, int);
+int		 replstr(int, int);
+int		 setcasefold(int, int);
+int		 delmatchlines(int, int);
+int		 delnonmatchlines(int, int);
+int		 cntmatchlines(int, int);
+int		 cntnonmatchlines(int, int);
 #endif	/* REGEX */
 
 /* undo.c X */
-void	 free_undo_record(struct undo_rec *);
-int	 undo_dump(int, int);
-int	 undo_enable(int);
-int	 undo_add_boundary(void);
-int	 undo_add_insert(LINE *, int, int);
-int	 undo_add_delete(LINE *, int, int);
-void	 undo_no_boundary(int);
-int	 undo_add_change(LINE *, int, int);
-int	 undo(int, int);
+void		 free_undo_record(struct undo_rec *);
+int		 undo_dump(int, int);
+int		 undo_enable(int);
+int		 undo_add_boundary(void);
+int		 undo_add_insert(struct line *, int, int);
+int		 undo_add_delete(struct line *, int, int);
+void		 undo_no_boundary(int);
+int		 undo_add_change(struct line *, int, int);
+int		 undo(int, int);
 
 /* autoexec.c X */
-int	 auto_execute(int, int);
-PF	*find_autoexec(const char *);
-int	 add_autoexec(const char *, const char *);
+int		 auto_execute(int, int);
+PF		*find_autoexec(const char *);
+int		 add_autoexec(const char *, const char *);
 
 /* mail.c X */
-void	 mail_init(void);
+void		 mail_init(void);
 
 /* grep.c X */
-int	 next_error(int, int);
+int		 next_error(int, int);
 
 /*
  * Externals.
  */
-extern BUFFER	*bheadp;
-extern BUFFER	*curbp;
-extern MGWIN	*curwp;
-extern MGWIN	*wheadp;
-extern int	 thisflag;
-extern int	 lastflag;
-extern int	 curgoal;
-extern int	 startrow;
-extern int	 epresf;
-extern int	 sgarbf;
-extern int	 mode;
-extern int	 nrow;
-extern int	 ncol;
-extern int	 ttrow;
-extern int	 ttcol;
-extern int	 tttop;
-extern int	 ttbot;
-extern int	 tthue;
-extern int	 defb_nmodes;
-extern int	 defb_flag;
-extern const char cinfo[];
-extern char	*keystrings[];
-extern char	 pat[NPAT];
+extern struct buffer	*bheadp;
+extern struct buffer	*curbp;
+extern struct mgwin	*curwp;
+extern struct mgwin	*wheadp;
+extern int		 thisflag;
+extern int		 lastflag;
+extern int		 curgoal;
+extern int		 startrow;
+extern int		 epresf;
+extern int		 sgarbf;
+extern int		 mode;
+extern int		 nrow;
+extern int		 ncol;
+extern int		 ttrow;
+extern int		 ttcol;
+extern int		 tttop;
+extern int		 ttbot;
+extern int		 tthue;
+extern int		 defb_nmodes;
+extern int		 defb_flag;
+extern const char	 cinfo[];
+extern char		*keystrings[];
+extern char		 pat[NPAT];
 #ifndef NO_DPROMPT
-extern char	 prompt[];
+extern char		 prompt[];
 #endif	/* !NO_DPROMPT */
 
 /*
  * Globals.
  */
-int	 tceeol;
-int	 tcinsl;
-int	 tcdell;
+int		 tceeol;
+int		 tcinsl;
+int		 tcdell;

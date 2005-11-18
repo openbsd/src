@@ -1,4 +1,4 @@
-/* $OpenBSD: mail.c,v 1.8 2005/10/14 19:46:46 kjell Exp $ */
+/* $OpenBSD: mail.c,v 1.9 2005/11/18 20:56:53 deraadt Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -127,7 +127,7 @@ fake_self_insert(int f, int n)
 			 */
 			const char *trail;
 			int save_doto = curwp->w_doto;
-			LINE *save_dotp = curwp->w_dotp;
+			struct line *save_dotp = curwp->w_dotp;
 			int tlen = len - col;
 
 			trail = curwp->w_dotp->l_text + col;

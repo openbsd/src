@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.12 2005/11/11 18:40:51 deraadt Exp $	*/
+/*	$OpenBSD: word.c,v 1.13 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -197,9 +197,9 @@ capword(int f, int n)
 RSIZE
 countfword()
 {
-	RSIZE	 size;
-	LINE	*dotp;
-	int	 doto;
+	RSIZE		 size;
+	struct line	*dotp;
+	int		 doto;
 
 	dotp = curwp->w_dotp;
 	doto = curwp->w_doto;
@@ -225,9 +225,9 @@ out:
 int
 delfword(int f, int n)
 {
-	RSIZE	 size;
-	LINE	*dotp;
-	int	 doto;
+	RSIZE		 size;
+	struct line	*dotp;
+	int		 doto;
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read-only");

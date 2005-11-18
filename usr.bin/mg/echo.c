@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.39 2005/11/11 18:40:51 deraadt Exp $	*/
+/*	$OpenBSD: echo.c,v 1.40 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -28,7 +28,7 @@ static void	 eputi(int, int);
 static void	 eputl(long, int);
 static void	 eputs(const char *);
 static void	 eputc(char);
-static LIST	*copy_list(LIST *);
+static struct list	*copy_list(struct list *);
 
 int		epresf = FALSE;		/* stuff in echo line flag */
 
@@ -95,7 +95,7 @@ eyesno(const char *sp)
 		if (rep[0] != '\0') {
 #ifndef NO_MACRO
 			if (macrodef) {
-				LINE	*lp = maclcur;
+				struct line	*lp = maclcur;
 
 				maclcur = lp->l_bp;
 				maclcur->l_fp = lp->l_fp;
@@ -150,8 +150,8 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 	int	 mr = 0;		/* match left arrow */
 	int	 ml = 0;		/* match right arrow */
 	int	 esc = 0;		/* position in esc pattern */
-	BUFFER	*bp;			/* completion list buffer */
-	MGWIN	*wp;			/* window for compl list */
+	struct buffer	*bp;			/* completion list buffer */
+	struct mgwin	*wp;			/* window for compl list */
 	int	 match;			/* esc match found */
 	int	 cc, rr;		/* saved ttcol, ttrow */
 	char	*ret;			/* return value */
@@ -340,7 +340,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 			}
 #ifndef NO_MACRO
 			if (macrodef) {
-				LINE	*lp;
+				struct line	*lp;
 
 				if ((lp = lalloc(cpos)) == NULL) {
 					static char falseval[] = "";
@@ -488,8 +488,8 @@ fail:
 static int
 complt(int flags, int c, char *buf, size_t nbuf, int cpos, int *nx)
 {
-	LIST	*lh, *lh2;
-	LIST	*wholelist = NULL;
+	struct list	*lh, *lh2;
+	struct list	*wholelist = NULL;
 	int	 i, nxtra, nhits, bxtra, msglen, nshown;
 	int	 wflag = FALSE;
 	char	*msg;
@@ -585,9 +585,9 @@ complt(int flags, int c, char *buf, size_t nbuf, int cpos, int *nx)
 static int
 complt_list(int flags, int c, char *buf, int cpos)
 {
-	LIST	*lh, *lh2, *lh3;
-	LIST	*wholelist = NULL;
-	BUFFER	*bp;
+	struct list	*lh, *lh2, *lh3;
+	struct list	*wholelist = NULL;
+	struct buffer	*bp;
 	int	 i, maxwidth, width;
 	int	 preflen = 0;
 	int	 oldrow = ttrow;
@@ -738,7 +738,7 @@ complt_list(int flags, int c, char *buf, int cpos)
  * this is normal.
  */
 int
-getxtra(LIST *lp1, LIST *lp2, int cpos, int wflag)
+getxtra(struct list *lp1, struct list *lp2, int cpos, int wflag)
 {
 	int	i;
 
@@ -918,9 +918,9 @@ eputc(char c)
 }
 
 void
-free_file_list(LIST *lp)
+free_file_list(struct list *lp)
 {
-	LIST	*next;
+	struct list	*next;
 
 	while (lp) {
 		next = lp->l_next;
@@ -929,14 +929,14 @@ free_file_list(LIST *lp)
 	}
 }
 
-static LIST *
-copy_list(LIST *lp)
+static struct list *
+copy_list(struct list *lp)
 {
-	LIST	*current, *last, *nxt;
+	struct list	*current, *last, *nxt;
 
 	last = NULL;
 	while (lp) {
-		current = (LIST *)malloc(sizeof(LIST));
+		current = (struct list *)malloc(sizeof(struct list));
 		if (current == NULL) {
 			for (current = last; current; current = nxt) {
 				nxt = current->l_next;

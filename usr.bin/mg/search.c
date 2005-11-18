@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.24 2005/11/18 17:35:17 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.25 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -25,11 +25,11 @@
 #define SRCH_ACCM	(-4)
 #define SRCH_MARK	(-5)
 
-typedef struct {
+struct srchcom {
 	int	 s_code;
-	LINE	*s_dotp;
+	struct line	*s_dotp;
 	int	 s_doto;
-} SRCHCOM;
+};
 
 static int	isearch(int);
 static void	is_cpush(int);
@@ -42,7 +42,7 @@ static void	is_prompt(int, int, int);
 static void	is_dspl(char *, int);
 static int	eq(int, int, int);
 
-static SRCHCOM	cmds[NSRCH];
+static struct srchcom	cmds[NSRCH];
 static int	cip;
 
 int		srch_lastdir = SRCH_NOPR;	/* Last search flags.	 */
@@ -154,7 +154,7 @@ backisearch(int f, int n)
 static int
 isearch(int dir)
 {
-	LINE	*clp;
+	struct line	*clp;
 
 	int	 c;
 	int	 cbo;
@@ -446,7 +446,7 @@ static int
 is_find(int dir)
 {
 	int	 plen, odoto;
-	LINE	*odotp;
+	struct line	*odotp;
 
 	odoto = curwp->w_doto;
 	odotp = curwp->w_dotp;
@@ -643,7 +643,7 @@ replstr(int f, int n)
 int
 forwsrch(void)
 {
-	LINE	*clp, *tlp;
+	struct line	*clp, *tlp;
 	int	 cbo, tbo, c, i, xcase = 0;
 	char	*pp;
 
@@ -695,7 +695,7 @@ fail:		;
 int
 backsrch(void)
 {
-	LINE	*clp, *tlp;
+	struct line	*clp, *tlp;
 	int	 cbo, tbo, c, i, xcase = 0;
 	char	*epp, *pp;
 

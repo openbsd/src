@@ -1,4 +1,4 @@
-/*	$OpenBSD: cinfo.c,v 1.13 2005/10/13 06:20:25 kjell Exp $	*/
+/*	$OpenBSD: cinfo.c,v 1.14 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -94,8 +94,8 @@ const char cinfo[256] = {
 char *
 keyname(char *cp, size_t len, int k)
 {
-	const char  *np;
-	size_t	     copied;
+	const char	*np;
+	size_t		 copied;
 
 	if (k < 0)
 		k = CHARMASK(k);	/* sign extended char */

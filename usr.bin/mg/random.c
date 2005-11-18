@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.14 2005/11/18 19:04:09 kjell Exp $	*/
+/*	$OpenBSD: random.c,v 1.15 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -24,7 +24,7 @@
 int
 showcpos(int f, int n)
 {
-	LINE	*clp;
+	struct line	*clp;
 	long	 nchar, cchar;
 	int	 nline, row;
 	int	 cline, cbyte;		/* Current line/char/byte */
@@ -114,7 +114,7 @@ getcolpos(void)
 int
 twiddle(int f, int n)
 {
-	LINE	*dotp;
+	struct line	*dotp;
 	int	 doto, cr;
 
 	dotp = curwp->w_dotp;
@@ -170,7 +170,7 @@ openline(int f, int n)
 int
 newline(int f, int n)
 {
-	LINE	*lp;
+	struct line	*lp;
 	int	 s;
 
 	if (n < 0)
@@ -196,7 +196,7 @@ newline(int f, int n)
 int
 deblank(int f, int n)
 {
-	LINE	*lp1, *lp2;
+	struct line	*lp1, *lp2;
 	RSIZE	 nld;
 
 	lp1 = curwp->w_dotp;
@@ -352,7 +352,7 @@ backdel(int f, int n)
 int
 killline(int f, int n)
 {
-	LINE	*nextp;
+	struct line	*nextp;
 	RSIZE	 chunk;
 	int	 i, c;
 
@@ -415,7 +415,7 @@ killline(int f, int n)
 int
 yank(int f, int n)
 {
-	LINE	*lp;
+	struct line	*lp;
 	int	 c, i, nline;
 
 	if (n < 0)

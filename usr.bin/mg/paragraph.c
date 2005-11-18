@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.12 2005/10/18 18:54:48 kjell Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.13 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -127,7 +127,7 @@ fillpara(int f, int n)
 	int	 newlength;	/* tentative new line length		*/
 	int	 eolflag;	/* was at end of line			*/
 	int	 retval;	/* return value				*/
-	LINE	*eopline;	/* pointer to line just past EOP	*/
+	struct line	*eopline;	/* pointer to line just past EOP	*/
 	char	 wbuf[MAXWORD];	/* buffer for current word		*/
 
 	undo_add_boundary();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.44 2005/11/13 07:24:48 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.45 2005/11/18 20:56:52 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -41,7 +41,7 @@ fileinsert(int f, int n)
 int
 filevisit(int f, int n)
 {
-	BUFFER	*bp;
+	struct buffer	*bp;
 	char	 fname[NFILEN], *bufp, *adjf, *slash;
 	int	 status;
 
@@ -86,7 +86,7 @@ filevisit(int f, int n)
 int
 filevisitalt(int f, int n)
 {
-	BUFFER	*bp;
+	struct buffer	*bp;
 	char	 fname[NFILEN], *bufp, *adjf, *slash;
 	int	 status;
 
@@ -145,8 +145,8 @@ filevisitro(int f, int n)
 int
 poptofile(int f, int n)
 {
-	BUFFER	*bp;
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
 	char	 fname[NFILEN], *adjf, *bufp;
 	int	 status;
 
@@ -176,10 +176,10 @@ poptofile(int f, int n)
  * Given a file name, either find the buffer it uses, or create a new
  * empty buffer to put it in.
  */
-BUFFER *
+struct buffer *
 findbuffer(char *fn)
 {
-	BUFFER		*bp;
+	struct buffer		*bp;
 	char		 bname[NBUFN], fname[NBUFN];
 	unsigned int	 count, remain, i;
 
@@ -211,7 +211,7 @@ findbuffer(char *fn)
 int
 readin(char *fname)
 {
-	MGWIN	*wp;
+	struct mgwin	*wp;
 	int	 status, i, ro = FALSE;
 	PF	*ael;
 
@@ -288,10 +288,10 @@ static int	linesize = 0;
 int
 insertfile(char *fname, char *newname, int replacebuf)
 {
-	BUFFER	*bp;
-	LINE	*lp1, *lp2;
-	LINE	*olp;			/* line we started at */
-	MGWIN	*wp;
+	struct buffer	*bp;
+	struct line	*lp1, *lp2;
+	struct line	*olp;			/* line we started at */
+	struct mgwin	*wp;
 	int	 nbytes, s, nline, siz, x = -1, x2;
 	int	 opos;			/* offset we started at */
 
@@ -540,7 +540,7 @@ filesave(int f, int n)
  * the value of makebackup.
  */
 int
-buffsave(BUFFER *bp)
+buffsave(struct buffer *bp)
 {
 	int	 s;
 
@@ -615,7 +615,7 @@ makebkfile(int f, int n)
  * "fileio.c" package. Most of the grief is checking of some sort.
  */
 int
-writeout(BUFFER *bp, char *fn)
+writeout(struct buffer *bp, char *fn)
 {
 	int	 s;
 
@@ -639,9 +639,9 @@ writeout(BUFFER *bp, char *fn)
  * mode line updated.
  */
 void
-upmodes(BUFFER *bp)
+upmodes(struct buffer *bp)
 {
-	MGWIN	*wp;
+	struct mgwin	*wp;
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 		if (bp == NULL || curwp->w_bufp == bp)

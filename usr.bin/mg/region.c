@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.18 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.19 2005/11/18 20:56:53 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,8 +11,8 @@
 
 #include "def.h"
 
-static	int	getregion(REGION *);
-static	int	setsize(REGION *, RSIZE);
+static	int	getregion(struct region *);
+static	int	setsize(struct region *, RSIZE);
 
 /*
  * Kill the region.  Ask "getregion" to figure out the bounds of the region.
@@ -23,7 +23,7 @@ int
 killregion(int f, int n)
 {
 	int	s;
-	REGION	region;
+	struct region	region;
 
 	if ((s = getregion(&region)) != TRUE)
 		return (s);
@@ -44,8 +44,8 @@ killregion(int f, int n)
 int
 copyregion(int f, int n)
 {
-	LINE	*linep;
-	REGION	 region;
+	struct line	*linep;
+	struct region	 region;
 	int	 loffs;
 	int	 s;
 
@@ -88,8 +88,8 @@ copyregion(int f, int n)
 int
 lowerregion(int f, int n)
 {
-	LINE	*linep;
-	REGION	 region;
+	struct line	*linep;
+	struct region	 region;
 	int	 loffs, c, s;
 
 	if (curbp->b_flag & BFREADONLY) {
@@ -129,8 +129,8 @@ lowerregion(int f, int n)
 int
 upperregion(int f, int n)
 {
-	LINE	 *linep;
-	REGION	  region;
+	struct line	 *linep;
+	struct region	  region;
 	int	  loffs, c, s;
 
 	if (curbp->b_flag & BFREADONLY) {
@@ -171,9 +171,9 @@ upperregion(int f, int n)
  * because I might add a "if regions is big, ask before clobbering" flag.
  */
 static int
-getregion(REGION *rp)
+getregion(struct region *rp)
 {
-	LINE	*flp, *blp;
+	struct line	*flp, *blp;
 	long	 fsize, bsize;
 
 	if (curwp->w_markp == NULL) {
@@ -227,7 +227,7 @@ getregion(REGION *rp)
  * Set size, and check for overflow.
  */
 static int
-setsize(REGION *rp, RSIZE size)
+setsize(struct region *rp, RSIZE size)
 {
 	rp->r_size = size;
 	if (rp->r_size != size) {
@@ -258,8 +258,8 @@ static char	prefix_string[PREFIXLENGTH] = {'>', '\0'};
 int
 prefixregion(int f, int n)
 {
-	LINE	*first, *last;
-	REGION	 region;
+	struct line	*first, *last;
+	struct region	 region;
 	char	*prefix = prefix_string;
 	int	 nline;
 	int	 s;
@@ -325,10 +325,10 @@ setprefix(int f, int n)
 #endif /* PREFIXREGION */
 
 int
-region_get_data(REGION *reg, char *buf, int len)
+region_get_data(struct region *reg, char *buf, int len)
 {
 	int	 i, off;
-	LINE	*lp;
+	struct line	*lp;
 
 	off = reg->r_offset;
 	lp = reg->r_linep;
