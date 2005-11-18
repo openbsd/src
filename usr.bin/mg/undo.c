@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.33 2005/11/12 18:48:08 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.34 2005/11/18 17:11:21 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -506,7 +506,7 @@ undo(int f, int n)
 			 */
 			switch (ptr->type) {
 			case INSERT:
-				ldelete(ptr->region.r_size, KFORW);
+				ldelete(ptr->region.r_size, KNONE);
 				break;
 			case DELETE:
 				region_put_data(ptr->content,
