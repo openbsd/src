@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.16 2004/01/27 06:58:03 tedu Exp $	*/
+/*	$OpenBSD: inet.c,v 1.17 2005/11/18 11:05:39 djm Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -66,13 +66,52 @@ struct rtentry;
 #include "os-proto.h"
 #endif
 
-/* Not all systems have IFF_LOOPBACK */
-#ifdef IFF_LOOPBACK
-#define ISLOOPBACK(p) ((p)->ifr_flags & IFF_LOOPBACK)
-#else
-#define ISLOOPBACK(p) ((p)->ifr_name[0] == 'l' && (p)->ifr_name[1] == 'o' && \
-    (isdigit((p)->ifr_name[2]) || (p)->ifr_name[2] == '\0'))
-#endif
+/*
+ * Free a list of interfaces.
+ */
+void
+pcap_freealldevs(pcap_if_t *alldevs)
+{
+	pcap_if_t *curdev, *nextdev;
+	pcap_addr_t *curaddr, *nextaddr;
+
+	for (curdev = alldevs; curdev != NULL; curdev = nextdev) {
+		nextdev = curdev->next;
+
+		/*
+		 * Free all addresses.
+		 */
+		for (curaddr = curdev->addresses; curaddr != NULL;
+		    curaddr = nextaddr) {
+			nextaddr = curaddr->next;
+			if (curaddr->addr)
+				free(curaddr->addr);
+			if (curaddr->netmask)
+				free(curaddr->netmask);
+			if (curaddr->broadaddr)
+				free(curaddr->broadaddr);
+			if (curaddr->dstaddr)
+				free(curaddr->dstaddr);
+			free(curaddr);
+		}
+
+		/*
+		 * Free the name string.
+		 */
+		free(curdev->name);
+
+		/*
+		 * Free the description string, if any.
+		 */
+		if (curdev->description != NULL)
+			free(curdev->description);
+
+		/*
+		 * Free the interface.
+		 */
+		free(curdev);
+	}
+}
 
 /*
  * Return the name of a network interface attached to the system, or NULL
@@ -100,16 +139,8 @@ pcap_lookupdev(errbuf)
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_UP) == 0)
 			continue;
-#ifdef IFF_LOOPBACK
-		if ((ifa->ifa_flags & IFF_LOOPBACK) != 0)
+		if (ISLOOPBACK(ifa->ifa_name, ifa->ifa_flags))
 			continue;
-#else
-		if (strncmp(ifa->ifa_name, "lo", 2) == 0 &&
-		    (ifa->ifa_name[2] == '\0' || isdigit(ifa->ifa_name[2]))) {
-			continue;
-		}
-#endif
-
 		for (cp = ifa->ifa_name; !isdigit(*cp); ++cp)
 			continue;
 		n = atoi(cp);
@@ -190,7 +221,8 @@ pcap_lookupdev(errbuf)
 		}
 
 		/* Must be up and not the loopback */
-		if ((ifr.ifr_flags & IFF_UP) == 0 || ISLOOPBACK(&ifr))
+		if ((ifr.ifr_flags & IFF_UP) == 0 || 
+		    ISLOOPBACK(ifr.ifr_name, ifr.ifr_flags)
 			continue;
 
 		for (cp = ifrp->ifr_name; !isdigit(*cp); ++cp)

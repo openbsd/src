@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.16 2004/02/06 22:41:24 tedu Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.17 2005/11/18 11:05:39 djm Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -70,6 +70,19 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	register u_char *bp, *ep;
 
  again:
+	/*
+	 * Has "pcap_breakloop()" been called?
+	 */
+	if (p->break_loop) {
+		/*
+		 * Yes - clear the flag that indicates that it
+		 * has, and return -2 to indicate that we were
+		 * told to break out of the loop.
+		 */
+		p->break_loop = 0;
+		return (-2);
+	}
+
 	cc = p->cc;
 	if (p->cc == 0) {
 		cc = read(p->fd, (char *)p->buffer, p->bufsize);
@@ -112,6 +125,27 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	ep = bp + cc;
 	while (bp < ep) {
 		register int caplen, hdrlen;
+
+		/*
+		 * Has "pcap_breakloop()" been called?
+		 * If so, return immediately - if we haven't read any
+		 * packets, clear the flag and return -2 to indicate
+		 * that we were told to break out of the loop, otherwise
+		 * leave the flag set, so that the *next* call will break
+		 * out of the loop without having read any packets, and
+		 * return the number of packets we've processed so far.
+		 */
+		if (p->break_loop) {
+			if (n == 0) {
+				p->break_loop = 0;
+				return (-2);
+			} else {
+				p->bp = bp;
+				p->cc = ep - bp;
+				return (n);
+			}
+		}
+
 		caplen = bhp->bh_caplen;
 		hdrlen = bhp->bh_hdrlen;
 		/*
@@ -164,13 +198,15 @@ bpf_open(pcap_t *p, char *errbuf)
 }
 
 pcap_t *
-pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
+pcap_open_live(const char *device, int snaplen, int promisc, int to_ms,
+    char *ebuf)
 {
 	int fd;
 	struct ifreq ifr;
 	struct bpf_version bv;
 	u_int v;
 	pcap_t *p;
+	struct bpf_dltlist bdl;
 
 	p = (pcap_t *)malloc(sizeof(*p));
 	if (p == NULL) {
@@ -235,6 +271,37 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 #endif
 	p->linktype = v;
 
+	/*
+	 * We know the default link type -- now determine all the DLTs
+	 * this interface supports.  If this fails with EINVAL, it's
+	 * not fatal; we just don't get to use the feature later.
+	 */
+	bzero(&bdl, sizeof(bdl));
+	if (ioctl(fd, BIOCGDLTLIST, (caddr_t)&bdl) == 0) {
+		bdl.bfl_list = (u_int *) malloc(sizeof(u_int) *
+		    bdl.bfl_len + 1);
+		if (bdl.bfl_list == NULL) {
+			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
+			    pcap_strerror(errno));
+			goto bad;
+		}
+
+		if (ioctl(fd, BIOCGDLTLIST, (caddr_t)&bdl) < 0) {
+			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE,
+			    "BIOCGDLTLIST: %s", pcap_strerror(errno));
+			free(bdl.bfl_list);
+			goto bad;
+		}
+		p->dlt_count = bdl.bfl_len;
+		p->dlt_list = bdl.bfl_list;
+	} else {
+		if (errno != EINVAL) {
+			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE,
+			    "BIOCGDLTLIST: %s", pcap_strerror(errno));
+			goto bad;
+		}
+	}
+
 	/* set timeout */
 	if (to_ms != 0) {
 		struct timeval to;
@@ -298,3 +365,45 @@ pcap_setfilter(pcap_t *p, struct bpf_program *fp)
 	}
 	return (0);
 }
+
+int
+pcap_set_datalink(pcap_t *p, int dlt)
+{
+	int i;
+
+	if (p->dlt_count == 0) {
+		/*
+		 * We couldn't fetch the list of DLTs, or we don't
+		 * have a "set datalink" operation, which means
+		 * this platform doesn't support changing the
+		 * DLT for an interface.  Check whether the new
+		 * DLT is the one this interface supports.
+		 */
+		if (p->linktype != dlt)
+			goto unsupported;
+
+		/*
+		 * It is, so there's nothing we need to do here.
+		 */
+		return (0);
+	}
+	for (i = 0; i < p->dlt_count; i++)
+		if (p->dlt_list[i] == dlt)
+			break;
+	if (i >= p->dlt_count)
+		goto unsupported;
+	if (ioctl(p->fd, BIOCSDLT, &dlt) == -1) {
+		(void) snprintf(p->errbuf, sizeof(p->errbuf),
+		    "Cannot set DLT %d: %s", dlt, strerror(errno));
+		return (-1);
+	}
+	p->linktype = dlt;
+	return (0);
+
+unsupported:
+	(void) snprintf(p->errbuf, sizeof(p->errbuf),
+	    "DLT %d is not one of the DLTs supported by this device",
+	    dlt);
+	return (-1);
+}
+

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.25 2003/03/06 20:13:15 jmc Exp $
+.\"	$OpenBSD: pcap.3,v 1.26 2005/11/18 11:05:39 djm Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,6 +79,30 @@
 .Fn pcap_close "pcap_t *p"
 .Ft void
 .Fn pcap_dump_close "pcap_dumper_t *p"
+.Ft int
+.Fn pcap_breakloop "pcap_t *p"
+.Ft int
+.Fn pcap_findalldevs "pcap_if_t **alldevsp" "char *errbuf"
+.Ft void
+.Fn pcap_freealldevs "pcap_if_t *alldevs"
+.Ft int
+.Fn pcap_getnonblock "pcap_t *p" "char *errbuf"
+.Ft int
+.Fn pcap_setnonblock "pcap_t *p" "int nonblock" "char *errbuf"
+.Ft int
+.Fn pcap_set_datalink "pcap_t *" "int dlt"
+.Ft int
+.Fn pcap_list_datalinks "pcap_t *p" "int **dlts"
+.Ft pcap_t
+.Fn pcap_open_dead "int linktype" "int snaplen"
+.Ft const char *
+.Fn pcap_lib_version "void"
+.Ft const char *
+.Fn pcap_datalink_val_to_name "int"
+.Ft const char *
+.Fn pcap_datalink_val_to_description "int"
+.Ft int
+.Fn pcap_datalink_name_to_val "const char *"
 .Sh DESCRIPTION
 .Nm
 provides a high level interface to packet capture systems.
@@ -91,6 +115,7 @@ through this mechanism.
 in
 .Fn pcap_open_live ,
 .Fn pcap_open_offline ,
+.Fn pcap_findalldevs ,
 .Fn pcap_lookupdev ,
 and
 .Fn pcap_lookupnet
@@ -287,6 +312,12 @@ A negative
 causes
 .Fn pcap_loop
 to loop forever (or at least until an error occurs).
+.Fn pcap_loop
+may be terminated early through an explicit call to
+.Fn pcap_breakloop .
+In this case, the return value of
+.Fn pcap_loop
+will be \-2.
 .Pp
 .Fn pcap_next
 returns a
@@ -352,6 +383,56 @@ and deallocates resources.
 .Pp
 .Fn pcap_dump_close
 closes the savefile.
+.Pp
+.Fn pcap_findalldevs
+constructs a linked list of network devices that are suitable for
+opening with
+.Fn pcap_open_live .
+.Pp
+.Fn pcap_freealldevs
+frees a list of interfaces built by
+.Fn pcap_findalldevs .
+.Pp
+.Fn pcap_getnonblock
+returns 1 if the capture file descriptor is in non-blocking mode, 0
+if it is in blocking mode, or \-1 on error.
+.Pp
+.Fn pcap_setnonblock
+sets or resets non-blocking mode on a capture file descriptor.
+.Pp
+.Fn pcap_set_datalink
+sets the datalink type on a live capture device that supports multiple
+datalink types.
+.Pp
+.Fn pcap_list_datalinks
+returns an array of the supported datalink types for an opened live capture
+device as a \-1 terminated array.
+It is the caller's responsibility to free this list.
+.Pp
+.Fn pcap_breakloop
+safely breaks out of a
+.Fn pcap_loop .
+This function sets an internal flag and is safe to be called from inside a
+signal handler.
+.Pp
+.Fn pcap_open_dead
+is used for creating a pcap_t structure to use when calling the
+other functions in libpcap.
+It is typically used when just using libpcap for compiling BPF code.
+.Pp
+.Fn pcap_lib_version
+returns a string describing the version of
+.Xr pcap 3 .
+.Fn pcap_datalink_val_to_name
+and
+.Fn pcap_datalink_val_to_description
+lookup the name or description of a datalink type by number.
+These functions return
+.Dv NULL
+if the specified datalink type is not known.
+.Fn pcap_datalink_name_to_val
+finds the datalink number for a given datalink name.
+Returns \-1 if the name is not known.
 .Sh SEE ALSO
 .Xr tcpdump 8
 .\" , tcpslice(1)
