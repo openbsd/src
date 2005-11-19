@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.9 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.10 2005/11/19 21:46:41 brad Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -70,24 +70,18 @@ struct cfdriver ki2c_cd = {
 };
 
 int
-ki2c_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+ki2c_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 
 	if (strcmp(ca->ca_name, "i2c") == 0)
-		return 1;
+		return (1);
 
-	return 0;
+	return (0);
 }
 
 void
-ki2c_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ki2c_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ki2c_softc *sc = (struct ki2c_softc *)self;
 	struct confargs *ca = aux;
@@ -134,20 +128,15 @@ ki2c_attach(parent, self, aux)
 }
 
 u_int
-ki2c_readreg(sc, reg)
-	struct ki2c_softc *sc;
-	int reg;
+ki2c_readreg(struct ki2c_softc *sc, int reg)
 {
 	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
 
-	return *addr;
+	return (*addr);
 }
 
 void
-ki2c_writereg(sc, reg, val)
-	struct ki2c_softc *sc;
-	int reg;
-	u_int val;
+ki2c_writereg(struct ki2c_softc *sc, int reg, u_int val)
 {
 	u_char *addr = sc->sc_reg + sc->sc_regstep * reg;
 
@@ -157,17 +146,13 @@ ki2c_writereg(sc, reg, val)
 }
 
 u_int
-ki2c_getmode(sc)
-	struct ki2c_softc *sc;
+ki2c_getmode(struct ki2c_softc *sc)
 {
 	return ki2c_readreg(sc, MODE) & I2C_MODE;
 }
 
 void
-ki2c_setmode(sc, mode, bus)
-	struct ki2c_softc *sc;
-	u_int mode;
-	u_int bus;
+ki2c_setmode(struct ki2c_softc *sc, u_int mode, u_int bus)
 {
 	u_int x;
 
@@ -183,16 +168,13 @@ ki2c_setmode(sc, mode, bus)
 }
 
 u_int
-ki2c_getspeed(sc)
-	struct ki2c_softc *sc;
+ki2c_getspeed(struct ki2c_softc *sc)
 {
 	return ki2c_readreg(sc, MODE) & I2C_SPEED;
 }
 
 void
-ki2c_setspeed(sc, speed)
-	struct ki2c_softc *sc;
-	u_int speed;
+ki2c_setspeed(struct ki2c_softc *sc, u_int speed)
 {
 	u_int x;
 
@@ -204,8 +186,7 @@ ki2c_setspeed(sc, speed)
 }
 
 int
-ki2c_intr(sc)
-	struct ki2c_softc *sc;
+ki2c_intr(struct ki2c_softc *sc)
 {
 	u_int isr, x;
 
@@ -267,13 +248,11 @@ out:
 
 	ki2c_writereg(sc, ISR, isr);
 
-	return 1;
+	return (1);
 }
 
 int
-ki2c_poll(sc, timo)
-	struct ki2c_softc *sc;
-	int timo;
+ki2c_poll(struct ki2c_softc *sc, int timo)
 {
 	while (sc->sc_flags & I2C_BUSY) {
 		if (ki2c_readreg(sc, ISR))
@@ -281,18 +260,15 @@ ki2c_poll(sc, timo)
 		timo -= 100;
 		if (timo < 0) {
 			printf("i2c_poll: timeout\n");
-			return -1;
+			return (-1);
 		}
 		delay(100);
 	}
-	return 0;
+	return (0);
 }
 
 int
-ki2c_start(sc, addr, subaddr, data, len)
-	struct ki2c_softc *sc;
-	int addr, subaddr, len;
-	void *data;
+ki2c_start(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	int rw = (sc->sc_flags & I2C_READING) ? 1 : 0;
 	int timo, x;
@@ -316,29 +292,23 @@ ki2c_start(sc, addr, subaddr, data, len)
 	ki2c_writereg(sc, CONTROL, x);
 
 	if (ki2c_poll(sc, timo))
-		return -1;
+		return (-1);
 	if (sc->sc_flags & I2C_ERROR) {
 		printf("I2C_ERROR\n");
-		return -1;
+		return (-1);
 	}
-	return 0;
+	return (0);
 }
 
 int
-ki2c_read(sc, addr, subaddr, data, len)
-	struct ki2c_softc *sc;
-	int addr, subaddr, len;
-	void *data;
+ki2c_read(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	sc->sc_flags = I2C_READING;
 	return ki2c_start(sc, addr, subaddr, data, len);
 }
 
 int
-ki2c_write(sc, addr, subaddr, data, len)
-	struct ki2c_softc *sc;
-	int addr, subaddr, len;
-	const void *data;
+ki2c_write(struct ki2c_softc *sc, int addr, int subaddr, const void *data, int len)
 {
 	sc->sc_flags = 0;
 	return ki2c_start(sc, addr, subaddr, (void *)data, len);
