@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.19 2005/11/15 15:46:41 millert Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.20 2005/11/19 19:05:02 millert Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -196,7 +196,7 @@
  *	__POSIX_VISIBLE
  *	__XPG_VISIBLE
  *	__ISO_C_VISIBLE
- *	__OPENBSD_VISIBLE
+ *	__BSD_VISIBLE
  */
 
 /*
@@ -292,11 +292,11 @@
 /*
  * Finally deal with BSD-specific interfaces that are not covered
  * by any standards.  We expose these when one of the POSIX or XPG
- * macros is not defined or if the user explicitly asks for them.
+ * macros is defined or if the user explicitly asks for them.
  */
-#if !defined(_OPENBSD_SOURCE) && \
+#if !defined(_BSD_SOURCE) && \
    (defined(_ANSI_SOURCE) || defined(__XPG_VISIBLE) || defined(__POSIX_VISIBLE))
-# define __OPENBSD_VISIBLE	0
+# define __BSD_VISIBLE		0
 #endif
 
 /*
@@ -311,8 +311,8 @@
 #ifndef __ISO_C_VISIBLE
 # define __ISO_C_VISIBLE	1999
 #endif
-#ifndef __OPENBSD_VISIBLE
-# define __OPENBSD_VISIBLE	1
+#ifndef __BSD_VISIBLE
+# define __BSD_VISIBLE		1
 #endif
 
 #endif /* !_CDEFS_H_ */
