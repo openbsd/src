@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sa.8,v 1.13 2005/05/04 09:02:54 jmc Exp $
+.\"	$OpenBSD: sa.8,v 1.14 2005/11/19 18:12:56 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: sa.8,v 1.13 2005/05/04 09:02:54 jmc Exp $
+.\"	$Id: sa.8,v 1.14 2005/11/19 18:12:56 jmc Exp $
 .\"
 .Dd February 25, 1994
 .Dt SA 8
@@ -184,7 +184,7 @@ the user name, the number of commands invoked, total CPU time used
 for each user.
 If the
 .Fl u
-option is specified, the uid, user and system time (in seconds),
+option is specified, the UID, user and system time (in seconds),
 CPU storage integral, I/O usage, and command name will be printed
 for each entry in the accounting data file.
 .Pp
@@ -229,9 +229,7 @@ was written for
 from the specification provided by various systems' manual pages.
 Its date of origin is unknown to the author.
 .Sh AUTHORS
-.Bl -tag
-Chris G. Demetriou, cgd@postgres.berkeley.edu
-.El
+.An Chris G. Demetriou Aq cgd@postgres.berkeley.edu
 .Sh CAVEATS
 While the behavior of the options in this version of
 .Nm
@@ -247,7 +245,7 @@ The formats of the summary files created by this version of
 .Nm
 are very different than those used by the original version.
 This is not considered a problem, however, because the accounting record
-format has changed as well (since user ids are now 32 bits).
+format has changed as well (since user IDs are now 32 bits).
 .Sh BUGS
 The number of options to this program is absurd, especially considering
 that there's not much logic behind their lettering.
