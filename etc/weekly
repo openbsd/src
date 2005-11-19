@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.15 2005/11/12 16:14:37 jmc Exp $
+#	$OpenBSD: weekly,v 1.16 2005/11/19 15:13:34 jmc Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -42,5 +42,3 @@ makewhatis
 # echo ""
 # echo "Doing login accounting:"
 # ac -p | sort -nr +1
-
-#echo "."
