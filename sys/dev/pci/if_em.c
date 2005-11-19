@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.93 2005/11/18 18:13:29 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.94 2005/11/19 22:17:15 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -130,20 +130,16 @@ void em_clean_transmit_interrupts(struct em_softc *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
 void em_process_receive_interrupts(struct em_softc *, int);
-void em_receive_checksum(struct em_softc *, 
-				     struct em_rx_desc *,
-				     struct mbuf *);
-void em_transmit_checksum_setup(struct em_softc *,
-					    struct mbuf *,
-					    u_int32_t *,
-					    u_int32_t *);
+void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
+			 struct mbuf *);
+void em_transmit_checksum_setup(struct em_softc *, struct mbuf *,
+				u_int32_t *, u_int32_t *);
 void em_set_promisc(struct em_softc *);
 void em_disable_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
 void em_print_hw_stats(struct em_softc *);
 void em_update_link_status(struct em_softc *);
-int  em_get_buf(int, struct em_softc *,
-			    struct mbuf *);
+int  em_get_buf(int, struct em_softc *, struct mbuf *);
 int  em_encap(struct em_softc *, struct mbuf *);
 void em_smartspeed(struct em_softc *);
 int  em_82547_fifo_workaround(struct em_softc *, int);
@@ -151,13 +147,12 @@ void em_82547_update_fifo_head(struct em_softc *, int);
 int  em_82547_tx_fifo_reset(struct em_softc *);
 void em_82547_move_tail(void *arg);
 void em_82547_move_tail_locked(struct em_softc *);
-int  em_dma_malloc(struct em_softc *, bus_size_t,
-    struct em_dma_alloc *, int);
+int  em_dma_malloc(struct em_softc *, bus_size_t, struct em_dma_alloc *,
+		   int);
 void em_dma_free(struct em_softc *, struct em_dma_alloc *);
 int  em_is_valid_ether_addr(u_int8_t *);
-u_int32_t em_fill_descriptors (bus_addr_t address,
-                                      u_int32_t length,
-                                      PDESC_ARRAY desc_array);
+u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
+			      PDESC_ARRAY desc_array);
 
 /*********************************************************************
  *  OpenBSD Device Interface Entry Points		     
@@ -235,18 +230,18 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	 * response(Rx) to Ethernet PAUSE frames.
 	 */
 	sc->hw.fc_high_water = FC_DEFAULT_HI_THRESH;
-	sc->hw.fc_low_water  = FC_DEFAULT_LO_THRESH;
+	sc->hw.fc_low_water = FC_DEFAULT_LO_THRESH;
 	sc->hw.fc_pause_time = FC_DEFAULT_TX_TIMER;
-	sc->hw.fc_send_xon   = TRUE;
+	sc->hw.fc_send_xon = TRUE;
 	sc->hw.fc = em_fc_full;
 
 	sc->hw.phy_init_script = 1;
-        sc->hw.phy_reset_disable = FALSE;
+	sc->hw.phy_reset_disable = FALSE;
 
 #ifndef EM_MASTER_SLAVE
-        sc->hw.master_slave = em_ms_hw_default;
+	sc->hw.master_slave = em_ms_hw_default;
 #else
-        sc->hw.master_slave = EM_MASTER_SLAVE;
+	sc->hw.master_slave = EM_MASTER_SLAVE;
 #endif
 	/*
 	 * Set the max frame size assuming standard Ethernet
@@ -339,23 +334,15 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.get_link_status = 1;
 	em_check_for_link(&sc->hw);
 
-	/* Print the link status */
-        if (sc->link_active == 1) {
-                em_get_speed_and_duplex(&sc->hw, &sc->link_speed,
-                                        &sc->link_duplex);
-	}
-
 	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
 
-        /* Identify 82544 on PCI-X */
-        em_get_bus_info(&sc->hw);
-        if(sc->hw.bus_type == em_bus_type_pcix &&
-           sc->hw.mac_type == em_82544) {
-                sc->pcix_82544 = TRUE;
-        }
-        else {
-                sc->pcix_82544 = FALSE;
-        }
+	/* Identify 82544 on PCI-X */
+	em_get_bus_info(&sc->hw);
+	if (sc->hw.bus_type == em_bus_type_pcix &&
+	    sc->hw.mac_type == em_82544)
+		sc->pcix_82544 = TRUE;
+        else
+		sc->pcix_82544 = FALSE;
 	INIT_DEBUGOUT("em_attach: end");
 	sc->sc_powerhook = powerhook_establish(em_power, sc);
 	return;
@@ -426,7 +413,6 @@ em_start(struct ifnet *ifp)
 
 		/* Set timeout in case hardware has problems transmitting */
 		ifp->if_timer = EM_TX_TIMEOUT;
-
 	}	
 }
 
@@ -489,25 +475,22 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				max_frame_size = MAX_JUMBO_FRAME_SIZE;
 		}
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu >
-		    max_frame_size - ETHER_HDR_LEN - ETHER_CRC_LEN) {
+		    max_frame_size - ETHER_HDR_LEN - ETHER_CRC_LEN)
 			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
-		}
 		break;
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFFLAGS (Set Interface Flags)");
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING)) {
+			if (!(ifp->if_flags & IFF_RUNNING))
 				em_init(sc);
-                        }
 
 			em_disable_promisc(sc);
 			em_set_promisc(sc);
 		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
+			if (ifp->if_flags & IFF_RUNNING)
 				em_stop(sc);
-			}
 		}
 		break;
 	case SIOCADDMULTI:
@@ -568,7 +551,6 @@ em_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
 
 	ifp->if_flags &= ~IFF_RUNNING;
-
 	em_init(sc);
 
 	sc->watchdog_events++;
@@ -640,9 +622,9 @@ em_init(void *arg)
 	INIT_DEBUGOUT1("em_init: pba=%dK",pba);
 	E1000_WRITE_REG(&sc->hw, PBA, pba);
 
-        /* Get the latest mac address, User can use a LAA */
-        bcopy(sc->interface_data.ac_enaddr, sc->hw.mac_addr,
-              ETHER_ADDR_LEN);
+	/* Get the latest mac address, User can use a LAA */
+	bcopy(sc->interface_data.ac_enaddr, sc->hw.mac_addr,
+	      ETHER_ADDR_LEN);
 
 	/* Initialize the hardware */
 	if (em_hardware_init(sc)) {
@@ -702,7 +684,7 @@ em_intr(void *arg)
 	struct em_softc  *sc = arg;
 	struct ifnet	*ifp;
 	u_int32_t	reg_icr;
-	int s, claimed = 0, wantinit = 0;
+	int s, claimed = 0;
 
 	s = splnet();
 
@@ -729,15 +711,9 @@ em_intr(void *arg)
 			timeout_add(&sc->timer_handle, hz); 
 		}
 
-		if (reg_icr & E1000_ICR_RXO) {
+		if (reg_icr & E1000_ICR_RXO)
 			sc->rx_overruns++;
-			wantinit = 1;
-		}
 	}
-#if 0
-	if (wantinit)
-		em_init(sc);
-#endif
 
 	if (ifp->if_flags & IFF_RUNNING &&
 	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
@@ -824,7 +800,7 @@ em_media_change(struct ifnet *ifp)
 	INIT_DEBUGOUT("em_media_change: begin");
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
-		return(EINVAL);
+		return (EINVAL);
 
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 	case IFM_AUTO:
@@ -842,7 +818,7 @@ em_media_change(struct ifnet *ifp)
 		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
 			sc->hw.forced_speed_duplex = em_100_full;
 		else
-			sc->hw.forced_speed_duplex	= em_100_half;
+			sc->hw.forced_speed_duplex = em_100_half;
 		break;
 	case IFM_10_T:
 		sc->hw.autoneg = FALSE;
@@ -850,20 +826,21 @@ em_media_change(struct ifnet *ifp)
 		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
 			sc->hw.forced_speed_duplex = em_10_full;
 		else
-			sc->hw.forced_speed_duplex	= em_10_half;
+			sc->hw.forced_speed_duplex = em_10_half;
 		break;
 	default:
 		printf("%s: Unsupported media type\n", sc->sc_dv.dv_xname);
 	}
 
-        /* As the speed/duplex settings may have changed we need to
-         * reset the PHY.
-         */
-        sc->hw.phy_reset_disable = FALSE;
+	/*
+	 * As the speed/duplex settings may have changed we need to
+	 * reset the PHY.
+	 */
+	sc->hw.phy_reset_disable = FALSE;
 
 	em_init(sc);
 
-	return(0);
+	return (0);
 }
 
 /*********************************************************************
@@ -879,10 +856,10 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	u_int32_t	txd_lower, txd_used = 0, txd_saved = 0;
 	int		i, j, error;
 
-        /* For 82544 Workaround */
-        DESC_ARRAY              desc_array;
-        u_int32_t               array_elements;
-        u_int32_t               counter;
+	/* For 82544 Workaround */
+	DESC_ARRAY		desc_array;
+	u_int32_t		array_elements;
+	u_int32_t		counter;
 
 	struct em_q	q;
 
@@ -930,64 +907,62 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	txd_upper = txd_lower = 0;
 
 	i = sc->next_avail_tx_desc;
-        if (sc->pcix_82544) {
-                txd_saved = i;
-                txd_used = 0;
-        }
+	if (sc->pcix_82544) {
+		txd_saved = i;
+		txd_used = 0;
+	}
 	for (j = 0; j < q.map->dm_nsegs; j++) {
-                /* If sc is 82544 and on PCI-X bus */
-                if (sc->pcix_82544) {
-                        /*
-                         * Check the Address and Length combination and
-                         * split the data accordingly
-                         */
-                        array_elements = em_fill_descriptors(q.map->dm_segs[j].ds_addr,
-                                                             q.map->dm_segs[j].ds_len,
-                                                             &desc_array);
-                        for (counter = 0; counter < array_elements; counter++) {
-                                if (txd_used == sc->num_tx_desc_avail) {
-                                          sc->next_avail_tx_desc = txd_saved;
-                                          sc->no_tx_desc_avail2++;
-                                          bus_dmamap_destroy(sc->txtag, q.map);
-                                          return (ENOBUFS);
-                                }
-                                tx_buffer = &sc->tx_buffer_area[i];
-                                current_tx_desc = &sc->tx_desc_base[i];
-                                current_tx_desc->buffer_addr = htole64(
-                                        desc_array.descriptor[counter].address);
-                                current_tx_desc->lower.data = htole32(
-                                        (sc->txd_cmd | txd_lower |
-                                         (u_int16_t)desc_array.descriptor[counter].length));
-                                current_tx_desc->upper.data = htole32((txd_upper));
-                                if (++i == sc->num_tx_desc)
-                                         i = 0;
+		/* If sc is 82544 and on PCI-X bus */
+		if (sc->pcix_82544) {
+			/*
+			 * Check the Address and Length combination and
+			 * split the data accordingly
+			 */
+			array_elements = em_fill_descriptors(q.map->dm_segs[j].ds_addr,
+							     q.map->dm_segs[j].ds_len,
+							     &desc_array);
+			for (counter = 0; counter < array_elements; counter++) {
+				if (txd_used == sc->num_tx_desc_avail) {
+					sc->next_avail_tx_desc = txd_saved;
+					sc->no_tx_desc_avail2++;
+					bus_dmamap_destroy(sc->txtag, q.map);
+					return (ENOBUFS);
+				}
+				tx_buffer = &sc->tx_buffer_area[i];
+				current_tx_desc = &sc->tx_desc_base[i];
+				current_tx_desc->buffer_addr = htole64(
+					desc_array.descriptor[counter].address);
+				current_tx_desc->lower.data = htole32(
+					(sc->txd_cmd | txd_lower |
+					 (u_int16_t)desc_array.descriptor[counter].length));
+				current_tx_desc->upper.data = htole32((txd_upper));
+				if (++i == sc->num_tx_desc)
+					i = 0;
 
-                                tx_buffer->m_head = NULL;
-                                txd_used++;
-                        }
-                } else {
-		        tx_buffer = &sc->tx_buffer_area[i];
-		        current_tx_desc = &sc->tx_desc_base[i];
+				tx_buffer->m_head = NULL;
+				txd_used++;
+			}
+		} else {
+			tx_buffer = &sc->tx_buffer_area[i];
+			current_tx_desc = &sc->tx_desc_base[i];
 
-		        current_tx_desc->buffer_addr = htole64(q.map->dm_segs[j].ds_addr);
-		        current_tx_desc->lower.data = htole32(
-		            sc->txd_cmd | txd_lower | q.map->dm_segs[j].ds_len);
-		        current_tx_desc->upper.data = htole32(txd_upper);
+			current_tx_desc->buffer_addr = htole64(q.map->dm_segs[j].ds_addr);
+			current_tx_desc->lower.data = htole32(
+				sc->txd_cmd | txd_lower | q.map->dm_segs[j].ds_len);
+			current_tx_desc->upper.data = htole32(txd_upper);
 
-		        if (++i == sc->num_tx_desc)
+			if (++i == sc->num_tx_desc)
 	        		i = 0;
-		
-		        tx_buffer->m_head = NULL;
-                }
+
+			tx_buffer->m_head = NULL;
+		}
 	}
 
 	sc->next_avail_tx_desc = i;
-        if (sc->pcix_82544) {
-                sc->num_tx_desc_avail -= txd_used;
-        }
-        else {
-                sc->num_tx_desc_avail -= q.map->dm_nsegs;
-        }
+	if (sc->pcix_82544)
+		sc->num_tx_desc_avail -= txd_used;
+	else
+		sc->num_tx_desc_avail -= q.map->dm_nsegs;
 
 	tx_buffer->m_head = m_head;
 	tx_buffer->map = q.map;
@@ -1045,7 +1020,7 @@ em_82547_move_tail_locked(struct em_softc *sc)
 		if(++hw_tdt == sc->num_tx_desc)
 			hw_tdt = 0;
 
-		if(eop) {
+		if (eop) {
 			if (em_82547_fifo_workaround(sc, length)) {
 				sc->tx_fifo_wrk_cnt++;
 				timeout_add(&sc->tx_fifo_timer_handle, 1);
@@ -1061,7 +1036,7 @@ em_82547_move_tail_locked(struct em_softc *sc)
 void
 em_82547_move_tail(void *arg)
 {
-        struct em_softc *sc = arg;
+	struct em_softc *sc = arg;
 	int s;
 
 	s = splnet();
@@ -1080,16 +1055,14 @@ em_82547_fifo_workaround(struct em_softc *sc, int len)
 		fifo_space = sc->tx_fifo_size - sc->tx_fifo_head;
 
 		if (fifo_pkt_len >= (EM_82547_PKT_THRESH + fifo_space)) {
-			if (em_82547_tx_fifo_reset(sc)) {
-				return(0);
-			}
-			else {
-				return(1);
-			}
+			if (em_82547_tx_fifo_reset(sc))
+				return (0);
+			else
+				return (1);
 		}
 	}
 
-	return(0);
+	return (0);
 }
 
 void
@@ -1099,9 +1072,8 @@ em_82547_update_fifo_head(struct em_softc *sc, int len)
 
 	/* tx_fifo_head is always 16 byte aligned */
 	sc->tx_fifo_head += fifo_pkt_len;
-	if (sc->tx_fifo_head >= sc->tx_fifo_size) {
+	if (sc->tx_fifo_head >= sc->tx_fifo_size)
 		sc->tx_fifo_head -= sc->tx_fifo_size;
-	}
 }
 
 int
@@ -1109,13 +1081,13 @@ em_82547_tx_fifo_reset(struct em_softc *sc)
 {
 	uint32_t tctl;
 
-	if ( (E1000_READ_REG(&sc->hw, TDT) ==
-	      E1000_READ_REG(&sc->hw, TDH)) &&
-	     (E1000_READ_REG(&sc->hw, TDFT) ==
-	      E1000_READ_REG(&sc->hw, TDFH)) &&
-	     (E1000_READ_REG(&sc->hw, TDFTS) ==
-	      E1000_READ_REG(&sc->hw, TDFHS)) &&
-	     (E1000_READ_REG(&sc->hw, TDFPC) == 0)) {
+	if ((E1000_READ_REG(&sc->hw, TDT) ==
+	     E1000_READ_REG(&sc->hw, TDH)) &&
+	    (E1000_READ_REG(&sc->hw, TDFT) ==
+	     E1000_READ_REG(&sc->hw, TDFH)) &&
+	    (E1000_READ_REG(&sc->hw, TDFTS) ==
+	     E1000_READ_REG(&sc->hw, TDFHS)) &&
+	    (E1000_READ_REG(&sc->hw, TDFPC) == 0)) {
 
 		/* Disable TX unit */
 		tctl = E1000_READ_REG(&sc->hw, TCTL);
@@ -1134,17 +1106,15 @@ em_82547_tx_fifo_reset(struct em_softc *sc)
 		sc->tx_fifo_head = 0;
 		sc->tx_fifo_reset_cnt++;
 
-		return(TRUE);
-	}
-	else {
-		return(FALSE);
+		return (TRUE);
+	} else {
+		return (FALSE);
 	}
 }
 
 void
 em_set_promisc(struct em_softc *sc)
 {
-
 	u_int32_t	reg_rctl;
 	u_int32_t	ctrl;
 	struct ifnet   *ifp = &sc->interface_data.ac_if;
@@ -1197,9 +1167,8 @@ em_set_multi(struct em_softc *sc)
 
 	if (sc->hw.mac_type == em_82542_rev2_0) {
 		reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
-		if (sc->hw.pci_cmd_word & CMD_MEM_WRT_INVALIDATE) {
+		if (sc->hw.pci_cmd_word & CMD_MEM_WRT_INVALIDATE)
 			em_pci_clear_mwi(&sc->hw);
-		}
 		reg_rctl |= E1000_RCTL_RST;
 		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 		msec_delay(5);
@@ -1230,9 +1199,8 @@ em_set_multi(struct em_softc *sc)
 		reg_rctl &= ~E1000_RCTL_RST;
 		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 		msec_delay(5);
-		if (sc->hw.pci_cmd_word & CMD_MEM_WRT_INVALIDATE) {
+		if (sc->hw.pci_cmd_word & CMD_MEM_WRT_INVALIDATE)
 			em_pci_set_mwi(&sc->hw);
-		}
 	}
 }
 
@@ -1342,7 +1310,6 @@ em_identify_hardware(struct em_softc *sc)
 	sc->hw.revision_id = PCI_REVISION(reg);
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-
 	sc->hw.subsystem_vendor_id = PCI_VENDOR(reg);
 	sc->hw.subsystem_id = PCI_PRODUCT(reg);
 
@@ -1422,7 +1389,7 @@ em_allocate_pci_resources(struct em_softc *sc)
 		
 	sc->hw.back = &sc->osdep;
 
-	return(0);
+	return (0);
 }
 
 void
@@ -1468,19 +1435,19 @@ em_hardware_init(struct em_softc *sc)
 	if (em_validate_eeprom_checksum(&sc->hw) < 0) {
 		printf("%s: The EEPROM Checksum Is Not Valid\n",
 		       sc->sc_dv.dv_xname);
-		return(EIO);
+		return (EIO);
 	}
 
 	if (em_read_part_num(&sc->hw, &(sc->part_num)) < 0) {
 		printf("%s: EEPROM read error while reading part number\n",
 		       sc->sc_dv.dv_xname);
-		return(EIO);
+		return (EIO);
 	}
 
 	if (em_init_hw(&sc->hw) < 0) {
 		printf("%s: Hardware Initialization Failed",
 		       sc->sc_dv.dv_xname);
-		return(EIO);
+		return (EIO);
 	}
 
 	em_check_for_link(&sc->hw);
@@ -1498,7 +1465,7 @@ em_hardware_init(struct em_softc *sc)
 		sc->link_duplex = 0;
 	}
 
-	return(0);
+	return (0);
 }
 
 /*********************************************************************
@@ -1620,7 +1587,7 @@ em_smartspeed(struct em_softc *sc)
  */
 int
 em_dma_malloc(struct em_softc *sc, bus_size_t size,
-	struct em_dma_alloc *dma, int mapflags)
+    struct em_dma_alloc *dma, int mapflags)
 {
 	int r;
 
@@ -1850,10 +1817,8 @@ em_free_transmit_structures(struct em_softc *sc)
  *
  **********************************************************************/
 void
-em_transmit_checksum_setup(struct em_softc *sc,
-			   struct mbuf *mp,
-			   u_int32_t *txd_upper,
-			   u_int32_t *txd_lower) 
+em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp,
+    u_int32_t *txd_upper, u_int32_t *txd_lower)
 {
 	struct em_context_desc *TXD;
 	struct em_buffer *tx_buffer;
@@ -1999,8 +1964,7 @@ em_clean_transmit_interrupts(struct em_softc *sc)
  *
  **********************************************************************/
 int
-em_get_buf(int i, struct em_softc *sc,
-    struct mbuf *nmp)
+em_get_buf(int i, struct em_softc *sc, struct mbuf *nmp)
 {
 	struct mbuf    *mp = nmp;
 	struct em_buffer *rx_buffer;
@@ -2013,13 +1977,13 @@ em_get_buf(int i, struct em_softc *sc,
 		MGETHDR(mp, M_DONTWAIT, MT_DATA);
 		if (mp == NULL) {
 			sc->mbuf_alloc_failed++;
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
 		MCLGET(mp, M_DONTWAIT);
 		if ((mp->m_flags & M_EXT) == 0) {
 			m_freem(mp);
 			sc->mbuf_cluster_failed++;
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
 		mp->m_len = mp->m_pkthdr.len = MCLBYTES;
 	} else {
@@ -2042,7 +2006,7 @@ em_get_buf(int i, struct em_softc *sc,
 	    mtod(mp, void *), mp->m_len, NULL, 0);
 	if (error) {
 		m_free(mp);
-		return(error);
+		return (error);
 	}
 	rx_buffer->m_head = mp;
 	sc->rx_desc_base[i].buffer_addr = htole64(rx_buffer->map->dm_segs[0].ds_addr);
@@ -2050,7 +2014,7 @@ em_get_buf(int i, struct em_softc *sc,
 	    rx_buffer->map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	return(0);
+	return (0);
 }
 
 /*********************************************************************
@@ -2476,9 +2440,8 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
  *
  *********************************************************************/
 void
-em_receive_checksum(struct em_softc *sc,
-		    struct em_rx_desc *rx_desc,
-		    struct mbuf *mp)
+em_receive_checksum(struct em_softc *sc, struct em_rx_desc *rx_desc,
+    struct mbuf *mp)
 {
 	/* 82543 or newer only */
 	if ((sc->hw.mac_type < em_82543) ||
@@ -2539,17 +2502,14 @@ em_is_valid_ether_addr(u_int8_t *addr)
 {
 	const char zero_addr[6] = { 0, 0, 0, 0, 0, 0 };
 
-	if ((addr[0] & 1) || (!bcmp(addr, zero_addr, ETHER_ADDR_LEN))) {
+	if ((addr[0] & 1) || (!bcmp(addr, zero_addr, ETHER_ADDR_LEN)))
 		return (FALSE);
-	}
 
-	return(TRUE);
+	return (TRUE);
 }
 
 void
-em_write_pci_cfg(struct em_hw *hw,
-		      uint32_t reg,
-		      uint16_t *value)
+em_write_pci_cfg(struct em_hw *hw, uint32_t reg, uint16_t *value)
 {
 	struct pci_attach_args *pa = &((struct em_osdep *)hw->back)->em_pa;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -2558,8 +2518,7 @@ em_write_pci_cfg(struct em_hw *hw,
 }
 
 void
-em_read_pci_cfg(struct em_hw *hw, uint32_t reg,
-		     uint16_t *value)
+em_read_pci_cfg(struct em_hw *hw, uint32_t reg, uint16_t *value)
 {
 	struct pci_attach_args *pa = &((struct em_osdep *)hw->back)->em_pa;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -2605,9 +2564,8 @@ em_pci_clear_mwi(struct em_hw *hw)
 *
 *** *********************************************************************/
 u_int32_t
-em_fill_descriptors (bus_addr_t address,
-                              u_int32_t length,
-                              PDESC_ARRAY desc_array)
+em_fill_descriptors(u_int64_t address, u_int32_t length,
+    PDESC_ARRAY desc_array)
 {
         /* Since issue is sensitive to length and address.*/
         /* Let us first check the address...*/
