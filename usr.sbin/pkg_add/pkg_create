@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.42 2005/09/24 19:44:26 espie Exp $
+# $OpenBSD: pkg_create,v 1.43 2005/11/19 14:45:32 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -472,6 +472,9 @@ for my $contentsfile (@contents) {
 						open($fh, '<', $fname) or die "missing file $fname";
 					}
 					next GETLINE;
+				}
+				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/) {
+					$_ = '@comment $'.'OpenBSD: '.basename($fname).',v$';
 				}
 				&$cont(dosubst($_));
 			}
