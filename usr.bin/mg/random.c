@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.15 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: random.c,v 1.16 2005/11/19 20:16:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -170,14 +170,12 @@ openline(int f, int n)
 int
 newline(int f, int n)
 {
-	struct line	*lp;
 	int	 s;
 
 	if (n < 0)
 		return (FALSE);
 
 	while (n--) {
-		lp = curwp->w_dotp;
 		if ((s = lnewline()) != TRUE)
 			return (s);
 	}

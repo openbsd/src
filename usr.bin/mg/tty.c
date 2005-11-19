@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.22 2005/06/14 18:14:40 kjell Exp $	*/
+/*	$OpenBSD: tty.c,v 1.23 2005/11/19 20:16:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -43,6 +43,7 @@ static char	*scroll_fwd;	/* How to scroll forward. */
 
 static void	 winchhandler(int);
 
+/* ARGSUSED */
 static void
 winchhandler(int sig)
 {

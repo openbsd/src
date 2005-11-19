@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.40 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: echo.c,v 1.41 2005/11/19 20:16:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -22,7 +22,7 @@
 
 static char	*veread(const char *, char *, size_t, int, va_list);
 static int	 complt(int, int, char *, size_t, int, int *);
-static int	 complt_list(int, int, char *, int);
+static int	 complt_list(int, char *, int);
 static void	 eformat(const char *, va_list);
 static void	 eputi(int, int);
 static void	 eputl(long, int);
@@ -192,7 +192,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 		c = getkey(FALSE);
 		if ((flag & EFAUTO) != 0 && (c == ' ' || c == CCHR('I'))) {
 			if (cplflag == TRUE) {
-				complt_list(flag, c, buf, cpos);
+				complt_list(flag, buf, cpos);
 				cwin = TRUE;
 			} else if (complt(flag, c, buf, nbuf, epos, &i) == TRUE) {
 				cplflag = TRUE;
@@ -583,7 +583,7 @@ complt(int flags, int c, char *buf, size_t nbuf, int cpos, int *nx)
  * Do completion on a list of objects, listing instead of completing.
  */
 static int
-complt_list(int flags, int c, char *buf, int cpos)
+complt_list(int flags, char *buf, int cpos)
 {
 	struct list	*lh, *lh2, *lh3;
 	struct list	*wholelist = NULL;
