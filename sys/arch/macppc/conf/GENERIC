@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.112 2005/11/17 15:03:52 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.113 2005/11/19 00:45:17 kettenis Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -150,6 +150,7 @@ awacs*		at macobio?	# Apple audio device
 ki2c*		at macobio?	# Keywest I2C
 snapper*	at macobio?	# Snapper audio device
 tumbler*	at macobio?	# Tumbler audio device
+onyx*		at macobio?	# Onyx audio device
 aoa*		at macobio?	# aoa audio device
 daca*		at macobio?	# Dac3550a audio device
 
@@ -289,6 +290,7 @@ wsdisplay*	at vgafb?
 audio*		at awacs?
 audio*		at snapper?
 audio*		at tumbler?
+audio*		at onyx?
 audio*		at eap?
 audio*		at uaudio?
 audio*		at aoa?
