@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.170 2005/10/19 17:52:02 brad Exp $
+$OpenBSD: usbdevs,v 1.171 2005/11/19 08:20:50 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1858,6 +1858,7 @@ product USR MILLER_B_NF		0x00fa	USR9000	SureConnect ADSL
 /* ViewSonic products */
 product VIEWSONIC G773HUB	0x00fe	G773 Monitor Hub
 product VIEWSONIC P815HUB	0x00ff	P815 Monitor Hub
+product VIEWSONIC AIRSYNC	0x0f01	Airsync
 product VIEWSONIC G773CTRL	0x4153	G773 Monitor Control
 
 /* Vision products */
