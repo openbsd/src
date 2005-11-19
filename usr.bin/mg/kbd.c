@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.18 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.19 2005/11/19 20:14:38 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -14,7 +14,6 @@
 #include "macro.h"
 #endif /* !NO_MACRO */
 
-#ifdef DO_METAKEY
 #ifndef METABIT
 #define METABIT 0x80
 #endif /* !METABIT */
@@ -45,7 +44,6 @@ do_meta(int f, int n)
 	ewprintf("Meta keys %sabled", use_metakey ? "en" : "dis");
 	return (TRUE);
 }
-#endif /* DO_METAKEY */
 
 #ifdef BSMAP
 static int	 bs_map = BSMAP;
@@ -67,11 +65,9 @@ bsmap(int f, int n)
 void
 ungetkey(int c)
 {
-#ifdef DO_METAKEY
 	if (use_metakey && pushed && c == CCHR('['))
 		pushedc |= METABIT;
 	else
-#endif /* DO_METAKEY */
 		pushedc = c;
 	pushed = TRUE;
 }
@@ -106,13 +102,11 @@ getkey(int flag)
 		else if (c == CCHR('?'))
 			c = CCHR('H');
 #endif /* BSMAP */
-#ifdef DO_METAKEY
 	if (use_metakey && (c & METABIT)) {
 		pushedc = c & ~METABIT;
 		pushed = TRUE;
 		c = CCHR('[');
 	}
-#endif /* DO_METAKEY */
 #ifndef NO_DPROMPT
 	if (flag && promptp < &prompt[PROMPTL - 5]) {
 		promptp = keyname(promptp,
