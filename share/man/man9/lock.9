@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.11 2005/11/19 02:18:00 pedro Exp $
+.\"     $OpenBSD: lock.9,v 1.12 2005/11/19 09:33:58 jmc Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 .Nm lockmgr_printinfo ,
 .Nd kernel lock functions
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/lock.h\*[Gt]
+.Fd #include <sys/lock.h>
 .Ft void
 .Fn simple_lock_init "struct simplelock *slock"
 .Ft void
@@ -72,8 +72,7 @@ functions provide synchronisation in the kernel by preventing multiple
 processes from simultaneously executing critical sections of code
 accessing shared data.
 A number of different locks are available:
-.Pp
-.Bl -tag -width compact
+.Bl -tag -width Ds
 .It struct simplelock
 Provides a simple spinning mutex.
 A processor will busy-wait while trying to acquire a simplelock.
@@ -105,8 +104,7 @@ are provided to record additional lock information.
 These facilities are provided to assist in determining deadlock occurrences.
 .Sh FUNCTIONS
 The functions which operate on simplelocks are:
-.Pp
-.Bl -tag -width compact
+.Bl -tag -width Ds
 .It Fn simple_lock_init "slock"
 The simplelock
 .Fa slock
@@ -117,7 +115,7 @@ The effect is the same as the dynamic initialisation by a call to
 simple_lock_init.
 For example,
 .Pp
-struct simplelock slock = SIMPLELOCK_INITIALIZER;
+.Dl struct simplelock slock = SIMPLELOCK_INITIALIZER;
 .It Fn simple_lock "slock"
 The simplelock
 .Fa slock
@@ -146,14 +144,14 @@ will be released but the kernel behaviour is undefined.
 .El
 .Pp
 The functions which operate on locks are:
-.Pp
-.Bl -tag -width compact
+.Bl -tag -width Ds
 .It Fn lockinit "lock" "prio" "wmesg" "timo" "flags"
 The lock
 .Fa lock
 is initialised according to the parameters provided.
 Arguments are as follows:
-.Bl -tag -width compact
+.Pp
+.Bl -tag -width Ds -compact
 .It Fa lock
 The lock.
 .It Fa prio
@@ -169,7 +167,8 @@ Used by
 Flags to specify the lock behaviour permanently over the lifetime of
 the lock.
 Valid lock flags are:
-.Bl -tag -width compact
+.Pp
+.Bl -tag -width "LK_CANRECURSEXX" -compact
 .It LK_NOWAIT
 Processes should not sleep when attempting to acquire the lock.
 .It LK_SLEEPFAIL
@@ -181,13 +180,14 @@ Processes can acquire the lock recursively.
 .It Fn lockmgr "lock" "flags" "slock"
 Set, change or release a lock according to the parameters provided.
 Arguments are as follows:
-.Bl -tag -width compact
+.Pp
+.Bl -tag -width Ds -compact
 .It Fa lock
 The lock.
 .It Fa flags
 Flags to specify the lock request type.
 In addition to the flags specified above, the following flags are valid:
-.Bl -tag -width compact
+.Bl -tag -width Ds
 .It LK_SHARED
 Get one of many possible shared-access locks.
 If a process holding an exclusive-access lock requests a shared-access lock,
@@ -242,6 +242,7 @@ Unlock the simplelock
 .Fa slock
 when the lock is acquired.
 .El
+.Pp
 .It Fa slock
 Simplelock interlock.
 If the flag LK_INTERLOCK is set in
