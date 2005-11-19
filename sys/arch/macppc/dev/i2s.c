@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.3 2005/11/17 02:58:03 brad Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.4 2005/11/19 00:00:47 kettenis Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -60,6 +60,7 @@ static void gpio_write(char *, int);
 void i2s_mute_speaker(struct i2s_softc *, int);
 void i2s_mute_headphone(struct i2s_softc *, int);
 int i2s_cint(void *);
+u_char *i2s_gpio_map(struct i2s_softc *, char *);
 void i2s_init(struct i2s_softc *, int);
 
 static void mono16_to_stereo16(void *, u_char *, int);
@@ -120,26 +121,27 @@ void
 i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 {
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
-	int soundbus, intr[6];
+	u_int32_t reg[6], intr[6];
 
-	ca->ca_reg[0] += ca->ca_baseaddr;
-	ca->ca_reg[2] += ca->ca_baseaddr;
-	ca->ca_reg[4] += ca->ca_baseaddr;
+	sc->sc_node = OF_child(ca->ca_node);
+	sc->sc_baseaddr = ca->ca_baseaddr;
 
-	sc->sc_reg = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
+	OF_getprop(sc->sc_node, "reg", reg, sizeof reg);
+	reg[0] += sc->sc_baseaddr;
+	reg[2] += sc->sc_baseaddr;
+	reg[4] += sc->sc_baseaddr;
 
-	sc->sc_node = ca->ca_node;
+	sc->sc_reg = mapiodev(reg[0], reg[1]);
 
 	sc->sc_dmat = ca->ca_dmat;
-	sc->sc_odma = mapiodev(ca->ca_reg[2], ca->ca_reg[3]); /* out */
-	sc->sc_idma = mapiodev(ca->ca_reg[4], ca->ca_reg[5]); /* in */
+	sc->sc_odma = mapiodev(reg[2], reg[3]); /* out */
+	sc->sc_idma = mapiodev(reg[4], reg[5]); /* in */
 	sc->sc_odbdma = dbdma_alloc(sc->sc_dmat, I2S_DMALIST_MAX);
 	sc->sc_odmacmd = sc->sc_odbdma->d_addr;
 	sc->sc_idbdma = dbdma_alloc(sc->sc_dmat, I2S_DMALIST_MAX);
 	sc->sc_idmacmd = sc->sc_idbdma->d_addr;
 
-	soundbus = OF_child(ca->ca_node);
-	OF_getprop(soundbus, "interrupts", intr, sizeof intr);
+	OF_getprop(sc->sc_node, "interrupts", intr, sizeof intr);
 	cirq = intr[0];
 	oirq = intr[2];
 	iirq = intr[4];
@@ -155,7 +157,7 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
 	i2s_set_rate(sc, 44100);
-	i2s_gpio_init(sc,  sc->sc_node, parent);
+	i2s_gpio_init(sc, ca->ca_node, parent);
 }
 
 int
@@ -1033,6 +1035,23 @@ i2s_cint(v)
 	return 1;
 }
 
+u_char *
+i2s_gpio_map(struct i2s_softc *sc, char *name)
+{
+	u_int32_t reg[2];
+	int gpio;
+
+	if (OF_getprop(sc->sc_node, name, &gpio,
+            sizeof(gpio)) != sizeof(gpio) ||
+	    OF_getprop(gpio, "reg", &reg[0],
+	    sizeof(reg[0])) != sizeof(reg[0]) ||
+	    OF_getprop(OF_parent(gpio), "reg", &reg[1],
+	    sizeof(reg[1])) != sizeof(reg[1]))
+		return NULL;
+
+	return mapiodev(sc->sc_baseaddr + reg[0] + reg[1], 1);
+}
+
 void
 i2s_gpio_init(sc, node, parent)
 	struct i2s_softc *sc;
@@ -1041,6 +1060,10 @@ i2s_gpio_init(sc, node, parent)
 {
 	int gpio;
 	int headphone_detect_intr = -1, headphone_detect_intrtype;
+
+	/* Map gpios. */
+	amp_mute = i2s_gpio_map(sc, "platform-amp-mute");
+	audio_hw_reset = i2s_gpio_map(sc, "platform-hw-reset");
 
 	gpio = OF_getnodebyname(OF_parent(node), "gpio");
 	DPRINTF((" /gpio 0x%x\n", gpio));
