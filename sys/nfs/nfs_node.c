@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.29 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.30 2005/11/19 15:48:04 pedro Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ loop:
 		np->n_fhp = &np->n_fh;
 	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
-	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
+	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 	*npp = np;
 	return (0);
 }
