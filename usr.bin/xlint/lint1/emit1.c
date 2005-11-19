@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit1.c,v 1.4 2005/01/24 00:25:15 millert Exp $	*/
+/*	$OpenBSD: emit1.c,v 1.5 2005/11/19 03:35:27 cloder Exp $	*/
 /*	$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: emit1.c,v 1.4 2005/01/24 00:25:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: emit1.c,v 1.5 2005/11/19 03:35:27 cloder Exp $";
 #endif
 
 #include <ctype.h>
@@ -83,8 +83,7 @@ static	void	outfstrg(strg_t *);
  * and 'v' (for volatile)
  */
 void
-outtype(tp)
-	type_t	*tp;
+outtype(type_t *tp)
 {
 	int	t, s, na;
 	sym_t	*arg;
@@ -154,8 +153,7 @@ outtype(tp)
  * it uses its own output buffer for conversion
  */
 const char *
-ttos(tp)
-	type_t	*tp;
+ttos(type_t *tp)
 {
 	static	ob_t	tob;
 	ob_t	tmp;
@@ -185,8 +183,7 @@ ttos(tp)
  * refers to this tag, this typename is written
  */
 static void
-outtt(tag, tdef)
-	sym_t	*tag, *tdef;
+outtt(sym_t *tag, sym_t *tdef)
 {
 	if (tag->s_name != unnamed) {
 		outint(1);
@@ -207,10 +204,7 @@ outtt(tag, tdef)
  * not here
  */
 void
-outsym(sym, sc, def)
-        sym_t	*sym;
-	scl_t	sc;
-	def_t	def;
+outsym(sym_t *sym, scl_t sc, def_t def)
 {
 	/*
 	 * Static function declarations must also be written to the output
@@ -278,10 +272,7 @@ outsym(sym, sc, def)
  * they are called with proper argument types
  */
 void
-outfdef(fsym, posp, rval, osdef, args)
-	sym_t	*fsym, *args;
-	pos_t	*posp;
-	int	rval, osdef;
+outfdef(sym_t *fsym, pos_t *posp, int rval, int osdef, sym_t *args)
 {
 	int	narg;
 	sym_t	*arg;
@@ -377,9 +368,7 @@ outfdef(fsym, posp, rval, osdef, args)
  * (casted to void)
  */
 void
-outcall(tn, rvused, rvdisc)
-	tnode_t	*tn;
-	int	rvused, rvdisc;
+outcall(tnode_t *tn, int rvused, int rvdisc)
 {
 	tnode_t	*args, *arg;
 	int	narg, n, i;
@@ -465,11 +454,10 @@ outcall(tn, rvused, rvdisc)
 
 /*
  * extracts potential format specifiers for printf() and scanf() and
- * writes them, enclosed in "" and qouted if necessary, to the output buffer
+ * writes them, enclosed in "" and quoted if necessary, to the output buffer
  */
 static void
-outfstrg(strg)
-	strg_t	*strg;
+outfstrg(strg_t *strg)
 {
 	int	c, oc, first;
 	u_char	*cp;
@@ -568,8 +556,7 @@ outfstrg(strg)
  * writes a record if sym was used
  */
 void
-outusg(sym)
-	sym_t	*sym;
+outusg(sym_t *sym)
 {
 	/* reset buffer */
 	outclr();

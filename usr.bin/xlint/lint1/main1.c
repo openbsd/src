@@ -1,4 +1,4 @@
-/*	$OpenBSD: main1.c,v 1.3 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: main1.c,v 1.4 2005/11/19 03:35:27 cloder Exp $	*/
 /*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main1.c,v 1.3 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: main1.c,v 1.4 2005/11/19 03:35:27 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -108,9 +108,7 @@ int	zflag = 1;
 static	void	usage(void);
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	c;
 
@@ -169,14 +167,14 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: lint1 [-abcdeghprstuvyzF] src dest\n");
 	exit(1);
 }
 	
 void
-norecover()
+norecover(void)
 {
 	/* cannot recover from previous errors */
 	error(224);

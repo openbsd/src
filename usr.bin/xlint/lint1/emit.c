@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit.c,v 1.6 2004/11/29 06:20:03 jsg Exp $	*/
+/*	$OpenBSD: emit.c,v 1.7 2005/11/19 03:35:27 cloder Exp $	*/
 /*	$NetBSD: emit.c,v 1.2 1995/07/03 21:24:00 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: emit.c,v 1.6 2004/11/29 06:20:03 jsg Exp $";
+static char rcsid[] = "$OpenBSD: emit.c,v 1.7 2005/11/19 03:35:27 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -57,8 +57,7 @@ static	void	outxbuf(void);
  * initialize output
  */
 void
-outopen(name)
-	const	char *name;
+outopen(const char *name)
 {
 	loname = name;
 
@@ -75,7 +74,7 @@ outopen(name)
  * flush output buffer and close file
  */
 void
-outclose()
+outclose(void)
 {
 	outclr();
 	if (fclose(lout) == EOF)
@@ -86,7 +85,7 @@ outclose()
  * resize output buffer
  */
 static void
-outxbuf()
+outxbuf(void)
 {
 	ptrdiff_t coffs;
 
@@ -101,7 +100,7 @@ outxbuf()
  * if it is not empty, it is flushed
  */
 void
-outclr()
+outclr(void)
 {
 	size_t	sz;
 
@@ -120,8 +119,7 @@ outclr()
  * write a character to the output buffer
  */
 void
-outchar(c)
-	int	c;
+outchar(int c)
 {
 	if (ob.o_nxt == ob.o_end)
 		outxbuf();
@@ -132,8 +130,7 @@ outchar(c)
  * write a character to the output buffer, qouted if necessary
  */
 void
-outqchar(c)
-	int	c;
+outqchar(int c)
 {
 	if (isprint(c) && c != '\\' && c != '"' && c != '\'') {
 		outchar(c);
@@ -185,8 +182,7 @@ outqchar(c)
  * should be quoted
  */
 void
-outstrg(s)
-	const	char *s;
+outstrg(const char *s)
 {
 	while (*s != '\0') {
 		if (ob.o_nxt == ob.o_end)
@@ -199,8 +195,7 @@ outstrg(s)
  * write an integer value to toe output buffer
  */
 void
-outint(i)
-	int	i;
+outint(int i)
 {
 	if ((ob.o_end - ob.o_nxt) < 12)
 		outxbuf();
@@ -213,8 +208,7 @@ outint(i)
  * the name is preceded by its length
  */
 void
-outname(name)
-	const	char *name;
+outname(const char *name)
 {
 	if (name == NULL)
 		errx(1, "internal error: outname() 1");
@@ -226,8 +220,7 @@ outname(name)
  * write the name of the .c source
  */
 void
-outsrc(name)
-	const	char *name;
+outsrc(const char *name)
 {
 	outclr();
 	outchar('S');

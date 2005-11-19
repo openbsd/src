@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.5 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: err.c,v 1.6 2005/11/19 03:35:27 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.5 2002/02/19 19:39:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.6 2005/11/19 03:35:27 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -370,8 +370,7 @@ const	char *msgs[] = {
  * component of the path, otherwise it returns the argument.
  */
 static const char *
-basename(path)
-	const	char *path;
+basename(const char *path)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -389,9 +388,7 @@ basename(path)
 }
 
 static void
-verror(n, ap)
-	int	n;
-	va_list	ap;
+verror(int n, va_list ap)
 {
 	const	char *fn;
 
@@ -403,9 +400,7 @@ verror(n, ap)
 }
 
 static void
-vwarning(n, ap)
-	int	n;
-	va_list	ap;
+vwarning(int n, va_list ap)
 {
 	const	char *fn;
 

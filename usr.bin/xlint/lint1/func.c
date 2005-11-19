@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.5 2004/05/10 15:26:22 deraadt Exp $	*/
+/*	$OpenBSD: func.c,v 1.6 2005/11/19 03:35:27 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.5 2004/05/10 15:26:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.6 2005/11/19 03:35:27 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -139,8 +139,7 @@ int	quadflg = 1;
  * Puts a new element at the top of the stack used for control statements.
  */
 void
-pushctrl(env)
-	int	env;
+pushctrl(int env)
 {
 	cstk_t	*ci;
 
@@ -154,8 +153,7 @@ pushctrl(env)
  * Removes the top element of the stack used for control statements.
  */
 void
-popctrl(env)
-	int	env;
+popctrl(int env)
 {
 	cstk_t	*ci;
 	clst_t	*cl;
@@ -180,7 +178,7 @@ popctrl(env)
  * Prints a warning if a statement cannot be reached.
  */
 void
-chkreach()
+chkreach(void)
 {
 	if (!reached && !rchflg) {
 		/* statement not reached */
@@ -200,8 +198,7 @@ chkreach()
  * redeclaration etc..
  */
 void
-funcdef(fsym)
-	sym_t	*fsym;
+funcdef(sym_t *fsym)
 {
 	int	n, warn;
 	sym_t	*arg, *sym, *rdsym;
@@ -333,7 +330,7 @@ funcdef(fsym)
  * Called at the end of a function definition.
  */
 void
-funcend()
+funcend(void)
 {
 	sym_t	*arg;
 	int	n;
@@ -399,10 +396,7 @@ funcend()
  * tn		expression if typ == T_CASE
  */
 void
-label(typ, sym, tn)
-	int	typ;
-	sym_t	*sym;
-	tnode_t	*tn;
+label(int typ, sym_t *sym, tnode_t *tn)
 {
 	cstk_t	*ci;
 	clst_t	*cl;
@@ -520,8 +514,7 @@ label(typ, sym, tn)
  * T_IF T_LPARN expr T_RPARN
  */
 void
-if1(tn)
-	tnode_t	*tn;
+if1(tnode_t *tn)
 {
 	if (tn != NULL)
 		tn = cconv(tn);
@@ -536,7 +529,7 @@ if1(tn)
  * if_without_else T_ELSE
  */
 void
-if2()
+if2(void)
 {
 	cstk->c_rchif = reached ? 1 : 0;
 	reached = 1;
@@ -547,8 +540,7 @@ if2()
  * if_without_else T_ELSE stmnt
  */
 void
-if3(els)
-	int	els;
+if3(int els)
 {
 	if (els) {
 		reached |= cstk->c_rchif;
@@ -562,8 +554,7 @@ if3(els)
  * T_SWITCH T_LPARN expr T_RPARN
  */
 void
-switch1(tn)
-	tnode_t	*tn;
+switch1(tnode_t *tn)
 {
 	tspec_t	t;
 	type_t	*tp;
@@ -614,7 +605,7 @@ switch1(tn)
  * switch_expr stmnt
  */
 void
-switch2()
+switch2(void)
 {
 	int	nenum, nclab;
 	sym_t	*esym;
@@ -669,8 +660,7 @@ switch2()
  * T_WHILE T_LPARN expr T_RPARN
  */
 void
-while1(tn)
-	tnode_t	*tn;
+while1(tnode_t *tn)
 {
 	if (!reached) {
 		/* loop not entered at top */
@@ -706,7 +696,7 @@ while1(tn)
  * while_expr error
  */
 void
-while2()
+while2(void)
 {
 	/*
 	 * The end of the loop can be reached if it is no endless loop
@@ -722,7 +712,7 @@ while2()
  * T_DO
  */
 void
-do1()
+do1(void)
 {
 	if (!reached) {
 		/* loop not entered at top */
@@ -739,8 +729,7 @@ do1()
  * do error
  */
 void
-do2(tn)
-	tnode_t	*tn;
+do2(tnode_t *tn)
 {
 	/*
 	 * If there was a continue statement the expression controlling the
@@ -783,8 +772,7 @@ do2(tn)
  * T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN
  */
 void
-for1(tn1, tn2, tn3)
-	tnode_t	*tn1, *tn2, *tn3;
+for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 {
 	/*
 	 * If there is no initialisation expression it is possible that
@@ -844,7 +832,7 @@ for1(tn1, tn2, tn3)
  * for_exprs error
  */
 void
-for2()
+for2(void)
 {
 	pos_t	cpos, cspos;
 	tnode_t	*tn3;
@@ -889,8 +877,7 @@ for2()
  * T_GOTO error T_SEMI
  */
 void
-dogoto(lab)
-	sym_t	*lab;
+dogoto(sym_t *lab)
 {
 	setuflg(lab, 0, 0);
 
@@ -903,7 +890,7 @@ dogoto(lab)
  * T_BREAK T_SEMI
  */
 void
-dobreak()
+dobreak(void)
 {
 	cstk_t	*ci;
 
@@ -929,7 +916,7 @@ dobreak()
  * T_CONTINUE T_SEMI
  */
 void
-docont()
+docont(void)
 {
 	cstk_t	*ci;
 
@@ -952,8 +939,7 @@ docont()
  * T_RETURN expr T_SEMI
  */
 void
-doreturn(tn)
-	tnode_t	*tn;
+doreturn(tnode_t *tn)
 {
 	tnode_t	*ln, *rn;
 	cstk_t	*ci;
@@ -1021,8 +1007,7 @@ doreturn(tn)
  * Especially remove informations about unused lint comments.
  */
 void
-glclup(silent)
-	int	silent;
+glclup(int silent)
 {
 	pos_t	cpos;
 
@@ -1073,8 +1058,7 @@ glclup(silent)
  * for usage. A missing argument is taken to be 0.
  */
 void
-argsused(n)
-	int	n;
+argsused(int n)
 {
 	if (n == -1)
 		n = 0;
@@ -1099,8 +1083,7 @@ argsused(n)
  * to the function definition. A missing argument is taken to be 0.
  */
 void
-varargs(n)
-	int	n;
+varargs(int n)
 {
 	if (n == -1)
 		n = 0;
@@ -1125,8 +1108,7 @@ varargs(n)
  * used the check the types of remaining arguments.
  */
 void
-printflike(n)
-	int	n;
+printflike(int n)
 {
 	if (n == -1)
 		n = 0;
@@ -1151,8 +1133,7 @@ printflike(n)
  * used the check the types of remaining arguments.
  */
 void
-scanflike(n)
-	int	n;
+scanflike(int n)
 {
 	if (n == -1)
 		n = 0;
@@ -1176,8 +1157,7 @@ scanflike(n)
  */
 /* ARGSUSED */
 void
-constcond(n)
-	int	n;
+constcond(int n)
 {
 	ccflg = 1;
 }
@@ -1188,8 +1168,7 @@ constcond(n)
  */
 /* ARGSUSED */
 void
-fallthru(n)
-	int	n;
+fallthru(int n)
 {
 	ftflg = 1;
 }
@@ -1200,8 +1179,7 @@ fallthru(n)
  */
 /* ARGSUSED */
 void
-notreach(n)
-	int	n;
+notreach(int n)
 {
 	reached = 0;
 	rchflg = 1;
@@ -1209,8 +1187,7 @@ notreach(n)
 
 /* ARGSUSED */
 void
-lintlib(n)
-	int	n;
+lintlib(int n)
 {
 	if (dcs->d_ctx != EXTERN) {
 		/* must be outside function: ** %s ** */
@@ -1226,8 +1203,7 @@ lintlib(n)
  */
 /* ARGSUSED */
 void
-linted(n)
-	int	n;
+linted(int n)
 {
 	nowarn = 1;
 }
@@ -1238,8 +1214,7 @@ linted(n)
  * to PROTOLIB is nonzero. Otherwise prototypes are handled normaly.
  */
 void
-protolib(n)
-	int	n;
+protolib(int n)
 {
 	if (dcs->d_ctx != EXTERN) {
 		/* must be outside function: ** %s ** */
@@ -1255,8 +1230,7 @@ protolib(n)
  */
 /* ARGSUSED */
 void
-longlong(n)
-	int	n;
+longlong(int n)
 {
 	quadflg = 1;
 }
