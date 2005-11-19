@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.10 2004/01/27 06:58:03 tedu Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.11 2005/11/19 01:51:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -1785,7 +1785,7 @@ count_stmts(p)
 		return 0;
 	Mark(p);
 	n = count_stmts(JT(p)) + count_stmts(JF(p));
-	return slength(p->stmts) + n + 1;
+	return slength(p->stmts) + n + 1 + p->longjt + p->longjf;
 }
 
 /*
