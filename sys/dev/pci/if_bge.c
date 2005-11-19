@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.92 2005/11/14 13:11:40 mickey Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.93 2005/11/19 23:04:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1058,10 +1058,14 @@ bge_init_tx_ring(struct bge_softc *sc)
 
 	sc->bge_txcnt = 0;
 	sc->bge_tx_saved_considx = 0;
-	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
-	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
-		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
 
+	/* Initialize transmit producer index for host-memory send ring. */
+	sc->bge_tx_prodidx = 0;
+	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, sc->bge_tx_prodidx);
+	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
+		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, sc->bge_tx_prodidx);
+
+	/* NIC-memory send ring not used; initialize to zero. */
 	CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
 		CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
@@ -2805,7 +2809,7 @@ bge_start(struct ifnet *ifp)
 {
 	struct bge_softc *sc;
 	struct mbuf *m_head = NULL;
-	u_int32_t prodidx = 0;
+	u_int32_t prodidx;
 	int pkts = 0;
 
 	sc = ifp->if_softc;
@@ -2813,7 +2817,7 @@ bge_start(struct ifnet *ifp)
 	if (!sc->bge_link && ifp->if_snd.ifq_len < 10)
 		return;
 
-	prodidx = CSR_READ_4(sc, BGE_MBX_TX_HOST_PROD0_LO);
+	prodidx = sc->bge_tx_prodidx;
 
 	while(sc->bge_cdata.bge_tx_chain[prodidx] == NULL) {
 		IFQ_POLL(&ifp->if_snd, m_head);
@@ -2869,6 +2873,8 @@ bge_start(struct ifnet *ifp)
 	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
 	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
 		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
+
+	sc->bge_tx_prodidx = prodidx;
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
