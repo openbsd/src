@@ -1,4 +1,4 @@
-/*	$OpenBSD: hyper.c,v 1.9 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: hyper.c,v 1.10 2005/11/19 01:59:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -159,7 +159,7 @@ hyper_attach(struct device *parent, struct device *self, void *aux)
 	scode = da->da_scode;
 	if (scode == conscode) {
 		fbr = (struct diofbreg *)conaddr;	/* already mapped */
-		sc->sc_fb = &diofb_cn;;
+		sc->sc_fb = &diofb_cn;
 	} else {
 		sc->sc_fb = &sc->sc_fb_store;
 		fbr = (struct diofbreg *)

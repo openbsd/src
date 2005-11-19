@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.10 2005/11/07 03:20:00 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.11 2005/11/19 01:59:37 aaron Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -295,7 +295,7 @@ mtd_miibus_writereg(struct device *self, int phy, int reg, int val)
 		for (mask = 0x8000; mask; mask >>= 1) {
 			miir &= ~(MIIMGT_MDC | MIIMGT_MDO);
 			if (mask & (u_int32_t)val)
-				miir |= MIIMGT_MDO;;
+				miir |= MIIMGT_MDO;
 			CSR_WRITE_4(MTD_MIIMGT, miir);
 			miir |= MIIMGT_MDC;
 			CSR_WRITE_4(MTD_MIIMGT, miir);

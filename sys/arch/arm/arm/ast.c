@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.4 2005/03/04 00:56:42 martin Exp $	*/
+/*	$OpenBSD: ast.c,v 1.5 2005/11/19 01:59:36 aaron Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ userret(struct proc *p, u_int32_t pc, quad_t oticks)
 void
 ast(struct trapframe *tf)
 {
-	struct proc *p = curproc;;
+	struct proc *p = curproc;
 
 #ifdef acorn26
 	/* Enable interrupts if they were enabled before the trap. */

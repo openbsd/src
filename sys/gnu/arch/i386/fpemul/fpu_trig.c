@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_trig.c,v 1.2 2003/07/30 21:30:31 jason Exp $	*/
+/*	$OpenBSD: fpu_trig.c,v 1.3 2005/11/19 01:59:37 aaron Exp $	*/
 /*
  *  fpu_trig.c
  *
@@ -103,7 +103,7 @@ trig_arg(FPU_REG * X)
 	rv = q & 7;
 
 	control_word = old_cw;
-	return rv;;
+	return rv;
 }
 
 

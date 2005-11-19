@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.3 2003/11/26 02:21:53 kevlo Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.4 2005/11/19 01:59:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -97,7 +97,7 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, GCB_WDTO, 0);
 	sts |= WDOVF_CLEAR;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, GCB_WDSTS, sts);
-	cnfg &= ~WDCNFG_MASK;;
+	cnfg &= ~WDCNFG_MASK;
 	cnfg |= WDTYPE1_RESET|WDPRES_DIV_512;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, GCB_WDCNFG, cnfg);
 
