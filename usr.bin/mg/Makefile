@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2005/03/10 18:27:47 henning Exp $
+# $OpenBSD: Makefile,v 1.16 2005/11/19 22:05:45 kjell Exp $
 
 PROG=	mg
 
@@ -7,7 +7,6 @@ DPADD+=	${LIBCURSES}
 
 # (Common) compile-time options:
 #
-#	DO_METAKEY	-- if bit 7 is set for a key, treat like a META key
 #	STARTUP		-- look for and handle initialization file
 #	FKEYS		-- add support for function key sequences.
 #	XKEYS		-- use termcap function key definitions. Warning -
@@ -16,7 +15,7 @@ DPADD+=	${LIBCURSES}
 #	PREFIXREGION	-- enable function "prefix-region"
 #	REGEX		-- create regular expression functions
 #
-CFLAGS+=-Wall -DDO_METAKEY -DPREFIXREGION -DXKEYS -DFKEYS -DREGEX
+CFLAGS+=-Wall -DPREFIXREGION -DXKEYS -DFKEYS -DREGEX
 
 SRCS=	cinfo.c fileio.c spawn.c ttyio.c tty.c ttykbd.c \
 	basic.c dir.c dired.c file.c line.c match.c paragraph.c \
