@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.14 2005/05/29 03:20:42 deraadt Exp $	*/
+/*	$OpenBSD: lock.h,v 1.15 2005/11/19 02:18:01 pedro Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -205,8 +205,7 @@ struct proc;
 
 void	lockinit(struct lock *, int prio, char *wmesg, int timo,
 			int flags);
-int	lockmgr(__volatile struct lock *, u_int flags,
-			struct simplelock *, struct proc *p);
+int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
 void	lockmgr_printinfo(__volatile struct lock *);
 int	lockstatus(struct lock *);
 
@@ -214,7 +213,7 @@ int	lockstatus(struct lock *);
 #define spinlockinit(lkp, name, flags)					\
 	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
 #define spinlockmgr(lkp, flags, intrlk)					\
-	lockmgr((lkp), (flags) | LK_SPIN, (intrlk), curproc)
+	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
 #else
 #define spinlockinit(lkp, name, flags)	(void)(lkp)
 #define spinlockmgr(lkp, flags, intrlk)	(0)

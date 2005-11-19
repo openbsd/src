@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.7 2005/05/24 05:43:31 brad Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.8 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -394,11 +394,8 @@ ntfs_ntget(
 
 	simple_lock(&ip->i_interlock);
 	ip->i_usecount++;
-#ifndef __OpenBSD__
+
 	lockmgr(&ip->i_lock, LK_EXCLUSIVE | LK_INTERLOCK, &ip->i_interlock);
-#else
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE | LK_INTERLOCK, &ip->i_interlock, p);
-#endif
 
 	return 0;
 }
@@ -437,11 +434,7 @@ ntfs_ntlookup(
 			*ipp = ip;
 			return (0);
 		}
-#ifndef __OpenBSD__
 	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE | LK_SLEEPFAIL, NULL));
-#else
-	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE | LK_SLEEPFAIL, NULL, p));
-#endif
 
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
@@ -468,11 +461,7 @@ ntfs_ntlookup(
 
 	ntfs_nthashins(ip);
 
-#ifndef __OpenBSD__
 	lockmgr(&ntfs_hashlock, LK_RELEASE, NULL);
-#else
-	lockmgr(&ntfs_hashlock, LK_RELEASE, NULL, p);
-#endif
 
 	*ipp = ip;
 
@@ -512,11 +501,7 @@ ntfs_ntput(
 #endif
 
 	if (ip->i_usecount > 0) {
-#ifndef __OpenBSD__
 		lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
-#else
-		lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock, p);
-#endif
 		return;
 	}
 
@@ -2111,12 +2096,8 @@ ntfs_toupper_use(mp, ntmp, p)
 	struct vnode *vp;
 
 	/* get exclusive access */
-#ifndef __OpenBSD__
 	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
-#else
-	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL, p);
-#endif
-	
+
 	/* only read the translation data from a file if it hasn't been
 	 * read already */
 	if (ntfs_toupper_tab)
@@ -2139,11 +2120,7 @@ ntfs_toupper_use(mp, ntmp, p)
 
     out:
 	ntfs_toupper_usecount++;
-#ifndef __OpenBSD__
 	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
-#else
-	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL, p);
-#endif
 	return (error);
 }
 
@@ -2160,11 +2137,7 @@ ntfs_toupper_unuse(p)
 #endif
 {
 	/* get exclusive access */
-#ifndef __OpenBSD__
 	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
-#else
-	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL, p);
-#endif
 
 	ntfs_toupper_usecount--;
 	if (ntfs_toupper_usecount == 0) {
@@ -2179,9 +2152,5 @@ ntfs_toupper_unuse(p)
 #endif
 	
 	/* release the lock */
-#ifndef __OpenBSD__
 	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
-#else
-	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL, p);
-#endif
-} 
+}

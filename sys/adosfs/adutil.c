@@ -1,4 +1,4 @@
-/*	$OpenBSD: adutil.c,v 1.14 2003/12/21 15:28:59 miod Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.15 2005/11/19 02:18:00 pedro Exp $	*/
 /*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
 
 /*
@@ -88,20 +88,17 @@ adosfs_ainshash(amp, ap)
 	struct adosfsmount *amp;
 	struct anode *ap;
 {
-	struct proc *p = curproc;		/* XXX */
 	struct anodechain *hp;
 	struct anode *aq;
 
 	/* lock the inode, then put it on the appropriate hash list */
-	lockmgr(&ap->a_lock, LK_EXCLUSIVE, (struct simplelock *)0, p);
+	lockmgr(&ap->a_lock, LK_EXCLUSIVE, NULL);
 
 	hp = &amp->anodetab[AHASH(ap->block)];
 
 	for (aq = hp->lh_first; aq ; aq = aq->link.le_next) {
 		if (aq->block == ap->block) {
-			lockmgr(&ap->a_lock, LK_RELEASE,
-				(struct simplelock *)0, p);
-
+			lockmgr(&ap->a_lock, LK_RELEASE, NULL);
 			return (EEXIST);
 		}
 	}

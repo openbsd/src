@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.37 2004/05/20 18:32:37 tedu Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.38 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -190,12 +190,12 @@ fdesc_allocvp(ftype, ix, mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
-	struct proc *p = curproc;       /* XXX */
+	struct proc *p = curproc;
 	struct fdhashhead *fc;
 	struct fdescnode *fd;
 	int error = 0;
 
-	if ((error = lockmgr(&fdcache_lock, LK_EXCLUSIVE, NULL, p)) != 0)
+	if ((error = lockmgr(&fdcache_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return error;
 
 	fc = FD_NHASH(ix);
@@ -222,7 +222,7 @@ loop:
 	LIST_INSERT_HEAD(fc, fd, fd_hash);
 
 out:
-	lockmgr(&fdcache_lock, LK_RELEASE, NULL, p);
+	lockmgr(&fdcache_lock, LK_RELEASE, NULL);
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.133 2005/11/10 08:10:16 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.134 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -202,13 +202,13 @@ sys___sysctl(p, v, retval)
 	    (error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
-		if ((error = lockmgr(&sysctl_lock, LK_EXCLUSIVE, NULL, p)) != 0)
+		if ((error = lockmgr(&sysctl_lock, LK_EXCLUSIVE, NULL)) != 0)
 			return (error);
 		if (dolock) {
 			error = uvm_vslock(p, SCARG(uap, old), oldlen,
 			    VM_PROT_READ|VM_PROT_WRITE);
 			if (error) {
-				lockmgr(&sysctl_lock, LK_RELEASE, NULL, p);
+				lockmgr(&sysctl_lock, LK_RELEASE, NULL);
 				return (error);
 			}
 		}
@@ -219,7 +219,7 @@ sys___sysctl(p, v, retval)
 	if (SCARG(uap, old) != NULL) {
 		if (dolock)
 			uvm_vsunlock(p, SCARG(uap, old), savelen);
-		lockmgr(&sysctl_lock, LK_RELEASE, NULL, p);
+		lockmgr(&sysctl_lock, LK_RELEASE, NULL);
 	}
 	if (error)
 		return (error);
@@ -1615,7 +1615,7 @@ sysctl_diskinit(update, p)
 	struct disk *dk;
 	int i, tlen, l;
 
-	if ((i = lockmgr(&sysctl_disklock, LK_EXCLUSIVE, NULL, p)) != 0)
+	if ((i = lockmgr(&sysctl_disklock, LK_EXCLUSIVE, NULL)) != 0)
 		return i;
 
 	if (disk_change) {
@@ -1676,7 +1676,7 @@ sysctl_diskinit(update, p)
 			sdk->ds_time = dk->dk_time;
 		}
 	}
-	lockmgr(&sysctl_disklock, LK_RELEASE, NULL, p);
+	lockmgr(&sysctl_disklock, LK_RELEASE, NULL);
 	return 0;
 }
 

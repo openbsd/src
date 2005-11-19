@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.31 2005/11/13 02:38:27 dlg Exp $ */
+/*	$OpenBSD: ses.c,v 1.32 2005/11/19 02:18:01 pedro Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -212,7 +212,7 @@ ses_detach(struct device *self, int flags)
 	struct ses_slot			*slot;
 #endif
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
 #if NBIO > 0
 	if (!TAILQ_EMPTY(&sc->sc_slots)) {
@@ -239,8 +239,8 @@ ses_detach(struct device *self, int flags)
 	if (sc->sc_buf != NULL)
 		free(sc->sc_buf, M_DEVBUF);
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
-	lockmgr(&sc->sc_lock, LK_DRAIN, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
 
 	return (0);
 }
@@ -496,11 +496,11 @@ ses_refresh_sensors(void *arg)
 	struct ses_sensor		*sensor;
 	int				ret = 0;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
 	if (ses_read_status(sc) != 0) {
 		printf("%s: unable to read enclosure status\n", DEVNAME(sc));
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		return;
 	}
 
@@ -550,7 +550,7 @@ ses_refresh_sensors(void *arg)
 		}
 	}
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 
 	if (ret)
 		printf("%s: error in sensor data\n");
@@ -606,10 +606,10 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 {
 	struct ses_slot			*slot;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
 	if (ses_read_status(sc) != 0) {
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		return (EIO);
 	}
 
@@ -619,7 +619,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 	}
 
 	if (slot == TAILQ_END(&sc->sc_slots)) {
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		return (EINVAL);
 	}
 
@@ -641,7 +641,7 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 		break;
 
 	default:
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		return (EINVAL);
 	}
 
@@ -650,11 +650,11 @@ ses_bio_blink(struct ses_softc *sc, struct bioc_blink *blink)
 	    slot->sl_stat->f3);
 
 	if (ses_write_config(sc) != 0) {
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		return (EIO);
 	}
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 
 	return (0);
 }

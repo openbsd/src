@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.7 2005/11/15 23:28:52 dlg Exp $	*/
+/*	$OpenBSD: smu.c,v 1.8 2005/11/19 02:18:00 pedro Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -393,7 +393,7 @@ smu_time_read(time_t *secs)
 	struct clock_ymdhms dt;
 	int error;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
 	cmd->cmd = SMU_RTC;
 	cmd->len = 1;
@@ -411,7 +411,7 @@ smu_time_read(time_t *secs)
 	dt.dt_min = FROMBCD(cmd->data[1]);
 	dt.dt_sec = FROMBCD(cmd->data[0]);
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 
 	*secs = clock_ymdhms_to_secs(&dt);
 	return (0);
@@ -427,7 +427,7 @@ smu_time_write(time_t secs)
 
 	clock_secs_to_ymdhms(secs, &dt);
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
 	cmd->cmd = SMU_RTC;
 	cmd->len = 8;
@@ -441,7 +441,7 @@ smu_time_write(time_t secs)
 	cmd->data[7] = TOBCD(dt.dt_year - 2000);
 	error = smu_do_cmd(sc, 800);
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 
 	return (error);
 }
@@ -581,12 +581,12 @@ smu_refresh_sensors(void *arg)
 	struct smu_softc *sc = arg;
 	int i;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 	for (i = 0; i < sc->sc_num_sensors; i++)
 		smu_sensor_refresh(sc, &sc->sc_sensors[i]);
 	for (i = 0; i < sc->sc_num_fans; i++)
 		smu_fan_refresh(sc, &sc->sc_fans[i]);
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 }
 
 int
@@ -597,7 +597,7 @@ smu_i2c_acquire_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return (0);
 
-	return (lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc));
+	return (lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL));
 }
 
 void
@@ -608,7 +608,7 @@ smu_i2c_release_bus(void *cookie, int flags)
         if (flags & I2C_F_POLL)
                 return;
 
-        lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+        lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 }
 
 int

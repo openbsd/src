@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.14 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.15 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -181,7 +181,6 @@ int
 cd9660_ihashins(ip)
 	struct iso_node *ip;
 {
-	struct proc *p = curproc;
 	struct iso_node **ipp, *iq;
 
 	simple_lock(&cd9660_ihash_slock);
@@ -200,7 +199,8 @@ cd9660_ihashins(ip)
 	*ipp = ip;
 	simple_unlock(&cd9660_ihash_slock);
 
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE, 0, p);
+	lockmgr(&ip->i_lock, LK_EXCLUSIVE, NULL);
+
 	return (0);
 }
 

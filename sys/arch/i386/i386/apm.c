@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.66 2005/06/16 16:49:04 beck Exp $	*/
+/*	$OpenBSD: apm.c,v 1.67 2005/11/19 02:18:00 pedro Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -75,8 +75,8 @@
 #define	DPRINTF(x)	/**/
 #endif
 
-#define	APM_LOCK(sc)	lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL, curproc)
-#define	APM_UNLOCK(sc)	lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL, curproc)
+#define	APM_LOCK(sc)	lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL)
+#define	APM_UNLOCK(sc)	lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL)
 
 struct cfdriver apm_cd = {
 	NULL, "apm", DV_DULL

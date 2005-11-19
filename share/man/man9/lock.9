@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.10 2005/02/20 15:14:05 jmc Exp $
+.\"     $OpenBSD: lock.9,v 1.11 2005/11/19 02:18:00 pedro Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,8 +60,7 @@
 .Fn lockinit "struct lock *lock" "int prio" "const char *wmesg" \
 "int timo" "int flags"
 .Ft int
-.Fn lockmgr "struct lock *lock" "u_int flags" "struct simplelock *slock" \
-"struct proc *p"
+.Fn lockmgr "struct lock *lock" "u_int flags" "struct simplelock *slock"
 .Ft int
 .Fn lockstatus "struct lock *lock"
 .Ft void
@@ -179,7 +178,7 @@ Processes should sleep, then return failure when acquiring the lock.
 Processes can acquire the lock recursively.
 .El
 .El
-.It Fn lockmgr "lock" "flags" "slock" "p"
+.It Fn lockmgr "lock" "flags" "slock"
 Set, change or release a lock according to the parameters provided.
 Arguments are as follows:
 .Bl -tag -width compact
@@ -255,9 +254,6 @@ is acquired, the simplelock is released.
 If the flag LK_INTERLOCK is not set,
 .Fa slock
 is ignored.
-.It Fa p
-Should always point to the current process
-.Va curproc .
 .El
 .It Fn lockstatus "lock"
 Determine the status of lock

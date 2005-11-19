@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.28 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.29 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -114,12 +114,12 @@ loop:
 		*npp = np;
 		return(0);
 	}
-	if (lockmgr(&nfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL, p))
+	if (lockmgr(&nfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL))
 		goto loop;
 	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp);
 	if (error) {
 		*npp = 0;
-		lockmgr(&nfs_hashlock, LK_RELEASE, NULL, p);
+		lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
 		return (error);
 	}
 	vp = nvp;
@@ -151,7 +151,7 @@ loop:
 		np->n_fhp = &np->n_fh;
 	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
-	lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
+	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 	*npp = np;
 	return (0);
 }

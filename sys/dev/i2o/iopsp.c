@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.7 2003/01/13 03:56:47 mickey Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.8 2005/11/19 02:18:00 pedro Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -376,7 +376,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 
-	rv = lockmgr(&iop->sc_conflock, LK_EXCLUSIVE, NULL, curproc);
+	rv = lockmgr(&iop->sc_conflock, LK_EXCLUSIVE, NULL);
 	if (rv != 0) {
 #ifdef I2ODEBUG
 		printf("iopsp_rescan: unable to acquire lock\n");
@@ -400,7 +400,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 	if ((rv = iop_lct_get(iop)) == 0)
 		rv = iopsp_reconfig(&sc->sc_dv);
 
-	lockmgr(&iop->sc_conflock, LK_RELEASE, NULL, curproc);
+	lockmgr(&iop->sc_conflock, LK_RELEASE, NULL);
 	return (rv);
 }
 

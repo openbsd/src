@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.23 2005/09/25 20:48:21 miod Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.24 2005/11/19 02:18:00 pedro Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -95,15 +95,14 @@ static __inline void
 gdt_lock()
 {
 	if (curproc != NULL)
-		lockmgr(&gdt_lock_store, LK_EXCLUSIVE, &gdt_simplelock,
-		    curproc);
+		lockmgr(&gdt_lock_store, LK_EXCLUSIVE, &gdt_simplelock);
 }
 
 static __inline void
 gdt_unlock()
 {
 	if (curproc != NULL)
-		lockmgr(&gdt_lock_store, LK_RELEASE, &gdt_simplelock, curproc);
+		lockmgr(&gdt_lock_store, LK_RELEASE, &gdt_simplelock);
 }
 
 /* XXX needs spinlocking if we ever mean to go finegrained. */

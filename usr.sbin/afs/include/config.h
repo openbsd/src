@@ -225,7 +225,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_FNMATCH_H 1
 
 /* define if lockmgr takes four arguments */
-#define HAVE_FOUR_ARGUMENT_LOCKMGR 1
+/* #undef HAVE_FOUR_ARGUMENT_LOCKMGR */
 
 /* define if vfs_busy takes four arguments */
 #define HAVE_FOUR_ARGUMENT_VFS_BUSY 1

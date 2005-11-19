@@ -1,4 +1,4 @@
-/*	$OpenBSD: pi2c.c,v 1.1 2005/11/16 12:28:54 kettenis Exp $	*/
+/*	$OpenBSD: pi2c.c,v 1.2 2005/11/19 02:18:00 pedro Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -84,7 +84,7 @@ pi2c_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct pi2c_softc *sc = cookie;
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL, curproc));
+	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
 }
 
 void
@@ -92,7 +92,7 @@ pi2c_i2c_release_bus(void *cookie, int flags)
 {
 	struct pi2c_softc *sc = cookie;
 
-        lockmgr(&sc->sc_buslock, LK_RELEASE, NULL, curproc);
+        lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
 }
 
 int

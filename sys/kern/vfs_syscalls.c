@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.127 2005/11/08 15:43:44 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.128 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -439,7 +439,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
  		if ((mp->mnt_flag & MNT_RDONLY) == 0 && hadsyncer)
  			(void) vfs_allocate_syncvnode(mp);
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK,
-		    &mountlist_slock, p);
+		    &mountlist_slock);
 		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
@@ -450,7 +450,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
 	mp->mnt_vfc->vfc_refcount--;
 	if (!LIST_EMPTY(&mp->mnt_vnodelist))
 		panic("unmount: dangling vnode");
-	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock, p);
+	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
 	free(mp, M_MOUNT);
 	return (0);
 }

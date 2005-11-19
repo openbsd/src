@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.54 2005/10/08 09:38:22 tom Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.55 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1743,8 +1743,7 @@ msdosfs_lock(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&VTODE(vp)->de_lock, ap->a_flags, &vp->v_interlock,
-	    ap->a_p));
+	return (lockmgr(&VTODE(vp)->de_lock, ap->a_flags, &vp->v_interlock));
 }
 
 int
@@ -1757,7 +1756,7 @@ msdosfs_unlock(v)
 	struct vnode *vp = ap->a_vp;
 
 	return (lockmgr(&VTODE(vp)->de_lock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock, ap->a_p));
+	    &vp->v_interlock));
 }
 
 int

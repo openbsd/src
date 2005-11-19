@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.118 2005/11/18 13:25:40 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.119 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp,
 
 	if (interlkp)
 		lkflags |= LK_INTERLOCK;
-	if (lockmgr(&mp->mnt_lock, lkflags, interlkp, p))
+	if (lockmgr(&mp->mnt_lock, lkflags, interlkp))
 		return (ENOENT);
 	return (0);
 }
@@ -190,7 +190,7 @@ vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp,
 void
 vfs_unbusy(struct mount *mp, struct proc *p)
 {
-	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL, p);
+	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL);
 }
 
 int

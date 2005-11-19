@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.60 2005/09/12 23:05:06 miod Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.61 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (memall == NULL) {
 			int totlen;
 
-			i = lockmgr(&sysctl_kmemlock, LK_EXCLUSIVE, NULL, p);
+			i = lockmgr(&sysctl_kmemlock, LK_EXCLUSIVE, NULL);
 			if (i)
 				return (i);
 
@@ -605,7 +605,7 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 			for (i = 0; i < totlen; i++)
 				if (memall[i] == ' ')
 					memall[i] = '_';
-			lockmgr(&sysctl_kmemlock, LK_RELEASE, NULL, p);
+			lockmgr(&sysctl_kmemlock, LK_RELEASE, NULL);
 		}
 		return (sysctl_rdstring(oldp, oldlenp, newp, memall));
 #else

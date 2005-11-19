@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.8 2005/11/18 23:19:28 kettenis Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.9 2005/11/19 02:18:00 pedro Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -349,7 +349,7 @@ ki2c_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct ki2c_softc *sc = cookie;
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL, curproc));
+	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
 }
 
 void
@@ -357,7 +357,7 @@ ki2c_i2c_release_bus(void *cookie, int flags)
 {
 	struct ki2c_softc *sc = cookie;
 
-	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL, curproc);
+	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
 }
 
 int

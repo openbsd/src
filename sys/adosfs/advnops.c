@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.30 2003/12/21 15:28:59 miod Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.31 2005/11/19 02:18:00 pedro Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -507,8 +507,7 @@ adosfs_lock(v)
 	advopprint(ap);
 #endif
 
-	rv = lockmgr(&VTOA(vp)->a_lock, ap->a_flags, &vp->v_interlock,
-	    ap->a_p);
+	rv = lockmgr(&VTOA(vp)->a_lock, ap->a_flags, &vp->v_interlock);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", rv);
@@ -534,7 +533,7 @@ adosfs_unlock(v)
 #endif
 
 	rv = lockmgr(&VTOA(vp)->a_lock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock, ap->a_p);
+	    &vp->v_interlock);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", rv);

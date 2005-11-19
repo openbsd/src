@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.60 2004/12/26 21:22:14 miod Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.61 2005/11/19 02:18:02 pedro Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -638,7 +638,7 @@ sys_swapctl(p, v, retval)
 	/*
 	 * ensure serialized syscall access by grabbing the swap_syscall_lock
 	 */
-	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL, p);
+	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
 	
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
@@ -877,7 +877,7 @@ sys_swapctl(p, v, retval)
 	vput(vp);
 
 out:
-	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL, p);
+	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
 	return (error);

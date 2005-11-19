@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.1 2004/07/21 17:30:56 marius Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.2 2005/11/19 02:18:01 pedro Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@ nfs_kqpoll(void *arg)
 	u_quad_t osize;
 
 	for(;;) {
-		lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL, p);
+		lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
 		SLIST_FOREACH(ke, &kevlist, kev_link) {
 			struct nfsnode *np = VTONFS(ke->vp);
 
@@ -126,7 +126,7 @@ nfs_kqpoll(void *arg)
 			 * for changes.
 			 */
 			ke->flags |= KEVQ_BUSY;
-			lockmgr(&nfskevq_lock, LK_RELEASE, NULL, p);
+			lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
 
 			/* save v_size, nfs_getattr() updates it */
 			osize = np->n_size;
@@ -157,7 +157,7 @@ nfs_kqpoll(void *arg)
 				ke->onlink = attr.va_nlink;
 			}
 
-			lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL, p);
+			lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
 			ke->flags &= ~KEVQ_BUSY;
 			if (ke->flags & KEVQ_WANT) {
 				ke->flags &= ~KEVQ_WANT;
@@ -168,10 +168,10 @@ nfs_kqpoll(void *arg)
 		if (SLIST_EMPTY(&kevlist)) {
 			/* Nothing more to watch, exit */
 			pnfskq = NULL;
-			lockmgr(&nfskevq_lock, LK_RELEASE, NULL, p);
+			lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
 			kthread_exit(0);
 		}
-		lockmgr(&nfskevq_lock, LK_RELEASE, NULL, p);
+		lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
 
 		/* wait a while before checking for changes again */
 		tsleep(pnfskq, PSOCK, "nfskqpw",
@@ -185,7 +185,6 @@ filt_nfsdetach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 	struct kevq *ke;
-	struct proc *p = curproc;
 
 #ifdef notyet
 	/* XXXLUKEM lock the struct? */
@@ -198,14 +197,14 @@ filt_nfsdetach(struct knote *kn)
 	simple_unlock(&vp->v_selectinfo.vsi_lock);
 
 	/* Remove the vnode from watch list */
-	lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL, p);
+	lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
 	SLIST_FOREACH(ke, &kevlist, kev_link) {
 		if (ke->vp == vp) {
 			while (ke->flags & KEVQ_BUSY) {
 				ke->flags |= KEVQ_WANT;
-				lockmgr(&nfskevq_lock, LK_RELEASE, NULL, p);
+				lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
 				(void) tsleep(ke, PSOCK, "nfskqdet", 0);
-				lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL, p);
+				lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
 			}
 
 			if (ke->usecount > 1) {
@@ -219,7 +218,7 @@ filt_nfsdetach(struct knote *kn)
 			break;
 		}
 	}
-	lockmgr(&nfskevq_lock, LK_RELEASE, NULL, p);
+	lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
 }
 
 static int
@@ -310,7 +309,7 @@ nfs_kqfilter(void *v)
 	memset(&attr, 0, sizeof(attr));
 	(void) VOP_GETATTR(vp, &attr, p->p_ucred, p);
 
-	lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL, p);
+	lockmgr(&nfskevq_lock, LK_EXCLUSIVE, NULL);
 
 	/* ensure the poller is running */
 	if (!pnfskq) {
@@ -353,7 +352,7 @@ nfs_kqfilter(void *v)
 #endif
 
     out:
-	lockmgr(&nfskevq_lock, LK_RELEASE, NULL, p);
+	lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
 
 	return (error);
 }

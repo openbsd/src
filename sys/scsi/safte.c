@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.22 2005/11/13 02:26:48 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.23 2005/11/19 02:18:01 pedro Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -211,7 +211,7 @@ safte_detach(struct device *self, int flags)
 	struct safte_softc		*sc = (struct safte_softc *)self;
 	int				i;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
 #if NBIO > 0
 	if (sc->sc_nslots > 0)
@@ -232,8 +232,8 @@ safte_detach(struct device *self, int flags)
 	if (sc->sc_encbuf != NULL)
 		free(sc->sc_encbuf, M_DEVBUF);
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
-	lockmgr(&sc->sc_lock, LK_DRAIN, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
 
 	return (0);
 }
@@ -383,7 +383,7 @@ safte_read_encstat(void *arg)
 	struct safte_sensor		*s;
 	u_int16_t			oot;
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ_BUFFER;
@@ -401,7 +401,7 @@ safte_read_encstat(void *arg)
 	if (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
 	    sizeof(cmd), sc->sc_encbuf, sc->sc_encbuflen, 2, 30000, NULL,
 	    flags) != 0) {
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 		printf("%s: unable to read enclosure status\n", DEVNAME(sc));
 		return;
 	}
@@ -504,7 +504,7 @@ safte_read_encstat(void *arg)
 		sc->sc_temps[i].se_sensor.status = 
 		    (oot & (1 << i)) ? SENSOR_S_CRIT : SENSOR_S_OK;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 }
 
 #if NBIO > 0
@@ -547,12 +547,12 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 		return (EINVAL);
 	}
 
-	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 	for (slot = 0; slot < sc->sc_nslots; slot++) {
 		if (sc->sc_slots[slot] == blink->bb_target)
 			break;
 	}
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 
 	if (slot >= sc->sc_nslots)
 		return (ENODEV);

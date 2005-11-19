@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.42 2004/11/18 17:12:33 millert Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.43 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ kernfs_allocvp(kt, mp, vpp)
 
 	printf("kernfs_allocvp: looking for %s\n", kt->kt_name);
 #endif
-	if ((error = lockmgr(&kfscache_lock, LK_EXCLUSIVE, NULL, p)) != 0)
+	if ((error = lockmgr(&kfscache_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return(error);
 
 loop:
@@ -266,7 +266,7 @@ loop:
 
 	TAILQ_INSERT_TAIL(&kfshead, kf, list);
 out:
-	lockmgr(&kfscache_lock, LK_RELEASE, NULL, p);
+	lockmgr(&kfscache_lock, LK_RELEASE, NULL);
 
 #ifdef KERNFS_DIAGNOSTIC
 	if (error) 

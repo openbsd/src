@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.6 2005/09/25 20:48:18 miod Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.7 2005/11/19 02:18:00 pedro Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -82,14 +82,14 @@ static __inline void
 gdt_lock()
 {
 	if (curproc != NULL)		/* XXX - ugh. needed for startup */
-		(void) lockmgr(&gdt_lock_store, LK_EXCLUSIVE, NULL, curproc);
+		(void) lockmgr(&gdt_lock_store, LK_EXCLUSIVE, NULL);
 }
 
 static __inline void
 gdt_unlock()
 {
 	if (curproc != NULL)
-		(void) lockmgr(&gdt_lock_store, LK_RELEASE, NULL, curproc);
+		(void) lockmgr(&gdt_lock_store, LK_RELEASE, NULL);
 }
 
 void

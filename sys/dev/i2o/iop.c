@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.26 2005/01/06 11:06:13 miod Exp $	*/
+/*	$OpenBSD: iop.c,v 1.27 2005/11/19 02:18:00 pedro Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -545,12 +545,12 @@ iop_config_interrupts(struct device *self)
 	config_found_sm(self, &ia, iop_vendor_print, iop_submatch);
 #endif
 
-	lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL);
 	if ((rv = iop_reconfigure(sc, 0)) == -1) {
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
 		return;
 	}
-	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL, curproc);
+	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
 	kthread_create_deferred(iop_create_reconf_thread, sc);
 }
 
@@ -584,7 +584,6 @@ void
 iop_reconf_thread(void *cookie)
 {
 	struct iop_softc *sc = cookie;
-	struct proc *p = sc->sc_reconf_proc;
 	struct i2o_lct lct;
 	u_int32_t chgind;
 	int rv;
@@ -603,10 +602,10 @@ iop_reconf_thread(void *cookie)
 		    sc->sc_dv.dv_xname, letoh32(lct.changeindicator), rv));
 
 		if (rv == 0 &&
-		    lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL, p) == 0) {
+		    lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL) == 0) {
 			iop_reconfigure(sc, letoh32(lct.changeindicator));
 			chgind = sc->sc_chgind + 1;
-			lockmgr(&sc->sc_conflock, LK_RELEASE, NULL, p);
+			lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
 		}
 
 		tsleep(iop_reconf_thread, PWAIT, "iopzzz", hz * 5);
@@ -2380,7 +2379,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (ENOTTY);
 	}
 
-	if ((rv = lockmgr(&sc->sc_conflock, LK_SHARED, NULL, p)) != 0)
+	if ((rv = lockmgr(&sc->sc_conflock, LK_SHARED, NULL)) != 0)
 		return (rv);
 
 	switch (cmd) {
@@ -2409,7 +2408,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 
-	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL, p);
+	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
 	return (rv);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.29 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.30 2005/11/19 02:18:01 pedro Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -391,14 +391,13 @@ disk_unbusy(diskp, bcount, read)
 	add_disk_randomness(bcount ^ diff_time.tv_usec);
 }
 
-
 int
 disk_lock(dk)
 	struct disk *dk;
 {
 	int error;
 
-	error = lockmgr(&dk->dk_lock, LK_EXCLUSIVE, 0, curproc);
+	error = lockmgr(&dk->dk_lock, LK_EXCLUSIVE, NULL);
 
 	return (error);
 }
@@ -407,9 +406,8 @@ void
 disk_unlock(dk)
 	struct disk *dk;
 {
-	lockmgr(&dk->dk_lock, LK_RELEASE, 0, curproc);
+	lockmgr(&dk->dk_lock, LK_RELEASE, NULL);
 }
-
 
 /*
  * Reset the metrics counters on the given disk.  Note that we cannot
