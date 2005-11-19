@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.40 2005/11/17 15:03:52 drahn Exp $
+#	$OpenBSD: files.macppc,v 1.41 2005/11/19 00:43:41 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -212,6 +212,11 @@ file	arch/macppc/dev/snapper.c			snapper
 device	tumbler: audio, auconv, mulaw, i2s
 attach	tumbler at macobio
 file	arch/macppc/dev/tumbler.c			tumbler
+
+# onyx audio
+device	onyx: audio, auconv, mulaw, i2s
+attach	onyx at macobio
+file	arch/macppc/dev/onyx.c				onyx
 
 # aoa audio
 device	aoa: audio, auconv, mulaw, i2s
