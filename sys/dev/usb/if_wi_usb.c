@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.23 2005/10/31 05:37:13 jsg Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.24 2005/11/19 08:23:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -257,6 +257,7 @@ const struct wi_usb_type {
 	{{ USB_VENDOR_TEKRAM, USB_PRODUCT_TEKRAM_0193 }, 0 },
 	{{ USB_VENDOR_TEKRAM, USB_PRODUCT_TEKRAM_ZYAIR_B200 }, 0 },
 	{{ USB_VENDOR_USR, USB_PRODUCT_USR_USR1120 }, 0 },
+	{{ USB_VENDOR_VIEWSONIC, USB_PRODUCT_VIEWSONIC_AIRSYNC }, 0 },
 	{{ USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_XI725 }, 0 },
 	{{ USB_VENDOR_ZCOM, USB_PRODUCT_ZCOM_XI735 }, 0 }
 };

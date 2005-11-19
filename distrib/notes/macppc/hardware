@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.65 2005/11/12 11:18:02 martin Exp $
+dnl	$OpenBSD: hardware,v 1.66 2005/11/19 08:23:41 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -359,6 +359,7 @@ Supported devices {:-include-:}:
 			Sitecom WL-022
 			Syntax USB-400
 			US Robotics 1120
+			ViewSonic Airsync
 			Z-Com XI-725/726
 			Z-Com XI-735
 			ZyXEL ZyAIR B-200

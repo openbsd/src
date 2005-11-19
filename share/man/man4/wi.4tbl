@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.78 2005/11/03 23:20:36 uwe Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.79 2005/11/19 08:23:41 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -379,6 +379,7 @@ TDK LAK-CD011WL:Prism-2:PCMCIA
 US Robotics 1120:Prism-3:USB
 US Robotics 2410:Prism-2:PCMCIA
 US Robotics 2445:Prism-2:PCMCIA
+ViewSonic Airsync:Prism-2.5:USB
 Z-Com XI-725/726:Prism-2.5:USB
 Z-Com XI-735:Prism-3:USB
 ZyXEL ZyAIR B-200:Prism-3:USB

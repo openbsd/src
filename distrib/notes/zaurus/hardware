@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.17 2005/11/04 00:18:08 uwe Exp $
+dnl	$OpenBSD: hardware,v 1.18 2005/11/19 08:23:42 jsg Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus C3000 and C3100 only, at
 the moment. Support for the C760 and C860 is under development.
@@ -173,6 +173,7 @@ Supported devices {:-include-:}:
 		    Sitecom WL-022
 		    Syntax USB-400
 		    US Robotics 1120
+		    ViewSonic Airsync
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200

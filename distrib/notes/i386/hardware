@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.225 2005/11/04 00:18:08 uwe Exp $
+dnl	$OpenBSD: hardware,v 1.226 2005/11/19 08:23:41 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -717,6 +717,7 @@ Supported hardware {:-include-:}:
 		    Sitecom WL-022
 		    Syntax USB-400
 		    US Robotics 1120
+		    ViewSonic Airsync
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200

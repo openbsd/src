@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.26 2005/10/17 11:25:30 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.27 2005/11/19 08:23:41 jsg Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -205,6 +205,7 @@ Supported devices {:-include-:}:
 		    Sitecom WL-022
 		    Syntax USB-400
 		    US Robotics 1120
+		    ViewSonic Airsync
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200

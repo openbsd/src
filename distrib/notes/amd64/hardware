@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.65 2005/10/17 11:25:29 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.66 2005/11/19 08:23:41 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -498,6 +498,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Sitecom WL-022
 		    Syntax USB-400
 		    US Robotics 1120
+		    ViewSonic Airsync
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
