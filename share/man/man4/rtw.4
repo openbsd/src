@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.21 2005/09/30 20:34:24 jaredy Exp $
+.\"	$OpenBSD: rtw.4,v 1.22 2005/11/20 09:57:56 jsg Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -29,9 +29,8 @@ The
 driver supports PCI/CardBus 802.11b wireless adapters based on the
 Realtek RTL8180L.
 .Pp
-A variety of radio tranceivers can be found in these devices, including
-the Philips SA2400A, Maxim MAX2820, and GCT GRF5101, though not all of them
-are currently supported.
+A variety of radio transceivers can be found in these devices, including
+the Philips SA2400A, Maxim MAX2820, and GCT GRF5101.
 .Pp
 These are the modes the
 .Nm
@@ -190,6 +189,7 @@ The following adapters should work:
 .It Li "D-Link DWL-610" Ta CardBus
 .\".It Li "Encore ENLWI-PCI1-NT" Ta PCI
 .\".It Li "Gigabyte GN-WLMR101" Ta PCI
+.It Li "GigaFast WF721-AEX" Ta CardBus
 .It Li "Level-One WPC-0101" Ta CardBus
 .It Li "Linksys WPC11 v4" Ta CardBus
 .It Li "Netgear MA521" Ta CardBus
@@ -264,9 +264,8 @@ and ported to
 .Ox
 by
 .An Jonathan Gray Aq jsg@openbsd.org .
-.Sh BUGS
-Only the Philips SA2400A and Maxim MAX2820 RF transceivers are known to work.
-Devices incorporating a GCT RF transceiver are not supported due to a lack of
-documentation from GCT.
+.Sh CAVEATS
+GCT refuse to release any documentation on their GRF5101 RF transceiver,
+so it likely does work as well it otherwise could.
 .Pp
 While PCI devices will attach most of them are not able to transmit.
