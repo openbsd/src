@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ki2c.4,v 1.3 2005/11/20 04:39:29 brad Exp $
+.\"	$OpenBSD: ki2c.4,v 1.4 2005/11/20 04:49:19 brad Exp $
 .\"
 .\" Copyright (c) 2004 Dale Rahn.
 .\" All rights reserved.
@@ -24,20 +24,22 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 11, 2004
+.Dd November 19, 2005
 .Dt KI2C 4 macppc
 .Os
 .Sh NAME
 .Nm ki2c
-.Nd kauai i2c interface stub
+.Nd Kauai i2c controller
 .Sh SYNOPSIS
 .Cd "ki2c* at macobio?"
 .Sh DESCRIPTION
 The
 .Nm
-device is an interface stub which controls the i2c audio mixer.
+device is an interface to the K2 i2c controller.
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr iic 4 ,
+.Xr maciic 4 ,
 .Xr macobio 4
 .Sh HISTORY
 The
