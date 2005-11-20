@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/powerpc.
 
-   Copyright 2004 Free Software Foundation, Inc.
+   Copyright 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,7 @@
 
 #include "ppc-tdep.h"
 #include "ppcobsd-tdep.h"
+#include "inf-ptrace.h"
 #include "bsd-kvm.h"
 
 /* OpenBSD/powerpc doesn't have PT_GETFPREGS/PT_SETFPREGS like
@@ -42,14 +43,14 @@
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers.  */
 
-void
-fetch_inferior_registers (int regnum)
+static void
+ppcobsd_fetch_registers (int regnum)
 {
   struct reg regs;
 
   if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-    perror_with_name ("Couldn't get registers");
+    perror_with_name (_("Couldn't get registers"));
 
   ppcobsd_supply_gregset (&ppcobsd_gregset, current_regcache, -1,
 			  &regs, sizeof regs);
@@ -58,21 +59,21 @@ fetch_inferior_registers (int regnum)
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers.  */
 
-void
-store_inferior_registers (int regnum)
+static void
+ppcobsd_store_registers (int regnum)
 {
   struct reg regs;
 
   if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-    perror_with_name ("Couldn't get registers");
+    perror_with_name (_("Couldn't get registers"));
 
   ppcobsd_collect_gregset (&ppcobsd_gregset, current_regcache,
 			   regnum, &regs, sizeof regs);
 
   if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
-    perror_with_name ("Couldn't write registers");
+    perror_with_name (_("Couldn't write registers"));
 }
 
 
@@ -119,6 +120,14 @@ void _initialize_ppcobsd_nat (void);
 void
 _initialize_ppcobsd_nat (void)
 {
+  struct target_ops *t;
+
+  /* Add in local overrides.  */
+  t = inf_ptrace_target ();
+  t->to_fetch_registers = ppcobsd_fetch_registers;
+  t->to_store_registers = ppcobsd_store_registers;
+  add_target (t);
+
   /* General-purpose registers.  */
   ppcobsd_reg_offsets.r0_offset = offsetof (struct reg, gpr);
   ppcobsd_reg_offsets.pc_offset = offsetof (struct reg, pc);

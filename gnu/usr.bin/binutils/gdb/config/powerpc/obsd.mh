@@ -1,5 +1,4 @@
 # Host: OpenBSD/powerpc
-NATDEPFILES= ppcobsd-nat.o fork-child.o infptrace.o inftarg.o bsd-kvm.o
-NAT_FILE= config/nm-bsd.h
+NATDEPFILES= fork-child.o inf-ptrace.o ppcobsd-nat.o bsd-kvm.o
 
 LOADLIBES= -lkvm
