@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.27 2005/11/16 04:31:32 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.28 2005/11/20 03:24:35 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -1517,25 +1517,25 @@ mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
 {
 	int error;
 
+	error = bus_dmamap_create(mpt->sc_dmat, img_sz, maxsgl, img_sz,
+	    0, 0, &mpt->fw_dmap);
+	if (error) {
+		mpt_prt(mpt, "unable to create request DMA map, error = %d",
+		    error);
+		goto fw_fail0;
+	}
+
 	error = bus_dmamem_alloc(mpt->sc_dmat, img_sz, PAGE_SIZE, 0,
 		&mpt->fw_seg, maxsgl, &mpt->fw_rseg, 0);
 	if (error) {
 		mpt_prt(mpt, "unable to allocate fw memory, error = %d", error);
-		goto fw_fail0;
+		goto fw_fail1;
 	}
 
 	error = bus_dmamem_map(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg, img_sz,
 		(caddr_t *)&mpt->fw, BUS_DMA_COHERENT);
 	if (error) {
 		mpt_prt(mpt, "unable to map fw area, error = %d", error);
-		goto fw_fail1;
-	}
-
-	error = bus_dmamap_create(mpt->sc_dmat, img_sz, maxsgl, img_sz,
-		0, 0, &mpt->fw_dmap);
-	if (error) {
-		mpt_prt(mpt, "unable to create request DMA map, error = %d",
-			error);
 		goto fw_fail2;
 	}
 
@@ -1547,15 +1547,14 @@ mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
 	}
 
 	return(error);
-fw_fail3:
-	bus_dmamap_unload(mpt->sc_dmat, mpt->fw_dmap);
-fw_fail2:
-	bus_dmamap_destroy(mpt->sc_dmat, mpt->fw_dmap);
-fw_fail1:
-	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, img_sz);
-fw_fail0:
-	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
 
+fw_fail3:
+	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, img_sz);
+fw_fail2:
+	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
+fw_fail1:
+	bus_dmamap_destroy(mpt->sc_dmat, mpt->fw_dmap);
+fw_fail0:
 	mpt->fw = NULL;
 	return (error);
 }
@@ -1564,7 +1563,7 @@ void
 mpt_free_fw_mem(mpt_softc_t *mpt)
 {
 	bus_dmamap_unload(mpt->sc_dmat, mpt->fw_dmap);
-	bus_dmamap_destroy(mpt->sc_dmat, mpt->fw_dmap);
 	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, mpt->fw_image_size);
 	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
+	bus_dmamap_destroy(mpt->sc_dmat, mpt->fw_dmap);
 }
