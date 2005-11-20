@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.53 2005/05/27 17:45:56 millert Exp $ */
+/*	$OpenBSD: unistd.h,v 1.54 2005/11/20 02:24:59 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ ssize_t  pwrite(int, const void *, size_t, off_t);
 #endif
 
 int	 acct(const char *);
-char	*brk(const char *);
+void	*brk(void *);
 int	 chroot(const char *);
 #if !defined(_XOPEN_SOURCE)
 int	 closefrom(int);
@@ -188,7 +188,7 @@ int	 rresvport(int *);
 int	 rresvport_af(int *, int);
 int	 ruserok(const char *, int, const char *, const char *);
 int	 quotactl(const char *, int, int, char *);
-char	*sbrk(int);
+void	*sbrk(int);
 
 #if !defined(_XOPEN_SOURCE)
 int	 select(int, fd_set *, fd_set *, fd_set *, struct timeval *);

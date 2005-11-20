@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brk.2,v 1.15 2005/08/10 01:06:13 jaredy Exp $
+.\"	$OpenBSD: brk.2,v 1.16 2005/11/20 02:24:59 millert Exp $
 .\"	$NetBSD: brk.2,v 1.7 1995/02/27 12:31:57 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -39,9 +39,9 @@
 .Nd change data segment size
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
-.Ft char *
-.Fn brk "const char *addr"
-.Ft char *
+.Ft void *
+.Fn brk "void *addr"
+.Ft void *
 .Fn sbrk "int incr"
 .Sh DESCRIPTION
 .Bf -symbolic
