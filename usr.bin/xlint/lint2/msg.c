@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.6 2005/11/20 17:09:55 cloder Exp $	*/
+/*	$OpenBSD: msg.c,v 1.7 2005/11/20 18:23:59 cloder Exp $	*/
 /*	$NetBSD: msg.c,v 1.2 1995/07/03 21:24:56 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: msg.c,v 1.6 2005/11/20 17:09:55 cloder Exp $";
+static char rcsid[] = "$OpenBSD: msg.c,v 1.7 2005/11/20 18:23:59 cloder Exp $";
 #endif
 
 #include <string.h>
@@ -65,7 +65,7 @@ static	const	char *msgs[] = {
 	"%s function value must be declared before use  \t%s  ::  %s",/* 17 */
 };
 
-static	const	char *basename(const char *);
+static	const	char *lbasename(const char *);
 
 void
 msg(int n, ...)
@@ -84,7 +84,7 @@ msg(int n, ...)
  * Return a pointer to the last component of a path.
  */
 static const char *
-basename(const char *path)
+lbasename(const char *path)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -122,7 +122,7 @@ mkpos(pos_t *posp)
 	}
 	qm = !Hflag && posp->p_src != posp->p_isrc;
 
-	len = strlen(fn = basename(fnames[src]));
+	len = strlen(fn = lbasename(fnames[src]));
 	len += 3 * sizeof (u_short) + 4;
 
 	if (len > blen)

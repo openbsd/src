@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.7 2005/11/20 17:42:49 deraadt Exp $	*/
+/*	$OpenBSD: err.c,v 1.8 2005/11/20 18:23:58 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.7 2005/11/20 17:42:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.8 2005/11/20 18:23:58 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -47,7 +47,7 @@ int	sytxerr;
 
 #include "lint1.h"
 
-static	const	char *basename(const char *);
+static	const	char *lbasename(const char *);
 static	void	verror(int, va_list);
 static	void	vwarning(int, va_list);
 
@@ -366,11 +366,11 @@ const	char *msgs[] = {
 };
 
 /*
- * If Fflag is not set basename() returns a pointer to the last
+ * If Fflag is not set lbasename() returns a pointer to the last
  * component of the path, otherwise it returns the argument.
  */
 static const char *
-basename(const char *path)
+lbasename(const char *path)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -392,7 +392,7 @@ verror(int n, va_list ap)
 {
 	const	char *fn;
 
-	fn = basename(curr_pos.p_file);
+	fn = lbasename(curr_pos.p_file);
 	(void)printf("%s(%d): ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
@@ -408,7 +408,7 @@ vwarning(int n, va_list ap)
 		/* this warning is suppressed by a LINTED comment */
 		return;
 
-	fn = basename(curr_pos.p_file);
+	fn = lbasename(curr_pos.p_file);
 	(void)printf("%s(%d): warning: ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
@@ -431,7 +431,7 @@ lerror(const char *msg, ...)
 	const	char *fn;
 
 	va_start(ap, msg);
-	fn = basename(curr_pos.p_file);
+	fn = lbasename(curr_pos.p_file);
 	(void)fprintf(stderr, "%s(%d): lint error: ", fn, curr_pos.p_line);
 	(void)vfprintf(stderr, msg, ap);
 	(void)fprintf(stderr, "\n");
@@ -456,7 +456,7 @@ message(int n, ...)
 	const	char *fn;
 
 	va_start(ap, n);
-	fn = basename(curr_pos.p_file);
+	fn = lbasename(curr_pos.p_file);
 	(void)printf("%s(%d): ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");

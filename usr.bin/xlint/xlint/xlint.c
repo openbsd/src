@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.18 2005/11/20 17:42:50 deraadt Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.19 2005/11/20 18:23:59 cloder Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.18 2005/11/20 17:42:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.19 2005/11/20 18:23:59 cloder Exp $";
 #endif
 
 #include <sys/param.h>
@@ -118,7 +118,7 @@ static	void	freelst(char ***);
 static	char	*concat2(const char *, const char *);
 static	char	*concat3(const char *, const char *, const char *);
 static	void	terminate(int);
-static	const	char *basename(const char *, int);
+static	const	char *lbasename(const char *, int);
 static	void	appdef(char ***, const char *);
 static	void	usage(void);
 static	void	fname(const char *, int);
@@ -242,7 +242,7 @@ terminate(int signo)
  * Returns strg if the string does not contain delim.
  */
 static const char *
-basename(const char *strg, int delim)
+lbasename(const char *strg, int delim)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -516,8 +516,8 @@ fname(const char *name, int last)
 	size_t	len;
 	int	error;
 
-	bn = basename(name, '/');
-	suff = basename(bn, '.');
+	bn = lbasename(name, '/');
+	suff = lbasename(bn, '.');
 
 	if (strcmp(suff, "ln") == 0) {
 		/* only for lint2 */
