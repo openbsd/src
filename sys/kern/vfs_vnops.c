@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.46 2005/05/28 07:30:25 marius Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.47 2005/11/20 21:55:15 pedro Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -54,15 +54,12 @@
 
 #include <uvm/uvm_extern.h>
 
-int	vn_read(struct file *fp, off_t *off, struct uio *uio, 
-	    struct ucred *cred);
-int	vn_write(struct file *fp, off_t *off, struct uio *uio, 
-	    struct ucred *cred);
-int	vn_poll(struct file *fp, int events, struct proc *p);
-int	vn_kqfilter(struct file *fp, struct knote *kn);
-int 	vn_closefile(struct file *fp, struct proc *p);
-int	vn_ioctl(struct file *fp, u_long com, caddr_t data,
-	    struct proc *p);
+int vn_read(struct file *, off_t *, struct uio *, struct ucred *);
+int vn_write(struct file *, off_t *, struct uio *, struct ucred *);
+int vn_poll(struct file *, int, struct proc *);
+int vn_kqfilter(struct file *, struct knote *);
+int vn_closefile(struct file *, struct proc *);
+int vn_ioctl(struct file *, u_long, caddr_t, struct proc *);
 
 struct 	fileops vnops =
 	{ vn_read, vn_write, vn_ioctl, vn_poll, vn_kqfilter, vn_statfile,
@@ -73,13 +70,11 @@ struct 	fileops vnops =
  * Check permissions, and call the VOP_OPEN or VOP_CREATE routine.
  */
 int
-vn_open(ndp, fmode, cmode)
-	register struct nameidata *ndp;
-	int fmode, cmode;
+vn_open(struct nameidata *ndp, int fmode, int cmode)
 {
-	register struct vnode *vp;
-	register struct proc *p = ndp->ni_cnd.cn_proc;
-	register struct ucred *cred = p->p_ucred;
+	struct vnode *vp;
+	struct proc *p = ndp->ni_cnd.cn_proc;
+	struct ucred *cred = p->p_ucred;
 	struct vattr va;
 	int error;
 
@@ -175,10 +170,8 @@ bad:
  * Prototype text segments cannot be written.
  */
 int
-vn_writechk(vp)
-	register struct vnode *vp;
+vn_writechk(struct vnode *vp)
 {
-
 	/*
 	 * Disallow write attempts on read-only file systems;
 	 * unless the file is a socket or a block or character
@@ -208,8 +201,7 @@ vn_writechk(vp)
  * Mark a vnode as being the text image of a running process.
  */
 void
-vn_marktext(vp)
-	struct vnode *vp;
+vn_marktext(struct vnode *vp)
 {
 	vp->v_flag |= VTEXT;
 }
@@ -218,11 +210,7 @@ vn_marktext(vp)
  * Vnode close call
  */
 int
-vn_close(vp, flags, cred, p)
-	register struct vnode *vp;
-	int flags;
-	struct ucred *cred;
-	struct proc *p;
+vn_close(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 {
 	int error;
 
@@ -238,17 +226,9 @@ vn_close(vp, flags, cred, p)
  * Package up an I/O request on a vnode into a uio and do it.
  */
 int
-vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
-	enum uio_rw rw;
-	struct vnode *vp;
-	caddr_t base;
-	int len;
-	off_t offset;
-	enum uio_seg segflg;
-	int ioflg;
-	struct ucred *cred;
-	size_t *aresid;
-	struct proc *p;
+vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
+    enum uio_seg segflg, int ioflg, struct ucred *cred, size_t *aresid,
+    struct proc *p)
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -284,13 +264,9 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
  * File table vnode read routine.
  */
 int
-vn_read(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
-	register struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = (struct vnode *)fp->f_data;
 	int error = 0;
 	size_t count;
 	struct proc *p = uio->uio_procp;
@@ -311,13 +287,9 @@ vn_read(fp, poff, uio, cred)
  * File table vnode write routine.
  */
 int
-vn_write(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
-	register struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = (struct vnode *)fp->f_data;
 	struct proc *p = uio->uio_procp;
 	int error, ioflag = IO_UNIT;
 	size_t count;
@@ -346,13 +318,9 @@ vn_write(fp, poff, uio, cred)
  * File table wrapper for vn_stat
  */
 int
-vn_statfile(fp, sb, p)
-	struct file *fp;
-	struct stat *sb;
-	struct proc *p;
+vn_statfile(struct file *fp, struct stat *sb, struct proc *p)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
-
 	return vn_stat(vp, sb, p);
 }
 
@@ -360,10 +328,7 @@ vn_statfile(fp, sb, p)
  * vnode stat routine.
  */
 int
-vn_stat(vp, sb, p)
-	struct vnode *vp;
-	register struct stat *sb;
-	struct proc *p;
+vn_stat(struct vnode *vp, struct stat *sb, struct proc *p)
 {
 	struct vattr va;
 	int error;
@@ -423,13 +388,9 @@ vn_stat(vp, sb, p)
  * File table vnode ioctl routine.
  */
 int
-vn_ioctl(fp, com, data, p)
-	struct file *fp;
-	u_long com;
-	caddr_t data;
-	struct proc *p;
+vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 {
-	register struct vnode *vp = ((struct vnode *)fp->f_data);
+	struct vnode *vp = ((struct vnode *)fp->f_data);
 	struct vattr vattr;
 	int error;
 
@@ -472,12 +433,8 @@ vn_ioctl(fp, com, data, p)
  * File table vnode poll routine.
  */
 int
-vn_poll(fp, events, p)
-	struct file *fp;
-	int events;
-	struct proc *p;
+vn_poll(struct file *fp, int events, struct proc *p)
 {
-
 	return (VOP_POLL(((struct vnode *)fp->f_data), events, p));
 }
 
@@ -515,11 +472,8 @@ vn_lock(struct vnode *vp, int flags, struct proc *p)
  * File table vnode close routine.
  */
 int
-vn_closefile(fp, p)
-	struct file *fp;
-	struct proc *p;
+vn_closefile(struct file *fp, struct proc *p)
 {
-
 	return (vn_close(((struct vnode *)fp->f_data), fp->f_flag,
 		fp->f_cred, p));
 }

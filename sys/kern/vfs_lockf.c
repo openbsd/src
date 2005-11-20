@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.11 2005/03/15 03:47:58 tedu Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.12 2005/11/20 21:55:15 pedro Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -129,16 +129,11 @@ lf_free(struct lockf *lock)
  * Do an advisory lock operation.
  */
 int
-lf_advlock(head, size, id, op, fl, flags)
-	struct lockf **head;
-	off_t size;
-	caddr_t id;
-	int op;
-	register struct flock *fl;
-	int flags;
+lf_advlock(struct lockf **head, off_t size, caddr_t id, int op,
+    struct flock *fl, int flags)
 {
 	struct proc *p = curproc;
-	register struct lockf *lock;
+	struct lockf *lock;
 	off_t start, end;
 	int error;
 
@@ -226,10 +221,9 @@ lf_advlock(head, size, id, op, fl, flags)
  * Set a byte-range lock.
  */
 int
-lf_setlock(lock)
-	register struct lockf *lock;
+lf_setlock(struct lockf *lock)
 {
-	register struct lockf *block;
+	struct lockf *block;
 	struct lockf **head = lock->lf_head;
 	struct lockf **prev, *overlap, *ltmp;
 	static char lockstr[] = "lockf";
@@ -270,8 +264,8 @@ lf_setlock(lock)
 		 */
 		if ((lock->lf_flags & F_POSIX) &&
 		    (block->lf_flags & F_POSIX)) {
-			register struct proc *wproc;
-			register struct lockf *waitblock;
+			struct proc *wproc;
+			struct lockf *waitblock;
 			int i = 0;
 
 			/* The block is waiting on something */
@@ -470,11 +464,10 @@ lf_setlock(lock)
  * and remove it (or shrink it), then wakeup anyone we can.
  */
 int
-lf_clearlock(lock)
-	register struct lockf *lock;
+lf_clearlock(struct lockf *lock)
 {
 	struct lockf **head = lock->lf_head;
-	register struct lockf *lf = *head;
+	struct lockf *lf = *head;
 	struct lockf *overlap, **prev;
 	int ovcase;
 
@@ -534,11 +527,9 @@ lf_clearlock(lock)
  * and if so return its process identifier.
  */
 int
-lf_getlock(lock, fl)
-	register struct lockf *lock;
-	register struct flock *fl;
+lf_getlock(struct lockf *lock, struct flock *fl)
 {
-	register struct lockf *block;
+	struct lockf *block;
 
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & DEBUG_CLEARLOCK)
@@ -568,8 +559,7 @@ lf_getlock(lock, fl)
  * return the first blocking lock.
  */
 struct lockf *
-lf_getblock(lock)
-	register struct lockf *lock;
+lf_getblock(struct lockf *lock)
 {
 	struct lockf **prev, *overlap, *lf;
 
@@ -598,12 +588,8 @@ lf_getblock(lock)
  *	 may be more than one.
  */
 int
-lf_findoverlap(lf, lock, type, prev, overlap)
-	register struct lockf *lf;
-	struct lockf *lock;
-	int type;
-	struct lockf ***prev;
-	struct lockf **overlap;
+lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
+    struct lockf ***prev, struct lockf **overlap)
 {
 	off_t start, end;
 
@@ -691,11 +677,9 @@ lf_findoverlap(lf, lock, type, prev, overlap)
  * two or three locks as necessary.
  */
 void
-lf_split(lock1, lock2)
-	register struct lockf *lock1;
-	register struct lockf *lock2;
+lf_split(struct lockf *lock1, struct lockf *lock2)
 {
-	register struct lockf *splitlock;
+	struct lockf *splitlock;
 
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & DEBUG_SPLIT) {
@@ -738,8 +722,7 @@ lf_split(lock1, lock2)
  * Wakeup a blocklist
  */
 void
-lf_wakelock(lock)
-	struct lockf *lock;
+lf_wakelock(struct lockf *lock)
 {
 	struct lockf *wakelock;
 
@@ -755,9 +738,7 @@ lf_wakelock(lock)
  * Print out a lock.
  */
 void
-lf_print(tag, lock)
-	char *tag;
-	register struct lockf *lock;
+lf_print(char *tag, struct lockf *lock)
 {
 	struct lockf	*block;
 	
@@ -781,11 +762,9 @@ lf_print(tag, lock)
 }
 
 void
-lf_printlist(tag, lock)
-	char *tag;
-	struct lockf *lock;
+lf_printlist(char *tag, struct lockf *lock)
 {
-	register struct lockf *lf;
+	struct lockf *lf;
 
 	printf("%s: Lock list:\n", tag);
 	for (lf = *lock->lf_head; lf; lf = lf->lf_next) {
