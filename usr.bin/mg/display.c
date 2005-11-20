@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.23 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.24 2005/11/20 03:53:45 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,11 +8,7 @@
  * process; the editing functions do, however, set some
  * hints to eliminate a lot of the grinding. There is more
  * that can be done; the "vtputc" interface is a real
- * pig. Two conditional compilation flags; the GOSLING
- * flag enables dynamic programming redisplay, using the
- * algorithm published by Jim Gosling in SIGOA. The MEMMAP
- * changes things around for memory mapped video. With
- * both off, the terminal is a VT52.
+ * pig.
  */
 #include "def.h"
 #include "kbd.h"
@@ -27,11 +23,8 @@
  * for change the size of a structure that isn't used.
  * A bit of a cheat.
  */
-/* These defines really belong in sysdef.h */
-#ifndef XCHAR
 #define	XCHAR	int
 #define	XSHORT	int
-#endif
 
 #ifdef	STANDOUT_GLITCH
 #include <term.h>
@@ -99,7 +92,6 @@ struct video	**pscreen;		/* Edge vector, physical.	 */
 struct video	 *video;		/* Actual screen data.		 */
 struct video	  blanks;		/* Blank line image.		 */
 
-#ifdef	GOSLING
 /*
  * This matrix is written as an array because
  * we do funny things in the "setscores" routine, which
@@ -108,7 +100,6 @@ struct video	  blanks;		/* Blank line image.		 */
  * Look at "setscores" to understand what is up.
  */
 struct score *score;			/* [NROW * NROW] */
-#endif
 
 /*
  * Reinit the display data structures, this is called when the terminal
@@ -164,9 +155,7 @@ vtresize(int force, int newrow, int newcol)
 			}
 		}
 
-#ifdef GOSLING
 		TRYREALLOC(score, newrow * newrow * sizeof(struct score));
-#endif
 		TRYREALLOC(vscreen, (newrow - 1) * sizeof(struct video *));
 		TRYREALLOC(pscreen, (newrow - 1) * sizeof(struct video *));
 		TRYREALLOC(video, (2 * (newrow - 1)) * sizeof(struct video));
@@ -551,7 +540,6 @@ update(void)
 		ttflush();
 		return;
 	}
-#ifdef	GOSLING
 	if (hflag != FALSE) {			/* Hard update?		*/
 		for (i = 0; i < nrow - 1; ++i) {/* Compute hash data.	*/
 			hash(vscreen[i]);
@@ -594,7 +582,6 @@ update(void)
 		ttflush();
 		return;
 	}
-#endif
 	for (i = 0; i < nrow - 1; ++i) {	/* Easy update.		*/
 		vp1 = vscreen[i];
 		vp2 = pscreen[i];
@@ -677,10 +664,6 @@ uline(int row, struct video *vvp, struct video *pvp)
 	char  *cp5;
 	int    nbflag;
 
-#ifdef	MEMMAP
-	putline(row + 1, 1, &vvp->v_text[0]);
-#else
-
 	if (vvp->v_color != pvp->v_color) {	/* Wrong color, do a	 */
 		ttmove(row, 0);			/* full redraw.		 */
 #ifdef	STANDOUT_GLITCH
@@ -695,7 +678,8 @@ uline(int row, struct video *vvp, struct video *pvp)
 		 * putting the invisible glitch character on the next line.
 		 * (Hazeltine executive 80 model 30)
 		 */
-		cp2 = &vvp->v_text[ncol - (magic_cookie_glitch >= 0 ? (magic_cookie_glitch != 0 ? magic_cookie_glitch : 1) : 0)];
+		cp2 = &vvp->v_text[ncol - (magic_cookie_glitch >= 0 ?
+		    (magic_cookie_glitch != 0 ? magic_cookie_glitch : 1) : 0)];
 #else
 		cp1 = &vvp->v_text[0];
 		cp2 = &vvp->v_text[ncol];
@@ -751,7 +735,6 @@ uline(int row, struct video *vvp, struct video *pvp)
 	}
 	if (cp5 != cp3)			/* Do erase.		 */
 		tteeol();
-#endif
 }
 
 /*
@@ -830,7 +813,6 @@ vtputs(const char *s)
 	return (n);
 }
 
-#ifdef	GOSLING
 /*
  * Compute the hash code for the line pointed to by the "vp".
  * Recompute it if necessary. Also set the approximate redisplay
@@ -1031,4 +1013,3 @@ traceback(int offs, int size, int i, int j)
 	k = offs + j - 1;
 	uline(k, vscreen[k], pscreen[offs + i - 1]);
 }
-#endif
