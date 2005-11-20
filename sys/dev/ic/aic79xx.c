@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.28 2005/10/04 23:52:04 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.29 2005/11/20 03:58:59 brad Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -6155,8 +6155,8 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 void
 ahd_controller_info(struct ahd_softc *ahd, char *buf, size_t bufsz)
 {
-	snprintf(buf, bufsz, "%s: U320 %s Channel %c, SCSI Id=%d, %s, %d SCBs",
-	    ahd_chip_names[ahd->chip & AHD_CHIPID_MASK],
+	snprintf(buf, bufsz, "%s: %s, U320 %s Channel %c, SCSI Id=%d, %s, %d SCBs",
+	    ahd_name(ahd), ahd_chip_names[ahd->chip & AHD_CHIPID_MASK],
 	    ((ahd->features & AHD_WIDE) != 0) ? "Wide" : "Single",
 	    ahd->channel, ahd->our_id, ahd->bus_description,
 	    ahd->scb_data.maxhscbs);
