@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.20 2005/11/20 04:17:25 kjell Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.21 2005/11/20 18:47:11 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -63,9 +63,7 @@ static struct funmap functnames[] = {
 	{executemacro, "call-last-kbd-macro",},
 #endif /* !NO_MACRO */
 	{capword, "capitalize-word",},
-#ifndef NO_DIR
 	{changedir, "cd",},
-#endif /* !NO_DIR */
 	{copyregion, "copy-region-as-kill",},
 #ifdef	REGEX
 	{cntmatchlines, "count-matches",},
@@ -155,9 +153,7 @@ static struct funmap functnames[] = {
 	{backline, "previous-line",},
 	{prevwind, "previous-window",},
 	{spawncli, "push-shell",},
-#ifndef NO_DIR
 	{showcwdir, "pwd",},
-#endif /* !NO_DIR */
 	{queryrepl, "query-replace",},
 #ifdef REGEX
 	{replstr, "replace-string",},

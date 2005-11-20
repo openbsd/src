@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.14 2005/08/09 00:53:48 kjell Exp $	*/
+/*	$OpenBSD: dir.c,v 1.15 2005/11/20 18:47:11 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,7 +11,6 @@
 
 #include "def.h"
 
-#ifndef NO_DIR
 char		*wdir;
 static char	 cwd[NFILEN];
 
@@ -64,4 +63,3 @@ showcwdir(int f, int n)
 	ewprintf("Current directory: %s", wdir);
 	return (TRUE);
 }
-#endif
