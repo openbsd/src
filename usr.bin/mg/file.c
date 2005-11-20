@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.46 2005/11/20 03:24:17 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.47 2005/11/20 04:16:34 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -273,13 +273,13 @@ readin(char *fname)
  * Insert a file in the current buffer, after dot. If file is a directory,
  * and 'replacebuf' is TRUE, invoke dired mode, else die with an error.
  * If file is a regular file, set mark at the end of the text inserted;
- * point at the beginning.  Return a standard status.
- * Print a summary (lines read, error message) out as well.  Unless the
- * NO_BACKUP conditional is set, this routine also does the read end of
- * backup processing.  The BFBAK flag, if set in a buffer, says that a
- * backup should be taken.  It is set when a file is read in, but not on
- * a new file.  (You don't need to make a backup copy of nothing.)
+ * point at the beginning.  Return a standard status. Print a summary
+ * (lines read, error message) out as well. This routine also does the
+ * read end of backup processing.  The BFBAK flag, if set in a buffer,
+ * says that a backup should be taken.  It is set when a file is read in,
+ * but not on a new file. You don't need to make a backup copy of nothing.
  */
+
 static char	*line = NULL;
 static int	linesize = 0;
 
@@ -422,14 +422,10 @@ endoffile:
 	curwp->w_doto = opos;
 	if (olp == curbp->b_linep)
 		curwp->w_dotp = lforw(olp);
-#ifndef NO_BACKUP
 	if (newname != NULL)
 		bp->b_flag |= BFCHG | BFBAK;	/* Need a backup.	 */
 	else
 		bp->b_flag |= BFCHG;
-#else /* !NO_BACKUP */
-	bp->b_flag |= BFCHG;
-#endif /* !NO_BACKUP */
 	/*
 	 * If the insert was at the end of buffer, set lp1 to the end of
 	 * buffer line, and lp2 to the beginning of the newly inserted text.
@@ -500,11 +496,7 @@ filewrite(int f, int n)
 		if (curbp->b_bname)
 			free((char *)curbp->b_bname);
 		curbp->b_bname = strdup(p);
-#ifndef NO_BACKUP
 		curbp->b_flag &= ~(BFBAK | BFCHG);
-#else /* !NO_BACKUP */
-		curbp->b_flag &= ~BFCHG;
-#endif /* !NO_BACKUP */
 		upmodes(curbp);
 	}
 	return (s);
@@ -513,12 +505,10 @@ filewrite(int f, int n)
 /*
  * Save the contents of the current buffer back into its associated file.
  */
-#ifndef NO_BACKUP
 #ifndef	MAKEBACKUP
 #define	MAKEBACKUP TRUE
 #endif /* !MAKEBACKUP */
 static int	makebackup = MAKEBACKUP;
-#endif /* !NO_BACKUP */
 
 /* ARGSUSED */
 int
@@ -552,7 +542,6 @@ buffsave(struct buffer *bp)
 		return (FALSE);
 	}
 
-#ifndef NO_BACKUP
 	if (makebackup && (bp->b_flag & BFBAK)) {
 		s = fbackupfile(bp->b_fname);
 		/* hard error */
@@ -563,19 +552,13 @@ buffsave(struct buffer *bp)
 		    (s = eyesno("Backup error, save anyway")) != TRUE)
 			return (s);
 	}
-#endif /* !NO_BACKUP */
 	if ((s = writeout(bp, bp->b_fname)) == TRUE) {
-#ifndef NO_BACKUP
 		bp->b_flag &= ~(BFCHG | BFBAK);
-#else /* !NO_BACKUP */
-		bp->b_flag &= ~BFCHG;
-#endif /* !NO_BACKUP */
 		upmodes(bp);
 	}
 	return (s);
 }
 
-#ifndef NO_BACKUP
 /*
  * Since we don't have variables (we probably should) this is a command
  * processor for changing the value of the make backup flag.  If no argument
@@ -594,7 +577,6 @@ makebkfile(int f, int n)
 	ewprintf("Backup files %sabled", makebackup ? "en" : "dis");
 	return (TRUE);
 }
-#endif /* !NO_BACKUP */
 
 /*
  * NB: bp is passed to both ffwopen and ffclose because some

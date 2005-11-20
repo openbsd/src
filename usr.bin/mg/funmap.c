@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.18 2005/11/19 20:14:38 kjell Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.19 2005/11/20 04:16:34 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -137,9 +137,7 @@ static struct funmap functnames[] = {
 #endif /* !NO_STARTUP */
 	{localbind, "local-set-key",},
 	{localunbind, "local-unset-key",},
-#ifndef NO_BACKUP
 	{makebkfile, "make-backup-files",},
-#endif /* !NO_BACKUP */
 	{do_meta, "meta-key-mode",},	/* better name, anyone? */
 	{negative_argument, "negative-argument",},
 	{newline, "newline",},

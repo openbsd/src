@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.63 2005/11/20 03:24:17 deraadt Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.64 2005/11/20 04:16:34 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -156,7 +156,6 @@ ffgetline(char *buf, int nbuf, int *nbytes)
 	return (c == EOF ? FIOEOF : FIOSUC);
 }
 
-#ifndef NO_BACKUP
 /*
  * Make a backup copy of "fname".  On Unix the backup has the same
  * name as the original file, with a "~" on the end; this seems to
@@ -230,7 +229,6 @@ fbackupfile(const char *fn)
 
 	return (nread == -1 ? FALSE : TRUE);
 }
-#endif
 
 /*
  * The string "fn" is a file name.
