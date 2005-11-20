@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.67 2005/09/29 17:41:49 jaredy Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.68 2005/11/20 14:24:55 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -456,10 +456,12 @@ with
 to preserve
 the backslash.
 .Ss Dashes and Hyphens
-In typography there are three types of dashes of various width:
+In typography there are different types of dashes of various width:
 the hyphen (-),
-the en-dash (\-),
+the minus sign (\-),
+the en-dash (\(en),
 and the em-dash (\(em).
+.Pp
 Hyphens are used for adjectives;
 to separate the two parts of a compound word;
 or to separate a word across two successive lines of text.
@@ -469,28 +471,36 @@ blue-eyed
 lorry-driver
 .Ed
 .Pp
-The en-dash is used to separate the two elements of a range,
-or can be used the same way as colons, semi-colons or parentheses.
-It is also used as the mathematical minus symbol.
-It should be escaped with the
-.Sq \e
-character:
+The mathematical minus sign is used for negative numbers or subtraction.
+It should be written as
+.Sq \e- :
 .Bd -unfilled -offset indent
-pp. 95\e\-97.
-Go away \e\- or else!
-\e\-2
+a = 3 \e- 1;
+b = \e-2;
+.Ed
+.Pp
+The en-dash is used to separate the two elements of a range,
+or can be used the same way as an em-dash.
+It should be written as
+.Sq \e(en :
+.Bd -unfilled -offset indent
+pp. 95\e(en97.
+Go away \e(en or else!
+.Ed
+.Pp
+The em-dash can be used to show an interruption
+or can be used the same way as colons, semi-colons, or parentheses.
+It should be written as
+.Sq \e(em :
+.Bd -unfilled -offset indent
+Three things \e(em apples, oranges, and bananas.
+This is not that \e(em rather, this is that.
 .Ed
 .Pp
 Note:
-hyphens and en-dashes will look identical under normal ASCII output.
+hyphens, minus signs, and en-dashes look identical under normal ASCII output.
 Other formats, such as PostScript, render them correctly,
 with differing widths.
-.Pp
-The em-dash is used to mark a parenthesis \(em like this \(em
-or an interruption.
-It should be written as
-.Pp
-.Dl \e(em
 .Sh THE ANATOMY OF A MAN PAGE
 The body of a man page is easily constructed from a basic
 template found in the file
