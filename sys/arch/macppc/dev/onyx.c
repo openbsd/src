@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.1 2005/11/19 00:43:42 kettenis Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.2 2005/11/20 02:36:34 brad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -24,6 +24,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Datasheet is available from
+ * http://focus.ti.com/docs/prod/folders/print/pcm3052.html
  */
 
 #include <sys/param.h>
