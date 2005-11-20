@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.19 2005/11/17 00:10:46 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.20 2005/11/20 12:02:04 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -106,11 +106,18 @@ table <myess> const {
 .Sh GLOBAL CONFIGURATION
 The following configuration settings are understood:
 .Bl -tag -width Ds
-.It Ic set hostap interface Ar interface
+.It Xo
+.Ic set hostap interface
+.Ar interface \*(Ba\ \&
+.Pf { Ar interface0 , interface1 , ... No }
+.Xc
 Specify the wireless interface running in Host AP mode.
 This option could be omitted to use
 .Xr hostapd 8
 to log received IAPP messages.
+Multiple hostap interfaces may be specified
+as a comma-separated list,
+surrounded by curly braces.
 .It Ic set hostap mode Ar mode
 Specify the Host AP capture mode.
 The supported modes are:

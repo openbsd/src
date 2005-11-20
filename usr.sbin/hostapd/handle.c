@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle.c,v 1.4 2005/10/11 14:22:22 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.5 2005/11/20 12:02:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -41,9 +41,9 @@
 
 #include "hostapd.h"
 
-int	 hostapd_handle_frame(struct hostapd_config *, struct hostapd_frame *,
+int	 hostapd_handle_frame(struct hostapd_apme *, struct hostapd_frame *,
 	    u_int8_t *, const u_int);
-int	 hostapd_handle_action(struct hostapd_config *, struct hostapd_frame *,
+int	 hostapd_handle_action(struct hostapd_apme *, struct hostapd_frame *,
 	    u_int8_t *, u_int8_t *, u_int8_t *, u_int8_t *, const u_int);
 void	 hostapd_handle_addr(const u_int32_t, u_int32_t *, u_int8_t *,
 	    u_int8_t *, struct hostapd_table *);
@@ -51,13 +51,14 @@ void	 hostapd_handle_ref(u_int, u_int, u_int8_t *, u_int8_t *, u_int8_t *,
 	    u_int8_t *);
 
 int
-hostapd_handle_input(struct hostapd_config *cfg, u_int8_t *buf, u_int len)
+hostapd_handle_input(struct hostapd_apme *apme, u_int8_t *buf, u_int len)
 {
-	int ret;
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
 	struct hostapd_frame *frame;
+	int ret;
 
 	TAILQ_FOREACH(frame, &cfg->c_frames, f_entries) {
-		if ((ret = hostapd_handle_frame(cfg, frame, buf, len)) != 0)
+		if ((ret = hostapd_handle_frame(apme, frame, buf, len)) != 0)
 			return (ret);
 	}
 
@@ -99,7 +100,7 @@ hostapd_handle_ref(u_int flags, u_int shift, u_int8_t *wfrom, u_int8_t *wto,
 }
 
 int
-hostapd_handle_frame(struct hostapd_config *cfg, struct hostapd_frame *frame,
+hostapd_handle_frame(struct hostapd_apme *apme, struct hostapd_frame *frame,
     u_int8_t *buf, const u_int len)
 {
 	struct ieee80211_frame *wh;
@@ -109,7 +110,7 @@ hostapd_handle_frame(struct hostapd_config *cfg, struct hostapd_frame *frame,
 	u_int32_t flags;
 	int offset, min_rate = 0;
 
-	if ((offset = hostapd_apme_offset(cfg, buf, len)) < 0)
+	if ((offset = hostapd_apme_offset(apme, buf, len)) < 0)
 		return (0);
 	wh = (struct ieee80211_frame *)(buf + offset);
 
@@ -216,7 +217,7 @@ hostapd_handle_frame(struct hostapd_config *cfg, struct hostapd_frame *frame,
 	if (min_rate)
 		return (0);
 
-	if (hostapd_handle_action(cfg, frame, wfrom, wto, wbssid, buf,
+	if (hostapd_handle_action(apme, frame, wfrom, wto, wbssid, buf,
 	    len) != 0)
 		return (0);
 
@@ -228,10 +229,11 @@ hostapd_handle_frame(struct hostapd_config *cfg, struct hostapd_frame *frame,
 }
 
 int
-hostapd_handle_action(struct hostapd_config *cfg, struct hostapd_frame *frame,
+hostapd_handle_action(struct hostapd_apme *apme, struct hostapd_frame *frame,
     u_int8_t *wfrom, u_int8_t *wto, u_int8_t *wbssid, u_int8_t *buf,
     const u_int len)
 {
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
 	struct hostapd_action_data *action = &frame->f_action_data;
 	struct hostapd_node node;
 	u_int8_t *lladdr = NULL;
@@ -240,7 +242,7 @@ hostapd_handle_action(struct hostapd_config *cfg, struct hostapd_frame *frame,
 	switch (frame->f_action) {
 	case HOSTAPD_ACTION_RADIOTAP:
 		/* Send IAPP frame with radiotap/pcap payload */
-		if ((ret = hostapd_iapp_radiotap(cfg, buf, len)) != 0)
+		if ((ret = hostapd_iapp_radiotap(apme, buf, len)) != 0)
 			return (ret);
 
 		if ((frame->f_action_flags & HOSTAPD_ACTION_VERBOSE) == 0)
@@ -256,10 +258,10 @@ hostapd_handle_action(struct hostapd_config *cfg, struct hostapd_frame *frame,
 		/* Log frame to syslog/stderr */
 		if (frame->f_rate && frame->f_rate_intval) {
 			hostapd_printf("%s: (rate: %ld/%ld sec) ",
-			    cfg->c_apme_iface, frame->f_rate_cnt,
+			    apme->a_iface, frame->f_rate_cnt,
 			    frame->f_rate_delay + 1);
 		} else
-			hostapd_printf("%s: ", cfg->c_apme_iface);
+			hostapd_printf("%s: ", apme->a_iface);
 
 		hostapd_print_ieee80211(cfg->c_apme_dlt, frame->f_action_flags &
 		    HOSTAPD_ACTION_VERBOSE, buf, len);
@@ -284,14 +286,14 @@ hostapd_handle_action(struct hostapd_config *cfg, struct hostapd_frame *frame,
 		bcopy(lladdr, &node.ni_macaddr, IEEE80211_ADDR_LEN);
 
 		if (frame->f_action == HOSTAPD_ACTION_DELNODE)
-			ret = hostapd_apme_delnode(cfg, &node);
+			ret = hostapd_apme_delnode(apme, &node);
 		else
-			ret = hostapd_apme_addnode(cfg, &node);
+			ret = hostapd_apme_addnode(apme, &node);
 
 		if (ret != 0)  {
 			hostapd_log(HOSTAPD_LOG_DEBUG,
 			    "%s: node add/delete %s failed: %s\n",
-			    cfg->c_apme_iface, etheraddr_string(lladdr),
+			    apme->a_iface, etheraddr_string(lladdr),
 			    strerror(ret));
 		}
 		break;
@@ -302,9 +304,9 @@ hostapd_handle_action(struct hostapd_config *cfg, struct hostapd_frame *frame,
 
 	case HOSTAPD_ACTION_RESEND:
 		/* Resend received raw IEEE 802.11 frame */
-		if ((offset = hostapd_apme_offset(cfg, buf, len)) < 0)
+		if ((offset = hostapd_apme_offset(apme, buf, len)) < 0)
 			return (EINVAL);
-		if (write(cfg->c_apme_raw, buf + offset, len - offset) == -1)
+		if (write(apme->a_raw, buf + offset, len - offset) == -1)
 			ret = errno;
 		break;
 
@@ -325,7 +327,7 @@ hostapd_handle_action(struct hostapd_config *cfg, struct hostapd_frame *frame,
 		}
 
 		/* Send a raw IEEE 802.11 frame */
-		return (hostapd_apme_output(cfg, &action->a_frame));
+		return (hostapd_apme_output(apme, &action->a_frame));
 
 	default:
 		return (0);

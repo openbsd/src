@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.8 2005/10/07 22:32:52 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.9 2005/11/20 12:02:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -225,14 +225,19 @@ struct hostapd_frame {
 	TAILQ_ENTRY(hostapd_frame)	f_entries;
 };
 
+struct hostapd_apme {
+	int				a_raw;
+	u_int				a_rawlen;
+	struct event			a_ev;
+	char				a_iface[IFNAMSIZ];
+	u_int8_t			a_bssid[IEEE80211_ADDR_LEN];
+	void				*a_cfg;
+
+	TAILQ_ENTRY(hostapd_apme)	a_entries;
+};
+
 struct hostapd_config {
-	int				c_apme;
-	int				c_apme_raw;
-	u_int				c_apme_rawlen;
-	struct event			c_apme_ev;
-	char				c_apme_iface[IFNAMSIZ];
-	int				c_apme_n;
-	u_int8_t			c_apme_bssid[IEEE80211_ADDR_LEN];
+	int				c_apme_ctl;
 	u_int				c_apme_dlt;
 
 	u_int16_t			c_iapp;
@@ -265,6 +270,7 @@ struct hostapd_config {
 
 	struct hostapd_counter		c_stats;
 
+	TAILQ_HEAD(, hostapd_apme)	c_apmes;
 	TAILQ_HEAD(, hostapd_table)	c_tables;
 	TAILQ_HEAD(, hostapd_frame)	c_frames;
 };
@@ -316,35 +322,39 @@ int	 hostapd_parse_symset(char *);
 
 void	 hostapd_priv_init(struct hostapd_config *);
 int	 hostapd_priv_llc_xid(struct hostapd_config *, struct hostapd_node *);
-void	 hostapd_priv_apme_bssid(struct hostapd_config *);
-int	 hostapd_priv_apme_getnode(struct hostapd_config *,
+void	 hostapd_priv_apme_bssid(struct hostapd_apme *);
+int	 hostapd_priv_apme_getnode(struct hostapd_apme *,
 	    struct hostapd_node *);
-int	 hostapd_priv_apme_setnode(struct hostapd_config *,
+int	 hostapd_priv_apme_setnode(struct hostapd_apme *,
 	    struct hostapd_node *node, int);
 
-void	 hostapd_apme_init(struct hostapd_config *);
+void	 hostapd_apme_init(struct hostapd_apme *);
+int	 hostapd_apme_add(struct hostapd_config *, const char *);
+void	 hostapd_apme_term(struct hostapd_apme *);
+struct hostapd_apme *hostapd_apme_lookup(struct hostapd_config *,
+	    const char *);
 void	 hostapd_apme_input(int, short, void *);
-int	 hostapd_apme_output(struct hostapd_config *,
+int	 hostapd_apme_output(struct hostapd_apme *,
 	    struct hostapd_ieee80211_frame *);
-int	 hostapd_apme_addnode(struct hostapd_config *,
+int	 hostapd_apme_addnode(struct hostapd_apme *,
 	    struct hostapd_node *node);
-int	 hostapd_apme_delnode(struct hostapd_config *,
+int	 hostapd_apme_delnode(struct hostapd_apme *,
 	    struct hostapd_node *node);
-int	 hostapd_apme_offset(struct hostapd_config *, u_int8_t *,
+int	 hostapd_apme_offset(struct hostapd_apme *, u_int8_t *,
 	    const u_int);
 
 void	 hostapd_iapp_init(struct hostapd_config *);
 void	 hostapd_iapp_term(struct hostapd_config *);
-int	 hostapd_iapp_add_notify(struct hostapd_config *,
+int	 hostapd_iapp_add_notify(struct hostapd_apme *,
 	    struct hostapd_node *);
-int	 hostapd_iapp_radiotap(struct hostapd_config *,
+int	 hostapd_iapp_radiotap(struct hostapd_apme *,
 	    u_int8_t *, const u_int);
 void	 hostapd_iapp_input(int, short, void *);
 
 void	 hostapd_llc_init(struct hostapd_config *);
 int	 hostapd_llc_send_xid(struct hostapd_config *, struct hostapd_node *);
 
-int	 hostapd_handle_input(struct hostapd_config *, u_int8_t *, u_int);
+int	 hostapd_handle_input(struct hostapd_apme *, u_int8_t *, u_int);
 
 void	 hostapd_print_ieee80211(u_int, u_int, u_int8_t *, u_int);
 

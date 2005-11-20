@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.22 2005/11/16 00:01:19 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.23 2005/11/20 12:02:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -308,12 +308,18 @@ void
 hostapd_cleanup(struct hostapd_config *cfg)
 {
 	struct ip_mreq mreq;
+	struct hostapd_apme *apme;
 	struct hostapd_table *table;
 	struct hostapd_entry *entry;
 
+	/* Release all Host APs */
+	if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
+		while ((apme = TAILQ_FIRST(&cfg->c_apmes)) != NULL)
+			hostapd_apme_term(apme);
+	}
+
 	if (cfg->c_flags & HOSTAPD_CFG_F_PRIV &&
-	    (cfg->c_flags & HOSTAPD_CFG_F_BRDCAST) == 0 &&
-	    cfg->c_apme_n == 0) {
+	    (cfg->c_flags & HOSTAPD_CFG_F_BRDCAST) == 0) {
 		/*
 		 * Disable multicast and let the kernel unsubscribe
 		 * from the multicast group.
@@ -360,7 +366,8 @@ int
 main(int argc, char *argv[])
 {
 	struct hostapd_config *cfg = &hostapd_cfg;
-	char *iapp_iface = NULL, *hostap_iface = NULL, *config = NULL;
+	struct hostapd_apme *apme;
+	char *config = NULL;
 	u_int debug = 0;
 	int ch;
 
@@ -396,14 +403,6 @@ main(int argc, char *argv[])
 	else
 		strlcpy(cfg->c_config, config, sizeof(cfg->c_config));
 
-	if (iapp_iface != NULL)
-		strlcpy(cfg->c_iapp_iface, iapp_iface,
-		    sizeof(cfg->c_iapp_iface));
-
-	if (hostap_iface != NULL)
-		strlcpy(cfg->c_apme_iface, hostap_iface,
-		    sizeof(cfg->c_apme_iface));
-
 	if (geteuid())
 		hostapd_fatal("need root privileges\n");
 
@@ -413,9 +412,6 @@ main(int argc, char *argv[])
 
 	if ((cfg->c_flags & HOSTAPD_CFG_F_IAPP) == 0)
 		hostapd_fatal("IAPP interface not specified\n");
-
-	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
-		strlcpy(cfg->c_apme_iface, "<none>", sizeof(cfg->c_apme_iface));
 
 	if (cfg->c_apme_dlt == 0)
 		cfg->c_apme_dlt = HOSTAPD_DLT;
@@ -434,17 +430,20 @@ main(int argc, char *argv[])
 		daemon(0, 0);
 	}
 
-	if (cfg->c_flags & HOSTAPD_CFG_F_APME)
-		hostapd_apme_init(cfg);
-	else
-		hostapd_log(HOSTAPD_LOG, "%s/%s: running without a Host AP\n",
-		    cfg->c_apme_iface, cfg->c_iapp_iface);
+	if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
+		TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries)
+			hostapd_apme_init(apme);
+	} else
+		hostapd_log(HOSTAPD_LOG, "%s: running without a Host AP\n",
+		    cfg->c_iapp_iface);
 
 	/* Drop all privileges in an unprivileged child process */
 	hostapd_priv_init(cfg);
 
-	setproctitle("Host AP: %s, IAPP: %s",
-	    cfg->c_apme_iface, cfg->c_iapp_iface);
+	if (cfg->c_flags & HOSTAPD_CFG_F_APME)
+		setproctitle("IAPP: %s, Host AP", cfg->c_iapp_iface);
+	else
+		setproctitle("IAPP: %s", cfg->c_iapp_iface);
 
 	/*
 	 * Unprivileged child process
@@ -469,9 +468,11 @@ main(int argc, char *argv[])
 	 * Schedule the Host AP listener
 	 */
 	if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
-		event_set(&cfg->c_apme_ev, cfg->c_apme_raw,
-		    EV_READ | EV_PERSIST, hostapd_apme_input, cfg);
-		event_add(&cfg->c_apme_ev, NULL);
+		TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
+			event_set(&apme->a_ev, apme->a_raw,
+			    EV_READ | EV_PERSIST, hostapd_apme_input, apme);
+			event_add(&apme->a_ev, NULL);
+		}
 	}
 
 	/*
@@ -481,8 +482,8 @@ main(int argc, char *argv[])
 	    hostapd_iapp_input, cfg);
 	event_add(&cfg->c_iapp_udp_ev, NULL);
 
-	hostapd_log(HOSTAPD_LOG, "%s/%s: starting hostapd with pid %u\n",
-	    cfg->c_apme_iface, cfg->c_iapp_iface, getpid());
+	hostapd_log(HOSTAPD_LOG, "starting hostapd with pid %u\n",
+	    getpid());
 
 	/* Run event loop */
 	event_dispatch();
@@ -595,4 +596,3 @@ hostapd_entry_cmp(struct hostapd_entry *a, struct hostapd_entry *b)
 }
 
 RB_GENERATE(hostapd_tree, hostapd_entry, e_nodes, hostapd_entry_cmp);
-

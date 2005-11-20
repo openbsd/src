@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2005/11/16 00:01:19 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2005/11/20 12:02:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -149,18 +149,10 @@ grammar		: /* empty */
 		| grammar error '\n'		{ errors++; }
 		;
 
-option		: SET HOSTAP INTERFACE STRING
+option		: SET HOSTAP INTERFACE hostapifaces
 		{
-			strlcpy(hostapd_cfg.c_apme_iface, $4,
-			    sizeof(hostapd_cfg.c_apme_iface));
-
-			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_APME;
-
-			hostapd_log(HOSTAPD_LOG_DEBUG,
-			    "parse %s: Host AP interface %s\n",
-			    hostapd_cfg.c_config, $4);
-
-			free($4);
+			if (!TAILQ_EMPTY(&hostapd_cfg.c_apmes))
+				hostapd_cfg.c_flags |= HOSTAPD_CFG_F_APME;
 		}
 		| SET HOSTAP MODE hostapmode
 		| SET IAPP INTERFACE STRING passive
@@ -170,8 +162,8 @@ option		: SET HOSTAP INTERFACE STRING
 
 			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_IAPP;
 
-			hostapd_log(HOSTAPD_LOG_DEBUG, "parse %s: "
-			    "IAPP interface %s\n", hostapd_cfg.c_config, $4);
+			hostapd_log(HOSTAPD_LOG_DEBUG,
+			    "%s: IAPP interface added\n", $4);
 
 			free($4);
 		}
@@ -210,6 +202,24 @@ hostapmode	: RADIOTAP
 		| PCAP
 		{
 			hostapd_cfg.c_apme_dlt = DLT_IEEE802_11;
+		}
+		;
+
+hostapifaces	: '{' optnl hostapifacelist optnl '}'
+		| hostapiface
+		;
+
+hostapifacelist	: hostapiface
+		| hostapifacelist comma hostapiface
+		;
+
+hostapiface	: STRING
+		{
+			if (hostapd_apme_add(&hostapd_cfg, $1) != 0) {
+				yyerror("failed to add hostap interface");
+				YYERROR;
+			}
+			free($1);
 		}
 		;
 
@@ -1257,6 +1267,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	}
 
 	/* Init tables and data structures */
+	TAILQ_INIT(&cfg->c_apmes);
 	TAILQ_INIT(&cfg->c_tables);
 	TAILQ_INIT(&cfg->c_frames);
 	cfg->c_iapp_multicast.sin_addr.s_addr = INADDR_ANY;

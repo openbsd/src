@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.8 2005/10/07 22:32:52 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.9 2005/11/20 12:02:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -45,32 +45,40 @@
 void
 hostapd_iapp_init(struct hostapd_config *cfg)
 {
+	struct hostapd_apme *apme;
+
 	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
 		return;
 
-	/* Get Host AP's BSSID */
-	hostapd_priv_apme_bssid(cfg);
-
-	hostapd_log(HOSTAPD_LOG_VERBOSE,
-	    "%s: attaching to Host AP %s with BSSID \"%s\"\n",
-	    cfg->c_iapp_iface, cfg->c_apme_iface,
-	    etheraddr_string(cfg->c_apme_bssid));
+	TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
+		/* Get Host AP's BSSID */
+		hostapd_priv_apme_bssid(apme);
+		hostapd_log(HOSTAPD_LOG_VERBOSE,
+		    "%s/%s: attached Host AP interface with BSSID \"%s\"\n",
+		    cfg->c_iapp_iface, apme->a_iface,
+		    etheraddr_string(apme->a_bssid));
+	}
 }
 
 void
 hostapd_iapp_term(struct hostapd_config *cfg)
 {
+	struct hostapd_apme *apme;
+
 	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
 		return;
 
-	/* XXX not yet used but inspired by the APME TERMINATE action */
-	hostapd_log(HOSTAPD_LOG_VERBOSE, "%s: detaching from Host AP %s\n",
-	    cfg->c_iapp_iface, cfg->c_apme_iface);
+	TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
+		hostapd_log(HOSTAPD_LOG_VERBOSE,
+		    "%s/%s: detaching from Host AP\n",
+		    cfg->c_iapp_iface, apme->a_iface);
+	}
 }
 
 int
-hostapd_iapp_add_notify(struct hostapd_config *cfg, struct hostapd_node *node)
+hostapd_iapp_add_notify(struct hostapd_apme *apme, struct hostapd_node *node)
 {
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
 	struct sockaddr_in *addr;
 	struct {
 		struct ieee80211_iapp_frame hdr;
@@ -105,17 +113,19 @@ hostapd_iapp_add_notify(struct hostapd_config *cfg, struct hostapd_node *node)
 		return (errno);
 	}
 
-	hostapd_log(HOSTAPD_LOG, "%s: sent ADD notification for %s\n",
-	    cfg->c_iapp_iface, etheraddr_string(frame.add.a_macaddr));
+	hostapd_log(HOSTAPD_LOG, "%s/%s: sent ADD notification for %s\n",
+	    apme->a_iface, cfg->c_iapp_iface,
+	    etheraddr_string(frame.add.a_macaddr));
 
 	/* Send a LLC XID frame, see llc.c for details */
 	return (hostapd_priv_llc_xid(cfg, node));
 }
 
 int
-hostapd_iapp_radiotap(struct hostapd_config *cfg, u_int8_t *buf,
+hostapd_iapp_radiotap(struct hostapd_apme *apme, u_int8_t *buf,
     const u_int len)
 {
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
 	struct sockaddr_in *addr;
 	struct ieee80211_iapp_frame hdr;
 	struct msghdr msg;
@@ -171,6 +181,7 @@ void
 hostapd_iapp_input(int fd, short sig, void *arg)
 {
 	struct hostapd_config *cfg = (struct hostapd_config *)arg;
+	struct hostapd_apme *apme;
 	struct sockaddr_in addr;
 	socklen_t addr_len;
 	ssize_t len;
@@ -237,14 +248,17 @@ hostapd_iapp_input(int fd, short sig, void *arg)
 		 * ADD.notify message will be ignored.
 		 */
 		if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
-			if ((ret = hostapd_apme_delnode(cfg, &node)) == 0)
-				cfg->c_stats.cn_tx_apme++;
+			TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
+				if ((ret = hostapd_apme_delnode(apme,
+				    &node)) == 0)
+					cfg->c_stats.cn_tx_apme++;
+			}
 		} else
 			ret = 0;
 
 		hostapd_log(HOSTAPD_LOG, "%s: %s ADD notification "
 		    "for %s at %s\n",
-		    cfg->c_apme_iface, ret == 0 ?
+		    cfg->c_iapp_iface, ret == 0 ?
 		    "received" : "ignored",
 		    etheraddr_string(node.ni_macaddr),
 		    inet_ntoa(addr.sin_addr));
