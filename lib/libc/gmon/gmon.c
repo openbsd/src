@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.19 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: gmon.c,v 1.20 2005/11/20 17:06:06 millert Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/gmon.h>
+#include <sys/mman.h>
 #include <sys/sysctl.h>
 
 #include <stdio.h>
@@ -39,8 +40,6 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
-
-extern char *minbrk __asm ("minbrk");
 
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
@@ -59,7 +58,7 @@ void
 monstartup(u_long lowpc, u_long highpc)
 {
 	int o;
-	char *cp;
+	void *addr;
 	struct gmonparam *p = &_gmonparam;
 
 	/*
@@ -79,21 +78,23 @@ monstartup(u_long lowpc, u_long highpc)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
 
-	cp = sbrk(p->kcountsize + p->fromssize + p->tossize);
-	if (cp == (char *)-1) {
-		ERR("monstartup: out of memory\n");
-		return;
-	}
-#ifdef notdef
-	bzero(cp, p->kcountsize + p->fromssize + p->tossize);
-#endif
-	p->tos = (struct tostruct *)cp;
-	cp += p->tossize;
-	p->kcount = (u_short *)cp;
-	cp += p->kcountsize;
-	p->froms = (u_short *)cp;
+	addr = mmap((void *)0, p->kcountsize,  PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+	if (addr == MAP_FAILED)
+		goto mapfailed;
+	p->kcount = addr;
 
-	minbrk = sbrk(0);
+	addr = mmap((void *)0, p->fromssize,  PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+	if (addr == MAP_FAILED)
+		goto mapfailed;
+	p->froms = addr;
+
+	addr = mmap((void *)0, p->tossize,  PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+	if (addr == MAP_FAILED)
+		goto mapfailed;
+	p->tos = addr;
 	p->tos[0].link = 0;
 
 	o = p->highpc - p->lowpc;
@@ -116,6 +117,22 @@ monstartup(u_long lowpc, u_long highpc)
 		s_scale = SCALE_1_TO_1;
 
 	moncontrol(1);
+	return;
+
+mapfailed:
+	if (p->kcount != NULL) {
+		munmap(p->kcount, p->kcountsize);
+		p->kcount = NULL;
+	}
+	if (p->froms != NULL) {
+		munmap(p->froms, p->fromssize);
+		p->froms = NULL;
+	}
+	if (p->tos != NULL) {
+		munmap(p->tos, p->tossize);
+		p->tos = NULL;
+	}
+	ERR("monstartup: out of memory\n");
 }
 
 void
@@ -252,6 +269,20 @@ _mcleanup(void)
 		}
 	}
 	close(fd);
+#ifdef notyet
+	if (p->kcount != NULL) {
+		munmap(p->kcount, p->kcountsize);
+		p->kcount = NULL;
+	}
+	if (p->froms != NULL) {
+		munmap(p->froms, p->fromssize);
+		p->froms = NULL;
+	}
+	if (p->tos != NULL) {
+		munmap(p->tos, p->tossize);
+		p->tos = NULL;
+	}
+#endif
 }
 
 /*
@@ -295,5 +326,3 @@ hertz(void)
 		return(0);
 	return (1000000 / tim.it_interval.tv_usec);
 }
-
-
