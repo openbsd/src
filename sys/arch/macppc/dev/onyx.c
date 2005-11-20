@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.3 2005/11/20 02:56:44 brad Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.4 2005/11/20 19:54:04 brad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -28,6 +28,9 @@
 
 /*
  * http://focus.ti.com/docs/prod/folders/print/pcm3052.html
+ *
+ * Datasheet is available from
+ * http://focus.ti.com/docs/prod/folders/print/pcm3052a.html
  */
 
 #include <sys/param.h>

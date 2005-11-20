@@ -1,5 +1,5 @@
-/*	$OpenBSD: daca.c,v 1.2 2005/11/05 04:26:22 brad Exp $	*/
-/*	$Id: daca.c,v 1.2 2005/11/05 04:26:22 brad Exp $	*/
+/*	$OpenBSD: daca.c,v 1.3 2005/11/20 19:54:05 brad Exp $	*/
+/*	$Id: daca.c,v 1.3 2005/11/20 19:54:05 brad Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Datasheet is available from
+ * http://www.indata.si/grega/pdfs/dac3550a.pdf
  */
 
 #include <sys/param.h>
@@ -103,7 +108,7 @@ struct audio_device daca_device = {
 	"daca"
 };
 
-/* DAC3550 registers */
+/* DAC3550A registers */
 #define DEQ_SR		0x01	/* Sample rate control (8) */
 #define DEQ_AVOL	0x02	/* Analog volume (16) */
 #define DEQ_GCFG	0x03	/* Global configuration (8) */
