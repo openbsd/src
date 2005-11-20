@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.10 2003/06/06 13:28:13 jmc Exp $
+.\"	$OpenBSD: acct.5,v 1.11 2005/11/20 10:00:02 jmc Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -53,25 +53,26 @@ to the accounting file.
  * exponent, 13 bit fraction ``floating point'' number.  Units are 1/AHZ
  * seconds.
  */
-typedef u_short comp_t;
+typedef u_int16_t comp_t;
 
 struct acct {
-	char	ac_comm[10];	/* name of command */
-	comp_t	ac_utime;	/* user time */
-	comp_t	ac_stime;	/* system time */
-	comp_t	ac_etime;	/* elapsed time */
-	time_t	ac_btime;	/* starting time */
-	uid_t	ac_uid;		/* user id */
-	gid_t	ac_gid;		/* group id */
-	short	ac_mem;		/* memory usage average */
-	comp_t	ac_io;		/* count of IO blocks */
-	dev_t	ac_tty;		/* controlling tty */
-#define	AFORK	0x01		/* forked but not exec'ed */
-#define	ASU	0x02		/* used superuser permissions */
+	char	  ac_comm[10];	/* command name */
+	comp_t	  ac_utime;	/* user time */
+	comp_t	  ac_stime;	/* system time */
+	comp_t	  ac_etime;	/* elapsed time */
+	time_t	  ac_btime;	/* starting time */
+	uid_t	  ac_uid;	/* user id */
+	gid_t	  ac_gid;	/* group id */
+	u_int16_t ac_mem;	/* average memory usage */
+	comp_t	  ac_io;	/* count of IO blocks */
+	dev_t	  ac_tty;	/* controlling tty */
+
+#define	AFORK	0x01		/* fork'd but not exec'd */
+#define	ASU	0x02		/* used super-user permissions */
 #define	ACOMPAT	0x04		/* used compatibility mode */
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */
-	char	ac_flag;	/* accounting flags */
+	u_int8_t  ac_flag;	/* accounting flags */
 };
 
 /*
@@ -80,8 +81,8 @@ struct acct {
  */
 #define	AHZ	64
 
-#ifdef KERNEL
-struct vnode	*acctp;
+#ifdef _KERNEL
+int	acct_process(struct proc *p);
 #endif
 .Ed
 .Pp
@@ -97,7 +98,7 @@ and its status is saved by setting one of more of the following flags in
 .Dv ACOMPAT ,
 .Dv ACORE ,
 and
-.Dv ASIG .
+.Dv AXSIG .
 .Sh SEE ALSO
 .Xr lastcomm 1 ,
 .Xr acct 2 ,
@@ -107,5 +108,5 @@ and
 .Sh HISTORY
 An
 .Nm
-file format appeared in
+file format first appeared in
 .At v7 .
