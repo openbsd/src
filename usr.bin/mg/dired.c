@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.31 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: dired.c,v 1.32 2005/11/20 03:24:17 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -21,8 +21,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <libgen.h>
-
-#ifndef NO_DIRED
 
 void		 dired_init(void);
 static int	 dired(int, int);
@@ -639,5 +637,3 @@ dired_(char *dirname)
 	bp->b_nmodes = 1;
 	return (bp);
 }
-
-#endif /* !NO_DIRED */

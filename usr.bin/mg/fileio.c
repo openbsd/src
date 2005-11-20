@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.62 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.63 2005/11/20 03:24:17 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -9,12 +9,10 @@
 
 
 #include <sys/types.h>
-#ifndef NO_DIRED
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include "kbd.h"
-#endif /* !NO_DIRED */
 #include <limits.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
@@ -40,11 +38,7 @@ ffropen(const char *fn, struct buffer *bp)
 
 	/* If 'fn' is a directory open it with dired. */
 	if (fisdir(fn) == TRUE)
-#ifdef NO_DIRED
-		return (FIOERR);
-#else
 		return (FIODIR);
-#endif /* NO_DIRED */
 
 	if (bp && fstat(fileno(ffp), &statbuf) == 0) {
 		/* set highorder bit to make sure this isn't all zero */
@@ -359,8 +353,6 @@ nohome:
 }
 #endif /* !NO_STARTUP */
 
-#ifndef NO_DIRED
-
 int
 copy(char *frname, char *toname)
 {
@@ -408,8 +400,6 @@ copy(char *frname, char *toname)
 
 	return (TRUE);
 }
-
-#endif				/* NO_DIRED */
 
 struct filelist {
 	struct list	fl_l;

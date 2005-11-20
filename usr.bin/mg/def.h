@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.76 2005/11/18 23:37:30 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.77 2005/11/20 03:24:17 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -66,9 +66,7 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define FIOEOF	2		/* End of file.			 */
 #define FIOERR	3		/* Error.			 */
 #define FIOLONG 4		/* long line partially read	 */
-#ifndef NO_DIRED
-# define FIODIR 5		/* File is a directory		 */
-#endif /* !NO_DIRED */
+#define FIODIR 5		/* File is a directory		 */
 
 /*
  * Directory I/O.
@@ -253,8 +251,7 @@ struct buffer {
 	char		 b_fname[NFILEN]; /* File name			 */
 	struct fileinfo	 b_fi;		/* File attributes		 */
 	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list		*/
-	int		 b_undopos;	/* Where we were during the	*/
-                                        /* last undo action.		*/
+	int		 b_undopos;	/* Where we were during last undo */
 	struct undo_rec *b_undoptr;
 };
 #define b_bufp	b_list.l_p.x_bp
@@ -320,10 +317,8 @@ void		 dirinit(void);
 int		 changedir(int, int);
 int		 showcwdir(int, int);
 
-#ifndef NO_DIRED
 /* dired.c */
 struct buffer	*dired_(char *);
-#endif /* !NO_DIRED */
 
 /* file.c X */
 int		 fileinsert(int, int);

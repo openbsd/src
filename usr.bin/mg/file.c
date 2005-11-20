@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.45 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.46 2005/11/20 03:24:17 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -249,10 +249,8 @@ readin(char *fname)
 	 */
 	if (access(fname, W_OK) && errno != ENOENT)
 		ro = TRUE;
-#ifndef NO_DIRED
 	if (fisdir(fname) == TRUE)
 		ro = TRUE;
-#endif
 	if (ro == TRUE)
 		curbp->b_flag |= BFREADONLY;
 	else
@@ -321,7 +319,6 @@ insertfile(char *fname, char *newname, int replacebuf)
 		else
 			ewprintf("(File not found)");
 		goto out;
-#ifndef NO_DIRED
 	} else if (s == FIODIR) {
 		/* file was a directory */
 		if (replacebuf == FALSE) {
@@ -335,7 +332,6 @@ insertfile(char *fname, char *newname, int replacebuf)
 		undo_enable(x);
 		curbp = bp;
 		return (showbuffer(bp, curwp, WFHARD | WFMODE));
-#endif /* !NO_DIRED */
 	}
 	opos = curwp->w_doto;
 
