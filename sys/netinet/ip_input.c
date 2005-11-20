@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.134 2005/10/05 17:32:22 norby Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.135 2005/11/20 19:25:16 brad Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -137,7 +137,8 @@ ipq_lock_try()
 {
 	int s;
 
-	s = splimp();
+	/* Use splvm() due to mbuf allocation. */
+	s = splvm();
 	if (ipq_locked) {
 		splx(s);
 		return (0);
@@ -154,7 +155,7 @@ ipq_unlock()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	ipq_locked = 0;
 	splx(s);
 }

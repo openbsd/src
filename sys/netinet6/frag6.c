@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.21 2003/10/01 21:41:05 itojun Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.22 2005/11/20 19:25:16 brad Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -81,7 +81,8 @@ ip6q_lock_try()
 {
 	int s;
 
-	s = splimp();
+	/* Use splvm() due to mbuf allocation. */
+	s = splvm();
 	if (ip6q_locked) {
 		splx(s);
 		return (0);
@@ -96,7 +97,7 @@ ip6q_unlock()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	ip6q_locked = 0;
 	splx(s);
 }
