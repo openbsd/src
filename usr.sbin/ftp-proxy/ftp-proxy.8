@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.3 2005/06/07 04:37:32 camield Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.4 2005/11/20 10:01:30 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -159,7 +159,11 @@ In the rule section:
 anchor "ftp-proxy/*"
 pass out proto tcp from $proxy to any port 21 keep state
 .Ed
-.Sh SECURITY
+.Sh SEE ALSO
+.Xr ftp 1 ,
+.Xr pf 4 ,
+.Xr pf.conf 5
+.Sh CAVEATS
 Negotiated data connection ports below 1024 are not allowed.
 .Pp
 The negotiated IP address for active modes is ignored for security
@@ -168,7 +172,3 @@ This makes third party file transfers impossible.
 .Pp
 .Nm ftp-proxy
 chroots to "/var/empty" and changes to user "proxy" to drop privileges.
-.Sh SEE ALSO
-.Xr ftp 1 ,
-.Xr pf 4 ,
-.Xr pf.conf 5
