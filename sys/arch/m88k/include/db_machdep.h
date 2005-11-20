@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 2005/04/30 16:43:11 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.7 2005/11/20 22:07:07 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -41,7 +41,10 @@
 
 #include <uvm/uvm_param.h>
 
-#define PC_REGS(regs)							\
+/*
+ * Extract the real pc from the exception pipeline.
+ */
+#define	PC_REGS(regs)							\
 	(CPU_IS88110 ? ((regs)->exip & XIP_ADDR) :			\
 	 ((regs)->sxip & XIP_V ? (regs)->sxip & XIP_ADDR :		\
 	  ((regs)->snip & NIP_V ? (regs)->snip & NIP_ADDR :		\
@@ -53,30 +56,10 @@ do {									\
 	(regs)->snip = (value) + 4;					\
 } while (0)
 
-/* inst_return(ins) - is the instruction a function call return.
- * Not mutually exclusive with inst_branch. Should be a jmp r1. */
-#define inst_return(I) \
-	(((I) & 0xfffffbff) == 0xf400c001 ? TRUE : FALSE)
-
-/*
- * inst_call - function call predicate: is the instruction a function call.
- * Could be either bsr or jsr
- */
-#define inst_call(I) \
-	(((I) & 0xf8000000) == 0xc8000000 /*bsr*/ || \
-	 ((I) & 0xfffffbe0) == 0xf400c800 /*jsr*/ ? TRUE : FALSE)
-
 #ifdef DDB
 
-/*
- * This is a hack so that mc88100 can use software single step
- * and mc88110 can use the wonderful hardware single step
- * feature. XXX smurph
- */
-#define INTERNAL_SSTEP		/* Use local Single Step routines */
-
 #define BKPT_SIZE	(4)	/* number of bytes in bkpt inst. */
-#define BKPT_INST	(0xF000D000 | DDB_ENTRY_BKPT_NO) /* tb0, 0,r0, vector 130 */
+#define BKPT_INST	(0xf000d000 | DDB_ENTRY_BKPT_NO) /* tb0, 0,r0, 130 */
 #define BKPT_SET(inst)	(BKPT_INST)
 
 /* Entry trap for the debugger - used for inline assembly breaks*/
@@ -88,14 +71,30 @@ typedef	struct reg	db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-unsigned	inst_load(unsigned);
-unsigned	inst_store(unsigned);
-boolean_t	inst_branch(unsigned);
-db_addr_t	next_instr_address(db_addr_t, unsigned);
-db_addr_t	branch_taken(u_int, db_addr_t, db_expr_t (*)(db_regs_t *, int),
-    db_regs_t *);
-int		ddb_break_trap(int, db_regs_t *);
-int		ddb_entry_trap(int, db_regs_t *);
+int	inst_load(u_int);
+int	inst_store(u_int);
+int	ddb_break_trap(int, db_regs_t *);
+int	ddb_entry_trap(int, db_regs_t *);
+int	m88k_print_instruction(u_int, long);	/* db_disasm.c */
+
+/*
+ * inst_call(ins) - is the instruction a function call.
+ * Could be either bsr or jsr.
+ */
+#define	inst_call(I) \
+	(((I) & 0xf8000000) == 0xc8000000 /* bsr */ || \
+	 ((I) & 0xfffffbe0) == 0xf400c800 /* jsr */)
+/*
+ * inst_return(ins) - is the instruction a function call return.
+ * Not mutually exclusive with inst_branch. Should be a jmp r1.
+ */
+#define	inst_return(I)	(((I) & 0xfffffbff) == 0xf400c001)
+
+/*
+ * inst_trap_return(ins) - is the instruction a return from trap.
+ * Should be a rte.
+ */
+#define	inst_trap_return(I)	((I) == 0xf400c000)
 
 /* breakpoint/watchpoint foo */
 #define IS_BREAKPOINT_TRAP(type,code) ((type)==T_KDB_BREAK)
@@ -105,25 +104,8 @@ int		ddb_entry_trap(int, db_regs_t *);
 #define IS_WATCHPOINT_TRAP(type,code) 0
 #endif /* T_WATCHPOINT */
 
-#ifdef INTERNAL_SSTEP
-db_expr_t getreg_val(db_regs_t *, int);
-void db_set_single_step(db_regs_t *);
-void db_clear_single_step(db_regs_t *);
-#else
-/* need software single step */
-#define SOFTWARE_SSTEP 1 /* we need this for mc88100 */
-#endif
-
-#define DB_ACCESS_LEVEL DB_ACCESS_ANY
-
-/* instruction type checking - others are implemented in db_sstep.c */
-
-#define inst_trap_return(ins)  ((ins) == 0xf400fc00)
-
 /* machine specific commands have been added to ddb */
 #define DB_MACHINE_COMMANDS
-
-int m88k_print_instruction(unsigned, long);
 
 #define	DB_AOUT_SYMBOLS
 

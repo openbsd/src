@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2005/05/15 14:33:04 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2005/11/20 22:07:09 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -39,65 +39,20 @@
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 
-union instruction {
-	unsigned rawbits;
-
-	struct {
-		unsigned int    : 5;
-		unsigned int   n: 1;
-		signed int   d26:26;
-	} br;
-
-	struct {
-		unsigned int      : 4;
-		unsigned int isbb1: 1;	/* isbb1==0 means bb0, isbb1==1 means bb1 */
-		unsigned int   n  : 1;
-		unsigned int  b5  : 5;
-		unsigned int  s1  : 5;
-		signed   int  d16 :16;
-	} bb; /* bcnd too, except "isbb1" makes no sense for bcnd */
-
-	struct {
-		unsigned int      : 6;
-		unsigned int  b5  : 5;
-		unsigned int  s1  : 5;
-		unsigned int      : 7;
-		unsigned int vec9 : 9;
-	} tb; /* tcnd too */
-
-	struct {
-		unsigned int      :21;
-		unsigned int    n : 1;
-		unsigned int      : 5;
-		unsigned int   s2 : 5;
-	} jump;	/* jmp, jsr */
-
-	struct {
-		unsigned int      : 6;
-		unsigned int    d : 5;
-		unsigned int   s1 : 5;
-		unsigned int  i16 :16;
-	} diatic;   /* general reg/reg/i16 instructions */
-
-	struct {
-		unsigned int      : 6;
-		unsigned int    d : 5;
-		unsigned int   s1 : 5;
-		unsigned int      :11;
-		unsigned int   s2 : 5;
-	} triatic;  /* general reg/reg/reg instructions */
-};
-
 static inline
-unsigned br_dest(unsigned addr, union instruction inst)
+unsigned br_dest(unsigned addr, u_int inst)
 {
-	return (addr + inst.br.d26 * 4);
+	inst = (inst & 0x03ffffff) << 2;
+	/* check if sign extension is needed */
+	if (inst & 0x08000000)
+		inst |= 0xf0000000;
+	return (addr + inst);
 }
 
 /* #define TRACE_DEBUG */
 
 int frame_is_sane(db_regs_t *regs, int);
-char *m88k_exception_name(unsigned vector);
+const char *m88k_exception_name(unsigned vector);
 unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
 
 /*
@@ -107,7 +62,7 @@ unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
 #define JMP_R1(I)	    ( (I) == 0xf400c001)	/* jmp     r1 */
 
 /* gets the IMM16 value from an instruction */
-#define IMM16VAL(I)	    (((union instruction)(I)).diatic.i16)
+#define IMM16VAL(I)	    ((I) & 0x0000ffff)
 
 /* subu r31, r31, IMM */
 #define SUBU_R31_R31_IMM(I) (((I) & 0xffff0000) == 0x67ff0000U)
@@ -242,27 +197,23 @@ m88k_instruction_info(unsigned instruction)
 static int
 hex_value_needs_0x(unsigned value)
 {
-	int i;
-	unsigned last = 0;
-	unsigned char c;
-	unsigned have_a_hex_digit = 0;
+	int c;
+	int have_a_hex_digit = 0;
 
 	if (value <= 9)
-		return 0;
+		return (0);
 
-	for (i = 0; i < 8; i++) {
+	while (value != 0) {
 		c = value & 0xf;
 		value >>= 4;
-		if (c)
-			last = c;
 		if (c > 9)
 			have_a_hex_digit = 1;
 	}
-	if (have_a_hex_digit == 0)
-		return 1;
-	if (last > 9)
-		return 1;
-	return 0;
+	if (have_a_hex_digit == 0)	/* has no letter, thus needs 0x */
+		return (1);
+	if (c > 9)		/* starts with a letter, thus needs 0x */
+		return (1);
+	return (0);
 }
 
 /*
@@ -300,35 +251,31 @@ frame_is_sane(db_regs_t *regs, int quiet)
 	if (CPU_IS88100) {
 		/* sxip is reasonable */
 #if 0
-		if ((regs->sxip & 1) == 1)
-			return 0;
+		if ((regs->sxip & XIP_E) != 0)
+			goto out;
 #endif
 		/* snip is reasonable */
-		if ((regs->snip & 3) != 2)
-			return 0;
+		if ((regs->snip & ~NIP_ADDR) != NIP_V)
+			goto out;
 		/* sfip is reasonable */
-		if ((regs->sfip & 3) != 2)
-			return 0;
+		if ((regs->sfip & ~FIP_ADDR) != FIP_V)
+			goto out;
 	}
 #endif
 
 	/* epsr sanity */
-	if ((regs->epsr & PSR_MODE)) { /* kernel mode */
-		if (regs->epsr & PSR_BO)
-			return 0;
-		return 1;
-	}
-	if (!(regs->epsr & PSR_MODE)) {	/* user mode */
-		if (regs->epsr & PSR_BO)
-			return 0;
-		return 2;
-	}
+	if (regs->epsr & PSR_BO)
+		goto out;
+
+	return ((regs->epsr & PSR_MODE) ? 1 : 2);
+
+out:
 	if (quiet == 0)
 		db_printf("[WARNING: not an exception frame?]\n");
-	return 0;
+	return (0);
 }
 
-char *
+const char *
 m88k_exception_name(unsigned vector)
 {
 	switch (vector) {
@@ -377,22 +324,23 @@ db_trace_get_val(vaddr_t addr, unsigned *ptr)
 	}
 }
 
-#define FIRST_CALLPRESERVED_REG 14
-#define LAST_CALLPRESERVED_REG  29
-#define FIRST_ARG_REG       2
-#define LAST_ARG_REG        9
-#define RETURN_VAL_REG           1
+#define	FIRST_CALLPRESERVED_REG	14
+#define	LAST_CALLPRESERVED_REG	29
+#define	FIRST_ARG_REG		2
+#define	LAST_ARG_REG		9
+#define	RETURN_VAL_REG		1
 
 static unsigned global_saved_list = 0x0; /* one bit per register */
 static unsigned local_saved_list  = 0x0; /* one bit per register */
 static unsigned trashed_list      = 0x0; /* one bit per register */
 static unsigned saved_reg[32];		 /* one value per register */
 
-#define reg_bit(reg) (1<<((reg)%32))
+#define	reg_bit(reg)	1 << (reg)
 
 static void
 save_reg(int reg, unsigned value)
 {
+	reg &= 0x1f;
 #ifdef TRACE_DEBUG
 	if (DEBUGGING_ON)
 		db_printf("save_reg(%d, %x)\n", reg, value);
@@ -404,20 +352,20 @@ save_reg(int reg, unsigned value)
 #endif
 		return;	/* don't save trashed registers */
 	}
-	saved_reg[(reg%32)] = value;
+	saved_reg[reg] = value;
 	global_saved_list |= reg_bit(reg);
-	local_saved_list  |= reg_bit(reg);
+	local_saved_list |= reg_bit(reg);
 }
 
-#define mark_reg_trashed(reg)	(trashed_list |= reg_bit(reg))
+#define	mark_reg_trashed(reg)	trashed_list |= reg_bit((reg) & 0x1f)
 
-#define have_global_reg(reg) (global_saved_list & (1<<(reg)))
-#define have_local_reg(reg)  (local_saved_list & (1<<(reg)))
+#define	have_global_reg(reg)	(global_saved_list & reg_bit(reg))
+#define	have_local_reg(reg)	(local_saved_list & reg_bit(reg))
 
-#define clear_local_saved_regs()  { local_saved_list = trashed_list =      0; }
-#define clear_global_saved_regs() { local_saved_list = global_saved_list = 0; }
+#define	clear_local_saved_regs()	local_saved_list = trashed_list = 0
+#define	clear_global_saved_regs()	local_saved_list = global_saved_list = 0
 
-#define saved_reg_value(reg) (saved_reg[(reg)])
+#define	saved_reg_value(reg)	saved_reg[(reg)]
 
 /*
  * Show any arguments that we might have been able to determine.
@@ -453,7 +401,6 @@ print_args(void)
 	db_printf(")");
 }
 
-
 #define JUMP_SOURCE_IS_BAD		0
 #define JUMP_SOURCE_IS_OK		1
 #define JUMP_SOURCE_IS_UNLIKELY		2
@@ -468,33 +415,34 @@ print_args(void)
  *	else
  *		OtherStuff...
  * to
- *	bcnd   !condition  mark
- *	bsr.n  func1
- *	or     r1, r0, mark2
+ *	bcnd	!condition, mark
+ *	bsr.n	func1
+ *	 or	r1, r0, mark2
  *    mark:
  *	OtherStuff...
  *    mark2:
  *
- * So RETURN_TO will be MARK2, even though we really did branch via
- * 'bsr.n func1', so this makes it difficult to be certaian about being
+ * So RETURN_TO will be mark2, even though we really did branch via
+ * 'bsr.n func1', so this makes it difficult to be certain about being
  * wrong.
  */
 static int
 is_jump_source_ok(unsigned return_to, unsigned jump_to)
 {
 	unsigned flags;
-	union instruction instruction;
+	u_int instruction;
 
 	/*
-	 * Delayed branches are most common... look two instructions before
+	 * Delayed branches are the most common... look two instructions before
 	 * where we were going to return to to see if it's a delayed branch.
 	 */
-	if (!db_trace_get_val(return_to - 8, &instruction.rawbits))
+	if (!db_trace_get_val(return_to - 8, &instruction))
 		return JUMP_SOURCE_IS_BAD;
-	flags = m88k_instruction_info(instruction.rawbits);
 
-	if ((flags & FLOW_CTRL) && (flags & DELAYED) && (flags & (JSR|BSR))) {
-		if (flags & JSR)
+	flags = m88k_instruction_info(instruction);
+	if ((flags & (FLOW_CTRL | DELAYED)) == (FLOW_CTRL | DELAYED) &&
+	    (flags & (JSR | BSR)) != 0) {
+		if ((flags & JSR) != 0)
 			return JUMP_SOURCE_IS_OK; /* have to assume it's correct */
 		/* calculate the offset */
 		if (br_dest(return_to - 8, instruction) == jump_to)
@@ -504,14 +452,15 @@ is_jump_source_ok(unsigned return_to, unsigned jump_to)
 	}
 
 	/*
-	 * Try again, looking for a non-delayed jump one back.
+	 * Try again, looking for a non-delayed jump one instruction back.
 	 */
-	if (!db_trace_get_val(return_to - 4, &instruction.rawbits))
+	if (!db_trace_get_val(return_to - 4, &instruction))
 		return JUMP_SOURCE_IS_BAD;
-	flags = m88k_instruction_info(instruction.rawbits);
 
-	if ((flags & FLOW_CTRL) && !(flags & DELAYED) && (flags & (JSR|BSR))) {
-		if (flags & JSR)
+	flags = m88k_instruction_info(instruction);
+	if ((flags & (FLOW_CTRL | DELAYED)) == FLOW_CTRL &&
+	    (flags & (JSR | BSR)) != 0) {
+		if ((flags & JSR) != 0)
 			return JUMP_SOURCE_IS_OK; /* have to assume it's correct */
 		/* calculate the offset */
 		if (br_dest(return_to - 4, instruction) == jump_to)
@@ -523,7 +472,7 @@ is_jump_source_ok(unsigned return_to, unsigned jump_to)
 	return JUMP_SOURCE_IS_UNLIKELY;
 }
 
-static char *note = 0;
+static const char *note;
 static int next_address_likely_wrong = 0;
 
 /* How much slop we expect in the stack trace */
@@ -538,7 +487,7 @@ static int next_address_likely_wrong = 0;
  *	try to find the function from which this one was called
  *	and the stack pointer for that function.
  *
- *	The return value is zero (if we get confused) or
+ *	The return value is zero if we get confused or
  *	we determine that the return address has not yet
  *	been saved (early in the function prologue). Otherwise
  *	the return value is the address from which this function
@@ -546,7 +495,6 @@ static int next_address_likely_wrong = 0;
  *
  *	Note that even is zero is returned (the second case) the
  *	stack pointer can be adjusted.
- *
  */
 static int
 stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
@@ -689,11 +637,11 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 	for (instructions_to_search = (addr - check_addr)/sizeof(long);
 	    instructions_to_search-- > 0;
 	    check_addr += 4) {
-		union instruction instruction;
+		u_int instruction, s1, d;
 		unsigned flags;
 
 		/* read the instruction */
-		if (!db_trace_get_val(check_addr, &instruction.rawbits)) {
+		if (!db_trace_get_val(check_addr, &instruction)) {
 #ifdef TRACE_DEBUG
 			if (DEBUGGING_ON)
 				(*pr)("couldn't read %x at line %d\n",
@@ -702,33 +650,41 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 			break;
 		}
 
-		SHOW_INSTRUCTION(check_addr, instruction.rawbits, "prolog: ");
+		SHOW_INSTRUCTION(check_addr, instruction, "prolog: ");
 
 		/* find out the particulars about this instruction */
-		flags = m88k_instruction_info(instruction.rawbits);
+		flags = m88k_instruction_info(instruction);
+
+		/* split the instruction in its diatic components anyway */
+		s1 = (instruction >> 16) & 0x1f;
+		d = (instruction >> 21) & 0x1f;
 
 		/* if a store to something off the stack pointer, note the value */
-		if ((flags & STORE) && instruction.diatic.s1 ==	/*stack pointer*/31) {
+		if ((flags & STORE) && s1 == 31 /*stack pointer*/) {
 			unsigned value;
-			if (!have_local_reg(instruction.diatic.d)) {
-				if (instruction.diatic.d == 1)
-					tried_to_save_r1 = r31 + instruction.diatic.i16 ;
-				if (db_trace_get_val(r31 + instruction.diatic.i16, &value))
-					save_reg(instruction.diatic.d, value);
+			if (!have_local_reg(d)) {
+				if (d == 1)
+					tried_to_save_r1 = r31 +
+					    IMM16VAL(instruction);
+				if (db_trace_get_val(r31 +
+				    IMM16VAL(instruction), &value))
+					save_reg(d, value);
 			}
-			if ((flags & DOUBLE) && !have_local_reg(instruction.diatic.d + 1)) {
-				if (instruction.diatic.d == 0)
-					tried_to_save_r1 = r31+instruction.diatic.i16 +4;
-				if (db_trace_get_val(r31+instruction.diatic.i16 +4, &value))
-					save_reg(instruction.diatic.d + 1, value);
+			if ((flags & DOUBLE) && !have_local_reg(d + 1)) {
+				if (d == 0)
+					tried_to_save_r1 = r31 +
+					    IMM16VAL(instruction) + 4;
+				if (db_trace_get_val(r31 +
+				    IMM16VAL(instruction) + 4, &value))
+					save_reg(d + 1, value);
 			}
 		}
 
 		/* if an inst that kills D (and maybe D+1), note that */
 		if (flags & TRASHES) {
-			mark_reg_trashed(instruction.diatic.d);
+			mark_reg_trashed(d);
 			if (flags & DOUBLE)
-				mark_reg_trashed(instruction.diatic.d + 1);
+				mark_reg_trashed(d + 1);
 		}
 
 		/* if a flow control instruction, stop now (or next if delayed) */
@@ -759,15 +715,7 @@ stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 		    ret_addr, function_addr);
 #endif
 
-	/*
-	 * In support of this, continuation.s puts the low bit on the
-	 * return address for continuations (the return address will never
-	 * be used, so it's ok to do anything you want to it).
-	 */
-	if (ret_addr & 1) {
-		note = "<<can not trace past a continuation>>";
-		ret_addr = 0;
-	} else if (ret_addr != 0x00) {
+	if (ret_addr != 0) {
 		switch (is_jump_source_ok(ret_addr, function_addr)) {
 		case JUMP_SOURCE_IS_OK:
 			break; /* excellent */
@@ -819,21 +767,10 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 #endif
 
 	/* fetch address */
-	/* use sxip if valid, otherwise try snip or sfip */
-#ifdef M88110
-	if (CPU_IS88110) {
-		where = regs->exip & XIP_ADDR;
-	}
-#endif
-#ifdef M88100
-	if (CPU_IS88100) {
-		where = ((regs->sxip & 2) ? regs->sxip :
-			 ((regs->snip & 2) ? regs->snip : regs->sfip)) & XIP_ADDR;
-	}
-#endif
+	where = PC_REGS(regs);
 	stack = regs->r[31];
 	(*pr)("stack base = 0x%x\n", stack);
-	(*pr)("(0) "); /*depth of trace */
+	(*pr)("(0) "); /* depth of trace */
 #ifdef TRACE_DEBUG
 	if (trace_flags & TRACE_SHOWADDRESS_FLAG)
 		(*pr)("%08x ", where);
@@ -842,7 +779,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	clear_global_saved_regs();
 
 	/* see if this routine had a stack frame */
-	if ((where=stack_decode(where, &stack, pr))==0) {
+	if ((where = stack_decode(where, &stack, pr)) == 0) {
 		where = regs->r[1];
 		(*pr)("(stackless)");
 	} else {
@@ -855,7 +792,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	(*pr)("\n");
 	if (note) {
 		(*pr)("   %s\n", note);
-		note = 0;
+		note = NULL;
 	}
 
 	do {
@@ -889,7 +826,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		}
 #endif
 
-		(*pr)("(%d)%c", depth++, next_address_likely_wrong ? '?':' ');
+		(*pr)("(%d)%c", depth++, next_address_likely_wrong ? '?' : ' ');
 		next_address_likely_wrong = 0;
 
 #ifdef TRACE_DEBUG
@@ -906,7 +843,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		(*pr)("\n");
 		if (note) {
 			(*pr)("   %s\n", note);
-			note = 0;
+			note = NULL;
 		}
 	} while (where);
 
@@ -945,22 +882,21 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		 */
 
 		if (badwordaddr((vaddr_t)stack) ||
-		    badwordaddr((vaddr_t)(stack+4)))
+		    badwordaddr((vaddr_t)(stack + 4)))
 			break;
 
-		db_read_bytes((vaddr_t)stack, 2*sizeof(int), (char *)pair);
+		db_read_bytes((vaddr_t)stack, 2 * sizeof(int), (char *)pair);
 
 		/* the pairs should match and equal stack+8 */
 		if (pair[0] == pair[1]) {
 			if (pair[0] != stack+8) {
-				/*
-				if (!badwordaddr((vaddr_t)pair[0]) && (pair[0]!=0))
-				(*pr)("stack_trace:found pair 0x%x but != to stack+8\n",
-				pair[0]);
-				*/
-			}
-
-			else if (frame_is_sane((db_regs_t*)pair[0], 1) != 0) {
+#if 0
+				if (!badwordaddr((vaddr_t)pair[0]) &&
+				    pair[0] != 0)
+					(*pr)("stack_trace:found pair 0x%x but != to stack+8\n",
+					    pair[0]);
+#endif
+			} else if (frame_is_sane((db_regs_t*)pair[0], 1) != 0) {
 				struct trapframe *frame =
 				    (struct trapframe *)pair[0];
 
@@ -1095,81 +1031,82 @@ db_stack_trace_print(db_expr_t addr,
 		regs = arg.frame;
 		break;
 	case Stack:
-		{
-			unsigned val1, val2, sxip;
-			unsigned ptr;
-			bzero((void *)&frame, sizeof(frame));
+	    {
+		unsigned val1, val2, sxip;
+		unsigned ptr;
+		bzero((void *)&frame, sizeof(frame));
 #define REASONABLE_FRAME_DISTANCE 2048
 
+		/*
+		 * We've got to find the top of a stack frame so we can get both
+		 * a PC and and real SP.
+		 */
+		for (ptr = arg.num;/**/; ptr += 4) {
+			/* Read a word from the named stack */
+			if (db_trace_get_val(ptr, &val1) == 0) {
+				(*pr)("can't read from %x, aborting.\n", ptr);
+				return;
+			}
+
 			/*
-			 * We've got to find the top of a stack frame so we can get both
-			 * a PC and and real SP.
+			 * See if it's a frame pointer.... if so it will be larger than
+			 * the address it was taken from (i.e. point back up the stack)
+			 * and we'll be able to read where it points.
 			 */
-			for (ptr = arg.num;/**/; ptr += 4) {
-				/* Read a word from the named stack */
-				if (db_trace_get_val(ptr, &val1) == 0) {
-					(*pr)("can't read from %x, aborting.\n", ptr);
-					return;
-				}
+			if (val1 <= ptr ||
+			    (val1 & 3)  ||
+			    val1 > (ptr + REASONABLE_FRAME_DISTANCE))
+				continue;
 
-				/*
-				 * See if it's a frame pointer.... if so it will be larger than
-				 * the address it was taken from (i.e. point back up the stack)
-				 * and we'll be able to read where it points.
-				 */
-				if (val1 <= ptr ||
-				    (val1 & 3)  ||
-				    val1 > (ptr + REASONABLE_FRAME_DISTANCE))
-					continue;
-
-				/* peek at the next word to see if it could be a return address */
-				if (db_trace_get_val(ptr, &sxip) == 0) {
-					(*pr)("can't read from %x, aborting.\n", ptr);
-					return;
-				}
-				if (sxip == 0 || !db_trace_get_val(sxip, &val2))
-					continue;
-
-				if (db_trace_get_val(val1, &val2) == 0) {
-					(*pr)("can't read from %x, aborting.\n", val1);
-					continue;
-				}
-
-				/*
-				 * The value we've just read will be either
-				 * another frame pointer, or the start of
-				 * another exception frame.
-				 */
-				if (val2 == 0x12345678 &&
-				    db_trace_get_val(val1 - 4, &val2) &&
-				    val2 == val1 &&
-				    db_trace_get_val(val1 - 8, &val2) &&
-				    val2 == val1) {
-					/* we've found a frame, so the stack
-					   must have been good */
-					(*pr)("%x looks like a frame, accepting %x\n",val1,ptr);
-					break;
-				}
-
-				if (val2 > val1 && (val2 & 3) == 0) {
-					/* well, looks close enough to be another frame pointer */
-					(*pr)("*%x = %x looks like a stack frame pointer, accepting %x\n", val1, val2, ptr);
-					break;
-				}
+			/* peek at the next word to see if it could be a return address */
+			if (db_trace_get_val(ptr, &sxip) == 0) {
+				(*pr)("can't read from %x, aborting.\n", ptr);
+				return;
 			}
-                        frame.r[31] = ptr;
-			frame.epsr = 0x800003f0U;
-#ifdef M88100
-			if (CPU_IS88100) {
-				frame.sxip = sxip | 2;
-				frame.snip = frame.sxip + 4;
-				frame.sfip = frame.snip + 4;
+			if (sxip == 0 || !db_trace_get_val(sxip, &val2))
+				continue;
+
+			if (db_trace_get_val(val1, &val2) == 0) {
+				(*pr)("can't read from %x, aborting.\n", val1);
+				continue;
 			}
-#endif
-			(*pr)("[r31=%x, %sxip=%x]\n", frame.r[31],
-			    CPU_IS88110 ? "e" : "s", frame.sxip);
-			regs = &frame;
+
+			/*
+			 * The value we've just read will be either
+			 * another frame pointer, or the start of
+			 * another exception frame.
+			 */
+			if (val2 == 0x12345678 &&
+			    db_trace_get_val(val1 - 4, &val2) &&
+			    val2 == val1 &&
+			    db_trace_get_val(val1 - 8, &val2) &&
+			    val2 == val1) {
+				/* we've found a frame, so the stack
+				   must have been good */
+				(*pr)("%x looks like a frame, accepting %x\n",val1,ptr);
+				break;
+			}
+
+			if (val2 > val1 && (val2 & 3) == 0) {
+				/* well, looks close enough to be another frame pointer */
+				(*pr)("*%x = %x looks like a stack frame pointer, accepting %x\n", val1, val2, ptr);
+				break;
+			}
 		}
+		frame.r[31] = ptr;
+		frame.epsr = 0x800003f0U;
+#ifdef M88100
+		if (CPU_IS88100) {
+			frame.sxip = sxip | XIP_V;
+			frame.snip = frame.sxip + 4;
+			frame.sfip = frame.snip + 4;
+		}
+#endif
+		(*pr)("[r31=%x, %sxip=%x]\n", frame.r[31],
+		    CPU_IS88110 ? "e" : "s", frame.sxip);
+		regs = &frame;
+	    }
+		break;
 	}
 	db_stack_trace_cmd2(regs, pr);
 }

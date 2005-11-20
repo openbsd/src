@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.3 2004/09/30 21:48:56 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.4 2005/11/20 22:07:09 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -33,6 +33,7 @@
 
 #include <ddb/db_access.h>	/* db_get_value() */
 #include <ddb/db_break.h>	/* db_breakpoint_t */
+#include <ddb/db_run.h>
 
 /*
  * Support routines for software single step.
@@ -41,64 +42,33 @@
  *
  */
 
-boolean_t inst_delayed(unsigned int ins);
-
-#ifdef INTERNAL_SSTEP
-db_breakpoint_t db_not_taken_bkpt = 0;
-db_breakpoint_t db_taken_bkpt = 0;
-#endif
-
-/*
- * Returns TRUE is the instruction a branch or jump instruction
- * (br, bb0, bb1, bcnd, jmp) but not a function call (bsr or jsr)
- */
-boolean_t
-inst_branch(ins)
-	unsigned int ins;
-{
-	/* check high five bits */
-	switch (ins >> (32 - 5)) {
-	case 0x18: /* br */
-	case 0x1a: /* bb0 */
-	case 0x1b: /* bb1 */
-	case 0x1d: /* bcnd */
-		return TRUE;
-		break;
-	case 0x1e: /* could be jmp */
-		if ((ins & 0xfffffbe0U) == 0xf400c000U)
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
 /*
  * inst_load(ins)
  * Returns the number of words the instruction loads. byte,
  * half and word count as 1; double word as 2
  */
-unsigned
-inst_load(ins)
-	unsigned int ins;
+int
+inst_load(u_int ins)
 {
 	/* look at the top six bits, for starters */
 	switch (ins >> (32 - 6)) {
 	case 0x0: /* xmem byte imm */
 	case 0x1: /* xmem word imm */
-
 	case 0x2: /* unsigned half-word load imm */
 	case 0x3: /* unsigned byte load imm */
 	case 0x5: /* signed word load imm */
 	case 0x6: /* signed half-word load imm */
 	case 0x7: /* signed byte load imm */
-		return 1;
+		return (1);
 
 	case 0x4: /* signed double word load imm */
-		return 2;
+		return (2);
 
 	case 0x3d: /* load/store/xmem scaled/unscaled instruction */
-		if ((ins & 0xf400c0e0U) == 0xf4000000U)	/* is load/xmem */
-			switch ((ins & 0x0000fce0) >> 5) { /* look at bits 15-5, but mask bits 8-9 */
+		if ((ins & 0xf400c0e0) == 0xf4000000)	/* is load/xmem */
+			/* look at bits 15-5, but mask bits 8-9 */
+			switch ((ins & 0x0000fce0) >> 5) {
+/* XXX previous test implies these values can never hit -- miod */
 			case 0x0: /* xmem byte */
 			case 0x1: /* xmem word */
 			case 0x2: /* unsigned half word */
@@ -106,24 +76,23 @@ inst_load(ins)
 			case 0x5: /* signed word load */
 			case 0x6: /* signed half-word load */
 			case 0x7: /* signed byte load */
-				return 1;
+				return (1);
 
 			case 0x4: /* signed double word load */
-				return 2;
-			} /* end switch load/xmem  */
+				return (2);
+			}
 		break;
-	} /* end switch 32-6 */
+	}
 
-	return 0;
+	return (0);
 }
 
 /*
  * inst_store
  * Like inst_load, except for store instructions.
  */
-unsigned
-inst_store(ins)
-	unsigned int ins;
+int
+inst_store(u_int ins)
 {
 	/* decode top 6 bits again */
 	switch (ins >> (32 - 6)) {
@@ -132,170 +101,132 @@ inst_store(ins)
 	case 0x9: /* store word imm */
 	case 0xa: /* store half-word imm */
 	case 0xb: /* store byte imm */
-		return 1;
+		return (1);
 
 	case 0x8: /* store double word */
-		return 2;
+		return (2);
+
 	case 0x3d: /* load/store/xmem scaled/unscaled instruction */
 		/* check bits 15,14,12,7,6,5 are all 0 */
-		if ((ins & 0x0000d0e0U) == 0)
-			switch ((ins & 0x00003c00U) >> 10) { /* decode bits 10-13 */
+		if ((ins & 0x0000d0e0) == 0)
+			/* decode bits 10-13 */
+			switch ((ins & 0x00003c00) >> 10) {
 			case 0x0: /* xmem byte imm */
 			case 0x1: /* xmem word imm */
 			case 0x9: /* store word */
 			case 0xa: /* store half-word */
 			case 0xb: /* store byte */
-				return 1;
+				return (1);
 
 			case 0x8: /* store double word */
-				return 2;
-			} /* end switch store/xmem */
+				return (2);
+			}
 		break;
-	} /* end switch 32-6 */
+	}
 
-	return 0;
+	return (0);
 }
 
 /*
- * inst_delayed
- * Returns TRUE if this instruction is followed by a delay slot.
- * Could be br.n, bsr.n bb0.n, bb1.n, bcnd.n or jmp.n or jsr.n
+ * We can not use the MI ddb SOFTWARE_SSTEP facility, since the 88110 will use
+ * hardware single stepping.
+ * Moreover, our software single stepping implementation is tailor-made for the
+ * 88100 and faster than the MI code.
+ */
+
+#ifdef M88100
+
+boolean_t	inst_branch_or_call(u_int);
+db_addr_t	branch_taken(u_int, db_addr_t, db_regs_t *);
+
+db_breakpoint_t db_not_taken_bkpt = 0;
+db_breakpoint_t db_taken_bkpt = 0;
+
+/*
+ * Returns TRUE is the instruction a branch, jump or call instruction
+ * (br, bb0, bb1, bcnd, jmp, bsr, jsr)
  */
 boolean_t
-inst_delayed(ins)
-	unsigned int ins;
+inst_branch_or_call(u_int ins)
 {
-	/* check the br, bsr, bb0, bb1, bcnd cases */
-	switch ((ins & 0xfc000000U) >> (32 - 6)) {
-	case 0x31: /* br */
-	case 0x33: /* bsr */
-	case 0x35: /* bb0 */
-	case 0x37: /* bb1 */
-	case 0x3b: /* bcnd */
-		return TRUE;
+	/* check high five bits */
+	switch (ins >> (32 - 5)) {
+	case 0x18: /* br */
+	case 0x19: /* bsr */
+	case 0x1a: /* bb0 */
+	case 0x1b: /* bb1 */
+	case 0x1d: /* bcnd */
+		return (TRUE);
+	case 0x1e: /* could be jmp or jsr */
+		if ((ins & 0xfffff3e0) == 0xf400c000)
+			return (TRUE);
 	}
 
-	/* check the jmp, jsr cases */
-	/* mask out bits 0-4, bit 11 */
-	return ((ins & 0xfffff7e0U) == 0xf400c400U) ? TRUE : FALSE;
+	return (FALSE);
 }
 
 /*
- * next_instr_address(pc,delay_slot,task) has the following semantics.
- * Let inst be the instruction at pc.
- * If delay_slot = 1, next_instr_address should return
- * the address of the instruction in the delay slot; if this instruction
- * does not have a delay slot, it should return pc.
- * If delay_slot = 0, next_instr_address should return the
- * address of next sequential instruction, or pc if the instruction is
- * followed by a delay slot.
- *
- * 91-11-28 jfriedl: I think the above is wrong. I think it should be:
- *	if delay_slot true, return address of the delay slot if there is one,
- *			    return pc otherwise.
- *	if delay_slot false, return (pc + 4) regardless.
- *
- */
-db_addr_t
-next_instr_address(pc, delay_slot)
-	db_addr_t pc;
-	unsigned delay_slot;
-{
-	if (delay_slot == 0)
-		return pc + 4;
-	else {
-		if (inst_delayed(db_get_value(pc, sizeof(int), FALSE)))
-			return pc + 4;
-		else
-			return pc;
-	}
-}
-
-
-/*
- * branch_taken(instruction, program counter, func, func_data)
+ * branch_taken(instruction, program counter, regs)
  *
  * instruction will be a control flow instruction location at address pc.
  * Branch taken is supposed to return the address to which the instruction
- * would jump if the branch is taken. Func can be used to get the current
- * register values when invoked with a register number and func_data as
- * arguments.
- *
- * If the instruction is not a control flow instruction, panic.
+ * would jump if the branch is taken.
  */
 db_addr_t
-branch_taken(inst, pc, func, func_data)
-	u_int inst;
-	db_addr_t pc;
-	db_expr_t (*func)(db_regs_t *, int);
-	db_regs_t *func_data;
+branch_taken(u_int inst, db_addr_t pc, db_regs_t *regs)
 {
-	/* check if br/bsr */
-	if ((inst & 0xf0000000U) == 0xc0000000U) {
+	u_int regno;
+
+	/*
+	 * Quick check of the instruction. Note that we know we are only
+	 * invoked if inst_branch_or_call() returns TRUE, so we do not
+	 * need to repeat the jmp and jsr stricter checks here.
+	 */
+	switch (inst >> (32 - 5)) {
+	case 0x18: /* br */
+	case 0x19: /* bsr */
 		/* signed 26 bit pc relative displacement, shift left two bits */
-		inst = (inst & 0x03ffffffU) << 2;
+		inst = (inst & 0x03ffffff) << 2;
 		/* check if sign extension is needed */
-		if (inst & 0x08000000U)
-			inst |= 0xf0000000U;
-		return pc + inst;
-	}
+		if (inst & 0x08000000)
+			inst |= 0xf0000000;
+		return (pc + inst);
 
-	/* check if bb0/bb1/bcnd case */
-	switch ((inst & 0xf8000000U)) {
-	case 0xd0000000U: /* bb0 */
-	case 0xd8000000U: /* bb1 */
-	case 0xe8000000U: /* bcnd */
+	case 0x1a: /* bb0 */
+	case 0x1b: /* bb1 */
+	case 0x1d: /* bcnd */
 		/* signed 16 bit pc relative displacement, shift left two bits */
-		inst = (inst & 0x0000ffffU) << 2;
+		inst = (inst & 0x0000ffff) << 2;
 		/* check if sign extension is needed */
-		if (inst & 0x00020000U)
-			inst |= 0xfffc0000U;
-		return pc + inst;
+		if (inst & 0x00020000)
+			inst |= 0xfffc0000;
+		return (pc + inst);
+
+	default: /* jmp or jsr */
+		regno = inst & 0x1f;
+		return (regno == 0 ? 0 : regs->r[regno]);
 	}
-
-	/* check jmp/jsr case */
-	/* check bits 5-31, skipping 10 & 11 */
-	if ((inst & 0xfffff3e0U) == 0xf400c000U) {
-		return (*func)(func_data, (inst & 0x0000001fU));  /* the register value */
-	}
-
-
-	panic("branch_taken");
-	return 0; /* keeps compiler happy */
 }
 
-/*
- * getreg_val - handed a register number and an exception frame.
- *              Returns the value of the register in the specified
- *              frame. Only makes sense for general registers.
- */
+#endif	/* M88100 */
 
-db_expr_t
-getreg_val(frame, regno)
-	db_regs_t *frame;
-	int regno;
-{
-	if (regno == 0)
-		return 0;
-	else if (regno < 31)
-		return frame->r[regno];
-	else
-		panic("bad register number (%d) to getreg_val.", regno);
-}
-
-#ifdef INTERNAL_SSTEP
 void
-db_set_single_step(regs)
-	db_regs_t *regs;
+db_set_single_step(db_regs_t *regs)
 {
 #ifdef M88110
-	if (CPU_IS88110)
-		(regs)->epsr |= PSR_TRACE | PSR_SER;
+	if (CPU_IS88110) {
+		/*
+		 * On the 88110, we can use the hardware tracing facility...
+		 */
+		regs->epsr |= PSR_TRACE | PSR_SER;
+	}
 #endif
 #ifdef M88100
 	if (CPU_IS88100) {
+		/*
+		 * ... while the 88100 will use two breakpoints.
+		 */
 		db_addr_t pc = PC_REGS(regs);
-#ifndef SOFTWARE_SSTEP_EMUL
 		db_addr_t brpc;
 		u_int inst;
 
@@ -303,20 +234,21 @@ db_set_single_step(regs)
 		 * User was stopped at pc, e.g. the instruction
 		 * at pc was not executed.
 		 */
-		inst = db_get_value(pc, sizeof(int), FALSE);
-		if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
-			brpc = branch_taken(inst, pc, getreg_val, regs);
-			if (brpc != pc) {	/* self-branches are hopeless */
+		db_read_bytes(pc, sizeof(inst), (caddr_t)&inst);
+
+		/*
+		 * Find if this instruction may cause a branch, and set up a
+		 * breakpoint at the branch location.
+		 */
+		if (inst_branch_or_call(inst)) {
+			brpc = branch_taken(inst, pc, regs);
+
+			/* self-branches are hopeless */
+			if (brpc != pc && brpc != 0)
 				db_taken_bkpt = db_set_temp_breakpoint(brpc);
-			}
-#if 0
-			/* XXX this seems like a true bug, no?  */
-			pc = next_instr_address(pc, 1);
-#endif
 		}
-#endif /*SOFTWARE_SSTEP_EMUL*/
-		pc = next_instr_address(pc, 0);
-		db_not_taken_bkpt = db_set_temp_breakpoint(pc);
+
+		db_not_taken_bkpt = db_set_temp_breakpoint(pc + 4);
 	}
 #endif
 }
@@ -328,7 +260,7 @@ db_clear_single_step(regs)
 #ifdef M88110
 	if (CPU_IS88110) {
 		/* do not remove PSR_SER as we don't enable OoO */
-		(regs)->epsr &= ~PSR_TRACE;
+		regs->epsr &= ~PSR_TRACE;
 	}
 #endif
 #ifdef M88100
@@ -344,4 +276,3 @@ db_clear_single_step(regs)
 	}
 #endif
 }
-#endif
