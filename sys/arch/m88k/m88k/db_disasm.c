@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 2005/09/06 19:30:32 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2005/11/20 22:04:12 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -48,6 +48,7 @@ static const char *condname[6] = {
 	"gt0 ", "eq0 ", "ge0 ", "lt0 ", "ne0 ", "le0 "
 };
 
+#ifdef M88100
 static const char *m88100_ctrlreg[64] = {
 	"cr0(PID)   ",
 	"cr1(PSR)   ",
@@ -86,7 +87,8 @@ static const char *m88100_ctrlreg[64] = {
 	"fcr62(FPSR)",
 	"fcr63(FPCR)"
 };
-
+#endif
+#ifdef M88110
 static const char *m88110_ctrlreg[64] = {
 	"cr0(PID)   ",
 	"cr1(PSR)   ",
@@ -145,6 +147,14 @@ static const char *m88110_ctrlreg[64] = {
 	"fcr62(FPSR)",
 	"fcr63(FPCR)"
 };
+#endif
+#if defined(M88100) && defined(M88110)
+#define	ctrlreg	(CPU_IS88100 ? m88100_ctrlreg : m88110_ctrlreg)
+#elif defined(M88100)
+#define	ctrlreg	m88100_ctrlreg
+#else
+#define	ctrlreg	m88110_ctrlreg
+#endif
 
 #define printval(x) \
 	do { \
@@ -202,14 +212,11 @@ ctrlregs(int inst, const char *opcode, long iadr)
 	db_printf("\t%s", opcode);
 
 	if (L6inst == 010 || L6inst == 011)
-		db_printf("\t\tr%-3d,%s", rd,
-		    CPU_IS88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
+		db_printf("\t\tr%-3d,%s", rd, ctrlreg[creg]);
 	else if (L6inst == 020 || L6inst == 021)
-		db_printf("\t\tr%-3d,%s", rs1,
-		    CPU_IS88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
+		db_printf("\t\tr%-3d,%s", rs1, ctrlreg[creg]);
 	else
-		db_printf("\t\tr%-3d,r%-3d,%s", rd, rs1,
-		    CPU_IS88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
+		db_printf("\t\tr%-3d,r%-3d,%s", rd, rs1, ctrlreg[creg]);
 }
 
 void
@@ -562,7 +569,7 @@ onimmed(int inst, const char *opcode, long iadr)
 }
 
 static const struct opdesc {
-	unsigned mask, match;
+	u_int mask, match;
 	void (*opfun)(int, const char *, long);
 	const char *farg;
 } opdecode[] = {
@@ -661,7 +668,7 @@ static const struct opdesc {
 };
 
 int
-m88k_print_instruction(unsigned iadr, long inst)
+m88k_print_instruction(u_int iadr, long inst)
 {
 	const struct opdesc *p;
 
