@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.16 2004/05/11 02:08:07 millert Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.17 2005/11/20 17:09:55 cloder Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.16 2004/05/11 02:08:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.17 2005/11/20 17:09:55 cloder Exp $";
 #endif
 
 #include <sys/param.h>
@@ -133,8 +133,7 @@ static	void	cat(char *const *, const char *);
  * Take care that we get no surprises in case of asynchronous signals.
  */
 static void
-appstrg(lstp, s)
-	char	***lstp, *s;
+appstrg(char ***lstp, char *s)
 {
 	char	**lst, **olst;
 	int	i;
@@ -149,17 +148,13 @@ appstrg(lstp, s)
 }	
 
 static void
-appcstrg(lstp, s)
-	char	***lstp;
-	const	char *s;
+appcstrg(char ***lstp, const char *s)
 {
 	appstrg(lstp, xstrdup(s));
 }
 
 static void
-applst(destp, src)
-	char	***destp;
-	char	*const *src;
+applst(char ***destp, char *const *src)
 {
 	int	i, k;
 	char	**dest, **odest;
@@ -177,8 +172,7 @@ applst(destp, src)
 }
 
 static void
-freelst(lstp)
-	char	***lstp;
+freelst(char ***lstp)
 {
 	char	*s;
 	int	i;
@@ -192,8 +186,7 @@ freelst(lstp)
 }
 
 static char *
-concat2(s1, s2)
-	const	char *s1, *s2;
+concat2(const char *s1, const char *s2)
 {
 	char	*s;
 	size_t len = strlen(s1) + strlen(s2) + 1;
@@ -206,8 +199,7 @@ concat2(s1, s2)
 }
 
 static char *
-concat3(s1, s2, s3)
-	const	char *s1, *s2, *s3;
+concat3(const char *s1, const char *s2, const char *s3)
 {
 	char	*s;
 	size_t len = strlen(s1) + strlen(s2) + strlen(s3) + 1;
@@ -224,8 +216,7 @@ concat3(s1, s2, s3)
  * Clean up after a signal.
  */
 static void
-terminate(signo)
-	int	signo;
+terminate(int signo)
 {
 	int	i;
 
@@ -251,9 +242,7 @@ terminate(signo)
  * Returns strg if the string does not contain delim.
  */
 static const char *
-basename(strg, delim)
-	const	char *strg;
-	int	delim;
+basename(const char *strg, int delim)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -268,9 +257,7 @@ basename(strg, delim)
 }
 
 static void
-appdef(lstp, def)
-	char	***lstp;
-	const	char *def;
+appdef(char ***lstp, const char *def)
 {
 	appstrg(lstp, concat2("-D__", def));
 	appstrg(lstp, concat3("-D__", def, "__"));
@@ -288,9 +275,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	c;
 	char	flgbuf[3], *tmp, *s;
@@ -524,9 +509,7 @@ main(argc, argv)
  * and pass it through lint1 if it is a C source.
  */
 static void
-fname(name, last)
-	const	char *name;
-	int	last;
+fname(const char *name, int last)
 {
 	const	char *bn, *suff;
 	char	**args, *ofn, *path;
@@ -619,9 +602,7 @@ fname(name, last)
 }
 
 static int
-runchild(path, args, crfn)
-	const	char *path, *crfn;
-	char	*const *args;
+runchild(const char *path, char *const *args, const char *crfn)
 {
 	int	status, signo, i;
 	pid_t	rv;
@@ -669,8 +650,7 @@ runchild(path, args, crfn)
 }
 
 static void
-findlibs(liblst)
-	char	*const *liblst;
+findlibs(char *const *liblst)
 {
 	int	i, k;
 	const	char *lib, *path;
@@ -704,8 +684,7 @@ findlibs(liblst)
 }
 
 static int
-rdok(path)
-	const	char *path;
+rdok(const char *path)
 {
 	struct	stat sbuf;
 
@@ -742,9 +721,7 @@ lint2()
 }
 
 static void
-cat(srcs, dest)
-	char	*const *srcs;
-	const	char *dest;
+cat(char *const *srcs, const char *dest)
 {
 	int	ifd, ofd, i;
 	char	*src, *buf;

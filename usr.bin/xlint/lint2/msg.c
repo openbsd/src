@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.5 2003/04/14 03:03:52 deraadt Exp $	*/
+/*	$OpenBSD: msg.c,v 1.6 2005/11/20 17:09:55 cloder Exp $	*/
 /*	$NetBSD: msg.c,v 1.2 1995/07/03 21:24:56 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: msg.c,v 1.5 2003/04/14 03:03:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msg.c,v 1.6 2005/11/20 17:09:55 cloder Exp $";
 #endif
 
 #include <string.h>
@@ -84,8 +84,7 @@ msg(int n, ...)
  * Return a pointer to the last component of a path.
  */
 static const char *
-basename(path)
-	const	char *path;
+basename(const char *path)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -106,8 +105,7 @@ basename(path)
  * Create a string which describes a position in a source file.
  */
 const char *
-mkpos(posp)
-	pos_t	*posp;
+mkpos(pos_t *posp)
 {
 	size_t	len;
 	const	char *fn;
