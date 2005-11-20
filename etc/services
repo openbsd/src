@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.62 2005/09/27 02:28:44 david Exp $
+#	$OpenBSD: services,v 1.63 2005/11/20 19:15:11 reyk Exp $
 #
 # Network services, Internet style
 #
@@ -227,6 +227,8 @@ iprop		2121/tcp			# Kerberos incremental propagation
 netplan		2983/tcp			# netplan daemon
 eppc		3031/tcp			# Remote AppleEvents/PPC Toolbox
 eppc		3031/udp			# Remote AppleEvents/PPC Toolbox
+iapp		3517/tcp	802-11-iapp	# IEEE 802.11f IAPP
+iapp		3517/udp	802-11-iapp	# IEEE 802.11f IAPP
 daap		3689/tcp			# Digital Audio Access Protocol
 daap		3689/udp			# Digital Audio Access Protocol
 krb524		4444/tcp			# Kerberos 5->4
