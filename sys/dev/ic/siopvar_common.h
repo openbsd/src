@@ -1,5 +1,5 @@
-/*	$OpenBSD: siopvar_common.h,v 1.22 2005/11/03 11:00:37 martin Exp $ */
-/*	$NetBSD: siopvar_common.h,v 1.32 2005/02/27 00:27:02 perry Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.23 2005/11/20 22:32:48 krw Exp $ */
+/*	$NetBSD: siopvar_common.h,v 1.33 2005/11/18 23:10:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -73,6 +73,9 @@ struct siop_common_xfer {
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
 #define SCSI_SIOP_NOSTATUS	0xff	/* device didn't report status */
 
+/* offset is initialised to SIOP_NOOFFSET, used to check if it was updated */
+#define SIOP_NOOFFSET 0xffffffff
+
 /*
  * This describes a command handled by the SCSI controller
  */
@@ -86,6 +89,7 @@ struct siop_common_cmd {
 	int status;
 	int flags;
 	int tag;	/* tag used for tagged command queuing */
+	int resid;	/* valid when CMDFL_RESID is set */
 };
 
 /* status defs */
@@ -99,6 +103,7 @@ struct siop_common_cmd {
 /* flags defs */
 #define CMDFL_TIMEOUT	0x0001 /* cmd timed out */
 #define CMDFL_TAG	0x0002 /* tagged cmd */
+#define CMDFL_RESID	0x0004 /* current offset in table is partial */
 
 /* per-target struct */
 struct siop_common_target {
@@ -192,12 +197,15 @@ void	siop_sdtr_msg(struct siop_common_cmd *, int, int, int);
 void	siop_wdtr_msg(struct siop_common_cmd *, int, int);
 void    siop_ppr_msg(struct siop_common_cmd *, int, int, int);
 void	siop_update_xfer_mode(struct siop_common_softc *, int);
+int	siop_iwr(struct siop_common_cmd *);
 /* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
 
 void	siop_minphys(struct buf *);
-void 	siop_sdp(struct siop_common_cmd *);
+void 	siop_ma(struct siop_common_cmd *);
+void 	siop_sdp(struct siop_common_cmd *, int);
+void 	siop_update_resid(struct siop_common_cmd *, int);
 void	siop_clearfifo(struct siop_common_softc *);
 void	siop_resetbus(struct siop_common_softc *);

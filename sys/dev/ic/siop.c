@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop.c,v 1.41 2005/11/03 11:00:36 martin Exp $ */
-/*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
+/*	$OpenBSD: siop.c,v 1.42 2005/11/20 22:32:48 krw Exp $ */
+/*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -115,6 +115,7 @@ struct scsi_device siop_dev = {
 static int siop_stat_intr = 0;
 static int siop_stat_intr_shortxfer = 0;
 static int siop_stat_intr_sdp = 0;
+static int siop_stat_intr_saveoffset = 0;
 static int siop_stat_intr_done = 0;
 static int siop_stat_intr_xferdisc = 0;
 static int siop_stat_intr_lunresel = 0;
@@ -343,7 +344,7 @@ siop_intr(v)
 	struct siop_cmd *siop_cmd;
 	struct siop_lun *siop_lun;
 	struct scsi_xfer *xs;
-	int istat, sist, sstat1, dstat;
+	int istat, sist, sstat1, dstat = 0;
 	u_int32_t irqcode;
 	int need_reset = 0;
 	int offset, target, lun, tag;
@@ -518,31 +519,31 @@ siop_intr(v)
 				/*
 				 * previous phase may be aborted for any reason
 				 * ( for example, the target has less data to
-				 * transfer than requested). Just go to status
-				 * and the command should terminate.
+				 * transfer than requested). Compute resid and
+				 * just go to status, the command should
+				 * terminate.
 				 */
 					INCSTAT(siop_stat_intr_shortxfer);
-					if ((dstat & DSTAT_DFE) == 0)
+					if (scratcha0 & A_flag_data)
+						siop_ma(&siop_cmd->cmd_c);
+					else if ((dstat & DSTAT_DFE) == 0)
 						siop_clearfifo(&sc->sc_c);
-					/* no table to flush here */
 					CALL_SCRIPT(Ent_status);
 					return 1;
 				case SSTAT1_PHASE_MSGIN:
-					/*
-					 * target may be ready to disconnect
-					 * Save data pointers just in case.
-					 */
+				/*
+				 * target may be ready to disconnect
+				 * Compute resid which would be used later
+				 * if a save data pointer is needed.
+				 */
 					INCSTAT(siop_stat_intr_xferdisc);
 					if (scratcha0 & A_flag_data)
-						siop_sdp(&siop_cmd->cmd_c);
+						siop_ma(&siop_cmd->cmd_c);
 					else if ((dstat & DSTAT_DFE) == 0)
 						siop_clearfifo(&sc->sc_c);
 					bus_space_write_1(sc->sc_c.sc_rt,
 					    sc->sc_c.sc_rh, SIOP_SCRATCHA,
 					    scratcha0 & ~A_flag_data);
-					siop_table_sync(siop_cmd,
-					    BUS_DMASYNC_PREREAD |
-					    BUS_DMASYNC_PREWRITE);
 					CALL_SCRIPT(Ent_msgin);
 					return 1;
 				}
@@ -816,6 +817,15 @@ scintr:
 				CALL_SCRIPT(Ent_msgin_ack);
 				return 1;
 			}
+			if (msgin == MSG_IGN_WIDE_RESIDUE) {
+			/* use the extmsgdata table to get the second byte */
+				siop_cmd->cmd_tables->t_extmsgdata.count =
+				    htole32(1);
+				siop_table_sync(siop_cmd,
+				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				CALL_SCRIPT(Ent_get_extmsgdata);
+				return 1;
+			}
 			if (xs)
 				sc_print_addr(xs->sc_link);
 			else
@@ -859,6 +869,29 @@ scintr:
 			printf("\n");
 			}
 #endif
+			if (siop_cmd->cmd_tables->msg_in[0] ==
+			    MSG_IGN_WIDE_RESIDUE) {
+			/* we got the second byte of MSG_IGN_WIDE_RESIDUE */
+				if (siop_cmd->cmd_tables->msg_in[3] != 1)
+					printf("MSG_IGN_WIDE_RESIDUE: "
+					    "bad len %d\n",
+					    siop_cmd->cmd_tables->msg_in[3]);
+				switch (siop_iwr(&siop_cmd->cmd_c)) {
+				case SIOP_NEG_MSGOUT:
+					siop_table_sync(siop_cmd,
+					    BUS_DMASYNC_PREREAD |
+					    BUS_DMASYNC_PREWRITE);
+					CALL_SCRIPT(Ent_send_msgout);
+					return(1);
+				case SIOP_NEG_ACK:
+					CALL_SCRIPT(Ent_msgin_ack);
+					return(1);
+				default:
+					panic("invalid retval from "
+					    "siop_iwr()");
+				}
+				return(1);
+			}
 			if (siop_cmd->cmd_tables->msg_in[2] == MSG_EXT_WDTR) {
 				switch (siop_wdtr_neg(&siop_cmd->cmd_c)) {
 				case SIOP_NEG_MSGOUT:
@@ -936,25 +969,21 @@ scintr:
 #ifdef SIOP_DEBUG_DR
 			printf("disconnect offset %d\n", offset);
 #endif
-			if (offset > SIOP_NSG) {
-				printf("%s: bad offset for disconnect (%d)\n",
-				    sc->sc_c.sc_dev.dv_xname, offset);
-				goto reset;
-			}
-			/* 
-			 * offset == SIOP_NSG may be a valid condition if
-			 * we get a sdp when the xfer is done.
-			 * Don't call bcopy in this case.
-			 */
-			if (offset < SIOP_NSG) {
-				bcopy(&siop_cmd->cmd_tables->data[offset],
-				    &siop_cmd->cmd_tables->data[0],
-				    (SIOP_NSG - offset) * sizeof(scr_table_t));
-				siop_table_sync(siop_cmd,
-				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-			}
-			/* check if we can put some command in scheduler */
-			siop_start(sc);
+			siop_sdp(&siop_cmd->cmd_c, offset);
+			/* we start again with no offset */
+			siop_cmd->saved_offset = SIOP_NOOFFSET;
+			siop_table_sync(siop_cmd,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			CALL_SCRIPT(Ent_script_sched);
+			return 1;
+		case A_int_saveoffset:
+			INCSTAT(siop_stat_intr_saveoffset);
+			offset = bus_space_read_1(sc->sc_c.sc_rt,
+			    sc->sc_c.sc_rh, SIOP_SCRATCHA + 1);
+#ifdef SIOP_DEBUG_DR
+			printf("saveoffset offset %d\n", offset);
+#endif
+			siop_cmd->saved_offset = offset;
 			CALL_SCRIPT(Ent_script_sched);
 			return 1;
 		case A_int_resfail:
@@ -981,6 +1010,19 @@ scintr:
 			    letoh32(siop_cmd->cmd_tables->status));
 #endif
 			INCSTAT(siop_stat_intr_done);
+			/* update resid.  */
+			offset = bus_space_read_1(sc->sc_c.sc_rt,
+			    sc->sc_c.sc_rh, SIOP_SCRATCHA + 1);
+			/*
+			 * if we got a disconnect between the last data phase
+			 * and the status phase, offset will be 0. In this
+			 * case, siop_cmd->saved_offset will have the proper
+			 * value if it got updated by the controller
+			 */
+			if (offset == 0 && 
+			    siop_cmd->saved_offset != SIOP_NOOFFSET)
+				offset = siop_cmd->saved_offset;
+			siop_update_resid(&siop_cmd->cmd_c, offset);
 			if (siop_cmd->cmd_c.status == CMDST_SENSE_ACTIVE)
 				siop_cmd->cmd_c.status = CMDST_SENSE_DONE;
 			else
@@ -1145,7 +1187,10 @@ out:
 	xs->flags |= ITSDONE;
 	siop_cmd->cmd_c.status = CMDST_FREE;
 	TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
-	xs->resid = 0;
+#if 0
+	if (xs->resid != 0)
+		printf("resid %d datalen %d\n", xs->resid, xs->datalen);
+#endif
 	scsi_done(xs);
 }
 
@@ -1410,6 +1455,7 @@ siop_scsicmd(xs)
 	}
 
 	siop_setuptables(&siop_cmd->cmd_c);
+	siop_cmd->saved_offset = SIOP_NOOFFSET;
 	siop_table_sync(siop_cmd,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
@@ -1850,10 +1896,12 @@ siop_morecbd(sc)
 		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
 		splx(s);
 #ifdef SIOP_DEBUG
-		printf("tables[%d]: in=0x%x out=0x%x status=0x%x\n", i,
+		printf("tables[%d]: in=0x%x out=0x%x status=0x%x "
+		    "offset=0x%x\n", i,
 		    letoh32(newcbd->cmds[i].cmd_tables->t_msgin.addr),
 		    letoh32(newcbd->cmds[i].cmd_tables->t_msgout.addr),
-		    letoh32(newcbd->cmds[i].cmd_tables->t_status.addr));
+		    letoh32(newcbd->cmds[i].cmd_tables->t_status.addr),
+		    letoh32(newcbd->cmds[i].cmd_tables->t_offset.addr));
 #endif
 	}
 	s = splbio();
@@ -2135,6 +2183,7 @@ siop_printstats()
 	printf("siop_stat_intr_shortxfer %d\n", siop_stat_intr_shortxfer);
 	printf("siop_stat_intr_xferdisc %d\n", siop_stat_intr_xferdisc);
 	printf("siop_stat_intr_sdp %d\n", siop_stat_intr_sdp);
+	printf("siop_stat_intr_saveoffset %d\n", siop_stat_intr_saveoffset);
 	printf("siop_stat_intr_done %d\n", siop_stat_intr_done);
 	printf("siop_stat_intr_lunresel %d\n", siop_stat_intr_lunresel);
 	printf("siop_stat_intr_qfull %d\n", siop_stat_intr_qfull);
