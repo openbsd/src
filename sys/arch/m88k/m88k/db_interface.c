@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1 2005/10/24 19:28:28 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 2005/11/20 22:04:32 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -64,7 +64,6 @@ void	kdbprinttrap(int);
 int	m88k_dmx_print(u_int, u_int, u_int, u_int);
 
 void	m88k_db_trap(int, struct trapframe *);
-int	ddb_nmi_trap(int, db_regs_t *);
 void	ddb_error_trap(char *, db_regs_t *);
 void	m88k_db_pause(u_int);
 void	m88k_db_print_frame(db_expr_t, int, db_expr_t, char *);
@@ -431,18 +430,7 @@ Debugger()
 {
 	asm (ENTRY_ASM); /* entry trap */
 	/* ends up at ddb_entry_trap below */
-}
-
-/* fielded a non maskable interrupt */
-int
-ddb_nmi_trap(level, eframe)
-	int level;
-	db_regs_t *eframe;
-{
-	db_printf("kernel: nmi interrupt\n");
-	m88k_db_trap(T_KDB_ENTRY, (struct trapframe *)eframe);
-
-	return 0;
+	return;
 }
 
 /*
