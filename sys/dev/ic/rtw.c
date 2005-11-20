@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.49 2005/11/05 02:31:29 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.50 2005/11/20 09:49:05 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -227,6 +227,11 @@ int	 rtw_rtl8255_init(struct rtw_softc *, u_int, u_int8_t,
 	    enum rtw_pwrstate);
 int	 rtw_rtl8255_txpower(struct rtw_softc *, u_int8_t);
 int	 rtw_rtl8255_tune(struct rtw_softc *, u_int);
+int	 rtw_grf5101_pwrstate(struct rtw_softc *, enum rtw_pwrstate);
+int	 rtw_grf5101_init(struct rtw_softc *, u_int, u_int8_t,
+	    enum rtw_pwrstate);
+int	 rtw_grf5101_txpower(struct rtw_softc *, u_int8_t);
+int	 rtw_grf5101_tune(struct rtw_softc *, u_int);
 int	 rtw_rf_hostwrite(struct rtw_softc *, u_int, u_int32_t);
 int	 rtw_rf_macwrite(struct rtw_softc *, u_int, u_int32_t);
 u_int8_t rtw_bbp_read(struct rtw_regs *, u_int);
@@ -3507,7 +3512,24 @@ rtw_rf_attach(struct rtw_softc *sc, int rfchipid)
 	case RTW_RFCHIPID_GCT:		/* this combo seen in the wild */
 		rfname = "GRF5101";
 		paname = "WS9901";
-		notsup = 1;
+		/* XXX magic */
+		bb->bb_antatten = RTW_BBP_ANTATTEN_GCT_MAGIC;
+		bb->bb_chestlim =	0x00;
+		bb->bb_chsqlim =	0xa0;
+		bb->bb_ifagcdet =	0x64;
+		bb->bb_ifagcini =	0x90;
+		bb->bb_ifagclimit =	0x1e;
+		bb->bb_lnadet =		0xc0;
+		bb->bb_sys1 =		0xa8;
+		bb->bb_sys2 =		0x47;
+		bb->bb_sys3 =		0x9b;
+		bb->bb_trl =		0x88;
+		bb->bb_txagc =		0x08;
+		sc->sc_pwrstate_cb = rtw_maxim_pwrstate;
+		sc->sc_rf_init = rtw_grf5101_init;
+		sc->sc_rf_pwrstate = rtw_grf5101_pwrstate;
+		sc->sc_rf_tune = rtw_grf5101_tune;
+		sc->sc_rf_txpower = rtw_grf5101_txpower;
 		break;
 	case RTW_RFCHIPID_INTERSIL:
 		rfname = "HFA3873";	/* guess */
@@ -4227,6 +4249,106 @@ rtw_max2820_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 }
 
 int
+rtw_grf5101_init(struct rtw_softc *sc, u_int freq, u_int8_t opaque_txpower,
+    enum rtw_pwrstate power)
+{
+	int rc;
+
+	/*
+	 * These values have been derived from the rtl8180-sa2400 Linux driver.
+	 * It is unknown what they all do, GCT refuse to release any documentation
+	 * so these are more than likely sub optimal settings
+	 */
+
+	rtw_rf_macwrite(sc, 0x01, 0x1a23);
+	rtw_rf_macwrite(sc, 0x02, 0x4971);
+	rtw_rf_macwrite(sc, 0x03, 0x41de);
+	rtw_rf_macwrite(sc, 0x04, 0x2d80);
+
+	rtw_rf_macwrite(sc, 0x05, 0x61ff);
+
+	rtw_rf_macwrite(sc, 0x06, 0x0);
+
+	rtw_rf_macwrite(sc, 0x08, 0x7533);
+	rtw_rf_macwrite(sc, 0x09, 0xc401);
+	rtw_rf_macwrite(sc, 0x0a, 0x0);
+	rtw_rf_macwrite(sc, 0x0c, 0x1c7);
+	rtw_rf_macwrite(sc, 0x0d, 0x29d3);
+	rtw_rf_macwrite(sc, 0x0e, 0x2e8);
+	rtw_rf_macwrite(sc, 0x10, 0x192);
+	rtw_rf_macwrite(sc, 0x11, 0x248);
+	rtw_rf_macwrite(sc, 0x12, 0x0);
+	rtw_rf_macwrite(sc, 0x13, 0x20c4);
+	rtw_rf_macwrite(sc, 0x14, 0xf4fc);
+	rtw_rf_macwrite(sc, 0x15, 0x0);
+	rtw_rf_macwrite(sc, 0x16, 0x1500);
+
+	if ((rc = rtw_grf5101_txpower(sc, opaque_txpower)) != 0)
+		return rc;
+
+	if ((rc = rtw_grf5101_tune(sc, freq)) != 0)
+		return rc;
+
+	return (0);
+}
+
+int
+rtw_grf5101_tune(struct rtw_softc *sc, u_int freq)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	u_int channel = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+
+	/* set channel */
+	rtw_rf_macwrite(sc, 0x07, 0);
+	rtw_rf_macwrite(sc, 0x0b, channel - 1);
+	rtw_rf_macwrite(sc, 0x07, 0x1000);
+
+	return (0);
+}
+
+int
+rtw_grf5101_txpower(struct rtw_softc *sc, u_int8_t opaque_txpower)
+{
+	rtw_rf_macwrite(sc, 0x15, 0);
+	rtw_rf_macwrite(sc, 0x06, opaque_txpower);
+	rtw_rf_macwrite(sc, 0x15, 0x10);
+	rtw_rf_macwrite(sc, 0x15, 0x00);
+
+	return (0);
+}
+
+int
+rtw_grf5101_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
+{
+	switch (power) {
+	case RTW_OFF:
+	case RTW_SLEEP:
+		rtw_rf_macwrite(sc, 0x07, 0x0000);
+		rtw_rf_macwrite(sc, 0x1f, 0x0045);
+		rtw_rf_macwrite(sc, 0x1f, 0x0005);
+		rtw_rf_macwrite(sc, 0x00, 0x08e4);
+	default:
+		break;
+	case RTW_ON:
+		rtw_rf_macwrite(sc, 0x1f, 0x0001);
+		DELAY(10);
+		rtw_rf_macwrite(sc, 0x1f, 0x0001);
+		DELAY(10);
+		rtw_rf_macwrite(sc, 0x1f, 0x0041);
+		DELAY(10);
+		rtw_rf_macwrite(sc, 0x1f, 0x0061);
+		DELAY(10);
+		rtw_rf_macwrite(sc, 0x00, 0x0ae4);
+		DELAY(10);
+		rtw_rf_macwrite(sc, 0x07, 0x1000);
+		DELAY(100);
+		break;
+	}
+
+	return 0;
+}
+
+int
 rtw_rtl8225_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
 	return (0);
@@ -4580,15 +4702,17 @@ rtw_rf_hostwrite(struct rtw_softc *sc, u_int addr, u_int32_t val)
 		lo_to_hi = 1;
 		break;
 	case RTW_RFCHIPID_GCT:
+		KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
+		KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
+		bits = rtw_grf5101_host_crypt(addr, val);
+		nbits = 21;
+		lo_to_hi = 1;
+		break;
 	case RTW_RFCHIPID_RFMD2948:
 		KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
 		KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
-		if (sc->sc_rfchipid == RTW_RFCHIPID_GCT)
-			bits = rtw_grf5101_host_crypt(addr, val);
-		else {
-			bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
-			    LSHIFT(addr, SI4126_TWI_ADDR_MASK);
-		}
+		bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
+		    LSHIFT(addr, SI4126_TWI_ADDR_MASK);
 		nbits = 22;
 		lo_to_hi = 0;
 		break;
