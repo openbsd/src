@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem1.c,v 1.7 2005/11/20 17:42:49 deraadt Exp $	*/
+/*	$OpenBSD: mem1.c,v 1.8 2005/11/20 18:18:57 cloder Exp $	*/
 /*	$NetBSD: mem1.c,v 1.2 1995/07/03 21:24:25 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mem1.c,v 1.7 2005/11/20 17:42:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mem1.c,v 1.8 2005/11/20 18:18:57 cloder Exp $";
 #endif
 
 #include <sys/types.h>
@@ -304,7 +304,7 @@ getnode(void)
 }
 
 /*
- * Free all memory which is allocated by the the current expression.
+ * Free all memory which is allocated by the current expression.
  */
 void
 tfreeblk(void)

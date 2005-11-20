@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.13 2005/11/20 17:42:49 deraadt Exp $	*/
+/*	$OpenBSD: decl.c,v 1.14 2005/11/20 18:18:57 cloder Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.13 2005/11/20 17:42:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.14 2005/11/20 18:18:57 cloder Exp $";
 #endif
 
 #include <sys/param.h>
@@ -506,7 +506,7 @@ settdsym(type_t *tp, sym_t *sym)
  * (and not the declarator) in the top element of the declaration stack.
  * Also detect multiple qualifiers of the same kind.
 
- * The rememberd qualifier is used by deftyp() to construct the type
+ * The remembered qualifier is used by deftyp() to construct the type
  * for all declarators.
  */
 void
@@ -1702,7 +1702,7 @@ compltag(type_t *tp, sym_t *fmem)
  *
  * sym points to the enumerator
  * val is the value of the enumerator
- * impl is 1 if the the value of the enumerator was not explicit specified.
+ * impl is 1 if the value of the enumerator was not explicitly specified.
  */
 sym_t *
 ename(sym_t *sym, int val, int impl)
@@ -2131,7 +2131,7 @@ chkosdef(sym_t *rdsym, sym_t *dsym)
 }
 
 /*
- * Complets a type by copying the dimension and prototype information
+ * Completes a type by copying the dimension and prototype information
  * from a second compatible type.
  *
  * Following lines are legal:
@@ -2235,7 +2235,7 @@ decl1arg(sym_t *sym, int initflg)
  * Does some checks for lint directives which apply to functions.
  * Processes arguments in old style function definitions which default
  * to int.
- * Checks compatiblility of old style function definition with previous
+ * Checks compatibility of old style function definition with previous
  * prototype.
  */
 void
@@ -2306,7 +2306,7 @@ cluparg(void)
 	}
 
 	/*
-	 * print a warning for each argument off an old style function
+	 * print a warning for each argument of an old style function
 	 * definition which defaults to int
 	 */
 	for (arg = args; arg != NULL; arg = arg->s_nxt) {
@@ -2319,7 +2319,7 @@ cluparg(void)
 	}
 
 	/*
-	 * If this is an old style function definition and a prototyp
+	 * If this is an old style function definition and a prototype
 	 * exists, compare the types of arguments.
 	 */
 	if (funcsym->s_osdef && funcsym->s_type->t_proto) {
@@ -2578,8 +2578,8 @@ ledecl(sym_t *dsym)
 }
 
 /*
- * Print an error or a warning if the symbol cant be initialized due
- * to type/storage class. Returnvalue is 1 if an error has been
+ * Print an error or a warning if the symbol can't be initialized due
+ * to type/storage class. Return value is 1 if an error has been
  * detected.
  */
 static int
@@ -2652,7 +2652,7 @@ globclup(void)
 	mblklev = 0;
 
 	/*
-	 * remove all informations about pending lint directives without
+	 * remove all information about pending lint directives without
 	 * warnings.
 	 */
 	glclup(1);
@@ -2995,7 +2995,7 @@ glchksz(sym_t *sym)
 	if (sym->s_def == TDEF) {
 		if (sym->s_type->t_tspec == FUNC)
 			/*
-			 * this can happen if an syntax error occurred
+			 * this can happen if a syntax error occurred
 			 * after a function declaration
 			 */
 			return;
