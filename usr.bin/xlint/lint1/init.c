@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 2005/11/19 03:35:27 cloder Exp $	*/
+/*	$OpenBSD: init.c,v 1.6 2005/11/20 17:42:49 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: init.c,v 1.5 2005/11/19 03:35:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.6 2005/11/20 17:42:49 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -410,7 +410,7 @@ mkinit(tnode_t *tn)
 	tmem = tsave();
 	expr(tn, 1, 0);
 	trestor(tmem);
-	
+
 	if (isityp(lt) && ln->tn_type->t_isfield && !isityp(rt)) {
 		/*
 		 * Bit-fields can be initialized in trad. C only by integer

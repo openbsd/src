@@ -1,4 +1,4 @@
-/*	$OpenBSD: main2.c,v 1.6 2005/11/20 17:09:55 cloder Exp $	*/
+/*	$OpenBSD: main2.c,v 1.7 2005/11/20 17:42:50 deraadt Exp $	*/
 /*	$NetBSD: main2.c,v 1.2 1995/07/03 21:24:53 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main2.c,v 1.6 2005/11/20 17:09:55 cloder Exp $";
+static char rcsid[] = "$OpenBSD: main2.c,v 1.7 2005/11/20 17:42:50 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			for (i = 0; libs[i] != NULL; i++) ;
-			libs = xrealloc(libs, (i + 2) * sizeof (char *)); 
+			libs = xrealloc(libs, (i + 2) * sizeof (char *));
 			libs[i] = xstrdup(optarg);
 			libs[i + 1] = NULL;
 			break;
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-	
+
 	argc -= optind;
 	argv += optind;
 

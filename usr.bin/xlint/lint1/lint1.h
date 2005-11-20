@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.2 1996/06/26 05:44:15 deraadt Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.3 2005/11/20 17:42:49 deraadt Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -226,7 +226,7 @@ typedef	struct sym {
 	struct	sym **s_rlink;	/* pointer to s_link of prev. symbol */
 	struct	sym *s_nxt;	/* next struct/union member, enumerator,
 				   argument */
-	struct	sym *s_dlnxt; 	/* next symbol declared on same level */
+	struct	sym *s_dlnxt;	/* next symbol declared on same level */
 } sym_t;
 
 #define	s_styp	u._s_st

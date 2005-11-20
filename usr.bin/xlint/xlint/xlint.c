@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.17 2005/11/20 17:09:55 cloder Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.18 2005/11/20 17:42:50 deraadt Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.17 2005/11/20 17:09:55 cloder Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.18 2005/11/20 17:42:50 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -145,7 +145,7 @@ appstrg(char ***lstp, char *s)
 	lst[i] = s;
 	lst[i + 1] = NULL;
 	*lstp = lst;
-}	
+}
 
 static void
 appcstrg(char ***lstp, const char *s)
@@ -338,7 +338,7 @@ main(int argc, char *argv[])
 		appstrg(&lcppflgs, concat2("-D", MACHINE_ARCH));
 	}
 #endif
-	
+
 	appcstrg(&deflibs, "c");
 
 	if (signal(SIGHUP, terminate) == SIG_IGN)
@@ -708,7 +708,7 @@ lint2()
 	len = strlen(PATH_LIBEXEC) + sizeof ("/lint2");
 	path = xmalloc(len);
 	(void)snprintf(path, len, "%s/lint2", PATH_LIBEXEC);
-	
+
 	appcstrg(&args, path);
 	applst(&args, l2flags);
 	applst(&args, l2libs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.6 2005/11/19 03:35:27 cloder Exp $	*/
+/*	$OpenBSD: err.c,v 1.7 2005/11/20 17:42:49 deraadt Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.6 2005/11/19 03:35:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.7 2005/11/20 17:42:49 deraadt Exp $";
 #endif
 
 /* number of errors found */
@@ -209,9 +209,9 @@ const	char *msgs[] = {
 	"argument has incompatible pointer type, arg #%d",	      /* 153 */
 	"illegal combination of pointer and integer, arg #%d",	      /* 154 */
 	"argument is incompatible with prototype, arg #%d",	      /* 155 */
-	"enum type mismatch, arg #%d",			       	      /* 156 */
+	"enum type mismatch, arg #%d",				      /* 156 */
 	"ANSI C treats constant as unsigned",			      /* 157 */
-	"%s may be used before set",			      	      /* 158 */
+	"%s may be used before set",				      /* 158 */
 	"assignment in conditional context",			      /* 159 */
 	"operator '==' found where '=' was expected",		      /* 160 */
 	"constant in conditional context",			      /* 161 */
@@ -244,7 +244,7 @@ const	char *msgs[] = {
 	"no automatic aggregate initialization in traditional C",     /* 188 */
 	"assignment of struct/union illegal in traditional C",	      /* 189 */
 	"empty array declaration: %s",				      /* 190 */
-	"%s set but not used in function %s",		      	      /* 191 */
+	"%s set but not used in function %s",			      /* 191 */
 	"%s unused in function %s",				      /* 192 */
 	"statement not reached",				      /* 193 */
 	"label %s redefined",					      /* 194 */

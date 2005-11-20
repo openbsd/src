@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.12 2005/11/19 03:35:27 cloder Exp $	*/
+/*	$OpenBSD: decl.c,v 1.13 2005/11/20 17:42:49 deraadt Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.12 2005/11/19 03:35:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.13 2005/11/20 17:42:49 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -174,7 +174,7 @@ initdecl(void)
 		for (i = 0; i < NTSPEC; i++)
 			ttab[i].tt_psz = ttab[i].tt_sz;
 	}
-	
+
 	/* shared type structures */
 	typetab = xcalloc(NTSPEC, sizeof (type_t));
 	for (i = 0; i < NTSPEC; i++)
@@ -404,7 +404,7 @@ addtype(type_t *tp)
 	} else {
 		/*
 		 * remember specifiers "void", "char", "int", "float" or
-		 * "double" int dcs->d_atyp 
+		 * "double" int dcs->d_atyp
 		 */
 		if (dcs->d_atyp != NOTSPEC)
 			/* more than one, print error in deftyp() */
@@ -1128,7 +1128,7 @@ align(int al, int len)
 	 */
 	if (al > dcs->d_stralign)
 		dcs->d_stralign = al;
-	
+
 	no = (dcs->d_offset + (al - 1)) & ~(al - 1);
 	if (len == 0 || dcs->d_offset + len > no)
 		dcs->d_offset = no;
@@ -1352,7 +1352,7 @@ osfunc(sym_t *decl, sym_t *args)
 	    decl->s_type == dcs->d_nxt->d_type) {
 		/*
 		 * We assume that this becomes a function definition. If
-		 * we are wrong, its corrected in chkfdef(). 
+		 * we are wrong, its corrected in chkfdef().
 		 */
 		if (args != NULL) {
 			decl->s_osdef = 1;
@@ -1790,7 +1790,6 @@ decl1ext(sym_t *dsym, int initflg)
 	}
 
 	if ((rdsym = dcs->d_rdcsym) != NULL) {
-
 		/*
 		 * If the old symbol stems from a old style function definition
 		 * we have remembered the params in rdsmy->s_args and compare
@@ -1803,7 +1802,6 @@ decl1ext(sym_t *dsym, int initflg)
 		}
 
 		if (!redec && !isredec(dsym, (warn = 0, &warn))) {
-		
 			if (warn) {
 				/* redeclaration of %s */
 				(*(sflag ? error : warning))(27, dsym->s_name);
@@ -1849,7 +1847,7 @@ decl1ext(sym_t *dsym, int initflg)
 			compltyp(dsym, rdsym);
 
 		}
-		
+
 		rmsym(rdsym);
 	}
 
@@ -1964,7 +1962,6 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
 	tspec_t	t;
 
 	while (tp1 != NULL && tp2 != NULL) {
-
 		t = tp1->t_tspec;
 		if (promot) {
 			if (t == FLOAT) {
@@ -2036,7 +2033,6 @@ eqargs(type_t *tp1, type_t *tp2, int *warn)
 	a2 = tp2->t_args;
 
 	while (a1 != NULL && a2 != NULL) {
-
 		if (eqtype(a1->s_type, a2->s_type, 1, 0, warn) == 0)
 			return (0);
 
@@ -2357,7 +2353,7 @@ cluparg(void)
 		/* from now the prototype is valid */
 		funcsym->s_osdef = 0;
 		funcsym->s_args = NULL;
-		
+
 	}
 
 }
@@ -2458,9 +2454,7 @@ decl1loc(sym_t *dsym, int initflg)
 	}
 
 	if (dcs->d_rdcsym != NULL) {
-
 		if (dcs->d_rdcsym->s_blklev == 0) {
-
 			switch (dsym->s_scl) {
 			case AUTO:
 				/* automatic hides external declaration: %s */
@@ -2485,9 +2479,7 @@ decl1loc(sym_t *dsym, int initflg)
 			default:
 				lerror("decl1loc() 1");
 			}
-
 		} else if (dcs->d_rdcsym->s_blklev == blklev) {
-
 			/* no hflag, because its illegal! */
 			if (dcs->d_rdcsym->s_arg) {
 				/*
@@ -2503,21 +2495,16 @@ decl1loc(sym_t *dsym, int initflg)
 			}
 
 		} else if (dcs->d_rdcsym->s_blklev < blklev) {
-
 			if (hflag)
 				/* declaration hides earlier one: %s */
 				warning(95, dsym->s_name);
-			
 		}
 
 		if (dcs->d_rdcsym->s_blklev == blklev) {
-
 			/* redeclaration of %s */
 			error(27, dsym->s_name);
 			rmsym(dcs->d_rdcsym);
-
 		}
-
 	}
 
 	if (initflg && !(initerr = chkinit(dsym))) {
@@ -2961,7 +2948,7 @@ chkglvar(sym_t *sym)
 {
 	if (sym->s_scl == TYPEDEF || sym->s_scl == ENUMCON)
 		return;
-	
+
 	if (sym->s_scl != EXTERN && sym->s_scl != STATIC)
 		lerror("chkglvar() 1");
 

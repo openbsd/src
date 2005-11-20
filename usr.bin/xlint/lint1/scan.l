@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.6 2004/05/10 15:26:22 deraadt Exp $	*/
+/*	$OpenBSD: scan.l,v 1.7 2005/11/20 17:42:49 deraadt Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.6 2004/05/10 15:26:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.7 2005/11/20 17:42:49 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -94,7 +94,7 @@ EX	([eE][+-]?[0-9]+)
 
 %%
 
-{L}({L}|{D})*		 	return (name());
+{L}({L}|{D})*			return (name());
 0{OD}*[lLuU]*			return (icon(8));
 {NZD}{D}*[lLuU]*		return (icon(10));
 0[xX]{HD}+[lLuU]*		return (icon(16));

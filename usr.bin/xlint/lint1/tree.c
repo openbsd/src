@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.8 2005/11/19 03:35:27 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.9 2005/11/20 17:42:49 deraadt Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.8 2005/11/19 03:35:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.9 2005/11/20 17:42:49 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -793,7 +793,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		for (tn=rn; tn->tn_op==CVT && !tn->tn_cast; tn=tn->tn_left) ;
 		ort = tn->tn_type->t_tspec;
 	}
-		
+
 	switch (op) {
 	case POINT:
 		/*
@@ -1732,7 +1732,7 @@ iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 			} else {
 				warning(132, tyname(tn->tn_type));
 			}
-		} 
+		}
 	}
 }
 
@@ -1796,7 +1796,7 @@ ppconv(op_t op, tnode_t *tn, type_t *tp)
 		warning(229);
 		return;
 	}
-	
+
 	if (getbound(tp->t_subt) > getbound(tn->tn_type->t_subt)) {
 		if (hflag)
 			/* possible pointer alignment problem */
@@ -1924,7 +1924,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		sz = tp->t_isfield ? tp->t_flen : size(nt);
 		nv->v_quad = xsign(nv->v_quad, nt, sz);
 	}
-	
+
 	if (rchk && op != CVT) {
 		osz = size(ot);
 		nsz = tp->t_isfield ? tp->t_flen : size(nt);
@@ -2280,7 +2280,7 @@ bldamper(tnode_t *tn, int noign)
 {
 	tnode_t	*ntn;
 	tspec_t	t;
-	
+
 	if (!noign && ((t = tn->tn_type->t_tspec) == ARRAY || t == FUNC)) {
 		/* & before array or function: ignored */
 		if (tflag)
@@ -2294,7 +2294,7 @@ bldamper(tnode_t *tn, int noign)
 	    tn->tn_left->tn_type->t_subt == tn->tn_type) {
 		return (tn->tn_left);
 	}
-	    
+
 	ntn = mktnode(AMPER, tincref(tn->tn_type, PTR), tn, NULL);
 
 	return (ntn);
@@ -3112,7 +3112,7 @@ chkfarg(type_t *ftp, tnode_t *args)
 		error(150, narg, narg > 1 ? "s" : "", npar);
 		asym = NULL;
 	}
-	
+
 	for (n = 1; n <= narg; n++) {
 
 		/*
@@ -3159,7 +3159,7 @@ chkfarg(type_t *ftp, tnode_t *args)
  * prototype parameter. If it is a valid combination, but both types
  * are not the same, insert a conversion to convert the argument into
  * the type of the parameter.
- * 
+ *
  * n:	position of arg
  * tp:	expected type (from prototype)
  * tn:	argument
@@ -3539,7 +3539,7 @@ chkaidx(tnode_t *tn, int amper)
 		return;
 	if (ln->tn_left->tn_type->t_tspec != ARRAY)
 		return;
-	
+
 	/*
 	 * For incomplete array types, we can print a warning only if
 	 * the index is negative.
