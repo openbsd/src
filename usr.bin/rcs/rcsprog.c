@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.41 2005/11/12 22:49:59 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.42 2005/11/20 08:50:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include "rcsprog.h"
 
 #define RCS_CMD_MAXARG	128
+#define RCS_DEFAULT_SUFFIX	",v/"
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
@@ -49,6 +50,7 @@ int pipeout = 0;
 
 int	 rcs_optind;
 char	*rcs_optarg;
+char	*rcs_suffixes;
 char	*rcs_tmpdir = RCS_TMPDIR_DEFAULT;
 
 struct rcs_prog {
@@ -182,23 +184,68 @@ rcs_getopt(int argc, char **argv, const char *optstr)
 int
 rcs_statfile(char *fname, char *out, size_t len)
 {
-	int l;
+	int l, found, strdir;
+	char defaultsuffix[] = RCS_DEFAULT_SUFFIX;
 	char filev[MAXPATHLEN], fpath[MAXPATHLEN];
+	char *ext, *slash;
 	struct stat st;
 
-	l = snprintf(filev, sizeof(filev), "%s%s", fname, RCS_FILE_EXT);
-	if (l == -1 || l >= (int)sizeof(filev))
-		return (-1);
+	strdir = found = 0;
 
-	if ((stat(RCSDIR, &st) != -1) && (st.st_mode & S_IFDIR)) {
-		l = snprintf(fpath, sizeof(fpath), "%s/%s", RCSDIR, filev);
-		if (l == -1 || l >= (int)sizeof(fpath))
+	/* we might have gotten a RCS file as argument */
+	if ((ext = strchr(fname, ',')) != NULL)
+		*ext = '\0';
+
+	/* we might have gotten the RCS/ dir in the argument string */
+	if (strstr(fname, RCSDIR) != NULL)
+		strdir = 1;
+
+	if (rcs_suffixes != NULL)
+		ext = rcs_suffixes;
+	else
+		ext = defaultsuffix;
+	for (;;) {
+		/*
+		 * GNU documentation says -x,v/ specifies two suffixes,
+		 * namely the ,v one and an empty one (which matches
+		 * everything).
+		 * The problem is that they don't follow this rule at
+		 * all, and their documentation seems flawed.
+		 * We try to be compatible, so let's do so.
+		 */
+		if (*ext == '\0')
+			break;
+
+		if ((slash = strchr(ext, '/')) != NULL)
+			*slash = '\0';
+
+		l = snprintf(filev, sizeof(filev), "%s%s", fname, ext);
+		if (l == -1 || l >= (int)sizeof(filev))
 			return (-1);
-	} else {
-		strlcpy(fpath, filev, sizeof(fpath));
+
+		if ((strdir == 0) &&
+		    (stat(RCSDIR, &st) != -1) && (st.st_mode & S_IFDIR)) {
+			l = snprintf(fpath, sizeof(fpath), "%s/%s",
+			    RCSDIR, filev);
+			if (l == -1 || l >= (int)sizeof(fpath))
+				return (-1);
+		} else {
+			strlcpy(fpath, filev, sizeof(fpath));
+		}
+
+		if (stat(fpath, &st) != -1) {
+			found++;
+			break;
+		}
+
+		if (slash == NULL)
+			break;
+
+		*slash++ = '/';
+		ext = slash;
 	}
 
-	if (stat(fpath, &st) == -1) {
+	if (found != 1) {
 		if (strcmp(__progname, "rcsclean"))
 			cvs_log(LP_ERRNO, "%s", fpath);
 		return (-1);
