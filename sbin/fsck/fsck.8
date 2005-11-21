@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.26 2005/02/03 05:00:07 jaredy Exp $
+.\"	$OpenBSD: fsck.8,v 1.27 2005/11/21 14:27:55 millert Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -38,6 +38,7 @@
 .Nm fsck
 .Bk -words
 .Op Fl dfnpvy
+.Op Fl b Ar block#
 .Op Fl l Ar maxparallel
 .Op Fl T Ar fstype : Ns Ar fsoptions
 .Op Fl t Ar fstype
@@ -76,6 +77,13 @@ checked.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl b Ar block#
+Causes
+.Nm
+to use the specified block as the location of the superblock.
+Block 32 is usually an alternate super block.
+This option is only valid for filesystems that support backup superblocks
+(ffs and ext2fs).
 .It Fl d
 Debugging mode.
 Just print the commands without executing them.

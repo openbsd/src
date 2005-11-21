@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.22 2005/11/12 13:28:34 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.23 2005/11/21 14:27:55 millert Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-static const char rcsid[] = "$OpenBSD: fsck.c,v 1.22 2005/11/12 13:28:34 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: fsck.c,v 1.23 2005/11/21 14:27:55 millert Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 	struct fstab *fs;
 	int i, rval = 0;
 	char *vfstype = NULL;
-	char globopt[3];
+	char *p, globopt[3];
 	struct rlimit rl;
 
 	/* Increase our data size to the max */
@@ -110,7 +110,7 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&selhead);
 	TAILQ_INIT(&opthead);
 
-	while ((i = getopt(argc, argv, "dvpfnyl:t:T:")) != -1)
+	while ((i = getopt(argc, argv, "dvpfnyb:l:T:t:")) != -1)
 		switch (i) {
 		case 'd':
 			flags |= CHECK_DEBUG;
@@ -128,6 +128,13 @@ main(int argc, char *argv[])
 		case 'y':
 			globopt[1] = i;
 			options = catopt(options, globopt, 1);
+			break;
+
+		case 'b':
+			if (asprintf(&p, "-b %s", optarg) == -1)
+				err(1, "malloc failed");
+			options = catopt(options, p, 1);
+			free(p);
 			break;
 
 		case 'l':
