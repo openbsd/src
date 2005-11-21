@@ -1,6 +1,6 @@
 # Host: OpenBSD/m68k
-NATDEPFILES= m68kbsd-nat.o bsd-kvm.o fork-child.o infptrace.o inftarg.o \
+NATDEPFILES= m68kbsd-nat.o bsd-kvm.o fork-child.o inf-ptrace.o \
 	solib.o solib-sunos.o
-NAT_FILE= nm-nbsdaout.h
+NAT_FILE= solib.h
 
 LOADLIBES= -lkvm
