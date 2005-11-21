@@ -1,7 +1,8 @@
-/*	$OpenBSD: esmvar.h,v 1.1 2005/11/21 17:23:19 jordan Exp $ */
+/*	$OpenBSD: esmvar.h,v 1.2 2005/11/21 22:05:36 marco Exp $ */
 
 /*
- * Copyright (c) David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
+ * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
