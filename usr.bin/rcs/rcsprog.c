@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.42 2005/11/20 08:50:20 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.43 2005/11/21 11:17:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -204,6 +204,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 		ext = rcs_suffixes;
 	else
 		ext = defaultsuffix;
+
 	for (;;) {
 		/*
 		 * GNU documentation says -x,v/ specifies two suffixes,
@@ -220,15 +221,21 @@ rcs_statfile(char *fname, char *out, size_t len)
 			*slash = '\0';
 
 		l = snprintf(filev, sizeof(filev), "%s%s", fname, ext);
-		if (l == -1 || l >= (int)sizeof(filev))
+		if (l == -1 || l >= (int)sizeof(filev)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", filev);
 			return (-1);
+		}
 
 		if ((strdir == 0) &&
 		    (stat(RCSDIR, &st) != -1) && (st.st_mode & S_IFDIR)) {
 			l = snprintf(fpath, sizeof(fpath), "%s/%s",
 			    RCSDIR, filev);
-			if (l == -1 || l >= (int)sizeof(fpath))
+			if (l == -1 || l >= (int)sizeof(fpath)) {
+				errno = ENAMETOOLONG;
+				cvs_log(LP_ERRNO, "%s", fpath);
 				return (-1);
+			}
 		} else {
 			strlcpy(fpath, filev, sizeof(fpath));
 		}
