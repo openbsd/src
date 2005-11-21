@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.9 2005/11/20 17:42:49 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.10 2005/11/21 18:28:24 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.9 2005/11/20 17:42:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.10 2005/11/21 18:28:24 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1725,12 +1725,12 @@ iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 	if (psize(nt) < psize(ot) &&
 	    (ot == LONG || ot == ULONG || ot == QUAD || ot == UQUAD ||
 	     aflag > 1)) {
-		/* conversion from '%s' may lose accuracy */
+		/* conversion from '%s' to '%s' may lose accuracy */
 		if (aflag) {
 			if (op == FARG) {
-				warning(298, tyname(tn->tn_type), arg);
+				warning(298, tyname(tn->tn_type), tyname(tp), arg);
 			} else {
-				warning(132, tyname(tn->tn_type));
+				warning(132, tyname(tn->tn_type), tyname(tp));
 			}
 		}
 	}

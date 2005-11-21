@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.8 2005/11/20 18:23:58 cloder Exp $	*/
+/*	$OpenBSD: err.c,v 1.9 2005/11/21 18:28:24 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.8 2005/11/20 18:23:58 cloder Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.9 2005/11/21 18:28:24 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -184,8 +184,8 @@ const	char *msgs[] = {
 	"operands have incompatible pointer types, op %s",	      /* 128 */
 	"expression has null effect",				      /* 129 */
 	"enum type mismatch, op %s",				      /* 130 */
-	"conversion to '%s' may sign-extend incorrectly",	      /* 131 */
-	"conversion from '%s' may lose accuracy",		      /* 132 */
+	"conversion from '%s' to '%s' may sign-extend incorrectly",   /* 131 */
+	"conversion from '%s' to '%s' may lose accuracy",	      /* 132 */
 	"conversion of pointer to '%s' loses bits",		      /* 133 */
 	"conversion of pointer to '%s' may lose bits",		      /* 134 */
 	"possible pointer alignment problem",			      /* 135 */
@@ -350,8 +350,8 @@ const	char *msgs[] = {
 	"multi-character character constant",			      /* 294 */
 	"conversion of '%s' to '%s' is out of range, arg #%d",	      /* 295 */
 	"conversion of negative constant to unsigned type, arg #%d",  /* 296 */
-	"conversion to '%s' may sign-extend incorrectly, arg #%d",    /* 297 */
-	"conversion from '%s' may lose accuracy, arg #%d",	      /* 298 */
+	"conversion from '%s' to '%s' may sign-extend incorrectly, arg #%d",    /* 297 */
+	"conversion from '%s' to '%s' may lose accuracy, arg #%d",    /* 298 */
 	"prototype does not match old style definition, arg #%d",     /* 299 */
 	"old style definition",					      /* 300 */
 	"array of incomplete type",				      /* 301 */
