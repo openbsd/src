@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.62 2005/11/17 00:22:30 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.63 2005/11/21 15:16:41 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -49,10 +49,11 @@
 #define DATE_MTIME      -2
 
 #define LOG_INIT        "Initial revision"
-#define LOG_PROMPT      "enter log message, terminated with a single '.' " \
+#define LOG_PROMPT      "enter log message, terminated with a single '.' "    \
                         "or end of file:\n>> "
-#define DESC_PROMPT     "enter description, terminated with single '.' "   \
-	                "or end of file:\nNOTE: This is NOT the log message!\n"
+#define DESC_PROMPT     "enter description, terminated with single '.' "      \
+	                "or end of file:\nNOTE: This is NOT the log message!" \
+                        "\n>> "
 
 struct checkin_params {
 	int flags, openflags;
@@ -66,13 +67,15 @@ struct checkin_params {
 
 static int    checkin_attach_symbol(struct checkin_params *pb);
 static int    checkin_checklock(struct checkin_params *pb);
+static char * checkin_choose_rcsfile(const char *);
 static char * checkin_diff_file(struct checkin_params *);
 static char * checkin_getdesc(void);
 static char * checkin_getinput(const char *);
 static char * checkin_getlogmsg(RCSNUM *, RCSNUM *);
-static void   checkin_init(struct checkin_params *);
-static void   checkin_revert(struct checkin_params *pb);
+static int    checkin_init(struct checkin_params *);
 static int    checkin_mtimedate(struct checkin_params *pb);
+static int    checkin_update(struct checkin_params *pb);
+static void   checkin_revert(struct checkin_params *pb);
 
 void
 checkin_usage(void)
@@ -96,10 +99,7 @@ int
 checkin_main(int argc, char **argv)
 {
 	int i, ch, status;
-	char  *filec;
-	struct stat sb;
 	struct checkin_params pb;
-	BUF *bp;
 
 	pb.date = DATE_NOW;
 	pb.file = NULL;
@@ -224,17 +224,31 @@ checkin_main(int argc, char **argv)
 
 	for (i = 0; i < argc; i++) {
 		pb.filename = argv[i];
-		if (rcs_statfile(pb.filename, pb.fpath, sizeof(pb.fpath)) < 0)
-			continue;
 
 		/*
 		 * Test for existence of ,v file. If we are expected to
 		 * create one, set NEWFILE flag.
 		 */
-		if ((pb.openflags & RCS_CREATE) && (stat(pb.fpath, &sb) < 0))
+		if ((pb.openflags & RCS_CREATE)
+		    && (rcs_statfile(pb.filename, pb.fpath,
+			    sizeof(pb.fpath)) < 0))
 			pb.flags |= NEWFILE;
 		else
 			pb.openflags &= ~RCS_CREATE;
+
+		/*
+		 * If we are to create a new ,v file, we must decide where it
+		 * should go.
+		 */
+		if (pb.flags & NEWFILE) {
+			char *fpath = checkin_choose_rcsfile(pb.filename);
+			if (fpath == NULL) {
+				status = 1;
+				continue;
+			}
+			strlcpy(pb.fpath, fpath, sizeof(pb.fpath));
+			free(fpath);
+		}
 
 		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
 
@@ -246,152 +260,11 @@ checkin_main(int argc, char **argv)
 
 		if (verbose == 1)
 			printf("%s  <--  %s\n", pb.fpath, pb.filename);
-
-		pb.frev = pb.file->rf_head;
-
-		/*
-		 * If revision passed on command line is less than HEAD, bail.
-		 */
-		if ((pb.newrev != NULL)
-		    && (rcsnum_cmp(pb.newrev, pb.frev, 0) > 0)) {
-			cvs_log(LP_ERR, "revision is too low!");
-			status = 1;
-			rcs_close(pb.file);
-			continue;
-		}
-
-		/*
-		 * Load file contents
-		 */
-		if ((bp = cvs_buf_load(argv[i], BUF_AUTOEXT)) == NULL) {
-			cvs_log(LP_ERR, "failed to load '%s'", pb.filename);
-			exit(1);
-		}
-
-		if (cvs_buf_putc(bp, '\0') < 0)
-			exit(1);
-
-		filec = (char *)cvs_buf_release(bp);
-
-		/*
-		 * Get RCS patch
-		 */
-		if ((pb.deltatext = checkin_diff_file(&pb)) == NULL) {
-			cvs_log(LP_ERR, "failed to get diff");
-			exit(1);
-		}
-
-		/*
-		 * If -f is not specified and there are no differences, tell
-		 * the user and revert to latest version.
-		 */
-		if (!(pb.flags & FORCE) && (strlen(pb.deltatext) < 1)) {
-			checkin_revert(&pb);
-			continue;
-		}
-
-		/*
-		 * Check for a lock belonging to this user. If none,
-		 * abort check-in.
-		 */
-		if (checkin_checklock(&pb) < 0) {
-			status = 1;
-			continue;
-		}
-
-		/*
-		 * If no log message specified, get it interactively.
-		 */
-		if (pb.flags & INTERACTIVE)
-			pb.rcs_msg = checkin_getlogmsg(pb.frev, pb.newrev);
-
-		/*
-		 * Remove the lock
-		 */
-		if (rcs_lock_remove(pb.file, pb.frev) < 0) {
-			if (rcs_errno != RCS_ERR_NOENT)
-			    cvs_log(LP_WARN, "failed to remove lock");
-                }
-
-		/*
-		 * Current head revision gets the RCS patch as rd_text
-		 */
-		if (rcs_deltatext_set(pb.file, pb.frev, pb.deltatext) == -1) {
-			cvs_log(LP_ERR,
-			    "failed to set new rd_text for head rev");
-			exit (1);
-		}
-
-		/*
-		 * Set the date of the revision to be the last modification
-		 * time of the working file if -d has no argument.
-		 */
-		if (pb.date == DATE_MTIME
-		    && (checkin_mtimedate(&pb) < 0))
-			    continue;
 		
-
-		/*
-		 * Now add our new revision
-		 */
-		if (rcs_rev_add(pb.file,
-			(pb.newrev == NULL ? RCS_HEAD_REV : pb.newrev),
-		    pb.rcs_msg, pb.date, pb.username) != 0) {
-			cvs_log(LP_ERR, "failed to add new revision");
-			exit(1);
-		}
-
-		/*
-		 * If we are checking in to a non-default (ie user-specified)
-		 * revision, set head to this revision.
-		 */
-		if (pb.newrev != NULL)
-			rcs_head_set(pb.file, pb.newrev);
+		if (pb.flags & NEWFILE)
+			status = checkin_init(&pb);
 		else
-			pb.newrev = pb.file->rf_head;
-
-		/*
-		 * New head revision has to contain entire file;
-		 */
-                if (rcs_deltatext_set(pb.file, pb.frev, filec) == -1) {
-			cvs_log(LP_ERR, "failed to set new head revision");
-			exit(1);
-		}
-
-		/*
-		 * Attach a symbolic name to this revision if specified.
-		 */
-		if (pb.symbol != NULL
-		    && (checkin_attach_symbol(&pb) < 0)) {
-			status = 1;
-			continue;
-		}
-
-		/*
-		 * Set the state of this revision if specified.
-		 */
-		if (pb.state != NULL)
-			(void)rcs_state_set(pb.file, pb.newrev, pb.state);
-
-		free(pb.deltatext);
-		free(filec);
-		(void)unlink(pb.filename);
-
-		/*
-		 * Do checkout if -u or -l are specified.
-		 */
-		if (((pb.flags & CO_LOCK) || (pb.flags & CO_UNLOCK))
-		    && !(pb.flags & CI_DEFAULT))
-			checkout_rev(pb.file, pb.newrev, pb.filename, pb.flags,
-			    pb.username);
-
-		/* File will NOW be synced */
-		rcs_close(pb.file);
-
-		if (pb.flags & INTERACTIVE) {
-			free(pb.rcs_msg);
-			pb.rcs_msg = NULL;
-		}
+			status = checkin_update(&pb);
 	}
 
 	return (status);
@@ -539,12 +412,169 @@ checkin_getinput(const char *prompt)
 }
 
 /*
+ * checkin_update()
+ *
+ * Do a checkin to an existing RCS file.
+ *
+ * On success, return 0. On error return -1.
+ */
+static int
+checkin_update(struct checkin_params *pb)
+{
+	char  *filec;
+	BUF *bp;
+
+	pb->frev = pb->file->rf_head;
+
+	/*
+	 * If revision passed on command line is less than HEAD, bail.
+	 */
+	if ((pb->newrev != NULL)
+	    && (rcsnum_cmp(pb->newrev, pb->frev, 0) > 0)) {
+		cvs_log(LP_ERR, "revision is too low!");
+		rcs_close(pb->file);
+		return (-1);
+	}
+
+	/*
+	 * Load file contents
+	 */
+	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
+		cvs_log(LP_ERR, "failed to load '%s'", pb->filename);
+		return (-1);
+	}
+
+	if (cvs_buf_putc(bp, '\0') < 0)
+		return (-1);
+
+	filec = (char *)cvs_buf_release(bp);
+
+	/*
+	 * Get RCS patch
+	 */
+	if ((pb->deltatext = checkin_diff_file(pb)) == NULL) {
+		cvs_log(LP_ERR, "failed to get diff");
+		return (-1);
+	}
+
+	/*
+	 * If -f is not specified and there are no differences, tell
+	 * the user and revert to latest version.
+	 */
+	if (!(pb->flags & FORCE) && (strlen(pb->deltatext) < 1)) {
+		checkin_revert(pb);
+		return (0);
+	}
+
+	/*
+	 * Check for a lock belonging to this user. If none,
+	 * abort check-in.
+	 */
+	if (checkin_checklock(pb) < 0)
+		return (-1);
+
+	/*
+	 * If no log message specified, get it interactively.
+	 */
+	if (pb->flags & INTERACTIVE)
+		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev);
+
+	/*
+	 * Remove the lock
+	 */
+	if (rcs_lock_remove(pb->file, pb->frev) < 0) {
+		if (rcs_errno != RCS_ERR_NOENT)
+		    cvs_log(LP_WARN, "failed to remove lock");
+	}
+
+	/*
+	 * Current head revision gets the RCS patch as rd_text
+	 */
+	if (rcs_deltatext_set(pb->file, pb->frev, pb->deltatext) == -1) {
+		cvs_log(LP_ERR,
+		    "failed to set new rd_text for head rev");
+		exit (1);
+	}
+
+	/*
+	 * Set the date of the revision to be the last modification
+	 * time of the working file if -d has no argument.
+	 */
+	if (pb->date == DATE_MTIME
+	    && (checkin_mtimedate(pb) < 0))
+		return (-1);
+
+	/*
+	 * Now add our new revision
+	 */
+	if (rcs_rev_add(pb->file,
+	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
+	    pb->rcs_msg, pb->date, pb->username) != 0) {
+		cvs_log(LP_ERR, "failed to add new revision");
+		return (-1);
+	}
+
+	/*
+	 * If we are checking in to a non-default (ie user-specified)
+	 * revision, set head to this revision.
+	 */
+	if (pb->newrev != NULL)
+		rcs_head_set(pb->file, pb->newrev);
+	else
+		pb->newrev = pb->file->rf_head;
+
+	/*
+	 * New head revision has to contain entire file;
+	 */
+
+        if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1) {
+		cvs_log(LP_ERR, "failed to set new head revision");
+		exit(1);
+	}
+
+	/*
+	 * Attach a symbolic name to this revision if specified.
+	 */
+	if (pb->symbol != NULL
+	    && (checkin_attach_symbol(pb) < 0))
+		return (-1);
+
+	/*
+	 * Set the state of this revision if specified.
+	 */
+	if (pb->state != NULL)
+		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
+
+	free(pb->deltatext);
+	free(filec);
+	(void)unlink(pb->filename);
+
+	/*
+	 * Do checkout if -u or -l are specified.
+	 */
+	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
+	    && !(pb->flags & CI_DEFAULT))
+		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
+		    pb->username);
+
+	/* File will NOW be synced */
+	rcs_close(pb->file);
+
+	if (pb->flags & INTERACTIVE) {
+		free(pb->rcs_msg);
+		pb->rcs_msg = NULL;
+	}
+	return (0);
+}
+
+/*
  * checkin_init()
  * 
  * Does an initial check in, just enough to create the new ,v file
  * XXX not fully implemented yet.
+ * On success, return 0. On error return -1.
  */
-static void
+static int
 checkin_init(struct checkin_params *pb)
 {
 	BUF *bp;
@@ -555,11 +585,11 @@ checkin_init(struct checkin_params *pb)
 	 */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load '%s'", pb->filename);
-		exit(1);
+		return (-1);
 	}
 
 	if (cvs_buf_putc(bp, '\0') < 0)
-		exit(1);
+		return (-1);
 
 	filec = (char *)cvs_buf_release(bp);
 
@@ -568,15 +598,37 @@ checkin_init(struct checkin_params *pb)
 	 */
 	rcs_desc = checkin_getdesc();
 	rcs_desc_set(pb->file, rcs_desc);
+	printf("set description\n");
 
 	/*
 	 * Now add our new revision
 	 */
 	if (rcs_rev_add(pb->file, RCS_HEAD_REV, LOG_INIT,
-		-1, pb->username) != 0) {
+	    -1, pb->username) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
-		exit(1);
+		return (-1);
 	}
+	printf("added rev\n");
+	/*
+	 * If we are checking in to a non-default (ie user-specified)
+	 * revision, set head to this revision.
+	 */
+	if (pb->newrev != NULL)
+		rcs_head_set(pb->file, pb->newrev);
+	else
+		pb->newrev = pb->file->rf_head;
+	printf("set head rev\n");
+
+	/*
+	 * New head revision has to contain entire file;
+	 */
+	if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1) {
+		cvs_log(LP_ERR, "failed to set new head revision");
+		return (-1);
+	}
+	printf("set delta text\n");
+
+	return (0);
 }
 
 /*
@@ -692,4 +744,54 @@ checkin_mtimedate(struct checkin_params *pb)
 	}
 	pb->date = (time_t)sb.st_mtimespec.tv_sec;
 	return (0);
+}
+
+/*
+ * checkin_rcsfile()
+ *
+ * Given a relative filename, decide where the corresponding ,v file
+ * should be. 
+ *
+ * Returns pointer to a char array on success, NULL on failure.
+ */
+static char *
+checkin_choose_rcsfile(const char *filename)
+{
+	char fullpath[MAXPATHLEN], *basepath;
+	size_t len;
+	struct stat sb;
+
+	if (realpath(filename, fullpath) == NULL) {
+		cvs_log(LP_ERRNO, "realpath failed: `%s'", filename);
+		return (NULL);
+	}
+	len = strlen(fullpath);
+	while (fullpath[len] != '/')
+		len--;
+	if (len > 0) {
+		/*
+		 * Need two bytes extra for trailing slash and
+		 * NUL-termination.
+		 */
+		len += 2;
+		if ((basepath = malloc(MAXPATHLEN)) == NULL) {
+			cvs_log(LP_ERRNO, "could not allocate memory");
+			return (NULL);
+		}
+		strlcpy(basepath, fullpath, len);
+		strlcat(basepath, RCSDIR"/", MAXPATHLEN);
+		if ((stat(basepath, &sb) == 0) && (sb.st_mode & S_IFDIR)) {
+			/* <path>/RCS/<filename>,v */
+			strlcat(basepath, filename, MAXPATHLEN);
+			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
+		} else {
+			/* <path>/<filename>,v */
+			bzero(basepath, MAXPATHLEN);
+			strlcpy(basepath, fullpath, len);
+			strlcat(basepath, filename, MAXPATHLEN);
+			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
+		}
+		return (basepath);
+	} else
+		return (NULL);
 }
