@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.8 2005/11/02 13:21:37 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.9 2005/11/21 16:20:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -50,7 +50,7 @@ rcsmerge_main(int argc, char **argv)
 
 	baserev = rev2 = RCS_HEAD_REV;
 
-	while ((ch = rcs_getopt(argc, argv, "k:p::q::r:TV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "k:p::q::r:TVx:")) != -1) {
 		switch (ch) {
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -85,6 +85,9 @@ rcsmerge_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+		case 'x':
+			rcs_suffixes = rcs_optarg;
+			break;
 		default:
 			break;
 		}

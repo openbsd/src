@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.29 2005/11/08 09:22:47 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.30 2005/11/21 16:20:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -59,7 +59,7 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "f::l::M::p::qr::s:u::V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::l::M::p::qr::s:u::Vx:")) != -1) {
 		switch (ch) {
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
@@ -97,6 +97,9 @@ checkout_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+		case 'x':
+			rcs_suffixes = rcs_optarg;
+			break;
 		default:
 			(usage)();
 			exit(1);

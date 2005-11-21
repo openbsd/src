@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.21 2005/11/16 15:10:32 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.22 2005/11/21 16:20:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -53,6 +53,7 @@ extern int pipeout;
 
 extern int rcs_optind;
 extern char *rcs_optarg;
+extern char *rcs_suffixes;
 extern char *rcs_tmpdir;
 
 /* date.y */

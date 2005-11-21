@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.14 2005/11/17 18:14:12 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.15 2005/11/21 16:20:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -53,7 +53,7 @@ rcsclean_main(int argc, char **argv)
 
 	rev = RCS_HEAD_REV;
 
-	while ((ch = rcs_getopt(argc, argv, "k:n::q::r:u::V")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "k:n::q::r:u::Vx:")) != -1) {
 		switch (ch) {
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -82,6 +82,9 @@ rcsclean_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+		case 'x':
+			rcs_suffixes = rcs_optarg;
+			break;
 		default:
 			break;
 		}

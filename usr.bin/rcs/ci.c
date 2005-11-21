@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.63 2005/11/21 15:16:41 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.64 2005/11/21 16:20:28 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -44,7 +44,7 @@
 #include "diff.h"
 #include "rcsprog.h"
 
-#define CI_OPTSTRING    "d::f::i::j::k:l::m:M::N:n:qr::s:u::Vw:"
+#define CI_OPTSTRING    "d::f::i::j::k:l::m:M::N:n:qr::s:u::Vw:x:"
 #define DATE_NOW        -1
 #define DATE_MTIME      -2
 
@@ -200,6 +200,9 @@ checkin_main(int argc, char **argv)
 			exit(0);
 		case 'w':
 			pb.username = rcs_optarg;
+			break;
+		case 'x':
+			rcs_suffixes = rcs_optarg;
 			break;
 		default:
 			(usage)();

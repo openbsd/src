@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.16 2005/11/21 15:01:10 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.17 2005/11/21 16:20:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -54,7 +54,7 @@ rcsdiff_main(int argc, char **argv)
 
 	strlcpy(diffargs, "diff", sizeof(diffargs));
 
-	while ((ch = rcs_getopt(argc, argv, "cnqr:uV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "cnqr:uVx:")) != -1) {
 		switch (ch) {
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
@@ -71,9 +71,6 @@ rcsdiff_main(int argc, char **argv)
 			strlcat(diffargs, " -u", sizeof(diffargs));
 			diff_format = D_UNIFIED;
 			break;
-		case 'V':
-			printf("%s\n", rcs_version);
-			exit(0);
 		case 'r':
 			if (rev == RCS_HEAD_REV) {
 				if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
@@ -86,6 +83,12 @@ rcsdiff_main(int argc, char **argv)
 					exit(1);
 				}
 			}
+			break;
+		case 'V':
+			printf("%s\n", rcs_version);
+			exit(0);
+		case 'x':
+			rcs_suffixes = rcs_optarg;
 			break;
 		default:
 			(usage)();
