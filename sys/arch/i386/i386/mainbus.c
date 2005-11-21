@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.19 2005/10/18 23:08:24 marco Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.20 2005/11/21 17:24:26 jordan Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include "mpbios.h"
 #include "acpi.h"
 #include "ipmi.h"
+#include "esm.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -68,6 +69,10 @@
 
 #if NIPMI > 0
 #include <dev/ipmivar.h>
+#endif
+
+#if NESM > 0
+#include <arch/i386/i386/esmvar.h>
 #endif
 
 #if 0
@@ -104,6 +109,9 @@ union mainbus_attach_args {
 #endif
 #if NIPMI > 0
 	struct ipmi_attach_args mba_iaa;
+#endif
+#if NESM > 0
+	struct esm_attach_args mba_eaa;
 #endif
 };
 
@@ -199,6 +207,16 @@ mainbus_attach(parent, self, aux)
 		printf ("%s: No MP configuration found.", self->dv_xname);
 #endif
 #endif
+#endif
+
+#if NESM > 0
+	{
+		memset(&mba.mba_eaa, 0, sizeof(mba.mba_eaa));
+		mba.mba_eaa.eaa_name = "esm";
+		mba.mba_eaa.eaa_iot  = I386_BUS_SPACE_IO;
+		mba.mba_eaa.eaa_memt = I386_BUS_SPACE_MEM;
+		config_found(self, &mba.mba_eaa, mainbus_print);
+	}
 #endif
 
 	/*
