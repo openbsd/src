@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.14 2005/11/08 14:23:16 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.15 2005/11/21 20:06:34 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Op Fl m Ns Ar rev : Ns Ar log
 .Oo Fl t Ns Ar file Ns \*(Ba
 .Ar str Oc
+.Op Fl x Ns Ar suffixes
 .Ar file ...
 .Sh DESCRIPTION
 The
@@ -124,6 +125,11 @@ See
 for more details on locking.
 .It Fl V
 Print the program's version string and exit.
+.It Fl x Ns Ar suffixes
+Specifies the suffixes for RCS files.
+Suffixes should be separated by the
+.Sq /
+character.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT

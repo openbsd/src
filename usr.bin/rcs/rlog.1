@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rlog.1,v 1.5 2005/11/21 13:57:35 xsa Exp $
+.\"     $OpenBSD: rlog.1,v 1.6 2005/11/21 20:06:34 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -24,6 +24,7 @@
 .Nm
 .Bk -words
 .Op Fl hLNqRTtV
+.Op Fl x Ns Ar suffixes
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -50,6 +51,11 @@ For compatibility.
 Print header and description only.
 .It Fl V
 Print RCS's version number.
+.It Fl x Ns Ar suffixes
+Specifies the suffixes for RCS files.
+Suffixes should be separated by the
+.Sq /
+character.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT

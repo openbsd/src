@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.16 2005/11/02 20:39:28 niallo Exp $
+.\"     $OpenBSD: ci.1,v 1.17 2005/11/21 20:06:34 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Op Fl s Ns Ar state
 .Op Fl u Ns Op Ar rev
 .Op Fl w Ns Ar username
+.Op Fl x Ns Ar suffixes
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -110,6 +111,11 @@ Print RCS's version number.
 Uses
 .Ar user
 as the author field of the deposited revision.
+.It Fl x Ns Ar suffixes
+Specifies the suffixes for RCS files.
+Suffixes should be separated by the
+.Sq /
+character.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT
