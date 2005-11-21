@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.15 2005/02/21 11:16:00 dlg Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.16 2005/11/21 18:16:42 millert Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/device.h>
 
 #include <net/if.h>

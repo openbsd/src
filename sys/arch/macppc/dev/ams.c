@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.10 2005/10/15 15:01:23 martin Exp $	*/
+/*	$OpenBSD: ams.c,v 1.11 2005/11/21 18:16:37 millert Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>

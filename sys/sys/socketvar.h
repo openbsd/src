@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.37 2005/05/27 17:16:13 dhartmei Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.38 2005/11/21 18:16:46 millert Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
  *	@(#)socketvar.h	8.1 (Berkeley) 6/2/93
  */
 
-#include <sys/select.h>			/* for struct selinfo */
+#include <sys/selinfo.h>			/* for struct selinfo */
 #include <sys/queue.h>
 
 TAILQ_HEAD(soqhead, socket);

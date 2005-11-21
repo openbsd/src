@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.17 2005/10/15 15:01:23 martin Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.18 2005/11/21 18:16:37 millert Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>

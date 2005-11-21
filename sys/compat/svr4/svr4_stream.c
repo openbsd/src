@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.18 2003/11/23 17:14:21 avsm Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.19 2005/11/21 18:16:38 millert Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 
 /*
@@ -46,7 +46,7 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/un.h>

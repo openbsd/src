@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.80 2005/09/14 20:55:59 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.81 2005/11/21 18:16:46 millert Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #define	_SYS_PROC_H_
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
-#include <sys/select.h>			/* For struct selinfo. */
+#include <sys/selinfo.h>			/* For struct selinfo. */
 #include <sys/queue.h>
 #include <sys/timeout.h>		/* For struct timeout. */
 #include <sys/event.h>			/* For struct klist */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aed.c,v 1.8 2003/10/16 03:54:48 deraadt Exp $	*/
+/*	$OpenBSD: aed.c,v 1.9 2005/11/21 18:16:37 millert Exp $	*/
 /*	$NetBSD: aed.c,v 1.5 2000/03/23 06:40:33 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/poll.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>

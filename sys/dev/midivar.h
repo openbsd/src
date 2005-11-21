@@ -1,4 +1,4 @@
-/*	$OpenBSD: midivar.h,v 1.4 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: midivar.h,v 1.5 2005/11/21 18:16:38 millert Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -21,7 +21,7 @@
 
 #include <dev/midi_if.h>
 #include <sys/device.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/timeout.h>
 

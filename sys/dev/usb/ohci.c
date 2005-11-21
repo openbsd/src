@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.63 2005/11/15 07:02:37 miod Exp $ */
+/*	$OpenBSD: ohci.c,v 1.64 2005/11/21 18:16:42 millert Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -52,7 +52,7 @@
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>

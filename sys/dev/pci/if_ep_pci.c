@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.25 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.26 2005/11/21 18:16:41 millert Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/device.h>
 
 #include <net/if.h>

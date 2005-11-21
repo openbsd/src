@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.32 2005/08/01 05:36:48 brad Exp $ */
+/*	$OpenBSD: ugen.c,v 1.33 2005/11/21 18:16:43 millert Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -58,7 +58,7 @@
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>

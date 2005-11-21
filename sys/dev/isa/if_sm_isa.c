@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.5 2005/06/08 17:03:00 henning Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.6 2005/11/21 18:16:40 millert Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/device.h>
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi_pcppi.c,v 1.3 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: midi_pcppi.c,v 1.4 2005/11/21 18:16:40 millert Exp $	*/
 /*	$NetBSD: midi_pcppi.c,v 1.4 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 

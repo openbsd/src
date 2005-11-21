@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.48 2005/10/24 14:22:34 fgsch Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.49 2005/11/21 18:16:36 millert Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/user.h>

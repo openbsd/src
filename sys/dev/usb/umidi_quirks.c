@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi_quirks.c,v 1.6 2004/06/27 19:44:48 deraadt Exp $	*/
+/*	$OpenBSD: umidi_quirks.c,v 1.7 2005/11/21 18:16:44 millert Exp $	*/
 /*	$NetBSD: umidi_quirks.c,v 1.4 2002/06/19 13:55:30 tshiozak Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>

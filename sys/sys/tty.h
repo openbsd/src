@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.19 2004/09/19 21:34:43 mickey Exp $	*/
+/*	$OpenBSD: tty.h,v 1.20 2005/11/21 18:16:46 millert Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #include <sys/termios.h>
 #include <sys/queue.h>
-#include <sys/select.h>		/* For struct selinfo. */
+#include <sys/selinfo.h>		/* For struct selinfo. */
 #include <sys/timeout.h>
 
 #define KERN_TTY_TKNIN		1	/* quad: input chars */

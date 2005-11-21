@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.27 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: uhid.c,v 1.28 2005/11/21 18:16:43 millert Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.22 2005/07/18 07:41:38 jsg Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.23 2005/11/21 18:16:44 millert Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -54,7 +54,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>

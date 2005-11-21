@@ -158,7 +158,7 @@ typedef struct componentname xfs_componentname;
 #include <sys/namei.h>
 #include <sys/dirent.h>
 #include <sys/ucred.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/uio.h>
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>

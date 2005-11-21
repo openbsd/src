@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.25 2004/09/16 18:46:01 millert Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.26 2005/11/21 18:16:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -37,7 +37,7 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/fcntl.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/queue.h>
 #include <sys/event.h>
 #include <sys/eventvar.h>

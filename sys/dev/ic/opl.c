@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl.c,v 1.6 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: opl.c,v 1.7 2005/11/21 18:16:39 millert Exp $	*/
 /*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

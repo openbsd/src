@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.4 2005/05/15 11:29:15 miod Exp $ */
+/* $OpenBSD: wsevent.c,v 1.5 2005/11/21 18:16:45 millert Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -83,7 +83,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/poll.h>
 
 #include <dev/wscons/wsconsio.h>

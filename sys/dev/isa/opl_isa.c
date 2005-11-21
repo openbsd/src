@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_isa.c,v 1.3 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: opl_isa.c,v 1.4 2005/11/21 18:16:40 millert Exp $	*/
 /*	$NetBSD: opl_isa.c,v 1.1 1998/08/26 13:33:59 augustss Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 

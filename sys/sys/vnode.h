@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.63 2005/10/19 16:50:47 pedro Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.64 2005/11/21 18:16:46 millert Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 
 /* XXX: clean up includes later */
 #include <uvm/uvm_pglist.h>	/* XXX */

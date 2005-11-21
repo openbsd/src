@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.23 2005/06/08 17:03:01 henning Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.24 2005/11/21 18:16:42 millert Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -47,7 +47,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/device.h>
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: oplinstrs.c,v 1.2 2001/05/01 02:21:42 mickey Exp $	*/
+/*	$OpenBSD: oplinstrs.c,v 1.3 2005/11/21 18:16:39 millert Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6,7 +6,7 @@
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 
 #include <machine/bus.h>
 

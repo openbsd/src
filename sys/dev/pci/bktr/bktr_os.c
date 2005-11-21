@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.19 2004/06/29 12:24:57 mickey Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.20 2005/11/21 18:16:41 millert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -74,7 +74,7 @@
 #include <sys/signalvar.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/vnode.h>
 
 #include <vm/vm.h>
@@ -147,7 +147,7 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #include <sys/signalvar.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/vnode.h>
 #if NRADIO > 0
 #include <sys/radioio.h>

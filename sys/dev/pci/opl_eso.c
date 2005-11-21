@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_eso.c,v 1.4 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: opl_eso.c,v 1.5 2005/11/21 18:16:41 millert Exp $	*/
 /*	$NetBSD: opl_eso.c,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
 

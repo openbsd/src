@@ -1,5 +1,4 @@
-/*	$OpenBSD: select.h,v 1.6 2003/06/02 23:28:21 millert Exp $	*/
-/*	$NetBSD: select.h,v 1.10 1995/03/26 20:24:38 jtc Exp $	*/
+/*	$OpenBSD: select.h,v 1.7 2005/11/21 18:16:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,24 +34,63 @@
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
 
-#include <sys/event.h>			/* for struct klist */
+#include <sys/time.h>
 
 /*
- * Used to maintain information about processes that wish to be
- * notified when I/O becomes possible.
+ * Select uses bit masks of file descriptors in longs.  These macros
+ * manipulate such bit fields (the filesystem macros use chars).
+ * FD_SETSIZE may be defined by the user, but the default here should
+ * be enough for most uses.
  */
-struct selinfo {
-	pid_t	si_selpid;	/* process to be notified */
-	struct	klist si_note;	/* kernel note list */
-	short	si_flags;	/* see below */
-};
-#define	SI_COLL	0x0001		/* collision occurred */
-
-#ifdef _KERNEL
-struct proc;
-
-void	selrecord(struct proc *selector, struct selinfo *);
-void	selwakeup(struct selinfo *);
+#ifndef	FD_SETSIZE
+#define	FD_SETSIZE	1024
 #endif
+
+/*
+ * We don't want to pollute the namespace with select(2) internals.
+ * Non-underscore versions are exposed later.
+ */
+#define	__NBBY	8				/* number of bits in a byte */
+typedef int32_t	__fd_mask;
+#define __NFDBITS (sizeof(__fd_mask) * __NBBY)	/* bits per mask */
+#define	__howmany(x, y)	(((x) + ((y) - 1)) / (y))
+
+typedef	struct fd_set {
+	__fd_mask fds_bits[__howmany(FD_SETSIZE, __NFDBITS)];
+} fd_set;
+
+#define	FD_SET(n, p) \
+	((p)->fds_bits[(n) / __NFDBITS] |= (1 << ((n) % __NFDBITS)))
+#define	FD_CLR(n, p) \
+	((p)->fds_bits[(n) / __NFDBITS] &= ~(1 << ((n) % __NFDBITS)))
+#define	FD_ISSET(n, p) \
+	((p)->fds_bits[(n) / __NFDBITS] & (1 << ((n) % __NFDBITS)))
+#ifdef _KERNEL
+#define	FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
+#define	FD_ZERO(p)	bzero(p, sizeof(*(p)))
+#else
+#define	FD_COPY(f, t)	memcpy(t, f, sizeof(*(f)))
+#define	FD_ZERO(p)	memset(p, 0, sizeof(*(p)))
+#endif
+
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#define	NBBY	__NBBY
+#define fd_mask	__fd_mask
+#define NFDBITS	__NFDBITS
+#ifndef howmany
+#define howmany(x, y)	__howmany(x, y)
+#endif
+#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
+
+#ifndef _KERNEL
+#ifndef _SELECT_DEFINED_
+#define _SELECT_DEFINED_
+#include <sys/cdefs.h>
+__BEGIN_DECLS
+struct timeval;
+int	select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+__END_DECLS
+#endif
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_SELECT_H_ */

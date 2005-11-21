@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.15 2004/12/17 15:56:58 reyk Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.16 2005/11/21 18:16:45 millert Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #ifndef _NET_BPFDESC_H_
 #define _NET_BPFDESC_H_
 
-#include <sys/select.h>
+#include <sys/selinfo.h>
 
 /*
  * Descriptor associated with each open bpf file.

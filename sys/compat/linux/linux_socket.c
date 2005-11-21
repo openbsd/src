@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.33 2005/06/07 02:30:47 henning Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.34 2005/11/21 18:16:37 millert Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <net/if.h>

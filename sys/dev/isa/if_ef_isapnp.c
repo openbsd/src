@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.19 2005/11/09 05:46:21 brad Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.20 2005/11/21 18:16:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -35,7 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>

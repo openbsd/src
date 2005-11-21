@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.9 2005/09/26 22:32:06 miod Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.10 2005/11/21 18:16:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -31,7 +31,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/user.h>

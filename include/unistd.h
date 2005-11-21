@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.54 2005/11/20 02:24:59 millert Exp $ */
+/*	$OpenBSD: unistd.h,v 1.55 2005/11/21 18:16:36 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -190,7 +190,8 @@ int	 ruserok(const char *, int, const char *, const char *);
 int	 quotactl(const char *, int, int, char *);
 void	*sbrk(int);
 
-#if !defined(_XOPEN_SOURCE)
+#if !defined(_XOPEN_SOURCE) && !defined(_SELECT_DEFINED_)
+#define _SELECT_DEFINED_
 int	 select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.12 2005/10/29 23:35:20 deraadt Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.13 2005/11/21 18:16:43 millert Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -77,11 +77,7 @@
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#if __FreeBSD_version >= 500014
 #include <sys/selinfo.h>
-#else
-#include <sys/select.h>
-#endif
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lc_isa.c,v 1.6 2005/11/14 12:28:00 mickey Exp $ */
+/*	$OpenBSD: if_lc_isa.c,v 1.7 2005/11/21 18:16:40 millert Exp $ */
 /*	$NetBSD: if_lc_isa.c,v 1.10 2001/06/13 10:46:03 wiz Exp $ */
 
 /*-
@@ -42,7 +42,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 

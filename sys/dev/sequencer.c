@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.10 2004/10/10 07:13:16 jsg Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.11 2005/11/21 18:16:38 millert Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.65 2005/11/14 12:24:34 mickey Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.66 2005/11/21 18:16:39 millert Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/device.h>
 
 #include <net/if.h>

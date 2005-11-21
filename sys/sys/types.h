@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.26 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.27 2005/11/21 18:16:46 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -153,39 +153,7 @@ __END_DECLS
 #endif
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	NBBY	8		/* number of bits in a byte */
-
-/*
- * Select uses bit masks of file descriptors in longs.  These macros
- * manipulate such bit fields (the filesystem macros use chars).
- * FD_SETSIZE may be defined by the user, but the default here should
- * be enough for most uses.
- */
-#ifndef	FD_SETSIZE
-#define	FD_SETSIZE	1024
-#endif
-
-typedef int32_t	fd_mask;
-#define NFDBITS	(sizeof(fd_mask) * NBBY)	/* bits per mask */
-
-#ifndef howmany
-#define	howmany(x, y)	(((x) + ((y) - 1)) / (y))
-#endif
-
-typedef	struct fd_set {
-	fd_mask	fds_bits[howmany(FD_SETSIZE, NFDBITS)];
-} fd_set;
-
-#define	FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
-#define	FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
-#define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
-#ifdef _KERNEL
-#define	FD_COPY(f, t)	bcopy(f, t, sizeof(*(f)))
-#define	FD_ZERO(p)	bzero(p, sizeof(*(p)))
-#else
-#define	FD_COPY(f, t)	memcpy(t, f, sizeof(*(f)))
-#define	FD_ZERO(p)	memset(p, 0, sizeof(*(p)))
-#endif
+#include <sys/select.h>	/* must be after type declarations */
 
 #if defined(__STDC__) && defined(_KERNEL)
 /*

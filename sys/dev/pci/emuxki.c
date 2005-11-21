@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.20 2005/08/09 04:10:11 mickey Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.21 2005/11/21 18:16:41 millert Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/audioio.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

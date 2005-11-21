@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.51 2005/11/15 07:02:37 miod Exp $ */
+/*	$OpenBSD: ehci.c,v 1.52 2005/11/21 18:16:42 millert Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 
