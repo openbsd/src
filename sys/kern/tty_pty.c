@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.29 2005/05/26 00:33:45 pedro Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.30 2005/11/21 01:16:02 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1175,7 +1175,6 @@ retry:
 		cfp->f_ops = &vnops;
 		cfp->f_data = (caddr_t) cnd.ni_vp;
 		VOP_UNLOCK(cnd.ni_vp, 0, p);
-		FILE_SET_MATURE(cfp);
 
 		/*
 		 * Open the slave.
@@ -1229,13 +1228,16 @@ retry:
 		sfp->f_ops = &vnops;
 		sfp->f_data = (caddr_t) snd.ni_vp;
 		VOP_UNLOCK(snd.ni_vp, 0, p);
-		FILE_SET_MATURE(sfp);
 
 		/* now, put the indexen and names into struct ptmget */
 		ptm->cfd = cindx;
 		ptm->sfd = sindx;
 		memcpy(ptm->cn, pti->pty_pn, sizeof(pti->pty_pn));
 		memcpy(ptm->sn, pti->pty_sn, sizeof(pti->pty_sn));
+
+		/* mark the files mature now that we've passed all errors */
+		FILE_SET_MATURE(cfp);
+		FILE_SET_MATURE(sfp);
 
 		fdpunlock(fdp);
 		break;
