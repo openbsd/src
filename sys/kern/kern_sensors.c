@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_sensors.c,v 1.4 2005/11/13 22:41:56 dlg Exp $ */
+/* $OpenBSD: kern_sensors.c,v 1.5 2005/11/21 13:47:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -27,8 +27,8 @@
 
 #include <sys/sensors.h>
 
-int nsensors = 0;
-struct sensors_head sensors = SLIST_HEAD_INITIALIZER(&sensors);
+int _sensors_count = 0;
+struct sensors_head _sensors_list = SLIST_HEAD_INITIALIZER(&_sensors_list);
 
 struct sensor_task {
 	void				*arg;

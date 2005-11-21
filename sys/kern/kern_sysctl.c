@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.134 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.135 2005/11/21 13:47:52 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1839,10 +1839,10 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOTDIR);
 
 	num = name[0];
-	if (num < 0 || num >= nsensors)
+	if (num < 0 || num >= _sensors_count)
 		return (ENXIO);
 
-	SLIST_FOREACH(s, &sensors, list)
+	SLIST_FOREACH(s, &_sensors_list, list)
 		if (s->num == num)
 			break;
 
