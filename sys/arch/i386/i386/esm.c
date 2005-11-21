@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.2 2005/11/21 22:05:36 marco Exp $ */
+/*	$OpenBSD: esm.c,v 1.3 2005/11/21 22:07:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -512,7 +512,7 @@ esm_cmd(struct esm_softc *sc, void *cmd, size_t cmdlen, void *resp,
 		EDATAWR(sc, *tx);
 		tx++;
 	}
-  
+
 	/* Ring doorbell and wait */
 	ECTRLWR(sc, ESM2_TC_H2ECDB);
 	if (esm_bmc_wait(sc, ESM2_TC_REG, ESM2_TC_EC2HDB, ESM2_TC_EC2HDB) != 0)
