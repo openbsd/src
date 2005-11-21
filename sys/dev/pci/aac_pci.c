@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.16 2005/11/18 05:39:10 nate Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.17 2005/11/21 20:11:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -44,7 +44,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>
