@@ -1572,6 +1572,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/select.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/selinfo.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/sem.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/shm.ph

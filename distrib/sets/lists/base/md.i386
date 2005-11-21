@@ -2109,6 +2109,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/select.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/selinfo.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sem.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/shm.ph

@@ -2050,6 +2050,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/select.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/selinfo.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sem.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/shm.ph

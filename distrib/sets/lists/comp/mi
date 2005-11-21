@@ -1385,6 +1385,7 @@
 ./usr/include/sys/sched.h
 ./usr/include/sys/scsiio.h
 ./usr/include/sys/select.h
+./usr/include/sys/selinfo.h
 ./usr/include/sys/sem.h
 ./usr/include/sys/sensors.h
 ./usr/include/sys/shm.h

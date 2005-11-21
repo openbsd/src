@@ -2051,6 +2051,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/select.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/selinfo.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sem.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/shm.ph

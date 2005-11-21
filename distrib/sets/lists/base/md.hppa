@@ -2076,6 +2076,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/select.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/selinfo.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/sem.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/shm.ph

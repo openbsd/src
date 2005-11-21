@@ -2067,6 +2067,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/select.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/selinfo.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sem.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/shm.ph
