@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.3 2005/11/21 22:07:49 deraadt Exp $ */
+/*	$OpenBSD: esm.c,v 1.4 2005/11/21 22:13:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -105,6 +105,7 @@ int		esm_smb_cmd(struct esm_softc *, struct esm_smb_req *,
 		    struct esm_smb_resp *);
 
 int64_t		esm_val2temp(u_int16_t);
+int64_t		esm_val2volts(u_int16_t);
 
 int
 esm_match(struct device *parent, void *match, void *aux)
@@ -197,6 +198,9 @@ esm_refresh(void *arg)
 		switch (sensor->es_sensor.type) {
 		case SENSOR_TEMP:
 			sensor->es_sensor.value = esm_val2temp(val->v_reading);
+			break;
+		case SENSOR_VOLTS_DC:
+			sensor->es_sensor.value = esm_val2volts(val->v_reading);
 			break;
 		default:
 			sensor->es_sensor.value = val->v_reading;
@@ -561,4 +565,10 @@ int64_t
 esm_val2temp(u_int16_t value)
 {
 	return (((int64_t)value/10 * 1000000) + 273150000);
+}
+
+int64_t
+esm_val2volts(u_int16_t value)
+{
+	return ((int64_t)value * 1000);
 }
