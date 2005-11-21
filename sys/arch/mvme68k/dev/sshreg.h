@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshreg.h,v 1.4 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: sshreg.h,v 1.5 2005/11/21 21:52:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -263,7 +263,7 @@ typedef volatile ssh_regmap_t *ssh_regmap_p;
 
 #define	SSH_CTEST7_CDIS	0x80	/* Cache burst disable */
 #define	SSH_CTEST7_SC1		0x40	/* Snoop control 1 */
-#define	SSH_CTEST7_SC0		0x20	/* Snoop contorl 0 */
+#define	SSH_CTEST7_SC0		0x20	/* Snoop control 0 */
 #define SSH_CTEST7_INHIBIT	(0 << 5)
 #define SSH_CTEST7_SNOOP	(1 << 5)
 #define SSH_CTEST7_INVAL	(2 << 5)

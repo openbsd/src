@@ -1,4 +1,4 @@
-/*	$OpenBSD: plx9060reg.h,v 1.1 2001/06/21 13:21:50 nate Exp $	*/
+/*	$OpenBSD: plx9060reg.h,v 1.2 2005/11/21 21:52:47 miod Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -170,7 +170,7 @@
 #define	CONTROL_PCIMRC		0x00000f00
 #define	CONTROL_PCIMRC_SHIFT	8
 #define	CONTROL_PCIMWC		0x0000f000
-#define	CONTORL_PCIMWC_SHIFT	12
+#define	CONTROL_PCIMWC_SHIFT	12
 #define	CONTROL_GPO		0x00010000
 #define	CONTROL_GPI		0x00020000
 #define	CONTROL_EESK		0x01000000

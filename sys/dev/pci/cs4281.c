@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.17 2005/08/09 04:10:10 mickey Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.18 2005/11/21 21:52:47 miod Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1127,7 +1127,7 @@ cs4281_init(sc)
 	BA0WRITE4(sc, CS4281_DCR0, dat32);
 	BA0WRITE4(sc, CS4281_DCR1, dat32);
 	
-	/* Set Auto-Initialize Contorl enable */
+	/* Set Auto-Initialize Control enable */
 	BA0WRITE4(sc, CS4281_DMR0,
 		  DMRn_DMA | DMRn_AUTO | DMRn_TR_READ);
 	BA0WRITE4(sc, CS4281_DMR1,
