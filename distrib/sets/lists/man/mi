@@ -1376,6 +1376,7 @@
 ./usr/share/man/cat4/macppc/mediabay.0
 ./usr/share/man/cat4/macppc/mem.0
 ./usr/share/man/cat4/macppc/onyx.0
+./usr/share/man/cat4/macppc/pi2c.0
 ./usr/share/man/cat4/macppc/smu.0
 ./usr/share/man/cat4/macppc/snapper.0
 ./usr/share/man/cat4/macppc/tumbler.0
