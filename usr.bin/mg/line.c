@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.30 2005/11/20 03:24:17 deraadt Exp $	*/
+/*	$OpenBSD: line.c,v 1.31 2005/11/21 19:47:23 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -24,14 +24,6 @@
  * The number of bytes member from the start of the structure type should be
  * computed at compile time.
  */
-
-#ifndef OFFSET
-#define OFFSET(type,member) ((char *)&(((type *)0)->member)-(char *)((type *)0))
-#endif
-
-#ifndef NBLOCK
-#define NBLOCK	16		/* Line block chunk size.	 */
-#endif
 
 #ifndef KBLOCK
 #define KBLOCK	256		/* Kill buffer block size.	 */
