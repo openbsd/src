@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.4 2005/11/21 22:13:30 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.5 2005/11/21 23:03:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -52,6 +52,8 @@ struct esm_sensor_type {
 #define ESM_A_PWRSUP_2		0x20
 #define ESM_A_PWRSUP_3		0x40
 #define ESM_A_PWRSUP_4		0x80
+#define ESM_A_SCSI_A		0x01
+#define ESM_A_SCSI_B		0x02
 	const char		*name;
 };
 
@@ -331,6 +333,41 @@ struct esm_sensor_type esm_sensors_esm2[] = {
         { SENSOR_INTEGER,	0,		"PS Over Temp" }
 };
 
+struct esm_sensor_type esm_sensors_backplane[] = {
+	{ SENSOR_INTEGER,	0,		"Backplane" },
+	{ SENSOR_INTEGER,	0,		"Backplane Control" },
+	{ SENSOR_TEMP,		0,		"Backplane Top" },
+	{ SENSOR_TEMP,		0,		"Backplane Bottom" },
+	{ SENSOR_TEMP,		0,		"Backplane Control Panel" },
+	{ SENSOR_VOLTS_DC,	0,		"Backplane Battery" },
+	{ SENSOR_VOLTS_DC,	0,		"Backplane +5V" },
+	{ SENSOR_VOLTS_DC,	0,		"Backplane +12V" },
+	{ SENSOR_VOLTS_DC,	0,		"Backplane Board" },
+	{ SENSOR_INTEGER,	0,		"Backplane Intrusion" },
+	{ SENSOR_INTEGER,	0,		"Backplane Fan Control" },
+	{ SENSOR_FANRPM,	0,		"Backplane Fan 1" },
+	{ SENSOR_FANRPM,	0,		"Backplane Fan 2" },
+	{ SENSOR_FANRPM,	0,		"Backplane Fan 3" },
+	{ SENSOR_INDICATOR,	ESM_A_SCSI_A,	"Backplane SCSI A Connected" },
+	{ SENSOR_VOLTS_DC,	ESM_A_SCSI_A,	"Backplane SCSI A External" },
+	{ SENSOR_VOLTS_DC,	ESM_A_SCSI_A,	"Backplane SCSI A Internal" },
+	{ SENSOR_INDICATOR,	ESM_A_SCSI_B,	"Backplane SCSI B Connected" },
+	{ SENSOR_VOLTS_DC,	ESM_A_SCSI_B,	"Backplane SCSI B External" },
+	{ SENSOR_VOLTS_DC,	ESM_A_SCSI_B,	"Backplane SCSI B Internal" },
+	{ SENSOR_INTEGER,	0x41,		"Drives 1-4" },
+	{ SENSOR_INTEGER,	0x45,		"Drives 5-8" },
+	{ SENSOR_INTEGER,	0x11,		"Drive 1"},
+	{ SENSOR_INTEGER,	0x12,		"Drive 2" },
+	{ SENSOR_INTEGER,	0x13,		"Drive 3" },
+	{ SENSOR_INTEGER,	0x14,		"Drive 4" },
+	{ SENSOR_INTEGER,	0x15,		"Drive 5" },
+	{ SENSOR_INTEGER,	0x16,		"Drive 6" },
+	{ SENSOR_INTEGER,	0x17,		"Drive 7" },
+	{ SENSOR_INTEGER,	0x18,		"Drive 8" },
+	{ SENSOR_INTEGER,	0,		"Backplane Control 2" },
+	{ SENSOR_VOLTS_DC,	0,		"Backplane +3.3V" },
+};
+
 void
 esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 {
@@ -406,6 +443,16 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 		}
 
 		printf("%s: %s %s %d.%d\n", DEVNAME(sc), min_name, maj_name,
+		    devmap->rev_major, devmap->rev_minor);
+		break;
+
+	case ESM2_DEV_BACKPLANE3:
+		maj_name = "Primary System Backplane";
+		sensor_types = esm_sensors_backplane;
+		nsensors = sizeof(esm_sensors_backplane) /
+		    sizeof(esm_sensors_backplane[0]);
+
+		printf("%s: %s %d.%d\n", DEVNAME(sc), maj_name,
 		    devmap->rev_major, devmap->rev_minor);
 		break;
 
