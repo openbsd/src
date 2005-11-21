@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.11 2004/09/30 08:27:50 otto Exp $	*/
+/*	$OpenBSD: misc.h,v 1.12 2005/11/21 01:59:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,7 +39,8 @@ struct unit_type {
 	int	conversion;
 	char	*lname;
 };
-extern const struct unit_type unit_types[];
+extern struct unit_type unit_types[];
+#define SECTORS	1	/* units are bytes/sectors/kbytes/mbytes/gbytes */
 
 /* Constants */
 #define ASK_HEX 0x01

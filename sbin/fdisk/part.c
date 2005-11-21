@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.40 2004/11/10 17:29:41 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.41 2005/11/21 01:59:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -283,7 +283,7 @@ PRT_print(int num, prt_t *partn, char *units)
 		printf(" #: id    C   H  S -    C   H  S [       start:      size   ]\n");
 		printf("------------------------------------------------------------------------\n");
 	} else {
-		size = (double)partn->ns * DEV_BSIZE /
+		size = ((double)partn->ns * unit_types[SECTORS].conversion) /
 		    unit_types[i].conversion;
 		printf("%c%1d: %.2X %4u %3u %2u - %4u %3u %2u [%12u:%12.0f%s] %s\n",
 			(partn->flag == 0x80)?'*':' ',

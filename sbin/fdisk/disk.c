@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.22 2004/08/03 09:23:11 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.23 2005/11/21 01:59:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -98,6 +98,7 @@ DISK_getlabelmetrics(char *name)
 			lm->heads = dl.d_ntracks;
 			lm->sectors = dl.d_nsectors;
 			lm->size = dl.d_secperunit;
+			unit_types[SECTORS].conversion = dl.d_secsize;
 		}
 		DISK_close(fd);
 	}
@@ -231,7 +232,8 @@ DISK_printmetrics(disk_t *disk, char *units)
 	int i;
 	double size;
 	i = unit_lookup(units);
-	size = (double)disk->real->size * DEV_BSIZE / unit_types[i].conversion;
+	size = ((double)disk->real->size * unit_types[SECTORS].conversion) /
+	    unit_types[i].conversion;
 	printf("Disk: %s\t", disk->name);
 	if (disk->real)
 		printf("geometry: %d/%d/%d [%.0f %s]\n", disk->real->cylinders,

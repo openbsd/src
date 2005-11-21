@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.15 2004/09/18 23:22:05 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.16 2005/11/21 01:59:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,7 +35,7 @@
 #include <limits.h>
 #include "misc.h"
 
-const struct unit_type unit_types[] = {
+struct unit_type unit_types[] = {
 	{"b", 1			, "Bytes"},
 	{" ", DEV_BSIZE		, "Sectors"},
 	{"K", 1024		, "Kilobytes"},
@@ -194,7 +194,7 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
 	u_int32_t rval = oval;
 	size_t n;
-	int mult = 1;
+	int mult = 1, secsize = unit_types[SECTORS].conversion;
 	double d;
 	int secpercyl;
 
@@ -234,22 +234,25 @@ getuint(disk_t *disk, char *prompt, char *helpstring, u_int32_t oval,
 					buf[--n] = '\0';
 					break;
 				case 'b':
-					mult = -DEV_BSIZE;
+					mult = -secsize;
 					buf[--n] = '\0';
 					break;
 				case 's':
 					buf[--n] = '\0';
 					break;
 				case 'k':
-					mult = 1024 / DEV_BSIZE;
+					if (secsize > 1024)
+						mult = -secsize / 1024;
+					else
+						mult = 1024 / secsize;
 					buf[--n] = '\0';
 					break;
 				case 'm':
-					mult = 1048576 / DEV_BSIZE;
+					mult = 1048576 / secsize;
 					buf[--n] = '\0';
 					break;
 				case 'g':
-					mult = 1073741824 / DEV_BSIZE;
+					mult = 1073741824 / secsize;
 					buf[--n] = '\0';
 					break;
 				}
