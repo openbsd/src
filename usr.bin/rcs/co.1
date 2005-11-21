@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.10 2005/11/03 15:43:11 niallo Exp $
+.\"     $OpenBSD: co.1,v 1.11 2005/11/21 15:45:22 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -117,6 +117,18 @@ option.
 If set, this variable should contain a list of space-delimited options that
 are prepended to the argument list.
 .El
+.Sh EXAMPLES
+Retrieve the latest revision of file
+.Pa foo.c
+and lock it for further editing:
+.Pp
+.Dl $ co -l foo.c
+.Pp
+Retrieve revision 1.5 of file
+.Pa foo.c :
+.Pp
+.Dl $ co -r1.5 foo.c
+.Pp
 .Sh SEE ALSO
 .Xr ci 1 ,
 .Xr ident 1 ,
