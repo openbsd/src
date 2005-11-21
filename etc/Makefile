@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.228 2005/11/17 21:28:05 jakob Exp $
+#	$OpenBSD: Makefile,v 1.229 2005/11/21 16:13:44 beck Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -96,8 +96,10 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 dot.profile \
 		    ${DESTDIR}/root/.profile; \
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
-		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
-		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile
+		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
+		    ${DESTDIR}/.cshrc; \
+		${INSTALL} -c -o root -g wheel -m 644 dot.profile \
+		    ${DESTDIR}/.profile;
 	cd skel; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/etc/skel/.cshrc; \
@@ -379,7 +381,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.228 2005/11/17 21:28:05 jakob Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.229 2005/11/21 16:13:44 beck Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
