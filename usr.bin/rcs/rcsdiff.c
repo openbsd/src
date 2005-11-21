@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.15 2005/11/16 09:57:04 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.16 2005/11/21 15:01:10 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
 #include "rcsprog.h"
 
 static int rcsdiff_file(RCSFILE *, RCSNUM *, const char *);
-static int rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev, RCSNUM *rev2);
+static int rcsdiff_rev(RCSFILE *, RCSNUM *, RCSNUM *, const char *);
 
 int
 rcsdiff_main(int argc, char **argv)
@@ -52,18 +52,23 @@ rcsdiff_main(int argc, char **argv)
 	rev2 = NULL;
 	status = 0;
 
+	strlcpy(diffargs, "diff", sizeof(diffargs));
+
 	while ((ch = rcs_getopt(argc, argv, "cnqr:uV")) != -1) {
 		switch (ch) {
 		case 'c':
+			strlcat(diffargs, " -c", sizeof(diffargs));
 			diff_format = D_CONTEXT;
 			break;
 		case 'n':
+			strlcat(diffargs, " -n", sizeof(diffargs));
 			diff_format = D_RCSDIFF;
 			break;
 		case 'q':
 			verbose = 0;
 			break;
 		case 'u':
+			strlcat(diffargs, " -u", sizeof(diffargs));
 			diff_format = D_UNIFIED;
 			break;
 		case 'V':
@@ -110,8 +115,8 @@ rcsdiff_main(int argc, char **argv)
 			frev = rev;
 
 		if (verbose == 1) {
-			cvs_printf("%s\n", RCS_DIFF_DIV);
-			cvs_printf("RCS file: %s\n", fpath);
+			printf("%s\n", RCS_DIFF_DIV);
+			printf("RCS file: %s\n", fpath);
 		}
 
 		diff_file = argv[i];
@@ -123,7 +128,7 @@ rcsdiff_main(int argc, char **argv)
 				continue;
 			}
 		} else {
-			if (rcsdiff_rev(file, rev, rev2) < 0) {
+			if (rcsdiff_rev(file, rev, rev2, argv[i]) < 0) {
 				rcs_close(file);
 				status = 2;
 				continue;
@@ -157,8 +162,10 @@ rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 	}
 
 	rcsnum_tostr(rev, rbuf, sizeof(rbuf));
-	if (verbose == 1)
+	if (verbose == 1) {
 		printf("retrieving revision %s\n", rbuf);
+		printf("%s -r%s %s\n", diffargs, rbuf, filename);
+	}
 
 	if ((b1 = rcs_getrev(rfp, rev)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision");
@@ -198,29 +205,32 @@ rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 }
 
 static int
-rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2)
+rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 {
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
-	char rbuf[64];
+	char rbuf1[64], rbuf2[64];
 
-	rcsnum_tostr(rev1, rbuf, sizeof(rbuf));
+	rcsnum_tostr(rev1, rbuf1, sizeof(rbuf1));
 	if (verbose == 1)
-		printf("retrieving revision %s\n", rbuf);
+		printf("retrieving revision %s\n", rbuf1);
 
 	if ((b1 = rcs_getrev(rfp, rev1)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision");
 		return (-1);
 	}
 
-	rcsnum_tostr(rev2, rbuf, sizeof(rbuf));
+	rcsnum_tostr(rev2, rbuf2, sizeof(rbuf2));
 	if (verbose == 1)
-		printf("retrieving revision %s\n", rbuf);
+		printf("retrieving revision %s\n", rbuf2);
 
 	if ((b2 = rcs_getrev(rfp, rev2)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision");
 		return (-1);
 	}
+
+	if (verbose == 1)
+		printf("%s -r%s -r%s %s\n", diffargs, rbuf1, rbuf2, filename);
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));

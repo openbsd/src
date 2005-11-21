@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.65 2005/11/18 10:30:34 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.66 2005/11/21 15:01:10 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -215,12 +215,12 @@ static char	*preadline(int, size_t, off_t);
 
 #if !defined(RCSPROG)
 static int Nflag;
-static char diffargs[128];
 #endif
 static int aflag, bflag, dflag, iflag, pflag, tflag, Tflag, wflag;
 static int context;
 int diff_format = D_NORMAL;
 char *diff_file = NULL;
+char diffargs[128];
 static struct stat stb1, stb2;
 static char *ifdefname, *ignore_pats;
 regex_t ignore_re;
