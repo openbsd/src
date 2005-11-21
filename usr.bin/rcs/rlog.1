@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rlog.1,v 1.4 2005/10/28 09:55:12 xsa Exp $
+.\"     $OpenBSD: rlog.1,v 1.5 2005/11/21 13:57:35 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -57,6 +57,14 @@ Print RCS's version number.
 If set, this variable should contain a list of space-delimited options that
 are prepended to the argument list.
 .El
+.Sh EXAMPLES
+Print complete information about files:
+.Pp
+.Dl $ rlog RCS/*
+.Pp
+Print the names of RCS files with locks set:
+.Pp
+.Dl $ rlog -L -R RCS/*
 .Sh SEE ALSO
 .Xr ci 1 ,
 .Xr co 1 ,
