@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.27 2004/01/13 22:09:40 deraadt Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.28 2005/11/21 14:25:09 mickey Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -352,14 +352,12 @@ isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
 #endif
 
 	if (flags & DMAMODE_READ) {
-		bus_dmamap_sync(sc->sc_dmat, dmam, 0,
-		dmam->dm_mapsize,
-		BUS_DMASYNC_PREREAD);
+		bus_dmamap_sync(sc->sc_dmat, dmam, 0, dmam->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
 		sc->sc_dmareads |= (1 << chan);
 	} else {
-		bus_dmamap_sync(sc->sc_dmat, dmam, 0,
-		dmam->dm_mapsize,
-		BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, dmam, 0, dmam->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
 		sc->sc_dmareads &= ~(1 << chan);
 	}
 
@@ -535,8 +533,7 @@ isa_dmadone(isadev, chan)
 		printf("%s: isa_dmadone: channel %d not finished\n",
 		    sc->sc_dev.dv_xname, chan);
 
-	bus_dmamap_sync(sc->sc_dmat, dmam, 0,
-	    dmam->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, dmam, 0, dmam->dm_mapsize,
 	    (sc->sc_dmareads & (1 << chan)) ? BUS_DMASYNC_POSTREAD :
 	    BUS_DMASYNC_POSTWRITE);
 
