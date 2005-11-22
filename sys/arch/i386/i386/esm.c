@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.9 2005/11/22 13:28:27 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.10 2005/11/22 13:50:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -381,6 +381,62 @@ struct esm_sensor_type esm_sensors_backplane[] = {
 	{ SENSOR_VOLTS_DC,	0,		"Backplane +3.3V" },
 };
 
+struct esm_sensor_type esm_sensors_powerunit[] = {
+	{ SENSOR_INTEGER,	0,		"Power Unit" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 -5V" },
+
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 -12V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 +5V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 +12V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 +3.3V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 -5V" },
+
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 -12V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 +5V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 -5V" },
+
+	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 -12V" },
+	{ SENSOR_VOLTS_DC,	0,		"System power supply +5V" },
+	{ SENSOR_VOLTS_DC,	0,		"System power supply +3.3V" },
+	{ SENSOR_VOLTS_DC,	0,		"System power supply +12V" },
+	{ SENSOR_VOLTS_DC,	0,		"System power supply -5V" },
+
+	{ SENSOR_VOLTS_DC,	0,		"System power supply -12V" },
+	{ SENSOR_VOLTS_DC,	0,		"System power supply +5V aux" },
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
+
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +5V" },
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +12V" },
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +3.3V" },
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +5V" },
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
+
+	{ SENSOR_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
+	{ SENSOR_FANRPM,	ESM_A_PWRSUP_1,	"Power supply 1 Fan" },
+	{ SENSOR_FANRPM,	ESM_A_PWRSUP_2,	"Power supply 2 Fan" },
+	{ SENSOR_FANRPM,	ESM_A_PWRSUP_3,	"Power supply 3 Fan" },
+	{ SENSOR_INTEGER,	ESM_A_PWRSUP_1,	"Power Supply 1" },
+
+	{ SENSOR_INTEGER,	ESM_A_PWRSUP_2,	"Power Supply 2" },
+	{ SENSOR_INTEGER,	ESM_A_PWRSUP_3,	"Power Supply 3" },
+	{ SENSOR_INTEGER,	0,		"PSPB Fan Control" },
+	{ SENSOR_FANRPM,	0,		"Fan 1" },
+	{ SENSOR_FANRPM,	0,		"Fan 2" },
+
+	{ SENSOR_FANRPM,	0,		"Fan 3" },
+	{ SENSOR_FANRPM,	0,		"Fan 4" },
+	{ SENSOR_FANRPM,	0,		"Fan 5" },
+	{ SENSOR_FANRPM,	0,		"Fan 6" },
+	{ SENSOR_INTEGER,	0,		"Fan Enclosure" },
+};
+
 void
 esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 {
@@ -463,6 +519,15 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 		nsensors = 22;
 
 		printf("%s: Primary System Backplane %d.%d\n", DEVNAME(sc),
+		    devmap->rev_major, devmap->rev_minor);
+		break;
+
+	case ESM2_DEV_POWERUNIT2:
+		sensor_types = esm_sensors_powerunit;
+		nsensors = sizeof(esm_sensors_powerunit) /
+		    sizeof(esm_sensors_powerunit[0]);
+
+		printf("%s: Power Unit %d.%d\n", DEVNAME(sc),
 		    devmap->rev_major, devmap->rev_minor);
 		break;
 
