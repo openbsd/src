@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2002/05/27 02:58:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2005/11/22 23:10:56 miod Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -20,11 +20,10 @@ REALIMAGE!=	echo /var/tmp/image.${PID}
 GZIP?=		gzip
 GZIPFLAGS?=	-9f
 
-all: ${CBIN} ${IMAGE} bsd.rd bsd.rd.gz
+all: ${CBIN} ${IMAGE} bsd.rd
 
 install: bsd.rd
-	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
-	cp ${.CURDIR}/../common/HP-IB.geometry ${DESTDIR}/snapshot
+	${GZIP} -c ${GZIPFLAGS} bsd.rd > ${DESTDIR}/snapshot/bsd.rd
 
 .include "Makefile.inc"
 
@@ -32,15 +31,14 @@ DISKTYPE=       rdroot
 NBLKS=          4096
 NEWFSARGS= -m 0 -o space -c 16 -i 3072
 
-bsd.rd.gz: ${IMAGE} bsd.rd rdsetroot
-	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
-	${GZIP} -c ${GZIPFLAGS} bsd.rd > bsd.rd.gz
-
 bsd.rd:
+.ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/hp300/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/hp300/compile/RAMDISK && \
 	    make clean && make depend && COPTS=-Os make
+.endif
 	cp ${.CURDIR}/../../../sys/arch/hp300/compile/RAMDISK/bsd bsd.rd
+	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
 
