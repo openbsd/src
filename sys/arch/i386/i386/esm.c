@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.8 2005/11/22 13:24:20 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.9 2005/11/22 13:28:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -456,6 +456,14 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 
 		printf("%s: %s Embedded Server Management %d.%d\n",
 		    DEVNAME(sc), name, devmap->rev_major, devmap->rev_minor);
+		break;
+
+	case ESM2_DEV_BACKPLANE2:
+		sensor_types = esm_sensors_backplane;
+		nsensors = 22;
+
+		printf("%s: Primary System Backplane %d.%d\n", DEVNAME(sc),
+		    devmap->rev_major, devmap->rev_minor);
 		break;
 
 	case ESM2_DEV_BACKPLANE3:
