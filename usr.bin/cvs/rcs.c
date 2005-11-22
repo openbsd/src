@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.100 2005/11/16 08:15:21 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.101 2005/11/22 11:49:02 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1390,8 +1390,18 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 		return (-1);
 
 	if (rev == RCS_HEAD_REV) {
-		rcsnum_cpy(rf->rf_head, old, 0);
-		rev = rcsnum_inc(rf->rf_head);
+		if (rf->rf_flags & RCS_CREATE) {
+			if ((rev = rcsnum_parse(RCS_HEAD_INIT)) == NULL)
+				return (-1);
+			if ((rf->rf_head = rcsnum_alloc()) == NULL) {
+				rcsnum_free(rev);
+				return (-1);
+			}
+			rcsnum_cpy(rev, rf->rf_head, 0);
+		} else {
+			rcsnum_cpy(rf->rf_head, old, 0);
+			rev = rcsnum_inc(rf->rf_head);
+		}
 	} else {
 		if ((rdp = rcs_findrev(rf, rev)) != NULL) {
 			rcs_errno = RCS_ERR_DUPENT;
@@ -1438,7 +1448,9 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 		return (-1);
 	}
 
-	rcsnum_cpy(old, rdp->rd_next, 0);
+	if (!(rf->rf_flags & RCS_CREATE))
+		rcsnum_cpy(old, rdp->rd_next, 0);
+
 	rcsnum_free(old);
 
 	if (username == NULL)

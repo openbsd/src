@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.65 2005/11/22 09:54:00 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.66 2005/11/22 11:49:02 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -131,10 +131,12 @@ checkin_main(int argc, char **argv)
 		case 'i':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
 			pb.openflags |= RCS_CREATE;
+			pb.flags |= CI_INIT;
 			break;
 		case 'j':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
 			pb.openflags &= ~RCS_CREATE;
+			pb.flags &= ~CI_INIT;
 			break;
 		case 'l':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
@@ -234,11 +236,22 @@ checkin_main(int argc, char **argv)
 		 */
 		if ((pb.openflags & RCS_CREATE)
 		    && (rcs_statfile(pb.filename, pb.fpath,
-			    sizeof(pb.fpath)) < 0))
+			    sizeof(pb.fpath)) < 0)) {
 			pb.flags |= NEWFILE;
-		else
+		} else if (!(pb.openflags & RCS_CREATE)
+		    && (rcs_statfile(pb.filename, pb.fpath,
+			    sizeof(pb.fpath)) < 0)) {
+			cvs_log(LP_ERR, "No existing RCS file");
+			status = 1;
+			continue;
+		} else {
+			if (pb.flags & CI_INIT) {
+				cvs_log(LP_ERR, "%s already exists", pb.fpath);
+				status = 1;
+				continue;
+			}
 			pb.openflags &= ~RCS_CREATE;
-
+		}
 		/*
 		 * If we are to create a new ,v file, we must decide where it
 		 * should go.
@@ -601,17 +614,14 @@ checkin_init(struct checkin_params *pb)
 	 */
 	rcs_desc = checkin_getdesc();
 	rcs_desc_set(pb->file, rcs_desc);
-	printf("set description\n");
 
 	/*
 	 * Now add our new revision
 	 */
-	if (rcs_rev_add(pb->file, RCS_HEAD_REV, LOG_INIT,
-	    -1, pb->username) != 0) {
+	if (rcs_rev_add(pb->file, RCS_HEAD_REV, LOG_INIT, -1, pb->username) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
 		return (-1);
 	}
-	printf("added rev\n");
 	/*
 	 * If we are checking in to a non-default (ie user-specified)
 	 * revision, set head to this revision.
@@ -620,17 +630,40 @@ checkin_init(struct checkin_params *pb)
 		rcs_head_set(pb->file, pb->newrev);
 	else
 		pb->newrev = pb->file->rf_head;
-	printf("set head rev\n");
 
 	/*
 	 * New head revision has to contain entire file;
 	 */
-	if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1) {
+	if (rcs_deltatext_set(pb->file, pb->file->rf_head, filec) == -1) {
 		cvs_log(LP_ERR, "failed to set new head revision");
 		return (-1);
 	}
-	printf("set delta text\n");
+	/*
+	 * Attach a symbolic name to this revision if specified.
+	 */
+	if (pb->symbol != NULL
+	    && (checkin_attach_symbol(pb) < 0))
+		return (-1);
 
+	/*
+	 * Set the state of this revision if specified.
+	 */
+	if (pb->state != NULL)
+		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
+
+	free(filec);
+	(void)unlink(pb->filename);
+
+	/*
+	 * Do checkout if -u or -l are specified.
+	 */
+	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
+	    && !(pb->flags & CI_DEFAULT))
+		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
+		    pb->username);
+
+	/* File will NOW be synced */
+	rcs_close(pb->file);
 	return (0);
 }
 
