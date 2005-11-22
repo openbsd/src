@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.7 2005/11/22 11:54:53 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.8 2005/11/22 13:24:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -385,69 +385,68 @@ void
 esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 {
 	struct esm_sensor_type	*sensor_types;
-	const char		*maj_name, *min_name;
+	const char		*name;
 	int			nsensors;
 
 	switch (devmap->dev_major) {
 	case ESM2_DEV_ESM2:
-		maj_name = "Embedded Server Management";
 		sensor_types = esm_sensors_esm2;
 
 		switch (devmap->dev_minor) {
 		case ESM2_DEV_ESM2_2300:
-			min_name = "PowerEdge 2300";
+			name = "PowerEdge 2300";
 			nsensors = 23;
 			break;
 		case ESM2_DEV_ESM2_4300:
-			min_name = "PowerEdge 4300";
+			name = "PowerEdge 4300";
 			nsensors = 27;
 			break;
 		case ESM2_DEV_ESM2_6300:
-			min_name = "PowerEdge 6300";
+			name = "PowerEdge 6300";
 			nsensors = 27;
 			break;
 		case ESM2_DEV_ESM2_6400:
-			min_name = "PowerEdge 6400";
+			name = "PowerEdge 6400";
 			nsensors = 44;
 			break;
 		case ESM2_DEV_ESM2_2550:
-			min_name = "PowerEdge 2550";
+			name = "PowerEdge 2550";
 			nsensors = 48;
 			break;
 		case ESM2_DEV_ESM2_4350:
-			min_name = "PowerEdge 4350";
+			name = "PowerEdge 4350";
 			nsensors = 27;
 			break;
 		case ESM2_DEV_ESM2_6350:
-			min_name = "PowerEdge 6350";
+			name = "PowerEdge 6350";
 			nsensors = 27;
 			break;
 		case ESM2_DEV_ESM2_6450:
-			min_name = "PowerEdge 6450";
+			name = "PowerEdge 6450";
 			nsensors = 44;
 			break;
 		case ESM2_DEV_ESM2_2400:
-			min_name = "PowerEdge 2400";
+			name = "PowerEdge 2400";
 			nsensors = 30;
 			break;
 		case ESM2_DEV_ESM2_4400:
-			min_name = "PowerEdge 4400";
+			name = "PowerEdge 4400";
 			nsensors = 44;
 			break;
 		case ESM2_DEV_ESM2_2500:
-			min_name = "PowerEdge 2500";
+			name = "PowerEdge 2500";
 			nsensors = 55;
 			break;
 		case ESM2_DEV_ESM2_2450:
-			min_name = "PowerEdge 2450";
+			name = "PowerEdge 2450";
 			nsensors = 27;
 			break;
 		case ESM2_DEV_ESM2_2400EX:
-			min_name = "PowerEdge 2400";
+			name = "PowerEdge 2400";
 			nsensors = 27;
 			break;
 		case ESM2_DEV_ESM2_2450EX:
-			min_name = "PowerEdge 2450";
+			name = "PowerEdge 2450";
 			nsensors = 44;
 			break;
 
@@ -455,17 +454,16 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 			return;
 		}
 
-		printf("%s: %s %s %d.%d\n", DEVNAME(sc), min_name, maj_name,
-		    devmap->rev_major, devmap->rev_minor);
+		printf("%s: %s Embedded Server Management %d.%d\n",
+		    DEVNAME(sc), name, devmap->rev_major, devmap->rev_minor);
 		break;
 
 	case ESM2_DEV_BACKPLANE3:
-		maj_name = "Primary System Backplane";
 		sensor_types = esm_sensors_backplane;
 		nsensors = sizeof(esm_sensors_backplane) /
 		    sizeof(esm_sensors_backplane[0]);
 
-		printf("%s: %s %d.%d\n", DEVNAME(sc), maj_name,
+		printf("%s: Primary System Backplane %d.%d\n", DEVNAME(sc),
 		    devmap->rev_major, devmap->rev_minor);
 		break;
 
