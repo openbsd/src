@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmreg.h,v 1.2 2005/11/21 22:05:36 marco Exp $ */
+/*	$OpenBSD: esmreg.h,v 1.3 2005/11/22 21:51:19 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -66,6 +66,29 @@
 
 #define ESM2_MAX_CMD_LEN	0x20
 #define ESM2_UUID_LEN		0x08
+
+#define DELL_SYSSTR_ADDR        0xFE076L
+#define DELL_SYSID_ADDR         0xFE840L
+#define DELL_SYSID_2300         0x81
+#define DELL_SYSID_4300         0x7C
+#define DELL_SYSID_4350         0x84
+#define DELL_SYSID_6300         0x7F
+#define DELL_SYSID_6350         0x83
+#define DELL_SYSID_2400         0x9B
+#define DELL_SYSID_2450         0xA6
+#define DELL_SYSID_4400         0x9A
+#define DELL_SYSID_6400         0x9C
+#define DELL_SYSID_6450         0xA2
+#define DELL_SYSID_2500         0xD9
+#define DELL_SYSID_2550         0xD1
+#define DELL_SYSID_EXT          0xFE
+
+struct dell_sysid
+{
+	uint16_t    		ext_id;
+	uint8_t     		bios_ver[3];
+	uint8_t     		sys_id;
+} __packed;
 
 struct esm_watchdog_prop {
 	u_int8_t		cmd;

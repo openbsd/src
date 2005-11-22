@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.10 2005/11/22 13:50:31 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.11 2005/11/22 21:51:19 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -26,12 +26,14 @@
 #include <sys/queue.h>
 #include <sys/sensors.h>
 
+#include <dev/isa/isareg.h>
 #include <machine/bus.h>
 
-#include <arch/i386/i386/esmreg.h>
 #include <arch/i386/i386/esmvar.h>
+#include <arch/i386/i386/esmreg.h>
+#include <arch/i386/isa/isa_machdep.h>
 
-#define ESM_DEBUG
+/* #define ESM_DEBUG */
 
 #ifdef ESM_DEBUG
 #define DPRINTF(x...)		do { if (esmdebug) printf(x); } while (0)
@@ -42,6 +44,7 @@ int	esmdebug = 2;
 #define DPRINTFN(n,x...)	/* n: x */
 #endif
 
+int             esm_probe(void);
 int		esm_match(struct device *, void *, void *);
 void		esm_attach(struct device *, struct device *, void *);
 
@@ -111,13 +114,56 @@ int		esm_smb_cmd(struct esm_softc *, struct esm_smb_req *,
 int64_t		esm_val2temp(u_int16_t);
 int64_t		esm_val2volts(u_int16_t);
 
+
+/* Determine if this is a Dell server */
+int
+esm_probe(void)
+{
+	const char *pdellstr;
+	struct dell_sysid *pdellid;
+	uint16_t sysid;
+
+	pdellstr = (const char *)ISA_HOLE_VADDR(DELL_SYSSTR_ADDR);
+	DPRINTF("Dell String: %s\n", pdellstr);
+	if (strncmp(pdellstr, "Dell System", 11))
+		return (0); 
+
+	pdellid = (struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
+	if ((sysid = pdellid->sys_id) == DELL_SYSID_EXT)
+		sysid = pdellid->ext_id;
+	DPRINTF("SysId: %x\n", sysid);
+
+ 	switch(sysid) {
+	case DELL_SYSID_2300:
+	case DELL_SYSID_4300:
+	case DELL_SYSID_4350:
+	case DELL_SYSID_6300:
+	case DELL_SYSID_6350:
+	case DELL_SYSID_2400:
+	case DELL_SYSID_2450:
+	case DELL_SYSID_4400:
+	case DELL_SYSID_6400:
+	case DELL_SYSID_6450:
+	case DELL_SYSID_2500:
+	case DELL_SYSID_2550:
+		return (1);
+	default:
+		return (0);
+	}
+
+	/* NOTREACHED */
+	return (0);
+}
+
 int
 esm_match(struct device *parent, void *match, void *aux)
 {
 	struct esm_attach_args		*eaa = aux;
 
-	if (strncmp(eaa->eaa_name, esm_cd.cd_name,
-	    sizeof(esm_cd.cd_name)) == 0)
+	if (!esm_probe())
+		return (0);
+
+	if (strncmp(eaa->eaa_name, esm_cd.cd_name, sizeof(esm_cd.cd_name)) == 0)
 		return (1);
 
 	return (0);
