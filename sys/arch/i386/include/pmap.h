@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.38 2005/11/14 23:50:26 martin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.39 2005/11/22 12:52:12 mickey Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ struct pmap {
 #define	pm_lock	pm_obj.vmobjlock
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-	u_int32_t pm_pdirpa;		/* PA of PD (read-only after create) */
+	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
 	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
@@ -343,7 +343,7 @@ struct pv_page {
 extern pd_entry_t	PTD[];
 
 /* PTDpaddr: is the physical address of the kernel's PDP */
-extern u_long PTDpaddr;
+extern u_int32_t PTDpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 extern int nkpde;			/* current # of PDEs for kernel */
