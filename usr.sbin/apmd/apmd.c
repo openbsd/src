@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.35 2005/11/15 01:21:41 jmc Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.36 2005/11/22 09:31:02 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -280,7 +280,7 @@ stand_by(int ctl_fd)
 	ioctl(ctl_fd, APM_IOC_STANDBY, 0);
 }
 
-#define TIMO (1*60)			/* 10 minutes */
+#define TIMO (10*60)			/* 10 minutes */
 
 int
 main(int argc, char *argv[])
