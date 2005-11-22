@@ -1260,6 +1260,7 @@
 ./usr/share/man/cat4/i386/bios.0
 ./usr/share/man/cat4/i386/cpu.0
 ./usr/share/man/cat4/i386/elansc.0
+./usr/share/man/cat4/i386/esm.0
 ./usr/share/man/cat4/i386/geodesc.0
 ./usr/share/man/cat4/i386/gscpcib.0
 ./usr/share/man/cat4/i386/gscpm.0
