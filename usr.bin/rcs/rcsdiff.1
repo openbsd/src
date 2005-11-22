@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsdiff.1,v 1.11 2005/11/21 20:06:34 xsa Exp $
+.\"     $OpenBSD: rcsdiff.1,v 1.12 2005/11/22 12:50:38 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -24,6 +24,7 @@
 .Nm
 .Bk -words
 .Op Fl cnquV
+.Op Fl k Ns Ar mode
 .Oo
 .Fl r Ns Ar rev
 .Op Fl r Ns Ar rev2
@@ -43,6 +44,8 @@ Produces a diff with three lines of context.
 See
 .Xr diff 1
 for more information.
+.It Fl k Ns Ar mode
+Specify the keyword substitution mode.
 .It Fl n
 Produces a diff in the same format that is used in the RCS files.
 .It Fl r Ns Ar rev
@@ -77,6 +80,19 @@ are to be created.
 The default is set to
 .Pa /tmp .
 .El
+.Sh EXAMPLES
+Compare the latest revision of the default branch with the content of
+working file
+.Pa foo.c :
+.Pp
+.Dl $ rcsdiff foo.c
+.Pp
+.Pp
+Compare revision 1.7 and 1.8 of file
+.Pa foo.c
+and ignore differences in keyword values:
+.Pp
+.Dl $ rcsdiff -kk -r1.7 -r1.8 foo.c
 .Sh SEE ALSO
 .Xr ci 1 ,
 .Xr co 1 ,
