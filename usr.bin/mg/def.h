@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.77 2005/11/20 03:24:17 deraadt Exp $	*/
+/*	$OpenBSD: def.h,v 1.78 2005/11/22 05:02:44 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -348,10 +348,15 @@ int		 lnewline(void);
 int		 ldelete(RSIZE, int);
 int		 ldelnewline(void);
 int		 lreplace(RSIZE, char *);
+
+/* yank.c X */
+
 void		 kdelete(void);
 int		 kinsert(int, int);
 int		 kremove(int);
 int		 kchunk(char *, RSIZE, int);
+int		 killline(int, int);
+int		 yank(int, int);
 
 /* window.c X */
 struct mgwin	*new_window(struct buffer *);
@@ -471,8 +476,6 @@ int		 delwhite(int, int);
 int		 indent(int, int);
 int		 forwdel(int, int);
 int		 backdel(int, int);
-int		 killline(int, int);
-int		 yank(int, int);
 int		 space_to_tabstop(int, int);
 
 /* extend.c X */

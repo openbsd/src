@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.32 2005/11/22 04:38:57 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.33 2005/11/22 05:02:44 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -22,22 +22,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-
-/*
- * The number of bytes member from the start of the structure type should be
- * computed at compile time.
- */
-
-#ifndef KBLOCK
-#define KBLOCK	256		/* Kill buffer block size.	 */
-#endif
-
-static char	*kbufp = NULL;	/* Kill buffer data.		 */
-static RSIZE	 kused = 0;	/* # of bytes used in KB.	 */
-static RSIZE	 ksize = 0;	/* # of bytes allocated in KB.	 */
-static RSIZE	 kstart = 0;	/* # of first used byte in KB.	 */
-
-static int	 kgrow(int);
 
 /*
  * Allocate a new line of size `used'.  lrealloc() can be called if the line
@@ -585,121 +569,5 @@ lreplace(RSIZE plen, char *st)
 
 	undo_no_boundary(FALSE);
 	undo_add_boundary();
-	return (TRUE);
-}
-
-/*
- * Delete all of the text saved in the kill buffer.  Called by commands when
- * a new kill context is created. The kill buffer array is released, just in
- * case the buffer has grown to an immense size.  No errors.
- */
-void
-kdelete(void)
-{
-	if (kbufp != NULL) {
-		free((char *)kbufp);
-		kbufp = NULL;
-		kstart = kused = ksize = 0;
-	}
-}
-
-/*
- * Insert a character to the kill buffer, enlarging the buffer if there
- * isn't any room. Always grow the buffer in chunks, on the assumption
- * that if you put something in the kill buffer you are going to put more
- * stuff there too later. Return TRUE if all is well, and FALSE on errors.
- * Print a message on errors.  Dir says whether to put it at back or front.
- * This call is ignored if  KNONE is set. 
- */
-int
-kinsert(int c, int dir)
-{
-	if (dir == KNONE)
-		return (TRUE);
-	if (kused == ksize && dir == KFORW && kgrow(dir) == FALSE)
-		return (FALSE);
-	if (kstart == 0 && dir == KBACK && kgrow(dir) == FALSE)
-		return (FALSE);
-	if (dir == KFORW)
-		kbufp[kused++] = c;
-	else if (dir == KBACK)
-		kbufp[--kstart] = c;
-	else
-		panic("broken kinsert call");	/* Oh shit! */
-	return (TRUE);
-}
-
-/*
- * kgrow - just get more kill buffer for the callee. If dir = KBACK
- * we are trying to get space at the beginning of the kill buffer.
- */
-static int
-kgrow(int dir)
-{
-	int	 nstart;
-	char	*nbufp;
-
-	if ((unsigned)(ksize + KBLOCK) <= (unsigned)ksize) {
-		/* probably 16 bit unsigned */
-		ewprintf("Kill buffer size at maximum");
-		return (FALSE);
-	}
-	if ((nbufp = malloc((unsigned)(ksize + KBLOCK))) == NULL) {
-		ewprintf("Can't get %ld bytes", (long)(ksize + KBLOCK));
-		return (FALSE);
-	}
-	nstart = (dir == KBACK) ? (kstart + KBLOCK) : (KBLOCK / 4);
-	bcopy(&(kbufp[kstart]), &(nbufp[nstart]), (int)(kused - kstart));
-	if (kbufp != NULL)
-		free((char *)kbufp);
-	kbufp = nbufp;
-	ksize += KBLOCK;
-	kused = kused - kstart + nstart;
-	kstart = nstart;
-	return (TRUE);
-}
-
-/*
- * This function gets characters from the kill buffer. If the character
- * index "n" is off the end, it returns "-1". This lets the caller just
- * scan along until it gets a "-1" back.
- */
-int
-kremove(int n)
-{
-	if (n < 0 || n + kstart >= kused)
-		return (-1);
-	return (CHARMASK(kbufp[n + kstart]));
-}
-
-/*
- * Copy a string into the kill buffer. kflag gives direction.
- * if KNONE, do nothing.
- */
-int
-kchunk(char *cp1, RSIZE chunk, int kflag)
-{
-	/*
-	 * HACK - doesn't matter, and fixes back-over-nl bug for empty
-	 *	kill buffers.
-	 */
-	if (kused == kstart)
-		kflag = KFORW;
-
-	if (kflag == KFORW) {
-		while (ksize - kused < chunk)
-			if (kgrow(kflag) == FALSE)
-				return (FALSE);
-		bcopy(cp1, &(kbufp[kused]), (int)chunk);
-		kused += chunk;
-	} else if (kflag == KBACK) {
-		while (kstart < chunk)
-			if (kgrow(kflag) == FALSE)
-				return (FALSE);
-		bcopy(cp1, &(kbufp[kstart - chunk]), (int)chunk);
-		kstart -= chunk;
-	} else if (kflag != KNONE)
-		panic("broken ldelete call");
-
 	return (TRUE);
 }
