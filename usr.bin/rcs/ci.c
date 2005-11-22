@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.64 2005/11/21 16:20:28 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.65 2005/11/22 09:54:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -276,7 +276,7 @@ checkin_main(int argc, char **argv)
 /*
  * checkin_diff_file()
  *
- * Generate the diff between the working file and a revision. 
+ * Generate the diff between the working file and a revision.
  * Returns pointer to a char array on success, NULL on failure.
  */
 static char *
@@ -337,7 +337,7 @@ checkin_diff_file(struct checkin_params *pb)
 }
 
 /*
- * checkin_getlogmsg() 
+ * checkin_getlogmsg()
  *
  * Get log message from user interactively.
  * Returns pointer to a char array on success, NULL on failure.
@@ -572,7 +572,7 @@ checkin_update(struct checkin_params *pb)
 
 /*
  * checkin_init()
- * 
+ *
  * Does an initial check in, just enough to create the new ,v file
  * XXX not fully implemented yet.
  * On success, return 0. On error return -1.
@@ -753,7 +753,7 @@ checkin_mtimedate(struct checkin_params *pb)
  * checkin_rcsfile()
  *
  * Given a relative filename, decide where the corresponding ,v file
- * should be. 
+ * should be.
  *
  * Returns pointer to a char array on success, NULL on failure.
  */
