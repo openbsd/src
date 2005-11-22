@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.15 2005/11/13 14:23:26 martin Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.16 2005/11/22 09:09:58 mickey Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -302,19 +302,17 @@ pciaddr_do_resource_allocate(sc, pc, tag, mapreg, ex, type, addr, size)
 	/* write new address to PCI device configuration header */
 	pci_conf_write(pc, tag, mapreg, *addr);
 	/* check */
-	if (!pcibios_flags & PCIBIOS_VERBOSE)
-	{
+	if (pcibios_flags & PCIBIOS_VERBOSE) {
 		printf("pci_addr_fixup: ");
 		pciaddr_print_devid(pc, tag);
 	}
 
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
-		printf("fixup failed. (new address=%#x)\n", *addr);
+		PCIBIOS_PRINTV(("fixup failed. (new address=%#x)\n", *addr));
 		return (1);
 	}
-	if (!pcibios_flags & PCIBIOS_VERBOSE)
-		printf("new address 0x%08x\n", *addr);
+	PCIBIOS_PRINTV(("new address 0x%08x\n", *addr));
 
 	return (0);
 }
