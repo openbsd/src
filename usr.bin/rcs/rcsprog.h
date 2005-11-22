@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.22 2005/11/21 16:20:29 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.23 2005/11/22 13:26:53 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -59,28 +59,42 @@ extern char *rcs_tmpdir;
 /* date.y */
 time_t  cvs_date_parse(const char *);
 
-void	rcs_usage(void);
-void	checkout_usage(void);
+/* ci.c */
+int	checkin_main(int, char **);
 void	checkin_usage(void);
-void	rcsdiff_usage(void);
-void	rcsclean_usage(void);
-void	rcsmerge_usage(void);
-void	rlog_usage(void);
-void	ident_usage(void);
-void	(*usage)(void);
-void	rcs_set_rev(const char *, RCSNUM **);
 
+/* co.c */
+int	checkout_main(int, char **);
+int	checkout_rev(RCSFILE *, RCSNUM *, const char *, int, const char *);
+void	checkout_usage(void);
+
+/* ident.c */
+int	ident_main(int, char **);
+void	ident_usage(void);
+
+/* rcsclean.c */
+int	rcsclean_main(int, char **);
+void	rcsclean_usage(void);
+
+/* rcsdiff.c */
+int	rcsdiff_main(int, char **);
+void	rcsdiff_usage(void);
+
+/* rcsmerge.c */
+int	rcsmerge_main(int, char **);
+void	rcsmerge_usage(void);
+
+/* rcsprog.c */
 int	rcs_init(char *, char **, int);
 int	rcs_getopt(int, char **, const char *);
-int	rcs_statfile(char *, char *, size_t);
-int	checkout_rev(RCSFILE *, RCSNUM *, const char *, int, const char *);
-int	checkout_main(int, char **);
-int	checkin_main(int, char **);
 int	rcs_main(int, char **);
-int	rcsdiff_main(int, char **);
-int	rcsclean_main(int, char **);
-int	rcsmerge_main(int, char **);
+int	rcs_statfile(char *, char *, size_t);
+void	rcs_set_rev(const char *, RCSNUM **);
+void	rcs_usage(void);
+void	(*usage)(void);
+
+/* rlog */
 int	rlog_main(int, char **);
-int	ident_main(int, char **);
+void	rlog_usage(void);
 
 #endif	/* RCSPROG_H */
