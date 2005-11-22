@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.6 2005/11/22 08:33:24 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.7 2005/11/22 11:54:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -73,6 +73,8 @@ struct esm_softc {
 	bus_space_handle_t	sc_ioh;
 
 	TAILQ_HEAD(, esm_sensor) sc_sensors;
+	struct esm_sensor	*sc_nextsensor;
+	int			sc_retries;
 	struct timeout		sc_timeout;
 };
 
@@ -168,6 +170,8 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!TAILQ_EMPTY(&sc->sc_sensors)) {
 		DPRINTF("%s: starting refresh\n", DEVNAME(sc));
+		sc->sc_nextsensor = TAILQ_FIRST(&sc->sc_sensors);
+		sc->sc_retries = 0;
 		timeout_set(&sc->sc_timeout, esm_refresh, sc);
 		timeout_add(&sc->sc_timeout, hz * 10);
 	}
@@ -177,26 +181,24 @@ void
 esm_refresh(void *arg)
 {
 	struct esm_softc	*sc = arg;
-	struct esm_sensor	*sensor;
+	struct esm_sensor	*sensor = sc->sc_nextsensor;
 	struct esm_smb_req	req;
 	struct esm_smb_resp	resp;
 	struct esm_smb_resp_val	*val = &resp.resp_val;
 
 	memset(&req, 0, sizeof(req));
 	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
+	req.h_dev = sensor->es_dev;
 	req.h_txlen = sizeof(req.req_val);
 	req.h_rxlen = sizeof(resp.resp_val);
 	req.req_val.v_cmd = ESM2_SMB_SENSOR_VALUE;
+	req.req_val.v_sensor = sensor->es_id;
 
-	TAILQ_FOREACH(sensor, &sc->sc_sensors, es_entry) {
-		req.h_dev = sensor->es_dev;
-		req.req_val.v_sensor = sensor->es_id;
-
-		if (esm_smb_cmd(sc, &req, &resp, 1) != 0) {
-			sensor->es_sensor.flags |= SENSOR_FINVALID;
-			continue;
-		}
-
+	if (esm_smb_cmd(sc, &req, &resp, 0) != 0) {
+		if (++sc->sc_retries < 10)
+			goto tick;
+		sensor->es_sensor.flags |= SENSOR_FINVALID;
+	} else {
 		switch (sensor->es_sensor.type) {
 		case SENSOR_TEMP:
 			sensor->es_sensor.value = esm_val2temp(val->v_reading);
@@ -208,9 +210,20 @@ esm_refresh(void *arg)
 			sensor->es_sensor.value = val->v_reading;
 			break;
 		}
+		sensor->es_sensor.flags &= ~SENSOR_FINVALID;
 	}
 
-	timeout_add(&sc->sc_timeout, hz * 10);
+	sc->sc_nextsensor = TAILQ_NEXT(sensor, es_entry);
+	sc->sc_retries = 0;
+
+	if (sc->sc_nextsensor == NULL) {
+		sc->sc_nextsensor = TAILQ_FIRST(&sc->sc_sensors);
+		timeout_add(&sc->sc_timeout, hz * 10);
+		return;
+	}
+tick:
+	timeout_add(&sc->sc_timeout, hz / 100);
+	
 }
 
 int
@@ -545,7 +558,7 @@ esm_cmd(struct esm_softc *sc, void *cmd, size_t cmdlen, void *resp,
 	int			i;
 
 	/* Wait for card ready */
-	if (esm_bmc_ready(sc, ESM2_TC_REG, ESM2_TC_READY, 0, 1) != 0)
+	if (esm_bmc_ready(sc, ESM2_TC_REG, ESM2_TC_READY, 0, wait) != 0)
 		return (1); /* busy */
 
 	/* Write command data to port */
