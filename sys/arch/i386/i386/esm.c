@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.5 2005/11/21 23:03:39 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.6 2005/11/22 08:33:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -100,11 +100,11 @@ void		esm_devmap(struct esm_softc *, struct esm_devmap *);
 void		esm_make_sensors(struct esm_softc *, struct esm_devmap *,
 		    struct esm_sensor_type *, int);
 
-int		esm_bmc_ready(struct esm_softc *, int, u_int8_t, u_int8_t);
-int		esm_bmc_wait(struct esm_softc *, int, u_int8_t, u_int8_t);
-int		esm_cmd(struct esm_softc *, void *, size_t, void *, size_t);
+int		esm_bmc_ready(struct esm_softc *, int, u_int8_t, u_int8_t, int);
+int		esm_cmd(struct esm_softc *, void *, size_t, void *, size_t,
+		    int);
 int		esm_smb_cmd(struct esm_softc *, struct esm_smb_req *,
-		    struct esm_smb_resp *);
+		    struct esm_smb_resp *, int);
 
 int64_t		esm_val2temp(u_int16_t);
 int64_t		esm_val2volts(u_int16_t);
@@ -152,7 +152,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	EWRITE(sc, ESM2_TC_REG, x);
 
 	/* see if card is alive */
-	if (esm_bmc_wait(sc, ESM2_TC_REG, ESM2_TC_ECBUSY, 0) != 0) {
+	if (esm_bmc_ready(sc, ESM2_TC_REG, ESM2_TC_ECBUSY, 0, 1) != 0) {
 		printf("%s: card is not alive\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
 		return;
@@ -192,7 +192,7 @@ esm_refresh(void *arg)
 		req.h_dev = sensor->es_dev;
 		req.req_val.v_sensor = sensor->es_id;
 
-		if (esm_smb_cmd(sc, &req, &resp) != 0) {
+		if (esm_smb_cmd(sc, &req, &resp, 1) != 0) {
 			sensor->es_sensor.flags |= SENSOR_FINVALID;
 			continue;
 		}
@@ -230,7 +230,7 @@ esm_get_devmap(struct esm_softc *sc, int dev, struct esm_devmap *devmap)
 	req.index = dev;
 	req.ndev = 1;
 
-	if (esm_cmd(sc, &req, sizeof(req), &resp, sizeof(resp)) != 0)
+	if (esm_cmd(sc, &req, sizeof(req), &resp, sizeof(resp), 1) != 0)
 		return (1);
 
 	if (resp.status != 0)
@@ -483,7 +483,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 
 	for (i = 0; i < nsensors; i++) {
 		req.req_val.v_sensor = i;
-		if (esm_smb_cmd(sc, &req, &resp) != 0)
+		if (esm_smb_cmd(sc, &req, &resp, 1) != 0)
 			continue;
 
 		DPRINTFN(1, "%s: dev: 0x%02x sensor: %d (%s) "
@@ -523,37 +523,29 @@ error:
 
 
 int
-esm_bmc_ready(struct esm_softc *sc, int port, u_int8_t mask, u_int8_t val)
+esm_bmc_ready(struct esm_softc *sc, int port, u_int8_t mask, u_int8_t val,
+    int wait)
 {
-	if ((EREAD(sc, port) & mask) == val)
-		return (1);
+	unsigned int		count = wait ? 0 : 0xfffff;
 
-	return (0);
-}
-
-int
-esm_bmc_wait(struct esm_softc *sc, int port, u_int8_t mask, u_int8_t val)
-{
-	unsigned int		count;
-
-	for (count = 0; count < 0xffffL; count++) {
-		if (esm_bmc_ready(sc, port, mask, val))
+	do {
+		if ((EREAD(sc, port) & mask) == val)
 			return (0);
-	}
+	} while (count++ < 0xfffff);
 
 	return (1);
 }
 
 int
 esm_cmd(struct esm_softc *sc, void *cmd, size_t cmdlen, void *resp,
-    size_t resplen)
+    size_t resplen, int wait)
 {
 	u_int8_t		*tx = (u_int8_t *)cmd;
 	u_int8_t		*rx = (u_int8_t *)resp;
 	int			i;
 
 	/* Wait for card ready */
-	if (esm_bmc_wait(sc, ESM2_TC_REG, ESM2_TC_READY, 0) != 0)
+	if (esm_bmc_ready(sc, ESM2_TC_REG, ESM2_TC_READY, 0, 1) != 0)
 		return (1); /* busy */
 
 	/* Write command data to port */
@@ -566,8 +558,7 @@ esm_cmd(struct esm_softc *sc, void *cmd, size_t cmdlen, void *resp,
 
 	/* Ring doorbell and wait */
 	ECTRLWR(sc, ESM2_TC_H2ECDB);
-	if (esm_bmc_wait(sc, ESM2_TC_REG, ESM2_TC_EC2HDB, ESM2_TC_EC2HDB) != 0)
-		printf("post\n");
+	esm_bmc_ready(sc, ESM2_TC_REG, ESM2_TC_EC2HDB, ESM2_TC_EC2HDB, 1);
 
 	/* Set host busy semaphore and clear doorbell */
 	ECTRLWR(sc, ESM2_TC_HOSTBUSY);
@@ -589,12 +580,12 @@ esm_cmd(struct esm_softc *sc, void *cmd, size_t cmdlen, void *resp,
 
 int
 esm_smb_cmd(struct esm_softc *sc, struct esm_smb_req *req,
-    struct esm_smb_resp *resp)
+    struct esm_smb_resp *resp, int wait)
 {
 	memset(resp, 0, sizeof(struct esm_smb_resp));
 
 	if (esm_cmd(sc, req, sizeof(req->hdr) + req->h_txlen, resp,
-	    sizeof(resp->hdr) + req->h_rxlen) != 0)
+	    sizeof(resp->hdr) + req->h_rxlen, wait) != 0)
 		return (1);
 
 	if (resp->h_status != 0 || resp->h_i2csts != 0) {
