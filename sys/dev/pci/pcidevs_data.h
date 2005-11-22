@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.968 2005/11/22 00:06:46 brad Exp 
+ *	OpenBSD: pcidevs,v 1.969 2005/11/22 01:28:56 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -40,11 +40,11 @@
 static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
-	    "OZ6729",
+	    "OZ6729 CardBus",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6730,
-	    "OZ6730",
+	    "OZ6730 CardBus",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6922,
@@ -531,12 +531,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "M1535 PCI",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
+	    "M1541 PCI",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
 	    "M1543 ISA",
 	},
 	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
-	    "M1541 PCI",
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1563,
+	    "M1563 ISA",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1621,
@@ -575,12 +579,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "M5237 USB",
 	},
 	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5247,
-	    "M5247 AGP/PCI-PCI",
-	},
-	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
 	    "M5243 AGP/PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5247,
+	    "M5247 AGP/PCI-PC",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5281,
@@ -2927,6 +2931,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IQ80310",
 	},
 	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5510,
+	    "Cx5510",
+	},
+	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_GXMPCI,
 	    "GXm PCI",
 	},
@@ -2940,7 +2948,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_SMI,
-	    "Cx5530 SMI/ACPI",
+	    "Cx5530 SMI",
 	},
 	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_IDE,
@@ -3907,12 +3915,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/1000 PB (82571EB)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_7,
-	    "PRO/100 VE (82562EZ)",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN,
+	    "82801FB LAN",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_8,
-	    "PRO/100 VE (82801FBM)",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LAN,
+	    "82801FBM LAN",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI,
@@ -5859,6 +5867,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DP83820 10/100/1000",
 	},
 	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SATURN,
+	    "Saturn",
+	},
+	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200_ISA,
 	    "SCx200 ISA",
 	},
@@ -5888,7 +5900,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_SMI,
-	    "SC1100 SMI/ACPI",
+	    "SC1100 SMI",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_XBUS,
@@ -7368,11 +7380,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1076,
-	    "I/O",
+	    "I/O 1076",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1077,
-	    "I/O",
+	    "I/O 1077",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
@@ -8287,8 +8299,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "UltraSPARC IIe PCI",
 	},
 	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_CE,
-	    "Cassini Ether",
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_CASSINI,
+	    "Cassini",
 	},
 	{
 	    PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201,
@@ -9823,8 +9835,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "X3201-3 (21143)",
 	},
 	{
-	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MPCI_MODEM,
-	    "Modem",
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_CARDBUS_ETH_1,
+	    "CardBus Ethernet",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_CARDBUS_ETH_2,
+	    "CardBus Ethernet",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_CARDBUS_ETH_3,
+	    "CardBus Ethernet",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MPCI_MODEM_V90,
+	    "Mini-PCI V.90 56k modem",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_CARDBUS_ETH_4,
+	    "CardBus Ethernet",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MPCI_MODEM_K56,
+	    "Mini-PCI K56Flex modem",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM_56K,
+	    "CardBus 56k modem",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
