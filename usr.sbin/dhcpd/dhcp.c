@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.19 2005/01/31 22:21:44 claudio Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.20 2005/11/22 21:33:56 beck Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -596,8 +596,13 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 
 	/* If we're already acking this lease, don't do it again. */
 	if (lease->state) {
-		note("already acking lease %s", piaddr(lease->ip_addr));
-		return;
+		if ((lease->flags & STATIC_LEASE) ||
+		    cur_time - lease->timestamp < 60) {
+			note("already acking lease %s", piaddr(lease->ip_addr));
+			return;
+		}
+		free_lease_state(lease->state, "ACK timed out");
+		lease->state = NULL;
 	}
 
 	if (packet->options[DHO_DHCP_CLASS_IDENTIFIER].len) {
