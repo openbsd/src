@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.13 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: modes.c,v 1.14 2005/11/22 04:23:14 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -163,11 +163,12 @@ set_default_mode(int f, int n)
 			defb_flag |= BFOVERWRITE;
 	}
 #ifdef NOTAB
-	if (strcmp(mode, "notab") == 0)
+	if (strcmp(mode, "notab") == 0) {
 		if (n <= 0)
 			defb_flag &= ~BFNOTAB;
 		else
 			defb_flag |= BFNOTAB;
+	}
 #endif	/* NOTAB */
 	return (TRUE);
 }
