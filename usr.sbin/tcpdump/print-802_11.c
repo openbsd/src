@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.4 2005/05/28 09:01:52 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.5 2005/11/22 11:36:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -67,6 +67,8 @@ int	 ieee80211_print(struct ieee80211_frame *, u_int);
 u_int	 ieee80211_any2ieee(u_int, u_int);
 
 #define TCARR(a)	TCHECK2(*a, sizeof(a))
+
+int ieee80211_encap = 0;
 
 int
 ieee80211_hdr(struct ieee80211_frame *wh)
@@ -449,7 +451,8 @@ ieee802_11_if_print(u_char *user, const struct pcap_pkthdr *h,
 {
 	struct ieee80211_frame *wh = (struct ieee80211_frame*)p;
 
-	ts_print(&h->ts);
+	if (!ieee80211_encap)
+		ts_print(&h->ts);
 
 	packetp = p;
 	snapend = p + h->caplen;
@@ -457,10 +460,11 @@ ieee802_11_if_print(u_char *user, const struct pcap_pkthdr *h,
 	if (ieee80211_print(wh, (u_int)h->caplen) != 0)
 		printf("[|802.11]");
 
-	if (xflag)
-		default_print(p, (u_int)h->caplen);
-
-	putchar('\n');
+	if (!ieee80211_encap) {
+		if (xflag)
+			default_print(p, (u_int)h->caplen);
+		putchar('\n');
+	}
 }
 
 void
@@ -474,7 +478,8 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 	u_int32_t present;
 	u_int len, rh_len;
 
-	ts_print(&h->ts);
+	if (!ieee80211_encap)
+		ts_print(&h->ts);
 
 	packetp = p;
 	snapend = p + h->caplen;
@@ -484,7 +489,7 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 	len = h->caplen;
 	rh_len = letoh16(rh->it_len);
 	if (rh->it_version != 0) {
-		printf("[?radiotap + 802.11 v:%u]\n", rh->it_version);
+		printf("[?radiotap + 802.11 v:%u]", rh->it_version);
 		goto out;
 	}
 
@@ -645,7 +650,9 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 	printf("[|radiotap + 802.11]");
 
  out:
-	if (xflag)
-		default_print(p, h->caplen);
-	putchar('\n');
+	if (!ieee80211_encap) {
+		if (xflag)
+			default_print(p, h->caplen);
+		putchar('\n');
+	}
 }

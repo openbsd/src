@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.50 2005/10/08 19:45:15 canacar Exp $	*/
+/*	$OpenBSD: interface.h,v 1.51 2005/11/22 11:36:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.50 2005/10/08 19:45:15 canacar Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.51 2005/11/22 11:36:12 reyk Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -218,6 +218,7 @@ extern void ieee802_11_if_print(u_char *, const struct pcap_pkthdr *,
     const u_char *);
 extern void ieee802_11_radio_if_print(u_char *, const struct pcap_pkthdr *,
     const u_char *);
+extern void iapp_print(const u_char *, u_int);
 extern void igrp_print(const u_char *, u_int, const u_char *);
 extern void ip_print(const u_char *, u_int);
 extern void ipx_print(const u_char *, u_int);
