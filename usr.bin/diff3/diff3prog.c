@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.7 2005/08/01 08:17:57 otto Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.8 2005/11/22 16:00:49 markus Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.7 2005/08/01 08:17:57 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.8 2005/11/22 16:00:49 markus Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -240,8 +240,10 @@ readin(char *name, struct diff **dd)
 		(*dd)[i].new.from = c;
 		(*dd)[i].new.to = d;
 	}
-	(*dd)[i].old.from = (*dd)[i-1].old.to;
-	(*dd)[i].new.from = (*dd)[i-1].new.to;
+	if (i) {
+		(*dd)[i].old.from = (*dd)[i-1].old.to;
+		(*dd)[i].new.from = (*dd)[i-1].new.to;
+	}
 	(void)fclose(fp[0]);
 	return (i);
 }
