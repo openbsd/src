@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.398 2005/10/28 13:30:50 jmc Exp $
+#	$OpenBSD: install.sub,v 1.399 2005/11/22 19:29:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -90,10 +90,10 @@ set_term() {
 	[[ -x /sbin/kbd ]] || return
 	_tables=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
 	while :; do
-		ask "kbd(8) mapping? ('?' for list)" "none"
+		ask "kbd(8) mapping? ('L' for list)" "none"
 		case $resp in
+		[Ll?])	echo "Major tables: $_tables" ;;
 		none)	return ;;
-		"?")	echo "Major tables: $_tables" ;;
 		*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
 		esac
 	done
