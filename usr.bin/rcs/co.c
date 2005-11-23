@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.31 2005/11/22 16:20:45 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.32 2005/11/23 08:42:23 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -59,7 +59,7 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "f::l::M::p::qr::s:u::Vx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::l::M::p::q::r::s:u::Vx:")) != -1) {
 		switch (ch) {
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
@@ -78,6 +78,7 @@ checkout_main(int argc, char **argv)
 			pipeout = 1;
 			break;
 		case 'q':
+			rcs_set_rev(rcs_optarg, &rev);
 			verbose = 0;
 			break;
 		case 'r':
@@ -161,8 +162,9 @@ void
 checkout_usage(void)
 {
 	fprintf(stderr,
-	    "usage: co [-qV] [-l[rev]] [-M[rev]] [-p[rev]] [-r[rev]]\n"
-            "          [-sstate] [-u[rev]] file ...\n");
+	    "usage: co [-V] [-ddate] [-f[rev]] [-I[rev]] [-kmode] [-l[rev]]\n"
+	    "          [-M[rev]] [-mmsg] [-p[rev]] [-q[rev]] [-r[rev]]\n"
+	    "          [-sstate] [-u[rev]] [-wuser] [-xsuffixes] [-ztz] file ...\n");
 }
 
 /*

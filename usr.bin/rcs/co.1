@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.12 2005/11/21 21:42:00 jmc Exp $
+.\"     $OpenBSD: co.1,v 1.13 2005/11/23 08:42:23 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,14 +23,16 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl fIqV
-.Op Ar rev
+.Op Fl V
 .Op Fl d Ns Ar date
+.Op Fl f Ns Op Ar rev
+.Op Fl I Ns Op Ar rev
 .Op Fl k Ns Ar mode
 .Op Fl l Ns Op Ar rev
 .Op Fl M Ns Op Ar rev
 .Op Fl m Ns Ar msg
 .Op Fl p Ns Op Ar rev
+.Op Fl q Ns Op Ar rev
 .Op Fl r Ns Op Ar rev
 .Op Fl s Ns Ar state
 .Op Fl u Ns Op Ar rev
@@ -48,9 +50,9 @@ The following options are supported:
 .It Fl d Ns Ar date
 Retrieve revision as of the latest revision no later than
 .Ar date .
-.It Fl f
+.It Fl f Ns Op Ar rev
 Force the overwriting of the working file.
-.It Fl I
+.It Fl I Ns Op Ar rev
 Interactive mode.
 .It Fl k Ns Ar mode
 Specify the keyword substitution mode.
@@ -73,7 +75,7 @@ to standard output.
 If
 .Ar rev
 is not specified, print HEAD.
-.It Fl q
+.It Fl q Ns Op Ns Ar rev
 Be quiet about reporting.
 .It Fl r Ns Op Ar rev
 Retrieve the latest revision no later than
