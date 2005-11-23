@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.7 2005/08/07 07:29:44 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.8 2005/11/23 11:22:10 mickey Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -115,8 +115,6 @@ void	pmap_page_cache(vm_page_t, int);
 
 #define pmap_proc_iflush(p,va,len)	/* nothing yet (handled in trap now) */
 #define pmap_unuse_final(p)		/* nothing yet */
-
-paddr_t vtophys(void *);
 
 #endif	/* _KERNEL */
 
