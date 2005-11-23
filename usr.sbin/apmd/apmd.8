@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.29 2005/11/15 01:19:56 jmc Exp $
+.\"	$OpenBSD: apmd.8,v 1.30 2005/11/23 08:02:58 sturm Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nd Advanced Power Management monitor daemon
 .Sh SYNOPSIS
 .Nm apmd
-.Op Fl ademps
+.Op Fl AadeHLmps
 .Op Fl f Ar devname
 .Op Fl S Ar sockname
 .Op Fl t Ar seconds
@@ -61,6 +61,10 @@ with logging facility
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Start
+.Nm
+in automatic performance adjustment mode.
 .It Fl a
 BIOS-initiated suspend or standby requests are
 ignored if the system is connected to line current and not running from
@@ -78,6 +82,18 @@ Use of this flag unconditionally enables power status messages.
 .It Fl f Ar devname
 Specify an alternate device file name,
 .Ar devname .
+.It Fl H
+Start
+.Nm
+in manual performance adjustment mode, initialising
+.Va hw.setperf
+to 100.
+.It Fl L
+Start
+.Nm
+in manual performance adjustment mode, initialising
+.Va hw.setperf
+to 0.
 .It Fl m
 Do not disable power status messages issued by the APM driver.
 In normal operation these status messages are disabled as they are
@@ -122,6 +138,26 @@ once per 10 minutes, but may be specified using the
 .Fl t
 command-line flag.
 .El
+.Pp
+In automatic performance adjustment mode,
+.Nm
+monitors the processor's idle time and adjusts
+.Va hw.setperf
+dynamically.
+This keeps the processor at low speed whenever possible, reducing noise and
+power consumption.
+When idle time falls below 10%, the daemon raises
+.Va hw.setperf
+as much as necessary.
+When idle time is above 30%,
+.Nm
+reduces
+.Va hw.setperf
+as much as possible.
+By default
+.Nm
+does not change
+.Va hw.setperf .
 .Pp
 When a client requests a suspend or stand-by mode,
 .Nm

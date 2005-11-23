@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.21 2005/11/15 01:27:58 jmc Exp $
+.\"	$OpenBSD: apm.8,v 1.22 2005/11/23 08:02:58 sturm Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Op Fl f Ar sockname
 .Br
 .Nm apm
-.Op Fl ablmSsvz
+.Op Fl AabHLlmPSsvz
 .Op Fl f Ar sockname
 .Sh DESCRIPTION
 .Nm
@@ -52,6 +52,10 @@ displays the current power management state in verbose form.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Set
+.Xr apmd 8
+to automatic performance adjustment mode.
 .It Fl a
 Display the external charger (A/C status).
 0 means disconnected, 1
@@ -65,10 +69,25 @@ Set the name of the socket via which to contact
 .Xr apmd 8
 to
 .Pa sockname .
+.It Fl H
+Set
+.Xr apmd 8
+to manual performance adjustment mode and
+.Va hw.setperf
+to 100.
+.It Fl L
+Set
+.Xr apmd 8
+to manual performance adjustment mode and
+.Va hw.setperf
+to 0.
 .It Fl l
 Display the estimated battery lifetime (in percent).
 .It Fl m
 Display the estimated battery lifetime (in minutes).
+.It Fl P
+Display the performance adjustment mode.
+0 means uninitialized, 1 means manual, and 2 means automatic mode.
 .It Fl S
 Put the system into stand-by (light sleep) mode.
 .It Fl s

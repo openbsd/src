@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.12 2005/11/15 01:25:48 jmc Exp $	*/
+/*	$OpenBSD: apm.c,v 1.13 2005/11/23 08:02:58 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -58,7 +58,7 @@ int send_command(int fd, struct apm_command *cmd, struct apm_reply *reply);
 void
 usage(void)
 {
-	fprintf(stderr,"usage: %s [-ablmSsvz] [-f sockname]\n",
+	fprintf(stderr,"usage: %s [-ablmPSsvz] [-f sockname] [-A | -L | -H]\n",
 	    __progname);
 	exit(1);
 }
@@ -142,13 +142,14 @@ main(int argc, char *argv[])
 	int dopct = FALSE;
 	int dobstate = FALSE;
 	int domin = FALSE;
+	int doperf = FALSE;
 	int verbose = FALSE;
 	int ch, fd, rval;
 	enum apm_action action = NONE;
 	struct apm_command command;
 	struct apm_reply reply;
 
-	while ((ch = getopt(argc, argv, "lmbvasSzf:")) != -1) {
+	while ((ch = getopt(argc, argv, "AHLlmbvaPsSzf:")) != -1) {
 		switch (ch) {
 		case 'v':
 			verbose = TRUE;
@@ -165,6 +166,21 @@ main(int argc, char *argv[])
 			if (action != NONE)
 				usage();
 			action = STANDBY;
+			break;
+		case 'A':
+			if (action != NONE)
+				usage();
+			action = SETPERF_AUTO;
+			break;
+		case 'H':
+			if (action != NONE)
+				usage();
+			action = SETPERF_HIGH;
+			break;
+		case 'L':
+			if (action != NONE)
+				usage();
+			action = SETPERF_LOW;
 			break;
 		case 's':
 			if (action != NONE && action != GETSTATUS)
@@ -196,6 +212,12 @@ main(int argc, char *argv[])
 			doac = TRUE;
 			action = GETSTATUS;
 			break;
+		case 'P':
+			if (action != NONE && action != GETSTATUS)
+				usage();
+			doperf = TRUE;
+			action = GETSTATUS;
+			break;
 		default:
 			usage();
 		}
@@ -210,6 +232,7 @@ main(int argc, char *argv[])
 	case NONE:
 		action = GETSTATUS;
 		verbose = doac = dopct = dobstate = dostatus = domin = TRUE;
+		doperf = TRUE;
 		/* fallthrough */
 	case GETSTATUS:
 		if (fd == -1) {
@@ -222,6 +245,9 @@ main(int argc, char *argv[])
 		/* fallthrough */
 	case SUSPEND:
 	case STANDBY:
+	case SETPERF_LOW:
+	case SETPERF_HIGH:
+	case SETPERF_AUTO:
 		command.action = action;
 		break;
 	default:
@@ -254,6 +280,8 @@ main(int argc, char *argv[])
 				    reply.batterystate.ac_state);
 			if (dostatus)
 				printf("1\n");
+			if (doperf)
+				printf("%d\n", reply.perfstate);
 			break;
 		}
 		if (dobstate)
@@ -288,6 +316,9 @@ main(int argc, char *argv[])
 		if (doac)
 			printf("A/C adapter state: %s\n",
 			    ac_state(reply.batterystate.ac_state));
+		if (doperf)
+			printf("Performance state: %s\n",
+			    perf_state(reply.perfstate));
 		if (dostatus)
 			printf("Power management enabled\n");
 		break;

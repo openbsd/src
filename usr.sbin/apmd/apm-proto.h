@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm-proto.h,v 1.4 2002/07/04 07:31:16 deraadt Exp $	*/
+/*	$OpenBSD: apm-proto.h,v 1.5 2005/11/23 08:02:58 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -33,13 +33,22 @@ enum apm_action {
 	NONE,
 	SUSPEND,
 	STANDBY,
-	GETSTATUS
+	GETSTATUS,
+	SETPERF_LOW,
+	SETPERF_HIGH,
+	SETPERF_AUTO
 };
 
 enum apm_state {
 	NORMAL,
 	SUSPENDING,
 	STANDING_BY
+};
+
+enum apm_perfstate {
+	PERF_NONE,
+	PERF_MANUAL,
+	PERF_AUTO
 };
 
 struct apm_command {
@@ -50,10 +59,12 @@ struct apm_command {
 struct apm_reply {
 	int vno;
 	enum apm_state newstate;
+	enum apm_perfstate perfstate;
 	struct apm_power_info batterystate;
 };
 
-#define APMD_VNO	1
+#define APMD_VNO	2
 
 extern const char *battstate(int state);
 extern const char *ac_state(int state);
+extern const char *perf_state(int state);

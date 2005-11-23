@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmsubr.c,v 1.3 2001/07/07 01:10:42 mickey Exp $	*/
+/*	$OpenBSD: apmsubr.c,v 1.4 2005/11/23 08:02:58 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1995,1996 John T. Kohl
@@ -68,5 +68,20 @@ ac_state(int state)
 		return "not known";
 	default:
 		return "invalid AC status";
+	}
+}
+
+const char *
+perf_state(int state)
+{
+	switch (state) {
+	case PERF_NONE:
+		return "uninitialized";
+	case PERF_MANUAL:
+		return "manual";
+	case PERF_AUTO:
+		return "auto";
+	default:
+		return "invalid performance status";
 	}
 }
