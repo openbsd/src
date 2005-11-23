@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.10 2005/11/23 00:12:13 cloder Exp $	*/
+/*	$OpenBSD: err.c,v 1.11 2005/11/23 22:25:37 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.10 2005/11/23 00:12:13 cloder Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.11 2005/11/23 22:25:37 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -364,6 +364,7 @@ const	char *msgs[] = {
 	"",							      /* 308 */
 	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
 	"right shift of %d-bit quantity by %d bits",		      /* 310 */
+	"case ranges are illegal in ANSI C",			      /* 311 */
 };
 
 /*

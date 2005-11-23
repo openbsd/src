@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.8 2005/11/23 18:47:40 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.9 2005/11/23 22:25:36 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.8 2005/11/23 18:47:40 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.9 2005/11/23 22:25:36 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1209,6 +1209,14 @@ label:
 	| T_CASE constant T_COLON {
 		label(T_CASE, NULL, $2);
 		ftflg = 1;
+	  }
+	| T_CASE constant T_ELLIPSE constant T_COLON {
+		/* XXX: only using the first value of this gcc-ism */
+		label(T_CASE, NULL, $2);
+		ftflg = 1;
+
+		if (!gflag)
+			gnuism(311);
 	  }
 	| T_DEFAULT T_COLON {
 		label(T_DEFAULT, NULL, NULL);
