@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.66 2005/11/22 11:49:02 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.67 2005/11/23 09:39:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -44,7 +44,7 @@
 #include "diff.h"
 #include "rcsprog.h"
 
-#define CI_OPTSTRING    "d::f::i::j::k:l::m:M::N:n:qr::s:u::Vw:x:"
+#define CI_OPTSTRING    "d::f::i::j::k:l::m:M::N:n:qr::s:Tu::Vw:x:"
 #define DATE_NOW        -1
 #define DATE_MTIME      -2
 
@@ -81,7 +81,7 @@ void
 checkin_usage(void)
 {
 	fprintf(stderr,
-	    "usage: ci [-MNqV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
+	    "usage: ci [-MNqTV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
             "          [-kmode] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
             "          [-nsymbol] [-r[rev]] [-sstate] [-u[rev]] [-wusername]\n"
             "          file ...\n");
@@ -192,6 +192,9 @@ checkin_main(int argc, char **argv)
 				    pb.state);
 				exit(1);
 			}
+			break;
+		case 'T':
+			pb.flags |= PRESERVETIME;
 			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &pb.newrev);

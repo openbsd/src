@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.15 2005/11/21 16:20:29 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.16 2005/11/23 09:39:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -46,14 +46,15 @@ static int uflag = 0;
 int
 rcsclean_main(int argc, char **argv)
 {
-	int i, ch;
+	int i, ch, flags;
 	RCSNUM *rev;
 	DIR *dirp;
 	struct dirent *dp;
 
+	flags = 0;
 	rev = RCS_HEAD_REV;
 
-	while ((ch = rcs_getopt(argc, argv, "k:n::q::r:u::Vx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "k:n::q::r:Tu::Vx:")) != -1) {
 		switch (ch) {
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -74,6 +75,9 @@ rcsclean_main(int argc, char **argv)
 			break;
 		case 'r':
 			rcs_set_rev(rcs_optarg, &rev);
+			break;
+		case 'T':
+			flags |= PRESERVETIME;
 			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &rev);

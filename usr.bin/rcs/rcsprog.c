@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.45 2005/11/21 16:20:29 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.46 2005/11/23 09:39:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -336,7 +336,7 @@ rcs_main(int argc, char **argv)
 	flags = RCS_RDWR;
 	logstr = alist = comment = elist = NULL;
 
-	while ((ch = rcs_getopt(argc, argv, "A:a:b::c:e::hik:Lm:MqUV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "A:a:b::c:e::hik:Lm:MqTUV")) != -1) {
 		switch (ch) {
 		case 'A':
 			if (rcs_statfile(rcs_optarg, ofpath, sizeof(ofpath)) < 0)
@@ -383,6 +383,9 @@ rcs_main(int argc, char **argv)
 			break;
 		case 'q':
 			verbose = 0;
+			break;
+		case 'T':
+			flags |= PRESERVETIME;
 			break;
 		case 'U':
 			if (lkmode == RCS_LOCK_STRICT)

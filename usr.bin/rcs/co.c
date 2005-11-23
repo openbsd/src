@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.33 2005/11/23 09:05:02 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.34 2005/11/23 09:39:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -99,6 +99,9 @@ checkout_main(int argc, char **argv)
 				exit(1);
 			}
 			flags |= CO_STATE;
+			break;
+		case 'T':
+			flags |= PRESERVETIME;
 			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &rev);

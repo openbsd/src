@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.18 2005/11/22 15:00:06 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.19 2005/11/23 09:39:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -45,18 +45,19 @@ static int kflag = RCS_KWEXP_ERR;
 int
 rcsdiff_main(int argc, char **argv)
 {
-	int i, ch, status;
+	int i, ch, flags, status;
 	RCSNUM *rev, *rev2, *frev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN];
 
+	flags = 0;
 	rev = RCS_HEAD_REV;
 	rev2 = NULL;
 	status = 0;
 
 	strlcpy(diffargs, "diff", sizeof(diffargs));
 
-	while ((ch = rcs_getopt(argc, argv, "ck:nqr:uVx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "ck:nqr:TuVx:")) != -1) {
 		switch (ch) {
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
@@ -94,6 +95,9 @@ rcsdiff_main(int argc, char **argv)
 					exit(1);
 				}
 			}
+			break;
+		case 'T':
+			flags |= PRESERVETIME;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
