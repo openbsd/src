@@ -214,7 +214,7 @@ E2:
 	movw	$0,r8			#clear r8
 	movq	$0,r0			#x underflow to zero
 C5:
-	bisw2	r8,r0			#put r8 into x's exponent field
+	bisw2	r8,r0			#put r8 into exponent field of x
 	ret
 Rop:					#Reserved operand
 	pushl	$EDOM
