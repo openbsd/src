@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.67 2005/11/23 09:39:20 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.68 2005/11/23 14:21:53 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -29,15 +29,12 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-#include <err.h>
-#include <pwd.h>
-#include <errno.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <time.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "rcs.h"
@@ -65,17 +62,17 @@ struct checkin_params {
 	const char *symbol, *state;
 };
 
-static int    checkin_attach_symbol(struct checkin_params *pb);
-static int    checkin_checklock(struct checkin_params *pb);
-static char * checkin_choose_rcsfile(const char *);
-static char * checkin_diff_file(struct checkin_params *);
-static char * checkin_getdesc(void);
-static char * checkin_getinput(const char *);
-static char * checkin_getlogmsg(RCSNUM *, RCSNUM *);
-static int    checkin_init(struct checkin_params *);
-static int    checkin_mtimedate(struct checkin_params *pb);
-static int    checkin_update(struct checkin_params *pb);
-static void   checkin_revert(struct checkin_params *pb);
+static int	 checkin_attach_symbol(struct checkin_params *pb);
+static int	 checkin_checklock(struct checkin_params *pb);
+static char	*checkin_choose_rcsfile(const char *);
+static char	*checkin_diff_file(struct checkin_params *);
+static char	*checkin_getdesc(void);
+static char	*checkin_getinput(const char *);
+static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *);
+static int	 checkin_init(struct checkin_params *);
+static int	 checkin_mtimedate(struct checkin_params *pb);
+static int	 checkin_update(struct checkin_params *pb);
+static void	 checkin_revert(struct checkin_params *pb);
 
 void
 checkin_usage(void)
