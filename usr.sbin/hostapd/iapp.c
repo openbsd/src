@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.9 2005/11/20 12:02:04 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.10 2005/11/23 20:47:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -53,9 +53,9 @@ hostapd_iapp_init(struct hostapd_config *cfg)
 	TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
 		/* Get Host AP's BSSID */
 		hostapd_priv_apme_bssid(apme);
-		hostapd_log(HOSTAPD_LOG_VERBOSE,
-		    "%s/%s: attached Host AP interface with BSSID \"%s\"\n",
-		    cfg->c_iapp_iface, apme->a_iface,
+		hostapd_log(HOSTAPD_LOG,
+		    "%s/%s: attached Host AP interface with BSSID %s\n",
+		    apme->a_iface, cfg->c_iapp_iface,
 		    etheraddr_string(apme->a_bssid));
 	}
 }
@@ -71,7 +71,7 @@ hostapd_iapp_term(struct hostapd_config *cfg)
 	TAILQ_FOREACH(apme, &cfg->c_apmes, a_entries) {
 		hostapd_log(HOSTAPD_LOG_VERBOSE,
 		    "%s/%s: detaching from Host AP\n",
-		    cfg->c_iapp_iface, apme->a_iface);
+		    apme->a_iface, cfg->c_iapp_iface);
 	}
 }
 
