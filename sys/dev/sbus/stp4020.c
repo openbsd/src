@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.13 2005/01/27 17:03:24 millert Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.14 2005/11/23 11:39:37 mickey Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@ int	stp4020_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 void	stp4020_chip_mem_free(pcmcia_chipset_handle_t,
 	    struct pcmcia_mem_handle *);
 int	stp4020_chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+	    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
 void	stp4020_chip_mem_unmap(pcmcia_chipset_handle_t, int);
 
 int	stp4020_chip_io_alloc(pcmcia_chipset_handle_t,
@@ -618,7 +618,7 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t card_addr;
 	bus_size_t size;
 	struct pcmcia_mem_handle *pcmhp;
-	bus_addr_t *offsetp;
+	bus_size_t *offsetp;
 	int *windowp;
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;

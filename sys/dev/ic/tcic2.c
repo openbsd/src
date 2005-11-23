@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.6 2004/07/22 15:11:37 miod Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.7 2005/11/23 11:39:37 mickey Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -947,7 +947,7 @@ tcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t card_addr;
 	bus_size_t size;
 	struct pcmcia_mem_handle *pcmhp;
-	bus_addr_t *offsetp;
+	bus_size_t *offsetp;
 	int *windowp;
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;

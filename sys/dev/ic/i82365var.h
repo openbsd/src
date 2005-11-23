@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.13 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.14 2005/11/23 11:39:37 mickey Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ int	pcic_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 void	pcic_chip_mem_free(pcmcia_chipset_handle_t,
 	    struct pcmcia_mem_handle *);
 int	pcic_chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+	    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
 void	pcic_chip_mem_unmap(pcmcia_chipset_handle_t, int);
 
 int	pcic_chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,

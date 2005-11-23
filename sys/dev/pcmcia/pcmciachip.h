@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciachip.h,v 1.7 2005/01/27 17:03:23 millert Exp $ */
+/*	$OpenBSD: pcmciachip.h,v 1.8 2005/11/23 11:39:37 mickey Exp $ */
 /*	$NetBSD: pcmciachip.h,v 1.5 2000/01/13 08:58:51 joda Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ struct pcmcia_chip_functions {
 	/* memory space window mapping */
 	int	(*mem_map)(pcmcia_chipset_handle_t, int, bus_addr_t,
 		    bus_size_t, struct pcmcia_mem_handle *,
-		    bus_addr_t *, int *);
+		    bus_size_t *, int *);
 	void	(*mem_unmap)(pcmcia_chipset_handle_t, int);
 
 	/* I/O space allocation */

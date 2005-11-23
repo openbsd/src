@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.19 2005/08/05 18:21:04 fgsch Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.20 2005/11/23 11:39:37 mickey Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ struct pcmcia_function {
 #define	pf_ccrh		pf_pcmh.memh
 #define	pf_ccr_mhandle	pf_pcmh.mhandle
 #define	pf_ccr_realsize	pf_pcmh.realsize
-	bus_addr_t	pf_ccr_offset;
+	bus_size_t	pf_ccr_offset;
 	int		pf_ccr_window;
 	bus_addr_t	pf_mfc_iobase;
 	bus_addr_t	pf_mfc_iomax;
@@ -194,7 +194,7 @@ struct pcmcia_tuple {
 	unsigned int	code;
 	unsigned int	length;
 	u_long		mult;
-	bus_addr_t	ptr;
+	bus_size_t	ptr;
 	bus_space_tag_t	memt;
 	bus_space_handle_t memh;
 };

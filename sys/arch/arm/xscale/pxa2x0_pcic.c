@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_pcic.c,v 1.14 2005/07/01 23:51:55 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_pcic.c,v 1.15 2005/11/23 11:39:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -51,7 +51,7 @@ int	pxapcic_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 void	pxapcic_mem_free(pcmcia_chipset_handle_t,
     struct pcmcia_mem_handle *);
 int	pxapcic_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
-    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
 void	pxapcic_mem_unmap(pcmcia_chipset_handle_t, int);
 
 int	pxapcic_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
@@ -120,7 +120,7 @@ pxapcic_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pmh)
 
 int
 pxapcic_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
-    bus_size_t size, struct pcmcia_mem_handle *pmh, bus_addr_t *offsetp,
+    bus_size_t size, struct pcmcia_mem_handle *pmh, bus_size_t *offsetp,
     int *windowp)
 {
 	struct pxapcic_socket *so = pch;

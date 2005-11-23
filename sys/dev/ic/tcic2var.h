@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2var.h,v 1.3 2004/01/15 17:51:42 miod Exp $	*/
+/*	$OpenBSD: tcic2var.h,v 1.4 2005/11/23 11:39:37 mickey Exp $	*/
 /*	$NetBSD: tcic2var.h,v 1.1 1999/03/23 20:04:14 bad Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ int	tcic_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 void	tcic_chip_mem_free(pcmcia_chipset_handle_t,
 	    struct pcmcia_mem_handle *);
 int	tcic_chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+	    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *);
 void	tcic_chip_mem_unmap(pcmcia_chipset_handle_t, int);
 
 int	tcic_chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,

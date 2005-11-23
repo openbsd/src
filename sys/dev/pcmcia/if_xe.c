@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.30 2005/11/09 05:56:05 brad Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.31 2005/11/23 11:39:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -136,7 +136,7 @@ struct xe_softc {
 	int	sc_all_mcasts;			/* Receive all multicasts */
 	bus_space_tag_t sc_bst;			/* Bus cookie */
 	bus_space_handle_t	sc_bsh;		/* Bus I/O handle */
-	bus_addr_t	sc_offset;		/* Offset of registers */
+	bus_size_t	sc_offset;		/* Offset of registers */
 	u_int8_t	sc_rev;			/* Chip revision */
 };
 
@@ -234,7 +234,7 @@ xe_pcmcia_attach(parent, self, aux)
 	int state = 0;
 	struct pcmcia_mem_handle pcmh;
 	int ccr_window;
-	bus_addr_t ccr_offset;
+	bus_size_t ccr_offset;
 	const char *intrstr;
 
 	psc->sc_pf = pf;
@@ -860,7 +860,7 @@ xe_mdi_idle(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 
 	/* Drive MDC low... */
 	bus_space_write_1(bst, bsh, offset + GP2, MDC_LOW);
@@ -880,7 +880,7 @@ xe_mdi_pulse(sc, data)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	u_int8_t bit = data ? MDIO_HIGH : MDIO_LOW;
 
 	/* First latch the data bit MDIO with clock bit MDC low...*/
@@ -900,7 +900,7 @@ xe_mdi_probe(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	u_int8_t x;
 
 	/* Pull clock bit MDCK low... */
@@ -1096,7 +1096,7 @@ xe_start(ifp)
 	struct xe_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	unsigned int s, len, pad = 0;
 	struct mbuf *m0, *m;
 	u_int16_t space;
@@ -1292,7 +1292,7 @@ xe_set_address(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	struct arpcom *arp = &sc->sc_arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1353,7 +1353,7 @@ xe_cycle_power(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 
 	PAGE(sc, 4);
 	DELAY(1);
@@ -1373,7 +1373,7 @@ xe_full_reset(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 
 	/* Do an as extensive reset as possible on all functions. */
 	xe_cycle_power(sc);
@@ -1526,7 +1526,7 @@ xe_reg_dump(sc)
 	int page, i;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 
 	printf("%x: Common registers: ", sc->sc_dev.dv_xname);
 	for (i = 0; i < 8; i++) {

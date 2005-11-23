@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.15 2005/03/29 11:37:33 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.16 2005/11/23 11:39:36 mickey Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -152,7 +152,7 @@ int	tslot_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 	    struct pcmcia_mem_handle *);
 void	tslot_mem_free(pcmcia_chipset_handle_t, struct pcmcia_mem_handle *);
 int	tslot_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
-	    struct pcmcia_mem_handle *, bus_addr_t *, int *);
+	    struct pcmcia_mem_handle *, bus_size_t *, int *);
 void	tslot_mem_unmap(pcmcia_chipset_handle_t, int);
 int	tslot_print(void *, const char *);
 void	tslot_queue_event(struct tslot_softc *, int);
@@ -439,7 +439,7 @@ tslot_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pmh)
 
 int
 tslot_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t addr,
-    bus_size_t size, struct pcmcia_mem_handle *pmh, bus_addr_t *offsetp,
+    bus_size_t size, struct pcmcia_mem_handle *pmh, bus_size_t *offsetp,
     int *windowp)
 {
 	struct tslot_data *td = (struct tslot_data *)pch;

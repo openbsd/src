@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.29 2005/10/31 19:02:08 miod Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.30 2005/11/23 11:39:37 mickey Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -521,7 +521,7 @@ ray_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa;
 	struct ray_softc *sc;
 	struct ifnet *ifp;
-	bus_addr_t memoff;
+	bus_size_t memoff;
 
 	pa = aux;
 	sc = (struct ray_softc *)self;

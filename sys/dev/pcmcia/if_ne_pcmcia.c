@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.83 2005/11/21 18:16:42 millert Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.84 2005/11/23 11:39:37 mickey Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -901,7 +901,7 @@ ne_pcmcia_get_enaddr(psc, maddr, myea)
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
+	bus_size_t offset;
 	u_int8_t *enaddr = NULL;
 	int j, mwindow;
 
@@ -969,7 +969,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
+	bus_size_t offset;
 	int rv = 1, mwindow;
 
 	if (pcmcia_mem_alloc(psc->sc_pf, AX88190_LAN_IOSIZE, &pcmh)) {
