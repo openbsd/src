@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.21 2005/07/18 14:55:49 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.22 2005/11/23 16:51:28 mickey Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -78,9 +78,9 @@ export	SONPROC
 # values for page tables
 export	PDSLOT_KERN
 export	PDSLOT_PTE
+export	PDSLOT_APTE
 export	NKPTP_MIN
 export	NKPTP_MAX
-export	APTDPTDI
 
 # values for virtual memory
 export	VM_MAXUSER_ADDRESS

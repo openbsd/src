@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.93 2005/10/26 20:32:59 marco Exp $	*/
+/*	$OpenBSD: locore.s,v 1.94 2005/11/23 16:51:28 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -191,10 +191,10 @@
  * It's used when modifying another process's page tables.
  */
 	.globl	_C_LABEL(APTmap), _C_LABEL(APTD), _C_LABEL(APTDpde)
-	.set	_C_LABEL(APTmap), (APTDPTDI << PDSHIFT)
-	.set	_C_LABEL(APTD), (_C_LABEL(APTmap) + APTDPTDI * NBPG)
+	.set	_C_LABEL(APTmap), (PDSLOT_APTE << PDSHIFT)
+	.set	_C_LABEL(APTD), (_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
 	# XXX 4 == sizeof pde
-	.set	_C_LABEL(APTDpde), (_C_LABEL(PTD) + APTDPTDI * 4)
+	.set	_C_LABEL(APTDpde), (_C_LABEL(PTD) + PDSLOT_APTE * 4)
 
 /*
  * Initialization

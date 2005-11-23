@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.32 2005/08/01 19:44:53 jmc Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.33 2005/11/23 16:51:28 mickey Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -89,16 +89,13 @@
  */
 #define	USRIOSIZE 	300
 
-/* XXX Compatibility */
-#define APTDPTDI	PDSLOT_APTE
-#define PTDPTDI		PDSLOT_PTE
-
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)((PTDPTDI<<PDSHIFT) - USPACE))
-#define VM_MAX_ADDRESS		((vaddr_t)((PTDPTDI<<PDSHIFT) + (PTDPTDI<<PGSHIFT)))
+#define VM_MAXUSER_ADDRESS	((vaddr_t)((PDSLOT_PTE<<PDSHIFT) - USPACE))
+#define VM_MAX_ADDRESS		((vaddr_t)((PDSLOT_PTE<<PDSHIFT) + \
+				    (PDSLOT_PTE<<PGSHIFT)))
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(APTDPTDI<<PDSHIFT))
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_APTE<<PDSHIFT))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
