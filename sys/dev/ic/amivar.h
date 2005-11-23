@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.32 2005/10/02 06:30:50 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.33 2005/11/23 21:36:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -136,11 +136,6 @@ struct ami_softc {
 	}			sc_hdr[AMI_BIG_MAX_LDRIVES];
 	struct ami_rawsoftc	*sc_rawsoftcs;
 };
-
-/* XXX These have to become spinlocks in case of SMP */
-#define AMI_LOCK_AMI(sc) splbio()
-#define AMI_UNLOCK_AMI(sc, lock) splx(lock)
-typedef int ami_lock_t;
 
 int  ami_attach(struct ami_softc *sc);
 int  ami_intr(void *);
