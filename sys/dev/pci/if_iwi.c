@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.52 2005/11/23 20:57:09 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.53 2005/11/23 21:04:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -757,7 +757,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct mbuf *m;
+	struct mbuf *mnew, *m;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	int error;
@@ -776,10 +776,48 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 		return;
 	}
 
+	/*
+	 * Try to allocate a new mbuf for this ring element and load it before
+	 * processing the current mbuf.  If the ring element cannot be loaded,
+	 * drop the received packet and reuse the old mbuf.  In the unlikely
+	 * case that the old mbuf can't be reloaded either, explicitly panic.
+	 */
+	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+	if (mnew == NULL) {
+		ifp->if_ierrors++;
+		return;
+	}
+
+	MCLGET(mnew, M_DONTWAIT);
+	if (!(mnew->m_flags & M_EXT)) {
+		ifp->if_ierrors++;
+		return;
+	}
+
 	bus_dmamap_unload(sc->sc_dmat, buf->map);
 
-	/* Finalize mbuf */
+	error = bus_dmamap_load(sc->sc_dmat, buf->map, mtod(mnew, void *),
+	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		m_freem(mnew);
+
+		/* try to reload the old mbuf */
+		error = bus_dmamap_load(sc->sc_dmat, buf->map,
+		    mtod(buf->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		if (error != 0) {
+			/* very unlikely that it will fail... */
+			panic("%s: could not load old rx mbuf",
+			    sc->sc_dev.dv_xname);
+		}
+		ifp->if_ierrors++;
+		return;
+	}
+
 	m = buf->m;
+	buf->m = mnew;
+	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, buf->map->dm_segs->ds_addr);
+
+	/* Finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = sizeof (struct iwi_hdr) +
 	    sizeof (struct iwi_frame) + letoh16(frame->len);
@@ -831,34 +869,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	ieee80211_input(ifp, m, ni, frame->rssi_dbm, 0);
 
 	ieee80211_release_node(ic, ni);
-
-	MGETHDR(buf->m, M_DONTWAIT, MT_DATA);
-	if (buf->m == NULL) {
-		printf("%s: could not allocate rx mbuf\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	MCLGET(buf->m, M_DONTWAIT);
-	if (!(buf->m->m_flags & M_EXT)) {
-		printf("%s: could not allocate rx mbuf cluster\n",
-		    sc->sc_dev.dv_xname);
-		m_freem(buf->m);
-		buf->m = NULL;
-		return;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmat, buf->map, mtod(buf->m, void *),
-	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		printf("%s: could not load rx buf DMA map\n",
-		    sc->sc_dev.dv_xname);
-		m_freem(buf->m);
-		buf->m = NULL;
-		return;
-	}
-
-	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, buf->map->dm_segs->ds_addr);
 }
 
 void
