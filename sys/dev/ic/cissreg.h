@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissreg.h,v 1.2 2005/09/07 04:00:16 mickey Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.3 2005/11/23 14:46:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -52,6 +52,7 @@ struct ciss_config {
 #define	CISS_SIGNATURE	(*(u_int32_t *)"CISS")
 	u_int32_t	version;
 #define	CISS_VERSION	1
+#define	CISS_VERSION3	3
 	u_int32_t	methods;
 #define	CISS_METH_READY	0x0001
 #define	CISS_METH_SIMPL	0x0002
