@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.16 2005/05/27 17:22:41 dhartmei Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.17 2005/11/23 22:33:11 cloder Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.16 2005/05/27 17:22:41 dhartmei Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.17 2005/11/23 22:33:11 cloder Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 	ts_print(&h->ts);
 
-	// check length
+	/* check length */
 	if (caplen < sizeof(u_int8_t)) {
 		printf("[|pflog]");
 		goto out;
