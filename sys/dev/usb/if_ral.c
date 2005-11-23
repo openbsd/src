@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.47 2005/11/23 20:23:48 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.48 2005/11/23 20:29:30 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2225,10 +2225,11 @@ ural_amrr_timeout(void *arg)
 	req.bRequest = RAL_READ_MULTI_MAC;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, RAL_STA_CSR0);
-	USETW(req.wLength, 22);
+	USETW(req.wLength, sizeof sc->sta);
 
 	usbd_setup_default_xfer(sc->amrr_xfer, sc->sc_udev, sc,
-	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, 22, 0, ural_amrr_update);
+	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof sc->sta, 0,
+	    ural_amrr_update);
 	(void)usbd_transfer(sc->amrr_xfer);
 
 	splx(s);
@@ -2246,7 +2247,7 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	amrr->retrycnt =
 	    sc->sta[7] +	/* TX one-retry ok count */
-	    sc->sta[8] +	/* TX more-retry ok count  */
+	    sc->sta[8] +	/* TX more-retry ok count */
 	    sc->sta[8];		/* TX retry-fail count */
 
 	amrr->txcnt =
