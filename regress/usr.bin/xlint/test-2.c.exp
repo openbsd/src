@@ -1,4 +1,3 @@
-test-2.c:
 test-2.c(17): warning: bitwise operation on signed value possibly nonportable
 test-2.c(22): warning: bitwise operation on signed value possibly nonportable
 test-2.c(22): warning: right shift of 8-bit quantity by 8 bits
