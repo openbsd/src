@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.44 2005/09/12 17:10:40 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.45 2005/11/23 18:34:33 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -134,7 +134,7 @@ _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
 .endif
 
-.if !defined(NOLINT)
+.if defined(WANTLINT)
 _LIBS+=llib-l${LIB}.ln
 .endif
 
@@ -252,7 +252,7 @@ realinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
 .endif
-.if !defined(NOLINT)
+.if defined(WANTLINT)
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
 .endif
