@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.94 2005/10/11 09:10:49 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.95 2005/11/23 12:12:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -45,7 +45,7 @@
  *	Theo de Raadt.
  */
 
-/*#define	AMI_DEBUG */
+#include "bio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,11 @@
 #include <dev/ic/amireg.h>
 #include <dev/ic/amivar.h>
 
+#if NBIO > 0
 #include <dev/biovar.h>
-#include "bio.h"
+#endif
+
+/*#define	AMI_DEBUG */
 
 #ifdef AMI_DEBUG
 #define	AMI_DPRINTF(m,a)	do { if (ami_debug & (m)) printf a; } while (0)
