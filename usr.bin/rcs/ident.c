@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.6 2005/11/16 15:25:29 xsa Exp $	*/
+/*	$OpenBSD: ident.c,v 1.7 2005/11/23 16:01:47 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -78,12 +78,6 @@ ident_main(int argc, char **argv)
 
 			ident_file(argv[i], fp);
 			fclose(fp);
-
-			if ((found == 0) && (verbose == 1))
-				fprintf(stderr,
-				    "ident warning: no id keywords in %s\n",
-				    argv[i]);
-			found = 0;
 		}
 	}
 
@@ -96,8 +90,10 @@ ident_file(const char *filename, FILE *fp)
 {
 	int c;
 
-	if (fp != stdin)
+	if (filename != NULL)
 		printf("%s:\n", filename);
+	else
+		filename = "standard output";
 
 	for (c = 0; c != EOF; (c = getc(fp))) {
 		if ((feof(fp)) || (ferror(fp)))
@@ -105,6 +101,12 @@ ident_file(const char *filename, FILE *fp)
 		if (c == KEYDELIM)
 			ident_line(fp);
 	}
+
+	if ((found == 0) && (verbose == 1))
+		fprintf(stderr, "ident warning: no id keywords in %s\n",
+	 	    filename);
+
+	found = 0;
 
 	return (0);
 }
