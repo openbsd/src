@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.31 2005/11/07 02:57:46 brad Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.32 2005/11/23 11:30:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -117,6 +117,7 @@
 #endif
 
 #include <uvm/uvm_extern.h>		/* for vtophys */
+#define	VTOPHYS(v)	vtophys((vaddr_t)(v))
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -933,12 +934,12 @@ int wb_list_rx_init(sc)
 		if (i == (WB_RX_LIST_CNT - 1)) {
 			cd->wb_rx_chain[i].wb_nextdesc = &cd->wb_rx_chain[0];
 			ld->wb_rx_list[i].wb_next = 
-					vtophys(&ld->wb_rx_list[0]);
+					VTOPHYS(&ld->wb_rx_list[0]);
 		} else {
 			cd->wb_rx_chain[i].wb_nextdesc =
 					&cd->wb_rx_chain[i + 1];
 			ld->wb_rx_list[i].wb_next =
-					vtophys(&ld->wb_rx_list[i + 1]);
+					VTOPHYS(&ld->wb_rx_list[i + 1]);
 		}
 	}
 
@@ -986,7 +987,7 @@ wb_newbuf(sc, c, m)
 	m_adj(m_new, sizeof(u_int64_t));
 
 	c->wb_mbuf = m_new;
-	c->wb_ptr->wb_data = vtophys(mtod(m_new, caddr_t));
+	c->wb_ptr->wb_data = VTOPHYS(mtod(m_new, caddr_t));
 	c->wb_ptr->wb_ctl = WB_RXCTL_RLINK | ETHER_MAX_DIX_LEN;
 	c->wb_ptr->wb_status = WB_RXSTAT;
 
@@ -1082,7 +1083,7 @@ void wb_rxeoc(sc)
 	wb_rxeof(sc);
 
 	WB_CLRBIT(sc, WB_NETCFG, WB_NETCFG_RX_ON);
-	CSR_WRITE_4(sc, WB_RXADDR, vtophys(&sc->wb_ldata->wb_rx_list[0]));
+	CSR_WRITE_4(sc, WB_RXADDR, VTOPHYS(&sc->wb_ldata->wb_rx_list[0]));
 	WB_SETBIT(sc, WB_NETCFG, WB_NETCFG_RX_ON);
 	if (CSR_READ_4(sc, WB_ISR) & WB_RXSTATE_SUSPEND)
 		CSR_WRITE_4(sc, WB_RXSTART, 0xFFFFFFFF);
@@ -1305,8 +1306,8 @@ int wb_encap(sc, c, m_head)
 				f->wb_status = 0;
 			} else
 				f->wb_status = WB_TXSTAT_OWN;
-			f->wb_next = vtophys(&c->wb_ptr->wb_frag[frag + 1]);
-			f->wb_data = vtophys(mtod(m, vaddr_t));
+			f->wb_next = VTOPHYS(&c->wb_ptr->wb_frag[frag + 1]);
+			f->wb_data = VTOPHYS(mtod(m, vaddr_t));
 			frag++;
 		}
 	}
@@ -1339,7 +1340,7 @@ int wb_encap(sc, c, m_head)
 		m_head = m_new;
 		f = &c->wb_ptr->wb_frag[0];
 		f->wb_status = 0;
-		f->wb_data = vtophys(mtod(m_new, caddr_t));
+		f->wb_data = VTOPHYS(mtod(m_new, caddr_t));
 		f->wb_ctl = total_len = m_new->m_len;
 		f->wb_ctl |= WB_TXCTL_TLINK|WB_TXCTL_FIRSTFRAG;
 		frag = 1;
@@ -1348,7 +1349,7 @@ int wb_encap(sc, c, m_head)
 	if (total_len < WB_MIN_FRAMELEN) {
 		f = &c->wb_ptr->wb_frag[frag];
 		f->wb_ctl = WB_MIN_FRAMELEN - total_len;
-		f->wb_data = vtophys(&sc->wb_cdata.wb_pad);
+		f->wb_data = VTOPHYS(&sc->wb_cdata.wb_pad);
 		f->wb_ctl |= WB_TXCTL_TLINK;
 		f->wb_status = WB_TXSTAT_OWN;
 		frag++;
@@ -1357,7 +1358,7 @@ int wb_encap(sc, c, m_head)
 	c->wb_mbuf = m_head;
 	c->wb_lastdesc = frag - 1;
 	WB_TXCTL(c) |= WB_TXCTL_LASTFRAG;
-	WB_TXNEXT(c) = vtophys(&c->wb_nextdesc->wb_ptr->wb_frag[0]);
+	WB_TXNEXT(c) = VTOPHYS(&c->wb_nextdesc->wb_ptr->wb_frag[0]);
 
 	return(0);
 }
@@ -1548,7 +1549,7 @@ void wb_init(xsc)
 	 * Load the address of the RX list.
 	 */
 	WB_CLRBIT(sc, WB_NETCFG, WB_NETCFG_RX_ON);
-	CSR_WRITE_4(sc, WB_RXADDR, vtophys(&sc->wb_ldata->wb_rx_list[0]));
+	CSR_WRITE_4(sc, WB_RXADDR, VTOPHYS(&sc->wb_ldata->wb_rx_list[0]));
 
 	/*
 	 * Enable interrupts.
@@ -1561,7 +1562,7 @@ void wb_init(xsc)
 	CSR_WRITE_4(sc, WB_RXSTART, 0xFFFFFFFF);
 
 	WB_CLRBIT(sc, WB_NETCFG, WB_NETCFG_TX_ON);
-	CSR_WRITE_4(sc, WB_TXADDR, vtophys(&sc->wb_ldata->wb_tx_list[0]));
+	CSR_WRITE_4(sc, WB_TXADDR, VTOPHYS(&sc->wb_ldata->wb_tx_list[0]));
 	WB_SETBIT(sc, WB_NETCFG, WB_NETCFG_TX_ON);
 
 	ifp->if_flags |= IFF_RUNNING;

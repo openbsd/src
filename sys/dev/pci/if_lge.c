@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.34 2005/10/09 04:44:45 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.35 2005/11/23 11:30:14 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -102,7 +102,7 @@
 #endif
 
 #include <uvm/uvm_extern.h>              /* for vtophys */
-#include <uvm/uvm_pmap.h>            /* for vtophys */
+#define	VTOPHYS(v)	vtophys((vaddr_t)(v))
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -729,7 +729,7 @@ lge_newbuf(struct lge_softc *sc, struct lge_rx_desc *c, struct mbuf *m)
 
 	c->lge_mbuf = m_new;
 	c->lge_fragptr_hi = 0;
-	c->lge_fragptr_lo = vtophys(mtod(m_new, caddr_t));
+	c->lge_fragptr_lo = VTOPHYS(mtod(m_new, caddr_t));
 	c->lge_fraglen = m_new->m_len;
 	c->lge_ctl = m_new->m_len | LGE_RXCTL_WANTINTR | LGE_FRAGCNT(1);
 	c->lge_sts = 0;
@@ -745,7 +745,7 @@ lge_newbuf(struct lge_softc *sc, struct lge_rx_desc *c, struct mbuf *m)
 	 * causes the command to be issued, so we do that
 	 * last.
 	 */
-	CSR_WRITE_4(sc, LGE_RXDESC_ADDR_LO, vtophys(c));
+	CSR_WRITE_4(sc, LGE_RXDESC_ADDR_LO, VTOPHYS(c));
 	LGE_INC(sc->lge_cdata.lge_rx_prod, LGE_RX_LIST_CNT);
 
 	return (0);
@@ -1145,7 +1145,7 @@ lge_encap(struct lge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 			tot_len += m->m_len;
 			f = &cur_tx->lge_frags[frag];
 			f->lge_fraglen = m->m_len;
-			f->lge_fragptr_lo = vtophys(mtod(m, vaddr_t));
+			f->lge_fragptr_lo = VTOPHYS(mtod(m, vaddr_t));
 			f->lge_fragptr_hi = 0;
 			frag++;
 		}
@@ -1159,7 +1159,7 @@ lge_encap(struct lge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	LGE_INC((*txidx), LGE_TX_LIST_CNT);
 
 	/* Queue for transmit */
-	CSR_WRITE_4(sc, LGE_TXDESC_ADDR_LO, vtophys(cur_tx));
+	CSR_WRITE_4(sc, LGE_TXDESC_ADDR_LO, VTOPHYS(cur_tx));
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.4 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.5 2005/11/23 11:30:14 mickey Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ struct cfattach uha_eisa_ca = {
 	sizeof(struct uha_softc), uha_eisa_match, uha_eisa_attach
 };
 
-#define KVTOPHYS(x)	vtophys(x)
+#define KVTOPHYS(x)	vtophys((vaddr_t)(x))
 
 int u24_find(bus_space_tag_t, bus_space_handle_t, struct uha_softc *);
 void u24_start_mbox(struct uha_softc *, struct uha_mscp *);

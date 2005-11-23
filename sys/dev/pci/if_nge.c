@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.47 2005/11/04 17:22:05 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.48 2005/11/23 11:30:14 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -122,6 +122,7 @@
 #endif
 
 #include <uvm/uvm_extern.h>              /* for vtophys */
+#define	VTOPHYS(v)	vtophys((vaddr_t)(v))
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -989,12 +990,12 @@ nge_list_tx_init(sc)
 			ld->nge_tx_list[i].nge_nextdesc =
 			    &ld->nge_tx_list[0];
 			ld->nge_tx_list[i].nge_next =
-			    vtophys(&ld->nge_tx_list[0]);
+			    VTOPHYS(&ld->nge_tx_list[0]);
 		} else {
 			ld->nge_tx_list[i].nge_nextdesc =
 			    &ld->nge_tx_list[i + 1];
 			ld->nge_tx_list[i].nge_next =
-			    vtophys(&ld->nge_tx_list[i + 1]);
+			    VTOPHYS(&ld->nge_tx_list[i + 1]);
 		}
 		ld->nge_tx_list[i].nge_mbuf = NULL;
 		ld->nge_tx_list[i].nge_ptr = 0;
@@ -1030,12 +1031,12 @@ nge_list_rx_init(sc)
 			ld->nge_rx_list[i].nge_nextdesc =
 			    &ld->nge_rx_list[0];
 			ld->nge_rx_list[i].nge_next =
-			    vtophys(&ld->nge_rx_list[0]);
+			    VTOPHYS(&ld->nge_rx_list[0]);
 		} else {
 			ld->nge_rx_list[i].nge_nextdesc =
 			    &ld->nge_rx_list[i + 1];
 			ld->nge_rx_list[i].nge_next =
-			    vtophys(&ld->nge_rx_list[i + 1]);
+			    VTOPHYS(&ld->nge_rx_list[i + 1]);
 		}
 	}
 
@@ -1086,7 +1087,7 @@ nge_newbuf(sc, c, m)
 	m_adj(m_new, sizeof(u_int64_t));
 
 	c->nge_mbuf = m_new;
-	c->nge_ptr = vtophys(mtod(m_new, caddr_t));
+	c->nge_ptr = VTOPHYS(mtod(m_new, caddr_t));
 	DPRINTFN(7,("%s: c->nge_ptr=%#x\n", sc->sc_dv.dv_xname,
 		    c->nge_ptr));
 	c->nge_ctl = m_new->m_len;
@@ -1616,7 +1617,7 @@ nge_encap(sc, m_head, txidx)
 				return(ENOBUFS);
 			f = &sc->nge_ldata->nge_tx_list[frag];
 			f->nge_ctl = NGE_CMDSTS_MORE | m->m_len;
-			f->nge_ptr = vtophys(mtod(m, vaddr_t));
+			f->nge_ptr = VTOPHYS(mtod(m, vaddr_t));
 			DPRINTFN(7,("%s: f->nge_ptr=%#x\n",
 				    sc->sc_dv.dv_xname, f->nge_ptr));
 			if (cnt != 0)
@@ -1794,9 +1795,9 @@ nge_init(xsc)
 	 * Load the address of the RX and TX lists.
 	 */
 	CSR_WRITE_4(sc, NGE_RX_LISTPTR,
-	    vtophys(&sc->nge_ldata->nge_rx_list[0]));
+	    VTOPHYS(&sc->nge_ldata->nge_rx_list[0]));
 	CSR_WRITE_4(sc, NGE_TX_LISTPTR,
-	    vtophys(&sc->nge_ldata->nge_tx_list[0]));
+	    VTOPHYS(&sc->nge_ldata->nge_tx_list[0]));
 
 	/* Set RX configuration */
 	CSR_WRITE_4(sc, NGE_RX_CFG, NGE_RXCFG);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.20 2005/02/17 18:07:36 jfb Exp $	*/
+/*	$OpenBSD: wds.c,v 1.21 2005/11/23 11:30:14 mickey Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -104,7 +104,7 @@ struct wds_mbx {
 	struct wds_mbx_in *tmbi;	/* Target Mail Box in */
 };
 
-#define	KVTOPHYS(x)	vtophys(x)
+#define	KVTOPHYS(x)	vtophys((vaddr_t)(x))
 
 struct wds_softc {
 	struct device sc_dev;

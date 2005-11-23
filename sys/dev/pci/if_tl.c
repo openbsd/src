@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.36 2005/11/07 02:57:45 brad Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.37 2005/11/23 11:30:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -210,6 +210,7 @@
 #endif
 
 #include <uvm/uvm_extern.h>              /* for vtophys */
+#define	VTOPHYS(v)	vtophys((vaddr_t)(v))
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1038,7 +1039,7 @@ int tl_list_rx_init(sc)
 		} else {
 			cd->tl_rx_chain[i].tl_next = &cd->tl_rx_chain[i + 1];
 			ld->tl_rx_list[i].tlist_fptr =
-					vtophys(&ld->tl_rx_list[i + 1]);
+					VTOPHYS(&ld->tl_rx_list[i + 1]);
 		}
 	}
 
@@ -1073,7 +1074,7 @@ int tl_newbuf(sc, c)
 	c->tl_next = NULL;
 	c->tl_ptr->tlist_frsize = MCLBYTES;
 	c->tl_ptr->tlist_fptr = 0;
-	c->tl_ptr->tl_frag.tlist_dadr = vtophys(mtod(m_new, caddr_t));
+	c->tl_ptr->tl_frag.tlist_dadr = VTOPHYS(mtod(m_new, caddr_t));
 	c->tl_ptr->tl_frag.tlist_dcnt = MCLBYTES;
 	c->tl_ptr->tlist_cstat = TL_CSTAT_READY;
 
@@ -1134,7 +1135,7 @@ int tl_intvec_rxeof(xsc, type)
 		}
 
 		sc->tl_cdata.tl_rx_tail->tl_ptr->tlist_fptr =
-						vtophys(cur_rx->tl_ptr);
+						VTOPHYS(cur_rx->tl_ptr);
 		sc->tl_cdata.tl_rx_tail->tl_next = cur_rx;
 		sc->tl_cdata.tl_rx_tail = cur_rx;
 
@@ -1199,7 +1200,7 @@ int tl_intvec_rxeoc(xsc, type)
 	r = 1;
 	cd->tl_rx_head = &cd->tl_rx_chain[0];
 	cd->tl_rx_tail = &cd->tl_rx_chain[TL_RX_LIST_CNT - 1];
-	CSR_WRITE_4(sc, TL_CH_PARM, vtophys(sc->tl_cdata.tl_rx_head->tl_ptr));
+	CSR_WRITE_4(sc, TL_CH_PARM, VTOPHYS(sc->tl_cdata.tl_rx_head->tl_ptr));
 	r |= (TL_CMD_GO|TL_CMD_RT);
 	return(r);
 }
@@ -1280,7 +1281,7 @@ int tl_intvec_txeoc(xsc, type)
 		CMD_PUT(sc, TL_CMD_ACK | 0x00000001 | type);
 		/* Then load the address of the next TX list. */
 		CSR_WRITE_4(sc, TL_CH_PARM,
-		    vtophys(sc->tl_cdata.tl_tx_head->tl_ptr));
+		    VTOPHYS(sc->tl_cdata.tl_tx_head->tl_ptr));
 		/* Restart TX channel. */
 		cmd = CSR_READ_4(sc, TL_HOSTCMD);
 		cmd &= ~TL_CMD_RT;
@@ -1479,7 +1480,7 @@ int tl_encap(sc, c, m_head)
 				break;
 			total_len+= m->m_len;
 			c->tl_ptr->tl_frag[frag].tlist_dadr =
-				vtophys(mtod(m, vaddr_t));
+				VTOPHYS(mtod(m, vaddr_t));
 			c->tl_ptr->tl_frag[frag].tlist_dcnt = m->m_len;
 			frag++;
 		}
@@ -1514,7 +1515,7 @@ int tl_encap(sc, c, m_head)
 		m_freem(m_head);
 		m_head = m_new;
 		f = &c->tl_ptr->tl_frag[0];
-		f->tlist_dadr = vtophys(mtod(m_new, caddr_t));
+		f->tlist_dadr = VTOPHYS(mtod(m_new, caddr_t));
 		f->tlist_dcnt = total_len = m_new->m_len;
 		frag = 1;
 	}
@@ -1526,7 +1527,7 @@ int tl_encap(sc, c, m_head)
 	if (total_len < TL_MIN_FRAMELEN) {
 		f = &c->tl_ptr->tl_frag[frag];
 		f->tlist_dcnt = TL_MIN_FRAMELEN - total_len;
-		f->tlist_dadr = vtophys(&sc->tl_ldata->tl_pad);
+		f->tlist_dadr = VTOPHYS(&sc->tl_ldata->tl_pad);
 		total_len += f->tlist_dcnt;
 		frag++;
 	}
@@ -1584,7 +1585,7 @@ void tl_start(ifp)
 		/* Chain it together */
 		if (prev != NULL) {
 			prev->tl_next = cur_tx;
-			prev->tl_ptr->tlist_fptr = vtophys(cur_tx->tl_ptr);
+			prev->tl_ptr->tlist_fptr = VTOPHYS(cur_tx->tl_ptr);
 		}
 		prev = cur_tx;
 
@@ -1617,7 +1618,7 @@ void tl_start(ifp)
 
 		if (sc->tl_txeoc) {
 			sc->tl_txeoc = 0;
-			CSR_WRITE_4(sc, TL_CH_PARM, vtophys(start_tx->tl_ptr));
+			CSR_WRITE_4(sc, TL_CH_PARM, VTOPHYS(start_tx->tl_ptr));
 			cmd = CSR_READ_4(sc, TL_HOSTCMD);
 			cmd &= ~TL_CMD_RT;
 			cmd |= TL_CMD_GO|TL_CMD_INTSON;
@@ -1700,7 +1701,7 @@ void tl_init(xsc)
 
 	/* Load the address of the rx list */
 	CMD_SET(sc, TL_CMD_RT);
-	CSR_WRITE_4(sc, TL_CH_PARM, vtophys(&sc->tl_ldata->tl_rx_list[0]));
+	CSR_WRITE_4(sc, TL_CH_PARM, VTOPHYS(&sc->tl_ldata->tl_rx_list[0]));
 
 	if (!sc->tl_bitrate) {
 		mii_mediachg(&sc->sc_mii);

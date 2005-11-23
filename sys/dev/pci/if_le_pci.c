@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.23 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.24 2005/11/23 11:30:14 mickey Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ le_pci_attach(parent, self, aux)
 	lesc->sc_ioh = ioh;
 
 	sc->sc_conf3 = 0;
-	sc->sc_addr = vtophys(sc->sc_mem);	/* XXX XXX XXX */
+	sc->sc_addr = vtophys((vaddr_t)sc->sc_mem);	/* XXX XXX XXX */
 	sc->sc_memsize = PCNET_MEMSIZE;
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;

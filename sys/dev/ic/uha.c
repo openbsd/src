@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.6 2005/02/17 18:07:36 jfb Exp $	*/
+/*	$OpenBSD: uha.c,v 1.7 2005/11/23 11:30:14 mickey Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -84,7 +84,7 @@
 #define Debugger() panic("should call debugger here (ultra14f.c)")
 #endif /* ! DDB */
 
-#define KVTOPHYS(x)	vtophys(x)
+#define KVTOPHYS(x)	vtophys((vaddr_t)x)
 
 integrate void uha_reset_mscp(struct uha_softc *, struct uha_mscp *);
 void uha_free_mscp(struct uha_softc *, struct uha_mscp *);

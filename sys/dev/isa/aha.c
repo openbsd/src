@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.53 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: aha.c,v 1.54 2005/11/23 11:30:14 mickey Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1147,7 +1147,7 @@ aha_init(sc)
 	/* Initialize mail box. */
 	mailbox.cmd.opcode = AHA_MBX_INIT;
 	mailbox.cmd.nmbx = AHA_MBX_SIZE;
-	ltophys(vtophys(wmbx), mailbox.cmd.addr);
+	ltophys(vtophys((vaddr_t)wmbx), mailbox.cmd.addr);
 	aha_cmd(iobase, sc, sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
 }
