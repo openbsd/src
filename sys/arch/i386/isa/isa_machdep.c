@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.52 2005/11/23 09:24:54 mickey Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.53 2005/11/23 09:32:46 mickey Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -143,11 +143,6 @@
 #include <i386/isa/isa_machdep.h>
 
 #include "isadma.h"
-
-/*
- * ISA can only DMA to 0-16M.
- */
-#define	ISA_DMA_BOUNCE_THRESHOLD	0x00ffffff
 
 extern	paddr_t avail_end;
 

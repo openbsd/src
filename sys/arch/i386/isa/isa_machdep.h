@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.19 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.20 2005/11/23 09:32:46 mickey Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.7 1997/06/06 23:28:42 thorpej Exp $	*/
 
 /*-
@@ -81,6 +81,11 @@
 #define _I386_ISA_MACHDEP_H_			/* XXX */
 
 #include <machine/bus.h>
+
+/*
+ * ISA can only DMA to 0-16M.
+ */
+#define	ISA_DMA_BOUNCE_THRESHOLD	0x00ffffff
 
 /*
  * XXX THIS FILE IS A MESS.  copyright: berkeley's probably.

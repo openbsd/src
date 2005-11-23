@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.332 2005/11/18 17:11:57 brad Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.333 2005/11/23 09:32:46 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -4160,12 +4160,16 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	/* Always round the size. */
 	size = round_page(size);
 
+	TAILQ_INIT(&mlist);
 	/*
 	 * Allocate pages from the VM system.
+	 * For non-ISA mappings first try higher memory segments.
 	 */
-	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(size, low, high,
-	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	if (high <= ISA_DMA_BOUNCE_THRESHOLD || (error = uvm_pglistalloc(size,
+	    round_page(ISA_DMA_BOUNCE_THRESHOLD), high, alignment, boundary,
+	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0)))
+		error = uvm_pglistalloc(size, low, high, alignment, boundary,
+		    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
 
