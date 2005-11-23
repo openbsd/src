@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.51 2005/10/07 06:33:11 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.52 2005/11/23 20:57:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -241,14 +241,14 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
-	ic->ic_myaddr[0] = val >> 8;
-	ic->ic_myaddr[1] = val & 0xff;
+	ic->ic_myaddr[0] = val & 0xff;
+	ic->ic_myaddr[1] = val >> 8;
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 1);
-	ic->ic_myaddr[2] = val >> 8;
-	ic->ic_myaddr[3] = val & 0xff;
+	ic->ic_myaddr[2] = val & 0xff;
+	ic->ic_myaddr[3] = val >> 8;
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 2);
-	ic->ic_myaddr[4] = val >> 8;
-	ic->ic_myaddr[5] = val & 0xff;
+	ic->ic_myaddr[4] = val & 0xff;
+	ic->ic_myaddr[5] = val >> 8;
 
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
@@ -748,7 +748,7 @@ iwi_read_prom_word(struct iwi_softc *sc, u_int8_t addr)
 	IWI_EEPROM_CTL(sc, 0);
 	IWI_EEPROM_CTL(sc, IWI_EEPROM_C);
 
-	return betoh16(val);
+	return val;
 }
 
 void
@@ -1210,7 +1210,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->nseg = htole32(buf->map->dm_nsegs);
 	for (i = 0; i < buf->map->dm_nsegs; i++) {
 		desc->seg_addr[i] = htole32(buf->map->dm_segs[i].ds_addr);
-		desc->seg_len[i]  = htole32(buf->map->dm_segs[i].ds_len);
+		desc->seg_len[i]  = htole16(buf->map->dm_segs[i].ds_len);
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->tx_ring_map,
@@ -1220,7 +1220,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	bus_dmamap_sync(sc->sc_dmat, buf->map, 0, MCLBYTES,
 	    BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(5, ("TX!DATA!%u!%u\n", desc->len, desc->nseg));
+	DPRINTFN(5, ("TX!DATA!%u!%u\n", letoh16(desc->len), desc->nseg));
 
 	/* Inform firmware about this new packet */
 	sc->tx_queued++;
@@ -1492,7 +1492,7 @@ iwi_load_ucode(struct iwi_softc *sc, const char *name)
 
 	/* Adapter is buggy, we must set the address for each word */
 	for (w = (u_int16_t *)uc; size > 0; w++, size -= 2)
-		MEM_WRITE_2(sc, 0x200010, *w);
+		MEM_WRITE_2(sc, 0x200010, htole16(*w));
 
 	MEM_WRITE_1(sc, 0x200000, 0x00);
 	MEM_WRITE_1(sc, 0x200000, 0x80);
