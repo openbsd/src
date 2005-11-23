@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.51 2004/11/29 20:15:40 pat Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.52 2005/11/23 09:24:54 mickey Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -558,9 +558,11 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 				}
 			}
 		}
+
+		/* no MP mapping found -- invent! */
  		if (mip == NULL)
-			printf("isa_intr_establish: no MP mapping found\n");
- 		else
+			airq = mpbios_invent(irq, type, mp_isa_bus);
+
 			return (apic_intr_establish(airq, type, level, ih_fun,
 			    ih_arg, ih_what));
  	}

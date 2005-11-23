@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.5 2005/11/13 14:23:26 martin Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.6 2005/11/23 09:24:46 mickey Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -175,7 +175,7 @@ void	mp_print_isa_intr (int);
 void	mpbios_cpu(const u_int8_t *, struct device *);
 void	mpbios_bus(const u_int8_t *, struct device *);
 void	mpbios_ioapic(const u_int8_t *, struct device *);
-void	mpbios_int(const u_int8_t *, int, struct mp_intr_map *);
+void	mpbios_int(const u_int8_t *, struct mp_intr_map *);
 
 const void *mpbios_map(paddr_t, int, struct mp_map *);
 static __inline void mpbios_unmap(struct mp_map *);
@@ -457,6 +457,7 @@ static struct mpbios_baseentry mp_conf[] =
 struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
+int mp_nintrs;
 
 struct mp_intr_map *lapic_ints[2]; /* XXX */
 int mp_isa_bus = -1;		/* XXX */
@@ -506,7 +507,7 @@ mpbios_scan(self)
 	const u_int8_t 	*position, *end;
 	int		count;
 	int		type;
-	int		intr_cnt, cur_intr;
+	int		intr_cnt;
 	paddr_t		lapic_base;
 
 	printf("%s: Intel MP Specification ", self->dv_xname);
@@ -580,7 +581,7 @@ mpbios_scan(self)
 		position += sizeof(*mp_cth);
 
 		count = mp_cth->entry_count;
-		intr_cnt = 0;
+		intr_cnt = 15;	/* presume all isa irqs being missing */
 
 		while ((count--) && (position < end)) {
 			type = *position;
@@ -626,7 +627,7 @@ mpbios_scan(self)
 		/* re-walk the table, recording info of interest */
 		position = (const u_int8_t *)mp_cth + sizeof(*mp_cth);
 		count = mp_cth->entry_count;
-		cur_intr = 0;
+		mp_nintrs = 0;
 
 		while ((count--) && (position < end)) {
 			switch (type = *(u_char *)position) {
@@ -641,9 +642,7 @@ mpbios_scan(self)
 				break;
 			case MPS_MCT_IOINT:
 			case MPS_MCT_LINT:
-				mpbios_int(position, type,
-				    &mp_intrs[cur_intr]);
-				cur_intr++;
+				mpbios_int(position, &mp_intrs[mp_nintrs++]);
 				break;
 			default:
 				printf("%s: unknown entry type %x "
@@ -667,6 +666,38 @@ mpbios_scan(self)
 		mp_cth = NULL;
 		mpbios_unmap(&mp_cfg_table_map);
 	}
+}
+
+int
+mpbios_invent(int irq, int type, int bus)
+{
+	struct mp_intr_map *mip;
+	struct mpbios_int e;
+
+	e.type = MPS_MCT_IOINT;
+	e.int_type = MPS_INTTYPE_INT;
+	switch (type) {
+	case IST_EDGE:
+		e.int_flags = MPS_INT(MPS_INTPO_ACTHI, MPS_INTTR_EDGE);
+		break;
+
+	case IST_LEVEL:
+		e.int_flags = MPS_INT(MPS_INTPO_ACTLO, MPS_INTTR_LEVEL);
+		break;
+
+	case IST_NONE:
+	case IST_PULSE:
+		e.int_flags = MPS_INT(MPS_INTPO_DEF, MPS_INTTR_DEF);
+		break;
+	}
+	e.src_bus_id = bus;
+	e.src_bus_irq = irq;
+	e.dst_apic_id = mp_busses[bus].mb_intrs->ioapic->sc_apicid;
+	e.dst_apic_int = irq;
+
+	mpbios_int((const u_int8_t *)&e, (mip = &mp_intrs[mp_nintrs++]));
+
+	return (mip->ioapic_ih | irq);
 }
 
 void
@@ -1005,9 +1036,8 @@ static const char flagtype_fmt[] = "\177\020"
 		"f\2\2trig\0" "=\1Edge\0" "=\3Level\0";
 
 void
-mpbios_int(ent, enttype, mpi)
+mpbios_int(ent, mpi)
 	const u_int8_t *ent;
-	int enttype;
 	struct mp_intr_map *mpi;
 {
 	const struct mpbios_int *entry = (const struct mpbios_int *)ent;
@@ -1059,7 +1089,7 @@ mpbios_int(ent, enttype, mpi)
 
 	(*mpb->mb_intr_cfg)(&rw_entry, &mpi->redir);
 
-	if (enttype == MPS_MCT_IOINT) {
+	if (entry->type == MPS_MCT_IOINT) {
 		sc = ioapic_find(id);
 		if (sc == NULL) {
 			printf("mpbios: can't find ioapic %d\n", id);

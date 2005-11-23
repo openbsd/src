@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosreg.h,v 1.2 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: mpbiosreg.h,v 1.3 2005/11/23 09:24:52 mickey Exp $	*/
 /* $NetBSD: mpbiosreg.h,v 1.1.2.3 2000/02/29 13:17:51 sommerfeld Exp $ */
 
 /*-
@@ -70,11 +70,18 @@
 #define MPS_INTPO_DEF		0
 #define MPS_INTPO_ACTHI		1
 #define MPS_INTPO_ACTLO		3
+#define MPS_INTPO_SHIFT		0
+#define MPS_INTPO_MASK		3
 
 #define MPS_INTTR_DEF		0
 #define MPS_INTTR_EDGE		1
 #define MPS_INTTR_LEVEL		3
+#define MPS_INTTR_SHIFT		2
+#define MPS_INTTR_MASK		3
 
+#define MPS_INT(p,t) \
+    ((((p) & MPS_INTPO_MASK) << MPS_INTPO_SHIFT) | \
+     (((t) & MPS_INTTR_MASK) << MPS_INTTR_SHIFT))
 
 /* MP Floating Pointer Structure */
 struct mpbios_fps {

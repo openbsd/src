@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.48 2005/11/21 22:28:13 brad Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.49 2005/11/23 09:24:57 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -101,6 +101,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/i8259.h>
+#include <machine/i82093var.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -535,15 +536,15 @@ pci_intr_route_link(pc, ihp)
 {
 	struct pciintr_link_map *l;
 	pcireg_t intr;
-	int rv = 1;
+	int irq, rv = 1;
 	char *p = NULL;
 
 	if (pcibios_flags & PCIBIOS_INTR_FIXUP)
 		return 1;
 
-	if (ihp->line != 0 &&
-	    ihp->line != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
-		pcibios_pir_header.exclusive_irq |= (1 << ihp->line);
+	irq = ihp->line & APIC_INT_LINE_MASK;
+	if (irq != 0 && irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
+		pcibios_pir_header.exclusive_irq |= 1 << irq;
 
 	l = ihp->link;
 	if (!l || pciintr_icu_tag == NULL)
@@ -584,13 +585,13 @@ pci_intr_route_link(pc, ihp)
 	 * IRQs 14 and 15 are reserved for PCI IDE interrupts; don't muck
 	 * with them.
 	 */
-	if (ihp->line == 14 || ihp->line == 15)
+	if (irq == 14 || irq == 15)
 		return (1);
 
 	intr = pci_conf_read(pc, ihp->tag, PCI_INTERRUPT_REG);
-	if (ihp->line != PCI_INTERRUPT_LINE(intr)) {
+	if (irq != PCI_INTERRUPT_LINE(intr)) {
 		intr &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
-		intr |= (ihp->line << PCI_INTERRUPT_LINE_SHIFT);
+		intr |= irq << PCI_INTERRUPT_LINE_SHIFT;
 		pci_conf_write(pc, ihp->tag, PCI_INTERRUPT_REG, intr);
 	}
 
@@ -651,7 +652,7 @@ pci_intr_header_fixup(pc, tag, ihp)
 	if (pcibios_flags & PCIBIOS_INTR_FIXUP)
 		return 1;
 
-	irq = ihp->line;
+	irq = ihp->line & APIC_INT_LINE_MASK;
 	ihp->link = NULL;
 	ihp->tag = tag;
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
@@ -666,7 +667,7 @@ pci_intr_header_fixup(pc, tag, ihp)
 		/*
 		 * No link map entry.
 		 * Probably pciintr_icu_getclink() or pciintr_icu_get_intr()
-		 * was failed.
+		 * has failed.
 		 */
 		if (pcibios_flags & PCIBIOS_INTRDEBUG)
 			printf("pci_intr_header_fixup: no entry for link "
@@ -682,8 +683,8 @@ pci_intr_header_fixup(pc, tag, ihp)
 	} else if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 
 		/* Appropriate interrupt was not found. */
-		if (pciintr_icu_tag == NULL && ihp->line != 0 &&
-		    ihp->line != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
+		if (pciintr_icu_tag == NULL && irq != 0 &&
+		    irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			/*
 			 * Do not print warning,
 			 * if no compatible PCI ICU found,
@@ -695,17 +696,17 @@ pci_intr_header_fixup(pc, tag, ihp)
 	} else if (irq == 0 || irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 
 		p = " fixed up";
-		ihp->line = l->irq;
+		ihp->line = irq = l->irq;
 
 	} else if (pcibios_flags & PCIBIOS_FIXUP_FORCE) {
 		/* routed by BIOS, but inconsistent */
 		/* believe PCI IRQ Routing table */
 		p = " WARNING: overriding";
-		ihp->line = l->irq;
+		ihp->line = irq = l->irq;
 	} else {
 		/* believe PCI Interrupt Configuration Register (default) */
 		p = " WARNING: preserving";
-		ihp->line = l->irq = irq;
+		ihp->line = (l->irq = irq) | (l->clink & PCI_INT_VIA_ISA);
 	}
 
 	if (pcibios_flags & PCIBIOS_INTRDEBUG) {

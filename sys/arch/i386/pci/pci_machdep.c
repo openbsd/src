@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.29 2005/07/28 17:22:28 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.30 2005/11/23 09:24:57 mickey Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -107,8 +107,8 @@ extern bios_pciinfo_t *bios_pciinfo;
 
 #include "ioapic.h"
 
-#if NIOAPIC > 0
 #include <machine/i82093var.h>
+#if NIOAPIC > 0
 #include <machine/mpbiosvar.h>
 #endif
 
@@ -510,7 +510,7 @@ pci_intr_map(pa, ihp)
 	ihp->pin = pin;
 #if NPCIBIOS > 0
 	pci_intr_header_fixup(pc, intrtag, ihp);
-	line = ihp->line;
+	line = ihp->line & APIC_INT_LINE_MASK;
 #endif
 
 	/*
@@ -543,7 +543,7 @@ pci_intr_map(pa, ihp)
 #if NIOAPIC > 0
 	pci_decompose_tag (pc, intrtag, &bus, &dev, &func);
 
-	if (mp_busses != NULL) {
+	if (!(ihp->line & PCI_INT_VIA_ISA) && mp_busses != NULL) {
 		/*
 		 * Assumes 1:1 mapping between PCI bus numbers and
 		 * the numbers given by the MP bios.
@@ -597,20 +597,20 @@ pci_intr_string(pc, ih)
 	pci_intr_handle_t ih;
 {
 	static char irqstr[64];
+	int line = ih.line & APIC_INT_LINE_MASK;
 
-	if (ih.line == 0 || (ih.line  & 0xff) >= ICU_LEN || ih.line == 2)
-		panic("pci_intr_string: bogus handle 0x%x", ih.line);
+	if (line == 0 || line >= ICU_LEN || line == 2)
+		panic("pci_intr_string: bogus handle 0x%x", line);
 
 #if NIOAPIC > 0
 	if (ih.line & APIC_INT_VIA_APIC) {
 		snprintf(irqstr, sizeof irqstr, "apic %d int %d (irq %d)",
-		     APIC_IRQ_APIC(ih.line), APIC_IRQ_PIN(ih.line),
-		     ih.line & 0xff);
+		     APIC_IRQ_APIC(ih.line), APIC_IRQ_PIN(ih.line), line);
 		return (irqstr);
 	}
 #endif
 
-	snprintf(irqstr, sizeof irqstr, "irq %d", ih.line);
+	snprintf(irqstr, sizeof irqstr, "irq %d", line);
 	return (irqstr);
 }
 
@@ -623,17 +623,17 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 	char *what;
 {
 	void *ret;
+	int l = ih.line & APIC_INT_LINE_MASK;
 
 #if NIOAPIC > 0
-	if (ih.line != -1 && ih.line & APIC_INT_VIA_APIC)
+	if (l != -1 && ih.line & APIC_INT_VIA_APIC)
 		return (apic_intr_establish(ih.line, IST_LEVEL, level, func, 
 		    arg, what));
 #endif
-	if (ih.line == 0 || ih.line >= ICU_LEN || ih.line == 2)
-		panic("pci_intr_establish: bogus handle 0x%x", ih.line);
+	if (l == 0 || l >= ICU_LEN || l == 2)
+		panic("pci_intr_establish: bogus handle 0x%x", l);
 
-	ret = isa_intr_establish(NULL, ih.line, IST_LEVEL, level, func, arg,
-	    what);
+	ret = isa_intr_establish(NULL, l, IST_LEVEL, level, func, arg, what);
 #if NPCIBIOS > 0
 	if (ret)
 		pci_intr_route_link(pc, &ih);
