@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.31 2005/11/14 23:50:26 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.32 2005/11/23 15:57:33 mickey Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -146,5 +146,3 @@
  */
 #define	i386_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
 #define	i386_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
-#define	i386_btod(x)		((unsigned)(x) >> PDSHIFT)
-#define	i386_dtob(x)		((unsigned)(x) << PDSHIFT)
