@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
+/*	$OpenBSD: if_ralvar.h,v 1.3 2005/11/23 20:23:48 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -67,6 +67,14 @@ struct ural_rx_data {
 	struct mbuf		*m;
 };
 
+struct ural_amrr {
+	int	txcnt;
+	int	retrycnt;
+	int	success;
+	int	success_threshold;
+	int	recovery;
+};
+
 struct ural_softc {
 	USBBASEDEVICE		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -82,20 +90,26 @@ struct ural_softc {
 	uint32_t		asic_rev;
 	uint8_t			rf_rev;
 
+	usbd_xfer_handle	amrr_xfer;
+
 	usbd_pipe_handle	sc_rx_pipeh;
 	usbd_pipe_handle	sc_tx_pipeh;
 
 	enum ieee80211_state	sc_state;
 	struct usb_task		sc_task;
 
+	struct ural_amrr	amrr;
+
 	struct ural_rx_data	rx_data[RAL_RX_LIST_COUNT];
 	struct ural_tx_data	tx_data[RAL_TX_LIST_COUNT];
 	int			tx_queued;
 
 	struct timeout		scan_ch;
+	struct timeout		amrr_ch;
 
 	int			sc_tx_timer;
 
+	uint16_t		sta[11];
 	uint32_t		rf_regs[4];
 	uint8_t			txpow[14];
 
