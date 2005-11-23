@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.3 2005/11/20 17:42:49 deraadt Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.4 2005/11/23 18:47:41 cloder Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ typedef	struct strg {
  * qualifiers (only for lex/yacc interface)
  */
 typedef enum {
-	CONST, VOLATILE
+	CONST, VOLATILE, RESTRICT
 } tqual_t;
 
 /*
@@ -123,6 +123,7 @@ typedef	struct type {
 	u_int	t_aincompl : 1;	/* incomplete array type */
 	u_int	t_const : 1;	/* const modifier */
 	u_int	t_volatile : 1;	/* volatile modifier */
+	u_int	t_restrict : 1;	/* restrict modifier */
 	u_int	t_proto : 1;	/* function prototype (t_args valid) */
 	u_int	t_vararg : 1;	/* protoype with ... */
 	u_int	t_typedef : 1;	/* type defined with typedef */
@@ -303,6 +304,7 @@ typedef	struct dinfo {
 	scl_t	d_ctx;		/* context of declaration */
 	u_int	d_const : 1;	/* const in declaration specifiers */
 	u_int	d_volatile : 1;	/* volatile in declaration specifiers */
+	u_int	d_restrict : 1;	/* restrict in declaration specifiers */
 	u_int	d_inline : 1;	/* inline in declaration specifiers */
 	u_int	d_mscl : 1;	/* multiple storage classes */
 	u_int	d_terr : 1;	/* invalid type combination */
@@ -342,6 +344,7 @@ typedef	struct pqinf {
 	int	p_pcnt;			/* number of asterisks */
 	u_int	p_const : 1;
 	u_int	p_volatile : 1;
+	u_int	p_restrict : 1;
 	struct	pqinf *p_nxt;
 } pqinf_t;
 

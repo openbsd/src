@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.7 2005/11/23 09:05:42 deraadt Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.8 2005/11/23 18:47:40 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.7 2005/11/23 09:05:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.8 2005/11/23 18:47:40 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -107,7 +107,7 @@ static	void	ignuptorp(void);
 /* types (char, int, short, long, unsigned, signed, float, double, void) */
 %token	<y_tspec>	T_TYPE
 
-/* qualifiers (const, volatile) */
+/* qualifiers (const, volatile, restrict) */
 %token	<y_tqual>	T_QUAL
 
 /* struct or union */

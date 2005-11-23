@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.14 2005/11/20 18:18:57 cloder Exp $	*/
+/*	$OpenBSD: decl.c,v 1.15 2005/11/23 18:47:41 cloder Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.14 2005/11/20 18:18:57 cloder Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.15 2005/11/23 18:47:41 cloder Exp $";
 #endif
 
 #include <sys/param.h>
@@ -518,15 +518,20 @@ addqual(tqual_t q)
 			warning(10, "const");
 		}
 		dcs->d_const = 1;
-	} else {
-		if (q != VOLATILE)
-			lerror("addqual() 1");
+	} else if (q == VOLATILE) {
 		if (dcs->d_volatile) {
 			/* duplicate "%s" */
 			warning(10, "volatile");
 		}
 		dcs->d_volatile = 1;
-	}
+	} else if (q == RESTRICT) {
+		if (dcs->d_restrict) {
+			/* duplicate "%s" */
+			warning(10, "restrict");
+		}
+		dcs->d_restrict = 1;
+	} else
+		lerror("addqual() 1");
 }
 
 /*
@@ -984,10 +989,11 @@ chktyp(sym_t *sym)
 			}
 		}
 		if (t == VOID && to != PTR) {
-			if (tp->t_const || tp->t_volatile) {
+			if (tp->t_const || tp->t_volatile || tp->t_restrict) {
 				/* inappropriate qualifiers with "void" */
 				warning(69);
 				tp->t_const = tp->t_volatile = 0;
+				tp->t_restrict = 0;
 			}
 		}
 		tpp = &tp->t_subt;
@@ -1985,6 +1991,9 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
 			return (0);
 
 		if (tp1->t_volatile != tp2->t_volatile && !ignqual && !tflag)
+			return (0);
+
+		if (tp1->t_restrict != tp2->t_restrict && !ignqual && !tflag)
 			return (0);
 
 		if (t == STRUCT || t == UNION)
