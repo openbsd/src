@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.10 2005/11/21 18:28:24 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.11 2005/11/23 00:12:13 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.10 2005/11/21 18:28:24 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.11 2005/11/23 00:12:13 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -935,20 +935,25 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 				warning(118, mp->m_name);
 			}
 		}
+
+		/* questionable right shift of %d-bit quantity by %d bits */
+		if (rn->tn_op == CON && size(olt) <= rn->tn_val->v_quad)
+			warning(310, size(olt), rn->tn_val->v_quad);
+
 		goto shift;
 	case SHL:
 		/*
 		 * ANSI C does not perform balancing for shift operations,
 		 * but traditional C does. If the width of the right operand
 		 * is greather than the width of the left operand, than in
-		 * traditional C the left operand would be extendet to the
+		 * traditional C the left operand would be extended to the
 		 * width of the right operand. For SHL this may result in
 		 * different results.
 		 */
 		if (psize(lt) < psize(rt)) {
 			/*
 			 * XXX If both operands are constant make sure
-			 * that there is really a differencs between
+			 * that there is really a difference between
 			 * ANSI C and traditional C.
 			 */
 			if (hflag)
@@ -961,7 +966,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 				/* negative shift */
 				warning(121);
 			} else if ((u_quad_t)rn->tn_val->v_quad == size(lt)) {
-				/* shift equal to size fo object */
+				/* shift equal to size of object */
 				warning(267);
 			} else if ((u_quad_t)rn->tn_val->v_quad > size(lt)) {
 				/* shift greater than size of object */
@@ -1088,6 +1093,11 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			/* bitwise operation on s.v. possibly nonportabel */
 			warning(117);
 		}
+
+		/* questionable right shift of %d-bit quantity by %d bits */
+		if (rn->tn_op == CON && size(olt) <= rn->tn_val->v_quad)
+			warning(310, size(olt), rn->tn_val->v_quad);
+
 		goto assign;
 	case ANDASS:
 	case XORASS:
