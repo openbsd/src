@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.53 2005/11/23 21:04:40 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.54 2005/11/23 21:08:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -790,6 +790,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 
 	MCLGET(mnew, M_DONTWAIT);
 	if (!(mnew->m_flags & M_EXT)) {
+		m_freem(mnew);
 		ifp->if_ierrors++;
 		return;
 	}
