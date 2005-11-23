@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.6 2005/11/23 08:53:37 deraadt Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.7 2005/11/23 09:05:42 deraadt Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.6 2005/11/23 08:53:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.7 2005/11/23 09:05:42 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -130,6 +130,7 @@ static	void	ignuptorp(void);
 %token			T_BREAK
 %token			T_RETURN
 %token			T_ASM
+%token			T_LEQUAL
 %token			T_ATTRIBUTE
 
 %left	T_COMMA
@@ -238,18 +239,45 @@ ext_decl:
 		glclup(0);
 		clrwflgs();
 	  }
+	| T_LEQUAL T_LPARN identifier T_COMMA identifier T_RPARN T_SEMI {
+		sym_t *new, *old;
+
+		if ($5->sb_sym && $3->sb_sym /*== NULL*/) {
+			new = getsym($5);
+			old = $3->sb_sym;
+			new->s_dpos = old->s_dpos;
+			new->s_spos = old->s_spos;
+			new->s_upos = old->s_upos;
+			new->s_kind = old->s_kind;
+			new->s_keyw = old->s_keyw;
+			new->s_field = old->s_field;
+			new->s_set = old->s_set;
+			new->s_used = old->s_used;
+			new->s_arg = old->s_arg;
+			new->s_reg = old->s_reg;
+			new->s_defarg = old->s_defarg;
+			new->s_rimpl = old->s_rimpl;
+			new->s_osdef = old->s_osdef;
+			new->s_inline = old->s_inline;
+			new->s_def = old->s_def;
+			new->s_scl = old->s_scl;
+			new->s_blklev = old->s_blklev;
+			new->s_type = old->s_type;
+			new->s_value = old->s_value;
+			new->u = old->u;
+
+			/* XXX missing 'r' because do not know return type
+			   of parent... */
+			/* outsym(new, new->s_scl, DEF); */
+			outfdef(new, &csrc_pos,
+			    new->s_rimpl || new->s_type->t_subt->t_tspec != VOID,
+			    0, NULL);
+		}
+
+	  }
 	;
 
-data_def:
-	  T_SEMI {
-		if (sflag) {
-			/* syntax error: empty declaration */
-			error(0);
-		} else if (!tflag) {
-			/* syntax error: empty declaration */
-			warning(0);
-		}
-	  }
+data_def: T_SEMI
 	| clrtyp deftyp notype_init_decls T_SEMI {
 		if (sflag) {
 			/* old style declaration; add "int" */
