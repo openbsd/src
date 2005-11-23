@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.9 2005/11/23 22:25:36 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.10 2005/11/23 22:57:36 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.9 2005/11/23 22:25:36 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.10 2005/11/23 22:57:36 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1101,6 +1101,7 @@ init_expr:
 	  }
 	| init_lbrace init_expr_list init_rbrace
 	| init_lbrace init_expr_list T_COMMA init_rbrace
+	| init_lbrace init_rbrace
 	| error
 	;
 
