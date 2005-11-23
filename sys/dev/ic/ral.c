@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.62 2005/10/02 14:01:52 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.63 2005/11/23 19:56:49 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1527,35 +1527,19 @@ uint16_t
 ral_txtime(int len, int rate, uint32_t flags)
 {
 	uint16_t txtime;
-	int ceil, dbps;
 
 	if (RAL_RATE_IS_OFDM(rate)) {
-		/*
-		 * OFDM TXTIME calculation.
-		 * From IEEE Std 802.11a-1999, pp. 37.
-		 */
-		dbps = rate * 2; /* data bits per OFDM symbol */
-
-		ceil = (16 + 8 * len + 6) / dbps;
-		if ((16 + 8 * len + 6) % dbps != 0)
-			ceil++;
-
-		txtime = 16 + 4 + 4 * ceil + 6;
+		/* IEEE Std 802.11a-1999, pp. 37 */
+		txtime = (8 + 4 * len + 3 + rate - 1) / rate;
+		txtime = 16 + 4 + 4 * txtime + 6;
 	} else {
-		/*
-		 * High Rate TXTIME calculation.
-		 * From IEEE Std 802.11b-1999, pp. 28.
-		 */
-		ceil = (8 * len * 2) / rate;
-		if ((8 * len * 2) % rate != 0)
-			ceil++;
-
+		/* IEEE Std 802.11b-1999, pp. 28 */
+		txtime = (16 * len + rate - 1) / rate;
 		if (rate != 2 && (flags & IEEE80211_F_SHPREAMBLE))
-			txtime =  72 + 24 + ceil;
+			txtime +=  72 + 24;
 		else
-			txtime = 144 + 48 + ceil;
+			txtime += 144 + 48;
 	}
-
 	return txtime;
 }
 
@@ -1621,12 +1605,11 @@ ral_setup_tx_desc(struct ral_softc *sc, struct ral_tx_desc *desc,
 		 * Long PLCP LENGTH field.
 		 * From IEEE Std 802.11b-1999, pp. 16.
 		 */
-		plcp_length = (8 * len * 2) / rate;
-		remainder = (8 * len * 2) % rate;
-		if (remainder != 0) {
-			if (rate == 22 && (rate - remainder) / 16 != 0)
+		plcp_length = (16 * len + rate - 1) / rate;
+		if (rate == 22) {
+			remainder = (16 * len) % 22;
+			if (remainder != 0 && remainder < 7)
 				desc->plcp_service |= RAL_PLCP_LENGEXT;
-			plcp_length++;
 		}
 		desc->plcp_length = htole16(plcp_length);
 	}
