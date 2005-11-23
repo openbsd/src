@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2005/11/20 12:02:04 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2005/11/23 20:40:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -123,7 +123,7 @@ u_int negative;
 %token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
-%token	ADDRESS PORT
+%token	ADDRESS PORT ON
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
 %type	<v.val>		number
@@ -223,12 +223,27 @@ hostapiface	: STRING
 		}
 		;
 
+hostapmatch	: /* empty */
+		| ON STRING
+		{
+			if ((frame.f_apme =
+			    hostapd_apme_lookup(&hostapd_cfg, $2)) == NULL) {
+				yyerror("undefined hostap interface");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			HOSTAPD_MATCH(APME);
+		}
+		;
+
 event		: HOSTAP HANDLE
 		{
 			bzero(&frame, sizeof(struct hostapd_frame));
 			/* IEEE 802.11 frame to match */
 			frame_ieee80211 = &frame.f_frame;
-		} eventopt frmmatch {
+		} eventopt hostapmatch frmmatch {
 			/* IEEE 802.11 raw frame to send as an action */
 			frame_ieee80211 = &frame.f_action_data.a_frame;
 		} action limit rate {
@@ -947,6 +962,7 @@ lookup(char *token)
 		{ "node",		NODE },
 		{ "not",		NOT },
 		{ "nwid",		NWID },
+		{ "on",			ON },
 		{ "open",		OPEN },
 		{ "passive",		PASSIVE },
 		{ "pcap",		PCAP },
@@ -1314,4 +1330,3 @@ yyerror(const char *fmt, ...)
 
 	return (0);
 }
-

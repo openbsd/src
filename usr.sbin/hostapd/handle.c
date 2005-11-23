@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle.c,v 1.5 2005/11/20 12:02:04 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.6 2005/11/23 20:40:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -146,6 +146,17 @@ hostapd_handle_frame(struct hostapd_apme *apme, struct hostapd_frame *frame,
 	default:
 	case IEEE80211_FC1_DIR_DSTODS:
 		return (0);
+	}
+
+	if (flags & HOSTAPD_FRAME_F_APME_M) {
+		if (frame->f_apme == NULL)
+			return (0);
+		/* Match hostap interface */
+		if ((flags & HOSTAPD_FRAME_F_APME &&
+		    apme == frame->f_apme) ||
+		    (flags & HOSTAPD_FRAME_F_APME_N &&
+		    apme != frame->f_apme))
+			flags &= ~HOSTAPD_FRAME_F_APME_M;
 	}
 
 	if (flags & HOSTAPD_FRAME_F_TYPE) {

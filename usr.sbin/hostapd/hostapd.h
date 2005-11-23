@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.9 2005/11/20 12:02:04 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.10 2005/11/23 20:40:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -196,6 +196,9 @@ struct hostapd_frame {
 #define HOSTAPD_FRAME_F_BSSID_N		0x00002000
 #define HOSTAPD_FRAME_F_BSSID_TABLE	0x00004000
 #define HOSTAPD_FRAME_F_BSSID_M		0x00007000
+#define HOSTAPD_FRAME_F_APME		0x00008000
+#define HOSTAPD_FRAME_F_APME_N		0x00010000
+#define HOSTAPD_FRAME_F_APME_M		0x00018000
 #define HOSTAPD_FRAME_F_M		0x0fffffff
 #define HOSTAPD_FRAME_F_RET_OK		0x00000000
 #define HOSTAPD_FRAME_F_RET_QUICK	0x10000000
@@ -210,6 +213,7 @@ struct hostapd_frame {
 	(HOSTAPD_FRAME_F_FROM_N | HOSTAPD_FRAME_F_TO_N |		\
 	HOSTAPD_FRAME_F_BSSID_N)
 
+	struct hostapd_apme		*f_apme;
 	struct hostapd_table		*f_from, *f_to, *f_bssid;
 	struct timeval			f_limit, f_then, f_last;
 	long				f_rate, f_rate_intval;

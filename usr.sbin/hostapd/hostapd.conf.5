@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.20 2005/11/20 12:02:04 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.21 2005/11/23 20:40:38 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -168,16 +168,24 @@ All
 event rules are single line statements beginning with
 the mandatory
 .Ic hostap handle
-keywords and optional rule options, frame matching,
+keywords and optional rule options, interface, frame matching,
 a specified action, a limit, and a minimal rate:
 .Bd -filled -offset indent
 .Ic hostap handle
 .Op Ar option
+.Op Ar interface
 .Op Ar frame
 .Op Ar action
 .Op Ar limit
 .Op Ar rate
 .Ed
+.Pp
+Some rule statements support the optional keyword
+.Ic not ,
+also represented by the
+.Ic !\&
+operator,
+for inverse matching.
 .Pp
 The optional parts are defined below.
 .Ss Rule Option
@@ -198,6 +206,21 @@ The keyword
 .Ic skip
 additionally skips any further IAPP processing of the frame,
 which is normally done after handling the event rules.
+.Ss Rule Interface
+The rule
+.Ar interface
+specifies the hostap interface the rule is matched on.
+The available interface list is specified by the global
+.Ic set hostap interface
+configuration setting.
+.Bd -filled -offset indent
+.Ic on
+.Op Ic not
+.Ar interface
+.Ed
+.Pp
+If not given,
+the event rule is matched on all available hostap interfaces.
 .Ss Rule Frame
 The
 .Ar frame
@@ -569,8 +592,8 @@ hostap handle skip type management subtype beacon bssid <pentest> \e
     with frame type management subtype auth \e
     from random to &bssid bssid &bssid
 
-# Re-inject a received IEEE 802.11 frame
-hostap handle type management subtype auth with resend
+# Re-inject a received IEEE 802.11 frame on the interface ath0
+hostap handle on ath0 type management subtype auth with resend
 
 # Remove a blacklisted node from the kernel node tree
 hostap handle type management subtype auth from <blacklist> \e
