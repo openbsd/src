@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.19 2005/11/20 18:23:59 cloder Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.20 2005/11/23 08:31:28 deraadt Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.19 2005/11/20 18:23:59 cloder Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.20 2005/11/23 08:31:28 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -324,8 +324,6 @@ main(int argc, char *argv[])
 	appcstrg(&cppflags, "-Dlint");		/* XXX don't def. with -s */
 	appdef(&cppflags, "lint");
 	appdef(&cppflags, "unix");
-
-	appcstrg(&lcppflgs, "-Wtraditional");
 
 	if (uname(&un) == -1)
 		err(1, "uname");
