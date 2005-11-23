@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.38 2005/11/23 18:34:33 deraadt Exp $
+#	$OpenBSD: bsd.README,v 1.39 2005/11/23 22:11:48 jmc Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -237,7 +237,7 @@ NOPROFILE	Do not build profiled versions of system libraries.
 NOPIC		Do not build PIC versions of system libraries, and
 		do not build shared libraries.
 
-NOLINT		Do not build lint libraries.
+WANTLINT	Build lint libraries.
 
 DEBUG		Add -g to assembly, C compiler and linking passes.  Also
 		doesn't	set STRIP to -s per default if defined.

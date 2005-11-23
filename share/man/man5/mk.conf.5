@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.7 2005/03/12 12:21:08 jmc Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.8 2005/11/23 22:11:48 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -197,9 +197,6 @@ updated GNU programs.
 Define to have PostScript manual pages generated.
 .It Ev MANZ
 Compress manual pages at installation time.
-.It Ev NOLINT
-Do not build lint libraries.
-.Bq yes; set unconditionally
 .It Ev NOPIC
 Do not build PIC versions of system libraries,
 and do not build shared libraries.
@@ -231,6 +228,9 @@ Copy or symlink kernel include files into
 .Pa /usr/include .
 Possible values are "symlinks" or "copies"
 (which is the same as the variable being unset).
+.It Ev WANTLINT
+Build lint libraries.
+.Bq no
 .It Ev WARNINGS
 Adds appropriate warning flags (defined in
 .Ev CDIAGFLAGS ,
