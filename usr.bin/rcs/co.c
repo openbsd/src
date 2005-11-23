@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.32 2005/11/23 08:42:23 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.33 2005/11/23 09:05:02 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -42,8 +42,7 @@ static int checkout_state(RCSFILE *, RCSNUM *, const char *, int,
 int
 checkout_main(int argc, char **argv)
 {
-	int i, ch;
-	int flags;
+	int i, ch, flags, kflag;
 	RCSNUM *frev, *rev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN], buf[16];
@@ -51,6 +50,7 @@ checkout_main(int argc, char **argv)
 	const char *state = NULL;
 
 	flags = 0;
+	kflag = RCS_KWEXP_ERR;
 	rev = RCS_HEAD_REV;
 	frev = NULL;
 
@@ -59,11 +59,20 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "f::l::M::p::q::r::s:u::Vx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::k:l::M::p::q::r::s:u::Vx:")) != -1) {
 		switch (ch) {
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
 			flags |= FORCE;
+			break;
+		case 'k':
+			kflag = rcs_kflag_get(rcs_optarg);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expansion mode");
+				(usage)();
+				exit(1);
+			}
 			break;
 		case 'l':
 			rcs_set_rev(rcs_optarg, &rev);
@@ -133,6 +142,9 @@ checkout_main(int argc, char **argv)
 			frev = rev;
 
 		rcsnum_tostr(frev, buf, sizeof(buf));
+
+		if (kflag != RCS_KWEXP_ERR)
+			rcs_kwexp_set(file, kflag);
 
 		if (flags & CO_STATE) {
 			if (checkout_state(file, frev, argv[i], flags,
