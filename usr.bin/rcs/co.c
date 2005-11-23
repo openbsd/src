@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.34 2005/11/23 09:39:20 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.35 2005/11/23 13:59:07 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -135,6 +135,11 @@ checkout_main(int argc, char **argv)
 		if (verbose == 1)
 			printf("%s  -->  %s\n", fpath,
 			    (pipeout == 1) ? "standard output" : argv[i]);
+
+		if ((flags & CO_LOCK) && (kflag & RCS_KWEXP_VAL)) {
+			cvs_log(LP_ERR, "%s: cannot combine -kv and -l", fpath);
+			continue;
+		}
 
 		if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
 			continue;
