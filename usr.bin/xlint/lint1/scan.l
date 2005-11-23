@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.7 2005/11/20 17:42:49 deraadt Exp $	*/
+/*	$OpenBSD: scan.l,v 1.8 2005/11/23 08:53:37 deraadt Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.7 2005/11/20 17:42:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.8 2005/11/23 08:53:37 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -191,6 +191,7 @@ static	struct	kwtab {
 	{ "asm",	T_ASM,		0,	0,	0,	  0, 1 },
 	{ "__asm",	T_ASM,		0,	0,	0,	  0, 0 },
 	{ "__asm__",	T_ASM,		0,	0,	0,	  0, 0 },
+	{ "__attribute__", T_ATTRIBUTE,	0,	0,	0,	  0, 0 },
 	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0, 0 },
 	{ "break",	T_BREAK,	0,	0,	0,	  0, 0 },
 	{ "case",	T_CASE,		0,	0,	0,	  0, 0 },

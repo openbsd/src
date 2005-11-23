@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.5 2003/11/08 19:17:29 jmc Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.6 2005/11/23 08:53:37 deraadt Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.5 2003/11/08 19:17:29 jmc Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.6 2005/11/23 08:53:37 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -130,6 +130,7 @@ static	void	ignuptorp(void);
 %token			T_BREAK
 %token			T_RETURN
 %token			T_ASM
+%token			T_ATTRIBUTE
 
 %left	T_COMMA
 %right	T_ASSIGN T_OPASS
@@ -277,7 +278,7 @@ data_def:
 			warning(2);
 		}
 	  }
-	| declspecs deftyp type_init_decls T_SEMI
+	| declspecs deftyp type_init_decls opt_attribute_spec T_SEMI
 	| error T_SEMI {
 		globclup();		
 	  }
@@ -310,6 +311,11 @@ func_def:
 		funcend();
 		popctrl(0);
 	  }
+	;
+
+opt_attribute_spec:
+	/* empty */
+	| T_ATTRIBUTE T_LPARN T_LPARN read_until_rparn T_RPARN
 	;
 
 func_decl:
@@ -758,7 +764,7 @@ type_init_decls:
 	;
 
 notype_init_decl:
-	  notype_decl opt_asm_spec {
+	  notype_decl opt_attribute_spec opt_asm_spec {
 		idecl($1, 0);
 		chksz($1);
 	  }
@@ -1054,9 +1060,7 @@ parameter_declaration:
 
 opt_asm_spec:
 	  /* empty */
-	| T_ASM T_LPARN T_STRING T_RPARN {
-		freeyyv(&$3, T_STRING);
-	  }
+	| T_ASM T_LPARN read_until_rparn
 	;
 
 initializer:
