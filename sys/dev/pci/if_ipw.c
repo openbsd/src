@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.51 2005/11/23 21:15:29 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.52 2005/11/23 21:29:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1211,11 +1211,13 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		}
 
 		M_DUP_PKTHDR(mnew, m);
-		MCLGET(mnew, M_DONTWAIT);
-		if (!(mnew->m_flags & M_EXT)) {
-			m_freem(m);
-			m_freem(mnew);
-			return ENOMEM;
+		if (m->m_pkthdr.len > MHLEN) {
+			MCLGET(mnew, M_DONTWAIT);
+			if (!(mnew->m_flags & M_EXT)) {
+				m_freem(m);
+				m_freem(mnew);
+				return ENOMEM;
+			}
 		}
 
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
