@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.37 2005/11/23 08:02:58 sturm Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.38 2005/11/23 08:21:09 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -205,7 +205,7 @@ perf_status(void)
 	size_t perf_sz = sizeof(perf);
 
 	if (sysctl(cp_time_mib, 2, &cp_time, &cp_time_sz, NULL, 0) < 0)
-		error("cannot read kern.cp_time", NULL);
+		syslog(LOG_INFO, "cannot read kern.cp_time");
 
 	for (i = 0; i < CPUSTATES; i++) {
 		if ((change = cp_time[i] - cp_time_old[i]) < 0) {
@@ -224,7 +224,7 @@ perf_status(void)
 	avg_idle = (avg_idle + (100 * idle) / sum) / 2;
 
 	if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, NULL, 0) < 0)
-		error("cannot read hw.setperf", NULL);
+		syslog(LOG_INFO, "cannot read hw.setperf");
 
 	if (avg_idle < PERFINCTHRES && perf < PERFMAX) {
 		perf += PERFINC;
@@ -621,7 +621,7 @@ setperf(int new_perf)
 	size_t perf_sz = sizeof(perf);
 
 	if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, &new_perf, perf_sz) < 0)
-		error("cannot set hw.setperf", NULL);
+		syslog(LOG_INFO, "cannot set hw.setperf");
 }
 
 void
