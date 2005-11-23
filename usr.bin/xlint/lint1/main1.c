@@ -1,4 +1,4 @@
-/*	$OpenBSD: main1.c,v 1.5 2005/11/20 17:42:49 deraadt Exp $	*/
+/*	$OpenBSD: main1.c,v 1.6 2005/11/23 18:21:43 deraadt Exp $	*/
 /*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main1.c,v 1.5 2005/11/20 17:42:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main1.c,v 1.6 2005/11/23 18:21:43 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -67,7 +67,7 @@ int	dflag;
 int	eflag;
 
 /* Print complete pathnames, not only the basename. */
-int	Fflag;
+int	Fflag = 1;
 
 /* Enable some extensions of gcc */
 int	gflag;
@@ -103,7 +103,7 @@ int	uflag = 1;
 int	vflag = 1;
 
 /* Complain about structures which are never defined. */
-int	zflag = 1;
+int	zflag = 0;
 
 static	void	usage(void);
 
@@ -146,8 +146,10 @@ main(int argc, char *argv[])
 	/* initialize output */
 	outopen(argv[1]);
 
+#if YYDEBUG
 	if (yflag)
 		yydebug = 1;
+#endif
 
 	initmem();
 	initdecl();

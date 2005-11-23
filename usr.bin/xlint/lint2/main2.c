@@ -1,4 +1,4 @@
-/*	$OpenBSD: main2.c,v 1.7 2005/11/20 17:42:50 deraadt Exp $	*/
+/*	$OpenBSD: main2.c,v 1.8 2005/11/23 18:21:44 deraadt Exp $	*/
 /*	$NetBSD: main2.c,v 1.2 1995/07/03 21:24:53 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main2.c,v 1.7 2005/11/20 17:42:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main2.c,v 1.8 2005/11/23 18:21:44 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -75,7 +75,7 @@ int	Hflag;
 int	hflag;
 
 /* Print full path names, not only the last component */
-int	Fflag;
+int	Fflag = 1;
 
 /*
  * List of libraries (from -l flag). These libraries are read after all

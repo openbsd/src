@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.20 2005/11/23 08:31:28 deraadt Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.21 2005/11/23 18:21:44 deraadt Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.20 2005/11/23 08:31:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.21 2005/11/23 18:21:44 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ static	char	**libs;
 static	char	**libsrchpath;
 
 /* flags */
-static	int	iflag, oflag, Cflag, sflag, tflag, Fflag;
+static	int	iflag, oflag, Cflag, sflag, tflag, Fflag = 1;
 
 /* print the commands executed to run the stages of compilation */
 static	int	Vflag;
@@ -529,9 +529,6 @@ fname(const char *name, int last)
 		warnx("unknown file type: %s", name);
 		return;
 	}
-
-	if (!iflag || !first || !last)
-		(void)printf("%s:\n", Fflag ? name : bn);
 
 	/* build the name of the output file of lint1 */
 	if (oflag) {
