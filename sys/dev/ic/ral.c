@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.63 2005/11/23 19:56:49 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.64 2005/11/23 20:51:20 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1225,7 +1225,7 @@ ral_decryption_intr(struct ral_softc *sc)
 	struct ral_node *rn;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
-	struct mbuf *m;
+	struct mbuf *mnew, *m;
 	int hw, error;
 
 	/* retrieve last decriptor index processed by cipher engine */
@@ -1253,12 +1253,57 @@ ral_decryption_intr(struct ral_softc *sc)
 			goto skip;
 		}
 
+		/*
+		 * Try to allocate a new mbuf for this ring element and load it
+		 * before processing the current mbuf.  If the ring element
+		 * cannot be loaded, drop the received packet and reuse the old
+		 * mbuf.  In the unlikely case that the old mbuf can't be
+		 * reloaded either, explicitly panic.
+		 */
+		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+		if (mnew == NULL) {
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		MCLGET(mnew, M_DONTWAIT);
+		if (!(mnew->m_flags & M_EXT)) {
+			m_freem(mnew);
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 
-		/* finalize mbuf */
+		error = bus_dmamap_load(sc->sc_dmat, data->map,
+		    mtod(mnew, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		if (error != 0) {
+			m_freem(mnew);
+
+			/* try to reload the old mbuf */
+			error = bus_dmamap_load(sc->sc_dmat, data->map,
+			    mtod(data->m, void *), MCLBYTES, NULL,
+			    BUS_DMA_NOWAIT);
+			if (error != 0) {
+				/* very unlikely that it will fail... */
+				panic("%s: could not load old rx mbuf",
+				    sc->sc_dev.dv_xname);
+			}
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		/*
+		 * New mbuf successfully loaded, update Rx ring and continue
+		 * processing.
+		 */
 		m = data->m;
+		data->m = mnew;
+		desc->physaddr = htole32(data->map->dm_segs->ds_addr);
+
+		/* finalize mbuf */
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len =
 		    (letoh32(desc->flags) >> 16) & 0xfff;
@@ -1304,33 +1349,6 @@ ral_decryption_intr(struct ral_softc *sc)
 		/* node is no longer needed */
 		ieee80211_release_node(ic, ni);
 
-		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
-		if (data->m == NULL) {
-			printf("%s: could not allocate rx mbuf\n",
-			    sc->sc_dev.dv_xname);
-			break;
-		}
-
-		MCLGET(data->m, M_DONTWAIT);
-		if (!(data->m->m_flags & M_EXT)) {
-			printf("%s: could not allocate rx mbuf cluster\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(data->m);
-			data->m = NULL;
-			break;
-		}
-
-		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
-		if (error != 0) {
-			printf("%s: could not load rx buf DMA map\n",
-			    sc->sc_dev.dv_xname);
-			m_freem(data->m);
-			data->m = NULL;
-			break;
-		}
-
-		desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 skip:		desc->flags = htole32(RAL_RX_BUSY);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->rxq.map,
