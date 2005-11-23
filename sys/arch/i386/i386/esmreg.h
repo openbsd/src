@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmreg.h,v 1.3 2005/11/22 21:51:19 jordan Exp $ */
+/*	$OpenBSD: esmreg.h,v 1.4 2005/11/23 01:07:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -83,11 +83,10 @@
 #define DELL_SYSID_2550         0xD1
 #define DELL_SYSID_EXT          0xFE
 
-struct dell_sysid
-{
-	uint16_t    		ext_id;
-	uint8_t     		bios_ver[3];
-	uint8_t     		sys_id;
+struct dell_sysid {
+	u_int16_t    		ext_id;
+	u_int8_t     		bios_ver[3];
+	u_int8_t     		sys_id;
 } __packed;
 
 struct esm_watchdog_prop {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.11 2005/11/22 21:51:19 jordan Exp $ */
+/*	$OpenBSD: esm.c,v 1.12 2005/11/23 01:07:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -44,7 +44,6 @@ int	esmdebug = 2;
 #define DPRINTFN(n,x...)	/* n: x */
 #endif
 
-int             esm_probe(void);
 int		esm_match(struct device *, void *, void *);
 void		esm_attach(struct device *, struct device *, void *);
 
@@ -114,26 +113,30 @@ int		esm_smb_cmd(struct esm_softc *, struct esm_smb_req *,
 int64_t		esm_val2temp(u_int16_t);
 int64_t		esm_val2volts(u_int16_t);
 
-
-/* Determine if this is a Dell server */
 int
-esm_probe(void)
+esm_match(struct device *parent, void *match, void *aux)
 {
-	const char *pdellstr;
-	struct dell_sysid *pdellid;
-	uint16_t sysid;
+	struct esm_attach_args		*eaa = aux;
+	const char			*dell_str;
+	const struct dell_sysid		*dell_sysid;
+	u_int16_t			sysid;
 
-	pdellstr = (const char *)ISA_HOLE_VADDR(DELL_SYSSTR_ADDR);
-	DPRINTF("Dell String: %s\n", pdellstr);
-	if (strncmp(pdellstr, "Dell System", 11))
+	if (strncmp(eaa->eaa_name, esm_cd.cd_name, sizeof(esm_cd.cd_name)) != 0)
+		return (0);
+
+	/* Determine if this is a Dell server */
+	dell_str = (const char *)ISA_HOLE_VADDR(DELL_SYSSTR_ADDR);
+	DPRINTF("Dell String: %s\n", dell_str);
+	if (strncmp(dell_str, "Dell System", 11) != 0)
 		return (0); 
 
-	pdellid = (struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
-	if ((sysid = pdellid->sys_id) == DELL_SYSID_EXT)
-		sysid = pdellid->ext_id;
+	/* Determine if it is an appropriate Dell server */
+	dell_sysid = (const struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
+	if ((sysid = dell_sysid->sys_id) == DELL_SYSID_EXT)
+		sysid = dell_sysid->ext_id;
 	DPRINTF("SysId: %x\n", sysid);
 
- 	switch(sysid) {
+ 	switch (sysid) {
 	case DELL_SYSID_2300:
 	case DELL_SYSID_4300:
 	case DELL_SYSID_4350:
@@ -146,27 +149,12 @@ esm_probe(void)
 	case DELL_SYSID_6450:
 	case DELL_SYSID_2500:
 	case DELL_SYSID_2550:
-		return (1);
+		break;
 	default:
 		return (0);
 	}
 
-	/* NOTREACHED */
-	return (0);
-}
-
-int
-esm_match(struct device *parent, void *match, void *aux)
-{
-	struct esm_attach_args		*eaa = aux;
-
-	if (!esm_probe())
-		return (0);
-
-	if (strncmp(eaa->eaa_name, esm_cd.cd_name, sizeof(esm_cd.cd_name)) == 0)
-		return (1);
-
-	return (0);
+	return (1);
 }
 
 void
