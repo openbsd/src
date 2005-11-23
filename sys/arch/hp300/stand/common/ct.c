@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: ct.c,v 1.4 2005/11/23 07:15:57 miod Exp $	*/
 /*	$NetBSD: ct.c,v 1.9 1996/10/14 07:29:57 thorpej Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 
 #include <hp300/dev/ctreg.h>
+#include "hpibvar.h"
 
 #include <lib/libsa/stand.h>
 
@@ -104,7 +105,7 @@ int
 ctident(ctlr, unit)
 	int ctlr, unit;
 {
-	struct ct_describe desc;
+	struct cs80_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
 	int id, i;
@@ -129,7 +130,7 @@ ctident(ctlr, unit)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, unit, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, unit, C_EXEC, &desc, 37);
+	hpibrecv(ctlr, unit, C_EXEC, &desc, sizeof(desc));
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	bzero(name, sizeof(name));
 	if (!stat) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.4 2005/09/06 19:01:01 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.5 2005/11/23 07:15:57 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.11 1996/12/21 21:34:40 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include "samachdep.h"
 
 #include <hp300/dev/hdreg.h>
+#include "hpibvar.h"
 
 struct	hd_iocmd hd_ioc;
 struct	hd_rscmd hd_rsc;
@@ -136,7 +137,7 @@ int
 hdident(ctlr, unit)
 	register int ctlr, unit;
 {
-	struct hd_describe desc;
+	struct cs80_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
 	register int id, i;
@@ -155,7 +156,7 @@ hdident(ctlr, unit)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, unit, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, unit, C_EXEC, &desc, 37);
+	hpibrecv(ctlr, unit, C_EXEC, &desc, sizeof(desc));
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	bzero(name, sizeof(name));
 	if (!stat) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpibvar.h,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: hpibvar.h,v 1.3 2005/11/23 07:15:58 miod Exp $	*/
 /*	$NetBSD: hpibvar.h,v 1.4 1994/10/26 07:27:24 cgd Exp $	*/
 
 /*
@@ -56,3 +56,31 @@ struct	hpib_softc {
 };
 
 extern	struct hpib_softc hpib_softc[];
+
+/*
+ * Description structure for CS/80 devices.
+ */
+
+struct cs80_describe {
+	u_int	d_iuw:16,	/* controller: installed unit word */
+		d_cmaxxfr:16,	/* controller: max transfer rate (Kb) */
+		d_ctype:8,	/* controller: controller type */
+		d_utype:8,	/* unit: unit type */
+		d_name:24,	/* unit: name (6 BCD digits) */
+		d_sectsize:16,	/* unit: # of bytes per block (sector) */
+		d_blkbuf:8,	/* unit: # of blocks which can be buffered */
+		d_burstsize:8,	/* unit: recommended burst size */
+		d_blocktime:16,	/* unit: block time (u-sec) */
+		d_uavexfr:16,	/* unit: average transfer rate (Kb) */
+		d_retry:16,	/* unit: optimal retry time (1/100-sec) */
+		d_access:16,	/* unit: access time param (1/100-sec) */
+		d_maxint:8,	/* unit: maximum interleave */
+		d_fvbyte:8,	/* unit: fixed volume byte */
+		d_rvbyte:8,	/* unit: removable volume byte */
+		d_maxcyl:24,	/* volume: maximum cylinder */
+		d_maxhead:8,	/* volume: maximum head */
+		d_maxsect:16,	/* volume: maximum sector on track */
+		d_maxvsecth:16,	/* volume: maximum sector on volume (MSW) */
+		d_maxvsectl:32,	/* volume: maximum sector on volume (LSWs) */
+		d_interleave:8;	/* volume: current interleave */
+} __packed;
