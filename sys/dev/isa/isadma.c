@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.28 2005/11/21 14:25:09 mickey Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.29 2005/11/23 10:00:12 mpf Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -683,7 +683,7 @@ isa_malloc(isadev, chan, size, pool, flags)
 	int bflags;
 	struct isa_mem *m;
 
-	bflags = flags & M_WAITOK ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT;
+	bflags = flags & M_NOWAIT ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
 
 	if (isa_dmamem_alloc(isadev, chan, size, &addr, bflags))
 		return 0;
