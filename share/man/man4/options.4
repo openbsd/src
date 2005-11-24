@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.170 2005/11/13 03:27:41 krw Exp $
+.\"	$OpenBSD: options.4,v 1.171 2005/11/24 12:08:16 pedro Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -445,15 +445,6 @@ and on
 .Pa /dev/stdout ,
 and
 .Pa /dev/stderr .
-.It Cd option KERNFS
-Includes code which permits the mounting of a special file system
-(normally mounted on
-.Pa /kern )
-in which files representing various kernel variables and parameters
-may be found.
-See
-.Xr mount_kernfs 8
-for details.
 .It Cd option PORTAL
 Includes the (experimental) portal filesystem.
 This permits interesting tricks like opening TCP sockets by opening files in
@@ -1106,7 +1097,6 @@ is zero, the hardware realtime clock device is not in Daylight Saving Time.
 .Xr init 8 ,
 .Xr mount_cd9660 8 ,
 .Xr mount_fdesc 8 ,
-.Xr mount_kernfs 8 ,
 .Xr mount_mfs 8 ,
 .Xr mount_msdos 8 ,
 .Xr mount_nfs 8 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.119 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.120 2005/11/24 12:08:16 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -492,7 +492,7 @@ bdevvp(dev_t dev, struct vnode **vpp)
 
 /*
  * Create a vnode for a character device.
- * Used for kernfs and some console handling.
+ * Used for console handling.
  */
 int
 cdevvp(dev_t dev, struct vnode **vpp)
@@ -503,7 +503,7 @@ cdevvp(dev_t dev, struct vnode **vpp)
 /*
  * Create a vnode for a device.
  * Used by bdevvp (block device) for root file system etc.,
- * and by cdevvp (character device) for console and kernfs.
+ * and by cdevvp (character device) for console.
  */
 int
 getdevvp(dev_t dev, struct vnode **vpp, enum vtype type)

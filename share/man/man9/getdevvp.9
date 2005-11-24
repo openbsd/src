@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getdevvp.9,v 1.5 2004/08/21 00:02:25 jmc Exp $
+.\"     $OpenBSD: getdevvp.9,v 1.6 2005/11/24 12:08:16 pedro Exp $
 .\"
 .\" Copyright (C) 2002 Peter A. Werner. All rights reserved.
 .\"
@@ -77,8 +77,7 @@ use getdevvp internally, specifying the third argument.
 will create a vnode for a block device, and is used for the root file system
 and swap areas, among other things.
 .Fn cdevvp
-will create a vnode for a character device and is used in kernfs and in some
-console handling.
+will create a vnode for a character device and is used in console handling.
 .Sh RETURN VALUES
 All functions return 0 on success.
 If an error occurs, vpp will point to a NULLVP.

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.72 2005/11/11 18:15:07 deraadt Exp $
+#	$OpenBSD: security,v 1.73 2005/11/24 12:08:15 pedro Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -457,7 +457,7 @@ fi
 
 # Display any changes in setuid/setgid files and devices.
 pending="\nChecking setuid/setgid files and devices:\n"
-(find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
+(find / \( ! -fstype local -o -fstype fdesc \
 	-o -fstype procfs -o -fstype afs -o -fstype xfs \) -a -prune -o \
 	-type f -a \( -perm -u+s -o -perm -g+s \) -print0 -o \
 	! -type d -a ! -type f -a ! -type l -a ! -type s -a ! -type p \

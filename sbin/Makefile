@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.74 2005/05/26 01:29:02 pedro Exp $
+#	$OpenBSD: Makefile,v 1.75 2005/11/24 12:08:15 pedro Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck
@@ -15,7 +15,6 @@ SUBDIR+= mount_ados
 SUBDIR+= mount_cd9660
 SUBDIR+= mount_fdesc
 SUBDIR+= mount_ffs	newfs fsck_ffs fsdb dumpfs dump restore clri tunefs fsirand
-SUBDIR+= mount_kernfs
 # mount_mfs -> newfs
 SUBDIR+= mount_msdos	newfs_msdos fsck_msdos
 SUBDIR+= mount_nfs

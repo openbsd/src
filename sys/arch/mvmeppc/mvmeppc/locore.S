@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2005/08/02 21:27:58 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 2005/11/24 12:08:16 pedro Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ start:
 	stw	%r4, _C_LABEL(bootdev)@l(%r9)
 
 /* compute end of kernel memory */
-#if defined(DDB) || defined(KERNFS)
+#if defined(DDB)
 	lis	%r9,_C_LABEL(esym)@ha
 	stw	%r8,_C_LABEL(esym)@l(%r9)	/* save for symbol handling */
 #else

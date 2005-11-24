@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.27 2005/10/20 12:52:13 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.28 2005/11/24 12:08:16 pedro Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ start:
 	lis	%r3, fwargsave@ha
 	lwz	%r6, fwargsave@l(%r3)
 	lwz	%r7, fwargsave@l+4(%r3)
-#if defined(DDB) || defined(KERNFS)
+#if defined(DDB)
 	cmpwi	%r6, 0
 	beq	1f
 	add	%r9,%r6,%r7
