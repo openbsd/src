@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctu.c,v 1.7 2005/05/23 23:26:55 tedu Exp $ */
+/*	$OpenBSD: ctu.c,v 1.8 2005/11/24 04:53:59 brad Exp $ */
 /*	$NetBSD: ctu.c,v 1.10 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -187,7 +187,7 @@ ctustrategy(bp)
 		return;
 	}
 	bp->b_rawblkno = bp->b_blkno;
-	s = splimp();
+	s = splbio();
 	disksort_blkno(&tu_sc.sc_q, bp); /* Why not use disksort? */
 	if (tu_sc.sc_state == SC_READY)
 		ctustart(bp);

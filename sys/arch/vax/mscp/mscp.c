@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp.c,v 1.8 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: mscp.c,v 1.9 2005/11/24 04:53:56 brad Exp $	*/
 /*	$NetBSD: mscp.c,v 1.16 2001/11/13 07:38:28 lukem Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ mscp_getcp(mi, canwait)
 #define mri	(&mi->mi_cmd)
 	struct mscp *mp;
 	int i;
-	int s = splimp();
+	int s = splbio();
 
 again:
 	/*
