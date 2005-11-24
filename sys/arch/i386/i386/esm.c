@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.12 2005/11/23 01:07:40 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.13 2005/11/24 08:03:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -47,7 +47,23 @@ int	esmdebug = 2;
 int		esm_match(struct device *, void *, void *);
 void		esm_attach(struct device *, struct device *, void *);
 
-struct esm_sensor_type {
+enum esm_sensor_type {
+	ESM_S_UNKNOWN, /* XXX */
+	ESM_S_INTRUSION,
+	ESM_S_TEMP,
+	ESM_S_FANRPM,
+	ESM_S_VOLTS,
+	ESM_S_AMPS,
+	ESM_S_PWRSUP,
+	ESM_S_PCISLOT,
+	ESM_S_SCSICONN,
+	ESM_S_DRIVES, /* argument is the base index of the drive */
+	ESM_S_DRIVE,
+	ESM_S_HPSLOT,
+	ESM_S_ACSWITCH
+};
+
+struct esm_sensor_map {
 	enum sensor_type	type;
 	long			arg;
 #define ESM_A_PWRSUP_1		0x10
@@ -63,9 +79,9 @@ struct esm_sensor {
 	u_int8_t		es_dev;
 	u_int8_t		es_id;
 
-	long			es_arg;
+	enum esm_sensor_type	es_type;
 
-	struct sensor		es_sensor;
+	struct sensor		*es_sensor;
 	TAILQ_ENTRY(esm_sensor)	es_entry;
 };
 
@@ -102,7 +118,7 @@ void		esm_refresh(void *);
 int		esm_get_devmap(struct esm_softc *, int, struct esm_devmap *);
 void		esm_devmap(struct esm_softc *, struct esm_devmap *);
 void		esm_make_sensors(struct esm_softc *, struct esm_devmap *,
-		    struct esm_sensor_type *, int);
+		    struct esm_sensor_map *, int);
 
 int		esm_bmc_ready(struct esm_softc *, int, u_int8_t, u_int8_t, int);
 int		esm_cmd(struct esm_softc *, void *, size_t, void *, size_t,
@@ -215,39 +231,59 @@ void
 esm_refresh(void *arg)
 {
 	struct esm_softc	*sc = arg;
-	struct esm_sensor	*sensor = sc->sc_nextsensor;
+	struct esm_sensor	*es = sc->sc_nextsensor;
 	struct esm_smb_req	req;
 	struct esm_smb_resp	resp;
 	struct esm_smb_resp_val	*val = &resp.resp_val;
+	int			i;
 
 	memset(&req, 0, sizeof(req));
 	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
-	req.h_dev = sensor->es_dev;
+	req.h_dev = es->es_dev;
 	req.h_txlen = sizeof(req.req_val);
 	req.h_rxlen = sizeof(resp.resp_val);
 	req.req_val.v_cmd = ESM2_SMB_SENSOR_VALUE;
-	req.req_val.v_sensor = sensor->es_id;
+	req.req_val.v_sensor = es->es_id;
 
 	if (esm_smb_cmd(sc, &req, &resp, 0) != 0) {
 		if (++sc->sc_retries < 10)
 			goto tick;
-		sensor->es_sensor.flags |= SENSOR_FINVALID;
-	} else {
-		switch (sensor->es_sensor.type) {
-		case SENSOR_TEMP:
-			sensor->es_sensor.value = esm_val2temp(val->v_reading);
-			break;
-		case SENSOR_VOLTS_DC:
-			sensor->es_sensor.value = esm_val2volts(val->v_reading);
+
+		switch (es->es_type) {
+		case ESM_S_DRIVES:
+			for (i = 0; i < 4; i++)
+				es->es_sensor[i].flags |= SENSOR_FINVALID;
 			break;
 		default:
-			sensor->es_sensor.value = val->v_reading;
+			es->es_sensor->flags |= SENSOR_FINVALID;
 			break;
 		}
-		sensor->es_sensor.flags &= ~SENSOR_FINVALID;
+
+	} else {
+		switch (es->es_type) {
+		case ESM_S_TEMP:
+			es->es_sensor->value = esm_val2temp(val->v_reading);
+			es->es_sensor->flags &= ~SENSOR_FINVALID;
+			break;
+		case ESM_S_VOLTS:
+			es->es_sensor->value = esm_val2volts(val->v_reading);
+			es->es_sensor->flags &= ~SENSOR_FINVALID;
+			break;
+		case ESM_S_DRIVES:
+			for (i = 0; i < 4; i++) {
+				es->es_sensor[i].value =
+				    (val->v_reading >> i * 8) & 0xf;
+				es->es_sensor[i].flags &= ~SENSOR_FINVALID;
+			}
+			break;
+		default:
+			es->es_sensor->value = val->v_reading;
+			es->es_sensor->flags &= ~SENSOR_FINVALID;
+			break;
+		}
 	}
 
-	sc->sc_nextsensor = TAILQ_NEXT(sensor, es_entry);
+	sc->sc_nextsensor = TAILQ_NEXT(es, es_entry);
 	sc->sc_retries = 0;
 
 	if (sc->sc_nextsensor == NULL) {
@@ -312,232 +348,232 @@ esm_get_devmap(struct esm_softc *sc, int dev, struct esm_devmap *devmap)
 	return (0);
 }
 
-struct esm_sensor_type esm_sensors_esm2[] = {
-	{ SENSOR_INTEGER,	0,		"Motherboard" },
-	{ SENSOR_TEMP,		0,		"CPU 1" },
-	{ SENSOR_TEMP,		0,		"CPU 2" },
-	{ SENSOR_TEMP,		0,		"CPU 3" },
-	{ SENSOR_TEMP,		0,		"CPU 4" },
+struct esm_sensor_map esm_sensors_esm2[] = {
+	{ ESM_S_UNKNOWN,	0,		"Motherbobrd" },
+	{ ESM_S_TEMP,		0,		"CPU 1" },
+	{ ESM_S_TEMP,		0,		"CPU 2" },
+	{ ESM_S_TEMP,		0,		"CPU 3" },
+	{ ESM_S_TEMP,		0,		"CPU 4" },
 
-	{ SENSOR_TEMP,		0,		"Mainboard" },
-	{ SENSOR_TEMP,		0,		"Ambient" },
-	{ SENSOR_VOLTS_DC,	0,		"CPU 1 Core" },
-	{ SENSOR_VOLTS_DC,	0,		"CPU 2 Core" },
-	{ SENSOR_VOLTS_DC,	0,		"CPU 3 Core" },
+	{ ESM_S_TEMP,		0,		"Mainboard" },
+	{ ESM_S_TEMP,		0,		"Ambient" },
+	{ ESM_S_VOLTS,		0,		"CPU 1 Core" },
+	{ ESM_S_VOLTS,		0,		"CPU 2 Core" },
+	{ ESM_S_VOLTS,		0,		"CPU 3 Core" },
 
-	{ SENSOR_VOLTS_DC,	0,		"CPU 4 Core" },
-	{ SENSOR_VOLTS_DC,	0,		"Motherboard +5V" },
-	{ SENSOR_VOLTS_DC,	0,		"Motherboard +12V" },
-	{ SENSOR_VOLTS_DC,	0,		"Motherboard +3.3V" },
-	{ SENSOR_VOLTS_DC,	0,		"Motherboard +2.5V" },
+	{ ESM_S_VOLTS,		0,		"CPU 4 Core" },
+	{ ESM_S_VOLTS,		0,		"Motherboard +5V" },
+	{ ESM_S_VOLTS,		0,		"Motherboard +12V" },
+	{ ESM_S_VOLTS,		0,		"Motherboard +3.3V" },
+	{ ESM_S_VOLTS,		0,		"Motherboard +2.5V" },
 
-	{ SENSOR_VOLTS_DC,	0,		"Motherboard GTL Term" },
-	{ SENSOR_VOLTS_DC,	0,		"Motherboard Battery" },
-	{ SENSOR_INDICATOR,	0,		"Chassis Intrusion", },
-	{ SENSOR_INTEGER,	0,		"Chassis Fan Ctrl", },
-	{ SENSOR_FANRPM,	0,		"Fan 1" },
+	{ ESM_S_VOLTS,		0,		"Motherboard GTL Term" },
+	{ ESM_S_VOLTS,		0,		"Motherboard Battery" },
+	{ ESM_S_INTRUSION,	0,		"Chassis Intrusion", },
+	{ ESM_S_UNKNOWN,	0,		"Chassis Fan Ctrl", },
+	{ ESM_S_FANRPM,		0,		"Fan 1" },
 
-	{ SENSOR_FANRPM,	0,		"Fan 2" }, /* 20 */
-	{ SENSOR_FANRPM,	0,		"Fan 3" },
-	{ SENSOR_FANRPM,	0,		"Power Supply Fan" },
-	{ SENSOR_VOLTS_DC,	0,		"CPU 1 cache" },
-	{ SENSOR_VOLTS_DC,	0,		"CPU 2 cache" },
+	{ ESM_S_FANRPM,		0,		"Fan 2" }, /* 20 */
+	{ ESM_S_FANRPM,		0,		"Fan 3" },
+	{ ESM_S_FANRPM,		0,		"Power Supply Fan" },
+	{ ESM_S_VOLTS,		0,		"CPU 1 cache" },
+	{ ESM_S_VOLTS,		0,		"CPU 2 cache" },
 
-	{ SENSOR_VOLTS_DC,	0,		"CPU 3 cache" },
-	{ SENSOR_VOLTS_DC,	0,		"CPU 4 cache" },
-	{ SENSOR_INTEGER,	0,		"Power Ctrl" },
-	{ SENSOR_INTEGER,	ESM_A_PWRSUP_1,	"Power Supply 1" },
-	{ SENSOR_INTEGER,	ESM_A_PWRSUP_2,	"Power Supply 2" },
+	{ ESM_S_VOLTS,		0,		"CPU 3 cache" },
+	{ ESM_S_VOLTS,		0,		"CPU 4 cache" },
+	{ ESM_S_UNKNOWN,	0,		"Power Ctrl" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
 
-        { SENSOR_VOLTS_DC,	0,		"Mainboard +1.5V" }, /* 30 */
-        { SENSOR_VOLTS_DC,	0,		"Motherboard +2.8V" },
-        { SENSOR_INTEGER,	0,		"HotPlug Status" },
-        { SENSOR_INTEGER,	1,		"PCI Slot 1" },
-        { SENSOR_INTEGER,	2,		"PCI Slot 2" },
+        { ESM_S_VOLTS,		0,		"Mainboard +1.5V" }, /* 30 */
+        { ESM_S_VOLTS,		0,		"Motherboard +2.8V" },
+        { ESM_S_UNKNOWN,	0,		"HotPlug Status" },
+        { ESM_S_PCISLOT,	0,		"PCI Slot 1" },
+        { ESM_S_PCISLOT,	0,		"PCI Slot 2" },
 
-        { SENSOR_INTEGER,	3,		"PCI Slot 3" },
-        { SENSOR_INTEGER,	4,		"PCI Slot 4" },
-        { SENSOR_INTEGER,	5,		"PCI Slot 5" },
-        { SENSOR_INTEGER,	6,		"PCI Slot 6" },
-        { SENSOR_INTEGER,	7,		"PCI Slot 7" },
+        { ESM_S_PCISLOT,	0,		"PCI Slot 3" },
+        { ESM_S_PCISLOT,	0,		"PCI Slot 4" },
+        { ESM_S_PCISLOT,	0,		"PCI Slot 5" },
+        { ESM_S_PCISLOT,	0,		"PCI Slot 6" },
+        { ESM_S_PCISLOT,	0,		"PCI Slot 7" },
 
-        { SENSOR_VOLTS_DC,	0,		"CPU 1 Cartridge" }, /* 40 */
-        { SENSOR_VOLTS_DC,	0,		"CPU 2 Cartridge" },
-        { SENSOR_VOLTS_DC,	0,		"CPU 3 Cartridge" },
-        { SENSOR_VOLTS_DC,	0,		"CPU 4 Cartridge" },
-        { SENSOR_VOLTS_DC,	0,		"Gigabit NIC +1.8V" },
+        { ESM_S_VOLTS,		0,		"CPU 1 Cartridge" }, /* 40 */
+        { ESM_S_VOLTS,		0,		"CPU 2 Cartridge" },
+        { ESM_S_VOLTS,		0,		"CPU 3 Cartridge" },
+        { ESM_S_VOLTS,		0,		"CPU 4 Cartridge" },
+        { ESM_S_VOLTS,		0,		"Gigabit NIC +1.8V" },
 
-        { SENSOR_VOLTS_DC,	0,		"Gigabit NIC +2.5V" },
-        { SENSOR_VOLTS_DC,	0,		"Memory +3.3V" },
-        { SENSOR_VOLTS_DC,	0,		"Video +2.5V" },
-        { SENSOR_INTEGER,	ESM_A_PWRSUP_3,	"Power Supply 3" },
-        { SENSOR_FANRPM,	0,		"Fan 4" },
+        { ESM_S_VOLTS,		0,		"Gigabit NIC +2.5V" },
+        { ESM_S_VOLTS,		0,		"Memory +3.3V" },
+        { ESM_S_VOLTS,		0,		"Video +2.5V" },
+        { ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
+        { ESM_S_FANRPM,		0,		"Fan 4" },
 
-        { SENSOR_FANRPM,	0,		"Power Supply Fan" }, /* 50 */
-        { SENSOR_FANRPM,	0,		"Power Supply Fan" },
-        { SENSOR_FANRPM,	0,		"Power Supply Fan" },
-        { SENSOR_INTEGER,	0,		"A/C Power Switch" },
-        { SENSOR_INTEGER,	0,		"PS Over Temp" }
+        { ESM_S_FANRPM,		0,		"Power Supply Fan" }, /* 50 */
+        { ESM_S_FANRPM,		0,		"Power Supply Fan" },
+        { ESM_S_FANRPM,		0,		"Power Supply Fan" },
+        { ESM_S_ACSWITCH,	0,		"A/C Power Switch" },
+        { ESM_S_UNKNOWN,	0,		"PS Over Temp" }
 };
 
-struct esm_sensor_type esm_sensors_backplane[] = {
-	{ SENSOR_INTEGER,	0,		"Backplane" },
-	{ SENSOR_INTEGER,	0,		"Backplane Control" },
-	{ SENSOR_TEMP,		0,		"Backplane Top" },
-	{ SENSOR_TEMP,		0,		"Backplane Bottom" },
-	{ SENSOR_TEMP,		0,		"Backplane Control Panel" },
-	{ SENSOR_VOLTS_DC,	0,		"Backplane Battery" },
-	{ SENSOR_VOLTS_DC,	0,		"Backplane +5V" },
-	{ SENSOR_VOLTS_DC,	0,		"Backplane +12V" },
-	{ SENSOR_VOLTS_DC,	0,		"Backplane Board" },
-	{ SENSOR_INTEGER,	0,		"Backplane Intrusion" },
-	{ SENSOR_INTEGER,	0,		"Backplane Fan Control" },
-	{ SENSOR_FANRPM,	0,		"Backplane Fan 1" },
-	{ SENSOR_FANRPM,	0,		"Backplane Fan 2" },
-	{ SENSOR_FANRPM,	0,		"Backplane Fan 3" },
-	{ SENSOR_INDICATOR,	ESM_A_SCSI_A,	"Backplane SCSI A Connected" },
-	{ SENSOR_VOLTS_DC,	ESM_A_SCSI_A,	"Backplane SCSI A External" },
-	{ SENSOR_VOLTS_DC,	ESM_A_SCSI_A,	"Backplane SCSI A Internal" },
-	{ SENSOR_INDICATOR,	ESM_A_SCSI_B,	"Backplane SCSI B Connected" },
-	{ SENSOR_VOLTS_DC,	ESM_A_SCSI_B,	"Backplane SCSI B External" },
-	{ SENSOR_VOLTS_DC,	ESM_A_SCSI_B,	"Backplane SCSI B Internal" },
-	{ SENSOR_INTEGER,	0x41,		"Drives 1-4" },
-	{ SENSOR_INTEGER,	0x45,		"Drives 5-8" },
-	{ SENSOR_INTEGER,	0x11,		"Drive 1"},
-	{ SENSOR_INTEGER,	0x12,		"Drive 2" },
-	{ SENSOR_INTEGER,	0x13,		"Drive 3" },
-	{ SENSOR_INTEGER,	0x14,		"Drive 4" },
-	{ SENSOR_INTEGER,	0x15,		"Drive 5" },
-	{ SENSOR_INTEGER,	0x16,		"Drive 6" },
-	{ SENSOR_INTEGER,	0x17,		"Drive 7" },
-	{ SENSOR_INTEGER,	0x18,		"Drive 8" },
-	{ SENSOR_INTEGER,	0,		"Backplane Control 2" },
-	{ SENSOR_VOLTS_DC,	0,		"Backplane +3.3V" },
+struct esm_sensor_map esm_sensors_backplane[] = {
+	{ ESM_S_UNKNOWN,	0,		"Backplane" },
+	{ ESM_S_UNKNOWN,	0,		"Backplane Control" },
+	{ ESM_S_TEMP,		0,		"Backplane Top" },
+	{ ESM_S_TEMP,		0,		"Backplane Bottom" },
+	{ ESM_S_TEMP,		0,		"Backplane Control Panel" },
+	{ ESM_S_VOLTS,		0,		"Backplane Battery" },
+	{ ESM_S_VOLTS,		0,		"Backplane +5V" },
+	{ ESM_S_VOLTS,		0,		"Backplane +12V" },
+	{ ESM_S_VOLTS,		0,		"Backplane Board" },
+	{ ESM_S_INTRUSION,	0,		"Backplane Intrusion" },
+	{ ESM_S_UNKNOWN,	0,		"Backplane Fan Control" },
+	{ ESM_S_FANRPM,		0,		"Backplane Fan 1" },
+	{ ESM_S_FANRPM,		0,		"Backplane Fan 2" },
+	{ ESM_S_FANRPM,		0,		"Backplane Fan 3" },
+	{ ESM_S_SCSICONN,	ESM_A_SCSI_A,	"Backplane SCSI A Connected" },
+	{ ESM_S_VOLTS,		ESM_A_SCSI_A,	"Backplane SCSI A External" },
+	{ ESM_S_VOLTS,		ESM_A_SCSI_A,	"Backplane SCSI A Internal" },
+	{ ESM_S_SCSICONN,	ESM_A_SCSI_B,	"Backplane SCSI B Connected" },
+	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B External" },
+	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B Internal" },
+	{ ESM_S_DRIVES,		1,		"Drive %d" },
+	{ ESM_S_DRIVES,		5,		"Drive %d" },
+	{ ESM_S_DRIVE,		0,		"Drive 1"},
+	{ ESM_S_DRIVE,		0,		"Drive 2" },
+	{ ESM_S_DRIVE,		0,		"Drive 3" },
+	{ ESM_S_DRIVE,		0,		"Drive 4" },
+	{ ESM_S_DRIVE,		0,		"Drive 5" },
+	{ ESM_S_DRIVE,		0,		"Drive 6" },
+	{ ESM_S_DRIVE,		0,		"Drive 7" },
+	{ ESM_S_DRIVE,		0,		"Drive 8" },
+	{ ESM_S_UNKNOWN,	0,		"Backplane Control 2" },
+	{ ESM_S_VOLTS,		0,		"Backplane +3.3V" },
 };
 
-struct esm_sensor_type esm_sensors_powerunit[] = {
+struct esm_sensor_map esm_sensors_powerunit[] = {
 	{ SENSOR_INTEGER,	0,		"Power Unit" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 -5V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 -5V" },
 
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_1,	"Power Supply 1 -12V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 +5V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 +12V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 +3.3V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 -5V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 -12V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 +5V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 +12V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 +3.3V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 -5V" },
 
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_2,	"Power Supply 2 -12V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 +5V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 -5V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 -12V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 +5V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 -5V" },
 
-	{ SENSOR_VOLTS_DC,	ESM_A_PWRSUP_3,	"Power Supply 3 -12V" },
-	{ SENSOR_VOLTS_DC,	0,		"System power supply +5V" },
-	{ SENSOR_VOLTS_DC,	0,		"System power supply +3.3V" },
-	{ SENSOR_VOLTS_DC,	0,		"System power supply +12V" },
-	{ SENSOR_VOLTS_DC,	0,		"System power supply -5V" },
+	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 -12V" },
+	{ ESM_S_VOLTS,		0,		"System power supply +5V" },
+	{ ESM_S_VOLTS,		0,		"System power supply +3.3V" },
+	{ ESM_S_VOLTS,		0,		"System power supply +12V" },
+	{ ESM_S_VOLTS,		0,		"System power supply -5V" },
 
-	{ SENSOR_VOLTS_DC,	0,		"System power supply -12V" },
-	{ SENSOR_VOLTS_DC,	0,		"System power supply +5V aux" },
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
+	{ ESM_S_VOLTS,		0,		"System power supply -12V" },
+	{ ESM_S_VOLTS,		0,		"System power supply +5V aux" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
 
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +5V" },
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +12V" },
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +3.3V" },
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +5V" },
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +5V" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +12V" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +3.3V" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +5V" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
 
-	{ SENSOR_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
-	{ SENSOR_FANRPM,	ESM_A_PWRSUP_1,	"Power supply 1 Fan" },
-	{ SENSOR_FANRPM,	ESM_A_PWRSUP_2,	"Power supply 2 Fan" },
-	{ SENSOR_FANRPM,	ESM_A_PWRSUP_3,	"Power supply 3 Fan" },
-	{ SENSOR_INTEGER,	ESM_A_PWRSUP_1,	"Power Supply 1" },
+	{ ESM_S_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
+	{ ESM_S_FANRPM,		ESM_A_PWRSUP_1,	"Power supply 1 Fan" },
+	{ ESM_S_FANRPM,		ESM_A_PWRSUP_2,	"Power supply 2 Fan" },
+	{ ESM_S_FANRPM,		ESM_A_PWRSUP_3,	"Power supply 3 Fan" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
 
-	{ SENSOR_INTEGER,	ESM_A_PWRSUP_2,	"Power Supply 2" },
-	{ SENSOR_INTEGER,	ESM_A_PWRSUP_3,	"Power Supply 3" },
-	{ SENSOR_INTEGER,	0,		"PSPB Fan Control" },
-	{ SENSOR_FANRPM,	0,		"Fan 1" },
-	{ SENSOR_FANRPM,	0,		"Fan 2" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
+	{ ESM_S_UNKNOWN,	0,		"PSPB Fan Control" },
+	{ ESM_S_FANRPM,		0,		"Fan 1" },
+	{ ESM_S_FANRPM,		0,		"Fan 2" },
 
-	{ SENSOR_FANRPM,	0,		"Fan 3" },
-	{ SENSOR_FANRPM,	0,		"Fan 4" },
-	{ SENSOR_FANRPM,	0,		"Fan 5" },
-	{ SENSOR_FANRPM,	0,		"Fan 6" },
-	{ SENSOR_INTEGER,	0,		"Fan Enclosure" },
+	{ ESM_S_FANRPM,		0,		"Fan 3" },
+	{ ESM_S_FANRPM,		0,		"Fan 4" },
+	{ ESM_S_FANRPM,		0,		"Fan 5" },
+	{ ESM_S_FANRPM,		0,		"Fan 6" },
+	{ ESM_S_UNKNOWN,	0,		"Fan Enclosure" },
 };
 
 void
 esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 {
-	struct esm_sensor_type	*sensor_types;
+	struct esm_sensor_map	*sensor_map;
 	const char		*name;
-	int			nsensors;
+	int			mapsize;
 
 	switch (devmap->dev_major) {
 	case ESM2_DEV_ESM2:
-		sensor_types = esm_sensors_esm2;
+		sensor_map = esm_sensors_esm2;
 
 		switch (devmap->dev_minor) {
 		case ESM2_DEV_ESM2_2300:
 			name = "PowerEdge 2300";
-			nsensors = 23;
+			mapsize = 23;
 			break;
 		case ESM2_DEV_ESM2_4300:
 			name = "PowerEdge 4300";
-			nsensors = 27;
+			mapsize = 27;
 			break;
 		case ESM2_DEV_ESM2_6300:
 			name = "PowerEdge 6300";
-			nsensors = 27;
+			mapsize = 27;
 			break;
 		case ESM2_DEV_ESM2_6400:
 			name = "PowerEdge 6400";
-			nsensors = 44;
+			mapsize = 44;
 			break;
 		case ESM2_DEV_ESM2_2550:
 			name = "PowerEdge 2550";
-			nsensors = 48;
+			mapsize = 48;
 			break;
 		case ESM2_DEV_ESM2_4350:
 			name = "PowerEdge 4350";
-			nsensors = 27;
+			mapsize = 27;
 			break;
 		case ESM2_DEV_ESM2_6350:
 			name = "PowerEdge 6350";
-			nsensors = 27;
+			mapsize = 27;
 			break;
 		case ESM2_DEV_ESM2_6450:
 			name = "PowerEdge 6450";
-			nsensors = 44;
+			mapsize = 44;
 			break;
 		case ESM2_DEV_ESM2_2400:
 			name = "PowerEdge 2400";
-			nsensors = 30;
+			mapsize = 30;
 			break;
 		case ESM2_DEV_ESM2_4400:
 			name = "PowerEdge 4400";
-			nsensors = 44;
+			mapsize = 44;
 			break;
 		case ESM2_DEV_ESM2_2500:
 			name = "PowerEdge 2500";
-			nsensors = 55;
+			mapsize = 55;
 			break;
 		case ESM2_DEV_ESM2_2450:
 			name = "PowerEdge 2450";
-			nsensors = 27;
+			mapsize = 27;
 			break;
 		case ESM2_DEV_ESM2_2400EX:
 			name = "PowerEdge 2400";
-			nsensors = 27;
+			mapsize = 27;
 			break;
 		case ESM2_DEV_ESM2_2450EX:
 			name = "PowerEdge 2450";
-			nsensors = 44;
+			mapsize = 44;
 			break;
 
 		default:
@@ -549,16 +585,16 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 		break;
 
 	case ESM2_DEV_BACKPLANE2:
-		sensor_types = esm_sensors_backplane;
-		nsensors = 22;
+		sensor_map = esm_sensors_backplane;
+		mapsize = 22;
 
 		printf("%s: Primary System Backplane %d.%d\n", DEVNAME(sc),
 		    devmap->rev_major, devmap->rev_minor);
 		break;
 
 	case ESM2_DEV_POWERUNIT2:
-		sensor_types = esm_sensors_powerunit;
-		nsensors = sizeof(esm_sensors_powerunit) /
+		sensor_map = esm_sensors_powerunit;
+		mapsize = sizeof(esm_sensors_powerunit) /
 		    sizeof(esm_sensors_powerunit[0]);
 
 		printf("%s: Power Unit %d.%d\n", DEVNAME(sc),
@@ -566,8 +602,8 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 		break;
 
 	case ESM2_DEV_BACKPLANE3:
-		sensor_types = esm_sensors_backplane;
-		nsensors = sizeof(esm_sensors_backplane) /
+		sensor_map = esm_sensors_backplane;
+		mapsize = sizeof(esm_sensors_backplane) /
 		    sizeof(esm_sensors_backplane[0]);
 
 		printf("%s: Primary System Backplane %d.%d\n", DEVNAME(sc),
@@ -578,18 +614,35 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 		return;
 	}
 
-	esm_make_sensors(sc, devmap, sensor_types, nsensors);
+	esm_make_sensors(sc, devmap, sensor_map, mapsize);
 }
+
+enum sensor_type esm_typemap[] = {
+	SENSOR_INTEGER,
+	SENSOR_INDICATOR,
+	SENSOR_TEMP,
+	SENSOR_FANRPM,
+	SENSOR_VOLTS_DC,
+	SENSOR_AMPS,
+	SENSOR_INTEGER,
+	SENSOR_INTEGER,
+	SENSOR_INDICATOR,
+	SENSOR_INTEGER,
+	SENSOR_INTEGER,
+	SENSOR_INTEGER,
+	SENSOR_INDICATOR
+};
 
 void
 esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
-    struct esm_sensor_type *sensor_types, int nsensors)
+    struct esm_sensor_map *sensor_map, int mapsize)
 {
 	struct esm_smb_req	req;
 	struct esm_smb_resp	resp;
 	struct esm_smb_resp_val	*val = &resp.resp_val;
-	struct esm_sensor	*sensor;
-	int			i;
+	struct esm_sensor	*es;
+	struct sensor		*s;
+	int			nsensors, i, j;
 
 	memset(&req, 0, sizeof(req));
 	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
@@ -599,43 +652,70 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 
 	req.req_val.v_cmd = ESM2_SMB_SENSOR_VALUE;
 
-	for (i = 0; i < nsensors; i++) {
+	for (i = 0; i < mapsize; i++) {
 		req.req_val.v_sensor = i;
 		if (esm_smb_cmd(sc, &req, &resp, 1) != 0)
 			continue;
 
 		DPRINTFN(1, "%s: dev: 0x%02x sensor: %d (%s) "
 		    "reading: 0x%04x status: 0x%02x cksum: 0x%02x\n",
-		    DEVNAME(sc), devmap->index, i, sensor_types[i].name,
+		    DEVNAME(sc), devmap->index, i, sensor_map[i].name,
 		    val->v_reading, val->v_status, val->v_checksum);
 
 		if ((val->v_status & ESM2_VS_VALID) != ESM2_VS_VALID)
 			continue;
+		
+		es = malloc(sizeof(struct esm_sensor), M_DEVBUF, M_NOWAIT);
+		if (es == NULL)
+			return;
 
-		sensor = malloc(sizeof(struct esm_sensor), M_DEVBUF, M_NOWAIT);
-		if (sensor == NULL)
-			goto error;
+		memset(es, 0, sizeof(struct esm_sensor));
+		es->es_dev = devmap->index;
+		es->es_id = i;
+		es->es_type = sensor_map[i].type;
 
-		memset(sensor, 0, sizeof(struct esm_sensor));
-		sensor->es_dev = devmap->index;
-		sensor->es_id = i;
-		sensor->es_arg = sensor_types[i].arg;
-		sensor->es_sensor.type = sensor_types[i].type;
-		strlcpy(sensor->es_sensor.device, DEVNAME(sc),
-		    sizeof(sensor->es_sensor.device));
-		strlcpy(sensor->es_sensor.desc, sensor_types[i].name,
-		    sizeof(sensor->es_sensor.desc));
-		TAILQ_INSERT_TAIL(&sc->sc_sensors, sensor, es_entry);
-		SENSOR_ADD(&sensor->es_sensor);
-	}
+		switch (es->es_type) {
+		case ESM_S_DRIVES:
+			/* 
+			 * this esm sensor represents 4 kernel sensors, so we
+			 * go through these hoops to deal with it.
+			 */
+			nsensors = 4;
+			s = malloc(sizeof(struct sensor) * nsensors, M_DEVBUF,
+			    M_NOWAIT);
+			if (s == NULL) {
+				free(es, M_DEVBUF);
+				return;
+			}
+			memset(s, 0, sizeof(struct sensor) * nsensors);
 
-	return;
+			for (j = 0; j < nsensors; j++) {
+				snprintf(s[j].desc, sizeof(s[j].desc),
+				    sensor_map[i].name, sensor_map[i].arg + j);
+			}
+			break;
 
-error:
-	while (!TAILQ_EMPTY(&sc->sc_sensors)) {
-		sensor = TAILQ_FIRST(&sc->sc_sensors);
-		TAILQ_REMOVE(&sc->sc_sensors, sensor, es_entry);
-		free(sensor, M_DEVBUF);
+		default:
+			nsensors = 1;
+			s = malloc(sizeof(struct sensor), M_DEVBUF, M_NOWAIT);
+			if (s == NULL) {
+				free(es, M_DEVBUF);
+				return;
+			}
+			memset(s, 0, sizeof(struct sensor));
+
+			strlcpy(s->desc, sensor_map[i].name, sizeof(s->desc));
+			break;
+		}
+
+		for (j = 0; j < nsensors; j++) {
+			s->type = esm_typemap[es->es_type];
+			strlcpy(s[j].device, DEVNAME(sc), sizeof(s[j].device));
+			SENSOR_ADD(&s[j]);
+		}
+
+		es->es_sensor = s;
+		TAILQ_INSERT_TAIL(&sc->sc_sensors, es, es_entry);
 	}
 }
 
