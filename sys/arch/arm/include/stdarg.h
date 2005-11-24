@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.3 2005/11/24 20:49:44 deraadt Exp $ */
 /*	$NetBSD: stdarg.h,v 1.7 2003/08/07 16:26:53 agc Exp $	*/
 
 /*
@@ -46,26 +46,10 @@ typedef _BSD_VA_LIST_	va_list;
 #define	__builtin_va_copy(d, s)		((d) = (s))
 #endif
 
-#if __GNUC_PREREQ__(2, 96)
 #define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
 #define	va_arg			__builtin_va_arg
 #define	va_end			__builtin_va_end
 #define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
-#else
-#define	__va_size(type) \
-	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
-
-#define	va_start(ap, last) \
-	((ap) = (va_list)__builtin_next_arg(last))
-
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type)))[-1]
-
-#define	va_end(ap)
-
-#define	__va_copy(dest, src)	((dest) = (src))
-
-#endif /* __GNUC_PREREQ__(2, 96) */
 
 #if !defined(_ANSI_SOURCE) &&						\
     (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
