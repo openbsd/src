@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.13 2005/11/24 08:03:16 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.14 2005/11/24 08:11:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -385,35 +385,35 @@ struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
 	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
 
-        { ESM_S_VOLTS,		0,		"Mainboard +1.5V" }, /* 30 */
-        { ESM_S_VOLTS,		0,		"Motherboard +2.8V" },
-        { ESM_S_UNKNOWN,	0,		"HotPlug Status" },
-        { ESM_S_PCISLOT,	0,		"PCI Slot 1" },
-        { ESM_S_PCISLOT,	0,		"PCI Slot 2" },
+	{ ESM_S_VOLTS,		0,		"Mainboard +1.5V" }, /* 30 */
+	{ ESM_S_VOLTS,		0,		"Motherboard +2.8V" },
+	{ ESM_S_UNKNOWN,	0,		"HotPlug Status" },
+	{ ESM_S_PCISLOT,	0,		"PCI Slot 1" },
+	{ ESM_S_PCISLOT,	0,		"PCI Slot 2" },
 
-        { ESM_S_PCISLOT,	0,		"PCI Slot 3" },
-        { ESM_S_PCISLOT,	0,		"PCI Slot 4" },
-        { ESM_S_PCISLOT,	0,		"PCI Slot 5" },
-        { ESM_S_PCISLOT,	0,		"PCI Slot 6" },
-        { ESM_S_PCISLOT,	0,		"PCI Slot 7" },
+	{ ESM_S_PCISLOT,	0,		"PCI Slot 3" },
+	{ ESM_S_PCISLOT,	0,		"PCI Slot 4" },
+	{ ESM_S_PCISLOT,	0,		"PCI Slot 5" },
+	{ ESM_S_PCISLOT,	0,		"PCI Slot 6" },
+	{ ESM_S_PCISLOT,	0,		"PCI Slot 7" },
 
-        { ESM_S_VOLTS,		0,		"CPU 1 Cartridge" }, /* 40 */
-        { ESM_S_VOLTS,		0,		"CPU 2 Cartridge" },
-        { ESM_S_VOLTS,		0,		"CPU 3 Cartridge" },
-        { ESM_S_VOLTS,		0,		"CPU 4 Cartridge" },
-        { ESM_S_VOLTS,		0,		"Gigabit NIC +1.8V" },
+	{ ESM_S_VOLTS,		0,		"CPU 1 Cartridge" }, /* 40 */
+	{ ESM_S_VOLTS,		0,		"CPU 2 Cartridge" },
+	{ ESM_S_VOLTS,		0,		"CPU 3 Cartridge" },
+	{ ESM_S_VOLTS,		0,		"CPU 4 Cartridge" },
+	{ ESM_S_VOLTS,		0,		"Gigabit NIC +1.8V" },
 
-        { ESM_S_VOLTS,		0,		"Gigabit NIC +2.5V" },
-        { ESM_S_VOLTS,		0,		"Memory +3.3V" },
-        { ESM_S_VOLTS,		0,		"Video +2.5V" },
-        { ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
-        { ESM_S_FANRPM,		0,		"Fan 4" },
+	{ ESM_S_VOLTS,		0,		"Gigabit NIC +2.5V" },
+	{ ESM_S_VOLTS,		0,		"Memory +3.3V" },
+	{ ESM_S_VOLTS,		0,		"Video +2.5V" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
+	{ ESM_S_FANRPM,		0,		"Fan 4" },
 
-        { ESM_S_FANRPM,		0,		"Power Supply Fan" }, /* 50 */
-        { ESM_S_FANRPM,		0,		"Power Supply Fan" },
-        { ESM_S_FANRPM,		0,		"Power Supply Fan" },
-        { ESM_S_ACSWITCH,	0,		"A/C Power Switch" },
-        { ESM_S_UNKNOWN,	0,		"PS Over Temp" }
+	{ ESM_S_FANRPM,		0,		"Power Supply Fan" }, /* 50 */
+	{ ESM_S_FANRPM,		0,		"Power Supply Fan" },
+	{ ESM_S_FANRPM,		0,		"Power Supply Fan" },
+	{ ESM_S_ACSWITCH,	0,		"A/C Power Switch" },
+	{ ESM_S_UNKNOWN,	0,		"PS Over Temp" }
 };
 
 struct esm_sensor_map esm_sensors_backplane[] = {
