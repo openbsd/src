@@ -26,11 +26,3 @@ ah tunnel from 1.1.1.7 to 2.2.2.2 spi 0x7eadbeef auth hmac-sha2-512
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ah tunnel from 2.2.2.2 to 1.1.1.7 spi 0xbeef7ead auth hmac-sha2-512
 	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-ah tunnel from 1.1.1.8 to 2.2.2.2 spi 0x8eadbeef auth md5
-	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-ah tunnel from 2.2.2.2 to 1.1.1.8 spi 0xbeef8ead auth md5
-	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-ah tunnel from 1.1.1.9 to 2.2.2.2 spi 0x9eadbeef auth sha1
-	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-ah tunnel from 2.2.2.2 to 1.1.1.9 spi 0xbeef9ead auth sha1
-	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

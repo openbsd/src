@@ -12,7 +12,3 @@ ah from 1.1.1.6 to 2.2.2.2 spi 0x6eadbeef:0xbeef6ead auth hmac-sha2-384 \
 	authkey file "DIR/ak384:DIR/ak384"
 ah from 1.1.1.7 to 2.2.2.2 spi 0x7eadbeef:0xbeef7ead auth hmac-sha2-512 \
 	authkey file "DIR/ak512:DIR/ak512"
-ah from 1.1.1.8 to 2.2.2.2 spi 0x8eadbeef:0xbeef8ead auth md5 \
-	authkey file "DIR/ak128:DIR/ak128"
-ah from 1.1.1.9 to 2.2.2.2 spi 0x9eadbeef:0xbeef9ead auth sha1 \
-	authkey file "DIR/ak160:DIR/ak160"
