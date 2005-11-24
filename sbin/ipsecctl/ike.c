@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.9 2005/11/12 16:41:39 deraadt Exp $	*/
+/*	$OpenBSD: ike.c,v 1.10 2005/11/24 11:52:07 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -145,11 +145,9 @@ ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 	if (qmxfs->authxf) {
 		switch (qmxfs->authxf->id) {
 		case AUTHXF_HMAC_MD5:
-		case AUTHXF_MD5:
 			fprintf(fd, "MD5");
 			break;
 		case AUTHXF_HMAC_SHA1:
-		case AUTHXF_SHA1:
 			fprintf(fd, "SHA");
 			break;
 		case AUTHXF_HMAC_RIPEMD160:
@@ -215,11 +213,9 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 	if (mmxfs->authxf) {
 		switch (mmxfs->authxf->id) {
 		case AUTHXF_HMAC_MD5:
-		case AUTHXF_MD5:
 			fprintf(fd, "MD5");
 			break;
 		case AUTHXF_HMAC_SHA1:
-		case AUTHXF_SHA1:
 			fprintf(fd, "SHA");
 			break;
 		default:

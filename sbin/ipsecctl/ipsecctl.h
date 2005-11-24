@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.23 2005/11/12 21:49:38 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.24 2005/11/24 11:52:07 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -58,7 +58,7 @@ enum {
 enum {
 	AUTHXF_UNKNOWN, AUTHXF_NONE, AUTHXF_HMAC_MD5, AUTHXF_HMAC_RIPEMD160,
 	AUTHXF_HMAC_SHA1, AUTHXF_HMAC_SHA2_256, AUTHXF_HMAC_SHA2_384,
-	AUTHXF_HMAC_SHA2_512, AUTHXF_MD5, AUTHXF_SHA1
+	AUTHXF_HMAC_SHA2_512
 };
 enum {
 	ENCXF_UNKNOWN, ENCXF_NONE, ENCXF_3DES_CBC, ENCXF_DES_CBC, ENCXF_AES,

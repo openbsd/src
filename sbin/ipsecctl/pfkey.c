@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.30 2005/11/12 16:41:39 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.31 2005/11/24 11:52:07 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -382,12 +382,6 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 			break;
 		case AUTHXF_HMAC_SHA2_512:
 			sa.sadb_sa_auth = SADB_X_AALG_SHA2_512;
-			break;
-		case AUTHXF_MD5:
-			sa.sadb_sa_auth = SADB_X_AALG_MD5;
-			break;
-		case AUTHXF_SHA1:
-			sa.sadb_sa_auth = SADB_X_AALG_SHA1;
 			break;
 		default:
 			warnx("unsupported authentication algorithm %d",

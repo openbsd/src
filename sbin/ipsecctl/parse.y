@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2005/11/12 21:57:34 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.41 2005/11/24 11:52:07 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -62,8 +62,6 @@ const struct ipsec_xf authxfs[] = {
 	{ "hmac-sha2-256",	AUTHXF_HMAC_SHA2_256,	32,	0 },
 	{ "hmac-sha2-384",	AUTHXF_HMAC_SHA2_384,	48,	0 },
 	{ "hmac-sha2-512",	AUTHXF_HMAC_SHA2_512,	64,	0 },
-	{ "md5",		AUTHXF_MD5,		16,	0 },
-	{ "sha1",		AUTHXF_SHA1,		20,	0 },
 	{ NULL,			0,			0,	0 },
 };
 
