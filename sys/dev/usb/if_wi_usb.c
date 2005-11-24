@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.24 2005/11/19 08:23:41 jsg Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.25 2005/11/24 14:31:40 grange Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -263,7 +263,7 @@ const struct wi_usb_type {
 };
 #define wi_usb_lookup(v, p) ((struct wi_usb_type *)usb_lookup(wi_usb_devs, v, p))
 
-USB_DECLARE_DRIVER(wi_usb);
+USB_DECLARE_DRIVER_CLASS(wi_usb, DV_IFNET);
 
 USB_MATCH(wi_usb)
 {

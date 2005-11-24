@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ubt.c,v 1.5 2005/11/09 05:57:23 brad Exp $	*/
+/*	$OpenBSD: if_ubt.c,v 1.6 2005/11/24 14:31:40 grange Exp $	*/
 
 /*
  * ng_ubt.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ubt.c,v 1.5 2005/11/09 05:57:23 brad Exp $
+ * $Id: if_ubt.c,v 1.6 2005/11/24 14:31:40 grange Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/drivers/ubt/ng_ubt.c,v 1.20 2004/10/12 23:33:46 emax Exp $
  */
 
@@ -64,7 +64,7 @@
 
 #include <dev/usb/if_ubtreg.h>
 
-USB_DECLARE_DRIVER(ubt);
+USB_DECLARE_DRIVER_CLASS(ubt, DV_IFNET);
 
 Static usbd_status	ubt_request_start(struct ubt_softc *);
 Static void		ubt_request_complete(usbd_xfer_handle,
