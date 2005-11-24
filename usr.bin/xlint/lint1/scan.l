@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.11 2005/11/23 20:36:41 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.12 2005/11/24 01:45:28 deraadt Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.11 2005/11/23 20:36:41 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.12 2005/11/24 01:45:28 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -428,7 +428,7 @@ search(sb)
 
 	return (NULL);
 }
-			
+
 static int
 keyw(sym)
 	sym_t	*sym;
@@ -732,7 +732,7 @@ ccon()
 		cv = (char)val;
 		val = cv;
 	}
-	
+
 	yylval.y_val = xcalloc(1, sizeof (val_t));
 	yylval.y_val->v_tspec = INT;
 	yylval.y_val->v_quad = val;
@@ -1419,5 +1419,5 @@ freeyyv(sp, tok)
 			lerror("fryylv() 1");
 		}
 		free(strg);
-	}	
+	}
 }
