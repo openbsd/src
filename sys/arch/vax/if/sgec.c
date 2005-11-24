@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.8 2005/01/15 05:24:10 brad Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.9 2005/11/24 04:49:25 brad Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -313,7 +313,7 @@ zestart(ifp)
 	int old_inq = sc->sc_inq;
 	short orword;
 
-	s = splimp();
+	s = splnet();
 	while (sc->sc_inq < (TXDESCS - 1)) {
 
 		if (sc->sc_setup) {
@@ -628,7 +628,7 @@ ze_setup(sc)
 	u_int8_t *enaddr = sc->sc_ac.ac_enaddr;
 	int j, idx, s, reg;
 
-	s = splimp();
+	s = splnet();
 	if (sc->sc_inq == (TXDESCS - 1)) {
 		sc->sc_setup = 1;
 		splx(s);
@@ -742,7 +742,7 @@ zereset(sc)
 	 */
 	reg = ZE_NICSR0_IPL14 | sc->sc_intvec | 0x1fff0003; /* SYNC/ASYNC??? */
 	i = 10;
-	s = splimp();
+	s = splnet();
 	do {
 		if (i-- == 0) {
 			printf("Failing SGEC CSR0 init\n");
