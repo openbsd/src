@@ -1697,8 +1697,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/kernfs
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/portal
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/portal/portal.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs

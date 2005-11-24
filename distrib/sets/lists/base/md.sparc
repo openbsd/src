@@ -1043,8 +1043,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/kernfs
-./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/portal
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/portal/portal.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/procfs

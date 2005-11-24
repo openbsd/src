@@ -327,4 +327,5 @@
 ./usr/libdata/ldscripts/armelfb_obsd.xsc
 ./usr/libdata/ldscripts/armelfb_obsd.xu
 ./usr/libdata/ldscripts/armelfb_obsd.xz
+./usr/libdata/lint/llib-larm.ln
 ./usr/share/man/cat1/objcopy.0

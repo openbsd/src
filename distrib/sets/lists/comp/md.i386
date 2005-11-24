@@ -304,4 +304,5 @@
 ./usr/libdata/ldscripts/elf_i386_obsd.xsc
 ./usr/libdata/ldscripts/elf_i386_obsd.xu
 ./usr/libdata/ldscripts/elf_i386_obsd.xz
+./usr/libdata/lint/llib-li386.ln
 ./usr/share/man/cat1/objcopy.0

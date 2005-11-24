@@ -2190,7 +2190,6 @@
 ./usr/share/man/cat8/mount_ext2fs.0
 ./usr/share/man/cat8/mount_fdesc.0
 ./usr/share/man/cat8/mount_ffs.0
-./usr/share/man/cat8/mount_kernfs.0
 ./usr/share/man/cat8/mount_mfs.0
 ./usr/share/man/cat8/mount_msdos.0
 ./usr/share/man/cat8/mount_nfs.0

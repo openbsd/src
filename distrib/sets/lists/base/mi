@@ -115,7 +115,6 @@
 ./sbin/mount_ext2fs
 ./sbin/mount_fdesc
 ./sbin/mount_ffs
-./sbin/mount_kernfs
 ./sbin/mount_mfs
 ./sbin/mount_msdos
 ./sbin/mount_nfs
@@ -2248,8 +2247,6 @@
 ./usr/share/lkm/syscall
 ./usr/share/lkm/syscall/module
 ./usr/share/lkm/syscall/test
-./usr/share/lkm/vfs
-./usr/share/lkm/vfs/module
 ./usr/share/locale
 ./usr/share/locale/bg_BG.CP1251
 ./usr/share/locale/bg_BG.CP1251/LC_CTYPE

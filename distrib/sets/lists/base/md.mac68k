@@ -1620,8 +1620,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/fifofs/fifo.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/kernfs
-./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/portal
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/portal/portal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/procfs
