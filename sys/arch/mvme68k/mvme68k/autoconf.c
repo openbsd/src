@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 2004/12/25 23:02:25 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.29 2005/11/24 22:43:19 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -104,7 +104,7 @@ extern void dumpconf(void);
 char	extiospace[EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16)];
 
 struct	extent *extio;
-extern	void *extiobase;
+extern	vaddr_t extiobase;
 
 void mainbus_attach(struct device *, struct device *, void *);
 int  mainbus_match(struct device *, void *, void *);
@@ -133,7 +133,7 @@ mainbus_print(args, bus)
 {
 	struct confargs *ca = args;
 
-	if (ca->ca_paddr != (void *)-1)
+	if (ca->ca_paddr != (paddr_t)-1)
 		printf(" addr 0x%x", (u_int32_t)ca->ca_paddr);
 	return (UNCONF);
 }
@@ -147,8 +147,8 @@ mainbus_scan(parent, child, args)
 	struct confargs oca;
 
 	bzero(&oca, sizeof oca);
-	oca.ca_paddr = (void *)cf->cf_loc[0];
-	oca.ca_vaddr = (void *)-1;
+	oca.ca_paddr = cf->cf_loc[0];
+	oca.ca_vaddr = (vaddr_t)-1;
 	oca.ca_ipl = -1;
 	oca.ca_bustype = BUS_MAIN;
 	oca.ca_name = cf->cf_driver->cd_name;
@@ -200,19 +200,19 @@ cpu_configure()
  * Allocate/deallocate a cache-inhibited range of kernel virtual address
  * space mapping the indicated physical address range [pa - pa+size)
  */
-void *
+vaddr_t
 mapiodev(pa, size)
-	void *pa;
+	paddr_t pa;
 	int size;
 {
 	int error;
-	void *kva;
+	vaddr_t kva;
 
-	if (size == 0)
+	if (size <= 0)
 		return NULL;
 
 #ifdef DEBUG
-	if (((int)pa & PGOFSET) || (size & PGOFSET))
+	if ((pa & PGOFSET) || (size & PGOFSET))
 		panic("mapiodev: unaligned");
 #endif
 
@@ -222,24 +222,24 @@ mapiodev(pa, size)
 	if (error != 0)
 	        return NULL;
 
-	physaccess((vaddr_t)kva, (paddr_t)pa, size, PG_RW|PG_CI);
+	physaccess(kva, pa, size, PG_RW | PG_CI);
 	return (kva);
 }
 
 void
 unmapiodev(kva, size)
-	void *kva;
+	vaddr_t kva;
 	int size;
 {
 	int error;
 
 #ifdef DEBUG
-	if (((int)kva & PGOFSET) || (size & PGOFSET))
+	if ((kva & PGOFSET) || (size & PGOFSET))
 	        panic("unmapiodev: unaligned");
 	if (kva < extiobase || kva >= extiobase + ctob(EIOMAPSIZE))
 	        panic("unmapiodev: bad address");
 #endif
-	physunaccess((vaddr_t)kva, size);
+	physunaccess(kva, size);
 
 	error = extent_free(extio, (u_long)kva, size, EX_NOWAIT);
 

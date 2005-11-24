@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipicreg.h,v 1.6 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: ipicreg.h,v 1.7 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -104,7 +104,7 @@ struct ipicsoftc {
 	struct device	sc_dev;
 	struct ipicreg	*sc_ipic;
 
-	caddr_t		sc_ipspace;
+	vaddr_t		sc_ipspace;
 	int		sc_nip;
 };
 

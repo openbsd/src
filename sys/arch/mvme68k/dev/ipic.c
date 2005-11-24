@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.15 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: ipic.c,v 1.16 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -98,7 +98,8 @@ ipicscan(parent, child, args)
 	struct ipicsoftc *sc = (struct ipicsoftc *)parent;
 	struct confargs oca;
 	int slot, n = 0;
-	caddr_t ipv, ipp;
+	vaddr_t ipv;
+	paddr_t ipp;
 	struct ipid *ipid;
 
 	/* XXX can we determine IPIC_IPSPACE automatically? */
@@ -108,7 +109,7 @@ ipicscan(parent, child, args)
 			continue;
 
 		ipv = mapiodev(ipp, NBPG);
-		if (ipv == NULL)
+		if (ipv == 0)
 			continue;
 
 		ipid = (struct ipid *)(ipv + IPIC_IP_IDOFFSET);
@@ -152,7 +153,7 @@ ipicattach(parent, self, args)
 	struct confargs *ca = args;
 
 	sc->sc_ipic = (struct ipicreg *)ca->ca_vaddr;
-	sc->sc_ipspace = (caddr_t)IPIC_IPSPACE;
+	sc->sc_ipspace = IPIC_IPSPACE;
 	sc->sc_nip = 2;
 
 	/* 

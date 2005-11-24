@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2005/08/14 12:52:39 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.22 2005/11/24 22:43:19 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -146,8 +146,8 @@ extern int want_resched;
 extern int astpending;
 #define aston() (astpending = 1)
 
-extern	char *intiobase, *intiolimit;
-extern	char *iiomapbase;
+extern	vaddr_t intiobase, intiolimit;
+extern	vaddr_t iiomapbase;
 extern	int iiomapsize;
 
 /* physical memory sections for mvme147 */
@@ -168,10 +168,10 @@ extern	int iiomapsize;
  * conversion between physical and kernel virtual addresses is easy.
  */
 #define	ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	((int)(pa)-(int)iiomapbase+(int)intiobase)
-#define	IIOP(va)	((int)(va)-(int)intiobase+(int)iiomapbase)
-#define	IIOPOFF(pa)	((int)(pa)-(int)iiomapbase)
+	((va) >= intiobase && (va) < intiolimit)
+#define	IIOV(pa)	((pa) - iiomapbase + intiobase)
+#define	IIOP(va)	((va) - intiobase + iiomapbase)
+#define	IIOPOFF(pa)	((pa) - iiomapbase)
 
 extern int	cputyp;
 #define CPU_147			0x147

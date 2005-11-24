@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.20 2005/10/27 16:04:08 martin Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.21 2005/11/24 22:43:19 miod Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -69,20 +69,20 @@
 
 #include <uvm/uvm_extern.h>
 
-char *iiomapbase;
+vaddr_t iiomapbase;
 int iiomapsize;
 #define	ETHERPAGES	16
 void *etherbuf;
 int etherlen;
 
-extern char *extiobase;
+extern vaddr_t extiobase;
 extern int maxmem;
 
 #define	RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 #define	PA2VA(v, t)	*((t*)((u_int)&(v)))
 
-#define	MACHINE_IIOMAPSIZE	RELOC(iiomapsize, int)
-#define	MACHINE_INTIOBASE	RELOC(iiomapbase, int)
+#define	MACHINE_IIOMAPSIZE	RELOC(iiomapsize, vaddr_t)
+#define	MACHINE_INTIOBASE	RELOC(iiomapbase, vaddr_t)
 #define	MACHINE_EIOMAPSIZE	EIOMAPSIZE
 
 #define	PMAP_MD_LOCALS		/* nothing */
@@ -95,7 +95,7 @@ do { \
 
 #define	PMAP_MD_MAPIOSPACE() \
 do { \
-	pte = &((u_int *)kptpa)[atop(etherbuf)]; \
+	pte = &((u_int *)kptpa)[atop((vaddr_t)etherbuf)]; \
 	epte = pte + ETHERPAGES; \
 	while (pte < epte) { \
 		*pte = (*pte & ~PG_CMASK) | PG_CIS | PG_U; \
@@ -113,9 +113,9 @@ do { \
 	 */
 #define	PMAP_MD_RELOC2() \
 do { \
-	RELOC(intiobase, char *) = (char *)iiobase; \
-	RELOC(intiolimit, char *) = (char *)eiobase; \
-	RELOC(extiobase, char *) = (char *)eiobase; \
+	RELOC(intiobase, vaddr_t) = (vaddr_t)iiobase; \
+	RELOC(intiolimit, vaddr_t) = (vaddr_t)eiobase; \
+	RELOC(extiobase, vaddr_t) = (vaddr_t)eiobase; \
 } while (0)
 
 #define	PMAP_MD_MEMSIZE() \
@@ -137,8 +137,8 @@ pmap_init_md()
 	 * mark as unavailable the regions which we have mapped in
 	 * pmap_bootstrap().
 	 */
-	addr = (vaddr_t) intiobase;
-	if (uvm_map(kernel_map, &addr, ptoa(iiomapsize+EIOMAPSIZE),
+	addr = intiobase;
+	if (uvm_map(kernel_map, &addr, ptoa(iiomapsize + EIOMAPSIZE),
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 	      UVM_INH_NONE, UVM_ADV_RANDOM, UVM_FLAG_FIXED)))

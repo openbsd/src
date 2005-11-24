@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.14 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.15 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -49,8 +49,8 @@
 
 struct pcctwosoftc {
 	struct device	sc_dev;
-	void		*sc_vaddr;	/* PCC2 space */
-	void		*sc_paddr;
+	vaddr_t		sc_vaddr;	/* PCC2 space */
+	paddr_t		sc_paddr;
 	struct pcctworeg *sc_pcc2;	/* the actual registers */
 };
 
@@ -116,8 +116,8 @@ pcctwo_scan(parent, child, args)
 		oca.ca_vaddr = sc->sc_vaddr + oca.ca_offset;
 		oca.ca_paddr = sc->sc_paddr + oca.ca_offset;
 	} else {
-		oca.ca_vaddr = (void *)-1;
-		oca.ca_paddr = (void *)-1;
+		oca.ca_vaddr = (vaddr_t)-1;
+		oca.ca_paddr = (paddr_t)-1;
 	}
 	oca.ca_bustype = BUS_PCCTWO;
 	oca.ca_name = cf->cf_driver->cd_name;
@@ -143,7 +143,7 @@ pcctwoattach(parent, self, args)
 	 * we must adjust our address
 	 */
 	sc->sc_paddr = ca->ca_paddr;
-	sc->sc_vaddr = (void *)IIOV(sc->sc_paddr);
+	sc->sc_vaddr = IIOV(sc->sc_paddr);
 	sc->sc_pcc2 = (struct pcctworeg *)(sc->sc_vaddr + PCC2_PCC2CHIP_OFF);
 	sys_pcc2 = sc->sc_pcc2;
 

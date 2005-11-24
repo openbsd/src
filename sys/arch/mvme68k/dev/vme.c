@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.22 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.23 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -61,10 +61,10 @@ void vmeattach(struct device *, struct device *, void *);
 
 void vme1chip_init(struct vmesoftc *sc);
 void vme2chip_init(struct vmesoftc *sc);
-u_long vme2chip_map(u_long base, int len, int dwidth);
+paddr_t vme2chip_map(u_long base, int len, int dwidth);
 int vme2abort(void *);
 
-void vmeunmap(void *, int);
+void vmeunmap(vaddr_t, int);
 int vmeprint(void *, const char *);
 
 static int vmebustype;
@@ -120,14 +120,14 @@ vmematch(parent, cf, args)
  * mappings, ie. the MVME147 cannot do 32 bit accesses to VME bus
  * addresses from 0 to physmem.
  */
-void *
+paddr_t
 vmepmap(sc, vmeaddr, len, bustype)
 	struct vmesoftc *sc;
-	void *vmeaddr;
+	paddr_t vmeaddr;
 	int len;
 	int bustype;
 {
-	u_int32_t base = (u_int32_t)vmeaddr;
+	paddr_t base = vmeaddr;
 
 	len = roundup(len, NBPG);
 	switch (vmebustype) {
@@ -154,7 +154,7 @@ vmepmap(sc, vmeaddr, len, bustype)
 			} else {
 				printf("%s: cannot map pa 0x%x len 0x%x\n",
 				    sc->sc_dev.dv_xname, base, len);
-				return (NULL);
+				return (0);
 			}
 			break;
 		case BUS_VMEL:
@@ -165,7 +165,7 @@ vmepmap(sc, vmeaddr, len, bustype)
 			else {
 				printf("%s: cannot map pa 0x%x len 0x%x\n",
 				    sc->sc_dev.dv_xname, base, len);
-				return (NULL);
+				return (0);
 			}
 			break;
 		}
@@ -194,8 +194,6 @@ vmepmap(sc, vmeaddr, len, bustype)
 				printf("vme2chip_map\n");
 #endif
 				base = vme2chip_map(base, len, 16);
-				if (base == NULL)
-					return (NULL);
 			}
 			break;
 		case BUS_VMEL:
@@ -205,36 +203,35 @@ vmepmap(sc, vmeaddr, len, bustype)
 				base = base - VME2_A16BASE + VME2_A16D32BASE;
 #endif
 			base = vme2chip_map(base, len, 32);
-			if (base == NULL)
-				return (NULL);
 			break;
 		}
 		break;
 #endif
 	}
-	return ((void *)base);
+	return (base);
 }
 
 /* if successful, returns the va of a vme bus mapping */
-void *
+vaddr_t
 vmemap(sc, vmeaddr, len, bustype)
 	struct vmesoftc *sc;
-	void *vmeaddr;
+	paddr_t vmeaddr;
 	int len;
 	int bustype;
 {
-	void *pa, *va;
+	paddr_t pa;
+	vaddr_t va;
 
 	pa = vmepmap(sc, vmeaddr, len, bustype);
-	if (pa == NULL)
-		return (NULL);
+	if (pa == 0)
+		return (0);
 	va = mapiodev(pa, len);
 	return (va);
 }
 
 void
 vmeunmap(va, len)
-	void *va;
+	vaddr_t va;
 	int len;
 {
 	unmapiodev(va, len);
@@ -247,10 +244,10 @@ vmerw(sc, uio, flags, bus)
 	int flags;
 	int bus;
 {
-	register vm_offset_t v;
-	register int c;
-	register struct iovec *iov;
-	void *vme;
+	vaddr_t v;
+	int c;
+	struct iovec *iov;
+	vaddr_t vme;
 	int error = 0;
 
 	while (uio->uio_resid > 0 && error == 0) {
@@ -269,9 +266,8 @@ vmerw(sc, uio, flags, bus)
 			c = NBPG - (v & PGOFSET);
 		if (c == 0)
 			return (0);
-		vme = vmemap(sc, (void *)(v & ~PGOFSET),
-		    NBPG, BUS_VMES);
-		if (vme == NULL) {
+		vme = vmemap(sc, trunc_page(v), NBPG, BUS_VMES);
+		if (vme == 0) {
 			error = EFAULT;	/* XXX? */
 			continue;
 		}
@@ -308,7 +304,7 @@ vmescan(parent, child, args, bustype)
 
 	bzero(&oca, sizeof oca);
 	oca.ca_bustype = bustype;
-	oca.ca_paddr = (void *)cf->cf_loc[0];
+	oca.ca_paddr = cf->cf_loc[0];
 	oca.ca_len = cf->cf_loc[1];
 	oca.ca_vec = cf->cf_loc[2];
 	oca.ca_ipl = cf->cf_loc[3];
@@ -317,13 +313,13 @@ vmescan(parent, child, args, bustype)
 	if (oca.ca_len == -1)
 		oca.ca_len = 4096;
 
-	oca.ca_offset = (u_int)oca.ca_paddr;
+	oca.ca_offset = oca.ca_paddr;
 	oca.ca_vaddr = vmemap(sc, oca.ca_paddr, oca.ca_len, oca.ca_bustype);
-	if (!oca.ca_vaddr)
-		oca.ca_vaddr = (void *)-1;
+	if (oca.ca_vaddr == 0)
+		oca.ca_vaddr = (vaddr_t)-1;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
-		if (oca.ca_vaddr != (void *)-1)
+		if (oca.ca_vaddr != (vaddr_t)-1)
 			vmeunmap(oca.ca_vaddr, oca.ca_len);
 		return (0);
 	}

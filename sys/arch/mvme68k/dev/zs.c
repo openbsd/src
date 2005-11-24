@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.21 2005/05/01 09:55:49 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.22 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -126,8 +126,7 @@ struct   sccregs *zs_cons_scc;
 void  zsstart(struct tty *);
 int   zsparam(struct tty *, struct termios *);
 int   zsirq(void *);
-int   zsregs(void *va, int unit, volatile u_char **crp,
-						  volatile u_char **drp);
+int   zsregs(vaddr_t, int, volatile u_char **, volatile u_char **);
 int   zspclk(void);
 
 u_long   sir_zs;
@@ -1087,7 +1086,7 @@ zscninit(cp)
 	 * on different MVME models, so we generate independent pointers
 	 * to them.
 	 */
-	size = zsregs(NULL, unit, &scc_cr, &scc_dr);
+	size = zsregs(0, unit, &scc_cr, &scc_dr);
 
 	*(scc_cr + size) = 0;
 	*(scc_cr + size) = 9;
@@ -1128,7 +1127,7 @@ u_long zs_cons_addrs_162[] = { ZS0_PHYS_162, ZS1_PHYS_162};
  */
 int
 zsregs(va, unit, crp, drp)
-	void *va;
+	vaddr_t va;
 	int unit;
 	volatile u_char **crp, **drp;
 {
@@ -1144,8 +1143,8 @@ zsregs(va, unit, crp, drp)
 	switch (cputyp) {
 #ifdef MVME147
 		case CPU_147:
-			if (!va)
-				va = (void *)IIOV(zs_cons_addrs_147[unit]);
+			if (va == 0)
+				va = IIOV(zs_cons_addrs_147[unit]);
 			scc_adr_147 = (volatile struct scc_147 *)va;
 			scc_cr = &scc_adr_147->cr;
 			scc_dr = &scc_adr_147->dr;
@@ -1155,8 +1154,8 @@ zsregs(va, unit, crp, drp)
 #if defined(MVME162) || defined(MVME172)
 		case CPU_162:
 		case CPU_172:
-			if (!va)
-				va = (void *)IIOV(zs_cons_addrs_162[unit]);
+			if (va == 0)
+				va = IIOV(zs_cons_addrs_162[unit]);
 			scc_adr_162 = (volatile struct scc_162 *)va;
 			scc_cr = &scc_adr_162->cr;
 			scc_dr = &scc_adr_162->dr;

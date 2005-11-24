@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.11 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.12 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -106,7 +106,7 @@ void *auxp;
 	int tmp;
 	extern int cpuspeed;
 
-	sc->sc_sshp = rp = ca->ca_vaddr;
+	sc->sc_sshp = rp = (void *)ca->ca_vaddr;
 	/*
 	 * ssh uses sc_clock_freq to define the dcntl & ctest7 reg values
 	 * (was 0x0221, but i added SSH_CTEST7_SC0 for snooping control)

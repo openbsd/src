@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.29 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.30 2005/11/24 22:43:16 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -276,7 +276,7 @@ lematch(parent, vcf, args)
 {
 	struct confargs *ca = args;
 	/* check physical addr for bogus MVME162 addr @0xffffd200. weird XXX - smurph */
-	if (cputyp == CPU_162 && ca->ca_paddr == (void *)0xffffd200)
+	if (cputyp == CPU_162 && ca->ca_paddr == 0xffffd200)
 		return (0);
 
 	return (!badvaddr((vaddr_t)ca->ca_vaddr, 2));
@@ -298,7 +298,7 @@ leattach(parent, self, aux)
 	struct confargs *ca = aux;
 	int pri = ca->ca_ipl;
 	extern void *etherbuf;
-	caddr_t addr;
+	paddr_t addr;
 	int card;
 
 	/* XXX the following declarations should be elsewhere */
@@ -319,7 +319,7 @@ leattach(parent, self, aux)
 		 * however, the board can be set up at any other address.
 		 * XXX These physical addresses should be mapped in extio!!!
 		 */
-		switch ((int)ca->ca_paddr) {
+		switch (ca->ca_paddr) {
 		case 0xffff1200:
 			card = 0;
 			break;
@@ -343,7 +343,7 @@ leattach(parent, self, aux)
 			return;
 		}
 
-		addr = (caddr_t)(VLEMEMBASE - (card * VLEMEMSIZE));
+		addr = VLEMEMBASE - (card * VLEMEMSIZE);
 
 		sc->sc_mem = (void *)mapiodev(addr, VLEMEMSIZE);
 		if (sc->sc_mem == NULL) {
@@ -351,7 +351,7 @@ leattach(parent, self, aux)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		sc->sc_addr = (paddr_t)addr & 0x00ffffff;
+		sc->sc_addr = addr & 0x00ffffff;
 
 		lesc->sc_r1 = (void *)ca->ca_vaddr;
 		lesc->sc_ipl = ca->ca_ipl;

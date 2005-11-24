@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2005/11/24 22:41:29 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.92 2005/11/24 22:43:19 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -892,13 +892,14 @@ badpaddr(addr, size)
 	int size;
 {
 	int off = (int)addr & PGOFSET;
-	caddr_t v, p = (void *)((int)addr & ~PGOFSET);
+	vaddr_t v;
+	paddr_t p = trunc_page(addr);
 	int x;
 
 	v = mapiodev(p, NBPG);
-	if (v == NULL)
+	if (v == 0)
 		return (1);
-	x = badvaddr((vaddr_t)v + off, size);
+	x = badvaddr(v + off, size);
 	unmapiodev(v, NBPG);
 	return (x);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.15 2005/10/27 16:04:08 martin Exp $ */
+/*	$OpenBSD: flash.c,v 1.16 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -52,13 +52,13 @@
 #include <mvme68k/dev/flashreg.h>
 
 struct flashsoftc {
-	struct device		sc_dev;
-	u_char *		sc_paddr;
-	volatile u_char *	sc_vaddr;
-	u_char			sc_manu;
-	u_char			sc_ii;
-	int			sc_len;
-	int			sc_zonesize;
+	struct device	 sc_dev;
+	paddr_t		 sc_paddr;
+	volatile u_char *sc_vaddr;
+	u_char		 sc_manu;
+	u_char		 sc_ii;
+	int		 sc_len;
+	int		 sc_zonesize;
 };
 
 void flashattach(struct device *, struct device *, void *);
@@ -123,7 +123,7 @@ flashmatch(parent, cf, args)
 		return (0);
 #endif
 
-	if (badpaddr((paddr_t)ca->ca_paddr, 1))
+	if (badpaddr(ca->ca_paddr, 1))
 		return (0);
 
 	if (!mc_hasflash())
@@ -142,7 +142,7 @@ flashattach(parent, self, args)
 	int manu, ident;
 
 	sc->sc_paddr = ca->ca_paddr;
-	sc->sc_vaddr = mapiodev(sc->sc_paddr, NBPG);
+	sc->sc_vaddr = (volatile u_char *)mapiodev(sc->sc_paddr, NBPG);
 
 	switch (cputyp) {
 #ifdef MVME162
@@ -187,8 +187,8 @@ flashattach(parent, self, args)
 	sc->sc_vaddr[0] = FLCMD_CLEARSTAT;
 	sc->sc_vaddr[0] = FLCMD_RESET;
 
-	unmapiodev((void *)sc->sc_vaddr, NBPG);
-	sc->sc_vaddr = mapiodev(sc->sc_paddr, sc->sc_len);
+	unmapiodev((vaddr_t)sc->sc_vaddr, NBPG);
+	sc->sc_vaddr = (volatile u_char *)mapiodev(sc->sc_paddr, sc->sc_len);
 	if (sc->sc_vaddr == NULL) {
 		sc->sc_len = 0;
 		printf(" -- failed to map");

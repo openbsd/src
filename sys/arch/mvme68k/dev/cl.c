@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.40 2004/08/09 06:04:18 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.41 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -73,7 +73,7 @@
 #define CL_RXINTR	0x02
 
 struct cl_cons {
-	void	*cl_paddr;
+	paddr_t	cl_paddr;
 	struct clreg *cl_vaddr;
 	volatile struct pcctworeg *pcctwoaddr;
 	u_char	channel;
@@ -949,8 +949,8 @@ clcninit(cp)
 {
 	struct clreg *cl_reg;
 	
-	cl_cons.cl_paddr = (void *)0xfff45000;
-	cl_cons.cl_vaddr   = (struct clreg *)IIOV(cl_cons.cl_paddr);
+	cl_cons.cl_paddr = 0xfff45000;
+	cl_cons.cl_vaddr = (struct clreg *)IIOV(cl_cons.cl_paddr);
 	cl_cons.pcctwoaddr = (void *)IIOV(0xfff42000);
 	cl_reg = cl_cons.cl_vaddr;
 

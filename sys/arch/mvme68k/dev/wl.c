@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.17 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: wl.c,v 1.18 2005/11/24 22:43:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -121,9 +121,9 @@ struct wlsoftc {
 	time_t		sc_fotime;	/* time of last fifo overrun */
 
 	u_char		sc_memv;
-	void		*sc_memvme;
+	paddr_t		sc_memvme;
 	void		*sc_memp;
-	void		*sc_memkv;
+	vaddr_t		sc_memkv;
 
 	struct clreg	*cl_reg;
 	struct cl_info	sc_cl[CLCD_PORTS_PER_CHIP];
@@ -252,11 +252,11 @@ wlattach(parent, self, aux)
 	sc->sc_vec = ca->ca_vec;
 
 	sc->sc_memv = 0xa5 + 0;
-	sc->sc_memvme = (void *)((0xff00 + sc->sc_memv) << 16);
+	sc->sc_memvme = ((0xff00 + sc->sc_memv) << 16);
 
 	clb->reset.val = 0xff;		/* reset card */
 	DELAY(1000);
-	clb->sram.base = ((u_int)sc->sc_memvme >> 16) & 0xff;
+	clb->sram.base = (sc->sc_memvme >> 16) & 0xff;
 	DELAY(1000);
 	clb->master.val = 0x01;		/* enable sram decoder */
 	DELAY(1000);
@@ -285,12 +285,12 @@ wlattach(parent, self, aux)
 	sc->sc_memkv = vmemap(((struct vmessoftc *)parent)->sc_vme,
 	    sc->sc_memvme, WLRAMLEN, BUS_VMES);
 	sc->sc_memp = (void *)kvtop(sc->sc_memkv);
-	if (sc->sc_memkv == NULL)
+	if (sc->sc_memkv == 0)
 		printf("%s: got no memory", sc->sc_dev.dv_xname);
 	else if (badvaddr(sc->sc_memkv, 1))
 		printf("%s: cannot tap 0x%08x", sc->sc_dev.dv_xname, sc->sc_memkv);
 	else {
-		u_char *x = sc->sc_memkv;
+		u_char *x = (u_char *)sc->sc_memkv;
 
 		/*printf("%s: pa 0x%08x va 0x%08x", sc->sc_dev.dv_xname,
 		    sc->sc_memp, sc->sc_memkv);*/
@@ -338,19 +338,19 @@ wlattach(parent, self, aux)
 	vmeintr_establish(ca->ca_vec + 2, &sc->sc_ih_t, sc->sc_txintrname);
 	vmeintr_establish(ca->ca_vec + 3, &sc->sc_ih_r, sc->sc_rxintrname);
 
-	p = sc->sc_memkv;
+	p = (void *)sc->sc_memkv;
 	s = splhigh();
 	for (i = 0; i < CLCD_PORTS_PER_CHIP; i++) {
 		for (j = 0; j < 2; j++) {
 			sc->sc_cl[i].rx[j] = p;
-			sc->sc_cl[i].rxp[j] = (void *)(p - sc->sc_memkv);
+			sc->sc_cl[i].rxp[j] = (void *)(p - (void *)sc->sc_memkv);
 			/*printf("%d:%d rx v %x p %x\n",
 			    i, j, sc->sc_cl[i].rx[j], sc->sc_cl[i].rxp[j]);*/
 			p += CL_BUFSIZE;
 		}
 		for (j = 0; j < 2; j++) {
 			sc->sc_cl[i].tx[j] = p;
-			sc->sc_cl[i].txp[j] = (void *)(p - sc->sc_memkv);
+			sc->sc_cl[i].txp[j] = (void *)(p - (void *)sc->sc_memkv);
 			/*printf("%d:%d tx v %x p %x\n",
 			    i, j, sc->sc_cl[i].tx[j], sc->sc_cl[i].txp[j]);*/
 			p += CL_BUFSIZE;

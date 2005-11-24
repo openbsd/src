@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.29 2005/07/31 03:52:18 pascoe Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.30 2005/11/24 22:43:16 miod Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -174,7 +174,7 @@ struct ie_softc {
 	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
 	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
 	u_int sc_msize;         /* how much RAM we have/use */
-	caddr_t sc_reg;         /* KVA of car's register */
+	vaddr_t sc_reg;         /* KVA of car's register */
 	int sc_bustype;
 
 	struct arpcom sc_arpcom;/* system arpcom structure */
@@ -356,7 +356,7 @@ ie_obreset(arg)
 	void *arg;
 {
 	struct ie_softc *sc = (struct ie_softc *)arg;
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
+	volatile struct ieob *ieo = (struct ieob *)sc->sc_reg;
 	volatile int t;
 	u_long	a;
 
@@ -379,7 +379,7 @@ ie_obattend(arg)
 	void *arg;
 {
 	struct ie_softc *sc = (struct ie_softc *)arg;
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
+	volatile struct ieob *ieo = (struct ieob *)sc->sc_reg;
 
 	ieo->attn = 1;
 }
@@ -414,7 +414,7 @@ ieattach(parent, self, aux)
 	sc->memzero = bzero;
 	sc->sc_msize = etherlen;
 	sc->sc_reg = ca->ca_vaddr;
-	ieo = (volatile struct ieob *) sc->sc_reg;
+	ieo = (volatile struct ieob *)sc->sc_reg;
 
         /* Are we the boot device? */
         if (ca->ca_paddr == bootaddr)
