@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.14 2005/11/24 08:11:04 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.15 2005/11/24 08:23:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -584,6 +584,16 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 		    DEVNAME(sc), name, devmap->rev_major, devmap->rev_minor);
 		break;
 
+	case ESM2_DEV_DRACII:
+		printf("%s: Dell Remote Assistance Card II %d.%d\n",
+		    DEVNAME(sc), devmap->rev_major, devmap->rev_minor);
+		return;
+
+	case ESM2_DEV_FRONT_PANEL:
+		printf("%s: Front Panel %d.%d\n", DEVNAME(sc),
+		    devmap->rev_major, devmap->rev_minor);
+		return;
+
 	case ESM2_DEV_BACKPLANE2:
 		sensor_map = esm_sensors_backplane;
 		mapsize = 22;
@@ -600,6 +610,23 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 		printf("%s: Power Unit %d.%d\n", DEVNAME(sc),
 		    devmap->rev_major, devmap->rev_minor);
 		break;
+
+	case ESM2_DEV_ENCL2_BACKPLANE:
+	case ESM2_DEV_ENCL1_BACKPLANE:
+		printf("%s: Enclosure Backplane %d.%d\n", DEVNAME(sc),
+		    devmap->rev_major, devmap->rev_minor);
+		return;
+
+	case ESM2_DEV_ENCL2_POWERUNIT:
+	case ESM2_DEV_ENCL1_POWERUNIT:
+		printf("%s: Enclosure Powerunit %d.%d\n", DEVNAME(sc),
+		    devmap->rev_major, devmap->rev_minor);
+		return;
+
+	case ESM2_DEV_HPPCI: /* nfi what this is */
+		printf("%s: HPPCI %d.%d\n", DEVNAME(sc),
+		    devmap->rev_major, devmap->rev_minor);
+		return;
 
 	case ESM2_DEV_BACKPLANE3:
 		sensor_map = esm_sensors_backplane;
