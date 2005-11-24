@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.53 2005/11/23 09:32:46 mickey Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.54 2005/11/24 08:37:08 mickey Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -558,8 +558,8 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
  		if (mip == NULL)
 			airq = mpbios_invent(irq, type, mp_isa_bus);
 
-			return (apic_intr_establish(airq, type, level, ih_fun,
-			    ih_arg, ih_what));
+		return (apic_intr_establish(airq, type, level, ih_fun,
+		    ih_arg, ih_what));
  	}
 #endif
 	/* no point in sleeping unless someone can free memory. */
