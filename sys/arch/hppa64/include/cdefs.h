@@ -1,5 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
-/*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.2 2005/11/24 20:46:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,9 +30,17 @@
 #ifndef _MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
 
-#define	__weak_alias(alias,sym)						\
-    __asm__(".export " __STRING(alias) ", entry\n\t.weak " __STRING(alias) "\n\t" __STRING(alias) " = " __STRING(sym))
-#define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning." __STRING(sym) "\n\t.ascii \"" msg "\"\n\t.text")
+#if defined(lint)
+#define __indr_reference(sym,alias)	__lint_equal__(sym,alias)
+#define __warn_references(sym,msg)
+#define __weak_alias(alias,sym)		__lint_equal__(sym,alias)
+#elif defined(__GNUC__) && defined(__STDC__)
+#define	__weak_alias(alias,sym)					\
+	__asm__(".export " __STRING(alias) ", entry\n\t.weak "	\
+	    __STRING(alias) "\n\t" __STRING(alias) " = " __STRING(sym))
+#define	__warn_references(sym,msg)				\
+	__asm__(".section .gnu.warning." __STRING(sym)		\
+	    "\n\t.ascii \"" msg "\"\n\t.text")
+#endif
 
 #endif /* !_MACHINE_CDEFS_H_ */

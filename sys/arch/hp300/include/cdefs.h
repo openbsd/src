@@ -1,5 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.2 1997/01/12 15:13:32 downsj Exp $	*/
-/*	$NetBSD: cdefs.h,v 1.1 1995/01/19 01:41:56 jtc Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.3 2005/11/24 20:46:44 deraadt Exp $	*/
 
 #ifndef _MACHINE_CDEFS_H_
 #define _MACHINE_CDEFS_H_
