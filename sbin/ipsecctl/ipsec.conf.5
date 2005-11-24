@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.25 2005/10/30 21:26:16 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.26 2005/11/24 11:53:23 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -163,10 +163,8 @@ Possible algorithms are
 .Ar hmac-sha1 ,
 .Ar hmac-sha2-256 ,
 .Ar hmac-sha2-384 ,
-.Ar hmc-sha2-512 ,
-.Ar md5 ,
 and
-.Ar sha1 .
+.Ar hmc-sha2-512 .
 .Pp
 If no algorithm is specified,
 .Xr ipsecctl 8
@@ -317,9 +315,9 @@ These paramters define the cryptographic transforms to be used for main mode.
 Possible values for
 .Aq Ar auth
 are
-.Ar sha1
+.Ar hmac-sha1
 and
-.Ar md5 .
+.Ar hmac-md5 .
 For
 .Aq Ar enc
 the values
@@ -333,9 +331,9 @@ are allowed.
 If omitted,
 .Xr isakmpd 8
 will use the default values
-.Aq Ar sha1
+.Ar hmac-sha1
 and
-.Aq Ar 3des .
+.Ar 3des .
 .It Xo
 .Ar quick auth
 .Aq Ar algorithm
