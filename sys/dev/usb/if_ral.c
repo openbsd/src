@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.50 2005/11/24 13:01:58 grange Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.51 2005/11/24 22:10:07 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -891,7 +891,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	if (len < RAL_RX_DESC_SIZE) {
+	if (len < RAL_RX_DESC_SIZE + IEEE80211_MIN_LEN) {
 		printf("%s: xfer too short %d\n", USBDEVNAME(sc->sc_dev), len);
 		ifp->if_ierrors++;
 		goto skip;
@@ -1090,7 +1090,7 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 	 */
 	desc->plcp_service = 4;
 
-	len += 4; /* account for FCS */
+	len += IEEE80211_CRC_LEN;
 	if (RAL_RATE_IS_OFDM(rate)) {
 		/*
 		 * PLCP length field (LENGTH).
@@ -1192,6 +1192,24 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
 
+	data->m = m0;
+	data->ni = ni;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		flags |= RAL_TX_ACK;
+
+		dur = ural_txtime(RAL_ACK_SIZE, rate, ic->ic_flags) + RAL_SIFS;
+		*(uint16_t *)wh->i_dur = htole16(dur);
+
+		/* tell hardware to add timestamp for probe responses */
+		if ((wh->i_fc[0] &
+		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
+		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
+			flags |= RAL_TX_TIMESTAMP;
+	}
+
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct mbuf mb;
@@ -1212,29 +1230,18 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 #endif
 
-	data->m = m0;
-	data->ni = ni;
-
-	wh = mtod(m0, struct ieee80211_frame *);
-
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		flags |= RAL_TX_ACK;
-
-		dur = ural_txtime(RAL_ACK_SIZE, rate, ic->ic_flags) + RAL_SIFS;
-		*(uint16_t *)wh->i_dur = htole16(dur);
-
-		/* tell hardware to add timestamp for probe responses */
-		if ((wh->i_fc[0] &
-		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
-		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
-			flags |= RAL_TX_TIMESTAMP;
-	}
-
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RAL_TX_DESC_SIZE);
 	ural_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
 
-	/* xfer length needs to be a multiple of two! */
+	/* align end on a 2-bytes boundary */
 	xferlen = (RAL_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
+
+	/*
+	 * No space left in the last URB to store the extra 2 bytes, force
+	 * sending of another URB.
+	 */
+	if ((xferlen % 64) == 0)
+		xferlen += 2;
 
 	DPRINTFN(10, ("sending mgt frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
@@ -1286,6 +1293,23 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			return ENOBUFS;
 	}
 
+	data = &sc->tx_data[0];
+	desc = (struct ural_tx_desc *)data->buf;
+
+	data->m = m0;
+	data->ni = ni;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		flags |= RAL_TX_ACK;
+		flags |= RAL_TX_RETRY(7);
+
+		dur = ural_txtime(RAL_ACK_SIZE, ural_ack_rate(ic, rate),
+		    ic->ic_flags) + RAL_SIFS;
+		*(uint16_t *)wh->i_dur = htole16(dur);
+	}
+
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct mbuf mb;
@@ -1306,28 +1330,18 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 #endif
 
-	data = &sc->tx_data[0];
-	desc = (struct ural_tx_desc *)data->buf;
-
-	data->m = m0;
-	data->ni = ni;
-
-	wh = mtod(m0, struct ieee80211_frame *);
-
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		flags |= RAL_TX_ACK;
-		flags |= RAL_TX_RETRY(7);
-
-		dur = ural_txtime(RAL_ACK_SIZE, ural_ack_rate(ic, rate),
-		    ic->ic_flags) + RAL_SIFS;
-		*(uint16_t *)wh->i_dur = htole16(dur);
-	}
-
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RAL_TX_DESC_SIZE);
 	ural_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
 
-	/* xfer length needs to be a multiple of two! */
+	/* align end on a 2-bytes boundary */
 	xferlen = (RAL_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
+
+	/*
+	 * No space left in the last URB to store the extra 2 bytes, force
+	 * sending of another URB.
+	 */
+	if ((xferlen % 64) == 0)
+		xferlen += 2;
 
 	DPRINTFN(10, ("sending data frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
@@ -1559,7 +1573,6 @@ ural_read_multi(struct ural_softc *sc, uint16_t reg, void *buf, int len)
 	if (error != 0) {
 		printf("%s: could not read MAC register: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(error));
-		return;
 	}
 }
 
