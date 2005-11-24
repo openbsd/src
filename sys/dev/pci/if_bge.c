@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.93 2005/11/19 23:04:48 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.94 2005/11/24 12:25:07 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2025,7 +2025,7 @@ bge_reset(struct bge_softc *sc)
 
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
-	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
+	    BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_PCISTATE_RW);
 
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS|(65<<1);
 
@@ -2061,7 +2061,7 @@ bge_reset(struct bge_softc *sc)
 	/* Reset some of the PCI state that got zapped by reset */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
-	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
+	    BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_PCISTATE_RW);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ, cachesize);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD, command);
 	bge_writereg_ind(sc, BGE_MISC_CFG, (65 << 1));
@@ -2086,7 +2086,7 @@ bge_reset(struct bge_softc *sc)
 		val = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM);
 		if (val == ~BGE_MAGIC_NUMBER)
 			break;
-		DELAY(1000);
+		DELAY(10);
 	}
 
 	if (i == BGE_TIMEOUT) {
