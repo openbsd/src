@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.68 2005/11/23 14:21:53 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.69 2005/11/24 15:35:11 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -822,7 +822,7 @@ checkin_choose_rcsfile(const char *filename)
 			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
 		} else {
 			/* <path>/<filename>,v */
-			bzero(basepath, MAXPATHLEN);
+			memset(basepath, '\0', MAXPATHLEN);
 			strlcpy(basepath, fullpath, len);
 			strlcat(basepath, filename, MAXPATHLEN);
 			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
