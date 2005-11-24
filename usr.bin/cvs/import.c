@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.27 2005/10/15 22:56:02 niallo Exp $	*/
+/*	$OpenBSD: import.c,v 1.28 2005/11/24 11:17:15 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -221,7 +221,7 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	if (dflag) {
+	if (dflag == 1) {
 		ctime_r(&(cf->cf_mtime), date);
 		sz = strlen(date);
 		if ((sz > 0) && (date[sz - 1] == '\n'))
@@ -241,6 +241,7 @@ static int
 cvs_import_local(CVSFILE *cf, void *arg)
 {
 	size_t len;
+	int l;
 	time_t stamp;
 	char fpath[MAXPATHLEN], rpath[MAXPATHLEN], repo[MAXPATHLEN];
 	const char *comment;
@@ -280,7 +281,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	 * If -d was given, use the file's last modification time as the
 	 * timestamps for the initial revisions.
 	 */
-	if (dflag) {
+	if (dflag == 1) {
 		if (stat(fpath, &fst) == -1) {
 			cvs_log(LP_ERRNO, "failed to stat %s", fpath);
 			return (CVS_EX_DATA);
@@ -294,8 +295,13 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	} else
 		stamp = -1;
 
-	snprintf(rpath, sizeof(rpath), "%s/%s%s",
+	l = snprintf(rpath, sizeof(rpath), "%s/%s%s",
 	    repo, fpath, RCS_FILE_EXT);
+	if (l == -1 || l >= (int)sizeof(rpath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rpath);
+		return (CVS_EX_DATA);
+	}
 
 	cvs_printf("N %s\n", fpath);
 
@@ -364,7 +370,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	/* add the vendor tag and release tag as symbols */
 	rcs_close(rf);
 
-	if (dflag && (utimes(rpath, ts) == -1))
+	if ((dflag ==1) && (utimes(rpath, ts) == -1))
 		cvs_log(LP_ERRNO, "failed to timestamp RCS file");
 
 	return (CVS_EX_OK);
