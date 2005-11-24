@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_sbi.c,v 1.3 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: uba_sbi.c,v 1.4 2005/11/24 04:55:18 brad Exp $	*/
 /*	$NetBSD: uba_sbi.c,v 1.1 1999/06/21 16:23:01 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -307,7 +307,7 @@ ubaerror(uh, ipl, uvec)
 		return;
 	}
 	sr = uba->uba_sr;
-	s = splimp();
+	s = spluba();
 	printf("%s: uba error sr=%b fmer=%x fubar=%o\n", vc->uv_sc.uh_dev.dv_xname,
 	    uba->uba_sr, ubasr_bits, uba->uba_fmer, 4*uba->uba_fubar);
 	splx(s);
