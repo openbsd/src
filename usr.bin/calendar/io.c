@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.31 2005/11/16 16:45:11 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.32 2005/11/24 19:36:10 moritz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: io.c,v 1.31 2005/11/16 16:45:11 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: io.c,v 1.32 2005/11/24 19:36:10 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,11 +207,11 @@ cal(void)
 				}
 			}
 		} else if (printing) {
-			free(ev1->ldesc);
-			if (asprintf(&ev1->ldesc, "%s\n%s", ev1->ldesc,
+			if (asprintf(&p, "%s\n%s", ev1->ldesc,
 			    buf) == -1)
 				err(1, NULL);
-		
+			free(ev1->ldesc);
+			ev1->ldesc = p;
 		}
 	}
 	tmp = events;
