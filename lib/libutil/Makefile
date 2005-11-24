@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.28 2004/07/13 21:09:48 millert Exp $
+#	$OpenBSD: Makefile,v 1.29 2005/11/24 20:49:23 deraadt Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
+WANTLINT=
 CFLAGS+=-DLIBC_SCCS
 
 HDRS=	util.h

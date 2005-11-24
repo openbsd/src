@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2000/03/02 00:29:51 todd Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/11/24 20:49:20 deraadt Exp $
 
 # libresolv no longer needs a special version of the resolver routines.
 # The resolver is always in libc.
@@ -6,6 +6,7 @@
 
 NOPIC=
 LIB=resolv
+WANTLINT=
 
 SRCS=nothing.c
 

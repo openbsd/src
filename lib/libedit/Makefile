@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.8 2003/10/31 08:42:23 otto Exp $
+#	$OpenBSD: Makefile,v 1.9 2005/11/24 20:49:17 deraadt Exp $
 #	$NetBSD: Makefile,v 1.28 2003/08/01 17:03:58 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
+WANTLINT=
 USE_SHLIBDIR=	yes
 
 OSRCS=	chared.c common.c el.c emacs.c fcns.c help.c hist.c key.c map.c \

@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.16 2005/10/12 18:54:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2005/11/24 20:49:17 deraadt Exp $
 
 LIB=	event
+WANTLINT=
 SRCS=	buffer.c evbuffer.c event.c kqueue.c log.c poll.c select.c signal.c
 HDRS=	event.h
 MAN=	event.3

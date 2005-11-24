@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.8 2001/08/03 20:02:36 jakob Exp $
+# $OpenBSD: Makefile,v 1.9 2005/11/24 20:49:20 deraadt Exp $
 
 LIB=	sectok
+WANTLINT=
 SRCS=	atr.c cmdtab.c cyberflex.c input.c r1r2.c sc7816.c sectok.c todos_atr.c \
 	ifdhandler.c scT1.c scio.c scrw.c
 HDRS=	sectok.h

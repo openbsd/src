@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.54 2003/10/19 22:20:37 brad Exp $
+#	$OpenBSD: Makefile,v 1.55 2005/11/24 20:49:16 deraadt Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -13,6 +13,7 @@ AWK?=	/usr/bin/awk
 .PATH:	${.CURDIR}/base ${.CURDIR}/tinfo ${.CURDIR}/trace ${.CURDIR}/tty
 
 LIB=    curses
+WANTLINT=
 SRCS=	codes.c comp_captab.c expanded.c fallback.c lib_gen.c lib_keyname.c \
 	names.c unctrl.c
 # base

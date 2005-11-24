@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.4 2002/03/04 22:00:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/11/24 20:49:16 deraadt Exp $
 
 LIB=	des
+WANTLINT=
 SRCS=	cbc_cksm.c cbc_enc.c cbc3_enc.c cfb_enc.c cfb64ede.c cfb64enc.c \
 	des_enc.c ecb_enc.c ecb3_enc.c ede_enc.c enc_read.c enc_writ.c \
 	fcrypt.c ncbc_enc.c ofb_enc.c ofb64ede.c ofb64enc.c pcbc_enc.c \

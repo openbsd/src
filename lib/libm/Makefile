@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.35 2005/11/17 20:07:40 otto Exp $
+#  $OpenBSD: Makefile,v 1.36 2005/11/24 20:49:18 deraadt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -98,6 +98,7 @@ CFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
 .endif
 
 LIB=	m
+WANTLINT=
 COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	e_atan2.c e_atan2f.c e_atanh.c e_atanhf.c e_cosh.c e_coshf.c e_exp.c \
 	e_expf.c e_fmod.c e_fmodf.c e_hypot.c e_hypotf.c e_j0.c e_j0f.c \

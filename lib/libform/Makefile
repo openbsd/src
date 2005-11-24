@@ -1,4 +1,5 @@
 LIB=	form
+WANTLINT=
 SRCS=	fld_arg.c fld_attr.c fld_current.c fld_def.c fld_dup.c fld_ftchoice.c \
 	fld_ftlink.c fld_info.c fld_just.c fld_link.c fld_max.c fld_move.c \
 	fld_newftyp.c fld_opts.c fld_pad.c fld_page.c fld_stat.c fld_type.c \

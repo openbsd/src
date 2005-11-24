@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 1998/05/04 06:02:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2005/11/24 20:49:19 deraadt Exp $
 #	$NetBSD: Makefile,v 1.5 1998/04/13 14:18:45 lukem Exp $
 
 LIB=	ossaudio
+WANTLINT=
 MAN=	ossaudio.3
 
 SRCS=	ossaudio.c

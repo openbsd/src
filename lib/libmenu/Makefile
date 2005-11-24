@@ -1,4 +1,5 @@
 LIB=	menu
+WANTLINT=
 SRCS=	m_adabind.c m_attribs.c m_cursor.c m_driver.c m_format.c \
 	m_global.c m_hook.c m_item_cur.c m_item_nam.c m_item_new.c \
 	m_item_opt.c m_item_top.c m_item_use.c m_item_val.c m_item_vis.c \
