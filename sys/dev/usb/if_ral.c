@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.49 2005/11/23 20:37:37 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.50 2005/11/24 13:01:58 grange Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -342,7 +342,7 @@ static const struct {
 	{ 161, 0x08808, 0x0242f, 0x00281 }
 };
 
-USB_DECLARE_DRIVER(ural);
+USB_DECLARE_DRIVER_CLASS(ural, DV_IFNET);
 
 USB_MATCH(ural)
 {
