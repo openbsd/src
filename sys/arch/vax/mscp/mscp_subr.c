@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_subr.c,v 1.8 2005/11/15 07:02:37 miod Exp $	*/
+/*	$OpenBSD: mscp_subr.c,v 1.9 2005/11/24 04:54:49 brad Exp $	*/
 /*	$NetBSD: mscp_subr.c,v 1.18 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -485,7 +485,7 @@ mscp_strategy(bp, usc)
 	struct device *usc;
 {
 	struct	mscp_softc *mi = (void *)usc;
-	int s = splimp();
+	int s = spl6();
 
 /*	SIMPLEQ_INSERT_TAIL(&mi->mi_resq, bp, xxx) */
 	bp->b_actf = NULL;
