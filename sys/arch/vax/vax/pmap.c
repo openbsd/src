@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2005/06/30 21:53:13 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.37 2005/11/24 04:52:23 brad Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -524,7 +524,7 @@ rensa(clp, ptp)
 if (startpmapdebug)
 	printf("rensa: pv %p clp 0x%x ptp %p\n", pv, clp, ptp);
 #endif
-	s = splimp();
+	s = splvm();
 	RECURSESTART;
 	if (pv->pv_pte == ptp) {
 		g = (int *)pv->pv_pte;
@@ -746,7 +746,7 @@ if (startpmapdebug)
 		} else if (pmap != pmap_kernel())
 				pmap->pm_refcnt[index]++; /* New mapping */
 
-		s = splimp();
+		s = splvm();
 		if (pv->pv_pte == 0) {
 			pv->pv_pte = (pt_entry_t *) & patch[i];
 			pv->pv_pmap = pmap;
@@ -1220,7 +1220,7 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 
 	RECURSESTART;
 	if (prot == VM_PROT_NONE) {
-		s = splimp();
+		s = splvm();
 		g = (int *)pv->pv_pte;
 		if (g) {
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
@@ -1312,7 +1312,7 @@ struct pv_entry *
 get_pventry()
 {
 	struct pv_entry *tmp;
-	int s = splimp();
+	int s = splvm();
 
 	if (pventries == 0)
 		panic("get_pventry");
@@ -1328,7 +1328,7 @@ void
 free_pventry(pv)
 	struct pv_entry *pv;
 {
-	int s = splimp();
+	int s = splvm();
 
 	pv->pv_next = pv_list;
 	pv_list = pv;
@@ -1355,7 +1355,7 @@ more_pventries()
 	for (i = 0; i < count; i++)
 		pv[i].pv_next = &pv[i + 1];
 
-	s = splimp();
+	s = splvm();
 	pv[count - 1].pv_next = pv_list;
 	pv_list = pv;
 	pventries += count;
