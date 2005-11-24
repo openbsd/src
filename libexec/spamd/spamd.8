@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.57 2005/08/06 19:52:36 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.58 2005/11/24 08:47:10 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -63,7 +63,7 @@ For black-listed entries, return error code 550 to the spammer.
 The maximum number of concurrent blacklisted connections to allow in
 greylisting mode.
 This value may not be greater than maxcon (see below).
-The default is maxcon \- 100
+The default is maxcon \- 100.
 .It Fl b Ar address
 Specify the local address to which
 .Nm
