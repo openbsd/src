@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2005/11/06 17:59:57 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.91 2005/11/24 22:41:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -898,7 +898,6 @@ badpaddr(addr, size)
 	v = mapiodev(p, NBPG);
 	if (v == NULL)
 		return (1);
-	v += off;
 	x = badvaddr((vaddr_t)v + off, size);
 	unmapiodev(v, NBPG);
 	return (x);
