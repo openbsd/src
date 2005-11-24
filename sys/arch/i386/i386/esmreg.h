@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmreg.h,v 1.4 2005/11/23 01:07:40 dlg Exp $ */
+/*	$OpenBSD: esmreg.h,v 1.5 2005/11/24 08:57:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -19,15 +19,9 @@
 
 #define ESM2_BASE_PORT		0xe0
 
-#if 0
-#define ESM2_TC_REG		(ESM2_BASE_PORT + 4)
-#define ESM2_TBUF_REG		(ESM2_BASE_PORT + 5)
-#define ESM2_TIM_REG		(ESM2_BASE_PORT + 6)
-#else
 #define ESM2_TC_REG		4
 #define ESM2_TBUF_REG		5
 #define ESM2_TIM_REG		6
-#endif
 
 #define ESM2_TC_CLR_WPTR	(1L << 0)
 #define ESM2_TC_CLR_RPTR	(1L << 1)
