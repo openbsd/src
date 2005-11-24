@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.94 2005/11/24 12:25:07 fgsch Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.95 2005/11/24 23:48:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -262,6 +262,29 @@ const struct pci_matchid bge_devices[] = {
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
 	(BGE_QUIRK_5700_SMALLDMA|BGE_QUIRK_PRODUCER_BUG)
+
+
+#define BGE_IS_5705_OR_BEYOND(sc)  \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
+
+#define BGE_IS_575X_PLUS(sc)  \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
+
+#define BGE_IS_5714_FAMILY(sc)  \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780)
+
+#define BGE_IS_JUMBO_CAPABLE(sc)  \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
+
 
 static const struct bge_revision {
 	uint32_t		br_chipid;
