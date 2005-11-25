@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.10 2005/11/25 22:17:14 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.11 2005/11/25 22:20:45 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -95,14 +95,6 @@
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/
 #endif
-
-/*
- * On some versions of the 88200, page size flushes don't work. I am using
- * sledge hammer approach till I find for sure which ones are bad XXX nivas
- *
- * Looks like 88204 are affected as well... So better keep this -- miod
- */
-#define BROKEN_MMU_MASK
 
 void m8820x_cmmu_init(void);
 void m8820x_cpu_configuration_print(int);
@@ -577,7 +569,6 @@ m8820x_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 	int s = splhigh();
 	CMMU_LOCK;
 
-#if !defined(BROKEN_MMU_MASK)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, 0,
 		    cpu, 0, 0);
@@ -597,9 +588,6 @@ m8820x_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT, 0,
 		    cpu, 0, 0);
 	}
-#else
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, 0, cpu, 0, 0);
-#endif /* !BROKEN_MMU_MASK */
 
 	m8820x_cmmu_wait(cpu);
 
@@ -616,7 +604,6 @@ m8820x_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 	int s = splhigh();
 	CMMU_LOCK;
 
-#if !defined(BROKEN_MMU_MASK)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		    cpu, INST_CMMU, 0);
@@ -636,10 +623,6 @@ m8820x_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT,
 		    MODE_VAL, cpu, INST_CMMU, 0);
 	}
-#else
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
-	    cpu, INST_CMMU, 0);
-#endif /* !BROKEN_MMU_MASK */
 
 	m8820x_cmmu_wait(cpu);
 
@@ -653,7 +636,6 @@ m8820x_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 	int s = splhigh();
 	CMMU_LOCK;
 
-#if !defined(BROKEN_MMU_MASK)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
 		    cpu, DATA_CMMU, 0);
@@ -673,10 +655,6 @@ m8820x_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_SEGMENT,
 		    MODE_VAL, cpu, DATA_CMMU, 0);
 	}
-#else
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
-	    cpu, DATA_CMMU, 0);
-#endif /* !BROKEN_MMU_MASK */
 
 	m8820x_cmmu_wait(cpu);
 
@@ -696,7 +674,6 @@ m8820x_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 
 	CMMU_LOCK;
 
-#if !defined(BROKEN_MMU_MASK)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
 		    cpu, DATA_CMMU, 0);
@@ -720,11 +697,6 @@ m8820x_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 		    MODE_VAL | ADDR_VAL, cpu, DATA_CMMU, physaddr);
 		rc = 0;
 	}
-#else
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CB_ALL, MODE_VAL,
-	    cpu, DATA_CMMU, 0);
-	rc = 1;
-#endif /* !BROKEN_MMU_MASK */
 
 	m8820x_cmmu_wait(cpu);
 
@@ -742,7 +714,6 @@ m8820x_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 
 	CMMU_LOCK;
 
-#if !defined(BROKEN_MMU_MASK)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
 		    cpu, INST_CMMU, 0);
@@ -774,13 +745,6 @@ m8820x_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 		    MODE_VAL | ADDR_VAL, cpu, DATA_CMMU, physaddr);
 		rc = 0;
 	}
-#else
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, MODE_VAL,
-	    cpu, INST_CMMU, 0);
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_CBI_ALL, MODE_VAL,
-	    cpu, DATA_CMMU, 0);
-	rc = 1;
-#endif /* !BROKEN_MMU_MASK */
 
 	m8820x_cmmu_wait(cpu);
 
@@ -798,7 +762,6 @@ m8820x_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 
 	CMMU_LOCK;
 
-#if !defined(BROKEN_MMU_MASK)
 	if (size > NBSG) {
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, 0,
 		    cpu, 0, 0);
@@ -822,11 +785,6 @@ m8820x_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 		    ADDR_VAL, cpu, 0, physaddr);
 		rc = 0;
 	}
-#else
-	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_CACHE_INV_ALL, 0,
-	    cpu, 0, 0);
-	rc = 1;
-#endif /* !BROKEN_MMU_MASK */
 
 	m8820x_cmmu_wait(cpu);
 
@@ -839,15 +797,12 @@ int
 m8820x_dma_cachectl(pmap_t pmap, vaddr_t va, vsize_t size, int op)
 {
 	paddr_t pa;
-#if !defined(BROKEN_MMU_MASK)
 	psize_t count;
 	int rc = 0;
-#endif
 
 	size = round_page(va + size) - trunc_page(va);
 	va = trunc_page(va);
 
-#if !defined(BROKEN_MMU_MASK)
 	while (size != 0 && rc == 0) {
 		count = min(size, PAGE_SIZE);
 
@@ -869,41 +824,17 @@ m8820x_dma_cachectl(pmap_t pmap, vaddr_t va, vsize_t size, int op)
 		size -= count;
 	}
 	return (rc);
-#else
-	/*
-	 * This assumes the space is also physically contiguous... but this
-	 * really doesn't matter as we flush/sync/invalidate the whole cache
-	 * anyway...
-	 */
-	if (pmap_extract(pmap, va, &pa) != FALSE) {
-		switch (op) {
-		case DMA_CACHE_SYNC:
-			m8820x_cmmu_sync_cache(pa, size);
-			break;
-		case DMA_CACHE_SYNC_INVAL:
-			m8820x_cmmu_sync_inval_cache(pa, size);
-			break;
-		default:
-			m8820x_cmmu_inval_cache(pa, size);
-			break;
-		}
-	}
-	return (1);
-#endif /* !BROKEN_MMU_MASK */
 }
 
 int
 m8820x_dma_cachectl_pa(paddr_t pa, psize_t size, int op)
 {
-#if !defined(BROKEN_MMU_MASK)
 	psize_t count;
 	int rc = 0;
-#endif
 
 	size = round_page(pa + size) - trunc_page(pa);
 	pa = trunc_page(pa);
 
-#if !defined(BROKEN_MMU_MASK)
 	while (size != 0 && rc == 0) {
 		count = min(size, PAGE_SIZE);
 
@@ -923,20 +854,6 @@ m8820x_dma_cachectl_pa(paddr_t pa, psize_t size, int op)
 		size -= count;
 	}
 	return (rc);
-#else
-	switch (op) {
-	case DMA_CACHE_SYNC:
-		m8820x_cmmu_sync_cache(pa, size);
-		break;
-	case DMA_CACHE_SYNC_INVAL:
-		m8820x_cmmu_sync_inval_cache(pa, size);
-		break;
-	default:
-		m8820x_cmmu_inval_cache(pa, size);
-		break;
-	}
-	return (1);
-#endif /* !BROKEN_MMU_MASK */
 }
 
 #ifdef DDB
