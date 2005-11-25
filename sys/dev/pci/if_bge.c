@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.97 2005/11/25 00:14:59 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.98 2005/11/25 00:37:59 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1722,7 +1722,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
 	struct ifnet		*ifp;
-	int			error = 0;
 	caddr_t			kva;
 
 	sc->bge_pa = *pa;
@@ -1821,7 +1820,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bge_chipinit(sc)) {
 		printf(": chip initialization failed\n");
-		error = ENXIO;
 		goto fail_2;
 	}
 
@@ -1840,7 +1838,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	} else if (bge_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
 		printf(": failed to read station address\n");
-		error = ENXIO;
 		goto fail_2;
 	}
 
@@ -1891,7 +1888,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (BGE_IS_JUMBO_CAPABLE(sc)) {
 		if (bge_alloc_jumbo_mem(sc)) {
 			printf(": jumbo buffer allocation failed\n");
-			error = ENXIO;
 			goto fail_5;
 		}
 	}
