@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.17 2005/11/18 11:05:39 djm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.18 2005/11/25 20:25:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -222,7 +222,7 @@ pcap_lookupdev(errbuf)
 
 		/* Must be up and not the loopback */
 		if ((ifr.ifr_flags & IFF_UP) == 0 || 
-		    ISLOOPBACK(ifr.ifr_name, ifr.ifr_flags)
+		    ISLOOPBACK(ifr.ifr_name, ifr.ifr_flags))
 			continue;
 
 		for (cp = ifrp->ifr_name; !isdigit(*cp); ++cp)
