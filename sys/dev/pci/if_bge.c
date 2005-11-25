@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.96 2005/11/25 00:09:05 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.97 2005/11/25 00:14:59 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1802,11 +1802,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * XXX: Broadcom Linux driver.  Not in specs or eratta.
-	 * PCI-Express?
+	 * PCI Express.
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752) {
+	if (BGE_IS_575X_PLUS(sc)) {
 		u_int32_t v;
 
 		v = pci_conf_read(pc, pa->pa_tag, BGE_PCI_MSI_CAPID);
@@ -2051,10 +2049,10 @@ bge_reset(struct bge_softc *sc)
 
 	/* XXX: Broadcom Linux driver. */
 	if (sc->bge_pcie) {
-		if (CSR_READ_4(sc, 0x7e2c) == 0x60)	/* PCIE 1.0 */
+		if (CSR_READ_4(sc, 0x7e2c) == 0x60)	/* PCI-E 1.0 */
 			CSR_WRITE_4(sc, 0x7e2c, 0x20);
 		if (sc->bge_chipid != BGE_CHIPID_BCM5750_A0) {
-			/* Prevent PCIE link training during global reset */
+			/* Prevent PCI-E link training during global reset */
 			CSR_WRITE_4(sc, BGE_MISC_CFG, (1<<29));
 			reset |= (1<<29);
 		}
@@ -2074,7 +2072,7 @@ bge_reset(struct bge_softc *sc)
 			v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0xc4);
 			pci_conf_write(pa->pa_pc, pa->pa_tag, 0xc4, v | (1<<15));
 		}
-		/* Set PCIE max payload size and clear error status. */
+		/* Set PCI-E max payload size and clear error status. */
 		pci_conf_write(pa->pa_pc, pa->pa_tag, 0xd8, 0xf5000);
 	}
 
