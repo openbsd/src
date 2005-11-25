@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2005/11/03 21:27:33 martin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2005/11/25 22:13:50 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -723,7 +723,7 @@ pmap_bootstrap(vaddr_t load_start)
 	 * Switch to using new page tables
 	 */
 
-	kernel_pmap->pm_apr = (atop(kmap) << PG_SHIFT) |
+	kernel_pmap->pm_apr = (atop((paddr_t)kmap) << PG_SHIFT) |
 	    CACHE_GLOBAL | CACHE_WT | APR_V;
 
 	/* Invalidate entire kernel TLB and get ready for address translation */
