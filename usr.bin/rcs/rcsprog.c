@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.47 2005/11/25 13:50:01 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.48 2005/11/25 14:16:44 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -376,6 +376,7 @@ rcs_main(int argc, char **argv)
 	RCSFILE *file, *oldfile;
 	RCSNUM *logrev;
 	struct rcs_access *acp;
+	time_t rcs_mtime = -1;
 
 	kflag = lkmode = -1;
 	fmode = 0;
@@ -465,9 +466,12 @@ rcs_main(int argc, char **argv)
 
 		if (verbose == 1)
 			printf("RCS file: %s\n", fpath);
-		file = rcs_open(fpath, flags, fmode);
-		if (file == NULL)
+
+		if ((file = rcs_open(fpath, flags, fmode)) == NULL);
 			continue;
+
+		if (flags & PRESERVETIME)
+			rcs_mtime = rcs_get_mtime(file->rf_path);
 
 		if (logstr != NULL) {
 			if ((logmsg = strchr(logstr, ':')) == NULL) {
@@ -478,7 +482,8 @@ rcs_main(int argc, char **argv)
 
 			*logmsg++ = '\0';
 			if ((logrev = rcsnum_parse(logstr)) == NULL) {
-				cvs_log(LP_ERR, "'%s' bad revision number", logstr);
+				cvs_log(LP_ERR,
+				    "'%s' bad revision number", logstr);
 				rcs_close(file);
 				continue;
 			}
@@ -531,6 +536,9 @@ rcs_main(int argc, char **argv)
 			rcs_lock_setmode(file, lkmode);
 
 		rcs_close(file);
+
+		if (flags & PRESERVETIME)
+			rcs_set_mtime(fpath, rcs_mtime);
 
 		if (verbose == 1)
 			printf("done\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.16 2005/11/23 09:39:20 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.17 2005/11/25 14:16:44 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -42,16 +42,16 @@ static int rcsclean_file(char *, RCSNUM *);
 static int nflag = 0;
 static int kflag = RCS_KWEXP_ERR;
 static int uflag = 0;
+static int flags = 0;
 
 int
 rcsclean_main(int argc, char **argv)
 {
-	int i, ch, flags;
+	int i, ch;
 	RCSNUM *rev;
 	DIR *dirp;
 	struct dirent *dp;
 
-	flags = 0;
 	rev = RCS_HEAD_REV;
 
 	while ((ch = rcs_getopt(argc, argv, "k:n::q::r:Tu::Vx:")) != -1) {
@@ -137,6 +137,7 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	BUF *b1, *b2;
 	char *s1, *s2, *c1, *c2;
 	struct stat st;
+	time_t rcs_mtime = -1;
 
 	match = 1;
 
@@ -148,6 +149,9 @@ rcsclean_file(char *fname, RCSNUM *rev)
 
 	if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
 		return (-1);
+
+	if (flags & PRESERVETIME)
+		rcs_mtime = rcs_get_mtime(file->rf_path);
 
 	if (!RCS_KWEXP_INVAL(kflag))
 		rcs_kwexp_set(file, kflag);
@@ -205,5 +209,9 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	}
 
 	rcs_close(file);
+
+	if (flags & PRESERVETIME)
+		rcs_set_mtime(fpath, rcs_mtime);
+
 	return (0);
 }
