@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.43 2005/11/20 01:36:43 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.44 2005/11/25 01:28:00 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -684,8 +684,7 @@ brgphy_load_dspcode(struct mii_softc *sc)
 	case MII_MODEL_xxBROADCOM_BCM5704:
 		brgphy_bcm5704_dspcode(sc);
 		break;
-	case MII_MODEL_xxBROADCOM_BCM5714:
-	case MII_MODEL_xxBROADCOM_BCM5715:
+	case MII_MODEL_xxBROADCOM_BCM5705:
 	case MII_MODEL_xxBROADCOM_BCM5750:
 	case MII_MODEL_xxBROADCOM_BCM5752:
 		brgphy_bcm5750_dspcode(sc);
