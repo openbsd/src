@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.24 2005/11/23 09:39:20 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.25 2005/11/25 13:48:02 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -47,15 +47,15 @@
 #define NEWFILE         (1<<10)
 #define PRESERVETIME	(1<<11)
 
-extern char *__progname;
-extern const char rcs_version[];
-extern int verbose;
-extern int pipeout;
+extern char	*__progname;
+extern const char	rcs_version[];
+extern int	verbose;
+extern int	pipeout;
 
-extern int rcs_optind;
-extern char *rcs_optarg;
-extern char *rcs_suffixes;
-extern char *rcs_tmpdir;
+extern int	 rcs_optind;
+extern char	*rcs_optarg;
+extern char	*rcs_suffixes;
+extern char	*rcs_tmpdir;
 
 /* date.y */
 time_t  cvs_date_parse(const char *);
