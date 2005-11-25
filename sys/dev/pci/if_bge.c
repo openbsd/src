@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.98 2005/11/25 00:37:59 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.99 2005/11/25 01:21:44 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1246,7 +1246,7 @@ bge_chipinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_MINDMA;
 
