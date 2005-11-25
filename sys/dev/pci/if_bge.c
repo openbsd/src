@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.95 2005/11/24 23:48:29 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.96 2005/11/25 00:09:05 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -47,7 +47,7 @@
  * Alteon Networks as part of the Tigon I and Tigon II gigabit ethernet
  * MAC chips. The BCM5700, sometimes refered to as the Tigon III, has
  * two on-board MIPS R4000 CPUs and can have as much as 16MB of external
- * SSRAM. The BCM5700 supports TCP, UDP and IP checksum offload, jumbo
+ * SSRAM. The BCM5700 supports TCP, UDP and IP checksum offload, Jumbo
  * frames, highly configurable RX filtering, and 16 RX and TX queues
  * (which, along with RX filter rules, can be used for QOS applications).
  * Other features, such as TCP segmentation, may be available as part
@@ -675,7 +675,7 @@ bge_miibus_statchg(struct device *dev)
 }
 
 /*
- * Memory management for jumbo frames.
+ * Memory management for Jumbo frames.
  */
 
 int
@@ -770,7 +770,7 @@ out:
 }
 
 /*
- * Allocate a jumbo buffer.
+ * Allocate a Jumbo buffer.
  */
 void *
 bge_jalloc(struct bge_softc *sc)
@@ -788,7 +788,7 @@ bge_jalloc(struct bge_softc *sc)
 }
 
 /*
- * Release a jumbo buffer.
+ * Release a Jumbo buffer.
  */
 void
 bge_jfree(caddr_t buf, u_int size, void *arg)
@@ -887,8 +887,8 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 }
 
 /*
- * Initialize a jumbo receive ring descriptor. This allocates
- * a jumbo buffer from the pool managed internally by the driver.
+ * Initialize a Jumbo receive ring descriptor. This allocates
+ * a Jumbo buffer from the pool managed internally by the driver.
  */
 int
 bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
@@ -904,7 +904,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 		if (m_new == NULL)
 			return (ENOBUFS);
 
-		/* Allocate the jumbo buffer */
+		/* Allocate the Jumbo buffer */
 		buf = bge_jalloc(sc);
 		if (buf == NULL) {
 			m_freem(m_new);
@@ -1398,13 +1398,13 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_NICADDR, rcb->bge_nicaddr);
 
 	/*
-	 * Initialize the jumbo RX ring control block
+	 * Initialize the Jumbo RX ring control block
 	 * We set the 'ring disabled' bit in the flags
 	 * field until we're actually ready to start
 	 * using this ring (i.e. once we set the MTU
 	 * high enough to require it).
 	 */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	if (BGE_IS_JUMBO_CAPABLE(sc)) {
 		rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
 		BGE_HOSTADDR(rcb->bge_hostaddr,
 		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
@@ -1888,10 +1888,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	bzero(sc->bge_rdata, sizeof(struct bge_ring_data));
 
 	/*
-	 * Try to allocate memory for jumbo buffers.
-	 * The 5705 does not appear to support jumbo frames.
+	 * Try to allocate memory for Jumbo buffers.
 	 */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	if (BGE_IS_JUMBO_CAPABLE(sc)) {
 		if (bge_alloc_jumbo_mem(sc)) {
 			printf(": jumbo buffer allocation failed\n");
 			error = ENXIO;
@@ -2008,11 +2007,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Call MI attach routine.
 	 */
-	DPRINTFN(5, ("if_attach\n"));
 	if_attach(ifp);
-	DPRINTFN(5, ("ether_ifattach\n"));
 	ether_ifattach(ifp);
-	DPRINTFN(5, ("timeout_set\n"));
+
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
 	return;
 
@@ -2171,7 +2168,7 @@ bge_reset(struct bge_softc *sc)
  * on the receive return list.
  *
  * Note: we have to be able to handle two possibilities here:
- * 1) the frame is from the jumbo receive ring
+ * 1) the frame is from the Jumbo receive ring
  * 2) the frame is from the standard receive ring
  */
 
@@ -2940,7 +2937,7 @@ bge_init(void *xsc)
 	ifp = &sc->arpcom.ac_if;
 
 	/* Specify MTU. */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (BGE_IS_JUMBO_CAPABLE(sc))
 		CSR_WRITE_4(sc, BGE_RX_MTU,
 			ETHER_MAX_LEN_JUMBO + ETHER_VLAN_ENCAP_LEN);
 	else
@@ -2986,8 +2983,8 @@ bge_init(void *xsc)
 			    sc->bge_dev.dv_xname);
 	}
 
-	/* Init jumbo RX ring. */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	/* Init Jumbo RX ring. */
+	if (BGE_IS_JUMBO_CAPABLE(sc))
 		bge_init_rx_ring_jumbo(sc);
 
 	/* Init our RX return ring index */
@@ -3143,10 +3140,9 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCSIFMTU:
-		/* Disallow jumbo frames on 5705. */
 		if (ifr->ifr_mtu < ETHERMIN ||
-		    (((sc->bge_quirks & BGE_QUIRK_5705_CORE) != 0) &&
-		    ifr->ifr_mtu > ETHERMTU) || ifr->ifr_mtu > ETHERMTU_JUMBO)
+		    ((BGE_IS_JUMBO_CAPABLE(sc)) &&
+		    ifr->ifr_mtu > ETHERMTU_JUMBO) || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
