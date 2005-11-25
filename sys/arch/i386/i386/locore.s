@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.94 2005/11/23 16:51:28 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.95 2005/11/25 07:07:49 tom Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -479,7 +479,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%edx,RELOC(_C_LABEL(cpu_feature))
 	movl	%ecx,RELOC(_C_LABEL(cpu_ecxfeature))
 
-	movl	$RELOC(_C_LABEL(cpuid_level)),%eax
+	movl	RELOC(_C_LABEL(cpuid_level)),%eax
 	cmp	$2,%eax
 	jl	1f
 
