@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_param.h,v 1.9 2003/11/08 19:17:28 jmc Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.10 2005/11/25 15:52:11 mickey Exp $	*/
 /*	$NetBSD: uvm_param.h,v 1.5 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
@@ -153,8 +153,8 @@ struct _ps_strings {
  *	No rounding is used.
  */
 #ifdef _KERNEL
-#define	atop(x)		(((paddr_t)(x)) >> PAGE_SHIFT)
-#define	ptoa(x)		((vaddr_t)((vaddr_t)(x) << PAGE_SHIFT))
+#define	atop(x)		((x) >> PAGE_SHIFT)
+#define	ptoa(x)		((x) << PAGE_SHIFT)
 
 /*
  * Round off or truncate to the nearest page.  These will work
