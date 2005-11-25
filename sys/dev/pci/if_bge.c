@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.100 2005/11/25 02:05:24 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.101 2005/11/25 02:08:54 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -154,7 +154,6 @@ int bge_read_eeprom(struct bge_softc *, caddr_t, int, int);
 void bge_setmulti(struct bge_softc *);
 
 int bge_alloc_jumbo_mem(struct bge_softc *);
-void bge_free_jumbo_mem(struct bge_softc *);
 void *bge_jalloc(struct bge_softc *);
 void bge_jfree(caddr_t, u_int, void *);
 int bge_newbuf_std(struct bge_softc *, int, struct mbuf *, bus_dmamap_t);
