@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2005/04/21 00:15:42 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2005/11/25 02:42:25 brad Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ rootconf()
 					bootdv->dv_class == DV_DISK
 						? 'a' : ' ');
 			printf(": ");
-			s = splimp();
+			s = splhigh();
 			cnpollc(1);
 			len = getsn(buf, sizeof(buf));
 
@@ -391,7 +391,7 @@ rootconf()
 					bootdv->dv_xname,
 					bootdv->dv_class == DV_DISK?'b':' ');
 			printf(": ");
-			s = splimp();
+			s = splhigh();
 			cnpollc(1);
 			len = getsn(buf, sizeof(buf));
 			cnpollc(0);

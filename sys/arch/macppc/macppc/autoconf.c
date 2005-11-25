@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2005/10/17 23:23:36 brad Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2005/11/25 02:42:25 brad Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.20 2005/10/17 23:23:36 brad Exp $
+ *      $Id: autoconf.c,v 1.21 2005/11/25 02:42:25 brad Exp $
  */
 
 /*
@@ -313,7 +313,7 @@ setroot()
 					bootdv->dv_class == DV_DISK
 						? 'a' : ' ');
 			printf(": ");
-			s = splimp();
+			s = splhigh();
 			cnpollc(TRUE);
 			len = getsn(buf, sizeof(buf));
 
@@ -352,7 +352,7 @@ setroot()
 					bootdv->dv_xname,
 					bootdv->dv_class == DV_DISK?'b':' ');
 			printf(": ");
-			s = splimp();
+			s = splhigh();
 			cnpollc(TRUE);
 			len = getsn(buf, sizeof(buf));
 			cnpollc(FALSE);
