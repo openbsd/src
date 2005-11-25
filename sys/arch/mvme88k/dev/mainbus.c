@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.16 2005/10/13 19:48:35 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.17 2005/11/25 22:14:31 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -72,9 +72,6 @@ const struct mvme88k_bus_space_tag mainbus_bustag = {
 extern struct extent *iomap_extent;
 extern struct vm_map *iomap_map;
 
-void	*mapiodev(void *, int);
-void	unmapiodev(void *, int);
-
 /*
  * Obio (internal IO) space is mapped 1:1 (see pmap_bootstrap() for details).
  *
@@ -112,7 +109,7 @@ mainbus_map(bus_addr_t addr, bus_size_t size, int flags,
 	if (addr >= threshold)
 		map = (vaddr_t)addr;
 	else {
-		map = (vaddr_t)mapiodev((void *)addr, size);
+		map = mapiodev((paddr_t)addr, size);
 	}
 
 	if (map == NULL)
@@ -150,9 +147,9 @@ mainbus_vaddr(bus_space_handle_t handle)
  * of pa. However, it is advisable to have pa page aligned since otherwise,
  * we might have several mappings for a given chunk of the IO page.
  */
-void *
+vaddr_t
 mapiodev(pa, size)
-	void *pa;
+	paddr_t pa;
 	int size;
 {
 	vaddr_t	iova, tva, off;
@@ -162,8 +159,8 @@ mapiodev(pa, size)
 	if (size <= 0)
 		return NULL;
 
-	ppa = trunc_page((paddr_t)pa);
-	off = (paddr_t)pa & PGOFSET;
+	ppa = trunc_page(pa);
+	off = pa & PGOFSET;
 	size = round_page(off + size);
 
 	s = splhigh();
@@ -185,7 +182,7 @@ mapiodev(pa, size)
 	}
 	pmap_update(vm_map_pmap(iomap_map));
 
-	return (void *)(iova + off);
+	return (iova + off);
 }
 
 /*
@@ -193,14 +190,14 @@ mapiodev(pa, size)
  */
 void
 unmapiodev(va, size)
-	void *va;
+	vaddr_t va;
 	int size;
 {
 	vaddr_t kva, off;
 	int s, error;
 
-	off = (vaddr_t)va & PGOFSET;
-	kva = trunc_page((vaddr_t)va);
+	off = va & PGOFSET;
+	kva = trunc_page(va);
 	size = round_page(off + size);
 
 	pmap_remove(vm_map_pmap(iomap_map), kva, kva + size);

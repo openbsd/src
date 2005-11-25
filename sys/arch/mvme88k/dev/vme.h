@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.16 2004/07/30 19:02:06 miod Exp $ */
+/*	$OpenBSD: vme.h,v 1.17 2005/11/25 22:14:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -280,7 +280,7 @@ struct vmesoftc {
 #define	VME2_A16BASE	0xffff0000UL
 #define	VME2_A24BASE	0xff000000UL
 
-void *vmepmap(struct device *sc, off_t vmeaddr, int bustype);
+paddr_t vmepmap(struct device *sc, off_t vmeaddr, int bustype);
 int vmerw(struct device *sc, struct uio *uio, int flags, int bus);
 int vmeintr_establish(int, struct intrhand *, const char *);
 int vme_findvec(int);

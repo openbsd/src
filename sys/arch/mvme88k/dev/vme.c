@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.39 2004/08/02 08:35:00 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.40 2005/11/25 22:14:31 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -99,7 +99,7 @@ vme_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
 #if 0
 	map = iomap_mapin(addr, size, 0);
 #else
-	map = (vaddr_t)mapiodev((void *)addr, size);
+	map = (vaddr_t)mapiodev((paddr_t)addr, size);
 #endif
 	if (map == NULL)
 		return ENOMEM;
@@ -114,7 +114,7 @@ vme_unmap(bus_space_handle_t handle, bus_size_t size)
 #if 0
 	iomap_mapout(handle, size);
 #else
-	unmapiodev((void *)handle, size);
+	unmapiodev((vaddr_t)handle, size);
 #endif
 }
 
@@ -334,7 +334,7 @@ vme_findvec(int skip)
  * mappings, ie. the MVME147 cannot do 32 bit accesses to VME bus
  * addresses from 0 to physmem.
  */
-void *
+paddr_t
 vmepmap(sc, vmeaddr, bustype)
 	struct device *sc;
 	off_t vmeaddr;
@@ -379,17 +379,17 @@ vmepmap(sc, vmeaddr, bustype)
 	default:
 		return NULL;
 	}
-	return ((void *)base);
+	return (base);
 }
 
-static void *vmemap(struct vmesoftc *, off_t);
-static void vmeunmap(void *);
+static vaddr_t vmemap(struct vmesoftc *, off_t);
+static void vmeunmap(paddr_t);
 
 /* if successful, returns the va of a vme bus mapping */
-static __inline__ void *
+static __inline__ vaddr_t
 vmemap(struct vmesoftc *sc, off_t vmeaddr)
 {
-	void *pa;
+	paddr_t pa;
 
 	pa = vmepmap((struct device *)sc, vmeaddr, BUS_VMES);
 	if (pa == NULL)
@@ -398,7 +398,7 @@ vmemap(struct vmesoftc *sc, off_t vmeaddr)
 }
 
 static __inline__ void
-vmeunmap(void *va)
+vmeunmap(vaddr_t va)
 {
 	unmapiodev(va, PAGE_SIZE);
 }
@@ -413,7 +413,7 @@ vmerw(sc, uio, flags, bus)
 	vaddr_t v;
 	int c;
 	struct iovec *iov;
-	void *vme;
+	paddr_t vme;
 	int error = 0;
 
 	while (uio->uio_resid > 0 && error == 0) {
