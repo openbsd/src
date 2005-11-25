@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.9 2005/09/25 20:55:13 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.10 2005/11/25 22:17:14 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -61,8 +61,8 @@ struct cmmu_p {
 	void (*cmmu_flush_cache_func)(int, paddr_t, psize_t);
 	void (*cmmu_flush_inst_cache_func)(int, paddr_t, psize_t);
 	void (*cmmu_flush_data_cache_func)(int, paddr_t, psize_t);
-	void (*dma_cachectl_func)(pmap_t, vaddr_t, vsize_t, int);
-	void (*dma_cachectl_pa_func)(paddr_t, psize_t, int);
+	int (*dma_cachectl_func)(pmap_t, vaddr_t, vsize_t, int);
+	int (*dma_cachectl_pa_func)(paddr_t, psize_t, int);
 	/* DDB only */
 	void (*cmmu_dump_config_func)(void);
 	void (*cmmu_show_translation_func)(unsigned, unsigned, unsigned, int);
