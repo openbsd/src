@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.56 2005/11/25 13:29:20 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.57 2005/11/25 13:33:47 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
 
-extern struct ifnet encif; 
+extern struct ifnet encif;
 struct ifaddr	*encap_findgwifa(struct sockaddr *);
 #endif
 
@@ -296,7 +296,7 @@ rtalloc1(struct sockaddr *dst, int report)
 			rt->rt_refcnt++;
 	} else {
 		if (dst->sa_family != PF_KEY)
-		        rtstat.rts_unreach++;
+			rtstat.rts_unreach++;
 	/*
 	 * IP encapsulation does lots of lookups where we don't need nor want
 	 * the RTM_MISSes that would be generated.  It causes RTM_MISS storms
@@ -324,7 +324,7 @@ rtfree(struct rtentry *rt)
 
 	if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_UP) == 0) {
 		if (rt->rt_nodes->rn_flags & (RNF_ACTIVE | RNF_ROOT))
-			panic ("rtfree 2");
+			panic("rtfree 2");
 		rttrash--;
 		if (rt->rt_refcnt < 0) {
 			printf("rtfree: %p not freed (neg refs)\n", rt);
@@ -545,7 +545,7 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway)
 		 * we can use the local address.
 		 */
 		ifa = NULL;
-		if (flags & RTF_HOST) 
+		if (flags & RTF_HOST)
 			ifa = ifa_ifwithdstaddr(dst);
 		if (ifa == NULL)
 			ifa = ifa_ifwithaddr(gateway);
@@ -951,7 +951,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
 			printf("rtinit: wrong ifa (%p) was (%p)\n",
-			       ifa, rt->rt_ifa);
+			    ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, NULL);
 			IFAFREE(rt->rt_ifa);
@@ -983,8 +983,8 @@ static int rt_init_done = 0;
 		(*r->rtt_func)(r->rtt_rt, r);			\
 	} else {						\
 		rtrequest((int) RTM_DELETE,			\
-			  (struct sockaddr *)rt_key(r->rtt_rt),	\
-			  0, 0, 0, 0);				\
+		    (struct sockaddr *)rt_key(r->rtt_rt),	\
+		    0, 0, 0, 0);				\
 	}							\
 }
 
@@ -1021,7 +1021,7 @@ rt_timer_queue_create(u_int timeout)
 
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
-		return (NULL);		
+		return (NULL);
 	Bzero(rtq, sizeof *rtq);
 
 	rtq->rtq_timeout = timeout;
@@ -1068,7 +1068,7 @@ rt_timer_count(struct rttimer_queue *rtq)
 	return (rtq->rtq_count);
 }
 
-void     
+void
 rt_timer_remove_all(struct rtentry *rt)
 {
 	struct rttimer	*r;
@@ -1084,7 +1084,7 @@ rt_timer_remove_all(struct rtentry *rt)
 	}
 }
 
-int      
+int
 rt_timer_add(struct rtentry *rt,
     void (*func)(struct rtentry *, struct rttimer *),
     struct rttimer_queue *queue)
@@ -1123,7 +1123,7 @@ rt_timer_add(struct rtentry *rt,
 	LIST_INSERT_HEAD(&rt->rt_timer, r, rtt_link);
 	TAILQ_INSERT_TAIL(&queue->rtq_head, r, rtt_next);
 	r->rtt_queue->rtq_count++;
-	
+
 	return (0);
 }
 
@@ -1138,7 +1138,7 @@ rt_timer_timer(void *arg)
 	int			 s;
 
 	s = splsoftnet();
-	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL; 
+	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL;
 	     rtq = LIST_NEXT(rtq, rtq_link)) {
 		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
 		    (r->rtt_time + rtq->rtq_timeout) < current_time) {
