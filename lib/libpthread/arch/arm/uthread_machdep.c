@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.3 2004/02/25 04:16:54 drahn Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.4 2005/11/25 06:53:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Dale Rahn. All rights reserved.
@@ -94,8 +94,10 @@ void
 _thread_machdep_save_float_state(statep)
 	struct _machdep_state* statep;
 {
+#if 0
 #ifndef __VFP_FP__
 #error finish FP save
+#endif
 #endif
 }
 
@@ -103,7 +105,9 @@ void
 _thread_machdep_restore_float_state(statep)
 	struct _machdep_state* statep;
 {
+#if 0
 #ifndef __VFP_FP__
 #error finish FP save
+#endif
 #endif
 }
