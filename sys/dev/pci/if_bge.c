@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.101 2005/11/25 02:08:54 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.102 2005/11/25 03:02:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -255,8 +255,7 @@ const struct pci_matchid bge_devices[] = {
 #define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
 #define	BGE_QUIRK_PRODUCER_BUG		0x00000020
 #define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000040
-#define	BGE_QUIRK_5705_CORE		0x00000080
-#define	BGE_QUIRK_FEWER_MBUFS		0x00000100
+#define	BGE_QUIRK_FEWER_MBUFS		0x00000080
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
@@ -376,55 +375,55 @@ static const struct bge_revision {
 	  "BCM5704 B0" },
 
 	{ BGE_CHIPID_BCM5705_A0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5705 A0" },
 
 	{ BGE_CHIPID_BCM5705_A1,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5705 A1" },
 
 	{ BGE_CHIPID_BCM5705_A2,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5705 A2" },
 
 	{ BGE_CHIPID_BCM5705_A3,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5705 A3" },
 
 	{ BGE_CHIPID_BCM5750_A0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5750 A0" },
 
 	{ BGE_CHIPID_BCM5750_A1,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5750 A1" },
 
 	{ BGE_CHIPID_BCM5750_A3,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5750 A3" },
 
 	{ BGE_CHIPID_BCM5750_B0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5750 B0" },
 
 	{ BGE_CHIPID_BCM5750_B1,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5750 B1" },
 
 	{ BGE_CHIPID_BCM5750_C0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5750 C0" },
 
 	{ BGE_CHIPID_BCM5714_A0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5714 A0" },
 
 	{ BGE_CHIPID_BCM5752_A0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5752 A0" },
 
 	{ BGE_CHIPID_BCM5752_A1,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5752 A1" },
 
 	{ 0, 0, NULL }
@@ -452,23 +451,23 @@ static const struct bge_revision bge_majorrevs[] = {
 	  "unknown BCM5704" },
 
 	{ BGE_ASICREV_BCM5705,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5705" },
 
 	{ BGE_ASICREV_BCM5750,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5750" },
 
 	{ BGE_ASICREV_BCM5714,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5714" },
 
 	{ BGE_ASICREV_BCM5752,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5752" },
 
 	{ BGE_ASICREV_BCM5780,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5780" },
 
 	{ 0,
@@ -1304,7 +1303,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_PCI_MEMWIN_BASEADDR, 0);
 
 	/* Configure mbuf memory pool */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
 		if (sc->bge_extram) {
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
 			    BGE_EXT_SSRAM);
@@ -1329,7 +1328,7 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Configure mbuf pool watermarks */
 	/* new Broadcom docs strongly recommend these: */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
@@ -1344,7 +1343,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_HIWAT, 10);
 
 	/* Enable buffer manager */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
 		CSR_WRITE_4(sc, BGE_BMAN_MODE,
 		    BGE_BMANMODE_ENABLE|BGE_BMANMODE_LOMBUF_ATTN);
 
@@ -1382,11 +1381,11 @@ bge_blockinit(struct bge_softc *sc)
 	/* Initialize the standard RX ring control block */
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (BGE_IS_5705_OR_BEYOND(sc))
+		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
+	else
 		rcb->bge_maxlen_flags =
 		    BGE_RCB_MAXLEN_FLAGS(ETHER_MAX_DIX_LEN, 0);
-	else
-		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
 	if (sc->bge_extram)
 		rcb->bge_nicaddr = BGE_EXT_STD_RX_RINGS;
 	else
@@ -1465,7 +1464,7 @@ bge_blockinit(struct bge_softc *sc)
 	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, taddr.bge_addr_lo);
 	RCB_WRITE_4(sc, rcb_addr, bge_nicaddr,
 		    BGE_NIC_TXRING_ADDR(0, BGE_TX_RING_CNT));
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 		    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
 
@@ -1549,7 +1548,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS, sc->bge_tx_coal_ticks);
 	CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS, sc->bge_rx_max_coal_bds);
 	CSR_WRITE_4(sc, BGE_HCC_TX_MAX_COAL_BDS, sc->bge_tx_max_coal_bds);
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
 		CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS_INT, 0);
 		CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS_INT, 0);
 	}
@@ -1557,7 +1556,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_HCC_TX_MAX_COAL_BDS_INT, 0);
 
 	/* Set up address of statistics block */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
 		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_HI, 0);
 		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_LO,
 			    BGE_RING_DMA_ADDR(sc, bge_info.bge_stats));
@@ -1586,7 +1585,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
 
 	/* Turn on RX list selector state machine. */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		CSR_WRITE_4(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
 
 	/* Turn on DMA, clear stats */
@@ -1608,7 +1607,7 @@ bge_blockinit(struct bge_softc *sc)
 #endif
 
 	/* Turn on DMA completion state machine */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		CSR_WRITE_4(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
 
 	/* Turn on write DMA state machine */
@@ -1629,7 +1628,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RDBDI_MODE, BGE_RDBDIMODE_ENABLE);
 
 	/* Turn on Mbuf cluster free state machine */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		CSR_WRITE_4(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
 
 	/* Turn on send BD completion state machine */
@@ -1899,10 +1898,10 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	sc->bge_tx_max_coal_bds = 400;
 
 	/* 5705 limits RX return ring to 512 entries. */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
-		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
-	else
+	if (BGE_IS_5705_OR_BEYOND(sc))
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT_5705;
+	else
+		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
 
 	/* Set up ifnet structure */
 	ifp = &sc->arpcom.ac_if;
@@ -2080,7 +2079,7 @@ bge_reset(struct bge_softc *sc)
 	bge_writereg_ind(sc, BGE_MISC_CFG, (65 << 1));
 
 	/* Enable memory arbiter. */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
 
 	/*
@@ -2494,10 +2493,10 @@ bge_tick(void *xsc)
 
 	s = splnet();
 
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
-		bge_stats_update(sc);
-	else
+	if (BGE_IS_5705_OR_BEYOND(sc))
 		bge_stats_update_regs(sc);
+	else
+		bge_stats_update(sc);
 	timeout_add(&sc->bge_timeout, hz);
 	if (sc->bge_link) {
 		splx(s);
@@ -3257,7 +3256,7 @@ bge_stop(struct bge_softc *sc)
 	bge_stop_block(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
 	bge_stop_block(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		bge_stop_block(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
 	bge_stop_block(sc, BGE_RDBDI_MODE, BGE_RBDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
@@ -3271,7 +3270,7 @@ bge_stop(struct bge_softc *sc)
 	bge_stop_block(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RDMA_MODE, BGE_RDMAMODE_ENABLE);
 	bge_stop_block(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		bge_stop_block(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
 	bge_stop_block(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
 
@@ -3281,13 +3280,13 @@ bge_stop(struct bge_softc *sc)
 	 */
 	bge_stop_block(sc, BGE_HCC_MODE, BGE_HCCMODE_ENABLE);
 	bge_stop_block(sc, BGE_WDMA_MODE, BGE_WDMAMODE_ENABLE);
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (!(BGE_IS_5705_OR_BEYOND(sc)))
 		bge_stop_block(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
 
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
 
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
 		bge_stop_block(sc, BGE_BMAN_MODE, BGE_BMANMODE_ENABLE);
 		bge_stop_block(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
 	}
