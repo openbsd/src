@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.15 2005/11/21 20:06:34 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.16 2005/11/25 15:35:43 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd RCS file management program
 .Sh SYNOPSIS
 .Nm
-.Op Fl ehiLMqUV
+.Op Fl ehiLMqTUV
 .Op Fl A Ns Ar oldfile
 .Op Fl a Ns Ar users
 .Op Fl b Ns Op Ar rev
@@ -104,6 +104,8 @@ log message with
 .It Fl q
 Be quiet about reporting.
 .Sm off
+.It Fl T
+Preserve RCS files modification time.
 .It Fl t Ar file \*(Ba Ar str
 .Sm on
 Change the descriptive text.

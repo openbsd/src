@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.14 2005/11/23 20:25:40 jmc Exp $
+.\"     $OpenBSD: co.1,v 1.15 2005/11/25 15:35:43 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl V
+.Op Fl TV
 .Op Fl d Ns Ar date
 .Op Fl f Ns Op Ar rev
 .Op Fl I Ns Op Ar rev
@@ -91,6 +91,8 @@ only.
 The same as
 .Fl r ,
 but also unlocks the retrieved revision if it was locked.
+.It Fl T
+Preserve RCS files modification time.
 .It Fl V
 Print RCS's version number.
 .It Fl w Ns Ar user
