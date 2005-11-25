@@ -1,3 +1,2 @@
 # Host: OpenBSD/hppa
-NATDEPFILES= fork-child.o infptrace.o inftarg.o hppabsd-nat.o
-NAT_FILE= config/nm-bsd.h
+NATDEPFILES= fork-child.o inf-ptrace.o hppabsd-nat.o
