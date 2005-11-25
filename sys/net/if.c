@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.137 2005/07/04 09:52:33 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.138 2005/11/25 13:45:02 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -126,7 +126,6 @@
 
 void	if_attachsetup(struct ifnet *);
 void	if_attachdomain1(struct ifnet *);
-int	if_detach_rtdelete(struct radix_node *, void *);
 
 int	ifqmaxlen = IFQ_MAXLEN;
 
@@ -449,37 +448,6 @@ if_attach(struct ifnet *ifp)
 }
 
 /*
- * Delete a route if it has a specific interface for output.
- * This function complies to the rn_walktree callback API.
- *
- * Note that deleting a RTF_CLONING route can trigger the
- * deletion of more entries, so we need to cancel the walk
- * and return EAGAIN.  The caller should restart the walk
- * as long as EAGAIN is returned.
- */
-int
-if_detach_rtdelete(struct radix_node *rn, void *vifp)
-{
-	struct ifnet *ifp = vifp;
-	struct rtentry *rt = (struct rtentry *)rn;
-
-	if (rt->rt_ifp == ifp) {
-		int cloning = (rt->rt_flags & RTF_CLONING);
-
-		if (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
-		    rt_mask(rt), 0, NULL) == 0 && cloning)
-			return (EAGAIN);
-	}
-
-	/*
-	 * XXX There should be no need to check for rt_ifa belonging to this
-	 * interface, because then rt_ifp is set, right?
-	 */
-
-	return (0);
-}
-
-/*
  * Detach an interface from everything in the kernel.  Also deallocate
  * private resources.
  * XXX So far only the INET protocol family has been looked over
@@ -490,9 +458,10 @@ if_detach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
-	int i, s = splimp();
-	struct radix_node_head *rnh;
+	int s;
 	struct domain *dp;
+
+	s = splimp();
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_start = if_detached_start;
@@ -529,17 +498,7 @@ if_detach(struct ifnet *ifp)
 		altq_detach(&ifp->if_snd);
 #endif
 
-	/*
-	 * Find and remove all routes which is using this interface.
-	 * XXX Factor out into a route.c function?
-	 */
-	for (i = 1; i <= AF_MAX; i++) {
-		rnh = rt_tables[i];
-		if (rnh)
-			while ((*rnh->rnh_walktree)(rnh,
-			    if_detach_rtdelete, ifp) == EAGAIN)
-				;
-	}
+	rt_if_remove(ifp);
 
 #ifdef INET
 	rti_delete(ifp);
