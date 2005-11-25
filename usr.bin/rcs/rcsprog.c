@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.46 2005/11/23 09:39:20 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.47 2005/11/25 13:50:01 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -81,6 +81,52 @@ rcs_set_rev(const char *str, RCSNUM **rev)
 		cvs_log(LP_ERR, "bad revision number '%s'", str);
 		exit (1);
 	}
+}
+
+/*
+ * rcs_get_mtime()
+ *
+ * Get <filename> last modified time.
+ * Returns last modified time on success, or -1 on failure.
+ */
+time_t
+rcs_get_mtime(const char *filename)
+{
+	struct stat st;
+	time_t mtime;
+
+	if (stat(filename, &st) == -1) {
+		cvs_log(LP_ERRNO, "failed to stat `%s'", filename);
+		return (-1);
+	}
+	mtime = (time_t)st.st_mtimespec.tv_sec;
+
+	return (mtime);
+}
+
+/*
+ * rcs_set_mtime()
+ *
+ * Set <filename> last modified time to <mtime> if it's not set to -1.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_set_mtime(const char *filename, time_t mtime)
+{
+	static struct timeval tv[2];
+
+	if (mtime == -1)
+		return (0);
+
+	tv[0].tv_sec = mtime;
+	tv[1].tv_sec = tv[0].tv_sec;
+
+	if (utimes(filename, tv) == -1) {
+		cvs_log(LP_ERRNO, "error setting utimes");
+		return (-1);
+	}
+
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.36 2005/11/24 15:35:11 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.37 2005/11/25 13:50:01 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -48,6 +48,7 @@ checkout_main(int argc, char **argv)
 	char fpath[MAXPATHLEN], buf[16];
 	char *username;
 	const char *state = NULL;
+	time_t rcs_mtime = -1;
 
 	flags = 0;
 	kflag = RCS_KWEXP_ERR;
@@ -59,7 +60,7 @@ checkout_main(int argc, char **argv)
 		exit (1);
 	}
 
-	while ((ch = rcs_getopt(argc, argv, "f::k:l::M::p::q::r::s:u::Vx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "f::k:l::M::p::q::r::s:Tu::Vx:")) != -1) {
 		switch (ch) {
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
@@ -144,6 +145,12 @@ checkout_main(int argc, char **argv)
 		if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
 			continue;
 
+		if (flags & PRESERVETIME)
+			rcs_mtime = rcs_get_mtime(file->rf_path);
+
+		if (kflag != RCS_KWEXP_ERR)
+			rcs_kwexp_set(file, kflag);
+
 		if (rev == RCS_HEAD_REV)
 			frev = file->rf_head;
 		else
@@ -151,17 +158,13 @@ checkout_main(int argc, char **argv)
 
 		rcsnum_tostr(frev, buf, sizeof(buf));
 
-		if (kflag != RCS_KWEXP_ERR)
-			rcs_kwexp_set(file, kflag);
-
 		if (flags & CO_STATE) {
 			if (checkout_state(file, frev, argv[i], flags,
 			    username, state) < 0) {
 				rcs_close(file);
 				continue;
 			}
-		}
-		else {
+		} else {
 			if (checkout_rev(file, frev, argv[i], flags,
 				username) < 0) {
 				rcs_close(file);
@@ -170,6 +173,9 @@ checkout_main(int argc, char **argv)
 		}
 
 		rcs_close(file);
+
+		if (flags & PRESERVETIME)
+			rcs_set_mtime(fpath, rcs_mtime);
 	}
 
 	if (rev != RCS_HEAD_REV)
