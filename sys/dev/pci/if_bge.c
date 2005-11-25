@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.99 2005/11/25 01:21:44 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.100 2005/11/25 02:05:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3306,7 +3306,7 @@ bge_stop(struct bge_softc *sc)
 	bge_free_rx_ring_std(sc);
 
 	/* Free jumbo RX list. */
-	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if (BGE_IS_JUMBO_CAPABLE(sc))
 		bge_free_rx_ring_jumbo(sc);
 
 	/* Free TX buffers. */
