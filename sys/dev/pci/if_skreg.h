@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.24 2005/10/15 23:09:17 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.25 2005/11/26 19:16:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -335,8 +335,11 @@
 #define SK_IMCTL_STOP	0x02
 #define SK_IMCTL_START	0x04
 
-#define SK_IMTIMER_TICKS	54
-#define SK_IM_USECS(x)		((x) * SK_IMTIMER_TICKS)
+/* Number of ticks per usec for interrupt moderation */
+#define SK_IMTIMER_TICKS_GENESIS	53
+#define SK_IMTIMER_TICKS_YUKON		78
+#define SK_IMTIMER_TICKS_YUKON_EC	125
+#define SK_IM_USECS(x)		((x) * imtimer_ticks)
 
 /*
  * The SK_EPROM0 register contains a byte that describes the

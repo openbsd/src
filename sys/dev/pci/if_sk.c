@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.87 2005/11/15 20:32:04 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.88 2005/11/26 19:16:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1045,6 +1045,8 @@ skc_probe(struct device *parent, void *match, void *aux)
  */
 void sk_reset(struct sk_softc *sc)
 {
+	u_int32_t imtimer_ticks;
+
 	DPRINTFN(2, ("sk_reset\n"));
 
 	CSR_WRITE_2(sc, SK_CSR, SK_CSR_SW_RESET);
@@ -1076,17 +1078,30 @@ void sk_reset(struct sk_softc *sc)
 	sk_win_write_4(sc, SK_RAMCTL, SK_RAMCTL_UNRESET);
 
 	/*
-         * Configure interrupt moderation. The moderation timer
+	 * Configure interrupt moderation. The moderation timer
 	 * defers interrupts specified in the interrupt moderation
 	 * timer mask based on the timeout specified in the interrupt
 	 * moderation timer init register. Each bit in the timer
-	 * register represents 18.825ns, so to specify a timeout in
-	 * microseconds, we have to multiply by 54.
+	 * register represents one tick, so to specify a timeout in
+	 * microseconds, we have to multiply by the correct number of
+	 * ticks-per-microsecond.
 	 */
-        sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(100));
-        sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
+	switch (sc->sk_type) {
+	case SK_GENESIS:
+		imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
+		break;
+	case SK_YUKON_EC:
+	case SK_YUKON_XL:
+	case SK_YUKON_FE:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
+	default:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+	}
+	sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(100));
+	sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
 	    SK_ISR_RX1_EOF|SK_ISR_RX2_EOF);
-        sk_win_write_1(sc, SK_IMTIMERCTL, SK_IMCTL_START);
+	sk_win_write_1(sc, SK_IMTIMERCTL, SK_IMCTL_START);
 }
 
 int
