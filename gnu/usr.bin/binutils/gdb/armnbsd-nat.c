@@ -21,20 +21,19 @@
    Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
+#include "gdbcore.h"
+#include "inferior.h"
+#include "regcache.h"
+#include "target.h"
 
-#ifndef FETCH_INFERIOR_REGISTERS
-#error Not FETCH_INFERIOR_REGISTERS 
-#endif /* !FETCH_INFERIOR_REGISTERS */
-
-#include "arm-tdep.h"
-
+#include "gdb_string.h"
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
-#include "inferior.h"
-#include "regcache.h"
-#include "gdbcore.h"
+
+#include "arm-tdep.h"
+#include "inf-ptrace.h"
 
 extern int arm_apcs_32;
 
@@ -88,7 +87,7 @@ fetch_register (int regno)
 
   if (ret < 0)
     {
-      warning ("unable to fetch general register");
+      warning (_("unable to fetch general register"));
       return;
     }
 
@@ -139,7 +138,7 @@ fetch_regs (void)
 
   if (ret < 0)
     {
-      warning ("unable to fetch general registers");
+      warning (_("unable to fetch general registers"));
       return;
     }
 
@@ -157,7 +156,7 @@ fetch_fp_register (int regno)
 
   if (ret < 0)
     {
-      warning ("unable to fetch floating-point register");
+      warning (_("unable to fetch floating-point register"));
       return;
     }
 
@@ -187,15 +186,15 @@ fetch_fp_regs (void)
 
   if (ret < 0)
     {
-      warning ("unable to fetch general registers");
+      warning (_("unable to fetch general registers"));
       return;
     }
 
   supply_fparegset (&inferior_fp_registers);
 }
 
-void
-fetch_inferior_registers (int regno)
+static void
+armnbsd_fetch_registers (int regno)
 {
   if (regno >= 0)
     {
@@ -223,7 +222,7 @@ store_register (int regno)
 
   if (ret < 0)
     {
-      warning ("unable to fetch general registers");
+      warning (_("unable to fetch general registers"));
       return;
     }
 
@@ -284,7 +283,7 @@ store_register (int regno)
 		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
 
   if (ret < 0)
-    warning ("unable to write register %d to inferior", regno);
+    warning (_("unable to write register %d to inferior"), regno);
 }
 
 static void
@@ -331,7 +330,7 @@ store_regs (void)
 		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
 
   if (ret < 0)
-    warning ("unable to store general registers");
+    warning (_("unable to store general registers"));
 }
 
 static void
@@ -345,7 +344,7 @@ store_fp_register (int regno)
 
   if (ret < 0)
     {
-      warning ("unable to fetch floating-point registers");
+      warning (_("unable to fetch floating-point registers"));
       return;
     }
 
@@ -366,7 +365,7 @@ store_fp_register (int regno)
 		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
 
   if (ret < 0)
-    warning ("unable to write register %d to inferior", regno);
+    warning (_("unable to write register %d to inferior"), regno);
 }
 
 static void
@@ -388,11 +387,11 @@ store_fp_regs (void)
 		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
 
   if (ret < 0)
-    warning ("unable to store floating-point registers");
+    warning (_("unable to store floating-point registers"));
 }
 
-void
-store_inferior_registers (int regno)
+static void
+armnbsd_store_registers (int regno)
 {
   if (regno >= 0)
     {
@@ -437,7 +436,7 @@ fetch_elfcore_registers (char *core_reg_sect, unsigned core_reg_size,
     {
     case 0:	/* Integer registers.  */
       if (core_reg_size != sizeof (struct reg))
-	warning ("wrong size of register set in core file");
+	warning (_("wrong size of register set in core file"));
       else
 	{
 	  /* The memcpy may be unnecessary, but we can't really be sure
@@ -449,7 +448,7 @@ fetch_elfcore_registers (char *core_reg_sect, unsigned core_reg_size,
 
     case 2:
       if (core_reg_size != sizeof (struct fpreg))
-	warning ("wrong size of FPA register set in core file");
+	warning (_("wrong size of FPA register set in core file"));
       else
 	{
 	  /* The memcpy may be unnecessary, but we can't really be sure
@@ -486,6 +485,13 @@ static struct core_fns arm_netbsd_elfcore_fns =
 void
 _initialize_arm_netbsd_nat (void)
 {
+  struct target_ops *t;
+
+  t = inf_ptrace_target ();
+  t->to_fetch_registers = armnbsd_fetch_registers;
+  t->to_store_registers = armnbsd_store_registers;
+  add_target (t);
+
   deprecated_add_core_fns (&arm_netbsd_core_fns);
   deprecated_add_core_fns (&arm_netbsd_elfcore_fns);
 }
