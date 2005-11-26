@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.23 2004/01/03 14:08:54 espie Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.24 2005/11/26 04:33:27 marco Exp $	*/
 
 /*-
  *
@@ -1442,7 +1442,7 @@ spx_usrreq(so, req, m, nam, controlp)
 			break;
 		}
 		cb->s_oobflags |= SF_SOOB;
-		/* FALLTRHOUGH */
+		/* FALLTHROUGH */
 
 	case PRU_SEND:
 		if (controlp) {
