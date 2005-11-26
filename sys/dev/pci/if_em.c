@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.94 2005/11/19 22:17:15 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.95 2005/11/26 19:05:24 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -224,16 +224,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.autoneg_advertised = AUTONEG_ADV_DEFAULT;
 	sc->hw.tbi_compatibility_en = TRUE;
 	sc->rx_buffer_len = EM_RXBUFFER_2048;
-
-	/*
-	 * These parameters control the automatic generation(Tx) and
-	 * response(Rx) to Ethernet PAUSE frames.
-	 */
-	sc->hw.fc_high_water = FC_DEFAULT_HI_THRESH;
-	sc->hw.fc_low_water = FC_DEFAULT_LO_THRESH;
-	sc->hw.fc_pause_time = FC_DEFAULT_TX_TIMER;
-	sc->hw.fc_send_xon = TRUE;
-	sc->hw.fc = em_fc_full;
 
 	sc->hw.phy_init_script = 1;
 	sc->hw.phy_reset_disable = FALSE;
@@ -1424,6 +1414,8 @@ em_free_pci_resources(struct em_softc *sc)
 int
 em_hardware_init(struct em_softc *sc)
 {
+	u_int16_t rx_buffer_size;
+
 	INIT_DEBUGOUT("em_hardware_init: begin");
 	/* Issue a global reset */
 	em_reset_hw(&sc->hw);
@@ -1443,6 +1435,28 @@ em_hardware_init(struct em_softc *sc)
 		       sc->sc_dv.dv_xname);
 		return (EIO);
 	}
+
+	/*
+	 * These parameters control the automatic generation (Tx) and 
+	 * response (Rx) to Ethernet PAUSE frames.
+	 * - High water mark should allow for at least two frames to be
+	 *   received after sending an XOFF.
+	 * - Low water mark works best when it is very near the high water mark.
+	 *   This allows the receiver to restart by sending XON when it has drained
+	 *   a bit.  Here we use an arbitary value of 1500 which will restart after
+	 *   one full frame is pulled from the buffer.  There could be several smaller
+	 *   frames in the buffer and if so they will not trigger the XON until their
+	 *   total number reduces the buffer by 1500.
+	 * - The pause time is fairly large at 1000 x 512ns = 512 usec.
+	 */
+	rx_buffer_size = ((E1000_READ_REG(&sc->hw, PBA) & 0xffff) << 10 );
+
+	sc->hw.fc_high_water = rx_buffer_size -
+	    EM_ROUNDUP(sc->hw.max_frame_size, 1024);
+	sc->hw.fc_low_water = sc->hw.fc_high_water - 1500;
+	sc->hw.fc_pause_time = 0x1000;
+	sc->hw.fc_send_xon = TRUE;
+	sc->hw.fc = em_fc_full;
 
 	if (em_init_hw(&sc->hw) < 0) {
 		printf("%s: Hardware Initialization Failed",
