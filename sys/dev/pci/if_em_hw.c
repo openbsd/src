@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.13 2005/11/08 01:33:19 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.14 2005/11/26 14:31:26 krw Exp $ */
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
  */
@@ -158,7 +158,7 @@ em_set_phy_type(struct em_hw *hw)
             hw->phy_type = em_phy_igp;
             break;
         }
-        /* Fall Through */
+        /* FALLTHROUGH */
     default:
         /* Should never have loaded on this device */
         hw->phy_type = em_phy_undefined;
@@ -369,7 +369,7 @@ em_set_mac_type(struct em_hw *hw)
     case em_82572:
     case em_82573:
         hw->eeprom_semaphore_present = TRUE;
-        /* fall through */
+        /* FALLTHROUGH */
     case em_82541:
     case em_82547:
     case em_82541_rev_2:
@@ -578,7 +578,7 @@ em_reset_hw(struct em_hw *hw)
                 E1000_WRITE_REG(hw, CTRL_EXT, ctrl_ext);
                 E1000_WRITE_FLUSH(hw);
             }
-            /* fall through */
+            /* FALLTHROUGH */
         case em_82571:
         case em_82572:
             ret_val = em_get_auto_rd_done(hw);
@@ -1292,7 +1292,8 @@ em_copper_link_igp_setup(struct em_hw *hw)
             break;
         case em_ms_auto:
             phy_data &= ~CR_1000T_MS_ENABLE;
-            default:
+	    break;
+        default:
             break;
         }
         ret_val = em_write_phy_reg(hw, PHY_1000T_CTRL, phy_data);
@@ -4900,7 +4901,7 @@ em_setup_led(struct em_hw *hw)
                                       ~IGP01E1000_GMII_SPD));
         if(ret_val)
             return ret_val;
-        /* Fall Through */
+        /* FALLTHROUGH */
     default:
         if(hw->media_type == em_media_type_fiber) {
             ledctl = E1000_READ_REG(hw, LEDCTL);
@@ -4949,7 +4950,7 @@ em_cleanup_led(struct em_hw *hw)
                                       hw->phy_spd_default);
         if(ret_val)
             return ret_val;
-        /* Fall Through */
+        /* FALLTHROUGH */
     default:
         /* Restore LEDCTL settings */
         E1000_WRITE_REG(hw, LEDCTL, hw->ledctl_default);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.28 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: ises.c,v 1.29 2005/11/26 14:31:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -262,14 +262,19 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	case 5:
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_dma_data,
 		    sizeof sc->sc_dma_data);
+		/* FALLTHROUGH */
 	case 4:
 		bus_dmamem_free(sc->sc_dmat, &seg, nsegs);
+		/* FALLTHROUGH */
 	case 3:
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
+		/* FALLTHROUGH */
 	case 2:
 		pci_intr_disestablish(pc, sc->sc_ih);
+		/* FALLTHROUGH */
 	case 1:
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
+		/* FALLTHROUGH */
 	default: /* 0 */
 		break;
 	}
@@ -300,9 +305,9 @@ ises_initstate(void *v)
 	case 0:
 		/* Called by dostartuphooks(9). */
 		timeout_set(&sc->sc_timeout, ises_initstate, sc);
+		sc->sc_initstate++;
 
 		/* FALLTHROUGH */
-		sc->sc_initstate++;
 	case 1:
 		/* Power up the chip (clear powerdown bit) */
 		stat = READ_REG(sc, ISES_BO_STAT);

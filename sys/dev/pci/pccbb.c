@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.40 2005/11/23 11:39:37 mickey Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.41 2005/11/26 14:31:26 krw Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -791,7 +791,7 @@ pccbb_chipinit(sc)
 			}
 			pci_conf_write(pc, tag, PCI12XX_MFUNC, reg);
 		}
-		/* fallthrough */
+		/* FALLTHROUGH */
 
 	case CB_TI125X:
 		/*
