@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.33 2005/11/23 21:36:19 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.34 2005/11/26 05:49:47 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -104,14 +104,12 @@ struct ami_softc {
 	volatile struct ami_iocmd *sc_mbox;
 	paddr_t			sc_mbox_pa;
 	bus_dmamap_t		sc_mbox_map;
-	bus_dma_segment_t	sc_mbox_seg[1];
 
 	struct ami_ccb		sc_ccbs[AMI_MAXCMDS];
 	ami_queue_head		sc_free_ccb, sc_ccbq, sc_ccbdone;
 
 	struct ami_ccbmem	*sc_ccbmem;
 	bus_dmamap_t		sc_ccbmap;
-	bus_dma_segment_t	sc_ccbseg[1];
 
 	int			sc_timeout;
 	struct timeout		sc_requeue_tmo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.97 2005/11/24 22:18:55 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.98 2005/11/26 05:49:47 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -125,10 +125,10 @@ u_int32_t	ami_read_outbound_db(struct ami_softc *);
 
 void		ami_copyhds(struct ami_softc *, const u_int32_t *,
 		    const u_int8_t *, const u_int8_t *);
-void		*ami_allocmem(bus_dma_tag_t, bus_dmamap_t *,
-		    bus_dma_segment_t *, size_t, size_t, const char *);
-void		ami_freemem(caddr_t, bus_dma_tag_t, bus_dmamap_t *,
-		    bus_dma_segment_t *, size_t, size_t, const char *);
+void		*ami_allocmem(bus_dma_tag_t, bus_dmamap_t *, size_t, size_t,
+		    const char *);
+void		ami_freemem(caddr_t, bus_dma_tag_t, bus_dmamap_t *, size_t,
+		    size_t, const char *);
 void		ami_stimeout(void *);
 int 		ami_cmd(struct ami_ccb *, int, int);
 int		ami_start(struct ami_ccb *, int);
@@ -226,9 +226,10 @@ ami_read_outbound_db(struct ami_softc *sc)
 }
 
 void *
-ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map, bus_dma_segment_t *segp,
-    size_t isize, size_t nent, const char *iname)
+ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map, size_t isize, size_t nent,
+    const char *iname)
 {
+	bus_dma_segment_t segp;
 	size_t total = isize * nent;
 	caddr_t p;
 	int error, rseg;
@@ -240,14 +241,14 @@ ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map, bus_dma_segment_t *segp,
 		return (NULL);
 	}
 
-	if ((error = bus_dmamem_alloc(dmat, total, PAGE_SIZE, 0, segp, 1,
+	if ((error = bus_dmamem_alloc(dmat, total, PAGE_SIZE, 0, &segp, 1,
 	    &rseg, BUS_DMA_NOWAIT))) {
 		printf(": cannot allocate %s%s (%d)\n",
 		    iname, nent==1? "": "s", error);
 		goto destroy;
 	}
 
-	if ((error = bus_dmamem_map(dmat, segp, rseg, total, &p,
+	if ((error = bus_dmamem_map(dmat, &segp, rseg, total, &p,
 	    BUS_DMA_NOWAIT))) {
 		printf(": cannot map %s%s (%d)\n",
 		    iname, nent==1? "": "s", error);
@@ -267,7 +268,7 @@ ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map, bus_dma_segment_t *segp,
 unmap:
 	bus_dmamem_unmap(dmat, p, total);
 free:
-	bus_dmamem_free(dmat, segp, 1);
+	bus_dmamem_free(dmat, &segp, 1);
 destroy:
 	bus_dmamap_destroy(dmat, *map);
 
@@ -276,13 +277,14 @@ destroy:
 
 void
 ami_freemem(caddr_t p, bus_dma_tag_t dmat, bus_dmamap_t *map,
-    bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname)
+     size_t isize, size_t nent, const char *iname)
 {
+	bus_dma_segment_t segp;
 	size_t total = isize * nent;
 
 	bus_dmamap_unload(dmat, *map);
 	bus_dmamem_unmap(dmat, p, total);
-	bus_dmamem_free(dmat, segp, 1);
+	bus_dmamem_free(dmat, &segp, 1);
 	bus_dmamap_destroy(dmat, *map);
 	*map = NULL;
 }
@@ -310,25 +312,23 @@ ami_attach(struct ami_softc *sc)
 	struct ami_iocmd *cmd;
 	struct ami_ccbmem *mem;
 	bus_dmamap_t idatamap;
-	bus_dma_segment_t idataseg[1];
 	const char *p;
 	void	*idata;
 	int	i, error;
 	/* u_int32_t *pp; */
 
-	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
-	    NBPG, 1, "init data")))
+	if (!(idata = ami_allocmem(sc->dmat, &idatamap, NBPG, 1, "init data")))
 		return (1);
 
-	sc->sc_mbox = ami_allocmem(sc->dmat, &sc->sc_mbox_map, sc->sc_mbox_seg,
+	sc->sc_mbox = ami_allocmem(sc->dmat, &sc->sc_mbox_map,
 	    sizeof(struct ami_iocmd), 1, "mbox");
 	if (!sc->sc_mbox)
 		goto free_idata;
 
-	sc->sc_mbox_pa = sc->sc_mbox_seg[0].ds_addr;
+	sc->sc_mbox_pa = htole32(sc->sc_mbox_map->dm_segs[0].ds_addr);
 	AMI_DPRINTF(AMI_D_CMD, ("mbox_pa=%llx ", sc->sc_mbox_pa));
 
-	sc->sc_ccbmem = ami_allocmem(sc->dmat, &sc->sc_ccbmap, sc->sc_ccbseg,
+	sc->sc_ccbmem = ami_allocmem(sc->dmat, &sc->sc_ccbmap,
 	    sizeof(struct ami_ccbmem), AMI_MAXCMDS, "ccb dmamem");
 	if (!sc->sc_ccbmem)
 		goto free_mbox;
@@ -356,11 +356,11 @@ ami_attach(struct ami_softc *sc)
 		ccb->ccb_offset = sizeof(struct ami_ccbmem) * i;
 
 		ccb->ccb_pt = &mem->cd_pt;
-		ccb->ccb_ptpa = htole32(sc->sc_ccbseg[0].ds_addr +
+		ccb->ccb_ptpa = htole32(sc->sc_ccbmap->dm_segs[0].ds_addr +
 		    ccb->ccb_offset);
 
 		ccb->ccb_sglist = mem->cd_sg;
-		ccb->ccb_sglistpa = htole32(sc->sc_ccbseg[0].ds_addr +
+		ccb->ccb_sglistpa = htole32(sc->sc_ccbmap->dm_segs[0].ds_addr +
 		    ccb->ccb_offset + sizeof(struct ami_passthrough));
 
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
@@ -370,7 +370,7 @@ ami_attach(struct ami_softc *sc)
 
 	(sc->sc_init)(sc);
 	{
-		paddr_t	pa = idataseg[0].ds_addr;
+		paddr_t	pa = htole32(idatamap->dm_segs[0].ds_addr);
 
 		ccb = ami_get_ccb(sc);
 		cmd = &ccb->ccb_cmd;
@@ -379,7 +379,7 @@ ami_attach(struct ami_softc *sc)
 		cmd->acc_cmd = AMI_FCOP;
 		cmd->acc_io.aio_channel = AMI_FC_EINQ3;
 		cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
-		cmd->acc_io.aio_data = htole32(pa);
+		cmd->acc_io.aio_data = pa;
 		if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) == 0) {
 			struct ami_fc_einquiry *einq = idata;
 			struct ami_fc_prodinfo *pi = idata;
@@ -394,7 +394,7 @@ ami_attach(struct ami_softc *sc)
 			cmd->acc_cmd = AMI_FCOP;
 			cmd->acc_io.aio_channel = AMI_FC_PRODINF;
 			cmd->acc_io.aio_param = 0;
-			cmd->acc_io.aio_data = htole32(pa);
+			cmd->acc_io.aio_data = pa;
 			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) == 0) {
 				sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
 
@@ -419,7 +419,7 @@ ami_attach(struct ami_softc *sc)
 			cmd->acc_cmd = AMI_EINQUIRY;
 			cmd->acc_io.aio_channel = 0;
 			cmd->acc_io.aio_param = 0;
-			cmd->acc_io.aio_data = htole32(pa);
+			cmd->acc_io.aio_data = pa;
 			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 				ccb = ami_get_ccb(sc);
 				cmd = &ccb->ccb_cmd;
@@ -427,7 +427,7 @@ ami_attach(struct ami_softc *sc)
 				cmd->acc_cmd = AMI_INQUIRY;
 				cmd->acc_io.aio_channel = 0;
 				cmd->acc_io.aio_param = 0;
-				cmd->acc_io.aio_data = htole32(pa);
+				cmd->acc_io.aio_data = pa;
 				if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 					printf(": cannot do inquiry\n");
 					goto destroy;
@@ -473,7 +473,7 @@ ami_attach(struct ami_softc *sc)
 		cmd->acc_cmd = AMI_MISC;
 		cmd->acc_io.aio_channel = AMI_GET_IO_CMPL; /* sub opcode */
 		cmd->acc_io.aio_param = 0;
-		cmd->acc_io.aio_data = htole32(pa);
+		cmd->acc_io.aio_data = pa;
 
 		if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
 			AMI_DPRINTF(AMI_D_MISC, ("getting io completion values"
@@ -486,7 +486,7 @@ ami_attach(struct ami_softc *sc)
 			cmd->acc_cmd = AMI_MISC;
 			cmd->acc_io.aio_channel = AMI_SET_IO_CMPL;
 			cmd->acc_io.aio_param = 0;
-			cmd->acc_io.aio_data = htole32(pa);
+			cmd->acc_io.aio_data = pa;
 
 			/* set parameters */
 			pp = idata;
@@ -526,7 +526,7 @@ ami_attach(struct ami_softc *sc)
 		}
 
 	}
-	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
+	ami_freemem(idata, sc->dmat, &idatamap, NBPG, 1, "init data");
 
 	/* hack for hp netraid version encoding */
 	if ('A' <= sc->sc_fwver[2] && sc->sc_fwver[2] <= 'Z' &&
@@ -615,13 +615,13 @@ destroy:
 			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
 
 	ami_freemem((caddr_t)sc->sc_ccbmem, sc->dmat, &sc->sc_ccbmap,
-	    sc->sc_ccbseg, sizeof(struct ami_ccbmem), AMI_MAXCMDS,
+	    sizeof(struct ami_ccbmem), AMI_MAXCMDS,
 	    "ccb dmamem");
 free_mbox:
 	ami_freemem((caddr_t)sc->sc_mbox, sc->dmat, &sc->sc_mbox_map,
-	    sc->sc_mbox_seg, sizeof(struct ami_iocmd), 1, "mbox");
+	    sizeof(struct ami_iocmd), 1, "mbox");
 free_idata:
-	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
+	ami_freemem(idata, sc->dmat, &idatamap, NBPG, 1, "init data");
 
 	return (1);
 }
@@ -657,7 +657,7 @@ ami_quartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 	sc->sc_mbox->acc_poll = 0;
 	sc->sc_mbox->acc_ack = 0;
 
-	qidb = sc->sc_mbox_pa | AMI_QIDB_EXEC;
+	qidb = sc->sc_mbox_pa | htole32(AMI_QIDB_EXEC);
 	ami_write_inbound_db(sc, qidb);
 
 	return (0);
@@ -765,7 +765,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 	sc->sc_mbox->acc_status = 0xff;
 
 	/* send command to firmware */
-	qidb = sc->sc_mbox_pa | AMI_QIDB_EXEC;
+	qidb = sc->sc_mbox_pa | htole32(AMI_QIDB_EXEC);
 	ami_write_inbound_db(sc, qidb);
 
 	while ((sc->sc_mbox->acc_nstat == 0xff) && (i < AMI_MAX_POLLWAIT)) {
@@ -810,7 +810,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 	sc->sc_mbox->acc_ack = 0x77;
 
 	/* ack */
-	qidb = sc->sc_mbox_pa | AMI_QIDB_ACK;
+	qidb = sc->sc_mbox_pa | htole32(AMI_QIDB_ACK);
 	ami_write_inbound_db(sc, qidb);
 
 	while((ami_read_inbound_db(sc) & AMI_QIDB_ACK) &&
@@ -1766,7 +1766,6 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	struct ami_iocmd *cmd;
 	void *idata;
 	bus_dmamap_t idatamap;
-	bus_dma_segment_t idataseg[1];
 	paddr_t	pa;
 	int error = 0;
 
@@ -1774,13 +1773,13 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	if (ccb == NULL)
 		return (ENOMEM);
 
-	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg, NBPG,
-	    (size / NBPG) + 1, "ami mgmt"))) {
+	if (!(idata = ami_allocmem(sc->dmat, &idatamap, NBPG, (size / NBPG) + 1,
+	    "ami mgmt"))) {
 		ami_put_ccb(ccb);
 		return (ENOMEM);
 	}
 
-	pa = idataseg[0].ds_addr;
+	pa = htole32(idatamap->dm_segs[0].ds_addr);
 
 	ccb->ccb_data = NULL;
 	ccb->ccb_wakeup = 1;
@@ -1803,7 +1802,7 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 		break;
 	};
 
-	cmd->acc_io.aio_data = htole32(pa);
+	cmd->acc_io.aio_data = pa;
 
 	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
 		while (ccb->ccb_wakeup)
@@ -1818,8 +1817,8 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	} else
 		error = EINVAL;
 
-	ami_freemem(idata, sc->dmat, &idatamap, idataseg, NBPG,
-	    (size / NBPG) + 1, "ami mgmt");
+	ami_freemem(idata, sc->dmat, &idatamap, NBPG, (size / NBPG) + 1,
+	    "ami mgmt");
 
 	return (error);
 }
