@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.60 2005/06/13 13:32:59 millert Exp $	 */
+/* $OpenBSD: monitor.c,v 1.61 2005/11/26 22:17:20 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -666,8 +666,6 @@ m_priv_setsockopt(void)
 
 errout:
 	log_print("m_priv_setsockopt: read/write error");
-	if (optval)
-		free(optval);
 	if (sock >= 0)
 		close(sock);
 }
@@ -713,8 +711,6 @@ m_priv_bind(void)
 
 errout:
 	log_print("m_priv_bind: read/write error");
-	if (name)
-		free(name);
 	if (sock >= 0)
 		close(sock);
 }
