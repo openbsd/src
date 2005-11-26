@@ -3255,7 +3255,7 @@ seed_something(void)
 
 	/* Try using egd */
 	if (!krb5_init_context(&context)) {
-	    (const char *)p = krb5_config_get_string(context, NULL, "libdefaults",
+	    p = krb5_config_get_string(context, NULL, "libdefaults",
 		"egd_socket", NULL);
 	    if (p != NULL)
 		RAND_egd_bytes(p, ENTROPY_NEEDED);
