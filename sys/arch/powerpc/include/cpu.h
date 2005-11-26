@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2005/11/13 21:46:03 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.26 2005/11/26 22:40:30 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -196,8 +196,10 @@ ppc_mtsrin(u_int32_t val, u_int32_t sn_shifted)
 }
 
 u_int64_t ppc64_mfscomc(void);
+void ppc_mtscomc(u_int32_t);
 void ppc64_mtscomc(u_int64_t);
 u_int64_t ppc64_mfscomd(void);
+void ppc_mtscomd(u_int32_t);
 
 /*
  * General functions to enable and disable interrupts

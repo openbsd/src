@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.33 2005/11/13 21:46:03 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.34 2005/11/26 22:40:31 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -55,7 +55,7 @@
 #define HID0_BHT	(1 << (31-29))
 
 /* SCOM addresses (24-bit) */
-#define SCOM_PCR	0x400801 /* Power Management Control Register */
+#define SCOM_PCR	0x0aa001 /* Power Control Register */
 #define SCOM_PSR	0x408001 /* Power Tuning Status Register */
 
 /* SCOMC format */
@@ -64,8 +64,10 @@
 #define SCOMC_READ		0x00008000
 
 /* Power (Tuning) Status Register */
-#define PSR_FREQ_MASK	0x0300000000000000LL
-#define PSR_FREQ_HALF	0x0100000000000000LL
+#define PSR_CMD_RECEIVED	0x2000000000000000LL
+#define PSR_CMD_COMPLETED	0x1000000000000000LL
+#define PSR_FREQ_MASK		0x0300000000000000LL
+#define PSR_FREQ_HALF		0x0100000000000000LL
 
 char cpu_model[80];
 char machine[] = MACHINE;	/* cpu architecture */
@@ -82,7 +84,10 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
 
-void config_l2cr(int cpu);
+void ppc64_scale_frequency(u_int);
+int ppc64_setperf(int);
+
+void config_l2cr(int);
 
 int
 cpumatch(parent, cfdata, aux)
@@ -108,6 +113,66 @@ int
 ppc_cpuspeed(int *freq)
 {
 	*freq = ppc_curfreq;
+
+	return (0);
+}
+
+static u_int32_t ppc_power_mode_data[2];
+
+void
+ppc64_scale_frequency(u_int freq_scale)
+{
+	u_int64_t psr;
+	int s;
+
+	s = ppc_intr_disable();
+
+	/* Clear PCRH and PCR. */
+	ppc_mtscomd(0x00000000);
+	ppc_mtscomc(SCOM_PCR << SCOMC_ADDR_SHIFT);
+	ppc_mtscomd(0x80000000);
+	ppc_mtscomc(SCOM_PCR << SCOMC_ADDR_SHIFT);
+
+	/* Set PCR. */
+	ppc_mtscomd(ppc_power_mode_data[freq_scale] | 0x80000000);
+	ppc_mtscomc(SCOM_PCR << SCOMC_ADDR_SHIFT);
+
+	/* Wait until frequency change is completed. */
+	do {
+		ppc64_mtscomc((SCOM_PSR << SCOMC_ADDR_SHIFT) | SCOMC_READ);
+		psr = ppc64_mfscomd();
+		ppc64_mfscomc();
+		if (psr & PSR_CMD_COMPLETED)
+			break;
+		DELAY(100);
+	} while (psr & PSR_CMD_RECEIVED);
+
+	if ((psr & PSR_FREQ_MASK) == PSR_FREQ_HALF)
+		ppc_curfreq = ppc_maxfreq / 2;
+	else
+		ppc_curfreq = ppc_maxfreq;
+
+	ppc_intr_enable(s);
+}
+
+extern int perflevel;
+
+int
+ppc64_setperf(int speed)
+{
+	if (speed <= 50) {
+		if (ppc_curfreq == ppc_maxfreq / 2)
+			return (0);
+
+		ppc64_scale_frequency(1);
+		perflevel = 50;
+	} else {
+		if (ppc_curfreq == ppc_maxfreq)
+			return (0);
+
+		ppc64_scale_frequency(0);
+		perflevel = 100;
+	}
 
 	return (0);
 }
@@ -165,7 +230,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	u_int32_t cpu, pvr, hid0;
 	char name[32];
 	int qhandle, phandle;
-	unsigned int clock_freq = 0;
+	u_int32_t clock_freq = 0;
 
 	pvr = ppc_mfpvr();
 	cpu = pvr >> 16;
@@ -236,7 +301,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
                 if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
                     && !strcmp(name, "cpu")
                     && OF_getprop(qhandle, "clock-frequency",
-                        &clock_freq , sizeof clock_freq ) >= 0)
+                        &clock_freq, sizeof clock_freq) >= 0)
 		{
 			break;
 		}
@@ -267,8 +332,14 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ppc64_mfscomc();
 		ppc_intr_enable(s);
 
-		if ((psr & PSR_FREQ_MASK) == PSR_FREQ_HALF)
+		if ((psr & PSR_FREQ_MASK) == PSR_FREQ_HALF) {
 			ppc_curfreq = ppc_maxfreq / 2;
+			perflevel = 50;
+		}
+
+		if (OF_getprop(qhandle, "power-mode-data",
+		    &ppc_power_mode_data, sizeof ppc_power_mode_data) >= 8)
+			cpu_setperf = ppc64_setperf;
 	}
 
 	/* power savings mode */
