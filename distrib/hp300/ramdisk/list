@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.45 2005/05/09 20:24:00 miod Exp $
+#	$OpenBSD: list,v 1.46 2005/11/26 12:26:17 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -71,7 +71,7 @@ SYMLINK	/tmp/disktab.shadow			etc/disktab
 SYMLINK	/tmp/fstab.shadow			etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
-TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp300h,hp700-wy,hp70092	usr/share/misc/termcap
+TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp700-wy,hp70092	usr/share/misc/termcap
 
 # dhcp things
 SCRIPT    ${DESTDIR}/sbin/dhclient-script	sbin/dhclient-script

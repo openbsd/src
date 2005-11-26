@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.28 2005/11/22 23:10:57 miod Exp $
+dnl	$OpenBSD: install,v 1.29 2005/11/26 12:26:18 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 
@@ -101,7 +101,7 @@ OpenBSDBootMsgs
 
 	You will next be asked for your terminal type.  There are only
 	a few specific terminal types supported.  If you are using a
-	graphics display, just hit return to select the default (hp300h).
+	graphics display, just hit return to select the default (vt220).
 	If you are using an ASCII terminal, it should either be an HP
 	or vt100 compatible terminal; nothing else is supported.  (If
 	your terminal type is xterm, just use vt100.)
