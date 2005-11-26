@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.2 2005/10/28 07:11:13 tedu Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.3 2005/11/26 11:22:12 tedu Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -139,8 +139,8 @@ static int pn8_vid_to_volts[] = {
 
 struct k8pnow_state {
 	int freq;
-	int fid;
-	int vid;
+	uint8_t fid;
+	uint8_t vid;
 };
 
 struct k8pnow_cpu_state {
@@ -167,11 +167,11 @@ struct psb_s {
 };
 
 struct pst_s {
-	uint32_t signature;
-	uint8_t fsb;		/* Front Side Bus frequency (Mhz) */
-	uint8_t fid;		/* Max Frequency code */
-	uint8_t vid;		/* Max Voltage code */
-	uint8_t n_states;	/* Number of states */
+	uint32_t cpuid;
+	uint8_t pll;
+	uint8_t fid;
+	uint8_t vid;
+	uint8_t n_states;
 };
 
 struct k8pnow_cpu_state *k8pnow_current_state[I386_MAXPROCS];
@@ -180,23 +180,20 @@ struct k8pnow_cpu_state *k8pnow_current_state[I386_MAXPROCS];
  * Prototypes
  */
 int k8pnow_read_pending_wait(uint64_t *);
-int k8pnow_decode_pst(struct k8pnow_cpu_state *, uint8_t *, int);
+int k8pnow_decode_pst(struct k8pnow_cpu_state *, uint8_t *);
 int k8pnow_states(struct k8pnow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 
-
 int k8pnow_read_pending_wait(uint64_t * status) {
-	unsigned int i = 0;
-	while(PN8_STA_PENDING(*status)) {
-		i++;
-		if (i > 1000) {
-			printf("k8pnow_read_pending_wait: change pending stuck"
-			    ".\n");
-			return 1;
-		}
+	unsigned int i = 1000;
+	while(i--) {
 		*status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
+		if (!PN8_STA_PENDING(*status))
+			return 0;
+
 	}
-	return 0;
+	printf("k8pnow_read_pending_wait: change pending stuck.\n");
+	return 1;
 }
 
 int
@@ -220,8 +217,9 @@ k8_powernow_setperf(int level)
 	cvid = PN8_STA_CVID(status);
 
 	cstate = k8pnow_current_state[cpu_number()];
-	high = cstate->state_table[cstate->n_states - 1].freq;
 	low = cstate->state_table[0].freq;
+	high = cstate->state_table[cstate->n_states-1].freq;
+
 	freq = low + (high - low) * level / 100;
 
 	for (i = 0; i < cstate->n_states; i++) {
@@ -306,7 +304,7 @@ k8_powernow_setperf(int level)
 	if (cfid != fid || cvid != vid)
 		return (1);
 
-	calibrate_cyclecounter();
+	pentium_mhz = ((cstate->state_table[i].freq / 100000)+1)*100;
 	return (0);
 }
 
@@ -315,23 +313,17 @@ k8_powernow_setperf(int level)
  * compute state_table via an insertion sort.
  */
 int
-k8pnow_decode_pst(struct k8pnow_cpu_state *cstate, uint8_t *p,
-	int npst)
+k8pnow_decode_pst(struct k8pnow_cpu_state *cstate, uint8_t *p)
 {
 	int i, j, n;
 	struct k8pnow_state state;
-
-	for (i = 0; i < POWERNOW_MAX_STATES; ++i)
-		cstate->state_table[i].freq = -1;
-
-	for (n = 0, i = 0; i < npst; ++i) {
+	for (n = 0, i = 0; i < cstate->n_states; i++) {
 		state.fid = *p++;
 		state.vid = *p++;
 
-		state.freq = 100 * pn8_fid_to_mult[state.fid >> 1] *
-			cstate->fsb;
+		state.freq = 100 * pn8_fid_to_mult[state.fid >>1] *cstate->fsb;
 		j = n;
-		while (j > 0 && cstate->state_table[j - 1].freq < state.freq) {
+		while (j > 0 && cstate->state_table[j - 1].freq > state.freq) {
 			memcpy(&cstate->state_table[j],
 			    &cstate->state_table[j - 1],
 			    sizeof(struct k8pnow_state));
@@ -348,10 +340,10 @@ int
 k8pnow_states(struct k8pnow_cpu_state *cstate, uint32_t cpusig,
     unsigned int fid, unsigned int vid)
 {
-	int maxpst;
 	struct psb_s *psb;
 	struct pst_s *pst;
 	uint8_t *p;
+	int i;
 
 	for (p = (u_int8_t *)ISA_HOLE_VADDR(BIOS_START);
 	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p += 16) {
@@ -365,23 +357,19 @@ k8pnow_states(struct k8pnow_cpu_state *cstate, uint32_t cpusig,
 			cstate->irt = PN8_PSB_TO_IRT(psb->reserved);
 			cstate->mvs = PN8_PSB_TO_MVS(psb->reserved);
 			cstate->low = PN8_PSB_TO_BATT(psb->reserved);
+			p+= sizeof(struct psb_s);
 
-			p += sizeof(struct psb_s);
-			/*
-			 * XXX: FreeBSD completely ignores psb->n_pst
-			 * XXX: n_pst might be 2 its not supposed to be
-			 * XXX: but why 200?
-			 */
-			for (maxpst = 0; maxpst < 200; maxpst++) {
-				pst = (struct pst_s*) p;
-				if (cpusig == pst->signature && fid == pst->fid
-				   && vid == pst->vid) {
-					cstate->n_states = pst->n_states;
+			for(i = 0; i < psb->n_pst; ++i) {
+				pst = (struct pst_s *) p;
+
+				cstate->pll = pst->pll;
+				cstate->n_states = pst->n_states;
+				if (cpusig == pst->cpuid &&
+				    pst->fid == fid && pst->vid == vid) {
 					return (k8pnow_decode_pst(cstate,
-					    p + sizeof(struct pst_s),
-					    cstate->n_states));
+					    p+= sizeof (struct pst_s)));
 				}
-				p += sizeof(struct pst_s) + (2 * pst->n_states);
+				p += sizeof(struct pst_s) + 2 * cstate->n_states;
 			}
 		}
 	}
@@ -393,9 +381,10 @@ k8pnow_states(struct k8pnow_cpu_state *cstate, uint32_t cpusig,
 void
 k8_powernow_init(void)
 {
-	uint64_t status, rate;
-	u_int maxfid, maxvid, currentfid;
+	uint64_t status;
+	u_int maxfid, maxvid, currentfid, i;
 	struct k8pnow_cpu_state *cstate;
+	struct k8pnow_state *state;
 	struct cpu_info * ci;
 	char * techname = NULL;
 	ci = curcpu();
@@ -404,13 +393,14 @@ k8_powernow_init(void)
 	if (!cstate)
 		return;
 
-	rate = pentium_mhz;
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	maxfid = PN8_STA_MFID(status);
 	maxvid = PN8_STA_MVID(status);
 	currentfid = PN8_STA_CFID(status);
 
-	cstate->fsb = rate / 100000 / pn8_fid_to_mult[currentfid >> 1];
+	CPU_CLOCKUPDATE();
+	cstate->fsb = pentium_base_tsc/ 100000/ pn8_fid_to_mult[currentfid>>1];
+
 	cstate->vid_to_volts = pn8_vid_to_volts;
 	/*
 	* If start FID is different to max FID, then it is a
@@ -423,9 +413,15 @@ k8_powernow_init(void)
 		techname = "Cool`n'Quiet K8";
 
 	if (k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid)) {
-		printf("%s: AMD %s: %d available states\n", ci->ci_dev.dv_xname,
-		    techname, cstate->n_states);
 		if (cstate->n_states) {
+			printf("%s: AMD %s available states ",
+			    ci->ci_dev.dv_xname, techname);
+			for(i= 0; i < cstate->n_states; i++) {
+				state = &cstate->state_table[i];
+				printf("%c%d", i==0 ? '(' : ',',
+				    ((state->freq / 100000)+1)*100);
+			}
+			printf(")\n");
 			k8pnow_current_state[cpu_number()] = cstate;
 			cpu_setperf = k8_powernow_setperf;
 		}

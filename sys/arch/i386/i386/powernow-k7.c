@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.7 2005/10/28 07:14:31 tedu Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.8 2005/11/26 11:22:12 tedu Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -148,18 +148,17 @@ struct k7pnow_cpu_state {
 	unsigned int sgtc;
 	struct k7pnow_state state_table[POWERNOW_MAX_STATES];
 	unsigned int n_states;
-	unsigned int max_states;
 	int errata_a0;
 	int *vid_to_volts;
 };
 
 struct psb_s {
-        char signature[10];     /* AMDK7PNOW! */
-        uint8_t version;
-        uint8_t flags;
-        uint16_t ttime;         /* Min Settling time */
-        uint8_t reserved;
-        uint8_t n_pst;
+	char signature[10];     /* AMDK7PNOW! */
+	uint8_t version;
+	uint8_t flags;
+	uint16_t ttime;         /* Min Settling time */
+	uint8_t reserved;
+	uint8_t n_pst;
 };
 
 struct pst_s {
@@ -234,7 +233,7 @@ k7_powernow_setperf(int level)
 	if (cstate->errata_a0);
 		enable_intr();
 
-	calibrate_cyclecounter();
+	pentium_mhz = ((cstate->state_table[i].freq / 100000)+1)*100;
 
 	return 1;
 }
@@ -261,7 +260,7 @@ k7pnow_decode_pst(struct k7pnow_cpu_state * cstate, uint8_t *p, int npst)
 			continue;
 
 		j = n;
-		while (j > 0 && cstate->state_table[j - 1].freq < state.freq) {
+		while (j > 0 && cstate->state_table[j - 1].freq > state.freq) {
 			memcpy(&cstate->state_table[j],
 			    &cstate->state_table[j - 1],
 			    sizeof(struct k7pnow_state));
@@ -275,7 +274,7 @@ k7pnow_decode_pst(struct k7pnow_cpu_state * cstate, uint8_t *p, int npst)
 	 * Fix powernow_max_states, if errata_a0 give us less states
 	 * than expected.
 	 */
-	cstate->max_states = n;
+	cstate->n_states = n;
 	return 1;
 }
 
@@ -324,12 +323,12 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 						return 0;
 					}
 
-					if(abs(cstate->fsb - pst->fsb) > 5)
+					if (abs(cstate->fsb - pst->fsb) > 5)
 						continue;
-					cstate->max_states = pst->n_states;
+					cstate->n_states = pst->n_states;
 					return (k7pnow_decode_pst(cstate,
 					     p + sizeof(struct pst_s),
-					     cstate->max_states));
+					     cstate->n_states));
 				}
 				p += sizeof(struct pst_s) + (2 * pst->n_states);
 			}
@@ -343,11 +342,14 @@ void
 k7_powernow_init(void)
 {
 	u_int regs[4];
-	uint64_t status, rate;
+	uint64_t status;
 	u_int maxfid, startvid, currentfid;
 	struct k7pnow_cpu_state *cstate;
+	struct k7pnow_state *state;
 	struct cpu_info *ci;
 	char *techname = NULL;
+	int i;
+
 	ci = curcpu();
 
 	cstate = malloc(sizeof(struct k7pnow_cpu_state), M_DEVBUF, M_NOWAIT);
@@ -360,13 +362,13 @@ k7_powernow_init(void)
 	else
 		cstate->errata_a0 = FALSE;
 
-	rate = pentium_mhz;
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	maxfid = PN7_STA_MFID(status);
 	startvid = PN7_STA_SVID(status);
 	currentfid = PN7_STA_CFID(status);
 
-	cstate->fsb = rate / 100000 / k7pnow_fid_to_mult[currentfid];
+	CPU_CLOCKUPDATE();
+	cstate->fsb = pentium_base_tsc / 100000 / k7pnow_fid_to_mult[currentfid];
 	/*
 	 * If start FID is different to max FID, then it is a
 	 * mobile processor.  If not, it is a low powered desktop
@@ -380,9 +382,15 @@ k7_powernow_init(void)
 		techname = "Cool`n'Quiet K7";
 	}
 	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
-		printf("%s: AMD %s: %d available states\n", ci->ci_dev.dv_xname,
-		    techname, cstate->n_states);
 		if (cstate->n_states) {
+			printf("%s: AMD %s: available states ", 
+			    ci->ci_dev.dv_xname, techname);
+			for(i = 0; i < cstate->n_states; i++) {
+				state = &cstate->state_table[i];
+				printf("%c%d", i==0 ? '(' : ',',
+				    ((state->freq / 100000)+1)*100);
+			}
+			printf(")\n");	
 			k7pnow_current_state[cpu_number()] = cstate;
 			cpu_setperf = k7_powernow_setperf;
 		}
