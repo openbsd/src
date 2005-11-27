@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.36 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.37 2005/11/27 23:48:44 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,7 @@
 #define	IOMAP_SIZE	0x01000000	/* roughly 0xff000000 - 0xffffffff */
 
 #ifdef   _KERNEL
+#if !defined(_LOCORE)
 extern int brdtyp;
 extern int cpumod;
 #endif
@@ -79,4 +80,5 @@ extern int cpumod;
 #define MOD_SP		0x02
 #define MOD_DP		0x03
 
+#endif	/* _KERNEL */
 #endif /* !_MACHINE_PARAM_H_ */
