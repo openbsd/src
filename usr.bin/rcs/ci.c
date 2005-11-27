@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.70 2005/11/27 16:15:26 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.71 2005/11/27 17:47:18 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -234,16 +234,14 @@ checkin_main(int argc, char **argv)
 		 * Test for existence of ,v file. If we are expected to
 		 * create one, set NEWFILE flag.
 		 */
-		if ((pb.openflags & RCS_CREATE)
-		    && (rcs_statfile(pb.filename, pb.fpath,
-			    sizeof(pb.fpath)) < 0)) {
-			pb.flags |= NEWFILE;
-		} else if (!(pb.openflags & RCS_CREATE)
-		    && (rcs_statfile(pb.filename, pb.fpath,
-			    sizeof(pb.fpath)) < 0)) {
-			cvs_log(LP_ERR, "No existing RCS file");
-			status = 1;
-			continue;
+		if (rcs_statfile(pb.filename, pb.fpath, sizeof(pb.fpath)) < 0) {
+			if (pb.openflags & RCS_CREATE)
+				pb.flags |= NEWFILE;
+			else {
+				cvs_log(LP_ERR, "No existing RCS file");
+				status = 1;
+				continue;
+			}
 		} else {
 			if (pb.flags & CI_INIT) {
 				cvs_log(LP_ERR, "%s already exists", pb.fpath);
