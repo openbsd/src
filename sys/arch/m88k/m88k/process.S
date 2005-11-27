@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.9 2005/10/12 19:05:44 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.10 2005/11/27 11:06:15 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -64,7 +64,7 @@ ASLOCAL(Lswsrunpanic)
  * The mapping of the pcb at p->p_addr has already been deleted,
  * and the memory for the pcb+stack has been freed.
  * The ipl is high enough to prevent the memory from being reallocated.
- * switch_exit(proc * p)
+ * switch_exit(proc *p)
  */
 
 ENTRY(switch_exit)
@@ -127,7 +127,8 @@ ASLOCAL(cpu_switch_search)
 	or.u	r7, r0, hi16(_C_LABEL(whichqs))
 	ld	r7, r7, lo16(_C_LABEL(whichqs))
 	bcnd	ne0, r7, _ASM_LABEL(cpu_switch_found)
-1:
+
+ASLOCAL(cpu_switch_idle)
 	/*
 	 * There were no runnable processes. Enable all interrupts and
 	 * busy-wait for this to change.
@@ -146,7 +147,7 @@ ASLOCAL(cpu_switch_search)
 	FLUSH_PIPELINE
 2:
 	ld	r7, r7, lo16(_C_LABEL(whichqs))
-	bcnd	eq0, r7, 2b
+	bcnd	eq0, r7, _ASM_LABEL(cpu_switch_idle)
 	/* XXX run fancy things here, such as page zeroing... */
 
 ASLOCAL(cpu_switch_found)
@@ -159,7 +160,7 @@ ASLOCAL(cpu_switch_found)
 	 */
 	or.u	r7, r0, hi16(_C_LABEL(whichqs))	/* reload whichqs */
 	ld	r7, r7, lo16(_C_LABEL(whichqs))
-	bcnd	eq0, r7, 1b
+	bcnd	eq0, r7, _ASM_LABEL(cpu_switch_idle)
 
 	/* XXX use ff1, like powerpc... needs *runqueue() adjustments */
 	xor	r6, r6, r6		/* set r6 to 0 */
@@ -224,7 +225,6 @@ ASLOCAL(cpu_switch_found)
 	bsr.n	_C_LABEL(pmap_activate)
 	 or	r2, r0, r9
 	or	r9, r0, r14		/* restore p saved in r14 */
-
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bsr	_C_LABEL(sched_unlock_idle)
