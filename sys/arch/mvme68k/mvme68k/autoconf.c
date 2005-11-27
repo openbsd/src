@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2005/11/24 22:43:19 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.30 2005/11/27 14:17:41 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -96,6 +96,11 @@ struct	device *parsedisk(char *, int, int, dev_t *);
 
 extern void init_intrs(void);
 extern void dumpconf(void);
+
+/* boot device information */
+paddr_t	bootaddr;
+int	bootctrllun, bootdevlun, bootpart;
+struct	device *bootdv;
 
 /*
  * XXX some storage space must be allocated statically because of
