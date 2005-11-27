@@ -11387,7 +11387,7 @@ if eval "test \"`echo '$''{'cf_cv_srand_func'+set}'`\" = set"; then
 else
   
 cf_cv_srand_func=unknown
-for cf_func in srandom/random srand48/lrand48 srand/rand
+for cf_func in arc4random srandom/random srand48/lrand48 srand/rand
 do
 	cf_srand_func=`echo $cf_func | sed -e 's%/.*%%'`
 	cf_rand_func=`echo  $cf_func | sed -e 's%.*/%%'`
@@ -11403,7 +11403,7 @@ cat > conftest.$ac_ext <<EOF
 #endif
 
 int main() {
-long seed = 1; $cf_srand_func(seed); seed = $cf_rand_func()
+long seed = 1; seed = $cf_rand_func()
 ; return 0; }
 EOF
 if { (eval echo configure:11410: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
@@ -11431,6 +11431,10 @@ else
 		srand/rand)
 			cf_cv_rand_max=RAND_MAX
 			cf_rand_max=16
+			;;
+		arc4random)
+			cf_cv_rand_max=0xFFFFFFFFUL
+			cf_rand_max=32
 			;;
 		*)
 			cf_cv_rand_max=INT_MAX

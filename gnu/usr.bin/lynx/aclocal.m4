@@ -3277,7 +3277,7 @@ dnl which usually is only 16-bits.
 AC_DEFUN([CF_SRAND],[
 AC_CACHE_CHECK(for random-integer functions, cf_cv_srand_func,[
 cf_cv_srand_func=unknown
-for cf_func in srandom/random srand48/lrand48 srand/rand
+for cf_func in arc4random srandom/random srand48/lrand48 srand/rand
 do
 	cf_srand_func=`echo $cf_func | sed -e 's%/.*%%'`
 	cf_rand_func=`echo  $cf_func | sed -e 's%.*/%%'`
@@ -3288,7 +3288,7 @@ AC_TRY_LINK([
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
-],[long seed = 1; $cf_srand_func(seed); seed = $cf_rand_func()],
+],[long seed = 1; seed = $cf_rand_func()],
 [cf_cv_srand_func=$cf_func
  break])
 done
@@ -3299,6 +3299,10 @@ if test "$cf_cv_srand_func" != unknown ; then
 		srand/rand)
 			cf_cv_rand_max=RAND_MAX
 			cf_rand_max=16
+			;;
+		arc4random)
+			cf_cv_rand_max=0xFFFFFFFFUL
+			cf_rand_max=32
 			;;
 		*)
 			cf_cv_rand_max=INT_MAX

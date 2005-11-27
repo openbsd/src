@@ -130,7 +130,9 @@ PUBLIC void HTSSLInitPRNG NOARGS
 	RAND_seed((unsigned char *)&pid, sizeof(pid));
 	/* Initialize system's random number generator */
 	RAND_bytes((unsigned char *)&seed, sizeof(long));
+#if !defined(__OpenBSD__)	
 	lynx_srand(seed);
+#endif
 	while (RAND_status() == 0) {
 	    /* Repeatedly seed the PRNG using the system's random number generator until it has been seeded with enough data */
 	    l = lynx_rand();

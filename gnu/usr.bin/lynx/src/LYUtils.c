@@ -3272,7 +3272,9 @@ PRIVATE int fmt_tempname ARGS3(
      */
 #ifdef USE_RAND_TEMPNAME
     if (first) {
+#if !defined(__OpenBSD__)
 	lynx_srand((unsigned)((long)time((time_t *)0) + (long)result));
+#endif
 	first = FALSE;
     }
 

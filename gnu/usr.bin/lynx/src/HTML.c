@@ -2104,7 +2104,8 @@ PRIVATE int HTML_start_element ARGS6(
 	    int enval = 2;
 
 	    column = HText_getCurrentColumn(me->text);
-	    if (present[HTML_TAB_TO]) {
+	    if (present[HTML_TAB_TO] &&
+			value[HTML_TAB_TO] && *value[HTML_TAB_TO]) {
 		/*
 		 *  TO has priority over INDENT if both are present. - FM
 		 */
