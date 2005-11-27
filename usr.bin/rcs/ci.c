@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.69 2005/11/24 15:35:11 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.70 2005/11/27 16:15:26 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -587,7 +587,6 @@ checkin_update(struct checkin_params *pb)
  * checkin_init()
  *
  * Does an initial check in, just enough to create the new ,v file
- * XXX not fully implemented yet.
  * On success, return 0. On error return -1.
  */
 static int
