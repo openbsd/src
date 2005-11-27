@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.42 2005/11/26 23:26:49 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.43 2005/11/27 03:50:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -121,7 +121,6 @@ struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
 void			 set_ipmask(struct ipsec_addr_wrap *, u_int8_t);
 struct ipsec_addr_wrap	*copyhost(const struct ipsec_addr_wrap *);
 const struct ipsec_xf	*parse_xf(const char *, const struct ipsec_xf *);
-struct ipsec_transforms *transforms(const char *, const char *, const char *);
 struct ipsec_transforms *copytransforms(const struct ipsec_transforms *);
 int			 validate_sa(u_int32_t, u_int8_t,
 			     struct ipsec_transforms *, struct ipsec_key *,
@@ -141,6 +140,8 @@ struct ipsec_rule	*create_ike(struct ipsec_addr_wrap *, struct
 			     struct ipsec_transforms *, struct
 			     ipsec_transforms *, u_int8_t, u_int8_t, char *,
 			     char *);
+
+struct ipsec_transforms *ipsec_transforms;
 
 typedef struct {
 	union {
@@ -452,58 +453,49 @@ spispec		: SPI STRING			{
 		}
 		;
 
-transforms	: /* empty */			{
-			struct ipsec_transforms *xfs;
-
-			/* We create just an empty transform */
-			if ((xfs = calloc(1, sizeof(struct ipsec_transforms)))
-			    == NULL)
+transforms	: 					{
+			if ((ipsec_transforms = calloc(1,
+			    sizeof(struct ipsec_transforms))) == NULL)
 				err(1, "transforms: calloc");
-			$$ = xfs;
 		}
-		| AUTHXF STRING ENCXF STRING	{
-			if (($$ = transforms($2, $4, NULL)) == NULL) {
-				free($2);
-				free($4);
-				yyerror("could not parse transforms");
-				YYERROR;
-			}
-			free($2);
-			free($4);
+		    transforms_l			{ $$ = ipsec_transforms; }
+		| /* empty */				{
+			if (($$ = calloc(1,
+			    sizeof(struct ipsec_transforms))) == NULL)
+				err(1, "transforms: calloc");
 		}
-		| ENCXF STRING AUTHXF STRING	{
-			if (($$ = transforms($4, $2, NULL)) == NULL) {
-				free($2);
-				free($4);
-				yyerror("could not parse transforms");
-				YYERROR;
+		;
+
+transforms_l	: transforms_l transform
+		| transform
+		;
+
+transform	: AUTHXF STRING			{
+			if (ipsec_transforms->authxf)
+				yyerror("auth already set");
+			else {
+				ipsec_transforms->authxf = parse_xf($2, authxfs);
+				if (!ipsec_transforms->authxf)
+					yyerror("%s not a valid transform", $2);
 			}
-			free($2);
-			free($4);
-		}
-		| AUTHXF STRING			{
-			if (($$ = transforms($2, NULL, NULL)) == NULL) {
-				free($2);
-				yyerror("could not parse transforms");
-				YYERROR;
-			}
-			free($2);
 		}
 		| ENCXF STRING			{
-			if (($$ = transforms(NULL, $2, NULL)) == NULL) {
-				free($2);
-				yyerror("could not parse transforms");
-				YYERROR;
+			if (ipsec_transforms->encxf)
+				yyerror("enc already set");
+			else {
+				ipsec_transforms->encxf = parse_xf($2, encxfs);
+				if (!ipsec_transforms->encxf)
+					yyerror("%s not a valid transform", $2);
 			}
-			free($2);
 		}
 		| COMPXF STRING			{
-			if (($$ = transforms(NULL, NULL, $2)) == NULL) {
-				free($2);
-				yyerror("could not parse transforms");
-				YYERROR;
+			if (ipsec_transforms->compxf)
+				yyerror("comp already set");
+			else {
+				ipsec_transforms->compxf = parse_xf($2, compxfs);
+				if (!ipsec_transforms->compxf)
+					yyerror("%s not a valid transform", $2);
 			}
-			free($2);
 		}
 		;
 
@@ -1276,34 +1268,6 @@ parse_xf(const char *name, const struct ipsec_xf xfs[])
 		return &xfs[i];
 	}
 	return (NULL);
-}
-
-struct ipsec_transforms *
-transforms(const char *authname, const char *encname, const char *compname)
-{
-	struct ipsec_transforms *xfs;
-
-	xfs = calloc(1, sizeof(struct ipsec_transforms));
-	if (xfs == NULL)
-		err(1, "transforms: calloc");
-
-	if (authname) {
-		xfs->authxf = parse_xf(authname, authxfs);
-		if (xfs->authxf == NULL)
-			yyerror("%s not a valid transform", authname);
-	}
-	if (encname) {
-		xfs->encxf = parse_xf(encname, encxfs);
-		if (xfs->encxf == NULL)
-			yyerror("%s not a valid transform", encname);
-	}
-	if (compname) {
-		xfs->compxf = parse_xf(compname, compxfs);
-		if (xfs->compxf == NULL)
-			yyerror("%s not a valid transform", compname);
-	}
-
-	return (xfs);
 }
 
 struct ipsec_transforms *
