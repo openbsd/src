@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2005/11/27 03:50:58 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.44 2005/11/27 09:47:56 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1306,10 +1306,18 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 			yyerror("ah does not provide encryption");
 			return (0);
 		}
+		if (xfs->compxf) {
+			yyerror("ah does not provide compression");
+			return (0);
+		}
 	}
 	if (protocol == IPSEC_ESP) {
 		if (!xfs) {
 			yyerror("no transforms specified");
+			return (0);
+		}
+		if (xfs->compxf) {
+			yyerror("esp does not provide compression");
 			return (0);
 		}
 		if (!xfs->authxf)
@@ -1320,6 +1328,10 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 	if (protocol == IPSEC_IPCOMP) {
 		if (!xfs) {
 			yyerror("no transform specified");
+			return (0);
+		}
+		if (xfs->authxf || xfs->encxf) {
+			yyerror("no encryption or authenticaion with ipcomp");
 			return (0);
 		}
 		if (!xfs->compxf)
