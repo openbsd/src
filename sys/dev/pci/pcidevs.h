@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.971 2005/11/25 03:38:54 brad Exp 
+ *	OpenBSD: pcidevs,v 1.972 2005/11/27 12:14:25 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1134,13 +1134,16 @@
 
 /* Creative Labs */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SoundBlaster Live */
+#define	PCI_PRODUCT_CREATIVELABS_AWE64D	0x0003		/* SoundBlaster AWE64D */
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGY	0x0004		/* SoundBlaster Audigy */
-#define	PCI_PRODUCT_CREATIVELABS_SBLIVE2	0x0006		/* SoundBlaster Live */
+#define	PCI_PRODUCT_CREATIVELABS_SBLIVE2	0x0006		/* SoundBlaster Live (Dell) */
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGYLS	0x0007		/* SoundBlaster Audigy LS */
+#define	PCI_PRODUCT_CREATIVELABS_AUDIGY2	0x0008		/* SoundBlaster Audigy */
 #define	PCI_PRODUCT_CREATIVELABS_FIWIRE	0x4001		/* Firewire */
 #define	PCI_PRODUCT_CREATIVELABS_SBJOY	0x7002		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGIN	0x7003		/* SoundBlaster Audigy Digital */
 #define	PCI_PRODUCT_CREATIVELABS_SBJOY2	0x7004		/* PCI Gameport Joystick */
+#define	PCI_PRODUCT_CREATIVELABS_SBJOY3	0x7005		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_EV1938	0x8938		/* Ectiva 1938 */
 
 /* Cyclades products */
@@ -1951,7 +1954,7 @@
 #define	PCI_PRODUCT_MARVELL_YUKON_8050	0x4361		/* Yukon 88E8050 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8053	0x4362		/* Yukon 88E8053 */
 #define	PCI_PRODUCT_MARVELL_YUKON_3	0x4363		/* Yukon */
-#define	PCI_PRODUCT_MARVELL_YUKON_BELKIN	0x5005		/* Belkin F5D5005 */
+#define	PCI_PRODUCT_MARVELL_YUKON_BELKIN	0x5005		/* Yukon (Belkin F5D5005) */
 #define	PCI_PRODUCT_MARVELL_88SX5040	0x5040		/* 88SX5040 SATA */
 #define	PCI_PRODUCT_MARVELL_88SX5041	0x5041		/* 88SX5041 SATA */
 #define	PCI_PRODUCT_MARVELL_88SX5080	0x5080		/* 88SX5080 SATA */
@@ -3214,10 +3217,10 @@
 #define	PCI_PRODUCT_XIRCOM_CARDBUS_ETH_1	0x0005		/* CardBus Ethernet */
 #define	PCI_PRODUCT_XIRCOM_CARDBUS_ETH_2	0x0007		/* CardBus Ethernet */
 #define	PCI_PRODUCT_XIRCOM_CARDBUS_ETH_3	0x000b		/* CardBus Ethernet */
-#define	PCI_PRODUCT_XIRCOM_MPCI_MODEM_V90	0x000c		/* Mini-PCI V.90 56k modem */
+#define	PCI_PRODUCT_XIRCOM_MPCI_MODEM_V90	0x000c		/* Mini-PCI V.90 56k Modem */
 #define	PCI_PRODUCT_XIRCOM_CARDBUS_ETH_4	0x000f		/* CardBus Ethernet */
-#define	PCI_PRODUCT_XIRCOM_MPCI_MODEM_K56	0x00d4		/* Mini-PCI K56Flex modem */
-#define	PCI_PRODUCT_XIRCOM_MODEM_56K	0x0101		/* CardBus 56k modem */
+#define	PCI_PRODUCT_XIRCOM_MPCI_MODEM_K56	0x00d4		/* Mini-PCI K56Flex Modem */
+#define	PCI_PRODUCT_XIRCOM_MODEM_56K	0x0101		/* CardBus 56k Modem */
 #define	PCI_PRODUCT_XIRCOM_MODEM56	0x0103		/* 56k Modem */
 #define	PCI_PRODUCT_XIRCOM_CBEM56G	0x0105		/* CBEM56G Modem */
 
