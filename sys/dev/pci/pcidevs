@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.971 2005/11/25 03:38:54 brad Exp $
+$OpenBSD: pcidevs,v 1.972 2005/11/27 12:14:25 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1129,13 +1129,16 @@ product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
 
 /* Creative Labs */
 product CREATIVELABS SBLIVE	0x0002	SoundBlaster Live
+product CREATIVELABS AWE64D	0x0003	SoundBlaster AWE64D
 product CREATIVELABS AUDIGY	0x0004	SoundBlaster Audigy
-product CREATIVELABS SBLIVE2	0x0006	SoundBlaster Live
+product CREATIVELABS SBLIVE2	0x0006	SoundBlaster Live (Dell)
 product CREATIVELABS AUDIGYLS	0x0007	SoundBlaster Audigy LS
+product CREATIVELABS AUDIGY2	0x0008	SoundBlaster Audigy
 product CREATIVELABS FIWIRE	0x4001	Firewire
 product CREATIVELABS SBJOY	0x7002	PCI Gameport Joystick
 product CREATIVELABS AUDIGIN	0x7003	SoundBlaster Audigy Digital
 product CREATIVELABS SBJOY2	0x7004	PCI Gameport Joystick
+product CREATIVELABS SBJOY3	0x7005	PCI Gameport Joystick
 product CREATIVELABS EV1938	0x8938	Ectiva 1938
 
 /* Cyclades products */
@@ -1946,7 +1949,7 @@ product MARVELL YUKON_8052	0x4360	Yukon 88E8052
 product MARVELL YUKON_8050	0x4361	Yukon 88E8050
 product MARVELL YUKON_8053	0x4362	Yukon 88E8053
 product MARVELL YUKON_3		0x4363	Yukon
-product MARVELL YUKON_BELKIN	0x5005	Belkin F5D5005
+product MARVELL YUKON_BELKIN	0x5005	Yukon (Belkin F5D5005)
 product MARVELL 88SX5040	0x5040	88SX5040 SATA
 product MARVELL 88SX5041	0x5041	88SX5041 SATA
 product MARVELL 88SX5080	0x5080	88SX5080 SATA
@@ -3209,10 +3212,10 @@ product XIRCOM X3201_3_21143	0x0003	X3201-3 (21143)
 product XIRCOM CARDBUS_ETH_1	0x0005	CardBus Ethernet
 product XIRCOM CARDBUS_ETH_2	0x0007	CardBus Ethernet
 product XIRCOM CARDBUS_ETH_3	0x000b	CardBus Ethernet
-product XIRCOM MPCI_MODEM_V90	0x000c	Mini-PCI V.90 56k modem
+product XIRCOM MPCI_MODEM_V90	0x000c	Mini-PCI V.90 56k Modem
 product XIRCOM CARDBUS_ETH_4	0x000f	CardBus Ethernet
-product XIRCOM MPCI_MODEM_K56	0x00d4	Mini-PCI K56Flex modem
-product XIRCOM MODEM_56K	0x0101	CardBus 56k modem
+product XIRCOM MPCI_MODEM_K56	0x00d4	Mini-PCI K56Flex Modem
+product XIRCOM MODEM_56K	0x0101	CardBus 56k Modem
 product XIRCOM MODEM56		0x0103	56k Modem
 product XIRCOM CBEM56G		0x0105	CBEM56G Modem
 
