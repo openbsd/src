@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.10 2005/10/23 14:07:11 mpf Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.11 2005/11/27 09:27:14 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -61,6 +61,7 @@ void	 trunk_port_lladdr(struct trunk_port *, u_int8_t *);
 int	 trunk_port_create(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_destroy(struct trunk_port *);
 void	 trunk_port_watchdog(struct ifnet *);
+void	 trunk_port_state(void *);
 int	 trunk_port_ioctl(struct ifnet *, u_long, caddr_t);
 struct trunk_port *trunk_port_get(struct trunk_softc *, struct ifnet *);
 int	 trunk_port_checkstacking(struct trunk_softc *);
@@ -347,6 +348,10 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	/* Add multicast addresses to this port */
 	trunk_ether_cmdmulti(tp, SIOCADDMULTI);
 
+	/* Register callback for physical link state changes */
+        tp->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
+            trunk_port_state, tp);
+
 	if (tr->tr_port_create != NULL)
 		error = (*tr->tr_port_create)(tp);
 
@@ -394,6 +399,8 @@ trunk_port_destroy(struct trunk_port *tp)
 	ifp->if_watchdog = tp->tp_watchdog;
 	ifp->if_ioctl = tp->tp_ioctl;
 	ifp->if_tp = NULL;
+
+	hook_disestablish(ifp->if_linkstatehooks, tp->lh_cookie);
 
 	/* Finally, remove the port from the trunk */
 	SLIST_REMOVE(&tr->tr_ports, tp, trunk_port, tp_entries);
@@ -960,10 +967,26 @@ trunk_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		imr->ifm_status |= IFM_ACTIVE;
 }
 
+void
+trunk_port_state(void *v)
+{       
+	struct trunk_port *tp = v;
+        struct trunk_softc *tr;
+
+	if (v)
+		tr = (struct trunk_softc *)tp->tp_trunk;
+
+	if (!tr)
+		return;
+	
+	trunk_link_active(tr, tp);
+}
+
 struct trunk_port *
 trunk_link_active(struct trunk_softc *tr, struct trunk_port *tp)
 {
-	struct trunk_port *tp_next;
+	struct trunk_port *tp_next, *rval = NULL;
+	int new_link = LINK_STATE_UP;
 
 	/*
 	 * Search a port which reports an active link state.
@@ -975,19 +998,34 @@ trunk_link_active(struct trunk_softc *tr, struct trunk_port *tp)
 
 	if (tp == NULL)
 		goto search;
-	if (tp->tp_link_state != LINK_STATE_DOWN)
-		return (tp);
+	if (tp->tp_link_state != LINK_STATE_DOWN) {
+		rval = tp;
+		goto found;
+	}
 	if ((tp_next = SLIST_NEXT(tp, tp_entries)) != NULL &&
-	    tp_next->tp_link_state != LINK_STATE_DOWN)
-		return (tp_next);
+	    tp_next->tp_link_state != LINK_STATE_DOWN) {
+		rval = tp_next;
+		goto found;
+	}
 
  search:
 	SLIST_FOREACH(tp_next, &tr->tr_ports, tp_entries) {
-		if (tp_next->tp_link_state != LINK_STATE_DOWN)
-			return (tp_next);
+		if (tp_next->tp_link_state != LINK_STATE_DOWN) {
+			rval = tp_next;
+			goto found;
+		}
 	}
 
-	return (NULL);
+ found:
+	if (rval == NULL)
+		new_link = LINK_STATE_DOWN;
+
+	if (tr->tr_ac.ac_if.if_link_state != new_link) {
+		tr->tr_ac.ac_if.if_link_state = new_link;
+		if_link_state_change(&tr->tr_ac.ac_if);
+	}
+	
+	return (rval);
 }
 
 /*
