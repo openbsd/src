@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.98 2005/11/26 05:49:47 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.99 2005/11/27 04:26:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -279,7 +279,7 @@ void
 ami_freemem(caddr_t p, bus_dma_tag_t dmat, bus_dmamap_t *map,
      size_t isize, size_t nent, const char *iname)
 {
-	bus_dma_segment_t segp;
+	bus_dma_segment_t segp = (*map)->dm_segs[0];
 	size_t total = isize * nent;
 
 	bus_dmamap_unload(dmat, *map);
