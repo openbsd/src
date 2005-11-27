@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.12 2005/11/27 09:29:42 mcbride Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.13 2005/11/27 15:46:04 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1160,9 +1160,24 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
     struct ether_header *eh, struct mbuf *m)
 {
 	struct ifnet *ifp = &tr->tr_ac.ac_if;
+	struct trunk_port *tmp_tp;
+	
+	if (tp == tr->tr_primary) { 
+		m->m_pkthdr.rcvif = ifp;
+		return (0);
+	}
 
-	/* Just pass in the packet to our trunk device */
-	m->m_pkthdr.rcvif = ifp;
+	if (tr->tr_primary->tp_link_state == LINK_STATE_DOWN) {
+		tmp_tp = trunk_link_active(tr, NULL);
+		/*
+		 * If tmp_tp is null, we've recieved a packet when all
+		 * our links are down. Weird, but process it anyways.
+		 */
+		if ((tmp_tp == NULL || tmp_tp == tp)) {
+			m->m_pkthdr.rcvif = ifp;
+			return (0);
+		}
+	}
 
-	return (0);
+	return (ENETDOWN);
 }
