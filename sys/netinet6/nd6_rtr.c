@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.33 2004/11/17 03:22:31 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.34 2005/11/27 16:22:45 henning Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1789,7 +1789,7 @@ rt6_flush(gateway, ifp)
     struct in6_addr *gateway;
     struct ifnet *ifp;
 {
-	struct radix_node_head *rnh = rt_tables[AF_INET6];
+	struct radix_node_head *rnh = rt_gettable(AF_INET6, 0);
 	int s = splsoftnet();
 
 	/* We'll care only link-local addresses */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.58 2005/11/25 13:45:02 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.59 2005/11/27 16:22:45 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1280,3 +1280,19 @@ rt_if_remove_rtdelete(struct radix_node *rn, void *vifp)
 	return (0);
 }
 
+struct radix_node_head *
+rt_gettable(sa_family_t af, int id)
+{
+	/* ignore id for now */
+	return (rt_tables[af]);
+}
+
+struct radix_node *
+rt_lookup(struct sockaddr *dst, struct sockaddr *mask, int tableid)
+{
+	struct radix_node_head	*rnh;
+
+	rnh = rt_gettable(dst->sa_family, tableid);
+
+	return (rnh->rnh_lookup(dst, mask, rnh));
+}
