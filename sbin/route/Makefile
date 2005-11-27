@@ -1,10 +1,8 @@
-#	$OpenBSD: Makefile,v 1.9 2005/03/30 06:02:52 henning Exp $
+#	$OpenBSD: Makefile,v 1.10 2005/11/27 18:27:41 deraadt Exp $
 
 PROG=	route
 MAN=	route.8
 SRCS=	route.c show.c
-BINOWN=	root
-BINMODE=555
 
 route.o .depend lint tags: keywords.h
 
