@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.22 2005/11/27 10:49:57 jmc Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.23 2005/11/27 13:12:00 jmc Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -115,7 +115,7 @@ is assumed.
 .El
 .Sh EXAMPLES
 Configure a CD-ROM or DVD image file as vnode disk svnd0
-and mount the ISO-9660 file system contained in it:
+and mount the ISO 9660 file system contained in it:
 .Bd -literal -offset indent
 # vnconfig svnd0 /tmp/diskimage
 # mount -t cd9660 /dev/svnd0c /mnt

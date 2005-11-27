@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.51 2005/04/29 09:31:05 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.52 2005/11/27 13:12:00 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -4993,7 +4993,7 @@ environment variable serves the same purpose but its use is discouraged.
 .Nm OpenSSL Ns Li 's
 handling of T61Strings
 .Pq aka TeletexStrings
-is broken: it effectively treats them as ISO-8859-1
+is broken: it effectively treats them as ISO 8859-1
 .Pq Latin 1 ;
 Netscape and MSIE have similar behaviour.
 This can cause problems if you need characters that aren't available in
@@ -8084,7 +8084,7 @@ Trusted certificates have the lines:
 .Ed
 .Pp
 The conversion to UTF8 format used with the name options assumes that
-T61Strings use the ISO8859-1 character set.
+T61Strings use the ISO 8859-1 character set.
 This is wrong, but Netscape and MSIE do this, as do many certificates.
 So although this is incorrect
 it is more likely to display the majority of certificates correctly.
