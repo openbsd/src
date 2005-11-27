@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.114 2005/11/27 10:48:59 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -224,9 +224,10 @@ carp_hmac_prepare(struct carp_softc *sc)
 	SHA1_CTX sha1ctx;
 	u_int32_t kmd[5];
 	struct ifaddr *ifa;
-	int i;
+	int i, found;
+	struct in_addr last, cur, in;
 #ifdef INET6
-	struct in6_addr in6;
+	struct in6_addr last6, cur6, in6;
 #endif /* INET6 */
 
 	/* compute ipad from key */
@@ -249,23 +250,46 @@ carp_hmac_prepare(struct carp_softc *sc)
 
 	/* the rest of the precomputation */
 	SHA1Update(&sc->sc_sha1, (void *)&vhid, sizeof(vhid));
+
+	/* Hash the addresses from smallest to largest, not interface order */
 #ifdef INET
-	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			SHA1Update(&sc->sc_sha1,
-			    (void *)&ifatoia(ifa)->ia_addr.sin_addr.s_addr,
-			    sizeof(struct in_addr));
-	}
+	cur.s_addr = 0;
+	do {
+		found = 0;
+		last = cur;
+		cur.s_addr = 0xffffff;
+		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
+			in.s_addr = ifatoia(ifa)->ia_addr.sin_addr.s_addr;
+			if (ifa->ifa_addr->sa_family == AF_INET && 
+		    	    in.s_addr > last.s_addr && in.s_addr < cur.s_addr) {
+				cur.s_addr = in.s_addr;
+				found++;
+			}
+		}
+		if (found)
+			SHA1Update(&sc->sc_sha1, (void *)&cur, sizeof(cur));
+	} while (found);
 #endif /* INET */
 #ifdef INET6
-	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
+	memset(&cur, 0x00, sizeof(cur));
+	do {
+		found = 0;
+		last6 = cur6;
+		memset(&cur, 0xff, sizeof(cur));
+		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 			in6 = ifatoia6(ifa)->ia_addr.sin6_addr;
 			if (IN6_IS_ADDR_LINKLOCAL(&in6))
 				in6.s6_addr16[1] = 0;
-			SHA1Update(&sc->sc_sha1, (void *)&in6, sizeof(in6));
+			if (ifa->ifa_addr->sa_family == AF_INET6 &&
+			    memcmp(&in6, &last6, sizeof(in6)) > 0 &&
+			    memcmp(&in6, &cur6, sizeof(in6)) < 0) {
+				cur6 = in6;
+				found++;
+			}
 		}
-	}
+		if (found)
+			SHA1Update(&sc->sc_sha1, (void *)&cur6, sizeof(in6));
+	} while (found);
 #endif /* INET6 */
 
 	/* convert ipad to opad */
