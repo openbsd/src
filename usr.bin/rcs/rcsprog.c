@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.48 2005/11/25 14:16:44 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.49 2005/11/27 16:49:15 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -467,7 +467,7 @@ rcs_main(int argc, char **argv)
 		if (verbose == 1)
 			printf("RCS file: %s\n", fpath);
 
-		if ((file = rcs_open(fpath, flags, fmode)) == NULL);
+		if ((file = rcs_open(fpath, flags, fmode)) == NULL)
 			continue;
 
 		if (flags & PRESERVETIME)
