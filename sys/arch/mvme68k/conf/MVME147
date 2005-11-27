@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME147,v 1.18 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: MVME147,v 1.19 2005/11/27 14:19:06 miod Exp $
 
 machine		mvme68k m68k
 
@@ -33,16 +33,16 @@ bugtty0 at mainbus0
 
 vmes0	at vme0
 
-#vs*	at vmes0 addr 0xffff9000 ipl 2 vec 0x80 len 0x800
-#vs*	at vmes0 addr 0xffff9800 ipl 2 vec 0x82 len 0x800
-#vs*	at vmes0 addr 0xffff4800 ipl 2 vec 0x84 len 0x800
-#vs*	at vmes0 addr 0xffff5800 ipl 2 vec 0x86 len 0x800
-#vs*	at vmes0 addr 0xffff7000 ipl 2 vec 0x88 len 0x800
-#vs*	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
+#vs*	at vmes0 addr 0xffff9000 ipl 2 vec 0x80
+#vs*	at vmes0 addr 0xffff9800 ipl 2 vec 0x82
+#vs*	at vmes0 addr 0xffff4800 ipl 2 vec 0x84
+#vs*	at vmes0 addr 0xffff5800 ipl 2 vec 0x86
+#vs*	at vmes0 addr 0xffff7000 ipl 2 vec 0x88
+#vs*	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a
 
-le*	at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100
-le*	at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100
-le*	at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100
+le*	at vmes0 addr 0xffff1200 ipl 1 vec 0x74
+le*	at vmes0 addr 0xffff1400 ipl 1 vec 0x75
+le*	at vmes0 addr 0xffff1600 ipl 1 vec 0x76
 
 vmel0	at vme0
 

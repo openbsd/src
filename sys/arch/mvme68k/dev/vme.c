@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.23 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.24 2005/11/27 14:19:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -305,22 +305,19 @@ vmescan(parent, child, args, bustype)
 	bzero(&oca, sizeof oca);
 	oca.ca_bustype = bustype;
 	oca.ca_paddr = cf->cf_loc[0];
-	oca.ca_len = cf->cf_loc[1];
-	oca.ca_vec = cf->cf_loc[2];
-	oca.ca_ipl = cf->cf_loc[3];
+	oca.ca_vec = cf->cf_loc[1];
+	oca.ca_ipl = cf->cf_loc[2];
 	if (oca.ca_ipl > 0 && oca.ca_vec == -1)
 		oca.ca_vec = intr_findvec(255, 0);
-	if (oca.ca_len == -1)
-		oca.ca_len = 4096;
 
 	oca.ca_offset = oca.ca_paddr;
-	oca.ca_vaddr = vmemap(sc, oca.ca_paddr, oca.ca_len, oca.ca_bustype);
+	oca.ca_vaddr = vmemap(sc, oca.ca_paddr, PAGE_SIZE, oca.ca_bustype);
 	if (oca.ca_vaddr == 0)
 		oca.ca_vaddr = (vaddr_t)-1;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
 		if (oca.ca_vaddr != (vaddr_t)-1)
-			vmeunmap(oca.ca_vaddr, oca.ca_len);
+			vmeunmap(oca.ca_vaddr, PAGE_SIZE);
 		return (0);
 	}
 	/*

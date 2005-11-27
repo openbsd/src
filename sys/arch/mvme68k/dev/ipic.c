@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.16 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: ipic.c,v 1.17 2005/11/27 14:19:08 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -126,7 +126,6 @@ ipicscan(parent, child, args)
 		oca.ca_offset = slot;		/* slot number */
 		oca.ca_paddr = ipp;
 		oca.ca_vaddr = ipv;
-		oca.ca_len = NBPG;
 		oca.ca_ipl = cf->cf_loc[2];
 		oca.ca_vec = cf->cf_loc[3];
 		if (oca.ca_ipl > 0 && oca.ca_vec == -1)

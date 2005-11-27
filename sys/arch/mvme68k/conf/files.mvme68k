@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.27 2005/09/21 21:08:34 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.28 2005/11/27 14:19:07 miod Exp $
 
 # config file for mvme68k
 
@@ -41,9 +41,9 @@ file	arch/mvme68k/dev/bug.c			bugtty
 
 device	vme {}
 attach	vme at pcc, mc, pcctwo
-device	vmes {[addr = -1], [len = -1], [vec = -1], [ipl = 0]}
+device	vmes {[addr = -1], [vec = -1], [ipl = 0]}
 attach	vmes at vme
-device	vmel {[addr = -1], [len = -1], [vec = -1], [ipl = 0]}
+device	vmel {[addr = -1], [vec = -1], [ipl = 0]}
 attach	vmel at vme
 file	arch/mvme68k/dev/vme.c			vme | vmes | vmel
 file	arch/mvme68k/dev/vmes.c			vmes needs-count
