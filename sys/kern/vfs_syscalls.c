@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.128 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.129 2005/11/27 12:37:58 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -126,8 +126,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 			vput(vp);
 			return (EOPNOTSUPP);	/* Needs translation */
 		}
-		mp->mnt_flag |=
-		    SCARG(uap, flags) & (MNT_RELOAD | MNT_UPDATE);
+
 		/*
 		 * Only root, or the user that did the original mount is
 		 * permitted to update it.
@@ -156,6 +155,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 			return (error);
 		}
 		VOP_UNLOCK(vp, 0, p);
+		mp->mnt_flag |= SCARG(uap, flags) & (MNT_RELOAD | MNT_UPDATE);
 		goto update;
 	}
 	/*
