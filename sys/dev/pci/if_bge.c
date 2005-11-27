@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.104 2005/11/27 00:26:36 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.105 2005/11/27 01:20:41 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1808,20 +1808,16 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	/*
-	 * XXX: Broadcom Linux driver.  Not in specs or eratta.
-	 * PCI Express.
+	 * PCI Express check.
 	 */
-	if (BGE_IS_575X_PLUS(sc)) {
-		u_int32_t v;
+	sc->bge_pcie = 0;
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	    NULL, NULL) != 0)
+		sc->bge_pcie = 1;
 
-		v = pci_conf_read(pc, pa->pa_tag, BGE_PCI_MSI_CAPID);
-		if (((v >> 8) & 0xff) == BGE_PCIE_CAPID_REG) {
-			v = pci_conf_read(pc, pa->pa_tag, BGE_PCIE_CAPID_REG);
-			if ((v & 0xff) == BGE_PCIE_CAPID)
-				sc->bge_pcie = 1;
-		}
-	}
-
+	/*
+	 * ASF check.
+	 */
 	sc->bge_asf_mode = 0;
 	if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_SIG) == BGE_MAGIC_NUMBER) {
 		if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_NICCFG) 
