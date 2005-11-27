@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.29 2005/11/20 03:58:59 brad Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.30 2005/11/27 07:46:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -10332,9 +10332,11 @@ ahd_freedmamem(struct ahd_softc* ahd, struct map_node *map)
 	for(i = 0; i < dmamap->dm_nsegs; i++)
 		size += dmamap->dm_segs[i].ds_len;
 
+	/* i == dmamap->dm_nsegs, which is invalidated by bus_dmamap_unload. */
+
 	bus_dmamap_unload(tag, dmamap);
 	bus_dmamem_unmap(tag, map->vaddr, size);
-	bus_dmamem_free(tag, dmamap->dm_segs, dmamap->dm_nsegs);
+	bus_dmamem_free(tag, dmamap->dm_segs, i);
 	bus_dmamap_destroy(tag, dmamap);
 }
 
