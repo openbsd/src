@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.49 2005/11/27 16:22:45 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.50 2005/11/27 19:33:20 deraadt Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -165,7 +165,9 @@ route_output(struct mbuf *m, ...)
 	struct radix_node	*rn = NULL;
 	struct rtentry		*rt = NULL;
 	struct rtentry		*saved_nrt = NULL;
+#ifndef SMALL_KERNEL
 	struct radix_node_head	*rnh;
+#endif
 	struct rt_addrinfo	 info;
 	int			 len, error = 0;
 	struct ifnet		*ifp = NULL;
