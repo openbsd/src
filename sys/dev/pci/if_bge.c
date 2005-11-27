@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.103 2005/11/25 03:42:35 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.104 2005/11/27 00:26:36 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -176,6 +176,12 @@ int bge_miibus_readreg(struct device *, int, int);
 void bge_miibus_writereg(struct device *, int, int, int);
 void bge_miibus_statchg(struct device *);
 
+#define BGE_RESET_START 1
+#define BGE_RESET_STOP  2
+void bge_sig_pre_reset(struct bge_softc *, int);
+void bge_sig_post_reset(struct bge_softc *, int);
+void bge_sig_legacy(struct bge_softc *, int);
+void bge_stop_fw(struct bge_softc *);
 void bge_reset(struct bge_softc *);
 
 #define BGE_DEBUG
@@ -1264,6 +1270,7 @@ bge_chipinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS);
 #endif
+	BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 
 	/*
 	 * Disable memory write invalidate.  Apparently it is not supported
@@ -1815,9 +1822,26 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	sc->bge_asf_mode = 0;
+	if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_SIG) == BGE_MAGIC_NUMBER) {
+		if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_NICCFG) 
+		    & BGE_HWCFG_ASF) {
+			sc->bge_asf_mode |= ASF_ENABLE;
+
+			if (CSR_READ_4(sc, BGE_MODE_CTL)
+			    & BGE_MODECTL_STACKUP)
+				sc->bge_asf_mode |= ASF_STACKUP;
+			if (BGE_IS_575X_PLUS(sc))
+				sc->bge_asf_mode |= ASF_NEW_HANDSHAKE;
+		}
+	}
+
 	/* Try to reset the chip. */
-	DPRINTFN(5, ("bge_reset\n"));
+	bge_stop_fw(sc);
+	bge_sig_pre_reset(sc, BGE_RESET_STOP);
 	bge_reset(sc);
+	bge_sig_legacy(sc, BGE_RESET_STOP);
+	bge_sig_post_reset(sc, BGE_RESET_STOP);
 
 	if (bge_chipinit(sc)) {
 		printf(": chip initialization failed\n");
@@ -2026,6 +2050,70 @@ fail_1:
 }
 
 void
+bge_sig_pre_reset(struct bge_softc *sc, int type)
+{
+	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
+
+	if (sc->bge_asf_mode & ASF_NEW_HANDSHAKE) {
+		switch (type) {
+		case BGE_RESET_START:
+			bge_writemem_ind(sc, BGE_SDI_STATUS, 0x1); /* START */
+			break;
+		case BGE_RESET_STOP:
+			bge_writemem_ind(sc, BGE_SDI_STATUS, 0x2); /* UNLOAD */
+			break;
+		}
+	}
+}
+
+void
+bge_sig_post_reset(struct bge_softc *sc, int type)
+{
+	if (sc->bge_asf_mode & ASF_NEW_HANDSHAKE) {
+		switch (type) {
+		case BGE_RESET_START:
+			bge_writemem_ind(sc, BGE_SDI_STATUS, 0x80000001); 
+			/* START DONE */
+			break;
+		case BGE_RESET_STOP:
+			bge_writemem_ind(sc, BGE_SDI_STATUS, 0x80000002); 
+			break;
+		}
+	}
+}
+
+void
+bge_sig_legacy(struct bge_softc *sc, int type)
+{
+	if (sc->bge_asf_mode) {
+		switch (type) {
+		case BGE_RESET_START:
+			bge_writemem_ind(sc, BGE_SDI_STATUS, 0x1); /* START */
+			break;
+		case BGE_RESET_STOP:
+			bge_writemem_ind(sc, BGE_SDI_STATUS, 0x2); /* UNLOAD */
+			break;
+		}
+	}
+}
+
+void
+bge_stop_fw(struct bge_softc *sc)
+{
+	int i;
+
+	if (sc->bge_asf_mode) {
+		bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM_FW, BGE_FW_PAUSE);
+
+		for (i = 0; i < 100; i++ ) {
+			if (!(CSR_READ_4(sc, BGE_CPU_EVENT) & (1 << 14)))
+				break;
+			DELAY(10);
+		}
+	}
+}
+
+void
 bge_reset(struct bge_softc *sc)
 {
 	struct pci_attach_args *pa = &sc->bge_pa;
@@ -2086,12 +2174,6 @@ bge_reset(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
 
 	/*
-	 * Prevent PXE restart: write a magic number to the
-	 * general communications memory at 0xB50.
-	 */
-	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
-
-	/*
 	 * Poll the value location we just wrote until
 	 * we see the 1's complement of the magic number.
 	 * This indicates that the firmware initialization
@@ -2134,6 +2216,8 @@ bge_reset(struct bge_softc *sc)
 
 	/* Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
+	if (sc->bge_asf_mode & ASF_STACKUP)
+		BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 
 	CSR_WRITE_4(sc, BGE_MAC_MODE, 0);
 
@@ -2916,7 +3000,13 @@ bge_init(void *xsc)
 
 	/* Cancel pending I/O and flush buffers. */
 	bge_stop(sc);
+
+	bge_stop_fw(sc);
+	bge_sig_pre_reset(sc, BGE_RESET_START);
 	bge_reset(sc);
+	bge_sig_legacy(sc, BGE_RESET_START);
+	bge_sig_post_reset(sc, BGE_RESET_START);
+
 	bge_chipinit(sc);
 
 	/*
@@ -3301,7 +3391,15 @@ bge_stop(struct bge_softc *sc)
 	/*
 	 * Tell firmware we're shutting down.
 	 */
-	BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
+	bge_stop_fw(sc);
+	bge_sig_pre_reset(sc, BGE_RESET_STOP);
+	bge_reset(sc);
+	bge_sig_legacy(sc, BGE_RESET_STOP);
+	bge_sig_post_reset(sc, BGE_RESET_STOP);
+	if (sc->bge_asf_mode & ASF_STACKUP)
+		BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
+	else
+		BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 
 	/* Free the RX lists. */
 	bge_free_rx_ring_std(sc);

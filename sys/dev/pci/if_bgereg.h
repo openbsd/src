@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.32 2005/11/24 12:25:07 fgsch Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.33 2005/11/27 00:26:36 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -76,6 +76,8 @@
 #define BGE_SOFTWARE_GENCOMM		0x00000B50
 #define BGE_SOFTWARE_GENCOMM_SIG	0x00000B54
 #define BGE_SOFTWARE_GENCOMM_NICCFG	0x00000B58
+#define BGE_SOFTWARE_GENCOMM_FW		0x00000B78
+#define    BGE_FW_PAUSE			0x00000002
 #define BGE_SOFTWARE_GENCOMM_END	0x00000FFF
 #define BGE_UNMAPPED			0x00001000
 #define BGE_UNMAPPED_END		0x00001FFF
@@ -1649,6 +1651,7 @@
 #define BGE_MODE_CTL			0x6800
 #define BGE_MISC_CFG			0x6804
 #define BGE_MISC_LOCAL_CTL		0x6808
+#define BGE_CPU_EVENT			0x6810
 #define BGE_EE_ADDR			0x6838
 #define BGE_EE_DATA			0x683C
 #define BGE_EE_CTL			0x6840
@@ -1930,6 +1933,7 @@ struct bge_status_block {
 #define BGE_HWCFG_VOLTAGE		0x00000003
 #define BGE_HWCFG_PHYLED_MODE		0x0000000C
 #define BGE_HWCFG_MEDIA			0x00000030
+#define BGE_HWCFG_ASF			0x00000080
 
 #define BGE_VOLTAGE_1POINT3		0x00000000
 #define BGE_VOLTAGE_1POINT8		0x00000001
@@ -2303,6 +2307,10 @@ struct txdmamap_pool_entry {
 #define BGE_RXRING_VALID	0x0002
 #define BGE_JUMBO_RXRING_VALID	0x0004
 
+#define ASF_ENABLE		1
+#define ASF_NEW_HANDSHAKE	2
+#define ASF_STACKUP		4
+
 struct bge_softc {
 	struct device		bge_dev;
 	struct arpcom		arpcom;		/* interface info */
@@ -2319,6 +2327,7 @@ struct bge_softc {
 	u_int32_t		bge_chipid;
 	u_int32_t		bge_quirks;
 	u_int8_t		bge_no_3_led;
+	u_int8_t		bge_asf_mode;
 	u_int8_t		bge_pcie;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
