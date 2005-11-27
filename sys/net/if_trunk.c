@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.11 2005/11/27 09:27:14 mcbride Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.12 2005/11/27 09:29:42 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -906,7 +906,7 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 {
 	struct trunk_softc *tr;
 	struct trunk_port *tp;
-	struct ifnet *trifp;
+	struct ifnet *trifp = NULL;
 	int error = 0;
 
 	/* Should be checked by the caller */
@@ -937,7 +937,8 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 	return (0);
 
  bad:
-	trifp->if_ierrors++;
+	if (trifp)
+		trifp->if_ierrors++;
 	return (error);
 }
 
