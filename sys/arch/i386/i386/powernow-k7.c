@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.8 2005/11/26 11:22:12 tedu Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.9 2005/11/28 17:48:02 mickey Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -230,7 +230,7 @@ k7_powernow_setperf(int level)
 			wrmsr(MSR_AMDK7_FIDVID_CTL, ctl | PN7_CTR_FIDC);
 	}
 
-	if (cstate->errata_a0);
+	if (cstate->errata_a0)
 		enable_intr();
 
 	pentium_mhz = ((cstate->state_table[i].freq / 100000)+1)*100;
