@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.51 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: nlist.c,v 1.52 2005/11/28 17:50:32 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -334,7 +334,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 		if ((shdr = malloc(shdr_size)) == NULL)
 			return (-1);
 
-		if (pread(fd, shdr, shdr_size, ehdr.e_shoff) != shdr_size) {
+		if (pread(fd, shdr, shdr_size, (off_t)ehdr.e_shoff) != shdr_size) {
 			free(shdr);
 			return (-1);
 		}
@@ -377,7 +377,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 	if (usemalloc) {
 		if ((strtab = malloc(symstrsize)) == NULL)
 			return (-1);
-		if (pread(fd, strtab, symstrsize, symstroff) != symstrsize) {
+		if (pread(fd, strtab, symstrsize, (off_t)symstroff) != symstrsize) {
 			free(strtab);
 			return (-1);
 		}
@@ -413,7 +413,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(sbuf));
-		if (pread(fd, sbuf, cc, symoff) != cc)
+		if (pread(fd, sbuf, cc, (off_t)symoff) != cc)
 			break;
 		symsize -= cc;
 		symoff += cc;
