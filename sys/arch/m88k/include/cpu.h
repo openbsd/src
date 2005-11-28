@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2005/10/13 19:48:32 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.8 2005/11/28 22:21:15 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -95,8 +95,8 @@ struct clockframe {
 	struct trapframe tf;
 };
 
-#define	CLKF_USERMODE(framep)	((((struct trapframe *)(framep))->tf_epsr & PSR_MODE) == 0)
-#define	CLKF_PC(framep)		(((struct trapframe *)(framep))->tf_sxip & XIP_ADDR)
+#define	CLKF_USERMODE(framep)	(((framep)->tf.tf_epsr & PSR_MODE) == 0)
+#define	CLKF_PC(framep)		((framep)->tf.tf_sxip & XIP_ADDR)
 #define	CLKF_INTR(framep)	(0)	/* XXX temporary */
 
 /*
@@ -108,33 +108,39 @@ struct clockframe {
 #define SIR_CLOCK	2
 
 #define setsoftint(x)	(ssir |= (x))
-#define setsoftnet()	(ssir |= SIR_NET)
-#define setsoftclock()	(ssir |= SIR_CLOCK)
+#define setsoftnet()	setsoftint(SIR_NET)
+#define setsoftclock()	setsoftint(SIR_CLOCK)
 
-#define siroff(x)	(ssir &= ~x)
+#define siroff(x)	(ssir &= ~(x))
 
 extern int	ssir;
-extern int	want_ast;
+
+#define	aston(p)	((p)->p_md.md_astpending = 1)
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 extern int	want_resched;		/* resched() was called */
-#define	need_resched(ci)		(want_resched = 1, want_ast = 1)
+#define	need_resched(ci) \
+do {									\
+	want_resched = 1;						\
+	if (curproc != NULL)						\
+		aston(curproc);						\
+} while (0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, want_ast = 1)
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		(want_ast = 1)
+#define	signotify(p)		aston(p)
 
 /*
  * switchframe - should be double word aligned.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2005/10/13 19:48:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2005/11/28 22:21:12 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -200,7 +200,6 @@ struct nvram_t {
 vaddr_t obiova;
 
 int ssir;
-int want_ast;
 int want_resched;
 
 int physmem;	  /* available physical memory, in pages */

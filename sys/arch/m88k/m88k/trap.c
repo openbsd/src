@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2005/09/15 21:14:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2005/11/28 22:21:15 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -558,7 +558,7 @@ user_fault:
 
 	case T_ASTFLT+T_USER:
 		uvmexp.softs++;
-		want_ast = 0;
+		p->p_md.md_astpending = 0;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
@@ -1049,7 +1049,7 @@ m88110_user_fault:
 
 	case T_ASTFLT+T_USER:
 		uvmexp.softs++;
-		want_ast = 0;
+		p->p_md.md_astpending = 0;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);

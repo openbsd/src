@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.12 2005/10/12 19:05:44 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.13 2005/11/28 22:21:15 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1587,12 +1587,13 @@ ASLOCAL(m88100_fpu_enable)
 #endif /* M88100 */
 
 /*
- * proc_trampoline.
- * When a process setup by cpu_set_kpc() resumes, it will find itself in
+ * void proc_trampoline(void (*func)(void *), void *proc)
+  *
+ * When a process setup by cpu_fork() resumes, it will find itself in
  * proc_trampoline, with r31 pointing to a ksigframe. proc_trampoline will
  * load func and proc values from ksigframe, call the function, and on return
  * pop off the ksigframe. Then, it will load pc from the switchframe and
- * jump there.
+ * jump there (the pc will usually be proc_do_uret).
  */
 
 ENTRY(proc_trampoline)
@@ -1605,26 +1606,22 @@ ENTRY(proc_trampoline)
 	jsr.n	r1
 	 addu	r31, r31, 8
 
+#define	FPTR	r14
+
 /*
- * proc_do_uret
- * this is called as proc_do_uret(proc) from proc_trampoline(). This function
- * loads r31 with a pointer to the trap frame for the given proc and calls
- * return_code which loads all the registers and does an RTE.
+ * void proc_do_uret(struct proc *p)
+ *
+ * This is called as proc_do_uret(proc) from proc_trampoline(). This function
+ * loads FPTR with a pointer to the trap frame for the given proc and continues
+ * near the end of return_code, bypassing soft interrupts and AST checks, to
+ * load all the registers and do an RTE.
  */
 
 ENTRY(proc_do_uret)
-	ld	r3,r2,P_ADDR		/* p->p_addr */
-	addu	r3,r3,PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
-	st	r3,r31,0		/* put it on the stack */
-#if defined(M88100) && defined(M88110)
-#ifdef M88110
-	or.u	r2, r0, hi16(_C_LABEL(cputyp))
-	ld	r3, r2, lo16(_C_LABEL(cputyp))
-	cmp	r2, r3, CPU_88110
-	bb1	eq, r2, _ASM_LABEL(m88110_return_code)
-	/* br	_ASM_LABEL(m88100_return_code) */
-#endif
-#endif
+	ld	FPTR, r2,   P_ADDR		/* p->p_addr */
+	br.n	_ASM_LABEL(no_ast)
+	 addu	FPTR, FPTR, PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
+
 
 	/*
 	 * Regs r1-r30 are free. r31 is pointing at the word
@@ -1648,7 +1645,6 @@ ASLOCAL(m88100_return_code)
 	 * go off and service that...
 	 */
 
-#define	FPTR	r14
 	ld	FPTR, r31, 0	/* grab exception frame pointer */
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
 	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
@@ -1689,37 +1685,40 @@ ASLOCAL(m88110_return_code)
 /*
  *   If the saved ipl is 0, then call dosoftint() to process soft
  *   interrupts.
- *   If returning to user land, look for ASTs
+ *   If returning to userland, look for ASTs.
  */
 ASLOCAL(check_ast)
-	ld	r2, FPTR, REG_OFF(EF_EPSR)	/* get pre-exception PSR */
-	bb1	PSR_INTERRUPT_DISABLE_BIT, r2, 1f	/* skip if ints off */
-	ld	r2, FPTR, REG_OFF(EF_MASK)	/* get pre-exception ipl */
-	bcnd	ne0, r2, 1f		/* can't do softint's */
+	/* do not service soft interrupts if interrupts were disabled... */
+	ld	r2, FPTR, REG_OFF(EF_EPSR)
+	bb1	PSR_INTERRUPT_DISABLE_BIT, r2, _ASM_LABEL(no_softint)
+	/* ...or we were not at spl0 */
+	ld	r2, FPTR, REG_OFF(EF_MASK)
+	bcnd	ne0, r2, _ASM_LABEL(no_softint)
 
+	/* do an inline spl0() */
 	bsr.n	_C_LABEL(setipl)
 	 or	r2, r0, IPL_SOFTCLOCK
-	/* at ipl 1 now */
 	bsr	_C_LABEL(dosoftint)
-	/* is this needed? we are going to restore the ipl below XXX nivas */
 	bsr.n	_C_LABEL(setipl)
-	 or	r2, r0, IPL_NONE		/* ints are enabled */
-	/* at ipl 0 now */
-1:
-	ld	r2, FPTR, REG_OFF(EF_EPSR)	/* get pre-exception PSR */
-	bb1	PSR_SUPERVISOR_MODE_BIT, r2, no_ast	/*skip if system mode */
+	 or	r2, r0, IPL_NONE
 
-	/* should assert here - not in user mode with ints off XXX nivas */
-	/* get and check want_ast */
-	or.u	r2, r0, hi16(_C_LABEL(want_ast))
-	ld	r3, r2, lo16(_C_LABEL(want_ast))
-	bcnd	eq0, r3, no_ast
+ASLOCAL(no_softint)
+	/* do not service AST if not returning to user mode */
+	ld	r2, FPTR, REG_OFF(EF_EPSR)
+	bb1	PSR_SUPERVISOR_MODE_BIT, r2, _ASM_LABEL(no_ast)
 
+	or.u	r2,  r0, hi16(_C_LABEL(curproc))
+	ld	r3,  r2, lo16(_C_LABEL(curproc))
+	bcnd.n	eq0, r3, _ASM_LABEL(no_ast)	/* no AST if no process! */
+	 ld	r2,  r3, P_ASTPENDING
+	bcnd.n	eq0, r3, _ASM_LABEL(no_ast)	/* .n safe since the first
+						   instruction of CALL() is
+						   safe in a delay slot. */
 	/*
 	 * trap(AST,...) will service ast's.
 	 */
 #if defined(M88110) && defined(M88100)
-	or.u	r2, r0, hi16(_C_LABEL(cputyp))
+	 or.u	r2, r0, hi16(_C_LABEL(cputyp))
 	ld	r3, r2, lo16(_C_LABEL(cputyp))
 	cmp	r2, r3, CPU_88110
 	bb0	eq, r2, 2f
@@ -1728,7 +1727,7 @@ ASLOCAL(check_ast)
 	CALL(m88110_trap, T_ASTFLT, FPTR)
 #endif
 #if defined(M88110) && defined(M88100)
-	br	no_ast
+	br	_ASM_LABEL(no_ast)
 2:
 #endif
 #ifdef M88100

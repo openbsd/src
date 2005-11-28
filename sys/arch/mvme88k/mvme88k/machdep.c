@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.169 2005/10/13 19:48:37 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.170 2005/11/28 22:21:16 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -141,7 +141,6 @@ volatile u_int8_t *ivec[8];
 #endif
 
 int ssir;
-int want_ast;
 int want_resched;
 
 int physmem;	  /* available physical memory, in pages */
