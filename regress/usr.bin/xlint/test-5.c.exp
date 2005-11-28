@@ -1,0 +1,6 @@
+test-5.c(34): warning: conversion to 'unsigned long long' due to prototype, arg #1
+test-5.c(35): warning: conversion of 'long long' to 'int' is out of range, arg #1
+dammit2
+test-5.c(36): warning: conversion to 'unsigned int' due to prototype, arg #1
+test-5.c(36): warning: conversion of negative constant to unsigned type, arg #1
+Lint pass2:
