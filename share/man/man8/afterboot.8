@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.111 2005/10/31 19:37:52 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.112 2005/11/28 19:43:00 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -673,14 +673,17 @@ for the mount option:
 .Pp
 .Dl /dev/wd0j /altroot ffs xx 0 0
 .Pp
-and you must add a line to root's
+and the environment variable
+.Ev ROOTBACKUP
+must be set.
+For example, the following can be added to root's
 .Xr crontab 5 :
 .Pp
 .Dl ROOTBACKUP=1
 .Pp
-so that the
+The
 .Pa /etc/daily
-script will make a daily backup of the root filesystem.
+script will then make a daily backup of the root filesystem.
 .Ss Tighten up security
 You might wish to tighten up security more by editing
 .Pa /etc/fbtab
