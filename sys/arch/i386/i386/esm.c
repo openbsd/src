@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.15 2005/11/24 08:23:59 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.16 2005/11/28 19:59:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -129,30 +129,26 @@ int		esm_smb_cmd(struct esm_softc *, struct esm_smb_req *,
 int64_t		esm_val2temp(u_int16_t);
 int64_t		esm_val2volts(u_int16_t);
 
+
+/* Determine if this is a Dell server */
 int
-esm_match(struct device *parent, void *match, void *aux)
+esm_probe(void *aux)
 {
-	struct esm_attach_args		*eaa = aux;
-	const char			*dell_str;
-	const struct dell_sysid		*dell_sysid;
-	u_int16_t			sysid;
+	const char *pdellstr;
+	struct dell_sysid *pdellid;
+	uint16_t sysid;
 
-	if (strncmp(eaa->eaa_name, esm_cd.cd_name, sizeof(esm_cd.cd_name)) != 0)
-		return (0);
-
-	/* Determine if this is a Dell server */
-	dell_str = (const char *)ISA_HOLE_VADDR(DELL_SYSSTR_ADDR);
-	DPRINTF("Dell String: %s\n", dell_str);
-	if (strncmp(dell_str, "Dell System", 11) != 0)
+	pdellstr = (const char *)ISA_HOLE_VADDR(DELL_SYSSTR_ADDR);
+	DPRINTF("Dell String: %s\n", pdellstr);
+	if (strncmp(pdellstr, "Dell System", 11))
 		return (0); 
 
-	/* Determine if it is an appropriate Dell server */
-	dell_sysid = (const struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
-	if ((sysid = dell_sysid->sys_id) == DELL_SYSID_EXT)
-		sysid = dell_sysid->ext_id;
+	pdellid = (struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
+	if ((sysid = pdellid->sys_id) == DELL_SYSID_EXT)
+		sysid = pdellid->ext_id;
 	DPRINTF("SysId: %x\n", sysid);
 
- 	switch (sysid) {
+ 	switch(sysid) {
 	case DELL_SYSID_2300:
 	case DELL_SYSID_4300:
 	case DELL_SYSID_4350:
@@ -165,12 +161,22 @@ esm_match(struct device *parent, void *match, void *aux)
 	case DELL_SYSID_6450:
 	case DELL_SYSID_2500:
 	case DELL_SYSID_2550:
-		break;
-	default:
-		return (0);
+		return (1);
 	}
 
-	return (1);
+	return (0);
+}
+
+int
+esm_match(struct device *parent, void *match, void *aux)
+{
+	struct esm_attach_args		*eaa = aux;
+
+	if (strncmp(eaa->eaa_name, esm_cd.cd_name, sizeof(esm_cd.cd_name)) == 0 &&
+	    esm_probe(eaa))
+		return (1);
+
+	return (0);
 }
 
 void

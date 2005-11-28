@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmvar.h,v 1.2 2005/11/21 22:05:36 marco Exp $ */
+/*	$OpenBSD: esmvar.h,v 1.3 2005/11/28 19:59:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -23,3 +23,4 @@ struct esm_attach_args {
 	bus_space_tag_t		eaa_memt;
 };
 
+int		esm_probe(void *);
