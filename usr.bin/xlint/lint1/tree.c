@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.15 2005/11/28 04:57:26 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.16 2005/11/28 22:29:57 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.15 2005/11/28 04:57:26 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.16 2005/11/28 22:29:57 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -77,6 +77,7 @@ static	tnode_t	*foldtst(tnode_t *);
 static	tnode_t	*foldflt(tnode_t *);
 static	tnode_t	*chkfarg(type_t *, tnode_t *);
 static	tnode_t	*parg(int, type_t *, tnode_t *);
+static	int	chkdbz(op_t, tnode_t *);
 static	void	nulleff(tnode_t *);
 static	void	displexpr(tnode_t *, int);
 static	void	chkaidx(tnode_t *, int);
@@ -2522,6 +2523,52 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 	return (ntn);
 }
 
+
+/*
+ * Check for division by zero.  Returns 1 if a division by zero is
+ * present, 0 otherwise.
+ */
+static int
+chkdbz(op_t op, tnode_t *rn)
+{
+	quad_t q;
+	ldbl_t r;
+	int code;
+
+	switch (op) {
+	case DIV:
+	case DIVASS:
+		code = 139;	/* division by 0 */
+		break;
+	case MOD:
+	case MODASS:
+		code = 140;	/* modular division by 0 */
+		break;
+	default:
+		return 0;
+	}
+
+	/* no way of checking unless right side is a constant */
+	if (rn->tn_op != CON)
+		return 0;
+
+	if (isftyp(rn->tn_type->t_tspec)) {
+		if (rn->tn_val->v_ldbl == 0.0) {
+			/* division by 0 */
+			error(code);
+			return 1;
+		}
+	} else {
+		if (rn->tn_val->v_quad == 0) {
+			/* division by 0 */
+			error(code);
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 /*
  * Get length of type tp->t_subt.
  */
@@ -2648,18 +2695,14 @@ fold(tnode_t *tn)
 			ovfl = 1;
 		break;
 	case DIV:
-		if (sr == 0) {
-			/* division by 0 */
-			error(139);
+		if (chkdbz(tn->tn_op, tn)) {
 			q = utyp ? UQUAD_MAX : QUAD_MAX;
 		} else {
 			q = utyp ? ul / ur : sl / sr;
 		}
 		break;
 	case MOD:
-		if (sr == 0) {
-			/* modulus by 0 */
-			error(140);
+		if (chkdbz(tn->tn_op, tn)) {
 			q = 0;
 		} else {
 			q = utyp ? ul % ur : sl % sr;
@@ -2847,9 +2890,7 @@ foldflt(tnode_t *tn)
 		v->v_ldbl = l * r;
 		break;
 	case DIV:
-		if (r == 0.0) {
-			/* division by 0 */
-			error(139);
+		if (chkdbz(tn->tn_op, tn)) {
 			if (t == FLOAT) {
 				v->v_ldbl = l < 0 ? -FLT_MAX : FLT_MAX;
 			} else if (t == DOUBLE) {
