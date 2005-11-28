@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.16 2005/11/28 19:59:25 deraadt Exp $ */
+/*	$OpenBSD: esm.c,v 1.17 2005/11/28 20:27:43 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -109,9 +109,9 @@ struct cfdriver esm_cd = {
 #define EREAD(s, r)	bus_space_read_1((s)->sc_iot, (s)->sc_ioh, (r))
 #define EWRITE(s, r, v)	bus_space_write_1((s)->sc_iot, (s)->sc_ioh, (r), (v))
 
-#define ECTRLWR(s, v)	EWRITE((s), ESM2_TC_REG, (v))
-#define EDATARD(s)	EREAD((s), ESM2_TBUF_REG)
-#define EDATAWR(s, v)	EWRITE((s), ESM2_TBUF_REG, (v))
+#define ECTRLWR(s, v)	EWRITE((s), ESM2_CTRL_REG, (v))
+#define EDATARD(s)	EREAD((s), ESM2_DATA_REG)
+#define EDATAWR(s, v)	EWRITE((s), ESM2_DATA_REG, (v))
 
 void		esm_refresh(void *);
 
@@ -161,6 +161,11 @@ esm_probe(void *aux)
 	case DELL_SYSID_6450:
 	case DELL_SYSID_2500:
 	case DELL_SYSID_2550:
+	case DELL_SYSID_PV530F:
+	case DELL_SYSID_PV735N:
+	case DELL_SYSID_PV750N:
+	case DELL_SYSID_PV755N:
+	case DELL_SYSID_PA200:
 		return (1);
 	}
 
@@ -198,19 +203,19 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* turn off interrupts here */
-	x = EREAD(sc, ESM2_TIM_REG);
+	x = EREAD(sc, ESM2_INTMASK_REG);
 	x &= ~(ESM2_TIM_SCI_EN|ESM2_TIM_SMI_EN|ESM2_TIM_NMI2SMI);
 	x |= ESM2_TIM_POWER_UP_BITS;
-	EWRITE(sc, ESM2_TIM_REG, x);
+	EWRITE(sc, ESM2_INTMASK_REG, x);
 
 	/* clear event doorbells */
-	x = EREAD(sc, ESM2_TC_REG);
+	x = EREAD(sc, ESM2_CTRL_REG);
 	x &= ~ESM2_TC_HOSTBUSY;
 	x |= ESM2_TC_POWER_UP_BITS;
-	EWRITE(sc, ESM2_TC_REG, x);
+	EWRITE(sc, ESM2_CTRL_REG, x);
 
 	/* see if card is alive */
-	if (esm_bmc_ready(sc, ESM2_TC_REG, ESM2_TC_ECBUSY, 0, 1) != 0) {
+	if (esm_bmc_ready(sc, ESM2_CTRL_REG, ESM2_TC_ECBUSY, 0, 1) != 0) {
 		printf("%s: card is not alive\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
 		return;
@@ -776,7 +781,7 @@ esm_cmd(struct esm_softc *sc, void *cmd, size_t cmdlen, void *resp,
 	int			i;
 
 	/* Wait for card ready */
-	if (esm_bmc_ready(sc, ESM2_TC_REG, ESM2_TC_READY, 0, wait) != 0)
+	if (esm_bmc_ready(sc, ESM2_CTRL_REG, ESM2_TC_READY, 0, wait) != 0)
 		return (1); /* busy */
 
 	/* Write command data to port */
@@ -789,7 +794,7 @@ esm_cmd(struct esm_softc *sc, void *cmd, size_t cmdlen, void *resp,
 
 	/* Ring doorbell and wait */
 	ECTRLWR(sc, ESM2_TC_H2ECDB);
-	esm_bmc_ready(sc, ESM2_TC_REG, ESM2_TC_EC2HDB, ESM2_TC_EC2HDB, 1);
+	esm_bmc_ready(sc, ESM2_CTRL_REG, ESM2_TC_EC2HDB, ESM2_TC_EC2HDB, 1);
 
 	/* Set host busy semaphore and clear doorbell */
 	ECTRLWR(sc, ESM2_TC_HOSTBUSY);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmreg.h,v 1.5 2005/11/24 08:57:05 dlg Exp $ */
+/*	$OpenBSD: esmreg.h,v 1.6 2005/11/28 20:27:43 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -19,9 +19,9 @@
 
 #define ESM2_BASE_PORT		0xe0
 
-#define ESM2_TC_REG		4
-#define ESM2_TBUF_REG		5
-#define ESM2_TIM_REG		6
+#define ESM2_CTRL_REG		4
+#define ESM2_DATA_REG		5
+#define ESM2_INTMASK_REG	6
 
 #define ESM2_TC_CLR_WPTR	(1L << 0)
 #define ESM2_TC_CLR_RPTR	(1L << 1)
@@ -75,6 +75,11 @@
 #define DELL_SYSID_6450         0xA2
 #define DELL_SYSID_2500         0xD9
 #define DELL_SYSID_2550         0xD1
+#define DELL_SYSID_PV530F       0xCD
+#define DELL_SYSID_PV735N       0xE2
+#define DELL_SYSID_PV750N       0xEE
+#define DELL_SYSID_PV755N       0xEF
+#define DELL_SYSID_PA200        0xCB
 #define DELL_SYSID_EXT          0xFE
 
 struct dell_sysid {
