@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.97 2005/11/13 14:29:57 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.98 2005/11/28 16:51:29 mickey Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -885,7 +885,7 @@ sc_err1(xs)
 
 	case XS_BUSY:
 		if (xs->retries) {
-			if ((error = scsi_delay(xs, 1)) == EIO) ;
+			if ((error = scsi_delay(xs, 1)) == EIO)
 				goto lose;
 		}
 		/* FALLTHROUGH */
