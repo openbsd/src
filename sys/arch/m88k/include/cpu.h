@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2005/11/28 22:21:15 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.9 2005/11/28 22:22:51 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -97,7 +97,8 @@ struct clockframe {
 
 #define	CLKF_USERMODE(framep)	(((framep)->tf.tf_epsr & PSR_MODE) == 0)
 #define	CLKF_PC(framep)		((framep)->tf.tf_sxip & XIP_ADDR)
-#define	CLKF_INTR(framep)	(0)	/* XXX temporary */
+extern int intrdepth;
+#define	CLKF_INTR(framep)	(intrdepth > 1)
 
 /*
  * Get interrupt glue.

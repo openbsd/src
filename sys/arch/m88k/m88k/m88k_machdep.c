@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.8 2005/11/06 17:58:20 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.9 2005/11/28 22:22:55 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -74,6 +74,8 @@ void dumpsys(void);
 void dumpconf(void);
 
 int longformat = 1;  /* for regdump() */
+
+int intrdepth;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
