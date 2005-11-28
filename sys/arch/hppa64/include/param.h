@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2005/10/26 18:35:45 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 2005/11/28 20:13:08 martin Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -107,12 +107,6 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define btop(x)		((unsigned long)(x) >> PAGE_SHIFT)
-#define ptob(x)		((unsigned long)(x) << PAGE_SHIFT)
 
 #ifndef _LOCORE
 #define	CONADDR	conaddr
