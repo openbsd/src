@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.51 2005/10/27 14:57:12 markus Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.52 2005/11/28 00:14:29 jsg Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -158,12 +158,9 @@ settime(struct timespec *ts)
 
 /* ARGSUSED */
 int
-sys_clock_gettime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_clock_gettime_args /* {
+	struct sys_clock_gettime_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */ *uap = v;
@@ -187,12 +184,9 @@ sys_clock_gettime(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_clock_settime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_clock_settime(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_clock_settime_args /* {
+	struct sys_clock_settime_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(const struct timespec *) tp;
 	} */ *uap = v;
@@ -222,12 +216,9 @@ sys_clock_settime(p, v, retval)
 }
 
 int
-sys_clock_getres(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_clock_getres(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_clock_getres_args /* {
+	struct sys_clock_getres_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */ *uap = v;
@@ -254,10 +245,7 @@ sys_clock_getres(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_nanosleep(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_nanosleep(struct proc *p, void *v, register_t *retval)
 {
 	static int nanowait;
 	struct sys_nanosleep_args/* {
@@ -306,12 +294,9 @@ sys_nanosleep(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_gettimeofday(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_gettimeofday_args /* {
+	struct sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
@@ -332,10 +317,7 @@ sys_gettimeofday(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_settimeofday(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_settimeofday(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_settimeofday_args /* {
 		syscallarg(const struct timeval *) tv;
@@ -376,12 +358,9 @@ long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
 
 /* ARGSUSED */
 int
-sys_adjtime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_adjtime(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_adjtime_args /* {
+	struct sys_adjtime_args /* {
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
@@ -403,7 +382,7 @@ sys_adjtime(p, v, retval)
 	return (0);
 #else
 	struct timeval atv;
-	register long ndelta, ntickdelta, odelta;
+	long ndelta, ntickdelta, odelta;
 	int s, error;
 
 	if ((error = suser(p, 0)))
@@ -487,12 +466,9 @@ sys_adjtime(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_getitimer(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getitimer(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_getitimer_args /* {
+	struct sys_getitimer_args /* {
 		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
@@ -529,19 +505,16 @@ sys_getitimer(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setitimer(p, v, retval)
-	struct proc *p;
-	register void *v;
-	register_t *retval;
+sys_setitimer(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_setitimer_args /* {
+	struct sys_setitimer_args /* {
 		syscallarg(int) which;
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
 	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
-	register const struct itimerval *itvp;
+	const struct itimerval *itvp;
 	int error;
 	int timo;
 
@@ -593,10 +566,9 @@ sys_setitimer(p, v, retval)
  * SIGALRM calls to be compressed into one.
  */
 void
-realitexpire(arg)
-	void *arg;
+realitexpire(void *arg)
 {
-	register struct proc *p;
+	struct proc *p;
 
 	p = (struct proc *)arg;
 	psignal(p, SIGALRM);
@@ -629,8 +601,7 @@ realitexpire(arg)
  * .it_interval part of an interval timer is acceptable.
  */
 int
-itimerfix(tv)
-	struct timeval *tv;
+itimerfix(struct timeval *tv)
 {
 
 	if (tv->tv_sec < 0 || tv->tv_sec > 100000000 ||
@@ -648,8 +619,7 @@ itimerfix(tv)
  * rounded up.
  */
 void
-itimerround(tv)
-	struct timeval *tv;
+itimerround(struct timeval *tv)
 {
 	if (tv->tv_sec == 0 && tv->tv_usec < tick)
 		tv->tv_usec = tick;
@@ -666,9 +636,7 @@ itimerround(tv)
  * on which it is operating cannot change in value.
  */
 int
-itimerdecr(itp, usec)
-	register struct itimerval *itp;
-	int usec;
+itimerdecr(struct itimerval *itp, int usec)
 {
 
 	if (itp->it_value.tv_usec < usec) {
@@ -703,9 +671,7 @@ expire:
  * for usage and rationale.
  */
 int
-ratecheck(lasttime, mininterval)
-	struct timeval *lasttime;
-	const struct timeval *mininterval;
+ratecheck(struct timeval *lasttime, const struct timeval *mininterval)
 {
 	struct timeval tv, delta;
 	int rv = 0;
@@ -731,10 +697,7 @@ ratecheck(lasttime, mininterval)
  * ppsratecheck(): packets (or events) per second limitation.
  */
 int
-ppsratecheck(lasttime, curpps, maxpps)
-	struct timeval *lasttime;
-	int *curpps;
-	int maxpps;	/* maximum pps allowed */
+ppsratecheck(struct timeval *lasttime, int *curpps, int maxpps)
 {
 	struct timeval tv, delta;
 	int rv;

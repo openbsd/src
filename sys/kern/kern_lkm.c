@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.41 2004/03/03 06:26:22 tedu Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.42 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ int lkmexists(struct lkm_table *);
 void init_exec(void);
 
 void
-lkminit()
+lkminit(void)
 {
 
 	TAILQ_INIT(&lkmods);
@@ -146,7 +146,7 @@ lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
  *
  */
 static struct lkm_table *
-lkmalloc()
+lkmalloc(void)
 {
 	struct lkm_table *p, *ret = NULL;
 	int id = 0;
@@ -247,7 +247,7 @@ lkmlookup(int i, char *name, int *error)
  * or explicitly by modload as a result of a link failure.
  */
 static void
-lkmunreserve()
+lkmunreserve(void)
 {
 
 	if (lkm_state == LKMS_IDLE)
@@ -555,7 +555,7 @@ sys_lkmnosys(struct proc *p, void *v, register_t *retval)
  * Place holder for device switch slots reserved for loadable modules.
  */
 int
-lkmenodev()
+lkmenodev(void)
 {
 
 	return (enodev());

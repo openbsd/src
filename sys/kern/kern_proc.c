@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.27 2005/07/04 00:20:42 tedu Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.28 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ void pgrpdump(void);
  * Initialize global process hashing structures.
  */
 void
-procinit()
+procinit(void)
 {
 
 	LIST_INIT(&allproc);
@@ -153,8 +153,7 @@ chgproccnt(uid_t uid, int diff)
  * Is p an inferior of the current process?
  */
 int
-inferior(p)
-	register struct proc *p;
+inferior(struct proc *p)
 {
 
 	for (; p != curproc; p = p->p_pptr)
@@ -167,10 +166,9 @@ inferior(p)
  * Locate a process by number
  */
 struct proc *
-pfind(pid)
-	register pid_t pid;
+pfind(pid_t pid)
 {
-	register struct proc *p;
+	struct proc *p;
 
 	LIST_FOREACH(p, PIDHASH(pid), p_hash)
 		if (p->p_pid == pid)
@@ -182,10 +180,9 @@ pfind(pid)
  * Locate a process group by number
  */
 struct pgrp *
-pgfind(pgid)
-	register pid_t pgid;
+pgfind(pid_t pgid)
 {
-	register struct pgrp *pgrp;
+	struct pgrp *pgrp;
 
 	LIST_FOREACH(pgrp, PGRPHASH(pgid), pg_hash)
 		if (pgrp->pg_id == pgid)
@@ -197,12 +194,9 @@ pgfind(pgid)
  * Move p to a new or existing process group (and session)
  */
 int
-enterpgrp(p, pgid, mksess)
-	register struct proc *p;
-	pid_t pgid;
-	int mksess;
+enterpgrp(struct proc *p, pid_t pgid, int mksess)
 {
-	register struct pgrp *pgrp = pgfind(pgid);
+	struct pgrp *pgrp = pgfind(pgid);
 
 #ifdef DIAGNOSTIC
 	if (pgrp != NULL && mksess)	/* firewalls */
@@ -224,7 +218,7 @@ enterpgrp(p, pgid, mksess)
 			return (ESRCH);
 		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
 		if (mksess) {
-			register struct session *sess;
+			struct session *sess;
 
 			/*
 			 * new session
@@ -273,8 +267,7 @@ enterpgrp(p, pgid, mksess)
  * remove process from process group
  */
 int
-leavepgrp(p)
-	register struct proc *p;
+leavepgrp(struct proc *p)
 {
 
 	LIST_REMOVE(p, p_pglist);
@@ -288,8 +281,7 @@ leavepgrp(p)
  * delete a process group
  */
 void
-pgdelete(pgrp)
-	register struct pgrp *pgrp;
+pgdelete(struct pgrp *pgrp)
 {
 
 	if (pgrp->pg_session->s_ttyp != NULL && 
@@ -311,13 +303,10 @@ pgdelete(pgrp)
  * entering == 1 => p is entering specified group.
  */
 void
-fixjobc(p, pgrp, entering)
-	register struct proc *p;
-	register struct pgrp *pgrp;
-	int entering;
+fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 {
-	register struct pgrp *hispgrp;
-	register struct session *mysession = pgrp->pg_session;
+	struct pgrp *hispgrp;
+	struct session *mysession = pgrp->pg_session;
 
 	/*
 	 * Check p's parent to see whether p qualifies its own process
@@ -353,10 +342,9 @@ fixjobc(p, pgrp, entering)
  * hang-up all process in that group.
  */
 static void
-orphanpg(pg)
-	struct pgrp *pg;
+orphanpg(struct pgrp *pg)
 {
-	register struct proc *p;
+	struct proc *p;
 
 	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 		if (p->p_stat == SSTOP) {
@@ -404,11 +392,7 @@ proc_printit(struct proc *p, const char *modif, int (*pr)(const char *, ...))
 #include <ddb/db_output.h>
 
 void
-db_show_all_procs(addr, haddr, count, modif)
-	db_expr_t addr;
-	int haddr;
-	db_expr_t count;
-	char *modif;
+db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	char *mode;
 	int doingzomb = 0;
@@ -489,11 +473,11 @@ db_show_all_procs(addr, haddr, count, modif)
 
 #ifdef DEBUG
 void
-pgrpdump()
+pgrpdump(void)
 {
-	register struct pgrp *pgrp;
-	register struct proc *p;
-	register int i;
+	struct pgrp *pgrp;
+	struct proc *p;
+	int i;
 
 	for (i = 0; i <= pgrphash; i++) {
 		if (!LIST_EMPTY(&pgrphashtbl[i])) {

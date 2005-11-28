@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.9 2003/08/15 20:32:18 tedu Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.10 2005/11/28 00:14:29 jsg Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -44,10 +44,7 @@
 
 /* ARGSUSED */
 int
-sys_reboot(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_reboot(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_reboot_args /* {
 		syscallarg(int) opt;
@@ -79,9 +76,7 @@ __stack_smash_handler(char func[], int damaged)
 int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS;
 
 void
-scdebug_call(p, code, args)
-	struct proc *p;
-	register_t code, args[];
+scdebug_call(struct proc *p, register_t code, register_t args[])
 {
 	struct sysent *sy;
 	struct emul *em;
@@ -114,11 +109,7 @@ scdebug_call(p, code, args)
 }
 
 void
-scdebug_ret(p, code, error, retval)
-	struct proc *p;
-	register_t code;
-	int error;
-	register_t retval[];
+scdebug_ret(struct proc *p, register_t code, int error, register_t retval[])
 {
 	struct sysent *sy;
 	struct emul *em;

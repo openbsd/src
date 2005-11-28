@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.135 2005/11/21 13:47:52 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.136 2005/11/28 00:14:29 jsg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@ struct lock sysctl_kmemlock;
 #endif
 
 void
-sysctl_init()
+sysctl_init(void)
 {
 	lockinit(&sysctl_lock, PLOCK|PCATCH, "sysctl", 0, 0);
 	lockinit(&sysctl_disklock, PLOCK|PCATCH, "sysctl_disklock", 0, 0);
@@ -129,12 +129,9 @@ sysctl_init()
 }
 
 int
-sys___sysctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___sysctl(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys___sysctl_args /* {
+	struct sys___sysctl_args /* {
 		syscallarg(int *) name;
 		syscallarg(u_int) namelen;
 		syscallarg(void *) old;
@@ -248,14 +245,8 @@ int securelevel;
  * kernel related system variables.
  */
 int
-kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	int error, level, inthostid, stackgap;
 	extern int somaxconn, sominconn;
@@ -567,14 +558,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * hardware related system variables.
  */
 int
-hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	extern char machine[], cpu_model[];
 	int err;
@@ -665,14 +650,8 @@ static struct ctldebug *debugvars[CTL_DEBUG_MAXID] = {
 	&debug15, &debug16, &debug17, &debug18, &debug19,
 };
 int
-debug_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	struct ctldebug *cdp;
 
@@ -699,12 +678,7 @@ debug_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * for an integer-valued sysctl function.
  */
 int
-sysctl_int(oldp, oldlenp, newp, newlen, valp)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	int *valp;
+sysctl_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
 {
 	int error = 0;
 
@@ -724,11 +698,7 @@ sysctl_int(oldp, oldlenp, newp, newlen, valp)
  * As above, but read-only.
  */
 int
-sysctl_rdint(oldp, oldlenp, newp, val)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	int val;
+sysctl_rdint(void *oldp, size_t *oldlenp, void *newp, int val)
 {
 	int error = 0;
 
@@ -746,14 +716,8 @@ sysctl_rdint(oldp, oldlenp, newp, val)
  * Array of integer values.
  */
 int
-sysctl_int_arr(valpp, name, namelen, oldp, oldlenp, newp, newlen)
-	int **valpp;
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+sysctl_int_arr(int **valpp, int *name, u_int namelen, void *oldp,
+    size_t *oldlenp, void *newp, size_t newlen)
 {
 	if (namelen > 1)
 		return (ENOTDIR);
@@ -767,12 +731,8 @@ sysctl_int_arr(valpp, name, namelen, oldp, oldlenp, newp, newlen)
  * for an integer-valued sysctl function.
  */
 int
-sysctl_quad(oldp, oldlenp, newp, newlen, valp)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	int64_t *valp;
+sysctl_quad(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
+    int64_t *valp)
 {
 	int error = 0;
 
@@ -792,11 +752,7 @@ sysctl_quad(oldp, oldlenp, newp, newlen, valp)
  * As above, but read-only.
  */
 int
-sysctl_rdquad(oldp, oldlenp, newp, val)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	int64_t val;
+sysctl_rdquad(void *oldp, size_t *oldlenp, void *newp, int64_t val)
 {
 	int error = 0;
 
@@ -815,38 +771,22 @@ sysctl_rdquad(oldp, oldlenp, newp, val)
  * for a string-valued sysctl function.
  */
 int
-sysctl_string(oldp, oldlenp, newp, newlen, str, maxlen)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	char *str;
-	int maxlen;
+sysctl_string(void *oldp, size_t *oldlenp, void *newp, size_t newlen, char *str,
+    int maxlen)
 {
 	return sysctl__string(oldp, oldlenp, newp, newlen, str, maxlen, 0);
 }
 
 int
-sysctl_tstring(oldp, oldlenp, newp, newlen, str, maxlen)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	char *str;
-	int maxlen;
+sysctl_tstring(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
+    char *str, int maxlen)
 {
 	return sysctl__string(oldp, oldlenp, newp, newlen, str, maxlen, 1);
 }
 
 int
-sysctl__string(oldp, oldlenp, newp, newlen, str, maxlen, trunc)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	char *str;
-	int maxlen;
-	int trunc;
+sysctl__string(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
+    char *str, int maxlen, int trunc)
 {
 	int len, error = 0;
 	char c;
@@ -881,11 +821,7 @@ sysctl__string(oldp, oldlenp, newp, newlen, str, maxlen, trunc)
  * As above, but read-only.
  */
 int
-sysctl_rdstring(oldp, oldlenp, newp, str)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	const char *str;
+sysctl_rdstring(void *oldp, size_t *oldlenp, void *newp, const char *str)
 {
 	int len, error = 0;
 
@@ -905,13 +841,8 @@ sysctl_rdstring(oldp, oldlenp, newp, str)
  * for a structure oriented sysctl function.
  */
 int
-sysctl_struct(oldp, oldlenp, newp, newlen, sp, len)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	void *sp;
-	int len;
+sysctl_struct(void *oldp, size_t *oldlenp, void *newp, size_t newlen, void *sp,
+    int len)
 {
 	int error = 0;
 
@@ -933,12 +864,8 @@ sysctl_struct(oldp, oldlenp, newp, newlen, sp, len)
  * for a structure oriented sysctl function.
  */
 int
-sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	const void *sp;
-	int len;
+sysctl_rdstruct(void *oldp, size_t *oldlenp, void *newp, const void *sp,
+    int len)
 {
 	int error = 0;
 
@@ -956,9 +883,7 @@ sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
  * Get file structures.
  */
 int
-sysctl_file(where, sizep)
-	char *where;
-	size_t *sizep;
+sysctl_file(char *where, size_t *sizep)
 {
 	int buflen, error;
 	struct file *fp;
@@ -1012,11 +937,7 @@ sysctl_file(where, sizep)
 #define KERN_PROCSLOP	(5 * sizeof (struct kinfo_proc))
 
 int
-sysctl_doproc(name, namelen, where, sizep)
-	int *name;
-	u_int namelen;
-	char *where;
-	size_t *sizep;
+sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 {
 	struct kinfo_proc2 *kproc2 = NULL;
 	struct eproc *eproc = NULL;
@@ -1607,9 +1528,7 @@ out:
  * then we simply update the disk statistics information.
  */
 int
-sysctl_diskinit(update, p)
-	int update;
-	struct proc *p;
+sysctl_diskinit(int update, struct proc *p)
 {
 	struct diskstats *sdk;
 	struct disk *dk;
@@ -1682,11 +1601,7 @@ sysctl_diskinit(update, p)
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 int
-sysctl_sysvipc(name, namelen, where, sizep)
-	int *name;
-	u_int namelen;
-	void *where;
-	size_t *sizep;
+sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 {
 #ifdef SYSVMSG
 	struct msg_sysctl_info *msgsi;

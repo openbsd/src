@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.70 2005/07/03 01:07:44 jaredy Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.71 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ struct pool file_pool;
 struct pool fdesc_pool;
 
 void
-filedesc_init()
+filedesc_init(void)
 {
 	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
 		&pool_allocator_nointr);
@@ -144,9 +144,7 @@ find_last_set(struct filedesc *fd, int last)
 }
 
 static __inline void
-fd_used(fdp, fd)
-	register struct filedesc *fdp;
-	register int fd;
+fd_used(struct filedesc *fdp, int fd)
 {
 	u_int off = fd >> NDENTRYSHIFT;
 
@@ -159,9 +157,7 @@ fd_used(fdp, fd)
 }
 
 static __inline void
-fd_unused(fdp, fd)
-	register struct filedesc *fdp;
-	register int fd;
+fd_unused(struct filedesc *fdp, int fd)
 {
 	u_int off = fd >> NDENTRYSHIFT;
 
@@ -181,9 +177,7 @@ fd_unused(fdp, fd)
 }
 
 struct file *
-fd_getfile(fdp, fd)
-	struct filedesc *fdp;
-	int fd;
+fd_getfile(struct filedesc *fdp, int fd)
 {
 	struct file *fp;
 
@@ -205,10 +199,7 @@ fd_getfile(fdp, fd)
  */
 /* ARGSUSED */
 int
-sys_dup(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_dup(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_dup_args /* {
 		syscallarg(int) fd;
@@ -245,10 +236,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_dup2(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_dup2(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_dup2_args /* {
 		syscallarg(int) from;
@@ -302,10 +290,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_fcntl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_fcntl(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_fcntl_args /* {
 		syscallarg(int) fd;
@@ -550,18 +535,14 @@ finishdup(struct proc *p, struct file *fp, int old, int new, register_t *retval)
 }
 
 void
-fdremove(fdp, fd)
-	struct filedesc *fdp;
-	int fd;
+fdremove(struct filedesc *fdp, int fd)
 {
 	fdp->fd_ofiles[fd] = NULL;
 	fd_unused(fdp, fd);
 }
 
 int
-fdrelease(p, fd)
-	struct proc *p;
-	int fd;
+fdrelease(struct proc *p, int fd)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file **fpp, *fp;
@@ -588,10 +569,7 @@ fdrelease(p, fd)
  */
 /* ARGSUSED */
 int
-sys_close(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_close(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_close_args /* {
 		syscallarg(int) fd;
@@ -613,10 +591,7 @@ sys_close(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fstat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_fstat(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_fstat_args /* {
 		syscallarg(int) fd;
@@ -649,10 +624,7 @@ sys_fstat(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fpathconf(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_fpathconf(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_fpathconf_args /* {
 		syscallarg(int) fd;
@@ -697,10 +669,7 @@ sys_fpathconf(p, v, retval)
  * Allocate a file descriptor for the process.
  */
 int
-fdalloc(p, want, result)
-	struct proc *p;
-	int want;
-	int *result;
+fdalloc(struct proc *p, int want, int *result)
 {
 	struct filedesc *fdp = p->p_fd;
 	int lim, last, i;
@@ -747,8 +716,7 @@ restart:
 }
 
 void
-fdexpand(p)
-	struct proc *p;
+fdexpand(struct proc *p)
 {
 	struct filedesc *fdp = p->p_fd;
 	int nfiles, i;
@@ -814,12 +782,9 @@ fdexpand(p)
  * a file descriptor for the process that refers to it.
  */
 int
-falloc(p, resultfp, resultfd)
-	register struct proc *p;
-	struct file **resultfp;
-	int *resultfd;
+falloc(struct proc *p, struct file **resultfp, int *resultfd)
 {
-	register struct file *fp, *fq;
+	struct file *fp, *fq;
 	int error, i;
 
 restart:
@@ -904,8 +869,7 @@ fdinit(struct proc *p)
  * Share a filedesc structure.
  */
 struct filedesc *
-fdshare(p)
-	struct proc *p;
+fdshare(struct proc *p)
 {
 	p->p_fd->fd_refcnt++;
 	return (p->p_fd);
@@ -915,8 +879,7 @@ fdshare(p)
  * Copy a filedesc structure.
  */
 struct filedesc *
-fdcopy(p)
-	struct proc *p;
+fdcopy(struct proc *p)
 {
 	struct filedesc *newfdp, *fdp = p->p_fd;
 	struct file **fpp;
@@ -1004,12 +967,11 @@ fdcopy(p)
  * Release a filedesc structure.
  */
 void
-fdfree(p)
-	struct proc *p;
+fdfree(struct proc *p)
 {
-	register struct filedesc *fdp = p->p_fd;
-	register struct file **fpp, *fp;
-	register int i;
+	struct filedesc *fdp = p->p_fd;
+	struct file **fpp, *fp;
+	int i;
 
 	if (--fdp->fd_refcnt > 0)
 		return;
@@ -1135,10 +1097,7 @@ closef(struct file *fp, struct proc *p)
  */
 /* ARGSUSED */
 int
-sys_flock(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_flock(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_flock_args /* {
 		syscallarg(int) fd;
@@ -1193,10 +1152,7 @@ out:
  */
 /* ARGSUSED */
 int
-filedescopen(dev, mode, type, p)
-	dev_t dev;
-	int mode, type;
-	struct proc *p;
+filedescopen(dev_t dev, int mode, int type, struct proc *p)
 {
 
 	/*
@@ -1215,11 +1171,7 @@ filedescopen(dev, mode, type, p)
  * Duplicate the specified descriptor to a free descriptor.
  */
 int
-dupfdopen(fdp, indx, dfd, mode, error)
-	struct filedesc *fdp;
-	int indx, dfd;
-	int mode;
-	int error;
+dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode, int error)
 {
 	struct file *wfp;
 
@@ -1287,11 +1239,10 @@ dupfdopen(fdp, indx, dfd, mode, error)
  * Close any files on exec?
  */
 void
-fdcloseexec(p)
-	struct proc *p;
+fdcloseexec(struct proc *p)
 {
-	register struct filedesc *fdp = p->p_fd;
-	register int fd;
+	struct filedesc *fdp = p->p_fd;
+	int fd;
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)

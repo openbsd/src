@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.61 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.62 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -126,13 +126,11 @@ struct freelist {
  * Allocate a block of memory
  */
 void *
-malloc(size, type, flags)
-	unsigned long size;
-	int type, flags;
+malloc(unsigned long size, int type, int flags)
 {
-	register struct kmembuckets *kbp;
-	register struct kmemusage *kup;
-	register struct freelist *freep;
+	struct kmembuckets *kbp;
+	struct kmemusage *kup;
+	struct freelist *freep;
 	long indx, npg, allocsize;
 	int s;
 	caddr_t va, cp, savedlist;
@@ -142,7 +140,7 @@ malloc(size, type, flags)
 	char *savedtype;
 #endif
 #ifdef KMEMSTATS
-	register struct kmemstats *ksp = &kmemstats[type];
+	struct kmemstats *ksp = &kmemstats[type];
 
 	if (((unsigned long)type) >= M_LAST)
 		panic("malloc - bogus type");
@@ -317,13 +315,11 @@ out:
  * Free a block of memory allocated by malloc.
  */
 void
-free(addr, type)
-	void *addr;
-	int type;
+free(void *addr, int type)
 {
-	register struct kmembuckets *kbp;
-	register struct kmemusage *kup;
-	register struct freelist *freep;
+	struct kmembuckets *kbp;
+	struct kmemusage *kup;
+	struct freelist *freep;
 	long size;
 	int s;
 #ifdef DIAGNOSTIC
@@ -332,7 +328,7 @@ free(addr, type)
 	long alloc, copysize;
 #endif
 #ifdef KMEMSTATS
-	register struct kmemstats *ksp = &kmemstats[type];
+	struct kmemstats *ksp = &kmemstats[type];
 #endif
 
 #ifdef MALLOC_DEBUG
@@ -435,7 +431,7 @@ free(addr, type)
  * the size of the kernel malloc arena.
  */
 void
-kmeminit_nkmempages()
+kmeminit_nkmempages(void)
 {
 	u_int npages;
 
@@ -482,7 +478,7 @@ kmeminit_nkmempages()
  * Initialize the kernel memory allocator
  */
 void
-kmeminit()
+kmeminit(void)
 {
 	vaddr_t base, limit;
 #ifdef KMEMSTATS
@@ -527,14 +523,8 @@ kmeminit()
  * Return kernel malloc statistics information.
  */
 int
-sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	struct kmembuckets kb;
 	int i, siz;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.54 2005/10/25 15:49:37 jmc Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.55 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -87,8 +87,8 @@
  * Bump a timeval by a small number of usec's.
  */
 #define BUMPTIME(t, usec) { \
-	register volatile struct timeval *tp = (t); \
-	register long us; \
+	volatile struct timeval *tp = (t); \
+	long us; \
  \
 	tp->tv_usec = us = tp->tv_usec + (usec); \
 	if (us >= 1000000) { \
@@ -138,7 +138,7 @@ generic_softclock(void *ignore)
  * Initialize clock frequencies and start both clocks running.
  */
 void
-initclocks()
+initclocks(void)
 {
 	int i;
 #ifdef __HAVE_TIMECOUNTER
@@ -229,7 +229,7 @@ hardclock(struct clockframe *frame)
 
 	p = curproc;
 	if (p && ((p->p_flag & P_WEXIT) == 0)) {
-		register struct pstats *pstats;
+		struct pstats *pstats;
 
 		/*
 		 * Run current process's virtual and profile time, as needed.
@@ -318,8 +318,7 @@ hardclock(struct clockframe *frame)
  * compute the second argument to timeout_add() from an absolute time.
  */
 int
-hzto(tv)
-	struct timeval *tv;
+hzto(struct timeval *tv)
 {
 	struct timeval now;
 	unsigned long ticks;
@@ -420,8 +419,7 @@ tvtohz(struct timeval *tv)
  * keeps the profile clock running constantly.
  */
 void
-startprofclock(p)
-	register struct proc *p;
+startprofclock(struct proc *p)
 {
 	int s;
 
@@ -440,8 +438,7 @@ startprofclock(p)
  * Stop profiling on a process.
  */
 void
-stopprofclock(p)
-	register struct proc *p;
+stopprofclock(struct proc *p)
 {
 	int s;
 
@@ -577,9 +574,7 @@ statclock(struct clockframe *frame)
  * Return information about system clocks.
  */
 int
-sysctl_clockrate(where, sizep)
-	register char *where;
-	size_t *sizep;
+sysctl_clockrate(char *where, size_t *sizep)
 {
 	struct clockinfo clkinfo;
 

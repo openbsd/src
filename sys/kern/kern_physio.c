@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.22 2003/11/08 19:17:28 jmc Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.23 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -68,13 +68,8 @@ void putphysbuf(struct buf *bp);
  * Comments in brackets are from Leffler, et al.'s pseudo-code implementation.
  */
 int
-physio(strategy, bp, dev, flags, minphys, uio)
-	void (*strategy)(struct buf *);
-	struct buf *bp;
-	dev_t dev;
-	int flags;
-	void (*minphys)(struct buf *);
-	struct uio *uio;
+physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
+    void (*minphys)(struct buf *), struct uio *uio)
 {
 	struct iovec *iovp;
 	struct proc *p = curproc;
@@ -257,7 +252,7 @@ done:
  * rather than PSWP + 1 (and on a different wchan).
  */
 struct buf *
-getphysbuf()
+getphysbuf(void)
 {
 	struct buf *bp;
 
@@ -277,8 +272,7 @@ getphysbuf()
  * must mask disk interrupts, rather than putphysbuf() itself.
  */
 void
-putphysbuf(bp)
-	struct buf *bp;
+putphysbuf(struct buf *bp)
 {
 	/* XXXCDC: is this necessary? */
 	if (bp->b_vp)
@@ -301,8 +295,7 @@ putphysbuf(bp)
  * and return the new count;
  */
 void
-minphys(bp)
-	struct buf *bp;
+minphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > MAXPHYS)

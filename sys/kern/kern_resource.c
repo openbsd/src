@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.30 2005/05/29 03:20:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.31 2005/11/28 00:14:29 jsg Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -62,17 +62,14 @@ rlim_t maxsmap = MAXSSIZ;
  */
 
 int
-sys_getpriority(curp, v, retval)
-	struct proc *curp;
-	void *v;
-	register_t *retval;
+sys_getpriority(struct proc *curp, void *v, register_t *retval)
 {
-	register struct sys_getpriority_args /* {
+	struct sys_getpriority_args /* {
 		syscallarg(int) which;
 		syscallarg(id_t) who;
 	} */ *uap = v;
-	register struct proc *p;
-	register int low = NZERO + PRIO_MAX + 1;
+	struct proc *p;
+	int low = NZERO + PRIO_MAX + 1;
 
 	switch (SCARG(uap, which)) {
 
@@ -87,7 +84,7 @@ sys_getpriority(curp, v, retval)
 		break;
 
 	case PRIO_PGRP: {
-		register struct pgrp *pg;
+		struct pgrp *pg;
 
 		if (SCARG(uap, who) == 0)
 			pg = curp->p_pgrp;
@@ -120,17 +117,14 @@ sys_getpriority(curp, v, retval)
 
 /* ARGSUSED */
 int
-sys_setpriority(curp, v, retval)
-	struct proc *curp;
-	void *v;
-	register_t *retval;
+sys_setpriority(struct proc *curp, void *v, register_t *retval)
 {
-	register struct sys_setpriority_args /* {
+	struct sys_setpriority_args /* {
 		syscallarg(int) which;
 		syscallarg(id_t) who;
 		syscallarg(int) prio;
 	} */ *uap = v;
-	register struct proc *p;
+	struct proc *p;
 	int found = 0, error = 0;
 
 	switch (SCARG(uap, which)) {
@@ -147,7 +141,7 @@ sys_setpriority(curp, v, retval)
 		break;
 
 	case PRIO_PGRP: {
-		register struct pgrp *pg;
+		struct pgrp *pg;
 		 
 		if (SCARG(uap, who) == 0)
 			pg = curp->p_pgrp;
@@ -179,11 +173,9 @@ sys_setpriority(curp, v, retval)
 }
 
 int
-donice(curp, chgp, n)
-	register struct proc *curp, *chgp;
-	register int n;
+donice(struct proc *curp, struct proc *chgp, int n)
 {
-	register struct pcred *pcred = curp->p_cred;
+	struct pcred *pcred = curp->p_cred;
 	int s;
 
 	if (pcred->pc_ucred->cr_uid && pcred->p_ruid &&
@@ -206,12 +198,9 @@ donice(curp, chgp, n)
 
 /* ARGSUSED */
 int
-sys_setrlimit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setrlimit(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_setrlimit_args /* {
+	struct sys_setrlimit_args /* {
 		syscallarg(int) which;
 		syscallarg(const struct rlimit *) rlp;
 	} */ *uap = v;
@@ -226,10 +215,7 @@ sys_setrlimit(p, v, retval)
 }
 
 int
-dosetrlimit(p, which, limp)
-	struct proc *p;
-	u_int which;
-	struct rlimit *limp;
+dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 {
 	struct rlimit *alimp;
 	rlim_t maxlim;
@@ -314,12 +300,9 @@ dosetrlimit(p, which, limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getrlimit(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_getrlimit_args /* {
+	struct sys_getrlimit_args /* {
 		syscallarg(int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
@@ -335,11 +318,8 @@ sys_getrlimit(p, v, retval)
  * system, and interrupt time usage.
  */
 void
-calcru(p, up, sp, ip)
-	struct proc *p;
-	struct timeval *up;
-	struct timeval *sp;
-	struct timeval *ip;
+calcru(struct proc *p, struct timeval *up, struct timeval *sp,
+    struct timeval *ip)
 {
 	u_quad_t st, ut, it;
 	int freq;
@@ -376,16 +356,13 @@ calcru(p, up, sp, ip)
 
 /* ARGSUSED */
 int
-sys_getrusage(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getrusage(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_getrusage_args /* {
+	struct sys_getrusage_args /* {
 		syscallarg(int) who;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	register struct rusage *rup;
+	struct rusage *rup;
 
 	switch (SCARG(uap, who)) {
 
@@ -406,11 +383,10 @@ sys_getrusage(p, v, retval)
 }
 
 void
-ruadd(ru, ru2)
-	register struct rusage *ru, *ru2;
+ruadd(struct rusage *ru, struct rusage *ru2)
 {
-	register long *ip, *ip2;
-	register int i;
+	long *ip, *ip2;
+	int i;
 
 	timeradd(&ru->ru_utime, &ru2->ru_utime, &ru->ru_utime);
 	timeradd(&ru->ru_stime, &ru2->ru_stime, &ru->ru_stime);

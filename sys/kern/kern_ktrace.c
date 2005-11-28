@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.37 2005/11/15 23:05:37 pedro Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.38 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -63,9 +63,7 @@ int ktrcanset(struct proc *, struct proc *);
  * Change the trace vnode in a correct way (to avoid races).
  */
 void
-ktrsettracevnode(p, newvp)
-	struct proc *p;
-	struct vnode *newvp;
+ktrsettracevnode(struct proc *p, struct vnode *newvp)
 {
 	struct vnode *vp;
 
@@ -83,10 +81,7 @@ ktrsettracevnode(p, newvp)
 }
 
 void
-ktrinitheader(kth, p, type)
-	struct ktr_header *kth;
-	struct proc *p;
-	int type;
+ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 {
 	bzero(kth, sizeof (struct ktr_header));
 	kth->ktr_type = type;
@@ -96,11 +91,7 @@ ktrinitheader(kth, p, type)
 }
 
 void
-ktrsyscall(p, code, argsize, args)
-	struct proc *p;
-	register_t code;
-	size_t argsize;
-	register_t args[];
+ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 {
 	struct	ktr_header kth;
 	struct	ktr_syscall *ktp;
@@ -133,11 +124,7 @@ ktrsyscall(p, code, argsize, args)
 }
 
 void
-ktrsysret(p, code, error, retval)
-	struct proc *p;
-	register_t code;
-	int error;
-	register_t retval;
+ktrsysret(struct proc *p, register_t code, int error, register_t retval)
 {
 	struct ktr_header kth;
 	struct ktr_sysret ktp;
@@ -156,9 +143,7 @@ ktrsysret(p, code, error, retval)
 }
 
 void
-ktrnamei(p, path)
-	struct proc *p;
-	char *path;
+ktrnamei(struct proc *p, char *path)
 {
 	struct ktr_header kth;
 
@@ -172,9 +157,7 @@ ktrnamei(p, path)
 }
 
 void
-ktremul(p, emul)
-	struct proc *p;
-	char *emul;
+ktremul(struct proc *p, char *emul)
 {
 	struct ktr_header kth;
 
@@ -188,12 +171,8 @@ ktremul(p, emul)
 }
 
 void
-ktrgenio(p, fd, rw, iov, len, error)
-	struct proc *p;
-	int fd;
-	enum uio_rw rw;
-	struct iovec *iov;
-	int len, error;
+ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov, int len,
+    int error)
 {
 	struct ktr_header kth;
 	struct ktr_genio *ktp;
@@ -256,12 +235,8 @@ ktrgenio(p, fd, rw, iov, len, error)
 }
 
 void
-ktrpsig(p, sig, action, mask, code, si)
-	struct proc *p;
-	int sig;
-	sig_t action;
-	int mask, code;
-	siginfo_t *si;
+ktrpsig(struct proc *p, int sig, sig_t action, int mask, int code,
+    siginfo_t *si)
 {
 	struct ktr_header kth;
 	struct ktr_psig kp;
@@ -281,9 +256,7 @@ ktrpsig(p, sig, action, mask, code, si)
 }
 
 void
-ktrcsw(p, out, user)
-	struct proc *p;
-	int out, user;
+ktrcsw(struct proc *p, int out, int user)
 {
 	struct ktr_header kth;
 	struct	ktr_csw kc;
@@ -306,10 +279,7 @@ ktrcsw(p, out, user)
  */
 /* ARGSUSED */
 int
-sys_ktrace(curp, v, retval)
-	struct proc *curp;
-	void *v;
-	register_t *retval;
+sys_ktrace(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -411,10 +381,7 @@ done:
 }
 
 int
-ktrops(curp, p, ops, facs, vp)
-	struct proc *p, *curp;
-	int ops, facs;
-	struct vnode *vp;
+ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct vnode *vp)
 {
 
 	if (!ktrcanset(curp, p))
@@ -444,10 +411,8 @@ ktrops(curp, p, ops, facs, vp)
 }
 
 int
-ktrsetchildren(curp, top, ops, facs, vp)
-	struct proc *curp, *top;
-	int ops, facs;
-	struct vnode *vp;
+ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
+    struct vnode *vp)
 {
 	struct proc *p;
 	int ret = 0;
@@ -476,9 +441,7 @@ ktrsetchildren(curp, top, ops, facs, vp)
 }
 
 int
-ktrwrite(p, kth)
-	struct proc *p;
-	struct ktr_header *kth;
+ktrwrite(struct proc *p, struct ktr_header *kth)
 {
 	struct uio auio;
 	struct iovec aiov[2];
@@ -532,8 +495,7 @@ ktrwrite(p, kth)
  * TODO: check groups.  use caller effective gid.
  */
 int
-ktrcanset(callp, targetp)
-	struct proc *callp, *targetp;
+ktrcanset(struct proc *callp, struct proc *targetp)
 {
 	struct pcred *caller = callp->p_cred;
 	struct pcred *target = targetp->p_cred;

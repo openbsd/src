@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.65 2005/11/15 22:15:18 pedro Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.66 2005/11/28 00:14:29 jsg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -95,11 +95,8 @@ int safepri;
  * interlock will always be unlocked upon return.
  */
 int
-ltsleep(ident, priority, wmesg, timo, interlock)
-	void *ident;
-	int priority, timo;
-	const char *wmesg;
-	volatile struct simplelock *interlock;
+ltsleep(void *ident, int priority, const char *wmesg, int timo,
+    volatile struct simplelock *interlock)
 {
 	struct proc *p = curproc;
 	struct slpque *qp;
@@ -240,8 +237,7 @@ resume:
  * is stopped, just unsleep so it will remain stopped.
  */
 void
-endtsleep(arg)
-	void *arg;
+endtsleep(void *arg)
 {
 	struct proc *p;
 	int s;
@@ -262,11 +258,10 @@ endtsleep(arg)
  * Remove a process from its wait queue
  */
 void
-unsleep(p)
-	register struct proc *p;
+unsleep(struct proc *p)
 {
-	register struct slpque *qp;
-	register struct proc **hp;
+	struct slpque *qp;
+	struct proc **hp;
 #if 0
 	int s;
 
@@ -294,9 +289,7 @@ unsleep(p)
  * Make a number of processes sleeping on the specified identifier runnable.
  */
 void
-wakeup_n(ident, n)
-	void *ident;
-	int n;
+wakeup_n(void *ident, int n)
 {
 	struct slpque *qp;
 	struct proc *p, **q;
@@ -360,8 +353,7 @@ restart:
  * Make all processes sleeping on the specified identifier runnable.
  */
 void
-wakeup(chan)
-	void *chan;
+wakeup(void *chan)
 {
 	wakeup_n(chan, -1);
 }

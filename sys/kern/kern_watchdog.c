@@ -1,4 +1,4 @@
-/*      $OpenBSD: kern_watchdog.c,v 1.1 2003/01/21 16:59:23 markus Exp $        */
+/*      $OpenBSD: kern_watchdog.c,v 1.2 2005/11/28 00:14:29 jsg Exp $        */
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -74,13 +74,8 @@ wdog_shutdown(void *arg)
 }
 
 int
-sysctl_wdog(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+sysctl_wdog(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
 {
 	int error, period;
 

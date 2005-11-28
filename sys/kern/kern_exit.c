@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.55 2005/09/14 20:55:59 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.56 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -82,10 +82,7 @@
  *	Death of process.
  */
 int
-sys_exit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_exit(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_exit_args /* {
 		syscallarg(int) rval;
@@ -102,9 +99,7 @@ sys_exit(p, v, retval)
  * status and rusage for wait().  Check for child processes and orphan them.
  */
 void
-exit1(p, rv)
-	struct proc *p;
-	int rv;
+exit1(struct proc *p, int rv)
 {
 	struct proc *q, *nq;
 
@@ -141,7 +136,7 @@ exit1(p, rv)
 	semexit(p);
 #endif
 	if (SESS_LEADER(p)) {
-		register struct session *sp = p->p_session;
+		struct session *sp = p->p_session;
 
 		if (sp->s_ttyvp) {
 			/*
@@ -404,19 +399,16 @@ reaper(void)
 }
 
 pid_t
-sys_wait4(q, v, retval)
-	register struct proc *q;
-	void *v;
-	register_t *retval;
+sys_wait4(struct proc *q, void *v, register_t *retval)
 {
-	register struct sys_wait4_args /* {
+	struct sys_wait4_args /* {
 		syscallarg(pid_t) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	register int nfound;
-	register struct proc *p, *t;
+	int nfound;
+	struct proc *p, *t;
 	int status, error;
 
 	if (SCARG(uap, pid) == 0)
@@ -520,9 +512,7 @@ loop:
  * make process 'parent' the new parent of process 'child'.
  */
 void
-proc_reparent(child, parent)
-	register struct proc *child;
-	register struct proc *parent;
+proc_reparent(struct proc *child, struct proc *parent)
 {
 
 	if (child->p_pptr == parent)

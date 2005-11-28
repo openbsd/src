@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.29 2004/11/28 02:11:33 deraadt Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.30 2005/11/28 00:14:29 jsg Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -47,12 +47,9 @@
 #include <sys/resourcevar.h>
 
 int
-uiomove(cp, n, uio)
-	register void *cp;
-	register int n;
-	register struct uio *uio;
+uiomove(void *cp, int n, struct uio *uio)
 {
-	register struct iovec *iov;
+	struct iovec *iov;
 	u_int cnt;
 	int error = 0;
 	struct proc *p;
@@ -115,11 +112,9 @@ uiomove(cp, n, uio)
  * Give next character to user as result of read.
  */
 int
-ureadc(c, uio)
-	register int c;
-	register struct uio *uio;
+ureadc(int c, struct uio *uio)
 {
-	register struct iovec *iov;
+	struct iovec *iov;
 
 	if (uio->uio_resid == 0)
 #ifdef DIAGNOSTIC
@@ -166,9 +161,7 @@ again:
  * General routine to allocate a hash table.
  */
 void *
-hashinit(elements, type, flags, hashmask)
-	int elements, type, flags;
-	u_long *hashmask;
+hashinit(int elements, int type, int flags, u_long *hashmask)
 {
 	u_long hashsize, i;
 	LIST_HEAD(generic, generic) *hashtbl;
@@ -198,11 +191,8 @@ struct hook_desc_head mountroothook_list =
     TAILQ_HEAD_INITIALIZER(mountroothook_list);
 
 void *
-hook_establish(head, tail, fn, arg)
-	struct hook_desc_head *head;
-	int tail;
-	void (*fn)(void *);
-	void *arg;
+hook_establish(struct hook_desc_head *head, int tail, void (*fn)(void *),
+    void *arg)
 {
 	struct hook_desc *hdp;
 
@@ -221,9 +211,7 @@ hook_establish(head, tail, fn, arg)
 }
 
 void
-hook_disestablish(head, vhook)
-	struct hook_desc_head *head;
-	void *vhook;
+hook_disestablish(struct hook_desc_head *head, void *vhook)
 {
 	struct hook_desc *hdp;
 
@@ -279,9 +267,7 @@ CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
 	CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
-powerhook_establish(fn, arg)
-	void (*fn)(int, void *);
-	void *arg;
+powerhook_establish(void (*fn)(int, void *), void *arg)
 {
 	struct powerhook_desc *ndp;
 
@@ -298,8 +284,7 @@ powerhook_establish(fn, arg)
 }
 
 void
-powerhook_disestablish(vhook)
-	void *vhook;
+powerhook_disestablish(void *vhook)
 {
 #ifdef DIAGNOSTIC
 	struct powerhook_desc *dp;
@@ -320,8 +305,7 @@ powerhook_disestablish(vhook)
  * Run power hooks.
  */
 void
-dopowerhooks(why)
-	int why;
+dopowerhooks(int why)
 {
 	struct powerhook_desc *dp;
 	int s;

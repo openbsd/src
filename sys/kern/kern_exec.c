@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.95 2005/08/14 11:02:33 miod Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.96 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -109,9 +109,7 @@ int stackgap_random = STACKGAP_RANDOM;
  *			error code, locked vnode, exec header unmodified
  */
 int
-check_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+check_exec(struct proc *p, struct exec_package *epp)
 {
 	int error, i;
 	struct vnode *vp;
@@ -234,10 +232,7 @@ bad1:
  */
 /* ARGSUSED */
 int
-sys_execve(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
+sys_execve(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -726,11 +721,8 @@ free_pack_abort:
 
 
 void *
-copyargs(pack, arginfo, stack, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	void *stack;
-	void *argp;
+copyargs(struct exec_package *pack, struct ps_strings *arginfo, void *stack,
+    void *argp)
 {
 	char **cpp = stack;
 	char *dp, *sp;

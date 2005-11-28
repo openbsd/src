@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.76 2005/06/17 22:33:34 niklas Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.77 2005/11/28 00:14:29 jsg Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -89,11 +89,7 @@ struct pool sigacts_pool;	/* memory pool for sigacts structures */
  * Can process p, with pcred pc, send the signal signum to process q?
  */
 int
-cansignal(p, pc, q, signum)
-	struct proc *p;
-	struct pcred *pc;
-	struct proc *q;
-	int signum;
+cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 {
 	if (pc->pc_ucred->cr_uid == 0)
 		return (1);		/* root can always signal */
@@ -150,7 +146,7 @@ cansignal(p, pc, q, signum)
  * Initialize signal-related data structures.
  */
 void
-signal_init()
+signal_init(void)
 {
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
 	    &pool_allocator_nointr);
@@ -161,8 +157,7 @@ signal_init()
  * as p.
  */
 struct sigacts *
-sigactsinit(p)
-	struct proc *p;
+sigactsinit(struct proc *p)
 {
 	struct sigacts *ps;
 
@@ -176,8 +171,7 @@ sigactsinit(p)
  * Make p2 share p1's sigacts.
  */
 void
-sigactsshare(p1, p2)
-	struct proc *p1, *p2;
+sigactsshare(struct proc *p1, struct proc *p2)
 {
 
 	p2->p_sigacts = p1->p_sigacts;
@@ -189,8 +183,7 @@ sigactsshare(p1, p2)
  * signal state.
  */
 void
-sigactsunshare(p)
-	struct proc *p;
+sigactsunshare(struct proc *p)
 {
 	struct sigacts *newps;
 
@@ -206,8 +199,7 @@ sigactsunshare(p)
  * Release a sigacts structure.
  */
 void
-sigactsfree(p)
-	struct proc *p;
+sigactsfree(struct proc *p)
 {
 	struct sigacts *ps = p->p_sigacts;
 
@@ -221,20 +213,17 @@ sigactsfree(p)
 
 /* ARGSUSED */
 int
-sys_sigaction(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigaction(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_sigaction_args /* {
+	struct sys_sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigaction *) nsa;
 		syscallarg(struct sigaction *) osa;
 	} */ *uap = v;
 	struct sigaction vec;
-	register struct sigaction *sa;
-	register struct sigacts *ps = p->p_sigacts;
-	register int signum;
+	struct sigaction *sa;
+	struct sigacts *ps = p->p_sigacts;
+	int signum;
 	int bit, error;
 
 	signum = SCARG(uap, signum);
@@ -278,10 +267,7 @@ sys_sigaction(p, v, retval)
 }
 
 void
-setsigvec(p, signum, sa)
-	register struct proc *p;
-	int signum;
-	register struct sigaction *sa;
+setsigvec(struct proc *p, int signum, struct sigaction *sa)
 {
 	struct sigacts *ps = p->p_sigacts;
 	int bit;
@@ -366,10 +352,9 @@ setsigvec(p, signum, sa)
  * set to ignore signals that are ignored by default.
  */
 void
-siginit(p)
-	struct proc *p;
+siginit(struct proc *p)
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < NSIG; i++)
 		if (sigprop[i] & SA_IGNORE && i != SIGCONT)
@@ -380,11 +365,10 @@ siginit(p)
  * Reset signals for an exec of the specified process.
  */
 void
-execsigs(p)
-	register struct proc *p;
+execsigs(struct proc *p)
 {
-	register struct sigacts *ps;
-	register int nc, mask;
+	struct sigacts *ps;
+	int nc, mask;
 
 	sigactsunshare(p);
 	ps = p->p_sigacts;
@@ -425,10 +409,7 @@ execsigs(p)
  * the library stub does the rest.
  */
 int
-sys_sigprocmask(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigprocmask(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sigprocmask_args /* {
 		syscallarg(int) how;
@@ -463,10 +444,7 @@ sys_sigprocmask(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_sigpending(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigpending(struct proc *p, void *v, register_t *retval)
 {
 
 	*retval = p->p_siglist;
@@ -480,15 +458,12 @@ sys_sigpending(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_sigsuspend(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigsuspend(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sigsuspend_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
-	register struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_sigacts;
 
 	/*
 	 * When returning from sigpause, we want
@@ -508,12 +483,9 @@ sys_sigsuspend(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_osigaltstack(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_osigaltstack(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_osigaltstack_args /* {
+	struct sys_osigaltstack_args /* {
 		syscallarg(const struct osigaltstack *) nss;
 		syscallarg(struct osigaltstack *) oss;
 	} */ *uap = v;
@@ -553,12 +525,9 @@ sys_osigaltstack(p, v, retval)
 }
 
 int
-sys_sigaltstack(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_sigaltstack_args /* {
+	struct sys_sigaltstack_args /* {
 		syscallarg(const struct sigaltstack *) nss;
 		syscallarg(struct sigaltstack *) oss;
 	} */ *uap = v;
@@ -593,17 +562,14 @@ sys_sigaltstack(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_kill(cp, v, retval)
-	register struct proc *cp;
-	void *v;
-	register_t *retval;
+sys_kill(struct proc *cp, void *v, register_t *retval)
 {
-	register struct sys_kill_args /* {
+	struct sys_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
 	} */ *uap = v;
-	register struct proc *p;
-	register struct pcred *pc = cp->p_cred;
+	struct proc *p;
+	struct pcred *pc = cp->p_cred;
 
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);
@@ -633,12 +599,10 @@ sys_kill(cp, v, retval)
  * cp is calling process.
  */
 int
-killpg1(cp, signum, pgid, all)
-	register struct proc *cp;
-	int signum, pgid, all;
+killpg1(struct proc *cp, int signum, int pgid, int all)
 {
-	register struct proc *p;
-	register struct pcred *pc = cp->p_cred;
+	struct proc *p;
+	struct pcred *pc = cp->p_cred;
 	struct pgrp *pgrp;
 	int nfound = 0;
 
@@ -691,10 +655,7 @@ killpg1(cp, signum, pgid, all)
  * process and see if it is permitted.
  */
 void
-csignal(pgid, signum, uid, euid)
-	pid_t pgid;
-	int signum;
-	uid_t uid, euid;
+csignal(pid_t pgid, int signum, uid_t uid, uid_t euid)
 {
 	struct pgrp *pgrp;
 	struct proc *p;
@@ -720,8 +681,7 @@ csignal(pgid, signum, uid, euid)
  * Send a signal to a process group.
  */
 void
-gsignal(pgid, signum)
-	int pgid, signum;
+gsignal(int pgid, int signum)
 {
 	struct pgrp *pgrp;
 
@@ -734,11 +694,9 @@ gsignal(pgid, signum)
  * limit to members which have a controlling terminal.
  */
 void
-pgsignal(pgrp, signum, checkctty)
-	struct pgrp *pgrp;
-	int signum, checkctty;
+pgsignal(struct pgrp *pgrp, int signum, int checkctty)
 {
-	register struct proc *p;
+	struct proc *p;
 
 	if (pgrp)
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
@@ -752,14 +710,10 @@ pgsignal(pgrp, signum, checkctty)
  * Otherwise, post it normally.
  */
 void
-trapsignal(p, signum, code, type, sigval)
-	struct proc *p;
-	register int signum;
-	u_long code;
-	int type;
-	union sigval sigval;
+trapsignal(struct proc *p, int signum, u_long code, int type,
+    union sigval sigval)
 {
-	register struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_sigacts;
 	int mask;
 
 	mask = sigmask(signum);
@@ -807,12 +761,10 @@ trapsignal(p, signum, code, type, sigval)
  * Other ignored signals are discarded immediately.
  */
 void
-psignal(p, signum)
-	register struct proc *p;
-	register int signum;
+psignal(struct proc *p, int signum)
 {
-	register int s, prop;
-	register sig_t action;
+	int s, prop;
+	sig_t action;
 	int mask;
 
 #ifdef DIAGNOSTIC
@@ -1180,8 +1132,7 @@ keep:
  * on the run queue.
  */
 void
-proc_stop(p)
-	struct proc *p;
+proc_stop(struct proc *p)
 {
 #ifdef MULTIPROCESSOR
 	SCHED_ASSERT_LOCKED();
@@ -1197,8 +1148,7 @@ proc_stop(p)
  * from the current set of pending signals.
  */
 void
-postsig(signum)
-	register int signum;
+postsig(int signum)
 {
 	struct proc *p = curproc;
 	struct sigacts *ps = p->p_sigacts;
@@ -1301,9 +1251,7 @@ postsig(signum)
  * Kill the current process for stated reason.
  */
 void
-killproc(p, why)
-	struct proc *p;
-	char *why;
+killproc(struct proc *p, char *why)
 {
 
 	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);
@@ -1320,9 +1268,7 @@ killproc(p, why)
  * does not return.
  */
 void
-sigexit(p, signum)
-	register struct proc *p;
-	int signum;
+sigexit(struct proc *p, int signum)
 {
 	/* Mark process as going away */
 	p->p_flag |= P_WEXIT;
@@ -1344,12 +1290,11 @@ int nosuidcoredump = 1;
  * setuid/setgid.
  */
 int
-coredump(p)
-	register struct proc *p;
+coredump(struct proc *p)
 {
-	register struct vnode *vp;
-	register struct ucred *cred = p->p_ucred;
-	register struct vmspace *vm = p->p_vmspace;
+	struct vnode *vp;
+	struct ucred *cred = p->p_ucred;
+	struct vmspace *vm = p->p_vmspace;
 	struct nameidata nd;
 	struct vattr vattr;
 	int error, error1;
@@ -1472,10 +1417,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_nosys(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_nosys(struct proc *p, void *v, register_t *retval)
 {
 
 	psignal(p, SIGSYS);
@@ -1483,12 +1425,7 @@ sys_nosys(p, v, retval)
 }
 
 void
-initsiginfo(si, sig, code, type, val)
-	siginfo_t *si;
-	int sig;
-	u_long code;
-	int type;
-	union sigval val;
+initsiginfo(siginfo_t *si, int sig, u_long code, int type, union sigval val)
 {
 	bzero(si, sizeof *si);
 

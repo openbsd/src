@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.16 2005/05/28 07:30:25 marius Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.17 2005/11/28 00:14:28 jsg Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -95,10 +95,7 @@ struct proc *acct_proc;
  * previous implementation done by Mark Tinguely.
  */
 int
-sys_acct(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_acct(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_acct_args /* {
 		syscallarg(const char *) path;

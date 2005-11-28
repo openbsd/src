@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.26 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.27 2005/11/28 00:14:29 jsg Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -57,10 +57,7 @@
 
 /* ARGSUSED */
 int
-sys_getpid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getpid(struct proc *p, void *v, register_t *retval)
 {
 
 	*retval = p->p_pid;
@@ -73,10 +70,7 @@ sys_getpid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_getppid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getppid(struct proc *p, void *v, register_t *retval)
 {
 
 	*retval = p->p_pptr->p_pid;
@@ -85,10 +79,7 @@ sys_getppid(p, v, retval)
 
 /* Get process group ID; note that POSIX getpgrp takes no parameter */
 int
-sys_getpgrp(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getpgrp(struct proc *p, void *v, register_t *retval)
 {
 
 	*retval = p->p_pgrp->pg_id;
@@ -99,10 +90,7 @@ sys_getpgrp(p, v, retval)
  * SysVR.4 compatible getpgid()
  */
 pid_t
-sys_getpgid(curp, v, retval)
-	struct proc *curp;
-	void *v;
-	register_t *retval;
+sys_getpgid(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_getpgid_args /* {
 		syscallarg(pid_t) pid;
@@ -121,10 +109,7 @@ found:
 }
 
 pid_t
-sys_getsid(curp, v, retval)
-	struct proc *curp;
-	void *v;
-	register_t *retval;
+sys_getsid(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_getsid_args /* {
 		syscallarg(pid_t) pid;
@@ -147,10 +132,7 @@ found:
 
 /* ARGSUSED */
 int
-sys_getuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getuid(struct proc *p, void *v, register_t *retval)
 {
 
 	*retval = p->p_cred->p_ruid;
@@ -163,10 +145,7 @@ sys_getuid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_geteuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_geteuid(struct proc *p, void *v, register_t *retval)
 {
 
 	*retval = p->p_ucred->cr_uid;
@@ -175,10 +154,7 @@ sys_geteuid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_issetugid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_issetugid(struct proc *p, void *v, register_t *retval)
 {
 	if (p->p_flag & P_SUGIDEXEC)
 		*retval = 1;
@@ -189,10 +165,7 @@ sys_issetugid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_getgid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getgid(struct proc *p, void *v, register_t *retval)
 {
 
 	*retval = p->p_cred->p_rgid;
@@ -209,10 +182,7 @@ sys_getgid(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_getegid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getegid(struct proc *p, void *v, register_t *retval)
 {
 
 	*retval = p->p_ucred->cr_gid;
@@ -220,10 +190,7 @@ sys_getegid(p, v, retval)
 }
 
 int
-sys_getgroups(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getgroups(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getgroups_args /* {
 		syscallarg(int) gidsetsize;
@@ -250,10 +217,7 @@ sys_getgroups(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setsid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setsid(struct proc *p, void *v, register_t *retval)
 {
 
 	if (p->p_pgid == p->p_pid || pgfind(p->p_pid)) {
@@ -280,10 +244,7 @@ sys_setsid(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_setpgid(curp, v, retval)
-	struct proc *curp;
-	void *v;
-	register_t *retval;
+sys_setpgid(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_setpgid_args /* {
 		syscallarg(pid_t) pid;
@@ -322,10 +283,7 @@ sys_setpgid(curp, v, retval)
 
 /* ARGSUSED */
 int
-sys_getresuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getresuid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getresuid_args /* {
 		syscallarg(uid_t *) ruid;
@@ -352,10 +310,7 @@ sys_getresuid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setresuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setresuid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setresuid_args /* {
 		syscallarg(uid_t) ruid;
@@ -428,10 +383,7 @@ sys_setresuid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_getresgid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getresgid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getresgid_args /* {
 		syscallarg(gid_t *) rgid;
@@ -458,10 +410,7 @@ sys_getresgid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setresgid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setresgid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setresgid_args /* {
 		syscallarg(gid_t) rgid;
@@ -528,10 +477,7 @@ sys_setresgid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setregid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setregid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setregid_args /* {
 		syscallarg(gid_t) rgid;
@@ -561,10 +507,7 @@ sys_setregid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setreuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setreuid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setreuid_args /* {
 		syscallarg(uid_t) ruid;
@@ -594,10 +537,7 @@ sys_setreuid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setuid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setuid_args /* {
 		syscallarg(uid_t) uid;
@@ -646,10 +586,7 @@ sys_setuid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_seteuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_seteuid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_seteuid_args /* {
 		syscallarg(uid_t) euid;
@@ -678,10 +615,7 @@ sys_seteuid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setgid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setgid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setgid_args /* {
 		syscallarg(gid_t) gid;
@@ -720,10 +654,7 @@ sys_setgid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setegid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setegid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setegid_args /* {
 		syscallarg(gid_t) egid;
@@ -752,10 +683,7 @@ sys_setegid(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setgroups(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setgroups(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setgroups_args /* {
 		syscallarg(int) gidsetsize;
@@ -784,9 +712,7 @@ sys_setgroups(p, v, retval)
  * Check if gid is a member of the group set.
  */
 int
-groupmember(gid, cred)
-	gid_t gid;
-	struct ucred *cred;
+groupmember(gid_t gid, struct ucred *cred)
 {
 	gid_t *gp;
 	gid_t *egp;
@@ -830,7 +756,7 @@ suser_ucred(struct ucred *cred)
  * Allocate a zeroed cred structure.
  */
 struct ucred *
-crget()
+crget(void)
 {
 	struct ucred *cr;
 
@@ -845,8 +771,7 @@ crget()
  * Throws away space when ref count gets to 0.
  */
 void
-crfree(cr)
-	struct ucred *cr;
+crfree(struct ucred *cr)
 {
 
 	if (--cr->cr_ref == 0)
@@ -857,8 +782,7 @@ crfree(cr)
  * Copy cred structure to a new one and free the old one.
  */
 struct ucred *
-crcopy(cr)
-	struct ucred *cr;
+crcopy(struct ucred *cr)
 {
 	struct ucred *newcr;
 
@@ -875,8 +799,7 @@ crcopy(cr)
  * Dup cred struct to a new held one.
  */
 struct ucred *
-crdup(cr)
-	struct ucred *cr;
+crdup(struct ucred *cr)
 {
 	struct ucred *newcr;
 
@@ -891,10 +814,7 @@ crdup(cr)
  */
 /* ARGSUSED */
 int
-sys_getlogin(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getlogin(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getlogin_args /* {
 		syscallarg(char *) namebuf;
@@ -912,10 +832,7 @@ sys_getlogin(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_setlogin(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setlogin(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setlogin_args /* {
 		syscallarg(const char *) namebuf;
