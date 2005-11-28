@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.72 2005/11/28 08:49:25 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.73 2005/11/28 09:16:32 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -440,9 +440,7 @@ checkin_update(struct checkin_params *pb)
 
 	pb->frev = pb->file->rf_head;
 
-	/*
-	 * If revision passed on command line is less than HEAD, bail.
-	 */
+	/* If revision passed on command line is less than HEAD, bail. */
 	if ((pb->newrev != NULL)
 	    && (rcsnum_cmp(pb->newrev, pb->frev, 0) > 0)) {
 		cvs_log(LP_ERR, "revision is too low!");
@@ -450,9 +448,7 @@ checkin_update(struct checkin_params *pb)
 		return (-1);
 	}
 
-	/*
-	 * Load file contents
-	 */
+	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load '%s'", pb->filename);
 		return (-1);
@@ -463,9 +459,7 @@ checkin_update(struct checkin_params *pb)
 
 	filec = (char *)cvs_buf_release(bp);
 
-	/*
-	 * Get RCS patch
-	 */
+	/* Get RCS patch */
 	if ((pb->deltatext = checkin_diff_file(pb)) == NULL) {
 		cvs_log(LP_ERR, "failed to get diff");
 		return (-1);
@@ -480,30 +474,20 @@ checkin_update(struct checkin_params *pb)
 		return (0);
 	}
 
-	/*
-	 * Check for a lock belonging to this user. If none,
-	 * abort check-in.
-	 */
+	/* Check for a lock belonging to this user. If none, abort check-in. */
 	if (checkin_checklock(pb) < 0)
 		return (-1);
 
-	/*
-	 * If no log message specified, get it interactively.
-	 */
+	/* If no log message specified, get it interactively. */
 	if (pb->flags & INTERACTIVE)
 		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev);
 
-	/*
-	 * Remove the lock
-	 */
 	if (rcs_lock_remove(pb->file, pb->frev) < 0) {
 		if (rcs_errno != RCS_ERR_NOENT)
 		    cvs_log(LP_WARN, "failed to remove lock");
 	}
 
-	/*
-	 * Current head revision gets the RCS patch as rd_text
-	 */
+	/* Current head revision gets the RCS patch as rd_text */
 	if (rcs_deltatext_set(pb->file, pb->frev, pb->deltatext) == -1) {
 		cvs_log(LP_ERR,
 		    "failed to set new rd_text for head rev");
@@ -518,9 +502,7 @@ checkin_update(struct checkin_params *pb)
 	    && (checkin_mtimedate(pb) < 0))
 		return (-1);
 
-	/*
-	 * Now add our new revision
-	 */
+	/* Now add our new revision */
 	if (rcs_rev_add(pb->file,
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
 	    pb->rcs_msg, pb->date, pb->username) != 0) {
@@ -537,25 +519,18 @@ checkin_update(struct checkin_params *pb)
 	else
 		pb->newrev = pb->file->rf_head;
 
-	/*
-	 * New head revision has to contain entire file;
-	 */
-
+	/* New head revision has to contain entire file; */
         if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1) {
 		cvs_log(LP_ERR, "failed to set new head revision");
 		exit(1);
 	}
 
-	/*
-	 * Attach a symbolic name to this revision if specified.
-	 */
+	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL
 	    && (checkin_attach_symbol(pb) < 0))
 		return (-1);
 
-	/*
-	 * Set the state of this revision if specified.
-	 */
+	/* Set the state of this revision if specified. */
 	if (pb->state != NULL)
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
@@ -563,9 +538,7 @@ checkin_update(struct checkin_params *pb)
 	free(filec);
 	(void)unlink(pb->filename);
 
-	/*
-	 * Do checkout if -u or -l are specified.
-	 */
+	/* Do checkout if -u or -l are specified. */
 	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 	    && !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
@@ -593,9 +566,7 @@ checkin_init(struct checkin_params *pb)
 	BUF *bp;
 	char *rcs_desc, *filec;
 
-	/*
-	 * Load file contents
-	 */
+	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load '%s'", pb->filename);
 		return (-1);
@@ -606,15 +577,11 @@ checkin_init(struct checkin_params *pb)
 
 	filec = (char *)cvs_buf_release(bp);
 
-	/*
-	 * Get description from user
-	 */
+	/* Get description from user */
 	rcs_desc = checkin_getdesc();
 	rcs_desc_set(pb->file, rcs_desc);
 
-	/*
-	 * Now add our new revision
-	 */
+	/* Now add our new revision */
 	if (rcs_rev_add(pb->file, RCS_HEAD_REV, LOG_INIT, -1, pb->username) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
 		return (-1);
@@ -628,32 +595,24 @@ checkin_init(struct checkin_params *pb)
 	else
 		pb->newrev = pb->file->rf_head;
 
-	/*
-	 * New head revision has to contain entire file;
-	 */
+	/* New head revision has to contain entire file; */
 	if (rcs_deltatext_set(pb->file, pb->file->rf_head, filec) == -1) {
 		cvs_log(LP_ERR, "failed to set new head revision");
 		return (-1);
 	}
-	/*
-	 * Attach a symbolic name to this revision if specified.
-	 */
+	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL
 	    && (checkin_attach_symbol(pb) < 0))
 		return (-1);
 
-	/*
-	 * Set the state of this revision if specified.
-	 */
+	/* Set the state of this revision if specified. */
 	if (pb->state != NULL)
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
 	free(filec);
 	(void)unlink(pb->filename);
 
-	/*
-	 * Do checkout if -u or -l are specified.
-	 */
+	/* Do checkout if -u or -l are specified. */
 	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 	    && !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
