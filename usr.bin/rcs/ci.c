@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.73 2005/11/28 09:16:32 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.74 2005/11/28 14:43:59 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -79,9 +79,9 @@ checkin_usage(void)
 {
 	fprintf(stderr,
 	    "usage: ci [-MNqTV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
-            "          [-kmode] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
-            "          [-nsymbol] [-r[rev]] [-sstate] [-u[rev]] [-wusername]\n"
-            "          file ...\n");
+	    "          [-kmode] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
+	    "          [-nsymbol] [-r[rev]] [-sstate] [-u[rev]] [-wusername]\n"
+	    "          [-xsuffixes] file ...\n");
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.14 2005/11/21 16:20:29 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.15 2005/11/28 14:43:59 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -138,7 +138,7 @@ void
 rlog_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rlog [-hLNqRTtV] file ...\n");
+	    "usage: rlog [-hLNqRTtV] [-xsuffixes] file ...\n");
 }
 
 static int
