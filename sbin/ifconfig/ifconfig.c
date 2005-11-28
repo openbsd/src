@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.154 2005/11/15 00:38:34 jmc Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.155 2005/11/28 10:14:34 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -737,25 +737,23 @@ printif(char *ifname, int ifaliases)
 					continue;
 			}
 		}
-		(void) strlcpy(name, ifa->ifa_name, sizeof(name));
-
 #ifdef INET6
 		/* quickhack: sizeof(ifr) < sizeof(ifr6) */
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
-			ifrp = (struct ifreq *)&ifr6;
 			memset(&ifr6, 0, sizeof(ifr6));
-		} else {
-			ifrp = &ifr;
+			memcpy(&ifr6.ifr_addr, ifa->ifa_addr,
+			    MIN(sizeof(ifr6.ifr_addr), ifa->ifa_addr->sa_len));
+			ifrp = (struct ifreq *)&ifr6;
+		} else
+#endif
+		{
 			memset(&ifr, 0, sizeof(ifr));
+			memcpy(&ifr.ifr_addr, ifa->ifa_addr,
+			    MIN(sizeof(ifr.ifr_addr), ifa->ifa_addr->sa_len));
+			ifrp = &ifr;
 		}
-#else /* INET6 */
-		ifrp = &ifr;
-		memset(&ifr, 0, sizeof(ifr));
-#endif /* INET6 */
-
+		strlcpy(name, ifa->ifa_name, sizeof(name));
 		strlcpy(ifrp->ifr_name, ifa->ifa_name, sizeof(ifrp->ifr_name));
-		/* XXX boundary check? */
-		memcpy(&ifrp->ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
 
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			namep = ifa->ifa_name;
