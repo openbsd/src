@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.6 2005/11/10 11:20:00 dlg Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.7 2005/11/28 23:47:42 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -79,6 +79,8 @@ struct ipmi_softc {
 
 	int		    sc_btseq;
 
+	int		    sc_wdog_period;
+
 	struct ipmi_thread  *sc_thread;
 };
 
@@ -86,6 +88,25 @@ struct ipmi_thread {
 	struct ipmi_softc   *sc;
 	volatile int	    running;
 };
+
+#define IPMI_WDOG_MASK          0x03
+#define IPMI_WDOG_DISABLED      0x00
+#define IPMI_WDOG_REBOOT        0x01
+#define IPMI_WDOG_PWROFF        0x02
+#define IPMI_WDOG_PWRCYCLE      0x03
+
+#define IPMI_WDOG_PRE_DISABLED  0x00
+#define IPMI_WDOG_PRE_SMI       0x01
+#define IPMI_WDOG_PRE_NMI       0x02
+#define IPMI_WDOG_PRE_INTERRUPT 0x03
+
+struct ipmi_watchdog {
+	u_int8_t		wdog_timer;
+	u_int8_t		wdog_action;
+	u_int8_t		wdog_pretimeout;
+	u_int8_t		wdog_flags;
+	u_int16_t		wdog_timeout;
+} __packed;
 
 void	ipmi_create_thread(void *);
 void	ipmi_poll_thread(void *);

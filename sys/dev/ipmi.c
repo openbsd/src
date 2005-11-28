@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.19 2005/11/22 04:28:14 marco Exp $	*/
+/*	$OpenBSD: ipmi.c,v 1.20 2005/11/28 23:47:42 jordan Exp $	*/
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -128,6 +128,8 @@ int	ipmi_poll = 1;
 	if (len && ipmi_dbg >= lvl) \
 		dumpb(msg, len, (const u_int8_t *)(buf));
 
+long signextend(unsigned long, int);
+
 SLIST_HEAD(ipmi_sensors_head, ipmi_sensor);
 struct ipmi_sensors_head ipmi_sensor_list =
     SLIST_HEAD_INITIALIZER(&ipmi_sensor_list);
@@ -145,6 +147,8 @@ int	get_sdr(struct ipmi_softc *, u_int16_t, u_int16_t *);
 
 int	ipmi_sendcmd(struct ipmi_softc *, int, int, int, int, int, const void*);
 int	ipmi_recvcmd(struct ipmi_softc *, int, int *, void *);
+
+int	ipmi_watchdog(void *, int);
 
 int	ipmi_intr(void *);
 int	ipmi_match(struct device *, void *, void *);
@@ -1206,6 +1210,15 @@ ipow(long val, int exp)
 	return (val);
 }
 
+/* Sign extend a n-bit value */
+long
+signextend(unsigned long val, int bits)
+{
+	long msk = (1L << (bits-1))-1;
+
+  	return (-(val & ~msk) | val);
+}
+
 /* Convert IPMI reading from sensor factors */
 long
 ipmi_convert(u_int8_t v, sdrtype1 *s1, long adj)
@@ -1214,24 +1227,11 @@ ipmi_convert(u_int8_t v, sdrtype1 *s1, long adj)
 	char	K1, K2;
 	long	val;
 
-	/* M is 10-bit value: check if negative */
-	M = (((short)(s1->m_tolerance & 0xC0)) << 2) + s1->m;
-	if (M & 0x200)
-		M |= 0xFC00;
-
-	/* B is 10-bit value; check if negative */
-	B = (((short)(s1->b_accuracy & 0xC0)) << 2) + s1->b;
-	if (B & 0x200)
-		B |= 0xFC00;
-
-	/* K1/K2 are 4-bit values; check if negative */
-	K1 = s1->rbexp & 0xF;
-	if (K1 & 0x8)
-		K1 |= 0xF0;
-
-	K2 = s1->rbexp >> 4;
-	if (K2 & 0x8)
-		K2 |= 0xF0;
+	/* Calculate linear reading variables */
+	M  = signextend((((short)(s1->m_tolerance & 0xC0)) << 2) + s1->m, 10);
+	B  = signextend((((short)(s1->b_accuracy & 0xC0)) << 2) + s1->b, 10);
+	K1 = signextend(s1->rbexp & 0xF, 4);
+	K2 = signextend(s1->rbexp >> 4, 4);
 
 	/* Calculate sensor reading:
 	 *  y = L((M * v + (B * 10^K1)) * 10^(K2+adj)
@@ -1661,4 +1661,51 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	if (ia->iaa_if_irq != -1)
 		printf(" irq %d", ia->iaa_if_irq);
 	printf("\n");
+
+	/* Setup Watchdog timer */
+	sc->sc_wdog_period = 0;
+	wdog_register(sc, ipmi_watchdog);
+}
+
+
+int
+ipmi_watchdog(void *arg, int period)
+{
+	struct ipmi_softc	*sc = arg;
+	struct ipmi_watchdog     wdog;
+	int			s, rc, len;
+
+	if (sc->sc_wdog_period == period) {
+		if (period != 0) {
+			s = splsoftclock();
+			/* tickle the watchdog */
+			rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
+					  APP_RESET_WATCHDOG, 0, NULL);
+			rc = ipmi_recvcmd(sc, 0, &len, NULL);
+			splx(s);
+		}
+		return (period);
+	}
+
+	if (period < 10 && period > 0)
+		period = 10;
+
+	s = splsoftclock();
+	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN, 
+			  APP_GET_WATCHDOG_TIMER, 0, NULL);
+	rc = ipmi_recvcmd(sc, sizeof(wdog), &len, &wdog);
+
+	/* Period is 10ths/sec */
+	wdog.wdog_timeout = htole32(period * 10);
+	wdog.wdog_action &= ~IPMI_WDOG_MASK;
+	wdog.wdog_action |= (period == 0) ? IPMI_WDOG_DISABLED : IPMI_WDOG_REBOOT;
+
+	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
+			  APP_SET_WATCHDOG_TIMER, sizeof(wdog), &wdog);
+	rc = ipmi_recvcmd(sc, 0, &len, NULL);
+
+	splx(s);
+
+	sc->sc_wdog_period = period;
+	return (period);
 }
