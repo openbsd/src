@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.28 2005/11/20 03:24:35 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.29 2005/11/28 23:24:31 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -1526,7 +1526,7 @@ mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
 	}
 
 	error = bus_dmamem_alloc(mpt->sc_dmat, img_sz, PAGE_SIZE, 0,
-		&mpt->fw_seg, maxsgl, &mpt->fw_rseg, 0);
+		&mpt->fw_seg, 1, &mpt->fw_rseg, 0);
 	if (error) {
 		mpt_prt(mpt, "unable to allocate fw memory, error = %d", error);
 		goto fw_fail1;
