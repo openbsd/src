@@ -1,4 +1,4 @@
-/*	$OpenBSD: Lint_brk.c,v 1.2 2004/09/14 22:18:56 deraadt Exp $	*/
+/*	$OpenBSD: Lint_brk.c,v 1.3 2005/11/28 16:54:07 deraadt Exp $	*/
 /*	$NetBSD: Lint_brk.c,v 1.1 1997/11/06 00:52:52 cgd Exp $	*/
 
 /*
@@ -9,8 +9,8 @@
 #include <unistd.h>
 
 /*ARGSUSED*/
-char *
-brk(const char *addr)
+void *
+brk(void *addr)
 {
 	return (0);
 }
