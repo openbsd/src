@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.17 2005/11/28 20:27:43 jordan Exp $ */
+/*	$OpenBSD: esm.c,v 1.18 2005/11/28 20:37:16 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -360,7 +360,7 @@ esm_get_devmap(struct esm_softc *sc, int dev, struct esm_devmap *devmap)
 }
 
 struct esm_sensor_map esm_sensors_esm2[] = {
-	{ ESM_S_UNKNOWN,	0,		"Motherbobrd" },
+	{ ESM_S_UNKNOWN,	0,		"Motherboard" },
 	{ ESM_S_TEMP,		0,		"CPU 1" },
 	{ ESM_S_TEMP,		0,		"CPU 2" },
 	{ ESM_S_TEMP,		0,		"CPU 3" },
@@ -463,7 +463,7 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 };
 
 struct esm_sensor_map esm_sensors_powerunit[] = {
-	{ SENSOR_INTEGER,	0,		"Power Unit" },
+	{ ESM_S_UNKNOWN,	0,		"Power Unit" },
 	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
 	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
 	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
