@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.13 2005/03/03 00:14:17 cloder Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.14 2005/11/28 21:54:06 deraadt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@ uu_lock(const char *ttyname)
 		GORET(0, UU_LOCK_CREAT_ERR);
 
 	for (i = 0; i < MAXTRIES; i++) {
-		if (link (lcktmpname, lckname) < 0) {
+		if (link(lcktmpname, lckname) < 0) {
 			if (errno != EEXIST)
 				GORET(1, UU_LOCK_LINK_ERR);
 			/*
@@ -89,7 +89,7 @@ uu_lock(const char *ttyname)
 			if ((fd = open(lckname, O_RDONLY)) < 0)
 				GORET(1, UU_LOCK_OPEN_ERR);
 
-			if ((pid_old = get_pid (fd, &err)) == -1)
+			if ((pid_old = get_pid(fd, &err)) == -1)
 				GORET(2, UU_LOCK_READ_ERR);
 
 			close(fd);
@@ -102,7 +102,7 @@ uu_lock(const char *ttyname)
 			 */
 			(void)unlink(lckname);
 		} else {
-			if (!put_pid (tmpfd, pid))
+			if (!put_pid(tmpfd, pid))
 				GORET(3, UU_LOCK_WRITE_ERR);
 			break;
 		}
@@ -203,7 +203,7 @@ put_pid(int fd, pid_t pid)
 
 	if (len < sizeof buf && len != -1 && write (fd, buf, len) == len) {
 		/* We don't mind too much if ftruncate() fails - see get_pid */
-		ftruncate(fd, len);
+		ftruncate(fd, (off_t)len);
 		return 1;
 	}
 	return 0;
@@ -216,10 +216,10 @@ get_pid(int fd, int *err)
 	char buf[32];
 	pid_t pid;
 
-	bytes_read = read (fd, buf, sizeof (buf) - 1);
+	bytes_read = read(fd, buf, sizeof (buf) - 1);
 	if (bytes_read > 0) {
 		buf[bytes_read] = '\0';
-		pid = strtoul (buf, (char **) NULL, 10);
+		pid = strtoul(buf, (char **) NULL, 10);
 	} else {
 		pid = -1;
 		*err = bytes_read ? errno : EINVAL;
