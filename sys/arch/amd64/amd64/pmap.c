@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2005/10/26 18:46:06 martin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2005/11/28 16:56:31 martin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2759,7 +2759,7 @@ pmap_growkernel(maxkvaddr)
 	if (maxkvaddr <= pmap_maxkvaddr)
 		return pmap_maxkvaddr;
 
-	maxkvaddr = round_pdr(maxkvaddr);
+	maxkvaddr = x86_round_pdr(maxkvaddr);
 	old = nkptp[PTP_LEVELS - 1];
 	/*
 	 * This loop could be optimized more, but pmap_growkernel()
