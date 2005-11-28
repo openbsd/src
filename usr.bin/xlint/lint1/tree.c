@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.11 2005/11/23 00:12:13 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.12 2005/11/28 01:04:18 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.11 2005/11/23 00:12:13 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.12 2005/11/28 01:04:18 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1684,9 +1684,14 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 
 	if (isftyp(nt) != isftyp(ot) || psize(nt) != psize(ot)) {
 		/* representation and/or width change */
-		if (styp(nt) != SHORT || !isityp(ot) || psize(ot) > psize(INT))
-			/* conversion to '%s' due to prototype, arg #%d */
-			warning(259, tyname(tp), arg);
+		if (styp(nt) != SHORT || !isityp(ot) || psize(ot) > psize(INT)) {
+			if (ptn->tn_op == CON) {
+				/* ok. promote() warns if constant out of range */
+			} else {
+				/* conversion to '%s' due to prototype, arg #%d */
+				warning(259, tyname(tp), arg);
+			}
+		}
 	} else if (hflag) {
 		/*
 		 * they differ in sign or base type (char, short, int,
