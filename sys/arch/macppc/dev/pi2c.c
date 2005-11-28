@@ -1,4 +1,4 @@
-/*	$OpenBSD: pi2c.c,v 1.3 2005/11/19 21:45:44 brad Exp $	*/
+/*	$OpenBSD: pi2c.c,v 1.4 2005/11/28 23:56:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -65,7 +65,7 @@ pi2c_attach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct maci2cbus_attach_args iba;
 
-	printf("i2c controller\n");
+	printf("\n");
 
 	lockinit(&sc->sc_buslock, PZERO, sc->sc_dev.dv_xname, 0, 0);
 
