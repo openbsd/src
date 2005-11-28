@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.14 2005/11/28 04:57:04 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.15 2005/11/28 04:57:26 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.14 2005/11/28 04:57:04 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.15 2005/11/28 04:57:26 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1532,7 +1532,7 @@ promote(op_t op, int farg, tnode_t *tn)
 
 /*
  * Insert conversions which are necessary to give both operands the same
- * type. This is done in different ways for traditional C and ANIS C.
+ * type. This is done in different ways for traditional C and ANSI C.
  */
 static void
 balance(op_t op, tnode_t **lnp, tnode_t **rnp)
