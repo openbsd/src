@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.28 2005/11/24 11:17:15 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.29 2005/11/28 08:49:25 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -283,7 +283,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	 */
 	if (dflag == 1) {
 		if (stat(fpath, &fst) == -1) {
-			cvs_log(LP_ERRNO, "failed to stat %s", fpath);
+			cvs_log(LP_ERRNO, "failed to stat `%s'", fpath);
 			return (CVS_EX_DATA);
 		}
 		stamp = (time_t)fst.st_mtime;

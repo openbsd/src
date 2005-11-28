@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.9 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: repo.c,v 1.10 2005/11/28 08:49:25 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -62,7 +62,7 @@ cvs_repo_load(const char *base, int flags)
 	cvs_log(LP_DEBUG, "loading repository %s", base);
 
 	if (stat(base, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat %s", base);
+		cvs_log(LP_ERRNO, "failed to stat `%s'", base);
 		return (NULL);
 	}
 
@@ -484,7 +484,7 @@ cvs_repo_loadrec(CVSREPO *repo, const char *path)
 
 	cvs_log(LP_NOTICE, "loading %s", path);
 	if (stat(path, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat %s", path);
+		cvs_log(LP_ERRNO, "failed to stat `%s'", path);
 		return (NULL);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.71 2005/11/27 17:47:18 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.72 2005/11/28 08:49:25 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -770,8 +770,7 @@ checkin_mtimedate(struct checkin_params *pb)
 {
 	struct stat sb;
 	if (stat(pb->filename, &sb) != 0) {
-		cvs_log(LP_ERRNO, "failed to stat: `%s'",
-		    pb->filename);
+		cvs_log(LP_ERRNO, "failed to stat `%s'", pb->filename);
 		rcs_close(pb->file);
 		return (-1);
 	}
