@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.21 2005/08/01 05:36:49 brad Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.22 2005/11/28 20:53:22 deraadt Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -190,6 +190,7 @@ static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_TJ25 }, PALM4 },
 /*	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_25 }, PALM4 },*/
 	{{ USB_VENDOR_GARMIN, USB_PRODUCT_GARMIN_IQUE3600 }, PALM4 },
+	{{ USB_VENDOR_TAPWAVE, USB_PRODUCT_TAPWAVE_ZODIAC }, PALM4 },
 };
 #define uvisor_lookup(v, p) ((struct uvisor_type *)usb_lookup(uvisor_devs, v, p))
 

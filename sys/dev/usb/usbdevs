@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.171 2005/11/19 08:20:50 jsg Exp $
+$OpenBSD: usbdevs,v 1.172 2005/11/28 20:53:22 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -402,6 +402,7 @@ vendor TSUNAMI		0x1241	Tsunami
 vendor PHEENET		0x124a	Pheenet
 vendor BELKIN2		0x1293	Belkin Components
 vendor ARANEUS		0x12d8	Araneus Information Systems
+vendor TAPWAVE		0x12ef	Tapwave
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
@@ -442,7 +443,6 @@ vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
 vendor SITECOM2		0x9016	Sitecom
 vendor HP2		0xf003	Hewlett Packard
-
 /*
  * List of known products.  Grouped by vendor.
  */
@@ -1787,6 +1787,9 @@ product TANGTOP USBPS2		0x0001	USBPS2
 
 /* Taugagreining products */
 product TAUGA CAMERAMATE	0x0005	CameraMate (DPCM_USB)
+
+/* Tapwave products */
+product TAPWAVE ZODIAC		0x0100	Zodiac
 
 /* TDK products */
 product TDK UPA9664		0x0115	USB-PDC Adapter UPA9664
