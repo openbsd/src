@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.124 2005/11/01 03:10:21 jsg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.125 2005/11/28 00:17:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -128,7 +128,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.124 2005/11/01 03:10:21 jsg Exp $";
+	"$OpenBSD: if_wi.c,v 1.125 2005/11/28 00:17:14 jsg Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1853,8 +1853,14 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			wi_init(sc);
 		break;
 	case SIOCG80211CHANNEL:
+		wreq.wi_type = WI_RID_CURRENT_CHAN;
+		wreq.wi_len = WI_MAX_DATALEN;
+		if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
+			error = EINVAL;
+			break;
+		}
 		((struct ieee80211chanreq *)data)->i_channel =
-		    sc->wi_channel;
+		    letoh16(wreq.wi_val[0]);
 		break;
 	case SIOCHOSTAP_ADD:
 	case SIOCHOSTAP_DEL:
