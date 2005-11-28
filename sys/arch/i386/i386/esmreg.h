@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmreg.h,v 1.7 2005/11/28 22:11:07 jordan Exp $ */
+/*	$OpenBSD: esmreg.h,v 1.8 2005/11/28 22:13:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -52,41 +52,41 @@
 #define  ESM2_HWDC_READ_PROPERTY		0x02
 #define  ESM2_HWDC_WRITE_PROPERTY		0x03
 
-#define ESM2_CMD_SMB_BUF	   	0x20
-#define ESM2_CMD_SMB_BUF_XMIT_RECV 	0x21
-#define ESM2_CMD_SMB_XMIT_RECV	   	0x22
+#define ESM2_CMD_SMB_BUF		0x20
+#define ESM2_CMD_SMB_BUF_XMIT_RECV	0x21
+#define ESM2_CMD_SMB_XMIT_RECV		0x22
 #define  ESM2_SMB_SENSOR_VALUE			0x04
 #define  ESM2_SMB_SENSOR_THRESHOLDS		0x19
 
 #define ESM2_MAX_CMD_LEN	0x20
 #define ESM2_UUID_LEN		0x08
 
-#define DELL_SYSSTR_ADDR        0xFE076L
-#define DELL_SYSID_ADDR         0xFE840L
+#define DELL_SYSSTR_ADDR	0xFE076L
+#define DELL_SYSID_ADDR		0xFE840L
 
-#define DELL_SYSID_2300         0x81
-#define DELL_SYSID_4300         0x7C
-#define DELL_SYSID_4350         0x84
-#define DELL_SYSID_6300         0x7F
-#define DELL_SYSID_6350         0x83
-#define DELL_SYSID_2400         0x9B
-#define DELL_SYSID_2450         0xA6
-#define DELL_SYSID_4400         0x9A
-#define DELL_SYSID_6400         0x9C
-#define DELL_SYSID_6450         0xA2
-#define DELL_SYSID_2500         0xD9
-#define DELL_SYSID_2550         0xD1
-#define DELL_SYSID_PV530F       0xCD
-#define DELL_SYSID_PV735N       0xE2
-#define DELL_SYSID_PV750N       0xEE
-#define DELL_SYSID_PV755N       0xEF
-#define DELL_SYSID_PA200        0xCB
-#define DELL_SYSID_EXT          0xFE
+#define DELL_SYSID_2300		0x81
+#define DELL_SYSID_4300		0x7C
+#define DELL_SYSID_4350		0x84
+#define DELL_SYSID_6300		0x7F
+#define DELL_SYSID_6350		0x83
+#define DELL_SYSID_2400		0x9B
+#define DELL_SYSID_2450		0xA6
+#define DELL_SYSID_4400		0x9A
+#define DELL_SYSID_6400		0x9C
+#define DELL_SYSID_6450		0xA2
+#define DELL_SYSID_2500		0xD9
+#define DELL_SYSID_2550		0xD1
+#define DELL_SYSID_PV530F	0xCD
+#define DELL_SYSID_PV735N	0xE2
+#define DELL_SYSID_PV750N	0xEE
+#define DELL_SYSID_PV755N	0xEF
+#define DELL_SYSID_PA200	0xCB
+#define DELL_SYSID_EXT		0xFE
 
 struct dell_sysid {
-	u_int16_t    		ext_id;
-	u_int8_t     		bios_ver[3];
-	u_int8_t     		sys_id;
+	u_int16_t		ext_id;
+	u_int8_t		bios_ver[3];
+	u_int8_t		sys_id;
 } __packed;
 
 struct esm_wdog_prop {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.19 2005/11/28 22:11:07 jordan Exp $ */
+/*	$OpenBSD: esm.c,v 1.20 2005/11/28 22:13:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -96,7 +96,7 @@ struct esm_softc {
 	int			sc_retries;
 	struct timeout		sc_timeout;
 
-	int 			sc_wdog_period;
+	int			sc_wdog_period;
 };
 
 struct cfattach esm_ca = {
@@ -146,14 +146,14 @@ esm_probe(void *aux)
 	pdellstr = (const char *)ISA_HOLE_VADDR(DELL_SYSSTR_ADDR);
 	DPRINTF("Dell String: %s\n", pdellstr);
 	if (strncmp(pdellstr, "Dell System", 11))
-		return (0); 
+		return (0);
 
 	pdellid = (struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
 	if ((sysid = pdellid->sys_id) == DELL_SYSID_EXT)
 		sysid = pdellid->ext_id;
 	DPRINTF("SysId: %x\n", sysid);
 
- 	switch(sysid) {
+	switch (sysid) {
 	case DELL_SYSID_2300:
 	case DELL_SYSID_4300:
 	case DELL_SYSID_4350:
@@ -244,7 +244,6 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 		timeout_add(&sc->sc_timeout, hz * 10);
 	}
 }
-
 
 int
 esm_watchdog(void *arg, int period)
@@ -361,7 +360,6 @@ esm_refresh(void *arg)
 	}
 tick:
 	timeout_add(&sc->sc_timeout, hz / 100);
-	
 }
 
 int
@@ -759,7 +757,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 
 		if ((val->v_status & ESM2_VS_VALID) != ESM2_VS_VALID)
 			continue;
-		
+
 		es = malloc(sizeof(struct esm_sensor), M_DEVBUF, M_NOWAIT);
 		if (es == NULL)
 			return;
@@ -771,7 +769,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 
 		switch (es->es_type) {
 		case ESM_S_DRIVES:
-			/* 
+			/*
 			 * this esm sensor represents 4 kernel sensors, so we
 			 * go through these hoops to deal with it.
 			 */
@@ -813,7 +811,6 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 		TAILQ_INSERT_TAIL(&sc->sc_sensors, es, es_entry);
 	}
 }
-
 
 int
 esm_bmc_ready(struct esm_softc *sc, int port, u_int8_t mask, u_int8_t val,
