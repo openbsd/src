@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.23 2005/11/20 14:15:26 jmc Exp $
+.\"	$OpenBSD: rtw.4,v 1.24 2005/11/28 00:20:53 jsg Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -177,27 +177,48 @@ Enable WEP encryption with the persistent key stored in the network card.
 .Sh HARDWARE
 The following adapters should work:
 .Pp
-.Bl -column "Card                        " "Bus" -compact -offset 6n
-.It Em "Card	Bus"
-.\".It Li "Acer Aspire 1357 LMi" Ta Mini PCI
-.\".It Li "Belkin F5D6001 V3" Ta PCI
-.It Li "Belkin F5D6020 V3" Ta CardBus
-.It Li "Buffalo WLI-CB-B11" Ta CardBus
-.It Li "Corega CG-WLCB11V3" Ta CardBus
-.\".It Li "D-Link DWL-510" Ta PCI
-.\".It Li "D-Link DWL-520 rev D" Ta PCI
-.It Li "D-Link DWL-610" Ta CardBus
-.\".It Li "Encore ENLWI-PCI1-NT" Ta PCI
-.\".It Li "Gigabyte GN-WLMR101" Ta PCI
-.It Li "GigaFast WF721-AEX" Ta CardBus
-.It Li "Level-One WPC-0101" Ta CardBus
-.It Li "Linksys WPC11 v4" Ta CardBus
-.It Li "Netgear MA521" Ta CardBus
-.It Li "Ovislink AirLive WL-1120PCM" Ta CardBus
-.It Li "Planet WL-3553" Ta CardBus
-.It Li "TRENDnet TEW-226PC" Ta CardBus
-.\".It Li "TRENDnet TEW-288PI" Ta PCI
-.It Li "VCTnet PC-11B1" Ta CardBus
+.Bl -column "Card                        " "Radio    " "Bus" -compact -offset 6n
+.It Em "Card	Radio	Bus"
+.\".It Li "Acer Aspire 1357 LMi" Ta SA2400 Ta Mini PCI
+.It Li "Allnet ALL0182" Ta SA2400 Ta CardBus
+.\".It Li "Belkin F5D6001 V3" Ta SA2400 Ta PCI
+.It Li "Belkin F5D6020 V3" Ta SA2400 Ta CardBus
+.It Li "Buffalo WLI-CB-B11" Ta ? Ta CardBus
+.It Li "Corega CG-WLCB11V3" Ta SA2400 Ta CardBus
+.\".It Li "D-Link DWL-510" Ta SA2400 Ta PCI
+.\".It Li "D-Link DWL-520 rev D" Ta ? Ta PCI
+.It Li "D-Link DWL-610" Ta ? Ta CardBus
+.\".It Li "Encore ENLWI-PCI1-NT" Ta SA2400 Ta PCI
+.It Li "Edimax EW-7106" Ta SA2400 Ta CardBus
+.\".It Li "Edimax EW-7126" Ta GRF5101 Ta PCI
+.\".It Li "Gigabyte GN-WLMR101" Ta SA2400 Ta PCI
+.It Li "GigaFast WF721-AEX (R* serial)" Ta "GRF5101" Ta CardBus
+.\".It Li "HomeLine HLW-PCC200" Ta "GRF5101" Ta CardBus
+.It Li "Jensen AirLink 6011" Ta GRF5101 Ta CardBus
+.It Li "Level-One WPC-0101" Ta SA2400 Ta CardBus
+.It Li "Linksys WPC11 v4" Ta MAX2820 Ta CardBus
+.\.It Li "Longshine LCS-8031-R" Ta GRF5101 Ta PCI
+.\".It Li "Mentor WLPCI04330073" Ta SA2400 Ta CardBus
+.\".It Li "Micronet SP906BB" Ta ? Ta PCI
+.It Li "Netgear MA521" Ta SA2400 Ta CardBus
+.It Li "Ovislink AirLive WL-1120PCM" Ta SA2400 Ta CardBus
+.\".It Li "Pheenet WL-11PCIR" Ta SA2400 Ta PCI
+.It Li "Planet WL-3553" Ta SA2400 Ta CardBus
+.It Li "Q-Tec 770WC" Ta SA2400 Ta CardBus
+.It Li "Q-Tec 775WC" Ta SA2400 Ta CardBus
+.\".It "Repotec RP-WP7126" Ta GRF5101 Ta PCI
+.It Li "Roper FreeLan 802.11b" Ta SA2400 Ta CardBus
+.It Li "SAFECOM SWLCR-1100" Ta SA2400 Ta CardBus
+.\".It Li "Surecom EP-9428" Ta ? Ta CardBus
+.\".It Li "Sweex LC700010" Ta GRF5101 Ta PCI
+.\".It "Tonze PC-2100T" Ta GRF5101 Ta PCI
+.\".It Li "Topcom Skyr@cer 4011b" Ta ? Ta CardBus
+.\".It "TP-Link TL-WN250/251" Ta GRF5101 Ta PCI
+.It Li "TRENDnet TEW-226PC" Ta ? Ta CardBus
+.\".It Li "TRENDnet TEW-288PI" Ta SA2400 Ta PCI
+.It Li "VCTnet PC-11B1" Ta SA2400 Ta CardBus
+.It Li "Winstron CB-200B" Ta SA2400 Ta CardBus
+.It Li "Zonet ZEW1000" Ta GRF5101 Ta CardBus
 .El
 .Sh EXAMPLES
 The following
