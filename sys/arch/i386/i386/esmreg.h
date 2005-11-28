@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmreg.h,v 1.6 2005/11/28 20:27:43 jordan Exp $ */
+/*	$OpenBSD: esmreg.h,v 1.7 2005/11/28 22:11:07 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -42,27 +42,28 @@
 #define ESM2_TIM_NMI2SMI	(1L << 4)
 #define ESM2_TIM_POWER_UP_BITS	(ESM2_TIM_HIRQ_PEND)
 
-#define ESM2_CMD_NOOP		0x00
-#define ESM2_CMD_ECHO		0x01
-#define ESM2_CMD_DEVICEMAP	0x03
-#define  ESM2_DEVICEMAP_READ		0
+#define ESM2_CMD_NOOP			0x00
+#define ESM2_CMD_ECHO			0x01
+#define ESM2_CMD_DEVICEMAP		0x03
+#define  ESM2_DEVICEMAP_READ			0x00
 
-#define ESM2_CMD_SMB_BUF	0x20
-#define ESM2_CMD_SMB_BUF_XMIT_RECV 0x21
-#define ESM2_CMD_SMB_XMIT_RECV	0x22
-#define  ESM2_SMB_SENSOR_VALUE		0x04
-#define  ESM2_SMB_SENSOR_THRESHOLDS	0x19
+#define ESM2_CMD_HWDC			0x05 /* Host Watch Dog Control */
+#define  ESM2_HWDC_WRITE_STATE			0x01
+#define  ESM2_HWDC_READ_PROPERTY		0x02
+#define  ESM2_HWDC_WRITE_PROPERTY		0x03
 
-#define ESM2_CMD_HWDC		0x05 /* Host Watch Dog Control */
-#define  ESM2_HWDC_WRITE_STATE		0x01
-#define  ESM2_HWDC_READ_PROPERTY	0x02
-#define  ESM2_HWDC_WRITE_PROPERTY	0x03
+#define ESM2_CMD_SMB_BUF	   	0x20
+#define ESM2_CMD_SMB_BUF_XMIT_RECV 	0x21
+#define ESM2_CMD_SMB_XMIT_RECV	   	0x22
+#define  ESM2_SMB_SENSOR_VALUE			0x04
+#define  ESM2_SMB_SENSOR_THRESHOLDS		0x19
 
 #define ESM2_MAX_CMD_LEN	0x20
 #define ESM2_UUID_LEN		0x08
 
 #define DELL_SYSSTR_ADDR        0xFE076L
 #define DELL_SYSID_ADDR         0xFE840L
+
 #define DELL_SYSID_2300         0x81
 #define DELL_SYSID_4300         0x7C
 #define DELL_SYSID_4350         0x84
@@ -88,7 +89,7 @@ struct dell_sysid {
 	u_int8_t     		sys_id;
 } __packed;
 
-struct esm_watchdog_prop {
+struct esm_wdog_prop {
 	u_int8_t		cmd;
 	u_int8_t		reserved;
 	u_int8_t		subcmd;
@@ -96,7 +97,13 @@ struct esm_watchdog_prop {
 	u_int32_t		time;
 } __packed;
 
-struct esm_watchdog_state {
+#define ESM_WDOG_DISABLE	0x00
+#define ESM_WDOG_PWROFF		(1L << 1)
+#define ESM_WDOG_PWRCYCLE	(1L << 2)
+#define ESM_WDOG_RESET		(1L << 3)
+#define ESM_WDOG_NOTIFY		(1L << 4)
+
+struct esm_wdog_state {
 	u_int8_t		cmd;
 	u_int8_t		reserved;
 	u_int8_t		subcmd;

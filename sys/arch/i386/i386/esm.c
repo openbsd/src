@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.18 2005/11/28 20:37:16 jordan Exp $ */
+/*	$OpenBSD: esm.c,v 1.19 2005/11/28 22:11:07 jordan Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -28,6 +28,7 @@
 
 #include <dev/isa/isareg.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <arch/i386/i386/esmvar.h>
 #include <arch/i386/i386/esmreg.h>
@@ -94,6 +95,8 @@ struct esm_softc {
 	struct esm_sensor	*sc_nextsensor;
 	int			sc_retries;
 	struct timeout		sc_timeout;
+
+	int 			sc_wdog_period;
 };
 
 struct cfattach esm_ca = {
@@ -112,6 +115,8 @@ struct cfdriver esm_cd = {
 #define ECTRLWR(s, v)	EWRITE((s), ESM2_CTRL_REG, (v))
 #define EDATARD(s)	EREAD((s), ESM2_DATA_REG)
 #define EDATAWR(s, v)	EWRITE((s), ESM2_DATA_REG, (v))
+
+int		esm_watchdog(void *, int);
 
 void		esm_refresh(void *);
 
@@ -221,7 +226,9 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(": Watchdog shizz goes here\n");
+	sc->sc_wdog_period = 0;
+	wdog_register(sc, esm_watchdog);
+	printf(": Hardware Watchdog\n");
 
 	for (i = 0; i <= 0xff; i++) {
 		if (esm_get_devmap(sc, i, &devmap) != 0)
@@ -236,6 +243,56 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 		timeout_set(&sc->sc_timeout, esm_refresh, sc);
 		timeout_add(&sc->sc_timeout, hz * 10);
 	}
+}
+
+
+int
+esm_watchdog(void *arg, int period)
+{
+	struct esm_softc	*sc = arg;
+	struct esm_wdog_prop	prop;
+	struct esm_wdog_state	state;
+	int			s;
+
+	if (sc->sc_wdog_period == period) {
+		if (period != 0) {
+			s = splsoftclock();
+			/* tickle the watchdog */
+			EWRITE(sc, ESM2_CTRL_REG, ESM2_TC_HBDB);
+			splx(s);
+		}
+		return (period);
+	}
+
+	memset(&prop, 0, sizeof(prop));
+	memset(&state, 0, sizeof(state));
+
+	if (period < 10 && period > 0)
+		period = 10;
+
+	s = splsoftclock();
+
+	prop.cmd = ESM2_CMD_HWDC;
+	prop.subcmd = ESM2_HWDC_WRITE_PROPERTY;
+	prop.action = (period == 0) ? ESM_WDOG_DISABLE : ESM_WDOG_RESET;
+	prop.time = period;
+
+	if (esm_cmd(sc, &prop, sizeof(prop), NULL, 0, 1) != 0) {
+		splx(s);
+		return (0);
+	}
+
+	state.cmd = ESM2_CMD_HWDC;
+	state.subcmd = ESM2_HWDC_WRITE_STATE;
+	state.state = (period == 0) ? 0 : 1;
+
+	/* we have the hw, this can't (shouldn't) fail */
+	esm_cmd(sc, &state, sizeof(state), NULL, 0, 1);
+
+	splx(s);
+
+	sc->sc_wdog_period = period;
+	return (period);
 }
 
 void
