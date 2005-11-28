@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.20 2005/09/18 21:52:47 dlg Exp $
+.\"	$OpenBSD: bus_dma.9,v 1.21 2005/11/28 20:16:00 krw Exp $
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -50,20 +50,30 @@ The
 interface provides a bus and machine independent mechanism
 for managing DMA data transfers to and from devices.
 .Pp
-The basic abstraction is the bus_dmamap_t, a pointer to a structure
-which contains an array of bus_dma_segment_t's (dm_segs) and a count
-of how many are currently valid (dm_nsegs).
+The basic abstraction is
+.Fa bus_dmamap_t ,
+a pointer to a structure describing an individual DMA mapping.
+The structure contains an array of segments
+.Pq Fa dm_segs ,
+and a count of segments
+.Pq Fa dm_nsegs .
 .Pp
-Each segment in the array describes a single physical area of memory
-which can be DMA'd, with a starting address (ds_addr) and a length
-(ds_len).
+Each segment in
+.Fa dm_segs
+describes a single physical area of memory suitable for DMA, with a starting
+address
+.Pq Fa ds_addr
+and a length
+.Pq Fa ds_len .
 These are the values that must be communicated to the DMA device.
 Taken together the segments exactly and completely describe the buffer
 being used to transfer data.
 .Pp
-bus_dma_tag_t's are an opaque type, received from higher software
-layers and are never created, changed, deleted or even examined in
-this interface.
+.Fa bus_dma_tag_t
+is an opaque type.
+.Fa bus_dma_tag_t
+values are received from higher software layers and are never created,
+changed, deleted or even examined in this interface.
 .Pp
 The basic cycle to transfer data to/from a DMA device is:
 .Bd -literal
@@ -173,10 +183,12 @@ The
 arguments are as follows:
 .Bl -tag -width nsegments -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa size
-This is the maximum DMA transfer that can be mapped by the handle.
+The maximum DMA transfer that can be mapped by the handle.
 .It Fa nsegments
 Number of segments the device can support in a single DMA transaction.
 This may be the number of scatter-gather descriptors supported by the
@@ -215,7 +227,9 @@ These flags are placeholders, and may be used by busses to provide
 bus-dependent functionality.
 .El
 .It Fa dmamp
-This is a pointer to a bus_dmamap_t.
+A
+.Fa bus_dmamap_t
+pointer.
 A DMA map will be allocated and pointed to by
 .Fa dmamp
 upon successful completion of this routine.
@@ -231,7 +245,9 @@ The
 arguments are as follows:
 .Bl -tag -width dmam -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle to destroy.
@@ -270,7 +286,9 @@ The
 arguments are as follows:
 .Bl -tag -width buflen -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle with which to map the transfer.
@@ -376,7 +394,9 @@ which maps buffers allocated by
 (see below).
 The
 .Fa segs
-argument is an array of bus_dma_segment_t's filled in by
+argument is a
+.Fa bus_dma_segment_t
+array filled in by
 .Fn bus_dmamem_alloc .
 The
 .Fa nsegs
@@ -395,7 +415,9 @@ The
 arguments are as follows:
 .Bl -tag -width dmam -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle containing the mappings which are to be deleted.
@@ -427,9 +449,11 @@ This function always succeeds if given valid arguments.
 The
 .Fn bus_dmamap_sync
 arguments are as follows:
-.Bl -tag -width "dmam" -compact
+.Bl -tag -width "offset" -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA mapping to be synchronized.
@@ -566,7 +590,9 @@ The
 arguments are as follows:
 .Bl -tag -width alignment -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa size
 The amount of memory to allocate.
@@ -581,15 +607,19 @@ Each segment in the allocated memory must not cross this boundary
 This value must be a power of two.
 A boundary value less than the size of the allocation is invalid.
 .It Fa segs
-An array of bus_dma_segment_t's, filled in as memory is allocated,
+The
+.Fa bus_dma_segment_t
+array, filled in as memory is allocated,
 representing the opaque addresses of the memory chunks.
 .It Fa nsegs
-Specifies the number of segments in
-.Fa segs ,
-and this is the maximum number of segments that the allocated memory may
-contain.
+The number of segments available in
+.Fa segs .
+Used to specify the maximum number of segments that the allocated memory may
+be divided into.
 .It Fa rsegs
-Used to return the actual number of segments the memory contains.
+The number of segments used in
+.Fa segs .
+Used to return the actual number of segments the memory was divided into.
 .It Fa flags
 Flags are defined as follows:
 .Bl -tag -width BUS_DMA_STREAMING -compact
@@ -635,10 +665,14 @@ The
 arguments are as follows:
 .Bl -tag -width nsegs -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa segs
-The array of bus_dma_segment_t's filled in by
+The
+.Fa bus_dma_segment_t
+array filled in by
 .Fn bus_dmamem_alloc .
 .It Fa nsegs
 The number of segments in
@@ -669,10 +703,14 @@ The
 arguments are as follows:
 .Bl -tag -width flags -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa segs
-The array of bus_dma_segment_t's filled in by
+The
+.Fa bus_dma_segment_t
+array filled in by
 .Fn bus_dmamem_alloc ,
 representing the memory regions to map.
 .It Fa nsegs
@@ -727,7 +765,9 @@ called from an interrupt context.
 arguments are as follows:
 .Bl -tag -width size -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa kva
 The kernel virtual address of the mapped memory.
@@ -741,8 +781,9 @@ function provides support for user
 .Xr mmap 2 Ns 'ing
 of DMA-safe memory.
 .Fn bus_dmamem_mmap
-is to be called by a device driver's (*d_mmap)() entry
-point, which is called by the device pager for each page to be mapped.
+is to be called by a device driver's
+.Fn (*d_mmap)
+entry point, which is called by the device pager for each page to be mapped.
 This function returns an opaque value to be interpreted by the device
 pager, or -1 on failure.
 .Fn bus_dmamem_mmap
@@ -750,10 +791,14 @@ arguments are
 as follows:
 .Bl -tag -width nsegs -compact
 .It Fa tag
-This is the bus_dma_tag_t passed down from the parent driver via
+The
+.Fa bus_dma_tag_t
+passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa segs
-The array of bus_dma_segment_t's filled in by
+The
+.Fa bus_dma_segment_t
+array filled in by
 .Fn bus_dmamem_alloc ,
 representing the memory to be
 .Xr mmap 2 Ns 'ed .
