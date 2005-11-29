@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rlog.1,v 1.7 2005/11/29 08:49:14 xsa Exp $
+.\"     $OpenBSD: rlog.1,v 1.8 2005/11/29 09:16:07 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl hLNqRTtV
+.Op Fl bhLNqRTtV
 .Op Fl d Ns Ar dates
 .Op Fl l Ns Op Ar lockers
 .Op Fl s Ns Ar states
@@ -38,6 +38,8 @@ program displays information about RCS files.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
+.It Fl b
+Print information about revisions of the default branch only.
 .It Fl d Ns Ar dates
 Specify revisions with dates matching the specification.
 The specification might be as follows:
