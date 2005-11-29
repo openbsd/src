@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.176 2005/11/01 21:42:58 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.177 2005/11/29 16:01:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -181,7 +181,7 @@ typedef struct {
 %type	<v.filter_prefix>	filter_prefix filter_prefix_l
 %type	<v.filter_prefix>	filter_prefix_h filter_prefix_m
 %type	<v.u8>			unaryop binaryop filter_as_type
-%type	<v.encspec>		encspec;
+%type	<v.encspec>		encspec
 %%
 
 grammar		: /* empty */
