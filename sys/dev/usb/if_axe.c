@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.40 2005/09/27 21:14:40 jolan Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.41 2005/11/29 23:16:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -157,10 +157,12 @@ Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_UF200}, 0 },
 	{ { USB_VENDOR_ACERCM, USB_PRODUCT_ACERCM_EP1427X2}, 0 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88172}, 0 },
+	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88772}, AX772 },
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88178}, AX178 },
 	{ { USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC210T}, 0 },
 	{ { USB_VENDOR_BILLIONTON, USB_PRODUCT_BILLIONTON_SNAPPORT}, 0 },
 	{ { USB_VENDOR_BILLIONTON, USB_PRODUCT_BILLIONTON_USB2AR}, 0},
+	{ { USB_VENDOR_CISCOLINKSYS, USB_PRODUCT_CISCOLINKSYS_USB200MV2}, AX772 },
 	{ { USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DUBE100}, 0 },
 	{ { USB_VENDOR_GOODWAY, USB_PRODUCT_GOODWAY_GWUSB2E}, 0 },
@@ -202,6 +204,9 @@ Static void axe_reset(struct axe_softc *sc);
 Static void axe_setmulti(struct axe_softc *);
 Static void axe_lock_mii(struct axe_softc *sc);
 Static void axe_unlock_mii(struct axe_softc *sc);
+
+Static void axe_ax88178_init(struct axe_softc *);
+Static void axe_ax88772_init(struct axe_softc *);
 
 /* Get exclusive access to the MII registers */
 Static void
@@ -331,7 +336,7 @@ axe_miibus_statchg(device_ptr_t dev)
 	else
 		val = 0;
 	
-	if (sc->axe_flags & AX178) {
+	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 		val |= (AXE_178_MEDIA_RX_EN | AXE_178_MEDIA_MAGIC);
 
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
@@ -446,6 +451,93 @@ axe_reset(struct axe_softc *sc)
 	return;
 }
 
+Static void
+axe_ax88178_init(struct axe_softc *sc)
+{
+	int gpio0 = 0, phymode = 0;
+	u_int16_t eeprom;
+
+	axe_cmd(sc, AXE_CMD_SROM_WR_ENABLE, 0, 0, NULL);
+	/* XXX magic */
+	axe_cmd(sc, AXE_CMD_SROM_READ, 0, 0x0017, &eeprom);
+	axe_cmd(sc, AXE_CMD_SROM_WR_DISABLE, 0, 0, NULL);
+
+	DPRINTF((" EEPROM is 0x%x\n", eeprom));
+
+	/* if EEPROM is invalid we have to use to GPIO0 */
+	if (eeprom == 0xffff) {
+		phymode = 0;
+		gpio0 = 1;
+	} else {
+		phymode = eeprom & 7;
+		if (eeprom & 0x80)
+			gpio0 = 0;
+	}
+
+	DPRINTF(("use gpio0: %d, phymode %d\n", gpio0, phymode));
+
+	/* GPIO voodoo required to turn on PHY */
+	if (gpio0)
+		printf("gpio0 path not done! PHY not enabled\n");
+	else {
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x008c, NULL);
+		usbd_delay_ms(sc->axe_udev, 40);
+		if (phymode != 1) {
+			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
+			usbd_delay_ms(sc->axe_udev, 30);
+
+			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x001c, NULL);
+			usbd_delay_ms(sc->axe_udev, 300);
+
+			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
+			usbd_delay_ms(sc->axe_udev, 30);
+		} else {
+			DPRINTF(("axe gpio phymode == 1 path\n"));
+			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x0004, NULL);
+			usbd_delay_ms(sc->axe_udev, 30);
+			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x000c, NULL);
+			usbd_delay_ms(sc->axe_udev, 30);
+		}
+	}
+
+	/* soft reset */
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0, NULL);
+	usbd_delay_ms(sc->axe_udev, 150);
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+	    AXE_178_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
+	usbd_delay_ms(sc->axe_udev, 150);
+	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
+	/* XXX is a delay this long required for PHY to work? */
+	usbd_delay_ms(sc->axe_udev, 1500);
+}
+
+Static void
+axe_ax88772_init(struct axe_softc *sc)
+{
+	axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x00b0, NULL);
+	usbd_delay_ms(sc->axe_udev, 40);
+
+	/* ask for embedded PHY */
+	axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0x01, NULL);
+	usbd_delay_ms(sc->axe_udev, 10);
+
+	/* power down and reset state, pin reset state */
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0x00, NULL);
+	usbd_delay_ms(sc->axe_udev, 60);
+
+	/* power down/reset state, pin operating state */
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0x48, NULL);
+	usbd_delay_ms(sc->axe_udev, 150);
+
+	/* power up, reset */
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0x08, NULL);
+
+	/* power up, operating */
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0x28, NULL);
+
+	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
+}
+
 /*
  * Probe for a AX88172 chip.
  */
@@ -473,12 +565,11 @@ USB_ATTACH(axe)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct mii_data	*mii;
-	u_int16_t eeprom;
 	u_char eaddr[ETHER_ADDR_LEN];
 	char *devinfop;
 	char *devname = USBDEVNAME(sc->axe_dev);
 	struct ifnet *ifp;
-	int i, s, gpio0 = 0, phymode = 0;
+	int i, s;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
@@ -515,7 +606,7 @@ USB_ATTACH(axe)
 	usbd_devinfo_free(devinfop);
 
 	/* decide on what our bufsize will be */
-	if (sc->axe_flags & AX178)
+	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
 		sc->axe_bufsz = (sc->axe_udev->speed == USB_SPEED_HIGH) ? 
 		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ; 
 	else
@@ -542,65 +633,15 @@ USB_ATTACH(axe)
 
 	s = splnet();
 
-	if (sc->axe_flags & AX178) {
-		axe_cmd(sc, AXE_CMD_SROM_WR_ENABLE, 0, 0, NULL);
-		/* XXX magic */
-		axe_cmd(sc, AXE_CMD_SROM_READ, 0, 0x0017, &eeprom);
-		axe_cmd(sc, AXE_CMD_SROM_WR_DISABLE, 0, 0, NULL);
-
-		DPRINTF((" EEPROM is 0x%x\n", eeprom));
-
-		/* if EEPROM is invalid we have to use to GPIO0 */
-		if (eeprom == 0xffff) {
-			phymode = 0;
-			gpio0 = 1;
-		} else {
-			phymode = eeprom & 7;
-			if (eeprom & 0x80)
-				gpio0 = 0;
-		}
-
-		DPRINTF(("use gpio0: %d, phymode %d\n", gpio0, phymode));
-
-		/* GPIO voodoo required to turn on PHY */
-		if (gpio0)
-			printf("gpio0 path not done! PHY not enabled\n");
-		else {
-			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x008c, NULL);
-			usbd_delay_ms(sc->axe_udev, 40);
-			if (phymode != 1) {
-				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
-				usbd_delay_ms(sc->axe_udev, 30);
-
-				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x001c, NULL);
-				usbd_delay_ms(sc->axe_udev, 300);
-
-				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
-				usbd_delay_ms(sc->axe_udev, 30);
-			} else {
-				DPRINTF(("axe gpio phymode == 1 path\n"));
-				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x0004, NULL);
-				usbd_delay_ms(sc->axe_udev, 30);
-				axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x000c, NULL);
-				usbd_delay_ms(sc->axe_udev, 30);
-			}
-		}
-
-		/* soft reset */
-		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, 0, NULL);
-		usbd_delay_ms(sc->axe_udev, 150);
-		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
-		    AXE_178_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
-		usbd_delay_ms(sc->axe_udev, 150);
-		axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
-		/* XXX is a delay this long required for PHY to work? */
-		usbd_delay_ms(sc->axe_udev, 1500);
-	}
+	if (sc->axe_flags & AX178)
+		axe_ax88178_init(sc);
+	else if (sc->axe_flags & AX772)
+		axe_ax88772_init(sc);
 
 	/*
 	 * Get station address.
 	 */
-	if (sc->axe_flags & AX178)
+	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
 		axe_cmd(sc, AXE_178_CMD_READ_NODEID, 0, 0, &eaddr);
 	else
 		axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, &eaddr);
@@ -918,7 +959,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
 	do {
-		if (sc->axe_flags & AX178) {
+		if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 			if (total_len < sizeof(hdr)) {
 				ifp->if_ierrors++;
 				goto done;
@@ -1103,7 +1144,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 
 	c = &sc->axe_cdata.axe_tx_chain[idx];
 
-	if (sc->axe_flags & AX178) {
+	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 		boundary = (sc->axe_udev->speed == USB_SPEED_HIGH) ? 512 : 64;
 
 		hdr.len = m->m_pkthdr.len;
@@ -1228,7 +1269,7 @@ axe_init(void *xsc)
 	}
 
 	/* Set transmitter IPG values */
-	if (sc->axe_flags & AX178)
+	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
 		axe_cmd(sc, AXE_178_CMD_WRITE_IPG012, 0,
 		    (sc->axe_ipgs[0]) | (sc->axe_ipgs[1] << 8) |
 		    (sc->axe_ipgs[2] << 16), NULL);
@@ -1240,11 +1281,13 @@ axe_init(void *xsc)
 
 	/* Enable receiver, set RX mode */
 	rxmode = AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
-	if (!(sc->axe_flags & AX178))
+	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
+		if (sc->axe_udev->speed == USB_SPEED_HIGH) {
+			/* largest possible USB buffer size for AX88178 */
+			rxmode |= AXE_178_RXCMD_MFB;  
+		}
+	} else
 		rxmode |= AXE_172_RXCMD_UNICAST;
-	else if (sc->axe_udev->speed == USB_SPEED_HIGH)
-		/* largest possible USB buffer size for AX88178 */
-		rxmode |= AXE_178_RXCMD_MFB;
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
