@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.19 2004/06/24 19:35:26 tholo Exp $	*/
+/*	$OpenBSD: time.h,v 1.20 2005/11/29 00:28:18 deraadt Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ bintime2timespec(struct bintime *bt, struct timespec *ts)
 {
 
 	ts->tv_sec = bt->sec;
-	ts->tv_nsec = ((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32;
+	ts->tv_nsec = (long)(((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
 
 static __inline void
@@ -204,14 +204,14 @@ bintime2timeval(struct bintime *bt, struct timeval *tv)
 {
 
 	tv->tv_sec = bt->sec;
-	tv->tv_usec = ((uint64_t)1000000 * (uint32_t)(bt->frac >> 32)) >> 32;
+	tv->tv_usec = (long)(((uint64_t)1000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
 
 static __inline void
 timeval2bintime(struct timeval *tv, struct bintime *bt)
 {
 
-	bt->sec = tv->tv_sec;
+	bt->sec = (time_t)tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
 }
