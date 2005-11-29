@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.10 2005/11/23 22:57:36 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.11 2005/11/29 19:50:33 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.10 2005/11/23 22:57:36 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.11 2005/11/29 19:50:33 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1654,21 +1654,10 @@ toicon(tn)
 				warning(56);
 			}
 		} else {
-#ifdef XXX_BROKEN_GCC
-			if (v->v_quad > INT_MAX) {
-				/* integral constant too large */
-				warning(56);
-			}
-			if (v->v_quad < INT_MIN) {
-				/* integral constant too large */
-				warning(56);
-			}
-#else
 			if (v->v_quad > INT_MAX || v->v_quad < INT_MIN) {
 				/* integral constant too large */
 				warning(56);
 			}
-#endif
 		}
 	}
 	free(v);
