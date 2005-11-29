@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.178 2005/11/02 13:21:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.179 2005/11/29 20:45:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -521,7 +521,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			nconf = NULL;
 			parent_set = NULL;
 			prefix_network_clean(&peerself, reloadtime);
-			
+
 			if (!rde_filter_equal(rules_l, newrules, DIR_OUT))
 				pt_dump(rde_softreconfig_out, NULL, AF_UNSPEC);
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
@@ -1787,7 +1787,7 @@ rde_softreconfig_out(struct pt_entry *pt, void *ptr)
 	struct rde_aspath	*oasp, *nasp;
 	enum filter_actions	 oa, na;
 	struct bgpd_addr	 addr;
-	
+
 	if (p == NULL)
 		return;
 
@@ -1819,7 +1819,7 @@ rde_softreconfig_out(struct pt_entry *pt, void *ptr)
 			goto done;
 		}
 		if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
-			if (path_compare(nasp, oasp) == 0) 
+			if (path_compare(nasp, oasp) == 0)
 				goto done;
 			/* send update */
 			up_generate(peer, nasp, &addr, pt->prefixlen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.43 2005/11/01 15:21:54 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.44 2005/11/29 20:45:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -283,7 +283,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		break;
 	}
 
-	if (peer->conf.ebgp && !aspath_loopfree(p->aspath->aspath, 
+	if (peer->conf.ebgp && !aspath_loopfree(p->aspath->aspath,
 	    peer->conf.remote_as)) {
 		/*
 		 * Do not send routes back to sender which would
