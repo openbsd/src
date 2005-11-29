@@ -1,4 +1,4 @@
-/*	$OpenBSD: op.h,v 1.2 1996/06/26 05:44:17 deraadt Exp $	*/
+/*	$OpenBSD: op.h,v 1.3 2005/11/29 20:09:57 cloder Exp $	*/
 /*	$NetBSD: op.h,v 1.2 1995/07/03 21:24:27 cgd Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ typedef	struct {
 	u_int	m_tlansiu : 1;	/* warning if left op. is unsign. in ANSI C */
 	u_int	m_transiu : 1;	/* warning if right op. is unsign. in ANSI C */
 	u_int	m_tpconf : 1;	/* test possible precedence confusion */
-	u_int	m_comp : 1;	/* op. performs comparision */
+	u_int	m_comp : 1;	/* op. performs comparison */
 	u_int	m_enumop : 1;	/* valid operation on enums */
 	u_int	m_badeop : 1;	/* dubious operation on enums */
 	u_int	m_eqwarn : 1;	/* warning if on operand stems from == */
