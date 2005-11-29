@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.6 2005/11/19 03:35:27 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.7 2005/11/29 03:40:56 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.6 2005/11/19 03:35:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.7 2005/11/29 03:40:56 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -216,6 +216,26 @@ funcdef(sym_t *fsym)
 			inssym(1, sym);
 		}
 	}
+
+	/*
+	 * __func__ is a "predefined identifier" in c99, which means it is a
+	 * block-scope variable supplying the name of the enclosing function.
+	 * It is defined as:
+	 *
+	 * static const char __func__[] = "function-name";
+	 *
+	 */
+	sym = getblk(sizeof (sym_t));
+	sym->s_name = "__func__";
+	sym->s_kind = FVFT;
+	sym->s_scl = STATIC;
+	sym->s_type = incref(gettyp(CHAR), ARRAY);
+	sym->s_blklev = 1;
+	sym->s_def = DEF;
+	sym->s_type->t_dim = strlen(fsym->s_name) + 1;
+	sym->s_type->t_subt = duptyp(gettyp(CHAR));
+	sym->s_type->t_subt->t_const = 1;
+	inssym(1, sym);
 
 	/*
 	 * In osfunc() we did not know whether it is an old style function
