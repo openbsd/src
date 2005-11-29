@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.16 2005/11/28 22:29:57 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.17 2005/11/29 03:42:32 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.16 2005/11/28 22:29:57 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.17 2005/11/29 03:42:32 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -2523,7 +2523,6 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 	return (ntn);
 }
 
-
 /*
  * Check for division by zero.  Returns 1 if a division by zero is
  * present, 0 otherwise.
@@ -2531,8 +2530,6 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 static int
 chkdbz(op_t op, tnode_t *rn)
 {
-	quad_t q;
-	ldbl_t r;
 	int code;
 
 	switch (op) {
