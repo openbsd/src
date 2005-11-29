@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.35 2005/10/23 01:42:22 pedro Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.36 2005/11/29 05:37:14 tedu Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -771,7 +771,7 @@ ReFault:
 	 * now and then forget about them (for the rest of the fault).
 	 */
 
-	if (ufi.entry->advice == MADV_SEQUENTIAL) {
+	if (ufi.entry->advice == MADV_SEQUENTIAL && nback != 0) {
 
 		UVMHIST_LOG(maphist, "  MADV_SEQUENTIAL: flushing backpages",
 		    0,0,0,0);
@@ -1151,6 +1151,7 @@ ReFault:
 				anon->u.an_page->uanon = NULL;
 				/* in case we owned */
 				anon->u.an_page->pqflags &= ~PQ_ANON;
+				uvm_pageactivate(pg);
 				uvm_unlock_pageq();
 				if (uobj) {
 					simple_unlock(&uobj->vmobjlock);
