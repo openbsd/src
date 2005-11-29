@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem1.c,v 1.8 2005/11/20 18:18:57 cloder Exp $	*/
+/*	$OpenBSD: mem1.c,v 1.9 2005/11/29 20:09:39 cloder Exp $	*/
 /*	$NetBSD: mem1.c,v 1.2 1995/07/03 21:24:25 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mem1.c,v 1.8 2005/11/20 18:18:57 cloder Exp $";
+static char rcsid[] = "$OpenBSD: mem1.c,v 1.9 2005/11/29 20:09:39 cloder Exp $";
 #endif
 
 #include <sys/types.h>
@@ -169,19 +169,8 @@ xnewblk(void)
 	int	prot, flags;
 
 	mb = xmalloc(sizeof (mbl_t));
-
-	/* use mmap instead of malloc to avoid malloc's size overhead */
-
-	prot = PROT_READ | PROT_WRITE;
-	flags = MAP_ANON | MAP_PRIVATE;
-	mb->blk = mmap(NULL, mblklen, prot, flags, -1, (off_t)0);
-	if (mb->blk == MAP_FAILED)
-		err(1, "can't map memory");
-	if (ALIGN((u_long)mb->blk) != (u_long)mb->blk)
-		errx(1, "mapped address is not aligned");
-
+	mb->blk = xmalloc(mblklen);
 	mb->size = mblklen;
-
 	return (mb);
 }
 
