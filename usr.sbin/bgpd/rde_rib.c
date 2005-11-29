@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.69 2005/07/29 12:38:40 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.70 2005/11/29 21:11:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -426,14 +426,13 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
 
-	ENSURE(asp->peer == p->peer);
+	ENSURE(asp->peer == p->aspath->peer);
 
 	/* create new prefix node */
 	np = prefix_alloc();
 	np->aspath = asp;
 	/* peer and prefix pointers are still equal */
 	np->prefix = p->prefix;
-	np->peer = p->peer;
 	np->lastchange = time(NULL);
 
 	/* add to new as path */
@@ -534,7 +533,7 @@ prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer)
 	struct prefix	*p;
 
 	LIST_FOREACH(p, &pte->prefix_h, prefix_l) {
-		if (p->peer == peer)
+		if (p->aspath->peer == peer)
 			return p;
 	}
 	return NULL;
@@ -624,7 +623,6 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 
 	pref->aspath = asp;
 	pref->prefix = pte;
-	pref->peer = asp->peer;
 	pref->lastchange = time(NULL);
 
 	/* make route decision */
@@ -643,7 +641,7 @@ prefix_unlink(struct prefix *pref)
 
 	LIST_REMOVE(pref, path_l);
 	pref->aspath->prefix_cnt--;
-	pref->peer->prefix_cnt--;
+	pref->aspath->peer->prefix_cnt--;
 
 	/* destroy all references to other objects */
 	pref->aspath = NULL;

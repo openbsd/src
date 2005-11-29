@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.42 2005/08/09 20:27:25 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.43 2005/11/29 21:11:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -176,14 +176,18 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 			return (p2->lastchange - p1->lastchange);
 
 	/* 10. lowest BGP Id wins */
-	if ((p2->peer->remote_bgpid - p1->peer->remote_bgpid) != 0)
-		return (p2->peer->remote_bgpid - p1->peer->remote_bgpid);
+	if ((p2->aspath->peer->remote_bgpid -
+	    p1->aspath->peer->remote_bgpid) != 0)
+		return (p2->aspath->peer->remote_bgpid -
+		    p1->aspath->peer->remote_bgpid);
 
 	/* 11. lowest peer address wins (IPv4 is better than IPv6) */
-	if (memcmp(&p1->peer->remote_addr, &p2->peer->remote_addr,
-	    sizeof(p1->peer->remote_addr)) != 0)
-		return (-memcmp(&p1->peer->remote_addr, &p2->peer->remote_addr,
-		    sizeof(p1->peer->remote_addr)));
+	if (memcmp(&p1->aspath->peer->remote_addr,
+	    &p2->aspath->peer->remote_addr,
+	    sizeof(p1->aspath->peer->remote_addr)) != 0)
+		return (-memcmp(&p1->aspath->peer->remote_addr,
+		    &p2->aspath->peer->remote_addr,
+		    sizeof(p1->aspath->peer->remote_addr)));
 
 	fatalx("Uh, oh a politician in the decision process");
 	/* NOTREACHED */

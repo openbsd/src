@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.44 2005/11/29 20:45:21 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.45 2005/11/29 21:11:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -266,7 +266,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		/* no prefix available */
 		return (0);
 
-	if (peer == p->peer)
+	if (peer == p->aspath->peer)
 		/* Do not send routes back to sender */
 		return (0);
 
@@ -292,7 +292,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		return (0);
 	}
 
-	if (p->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
+	if (p->aspath->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
 		/*
 		 * route reflector redistribution rules:
 		 * 1. if announce is set                -> announce
@@ -301,7 +301,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		 * 4. old non-client, new client        -> yes
 		 * 5. old client, new client            -> yes
 		 */
-		if (p->peer->conf.reflector_client == 0 &&
+		if (p->aspath->peer->conf.reflector_client == 0 &&
 		    peer->conf.reflector_client == 0 &&
 		    (p->aspath->flags & F_PREFIX_ANNOUNCED) == 0)
 			/* Do not redistribute updates to ibgp peers */
@@ -413,7 +413,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 
 		pt_getaddr(old->prefix, &addr);
 		if (rde_filter(rules, peer, fasp, &addr, old->prefix->prefixlen,
-		    old->peer, DIR_OUT) == ACTION_DENY) {
+		    old->aspath->peer, DIR_OUT) == ACTION_DENY) {
 			path_put(fasp);
 			return;
 		}
@@ -437,7 +437,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 
 		pt_getaddr(new->prefix, &addr);
 		if (rde_filter(rules, peer, fasp, &addr, new->prefix->prefixlen,
-		    new->peer, DIR_OUT) == ACTION_DENY) {
+		    new->aspath->peer, DIR_OUT) == ACTION_DENY) {
 			path_put(fasp);
 			up_generate_updates(rules, peer, NULL, old);
 			return;

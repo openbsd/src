@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.73 2005/11/02 13:19:30 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.74 2005/11/29 21:11:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -232,8 +232,8 @@ struct prefix {
 	LIST_ENTRY(prefix)		 prefix_l, path_l;
 	struct rde_aspath		*aspath;
 	struct pt_entry			*prefix;
-	struct rde_peer			*peer;
 	time_t				 lastchange;
+	u_int32_t			 flags;
 };
 
 /* prototypes */

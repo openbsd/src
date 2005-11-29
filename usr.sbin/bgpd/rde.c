@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.179 2005/11/29 20:45:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.180 2005/11/29 21:11:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1553,7 +1553,7 @@ rde_dump_rib_as(struct prefix *p, pid_t pid)
 	rib.flags = 0;
 	if (p->prefix->active == p)
 		rib.flags |= F_RIB_ACTIVE;
-	if (p->peer->conf.ebgp == 0)
+	if (p->aspath->peer->conf.ebgp == 0)
 		rib.flags |= F_RIB_INTERNAL;
 	if (p->aspath->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_RIB_ANNOUNCE;
@@ -1801,9 +1801,9 @@ rde_softreconfig_out(struct pt_entry *pt, void *ptr)
 		nasp = path_copy(p->aspath);
 
 		oa = rde_filter(rules_l, peer, oasp, &addr, pt->prefixlen,
-		    p->peer, DIR_OUT);
+		    p->aspath->peer, DIR_OUT);
 		na = rde_filter(newrules, peer, nasp, &addr, pt->prefixlen,
-		    p->peer, DIR_OUT);
+		    p->aspath->peer, DIR_OUT);
 
 		if (oa == ACTION_DENY && na == ACTION_DENY)
 			/* nothing todo */
@@ -2301,7 +2301,7 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 			pt_getaddr(p->prefix, &addr);
 			k.prefix.s_addr = addr.v4.s_addr;
 			k.prefixlen = p->prefix->prefixlen;
-			if (p->peer == &peerself)
+			if (p->aspath->peer == &peerself)
 				k.flags = F_KERNEL;
 			if (imsg_compose(ibuf_se, IMSG_CTL_SHOW_NETWORK, 0, pid,
 			    -1, &k, sizeof(k)) == -1)
@@ -2313,7 +2313,7 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 			pt_getaddr(p->prefix, &addr);
 			memcpy(&k6.prefix, &addr.v6, sizeof(k6.prefix));
 			k6.prefixlen = p->prefix->prefixlen;
-			if (p->peer == &peerself)
+			if (p->aspath->peer == &peerself)
 				k6.flags = F_KERNEL;
 			if (imsg_compose(ibuf_se, IMSG_CTL_SHOW_NETWORK6, 0,
 			    pid, -1, &k6, sizeof(k6)) == -1)
