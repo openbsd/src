@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.117 2005/11/29 02:59:42 jolan Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.118 2005/11/29 09:57:44 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -271,11 +271,11 @@ carp_hmac_prepare(struct carp_softc *sc)
 	} while (found);
 #endif /* INET */
 #ifdef INET6
-	memset(&cur, 0x00, sizeof(cur));
+	memset(&cur6, 0x00, sizeof(cur6));
 	do {
 		found = 0;
 		last6 = cur6;
-		memset(&cur, 0xff, sizeof(cur));
+		memset(&cur6, 0xff, sizeof(cur6));
 		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 			in6 = ifatoia6(ifa)->ia_addr.sin6_addr;
 			if (IN6_IS_ADDR_LINKLOCAL(&in6))
@@ -288,7 +288,7 @@ carp_hmac_prepare(struct carp_softc *sc)
 			}
 		}
 		if (found)
-			SHA1Update(&sc->sc_sha1, (void *)&cur6, sizeof(in6));
+			SHA1Update(&sc->sc_sha1, (void *)&cur6, sizeof(cur6));
 	} while (found);
 #endif /* INET6 */
 
