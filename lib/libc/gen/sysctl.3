@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.145 2005/10/07 16:29:09 norby Exp $
+.\"	$OpenBSD: sysctl.3,v 1.146 2005/11/29 20:35:00 otto Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -334,7 +334,7 @@ information.
 .Bl -column "KERNXCRYPTODEVALLOWSOFTXXX" "struct clockrateXXX" -offset indent
 .It Sy Second level name	Type	Changeable
 .It Dv KERN_ARGMAX No "	integer	no"
-.It Dv KERN_ARND No "	integer	no"
+.It Dv KERN_ARND No "	char[]	no"
 .It Dv KERN_BOOTTIME No "	struct timeval	no"
 .It Dv KERN_CCPU No "	integer	no"
 .It Dv KERN_CLOCKRATE No "	struct clockinfo	no"
@@ -405,7 +405,7 @@ information.
 The maximum number of bytes allowed among the arguments to
 .Xr exec 3 .
 .It Dv KERN_ARND
-Returns a random integer from the kernel
+Returns a maximum of 256 random bytes from the kernel using the
 .Xr arc4random 9
 function.
 This can be useful if
