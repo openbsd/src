@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.12 2005/11/24 01:45:28 deraadt Exp $	*/
+/*	$OpenBSD: scan.l,v 1.13 2005/11/29 20:47:44 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.12 2005/11/24 01:45:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.13 2005/11/29 20:47:44 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -50,9 +50,6 @@ static char rcsid[] = "$OpenBSD: scan.l,v 1.12 2005/11/24 01:45:28 deraadt Exp $
 #include "y.tab.h"
 
 #define CHAR_MASK	(~(~0 << CHAR_BIT))
-
-/* XXX declaration of strtouq() is missing in stdlib.h ? */
-extern	u_quad_t strtouq(const char *, char **, int);
 
 /* Current position (its also updated when an included file is parsed) */
 pos_t	curr_pos = { 1, "" };
