@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.23 2005/08/09 04:10:10 mickey Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.24 2005/11/29 05:42:17 tedu Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -376,10 +376,11 @@ cs4280_src_wait(sc)
 	struct cs4280_softc *sc;
 {
 	int n;
+
 	n = 0;
 	while ((BA0READ4(sc, CS4280_ACCTL) & ACCTL_DCV)) {
 		delay(1000);
-		while (++n > 1000)
+		if (++n > 1000)
 			return (-1);
 	}
 	return (0);

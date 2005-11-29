@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.18 2005/11/21 21:52:47 miod Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.19 2005/11/29 05:42:17 tedu Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1588,7 +1588,7 @@ cs4281_src_wait(sc)
 	n = 0;
 	while ((BA0READ4(sc, CS4281_ACCTL) & ACCTL_DCV)) {
 		delay(1000);
-		while (++n > 1000)
+		if (++n > 1000)
 			return (-1);
 	}
 	return (0);
