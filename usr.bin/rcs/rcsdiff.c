@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.22 2005/11/28 14:43:59 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.23 2005/11/29 11:11:39 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -173,7 +173,7 @@ rcsdiff_usage(void)
 }
 
 static int
-rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
+rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 {
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
@@ -191,7 +191,7 @@ rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 		fprintf(stderr, "%s -r%s %s\n", diffargs, rbuf, filename);
 	}
 
-	if ((b1 = rcs_getrev(rfp, rev)) == NULL) {
+	if ((b1 = rcs_getrev(file, rev)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision");
 		return (-1);
 	}
@@ -229,7 +229,7 @@ rcsdiff_file(RCSFILE *rfp, RCSNUM *rev, const char *filename)
 }
 
 static int
-rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
+rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 {
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
@@ -239,7 +239,7 @@ rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 	if (verbose == 1)
 		printf("retrieving revision %s\n", rbuf1);
 
-	if ((b1 = rcs_getrev(rfp, rev1)) == NULL) {
+	if ((b1 = rcs_getrev(file, rev1)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision");
 		return (-1);
 	}
@@ -248,7 +248,7 @@ rcsdiff_rev(RCSFILE *rfp, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 	if (verbose == 1)
 		fprintf(stderr, "retrieving revision %s\n", rbuf2);
 
-	if ((b2 = rcs_getrev(rfp, rev2)) == NULL) {
+	if ((b2 = rcs_getrev(file, rev2)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision");
 		return (-1);
 	}

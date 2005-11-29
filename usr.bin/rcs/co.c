@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.38 2005/11/29 10:55:37 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.39 2005/11/29 11:11:39 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -215,9 +215,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	struct stat st;
 	char *content;
 
-	/*
-	 * Check out the latest revision if <frev> is greater than HEAD
-	 */
+	/* Check out the latest revision if <frev> is greater than HEAD */
 	if (rcsnum_cmp(frev, file->rf_head, 0) == -1)
 		frev = file->rf_head;
 
@@ -316,21 +314,21 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
  * Returns 0 on success, -1 on checkout_rev failure.
  */
 static int
-checkout_state(RCSFILE *rfp, RCSNUM *rev, const char *dst, int flags,
+checkout_state(RCSFILE *file, RCSNUM *rev, const char *dst, int flags,
     const char *username, const char *state)
 {
 	const char *tstate;
 	
 	if (rev == NULL) {
 		cvs_log(LP_ERR, "%s: No revision on branch has state %s",
-		    rfp->rf_path, state);
+		    file->rf_path, state);
 		return (-1);
 	} else {
-		if (((tstate = rcs_state_get(rfp, rev)) != NULL)
+		if (((tstate = rcs_state_get(file, rev)) != NULL)
 		    && (strcmp(state, tstate) == 0))
-			return (checkout_rev(rfp, rev, dst, flags, username));
+			return (checkout_rev(file, rev, dst, flags, username));
 		else
 			rev = rcsnum_dec(rev);
-		return (checkout_state(rfp, rev, dst, flags, username, state));
+		return (checkout_state(file, rev, dst, flags, username, state));
 	}
 }
