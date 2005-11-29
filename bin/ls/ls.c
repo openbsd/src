@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.25 2005/11/25 20:37:45 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.26 2005/11/29 20:33:01 otto Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.25 2005/11/25 20:37:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.26 2005/11/29 20:33:01 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,6 @@ int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
 int f_listdot;			/* list files beginning with . */
 int f_longform;			/* long listing format */
-int f_newline;			/* if precede with newline */
 int f_nonprint;			/* show unprintables as ? */
 int f_nosort;			/* don't sort output */
 int f_numericonly;		/* don't expand uid to symbolic name */

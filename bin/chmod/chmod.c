@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.19 2005/10/15 08:57:21 jmc Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.20 2005/11/29 20:32:22 otto Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.19 2005/10/15 08:57:21 jmc Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.20 2005/11/29 20:32:22 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 	void *set;
 	long val;
 	int oct, omode;
-	int Hflag, Lflag, Pflag, Rflag, ch, fflag, fts_options, hflag, rval;
+	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	uid_t uid;
 	gid_t gid;
 	u_int32_t fclear, fset;
@@ -93,19 +93,18 @@ main(int argc, char *argv[])
 
 	uid = -1;
 	gid = -1;
-	Hflag = Lflag = Pflag = Rflag = fflag = hflag = 0;
+	Hflag = Lflag = Rflag = fflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRXfghorstuwx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
-			Lflag = Pflag = 0;
+			Lflag = 0;
 			break;
 		case 'L':
 			Lflag = 1;
-			Hflag = Pflag = 0;
+			Hflag = 0;
 			break;
 		case 'P':
-			Pflag = 1;
 			Hflag = Lflag = 0;
 			break;
 		case 'R':
