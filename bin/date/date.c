@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.26 2003/10/15 15:58:22 mpech Exp $	*/
+/*	$OpenBSD: date.c,v 1.27 2005/11/29 19:07:46 dhartmei Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.26 2003/10/15 15:58:22 mpech Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.27 2005/11/29 19:07:46 dhartmei Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ static char rcsid[] = "$OpenBSD: date.c,v 1.26 2003/10/15 15:58:22 mpech Exp $";
 extern	char *__progname;
 
 time_t tval;
-int retval, nflag;
+int retval, jflag, nflag;
 int slidetime;
 
 static void setthetime(char *);
@@ -83,13 +83,16 @@ main(int argc, char *argv[])
 
 	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "ad:nr:ut:")) != -1)
+	while ((ch = getopt(argc, argv, "ad:jnr:ut:")) != -1)
 		switch((char)ch) {
 		case 'd':		/* daylight saving time */
 			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
 			break;
 		case 'a':
 			slidetime++;
+			break;
+		case 'j':		/* don't set */
+			jflag = 1;
 			break;
 		case 'n':		/* don't set network */
 			nflag = 1;
@@ -227,6 +230,9 @@ setthetime(char *p)
 	if ((tval = mktime(lt)) < 0)
 		errx(1, "specified date is outside allowed range");
 
+	if (jflag)
+		return;
+
 	/* set the time */
 	if (nflag || netsettime(tval)) {
 		if (slidetime) {
@@ -265,7 +271,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-anu] [-d dst] [-r seconds] [-t west] [+format]\n",
+	    "usage: %s [-ajnu] [-d dst] [-r seconds] [-t west] [+format]\n",
 	     __progname);
 	(void)fprintf(stderr,
 	    "%-*s[[[[[[cc]yy]mm]dd]HH]MM[.SS]]\n", strlen(__progname) + 8, "");
