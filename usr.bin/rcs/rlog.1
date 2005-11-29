@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rlog.1,v 1.6 2005/11/21 20:06:34 xsa Exp $
+.\"     $OpenBSD: rlog.1,v 1.7 2005/11/29 08:49:14 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -24,6 +24,10 @@
 .Nm
 .Bk -words
 .Op Fl hLNqRTtV
+.Op Fl d Ns Ar dates
+.Op Fl l Ns Op Ar lockers
+.Op Fl s Ns Ar states
+.Op Fl w Ns Op Ar logins
 .Op Fl x Ns Ar suffixes
 .Ar file ...
 .Ek
@@ -34,16 +38,55 @@ program displays information about RCS files.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
+.It Fl d Ns Ar dates
+Specify revisions with dates matching the specification.
+The specification might be as follows:
+.Bl -tag -width Ds
+.It D1>D2 or D2>D1
+Select all revisions between
+.Ar \&D1
+and
+.Ar D2 .
+.It <D or D>
+Select all revisions before
+.Ar D .
+.It >D or D<
+Select all revisions after
+.Ar D .
+.It D
+Select the latest revision before or equal to
+.Ar D .
+.El
+.Pp
+The
+.Sq \*(Gt
+and
+.Sq \*(Lt
+characters can be followed by the
+.Sq =
+character to imply an inclusive specification.
+Several specifications can be used by separating them with the
+.Sq \&;
+character.
 .It Fl h
 Print header.
 .It Fl L
 Ignore RCS files with no locks set.
+.It Fl l Ns Op Ar lockers
+Print information about locked revisions only.
+If a comma-separated list of login names is specified,
+ignore all locks other than those held in the list.
 .It Fl N
 Do not print symbolic names.
 .It Fl q
 Be quiet about reporting.
 .It Fl R
 Print name of RCS file only.
+.It Fl s Ns Ar states
+Print information about revisions whose state matches one of the
+specified
+.Ar states .
+Multiple states may be specified as a comma-separated list.
 .It Fl T
 No effect.
 For compatibility.
@@ -51,6 +94,12 @@ For compatibility.
 Print header and description only.
 .It Fl V
 Print RCS's version number.
+.It Fl w Ns Op Ar logins
+Print information about revisions checked in by users specified
+in a comma-separated list.
+If
+.Ar logins
+is omitted, the user's login is assumed.
 .It Fl x Ns Ar suffixes
 Specifies the suffixes for RCS files.
 Suffixes should be separated by the
