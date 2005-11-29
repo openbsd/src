@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 2005/11/20 17:42:49 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 2005/11/29 20:15:04 cloder Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: init.c,v 1.6 2005/11/20 17:42:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.7 2005/11/29 20:15:04 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -348,7 +348,7 @@ mkinit(tnode_t *tn)
 	sc = initsym->s_scl;
 
 	/*
-	 * Do not test for automatic aggregat initialisation. If the
+	 * Do not test for automatic aggregate initialisation. If the
 	 * initalizer starts with a brace we have the warning already.
 	 * If not, an error will be printed that the initializer must
 	 * be enclosed by braces.
