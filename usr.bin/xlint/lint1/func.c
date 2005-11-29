@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.7 2005/11/29 03:40:56 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.8 2005/11/29 19:38:09 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.7 2005/11/29 03:40:56 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.8 2005/11/29 19:38:09 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -340,7 +340,7 @@ funcdef(sym_t *fsym)
 	}
 
 	if (dcs->d_notyp)
-		/* return value is implizitly declared to be int */
+		/* return value is implicitly declared to be int */
 		fsym->s_rimpl = 1;
 
 	reached = 1;
@@ -365,7 +365,7 @@ funcend(void)
 	}
 
 	/*
-	 * This warning is printed only if the return value was implizitly
+	 * This warning is printed only if the return value was implicitly
 	 * declared to be int. Otherwise the wrong return statement
 	 * has already printed a warning.
 	 */

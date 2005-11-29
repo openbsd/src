@@ -1,4 +1,4 @@
-/*	$OpenBSD: main1.c,v 1.6 2005/11/23 18:21:43 deraadt Exp $	*/
+/*	$OpenBSD: main1.c,v 1.7 2005/11/29 19:38:09 cloder Exp $	*/
 /*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main1.c,v 1.6 2005/11/23 18:21:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main1.c,v 1.7 2005/11/29 19:38:09 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -48,7 +48,7 @@ int	yflag;
 
 /*
  * Print warnings if an assignment of an integertype to another integertype
- * causes an implizit narrowing conversion. If aflag is 1, these warnings
+ * causes an implicit narrowing conversion. If aflag is 1, these warnings
  * are printed only if the source type is at least as wide as long. If aflag
  * is greather then 1, they are always printed.
  */

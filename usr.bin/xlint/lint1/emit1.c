@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit1.c,v 1.5 2005/11/19 03:35:27 cloder Exp $	*/
+/*	$OpenBSD: emit1.c,v 1.6 2005/11/29 19:38:09 cloder Exp $	*/
 /*	$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: emit1.c,v 1.5 2005/11/19 03:35:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: emit1.c,v 1.6 2005/11/29 19:38:09 cloder Exp $";
 #endif
 
 #include <ctype.h>
@@ -406,7 +406,7 @@ outcall(tnode_t *tn, int rvused, int rvdisc)
 			if (isityp(t = arg->tn_type->t_tspec)) {
 				/*
 				 * XXX it would probably be better to
-				 * explizitly test the sign
+				 * explicitly test the sign
 				 */
 				if ((q = arg->tn_val->v_quad) == 0) {
 					/* zero constant */
