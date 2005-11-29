@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.37 2005/11/25 13:50:01 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.38 2005/11/29 10:55:37 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,6 +36,8 @@
 #include "rcs.h"
 #include "rcsprog.h"
 
+#define CO_OPTSTRING	"f::k:l::M::p::q::r::s:Tu::Vw::x:"
+
 static int checkout_state(RCSFILE *, RCSNUM *, const char *, int,
     const char *, const char *);
 
@@ -47,20 +49,16 @@ checkout_main(int argc, char **argv)
 	RCSFILE *file;
 	char fpath[MAXPATHLEN], buf[16];
 	char *username;
-	const char *state = NULL;
+	const char *state;
 	time_t rcs_mtime = -1;
 
 	flags = 0;
 	kflag = RCS_KWEXP_ERR;
 	rev = RCS_HEAD_REV;
 	frev = NULL;
+	state = username = NULL;
 
-	if ((username = getlogin()) == NULL) {
-		cvs_log(LP_ERRNO, "failed to get username");
-		exit (1);
-	}
-
-	while ((ch = rcs_getopt(argc, argv, "f::k:l::M::p::q::r::s:Tu::Vx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, CO_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
@@ -111,6 +109,9 @@ checkout_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+		case 'w':
+			username = rcs_optarg;
+			break;
 		case 'x':
 			rcs_suffixes = rcs_optarg;
 			break;
@@ -126,6 +127,11 @@ checkout_main(int argc, char **argv)
 	if (argc == 0) {
 		cvs_log(LP_ERR, "no input file");
 		(usage)();
+		exit (1);
+	}
+
+	if ((username == NULL) && ((username = getlogin()) == NULL)) {
+		cvs_log(LP_ERRNO, "failed to get username");
 		exit (1);
 	}
 
@@ -190,7 +196,7 @@ checkout_usage(void)
 	fprintf(stderr,
 	    "usage: co [-V] [-ddate] [-f[rev]] [-I[rev]] [-kmode] [-l[rev]]\n"
 	    "          [-M[rev]] [-mmsg] [-p[rev]] [-q[rev]] [-r[rev]]\n"
-	    "          [-sstate] [-u[rev]] [-wuser] [-xsuffixes] [-ztz] file ...\n");
+	    "          [-sstate] [-u[rev]] [-w[user]] [-xsuffixes] [-ztz] file ...\n");
 }
 
 /*
@@ -319,8 +325,7 @@ checkout_state(RCSFILE *rfp, RCSNUM *rev, const char *dst, int flags,
 		cvs_log(LP_ERR, "%s: No revision on branch has state %s",
 		    rfp->rf_path, state);
 		return (-1);
-	}
-	else {
+	} else {
 		if (((tstate = rcs_state_get(rfp, rev)) != NULL)
 		    && (strcmp(state, tstate) == 0))
 			return (checkout_rev(rfp, rev, dst, flags, username));
