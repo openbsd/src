@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.18 2004/12/30 17:29:55 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.19 2005/11/29 03:12:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -587,6 +587,8 @@ struct map_node {
 	bus_dmamap_t		 dmamap;
 	bus_addr_t		 busaddr;
 	uint8_t			*vaddr;
+	bus_dma_segment_t	 dmaseg;
+	size_t			 size;
 	SLIST_ENTRY(map_node)	 links;
 };
 

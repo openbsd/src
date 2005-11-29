@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.30 2005/11/27 07:46:25 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.31 2005/11/29 03:12:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -10263,81 +10263,62 @@ ahd_createdmamem(struct ahd_softc *ahd, size_t size, struct map_node *map,
     const char *what)
 {
 	bus_dma_tag_t tag = ahd->parent_dmat;
-	bus_dma_segment_t seg;
-	uint8_t *vaddr;
-	int nseg, error, level = 0;
+	int nseg, error;
 
         bzero(map, sizeof(*map));
-
-	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0, &seg, 1, &nseg,
-	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
-		    ahd_name(ahd), what, error);
-		goto out;
-	}
-	level++;
-
-	if ((error = bus_dmamem_map(tag, &seg, nseg, size, (caddr_t *)&vaddr,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: failed to map DMA mem for %s, error = %d\n",
-		    ahd_name(ahd), what, error);
-		goto out;
-	}
-	map->vaddr = vaddr;
-	level++;
 
 	if ((error = bus_dmamap_create(tag, size, 1, size, 0, BUS_DMA_NOWAIT,
 	    &map->dmamap)) != 0) {
 		printf("%s: failed to create DMA map for %s, error = %d\n",
 		    ahd_name(ahd), what, error);
-		goto out;
+		return (error);
 	}
-	level++;
 
-	if ((error = bus_dmamap_load(tag, map->dmamap, vaddr, size, NULL,
+	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0, &map->dmaseg,
+	    1, &nseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
+		    ahd_name(ahd), what, error);
+		goto destroy;
+	}
+
+	if ((error = bus_dmamem_map(tag, &map->dmaseg, nseg, size,
+	    (caddr_t *)&map->vaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: failed to map DMA mem for %s, error = %d\n",
+		    ahd_name(ahd), what, error);
+		goto free;
+	}
+
+	if ((error = bus_dmamap_load(tag, map->dmamap, map->vaddr, size, NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: failed to load DMA map for %s, error = %d\n",
 		    ahd_name(ahd), what, error);
-		goto out;
+		goto unmap;
 	}
+
+	map->size = size;
 	map->busaddr = map->dmamap->dm_segs[0].ds_addr;
+	return (0);
 
-	return 0;
-out:
-	switch (level) {
-	case 3:
-		bus_dmamap_destroy(tag, map->dmamap);
-		/* FALLTHROUGH */
-	case 2:
-		bus_dmamem_unmap(tag, vaddr, size);
-		/* FALLTHROUGH */
-	case 1:
-		bus_dmamem_free(tag, &seg, nseg);
-		break;
-	default:
-		break;
-	}
+unmap:
+	bus_dmamem_unmap(tag, map->vaddr, size);
+free:
+	bus_dmamem_free(tag, &map->dmaseg, 1);
+destroy:
+	bus_dmamap_destroy(tag, map->dmamap);
 
-	return error;
+	bzero(map, sizeof(*map));
+	return (error);
 }
 
 void
 ahd_freedmamem(struct ahd_softc* ahd, struct map_node *map)
 {
 	bus_dma_tag_t tag = ahd->parent_dmat;
-	bus_dmamap_t dmamap = map->dmamap;
-	size_t size = 0;
-	int i;
 
-	for(i = 0; i < dmamap->dm_nsegs; i++)
-		size += dmamap->dm_segs[i].ds_len;
-
-	/* i == dmamap->dm_nsegs, which is invalidated by bus_dmamap_unload. */
-
-	bus_dmamap_unload(tag, dmamap);
-	bus_dmamem_unmap(tag, map->vaddr, size);
-	bus_dmamem_free(tag, dmamap->dm_segs, i);
-	bus_dmamap_destroy(tag, dmamap);
+	bus_dmamap_unload(tag, map->dmamap);
+	bus_dmamem_unmap(tag, map->vaddr, map->size);
+	bus_dmamem_free(tag, &map->dmaseg, 1);
+	bus_dmamap_destroy(tag, map->dmamap);
 }
 
 char *
