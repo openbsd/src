@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.12 2005/08/22 11:25:59 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.13 2005/11/29 09:31:07 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -46,39 +46,40 @@ sub create_device($)
 
 sub init_devices()
 {
-    delete $ENV{'BLOCKSIZE'};
-    open(my $cmd1, "/sbin/mount|") or print STDERR "Can't run mount\n";
-    while (<$cmd1>) {
-	    chomp;
-	    if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
-		my ($dev, $opts) = ($1, $2);
-		my $i = create_device($dev);
-		next unless defined $i;
-		next unless defined $opts;
-		for my $o (split /,\s*/, $opts) {
-		    if ($o eq 'read-only') {
-			$i->{ro} = 1;
-		    } elsif ($o eq 'nodev') {
-			$i->{nodev} = 1;
-		    } elsif ($o eq 'nosuid') {
-			$i->{nosuid} = 1;
-		    }
+	delete $ENV{'BLOCKSIZE'};
+	open(my $cmd1, "/sbin/mount|") or print STDERR "Can't run mount\n";
+	while (<$cmd1>) {
+		chomp;
+		if (m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
+			my ($dev, $opts) = ($1, $2);
+			my $i = create_device($dev);
+			next unless defined $i;
+			next unless defined $opts;
+			for my $o (split /,\s*/, $opts) {
+				if ($o eq 'read-only') {
+					$i->{ro} = 1;
+				} elsif ($o eq 'nodev') {
+					$i->{nodev} = 1;
+				} elsif ($o eq 'nosuid') {
+					$i->{nosuid} = 1;
+				}
+			}
+		} else {
+			print STDERR "Can't parse mount line: $_\n";
 		}
-	    } else {
-		print STDERR "Can't parse mount line: $_\n";
-	    }
-    }
-    close($cmd1) or print STDERR "Error running mount: $!\n";
-    $giveup = { used => 0 };
-    bless $giveup, "OpenBSD::Vstat::Failsafe";
+	}
+	close($cmd1) or print STDERR "Error running mount: $!\n";
+	$giveup = { used => 0 };
+	bless $giveup, "OpenBSD::Vstat::Failsafe";
 }
 
 sub ask_df($)
 {
 	my $fname = shift;
-	my $info = $giveup;;
+	my $info = $giveup;
 
-	open(my $cmd2, "-|", "/bin/df", $fname) or print STDERR "Can't run df\n";
+	open(my $cmd2, "-|", "/bin/df", $fname)
+	    or print STDERR "Can't run df\n";
 	my $blocksize = 512;
 	while (<$cmd2>) {
 		chomp;
