@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.149 2004/08/12 18:10:12 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.150 2005/11/29 00:03:08 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1864,7 +1864,6 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		}
 	}
 	bzero(ses, sizeof(*ses));
-	ses->hs_used = 1;
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
@@ -1908,6 +1907,7 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		return (EINVAL);
 
 	*sidp = HIFN_SID(sc->sc_dv.dv_unit, sesn);
+	ses->hs_used = 1;
 
 	return (0);
 }
