@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.72 2005/11/25 13:45:02 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.73 2005/11/29 02:59:42 jolan Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -346,9 +346,11 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 int
 tunclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	int			 s;
+	extern int if_detach_rtdelete(struct radix_node *, void *);
+	int			 s, i;
 	struct tun_softc	*tp;
 	struct ifnet		*ifp;
+	struct radix_node_head	*rnh;
 
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
@@ -380,7 +382,17 @@ tunclose(dev_t dev, int flag, int mode, struct proc *p)
 				/* XXX INET6 */
 #endif
 			}
-			rt_if_remove(ifp);
+			/*
+			 * Find and remove all routes which is using this
+			 * interface. Stolen from if.c if_detach().
+			 */
+			for (i = 1; i <= AF_MAX; i++) {
+				rnh = rt_tables[i];
+				if (rnh)
+					while ((*rnh->rnh_walktree)(rnh,
+					    if_detach_rtdelete, ifp) == EAGAIN)
+						;
+			}
 			ifp->if_flags &= ~IFF_RUNNING;
 		}
 		splx(s);

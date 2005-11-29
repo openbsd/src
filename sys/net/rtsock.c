@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.50 2005/11/27 19:33:20 deraadt Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.51 2005/11/29 02:59:42 jolan Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -165,9 +165,7 @@ route_output(struct mbuf *m, ...)
 	struct radix_node	*rn = NULL;
 	struct rtentry		*rt = NULL;
 	struct rtentry		*saved_nrt = NULL;
-#ifndef SMALL_KERNEL
 	struct radix_node_head	*rnh;
-#endif
 	struct rt_addrinfo	 info;
 	int			 len, error = 0;
 	struct ifnet		*ifp = NULL;
@@ -264,11 +262,11 @@ route_output(struct mbuf *m, ...)
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
-		if (rt_gettable(dst->sa_family, 0) == NULL) {
+		if ((rnh = rt_tables[dst->sa_family]) == 0) {
 			error = EAFNOSUPPORT;
 			goto flush;
 		}
-		rn = rt_lookup(dst, netmask, 0);
+		rn = rnh->rnh_lookup(dst, netmask, rnh);
 		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0) {
 			error = ESRCH;
 			goto flush;
@@ -906,7 +904,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
 		for (i = 1; i <= AF_MAX; i++)
-			if ((rnh = rt_gettable(i, 0)) && (af == 0 || af == i) &&
+			if ((rnh = rt_tables[i]) && (af == 0 || af == i) &&
 			    (error = (*rnh->rnh_walktree)(rnh,
 			    sysctl_dumpentry, &w)))
 				break;

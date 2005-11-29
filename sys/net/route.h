@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.33 2005/11/27 16:22:45 henning Exp $	*/
+/*	$OpenBSD: route.h,v 1.34 2005/11/29 02:59:42 jolan Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -299,6 +299,7 @@ void		 rtlabel_unref(u_int16_t);
 
 extern struct route_cb route_cb;
 extern struct rtstat rtstat;
+extern struct radix_node_head *rt_tables[];
 extern const struct sockaddr_rtin rt_defmask4;
 
 struct	socket;
@@ -345,10 +346,6 @@ int	 rtrequest(int, struct sockaddr *,
 			struct sockaddr *, struct sockaddr *, int,
 			struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
-void	 rt_if_remove(struct ifnet *);
-
-struct radix_node_head	*rt_gettable(sa_family_t, int);
-struct radix_node	*rt_lookup(struct sockaddr *, struct sockaddr *, int);
 
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

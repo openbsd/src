@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.139 2005/11/27 16:22:45 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.140 2005/11/29 02:59:42 jolan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -126,6 +126,7 @@
 
 void	if_attachsetup(struct ifnet *);
 void	if_attachdomain1(struct ifnet *);
+int	if_detach_rtdelete(struct radix_node *, void *);
 
 int	ifqmaxlen = IFQ_MAXLEN;
 
@@ -448,6 +449,37 @@ if_attach(struct ifnet *ifp)
 }
 
 /*
+ * Delete a route if it has a specific interface for output.
+ * This function complies to the rn_walktree callback API.
+ *
+ * Note that deleting a RTF_CLONING route can trigger the
+ * deletion of more entries, so we need to cancel the walk
+ * and return EAGAIN.  The caller should restart the walk
+ * as long as EAGAIN is returned.
+ */
+int
+if_detach_rtdelete(struct radix_node *rn, void *vifp)
+{
+	struct ifnet *ifp = vifp;
+	struct rtentry *rt = (struct rtentry *)rn;
+
+	if (rt->rt_ifp == ifp) {
+		int cloning = (rt->rt_flags & RTF_CLONING);
+
+		if (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+		    rt_mask(rt), 0, NULL) == 0 && cloning)
+			return (EAGAIN);
+	}
+
+	/*
+	 * XXX There should be no need to check for rt_ifa belonging to this
+	 * interface, because then rt_ifp is set, right?
+	 */
+
+	return (0);
+}
+
+/*
  * Detach an interface from everything in the kernel.  Also deallocate
  * private resources.
  * XXX So far only the INET protocol family has been looked over
@@ -458,10 +490,9 @@ if_detach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
-	int s;
+	int i, s = splimp();
+	struct radix_node_head *rnh;
 	struct domain *dp;
-
-	s = splimp();
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_start = if_detached_start;
@@ -498,7 +529,17 @@ if_detach(struct ifnet *ifp)
 		altq_detach(&ifp->if_snd);
 #endif
 
-	rt_if_remove(ifp);
+	/*
+	 * Find and remove all routes which is using this interface.
+	 * XXX Factor out into a route.c function?
+	 */
+	for (i = 1; i <= AF_MAX; i++) {
+		rnh = rt_tables[i];
+		if (rnh)
+			while ((*rnh->rnh_walktree)(rnh,
+			    if_detach_rtdelete, ifp) == EAGAIN)
+				;
+	}
 
 #ifdef INET
 	rti_delete(ifp);
@@ -1750,6 +1791,7 @@ if_group_egress_build(void)
 #ifdef INET6
 	struct sockaddr_in6	 sa_in6;
 #endif
+	struct radix_node_head	*rnh;
 	struct radix_node	*rn;
 	struct rtentry		*rt;
 
@@ -1763,34 +1805,42 @@ if_group_egress_build(void)
 			if_delgroup(ifgm->ifgm_ifp, IFG_EGRESS);
 		}
 
+	if ((rnh = rt_tables[AF_INET]) == NULL)
+		return (-1);
+
 	bzero(&sa_in, sizeof(sa_in));
 	sa_in.sin_len = sizeof(sa_in);
 	sa_in.sin_family = AF_INET;
-	if ((rn = rt_lookup(sintosa(&sa_in), sintosa(&sa_in), 0)) != NULL) {
+	if ((rn = rnh->rnh_lookup(&sa_in, &sa_in, rnh))) {
 		do {
 			rt = (struct rtentry *)rn;
 			if (rt->rt_ifp)
 				if_addgroup(rt->rt_ifp, IFG_EGRESS);
 #ifndef SMALL_KERNEL
-			rn = rn_mpath_next(rn);
-#else
-			rn = NULL;
+			if (rn_mpath_capable(rnh))
+				rn = rn_mpath_next(rn);
+			else
 #endif
+				rn = NULL;
 		} while (rn != NULL);
 	}
 
 #ifdef INET6
+	if ((rnh = rt_tables[AF_INET6]) == NULL)
+		return (-1);
+
 	bcopy(&sa6_any, &sa_in6, sizeof(sa_in6));
-	if ((rn = rt_lookup(sin6tosa(&sa_in6), sin6tosa(&sa_in6), 0)) != NULL) {
+	if ((rn = rnh->rnh_lookup(&sa_in6, &sa_in6, rnh))) {
 		do {
 			rt = (struct rtentry *)rn;
 			if (rt->rt_ifp)
 				if_addgroup(rt->rt_ifp, IFG_EGRESS);
 #ifndef SMALL_KERNEL
-			rn = rn_mpath_next(rn);
-#else
-			rn = NULL;
+			if (rn_mpath_capable(rnh))
+				rn = rn_mpath_next(rn);
+			else
 #endif
+				rn = NULL;
 		} while (rn != NULL);
 	}
 #endif

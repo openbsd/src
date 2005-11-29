@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.60 2005/11/27 16:22:45 henning Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.61 2005/11/29 02:59:42 jolan Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -1077,7 +1077,7 @@ int
 db_show_arptab()
 {
 	struct radix_node_head *rnh;
-	rnh = rt_gettable(AF_INET, 0);
+	rnh = rt_tables[AF_INET];
 	db_printf("Route tree for AF_INET\n");
 	if (rnh == NULL) {
 		db_printf(" (not initialized)\n");
