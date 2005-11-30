@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipmi.4,v 1.8 2005/11/21 07:05:53 dlg Exp $
+.\"	$OpenBSD: ipmi.4,v 1.9 2005/11/30 20:21:42 marco Exp $
 .\"
 .\" Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -139,9 +139,27 @@ upstream and downstream message blocks.
 The BT interface can be implemented using an ASIC or FPGA
 or may be built in to a custom-designed management controller.
 .El
+.Sh WATCHDOG
+IPMI provides watchdog timer functionality.
+Once configured, if the watchdog is not reset within a x second timeout,
+the server will reset.
+The reset will occur regardless of the recoverability of the hang or crash.
+.Bl -tag -width Ds
+.It Example of enabling a watchdog:
+sysctl -w kern.watchdog.period=10
+.El
+.Pp
+In this case if the watchdog is not reset it'll reboot the server after roughly
+10 seconds.
+.Pp
+.Bl -tag -width Ds
+.It Example of disabling watchdog:
+sysctl -w kern.watchdog.period=0
+.El
 .Sh SEE ALSO
 .Xr sensorsd 8 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr watchdog 4
 .Sh HISTORY
 The
 .Nm
