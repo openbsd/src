@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.173 2005/11/29 23:08:58 jsg Exp $
+$OpenBSD: usbdevs,v 1.174 2005/11/30 20:25:59 xsa Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -181,6 +181,7 @@ vendor IOMEGA		0x059b	Iomega
 vendor ATREND		0x059c	A-Trend Technology
 vendor AID		0x059d	Advanced Input Devices
 vendor LACIE		0x059f	LaCie
+vendor THRUSTMASTER	0x05a4	Thrustmaster
 vendor OMNIVISION	0x05a9	OmniVision
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
