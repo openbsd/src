@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.66 2005/08/30 17:05:28 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.67 2005/11/30 12:31:43 tom Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -647,12 +647,14 @@ dnl
 define({:-OpenBSDCongratulations-:},
 {:-Congratulations, you have successfully installed OpenBSD OSREV.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
-You should create yourself an account and protect it and the "root" account
-with good passwords.  You should have got a mail from the install program we
-recommend you to read, it contains answers to basic questions you might
-have about OpenBSD (like setting up your system, installing packages, getting
-more information about OpenBSD, sending in your dmesg output and more).
-This you can do by running
+You should create yourself an account and protect it and the "root"
+account with good passwords.
+
+The install program leaves root an initial mail message.  We recommend
+you read it, as it contains answers to basic questions you might have
+about OpenBSD, such as configuring your system, installing packages,
+getting more information about OpenBSD, sending in your dmesg output
+and more.  To do this, run
 
 	mail
 
