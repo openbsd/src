@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.22 2005/11/30 11:46:57 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.23 2005/11/30 13:40:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -60,6 +60,22 @@ enum esm_sensor_type {
 	ESM_S_DRIVE,
 	ESM_S_HPSLOT,
 	ESM_S_ACSWITCH
+};
+
+enum sensor_type esm_typemap[] = {
+	SENSOR_INTEGER,
+	SENSOR_INDICATOR,
+	SENSOR_TEMP,
+	SENSOR_FANRPM,
+	SENSOR_VOLTS_DC,
+	SENSOR_AMPS,
+	SENSOR_INTEGER,
+	SENSOR_INTEGER,
+	SENSOR_INDICATOR,
+	SENSOR_INTEGER,
+	SENSOR_INTEGER,
+	SENSOR_INTEGER,
+	SENSOR_INDICATOR
 };
 
 struct esm_sensor_map {
@@ -740,22 +756,6 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 
 	esm_make_sensors(sc, devmap, sensor_map, mapsize);
 }
-
-enum sensor_type esm_typemap[] = {
-	SENSOR_INTEGER,
-	SENSOR_INDICATOR,
-	SENSOR_TEMP,
-	SENSOR_FANRPM,
-	SENSOR_VOLTS_DC,
-	SENSOR_AMPS,
-	SENSOR_INTEGER,
-	SENSOR_INTEGER,
-	SENSOR_INDICATOR,
-	SENSOR_INTEGER,
-	SENSOR_INTEGER,
-	SENSOR_INTEGER,
-	SENSOR_INDICATOR
-};
 
 void
 esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
