@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.24 2005/11/30 15:46:32 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.25 2005/11/30 17:39:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -244,7 +244,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* see if card is alive */
 	if (esm_bmc_ready(sc, ESM2_CTRL_REG, ESM2_TC_ECBUSY, 0, 1) != 0) {
-		printf("%s: card is not alive\n");
+		printf(": card is not alive\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
 		return;
 	}
