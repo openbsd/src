@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.132 2005/11/15 22:12:07 kettenis Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.133 2005/11/30 15:46:32 dlg Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.132 2005/11/15 22:12:07 kettenis Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.133 2005/11/30 15:46:32 dlg Exp $";
 #endif
 #endif /* not lint */
 
@@ -2123,6 +2123,8 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 void
 print_sensor(struct sensor *s)
 {
+	const char *name;
+
 	printf("%s, %s, ", s->device, s->desc);
 	switch (s->status) {
 	case SENSOR_S_OK:
@@ -2169,6 +2171,45 @@ print_sensor(struct sensor *s)
 		case SENSOR_LUX:
 			printf("lux, %.2f lx", s->value / 1000000.0);
 			break;
+		case SENSOR_DRIVE:
+			switch (s->value) {
+			case SENSOR_DRIVE_EMPTY:
+				name = "empty";
+				break;
+			case SENSOR_DRIVE_READY:
+				name = "ready";
+				break;
+			case SENSOR_DRIVE_POWERUP:
+				name = "powering up";
+				break;
+			case SENSOR_DRIVE_ONLINE:
+				name = "online";
+				break;
+			case SENSOR_DRIVE_IDLE:
+				name = "idle";
+				break;
+			case SENSOR_DRIVE_ACTIVE:
+				name = "active";
+				break;
+			case SENSOR_DRIVE_REBUILD:
+				name = "rebuilding";
+				break;
+			case SENSOR_DRIVE_POWERDOWN:
+				name = "powering down";
+				break;
+			case SENSOR_DRIVE_FAIL:
+				name = "failed";
+				break;
+			case SENSOR_DRIVE_PFAIL:
+				name = "pfailed";
+				break;
+			default:
+				name = "unknown";
+				break;
+			}
+			printf("drive, %s", name);
+			break;
+
 		default:
 			printf("unknown");
 		}

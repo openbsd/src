@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.11 2005/11/21 13:47:52 dlg Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.12 2005/11/30 15:46:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -42,8 +42,20 @@ enum sensor_type {
 	SENSOR_INDICATOR,		/* boolean indicator */
 	SENSOR_INTEGER,			/* generic integer value */
 	SENSOR_PERCENT,			/* percent */
-	SENSOR_LUX			/* illuminance (mulx) */
+	SENSOR_LUX,			/* illuminance (mulx) */
+	SENSOR_DRIVE			/* disk */
 };
+
+#define SENSOR_DRIVE_EMPTY	1
+#define SENSOR_DRIVE_READY	2
+#define SENSOR_DRIVE_POWERUP	3
+#define SENSOR_DRIVE_ONLINE	4
+#define SENSOR_DRIVE_IDLE	5
+#define SENSOR_DRIVE_ACTIVE	6
+#define SENSOR_DRIVE_REBUILD	7
+#define SENSOR_DRIVE_POWERDOWN	8
+#define SENSOR_DRIVE_FAIL	9
+#define SENSOR_DRIVE_PFAIL	10
 
 /* Sensor states */
 enum sensor_status {

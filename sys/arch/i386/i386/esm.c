@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.23 2005/11/30 13:40:33 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.24 2005/11/30 15:46:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -72,8 +72,8 @@ enum sensor_type esm_typemap[] = {
 	SENSOR_INTEGER,
 	SENSOR_INTEGER,
 	SENSOR_INDICATOR,
-	SENSOR_INTEGER,
-	SENSOR_INTEGER,
+	SENSOR_DRIVE,
+	SENSOR_DRIVE,
 	SENSOR_INTEGER,
 	SENSOR_INDICATOR
 };
