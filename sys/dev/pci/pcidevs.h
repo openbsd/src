@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.972 2005/11/27 12:14:25 brad Exp 
+ *	OpenBSD: pcidevs,v 1.973 2005/11/30 11:07:34 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2470,7 +2470,10 @@
 #define	PCI_PRODUCT_RCC_HT_1000_SATA	0x024a		/* HT-1000 SATA */
 
 /* Philips products */
-#define	PCI_PRODUCT_PHILIPS_SAA7130	0x7130		/* SAA7130 */
+#define	PCI_PRODUCT_PHILIPS_SAA7130	0x7130		/* SAA7130 TV */
+#define	PCI_PRODUCT_PHILIPS_SAA7133	0x7133		/* SAA7133 TV */
+#define	PCI_PRODUCT_PHILIPS_SAA7134	0x7134		/* SAA7134 TV */
+#define	PCI_PRODUCT_PHILIPS_SAA7135	0x7135		/* SAA7135 TV */
 
 /* Picopower */
 #define	PCI_PRODUCT_PICOPOWER_PT80C826	0x0000		/* PT80C826 */
