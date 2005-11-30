@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.26 2005/11/29 20:33:01 otto Exp $	*/
+/*	$OpenBSD: ls.c,v 1.27 2005/11/30 00:57:25 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.26 2005/11/29 20:33:01 otto Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.27 2005/11/30 00:57:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,6 @@ int f_singlecol;		/* use single column output */
 int f_size;			/* list size in short listing */
 int f_statustime;		/* use time of last mode change */
 int f_stream;			/* stream format */
-int f_dirname;			/* if precede with directory name */
 int f_type;			/* add type character for non-regular files */
 int f_typedir;			/* add type character for directories */
 
