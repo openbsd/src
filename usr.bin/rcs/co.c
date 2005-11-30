@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.40 2005/11/30 14:29:22 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.41 2005/11/30 18:50:51 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -254,7 +254,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	if (verbose == 1)
 		printf("\n");
 
-	if ((pipeout == 0) && (stat(dst, &st) != -1) && !(flags & FORCE)) {
+	if ((pipeout == 0) && (stat(dst, &st) == 0) && !(flags & FORCE)) {
 		if (st.st_mode & S_IWUSR) {
 			yn = 0;
 			if (verbose == 0) {
@@ -263,8 +263,11 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 				    dst);
 				return (-1);
 			}
-			while (yn != 'y' && yn != 'n') {
-				printf("writable %s exists; ", dst);
+
+			while ((yn != 'y') && (yn != 'n')) {
+				printf("writable %s exists%s; ", dst,
+				    ((uid_t)getuid() == st.st_uid) ? "" :
+				    ", and you do not own it");
 				printf("remove it? [ny](n): ");
 				fflush(stdout);
 				yn = getchar();
