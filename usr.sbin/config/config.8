@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.43 2004/06/08 20:59:29 mcbride Exp $
+.\"	$OpenBSD: config.8,v 1.44 2005/11/30 11:53:32 jmc Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -319,6 +319,9 @@ Add a device through copying another.
 .It Ic base Ar 8 | 10 | 16
 Change the base of numbers displayed and entered,
 e.g., I/O addresses in a VAXen are octal.
+.It Ic cachepct Op Ar number
+Change the BUFCACHEPERCENT value.
+Without arguments, displays its current value.
 .It Ic change Ar devno | dev
 Modify one or more devices.
 .It Ic disable Ar attr val | devno | dev
@@ -331,12 +334,21 @@ Exit without saving changes.
 Find one or more devices.
 .It Ic help
 Give a short summary of all commands and their arguments.
-.It Ic list
-Show all known devices, a screen at a time.
 .It Ic lines Op Ar count
 Set the number of rows per page.
+.It Ic list
+Show all known devices, a screen at a time.
+.It Ic nkmempg Op Ar number
+Change the NKMEMPAGES value.
+Without arguments, displays its current value.
 .It Ic quit
 Exit and save changes.
+.It Ic shmmaxpgs Op Ar number
+Change the SHMMAXPGS value.
+Without arguments, displays its current value.
+.It Ic shmseg Op Ar number
+Change the SHMSEG value.
+Without arguments, displays its current value.
 .It Ic show Op Ar attr Op Ar val
 Show all devices for which attribute
 .Ar attr
@@ -346,18 +358,6 @@ has the value
 Change the
 .Va tz
 timezone structure.
-Without arguments, displays its current value.
-.It Ic cachepct Op Ar number
-Change the BUFCACHEPERCENT value.
-Without arguments, displays its current value.
-.It Ic nkmempg Op Ar number
-Change the NKMEMPAGES value.
-Without arguments, displays its current value.
-.It Ic shmseg Op Ar number
-Change the SHMSEG value.
-Without arguments, displays its current value.
-.It Ic shmmaxpgs Op Ar number
-Change the SHMMAXPGS value.
 Without arguments, displays its current value.
 .El
 .Sh EXAMPLES (First synopsis)
