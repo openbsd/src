@@ -1,0 +1,3 @@
+test-6.c(21): warning: left operand of '=' must be modifiable lvalue
+test-6.c(23): warning: array subscript cannot be > 4: 5
+Lint pass2:
