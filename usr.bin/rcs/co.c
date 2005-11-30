@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.39 2005/11/29 11:11:39 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.40 2005/11/30 14:29:22 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -259,12 +259,12 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			yn = 0;
 			if (verbose == 0) {
 				cvs_log(LP_ERR,
-				    "writeable %s exists; checkout aborted",
+				    "writable %s exists; checkout aborted",
 				    dst);
 				return (-1);
 			}
 			while (yn != 'y' && yn != 'n') {
-				printf("writeable %s exists; ", dst);
+				printf("writable %s exists; ", dst);
 				printf("remove it? [ny](n): ");
 				fflush(stdout);
 				yn = getchar();
