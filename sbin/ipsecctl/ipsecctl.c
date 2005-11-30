@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.35 2005/11/21 09:52:22 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.36 2005/11/30 12:42:05 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -320,7 +320,8 @@ ipsecctl_flush(int opts)
 	if (pfkey_init() == -1)
 		errx(1, "ipsecctl_flush: failed to open PF_KEY socket");
 
-	pfkey_ipsec_flush();
+	if (pfkey_ipsec_flush() == -1)
+		errx(1, "ipsecctl_flush: failed to flush");
 
 	return (0);
 }
