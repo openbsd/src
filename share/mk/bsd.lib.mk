@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.45 2005/11/23 18:34:33 deraadt Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.46 2005/11/30 13:04:55 steven Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -70,6 +70,31 @@ SHLIB_MINOR=${minor}
 .cc.so .C.so .cxx.so:
 	@echo "${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+# Fortran 77
+.f.o:
+	@echo "${COMPILE.f} ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.f} ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+.f.go:
+	@echo "${COMPILE.f} -g ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.f} -g ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+.f.po:
+	@echo "${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+.f.so:
+	@echo "${COMPILE.f} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.f} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
