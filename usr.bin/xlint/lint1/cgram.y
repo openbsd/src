@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.11 2005/11/29 19:50:33 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.12 2005/11/30 06:33:49 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.11 2005/11/29 19:50:33 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.12 2005/11/30 06:33:49 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1607,8 +1607,7 @@ identifier:
 
 /* ARGSUSED */
 int
-yyerror(msg)
-	char	*msg;
+yyerror(char *msg)
 {
 	error(249);
 	if (++sytxerr >= 5)
@@ -1626,8 +1625,7 @@ yyerror(msg)
  * expressions, it frees the memory used for the expression.
  */
 static int
-toicon(tn)
-	tnode_t	*tn;
+toicon(tnode_t *tn)
 {
 	int	i;
 	tspec_t	t;
@@ -1665,9 +1663,7 @@ toicon(tn)
 }
 
 static void
-idecl(decl, initflg)
-	sym_t	*decl;
-	int	initflg;
+idecl(sym_t *decl, int initflg)
 {
 	initerr = 0;
 	initsym = decl;
@@ -1695,7 +1691,7 @@ idecl(decl, initflg)
  * unmatched right paren
  */
 void
-ignuptorp()
+ignuptorp(void)
 {
 	int	level;
 
