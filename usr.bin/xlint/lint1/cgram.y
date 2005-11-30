@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.12 2005/11/30 06:33:49 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.13 2005/11/30 18:47:11 deraadt Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.12 2005/11/30 06:33:49 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.13 2005/11/30 18:47:11 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -308,7 +308,7 @@ data_def: T_SEMI
 	  }
 	| declspecs deftyp type_init_decls opt_attribute_spec T_SEMI
 	| error T_SEMI {
-		globclup();		
+		globclup();
 	  }
 	| error T_RBRACE {
 		globclup();

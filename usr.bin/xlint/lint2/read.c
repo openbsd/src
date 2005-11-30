@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.7 2005/11/20 17:09:55 cloder Exp $	*/
+/*	$OpenBSD: read.c,v 1.8 2005/11/30 18:47:10 deraadt Exp $	*/
 /*	$NetBSD: read.c,v 1.2 1995/07/03 21:24:59 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.7 2005/11/20 17:09:55 cloder Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.8 2005/11/30 18:47:10 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -132,7 +132,7 @@ readfile(const char *name)
 		/* line number in csrcfile */
 		cline = (int)strtol(cp, &eptr, 10);
 		if (cp == eptr) {
-		        cline = -1;
+			cline = -1;
 		} else {
 			cp = eptr;
 		}
@@ -261,7 +261,7 @@ funccall(pos_t *posp, const char *cp)
 	rused = rdisc = 0;
 	lai = &fcall->f_args;
 	while ((c = *cp) == 'u' || c == 'i' || c == 'd' ||
-	       c == 'z' || c == 'p' || c == 'n' || c == 's') {
+	    c == 'z' || c == 'p' || c == 'n' || c == 's') {
 		cp++;
 		switch (c) {
 		case 'u':
@@ -336,8 +336,8 @@ decldef(pos_t *posp, const char *cp)
 	used = 0;
 
 	while ((c = *cp) == 't' || c == 'd' || c == 'e' || c == 'u' ||
-	       c == 'r' || c == 'o' || c == 's' || c == 'v' ||
-	       c == 'P' || c == 'S') {
+	    c == 'r' || c == 'o' || c == 's' || c == 'v' ||
+	    c == 'P' || c == 'S') {
 		cp++;
 		switch (c) {
 		case 't':
