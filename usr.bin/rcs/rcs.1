@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.17 2005/11/27 10:55:38 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.18 2005/11/30 09:36:48 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Oo Fl t Ns Ar file Ns \*(Ba
 .Ar str Oc
 .Op Fl x Ns Ar suffixes
+.Op Fl z Ns Ar tz
 .Ar file ...
 .Sh DESCRIPTION
 The
@@ -132,6 +133,9 @@ Specifies the suffixes for RCS files.
 Suffixes should be separated by the
 .Sq /
 character.
+.It Fl z Ns Ar tz
+No effect.
+For compatibility.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT

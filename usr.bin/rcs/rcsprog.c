@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.50 2005/11/28 14:43:59 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.51 2005/11/30 09:36:48 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,6 +43,7 @@
 
 #define RCS_CMD_MAXARG	128
 #define RCS_DEFAULT_SUFFIX	",v/"
+#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Lm:MqTUVx:z:"
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
@@ -356,7 +357,7 @@ rcs_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rcs [-hiLMTUV] [-Aoldfile] [-ausers] [-b[rev]] [-cstring]\n"
-	    "           [-eusers] [-kmode] [-mrev:log] [-xsuffixes] file ...\n");
+	    "           [-eusers] [-kmode] [-mrev:log] [-xsuffixes] [-ztz] file ...\n");
 }
 
 /*
@@ -383,7 +384,7 @@ rcs_main(int argc, char **argv)
 	flags = RCS_RDWR;
 	logstr = alist = comment = elist = NULL;
 
-	while ((ch = rcs_getopt(argc, argv, "A:a:b::c:e::hik:Lm:MqTUV")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, RCSPROG_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'A':
 			if (rcs_statfile(rcs_optarg, ofpath, sizeof(ofpath)) < 0)
@@ -444,6 +445,11 @@ rcs_main(int argc, char **argv)
 			exit(0);
 		case 'x':
 			rcs_suffixes = rcs_optarg;
+			break;
+		case 'z':
+			/*
+			 * kept for compatibility
+			 */
 			break;
 		default:
 			(usage)();
