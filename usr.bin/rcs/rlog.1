@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rlog.1,v 1.8 2005/11/29 09:16:07 xsa Exp $
+.\"     $OpenBSD: rlog.1,v 1.9 2005/11/30 08:53:29 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -29,6 +29,7 @@
 .Op Fl s Ns Ar states
 .Op Fl w Ns Op Ar logins
 .Op Fl x Ns Ar suffixes
+.Op Fl z Ns Ar tz
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -107,6 +108,12 @@ Specifies the suffixes for RCS files.
 Suffixes should be separated by the
 .Sq /
 character.
+.It Fl z Ns Ar tz
+Specify the date output format, and the default timezone for
+.Ar dates
+used in the
+.Fl d
+option.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT

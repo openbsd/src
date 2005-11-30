@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsdiff.1,v 1.13 2005/11/22 19:31:30 jmc Exp $
+.\"     $OpenBSD: rcsdiff.1,v 1.14 2005/11/30 08:53:29 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -30,6 +30,7 @@
 .Op Fl r Ns Ar rev2
 .Oc
 .Op Fl x Ns Ar suffixes
+.Op Fl z Ns Ar tz
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
@@ -68,6 +69,8 @@ Specifies the suffixes for RCS files.
 Suffixes should be separated by the
 .Sq /
 character.
+.It Fl z Ns Ar tz
+Specify the date output format.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT
