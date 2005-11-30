@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.129 2005/11/27 12:37:58 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.130 2005/11/30 10:35:08 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 			if (flag & MNT_NOEXEC)
 				SCARG(uap, flags) |= MNT_NOEXEC;
 		}
-		if ((error = vfs_busy(mp, LK_NOWAIT, 0, p)) != 0) {
+		if ((error = vfs_busy(mp, LK_NOWAIT, NULL)) != 0) {
 			vput(vp);
 			return (error);
 		}
@@ -238,7 +238,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	/* This error never happens, but it makes auditing easier */
-	if ((error = vfs_busy(mp, LK_NOWAIT, 0, p)))
+	if ((error = vfs_busy(mp, LK_NOWAIT, NULL)))
 		return (error);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;
@@ -285,7 +285,7 @@ update:
  			mp->mnt_syncer = NULL;
  		}
 
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 		return (error);
 	}
 
@@ -304,13 +304,13 @@ update:
 		VOP_UNLOCK(vp, 0, p);
  		if ((mp->mnt_flag & MNT_RDONLY) == 0)
  			error = vfs_allocate_syncvnode(mp);
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 		(void) VFS_STATFS(mp, &mp->mnt_stat, p);
 		if ((error = VFS_START(mp, 0, p)) != 0)
 			vrele(vp);
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
 		vput(vp);
 	}
@@ -407,7 +407,7 @@ sys_unmount(struct proc *p, void *v, register_t *retval)
 	}
 	vput(vp);
 
-	if (vfs_busy(mp, LK_EXCLUSIVE, NULL, p))
+	if (vfs_busy(mp, LK_EXCLUSIVE, NULL))
 		return (EBUSY);
 
 	return (dounmount(mp, SCARG(uap, flags), p, vp));
@@ -473,7 +473,7 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 	simple_lock(&mountlist_slock);
 	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
 			nmp = CIRCLEQ_PREV(mp, mnt_list);
 			continue;
 		}
@@ -487,7 +487,7 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 		}
 		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
 
@@ -630,7 +630,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 	simple_lock(&mountlist_slock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -645,7 +645,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 			    (error = VFS_STATFS(mp, sp, p))) {
 				simple_lock(&mountlist_slock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
-				vfs_unbusy(mp, p);
+				vfs_unbusy(mp);
  				continue;
 			}
 
@@ -661,7 +661,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 			}
 			error = copyout(sp, sfsp, sizeof(*sp));
 			if (error) {
-				vfs_unbusy(mp, p);
+				vfs_unbusy(mp);
 				return (error);
 			}
 			sfsp++;
@@ -669,7 +669,7 @@ sys_getfsstat(struct proc *p, void *v, register_t *retval)
 		count++;
 		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
 	if (sfsp && count > maxcount)
@@ -707,10 +707,10 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
-		if (vfs_busy(mp, 0, 0, p))
+		if (vfs_busy(mp, 0, NULL))
 			continue;
 		error = VFS_ROOT(mp, &tdp);
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 		if (error)
 			break;
 		vput(vp);

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.35 2005/11/06 13:07:48 pedro Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.36 2005/11/30 10:35:07 pedro Exp $  */
 
 /*
  *  Portions of this code are:
@@ -352,13 +352,13 @@ sync_fsync(void *v)
 	 * not already on the sync list.
 	 */
 	simple_lock(&mountlist_slock);
-	if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, ap->a_p) == 0) {
+	if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock) == 0) {
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
 		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_p);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
-		vfs_unbusy(mp, ap->a_p);
+		vfs_unbusy(mp);
 	} else
 		simple_unlock(&mountlist_slock);
 

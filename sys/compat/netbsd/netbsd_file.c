@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_file.c,v 1.5 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: netbsd_file.c,v 1.6 2005/11/30 10:35:07 pedro Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -633,7 +633,7 @@ netbsd_sys_getfsstat(p, v, retval)
 	count = 0;
 	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
 			nmp = mp->mnt_list.cqe_next;
 			continue;
 		}
@@ -648,7 +648,7 @@ netbsd_sys_getfsstat(p, v, retval)
 			    (error = VFS_STATFS(mp, sp, p))) {
 				simple_lock(&mountlist_slock);
 				nmp = mp->mnt_list.cqe_next;
-				vfs_unbusy(mp, p);
+				vfs_unbusy(mp);
  				continue;
 			}
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
@@ -656,7 +656,7 @@ netbsd_sys_getfsstat(p, v, retval)
 			statfs_to_netbsd_statfs(p, mp, sp, &fsb);
 			error = copyout((caddr_t)&fsb, sfsp, sizeof(fsb));
 			if (error) {
-				vfs_unbusy(mp, p);
+				vfs_unbusy(mp);
 				return (error);
 			}
 			sfsp += sizeof(fsb);
@@ -664,7 +664,7 @@ netbsd_sys_getfsstat(p, v, retval)
 		count++;
 		simple_lock(&mountlist_slock);
 		nmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
 	if (sfsp && count > maxcount)

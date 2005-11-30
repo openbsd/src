@@ -882,10 +882,10 @@
 #define HAVE_THREE_ARGUMENT_VOP_LOCK 1
 
 /* define if vfs_busy takes three arguments */
-/* #undef HAVE_THREE_ARGUMENT_VFS_BUSY */
+#define HAVE_THREE_ARGUMENT_VFS_BUSY 1
 
 /* define if vfs_busy takes four arguments */
-#define HAVE_FOUR_ARGUMENT_VFS_BUSY 1
+/* #undef HAVE_FOUR_ARGUMENT_VFS_BUSY */
 
 /* define if vget takes one argument */
 /* #undef HAVE_ONE_ARGUMENT_VGET */

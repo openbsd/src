@@ -228,7 +228,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef HAVE_FOUR_ARGUMENT_LOCKMGR */
 
 /* define if vfs_busy takes four arguments */
-#define HAVE_FOUR_ARGUMENT_VFS_BUSY 1
+/* #undef HAVE_FOUR_ARGUMENT_VFS_BUSY */
 
 /* define if vfs_name_hash takes four arguments */
 /* #undef HAVE_FOUR_ARGUMENT_VFS_NAME_HASH */
@@ -1260,7 +1260,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef HAVE_THREE_ARGUMENT_SELRECORD */
 
 /* define if vfs_busy takes three arguments */
-/* #undef HAVE_THREE_ARGUMENT_VFS_BUSY */
+#define HAVE_THREE_ARGUMENT_VFS_BUSY 1
 
 /* define if vfs_name_hash takes three arguments */
 /* #undef HAVE_THREE_ARGUMENT_VFS_NAME_HASH */

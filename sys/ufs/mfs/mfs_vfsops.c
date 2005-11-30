@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.28 2005/07/03 20:14:02 drahn Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.29 2005/11/30 10:35:08 pedro Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ mfs_mountroot()
 	mfsp->mfs_buflist = (struct buf *)0;
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
 		return (error);
@@ -125,7 +125,7 @@ mfs_mountroot()
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statfs(mp, &mp->mnt_stat, p);
-	vfs_unbusy(mp, p);
+	vfs_unbusy(mp);
 	inittodr((time_t)0);
 	return (0);
 }
@@ -271,7 +271,7 @@ mfs_start(mp, flags, p)
 		 * EINTR/ERESTART.
 		 */
 		if (sleepreturn != 0) {
-			if (vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT, NULL, p) ||
+			if (vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT, NULL) ||
 			    dounmount(mp, 0, p, NULL))
 				CLRSIG(p, CURSIG(p));
 			sleepreturn = 0;

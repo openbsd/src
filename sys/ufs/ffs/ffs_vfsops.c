@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.74 2005/11/08 02:29:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.75 2005/11/30 10:35:08 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ ffs_mountroot(void)
 
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
 		vrele(swapdev_vp);
 		vrele(rootvp);
@@ -143,7 +143,7 @@ ffs_mountroot(void)
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statfs(mp, &mp->mnt_stat, p);
-	vfs_unbusy(mp, p);
+	vfs_unbusy(mp);
 	inittodr(fs->fs_time);
 	return (0);
 }

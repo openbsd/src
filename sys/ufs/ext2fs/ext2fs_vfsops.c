@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.40 2005/11/06 00:24:17 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.41 2005/11/30 10:35:08 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ ext2fs_mountroot()
 
 	if ((error = ext2fs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_vfc->vfc_refcount--;
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
 		vrele(rootvp);
 		return (error);
@@ -159,7 +159,7 @@ ext2fs_mountroot()
 		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, 0);
 	}
 	(void)ext2fs_statfs(mp, &mp->mnt_stat, p);
-	vfs_unbusy(mp, p);
+	vfs_unbusy(mp);
 	inittodr(fs->e2fs.e2fs_wtime);
 	return (0);
 }

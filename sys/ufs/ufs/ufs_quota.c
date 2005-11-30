@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.20 2005/11/11 16:27:52 pedro Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.21 2005/11/30 10:35:08 pedro Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -1028,7 +1028,7 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
 	if ((u_int)type >= MAXQUOTAS)
 		return (EINVAL);
 
-	if (vfs_busy(mp, LK_NOWAIT, 0, p))
+	if (vfs_busy(mp, LK_NOWAIT, NULL))
 		return (0);
  
 
@@ -1063,6 +1063,6 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
 		break;
 	}
 
-	vfs_unbusy(mp, p);
+	vfs_unbusy(mp);
 	return (error);
 }

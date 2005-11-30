@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.120 2005/11/24 12:08:16 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.121 2005/11/30 10:35:07 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -154,8 +154,7 @@ vntblinit(void)
  *     fail.
  */
 int
-vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp,
-    struct proc *p)
+vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp)
 {
 	int lkflags;
 
@@ -183,12 +182,11 @@ vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp,
 	return (0);
 }
 
-
 /*
  * Free a busy file system
  */
 void
-vfs_unbusy(struct mount *mp, struct proc *p)
+vfs_unbusy(struct mount *mp)
 {
 	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL);
 }
@@ -208,7 +206,6 @@ vfs_isbusy(struct mount *mp)
 int
 vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 {
-	struct proc *p = curproc;
 	struct vfsconf *vfsp;
 	struct mount *mp;
 
@@ -220,7 +217,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	(void)vfs_busy(mp, LK_NOWAIT, 0, p);
+	(void)vfs_busy(mp, LK_NOWAIT, NULL);
 	LIST_INIT(&mp->mnt_vnodelist);
 	mp->mnt_vfc = vfsp;
 	mp->mnt_op = vfsp->vfc_vfsops;
@@ -1167,7 +1164,7 @@ vgonel(struct vnode *vp, struct proc *p)
 		 */
 		mp = vp->v_specmountpoint;
 		if (mp != NULL) {
-			if (!vfs_busy(mp, LK_EXCLUSIVE, NULL, p)) {
+			if (!vfs_busy(mp, LK_EXCLUSIVE, NULL)) {
 				flags = MNT_FORCE | MNT_DOOMED;
 				dounmount(mp, flags, p, NULL);
 			}
@@ -1325,7 +1322,6 @@ vprint(char *label, struct vnode *vp)
 void
 printlockedvnodes(void)
 {
-	struct proc *p = curproc;
 	struct mount *mp, *nmp;
 	struct vnode *vp;
 
@@ -1333,7 +1329,7 @@ printlockedvnodes(void)
 	simple_lock(&mountlist_slock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1343,7 +1339,7 @@ printlockedvnodes(void)
 		}
 		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
  	}
 	simple_unlock(&mountlist_slock);
 
@@ -1414,7 +1410,7 @@ sysctl_vnode(char *where, size_t *sizep, struct proc *p)
 	simple_lock(&mountlist_slock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1438,7 +1434,7 @@ again:
 			if (bp + sizeof(struct e_vnode) > ewhere) {
 				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
-				vfs_unbusy(mp, p);
+				vfs_unbusy(mp);
 				return (ENOMEM);
 			}
 			if ((error = copyout(&vp,
@@ -1447,7 +1443,7 @@ again:
 			   (error = copyout(vp,
 			    &((struct e_vnode *)bp)->vnode,
 			    sizeof(struct vnode)))) {
-				vfs_unbusy(mp, p);
+				vfs_unbusy(mp);
 				return (error);
 			}
 			bp += sizeof(struct e_vnode);
@@ -1457,7 +1453,7 @@ again:
 		simple_unlock(&mntvnode_slock);
 		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 	}
 
 	simple_unlock(&mountlist_slock);
@@ -1711,14 +1707,13 @@ vfs_unmountall(void)
 {
 	struct mount *mp, *nmp;
 	int allerror, error, again = 1;
-	struct proc *p = curproc;
 
  retry:
 	allerror = 0;
 	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
-		if ((vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT, NULL, p)) != 0)
+		if ((vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT, NULL)) != 0)
 			continue;
 		if ((error = dounmount(mp, MNT_FORCE, curproc, NULL)) != 0) {
 			printf("unmount of %s failed with error %d\n",

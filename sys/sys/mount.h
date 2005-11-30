@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.64 2005/11/24 12:08:16 pedro Exp $	*/
+/*	$OpenBSD: mount.h,v 1.65 2005/11/30 10:35:08 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -564,7 +564,7 @@ struct netexport {
 /*
  * exported vnode operations
  */
-int	vfs_busy(struct mount *, int, struct simplelock *, struct proc *);
+int	vfs_busy(struct mount *, int, struct simplelock *);
 int     vfs_isbusy(struct mount *);
 int     vfs_mount_foreach_vnode(struct mount *, int (*func)(struct vnode *,
 				    void *), void *);
@@ -573,7 +573,7 @@ struct	mount *vfs_getvfs(fsid_t *);
 int	vfs_mountedon(struct vnode *);
 int	vfs_mountroot(void);
 int	vfs_rootmountalloc(char *, char *, struct mount **);
-void	vfs_unbusy(struct mount *, struct proc *);
+void	vfs_unbusy(struct mount *);
 void	vfs_unmountall(void);
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;
 extern	struct simplelock mountlist_slock;

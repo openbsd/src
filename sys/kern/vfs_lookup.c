@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.30 2005/11/08 15:43:44 pedro Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.31 2005/11/30 10:35:07 pedro Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -513,11 +513,11 @@ dirloop:
 	 */
 	while (dp->v_type == VDIR && (mp = dp->v_mountedhere) &&
 	    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
-		if (vfs_busy(mp, 0, 0, p))
+		if (vfs_busy(mp, 0, NULL))
 			continue;
 		VOP_UNLOCK(dp, 0, p);
 		error = VFS_ROOT(mp, &tdp);
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 		if (error) {
 			dpunlocked = 1;
 			goto bad2;
