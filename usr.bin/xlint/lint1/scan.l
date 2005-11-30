@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.13 2005/11/29 20:47:44 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.14 2005/11/30 06:22:42 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.13 2005/11/29 20:47:44 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.14 2005/11/30 06:22:42 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -313,7 +313,7 @@ allocsb()
 	} else {
 		sb = xmalloc(sizeof (sbuf_t));
 	}
-	(void)memset(sb, 0, sizeof (sb));
+	(void)memset(sb, 0, sizeof (sbuf_t));
 	return (sb);
 }
 
