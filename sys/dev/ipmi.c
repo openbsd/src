@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.20 2005/11/28 23:47:42 jordan Exp $	*/
+/*	$OpenBSD: ipmi.c,v 1.21 2005/11/30 18:02:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1216,7 +1216,7 @@ signextend(unsigned long val, int bits)
 {
 	long msk = (1L << (bits-1))-1;
 
-  	return (-(val & ~msk) | val);
+	return (-(val & ~msk) | val);
 }
 
 /* Convert IPMI reading from sensor factors */
@@ -1667,12 +1667,11 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	wdog_register(sc, ipmi_watchdog);
 }
 
-
 int
 ipmi_watchdog(void *arg, int period)
 {
 	struct ipmi_softc	*sc = arg;
-	struct ipmi_watchdog     wdog;
+	struct ipmi_watchdog	wdog;
 	int			s, rc, len;
 
 	if (sc->sc_wdog_period == period) {
@@ -1680,7 +1679,7 @@ ipmi_watchdog(void *arg, int period)
 			s = splsoftclock();
 			/* tickle the watchdog */
 			rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
-					  APP_RESET_WATCHDOG, 0, NULL);
+			    APP_RESET_WATCHDOG, 0, NULL);
 			rc = ipmi_recvcmd(sc, 0, &len, NULL);
 			splx(s);
 		}
@@ -1691,8 +1690,8 @@ ipmi_watchdog(void *arg, int period)
 		period = 10;
 
 	s = splsoftclock();
-	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN, 
-			  APP_GET_WATCHDOG_TIMER, 0, NULL);
+	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
+	    APP_GET_WATCHDOG_TIMER, 0, NULL);
 	rc = ipmi_recvcmd(sc, sizeof(wdog), &len, &wdog);
 
 	/* Period is 10ths/sec */
@@ -1701,7 +1700,7 @@ ipmi_watchdog(void *arg, int period)
 	wdog.wdog_action |= (period == 0) ? IPMI_WDOG_DISABLED : IPMI_WDOG_REBOOT;
 
 	rc = ipmi_sendcmd(sc, BMC_SA, BMC_LUN, APP_NETFN,
-			  APP_SET_WATCHDOG_TIMER, sizeof(wdog), &wdog);
+	    APP_SET_WATCHDOG_TIMER, sizeof(wdog), &wdog);
 	rc = ipmi_recvcmd(sc, 0, &len, NULL);
 
 	splx(s);
