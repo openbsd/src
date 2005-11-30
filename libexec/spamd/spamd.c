@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.80 2005/11/12 02:20:37 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.81 2005/11/30 20:44:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -422,10 +422,10 @@ append_error_string(struct con *cp, size_t off, char *fmt, int af, void *ia)
 				sav = '\0';
 				break;
 			}
-			/* fallthrough */
+			/* FALLTHROUGH */
 		default:
 			if (sav)
-			c[i++] = sav;
+				c[i++] = sav;
 			c[i++] = *s;
 			sav = '\0';
 			c[i] = '\0';
@@ -452,8 +452,7 @@ loglists(struct con *cp)
 		/* don't report an insane amount of lists in the logs.
 		 * just truncate and indicate with ...
 		 */
-		if (strlen(matchlists) + strlen(matches[0]->tag) + 1
-		    >= s)
+		if (strlen(matchlists) + strlen(matches[0]->tag) + 1 >= s)
 			strlcat(matchlists, " ...", sizeof(matchlists));
 		else {
 			strlcat(matchlists, " ", s);
@@ -555,11 +554,11 @@ setlog(char *p, size_t len, char *f)
 void
 initcon(struct con *cp, int fd, struct sockaddr *sa)
 {
-	time_t t;
+	time_t tt;
 	char *tmp;
 	int error;
 
-	time(&t);
+	time(&tt);
 	free(cp->obuf);
 	cp->obuf = NULL;
 	cp->osize = 0;
@@ -594,8 +593,8 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 	free(tmp);
 	cp->op = cp->obuf;
 	cp->ol = strlen(cp->op);
-	cp->w = t + cp->stutter;
-	cp->s = t;
+	cp->w = tt + cp->stutter;
+	cp->s = tt;
 	strlcpy(cp->rend, "\n", sizeof cp->rend);
 	clients++;
 	if (cp->blacklists != NULL) {
@@ -613,16 +612,16 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 void
 closecon(struct con *cp)
 {
-	time_t t;
+	time_t tt;
 
-	time(&t);
+	time(&tt);
 	syslog_r(LOG_INFO, &sdata, "%s: disconnected after %ld seconds.%s%s",
-	    cp->addr, (long)(t - cp->s),
+	    cp->addr, (long)(tt - cp->s),
 	    ((cp->lists == NULL) ? "" : " lists:"),
 	    ((cp->lists == NULL) ? "": cp->lists));
 	if (debug > 0)
 		printf("%s connected for %ld seconds.\n", cp->addr,
-		    (long)(t - cp->s));
+		    (long)(tt - cp->s));
 	if (cp->lists != NULL) {
 		free(cp->lists);
 		cp->lists = NULL;
@@ -703,8 +702,8 @@ nextstate(struct con *cp)
 		cp->state = 3;
 		cp->r = t;
 		break;
-	mail:
 	case 3:
+	mail:
 		if (match(cp->ibuf, "MAIL")) {
 			setlog(cp->mail, sizeof cp->mail, cp->ibuf);
 			snprintf(cp->obuf, cp->osize,
@@ -726,8 +725,8 @@ nextstate(struct con *cp)
 		cp->state = 5;
 		cp->r = t;
 		break;
-	rcpt:
 	case 5:
+	rcpt:
 		if (match(cp->ibuf, "RCPT")) {
 			setlog(cp->rcpt, sizeof(cp->rcpt), cp->ibuf);
 			snprintf(cp->obuf, cp->osize,
@@ -771,8 +770,8 @@ nextstate(struct con *cp)
 		cp->r = t;
 		break;
 
-	spam:
 	case 50:
+	spam:
 		if (match(cp->ibuf, "DATA")) {
 			snprintf(cp->obuf, cp->osize,
 			    "354 Enter spam, end with \".\" on a line by "
@@ -832,8 +831,8 @@ nextstate(struct con *cp)
 		cp->r = t;
 		break;
 	}
-	done:
 	case 98:
+	done:
 		doreply(cp);
 		cp->op = cp->obuf;
 		cp->ol = strlen(cp->op);

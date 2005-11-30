@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.h,v 1.2 2004/02/26 08:18:56 deraadt Exp $ */
+/*	$OpenBSD: sdl.h,v 1.3 2005/11/30 20:44:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck, Kjell Wooding.  All rights reserved.
@@ -29,7 +29,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/ip_ipsp.h>
 
 /* spamd source list */
 struct sdlist {
