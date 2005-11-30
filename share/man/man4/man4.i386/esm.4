@@ -1,4 +1,4 @@
-.\"	$OpenBSD: esm.4,v 1.2 2005/11/30 20:23:36 marco Exp $
+.\"	$OpenBSD: esm.4,v 1.3 2005/11/30 22:39:33 jmc Exp $
 .\"
 .\" Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
 .\"
@@ -51,25 +51,28 @@ monitored by the
 .Xr ipmi 4
 driver.
 .Sh WATCHDOG
-ESM provides watchdog timer functionality.
-Once configured, if the watchdog is not reset within a x second timeout,
-the server will reset.
+ESM provides
+.Xr watchdog 4
+timer functionality.
+Once configured, if the watchdog is not reset within
+a certain period of time,
+it will timeout and the server will reset.
 The reset will occur regardless of the recoverability of the hang or crash.
-.Bl -tag -width Ds
-.It Example of enabling a watchdog:
-sysctl -w kern.watchdog.period=10
-.El
 .Pp
-In this case if the watchdog is not reset it'll reboot the server after roughly
-10 seconds.
+Example of enabling a watchdog:
 .Pp
-.Bl -tag -width Ds
-.It Example of disabling watchdog:
-sysctl -w kern.watchdog.period=0
-.El
+.Dl # sysctl kern.watchdog.period=10
+.Pp
+In this case if the watchdog is not reset,
+it'll reboot the server after roughly 10 seconds.
+.Pp
+Example of disabling the watchdog:
+.Pp
+.Dl # sysctl kern.watchdog.period=0
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr ipmi 4 ,
+.Xr watchdog 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipmi.4,v 1.9 2005/11/30 20:21:42 marco Exp $
+.\"	$OpenBSD: ipmi.4,v 1.10 2005/11/30 22:35:42 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
 .\" Text was heavily borrowed from the IPMI spec V1.5
@@ -140,26 +140,28 @@ The BT interface can be implemented using an ASIC or FPGA
 or may be built in to a custom-designed management controller.
 .El
 .Sh WATCHDOG
-IPMI provides watchdog timer functionality.
-Once configured, if the watchdog is not reset within a x second timeout,
-the server will reset.
-The reset will occur regardless of the recoverability of the hang or crash.
-.Bl -tag -width Ds
-.It Example of enabling a watchdog:
-sysctl -w kern.watchdog.period=10
-.El
-.Pp
-In this case if the watchdog is not reset it'll reboot the server after roughly
-10 seconds.
-.Pp
-.Bl -tag -width Ds
-.It Example of disabling watchdog:
-sysctl -w kern.watchdog.period=0
-.El
-.Sh SEE ALSO
-.Xr sensorsd 8 ,
-.Xr sysctl 8 ,
+IPMI provides
 .Xr watchdog 4
+timer functionality.
+Once configured, if the watchdog is not reset within
+a certain period of time,
+it will timeout and the server will reset.
+The reset will occur regardless of the recoverability of the hang or crash.
+.Pp
+Example of enabling a watchdog:
+.Pp
+.Dl # sysctl kern.watchdog.period=10
+.Pp
+In this case if the watchdog is not reset,
+it'll reboot the server after roughly 10 seconds.
+.Pp
+Example of disabling the watchdog:
+.Pp
+.Dl # sysctl kern.watchdog.period=0
+.Sh SEE ALSO
+.Xr watchdog 4 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
