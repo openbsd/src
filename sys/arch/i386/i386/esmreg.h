@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmreg.h,v 1.8 2005/11/28 22:13:49 deraadt Exp $ */
+/*	$OpenBSD: esmreg.h,v 1.9 2005/11/30 11:46:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -138,16 +138,17 @@ struct esm_devmap_resp {
 	struct esm_devmap	devmap[1]; /* request one map at a time */
 } __packed;
 
-
 /* ESM SMB requests */
-
-struct esm_smb_req_hdr {
-} __packed;
 
 struct esm_smb_req_val {
 	u_int8_t		v_cmd;
 	u_int8_t		v_initiator;
 	u_int8_t		v_sensor;
+} __packed;
+
+struct esm_smb_req_thr {
+	u_int8_t		t_cmd;
+	u_int8_t		t_sensor;
 } __packed;
 
 struct esm_smb_req {
@@ -164,8 +165,10 @@ struct esm_smb_req {
 
 	union {
 		struct esm_smb_req_val	_val;
+		struct esm_smb_req_thr	_thr;
 	} __packed _;
 #define req_val		_._val
+#define req_thr		_._thr
 
 } __packed;
 
@@ -175,6 +178,16 @@ struct esm_smb_resp_val {
 	u_int16_t		v_reading;
 	u_int8_t		v_status;
 	u_int8_t		v_checksum;
+} __packed;
+
+struct esm_smb_resp_thr {
+	u_int8_t		t_sensor;
+	u_int16_t		t_lo_fail;
+	u_int16_t		t_hi_fail;
+	u_int16_t		t_lo_warn;
+	u_int16_t		t_hi_warn;
+	u_int16_t		t_hysterisis;
+	u_int8_t		t_checksum;
 } __packed;
 
 struct esm_smb_resp {
@@ -193,8 +206,10 @@ struct esm_smb_resp {
 
 	union {
 		struct esm_smb_resp_val	_val;
+		struct esm_smb_resp_thr	_thr;
 	} __packed _;
 #define resp_val _._val
+#define resp_thr _._thr
 } __packed;
 
 #define ESM2_VS_VALID		0x07

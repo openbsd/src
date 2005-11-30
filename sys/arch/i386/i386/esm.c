@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.21 2005/11/28 23:56:04 deraadt Exp $ */
+/*	$OpenBSD: esm.c,v 1.22 2005/11/30 11:46:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -34,12 +34,10 @@
 #include <arch/i386/i386/esmreg.h>
 #include <arch/i386/isa/isa_machdep.h>
 
-/* #define ESM_DEBUG */
-
 #ifdef ESM_DEBUG
 #define DPRINTF(x...)		do { if (esmdebug) printf(x); } while (0)
 #define DPRINTFN(n,x...)	do { if (esmdebug > (n)) printf(x); } while (0)
-int	esmdebug = 2;
+int	esmdebug = 3;
 #else
 #define DPRINTF(x...)		/* x */
 #define DPRINTFN(n,x...)	/* n: x */
@@ -81,6 +79,13 @@ struct esm_sensor {
 	u_int8_t		es_id;
 
 	enum esm_sensor_type	es_type;
+
+	struct {
+		u_int16_t		th_lo_crit;
+		u_int16_t		th_lo_warn;
+		u_int16_t		th_hi_warn;
+		u_int16_t		th_hi_crit;
+	}			es_thresholds;
 
 	struct sensor		*es_sensor;
 	TAILQ_ENTRY(esm_sensor)	es_entry;
@@ -124,6 +129,8 @@ int		esm_get_devmap(struct esm_softc *, int, struct esm_devmap *);
 void		esm_devmap(struct esm_softc *, struct esm_devmap *);
 void		esm_make_sensors(struct esm_softc *, struct esm_devmap *,
 		    struct esm_sensor_map *, int);
+int		esm_thresholds(struct esm_softc *, struct esm_devmap *,
+		    struct esm_sensor *);
 
 int		esm_bmc_ready(struct esm_softc *, int, u_int8_t, u_int8_t, int);
 int		esm_cmd(struct esm_softc *, void *, size_t, void *, size_t,
@@ -348,6 +355,30 @@ esm_refresh(void *arg)
 			es->es_sensor->flags &= ~SENSOR_FINVALID;
 			break;
 		}
+
+		switch (es->es_type) {
+		case ESM_S_TEMP:
+		case ESM_S_FANRPM:
+		case ESM_S_VOLTS:
+			if (val->v_reading >= es->es_thresholds.th_hi_crit ||
+			    val->v_reading <= es->es_thresholds.th_lo_crit) {
+				es->es_sensor->status = SENSOR_S_CRIT;
+				break;
+			}
+
+			if (val->v_reading >= es->es_thresholds.th_hi_warn ||
+			    val->v_reading <= es->es_thresholds.th_lo_warn) {
+				es->es_sensor->status = SENSOR_S_WARN;
+				break;
+			}
+
+			es->es_sensor->status = SENSOR_S_OK;
+			break;
+
+		default:
+			break;
+		}
+
 	}
 
 	sc->sc_nextsensor = TAILQ_NEXT(es, es_entry);
@@ -788,6 +819,15 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			}
 			break;
 
+		case ESM_S_TEMP:
+		case ESM_S_FANRPM:
+		case ESM_S_VOLTS:
+			if (esm_thresholds(sc, devmap, es) != 0) {
+				free(es, M_DEVBUF);
+				continue;
+			}
+			/* FALLTHROUGH */
+
 		default:
 			nsensors = 1;
 			s = malloc(sizeof(struct sensor), M_DEVBUF, M_NOWAIT);
@@ -810,6 +850,40 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 		es->es_sensor = s;
 		TAILQ_INSERT_TAIL(&sc->sc_sensors, es, es_entry);
 	}
+}
+
+int
+esm_thresholds(struct esm_softc *sc, struct esm_devmap *devmap,
+    struct esm_sensor *es)
+{
+	struct esm_smb_req	req;
+	struct esm_smb_resp	resp;
+	struct esm_smb_resp_thr	*thr = &resp.resp_thr;
+
+	memset(&req, 0, sizeof(req));
+	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
+	req.h_dev = devmap->index;
+	req.h_txlen = sizeof(req.req_thr);
+	req.h_rxlen = sizeof(resp.resp_thr);
+
+	req.req_thr.t_cmd = ESM2_SMB_SENSOR_THRESHOLDS;
+	req.req_thr.t_sensor = es->es_id;
+
+	if (esm_smb_cmd(sc, &req, &resp, 1) != 0)
+		return (1);
+
+	DPRINTFN(2, "%s: dev: %d sensor: %d lo fail: %d hi fail: %d "
+	    "lo warn: %d hi warn: %d hysterisis: %d checksum: 0x%02x\n",
+	    DEVNAME(sc), devmap->index, es->es_id, thr->t_lo_fail,
+	    thr->t_hi_fail, thr->t_lo_warn, thr->t_hi_warn, thr->t_hysterisis,
+	    thr->t_checksum);
+
+	es->es_thresholds.th_lo_crit = thr->t_lo_fail;
+	es->es_thresholds.th_lo_warn = thr->t_lo_warn;
+	es->es_thresholds.th_hi_warn = thr->t_hi_warn;
+	es->es_thresholds.th_hi_crit = thr->t_hi_fail;
+
+	return (0);
 }
 
 int
