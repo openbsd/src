@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.15 2005/11/30 06:32:00 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.16 2005/11/30 19:42:58 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.15 2005/11/30 06:32:00 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.16 2005/11/30 19:42:58 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -77,6 +77,7 @@ static	int	wccon(void);
 static	int	getescc(int);
 static	void	directive(void);
 static	void	comment(void);
+static	void	slashslashcomment(void);
 static	int	string(void);
 static	int	wcstrg(void);
 
@@ -152,6 +153,7 @@ EX	([eE][+-]?[0-9]+)
 \n				incline();
 \t|" "|\f|\v			;
 "/*"				comment();
+"//"				slashslashcomment();
 .				badchar(yytext[0]);
 
 %%
@@ -1073,6 +1075,17 @@ comment(void)
 		if (lc == '*' && c == '/')
 			eoc = 1;
 	}
+}
+
+/*
+ * Handle // style comments, which are valid in C99.
+ */
+static void
+slashslashcomment(void)
+{
+	int c;
+
+	while ((c = inpc()) != EOF && c != '\n');
 }
 
 /*
