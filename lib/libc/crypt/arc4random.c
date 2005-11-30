@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.14 2005/06/06 14:57:59 kjell Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.15 2005/11/30 07:51:02 otto Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -99,14 +99,7 @@ arc4_stir(struct arc4_stream *as)
 	mib[1] = KERN_ARND;
 
 	len = sizeof(rnd);
-	if (sysctl(mib, 2, rnd, &len, NULL, 0) == -1) {
-		for (i = 0; i < sizeof(rnd) / sizeof(u_int); i ++) {
-			len = sizeof(u_int);
-			if (sysctl(mib, 2, &rnd[i * sizeof(u_int)], &len,
-			    NULL, 0) == -1)
-				break;
-		}
-	}
+	sysctl(mib, 2, rnd, &len, NULL, 0);
 
 	arc4_stir_pid = getpid();
 	arc4_addrandom(as, rnd, sizeof(rnd));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.14 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: random.c,v 1.15 2005/11/30 07:51:02 otto Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -220,17 +220,17 @@ srandom(unsigned int x)
  * srandomdev:
  *
  * Many programs choose the seed value in a totally predictable manner.
- * This often causes problems.  We seed the generator using the much more
- * secure arandom(4) interface.  Note that this particular seeding
- * procedure can generate states which are impossible to reproduce by
- * calling srandom() with any value, since the succeeding terms in the
- * state buffer are no longer derived from the LC algorithm applied to
- * a fixed seed.
+ * This often causes problems.  We seed the generator using random
+ * data from the kernel.
+ * Note that this particular seeding procedure can generate states
+ * which are impossible to reproduce by calling srandom() with any
+ * value, since the succeeding terms in the state buffer are no longer
+ * derived from the LC algorithm applied to a fixed seed.
  */
 void
 srandomdev(void)
 {
-	int fd, i, mib[2], n;
+	int mib[2];
 	size_t len;
 
 	if (rand_type == TYPE_0)
@@ -238,36 +238,9 @@ srandomdev(void)
 	else
 		len = rand_deg * sizeof(state[0]);
 
-	/*
-	 * To get seed data, first try reading from /dev/arandom.
-	 * If that fails, try the KERN_ARND sysctl() (one int at a time).
-	 * As a last resort, call srandom().
-	 */
-	if ((fd = open("/dev/arandom", O_RDONLY, 0)) != -1 &&
-	    read(fd, (void *) state, len) == (ssize_t) len) {
-		close(fd);
-	} else {
-		if (fd != -1)
-			close(fd);
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_ARND;
-		n = len / sizeof(int);
-		len = sizeof(int);
-		for (i = 0; i < n; i++) {
-			if (sysctl(mib, 2, (char *)((int *)state + i), &len,
-			    NULL, 0) == -1)
-				break;
-		}
-		if (i != n) {
-			struct timeval tv;
-			u_int junk;
-
-			/* XXX - this could be better */
-			gettimeofday(&tv, NULL);
-			srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec ^ junk);
-			return;
-		}
-	}
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ARND;
+	sysctl(mib, 2, state, &len, NULL, 0);
 
 	if (rand_type != TYPE_0) {
 		fptr = &state[rand_sep];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.8 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.9 2005/11/30 07:51:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -43,7 +43,7 @@ void __stack_smash_handler(char func[], int damaged __attribute__((unused)));
 static void
 __guard_setup(void)
 {
-	int i, mib[2];
+	int mib[2];
 	size_t len;
 
 	if (__guard[0] != 0)
@@ -52,14 +52,9 @@ __guard_setup(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_ARND;
 
-	len = 4;
-	for (i = 0; i < sizeof(__guard) / 4; i++) {
-		if (__sysctl(mib, 2, (char *)&((int *)__guard)[i],
-		    &len, NULL, 0) == -1)
-			break;
-	}
-
-	if (i < sizeof(__guard) / 4) {
+	len = sizeof(__guard);
+	if (__sysctl(mib, 2, __guard, &len, NULL, 0) == -1 ||
+	    len != sizeof(__guard)) {
 		/* If sysctl was unsuccessful, use the "terminator canary". */
 		((unsigned char *)__guard)[0] = 0;
 		((unsigned char *)__guard)[1] = 0;
