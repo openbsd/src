@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.107 2005/11/16 12:49:21 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.108 2005/11/30 12:16:04 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -1559,6 +1559,15 @@ The default is
 for non-root users,
 .Sq #\ \&
 for root.
+Additionally, if
+.Nm
+is invoked by root and
+.Ev PS1
+does not contain a
+.Sq #
+character, the default value will be used even if
+.Ev PS1
+already exists in the environment.
 .Pp
 The following backslash-escaped special characters can be used
 to customise the prompt:
