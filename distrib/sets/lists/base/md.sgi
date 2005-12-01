@@ -1987,13 +1987,11 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/ieeefp.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/internal_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/intr.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/kbdreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/kcore.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/limits.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/memconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/mips_opcode.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/mouse.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/param.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/pcb.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/pio.ph

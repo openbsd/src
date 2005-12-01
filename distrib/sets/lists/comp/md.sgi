@@ -211,13 +211,11 @@
 ./usr/include/sgi/ieeefp.h
 ./usr/include/sgi/internal_types.h
 ./usr/include/sgi/intr.h
-./usr/include/sgi/kbdreg.h
 ./usr/include/sgi/kcore.h
 ./usr/include/sgi/limits.h
 ./usr/include/sgi/loadfile_machdep.h
 ./usr/include/sgi/memconf.h
 ./usr/include/sgi/mips_opcode.h
-./usr/include/sgi/mouse.h
 ./usr/include/sgi/param.h
 ./usr/include/sgi/pcb.h
 ./usr/include/sgi/pio.h
