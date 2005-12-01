@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.58 2005/11/24 08:47:10 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.59 2005/12/01 15:21:16 tom Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -56,9 +56,9 @@ it will attempt to waste the time and resources of the spam sender.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 4
-For black listed entries, return error code 450 to the spammer (default).
+For blacklisted entries, return error code 450 to the spammer (default).
 .It Fl 5
-For black-listed entries, return error code 550 to the spammer.
+For blacklisted entries, return error code 550 to the spammer.
 .It Fl B Ar maxblack
 The maximum number of concurrent blacklisted connections to allow in
 greylisting mode.
