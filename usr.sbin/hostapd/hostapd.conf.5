@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.24 2005/12/01 05:10:38 deraadt Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.25 2005/12/01 08:28:58 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -82,7 +82,7 @@ Tables are used for
 .Xr hostapd 8
 .Em event rules
 to match specified IEEE 802.11 link layer addresses and address ranges,
-and the capability to assign link layer to IP addresses and a option netmask
+and the capability to assign link layer to IP addresses and an option netmask
 is a requirement for advanced IAPP functionality.
 .Pp
 Table options may be presented after the table name declaration.
@@ -151,7 +151,7 @@ Specify the IAPP subtypes to use:
 .Op Ic not
 .Ic add notify
 .Xc
-Sent and receive
+Send and receive
 .Em ADD.notify
 messages.
 This option is enabled by default.
@@ -170,12 +170,16 @@ Specify the IAPP mode.
 The supported modes are:
 .Pp
 .Bl -tag -width broadcast -offset indent -compact
-.It Ic multicast
+.It Xo
+.Ic multicast
 .Op Ic address Ar ipv4addr
 .Op Ic port Ar number
+.Xc
 Use multicast frames.
-.It Ic broadcast
+.It Xo
+.Ic broadcast
 .Op Ic port Ar number
+.Xc
 Use broadcast frames.
 .El
 .Pp
@@ -314,7 +318,7 @@ The direction may be specified in the following ways:
 Match all directions.
 .It Ic dir Ar framedir
 Match frames with the given direction
-.Ar framedir.
+.Ar framedir .
 See the
 .Sx Frame Directions
 section below for available direction specifications.
