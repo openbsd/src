@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.55 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.56 2005/12/01 22:13:33 pedro Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1151,6 +1151,9 @@ abortit:
 				VOP_UNLOCK(fdvp, 0, p);
 			goto bad;
 		}
+
+		cache_purge(fvp);
+
 		if (!doingdirectory) {
 			error = pcbmap(dp, de_cluster(pmp, to_diroffset), 0,
 				       &ip->de_dirclust, 0);
