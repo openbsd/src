@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.25 2005/11/30 17:39:45 deraadt Exp $ */
+/*	$OpenBSD: esm.c,v 1.26 2005/12/01 00:19:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -552,7 +552,7 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B Internal" },
 	{ ESM_S_DRIVES,		1,		"Drive %d" },
 	{ ESM_S_DRIVES,		5,		"Drive %d" },
-	{ ESM_S_DRIVE,		0,		"Drive 1"},
+	{ ESM_S_DRIVE,		0,		"Drive 1" },
 	{ ESM_S_DRIVE,		0,		"Drive 2" },
 	{ ESM_S_DRIVE,		0,		"Drive 3" },
 	{ ESM_S_DRIVE,		0,		"Drive 4" },
@@ -584,13 +584,13 @@ struct esm_sensor_map esm_sensors_powerunit[] = {
 	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 -5V" },
 
 	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 -12V" },
-	{ ESM_S_VOLTS,		0,		"System power supply +5V" },
-	{ ESM_S_VOLTS,		0,		"System power supply +3.3V" },
-	{ ESM_S_VOLTS,		0,		"System power supply +12V" },
-	{ ESM_S_VOLTS,		0,		"System power supply -5V" },
+	{ ESM_S_VOLTS,		0,		"System Power Supply +5V" },
+	{ ESM_S_VOLTS,		0,		"System Power Supply +3.3V" },
+	{ ESM_S_VOLTS,		0,		"System Power Supply +12V" },
+	{ ESM_S_VOLTS,		0,		"System Power Supply -5V" },
 
-	{ ESM_S_VOLTS,		0,		"System power supply -12V" },
-	{ ESM_S_VOLTS,		0,		"System power supply +5V aux" },
+	{ ESM_S_VOLTS,		0,		"System Power Supply -12V" },
+	{ ESM_S_VOLTS,		0,		"System Power Supply +5V aux" },
 	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
 	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
 	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
@@ -602,9 +602,9 @@ struct esm_sensor_map esm_sensors_powerunit[] = {
 	{ ESM_S_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
 
 	{ ESM_S_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
-	{ ESM_S_FANRPM,		ESM_A_PWRSUP_1,	"Power supply 1 Fan" },
-	{ ESM_S_FANRPM,		ESM_A_PWRSUP_2,	"Power supply 2 Fan" },
-	{ ESM_S_FANRPM,		ESM_A_PWRSUP_3,	"Power supply 3 Fan" },
+	{ ESM_S_FANRPM,		ESM_A_PWRSUP_1,	"Power Supply 1 Fan" },
+	{ ESM_S_FANRPM,		ESM_A_PWRSUP_2,	"Power Supply 2 Fan" },
+	{ ESM_S_FANRPM,		ESM_A_PWRSUP_3,	"Power Supply 3 Fan" },
 	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
 
 	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
@@ -624,7 +624,7 @@ void
 esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 {
 	struct esm_sensor_map	*sensor_map;
-	const char		*name;
+	const char		*name = NULL, *fname = NULL;
 	int			mapsize;
 
 	switch (devmap->dev_major) {
@@ -688,31 +688,26 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 			name = "PowerEdge 2450";
 			mapsize = 44;
 			break;
-
 		default:
 			return;
 		}
 
-		printf("%s: %s Embedded Server Management %d.%d\n",
-		    DEVNAME(sc), name, devmap->rev_major, devmap->rev_minor);
+		fname = "Embedded Server Management";
 		break;
 
 	case ESM2_DEV_DRACII:
-		printf("%s: Dell Remote Assistance Card II %d.%d\n",
-		    DEVNAME(sc), devmap->rev_major, devmap->rev_minor);
-		return;
+		fname = "Dell Remote Assistance Card II";
+		break;
 
 	case ESM2_DEV_FRONT_PANEL:
-		printf("%s: Front Panel %d.%d\n", DEVNAME(sc),
-		    devmap->rev_major, devmap->rev_minor);
-		return;
+		fname = "Front Panel";
+		break;
 
 	case ESM2_DEV_BACKPLANE2:
 		sensor_map = esm_sensors_backplane;
 		mapsize = 22;
 
-		printf("%s: Primary System Backplane %d.%d\n", DEVNAME(sc),
-		    devmap->rev_major, devmap->rev_minor);
+		fname = "Primary System Backplane";
 		break;
 
 	case ESM2_DEV_POWERUNIT2:
@@ -720,39 +715,38 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 		mapsize = sizeof(esm_sensors_powerunit) /
 		    sizeof(esm_sensors_powerunit[0]);
 
-		printf("%s: Power Unit %d.%d\n", DEVNAME(sc),
-		    devmap->rev_major, devmap->rev_minor);
+		fname = "Power Unit";
 		break;
 
 	case ESM2_DEV_ENCL2_BACKPLANE:
 	case ESM2_DEV_ENCL1_BACKPLANE:
-		printf("%s: Enclosure Backplane %d.%d\n", DEVNAME(sc),
-		    devmap->rev_major, devmap->rev_minor);
-		return;
+		fname = "Enclosure Backplane";
+		break;
 
 	case ESM2_DEV_ENCL2_POWERUNIT:
 	case ESM2_DEV_ENCL1_POWERUNIT:
-		printf("%s: Enclosure Powerunit %d.%d\n", DEVNAME(sc),
-		    devmap->rev_major, devmap->rev_minor);
-		return;
+		fname = "Enclosure Powerunit";
+		break;
 
 	case ESM2_DEV_HPPCI: /* nfi what this is */
-		printf("%s: HPPCI %d.%d\n", DEVNAME(sc),
-		    devmap->rev_major, devmap->rev_minor);
-		return;
+		fname = "HPPCI";
+		break;
 
 	case ESM2_DEV_BACKPLANE3:
 		sensor_map = esm_sensors_backplane;
 		mapsize = sizeof(esm_sensors_backplane) /
 		    sizeof(esm_sensors_backplane[0]);
 
-		printf("%s: Primary System Backplane %d.%d\n", DEVNAME(sc),
-		    devmap->rev_major, devmap->rev_minor);
+		fname = "Primary System Backplane";
 		break;
 
 	default:
 		return;
 	}
+
+	printf("%s: %s%s%s %d.%d\n", DEVNAME(sc),
+	    name ? name : "", name ? " " : "", fname, 
+	    devmap->rev_major, devmap->rev_minor);
 
 	esm_make_sensors(sc, devmap, sensor_map, mapsize);
 }
