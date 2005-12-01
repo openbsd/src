@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.16 2005/11/30 19:42:58 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.17 2005/12/01 03:17:14 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.16 2005/11/30 19:42:58 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.17 2005/12/01 03:17:14 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -507,7 +507,7 @@ icon(int base)
 		warning(252);
 
 	/*
-         * If the value is to big for the current type, we must choose
+         * If the value is too big for the current type, we must choose
 	 * another type.
 	 */
 	ansiu = 0;
