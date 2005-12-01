@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2005/11/28 22:22:55 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2005/12/01 22:24:52 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -781,7 +781,7 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			 */
 			pte = pmap_pte(map->pmap, va);
 #ifdef DEBUG
-			if (pte == PT_ENTRY_NULL)
+			if (pte == NULL)
 				panic("NULL pte on write fault??");
 #endif
 			if (!(*pte & PG_M) && !(*pte & PG_RO)) {
@@ -877,7 +877,7 @@ m88110_user_fault:
 				 */
 				pte = pmap_pte(vm_map_pmap(map), va);
 #ifdef DEBUG
-				if (pte == PT_ENTRY_NULL)
+				if (pte == NULL)
 					panic("NULL pte on write fault??");
 #endif
 				if (!(*pte & PG_M) && !(*pte & PG_RO)) {

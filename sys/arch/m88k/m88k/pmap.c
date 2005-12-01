@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2005/11/25 22:13:50 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2005/12/01 22:24:52 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -121,7 +121,6 @@ struct kpdt_entry {
 	kpdt_entry_t	next;
 	paddr_t		phys;
 };
-#define	KPDT_ENTRY_NULL		((kpdt_entry_t)0)
 
 kpdt_entry_t	kpdt_free;
 
@@ -130,8 +129,6 @@ kpdt_entry_t	kpdt_free;
  * Used in pmap_copy_page() and pmap_zero_page().
  */
 vaddr_t phys_map_vaddr, phys_map_vaddr_end;
-
-#define PV_ENTRY_NULL	((pv_entry_t) 0)
 
 static pv_entry_t pg_to_pvh(struct vm_page *);
 
@@ -240,7 +237,7 @@ flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
  *	Given a map and a virtual address, compute a (virtual) pointer
  *	to the page table entry (PTE) which maps the address .
  *	If the page table associated with the address does not
- *	exist, PT_ENTRY_NULL is returned (and the map may need to grow).
+ *	exist, NULL is returned (and the map may need to grow).
  *
  * Parameters:
  *	pmap	pointer to pmap structure
@@ -259,7 +256,7 @@ pmap_pte(pmap_t pmap, vaddr_t virt)
 	 * Check whether page table exists.
 	 */
 	if (!SDT_VALID(sdt))
-		return (PT_ENTRY_NULL);
+		return (NULL);
 
 	return (pt_entry_t *)(PG_PFNUM(*(sdt + SDT_ENTRIES)) << PDT_SHIFT) +
 		PDTIDX(virt);
@@ -315,7 +312,7 @@ pmap_expand_kmap(vaddr_t virt, vm_prot_t prot, int canfail)
 #endif
 
 	kpdt_ent = kpdt_free;
-	if (kpdt_ent == KPDT_ENTRY_NULL) {
+	if (kpdt_ent == NULL) {
 		if (canfail)
 			return (NULL);
 		else
@@ -402,7 +399,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 	page = trunc_page(start);
 	npages = atop(round_page(end) - page);
 	for (num_phys_pages = npages; num_phys_pages != 0; num_phys_pages--) {
-		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
+		if ((pte = pmap_pte(kernel_pmap, virt)) == NULL)
 			pte = pmap_expand_kmap(virt,
 			    VM_PROT_READ | VM_PROT_WRITE, 0);
 
@@ -463,7 +460,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		printf("(pmap_cache_ctrl: %x) pmap %x, va %x, mode %x\n", curproc, pmap, s, mode);
 	}
 
-	if (pmap == PMAP_NULL)
+	if (pmap == NULL)
 		panic("pmap_cache_ctrl: pmap is NULL");
 #endif /* DEBUG */
 
@@ -473,7 +470,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 	kflush = pmap == kernel_pmap;
 
 	for (va = s; va < e; va += PAGE_SIZE) {
-		if ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL)
+		if ((pte = pmap_pte(pmap, va)) == NULL)
 			continue;
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_CACHE) {
@@ -635,7 +632,7 @@ pmap_bootstrap(vaddr_t load_start)
 		kpdt_virt = kpdt_virt->next;
 		kpdt_phys += PDT_SIZE;
 	}
-	kpdt_virt->next = KPDT_ENTRY_NULL; /* terminate the list */
+	kpdt_virt->next = NULL; /* terminate the list */
 
 	/*
 	 * Map the kernel image into virtual space
@@ -705,7 +702,7 @@ pmap_bootstrap(vaddr_t load_start)
 #define	SYSMAP(c, p, v, n)	\
 ({ \
 	v = (c)virt; \
-	if ((p = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL) \
+	if ((p = pmap_pte(kernel_pmap, virt)) == NULL) \
 		pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE, 0); \
 	virt += ((n) * PAGE_SIZE); \
 })
@@ -936,7 +933,7 @@ pmap_release(pmap_t pmap)
 	/* Segment table Loop */
 	for (sdt_va = VM_MIN_ADDRESS; sdt_va < VM_MAX_ADDRESS;
 	    sdt_va += PDT_VA_SPACE) {
-		if ((gdttbl = pmap_pte(pmap, (vaddr_t)sdt_va)) != PT_ENTRY_NULL) {
+		if ((gdttbl = pmap_pte(pmap, (vaddr_t)sdt_va)) != NULL) {
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_FREE | CD_FULL)) == (CD_FREE | CD_FULL))
 				printf("(pmap_release: %x) free page table = 0x%x\n",
@@ -1075,7 +1072,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 	}
 #endif
 
-	if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+	if (pte == NULL || !PDT_VALID(pte)) {
 		return;	 	/* no page mapping, nothing to do! */
 	}
 
@@ -1111,35 +1108,35 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 	pvl = pg_to_pvh(pg);
 
 #ifdef DIAGNOSTIC
-	if (pvl->pv_pmap == PMAP_NULL)
+	if (pvl->pv_pmap == NULL)
 		panic("pmap_remove_pte: null pv_list");
 #endif
 
-	prev = PV_ENTRY_NULL;
-	for (cur = pvl; cur != PV_ENTRY_NULL; cur = cur->pv_next) {
+	prev = NULL;
+	for (cur = pvl; cur != NULL; cur = cur->pv_next) {
 		if (cur->pv_va == va && cur->pv_pmap == pmap)
 			break;
 		prev = cur;
 	}
-	if (cur == PV_ENTRY_NULL) {
+	if (cur == NULL) {
 		panic("pmap_remove_pte: mapping for va "
 		    "0x%lx (pa 0x%lx) not in pv list at %p",
 		    va, pa, pvl);
 	}
 
-	if (prev == PV_ENTRY_NULL) {
+	if (prev == NULL) {
 		/*
 		 * Hander is the pv_entry. Copy the next one
 		 * to hander and free the next one (we can't
 		 * free the hander)
 		 */
 		cur = cur->pv_next;
-		if (cur != PV_ENTRY_NULL) {
+		if (cur != NULL) {
 			cur->pv_flags = pvl->pv_flags;
 			*pvl = *cur;
 			pool_put(&pvpool, cur);
 		} else {
-			pvl->pv_pmap = PMAP_NULL;
+			pvl->pv_pmap = NULL;
 		}
 	} else {
 		prev->pv_next = cur->pv_next;
@@ -1239,7 +1236,7 @@ pmap_remove(pmap_t pmap, vaddr_t s, vaddr_t e)
 {
 	int spl;
 
-	if (pmap == PMAP_NULL)
+	if (pmap == NULL)
 		return;
 
 #ifdef DEBUG
@@ -1321,14 +1318,14 @@ remove_all_Retry:
 	/*
 	 * Loop for each entry on the pv list
 	 */
-	while (pvl != PV_ENTRY_NULL && (pmap = pvl->pv_pmap) != PMAP_NULL) {
+	while (pvl != NULL && (pmap = pvl->pv_pmap) != NULL) {
 		if (!simple_lock_try(&pmap->pm_lock))
 			goto remove_all_Retry;
 
 		va = pvl->pv_va;
 		pte = pmap_pte(pmap, va);
 
-		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+		if (pte == NULL || !PDT_VALID(pte)) {
 			pvl = pvl->pv_next;
 			goto next;	/* no page mapping */
 		}
@@ -1419,7 +1416,7 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 		}
 
 		pte = pmap_pte(pmap, va);
-		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+		if (pte == NULL || !PDT_VALID(pte)) {
 			continue;	 /* no page mapping */
 		}
 
@@ -1497,7 +1494,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 
 	PMAP_LOCK(pmap, spl);
 
-	if ((pte = pmap_pte(pmap, v)) != PT_ENTRY_NULL) {
+	if ((pte = pmap_pte(pmap, v)) != NULL) {
 		/*
 		 * Someone else caused us to expand
 		 * during our vm_allocate.
@@ -1628,7 +1625,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Expand pmap to include this pte.
 	 */
-	while ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL) {
+	while ((pte = pmap_pte(pmap, va)) == NULL) {
 		if (pmap == kernel_pmap) {
 			/* will only return NULL if PMAP_CANFAIL is set */
 			if (pmap_expand_kmap(va, VM_PROT_READ | VM_PROT_WRITE,
@@ -1673,13 +1670,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 * Enter the mapping in the PV list for this
 			 * managed page.
 			 */
-			if (pvl->pv_pmap == PMAP_NULL) {
+			if (pvl->pv_pmap == NULL) {
 				/*
 				 *	No mappings yet
 				 */
 				pvl->pv_va = va;
 				pvl->pv_pmap = pmap;
-				pvl->pv_next = PV_ENTRY_NULL;
+				pvl->pv_next = NULL;
 				pvl->pv_flags = 0;
 
 			} else {
@@ -1775,7 +1772,7 @@ pmap_unwire(pmap_t pmap, vaddr_t v)
 
 	PMAP_LOCK(pmap, spl);
 
-	if ((pte = pmap_pte(pmap, v)) == PT_ENTRY_NULL)
+	if ((pte = pmap_pte(pmap, v)) == NULL)
 		panic("pmap_unwire: pte missing");
 
 	if (pmap_pte_w(pte)) {
@@ -1818,14 +1815,14 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	boolean_t rv = FALSE;
 
 #ifdef DIAGNOSTIC
-	if (pmap == PMAP_NULL)
+	if (pmap == NULL)
 		panic("pmap_extract: pmap is NULL");
 #endif
 
 	PMAP_LOCK(pmap, spl);
 
 	pte = pmap_pte(pmap, va);
-	if (pte != PT_ENTRY_NULL && PDT_VALID(pte)) {
+	if (pte != NULL && PDT_VALID(pte)) {
 		rv = TRUE;
 		if (pap != NULL) {
 			pa = ptoa(PG_PFNUM(*pte));
@@ -1896,7 +1893,7 @@ pmap_collect(pmap_t pmap)
 	for (sdt_va = VM_MIN_ADDRESS; sdt_va < VM_MAX_ADDRESS;
 	    sdt_va += PDT_VA_SPACE, sdtp++) {
 		gdttbl = pmap_pte(pmap, sdt_va);
-		if (gdttbl == PT_ENTRY_NULL)
+		if (gdttbl == NULL)
 			continue; /* no maps in this range */
 
 		gdttblend = gdttbl + PDT_ENTRIES;
@@ -2115,7 +2112,7 @@ changebit_Retry:
 	 */
 	pvl->pv_flags &= mask;
 
-	if (pvl->pv_pmap == PMAP_NULL) {
+	if (pvl->pv_pmap == NULL) {
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_CBIT)
 			printf("(pmap_changebit: %x) vm page 0x%x not mapped\n",
@@ -2126,7 +2123,7 @@ changebit_Retry:
 	}
 
 	/* for each listed pmap, update the affected bits */
-	for (pvep = pvl; pvep != PV_ENTRY_NULL; pvep = pvep->pv_next) {
+	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
 		if (!simple_lock_try(&pmap->pm_lock)) {
 			goto changebit_Retry;
@@ -2140,7 +2137,7 @@ changebit_Retry:
 		/*
 		 * Check for existing and valid pte
 		 */
-		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+		if (pte == NULL || !PDT_VALID(pte)) {
 			goto next;	 /* no page mapping */
 		}
 #ifdef DIAGNOSTIC
@@ -2222,7 +2219,7 @@ testbit_Retry:
 		return (TRUE);
 	}
 
-	if (pvl->pv_pmap == PMAP_NULL) {
+	if (pvl->pv_pmap == NULL) {
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_TBIT)
 			printf("(pmap_testbit: %x) vm page 0x%x not mapped\n",
@@ -2233,13 +2230,13 @@ testbit_Retry:
 	}
 
 	/* for each listed pmap, check modified bit for given page */
-	for (pvep = pvl; pvep != PV_ENTRY_NULL; pvep = pvep->pv_next) {
+	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		if (!simple_lock_try(&pvep->pv_pmap->pm_lock)) {
 			goto testbit_Retry;
 		}
 
 		pte = pmap_pte(pvep->pv_pmap, pvep->pv_va);
-		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+		if (pte == NULL || !PDT_VALID(pte)) {
 			goto next;
 		}
 
@@ -2300,7 +2297,7 @@ unsetbit_Retry:
 	 */
 	pvl->pv_flags &= ~bit;
 
-	if (pvl->pv_pmap == PMAP_NULL) {
+	if (pvl->pv_pmap == NULL) {
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_USBIT)
 			printf("(pmap_unsetbit: %x) vm page 0x%x not mapped\n",
@@ -2311,7 +2308,7 @@ unsetbit_Retry:
 	}
 
 	/* for each listed pmap, update the specified bit */
-	for (pvep = pvl; pvep != PV_ENTRY_NULL; pvep = pvep->pv_next) {
+	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
 		if (!simple_lock_try(&pmap->pm_lock)) {
 			goto unsetbit_Retry;
@@ -2325,7 +2322,7 @@ unsetbit_Retry:
 		/*
 		 * Check for existing and valid pte
 		 */
-		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+		if (pte == NULL || !PDT_VALID(pte)) {
 			goto next;	 /* no page mapping */
 		}
 #ifdef DIAGNOSTIC
@@ -2434,7 +2431,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	/*
 	 * Expand pmap to include this pte.
 	 */
-	while ((pte = pmap_pte(kernel_pmap, va)) == PT_ENTRY_NULL)
+	while ((pte = pmap_pte(kernel_pmap, va)) == NULL)
 		pmap_expand_kmap(va, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	/*
@@ -2488,7 +2485,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		}
 
 		pte = pmap_pte(kernel_pmap, va);
-		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+		if (pte == NULL || !PDT_VALID(pte)) {
 			continue;	 /* no page mapping */
 		}
 

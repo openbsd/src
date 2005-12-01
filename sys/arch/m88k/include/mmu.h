@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.4 2005/09/15 21:07:04 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.5 2005/12/01 22:24:49 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -102,8 +102,6 @@
 
 typedef u_int32_t	sdt_entry_t;
 
-#define	SDT_ENTRY_NULL	((sdt_entry_t *) 0)
-
 #define	SG_V		0x00000001
 #define	SG_NV		0x00000000
 #define	SG_PROT		0x00000004
@@ -120,8 +118,6 @@ typedef u_int32_t	sdt_entry_t;
  */
 
 typedef u_int32_t	pt_entry_t;
-
-#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 
 #define	PG_V		0x00000001
 #define	PG_NV		0x00000000
