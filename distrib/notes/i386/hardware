@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.226 2005/11/19 08:23:41 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.227 2005/12/01 06:57:23 dlg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -903,8 +903,7 @@ Supported hardware {:-include-:}:
 		Level1 LXT1001 based adapters (untested), including: [*]
 		    SMC TigerCard 1000
 		    D-Link DGE-500SX
-		Broadcom BCM570x (Tigon3) based PCI adapters, including: [A]
-		  [B] [C]
+		Broadcom BCM570x (Tigon3) based PCI adapters, including: [A] [C]
 		    3Com 3c996-T
 		    3Com 3c996-SX
 		    3Com 3c996B-T
