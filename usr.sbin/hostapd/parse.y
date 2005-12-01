@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2005/12/01 01:28:19 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2005/12/01 02:03:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -107,12 +107,16 @@ u_int negative;
 #define HOSTAPD_MATCH(_m)	{					\
 	frame.f_flags |= negative ?				\
 	    HOSTAPD_FRAME_F_##_m##_N : HOSTAPD_FRAME_F_##_m;		\
-	negative = 0;							\
 }
 #define HOSTAPD_MATCH_TABLE(_m)	{					\
 	frame.f_flags |= HOSTAPD_FRAME_F_##_m##_TABLE | (negative ?	\
 	    HOSTAPD_FRAME_F_##_m##_N : HOSTAPD_FRAME_F_##_m);		\
-	negative = 0;							\
+}
+#define HOSTAPD_IAPP_FLAG(_f) {						\
+	if (negative)							\
+		hostapd_cfg.c_iapp.i_flags &= ~(HOSTAPD_IAPP_F_##_f);	\
+	else								\
+		hostapd_cfg.c_iapp.i_flags |= (HOSTAPD_IAPP_F_##_f);	\
 }
 %}
 
@@ -123,7 +127,7 @@ u_int negative;
 %token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
-%token	ADDRESS PORT ON
+%token	ADDRESS PORT ON NOTIFY
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
 %type	<v.val>		number
@@ -168,6 +172,7 @@ option		: SET HOSTAP INTERFACE hostapifaces
 			free($4);
 		}
 		| SET IAPP MODE iappmode
+		| SET IAPP HANDLE SUBTYPE iappsubtypes
 		;
 
 iappmode	: MULTICAST iappmodeaddr iappmodeport
@@ -259,6 +264,24 @@ event		: HOSTAP HANDLE
 			bcopy(&frame, frame_ptr, sizeof(struct hostapd_frame));
 			TAILQ_INSERT_TAIL(&hostapd_cfg.c_frames,
 			    frame_ptr, f_entries);
+		}
+		;
+
+iappsubtypes	: '{' optnl iappsubtypelist optnl '}'
+		| iappsubtype
+		;
+
+iappsubtypelist	: iappsubtype
+		| iappsubtypelist comma iappsubtype
+		;
+
+iappsubtype	: not ADD NOTIFY
+		{
+			HOSTAPD_IAPP_FLAG(ADD_NOTIFY);
+		}
+		| not RADIOTAP
+		{
+			HOSTAPD_IAPP_FLAG(RADIOTAP);
 		}
 		;
 
@@ -902,6 +925,9 @@ optnl		: /* empty */
 		;
 
 not		: /* empty */
+		{
+			negative = 0;
+		}
 		| '!'
 		{
 			negative = 1;
@@ -973,6 +999,7 @@ lookup(char *token)
 		{ "no",			NO },
 		{ "node",		NODE },
 		{ "not",		NOT },
+		{ "notify",		NOTIFY },
 		{ "nwid",		NWID },
 		{ "on",			ON },
 		{ "open",		OPEN },
@@ -1299,6 +1326,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	TAILQ_INIT(&cfg->c_tables);
 	TAILQ_INIT(&cfg->c_frames);
 	cfg->c_iapp.i_multicast.sin_addr.s_addr = INADDR_ANY;
+	cfg->c_iapp.i_flags = HOSTAPD_IAPP_F_DEFAULT;
 
 	lineno = 1;
 	errors = 0;

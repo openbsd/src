@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.22 2005/12/01 01:28:19 reyk Exp $
+5~.\" $OpenBSD: hostapd.conf.5,v 1.23 2005/12/01 02:03:57 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -65,6 +65,7 @@ Macros are not expanded inside quotes.
 For example:
 .Bd -literal -offset indent
 wlan="ath0"
+set iapp handle subtype { ! add notify, radiotap }
 set iapp interface $wlan
 .Ed
 .Sh TABLES
@@ -138,6 +139,32 @@ Specify the mandatory Inter-Access-Point (IAPP) interface.
 It is important that the IAPP interface is on a trusted
 network because there is no authentication and an attacker could force
 disassociation of selected stations on all listening access points.
+.It Xo
+.Ic set iapp handle subtype
+.Ar subtype \*(Ba\ \&
+.Pf { Ar subtype0 , subtype1 , ... No }
+.Xc
+Specify the IAPP subtypes to use:
+.Pp
+.Bl -tag -width broadcast -offset indent -compact
+.It Xo
+.Op Ic not
+.Ic add notify
+.Xc
+Sent and receive
+.Em ADD.notify
+messages.
+This option is enabled by default.
+.It Xo
+.Op Ic not
+.Ic radiotap
+.Xc
+Receive
+.Em radiotap
+messages.
+This option is enabled by default.
+.El
+.Pp
 .It Ic set iapp mode Ar mode
 Specify the IAPP mode.
 The supported modes are:

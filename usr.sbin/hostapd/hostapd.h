@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.13 2005/12/01 01:28:19 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.14 2005/12/01 02:03:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -263,6 +263,12 @@ struct hostapd_iapp {
 	struct sockaddr_in		i_addr;
 	struct sockaddr_in		i_broadcast;
 	struct sockaddr_in		i_multicast;
+	u_int8_t			i_flags;
+
+#define HOSTAPD_IAPP_F_ADD_NOTIFY	0x01
+#define HOSTAPD_IAPP_F_RADIOTAP		0x02
+#define HOSTAPD_IAPP_F_DEFAULT							\
+	(HOSTAPD_IAPP_F_ADD_NOTIFY | HOSTAPD_IAPP_F_RADIOTAP)
 };
 
 struct hostapd_config {

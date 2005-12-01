@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.12 2005/12/01 01:11:30 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.13 2005/12/01 02:03:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -90,6 +90,9 @@ hostapd_iapp_add_notify(struct hostapd_apme *apme, struct hostapd_node *node)
 		struct ieee80211_iapp_frame hdr;
 		struct ieee80211_iapp_add_notify add;
 	} __packed frame;
+
+	if ((iapp->i_flags & HOSTAPD_IAPP_F_ADD_NOTIFY) == 0)
+		return (0);
 
 	/*
 	 * Send an ADD.notify message to other accesspoints to notify
@@ -274,6 +277,9 @@ hostapd_iapp_input(int fd, short sig, void *arg)
 
 	case IEEE80211_IAPP_FRAME_HOSTAPD_PCAP:
 	case IEEE80211_IAPP_FRAME_HOSTAPD_RADIOTAP:
+		if ((iapp->i_flags & HOSTAPD_IAPP_F_RADIOTAP) == 0)
+			return;
+
 		/* Short frame */
 		if (len <= (ssize_t)sizeof(struct ieee80211_iapp_frame) ||
 		    frame->hdr.i_length < sizeof(struct ieee80211_frame))
