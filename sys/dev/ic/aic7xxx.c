@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.68 2005/10/04 23:52:04 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.69 2005/12/01 02:21:13 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.68 2005/10/04 23:52:04 krw Exp $
+ * $Id: aic7xxx.c,v 1.69 2005/12/01 02:21:13 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -7394,60 +7394,49 @@ ahc_createdmamem(bus_dma_tag_t tag, int size, int flags, bus_dmamap_t *mapp,
     caddr_t *vaddr, bus_addr_t *baddr, bus_dma_segment_t *seg, int *nseg,
     const char *myname, const char *what)
 {
-	int error, level = 0;
-
-	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
-				      seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
-			myname, what, error);
-		goto out;
-	}
-	level++;
-
-	if ((error = bus_dmamem_map(tag, seg, *nseg, size, vaddr,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: failed to map DMA mem for %s, error = %d\n",
-			myname, what, error);
-		goto out;
-	}
-	level++;
+	int error;
 
 	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
 				       BUS_DMA_NOWAIT | flags, mapp)) != 0) {
                 printf("%s: failed to create DMA map for %s, error = %d\n",
 			myname, what, error);
-		goto out;
+		return (error);
         }
-	level++;
 
+	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
+				      seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
+			myname, what, error);
+		goto destroy;
+	}
+
+	if ((error = bus_dmamem_map(tag, seg, *nseg, size, vaddr,
+				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: failed to map DMA mem for %s, error = %d\n",
+			myname, what, error);
+		goto free;
+	}
 
 	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
                 printf("%s: failed to load DMA map for %s, error = %d\n",
 			myname, what, error);
-		goto out;
+		goto unmap;
         }
 
 	*baddr = (*mapp)->dm_segs[0].ds_addr;
+	return (0);
 
-	return 0;
-out:
-	printf("ahc_createdmamem error (%d)\n", level);
-	switch (level) {
-	case 3:
-		bus_dmamap_destroy(tag, *mapp);
-		/* FALLTHROUGH */
-	case 2:
-		bus_dmamem_unmap(tag, *vaddr, size);
-		/* FALLTHROUGH */
-	case 1:
-		bus_dmamem_free(tag, seg, *nseg);
-		break;
-	default:
-		break;
-	}
+unmap:
+	bus_dmamem_unmap(tag, *vaddr, size);
+free:
+	bus_dmamem_free(tag, seg, *nseg);
+destroy:
+	bus_dmamap_destroy(tag, *mapp);
 
-	return error;
+	*vaddr = 0;
+	bzero(seg, sizeof(*seg));
+	return (error);
 }
 
 static void
@@ -7456,7 +7445,7 @@ ahc_freedmamem(bus_dma_tag_t tag, int size, bus_dmamap_t map, caddr_t vaddr,
 {
 
 	bus_dmamap_unload(tag, map);
-	bus_dmamap_destroy(tag, map);
 	bus_dmamem_unmap(tag, vaddr, size);
 	bus_dmamem_free(tag, seg, nseg);
+	bus_dmamap_destroy(tag, map);
 }
