@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.101 2005/11/22 11:49:02 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.102 2005/12/01 18:22:09 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -287,7 +287,6 @@ static int	rcs_strprint(const u_char *, size_t, FILE *);
 
 static int	rcs_expand_keywords(char *, struct rcs_delta *, char *, char *,
 		    size_t, int);
-static struct rcs_delta	*rcs_findrev(RCSFILE *, const RCSNUM *);
 
 /*
  * rcs_open()
@@ -1527,7 +1526,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
  * The revision number is given in <rev>.
  * Returns a pointer to the delta on success, or NULL on failure.
  */
-static struct rcs_delta*
+struct rcs_delta *
 rcs_findrev(RCSFILE *rfp, const RCSNUM *rev)
 {
 	u_int cmplen;

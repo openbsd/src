@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.38 2005/11/02 20:32:44 niallo Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.39 2005/12/01 18:22:09 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -183,42 +183,43 @@ typedef struct rcs_file {
 extern int rcs_errno;
 
 
-RCSFILE		*rcs_open(const char *, int, ...);
-void		 rcs_close(RCSFILE *);
-const RCSNUM	*rcs_head_get(RCSFILE *);
-int		 rcs_head_set(RCSFILE *, const RCSNUM *);
-const RCSNUM	*rcs_branch_get(RCSFILE *);
-int		 rcs_branch_set(RCSFILE *, const RCSNUM *);
-int		 rcs_access_add(RCSFILE *, const char *);
-int		 rcs_access_remove(RCSFILE *, const char *);
-int		 rcs_access_check(RCSFILE *, const char *);
-int		 rcs_sym_add(RCSFILE *, const char *, RCSNUM *);
-int		 rcs_sym_remove(RCSFILE *, const char *);
-RCSNUM		*rcs_sym_getrev(RCSFILE *, const char *);
-int		 rcs_sym_check(const char *);
-int		 rcs_lock_getmode(RCSFILE *);
-int		 rcs_lock_setmode(RCSFILE *, int);
-int		 rcs_lock_add(RCSFILE *, const char *, RCSNUM *);
-int		 rcs_lock_remove(RCSFILE *, const RCSNUM *);
-BUF		*rcs_getrev(RCSFILE *, RCSNUM *);
-int		 rcs_deltatext_set(RCSFILE *, RCSNUM *, const char *);
-const char	*rcs_desc_get(RCSFILE *);
-int		 rcs_desc_set(RCSFILE *, const char *);
-const char	*rcs_comment_lookup(const char *);
-const char	*rcs_comment_get(RCSFILE *);
-int		 rcs_comment_set(RCSFILE *, const char *);
-int		 rcs_kwexp_set(RCSFILE *, int);
-int		 rcs_kwexp_get(RCSFILE *);
-int		 rcs_rev_add(RCSFILE *, RCSNUM *, const char *, time_t,
-                     const char *);
-time_t           rcs_rev_getdate(RCSFILE *, RCSNUM *);
-int		 rcs_rev_setlog(RCSFILE *, RCSNUM *, const char *);
-int		rcs_rev_remove(RCSFILE *, RCSNUM *);
-int              rcs_state_set(RCSFILE *, RCSNUM *, const char *);
-const char      *rcs_state_get(RCSFILE *, RCSNUM *);
-int              rcs_state_check(const char *);
-RCSNUM		*rcs_tag_resolve(RCSFILE *, const char *);
-const char	*rcs_errstr(int);
+RCSFILE			*rcs_open(const char *, int, ...);
+void			 rcs_close(RCSFILE *);
+const RCSNUM		*rcs_head_get(RCSFILE *);
+int			 rcs_head_set(RCSFILE *, const RCSNUM *);
+const RCSNUM		*rcs_branch_get(RCSFILE *);
+int			 rcs_branch_set(RCSFILE *, const RCSNUM *);
+int			 rcs_access_add(RCSFILE *, const char *);
+int			 rcs_access_remove(RCSFILE *, const char *);
+int			 rcs_access_check(RCSFILE *, const char *);
+struct rcs_delta	*rcs_findrev(RCSFILE *, const RCSNUM *);
+int			 rcs_sym_add(RCSFILE *, const char *, RCSNUM *);
+int			 rcs_sym_remove(RCSFILE *, const char *);
+RCSNUM			*rcs_sym_getrev(RCSFILE *, const char *);
+int			 rcs_sym_check(const char *);
+int			 rcs_lock_getmode(RCSFILE *);
+int			 rcs_lock_setmode(RCSFILE *, int);
+int			 rcs_lock_add(RCSFILE *, const char *, RCSNUM *);
+int			 rcs_lock_remove(RCSFILE *, const RCSNUM *);
+BUF			*rcs_getrev(RCSFILE *, RCSNUM *);
+int			 rcs_deltatext_set(RCSFILE *, RCSNUM *, const char *);
+const char		*rcs_desc_get(RCSFILE *);
+int			 rcs_desc_set(RCSFILE *, const char *);
+const char		*rcs_comment_lookup(const char *);
+const char		*rcs_comment_get(RCSFILE *);
+int			 rcs_comment_set(RCSFILE *, const char *);
+int			 rcs_kwexp_set(RCSFILE *, int);
+int			 rcs_kwexp_get(RCSFILE *);
+int			 rcs_rev_add(RCSFILE *, RCSNUM *, const char *, time_t,
+			     const char *);
+time_t			 rcs_rev_getdate(RCSFILE *, RCSNUM *);
+int			 rcs_rev_setlog(RCSFILE *, RCSNUM *, const char *);
+int			 rcs_rev_remove(RCSFILE *, RCSNUM *);
+int			 rcs_state_set(RCSFILE *, RCSNUM *, const char *);
+const char		*rcs_state_get(RCSFILE *, RCSNUM *);
+int			 rcs_state_check(const char *);
+RCSNUM			*rcs_tag_resolve(RCSFILE *, const char *);
+const char		*rcs_errstr(int);
 
 
 int	rcs_kflag_get(const char *);
