@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.23 2005/11/20 12:02:04 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.24 2005/12/01 01:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -198,6 +198,7 @@ hostapd_bpf_open(u_int flags)
 void
 hostapd_udp_init(struct hostapd_config *cfg)
 {
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	struct ifreq ifr;
 	struct sockaddr_in *addr, baddr;
 	struct ip_mreq mreq;
@@ -209,37 +210,37 @@ hostapd_udp_init(struct hostapd_config *cfg)
 	 * Open a listening UDP socket
 	 */
 
-	if ((cfg->c_iapp_udp = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+	if ((iapp->i_udp = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		hostapd_fatal("unable to open udp socket\n");
 
 	cfg->c_flags |= HOSTAPD_CFG_F_UDP;
 
-	strlcpy(ifr.ifr_name, cfg->c_iapp_iface, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, iapp->i_iface, sizeof(ifr.ifr_name));
 
-	if (ioctl(cfg->c_iapp_udp, SIOCGIFADDR, &ifr) == -1)
+	if (ioctl(iapp->i_udp, SIOCGIFADDR, &ifr) == -1)
 		hostapd_fatal("UDP ioctl %s on \"%s\" failed: %s\n",
 		    "SIOCGIFADDR", ifr.ifr_name, strerror(errno));
 
 	addr = (struct sockaddr_in *)&ifr.ifr_addr;
-	cfg->c_iapp_addr.sin_family = AF_INET;
-	cfg->c_iapp_addr.sin_addr.s_addr = addr->sin_addr.s_addr;
-	if (cfg->c_iapp_addr.sin_port == 0)
-		cfg->c_iapp_addr.sin_port = htons(IAPP_PORT);
+	iapp->i_addr.sin_family = AF_INET;
+	iapp->i_addr.sin_addr.s_addr = addr->sin_addr.s_addr;
+	if (iapp->i_addr.sin_port == 0)
+		iapp->i_addr.sin_port = htons(IAPP_PORT);
 
-	if (ioctl(cfg->c_iapp_udp, SIOCGIFBRDADDR, &ifr) == -1)
+	if (ioctl(iapp->i_udp, SIOCGIFBRDADDR, &ifr) == -1)
 		hostapd_fatal("UDP ioctl %s on \"%s\" failed: %s\n",
 		    "SIOCGIFBRDADDR", ifr.ifr_name, strerror(errno));
 
 	addr = (struct sockaddr_in *)&ifr.ifr_addr;
-	cfg->c_iapp_broadcast.sin_family = AF_INET;
-	cfg->c_iapp_broadcast.sin_addr.s_addr = addr->sin_addr.s_addr;
-	cfg->c_iapp_broadcast.sin_port = cfg->c_iapp_addr.sin_port;
+	iapp->i_broadcast.sin_family = AF_INET;
+	iapp->i_broadcast.sin_addr.s_addr = addr->sin_addr.s_addr;
+	iapp->i_broadcast.sin_port = iapp->i_addr.sin_port;
 
 	baddr.sin_family = AF_INET;
 	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	baddr.sin_port = cfg->c_iapp_addr.sin_port;
+	baddr.sin_port = iapp->i_addr.sin_port;
 
-	if (bind(cfg->c_iapp_udp, (struct sockaddr *)&baddr,
+	if (bind(iapp->i_udp, (struct sockaddr *)&baddr,
 	    sizeof(baddr)) == -1)
 		hostapd_fatal("failed to bind UDP socket: %s\n",
 		    strerror(errno));
@@ -257,7 +258,7 @@ hostapd_udp_init(struct hostapd_config *cfg)
 
 		hostapd_log(HOSTAPD_LOG_DEBUG, "using broadcast mode\n");
 
-		if (setsockopt(cfg->c_iapp_udp, SOL_SOCKET, SO_BROADCAST,
+		if (setsockopt(iapp->i_udp, SOL_SOCKET, SO_BROADCAST,
 		    &brd, sizeof(brd)) == -1)
 			hostapd_fatal("failed to enable broadcast on socket\n");
 	} else {
@@ -269,18 +270,18 @@ hostapd_udp_init(struct hostapd_config *cfg)
 
 		bzero(&mreq, sizeof(mreq));
 
-		cfg->c_iapp_multicast.sin_family = AF_INET;
-		if (cfg->c_iapp_multicast.sin_addr.s_addr == INADDR_ANY)
-			cfg->c_iapp_multicast.sin_addr.s_addr =
+		iapp->i_multicast.sin_family = AF_INET;
+		if (iapp->i_multicast.sin_addr.s_addr == INADDR_ANY)
+			iapp->i_multicast.sin_addr.s_addr =
 			    inet_addr(IAPP_MCASTADDR);
-		cfg->c_iapp_multicast.sin_port = cfg->c_iapp_addr.sin_port;
+		iapp->i_multicast.sin_port = iapp->i_addr.sin_port;
 
 		mreq.imr_multiaddr.s_addr =
-		    cfg->c_iapp_multicast.sin_addr.s_addr;
+		    iapp->i_multicast.sin_addr.s_addr;
 		mreq.imr_interface.s_addr =
-		    cfg->c_iapp_addr.sin_addr.s_addr;
+		    iapp->i_addr.sin_addr.s_addr;
 
-		if (setsockopt(cfg->c_iapp_udp, IPPROTO_IP,
+		if (setsockopt(iapp->i_udp, IPPROTO_IP,
 		    IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1)
 			hostapd_fatal("failed to add multicast membership to "
 			    "%s: %s\n", IAPP_MCASTADDR, strerror(errno));
@@ -307,6 +308,7 @@ hostapd_sig_handler(int sig)
 void
 hostapd_cleanup(struct hostapd_config *cfg)
 {
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	struct ip_mreq mreq;
 	struct hostapd_apme *apme;
 	struct hostapd_table *table;
@@ -330,9 +332,9 @@ hostapd_cleanup(struct hostapd_config *cfg)
 		mreq.imr_multiaddr.s_addr =
 		    inet_addr(IAPP_MCASTADDR);
 		mreq.imr_interface.s_addr =
-		    cfg->c_iapp_addr.sin_addr.s_addr;
+		    iapp->i_addr.sin_addr.s_addr;
 
-		if (setsockopt(cfg->c_iapp_udp, IPPROTO_IP,
+		if (setsockopt(iapp->i_udp, IPPROTO_IP,
 		    IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) == -1)
 			hostapd_log(HOSTAPD_LOG, "failed to remove multicast"
 			    " membership to %s: %s\n",
@@ -366,6 +368,7 @@ int
 main(int argc, char *argv[])
 {
 	struct hostapd_config *cfg = &hostapd_cfg;
+	struct hostapd_iapp *iapp;
 	struct hostapd_apme *apme;
 	char *config = NULL;
 	u_int debug = 0;
@@ -410,6 +413,8 @@ main(int argc, char *argv[])
 	if (hostapd_parse_file(cfg) != 0)
 		hostapd_fatal("invalid configuration in %s\n", cfg->c_config);
 
+	iapp = &cfg->c_iapp;
+
 	if ((cfg->c_flags & HOSTAPD_CFG_F_IAPP) == 0)
 		hostapd_fatal("IAPP interface not specified\n");
 
@@ -435,15 +440,15 @@ main(int argc, char *argv[])
 			hostapd_apme_init(apme);
 	} else
 		hostapd_log(HOSTAPD_LOG, "%s: running without a Host AP\n",
-		    cfg->c_iapp_iface);
+		    iapp->i_iface);
 
 	/* Drop all privileges in an unprivileged child process */
 	hostapd_priv_init(cfg);
 
 	if (cfg->c_flags & HOSTAPD_CFG_F_APME)
-		setproctitle("IAPP: %s, Host AP", cfg->c_iapp_iface);
+		setproctitle("IAPP: %s, Host AP", iapp->i_iface);
 	else
-		setproctitle("IAPP: %s", cfg->c_iapp_iface);
+		setproctitle("IAPP: %s", iapp->i_iface);
 
 	/*
 	 * Unprivileged child process
@@ -478,9 +483,9 @@ main(int argc, char *argv[])
 	/*
 	 * Schedule the IAPP listener
 	 */
-	event_set(&cfg->c_iapp_udp_ev, cfg->c_iapp_udp, EV_READ | EV_PERSIST,
+	event_set(&iapp->i_udp_ev, iapp->i_udp, EV_READ | EV_PERSIST,
 	    hostapd_iapp_input, cfg);
-	event_add(&cfg->c_iapp_udp_ev, NULL);
+	event_add(&iapp->i_udp_ev, NULL);
 
 	hostapd_log(HOSTAPD_LOG, "starting hostapd with pid %u\n",
 	    getpid());

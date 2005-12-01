@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc.c,v 1.2 2005/04/13 20:25:31 deraadt Exp $	*/
+/*	$OpenBSD: llc.c,v 1.3 2005/12/01 01:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -44,34 +44,36 @@
 void
 hostapd_llc_init(struct hostapd_config *cfg)
 {
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	struct ifreq ifr;
 	u_int i;
 
-	cfg->c_iapp_raw = hostapd_bpf_open(O_WRONLY);
+	iapp->i_raw = hostapd_bpf_open(O_WRONLY);
 	cfg->c_flags |= HOSTAPD_CFG_F_RAW;
 
 	bzero(&ifr, sizeof(struct ifreq));
-	strlcpy(ifr.ifr_name, cfg->c_iapp_iface, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, iapp->i_iface, sizeof(ifr.ifr_name));
 
 	/* Associate the wired network interface to the BPF descriptor */
-	if (ioctl(cfg->c_iapp_raw, BIOCSETIF, &ifr) == -1)
+	if (ioctl(iapp->i_raw, BIOCSETIF, &ifr) == -1)
 		hostapd_fatal("failed to set BPF interface \"%s\": %s\n",
-		    cfg->c_iapp_iface, strerror(errno));
+		    iapp->i_iface, strerror(errno));
 
 	i = 1;
-	if (ioctl(cfg->c_iapp_raw, BIOCSHDRCMPLT, &i) == -1)
+	if (ioctl(iapp->i_raw, BIOCSHDRCMPLT, &i) == -1)
 		hostapd_fatal("failed to set BPF header completion: %s\n",
 		    strerror(errno));
 
 	/* Lock the BPF descriptor, no further configuration */
-	if (ioctl(cfg->c_iapp_raw, BIOCLOCK, NULL) == -1)
+	if (ioctl(iapp->i_raw, BIOCLOCK, NULL) == -1)
 		hostapd_fatal("failed to lock BPF interface on \"%s\": %s\n",
-		    cfg->c_iapp_iface, strerror(errno));
+		    iapp->i_iface, strerror(errno));
 }
 
 int
 hostapd_llc_send_xid(struct hostapd_config *cfg, struct hostapd_node *node)
 {
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	struct hostapd_llc *llc;
 	u_int8_t buf[ETHER_HDR_LEN + (LLC_UFRAMELEN * 2)];
 
@@ -92,7 +94,7 @@ hostapd_llc_send_xid(struct hostapd_config *cfg, struct hostapd_node *node)
 	llc->x_llc.llc_class = IAPP_LLC_CLASS;
 	llc->x_llc.llc_window = IAPP_LLC_WINDOW;
 
-	if (write(cfg->c_iapp_raw, &buf, sizeof(buf)) == -1)
+	if (write(iapp->i_raw, &buf, sizeof(buf)) == -1)
 		return (errno);
 	return (0);
 }

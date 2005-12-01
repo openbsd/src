@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.11 2005/12/01 00:36:41 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.12 2005/12/01 01:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -240,19 +240,23 @@ struct hostapd_apme {
 	TAILQ_ENTRY(hostapd_apme)	a_entries;
 };
 
+struct hostapd_iapp {
+	u_int16_t			i_cnt;
+	int				i_raw;
+	char				i_iface[IFNAMSIZ];
+	int				i_udp;
+	struct event			i_udp_ev;
+	u_int16_t			i_udp_port;
+	struct sockaddr_in		i_addr;
+	struct sockaddr_in		i_broadcast;
+	struct sockaddr_in		i_multicast;
+};
+
 struct hostapd_config {
 	int				c_apme_ctl;
 	u_int				c_apme_dlt;
 
-	u_int16_t			c_iapp;
-	int				c_iapp_raw;
-	char				c_iapp_iface[IFNAMSIZ];
-	int				c_iapp_udp;
-	struct event			c_iapp_udp_ev;
-	u_int16_t			c_iapp_udp_port;
-	struct sockaddr_in		c_iapp_addr;
-	struct sockaddr_in		c_iapp_broadcast;
-	struct sockaddr_in		c_iapp_multicast;
+	struct hostapd_iapp		c_iapp;
 
 	u_int8_t			c_flags;
 

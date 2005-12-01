@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2005/11/23 20:40:38 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2005/12/01 01:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -157,8 +157,8 @@ option		: SET HOSTAP INTERFACE hostapifaces
 		| SET HOSTAP MODE hostapmode
 		| SET IAPP INTERFACE STRING passive
 		{
-			strlcpy(hostapd_cfg.c_iapp_iface, $4,
-			    sizeof(hostapd_cfg.c_iapp_iface));
+			strlcpy(hostapd_cfg.c_iapp.i_iface, $4,
+			    sizeof(hostapd_cfg.c_iapp.i_iface));
 
 			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_IAPP;
 
@@ -183,7 +183,7 @@ iappmode	: MULTICAST iappmodeaddr iappmodeport
 iappmodeaddr	: /* empty */
 		| ADDRESS ipv4addr
 		{
-			bcopy(&$2, &hostapd_cfg.c_iapp_multicast.sin_addr,
+			bcopy(&$2, &hostapd_cfg.c_iapp.i_multicast.sin_addr,
 			    sizeof(struct in_addr));
 		}
 		;
@@ -191,7 +191,7 @@ iappmodeaddr	: /* empty */
 iappmodeport	: /* empty */
 		| PORT number
 		{
-			hostapd_cfg.c_iapp_addr.sin_port = htons($2);
+			hostapd_cfg.c_iapp.i_addr.sin_port = htons($2);
 		}
 		;
 
@@ -1286,7 +1286,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	TAILQ_INIT(&cfg->c_apmes);
 	TAILQ_INIT(&cfg->c_tables);
 	TAILQ_INIT(&cfg->c_frames);
-	cfg->c_iapp_multicast.sin_addr.s_addr = INADDR_ANY;
+	cfg->c_iapp.i_multicast.sin_addr.s_addr = INADDR_ANY;
 
 	lineno = 1;
 	errors = 0;

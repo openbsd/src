@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle.c,v 1.6 2005/11/23 20:40:38 reyk Exp $	*/
+/*	$OpenBSD: handle.c,v 1.7 2005/12/01 01:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -245,6 +245,7 @@ hostapd_handle_action(struct hostapd_apme *apme, struct hostapd_frame *frame,
     const u_int len)
 {
 	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	struct hostapd_action_data *action = &frame->f_action_data;
 	struct hostapd_node node;
 	u_int8_t *lladdr = NULL;
@@ -261,7 +262,7 @@ hostapd_handle_action(struct hostapd_apme *apme, struct hostapd_frame *frame,
 
 		hostapd_log(HOSTAPD_LOG,
 		    "%s: sent IAPP frame HOSTAPD_%s (%u bytes)\n",
-		    cfg->c_iapp_iface, cfg->c_apme_dlt ==
+		    iapp->i_iface, cfg->c_apme_dlt ==
 		    DLT_IEEE802_11_RADIO ? "RADIOTAP" : "PCAP", len);
 		break;
 

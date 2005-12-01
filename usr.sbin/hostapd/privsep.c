@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.15 2005/11/20 12:02:04 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.16 2005/12/01 01:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -78,6 +78,7 @@ static volatile pid_t child_pid = -1;
 void
 hostapd_priv_init(struct hostapd_config *cfg)
 {
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	int i, socks[2];
 	struct passwd *pw;
 	struct servent *se;
@@ -86,9 +87,9 @@ hostapd_priv_init(struct hostapd_config *cfg)
 		signal(i, SIG_DFL);
 
 	if ((se = getservbyname("iapp", "udp")) == NULL) {
-		cfg->c_iapp_udp_port = IAPP_PORT;
+		iapp->i_udp_port = IAPP_PORT;
 	} else
-		cfg->c_iapp_udp_port = se->s_port;
+		iapp->i_udp_port = se->s_port;
 
 	if ((pw = getpwnam(HOSTAPD_USER)) == NULL)
 		hostapd_fatal("failed to get user \"%s\"\n", HOSTAPD_USER);
@@ -326,6 +327,7 @@ hostapd_priv_apme_setnode(struct hostapd_apme *apme, struct hostapd_node *node,
     int add)
 {
 	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	int ret, cmd;
 
 	if (priv_fd < 0)
@@ -344,8 +346,9 @@ hostapd_priv_apme_setnode(struct hostapd_apme *apme, struct hostapd_node *node,
 
 	hostapd_must_read(priv_fd, &ret, sizeof(int));
 	if (ret == 0)
-		hostapd_log(HOSTAPD_LOG, "%s: %s node %s\n",
-		    apme->a_iface, add ? "added" : "removed",
+		hostapd_log(HOSTAPD_LOG_VERBOSE, "%s/%s: %s node %s\n",
+		    apme->a_iface, iapp->i_iface,
+		    add ? "added" : "removed",
 		    etheraddr_string(node->ni_macaddr));
 
 	return (ret);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.7 2005/12/01 00:36:41 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.8 2005/12/01 01:11:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -73,6 +73,7 @@ int
 hostapd_apme_deauth(struct hostapd_apme *apme)
 {
 	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+	struct hostapd_iapp *iapp = &cfg->c_iapp;
 	u_int8_t buf[sizeof(struct ieee80211_frame) + sizeof(u_int16_t)];
 	struct ieee80211_frame *wh;
 
@@ -89,14 +90,14 @@ hostapd_apme_deauth(struct hostapd_apme *apme)
 	if (write(apme->a_raw, buf, sizeof(buf)) == -1) {
 		hostapd_log(HOSTAPD_LOG_VERBOSE,
 		    "%s/%s: failed to deauthenticate all stations: %s\n",
-		    cfg->c_iapp_iface, apme->a_iface,
+		    iapp->i_iface, apme->a_iface,
 		    strerror(errno));
 		return (EIO);
 	}
 
 	hostapd_log(HOSTAPD_LOG_VERBOSE,
 	    "%s/%s: deauthenticated all stations\n",
-	    apme->a_iface, cfg->c_iapp_iface);
+	    apme->a_iface, iapp->i_iface);
 
 	return (0);
 }
@@ -119,14 +120,15 @@ hostapd_apme_term(struct hostapd_apme *apme)
 {
 	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
 
-	hostapd_log(HOSTAPD_LOG_DEBUG,
-	    "%s: Host AP interface removed\n", apme->a_iface);
-
 	/* Kick a specified Host AP interface */
 	event_del(&apme->a_ev);
 	close(apme->a_raw);
 
 	TAILQ_REMOVE(&cfg->c_apmes, apme, a_entries);
+
+	hostapd_log(HOSTAPD_LOG_DEBUG,
+	    "%s: Host AP interface removed\n", apme->a_iface);
+
 	free(apme);
 }
 
