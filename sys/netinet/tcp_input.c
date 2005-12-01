@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.193 2005/11/15 21:09:45 miod Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.194 2005/12/01 22:31:50 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1423,7 +1423,8 @@ trimthenstep6:
 	 *	Close the tcb.
 	 */
 	if (tiflags & TH_RST) {
-		if (th->th_seq != tp->last_ack_sent)
+		if (th->th_seq != tp->last_ack_sent &&
+		    th->th_seq != tp->rcv_nxt)
 			goto drop;
 
 		switch (tp->t_state) {
