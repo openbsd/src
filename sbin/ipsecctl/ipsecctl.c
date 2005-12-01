@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.36 2005/11/30 12:42:05 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.37 2005/12/01 10:36:42 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -240,8 +240,10 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 	ipsecctl_print_addr(r->src);
 	printf(" to ");
 	ipsecctl_print_addr(r->dst);
-	printf(" peer ");
-	ipsecctl_print_addr(r->peer);
+	if (r->peer) {
+		printf(" peer ");
+		ipsecctl_print_addr(r->peer);
+	}
 
 	if (opts & IPSECCTL_OPT_VERBOSE) {
 		if (r->auth) {
@@ -410,8 +412,10 @@ ipsecctl_show_flows(int opts)
 		free(rp->src);
 		free(rp->dst->name);
 		free(rp->dst);
-		free(rp->peer->name);
-		free(rp->peer);
+		if (rp->peer) {
+			free(rp->peer->name);
+			free(rp->peer);
+		}
 		if (rp->auth) {
 			if (rp->auth->srcid)
 				free(rp->auth->srcid);
