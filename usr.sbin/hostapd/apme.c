@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.6 2005/11/20 12:02:04 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.7 2005/12/01 00:36:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -65,6 +65,38 @@ hostapd_apme_add(struct hostapd_config *cfg, const char *name)
 
 	hostapd_log(HOSTAPD_LOG_DEBUG,
 	    "%s: Host AP interface added\n", apme->a_iface);
+
+	return (0);
+}
+
+int
+hostapd_apme_deauth(struct hostapd_apme *apme)
+{
+	struct hostapd_config *cfg = (struct hostapd_config *)apme->a_cfg;
+	u_int8_t buf[sizeof(struct ieee80211_frame) + sizeof(u_int16_t)];
+	struct ieee80211_frame *wh;
+
+	bzero(&buf, sizeof(buf));
+	wh = (struct ieee80211_frame *)&buf[0];
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
+	    IEEE80211_FC0_SUBTYPE_DEAUTH;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	memset(&wh->i_addr1, 0xff, IEEE80211_ADDR_LEN);
+	bcopy(apme->a_bssid, wh->i_addr2, IEEE80211_ADDR_LEN);
+	bcopy(apme->a_bssid, wh->i_addr3, IEEE80211_ADDR_LEN);
+	*(u_int16_t *)(wh + 1) = htole16(IEEE80211_REASON_AUTH_EXPIRE);
+
+	if (write(apme->a_raw, buf, sizeof(buf)) == -1) {
+		hostapd_log(HOSTAPD_LOG_VERBOSE,
+		    "%s/%s: failed to deauthenticate all stations: %s\n",
+		    cfg->c_iapp_iface, apme->a_iface,
+		    strerror(errno));
+		return (EIO);
+	}
+
+	hostapd_log(HOSTAPD_LOG_VERBOSE,
+	    "%s/%s: deauthenticated all stations\n",
+	    apme->a_iface, cfg->c_iapp_iface);
 
 	return (0);
 }

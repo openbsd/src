@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.10 2005/11/23 20:40:38 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.11 2005/12/01 00:36:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -333,6 +333,7 @@ int	 hostapd_priv_apme_setnode(struct hostapd_apme *,
 	    struct hostapd_node *node, int);
 
 void	 hostapd_apme_init(struct hostapd_apme *);
+int	 hostapd_apme_deauth(struct hostapd_apme *);
 int	 hostapd_apme_add(struct hostapd_config *, const char *);
 void	 hostapd_apme_term(struct hostapd_apme *);
 struct hostapd_apme *hostapd_apme_lookup(struct hostapd_config *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.10 2005/11/23 20:47:29 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.11 2005/12/01 00:36:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -57,6 +57,9 @@ hostapd_iapp_init(struct hostapd_config *cfg)
 		    "%s/%s: attached Host AP interface with BSSID %s\n",
 		    apme->a_iface, cfg->c_iapp_iface,
 		    etheraddr_string(apme->a_bssid));
+
+		/* Deauthenticate all stations on startup */
+		hostapd_apme_deauth(apme);
 	}
 }
 
