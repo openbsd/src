@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.9 2005/11/05 08:17:08 dlg Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.10 2005/12/01 05:47:14 dlg Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -62,15 +62,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * mpt_pci.c:
- *
- * OpenBSD PCI-specific routines for LSI Fusion adapters.
- */
-
-#include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $"); */
-
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
 #include <dev/pci/pcireg.h>
@@ -78,37 +69,41 @@
 #include <dev/pci/pcidevs.h>
 
 #define	MPT_PCI_MMBA		(PCI_MAPREG_START+0x04)
-#define PCI_MAPREG_ROM	0x30
+#define PCI_MAPREG_ROM		0x30
 
-void mpt_pci_attach(struct device *, struct device *, void *);
-int mpt_pci_match(struct device *, void *, void *);
+void	mpt_pci_attach(struct device *, struct device *, void *);
+int	mpt_pci_match(struct device *, void *, void *);
 const struct mpt_pci_product *mpt_pci_lookup(const struct pci_attach_args *);
 
 struct mpt_pci_softc {
-	mpt_softc_t sc_mpt;
+	mpt_softc_t		sc_mpt;
 
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_tag;
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
 
-	void *sc_ih;
+	void			*sc_ih;
 
 	/* Saved volatile PCI configuration registers. */
-	pcireg_t sc_pci_csr;
-	pcireg_t sc_pci_bhlc;
-	pcireg_t sc_pci_io_bar;
-	pcireg_t sc_pci_mem0_bar[2];
-	pcireg_t sc_pci_mem1_bar[2];
-	pcireg_t sc_pci_rom_bar;
-	pcireg_t sc_pci_int;
-	pcireg_t sc_pci_pmcsr;
+	pcireg_t		sc_pci_csr;
+	pcireg_t		sc_pci_bhlc;
+	pcireg_t		sc_pci_io_bar;
+	pcireg_t		sc_pci_mem0_bar[2];
+	pcireg_t		sc_pci_mem1_bar[2];
+	pcireg_t		sc_pci_rom_bar;
+	pcireg_t		sc_pci_int;
+	pcireg_t		sc_pci_pmcsr;
 };
 
 void	mpt_pci_link_peer(mpt_softc_t *);
 void	mpt_pci_read_config_regs(mpt_softc_t *);
 void	mpt_pci_set_config_regs(mpt_softc_t *);
 
-#define	MPP_F_FC	0x01	/* Fibre Channel adapter */
-#define	MPP_F_DUAL	0x02	/* Dual port adapter */
+struct cfattach mpt_pci_ca = {
+	sizeof (struct mpt_pci_softc), mpt_pci_match, mpt_pci_attach,
+};
+
+#define	MPP_F_FC		0x01	/* Fibre Channel adapter */
+#define	MPP_F_DUAL		0x02	/* Dual port adapter */
 
 static const struct mpt_pci_product {
 	pci_vendor_id_t		mpp_vendor;
@@ -208,7 +203,7 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Ensure that the ROM is diabled.
+	 * Ensure that the ROM is disabled.
 	 */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
 	reg &= ~1;
@@ -257,9 +252,9 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * If we're a dual-port adapter, try to find our peer.  We
 	 * need to fix his PCI config registers, too.
 	 */
-	if (mpp->mpp_flags & MPP_F_DUAL) {
+	if (mpp->mpp_flags & MPP_F_DUAL)
 		mpt_pci_link_peer(mpt);
-	}
+
 	/* Initialize the hardware. */
 	if (mpt_init(mpt, MPT_DB_INIT_HOST) != 0) {
 		/* Error message already printed. */
@@ -269,15 +264,6 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Complete attachment of hardware, include subdevices. */
 	mpt_attach(mpt);
 }
-
-#if defined(__NetBSD__)
-CFATTACH_DECL(mpt_pci, sizeof(struct mpt_pci_softc),
-    mpt_pci_match, mpt_pci_attach, NULL, NULL);
-#else
-struct cfattach mpt_pci_ca = {
-	sizeof (struct mpt_pci_softc), mpt_pci_match, mpt_pci_attach,
-};
-#endif
 
 /*
  * Find and remember our peer PCI function on a dual-port device.
