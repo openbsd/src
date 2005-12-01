@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.168 2005/08/22 17:49:37 mickey Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.169 2005/12/01 17:36:59 pvalchev Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.168 2005/08/22 17:49:37 mickey Exp $";
+    "$OpenBSD: ftpd.c,v 1.169 2005/12/01 17:36:59 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -395,7 +395,7 @@ main(int argc, char *argv[])
 	endpwent();
 
 	if (daemon_mode) {
-		int *fds, n, error, i, fd;
+		int *fds, n, i, fd;
 		struct pollfd *pfds;
 		struct addrinfo hints, *res, *res0;
 
@@ -1889,7 +1889,7 @@ printaddr:
 			break;
 		}
 		if (af) {
-			char hbuf[MAXHOSTNAMELEN], pbuf[10];
+			char pbuf[10];
 			union sockunion tmp = *su;
 
 			if (tmp.su_family == AF_INET6)
