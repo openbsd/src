@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.47 2005/12/01 22:07:26 kettenis Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.48 2005/12/01 22:08:43 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -209,7 +209,6 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOBJS} ${DPADD}
 	    `${LORDER} ${SOBJS}|tsort -q` ${LDADD}
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
-# the following looks XXX to me... -- cgd
 LLIBS?=	-lc
 llib-l${LIB}.ln: ${LOBJS}
 	@echo building llib-l${LIB}.ln
