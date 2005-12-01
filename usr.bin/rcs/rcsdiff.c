@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.23 2005/11/29 11:11:39 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.24 2005/12/01 23:02:27 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -179,6 +179,9 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	BUF *b1, *b2;
 	char rbuf[64];
 	struct stat st;
+	struct timeval tv[2], tv2[2];
+	memset(&tv, 0, sizeof(tv));
+	memset(&tv2, 0, sizeof(tv2));
 
 	if (stat(filename, &st) == -1) {
 		cvs_log(LP_ERRNO, "%s", filename);
@@ -195,12 +198,16 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 		cvs_log(LP_ERR, "failed to retrieve revision");
 		return (-1);
 	}
+	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
+	tv[1].tv_sec = tv[0].tv_sec;
 
 	if ((b2 = cvs_buf_load(filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load file: '%s'", filename);
 		cvs_buf_free(b1);
 		return (-1);
 	}
+	tv2[0].tv_sec = st.st_mtime;
+	tv2[1].tv_sec = st.st_mtime;
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
@@ -211,6 +218,8 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 		return (-1);
 	}
 	cvs_buf_free(b1);
+	if (utimes(path1, (const struct timeval *)&tv) < 0)
+		cvs_log(LP_ERRNO, "error setting utimes");
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
@@ -220,6 +229,8 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 		return (-1);
 	}
 	cvs_buf_free(b2);
+	if (utimes(path2, (const struct timeval *)&tv2) < 0)
+		cvs_log(LP_ERRNO, "error setting utimes");
 
 	cvs_diffreg(path1, path2, NULL);
 	(void)unlink(path1);
@@ -234,6 +245,10 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
 	char rbuf1[64], rbuf2[64];
+	struct timeval tv[2], tv2[2];
+
+	memset(&tv, 0, sizeof(tv));
+	memset(&tv2, 0, sizeof(tv2));
 
 	rcsnum_tostr(rev1, rbuf1, sizeof(rbuf1));
 	if (verbose == 1)
@@ -243,6 +258,8 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 		cvs_log(LP_ERR, "failed to retrieve revision");
 		return (-1);
 	}
+	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev1);
+	tv[1].tv_sec = tv[0].tv_sec;
 
 	rcsnum_tostr(rev2, rbuf2, sizeof(rbuf2));
 	if (verbose == 1)
@@ -252,6 +269,8 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 		cvs_log(LP_ERR, "failed to retrieve revision");
 		return (-1);
 	}
+	tv2[0].tv_sec = (long)rcs_rev_getdate(file, rev2);
+	tv2[1].tv_sec = tv2[0].tv_sec;
 
 	if (verbose == 1)
 		fprintf(stderr,
@@ -266,6 +285,8 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 		return (-1);
 	}
 	cvs_buf_free(b1);
+	if (utimes(path1, (const struct timeval *)&tv) < 0)
+		cvs_log(LP_ERRNO, "error setting utimes");
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
@@ -276,6 +297,9 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 	}
 	cvs_buf_free(b2);
 
+	if (utimes(path2, (const struct timeval *)&tv2) < 0)
+		cvs_log(LP_ERRNO, "error setting utimes");
+	
 	cvs_diffreg(path1, path2, NULL);
 	(void)unlink(path1);
 	(void)unlink(path2);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.68 2005/12/01 20:36:30 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.69 2005/12/01 23:02:27 niallo Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -567,6 +567,10 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 	RCSNUM *r1, *r2;
 	RCSFILE *rf;
 	struct cvsroot *root;
+	struct timeval tv[2], tv2[2];
+
+	memset(&tv, 0, sizeof(tv));
+	memset(&tv2, 0, sizeof(tv2));
 
 	rf = NULL;
 	root = CVS_DIR_ROOT(cf);
@@ -628,6 +632,8 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		rcs_close(rf);
 		return (CVS_EX_DATA);
 	}
+	tv[0].tv_sec = (long)rcs_rev_getdate(rf, r1);
+	tv[1].tv_sec = tv[0].tv_sec;
 
 	if (r1 != cf->cf_lrev)
 		rcsnum_free(r1);
@@ -652,6 +658,8 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		cvs_buf_free(b1);
 		return (CVS_EX_DATA);
 	}
+	tv2[0].tv_sec = (long)rcs_rev_getdate(rf, r2);
+	tv2[1].tv_sec = tv2[0].tv_sec;
 
 	cvs_printf("%s", diffargs);
 	cvs_printf(" -r%s", buf);
@@ -666,6 +674,8 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 	cvs_buf_free(b1);
+	if (utimes(path_tmp1, (const struct timeval *)&tv) < 0)
+		cvs_log(LP_ERRNO, "error setting utimes");
 
 	strlcpy(path_tmp2, cvs_tmpdir, sizeof(path_tmp2));
 	strlcat(path_tmp2, "/diff2.XXXXXXXXXX", sizeof(path_tmp2));
@@ -675,6 +685,8 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 	cvs_buf_free(b2);
+	if (utimes(path_tmp2, (const struct timeval *)&tv2) < 0)
+		cvs_log(LP_ERRNO, "error setting utimes");
 
 	cvs_diffreg(path_tmp1, path_tmp2, NULL);
 	(void)unlink(path_tmp1);
@@ -714,6 +726,14 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 		goto closem;
 	}
 
+	if (stat(file1, &stb1) < 0) {
+		cvs_log(LP_ERRNO, "%s", file1);
+		goto closem;
+	}
+	if (stat(file2, &stb2) < 0) {
+		cvs_log(LP_ERRNO, "%s", file2);
+		goto closem;
+	}
 	switch (files_differ(f1, f2)) {
 	case 0:
 		goto closem;
