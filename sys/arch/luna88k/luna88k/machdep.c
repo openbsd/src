@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2005/11/28 22:21:12 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 2005/12/01 22:14:52 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -138,14 +138,14 @@ int clockintr(void *);				/* in clock.c */
  * *int_mask_reg[CPU]
  * Points to the hardware interrupt status register for each CPU.
  */
-unsigned int *volatile int_mask_reg[MAX_CPUS] = {
+unsigned int *volatile int_mask_reg[] = {
 	(unsigned int *)INT_ST_MASK0,
 	(unsigned int *)INT_ST_MASK1,
 	(unsigned int *)INT_ST_MASK2,
 	(unsigned int *)INT_ST_MASK3
 };
 
-unsigned int luna88k_curspl[MAX_CPUS] = {0, 0, 0, 0};
+unsigned int luna88k_curspl[] = {0, 0, 0, 0};
 
 unsigned int int_mask_val[INT_LEVEL] = {
 	INT_MASK_LV0,
@@ -172,7 +172,7 @@ unsigned int int_set_val[INT_LEVEL] = {
 /*
  * *clock_reg[CPU]
  */
-unsigned int *volatile clock_reg[MAX_CPUS] = {
+unsigned int *volatile clock_reg[] = {
 	(unsigned int *)OBIO_CLOCK0,
 	(unsigned int *)OBIO_CLOCK1,
 	(unsigned int *)OBIO_CLOCK2,
