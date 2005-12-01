@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.7 2005/07/02 07:15:13 grunk Exp $	*/
+/*	$OpenBSD: signal.c,v 1.8 2005/12/01 21:08:56 deraadt Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -54,7 +54,7 @@
 
 extern struct event_list signalqueue;
 
-static short evsigcaught[NSIG];
+static sig_atomic_t evsigcaught[NSIG];
 static int needrecalc;
 volatile sig_atomic_t evsignal_caught = 0;
 
@@ -63,11 +63,12 @@ static int ev_signal_pair[2];
 static int ev_signal_added;
 
 /* Callback for when the signal handler write a byte to our signaling socket */
-static void evsignal_cb(int fd, short what, void *arg)
+static void
+evsignal_cb(int fd, short what, void *arg)
 {
 	static char signals[100];
 	struct event *ev = arg;
-	int n;
+	ssize_t n;
 
 	n = read(fd, signals, sizeof(signals));
 	if (n == -1)
@@ -137,11 +138,14 @@ evsignal_del(sigset_t *evsigmask, struct event *ev)
 static void
 evsignal_handler(int sig)
 {
+	int save_errno = errno;
+
 	evsigcaught[sig]++;
 	evsignal_caught = 1;
 
 	/* Wake up our notification mechanism */
 	write(ev_signal_pair[0], "a", 1);
+	errno = save_errno;
 }
 
 int
