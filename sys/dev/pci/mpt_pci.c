@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.10 2005/12/01 05:47:14 dlg Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.11 2005/12/01 22:10:06 dlg Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -68,15 +68,15 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define	MPT_PCI_MMBA		(PCI_MAPREG_START+0x04)
-#define PCI_MAPREG_ROM		0x30
+#define MPT_PCI_MMBA	(PCI_MAPREG_START+0x04)
+#define PCI_MAPREG_ROM	0x30
 
 void	mpt_pci_attach(struct device *, struct device *, void *);
 int	mpt_pci_match(struct device *, void *, void *);
 const struct mpt_pci_product *mpt_pci_lookup(const struct pci_attach_args *);
 
 struct mpt_pci_softc {
-	mpt_softc_t		sc_mpt;
+	struct mpt_softc	sc_mpt;
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
@@ -94,16 +94,19 @@ struct mpt_pci_softc {
 	pcireg_t		sc_pci_pmcsr;
 };
 
-void	mpt_pci_link_peer(mpt_softc_t *);
-void	mpt_pci_read_config_regs(mpt_softc_t *);
-void	mpt_pci_set_config_regs(mpt_softc_t *);
+void	mpt_pci_link_peer(struct mpt_softc *);
+void	mpt_pci_read_config_regs(struct mpt_softc *);
+void	mpt_pci_set_config_regs(struct mpt_softc *);
 
 struct cfattach mpt_pci_ca = {
 	sizeof (struct mpt_pci_softc), mpt_pci_match, mpt_pci_attach,
 };
 
-#define	MPP_F_FC		0x01	/* Fibre Channel adapter */
-#define	MPP_F_DUAL		0x02	/* Dual port adapter */
+#define PREAD(s, r)	pci_conf_read((s)->sc_pc, (s)->sc_tag, (r))
+#define PWRITE(s, r, v)	pci_conf_write((s)->sc_pc, (s)->sc_tag, (r), (v))
+
+#define MPP_F_FC	0x01	/* Fibre Channel adapter */
+#define MPP_F_DUAL	0x02	/* Dual port adapter */
 
 static const struct mpt_pci_product {
 	pci_vendor_id_t		mpp_vendor;
@@ -125,13 +128,13 @@ static const struct mpt_pci_product {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC919_1,
 	  MPP_F_FC },
 	{ 0,			0,
-	  0 },
+	  0 }
 };
 
 const struct mpt_pci_product *
 mpt_pci_lookup(const struct pci_attach_args *pa)
 {
-	const struct mpt_pci_product *mpp;
+	const struct mpt_pci_product	*mpp;
 
 	for (mpp = mpt_pci_products; mpp->mpp_vendor != 0; mpp++) {
 		if (PCI_VENDOR(pa->pa_id) == mpp->mpp_vendor &&
@@ -145,7 +148,7 @@ mpt_pci_lookup(const struct pci_attach_args *pa)
 int
 mpt_pci_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+	struct pci_attach_args		*pa = aux;
 
 	if (mpt_pci_lookup(pa) != NULL)
 		return (1);
@@ -156,16 +159,13 @@ mpt_pci_match(struct device *parent, void *match, void *aux)
 void
 mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mpt_pci_softc *psc = (void *) self;
-	mpt_softc_t *mpt = &psc->sc_mpt;
-	struct pci_attach_args *pa = aux;
-	const struct mpt_pci_product *mpp;
-	pci_intr_handle_t ih;
-	const char *intrstr;
-	pcireg_t reg, memtype;
-	bus_space_tag_t memt;
-	bus_space_handle_t memh;
-	int memh_valid;
+	struct mpt_pci_softc		*psc = (void *)self;
+	struct mpt_softc		*mpt = &psc->sc_mpt;
+	struct pci_attach_args		*pa = aux;
+	const struct mpt_pci_product	*mpp;
+	pci_intr_handle_t		ih;
+	const char			*intrstr;
+	pcireg_t			memtype;
 
 	mpp = mpt_pci_lookup(pa);
 	if (mpp == NULL) {
@@ -179,39 +179,24 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	mpt->sc_dmat = pa->pa_dmat;
 	mpt->sc_set_config_regs = mpt_pci_set_config_regs;
 
-	/*
-	 * Map the device.
-	 */
+	/* Map the device. */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MPT_PCI_MMBA);
-	switch (memtype) {
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		memh_valid = (pci_mapreg_map(pa, MPT_PCI_MMBA,
-		    memtype, 0, &memt, &memh, NULL, NULL, 0) == 0);
-		break;
-
-	default:
-		memh_valid = 0;
+	if (memtype != (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT) &&
+	    memtype != (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT)) {
+		printf(": incorrect memory map type\n");
+		return;
 	}
 
-	if (memh_valid) {
-		mpt->sc_st = memt;
-		mpt->sc_sh = memh;
-	} else {
+	if (pci_mapreg_map(pa, MPT_PCI_MMBA, memtype, 0, &mpt->sc_st,
+	    &mpt->sc_sh, NULL, NULL, 0) != 0) {
 		printf(": unable to map device registers\n");
 		return;
 	}
 
-	/*
-	 * Ensure that the ROM is disabled.
-	 */
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	reg &= ~1;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM, reg);
+	/* Ensure that the ROM is disabled.  */
+	PWRITE(psc, PCI_MAPREG_ROM, PREAD(psc, PCI_MAPREG_ROM & ~1));
 
-	/*
-	 * Map and establish our interrupt.
-	 */
+	/* Map and establish our interrupt. */
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": unable to map interrupt\n");
 		return;
@@ -220,13 +205,11 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mpt_intr, mpt,
 	    mpt->mpt_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf(": unable to establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+		printf(": unable to establish interrupt%s%s\n",
+		    intrstr != NULL ? " at " : "",
+		    intrstr != NULL ? intrstr : "");
 		return;
 	}
-	printf(": %s\n", intrstr ? intrstr : "?");
 
 	/* Disable interrupts on the part. */
 	mpt_disable_ints(mpt);
@@ -236,6 +219,8 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to allocate DMA memory\n");
 		return;
 	}
+
+	printf(": %s\n", intrstr ? intrstr : "?");
 
 	/*
 	 * Save the PCI config register values.
@@ -250,7 +235,7 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * If we're a dual-port adapter, try to find our peer.  We
-	 * need to fix his PCI config registers, too.
+	 * need to fix its PCI config registers too.
 	 */
 	if (mpp->mpp_flags & MPP_F_DUAL)
 		mpt_pci_link_peer(mpt);
@@ -269,13 +254,13 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
  * Find and remember our peer PCI function on a dual-port device.
  */
 void
-mpt_pci_link_peer(mpt_softc_t *mpt)
+mpt_pci_link_peer(struct mpt_softc *mpt)
 {
-	extern struct cfdriver mpt_cd;
+	extern struct cfdriver		mpt_cd;
 
-	struct mpt_pci_softc *peer_psc, *psc = (void *) mpt;
-	struct device *dev;
-	int unit, b, d, f, peer_b, peer_d, peer_f;
+	struct mpt_pci_softc		*peer_psc, *psc = (void *)mpt;
+	struct device			*dev;
+	int				unit, b, d, f, peer_b, peer_d, peer_f;
 
 	pci_decompose_tag(psc->sc_pc, psc->sc_tag, &b, &d, &f);
 
@@ -289,7 +274,7 @@ mpt_pci_link_peer(mpt_softc_t *mpt)
 			continue;
 		if (dev->dv_cfdata->cf_attach != &mpt_pci_ca)
 			continue;
-		peer_psc = (void *) dev;
+		peer_psc = (void *)dev;
 		if (peer_psc->sc_pc != psc->sc_pc)
 			continue;
 		pci_decompose_tag(peer_psc->sc_pc, peer_psc->sc_tag,
@@ -298,7 +283,7 @@ mpt_pci_link_peer(mpt_softc_t *mpt)
 			if (mpt->verbose)
 				mpt_prt(mpt, "linking with peer: %s",
 				    peer_psc->sc_mpt.mpt_dev.dv_xname);
-			mpt->mpt2 = (mpt_softc_t *) peer_psc;
+			mpt->mpt2 = (struct mpt_softc *)peer_psc;
 			peer_psc->sc_mpt.mpt2 = mpt;
 			return;
 		}
@@ -309,56 +294,38 @@ mpt_pci_link_peer(mpt_softc_t *mpt)
  * Save the volatile PCI configuration registers.
  */
 void
-mpt_pci_read_config_regs(mpt_softc_t *mpt)
+mpt_pci_read_config_regs(struct mpt_softc *mpt)
 {
-	struct mpt_pci_softc *psc = (void *) mpt;
+	struct mpt_pci_softc		*psc = (void *)mpt;
 
-	psc->sc_pci_csr = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_COMMAND_STATUS_REG);
-	psc->sc_pci_bhlc = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_BHLC_REG);
-	psc->sc_pci_io_bar = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_MAPREG_START);
-	psc->sc_pci_mem0_bar[0] = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_MAPREG_START+0x04);
-	psc->sc_pci_mem0_bar[1] = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_MAPREG_START+0x08);
-	psc->sc_pci_mem1_bar[0] = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_MAPREG_START+0x0c);
-	psc->sc_pci_mem1_bar[1] = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_MAPREG_START+0x10);
-	psc->sc_pci_rom_bar = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_MAPREG_ROM);
-	psc->sc_pci_int = pci_conf_read(psc->sc_pc, psc->sc_tag,
-	    PCI_INTERRUPT_REG);
-	psc->sc_pci_pmcsr = pci_conf_read(psc->sc_pc, psc->sc_tag, 0x44);
+	psc->sc_pci_csr = PREAD(psc, PCI_COMMAND_STATUS_REG);
+	psc->sc_pci_bhlc = PREAD(psc, PCI_BHLC_REG);
+	psc->sc_pci_io_bar = PREAD(psc, PCI_MAPREG_START);
+	psc->sc_pci_mem0_bar[0] = PREAD(psc, PCI_MAPREG_START+0x04);
+	psc->sc_pci_mem0_bar[1] = PREAD(psc, PCI_MAPREG_START+0x08);
+	psc->sc_pci_mem1_bar[0] = PREAD(psc, PCI_MAPREG_START+0x0c);
+	psc->sc_pci_mem1_bar[1] = PREAD(psc, PCI_MAPREG_START+0x10);
+	psc->sc_pci_rom_bar = PREAD(psc, PCI_MAPREG_ROM);
+	psc->sc_pci_int = PREAD(psc, PCI_INTERRUPT_REG);
+	psc->sc_pci_pmcsr = PREAD(psc, 0x44);
 }
 
 /*
  * Restore the volatile PCI configuration registers.
  */
 void
-mpt_pci_set_config_regs(mpt_softc_t *mpt)
+mpt_pci_set_config_regs(struct mpt_softc *mpt)
 {
-	struct mpt_pci_softc *psc = (void *) mpt;
+	struct mpt_pci_softc		*psc = (void *)mpt;
 
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_COMMAND_STATUS_REG,
-	    psc->sc_pci_csr);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_BHLC_REG,
-	    psc->sc_pci_bhlc);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_MAPREG_START,
-	    psc->sc_pci_io_bar);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_MAPREG_START+0x04,
-	    psc->sc_pci_mem0_bar[0]);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_MAPREG_START+0x08,
-	    psc->sc_pci_mem0_bar[1]);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_MAPREG_START+0x0c,
-	    psc->sc_pci_mem1_bar[0]);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_MAPREG_START+0x10,
-	    psc->sc_pci_mem1_bar[1]);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_MAPREG_ROM,
-	    psc->sc_pci_rom_bar);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, PCI_INTERRUPT_REG,
-	    psc->sc_pci_int);
-	pci_conf_write(psc->sc_pc, psc->sc_tag, 0x44, psc->sc_pci_pmcsr);
+	PWRITE(psc, PCI_COMMAND_STATUS_REG, psc->sc_pci_csr);
+	PWRITE(psc, PCI_BHLC_REG, psc->sc_pci_bhlc);
+	PWRITE(psc, PCI_MAPREG_START, psc->sc_pci_io_bar);
+	PWRITE(psc, PCI_MAPREG_START+0x04, psc->sc_pci_mem0_bar[0]);
+	PWRITE(psc, PCI_MAPREG_START+0x08, psc->sc_pci_mem0_bar[1]);
+	PWRITE(psc, PCI_MAPREG_START+0x0c, psc->sc_pci_mem1_bar[0]);
+	PWRITE(psc, PCI_MAPREG_START+0x10, psc->sc_pci_mem1_bar[1]);
+	PWRITE(psc, PCI_MAPREG_ROM, psc->sc_pci_rom_bar);
+	PWRITE(psc, PCI_INTERRUPT_REG, psc->sc_pci_int);
+	PWRITE(psc, 0x44, psc->sc_pci_pmcsr);
 }
