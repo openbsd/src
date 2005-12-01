@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.8 2005/11/30 18:47:10 deraadt Exp $	*/
+/*	$OpenBSD: read.c,v 1.9 2005/12/01 05:06:40 cloder Exp $	*/
 /*	$NetBSD: read.c,v 1.2 1995/07/03 21:24:59 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.8 2005/11/30 18:47:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.9 2005/12/01 05:06:40 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -80,7 +80,7 @@ type_t	**tlst;				/* array for indexed access */
 static	size_t	tlstlen;		/* length of tlst */
 
 /* index of current C source file (as spezified at the command line) */
-static	int	csrcfile;
+int	csrcfile;
 
 
 static	void	inperr(void);

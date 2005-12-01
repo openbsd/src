@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs2.h,v 1.4 2002/02/17 19:42:35 millert Exp $	*/
+/*	$OpenBSD: externs2.h,v 1.5 2005/12/01 05:06:40 cloder Exp $	*/
 /*	$NetBSD: externs2.h,v 1.2 1995/07/03 21:24:46 cgd Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ extern	void	forall(void (*)(hte_t *));
  */
 extern	const	char **fnames;
 extern	type_t	**tlst;
+extern	int	csrcfile;
 
 extern	void	readfile(const char *);
 extern	void	mkstatic(hte_t *);

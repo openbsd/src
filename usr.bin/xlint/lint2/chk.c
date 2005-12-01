@@ -1,4 +1,4 @@
-/*	$OpenBSD: chk.c,v 1.10 2005/11/20 17:42:50 deraadt Exp $	*/
+/*	$OpenBSD: chk.c,v 1.11 2005/12/01 05:06:40 cloder Exp $	*/
 /*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chk.c,v 1.10 2005/11/20 17:42:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chk.c,v 1.11 2005/12/01 05:06:40 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -270,6 +270,12 @@ chkdnud(hte_t *hte)
 	if ((sym = hte->h_syms) != NULL) {
 		if (sym->s_def != DECL)
 			errx(1, "internal error: chkdnud() 1");
+
+		/* don't warn if the name was declared in a separate header */
+		if (sym->s_pos.p_src != sym->s_pos.p_isrc) {
+			return;
+		}
+
 		/* %s declared( %s ), but never used or defined */
 		msg(2, hte->h_name, mkpos(&sym->s_pos));
 	}
