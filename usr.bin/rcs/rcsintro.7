@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rcsintro.7,v 1.3 2005/10/26 15:15:46 xsa Exp $
+.\"     $OpenBSD: rcsintro.7,v 1.4 2005/12/01 09:18:54 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -74,6 +74,22 @@ option of the
 .Xr co 1
 command.
 Only one concurrent locked checkout of a revision is permitted.
+.Pp
+Once changes have been made to the
+.Pa foo.c
+file, and before checking the file in, the
+.Xr rcsdiff 1
+command can be used to view changes between the working file
+and the most recently checked-in revision:
+.Pp
+.Dl $ rcsdiff -u foo.c
+.Pp
+The
+.Fl u
+option produces a unified diff.
+See
+.Xr diff 1
+for more information.
 .Sh SEE ALSO
 .Xr ci 1 ,
 .Xr co 1 ,
