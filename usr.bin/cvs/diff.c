@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.67 2005/11/24 11:23:13 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.68 2005/12/01 20:36:30 niallo Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -217,7 +217,7 @@ static char	*preadline(int, size_t, off_t);
 static int Nflag;
 #endif
 static int aflag, bflag, dflag, iflag, pflag, tflag, Tflag, wflag;
-static int context;
+static int context = 3;
 int diff_format = D_NORMAL;
 char *diff_file = NULL;
 char diffargs[128];
