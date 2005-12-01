@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.29 2005/11/28 23:24:31 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.30 2005/12/01 02:15:21 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -478,15 +478,24 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 		return (ENOMEM);
 	}
 	bzero(mpt->request_pool, len);
+	
 	/*
 	 * Allocate DMA resources for reply buffers.
 	 */
+	error = bus_dmamap_create(mpt->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
+	    0, 0, &mpt->reply_dmap);
+	if (error) {
+		printf("%s: unable to create reply DMA map, error = %d\n",
+		    mpt->mpt_dev.dv_xname, error);
+		goto free_request_pool;
+	}
+
 	error = bus_dmamem_alloc(mpt->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    &reply_seg, 1, &reply_rseg, 0);
 	if (error) {
 		printf("%s: unable to allocate reply area, error = %d\n",
 		    mpt->mpt_dev.dv_xname, error);
-		goto fail_0;
+		goto destroy_reply;
 	}
 
 	error = bus_dmamem_map(mpt->sc_dmat, &reply_seg, reply_rseg, PAGE_SIZE,
@@ -494,15 +503,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	if (error) {
 		printf("%s: unable to map reply area, error = %d\n",
 		    mpt->mpt_dev.dv_xname, error);
-		goto fail_1;
-	}
-
-	error = bus_dmamap_create(mpt->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
-	    0, 0, &mpt->reply_dmap);
-	if (error) {
-		printf("%s: unable to create reply DMA map, error = %d\n",
-		    mpt->mpt_dev.dv_xname, error);
-		goto fail_2;
+		goto free_reply;
 	}
 
 	error = bus_dmamap_load(mpt->sc_dmat, mpt->reply_dmap, mpt->reply,
@@ -510,19 +511,26 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	if (error) {
 		printf("%s: unable to load reply DMA map, error = %d\n",
 		    mpt->mpt_dev.dv_xname, error);
-		goto fail_3;
+		goto unmap_reply;
 	}
-	mpt->reply_phys = mpt->reply_dmap->dm_segs[0].ds_addr;
 
 	/*
 	 * Allocate DMA resources for request buffers.
 	 */
+	error = bus_dmamap_create(mpt->sc_dmat, MPT_REQ_MEM_SIZE(mpt), 1,
+	    MPT_REQ_MEM_SIZE(mpt), 0, 0, &mpt->request_dmap);
+	if (error) {
+		printf("%s: unable to create request DMA map, error = %d\n",
+		    mpt->mpt_dev.dv_xname, error);
+		goto unload_reply;
+	}
+
 	error = bus_dmamem_alloc(mpt->sc_dmat, MPT_REQ_MEM_SIZE(mpt),
 	    PAGE_SIZE, 0, &request_seg, 1, &request_rseg, 0);
 	if (error) {
 		printf("%s: unable to allocate request area, error = %d\n",
 		    mpt->mpt_dev.dv_xname, error);
-		goto fail_4;
+		goto destroy_request;
 	}
 
 	error = bus_dmamem_map(mpt->sc_dmat, &request_seg, request_rseg,
@@ -530,15 +538,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	if (error) {
 		printf("%s: unable to map request area, error = %d\n",
 		    mpt->mpt_dev.dv_xname, error);
-		goto fail_5;
-	}
-
-	error = bus_dmamap_create(mpt->sc_dmat, MPT_REQ_MEM_SIZE(mpt), 1,
-	    MPT_REQ_MEM_SIZE(mpt), 0, 0, &mpt->request_dmap);
-	if (error) {
-		printf("%s: unable to create request DMA map, error = %d\n",
-		    mpt->mpt_dev.dv_xname, error);
-		goto fail_6;
+		goto free_request;
 	}
 
 	error = bus_dmamap_load(mpt->sc_dmat, mpt->request_dmap, mpt->request,
@@ -546,11 +546,10 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	if (error) {
 		printf("%s: unable to load request DMA map, error = %d\n",
 		    mpt->mpt_dev.dv_xname, error);
-		goto fail_7;
+		goto unmap_request;
 	}
-	mpt->request_phys = mpt->request_dmap->dm_segs[0].ds_addr;
 
-	pptr = mpt->request_phys;
+	pptr = mpt->request_dmap->dm_segs[0].ds_addr;
 	vptr = (caddr_t) mpt->request;
 	end = pptr + MPT_REQ_MEM_SIZE(mpt);
 
@@ -573,34 +572,38 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 		if (error) {
 			printf("%s: unable to create req %d DMA map, error = ",
 			    "%d", mpt->mpt_dev.dv_xname, i, error);
-			goto fail_8;
+			goto unload_request;
 		}
 	}
 
+	mpt->request_phys = mpt->request_dmap->dm_segs[0].ds_addr;
+	mpt->reply_phys = mpt->reply_dmap->dm_segs[0].ds_addr;
 	return (0);
 
- fail_8:
+unload_request:	
 	for (--i; i >= 0; i--) {
 		request_t *req = &mpt->request_pool[i];
 		if (req->dmap != NULL)
 			bus_dmamap_destroy(mpt->sc_dmat, req->dmap);
 	}
 	bus_dmamap_unload(mpt->sc_dmat, mpt->request_dmap);
- fail_7:
-	bus_dmamap_destroy(mpt->sc_dmat, mpt->request_dmap);
- fail_6:
+unmap_request:
 	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->request, PAGE_SIZE);
- fail_5:
-	bus_dmamem_free(mpt->sc_dmat, &request_seg, request_rseg);
- fail_4:
+free_request:
+	bus_dmamem_free(mpt->sc_dmat, &request_seg, 1);
+destroy_request:
+	bus_dmamap_destroy(mpt->sc_dmat, mpt->request_dmap);
+
+unload_reply:
 	bus_dmamap_unload(mpt->sc_dmat, mpt->reply_dmap);
- fail_3:
-	bus_dmamap_destroy(mpt->sc_dmat, mpt->reply_dmap);
- fail_2:
+unmap_reply:
 	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->reply, PAGE_SIZE);
- fail_1:
-	bus_dmamem_free(mpt->sc_dmat, &reply_seg, reply_rseg);
- fail_0:
+free_reply:
+	bus_dmamem_free(mpt->sc_dmat, &reply_seg, 1);
+destroy_reply:
+	bus_dmamap_destroy(mpt->sc_dmat, mpt->reply_dmap);
+	
+free_request_pool:
 	free(mpt->request_pool, M_DEVBUF);
 
 	mpt->reply = NULL;
@@ -1513,49 +1516,52 @@ mpt_minphys(struct buf *bp)
  * maxsgl : maximum number of DMA segments
  */
 int
-mpt_alloc_fw_mem(mpt_softc_t *mpt, uint32_t img_sz, int maxsgl)
+mpt_alloc_fw_mem(mpt_softc_t *mpt, int maxsgl)
 {
-	int error;
+	int error, rseg;
 
-	error = bus_dmamap_create(mpt->sc_dmat, img_sz, maxsgl, img_sz,
-	    0, 0, &mpt->fw_dmap);
+	error = bus_dmamap_create(mpt->sc_dmat, mpt->fw_image_size, maxsgl,
+	    mpt->fw_image_size, 0, 0, &mpt->fw_dmap);
 	if (error) {
 		mpt_prt(mpt, "unable to create request DMA map, error = %d",
 		    error);
-		goto fw_fail0;
+		return (error);
 	}
 
-	error = bus_dmamem_alloc(mpt->sc_dmat, img_sz, PAGE_SIZE, 0,
-		&mpt->fw_seg, 1, &mpt->fw_rseg, 0);
+	error = bus_dmamem_alloc(mpt->sc_dmat, mpt->fw_image_size, PAGE_SIZE, 0,
+		&mpt->fw_seg, 1, &rseg, 0);
 	if (error) {
 		mpt_prt(mpt, "unable to allocate fw memory, error = %d", error);
-		goto fw_fail1;
+		goto destroy;
 	}
 
-	error = bus_dmamem_map(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg, img_sz,
-		(caddr_t *)&mpt->fw, BUS_DMA_COHERENT);
+	error = bus_dmamem_map(mpt->sc_dmat, &mpt->fw_seg, 1,
+	    mpt->fw_image_size, (caddr_t *)&mpt->fw, BUS_DMA_COHERENT);
 	if (error) {
 		mpt_prt(mpt, "unable to map fw area, error = %d", error);
-		goto fw_fail2;
+		goto free;
 	}
 
-	error = bus_dmamap_load(mpt->sc_dmat, mpt->fw_dmap, mpt->fw, img_sz,
-		NULL, 0);
+	error = bus_dmamap_load(mpt->sc_dmat, mpt->fw_dmap, mpt->fw,
+	    mpt->fw_image_size, NULL, 0);
 	if (error) {
-		mpt_prt(mpt, "unable to load request DMA map, error = %d", error);
-		goto fw_fail3;
+		mpt_prt(mpt, "unable to load request DMA map, error = %d",
+		    error);
+		goto unmap;
 	}
 
 	return(error);
 
-fw_fail3:
-	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, img_sz);
-fw_fail2:
-	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
-fw_fail1:
+unmap:
+	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, mpt->fw_image_size);
+free:
+	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, 1);
+destroy:
 	bus_dmamap_destroy(mpt->sc_dmat, mpt->fw_dmap);
-fw_fail0:
+
 	mpt->fw = NULL;
+	bzero(&mpt->fw_seg, sizeof(mpt->fw_seg));
+		
 	return (error);
 }
 
@@ -1564,6 +1570,6 @@ mpt_free_fw_mem(mpt_softc_t *mpt)
 {
 	bus_dmamap_unload(mpt->sc_dmat, mpt->fw_dmap);
 	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, mpt->fw_image_size);
-	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, mpt->fw_rseg);
+	bus_dmamem_free(mpt->sc_dmat, &mpt->fw_seg, 1);
 	bus_dmamap_destroy(mpt->sc_dmat, mpt->fw_dmap);
 }

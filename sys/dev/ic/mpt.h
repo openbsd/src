@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.h,v 1.5 2005/11/16 04:31:32 marco Exp $	*/
+/*	$OpenBSD: mpt.h,v 1.6 2005/12/01 02:15:21 krw Exp $	*/
 /*	$NetBSD: mpt.h,v 1.2 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ int mpt_read_cfg_header(mpt_softc_t *, int, int, int, CONFIG_PAGE_HEADER *);
 /* FW Download Boot */
 int mpt_downloadboot(mpt_softc_t *);
 int mpt_do_upload(mpt_softc_t *);
-int mpt_alloc_fw_mem(mpt_softc_t *, uint32_t , int);
+int mpt_alloc_fw_mem(mpt_softc_t *, int);
 void mpt_free_fw_mem(mpt_softc_t *);
 
 /* mpt_debug.c functions */

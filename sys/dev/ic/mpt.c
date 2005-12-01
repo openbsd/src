@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.17 2005/11/16 04:31:32 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.18 2005/12/01 02:15:21 krw Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -1785,7 +1785,7 @@ mpt_do_upload(mpt_softc_t *mpt)
 		sizeof(SGE_MPI_UNION) - sizeof(FWUploadTCSGE_t))
 		/ sizeof(SGE_SIMPLE32);
 
-	error = mpt_alloc_fw_mem(mpt, mpt->fw_image_size, maxsgl);
+	error = mpt_alloc_fw_mem(mpt, maxsgl);
 	if (error) {
 		mpt_prt(mpt,"mpt_alloc_fw_mem error: %d", error);
 		return error;
