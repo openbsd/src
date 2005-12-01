@@ -1,10 +1,10 @@
-/*      $OpenBSD: test-9.c,v 1.1 2005/12/01 05:19:25 cloder Exp $	*/
+/*      $OpenBSD: test-9.c,v 1.2 2005/12/01 14:23:02 cloder Exp $	*/
 
 /*
  * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
  *
- * Test warning on things declared in the translation unit but never
- * defined.
+ * Test warning on inequality comparison of unsigned value with
+ * 0.
  */
 
 /* ARGSUSED */
