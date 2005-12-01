@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.12 2005/12/01 01:11:30 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.13 2005/12/01 01:28:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -92,17 +92,29 @@ struct hostapd_counter {
 	((_e)->e_lladdr[5] == ((_b)[5] & (_e)->e_addr.a_mask[5]))		\
 )
 
+struct hostapd_inaddr {
+	sa_family_t		in_af;
+	union {
+		struct in_addr	v4;
+		struct in6_addr	v6;
+	} in_v;
+	int			in_netmask;
+};
+
+#define in_v4			in_v.v4
+#define in_v6			in_v.v6
+
 struct hostapd_entry {
 	u_int8_t			e_lladdr[IEEE80211_ADDR_LEN];
 	u_int8_t			e_flags;
 
 #define HOSTAPD_ENTRY_F_LLADDR		0x00
 #define HOSTAPD_ENTRY_F_MASK		0x01
-#define HOSTAPD_ENTRY_F_IPV4		0x02
+#define HOSTAPD_ENTRY_F_INADDR		0x02
 
 	union {
 		u_int8_t		a_mask[IEEE80211_ADDR_LEN];
-		struct in_addr		a_ipv4;
+		struct hostapd_inaddr	a_inaddr;
 	}				e_addr;
 
 	RB_ENTRY(hostapd_entry)		e_nodes;
@@ -110,7 +122,7 @@ struct hostapd_entry {
 };
 
 #define e_mask				e_addr.a_mask
-#define e_ipv4				e_addr.a_ipv4
+#define e_inaddr			e_addr.a_inaddr
 
 #define HOSTAPD_TABLE_NAMELEN		32
 
@@ -236,6 +248,7 @@ struct hostapd_apme {
 	char				a_iface[IFNAMSIZ];
 	u_int8_t			a_bssid[IEEE80211_ADDR_LEN];
 	void				*a_cfg;
+	struct sockaddr_in		a_addr;
 
 	TAILQ_ENTRY(hostapd_apme)	a_entries;
 };

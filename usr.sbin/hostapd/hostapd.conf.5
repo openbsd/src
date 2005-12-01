@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.21 2005/11/23 20:40:38 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.22 2005/12/01 01:28:19 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -81,8 +81,8 @@ Tables are used for
 .Xr hostapd 8
 .Em event rules
 to match specified IEEE 802.11 link layer addresses and address ranges,
-and the capability to assign link layer to IP addresses is a
-requirement for advanced IAPP functionality.
+and the capability to assign link layer to IP addresses and a option netmask
+is a requirement for advanced IAPP functionality.
 .Pp
 Table options may be presented after the table name declaration.
 The following options are supported:
@@ -101,6 +101,9 @@ table <myess> const {
 	00:00:24:c3:40:18 -> 10.195.64.24,
 	00:00:24:c3:40:19 -> 10.195.64.25,
 	00:00:24:c3:40:1a -> 10.195.64.26
+}
+table <myclient> const {
+	00:05:4e:45:d4:b9 -> 172.23.5.1/30
 }
 .Ed
 .Sh GLOBAL CONFIGURATION

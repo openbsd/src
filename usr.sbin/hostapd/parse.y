@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2005/12/01 01:11:30 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2005/12/01 01:28:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -813,10 +813,12 @@ tableaddrentry	: lladdr
 		;
 
 tableaddropt	: /* empty */
-		| assign ipv4addr
+		| assign ipv4addr ipnetmask
 		{
-			entry->e_flags |= HOSTAPD_ENTRY_F_IPV4;
-			bcopy(&$2, &entry->e_ipv4, sizeof(struct in_addr));
+			entry->e_flags |= HOSTAPD_ENTRY_F_INADDR;
+			entry->e_inaddr.in_af = AF_INET;
+			bcopy(&$2, &entry->e_inaddr.in_v4,
+			    sizeof(struct in_addr));
 		}
 		| mask lladdr
 		{
@@ -836,6 +838,16 @@ ipv4addr	: STRING
 				YYERROR;
 			}
 			free($1);
+		}
+		;
+
+ipnetmask	: /* empty */
+		{
+			entry->e_inaddr.in_netmask = -1;
+		}
+		| '/' number
+		{
+			entry->e_inaddr.in_netmask = $2;
 		}
 		;
 
