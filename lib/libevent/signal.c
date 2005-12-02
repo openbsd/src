@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.9 2005/12/02 04:14:03 deraadt Exp $	*/
+/*	$OpenBSD: signal.c,v 1.10 2005/12/02 16:54:25 deraadt Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -100,6 +100,8 @@ evsignal_init(sigset_t *evsigmask)
 
 	FD_CLOSEONEXEC(ev_signal_pair[0]);
 	FD_CLOSEONEXEC(ev_signal_pair[1]);
+
+	fcntl(ev_signal_pair[0], F_SETFL, O_NONBLOCK);
 
 	event_set(&ev_signal, ev_signal_pair[1], EV_READ,
 	    evsignal_cb, &ev_signal);
