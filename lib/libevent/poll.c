@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.10 2005/07/02 07:15:13 grunk Exp $	*/
+/*	$OpenBSD: poll.c,v 1.11 2005/12/02 04:41:30 deraadt Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -75,7 +75,7 @@ int poll_del		(void *, struct event *);
 int poll_recalc		(struct event_base *, void *, int);
 int poll_dispatch	(struct event_base *, void *, struct timeval *);
 
-struct eventop pollops = {
+const struct eventop pollops = {
 	"poll",
 	poll_init,
 	poll_add,
