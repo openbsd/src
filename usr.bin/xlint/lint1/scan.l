@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.17 2005/12/01 03:17:14 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.18 2005/12/02 18:03:09 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.17 2005/12/01 03:17:14 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.18 2005/12/02 18:03:09 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -180,61 +180,63 @@ badchar(int c)
 static	struct	kwtab {
 	const	char *kw_name;	/* keyword */
 	int	kw_token;	/* token returned by yylex() */
-	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
-	tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
-	tqual_t	kw_tqual;	/* type qual. fi kw_token T_QUAL */
+	union {
+		scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
+		tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
+		tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
+	};
 	u_int	kw_stdc : 1;	/* STDC keyword */
 	u_int	kw_gcc : 1;	/* GCC keyword */
 } kwtab[] = {
-	{ "asm",	T_ASM,		0,	0,	0,	  0, 1 },
-	{ "__asm",	T_ASM,		0,	0,	0,	  0, 0 },
-	{ "__asm__",	T_ASM,		0,	0,	0,	  0, 0 },
-	{ "__attribute__", T_ATTRIBUTE,	0,	0,	0,	  0, 0 },
-	{ "__lint_equal__", T_LEQUAL,	0,	0,	0,	  0, 0 },
-	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0, 0 },
-	{ "break",	T_BREAK,	0,	0,	0,	  0, 0 },
-	{ "case",	T_CASE,		0,	0,	0,	  0, 0 },
-	{ "char",	T_TYPE,		0,	CHAR,	0,	  0, 0 },
-	{ "const",	T_QUAL,		0,	0,	CONST,	  1, 0 },
-	{ "__const__",	T_QUAL,		0,	0,	CONST,	  0, 0 },
-	{ "__const",	T_QUAL,		0,	0,	CONST,	  0, 0 },
-	{ "continue",	T_CONTINUE,	0,	0,	0,	  0, 0 },
-	{ "default",	T_DEFAULT,	0,	0,	0,	  0, 0 },
-	{ "do",		T_DO,		0,	0,	0,	  0, 0 },
-	{ "double",	T_TYPE,		0,	DOUBLE,	0,	  0, 0 },
-	{ "else",	T_ELSE,		0,	0,	0,	  0, 0 },
-	{ "enum",	T_ENUM,		0,	0,	0,	  0, 0 },
-	{ "extern",	T_SCLASS,	EXTERN,	0,	0,	  0, 0 },
-	{ "float",	T_TYPE,		0,	FLOAT,	0,	  0, 0 },
-	{ "for",	T_FOR,		0,	0,	0,	  0, 0 },
-	{ "goto",	T_GOTO,		0,	0,	0,	  0, 0 },
-	{ "if",		T_IF,		0,	0,	0,	  0, 0 },
-	{ "inline",	T_SCLASS,	INLINE,	0,	0,	  1, 0 },
-	{ "__inline__",	T_SCLASS,	INLINE,	0,	0,	  0, 0 },
-	{ "__inline",	T_SCLASS,	INLINE,	0,	0,	  0, 0 },
-	{ "int",	T_TYPE,		0,	INT,	0,	  0, 0 },
-	{ "long",	T_TYPE,		0,	LONG,	0,	  0, 0 },
-	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0 },
-	{ "__restrict",	T_QUAL,		0,	0,	RESTRICT, 0, 0 },
-	{ "__restrict__",	T_QUAL,	0,	0,	RESTRICT, 0, 0 },
-	{ "return",	T_RETURN,	0,	0,	0,	  0, 0 },
-	{ "short",	T_TYPE,		0,	SHORT,	0,	  0, 0 },
-	{ "signed",	T_TYPE,		0,	SIGNED,	0,	  1, 0 },
-	{ "__signed__",	T_TYPE,		0,	SIGNED,	0,	  0, 0 },
-	{ "__signed",	T_TYPE,		0,	SIGNED,	0,	  0, 0 },
-	{ "sizeof",	T_SIZEOF,	0,	0,	0,	  0, 0 },
-	{ "static",	T_SCLASS,	STATIC,	0,	0,	  0, 0 },
-	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0, 0 },
-	{ "switch",	T_SWITCH,	0,	0,	0,	  0, 0 },
-	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0, 0 },
-	{ "union",	T_SOU,		0,	UNION,	0,	  0, 0 },
-	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0,	  0, 0 },
-	{ "void",	T_TYPE,		0,	VOID,	0,	  0, 0 },
-	{ "volatile",	T_QUAL,		0,	0,	VOLATILE, 1, 0 },
-	{ "__volatile__", T_QUAL,	0,	0,	VOLATILE, 0, 0 },
-	{ "__volatile",	T_QUAL,		0,	0,	VOLATILE, 0, 0 },
-	{ "while",	T_WHILE,	0,	0,	0,	  0, 0 },
-	{ NULL,		0,		0,	0,	0,	  0, 0 }
+	{ "asm",		T_ASM,		{ 0 },		0, 1 },
+	{ "__asm",		T_ASM,		{ 0 },		0, 0 },
+	{ "__asm__",		T_ASM,		{ 0 },		0, 0 },
+	{ "__attribute__",	T_ATTRIBUTE,	{ 0 },		0, 0 },
+	{ "auto",		T_SCLASS,	{ AUTO },	0, 0 },
+	{ "break",		T_BREAK,	{ 0 },		0, 0 },
+	{ "case",		T_CASE,		{ 0 },		0, 0 },
+	{ "char",		T_TYPE,		{ CHAR },	0, 0 },
+	{ "const",		T_QUAL,		{ CONST },	1, 0 },
+	{ "__const__",		T_QUAL,		{ CONST },	0, 0 },
+	{ "__const",		T_QUAL,		{ CONST },	0, 0 },
+	{ "continue",		T_CONTINUE,	{ 0 },		0, 0 },
+	{ "default",		T_DEFAULT,	{ 0 },		0, 0 },
+	{ "do",			T_DO,		{ 0 },		0, 0 },
+	{ "double",		T_TYPE,		{ DOUBLE },	0, 0 },
+	{ "else",		T_ELSE,		{ 0 },		0, 0 },
+	{ "enum",		T_ENUM,		{ 0 },		0, 0 },
+	{ "extern",		T_SCLASS,	{ EXTERN },	0, 0 },
+	{ "float",		T_TYPE,		{ FLOAT },	0, 0 },
+	{ "for",		T_FOR,		{ 0 },		0, 0 },
+	{ "goto",		T_GOTO,		{ 0 },		0, 0 },
+	{ "if",			T_IF,		{ 0 },		0, 0 },
+	{ "inline",		T_SCLASS,	{ INLINE },	1, 0 },
+	{ "__inline__",		T_SCLASS,	{ INLINE },	0, 0 },
+	{ "__inline",		T_SCLASS,	{ INLINE },	0, 0 },
+	{ "int",		T_TYPE,		{ INT },	0, 0 },
+	{ "__lint_equal__",	T_LEQUAL,	{ 0 },		0, 0 },
+	{ "long",		T_TYPE,		{ LONG },	0, 0 },
+	{ "register",		T_SCLASS,	{ REG },	0, 0 },
+	{ "__restrict",		T_QUAL,		{ RESTRICT },	0, 0 },
+	{ "__restrict__",	T_QUAL,		{ RESTRICT },	0, 0 },
+	{ "return",		T_RETURN,	{ 0 },		0, 0 },
+	{ "short",		T_TYPE,		{ SHORT },	0, 0 },
+	{ "signed",		T_TYPE,		{ SIGNED },	1, 0 },
+	{ "__signed__",		T_TYPE,		{ SIGNED },	0, 0 },
+	{ "__signed",		T_TYPE,		{ SIGNED },	0, 0 },
+	{ "sizeof",		T_SIZEOF,	{ 0 },		0, 0 },
+	{ "static",		T_SCLASS,	{ STATIC },	0, 0 },
+	{ "struct",		T_SOU,		{ STRUCT },	0, 0 },
+	{ "switch",		T_SWITCH,	{ 0 },		0, 0 },
+	{ "typedef",		T_SCLASS,	{ TYPEDEF },	0, 0 },
+	{ "union",		T_SOU,		{ UNION },	0, 0 },
+	{ "unsigned",		T_TYPE,		{ UNSIGN },	0, 0 },
+	{ "void",		T_TYPE,		{ VOID },	0, 0 },
+	{ "volatile",		T_QUAL,		{ VOLATILE },	1, 0 },
+	{ "__volatile__",	T_QUAL,		{ VOLATILE },	0, 0 },
+	{ "__volatile",		T_QUAL,		{ VOLATILE },	0, 0 },
+	{ "while",		T_WHILE,	{ 0 },		0, 0 },
+	{ NULL,			0,		{ 0 },		0, 0 }
 };
 
 /* Symbol table */
