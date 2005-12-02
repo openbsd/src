@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.23 2005/11/19 02:18:01 pedro Exp $ */
+/*	$OpenBSD: safte.c,v 1.24 2005/12/02 04:23:17 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -491,6 +491,7 @@ safte_read_encstat(void *arg)
 				s->se_sensor.status = SENSOR_S_CRIT;
 				break;
 			}
+			break;
 
 		case SAFTE_T_TEMP:
 			s->se_sensor.value = safte_temp2uK(*s->se_field,
