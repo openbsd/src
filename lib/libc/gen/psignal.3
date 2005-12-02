@@ -1,4 +1,4 @@
-.\"	$OpenBSD: psignal.3,v 1.10 2005/07/22 03:16:58 jaredy Exp $
+.\"	$OpenBSD: psignal.3,v 1.11 2005/12/02 03:44:54 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Fd #include <signal.h>
 .Ft void
-.Fn psignal "unsigned sig" "const char *s"
+.Fn psignal "unsigned int sig" "const char *s"
 .Vt extern char *sys_siglist[];
 .Vt extern char *sys_signame[];
 .Sh DESCRIPTION
