@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.24 2005/12/02 04:33:26 deraadt Exp $
+.\"	$OpenBSD: apm.8,v 1.25 2005/12/02 09:22:52 jmc Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -52,6 +52,10 @@ displays the current power management state in verbose form.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Set
+.Xr apmd 8
+to automatic performance adjustment mode.
 .It Fl a
 Display the external charger (A/C status).
 0 means disconnected, 1
@@ -69,6 +73,18 @@ Set the name of the socket via which to contact
 .Xr apmd 8
 to
 .Pa sockname .
+.It Fl H
+Set
+.Xr apmd 8
+to manual performance adjustment mode and
+.Va hw.setperf
+to 100.
+.It Fl L
+Set
+.Xr apmd 8
+to manual performance adjustment mode and
+.Va hw.setperf
+to 0.
 .It Fl l
 Display the estimated battery lifetime (in percent).
 .It Fl m
@@ -85,26 +101,6 @@ Display if power management is enabled.
 Request more verbose description of the displayed states.
 .It Fl z
 Put the system into suspend (deep sleep) mode.
-.It Fl A
-Set
-.Xr apmd 8
-to automatic performance adjustment mode.
-.It Fl C
-Set
-.Xr apmd 8
-to cool running performance adjustment mode.
-.It Fl H
-Set
-.Xr apmd 8
-to manual performance adjustment mode and
-.Va hw.setperf
-to 100.
-.It Fl L
-Set
-.Xr apmd 8
-to manual performance adjustment mode and
-.Va hw.setperf
-to 0.
 .El
 .Pp
 The
