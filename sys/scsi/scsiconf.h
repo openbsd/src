@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.62 2005/11/13 02:39:45 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.63 2005/12/02 16:24:08 marco Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ struct scsi_inquiry_pattern {
  */
 struct scsibus_softc {
 	struct device sc_dev;
-	struct scsi_link *adapter_link;		/* prototype supplied by adapter */
+	struct scsi_link *adapter_link;	/* prototype supplied by adapter */
 	struct scsi_link ***sc_link;
 	u_int16_t sc_buswidth;
 };
