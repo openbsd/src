@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.14 2005/12/02 04:27:52 beck Exp $	*/
+/*	$OpenBSD: apm.c,v 1.15 2005/12/02 04:33:27 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -58,8 +58,8 @@ int send_command(int fd, struct apm_command *cmd, struct apm_reply *reply);
 void
 usage(void)
 {
-	fprintf(stderr,"usage: %s [-ablmPSsvz] [-f sockname]"
-		" [-C | -A | -L | -H]\n", __progname);
+	fprintf(stderr,"usage: %s [-AabCHLlmPSsvz] [-f sockname]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -86,7 +86,7 @@ send_command(int fd, struct apm_command *cmd, struct apm_reply *reply)
 		warn("invalid send to APM daemon");
 		return (1);
 	}
-	return 0;
+	return (0);
 }
 
 int
@@ -130,7 +130,7 @@ open_socket(const char *sockname)
 		errno = errr;
 		err(1, "cannot open connection to APM daemon");
 	}
-	return sock;
+	return (sock);
 }
 
 int
