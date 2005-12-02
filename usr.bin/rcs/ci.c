@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.76 2005/12/02 01:13:12 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.77 2005/12/02 13:43:32 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -435,7 +435,7 @@ checkin_getinput(const char *prompt)
 static int
 checkin_update(struct checkin_params *pb)
 {
-	char  *filec;
+	char  *filec, numb1[64], numb2[64];
 	BUF *bp;
 
 	pb->frev = pb->file->rf_head;
@@ -443,8 +443,18 @@ checkin_update(struct checkin_params *pb)
 	/* If revision passed on command line is less than HEAD, bail. */
 	if ((pb->newrev != NULL)
 	    && (rcsnum_cmp(pb->newrev, pb->frev, 0) > 0)) {
-		cvs_log(LP_ERR, "revision is too low!");
+		cvs_log(LP_ERR,
+		    "%s: revision %s too low; must be higher than %s",
+		    pb->file->rf_path,
+		    rcsnum_tostr(pb->newrev, numb1, sizeof(numb1)),
+		    rcsnum_tostr(pb->frev, numb2, sizeof(numb2)));
 		rcs_close(pb->file);
+		return (-1);
+	}
+
+	if (checkin_checklock(pb) < 0) {
+		cvs_log(LP_ERR, "%s: no lock set by %s",
+		    pb->file->rf_path, pb->username);
 		return (-1);
 	}
 
@@ -473,10 +483,6 @@ checkin_update(struct checkin_params *pb)
 		checkin_revert(pb);
 		return (0);
 	}
-
-	/* Check for a lock belonging to this user. If none, abort check-in. */
-	if (checkin_checklock(pb) < 0)
-		return (-1);
 
 	/* If no log message specified, get it interactively. */
 	if (pb->flags & INTERACTIVE)
