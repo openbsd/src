@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.18 2005/12/01 02:15:21 krw Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.19 2005/12/02 03:55:57 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -1629,7 +1629,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		/*
 		 * Give it reply buffers
 		 *
-		 * Do *not* except global credits.
+		 * Do *not* exceed global credits.
 		 */
 		for (val = 0, pptr = mpt->reply_phys;
 		    (pptr + MPT_REPLY_SIZE) < (mpt->reply_phys + PAGE_SIZE);
