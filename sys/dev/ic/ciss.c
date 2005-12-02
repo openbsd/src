@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.9 2005/11/23 14:46:47 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.10 2005/12/02 11:35:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -479,7 +479,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	CISS_DPRINTF(CISS_D_CMD, ("submit=0x%x ", cmd->id));
 	bus_space_write_4(sc->iot, sc->ioh, CISS_INQ, ccb->ccb_cmdpa);
 
-	if (wait) {
+	if (wait & SCSI_POLL) {
 		struct timeval tv;
 		int etick;
 		CISS_DPRINTF(CISS_D_CMD, ("waiting "));
