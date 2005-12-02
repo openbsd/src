@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.102 2005/12/01 18:22:09 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.103 2005/12/02 20:08:41 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -561,8 +561,11 @@ rcs_write(RCSFILE *rfp)
 		fputs("@\ntext\n@", fp);
 		if (rdp->rd_text != NULL) {
 			rcs_strprint(rdp->rd_text, rdp->rd_tlen, fp);
-			if (rdp->rd_text[rdp->rd_tlen-1] != '\n')
-				fputc('\n', fp);
+
+			if (rdp->rd_tlen != 0) {
+				if (rdp->rd_text[rdp->rd_tlen-1] != '\n')
+					fputc('\n', fp);
+			}
 		}
 		fputs("@\n", fp);
 	}
@@ -2878,11 +2881,16 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
 		free(rdp->rd_text);
 
 	len = strlen(dtext);
-	if ((rdp->rd_text = (u_char *)malloc(len)) == NULL)
-		return (-1);
+	if (len != 0) {
+		if ((rdp->rd_text = (u_char *)malloc(len)) == NULL)
+			return (-1);
 
-	rdp->rd_tlen = len - 1;
-	strlcpy(rdp->rd_text, dtext, len);
+		rdp->rd_tlen = len - 1;
+		strlcpy(rdp->rd_text, dtext, len);
+	} else {
+		rdp->rd_text = NULL;
+		rdp->rd_tlen = 0;
+	}
 
 	return (0);
 }
