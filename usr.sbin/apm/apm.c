@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.13 2005/11/23 08:02:58 sturm Exp $	*/
+/*	$OpenBSD: apm.c,v 1.14 2005/12/02 04:27:52 beck Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -58,8 +58,8 @@ int send_command(int fd, struct apm_command *cmd, struct apm_reply *reply);
 void
 usage(void)
 {
-	fprintf(stderr,"usage: %s [-ablmPSsvz] [-f sockname] [-A | -L | -H]\n",
-	    __progname);
+	fprintf(stderr,"usage: %s [-ablmPSsvz] [-f sockname]"
+		" [-C | -A | -L | -H]\n", __progname);
 	exit(1);
 }
 
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 	struct apm_command command;
 	struct apm_reply reply;
 
-	while ((ch = getopt(argc, argv, "AHLlmbvaPsSzf:")) != -1) {
+	while ((ch = getopt(argc, argv, "ACHLlmbvaPsSzf:")) != -1) {
 		switch (ch) {
 		case 'v':
 			verbose = TRUE;
@@ -171,6 +171,11 @@ main(int argc, char *argv[])
 			if (action != NONE)
 				usage();
 			action = SETPERF_AUTO;
+			break;
+		case 'C':
+			if (action != NONE)
+				usage();
+			action = SETPERF_COOL;
 			break;
 		case 'H':
 			if (action != NONE)
@@ -248,6 +253,7 @@ main(int argc, char *argv[])
 	case SETPERF_LOW:
 	case SETPERF_HIGH:
 	case SETPERF_AUTO:
+	case SETPERF_COOL:
 		command.action = action;
 		break;
 	default:

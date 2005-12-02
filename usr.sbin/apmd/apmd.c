@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.38 2005/11/23 08:21:09 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.39 2005/12/02 04:27:52 beck Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -74,7 +74,7 @@ void usage(void);
 int power_status(int fd, int force, struct apm_power_info *pinfo);
 int bind_socket(const char *sn);
 enum apm_state handle_client(int sock_fd, int ctl_fd);
-void perf_status(void);
+void perf_status(struct apm_power_info *pinfo);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
 void setperf(int new_perf);
@@ -95,7 +95,7 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: %s [-ademps] [-f devname] [-S sockname] [-t seconds]"
-	    " [-A | -L | -H]\n", __progname);
+	    " [-C | -A | -L | -H]\n", __progname);
 	exit(1);
 }
 
@@ -192,7 +192,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 }
 
 void
-perf_status(void)
+perf_status(struct apm_power_info *pinfo)
 {
 	static long cp_time_old[CPUSTATES];
 	static int avg_idle;
@@ -200,6 +200,7 @@ perf_status(void)
 	int cp_time_mib[] = {CTL_KERN, KERN_CPTIME};
 	int hw_perf_mib[] = {CTL_HW, HW_SETPERF};
 	int i, idle, perf;
+	int forcehi = 0;
 	int sum = 0;
 	size_t cp_time_sz = sizeof(cp_time);
 	size_t perf_sz = sizeof(perf);
@@ -223,10 +224,24 @@ perf_status(void)
 	/* smooth data */
 	avg_idle = (avg_idle + (100 * idle) / sum) / 2;
 
+	switch (doperf) {
+	case PERF_AUTO:
+		/*
+		 * force setperf towards the max if we are connected to AC
+		 * power and have a battery life greater than 15%
+		 */
+		if (pinfo->ac_state == APM_AC_ON && pinfo->battery_life > 15)
+			forcehi = 1;		
+		break;
+	case PERF_COOL:
+		forcehi = 0;
+		break;
+	}
+	
 	if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, NULL, 0) < 0)
 		syslog(LOG_INFO, "cannot read hw.setperf");
 
-	if (avg_idle < PERFINCTHRES && perf < PERFMAX) {
+	if (forcehi || (avg_idle < PERFINCTHRES && perf < PERFMAX)) {
 		perf += PERFINC;
 		if (perf > PERFMAX)
 			perf = PERFMAX;
@@ -336,6 +351,11 @@ handle_client(int sock_fd, int ctl_fd)
 		reply.newstate = NORMAL;
 		syslog(LOG_NOTICE, "setting hw.setperf automatically");
 		break;
+	case SETPERF_COOL:
+		doperf = PERF_COOL;
+		reply.newstate = NORMAL;
+		syslog(LOG_NOTICE, "setting hw.setperf for cool running");
+		break;
 	default:
 		reply.newstate = NORMAL;
 		break;
@@ -386,12 +406,13 @@ main(int argc, char *argv[])
 	int messages = 0;
 	int noacsleep = 0;
 	struct timespec ts = {TIMO, 0}, sts = {0, 0};
+	struct apm_power_info pinfo;
 	time_t apmtimeout = 0;
 	const char *sockname = sockfile;
 	int kq, nchanges;
 	struct kevent ev[2];
 
-	while ((ch = getopt(argc, argv, "aAdHLsepmf:t:S:")) != -1)
+	while ((ch = getopt(argc, argv, "aACdHLsepmf:t:S:")) != -1)
 		switch(ch) {
 		case 'a':
 			noacsleep = 1;
@@ -423,6 +444,11 @@ main(int argc, char *argv[])
 			if (doperf != PERF_NONE)
 				usage();
 			doperf = PERF_AUTO;
+			break;
+		case 'C':
+			if (doperf != PERF_NONE)
+				usage();
+			doperf = PERF_COOL;
 			break;
 		case 'L':
 			if (doperf != PERF_NONE)
@@ -470,7 +496,7 @@ main(int argc, char *argv[])
 	if (fcntl(sock_fd, F_SETFD, 1) == -1)
 		error("cannot set close-on-exec for the socket", NULL);
 
-	power_status(ctl_fd, 1, 0);
+	power_status(ctl_fd, 1, &pinfo);
 
 	if (statonly)
 		exit(0);
@@ -509,9 +535,9 @@ main(int argc, char *argv[])
 
 		sts = ts;
 
-		if (doperf == PERF_AUTO) {
+		if (doperf == PERF_AUTO || doperf == PERF_COOL) {
 			sts.tv_sec = 1;
-			perf_status();
+			perf_status(&pinfo);
 		}
 
 		apmtimeout += sts.tv_sec;
@@ -522,7 +548,7 @@ main(int argc, char *argv[])
 			apmtimeout = 0;
 
 			/* wakeup for timeout: take status */
-			powerbak = power_status(ctl_fd, 0, 0);
+			powerbak = power_status(ctl_fd, 0, &pinfo);
 			if (powerstatus != powerbak) {
 				powerstatus = powerbak;
 				powerchange = 1;
@@ -557,7 +583,7 @@ main(int argc, char *argv[])
 			case APM_NORMAL_RESUME:
 			case APM_CRIT_RESUME:
 			case APM_SYS_STANDBY_RESUME:
-				powerbak = power_status(ctl_fd, 0, 0);
+				powerbak = power_status(ctl_fd, 0, &pinfo);
 				if (powerstatus != powerbak) {
 					powerstatus = powerbak;
 					powerchange = 1;
@@ -565,7 +591,7 @@ main(int argc, char *argv[])
 				resumes++;
 				break;
 			case APM_POWER_CHANGE:
-				powerbak = power_status(ctl_fd, 0, 0);
+				powerbak = power_status(ctl_fd, 0, &pinfo);
 				if (powerstatus != powerbak) {
 					powerstatus = powerbak;
 					powerchange = 1;
@@ -576,7 +602,7 @@ main(int argc, char *argv[])
 			}
 
 			if ((standbys || suspends) && noacsleep &&
-			    power_status(ctl_fd, 0, 0))
+			    power_status(ctl_fd, 0, &pinfo))
 				syslog(LOG_DEBUG, "no! sleep! till brooklyn!");
 			else if (suspends)
 				suspend(ctl_fd);

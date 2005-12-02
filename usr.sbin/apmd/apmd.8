@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.30 2005/11/23 08:02:58 sturm Exp $
+.\"	$OpenBSD: apmd.8,v 1.31 2005/12/02 04:27:52 beck Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nd Advanced Power Management monitor daemon
 .Sh SYNOPSIS
 .Nm apmd
-.Op Fl AadeHLmps
+.Op Fl AaCdeHLmps
 .Op Fl f Ar devname
 .Op Fl S Ar sockname
 .Op Fl t Ar seconds
@@ -65,10 +65,37 @@ The options are as follows:
 Start
 .Nm
 in automatic performance adjustment mode.
+In this mode, when CPU idle time falls below 10%,
+or if the AC power is connected and the battery is more than 15% charged, 
+.Nm
+raises
+.Va hw.setperf
+as much as possible.
+Otherwise, when the CPU idle time
+is above 30% and the system is running on battery power, 
+.Nm
+lowers 
+.Va hw.setperf
+as much as possible to reduce power consumption.
 .It Fl a
 BIOS-initiated suspend or standby requests are
 ignored if the system is connected to line current and not running from
 batteries (user requests are still honored).
+.It Fl C
+Start
+.Nm
+in cool running performance adjustment mode.
+In this mode, when CPU idle time falls below
+10%, 
+.Nm 
+raises
+.Va hw.setperf
+as much as necessary.
+Otherwise, when idle time is above 30%
+.Nm
+reduces
+.Va hw.setperf
+as much as possible to reduce heat, noise, and power comsumption.
 .It Fl d
 .Nm
 enters debug mode, logging to facility
@@ -138,26 +165,6 @@ once per 10 minutes, but may be specified using the
 .Fl t
 command-line flag.
 .El
-.Pp
-In automatic performance adjustment mode,
-.Nm
-monitors the processor's idle time and adjusts
-.Va hw.setperf
-dynamically.
-This keeps the processor at low speed whenever possible, reducing noise and
-power consumption.
-When idle time falls below 10%, the daemon raises
-.Va hw.setperf
-as much as necessary.
-When idle time is above 30%,
-.Nm
-reduces
-.Va hw.setperf
-as much as possible.
-By default
-.Nm
-does not change
-.Va hw.setperf .
 .Pp
 When a client requests a suspend or stand-by mode,
 .Nm
