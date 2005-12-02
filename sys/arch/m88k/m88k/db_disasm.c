@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.5 2005/11/20 22:04:12 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.6 2005/12/02 20:01:33 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -444,7 +444,8 @@ immem(int inst, const char *opcode, long iadr)
 	int aryno = (inst >> 26) & 03;
 	char c = ' ';
 
-	if (!st_lda) {
+	switch (st_lda) {
+	case 0:
 		if (aryno == 0 || aryno == 01)
 			opcode = "xmem";
 		else
@@ -453,9 +454,10 @@ immem(int inst, const char *opcode, long iadr)
 			aryno = 03;
 		if (aryno != 01)
 			c = 'u';
-	} else {
-		if (st_lda == 01)
-			opcode = "ld";
+		break;
+	case 1:
+		opcode = "ld";
+		break;
 	}
 
 	db_printf("\t%s%s%c\t\tr%-3d,r%-3d,",
@@ -473,11 +475,11 @@ nimmem(int inst, const char *opcode, long iadr)
 	int rs2 = inst & 037;
 	int st_lda = (inst >> 12) & 03;
 	int aryno = (inst >> 10) & 03;
-	int user_bit = 0;
-	int signed_fg = 1;
-	char *user = "    ";
+	char c = ' ';
+	const char *user;
 
-	if (!st_lda) {
+	switch (st_lda) {
+	case 0:
 		if (aryno == 0 || aryno == 01)
 			opcode = "xmem";
 		else
@@ -485,28 +487,21 @@ nimmem(int inst, const char *opcode, long iadr)
 		if (aryno == 0)
 			aryno = 03;
 		if (aryno != 01)
-			signed_fg = 0;
-	} else {
-		if (st_lda == 01)
-			opcode = "ld";
+			c = 'u';
+		break;
+	case 1:
+		opcode = "ld";
+		break;
 	}
 
-	if (st_lda != 03) {
-		user_bit = (inst >> 8) & 01;
-		if (user_bit)
-			user = ".usr";
-	}
 
-	if (user_bit && signed_fg && aryno == 01)
-		db_printf("\t%s%s\tr%-3d,r%-3d", opcode, user, rd, rs1);
-	else {
-		if (user_bit && signed_fg)
-			db_printf("\t%s%s%s\tr%-3d,r%-3d",
-			    opcode, instwidth[aryno], user, rd, rs1);
-		else
-			db_printf("\t%s%su%s\tr%-3d,r%-3d",
-			    opcode, instwidth[aryno], user, rd, rs1);
-	}
+	if (st_lda != 03 && ((inst >> 8) & 01) != 0)
+		user = ".usr";
+	else
+		user = "    ";
+
+	db_printf("\t%s%s%c%s\tr%-3d,r%-3d",
+	    opcode, instwidth[aryno], c, user, rd, rs1);
 
 	if (scaled)
 		db_printf("[r%-3d]", rs2);
