@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.18 2005/11/30 09:36:48 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.19 2005/12/02 14:49:06 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Op Fl e Ns Op Ar users
 .Op Fl k Ns Ar mode
 .Op Fl m Ns Ar rev : Ns Ar log
+.Op Fl o Ns Ar rev
 .Oo Fl t Ns Ar file Ns \*(Ba
 .Ar str Oc
 .Op Fl x Ns Ar suffixes
@@ -102,6 +103,34 @@ Replace revision
 .Ar rev Ns 's
 log message with
 .Ar msg .
+.It Fl o Ns Ar rev
+Delete one or more revisions.
+The specifications of the values or revisions are as follows:
+.Bl -tag -width Ds
+.It rev
+Specific revision.
+.It rev1:rev2
+Delete all revisions of a branch between
+.Ar rev1
+and
+.Ar rev2 .
+.It rev1::rev2
+Delete all revisions of a branch between
+.Ar rev1
+and
+.Ar rev2
+without deleting revisions
+.Ar rev1
+and
+.Ar rev2 .
+.It :rev
+Delete all revisions of the branch until revision
+.Ar rev .
+.It rev:
+Delete all revisions of the branch from revision
+.Ar rev
+until the last revision of the branch.
+.El
 .It Fl q
 Be quiet about reporting.
 .Sm off
