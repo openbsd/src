@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.19 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.20 2005/12/02 17:50:51 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -1395,6 +1395,8 @@ pxa2x0_setperf(int speed)
 
 	s = disable_interrupts(I32_bit|F32_bit);
 
+#if 0
+	/* Not yet, because OSCR0 does not run in low-power mode. */
 	if (speed <= 30) {
 		pxa27x_run_mode();
 		pxa27x_fastbus_run_mode(0, MDREFR_LOW);
@@ -1405,13 +1407,15 @@ pxa2x0_setperf(int speed)
 			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
 			    PI2C_VOLTAGE_LOW);
 		perflevel = 25;
-	} else if (speed < 60) {
+	} else
+#endif
+	if (speed < 60) {
 		if (perflevel < 50)
 			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
 			    PI2C_VOLTAGE_HIGH);
 
 		pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
-		CLKCFG_F, &pxa2x0_memcfg);
+		    CLKCFG_F, &pxa2x0_memcfg);
 
 		/* XXX is the delay long enough, and necessary at all? */
 		delay(1);
