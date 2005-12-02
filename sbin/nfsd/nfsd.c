@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.25 2004/09/14 22:09:52 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.26 2005/12/02 01:08:01 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.25 2004/09/14 22:09:52 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.26 2005/12/02 01:08:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -251,7 +251,7 @@ main(int argc, char *argv[])
 			return (1);
 		}
 		if (setsockopt(tcpsock,
-		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
+		    SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
 			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
 		memset(&inetaddr, 0, sizeof inetaddr);
 		inetaddr.sin_family = AF_INET;
@@ -317,7 +317,7 @@ main(int argc, char *argv[])
 			}
 			memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
 			if (setsockopt(msgsock, SOL_SOCKET,
-			    SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
+			    SO_KEEPALIVE, &on, sizeof(on)) < 0)
 				syslog(LOG_ERR,
 				    "setsockopt SO_KEEPALIVE: %m");
 			nfsdargs.sock = msgsock;
