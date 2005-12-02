@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.74 2005/11/28 14:43:59 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.75 2005/12/02 00:15:35 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -738,7 +738,7 @@ checkin_mtimedate(struct checkin_params *pb)
 }
 
 /*
- * checkin_rcsfile()
+ * checkin_choose_rcsfile()
  *
  * Given a relative filename, decide where the corresponding ,v file
  * should be.
