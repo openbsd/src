@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.32 2005/05/19 09:28:24 jmc Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.33 2005/12/02 01:05:38 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.32 2005/05/19 09:28:24 jmc Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.33 2005/12/02 01:05:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,8 @@ struct interval {
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, dopower, dodump, killflg, mbuflen, nosync;
+static int dofast, dohalt, doreboot, dopower, dodump, mbuflen, nosync;
+static sig_atomic_t killflg;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime(void);
