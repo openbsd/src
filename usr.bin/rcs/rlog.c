@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.15 2005/11/28 14:43:59 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.16 2005/12/02 09:55:39 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -38,7 +38,8 @@
 #include "diff.h"
 #include "rcsprog.h"
 
-static int rlog_file(const char *, const char *, RCSFILE *);
+static int	rlog_file(const char *, const char *, RCSFILE *);
+static void	rlog_rev_print(RCSFILE *);
 
 #define REVSEP		"----------------------------"
 #define REVEND \
@@ -146,7 +147,6 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 {
 	char numb[64];
 	struct rcs_sym *sym;
-	struct rcs_delta *rdp;
 	struct rcs_access *acp;
 	struct rcs_lock *lkp;
 
@@ -186,21 +186,32 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	if ((hflag == 0) || (tflag == 1))
 		printf("description:\n%s", file->rf_desc);
 
-	if ((hflag == 0) && (tflag == 0)) {
-		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
-			rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
-			printf("%s\nrevision %s\n", REVSEP, numb);
-			printf("date: %d/%02d/%02d %02d:%02d:%02d;"
-			    "  author: %s;  state: %s;\n",
-			    rdp->rd_date.tm_year + 1900,
-			    rdp->rd_date.tm_mon + 1,
-			    rdp->rd_date.tm_mday, rdp->rd_date.tm_hour,
-			    rdp->rd_date.tm_min, rdp->rd_date.tm_sec,
-			    rdp->rd_author, rdp->rd_state);
-			printf("%s", rdp->rd_log);
-		}
-	}
+	if ((hflag == 0) && (tflag == 0))
+		rlog_rev_print(file);
 
 	printf("%s\n", REVEND);
 	return (0);
+}
+
+static void
+rlog_rev_print(RCSFILE *file)
+{
+	char numb[64];
+	struct rcs_delta *rdp;
+
+	TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
+		printf("%s\n", REVSEP);
+
+		rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
+
+		printf("revision %s\n", numb);
+		printf("date: %d/%02d/%02d %02d:%02d:%02d;"
+		    "  author: %s;  state: %s;\n",
+		    rdp->rd_date.tm_year + 1900,
+		    rdp->rd_date.tm_mon + 1,
+		    rdp->rd_date.tm_mday, rdp->rd_date.tm_hour,
+		    rdp->rd_date.tm_min, rdp->rd_date.tm_sec,
+		    rdp->rd_author, rdp->rd_state);
+		printf("%s", rdp->rd_log);
+	}
 }
