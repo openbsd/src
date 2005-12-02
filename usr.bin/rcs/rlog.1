@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rlog.1,v 1.10 2005/11/30 10:54:05 xsa Exp $
+.\"     $OpenBSD: rlog.1,v 1.11 2005/12/02 11:13:32 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -26,6 +26,7 @@
 .Op Fl bhLNqRTtV
 .Op Fl d Ns Ar dates
 .Op Fl l Ns Op Ar lockers
+.Op Fl r Ns Op Ar revs
 .Op Fl s Ns Ar states
 .Op Fl w Ns Op Ar logins
 .Op Fl x Ns Ar suffixes
@@ -85,6 +86,42 @@ Do not print symbolic names.
 Be quiet about reporting.
 .It Fl R
 Print name of RCS file only.
+.It Fl r Ns Op Ar revs
+Specify revision(s) to list:
+.Bl -tag -width Ds
+.It REV1,REV2,...,
+A list of revisions is specified by separating names or numbers
+of revisions by the
+.Sq \&,
+character.
+.It REV1:REV2
+List all revisions between
+.Ar REV1
+and
+.Ar REV2
+(they must be on the same branch).
+.It :REV
+List all revisions since the beginning of the branch until
+.Ar REV
+included.
+.It REV:
+List all revisions of the branch beginning with
+.Ar REV .
+.It BRANCH
+List all revisions of a branch.
+.It BRANCH.
+List the latest revision of the branch
+.Ar BRANCH .
+.It BRANCH1:BRANCH2
+List all revisions of branches between
+.Ar BRANCH1
+and
+.Ar BRANCH2 .
+.El
+.Pp
+Without argument, the
+.Fl r
+option means the latest revision of the default branch.
 .It Fl s Ns Ar states
 Print information about revisions whose state matches one of the
 specified
