@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.21 2005/11/23 18:21:44 deraadt Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.22 2005/12/02 09:07:10 grunk Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.21 2005/11/23 18:21:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.22 2005/12/02 09:07:10 grunk Exp $";
 #endif
 
 #include <sys/param.h>
@@ -318,7 +318,7 @@ main(int argc, char *argv[])
 #if defined(__GNUC__) && __GNUC__ < 3
 	appcstrg(&cppflags, "-$");
 #endif
-	appcstrg(&cppflags, "-C");
+	appcstrg(&cppflags, "-CC");
 	appcstrg(&cppflags, "-Wcomment");
 	appcstrg(&cppflags, "-D__OpenBSD__");
 	appcstrg(&cppflags, "-Dlint");		/* XXX don't def. with -s */
