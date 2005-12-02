@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.7 2005/10/13 19:48:31 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.8 2005/12/02 21:16:43 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -166,10 +166,10 @@ m8820x_setup_board_config()
  */
 #define ILLADDRESS	0x3ffffff0 	/* any faulty address for luna88k2 */
 
-unsigned
+cpuid_t
 m8820x_cmmu_cpu_number()
 {
-	unsigned cmmu;
+	u_int cmmu;
 	u_int i;
 
 	CMMU_LOCK;

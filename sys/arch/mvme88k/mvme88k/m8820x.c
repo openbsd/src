@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.42 2005/10/13 19:48:37 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.43 2005/12/02 21:16:45 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -254,7 +254,7 @@ m8820x_setup_board_config()
  * its value will let us know which data CMMU has been used to perform
  * the read, and we can reliably compute the CPU number from it.
  */
-unsigned
+cpuid_t
 m8820x_cmmu_cpu_number()
 {
 #ifdef MVME188

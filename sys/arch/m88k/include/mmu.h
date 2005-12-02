@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.5 2005/12/01 22:24:49 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.6 2005/12/02 21:16:45 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -75,6 +75,8 @@
 /*
  * Area descriptors
  */
+
+typedef	u_int32_t	apr_t;
 
 #define	APR_V		0x00000001	/* valid bit */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.10 2005/11/25 22:17:14 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.11 2005/12/02 21:16:45 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -54,20 +54,20 @@ struct cmmu_p {
 	void (*cpu_configuration_print_func)(int);
 	void (*cmmu_shutdown_now_func)(void);
 	void (*cmmu_parity_enable_func)(void);
-	unsigned (*cmmu_cpu_number_func)(void);
-	void (*cmmu_set_sapr_func)(unsigned, unsigned);
-	void (*cmmu_set_uapr_func)(unsigned);
-	void (*cmmu_flush_tlb_func)(unsigned, unsigned, vaddr_t, u_int);
-	void (*cmmu_flush_cache_func)(int, paddr_t, psize_t);
-	void (*cmmu_flush_inst_cache_func)(int, paddr_t, psize_t);
-	void (*cmmu_flush_data_cache_func)(int, paddr_t, psize_t);
+	cpuid_t (*cmmu_cpu_number_func)(void);
+	void (*cmmu_set_sapr_func)(cpuid_t, apr_t);
+	void (*cmmu_set_uapr_func)(apr_t);
+	void (*cmmu_flush_tlb_func)(cpuid_t, unsigned, vaddr_t, u_int);
+	void (*cmmu_flush_cache_func)(cpuid_t, paddr_t, psize_t);
+	void (*cmmu_flush_inst_cache_func)(cpuid_t, paddr_t, psize_t);
+	void (*cmmu_flush_data_cache_func)(cpuid_t, paddr_t, psize_t);
 	int (*dma_cachectl_func)(pmap_t, vaddr_t, vsize_t, int);
 	int (*dma_cachectl_pa_func)(paddr_t, psize_t, int);
 	/* DDB only */
 	void (*cmmu_dump_config_func)(void);
 	void (*cmmu_show_translation_func)(unsigned, unsigned, unsigned, int);
 	/* DEBUG only */
-	void (*show_apr_func)(unsigned);
+	void (*show_apr_func)(apr_t);
 };
 
 /* THE pointer! */

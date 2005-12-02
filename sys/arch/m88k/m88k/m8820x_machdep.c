@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.11 2005/11/25 22:20:45 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.12 2005/12/02 21:16:45 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -100,17 +100,17 @@ void m8820x_cmmu_init(void);
 void m8820x_cpu_configuration_print(int);
 void m8820x_cmmu_shutdown_now(void);
 void m8820x_cmmu_parity_enable(void);
-void m8820x_cmmu_set_sapr(unsigned, unsigned);
-void m8820x_cmmu_set_uapr(unsigned);
-void m8820x_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, u_int);
-void m8820x_cmmu_flush_cache(int, paddr_t, psize_t);
-void m8820x_cmmu_flush_inst_cache(int, paddr_t, psize_t);
-void m8820x_cmmu_flush_data_cache(int, paddr_t, psize_t);
+void m8820x_cmmu_set_sapr(cpuid_t, apr_t);
+void m8820x_cmmu_set_uapr(apr_t);
+void m8820x_cmmu_flush_tlb(cpuid_t, unsigned, vaddr_t, u_int);
+void m8820x_cmmu_flush_cache(cpuid_t, paddr_t, psize_t);
+void m8820x_cmmu_flush_inst_cache(cpuid_t, paddr_t, psize_t);
+void m8820x_cmmu_flush_data_cache(cpuid_t, paddr_t, psize_t);
 int m8820x_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
 int m8820x_dma_cachectl_pa(paddr_t, psize_t, int);
 void m8820x_cmmu_dump_config(void);
 void m8820x_cmmu_show_translation(unsigned, unsigned, unsigned, int);
-void m8820x_show_apr(unsigned);
+void m8820x_show_apr(apr_t);
 
 /* This is the function table for the mc8820x CMMUs */
 struct cmmu_p cmmu8820x = {
@@ -473,7 +473,7 @@ m8820x_cmmu_parity_enable()
 }
 
 void
-m8820x_cmmu_set_sapr(unsigned cpu, unsigned ap)
+m8820x_cmmu_set_sapr(cpuid_t cpu, apr_t ap)
 {
 	CMMU_LOCK;
 	m8820x_cmmu_set(CMMU_SAPR, ap, 0, cpu, 0, 0);
@@ -481,7 +481,7 @@ m8820x_cmmu_set_sapr(unsigned cpu, unsigned ap)
 }
 
 void
-m8820x_cmmu_set_uapr(unsigned ap)
+m8820x_cmmu_set_uapr(apr_t ap)
 {
 	int s = splhigh();
 	int cpu = cpu_number();
@@ -500,7 +500,7 @@ m8820x_cmmu_set_uapr(unsigned ap)
  *	flush any tlb
  */
 void
-m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr, u_int count)
+m8820x_cmmu_flush_tlb(cpuid_t cpu, unsigned kernel, vaddr_t vaddr, u_int count)
 {
 	int s = splhigh();
 
@@ -564,7 +564,7 @@ m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr, u_int count)
  *	flush both Instruction and Data caches
  */
 void
-m8820x_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
+m8820x_cmmu_flush_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();
 	CMMU_LOCK;
@@ -599,7 +599,7 @@ m8820x_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
  *	flush Instruction caches
  */
 void
-m8820x_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
+m8820x_cmmu_flush_inst_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();
 	CMMU_LOCK;
@@ -631,7 +631,7 @@ m8820x_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 }
 
 void
-m8820x_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
+m8820x_cmmu_flush_data_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
 {
 	int s = splhigh();
 	CMMU_LOCK;
@@ -1138,7 +1138,7 @@ m8820x_cmmu_show_translation(unsigned address, unsigned supervisor_flag,
 
 #ifdef DEBUG
 void
-m8820x_show_apr(unsigned value)
+m8820x_show_apr(apr_t value)
 {
 	printf("table @ 0x%x000", PG_PFNUM(value));
 	if (value & CACHE_WT)

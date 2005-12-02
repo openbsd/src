@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.4 2005/05/15 21:52:45 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.5 2005/12/02 21:16:45 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -193,8 +193,8 @@ extern struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
 extern u_int cmmu_shift;
 extern u_int max_cmmus;
 
-extern void m8820x_setup_board_config(void);
-extern unsigned m8820x_cmmu_cpu_number(void);
+void m8820x_setup_board_config(void);
+cpuid_t m8820x_cmmu_cpu_number(void);
 
 #endif	/* _LOCORE */
 #endif	/* __M88K_M8820X_H__ */

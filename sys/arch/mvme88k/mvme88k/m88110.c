@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.27 2005/11/25 22:17:12 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.28 2005/12/02 21:16:45 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -101,18 +101,18 @@ void m88110_setup_board_config(void);
 void m88110_cpu_configuration_print(int);
 void m88110_cmmu_shutdown_now(void);
 void m88110_cmmu_parity_enable(void);
-unsigned m88110_cmmu_cpu_number(void);
-void m88110_cmmu_set_sapr(unsigned, unsigned);
-void m88110_cmmu_set_uapr(unsigned);
-void m88110_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, u_int);
-void m88110_cmmu_flush_cache(int, paddr_t, psize_t);
-void m88110_cmmu_flush_inst_cache(int, paddr_t, psize_t);
-void m88110_cmmu_flush_data_cache(int, paddr_t, psize_t);
+cpuid_t m88110_cmmu_cpu_number(void);
+void m88110_cmmu_set_sapr(cpuid_t, apr_t);
+void m88110_cmmu_set_uapr(apr_t);
+void m88110_cmmu_flush_tlb(cpuid_t, unsigned, vaddr_t, u_int);
+void m88110_cmmu_flush_cache(cpuid_t, paddr_t, psize_t);
+void m88110_cmmu_flush_inst_cache(cpuid_t, paddr_t, psize_t);
+void m88110_cmmu_flush_data_cache(cpuid_t, paddr_t, psize_t);
 int m88110_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
 int m88110_dma_cachectl_pa(paddr_t, psize_t, int);
 void m88110_cmmu_dump_config(void);
 void m88110_cmmu_show_translation(unsigned, unsigned, unsigned, int);
-void m88110_show_apr(unsigned);
+void m88110_show_apr(apr_t);
 
 /* This is the function table for the mc88110 built-in CMMUs */
 struct cmmu_p cmmu88110 = {
@@ -167,7 +167,7 @@ patc_clear(void)
 
 #ifdef DEBUG
 void
-m88110_show_apr(unsigned value)
+m88110_show_apr(apr_t value)
 {
 	printf("table @ 0x%x000", PG_PFNUM(value));
 	if (value & CACHE_WT)
@@ -305,14 +305,14 @@ m88110_cmmu_parity_enable(void)
  * disabled.
  */
 
-unsigned
+cpuid_t
 m88110_cmmu_cpu_number(void)
 {
-	return 0; /* to make compiler happy */
+	return (0);
 }
 
 void
-m88110_cmmu_set_sapr(unsigned cpu, unsigned ap)
+m88110_cmmu_set_sapr(cpuid_t cpu, apr_t ap)
 {
 	unsigned ictl, dctl;
 
@@ -346,7 +346,7 @@ m88110_cmmu_set_sapr(unsigned cpu, unsigned ap)
 }
 
 void
-m88110_cmmu_set_uapr(unsigned ap)
+m88110_cmmu_set_uapr(apr_t ap)
 {
 	CMMU_LOCK;
 	set_iuap(ap);
@@ -368,7 +368,7 @@ m88110_cmmu_set_uapr(unsigned ap)
  *	flush any tlb
  */
 void
-m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr, u_int count)
+m88110_cmmu_flush_tlb(cpuid_t cpu, unsigned kernel, vaddr_t vaddr, u_int count)
 {
 	u_int32_t psr;
 
@@ -417,7 +417,7 @@ m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr, u_int count)
  *	flush both Instruction and Data caches
  */
 void
-m88110_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
+m88110_cmmu_flush_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
 {
 	u_int32_t psr;
 
@@ -434,7 +434,7 @@ m88110_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
  *	flush Instruction caches
  */
 void
-m88110_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
+m88110_cmmu_flush_inst_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
 {
 	u_int32_t psr;
 
@@ -448,7 +448,7 @@ m88110_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
  * flush data cache
  */
 void
-m88110_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
+m88110_cmmu_flush_data_cache(cpuid_t cpu, paddr_t physaddr, psize_t size)
 {
 	u_int32_t psr;
 
