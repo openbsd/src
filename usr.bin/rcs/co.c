@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.41 2005/11/30 18:50:51 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.42 2005/12/02 11:45:02 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -194,9 +194,9 @@ void
 checkout_usage(void)
 {
 	fprintf(stderr,
-	    "usage: co [-V] [-ddate] [-f[rev]] [-I[rev]] [-kmode] [-l[rev]]\n"
-	    "          [-M[rev]] [-mmsg] [-p[rev]] [-q[rev]] [-r[rev]]\n"
-	    "          [-sstate] [-u[rev]] [-w[user]] [-xsuffixes] [-ztz] file ...\n");
+	    "usage: co [-TV] [-ddate] [-f[rev]] [-I[rev]] [-kmode] [-l[rev]]\n"
+	    "          [-M[rev]] [-p[rev]] [-q[rev]] [-r[rev]] [-sstate]\n"
+	    "          [-u[rev]] [-w[user]] [-xsuffixes] [-ztz] file ...\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.19 2005/12/02 11:39:05 xsa Exp $
+.\"     $OpenBSD: co.1,v 1.20 2005/12/02 11:45:02 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -30,7 +30,6 @@
 .Op Fl k Ns Ar mode
 .Op Fl l Ns Op Ar rev
 .Op Fl M Ns Op Ar rev
-.Op Fl m Ns Ar msg
 .Op Fl p Ns Op Ar rev
 .Op Fl q Ns Op Ar rev
 .Op Fl r Ns Op Ar rev
@@ -63,11 +62,6 @@ but also locks the revision.
 .It Fl M Ns Op Ar rev
 Set the modification time of the file to the date of the
 retrieved revision.
-.It Fl m Ns Ar msg
-Specify a log message.
-A line beginning with a hash character
-.Pq Sq #
-is considered a comment and ignored.
 .It Fl p Ns Op Ar rev
 Print the latest revision no later than
 .Ar rev
