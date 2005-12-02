@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.75 2005/12/02 00:15:35 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.76 2005/12/02 01:13:12 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -748,28 +748,16 @@ checkin_mtimedate(struct checkin_params *pb)
 static char *
 checkin_choose_rcsfile(const char *filename)
 {
-	char fullpath[MAXPATHLEN], *basepath;
+	char name[MAXPATHLEN], *basepath;
+	const char *ptr;
 	size_t len;
 	struct stat sb;
 
-	if (realpath(filename, fullpath) == NULL) {
-		cvs_log(LP_ERRNO, "realpath failed: `%s'", filename);
+	if ((basepath = malloc(MAXPATHLEN)) == NULL) {
+		cvs_log(LP_ERRNO, "could not allocate memory");
 		return (NULL);
 	}
-	len = strlen(fullpath);
-	while (fullpath[len] != '/')
-		len--;
-	if (len > 0) {
-		/*
-		 * Need two bytes extra for trailing slash and
-		 * NUL-termination.
-		 */
-		len += 2;
-		if ((basepath = malloc(MAXPATHLEN)) == NULL) {
-			cvs_log(LP_ERRNO, "could not allocate memory");
-			return (NULL);
-		}
-		strlcpy(basepath, fullpath, len);
+	if (strchr(filename, '/') == NULL) {
 		strlcat(basepath, RCSDIR"/", MAXPATHLEN);
 		if ((stat(basepath, &sb) == 0) && (sb.st_mode & S_IFDIR)) {
 			/* <path>/RCS/<filename>,v */
@@ -778,11 +766,40 @@ checkin_choose_rcsfile(const char *filename)
 		} else {
 			/* <path>/<filename>,v */
 			memset(basepath, '\0', MAXPATHLEN);
-			strlcpy(basepath, fullpath, len);
-			strlcat(basepath, filename, MAXPATHLEN);
+			strlcpy(basepath, filename, MAXPATHLEN);
 			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
 		}
-		return (basepath);
-	} else
-		return (NULL);
+	} else {
+		ptr = filename;
+		/* Walk backwards till we find the base directory */
+		len = strlen(filename);
+		ptr += len + 1;
+		while (filename[len] != '/') {
+			len--;
+			ptr--;
+		}
+		/*
+		 * Need two bytes extra for trailing slash and
+		 * NUL-termination.
+		 */
+		len += 2;
+		if (len > MAXPATHLEN) {
+			free(basepath);
+			return (NULL);
+		}
+		strlcpy(basepath, filename, len);
+		strlcpy(name, ptr, MAXPATHLEN);
+		strlcat(basepath, RCSDIR"/", MAXPATHLEN);
+		if ((stat(basepath, &sb) == 0) && (sb.st_mode & S_IFDIR)) {
+			/* <path>/RCS/<filename>,v */
+			strlcat(basepath, name, MAXPATHLEN);
+			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
+		} else {
+			/* <path>/<filename>,v */
+			memset(basepath, '\0', MAXPATHLEN);
+			strlcpy(basepath, filename, MAXPATHLEN);
+			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
+		}
+	}
+	return (basepath);
 }
