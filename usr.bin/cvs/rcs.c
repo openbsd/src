@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.103 2005/12/02 20:08:41 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.104 2005/12/02 21:21:47 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2907,7 +2907,6 @@ rcs_rev_setlog(RCSFILE *rfp, RCSNUM *rev, const char *logtext)
 	char buf[16];
 
 	rcsnum_tostr(rev, buf, sizeof(buf));
-	printf("setting log for %s to '%s'\n", buf, logtext);
 
 	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 		return (-1);
