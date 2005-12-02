@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.26 2005/06/06 23:20:44 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.27 2005/12/02 16:50:11 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -341,6 +341,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		wait(&r);
 		execvp(argv[0], argv);
 	}
+	unlink(_PATH_LOGPID);
 	_exit(1);
 }
 
