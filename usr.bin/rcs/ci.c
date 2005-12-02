@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.77 2005/12/02 13:43:32 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.78 2005/12/02 13:53:43 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -452,11 +452,8 @@ checkin_update(struct checkin_params *pb)
 		return (-1);
 	}
 
-	if (checkin_checklock(pb) < 0) {
-		cvs_log(LP_ERR, "%s: no lock set by %s",
-		    pb->file->rf_path, pb->username);
+	if (checkin_checklock(pb) < 0)
 		return (-1);
-	}
 
 	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
@@ -715,7 +712,8 @@ checkin_checklock(struct checkin_params *pb)
 	}
 
 	if ((found == 0) && (notlocked == 0)) {
-		cvs_log(LP_ERR, "no locks set for '%s'", pb->username);
+		cvs_log(LP_ERR,
+		    "%s: no lock by %s", pb->file->rf_path, pb->username);
 		rcs_close(pb->file);
 		return (-1);
 	}
