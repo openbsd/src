@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.78 2005/12/02 13:53:43 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.79 2005/12/02 14:29:13 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -703,17 +703,17 @@ checkin_checklock(struct checkin_params *pb)
 			if (!strcmp(lkp->rl_name, pb->username))
 				notlocked = 0;
 
-			if (!strcmp(lkp->rl_name, pb->username) &&
-			    !rcsnum_cmp(lkp->rl_num, pb->frev, 0)) {
+			if ((!strcmp(lkp->rl_name, pb->username)) &&
+			    (!rcsnum_cmp(lkp->rl_num, pb->frev, 0))) {
 				found = 1;
 				return (0);
 			}
 		}
 	}
 
-	if ((found == 0) && (notlocked == 0)) {
+	if ((found == 0) && (notlocked == 1)) {
 		cvs_log(LP_ERR,
-		    "%s: no lock by %s", pb->file->rf_path, pb->username);
+		    "%s: no lock set by %s", pb->file->rf_path, pb->username);
 		rcs_close(pb->file);
 		return (-1);
 	}
