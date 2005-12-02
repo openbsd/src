@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.31 2005/12/02 04:27:52 beck Exp $
+.\"	$OpenBSD: apmd.8,v 1.32 2005/12/02 09:19:39 jmc Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -66,15 +66,15 @@ Start
 .Nm
 in automatic performance adjustment mode.
 In this mode, when CPU idle time falls below 10%,
-or if the AC power is connected and the battery is more than 15% charged, 
+or if the AC power is connected and the battery is more than 15% charged,
 .Nm
 raises
 .Va hw.setperf
 as much as possible.
 Otherwise, when the CPU idle time
-is above 30% and the system is running on battery power, 
+is above 30% and the system is running on battery power,
 .Nm
-lowers 
+lowers
 .Va hw.setperf
 as much as possible to reduce power consumption.
 .It Fl a
@@ -86,8 +86,8 @@ Start
 .Nm
 in cool running performance adjustment mode.
 In this mode, when CPU idle time falls below
-10%, 
-.Nm 
+10%,
+.Nm
 raises
 .Va hw.setperf
 as much as necessary.
