@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.20 2005/11/21 18:16:41 millert Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.21 2005/12/02 15:01:32 robert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1277,6 +1277,11 @@ bktr_set_info(void *v, struct radio_info *ri)
 		set_audio(sc, AUDIO_UNMUTE);
 		init_audio_devices(sc);
 	}
+
+	if (ri->freq < MIN_FM_FREQ)
+		ri->freq = MIN_FM_FREQ;
+	if (ri->freq > MAX_FM_FREQ)
+		ri->freq = MAX_FM_FREQ;
 
 	freq = ri->freq / 10;
 	set_audio(sc, AUDIO_INTERN);	/* use internal audio */
