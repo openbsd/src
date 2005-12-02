@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.59 2004/09/14 22:12:27 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.60 2005/12/02 01:05:50 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -2155,13 +2155,13 @@ tvsub(struct timeval *out, struct timeval *in)
 void
 onint(int notused)
 {
-	summary();
+	summary();			/* XXX signal race */
 
 	(void)signal(SIGINT, SIG_DFL);
 	(void)kill(getpid(), SIGINT);
 
 	/* NOTREACHED */
-	exit(1);
+	exit(1);			/* XXX signal race */
 }
 
 /*
