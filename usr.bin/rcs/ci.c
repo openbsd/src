@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.80 2005/12/03 16:50:48 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.81 2005/12/03 17:11:58 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -80,8 +80,8 @@ checkin_usage(void)
 	fprintf(stderr,
 	    "usage: ci [-MNqTV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
 	    "          [-kmode] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
-	    "          [-nsymbol] [-r[rev]] [-sstate] [-u[rev]] [-wusername]\n"
-	    "          [-xsuffixes] file ...\n");
+	    "          [-nsymbol] [-r[rev]] [-sstate] [-tfile] [-u[rev]]\n"
+	    "          [-wusername] [-xsuffixes] file ...\n");
 }
 
 
@@ -593,6 +593,8 @@ checkin_init(struct checkin_params *pb)
 	else {
 		if (*pb->description == '-') {
 			pb->description++;
+			rcs_desc = (const char *)pb->description;
+		} else {
 			dp = cvs_buf_load(pb->description, BUF_AUTOEXT);
 			if (dp == NULL) {
 				cvs_log(LP_ERR,
@@ -607,8 +609,6 @@ checkin_init(struct checkin_params *pb)
 			}
 			rcs_desc = (const char *)cvs_buf_release(dp);
 		}
-		else
-			rcs_desc = (const char *)pb->description;
 	}
 	rcs_desc_set(pb->file, rcs_desc);
 
