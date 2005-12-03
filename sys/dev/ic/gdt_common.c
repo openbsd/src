@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.30 2005/09/15 05:33:39 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.31 2005/12/03 16:22:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -71,7 +71,7 @@ void	gdt_eval_mapping(u_int32_t, int *, int *, int *);
 int	gdt_exec_ccb(struct gdt_ccb *);
 void	gdt_free_ccb(struct gdt_softc *, struct gdt_ccb *);
 struct gdt_ccb *gdt_get_ccb(struct gdt_softc *, int);
-int	gdt_internal_cache_cmd(struct scsi_xfer *);
+void	gdt_internal_cache_cmd(struct scsi_xfer *);
 int	gdt_internal_cmd(struct gdt_softc *, u_int8_t, u_int16_t,
     u_int32_t, u_int32_t, u_int32_t);
 #if NBIO > 0
@@ -552,10 +552,7 @@ gdt_scsi_cmd(xs)
 #if 0
 		case VERIFY:
 #endif
-			if (!gdt_internal_cache_cmd(xs)) {
-				GDT_UNLOCK_GDT(gdt, lock);
-				return (TRY_AGAIN_LATER);
-			}
+			gdt_internal_cache_cmd(xs);
 			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
@@ -845,7 +842,7 @@ gdt_copy_internal_data(xs, data, size)
 }
 
 /* Emulated SCSI operation on cache device */
-int
+void
 gdt_internal_cache_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -909,11 +906,10 @@ gdt_internal_cache_cmd(xs)
 		GDT_DPRINTF(GDT_D_CMD, ("unsupported scsi command %#x tgt %d ",
 		    xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
-		return (0);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
-	return (1);
 }
 
 /* Start a raw SCSI operation */
