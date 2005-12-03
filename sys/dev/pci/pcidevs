@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.973 2005/11/30 11:07:34 mickey Exp $
+$OpenBSD: pcidevs,v 1.974 2005/12/03 19:32:04 pedro Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -723,6 +723,7 @@ product ATI SB200_EHCI		0x4345	SB200 USB2
 product ATI SB200_OHCI_1	0x4347	SB200 USB
 product ATI SB200_OHCI_2	0x4348	SB200 USB
 product ATI SB200_ISA		0x434c	SB200 PCI-ISA
+product ATI IXP_MODEM_200	0x434d	IXP200 Modem
 product ATI SB200_SMB		0x4353	SB200 SMBus
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
