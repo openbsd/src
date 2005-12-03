@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.18 2005/04/13 06:36:03 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.19 2005/12/03 18:23:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.18 2005/04/13 06:36:03 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.19 2005/12/03 18:23:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -225,6 +225,7 @@ add_str(const char *str)
 	strlcat(strbuf, str, strbuf_sz);
 }
 
+/* ARGSUSED */
 void
 abort_line(int sig)
 {
