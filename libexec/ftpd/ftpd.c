@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.169 2005/12/01 17:36:59 pvalchev Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.170 2005/12/03 18:23:30 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.169 2005/12/01 17:36:59 pvalchev Exp $";
+    "$OpenBSD: ftpd.c,v 1.170 2005/12/03 18:23:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1824,6 +1824,8 @@ statcmd(void)
 		ispassive++;
 		goto printaddr;
 	} else if (usedefault == 0) {
+		int alen, af, i;
+
 		su = (union sockunion *)&data_dest;
 printaddr:
 		/* PASV/PORT */
@@ -1840,9 +1842,6 @@ printaddr:
 		}
 
 		/* LPSV/LPRT */
-	    {
-		int alen, af, i;
-
 		alen = 0;
 		switch (su->su_family) {
 		case AF_INET:
@@ -1871,12 +1870,8 @@ printaddr:
 				printf(",%u", a[i]);
 			printf(",%u,%u,%u)\r\n", 2, p[0], p[1]);
 		}
-	    }
 
 		/* EPRT/EPSV */
-	    {
-		u_char af;
-
 		switch (su->su_family) {
 		case AF_INET:
 			af = 1;
@@ -1902,10 +1897,9 @@ printaddr:
 				else
 					printf("211- EPRT ");
 				printf("(|%u|%s|%s|)\r\n",
-					af, hbuf, pbuf);
+				    af, hbuf, pbuf);
 			}
 		}
-	    }
 	} else
 		printf("     No data connection\r\n");
 	reply(211, "End of status");
