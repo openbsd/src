@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.100 2005/11/27 07:28:57 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.101 2005/12/03 16:53:15 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1563,7 +1563,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 			AMI_DPRINTF(AMI_D_CMD, ("failed %p ", xs));
 		__asm __volatile(".globl _bpamifail\n_bpamifail:");
 			if (flags & SCSI_POLL) {
-				xs->error = XS_TIMEOUT;
 				splx(s);
 				return (TRY_AGAIN_LATER);
 			} else {

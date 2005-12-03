@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.27 2004/08/02 19:55:45 art Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.28 2005/12/03 16:53:16 krw Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -318,7 +318,6 @@ ispcmd(XS_T *xs)
 	 */
 	if (isp->isp_osinfo.blocked) {
 		if (xs->flags & SCSI_POLL) {
-			xs->error = XS_DRIVER_STUFFUP;
 			ISP_UNLOCK(isp);
 			return (TRY_AGAIN_LATER);
 		}
@@ -393,9 +392,6 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 		break;
 	case CMD_RQLATER:
 	case CMD_EAGAIN:
-		if (XS_NOERR(xs)) {
-			xs->error = XS_DRIVER_STUFFUP;
-		}
 		result = TRY_AGAIN_LATER;
 		break;
 	case CMD_COMPLETE:

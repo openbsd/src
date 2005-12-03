@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.31 2005/12/03 16:22:24 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.32 2005/12/03 16:53:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -622,7 +622,6 @@ gdt_scsi_cmd(xs)
 			 * We are out of commands, try again in a little while.
 			 */
 			if (ccb == NULL) {
-				xs->error = XS_DRIVER_STUFFUP;
 				GDT_UNLOCK_GDT(gdt, lock);
 				return (TRY_AGAIN_LATER);
 			}
@@ -673,7 +672,6 @@ gdt_scsi_cmd(xs)
 					printf("%s: command %d timed out\n",
 					    gdt->sc_dev.dv_xname,
 					    ccb->gc_cmd_index);
-					xs->error = XS_TIMEOUT;
 					return (TRY_AGAIN_LATER);
 				}
 				xs->flags |= ITSDONE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.25 2005/11/21 22:55:43 miod Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.26 2005/12/03 16:53:16 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -404,7 +404,6 @@ osiop_scsicmd(xs)
 		printf("unable to allocate acb\n");
 		panic("osiop_scsipi_request");
 #endif
-		xs->error = XS_DRIVER_STUFFUP;
 		splx(s);
 		return (TRY_AGAIN_LATER);
 	}

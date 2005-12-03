@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.14 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: adv.c,v 1.15 2005/12/03 16:53:15 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -669,7 +669,6 @@ adv_scsi_cmd(xs)
                          */
 			if (dontqueue) {
 				splx(s);
-				xs->error = XS_DRIVER_STUFFUP;
 				return (TRY_AGAIN_LATER);
 			}
 			/*
@@ -695,7 +694,6 @@ adv_scsi_cmd(xs)
                  */
 		if (dontqueue) {
 			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
 			return (TRY_AGAIN_LATER);
 		}
 		/*

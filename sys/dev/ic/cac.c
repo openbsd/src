@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.20 2005/09/15 05:33:39 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.21 2005/12/03 16:53:15 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -684,11 +684,9 @@ cac_scsi_cmd(xs)
 		    target, blockno, flags, xs))) {
 
 			if (error == ENOMEM) {
-				xs->error = XS_BUSY;
 				splx(s);
 				return (TRY_AGAIN_LATER);
 			} else if (poll) {
-				xs->error = XS_TIMEOUT;
 				splx(s);
 				return (TRY_AGAIN_LATER);
 			} else {

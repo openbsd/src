@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.29 2004/12/26 21:22:13 miod Exp $ */
+/*	$OpenBSD: adw.c,v 1.30 2005/12/03 16:53:15 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -674,7 +674,6 @@ adw_scsi_cmd(xs)
 	} else {
  		if(sc->sc_freeze_dev[xs->sc_link->target]) {
 			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
 			return (TRY_AGAIN_LATER);
 		}
 
@@ -691,7 +690,6 @@ adw_scsi_cmd(xs)
                          */
 			if (dontqueue) {
 				splx(s);
-				xs->error = XS_DRIVER_STUFFUP;
 				return (TRY_AGAIN_LATER);
 			}
 			/*
@@ -719,7 +717,6 @@ adw_scsi_cmd(xs)
                  */
 		if (dontqueue) {
 			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
 			return (TRY_AGAIN_LATER);
 		}
 		/*

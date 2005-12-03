@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.24 2005/09/15 05:33:39 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.25 2005/12/03 16:53:16 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -921,7 +921,6 @@ twe_scsi_cmd(xs)
 			TWE_UNLOCK(sc, lock);
 			TWE_DPRINTF(TWE_D_CMD, ("failed %p ", xs));
 			if (xs->flags & SCSI_POLL) {
-				xs->error = XS_TIMEOUT;
 				return (TRY_AGAIN_LATER);
 			} else {
 				xs->error = XS_DRIVER_STUFFUP;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.42 2005/11/20 22:32:48 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.43 2005/12/03 16:53:16 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1356,7 +1356,6 @@ siop_scsicmd(xs)
 #endif
 	siop_cmd = TAILQ_FIRST(&sc->free_list);
 	if (siop_cmd == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
 		splx(s);
 		return(TRY_AGAIN_LATER);
 	}
@@ -1382,7 +1381,6 @@ siop_scsicmd(xs)
 			printf("%s: can't malloc memory for "
 			    "target %d\n", sc->sc_c.sc_dev.dv_xname,
 			    target);
-			xs->error = XS_DRIVER_STUFFUP;
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
@@ -1401,7 +1399,6 @@ siop_scsicmd(xs)
 		if (siop_target->lunsw == NULL) {
 			printf("%s: can't alloc lunsw for target %d\n",
 			    sc->sc_c.sc_dev.dv_xname, target);
-			xs->error = XS_DRIVER_STUFFUP;
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
@@ -1417,7 +1414,6 @@ siop_scsicmd(xs)
 			printf("%s: can't alloc siop_lun for "
 			    "target %d lun %d\n",
 			    sc->sc_c.sc_dev.dv_xname, target, lun);
-			xs->error = XS_DRIVER_STUFFUP;
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
@@ -1443,7 +1439,6 @@ siop_scsicmd(xs)
 		if (error) {
 			printf("%s: unable to load data DMA map: %d\n",
 			    sc->sc_c.sc_dev.dv_xname, error);
-			xs->error = XS_DRIVER_STUFFUP;
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.10 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.11 2005/12/03 16:53:16 krw Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -1030,7 +1030,6 @@ dpt_scsi_cmd(xs)
 			 */
 			if (dontqueue) {
 				splx(s);
-				xs->error = XS_DRIVER_STUFFUP;
 				return (TRY_AGAIN_LATER);
 			}
 
@@ -1058,7 +1057,6 @@ dpt_scsi_cmd(xs)
 		/* If we can't queue, we lose */
 		if (dontqueue) {
 			splx(s);
-			xs->error = XS_DRIVER_STUFFUP;
 			return (TRY_AGAIN_LATER);
 		}
 		
@@ -1219,7 +1217,6 @@ dpt_scsi_cmd(xs)
 	
 	if (dpt_cmd(sc, &ccb->ccb_eata_cp, ccb->ccb_ccbpa, CP_DMA_CMD, 0)) {
 		printf("%s: dpt_cmd failed\n", sc->sc_dv.dv_xname);
-		xs->error = XS_DRIVER_STUFFUP;
 		dpt_free_ccb(sc, ccb);
 		return (TRY_AGAIN_LATER);
 	}

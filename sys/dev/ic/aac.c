@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.25 2005/11/18 05:39:10 nate Exp $	*/
+/*	$OpenBSD: aac.c,v 1.26 2005/12/03 16:53:15 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2578,7 +2578,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 			 * We are out of commands, try again
 			 * in a little while.
 			 */
-			xs->error = XS_DRIVER_STUFFUP;
 			splx(s);
 			return (TRY_AGAIN_LATER);
 		}
@@ -2603,7 +2602,6 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 			{
 				printf("%s: command timed out\n",
 				       sc->aac_dev.dv_xname);
-				xs->error = XS_TIMEOUT;
 				splx(s);
 				return (TRY_AGAIN_LATER);
 			}
