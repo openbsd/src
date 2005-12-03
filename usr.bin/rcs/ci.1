@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.19 2005/11/24 08:52:48 jmc Exp $
+.\"     $OpenBSD: ci.1,v 1.20 2005/12/03 17:08:25 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Op Fl n Ns Ar symbol
 .Op Fl r Ns Op Ar rev
 .Op Fl s Ns Ar state
+.Op Fl t Ns Ar file
 .Op Fl u Ns Op Ar rev
 .Op Fl w Ns Ar username
 .Op Fl x Ns Ar suffixes
@@ -108,6 +109,17 @@ working file.
 Sets the state of the deposited revision to the identifier
 .Ar state .
 The specified value may not contain a space character.
+.It Fl t Ns Ar file
+Sets the description in the RCS file to the contents of the specified file.
+The
+.Ar file
+argument cannot begin with \-.
+If
+.Ar file
+begins with \-, the text following \- is used for the description,
+intead of loading the contents of a file.
+For example \-tafile sets the description to the contents of the file
+"afile", whereas \-t\-afile sets the description to the string "afile".
 .It Fl u
 The same as
 .Fl r ,
