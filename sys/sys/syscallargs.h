@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.88 2005/07/03 20:14:19 drahn Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.89 2005/12/03 18:09:09 tedu Exp $	*/
 
 /*
  * System call argument lists.
@@ -1217,6 +1217,24 @@ struct sys_msgctl_args {
 	syscallarg(struct msqid_ds *) buf;
 };
 
+struct sys_thrsleep_args {
+	syscallarg(long) ident;
+	syscallarg(int) timeout;
+	syscallarg(void *) lock;
+};
+
+struct sys_thrwakeup_args {
+	syscallarg(long) ident;
+};
+
+struct sys_threxit_args {
+	syscallarg(int) rval;
+};
+
+struct sys_thrsigdivert_args {
+	syscallarg(sigset_t) sigmask;
+};
+
 /*
  * System call prototypes.
  */
@@ -1523,5 +1541,14 @@ int	sys_shmctl(struct proc *, void *, register_t *);
 #endif
 #ifdef SYSVMSG
 int	sys_msgctl(struct proc *, void *, register_t *);
+#else
+#endif
+int	sys_sched_yield(struct proc *, void *, register_t *);
+#ifdef RTHREADS
+int	sys_getthrid(struct proc *, void *, register_t *);
+int	sys_thrsleep(struct proc *, void *, register_t *);
+int	sys_thrwakeup(struct proc *, void *, register_t *);
+int	sys_threxit(struct proc *, void *, register_t *);
+int	sys_thrsigdivert(struct proc *, void *, register_t *);
 #else
 #endif

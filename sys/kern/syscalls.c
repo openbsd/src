@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.88 2005/07/03 20:14:19 drahn Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.89 2005/12/03 18:09:08 tedu Exp $	*/
 
 /*
  * System call names.
@@ -406,5 +406,19 @@ char *syscallnames[] = {
 	"msgctl",			/* 297 = msgctl */
 #else
 	"#297 (unimplemented)",		/* 297 = unimplemented */
+#endif
+	"sched_yield",			/* 298 = sched_yield */
+#ifdef RTHREADS
+	"getthrid",			/* 299 = getthrid */
+	"thrsleep",			/* 300 = thrsleep */
+	"thrwakeup",			/* 301 = thrwakeup */
+	"threxit",			/* 302 = threxit */
+	"thrsigdivert",			/* 303 = thrsigdivert */
+#else
+	"#299 (unimplemented)",		/* 299 = unimplemented */
+	"#300 (unimplemented)",		/* 300 = unimplemented */
+	"#301 (unimplemented)",		/* 301 = unimplemented */
+	"#302 (unimplemented)",		/* 302 = unimplemented */
+	"#303 (unimplemented)",		/* 303 = unimplemented */
 #endif
 };

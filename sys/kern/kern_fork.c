@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.78 2005/11/02 20:03:16 aaron Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.79 2005/12/03 18:09:08 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -139,6 +139,10 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
 
 	if (rforkflags & RFMEM)
 		flags |= FORK_SHAREVM;
+#ifdef RTHREADS
+	if (rforkflags & RFTHREAD)
+		flags |= FORK_THREAD;
+#endif
 
 	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval, NULL));
 }
@@ -280,6 +284,16 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 		p2->p_flag |= P_NOZOMBIE;
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
+
+	if (flags & FORK_THREAD) {
+		p2->p_thrparent = p1->p_thrparent;
+		LIST_INSERT_HEAD(&p1->p_thrparent->p_thrchildren, p2, p_thrsib);
+	} else {
+		p2->p_thrparent = p2;
+	}
+
+	LIST_INIT(&p2->p_thrchildren);
+	LIST_INIT(&p2->p_sleepers);
 
 #ifdef KTRACE
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.56 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.57 2005/12/03 18:09:08 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -88,10 +88,22 @@ sys_exit(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) rval;
 	} */ *uap = v;
 
-	exit1(p, W_EXITCODE(SCARG(uap, rval), 0));
+	exit1(p, W_EXITCODE(SCARG(uap, rval), 0), EXIT_NORMAL);
 	/* NOTREACHED */
 	return (0);
 }
+
+#ifdef RTHREADS
+int
+sys_threxit(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_threxit_args *uap = v;
+
+	exit1(p, W_EXITCODE(SCARG(uap, rval), 0), EXIT_THREAD);
+
+	return (0);
+}
+#endif
 
 /*
  * Exit: deallocate address space and other resources, change proc state
@@ -99,13 +111,50 @@ sys_exit(struct proc *p, void *v, register_t *retval)
  * status and rusage for wait().  Check for child processes and orphan them.
  */
 void
-exit1(struct proc *p, int rv)
+exit1(struct proc *p, int rv, int flags)
 {
 	struct proc *q, *nq;
 
 	if (p->p_pid == 1)
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
+	
+	/*
+	 * if one thread calls exit, we take down everybody.
+	 * we have to be careful not to get recursively caught.
+	 * this is kinda sick.
+	 */
+	if (flags == EXIT_NORMAL && p != p->p_thrparent &&
+	    (p->p_thrparent->p_flag & P_WEXIT) == 0) {
+		printf("thread exiting normally %d\n", p->p_pid);
+		/*
+		 * we are one of the threads.  we SIGKILL the parent,
+		 * then wait for it to kill us back.  as soon as we return,
+		 * we'll exit again.
+		 */
+		p->p_thrparent->p_flag |= P_IGNEXITRV;
+		p->p_thrparent->p_xstat = rv;
+		psignal(p->p_thrparent, SIGKILL);
+		tsleep(&p->p_thrparent->p_thrchildren, PUSER | PCATCH, "dying",
+		    0);
+		printf("thread got sig %d\n", p->p_pid);
+		return;
+	} else if (p == p->p_thrparent) {
+		p->p_flag |= P_WEXIT;
+		if (flags == EXIT_NORMAL) {
+			q = LIST_FIRST(&p->p_thrchildren);
+			for (; q != 0; q = nq) {
+				nq = LIST_NEXT(q, p_thrsib);
+				q->p_flag |= P_IGNEXITRV;
+				q->p_xstat = rv;
+				printf("parent killing child %d\n", q->p_pid);
+				psignal(q, SIGKILL);
+			}
+		}
+		while (!LIST_EMPTY(&p->p_thrchildren))
+			tsleep(&p->p_thrchildren, PUSER, "thrdeath", 0);
+	}
+
 
 	if (p->p_flag & P_PROFIL)
 		stopprofclock(p);
@@ -218,11 +267,20 @@ exit1(struct proc *p, int rv)
 		}
 	}
 
+	/* unlink oursleves from the active threads */
+	if (p != p->p_thrparent) {
+		LIST_REMOVE(p, p_thrsib);
+		if (LIST_EMPTY(&p->p_thrparent->p_thrchildren))
+			wakeup(&p->p_thrparent->p_thrchildren);
+	}
+	
+
 	/*
 	 * Save exit status and final rusage info, adding in child rusage
 	 * info and self times.
 	 */
-	p->p_xstat = rv;
+	if (!(p->p_flag & P_IGNEXITRV))
+		p->p_xstat = rv;
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);

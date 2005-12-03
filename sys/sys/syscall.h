@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.86 2005/07/03 20:14:19 drahn Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.87 2005/12/03 18:09:09 tedu Exp $	*/
 
 /*
  * System call numbers.
@@ -670,4 +670,22 @@
 /* syscall: "msgctl" ret: "int" args: "int" "int" "struct msqid_ds *" */
 #define	SYS_msgctl	297
 
-#define	SYS_MAXSYSCALL	298
+/* syscall: "sched_yield" ret: "int" args: */
+#define	SYS_sched_yield	298
+
+/* syscall: "getthrid" ret: "pid_t" args: */
+#define	SYS_getthrid	299
+
+/* syscall: "thrsleep" ret: "int" args: "long" "int" "void *" */
+#define	SYS_thrsleep	300
+
+/* syscall: "thrwakeup" ret: "int" args: "long" */
+#define	SYS_thrwakeup	301
+
+/* syscall: "threxit" ret: "int" args: "int" */
+#define	SYS_threxit	302
+
+/* syscall: "thrsigdivert" ret: "int" args: "sigset_t" */
+#define	SYS_thrsigdivert	303
+
+#define	SYS_MAXSYSCALL	304

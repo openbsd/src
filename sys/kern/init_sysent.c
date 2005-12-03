@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.87 2005/07/03 20:14:19 drahn Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.88 2005/12/03 18:09:08 tedu Exp $	*/
 
 /*
  * System call switch table.
@@ -792,6 +792,31 @@ struct sysent sysent[] = {
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 297 = unimplemented */
+#endif
+	{ 0, 0,
+	    sys_sched_yield },			/* 298 = sched_yield */
+#ifdef RTHREADS
+	{ 0, 0,
+	    sys_getthrid },			/* 299 = getthrid */
+	{ 3, s(struct sys_thrsleep_args),
+	    sys_thrsleep },			/* 300 = thrsleep */
+	{ 1, s(struct sys_thrwakeup_args),
+	    sys_thrwakeup },			/* 301 = thrwakeup */
+	{ 1, s(struct sys_threxit_args),
+	    sys_threxit },			/* 302 = threxit */
+	{ 1, s(struct sys_thrsigdivert_args),
+	    sys_thrsigdivert },			/* 303 = thrsigdivert */
+#else
+	{ 0, 0,
+	    sys_nosys },			/* 299 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 300 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 301 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 302 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 303 = unimplemented */
 #endif
 };
 

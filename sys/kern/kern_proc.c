@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.28 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.29 2005/12/03 18:09:08 tedu Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -85,6 +85,10 @@ procinit(void)
 	LIST_INIT(&allproc);
 	LIST_INIT(&zombproc);
 
+#ifdef RTHREADS
+	extern struct pool sleeper_pool;
+#endif
+
 	pidhashtbl = hashinit(maxproc / 4, M_PROC, M_NOWAIT, &pidhash);
 	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_NOWAIT, &pgrphash);
 	uihashtbl = hashinit(maxproc / 16, M_PROC, M_NOWAIT, &uihash);
@@ -103,6 +107,10 @@ procinit(void)
 	    &pool_allocator_nointr);
 	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
 	    &pool_allocator_nointr);
+#ifdef RTHREADS
+	pool_init(&sleeper_pool, sizeof(struct twaitnode), 0, 0, 0, "thrwaitpl",
+	    &pool_allocator_nointr);
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.96 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.97 2005/12/03 18:09:08 tedu Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -709,7 +709,7 @@ exec_abort:
 
 free_pack_abort:
 	free(pack.ep_hdr, M_EXEC);
-	exit1(p, W_EXITCODE(0, SIGABRT));
+	exit1(p, W_EXITCODE(0, SIGABRT), EXIT_NORMAL);
 
 	/* NOTREACHED */
 	p->p_flag &= ~P_INEXEC;

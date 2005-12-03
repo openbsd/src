@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.78 2005/07/03 20:13:59 drahn Exp $
+;	$OpenBSD: syscalls.master,v 1.79 2005/12/03 18:09:08 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -593,4 +593,18 @@
 			    struct msqid_ds *buf); }
 #else
 297	UNIMPL
+#endif
+298	STD		{ int sys_sched_yield(void); }
+#ifdef RTHREADS
+299	STD		{ pid_t sys_getthrid(void); }
+300	STD		{ int sys_thrsleep(long ident, int timeout, void *lock); }
+301	STD		{ int sys_thrwakeup(long ident); }
+302	STD		{ int sys_threxit(int rval); }
+303	STD		{ int sys_thrsigdivert(sigset_t sigmask); }
+#else
+299	UNIMPL
+300	UNIMPL
+301	UNIMPL
+302	UNIMPL
+303	UNIMPL
 #endif

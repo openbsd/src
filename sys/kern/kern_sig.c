@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.77 2005/11/28 00:14:29 jsg Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.78 2005/12/03 18:09:08 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -96,6 +96,11 @@ cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 
 	if (p == q)
 		return (1);		/* process can always signal itself */
+
+	/* a thread can only be signalled from within the same process */
+	if (q->p_flag & P_THREAD)
+		return (p->p_thrparent == q->p_thrparent);
+
 
 	if (signum == SIGCONT && q->p_session == p->p_session)
 		return (1);		/* SIGCONT in session */
@@ -766,6 +771,7 @@ psignal(struct proc *p, int signum)
 	int s, prop;
 	sig_t action;
 	int mask;
+	struct proc *q;
 
 #ifdef DIAGNOSTIC
 	if ((u_int)signum >= NSIG || signum == 0)
@@ -775,6 +781,14 @@ psignal(struct proc *p, int signum)
 	/* Ignore signal if we are exiting */
 	if (p->p_flag & P_WEXIT)
 		return;
+
+	LIST_FOREACH(q, &p->p_thrchildren, p_thrsib) {
+		if (q->p_sigdivert & (1 << signum)) {
+			q->p_sigdivert = 0;
+			psignal(q, signum);
+			return;
+		}
+	}
 
 	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
 
@@ -1279,7 +1293,7 @@ sigexit(struct proc *p, int signum)
 		if (coredump(p) == 0)
 			signum |= WCOREFLAG;
 	}
-	exit1(p, W_EXITCODE(0, signum));
+	exit1(p, W_EXITCODE(0, signum), EXIT_NORMAL);
 	/* NOTREACHED */
 }
 
@@ -1423,6 +1437,18 @@ sys_nosys(struct proc *p, void *v, register_t *retval)
 	psignal(p, SIGSYS);
 	return (ENOSYS);
 }
+
+#ifdef RTHREADS
+int
+sys_thrsigdivert(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_thrsigdivert_args *uap = v;
+
+	p->p_sigdivert = SCARG(uap, sigmask);
+
+	return (0);
+}
+#endif
 
 void
 initsiginfo(siginfo_t *si, int sig, u_long code, int type, union sigval val)

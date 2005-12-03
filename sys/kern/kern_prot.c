@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.27 2005/11/28 00:14:29 jsg Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.28 2005/12/03 18:09:08 tedu Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -60,13 +60,27 @@ int
 sys_getpid(struct proc *p, void *v, register_t *retval)
 {
 
-	*retval = p->p_pid;
+	*retval = p->p_thrparent->p_pid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
     defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS)
-	retval[1] = p->p_pptr->p_pid;
+	retval[1] = p->p_thrparent->p_pptr->p_pid;
 #endif
 	return (0);
 }
+
+#ifdef RTHREADS
+/* ARGSUSED */
+int
+sys_getthrid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	*retval = p->p_pid;
+	return (0);
+}
+#endif
 
 /* ARGSUSED */
 int

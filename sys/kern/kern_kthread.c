@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.24 2004/12/08 06:56:14 miod Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.25 2005/12/03 18:09:08 tedu Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ kthread_exit(int ecode)
 		printf("WARNING: thread `%s' (%d) exits with status %d\n",
 		    curproc->p_comm, curproc->p_pid, ecode);
 
-	exit1(curproc, W_EXITCODE(ecode, 0));
+	exit1(curproc, W_EXITCODE(ecode, 0), EXIT_NORMAL);
 
 	/*
 	 * XXX Fool the compiler.  Making exit1() __dead is a can

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.66 2005/11/28 00:14:29 jsg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.67 2005/12/03 18:09:08 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -47,6 +47,11 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sched.h>
 #include <sys/timeout.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+#include <sys/pool.h>
+
+#include <machine/spinlock.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -127,8 +132,12 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	SCHED_LOCK(s);
 
 #ifdef DIAGNOSTIC
-	if (ident == NULL || p->p_stat != SONPROC || p->p_back != NULL)
-		panic("tsleep");
+	if (ident == NULL)
+		panic("tsleep: no ident");
+	if (p->p_stat != SONPROC)
+		panic("tsleep: not SONPROC");
+	if (p->p_back != NULL)
+		panic("tsleep: p_back not NULL");
 #endif
 
 	p->p_wchan = ident;
@@ -300,8 +309,10 @@ wakeup_n(void *ident, int n)
 restart:
 	for (q = &qp->sq_head; (p = *q) != NULL; ) {
 #ifdef DIAGNOSTIC
-		if (p->p_back || (p->p_stat != SSLEEP && p->p_stat != SSTOP))
-			panic("wakeup");
+		if (p->p_back)
+			panic("wakeup: p_back not NULL");
+		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
+			panic("wakeup: p_stat is %d", (int)p->p_stat);
 #endif
 		if (p->p_wchan == ident) {
 			--n;
@@ -357,3 +368,75 @@ wakeup(void *chan)
 {
 	wakeup_n(chan, -1);
 }
+
+int
+sys_sched_yield(struct proc *p, void *v, register_t *retval)
+{
+	yield();
+	return (0);
+}
+
+#ifdef RTHREADS
+
+struct pool sleeper_pool;
+
+int
+sys_thrsleep(struct proc *p, void *v, register_t *revtal)
+{
+	struct sys_thrsleep_args *uap = v;
+	long ident = SCARG(uap, ident);
+	int timo = SCARG(uap, timeout);
+	_spinlock_lock_t *lock = SCARG(uap, lock);
+	_spinlock_lock_t unlocked = _SPINLOCK_UNLOCKED;
+
+	struct twaitnode *n, *n2;
+	int error;
+
+	n = pool_get(&sleeper_pool, PR_WAITOK);
+	n->t_ident = ident;
+	/* we may have slept */
+	LIST_FOREACH(n2, &p->p_thrparent->p_sleepers, t_next) {
+		if (n2->t_ident == ident)
+			break;
+	}
+	if (n2) {
+		pool_put(&sleeper_pool, n);
+		n = n2;
+	} else {
+		LIST_INSERT_HEAD(&p->p_thrparent->p_sleepers, n, t_next);
+	}
+
+	if (lock)
+		copyout(&unlocked, lock, sizeof(unlocked));
+	if (hz > 1000)
+		timo = timo * (hz / 1000);
+	else
+		timo = timo / (1000 / hz);
+	error = tsleep(n, PUSER | PCATCH, "sys_tsleep", timo);
+
+	return (error);
+
+}
+
+int
+sys_thrwakeup(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_thrwakeup_args *uap = v;
+	long ident = SCARG(uap, ident);
+	struct twaitnode *n;
+	
+	LIST_FOREACH(n, &p->p_thrparent->p_sleepers, t_next) {
+		if (n->t_ident == ident) {
+			LIST_REMOVE(n, t_next);
+			break;
+		}
+	}
+	if (!n)
+		return (ESRCH);
+	wakeup(n);
+	pool_put(&sleeper_pool, n);
+	yield();
+
+	return (0);
+}
+#endif

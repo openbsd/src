@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.81 2005/11/21 18:16:46 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.82 2005/12/03 18:09:09 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -113,6 +113,11 @@ struct	emul {
 extern struct emul *emulsw[];		/* All emuls in system */
 extern int nemuls;			/* Number of emuls */
 
+struct	twaitnode {
+	long t_ident;
+	LIST_ENTRY(twaitnode) t_next;
+};
+
 /*
  * Description of a process.
  *
@@ -159,6 +164,14 @@ struct	proc {
 	pid_t	p_oppid;	 /* Save parent pid during ptrace. XXX */
 	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
+	/* threads are processes that sometimes use the parent thread's
+	 * info for userland visibility */
+	struct	proc *p_thrparent;
+	LIST_ENTRY(proc) p_thrsib;
+	LIST_HEAD(, proc) p_thrchildren;
+	LIST_HEAD(, twaitnode) p_sleepers;
+
+
 	/* scheduling */
 	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
 	int	p_cpticks;	 /* Ticks of cpu time. */
@@ -200,6 +213,7 @@ struct	proc {
 	struct	klist p_klist;		/* knotes attached to this process */
 					/* pad to 256, avoid shifting eproc. */
 
+	sigset_t p_sigdivert;		/* Signals to be diverted to thread. */
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy
@@ -278,6 +292,8 @@ struct	proc {
 #define P_CONTINUED	0x800000	/* Proc has continued from a stopped state. */
 #define P_SWAPIN	0x1000000	/* Swapping in right now */
 #define P_BIGLOCK	0x2000000	/* Process needs kernel "big lock" to run */
+#define	P_THREAD	0x4000000	/* Only a thread, not a real process */
+#define	P_IGNEXITRV	0x8000000	/* For thread kills */
 
 #define	P_BITS \
     ("\20\01ADVLOCK\02CTTY\03INMEM\04NOCLDSTOP\05PPWAIT\06PROFIL\07SELECT" \
@@ -361,6 +377,10 @@ struct uidinfo *uid_find(uid_t);
 #define FORK_SHAREVM	0x00000080
 #define FORK_SIGHAND	0x00000200
 #define FORK_PTRACE	0x00000400
+#define FORK_THREAD	0x00000800
+
+#define EXIT_NORMAL	0x00000001
+#define EXIT_THREAD	0x00000002
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
@@ -432,7 +452,7 @@ void    wakeup_n(void *chan, int);
 void    wakeup(void *chan);
 #define wakeup_one(c) wakeup_n((c), 1)
 void	reaper(void);
-void	exit1(struct proc *, int);
+void	exit1(struct proc *, int, int);
 void	exit2(struct proc *);
 int	fork1(struct proc *, int, int, void *, size_t, void (*)(void *),
 	    void *, register_t *, struct proc **);
