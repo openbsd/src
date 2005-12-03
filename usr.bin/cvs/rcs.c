@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.107 2005/12/03 15:07:21 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.108 2005/12/03 15:31:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3064,10 +3064,15 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 
 	if (type == CHECKOUT_REV_CREATED)
 		rcstime = rcs_rev_getdate(rf, rev);
-	else if (type == CHECKOUT_REV_MERGED)
+	else if (type == CHECKOUT_REV_MERGED ||
+	    type == CHECKOUT_REV_UPDATED) {
 		time(&rcstime);
+		if ((rcstime = cvs_hack_time(rcstime, 1)) < 0)
+			goto out;
+	}
 
-	if (type == CHECKOUT_REV_CREATED) {
+	if (type == CHECKOUT_REV_CREATED ||
+	    type == CHECKOUT_REV_UPDATED) {
 		ctime_r(&rcstime, timebuf);
 		l = strlen(timebuf);
 		if ((l > 0) && (timebuf[l - 1] == '\n'))
@@ -3134,6 +3139,7 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 			break;
 		case CHECKOUT_REV_MERGED:
 			/* XXX move the old file when merging */
+		case CHECKOUT_REV_UPDATED:
 		case CHECKOUT_REV_CREATED:
 			if (cvs_buf_write(bp, fpath, cf->cf_mode) < 0) {
 				cvs_log(LP_ERR, "failed to update file '%s'",

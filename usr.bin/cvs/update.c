@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.46 2005/12/03 13:00:00 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.47 2005/12/03 15:31:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -336,7 +336,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 		break;
 	case CVS_FST_LOST:
 		if (cvs_checkout_rev(rf, frev, cf, fpath, islocal,
-		    CHECKOUT_REV_CREATED) != -1) {
+		    CHECKOUT_REV_UPDATED) != -1) {
 			cf->cf_cvstat = CVS_FST_UPTODATE;
 			cvs_printf("U %s\n", fpath);
 		}
@@ -344,7 +344,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 	case CVS_FST_UPTODATE:
 		if (revdiff == 1) {
 			if (cvs_checkout_rev(rf, frev, cf, fpath, islocal,
-			    CHECKOUT_REV_CREATED) != -1)
+			    CHECKOUT_REV_UPDATED) != -1)
 				cvs_printf("P %s\n", fpath);
 		}
 		break;
