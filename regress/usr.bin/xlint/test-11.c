@@ -1,4 +1,4 @@
-/*      $OpenBSD: test-11.c,v 1.1 2005/12/02 22:11:46 cloder Exp $	*/
+/*      $OpenBSD: test-11.c,v 1.2 2005/12/03 01:04:06 cloder Exp $	*/
 
 /*
  * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
@@ -35,12 +35,28 @@ void foo4(void)
 	__attribute__((__pure__))
 	__attribute__((__section__("text")));
 
+/*
+ * A function prototype with multiple attributes after,
+ * one of which (volatile) is stupidly also a C keyword.
+ */
+__attribute__((__noreturn__)) void foo5(const char *, ...)
+	__attribute__((volatile, __format__ (printf, 1, 2)));
+
+/*
+ * A function prototype with unnamed parameters having attributes.
+ */
+void foo6(char[], int __attribute__((unused)));
+
+/*
+ * A function prototype with named parameters having attributes.
+ */
+void foo7(char func[], int i __attribute__((unused)));
 
 /*
  * A function definition with a single attribute before.
  */
 __attribute__((__noreturn__)) void
-foo5(void)
+foo8(void)
 {
 	exit(0);
 }
@@ -52,7 +68,7 @@ __attribute__((__noreturn__))
 __attribute__((__pure__))
 __attribute__((__section__("text")))
 void
-foo6(void)
+foo9(void)
 {
 	exit(0);
 }

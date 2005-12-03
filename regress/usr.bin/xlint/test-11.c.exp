@@ -1,0 +1,16 @@
+test-11.c(126): warning: argument argc unused in function main
+test-11.c(126): warning: argument argv unused in function main
+Lint pass2:
+foo1 declared( test-11.c(15) ), but never used or defined
+foo2 declared( test-11.c(23) ), but never used or defined
+foo3 declared( test-11.c(28) ), but never used or defined
+foo4 declared( test-11.c(36) ), but never used or defined
+foo5 declared( test-11.c(43) ), but never used or defined
+foo6 declared( test-11.c(48) ), but never used or defined
+foo7 declared( test-11.c(53) ), but never used or defined
+foo8 defined( test-11.c(59) ), but never used
+foo9 defined( test-11.c(71) ), but never used
+pac defined( test-11.c(117) ), but never used
+f defined( test-11.c(123) ), but never used
+sh2 defined( test-11.c(112) ), but never used
+sh defined( test-11.c(107) ), but never used
