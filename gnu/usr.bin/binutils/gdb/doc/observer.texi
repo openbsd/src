@@ -91,7 +91,12 @@ at the entry-point instruction.  For @samp{attach} and @samp{core},
 inferior, and before any information on the inferior has been printed.
 @end deftypefun
 
+@deftypefun void solib_loaded (struct so_list *@var{solib})
+The shared library specified by @var{solib} has been loaded.  Note that
+when @value{GDBN} calls this observer, the library's symbols probably
+haven't been loaded yet.
+@end deftypefun
+
 @deftypefun void solib_unloaded (struct so_list *@var{solib})
 The specified shared library has been discovered to be unloaded.
 @end deftypefun
-

@@ -643,6 +643,7 @@ bfd_target_h = bfd-target.h
 block_h = block.h
 breakpoint_h = breakpoint.h $(frame_h) $(value_h) $(gdb_events_h)
 bsd_kvm_h = bsd-kvm.h
+bsd_uthread_h = bsd-uthread.h
 buildsym_h = buildsym.h
 call_cmds_h = call-cmds.h
 charset_h = charset.h
@@ -1743,6 +1744,10 @@ breakpoint.o: breakpoint.c $(defs_h) $(symtab_h) $(frame_h) $(breakpoint_h) \
 bsd-kvm.o: bsd-kvm.c $(defs_h) $(cli_cmds_h) $(command_h) $(frame_h) \
 	$(regcache_h) $(target_h) $(value_h) $(gdbcore_h) $(gdb_assert_h) \
 	$(readline_h) $(bsd_kvm_h)
+bsd-uthread.o: bsd-uthread.c $(defs_h) $(gdbcore_h) $(gdbthread_h) \
+	$(inferior_h) $(objfiles_h) $(observer_h) $(regcache_h) $(solib_h) \
+	$(solist_h) $(symfile_h) $(target_h) $(gdb_assert_h) \
+	$(gdb_obstack_h) $(bsd_uthread_h)
 buildsym.o: buildsym.c $(defs_h) $(bfd_h) $(gdb_obstack_h) $(symtab_h) \
 	$(symfile_h) $(objfiles_h) $(gdbtypes_h) $(gdb_assert_h) \
 	$(complaints_h) $(gdb_string_h) $(expression_h) $(bcache_h) \

@@ -23,6 +23,7 @@
 #define SOLIB_H
 
 /* Forward decl's for prototypes */
+struct so_list;
 struct target_ops;
 
 /* Called when we free all symtabs, to free the shared library information
@@ -38,6 +39,7 @@ extern void clear_solib (void);
     solib_add (filename, from_tty, targ, readsyms)
 
 extern void solib_add (char *, int, struct target_ops *, int);
+extern int solib_read_symbols (struct so_list *, int);
 
 /* Function to be called when the inferior starts up, to discover the names
    of shared libraries that are dynamically linked, the base addresses to

@@ -879,6 +879,10 @@ extern void xvasprintf (char **ret, const char *format, va_list ap);
 extern char *xstrprintf (const char *format, ...) ATTR_FORMAT (printf, 1, 2);
 extern char *xstrvprintf (const char *format, va_list ap);
 
+/* Like snprintf, but throw an error if the output buffer is too small.  */
+extern int xsnprintf (char *str, size_t size, const char *format, ...)
+     ATTR_FORMAT (printf, 3, 4);
+
 extern int parse_escape (char **);
 
 /* Message to be printed before the error message, when an error occurs.  */
