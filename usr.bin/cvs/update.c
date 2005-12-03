@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.45 2005/12/03 01:02:09 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.46 2005/12/03 13:00:00 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -236,7 +236,8 @@ cvs_update_local(CVSFILE *cf, void *arg)
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		cvs_printf("? %s\n", fpath);
+		if (verbosity > 1)
+			cvs_printf("? %s\n", fpath);
 		return (CVS_EX_OK);
 	}
 
