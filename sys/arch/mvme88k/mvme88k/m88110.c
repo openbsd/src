@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.30 2005/12/03 16:52:16 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.31 2005/12/03 18:48:22 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -58,7 +58,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/simplelock.h>
 
@@ -70,31 +69,9 @@
 #include <machine/locore.h>
 #include <machine/trap.h>
 
-#ifdef DEBUG
-#define DB_CMMU		0x4000	/* MMU debug */
-unsigned int debuglevel = 0;
-#define dprintf(_L_,_X_) \
-do { \
-	if (debuglevel & (_L_)) { \
-		unsigned int psr; \
-		disable_interrupt(psr); \
-		printf("%d: ", cpu_number()); \
-		printf _X_; \
-		set_psr(psr); \
-	} \
-} while (0)
-#else
-#define dprintf(_L_,_X_)
-#endif
-
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/
-#define DEBUG_MSG db_printf
-#define STATIC
-#else
-#define DEBUG_MSG printf
-#define STATIC	static
-#endif /* DDB */
+#endif
 
 void m88110_cmmu_init(void);
 void m88110_setup_board_config(void);
@@ -598,44 +575,44 @@ m88110_cmmu_show_translation(unsigned address,
 	result = get_dsr();
 	probeaddr = get_dsar();
 	if (verbose_flag > 1)
-		DEBUG_MSG("probe of 0x%08x returns dsr=0x%08x\n",
+		db_printf("probe of 0x%08x returns dsr=0x%08x\n",
 			  address, result);
 	if (result & CMMU_DSR_PH || result & CMMU_DSR_BH) {
-		DEBUG_MSG("probe of 0x%08x returns phys=0x%x",
+		db_printf("probe of 0x%08x returns phys=0x%x",
 			  address, probeaddr);
-		if (result & CMMU_DSR_CP) DEBUG_MSG(", copyback err");
-		if (result & CMMU_DSR_BE) DEBUG_MSG(", bus err");
-		if (result & CMMU_DSR_TBE) DEBUG_MSG(", table search bus error");
-		if (result & CMMU_DSR_SU) DEBUG_MSG(", sup prot");
-		if (result & CMMU_DSR_WE) DEBUG_MSG(", write prot");
-		if (result & CMMU_DSR_PH) DEBUG_MSG(", PATC");
-		if (result & CMMU_DSR_BH) DEBUG_MSG(", BATC");
+		if (result & CMMU_DSR_CP) db_printf(", copyback err");
+		if (result & CMMU_DSR_BE) db_printf(", bus err");
+		if (result & CMMU_DSR_TBE) db_printf(", table search bus error");
+		if (result & CMMU_DSR_SU) db_printf(", sup prot");
+		if (result & CMMU_DSR_WE) db_printf(", write prot");
+		if (result & CMMU_DSR_PH) db_printf(", PATC");
+		if (result & CMMU_DSR_BH) db_printf(", BATC");
 	} else {
-		DEBUG_MSG("probe of 0x%08x missed the ATCs", address);
+		db_printf("probe of 0x%08x missed the ATCs", address);
 	}
-	DEBUG_MSG(".\n");
+	db_printf(".\n");
 
 	/******* INTERPRET AREA DESCRIPTOR *********/
 	{
 		if (verbose_flag > 1) {
-			DEBUG_MSG(" %cAPR is 0x%08x\n",
+			db_printf(" %cAPR is 0x%08x\n",
 				  supervisor_flag ? 'S' : 'U', value);
 		}
-		DEBUG_MSG(" %cAPR: SegTbl: 0x%x000p",
+		db_printf(" %cAPR: SegTbl: 0x%x000p",
 			  supervisor_flag ? 'S' : 'U', PG_PFNUM(value));
 		if (value & CACHE_WT)
-			DEBUG_MSG(", WTHRU");
+			db_printf(", WTHRU");
 		if (value & CACHE_GLOBAL)
-			DEBUG_MSG(", GLOBAL");
+			db_printf(", GLOBAL");
 		if (value & CACHE_INH)
-			DEBUG_MSG(", INHIBIT");
+			db_printf(", INHIBIT");
 		if (value & APR_V)
-			DEBUG_MSG(", VALID");
-		DEBUG_MSG("\n");
+			db_printf(", VALID");
+		db_printf("\n");
 
 		/* if not valid, done now */
 		if ((value & APR_V) == 0) {
-			DEBUG_MSG("<would report an error, valid bit not set>\n");
+			db_printf("<would report an error, valid bit not set>\n");
 			return;
 		}
 		value &= PG_FRAME;	/* now point to seg page */
@@ -643,7 +620,7 @@ m88110_cmmu_show_translation(unsigned address,
 
 	/* translate value from physical to virtual */
 	if (verbose_flag)
-		DEBUG_MSG("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
+		db_printf("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
 	value += VEQR_ADDR;
 
 	virtual_address.bits = address;
@@ -652,38 +629,38 @@ m88110_cmmu_show_translation(unsigned address,
 	{
 		sdt_entry_t sdt;
 		if (verbose_flag)
-			DEBUG_MSG("will follow to entry %d of page at 0x%x...\n",
+			db_printf("will follow to entry %d of page at 0x%x...\n",
 				  virtual_address.field.segment_table_index, value);
 		value |= virtual_address.field.segment_table_index *
 			 sizeof(sdt_entry_t);
 
 		if (badwordaddr((vaddr_t)value)) {
-			DEBUG_MSG("ERROR: unable to access page at 0x%08x.\n", value);
+			db_printf("ERROR: unable to access page at 0x%08x.\n", value);
 			return;
 		}
 
 		sdt = *(sdt_entry_t *)value;
 		if (verbose_flag > 1)
-			DEBUG_MSG("SEG DESC @0x%x is 0x%08x\n", value, sdt);
-		DEBUG_MSG("SEG DESC @0x%x: PgTbl: 0x%x000",
+			db_printf("SEG DESC @0x%x is 0x%08x\n", value, sdt);
+		db_printf("SEG DESC @0x%x: PgTbl: 0x%x000",
 			  value, PG_PFNUM(sdt));
-		if (sdt & CACHE_WT)		    DEBUG_MSG(", WTHRU");
-		else				    DEBUG_MSG(", !wthru");
-		if (sdt & SG_SO)		    DEBUG_MSG(", S-PROT");
-		else				    DEBUG_MSG(", UserOk");
-		if (sdt & CACHE_GLOBAL)		    DEBUG_MSG(", GLOBAL");
-		else				    DEBUG_MSG(", !global");
-		if (sdt & CACHE_INH)		    DEBUG_MSG(", $INHIBIT");
-		else				    DEBUG_MSG(", $ok");
-		if (sdt & SG_PROT)		    DEBUG_MSG(", W-PROT");
-		else				    DEBUG_MSG(", WriteOk");
-		if (sdt & SG_V)			    DEBUG_MSG(", VALID");
-		else				    DEBUG_MSG(", !valid");
-		DEBUG_MSG(".\n");
+		if (sdt & CACHE_WT)		    db_printf(", WTHRU");
+		else				    db_printf(", !wthru");
+		if (sdt & SG_SO)		    db_printf(", S-PROT");
+		else				    db_printf(", UserOk");
+		if (sdt & CACHE_GLOBAL)		    db_printf(", GLOBAL");
+		else				    db_printf(", !global");
+		if (sdt & CACHE_INH)		    db_printf(", $INHIBIT");
+		else				    db_printf(", $ok");
+		if (sdt & SG_PROT)		    db_printf(", W-PROT");
+		else				    db_printf(", WriteOk");
+		if (sdt & SG_V)			    db_printf(", VALID");
+		else				    db_printf(", !valid");
+		db_printf(".\n");
 
 		/* if not valid, done now */
 		if (!(sdt & SG_V)) {
-			DEBUG_MSG("<would report an error, STD entry not valid>\n");
+			db_printf("<would report an error, STD entry not valid>\n");
 			return;
 		}
 		value = ptoa(PG_PFNUM(sdt));
@@ -691,71 +668,71 @@ m88110_cmmu_show_translation(unsigned address,
 
 	/* translate value from physical to virtual */
 	if (verbose_flag)
-		DEBUG_MSG("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
+		db_printf("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
 	value += VEQR_ADDR;
 
 	/******* PAGE TABLE *********/
 	{
 		pt_entry_t pte;
 		if (verbose_flag)
-			DEBUG_MSG("will follow to entry %d of page at 0x%x...\n",
+			db_printf("will follow to entry %d of page at 0x%x...\n",
 				  virtual_address.field.page_table_index, value);
 		value |= virtual_address.field.page_table_index *
 			 sizeof(pt_entry_t);
 
 		if (badwordaddr((vaddr_t)value)) {
-			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
+			db_printf("error: unable to access page at 0x%08x.\n", value);
 			return;
 		}
 
 		pte = *(pt_entry_t *)value;
 		if (verbose_flag > 1)
-			DEBUG_MSG("PAGE DESC @0x%x is 0x%08x.\n", value, pte);
-		DEBUG_MSG("PAGE DESC @0x%x: page @%x000",
+			db_printf("PAGE DESC @0x%x is 0x%08x.\n", value, pte);
+		db_printf("PAGE DESC @0x%x: page @%x000",
 			  value, PG_PFNUM(pte));
-		if (pte & PG_W)			DEBUG_MSG(", WIRE");
-		else				DEBUG_MSG(", !wire");
-		if (pte & CACHE_WT)		DEBUG_MSG(", WTHRU");
-		else				DEBUG_MSG(", !wthru");
-		if (pte & PG_SO)		DEBUG_MSG(", S-PROT");
-		else				DEBUG_MSG(", UserOk");
-		if (pte & CACHE_GLOBAL)		DEBUG_MSG(", GLOBAL");
-		else				DEBUG_MSG(", !global");
-		if (pte & CACHE_INH)		DEBUG_MSG(", $INHIBIT");
-		else				DEBUG_MSG(", $ok");
-		if (pte & PG_M)			DEBUG_MSG(", MOD");
-		else				DEBUG_MSG(", !mod");
-		if (pte & PG_U)			DEBUG_MSG(", USED");
-		else				DEBUG_MSG(", !used");
-		if (pte & PG_PROT)		DEBUG_MSG(", W-PROT");
-		else				DEBUG_MSG(", WriteOk");
-		if (pte & PG_V)			DEBUG_MSG(", VALID");
-		else				DEBUG_MSG(", !valid");
-		DEBUG_MSG(".\n");
+		if (pte & PG_W)			db_printf(", WIRE");
+		else				db_printf(", !wire");
+		if (pte & CACHE_WT)		db_printf(", WTHRU");
+		else				db_printf(", !wthru");
+		if (pte & PG_SO)		db_printf(", S-PROT");
+		else				db_printf(", UserOk");
+		if (pte & CACHE_GLOBAL)		db_printf(", GLOBAL");
+		else				db_printf(", !global");
+		if (pte & CACHE_INH)		db_printf(", $INHIBIT");
+		else				db_printf(", $ok");
+		if (pte & PG_M)			db_printf(", MOD");
+		else				db_printf(", !mod");
+		if (pte & PG_U)			db_printf(", USED");
+		else				db_printf(", !used");
+		if (pte & PG_PROT)		db_printf(", W-PROT");
+		else				db_printf(", WriteOk");
+		if (pte & PG_V)			db_printf(", VALID");
+		else				db_printf(", !valid");
+		db_printf(".\n");
 
 		/* if not valid, done now */
 		if (!(pte & PG_V)) {
-			DEBUG_MSG("<would report an error, PTE entry not valid>\n");
+			db_printf("<would report an error, PTE entry not valid>\n");
 			return;
 		}
 
 		value = ptoa(PG_PFNUM(pte));
 		if (verbose_flag)
-			DEBUG_MSG("will follow to byte %d of page at 0x%x...\n",
+			db_printf("will follow to byte %d of page at 0x%x...\n",
 				  virtual_address.field.page_offset, value);
 		value |= virtual_address.field.page_offset;
 
 		if (badwordaddr((vaddr_t)value)) {
-			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
+			db_printf("error: unable to access page at 0x%08x.\n", value);
 			return;
 		}
 	}
 
 	/* translate value from physical to virtual */
 	if (verbose_flag)
-		DEBUG_MSG("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
+		db_printf("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
 	value += VEQR_ADDR;
 
-	DEBUG_MSG("WORD at 0x%x is 0x%08x.\n", value, *(unsigned *)value);
+	db_printf("WORD at 0x%x is 0x%08x.\n", value, *(unsigned *)value);
 }
 #endif /* DDB */
