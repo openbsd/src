@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.40 2005/09/15 17:01:10 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.41 2005/12/03 01:02:08 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,6 +43,7 @@
 
 static int	cvs_checkout_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_checkout_pre_exec(struct cvsroot *);
+static int	cvs_checkout_local(CVSFILE *cf, void *);
 
 struct cvs_cmd cvs_cmd_checkout = {
 	CVS_OP_CHECKOUT, CVS_REQ_CO, "checkout",
@@ -79,6 +80,9 @@ struct cvs_cmd cvs_cmd_export = {
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR
 };
 
+static char *currepo = NULL;
+static DIR *dirp = NULL;
+static int cwdfd = -1;
 static char *date, *tag, *koptstr, *tgtdir, *rcsid;
 static int statmod = 0;
 static int shorten = 0;
@@ -88,6 +92,8 @@ static int kflag = RCS_KWEXP_DEFAULT;
 /* modules */
 static char **co_mods;
 static int    co_nmod;
+
+/* XXX checkout has issues in remote mode, -N gets seen as module */
 
 static int
 cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
@@ -191,8 +197,15 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_checkout_pre_exec(struct cvsroot *root)
 {
-	int i;
-	char *sp;
+	int i, ret;
+	char *sp, repo[MAXPATHLEN];
+
+	if ((dirp = opendir(".")) == NULL) {
+		cvs_log(LP_ERRNO, "failed to save cwd");
+		return (CVS_EX_DATA);
+	}
+
+	cwdfd = dirfd(dirp);
 
 	for (i = 0; i < co_nmod; i++) {
 		if ((sp = strchr(co_mods[i], '/')) != NULL)
@@ -215,7 +228,25 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 			*sp = '/';
 	}
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
+	if (root->cr_method == CVS_METHOD_LOCAL) {
+		if ((dirp = opendir(".")) == NULL)
+			return (CVS_EX_DATA);
+		cwdfd = dirfd(dirp);
+
+		for (i = 0; i < co_nmod; i++) {
+			snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir,
+			    co_mods[i]);
+			currepo = co_mods[i];
+			ret = cvs_file_get(repo, CF_RECURSE | CF_REPO | CF_IGNORE,
+			    cvs_checkout_local, NULL, NULL);
+			if (ret != CVS_EX_OK) {
+				closedir(dirp);
+				return (ret);
+			}
+		}
+
+		closedir(dirp);
+	} else {
 		/*
 		 * These arguments are for the expand-modules
 		 * command that we send to the server before requesting
@@ -267,4 +298,72 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 			return (CVS_EX_PROTO);
 	}
 	return (0);
+}
+
+static int
+cvs_checkout_local(CVSFILE *cf, void *arg)
+{
+	char rcspath[MAXPATHLEN], fpath[MAXPATHLEN];
+	RCSFILE *rf;
+	struct cvsroot *root;
+	static int inattic = 0;
+
+	/* we don't want these */
+	if ((cf->cf_type == DT_DIR) && !strcmp(cf->cf_name, "Attic")) {
+		inattic = 1;
+		return (CVS_EX_OK);
+	}
+
+	root = CVS_DIR_ROOT(cf);
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+	snprintf(rcspath, sizeof(rcspath), "%s/%s%s", root->cr_dir,
+	    fpath, RCS_FILE_EXT);
+
+	if (cf->cf_type == DT_DIR) {
+		inattic = 0;
+		if (verbosity > 1)
+			cvs_log(LP_INFO, "Updating %s", fpath);
+
+		if (cvs_cmdop != CVS_OP_SERVER) {
+			/*
+			 * We pass an empty repository name to
+			 * cvs_create_dir(), because it will correctly
+			 * create the repository directory for us.
+			 */
+			if (cvs_create_dir(fpath, 1, root->cr_dir, NULL) < 0)
+				return (CVS_EX_FILE);
+			if (fchdir(cwdfd) < 0) {
+				cvs_log(LP_ERRNO, "fchdir failed");
+				return (CVS_EX_FILE);
+			}
+		} else {
+			/*
+			 * TODO: send responses to client so it'll
+			 * create it's directories.
+			 */
+		}
+
+		return (CVS_EX_OK);
+	}
+
+	if (inattic == 1)
+		return (CVS_EX_OK);
+
+	if ((rf = rcs_open(rcspath, RCS_READ)) == NULL) {
+		cvs_log(LP_ERR, "cvs_checkout_local: rcs_open failed");
+		return (CVS_EX_DATA);
+	}
+
+	if (cvs_checkout_rev(rf, rf->rf_head, cf, fpath,
+	    (cvs_cmdop != CVS_OP_SERVER) ? 1 : 0,
+	    CHECKOUT_REV_CREATED) < 0) {
+		rcs_close(rf);
+		return (CVS_EX_DATA);
+	}
+
+	rcs_close(rf);
+
+	cvs_printf("U %s\n", fpath);
+	return (CVS_EX_OK);
 }

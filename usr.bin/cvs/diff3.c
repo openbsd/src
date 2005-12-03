@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.6 2005/11/08 16:06:03 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.7 2005/12/03 01:02:08 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.6 2005/11/08 16:06:03 xsa Exp $";
+static const char rcsid[] = "$OpenBSD: diff3.c,v 1.7 2005/12/03 01:02:08 joris Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -235,16 +235,23 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	argv[argc++] = path1;
 	argv[argc++] = path2;
 	argv[argc++] = path3;
-	if ((diff3_conflicts = diff3_internal(argc, argv, workfile, r2)) < 0)
+
+	diff3_conflicts = diff3_internal(argc, argv, workfile, r2);
+	if (diff3_conflicts < 0) {
+		cvs_buf_free(diffb);
+		diffb = NULL;
 		goto out;
+	}
 
 	if (cvs_buf_putc(diffb, '\0') < 0) {
 		cvs_buf_free(diffb);
+		diffb = NULL;
 		goto out;
 	}
 
 	if (cvs_buf_putc(b1, '\0') < 0) {
 		cvs_buf_free(diffb);
+		diffb = NULL;
 		goto out;
 	}
 
@@ -257,6 +264,11 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 
 	if ((diffb = cvs_patchfile(data, patch, ed_patch_lines)) == NULL)
 		goto out;
+
+	if (diff3_conflicts != 0) {
+		cvs_printf("%d conflict%s found during merge, please correct.\n",
+		    diff3_conflicts, (diff3_conflicts > 1) ? "s" : "");
+	}
 
 	free(data);
 	free(patch);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.55 2005/10/30 11:10:12 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.56 2005/12/03 01:02:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -478,7 +478,9 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
 	}
 
 	/* create CVS/Tag file (if needed) */
-	(void)cvs_write_tagfile(tag, date, nb);
+	/* XXX correct? */
+	if (tag != NULL || date != NULL)
+		(void)cvs_write_tagfile(tag, date, nb);
 
 	return (0);
 }
@@ -639,7 +641,7 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 	CVSENTRIES *entf;
 	struct cvs_ent *ent;
 
-	if (create_adm == 1 && (root == NULL || repo == NULL)) {
+	if (create_adm == 1 && (root == NULL)) {
 		cvs_log(LP_ERR, "missing stuff in cvs_create_dir");
 		return (-1);
 	}
@@ -647,12 +649,21 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 	if ((s = strdup(path)) == NULL)
 		return (-1);
 
-	if (strlcpy(rpath, repo, sizeof(rpath)) >= sizeof(rpath) ||
-	    strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rpath);
-		free(s);
-		return (-1);
+	rpath[0] = '\0';
+	if (repo != NULL) {
+		if (strlcpy(rpath, repo, sizeof(rpath)) >= sizeof(rpath)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", rpath);
+			free(s);
+			return (-1);
+		}
+
+		if (strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", rpath);
+			free(s);
+			return (-1);
+		}
 	}
 
 	ret = -1;
@@ -707,7 +718,7 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 				goto done;
 			}
 
-			cvs_ent_remove(entf, d);
+			cvs_ent_remove(entf, d, 0);
 
 			if (cvs_ent_add(entf, ent) < 0) {
 				cvs_log(LP_ERR, "failed to add entry");

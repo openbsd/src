@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.127 2005/11/12 21:34:48 niallo Exp $	*/
+/*	$OpenBSD: file.c,v 1.128 2005/12/03 01:02:08 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -427,13 +427,22 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 	}
 
 	cvs_error = CVS_EX_OK;
-	cvs_file_free(cf);
 
 	/*
 	 * Since some commands don't require any files to operate
 	 * we can stop right here for those.
 	 */
-	if (cvs_cmdop == CVS_OP_CHECKOUT || cvs_cmdop == CVS_OP_VERSION)
+	if (cf->cf_root != NULL) {
+		if (cf->cf_root->cr_method != CVS_METHOD_LOCAL &&
+		    cvs_cmdop == CVS_OP_CHECKOUT) {
+			cvs_file_free(cf);
+			return (0);
+		}
+	}
+
+	cvs_file_free(cf);
+
+	if (cvs_cmdop == CVS_OP_VERSION)
 		return (0);
 
 	for (i = 0; i < fsn; i++) {
@@ -838,6 +847,22 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 	if ((flags & CF_KNOWN) && (cf->cf_cvstat == CVS_FST_UNKNOWN))
 		return (0);
 
+	/*
+	 * if we are working with a repository, fiddle with
+	 * the pathname again.
+	 */
+	if (flags & CF_REPO) {
+		ret = snprintf(fpath, sizeof(fpath), "%s%s%s",
+		    cf->cf_root->cr_dir,
+		    (cf->cf_dir != NULL) ? "/" : "",
+		    (cf->cf_dir != NULL) ? cf->cf_dir : "");
+		if (ret == -1 || ret >= (int)sizeof(fpath))
+			return (-1);
+		free(cf->cf_dir);
+		if ((cf->cf_dir = strdup(fpath)) == NULL)
+			return (-1);
+	}
+
 	nfiles = ndirs = 0;
 	SIMPLEQ_INIT(&dirs);
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
@@ -1199,15 +1224,23 @@ static CVSFILE *
 cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
     struct cvs_ent *ent)
 {
+	char *c;
 	int ret;
 	u_int type;
 	struct stat st;
 	CVSFILE *cfp;
+	struct cvsroot *root;
 
 	type = DT_UNKNOWN;
 	ret = stat(path, &st);
 	if (ret == 0)
 		type = IFTODT(st.st_mode);
+
+	if ((flags & CF_REPO) && (type != DT_DIR)) {
+		if ((c = strrchr(path, ',')) == NULL)
+			return (NULL);
+		*c = '\0';
+	}
 
 	if ((cfp = cvs_file_alloc(path, type)) == NULL)
 		return (NULL);
@@ -1268,6 +1301,9 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 			else
 				cfp->cf_cvstat = CVS_FST_LOST;
 		}
+
+		/* XXX assume 0644 ? */
+		cfp->cf_mode = 0644;
 	}
 
 	if (ent != NULL) {
@@ -1298,6 +1334,34 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 			cvs_file_free(cfp);
 			return (NULL);
 		}
+	}
+
+	if (flags & CF_REPO) {
+		root = CVS_DIR_ROOT(cfp);
+
+		cfp->cf_mode = 0644;
+		cfp->cf_cvstat = CVS_FST_LOST;
+
+		if ((c = strdup(cfp->cf_dir)) == NULL) {
+			cvs_file_free(cfp);
+			return (NULL);
+		}
+
+		free(cfp->cf_dir);
+
+		if (strcmp(c, root->cr_dir)) {
+			c += strlen(root->cr_dir) + 1;
+			if ((cfp->cf_dir = strdup(c)) == NULL) {
+				cvs_file_free(cfp);
+				return (NULL);
+			}
+
+			c -= strlen(root->cr_dir) + 1;
+		} else {
+			cfp->cf_dir = NULL;
+		}
+
+		free(c);
 	}
 
 	if ((cfp->cf_repo != NULL) && (cfp->cf_type == DT_DIR) &&
@@ -1383,7 +1447,7 @@ cvs_file_prune(char *path)
 			if (cvs_file_prune(fpath)) {
 				empty--;
 				if (entf)
-					cvs_ent_remove(entf, fpath);
+					cvs_ent_remove(entf, fpath, 0);
 			} else {
 				empty++;
 			}

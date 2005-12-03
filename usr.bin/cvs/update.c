@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.44 2005/08/08 11:37:41 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.45 2005/12/03 01:02:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -36,13 +36,12 @@
 #include "cvs.h"
 #include "log.h"
 #include "proto.h"
-
+#include "diff.h"
 
 static int	cvs_update_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_update_pre_exec(struct cvsroot *);
 static int	cvs_update_remote(CVSFILE *, void *);
 static int	cvs_update_local(CVSFILE *, void *);
-
 
 struct cvs_cmd cvs_cmd_update = {
 	CVS_OP_UPDATE, CVS_REQ_UPDATE, "update",
@@ -220,13 +219,20 @@ cvs_update_remote(CVSFILE *cf, void *arg)
 static int
 cvs_update_local(CVSFILE *cf, void *arg)
 {
-	int ret;
+	int ret, islocal, revdiff;
 	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char *repo;
 	RCSFILE *rf;
+	RCSNUM *frev;
+	BUF *fbuf;
+	struct cvsroot *root;
 
-	ret = 0;
+	revdiff = ret = 0;
 	rf = NULL;
+	islocal = (cvs_cmdop != CVS_OP_SERVER);
 
+	root = CVS_DIR_ROOT(cf);
+	repo = CVS_DIR_REPO(cf);
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
@@ -235,20 +241,120 @@ cvs_update_local(CVSFILE *cf, void *arg)
 	}
 
 	if (cf->cf_type == DT_DIR) {
-		cvs_log(LP_NOTICE, "Updating %s", fpath);
+		if (verbosity > 1)
+			cvs_log(LP_NOTICE, "Updating %s", fpath);
+
 		return (CVS_EX_OK);
 	}
 
 	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
 		return (CVS_EX_DATA);
 
-	rf = rcs_open(rcspath, RCS_RDWR);
-	if (rf == NULL) {
-		printf("failed here?\n");
+	/*
+	 * Only open the RCS file for files that have not been added.
+	 */
+	if (cf->cf_cvstat != CVS_FST_ADDED) {
+		rf = rcs_open(rcspath, RCS_READ);
+
+		/*
+		 * If there is no RCS file available in the repository
+		 * directory that matches this file, it's gone.
+		 * XXX: so what about the Attic?
+		 */
+		if (rf == NULL) {
+			cvs_log(LP_WARN, "%s is no longer in the repository",
+			    fpath);
+			if (cvs_checkout_rev(NULL, NULL, cf, fpath,
+			    islocal, CHECKOUT_REV_REMOVED) < 0)
+				return (CVS_EX_FILE);
+			return (CVS_EX_OK);
+		}
+	}
+
+	/* set keyword expansion */
+	/* XXX look at cf->cf_opts as well for this */
+	if (rcs_kwexp_set(rf, kflag) < 0) {
+		if (rf != NULL)
+			rcs_close(rf);
 		return (CVS_EX_DATA);
 	}
 
-	rcs_close(rf);
+	/* fill in the correct revision */
+	if (rev != NULL) {
+		if ((frev = rcsnum_parse(rev)) == NULL) {
+			if (rf != NULL)
+				rcs_close(rf);
+			return (CVS_EX_DATA);
+		}
+	} else {
+		frev = rf->rf_head;
+	}
 
-	return (ret);
+	/*
+	 * Compare the headrevision with the revision we currently have.
+	 */
+	if (rf != NULL && cf->cf_lrev != NULL)
+		revdiff = rcsnum_cmp(cf->cf_lrev, frev, 0);
+
+	switch (cf->cf_cvstat) {
+	case CVS_FST_MODIFIED:
+		/*
+		 * If the file has been modified but there is a newer version
+		 * available, we try to merge it into the existing changes.
+		 */
+		if (revdiff == 1) {
+			fbuf = cvs_diff3(rf, fpath, cf->cf_lrev, frev);
+			if (fbuf == NULL) {
+				cvs_log(LP_ERR, "merge failed");
+				break;
+			}
+
+			/*
+			 * Please note fbuf will be free'd in cvs_checkout_rev
+			 */
+			if (cvs_checkout_rev(rf, frev, cf, fpath, islocal,
+			    CHECKOUT_REV_MERGED, fbuf) != -1) {
+				cvs_printf("%c %s\n",
+				    (diff3_conflicts > 0) ? 'C' : 'M',
+				    fpath);
+				if (diff3_conflicts > 0)
+					cf->cf_cvstat = CVS_FST_CONFLICT;
+			}
+		} else {
+			cvs_printf("M %s\n", fpath);
+		}
+		break;
+	case CVS_FST_ADDED:
+		cvs_printf("A %s\n", fpath);
+		break;
+	case CVS_FST_REMOVED:
+		cvs_printf("R %s\n", fpath);
+		break;
+	case CVS_FST_CONFLICT:
+		cvs_printf("C %s\n", fpath);
+		break;
+	case CVS_FST_LOST:
+		if (cvs_checkout_rev(rf, frev, cf, fpath, islocal,
+		    CHECKOUT_REV_CREATED) != -1) {
+			cf->cf_cvstat = CVS_FST_UPTODATE;
+			cvs_printf("U %s\n", fpath);
+		}
+		break;
+	case CVS_FST_UPTODATE:
+		if (revdiff == 1) {
+			if (cvs_checkout_rev(rf, frev, cf, fpath, islocal,
+			    CHECKOUT_REV_CREATED) != -1)
+				cvs_printf("P %s\n", fpath);
+		}
+		break;
+	default:
+		break;
+	}
+
+	if ((frev != NULL) && (frev != rf->rf_head))
+		rcsnum_free(frev);
+	if (rf != NULL)
+		rcs_close(rf);
+
+	return (CVS_EX_OK);
 }

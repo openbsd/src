@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.62 2005/11/28 08:49:25 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.63 2005/12/03 01:02:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -526,7 +526,7 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 		ent->ce_mtime = time(&(ent->ce_mtime));
 
 		/* replace the current entry with the one we just received */
-		(void)cvs_ent_remove(cvs_resp_lastent, ent->ce_name);
+		(void)cvs_ent_remove(cvs_resp_lastent, ent->ce_name, 0);
 
 		cvs_ent_add(cvs_resp_lastent, ent);
 	}
@@ -674,7 +674,7 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 
 	if ((type == CVS_RESP_UPDEXIST) || (type == CVS_RESP_UPDATED) ||
 	    (type == CVS_RESP_MERGED) || (type == CVS_RESP_CREATED)) {
-		if ((cvs_ent_remove(cvs_resp_lastent, ent->ce_name) < 0) &&
+		if ((cvs_ent_remove(cvs_resp_lastent, ent->ce_name, 0) < 0) &&
 		    (type != CVS_RESP_CREATED)) {
 			cvs_log(LP_WARN, "failed to remove entry for '%s`",
 			    ent->ce_name);
@@ -752,7 +752,7 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
 	if (resp_check_dir(root, line) < 0)
 		return (-1);
 
-	(void)cvs_ent_remove(cvs_resp_lastent, file);
+	(void)cvs_ent_remove(cvs_resp_lastent, file, 0);
 	if ((type == CVS_RESP_REMOVED) && ((unlink(fpath) == -1) &&
 	    errno != ENOENT)) {
 		cvs_log(LP_ERRNO, "failed to unlink `%s'", file);

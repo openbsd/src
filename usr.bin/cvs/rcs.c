@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.104 2005/12/02 21:21:47 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.105 2005/12/03 01:02:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -318,8 +318,10 @@ rcs_open(const char *path, int flags, ...)
 			fmode = va_arg(vap, mode_t);
 			va_end(vap);
 		} else {
-			rcs_errno = RCS_ERR_ERRNO;
+			/* XXX, make this command dependant? */
+#if 0
 			cvs_log(LP_ERR, "RCS file `%s' does not exist", path);
+#endif
 			return (NULL);
 		}
 	} else if ((ret == 0) && (flags & RCS_CREATE)) {
@@ -2998,3 +3000,222 @@ rcs_state_get(RCSFILE *rfp, RCSNUM *rev)
 	return (rdp->rd_state);
 }
 
+
+static char *month_tab[] = {
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec"
+};
+
+/*
+ * Checkout a certain revision <rev> of RCS file <rf> to either standard
+ * output when running in server mode, or to <fpath> when running in local mode.
+ *
+ * If type is CHECKOUT_REV_MERGED we have an extra argument, which
+ * is the buffer containing the merged file.
+ *
+ * If type is CHECKOUT_REV_REMOVED, the file has been removed and we
+ * need to do the same thing.
+ */
+int
+cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
+    int local, int type, ...)
+{
+	BUF *bp;
+	int l, ret, fsize;
+	char timebuf[32], entry[MAXPATHLEN], copyfile[MAXPATHLEN];
+	char *content, *repo, buf[MAXPATHLEN], modestr[16];
+	struct cvsroot *root;
+	struct cvs_ent *ent;
+	va_list ap;
+	time_t rcstime;
+	struct timeval tv[2];
+	struct tm *tp;
+	RCSNUM *oldrev;
+
+	bp = NULL;
+	ret = -1;
+	content = NULL;
+	oldrev = NULL;
+
+	if ((type != CHECKOUT_REV_MERGED) && (type != CHECKOUT_REV_REMOVED)) {
+		/* fetch the contents of the revision */
+		if ((bp = rcs_getrev(rf, rev)) == NULL) {
+			cvs_log(LP_ERR, "revision '%s' not found in file '%s'",
+			    rcsnum_tostr(rev, buf, sizeof(buf)), fpath);
+			goto out;
+		}
+	} else if (type != CHECKOUT_REV_REMOVED) {
+		va_start(ap, type);
+		bp = va_arg(ap, BUF *);
+		va_end(ap);
+	}
+
+	if (type == CHECKOUT_REV_CREATED)
+		rcstime = rcs_rev_getdate(rf, rev);
+	else if (type == CHECKOUT_REV_MERGED)
+		time(&rcstime);
+
+	if (type == CHECKOUT_REV_CREATED) {
+		ctime_r(&rcstime, timebuf);
+		l = strlen(timebuf);
+		if ((l > 0) && (timebuf[l - 1] == '\n'))
+			timebuf[--l] = '\0';
+
+		l = snprintf(entry, sizeof(entry), "/%s/%s/%s/%s/", cf->cf_name,
+		    rcsnum_tostr(rev, buf, sizeof(buf)),
+		    (local == 1) ? timebuf : "",
+		    (type == CHECKOUT_REV_MERGED) ? "+=" : "");
+		if (l == -1 || l >= (int)sizeof(buf))
+			goto out;
+	}
+
+	if (type == CHECKOUT_REV_MERGED) {
+		if ((oldrev = rcsnum_alloc()) == NULL)
+			goto out;
+
+		if (rcsnum_cpy(rev, oldrev, 0) < 0)
+			goto out;
+
+		if (rcsnum_dec(oldrev) == NULL)
+			goto out;
+
+		l = snprintf(copyfile, sizeof(copyfile), ".#%s.%s",
+		    cf->cf_name, rcsnum_tostr(oldrev, buf, sizeof(buf)));
+		if (l == -1 || l >= (int)sizeof(copyfile))
+			goto out;
+	}
+
+	root = CVS_DIR_ROOT(cf);
+	repo = CVS_DIR_REPO(cf);
+
+	/*
+	 * In local mode, just copy the entire contents to fpath.
+	 * In server mode, we need to send it to the client together with
+	 * some responses.
+	 */
+	if (local) {
+		l = 0;
+		if (cf->cf_entry == NULL) {
+			l = 1;
+			cf->cf_entry = cvs_ent_open(cf->cf_dir, O_RDWR);
+			if (cf->cf_entry == NULL) {
+				cvs_log(LP_ERR,
+				    "failed to open Entry file '%s'", cf->cf_dir);
+				goto out;
+			}
+		}
+
+		cvs_ent_remove(cf->cf_entry, cf->cf_name, 1);
+		if (type != CHECKOUT_REV_REMOVED) {
+			cvs_ent_addln(cf->cf_entry, entry);
+			ent = cvs_ent_get(cf->cf_entry, cf->cf_name);
+			ent->processed = 1;
+		}
+
+		if (l == 1)
+			cvs_ent_close(cf->cf_entry);
+
+		switch (type) {
+		case CHECKOUT_REV_REMOVED:
+			if (cvs_unlink(fpath) < 0)
+				goto out;
+			break;
+		case CHECKOUT_REV_MERGED:
+			/* XXX move the old file when merging */
+		case CHECKOUT_REV_CREATED:
+			if (cvs_buf_write(bp, fpath, cf->cf_mode) < 0) {
+				cvs_log(LP_ERR, "failed to update file '%s'",
+				    fpath);
+				goto out;
+			}
+
+			tv[0].tv_sec = rcstime;
+			tv[0].tv_usec = 0;
+			tv[1] = tv[0];
+			if (utimes(fpath, tv) == -1)
+				cvs_log(LP_ERRNO, "failed to set timestamps");
+			break;
+		}
+	} else {
+		/* sanity */
+		if (cf->cf_type != DT_REG) {
+			cvs_log(LP_ERR, "cvs_checkout_rev: none DT_REG file");
+			goto out;
+		}
+
+		/*
+		 * if we are removing a file, we don't need this stuff.
+		 */
+		if (type != CHECKOUT_REV_REMOVED) {
+			tp = gmtime(&rcstime);
+			l = snprintf(timebuf, sizeof(timebuf),
+			    "%02d %s %d %02d:%02d:%02d -0000",
+			    tp->tm_mday, month_tab[tp->tm_mon],
+			    tp->tm_year + 1900, tp->tm_hour,
+			    tp->tm_min, tp->tm_sec);
+			if (l == -1 || l >= (int)sizeof(timebuf))
+				goto out;
+
+			fsize = cvs_buf_len(bp);
+			cvs_modetostr(cf->cf_mode, modestr, sizeof(modestr));
+			if (cvs_buf_putc(bp, '\0') < 0)
+				goto out;
+			content = cvs_buf_release(bp);
+			bp = NULL;
+		}
+
+		if (type == CHECKOUT_REV_MERGED) {
+			printf("Copy-file %s/\n", (cf->cf_dir != NULL) ?
+			    cf->cf_dir : ".");
+			printf("%s/%s/%s\n", root->cr_dir, repo, cf->cf_name);
+			printf("%s\n", copyfile);
+		}
+
+		switch (type) {
+		case CHECKOUT_REV_MERGED:
+			printf("Merged");
+			break;
+		case CHECKOUT_REV_REMOVED:
+			printf("Removed");
+			break;
+		case CHECKOUT_REV_CREATED:
+			printf("Mod-time %s\n", timebuf);
+			printf("Created");
+			break;
+		default:
+			cvs_log(LP_ERR, "cvs_checkout_rev: bad type %d",
+			    type);
+			goto out;
+		}
+
+		printf(" %s/\n", (cf->cf_dir != NULL) ? cf->cf_dir : ".");
+		printf("%s/%s\n", repo, cf->cf_name);
+
+		if (type != CHECKOUT_REV_REMOVED) {
+			printf("%s\n", entry);
+			printf("%s\n%d\n%s", modestr, fsize, content);
+		}
+	}
+
+	ret = 0;
+
+out:
+	if (oldrev != NULL)
+		rcsnum_free(oldrev);
+	if (bp != NULL)
+		cvs_buf_free(bp);
+	if (content != NULL)
+		free(content);
+
+	return (ret);
+}

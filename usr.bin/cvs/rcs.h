@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.39 2005/12/01 18:22:09 xsa Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.40 2005/12/03 01:02:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -104,6 +104,11 @@
 #define RCS_ERR_BADSYM	4
 #define RCS_ERR_PARSE	5
 #define RCS_ERR_ERRNO	255
+
+/* used for cvs_checkout_rev */
+#define CHECKOUT_REV_CREATED	1
+#define CHECKOUT_REV_MERGED	2
+#define CHECKOUT_REV_REMOVED	3
 
 typedef struct rcs_num {
 	u_int		 rn_len;

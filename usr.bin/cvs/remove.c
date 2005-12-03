@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.37 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: remove.c,v 1.38 2005/12/03 01:02:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -179,7 +179,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			    cf->cf_name);
 		return (0);
 	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
-		if (cvs_ent_remove(entf, cf->cf_name) == -1)
+		if (cvs_ent_remove(entf, cf->cf_name, 0) == -1)
 			return (CVS_EX_FILE);
 
 		l = snprintf(buf, sizeof(buf), "%s/%s%s",

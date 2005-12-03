@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.50 2005/10/22 17:23:21 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.51 2005/12/03 01:02:08 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -255,7 +255,7 @@ cvs_ent_addln(CVSENTRIES *ef, const char *line)
  * by <name>.
  */
 int
-cvs_ent_remove(CVSENTRIES *ef, const char *name)
+cvs_ent_remove(CVSENTRIES *ef, const char *name, int useprev)
 {
 	struct cvs_ent *ent;
 
@@ -270,7 +270,12 @@ cvs_ent_remove(CVSENTRIES *ef, const char *name)
 		 * call to cvs_ent_next(), point to the next element to avoid
 		 * keeping an invalid reference.
 		 */
-		ef->cef_cur = TAILQ_NEXT(ef->cef_cur, ce_list);
+		if (useprev) {
+			ef->cef_cur = TAILQ_PREV(ef->cef_cur,
+			    cvsentrieshead, ce_list);
+		} else {
+			ef->cef_cur = TAILQ_NEXT(ef->cef_cur, ce_list);
+		}
 	}
 	TAILQ_REMOVE(&(ef->cef_ent), ent, ce_list);
 	cvs_ent_free(ent);

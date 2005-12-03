@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.87 2005/10/22 17:32:57 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.88 2005/12/03 01:02:08 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -280,7 +280,7 @@ typedef struct cvs_entries {
 	char	*cef_path;
 	u_int	 cef_flags;
 
-	TAILQ_HEAD(, cvs_ent)	 cef_ent;
+	TAILQ_HEAD(cvsentrieshead, cvs_ent)	 cef_ent;
 	struct cvs_ent		*cef_cur;
 } CVSENTRIES;
 
@@ -387,7 +387,7 @@ struct cvs_ent	*cvs_ent_get(CVSENTRIES *, const char *);
 struct cvs_ent	*cvs_ent_next(CVSENTRIES *);
 int		 cvs_ent_add(CVSENTRIES *, struct cvs_ent *);
 int		 cvs_ent_addln(CVSENTRIES *, const char *);
-int		 cvs_ent_remove(CVSENTRIES *, const char *);
+int		 cvs_ent_remove(CVSENTRIES *, const char *, int);
 int		 cvs_ent_write(CVSENTRIES *);
 struct cvs_ent	*cvs_ent_parse(const char *);
 void		 cvs_ent_close(CVSENTRIES *);
@@ -453,5 +453,6 @@ void			cvs_freelines(struct cvs_lines *);
 
 /* XXX */
 int			rcs_patch_lines(struct cvs_lines *, struct cvs_lines *);
+int	cvs_checkout_rev(RCSFILE *, RCSNUM *, CVSFILE *, char *, int, int, ...);
 
 #endif	/* CVS_H */

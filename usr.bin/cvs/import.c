@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.29 2005/11/28 08:49:25 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.30 2005/12/03 01:02:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -243,6 +243,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	size_t len;
 	int l;
 	time_t stamp;
+	char *fcont;
 	char fpath[MAXPATHLEN], rpath[MAXPATHLEN], repo[MAXPATHLEN];
 	const char *comment;
 	struct stat fst;
@@ -250,6 +251,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	struct cvsroot *root;
 	RCSFILE *rf;
 	RCSNUM *rev;
+	BUF *bp;
 
 	root = CVS_DIR_ROOT(cf);
 
@@ -362,6 +364,26 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	if (rcs_sym_add(rf, vendor, imp_brnum) < 0) {
 		cvs_log(LP_ERR, "failed to set RCS symbol: %s",
 		    strerror(rcs_errno));
+		rcs_close(rf);
+		(void)unlink(rpath);
+		return (CVS_EX_DATA);
+	}
+
+	if ((bp = cvs_buf_load(fpath, BUF_AUTOEXT)) == NULL) {
+		rcs_close(rf);
+		(void)unlink(rpath);
+		return (CVS_EX_DATA);
+	}
+
+	if (cvs_buf_putc(bp, '\0') < 0) {
+		rcs_close(rf);
+		(void)unlink(rpath);
+		return (CVS_EX_DATA);
+	}
+
+	fcont = cvs_buf_release(bp);
+
+	if (rcs_deltatext_set(rf, rev, fcont) < 0) {
 		rcs_close(rf);
 		(void)unlink(rpath);
 		return (CVS_EX_DATA);
