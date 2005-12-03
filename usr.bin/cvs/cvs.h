@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.89 2005/12/03 15:02:54 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.90 2005/12/03 15:07:21 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -447,6 +447,7 @@ void	  cvs_freeargv(char **, int);
 void	  cvs_write_tagfile(char *, char *, int);
 void	  cvs_parse_tagfile(char **, char **, int *);
 size_t	  cvs_path_cat(const char *, const char *, char *, size_t);
+time_t	  cvs_hack_time(time_t, int);
 
 BUF			*cvs_patchfile(const char *, const char *,
 			    int (*p)(struct cvs_lines *, struct cvs_lines *));

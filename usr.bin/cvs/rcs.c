@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.106 2005/12/03 02:10:58 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.107 2005/12/03 15:07:21 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3141,6 +3141,12 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 				goto out;
 			}
 
+			/*
+			 * correct the time first
+			 */
+			if ((rcstime = cvs_hack_time(rcstime, 0)) == 0)
+				goto out;
+
 			tv[0].tv_sec = rcstime;
 			tv[0].tv_usec = 0;
 			tv[1] = tv[0];
@@ -3159,6 +3165,9 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 		 * if we are removing a file, we don't need this stuff.
 		 */
 		if (type != CHECKOUT_REV_REMOVED) {
+			if ((rcstime = cvs_hack_time(rcstime, 0)) == 0)
+				goto out;
+
 			tp = gmtime(&rcstime);
 			l = snprintf(timebuf, sizeof(timebuf),
 			    "%02d %s %d %02d:%02d:%02d -0000",

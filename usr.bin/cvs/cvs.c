@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.86 2005/11/12 21:34:48 niallo Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.87 2005/12/03 15:07:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -101,6 +101,8 @@ main(int argc, char **argv)
 	struct cvs_cmd *cmdp;
 	struct passwd *pw;
 	struct stat st;
+
+	tzset();
 
 	TAILQ_INIT(&cvs_variables);
 

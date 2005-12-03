@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.57 2005/12/03 03:59:47 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.58 2005/12/03 15:07:21 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1034,4 +1034,33 @@ cvs_patchfile(const char *data, const char *patch,
 	cvs_freelines(dlines);
 	cvs_freelines(plines);
 	return (res);
+}
+
+/*
+ * a hack to mimic and thus match gnu cvs behaviour.
+ */
+time_t
+cvs_hack_time(time_t oldtime, int togmt)
+{
+	int l;
+	struct tm *t;
+	char tbuf[32];
+
+	if (togmt == 1) {
+		t = gmtime(&oldtime);
+		if (t == NULL)
+			return (0);
+
+		return (mktime(t));
+	}
+
+	t = localtime(&oldtime);
+
+	l = snprintf(tbuf, sizeof(tbuf), "%d/%d/%d GMT %d:%d:%d",
+	    t->tm_mon + 1, t->tm_mday, t->tm_year + 1900, t->tm_hour,
+	    t->tm_min, t->tm_sec);
+	if (l == -1 || l >= (int)sizeof(tbuf))
+		return (0);
+
+	return (cvs_date_parse(tbuf));
 }
