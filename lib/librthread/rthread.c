@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.1 2005/12/03 18:16:19 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.2 2005/12/03 18:17:55 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -41,7 +41,6 @@ static int threads_ready;
 static pthread_t thread_list;
 static _spinlock_lock_t thread_lock;
 
-int yield();
 int getthrid();
 void threxit(int);
 int rfork_thread(int, void *, void (*)(void *), void *);
