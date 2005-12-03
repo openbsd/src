@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.12 2005/12/02 21:16:45 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.13 2005/12/03 16:52:16 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -262,7 +262,7 @@ void
 m8820x_cpu_configuration_print(int master)
 {
 	struct m8820x_cmmu *cmmu;
-	int pid = read_processor_identification_register();
+	int pid = get_cpu_pid();
 	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
 	int procvers = (pid & PID_VN) >> VN_SHIFT;
 	int mmu, cnt, cpu = cpu_number();

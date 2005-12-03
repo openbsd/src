@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.29 2005/12/03 14:30:06 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.30 2005/12/03 16:52:16 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -199,7 +199,7 @@ m88110_setup_board_config(void)
 void
 m88110_cpu_configuration_print(int master)
 {
-	int pid = read_processor_identification_register();
+	int pid = get_cpu_pid();
 	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
 	int procvers = (pid & PID_VN) >> VN_SHIFT;
 	int cpu = cpu_number();

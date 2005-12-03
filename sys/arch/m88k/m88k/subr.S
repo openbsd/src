@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.9 2005/12/03 14:30:06 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.10 2005/12/03 16:52:16 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1543,10 +1543,6 @@ ENTRY(longjmp)
 	ld	r31,r2,18*4
 	jmp.n	r1
 	 or	r2,r0,1
-
-ENTRY(read_processor_identification_register)
-	jmp.n	r1
-	 ldcr	r2, PID
 
 /*
  * Trampoline code. Gets copied to the top of

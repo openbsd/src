@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.6 2005/12/03 14:30:02 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.7 2005/12/03 16:52:14 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -9,7 +9,6 @@
 
 /* subr.S */
 
-unsigned read_processor_identification_register(void);
 int badaddr(vaddr_t addr, int size);
 #define badwordaddr(x) badaddr(x, 4)
 void doboot(void);

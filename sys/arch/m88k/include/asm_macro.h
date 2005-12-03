@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.2 2005/04/30 16:42:36 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.3 2005/12/03 16:52:16 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -26,8 +26,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef __MACHINE_M88K_ASM_MACRO_H__
-#define __MACHINE_M88K_ASM_MACRO_H__
+#ifndef __M88K_ASM_MACRO_H__
+#define __M88K_ASM_MACRO_H__
 
 /*
  * Various compiler macros used for speed and efficiency.
@@ -58,7 +58,7 @@ static __inline__ u_int get_psr(void)
 {
 	u_int psr;
 	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (psr));
-	return psr;
+	return (psr);
 }
 
 #define	disable_interrupt(psr)	set_psr(((psr) = get_psr()) | PSR_IND)
@@ -69,7 +69,14 @@ static __inline__ u_int get_psr(void)
 static __inline__ unsigned ff1(unsigned val)
 {
 	__asm__ __volatile__ ("ff1 %0, %0" : "=r" (val) : "0" (val));
-	return val;
+	return (val);
 }
 
-#endif /* __MACHINE_M88K_ASM_MACRO_H__ */
+static __inline__ u_int get_cpu_pid(void)
+{
+	u_int pid;
+	__asm__ __volatile__ ("ldcr %0, cr0" : "=r" (pid));
+	return (pid);
+}
+
+#endif /* __M88K_ASM_MACRO_H__ */
