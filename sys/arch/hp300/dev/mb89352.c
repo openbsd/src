@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.13 2005/01/04 19:00:02 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.14 2005/12/03 18:09:36 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -407,7 +407,6 @@ spc_scsi_cmd(struct scsi_xfer *xs)
 
 	flags = xs->flags;
 	if ((acb = spc_get_acb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
 

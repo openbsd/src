@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.55 2005/04/27 14:09:45 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.56 2005/12/03 18:09:37 krw Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -370,7 +370,6 @@ vs_scsicmd(struct scsi_xfer *xs)
 	} else {
 		cqep = vs_getcqe(sc);
 		if (cqep == 0) {
-			xs->error = XS_DRIVER_STUFFUP;
 			return (TRY_AGAIN_LATER);
 		}
 		iopb = vs_getiopb(sc);
