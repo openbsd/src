@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2005/12/03 14:30:06 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2005/12/03 18:54:34 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -54,11 +54,11 @@
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 
-#include <uvm/uvm.h>
-
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/pmap_table.h>
+
+#include <uvm/uvm.h>
 
 /*
  * VM externals
@@ -142,23 +142,13 @@ pg_to_pvh(struct vm_page *pg)
  *	Locking primitives
  */
 
-/*
- *	We raise the interrupt level to splvm, to block interprocessor
- *	interrupts during pmap operations.
- */
-#define	SPLVM(spl)	spl = splvm()
-#define	SPLX(spl)	splx(spl)
-
-#define PMAP_LOCK(pmap,spl) \
-	do { \
-		SPLVM(spl); \
-		simple_lock(&(pmap)->pm_lock); \
-	} while (0)
-#define PMAP_UNLOCK(pmap, spl) \
-	do { \
-		simple_unlock(&(pmap)->pm_lock); \
-		SPLX(spl); \
-	} while (0)
+#ifdef	MULTIPROCESSOR
+#define	PMAP_LOCK(pmap)		simple_lock(&(pmap)->pm_lock)
+#define	PMAP_UNLOCK(pmap)	simple_unlock(&(pmap)->pm_lock)
+#else
+#define	PMAP_LOCK(pmap)		do { /* nothing */ } while (0)
+#define	PMAP_UNLOCK(pmap)	do { /* nothing */ } while (0)
+#endif
 
 vaddr_t kmapva = 0;
 
@@ -463,7 +453,8 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		panic("pmap_cache_ctrl: pmap is NULL");
 #endif /* DEBUG */
 
-	PMAP_LOCK(pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(pmap);
 
 	users = pmap->pm_cpus;
 	kflush = pmap == kernel_pmap;
@@ -496,7 +487,8 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 #endif
 				cmmu_flush_cache(cpu, pa, PAGE_SIZE);
 	}
-	PMAP_UNLOCK(pmap, spl);
+	PMAP_UNLOCK(pmap);
+	splx(spl);
 }
 
 /*
@@ -802,7 +794,7 @@ pmap_zero_page(struct vm_page *pg)
 	va = (vaddr_t)(phys_map_vaddr + 2 * (cpu << PAGE_SHIFT));
 	pte = pmap_pte(kernel_pmap, va);
 
-	SPLVM(spl);
+	spl = splvm();
 
 	*pte = m88k_protection(VM_PROT_READ | VM_PROT_WRITE) |
 	    CACHE_GLOBAL | PG_M /* 88110 */ | PG_V | pa;
@@ -821,7 +813,7 @@ pmap_zero_page(struct vm_page *pg)
 	bzero((void *)va, PAGE_SIZE);
 	cmmu_flush_data_cache(cpu, pa, PAGE_SIZE);
 
-	SPLX(spl);
+	splx(spl);
 }
 
 /*
@@ -1000,9 +992,9 @@ pmap_destroy(pmap_t pmap)
 		panic("pmap_destroy: Attempt to destroy kernel pmap");
 #endif
 
-	simple_lock(&pmap->pm_lock);
+	PMAP_LOCK(pmap);
 	count = --pmap->pm_count;
-	simple_unlock(&pmap->pm_lock);
+	PMAP_UNLOCK(pmap);
 	if (count == 0) {
 		pmap_release(pmap);
 		pool_put(&pmappool, pmap);
@@ -1026,9 +1018,9 @@ void
 pmap_reference(pmap_t pmap)
 {
 
-	simple_lock(&pmap->pm_lock);
+	PMAP_LOCK(pmap);
 	pmap->pm_count++;
-	simple_unlock(&pmap->pm_lock);
+	PMAP_UNLOCK(pmap);
 }
 
 /*
@@ -1252,9 +1244,11 @@ pmap_remove(pmap_t pmap, vaddr_t s, vaddr_t e)
 		panic("pmap_remove: start greater than end address");
 #endif
 
-	PMAP_LOCK(pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(pmap);
 	pmap_remove_range(pmap, s, e);
-	PMAP_UNLOCK(pmap, spl);
+	PMAP_UNLOCK(pmap);
+	splx(spl);
 }
 
 /*
@@ -1313,7 +1307,7 @@ pmap_remove_all(struct vm_page *pg)
 		printf("(pmap_remove_all: %x) va %x\n", curproc, pg, pg_to_pvh(pg)->pv_va);
 #endif
 
-	SPLVM(spl);
+	spl = splvm();
 	/*
 	 * Walk down PV list, removing all mappings.
 	 * We don't have to lock the pv list, since we have the entire pmap
@@ -1354,9 +1348,9 @@ remove_all_Retry:
 		 * leaves that for when VM calls pmap_collect().
 		 */
 next:
-		simple_unlock(&pmap->pm_lock);
+		PMAP_UNLOCK(pmap);
 	}
-	SPLX(spl);
+	splx(spl);
 }
 
 /*
@@ -1403,7 +1397,8 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 
 	ap = m88k_protection(prot);
 
-	PMAP_LOCK(pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(pmap);
 
 	users = pmap->pm_cpus;
 	kflush = pmap == kernel_pmap;
@@ -1437,7 +1432,8 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 		flush_atc_entry(users, va, kflush);
 		pte++;
 	}
-	PMAP_UNLOCK(pmap, spl);
+	PMAP_UNLOCK(pmap);
+	splx(spl);
 }
 
 /*
@@ -1500,14 +1496,15 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 	pmap_cache_ctrl(kernel_pmap,
 	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_GLOBAL | CACHE_WT);
 
-	PMAP_LOCK(pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(pmap);
 
 	if ((pte = pmap_pte(pmap, v)) != NULL) {
 		/*
 		 * Someone else caused us to expand
 		 * during our vm_allocate.
 		 */
-		simple_unlock(&pmap->pm_lock);
+		PMAP_UNLOCK(pmap);
 		uvm_km_free(kernel_map, pdt_vaddr, PAGE_SIZE);
 
 #ifdef DEBUG
@@ -1536,7 +1533,8 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 	*((sdt_entry_t *)sdt) = pdt_paddr | SG_RW | SG_V;
 	*((sdt_entry_t *)(sdt + SDT_ENTRIES)) = pdt_vaddr | SG_RW | SG_V;
 
-	PMAP_UNLOCK(pmap, spl);
+	PMAP_UNLOCK(pmap);
+	splx(spl);
 }
 
 /*
@@ -1626,7 +1624,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	template = m88k_protection(prot);
 
-	PMAP_LOCK(pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(pmap);
 	users = pmap->pm_cpus;
 	kflush = pmap == kernel_pmap;
 
@@ -1643,9 +1642,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			/*
 			 * Must unlock to expand the pmap.
 			 */
-			simple_unlock(&pmap->pm_lock);
+			PMAP_UNLOCK(pmap);
 			pmap_expand(pmap, va);
-			simple_lock(&pmap->pm_lock);
+			PMAP_LOCK(pmap);
 		}
 	}
 	/*
@@ -1694,7 +1693,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				pv_e = pool_get(&pvpool, PR_NOWAIT);
 				if (pv_e == NULL) {
 					if (flags & PMAP_CANFAIL) {
-						PMAP_UNLOCK(pmap, spl);
+						PMAP_UNLOCK(pmap);
+						splx(spl);
 						return (ENOMEM);
 					} else
 						panic("pmap_enter: "
@@ -1752,7 +1752,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pvl != NULL)
 		pvl->pv_flags |= template & PG_M_U;
 
-	PMAP_UNLOCK(pmap, spl);
+	PMAP_UNLOCK(pmap);
+	splx(spl);
 
 	return 0;
 }
@@ -1778,7 +1779,8 @@ pmap_unwire(pmap_t pmap, vaddr_t v)
 	pt_entry_t *pte;
 	int spl;
 
-	PMAP_LOCK(pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(pmap);
 
 	if ((pte = pmap_pte(pmap, v)) == NULL)
 		panic("pmap_unwire: pte missing");
@@ -1789,7 +1791,8 @@ pmap_unwire(pmap_t pmap, vaddr_t v)
 		*pte &= ~PG_W;
 	}
 
-	PMAP_UNLOCK(pmap, spl);
+	PMAP_UNLOCK(pmap);
+	splx(spl);
 }
 
 /*
@@ -1827,7 +1830,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		panic("pmap_extract: pmap is NULL");
 #endif
 
-	PMAP_LOCK(pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(pmap);
 
 	pte = pmap_pte(pmap, va);
 	if (pte != NULL && PDT_VALID(pte)) {
@@ -1839,7 +1843,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		}
 	}
 
-	PMAP_UNLOCK(pmap, spl);
+	PMAP_UNLOCK(pmap);
+	splx(spl);
 	return rv;
 }
 
@@ -1893,7 +1898,8 @@ pmap_collect(pmap_t pmap)
 		printf ("(pmap_collect: %x) pmap %x\n", curproc, pmap);
 #endif
 
-	PMAP_LOCK(pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(pmap);
 
 	sdtp = pmap->pm_stab; /* addr of segment table */
 
@@ -1931,12 +1937,13 @@ pmap_collect(pmap_t pmap)
 		 * we have to unlock before freeing the table, since
 		 * uvm_km_free will invoke another pmap routine
 		 */
-		simple_unlock(&pmap->pm_lock);
+		PMAP_UNLOCK(pmap);
 		uvm_km_free(kernel_map, (vaddr_t)gdttbl, PAGE_SIZE);
-		simple_lock(&pmap->pm_lock);
+		PMAP_LOCK(pmap);
 	}
 
-	PMAP_UNLOCK(pmap, spl);
+	PMAP_UNLOCK(pmap);
+	splx(spl);
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_COL)
@@ -1976,7 +1983,7 @@ pmap_activate(struct proc *p)
 		/*
 		 * Lock the pmap to put this cpu in its active set.
 		 */
-		simple_lock(&pmap->pm_lock);
+		PMAP_LOCK(pmap);
 
 		cmmu_set_uapr(pmap->pm_apr);
 		cmmu_flush_tlb(cpu, FALSE, VM_MIN_ADDRESS,
@@ -1986,7 +1993,8 @@ pmap_activate(struct proc *p)
 		 * Mark that this cpu is using the pmap.
 		 */
 		SETBIT_CPUSET(cpu, &(pmap->pm_cpus));
-		simple_unlock(&pmap->pm_lock);
+
+		PMAP_UNLOCK(pmap);
 	}
 }
 
@@ -2007,11 +2015,11 @@ pmap_deactivate(struct proc *p)
 
 	if (pmap != kernel_pmap) {
 		/*
-		 * we expect the spl is already raised to sched level.
+		 * We expect the spl to already have been raised to sched level.
 		 */
-		simple_lock(&pmap->pm_lock);
+		PMAP_LOCK(pmap);
 		CLRBIT_CPUSET(cpu, &(pmap->pm_cpus));
-		simple_unlock(&pmap->pm_lock);
+		PMAP_UNLOCK(pmap);
 	}
 }
 
@@ -2050,7 +2058,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	dstpte = pmap_pte(kernel_pmap, dstva);
 	srcpte = pmap_pte(kernel_pmap, srcva);
 
-	SPLVM(spl);
+	spl = splvm();
 
 	*dstpte = m88k_protection(VM_PROT_READ | VM_PROT_WRITE) |
 	    CACHE_GLOBAL | PG_M /* 88110 */ | PG_V | dst;
@@ -2073,7 +2081,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	bcopy((const void *)srcva, (void *)dstva, PAGE_SIZE);
 	cmmu_flush_data_cache(cpu, dst, PAGE_SIZE);
 
-	SPLX(spl);
+	splx(spl);
 }
 
 /*
@@ -2110,7 +2118,7 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 	u_int users;
 	boolean_t kflush;
 
-	SPLVM(spl);
+	spl = splvm();
 
 changebit_Retry:
 	pvl = pg_to_pvh(pg);
@@ -2126,7 +2134,7 @@ changebit_Retry:
 			printf("(pmap_changebit: %x) vm page 0x%x not mapped\n",
 			    curproc, pg);
 #endif
-		SPLX(spl);
+		splx(spl);
 		return;
 	}
 
@@ -2172,9 +2180,9 @@ changebit_Retry:
 			flush_atc_entry(users, va, kflush);
 		}
 next:
-		simple_unlock(&pmap->pm_lock);
+		PMAP_UNLOCK(pmap);
 	}
-	SPLX(spl);
+	splx(spl);
 }
 
 /*
@@ -2208,9 +2216,10 @@ pmap_testbit(struct vm_page *pg, int bit)
 {
 	pv_entry_t pvl, pvep;
 	pt_entry_t *pte;
+	pmap_t pmap;
 	int spl;
 
-	SPLVM(spl);
+	spl = splvm();
 
 testbit_Retry:
 	pvl = pg_to_pvh(pg);
@@ -2223,7 +2232,7 @@ testbit_Retry:
 			printf("(pmap_testbit: %x) already cached a %x flag for this page\n",
 			    curproc, bit);
 #endif
-		SPLX(spl);
+		splx(spl);
 		return (TRUE);
 	}
 
@@ -2233,17 +2242,18 @@ testbit_Retry:
 			printf("(pmap_testbit: %x) vm page 0x%x not mapped\n",
 			    curproc, pg);
 #endif
-		SPLX(spl);
+		splx(spl);
 		return (FALSE);
 	}
 
 	/* for each listed pmap, check modified bit for given page */
 	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
-		if (!simple_lock_try(&pvep->pv_pmap->pm_lock)) {
+		pmap = pvep->pv_pmap;
+		if (!simple_lock_try(&pmap->pm_lock)) {
 			goto testbit_Retry;
 		}
 
-		pte = pmap_pte(pvep->pv_pmap, pvep->pv_va);
+		pte = pmap_pte(pmap, pvep->pv_va);
 		if (pte == NULL || !PDT_VALID(pte)) {
 			goto next;
 		}
@@ -2251,24 +2261,24 @@ testbit_Retry:
 #ifdef DIAGNOSTIC
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
 			panic("pmap_testbit: pte %x in pmap %p %d doesn't point to page %p %lx",
-			    *pte, pvep->pv_pmap, pvep->pv_pmap == kernel_pmap ? 1 : 0, pg, VM_PAGE_TO_PHYS(pg));
+			    *pte, pmap, pmap == kernel_pmap ? 1 : 0, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
 		if ((*pte & bit) != 0) {
-			simple_unlock(&pvep->pv_pmap->pm_lock);
+			PMAP_UNLOCK(pmap);
 			pvl->pv_flags |= bit;
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_TBIT | CD_FULL)) == (CD_TBIT | CD_FULL))
 				printf("(pmap_testbit: %x) true on page pte@%p\n", curproc, pte);
 #endif
-			SPLX(spl);
+			splx(spl);
 			return (TRUE);
 		}
 next:
-		simple_unlock(&pvep->pv_pmap->pm_lock);
+		PMAP_UNLOCK(pmap);
 	}
 
-	SPLX(spl);
+	splx(spl);
 	return (FALSE);
 }
 
@@ -2295,7 +2305,7 @@ pmap_unsetbit(struct vm_page *pg, int bit)
 	u_int users;
 	boolean_t kflush;
 
-	SPLVM(spl);
+	spl = splvm();
 
 unsetbit_Retry:
 	pvl = pg_to_pvh(pg);
@@ -2311,7 +2321,7 @@ unsetbit_Retry:
 			printf("(pmap_unsetbit: %x) vm page 0x%x not mapped\n",
 			    curproc, pg);
 #endif
-		SPLX(spl);
+		splx(spl);
 		return (FALSE);
 	}
 
@@ -2356,9 +2366,9 @@ unsetbit_Retry:
 		} else
 			rv = TRUE;
 next:
-		simple_unlock(&pmap->pm_lock);
+		PMAP_UNLOCK(pmap);
 	}
-	SPLX(spl);
+	splx(spl);
 
 	return (rv);
 }
@@ -2427,7 +2437,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 #endif
 
-	PMAP_LOCK(kernel_pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(kernel_pmap);
 	users = kernel_pmap->pm_cpus;
 
 	template = m88k_protection(prot);
@@ -2460,7 +2471,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	*pte = template | pa;
 	flush_atc_entry(users, va, TRUE);
 
-	PMAP_UNLOCK(kernel_pmap, spl);
+	PMAP_UNLOCK(kernel_pmap);
+	splx(spl);
 }
 
 void
@@ -2475,7 +2487,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		printf("(pmap_kremove: %x) va %x len %x\n", curproc, va, len);
 #endif
 
-	PMAP_LOCK(kernel_pmap, spl);
+	spl = splvm();
+	PMAP_LOCK(kernel_pmap);
 	users = kernel_pmap->pm_cpus;
 
 	e = va + len;
@@ -2506,7 +2519,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		invalidate_pte(pte);
 		flush_atc_entry(users, va, TRUE);
 	}
-	PMAP_UNLOCK(map, spl);
+	PMAP_UNLOCK(kernel_pmap);
+	splx(spl);
 }
 
 void
