@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.125 2005/11/28 00:17:14 jsg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.126 2005/12/03 21:11:47 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -128,7 +128,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.125 2005/11/28 00:17:14 jsg Exp $";
+	"$OpenBSD: if_wi.c,v 1.126 2005/12/03 21:11:47 brad Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -875,7 +875,7 @@ wi_inquire(void *xsc)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	s = splimp();
+	s = splnet();
 	rv = wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS, 0, 0);
 	splx(s);
 	if (rv)
@@ -1550,7 +1550,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct ieee80211_nwid	nwid;
 
-	s = splimp();
+	s = splnet();
 
 	sc = ifp->if_softc;
 	ifr = (struct ifreq *)data;
@@ -1893,7 +1893,7 @@ wi_init_io(struct wi_softc *sc)
 
 	DPRINTF(WID_INIT, ("wi_init: sc %p\n", sc));
 
-	s = splimp();
+	s = splnet();
 
 	if (ifp->if_flags & IFF_RUNNING)
 		wi_stop(sc);

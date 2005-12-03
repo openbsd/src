@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.32 2005/10/31 05:37:13 jsg Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.33 2005/12/03 21:11:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -183,7 +183,7 @@ put_rates(caddr_t *ppkt, u_int16_t rates)
 /* wihap_init()
  *
  *	Initialize host AP data structures.  Called even if port type is
- *	not AP.  Caller MUST raise to splimp().
+ *	not AP.  Caller MUST raise to splnet().
  */
 void
 wihap_init(struct wi_softc *sc)
@@ -285,7 +285,7 @@ wihap_shutdown(struct wi_softc *sc)
 		return;
 	whi->apflags = 0;
 
-	s = splimp();
+	s = splnet();
 
 	/* Disable wihap inactivity timer. */
 	timeout_del(&whi->tmo);
@@ -352,7 +352,7 @@ wihap_timeout(void *v)
 	struct wihap_sta_info	*sta, *next;
 	int	i, s;
 
-	s = splimp();
+	s = splnet();
 
 	for (i = 10, sta = TAILQ_FIRST(&whi->sta_list);
 	    i != 0 && sta != TAILQ_END(&whi->sta_list) &&
@@ -412,7 +412,7 @@ wihap_sta_timeout(void *v)
 	struct wihap_info	*whi = &sc->wi_hostap_info;
 	int	s;
 
-	s = splimp();
+	s = splnet();
 
 	/* Mark sta as dead and move it to the head of the list. */
 	TAILQ_REMOVE(&whi->sta_list, sta, list);
@@ -428,7 +428,7 @@ wihap_sta_timeout(void *v)
 
 /* wihap_sta_delete()
  * Delete a single station and free up its data structure.
- * Caller must raise to splimp().
+ * Caller must raise to splnet().
  */
 void
 wihap_sta_delete(struct wihap_sta_info *sta)
@@ -611,7 +611,7 @@ wihap_auth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 			printf("wihap_auth_req: new station\n");
 
 		/* Create new station. */
-		s = splimp();
+		s = splnet();
 		sta = wihap_sta_alloc(sc, rxfrm->wi_addr2);
 		splx(s);
 		if (sta == NULL) {
@@ -1218,7 +1218,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			break;
 		if ((error = copyin(ifr->ifr_data, &reqsta, sizeof(reqsta))))
 			break;
-		s = splimp();
+		s = splnet();
 		sta = wihap_sta_find(whi, reqsta.addr);
 		if (sta == NULL)
 			error = ENOENT;
@@ -1240,7 +1240,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 	case SIOCHOSTAP_GET:
 		if ((error = copyin(ifr->ifr_data, &reqsta, sizeof(reqsta))))
 			break;
-		s = splimp();
+		s = splnet();
 		sta = wihap_sta_find(whi, reqsta.addr);
 		if (sta == NULL)
 			error = ENOENT;
@@ -1262,7 +1262,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			break;
 		if ((error = copyin(ifr->ifr_data, &reqsta, sizeof(reqsta))))
 			break;
-		s = splimp();
+		s = splnet();
 		sta = wihap_sta_find(whi, reqsta.addr);
 		if (sta != NULL) {
 			error = EEXIST;
@@ -1301,7 +1301,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 
 		reqall.nstations = whi->n_stations;
 		n = 0;
-		s = splimp();
+		s = splnet();
 		sta = TAILQ_FIRST(&whi->sta_list);
 		while (sta && reqall.size >= n+sizeof(struct hostap_sta)) {
 

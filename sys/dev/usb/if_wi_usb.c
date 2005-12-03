@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.25 2005/11/24 14:31:40 grange Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.26 2005/12/03 21:11:48 brad Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1702,7 +1702,7 @@ wi_start_usb(struct ifnet *ifp)
 	wsc = ifp->if_softc;
 	sc  = wsc->wi_usb_cdata;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTFN(5,("%s: %s:\n",
 	    USBDEVNAME(sc->wi_usb_dev), __func__));
@@ -1748,7 +1748,7 @@ wi_inquire_usb(void *xsc)
 	int s;
 
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTFN(2,("%s: %s:\n",
 	    USBDEVNAME(sc->wi_usb_dev), __func__));
@@ -1775,7 +1775,7 @@ wi_watchdog_usb(struct ifnet *ifp)
 	wsc = ifp->if_softc;
 	sc = wsc->wi_usb_cdata;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTFN(5,("%s: %s: ifp %x\n",
 	    USBDEVNAME(sc->wi_usb_dev), __func__, ifp));
@@ -1873,7 +1873,7 @@ wi_usb_thread(void *arg)
 		wi_usb_ctl_unlock(sc);
 
 		if (wi_thread_info->status == 0) {
-			s = splimp();
+			s = splnet();
 			wi_thread_info->idle = 1;
 			tsleep(wi_thread_info, PRIBIO, "wiIDL", 0);
 			wi_thread_info->idle = 0;
@@ -1887,7 +1887,7 @@ wi_usb_tx_lock_try(struct wi_usb_softc *sc)
 {
 	int s;
 
-	s = splimp(); /* right priority? */
+	s = splnet();
 
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->wi_usb_dev), __func__));
 
@@ -1906,7 +1906,7 @@ wi_usb_tx_lock(struct wi_usb_softc *sc)
 {
 	int s;
 
-	s = splimp(); /* right priority? */
+	s = splnet();
 
 	again:
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->wi_usb_dev), __func__));
@@ -1932,7 +1932,7 @@ void
 wi_usb_tx_unlock(struct wi_usb_softc *sc)
 {
 	int s;
-	s = splimp(); /* right priority? */
+	s = splnet();
 
 	sc->wi_lock = 0;
 
@@ -1953,7 +1953,7 @@ wi_usb_ctl_lock(struct wi_usb_softc *sc)
 {
 	int s;
 
-	s = splimp(); /* right priority? */
+	s = splnet();
 
 	again:
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->wi_usb_dev),
@@ -1988,7 +1988,7 @@ wi_usb_ctl_unlock(struct wi_usb_softc *sc)
 {
 	int s;
 
-	s = splimp(); /* right priority? */
+	s = splnet();
 
 	sc->wi_ctllock--;
 
