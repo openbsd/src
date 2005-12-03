@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.13 2005/11/28 22:21:15 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.14 2005/12/03 14:30:06 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -133,7 +133,7 @@
  *    system will hang waiting for a bit to clear that will never.
  *
  * 3) If the exception is the privilege violation exception, the bounds
- *    violation exception, or the misaligned access exception, the
+ *    check exception, or the misaligned access exception, the
  *    destination register bit in the SSBR may need to be cleared.
  *
  * 4) If the exception is one of the floating exceptions, then the
@@ -171,7 +171,6 @@
  * Because we can't save the pointer to the exception frame in a general
  * register during the FPU restart (it could get overwritten by the FPU!),
  * we save it in a control register, SR3, during the restart.
- *
  *
  * HOWEVER .....
  *
@@ -211,10 +210,6 @@
 
 /*
  * SR1 - CPU FLAGS REGISTER
- * XXX clean this when the trap handler is reworked. Among the things
- * I like to see is having the trap frame on the kernel stack instead
- * of putting in the PCB. If done properly, we don't need SR1 for doing
- * anything special. nivas
  *
  * SR1 contains flags about the current CPU status.
  *
@@ -247,10 +242,10 @@
  *
  * Also, if any are 'r2' or 'r3', be careful using with CALL above!
  */
-#define	FLAGS	r2
-#define	TMP	r3
-#define	TMP2	r10
-#define	TMP3	r11
+#define	FLAGS		r2
+#define	TMP		r3
+#define	TMP2		r10
+#define	TMP3		r11
 #define	SAVE_TMP2	st	r10, r31, GENREG_OFF(10)
 #define	SAVE_TMP3	st	r11, r31, GENREG_OFF(11)
 #define	RESTORE_TMP2	ld	r10, r31, GENREG_OFF(10)
@@ -611,7 +606,6 @@ GLOBAL(error_handler)
 GLOBAL(reset_handler)
 	or	r29, r0, 0
 1:
-	/* pick up the slavestack */
 	or	r26, r0,  r31	/* save old stack */
 	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
 	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
@@ -743,7 +737,7 @@ ASLOCAL(m88100_ignore_data_exception)
 	/*
 	 * SR1: previous FLAGS reg
 	 * SR2: free
-	 * SR3: must presere
+	 * SR3: must preserve
 	 * FLAGS: CPU status flags
 	 */
 	xcr	FLAGS, FLAGS, SR1	/* replace SR1, FLAGS */
@@ -753,7 +747,7 @@ ASLOCAL(m88100_ignore_data_exception)
 	 *
 	 * We just want to jump to "badaddr__return_nonzero" below.
 	 *
-	 * We don't worry about trashing R2 here because we're
+	 * We don't worry about trashing r2 here because we're
 	 * jumping back to the function badaddr() where we're allowed
 	 * to blast r2..r9 as we see fit.
 	 */
@@ -1010,8 +1004,8 @@ ASLOCAL(m88100_use_SR3_pcb)
 	 * Consequently, we never picked up a stack. Do so now.
 	 * R1 is currently free (saved in the exception frame pointed at by
 	 * r30) */
-	or.u	r1,   r0,   hi16(_C_LABEL(curpcb))
-	ld	r1,   r1,   lo16(_C_LABEL(curpcb))
+	ldcr	r1,   CPU
+	ld	r1,   r1,   CI_CURPCB
 	addu	r1,   r1,   USIZE - SIZEOF_EF
 	st	FLAGS,r1,   REG_OFF(EF_FLAGS)	/* store flags */
 	st	r31,  r1,   GENREG_OFF(31)	/* store r31 - now free */
@@ -1038,8 +1032,8 @@ ASLOCAL(m88100_pickup_stack)
 	stcr	r31,  SR3	/* save previous r31 */
 
 	/* switch to the process kernel stack. */
-	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
-	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
+	ldcr	r31,  CPU
+	ld	r31,  r31,  CI_CURPCB
 	addu	r31,  r31,  PCB_USER_STATE	/* point to user save area */
 
 	/*
@@ -1082,8 +1076,8 @@ ASLOCAL(m88100_have_pcb)
 	st	TMP3, r31,  REG_OFF(EF_SNIP)
 	ldcr	TMP2, SFIP
 	st	TMP2, r31,  REG_OFF(EF_SFIP)
-	/* get and store the cpu number */
-	extu	TMP,  FLAGS,  FLAG_CPU_FIELD_WIDTH<0>	/* TMP = cpu# */
+	/* get and store the cpu_info pointer */
+	ldcr	TMP,  CPU
 	st	TMP,  r31,  REG_OFF(EF_CPU)
 
 	/*
@@ -1531,8 +1525,8 @@ ASLOCAL(m88100_fpu_enable)
 	ld	r2,   r31,  REG_OFF(EF_EPSR)
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
 
-	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
-	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
+	ldcr	r31,  CPU
+	ld	r31,  r31,  CI_CURPCB
 	addu	r31,  r31,  USIZE	/* point at proper end */
 1:
 
@@ -1707,8 +1701,8 @@ ASLOCAL(no_softint)
 	ld	r2, FPTR, REG_OFF(EF_EPSR)
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, _ASM_LABEL(no_ast)
 
-	or.u	r2,  r0, hi16(_C_LABEL(curproc))
-	ld	r3,  r2, lo16(_C_LABEL(curproc))
+	ldcr	r2,  CPU
+	ld	r3,  r2, CI_CURPROC
 	bcnd.n	eq0, r3, _ASM_LABEL(no_ast)	/* no AST if no process! */
 	 ld	r2,  r3, P_ASTPENDING
 	bcnd.n	eq0, r3, _ASM_LABEL(no_ast)	/* .n safe since the first
@@ -2020,7 +2014,6 @@ GLOBAL(m88110_error_handler)
 GLOBAL(m88110_reset_handler)
 	or	r29, r0, 0
 1:
-	/* pick up the slavestack */
 	or	r26, r0, r31	/* save old stack */
 	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
 	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
@@ -2269,8 +2262,8 @@ ASLOCAL(m88110_use_SR3_pcb)
 	 * R1 is currently free (saved in the exception frame pointed at by
 	 * r30)
 	 */
-	or.u	r1,   r0,   hi16(_C_LABEL(curpcb))
-	ld	r1,   r1,   lo16(_C_LABEL(curpcb))
+	ldcr	r1,   CPU
+	ld	r1,   r1,   CI_CURPCB
 	addu	r1,   r1,   USIZE - SIZEOF_EF
 	st	FLAGS,r1,   REG_OFF(EF_FLAGS)	/* store flags */
 	st	r31,  r1,   GENREG_OFF(31)	/* store r31 - now free */
@@ -2298,8 +2291,8 @@ ASLOCAL(m88110_pickup_stack)
 	stcr	r31,  SR3	/* save previous r31 */
 
 	/* switch to the process kernel stack. */
-	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
-	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
+	ldcr	r31,  CPU
+	ld	r31,  r31,  CI_CURPCB
 	addu	r31,  r31,  PCB_USER_STATE	/* point to user save area */
 
 	/*
@@ -2343,8 +2336,8 @@ ASLOCAL(m88110_have_pcb)
 	st	TMP2, r31,  REG_OFF(EF_EXIP)
 	st	TMP3, r31,  REG_OFF(EF_ENIP)
 
-	/* get and store the cpu number */
-	extu	TMP,  FLAGS,  FLAG_CPU_FIELD_WIDTH<0>	/* TMP = cpu# */
+	/* get and store the cpu_info pointer */
+	ldcr	TMP,  CPU
 	st	TMP,  r31,  REG_OFF(EF_CPU)
 
 	/*
@@ -2533,8 +2526,8 @@ ASLOCAL(m88110_fpu_enable)
 	ld	r2,   r31,  REG_OFF(EF_EPSR)
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
 
-	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
-	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
+	ldcr	r31,  CPU
+	ld	r31,  r31,  CI_CURPCB
 	addu	r31,  r31,  USIZE		/* point at proper end */
 1:
 

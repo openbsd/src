@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: pcb.h,v 1.2 2005/12/03 14:30:05 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -81,7 +81,7 @@ struct trapframe {
 	register_t	tf_scratch1;	/* reserved for use by locore */
 	register_t	tf_ipfsr;	/* P BUS status */
 	register_t	tf_dpfsr;	/* P BUS status */
-	register_t	tf_cpu;		/* cpu number */
+	void		*tf_cpu;	/* cpu_info pointer */
 };
 
 #define	tf_r		tf_regs.r

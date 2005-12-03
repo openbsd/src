@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.8 2005/12/02 21:16:43 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.9 2005/12/03 14:30:05 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -101,8 +101,6 @@ m8820x_setup_board_config()
 	struct m8820x_cmmu *cmmu;
 	int num;
 
-	master_cpu = 0;	/* temp to get things going */
-
 	m8820x_cmmu[0].cmmu_regs = (void *)CMMU_I0;
 	m8820x_cmmu[1].cmmu_regs = (void *)CMMU_D0;
 	m8820x_cmmu[2].cmmu_regs = (void *)CMMU_I1;
@@ -150,7 +148,6 @@ m8820x_setup_board_config()
 	for (num = 0; num < max_cpus; num++) {
 		int type;
 
-		cpu_sets[num] = 1;   /* This cpu installed... */
 		type = CMMU_TYPE(m8820x_cmmu[num << cmmu_shift].
 		    cmmu_regs[CMMU_IDR]);
 

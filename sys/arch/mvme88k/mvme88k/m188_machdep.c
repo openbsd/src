@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.10 2005/10/13 19:48:36 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.11 2005/12/03 14:30:06 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -241,8 +241,10 @@ m188_setipl(u_int level)
 	curspl = m188_curspl[cpu];
 
 	mask = int_mask_val[level];
+#ifdef MULTIPROCESSOR
 	if (cpu != master_cpu)
 		mask &= SLAVE_MASK;
+#endif
 
 	*int_mask_reg[cpu] = mask;
 	m188_curspl[cpu] = level;
@@ -259,8 +261,10 @@ m188_raiseipl(u_int level)
 	curspl = m188_curspl[cpu];
 	if (curspl < level) {
 		mask = int_mask_val[level];
+#ifdef MULTIPROCESSOR
 		if (cpu != master_cpu)
 			mask &= SLAVE_MASK;
+#endif
 
 		*int_mask_reg[cpu] = mask;
 		m188_curspl[cpu] = level;

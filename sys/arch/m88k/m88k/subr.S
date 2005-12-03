@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.8 2005/10/13 19:48:33 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.9 2005/12/03 14:30:06 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -194,8 +194,8 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 
 ENTRY(copyin)
 	/* set up fault handler */
-	or.u	r5,   r0,   hi16(_C_LABEL(curpcb))
-	ld	r6,   r5,   lo16(_C_LABEL(curpcb))
+	ldcr	r5,   CPU
+	ld	r6,   r5,   CI_CURPCB
 	or.u	r5,   r0,   hi16(_ASM_LABEL(Lciflt))
 	or	r5,   r5,   lo16(_ASM_LABEL(Lciflt))
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = Lciflt */
@@ -231,7 +231,7 @@ ASLOCAL(copyin_right_aligned_to_halfword)
 ASLOCAL(copyin_right_aligned_to_word)
 
 	/* At this point, both SRC and DEST are aligned to a word */
-	/* boundry, and LEN is an even multiple of 4.             */
+	/* boundary, and LEN is an even multiple of 4.             */
 	bb1.n	2,    LEN,  _ASM_LABEL(copyin_right_align_to_doubleword)
 	 or	r7,   r0,   4
 
@@ -357,8 +357,8 @@ ASLOCAL(copyin_byte_only)
 	 or	r2, r0, r0	/* successful return */
 
 ASLOCAL(Lcidone)
-	or.u	r5,r0,hi16(_C_LABEL(curpcb))
-	ld	r6,r5,lo16(_C_LABEL(curpcb))
+	ldcr	r5,   CPU
+	ld	r6,   r5,   CI_CURPCB
 	jmp.n	r1
 	 st	r0,r6,PCB_ONFAULT
 
@@ -391,8 +391,8 @@ ASLOCAL(Lciflt)
 ENTRY(copyinstr)
 
 	/* setup fault handler */
-	or.u	r6,   r0,   hi16(_C_LABEL(curpcb))
-	ld	r7,   r6,   lo16(_C_LABEL(curpcb))
+	ldcr	r6,   CPU
+	ld	r7,   r6,   CI_CURPCB
 	or.u	r6,   r0,   hi16(_ASM_LABEL(Lcisflt))
 	or	r6,   r6,   lo16(_ASM_LABEL(Lcisflt))
 	st	r6,   r7,   PCB_ONFAULT
@@ -432,8 +432,8 @@ ASLOCAL(Lcisdone)
 	bcnd	eq0, LEN, 3f
 	st	r6, r0, LEN
 3:
-	or.u	r5,r0,hi16(_C_LABEL(curpcb))
-	ld	r6,r5,lo16(_C_LABEL(curpcb))
+	ldcr	r5,   CPU
+	ld	r6,   r5,   CI_CURPCB
 	jmp.n	r1
 	 st	r0,r6,PCB_ONFAULT	/* clear the handler */
 
@@ -460,8 +460,8 @@ ASLOCAL(Lcisflt)
 
 ENTRY(copyout)
 	/* setup fault handler */
-	or.u	r5,   r0,   hi16(_C_LABEL(curpcb))
-	ld	r6,   r5,   lo16(_C_LABEL(curpcb))
+	ldcr	r5,   CPU
+	ld	r6,   r5,   CI_CURPCB
 	or.u	r5,   r0,   hi16(_ASM_LABEL(Lcoflt))
 	or	r5,   r5,   lo16(_ASM_LABEL(Lcoflt))
 	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = Lcoflt */
@@ -496,7 +496,7 @@ ASLOCAL(copyout_right_aligned_to_word)
 
 	/*
 	 * At this point, both SRC and DEST are aligned to a word
-	 * boundry, and LEN is an even multiple of 4.
+	 * boundary, and LEN is an even multiple of 4.
 	 */
 	bb1.n	2,    LEN,  _ASM_LABEL(copyout_right_align_to_doubleword)
 	 or	r7,   r0,   4
@@ -631,8 +631,8 @@ ASLOCAL(copyout_byte_only)
 	 or	r2, r0, r0	/* successful return */
 
 ASLOCAL(Lcodone)
-	or.u	r5,r0,hi16(_C_LABEL(curpcb))
-	ld	r6,r5,lo16(_C_LABEL(curpcb))
+	ldcr	r5,   CPU
+	ld	r6,   r5,   CI_CURPCB
 	jmp.n	r1
 	 st	r0,r6,PCB_ONFAULT	/* clear the handler */
 
@@ -662,8 +662,8 @@ ASLOCAL(Lcoflt)
 
 ENTRY(copyoutstr)
 	/* setup fault handler */
-	or.u	r6,   r0,   hi16(_C_LABEL(curpcb))
-	ld	r7,   r6,   lo16(_C_LABEL(curpcb))
+	ldcr	r6,   CPU
+	ld	r7,   r6,   CI_CURPCB
 	or.u	r6,   r0,   hi16(_ASM_LABEL(Lcosflt))
 	or	r6,   r6,   lo16(_ASM_LABEL(Lcosflt))
 	st	r6,   r7,   PCB_ONFAULT
@@ -698,8 +698,9 @@ ASLOCAL(Lcosflt)
 ASLOCAL(Lcosdone)
 	bcnd	eq0, LEN, 3f
 	st	r6, r0, LEN
-3:	or.u	r5,r0,hi16(_C_LABEL(curpcb))
-	ld	r6,r5,lo16(_C_LABEL(curpcb))
+3:
+	ldcr	r5,   CPU
+	ld	r6,   r5,   CI_CURPCB
 	jmp.n	r1
 	 st	r0,r6,PCB_ONFAULT	/* clear the handler */
 
@@ -716,8 +717,8 @@ ASLOCAL(Lcosdone)
  * Copy len bytes from src to dst, aborting if we encounter a page fault.
  */
 ENTRY(kcopy)
-	or.u	r5,   r0,   hi16(_C_LABEL(curpcb))
-	ld	r6,   r5,   lo16(_C_LABEL(curpcb))
+	ldcr	r5,   CPU
+	ld	r6,   r5,   CI_CURPCB
 	or.u	r5,   r0,   hi16(_ASM_LABEL(kcopy_fault))
 	or	r5,   r5,   lo16(_ASM_LABEL(kcopy_fault))
 	st	r5,   r6,   PCB_ONFAULT		/* pcb_onfault = kcopy_fault */
@@ -968,8 +969,8 @@ ASLOCAL(kr_byte_copy)
 ASLOCAL(kcopy_out)
 	or	r2,   r0,   0		/* return success */
 ASLOCAL(kcopy_out_fault)
-	or.u	r5,r0,hi16(_C_LABEL(curpcb))
-	ld	r6,r5,lo16(_C_LABEL(curpcb))
+	ldcr	r5,   CPU
+	ld	r6,   r5,   CI_CURPCB
 	st	r0,r6,PCB_ONFAULT	/* clear the handler */
 	jmp	r1		/* all done, return to caller */
 
@@ -1546,54 +1547,6 @@ ENTRY(longjmp)
 ENTRY(read_processor_identification_register)
 	jmp.n	r1
 	 ldcr	r2, PID
-
-/*
- * void set_cpu_number(unsigned number);
- *
- * Sets the kernel cpu number for this cpu to the given value.
- *
- * Input:
- *	r1	return address
- *	r2 	the number (should be 0, 1, 2, or 3).
- *
- * Other registers used:
- *	r3	temp
- *	r4	original PSR
- *	r5	temporary new PSR
- */
-ENTRY(set_cpu_number)
-#ifdef DEBUG
-	/* make sure the CPU number is valid */
-	clr	r3, r2, FLAG_CPU_FIELD_WIDTH<0>
-	bcnd	ne0, r3, 1f	/* bad cpu number */
-#endif
-
-	/* going to change a control register -- disable interrupts */
-	ldcr	r4, PSR
-	set	r5, r4, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r5, PSR
-	FLUSH_PIPELINE
-
-	/* put in the cpu number */
-	ldcr	r3, SR1				/* get the flags */
-	clr	r3, r3, FLAG_CPU_FIELD_WIDTH<0>	/* clean the slate */
-	or	r3, r3, r2			/* add the cpu number */
-	stcr	r3, SR1				/* put back */
-
-	/* put back the PSR to what it was before and return */
-	stcr	r4, PSR
-	FLUSH_PIPELINE
-	jmp	r1
-
-#ifdef DEBUG
-1:	/* bad cpu number*/
-	or.u	r2, r0, hi16(9f)
-	bsr.n	_C_LABEL(panic)
-	 or	r2, r2, lo16(9f)
-
-	data
-9:	string "set_cpu_number: bad CPU number %x\0"
-#endif
 
 /*
  * Trampoline code. Gets copied to the top of

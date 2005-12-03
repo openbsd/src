@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.11 2005/12/02 21:16:45 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.12 2005/12/03 14:30:05 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -28,13 +28,10 @@
 #ifndef	_M88K_CMMU_H_
 #define	_M88K_CMMU_H_
 
-#if defined(_KERNEL) && !defined(_LOCORE)
 /*
  * Prototypes and stuff for cmmu.c.
  */
-extern unsigned cpu_sets[MAX_CPUS];
-extern unsigned master_cpu;
-extern int max_cpus;
+#if defined(_KERNEL) && !defined(_LOCORE)
 
 /*
  * This lock protects the cmmu SAR and SCR's; other ports

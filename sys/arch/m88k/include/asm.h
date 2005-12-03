@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2005/10/13 19:47:12 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 2005/12/03 14:30:05 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -160,12 +160,6 @@
 #define RTE			NOP ; rte
 
 /*
- * Fields in cr18. More bits are used privately in the exception handling
- * code.
- */
-#define FLAG_CPU_FIELD_WIDTH		2	/* must match cpu_number() */
-
-/*
  * Info about the PSR
  */
 #define	PSR_SHADOW_FREEZE_BIT		0
@@ -183,6 +177,8 @@
 
 #define	VECTOR(x) \
 	word	_C_LABEL(x)
+
+#define	CPU	SR0
 
 #endif	/* _LOCORE */
 

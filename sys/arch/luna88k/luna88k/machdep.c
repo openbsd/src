@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2005/12/01 22:14:52 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2005/12/03 14:30:05 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -200,7 +200,6 @@ struct nvram_t {
 vaddr_t obiova;
 
 int ssir;
-int want_resched;
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -261,7 +260,6 @@ vaddr_t last_addr;
 vaddr_t avail_start, avail_end;
 vaddr_t virtual_avail, virtual_end;
 
-extern struct pcb *curpcb;
 extern struct user *proc0paddr;
 
 /*
@@ -1106,16 +1104,9 @@ luna88k_bootstrap()
 	extern struct consdev *cn_tab;
 	extern struct cmmu_p cmmu8820x;
 	extern char *end;
-
-	/*
-	 * Must initialize p_addr before autoconfig or
-	 * the fault handler will get a NULL reference.
-	 * Do this early so that we can take a data or 
-	 * instruction fault and survive it.
-	 */
-	proc0.p_addr = proc0paddr;
-	curproc = &proc0;
-	curpcb = &proc0paddr->u_pcb;
+#ifndef MULTIPROCESSOR
+	u_int master_cpu;
+#endif
 
 	cmmu = &cmmu8820x;
 
@@ -1141,6 +1132,16 @@ luna88k_bootstrap()
 	cmmu_init();
 	master_cpu = cmmu_cpu_number();
 	set_cpu_number(master_cpu);
+
+	/*
+	 * Now that set_cpu_number() set us with a valid cpu_info pointer,
+	 * we need to initialize p_addr and curpcb before autoconf, for the
+	 * fault handler to behave properly [except for badaddr() faults,
+	 * which can be taken care of without a valid curcpu()].
+	 */
+	proc0.p_addr = proc0paddr;
+	curproc = &proc0;
+	curpcb = &proc0paddr->u_pcb;
 
 	/*
 	 * We may have more than one CPU, so mention which one is the master.
@@ -1441,8 +1442,10 @@ setlevel(unsigned int level)
 
 	set_value = int_set_val[level];
 
+#ifdef MULTIPROCESSOR
 	if (cpu != master_cpu)
 		set_value &= INT_SLAVE_MASK;
+#endif
 
 	*int_mask_reg[cpu] = set_value;
 	luna88k_curspl[cpu] = level;

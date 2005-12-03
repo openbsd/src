@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 2005/10/13 19:48:33 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 2005/12/03 14:30:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -88,7 +88,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		void (*func)(void *);
 		void *proc;
 	} *ksfp;
-	extern struct pcb *curpcb;
 	extern void proc_trampoline(void);
 
 	/* Copy pcb from p1 to p2. */
@@ -202,26 +201,7 @@ cpu_coredump(p, vp, cred, chdr)
 }
 
 /*
- * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
- *
- *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
- *	B_PHYS|B_PAGET:	User page table swap.
- *			Address is a kernel VA in usrpt (Usrptmap).
- *	B_PHYS|B_DIRTY:	Dirty page push.
- *			Address is a VA in proc2's address space.
- *	B_PHYS|B_PGIN:	Kernel pagein of user pages.
- *			Address is VA in user's address space.
- *	B_PHYS:		User "raw" IO request.
- *			Address is VA in user's address space.
- *
- * All requests are (re)mapped into kernel VA space via phys_map
- *
- * XXX we allocate KVA space by using kmem_alloc_wait which we know
- * allocates space without backing physical memory.  This implementation
- * is a total crock, the multiple mappings of these physical pages should
- * be reflected in the higher-level VM structures to avoid problems.
+ * Map an IO request into kernel virtual address space via phys_map.
  */
 void
 vmapbuf(bp, len)

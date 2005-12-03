@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2005/12/01 22:24:52 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2005/12/03 14:30:06 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -122,13 +122,14 @@ static inline void
 userret(struct proc *p, struct trapframe *frame, u_quad_t oticks)
 {
 	int sig;
+	struct cpu_info *cpu = curcpu();
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
 
-	if (want_resched) {
+	if (cpu->ci_want_resched) {
 		/*
 		 * We're being preempted.
 		 */
@@ -146,7 +147,7 @@ userret(struct proc *p, struct trapframe *frame, u_quad_t oticks)
 		addupc_task(p, frame->tf_sxip & XIP_ADDR,
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
-	curpriority = p->p_priority;
+	cpu->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 __dead void
@@ -260,9 +261,9 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		/* This function pointer is set in machdep.c
 		   It calls m188_ext_int or sbc_ext_int depending
 		   on the value of brdtyp - smurph */
-		intrdepth++;
+		curcpu()->ci_intrdepth++;
 		md_interrupt_func(T_INT, frame);
-		intrdepth--;
+		curcpu()->ci_intrdepth--;
 		return;
 
 	case T_MISALGNFLT:
@@ -277,7 +278,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		 */
 #ifdef TRAPDEBUG
 		pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
-		printf("Kernel Instruction fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
+		printf("Kernel Instruction fault #%d (%s) v = 0x%x, frame 0x%x cpu %p\n",
 		    pbus_type, pbus_exception_type[pbus_type],
 		    fault_addr, frame, frame->tf_cpu);
 #endif
@@ -312,7 +313,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 
 		pbus_type = CMMU_PFSR_FAULT(frame->tf_dpfsr);
 #ifdef TRAPDEBUG
-		printf("Kernel Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
+		printf("Kernel Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %p\n",
 		    pbus_type, pbus_exception_type[pbus_type],
 		    fault_addr, frame, frame->tf_cpu);
 #endif
@@ -362,7 +363,7 @@ user_fault:
 		if (type == T_INSTFLT + T_USER) {
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
 #ifdef TRAPDEBUG
-			printf("User Instruction fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
+			printf("User Instruction fault #%d (%s) v = 0x%x, frame 0x%x cpu %p\n",
 			    pbus_type, pbus_exception_type[pbus_type],
 			    fault_addr, frame, frame->tf_cpu);
 #endif
@@ -370,7 +371,7 @@ user_fault:
 			fault_addr = frame->tf_dma0;
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_dpfsr);
 #ifdef TRAPDEBUG
-			printf("User Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
+			printf("User Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %p\n",
 			    pbus_type, pbus_exception_type[pbus_type],
 			    fault_addr, frame, frame->tf_cpu);
 #endif
@@ -695,15 +696,15 @@ m88110_trap(unsigned type, struct trapframe *frame)
 		break;
 	case T_NON_MASK:
 	case T_NON_MASK+T_USER:
-		intrdepth++;
+		curcpu()->ci_intrdepth++;
 		md_interrupt_func(T_NON_MASK, frame);
-		intrdepth--;
+		curcpu()->ci_intrdepth--;
 		return;
 	case T_INT:
 	case T_INT+T_USER:
-		intrdepth++;
+		curcpu()->ci_intrdepth++;
 		md_interrupt_func(T_INT, frame);
-		intrdepth--;
+		curcpu()->ci_intrdepth--;
 		return;
 	case T_MISALGNFLT:
 		printf("kernel mode misaligned access exception @ 0x%08x\n",
@@ -1102,9 +1103,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	int error;
 	register_t args[11], rval[2], *ap;
 	u_quad_t sticks;
-#ifdef DIAGNOSTIC
-	extern struct pcb *curpcb;
-#endif
 
 	uvmexp.syscalls++;
 
@@ -1263,9 +1261,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	int error;
 	register_t args[11], rval[2], *ap;
 	u_quad_t sticks;
-#ifdef DIAGNOSTIC
-	extern struct pcb *curpcb;
-#endif
 
 	uvmexp.syscalls++;
 

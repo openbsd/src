@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.5 2004/08/05 21:34:08 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.6 2005/12/03 14:30:05 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -36,7 +36,8 @@
  */
 
 #define	PFSR_SAVE \
-	extu	TMP,  FLAGS, FLAG_CPU_FIELD_WIDTH<0>;	/* TMP = cpu# */ \
+	ldcr	TMP,  CPU; \
+	ld	TMP,  TMP, CI_CPUID;			/* TMP = cpu# */ \
 	cmp	TMP2, TMP, 0x0;				/* CPU0 ? */ \
 	bb1	eq,   TMP2, 1f; \
 	cmp	TMP2, TMP, 0x1;				/* CPU1 ? */ \

@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.62 2004/08/05 21:34:11 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.63 2005/12/03 14:30:06 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -94,8 +94,9 @@ ASLOCAL(pfsr188)
 	or.u	TMP,  r0,   hi16(_C_LABEL(cmmu_shift))
 	ld	TMP,  TMP,  lo16(_C_LABEL(cmmu_shift))
 	cmp	TMP2, TMP,  2
+	ldcr	TMP,  CPU
 	bb1.n	lt,   TMP2, _ASM_LABEL(pfsr188_straight)
-	 extu	TMP,  FLAGS, FLAG_CPU_FIELD_WIDTH<0>	/* TMP = cpu# */
+	 ld	TMP,  TMP,  CI_CPUID			/* TMP = cpu# */
 	bb1	eq,   TMP2, _ASM_LABEL(pfsr188_double)
 
 ASLOCAL(pfsr188_quad)

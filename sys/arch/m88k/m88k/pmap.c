@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2005/12/01 22:24:52 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 2005/12/03 14:30:06 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -203,31 +203,30 @@ boolean_t pmap_testbit(struct vm_page *, int);
  *	va	virtual address that should be flushed
  *	kernel	TRUE if supervisor mode, FALSE if user mode
  */
-static __inline__ void
+static
+#ifndef MULTIPROCESSOR
+__inline__
+#endif
+void
 flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 {
-#if defined(MULTIPROCESSOR)
+#ifdef MULTIPROCESSOR
 	int cpu;
 
 	if (users == 0)
 		return;
 
-#ifdef DEBUG
-	if (ff1(users) >= MAX_CPUS) {
-		panic("flush_atc_entry: invalid ff1 users = %d", ff1(users));
-	}
-#endif
-
 	while ((cpu = ff1(users)) != 32) {
-		if (cpu_sets[cpu]) { /* just checking to make sure */
+#ifdef DIAGNOSTIC
+		if (m88k_cpus[cpu].ci_alive)
+#endif
 			cmmu_flush_tlb(cpu, kernel, va, 1);
-		}
-		users &= ~(1 << cpu);
+		users ^= 1 << cpu;
 	}
-#else
+#else	/* MULTIPROCESSOR */
 	if (users != 0)
 		cmmu_flush_tlb(cpu_number(), kernel, va, 1);
-#endif
+#endif	/* MULTIPROCESSOR */
 }
 
 /*
@@ -448,7 +447,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 	vaddr_t va;
 	paddr_t pa;
 	boolean_t kflush;
-	int cpu;
+	cpuid_t cpu;
 	u_int users;
 
 #ifdef DEBUG
@@ -489,8 +488,12 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		 * Data cache should be copied back and invalidated.
 		 */
 		pa = ptoa(PG_PFNUM(*pte));
+#ifdef MULTIPROCESSOR
 		for (cpu = 0; cpu < MAX_CPUS; cpu++)
-			if (cpu_sets[cpu])
+			if (m88k_cpus[cpu].ci_alive != 0)
+#else
+		cpu = cpu_number();
+#endif
 				cmmu_flush_cache(cpu, pa, PAGE_SIZE);
 	}
 	PMAP_UNLOCK(pmap, spl);
@@ -543,6 +546,9 @@ pmap_bootstrap(vaddr_t load_start)
 	paddr_t s_text, e_text, kpdt_phys;
 	unsigned int kernel_pmap_size, pdt_size;
 	int i;
+#ifndef MULTIPROCESSOR
+	cpuid_t cpu;
+#endif
 	pmap_table_t ptable;
 	extern void *etext;
 
@@ -724,17 +730,19 @@ pmap_bootstrap(vaddr_t load_start)
 	    CACHE_GLOBAL | CACHE_WT | APR_V;
 
 	/* Invalidate entire kernel TLB and get ready for address translation */
-	for (i = 0; i < MAX_CPUS; i++)
-		if (cpu_sets[i]) {
-			cmmu_flush_tlb(i, TRUE, VM_MIN_KERNEL_ADDRESS,
-			    btoc(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS));
-			/* Load supervisor pointer to segment table. */
-			cmmu_set_sapr(i, kernel_pmap->pm_apr);
+#ifdef MULTIPROCESSOR
+	pmap_bootstrap_cpu(cpu_number());
+#else
+	cpu = cpu_number();
+	cmmu_flush_tlb(cpu, TRUE, VM_MIN_KERNEL_ADDRESS,
+	    btoc(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS));
+	/* Load supervisor pointer to segment table. */
+	cmmu_set_sapr(cpu, kernel_pmap->pm_apr);
 #ifdef DEBUG
-			printf("cpu%d: running virtual\n", i);
+	printf("cpu%d: running virtual\n", cpu);
 #endif
-			SETBIT_CPUSET(i, &kernel_pmap->pm_cpus);
-		}
+	SETBIT_CPUSET(cpu, &kernel_pmap->pm_cpus);
+#endif	/* MULTIPROCESSOR */
 }
 
 /*

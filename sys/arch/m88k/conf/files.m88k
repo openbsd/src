@@ -1,6 +1,5 @@
-#	$OpenBSD: files.m88k,v 1.14 2005/10/24 19:28:28 miod Exp $
+#	$OpenBSD: files.m88k,v 1.15 2005/12/03 14:30:05 miod Exp $
 
-file	arch/m88k/m88k/cmmu.c
 file	arch/m88k/m88k/db_disasm.c			ddb
 file	arch/m88k/m88k/db_interface.c			ddb
 file	arch/m88k/m88k/db_sstep.c			ddb

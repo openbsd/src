@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 2005/10/12 19:32:17 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 2005/12/03 14:30:05 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -120,7 +120,7 @@ GLOBAL(start_text)
 	or.u	r13, r0,  hi16(_C_LABEL(brdtyp))
 	st	r8,  r13, lo16(_C_LABEL(brdtyp))
 
-	/* set _cputyp */
+	/* set cputyp */
 	cmp	r2,  r8, BRD_197	/* r8 contains brdtyp */
 	bb1	ne, r2, 1f	/* if it's a '197, CPU is 88110 */
 	or.u	r13, r0,  hi16(CPU_88110)
@@ -157,12 +157,12 @@ GLOBAL(start_text)
 	 * The manual says not to disable interrupts and freeze shadowing
 	 * at the same time because interrupts are not actually disabled
 	 * until after the next instruction. Well, if an interrupt
-	 * occurs now, we're in deep   anyway, so I'm going to do
+	 * occurs now, we're in deep trouble anyway, so I'm going to do
 	 * the two together.
 	 *
 	 * Upon a reset (or poweron, I guess), the PSR indicates:
 	 *   supervisor mode
-	 *   interrupts, shadowing, FPU, missaligned exception: all disabled
+	 *   interrupts, shadowing, FPU, misaligned exception: all disabled
 	 *
 	 * We'll just construct our own turning on what we want.
 	 *
@@ -170,7 +170,6 @@ GLOBAL(start_text)
 	 */
 
 	stcr	r0, SSBR	/* clear this for later */
-	stcr	r0, SR0		/* clear "current thread" */
 	stcr	r0, SR1		/* clear the CPU flags */
 
 	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
@@ -263,7 +262,6 @@ ASLOCAL(master_start)
 	 */
 	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
 	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
-	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
 
 	or.u	r3, r0, hi16(_C_LABEL(vector_list))
 	or	r3, r3, lo16(_C_LABEL(vector_list))
@@ -320,8 +318,8 @@ ASLOCAL(master_start)
 	/*
 	 * ...and we can switch to the u area stack now.
 	 */
-	or.u	r10, r0,  hi16(_C_LABEL(curpcb))
-	ld	r31, r10, lo16(_C_LABEL(curpcb))
+	ldcr	r10, CPU
+	ld	r31, r10, CI_CURPCB
 	addu	r31, r31, USIZE
 
 	/* call main() - no arguments although main() still defines one */
@@ -382,12 +380,6 @@ GLOBAL(spin_cpu)
  * The processor loops (busy waits) for the given number of microseconds:
  * Thus, delay(1000000) will delay for one second.
  * (originally from Mach 2.5)
- *
- * REGISTER USAGE:
- *  IN  r1   - return address
- *  IN  r2   - number of microseconds
- *      r3   - cpu speed in MHz
- *      r4   - number of cycles to delay
  */
 
 GLOBAL(delay)
@@ -412,7 +404,7 @@ GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
 
 	.align NBPG
 GLOBAL(intstack)
-	space	INTSTACK_SIZE	/* 16K, just to be safe */
+	space	USIZE
 ASGLOBAL(intstack_end)
 ASGLOBAL(slavestack)
 	space	NBPG		/* 4K, small, interim stack */
@@ -429,7 +421,7 @@ ASGLOBAL(slavestack_end)
  */
 	.align NBPG
 GLOBAL(idle_u)
-	space	UPAGES * NBPG
+	space	USIZE
 
 /*
  * Process 0's u.
@@ -439,6 +431,8 @@ GLOBAL(idle_u)
 	.align	NBPG
 ASLOCAL(u0)
 	space	UPAGES * NBPG
+GLOBAL(proc0paddr)
+	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 
 GLOBAL(ret_addr)
 	word 0
@@ -454,21 +448,8 @@ ASLOCAL(master_processor_chosen)
 /* XMEM spin lock -- controls access to master_processor_chosen */
 ASLOCAL(inter_processor_lock)
 	word 0
+
 #if defined(DDB) || NKSYMS > 0
 GLOBAL(esym)
 	word 	0
 #endif /* DDB || NKSYMS > 0 */
-GLOBAL(proc0paddr)
-	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
-
-/*
- * curpcb points to the current pcb (and hence u. area).
- * Initially this is the special one.
- */
-/*
- * pcb is composed of kernel state + user state
- * I may have to change curpcb to u0 + PCB_USER based on what
- * other parts expect XXX nivas
- */
-GLOBAL(curpcb)
-	word	_ASM_LABEL(u0)	/* curpcb = &u0 */

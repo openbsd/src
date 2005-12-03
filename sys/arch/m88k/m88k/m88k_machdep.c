@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.9 2005/11/28 22:22:55 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.10 2005/12/03 14:30:06 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -53,8 +53,10 @@
 #include <sys/exec.h>
 #include <sys/errno.h>
 
+#include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/locore.h>
 #include <machine/reg.h>
 #ifdef M88100
 #include <machine/m88100.h>
@@ -73,9 +75,26 @@ void regdump(struct trapframe *f);
 void dumpsys(void);
 void dumpconf(void);
 
-int longformat = 1;  /* for regdump() */
+/*
+ * CMMU and CPU variables
+ */
 
-int intrdepth;
+#ifdef MULTIPROCESSOR
+cpuid_t	master_cpu;
+#endif
+
+struct cpu_info m88k_cpus[MAX_CPUS];
+u_int	max_cpus;
+
+struct cmmu_p *cmmu;
+
+/*
+ * This lock protects the cmmu SAR and SCR's; other ports
+ * can be accessed without locking it.
+ */
+struct simplelock cmmu_cpu_lock;
+
+int longformat = 1;  /* for regdump() */
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -279,7 +298,7 @@ regdump(struct trapframe *f)
 		    f->tf_fphs2, f->tf_fpls2);
 		printf("fppt %x fprh %x fprl %x fpit %x\n",
 		    f->tf_fppt, f->tf_fprh, f->tf_fprl, f->tf_fpit);
-		printf("vector %d mask %x mode %x scratch1 %x cpu %x\n",
+		printf("vector %d mask %x mode %x scratch1 %x cpu %p\n",
 		    f->tf_vector, f->tf_mask, f->tf_mode,
 		    f->tf_scratch1, f->tf_cpu);
 	}
@@ -292,9 +311,39 @@ regdump(struct trapframe *f)
 		    f->tf_dsap, f->tf_duap, f->tf_dsr, f->tf_dlar, f->tf_dpar);
 		printf("isap %x iuap %x isr %x ilar %x ipar %x\n",
 		    f->tf_isap, f->tf_iuap, f->tf_isr, f->tf_ilar, f->tf_ipar);
-		printf("vector %d mask %x mode %x scratch1 %x cpu %x\n",
+		printf("vector %d mask %x mode %x scratch1 %x cpu %p\n",
 		    f->tf_vector, f->tf_mask, f->tf_mode,
 		    f->tf_scratch1, f->tf_cpu);
 	}
 #endif
+}
+
+/*
+ * Set up the cpu_info pointer and the cpu number for the current processor.
+ */
+void
+set_cpu_number(cpuid_t number)
+{
+	struct cpu_info *ci;
+	extern struct pcb idle_u;
+
+#ifdef MULTIPROCESSOR
+	ci = &m88k_cpus[number];
+#else
+	ci = &m88k_cpus[0];
+#endif
+	ci->ci_cpuid = number;
+
+	__asm__ __volatile__ ("stcr %0, cr17" :: "r" (ci));
+	flush_pipeline();
+
+#ifdef MULTIPROCESSOR
+	if (number == master_cpu)
+#endif
+	{
+		ci->ci_primary = 1;
+		ci->ci_idle_pcb = &idle_u;
+	}
+
+	ci->ci_alive = 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.28 2005/09/13 19:12:21 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.29 2005/12/03 14:30:06 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -12,17 +12,14 @@
 unsigned read_processor_identification_register(void);
 int badaddr(vaddr_t addr, int size);
 #define badwordaddr(x) badaddr(x, 4)
-void set_cpu_number(unsigned number);
 void doboot(void);
-
-/* locore_c_routines.c */
-
-unsigned getipl(void);
 
 /* machdep.c */
 
+unsigned getipl(void);
 int intr_findvec(int, int, int);
-void myetheraddr(u_char *cp);
+void myetheraddr(u_char *);
+void set_cpu_number(cpuid_t);
 
 extern volatile u_int8_t *ivec[];
 
