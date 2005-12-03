@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.56 2005/12/03 01:02:09 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.57 2005/12/03 03:59:47 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -75,8 +75,6 @@ static const char *cvs_modestr[8] = {
 	"", "x", "w", "wx", "r", "rx", "rw", "rwx"
 };
 
-
-pid_t cvs_exec_pid;
 
 
 /*
