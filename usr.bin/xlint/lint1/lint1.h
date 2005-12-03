@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.6 2005/12/03 00:27:54 cloder Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.7 2005/12/03 01:14:39 cloder Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ typedef	struct sym {
 		enum_t	*_s_et;	/* tag, if it is a enumerator */
 		tspec_t	_s_tsp;	/* type (only for keywords) */
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
-		tqual_t	_s_att;	/* attribute (only for keywords) */
+		attr_t	_s_att;	/* attribute (only for keywords) */
 		struct	sym *_s_args; /* arguments in old style function
 					 definitions */
 	} u;
