@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.30 2005/12/03 01:02:09 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.31 2005/12/03 02:19:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -150,7 +150,6 @@ CVSFILE	*cvs_file_loadinfo(char *, int, int (*)(CVSFILE *, void *), void *,
 CVSFILE	*cvs_file_create(CVSFILE *, const char *, u_int, mode_t);
 CVSFILE	*cvs_file_copy(CVSFILE *);
 int	 cvs_file_attach(CVSFILE *, CVSFILE *);
-int	 cvs_file_examine(CVSFILE *, int (*)(CVSFILE *, void *), void *);
 
 int	 cvs_file_init(void);
 int	 cvs_file_ignore(const char *);

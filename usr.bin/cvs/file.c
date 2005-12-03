@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.128 2005/12/03 01:02:08 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.129 2005/12/03 02:19:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1080,22 +1080,6 @@ cvs_file_free(CVSFILE *cf)
 	free(cf);
 }
 
-
-/*
- * cvs_file_examine()
- *
- * Walk through the files, calling the callback as we go.
- */
-int
-cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
-{
-	int ret;
-	CVSFILE *fp;
-
-	fp = NULL;
-	ret = 0;
-	return (ret);
-}
 
 /*
  * cvs_file_sort()
