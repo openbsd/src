@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.7 1995/07/05 17:46:11 pk Exp $ */
-/*	$OpenBSD: types.h,v 1.4 2005/12/03 14:30:05 miod Exp $ */
+/*	$OpenBSD: types.h,v 1.5 2005/12/03 19:01:14 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,5 +78,6 @@ typedef	unsigned long long	 uint64_t;
 typedef int32_t			register_t;
 
 #define	__HAVE_CPUINFO
+#define	__HAVE_MUTEX
 
 #endif	/* _M88K_TYPES_H_ */
