@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.4 2004/12/24 22:50:30 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.5 2005/12/03 21:37:14 brad Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ netintr()
 	int s, isr;
 
 	for (;;) {
-		s = splimp();
+		s = splhigh();
 		isr = netisr;
 		netisr = 0;
 		splx(s);
