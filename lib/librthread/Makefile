@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 2005/12/03 18:36:40 tedu Exp $
+
 LIB=rthread
 CFLAGS+=-Wall -g -Werror
 
