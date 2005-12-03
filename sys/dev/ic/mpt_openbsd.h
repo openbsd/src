@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.18 2005/12/01 02:15:21 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.19 2005/12/03 04:00:08 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -184,7 +184,8 @@ enum mpt_req_state {
 	REQ_ON_CHIP,
 	REQ_DONE
 };
-typedef struct req_entry {
+
+struct req_entry {
 	uint16_t	index;		/* index of this entry */
 	struct scsi_xfer *xfer;		/* scsipi xfer request */
 	void		*req_vbuf;	/* virtual address of entry */
@@ -195,9 +196,9 @@ typedef struct req_entry {
 	SLIST_ENTRY(req_entry) link;	/* pointer to next in list */
 	enum mpt_req_state debug;	/* debugging */
 	uint32_t	sequence;	/* sequence number */
-} request_t;
+};
 
-typedef struct mpt_softc {
+struct mpt_softc {
 	struct device	mpt_dev;		/* base device glue */
 
 	int		verbose;
@@ -307,7 +308,7 @@ typedef struct mpt_softc {
 	bus_addr_t		request_phys;
 
 	/* scsi linkage */
-	request_t		*request_pool;
+	struct req_entry		*request_pool;
 	SLIST_HEAD(req_queue, req_entry) request_free_list;
 
 	struct scsi_link	sc_link;
@@ -329,7 +330,7 @@ typedef struct mpt_softc {
 
 	/* To restore configuration after hard reset. */
 	void			(*sc_set_config_regs)(struct mpt_softc *);
-} mpt_softc_t;
+};
 
 #define	MPT_SYNC_REQ(mpt, req, ops)				\
 	bus_dmamap_sync((mpt)->sc_dmat, (mpt)->request_dmap,	\
@@ -341,10 +342,10 @@ typedef struct mpt_softc {
 #define	mpt_write(mpt, reg, val)				\
 	bus_space_write_4((mpt)->sc_st, (mpt)->sc_sh, (reg), (val))
 
-void	mpt_attach(mpt_softc_t *);
-int	mpt_dma_mem_alloc(mpt_softc_t *);
+void	mpt_attach(struct mpt_softc *);
+int	mpt_dma_mem_alloc(struct mpt_softc *);
 int	mpt_intr(void *);
-void	mpt_prt(mpt_softc_t *, const char *, ...);
+void	mpt_prt(struct mpt_softc *, const char *, ...);
 
 
 #define	mpt_set_config_regs(mpt)				\

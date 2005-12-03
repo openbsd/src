@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.30 2005/12/01 02:15:21 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.31 2005/12/03 04:00:08 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -106,15 +106,15 @@
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
-void	mpt_run_ppr(mpt_softc_t *, int);
-int	mpt_ppr(mpt_softc_t *, struct scsi_link *, int, int);
-int	mpt_poll(mpt_softc_t *, struct scsi_xfer *, int);
+void	mpt_run_ppr(struct mpt_softc *, int);
+int	mpt_ppr(struct mpt_softc *, struct scsi_link *, int, int);
+int	mpt_poll(struct mpt_softc *, struct scsi_xfer *, int);
 void	mpt_timeout(void *);
-void	mpt_done(mpt_softc_t *, uint32_t);
-int	mpt_run_xfer(mpt_softc_t *, struct scsi_xfer *);
-void	mpt_check_xfer_settings(mpt_softc_t *, struct scsi_xfer *, MSG_SCSI_IO_REQUEST *);
-void	mpt_ctlop(mpt_softc_t *, void *vmsg, uint32_t);
-void	mpt_event_notify_reply(mpt_softc_t *, MSG_EVENT_NOTIFY_REPLY *);
+void	mpt_done(struct mpt_softc *, uint32_t);
+int	mpt_run_xfer(struct mpt_softc *, struct scsi_xfer *);
+void	mpt_check_xfer_settings(struct mpt_softc *, struct scsi_xfer *, MSG_SCSI_IO_REQUEST *);
+void	mpt_ctlop(struct mpt_softc *, void *vmsg, uint32_t);
+void	mpt_event_notify_reply(struct mpt_softc *, MSG_EVENT_NOTIFY_REPLY *);
 
 int	mpt_action(struct scsi_xfer *);
 void	mpt_minphys(struct buf *);
@@ -139,7 +139,7 @@ enum mpt_scsi_speed { U320, U160, U80 };
  * return 1 if passed
  */
 int
-mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
+mpt_ppr(struct mpt_softc *mpt, struct scsi_link *sc_link, int speed, int flags)
 {
 	CONFIG_PAGE_SCSI_DEVICE_0 page0;
 	CONFIG_PAGE_SCSI_DEVICE_1 page1;
@@ -356,7 +356,7 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
  * Run PPR on all attached devices
  */
 void
-mpt_run_ppr(mpt_softc_t *mpt, int flags)
+mpt_run_ppr(struct mpt_softc *mpt, int flags)
 {
 	struct scsi_link *sc_link;
 	struct device *dev;
@@ -411,7 +411,7 @@ mpt_run_ppr(mpt_softc_t *mpt, int flags)
  * Complete attachment of hardware, include subdevices.
  */
 void
-mpt_attach(mpt_softc_t *mpt)
+mpt_attach(struct mpt_softc *mpt)
 {
 	struct scsi_link *lptr = &mpt->sc_link;
 
@@ -453,7 +453,7 @@ mpt_attach(mpt_softc_t *mpt)
 }
 
 int
-mpt_dma_mem_alloc(mpt_softc_t *mpt)
+mpt_dma_mem_alloc(struct mpt_softc *mpt)
 {
 	bus_dma_segment_t reply_seg, request_seg;
 	int reply_rseg, request_rseg;
@@ -470,7 +470,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	 * Allocate the request pool.  This isn't really DMA'd memory,
 	 * but it's a convenient place to do it.
 	 */
-	len = sizeof(request_t) * MPT_MAX_REQUESTS(mpt);
+	len = sizeof(struct req_entry) * MPT_MAX_REQUESTS(mpt);
 	mpt->request_pool = malloc(len, M_DEVBUF, M_WAITOK);
 	if (mpt->request_pool == NULL) {
 		printf("%s: unable to allocate request pool\n",
@@ -554,7 +554,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	end = pptr + MPT_REQ_MEM_SIZE(mpt);
 
 	for (i = 0; pptr < end; i++) {
-		request_t *req = &mpt->request_pool[i];
+		struct req_entry *req = &mpt->request_pool[i];
 		req->index = i;
 
 		/* Store location of Request Data */
@@ -582,7 +582,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 
 unload_request:	
 	for (--i; i >= 0; i--) {
-		request_t *req = &mpt->request_pool[i];
+		struct req_entry *req = &mpt->request_pool[i];
 		if (req->dmap != NULL)
 			bus_dmamap_destroy(mpt->sc_dmat, req->dmap);
 	}
@@ -616,7 +616,7 @@ free_request_pool:
 int
 mpt_intr(void *arg)
 {
-	mpt_softc_t *mpt = arg;
+	struct mpt_softc *mpt = arg;
 	int nrepl = 0;
 	uint32_t reply;
 
@@ -658,7 +658,7 @@ mpt_intr(void *arg)
 }
 
 void
-mpt_prt(mpt_softc_t *mpt, const char *fmt, ...)
+mpt_prt(struct mpt_softc *mpt, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -670,7 +670,7 @@ mpt_prt(mpt_softc_t *mpt, const char *fmt, ...)
 }
 
 int
-mpt_poll(mpt_softc_t *mpt, struct scsi_xfer *xs, int count)
+mpt_poll(struct mpt_softc *mpt, struct scsi_xfer *xs, int count)
 {
 
 	/* Timeouts are in msec, so we loop in 1000usec cycles */
@@ -688,10 +688,10 @@ mpt_poll(mpt_softc_t *mpt, struct scsi_xfer *xs, int count)
 void
 mpt_timeout(void *arg)
 {
-	request_t *req = arg;
+	struct req_entry *req = arg;
 	struct scsi_xfer *xs = req->xfer;
 	struct scsi_link *linkp = xs->sc_link;
-	mpt_softc_t *mpt = (void *) linkp->adapter_softc;
+	struct mpt_softc *mpt = (void *) linkp->adapter_softc;
 	uint32_t oseq;
 	int s, index;
 
@@ -733,12 +733,12 @@ mpt_timeout(void *arg)
 }
 
 void
-mpt_done(mpt_softc_t *mpt, uint32_t reply)
+mpt_done(struct mpt_softc *mpt, uint32_t reply)
 {
 	struct scsi_xfer *xs = NULL;
 	struct scsi_link *linkp;
 	int index;
-	request_t *req;
+	struct req_entry *req;
 	MSG_REQUEST_HEADER *mpt_req;
 	MSG_SCSI_IO_REPLY *mpt_reply;
 
@@ -790,7 +790,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 
 	/* Make sure memory hasn't been trashed. */
 	if (req->index != index) {
-		mpt_prt(mpt, "mpt_done: corrupted request_t (0x%x)", index);
+		mpt_prt(mpt, "mpt_done: corrupted struct req_entry (0x%x)", index);
 		return;
 	}
 
@@ -989,10 +989,10 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 }
 
 int
-mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
+mpt_run_xfer(struct mpt_softc *mpt, struct scsi_xfer *xs)
 {
 	struct scsi_link *linkp = xs->sc_link;
-	request_t *req;
+	struct req_entry *req;
 	MSG_SCSI_IO_REQUEST *mpt_req;
 	int error, s;
 
@@ -1242,7 +1242,7 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 }
 
 void
-mpt_ctlop(mpt_softc_t *mpt, void *vmsg, uint32_t reply)
+mpt_ctlop(struct mpt_softc *mpt, void *vmsg, uint32_t reply)
 {
 	MSG_DEFAULT_REPLY *dmsg = vmsg;
 
@@ -1263,7 +1263,7 @@ mpt_ctlop(mpt_softc_t *mpt, void *vmsg, uint32_t reply)
 		if (mpt->verbose > 1)
 			mpt_prt(mpt, "enable port reply index %d", index);
 		if (index >= 0 && index < MPT_MAX_REQUESTS(mpt)) {
-			request_t *req = &mpt->request_pool[index];
+			struct req_entry *req = &mpt->request_pool[index];
 			req->debug = REQ_DONE;
 		}
 		mpt_free_reply(mpt, (reply << 1));
@@ -1275,7 +1275,7 @@ mpt_ctlop(mpt_softc_t *mpt, void *vmsg, uint32_t reply)
 		MSG_CONFIG_REPLY *msg = vmsg;
 		int index = msg->MsgContext & ~0x80000000;
 		if (index >= 0 && index < MPT_MAX_REQUESTS(mpt)) {
-			request_t *req = &mpt->request_pool[index];
+			struct req_entry *req = &mpt->request_pool[index];
 			req->debug = REQ_DONE;
 			req->sequence = reply;
 		} else
@@ -1289,7 +1289,7 @@ mpt_ctlop(mpt_softc_t *mpt, void *vmsg, uint32_t reply)
 }
 
 void
-mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
+mpt_event_notify_reply(struct mpt_softc *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 {
 
 	switch (msg->Event) {
@@ -1431,7 +1431,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 
 	if (msg->AckRequired) {
 		MSG_EVENT_ACK *ackp;
-		request_t *req;
+		struct req_entry *req;
 
 		if ((req = mpt_get_request(mpt)) == NULL) {
 			/* XXX XXX XXX XXXJRT */
@@ -1451,7 +1451,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 }
 
 void
-mpt_check_xfer_settings(mpt_softc_t *mpt, struct scsi_xfer *xs, MSG_SCSI_IO_REQUEST *mpt_req)
+mpt_check_xfer_settings(struct mpt_softc *mpt, struct scsi_xfer *xs, MSG_SCSI_IO_REQUEST *mpt_req)
 {
 	if (mpt->is_fc) {
 		/*
@@ -1486,7 +1486,7 @@ mpt_check_xfer_settings(mpt_softc_t *mpt, struct scsi_xfer *xs, MSG_SCSI_IO_REQU
 int
 mpt_action(struct scsi_xfer *xfer)
 {
-	mpt_softc_t *mpt = (void *) xfer->sc_link->adapter_softc;
+	struct mpt_softc *mpt = (void *) xfer->sc_link->adapter_softc;
 	int ret;
 
 	ret = mpt_run_xfer(mpt, xfer);
@@ -1516,7 +1516,7 @@ mpt_minphys(struct buf *bp)
  * maxsgl : maximum number of DMA segments
  */
 int
-mpt_alloc_fw_mem(mpt_softc_t *mpt, int maxsgl)
+mpt_alloc_fw_mem(struct mpt_softc *mpt, int maxsgl)
 {
 	int error, rseg;
 
@@ -1566,7 +1566,7 @@ destroy:
 }
 
 void
-mpt_free_fw_mem(mpt_softc_t *mpt)
+mpt_free_fw_mem(struct mpt_softc *mpt)
 {
 	bus_dmamap_unload(mpt->sc_dmat, mpt->fw_dmap);
 	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->fw, mpt->fw_image_size);

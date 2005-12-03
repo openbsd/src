@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.19 2005/12/02 03:55:57 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.20 2005/12/03 04:00:08 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -50,39 +50,39 @@ static int maxwait_ack = 0;
 static int maxwait_int = 0;
 static int maxwait_state = 0;
 
-__inline u_int32_t mpt_rd_db(mpt_softc_t *);
-__inline u_int32_t mpt_rd_intr(mpt_softc_t *);
-int mpt_wait_db_ack(mpt_softc_t *);
-int mpt_wait_db_int(mpt_softc_t *);
-int mpt_wait_state(mpt_softc_t *, enum DB_STATE_BITS);
-int mpt_get_iocfacts(mpt_softc_t *, MSG_IOC_FACTS_REPLY *);
-int mpt_get_portfacts(mpt_softc_t *, MSG_PORT_FACTS_REPLY *);
-int mpt_send_ioc_init(mpt_softc_t *, u_int32_t);
-void mpt_print_header(mpt_softc_t *, char *, CONFIG_PAGE_HEADER *);
-int mpt_read_config_info_mfg(mpt_softc_t *);
-int mpt_read_config_info_iou(mpt_softc_t *);
-int mpt_read_config_info_ioc(mpt_softc_t *);
-int mpt_read_config_info_raid(mpt_softc_t *);
-int mpt_read_config_info_spi(mpt_softc_t *);
-int mpt_set_initial_config_spi(mpt_softc_t *);
-int mpt_send_port_enable(mpt_softc_t *, int);
-int mpt_send_event_request(mpt_softc_t *, int);
+__inline u_int32_t mpt_rd_db(struct mpt_softc *);
+__inline u_int32_t mpt_rd_intr(struct mpt_softc *);
+int mpt_wait_db_ack(struct mpt_softc *);
+int mpt_wait_db_int(struct mpt_softc *);
+int mpt_wait_state(struct mpt_softc *, enum DB_STATE_BITS);
+int mpt_get_iocfacts(struct mpt_softc *, MSG_IOC_FACTS_REPLY *);
+int mpt_get_portfacts(struct mpt_softc *, MSG_PORT_FACTS_REPLY *);
+int mpt_send_ioc_init(struct mpt_softc *, u_int32_t);
+void mpt_print_header(struct mpt_softc *, char *, CONFIG_PAGE_HEADER *);
+int mpt_read_config_info_mfg(struct mpt_softc *);
+int mpt_read_config_info_iou(struct mpt_softc *);
+int mpt_read_config_info_ioc(struct mpt_softc *);
+int mpt_read_config_info_raid(struct mpt_softc *);
+int mpt_read_config_info_spi(struct mpt_softc *);
+int mpt_set_initial_config_spi(struct mpt_softc *);
+int mpt_send_port_enable(struct mpt_softc *, int);
+int mpt_send_event_request(struct mpt_softc *, int);
 
 __inline u_int32_t
-mpt_rd_db(mpt_softc_t *mpt)
+mpt_rd_db(struct mpt_softc *mpt)
 {
 	return mpt_read(mpt, MPT_OFFSET_DOORBELL);
 }
 
 __inline u_int32_t
-mpt_rd_intr(mpt_softc_t *mpt)
+mpt_rd_intr(struct mpt_softc *mpt)
 {
 	return mpt_read(mpt, MPT_OFFSET_INTR_STATUS);
 }
 
 /* Busy wait for a door bell to be read by IOC */
 int
-mpt_wait_db_ack(mpt_softc_t *mpt)
+mpt_wait_db_ack(struct mpt_softc *mpt)
 {
 	int i;
 	for (i=0; i < MPT_MAX_WAIT; i++) {
@@ -98,7 +98,7 @@ mpt_wait_db_ack(mpt_softc_t *mpt)
 
 /* Busy wait for a door bell interrupt */
 int
-mpt_wait_db_int(mpt_softc_t *mpt)
+mpt_wait_db_int(struct mpt_softc *mpt)
 {
 	int i;
 	for (i=0; i < MPT_MAX_WAIT; i++) {
@@ -113,7 +113,7 @@ mpt_wait_db_int(mpt_softc_t *mpt)
 
 /* Wait for IOC to transition to a give state */
 void
-mpt_check_doorbell(mpt_softc_t *mpt)
+mpt_check_doorbell(struct mpt_softc *mpt)
 {
 	u_int32_t db = mpt_rd_db(mpt);
 
@@ -137,7 +137,7 @@ mpt_check_doorbell(mpt_softc_t *mpt)
 
 /* Wait for IOC to transition to a give state */
 int
-mpt_wait_state(mpt_softc_t *mpt, enum DB_STATE_BITS state)
+mpt_wait_state(struct mpt_softc *mpt, enum DB_STATE_BITS state)
 {
 	int i;
 
@@ -155,7 +155,7 @@ mpt_wait_state(mpt_softc_t *mpt, enum DB_STATE_BITS state)
 
 /* Issue the reset COMMAND to the IOC */
 int
-mpt_soft_reset(mpt_softc_t *mpt)
+mpt_soft_reset(struct mpt_softc *mpt)
 {
 	if (mpt->verbose) {
 		mpt_prt(mpt, "soft reset");
@@ -197,7 +197,7 @@ mpt_soft_reset(mpt_softc_t *mpt)
  * processors in the chip.
  */
 void
-mpt_hard_reset(mpt_softc_t *mpt)
+mpt_hard_reset(struct mpt_softc *mpt)
 {
 	u_int32_t	diag0;
 	int		count;
@@ -263,7 +263,7 @@ mpt_hard_reset(mpt_softc_t *mpt)
  * fouls up the PCI configuration registers.
  */
 int
-mpt_reset(mpt_softc_t *mpt)
+mpt_reset(struct mpt_softc *mpt)
 {
 	int ret;
 
@@ -284,7 +284,7 @@ mpt_reset(mpt_softc_t *mpt)
 
 /* Return a command buffer to the free queue */
 void
-mpt_free_request(mpt_softc_t *mpt, request_t *req)
+mpt_free_request(struct mpt_softc *mpt, struct req_entry *req)
 {
 	if (req == NULL || req != &mpt->request_pool[req->index]) {
 		panic("mpt_free_request bad req ptr");
@@ -306,7 +306,7 @@ mpt_free_request(mpt_softc_t *mpt, request_t *req)
 
 /* Initialize command buffer */
 void
-mpt_init_request(mpt_softc_t *mpt, request_t *req)
+mpt_init_request(struct mpt_softc *mpt, struct req_entry *req)
 {
 	if (req == NULL || req != &mpt->request_pool[req->index]) {
 		panic("mpt_init_request bad req ptr");
@@ -318,10 +318,10 @@ mpt_init_request(mpt_softc_t *mpt, request_t *req)
 	SLIST_INSERT_HEAD(&mpt->request_free_list, req, link);
 }
 /* Get a command buffer from the free queue */
-request_t *
-mpt_get_request(mpt_softc_t *mpt)
+struct req_entry *
+mpt_get_request(struct mpt_softc *mpt)
 {
-	request_t *req;
+	struct req_entry *req;
 	req = SLIST_FIRST(&mpt->request_free_list);
 	if (req != NULL) {
 		if (req != &mpt->request_pool[req->index]) {
@@ -339,7 +339,7 @@ mpt_get_request(mpt_softc_t *mpt)
 
 /* Pass the command to the IOC */
 void
-mpt_send_cmd(mpt_softc_t *mpt, request_t *req)
+mpt_send_cmd(struct mpt_softc *mpt, struct req_entry *req)
 {
 	req->sequence = mpt->sequence++;
 	if (mpt->verbose > 1) {
@@ -366,14 +366,14 @@ mpt_send_cmd(mpt_softc_t *mpt, request_t *req)
  * finished processing it.
  */
 void
-mpt_free_reply(mpt_softc_t *mpt, u_int32_t ptr)
+mpt_free_reply(struct mpt_softc *mpt, u_int32_t ptr)
 {
 	mpt_write(mpt, MPT_OFFSET_REPLY_Q, ptr);
 }
 
 /* Get a reply from the IOC */
 u_int32_t
-mpt_pop_reply_queue(mpt_softc_t *mpt)
+mpt_pop_reply_queue(struct mpt_softc *mpt)
 {
 	return mpt_read(mpt, MPT_OFFSET_REPLY_Q);
 }
@@ -385,7 +385,7 @@ mpt_pop_reply_queue(mpt_softc_t *mpt)
  * commands such as device/bus reset as specified by LSI.
  */
 int
-mpt_send_handshake_cmd(mpt_softc_t *mpt, size_t len, void *cmd)
+mpt_send_handshake_cmd(struct mpt_softc *mpt, size_t len, void *cmd)
 {
 	int i;
 	u_int32_t data, *data32;
@@ -445,7 +445,7 @@ mpt_send_handshake_cmd(mpt_softc_t *mpt, size_t len, void *cmd)
 
 /* Get the response from the handshake register */
 int
-mpt_recv_handshake_reply(mpt_softc_t *mpt, size_t reply_len, void *reply)
+mpt_recv_handshake_reply(struct mpt_softc *mpt, size_t reply_len, void *reply)
 {
 	int left, reply_left;
 	u_int16_t *data16;
@@ -515,7 +515,7 @@ mpt_recv_handshake_reply(mpt_softc_t *mpt, size_t reply_len, void *reply)
 }
 
 int
-mpt_get_iocfacts(mpt_softc_t *mpt, MSG_IOC_FACTS_REPLY *freplp)
+mpt_get_iocfacts(struct mpt_softc *mpt, MSG_IOC_FACTS_REPLY *freplp)
 {
 	MSG_IOC_FACTS f_req;
 	int error;
@@ -531,7 +531,7 @@ mpt_get_iocfacts(mpt_softc_t *mpt, MSG_IOC_FACTS_REPLY *freplp)
 }
 
 int
-mpt_get_portfacts(mpt_softc_t *mpt, MSG_PORT_FACTS_REPLY *freplp)
+mpt_get_portfacts(struct mpt_softc *mpt, MSG_PORT_FACTS_REPLY *freplp)
 {
 	MSG_PORT_FACTS f_req;
 	int error;
@@ -554,7 +554,7 @@ mpt_get_portfacts(mpt_softc_t *mpt, MSG_PORT_FACTS_REPLY *freplp)
  * frames from the IOC that we will be allocating.
  */
 int
-mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
+mpt_send_ioc_init(struct mpt_softc *mpt, u_int32_t who)
 {
 	int error = 0;
 	MSG_IOC_INIT init;
@@ -606,11 +606,11 @@ mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
  */
 
 int
-mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,
+mpt_read_cfg_header(struct mpt_softc *mpt, int PageType, int PageNumber,
     int PageAddress, CONFIG_PAGE_HEADER *rslt)
 {
 	int count;
-	request_t *req;
+	struct req_entry *req;
 	MSG_CONFIG *cfgp;
 	MSG_CONFIG_REPLY *reply;
 
@@ -657,10 +657,10 @@ mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,
 #define	CFG_DATA_OFF	128
 
 int
-mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, CONFIG_PAGE_HEADER *hdr)
+mpt_read_cfg_page(struct mpt_softc *mpt, int PageAddress, CONFIG_PAGE_HEADER *hdr)
 {
 	int count;
-	request_t *req;
+	struct req_entry *req;
 	SGE_SIMPLE32 *se;
 	MSG_CONFIG *cfgp;
 	size_t amt;
@@ -744,10 +744,10 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, CONFIG_PAGE_HEADER *hdr)
 }
 
 int
-mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, CONFIG_PAGE_HEADER *hdr)
+mpt_write_cfg_page(struct mpt_softc *mpt, int PageAddress, CONFIG_PAGE_HEADER *hdr)
 {
 	int count, hdr_attr;
-	request_t *req;
+	struct req_entry *req;
 	SGE_SIMPLE32 *se;
 	MSG_CONFIG *cfgp;
 	size_t amt;
@@ -829,7 +829,7 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, CONFIG_PAGE_HEADER *hdr)
 }
 
 void
-mpt_print_header(mpt_softc_t *mpt, char *s, CONFIG_PAGE_HEADER *phdr)
+mpt_print_header(struct mpt_softc *mpt, char *s, CONFIG_PAGE_HEADER *phdr)
 {
 	mpt_prt(mpt, "%s %x: %x %x %x %x",
 	    s,
@@ -844,7 +844,7 @@ mpt_print_header(mpt_softc_t *mpt, char *s, CONFIG_PAGE_HEADER *phdr)
  * Read manufacturing configuration information
  */
 int
-mpt_read_config_info_mfg(mpt_softc_t *mpt)
+mpt_read_config_info_mfg(struct mpt_softc *mpt)
 {
 	int rv, i;
 	CONFIG_PAGE_HEADER *phdr[5] = {
@@ -934,7 +934,7 @@ mpt_read_config_info_mfg(mpt_softc_t *mpt)
  * Read IO Unit configuration information
  */
 int
-mpt_read_config_info_iou(mpt_softc_t *mpt)
+mpt_read_config_info_iou(struct mpt_softc *mpt)
 {
 	int rv, i;
 
@@ -998,7 +998,7 @@ mpt_read_config_info_iou(mpt_softc_t *mpt)
  * Read IOC configuration information
  */
 int
-mpt_read_config_info_ioc(mpt_softc_t *mpt)
+mpt_read_config_info_ioc(struct mpt_softc *mpt)
 {
 	int rv, i;
 	CONFIG_PAGE_HEADER *phdr[5] = {
@@ -1098,7 +1098,7 @@ mpt_read_config_info_ioc(mpt_softc_t *mpt)
  * Read RAID Volume pages
  */
 int
-mpt_read_config_info_raid(mpt_softc_t *mpt)
+mpt_read_config_info_raid(struct mpt_softc *mpt)
 {
 	int rv, i;
 
@@ -1214,7 +1214,7 @@ mpt_read_config_info_raid(mpt_softc_t *mpt)
  * Read SCSI configuration information
  */
 int
-mpt_read_config_info_spi(mpt_softc_t *mpt)
+mpt_read_config_info_spi(struct mpt_softc *mpt)
 {
 	int rv, i;
 
@@ -1364,7 +1364,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
  * In particular, validate SPI Port Page 1.
  */
 int
-mpt_set_initial_config_spi(mpt_softc_t *mpt)
+mpt_set_initial_config_spi(struct mpt_softc *mpt)
 {
 	int i, pp1val = ((1 << mpt->mpt_ini_id) << 16) | mpt->mpt_ini_id;
 
@@ -1423,10 +1423,10 @@ mpt_set_initial_config_spi(mpt_softc_t *mpt)
  * Enable IOC port
  */
 int
-mpt_send_port_enable(mpt_softc_t *mpt, int port)
+mpt_send_port_enable(struct mpt_softc *mpt, int port)
 {
 	int count;
-	request_t *req;
+	struct req_entry *req;
 	MSG_PORT_ENABLE *enable_req;
 
 	req = mpt_get_request(mpt);
@@ -1464,9 +1464,9 @@ mpt_send_port_enable(mpt_softc_t *mpt, int port)
  * instead of the handshake register.
  */
 int
-mpt_send_event_request(mpt_softc_t *mpt, int onoff)
+mpt_send_event_request(struct mpt_softc *mpt, int onoff)
 {
-	request_t *req;
+	struct req_entry *req;
 	MSG_EVENT_NOTIFY *enable_req;
 
 	req = mpt_get_request(mpt);
@@ -1491,7 +1491,7 @@ mpt_send_event_request(mpt_softc_t *mpt, int onoff)
  * Un-mask the interrupts on the chip.
  */
 void
-mpt_enable_ints(mpt_softc_t *mpt)
+mpt_enable_ints(struct mpt_softc *mpt)
 {
 	/* Unmask every thing except door bell int */
 	mpt_write(mpt, MPT_OFFSET_INTR_MASK, MPT_INTR_DB_MASK);
@@ -1501,7 +1501,7 @@ mpt_enable_ints(mpt_softc_t *mpt)
  * Mask the interrupts on the chip.
  */
 void
-mpt_disable_ints(mpt_softc_t *mpt)
+mpt_disable_ints(struct mpt_softc *mpt)
 {
 	/* Mask all interrupts */
 	mpt_write(mpt, MPT_OFFSET_INTR_MASK,
@@ -1510,7 +1510,7 @@ mpt_disable_ints(mpt_softc_t *mpt)
 
 /* (Re)Initialize the chip for use */
 int
-mpt_init(mpt_softc_t *mpt, u_int32_t who)
+mpt_init(struct mpt_softc *mpt, u_int32_t who)
 {
 	int try;
 	MSG_IOC_FACTS_REPLY facts;
@@ -1763,7 +1763,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
  * Returns 0 for success, error for failure
  */
 int
-mpt_do_upload(mpt_softc_t *mpt)
+mpt_do_upload(struct mpt_softc *mpt)
 {
 	u_int8_t        request[MPT_RQSL(mpt)];
 	FWUploadReply_t reply;
@@ -1889,7 +1889,7 @@ mpt_do_upload(mpt_softc_t *mpt)
  * Returns 0 for success, <0 for failure
  */
 int
-mpt_downloadboot(mpt_softc_t *mpt)
+mpt_downloadboot(struct mpt_softc *mpt)
 {
 	MpiFwHeader_t		*fwhdr = NULL;
 	MpiExtImageHeader_t	*exthdr = NULL;

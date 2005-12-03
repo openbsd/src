@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.h,v 1.6 2005/12/01 02:15:21 krw Exp $	*/
+/*	$OpenBSD: mpt.h,v 1.7 2005/12/03 04:00:08 marco Exp $	*/
 /*	$NetBSD: mpt.h,v 1.2 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
@@ -158,33 +158,33 @@ enum _MPT_DIAG_BITS {
 #define MPT_CONTEXT_MASK  (~0xE0000000)
 
 #ifdef _KERNEL
-int mpt_soft_reset(mpt_softc_t *);
-void mpt_hard_reset(mpt_softc_t *);
-int mpt_recv_handshake_reply(mpt_softc_t *, size_t, void *);
+int mpt_soft_reset(struct mpt_softc *);
+void mpt_hard_reset(struct mpt_softc *);
+int mpt_recv_handshake_reply(struct mpt_softc *, size_t, void *);
 
-void mpt_send_cmd(mpt_softc_t *, request_t *);
-void mpt_free_reply(mpt_softc_t *, u_int32_t);
-void mpt_enable_ints(mpt_softc_t *);
-void mpt_disable_ints(mpt_softc_t *);
-u_int32_t mpt_pop_reply_queue(mpt_softc_t *);
-int mpt_init(mpt_softc_t *, u_int32_t);
-int mpt_reset(mpt_softc_t *);
-int mpt_send_handshake_cmd(mpt_softc_t *, size_t, void *);
-request_t * mpt_get_request(mpt_softc_t *);
-void mpt_free_request(mpt_softc_t *, request_t *);
-void mpt_init_request(mpt_softc_t *, request_t *);
+void mpt_send_cmd(struct mpt_softc *, struct req_entry *);
+void mpt_free_reply(struct mpt_softc *, u_int32_t);
+void mpt_enable_ints(struct mpt_softc *);
+void mpt_disable_ints(struct mpt_softc *);
+u_int32_t mpt_pop_reply_queue(struct mpt_softc *);
+int mpt_init(struct mpt_softc *, u_int32_t);
+int mpt_reset(struct mpt_softc *);
+int mpt_send_handshake_cmd(struct mpt_softc *, size_t, void *);
+struct req_entry * mpt_get_request(struct mpt_softc *);
+void mpt_free_request(struct mpt_softc *, struct req_entry *);
+void mpt_init_request(struct mpt_softc *, struct req_entry *);
 int mpt_intr(void *);
-void mpt_check_doorbell(mpt_softc_t *);
+void mpt_check_doorbell(struct mpt_softc *);
 
-int mpt_read_cfg_page(mpt_softc_t *, int, CONFIG_PAGE_HEADER *);
-int mpt_write_cfg_page(mpt_softc_t *, int, CONFIG_PAGE_HEADER *);
-int mpt_read_cfg_header(mpt_softc_t *, int, int, int, CONFIG_PAGE_HEADER *);
+int mpt_read_cfg_page(struct mpt_softc *, int, CONFIG_PAGE_HEADER *);
+int mpt_write_cfg_page(struct mpt_softc *, int, CONFIG_PAGE_HEADER *);
+int mpt_read_cfg_header(struct mpt_softc *, int, int, int, CONFIG_PAGE_HEADER *);
 
 /* FW Download Boot */
-int mpt_downloadboot(mpt_softc_t *);
-int mpt_do_upload(mpt_softc_t *);
-int mpt_alloc_fw_mem(mpt_softc_t *, int);
-void mpt_free_fw_mem(mpt_softc_t *);
+int mpt_downloadboot(struct mpt_softc *);
+int mpt_do_upload(struct mpt_softc *);
+int mpt_alloc_fw_mem(struct mpt_softc *, int);
+void mpt_free_fw_mem(struct mpt_softc *);
 
 /* mpt_debug.c functions */
 void mpt_print_reply(void *);
