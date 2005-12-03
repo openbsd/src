@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.105 2005/12/03 01:02:09 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.106 2005/12/03 02:10:58 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3001,6 +3001,8 @@ rcs_state_get(RCSFILE *rfp, RCSNUM *rev)
 }
 
 
+#if !defined(RCSPROG)
+
 static char *month_tab[] = {
 	"Jan",
 	"Feb",
@@ -3219,3 +3221,5 @@ out:
 
 	return (ret);
 }
+
+#endif
