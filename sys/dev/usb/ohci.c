@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.64 2005/11/21 18:16:42 millert Exp $ */
+/*	$OpenBSD: ohci.c,v 1.65 2005/12/03 03:40:52 brad Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2476,6 +2476,9 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
+			case 0: /* Language table */
+				totlen = ohci_str(buf, len, "\001");
+				break;
 			case 1: /* Vendor */
 				totlen = ohci_str(buf, len, sc->sc_vendor);
 				break;

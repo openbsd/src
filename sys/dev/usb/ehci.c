@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.52 2005/11/21 18:16:42 millert Exp $ */
+/*	$OpenBSD: ehci.c,v 1.53 2005/12/03 03:40:52 brad Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -479,7 +479,7 @@ ehci_init(ehci_softc_t *sc)
 
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
-	    EHCI_CMD_ITC_2 | /* 2 microframes */
+	    EHCI_CMD_ITC_2 | /* 2 microframes interrupt delay */
 	    (EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_FLS_M) |
 	    EHCI_CMD_ASE |
 	    EHCI_CMD_PSE |
@@ -1760,6 +1760,9 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
+			case 0: /* Language table */
+				totlen = ehci_str(buf, len, "\001");
+				break;
 			case 1: /* Vendor */
 				totlen = ehci_str(buf, len, sc->sc_vendor);
 				break;
