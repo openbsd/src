@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2005/01/14 22:39:27 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 2005/12/03 21:36:17 brad Exp $	*/
 /*	$NetBSD: clock.c,v 1.20 1997/04/27 20:43:38 thorpej Exp $	*/
 
 /*
@@ -584,7 +584,7 @@ send_clock_cmd(volatile u_int8_t *address, u_int8_t cmd, u_int8_t *data,
 	u_int8_t status;
 	int s;
 
-	s = splimp();
+	s = splvm();
 
 	while ((address[HILP_STAT] & HIL_BUSY) != 0)
 		DELAY(1);
