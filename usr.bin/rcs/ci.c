@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.79 2005/12/02 14:29:13 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.80 2005/12/03 16:50:48 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
 #include "diff.h"
 #include "rcsprog.h"
 
-#define CI_OPTSTRING    "d::f::i::j::k:l::m:M::N:n:qr::s:Tu::Vw:x:"
+#define CI_OPTSTRING    "d::f::i::j::k:l::m:M::N:n:qr::s:Tt:u::Vw:x:"
 #define DATE_NOW        -1
 #define DATE_MTIME      -2
 
@@ -59,7 +59,7 @@ struct checkin_params {
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN], *rcs_msg, *username, *deltatext, *filename;
-	const char *symbol, *state;
+	const char *symbol, *state, *description;
 };
 
 static int	 checkin_attach_symbol(struct checkin_params *pb);
@@ -101,7 +101,7 @@ checkin_main(int argc, char **argv)
 	pb.date = DATE_NOW;
 	pb.file = NULL;
 	pb.rcs_msg = pb.username = NULL;
-	pb.state = pb.symbol = NULL;
+	pb.state = pb.symbol = pb.description = NULL;
 	pb.newrev =  NULL;
 	pb.fmode = pb.flags = status = 0;
 
@@ -192,6 +192,12 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'T':
 			pb.flags |= PRESERVETIME;
+			break;
+		case 't':
+			if ((pb.description = strdup(rcs_optarg)) == NULL) {
+				cvs_log(LP_ERRNO, "out of memory");
+				exit(1);
+			}
 			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
@@ -566,8 +572,9 @@ checkin_update(struct checkin_params *pb)
 static int
 checkin_init(struct checkin_params *pb)
 {
-	BUF *bp;
-	char *rcs_desc, *filec;
+	BUF *bp, *dp;
+	char *filec;
+	const char *rcs_desc;
 
 	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
@@ -581,7 +588,28 @@ checkin_init(struct checkin_params *pb)
 	filec = (char *)cvs_buf_release(bp);
 
 	/* Get description from user */
-	rcs_desc = checkin_getdesc();
+	if (pb->description == NULL)
+		rcs_desc = (const char *)checkin_getdesc();
+	else {
+		if (*pb->description == '-') {
+			pb->description++;
+			dp = cvs_buf_load(pb->description, BUF_AUTOEXT);
+			if (dp == NULL) {
+				cvs_log(LP_ERR,
+				    "failed to load description file '%s'",
+				    pb->description);
+				free(filec);
+				return (-1);
+			}
+			if (cvs_buf_putc(dp, '\0') < 0) {
+				free(filec);
+				return (-1);
+			}
+			rcs_desc = (const char *)cvs_buf_release(dp);
+		}
+		else
+			rcs_desc = (const char *)pb->description;
+	}
 	rcs_desc_set(pb->file, rcs_desc);
 
 	/* Now add our new revision */
