@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2005/12/03 18:54:34 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2005/12/03 19:06:11 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -47,7 +47,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/simplelock.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -56,6 +55,7 @@
 
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
+#include <machine/lock.h>
 #include <machine/pmap_table.h>
 
 #include <uvm/uvm.h>
@@ -143,8 +143,8 @@ pg_to_pvh(struct vm_page *pg)
  */
 
 #ifdef	MULTIPROCESSOR
-#define	PMAP_LOCK(pmap)		simple_lock(&(pmap)->pm_lock)
-#define	PMAP_UNLOCK(pmap)	simple_unlock(&(pmap)->pm_lock)
+#define	PMAP_LOCK(pmap)		__cpu_simple_lock(&(pmap)->pm_lock)
+#define	PMAP_UNLOCK(pmap)	__cpu_simple_unlock(&(pmap)->pm_lock)
 #else
 #define	PMAP_LOCK(pmap)		do { /* nothing */ } while (0)
 #define	PMAP_UNLOCK(pmap)	do { /* nothing */ } while (0)
@@ -510,7 +510,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
  *	phys_map_vaddr	VA of page mapped arbitrarily for debug/IO
  *
  * Calls:
- *	simple_lock_init
+ *	__cpu_simple_lock_init
  *	pmap_map
  *
  *    The physical address 'load_start' is mapped at
@@ -544,7 +544,9 @@ pmap_bootstrap(vaddr_t load_start)
 	pmap_table_t ptable;
 	extern void *etext;
 
-	simple_lock_init(&kernel_pmap->pm_lock);
+#ifdef MULTIPROCESSOR
+	__cpu_simple_lock_init(&kernel_pmap->pm_lock);
+#endif
 
 	/*
 	 * Allocate the kernel page table from the front of available
@@ -889,7 +891,9 @@ pmap_create(void)
 	 * Initialize pmap structure.
 	 */
 	pmap->pm_count = 1;
-	simple_lock_init(&pmap->pm_lock);
+#ifdef MULTIPROCESSOR
+	__cpu_simple_lock_init(&pmap->pm_lock);
+#endif
 	pmap->pm_cpus = 0;
 
 	return pmap;
@@ -1266,7 +1270,7 @@ pmap_remove(pmap_t pmap, vaddr_t s, vaddr_t e)
  *	pv lists
  *
  * Calls:
- *	simple_lock
+ *	__cpu_simple_lock
  *	pmap_pte
  *	pool_put
  *
@@ -1313,7 +1317,9 @@ pmap_remove_all(struct vm_page *pg)
 	 * We don't have to lock the pv list, since we have the entire pmap
 	 * system.
 	 */
+#ifdef MULTIPROCESSOR
 remove_all_Retry:
+#endif
 
 	pvl = pg_to_pvh(pg);
 
@@ -1321,8 +1327,10 @@ remove_all_Retry:
 	 * Loop for each entry on the pv list
 	 */
 	while (pvl != NULL && (pmap = pvl->pv_pmap) != NULL) {
-		if (!simple_lock_try(&pmap->pm_lock))
+#ifdef MULTIPROCESSOR
+		if (!__cpu_simple_lock_try(&pmap->pm_lock))
 			goto remove_all_Retry;
+#endif
 
 		va = pvl->pv_va;
 		pte = pmap_pte(pmap, va);
@@ -2120,7 +2128,9 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 
 	spl = splvm();
 
+#ifdef MULTIPROCESSOR
 changebit_Retry:
+#endif
 	pvl = pg_to_pvh(pg);
 
 	/*
@@ -2141,9 +2151,11 @@ changebit_Retry:
 	/* for each listed pmap, update the affected bits */
 	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
-		if (!simple_lock_try(&pmap->pm_lock)) {
+#ifdef MULTIPROCESSOR
+		if (!__cpu_simple_lock_try(&pmap->pm_lock)) {
 			goto changebit_Retry;
 		}
+#endif
 		users = pmap->pm_cpus;
 		kflush = pmap == kernel_pmap;
 
@@ -2221,7 +2233,9 @@ pmap_testbit(struct vm_page *pg, int bit)
 
 	spl = splvm();
 
+#ifdef MULTIPROCESSOR
 testbit_Retry:
+#endif
 	pvl = pg_to_pvh(pg);
 
 	if (pvl->pv_flags & bit) {
@@ -2249,9 +2263,11 @@ testbit_Retry:
 	/* for each listed pmap, check modified bit for given page */
 	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
-		if (!simple_lock_try(&pmap->pm_lock)) {
+#ifdef MULTIPROCESSOR
+		if (!__cpu_simple_lock_try(&pmap->pm_lock)) {
 			goto testbit_Retry;
 		}
+#endif
 
 		pte = pmap_pte(pmap, pvep->pv_va);
 		if (pte == NULL || !PDT_VALID(pte)) {
@@ -2307,7 +2323,9 @@ pmap_unsetbit(struct vm_page *pg, int bit)
 
 	spl = splvm();
 
+#ifdef MULTIPROCESSOR
 unsetbit_Retry:
+#endif
 	pvl = pg_to_pvh(pg);
 
 	/*
@@ -2328,9 +2346,11 @@ unsetbit_Retry:
 	/* for each listed pmap, update the specified bit */
 	for (pvep = pvl; pvep != NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
-		if (!simple_lock_try(&pmap->pm_lock)) {
+#ifdef MULTIPROCESSOR
+		if (!__cpu_simple_lock_try(&pmap->pm_lock)) {
 			goto unsetbit_Retry;
 		}
+#endif
 		users = pmap->pm_cpus;
 		kflush = pmap == kernel_pmap;
 

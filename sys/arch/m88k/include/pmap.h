@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 2005/12/02 21:16:45 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 2005/12/03 19:06:08 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -23,11 +23,13 @@
 
 struct pmap {
 	sdt_entry_t		*pm_stab;	/* virtual pointer to sdt */
-	apr_t			pm_apr;
-	int			pm_count;	/* reference count */
+	apr_t			 pm_apr;
+	int			 pm_count;	/* reference count */
 	/* cpus using of this pmap; NCPU must be <= 32 */
-	u_int32_t		pm_cpus;
-	struct simplelock	pm_lock;
+	u_int32_t		 pm_cpus;
+#ifdef MULTIPROCESSOR
+	__cpu_simple_lock_t	 pm_lock;
+#endif
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 

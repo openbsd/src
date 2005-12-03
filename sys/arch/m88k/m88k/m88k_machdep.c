@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.10 2005/12/03 14:30:06 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.11 2005/12/03 19:06:11 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -56,6 +56,7 @@
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/lock.h>
 #include <machine/locore.h>
 #include <machine/reg.h>
 #ifdef M88100
@@ -80,6 +81,7 @@ void dumpconf(void);
  */
 
 #ifdef MULTIPROCESSOR
+__cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
 cpuid_t	master_cpu;
 #endif
 

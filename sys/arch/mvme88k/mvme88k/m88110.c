@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.31 2005/12/03 18:48:22 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.32 2005/12/03 19:06:12 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -59,10 +59,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/lock.h>
 #include <machine/cmmu.h>
 #include <machine/m88110.h>
 #include <machine/m88410.h>
@@ -180,19 +180,20 @@ m88110_cpu_configuration_print(int master)
 	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
 	int procvers = (pid & PID_VN) >> VN_SHIFT;
 	int cpu = cpu_number();
-	struct simplelock print_lock;
+	static __cpu_simple_lock_t print_lock;
 
 	CMMU_LOCK;
 	if (master)
-		simple_lock_init(&print_lock);
+		__cpu_simple_lock_init(&print_lock);
 
-	simple_lock(&print_lock);
+	__cpu_simple_lock(&print_lock);
 
 	printf("cpu%d: ", cpu);
 	if (proctype != ARN_88110) {
 		printf("unknown model arch 0x%x version 0x%x\n",
 		    proctype, procvers);
-		simple_unlock(&print_lock);
+		__cpu_simple_unlock(&print_lock);
+		CMMU_UNLOCK;
 		return;
 	}
 
@@ -201,7 +202,7 @@ m88110_cpu_configuration_print(int master)
 		printf(", external M88410 cache controller");
 	printf("\n");
 
-	simple_unlock(&print_lock);
+	__cpu_simple_unlock(&print_lock);
         CMMU_UNLOCK;
 }
 

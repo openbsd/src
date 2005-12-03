@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.13 2005/12/03 16:52:16 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.14 2005/12/03 19:06:11 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -83,13 +83,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/locore.h>
+#include <machine/lock.h>
 #include <machine/m8820x.h>
 
 #ifdef DDB
@@ -266,21 +266,21 @@ m8820x_cpu_configuration_print(int master)
 	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
 	int procvers = (pid & PID_VN) >> VN_SHIFT;
 	int mmu, cnt, cpu = cpu_number();
-	struct simplelock print_lock;
+	static __cpu_simple_lock_t print_lock;
 #ifdef M88200_HAS_SPLIT_ADDRESS
 	int aline, abit, amask;
 #endif
 
 	if (master)
-		simple_lock_init(&print_lock);
+		__cpu_simple_lock_init(&print_lock);
 
-	simple_lock(&print_lock);
+	__cpu_simple_lock(&print_lock);
 
 	printf("cpu%d: ", cpu);
 	if (proctype != ARN_88100) {
 		printf("unknown model arch 0x%x rev 0x%x\n",
 		    proctype, procvers);
-		simple_unlock(&print_lock);
+		__cpu_simple_unlock(&print_lock);
 		return;
 	}
 
@@ -344,7 +344,7 @@ m8820x_cpu_configuration_print(int master)
 	}
 #endif
 
-	simple_unlock(&print_lock);
+	__cpu_simple_unlock(&print_lock);
 }
 
 /*
