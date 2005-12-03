@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.5 2005/11/29 19:38:09 cloder Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.6 2005/12/03 00:27:54 cloder Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -68,6 +68,13 @@ typedef	struct strg {
 typedef enum {
 	CONST, VOLATILE, RESTRICT
 } tqual_t;
+
+/*
+ * attributes
+ */
+typedef enum {
+	NORETURN
+} attr_t;
 
 /*
  * Integer and floating point values are stored in this structure
@@ -220,6 +227,7 @@ typedef	struct sym {
 		enum_t	*_s_et;	/* tag, if it is a enumerator */
 		tspec_t	_s_tsp;	/* type (only for keywords) */
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
+		tqual_t	_s_att;	/* attribute (only for keywords) */
 		struct	sym *_s_args; /* arguments in old style function
 					 definitions */
 	} u;
@@ -234,6 +242,7 @@ typedef	struct sym {
 #define	s_etyp	u._s_et
 #define	s_tspec	u._s_tsp
 #define	s_tqual	u._s_tqu
+#define	s_attr	u._s_att
 #define	s_args	u._s_args
 
 /*
