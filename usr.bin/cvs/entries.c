@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.51 2005/12/03 01:02:08 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.52 2005/12/03 15:02:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,6 +53,7 @@ cvs_ent_open(const char *dir, int flags)
 {
 	size_t len;
 	int exists, nodir;
+	char bpath[MAXPATHLEN], *p;
 	char cdpath[MAXPATHLEN], ebuf[CVS_ENT_MAXLINELEN], entpath[MAXPATHLEN];
 	char mode[4];
 	FILE *fp;
@@ -76,6 +77,10 @@ cvs_ent_open(const char *dir, int flags)
 
 	if ((stat(cdpath, &st) == 0) && S_ISDIR(st.st_mode))
 		nodir = 0;	/* the CVS/ directory does exist */
+
+	len = cvs_path_cat(dir, CVS_PATH_BACKUPENTRIES, bpath, sizeof(bpath));
+	if (len >= sizeof(entpath))
+		return (NULL);
 
 	len = cvs_path_cat(dir, CVS_PATH_ENTRIES, entpath, sizeof(entpath));
 	if (len >= sizeof(entpath))
@@ -123,6 +128,13 @@ cvs_ent_open(const char *dir, int flags)
 		return (NULL);
 	}
 
+	ep->cef_bpath = strdup(bpath);
+	if (ep->cef_bpath == NULL) {
+		cvs_ent_close(ep);
+		(void)fclose(fp);
+		return (NULL);
+	}
+
 	ep->cef_cur = NULL;
 	TAILQ_INIT(&(ep->cef_ent));
 
@@ -138,6 +150,7 @@ cvs_ent_open(const char *dir, int flags)
 
 		TAILQ_INSERT_TAIL(&(ep->cef_ent), ent, ce_list);
 	}
+
 	if (ferror(fp)) {
 		cvs_log(LP_ERRNO, "read error on %s", entpath);
 		(void)fclose(fp);
@@ -151,8 +164,43 @@ cvs_ent_open(const char *dir, int flags)
 
 	(void)fclose(fp);
 
-	if (exists == 1)
-		ep->cef_flags |= CVS_ENTF_SYNC;
+	/*
+	 * look for Entries.Log and add merge it together with our
+	 * list of things.
+	 */
+	len = cvs_path_cat(dir, CVS_PATH_LOGENTRIES, entpath, sizeof(entpath));
+	if (len >= sizeof(entpath)) {
+		cvs_ent_close(ep);
+		return (NULL);
+	}
+
+	fp = fopen(entpath, "r");
+	if (fp != NULL) {
+		while (fgets(ebuf, (int)sizeof(ebuf), fp) != NULL) {
+			len = strlen(ebuf);
+			if ((len > 0) && (ebuf[len - 1] == '\n'))
+				ebuf[--len] = '\0';
+
+			p = &ebuf[2];
+			ent = cvs_ent_parse(p);
+			if (ent == NULL)
+				continue;
+
+			if (ebuf[0] == 'A')
+				cvs_ent_add(ep, ent);
+			else if (ebuf[0] == 'R')
+				cvs_ent_remove(ep, ent->ce_name, 0);
+		}
+		(void)fclose(fp);
+
+		/* always un-synced here, because we
+		 * just added or removed entries.
+		 */
+		ep->cef_flags &= ~CVS_ENTF_SYNC;
+	} else {
+		if (exists == 1)
+			ep->cef_flags |= CVS_ENTF_SYNC;
+	}
 
 	return (ep);
 }
@@ -177,6 +225,9 @@ cvs_ent_close(CVSENTRIES *ep)
 
 	if (ep->cef_path != NULL)
 		free(ep->cef_path);
+
+	if (ep->cef_bpath != NULL)
+		free(ep->cef_bpath);
 
 	while (!TAILQ_EMPTY(&(ep->cef_ent))) {
 		ent = TAILQ_FIRST(&(ep->cef_ent));
@@ -442,8 +493,8 @@ cvs_ent_write(CVSENTRIES *ef)
 	if (ef->cef_flags & CVS_ENTF_SYNC)
 		return (0);
 
-	if ((fp = fopen(ef->cef_path, "w")) == NULL) {
-		cvs_log(LP_ERRNO, "failed to open Entries `%s'", ef->cef_path);
+	if ((fp = fopen(ef->cef_bpath, "w")) == NULL) {
+		cvs_log(LP_ERRNO, "failed to open Entries `%s'", ef->cef_bpath);
 		return (-1);
 	}
 
@@ -488,5 +539,12 @@ cvs_ent_write(CVSENTRIES *ef)
 
 	ef->cef_flags |= CVS_ENTF_SYNC;
 	fclose(fp);
+
+	/* rename Entries.Backup to Entries */
+	cvs_rename(ef->cef_bpath, ef->cef_path);
+
+	/* remove Entries.Log */
+	cvs_unlink(CVS_PATH_LOGENTRIES);
+
 	return (0);
 }

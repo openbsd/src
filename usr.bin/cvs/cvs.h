@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.88 2005/12/03 01:02:08 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.89 2005/12/03 15:02:54 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -137,6 +137,7 @@
 #define CVS_PATH_ENTRIES	CVS_PATH_CVSDIR "/Entries"
 #define CVS_PATH_STATICENTRIES	CVS_PATH_CVSDIR "/Entries.Static"
 #define CVS_PATH_LOGENTRIES	CVS_PATH_CVSDIR "/Entries.Log"
+#define CVS_PATH_BACKUPENTRIES	CVS_PATH_CVSDIR "/Entries.Backup"
 #define CVS_PATH_ROOTSPEC	CVS_PATH_CVSDIR "/Root"
 #define CVS_PATH_REPOSITORY	CVS_PATH_CVSDIR "/Repository"
 #define CVS_PATH_TAG		CVS_PATH_CVSDIR "/Tag"
@@ -278,6 +279,7 @@ struct cvs_ent {
 
 typedef struct cvs_entries {
 	char	*cef_path;
+	char	*cef_bpath;
 	u_int	 cef_flags;
 
 	TAILQ_HEAD(cvsentrieshead, cvs_ent)	 cef_ent;
