@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.21 2005/11/23 11:30:14 mickey Exp $	*/
+/*	$OpenBSD: wds.c,v 1.22 2005/12/03 17:13:22 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -1075,7 +1075,6 @@ wds_scsi_cmd(xs)
 		mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
 #endif
 	if ((scb = wds_get_scb(sc, flags, NEEDBUFFER(sc))) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
 	scb->xs = xs;

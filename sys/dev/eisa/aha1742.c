@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.20 2005/02/17 18:07:36 jfb Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.21 2005/12/03 17:13:22 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -959,7 +959,6 @@ ahb_scsi_cmd(xs)
 		xs->flags &= ~ITSDONE;
 	}
 	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
 	ecb->xs = xs;

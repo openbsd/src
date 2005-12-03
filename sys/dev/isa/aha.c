@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.54 2005/11/23 11:30:14 mickey Exp $	*/
+/*	$OpenBSD: aha.c,v 1.55 2005/12/03 17:13:22 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1271,7 +1271,6 @@ aha_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((ccb = aha_get_ccb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
 		return (TRY_AGAIN_LATER);
 	}
 	ccb->xs = xs;
