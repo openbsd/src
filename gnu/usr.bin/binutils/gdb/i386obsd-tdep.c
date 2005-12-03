@@ -38,6 +38,7 @@
 #include "i386-tdep.h"
 #include "i387-tdep.h"
 #include "solib-svr4.h"
+#include "bsd-uthread.h"
 
 /* Support for signal handlers.  */
 
@@ -192,6 +193,120 @@ int i386obsd_sc_reg_offset[I386_NUM_GREGS] =
   0 * 4				/* %gs */
 };
 
+/* From /usr/src/lib/libpthread/arch/i386/uthread_machdep.c.  */
+static int i386obsd_uthread_reg_offset[] =
+{
+  11 * 4,			/* %eax */
+  10 * 4,			/* %ecx */
+  9 * 4,			/* %edx */
+  8 * 4,			/* %ebx */
+  -1,				/* %esp */
+  6 * 4,			/* %ebp */
+  5 * 4,			/* %esi */
+  4 * 4,			/* %edi */
+  12 * 4,			/* %eip */
+  -1,				/* %eflags */
+  13 * 4,			/* %cs */
+  -1,				/* %ss */
+  3 * 4,			/* %ds */
+  2 * 4,			/* %es */
+  1 * 4,			/* %fs */
+  0 * 4				/* %gs */
+};
+
+/* Offset within the thread structure where we can find the saved
+   stack pointer (%esp).  */
+#define I386OBSD_UTHREAD_ESP_OFFSET	176
+
+static void
+i386obsd_supply_uthread (struct regcache *regcache,
+			 int regnum, CORE_ADDR addr)
+{
+  CORE_ADDR sp_addr = addr + I386OBSD_UTHREAD_ESP_OFFSET;
+  CORE_ADDR sp = 0;
+  char buf[4];
+  int i;
+
+  gdb_assert (regnum >= -1);
+
+  if (regnum == -1 || regnum == I386_ESP_REGNUM)
+    {
+      int offset;
+
+      /* Fetch stack pointer from thread structure.  */
+      sp = read_memory_unsigned_integer (sp_addr, 4);
+
+      /* Adjust the stack pointer such that it looks as if we just
+         returned from _thread_machdep_switch.  */
+      offset = i386obsd_uthread_reg_offset[I386_EIP_REGNUM] + 4;
+      store_unsigned_integer (buf, 4, sp + offset);
+      regcache_raw_supply (regcache, I386_ESP_REGNUM, buf);
+    }
+
+  for (i = 0; i < ARRAY_SIZE (i386obsd_uthread_reg_offset); i++)
+    {
+      if (i386obsd_uthread_reg_offset[i] != -1
+	  && (regnum == -1 || regnum == i))
+	{
+	  /* Fetch stack pointer from thread structure (if we didn't
+             do so already).  */
+	  if (sp == 0)
+	    sp = read_memory_unsigned_integer (sp_addr, 4);
+
+	  /* Read the saved register from the stack frame.  */
+	  read_memory (sp + i386obsd_uthread_reg_offset[i], buf, 4);
+	  regcache_raw_supply (regcache, i, buf);
+	}
+    }
+
+}
+
+static void
+i386obsd_collect_uthread (const struct regcache *regcache,
+			  int regnum, CORE_ADDR addr)
+{
+  CORE_ADDR sp_addr = addr + I386OBSD_UTHREAD_ESP_OFFSET;
+  CORE_ADDR sp = 0;
+  char buf[4];
+  int i;
+
+  gdb_assert (regnum >= -1);
+
+  if (regnum == -1 || regnum == I386_ESP_REGNUM)
+    {
+      int offset;
+
+      /* Calculate the stack pointer (frame pointer) that will be
+         stored into the thread structure.  */
+      offset = i386obsd_uthread_reg_offset[I386_EIP_REGNUM] + 4;
+      regcache_raw_collect (regcache, I386_ESP_REGNUM, buf);
+      sp = extract_unsigned_integer (buf, 4) - offset;
+
+      /* Store the stack pointer.  */
+      write_memory_unsigned_integer (sp_addr, 4, sp);
+
+      /* The stack pointer was (potentially) modified.  Make sure we
+         build a proper stack frame.  */
+      regnum = -1;
+    }
+
+  for (i = 0; i < ARRAY_SIZE (i386obsd_uthread_reg_offset); i++)
+    {
+      if (i386obsd_uthread_reg_offset[i] != -1
+	  && (regnum == -1 || regnum == i))
+	{
+	  /* Fetch stack pointer from thread structure (if we didn't
+             calculate it already).  */
+	  if (sp == 0)
+	    sp = read_memory_unsigned_integer (sp_addr, 4);
+
+	  /* Write the register into the stack frame.  */
+	  regcache_raw_collect (regcache, i, buf);
+	  write_memory (sp + i386obsd_uthread_reg_offset[i], buf, 4);
+	}
+    }
+}
+
 static void 
 i386obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -217,6 +332,10 @@ i386obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
      original 4.3 BSD.  */
   tdep->sc_reg_offset = i386obsd_sc_reg_offset;
   tdep->sc_num_regs = ARRAY_SIZE (i386obsd_sc_reg_offset);
+
+  /* OpenBSD provides a user-level threads implementation.  */
+  bsd_uthread_set_supply_uthread (gdbarch, i386obsd_supply_uthread);
+  bsd_uthread_set_collect_uthread (gdbarch, i386obsd_collect_uthread);
 }
 
 /* OpenBSD a.out.  */
