@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2005/12/03 14:30:05 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 2005/12/03 18:20:48 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -398,16 +398,16 @@ GLOBAL(delay)
 /*****************************************************************************/
 
 	data
-	.align NBPG
+	.align	PAGE_SIZE
 GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
 	space	0x2000		/* 8K - 4K phys, 4K virt*/
 
-	.align NBPG
-GLOBAL(intstack)
+	.align	PAGE_SIZE
+ASGLOBAL(intstack)
 	space	USIZE
 ASGLOBAL(intstack_end)
 ASGLOBAL(slavestack)
-	space	NBPG		/* 4K, small, interim stack */
+	space	PAGE_SIZE	/* 4K, small, interim stack */
 ASGLOBAL(slavestack_end)
 
 /*
@@ -419,7 +419,7 @@ ASGLOBAL(slavestack_end)
  * we feel like doing that).
  * Should be page aligned.
  */
-	.align NBPG
+	.align	PAGE_SIZE
 GLOBAL(idle_u)
 	space	USIZE
 
@@ -428,9 +428,9 @@ GLOBAL(idle_u)
  *
  * This must be page aligned
  */
-	.align	NBPG
+	.align	PAGE_SIZE
 ASLOCAL(u0)
-	space	UPAGES * NBPG
+	space	USIZE
 GLOBAL(proc0paddr)
 	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 

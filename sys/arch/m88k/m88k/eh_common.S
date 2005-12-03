@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.14 2005/12/03 14:30:06 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.15 2005/12/03 18:20:50 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -612,8 +612,8 @@ GLOBAL(reset_handler)
 
 #ifdef DEBUG
 	/* zero the stack, so we'll know what we're lookin' at */
-	or.u	r27, r0,  hi16(_C_LABEL(intstack))
-	or	r27, r27, lo16(_C_LABEL(intstack))
+	or.u	r27, r0,  hi16(_ASM_LABEL(intstack))
+	or	r27, r27, lo16(_ASM_LABEL(intstack))
 1:	cmp	r28, r27, r31
 	bb1	ge,  r28, 2f	/* branch if at the end of the stack */
 	st	r0,  r0,  r27
@@ -2020,8 +2020,8 @@ GLOBAL(m88110_reset_handler)
 
 #ifdef DEBUG
 	/* zero the stack, so we'll know what we're lookin' at */
-	or.u	r27, r0,  hi16(_C_LABEL(intstack))
-	or	r27, r27, lo16(_C_LABEL(intstack))
+	or.u	r27, r0,  hi16(_ASM_LABEL(intstack))
+	or	r27, r27, lo16(_ASM_LABEL(intstack))
 1:	cmp	r28, r27, r31
 	bb1	ge,  r28, 2f	/* branch if at the end of the stack */
 	st	r0,  r0,  r27
