@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.29 2005/12/03 18:09:08 tedu Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.30 2005/12/04 05:49:12 deraadt Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -81,13 +81,13 @@ void pgrpdump(void);
 void
 procinit(void)
 {
+#ifdef RTHREADS
+	extern struct pool sleeper_pool;
+#endif
 
 	LIST_INIT(&allproc);
 	LIST_INIT(&zombproc);
 
-#ifdef RTHREADS
-	extern struct pool sleeper_pool;
-#endif
 
 	pidhashtbl = hashinit(maxproc / 4, M_PROC, M_NOWAIT, &pidhash);
 	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_NOWAIT, &pgrphash);
