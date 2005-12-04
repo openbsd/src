@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.69 2005/12/01 02:21:13 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.70 2005/12/04 03:56:17 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.69 2005/12/01 02:21:13 krw Exp $
+ * $Id: aic7xxx.c,v 1.70 2005/12/04 03:56:17 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -4263,6 +4263,7 @@ static int
 ahc_init_scbdata(struct ahc_softc *ahc)
 {
 	struct scb_data *scb_data;
+	int i;
 
 	scb_data = ahc->scb_data;
 	SLIST_INIT(&scb_data->free_scbs);
@@ -4316,9 +4317,13 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	/* Perform initial CCB allocation */
 	memset(scb_data->hscbs, 0,
 	       AHC_SCB_MAX_ALLOC * sizeof(struct hardware_scb));
-	ahc_alloc_scbs(ahc);
+	do {
+		i = scb_data->numscbs;
+		ahc_alloc_scbs(ahc);
+	} while ((i != scb_data->numscbs) && 
+	    (scb_data->numscbs < AHC_SCB_MAX_ALLOC));
 
-	if (scb_data->numscbs == 0) {
+	if (scb_data->numscbs != AHC_SCB_MAX_ALLOC) {
 		printf("%s: ahc_init_scbdata - "
 		       "Unable to allocate initial scbs\n",
 		       ahc_name(ahc));

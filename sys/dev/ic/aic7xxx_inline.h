@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_inline.h,v 1.11 2005/07/18 02:43:26 fgsch Exp $	*/
+/*	$OpenBSD: aic7xxx_inline.h,v 1.12 2005/12/04 03:56:17 krw Exp $	*/
 /*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -378,13 +378,11 @@ ahc_get_scb(struct ahc_softc *ahc)
 {
 	struct scb *scb;
 
-	if ((scb = SLIST_FIRST(&ahc->scb_data->free_scbs)) == NULL) {
-		ahc_alloc_scbs(ahc);
-		scb = SLIST_FIRST(&ahc->scb_data->free_scbs);
-		if (scb == NULL)
-			return (NULL);
-	}
-	SLIST_REMOVE_HEAD(&ahc->scb_data->free_scbs, links.sle);
+	scb = SLIST_FIRST(&ahc->scb_data->free_scbs);
+
+	if (scb != NULL)
+		SLIST_REMOVE_HEAD(&ahc->scb_data->free_scbs, links.sle);
+
 	return (scb);
 }
 
