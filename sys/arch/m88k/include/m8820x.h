@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.5 2005/12/02 21:16:45 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.6 2005/12/04 12:20:19 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -194,7 +194,7 @@ extern u_int cmmu_shift;
 extern u_int max_cmmus;
 
 void m8820x_setup_board_config(void);
-cpuid_t m8820x_cmmu_cpu_number(void);
+cpuid_t m8820x_cpu_number(void);
 
 #endif	/* _LOCORE */
 #endif	/* __M88K_M8820X_H__ */

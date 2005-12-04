@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.44 2005/12/03 14:30:06 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.45 2005/12/04 12:20:19 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -30,6 +30,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
+#include <machine/cpu.h>
 #ifdef DEBUG
 #include <machine/locore.h>
 #endif
@@ -253,11 +254,11 @@ m8820x_setup_board_config()
  * the read, and we can reliably compute the CPU number from it.
  */
 cpuid_t
-m8820x_cmmu_cpu_number()
+m8820x_cpu_number()
 {
 #ifdef MVME188
 	u_int32_t whoami;
-	unsigned int cpu;
+	cpuid_t cpu;
 #endif
 
 #ifdef MVME187

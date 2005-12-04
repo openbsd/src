@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2005/12/03 14:30:05 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2005/12/04 12:20:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1125,8 +1125,6 @@ luna88k_bootstrap()
 	first_addr = round_page((vaddr_t)&end);	/* XXX temp until symbols */
 	last_addr = size_memory();
 	physmem = btoc(last_addr);
-
-	cmmu_parity_enable();
 
 	setup_board_config();
 	cmmu_init();

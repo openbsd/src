@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.171 2005/12/03 14:30:06 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.172 2005/12/04 12:20:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1092,8 +1092,6 @@ mvme_bootstrap()
 #endif
 	}
 	physmem = btoc(last_addr);
-
-	cmmu_parity_enable();
 
 	setup_board_config();
 	cmmu_init();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.9 2005/12/03 14:30:05 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.10 2005/12/04 12:20:17 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -164,7 +164,7 @@ m8820x_setup_board_config()
 #define ILLADDRESS	0x3ffffff0 	/* any faulty address for luna88k2 */
 
 cpuid_t
-m8820x_cmmu_cpu_number()
+m8820x_cpu_number()
 {
 	u_int cmmu;
 	u_int i;
@@ -181,7 +181,7 @@ m8820x_cmmu_cpu_number()
 		/* access faulting address */
 		badwordaddr((vaddr_t)ILLADDRESS);
 
-		/* check which CMMU reporting the fault  */
+		/* check which CMMU is reporting the fault  */
 		for (cmmu = 0; cmmu < max_cmmus; cmmu++) {
 			if (CMMU_MODE(cmmu) != INST_CMMU &&
 			    CMMU_PFSR_FAULT(m8820x_cmmu[cmmu].
@@ -195,5 +195,5 @@ m8820x_cmmu_cpu_number()
 	}
 	CMMU_UNLOCK;
 
-	panic("m8820x_cmmu_cpu_number: could not determine my cpu number");
+	panic("m8820x_cpu_number: could not determine my cpu number");
 }

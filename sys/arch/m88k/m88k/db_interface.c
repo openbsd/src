@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.2 2005/11/20 22:04:32 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.3 2005/12/04 12:20:19 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -598,67 +598,6 @@ m88k_db_frame_search(addr, have_addr, count, modif)
 	db_printf("(Walked back until 0x%x)\n",addr);
 }
 
-/*
- * See how a virtual address translates.
- * Must have an address.
- */
-void
-m88k_db_translate(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-	char c;
-	int verbose_flag = 0;
-	int supervisor_flag = 1;
-	int wanthelp = 0;
-
-	if (!have_addr)
-		wanthelp = 1;
-	else {
-		while (c = *modif++, c != 0) {
-			switch (c) {
-			default:
-				db_printf("bad modifier [%c]\n", c);
-				wanthelp = 1;
-				break;
-			case 'h':
-				wanthelp = 1;
-				break;
-			case 'v':
-				verbose_flag++;
-				break;
-			case 's':
-				supervisor_flag = 1;
-				break;
-			case 'u':
-				supervisor_flag = 0;
-				break;
-			}
-		}
-	}
-
-	if (wanthelp) {
-		db_printf("usage: translate[/vvsu] address\n");
-		db_printf("flags: v - be verbose (vv - be very verbose)\n");
-		db_printf("       s - use cmmu's supervisor area pointer (default)\n");
-		db_printf("       u - use cmmu's user area pointer\n");
-		return;
-	}
-	cmmu_show_translation(addr, supervisor_flag, verbose_flag, -1);
-}
-
-void
-m88k_db_cmmucfg(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-	cmmu_dump_config();
-}
-
 /************************/
 /* COMMAND TABLE / INIT */
 /************************/
@@ -667,8 +606,6 @@ struct db_command db_machine_cmds[] = {
 	{ "frame",	m88k_db_print_frame,	0,	NULL },
 	{ "regs",	m88k_db_registers,	0,	NULL },
 	{ "searchframe",m88k_db_frame_search,	0,	NULL },
-	{ "translate",	m88k_db_translate,	0,	NULL },
-	{ "cmmucfg",	m88k_db_cmmucfg,	0,	NULL },
 	{ "where",	m88k_db_where,		0,	NULL },
 #if defined(EXTRA_MACHDEP_COMMANDS)
 	EXTRA_MACHDEP_COMMANDS
