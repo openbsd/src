@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.14 2005/12/04 12:20:19 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.15 2005/12/04 15:00:25 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -54,10 +54,10 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 
 /* machine dependent cmmu function pointer structure */
 struct cmmu_p {
-	void (*init)(void);
+	cpuid_t (*init)(void);
 	void (*setup_board_config)(void);
 	void (*cpu_configuration_print)(int);
-	void (*shutdown_now)(void);
+	void (*shutdown)(void);
 	cpuid_t (*cpu_number)(void);
 	void (*set_sapr)(cpuid_t, apr_t);
 	void (*set_uapr)(apr_t);
@@ -69,14 +69,12 @@ struct cmmu_p {
 	int (*dma_cachectl_pa)(paddr_t, psize_t, int);
 };
 
-/* THE pointer! */
 extern struct cmmu_p *cmmu;
 
-/* The macros... */
 #define cmmu_init			(cmmu->init)
 #define setup_board_config		(cmmu->setup_board_config)
 #define	cpu_configuration_print(a)	(cmmu->cpu_configuration_print)(a)
-#define	cmmu_shutdown_now		(cmmu->shutdown_now)
+#define	cmmu_shutdown			(cmmu->shutdown)
 #define	cmmu_cpu_number			(cmmu->cpu_number)
 #define	cmmu_set_sapr(a, b)		(cmmu->set_sapr)(a, b)
 #define	cmmu_set_uapr(a)		(cmmu->set_uapr)(a)
@@ -86,10 +84,6 @@ extern struct cmmu_p *cmmu;
 #define	cmmu_flush_data_cache(a, b, c)	(cmmu->flush_data_cache)(a, b, c)
 #define	dma_cachectl(a, b, c, d)	(cmmu->dma_cachectl)(a, b, c, d)
 #define	dma_cachectl_pa(a, b, c)	(cmmu->dma_cachectl_pa)(a, b, c)
-#define	cmmu_dump_config		(cmmu->dump_config)
-#define	cmmu_show_translation(a, b, c, d) \
-	(cmmu->show_translation)(a, b, c, d)
-#define show_apr(ap)			(cmmu->show_apr)(ap)
 
 /*
  * dma_cachectl() modes

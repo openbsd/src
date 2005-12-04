@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2005/12/04 12:20:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2005/12/04 15:00:23 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1105,7 +1105,7 @@ luna88k_bootstrap()
 	extern struct cmmu_p cmmu8820x;
 	extern char *end;
 #ifndef MULTIPROCESSOR
-	u_int master_cpu;
+	cpuid_t master_cpu;
 #endif
 
 	cmmu = &cmmu8820x;
@@ -1127,8 +1127,7 @@ luna88k_bootstrap()
 	physmem = btoc(last_addr);
 
 	setup_board_config();
-	cmmu_init();
-	master_cpu = cmmu_cpu_number();
+	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
 
 	/*

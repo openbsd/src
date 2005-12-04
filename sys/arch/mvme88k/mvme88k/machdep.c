@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.172 2005/12/04 12:20:19 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.173 2005/12/04 15:00:26 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -563,7 +563,7 @@ allocsys(v)
 __dead void
 _doboot()
 {
-	cmmu_shutdown_now();
+	cmmu_shutdown();
 	bugreturn();
 	/*NOTREACHED*/
 	for (;;);		/* appease gcc */
@@ -1032,7 +1032,7 @@ mvme_bootstrap()
 	extern struct consdev *cn_tab;
 	struct mvmeprom_brdid brdid;
 #ifndef MULTIPROCESSOR
-	u_int master_cpu;
+	cpuid_t master_cpu;
 #endif
 
 	buginit();
@@ -1094,8 +1094,7 @@ mvme_bootstrap()
 	physmem = btoc(last_addr);
 
 	setup_board_config();
-	cmmu_init();
-	master_cpu = cmmu_cpu_number();
+	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
 
 	/*

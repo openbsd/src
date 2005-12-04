@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.15 2005/12/04 12:20:19 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.16 2005/12/04 15:00:26 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -94,7 +94,7 @@
 #include <machine/m8820x.h>
 #include <machine/psl.h>
 
-void m8820x_init(void);
+cpuid_t m8820x_init(void);
 void m8820x_cpu_configuration_print(int);
 void m8820x_shutdown(void);
 void m8820x_set_sapr(cpuid_t, apr_t);
@@ -105,9 +105,6 @@ void m8820x_flush_inst_cache(cpuid_t, paddr_t, psize_t);
 void m8820x_flush_data_cache(cpuid_t, paddr_t, psize_t);
 int m8820x_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
 int m8820x_dma_cachectl_pa(paddr_t, psize_t, int);
-void m8820x_dump_config(void);
-void m8820x_show_translation(vaddr_t, u_int, u_int, int);
-void m8820x_show_apr(apr_t);
 
 /* This is the function table for the mc8820x CMMUs */
 struct cmmu_p cmmu8820x = {
@@ -262,7 +259,7 @@ m8820x_cpu_configuration_print(int master)
 	printf("cpu%d: ", cpu);
 	switch (proctype) {
 	default:
-		printf("unknown model arch 0x%x rev 0x%x\n",
+		printf("unknown model arch 0x%x rev 0x%x",
 		    proctype, procvers);
 		break;
 	case ARN_88100:
@@ -312,7 +309,8 @@ m8820x_cpu_configuration_print(int master)
 			} else
 #endif
 				printf(" full");
-			printf(" %ccache", CMMU_MODE(mmu) == INST_CMMU ? 'I' : 'D');
+			printf(" %ccache",
+			    CMMU_MODE(mmu) == INST_CMMU ? 'I' : 'D');
 		}
 		break;
 	}
@@ -337,7 +335,7 @@ m8820x_cpu_configuration_print(int master)
 /*
  * CMMU initialization routine
  */
-void
+cpuid_t
 m8820x_init()
 {
 	struct m8820x_cmmu *cmmu;
@@ -423,6 +421,8 @@ m8820x_init()
 		    0, cpu, 0, 0);
 		m8820x_cmmu_wait(cpu);
 	}
+
+	return (m8820x_cpu_number());
 }
 
 /*

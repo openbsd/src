@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.33 2005/12/04 12:20:19 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.34 2005/12/04 15:00:26 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -71,7 +71,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 
-void m88110_init(void);
+cpuid_t m88110_init(void);
 void m88110_setup_board_config(void);
 void m88110_cpu_configuration_print(int);
 void m88110_shutdown(void);
@@ -153,7 +153,7 @@ m88110_cpu_configuration_print(int master)
 	printf("cpu%d: ", cpu);
 	switch (proctype) {
 	default:
-		printf("unknown model arch 0x%x version 0x%x\n",
+		printf("unknown model arch 0x%x version 0x%x",
 		    proctype, procvers);
 		break;
 	case ARN_88110:
@@ -171,7 +171,7 @@ m88110_cpu_configuration_print(int master)
 /*
  * CMMU initialization routine
  */
-void
+cpuid_t
 m88110_init(void)
 {
 	int i;
@@ -212,6 +212,8 @@ m88110_init(void)
 
 	set_isr(0);
 	set_dsr(0);
+
+	return (m88110_cpu_number());
 }
 
 /*
