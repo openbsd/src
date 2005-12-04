@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.31 2005/09/06 23:30:33 jmc Exp $
+.\"	$OpenBSD: top.1,v 1.32 2005/12/04 23:10:06 tedu Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -152,6 +152,10 @@ Set the delay between screen updates to
 seconds.
 The value may be fractional, to permit delays of less than 1 second.
 The default delay between updates is 5 seconds.
+.It Fl T
+Show process threads in the display.
+Normally, only the main process is shown.
+This option makes all threads visible.
 .It Fl U Ar username
 Show only those processes owned by
 .Ar username .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.40 2005/06/17 09:40:48 markus Exp $	*/
+/*	$OpenBSD: top.c,v 1.41 2005/12/04 23:10:06 tedu Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -97,6 +97,7 @@ char *order_name = NULL;
 int topn = Default_TOPN;
 int no_command = Yes;
 int old_system = No;
+int old_threads = No;
 int show_args = No;
 
 #if Default_TOPN == Infinity
@@ -127,6 +128,7 @@ char topn_specified = No;
 #define CMD_order	16
 #define CMD_pid		17
 #define CMD_command	18
+#define CMD_threads	19
 
 static void
 usage(void)
@@ -134,7 +136,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-bIinqSu] [-d count] [-o field] [-p pid] [-s time] [-U username] [number]\n",
+	    "usage: %s [-bIinqSTu] [-d count] [-o field] [-p pid] [-s time] [-U username] [number]\n",
 	    __progname);
 }
 
@@ -144,7 +146,7 @@ parseargs(int ac, char **av)
 	char *endp;
 	int i;
 
-	while ((i = getopt(ac, av, "SIbinqus:d:p:U:o:")) != -1) {
+	while ((i = getopt(ac, av, "STIbinqus:d:p:U:o:")) != -1) {
 		switch (i) {
 		case 'u':	/* toggle uid/username display */
 			do_unames = !do_unames;
@@ -174,6 +176,11 @@ parseargs(int ac, char **av)
 		case 'S':	/* show system processes */
 			ps.system = Yes;
 			old_system = Yes;
+			break;
+
+		case 'T':	/* show threads */
+			ps.threads = Yes;
+			old_threads = Yes;
 			break;
 
 		case 'I':	/* show idle processes */
@@ -514,7 +521,7 @@ rundisplay(void)
 	int change, i;
 	struct pollfd pfd[1];
 	uid_t uid;
-	static char command_chars[] = "\f qh?en#sdkriIuSopC";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCT";
 
 	/*
 	 * assume valid command unless told
@@ -852,6 +859,14 @@ rundisplay(void)
 
 		case CMD_command:
 			show_args = (show_args == No) ? Yes : No;
+			break;
+		
+		case CMD_threads:
+			ps.threads = !ps.threads;
+			old_threads = ps.threads;
+			new_message(MT_standout | MT_delayed,
+			    " %sisplaying threads.",
+			    ps.threads ? "D" : "Not d");
 			break;
 
 		default:

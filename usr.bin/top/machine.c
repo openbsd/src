@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.49 2005/06/17 09:40:48 markus Exp $	 */
+/* $OpenBSD: machine.c,v 1.50 2005/12/04 23:10:06 tedu Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -342,7 +342,7 @@ caddr_t
 get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
-	int show_idle, show_system, show_uid, show_pid;
+	int show_idle, show_system, show_threads, show_uid, show_pid;
 	int total_procs, active_procs;
 	struct kinfo_proc2 **prefp, *pp;
 
@@ -363,6 +363,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	/* set up flags which define what we are going to select */
 	show_idle = sel->idle;
 	show_system = sel->system;
+	show_threads = sel->threads;
 	show_uid = sel->uid != (uid_t)-1;
 	show_pid = sel->pid != (pid_t)-1;
 
@@ -379,7 +380,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 		 *  processes---these get ignored unless show_sysprocs is set.
 		 */
 		if (pp->p_stat != 0 &&
-		    (show_system || (pp->p_flag & P_SYSTEM) == 0)) {
+		    (show_system || (pp->p_flag & P_SYSTEM) == 0) &&
+		    (show_threads || (pp->p_flag & P_THREAD) == 0)) {
 			total_procs++;
 			process_states[(unsigned char) pp->p_stat]++;
 			if (pp->p_stat != SZOMB &&
