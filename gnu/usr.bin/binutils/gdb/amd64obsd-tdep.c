@@ -25,6 +25,7 @@
 #include "symtab.h"
 #include "objfiles.h"
 #include "osabi.h"
+#include "regcache.h"
 #include "regset.h"
 #include "target.h"
 
@@ -34,6 +35,7 @@
 #include "amd64-tdep.h"
 #include "i387-tdep.h"
 #include "solib-svr4.h"
+#include "bsd-uthread.h"
 
 /* Support for core dumps.  */
 
@@ -209,6 +211,127 @@ static int amd64obsd_sc_reg_offset[] =
   15 * 8			/* %gs */
 };
 
+/* From /usr/src/lib/libpthread/arch/amd64/uthread_machdep.c.  */
+static int amd64obsd_uthread_reg_offset[] =
+{
+  19 * 8,			/* %rax */
+  16 * 8,			/* %rbx */
+  18 * 8,			/* %rcx */
+  17 * 8,			/* %rdx */
+  14 * 8,			/* %rsi */
+  13 * 8,			/* %rdi */
+  15 * 8,			/* %rbp */
+  -1,				/* %rsp */
+  12 * 8,			/* %r8 ... */
+  11 * 8,
+  10 * 8,
+  9 * 8,
+  8 * 8,
+  7 * 8,
+  6 * 8,
+  5 * 8,			/* ... %r15 */
+  20 * 8,			/* %rip */
+  4 * 8,			/* %eflags */
+  21 * 8,			/* %cs */
+  -1,				/* %ss */
+  3 * 8,			/* %ds */
+  2 * 8,			/* %es */
+  1 * 8,			/* %fs */
+  0 * 8				/* %gs */
+};
+
+/* Offset within the thread structure where we can find the saved
+   stack pointer (%esp).  */
+#define AMD64OBSD_UTHREAD_RSP_OFFSET	400
+
+static void
+amd64obsd_supply_uthread (struct regcache *regcache,
+			  int regnum, CORE_ADDR addr)
+{
+  CORE_ADDR sp_addr = addr + AMD64OBSD_UTHREAD_RSP_OFFSET;
+  CORE_ADDR sp = 0;
+  char buf[8];
+  int i;
+
+  gdb_assert (regnum >= -1);
+
+  if (regnum == -1 || regnum == AMD64_RSP_REGNUM)
+    {
+      int offset;
+
+      /* Fetch stack pointer from thread structure.  */
+      sp = read_memory_unsigned_integer (sp_addr, 8);
+
+      /* Adjust the stack pointer such that it looks as if we just
+         returned from _thread_machdep_switch.  */
+      offset = amd64obsd_uthread_reg_offset[AMD64_RIP_REGNUM] + 8;
+      store_unsigned_integer (buf, 8, sp + offset);
+      regcache_raw_supply (regcache, AMD64_RSP_REGNUM, buf);
+    }
+
+  for (i = 0; i < ARRAY_SIZE (amd64obsd_uthread_reg_offset); i++)
+    {
+      if (amd64obsd_uthread_reg_offset[i] != -1
+	  && (regnum == -1 || regnum == i))
+	{
+	  /* Fetch stack pointer from thread structure (if we didn't
+             do so already).  */
+	  if (sp == 0)
+	    sp = read_memory_unsigned_integer (sp_addr, 8);
+
+	  /* Read the saved register from the stack frame.  */
+	  read_memory (sp + amd64obsd_uthread_reg_offset[i], buf, 8);
+	  regcache_raw_supply (regcache, i, buf);
+	}
+    }
+}
+
+static void
+amd64obsd_collect_uthread (const struct regcache *regcache,
+			   int regnum, CORE_ADDR addr)
+{
+  CORE_ADDR sp_addr = addr + AMD64OBSD_UTHREAD_RSP_OFFSET;
+  CORE_ADDR sp = 0;
+  char buf[8];
+  int i;
+
+  gdb_assert (regnum >= -1);
+
+  if (regnum == -1 || regnum == AMD64_RSP_REGNUM)
+    {
+      int offset;
+
+      /* Calculate the stack pointer (frame pointer) that will be
+         stored into the thread structure.  */
+      offset = amd64obsd_uthread_reg_offset[AMD64_RIP_REGNUM] + 8;
+      regcache_raw_collect (regcache, AMD64_RSP_REGNUM, buf);
+      sp = extract_unsigned_integer (buf, 8) - offset;
+
+      /* Store the stack pointer.  */
+      write_memory_unsigned_integer (sp_addr, 8, sp);
+
+      /* The stack pointer was (potentially) modified.  Make sure we
+         build a proper stack frame.  */
+      regnum = -1;
+    }
+
+  for (i = 0; i < ARRAY_SIZE (amd64obsd_uthread_reg_offset); i++)
+    {
+      if (amd64obsd_uthread_reg_offset[i] != -1
+	  && (regnum == -1 || regnum == i))
+	{
+	  /* Fetch stack pointer from thread structure (if we didn't
+             calculate it already).  */
+	  if (sp == 0)
+	    sp = read_memory_unsigned_integer (sp_addr, 8);
+
+	  /* Write the register into the stack frame.  */
+	  regcache_raw_collect (regcache, i, buf);
+	  write_memory (sp + amd64obsd_uthread_reg_offset[i], buf, 8);
+	}
+    }
+}
+
 static void
 amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -230,6 +353,10 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sigcontext_addr = amd64obsd_sigcontext_addr;
   tdep->sc_reg_offset = amd64obsd_sc_reg_offset;
   tdep->sc_num_regs = ARRAY_SIZE (amd64obsd_sc_reg_offset);
+
+  /* OpenBSD provides a user-level threads implementation.  */
+  bsd_uthread_set_supply_uthread (gdbarch, amd64obsd_supply_uthread);
+  bsd_uthread_set_collect_uthread (gdbarch, amd64obsd_collect_uthread);
 
   /* OpenBSD uses SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets

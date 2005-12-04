@@ -132,37 +132,36 @@ struct value *
 find_function_in_inferior (const char *name)
 {
   struct symbol *sym;
+  struct minimal_symbol *msymbol;
+
   sym = lookup_symbol (name, 0, VAR_DOMAIN, 0, NULL);
   if (sym != NULL)
     {
       if (SYMBOL_CLASS (sym) != LOC_BLOCK)
-	{
-	  error ("\"%s\" exists in this program but is not a function.",
-		 name);
-	}
-      return value_of_variable (sym, NULL);
+	error (_("\"%s\" exists in this program but is not a function."),
+	       name);
+
+      if (TYPE_PROTOTYPED (SYMBOL_TYPE (sym)))
+	return value_of_variable (sym, NULL);
     }
-  else
+
+  msymbol = lookup_minimal_symbol (name, NULL, NULL);
+  if (msymbol != NULL)
     {
-      struct minimal_symbol *msymbol = lookup_minimal_symbol (name, NULL, NULL);
-      if (msymbol != NULL)
-	{
-	  struct type *type;
-	  CORE_ADDR maddr;
-	  type = lookup_pointer_type (builtin_type_char);
-	  type = lookup_function_type (type);
-	  type = lookup_pointer_type (type);
-	  maddr = SYMBOL_VALUE_ADDRESS (msymbol);
-	  return value_from_pointer (type, maddr);
-	}
-      else
-	{
-	  if (!target_has_execution)
-	    error ("evaluation of this expression requires the target program to be active");
-	  else
-	    error ("evaluation of this expression requires the program to have a function \"%s\".", name);
-	}
+      struct type *type;
+      CORE_ADDR maddr;
+
+      type = lookup_pointer_type (builtin_type_char);
+      type = lookup_function_type (type);
+      type = lookup_pointer_type (type);
+      maddr = SYMBOL_VALUE_ADDRESS (msymbol);
+      return value_from_pointer (type, maddr);
     }
+
+  if (!target_has_execution)
+    error ("evaluation of this expression requires the target program to be active");
+  else
+    error ("evaluation of this expression requires the program to have a function \"%s\".", name);
 }
 
 /* Allocate NBYTES of space in the inferior using the inferior's malloc
