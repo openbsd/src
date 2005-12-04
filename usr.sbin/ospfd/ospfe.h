@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.17 2005/11/04 10:19:16 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.18 2005/12/04 20:49:47 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -203,6 +203,7 @@ int	 if_leave_group(struct iface *, struct in_addr *);
 int	 if_set_mcast(struct iface *);
 int	 if_set_mcast_ttl(int, u_int8_t);
 int	 if_set_tos(int, int);
+void	 if_set_recvbuf(int);
 int	 if_set_mcast_loop(int);
 
 /* lsack.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.38 2005/10/19 21:43:20 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.39 2005/12/04 20:49:47 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -735,6 +735,17 @@ if_set_tos(int fd, int tos)
 	}
 
 	return (0);
+}
+
+void
+if_set_recvbuf(int fd)
+{
+	int	bsize;
+
+	bsize = 65535;
+	while (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bsize,
+	    sizeof(bsize)) == -1)
+		bsize /= 2; 
 }
 
 int
