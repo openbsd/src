@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnsubr.9,v 1.4 2005/06/02 15:42:12 jaredy Exp $
+.\"     $OpenBSD: vnsubr.9,v 1.5 2005/12/04 19:08:33 pedro Exp $
 .\"     $NetBSD: vnsubr.9,v 1.21 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 .Os
 .Sh NAME
 .Nm vnsubr ,
+.Nm vn_access ,
 .Nm vn_close ,
 .Nm vn_default_error ,
 .Nm vn_isunder ,
@@ -54,6 +55,8 @@
 .In sys/param.h
 .In sys/lock.h
 .In sys/vnode.h
+.Ft int
+.Fn vn_access "struct vnode *vp" "int mode"
 .Ft int
 .Fn vn_close "struct vnode *vp" "int flags" "struct ucred *cred" "struct proc *p"
 .Ft int
@@ -81,6 +84,13 @@ The high-level functions described in this page are convenience
 functions for simplified access to the vnode operations described in
 .Xr VOP_LOOKUP 9 .
 .Bl -tag -width Ds
+.It Fn vn_access "vp" "mode"
+Common code for checking if the current process has enough permissions
+to access the vnode pointed to by
+.Fa vp
+with mode
+.Fa mode .
+The vnode should be passed unlocked, and remains unlocked upon return.
 .It Fn vn_close "vp" "flags" "cred" "p"
 Common code for a vnode close.
 The argument
