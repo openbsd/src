@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.11 2005/12/03 19:06:11 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.12 2005/12/04 12:12:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -89,12 +89,6 @@ struct cpu_info m88k_cpus[MAX_CPUS];
 u_int	max_cpus;
 
 struct cmmu_p *cmmu;
-
-/*
- * This lock protects the cmmu SAR and SCR's; other ports
- * can be accessed without locking it.
- */
-struct simplelock cmmu_cpu_lock;
 
 int longformat = 1;  /* for regdump() */
 
