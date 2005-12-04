@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.9 2005/09/15 05:33:39 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.10 2005/12/04 04:05:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -109,7 +109,7 @@ void	ioprbs_enqueue_ccb(struct ioprbs_softc *, struct ioprbs_ccb *);
 int	ioprbs_exec_ccb(struct ioprbs_ccb *);
 void	ioprbs_free_ccb(struct ioprbs_softc *, struct ioprbs_ccb *);
 struct ioprbs_ccb *ioprbs_get_ccb(struct ioprbs_softc *, int);
-int	ioprbs_internal_cache_cmd(struct scsi_xfer *);
+void	ioprbs_internal_cache_cmd(struct scsi_xfer *);
 void	ioprbs_intr(struct device *, struct iop_msg *, void *);
 void	ioprbs_intr_event(struct device *, struct iop_msg *, void *);
 int	ioprbs_match(struct device *, void *, void *);
@@ -435,10 +435,7 @@ ioprbs_scsi_cmd(xs)
 #if 0
 		case VERIFY:
 #endif
-			if (!ioprbs_internal_cache_cmd(xs)) {
-				IOPRBS_UNLOCK(sc, lock);
-				return (TRY_AGAIN_LATER);
-			}
+			ioprbs_internal_cache_cmd(xs);
 			xs->flags |= ITSDONE;
 			scsi_done(xs);
 			goto ready;
@@ -510,7 +507,6 @@ ioprbs_scsi_cmd(xs)
 			 * We are out of commands, try again in a little while.
 			 */
 			if (ccb == NULL) {
-				xs->error = XS_DRIVER_STUFFUP;
 				IOPRBS_UNLOCK(sc, lock);
 				return (TRY_AGAIN_LATER);
 			}
@@ -529,7 +525,6 @@ ioprbs_scsi_cmd(xs)
 					IOPRBS_UNLOCK(sc, lock);
 					printf("%s: command timed out\n",
 					    sc->sc_dv.dv_xname);
-					xs->error = XS_TIMEOUT;
 					return (TRY_AGAIN_LATER);
 				}
 				xs->flags |= ITSDONE;
@@ -711,7 +706,7 @@ ioprbs_copy_internal_data(xs, data, size)
 }
 
 /* Emulated SCSI operation on cache device */
-int
+void
 ioprbs_internal_cache_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -727,14 +722,8 @@ ioprbs_internal_cache_cmd(xs)
 	xs->error = XS_NOERROR;
 
 	if (target > 0 || link->lun != 0) {
-		/*
-		 * XXX Should be XS_SENSE but that would require setting up a
-		 * faked sense too.
-		 */
 		xs->error = XS_DRIVER_STUFFUP;
-		xs->flags |= ITSDONE;
-		scsi_done(xs);
-		return (COMPLETE);
+		return;
 	}
 
 	switch (xs->cmd->opcode) {
@@ -785,11 +774,10 @@ ioprbs_internal_cache_cmd(xs)
 		DPRINTF(("unsupported scsi command %#x tgt %d ",
 		    xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
-		return (0);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
-	return (1);
 }
 
 struct ioprbs_ccb *
