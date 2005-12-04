@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.31 2005/12/03 02:19:17 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.32 2005/12/04 17:39:02 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,20 +37,15 @@
 struct cvs_file;
 struct cvs_entries;
 
-
-#define CVS_FILE_MAXDEPTH	32
-
-
 #define CF_STAT		0x01	/* obsolete */
 #define CF_IGNORE	0x02	/* apply regular ignore rules */
 #define CF_RECURSE	0x04	/* recurse on directory operations */
 #define CF_SORT		0x08	/* all files are sorted alphabetically */
 #define CF_KNOWN	0x10	/* only recurse in directories known to CVS */
 #define CF_CREATE	0x20	/* create if file does not exist */
-#define CF_MKADMIN	0x40	/* create admin files if they're missing */
-#define CF_NOSYMS	0x80	/* ignore symbolic links */
-#define CF_NOFILES	0x100	/* don't load any files inside a directory */
-#define CF_REPO		0x200	/* we are loading a repository with ,v files */
+#define CF_NOSYMS	0x40	/* ignore symbolic links */
+#define CF_NOFILES	0x80	/* don't load any files inside a directory */
+#define CF_REPO		0x100	/* we are loading a repository with ,v files */
 
 /*
  * The cvs_file structure is used to represent any file or directory within
@@ -70,7 +65,6 @@ struct cvs_entries;
 #define CVS_FST_CONFLICT	5	/* Unresolved Conflict */
 #define CVS_FST_PATCHED		6
 #define CVS_FST_LOST		7	/* Needs Checkout */
-
 
 SIMPLEQ_HEAD(cvs_flist, cvs_file);
 
@@ -122,7 +116,6 @@ typedef struct cvs_file {
 #define cf_files	cf_td.cf_dir.cd_files
 #define cf_repo		cf_td.cf_dir.cd_repo
 #define cf_root		cf_td.cf_dir.cd_root
-
 
 #define CVS_DIRF_STATIC		0x01
 #define CVS_DIRF_STICKY		0x02
