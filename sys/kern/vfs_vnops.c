@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.47 2005/11/20 21:55:15 pedro Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.48 2005/12/04 19:04:13 pedro Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -483,4 +483,22 @@ int
 vn_kqfilter(struct file *fp, struct knote *kn)
 {
 	return (VOP_KQFILTER(((struct vnode *)fp->f_data), kn));
+}
+
+/*
+ * Common code for vnode access operations.
+ */
+int
+vn_access(struct vnode *vp, int mode)
+{
+	struct proc *p = curproc;
+	int error;
+
+	if ((error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p)))
+		return (error);
+
+	error = VOP_ACCESS(vp, mode, p->p_ucred, p);
+	VOP_UNLOCK(vp, 0, p);
+
+	return (error);
 }

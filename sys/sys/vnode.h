@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.64 2005/11/21 18:16:46 millert Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.65 2005/12/04 19:04:13 pedro Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -438,6 +438,7 @@ int	vinvalbuf(struct vnode *vp, int save, struct ucred *cred,
 	    struct proc *p, int slpflag, int slptimeo);
 void	vprint(char *label, struct vnode *vp);
 int	vop_generic_bwrite(void *ap);
+int	vn_access(struct vnode *, int);
 void	vn_update(void);
 int	vn_close(struct vnode *vp,
 	    int flags, struct ucred *cred, struct proc *p);
