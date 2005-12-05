@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.27 2005/12/05 19:46:46 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.28 2005/12/05 19:49:20 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -43,7 +43,7 @@
 #define CO_UNLOCK       (1<<8)
 
 /* shared flags  */
-#define FORCE           (1<<8)
+#define FORCE           (1<<9)
 #define INTERACTIVE     (1<<10)
 #define NEWFILE         (1<<11)
 #define PRESERVETIME	(1<<12)
