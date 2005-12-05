@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.100 2005/11/16 03:12:12 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.101 2005/12/05 21:30:40 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.100 2005/11/16 03:12:12 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.101 2005/12/05 21:30:40 miod Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -754,18 +754,21 @@ editor_delete(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 		return;
 	}
 	c = p[0] - 'a';
-	if (c < 0 || c >= lp->d_npartitions)
+	if (c < 0 || c >= lp->d_npartitions) {
 		fprintf(stderr, "Partition must be between 'a' and '%c'.\n",
 		    'a' + lp->d_npartitions - 1);
-	else if (c >= lp->d_npartitions || (lp->d_partitions[c].p_fstype ==
-	    FS_UNUSED && lp->d_partitions[c].p_size == 0))
+		return;
+	} else if (lp->d_partitions[c].p_fstype == FS_UNUSED &&
+	    lp->d_partitions[c].p_size == 0) {
 		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + c);
-	else if (c == RAW_PART)
+		return;
+	} else if (c == RAW_PART) {
 		fputs(
 "You may not delete the 'c' partition.  The 'c' partition must exist and\n"
 "should span the entire disk.  By default it is of type 'unused' and so\n"
 "does not take up any space.\n", stderr);
-	else {
+		return;
+	} else {
 		/* Update free sector count. */
 		if (lp->d_partitions[c].p_offset < ending_sector &&
 		    lp->d_partitions[c].p_offset >= starting_sector &&
