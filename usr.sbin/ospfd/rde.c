@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.33 2005/11/04 10:46:23 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.34 2005/12/05 13:18:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -587,8 +587,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
 
-			log_debug("rde: new announced net %s/%d",
-			    inet_ntoa(kr.prefix), kr.prefixlen);
 			if ((lsa = rde_asext_get(&kr)) != NULL) {
 				v = lsa_find(NULL, lsa->hdr.type,
 				    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
@@ -603,8 +601,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
 
-			log_debug("rde: removing announced net %s/%d",
-				    inet_ntoa(kr.prefix), kr.prefixlen);
 			if ((lsa = rde_asext_put(&kr)) != NULL) {
 				v = lsa_find(NULL, lsa->hdr.type,
 				    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
@@ -935,6 +931,10 @@ rde_redistribute(struct kroute *kr)
 	if ((rdeconf->redistribute_flags & REDISTRIBUTE_CONNECTED) &&
 	    (kr->flags & F_CONNECTED))
 		rv = 1;
+
+	/* route does not match redistribute_flags */
+	if (rv == 0)
+		return (0);
 
 	/* interface is not up and running so don't announce */
 	if (kif_validate(kr->ifindex) == 0)
