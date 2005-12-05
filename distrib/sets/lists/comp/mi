@@ -5637,6 +5637,7 @@
 ./usr/share/man/cat9/vgonel.0
 ./usr/share/man/cat9/vhold.0
 ./usr/share/man/cat9/vinvalbuf.0
+./usr/share/man/cat9/vn_access.0
 ./usr/share/man/cat9/vn_close.0
 ./usr/share/man/cat9/vn_default_error.0
 ./usr/share/man/cat9/vn_isunder.0
