@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2005/03/31 02:53:48 tedu Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2005/12/05 21:31:23 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ extern boolean_t db_cmd_loop_done;
 struct mutex ddb_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;
 volatile cpuid_t ddb_active_cpu;
-extern volatile int ddb_state;
 boolean_t	 db_switch_cpu;
 long		 db_switch_to_cpu;
 #endif
