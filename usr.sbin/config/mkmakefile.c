@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.16 2004/01/04 18:30:05 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.17 2005/12/05 04:32:21 drahn Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -285,8 +285,9 @@ emitfiles(FILE *fp, int suffix)
 	int lpos, len, sp;
 	const char *fpath;
 	char swapname[100];
+	int uppersuffix = toupper(suffix);
 
-	if (fprintf(fp, "%cFILES=", toupper(suffix)) < 0)
+	if (fprintf(fp, "%cFILES=", uppersuffix) < 0)
 		return (1);
 	sp = '\t';
 	lpos = 7;
@@ -296,7 +297,7 @@ emitfiles(FILE *fp, int suffix)
 		if ((fpath = srcpath(fi)) == NULL)
 			return (1);
 		len = strlen(fpath);
-		if (fpath[len - 1] != suffix)
+		if (fpath[len - 1] != suffix && fpath[len - 1] != uppersuffix)
 			continue;
 		if (*fpath != '/')
 			len += 3;	/* "$S/" */
