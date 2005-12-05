@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.127 2005/10/27 16:42:19 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.128 2005/12/05 18:06:36 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.124 2005/10/27 16:42:01 deraadt Exp 
+ *		OpenBSD: pcmciadevs,v 1.125 2005/12/05 18:06:16 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -669,11 +669,13 @@
 #define	PCMCIA_CIS_SVEC_LANCARD	{ "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL }
 #define	PCMCIA_PRODUCT_SVEC_LANCARD	PCMCIA_PRODUCT_INVALID
 /*
- * vendor ID of PN650TX is LINKSYS (0x0149) and product ID is 0xc1ab, but
- * it conflicts with LINKSYS Combo EthernetCard.
+ * vendor ID of PN650TX and TECF100 is LINKSYS (0x0149) and product ID is
+ * 0xc1ab, but it conflicts with LINKSYS Combo EthernetCard.
  */
 #define	PCMCIA_CIS_SVEC_PN650TX	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SVEC_PN650TX	-1
+#define	PCMCIA_CIS_TRENDNET_TECF100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TRENDNET_TECF100	-1
 #define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_IODATA_PCLAT	{ "I-O DATA", "PCLA", "ETHERNET", NULL }
