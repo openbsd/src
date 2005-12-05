@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.21 2005/12/02 15:01:32 robert Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.22 2005/12/05 15:16:26 robert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1259,7 +1259,9 @@ int
 bktr_set_info(void *v, struct radio_info *ri)
 {
 	struct bktr_softc *sc = v;
+	struct TVTUNER *tv = &sc->tuner;
 	u_int32_t freq;
+	u_int32_t chan;
 
 	if (ri->mute) {
 		/* mute the audio stream by switching the mux */
@@ -1278,15 +1280,39 @@ bktr_set_info(void *v, struct radio_info *ri)
 		init_audio_devices(sc);
 	}
 
-	if (ri->freq < MIN_FM_FREQ)
-		ri->freq = MIN_FM_FREQ;
-	if (ri->freq > MAX_FM_FREQ)
-		ri->freq = MAX_FM_FREQ;
+	if (ri->chan) {
+		if (ri->chan < MIN_TV_CHAN)
+			ri->chan = MIN_TV_CHAN;
+		if (ri->chan > MAX_TV_CHAN)
+			ri->chan = MAX_TV_CHAN;
+	} else {
+		if (ri->freq < MIN_FM_FREQ)
+			ri->freq = MIN_FM_FREQ;
+		if (ri->freq > MAX_FM_FREQ)
+			ri->freq = MAX_FM_FREQ;
+	}
 
 	freq = ri->freq / 10;
+	chan = ri->chan;
+
+	if (ri->chnlset >= CHNLSET_MIN && ri->chnlset <= CHNLSET_MAX)
+		tv->chnlset = ri->chnlset;
+	else
+		tv->chnlset = DEFAULT_CHNLSET;
+	
 	set_audio(sc, AUDIO_INTERN);	/* use internal audio */
 	temp_mute(sc, TRUE);
-	ri->freq = tv_freq(sc, freq, FM_RADIO_FREQUENCY) * 10;
+	
+	/* 
+	 * We only need to set the frequency if we are using
+	 * FM Radio. If the channel is > 0 then call tv_channel(),
+	 * which will set the correct TV frequency.
+	 */
+	if (!ri->chan)
+		ri->freq = tv_freq(sc, freq, FM_RADIO_FREQUENCY) * 10;
+	else
+		ri->chan = tv_channel(sc, chan);
+
 	temp_mute(sc, FALSE);
 
 	return (0);
@@ -1316,6 +1342,9 @@ bktr_get_info(void *v, struct radio_info *ri)
 	 * The ri->info is for that purpose.
 	 */
 	ri->stereo = 1; /* Can't switch to mono, always stereo */
+	
+	ri->chan = tv->channel;
+	ri->chnlset = tv->chnlset;
 
 	return (0);
 }
