@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.31 2005/11/15 11:08:46 mickey Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.32 2005/12/05 16:02:55 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -77,7 +77,7 @@ struct	ami_pci_device {
 	int	flags;
 #define	AMI_CHECK_SIGN	0x001
 } ami_pci_devices[] = {
-	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID,	0 },
+	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID,	AMI_BROKEN },
 	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID428,	AMI_BROKEN },
 	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID434,	AMI_BROKEN },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4DI,	0 },
