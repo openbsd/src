@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.124 2005/10/27 16:42:01 deraadt Exp $
+	$OpenBSD: pcmciadevs,v 1.125 2005/12/05 18:06:16 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -472,10 +472,11 @@ product COREGA WIRELESS_LAN_WLCFL_11    { "corega", "WLCFL-11", NULL, NULL }
 product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL }
 product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL }
 /*
- * vendor ID of PN650TX is LINKSYS (0x0149) and product ID is 0xc1ab, but
- * it conflicts with LINKSYS Combo EthernetCard.
+ * vendor ID of PN650TX and TECF100 is LINKSYS (0x0149) and product ID is
+ * 0xc1ab, but it conflicts with LINKSYS Combo EthernetCard.
  */
 product SVEC PN650TX		-1
+product TRENDNET TECF100	-1
 product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL }
 product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL }
 product EPSON EEN10B		{ "Seiko&spEpson&spCorp.", "Ethernet", "P/N:&spEEN10B&spRev.&sp00", NULL }
