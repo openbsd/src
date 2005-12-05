@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.42 2005/12/02 11:45:02 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.43 2005/12/05 19:46:24 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -38,8 +38,10 @@
 
 #define CO_OPTSTRING	"f::k:l::M::p::q::r::s:Tu::Vw::x:"
 
-static int checkout_state(RCSFILE *, RCSNUM *, const char *, int,
+static int	checkout_state(RCSFILE *, RCSNUM *, const char *, int,
     const char *, const char *);
+static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
+    const char *, int);
 
 int
 checkout_main(int argc, char **argv)
@@ -50,6 +52,7 @@ checkout_main(int argc, char **argv)
 	char fpath[MAXPATHLEN], buf[16];
 	char *username;
 	const char *state;
+	struct rcs_delta *rdp;
 	time_t rcs_mtime = -1;
 
 	flags = 0;
@@ -111,6 +114,7 @@ checkout_main(int argc, char **argv)
 			exit(0);
 		case 'w':
 			username = rcs_optarg;
+			flags |= CO_AUTHOR;
 			break;
 		case 'x':
 			rcs_suffixes = rcs_optarg;
@@ -163,6 +167,18 @@ checkout_main(int argc, char **argv)
 			frev = rev;
 
 		rcsnum_tostr(frev, buf, sizeof(buf));
+
+		if ((rdp = rcs_findrev(file, frev)) == NULL)
+			return (-1);
+
+		if (((flags & CO_STATE) &&
+		    (strcmp(rdp->rd_state, state) != 0)) ||
+		    ((flags & CO_AUTHOR) &&
+		    (strcmp(rdp->rd_author, username) != 0))) {
+			checkout_err_nobranch(file, username, NULL, state,
+			    flags);
+			return (-1);
+		}
 
 		if (flags & CO_STATE) {
 			if (checkout_state(file, frev, argv[i], flags,
@@ -322,11 +338,9 @@ checkout_state(RCSFILE *file, RCSNUM *rev, const char *dst, int flags,
 {
 	const char *tstate;
 	
-	if (rev == NULL) {
-		cvs_log(LP_ERR, "%s: No revision on branch has state %s",
-		    file->rf_path, state);
+	if (rev == NULL)
 		return (-1);
-	} else {
+	else {
 		if (((tstate = rcs_state_get(file, rev)) != NULL)
 		    && (strcmp(state, tstate) == 0))
 			return (checkout_rev(file, rev, dst, flags, username));
@@ -334,4 +348,28 @@ checkout_state(RCSFILE *file, RCSNUM *rev, const char *dst, int flags,
 			rev = rcsnum_dec(rev);
 		return (checkout_state(file, rev, dst, flags, username, state));
 	}
+}
+
+/*
+ * checkout_err_nobranch()
+ *
+ * XXX - should handle the dates too.
+ */
+static void
+checkout_err_nobranch(RCSFILE *file, const char *author, const char *date,
+    const char *state, int flags)
+{
+	if (!(flags & CO_AUTHOR))
+		author = NULL;
+	if (!(flags & CO_STATE))
+		state = NULL;
+
+	cvs_log(LP_ERR, "%s: No revision on branch has%s%s%s%s%s%s.",
+	    file->rf_path,
+	    date ? " a date before " : "",
+	    date ? date : "",
+	    author ? " and author " + (date ? 0:4 ) : "",
+	    author ? author : "",
+	    state  ? " and state " + (date || author ? 0:4) : "",
+	    state  ? state : "");
 }
