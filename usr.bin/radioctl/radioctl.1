@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radioctl.1,v 1.8 2004/08/08 00:21:55 jaredy Exp $
+.\"	$OpenBSD: radioctl.1,v 1.9 2005/12/05 16:30:24 robert Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -32,11 +32,11 @@
 .Sh SYNOPSIS
 .Nm radioctl
 .Op Fl f Ar file
-.Op Fl n
+.Op Fl nv
 .Fl a
 .Nm radioctl
 .Op Fl f Ar file
-.Op Fl n
+.Op Fl nv
 .Ar name
 .Nm radioctl
 .Op Fl f Ar file
@@ -63,6 +63,8 @@ Print all device variables and their current values.
 Specify an alternative radio tuner device.
 .It Fl n
 Suppress printing of the variable name.
+.It Fl v
+Show the possible values of queries.
 .It Ar name Ns Li = Ns Ar value
 Attempt to set the specified variable
 .Ar name
@@ -100,6 +102,31 @@ or
 .Pp
 Read-write controls:
 .Bl -tag -width volume
+.It Ar channel
+Integer value from 0 to 150.
+.It Ar chnlset
+Specifies the TV channel set currently being used
+(weurope being the default):
+.Bl -tag -width indent
+.It nabcst
+U.S.A. Broadcast
+.It cableirc
+U.S.A. Cable IRC
+.It cablehrc
+U.S.A. Cable HRC
+.It weurope
+Western Europe
+.It jpnbcst
+Japan Broadcast
+.It jpncable
+Japan Cable
+.It xussr
+Former U.S.S.R. and C.I.S. Countries
+.It australia
+Australia
+.It france
+France
+.El
 .It Ar frequency
 Float value from 87.5 to 108.0.
 .It Ar volume
@@ -146,6 +173,8 @@ The command
 can produce
 .Bd -literal
 volume=255
+channel=0
+chnlset=weurope
 frequency=106.30MHz
 mute=off
 reference=50kHz

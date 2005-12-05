@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.11 2005/07/28 17:15:11 robert Exp $ */
+/* $OpenBSD: radioctl.c,v 1.12 2005/12/05 16:30:24 robert Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -29,6 +29,8 @@
 #include <sys/ioctl.h>
 #include <sys/radioio.h>
 
+#include <dev/ic/bt8xx.h>
+
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -54,8 +56,12 @@ const char *varname[] = {
 #define OPTION_MONO		0x05
 	"stereo",
 #define	OPTION_STEREO		0x06
-	"sensitivity"
+	"sensitivity",
 #define	OPTION_SENSITIVITY	0x07
+	"channel",
+#define OPTION_CHANNEL		0x08
+	"chnlset"
+#define OPTION_CHNLSET		0x09
 };
 
 #define OPTION_NONE		~0u
@@ -71,6 +77,22 @@ struct opt_t {
 	u_int32_t value;
 };
 
+struct chansets {
+	int value;
+	char *name;
+} chansets[] = {
+{ CHNLSET_NABCST,	"nabcst",	},
+{ CHNLSET_CABLEIRC,	"cableirc",	},
+{ CHNLSET_CABLEHRC,	"cablehrc",	},
+{ CHNLSET_WEUROPE,	"weurope",	},
+{ CHNLSET_JPNBCST,	"jpnbcst",	},
+{ CHNLSET_JPNCABLE,	"jpncable",	},
+{ CHNLSET_XUSSR,	"xussr",	},
+{ CHNLSET_AUSTRALIA,	"australia",	},
+{ CHNLSET_FRANCE,	"france",	},
+{ 0, NULL }
+};
+
 extern char *__progname;
 const char *onchar = "on";
 #define ONCHAR_LEN	2
@@ -78,13 +100,14 @@ const char *offchar = "off";
 #define OFFCHAR_LEN	3
 
 struct radio_info ri;
+unsigned int i = 0;
 
 int	parse_opt(char *, struct opt_t *);
 
-void	print_vars(int);
+void	print_vars(int, int);
 void	do_ioctls(int, struct opt_t *, int);
 
-void	print_value(int);
+void	print_value(int, int);
 void	change_value(const struct opt_t);
 void	update_value(int, int *, int);
 
@@ -111,6 +134,7 @@ main(int argc, char **argv)
 	int rd = -1;
 	int optchar;
 	int show_vars = 0;
+	int show_choices = 0;
 	int silent = 0;
 	int mode = O_RDONLY;
 
@@ -121,7 +145,7 @@ main(int argc, char **argv)
 	if (radiodev == NULL)
 		radiodev = RADIODEVICE;
 
-	while ((optchar = getopt(argc, argv, "af:nw")) != -1) {
+	while ((optchar = getopt(argc, argv, "af:nvw")) != -1) {
 		switch (optchar) {
 		case 'a':
 			show_vars = 1;
@@ -131,6 +155,9 @@ main(int argc, char **argv)
 			break;
 		case 'n':
 			silent = 1;
+			break;
+		case 'v':
+			show_choices = 1;
 			break;
 		case 'w':
 			/* backwards compatibility */
@@ -162,7 +189,7 @@ main(int argc, char **argv)
 		err(1, "RIOCGINFO");
 
 	if (!argc && show_vars)
-		print_vars(silent);
+		print_vars(silent, show_choices);
 	else if (argc > 0 && !show_vars) {
 		if (mode == O_RDWR) {
 			for(; argc--; argv++)
@@ -173,7 +200,7 @@ main(int argc, char **argv)
 				if (parse_opt(*argv, &opt)) {
 					show_verbose(varname[opt.option],
 					    silent);
-					print_value(opt.option);
+					print_value(opt.option, show_choices);
 					free(opt.string);
 					putchar('\n');
 				}
@@ -190,9 +217,9 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-f file] [-n] variable ...\n"
+	    "usage: %s [-f file] [-nv] variable ...\n"
 	    "       %s [-f file] [-n] variable=value ...\n"
-	    "       %s [-f file] [-n] -a\n",
+	    "       %s [-f file] [-nv] -a\n",
 	    __progname, __progname, __progname);
 	exit(1);
 }
@@ -227,7 +254,7 @@ do_ioctls(int fd, struct opt_t *o, int silent)
 	if (!silent)
 		printf("%s: ", varname[oval]);
 
-	print_value(o->option);
+	print_value(o->option, 0);
 	printf(" -> ");
 
 	if (o->option == OPTION_SEARCH) {
@@ -252,7 +279,7 @@ do_ioctls(int fd, struct opt_t *o, int silent)
 		return;
 	}
 
-	print_value(o->option);
+	print_value(o->option, 0);
 	putchar('\n');
 }
 
@@ -293,6 +320,12 @@ change_value(const struct opt_t o)
 		break;
 	case OPTION_MUTE:
 		ri.mute = o.value;
+		break;
+	case OPTION_CHANNEL:
+		update_value(o.sign, &ri.chan, o.value);
+		break;
+	case OPTION_CHNLSET:
+		ri.chnlset = o.value;
 		break;
 	}
 
@@ -369,7 +402,7 @@ parse_opt(char *s, struct opt_t *o) {
 	const char *badvalue = "bad value `%s'";
 	char *topt = NULL;
 	int slen, optlen;
-
+	
 	if (s == NULL || *s == '\0' || o == NULL)
 		return 0;
 
@@ -407,6 +440,21 @@ parse_opt(char *s, struct opt_t *o) {
 	o->string = topt;
 
 	topt = &s[optlen];
+	
+	if (strcmp(o->string, "chnlset") == 0) {
+		for (i = 0; chansets[i].name; i++)
+			if (strncmp(chansets[i].name, topt,
+				strlen(chansets[i].name)) == 0)
+					break;
+		if (chansets[i].name != NULL) {
+			o->value = chansets[i].value;
+			return 1;
+		} else {
+			warnx(badvalue, topt);
+			return 0;
+		}
+	}
+
 	switch (*topt) {
 	case '+':
 	case '-':
@@ -447,7 +495,7 @@ parse_opt(char *s, struct opt_t *o) {
  * Print current value of the parameter.
  */
 void
-print_value(int optval)
+print_value(int optval, int show_choices)
 {
 	if (optval == OPTION_NONE)
 		return;
@@ -472,6 +520,21 @@ print_value(int optval)
 		break;
 	case OPTION_STEREO:
 		printf(ri.stereo ? onchar : offchar);
+		break;
+	case OPTION_CHANNEL:
+		printf("%u", ri.chan);
+		break;
+	case OPTION_CHNLSET:
+		for (i = 0; chansets[i].name; i++) {
+			if (chansets[i].value == ri.chnlset)
+				printf("%s", chansets[i].name);
+		}
+		if (show_choices) {
+			printf("\n\t[");
+			for (i = 0; chansets[i].name; i++)
+				printf("%s ", chansets[i].name);
+			printf("]");
+		}
 		break;
 	case OPTION_VOLUME:
 	default:
@@ -505,9 +568,20 @@ show_char_val(const char *val, const char *nick, int silent)
  * Print all available parameters
  */
 void
-print_vars(int silent)
+print_vars(int silent, int show_choices)
 {
 	show_int_val(ri.volume, varname[OPTION_VOLUME], "", silent);
+	show_int_val(ri.chan, varname[OPTION_CHANNEL], "", silent);
+	for (i = 0; chansets[i].name; i++) {
+		if (chansets[i].value == ri.chnlset)
+			show_char_val(chansets[i].name, varname[OPTION_CHNLSET], silent);
+	}
+	if (show_choices) {
+		printf("\t[ ");
+		for (i = 0; chansets[i].name; i++)
+			printf("%s ", chansets[i].name);
+		printf("]\n");
+	}
 	show_float_val((float)ri.freq / 1000., varname[OPTION_FREQUENCY],
 	    "MHz", silent);
 	show_char_val(ri.mute ? onchar : offchar, varname[OPTION_MUTE], silent);
