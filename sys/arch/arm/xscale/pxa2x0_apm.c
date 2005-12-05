@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.20 2005/12/02 17:50:51 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.21 2005/12/05 21:13:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -1398,51 +1398,40 @@ pxa2x0_setperf(int speed)
 #if 0
 	/* Not yet, because OSCR0 does not run in low-power mode. */
 	if (speed <= 30) {
-		pxa27x_run_mode();
-		pxa27x_fastbus_run_mode(0, MDREFR_LOW);
-		delay(1);
-		pxa27x_cpu_speed_91();
-		freq = 91;
-		if (perflevel > 50)
+		if (freq > 91) {
+			pxa27x_run_mode();
+			pxa27x_fastbus_run_mode(0, MDREFR_LOW);
+			pxa27x_cpu_speed_91();
 			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
 			    PI2C_VOLTAGE_LOW);
-		perflevel = 25;
+			freq = 91;
+		}
 	} else
 #endif
 	if (speed < 60) {
-		if (perflevel < 50)
+		if (freq < 208)
 			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
 			    PI2C_VOLTAGE_HIGH);
-
-		pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
-		    CLKCFG_F, &pxa2x0_memcfg);
-
-		/* XXX is the delay long enough, and necessary at all? */
-		delay(1);
-
-		pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
-		freq = 208;
-		perflevel = 50;
+		if (freq != 208) {
+			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 |
+			    CCCR_RUN_X16, CLKCFG_F, &pxa2x0_memcfg);
+			pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
+			freq = 208;
+		}
 	} else {
-		if (perflevel < 50)
+		if (freq < 208) {
 			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
 			    PI2C_VOLTAGE_HIGH);
-
-		/* Change to 208Mhz run mode with fast-bus still disabled. */
-		pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
-		    CLKCFG_F, &pxa2x0_memcfg);
-
-		/* XXX is the delay long enough, and necessary at all? */
-		delay(1);
-
-		pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
-
-		/* Change to 416Mhz turbo mode with fast-bus enabled. */
-		pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
-		    CLKCFG_B | CLKCFG_F | CLKCFG_T, &pxa2x0_memcfg);
-
-		freq = 416;
-		perflevel = 100;
+			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 |
+			    CCCR_RUN_X16, CLKCFG_F, &pxa2x0_memcfg);
+			pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
+		}
+		if (freq < 416) {
+			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 |
+			    CCCR_RUN_X16, CLKCFG_B | CLKCFG_F | CLKCFG_T,
+			    &pxa2x0_memcfg);
+			freq = 416;
+		}
 	}
 
 	restore_interrupts(s);
