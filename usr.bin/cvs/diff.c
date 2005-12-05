@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.69 2005/12/01 23:02:27 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.70 2005/12/05 19:53:00 niallo Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -645,9 +645,20 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 			return (CVS_EX_DATA);
 		}
 		b2 = rcs_getrev(rf, r2);
+		tv2[0].tv_sec = (long)rcs_rev_getdate(rf, r2);
+		tv2[1].tv_sec = tv2[0].tv_sec;
 		rcsnum_free(r2);
 	} else {
+		struct stat st;
+		if (stat(diff_file, &st) < 0) {
+			cvs_log(LP_ERR, "failed to retrieve revision %s\n",
+			    dap->rev2);
+			cvs_buf_free(b1);
+			return (CVS_EX_DATA);
+		}
 		b2 = cvs_buf_load(diff_file, BUF_AUTOEXT);
+		tv2[0].tv_sec = st.st_mtime;
+		tv2[1].tv_sec = st.st_mtime;
 	}
 
 	rcs_close(rf);
@@ -658,8 +669,6 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		cvs_buf_free(b1);
 		return (CVS_EX_DATA);
 	}
-	tv2[0].tv_sec = (long)rcs_rev_getdate(rf, r2);
-	tv2[1].tv_sec = tv2[0].tv_sec;
 
 	cvs_printf("%s", diffargs);
 	cvs_printf(" -r%s", buf);
