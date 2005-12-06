@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.111 2005/11/02 18:45:26 todd Exp $
+#	$OpenBSD: netstart,v 1.112 2005/12/06 17:24:18 reyk Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -330,6 +330,7 @@ done
 # NO			YES			none installed	daemon will run
 # YES/interface		NO			-interface	YES=def. iface
 #	   Any other combination		-reject		config error
+route -qn delete 224.0.0.0/4 > /dev/null 2>&1
 case "$multicast_host:$multicast_router" in
 NO:NO)
 	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject > /dev/null
@@ -337,7 +338,7 @@ NO:NO)
 NO:YES)
 	;;
 *:NO)
-	set `if [ $multicast_host = YES ]; then
+	maddr=`if [ "$multicast_host" = "YES" ]; then
 		ed -s '!route -qn show -inet' <<EOF
 /^default/p
 EOF
@@ -345,8 +346,14 @@ EOF
 		ed -s "!ifconfig $multicast_host" <<EOF
 /^	inet /p
 EOF
-	fi`
-	route -qn add -net 224.0.0.0/4 -interface $2 > /dev/null
+	fi 2> /dev/null`
+	if [ "X${maddr}" != "X" ]; then
+		set $maddr
+		route -qn add -net 224.0.0.0/4 -interface $2 > /dev/null
+	else
+		route -qn add -net 224.0.0.0/4 -interface \
+			127.0.0.1 -reject > /dev/null
+	fi
 	;;
 *:*)
 	echo 'config error, multicasting disabled until rc.conf is fixed'
