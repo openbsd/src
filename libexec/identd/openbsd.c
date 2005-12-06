@@ -1,4 +1,4 @@
-/* $OpenBSD: openbsd.c,v 1.19 2004/09/16 08:25:05 deraadt Exp $ */
+/* $OpenBSD: openbsd.c,v 1.20 2005/12/06 22:05:22 deraadt Exp $ */
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -41,7 +41,7 @@ k_getuid(struct in_addr *faddr, int fport, struct in_addr *laddr,
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_IDENT };
 	struct sockaddr_in *fin, *lin;
 	struct tcp_ident_mapping tir;
-	int error = 0;
+	int err = 0;
 	size_t i;
 
 	memset(&tir, 0, sizeof (tir));
@@ -57,12 +57,12 @@ k_getuid(struct in_addr *faddr, int fport, struct in_addr *laddr,
 	fin->sin_port = fport;
 	lin->sin_port = lport;
 	i = sizeof (tir);
-	error = sysctl(mib, sizeof (mib) / sizeof (int), &tir, &i, NULL, 0);
-	if (!error && tir.ruid != -1) {
+	err = sysctl(mib, sizeof (mib) / sizeof (int), &tir, &i, NULL, 0);
+	if (!err && tir.ruid != -1) {
 		*uid = tir.ruid;
 		return (0);
 	}
-	if (error == -1)
+	if (err == -1)
 		syslog(LOG_DEBUG, "sysctl failed (%m)");
 
 	return (-1);
@@ -79,7 +79,7 @@ k_getuid6(struct sockaddr_in6 *faddr, int fport, struct sockaddr_in6 *laddr,
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_IDENT };
 	struct sockaddr_in6 *fin, *lin;
 	struct tcp_ident_mapping tir;
-	int error = 0;
+	int err = 0;
 	size_t i;
 
 	memset(&tir, 0, sizeof (tir));
@@ -95,12 +95,12 @@ k_getuid6(struct sockaddr_in6 *faddr, int fport, struct sockaddr_in6 *laddr,
 	fin->sin6_port = fport;
 	lin->sin6_port = lport;
 	i = sizeof (tir);
-	error = sysctl(mib, sizeof (mib) / sizeof (int), &tir, &i, NULL, 0);
-	if (!error && tir.ruid != -1) {
+	err = sysctl(mib, sizeof (mib) / sizeof (int), &tir, &i, NULL, 0);
+	if (!err && tir.ruid != -1) {
 		*uid = tir.ruid;
 		return (0);
 	}
-	if (error == -1)
+	if (err == -1)
 		syslog(LOG_DEBUG, "sysctl failed (%m)");
 
 	return (-1);

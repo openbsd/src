@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.42 2005/04/04 08:55:36 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.43 2005/12/06 22:05:22 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -120,7 +120,7 @@ ssize_t
 timed_read(int fd, void *buf, size_t siz, time_t timeout)
 {
 	struct timeval tv, start, after, duration, tmp;
-	int error, tot = 0, i, r;
+	int err, tot = 0, i, r;
 	struct pollfd rfd[1];
 	char *p = buf;
 
@@ -133,9 +133,9 @@ timed_read(int fd, void *buf, size_t siz, time_t timeout)
 		rfd[0].revents = 0;
 
 		gettimeofday(&start, NULL);
-		if ((error = poll(rfd, 1, tv.tv_sec * 1000 +
+		if ((err = poll(rfd, 1, tv.tv_sec * 1000 +
 		    tv.tv_usec / 1000)) <= 0)
-			return error;
+			return err;
 		r = read(fd, p, siz - tot);
 		if (r == -1 || r == 0)
 			return (r);
@@ -163,7 +163,7 @@ timed_write(int fd, const void *buf, size_t siz, time_t timeout)
 {
 	struct pollfd wfd[2];
 	struct timeval tv;
-	int error;
+	int err;
 
 	wfd[0].fd = fd;
 	wfd[0].events = POLLOUT;
@@ -172,10 +172,10 @@ timed_write(int fd, const void *buf, size_t siz, time_t timeout)
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 
-	if ((error = poll(wfd, 1, tv.tv_sec * 1000 +
+	if ((err = poll(wfd, 1, tv.tv_sec * 1000 +
 	    tv.tv_usec / 1000)) <= 0)
-		return error;
-	return(write(fd, buf, siz));
+		return err;
+	return (write(fd, buf, siz));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.41 2004/11/17 01:47:20 itojun Exp $	*/
+/*	$OpenBSD: identd.c,v 1.42 2005/12/06 22:05:22 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -77,7 +77,7 @@ gethost4_addr(struct in_addr *addr)
 {
 	struct hostent *hp;
 
-	hp = gethostbyaddr((char *) addr, sizeof(struct in_addr), AF_INET);
+	hp = gethostbyaddr(addr, sizeof(struct in_addr), AF_INET);
 	if (hp)
 		return hp->h_name;
 	return inet_ntoa(*addr);
@@ -96,7 +96,7 @@ gethost4(struct sockaddr_in *sin)
 {
 	struct hostent *hp;
 
-	hp = gethostbyaddr((char *)&sin->sin_addr, sizeof(struct in_addr), AF_INET);
+	hp = gethostbyaddr(&sin->sin_addr, sizeof(struct in_addr), AF_INET);
 	if (hp)
 		return hp->h_name;
 	return inet_ntoa(sin->sin_addr);
@@ -111,13 +111,13 @@ gethost6(struct sockaddr_in6 *addr)
 	static char hbuf[2][NI_MAXHOST];
 	const int niflags = NI_NUMERICHOST;
 	static int bb = 0;
-	int error;
+	int err;
 
 	bb = (bb+1)%2;
-	error = getnameinfo((struct sockaddr *)addr, addr->sin6_len,
+	err = getnameinfo((struct sockaddr *)addr, addr->sin6_len,
 	    hbuf[bb], sizeof(hbuf[bb]), NULL, 0, niflags);
-	if (error != 0) {
-		syslog(LOG_ERR, "getnameinfo failed (%s)", gai_strerror(error));
+	if (err != 0) {
+		syslog(LOG_ERR, "getnameinfo failed (%s)", gai_strerror(err));
 		strlcpy(hbuf[bb], "UNKNOWN", sizeof(hbuf[bb]));
 	}
 	return(hbuf[bb]);
